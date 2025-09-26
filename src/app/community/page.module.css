@@ -1,0 +1,774 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding-bottom: 60px;
+  background-color: #f5f5f5;
+}
+
+/* 主导航样式 */
+.mainTabs {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #fff;
+  padding: 0 16px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.tabsLeft {
+  display: flex;
+  align-items: center;
+  height: 44px;
+}
+
+.tabItem {
+  position: relative;
+  padding: 12px 16px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.tabItem.active {
+  color: #1890ff;
+}
+
+.tabItem.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 2px;
+  background-color: #1890ff;
+  border-radius: 1px;
+}
+
+/* 子导航样式 */
+.subTabs {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  background-color: #fff;
+  border-bottom: 1px solid #e5e5e5;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.subTab {
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #666;
+  cursor: pointer;
+  transition: color 0.3s;
+  flex-shrink: 0;
+}
+
+.subTab.active {
+  color: #1890ff;
+  font-weight: 500;
+}
+
+/* 币种标签样式 */
+.coinTabs {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  background-color: #fff;
+  border-bottom: 1px solid #e5e5e5;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.coinTab {
+  display: inline-block;
+  padding: 6px 12px;
+  margin-right: 8px;
+  font-size: 12px;
+  color: #666;
+  background-color: #f5f5f5;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+
+.coinTab.active {
+  color: #fff;
+  background-color: #1890ff;
+}
+
+.coinTab.more {
+  color: #1890ff;
+  background-color: #e6f7ff;
+}
+
+/* 热榜搜索栏样式 */
+.hotSearchBar {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: #fff;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.searchBox {
+  flex: 1;
+  height: 32px;
+  line-height: 32px;
+  padding: 0 12px;
+  background-color: #f5f5f5;
+  border-radius: 16px;
+  font-size: 14px;
+  color: #999;
+  cursor: pointer;
+}
+
+.createTopicBtn {
+  margin-left: 12px;
+  padding: 6px 12px;
+  font-size: 12px;
+  background-color: #1890ff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* 内容列表样式 */
+.contentList {
+  flex: 1;
+  padding: 12px;
+}
+
+.contentList.withSubTabs {
+  padding-top: 12px;
+}
+
+.contentList.withCoinTabs {
+  padding-top: 12px;
+}
+
+.contentList.topicSubTabs {
+  padding-top: 12px;
+}
+
+.postsList {
+  margin-top: 16px;
+}
+
+.postItem {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.postHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  margin-right: 8px;
+  object-fit: cover;
+}
+
+.username {
+  font-weight: 500;
+  font-size: var(--font-size-base);
+}
+
+.postTime {
+  font-size: var(--font-size-sm);
+  color: #999;
+}
+
+.postContent {
+  margin-bottom: 12px;
+}
+
+.postTitle {
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.postText {
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  margin-bottom: 8px;
+  word-break: break-word;
+}
+
+.postImages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.postImage {
+  width: calc(33.33% - 6px);
+  height: 100px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.postFooter {
+  display: flex;
+  align-items: center;
+  border-top: 1px solid var(--border-color);
+  padding-top: 12px;
+}
+
+.postAction {
+  display: flex;
+  align-items: center;
+  margin-right: 16px;
+  cursor: pointer;
+}
+
+.actionIcon {
+  margin-right: 4px;
+  font-size: 16px;
+}
+
+.liked {
+  color: var(--primary-color);
+}
+
+.topicsList {
+  display: flex;
+  flex-direction: column;
+}
+
+.topicItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.topicItem:last-child {
+  border-bottom: none;
+}
+
+.topicTitle {
+  font-size: var(--font-size-base);
+  color: var(--primary-color);
+}
+
+.topicCount {
+  font-size: var(--font-size-sm);
+  color: #999;
+}
+
+.emptyContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: #999;
+}
+
+.noMore {
+  text-align: center;
+  color: #999;
+  padding: 16px 0;
+  font-size: var(--font-size-sm);
+}
+
+/* 热榜话题样式 */
+.hotTopics {
+  background-color: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.hotTopicItem {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.hotTopicItem:hover {
+  background-color: #f9f9f9;
+}
+
+.hotTopicItem:last-child {
+  border-bottom: none;
+}
+
+.topicRank {
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: bold;
+  color: #666;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.topicInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.topicTitle {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topicDesc {
+  display: block;
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topicStats {
+  display: flex;
+  align-items: center;
+}
+
+.statItem {
+  font-size: 11px;
+  color: #999;
+  margin-right: 12px;
+}
+
+/* 发帖按钮样式 */
+.floatPostBtn {
+  position: fixed;
+  right: 16px;
+  bottom: 80px;
+  z-index: 100;
+}
+
+.postBtn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: #1890ff;
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 12px rgba(24, 144, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.postBtn:hover {
+  transform: scale(1.1);
+}
+
+.iconPlus {
+  font-size: 24px;
+  font-weight: 300;
+}
+
+/* 币种和话题标签容器 */
+.tagsTopicsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+/* 币种标签样式 */
+.coinTag {
+  display: inline-block;
+  padding: 4px 8px;
+  background-color: #fff2e8;
+  color: #fa8c16;
+  border: 1px solid #ffd591;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.coinTag:hover {
+  background-color: #fa8c16;
+  color: #fff;
+}
+
+/* 话题标签样式 */
+.topicTag {
+  display: inline-block;
+  padding: 4px 8px;
+  background-color: #e6f7ff;
+  color: #1890ff;
+  border: 1px solid #91d5ff;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.topicTag:hover {
+  background-color: #1890ff;
+  color: #fff;
+}
+
+/* 币种选择器样式 */
+.coinSelectorFullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #fff;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.selectorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e5e5;
+  background-color: #fff;
+}
+
+.headerTitle {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+}
+
+.close {
+  font-size: 14px;
+  color: #666;
+  cursor: pointer;
+}
+
+.selectorSearch {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.selectorSearchBox {
+  margin-bottom: 16px;
+}
+
+.coinItem {
+  display: flex;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+}
+
+.coinItem:last-child {
+  border-bottom: none;
+}
+
+.coinIcon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  margin-right: 12px;
+}
+
+.coinName {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+}
+
+.selectedIcon {
+  color: #1890ff;
+  font-size: 16px;
+}
+
+.loadingText {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+}
+
+.noResult {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+  font-size: 14px;
+}
+
+/* 创建话题弹窗样式 */
+.topicCreatorMask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.topicCreator {
+  background-color: #fff;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 400px;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.creatorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid #e5e5e5;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.creatorContent {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.inputGroup {
+  margin-bottom: 16px;
+}
+
+.label {
+  display: block;
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.titleInput {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.titleInput:focus {
+  border-color: #1890ff;
+}
+
+.descInput {
+  width: 100%;
+  height: 80px;
+  padding: 8px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  font-size: 14px;
+  resize: none;
+  outline: none;
+  transition: border-color 0.3s;
+  font-family: inherit;
+}
+
+.descInput:focus {
+  border-color: #1890ff;
+}
+
+.wordCount {
+  display: block;
+  text-align: right;
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px;
+}
+
+.createBtn {
+  width: 100%;
+  padding: 12px;
+  background-color: #d9d9d9;
+  color: #999;
+  border: none;
+  border-radius: 0 0 8px 8px;
+  font-size: 16px;
+  cursor: not-allowed;
+  transition: all 0.3s;
+}
+
+.createBtn.active {
+  background-color: #1890ff;
+  color: #fff;
+  cursor: pointer;
+}
+
+/* 加载和空状态样式 */
+.loadingMore {
+  text-align: center;
+  padding: 20px;
+}
+
+.listFooter {
+  text-align: center;
+  padding: 16px;
+  color: #999;
+  font-size: 12px;
+}
+
+.emptyContent {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+  font-size: 14px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .container {
+    background-color: #000;
+  }
+  
+  .mainTabs,
+  .subTabs,
+  .coinTabs,
+  .hotSearchBar {
+    background-color: #1a1a1a;
+    border-bottom-color: #333;
+  }
+  
+  .tabItem,
+  .subTab {
+    color: #999;
+  }
+  
+  .tabItem.active,
+  .subTab.active {
+    color: #1890ff;
+  }
+  
+  .coinTab {
+    background-color: #333;
+    color: #999;
+  }
+  
+  .coinTab.active {
+    background-color: #1890ff;
+    color: #fff;
+  }
+  
+  .searchBox {
+    background-color: #333;
+    color: #999;
+  }
+  
+  .hotTopics,
+  .postItem {
+    background-color: #1a1a1a;
+  }
+  
+  .hotTopicItem {
+    border-bottom-color: #333;
+  }
+  
+  .hotTopicItem:hover {
+    background-color: #333;
+  }
+  
+  .topicTitle {
+    color: #fff;
+  }
+  
+  .topicDesc,
+  .statItem {
+    color: #999;
+  }
+  
+  .postFooter {
+    border-top-color: #333;
+  }
+  
+  .topicItem {
+    border-bottom-color: #333;
+  }
+  
+  .coinSelectorFullscreen,
+  .topicCreator {
+    background-color: #1a1a1a;
+  }
+  
+  .selectorHeader,
+  .creatorHeader {
+    background-color: #1a1a1a;
+    border-bottom-color: #333;
+  }
+  
+  .headerTitle,
+  .label,
+  .coinName {
+    color: #fff;
+  }
+  
+  .close {
+    color: #999;
+  }
+  
+  .coinItem {
+    border-bottom-color: #333;
+  }
+  
+  .titleInput,
+  .descInput {
+    background-color: #333;
+    border-color: #444;
+    color: #fff;
+  }
+  
+  .titleInput:focus,
+  .descInput:focus {
+    border-color: #1890ff;
+  }
+  
+  .wordCount {
+    color: #999;
+  }
+}

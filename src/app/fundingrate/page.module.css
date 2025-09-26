@@ -1,0 +1,188 @@
+.pcrBox {
+  background-color: #efefef;
+  box-sizing: border-box;
+  min-height: 100vh;
+}
+
+.currentPCR {
+  padding: 20px;
+  background-color: #fff;
+  margin-bottom: 20px;
+}
+
+.pickerList {
+  display: flex;
+  justify-content: space-around;
+  height: 50px;
+}
+
+.pickerItem {
+  display: flex;
+  margin-left: 10px;
+}
+
+.pickerTitle {
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.pickerSelect {
+  display: flex;
+  align-items: center;
+  height: 50px;
+}
+
+.selectIcon {
+  margin-right: 10px;
+}
+
+.caretDown {
+  font-size: 12px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.currentPCRChart {
+  width: 100%;
+}
+
+.scrollContainer {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.scrollContent {
+  min-width: 100%;
+  white-space: nowrap;
+}
+
+.showMoreBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 0;
+  cursor: pointer;
+}
+
+.more {
+  margin-right: 10px;
+}
+
+.fundList {
+  display: flex;
+}
+
+.fundItem {
+  background-color: #eff2f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 10px;
+  min-width: 150px;
+}
+
+.fundUrl {
+  height: 36px;
+  width: 36px;
+  margin-right: 10px;
+}
+
+.fundItemFirst {
+  min-width: 200px;
+}
+
+.green {
+  color: #02c076;
+}
+
+.red {
+  color: #ff3333;
+}
+
+.fundTitle .fundItem {
+  border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+}
+
+.fundDetailBox {
+  height: 900px;
+  overflow-y: hidden;
+}
+
+.showMoreTrue {
+  height: auto;
+}
+
+.listDetail .fundItem {
+  background-color: #fff;
+}
+
+.currentChart {
+  width: 100%;
+  height: 600px;
+  position: relative;
+}
+
+.chartArrawsalt {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  background-color: #d5d5d5;
+  border-radius: 50%;
+  padding: 6px;
+  box-sizing: border-box;
+  z-index: 100;
+  cursor: pointer;
+}
+
+.arrowIcon {
+  font-size: 24px;
+}
+
+.chart {
+  width: 100%;
+  height: 100%;
+}
+
+.noData {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #999;
+}
+
+/* 暗色模式适配 */
+@media (prefers-color-scheme: dark) {
+  .pcrBox {
+    background-color: #1a1a1a;
+  }
+  
+  .currentPCR {
+    background-color: #222;
+  }
+  
+  .fundItem {
+    background-color: #333;
+    color: #eee;
+  }
+  
+  .listDetail .fundItem {
+    background-color: #222;
+  }
+  
+  .fundTitle .fundItem {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .chartArrawsalt {
+    background-color: #444;
+  }
+  
+  .noData {
+    color: #777;
+  }
+}

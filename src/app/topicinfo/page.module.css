@@ -1,0 +1,314 @@
+/* 话题详情页样式 */
+.topicDetail {
+  padding-bottom: 60px;
+  background-color: var(--adm-color-background);
+  min-height: 100vh;
+}
+
+/* 话题头部 */
+.topicHeader {
+  background-color: var(--adm-color-white);
+  padding: 15px;
+  margin-bottom: 10px;
+}
+
+.titleSection {
+  margin-bottom: 10px;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--adm-color-text);
+}
+
+.description {
+  font-size: 14px;
+  color: var(--adm-color-text-secondary);
+  margin-bottom: 15px;
+  line-height: 1.5;
+}
+
+.stats {
+  display: flex;
+  font-size: 12px;
+  color: var(--adm-color-weak);
+}
+
+.statItem {
+  margin-right: 15px;
+}
+
+/* 帖子列表 */
+.postList {
+}
+
+.listHeader {
+  background-color: var(--adm-color-white);
+  padding: 10px 15px;
+  border-bottom: 1px solid var(--adm-color-border);
+}
+
+.total {
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--adm-color-text);
+}
+
+/* 评论卡片样式 */
+.commentCard {
+  background-color: var(--adm-color-white);
+  padding: 15px;
+  margin-bottom: 10px;
+  position: relative;
+  cursor: pointer;
+}
+
+.commentCard:hover {
+  background-color: var(--adm-color-background);
+}
+
+/* 编辑操作按钮 */
+.editActions {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  z-index: 1;
+  cursor: pointer;
+}
+
+/* 用户信息 */
+.userInfo {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+  object-fit: cover;
+}
+
+.nickname {
+  font-size: 14px;
+  color: var(--adm-color-text);
+  font-weight: 500;
+}
+
+/* 内容标签 */
+.contentTag {
+  display: inline-block;
+  font-size: 12px;
+  color: #45e87f;
+  background-color: rgba(69, 232, 127, 0.1);
+  padding: 3px 8px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+/* 标题 */
+.postTitle {
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--adm-color-text);
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+/* 描述 */
+.postDescription {
+  font-size: 14px;
+  color: var(--adm-color-text-secondary);
+  margin-bottom: 10px;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+/* 币种和话题标签容器 */
+.tagsTopicsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  gap: 8px;
+}
+
+/* 币种标签 */
+.coinTag {
+  font-size: 12px;
+  color: #ff9500;
+  background-color: rgba(255, 149, 0, 0.1);
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.coinTag:hover {
+  opacity: 0.7;
+}
+
+/* 话题标签 */
+.topicTag {
+  font-size: 12px;
+  color: #007aff;
+  background-color: rgba(0, 122, 255, 0.1);
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.topicTag:hover {
+  opacity: 0.7;
+}
+
+/* 操作按钮 */
+.actionButtons {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid var(--adm-color-border);
+  padding-top: 10px;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--adm-color-weak);
+  background: none;
+  border: none;
+  padding: 0;
+  gap: 4px;
+  min-height: auto;
+  height: auto;
+}
+
+.actionBtn.liked {
+  color: #ff4d4f;
+}
+
+/* 底部提示 */
+.listFooter {
+  text-align: center;
+  padding: 15px 0;
+}
+
+.footerText {
+  font-size: 12px;
+  color: var(--adm-color-weak);
+}
+
+/* 加载更多 */
+.loadingMore {
+  display: flex;
+  justify-content: center;
+  padding: 15px 0;
+  font-size: 12px;
+  color: var(--adm-color-weak);
+}
+
+/* 悬浮发帖按钮 */
+.floatPostBtn {
+  position: fixed;
+  right: 15px;
+  bottom: 50px;
+  z-index: 100;
+}
+
+.postBtn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #45e87f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(69, 232, 127, 0.4);
+  border: none;
+  padding: 0;
+}
+
+.iconPlus {
+  font-size: 24px;
+  color: #fff;
+  font-weight: bold;
+  line-height: 1;
+}
+
+/* 暗色模式适配 */
+@media (prefers-color-scheme: dark) {
+  .topicDetail {
+    background-color: #000;
+  }
+  
+  .topicHeader,
+  .listHeader,
+  .commentCard {
+    background-color: #1a1a1a;
+    border-color: #333;
+  }
+  
+  .title,
+  .total,
+  .nickname,
+  .postTitle {
+    color: #fff;
+  }
+  
+  .description,
+  .postDescription {
+    color: #999;
+  }
+  
+  .actionBtn {
+    color: #666;
+  }
+  
+  .footerText,
+  .loadingMore {
+    color: #666;
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .topicHeader {
+    padding: 12px;
+  }
+  
+  .title {
+    font-size: 16px;
+  }
+  
+  .description {
+    font-size: 13px;
+  }
+  
+  .commentCard {
+    padding: 12px;
+  }
+  
+  .postTitle {
+    font-size: 15px;
+  }
+  
+  .postDescription {
+    font-size: 13px;
+  }
+  
+  .floatPostBtn {
+    right: 12px;
+    bottom: 40px;
+  }
+  
+  .postBtn {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .iconPlus {
+    font-size: 20px;
+  }
+}

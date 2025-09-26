@@ -1,0 +1,299 @@
+.box {
+  background-color: #efefef;
+  padding-bottom: 50px;
+  box-sizing: border-box;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.errorBox {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 50vh;
+}
+
+.sideBox {
+  display: flex;
+  flex-grow: 1;
+  height: calc(100vh - 100px);
+}
+
+.side {
+  flex: none;
+}
+
+.sidebar {
+  width: 200px;
+  box-sizing: border-box;
+  height: 100%;
+}
+
+.sidebarItem {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.sidebarIcon {
+  height: 36px;
+  width: 36px;
+  margin-right: 10px;
+  object-fit: contain;
+}
+
+.main {
+  flex: auto;
+  background-color: #fff;
+  padding: 20px;
+  box-sizing: border-box;
+  position: relative;
+  overflow-y: auto;
+}
+
+.mainItem {
+  display: flex;
+  margin-bottom: 20px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+  background-color: #fafafa;
+}
+
+.contentWrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding-right: 10px;
+}
+
+.contentLabel {
+  margin-right: 8px;
+  font-weight: 500;
+  color: #333;
+  white-space: nowrap;
+}
+
+.contentText {
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  border: 1px solid #ddd;
+  background-color: #fff;
+  display: inline-block;
+  flex: 1;
+  min-width: 80px;
+}
+
+.contentText:hover {
+  background-color: #f5f5f5;
+  border-color: #ccc;
+}
+
+.contentText:active {
+  background-color: #e8e8e8;
+}
+
+.editContainer {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  padding-right: 10px;
+  gap: 8px;
+}
+
+.editInput {
+  flex: 1;
+  min-width: 120px;
+}
+
+.confirmBtn {
+  min-width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.confirmBtn:hover {
+  background-color: #f0f0f0;
+}
+
+/* 暗色模式适配 */
+@media (prefers-color-scheme: dark) {
+  .box {
+    background-color: #1a1a1a;
+  }
+  
+  .main {
+    background-color: #2a2a2a;
+    color: #ffffff;
+  }
+  
+  .mainItem {
+    background-color: #333;
+    border-color: #444;
+  }
+  
+  .contentLabel {
+    color: #ffffff;
+  }
+  
+  .contentText {
+    background-color: #444;
+    border-color: #555;
+    color: #ffffff;
+  }
+  
+  .contentText:hover {
+    background-color: #555;
+    border-color: #666;
+  }
+  
+  .contentText:active {
+    background-color: #666;
+  }
+  
+  .confirmBtn:hover {
+    background-color: #444;
+  }
+  
+  .sidebar {
+    background-color: #2a2a2a;
+  }
+  
+  .sidebarItem {
+    color: #ffffff;
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .sideBox {
+    flex-direction: column;
+    height: auto;
+  }
+  
+  .sidebar {
+    width: 100%;
+    height: auto;
+  }
+  
+  .main {
+    height: auto;
+    min-height: 50vh;
+  }
+  
+  .mainItem {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  
+  .contentWrapper {
+    padding-right: 0;
+  }
+  
+  .editContainer {
+    padding-right: 0;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .editInput {
+    min-width: auto;
+  }
+}
+
+/* 登录容器样式 */
+.loginContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.loginIcon {
+  font-size: 64px;
+  margin-bottom: 24px;
+  opacity: 0.8;
+}
+
+.loginTitle {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.loginDesc {
+  font-size: 16px;
+  color: #666;
+  line-height: 1.5;
+  margin-bottom: 32px;
+  max-width: 300px;
+}
+
+/* 空状态样式 */
+.emptyContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 64px;
+  margin-bottom: 24px;
+  opacity: 0.8;
+}
+
+.emptyTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.emptyDesc {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.5;
+  margin-bottom: 32px;
+  max-width: 280px;
+}
+
+.emptyButton {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 24px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  outline: none;
+}
+
+.emptyButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.emptyButton:active {
+  transform: translateY(0);
+}

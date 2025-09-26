@@ -1,0 +1,31 @@
+.errorBox {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  padding: 20px;
+  box-sizing: border-box;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.errorText {
+  margin: 10px 0;
+  font-size: 14px;
+  color: var(--adm-color-text-secondary);
+  text-align: center;
+}
+
+.errorBtn {
+  background-color: #02c076;
+  color: #fff;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+/* 暗色模式适配 */
+@media (prefers-color-scheme: dark) {
+  .errorText {
+    color: #999;
+  }
+}

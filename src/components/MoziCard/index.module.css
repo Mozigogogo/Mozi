@@ -1,0 +1,195 @@
+.card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.title {
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+.titleNum {
+  margin-left: 4px;
+  font-size: var(--font-size-sm);
+  color: #999;
+}
+
+.cardBody {
+  padding: 16px;
+}
+
+.more {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.moreDesc {
+  font-size: var(--font-size-sm);
+  color: #999;
+}
+
+.moreIcon {
+  font-size: 18px;
+  color: #999;
+}
+
+.select {
+  position: relative;
+}
+
+.selectInput {
+  appearance: none;
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-base);
+  padding: 4px 24px 4px 8px;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.select::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid #999;
+  pointer-events: none;
+}
+
+/* 排行榜相关样式 */
+.rankTitle {
+  display: flex;
+  align-items: center;
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+}
+
+.rankTitleTime {
+  font-size: var(--font-size-sm);
+  color: #898989;
+  margin-left: 10px;
+}
+
+.loading,
+.error,
+.empty {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 120px;
+}
+
+/* 交易所排行榜网格样式 */
+.exchangeGrid {
+  width: 100%;
+}
+
+.gridHeader {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 8px;
+  padding: 8px 0;
+  font-size: var(--font-size-sm);
+  color: #898989;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.gridRow {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f5f5f5;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.gridRow:hover {
+  background-color: #f9f9f9;
+}
+
+.gridRow:last-child {
+  border-bottom: none;
+}
+
+.gridCol {
+  display: flex;
+  align-items: center;
+  font-size: var(--font-size-base);
+}
+
+.textRight {
+  justify-content: flex-end;
+}
+
+.exchangeIcon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  margin-right: 8px;
+  object-fit: cover;
+}
+
+@media (max-width: 768px) {
+  .gridHeader,
+  .gridRow {
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 4px;
+  }
+  
+  .gridCol {
+    font-size: var(--font-size-sm);
+  }
+  
+  .exchangeIcon {
+    width: 20px;
+    height: 20px;
+    margin-right: 6px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .card {
+    background-color: #1a1a1a;
+  }
+  
+  .cardHeader {
+    border-bottom-color: #333;
+  }
+  
+  .selectInput {
+    border-color: #333;
+    color: var(--foreground);
+  }
+  
+  .gridHeader {
+    border-bottom-color: #333;
+  }
+  
+  .gridRow {
+    border-bottom-color: #333;
+  }
+  
+  .gridRow:hover {
+    background-color: #2a2a2a;
+  }
+}

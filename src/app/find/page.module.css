@@ -1,0 +1,211 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding-bottom: 60px;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #fff;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.content {
+  flex: 1;
+  padding: 12px;
+}
+
+/* 排行榜样式 */
+.rankContainer {
+  margin-top: 16px;
+}
+
+.rankGrid {
+  margin-top: 16px;
+}
+
+.rankItem {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: #fff;
+  cursor: pointer;
+}
+
+.rankItem:last-child {
+  border-bottom: none;
+}
+
+.rankIndex {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-sm);
+  margin-right: 12px;
+}
+
+.rankTitle {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.rankImg {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  margin-right: 8px;
+  object-fit: cover;
+}
+
+.rankCoin {
+  font-weight: 500;
+  font-size: var(--font-size-base);
+}
+
+.rankCoinDesc {
+  font-size: var(--font-size-sm);
+  color: #999;
+}
+
+.rankDesc {
+  text-align: right;
+}
+
+.rankPrice {
+  font-weight: 500;
+  font-size: var(--font-size-base);
+}
+
+.rankPriceChange {
+  font-size: var(--font-size-sm);
+}
+
+.rankGreen {
+  color: var(--success-color);
+}
+
+.rankRed {
+  color: var(--error-color);
+}
+
+/* 自选列表样式 */
+.ownList {
+  margin-top: 16px;
+}
+
+.ownItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: #fff;
+  cursor: pointer;
+}
+
+.ownItem:last-child {
+  border-bottom: none;
+}
+
+.ownLeft {
+  display: flex;
+  align-items: center;
+}
+
+.ownImg {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  margin-right: 12px;
+  object-fit: cover;
+}
+
+.ownInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.ownSymbol {
+  font-weight: 500;
+  font-size: var(--font-size-base);
+}
+
+.ownName {
+  font-size: var(--font-size-sm);
+  color: #999;
+}
+
+.ownRight {
+  text-align: right;
+}
+
+.ownPrice {
+  font-weight: 500;
+  font-size: var(--font-size-base);
+}
+
+.ownChange {
+  font-size: var(--font-size-sm);
+}
+
+.emptyOwn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #999;
+}
+
+.addOwnBtn {
+  margin-top: 16px;
+  padding: 8px 16px;
+  background-color: var(--primary-color);
+  color: #fff;
+  border: none;
+  border-radius: var(--border-radius-base);
+  font-size: var(--font-size-base);
+}
+
+.emptyData {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100px;
+  color: #999;
+}
+
+/* 市场网格样式 */
+.marketGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .header {
+    background-color: #1a1a1a;
+    border-bottom-color: #333;
+  }
+  
+  .rankItem,
+  .ownItem {
+    background-color: #1a1a1a;
+    border-bottom-color: #333;
+  }
+  
+  .rankIndex {
+    background-color: #333;
+  }
+}

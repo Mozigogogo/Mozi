@@ -1,0 +1,413 @@
+.container {
+  width: 100%;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, #1a1a1a 0%, #2a2a2a 100%, #333333);
+  min-height: 100vh;
+}
+
+.header {
+  padding: 16px 12px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: linear-gradient(180deg, #1a1a1a 0%, #2a2a2a 100%);
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+}
+
+.noticeBar {
+  margin-top: 16px;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.8);
+  color: #333;
+  font-size: 12px;
+  padding: 8px 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+
+
+.content {
+  padding-bottom: 60px;
+}
+
+/* 投资机会滑动容器样式 */
+.scrollContainer {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollContainer::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollContent {
+  display: flex;
+  gap: 20px;
+  padding: 16px 0;
+}
+
+.treemapBox {
+  min-width: 280px;
+  flex-shrink: 0;
+}
+
+.treemapBox.last {
+  margin-right: 0;
+}
+
+.treemapTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.loadingBox {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 120px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  color: #666;
+}
+
+/* 热门币种样式 */
+.coinGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.coinItem {
+  background: #fff;
+  border-radius: 6px;
+  padding: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  border: 1px solid #f0f0f0;
+}
+
+.coinItem:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.coinHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.coinImg {
+  width: 20px;
+  height: 20px;
+  margin-right: 6px;
+  border-radius: 50%;
+}
+
+.coinSymbol {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.coinPrice {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.coinChange {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* 热门板块样式 */
+.industryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.industryItem {
+  background: #fff;
+  border-radius: 6px;
+  padding: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  border: 1px solid #f0f0f0;
+  text-align: center;
+}
+
+.industryItem:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.industryName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6px;
+}
+
+.industryChange {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* 热门合约样式 */
+.contractGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.contractItem {
+  background: #fff;
+  border-radius: 6px;
+  padding: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  border: 1px solid #f0f0f0;
+}
+
+.contractItem:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.contractHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.contractImg {
+  width: 20px;
+  height: 20px;
+  margin-right: 6px;
+  border-radius: 50%;
+}
+
+.contractSymbol {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.contractPrice {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.contractChange {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* 衍生品专区样式 */
+.areaGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.areaItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background-color: var(--card-background);
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.areaItem:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.areaIcon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.areaText {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* 通用涨跌样式 */
+.priceUp {
+  color: #00d4aa;
+}
+
+.priceDown {
+  color: #ff6b6b;
+}
+
+/* 实时榜单样式 */
+.tabBox {
+  margin-bottom: 16px;
+}
+
+.ownTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ownImg {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.listMore {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px;
+  margin-top: 16px;
+  color: #1677ff;
+  font-size: 14px;
+  cursor: pointer;
+  border-top: 1px solid #f0f0f0;
+  transition: background-color 0.2s;
+}
+
+.listMore:hover {
+  background-color: #f8f9fa;
+}
+
+.rightIcon {
+  font-size: 12px;
+}
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+
+  .treemapBox {
+    min-width: 240px;
+  }
+
+  .coinGrid,
+  .industryGrid,
+  .contractGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .areaGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .scrollContent {
+    gap: 16px;
+  }
+
+  .treemapTitle {
+    font-size: 14px;
+  }
+
+  .coinItem,
+  .industryItem,
+  .contractItem {
+    padding: 10px;
+  }
+
+  .coinImg,
+  .contractImg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .coinSymbol,
+  .contractSymbol {
+    font-size: 13px;
+  }
+
+  .coinPrice,
+  .contractPrice {
+    font-size: 13px;
+  }
+
+  .industryName {
+    font-size: 13px;
+  }
+
+  .tabBox {
+    margin-bottom: 12px;
+  }
+
+  .ownImg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .listMore {
+    padding: 10px;
+    margin-top: 12px;
+    font-size: 13px;
+  }
+}
+
+/* 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+  .priceUp {
+    background-color: rgba(0, 200, 5, 0.2);
+  }
+  
+  .priceDown {
+    background-color: rgba(255, 0, 0, 0.2);
+  }
+  
+  .coinItem,
+  .industryItem,
+  .contractItem,
+  .areaItem {
+    box-shadow: var(--card-shadow-dark);
+  }
+  
+  .coinItem:hover,
+  .industryItem:hover,
+  .contractItem:hover,
+  .areaItem:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* 空数据样式 */
+.emptyData {
+  padding: 40px 20px;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin: 16px 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .emptyData {
+    background-color: #2a2a2a;
+    color: #666;
+  }
+}

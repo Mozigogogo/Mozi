@@ -1,0 +1,143 @@
+.scrollList {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  height: 22vh;
+  box-sizing: border-box;
+  background-color: #f5f5f5;
+}
+
+.left {
+  flex: 1;
+  padding: 20px 0 20px 60px;
+}
+
+.title {
+  font-weight: bold;
+  font-size: 36px;
+  margin-bottom: 20px;
+}
+
+.desc {
+  display: flex;
+  margin-top: 20px;
+  font-size: 24px;
+}
+
+.descCon {
+  margin-right: 10px;
+}
+
+.pickerSelect {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.selectIcon {
+  margin-right: 10px;
+}
+
+.right {
+  flex: 1;
+  width: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.headerImg {
+  height: 18vh;
+  object-fit: contain;
+}
+
+.gridTitle {
+  font-size: 20px;
+  color: #898989;
+  margin-bottom: 10px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: #dfdfdf;
+  z-index: 10;
+  align-items: center;
+  padding: 10px 20px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.gridTitleItem {
+  display: flex;
+  align-items: center;
+}
+
+.text {
+  text-align: right;
+}
+
+.showHeaderGrid {
+  top: 22vh;
+}
+
+.scroll {
+  height: 100vh;
+  box-sizing: border-box;
+  position: relative;
+  background-color: #fff;
+  padding-bottom: 20px;
+  overflow-y: auto;
+  padding-top: 60px;
+}
+
+.showHeader {
+  height: 78vh;
+}
+
+.gridText {
+  display: flex;
+  width: 100%;
+  align-items: center;
+}
+
+.gridIcon {
+  height: 36px;
+  width: 36px;
+  margin-right: 10px;
+  object-fit: contain;
+}
+
+.list {
+  margin-top: 50px;
+}
+
+.gridListItem {
+  padding: 0 20px;
+}
+
+/* 暗色模式适配 */
+@media (prefers-color-scheme: dark) {
+  .header {
+    background-color: #1a1a1a;
+    color: #ffffff;
+  }
+  
+  .gridTitle {
+    background-color: #2a2a2a;
+    color: #cccccc;
+  }
+  
+  .scroll {
+    background-color: #000000;
+  }
+  
+  .title {
+    color: #ffffff;
+  }
+  
+  .desc {
+    color: #cccccc;
+  }
+}

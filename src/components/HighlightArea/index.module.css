@@ -1,0 +1,57 @@
+.areaBoxSimple {
+  width: 60px;
+  height: 30px;
+  color: #fff;
+  border-radius: 5px;
+  line-height: 30px;
+  text-align: center;
+  font-size: 12px;
+}
+
+.areaBox {
+  color: #fff;
+  border-radius: 5px;
+  text-align: center;
+  width: 23%;
+  margin-right: 1%;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 8px 4px;
+  min-height: 40px;
+}
+
+.areaBoxTitle {
+  font-size: 11px;
+  margin-bottom: 2px;
+  opacity: 0.9;
+}
+
+.green {
+  background-color: #02c076;
+}
+
+.red {
+  background-color: #ff3333;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .areaBox {
+    font-size: 11px;
+    padding: 6px 3px;
+    min-height: 35px;
+  }
+  
+  .areaBoxTitle {
+    font-size: 10px;
+  }
+  
+  .areaBoxSimple {
+    width: 50px;
+    height: 25px;
+    line-height: 25px;
+    font-size: 11px;
+  }
+}

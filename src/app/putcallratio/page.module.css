@@ -1,0 +1,238 @@
+/* 看跌看涨比页面样式 */
+.pcrBox {
+  background-color: #efefef;
+  box-sizing: border-box;
+  min-height: 100vh;
+  padding-bottom: 20px;
+}
+
+/* 选择器列表 */
+.pickerList {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+  background: #fff;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pickerItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pickerTitle {
+  font-weight: bold;
+  color: #333;
+  font-size: 14px;
+}
+
+.pickerSelect {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 100px;
+  justify-content: space-between;
+}
+
+.pickerSelect:hover {
+  background: #e8e8e8;
+}
+
+.selectIcon {
+  font-size: 14px;
+  color: #333;
+}
+
+.arrow {
+  font-size: 12px;
+  color: #666;
+  transition: transform 0.3s ease;
+}
+
+.pickerSelect:active .arrow {
+  transform: rotate(180deg);
+}
+
+/* 当前多空比区域 */
+.currentPCR {
+  padding: 20px;
+  background-color: #fff;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.headerTitle {
+  font-weight: bold;
+  font-size: 16px;
+  color: #333;
+}
+
+/* 图表容器 */
+.currentPCRChart {
+  width: 100%;
+  height: 400px;
+  padding: 0 20px;
+  position: relative;
+  margin-top: 16px;
+}
+
+.chartArrawsalt {
+  position: absolute;
+  right: 30px;
+  bottom: 25px;
+  background-color: #d5d5d5;
+  border-radius: 50%;
+  padding: 8px;
+  box-sizing: border-box;
+  z-index: 100;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+}
+
+.chartArrawsalt:hover {
+  background-color: #bbb;
+  transform: scale(1.1);
+}
+
+.fullscreenIcon {
+  font-size: 16px;
+  color: #fff;
+}
+
+.chart {
+  height: 100%;
+  width: 100%;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .pickerList {
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+  }
+  
+  .pickerItem {
+    justify-content: space-between;
+    width: 100%;
+  }
+  
+  .pickerSelect {
+    min-width: 120px;
+  }
+  
+  .currentPCR {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .currentPCRChart {
+    height: 300px;
+    padding: 0 10px;
+  }
+  
+  .chartArrawsalt {
+    right: 20px;
+    bottom: 20px;
+    width: 32px;
+    height: 32px;
+    padding: 6px;
+  }
+  
+  .fullscreenIcon {
+    font-size: 14px;
+  }
+}
+
+/* 暗色模式适配 */
+@media (prefers-color-scheme: dark) {
+  .pcrBox {
+    background-color: #1a1a1a;
+  }
+  
+  .pickerList,
+  .currentPCR {
+    background-color: #2a2a2a;
+    color: #fff;
+  }
+  
+  .pickerTitle,
+  .headerTitle,
+  .selectIcon {
+    color: #fff;
+  }
+  
+  .pickerSelect {
+    background: #3a3a3a;
+  }
+  
+  .pickerSelect:hover {
+    background: #4a4a4a;
+  }
+  
+  .arrow {
+    color: #ccc;
+  }
+  
+  .chartArrawsalt {
+    background-color: #555;
+  }
+  
+  .chartArrawsalt:hover {
+    background-color: #666;
+  }
+}
+
+/* 加载状态 */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: #666;
+}
+
+/* 错误状态 */
+.error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: #ff4d4f;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.error button {
+  padding: 8px 16px;
+  background: #1890ff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.error button:hover {
+  background: #40a9ff;
+}

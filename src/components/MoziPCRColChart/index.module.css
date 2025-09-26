@@ -1,0 +1,111 @@
+.PCRBox {
+  width: 100%;
+  padding: 10px 0;
+}
+
+.emptyData {
+  text-align: center;
+  color: #999;
+  padding: 20px;
+}
+
+.PCRDesc {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px 10px;
+  font-size: 14px;
+  color: #666;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.PCRDescName {
+  flex: 1;
+}
+
+.PCRDescContent {
+  display: flex;
+  width: 80px;
+  justify-content: space-between;
+}
+
+.PCRList {
+  padding: 0;
+}
+
+.pcrItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #f8f8f8;
+}
+
+.pcrItem:last-child {
+  border-bottom: none;
+}
+
+.pcrItemTitle {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  font-size: 14px;
+}
+
+.pcrItemTitle > div:first-child {
+  width: 20px;
+  text-align: center;
+  margin-right: 10px;
+  color: #999;
+  font-size: 12px;
+}
+
+.pcrItemIcon {
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  border-radius: 50%;
+}
+
+.pcrItemName {
+  font-weight: 500;
+  color: #333;
+}
+
+.pcrItemRatio {
+  display: flex;
+  align-items: center;
+  width: 80px;
+  position: relative;
+}
+
+.pcrItemLeft {
+  height: 20px;
+  background: linear-gradient(90deg, #02c076 0%, #ff3333 100%);
+  border-radius: 10px;
+  min-width: 2px;
+  max-width: 100%;
+}
+
+.pcrItemDesc {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 20px;
+  align-items: center;
+  font-size: 10px;
+  color: #fff;
+  font-weight: bold;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+}
+
+.pcrItemDesc > div:first-child {
+  margin-left: 4px;
+}
+
+.pcrItemDesc > div:last-child {
+  margin-right: 4px;
+}

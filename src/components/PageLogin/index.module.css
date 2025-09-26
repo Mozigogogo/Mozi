@@ -1,0 +1,56 @@
+.loginContainer {
+  padding: 20px;
+  text-align: center;
+}
+
+.loginTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.loginDesc {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.5;
+}
+
+.loginButton {
+  width: 100%;
+  margin-top: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 16px;
+  font-weight: 500;
+  padding: 12px 0;
+  transition: all 0.3s ease;
+}
+
+.loginButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.loginButton:active {
+  transform: translateY(0);
+}
+
+.cancelButton {
+  width: 100%;
+  margin-top: 12px;
+  background: transparent;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  color: #666;
+  font-size: 16px;
+  padding: 12px 0;
+  transition: all 0.3s ease;
+}
+
+.cancelButton:hover {
+  border-color: #999;
+  color: #333;
+}

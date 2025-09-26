@@ -1,0 +1,73 @@
+.rankGridContainer {
+  display: flex;
+}
+
+.rankGridHead {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  margin-right: 30px;
+}
+
+.firstPic {
+  width: 140px;
+  height: 140px;
+  margin-bottom: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.rankGridDesc {
+  flex: 2;
+}
+
+.gridTitle {
+  font-size: 20px;
+  color: #898989;
+  margin-bottom: 10px;
+}
+
+.gridTitle .text {
+  text-align: right;
+}
+
+.gridListItem {
+  padding-left: 0;
+}
+
+.gridContent {
+  font-size: 24px;
+}
+
+.gridConItem {
+  display: flex;
+  align-items: center;
+}
+
+.gridContent .text {
+  justify-content: flex-end;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .firstPic {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .rankGridHead {
+    font-size: 20px;
+    margin-right: 20px;
+  }
+  
+  .gridTitle {
+    font-size: 16px;
+  }
+  
+  .gridContent {
+    font-size: 18px;
+  }
+}

@@ -1,0 +1,162 @@
+.container {
+  width: 100%;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+.header {
+  padding: 12px 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: var(--background-color);
+}
+
+.content {
+  padding-bottom: 60px;
+}
+
+.tabs {
+  margin-top: 16px;
+}
+
+.loadingContainer,
+.emptyContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.resultList {
+  margin-top: 16px;
+}
+
+.resultItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  margin-bottom: 12px;
+  background-color: var(--card-background);
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.resultItem:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.itemLeft {
+  display: flex;
+  align-items: center;
+}
+
+.itemImg {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  margin-right: 12px;
+}
+
+.industryIcon,
+.topicIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  margin-right: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: 16px;
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.topicIcon {
+  background-color: var(--secondary-color);
+}
+
+.itemInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.itemSymbol {
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.itemName {
+  font-weight: 500;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.itemDesc {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.itemRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.itemPrice {
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.itemChange {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.itemHot {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* 价格涨跌样式 */
+.priceUp {
+  background-color: rgba(0, 200, 5, 0.1);
+  color: #00c805;
+}
+
+.priceDown {
+  background-color: rgba(255, 0, 0, 0.1);
+  color: #ff0000;
+}
+
+/* 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+  .header {
+    background-color: var(--background-color-dark);
+  }
+  
+  .priceUp {
+    background-color: rgba(0, 200, 5, 0.2);
+  }
+  
+  .priceDown {
+    background-color: rgba(255, 0, 0, 0.2);
+  }
+  
+  .resultItem {
+    box-shadow: var(--card-shadow-dark);
+  }
+  
+  .resultItem:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  }
+}

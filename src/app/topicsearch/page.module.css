@@ -1,0 +1,122 @@
+.topicSearch {
+  padding: 10px;
+}
+
+.searchBox {
+  background-color: var(--adm-color-background);
+}
+
+.loadingBox {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  padding: 40px 0;
+}
+
+.loadingText {
+  font-size: 14px;
+  color: var(--adm-color-weak);
+}
+
+.topicList {
+  margin-top: 10px;
+}
+
+.topicItem {
+  background: var(--adm-color-white);
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.topicItem:hover {
+  background-color: var(--adm-color-background);
+}
+
+.topicTitle {
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--adm-color-text);
+  margin-bottom: 4px;
+}
+
+.topicDesc {
+  font-size: 14px;
+  color: var(--adm-color-text-secondary);
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.topicMeta {
+  font-size: 12px;
+  color: var(--adm-color-weak);
+}
+
+.topicTime {
+  margin-right: 10px;
+}
+
+.loadingMore {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0;
+  font-size: 12px;
+  color: var(--adm-color-weak);
+}
+
+/* 暗色模式适配 */
+@media (prefers-color-scheme: dark) {
+  .topicSearch {
+    background-color: #000;
+  }
+  
+  .topicItem {
+    background-color: #1a1a1a;
+    border-color: #333;
+  }
+  
+  .topicItem:hover {
+    background-color: #2a2a2a;
+  }
+  
+  .topicTitle {
+    color: #fff;
+  }
+  
+  .topicDesc {
+    color: #999;
+  }
+  
+  .topicMeta,
+  .loadingText,
+  .loadingMore {
+    color: #666;
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .topicSearch {
+    padding: 8px;
+  }
+  
+  .topicItem {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+  
+  .topicTitle {
+    font-size: 15px;
+  }
+  
+  .topicDesc {
+    font-size: 13px;
+  }
+  
+  .topicMeta {
+    font-size: 11px;
+  }
+}

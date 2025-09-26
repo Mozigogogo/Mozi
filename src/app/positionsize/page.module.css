@@ -1,0 +1,154 @@
+.pcrBox {
+  background-color: #efefef;
+  box-sizing: border-box;
+  min-height: 100vh;
+}
+
+.pickerList {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+  background: #fff;
+  margin-bottom: 20px;
+}
+
+.pickerItem {
+  display: flex;
+  align-items: center;
+}
+
+.pickerTitle {
+  font-weight: bold;
+  margin-right: 10px;
+  color: #333;
+}
+
+.pickerSelect {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  min-width: 80px;
+  justify-content: space-between;
+}
+
+.pickerSelect:hover {
+  border-color: #1890ff;
+}
+
+.selectIcon {
+  margin-right: 8px;
+  color: #333;
+}
+
+.currentPCR {
+  padding: 20px;
+  background-color: #fff;
+  margin-bottom: 20px;
+  border-radius: 8px;
+}
+
+.header {
+  font-weight: bold;
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 16px;
+}
+
+.currentPCRChart {
+  width: 100%;
+  height: 600px;
+  padding: 0 20px;
+  position: relative;
+}
+
+.chartArrawsalt {
+  position: absolute;
+  right: 90px;
+  bottom: 85px;
+  background-color: #d5d5d5;
+  border-radius: 50%;
+  padding: 6px;
+  box-sizing: border-box;
+  z-index: 100;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.chartArrawsalt:hover {
+  background-color: #bbb;
+}
+
+.chart {
+  height: 100%;
+  width: 100%;
+}
+
+/* 暗色模式适配 */
+@media (prefers-color-scheme: dark) {
+  .pcrBox {
+    background-color: #1a1a1a;
+  }
+
+  .pickerList,
+  .currentPCR {
+    background-color: #2a2a2a;
+  }
+
+  .pickerTitle,
+  .header {
+    color: #fff;
+  }
+
+  .pickerSelect {
+    background: #333;
+    border-color: #555;
+    color: #fff;
+  }
+
+  .pickerSelect:hover {
+    border-color: #1890ff;
+  }
+
+  .selectIcon {
+    color: #fff;
+  }
+
+  .chartArrawsalt {
+    background-color: #555;
+  }
+
+  .chartArrawsalt:hover {
+    background-color: #666;
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .pickerList {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .pickerItem {
+    justify-content: space-between;
+  }
+
+  .currentPCRChart {
+    height: 400px;
+    padding: 0 10px;
+  }
+
+  .chartArrawsalt {
+    right: 60px;
+    bottom: 60px;
+  }
+}

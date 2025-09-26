@@ -1,0 +1,42 @@
+import { Inter, Roboto_Mono } from "next/font/google";
+import "./globals.css";
+import { Suspense } from "react";
+import Web3Provider from "../context/Web3Provider.jsx";
+
+const geistSans = Inter({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Roboto_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+export const metadata = {
+  title: "墨子 - 数字货币行情社区",
+  description: "墨子数字货币行情社区，提供币种行情、社区讨论等功能",
+  icons: {
+    icon: "/favicon.svg",
+  },
+};
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="zh">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#1677ff" />
+      </head>
+      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+        <Web3Provider>
+          <Suspense fallback={<div>Loading...</div>}>
+            {children}
+          </Suspense>
+        </Web3Provider>
+      </body>
+    </html>
+  );
+}

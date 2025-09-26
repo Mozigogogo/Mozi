@@ -1,0 +1,43 @@
+.collect {
+  pointer-events: auto;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.collect:hover {
+  background-color: var(--adm-color-background);
+}
+
+.collect:active {
+  opacity: 0.7;
+}
+
+.loginContainer {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 13px;
+}
+
+.loginBtn {
+  margin-top: 20px;
+  background-color: #02c076;
+  color: #fff;
+}
+
+/* 暗色模式适配 */
+@media (prefers-color-scheme: dark) {
+  .collect:hover {
+    background-color: #2a2a2a;
+  }
+  
+  .loginContainer {
+    color: #fff;
+  }
+}
