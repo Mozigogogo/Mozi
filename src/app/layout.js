@@ -2,6 +2,7 @@ import { Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import { Suspense } from "react";
 import Web3Provider from "../context/Web3Provider.jsx";
+import WalletAccountSync from "@/components/WalletAccountSync";
 
 const geistSans = Inter({
   variable: "--font-geist-sans",
@@ -32,6 +33,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <Web3Provider>
+          <WalletAccountSync />
           <Suspense fallback={<div>Loading...</div>}>
             {children}
           </Suspense>
