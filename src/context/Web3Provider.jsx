@@ -50,6 +50,20 @@ export default function Web3Provider({ children }) {
         console.warn('[Web3Provider] open modal failed', e)
       }
     }
+    // 打开钱包信息（已连接情况下显示账户信息视图）
+    window.__openWalletInfo = () => {
+      try {
+        // 部分版本支持通过 view 指定账户视图
+        modal.open?.({ view: 'Account' })
+      } catch (e) {
+        try {
+          // 回退：直接打开 modal，已连接时会显示账户信息
+          modal.open?.()
+        } catch (err) {
+          console.warn('[Web3Provider] open wallet info failed', err)
+        }
+      }
+    }
   }
 
   // 仅客户端渲染，无需 cookies 初始态

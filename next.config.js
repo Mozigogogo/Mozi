@@ -49,24 +49,28 @@ const nextConfig = {
       },
     ];
   },
-  // 配置 headers
+  // 配置 headers：放开 Telegram WebApp 嵌入（其它路径保持安全头）
   async headers() {
     return [
+      // 1) 针对 Telegram WebApp 路径放开 frame-ancestors
       {
-        source: '/(.*)',
+        source: '/tg/:path*',
         headers: [
           {
-            key: 'X-Frame-Options',
-            value: 'DENY',
+            key: 'Content-Security-Policy',
+            value: "frame-ancestors 'self' https://web.telegram.org https://t.me https://*.telegram.org",
           },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
-          },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
+        ],
+      },
+      // 2) 其它路径沿用原有安全头（不允许被嵌入）
+      {
+        source: '/((?!tg/).*)',
+        headers: [
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
         ],
       },
     ];

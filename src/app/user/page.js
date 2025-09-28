@@ -31,7 +31,7 @@ export default function UserPage() {
     if (typeof document === 'undefined') return;
     document.cookie = `${encodeURIComponent(name)}=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; SameSite=Lax`;
   };
-  
+
   // 首次与聚焦时同步登录态（来自 token 或钱包地址 Cookie）
   useEffect(() => {
     const syncLogin = () => {
@@ -56,7 +56,7 @@ export default function UserPage() {
       clearInterval(timer);
     };
   }, []);
-  
+
   // 每次都强制签名登录
   const signingRef = useRef(false);
   const pendingSignRef = useRef(false);
@@ -75,7 +75,6 @@ export default function UserPage() {
       const message = `Domain: ${domain}\nAddress: ${currentAddress}\nNonce: ${nonce}\nTimestamp: ${new Date().toISOString()}\nStatement: ${statement}`;
       const signature = await signMessageAsync({ message });
 
-      // 上报后端换 token（后端可做 SIWE 校验）
       try {
         const res = await request({
           url: Interface.MOZI_LOGIN,
@@ -83,7 +82,7 @@ export default function UserPage() {
           data: { address: currentAddress, signature, message },
         });
         if (res?.data?.token) localStorage.setItem('token', res.data.token);
-        if (res?.data?.user) localStorage.setItem('userInfo', JSON.stringify(res.data.user));
+        if (res?.data?.user) localStorage.setItem('userInfo', JSON.stringify(res?.data?.user));
       } catch {}
 
       setUserInfo((prev) => ({ ...prev, isLogin: true }));
@@ -130,7 +129,7 @@ export default function UserPage() {
     setUserInfo((prev) => ({ ...prev, isLogin: false }));
     Toast.show({ content: '退出成功', position: 'bottom' });
   };
-  
+
   // 开通会员
   const handleVip = () => {
     Dialog.confirm({
@@ -143,7 +142,7 @@ export default function UserPage() {
       },
     });
   };
-  
+
   // 菜单项
   const menuItems = [
     { title: '我的自选', icon: '⭐', onClick: () => window.location.href = '/market?type=favorite' },
@@ -153,12 +152,12 @@ export default function UserPage() {
     { title: '设置', icon: '⚙️', onClick: () => Toast.show({ content: '功能开发中', position: 'bottom' }) },
     { title: '关于我们', icon: 'ℹ️', onClick: () => Toast.show({ content: '墨子数字货币行情社区', position: 'bottom' }) },
   ];
-  
+
   return (
     <Layout>
       <div className={styles.container}>
         <div className={styles.header}>
-          <div className={styles.userInfo}>
+          <div className={styles.userInfo} onClick={() => (window.__openWalletInfo ? window.__openWalletInfo() : null)}>
             <Avatar src={userInfo.avatar} className={styles.avatar} />
             <div className={styles.userMeta}>
               <div className={styles.nickname}>{userInfo.nickname}</div>
