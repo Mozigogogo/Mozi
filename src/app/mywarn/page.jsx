@@ -9,7 +9,7 @@ import Layout from '../../components/Layout';
 import { PageLogin } from '../../components/PageLogin';
 import Error from '../../components/Error';
 import { isEmpty } from 'lodash';
-import styles from './page.module.css';
+import styles from './page.module.less';
 
 export default function Mywarn() {
   const [activeKey, setActiveKey] = useState('0');

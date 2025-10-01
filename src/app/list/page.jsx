@@ -12,7 +12,7 @@ import AddCollect from '../../components/AddCollect';
 import AddMonitor from '../../components/AddMonitor';
 import Layout from '../../components/Layout';
 import { PageLogin } from '../../components/PageLogin';
-import styles from './page.module.css';
+import styles from './page.module.less';
 
 export default function List() {
   const router = useRouter();

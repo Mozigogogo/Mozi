@@ -8,7 +8,7 @@ import Layout from '@/components/Layout';
 import { Loading } from '@/components/Loading';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
-import styles from './page.module.css';
+import styles from './page.module.less';
 
 export default function CommentInfo() {
   const searchParams = useSearchParams();

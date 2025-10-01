@@ -7,7 +7,7 @@ import Layout from '../../components/Layout';
 import { SearchInput } from '../../components/SearchInput';
 import { Interface } from '../../utils/constants';
 import { request } from '../../utils/request';
-import styles from './page.module.css';
+import styles from './page.module.less';
 
 export default function TopicSearch() {
   const router = useRouter();

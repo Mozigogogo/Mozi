@@ -7,7 +7,7 @@ import Layout from '../../components/Layout';
 import CalendarCard from '../../components/CalendarCard';
 import { request } from '../../utils/request';
 import { Interface, EMAIL, COINKEY } from '../../utils/constants';
-import styles from './page.module.css';
+import styles from './page.module.less';
 
 export default function UserPage() {
   // 状态定义

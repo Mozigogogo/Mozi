@@ -10,7 +10,7 @@ import { Loading } from '../../components/Loading';
 import MoziCard from '../../components/MoziCard';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
-import styles from './page.module.css';
+import styles from './page.module.less';
 
 // 加载组件
 const GardenLoading = () => (

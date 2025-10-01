@@ -8,7 +8,7 @@ import { Interface } from '@/utils/constants';
 import Layout from '@/components/Layout';
 import { handleOptions } from '@/utils/chartUtils';
 import * as echarts from 'echarts';
-import styles from './page.module.css';
+import styles from './page.module.less';
 
 export default function Positionsize() {
   const [cexArr, setCexArr] = useState([]);

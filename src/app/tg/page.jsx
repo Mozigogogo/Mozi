@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Script from 'next/script';
 import { Button } from 'antd-mobile';
-import styles from './page.module.css';
+import styles from './page.module.less';
 
 export default function TgWebAppPage() {
   const [ready, setReady] = useState(false);

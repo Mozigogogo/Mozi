@@ -7,7 +7,7 @@ import { SendOutline, MessageOutline, HeartFill, MoreOutline } from 'antd-mobile
 import Layout from '../../components/Layout';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
-import styles from './page.module.css';
+import styles from './page.module.less';
 
 export default function TopicInfo() {
   const router = useRouter();

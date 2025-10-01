@@ -7,7 +7,7 @@ import Layout from '@/components/Layout';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 import { handleOptions } from '@/utils/chartUtils';
-import styles from './page.module.css';
+import styles from './page.module.less';
 
 const TradeVol = () => {
   const [cexArr, setCexArr] = useState([]);

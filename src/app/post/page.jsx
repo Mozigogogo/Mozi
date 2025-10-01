@@ -7,7 +7,7 @@ import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import Layout from '../../components/Layout';
 import { useRouter, useSearchParams } from 'next/navigation';
-import styles from './page.module.css';
+import styles from './page.module.less';
 
 // 确保接口定义存在
 if (!Interface.POSTS_UPDATE) {

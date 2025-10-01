@@ -7,7 +7,7 @@ import { Interface } from '../../utils/constants';
 import Layout from '../../components/Layout';
 import { Loading } from '../../components/Loading';
 import { handleOptions } from '../../utils/chartUtils';
-import styles from './page.module.css';
+import styles from './page.module.less';
 
 // 引入 echarts
 import * as echarts from 'echarts';

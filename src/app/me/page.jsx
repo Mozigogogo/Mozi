@@ -7,7 +7,7 @@ import { request } from '../../utils/request';
 import { jump2Detail, jump2Market, jump2NoTab } from '../../utils/core';
 import { EMAIL, COINKEY, Interface } from '../../utils/constants';
 import Layout from '../../components/Layout';
-import styles from './page.module.css';
+import styles from './page.module.less';
 
 let isReporting = false;
 

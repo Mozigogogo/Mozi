@@ -10,7 +10,7 @@ import { Loading } from '../../components/Loading';
 import { request } from '../../utils/request';
 import { Interface, LOOPTIME } from '../../utils/constants';
 import { jump2Detail, jump2List } from '../../utils/core';
-import styles from './page.module.css';
+import styles from './page.module.less';
 
 // 市场标题组件
 const MarketTitle = ({ url, symbol, totalVolume }) => {

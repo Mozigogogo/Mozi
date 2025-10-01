@@ -14,7 +14,7 @@ import AddMonitor from '../components/AddMonitor';
 import { request } from '../utils/request';
 import { Interface, LOOPTIME } from '../utils/constants';
 import { jump2Detail, jump2Market, jump2List, jump2NoTab } from '../utils/core';
-import styles from './page.module.css';
+import styles from './page.module.less';
 
 // 区块内容
 const areas = {

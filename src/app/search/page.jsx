@@ -9,7 +9,7 @@ import { Loading } from '../../components/Loading';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { jump2Detail, jump2List } from '../../utils/core';
-import styles from './page.module.css';
+import styles from './page.module.less';
 
 export default function SearchPage() {
   const searchParams = useSearchParams();

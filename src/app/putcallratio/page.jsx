@@ -9,7 +9,7 @@ import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 import { handleOptions } from '@/utils/chartUtils';
 import { isEmpty } from 'lodash';
-import styles from './page.module.css';
+import styles from './page.module.less';
 
 const PutCallRatio = () => {
   const [activeKey, setActiveKey] = useState('currentRatio');

@@ -6,7 +6,7 @@ import Layout from '@/components/Layout';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 import { jump2NoTab } from '@/utils/core';
-import styles from './page.module.css';
+import styles from './page.module.less';
 
 export default function Addwarn() {
   const [activeKey, setActiveKey] = useState('0');

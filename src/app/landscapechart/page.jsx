@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import * as echarts from 'echarts';
-import styles from './page.module.css';
+import styles from './page.module.less';
 
 export default function LandscapeChart() {
   const chartRef = useRef(null);

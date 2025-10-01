@@ -10,7 +10,7 @@ import { Loading } from '../../components/Loading';
 import { request } from '../../utils/request';
 import { Interface, LOOPTIME } from '../../utils/constants';
 import { formatNumber, formatPercent, jump2NoTab } from '../../utils/core';
-import styles from './page.module.css';
+import styles from './page.module.less';
 
 export default function DetailPage() {
   console.log('DetailPage组件开始渲染');
