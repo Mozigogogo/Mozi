@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Modal, Button, Toast } from 'antd-mobile';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
-// import styles from './index.module.css';
+// import styles from './index.module.less';
 
 export const PageLogin = ({ show = false, hideCb, onLoginSuccess }) => {
   const [loading, setLoading] = useState(false);

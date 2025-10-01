@@ -4,7 +4,7 @@ import React from 'react';
 import { Button } from 'antd-mobile';
 import { ExclamationCircleFill } from 'antd-mobile-icons';
 import { COMMON_MSG } from '../../utils/constants';
-import styles from './index.module.css';
+import styles from './index.module.less';
 
 const Error = ({ errMsg, onRefresh, isRefresh = false }) => {
   const handleRefresh = () => {

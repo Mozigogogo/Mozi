@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import styles from './index.module.css';
+import styles from './index.module.less';
 
 const HighlightArea = ({ title = '', value }) => {
   const isNegative = String(value).includes('-');

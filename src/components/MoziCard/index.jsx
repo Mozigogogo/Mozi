@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { SpinLoading, Empty } from 'antd-mobile';
 import RankGrid from '../RankGrid';
-import styles from './index.module.css';
+import styles from './index.module.less';
 
 const MoziCard = ({ 
   title, 

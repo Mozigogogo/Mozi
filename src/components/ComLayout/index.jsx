@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { SpinLoading } from 'antd-mobile';
-import styles from './index.module.css';
+import styles from './index.module.less';
 
 const ComLayout = ({ isLoading, children }) => {
   if (isLoading) {

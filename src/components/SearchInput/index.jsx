@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { SearchOutline } from 'antd-mobile-icons';
-import styles from './index.module.css';
+import styles from './index.module.less';
 
 export const SearchInput = ({ placeholder = '搜索', onSearch, onChange, value, loading }) => {
   const [inputValue, setInputValue] = useState(value || '');

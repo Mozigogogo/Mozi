@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Grid } from 'antd-mobile';
-import styles from './index.module.css';
+import styles from './index.module.less';
 
 const MoziGrid = ({ colName = [], gridContent = [], length, hideTitle = false, callback }) => {
   return (

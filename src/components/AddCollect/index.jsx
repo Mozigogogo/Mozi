@@ -5,7 +5,7 @@ import { Toast } from 'antd-mobile';
 import { HeartFill } from 'antd-mobile-icons';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
-import styles from './index.module.css';
+import styles from './index.module.less';
 
 let isClick = false;
 

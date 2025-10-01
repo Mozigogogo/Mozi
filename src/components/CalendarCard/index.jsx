@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import styles from './index.module.css';
+import styles from './index.module.less';
 
 /**
  * H5 版 CalendarCard（等价于小程序版）

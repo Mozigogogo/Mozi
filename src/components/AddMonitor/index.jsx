@@ -3,7 +3,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { BellOutline } from 'antd-mobile-icons';
-import styles from './index.module.css';
+import styles from './index.module.less';
 
 const AddMonitor = ({ symbol }) => {
   const router = useRouter();

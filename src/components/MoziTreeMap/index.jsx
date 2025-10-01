@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import styles from './index.module.css';
+import styles from './index.module.less';
 
 const MoziTreeMap = ({ list = [], name, desc }) => {
   if (!list || list.length === 0) {

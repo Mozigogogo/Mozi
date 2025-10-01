@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { SpinLoading } from 'antd-mobile';
 import { tabBarList } from '../../app/app.config';
-import styles from './index.module.css';
+import styles from './index.module.less';
 
 const Layout = ({ children, title, isLoading, isError, errMsg, needLogin, loginCallback }) => {
   const pathname = usePathname();

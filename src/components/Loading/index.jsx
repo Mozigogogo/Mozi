@@ -1,7 +1,7 @@
 'use client';
 
 import { SpinLoading } from 'antd-mobile';
-import styles from './index.module.css';
+import styles from './index.module.less';
 
 export const Loading = ({ tip = '加载中...' }) => {
   return (
