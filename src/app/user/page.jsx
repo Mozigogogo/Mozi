@@ -265,42 +265,42 @@ export default function UserPage() {
     {
       key: 'language',
       icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/skin%402x.png'} alt="语言设置" style={{ width: 44, height: 44 }} />),
-      text: t('user.language') || '语言设置',
+      text: t('user.language'),
       extra: i18n.language === 'zh' ? '中文' : 'English',
       callback: () => changeLanguage()
     },
     {
       key: 'theme',
       icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/skin%402x.png'} alt="皮肤中心" style={{ width: 44, height: 44 }} />),
-      text: '皮肤中心',
+      text: t('user.skinCenter'),
       extra: '›',
-      callback: () => Toast.show({ content: '敬请期待', position: 'bottom' })
+      callback: () => Toast.show({ content: t('user.comingSoon'), position: 'bottom' })
     },
     {
       key: 'contact',
       icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/me-contact%402x.png'} alt="联系我们" style={{ width: 44, height: 44 }} />),
-      text: '联系我们',
+      text: t('user.contactUs'),
       extra: '›',
       callback: () => contact()
     },
     {
       key: 'social',
       icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/social%402x.png'} alt="社交媒体" style={{ width: 44, height: 44 }} />),
-      text: '到社交媒体找我们',
+      text: t('user.socialMedia'),
       extra: '›',
-      callback: () => Toast.show({ content: '敬请期待', position: 'bottom' })
+      callback: () => Toast.show({ content: t('user.comingSoon'), position: 'bottom' })
     },
     {
       key: 'about',
       icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/about%402x.png'} alt="关于" style={{ width: 44, height: 44 }} />),
-      text: '关于',
+      text: t('user.about'),
       extra: '›',
       callback: () => about()
     },
     {
       key: 'donate',
       icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/donate%402x.png'} alt="捐赠" style={{ width: 44, height: 44 }} />),
-      text: '捐赠',
+      text: t('user.donate'),
       extra: '›',
       callback: () => reward()
     }
@@ -313,17 +313,14 @@ export default function UserPage() {
           {userInfo.isLogin ? (
             <div className={styles.headerUser} onClick={() => (window.__openWalletInfo ? window.__openWalletInfo() : null)}>
               <img className={styles.headerAvatar} src={userInfo.avatar || DEFAULT_AVATAR} alt="头像" />
-              <span>{userInfo.nickname || '微信用户'}</span>
+              <span>{userInfo.nickname || t('user.profile')}</span>
               <img className={styles.editIcon} src={EDIT_ICON} alt="编辑" />
             </div>
           ) : (
             <div className={styles.loginBox}>
               <div className={styles.headerUser}>
                 <img className={styles.headerAvatar} src={DEFAULT_AVATAR} alt="头像" />
-                <span>请登录</span>
-              </div>
-              <div style={{ marginTop: 12 }}>
-                <appkit-button></appkit-button>
+                <span>{t('user.pleaseLogin')}</span>
               </div>
             </div>
           )}
@@ -333,19 +330,19 @@ export default function UserPage() {
               <div className={styles.actionIcon}>
                 <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/optional%402x.png'} alt="我的自选" />
               </div>
-              <div className={styles.actionText}>我的自选</div>
+              <div className={styles.actionText}>{t('user.myFavorites')}</div>
             </div>
             <div className={styles.actionButton} onClick={() => (window.location.href = '/alert')}>
               <div className={styles.actionIcon}>
                 <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/me-alert%402x.png'} alt="我的报警" />
               </div>
-              <div className={styles.actionText}>我的报警</div>
+              <div className={styles.actionText}>{t('user.myWarnings')}</div>
             </div>
             <div className={styles.actionButton} onClick={attendUs}>
               <div className={styles.actionIcon}>
                 <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/official-accounts%402x.png'} alt="关注公众号" />
               </div>
-              <div className={styles.actionText}>关注公众号</div>
+              <div className={styles.actionText}>{t('user.followOfficialAccount')}</div>
             </div>
             </div>
           </div>
@@ -353,24 +350,24 @@ export default function UserPage() {
         {showSecondaryActions && (
           <div className={styles.secondaryActions}>
             <div className={styles.actionRow}>
-              <div className={styles.actionButton} onClick={() => Toast.show({ content: '敬请期待', position: 'bottom' })}>
+              <div className={styles.actionButton} onClick={() => Toast.show({ content: t('user.comingSoon'), position: 'bottom' })}>
                 <div className={`${styles.actionIcon} ${styles.secondary}`}>
                   <img className={`${styles.actionIconImg} ${styles.secondary}`} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/comment%402x.png'} alt="我的评论" />
                 </div>
-                <div className={`${styles.actionText} ${styles.secondary}`}>我的评论</div>
+                <div className={`${styles.actionText} ${styles.secondary}`}>{t('user.myComments')}</div>
               </div>
-              <div className={styles.actionButton} onClick={() => Toast.show({ content: '敬请期待', position: 'bottom' })}>
+              <div className={styles.actionButton} onClick={() => Toast.show({ content: t('user.comingSoon'), position: 'bottom' })}>
                 <div className={`${styles.actionIcon} ${styles.secondary}`} style={{ position: 'relative' }}>
                   <img className={`${styles.actionIconImg} ${styles.secondary}`} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/mail%402x.png'} alt="消息通知" />
                   <div className={styles.badge}>3</div>
                 </div>
-                <div className={`${styles.actionText} ${styles.secondary}`}>消息通知</div>
+                <div className={`${styles.actionText} ${styles.secondary}`}>{t('user.messageNotification')}</div>
               </div>
-              <div className={styles.actionButton} onClick={() => Toast.show({ content: '敬请期待', position: 'bottom' })}>
+              <div className={styles.actionButton} onClick={() => Toast.show({ content: t('user.comingSoon'), position: 'bottom' })}>
                 <div className={`${styles.actionIcon} ${styles.secondary}`}>
                   <img className={`${styles.actionIconImg} ${styles.secondary}`} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/like%402x.png'} alt="我的点赞" />
                 </div>
-                <div className={`${styles.actionText} ${styles.secondary}`}>我的点赞</div>
+                <div className={`${styles.actionText} ${styles.secondary}`}>{t('user.myLikes')}</div>
               </div>
             </div>
           </div>
@@ -378,19 +375,16 @@ export default function UserPage() {
 
         <div className={styles.horizontalButtons}>
           {!userInfo.isLogin ? (
-            <div className={`${styles.horizontalBtn} ${styles.left}`}>
+            <div className={`${styles.horizontalBtn} ${styles.left}`} onClick={handleLogin}>
               <div className={styles.btnIcon}>
                 <img className={styles.btnIconImg} src={'https://image-1317406749.myqcloud.com/assets/icon/me_slices/feedback%402x.png'} alt="反馈" />
               </div>
               <div className={styles.btnBottom}>
                 <div className={styles.btnContent}>
-                  <div className={styles.btnText}>产品功能反馈</div>
-                  <div className={styles.btnSubtext}>留言你想要的功能</div>
+                  <div className={styles.btnText}>{t('user.feedback')}</div>
+                  <div className={styles.btnSubtext}>{t('user.feedbackDesc')}</div>
                 </div>
                 <div className={styles.btnArrow}>›</div>
-              </div>
-              <div style={{ marginTop: 12, paddingLeft: 26 }}>
-                <appkit-button onClick={handleLogin}></appkit-button>
               </div>
             </div>
           ) : (
@@ -400,8 +394,8 @@ export default function UserPage() {
               </div>
               <div className={styles.btnBottom}>
                 <div className={styles.btnContent}>
-                  <div className={styles.btnText}>产品功能反馈</div>
-                  <div className={styles.btnSubtext}>留言你想要的功能</div>
+                  <div className={styles.btnText}>{t('user.feedback')}</div>
+                  <div className={styles.btnSubtext}>{t('user.feedbackDesc')}</div>
                 </div>
                 <div className={styles.btnArrow}>›</div>
               </div>
@@ -413,8 +407,8 @@ export default function UserPage() {
             </div>
             <div className={styles.btnBottom}>
               <div className={styles.btnContent}>
-                <div className={styles.btnText}>推荐朋友</div>
-                <div className={styles.btnSubtext}>分享你的喜爱</div>
+                <div className={styles.btnText}>{t('user.recommendFriend')}</div>
+                <div className={styles.btnSubtext}>{t('user.recommendDesc')}</div>
               </div>
               <div className={styles.btnArrow}>›</div>
             </div>
@@ -423,16 +417,16 @@ export default function UserPage() {
         
         {showPointsSection && (
           <div className={styles.pointsSection}>
-            <div className={styles.pointsInfo} onClick={() => Toast.show({ content: '敬请期待', position: 'bottom' })}>
-              <span className={styles.pointsTitle}>我的积分</span>
+            <div className={styles.pointsInfo} onClick={() => Toast.show({ content: t('user.comingSoon'), position: 'bottom' })}>
+              <span className={styles.pointsTitle}>{t('user.myPoints')}</span>
               <div className={styles.pointsValueRow}>
                 <span className={styles.pointsValue}>2000</span>
-                <span className={styles.pointsDaily}>昨日积分：+100</span>
+                <span className={styles.pointsDaily}>{t('user.yesterdayPoints', { points: 100 })}</span>
               </div>
-              <span className={styles.pointsRank}>当前排名：总榜第 <span style={{ color: '#000', fontWeight: 'bold' }}>23</span> 名</span>
+              <span className={styles.pointsRank}>{t('user.currentRank', { rank: 23 })}</span>
             </div>
-            <div className={styles.pointsAction} onClick={() => Toast.show({ content: '敬请期待', position: 'bottom' })}>
-              <span className={styles.pointsButton}>积分榜单</span>
+            <div className={styles.pointsAction} onClick={() => Toast.show({ content: t('user.comingSoon'), position: 'bottom' })}>
+              <span className={styles.pointsButton}>{t('user.pointsRanking')}</span>
               <span style={{ color: '#fff' }}>›</span>
             </div>
             <img className={styles.pointsCoin} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/integral-coin.png'} alt="coin" />
@@ -447,8 +441,8 @@ export default function UserPage() {
 
         {showNewCoinListing && (
           <div className={styles.newCoinSection}>
-            <div className={styles.newCoinTitle}>新币上线</div>
-            <div className={styles.newCoinBody}>敬请期待</div>
+            <div className={styles.newCoinTitle}>{t('user.newCoinListing')}</div>
+            <div className={styles.newCoinBody}>{t('user.comingSoon')}</div>
           </div>
         )}
 
@@ -473,9 +467,9 @@ export default function UserPage() {
         </div>
 
         {userInfo.isLogin ? (
-          <Button className={styles.logoutBtn} onClick={handleLogout}>退出登录</Button>
+          <Button className={styles.logoutBtn} onClick={handleLogout}>{t('user.logout')}</Button>
         ) : (
-          <Button className={styles.logoutBtn} onClick={handleLogin}>登录/注册</Button>
+          <Button className={styles.logoutBtn} onClick={handleLogin}>{t('user.loginRegister')}</Button>
         )}
         
         <Popup
@@ -513,10 +507,10 @@ export default function UserPage() {
 
           {popType === 'score' && (
             <div className={styles.popContainer}>
-              <div>根据您的使用经历，请问您有多大可能向您的朋友推荐Mozi行情助手</div>
+              <div>{t('user.feedbackQuestion')}</div>
               <div className={styles.scoreDesc}>
-                <span>极不愿意</span>
-                <span>非常愿意</span>
+                <span>{t('user.veryUnwilling')}</span>
+                <span>{t('user.veryWilling')}</span>
               </div>
               <Grid className={styles.scoreList} columns={10} gap={5}>
                 {[1,2,3,4,5,6,7,8,9,10].map((item) => (
@@ -527,20 +521,20 @@ export default function UserPage() {
               </Grid>
               <div className={styles.scoreCon}>
                 <div>
-                  <span>更多反馈</span>
-                  <span className={styles.scoreConDesc}>（选填）</span>
+                  <span>{t('user.moreFeedback')}</span>
+                  <span className={styles.scoreConDesc}>{t('user.optional')}</span>
                 </div>
-                <TextArea className={styles.scoreText} placeholder='感谢反馈，期待您更多的建议' maxLength={200} onChange={onScoreTextChange} rows={4} />
+                <TextArea className={styles.scoreText} placeholder={t('user.feedbackPlaceholder')} maxLength={200} onChange={onScoreTextChange} rows={4} />
               </div>
               <Button className={`${styles.scoreBtn} ${scoreDisable ? styles.scoreBtnDisable : ''}`} onClick={submitScore} disabled={scoreDisable} block>
-                提交
+                {t('common.submit')}
           </Button>
             </div>
           )}
 
           {popType === 'contact' && showContactPop && (
             <div className={`${styles.popContainer} ${styles.contactContainer}`}>
-              <div className={styles.contactTitle}>欢迎联系我们</div>
+              <div className={styles.contactTitle}>{t('user.welcomeContact')}</div>
               <div className={styles.contactEmail}>
                 <span>{EMAIL}</span>
                 <div className={styles.contactCopy} onClick={() => copyToClipboard(EMAIL)}>📋</div>
@@ -550,14 +544,14 @@ export default function UserPage() {
 
           {popType === 'attend' && (
             <div className={styles.popContainer}>
-              <div className={styles.contactTitle}>欢迎关注我们的公众号</div>
+              <div className={styles.contactTitle}>{t('user.welcomeFollowUs')}</div>
               <img className={styles.attendPic} src='https://image-1317406749.cos.ap-shanghai.myqcloud.com/wechat_account.jpg' alt='公众号二维码' />
             </div>
           )}
 
           {popType === 'reward' && (
             <div className={styles.scrollContainer}>
-              <div className={styles.contactTitle}>如果觉着好用，欢迎打赏支持</div>
+              <div className={styles.contactTitle}>{t('user.donateSupport')}</div>
               <div className={styles.rewardScrollBox}>
                 <div className={styles.rewardBox}>
                   <img className={styles.attendPic} src='https://image-1317406749.cos.ap-shanghai.myqcloud.com/wechat_pay.jpg' alt='微信支付' />
@@ -589,7 +583,7 @@ export default function UserPage() {
           
           {popType === 'language' && (
             <div className={styles.popContainer}>
-              <div className={styles.contactTitle}>{t('user.language') || '选择语言'}</div>
+              <div className={styles.contactTitle}>{t('user.selectLanguage')}</div>
               <List className={styles.languageList}>
                 <List.Item 
                   className={styles.languageItem}

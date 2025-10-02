@@ -4,11 +4,13 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { SpinLoading } from 'antd-mobile';
+import { useTranslation } from 'react-i18next';
 import { tabBarList } from '../../app/app.config';
 import styles from './index.module.less';
 
 const Layout = ({ children, title, isLoading, isError, errMsg, needLogin, loginCallback }) => {
   const pathname = usePathname();
+  const { t } = useTranslation();
 
   // 底部导航图标映射
   const iconMap = {
@@ -25,7 +27,7 @@ const Layout = ({ children, title, isLoading, isError, errMsg, needLogin, loginC
     return (
       <div className={styles.errorBox}>
         <div className={styles.errorIcon}>❌</div>
-        <div className={styles.errorMsg}>{errMsg || '出错了，请稍后再试'}</div>
+        <div className={styles.errorMsg}>{errMsg || t('common.error')}</div>
       </div>
     );
   }
@@ -41,8 +43,8 @@ const Layout = ({ children, title, isLoading, isError, errMsg, needLogin, loginC
   if (needLogin) {
     return (
       <div className={styles.loginBox}>
-        <div>您还未登录，登录可享受更多权益</div>
-        <button className={styles.loginBtn} onClick={loginCallback}>登录/注册</button>
+        <div>{t('user.pleaseLogin')}</div>
+        <button className={styles.loginBtn} onClick={loginCallback}>{t('user.loginRegister')}</button>
       </div>
     );
   }
@@ -64,7 +66,7 @@ const Layout = ({ children, title, isLoading, isError, errMsg, needLogin, loginC
             <Link href={item.path} key={item.path} className={styles.tabItem}>
               <div className={`${styles.tabLink} ${pathname === item.path ? styles.active : ''}`}>
                 <span className={styles.tabIcon}>{iconMap[item.icon] || '📱'}</span>
-                <span>{item.name}</span>
+                <span>{item.i18nKey ? t(item.i18nKey) : item.name}</span>
               </div>
             </Link>
           ))}

@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './index.module.less';
 
 /**
  * H5 版 CalendarCard（等价于小程序版）
  */
 export default function CalendarCard({ onDateChange, onToggleChange, defaultToggle = true, enableDark = false }) {
+  const { t, i18n } = useTranslation();
   const [selectedDate, setSelectedDate] = useState(null);
   const [isToggleOn, setIsToggleOn] = useState(defaultToggle);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -32,7 +34,15 @@ export default function CalendarCard({ onDateChange, onToggleChange, defaultTogg
   const formatMonthYear = () => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth() + 1;
-    return `${year}年${month}月`;
+    
+    if (i18n.language === 'zh') {
+      return t('calendar.yearMonth', { year, month });
+    } else {
+      // 英文格式: October 2025
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                          'July', 'August', 'September', 'October', 'November', 'December'];
+      return `${monthNames[month - 1]} ${year}`;
+    }
   };
 
   const generateCalendarData = () => {
@@ -76,7 +86,15 @@ export default function CalendarCard({ onDateChange, onToggleChange, defaultTogg
     return days;
   };
 
-  const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+  const weekDays = [
+    t('calendar.weekdays.sun'),
+    t('calendar.weekdays.mon'),
+    t('calendar.weekdays.tue'),
+    t('calendar.weekdays.wed'),
+    t('calendar.weekdays.thu'),
+    t('calendar.weekdays.fri'),
+    t('calendar.weekdays.sat')
+  ];
 
   return (
     <div className={`${styles.card} ${enableDark ? styles.enableDark : ''}`}>
@@ -86,8 +104,8 @@ export default function CalendarCard({ onDateChange, onToggleChange, defaultTogg
             <img className={styles.iconImage} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/me-calendar%402x.png'} alt='公告' />
           </div>
           <div className={styles.announceContent}>
-            <div className={styles.announceTitle}>交易所公告</div>
-            <div className={styles.announceSubtitle}>打开订阅推送，免费试用</div>
+            <div className={styles.announceTitle}>{t('calendar.title')}</div>
+            <div className={styles.announceSubtitle}>{t('calendar.subtitle')}</div>
           </div>
           <div className={styles.announceSwitch}>
             <div className={`${styles.customSwitch} ${isToggleOn ? styles.checked : ''}`} onClick={handleToggleChange}>

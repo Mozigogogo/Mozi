@@ -3,24 +3,28 @@ export const routes = [
   {
     path: '/',
     name: '首页',
+    i18nKey: 'common.home',
     icon: 'home',
     showTab: true
   },
   {
     path: '/find',
     name: '发现',
+    i18nKey: 'common.find',
     icon: 'compass',
     showTab: true
   },
   {
     path: '/community',
     name: '社区',
+    i18nKey: 'common.community',
     icon: 'message',
     showTab: true
   },
   {
     path: '/user',
     name: '我的',
+    i18nKey: 'common.profile',
     icon: 'user',
     showTab: true
   },
