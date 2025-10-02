@@ -3,6 +3,7 @@ import "./globals.css";
 import { Suspense } from "react";
 import Web3Provider from "../context/Web3Provider.jsx";
 import WalletAccountSync from "@/components/WalletAccountSync";
+import I18nProvider from "@/components/I18nProvider";
 
 const geistSans = Inter({
   variable: "--font-geist-sans",
@@ -24,7 +25,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="zh">
+    <html lang="en">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -32,12 +33,14 @@ export default function RootLayout({ children }) {
         <meta name="theme-color" content="#1677ff" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <Web3Provider>
-          <WalletAccountSync />
-          <Suspense fallback={<div>Loading...</div>}>
-            {children}
-          </Suspense>
-        </Web3Provider>
+        <I18nProvider>
+          <Web3Provider>
+            <WalletAccountSync />
+            <Suspense fallback={<div>Loading...</div>}>
+              {children}
+            </Suspense>
+          </Web3Provider>
+        </I18nProvider>
       </body>
     </html>
   );

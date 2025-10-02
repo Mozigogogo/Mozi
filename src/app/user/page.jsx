@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAccount, useDisconnect, useSignMessage } from 'wagmi';
 import { Button, Avatar, List, Dialog, Toast, Popup, Grid, TextArea } from 'antd-mobile';
+import { useTranslation } from 'react-i18next';
 import Layout from '../../components/Layout';
 import CalendarCard from '../../components/CalendarCard';
 import { request } from '../../utils/request';
@@ -14,6 +15,7 @@ export default function UserPage() {
   const { disconnect } = useDisconnect();
   const { address, isConnected } = useAccount();
   const { signMessageAsync } = useSignMessage();
+  const { t, i18n } = useTranslation();
   const [userInfo, setUserInfo] = useState({
     avatar: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png',
     nickname: '微信用户',
@@ -244,7 +246,29 @@ export default function UserPage() {
     });
   };
 
+  const changeLanguage = () => {
+    setPopVis(true);
+    setPopType('language');
+  };
+  
+  const selectLanguage = (lng) => {
+    i18n.changeLanguage(lng);
+    Toast.show({
+      content: lng === 'zh' ? '已切换到中文' : 'Switched to English',
+      duration: 1000,
+      position: 'bottom'
+    });
+    setPopVis(false);
+  };
+
   const footerList = [
+    {
+      key: 'language',
+      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/skin%402x.png'} alt="语言设置" style={{ width: 44, height: 44 }} />),
+      text: t('user.language') || '语言设置',
+      extra: i18n.language === 'zh' ? '中文' : 'English',
+      callback: () => changeLanguage()
+    },
     {
       key: 'theme',
       icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/skin%402x.png'} alt="皮肤中心" style={{ width: 44, height: 44 }} />),
@@ -560,6 +584,32 @@ export default function UserPage() {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+          
+          {popType === 'language' && (
+            <div className={styles.popContainer}>
+              <div className={styles.contactTitle}>{t('user.language') || '选择语言'}</div>
+              <List className={styles.languageList}>
+                <List.Item 
+                  className={styles.languageItem}
+                  onClick={() => selectLanguage('zh')}
+                >
+                  <div className={styles.languageOption}>
+                    <span>简体中文</span>
+                    {i18n.language === 'zh' && <span className={styles.languageCheck}>✓</span>}
+                  </div>
+                </List.Item>
+                <List.Item 
+                  className={styles.languageItem}
+                  onClick={() => selectLanguage('en')}
+                >
+                  <div className={styles.languageOption}>
+                    <span>English</span>
+                    {i18n.language === 'en' && <span className={styles.languageCheck}>✓</span>}
+                  </div>
+                </List.Item>
+              </List>
             </div>
           )}
         </Popup>

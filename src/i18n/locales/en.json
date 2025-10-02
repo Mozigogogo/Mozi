@@ -1,0 +1,100 @@
+{
+  "common": {
+    "home": "Home",
+    "community": "Community",
+    "discover": "Discover",
+    "profile": "Profile",
+    "search": "Search",
+    "back": "Back",
+    "loading": "Loading...",
+    "loadMore": "Load More",
+    "noMore": "No More",
+    "error": "Error",
+    "retry": "Retry",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "share": "Share",
+    "more": "More"
+  },
+  "home": {
+    "title": "Mozi - Crypto Market Community",
+    "hotCoins": "Hot Coins",
+    "hotSectors": "Hot Sectors",
+    "hotContracts": "Hot Contracts",
+    "derivatives": "Derivatives",
+    "rankList": "Rank List",
+    "opportunities": "Opportunities",
+    "notice": "Welcome to Mozi Crypto Market Community"
+  },
+  "market": {
+    "price": "Price",
+    "change": "Change",
+    "volume": "Volume",
+    "marketCap": "Market Cap",
+    "high24h": "24h High",
+    "low24h": "24h Low",
+    "fundingRate": "Funding Rate",
+    "positionSize": "Position Size",
+    "putCallRatio": "Put/Call Ratio",
+    "tradeVolume": "Trade Volume"
+  },
+  "user": {
+    "login": "Login",
+    "logout": "Logout",
+    "register": "Register",
+    "profile": "Profile",
+    "settings": "Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "notifications": "Notifications",
+    "myWarnings": "My Warnings",
+    "favorites": "Favorites"
+  },
+  "community": {
+    "title": "Community",
+    "post": "Post",
+    "comment": "Comment",
+    "like": "Like",
+    "reply": "Reply",
+    "topic": "Topic",
+    "hotTopics": "Hot Topics",
+    "trending": "Trending"
+  },
+  "warning": {
+    "addWarning": "Add Warning",
+    "myWarnings": "My Warnings",
+    "priceWarning": "Price Warning",
+    "volumeWarning": "Volume Warning",
+    "condition": "Condition",
+    "enabled": "Enabled",
+    "disabled": "Disabled"
+  },
+  "chart": {
+    "kline": "K-Line",
+    "line": "Line Chart",
+    "timeRange": "Time Range",
+    "1m": "1 Min",
+    "5m": "5 Min",
+    "15m": "15 Min",
+    "1h": "1 Hour",
+    "4h": "4 Hours",
+    "1d": "1 Day",
+    "1w": "1 Week"
+  },
+  "error": {
+    "network": "Network error, please check your connection",
+    "server": "Server error, please try again later",
+    "notFound": "Page not found",
+    "unauthorized": "Unauthorized, please login first",
+    "forbidden": "Access forbidden",
+    "unknown": "Unknown error"
+  },
+  "language": {
+    "zh": "简体中文",
+    "en": "English"
+  }
+}

@@ -145,8 +145,49 @@
 .coinKey { word-wrap: break-word; word-break: break-all; white-space: normal; font-size: 12px; max-width: 200px; }
 .contactContainer { padding: 30px 20px; }
 
+/* 语言选择样式 */
+.languageList {
+  background-color: transparent;
+}
+
+.languageItem {
+  padding: 15px 0;
+  border-bottom: 1px solid #efefef;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.languageItem:hover {
+  background-color: #f8f8f8;
+}
+
+.languageItem:last-child {
+  border-bottom: none;
+}
+
+.languageOption {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 16px;
+}
+
+.languageCheck {
+  color: #11B787;
+  font-size: 20px;
+  font-weight: bold;
+}
+
 /* 深色模式适配 */
 @media (prefers-color-scheme: dark) {
   .container { background-color: #1a1a1a; }
   .footerList { box-shadow: var(--card-shadow-dark); }
+  
+  .languageItem {
+    border-bottom-color: #444;
+  }
+  
+  .languageItem:hover {
+    background-color: #333;
+  }
 }

@@ -1,0 +1,100 @@
+{
+  "common": {
+    "home": "首页",
+    "community": "社区",
+    "discover": "发现",
+    "profile": "我的",
+    "search": "搜索",
+    "back": "返回",
+    "loading": "加载中...",
+    "loadMore": "加载更多",
+    "noMore": "没有更多了",
+    "error": "出错了",
+    "retry": "重试",
+    "confirm": "确认",
+    "cancel": "取消",
+    "submit": "提交",
+    "save": "保存",
+    "edit": "编辑",
+    "delete": "删除",
+    "share": "分享",
+    "more": "更多"
+  },
+  "home": {
+    "title": "墨子 - 数字货币行情社区",
+    "hotCoins": "热门币种",
+    "hotSectors": "热门板块",
+    "hotContracts": "热门合约",
+    "derivatives": "衍生品专区",
+    "rankList": "实时榜单",
+    "opportunities": "投资机会",
+    "notice": "欢迎使用墨子数字货币行情社区"
+  },
+  "market": {
+    "price": "价格",
+    "change": "涨跌幅",
+    "volume": "成交量",
+    "marketCap": "市值",
+    "high24h": "24h最高",
+    "low24h": "24h最低",
+    "fundingRate": "资金费率",
+    "positionSize": "持仓量",
+    "putCallRatio": "看跌看涨比",
+    "tradeVolume": "交易量"
+  },
+  "user": {
+    "login": "登录",
+    "logout": "退出登录",
+    "register": "注册",
+    "profile": "个人资料",
+    "settings": "设置",
+    "language": "语言",
+    "theme": "主题",
+    "notifications": "通知",
+    "myWarnings": "我的预警",
+    "favorites": "我的收藏"
+  },
+  "community": {
+    "title": "社区",
+    "post": "发帖",
+    "comment": "评论",
+    "like": "点赞",
+    "reply": "回复",
+    "topic": "话题",
+    "hotTopics": "热门话题",
+    "trending": "热门动态"
+  },
+  "warning": {
+    "addWarning": "添加预警",
+    "myWarnings": "我的预警",
+    "priceWarning": "价格预警",
+    "volumeWarning": "成交量预警",
+    "condition": "预警条件",
+    "enabled": "已启用",
+    "disabled": "已禁用"
+  },
+  "chart": {
+    "kline": "K线图",
+    "line": "分时图",
+    "timeRange": "时间范围",
+    "1m": "1分钟",
+    "5m": "5分钟",
+    "15m": "15分钟",
+    "1h": "1小时",
+    "4h": "4小时",
+    "1d": "1天",
+    "1w": "1周"
+  },
+  "error": {
+    "network": "网络错误，请检查您的网络连接",
+    "server": "服务器错误，请稍后重试",
+    "notFound": "页面未找到",
+    "unauthorized": "未授权，请先登录",
+    "forbidden": "没有权限访问",
+    "unknown": "未知错误"
+  },
+  "language": {
+    "zh": "简体中文",
+    "en": "English"
+  }
+}
