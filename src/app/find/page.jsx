@@ -366,26 +366,6 @@ const marketPageSize = 20;
     }
   };
 
-  // 获取排行榜数据
-  const fetchRankData = async (key) => {
-    if (!rankInterfaces[key]) return;
-
-    setRankLoading(prev => ({ ...prev, [key]: true }));
-    try {
-      const response = await request({
-        url: rankInterfaces[key],
-        data: rankParams[key]
-      });
-
-      if (response?.data) {
-        setRankData(prev => ({ ...prev, [key]: response.data }));
-      }
-    } catch (error) {
-      console.error(`获取${key}排行榜失败:`, error);
-    } finally {
-      setRankLoading(prev => ({ ...prev, [key]: false }));
-    }
-  };
   const loadMarketData = async () => {
     setMarketLoading(true);
     try {
@@ -414,25 +394,21 @@ const marketPageSize = 20;
 
   // 初始化加载
   useEffect(() => {
-    if (pageActiveKey === 'market') {
-      fetchRankData(rankActiveKey);
-    } else if (pageActiveKey === 'self') {
+    if (pageActiveKey === 'self') {
       fetchOwnList();
     }
 
     // 设置轮询
     const timer = setInterval(() => {
       if (needLoop.current) {
-        if (pageActiveKey === 'market') {
-          fetchRankData(rankActiveKey);
-        } else if (pageActiveKey === 'self') {
+        if (pageActiveKey === 'self') {
           fetchOwnList();
         }
       }
     }, LOOPTIME);
 
     return () => clearInterval(timer);
-  }, [pageActiveKey, rankActiveKey]);
+  }, [pageActiveKey]);
   useEffect(() => {
     if (pageActiveKey === 'market' && marketData.length === 0) {
       loadMarketData();
@@ -493,7 +469,6 @@ const marketPageSize = 20;
   // 切换排行榜标签
   const handleRankTabChange = (key) => {
     setRankActive(key);
-    fetchRankData(key);
   };
 
   // 点击币种跳转到详情
