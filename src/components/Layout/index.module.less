@@ -99,16 +99,30 @@
   justify-content: center;
   height: 100%;
   font-size: var(--font-size-sm);
-  color: #999;
+  color: #cecece;
+  transition: color 0.3s ease;
 }
 
 .tabLink.active {
-  color: var(--primary-color);
+  color: #11B787;
 }
 
 .tabIcon {
-  font-size: 20px;
-  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+  width: 22px;
+  height: 22px;
+  
+  img {
+    display: block;
+  }
+}
+
+.tabText {
+  font-size: var(--font-size-sm);
+  line-height: 1;
 }
 
 .errorBox {
@@ -181,10 +195,10 @@
   }
   
   .tabLink {
-    color: #666;
+    color: #cecece;
   }
   
   .tabLink.active {
-    color: var(--primary-color);
+    color: #11B787;
   }
 }
