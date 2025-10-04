@@ -169,5 +169,18 @@
       "fri": "Fri",
       "sat": "Sat"
     }
+  },
+  "points": {
+    "title": "Points Ranking",
+    "daily": "Daily",
+    "monthly": "Monthly",
+    "total": "Total",
+    "loading": "Loading...",
+    "loadFailed": "Load Failed",
+    "inviteChallenge": "Invite friends to challenge",
+    "shareFeatureInDevelopment": "Share feature in development",
+    "back": "Back",
+    "rank": "Rank",
+    "points": "Points"
   }
 }

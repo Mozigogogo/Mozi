@@ -3,11 +3,13 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Toast } from 'antd-mobile';
+import { useTranslation } from 'react-i18next';
 import Layout from '../../components/Layout';
 import styles from './page.module.less';
 
 export default function PointsRank() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('daily');
   const [loading, setLoading] = useState(false);
   const [rankData, setRankData] = useState({});
@@ -15,7 +17,7 @@ export default function PointsRank() {
   // 模拟数据生成器
   const makeList = (basePoints) => {
     const avatars = [
-      'https://images.unsplash.com/photo-1494790108755-2616c5e91d5f?w=100&h=100&fit=crop&crop=face',
+      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
       'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
       'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face',
       'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
@@ -57,13 +59,13 @@ export default function PointsRank() {
     } catch (error) {
       console.error('加载排行榜数据失败:', error);
       Toast.show({
-        content: '加载失败',
+        content: t('points.loadFailed'),
         icon: 'fail'
       });
     } finally {
       setLoading(false);
     }
-  }, [activeTab]);
+  }, [activeTab, t]);
 
   const handleTabChange = (key) => {
     setActiveTab(key);
@@ -88,30 +90,30 @@ export default function PointsRank() {
                 <img 
                   className={styles.backArrowIcon}
                   src='https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/left-arrow.png'
-                  alt="返回"
+                  alt={t('points.back')}
                 />
               </div>
-              <div className={styles.miniTitle}>积分榜单</div>
+              <div className={styles.miniTitle}>{t('points.title')}</div>
             </div>
-            <div className={styles.mainTitle}>积分榜单</div>
+            <div className={styles.mainTitle}>{t('points.title')}</div>
             <div className={styles.miniTabs}>
               <div
                 className={`${styles.miniTab} ${activeTab === 'daily' ? styles.active : ''}`}
                 onClick={() => handleTabChange('daily')}
               >
-                日榜
+                {t('points.daily')}
               </div>
               <div
                 className={`${styles.miniTab} ${activeTab === 'monthly' ? styles.active : ''}`}
                 onClick={() => handleTabChange('monthly')}
               >
-                月榜
+                {t('points.monthly')}
               </div>
               <div
                 className={`${styles.miniTab} ${activeTab === 'total' ? styles.active : ''}`}
                 onClick={() => handleTabChange('total')}
               >
-                总榜
+                {t('points.total')}
               </div>
             </div>
           </div>
@@ -160,7 +162,7 @@ export default function PointsRank() {
         {/* 内容区域 */}
         <div className={styles.contentArea}>
           {loading ? (
-            <div className={styles.loading}>加载中...</div>
+            <div className={styles.loading}>{t('points.loading')}</div>
           ) : (
             <div className={styles.rankList}>
               {restList.map((item) => (
@@ -198,11 +200,11 @@ export default function PointsRank() {
         )}
 
         {/* 邀请好友悬浮按钮 */}
-        <div className={styles.inviteFloatBtn} onClick={() => Toast.show('分享功能开发中')}>
+        <div className={styles.inviteFloatBtn} onClick={() => Toast.show(t('points.shareFeatureInDevelopment'))}>
           <div className={styles.inviteIconWrap}>
-            <img className={styles.inviteIcon} src='https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/score-invite.png' alt="邀请" />
+            <img className={styles.inviteIcon} src='https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/score-invite.png' alt={t('points.inviteChallenge')} />
           </div>
-          <span className={styles.inviteText}>邀请朋友来挑战吧</span>
+          <span className={styles.inviteText}>{t('points.inviteChallenge')}</span>
         </div>
       </div>
     </Layout>

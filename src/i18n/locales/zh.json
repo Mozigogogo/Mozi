@@ -169,5 +169,18 @@
       "fri": "五",
       "sat": "六"
     }
+  },
+  "points": {
+    "title": "积分榜单",
+    "daily": "日榜",
+    "monthly": "月榜",
+    "total": "总榜",
+    "loading": "加载中...",
+    "loadFailed": "加载失败",
+    "inviteChallenge": "邀请朋友来挑战吧",
+    "shareFeatureInDevelopment": "分享功能开发中",
+    "back": "返回",
+    "rank": "排名",
+    "points": "积分"
   }
 }
