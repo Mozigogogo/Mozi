@@ -51,12 +51,15 @@
   flex-shrink: 0;
   width: calc(80vw - 20px);
   max-width: 300px;
+  min-height: 140px;
   margin-right: 12px;
   background: #fff;
   border-radius: 16px;
-  padding: 16px;
+  padding: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 
 .coinItem.last {
@@ -66,34 +69,34 @@
 .coinInfo {
   display: flex;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .exchangeIcon {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   margin-right: 8px;
   border-radius: 4px;
   object-fit: contain;
 }
 
 .exchangeName {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: #333;
   margin-right: auto;
 }
 
 .listingTime {
-  font-size: 12px;
+  font-size: 11px;
   color: #999;
 }
 
 .coinDetails {
-  font-size: 14px;
+  font-size: 13px;
   color: #333;
   line-height: 1.4;
-  margin: 0 0 12px 0;
+  margin: 0;
   white-space: normal;
   word-wrap: break-word;
   word-break: break-word;
@@ -102,13 +105,13 @@
 
 .coinLinkContainer {
   background-color: #F2F4F8;
-  padding: 10px 12px;
-  border-radius: 12px;
-  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  margin-top: auto;
 }
 
 .coinLink {
-  font-size: 12px;
+  font-size: 11px;
   color: #8E8E8E;
   white-space: normal;
   word-wrap: break-word;

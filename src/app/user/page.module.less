@@ -24,16 +24,16 @@
 }
 
 .headerAvatar {
-  width: 72px;
-  height: 72px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   margin-right: 12px;
   object-fit: cover;
 }
 
 .editIcon {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   margin-left: 10px;
   vertical-align: middle;
 }
@@ -100,8 +100,8 @@
 
 .badge {
   position: absolute;
-  top: 2px;
-  right: 2px;
+  top: -2px;
+  right: -2px;
   background: #ff4757;
   color: #fff;
   border-radius: 50%;
@@ -342,16 +342,71 @@
   margin: 0px 0px 16px 0px;
   background: #fff;
   border-radius: 16px;
+  overflow: hidden;
   // box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
 .footerList {
   background: transparent;
+  border: none !important;
+  
+  :global {
+    .adm-list {
+      --border-inner: 0px !important;
+      --border-top: 0px !important;
+      --border-bottom: 0px !important;
+    }
+    
+    .adm-list-body {
+      border: none !important;
+      border-top: none !important;
+      border-bottom: none !important;
+    }
+    
+    .adm-list-item {
+      border: none !important;
+      border-bottom: none !important;
+      
+      &::before,
+      &::after {
+        display: none !important;
+        border: none !important;
+      }
+    }
+    
+    .adm-list-item-content {
+      border: none !important;
+      border-bottom: none !important;
+      
+      &::before,
+      &::after {
+        display: none !important;
+        border: none !important;
+        height: 0 !important;
+      }
+    }
+    
+    .adm-list-item-content-main {
+      border: none !important;
+      
+      &::before,
+      &::after {
+        display: none !important;
+      }
+    }
+  }
 }
 
 .footerItem {
-  border-bottom: none;
+  border: none !important;
+  border-bottom: none !important;
   cursor: pointer;
+  
+  &::before,
+  &::after {
+    display: none !important;
+    border: none !important;
+  }
 }
 
 .footerBtn {
@@ -359,7 +414,7 @@
   display: flex;
   justify-content: space-between;
   width: 100%;
-  height: 56px;
+  height: 32px;
   align-items: center;
   background: transparent;
   padding: 0 16px;
@@ -367,7 +422,7 @@
 }
 
 .icon {
-  width: 42px;
+  width: 30px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -376,18 +431,19 @@
 .text {
   flex: 1;
   margin-left: 12px;
-  font-size: 16px;
+  font-size: 15px;
   color: #333;
   font-weight: 600;
 }
 
 .extra {
-  width: 24px;
+  min-width: 32px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   color: #A5A9AF;
-  font-size: 16px;
+  font-size: 14px;
+  white-space: nowrap;
 }
 
 .last {
@@ -403,7 +459,7 @@
   border-radius: 16px;
   height: 44px;
   color: #fff;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   border: none;
   box-shadow: 0 2px 12px rgba(220, 53, 69, 0.3);
@@ -501,10 +557,14 @@
 
 /* 联系我们与赏 */
 .contactTitle {
-  margin-bottom: 12px;
+  margin-bottom: 16px;
   display: block;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 600;
+  color: #333;
+  text-align: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .contactEmail {
@@ -561,21 +621,93 @@
 /* 语言选择样式 */
 .languageList {
   background-color: transparent;
+  margin-top: 8px;
+  
+  :global {
+    .adm-list {
+      --border-inner: 0px !important;
+      --border-top: 0px !important;
+      --border-bottom: 0px !important;
+    }
+    
+    .adm-list-body {
+      border: none !important;
+      border-top: none !important;
+      border-bottom: none !important;
+    }
+    
+    .adm-list-item {
+      border: none !important;
+      border-bottom: none !important;
+      
+      &::before,
+      &::after {
+        display: none !important;
+        border: none !important;
+      }
+    }
+    
+    .adm-list-item-content {
+      border: none !important;
+      border-bottom: none !important;
+      
+      &::before,
+      &::after {
+        display: none !important;
+        border: none !important;
+      }
+    }
+    
+    .adm-list-item-content-arrow {
+      display: none !important;
+    }
+  }
 }
 
 .languageItem {
-  padding: 15px 0;
-  border-bottom: 1px solid #efefef;
+  padding: 4px 16px; /* Adjusted from 12px 16px */
+  margin-bottom: 8px;
+  border-radius: 12px;
+  background-color: transparent;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
+  border: 2px solid #e0e0e0 !important;
+  
+  :global {
+    .adm-list-item-content-arrow {
+      display: none !important;
+    }
+  }
+  
+  &::before,
+  &::after {
+    display: none !important;
+    border: none !important;
+  }
+  
+  &:hover {
+    border-color: #11B787 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(17, 183, 135, 0.1);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
 }
 
-.languageItem:hover {
-  background-color: #f8f8f8;
-}
-
-.languageItem:last-child {
-  border-bottom: none;
+.languageItemActive {
+  background-color: #e8f5f1;
+  border-color: #11B787 !important;
+  
+  &:hover {
+    background-color: #d4ede5;
+    border-color: #11B787 !important;
+  }
 }
 
 .languageOption {
@@ -583,12 +715,31 @@
   justify-content: space-between;
   align-items: center;
   font-size: 16px;
+  font-weight: 500;
+  color: #333;
+  
+  span:first-child {
+    flex: 1;
+  }
 }
 
 .languageCheck {
   color: #11B787;
-  font-size: 20px;
+  font-size: 24px;
   font-weight: bold;
+  margin-left: 12px;
+  animation: checkmark 0.3s ease;
+}
+
+@keyframes checkmark {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* 深色模式适配 */
@@ -601,11 +752,191 @@
     box-shadow: var(--card-shadow-dark);
   }
   
-  .languageItem {
+  .contactTitle {
+    color: #e0e0e0;
     border-bottom-color: #444;
   }
   
-  .languageItem:hover {
-    background-color: #333;
+  .languageItem {
+    border-color: #444;
+    
+    &:hover {
+      border-color: #11B787;
+    }
+  }
+  
+  .languageItemActive {
+    background-color: #1e3e37;
+    border-color: #11B787;
+    
+    &:hover {
+      background-color: #19332f;
+    }
+  }
+  
+  .languageOption {
+    color: #e0e0e0;
+  }
+}
+
+/* 编辑用户信息弹窗样式 */
+.editProfileContainer {
+  padding: 20px 0;
+}
+
+.editProfileTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+  margin-bottom: 30px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.editAvatarSection {
+  margin-bottom: 32px;
+}
+
+.editLabel {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+.editAvatarBox {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.editAvatarPreview {
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.editAvatarBtn {
+  padding: 10px 20px;
+  background: #11B787;
+  color: #fff;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: #0fa076;
+  }
+  
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.editNicknameSection {
+  margin-bottom: 32px;
+}
+
+.editNicknameInput {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 16px;
+  color: #333;
+  outline: none;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  
+  &:focus {
+    border-color: #11B787;
+    box-shadow: 0 0 0 2px rgba(17, 183, 135, 0.1);
+  }
+  
+  &::placeholder {
+    color: #999;
+  }
+}
+
+.editButtonGroup {
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.editCancelBtn {
+  flex: 1;
+  height: 44px;
+  background: #f5f5f5;
+  color: #666;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: #e8e8e8;
+  }
+  
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.editSaveBtn {
+  flex: 1;
+  height: 44px;
+  background: #11B787;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: #0fa076;
+  }
+  
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+/* 暗色模式下的编辑弹窗样式 */
+[data-prefers-color-scheme='dark'] {
+  .editProfileTitle {
+    color: #e0e0e0;
+    border-bottom-color: #333;
+  }
+  
+  .editLabel {
+    color: #999;
+  }
+  
+  .editNicknameInput {
+    background: #1a1a1a;
+    border-color: #333;
+    color: #e0e0e0;
+    
+    &:focus {
+      border-color: #11B787;
+      box-shadow: 0 0 0 2px rgba(17, 183, 135, 0.2);
+    }
+  }
+  
+  .editCancelBtn {
+    background: #2a2a2a;
+    color: #999;
+    
+    &:hover {
+      background: #333;
+    }
   }
 }

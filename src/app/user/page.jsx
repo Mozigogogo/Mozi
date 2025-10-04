@@ -39,6 +39,10 @@ export default function UserPage() {
   const [showThemeOption, setShowThemeOption] = useState(true);
   const [showSocialOption, setShowSocialOption] = useState(true);
   const [showContactPop, setShowContactPop] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [editNickname, setEditNickname] = useState('');
+  const [editAvatar, setEditAvatar] = useState('');
+  const [avatarFile, setAvatarFile] = useState(null);
   
   // 简单的 Cookie 读写（仅前端可见；敏感 token 建议服务端 HttpOnly）
   const getCookie = (name) => {
@@ -255,6 +259,10 @@ export default function UserPage() {
   
   const selectLanguage = (lng) => {
     i18n.changeLanguage(lng);
+    // 确保语言设置被持久化到 localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('i18nextLng', lng);
+    }
     Toast.show({
       content: lng === 'zh' ? '已切换到中文' : 'Switched to English',
       duration: 1000,
@@ -263,47 +271,151 @@ export default function UserPage() {
     setPopVis(false);
   };
 
+  // 打开编辑个人资料弹窗
+  const openEditProfile = () => {
+    // 如果昵称是"微信用户"或空，则不填充
+    const nickname = (userInfo.nickname && userInfo.nickname !== '微信用户') ? userInfo.nickname : '';
+    setEditNickname(nickname);
+    setEditAvatar(userInfo.avatar || DEFAULT_AVATAR);
+    setAvatarFile(null);
+    setShowEditProfile(true);
+  };
+
+  // 处理头像选择
+  const handleAvatarChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // 检查文件大小（限制为2MB）
+      if (file.size > 2 * 1024 * 1024) {
+        Toast.show({
+          content: t('user.avatarTooLarge') || '头像文件太大，请选择小于2MB的图片',
+          position: 'bottom',
+          icon: 'fail'
+        });
+        return;
+      }
+      
+      // 读取文件并转换为 base64
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setEditAvatar(event.target.result);
+        setAvatarFile(file);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // 保存用户信息
+  const saveUserProfile = async () => {
+    if (!editNickname || editNickname.trim().length === 0) {
+      Toast.show({
+        content: t('user.nicknameRequired') || '请输入昵称',
+        position: 'bottom',
+        icon: 'fail'
+      });
+      return;
+    }
+
+    if (editNickname.length > 50) {
+      Toast.show({
+        content: t('user.nicknameTooLong') || '昵称不能超过50个字符',
+        position: 'bottom',
+        icon: 'fail'
+      });
+      return;
+    }
+
+    Toast.show({
+      icon: 'loading',
+      content: t('user.saving') || '保存中...',
+      duration: 0
+    });
+
+    try {
+      const res = await request({
+        url: Interface.UPDATE_USER_INFO,
+        method: 'POST',
+        data: {
+          avatar: editAvatar,
+          nickName: editNickname.trim(),
+        }
+      });
+
+      if (res?.data) {
+        // 更新本地用户信息
+        setUserInfo(prev => ({
+          ...prev,
+          nickname: editNickname.trim(),
+          avatar: res.data // 服务器返回的头像URL
+        }));
+
+        Toast.clear();
+        Toast.show({
+          content: t('user.saveSuccess') || '保存成功',
+          position: 'bottom',
+          icon: 'success'
+        });
+        setShowEditProfile(false);
+      } else {
+        Toast.clear();
+        Toast.show({
+          content: t('user.saveFailed') || '保存失败',
+          position: 'bottom',
+          icon: 'fail'
+        });
+      }
+    } catch (error) {
+      console.error('保存用户信息失败:', error);
+      Toast.clear();
+      Toast.show({
+        content: t('user.saveFailed') || '保存失败',
+        position: 'bottom',
+        icon: 'fail'
+      });
+    }
+  };
+
   const footerList = [
     {
       key: 'language',
-      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/skin%402x.png'} alt="语言设置" style={{ width: 44, height: 44 }} />),
+      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/skin%402x.png'} alt="语言设置" style={{ width: 22, height: 22 }} />),
       text: t('user.language'),
       extra: i18n.language === 'zh' ? '中文' : 'English',
       callback: () => changeLanguage()
     },
     {
       key: 'theme',
-      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/skin%402x.png'} alt="皮肤中心" style={{ width: 44, height: 44 }} />),
+      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/skin%402x.png'} alt="皮肤中心" style={{ width: 22, height: 22 }} />),
       text: t('user.skinCenter'),
-      extra: (<RightArrowIcon size={16} color="#A5A9AF" />),
+      extra: '',
       callback: () => Toast.show({ content: t('user.comingSoon'), position: 'bottom' })
     },
     {
       key: 'contact',
-      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/me-contact%402x.png'} alt="联系我们" style={{ width: 44, height: 44 }} />),
+      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/me-contact%402x.png'} alt="联系我们" style={{ width: 22, height: 22 }} />),
       text: t('user.contactUs'),
-      extra: (<RightArrowIcon size={16} color="#A5A9AF" />),
+      extra: '',
       callback: () => contact()
     },
     {
       key: 'social',
-      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/social%402x.png'} alt="社交媒体" style={{ width: 44, height: 44 }} />),
+      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/social%402x.png'} alt="社交媒体" style={{ width: 22, height: 22 }} />),
       text: t('user.socialMedia'),
-      extra: (<RightArrowIcon size={16} color="#A5A9AF" />),
+      extra: '',
       callback: () => Toast.show({ content: t('user.comingSoon'), position: 'bottom' })
     },
     {
       key: 'about',
-      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/about%402x.png'} alt="关于" style={{ width: 44, height: 44 }} />),
+      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/about%402x.png'} alt="关于" style={{ width: 22, height: 22 }} />),
       text: t('user.about'),
-      extra: (<RightArrowIcon size={16} color="#A5A9AF" />),
+      extra: '',
       callback: () => about()
     },
     {
       key: 'donate',
-      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/donate%402x.png'} alt="捐赠" style={{ width: 44, height: 44 }} />),
+      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/donate%402x.png'} alt="捐赠" style={{ width: 22, height: 22 }} />),
       text: t('user.donate'),
-      extra: (<RightArrowIcon size={16} color="#A5A9AF" />),
+      extra: '',
       callback: () => reward()
     }
   ];
@@ -313,14 +425,14 @@ export default function UserPage() {
       <div className={styles.container}>
         <div className={styles.headerBox}>
           {userInfo.isLogin ? (
-            <div className={styles.headerUser} onClick={() => (window.__openWalletInfo ? window.__openWalletInfo() : null)}>
+            <div className={styles.headerUser}>
               <img className={styles.headerAvatar} src={userInfo.avatar || DEFAULT_AVATAR} alt="头像" />
-              <span>{userInfo.nickname || t('user.profile')}</span>
-              <img className={styles.editIcon} src={EDIT_ICON} alt="编辑" />
+              <span>{address ? `${address.slice(0, 6)}...${address.slice(-4)}` : (userInfo.nickname || t('user.profile'))}</span>
+              <img className={styles.editIcon} src={EDIT_ICON} alt="编辑" onClick={openEditProfile} />
             </div>
           ) : (
             <div className={styles.loginBox}>
-              <div className={styles.headerUser}>
+              <div className={styles.headerUser} onClick={handleLogin}>
                 <img className={styles.headerAvatar} src={DEFAULT_AVATAR} alt="头像" />
                 <span>{t('user.pleaseLogin')}</span>
               </div>
@@ -473,10 +585,8 @@ export default function UserPage() {
           </List>
         </div>
 
-        {userInfo.isLogin ? (
+        {userInfo.isLogin && (
           <Button className={styles.logoutBtn} onClick={handleLogout}>{t('user.logout')}</Button>
-        ) : (
-          <Button className={styles.logoutBtn} onClick={handleLogin}>{t('user.loginRegister')}</Button>
         )}
         
         <Popup
@@ -593,7 +703,7 @@ export default function UserPage() {
               <div className={styles.contactTitle}>{t('user.selectLanguage')}</div>
               <List className={styles.languageList}>
                 <List.Item 
-                  className={styles.languageItem}
+                  className={`${styles.languageItem} ${i18n.language === 'zh' ? styles.languageItemActive : ''}`}
                   onClick={() => selectLanguage('zh')}
                 >
                   <div className={styles.languageOption}>
@@ -602,7 +712,7 @@ export default function UserPage() {
                   </div>
                 </List.Item>
                 <List.Item 
-                  className={styles.languageItem}
+                  className={`${styles.languageItem} ${i18n.language === 'en' ? styles.languageItemActive : ''}`}
                   onClick={() => selectLanguage('en')}
                 >
                   <div className={styles.languageOption}>
@@ -613,6 +723,72 @@ export default function UserPage() {
               </List>
             </div>
           )}
+        </Popup>
+
+        {/* 编辑用户信息弹窗 */}
+        <Popup
+          visible={showEditProfile}
+          onMaskClick={() => setShowEditProfile(false)}
+          onClose={() => setShowEditProfile(false)}
+          position='bottom'
+          bodyStyle={{
+            borderTopLeftRadius: '24px',
+            borderTopRightRadius: '24px',
+            minHeight: '50vh',
+            maxHeight: '80vh',
+            padding: '24px'
+          }}
+        >
+          <div className={styles.editProfileContainer}>
+            <div className={styles.editProfileTitle}>{t('user.editProfile') || '编辑个人资料'}</div>
+            
+            {/* 头像编辑 */}
+            <div className={styles.editAvatarSection}>
+              <div className={styles.editLabel}>{t('user.avatar') || '头像'}</div>
+              <div className={styles.editAvatarBox}>
+                <img className={styles.editAvatarPreview} src={editAvatar} alt="头像预览" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                  style={{ display: 'none' }}
+                  id="avatar-upload"
+                />
+                <label htmlFor="avatar-upload" className={styles.editAvatarBtn}>
+                  {t('user.changeAvatar') || '更换头像'}
+                </label>
+              </div>
+            </div>
+
+            {/* 昵称编辑 */}
+            <div className={styles.editNicknameSection}>
+              <div className={styles.editLabel}>{t('user.nickname') || '昵称'}</div>
+              <input
+                type="text"
+                className={styles.editNicknameInput}
+                value={editNickname}
+                onChange={(e) => setEditNickname(e.target.value)}
+                placeholder={t('user.enterNickname') || '请输入用户名'}
+                maxLength={50}
+              />
+            </div>
+
+            {/* 保存按钮 */}
+            <div className={styles.editButtonGroup}>
+              <Button
+                className={styles.editCancelBtn}
+                onClick={() => setShowEditProfile(false)}
+              >
+                {t('common.cancel') || '取消'}
+              </Button>
+              <Button
+                className={styles.editSaveBtn}
+                onClick={saveUserProfile}
+              >
+                {t('common.save') || '保存'}
+              </Button>
+            </div>
+          </div>
         </Popup>
       </div>
     </Layout>

@@ -84,6 +84,8 @@ export const Interface = {
   MOZI_LOGIN: '/user/login',
   // 用户信息
   USER_INFO: '/user/info',
+  // 更新用户信息
+  UPDATE_USER_INFO: '/user/info',
   // 用户帖子列表
   USER_POSTS: '/user/posts',
 

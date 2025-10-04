@@ -19,7 +19,6 @@ i18n
       en: { translation: en },
     },
     fallbackLng: 'en', // 默认语言
-    lng: 'en', // 初始语言
     debug: false, // 开发模式下可以设置为 true 查看日志
     
     interpolation: {

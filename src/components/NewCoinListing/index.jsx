@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './index.module.less';
 
 /**
@@ -10,6 +11,8 @@ import styles from './index.module.less';
  * @param {Function} onMoreClick - 点击"查看更多"的回调
  */
 const NewCoinListing = ({ showMore = false, data = [], onMoreClick }) => {
+  const { t } = useTranslation();
+  
   // 默认数据（如果没有传入data）
   const defaultData = [
     {
@@ -17,7 +20,7 @@ const NewCoinListing = ({ showMore = false, data = [], onMoreClick }) => {
       exchange: 'Binance',
       exchangeIcon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/biannce.png',
       listingTime: '2025-05-07 10:00:10',
-      details: 'Ravala (AVA)将上线 Bitget 创新区及WEB3区!',
+      details: t('user.defaultCoin1Details'),
       link: 'https://www.bitget.com/zh-CN/support/articles/1256060381977'
     },
     {
@@ -25,7 +28,7 @@ const NewCoinListing = ({ showMore = false, data = [], onMoreClick }) => {
       exchange: 'OKX',
       exchangeIcon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/biannce.png',
       listingTime: '2025-05-08 14:30:00',
-      details: 'LayerZero (ZRO) 将上线 OKX 现货交易!',
+      details: t('user.defaultCoin2Details'),
       link: 'https://www.okx.com/support/hc/zh-cn/articles/18649384847757'
     },
     {
@@ -33,7 +36,7 @@ const NewCoinListing = ({ showMore = false, data = [], onMoreClick }) => {
       exchange: 'Bybit',
       exchangeIcon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/biannce.png',
       listingTime: '2025-05-09 16:00:00',
-      details: 'Polygon (POL) 将上线 Bybit 现货交易区!',
+      details: t('user.defaultCoin3Details'),
       link: 'https://announcements.bybit.com/article/pol-listing'
     }
   ];
@@ -44,10 +47,10 @@ const NewCoinListing = ({ showMore = false, data = [], onMoreClick }) => {
     <div className={styles.wrapper}>
       {/* 标题头部 */}
       <div className={styles.header}>
-        <span className={styles.headerTitle}>新币上线</span>
+        <span className={styles.headerTitle}>{t('user.newCoinListing')}</span>
         {showMore && (
           <span className={styles.viewMore} onClick={onMoreClick}>
-            查看更多 {'>'}
+            {t('user.viewMore')} {'>'}
           </span>
         )}
       </div>
@@ -66,7 +69,7 @@ const NewCoinListing = ({ showMore = false, data = [], onMoreClick }) => {
                 </div>
                 <p className={styles.coinDetails}>{coin.details}</p>
                 <div className={styles.coinLinkContainer}>
-                  <span className={styles.coinLink}>详情: {coin.link}</span>
+                  <span className={styles.coinLink}>{t('user.details')} {coin.link}</span>
                 </div>
               </div>
             );
