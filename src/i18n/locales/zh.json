@@ -182,5 +182,31 @@
     "back": "返回",
     "rank": "排名",
     "points": "积分"
+  },
+  "pointsDetail": {
+    "myPoints": "我的积分",
+    "myInvites": "我的邀请",
+    "season": "赛季",
+    "historyRecord": "历史记录",
+    "inviteRewardTitle": "每坏推荐均可获得积分奖励！",
+    "inviteReward": "邀请有奖",
+    "perInvite": "每邀请一人",
+    "inviteLink": "邀请链接",
+    "inviteCode": "邀请码",
+    "totalInvites": "总邀请数",
+    "earnedPoints": "积分",
+    "activeInvites": "有效邀请",
+    "pendingRewards": "待领取奖励",
+    "linkCopied": "已复制",
+    "copyFailed": "复制失败",
+    "historyFeatureInDevelopment": "历史记录功能开发中",
+    "moziSlogan": "自由交易 不被定义",
+    "fanRewardsTitle": "疯狂爱好者积分奖励",
+    "earnMorePoints": "获得更多积分",
+    "dailyInvestmentTitle": "每日投资排行",
+    "taskCompleted": "任务已完成",
+    "joinAlarm": "加入警报通",
+    "certification": "认证",
+    "completed": "已完成"
   }
 }

@@ -538,8 +538,8 @@ export default function UserPage() {
         </div>
         
         {showPointsSection && (
-          <div className={styles.pointsSection} onClick={() => router.push('/points')}>
-            <div className={styles.pointsInfo}>
+          <div className={styles.pointsSection}>
+            <div className={styles.pointsInfo} onClick={() => router.push('/pointsdetail')}>
               <span className={styles.pointsTitle}>{t('user.myPoints')}</span>
               <div className={styles.pointsValueRow}>
                 <span className={styles.pointsValue}>2000</span>
@@ -547,7 +547,7 @@ export default function UserPage() {
               </div>
               <span className={styles.pointsRank}>{t('user.currentRank', { rank: 23 })}</span>
             </div>
-            <div className={styles.pointsAction}>
+            <div className={styles.pointsAction} onClick={() => router.push('/points')}>
               <span className={styles.pointsButton}>{t('user.pointsRanking')}</span>
               <RightArrowIcon size={18} color="#fff"  />
             </div>

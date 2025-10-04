@@ -182,5 +182,31 @@
     "back": "Back",
     "rank": "Rank",
     "points": "Points"
+  },
+  "pointsDetail": {
+    "myPoints": "My Points",
+    "myInvites": "My Invites",
+    "season": "Season",
+    "historyRecord": "History",
+    "inviteRewardTitle": "Get points rewards for every referral!",
+    "inviteReward": "Invite Reward",
+    "perInvite": "Per invite",
+    "inviteLink": "Invite Link",
+    "inviteCode": "Invite Code",
+    "totalInvites": "Total Invites",
+    "earnedPoints": "Points",
+    "activeInvites": "Active Invites",
+    "pendingRewards": "Pending Rewards",
+    "linkCopied": "Copied",
+    "copyFailed": "Copy Failed",
+    "historyFeatureInDevelopment": "History feature in development",
+    "moziSlogan": "Free Trading, Unlimited",
+    "fanRewardsTitle": "Super Fan Points Rewards",
+    "earnMorePoints": "Earn More Points",
+    "dailyInvestmentTitle": "Daily Investment Ranking",
+    "taskCompleted": "Task Completed",
+    "joinAlarm": "Join Alarm",
+    "certification": "Certification",
+    "completed": "Completed"
   }
 }
