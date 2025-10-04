@@ -6,6 +6,7 @@ import { Button, Avatar, List, Dialog, Toast, Popup, Grid, TextArea } from 'antd
 import { useTranslation } from 'react-i18next';
 import Layout from '../../components/Layout';
 import CalendarCard from '../../components/CalendarCard';
+import NewCoinListing from '../../components/NewCoinListing';
 import { RightArrowIcon } from '../../components/Icons';
 import { request } from '../../utils/request';
 import { Interface, EMAIL, COINKEY } from '../../utils/constants';
@@ -448,8 +449,7 @@ export default function UserPage() {
 
         {showNewCoinListing && (
           <div className={styles.newCoinSection}>
-            <div className={styles.newCoinTitle}>{t('user.newCoinListing')}</div>
-            <div className={styles.newCoinBody}>{t('user.comingSoon')}</div>
+            <NewCoinListing showMore={false} />
           </div>
         )}
 
