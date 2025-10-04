@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { RightArrowIcon } from '../Icons';
 import styles from './index.module.less';
 
 /**
@@ -49,14 +50,22 @@ export default function CalendarCard({ onDateChange, onToggleChange, defaultTogg
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
     const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0); // 当月最后一天
+    
+    // 计算日历开始日期（当月第一天所在周的周日）
     const startDate = new Date(firstDay);
     startDate.setDate(startDate.getDate() - firstDay.getDay());
+    
+    // 计算需要显示的总天数（到当月最后一天所在周的周六）
+    const daysToShow = firstDay.getDay() + lastDay.getDate();
+    const weeksNeeded = Math.ceil(daysToShow / 7);
+    const totalDays = weeksNeeded * 7;
 
     const days = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    for (let i = 0; i < 42; i++) {
+    for (let i = 0; i < totalDays; i++) {
       const currentDate = new Date(startDate);
       currentDate.setDate(startDate.getDate() + i);
       currentDate.setHours(0, 0, 0, 0);
@@ -117,9 +126,13 @@ export default function CalendarCard({ onDateChange, onToggleChange, defaultTogg
 
       <div className={styles.content}>
         <div className={styles.headerBar}>
-          <div className={styles.nav} onClick={() => changeMonth(-1)}><span className={styles.navText}>‹</span></div>
+          <div className={styles.nav} onClick={() => changeMonth(-1)}>
+            <RightArrowIcon size={24} color="#666" style={{ transform: 'rotate(180deg)' }} />
+          </div>
           <span className={styles.title}>{formatMonthYear()}</span>
-          <div className={styles.nav} onClick={() => changeMonth(1)}><span className={styles.navText}>›</span></div>
+          <div className={styles.nav} onClick={() => changeMonth(1)}>
+            <RightArrowIcon size={24} color="#666" />
+          </div>
         </div>
 
         <div className={styles.weekHeader}>

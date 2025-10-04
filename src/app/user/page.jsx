@@ -6,6 +6,7 @@ import { Button, Avatar, List, Dialog, Toast, Popup, Grid, TextArea } from 'antd
 import { useTranslation } from 'react-i18next';
 import Layout from '../../components/Layout';
 import CalendarCard from '../../components/CalendarCard';
+import { RightArrowIcon } from '../../components/Icons';
 import { request } from '../../utils/request';
 import { Interface, EMAIL, COINKEY } from '../../utils/constants';
 import styles from './page.module.less';
@@ -273,35 +274,35 @@ export default function UserPage() {
       key: 'theme',
       icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/skin%402x.png'} alt="皮肤中心" style={{ width: 44, height: 44 }} />),
       text: t('user.skinCenter'),
-      extra: '›',
+      extra: (<RightArrowIcon size={16} color="#A5A9AF" />),
       callback: () => Toast.show({ content: t('user.comingSoon'), position: 'bottom' })
     },
     {
       key: 'contact',
       icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/me-contact%402x.png'} alt="联系我们" style={{ width: 44, height: 44 }} />),
       text: t('user.contactUs'),
-      extra: '›',
+      extra: (<RightArrowIcon size={16} color="#A5A9AF" />),
       callback: () => contact()
     },
     {
       key: 'social',
       icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/social%402x.png'} alt="社交媒体" style={{ width: 44, height: 44 }} />),
       text: t('user.socialMedia'),
-      extra: '›',
+      extra: (<RightArrowIcon size={16} color="#A5A9AF" />),
       callback: () => Toast.show({ content: t('user.comingSoon'), position: 'bottom' })
     },
     {
       key: 'about',
       icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/about%402x.png'} alt="关于" style={{ width: 44, height: 44 }} />),
       text: t('user.about'),
-      extra: '›',
+      extra: (<RightArrowIcon size={16} color="#A5A9AF" />),
       callback: () => about()
     },
     {
       key: 'donate',
       icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/donate%402x.png'} alt="捐赠" style={{ width: 44, height: 44 }} />),
       text: t('user.donate'),
-      extra: '›',
+      extra: (<RightArrowIcon size={16} color="#A5A9AF" />),
       callback: () => reward()
     }
   ];
@@ -351,23 +352,23 @@ export default function UserPage() {
           <div className={styles.secondaryActions}>
             <div className={styles.actionRow}>
               <div className={styles.actionButton} onClick={() => Toast.show({ content: t('user.comingSoon'), position: 'bottom' })}>
-                <div className={`${styles.actionIcon} ${styles.secondary}`}>
-                  <img className={`${styles.actionIconImg} ${styles.secondary}`} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/comment%402x.png'} alt="我的评论" />
+                <div className={styles.actionIcon}>
+                  <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/comment%402x.png'} alt="我的评论" />
                 </div>
-                <div className={`${styles.actionText} ${styles.secondary}`}>{t('user.myComments')}</div>
+                <div className={styles.actionText}>{t('user.myComments')}</div>
               </div>
               <div className={styles.actionButton} onClick={() => Toast.show({ content: t('user.comingSoon'), position: 'bottom' })}>
-                <div className={`${styles.actionIcon} ${styles.secondary}`} style={{ position: 'relative' }}>
-                  <img className={`${styles.actionIconImg} ${styles.secondary}`} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/mail%402x.png'} alt="消息通知" />
+                <div className={styles.actionIcon} style={{ position: 'relative' }}>
+                  <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/mail%402x.png'} alt="消息通知" />
                   <div className={styles.badge}>3</div>
                 </div>
-                <div className={`${styles.actionText} ${styles.secondary}`}>{t('user.messageNotification')}</div>
+                <div className={styles.actionText}>{t('user.messageNotification')}</div>
               </div>
               <div className={styles.actionButton} onClick={() => Toast.show({ content: t('user.comingSoon'), position: 'bottom' })}>
-                <div className={`${styles.actionIcon} ${styles.secondary}`}>
-                  <img className={`${styles.actionIconImg} ${styles.secondary}`} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/like%402x.png'} alt="我的点赞" />
+                <div className={styles.actionIcon}>
+                  <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/like%402x.png'} alt="我的点赞" />
                 </div>
-                <div className={`${styles.actionText} ${styles.secondary}`}>{t('user.myLikes')}</div>
+                <div className={styles.actionText}>{t('user.myLikes')}</div>
               </div>
             </div>
           </div>
@@ -377,27 +378,31 @@ export default function UserPage() {
           {!userInfo.isLogin ? (
             <div className={`${styles.horizontalBtn} ${styles.left}`} onClick={handleLogin}>
               <div className={styles.btnIcon}>
-                <img className={styles.btnIconImg} src={'https://image-1317406749.myqcloud.com/assets/icon/me_slices/feedback%402x.png'} alt="反馈" />
+                <img className={styles.btnIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/feedback%402x.png'} alt="反馈" />
               </div>
               <div className={styles.btnBottom}>
                 <div className={styles.btnContent}>
                   <div className={styles.btnText}>{t('user.feedback')}</div>
                   <div className={styles.btnSubtext}>{t('user.feedbackDesc')}</div>
                 </div>
-                <div className={styles.btnArrow}>›</div>
+                <div className={styles.btnArrow}>
+                  <RightArrowIcon size={24} color="#A5A9AF" />
+                </div>
               </div>
             </div>
           ) : (
             <div className={`${styles.horizontalBtn} ${styles.left}`} onClick={score}>
               <div className={styles.btnIcon}>
-                <img className={styles.btnIconImg} src={'https://image-1317406749.myqcloud.com/assets/icon/me_slices/feedback%402x.png'} alt="反馈" />
+                <img className={styles.btnIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/feedback%402x.png'} alt="反馈" />
               </div>
               <div className={styles.btnBottom}>
                 <div className={styles.btnContent}>
                   <div className={styles.btnText}>{t('user.feedback')}</div>
                   <div className={styles.btnSubtext}>{t('user.feedbackDesc')}</div>
                 </div>
-                <div className={styles.btnArrow}>›</div>
+                <div className={styles.btnArrow}>
+                  <RightArrowIcon size={24} color="#A5A9AF" />
+                </div>
               </div>
             </div>
           )}
@@ -410,7 +415,9 @@ export default function UserPage() {
                 <div className={styles.btnText}>{t('user.recommendFriend')}</div>
                 <div className={styles.btnSubtext}>{t('user.recommendDesc')}</div>
               </div>
-              <div className={styles.btnArrow}>›</div>
+              <div className={styles.btnArrow}>
+                <RightArrowIcon size={24} color="#A5A9AF" />
+              </div>
             </div>
           </div>
         </div>
@@ -427,7 +434,7 @@ export default function UserPage() {
             </div>
             <div className={styles.pointsAction} onClick={() => Toast.show({ content: t('user.comingSoon'), position: 'bottom' })}>
               <span className={styles.pointsButton}>{t('user.pointsRanking')}</span>
-              <span style={{ color: '#fff' }}>›</span>
+              <RightArrowIcon size={18} color="#fff"  />
             </div>
             <img className={styles.pointsCoin} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/integral-coin.png'} alt="coin" />
           </div>

@@ -74,8 +74,8 @@
     "recommendFriend": "推荐朋友",
     "recommendDesc": "分享你的喜爱",
     "myPoints": "我的积分",
-    "yesterdayPoints": "昨日积分：+{points}",
-    "currentRank": "当前排名：总榜第 {rank} 名",
+    "yesterdayPoints": "昨日积分：+{{points}}",
+    "currentRank": "当前排名：总榜第 {{rank}} 名",
     "pointsRanking": "积分榜单",
     "newCoinListing": "新币上线",
     "comingSoon": "敬请期待",
@@ -143,7 +143,7 @@
   "calendar": {
     "title": "交易所公告",
     "subtitle": "打开订阅推送，免费试用",
-    "yearMonth": "{year}年{month}月",
+    "yearMonth": "{{year}}年{{month}}月",
     "weekdays": {
       "sun": "日",
       "mon": "一",

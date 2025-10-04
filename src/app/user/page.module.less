@@ -11,8 +11,8 @@
 
 .headerBox {
   background: transparent;
-  margin-bottom: 20px;
-  padding: 60px 0 10px;
+  margin-bottom: 10px;
+  padding: 0px 0 10px;
 }
 
 .headerUser {
@@ -38,8 +38,8 @@
   vertical-align: middle;
 }
 
-.loginBox { 
-  background: transparent; 
+.loginBox {
+  background: transparent;
 }
 
 /* 第一排功能按钮 */
@@ -47,103 +47,532 @@
   background: #fff;
   border-radius: 16px;
   margin: 10px 0 0;
-  padding: 20px 16px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  padding: 16px 16px;
   display: flex;
   justify-content: space-around;
 }
-.actionButton { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
-.actionIcon { width: 72px; height: 72px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; transition: all 0.3s ease; }
-.actionIcon:active { transform: scale(0.95); }
-.actionIconImg { width: 50px; height: 50px; object-fit: contain; }
-.actionText { color: #333; font-size: 14px; font-weight: 500; }
+
+.actionButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+}
+
+.actionIcon {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+  transition: all 0.3s ease;
+}
+
+.actionIcon:active {
+  transform: scale(0.95);
+}
+
+.actionIconImg {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.actionText {
+  color: #333;
+  font-size: 13px;
+  font-weight: 500;
+}
 
 /* 第二排功能按钮 */
-.secondaryActions { background: #fff; margin: 16px 0; border-radius: 16px; padding: 20px 16px; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08); }
-.actionRow { display: flex; justify-content: space-around; }
-.secondary {}
-.badge { position: absolute; top: 2px; right: 2px; background: #ff4757; color: #fff; border-radius: 50%; width: 18px; height: 18px; font-size: 12px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+.secondaryActions {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px 16px;
+  // box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.actionRow {
+  display: flex;
+  justify-content: space-around;
+}
+
+.badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: #ff4757;
+  color: #fff;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
 
 /* 左右分布的按钮 */
-.horizontalButtons { margin: 16px 0; display: flex; gap: 10px; }
-.horizontalBtn { flex: 1; background: #fff; border-radius: 16px; padding: 14px 12px; box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06); display: flex; flex-direction: column; position: relative; cursor: pointer; border: 1px solid #f0f0f0; text-align: left; }
-.horizontalBtn:active { background: #f8f8f8; transform: scale(0.98); }
-.btnIcon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; align-self: flex-start; margin-left: 20px; }
-.btnIconImg { width: 36px; height: 36px; }
-.btnBottom { display: flex; align-items: center; justify-content: space-between; width: 100%; }
-.btnContent { flex: 1; display: flex; flex-direction: column; align-items: flex-start; min-width: 0; padding-left: 20px; }
-.btnText { color: #333; font-size: 16px; font-weight: 600; line-height: 1.2; margin-bottom: 4px; text-align: left; }
-.btnSubtext { color: #999; font-size: 12px; line-height: 1.3; text-align: left; }
-.btnArrow { flex-shrink: 0; margin-left: 12px; display: flex; align-items: center; justify-content: center; height: 40px; }
+.horizontalButtons {
+  margin: 16px 0;
+  display: flex;
+  gap: 10px;
+}
+
+.horizontalBtn {
+  flex: 1;
+  background: #fff;
+  border-radius: 16px;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  cursor: pointer;
+  border: 1px solid #f0f0f0;
+  text-align: left;
+}
+
+.horizontalBtn:active {
+  background: #f8f8f8;
+  transform: scale(0.98);
+}
+
+.btnIcon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 5px;
+  align-self: flex-start;
+  margin-left: 14px;
+}
+
+.btnIconImg {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+}
+
+.btnBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.btnContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  padding-left: 14px;
+}
+
+.btnText {
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  margin-bottom: 3px;
+  text-align: left;
+}
+
+.btnSubtext {
+  color: #999;
+  font-size: 11px;
+  line-height: 1.3;
+  text-align: left;
+}
+
+.btnArrow {
+  flex-shrink: 0;
+  margin-left: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+}
 
 /* 积分模块 */
-.pointsSection { background: url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/integral.png') no-repeat center center; background-size: 100% 100%; margin: 16px 0; border-radius: 16px; padding: 20px 16px; display: flex; justify-content: space-between; align-items: center; min-height: 140px; max-height: 180px; position: relative; }
-.pointsInfo { flex: 1; padding-left: 20px; }
-.pointsTitle { color: #333; font-size: 16px; font-weight: 600; margin-bottom: 6px; display: block; }
-.pointsValueRow { display: flex; align-items: baseline; margin-bottom: 6px; }
-.pointsValue { color: #52c41a; font-size: 32px; font-weight: 700; margin-bottom: 6px; display: block; }
-.pointsDaily { color: #707070; font-size: 12px; margin-left: 12px; display: block; }
-.pointsRank { color: #707070; font-size: 12px; margin-bottom: 4px; display: block; }
-.pointsAction { position: absolute; top: 12px; right: 18px; display: flex; align-items: center; }
-.pointsButton { color: #fff; border-radius: 16px; padding: 8px 8px 8px 16px; font-size: 12px; cursor: pointer; font-weight: 600; line-height: 20px; }
-.pointsCoin { position: absolute; bottom: 0; right: 0; width: 60px; height: 80px; }
+.pointsSection {
+  background: url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/integral.png') no-repeat center center;
+  background-size: 100% 100%;
+  margin: 0px 0 16px 0;
+  border-radius: 16px;
+  padding: 16px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 110px;
+  max-height: 130px;
+  position: relative;
+}
+
+.pointsInfo {
+  flex: 1;
+  padding-left: 16px;
+}
+
+.pointsTitle {
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.pointsValueRow {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.pointsValue {
+  color: #11B787;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.pointsDaily {
+  color: #707070;
+  font-size: 11px;
+  margin-left: 10px;
+  display: block;
+}
+
+.pointsRank {
+  color: #707070;
+  font-size: 11px;
+  margin-bottom: 3px;
+  display: block;
+}
+
+.pointsAction {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.pointsButton {
+  color: #fff;
+  border-radius: 14px;
+  padding: 4px 0px 6px 12px;
+  font-size: 11px;
+  cursor: pointer;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.pointsCoin {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 50px;
+  height: 65px;
+}
 
 /* 日历模块占位 */
-.calendarSection { margin-bottom: 16px; }
-.calendarPlaceholder { background: #fff; border-radius: 16px; padding: 16px; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08); }
-.calendarHeaderRow { display: flex; align-items: center; justify-content: space-between; }
-.calendarHeaderLeft { display: flex; align-items: center; gap: 10px; }
-.calendarHeaderIcon { width: 24px; height: 24px; }
-.calendarHeaderTitle { font-size: 14px; font-weight: 600; color: #333; }
-.calendarHeaderSub { font-size: 12px; color: #999; }
-.calendarSwitch { background: #11B787; color: #fff; border-radius: 12px; padding: 2px 8px; font-size: 12px; }
+.calendarSection {
+  margin-bottom: 16px;
+}
+
+.calendarPlaceholder {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  // box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.calendarHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.calendarHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.calendarHeaderIcon {
+  width: 24px;
+  height: 24px;
+}
+
+.calendarHeaderTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.calendarHeaderSub {
+  font-size: 12px;
+  color: #999;
+}
+
+.calendarSwitch {
+  background: #11B787;
+  color: #fff;
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 12px;
+}
 
 /* 新币上线占位 */
-.newCoinSection { background: #fff; border-radius: 16px; padding: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-bottom: 16px; }
-.newCoinTitle { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
-.newCoinBody { color: #999; font-size: 12px; }
+.newCoinSection {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  // box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 16px;
+}
+
+.newCoinTitle {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.newCoinBody {
+  color: #999;
+  font-size: 12px;
+}
 
 /* 弹性占位，推底退出按钮 */
-.flexSpacer { flex: 1 1 auto; }
+.flexSpacer {
+  flex: 1 1 auto;
+}
 
 /* 底部列表与退出 */
-.footer { margin: 16px 0; background: #fff; border-radius: 16px; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08); }
-.footerList { background: transparent; }
-.footerItem { border-bottom: none; cursor: pointer; }
-.footerBtn { border: none; display: flex; justify-content: space-between; width: 100%; height: 56px; align-items: center; background: transparent; padding: 0 16px; text-align: left; }
-.icon { width: 42px; display: flex; align-items: center; justify-content: flex-start; }
-.text { flex: 1; margin-left: 12px; font-size: 16px; color: #333; font-weight: 600; }
-.extra { width: 24px; display: flex; align-items: center; justify-content: center; color: #A5A9AF; font-size: 16px; }
-.last { border: none; }
-.logoutBtn { display: block; width: 88%; max-width: 420px; margin: 12px auto 20px auto; background: #dc3545; border-radius: 16px; height: 44px; color: #fff; font-size: 16px; font-weight: 600; border: none; box-shadow: 0 2px 12px rgba(220, 53, 69, 0.3); }
-.logoutBtn:active { background: #c82333; transform: scale(0.98); }
+.footer {
+  margin: 16px 0;
+  background: #fff;
+  border-radius: 16px;
+  // box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.footerList {
+  background: transparent;
+}
+
+.footerItem {
+  border-bottom: none;
+  cursor: pointer;
+}
+
+.footerBtn {
+  border: none;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  height: 56px;
+  align-items: center;
+  background: transparent;
+  padding: 0 16px;
+  text-align: left;
+}
+
+.icon {
+  width: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.text {
+  flex: 1;
+  margin-left: 12px;
+  font-size: 16px;
+  color: #333;
+  font-weight: 600;
+}
+
+.extra {
+  width: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #A5A9AF;
+  font-size: 16px;
+}
+
+.last {
+  border: none;
+}
+
+.logoutBtn {
+  display: block;
+  width: 88%;
+  max-width: 420px;
+  margin: 12px auto 20px auto;
+  background: #dc3545;
+  border-radius: 16px;
+  height: 44px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  box-shadow: 0 2px 12px rgba(220, 53, 69, 0.3);
+}
+
+.logoutBtn:active {
+  background: #c82333;
+  transform: scale(0.98);
+}
 
 /* 弹窗与评分 */
-.popContainer { padding: 20px; box-sizing: border-box; max-height: 70vh; overflow-y: auto; }
-.aboutItem { margin-bottom: 10px; font-size: 14px; line-height: 1.5; }
-.secDesc { margin-top: 16px; }
-.secCon { margin-top: 16px; }
-.scoreDesc { display: flex; justify-content: space-between; font-size: 12px; margin-top: 10px; color: #898989; }
-.scoreList { margin-top: 16px; }
-.scoreItem { background-color: #efefef; width: 36px; height: 36px; text-align: center; line-height: 36px; border-radius: 8px; color: #000; cursor: pointer; transition: all 0.3s; }
-.scoreItem:hover { background-color: #ddd; }
-.scoreActive { background-color: #11B787 !important; color: #fff !important; }
-.scoreCon { margin-top: 16px; }
-.scoreConDesc { color: #898989; font-size: 12px; }
-.scoreText { box-sizing: border-box; width: 100%; border: 1px solid #efefef; margin-top: 10px; padding: 10px; border-radius: 4px; }
-.scoreBtn { background-color: #11B787; color: #fff; margin-top: 16px; border: none; }
-.scoreBtnDisable { background-color: #f8f8f8 !important; color: #00000040 !important; }
+.popContainer {
+  padding: 20px;
+  box-sizing: border-box;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.aboutItem {
+  margin-bottom: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.secDesc {
+  margin-top: 16px;
+}
+
+.secCon {
+  margin-top: 16px;
+}
+
+.scoreDesc {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-top: 10px;
+  color: #898989;
+}
+
+.scoreList {
+  margin-top: 16px;
+}
+
+.scoreItem {
+  background-color: #efefef;
+  width: 36px;
+  height: 36px;
+  text-align: center;
+  line-height: 36px;
+  border-radius: 8px;
+  color: #000;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.scoreItem:hover {
+  background-color: #ddd;
+}
+
+.scoreActive {
+  background-color: #11B787 !important;
+  color: #fff !important;
+}
+
+.scoreCon {
+  margin-top: 16px;
+}
+
+.scoreConDesc {
+  color: #898989;
+  font-size: 12px;
+}
+
+.scoreText {
+  box-sizing: border-box;
+  width: 100%;
+  border: 1px solid #efefef;
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+.scoreBtn {
+  background-color: #11B787;
+  color: #fff;
+  margin-top: 16px;
+  border: none;
+}
+
+.scoreBtnDisable {
+  background-color: #f8f8f8 !important;
+  color: #00000040 !important;
+}
 
 /* 联系我们与赏 */
-.contactTitle { margin-bottom: 12px; display: block; font-size: 14px; font-weight: 600; }
-.contactEmail { display: flex; align-items: center; justify-content: space-between; }
-.contactCopy { margin-left: 12px; cursor: pointer; font-size: 18px; }
-.attendPic { width: 100%; max-width: 300px; height: auto; object-fit: contain; }
-.scrollContainer { padding: 20px; box-sizing: border-box; max-height: 70vh; overflow-y: auto; }
-.rewardScrollBox { display: flex; overflow-x: auto; gap: 12px; padding-bottom: 10px; }
-.rewardBox { font-size: 14px; min-width: 240px; flex-shrink: 0; }
-.coinKey { word-wrap: break-word; word-break: break-all; white-space: normal; font-size: 12px; max-width: 200px; }
-.contactContainer { padding: 30px 20px; }
+.contactTitle {
+  margin-bottom: 12px;
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.contactEmail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.contactCopy {
+  margin-left: 12px;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.attendPic {
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  object-fit: contain;
+}
+
+.scrollContainer {
+  padding: 20px;
+  box-sizing: border-box;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.rewardScrollBox {
+  display: flex;
+  overflow-x: auto;
+  gap: 12px;
+  padding-bottom: 10px;
+}
+
+.rewardBox {
+  font-size: 14px;
+  min-width: 240px;
+  flex-shrink: 0;
+}
+
+.coinKey {
+  word-wrap: break-word;
+  word-break: break-all;
+  white-space: normal;
+  font-size: 12px;
+  max-width: 200px;
+}
+
+.contactContainer {
+  padding: 30px 20px;
+}
 
 /* 语言选择样式 */
 .languageList {
@@ -180,8 +609,13 @@
 
 /* 深色模式适配 */
 @media (prefers-color-scheme: dark) {
-  .container { background-color: #1a1a1a; }
-  .footerList { box-shadow: var(--card-shadow-dark); }
+  .container {
+    background-color: #1a1a1a;
+  }
+  
+  .footerList {
+    box-shadow: var(--card-shadow-dark);
+  }
   
   .languageItem {
     border-bottom-color: #444;
