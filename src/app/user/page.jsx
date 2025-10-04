@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAccount, useDisconnect, useSignMessage } from 'wagmi';
 import { Button, Avatar, List, Dialog, Toast, Popup, Grid, TextArea } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +15,7 @@ import styles from './page.module.less';
 
 export default function UserPage() {
   // 状态定义
+  const router = useRouter();
   const { disconnect } = useDisconnect();
   const { address, isConnected } = useAccount();
   const { signMessageAsync } = useSignMessage();
@@ -536,8 +538,8 @@ export default function UserPage() {
         </div>
         
         {showPointsSection && (
-          <div className={styles.pointsSection}>
-            <div className={styles.pointsInfo} onClick={() => Toast.show({ content: t('user.comingSoon'), position: 'bottom' })}>
+          <div className={styles.pointsSection} onClick={() => router.push('/points')}>
+            <div className={styles.pointsInfo}>
               <span className={styles.pointsTitle}>{t('user.myPoints')}</span>
               <div className={styles.pointsValueRow}>
                 <span className={styles.pointsValue}>2000</span>
@@ -545,7 +547,7 @@ export default function UserPage() {
               </div>
               <span className={styles.pointsRank}>{t('user.currentRank', { rank: 23 })}</span>
             </div>
-            <div className={styles.pointsAction} onClick={() => Toast.show({ content: t('user.comingSoon'), position: 'bottom' })}>
+            <div className={styles.pointsAction}>
               <span className={styles.pointsButton}>{t('user.pointsRanking')}</span>
               <RightArrowIcon size={18} color="#fff"  />
             </div>
