@@ -79,189 +79,195 @@ export default function PointsDetail() {
           </Tabs>
         </div>
 
-        {/* 积分卡片 */}
-        <div className={styles.pointsCard}>
-          <div className={styles.cardHeader}>
-            <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/mozi-logo.png" alt="Logo" className={styles.logo} />
-          </div>
-          <div className={styles.seasonInfo}>
-            <h2 className={styles.seasonTitle}>{pointsData.season}</h2>
-            <div className={styles.seasonDuration}>
-              <span className={styles.clockIcon}>🕐</span>
-              {pointsData.seasonStart} 至 {pointsData.seasonEnd}
-            </div>
-          </div>
-          <div className={styles.pointsDisplay}>
-            <div className={styles.coinIcon}>🪙</div>
-            <div className={styles.pointsValue}>{pointsData.totalPoints}</div>
-            <button className={styles.historyBtn} onClick={() => Toast.show('历史记录功能开发中')}>
-              <span className={styles.historyIcon}>🕐</span>
-              历史记录
-            </button>
-          </div>
-          <img 
-            src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/points-character.png" 
-            alt="Character" 
-            className={styles.characterImg}
-            onError={(e) => { e.target.style.display = 'none'; }}
-          />
-        </div>
-
-        {/* MOZI横幅 */}
-        <div className={styles.moziBanner}>
-          <div className={styles.bannerContent}>
-            <h3>MOZI</h3>
-            <p>自由交易 不被定义</p>
-          </div>
-          <img 
-            src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/mozi-mascot.png" 
-            alt="Mascot" 
-            className={styles.mascotImg}
-            onError={(e) => { e.target.style.display = 'none'; }}
-          />
-        </div>
-
-        {/* 邀请推荐区域 */}
-        <div className={styles.inviteSection}>
-          <div className={styles.inviteHeader}>
-            <span className={styles.starIcon}>🤩</span>
-            <h3>每坏推荐均可获得积分奖励！</h3>
-          </div>
-
-          {/* 邀请有奖卡片 */}
-          <div className={styles.rewardCard}>
-            <div className={styles.rewardIcon}>📥</div>
-            <div className={styles.rewardInfo}>
-              <h4>邀请有奖</h4>
-              <p>每邀请一人 <span className={styles.bonusPoints}>+500🪙</span></p>
-            </div>
-          </div>
-
-          {/* 邀请链接 */}
-          <div className={styles.inviteItem}>
-            <div className={styles.inviteLabel}>邀请链接</div>
-            <div className={styles.inviteValue}>
-              <span>{pointsData.inviteLink}</span>
-              <button onClick={() => copyToClipboard(pointsData.inviteLink, '邀请链接')} className={styles.copyBtn}>
-                📋
-              </button>
-            </div>
-          </div>
-
-          {/* 邀请码 */}
-          <div className={styles.inviteItem}>
-            <div className={styles.inviteLabel}>邀请码</div>
-            <div className={styles.inviteValue}>
-              <span>{pointsData.inviteCode}</span>
-              <button onClick={() => copyToClipboard(pointsData.inviteCode, '邀请码')} className={styles.copyBtn}>
-                📋
-              </button>
-            </div>
-          </div>
-
-          {/* 统计数据 */}
-          <div className={styles.statsGrid}>
-            <div className={styles.statCard}>
-              <div className={styles.statValue}>{pointsData.totalInvites}</div>
-              <div className={styles.statLabel}>总邀请数</div>
-            </div>
-            <div className={styles.statCard}>
-              <div className={styles.statValue}>{pointsData.earnedPoints}</div>
-              <div className={styles.statLabel}>积分</div>
-            </div>
-            <div className={styles.statCard}>
-              <div className={styles.statValue}>{pointsData.activeInvites}</div>
-              <div className={styles.statLabel}>有效邀请</div>
-            </div>
-            <div className={styles.statCard}>
-              <div className={styles.statValue}>
-                {pointsData.pendingRewards === 0 ? '!' : pointsData.pendingRewards}
+        <div className={styles.topSection}>
+          {/* 积分卡片 */}
+          <div className={styles.pointsCard}>
+            <div className={styles.seasonBackgroundCard}>
+              <div className={styles.cardHeader}>
+                <img src="/point/moz_logo@2x.png" alt="Logo" className={styles.logo} />
               </div>
-              <div className={styles.statLabel}>待领取奖励</div>
+              <div className={styles.seasonInfo}>
+                <h2 className={styles.seasonTitle}>{pointsData.season}</h2>
+                <div className={styles.seasonDuration}>
+                  <span className={styles.clockIcon}>🕐</span>
+                  {pointsData.seasonStart} 至 {pointsData.seasonEnd}
+                </div>
+              </div>
             </div>
+            <div className={styles.pointsDisplay}>
+              <div className={styles.coinIcon}>🪙</div>
+              <div className={styles.pointsValue}>{pointsData.totalPoints}</div>
+              <button className={styles.historyBtn} onClick={() => Toast.show(t('pointsDetail.historyFeatureInDevelopment'))}>
+                <span className={styles.historyIcon}>🕐</span>
+                {t('pointsDetail.historyRecord')}
+              </button>
+            </div>
+            <img 
+              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/points-character.png" 
+              alt="Character" 
+              className={styles.characterImg}
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+          </div>
+
+          {/* MOZI横幅 */}
+          <div className={styles.moziBanner}>
+            <div className={styles.bannerContent}>
+              <h3>MOZI</h3>
+              <p>{t('pointsDetail.moziSlogan')}</p>
+            </div>
+            <img 
+              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/mozi-mascot.png" 
+              alt="Mascot" 
+              className={styles.mascotImg}
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
           </div>
         </div>
 
-        {/* 疯狂爱好者积分奖励 */}
-        <div className={styles.tasksSection}>
-          <div className={styles.tasksSectionHeader}>
-            <span className={styles.taskIcon}>😍</span>
-            <h3>疯狂爱好者积分奖励</h3>
-          </div>
-          
-          <div className={styles.tasksList}>
-            {tasks.map(task => (
-              <div key={task.id} className={`${styles.taskItem} ${task.status === 'completed' ? styles.completed : ''}`}>
-                <div className={styles.taskIcon}>{task.icon}</div>
-                <div className={styles.taskInfo}>
-                  <div className={styles.taskTitle}>{task.title}</div>
-                  <div className={styles.taskPoints}>+{task.points}🪙</div>
-                </div>
-                <button 
-                  className={`${styles.taskBtn} ${task.status === 'completed' ? styles.completedBtn : ''}`}
-                  onClick={() => handleTaskClick(task)}
-                >
-                  {task.btnText}
+        <div className={styles.bottomSection}>
+          {/* 邀请推荐区域 */}
+          <div className={styles.inviteSection}>
+            <div className={styles.inviteHeader}>
+              <span className={styles.starIcon}>🤩</span>
+              <h3>{t('pointsDetail.inviteRewardTitle')}</h3>
+            </div>
+
+            {/* 邀请有奖卡片 */}
+            <div className={styles.rewardCard}>
+              <div className={styles.rewardIcon}>📥</div>
+              <div className={styles.rewardInfo}>
+                <h4>{t('pointsDetail.inviteReward')}</h4>
+                <p>{t('pointsDetail.perInvite')} <span className={styles.bonusPoints}>+500🪙</span></p>
+              </div>
+            </div>
+
+            {/* 邀请链接 */}
+            <div className={styles.inviteItem}>
+              <div className={styles.inviteLabel}>{t('pointsDetail.inviteLink')}</div>
+              <div className={styles.inviteValue}>
+                <span>{pointsData.inviteLink}</span>
+                <button onClick={() => copyToClipboard(pointsData.inviteLink, t('pointsDetail.inviteLink'))} className={styles.copyBtn}>
+                  📋
                 </button>
               </div>
-            ))}
+            </div>
+
+            {/* 邀请码 */}
+            <div className={styles.inviteItem}>
+              <div className={styles.inviteLabel}>{t('pointsDetail.inviteCode')}</div>
+              <div className={styles.inviteValue}>
+                <span>{pointsData.inviteCode}</span>
+                <button onClick={() => copyToClipboard(pointsData.inviteCode, t('pointsDetail.inviteCode'))} className={styles.copyBtn}>
+                  📋
+                </button>
+              </div>
+            </div>
+
+            {/* 统计数据 */}
+            <div className={styles.statsGrid}>
+              <div className={styles.statCard}>
+                <div className={styles.statValue}>{pointsData.totalInvites}</div>
+                <div className={styles.statLabel}>{t('pointsDetail.totalInvites')}</div>
+              </div>
+              <div className={styles.statCard}>
+                <div className={styles.statValue}>{pointsData.earnedPoints}</div>
+                <div className={styles.statLabel}>{t('pointsDetail.earnedPoints')}</div>
+              </div>
+              <div className={styles.statCard}>
+                <div className={styles.statValue}>{pointsData.activeInvites}</div>
+                <div className={styles.statLabel}>{t('pointsDetail.activeInvites')}</div>
+              </div>
+              <div className={styles.statCard}>
+                <div className={styles.statValue}>
+                  {pointsData.pendingRewards === 0 ? '!' : pointsData.pendingRewards}
+                </div>
+                <div className={styles.statLabel}>{t('pointsDetail.pendingRewards')}</div>
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* 获得更多积分横幅 */}
-        <div className={styles.earnMoreBanner}>
-          <span className={styles.bannerText}>获得更多积分</span>
-          <img 
-            src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/mozi-mascot.png" 
-            alt="Mascot" 
-            className={styles.bannerMascot}
-            onError={(e) => { e.target.style.display = 'none'; }}
-          />
-        </div>
-
-        {/* 每日投资排行 */}
-        <div className={styles.dailyInvestmentSection}>
-          <div className={styles.sectionHeader}>
-            <span className={styles.headerIcon}>🎁</span>
-            <h3>每日投资排行</h3>
+          {/* 疯狂爱好者积分奖励 */}
+          <div className={styles.tasksSection}>
+            <div className={styles.tasksSectionHeader}>
+              <span className={styles.taskIcon}>😍</span>
+              <h3>{t('pointsDetail.fanRewardsTitle')}</h3>
+            </div>
+            
+            <div className={styles.tasksList}>
+              {tasks.map(task => (
+                <div key={task.id} className={`${styles.taskItem} ${task.status === 'completed' ? styles.completed : ''}`}>
+                  <div className={styles.taskIcon}>{task.icon}</div>
+                  <div className={styles.taskInfo}>
+                    <div className={styles.taskTitle}>{task.title}</div>
+                    <div className={styles.taskPoints}>+{task.points}🪙</div>
+                  </div>
+                  <button 
+                    className={`${styles.taskBtn} ${task.status === 'completed' ? styles.completedBtn : ''}`}
+                    onClick={() => handleTaskClick(task)}
+                  >
+                    {task.btnText}
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className={styles.investmentList}>
-            {dailyInvestments.map(item => (
-              <div key={item.id} className={styles.investmentItem}>
-                <div className={styles.investmentIcon}>📦</div>
-                <div className={styles.investmentInfo}>
-                  <div className={styles.investmentTitle}>{item.title}</div>
-                  <div className={styles.investmentSubtitle}>{item.subtitle}</div>
-                  <div className={styles.progressBar}>
-                    <div 
-                      className={styles.progressFill} 
-                      style={{ width: `${item.total > 0 ? (item.current / item.total * 100) : 100}%` }}
-                    />
+          {/* 获得更多积分横幅 */}
+          <div className={styles.earnMoreBanner}>
+            <span className={styles.bannerText}>{t('pointsDetail.earnMorePoints')}</span>
+            <img 
+              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/mozi-mascot.png" 
+              alt="Mascot" 
+              className={styles.bannerMascot}
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+          </div>
+
+          {/* 每日投资排行 */}
+          <div className={styles.dailyInvestmentSection}>
+            <div className={styles.sectionHeader}>
+              <span className={styles.headerIcon}>🎁</span>
+              <h3>{t('pointsDetail.dailyInvestmentTitle')}</h3>
+            </div>
+
+            <div className={styles.investmentList}>
+              {dailyInvestments.map(item => (
+                <div key={item.id} className={styles.investmentItem}>
+                  <div className={styles.investmentIcon}>📦</div>
+                  <div className={styles.investmentInfo}>
+                    <div className={styles.investmentTitle}>{item.title}</div>
+                    <div className={styles.investmentSubtitle}>{item.subtitle}</div>
+                    <div className={styles.progressBar}>
+                      <div 
+                        className={styles.progressFill} 
+                        style={{ width: `${item.total > 0 ? (item.current / item.total * 100) : 100}%` }}
+                      />
+                    </div>
+                  </div>
+                  <div className={styles.investmentProgress}>
+                    {item.completed ? (
+                      <span className={styles.completedLabel}>{t('pointsDetail.completed')}</span>
+                    ) : (
+                      <span>{item.current}/{item.total}</span>
+                    )}
                   </div>
                 </div>
-                <div className={styles.investmentProgress}>
-                  {item.completed ? (
-                    <span className={styles.completedLabel}>已完成</span>
-                  ) : (
-                    <span>{item.current}/{item.total}</span>
-                  )}
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* 底部按钮 */}
-        <div className={styles.bottomButtons}>
-          <button className={styles.bottomBtn} onClick={() => Toast.show('加入警报通功能开发中')}>
-            <span>🔔</span>
-            加入警报通
-          </button>
-          <button className={styles.bottomBtn} onClick={() => Toast.show('认证功能开发中')}>
-            <span>🛡️</span>
-            认证
-          </button>
+          {/* 底部按钮 */}
+          <div className={styles.bottomButtons}>
+            <button className={styles.bottomBtn} onClick={() => Toast.show(t('pointsDetail.joinAlarm'))}>
+              <span>🔔</span>
+              {t('pointsDetail.joinAlarm')}
+            </button>
+            <button className={styles.bottomBtn} onClick={() => Toast.show(t('pointsDetail.certification'))}>
+              <span>🛡️</span>
+              {t('pointsDetail.certification')}
+            </button>
+          </div>
         </div>
       </div>
     </Layout>

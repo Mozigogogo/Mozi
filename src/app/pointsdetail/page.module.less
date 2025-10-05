@@ -47,13 +47,12 @@
 
   // 积分卡片
   .pointsCard {
-    background: linear-gradient(135deg, #B8FF6F 0%, #C4FF8D 100%);
-    border-radius: 15px;
-    padding: 20px;
+    border-radius: 15px; /* 保持圆角 */
     margin-bottom: 15px;
     position: relative;
     overflow: hidden;
-    min-height: 180px;
+    min-height: auto; /* 高度由内容决定 */
+    background-color: #222222;
 
     .cardHeader {
       display: flex;
@@ -61,8 +60,8 @@
       margin-bottom: 10px;
       
       .logo {
-        width: 30px;
-        height: 30px;
+        width: 80px;
+        height: auto;
       }
     }
 
@@ -136,6 +135,19 @@
       height: auto;
       pointer-events: none;
     }
+  }
+
+  // 新增的背景盒子样式
+  .seasonBackgroundCard {
+    background-image: url('/point/Season_bg@2x.png');
+    background-size: cover; /* 保持cover，但调整position */
+    background-position: right center; /* 调整为右侧居中 */
+    background-repeat: no-repeat;
+    border-radius: 15px; /* 保持圆角与外部pointsCard一致 */
+    padding: 20px; /* 将padding移动到这里 */
+    position: relative;
+    overflow: hidden;
+    min-height: 180px; /* 适当调整高度以适应内容 */
   }
 
   // MOZI横幅
@@ -572,6 +584,17 @@
         background: #333;
       }
     }
+  }
+
+  .topSection {
+    margin-bottom: 20px; /* 或者其他你想要的间距 */
+  }
+
+  .bottomSection {
+    /* 底部区域的样式，例如背景色 */
+    background: #000;
+    border-radius: 15px;
+    padding: 10px;
   }
 }
 
