@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Toast, Tabs } from 'antd-mobile';
+import { ClockCircleOutline } from 'antd-mobile-icons';
 import { useTranslation } from 'react-i18next';
 import Layout from '../../components/Layout';
 import styles from './page.module.less';
@@ -89,16 +90,16 @@ export default function PointsDetail() {
               <div className={styles.seasonInfo}>
                 <h2 className={styles.seasonTitle}>{pointsData.season}</h2>
                 <div className={styles.seasonDuration}>
-                  <span className={styles.clockIcon}>🕐</span>
+                  <ClockCircleOutline className={styles.clockIcon} />
                   {pointsData.seasonStart} 至 {pointsData.seasonEnd}
                 </div>
               </div>
             </div>
             <div className={styles.pointsDisplay}>
-              <div className={styles.coinIcon}>🪙</div>
+              <img src="/point/coin_icon@2x.png" alt="Coin" className={styles.coinIcon} />
               <div className={styles.pointsValue}>{pointsData.totalPoints}</div>
               <button className={styles.historyBtn} onClick={() => Toast.show(t('pointsDetail.historyFeatureInDevelopment'))}>
-                <span className={styles.historyIcon}>🕐</span>
+                <ClockCircleOutline className={styles.historyIcon} />
                 {t('pointsDetail.historyRecord')}
               </button>
             </div>
@@ -112,59 +113,60 @@ export default function PointsDetail() {
 
           {/* MOZI横幅 */}
           <div className={styles.moziBanner}>
-            <div className={styles.bannerContent}>
-              <h3>MOZI</h3>
-              <p>{t('pointsDetail.moziSlogan')}</p>
-            </div>
-            <img 
-              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/mozi-mascot.png" 
-              alt="Mascot" 
-              className={styles.mascotImg}
-              onError={(e) => { e.target.style.display = 'none'; }}
-            />
+            {/* 背景图片自带文字，无需额外内容 */}
           </div>
         </div>
 
         <div className={styles.bottomSection}>
           {/* 邀请推荐区域 */}
           <div className={styles.inviteSection}>
+            {/* 标题区域 */}
             <div className={styles.inviteHeader}>
-              <span className={styles.starIcon}>🤩</span>
-              <h3>{t('pointsDetail.inviteRewardTitle')}</h3>
+              <img src="/point/Emoji_1@2x.png" alt="Emoji" className={styles.emojiIcon} />
+              <div className={styles.inviteTitle}>{t('pointsDetail.inviteRewardTitle')}</div>
             </div>
 
             {/* 邀请有奖卡片 */}
             <div className={styles.rewardCard}>
-              <div className={styles.rewardIcon}>📥</div>
+              <img src="/point/invite@2x.png" alt="Invite" className={styles.rewardIcon} />
               <div className={styles.rewardInfo}>
                 <h4>{t('pointsDetail.inviteReward')}</h4>
-                <p>{t('pointsDetail.perInvite')} <span className={styles.bonusPoints}>+500🪙</span></p>
+                <p>
+                  {t('pointsDetail.perInvite')} 
+                  <span className={styles.bonusPoints}>
+                    +500<img src="/point/coin_icon@2x.png" alt="Coin" className={styles.bonusCoinIcon} />
+                  </span>
+                </p>
               </div>
             </div>
 
             {/* 邀请链接 */}
-            <div className={styles.inviteItem}>
-              <div className={styles.inviteLabel}>{t('pointsDetail.inviteLink')}</div>
-              <div className={styles.inviteValue}>
-                <span>{pointsData.inviteLink}</span>
-                <button onClick={() => copyToClipboard(pointsData.inviteLink, t('pointsDetail.inviteLink'))} className={styles.copyBtn}>
-                  📋
+            <div className={styles.inviteInputBox}>
+              <div className={styles.inviteInputLabel}>{t('pointsDetail.inviteLink')}</div>
+              <div className={styles.inviteInputContent}>
+                <span className={styles.inviteInputText}>{pointsData.inviteLink}</span>
+                <button 
+                  onClick={() => copyToClipboard(pointsData.inviteLink, t('pointsDetail.inviteLink'))} 
+                  className={styles.copyIconBtn}>
+                  <img src="/point/copy@2x.png" alt="Copy" className={styles.copyIcon} />
                 </button>
               </div>
             </div>
 
             {/* 邀请码 */}
-            <div className={styles.inviteItem}>
-              <div className={styles.inviteLabel}>{t('pointsDetail.inviteCode')}</div>
-              <div className={styles.inviteValue}>
-                <span>{pointsData.inviteCode}</span>
-                <button onClick={() => copyToClipboard(pointsData.inviteCode, t('pointsDetail.inviteCode'))} className={styles.copyBtn}>
-                  📋
+            <div className={styles.inviteInputBox}>
+              <div className={styles.inviteInputLabel}>{t('pointsDetail.inviteCode')}</div>
+              <div className={styles.inviteInputContent}>
+                <span className={styles.inviteInputText}>{pointsData.inviteCode}</span>
+                <button 
+                  onClick={() => copyToClipboard(pointsData.inviteCode, t('pointsDetail.inviteCode'))} 
+                  className={styles.copyIconBtn}>
+                  <img src="/point/copy@2x.png" alt="Copy" className={styles.copyIcon} />
                 </button>
               </div>
             </div>
 
-            {/* 统计数据 */}
+            {/* 统计数据网格 */}
             <div className={styles.statsGrid}>
               <div className={styles.statCard}>
                 <div className={styles.statValue}>{pointsData.totalInvites}</div>
@@ -180,10 +182,17 @@ export default function PointsDetail() {
               </div>
               <div className={styles.statCard}>
                 <div className={styles.statValue}>
-                  {pointsData.pendingRewards === 0 ? '!' : pointsData.pendingRewards}
+                  {pointsData.pendingRewards === 0 ? <img src="/point/info@2x.png" alt="Info" className={styles.infoIcon} /> : pointsData.pendingRewards}
                 </div>
                 <div className={styles.statLabel}>{t('pointsDetail.pendingRewards')}</div>
               </div>
+            </div>
+
+            {/* 说明文字 */}
+            <div className={styles.inviteNotes}>
+              <p>1. {t('pointsDetail.note1')}</p>
+              <p>2. {t('pointsDetail.note2')}</p>
+              <p>3. {t('pointsDetail.note3')}</p>
             </div>
           </div>
 

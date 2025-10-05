@@ -207,6 +207,9 @@
     "taskCompleted": "Task Completed",
     "joinAlarm": "Join Alarm",
     "certification": "Certification",
+    "note1": "The first 20 referrals each day can earn points.",
+    "note2": "If your referral purchases membership, you will receive points and a 20% commission rebate.",
+    "note3": "The referral is valid only if the invited user enters the invitation code",
     "completed": "Completed"
   }
 }

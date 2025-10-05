@@ -188,7 +188,7 @@
     "myInvites": "我的邀请",
     "season": "赛季",
     "historyRecord": "历史记录",
-    "inviteRewardTitle": "每坏推荐均可获得积分奖励！",
+    "inviteRewardTitle": "每次推荐均可获得积分奖励！",
     "inviteReward": "邀请有奖",
     "perInvite": "每邀请一人",
     "inviteLink": "邀请链接",
@@ -207,6 +207,9 @@
     "taskCompleted": "任务已完成",
     "joinAlarm": "加入警报通",
     "certification": "认证",
+    "note1": "每天前20个推荐均可获得积分。",
+    "note2": "如果您的推荐人购买会员资格，您将获得积分和20%的费用回扣。",
+    "note3": "推荐有效的前提是被邀请用户必须输入邀请码",
     "completed": "已完成"
   }
 }
