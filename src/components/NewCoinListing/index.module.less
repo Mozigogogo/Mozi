@@ -1,0 +1,122 @@
+.wrapper {
+  margin: 0 0 20px 0;
+}
+
+.container {
+  background: transparent;
+  padding: 0;
+}
+
+.scroll {
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  
+  /* 隐藏滚动条 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 10px 16px 10px;
+  background-color: transparent;
+}
+
+.headerTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+}
+
+.viewMore {
+  font-size: 14px;
+  color: #999;
+  cursor: pointer;
+  
+  &:hover {
+    color: #666;
+  }
+}
+
+.coinItem {
+  flex-shrink: 0;
+  width: calc(80vw - 20px);
+  max-width: 300px;
+  min-height: 140px;
+  margin-right: 12px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.coinItem.last {
+  margin-right: 0;
+}
+
+.coinInfo {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.exchangeIcon {
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  border-radius: 4px;
+  object-fit: contain;
+}
+
+.exchangeName {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  margin-right: auto;
+}
+
+.listingTime {
+  font-size: 11px;
+  color: #999;
+}
+
+.coinDetails {
+  font-size: 13px;
+  color: #333;
+  line-height: 1.4;
+  margin: 0;
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.coinLinkContainer {
+  background-color: #F2F4F8;
+  padding: 8px 10px;
+  border-radius: 10px;
+  margin-top: auto;
+}
+
+.coinLink {
+  font-size: 11px;
+  color: #8E8E8E;
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-all;
+  overflow-wrap: break-word;
+  line-height: 1.3;
+}
+

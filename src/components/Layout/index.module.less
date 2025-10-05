@@ -1,0 +1,204 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding-bottom: 50px; /* 为底部导航栏留出空间 */
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0;
+  z-index: 99;
+  display: flex;
+  align-items: center;
+  height: 44px;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  padding-left: 16px;
+  min-width: 60px;
+}
+
+.headerCenter {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  padding-right: 16px;
+  min-width: 60px;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.backBtn,
+.moreBtn,
+.searchBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  color: var(--text-color);
+  transition: opacity 0.2s;
+}
+
+.backBtn:hover,
+.moreBtn:hover,
+.searchBtn:hover {
+  opacity: 0.6;
+}
+
+.title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-color);
+  text-align: center;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.content {
+  flex: 1;
+}
+
+.tabBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background: #fff;
+  display: flex;
+  border-top: 1px solid var(--border-color);
+  z-index: 100;
+}
+
+.tabItem {
+  flex: 1;
+  text-align: center;
+}
+
+.tabLink {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: var(--font-size-sm);
+  color: #cecece;
+  transition: color 0.3s ease;
+}
+
+.tabLink.active {
+  color: #11B787;
+}
+
+.tabIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+  width: 22px;
+  height: 22px;
+  
+  img {
+    display: block;
+  }
+}
+
+.tabText {
+  font-size: var(--font-size-sm);
+  line-height: 1;
+}
+
+.errorBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  padding: 20px;
+  text-align: center;
+}
+
+.errorIcon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.errorMsg {
+  color: var(--error-color);
+  font-size: var(--font-size-base);
+}
+
+.loadingBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+.loginBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  padding: 20px;
+  text-align: center;
+}
+
+.loginBtn {
+  margin-top: 16px;
+  padding: 8px 24px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-base);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+}
+
+@media (prefers-color-scheme: dark) {
+  .header {
+    background: #1a1a1a;
+    border-bottom-color: #333;
+  }
+  
+  .title {
+    color: #fff;
+  }
+  
+  .backBtn,
+  .moreBtn,
+  .searchBtn {
+    color: #fff;
+  }
+  
+  .tabBar {
+    background: #1a1a1a;
+    border-top-color: #333;
+  }
+  
+  .tabLink {
+    color: #cecece;
+  }
+  
+  .tabLink.active {
+    color: #11B787;
+  }
+}
