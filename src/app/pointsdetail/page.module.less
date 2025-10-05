@@ -45,6 +45,39 @@
     }
   }
 
+  /* 顶部导航 */
+  .topNav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 10px 6px;
+    margin-bottom: 8px;
+    position: sticky;
+    top: 0;
+    z-index: 80;
+    background: #000; /* ensure it covers content when fixed */
+  }
+
+  .backBtn {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 6px 8px;
+  }
+
+  .navTitle {
+    color: #fff;
+    font-weight: 700;
+    font-size: 16px;
+  }
+
   // 积分卡片
   .pointsCard {
     border-radius: 15px; /* 保持圆角 */
@@ -426,12 +459,33 @@
     border-radius: 15px;
     padding: 20px;
     margin-bottom: 15px;
+    position: relative;
+
+    &::before {
+      content: "";
+      position: absolute;
+      right: 0;
+      width: 210px;
+      height: 210px;
+      background-image: url('/point/transparent_bg@2x.png');
+      background-repeat: no-repeat;
+      background-position: right top;
+      background-size: contain;
+      pointer-events: none;
+      opacity: 0.9;
+    }
 
     .tasksSectionHeader {
       display: flex;
       align-items: center;
       gap: 8px;
       margin-bottom: 15px;
+      
+      .headerIconImg {
+        width: 28px;
+        height: 28px;
+        object-fit: contain;
+      }
       
       .taskIcon {
         font-size: 24px;
@@ -442,31 +496,56 @@
         font-weight: 700;
         color: #fff;
         margin: 0;
+        display: inline-block;
+        border-radius: 8px;
+        background-image: url('/point/tab_bg@2x.png');
+        background-repeat: no-repeat;
+        background-position: bottom left;
+        background-size: auto 12px;
+        padding-bottom: 4px;
+        line-height: 1;
       }
     }
 
     .tasksList {
       display: flex;
       flex-direction: column;
-      gap: 10px;
 
       .taskItem {
-        background: #B8FF6F;
-        border-radius: 12px;
-        padding: 12px 15px;
+        background: transparent;
+        border-radius: 16px;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 14px;
         transition: all 0.3s ease;
+        min-height: 70px;
 
-        &.completed {
-          opacity: 0.7;
+        // &.completed {
+        //   opacity: 0.7;
+        // }
+
+        .taskIconWrapper {
+          width: 45px;
+          height: 45px;
+          background: transparent;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          
+          .taskIconImg {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+          }
         }
-
+        
         .taskIcon {
-          width: 36px;
-          height: 36px;
-          background: #11B787;
+          width: 45px;
+          height: 45px;
+          background: transparent;
           border-radius: 10px;
           display: flex;
           align-items: center;
@@ -479,36 +558,47 @@
           flex: 1;
           
           .taskTitle {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 600;
-            color: #000;
-            margin-bottom: 2px;
+            color: #fff;
+            margin-bottom: 4px;
           }
           
           .taskPoints {
-            font-size: 12px;
-            color: #333;
+            font-size: 11px;
+            color: #fff;
             font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            
+            .taskCoinIcon {
+              width: 11px;
+              height: 11px;
+              object-fit: contain;
+            }
           }
         }
 
         .taskBtn {
-          background: #11B787;
+          background: linear-gradient( 92deg, #6AFF41 0%, #EDE75C 100%);
           border: none;
-          border-radius: 16px;
-          padding: 6px 16px;
+          border-radius: 8px;
+          padding: 8px 12px;
           font-size: 12px;
-          color: #fff;
+          color: #222222;
           font-weight: 600;
           cursor: pointer;
           flex-shrink: 0;
+          min-width: 60px;
           
           &:active {
             transform: scale(0.95);
           }
           
           &.completedBtn {
-            background: #666;
+            background: #333727;
+            color:#82FB46;
           }
         }
       }
@@ -517,7 +607,10 @@
 
   // 获得更多积分横幅
   .earnMoreBanner {
-    background: linear-gradient(135deg, #B8FF6F 0%, #C4FF8D 100%);
+    background-image: url('/point/last_bg@2x.png');
+    background-repeat: no-repeat;
+    background-position: right center;
+    background-size: contain;
     border-radius: 15px;
     padding: 15px 20px;
     margin-bottom: 15px;
@@ -526,13 +619,13 @@
     justify-content: space-between;
     position: relative;
     overflow: hidden;
-    min-height: 60px;
+    min-height: 55px;
 
-    .bannerText {
-      font-size: 20px;
-      font-weight: 700;
-      color: #000;
-    }
+    // .bannerText {
+    //   font-size: 20px;
+    //   font-weight: 700;
+    //   color: #000;
+    // }
 
     .bannerMascot {
       width: 60px;
@@ -559,6 +652,13 @@
       .headerIcon {
         font-size: 24px;
       }
+
+      .headerIconImg {
+        width: 28px;
+        height: 28px;
+        display: block;
+        object-fit: contain;
+      }
       
       h3 {
         font-size: 16px;
@@ -574,23 +674,45 @@
       gap: 12px;
 
       .investmentItem {
-        background: #2a2a2a;
-        border-radius: 12px;
-        padding: 12px 15px;
         display: flex;
         align-items: center;
         gap: 12px;
 
         .investmentIcon {
-          width: 36px;
-          height: 36px;
-          background: #B8FF6F;
+          width: 45px;
+          height: 45px;
+          background: transparent;
           border-radius: 10px;
           display: flex;
           align-items: center;
           justify-content: center;
           font-size: 20px;
           flex-shrink: 0;
+
+          .investmentIconImg {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+          }
+        }
+
+        .investmentSubtitle {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          color: #999;
+        }
+
+        .rewardValue {
+          color: #FEBE64;
+          font-weight: 700;
+        }
+
+        .investmentCoinIcon {
+          width: 14px;
+          height: 14px;
+          object-fit: contain;
         }
 
         .investmentInfo {
@@ -611,16 +733,42 @@
 
           .progressBar {
             width: 100%;
-            height: 6px;
+            height: 8px;
             background: #444;
             border-radius: 3px;
-            overflow: hidden;
+            overflow: visible; /* allow handle to overflow */
+            position: relative; /* make handle positioned relative to bar */
 
             .progressFill {
               height: 100%;
-              background: linear-gradient(90deg, #B8FF6F 0%, #11B787 100%);
+              background: linear-gradient( 92deg, #6AFF41 0%, #EDE75C 100%);
               transition: width 0.3s ease;
+              border-radius: 12px 0 0 12px; /* 左侧圆角 */
             }
+          }
+          .progressRow {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
+
+          .progressHandle {
+            position: absolute;
+            left: 0; /* positioned via inline style left percent */
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: linear-gradient( 92deg, #6AFF41 0%, #EDE75C 100%);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-weight:500;
+            color:#0A0A0A;
+            font-size: 11px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+            z-index: 2;
           }
         }
 
@@ -633,7 +781,7 @@
           text-align: right;
 
           .completedLabel {
-            color: #B8FF6F;
+            color: #FFFFFF;
           }
         }
       }
@@ -648,23 +796,49 @@
     margin-top: 20px;
 
     .bottomBtn {
-      background: #2a2a2a;
-      border: 1px solid #444;
-      border-radius: 10px;
-      padding: 15px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      font-size: 14px;
-      color: #fff;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
+        background: linear-gradient(180deg, #202211 0%, #222222 100%);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 12px;
+        padding: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 16px;
+        color: #fff;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
       
       span {
-        font-size: 20px;
+        font-size: 14px;
       }
+
+        .bottomIcon {
+          width: 50px;
+          height: 50px;
+          display: block;
+          margin-left: 12px;
+        }
+
+        .bottomBtnContent {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 4px;
+          text-align: left;
+        }
+
+        .bottomBtnTitle {
+          font-size: 12px;
+          font-weight: 800;
+          color: #fff;
+        }
+
+        .bottomBtnSubtitle {
+          font-size: 10px;
+          color: rgba(255,255,255,0.7);
+        }
       
       &:active {
         transform: scale(0.98);

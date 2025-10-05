@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Toast, Tabs } from 'antd-mobile';
-import { ClockCircleOutline } from 'antd-mobile-icons';
+import { ClockCircleOutline, LeftOutline } from 'antd-mobile-icons';
 import { useTranslation } from 'react-i18next';
 import Layout from '../../components/Layout';
 import styles from './page.module.less';
@@ -27,20 +27,21 @@ export default function PointsDetail() {
   };
 
   const tasks = [
-    { id: 1, icon: '🎯', title: '首次注册赠号', points: 30, status: 'pending', btnText: '去注册' },
-    { id: 2, icon: '✅', title: '完成邀件2次交易', points: 5, status: 'completed', btnText: '已完成' },
-    { id: 3, icon: '👥', title: '加入他们的社群', points: 20, status: 'pending', btnText: '去加入' },
-    { id: 4, icon: '🌅', title: '早晨登录', points: 200, status: 'pending', btnText: '去登录' },
-    { id: 5, icon: '⭐', title: '收藏我的推文', points: 100, status: 'completed', btnText: '已收藏' },
-    { id: 6, icon: '📚', title: '类似链接学习', points: 5, status: 'pending', btnText: '去学习' }
+    { id: 1, icon: '/point/contact_person@2x.png', title: '首次注册账号', points: 50, status: 'pending', btnText: '去注册' },
+    { id: 2, icon: '/point/like@2x.png', title: '关注我们的公众号', points: 50, status: 'completed', btnText: '已关注' },
+    { id: 3, icon: '/point/social_group@2x.png', title: '加入我们的社群', points: 50, status: 'pending', btnText: '去加入' },
+    { id: 4, icon: '/point/twitter@2x.png', title: '早鸟活动', points: 200, status: 'pending', btnText: '去参加' },
+    { id: 5, icon: '/point/set_alert@2x.png', title: '设置报警功能', points: 100, status: 'completed', btnText: '已设置' },
+    { id: 6, icon: '/point/video@2x.png', title: '完成视频学习', points: 50, status: 'pending', btnText: '去学习' }
   ];
 
   const dailyInvestments = [
-    { id: 1, title: '每日点赞', subtitle: '每天点赞+30🪙', current: 3, total: 47 },
-    { id: 2, title: '签到', subtitle: '每周签到+20🪙', current: 10, total: 47 },
-    { id: 3, title: '收到糖', subtitle: '收到糖+7🪙', current: 7, total: 47 },
-    { id: 4, title: '阅读', subtitle: '阅读一遍+9🪙', current: 9, total: 0 },
-    { id: 5, title: '获字寺币排除', subtitle: '获字寺+20🪙', current: 47, total: 47, completed: true }
+    { id: 1, icon: '/point/glove_praise@2x.png', title: '每日点赞', rewardLabel: '每个赞', reward: 4, current: 3, total: 47 },
+    { id: 2, icon: '/point/paper_airplane@2x.png', title: '发帖', rewardLabel: '每条帖子', reward: 10, current: 10, total: 47 },
+    // 注意：仓库中该文件名有前导空格，使用 URL 编码以确保能加载
+    { id: 3, icon: '/point/%20no_glove_praise@2x.png', title: '收到赞', rewardLabel: '每次被赞', reward: 4, current: 7, total: 47 },
+    { id: 4, icon: '/point/notification_1@2x.png', title: '回复', rewardLabel: '回复一次', reward: 4, current: 9, total: 10 },
+    { id: 5, icon: '/point/notification_2@2x.png', title: '帖子收到回复', rewardLabel: '收到回复', reward: 4, current: 10, total: 10, completed: true }
   ];
 
   const handleTaskClick = (task) => {
@@ -65,8 +66,15 @@ export default function PointsDetail() {
   ];
 
   return (
-    <Layout>
+
       <div className={styles.pointsDetailContainer}>
+        {/* 顶部导航 */}
+        <div className={styles.topNav}>
+          <button className={styles.backBtn} onClick={() => router.back()}>
+            <LeftOutline />
+          </button>
+          <div className={styles.navTitle}>积分中心</div>
+        </div>
         {/* 顶部Tab */}
         <div className={styles.tabsContainer}>
           <Tabs
@@ -199,17 +207,22 @@ export default function PointsDetail() {
           {/* 疯狂爱好者积分奖励 */}
           <div className={styles.tasksSection}>
             <div className={styles.tasksSectionHeader}>
-              <span className={styles.taskIcon}>😍</span>
+              <img src="/point/Emoji_2@2x.png" alt="Praise" className={styles.headerIconImg} />
               <h3>{t('pointsDetail.fanRewardsTitle')}</h3>
             </div>
             
             <div className={styles.tasksList}>
               {tasks.map(task => (
                 <div key={task.id} className={`${styles.taskItem} ${task.status === 'completed' ? styles.completed : ''}`}>
-                  <div className={styles.taskIcon}>{task.icon}</div>
+                  <div className={styles.taskIconWrapper}>
+                    <img src={task.icon} alt={task.title} className={styles.taskIconImg} />
+                  </div>
                   <div className={styles.taskInfo}>
                     <div className={styles.taskTitle}>{task.title}</div>
-                    <div className={styles.taskPoints}>+{task.points}🪙</div>
+                    <div className={styles.taskPoints}>
+                      +{task.points}
+                      <img src="/point/coin_icon@2x.png" alt="Coin" className={styles.taskCoinIcon} />
+                    </div>
                   </div>
                   <button 
                     className={`${styles.taskBtn} ${task.status === 'completed' ? styles.completedBtn : ''}`}
@@ -224,43 +237,52 @@ export default function PointsDetail() {
 
           {/* 获得更多积分横幅 */}
           <div className={styles.earnMoreBanner}>
-            <span className={styles.bannerText}>{t('pointsDetail.earnMorePoints')}</span>
-            <img 
-              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/mozi-mascot.png" 
-              alt="Mascot" 
-              className={styles.bannerMascot}
-              onError={(e) => { e.target.style.display = 'none'; }}
-            />
+            
           </div>
 
           {/* 每日投资排行 */}
           <div className={styles.dailyInvestmentSection}>
             <div className={styles.sectionHeader}>
-              <span className={styles.headerIcon}>🎁</span>
-              <h3>{t('pointsDetail.dailyInvestmentTitle')}</h3>
+              <img src="/point/Emoji_3@2x.png" alt="Daily" className={styles.headerIconImg} />
+              <h3>每日奖励任务</h3>
             </div>
 
             <div className={styles.investmentList}>
               {dailyInvestments.map(item => (
                 <div key={item.id} className={styles.investmentItem}>
-                  <div className={styles.investmentIcon}>📦</div>
+                  <div className={styles.investmentIcon}>
+                    <img src={item.icon} alt={item.title} className={styles.investmentIconImg} />
+                  </div>
                   <div className={styles.investmentInfo}>
                     <div className={styles.investmentTitle}>{item.title}</div>
-                    <div className={styles.investmentSubtitle}>{item.subtitle}</div>
-                    <div className={styles.progressBar}>
-                      <div 
-                        className={styles.progressFill} 
-                        style={{ width: `${item.total > 0 ? (item.current / item.total * 100) : 100}%` }}
-                      />
+                    <div className={styles.investmentSubtitle}>
+                      <span>{item.rewardLabel}</span>
+                      <span className={styles.rewardValue}>+{item.reward}</span>
+                      <img src="/point/coin_icon@2x.png" alt="coin" className={styles.investmentCoinIcon} />
+                    </div>
+                    <div className={styles.progressRow}>
+                      <div className={styles.progressBar}>
+                        <div 
+                          className={styles.progressFill} 
+                          style={{ width: `${item.total > 0 ? (item.current / item.total * 100) : 100}%` }}
+                        />
+                        <div
+                          className={styles.progressHandle}
+                          style={{ left: `${item.total > 0 ? (item.current / item.total * 100) : 100}%` }}
+                        >
+                          <span>{item.current}</span>
+                        </div>
+                      </div>
+                      <div className={styles.investmentProgress}>
+                        {item.completed ? (
+                          <span className={styles.completedLabel}>{t('pointsDetail.completed')}</span>
+                        ) : (
+                          <span>{item.current}/{item.total}</span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <div className={styles.investmentProgress}>
-                    {item.completed ? (
-                      <span className={styles.completedLabel}>{t('pointsDetail.completed')}</span>
-                    ) : (
-                      <span>{item.current}/{item.total}</span>
-                    )}
-                  </div>
+                  {/* moved into progressRow for inline layout */}
                 </div>
               ))}
             </div>
@@ -269,17 +291,23 @@ export default function PointsDetail() {
           {/* 底部按钮 */}
           <div className={styles.bottomButtons}>
             <button className={styles.bottomBtn} onClick={() => Toast.show(t('pointsDetail.joinAlarm'))}>
-              <span>🔔</span>
-              {t('pointsDetail.joinAlarm')}
+              <div className={styles.bottomBtnContent}>
+                <div className={styles.bottomBtnTitle}>{t('pointsDetail.joinAlarm')}</div>
+                <div className={styles.bottomBtnSubtitle}>Add an alarm</div>
+              </div>
+              <img src="/point/point_alert@2x.png" alt="Alert" className={styles.bottomIcon} />
             </button>
+
             <button className={styles.bottomBtn} onClick={() => Toast.show(t('pointsDetail.certification'))}>
-              <span>🛡️</span>
-              {t('pointsDetail.certification')}
+              <div className={styles.bottomBtnContent}>
+                <div className={styles.bottomBtnTitle}>{t('pointsDetail.certification')}</div>
+                <div className={styles.bottomBtnSubtitle}>certification</div>
+              </div>
+              <img src="/point/Certification@2x.png" alt="Certification" className={styles.bottomIcon} />
             </button>
           </div>
         </div>
       </div>
-    </Layout>
   );
 }
 
