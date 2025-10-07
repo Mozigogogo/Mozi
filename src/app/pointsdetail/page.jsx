@@ -47,9 +47,25 @@ export default function PointsDetail() {
   const handleTaskClick = (task) => {
     if (task.status === 'completed') {
       Toast.show({ content: '任务已完成', position: 'bottom' });
-    } else {
-      Toast.show({ content: `${task.btnText}功能开发中`, position: 'bottom' });
+      return;
     }
+
+    // 跳转逻辑：注册跳转到用户页（登录/注册），早鸟/推特跳转到 Twitter
+    if (task.btnText === '去注册' || task.title === '首次注册账号') {
+      router.push('/user');
+      return;
+    }
+
+    // 如果图标是 twitter，跳转到推特外链
+    if (task.icon && task.icon.includes('twitter')) {
+      // 打开推特（新标签页）
+      if (typeof window !== 'undefined') {
+        window.open('https://twitter.com', '_blank');
+      }
+      return;
+    }
+
+    Toast.show({ content: `${task.btnText}功能开发中`, position: 'bottom' });
   };
 
   const copyToClipboard = (text, label) => {
