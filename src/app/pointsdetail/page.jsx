@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Toast, Tabs } from 'antd-mobile';
+import { Toast, Tabs, Modal, Image as AntdImage } from 'antd-mobile';
 import { ClockCircleOutline, LeftOutline } from 'antd-mobile-icons';
 import { useTranslation } from 'react-i18next';
 import Layout from '../../components/Layout';
@@ -26,14 +26,32 @@ export default function PointsDetail() {
     pendingRewards: 0
   };
 
-  const tasks = [
-    { id: 1, icon: '/point/contact_person@2x.png', title: '首次注册账号', points: 50, status: 'pending', btnText: '去注册' },
-    { id: 2, icon: '/point/like@2x.png', title: '关注我们的公众号', points: 50, status: 'completed', btnText: '已关注' },
-    { id: 3, icon: '/point/social_group@2x.png', title: '加入我们的社群', points: 50, status: 'pending', btnText: '去加入' },
-    { id: 4, icon: '/point/twitter@2x.png', title: '早鸟活动', points: 200, status: 'pending', btnText: '去参加' },
-    { id: 5, icon: '/point/set_alert@2x.png', title: '设置报警功能', points: 100, status: 'completed', btnText: '已设置' },
-    { id: 6, icon: '/point/video@2x.png', title: '完成视频学习', points: 50, status: 'pending', btnText: '去学习' }
-  ];
+  const [tasksList, setTasksList] = useState([
+    { id: 1, icon: '/point/contact_person@2x.png', title: '首次登录账号', points: 50, status: 'pending', btnText: '去登录', needsAction: true },
+    { id: 2, icon: '/point/like@2x.png', title: '关注我们的公众号', points: 50, status: 'pending', btnText: '去关注', needsAction: true },
+    { id: 3, icon: '/point/social_group@2x.png', title: '加入我们的社群', points: 50, status: 'pending', btnText: '去加入', needsAction: true },
+    { id: 4, icon: '/point/twitter@2x.png', title: '早鸟活动', points: 200, status: 'pending', btnText: '去参加', needsAction: true },
+    { id: 5, icon: '/point/set_alert@2x.png', title: '设置报警功能', points: 100, status: 'pending', btnText: '去设置', needsAction: true },
+    { id: 6, icon: '/point/video@2x.png', title: '完成视频学习', points: 50, status: 'pending', btnText: '去学习', needsAction: true }
+  ]);
+  const [verifyingTaskId, setVerifyingTaskId] = useState(null);
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [qrModalType, setQRModalType] = useState(''); // 'wechat' or 'community'
+
+  // 页面加载时恢复任务状态
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedTasks = localStorage.getItem('pointsTasks');
+      if (savedTasks) {
+        try {
+          const tasks = JSON.parse(savedTasks);
+          setTasksList(tasks);
+        } catch (e) {
+          console.error('恢复任务状态失败:', e);
+        }
+      }
+    }
+  }, []);
 
   const dailyInvestments = [
     { id: 1, icon: '/point/glove_praise@2x.png', title: '每日点赞', rewardLabel: '每个赞', reward: 4, current: 3, total: 47 },
@@ -44,28 +62,138 @@ export default function PointsDetail() {
     { id: 5, icon: '/point/notification_2@2x.png', title: '帖子收到回复', rewardLabel: '收到回复', reward: 4, current: 10, total: 10, completed: true }
   ];
 
+  // 验证任务完成
+  const verifyTask = async (task) => {
+    try {
+      setVerifyingTaskId(task.id);
+      let isCompleted = false;
+      
+      // 根据不同任务进行验证
+      if (task.title === '首次登录账号' || task.title === '早鸟活动' || task.title === '设置报警功能') {
+        // 检查用户是否已登录（检查 localStorage 中的 token）
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        if (token) {
+          isCompleted = true;
+        }
+      } else if (task.title === '完成视频学习') {
+        // 检查本地存储的视频完成状态
+        try {
+          const saved = typeof window !== 'undefined' ? localStorage.getItem('completedVideos') : null;
+          const total = typeof window !== 'undefined' ? localStorage.getItem('videoLearnTotal') : '0';
+          if (saved) {
+            const map = JSON.parse(saved);
+            const finished = Object.values(map).filter(Boolean).length;
+            const totalNum = parseInt(total) || 0;
+            if (totalNum > 0 && finished >= totalNum) {
+              isCompleted = true;
+            }
+          }
+        } catch (e) {
+          console.error('校验视频学习完成状态失败', e);
+        }
+      }
+      
+      if (isCompleted) {
+        // 验证成功，更新为已完成
+        const updatedTasks = tasksList.map(t => 
+          t.id === task.id 
+            ? { ...t, status: 'completed', btnText: '已完成', needsAction: false }
+            : t
+        );
+        setTasksList(updatedTasks);
+        
+        // 保存到本地存储
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('pointsTasks', JSON.stringify(updatedTasks));
+        }
+        
+        Toast.show({ content: `+${task.points}积分`, icon: 'success', position: 'bottom' });
+      } else {
+        // 验证失败
+        Toast.show({ content: '任务尚未完成，请先完成任务', position: 'bottom' });
+      }
+    } catch (error) {
+      console.error('验证任务失败:', error);
+      Toast.show({ content: '验证失败，请稍后重试', position: 'bottom' });
+    } finally {
+      setVerifyingTaskId(null);
+    }
+  };
+
   const handleTaskClick = (task) => {
+    // 如果任务已完成，不处理
     if (task.status === 'completed') {
       Toast.show({ content: '任务已完成', position: 'bottom' });
       return;
     }
 
-    // 跳转逻辑：注册跳转到用户页（登录/注册），早鸟/推特跳转到 Twitter
-    if (task.btnText === '去注册' || task.title === '首次注册账号') {
-      router.push('/user');
+    // 如果正在验证中，不处理
+    if (verifyingTaskId === task.id) {
       return;
     }
 
-    // 如果图标是 twitter，跳转到推特外链
-    if (task.icon && task.icon.includes('twitter')) {
-      // 打开推特（新标签页）
+    // 如果需要先去完成任务（needsAction为true）
+    if (task.needsAction) {
+      // 立即标记为待验证状态
+      const updatedTasks = tasksList.map(t => 
+        t.id === task.id 
+          ? { ...t, btnText: '验证', needsAction: false }
+          : t
+      );
+      setTasksList(updatedTasks);
+      
+      // 保存到本地存储
       if (typeof window !== 'undefined') {
-        window.open('https://twitter.com', '_blank');
+        localStorage.setItem('pointsTasks', JSON.stringify(updatedTasks));
       }
-      return;
-    }
+      
+      // 跳转到对应页面
+      if (task.title === '首次登录账号') {
+        router.push('/user');
+        return;
+      }
 
-    Toast.show({ content: `${task.btnText}功能开发中`, position: 'bottom' });
+      if (task.title === '早鸟活动') {
+        // 早鸟活动：检查是否登录
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        if (!token) {
+          Toast.show({ content: '请先登录', position: 'bottom' });
+          router.push('/user');
+          return;
+        }
+        // 已登录，按钮已变为"验证"，不需要额外操作
+        return;
+      }
+
+      if (task.title === '完成视频学习') {
+        Toast.show({ content: '视频学习功能开发中', position: 'bottom' });
+        return;
+      }
+
+      if (task.title === '关注我们的公众号') {
+        // 弹出公众号二维码
+        setQRModalType('wechat');
+        setShowQRModal(true);
+        return;
+      }
+
+      if (task.title === '加入我们的社群') {
+        // 弹出社群图片
+        setQRModalType('community');
+        setShowQRModal(true);
+        return;
+      }
+
+      if (task.title === '设置报警功能') {
+        Toast.show({ content: '报警功能开发中', position: 'bottom' });
+        return;
+      }
+
+      Toast.show({ content: `${task.title}功能开发中`, position: 'bottom' });
+    } else {
+      // 如果是验证状态（needsAction为false），点击进行验证
+      verifyTask(task);
+    }
   };
 
   const copyToClipboard = (text, label) => {
@@ -227,26 +355,44 @@ export default function PointsDetail() {
             </div>
             
             <div className={styles.tasksList}>
-              {tasks.map(task => (
-                <div key={task.id} className={`${styles.taskItem} ${task.status === 'completed' ? styles.completed : ''}`}>
-                  <div className={styles.taskIconWrapper}>
-                    <img src={task.icon} alt={task.title} className={styles.taskIconImg} />
-                  </div>
-                  <div className={styles.taskInfo}>
-                    <div className={styles.taskTitle}>{task.title}</div>
-                    <div className={styles.taskPoints}>
-                      +{task.points}
-                      <img src="/point/coin_icon@2x.png" alt="Coin" className={styles.taskCoinIcon} />
+              {tasksList.map(task => {
+                // 判断按钮状态
+                const isVerifying = verifyingTaskId === task.id;
+                const isCompleted = task.status === 'completed';
+                const isWaitingVerify = !task.needsAction && task.status === 'pending'; // 待验证状态
+                
+                // 按钮文本
+                let btnText = task.btnText;
+                if (isVerifying) btnText = '验证中';
+                
+                // 按钮样式
+                let btnClassName = styles.taskBtn;
+                if (isCompleted) btnClassName += ` ${styles.completedBtn}`;
+                else if (isVerifying) btnClassName += ` ${styles.verifyingBtn}`;
+                else if (isWaitingVerify) btnClassName += ` ${styles.verifyBtn}`;
+                
+                return (
+                  <div key={task.id} className={`${styles.taskItem} ${isCompleted ? styles.completed : ''}`}>
+                    <div className={styles.taskIconWrapper}>
+                      <img src={task.icon} alt={task.title} className={styles.taskIconImg} />
                     </div>
+                    <div className={styles.taskInfo}>
+                      <div className={styles.taskTitle}>{task.title}</div>
+                      <div className={styles.taskPoints}>
+                        +{task.points}
+                        <img src="/point/coin_icon@2x.png" alt="Coin" className={styles.taskCoinIcon} />
+                      </div>
+                    </div>
+                    <button 
+                      className={btnClassName}
+                      onClick={() => handleTaskClick(task)}
+                      disabled={isVerifying}
+                    >
+                      {btnText}
+                    </button>
                   </div>
-                  <button 
-                    className={`${styles.taskBtn} ${task.status === 'completed' ? styles.completedBtn : ''}`}
-                    onClick={() => handleTaskClick(task)}
-                  >
-                    {task.btnText}
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -322,6 +468,31 @@ export default function PointsDetail() {
             </button>
           </div>
         </div>
+
+        {/* 二维码弹窗 */}
+        <Modal
+          visible={showQRModal}
+          onClose={() => setShowQRModal(false)}
+          content={
+            <div style={{ padding: '20px', textAlign: 'center' }}>
+              <h3 style={{ color: '#fff', marginBottom: '20px' }}>
+                {qrModalType === 'wechat' ? '欢迎关注我们的公众号' : '欢迎加入我们的社群'}
+              </h3>
+              <AntdImage
+                src={qrModalType === 'wechat' 
+                  ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/wechat_account.jpg'
+                  : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/point/community.jpg'
+                }
+                alt={qrModalType === 'wechat' ? '公众号二维码' : '社群二维码'}
+                style={{ width: '100%', maxWidth: '300px' }}
+              />
+            </div>
+          }
+          closeOnMaskClick
+          style={{
+            '--background-color': '#1a1a1a',
+          }}
+        />
       </div>
   );
 }
