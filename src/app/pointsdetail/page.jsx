@@ -62,6 +62,19 @@ export default function PointsDetail() {
     { id: 5, icon: '/point/notification_2@2x.png', title: '帖子收到回复', rewardLabel: '收到回复', reward: 4, current: 10, total: 10, completed: true }
   ];
 
+  // 获取任务的原始按钮文本
+  const getOriginalBtnText = (taskTitle) => {
+    const btnTextMap = {
+      '首次登录账号': '去登录',
+      '关注我们的公众号': '去关注',
+      '加入我们的社群': '去加入',
+      '早鸟活动': '去参加',
+      '设置报警功能': '去设置',
+      '完成视频学习': '去学习'
+    };
+    return btnTextMap[taskTitle] || '去完成';
+  };
+
   // 验证任务完成
   const verifyTask = async (task) => {
     try {
@@ -107,14 +120,40 @@ export default function PointsDetail() {
           localStorage.setItem('pointsTasks', JSON.stringify(updatedTasks));
         }
         
-        Toast.show({ content: `+${task.points}积分`, icon: 'success', position: 'bottom' });
+        Toast.show({ content: `+${task.points}积分`, icon: 'success', position: 'center' });
       } else {
-        // 验证失败
-        Toast.show({ content: '任务尚未完成，请先完成任务', position: 'bottom' });
+        // 验证失败，恢复成原来的状态
+        const updatedTasks = tasksList.map(t => 
+          t.id === task.id 
+            ? { ...t, btnText: getOriginalBtnText(t.title), needsAction: true }
+            : t
+        );
+        setTasksList(updatedTasks);
+        
+        // 保存到本地存储
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('pointsTasks', JSON.stringify(updatedTasks));
+        }
+        
+        Toast.show({ content: '任务尚未完成，请先完成任务', position: 'center' });
       }
     } catch (error) {
       console.error('验证任务失败:', error);
-      Toast.show({ content: '验证失败，请稍后重试', position: 'bottom' });
+      
+      // 验证出错时也恢复成原来的状态
+      const updatedTasks = tasksList.map(t => 
+        t.id === task.id 
+          ? { ...t, btnText: getOriginalBtnText(t.title), needsAction: true }
+          : t
+      );
+      setTasksList(updatedTasks);
+      
+      // 保存到本地存储
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('pointsTasks', JSON.stringify(updatedTasks));
+      }
+      
+      Toast.show({ content: '验证失败，请稍后重试', position: 'center' });
     } finally {
       setVerifyingTaskId(null);
     }
@@ -166,7 +205,7 @@ export default function PointsDetail() {
       }
 
       if (task.title === '完成视频学习') {
-        Toast.show({ content: '视频学习功能开发中', position: 'bottom' });
+        router.push('/videolearn');
         return;
       }
 
