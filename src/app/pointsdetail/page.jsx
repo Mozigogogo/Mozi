@@ -121,7 +121,7 @@ export default function PointsDetail() {
             <div className={styles.pointsDisplay}>
               <img src="/point/coin_icon@2x.png" alt="Coin" className={styles.coinIcon} />
               <div className={styles.pointsValue}>{pointsData.totalPoints}</div>
-              <button className={styles.historyBtn} onClick={() => Toast.show(t('pointsDetail.historyFeatureInDevelopment'))}>
+              <button className={styles.historyBtn} onClick={() => router.push('/pointshistory')}>
                 <ClockCircleOutline className={styles.historyIcon} />
                 {t('pointsDetail.historyRecord')}
               </button>
