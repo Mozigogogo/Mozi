@@ -6,28 +6,40 @@
 
   // Tab栏
   .tabsContainer {
-    margin-bottom: 15px;
+    margin-bottom: 5px;
+    padding-left: 0;
     
     :global {
       .adm-tabs {
         background: transparent;
+        text-align: left;
         
         .adm-tabs-header {
           border-bottom: none;
+          justify-content: flex-start !important;
         }
         
         .adm-tabs-tab-list {
           background: transparent;
           gap: 10px;
+          justify-content: flex-start !important;
+          display: flex !important;
+          flex-wrap: nowrap !important;
         }
         
         .adm-tabs-tab {
           color: #fff;
           font-size: 16px;
           font-weight: 600;
-          padding: 8px 16px;
+          padding: 8px 16px 8px 0;
           background: transparent;
           position: relative;
+          margin-left: 0 !important;
+          
+          &:first-child {
+            margin-left: 0 !important;
+            padding-left: 0 !important;
+          }
         }
         
         .adm-tabs-tab-active {
@@ -51,8 +63,8 @@
     align-items: center;
     justify-content: center;
     gap: 12px;
-    padding: 10px 6px;
-    margin-bottom: 8px;
+    padding: 10px 6px 5px 6px;
+    margin-bottom: 0;
     position: sticky;
     top: 0;
     z-index: 80;

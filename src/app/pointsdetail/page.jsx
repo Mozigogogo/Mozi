@@ -77,8 +77,7 @@ export default function PointsDetail() {
   };
 
   const tabs = [
-    { key: 'myPoints', title: t('pointsDetail.myPoints', '我的积分') },
-    { key: 'myInvites', title: t('pointsDetail.myInvites', '我的邀请') }
+    { key: 'myPoints', title: t('pointsDetail.myPoints', '我的积分') }
   ];
 
   return (
