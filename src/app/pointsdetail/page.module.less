@@ -278,6 +278,7 @@
         font-style: normal;
         text-transform: none;
         margin: 0;
+        display: inline-block;
         background-image: url('/point/tab_bg@2x.png');
         background-repeat: no-repeat;
         background-position: bottom left;
@@ -477,6 +478,7 @@
       content: "";
       position: absolute;
       right: 0;
+      top: 0;
       width: 210px;
       height: 210px;
       background-image: url('/point/transparent_bg@2x.png');
@@ -492,6 +494,8 @@
       align-items: center;
       gap: 8px;
       margin-bottom: 15px;
+      position: relative;
+      z-index: 1;
       
       .headerIconImg {
         width: 28px;
@@ -522,6 +526,8 @@
     .tasksList {
       display: flex;
       flex-direction: column;
+      position: relative;
+      z-index: 1;
 
       .taskItem {
         background: transparent;
@@ -654,12 +660,30 @@
     border-radius: 15px;
     padding: 20px;
     margin-bottom: 15px;
+    position: relative;
+
+    &::before {
+      content: "";
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 210px;
+      height: 210px;
+      background-image: url('/point/transparent_bg@2x.png');
+      background-repeat: no-repeat;
+      background-position: right top;
+      background-size: contain;
+      pointer-events: none;
+      opacity: 0.9;
+    }
 
     .sectionHeader {
       display: flex;
       align-items: center;
       gap: 8px;
       margin-bottom: 15px;
+      position: relative;
+      z-index: 1;
       
       .headerIcon {
         font-size: 24px;
@@ -677,6 +701,13 @@
         font-weight: 700;
         color: #fff;
         margin: 0;
+        display: inline-block;
+        background-image: url('/point/tab_bg@2x.png');
+        background-repeat: no-repeat;
+        background-position: bottom left;
+        background-size: auto 12px;
+        padding-bottom: 4px;
+        line-height: 1;
       }
     }
 
@@ -684,6 +715,8 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
+      position: relative;
+      z-index: 1;
 
       .investmentItem {
         display: flex;
