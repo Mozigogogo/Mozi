@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Toast, Tabs, Modal, Image as AntdImage } from 'antd-mobile';
+import { Toast, Tabs } from 'antd-mobile';
 import { ClockCircleOutline, LeftOutline } from 'antd-mobile-icons';
 import { useTranslation } from 'react-i18next';
 import Layout from '../../components/Layout';
@@ -28,15 +28,13 @@ export default function PointsDetail() {
 
   const [tasksList, setTasksList] = useState([
     { id: 1, icon: '/point/contact_person@2x.png', title: '首次登录账号', points: 50, status: 'pending', btnText: '去登录', needsAction: true },
-    { id: 2, icon: '/point/like@2x.png', title: '关注我们的公众号', points: 50, status: 'pending', btnText: '去关注', needsAction: true },
+    { id: 2, icon: '/point/like@2x.png', title: '关注我们的Twitter', points: 50, status: 'pending', btnText: '去关注', needsAction: true },
     { id: 3, icon: '/point/social_group@2x.png', title: '加入我们的社群', points: 50, status: 'pending', btnText: '去加入', needsAction: true },
     { id: 4, icon: '/point/twitter@2x.png', title: '早鸟活动', points: 200, status: 'pending', btnText: '去参加', needsAction: true },
     { id: 5, icon: '/point/set_alert@2x.png', title: '设置报警功能', points: 100, status: 'pending', btnText: '去设置', needsAction: true },
     { id: 6, icon: '/point/video@2x.png', title: '完成视频学习', points: 50, status: 'pending', btnText: '去学习', needsAction: true }
   ]);
   const [verifyingTaskId, setVerifyingTaskId] = useState(null);
-  const [showQRModal, setShowQRModal] = useState(false);
-  const [qrModalType, setQRModalType] = useState(''); // 'wechat' or 'community'
 
   // 页面加载时恢复任务状态
   useEffect(() => {
@@ -66,7 +64,7 @@ export default function PointsDetail() {
   const getOriginalBtnText = (taskTitle) => {
     const btnTextMap = {
       '首次登录账号': '去登录',
-      '关注我们的公众号': '去关注',
+      '关注我们的Twitter': '去关注',
       '加入我们的社群': '去加入',
       '早鸟活动': '去参加',
       '设置报警功能': '去设置',
@@ -209,22 +207,20 @@ export default function PointsDetail() {
         return;
       }
 
-      if (task.title === '关注我们的公众号') {
-        // 弹出公众号二维码
-        setQRModalType('wechat');
-        setShowQRModal(true);
+      if (task.title === '关注我们的Twitter') {
+        // 跳转到 X (Twitter) 账号
+        window.open('https://x.com/Innovation56171', '_blank');
         return;
       }
 
       if (task.title === '加入我们的社群') {
-        // 弹出社群图片
-        setQRModalType('community');
-        setShowQRModal(true);
+        // 跳转到 Telegram 社群链接
+        window.open('https://t.me/MoziInnovations', '_blank');
         return;
       }
 
       if (task.title === '设置报警功能') {
-        Toast.show({ content: '报警功能开发中', position: 'bottom' });
+        router.push('/addwarn?symbol=BTC');
         return;
       }
 
@@ -490,7 +486,7 @@ export default function PointsDetail() {
 
           {/* 底部按钮 */}
           <div className={styles.bottomButtons}>
-            <button className={styles.bottomBtn} onClick={() => Toast.show(t('pointsDetail.joinAlarm'))}>
+            <button className={styles.bottomBtn} onClick={() => router.push('/addwarn?symbol=BTC')}>
               <div className={styles.bottomBtnContent}>
                 <div className={styles.bottomBtnTitle}>{t('pointsDetail.joinAlarm')}</div>
                 <div className={styles.bottomBtnSubtitle}>Add an alarm</div>
@@ -507,31 +503,6 @@ export default function PointsDetail() {
             </button>
           </div>
         </div>
-
-        {/* 二维码弹窗 */}
-        <Modal
-          visible={showQRModal}
-          onClose={() => setShowQRModal(false)}
-          content={
-            <div style={{ padding: '20px', textAlign: 'center' }}>
-              <h3 style={{ color: '#fff', marginBottom: '20px' }}>
-                {qrModalType === 'wechat' ? '欢迎关注我们的公众号' : '欢迎加入我们的社群'}
-              </h3>
-              <AntdImage
-                src={qrModalType === 'wechat' 
-                  ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/wechat_account.jpg'
-                  : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/point/community.jpg'
-                }
-                alt={qrModalType === 'wechat' ? '公众号二维码' : '社群二维码'}
-                style={{ width: '100%', maxWidth: '300px' }}
-              />
-            </div>
-          }
-          closeOnMaskClick
-          style={{
-            '--background-color': '#1a1a1a',
-          }}
-        />
       </div>
   );
 }
