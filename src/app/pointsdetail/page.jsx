@@ -498,7 +498,7 @@ export default function PointsDetail() {
               <img src="/point/point_alert@2x.png" alt="Alert" className={styles.bottomIcon} />
             </button>
 
-            <button className={styles.bottomBtn} onClick={() => Toast.show(t('pointsDetail.certification'))}>
+            <button className={styles.bottomBtn} onClick={() => router.push('/kyc')}>
               <div className={styles.bottomBtnContent}>
                 <div className={styles.bottomBtnTitle}>{t('pointsDetail.certification')}</div>
                 <div className={styles.bottomBtnSubtitle}>certification</div>

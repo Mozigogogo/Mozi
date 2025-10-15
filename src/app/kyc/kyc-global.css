@@ -1,0 +1,59 @@
+/* KYC 页面全局样式 - 用于覆盖 antd-mobile 组件样式 */
+
+/* Input 组件样式 */
+.adm-input {
+  background: transparent;
+}
+
+.adm-input-element {
+  background: transparent;
+  color: #fff !important;
+  font-size: 14px;
+}
+
+.adm-input-element::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* Picker 组件样式 */
+.adm-picker-header {
+  background: #1a1a1a;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.adm-picker-header-button {
+  color: #C3F53C !important;
+}
+
+.adm-picker-view {
+  background: #1a1a1a;
+}
+
+.adm-picker-view-column-item {
+  color: #fff;
+}
+
+.adm-picker-view-mask-top,
+.adm-picker-view-mask-bottom {
+  background: linear-gradient(to bottom, #1a1a1a, rgba(26, 26, 26, 0));
+}
+
+.adm-picker-view-mask-bottom {
+  background: linear-gradient(to top, #1a1a1a, rgba(26, 26, 26, 0));
+}
+
+/* Popup 组件样式 */
+.adm-popup-body {
+  background: #1a1a1a;
+}
+
+.adm-center-popup-body {
+  background: #1a1a1a;
+}
+
+/* Button 组件样式 */
+.adm-button {
+  background: transparent;
+  border: none;
+}
+
