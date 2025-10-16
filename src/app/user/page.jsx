@@ -210,8 +210,8 @@ export default function UserPage() {
   };
 
   const attendUs = () => {
-    setPopVis(true);
-    setPopType('attend');
+    // 跳转到 X (Twitter) 账号
+    window.open('https://x.com/Innovation56171', '_blank');
   };
 
   const reward = () => {
@@ -456,9 +456,9 @@ export default function UserPage() {
             </div>
             <div className={styles.actionButton} onClick={attendUs}>
               <div className={styles.actionIcon}>
-                <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/official-accounts%402x.png'} alt="关注公众号" />
+                <img className={styles.actionIconImg} src={'/icons/twitter.svg'} alt="关注Twitter" />
               </div>
-              <div className={styles.actionText}>{t('user.followOfficialAccount')}</div>
+              <div className={styles.actionText}>关注Twitter</div>
             </div>
             </div>
           </div>
