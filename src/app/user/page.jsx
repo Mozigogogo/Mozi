@@ -492,9 +492,9 @@ export default function UserPage() {
             </div>
             <div className={styles.actionButton} onClick={attendUs}>
               <div className={styles.actionIcon}>
-                <img className={styles.actionIconImg} src={'/icons/twitter.svg'} alt="关注Twitter" />
+                <img className={styles.actionIconImg} src={'/icons/twitter.svg'} alt={t('user.followTwitter')} />
               </div>
-              <div className={styles.actionText}>关注Twitter</div>
+              <div className={styles.actionText}>{t('user.followTwitter')}</div>
             </div>
             </div>
           </div>
