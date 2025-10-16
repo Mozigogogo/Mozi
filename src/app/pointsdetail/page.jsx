@@ -27,7 +27,7 @@ export default function PointsDetail() {
   };
 
   const [tasksList, setTasksList] = useState([
-    { id: 1, icon: '/point/contact_person@2x.png', title: '首次登录账号', points: 50, status: 'pending', btnText: '去登录', needsAction: true },
+    { id: 1, icon: '/point/contact_person@2x.png', title: '首次注册账号', points: 50, status: 'pending', btnText: '去注册', needsAction: true },
     { id: 2, icon: '/point/like@2x.png', title: '关注我们的Twitter', points: 50, status: 'pending', btnText: '去关注', needsAction: true },
     { id: 3, icon: '/point/social_group@2x.png', title: '加入我们的社群', points: 50, status: 'pending', btnText: '去加入', needsAction: true },
     { id: 4, icon: '/point/twitter@2x.png', title: '早鸟活动', points: 200, status: 'pending', btnText: '去参加', needsAction: true },
@@ -63,7 +63,7 @@ export default function PointsDetail() {
   // 获取任务的原始按钮文本
   const getOriginalBtnText = (taskTitle) => {
     const btnTextMap = {
-      '首次登录账号': '去登录',
+      '首次注册账号': '去注册',
       '关注我们的Twitter': '去关注',
       '加入我们的社群': '去加入',
       '早鸟活动': '去参加',
@@ -80,7 +80,7 @@ export default function PointsDetail() {
       let isCompleted = false;
       
       // 根据不同任务进行验证
-      if (task.title === '首次登录账号' || task.title === '早鸟活动' || task.title === '设置报警功能') {
+      if (task.title === '首次注册账号' || task.title === '早鸟活动' || task.title === '设置报警功能') {
         // 检查用户是否已登录（检查 localStorage 中的 token）
         const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
         if (token) {
@@ -185,20 +185,20 @@ export default function PointsDetail() {
       }
       
       // 跳转到对应页面
-      if (task.title === '首次登录账号') {
-        router.push('/user');
+      if (task.title === '首次注册账号') {
+        router.push('/user?mode=register');
         return;
       }
 
       if (task.title === '早鸟活动') {
-        // 早鸟活动：检查是否登录
+        // 早鸟活动：检查是否注册
         const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
         if (!token) {
-          Toast.show({ content: '请先登录', position: 'bottom' });
-          router.push('/user');
+          Toast.show({ content: '请先注册', position: 'bottom' });
+          router.push('/user?mode=register');
           return;
         }
-        // 已登录，按钮已变为"验证"，不需要额外操作
+        // 已注册，按钮已变为"验证"，不需要额外操作
         return;
       }
 

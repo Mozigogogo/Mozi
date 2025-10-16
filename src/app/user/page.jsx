@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAccount, useDisconnect, useSignMessage } from 'wagmi';
 import { Button, Avatar, List, Dialog, Toast, Popup, Grid, TextArea } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import Layout from '../../components/Layout';
 import CalendarCard from '../../components/CalendarCard';
 import NewCoinListing from '../../components/NewCoinListing';
+import LoginModal from '../../components/LoginModal';
 import { RightArrowIcon } from '../../components/Icons';
 import { request } from '../../utils/request';
 import { Interface, EMAIL, COINKEY } from '../../utils/constants';
@@ -16,6 +17,7 @@ import styles from './page.module.less';
 export default function UserPage() {
   // 状态定义
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { disconnect } = useDisconnect();
   const { address, isConnected } = useAccount();
   const { signMessageAsync } = useSignMessage();
@@ -45,6 +47,8 @@ export default function UserPage() {
   const [editNickname, setEditNickname] = useState('');
   const [editAvatar, setEditAvatar] = useState('');
   const [avatarFile, setAvatarFile] = useState(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loginModalMode, setLoginModalMode] = useState('login');
   
   // 简单的 Cookie 读写（仅前端可见；敏感 token 建议服务端 HttpOnly）
   const getCookie = (name) => {
@@ -56,6 +60,15 @@ export default function UserPage() {
     if (typeof document === 'undefined') return;
     document.cookie = `${encodeURIComponent(name)}=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; SameSite=Lax`;
   };
+
+  // 检查 URL 参数，自动打开注册弹窗
+  useEffect(() => {
+    const mode = searchParams.get('mode');
+    if (mode === 'register') {
+      setLoginModalMode('register');
+      setShowLoginModal(true);
+    }
+  }, [searchParams]);
 
   // 首次与聚焦时同步登录态（来自 token 或钱包地址 Cookie）
   useEffect(() => {
@@ -119,19 +132,9 @@ export default function UserPage() {
     }
   };
 
-  // 登录处理：未连接则先弹出连接；连接完成后触发签名
-  const handleLogin = async () => {
-    if (typeof window === 'undefined') return;
-    if (!isConnected) {
-      pendingSignRef.current = true;
-      if (window.__openAppKit) {
-        window.__openAppKit();
-      } else {
-        Toast.show({ content: '钱包组件尚未就绪', position: 'bottom' });
-      }
-      return;
-    }
-    await triggerSignatureLogin();
+  // 登录处理：打开登录弹窗
+  const handleLogin = () => {
+    setShowLoginModal(true);
   };
 
   // 监听连接完成后自动发起签名
@@ -305,6 +308,39 @@ export default function UserPage() {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  // 处理登录成功
+  const handleLoginSuccess = () => {
+    const syncLogin = () => {
+      const hasToken = !!localStorage.getItem('token');
+      const walletAddr = getCookie('wallet_address');
+      const loggedIn = hasToken || !!walletAddr;
+      setUserInfo((prev) => ({ ...prev, isLogin: loggedIn }));
+      const ui = localStorage.getItem('userInfo');
+      if (ui) {
+        try {
+          const parsed = JSON.parse(ui);
+          setUserInfo((prev) => ({ ...prev, nickname: parsed.nickName || prev.nickname, avatar: parsed.avatar || prev.avatar }));
+        } catch {}
+      }
+    };
+    syncLogin();
+  };
+
+  // 处理钱包登录
+  const handleWalletLogin = async () => {
+    if (typeof window === 'undefined') return;
+    if (!isConnected) {
+      pendingSignRef.current = true;
+      if (window.__openAppKit) {
+        window.__openAppKit();
+      } else {
+        Toast.show({ content: '钱包组件尚未就绪', position: 'bottom' });
+      }
+      return;
+    }
+    await triggerSignatureLogin();
   };
 
   // 保存用户信息
@@ -792,6 +828,15 @@ export default function UserPage() {
             </div>
           </div>
         </Popup>
+
+        {/* 登录注册弹窗 */}
+        <LoginModal
+          visible={showLoginModal}
+          onClose={() => setShowLoginModal(false)}
+          onLoginSuccess={handleLoginSuccess}
+          onWalletLogin={handleWalletLogin}
+          initialMode={loginModalMode}
+        />
       </div>
     </Layout>
   );
