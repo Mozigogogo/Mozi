@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { NoticeBar, Grid, TabBar } from 'antd-mobile';
+import { NoticeBar, Grid, TabBar, Swiper } from 'antd-mobile';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import Layout from '../components/Layout';
 import MoziCard from '../components/MoziCard';
 import MoziTreeMap from '../components/MoziTreeMap';
@@ -16,28 +18,47 @@ import { Interface, LOOPTIME } from '../utils/constants';
 import { jump2Detail, jump2Market, jump2List, jump2NoTab } from '../utils/core';
 import styles from './page.module.less';
 
+// CDN 图片前缀
+const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
+
+// 首页背景轮播图
+const HOME_BANNERS = [
+  `${CDN_PREFIX}/image/home/banner1.png`,
+  `${CDN_PREFIX}/image/home/banner2.png`,
+  `${CDN_PREFIX}/image/home/banner3.png`,
+];
+
+// 提醒图标
+const HomeAlertIcon = `${CDN_PREFIX}/icon/home-alert.png`;
+
+// 合约专区图标（使用CDN）
+const bullBearRatioIcon = `${CDN_PREFIX}/icon/bull-bear-ratio.png`;
+const inventoryIcon = `${CDN_PREFIX}/icon/inventory.png`;
+const fundingRateIcon = `${CDN_PREFIX}/icon/funding-rate.png`;
+const volumeTransactionIcon = `${CDN_PREFIX}/icon/volume-transaction.png`;
+
 // 区块内容
-const areas = {
+const area = {
   derivativeArea: {
     title: '合约专区',
     list: [
       {
-        icon: '📊',
+        icon: bullBearRatioIcon,
         text: '多空比',
         callback: () => { jump2NoTab('putcallratio'); }
       },
       {
-        icon: '📈',
+        icon: inventoryIcon,
         text: '持仓量',
         callback: () => { jump2NoTab('positionsize'); }
       },
       {
-        icon: '💰',
+        icon: fundingRateIcon,
         text: '资金费率',
         callback: () => { jump2NoTab('fundingrate'); }
       },
       {
-        icon: '🔄',
+        icon: volumeTransactionIcon,
         text: '成交额',
         callback: () => { jump2NoTab('tradevol'); }
       }
@@ -46,6 +67,8 @@ const areas = {
 };
 
 export default function HomePage() {
+  const router = useRouter();
+  
   // 状态定义
   const [hotCoin, setHotCoin] = useState([]);
   const [hotIndustry, setHotIndustry] = useState([]);
@@ -489,49 +512,82 @@ export default function HomePage() {
 
   // 渲染衍生品专区
   const renderDerivativeArea = () => {
-    const { title, list } = areas.derivativeArea;
+    const { title, list } = area.derivativeArea;
     return (
-      <MoziCard title={title}>
-        <div className={styles.areaGrid}>
-          {list.map((item, index) => (
-            <div key={index} className={styles.areaItem} onClick={item.callback}>
-              <div className={styles.areaIcon}>{item.icon}</div>
-              <div className={styles.areaText}>{item.text}</div>
-            </div>
-          ))}
+      <MoziCard title={title} customStyle={{ borderRadius: '0 0 8px 8px', paddingTop: '5px' }}>
+        <div className={styles.derivativeBody}>
+          <Grid columns={4}>
+            {list.map((item, index) => (
+              <Grid.Item key={index} className={styles.derivativeItem} onClick={item.callback}>
+                <div className={styles.derivativeIcon}>
+                  <img src={item.icon} alt={item.text} />
+                </div>
+                <span>{item.text}</span>
+              </Grid.Item>
+            ))}
+          </Grid>
         </div>
       </MoziCard>
     );
   };
 
   return (
-    <Layout>
-      <div className={styles.container}>
-        <div className={styles.header}>
-          <SearchInput 
-            placeholder="搜索币种" 
-            onSearch={(value) => window.location.href = `/search?keyword=${value}`} 
-          />
-          <NoticeBar
-            content="欢迎使用墨子数字货币行情社区，实时掌握币圈动态"
-            color="info"
-            className={styles.noticeBar}
-          />
-        </div>
-
-        <div className={styles.content}>
-          {renderDerivativeArea()}
-          <MoziCard 
-            title="投资机会" 
-            type="more" 
-            callback={() => jump2List('market')}
-            moreDesc="查看更多"
+    <div className={styles.indexBox}>
+      {/* 顶部区域：Banner + 搜索框 + 公告栏 */}
+      <div className={styles.heroWrap}>
+        {/* 背景轮播图 */}
+        <div className={styles.bgBanner}>
+          <Swiper
+            className={styles.bgBannerSwiper}
+            loop
+            autoplay
+            indicator={() => null}
           >
-            {renderInvestmentOpportunity()}
-          </MoziCard>
-          {renderRealTimeRanking()}
+            {HOME_BANNERS.map((url, idx) => (
+              <Swiper.Item key={idx}>
+                <img className={styles.bgBannerImage} src={url} alt={`banner-${idx}`} />
+              </Swiper.Item>
+            ))}
+          </Swiper>
+
+          {/* 搜索框（层叠在 Banner 上） */}
+          <div className={styles.header} onClick={() => router.push('/search')}>
+            <div className={styles.searchBox}>
+              <div className={styles.searchInput}>请输入搜索的币种</div>
+              <div className={styles.searchCancel}>
+                🔍 搜索
+              </div>
+            </div>
+          </div>
+
+          {/* 公告栏（层叠在 Banner 上） */}
+          <div className={styles.notice}>
+            <NoticeBar
+              className={styles.noticeItem}
+              content="告别手动盯盘，实时波动随时跟进！开启智能告警配置吧！"
+              color="alert"
+              wrap
+              icon={<img src={HomeAlertIcon} className={styles.noticeIcon} alt="alert" />}
+            />
+          </div>
         </div>
       </div>
-    </Layout>
+
+      {/* 合约专区 */}
+      {renderDerivativeArea()}
+
+      {/* 投资机会 */}
+      <MoziCard 
+        title="投资机会" 
+        type="more" 
+        callback={() => jump2Market('rank')}
+        moreDesc="查看更多"
+      >
+        {renderInvestmentOpportunity()}
+      </MoziCard>
+
+      {/* 实时榜单 */}
+      {renderRealTimeRanking()}
+    </div>
   );
 }
