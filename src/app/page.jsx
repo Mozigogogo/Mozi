@@ -165,10 +165,10 @@ export default function HomePage() {
         url: Interface.hot_industry,
         data: {
           pageSize: 10
-        }});
-      const data = await response.json();
-      if (data.success) {
-        setHotIndustry(data.data);
+        }
+      });
+      if (response?.data) {
+        setHotIndustry(response.data);
       }
     } catch (error) {
       console.error('获取热门板块失败:', error);
@@ -185,10 +185,10 @@ export default function HomePage() {
         url: Interface.hot_contract,
         data: {
           pageSize: 10
-        }});
-      const data = await response.json();
-      if (data.success) {
-        setHotContract(data.data);
+        }
+      });
+      if (response?.data) {
+        setHotContract(response.data);
       }
     } catch (error) {
       console.error('获取热门合约失败:', error);
@@ -205,9 +205,8 @@ export default function HomePage() {
         url: Interface.hot_topics || '/api/community/hot-topics',
         data: {}
       });
-      const data = await response.json();
-      if (data.success && Array.isArray(data.data)) {
-        setHotTopics(data.data);
+      if (response?.success && Array.isArray(response.data)) {
+        setHotTopics(response.data);
       }
     } catch (error) {
       console.error('获取话题热榜失败:', error);
