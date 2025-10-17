@@ -15,6 +15,10 @@ const MoziCard = ({
   selectArr = [], 
   moreDesc, 
   pickChange,
+  // 样式相关props（与原项目保持一致）
+  borderRadius = '8px',
+  backgroundColor = '#fff',
+  marginBottom = '10px',
   customStyle = {},
   className = '',
   // 新增的排行榜相关props
@@ -27,11 +31,11 @@ const MoziCard = ({
   onItemClick,
   onMoreClick
 }) => {
-  // 合并默认样式和自定义样式
+  // 合并默认样式和自定义样式（customStyle 优先级最高）
   const cardStyle = {
-    borderRadius: '8px',
-    backgroundColor: '#fff',
-    marginBottom: '5px',
+    borderRadius,
+    backgroundColor,
+    marginBottom,
     ...customStyle
   };
   
@@ -183,7 +187,8 @@ const MoziCard = ({
 };
 
 const CardExtra = ({ type, callback, selectArr = [], selectIndex = 0, moreDesc, pickChange }) => {
-  const [selected, setSelected] = useState(selectIndex);
+  // 对于tabs类型，selected存储实际的item值；其他类型存储index
+  const [selected, setSelected] = useState(type === 'tabs' ? selectArr[selectIndex] : selectIndex);
 
   const handleChange = (e) => {
     const index = parseInt(e.target.value);
@@ -216,17 +221,17 @@ const CardExtra = ({ type, callback, selectArr = [], selectIndex = 0, moreDesc, 
       </div>
     );
   } else if (type === 'tabs') {
-    // 添加tabs类型支持
+    // 添加tabs类型支持（与原项目保持一致，selected比较item值）
     return (
       <div className={styles.tabsContainer}>
         {selectArr.map((item, index) => (
           <div 
             key={index}
-            className={`${styles.tabItem} ${selected === index ? styles.tabActive : ''}`}
+            className={`${styles.tabItem} ${selected === item ? styles.tabActive : ''}`}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              setSelected(index);
+              setSelected(item);
               pickChange && pickChange(index);
             }}
           >

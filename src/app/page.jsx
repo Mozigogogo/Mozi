@@ -82,6 +82,9 @@ export default function HomePage() {
   const [rankActiveKey, setRankActive] = useState('zhangfu');
   const [footerArr, setFooterArr] = useState([]);
   const [footerLoading, setFooterLoading] = useState(true);
+  const [investmentTab, setInvestmentTab] = useState('opportunity');
+  const [hotTopics, setHotTopics] = useState([]);
+  const [topicsLoading, setTopicsLoading] = useState(false);
   const needLoop = useRef(true);
 
   // 实时榜单配置
@@ -194,7 +197,28 @@ export default function HomePage() {
     }
   };
 
-
+  // 获取话题热榜数据
+  const fetchHotTopics = async (forceRefresh = false) => {
+    setTopicsLoading(true);
+    try {
+      const response = await request({
+        url: Interface.hot_topics || '/api/community/hot-topics',
+        data: {}
+      });
+      const data = await response.json();
+      if (data.success && Array.isArray(data.data)) {
+        setHotTopics(data.data);
+      }
+    } catch (error) {
+      console.error('获取话题热榜失败:', error);
+      // 如果失败，使用模拟数据
+      setHotTopics([
+        { id: 1, title: '暂无热门话题', desc: '敬请期待', discussionCount: 0, createdAt: new Date().toISOString() },
+      ]);
+    } finally {
+      setTopicsLoading(false);
+    }
+  };
 
   // 获取自选列表
   const fetchOwnList = async () => {
@@ -388,91 +412,195 @@ export default function HomePage() {
     });
   };
 
+  // 格式化话题时间
+  const formatTopicTime = (dateStr) => {
+    if (!dateStr) return '--';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = now - date;
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    if (days === 0) return '今天';
+    if (days === 1) return '昨天';
+    if (days < 7) return `${days}天前`;
+    return date.toLocaleDateString('zh-CN');
+  };
+
+  // 奖牌图标URL
+  const rankMedals = [
+    `${CDN_PREFIX}/icon/gold.png`,
+    `${CDN_PREFIX}/icon/silver.png`, 
+    `${CDN_PREFIX}/icon/copper.png`
+  ];
+
   // 渲染投资机会（可滑动）
   const renderInvestmentOpportunity = () => {
-    return (
-      <div className={styles.scrollContainer}>
-        <div className={styles.scrollContent}>
-          {/* 热门币种 */}
-          <div className={styles.treemapBox} onClick={() => {
-            jump2List({
-              interFace: Interface.hot_coin,
-              gridTitle: ['币种', '热门指数', '24H价格变化'],
-              gridCon: [{
-                type: 'Text',
-                data: 'coin'
-              }, {
-                type: 'Text',
-                data: 'hot'
-              }, {
-                type: 'HighlightArea',
-                data: 'priceChangePercent'
-              }]
-            });
-          }}>
-            <div className={styles.treemapTitle}>热门币种</div>
-            <Layout isLoading={coinLoading}>
-              <MoziTreeMap
-                list={hotCoin}
-                name='coin'
-                desc='priceChangePercent'
-              />
-            </Layout>
-          </div>
-          
-          {/* 热门合约 */}
-          <div className={styles.treemapBox} onClick={() => {
-            jump2List({
-              interFace: Interface.hot_contract,
-              gridTitle: ['合约', '热门指数', '24H价格变化'],
-              gridCon: [{
-                type: 'Text',
-                data: 'coin'
-              }, {
-                type: 'Text',
-                data: 'hot'
-              }, {
-                type: 'HighlightArea',
-                data: 'priceChangePercent'
-              }]
-            });
-          }}>
-            <div className={styles.treemapTitle}>热门合约</div>
-            <Layout isLoading={contractLoading}>
-              <MoziTreeMap
-                list={hotContract}
-                name='coin'
-                desc='priceChangePercent'
-              />
-            </Layout>
-          </div>
-          
-          {/* 热门板块 */}
-          <div className={`${styles.treemapBox} ${styles.last}`} onClick={() => {
-            jump2List({
-              interFace: Interface.hot_industry,
-              gridTitle: ['版块', '24H变化'],
-              gridCon: [{
-                type: 'Text',
-                data: 'section'
-              }, {
-                type: 'HighlightArea',
-                data: 'changes'
-              }]
-            });
-          }}>
-            <div className={styles.treemapTitle}>热门版块</div>
-            <Layout isLoading={industryLoading}>
-              <MoziTreeMap
-                list={hotIndustry}
-                name='section'
-                desc='changes'
-              />
-            </Layout>
+    if (investmentTab === 'opportunity') {
+      // 投资机会 Tab
+      return (
+        <div className={styles.scrollContainer}>
+          <div className={styles.scrollContent}>
+            {/* 热门币种 */}
+            <div className={`${styles.treemapBox} ${styles.contentCard}`} onClick={() => {
+              jump2List({
+                interFace: Interface.hot_coin,
+                gridTitle: ['币种', '热门指数', '24H价格变化'],
+                gridCon: [{
+                  type: 'Text',
+                  data: 'coin'
+                }, {
+                  type: 'Text',
+                  data: 'hot'
+                }, {
+                  type: 'HighlightArea',
+                  data: 'priceChangePercent'
+                }],
+                rankTitle: '热门币种',
+                showRanking: true
+              });
+            }}>
+              <div className={styles.treemapTitle}>热门币种</div>
+              <div className={styles.centerLoading}>
+                {coinLoading ? (
+                  <Loading tip="加载中..." />
+                ) : (
+                  <div style={{ width: '100%', height: '100%', flex: 1 }}>
+                    <MoziTreeMap
+                      list={hotCoin}
+                      name='coin'
+                      desc='priceChangePercent'
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* 热门合约 */}
+            <div className={`${styles.treemapBox} ${styles.contentCard}`} onClick={() => {
+              jump2List({
+                interFace: Interface.hot_contract,
+                gridTitle: ['合约', '热门指数', '24H价格变化'],
+                gridCon: [{
+                  type: 'Text',
+                  data: 'coin'
+                }, {
+                  type: 'Text',
+                  data: 'hot'
+                }, {
+                  type: 'HighlightArea',
+                  data: 'priceChangePercent'
+                }],
+                rankTitle: '热门合约',
+                showRanking: true
+              });
+            }}>
+              <div className={styles.treemapTitle}>热门合约</div>
+              <div className={styles.centerLoading}>
+                {contractLoading ? (
+                  <Loading tip="加载中..." />
+                ) : (
+                  <div style={{ width: '100%', height: '100%', flex: 1 }}>
+                    <MoziTreeMap
+                      list={hotContract}
+                      name='coin'
+                      desc='priceChangePercent'
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* 热门板块 */}
+            <div className={`${styles.treemapBox} ${styles.contentCard} ${styles.last}`} onClick={() => {
+              jump2List({
+                interFace: Interface.hot_industry,
+                gridTitle: ['版块', '24H变化'],
+                gridCon: [{
+                  type: 'Text',
+                  data: 'section'
+                }, {
+                  type: 'HighlightArea',
+                  data: 'changes'
+                }],
+                rankTitle: '热门版块',
+                showRanking: true
+              });
+            }}>
+              <div className={styles.treemapTitle}>热门版块</div>
+              <div className={styles.centerLoading}>
+                {industryLoading ? (
+                  <Loading tip="加载中..." />
+                ) : (
+                  <div style={{ width: '100%', height: '100%', flex: 1 }}>
+                    <MoziTreeMap
+                      list={hotIndustry}
+                      name='section'
+                      desc='changes'
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    );
+      );
+    } else {
+      // 话题热榜 Tab
+      return (
+        <div className={styles.scrollContainer}>
+          <div className={styles.topicsContent}>
+            {topicsLoading ? (
+              <Loading tip="加载中..." />
+            ) : (
+              <div className={styles.topicCards}>
+                {hotTopics && hotTopics.length > 0 ? (
+                  hotTopics.slice(0, 3).map((topic, index) => {
+                    const hasDesc = Boolean(topic.desc || topic.description);
+                    return (
+                      <div 
+                        className={`${styles.topicCard} ${!hasDesc ? styles.noDesc : ''}`}
+                        key={topic.id || index}
+                        onClick={() => {
+                          router.push('/community');
+                        }}
+                      >
+                        <div className={styles.topicRank}>
+                          <img 
+                            src={rankMedals[index] || rankMedals[2]} 
+                            className={styles.rankMedal}
+                            alt={`rank-${index + 1}`}
+                          />
+                        </div>
+                        <div className={styles.topicTitle}>{topic.title || topic.name}</div>
+                        {hasDesc && (
+                          <div className={styles.topicDesc}>{topic.desc || topic.description}</div>
+                        )}
+                        <div className={`${styles.topicStats} ${!hasDesc ? styles.noDesc : ''}`}>
+                          <div className={styles.topicHot}>🔥 {topic.discussionCount || topic.hot || 0} 讨论</div>
+                          <div className={styles.topicDate}>{formatTopicTime(topic.createdAt || topic.createTime)}</div>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className={styles.topicCard}>
+                    <div className={styles.topicRank}>
+                      <img src={rankMedals[0]} className={styles.rankMedal} alt="rank-1" />
+                    </div>
+                    <div className={styles.topicTitle}>暂无话题</div>
+                    <div className={styles.topicDesc}>敬请期待</div>
+                    <div className={styles.topicStats}>
+                      <div className={styles.topicHot}>🔥 0 讨论</div>
+                      <div className={styles.topicDate}>--</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
   };
 
   // 渲染实时榜单
@@ -577,11 +705,42 @@ export default function HomePage() {
       {renderDerivativeArea()}
 
       {/* 投资机会 */}
-      <MoziCard 
-        title="投资机会" 
-        type="more" 
-        callback={() => jump2Market('rank')}
-        moreDesc="查看更多"
+      <MoziCard
+        customTitle={
+          <div className={styles.investmentHeader}>
+            <div className={styles.investmentTabs}>
+              <div 
+                className={`${styles.tabItem} ${investmentTab === 'opportunity' ? styles.active : ''}`}
+                onClick={() => setInvestmentTab('opportunity')}
+              >
+                投资机会
+              </div>
+              <div 
+                className={`${styles.tabItem} ${investmentTab === 'topics' ? styles.active : ''}`}
+                onClick={() => {
+                  setInvestmentTab('topics');
+                  fetchHotTopics();
+                }}
+              >
+                话题热榜
+              </div>
+            </div>
+            <div 
+              className={styles.moreBtn}
+              onClick={() => {
+                if (investmentTab === 'topics') {
+                  router.push('/community');
+                } else {
+                  jump2Market('rank');
+                }
+              }}
+            >
+              查看更多 &gt;
+            </div>
+          </div>
+        }
+        customStyle={{ backgroundColor: 'transparent' }}
+        className={styles.investmentCard}
       >
         {renderInvestmentOpportunity()}
       </MoziCard>

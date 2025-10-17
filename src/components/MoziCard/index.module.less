@@ -10,7 +10,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 5px 10px;
+  padding: 10px;
   background-color: transparent;
 }
 
@@ -28,7 +28,7 @@
 }
 
 .cardBody {
-  padding: 5px 10px;
+  padding: 10px;
   overflow-x: auto;
 }
 
@@ -41,6 +41,16 @@
 .moreDesc {
   font-size: 13px;
   color: #999;
+}
+
+/* 与原项目对齐：添加选择器样式 */
+.pickerSelect {
+  display: flex;
+  align-items: center;
+}
+
+.selectIcon {
+  margin-right: 5px;
 }
 
 .moreIcon {
@@ -76,15 +86,15 @@
   pointer-events: none;
 }
 
-/* Tabs类型样式 */
+/* Tabs类型样式（与原项目对齐） */
 .tabsContainer {
   display: flex;
   background-color: #f5f5f5;
-  border-radius: 11px;
-  padding: 1px;
-  gap: 1px;
-  width: 140px;
-  height: 22px;
+  border-radius: 22px;
+  padding: 2px;
+  gap: 2px;
+  width: 280px; /* 与原项目保持一致 */
+  height: 44px; /* 与原项目保持一致 */
 }
 
 .tabItem {
@@ -92,8 +102,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
-  font-size: 11px;
+  border-radius: 20px;
+  font-size: 22px; /* 与原项目保持一致 */
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
