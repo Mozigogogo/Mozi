@@ -85,6 +85,8 @@ export default function HomePage() {
   const [investmentTab, setInvestmentTab] = useState('opportunity');
   const [hotTopics, setHotTopics] = useState([]);
   const [topicsLoading, setTopicsLoading] = useState(false);
+  const [lastTopicsLoadTime, setLastTopicsLoadTime] = useState(null);
+  const topicsCacheTimer = useRef(null);
   const needLoop = useRef(true);
 
   // 实时榜单配置
@@ -197,23 +199,55 @@ export default function HomePage() {
     }
   };
 
-  // 获取话题热榜数据
+  // 清理话题缓存
+  const clearTopicsCache = () => {
+    setHotTopics(null);
+    setLastTopicsLoadTime(null);
+    if (topicsCacheTimer.current) {
+      clearTimeout(topicsCacheTimer.current);
+      topicsCacheTimer.current = null;
+    }
+  };
+
+  // 获取话题热榜数据 - 带缓存机制
   const fetchHotTopics = async (forceRefresh = false) => {
+    const now = Date.now();
+    const CACHE_DURATION = 60 * 1000; // 缓存1分钟
+    
+    // 如果强制刷新，清理缓存
+    if (forceRefresh) {
+      clearTopicsCache();
+    }
+    
+    // 检查缓存是否有效
+    if (!forceRefresh && hotTopics !== null && lastTopicsLoadTime && (now - lastTopicsLoadTime < CACHE_DURATION)) {
+      return;
+    }
+    
     setTopicsLoading(true);
     try {
       const response = await request({
-        url: Interface.hot_topics || '/api/community/hot-topics',
-        data: {}
+        url: Interface.HOT_TOPICS_API || '/topic/hot',
+        data: {
+          pageSize: 10
+        }
       });
-      if (response?.success && Array.isArray(response.data)) {
-        setHotTopics(response.data);
+      setHotTopics(response?.data?.data || response?.data || []);
+      setLastTopicsLoadTime(now);
+      
+      // 清除之前的定时器
+      if (topicsCacheTimer.current) {
+        clearTimeout(topicsCacheTimer.current);
       }
+      
+      // 设置缓存清理定时器
+      topicsCacheTimer.current = setTimeout(() => {
+        setLastTopicsLoadTime(null); // 标记缓存过期
+      }, CACHE_DURATION);
+      
     } catch (error) {
       console.error('获取话题热榜失败:', error);
-      // 如果失败，使用模拟数据
-      setHotTopics([
-        { id: 1, title: '暂无热门话题', desc: '敬请期待', discussionCount: 0, createdAt: new Date().toISOString() },
-      ]);
+      setHotTopics([]);
     } finally {
       setTopicsLoading(false);
     }
@@ -548,54 +582,54 @@ export default function HomePage() {
       return (
         <div className={styles.scrollContainer}>
           <div className={styles.topicsContent}>
-            {topicsLoading ? (
-              <Loading tip="加载中..." />
-            ) : (
-              <div className={styles.topicCards}>
-                {hotTopics && hotTopics.length > 0 ? (
-                  hotTopics.slice(0, 3).map((topic, index) => {
-                    const hasDesc = Boolean(topic.desc || topic.description);
-                    return (
-                      <div 
-                        className={`${styles.topicCard} ${!hasDesc ? styles.noDesc : ''}`}
-                        key={topic.id || index}
-                        onClick={() => {
-                          router.push('/community');
-                        }}
-                      >
-                        <div className={styles.topicRank}>
-                          <img 
-                            src={rankMedals[index] || rankMedals[2]} 
-                            className={styles.rankMedal}
-                            alt={`rank-${index + 1}`}
-                          />
-                        </div>
-                        <div className={styles.topicTitle}>{topic.title || topic.name}</div>
-                        {hasDesc && (
-                          <div className={styles.topicDesc}>{topic.desc || topic.description}</div>
-                        )}
-                        <div className={`${styles.topicStats} ${!hasDesc ? styles.noDesc : ''}`}>
-                          <div className={styles.topicHot}>🔥 {topic.discussionCount || topic.hot || 0} 讨论</div>
-                          <div className={styles.topicDate}>{formatTopicTime(topic.createdAt || topic.createTime)}</div>
-                        </div>
+            <div className={styles.topicCards}>
+              {topicsLoading ? (
+                <div style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '40px 0' }}>
+                  <Loading tip="加载中..." />
+                </div>
+              ) : hotTopics && hotTopics.length > 0 ? (
+                hotTopics.slice(0, 3).map((topic, index) => {
+                  const hasDesc = Boolean(topic.desc || topic.description);
+                  return (
+                    <div 
+                      className={`${styles.topicCard} ${!hasDesc ? styles.noDesc : ''}`}
+                      key={topic.id || index}
+                      onClick={() => {
+                        router.push('/community');
+                      }}
+                    >
+                      <div className={styles.topicRank}>
+                        <img 
+                          src={rankMedals[index] || rankMedals[2]} 
+                          className={styles.rankMedal}
+                          alt={`rank-${index + 1}`}
+                        />
                       </div>
-                    );
-                  })
-                ) : (
-                  <div className={styles.topicCard}>
-                    <div className={styles.topicRank}>
-                      <img src={rankMedals[0]} className={styles.rankMedal} alt="rank-1" />
+                      <div className={styles.topicTitle}>{topic.title || topic.name}</div>
+                      {hasDesc && (
+                        <div className={styles.topicDesc}>{topic.desc || topic.description}</div>
+                      )}
+                      <div className={`${styles.topicStats} ${!hasDesc ? styles.noDesc : ''}`}>
+                        <div className={styles.topicHot}>🔥 {topic.discussionCount || topic.hot || 0} 讨论</div>
+                        <div className={styles.topicDate}>{formatTopicTime(topic.createdAt || topic.createTime)}</div>
+                      </div>
                     </div>
-                    <div className={styles.topicTitle}>暂无话题</div>
-                    <div className={styles.topicDesc}>敬请期待</div>
-                    <div className={styles.topicStats}>
-                      <div className={styles.topicHot}>🔥 0 讨论</div>
-                      <div className={styles.topicDate}>--</div>
-                    </div>
+                  );
+                })
+              ) : (
+                <div className={styles.topicCard}>
+                  <div className={styles.topicRank}>
+                    <img src={rankMedals[0]} className={styles.rankMedal} alt="rank-1" />
                   </div>
-                )}
-              </div>
-            )}
+                  <div className={styles.topicTitle}>暂无话题</div>
+                  <div className={styles.topicDesc}>敬请期待</div>
+                  <div className={styles.topicStats}>
+                    <div className={styles.topicHot}>🔥 0 讨论</div>
+                    <div className={styles.topicDate}>--</div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       );
