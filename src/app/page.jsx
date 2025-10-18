@@ -14,8 +14,9 @@ import HighlightArea from '../components/HighlightArea';
 import AddCollect from '../components/AddCollect';
 import AddMonitor from '../components/AddMonitor';
 import { request } from '../utils/request';
-import { Interface, LOOPTIME } from '../utils/constants';
+import { Interface, LOOPTIME, WS_URL } from '../utils/constants';
 import { jump2Detail, jump2Market, jump2List, jump2NoTab } from '../utils/core';
+import { useWebSocket } from '../utils/useWebSocket';
 import styles from './page.module.less';
 
 // CDN 图片前缀
@@ -88,6 +89,42 @@ export default function HomePage() {
   const [lastTopicsLoadTime, setLastTopicsLoadTime] = useState(null);
   const topicsCacheTimer = useRef(null);
   const needLoop = useRef(true);
+
+  // WebSocket 连接 - 进入页面自动连接
+  const { sendMessage, isOpen, lastMessage, readyState } = useWebSocket(WS_URL, {
+    onOpen: () => {
+      console.log('WebSocket 连接已建立');
+      // 可以发送初始化消息
+      // sendMessage({ type: 'subscribe', channel: 'market' });
+    },
+    onMessage: (message) => {
+      try {
+        const data = JSON.parse(message);
+        console.log('收到 WebSocket 消息:', data);
+        
+        // 根据消息类型处理数据
+        // 例如：实时更新币价、榜单等
+        if (data.type === 'price_update') {
+          // 更新价格数据
+        } else if (data.type === 'ranking_update') {
+          // 更新榜单数据
+        }
+      } catch (error) {
+        console.error('解析 WebSocket 消息失败:', error);
+      }
+    },
+    onClose: () => {
+      console.log('WebSocket 连接已关闭');
+    },
+    onError: (error) => {
+      console.error('WebSocket 错误:', error);
+    },
+    autoConnect: true, // 自动连接
+    reconnectInterval: 5000, // 5秒后重连
+    reconnectAttempts: 5, // 最多重连5次
+    heartbeatInterval: 30000, // 30秒心跳
+    heartbeatMessage: JSON.stringify({ type: 'ping' })
+  });
 
   // 实时榜单配置
   const activeArr = ['zixuan', 'zhangfu', 'diefu', 'zhenfu', 'chengjiaoe', 'xinbi', 'biaosheng'];

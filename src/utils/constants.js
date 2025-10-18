@@ -4,6 +4,9 @@ export const COMMON_MSG = '网络繁忙，请稍后再试';
 // 接口基础URL - 使用代理路径避免跨域
 export const INTERFACE_URL = '/api';
 
+// WebSocket 服务器地址
+export const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3000/ws';
+
 // 轮询时间间隔（毫秒）
 export const LOOPTIME = 30000;
 
