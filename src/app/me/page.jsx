@@ -119,8 +119,8 @@ export default function Me() {
   };
   
   const attendUs = () => {
-    setPopVis(true);
-    setPopType('attend');
+    // 跳转到 X (Twitter) 账号
+    window.open('https://x.com/Innovation56171', '_blank');
   };
   
   const reward = () => {
@@ -232,8 +232,8 @@ export default function Me() {
               <div className={styles.headerSelectText}>我的报警</div>
             </div>
             <div className={styles.headerSelectItem} onClick={attendUs}>
-              <span style={{fontSize: '30px', color: '#04be02'}}>💬</span>
-              <div className={styles.headerSelectText}>关注公众号</div>
+              <img src="/icons/twitter.svg" alt="Twitter" style={{width: '30px', height: '30px'}} />
+              <div className={styles.headerSelectText}>关注Twitter</div>
             </div>
           </div>
         </div>
