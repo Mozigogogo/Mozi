@@ -18,7 +18,8 @@ i18n
       zh: { translation: zh },
       en: { translation: en },
     },
-    fallbackLng: 'en', // 默认语言
+    lng: 'en', // 默认语言设置为英语
+    fallbackLng: 'en', // 备用语言
     debug: false, // 开发模式下可以设置为 true 查看日志
     
     interpolation: {

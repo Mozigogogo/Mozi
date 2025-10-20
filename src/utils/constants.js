@@ -82,12 +82,20 @@ export const Interface = {
   // 用户
   // 登录
   MOZI_LOGIN: '/user/login',
+  // 邮箱登录
+  EMAIL_LOGIN: '/user/email/login',
+  // 邮箱注册
+  EMAIL_REGISTER: '/user/email/register',
+  // 发送邮箱验证码
+  SEND_EMAIL_CODE: '/user/email/code',
   // 用户信息
   USER_INFO: '/user/info',
   // 更新用户信息
   UPDATE_USER_INFO: '/user/info',
   // 用户帖子列表
   USER_POSTS: '/user/posts',
+  // 评论
+  MOZI_COMMENT: '/user/feedback',
 
   // 告警
   // 添加告警
