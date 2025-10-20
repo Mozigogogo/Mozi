@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { NoticeBar, Grid, TabBar, Swiper } from 'antd-mobile';
+import { RightOutline } from 'antd-mobile-icons';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Layout from '../components/Layout';
@@ -31,6 +32,9 @@ const HOME_BANNERS = [
 
 // 提醒图标
 const HomeAlertIcon = `${CDN_PREFIX}/icon/home-alert.png`;
+
+// 搜索图标
+const SearchIcon = `${CDN_PREFIX}/icon/community/search.png`;
 
 // 合约专区图标（使用CDN）
 const bullBearRatioIcon = `${CDN_PREFIX}/icon/bull-bear-ratio.png`;
@@ -688,21 +692,19 @@ export default function HomePage() {
             <TabBar.Item key='xinbi' title='新币榜' />
             <TabBar.Item key='biaosheng' title='飙升榜' />
           </TabBar>
-          {
-            footerArr.length > 0 && (
-              <div>
-                <MoziGrid
-                  length={5}
-                  colName={colNameArr[activeArr.indexOf(rankActiveKey)]}
-                  gridContent={footerArr[activeArr.indexOf(rankActiveKey)]}
-                  callback={(gridCon) => { jump2Detail(gridCon.key); }}
-                />
-                <div className={styles.listMore} onClick={go2List}>
-                  查看更多 <span className={styles.rightIcon}>→</span>
-                </div>
-              </div>
-            )
-          }
+          <div>
+            <MoziGrid
+              length={5}
+              colName={colNameArr[activeArr.indexOf(rankActiveKey)]}
+              gridContent={footerArr[activeArr.indexOf(rankActiveKey)] || []}
+              callback={(gridCon) => { jump2Detail(gridCon.key); }}
+              maxRows={10}
+              minRows={10}
+            />
+            <div className={styles.listMore} onClick={go2List}>
+              查看更多 <RightOutline fontSize={12} />
+            </div>
+          </div>
         {/* </Layout> */}
       </MoziCard>
     );
@@ -730,93 +732,96 @@ export default function HomePage() {
   };
 
   return (
-    <div className={styles.indexBox}>
-      {/* 顶部区域：Banner + 搜索框 + 公告栏 */}
-      <div className={styles.heroWrap}>
-        {/* 背景轮播图 */}
-        <div className={styles.bgBanner}>
-          <Swiper
-            className={styles.bgBannerSwiper}
-            loop
-            autoplay
-            indicator={() => null}
-          >
-            {HOME_BANNERS.map((url, idx) => (
-              <Swiper.Item key={idx}>
-                <img className={styles.bgBannerImage} src={url} alt={`banner-${idx}`} />
-              </Swiper.Item>
-            ))}
-          </Swiper>
+    <Layout>
+      <div className={styles.indexBox}>
+        {/* 顶部区域：Banner + 搜索框 + 公告栏 */}
+        <div className={styles.heroWrap}>
+          {/* 背景轮播图 */}
+          <div className={styles.bgBanner}>
+            <Swiper
+              className={styles.bgBannerSwiper}
+              loop
+              autoplay
+              indicator={() => null}
+            >
+              {HOME_BANNERS.map((url, idx) => (
+                <Swiper.Item key={idx}>
+                  <img className={styles.bgBannerImage} src={url} alt={`banner-${idx}`} />
+                </Swiper.Item>
+              ))}
+            </Swiper>
 
-          {/* 搜索框（层叠在 Banner 上） */}
-          <div className={styles.header} onClick={() => router.push('/search')}>
-            <div className={styles.searchBox}>
-              <div className={styles.searchInput}>请输入搜索的币种</div>
-              <div className={styles.searchCancel}>
-                🔍 搜索
+            {/* 搜索框（层叠在 Banner 上） */}
+            <div className={styles.header} onClick={() => router.push('/search')}>
+              <div className={styles.searchBox}>
+                <div className={styles.searchInput}>请输入搜索的币种</div>
+                <div className={styles.searchCancel}>
+                  <img src={SearchIcon} alt="搜索" className={styles.searchIcon} />
+                  搜索
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* 公告栏（层叠在 Banner 上） */}
-          <div className={styles.notice}>
-            <NoticeBar
-              className={styles.noticeItem}
-              content="告别手动盯盘，实时波动随时跟进！开启智能告警配置吧！"
-              color="alert"
-              wrap
-              icon={<img src={HomeAlertIcon} className={styles.noticeIcon} alt="alert" />}
-            />
+            {/* 公告栏（层叠在 Banner 上） */}
+            <div className={styles.notice}>
+              <NoticeBar
+                className={styles.noticeItem}
+                content="告别手动盯盘，实时波动随时跟进！开启智能告警配置吧！"
+                color="alert"
+                wrap
+                icon={<img src={HomeAlertIcon} className={styles.noticeIcon} alt="alert" />}
+              />
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* 合约专区 */}
-      {renderDerivativeArea()}
+        {/* 合约专区 */}
+        {renderDerivativeArea()}
 
-      {/* 投资机会 */}
-      <MoziCard
-        customTitle={
-          <div className={styles.investmentHeader}>
-            <div className={styles.investmentTabs}>
-              <div 
-                className={`${styles.tabItem} ${investmentTab === 'opportunity' ? styles.active : ''}`}
-                onClick={() => setInvestmentTab('opportunity')}
-              >
-                投资机会
+        {/* 投资机会 */}
+        <MoziCard
+          customTitle={
+            <div className={styles.investmentHeader}>
+              <div className={styles.investmentTabs}>
+                <div 
+                  className={`${styles.tabItem} ${investmentTab === 'opportunity' ? styles.active : ''}`}
+                  onClick={() => setInvestmentTab('opportunity')}
+                >
+                  投资机会
+                </div>
+                <div 
+                  className={`${styles.tabItem} ${investmentTab === 'topics' ? styles.active : ''}`}
+                  onClick={() => {
+                    setInvestmentTab('topics');
+                    fetchHotTopics();
+                  }}
+                >
+                  话题热榜
+                </div>
               </div>
               <div 
-                className={`${styles.tabItem} ${investmentTab === 'topics' ? styles.active : ''}`}
+                className={styles.moreBtn}
                 onClick={() => {
-                  setInvestmentTab('topics');
-                  fetchHotTopics();
+                  if (investmentTab === 'topics') {
+                    router.push('/community');
+                  } else {
+                    jump2Market('rank');
+                  }
                 }}
               >
-                话题热榜
+                查看更多 <RightOutline fontSize={12} />
               </div>
             </div>
-            <div 
-              className={styles.moreBtn}
-              onClick={() => {
-                if (investmentTab === 'topics') {
-                  router.push('/community');
-                } else {
-                  jump2Market('rank');
-                }
-              }}
-            >
-              查看更多 &gt;
-            </div>
-          </div>
-        }
-        customStyle={{ backgroundColor: 'transparent' }}
-        className={styles.investmentCard}
-      >
-        {renderInvestmentOpportunity()}
-      </MoziCard>
+          }
+          customStyle={{ backgroundColor: 'transparent' }}
+          className={styles.investmentCard}
+        >
+          {renderInvestmentOpportunity()}
+        </MoziCard>
 
-      {/* 实时榜单 */}
-      {renderRealTimeRanking()}
-    </div>
+        {/* 实时榜单 */}
+        {renderRealTimeRanking()}
+      </div>
+    </Layout>
   );
 }

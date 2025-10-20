@@ -50,7 +50,7 @@ const MoziCard = ({
       return (
         <div className={styles.rankTitle}>
           <div>{title}</div>
-          <div className={styles.rankTitleTime}>实时更新</div>
+          {/* <div className={styles.rankTitleTime}>实时更新</div> */}
         </div>
       );
     }

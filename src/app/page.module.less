@@ -55,6 +55,13 @@
       font-weight: 500;
       gap: 4px;
     }
+    
+    .searchIcon {
+      width: 16px;
+      height: 16px;
+      display: block;
+      filter: brightness(0) invert(1); // 将图标变为白色
+    }
   }
 
   /* 移动端调整 */
@@ -72,6 +79,11 @@
       .searchCancel {
         width: 60px;
         font-size: 12px;
+      }
+      
+      .searchIcon {
+        width: 14px;
+        height: 14px;
       }
     }
   }
@@ -468,7 +480,14 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 4px;
   font-size: 12px;
+  color: #666;
+  cursor: pointer;
+  
+  &:hover {
+    color: #02c076;
+  }
 }
 
 /* 通用涨跌样式 */
@@ -478,10 +497,6 @@
 
 .priceDown {
   color: #ff6b6b;
-}
-
-.rightIcon {
-  font-size: 12px;
 }
 
 /* 响应式布局 */
