@@ -1,91 +1,61 @@
 .treemapContainer {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
-  gap: 4px;
-  height: 120px;
+  border-radius: 8px;
+  overflow: hidden;
   width: 100%;
+  
+  :global {
+    .adm-grid-item {
+      padding: 0;
+    }
+  }
 }
 
 .treemapItem {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  border-radius: 4px;
-  padding: 4px;
-  font-size: 10px;
-  font-weight: 500;
   color: #fff;
   text-align: center;
-  transition: all 0.2s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  padding: 40px 20px;
+  flex-wrap: wrap;
+  border-radius: 8px;
+  min-height: 100px;
   cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    opacity: 0.9;
+    transform: scale(1.02);
+  }
 }
 
-.treemapItem:hover {
-  transform: scale(1.05);
-  z-index: 1;
+.green {
+  background-color: #11B787;
 }
 
-/* 尺寸类 */
-.large {
-  grid-column: span 2;
-  grid-row: span 2;
-  font-size: 12px;
-}
-
-.medium {
-  grid-column: span 1;
-  grid-row: span 2;
-  font-size: 11px;
-}
-
-.small {
-  grid-column: span 1;
-  grid-row: span 1;
-  font-size: 10px;
-}
-
-/* 颜色类 */
-.strongPositive {
-  background: linear-gradient(135deg, #00d4aa, #00b894);
-}
-
-.positive {
-  background: linear-gradient(135deg, #55efc4, #00d4aa);
-}
-
-.neutral {
-  background: linear-gradient(135deg, #ddd, #bbb);
-}
-
-.negative {
-  background: linear-gradient(135deg, #ff7675, #e84393);
-}
-
-.strongNegative {
-  background: linear-gradient(135deg, #e84393, #d63031);
+.red {
+  background-color: #FA5F5F;
 }
 
 .itemName {
+  font-size: 10px;
   font-weight: 600;
-  margin-bottom: 2px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  width: 100%;
+  margin-bottom: 8px;
+  word-break: break-all;
 }
 
 .itemValue {
+  font-size: 10px;
   font-weight: 500;
-  opacity: 0.9;
+  opacity: 0.95;
 }
 
 .emptyContainer {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 120px;
+  min-height: 200px;
   background: #f8f9fa;
   border-radius: 8px;
 }
@@ -97,23 +67,17 @@
 
 /* 响应式调整 */
 @media (max-width: 768px) {
-  .treemapContainer {
-    height: 100px;
-  }
-  
-  .large {
-    font-size: 11px;
-  }
-  
-  .medium {
-    font-size: 10px;
-  }
-  
-  .small {
-    font-size: 9px;
+  .treemapItem {
+    padding: 30px 15px;
+    min-height: 80px;
   }
   
   .itemName {
-    margin-bottom: 1px;
+    font-size: 10px;
+    margin-bottom: 6px;
+  }
+  
+  .itemValue {
+    font-size: 10px;
   }
 }
