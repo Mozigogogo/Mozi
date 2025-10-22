@@ -6,7 +6,16 @@ import styles from './index.module.less';
 
 const ROW_HEIGHT_PX = 44; // 近似单行高度，用于最小高度计算
 
-const MoziGrid = ({ colName = [], gridContent = [], length, hideTitle = false, callback, maxRows, minRows }) => {
+const MoziGrid = ({ 
+  colName = [], 
+  gridContent = [], 
+  length, 
+  hideTitle = false, 
+  callback, 
+  maxRows, 
+  minRows,
+  columnWidths // 可选的自定义列宽数组
+}) => {
   const displayData = Array.isArray(gridContent)
     ? (maxRows ? gridContent.slice(0, maxRows) : gridContent)
     : [];
@@ -15,6 +24,11 @@ const MoziGrid = ({ colName = [], gridContent = [], length, hideTitle = false, c
 
   // 计算列宽：前两列占更多宽度，最后两列较小
   const getColWidth = (index) => {
+    // 如果提供了自定义列宽，优先使用
+    if (columnWidths && columnWidths[index]) {
+      return columnWidths[index];
+    }
+    
     if (length === 5) {
       // 5列布局：币种(26%) 最新价(20%) 24H幅度(20%) 加自选(18%) 加监控(16%)
       const widths = ['26%', '20%', '20%', '18%', '16%'];

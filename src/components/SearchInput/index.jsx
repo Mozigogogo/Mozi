@@ -1,29 +1,55 @@
 'use client';
 
-import { useState } from 'react';
-import { SearchOutline } from 'antd-mobile-icons';
+import { useState, useEffect, useRef } from 'react';
+import { CloseCircleFill } from 'antd-mobile-icons';
 import styles from './index.module.less';
 
-export const SearchInput = ({ placeholder = '搜索', onSearch, onChange, value, loading }) => {
-  const [inputValue, setInputValue] = useState(value || '');
+const searchIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/search.png';
+
+export const SearchInput = ({ 
+  placeholder = '请搜索币种', 
+  reloadFun, 
+  value = '' 
+}) => {
+  const [inputValue, setInputValue] = useState(value);
+  const [closeColor, setCloseColor] = useState('#b2b2b2');
+  const inputValueRef = useRef(value);
+
+  useEffect(() => {
+    setInputValue(value);
+    inputValueRef.current = value;
+  }, [value]);
+
+  const jump2Search = (e) => {
+    const raw = e?.target?.value ?? inputValueRef.current;
+    const searchValue = (raw || '').trim();
+    
+    if (searchValue && reloadFun) {
+      reloadFun(searchValue);
+    }
+  };
 
   const handleChange = (e) => {
     const newValue = e.target.value;
+    if (newValue) setCloseColor('#b2b2b2');
     setInputValue(newValue);
-    onChange && onChange(newValue);
+    inputValueRef.current = newValue;
   };
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
-      onSearch && onSearch(inputValue);
+      jump2Search(e);
     }
   };
 
+  const clear = () => {
+    setInputValue('');
+    setCloseColor('#b2b2b2');
+    inputValueRef.current = '';
+  };
+
   return (
-    <div className={styles.searchContainer}>
-      <div className={styles.searchIcon}>
-        <SearchOutline />
-      </div>
+    <div className={styles.searchBox}>
       <input
         type="text"
         className={styles.searchInput}
@@ -32,17 +58,13 @@ export const SearchInput = ({ placeholder = '搜索', onSearch, onChange, value,
         onChange={handleChange}
         onKeyDown={handleKeyDown}
       />
-      <button
-        className={styles.searchButton}
-        onClick={() => onSearch && onSearch(inputValue)}
-      >
-        搜索
-      </button>
-      {loading && (
-        <div className={styles.loadingIcon}>
-          <div className={styles.spinner}></div>
-        </div>
-      )}
+      <div className={styles.searchCancel} onClick={clear}>
+        <CloseCircleFill color={closeColor} fontSize={15} />
+      </div>
+      <div className={styles.searchButton} onClick={() => jump2Search()}>
+        <img src={searchIcon} className={styles.searchIconImg} alt="search" />
+        <span className={styles.searchText}>搜索</span>
+      </div>
     </div>
   );
 };
