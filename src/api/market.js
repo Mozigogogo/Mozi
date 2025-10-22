@@ -26,6 +26,16 @@ export const getFearGreedIndex = async () => {
 };
 
 /**
+ * 获取市场聚合数据（BTC市场占有率、市值、成交量等）
+ * @returns {Promise} 返回市场聚合数据
+ */
+export const getAggregationDetail = async () => {
+  return await request({
+    url: '/easy/getAggregationDetail'
+  });
+};
+
+/**
  * 批量获取市场数据（涨跌分布 + 恐慌贪婪指数）
  * @returns {Promise<{distribution: any, fearGreed: any}>}
  */

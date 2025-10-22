@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getMarketDistribution, getFearGreedIndex } from '../../api/market';
+import { getMarketDistribution, getFearGreedIndex, getAggregationDetail } from '../../api/market';
 import DistributionChart from './DistributionChart';
 import FearGreedIndex from './FearGreedIndex';
 import BTCMarketShare from './BTCMarketShare';
@@ -44,11 +44,13 @@ export default function MarketDistribution({ title = '涨跌分布', showUpdateT
   useEffect(() => {
     fetchMarketDistribution();
     fetchFearGreedIndex();
+    fetchAggregationDetail();
     
     // 设置定时刷新（每30秒）
     const interval = setInterval(() => {
       fetchMarketDistribution();
       fetchFearGreedIndex();
+      fetchAggregationDetail();
     }, 30000);
     
     return () => clearInterval(interval);
@@ -131,6 +133,28 @@ export default function MarketDistribution({ title = '涨跌分布', showUpdateT
       }
     } catch (error) {
       console.error('获取恐慌贪婪指数失败:', error);
+    }
+  };
+
+  // 获取市场聚合数据（BTC市场占有率、市值、成交量等）
+  const fetchAggregationDetail = async () => {
+    try {
+      const response = await getAggregationDetail();
+      
+      if (response?.data) {
+        const { btcDominanceFmt, btcDominanceChangeFmt } = response.data;
+        
+        // 更新 BTC 市场占有率数据
+        setDistributionData(prev => ({
+          ...prev,
+          btcMarketShare: {
+            percentage: btcDominanceFmt || '0%',
+            change: btcDominanceChangeFmt || '0%'
+          }
+        }));
+      }
+    } catch (error) {
+      console.error('获取市场聚合数据失败:', error);
     }
   };
 
