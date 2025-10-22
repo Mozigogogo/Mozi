@@ -8,7 +8,7 @@ import MoziCard from '../../components/MoziCard';
 import MoziGrid from '../../components/MoziGrid';
 import HighlightArea from '../../components/HighlightArea';
 import { Loading } from '../../components/Loading';
-import { FavoriteIcon, BellIcon } from '../../components/Icons';
+import { FavoriteIcon, BellIcon, RightArrowIcon } from '../../components/Icons';
 import { request } from '../../utils/request';
 import { Interface, LOOPTIME } from '../../utils/constants';
 import { jump2Detail, jump2List } from '../../utils/core';
@@ -261,9 +261,14 @@ export default function SearchPage() {
           <div className={styles.coinHeaderInfo}>
             <div className={styles.coinHeaderItem}>
               币种({infoData.length})
-              {infoData.length > 3 && <span className={styles.moreArrow}>›</span>}
+              {infoData.length > 3 && <RightArrowIcon size={20} color="#666666" />}
             </div>
           </div>
+        )}
+        
+        {/* 空状态头部 */}
+        {(showType === 'none' || showType === 'invalid') && (
+          <div className={styles.coinHeaderInfo}></div>
         )}
       </div>
 
@@ -327,7 +332,7 @@ export default function SearchPage() {
                     style={{ cursor: areaData.length > 4 ? 'pointer' : 'default' }}
                   >
                     相关版块({areaData.length})
-                    {areaData.length > 4 && <span className={styles.moreArrow}>›</span>}
+                    {areaData.length > 4 && <RightArrowIcon size={20} color="#666666" />}
                   </div>
                 </div>
                 <MoziCard>
@@ -337,7 +342,7 @@ export default function SearchPage() {
                     <div className={styles.areaFlex}>
                       {areaData.data &&
                         areaData.data.map((item, index) => (
-                          <HighlightArea key={index} title={item.section} value={item.changes} />
+                          <HighlightArea key={index} title={item.section} value={item.changes} variant="section" />
                         ))}
                     </div>
                   )}
@@ -364,7 +369,7 @@ export default function SearchPage() {
                     style={{ cursor: platformData.length > 3 ? 'pointer' : 'default' }}
                   >
                     可交易{searchValue}平台({platformData.length})
-                    {platformData.length > 3 && <span className={styles.moreArrow}>›</span>}
+                    {platformData.length > 3 && <RightArrowIcon size={20} color="#666666" />}
                   </div>
                 </div>
                 <MoziCard>
@@ -375,6 +380,7 @@ export default function SearchPage() {
                       length={4}
                       colName={['平台', '所属链', '提取手续费', '最小提币量']}
                       gridContent={platformData.data || []}
+                      columnWidths={['28%', '25%', '25%', '22%']}
                     />
                   )}
                 </MoziCard>
@@ -398,7 +404,7 @@ export default function SearchPage() {
                     style={{ cursor: 'pointer' }}
                   >
                     交易对
-                    <span className={styles.moreArrow}>›</span>
+                    <RightArrowIcon size={20} color="#666666" />
                   </div>
                 </div>
                 <MoziCard>
@@ -413,6 +419,7 @@ export default function SearchPage() {
                             length={4}
                             colName={spotColNameList[pairIndex]}
                             gridContent={pairItem}
+                            columnWidths={['30%', '25%', '25%', '20%']}
                           />
                         ))}
                     </>
