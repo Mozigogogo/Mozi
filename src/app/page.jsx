@@ -14,6 +14,7 @@ import { Loading } from '../components/Loading';
 import HighlightArea from '../components/HighlightArea';
 import AddCollect from '../components/AddCollect';
 import AddMonitor from '../components/AddMonitor';
+import MarketDistribution from '../components/MarketDistribution';
 import { request } from '../utils/request';
 import { Interface, LOOPTIME, WS_URL } from '../utils/constants';
 import { jump2Detail, jump2Market, jump2List, jump2NoTab } from '../utils/core';
@@ -818,6 +819,9 @@ export default function HomePage() {
         >
           {renderInvestmentOpportunity()}
         </MoziCard>
+
+        {/* 涨跌分布 */}
+        <MarketDistribution />
 
         {/* 实时榜单 */}
         {renderRealTimeRanking()}

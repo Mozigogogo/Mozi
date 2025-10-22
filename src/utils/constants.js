@@ -176,6 +176,9 @@ export const Interface = {
 
   // 是否展示全部内容
   SHOW_ALL: '/switch/status',
+  
+  // 涨跌分布
+  MARKET_DISTRIBUTION: '/easy/getGainAndLossDistDa',
 };
 
 // 业务中使用到的联系邮箱和链上地址（打包报错缺失导出）
