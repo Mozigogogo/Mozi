@@ -11,13 +11,50 @@ export const jump2Market = (symbol) => {
 };
 
 // 跳转到列表页
-export const jump2List = (type, params = {}) => {
-  const queryParams = new URLSearchParams();
-  queryParams.append('type', type);
+export const jump2List = (config) => {
+  // 兼容旧版调用方式
+  if (typeof config === 'string') {
+    const type = config;
+    const params = arguments[1] || {};
+    const queryParams = new URLSearchParams();
+    queryParams.append('type', type);
+    
+    Object.entries(params).forEach(([key, value]) => {
+      queryParams.append(key, value);
+    });
+    
+    window.location.href = `/list?${queryParams.toString()}`;
+    return;
+  }
   
-  Object.entries(params).forEach(([key, value]) => {
-    queryParams.append(key, value);
-  });
+  // 新版配置对象方式（支持搜索页等复杂场景）
+  const {
+    showHeader,
+    rankTitle,
+    interFace,
+    requestData,
+    gridTitle,
+    gridCon,
+    rankName,
+    selectArr,
+    reponseData,
+    fromPlatform,
+    searchCoin
+  } = config;
+  
+  const queryParams = new URLSearchParams();
+  
+  if (showHeader !== undefined) queryParams.append('showHeader', showHeader);
+  if (rankTitle) queryParams.append('rankTitle', rankTitle);
+  if (interFace) queryParams.append('interFace', interFace);
+  if (requestData) queryParams.append('requestData', JSON.stringify(requestData));
+  if (gridTitle) queryParams.append('gridTitle', JSON.stringify(gridTitle));
+  if (gridCon) queryParams.append('gridCon', JSON.stringify(gridCon));
+  if (rankName) queryParams.append('rankName', rankName);
+  if (selectArr) queryParams.append('selectArr', JSON.stringify(selectArr));
+  if (reponseData) queryParams.append('reponseData', JSON.stringify(reponseData));
+  if (fromPlatform !== undefined) queryParams.append('fromPlatform', fromPlatform);
+  if (searchCoin) queryParams.append('searchCoin', searchCoin);
   
   window.location.href = `/list?${queryParams.toString()}`;
 };

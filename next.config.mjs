@@ -19,6 +19,11 @@ const nextConfig = withLess({
         source: '/api/:path*',
         destination: `${API_BASE_URL}/:path*`,
       },
+      {
+        // 涨跌分布接口单独代理，不加 /api 前缀
+        source: '/easy/:path*',
+        destination: `${API_BASE_URL}/easy/:path*`,
+      },
     ];
   },
   async redirects() {

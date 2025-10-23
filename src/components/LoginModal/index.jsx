@@ -11,6 +11,7 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [sendingCode, setSendingCode] = useState(false);
   const [countdown, setCountdown] = useState(0);
@@ -154,7 +155,12 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
       const res = await request({
         url: Interface.EMAIL_REGISTER,
         method: 'POST',
-        data: { email, password, code: verificationCode }
+        data: { 
+          email, 
+          password, 
+          code: verificationCode,
+          ...(inviteCode && { inviteCode }) // 如果有邀请码就传递
+        }
       });
 
       if (res?.data?.success) {
@@ -162,6 +168,7 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
         setMode('login');
         setPassword('');
         setVerificationCode('');
+        setInviteCode('');
       } else {
         Toast.show({ content: res?.message || '注册失败', position: 'center', icon: 'fail' });
       }
@@ -177,6 +184,7 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
     setMode(mode === 'login' ? 'register' : 'login');
     setPassword('');
     setVerificationCode('');
+    setInviteCode('');
   };
 
   // 关闭弹窗
@@ -184,6 +192,7 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
     setEmail('');
     setPassword('');
     setVerificationCode('');
+    setInviteCode('');
     setCountdown(0);
     onClose?.();
   };
@@ -241,6 +250,20 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
                 clearable
               />
             </div>
+
+            {/* 注册模式下的邀请码（可选） */}
+            {mode === 'register' && (
+              <div className={styles.formItem}>
+                <label className={styles.label}>邀请码（可选）</label>
+                <Input
+                  className={styles.input}
+                  placeholder='请输入邀请码'
+                  value={inviteCode}
+                  onChange={setInviteCode}
+                  clearable
+                />
+              </div>
+            )}
 
             {/* 注册模式下的验证码 */}
             {mode === 'register' && (

@@ -1,190 +1,435 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { Tabs, Empty } from 'antd-mobile';
-import Layout from '../../components/Layout';
+import { useState, useEffect, useRef } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { LeftOutline } from 'antd-mobile-icons';
 import { SearchInput } from '../../components/SearchInput';
+import MoziCard from '../../components/MoziCard';
+import MoziGrid from '../../components/MoziGrid';
+import HighlightArea from '../../components/HighlightArea';
 import { Loading } from '../../components/Loading';
+import { FavoriteIcon, BellIcon, RightArrowIcon } from '../../components/Icons';
 import { request } from '../../utils/request';
-import { Interface } from '../../utils/constants';
+import { Interface, LOOPTIME } from '../../utils/constants';
 import { jump2Detail, jump2List } from '../../utils/core';
+import isEmpty from 'lodash/isEmpty';
 import styles from './page.module.less';
 
 export default function SearchPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const keyword = searchParams.get('keyword') || '';
-  
-  // 状态定义
+
+  const [showType, setShowType] = useState('none');
   const [searchValue, setSearchValue] = useState(keyword);
-  const [searchResults, setSearchResults] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('coin');
-  
-  // 搜索函数
-  const handleSearch = async (value) => {
-    if (!value) return;
+
+  // 四个数据模块的状态
+  const [infoData, setInfoData] = useState({
+    length: 0,
+    data: null,
+    loading: true,
+    close: false
+  });
+
+  const [areaData, setAreaData] = useState({
+    length: 0,
+    data: null,
+    loading: true,
+    close: false
+  });
+
+  const [platformData, setPlatformData] = useState({
+    length: 0,
+    data: null,
+    loading: true,
+    close: false
+  });
+
+  const [spotData, setSpotData] = useState({
+    length: 0,
+    data: null,
+    loading: true,
+    close: false
+  });
+
+  const needLoop = useRef(true);
+
+  // 页面显示/隐藏控制
+  useEffect(() => {
+    needLoop.current = true;
     
-    setLoading(true);
+    return () => {
+      needLoop.current = false;
+    };
+  }, []);
+
+  // 初始搜索
+  useEffect(() => {
+    if (keyword) {
+      reload(keyword);
+    }
+  }, [keyword]);
+
+  // 币种信息轮询请求
+  const coinRequest = async (value) => {
     try {
-      const response = await request({
-        url: Interface.SEARCH,
-        data: { keyword: value }
+      const sectionRes = await request({
+        url: Interface.COIN_INFO,
+        data: { coin: value }
       });
-      
-      if (response?.data) {
-        setSearchResults(response.data);
+
+      if (sectionRes?.data && !isEmpty(sectionRes.data)) {
+        const tempData = sectionRes.data.slice(0, 3).map((item) => ({
+          title: (
+            <div className={styles.gridText}>
+              <img className={styles.gridIcon} src={item.url} alt={item.symbol} />
+              <div className={styles.gridName}>{item.symbol}</div>
+            </div>
+          ),
+          last: item.last,
+          price24h: <HighlightArea value={item.price24h} />,
+          isOwn: <FavoriteIcon filled={item.favorite} size={18} />,
+          monitor: <BellIcon active={false} size={18} />,
+          key: item.symbol
+        }));
+
+        setInfoData({
+          length: sectionRes.data.length,
+          data: tempData,
+          loading: false,
+          close: false
+        });
+      }
+
+      // 继续轮询
+      setTimeout(() => {
+        if (needLoop.current) coinRequest(value);
+      }, LOOPTIME);
+    } catch (error) {
+      console.error('币种信息请求失败:', error);
+    }
+  };
+
+  // 主搜索函数
+  const reload = async (value) => {
+    if (!value) return;
+
+    setSearchValue(value);
+    setShowType('valid');
+
+    try {
+      // 1. 验证币种
+      const isCoin = await request({
+        url: Interface.IS_COIN,
+        data: { coin: value }
+      });
+
+      if (!isCoin?.data?.isCoin) {
+        setShowType('invalid');
+        return;
+      }
+
+      // 2. 启动币种信息轮询
+      coinRequest(value);
+
+      // 3. 并发请求其他接口
+      const interfaceList = [Interface.COIN_AREA, Interface.COIN_PLATFORM, Interface.COIN_SPOT];
+
+      for (let i = 0; i < interfaceList.length; i++) {
+        const sectionRes = await request({
+          url: interfaceList[i],
+          data: { coin: value }
+        });
+
+        if (!isEmpty(sectionRes?.data)) {
+          let tempData = null;
+
+          // 相关版块
+          if (interfaceList[i] === Interface.COIN_AREA) {
+            tempData = sectionRes.data.slice(0, 4);
+            setAreaData({
+              length: sectionRes.data.length,
+              data: tempData,
+              loading: false,
+              close: false
+            });
+          }
+
+          // 可交易平台
+          if (interfaceList[i] === Interface.COIN_PLATFORM) {
+            tempData = sectionRes.data.slice(0, 3).map((item) => ({
+              title: (
+                <div className={styles.gridText}>
+                  <img className={styles.gridIcon} src={item.url} alt={item.exchanges} />
+                  <div className={styles.gridName}>{item.exchanges}</div>
+                </div>
+              ),
+              chain: item.chain,
+              withdrawfee: item.withdrawfee,
+              withdrawmin: item.withdrawmin
+            }));
+            setPlatformData({
+              length: sectionRes.data.length,
+              data: tempData,
+              loading: false,
+              close: false
+            });
+          }
+
+          // 交易对
+          if (interfaceList[i] === Interface.COIN_SPOT) {
+            const spotArr = [];
+            if (!isEmpty(sectionRes.data?.spot)) {
+              tempData = sectionRes.data.spot.slice(0, 3).map((item) => ({
+                title: (
+                  <div className={styles.gridText}>
+                    <img className={styles.gridIcon} src={item.url} alt={item.symbol} />
+                    <div className={styles.gridName}>{item.symbol}</div>
+                  </div>
+                ),
+                symbol: item.exchanges,
+                lasts: item.lasts,
+                price24h: <HighlightArea value={item.price24h} />
+              }));
+              spotArr.push(tempData);
+            }
+            if (!isEmpty(sectionRes.data?.nonSpot)) {
+              tempData = sectionRes.data.nonSpot.slice(0, 3).map((item) => ({
+                title: (
+                  <div className={styles.gridText}>
+                    <img className={styles.gridIcon} src={item.url} alt={item.symbol} />
+                    <div className={styles.gridName}>{item.symbol}</div>
+                  </div>
+                ),
+                symbol: item.exchanges,
+                lasts: item.lasts,
+                price24h: <HighlightArea value={item.price24h} />
+              }));
+              spotArr.push(tempData);
+            }
+            setSpotData({
+              length: sectionRes.data.spot?.length > 3 || sectionRes.data.nonSpot?.length > 3 ? 'more' : false,
+              data: spotArr,
+              loading: false,
+              close: false
+            });
+          }
+        } else {
+          // 数据为空，关闭对应模块
+          if (interfaceList[i] === Interface.COIN_AREA) {
+            setAreaData({ close: true });
+          }
+          if (interfaceList[i] === Interface.COIN_PLATFORM) {
+            setPlatformData({ close: true });
+          }
+          if (interfaceList[i] === Interface.COIN_SPOT) {
+            setSpotData({ close: true });
+          }
+        }
       }
     } catch (error) {
       console.error('搜索失败:', error);
-    } finally {
-      setLoading(false);
+      setShowType('invalid');
     }
   };
-  
-  // 初始加载
-  useEffect(() => {
-    if (keyword) {
-      handleSearch(keyword);
-    }
-  }, [keyword]);
-  
-  // 渲染币种结果
-  const renderCoinResults = () => {
-    if (!searchResults?.coin || searchResults.coin.length === 0) {
-      return <Empty description="暂无相关币种" />
-    }
-    
-    return (
-      <div className={styles.resultList}>
-        {searchResults.coin.map((item, index) => (
-          <div 
-            key={index} 
-            className={styles.resultItem}
-            onClick={() => jump2Detail(item.symbol)}
-          >
-            <div className={styles.itemLeft}>
-              <img src={item.url} alt={item.symbol} className={styles.itemImg} />
-              <div className={styles.itemInfo}>
-                <div className={styles.itemSymbol}>{item.symbol}</div>
-                <div className={styles.itemName}>{item.name}</div>
-              </div>
-            </div>
-            <div className={styles.itemRight}>
-              <div className={styles.itemPrice}>{item.currentPrice}</div>
-              <div className={`${styles.itemChange} ${String(item.priceChange24h).includes('-') ? styles.priceDown : styles.priceUp}`}>
-                {item.priceChange24h}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
-  
-  // 渲染行业结果
-  const renderIndustryResults = () => {
-    if (!searchResults?.industry || searchResults.industry.length === 0) {
-      return <Empty description="暂无相关行业" />
-    }
-    
-    return (
-      <div className={styles.resultList}>
-        {searchResults.industry.map((item, index) => (
-          <div 
-            key={index} 
-            className={styles.resultItem}
-            onClick={() => jump2List('industry', { industry: item.name })}
-          >
-            <div className={styles.itemLeft}>
-              <div className={styles.industryIcon}>{item.name.charAt(0)}</div>
-              <div className={styles.itemInfo}>
-                <div className={styles.itemName}>{item.name}</div>
-                <div className={styles.itemDesc}>{item.description || '暂无描述'}</div>
-              </div>
-            </div>
-            <div className={styles.itemRight}>
-              <div className={`${styles.itemChange} ${String(item.change).includes('-') ? styles.priceDown : styles.priceUp}`}>
-                {item.change}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
-  
-  // 渲染话题结果
-  const renderTopicResults = () => {
-    if (!searchResults?.topic || searchResults.topic.length === 0) {
-      return <Empty description="暂无相关话题" />
-    }
-    
-    return (
-      <div className={styles.resultList}>
-        {searchResults.topic.map((item, index) => (
-          <div 
-            key={index} 
-            className={styles.resultItem}
-            onClick={() => window.location.href = `/community?topic=${item.id}`}
-          >
-            <div className={styles.itemLeft}>
-              <div className={styles.topicIcon}>#</div>
-              <div className={styles.itemInfo}>
-                <div className={styles.itemName}>{item.title}</div>
-                <div className={styles.itemDesc}>{`${item.postCount || 0}个帖子`}</div>
-              </div>
-            </div>
-            <div className={styles.itemRight}>
-              <div className={styles.itemHot}>{`热度 ${item.hot || 0}`}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
-  
+
+  const spotColNameList = [
+    [<span key="spot" className={styles.pairTitleStrong}>现货交易对</span>, '交易所', '最新价', '24H变化'],
+    [<span key="nonspot" className={styles.pairTitleStrong}>衍生品交易对</span>, '交易所', '最新价', '24H变化']
+  ];
+
   return (
-    <Layout>
-      <div className={styles.container}>
+    <div className={styles.indexBox}>
+      {/* 顶部区域 */}
+      <div className={styles.topArea}>
+        {/* 自定义导航栏 */}
+        <div className={styles.customNavbar}>
+          <div className={styles.navbarLeft} onClick={() => router.back()}>
+            <LeftOutline fontSize={24} color="#ffffff" />
+          </div>
+          <div className={styles.navbarTitle}>搜索</div>
+          <div className={styles.navbarRight}></div>
+        </div>
+
+        {/* 搜索框区域 */}
         <div className={styles.header}>
-          <SearchInput 
-            placeholder="搜索币种、行业、话题" 
-            value={searchValue}
-            onChange={setSearchValue}
-            onSearch={handleSearch}
-            loading={loading}
-          />
+          <SearchInput reloadFun={reload} value={searchValue} />
         </div>
+
+        {/* 币种头部信息 */}
+        {showType === 'valid' && (
+          <div className={styles.coinHeaderInfo}>
+            <div className={styles.coinHeaderItem}>
+              币种({infoData.length})
+              {infoData.length > 3 && <RightArrowIcon size={20} color="#666666" />}
+            </div>
+          </div>
+        )}
         
-        <div className={styles.content}>
-          {loading ? (
-            <div className={styles.loadingContainer}>
-              <Loading />
-            </div>
-          ) : searchResults ? (
-            <Tabs 
-              activeKey={activeTab} 
-              onChange={setActiveTab}
-              className={styles.tabs}
-            >
-              <Tabs.Tab title="币种" key="coin">
-                {renderCoinResults()}
-              </Tabs.Tab>
-              <Tabs.Tab title="行业" key="industry">
-                {renderIndustryResults()}
-              </Tabs.Tab>
-              <Tabs.Tab title="话题" key="topic">
-                {renderTopicResults()}
-              </Tabs.Tab>
-            </Tabs>
-          ) : (
-            <div className={styles.emptyContainer}>
-              <Empty description="请输入关键词搜索" />
-            </div>
-          )}
-        </div>
+        {/* 空状态头部 */}
+        {(showType === 'none' || showType === 'invalid') && (
+          <div className={styles.coinHeaderInfo}></div>
+        )}
       </div>
-    </Layout>
+
+      {/* 内容区域 */}
+      <div className={styles.contentArea}>
+        {showType === 'none' && (
+          <div className={styles.noSearchBox}>请输入您想搜索的币种</div>
+        )}
+
+        {showType === 'invalid' && (
+          <div className={styles.noSearchBox}>请输入正确的币种</div>
+        )}
+
+        {showType === 'valid' && (
+          <div className={styles.searchBox}>
+            {/* 币种信息 */}
+            {!infoData.close && (
+              <MoziCard
+                type={infoData.length > 3 ? 'more' : null}
+                callback={() => {
+                  if (infoData.length > 3) {
+                    jump2List({
+                      showHeader: true,
+                      rankTitle: searchValue,
+                      interFace: Interface.COIN_INFO,
+                      requestData: { coin: searchValue }
+                    });
+                  }
+                }}
+              >
+                {infoData.loading ? (
+                  <Loading />
+                ) : (
+                  <MoziGrid
+                    length={5}
+                    colName={['名称', '最新价', '24H涨幅', '加自选', '加监控']}
+                    gridContent={infoData.data || []}
+                    callback={(gridCon) => jump2Detail(gridCon.key)}
+                    columnWidths={['24%', '26%', '20%', '15%', '15%']}
+                  />
+                )}
+              </MoziCard>
+            )}
+
+            {/* 相关版块 */}
+            {!areaData.close && (
+              <>
+                <div className={styles.headerInfo}>
+                  <div 
+                    className={styles.headerInfoItem}
+                    onClick={() => {
+                      if (areaData.length > 4) {
+                        jump2List({
+                          showHeader: true,
+                          rankTitle: searchValue,
+                          interFace: Interface.COIN_AREA,
+                          requestData: { coin: searchValue }
+                        });
+                      }
+                    }}
+                    style={{ cursor: areaData.length > 4 ? 'pointer' : 'default' }}
+                  >
+                    相关版块({areaData.length})
+                    {areaData.length > 4 && <RightArrowIcon size={20} color="#666666" />}
+                  </div>
+                </div>
+                <MoziCard>
+                  {areaData.loading ? (
+                    <Loading />
+                  ) : (
+                    <div className={styles.areaFlex}>
+                      {areaData.data &&
+                        areaData.data.map((item, index) => (
+                          <HighlightArea key={index} title={item.section} value={item.changes} variant="section" />
+                        ))}
+                    </div>
+                  )}
+                </MoziCard>
+              </>
+            )}
+
+            {/* 可交易平台 */}
+            {!platformData.close && (
+              <>
+                <div className={styles.headerInfo}>
+                  <div 
+                    className={styles.headerInfoItem}
+                    onClick={() => {
+                      if (platformData.length > 3) {
+                        jump2List({
+                          showHeader: true,
+                          rankTitle: `可交易${searchValue.toUpperCase()}平台`,
+                          interFace: Interface.COIN_PLATFORM,
+                          requestData: { coin: searchValue }
+                        });
+                      }
+                    }}
+                    style={{ cursor: platformData.length > 3 ? 'pointer' : 'default' }}
+                  >
+                    可交易{searchValue}平台({platformData.length})
+                    {platformData.length > 3 && <RightArrowIcon size={20} color="#666666" />}
+                  </div>
+                </div>
+                <MoziCard>
+                  {platformData.loading ? (
+                    <Loading />
+                  ) : (
+                    <MoziGrid
+                      length={4}
+                      colName={['平台', '所属链', '提取手续费', '最小提币量']}
+                      gridContent={platformData.data || []}
+                      columnWidths={['28%', '25%', '25%', '22%']}
+                    />
+                  )}
+                </MoziCard>
+              </>
+            )}
+
+            {/* 交易对 */}
+            {!spotData.close && (
+              <>
+                <div className={styles.headerInfo}>
+                  <div 
+                    className={styles.headerInfoItem}
+                    onClick={() => {
+                      jump2List({
+                        showHeader: true,
+                        rankTitle: `${searchValue.toUpperCase()}交易对`,
+                        interFace: Interface.COIN_SPOT,
+                        requestData: { coin: searchValue }
+                      });
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    交易对
+                    <RightArrowIcon size={20} color="#666666" />
+                  </div>
+                </div>
+                <MoziCard>
+                  {spotData.loading ? (
+                    <Loading />
+                  ) : (
+                    <>
+                      {spotData.data &&
+                        spotData.data.map((pairItem, pairIndex) => (
+                          <MoziGrid
+                            key={pairIndex}
+                            length={4}
+                            colName={spotColNameList[pairIndex]}
+                            gridContent={pairItem}
+                            columnWidths={['30%', '25%', '25%', '20%']}
+                          />
+                        ))}
+                    </>
+                  )}
+                </MoziCard>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

@@ -1,162 +1,187 @@
-.container {
-  width: 100%;
-  padding: 0 16px;
+.indexBox {
+  background-color: #efefef;
   box-sizing: border-box;
+  min-height: 100vh;
+
+  // 顶部区域 - 包含导航栏和搜索框
+  .topArea {
+    background-image: url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/home-bg.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    
+    // 自定义导航栏
+    .customNavbar {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      
+      .navbarLeft {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        
+        &:active {
+          opacity: 0.7;
+        }
+      }
+      
+      .navbarTitle {
+        flex: 1;
+        text-align: center;
+        font-size: 20px;
+        font-weight: 500;
+        color: #ffffff;
+      }
+      
+      .navbarRight {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+    
+    // 搜索框区域
+    .header {
+      padding: 16px 16px 20px 16px;
+    }
+    
+    // 币种头部信息区域（特殊样式）
+    .coinHeaderInfo {
+      background-color: #EEF0F3;
+      border-radius: 20px 20px 0 0;
+      padding: 12px 16px 12px 0;
+      margin-top: 0;
+      
+      .coinHeaderItem {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        font-size: 16px;
+        font-weight: 500;
+        color: #333333;
+        margin-left: 16px;
+        width: 100%;
+        box-sizing: border-box;
+        min-height: 30px;
+        white-space: nowrap;
+      }
+    }
+  }
+  
+  // 内容区域
+  .contentArea {
+    padding: 0 10px 20px 10px;
+    
+    // 内容区域中的头部信息
+    .headerInfo {
+      background-color: transparent;
+      padding: 10px 6px 0 0;
+      margin-top: 10px;
+      
+      .headerInfoItem {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        font-size: 16px;
+        font-weight: 500;
+        color: #333333;
+        margin: 0 0 0 6px;
+        width: 100%;
+        box-sizing: border-box;
+        min-height: 30px;
+        white-space: nowrap;
+      }
+    }
+  }
+
+  .noSearchBox {
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    font-size: 14px;
+  }
+
+  .areaFlex {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
 }
 
-.header {
-  padding: 12px 0;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background-color: var(--background-color);
-}
-
-.content {
-  padding-bottom: 60px;
-}
-
-.tabs {
-  margin-top: 16px;
-}
-
-.loadingContainer,
-.emptyContainer {
+// Grid 相关样式
+.gridText {
   display: flex;
-  justify-content: center;
   align-items: center;
-  min-height: 200px;
+  width: 100%;
+  
+  .gridIcon {
+    height: 18px;
+    width: 18px;
+    margin-right: 6px;
+    border-radius: 50%;
+  }
+
+  .gridName {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 13px;
+  }
 }
 
-.resultList {
-  margin-top: 16px;
-}
-
-.resultItem {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px;
-  margin-bottom: 12px;
-  background-color: var(--card-background);
-  border-radius: 8px;
-  box-shadow: var(--card-shadow);
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.resultItem:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-}
-
-.itemLeft {
-  display: flex;
-  align-items: center;
-}
-
-.itemImg {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  margin-right: 12px;
-}
-
-.industryIcon,
-.topicIcon {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  margin-right: 12px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-weight: bold;
-  font-size: 16px;
-  background-color: var(--primary-color);
-  color: white;
-}
-
-.topicIcon {
-  background-color: var(--secondary-color);
-}
-
-.itemInfo {
-  display: flex;
-  flex-direction: column;
-}
-
-.itemSymbol {
-  font-weight: 600;
-  font-size: 16px;
-  margin-bottom: 4px;
-}
-
-.itemName {
-  font-weight: 500;
-  font-size: 14px;
-  margin-bottom: 4px;
-}
-
-.itemDesc {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.itemRight {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-}
-
-.itemPrice {
-  font-weight: 600;
-  font-size: 16px;
-  margin-bottom: 4px;
-}
-
-.itemChange {
-  font-size: 12px;
-  font-weight: 500;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.itemHot {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-/* 价格涨跌样式 */
-.priceUp {
-  background-color: rgba(0, 200, 5, 0.1);
-  color: #00c805;
-}
-
-.priceDown {
-  background-color: rgba(255, 0, 0, 0.1);
-  color: #ff0000;
+/* 搜索-交易对：加粗标题样式 */
+.pairTitleStrong {
+  font-weight: 700;
+  color: #000;
+  font-size: 13px;
 }
 
 /* 深色模式适配 */
 @media (prefers-color-scheme: dark) {
-  .header {
-    background-color: var(--background-color-dark);
+  .indexBox {
+    background-color: #1a1a1a;
   }
   
-  .priceUp {
-    background-color: rgba(0, 200, 5, 0.2);
+  .topArea {
+    .coinHeaderInfo {
+      background-color: #2a2a2a;
+      
+      .coinHeaderItem {
+        color: #e0e0e0;
+      }
+    }
   }
   
-  .priceDown {
-    background-color: rgba(255, 0, 0, 0.2);
+  .contentArea {
+    .headerInfo {
+      .headerInfoItem {
+        color: #e0e0e0;
+      }
+    }
   }
   
-  .resultItem {
-    box-shadow: var(--card-shadow-dark);
+  .noSearchBox {
+    color: #999;
   }
   
-  .resultItem:hover {
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  .pairTitleStrong {
+    color: #e0e0e0;
+  }
+  
+  .gridName {
+    color: #e0e0e0;
   }
 }

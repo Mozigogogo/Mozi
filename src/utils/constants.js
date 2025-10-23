@@ -4,6 +4,9 @@ export const COMMON_MSG = '网络繁忙，请稍后再试';
 // 接口基础URL - 使用代理路径避免跨域
 export const INTERFACE_URL = '/api';
 
+// WebSocket 服务器地址
+export const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3000/ws';
+
 // 轮询时间间隔（毫秒）
 export const LOOPTIME = 30000;
 
@@ -51,7 +54,13 @@ export const Interface = {
   // 币种是否有效
   IS_COIN: '/search/iscoin',
   // 币种信息
-  COIN_INFO: '/search/coin',
+  COIN_INFO: '/search/lastpricechange',
+  // 相关版块
+  COIN_AREA: '/search/coinsection',
+  // 可交易平台
+  COIN_PLATFORM: '/search/symbolfees',
+  // 交易对（现货+衍生品）
+  COIN_SPOT: '/search/symbolprice',
   // 搜索历史
   SEARCH_HISTORY: '/search/history',
 
@@ -173,6 +182,9 @@ export const Interface = {
 
   // 是否展示全部内容
   SHOW_ALL: '/switch/status',
+  
+  // 涨跌分布
+  MARKET_DISTRIBUTION: '/easy/getGainAndLossDistDa',
 };
 
 // 业务中使用到的联系邮箱和链上地址（打包报错缺失导出）

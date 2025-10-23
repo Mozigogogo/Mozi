@@ -6,7 +6,8 @@ import RankGrid from '../RankGrid';
 import styles from './index.module.less';
 
 const MoziCard = ({ 
-  title, 
+  title,
+  customTitle,
   sumNum, 
   children, 
   type = 'default', 
@@ -14,6 +15,12 @@ const MoziCard = ({
   selectArr = [], 
   moreDesc, 
   pickChange,
+  // 样式相关props（与原项目保持一致）
+  borderRadius = '8px',
+  backgroundColor = '#fff',
+  marginBottom = '10px',
+  customStyle = {},
+  className = '',
   // 新增的排行榜相关props
   data = [],
   loading = false,
@@ -24,16 +31,31 @@ const MoziCard = ({
   onItemClick,
   onMoreClick
 }) => {
+  // 合并默认样式和自定义样式（customStyle 优先级最高）
+  const cardStyle = {
+    borderRadius,
+    backgroundColor,
+    marginBottom,
+    ...customStyle
+  };
   
-  const renderRankTitle = () => {
+  const renderTitle = () => {
+    // 如果有自定义标题，直接返回
+    if (customTitle) {
+      return customTitle;
+    }
+    
+    // 如果是榜单类型
     if (title && (title.includes('榜') || title.includes('排行'))) {
       return (
         <div className={styles.rankTitle}>
           <div>{title}</div>
-          <div className={styles.rankTitleTime}>实时更新</div>
+          {/* <div className={styles.rankTitleTime}>实时更新</div> */}
         </div>
       );
     }
+    
+    // 普通标题
     return (
       <div className={styles.title} onClick={callback}>
         <span>{title}</span>
@@ -120,14 +142,12 @@ const MoziCard = ({
     );
   };
 
-  // 如果是排行榜类型，使用新的渲染逻辑
-  // 有children的情况（如首页实时榜单）使用原有渲染逻辑
+  // 如果是排行榜类型且没有children，使用榜单渲染逻辑
   if (title && (title.includes('榜') || title.includes('排行')) && !children && (selectData?.length > 0 || onItemClick || (Array.isArray(data) && data.length > 0))) {
-
     return (
-      <div className={styles.card}>
+      <div className={`${styles.card} ${className}`} style={cardStyle}>
         <div className={styles.cardHeader}>
-          {renderRankTitle()}
+          {renderTitle()}
           <CardExtra 
             type={selectData && selectData.length > 0 ? 'select' : 'more'}
             callback={onMoreClick} 
@@ -144,21 +164,20 @@ const MoziCard = ({
     );
   }
 
-  // 原有的渲染逻辑
+  // 通用渲染逻辑
   return (
-    <div className={styles.card}>
+    <div className={`${styles.card} ${className}`} style={cardStyle}>
       <div className={styles.cardHeader}>
-        <div className={styles.title} onClick={callback}>
-          <span>{title}</span>
-          {sumNum > 0 && <span className={styles.titleNum}>({sumNum})</span>}
-        </div>
-        <CardExtra 
-          type={type} 
-          callback={callback} 
-          selectArr={selectArr} 
-          moreDesc={moreDesc} 
-          pickChange={pickChange} 
-        />
+        {renderTitle()}
+        {!customTitle && (
+          <CardExtra 
+            type={type} 
+            callback={callback} 
+            selectArr={selectArr} 
+            moreDesc={moreDesc} 
+            pickChange={pickChange} 
+          />
+        )}
       </div>
       <div className={styles.cardBody}>
         {children}
@@ -168,7 +187,8 @@ const MoziCard = ({
 };
 
 const CardExtra = ({ type, callback, selectArr = [], selectIndex = 0, moreDesc, pickChange }) => {
-  const [selected, setSelected] = useState(selectIndex);
+  // 对于tabs类型，selected存储实际的item值；其他类型存储index
+  const [selected, setSelected] = useState(type === 'tabs' ? selectArr[selectIndex] : selectIndex);
 
   const handleChange = (e) => {
     const index = parseInt(e.target.value);
@@ -198,6 +218,26 @@ const CardExtra = ({ type, callback, selectArr = [], selectIndex = 0, moreDesc, 
             <option key={index} value={index}>{item}</option>
           ))}
         </select>
+      </div>
+    );
+  } else if (type === 'tabs') {
+    // 添加tabs类型支持（与原项目保持一致，selected比较item值）
+    return (
+      <div className={styles.tabsContainer}>
+        {selectArr.map((item, index) => (
+          <div 
+            key={index}
+            className={`${styles.tabItem} ${selected === item ? styles.tabActive : ''}`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setSelected(item);
+              pickChange && pickChange(index);
+            }}
+          >
+            {item}
+          </div>
+        ))}
       </div>
     );
   }

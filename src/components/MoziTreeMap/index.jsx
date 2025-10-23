@@ -1,9 +1,73 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { Grid } from 'antd-mobile';
 import styles from './index.module.less';
 
 const MoziTreeMap = ({ list = [], name, desc }) => {
+  const [newList, setList] = useState([]);
+
+  // 交换数组元素
+  const swapElements = (arr, index1, index2) => {
+    const temp = arr[index1];
+    arr[index1] = arr[index2];
+    arr[index2] = temp;
+  };
+
+  useEffect(() => {
+    if (list && list.length > 0) {
+      const handledArr = handleArr(list);
+      setList(handledArr);
+    }
+  }, [list]);
+
+  // 处理数组，计算 span 和调整布局
+  const handleArr = (arr) => {
+    // 按绝对值排序，找出最大的两个
+    let sortedArr = arr.slice().sort((a, b) => {
+      const aVal = Math.abs(parseFloat(String(a[desc]).replace('%', '')));
+      const bVal = Math.abs(parseFloat(String(b[desc]).replace('%', '')));
+      return bVal - aVal;
+    });
+    
+    let maxValue1 = sortedArr[0][desc];
+    let maxValue2 = sortedArr[1] ? sortedArr[1][desc] : maxValue1;
+
+    const tempArr = arr.slice();
+
+    // 给前两个最大值设置 span=2，其他为 span=1
+    let bigSpanNum = 0;
+    tempArr.forEach(item => {
+      if (bigSpanNum === 2) {
+        item.span = 1;
+      } else {
+        if (item[desc] === maxValue1 || item[desc] === maxValue2) {
+          item.span = 2;
+          bigSpanNum++;
+        } else {
+          item.span = 1;
+        }
+      }
+    });
+
+    // 调整布局，确保 span=2 的项不会出现在奇数位置
+    let sumSpan = 0;
+    tempArr.forEach((item, index) => {
+      if (item.span === 2) {
+        if ((sumSpan + item.span) % 4 === 1) {
+          if (tempArr[index - 1].span === 2) {
+            swapElements(tempArr, index, index - 2);
+          } else {
+            swapElements(tempArr, index, index - 1);
+          }
+        }
+      }
+      sumSpan += item.span;
+    });
+
+    return tempArr;
+  };
+
   if (!list || list.length === 0) {
     return (
       <div className={styles.emptyContainer}>
@@ -12,51 +76,25 @@ const MoziTreeMap = ({ list = [], name, desc }) => {
     );
   }
 
-  // 计算每个项目的大小权重
-  const getItemSize = (index, total) => {
-    if (total <= 6) {
-      // 6个或更少项目时的布局
-      if (index === 0) return 'large';
-      if (index === 1) return 'medium';
-      return 'small';
-    }
-    // 更多项目时的布局
-    if (index < 2) return 'large';
-    if (index < 4) return 'medium';
-    return 'small';
-  };
-
-  // 获取颜色类名
-  const getColorClass = (value) => {
-    if (!value) return styles.neutral;
-    const numValue = parseFloat(String(value).replace('%', ''));
-    if (numValue > 5) return styles.strongPositive;
-    if (numValue > 0) return styles.positive;
-    if (numValue > -5) return styles.negative;
-    return styles.strongNegative;
-  };
-
   return (
-    <div className={styles.treemapContainer}>
-      {list.slice(0, 9).map((item, index) => {
-        const sizeClass = getItemSize(index, list.length);
-        const colorClass = getColorClass(item[desc]);
+    <Grid className={styles.treemapContainer} columns={4} gap={4}>
+      {newList.map((item, index) => {
+        // 判断是涨还是跌
+        const value = String(item[desc]);
+        const isNegative = value.includes('-');
         
         return (
-          <div 
+          <Grid.Item 
             key={index} 
-            className={`${styles.treemapItem} ${styles[sizeClass]} ${colorClass}`}
+            className={`${styles.treemapItem} ${isNegative ? styles.red : styles.green}`}
+            span={item.span}
           >
-            <div className={styles.itemName}>
-              {item[name]}
-            </div>
-            <div className={styles.itemValue}>
-              {item[desc]}
-            </div>
-          </div>
+            <div className={styles.itemName}>{item[name]}</div>
+            <div className={styles.itemValue}>{item[desc]}</div>
+          </Grid.Item>
         );
       })}
-    </div>
+    </Grid>
   );
 };
 
