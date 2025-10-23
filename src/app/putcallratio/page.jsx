@@ -12,7 +12,6 @@ import { isEmpty } from 'lodash';
 import styles from './page.module.less';
 
 const PutCallRatio = () => {
-  const [activeKey, setActiveKey] = useState('currentRatio');
   const [ratioSelected, setRatioSelected] = useState('主动买卖量比');
   const [coinSelected, setCoinSelected] = useState('');
   const [cexSelected, setCexSelected] = useState('');
@@ -25,11 +24,7 @@ const PutCallRatio = () => {
     close: false,
     data: null
   });
-  const [hisPCRData, setHisPCRData] = useState({
-    loading: true,
-    close: false,
-    data: null
-  });
+  const [hisLoading, setHisLoading] = useState(true);
   
   const chartRef = useRef(null);
   const chartData = useRef(null);
@@ -97,6 +92,8 @@ const PutCallRatio = () => {
   // 获取数据
   const getData = async ({ ratioTypeSelected, coin = coinSelected, exchange = cexSelected, getType = 'all' }) => {
     try {
+      setHisLoading(true);
+
       // 获取历史数据
       const pcrHisData = await request({
         url: Interface.PCR_HIS,
@@ -111,9 +108,11 @@ const PutCallRatio = () => {
       if (chartRef.current && pcrHisData?.data) {
         chartData.current = {
           data: pcrHisData.data,
-          type: 'samebar'
+          type: 'samebar',
+          msg: '历史多空比'
         };
         chartRef.current.setOption(handleOptions(pcrHisData.data, 'samebar'));
+        setHisLoading(false);
       }
 
       if (getType === 'his') {
@@ -148,15 +147,14 @@ const PutCallRatio = () => {
       console.error('获取数据失败:', error);
       Toast.show('数据获取失败');
       setCurPCRData(prev => ({ ...prev, loading: false }));
+      setHisLoading(false);
     }
   };
 
-  // 比率类型变化
-  const onRatioChange = (value) => {
-    const selectedRatio = ratioArr[value[0]];
-    setRatioSelected(selectedRatio);
-    
-    const ratioTypeSelected = ratioTypeArr[ratioArr.indexOf(selectedRatio)];
+  // Tab点击切换类型
+  const onRatioTabClick = (ratio) => {
+    setRatioSelected(ratio);
+    const ratioTypeSelected = ratioTypeArr[ratioArr.indexOf(ratio)];
     getData({ ratioTypeSelected });
   };
 
@@ -189,8 +187,9 @@ const PutCallRatio = () => {
   return (
     <Layout>
       <div className={styles.pcrBox}>
+        {/* 币种选择器 - 白色胶囊样式 */}
         <div className={styles.pickerList}>
-          <div className={styles.pickerItem}>
+          <div className={`${styles.pickerItem} ${styles.coinPickerWhite}`}>
             <div className={styles.pickerTitle}>币种</div>
             <Picker
               columns={[coinArr.map((item, index) => ({ label: item, value: index }))]}
@@ -205,33 +204,43 @@ const PutCallRatio = () => {
               )}
             </Picker>
           </div>
-          <div className={styles.pickerItem}>
-            <div className={styles.pickerTitle}>类型</div>
-            <Picker
-              columns={[ratioArr.map((item, index) => ({ label: item, value: index }))]}
-              value={[ratioArr.indexOf(ratioSelected)]}
-              onConfirm={onRatioChange}
+        </div>
+
+        {/* 类型Tab切换 */}
+        <div className={styles.ratioTabs}>
+          {ratioArr.map((ratio, index) => (
+            <div
+              key={index}
+              className={`${styles.ratioTab} ${ratioSelected === ratio ? styles.active : ''}`}
+              onClick={() => onRatioTabClick(ratio)}
             >
-              {(items) => (
-                <div className={styles.pickerSelect}>
-                  <span className={styles.selectIcon}>{ratioSelected}</span>
-                  <span className={styles.arrow}>▼</span>
-                </div>
-              )}
-            </Picker>
+              {ratio}
+            </div>
+          ))}
+        </div>
+
+        {/* 当前多空比 */}
+        <div className={styles.sectionHeader}>当前多空比</div>
+        <div className={styles.currentPCR}>
+          <div className={`${styles.currentPCRChart} ${styles.compact}`} style={{ height: curPCRData.loading ? '75px' : 'auto' }}>
+            {curPCRData.loading && (
+              <div className={styles.chartLoading}>
+                <div className={styles.spinner} />
+              </div>
+            )}
+            {!curPCRData.loading && curPCRData?.data?.list?.length ? (
+              <MoziPCRColChart data={curPCRData.data.list} />
+            ) : null}
+            {!curPCRData.loading && curPCRData.close && (
+              <div className={styles.emptyData}>暂无数据</div>
+            )}
           </div>
         </div>
 
-        <Layout isLoading={curPCRData.loading} isClose={curPCRData.close}>
-          <div className={styles.currentPCR}>
-            <div className={styles.headerTitle}>当前多空比</div>
-            <MoziPCRColChart data={curPCRData.data?.list} />
-          </div>
-        </Layout>
-
+        {/* 历史多空比 */}
+        <div className={styles.sectionHeader}>历史多空比</div>
         <div className={styles.currentPCR}>
           <div className={styles.header}>
-            <div className={styles.headerTitle}>历史多空比</div>
             <div>
               <Picker
                 columns={[cexArr.map((item, index) => ({ label: item, value: index }))]}
@@ -247,8 +256,13 @@ const PutCallRatio = () => {
               </Picker>
             </div>
           </div>
-          
+
           <div className={styles.currentPCRChart}>
+            {hisLoading && (
+              <div className={styles.chartLoading}>
+                <div className={styles.spinner} />
+              </div>
+            )}
             <div className={styles.chartArrawsalt} onClick={jump2Land}>
               <span className={styles.fullscreenIcon}>⛶</span>
             </div>
