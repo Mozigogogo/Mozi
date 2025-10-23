@@ -9,7 +9,6 @@
 }
 
 .areaBox {
-  color: #fff;
   border-radius: 5px;
   text-align: center;
   width: 23%;
@@ -25,15 +24,44 @@
 .areaBoxTitle {
   font-size: 11px;
   margin-bottom: 2px;
-  opacity: 0.9;
+  color: #333333;
 }
 
 .green {
-  background-color: #02c076;
+  background-color: #11B787;
+  color: #fff;
 }
 
 .red {
-  background-color: #ff3333;
+  background-color: #FA5F5F;
+  color: #fff;
+}
+
+/* 相关板块专用样式 */
+.sectionGreen {
+  background-color: #E7FAF5;
+  
+  .areaBoxTitle {
+    color: #333333;
+  }
+  
+  > div:last-child {
+    color: #11B787;
+    font-weight: 500;
+  }
+}
+
+.sectionRed {
+  background-color: #FFF2F2;
+  
+  .areaBoxTitle {
+    color: #333333;
+  }
+  
+  > div:last-child {
+    color: #FA5F5F;
+    font-weight: 500;
+  }
 }
 
 /* 响应式设计 */

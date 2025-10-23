@@ -18,11 +18,13 @@
   width: 100%;
   padding: 0 10px;
   box-sizing: border-box;
-  position: absolute;
+  position: absolute; /* 绝对定位 */
   left: 0;
   right: 0;
-  bottom: 38px;
+  bottom: 38px; /* 相对父容器底部的固定距离 */
   z-index: 5;
+  transform: translateZ(0); /* 开启硬件加速，提升渲染性能 */
+  will-change: auto; /* 优化动画性能 */
 
   .searchBox {
     width: 100%;
@@ -35,16 +37,22 @@
     padding: 0 3px 0 20px;
     box-sizing: border-box;
     position: relative;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* 添加阴影，增强视觉层次 */
   
     .searchInput {
       flex: 1;
       color: #b2b2b2;
       font-size: 14px;
+      white-space: nowrap; /* 防止文字换行 */
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   
     .searchCancel {
       height: 90%;
       width: 70px;
+      min-width: 70px; /* 防止按钮被压缩 */
+      flex-shrink: 0; /* 不允许缩小 */
       background-color:#47C89D;
       border-radius: 19px;
       display: flex;
@@ -61,12 +69,14 @@
       height: 16px;
       display: block;
       filter: brightness(0) invert(1); // 将图标变为白色
+      flex-shrink: 0; /* 图标不允许缩小 */
     }
   }
 
   /* 移动端调整 */
   @media (max-width: 768px) {
     padding: 0 8px;
+    bottom: 38px; /* 移动端保持相同的底部距离 */
     
     .searchBox {
       height: 36px;
@@ -78,12 +88,39 @@
       
       .searchCancel {
         width: 60px;
+        min-width: 60px;
         font-size: 12px;
       }
       
       .searchIcon {
         width: 14px;
         height: 14px;
+      }
+    }
+  }
+  
+  /* 超小屏幕适配 (iPhone SE等) */
+  @media (max-width: 375px) {
+    padding: 0 6px;
+    
+    .searchBox {
+      height: 34px;
+      padding: 0 2px 0 12px;
+      
+      .searchInput {
+        font-size: 12px;
+      }
+      
+      .searchCancel {
+        width: 55px;
+        min-width: 55px;
+        font-size: 11px;
+        gap: 2px;
+      }
+      
+      .searchIcon {
+        width: 12px;
+        height: 12px;
       }
     }
   }
@@ -94,22 +131,25 @@
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0px;
+  bottom: 0px; /* 紧贴 banner 底部 */
   margin: 0;
   color: #333333;
   font-size: 11px;
-  z-index: 4;
+  z-index: 4; /* 比搜索框层级低 */
+  transform: translateZ(0); /* 硬件加速 */
 
   .noticeIcon {
     width: 11px;
     height: 11px;
+    flex-shrink: 0; /* 图标不缩小 */
   }
 
   .noticeItem {
-    border-radius: 10px 10px 0px 0px;
+    border-radius: 10px 10px 0px 0px; /* 只有顶部圆角 */
     padding: 5px 10px;
     line-height: 1.4;
     align-items: center;
+    min-height: 28px; /* 确保最小高度 */
 
     // 覆盖 antd-mobile 默认样式
     :global {
@@ -185,16 +225,34 @@
   left: 0;
   right: 0;
   height: 270px;
+  min-height: 270px; /* 确保最小高度 */
+  max-height: 270px; /* 限制最大高度 */
+  overflow: hidden; /* 隐藏溢出内容 */
 }
 .bgBannerSwiper {
   width: 100%;
   height: 100%;
+  
+  /* 覆盖 antd-mobile Swiper 默认样式 */
+  :global {
+    .adm-swiper {
+      height: 100%;
+    }
+    .adm-swiper-track {
+      height: 100%;
+    }
+    .adm-swiper-track-inner {
+      height: 100%;
+    }
+  }
 }
 .bgBannerImage {
   width: 100%;
-  height: 100%;
+  height: 270px; /* 明确指定高度，不使用 100% */
+  min-height: 270px; /* 防止塌陷 */
   display: block;
   object-fit: cover;
+  object-position: center; /* 图片居中裁剪 */
 }
 
 /* 投资机会滑动容器样式 */
@@ -503,10 +561,17 @@
 @media (max-width: 768px) {
   .bgBanner {
     height: 240px;
+    min-height: 240px; /* 移动端固定高度 */
+    max-height: 240px;
+  }
+  
+  .bgBannerImage {
+    height: 240px; /* 与容器高度一致 */
+    min-height: 240px;
   }
 
   .header {
-    bottom: 38px;
+    bottom: 36px; /* 移动端调整底部距离 */
   }
 
   .treemapBox {
@@ -521,10 +586,6 @@
   .treemapTitle {
     font-size: 14px;
   }
-
-  // .scrollContent {
-  //   gap: 10px;
-  // }
   
   .investmentTabs {
     gap: 20px;
@@ -568,6 +629,42 @@
   .topicHot,
   .topicDate {
     font-size: 10px;
+  }
+}
+
+/* 超小屏幕适配 (iPhone SE 375px等) */
+@media (max-width: 375px) {
+  .bgBanner {
+    height: 220px;
+    min-height: 220px;
+    max-height: 220px;
+  }
+  
+  .bgBannerImage {
+    height: 220px;
+    min-height: 220px;
+  }
+  
+  .header {
+    bottom: 34px; /* 小屏幕进一步调整 */
+  }
+  
+  .notice {
+    .noticeItem {
+      padding: 4px 8px;
+      min-height: 26px;
+      
+      :global {
+        .adm-notice-bar-content {
+          font-size: 10px;
+        }
+      }
+    }
+    
+    .noticeIcon {
+      width: 10px;
+      height: 10px;
+    }
   }
 }
 

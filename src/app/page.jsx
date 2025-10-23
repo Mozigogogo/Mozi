@@ -14,6 +14,7 @@ import { Loading } from '../components/Loading';
 import HighlightArea from '../components/HighlightArea';
 import AddCollect from '../components/AddCollect';
 import AddMonitor from '../components/AddMonitor';
+import MarketDistribution from '../components/MarketDistribution';
 import { request } from '../utils/request';
 import { Interface, LOOPTIME, WS_URL } from '../utils/constants';
 import { jump2Detail, jump2Market, jump2List, jump2NoTab } from '../utils/core';
@@ -679,6 +680,7 @@ export default function HomePage() {
 
   // 渲染实时榜单
   const renderRealTimeRanking = () => {
+    const currentRankData = footerArr[activeArr.indexOf(rankActiveKey)] || [];
     
     return (
       <MoziCard title="实时榜单">
@@ -692,19 +694,21 @@ export default function HomePage() {
             <TabBar.Item key='xinbi' title='新币榜' />
             <TabBar.Item key='biaosheng' title='飙升榜' />
           </TabBar>
-          <div>
-            <MoziGrid
-              length={5}
-              colName={colNameArr[activeArr.indexOf(rankActiveKey)]}
-              gridContent={footerArr[activeArr.indexOf(rankActiveKey)] || []}
-              callback={(gridCon) => { jump2Detail(gridCon.key); }}
-              maxRows={10}
-              minRows={10}
-            />
-            <div className={styles.listMore} onClick={go2List}>
-              查看更多 <RightOutline fontSize={12} />
+          {currentRankData.length > 0 && (
+            <div>
+              <MoziGrid
+                length={5}
+                colName={colNameArr[activeArr.indexOf(rankActiveKey)]}
+                gridContent={currentRankData}
+                callback={(gridCon) => { jump2Detail(gridCon.key); }}
+                maxRows={10}
+                minRows={10}
+              />
+              <div className={styles.listMore} onClick={go2List}>
+                查看更多 <RightOutline fontSize={12} />
+              </div>
             </div>
-          </div>
+          )}
         {/* </Layout> */}
       </MoziCard>
     );
@@ -818,6 +822,9 @@ export default function HomePage() {
         >
           {renderInvestmentOpportunity()}
         </MoziCard>
+
+        {/* 涨跌分布 */}
+        <MarketDistribution />
 
         {/* 实时榜单 */}
         {renderRealTimeRanking()}

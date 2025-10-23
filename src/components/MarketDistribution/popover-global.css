@@ -1,0 +1,16 @@
+/* Popover 全局样式覆盖 */
+.adm-popover-arrow {
+  border-color: #fff !important;
+}
+
+.adm-popover-inner {
+  background: #fff !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  padding: 0 !important;
+}
+
+.adm-popover-inner-content {
+  padding: 0 !important;
+}
+
