@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { Picker, Toast } from 'antd-mobile';
 import * as echarts from 'echarts';
 import Layout from '@/components/Layout';
@@ -12,6 +13,7 @@ import { isEmpty } from 'lodash';
 import styles from './page.module.less';
 
 const PutCallRatio = () => {
+  const router = useRouter();
   const [ratioSelected, setRatioSelected] = useState('主动买卖量比');
   const [coinSelected, setCoinSelected] = useState('');
   const [cexSelected, setCexSelected] = useState('');
@@ -169,6 +171,7 @@ const PutCallRatio = () => {
 
   // 交易所变化
   const onExchangeChange = (value) => {
+    console.log('交易所选择变化:', value);
     const selectedCex = cexArr[value[0]];
     setCexSelected(selectedCex);
     
@@ -179,13 +182,16 @@ const PutCallRatio = () => {
   // 跳转到横屏图表
   const jump2Land = () => {
     if (chartData.current) {
-      // 在H5中可以通过路由跳转或弹窗显示横屏图表
-      console.log('跳转到横屏图表', chartData.current);
+      // 使用 Next.js 路由跳转到横屏页面
+      const dataStr = encodeURIComponent(JSON.stringify(chartData.current));
+      router.push(`/landscapechart?data=${dataStr}`);
+    } else {
+      Toast.show('暂无图表数据');
     }
   };
 
   return (
-    <Layout>
+
       <div className={styles.pcrBox}>
         {/* 币种选择器 - 白色胶囊样式 */}
         <div className={styles.pickerList}>
@@ -195,9 +201,17 @@ const PutCallRatio = () => {
               columns={[coinArr.map((item, index) => ({ label: item, value: index }))]}
               value={[coinArr.indexOf(coinSelected)]}
               onConfirm={onCoinChange}
+              cancelText="取消"
+              confirmText="确定"
             >
-              {(items) => (
-                <div className={styles.pickerSelect}>
+              {(items, actions) => (
+                <div 
+                  className={styles.pickerSelect}
+                  onClick={() => {
+                    console.log('点击了币种选择器');
+                    actions.open();
+                  }}
+                >
                   <span className={styles.selectIcon}>{coinSelected}</span>
                   <span className={styles.arrow}>▼</span>
                 </div>
@@ -246,9 +260,17 @@ const PutCallRatio = () => {
                 columns={[cexArr.map((item, index) => ({ label: item, value: index }))]}
                 value={[cexArr.indexOf(cexSelected)]}
                 onConfirm={onExchangeChange}
+                cancelText="取消"
+                confirmText="确定"
               >
-                {(items) => (
-                  <div className={styles.pickerSelect}>
+                {(items, actions) => (
+                  <div 
+                    className={styles.pickerSelect}
+                    onClick={() => {
+                      console.log('点击了选择器');
+                      actions.open();
+                    }}
+                  >
                     <span className={styles.selectIcon}>{cexSelected}</span>
                     <span className={styles.arrow}>▼</span>
                   </div>
@@ -270,7 +292,6 @@ const PutCallRatio = () => {
           </div>
         </div>
       </div>
-    </Layout>
   );
 };
 
