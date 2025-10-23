@@ -239,11 +239,24 @@
   height: 12px;
   background-color: #fff;
   border-radius: 50%;
-  top: -6px;
-  left: calc(50% - 6px);
-  transform-origin: 6px 66px;
+  border: 2px solid rgba(0, 0, 0, 0.1); /* 添加边框，增强视觉效果 */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* 添加阴影，让圆球更立体 */
+  
+  /* 圆球的初始位置：在半圆的顶部中心 */
+  top: 0; /* 紧贴半圆的顶边 */
+  left: 50%; /* 水平居中 */
+  
+  /* 关键：设置旋转中心点 */
+  /* transform-origin: X轴偏移 Y轴偏移 */
+  /* X: 0 表示相对圆球自身中心（因为已经 left: 50%）*/
+  /* Y: 60px 是半圆的半径（120px / 2）*/
+  transform-origin: 0 60px;
+  
   z-index: 10;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease-out; /* 更流畅的过渡效果 */
+  
+  /* 优化渲染性能 */
+  will-change: transform;
 }
 
 .fearGreedValue {
@@ -346,7 +359,7 @@
   .fearGreedBall {
     width: 10px;
     height: 10px;
-    top: -5px;
+    top: 0px;
     left: calc(50% - 5px);
     transform-origin: 5px 55px;
   }
@@ -368,3 +381,57 @@
   }
 }
 
+/* Tooltip 样式 */
+.tooltipContent {
+  max-width: 220px;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.3;
+  color: #333;
+  
+  .tooltipTitle {
+    margin: 0 0 5px 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #11B787;
+    line-height: 1.2;
+  }
+  
+  .tooltipDesc {
+    margin: 0 0 5px 0;
+    font-size: 12px;
+    color: #666;
+    line-height: 1.3;
+  }
+  
+  .tooltipList {
+    margin: 0;
+    padding-left: 16px;
+    list-style: none;
+    
+    li {
+      position: relative;
+      margin-bottom: 3px;
+      font-size: 11px;
+      color: #666;
+      line-height: 1.35;
+      
+      &:before {
+        content: '•';
+        position: absolute;
+        left: -12px;
+        color: #11B787;
+        font-weight: bold;
+      }
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      strong {
+        color: #333;
+        font-weight: 600;
+      }
+    }
+  }
+}
