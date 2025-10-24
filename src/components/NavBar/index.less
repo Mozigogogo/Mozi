@@ -1,0 +1,102 @@
+.navBar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: #ffffff;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  z-index: 999;
+
+  .left {
+    flex: 0px 0px 60px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  .center {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px;
+  }
+
+  .right {
+    flex: 0 0 60px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .backBtn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #000000;
+    transition: opacity 0.2s;
+
+    &:active {
+      opacity: 0.6;
+    }
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  .title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #000000;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .iconBtn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #000000;
+    transition: opacity 0.2s;
+
+    &:active {
+      opacity: 0.6;
+    }
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+// 深色模式支持
+@media (prefers-color-scheme: dark) {
+  .navBar {
+    background: #1c1c1e;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+
+    .backBtn,
+    .iconBtn,
+    .title {
+      color: #ffffff;
+    }
+  }
+}
+

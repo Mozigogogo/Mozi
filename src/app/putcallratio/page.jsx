@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Picker, Toast } from 'antd-mobile';
 import * as echarts from 'echarts';
-import Layout from '@/components/Layout';
+import NavBar from '@/components/NavBar';
 import MoziPCRColChart from '@/components/MoziPCRColChart';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
@@ -191,8 +191,9 @@ const PutCallRatio = () => {
   };
 
   return (
-
-      <div className={styles.pcrBox}>
+      <>
+        <NavBar title="多空比" />
+        <div className={styles.pcrBox}>
         {/* 币种选择器 - 白色胶囊样式 */}
         <div className={styles.pickerList}>
           <div className={`${styles.pickerItem} ${styles.coinPickerWhite}`}>
@@ -292,6 +293,7 @@ const PutCallRatio = () => {
           </div>
         </div>
       </div>
+      </>
   );
 };
 
