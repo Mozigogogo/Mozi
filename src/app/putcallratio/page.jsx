@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { Picker, Toast } from 'antd-mobile';
 import * as echarts from 'echarts';
-import Layout from '@/components/Layout';
+import NavBar from '@/components/NavBar';
 import MoziPCRColChart from '@/components/MoziPCRColChart';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
@@ -12,7 +13,7 @@ import { isEmpty } from 'lodash';
 import styles from './page.module.less';
 
 const PutCallRatio = () => {
-  const [activeKey, setActiveKey] = useState('currentRatio');
+  const router = useRouter();
   const [ratioSelected, setRatioSelected] = useState('主动买卖量比');
   const [coinSelected, setCoinSelected] = useState('');
   const [cexSelected, setCexSelected] = useState('');
@@ -25,11 +26,7 @@ const PutCallRatio = () => {
     close: false,
     data: null
   });
-  const [hisPCRData, setHisPCRData] = useState({
-    loading: true,
-    close: false,
-    data: null
-  });
+  const [hisLoading, setHisLoading] = useState(true);
   
   const chartRef = useRef(null);
   const chartData = useRef(null);
@@ -97,6 +94,8 @@ const PutCallRatio = () => {
   // 获取数据
   const getData = async ({ ratioTypeSelected, coin = coinSelected, exchange = cexSelected, getType = 'all' }) => {
     try {
+      setHisLoading(true);
+
       // 获取历史数据
       const pcrHisData = await request({
         url: Interface.PCR_HIS,
@@ -111,9 +110,11 @@ const PutCallRatio = () => {
       if (chartRef.current && pcrHisData?.data) {
         chartData.current = {
           data: pcrHisData.data,
-          type: 'samebar'
+          type: 'samebar',
+          msg: '历史多空比'
         };
         chartRef.current.setOption(handleOptions(pcrHisData.data, 'samebar'));
+        setHisLoading(false);
       }
 
       if (getType === 'his') {
@@ -148,15 +149,14 @@ const PutCallRatio = () => {
       console.error('获取数据失败:', error);
       Toast.show('数据获取失败');
       setCurPCRData(prev => ({ ...prev, loading: false }));
+      setHisLoading(false);
     }
   };
 
-  // 比率类型变化
-  const onRatioChange = (value) => {
-    const selectedRatio = ratioArr[value[0]];
-    setRatioSelected(selectedRatio);
-    
-    const ratioTypeSelected = ratioTypeArr[ratioArr.indexOf(selectedRatio)];
+  // Tab点击切换类型
+  const onRatioTabClick = (ratio) => {
+    setRatioSelected(ratio);
+    const ratioTypeSelected = ratioTypeArr[ratioArr.indexOf(ratio)];
     getData({ ratioTypeSelected });
   };
 
@@ -171,6 +171,7 @@ const PutCallRatio = () => {
 
   // 交易所变化
   const onExchangeChange = (value) => {
+    console.log('交易所选择变化:', value);
     const selectedCex = cexArr[value[0]];
     setCexSelected(selectedCex);
     
@@ -181,40 +182,38 @@ const PutCallRatio = () => {
   // 跳转到横屏图表
   const jump2Land = () => {
     if (chartData.current) {
-      // 在H5中可以通过路由跳转或弹窗显示横屏图表
-      console.log('跳转到横屏图表', chartData.current);
+      // 使用 Next.js 路由跳转到横屏页面
+      const dataStr = encodeURIComponent(JSON.stringify(chartData.current));
+      router.push(`/landscapechart?data=${dataStr}`);
+    } else {
+      Toast.show('暂无图表数据');
     }
   };
 
   return (
-    <Layout>
-      <div className={styles.pcrBox}>
+      <>
+        <NavBar title="多空比" />
+        <div className={styles.pcrBox}>
+        {/* 币种选择器 - 白色胶囊样式 */}
         <div className={styles.pickerList}>
-          <div className={styles.pickerItem}>
+          <div className={`${styles.pickerItem} ${styles.coinPickerWhite}`}>
             <div className={styles.pickerTitle}>币种</div>
             <Picker
               columns={[coinArr.map((item, index) => ({ label: item, value: index }))]}
               value={[coinArr.indexOf(coinSelected)]}
               onConfirm={onCoinChange}
+              cancelText="取消"
+              confirmText="确定"
             >
-              {(items) => (
-                <div className={styles.pickerSelect}>
+              {(items, actions) => (
+                <div 
+                  className={styles.pickerSelect}
+                  onClick={() => {
+                    console.log('点击了币种选择器');
+                    actions.open();
+                  }}
+                >
                   <span className={styles.selectIcon}>{coinSelected}</span>
-                  <span className={styles.arrow}>▼</span>
-                </div>
-              )}
-            </Picker>
-          </div>
-          <div className={styles.pickerItem}>
-            <div className={styles.pickerTitle}>类型</div>
-            <Picker
-              columns={[ratioArr.map((item, index) => ({ label: item, value: index }))]}
-              value={[ratioArr.indexOf(ratioSelected)]}
-              onConfirm={onRatioChange}
-            >
-              {(items) => (
-                <div className={styles.pickerSelect}>
-                  <span className={styles.selectIcon}>{ratioSelected}</span>
                   <span className={styles.arrow}>▼</span>
                 </div>
               )}
@@ -222,24 +221,57 @@ const PutCallRatio = () => {
           </div>
         </div>
 
-        <Layout isLoading={curPCRData.loading} isClose={curPCRData.close}>
-          <div className={styles.currentPCR}>
-            <div className={styles.headerTitle}>当前多空比</div>
-            <MoziPCRColChart data={curPCRData.data?.list} />
-          </div>
-        </Layout>
+        {/* 类型Tab切换 */}
+        <div className={styles.ratioTabs}>
+          {ratioArr.map((ratio, index) => (
+            <div
+              key={index}
+              className={`${styles.ratioTab} ${ratioSelected === ratio ? styles.active : ''}`}
+              onClick={() => onRatioTabClick(ratio)}
+            >
+              {ratio}
+            </div>
+          ))}
+        </div>
 
+        {/* 当前多空比 */}
+        <div className={styles.sectionHeader}>当前多空比</div>
+        <div className={styles.currentPCR}>
+          <div className={`${styles.currentPCRChart} ${styles.compact}`} style={{ height: curPCRData.loading ? '75px' : 'auto' }}>
+            {curPCRData.loading && (
+              <div className={styles.chartLoading}>
+                <div className={styles.spinner} />
+              </div>
+            )}
+            {!curPCRData.loading && curPCRData?.data?.list?.length ? (
+              <MoziPCRColChart data={curPCRData.data.list} />
+            ) : null}
+            {!curPCRData.loading && curPCRData.close && (
+              <div className={styles.emptyData}>暂无数据</div>
+            )}
+          </div>
+        </div>
+
+        {/* 历史多空比 */}
+        <div className={styles.sectionHeader}>历史多空比</div>
         <div className={styles.currentPCR}>
           <div className={styles.header}>
-            <div className={styles.headerTitle}>历史多空比</div>
             <div>
               <Picker
                 columns={[cexArr.map((item, index) => ({ label: item, value: index }))]}
                 value={[cexArr.indexOf(cexSelected)]}
                 onConfirm={onExchangeChange}
+                cancelText="取消"
+                confirmText="确定"
               >
-                {(items) => (
-                  <div className={styles.pickerSelect}>
+                {(items, actions) => (
+                  <div 
+                    className={styles.pickerSelect}
+                    onClick={() => {
+                      console.log('点击了选择器');
+                      actions.open();
+                    }}
+                  >
                     <span className={styles.selectIcon}>{cexSelected}</span>
                     <span className={styles.arrow}>▼</span>
                   </div>
@@ -247,8 +279,13 @@ const PutCallRatio = () => {
               </Picker>
             </div>
           </div>
-          
+
           <div className={styles.currentPCRChart}>
+            {hisLoading && (
+              <div className={styles.chartLoading}>
+                <div className={styles.spinner} />
+              </div>
+            )}
             <div className={styles.chartArrawsalt} onClick={jump2Land}>
               <span className={styles.fullscreenIcon}>⛶</span>
             </div>
@@ -256,7 +293,7 @@ const PutCallRatio = () => {
           </div>
         </div>
       </div>
-    </Layout>
+      </>
   );
 };
 

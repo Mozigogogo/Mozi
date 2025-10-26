@@ -1,123 +1,88 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import * as echarts from 'echarts';
+import { handleOptions } from '@/utils/chartUtils';
 import styles from './page.module.less';
 
-export default function LandscapeChart() {
-  const chartRef = useRef(null);
+const LandscapeChart = () => {
   const router = useRouter();
-
-  // 处理图表选项
-  const handleOptions = (data, type) => {
-    if (type === 'updownbarline') {
-      return {
-        tooltip: {
-          trigger: 'axis',
-          axisPointer: {
-            type: 'cross',
-            crossStyle: {
-              color: '#999'
-            }
-          }
-        },
-        grid: {
-          left: '3%',
-          right: '4%',
-          bottom: '3%',
-          containLabel: true
-        },
-        xAxis: [
-          {
-            type: 'category',
-            data: data.map(item => item.time),
-            axisPointer: {
-              type: 'shadow'
-            },
-            axisLabel: {
-              interval: Math.floor(data.length / 10),
-              formatter: function(value) {
-                return value.substring(5, 16);
-              }
-            }
-          }
-        ],
-        yAxis: [
-          {
-            type: 'value',
-            name: '资金费率(%)',
-            axisLabel: {
-              formatter: '{value}%'
-            }
-          }
-        ],
-        series: [
-          {
-            name: '资金费率',
-            type: 'line',
-            data: data.map(item => parseFloat(item.value)),
-            itemStyle: {
-              color: function(params) {
-                return parseFloat(params.value) >= 0 ? '#ff3333' : '#02c076';
-              }
-            },
-            lineStyle: {
-              width: 2
-            }
-          }
-        ]
-      };
-    }
-    return {};
-  };
+  const searchParams = useSearchParams();
+  const chartContainerRef = useRef(null);
+  const chartRef = useRef(null);
 
   useEffect(() => {
-    // 从 sessionStorage 获取数据
-    const chartDataStr = sessionStorage.getItem('chartData');
+    // 获取传递过来的数据
+    const chartDataStr = searchParams.get('data');
     if (!chartDataStr) {
-      alert('没有图表数据');
-      router.push('/');
+      console.warn('没有图表数据');
       return;
     }
 
-    const chartData = JSON.parse(chartDataStr);
-    
+    let chartData;
+    try {
+      chartData = JSON.parse(decodeURIComponent(chartDataStr));
+    } catch (e) {
+      console.error('解析图表数据失败:', e);
+      return;
+    }
+
     // 初始化图表
-    if (chartRef.current) {
-      const chart = echarts.init(chartRef.current);
-      
-      // 设置图表选项
-      if (chartData.data && chartData.type) {
-        chart.setOption(handleOptions(chartData.data, chartData.type));
+    if (chartContainerRef.current && !chartRef.current) {
+      const chart = echarts.init(chartContainerRef.current);
+      chartRef.current = chart;
+
+      // 设置图表配置
+      if (chartData?.data && chartData?.type) {
+        const option = handleOptions(chartData.data, chartData.type, chartData.msg);
+        chart.setOption(option);
       }
-      
-      // 窗口大小变化时重新调整图表大小
+
+      // 监听窗口大小变化
       const handleResize = () => {
         chart.resize();
       };
-      
       window.addEventListener('resize', handleResize);
-      
+
+      // 强制横屏提示（移动端）
+      if (typeof window !== 'undefined' && window.screen?.orientation) {
+        try {
+          // 尝试锁定为横屏模式
+          window.screen.orientation.lock?.('landscape').catch(() => {
+            console.log('无法锁定横屏模式');
+          });
+        } catch (e) {
+          console.log('浏览器不支持屏幕方向锁定');
+        }
+      }
+
       return () => {
         window.removeEventListener('resize', handleResize);
-        chart.dispose();
+        if (chartRef.current) {
+          chartRef.current.dispose();
+          chartRef.current = null;
+        }
       };
     }
-  }, [router]);
+  }, [searchParams]);
 
-  // 返回上一页
-  const handleBack = () => {
+  const handleClose = () => {
     router.back();
   };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <button className={styles.backButton} onClick={handleBack}>返回</button>
-        <h1 className={styles.title}>资金费率</h1>
+    <div className={styles.chartBox}>
+      <div className={styles.chartHeader}>
+        <div className={styles.chartClose} onClick={handleClose}>
+          <span>✕</span>
+        </div>
       </div>
-      <div ref={chartRef} className={styles.chart}></div>
+      <div className={styles.mychart}>
+        <div ref={chartContainerRef} className={styles.chart}></div>
+      </div>
     </div>
   );
-}
+};
+
+export default LandscapeChart;

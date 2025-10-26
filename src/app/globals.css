@@ -114,6 +114,22 @@ a {
   height: 100px;
 }
 
+/* antd-mobile Picker 按钮自定义样式 */
+.adm-picker-header-button {
+  font-size: 16px !important;
+}
+
+/* 取消按钮 - 灰色 */
+.adm-picker-header-button:first-child {
+  color: #999 !important;
+}
+
+/* 确定按钮 - 绿色 */
+.adm-picker-header-button:last-child {
+  color: #11B787 !important;
+  font-weight: 600 !important;
+}
+
 @media (prefers-color-scheme: dark) {
   .card {
     background: #1a1a1a;

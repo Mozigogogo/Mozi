@@ -10,12 +10,29 @@ export const handleOptions = (data, type, msg) => {
         }
       },
       legend: {
-        selectedMode: false
+        selectedMode: false,
+        data: ['空', '多', '多空比'],
+        top: '3%',
+        left: 'center',
+        itemWidth: 20,
+        itemHeight: 12,
+        itemGap: 10,
+        textStyle: {
+          fontSize: 11,
+          color: '#666'
+        }
+      },
+      grid: {
+        left: '10%',
+        right: '10%',
+        top: '15%',
+        bottom: '20%',
+        containLabel: false
       },
       yAxis: [{
-        type: 'value',
+        type: 'value'
       }, {
-        type: 'value',
+        type: 'value'
       }],
       xAxis: {
         type: 'category',
@@ -32,7 +49,7 @@ export const handleOptions = (data, type, msg) => {
           type: 'slider',
           start: 80,
           end: 100,
-          bottom: '5%',
+          top: '87%',
           height: 20
         }
       ],
@@ -41,14 +58,14 @@ export const handleOptions = (data, type, msg) => {
           name: '空',
           type: 'bar',
           stack: 'total',
-          color: '#ff3333',
+          color: '#FA5F5F',
           data: data.shortData
         },
         {
           name: '多',
           type: 'bar',
           stack: 'total',
-          color: '#02c076',
+          color: '#11B787',
           emphasis: {
             focus: 'series'
           },
@@ -58,7 +75,13 @@ export const handleOptions = (data, type, msg) => {
           name: '多空比',
           type: 'line',
           yAxisIndex: 1,
-          data: data.longShortData
+          data: data.longShortData,
+          lineStyle: {
+            color: '#FF9A37'
+          },
+          itemStyle: {
+            color: '#FF9A37'
+          }
         }
       ]
     };
