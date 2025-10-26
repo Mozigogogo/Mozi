@@ -134,9 +134,10 @@ export default function Positionsize() {
         setCurLoading(false);
       }
 
-      // 获取历史持仓量数据
+      // 获取历史持仓量数据   
       const psHisData = await request({
         url: Interface.PS_HIS,
+        method: 'GET',
         data: {
           coin,
           exchange
@@ -145,6 +146,13 @@ export default function Positionsize() {
 
       console.log('✅ 历史持仓量原始数据:', psHisData);
       console.log('📊 历史持仓量data字段:', psHisData?.data);
+      
+      if (psHisData?.code !== 0) {
+        console.error('❌ 历史持仓量接口返回错误:', psHisData);
+        Toast.show(psHisData?.errorMsg || '获取历史持仓量失败');
+        setHisLoading(false);
+        return;
+      }
       
       if (!psHisData?.data) {
         console.error('❌ 历史持仓量数据为空');

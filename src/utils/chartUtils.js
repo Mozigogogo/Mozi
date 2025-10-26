@@ -266,8 +266,8 @@ export const handleOptions = (data, type, msg) => {
     const option = {
       grid: {
         top: '15%',
-        left: '10%',
-        right: '10%',
+        left: '8%',
+        right: '8%',
         bottom: '15%',
         containLabel: true
       },
