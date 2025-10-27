@@ -33,8 +33,23 @@ export const useWebSocket = (url, options = {}) => {
   const reconnectTimerRef = useRef(null);
   const heartbeatTimerRef = useRef(null);
   const reconnectCountRef = useRef(0);
+  
+  // 使用 ref 保存回调函数，避免依赖变化
+  const onMessageRef = useRef(onMessage);
+  const onOpenRef = useRef(onOpen);
+  const onCloseRef = useRef(onClose);
+  const onErrorRef = useRef(onError);
+  
   const [readyState, setReadyState] = useState(WebSocket.CONNECTING);
   const [lastMessage, setLastMessage] = useState(null);
+  
+  // 更新回调 ref
+  useEffect(() => {
+    onMessageRef.current = onMessage;
+    onOpenRef.current = onOpen;
+    onCloseRef.current = onClose;
+    onErrorRef.current = onError;
+  }, [onMessage, onOpen, onClose, onError]);
 
   // 清除重连定时器
   const clearReconnectTimer = useCallback(() => {
@@ -103,26 +118,26 @@ export const useWebSocket = (url, options = {}) => {
         reconnectCountRef.current = 0;
         clearReconnectTimer();
         startHeartbeat();
-        onOpen?.(event);
+        onOpenRef.current?.(event);
       };
 
       ws.onmessage = (event) => {
         console.log('[WebSocket] 收到消息:', event.data);
         setLastMessage(event.data);
-        onMessage?.(event.data);
+        onMessageRef.current?.(event.data);
       };
 
       ws.onerror = (event) => {
         console.error('[WebSocket] 连接错误:', event);
         setReadyState(WebSocket.CLOSING);
-        onError?.(event);
+        onErrorRef.current?.(event);
       };
 
       ws.onclose = (event) => {
         console.log('[WebSocket] 连接关闭:', event.code, event.reason);
         setReadyState(WebSocket.CLOSED);
         clearHeartbeatTimer();
-        onClose?.(event);
+        onCloseRef.current?.(event);
 
         // 非正常关闭时尝试重连
         if (event.code !== 1000 && event.code !== 1001) {
@@ -134,7 +149,7 @@ export const useWebSocket = (url, options = {}) => {
       setReadyState(WebSocket.CLOSED);
       reconnect();
     }
-  }, [url, onOpen, onMessage, onError, onClose, reconnect, startHeartbeat, clearHeartbeatTimer, clearReconnectTimer]);
+  }, [url, reconnect, startHeartbeat, clearHeartbeatTimer, clearReconnectTimer]);
 
   // 发送消息
   const sendMessage = useCallback((message) => {
@@ -179,6 +194,7 @@ export const useWebSocket = (url, options = {}) => {
 
     // 清理函数
     return () => {
+      console.log('[WebSocket] 组件卸载，清理连接');
       clearReconnectTimer();
       clearHeartbeatTimer();
       if (wsRef.current) {
@@ -186,7 +202,8 @@ export const useWebSocket = (url, options = {}) => {
         wsRef.current = null;
       }
     };
-  }, [url, autoConnect]); // 仅在 url 或 autoConnect 变化时重新连接
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [url, autoConnect]); // 只在 url 或 autoConnect 变化时重新连接
 
   return {
     sendMessage,

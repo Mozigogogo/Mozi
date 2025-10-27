@@ -8,8 +8,16 @@ import MoziCard from '../../components/MoziCard';
 import KlineChart from '../../components/KlineChart';
 import { Loading } from '../../components/Loading';
 import { request } from '../../utils/request';
-import { Interface, LOOPTIME } from '../../utils/constants';
+import { Interface, LOOPTIME, WS_URL } from '../../utils/constants';
 import { formatNumber, formatPercent, jump2NoTab } from '../../utils/core';
+import { MoziWebSocket } from '../../utils/moziWebSocket';
+import {
+  WS_EVENTS,
+  PLATFORMS,
+  KLINE_PERIODS,
+  createTickerChannel,
+  createKlineChannel,
+} from '../../utils/websocketProtocol';
 import styles from './page.module.less';
 
 export default function DetailPage() {
@@ -40,6 +48,11 @@ export default function DetailPage() {
   const needLoop = useRef(true);
   const chartRef = useRef(null);
   const marketRef = useRef(null);
+  const wsRef = useRef(null);
+  const currentKlineChannelRef = useRef(null); // 当前K线订阅频道ID
+  const isWsAuthenticatedRef = useRef(false); // WebSocket认证状态
+  const isFirstRenderRef = useRef(true); // 是否首次渲染
+  const currentKlinePeriodRef = useRef('hour'); // 当前K线时间周期
   
   // 获取币种信息
   const fetchCoinInfo = async () => {
@@ -377,11 +390,317 @@ export default function DetailPage() {
       }
     }, LOOPTIME);
     
+    // WebSocket 连接和订阅
+    console.log('🔄 创建 WebSocket 连接...');
+    const ws = new MoziWebSocket(WS_URL, {
+      platform: PLATFORMS.H5,
+      version: '1.0.0',
+      autoHandshake: true,
+      debug: true,
+    });
+    
+    wsRef.current = ws;
+    
+    // 监听认证成功后订阅数据
+    ws.on('authenticated', (data) => {
+      console.log('✅ 详情页握手成功，开始订阅币种数据:', symbol);
+      isWsAuthenticatedRef.current = true; // 标记已认证
+      
+      // 订阅 Ticker 数据（实时价格）
+      const tickerChannel = createTickerChannel([symbol], 5000);
+      ws.subscribe([tickerChannel]).then(() => {
+        console.log(`📊 已订阅 ${symbol} 的 Ticker 数据`);
+      }).catch(err => {
+        console.error('订阅 Ticker 失败:', err);
+      });
+      
+      // 订阅 K线数据（1小时）
+      const klineChannel = createKlineChannel([symbol], KLINE_PERIODS.ONE_HOUR, 100);
+      ws.subscribe([klineChannel]).then((response) => {
+        console.log(`📈 已订阅 ${symbol} 的 1小时 K线数据`, response);
+        // 保存频道ID和时间周期，用于后续切换时取消订阅
+        if (response?.data?.channels?.[0]?.channelId) {
+          currentKlineChannelRef.current = response.data.channels[0].channelId;
+          currentKlinePeriodRef.current = 'hour'; // 初始订阅的是小时线
+          console.log('💾 保存K线频道ID:', currentKlineChannelRef.current);
+          console.log('💾 保存当前时间周期: hour');
+        }
+      }).catch(err => {
+        console.error('订阅 K线失败:', err);
+      });
+    });
+    
+    // 监听 Ticker 数据更新
+    ws.on(WS_EVENTS.TICKER, (data) => {
+      console.log('💹 收到 Ticker 数据:', data);
+      // 可以更新币种价格等实时数据
+      if (data.data && data.data.length > 0) {
+        const tickerData = data.data[0];
+        console.log(`${symbol} 最新价格:`, tickerData.price);
+        // 这里可以更新 coinInfo 的实时数据
+      }
+    });
+    
+    // 监听 K线数据更新 - 更新 headerData 和 klineData
+    ws.on(WS_EVENTS.KLINE, (data) => {
+      console.log('📈 收到 K线数据:', data);
+      
+      // 检查是否有 headerData
+      if (!data.data || !data.data.headerData) {
+        console.log('⚠️ K线数据中没有 headerData');
+        return;
+      }
+      
+      const headerData = data.data.headerData;
+      console.log('📊 K线 headerData:', headerData);
+      
+      // 处理 K线图表数据
+      if (data.data.klineData && Array.isArray(data.data.klineData)) {
+        console.log('📊 收到 K线图表数据，数量:', data.data.klineData.length);
+        
+        // 转换 K线数据为图表需要的格式
+        const transformedKlineData = {
+          values: [],
+          categoryData: []
+        };
+        
+        data.data.klineData.forEach(item => {
+          // KlineChart 期望格式: [open, close, low, high]
+          transformedKlineData.values.push([
+            parseFloat(item.open),
+            parseFloat(item.close),
+            parseFloat(item.low),
+            parseFloat(item.high)
+          ]);
+          
+          // 生成时间标签
+          const date = new Date(item.timestamp);
+          const timeLabel = `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+          transformedKlineData.categoryData.push(timeLabel);
+        });
+        
+        console.log('✅ K线数据转换完成:', transformedKlineData);
+        
+        // 使用当前订阅的时间周期来更新数据
+        const currentPeriod = currentKlinePeriodRef.current;
+        console.log(`📊 更新 ${currentPeriod} 时间周期的K线数据`);
+        
+        setKlineData(prev => ({
+          ...prev,
+          [currentPeriod]: transformedKlineData
+        }));
+      }
+      
+      // 更新 coinInfo
+      setCoinInfo(prevInfo => {
+        if (!prevInfo) {
+          console.log('⚠️ coinInfo 为空，跳过更新');
+          return null;
+        }
+        
+        const updatedInfo = {
+          ...prevInfo,
+          // 基本信息
+          currentPrice: headerData.currentPrice || prevInfo.currentPrice,
+          name: headerData.name || prevInfo.name,
+          symbol: headerData.symbol || prevInfo.symbol,
+          url: headerData.url || prevInfo.url,
+          
+          // 24小时数据
+          priceChange_24h: headerData.priceChange_24h || prevInfo.priceChange_24h,
+          priceChangePercentage_24h: headerData.priceChangePercentage_24h || prevInfo.priceChangePercentage_24h,
+          high_24h: headerData.high_24h || prevInfo.high_24h,
+          low_24h: headerData.low_24h || prevInfo.low_24h,
+          
+          // 市值数据
+          marketCap: headerData.marketCap || prevInfo.marketCap,
+          marketCapRank: headerData.marketCapRank || prevInfo.marketCapRank,
+          marketCapChange_24h: headerData.marketCapChange_24h || prevInfo.marketCapChange_24h,
+          marketCapChangePercentage_24h: headerData.marketCapChangePercentage_24h || prevInfo.marketCapChangePercentage_24h,
+          fullyDilutedValuation: headerData.fullyDilutedValuation || prevInfo.fullyDilutedValuation,
+          
+          // 供应量
+          totalSupply: headerData.totalSupply || prevInfo.totalSupply,
+          circulatingSupply: headerData.circulatingSupply || prevInfo.circulatingSupply,
+          
+          // 成交量
+          totalVolume: headerData.totalVolume || prevInfo.totalVolume,
+          volume: headerData.volume || prevInfo.volume,
+          quoteVolume: headerData.quoteVolume || prevInfo.quoteVolume,
+          
+          // 历史最高/最低
+          ath: headerData.ath || prevInfo.ath,
+          athDate: headerData.athDate || prevInfo.athDate,
+          athChangePercentage: headerData.athChangePercentage || prevInfo.athChangePercentage,
+          atl: headerData.atl || prevInfo.atl,
+          atlDate: headerData.atlDate || prevInfo.atlDate,
+          atlChangePercentage: headerData.atlChangePercentage || prevInfo.atlChangePercentage,
+          
+          // 自选状态
+          isSelfSelected: headerData.isSelfSelected !== undefined ? headerData.isSelfSelected : prevInfo.isSelfSelected,
+        };
+        
+        console.log('✅ 更新 coinInfo 成功:', {
+          symbol: updatedInfo.symbol,
+          currentPrice: updatedInfo.currentPrice,
+          priceChange_24h: updatedInfo.priceChange_24h,
+          priceChangePercentage_24h: updatedInfo.priceChangePercentage_24h
+        });
+        
+        return updatedInfo;
+      });
+      
+      // 更新详细信息（左侧）
+      setCoinInfoLeft(prev => prev.map(item => {
+        if (item.name === '24H最高价' && headerData.high_24h) {
+          return { ...item, value: headerData.high_24h };
+        }
+        if (item.name === '24H最低价' && headerData.low_24h) {
+          return { ...item, value: headerData.low_24h };
+        }
+        if (item.name === '稀释市值' && headerData.fullyDilutedValuation) {
+          return { ...item, value: headerData.fullyDilutedValuation };
+        }
+        if (item.name === '24H市值变化' && headerData.marketCapChange_24h) {
+          return { ...item, value: headerData.marketCapChange_24h };
+        }
+        if (item.name === '24H市值变化百分比' && headerData.marketCapChangePercentage_24h) {
+          return { ...item, value: headerData.marketCapChangePercentage_24h };
+        }
+        if (item.name === '历史最高价时间' && headerData.athDate) {
+          return { ...item, value: headerData.athDate };
+        }
+        if (item.name === '历史最低价时间' && headerData.atlDate) {
+          return { ...item, value: headerData.atlDate };
+        }
+        return item;
+      }));
+      
+      // 更新详细信息（右侧）
+      setCoinInfoRight(prev => prev.map(item => {
+        if (item.name === '24H成交额' && headerData.totalVolume) {
+          return { ...item, value: headerData.totalVolume };
+        }
+        if (item.name === '总供应量' && headerData.totalSupply) {
+          return { ...item, value: headerData.totalSupply };
+        }
+        if (item.name === '流通供应量' && headerData.circulatingSupply) {
+          return { ...item, value: headerData.circulatingSupply };
+        }
+        if (item.name === '历史最高价' && headerData.ath) {
+          return { ...item, value: headerData.ath };
+        }
+        if (item.name === '历史最高价百分比' && headerData.athChangePercentage) {
+          return { ...item, value: headerData.athChangePercentage };
+        }
+        if (item.name === '历史最低价' && headerData.atl) {
+          return { ...item, value: headerData.atl };
+        }
+        if (item.name === '历史最低价百分比' && headerData.atlChangePercentage) {
+          return { ...item, value: headerData.atlChangePercentage };
+        }
+        return item;
+      }));
+    });
+    
+    // 连接 WebSocket
+    ws.connect();
+    
     return () => {
+      console.log('🔴 详情页卸载，断开 WebSocket');
       clearInterval(timer);
       needLoop.current = false;
+      isWsAuthenticatedRef.current = false;
+      currentKlineChannelRef.current = null;
+      currentKlinePeriodRef.current = 'hour';
+      isFirstRenderRef.current = true;
+      
+      // 断开 WebSocket
+      if (wsRef.current) {
+        wsRef.current.disconnect();
+        wsRef.current = null;
+      }
     };
   }, [symbol]);
+  
+  // 监听K线时间周期切换，动态切换订阅
+  useEffect(() => {
+    // 跳过首次渲染（首次渲染时已经在认证成功回调中订阅了）
+    if (isFirstRenderRef.current) {
+      console.log('⏭️ 跳过首次渲染的K线订阅切换');
+      isFirstRenderRef.current = false;
+      return;
+    }
+    
+    // 检查必要条件
+    if (!wsRef.current || !symbol || !isWsAuthenticatedRef.current) {
+      console.log('⚠️ K线订阅切换条件不满足:', {
+        hasWs: !!wsRef.current,
+        hasSymbol: !!symbol,
+        isAuthenticated: isWsAuthenticatedRef.current
+      });
+      return;
+    }
+    
+    console.log(`🔄 K线时间周期切换到: ${activeKlineTab}`);
+    
+    // 时间周期映射
+    const periodMap = {
+      'hour': KLINE_PERIODS.ONE_HOUR,
+      'day': KLINE_PERIODS.ONE_DAY,
+      'week': KLINE_PERIODS.ONE_WEEK,
+      'month': KLINE_PERIODS.ONE_MONTH
+    };
+    
+    const periodLabel = {
+      'hour': '1小时',
+      'day': '1天',
+      'week': '1周',
+      'month': '1月'
+    };
+    
+    const newPeriod = periodMap[activeKlineTab];
+    const label = periodLabel[activeKlineTab];
+    
+    if (!newPeriod) {
+      console.error('❌ 未知的时间周期:', activeKlineTab);
+      return;
+    }
+    
+    // 执行订阅切换
+    const switchKlineSubscription = async () => {
+      const ws = wsRef.current;
+      if (!ws) return;
+      
+      try {
+        // 1. 如果有旧的订阅，先取消
+        if (currentKlineChannelRef.current) {
+          console.log(`📤 取消旧的K线订阅，频道ID:`, currentKlineChannelRef.current);
+          await ws.unsubscribe([currentKlineChannelRef.current]);
+          console.log(`✅ 已取消旧订阅`);
+          currentKlineChannelRef.current = null;
+        }
+        
+        // 2. 订阅新的K线数据
+        console.log(`📥 订阅新的K线数据: ${label} (${newPeriod})`);
+        const klineChannel = createKlineChannel([symbol], newPeriod, 100);
+        const response = await ws.subscribe([klineChannel]);
+        console.log(`✅ 已订阅 ${symbol} 的 ${label} K线数据`, response);
+        
+        // 3. 保存新的频道ID和当前时间周期
+        if (response?.data?.channels?.[0]?.channelId) {
+          currentKlineChannelRef.current = response.data.channels[0].channelId;
+          currentKlinePeriodRef.current = activeKlineTab; // 更新当前订阅的时间周期
+          console.log('💾 保存新的K线频道ID:', currentKlineChannelRef.current);
+          console.log('💾 保存当前时间周期:', activeKlineTab);
+        }
+      } catch (err) {
+        console.error(`❌ 切换K线订阅失败:`, err);
+      }
+    };
+    
+    switchKlineSubscription();
+  }, [activeKlineTab, symbol]);
   
   // 渲染币种基本信息
   const renderCoinInfo = () => {
@@ -491,8 +810,8 @@ export default function DetailPage() {
       <div className={`${styles.box} ${styles.klineContainer}`}>
         <KlineChart 
           data={currentKlineData}
-          activeTab={activeKlineTab}
-          onTabChange={setActiveKlineTab}
+          activeKey={activeKlineTab}
+          onActiveChange={setActiveKlineTab}
           loading={klineLoading}
         />
       </div>

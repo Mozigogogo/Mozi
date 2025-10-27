@@ -5,7 +5,7 @@ export const COMMON_MSG = '网络繁忙，请稍后再试';
 export const INTERFACE_URL = '/api';
 
 // WebSocket 服务器地址
-export const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3000/ws';
+export const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://43.134.34.51:8080/ws';
 
 // 轮询时间间隔（毫秒）
 export const LOOPTIME = 30000;
