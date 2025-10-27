@@ -33,6 +33,7 @@ export default function RobotPage() {
   const [isConnecting, setIsConnecting] = useState(true);
   const [isStreaming, setIsStreaming] = useState(false);
   const [suggestedQuestions, setSuggestedQuestions] = useState([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false); // 是否正在加载历史记录
   
   const scrollRef = useRef(null);
   const messagesEndRef = useRef(null); // 用于标记消息列表底部
@@ -40,10 +41,21 @@ export default function RobotPage() {
   const conversationIdRef = useRef(null);
   const currentMessageIdRef = useRef(null);
   const currentRequestIdRef = useRef(null);
+  const hasLoadedHistoryRef = useRef(false); // 标记是否已加载过历史记录
 
   // 初始化 WebSocket
   useEffect(() => {
     console.log('🤖 初始化 AI 对话 WebSocket');
+    
+    // 尝试从 localStorage 读取上次的 conversationId
+    const savedConversationId = typeof window !== 'undefined' 
+      ? localStorage.getItem('ai_conversation_id') 
+      : null;
+    
+    if (savedConversationId) {
+      conversationIdRef.current = savedConversationId;
+      console.log('📌 从本地读取会话 ID:', savedConversationId);
+    }
     
     const ws = new MoziWebSocket(WS_URL, {
       platform: PLATFORMS.H5,
@@ -58,6 +70,22 @@ export default function RobotPage() {
     ws.on('authenticated', (data) => {
       console.log('✅ AI 对话 WebSocket 认证成功');
       setIsConnecting(false);
+      
+      // 认证成功后，立即请求历史记录
+      if (!hasLoadedHistoryRef.current && ws.isConnected) {
+        const conversationId = conversationIdRef.current;
+        console.log(`📜 请求历史对话记录... (会话ID: ${conversationId || '无'})`);
+        setIsLoadingHistory(true);
+        try {
+          // 使用保存的 conversationId 查询历史记录
+          const historyMessage = createAIChatHistoryMessage(conversationId, 50);
+          ws.send(historyMessage);
+          hasLoadedHistoryRef.current = true;
+        } catch (error) {
+          console.error('❌ 请求历史记录失败:', error);
+          setIsLoadingHistory(false);
+        }
+      }
     });
 
     // 监听 AI 开始回复
@@ -67,6 +95,10 @@ export default function RobotPage() {
       
       if (conversationId) {
         conversationIdRef.current = conversationId;
+        // 保存到 localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('ai_conversation_id', conversationId);
+        }
       }
       if (messageId) {
         currentMessageIdRef.current = messageId;
@@ -180,18 +212,37 @@ export default function RobotPage() {
     // 监听历史记录响应
     ws.on(WS_EVENTS.AI_CHAT_HISTORY_RESPONSE, (data) => {
       console.log('📜 收到历史记录:', data);
-      const { messages: historyMessages } = data.data || {};
+      setIsLoadingHistory(false);
+      
+      const { messages: historyMessages, conversationId } = data.data || {};
       
       if (historyMessages && historyMessages.length > 0) {
+        console.log(`✅ 加载了 ${historyMessages.length} 条历史消息`);
+        
+        // 如果有历史记录，保存 conversationId
+        if (conversationId) {
+          conversationIdRef.current = conversationId;
+          // 保存到 localStorage
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('ai_conversation_id', conversationId);
+          }
+          console.log('📌 设置并保存会话 ID:', conversationId);
+        }
+        
+        // 格式化历史消息
         const formattedMessages = historyMessages.map(msg => ({
-          id: msg.messageId,
+          id: msg.messageId || `history-${msg.timestamp}`,
           messageId: msg.messageId,
-          role: msg.role,
+          role: msg.role === 'system' ? 'assistant' : msg.role, // 将 system 映射为 assistant
           content: msg.content,
-          time: msg.timestamp,
+          time: msg.timestamp || Date.now(),
         }));
         
-        setMessages(prev => [...formattedMessages, ...prev]);
+        // 如果有历史记录，替换掉默认的欢迎消息
+        setMessages(formattedMessages);
+      } else {
+        console.log('📭 没有历史记录，显示默认欢迎消息');
+        // 没有历史记录，保持默认的欢迎消息
       }
     });
 
@@ -338,7 +389,6 @@ export default function RobotPage() {
   };
 
   return (
- 
       <div className={styles.robotPage}>
         <div className={styles.chatHeader}>
           <div className={styles.chatTitle}>AI 助手</div>
@@ -352,6 +402,13 @@ export default function RobotPage() {
         </div>
 
         <div className={styles.chatScroll} ref={scrollRef}>
+          {/* 加载历史记录提示 */}
+          {isLoadingHistory && (
+            <div className={styles.loadingHistory}>
+              <div className={styles.loadingText}>正在加载历史对话...</div>
+            </div>
+          )}
+          
           <div className={styles.messages}>
             {messages.map((msg, idx) => (
               <div key={msg.id} className={`${styles.msgRow} ${msg.role === 'user' ? styles.right : styles.left}`}>
