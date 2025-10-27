@@ -865,6 +865,15 @@ export default function HomePage() {
 
         {/* 实时榜单 */}
         {renderRealTimeRanking()}
+
+        {/* 悬浮机器人按钮 */}
+        <div className={styles.floatRobotBtn} onClick={() => router.push('/robot')}>
+          <img 
+            className={styles.robotIcon} 
+            src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/AI_Bot.png" 
+            alt="AI助手" 
+          />
+        </div>
       </div>
     </Layout>
   );

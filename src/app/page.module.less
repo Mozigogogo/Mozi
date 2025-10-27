@@ -678,3 +678,50 @@
   border-radius: 8px;
   margin: 16px 0;
 }
+
+/* 悬浮机器人按钮 */
+.floatRobotBtn {
+  position: fixed;
+  right: 20px;
+  bottom: 80px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #11B787 0%, #02c076 100%);
+  box-shadow: 0 4px 12px rgba(17, 183, 135, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 999;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(17, 183, 135, 0.6);
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+  
+  .robotIcon {
+    width: 32px;
+    height: 32px;
+    display: block;
+  }
+}
+
+@media (max-width: 768px) {
+  .floatRobotBtn {
+    right: 16px;
+    bottom: 70px;
+    width: 50px;
+    height: 50px;
+    
+    .robotIcon {
+      width: 28px;
+      height: 28px;
+    }
+  }
+}

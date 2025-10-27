@@ -290,9 +290,10 @@ export function createMarketOverviewChannel(interval = 30000) {
  * @param {string} message - 用户消息
  * @param {string} conversationId - 会话 ID（可选）
  * @param {object} context - 上下文信息（可选）
+ * @param {string} requestId - 请求ID（可选）
  * @returns {object} AI 对话消息对象
  */
-export function createAIChatMessage(message, conversationId = null, context = null) {
+export function createAIChatMessage(message, conversationId = null, context = null, requestId = null) {
   const timestamp = Date.now();
   return {
     event: WS_EVENTS.AI_CHAT,
@@ -302,7 +303,64 @@ export function createAIChatMessage(message, conversationId = null, context = nu
       context: context
     },
     timestamp: timestamp,
-    requestId: `req-ai-${timestamp}`
+    requestId: requestId || `req-ai-${timestamp}`
+  };
+}
+
+/**
+ * 创建获取 AI 对话历史消息
+ * @param {string} conversationId - 会话 ID
+ * @param {number} limit - 获取数量限制
+ * @returns {object} 获取历史消息对象
+ */
+export function createAIChatHistoryMessage(conversationId, limit = 20) {
+  const timestamp = Date.now();
+  return {
+    event: WS_EVENTS.AI_CHAT_HISTORY,
+    data: {
+      conversationId: conversationId,
+      limit: limit
+    },
+    timestamp: timestamp,
+    requestId: `req-history-${timestamp}`
+  };
+}
+
+/**
+ * 创建停止 AI 生成消息
+ * @param {string} conversationId - 会话 ID
+ * @param {string} messageId - 消息 ID
+ * @returns {object} 停止生成消息对象
+ */
+export function createAIChatStopMessage(conversationId, messageId) {
+  const timestamp = Date.now();
+  return {
+    event: WS_EVENTS.AI_CHAT_STOP,
+    data: {
+      conversationId: conversationId,
+      messageId: messageId
+    },
+    timestamp: timestamp,
+    requestId: `req-stop-${timestamp}`
+  };
+}
+
+/**
+ * 创建重新生成 AI 回复消息
+ * @param {string} conversationId - 会话 ID
+ * @param {string} messageId - 消息 ID
+ * @returns {object} 重新生成消息对象
+ */
+export function createAIChatRegenerateMessage(conversationId, messageId) {
+  const timestamp = Date.now();
+  return {
+    event: WS_EVENTS.AI_CHAT_REGENERATE,
+    data: {
+      conversationId: conversationId,
+      messageId: messageId
+    },
+    timestamp: timestamp,
+    requestId: `req-regenerate-${timestamp}`
   };
 }
 
