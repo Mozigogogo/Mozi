@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import Layout from '../../components/Layout';
 import { MoziWebSocket } from '../../utils/moziWebSocket';
 import { WS_URL } from '../../utils/constants';
@@ -34,6 +35,7 @@ export default function RobotPage() {
   const [suggestedQuestions, setSuggestedQuestions] = useState([]);
   
   const scrollRef = useRef(null);
+  const messagesEndRef = useRef(null); // 用于标记消息列表底部
   const wsRef = useRef(null);
   const conversationIdRef = useRef(null);
   const currentMessageIdRef = useRef(null);
@@ -205,11 +207,18 @@ export default function RobotPage() {
     };
   }, []);
 
-  // 自动滚动到底部
+  // 自动滚动到底部 - 使用平滑滚动和 requestAnimationFrame 确保 DOM 更新后滚动
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    const scrollToBottom = () => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }
+    };
+
+    // 使用 requestAnimationFrame 确保在 DOM 更新后执行滚动
+    requestAnimationFrame(() => {
+      requestAnimationFrame(scrollToBottom);
+    });
   }, [messages]);
 
   // 发送消息
@@ -329,7 +338,7 @@ export default function RobotPage() {
   };
 
   return (
-    <Layout>
+ 
       <div className={styles.robotPage}>
         <div className={styles.chatHeader}>
           <div className={styles.chatTitle}>AI 助手</div>
@@ -376,7 +385,14 @@ export default function RobotPage() {
                         onClick={() => handleRegenerate(msg.messageId)}
                         disabled={isStreaming}
                       >
-                        🔄 重新生成
+                        <Image 
+                          src="/icons/reload.svg" 
+                          alt="重新生成" 
+                          width={14} 
+                          height={14}
+                          className={styles.reloadIcon}
+                        />
+                        重新生成
                       </button>
                     </div>
                   )}
@@ -407,40 +423,45 @@ export default function RobotPage() {
               ))}
             </div>
           )}
+          {/* 用于滚动定位的底部元素 */}
+          <div ref={messagesEndRef} style={{ height: '1px' }} />
         </div>
 
         <div className={styles.chatInputBar}>
+          <div className={styles.inputBox}>
+            <input
+              className={styles.input}
+              value={inputValue}
+              placeholder="输入你的问题..."
+              onKeyPress={(e) => e.key === 'Enter' && !isStreaming && handleSend()}
+              onChange={(e) => setInputValue(e.target.value)}
+              disabled={isConnecting || isStreaming}
+            />
+          </div>
           {isStreaming ? (
             <button 
               className={styles.stopBtn} 
               onClick={handleStop}
             >
-              ⏸️ 停止生成
+              <Image 
+                src="/icons/pause.svg" 
+                alt="停止生成" 
+                width={18} 
+                height={18}
+                className={styles.pauseIcon}
+              />
             </button>
           ) : (
-            <>
-              <div className={styles.inputBox}>
-                <input
-                  className={styles.input}
-                  value={inputValue}
-                  placeholder="输入你的问题..."
-                  onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  disabled={isConnecting}
-                />
-              </div>
-              <button 
-                className={styles.sendBtn} 
-                onClick={() => handleSend()}
-                disabled={isConnecting || !inputValue.trim()}
-              >
-                发送
-              </button>
-            </>
+            <button 
+              className={styles.sendBtn} 
+              onClick={() => handleSend()}
+              disabled={isConnecting || !inputValue.trim()}
+            >
+              发送
+            </button>
           )}
         </div>
       </div>
-    </Layout>
   );
 }
 
