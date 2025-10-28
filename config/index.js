@@ -14,10 +14,12 @@ const APP_ENV =
 const ENV_CONFIG = {
   development: {
     API_BASE_URL: 'https://moziinnovations.com',
-    WS_URL: 'ws://43.134.34.51:8080/ws',
+    WS_URL: 'ws://43.134.34.51:8080/ws', // 本地开发使用 ws
   },
   production: {
     API_BASE_URL: 'https://moziinnovations.com',
+    // 生产环境使用通过 Nginx 代理的 WSS 地址
+    // 需要先在服务器配置 Nginx（见 nginx-websocket-config.conf）
     WS_URL: 'ws://43.134.34.51:8080/ws',
   },
   test: {
