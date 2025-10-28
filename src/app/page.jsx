@@ -5,6 +5,7 @@ import { NoticeBar, Grid, TabBar, Swiper } from 'antd-mobile';
 import { RightOutline } from 'antd-mobile-icons';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { motion, useMotionValue, useTransform, useSpring, AnimatePresence } from 'framer-motion';
 import Layout from '../components/Layout';
 import MoziCard from '../components/MoziCard';
 import MoziTreeMap from '../components/MoziTreeMap';
@@ -23,6 +24,15 @@ import styles from './page.module.less';
 
 // CDN 图片前缀
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
+
+// 简单文本组件
+function BubbleText({ text }) {
+  return (
+    <div className={styles.bubbleText}>
+      {text}
+    </div>
+  );
+}
 
 // 首页背景轮播图
 const HOME_BANNERS = [
@@ -93,42 +103,93 @@ export default function HomePage() {
   const [topicsLoading, setTopicsLoading] = useState(false);
   const [lastTopicsLoadTime, setLastTopicsLoadTime] = useState(null);
   const topicsCacheTimer = useRef(null);
+  
+  // 机器人交互状态
+  const [showRobotBubble, setShowRobotBubble] = useState(false);
+  const rankingSectionRef = useRef(null);
+  const robotRef = useRef(null);
+  
+  // 鼠标位置用于磁吸效果
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  
+  // 机器人位置弹簧动画
+  const springConfig = { damping: 25, stiffness: 150 };
+  const robotX = useSpring(useTransform(mouseX, [0, 1], [0, 0]), springConfig);
+  const robotY = useSpring(useTransform(mouseY, [0, 1], [0, 0]), springConfig);
   const needLoop = useRef(true);
 
-  // WebSocket 连接 - 进入页面自动连接
+  // WebSocket 连接 - 进入页面自动连接并握手
   const { sendMessage, isOpen, lastMessage, readyState } = useWebSocket(WS_URL, {
     onOpen: () => {
-      console.log('WebSocket 连接已建立');
-      // 可以发送初始化消息
-      // sendMessage({ type: 'subscribe', channel: 'market' });
+      console.log('✅ WebSocket 连接已建立');
+      
+      // 自动发送握手消息
+      const handshakeMessage = {
+        event: "hello",
+        data: {
+          clientId: `web-${Date.now()}`,
+          platform: "h5",
+          version: "1.0.0"
+        },
+        requestId: `req-hello-${Date.now()}`,
+        timestamp: Date.now()
+      };
+      
+      // 延迟100ms确保连接稳定
+      setTimeout(() => {
+        const sent = sendMessage(handshakeMessage);
+        if (sent) {
+          console.log('📤 已发送握手消息:', handshakeMessage);
+        } else {
+          console.error('❌ 发送握手消息失败');
+        }
+      }, 100);
     },
     onMessage: (message) => {
       try {
         const data = JSON.parse(message);
-        console.log('收到 WebSocket 消息:', data);
+        console.log('📥 收到 WebSocket 消息:', data);
         
-        // 根据消息类型处理数据
-        // 例如：实时更新币价、榜单等
-        if (data.type === 'price_update') {
+        // 处理握手响应
+        if (data.event === 'welcome') {
+          console.log('🤝 握手成功！Session ID:', data.data?.sessionId);
+        }
+        
+        // 处理 ping/pong 心跳
+        if (data.event === 'ping') {
+          sendMessage({
+            event: 'pong',
+            timestamp: Date.now()
+          });
+        }
+        
+        // 处理其他消息类型
+        if (data.event === 'ticker') {
+          console.log('💹 收到 Ticker 数据:', data.data);
           // 更新价格数据
-        } else if (data.type === 'ranking_update') {
+        } else if (data.event === 'ranking') {
+          console.log('📊 收到榜单数据:', data.data);
           // 更新榜单数据
         }
       } catch (error) {
-        console.error('解析 WebSocket 消息失败:', error);
+        console.error('⚠️ 解析 WebSocket 消息失败:', error);
       }
     },
     onClose: () => {
-      console.log('WebSocket 连接已关闭');
+      console.log('🔴 WebSocket 连接已关闭');
     },
     onError: (error) => {
-      console.error('WebSocket 错误:', error);
+      console.error('❌ WebSocket 错误:', error);
     },
     autoConnect: true, // 自动连接
     reconnectInterval: 5000, // 5秒后重连
-    reconnectAttempts: 5, // 最多重连5次
+    reconnectAttempts: -1, // 无限重连
     heartbeatInterval: 30000, // 30秒心跳
-    heartbeatMessage: JSON.stringify({ type: 'ping' })
+    heartbeatMessage: JSON.stringify({ 
+      event: 'ping',
+      timestamp: Date.now()
+    })
   });
 
   // 实时榜单配置
@@ -678,12 +739,89 @@ export default function HomePage() {
     }
   };
 
+  // 监听滚动到实时榜单 - 触发机器人气泡
+  useEffect(() => {
+    if (!rankingSectionRef.current) return;
+
+    let hideTimer = null;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            // 进入视口，显示气泡
+            setShowRobotBubble(true);
+            
+            // 7秒后自动隐藏气泡
+            hideTimer = setTimeout(() => {
+              setShowRobotBubble(false);
+            }, 7000);
+          } else {
+            // 离开视口，立即隐藏气泡并清除定时器
+            if (hideTimer) {
+              clearTimeout(hideTimer);
+            }
+            setShowRobotBubble(false);
+          }
+        });
+      },
+      {
+        threshold: 0.2, // 当20%可见时触发
+        rootMargin: '0px'
+      }
+    );
+
+    observer.observe(rankingSectionRef.current);
+
+    return () => {
+      if (hideTimer) {
+        clearTimeout(hideTimer);
+      }
+      if (rankingSectionRef.current) {
+        observer.unobserve(rankingSectionRef.current);
+      }
+    };
+  }, []);
+
+  // 鼠标磁吸效果
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!robotRef.current) return;
+      
+      const rect = robotRef.current.getBoundingClientRect();
+      const robotCenterX = rect.left + rect.width / 2;
+      const robotCenterY = rect.top + rect.height / 2;
+      
+      const distanceX = e.clientX - robotCenterX;
+      const distanceY = e.clientY - robotCenterY;
+      const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+      
+      // 磁吸范围：150px
+      const magnetRange = 150;
+      if (distance < magnetRange) {
+        const magnetStrength = (magnetRange - distance) / magnetRange;
+        const moveX = (distanceX / distance) * magnetStrength * 15;
+        const moveY = (distanceY / distance) * magnetStrength * 15;
+        
+        mouseX.set(moveX);
+        mouseY.set(moveY);
+      } else {
+        mouseX.set(0);
+        mouseY.set(0);
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [mouseX, mouseY]);
+
   // 渲染实时榜单
   const renderRealTimeRanking = () => {
     const currentRankData = footerArr[activeArr.indexOf(rankActiveKey)] || [];
     
     return (
-      <MoziCard title="实时榜单">
+      <div ref={rankingSectionRef}>
+        <MoziCard title="实时榜单">
         {/* <Layout isLoading={footerLoading}> */}
           <TabBar className={styles.tabBox} activeKey={rankActiveKey} onChange={rankActiveClick}>
             <TabBar.Item key='zixuan' title='自选榜' />
@@ -711,6 +849,7 @@ export default function HomePage() {
           )}
         {/* </Layout> */}
       </MoziCard>
+      </div>
     );
   };
 
@@ -828,6 +967,107 @@ export default function HomePage() {
 
         {/* 实时榜单 */}
         {renderRealTimeRanking()}
+
+        {/* 悬浮机器人按钮 - Framer Motion 炫酷版 */}
+        <motion.div 
+          ref={robotRef}
+          className={styles.floatRobotBtn} 
+          onClick={() => router.push('/robot')}
+          style={{
+            x: robotX,
+            y: robotY,
+          }}
+          whileHover={{ 
+            scale: 1.15,
+            rotate: [0, -10, 10, -10, 0],
+            transition: { duration: 0.5 }
+          }}
+          whileTap={{ scale: 0.9 }}
+          initial={{ scale: 0, rotate: -180, opacity: 0 }}
+          animate={{ scale: 1, rotate: 0, opacity: 1 }}
+          transition={{ 
+            type: "spring",
+            stiffness: 200,
+            damping: 15,
+            delay: 0.5
+          }}
+        >
+          {/* 悬浮光晕效果 */}
+          <motion.div 
+            className={styles.robotGlow}
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.5, 0.8, 0.5],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
+          
+          {/* 机器人图标 */}
+          <motion.img 
+            className={styles.robotIcon} 
+            src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/AI_Bot.png" 
+            alt="AI助手"
+            animate={{
+              y: [0, -5, 0],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
+          
+          {/* 消息气泡 */}
+          <AnimatePresence>
+            {showRobotBubble && (
+              <motion.div 
+                className={styles.robotBubble}
+                initial={{ 
+                  opacity: 0, 
+                  x: 30, 
+                  scale: 0.3,
+                  rotate: 10
+                }}
+                animate={{ 
+                  opacity: 1, 
+                  x: 0, 
+                  scale: 1,
+                  rotate: 0
+                }}
+                exit={{ 
+                  opacity: 0, 
+                  x: 30, 
+                  scale: 0.3,
+                  rotate: -10
+                }}
+                transition={{ 
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 20
+                }}
+              >
+                <motion.div 
+                  className={styles.bubbleContent}
+                  animate={{
+                    y: [0, -3, 0],
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                >
+                  <BubbleText text="嗨！需要帮助吗？点击我开始对话~" />
+                  <div className={styles.bubbleArrow}></div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
       </div>
     </Layout>
   );

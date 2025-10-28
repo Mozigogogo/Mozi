@@ -257,58 +257,109 @@ export const handleOptions = (data, type, msg) => {
   }
 
   if (type === 'linebar') {
-    return {
+    console.log('📊 linebar配置 - 输入数据:', data);
+    console.log('📊 linebar配置 - msg:', msg);
+    console.log('📊 xAxisData:', data?.xAxisData);
+    console.log('📊 barData:', data?.barData);
+    console.log('📊 lineData:', data?.lineData);
+    
+    const option = {
+      grid: {
+        top: '15%',
+        left: '8%',
+        right: '8%',
+        bottom: '15%',
+        containLabel: true
+      },
       tooltip: {
         trigger: 'axis',
         formatter: function (info) {
-          console.log('info', info);
-          let valueList = info[0].data.toolTips;
-          let tips = '';
-          valueList.forEach((item) => {
-            tips += `
-              ${item.exchange}${item.value}
-            `
-          });
-          return tips;
+          if (!info || info.length === 0) return '';
+          console.log('tooltip info', info);
+          try {
+            if (info[0]?.data?.toolTips) {
+              let valueList = info[0].data.toolTips;
+              let tips = '';
+              valueList.forEach((item) => {
+                tips += `${item.exchange}: ${item.value}<br/>`;
+              });
+              return tips;
+            }
+          } catch (e) {
+            console.error('tooltip格式化失败:', e);
+          }
+          return `${info[0].name}: ${info[0].value}`;
         }
       },
       legend: {
+        show: true,
+        top: '0%',
+        data: [msg, '价格'],
         selectedMode: false
       },
       xAxis: [
         {
           type: 'category',
-          data: data.xAxisData,
+          data: data?.xAxisData || [],
           axisPointer: {
             type: 'line'
+          },
+          axisLabel: {
+            rotate: 45,
+            fontSize: 10
           }
         }
       ],
       yAxis: [
         {
           type: 'value',
+          name: msg,
+          position: 'left',
           axisLabel: {
-            formatter: (value) => data.yAxisLeftSlot.replace('{}', value) ?? value
+            formatter: (value) => {
+              if (data?.yAxisLeftSlot) {
+                return data.yAxisLeftSlot.replace('{}', value);
+              }
+              return value;
+            }
           }
         },
         {
           type: 'value',
+          name: '价格',
+          position: 'right',
           axisLabel: {
-            formatter: (value) => data.yAxisRightSlot.replace('{}', value) ?? value
+            formatter: (value) => {
+              if (data?.yAxisRightSlot) {
+                return data.yAxisRightSlot.replace('{}', value);
+              }
+              return value;
+            }
           }
         }
       ],
       series: [
         {
-          name: msg,
+          name: msg || '持仓',
           type: 'bar',
-          data: data.barData
+          data: data?.barData || [],
+          itemStyle: {
+            color: '#11B787'
+          },
+          barWidth: '60%'
         },
         {
           name: '价格',
           type: 'line',
           yAxisIndex: 1,
-          data: data.lineData
+          data: data?.lineData || [],
+          lineStyle: {
+            color: '#FA5F5F',
+            width: 2
+          },
+          itemStyle: {
+            color: '#FA5F5F'
+          }
         }
       ],
       dataZoom: [
@@ -327,6 +378,9 @@ export const handleOptions = (data, type, msg) => {
         }
       ],
     };
+    
+    console.log('✅ linebar配置生成完成:', option);
+    return option;
   }
 
   if (type === 'updownbarline') {

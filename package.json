@@ -11,13 +11,15 @@
   "dependencies": {
     "@reown/appkit": "1.8.7",
     "@reown/appkit-adapter-wagmi": "1.8.7",
-    "@tanstack/react-query": "5.90.2",
+    "@tanstack/react-query": "^5.90.5",
     "antd-mobile": "^5.39.0",
     "antd-mobile-icons": "^0.3.0",
     "axios": "^1.10.0",
     "echarts": "^6.0.0",
+    "framer-motion": "^12.23.24",
     "i18next": "^25.5.3",
     "i18next-browser-languagedetector": "^8.2.0",
+    "lightweight-charts": "^4.2.0",
     "lodash": "^4.17.21",
     "next": "14.2.15",
     "next-intl": "^4.3.9",
@@ -26,8 +28,8 @@
     "react-dom": "18.3.1",
     "react-i18next": "^16.0.0",
     "styled-components": "^6.1.19",
-    "viem": "2.37.8",
-    "wagmi": "2.17.5"
+    "viem": "^2.38.4",
+    "wagmi": "^2.18.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
