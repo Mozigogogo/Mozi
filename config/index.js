@@ -13,15 +13,15 @@ const APP_ENV =
 // 各环境默认值（可按需修改）
 const ENV_CONFIG = {
   development: {
-    API_BASE_URL: 'https://moziinnovations.com:8080',  // 添加端口号
+    API_BASE_URL: 'https://moziinnovations.com',  
     WS_URL: 'wss://moziinnovations.com:8080/ws', // 后端已支持 WSS
   },
   production: {
-    API_BASE_URL: 'https://moziinnovations.com:8080',  // 添加端口号
+    API_BASE_URL: 'https://moziinnovations.com',  // 添加端口号
     WS_URL: 'wss://moziinnovations.com:8080/ws', // 后端已支持 WSS
   },
   test: {
-    API_BASE_URL: 'https://moziinnovations.com:8080',
+    API_BASE_URL: 'https://moziinnovations.com',
     WS_URL: 'wss://moziinnovations.com:8080/ws',
   },
 };
