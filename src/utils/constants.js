@@ -1,11 +1,13 @@
+import { WS_URL as CONFIG_WS_URL } from '../../config/index.js';
+
 // 通用兜底提示语
 export const COMMON_MSG = '网络繁忙，请稍后再试';
 
 // 接口基础URL - 使用代理路径避免跨域
 export const INTERFACE_URL = '/api';
 
-// WebSocket 服务器地址
-export const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://43.134.34.51:8080/ws';
+// WebSocket 服务器地址（从配置中心统一管理）
+export const WS_URL = CONFIG_WS_URL;
 
 // 轮询时间间隔（毫秒）
 export const LOOPTIME = 30000;
