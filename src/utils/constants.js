@@ -6,8 +6,29 @@ export const COMMON_MSG = '网络繁忙，请稍后再试';
 // 接口基础URL - 使用代理路径避免跨域
 export const INTERFACE_URL = '/api';
 
-// WebSocket 服务器地址（从配置中心统一管理）
-export const WS_URL = CONFIG_WS_URL;
+/**
+ * 获取适配当前页面协议的 WebSocket URL
+ * 解决 HTTPS 页面无法连接 WS（非加密）的混合内容问题
+ */
+const getAdaptiveWebSocketURL = () => {
+  let wsUrl = CONFIG_WS_URL;
+  
+  // 在浏览器环境中，根据页面协议自动调整 WebSocket 协议
+  if (typeof window !== 'undefined') {
+    const isSecure = window.location.protocol === 'https:';
+    
+    // 如果页面使用 HTTPS，WebSocket 也必须使用 WSS（加密）
+    if (isSecure && wsUrl.startsWith('ws://')) {
+      wsUrl = wsUrl.replace('ws://', 'wss://');
+      console.log('🔒 检测到 HTTPS 环境，自动切换到加密 WebSocket:', wsUrl);
+    }
+  }
+  
+  return wsUrl;
+};
+
+// WebSocket 服务器地址（自动适配协议）
+export const WS_URL = getAdaptiveWebSocketURL();
 
 // 轮询时间间隔（毫秒）
 export const LOOPTIME = 30000;
