@@ -204,7 +204,7 @@ export const handleOptions = (data, type, msg) => {
   }
 
   if (type === 'treemap') {
-    return {
+    const baseConfig = {
       series: [
         {
           type: 'treemap',
@@ -253,7 +253,22 @@ export const handleOptions = (data, type, msg) => {
         },
         confine: true
       },
+    };
+    
+    // 如果是成交量或持仓量界面，添加特殊配置让图表占满
+    if (msg === '成交量' || msg === '持仓量') {
+      baseConfig.series[0] = {
+        ...baseConfig.series[0],
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100%',
+        height: '100%'
+      };
     }
+    
+    return baseConfig;
   }
 
   if (type === 'linebar') {
@@ -263,13 +278,13 @@ export const handleOptions = (data, type, msg) => {
     console.log('📊 barData:', data?.barData);
     console.log('📊 lineData:', data?.lineData);
     
-    const option = {
+    const baseConfig = {
       grid: {
-        top: '15%',
-        left: '8%',
-        right: '8%',
-        bottom: '15%',
-        containLabel: true
+        left: '15%',
+        right: '15%',
+        top: '12%',
+        bottom: '25%',
+        containLabel: false
       },
       tooltip: {
         trigger: 'axis',
@@ -379,8 +394,8 @@ export const handleOptions = (data, type, msg) => {
       ],
     };
     
-    console.log('✅ linebar配置生成完成:', option);
-    return option;
+    console.log('✅ linebar配置生成完成:', baseConfig);
+    return baseConfig;
   }
 
   if (type === 'updownbarline') {

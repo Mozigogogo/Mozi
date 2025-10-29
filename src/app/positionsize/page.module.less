@@ -85,27 +85,20 @@
 /* 交易所Tab切换样式 */
 .exchangeTabs {
   display: flex;
-  background: #EEF0F3;
-  flex-wrap: nowrap;
+  background: transparent;
+  padding: 0 10px;
+  margin-bottom: 10px;
   overflow-x: auto;
-  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-
-  /* 隐藏滚动条样式 */
+  
   &::-webkit-scrollbar {
     display: none;
   }
 
-  /* 兼容火狐浏览器 */
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-
   .exchangeTab {
-    flex: 0 0 auto;
-    min-width: 60px;
-    padding: 10px 7.5px;
-    font-size: 12px;
+    flex: 1;
+    padding: 10px 5px;
+    font-size: 13px;
     color: #999;
     background: transparent;
     text-align: center;
@@ -113,24 +106,24 @@
     transition: all 0.3s ease;
     position: relative;
     white-space: nowrap;
-
+    user-select: none;
+    
     &.active {
       color: #11B787;
       font-weight: bold;
-
+      
       &::after {
         content: '';
         position: absolute;
-        bottom: -2px;
+        bottom: 0;
         left: 50%;
         transform: translateX(-50%);
-        width: 18px;
-        height: 4px;
+        width: 27px;
+        height: 3px;
         background-color: #11B787;
-        border-radius: 2px;
       }
     }
-
+    
     &:not(.active):hover {
       color: #666;
     }
@@ -140,19 +133,18 @@
 /* 外部标题样式 */
 .sectionHeader {
   font-weight: 600;
-  font-size: 16px;
+  font-size: 16px; // 32rpx/2
   color: #333;
-  padding: 10px 16px 5px 16px;
-  margin: 0;
+  padding: 10px; // 20rpx/2
+  padding-bottom: 5px; // 10rpx/2
   background: transparent;
 }
 
 /* 当前持仓量区域 */
 .currentPCR {
-  padding: 10px 0px 0 0px;
+  padding: 10px; // 20rpx/2
   background-color: #fff;
-  margin: 0 8px 10px 8px;
-  border-radius: 8px;
+  margin-bottom: 10px; // 20rpx/2
   box-sizing: border-box;
 }
 
@@ -241,23 +233,22 @@
   }
 
   .exchangeTabs {
-    padding: 0 10px;
-    margin-bottom: 5px;
+    padding: 0 8px;
 
     .exchangeTab {
-      min-width: 80px;
-      font-size: 11px;
+      font-size: 13px;
     }
   }
 
   .sectionHeader {
-    font-size: 14px;
-    padding-bottom: 8px;
+    padding: 8px;
+    padding-bottom: 4px;
+    font-size: 15px;
   }
 
   .currentPCR {
-    padding: 10px;
-    border-radius: 16px;
+    padding: 8px;
+    margin-bottom: 8px;
   }
 
   .currentPCRChart {
@@ -314,7 +305,7 @@
   }
 
   .exchangeTabs {
-    background: #1a1a1a;
+    background: transparent;
 
     .exchangeTab {
       color: #666;
