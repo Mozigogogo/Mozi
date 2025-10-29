@@ -385,6 +385,13 @@ export const handleOptions = (data, type, msg) => {
 
   if (type === 'updownbarline') {
     return {
+      grid: {
+        left: '10%',
+        right: '10%',
+        top: '10%',
+        bottom: '25%',
+        containLabel: false
+      },
       tooltip: {
         trigger: 'axis',
         formatter: function (info) {
@@ -408,6 +415,9 @@ export const handleOptions = (data, type, msg) => {
           data: data.xAxisData,
           axisPointer: {
             type: 'line'
+          },
+          axisLabel: {
+            margin: 12  // x轴标签与轴线的距离
           }
         }
       ],
@@ -444,7 +454,14 @@ export const handleOptions = (data, type, msg) => {
           // name: '价格',
           type: 'line',
           yAxisIndex: 1,
-          data: data.coinFee
+          data: data.coinFee,
+          lineStyle: {
+            color: '#FF9A37',
+            width: 2
+          },
+          itemStyle: {
+            color: '#FF9A37'
+          }
         }
       ],
       dataZoom: [
@@ -459,8 +476,10 @@ export const handleOptions = (data, type, msg) => {
           type: 'slider',
           start: 80,
           end: 100,
-          top: '87%',
-          height: 20
+          bottom: '8%',  // 从底部往上8%的位置
+          height: 20,
+          showDataShadow: false,
+          showDetail: false
         }
       ],
     };
