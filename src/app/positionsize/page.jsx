@@ -30,13 +30,19 @@ export default function Positionsize() {
   });
 
   useEffect(() => {
-    // 初始化图表
+    // 初始化图表 - 强制指定高度避免默认200px
     if (chartContainerRef.current && !chartRef.current) {
-      chartRef.current = echarts.init(chartContainerRef.current);
+      chartRef.current = echarts.init(chartContainerRef.current, null, {
+        width: chartContainerRef.current.offsetWidth,
+        height: 300
+      });
       console.log('当前持仓量图表初始化成功');
     }
     if (chartContainerRef1.current && !chartRef1.current) {
-      chartRef1.current = echarts.init(chartContainerRef1.current);
+      chartRef1.current = echarts.init(chartContainerRef1.current, null, {
+        width: chartContainerRef1.current.offsetWidth,
+        height: 300
+      });
       console.log('历史持仓量图表初始化成功');
     }
 
@@ -120,7 +126,10 @@ export default function Positionsize() {
       
       // 确保图表已初始化，如果没有则初始化
       if (!chartRef.current && chartContainerRef.current) {
-        chartRef.current = echarts.init(chartContainerRef.current);
+        chartRef.current = echarts.init(chartContainerRef.current, null, {
+          width: chartContainerRef.current.offsetWidth,
+          height: 300
+        });
         console.log('延迟初始化当前持仓量图表');
       }
       
@@ -167,7 +176,10 @@ export default function Positionsize() {
       
       // 确保图表已初始化，如果没有则初始化
       if (!chartRef1.current && chartContainerRef1.current) {
-        chartRef1.current = echarts.init(chartContainerRef1.current);
+        chartRef1.current = echarts.init(chartContainerRef1.current, null, {
+          width: chartContainerRef1.current.offsetWidth,
+          height: 300
+        });
         console.log('🔧 延迟初始化历史持仓量图表');
       }
       
@@ -195,10 +207,10 @@ export default function Positionsize() {
     }
   };
 
-  const onCoinChange = (value) => {
-    const selectedCoin = coinArr[value[0]];
-    setCoinSelected(selectedCoin);
-    getData({ coin: selectedCoin });
+  const onCoinChange = (val) => {
+    console.log('币种变化:', val);
+    setCoinSelected(val[0]);
+    getData({ coin: val[0] });
   };
 
   const onExchangeTabClick = (exchange) => {
@@ -220,8 +232,8 @@ export default function Positionsize() {
           <div className={`${styles.pickerItem} ${styles.coinPickerWhite}`}>
             <div className={styles.pickerTitle}>币种</div>
             <Picker
-              columns={[coinArr.map((item, index) => ({ label: item, value: index }))]}
-              value={[coinArr.indexOf(coinSelected)]}
+              columns={[coinArr]}
+              value={[coinSelected]}
               onConfirm={onCoinChange}
               cancelText="取消"
               confirmText="确定"
