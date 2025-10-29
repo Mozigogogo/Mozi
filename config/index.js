@@ -14,15 +14,15 @@ const APP_ENV =
 const ENV_CONFIG = {
   development: {
     API_BASE_URL: 'https://moziinnovations.com',  
-    WS_URL: 'wss://moziinnovations.com:8080/ws', // 后端已支持 WSS
+    WS_URL: 'wss://moziinnovations.com/ws', // 后端已支持 WSS
   },
   production: {
     API_BASE_URL: 'https://moziinnovations.com',  // 添加端口号
-    WS_URL: 'wss://moziinnovations.com:8080/ws', // 后端已支持 WSS
+    WS_URL: 'wss://moziinnovations.com/ws', // 后端已支持 WSS
   },
   test: {
     API_BASE_URL: 'https://moziinnovations.com',
-    WS_URL: 'wss://moziinnovations.com:8080/ws',
+    WS_URL: 'wss://moziinnovations.com/ws',
   },
 };
 
