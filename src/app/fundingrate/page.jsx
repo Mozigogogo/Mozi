@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Tabs, Picker, SpinLoading, Image } from 'antd-mobile';
+import { useRouter } from 'next/navigation';
+import { Tabs, Picker, Image } from 'antd-mobile';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import Layout from '../../components/Layout';
+import NavBar from '../../components/NavBar';
 import { Loading } from '../../components/Loading';
 import { handleOptions } from '../../utils/chartUtils';
 import styles from './page.module.less';
@@ -13,12 +15,15 @@ import styles from './page.module.less';
 import * as echarts from 'echarts';
 
 export default function FundingRate() {
+  const router = useRouter();
   const [activeKey, setActiveKey] = useState('currentRatio');
   const [coinList, setCoinList] = useState([]);
   const [cexList, setCexList] = useState([]);
   const [coinSelected, setCoinSelected] = useState('');
   const [cexSelected, setCexSelected] = useState('');
   const [showMore, setShowMore] = useState(false);
+  const [showChart, setShowChart] = useState(true);
+  const [hisLoading, setHisLoading] = useState(true);
   
   const [curFundData, setCurFundData] = useState({
     loading: true,
@@ -28,6 +33,7 @@ export default function FundingRate() {
 
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
+  const chartDataRef = useRef(null);
 
 
 
@@ -48,10 +54,10 @@ export default function FundingRate() {
     getData({ coin: val[0] });
   };
 
-  // 交易所选择变更
-  const handleExchangeChange = (val) => {
-    setCexSelected(val[0]);
-    getData({ exchange: val[0] });
+  // 交易所Tab点击
+  const handleExchangeTabClick = (exchange) => {
+    setCexSelected(exchange);
+    getData({ exchange });
   };
 
   // 初始化数据
@@ -98,11 +104,80 @@ export default function FundingRate() {
     fetchInitialData();
   }, []);
 
+  // 监听图表显示状态，重新设置数据（展开/收起后）
+  useEffect(() => {
+    if (showChart && chartInstance.current && chartDataRef.current) {
+      setTimeout(() => {
+        try {
+          const options = handleOptions(chartDataRef.current.data, chartDataRef.current.type);
+          if (chartDataRef.current.type === 'updownbarline') {
+            options.grid = {
+              left: '17%',
+              right: '17%',
+              top: '5%',
+              bottom: '25%',
+              containLabel: false
+            };
+            if (options.yAxis && options.yAxis[0]) {
+              options.yAxis[0].axisLabel = options.yAxis[0].axisLabel || {};
+              options.yAxis[0].axisLabel.formatter = (value) => {
+                const slot = chartDataRef.current.data.yAxisLeftSlot;
+                const formatted = slot ? String(slot).replace('{}', value) : value;
+                return String(formatted).replace(/\$/g, '');
+              };
+            }
+            if (options.yAxis && options.yAxis[1]) {
+              options.yAxis[1].axisLabel = options.yAxis[1].axisLabel || {};
+              options.yAxis[1].axisLabel.formatter = (value) => {
+                const slot = chartDataRef.current.data.yAxisRightSlot;
+                const formatted = slot ? String(slot).replace('{}', value) : value;
+                return String(formatted).replace(/\$/g, '');
+              };
+            }
+          }
+          chartInstance.current.setOption(options);
+        } catch (e) {
+          console.log('图表重设失败', e);
+        }
+      }, 50);
+    }
+  }, [showChart]);
+
   // 初始化图表
   useEffect(() => {
     if (chartRef.current && !chartInstance.current) {
       chartInstance.current = echarts.init(chartRef.current);
-      
+      // 如果已有数据，立即设置
+      if (chartDataRef.current) {
+        const options = handleOptions(chartDataRef.current.data, chartDataRef.current.type);
+        if (chartDataRef.current.type === 'updownbarline') {
+          options.grid = {
+            left: '17%',
+            right: '17%',
+            top: '5%',
+            bottom: '25%',
+            containLabel: false
+          };
+          if (options.yAxis && options.yAxis[0]) {
+            options.yAxis[0].axisLabel = options.yAxis[0].axisLabel || {};
+            options.yAxis[0].axisLabel.formatter = (value) => {
+              const slot = chartDataRef.current.data.yAxisLeftSlot;
+              const formatted = slot ? String(slot).replace('{}', value) : value;
+              return String(formatted).replace(/\$/g, '');
+            };
+          }
+          if (options.yAxis && options.yAxis[1]) {
+            options.yAxis[1].axisLabel = options.yAxis[1].axisLabel || {};
+            options.yAxis[1].axisLabel.formatter = (value) => {
+              const slot = chartDataRef.current.data.yAxisRightSlot;
+              const formatted = slot ? String(slot).replace('{}', value) : value;
+              return String(formatted).replace(/\$/g, '');
+            };
+          }
+        }
+        chartInstance.current.setOption(options);
+      }
+
       // 窗口大小变化时重新调整图表大小
       const handleResize = () => {
         if (chartInstance.current) {
@@ -165,6 +240,7 @@ export default function FundingRate() {
       });
 
       // 获取历史资金费率数据
+      setHisLoading(true);
       const frHisData = await request({
         url: Interface.FR_HIS,
         data: {
@@ -178,13 +254,37 @@ export default function FundingRate() {
 
       // 更新图表
       if (chartInstance.current && frHisData?.data) {
-        console.log('开始更新图表，数据结构:', frHisData.data);
-        const chartOptions = handleOptions(frHisData.data, 'updownbarline');
-        console.log('图表配置:', chartOptions);
-        chartInstance.current.setOption(chartOptions);
+        chartDataRef.current = { data: frHisData.data, type: 'updownbarline' };
+        const options = handleOptions(frHisData.data, 'updownbarline');
+        // 专用 grid 布局与轴格式
+        options.grid = {
+          left: '17%',
+          right: '17%',
+          top: '5%',
+          bottom: '25%',
+          containLabel: false
+        };
+        if (options.yAxis && options.yAxis[0]) {
+          options.yAxis[0].axisLabel = options.yAxis[0].axisLabel || {};
+          options.yAxis[0].axisLabel.formatter = (value) => {
+            const slot = frHisData.data.yAxisLeftSlot;
+            const formatted = slot ? String(slot).replace('{}', value) : value;
+            return String(formatted).replace(/\$/g, '');
+          };
+        }
+        if (options.yAxis && options.yAxis[1]) {
+          options.yAxis[1].axisLabel = options.yAxis[1].axisLabel || {};
+          options.yAxis[1].axisLabel.formatter = (value) => {
+            const slot = frHisData.data.yAxisRightSlot;
+            const formatted = slot ? String(slot).replace('{}', value) : value;
+            return String(formatted).replace(/\$/g, '');
+          };
+        }
+        chartInstance.current.setOption(options);
       } else {
         console.log('图表更新失败 - 图表实例:', !!chartInstance.current, '数据:', !!frHisData?.data);
       }
+      setHisLoading(false);
     } catch (error) {
       console.error('获取数据失败:', error);
       setCurFundData({
@@ -192,28 +292,37 @@ export default function FundingRate() {
         loading: false,
         close: true
       });
+      setHisLoading(false);
     }
   };
 
   // 切换到横屏图表
   const jumpToLandscape = () => {
-    // 这里可以实现横屏图表的跳转逻辑
-    alert('横屏图表功能开发中');
+    if (!chartDataRef.current) {
+      console.warn('没有图表数据');
+      return;
+    }
+    
+    try {
+      // 将图表数据转换为 JSON 字符串并编码
+      const dataStr = encodeURIComponent(JSON.stringify(chartDataRef.current));
+      // 跳转到横屏图表页面
+      router.push(`/landscapechart?data=${dataStr}`);
+    } catch (error) {
+      console.error('跳转横屏图表失败:', error);
+    }
   };
 
   return (
-    <Layout>
+    <>
+      <NavBar title="资金费率" className={styles.customNavBar} />
       <div className={styles.pcrBox}>
-        <Tabs activeKey={activeKey} onChange={handleTabChange}>
+        <Tabs className={styles.pcrTab} activeKey={activeKey} onChange={handleTabChange}>
           <Tabs.Tab title="当前费率" key="currentRatio" />
           <Tabs.Tab title="历史费率" key="historyRatio" />
         </Tabs>
-        
+        <div className={styles.currentRateTitle}>当前费率</div>
         <div className={styles.currentPCR}>
-          <div className={styles.header}>
-            <div>当前费率</div>
-          </div>
-            
           <div className={styles.currentPCRChart}>
             {curFundData.loading ? (
               <Loading />
@@ -279,65 +388,90 @@ export default function FundingRate() {
                 </div>
                 
                 {!showMore && (
-                  <div className={styles.showMoreBtn} onClick={() => setShowMore(true)}>
+                  <div
+                    className={styles.showMoreBtn}
+                    onClick={() => {
+                      setShowMore(true);
+                      setShowChart(false);
+                      setTimeout(() => setShowChart(true), 100);
+                    }}
+                  >
                     <div className={styles.more}>查看更多</div>
                     <span className={styles.caretDown}>▼</span>
+                  </div>
+                )}
+                {showMore && (
+                  <div
+                    className={styles.showMoreBtn}
+                    onClick={() => {
+                      setShowMore(false);
+                      setShowChart(false);
+                      setTimeout(() => setShowChart(true), 100);
+                    }}
+                  >
+                    <div className={styles.more}>收起</div>
+                    <span className={styles.caretDown}>▲</span>
                   </div>
                 )}
               </div>
             )}
           </div>
         </div>
-        
-        <div className={`${styles.currentPCR} ${styles.hisFR}`}>
-          <div className={styles.header}>
-            <div>历史费率</div>
-            <div className={styles.pickerList}>
-              <div className={styles.pickerItem}>
-                <div className={styles.pickerTitle}>币种</div>
-                <Picker
-                  columns={[coinList]}
-                  value={[coinSelected]}
-                  onChange={handleCoinChange}
-                >
-                  {(items) => {
-                    return (
-                      <div className={styles.pickerSelect}>
-                        <div className={styles.selectIcon}>{coinSelected}</div>
-                        <span className={styles.caretDown}>▼</span>
-                      </div>
-                    );
-                  }}
-                </Picker>
-              </div>
-              <div className={styles.pickerItem}>
-                <div className={styles.pickerTitle}>交易所</div>
-                <Picker
-                  columns={[cexList]}
-                  value={[cexSelected]}
-                  onChange={handleExchangeChange}
-                >
-                  {(items) => {
-                    return (
-                      <div className={styles.pickerSelect}>
-                        <div className={styles.selectIcon}>{cexSelected}</div>
-                        <span className={styles.caretDown}>▼</span>
-                      </div>
-                    );
-                  }}
-                </Picker>
-              </div>
-            </div>
-          </div>
-            
-          <div className={styles.currentChart}>
-            <div className={styles.chartArrawsalt} onClick={jumpToLandscape}>
-              <span className={styles.arrowIcon}>↔️</span>
-            </div>
-            <div ref={chartRef} className={styles.chart}></div>
+        <div className={styles.currentRateTitle}>历史费率</div>
+        {/* 历史费率选择器（仅币种） */}
+        <div className={styles.pickerList}>
+          <div className={`${styles.pickerItem} ${styles.coinPickerWhite}`}>
+            <div className={styles.pickerTitle}>币种</div>
+            <Picker 
+              columns={[coinList]} 
+              value={[coinSelected]} 
+              onConfirm={handleCoinChange}
+              onSelect={(val) => {
+                console.log('选中币种:', val);
+              }}
+            >
+              {(items, actions) => {
+                return (
+                  <div className={styles.pickerSelect} onClick={() => {
+                    console.log('点击选择器');
+                    actions.open();
+                  }}>
+                    <div className={styles.selectIcon}>{coinSelected || '请选择'}</div>
+                    <span className={styles.caretDown}>▼</span>
+                  </div>
+                );
+              }}
+            </Picker>
           </div>
         </div>
+
+        {/* 交易所Tab切换 */}
+        <div className={styles.exchangeTabs}>
+          {cexList.map((exchange, index) => (
+            <div
+              key={index}
+              className={`${styles.exchangeTab} ${cexSelected === exchange ? styles.active : ''}`}
+              onClick={() => handleExchangeTabClick(exchange)}
+            >
+              {exchange}
+            </div>
+          ))}
+        </div>
+
+        <div className={`${styles.currentPCR} ${styles.hisFR}`}>
+          {showChart && (
+            <div className={styles.currentChart}>
+              {hisLoading && (
+                <div className={styles.chartLoading}>
+                  <div className={styles.spinner} />
+                </div>
+              )}
+              <div className={styles.chartArrawsalt} onClick={jumpToLandscape}></div>
+              <div ref={chartRef} className={styles.chart}></div>
+            </div>
+          )}
+        </div>
       </div>
-    </Layout>
+    </>
   );
 }

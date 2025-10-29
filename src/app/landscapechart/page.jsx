@@ -36,6 +36,16 @@ const LandscapeChart = () => {
       // 设置图表配置
       if (chartData?.data && chartData?.type) {
         const option = handleOptions(chartData.data, chartData.type, chartData.msg);
+        
+        // 针对横屏页面，调整 dataZoom 位置
+        if (option.dataZoom && Array.isArray(option.dataZoom)) {
+          option.dataZoom.forEach(zoom => {
+            if (zoom.type === 'slider') {
+              zoom.bottom = '15%';  // 横屏页面的 dataZoom 位置
+            }
+          });
+        }
+        
         chart.setOption(option);
       }
 
