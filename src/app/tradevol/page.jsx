@@ -4,9 +4,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Picker, Toast } from 'antd-mobile';
 import * as echarts from 'echarts';
 import Layout from '@/components/Layout';
+import NavBar from '@/components/NavBar';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 import { handleOptions } from '@/utils/chartUtils';
+import { DownOutline } from 'antd-mobile-icons';
 import styles from './page.module.less';
 
 const TradeVol = () => {
@@ -14,7 +16,8 @@ const TradeVol = () => {
   const [cexSelected, setCexSelected] = useState('');
   const [coinArr, setCoinArr] = useState([]);
   const [coinSelected, setCoinSelected] = useState('');
-  const [activeKey, setActiveKey] = useState('currentRatio');
+  const [curLoading, setCurLoading] = useState(true);
+  const [hisLoading, setHisLoading] = useState(true);
   
   const chartRef = useRef(null);
   const chartRef1 = useRef(null);
@@ -29,7 +32,11 @@ const TradeVol = () => {
   const initChart = () => {
     if (!chartContainerRef.current) return;
     
-    const chart = echarts.init(chartContainerRef.current);
+    // 强制指定容器高度，避免 ECharts 使用默认的 200px
+    const chart = echarts.init(chartContainerRef.current, null, {
+      width: chartContainerRef.current.offsetWidth,
+      height: 300 // 与 CSS 中设置的高度一致
+    });
     chartRef.current = chart;
     
     // 监听窗口大小变化
@@ -48,7 +55,13 @@ const TradeVol = () => {
   const initChart1 = () => {
     if (!chartContainerRef1.current) return;
     
+    // 强制指定容器高度，避免 ECharts 使用默认的 200px
     const chart = echarts.init(chartContainerRef1.current);
+
+    // const chart = echarts.init(chartContainerRef1.current, null, {
+    //   width: chartContainerRef1.current.offsetWidth,
+    //   height: 300 // 与 CSS 中设置的高度一致
+    // });
     chartRef1.current = chart;
     
     // 监听窗口大小变化
@@ -108,6 +121,9 @@ const TradeVol = () => {
 
   // 获取数据
   const getData = async ({ coin = coinSelected, exchange = cexSelected }) => {
+    setCurLoading(true);
+    setHisLoading(true);
+    
     try {
       // 获取当前成交额数据
       const traCurData = await request({
@@ -121,7 +137,7 @@ const TradeVol = () => {
         return {
           ...item,
           itemStyle: {
-            color: item.state === 1 ? '#02c076' : '#ff3333'
+            color: item.state === 1 ? '#11B787' : '#FA5F5F'
           }
         };
       });
@@ -135,6 +151,7 @@ const TradeVol = () => {
       // 更新当前成交额图表
       if (chartRef.current && traTmpData) {
         chartRef.current.setOption(handleOptions(traTmpData, 'treemap', '成交量'));
+        setCurLoading(false);
       }
 
       // 获取历史成交额数据
@@ -154,25 +171,28 @@ const TradeVol = () => {
       // 更新历史成交额图表
       if (chartRef1.current && traHisData.data) {
         chartRef1.current.setOption(handleOptions(traHisData.data, 'linebar', '成交额'));
+        setHisLoading(false);
       }
     } catch (error) {
       console.error('获取数据失败:', error);
       Toast.show('数据获取失败');
+      setCurLoading(false);
+      setHisLoading(false);
     }
   };
 
   // 币种变化
-  const onCoinChange = (value) => {
-    const selectedCoin = coinArr[value[0]];
-    setCoinSelected(selectedCoin);
-    getData({ coin: selectedCoin });
+  const onCoinChange = (val) => {
+    console.log('币种变化:', val);
+    setCoinSelected(val[0]);
+    getData({ coin: val[0] });
   };
 
-  // 交易所变化
-  const onExchangeChange = (value) => {
-    const selectedCex = cexArr[value[0]];
-    setCexSelected(selectedCex);
-    getData({ exchange: selectedCex });
+  // 交易所Tab点击
+  const onExchangeTabClick = (exchange) => {
+    if (exchange === cexSelected) return;
+    setCexSelected(exchange);
+    getData({ exchange });
   };
 
   // 跳转到横屏图表
@@ -184,62 +204,74 @@ const TradeVol = () => {
   };
 
   return (
-    <Layout>
+    <>
+      <NavBar title="成交额" className={styles.customNavBar} />
       <div className={styles.pcrBox}>
+        {/* 币种选择器 */}
         <div className={styles.pickerList}>
-          <div className={styles.pickerItem}>
+          <div className={`${styles.pickerItem} ${styles.coinPickerWhite}`}>
             <div className={styles.pickerTitle}>币种</div>
             <Picker
-              columns={[coinArr.map((item, index) => ({ label: item, value: index }))]}
-              value={[coinArr.indexOf(coinSelected)]}
+              columns={[coinArr]}
+              value={[coinSelected]}
               onConfirm={onCoinChange}
             >
-              {(items) => (
-                <div className={styles.pickerSelect}>
+              {(items, actions) => (
+                <div className={styles.pickerSelect} onClick={() => actions?.open()}>
                   <span className={styles.selectIcon}>{coinSelected}</span>
-                  <span className={styles.arrow}>▼</span>
-                </div>
-              )}
-            </Picker>
-          </div>
-          <div className={styles.pickerItem}>
-            <div className={styles.pickerTitle}>交易所</div>
-            <Picker
-              columns={[cexArr.map((item, index) => ({ label: item, value: index }))]}
-              value={[cexArr.indexOf(cexSelected)]}
-              onConfirm={onExchangeChange}
-            >
-              {(items) => (
-                <div className={styles.pickerSelect}>
-                  <span className={styles.selectIcon}>{cexSelected}</span>
-                  <span className={styles.arrow}>▼</span>
+                  <DownOutline className={styles.arrowIcon} />
                 </div>
               )}
             </Picker>
           </div>
         </div>
 
+        {/* 交易所Tab切换 */}
+        <div className={styles.exchangeTabs}>
+          {cexArr.map((exchange, index) => (
+            <div 
+              key={index} 
+              className={`${styles.exchangeTab} ${cexSelected === exchange ? styles.active : ''}`}
+              onClick={() => onExchangeTabClick(exchange)}
+            >
+              {exchange}
+            </div>
+          ))}
+        </div>
+
+        {/* 当前成交额 */}
+        <div className={styles.sectionHeader}>当前成交额</div>
         <div className={styles.currentPCR}>
-          <div className={styles.header}>当前成交额</div>
-          <div className={styles.currentPCRChart}>
+          <div className={`${styles.currentPCRChart} ${styles.zoomBottomRight}`}>
+            {curLoading && (
+              <div className={styles.chartLoading}>
+                <div className={styles.spinner} />
+              </div>
+            )}
             <div className={styles.chartArrawsalt} onClick={() => jump2Land('cur')}>
-              <span className={styles.fullscreenIcon}>⛶</span>
+              <span className={styles.fullscreenIcon}>⤢</span>
             </div>
             <div ref={chartContainerRef} className={styles.chart}></div>
           </div>
         </div>
 
+        {/* 历史成交额 */}
+        <div className={styles.sectionHeader}>历史成交额</div>
         <div className={styles.currentPCR}>
-          <div className={styles.header}>历史成交额</div>
-          <div className={styles.currentPCRChart}>
+          <div className={`${styles.currentPCRChart} ${styles.zoomBottomRight}`}>
+            {hisLoading && (
+              <div className={styles.chartLoading}>
+                <div className={styles.spinner} />
+              </div>
+            )}
             <div className={styles.chartArrawsalt} onClick={() => jump2Land('his')}>
-              <span className={styles.fullscreenIcon}>⛶</span>
+              <span className={styles.fullscreenIcon}>⤢</span>
             </div>
             <div ref={chartContainerRef1} className={styles.chart}></div>
           </div>
         </div>
       </div>
-    </Layout>
+    </>
   );
 };
 

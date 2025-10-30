@@ -84,7 +84,7 @@ export default function MarketDistribution({ title = '涨跌分布', showUpdateT
         const now = new Date();
         const updateTime = `${now.getMonth() + 1}.${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} 更新`;
         
-        setDistributionData({
+        setDistributionData(prev => ({
           updateTime,
           chartData: [
             { range: '>10%', value: gt10PlusUp, type: 'up' },
@@ -104,8 +104,8 @@ export default function MarketDistribution({ title = '涨跌分布', showUpdateT
             neutral: totalNeutral,
             down: totalDown
           },
-          btcMarketShare: distributionData.btcMarketShare // 保持原有的BTC市场占有率数据
-        });
+          btcMarketShare: prev.btcMarketShare // 保持原有的BTC市场占有率数据（使用最新的state）
+        }));
       }
     } catch (error) {
       console.error('获取涨跌分布数据失败:', error);
@@ -144,17 +144,22 @@ export default function MarketDistribution({ title = '涨跌分布', showUpdateT
       if (response?.data) {
         const { btcDominanceFmt, btcDominanceChangeFmt } = response.data;
         
-        // 更新 BTC 市场占有率数据
-        setDistributionData(prev => ({
-          ...prev,
-          btcMarketShare: {
-            percentage: btcDominanceFmt || '0%',
-            change: btcDominanceChangeFmt || '0%'
-          }
-        }));
+        // 只有当数据有效时才更新（避免设置为 '0%'）
+        if (btcDominanceFmt) {
+          setDistributionData(prev => ({
+            ...prev,
+            btcMarketShare: {
+              percentage: btcDominanceFmt,
+              change: btcDominanceChangeFmt || prev.btcMarketShare.change
+            }
+          }));
+          console.log('✅ 更新BTC市场占有率:', btcDominanceFmt, '变化:', btcDominanceChangeFmt);
+        } else {
+          console.log('⚠️ BTC市场占有率数据为空，保持旧值:', response.data);
+        }
       }
     } catch (error) {
-      console.error('获取市场聚合数据失败:', error);
+      console.error('❌ 获取市场聚合数据失败:', error);
     }
   };
 

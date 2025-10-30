@@ -50,7 +50,25 @@ const KlineChart = ({ data, activeKey = 'hour', onActiveChange }) => {
     const downColor = '#ff3333'; // 阴线颜色
     const downBorderColor = '#8A0000'; // 阴线边框颜色
 
+    const dataLength = processedData.values.length;
+    
+    // 根据数据量动态调整显示范围
+    let startPercent = 0;
+    let endPercent = 100;
+    
+    if (dataLength > 50) {
+      // 数据多时，默认显示最后30%的数据
+      startPercent = 70;
+      endPercent = 100;
+    } else if (dataLength > 20) {
+      // 中等数据量，显示最后50%
+      startPercent = 50;
+      endPercent = 100;
+    }
+    // 数据少时（<20条），显示全部
+
     return {
+      backgroundColor: 'transparent',
       legend: {
         type: 'scroll',
         data: ['K线', 'MA5', 'MA10', 'MA20', 'MA30'],
@@ -70,10 +88,10 @@ const KlineChart = ({ data, activeKey = 'hour', onActiveChange }) => {
         axisPointer: {
           type: 'cross'
         },
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        borderColor: '#333',
+        backgroundColor: 'rgba(245, 245, 245, 0.95)',
+        borderColor: '#ddd',
         textStyle: {
-          color: '#fff'
+          color: '#333'
         }
       },
       animation: false,
@@ -82,29 +100,35 @@ const KlineChart = ({ data, activeKey = 'hour', onActiveChange }) => {
         right: '4%',
         bottom: '15%',
         top: '10%',
-        containLabel: true
+        containLabel: true,
+        backgroundColor: 'transparent',
+        borderColor: 'transparent'
       },
       xAxis: {
         type: 'category',
         data: processedData.categoryData,
-        boundaryGap: false,
+        boundaryGap: true,  // 改为 true，让每根K线两侧有间距
         axisLine: { 
           onZero: false,
           lineStyle: { color: '#ddd' }
         },
         splitLine: { show: false },
-        min: 'dataMin',
-        max: 'dataMax',
         axisLabel: {
-          color: '#666'
+          color: '#666',
+          rotate: 0,
+          interval: 'auto'
         }
       },
       yAxis: {
         scale: true,
         splitArea: {
+          show: false
+        },
+        splitLine: {
           show: true,
-          areaStyle: {
-            color: [['rgba(250,250,250,0.1)', 'rgba(200,200,200,0.1)']]
+          lineStyle: {
+            color: '#f0f0f0',
+            type: 'solid'
           }
         },
         axisLine: {
@@ -117,19 +141,21 @@ const KlineChart = ({ data, activeKey = 'hour', onActiveChange }) => {
       dataZoom: [
         {
           type: 'inside',
-          start: 50,
-          end: 100
+          start: startPercent,
+          end: endPercent,
+          minValueSpan: 5  // 最少显示5个数据点
         },
         {
           show: true,
           type: 'slider',
-          start: 70,
-          end: 100,
+          start: startPercent,
+          end: endPercent,
           bottom: '5%',
           height: 20,
           backgroundColor: '#f5f5f5',
           fillerColor: 'rgba(2, 192, 118, 0.2)',
-          borderColor: '#ddd'
+          borderColor: '#ddd',
+          minValueSpan: 5  // 最少显示5个数据点
         }
       ],
       series: [
@@ -137,35 +163,12 @@ const KlineChart = ({ data, activeKey = 'hour', onActiveChange }) => {
           name: 'K线',
           type: 'candlestick',
           data: processedData.values,
+          barWidth: '60%',  // K线宽度占60%
           itemStyle: {
             color: upColor,
             color0: downColor,
             borderColor: upBorderColor,
             borderColor0: downBorderColor
-          },
-          markPoint: {
-            label: {
-              formatter: function (param) {
-                return param != null ? Math.round(param.value) + '' : '';
-              }
-            },
-            data: [
-              {
-                name: 'highest value',
-                type: 'max',
-                valueDim: 'highest'
-              },
-              {
-                name: 'lowest value',
-                type: 'min',
-                valueDim: 'lowest'
-              }
-            ],
-            tooltip: {
-              formatter: function (param) {
-                return param.name + '<br>' + (param.data.coord || '');
-              }
-            }
           }
         },
         {
@@ -219,7 +222,10 @@ const KlineChart = ({ data, activeKey = 'hour', onActiveChange }) => {
   // 初始化图表
   useEffect(() => {
     if (chartRef.current && !chartInstance.current) {
-      chartInstance.current = echarts.init(chartRef.current);
+      chartInstance.current = echarts.init(chartRef.current, null, {
+        renderer: 'canvas',
+        useDirtyRect: false
+      });
       
       // 监听窗口大小变化
       const handleResize = () => {
@@ -243,9 +249,9 @@ const KlineChart = ({ data, activeKey = 'hour', onActiveChange }) => {
   // 更新图表数据
   useEffect(() => {
     if (chartInstance.current && data) {
-      const processedData = processKlineData(data);
+      console.log('📊 ECharts 接收数据:', data);
       const options = getChartOptions(data);
-      console.log('k线配置', options);
+      console.log('📊 K线数量:', data.values?.length);
       chartInstance.current.setOption(options, true);
     }
   }, [data]);
@@ -275,6 +281,11 @@ const KlineChart = ({ data, activeKey = 'hour', onActiveChange }) => {
       
       {/* 图表容器 */}
       <div className={styles.chartContainer}>
+        {!data && (
+          <div className={styles.loading}>
+            <div>加载中...</div>
+          </div>
+        )}
         <div ref={chartRef} className={styles.chart}></div>
       </div>
     </div>

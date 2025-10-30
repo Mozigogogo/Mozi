@@ -353,3 +353,50 @@
     background-color: rgba(255, 0, 0, 0.2);
   }
 }
+
+/* 悬浮机器人按钮 */
+.floatRobotBtn {
+  position: fixed;
+  right: 20px;
+  bottom: 150px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 999;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: none;
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+  
+  .robotIcon {
+    width: 56px;
+    height: 56px;
+    display: block;
+  }
+}
+
+@media (max-width: 768px) {
+  .floatRobotBtn {
+    right: 16px;
+    bottom: 120px;
+    width: 50px;
+    height: 50px;
+    
+    .robotIcon {
+      width: 50px;
+      height: 50px;
+    }
+  }
+}

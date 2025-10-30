@@ -1,167 +1,333 @@
-/* 看跌看涨比页面样式 */
+/* 多空比页面样式 */
 .pcrBox {
   background-color: #efefef;
   box-sizing: border-box;
   min-height: 100vh;
+  padding-top: 50px; /* NavBar高度 */
   padding-bottom: 20px;
+
+  /* 单独的币种选择白色背景类，不影响其他区域 */
+  .coinPickerWhite {
+    background: #fff !important;
+    border-radius: 25px;
+    border: 1px solid #e9ecef;
+  }
 }
 
 /* 选择器列表 */
 .pickerList {
   display: flex;
-  justify-content: space-between;
-  padding: 20px;
+  justify-content: center;
+  align-items: center;
+  padding: 15px 10px 0 10px;
+  margin-bottom: 0;
+
+  .pickerItem {
+    background: #f8f9fa;
+    border-radius: 12.5px;
+    border: 1px solid #e9ecef;
+    width: 100%;
+    position: relative;
+
+    .pickerTitle {
+      font-weight: 400;
+      font-size: 14px;
+      color: #81858C;
+      margin-right: 0;
+      position: absolute;
+      left: 12.5px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .pickerSelect {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      color: #333;
+      font-weight: 600;
+      font-size: 14px;
+      padding: 7.5px 12.5px;
+      min-height: 30px;
+      box-sizing: border-box;
+      cursor: pointer;
+      transition: all 0.3s ease;
+
+      .selectIcon {
+        margin-right: 4px;
+      }
+
+      .arrow {
+        font-size: 10px;
+        color: #666;
+        transition: transform 0.3s ease;
+      }
+
+      &:hover {
+        background: rgba(0, 0, 0, 0.02);
+      }
+
+      &:active .arrow {
+        transform: rotate(180deg);
+      }
+    }
+  }
+}
+
+/* 覆盖默认灰底：仅当同时带有 coinPickerWhite 类时才渲染为白底 */
+.pickerList .pickerItem.coinPickerWhite {
   background: #fff;
-  margin-bottom: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e9ecef;
 }
 
-.pickerItem {
+/* 类型Tab切换样式 */
+.ratioTabs {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  background: #EEF0F3;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+
+  /* 隐藏滚动条样式 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* 兼容火狐浏览器 */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  .ratioTab {
+    flex: 0 0 auto;
+    min-width: 60px;
+    padding: 10px 7.5px;
+    font-size: 12px;
+    color: #999;
+    background: transparent;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    white-space: nowrap;
+
+    &.active {
+      color: #11B787;
+      font-weight: bold;
+
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 18px;
+        height: 4px;
+        background-color: #11B787;
+        border-radius: 2px;
+      }
+    }
+
+    &:not(.active):hover {
+      color: #666;
+    }
+  }
 }
 
-.pickerTitle {
-  font-weight: bold;
+/* 外部标题样式 */
+.sectionHeader {
+  font-weight: 600;
+  font-size: 16px;
   color: #333;
-  font-size: 14px;
-}
-
-.pickerSelect {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: #f5f5f5;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  min-width: 100px;
-  justify-content: space-between;
-}
-
-.pickerSelect:hover {
-  background: #e8e8e8;
-}
-
-.selectIcon {
-  font-size: 14px;
-  color: #333;
-}
-
-.arrow {
-  font-size: 12px;
-  color: #666;
-  transition: transform 0.3s ease;
-}
-
-.pickerSelect:active .arrow {
-  transform: rotate(180deg);
+  padding: 10px 16px 5px 16px;
+  margin: 0;
+  background: transparent;
 }
 
 /* 当前多空比区域 */
 .currentPCR {
-  padding: 20px;
+  padding: 10px 10px 0 10px;
   background-color: #fff;
-  margin-bottom: 20px;
+  margin: 0 10px 10px 10px;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-}
+  // margin-bottom: 8px;
 
-.headerTitle {
-  font-weight: bold;
-  font-size: 16px;
-  color: #333;
+  .pickerSelect {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 80px;
+    justify-content: space-between;
+
+
+    // &:hover {
+    //   background: #e9ecef;
+    // }
+
+    // &:active {
+    //   background: #dee2e6;
+    //   transform: scale(0.98);
+    // }
+
+    .selectIcon {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .arrow {
+      font-size: 10px;
+      color: #666;
+    }
+  }
 }
 
 /* 图表容器 */
 .currentPCRChart {
   width: 100%;
-  height: 400px;
-  padding: 0 20px;
+  height: 250px;
+  padding: 0 10px;
   position: relative;
-  margin-top: 16px;
-}
-
-.chartArrawsalt {
-  position: absolute;
-  right: 30px;
-  bottom: 25px;
-  background-color: #d5d5d5;
-  border-radius: 50%;
-  padding: 8px;
   box-sizing: border-box;
-  z-index: 100;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
+
+  .chartLoading {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 2px solid rgba(17, 183, 135, 0.3);
+      border-top-color: #11B787;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .chartArrawsalt {
+    position: absolute;
+    right: 10px;
+    bottom: 5px;
+    background-color: #d5d5d5;
+    border-radius: 50%;
+    padding: 6px;
+    box-sizing: border-box;
+    z-index: 100;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+      background-color: #bbb;
+      transform: scale(1.1);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+
+    .fullscreenIcon {
+      font-size: 15px;
+      color: #fff;
+      line-height: 1;
+    }
+  }
+
+  .chart {
+    height: 100%;
+    width: 100%;
+  }
 }
 
-.chartArrawsalt:hover {
-  background-color: #bbb;
-  transform: scale(1.1);
+/* 更紧凑的版本，去掉额外留白，同时确保不截断 */
+.currentPCRChart.compact {
+  padding: 0 6px;
+  height: auto;
+  min-height: 75px;
+
+  .chart {
+    height: auto;
+  }
 }
 
-.fullscreenIcon {
-  font-size: 16px;
-  color: #fff;
-}
-
-.chart {
-  height: 100%;
-  width: 100%;
+/* 空数据提示 */
+.emptyData {
+  text-align: center;
+  color: #999;
+  padding: 20px;
+  font-size: 12px;
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
   .pickerList {
-    flex-direction: column;
-    gap: 16px;
-    padding: 16px;
+    padding: 20px 10px 0 10px;
   }
-  
-  .pickerItem {
-    justify-content: space-between;
-    width: 100%;
-  }
-  
-  .pickerSelect {
-    min-width: 120px;
-  }
-  
-  .currentPCR {
-    padding: 16px;
-    margin-bottom: 16px;
-  }
-  
-  .currentPCRChart {
-    height: 300px;
+
+  .ratioTabs {
     padding: 0 10px;
+    margin-bottom: 5px;
+
+    .ratioTab {
+      min-width: 80px;
+      font-size: 11px;
+      
+    }
   }
-  
-  .chartArrawsalt {
-    right: 20px;
-    bottom: 20px;
-    width: 32px;
-    height: 32px;
-    padding: 6px;
-  }
-  
-  .fullscreenIcon {
+
+  .sectionHeader {
     font-size: 14px;
+    padding-bottom: 8px;
+  }
+
+  .currentPCR {
+    padding: 10px;
+    border-radius: 16px;
+  }
+
+  .currentPCRChart {
+    height: 280px;
+
+    .chartArrawsalt {
+      right: 0px;
+      bottom: 8px;
+      padding: 8px;
+
+      .fullscreenIcon {
+        font-size: 16px;
+      }
+    }
+  }
+
+  .currentPCRChart.compact {
+    padding: 0 8px;
   }
 }
 
@@ -169,70 +335,99 @@
 @media (prefers-color-scheme: dark) {
   .pcrBox {
     background-color: #1a1a1a;
+
+    .coinPickerWhite {
+      background: #2a2a2a !important;
+      border-color: #3a3a3a;
+    }
   }
-  
-  .pickerList,
+
+  .pickerList {
+    .pickerItem {
+      background: #2a2a2a;
+      border-color: #3a3a3a;
+
+      .pickerTitle {
+        color: #999;
+      }
+
+      .pickerSelect {
+        color: #fff;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.05);
+        }
+
+        .selectIcon {
+          color: #fff;
+        }
+
+        .arrow {
+          color: #ccc;
+        }
+      }
+    }
+  }
+
+  .ratioTabs {
+    background: #1a1a1a;
+
+    .ratioTab {
+      color: #666;
+
+      &.active {
+        color: #11B787;
+      }
+
+      &:not(.active):hover {
+        color: #999;
+      }
+    }
+  }
+
+  .sectionHeader {
+    color: #fff;
+  }
+
   .currentPCR {
     background-color: #2a2a2a;
-    color: #fff;
   }
-  
-  .pickerTitle,
-  .headerTitle,
-  .selectIcon {
-    color: #fff;
-  }
-  
-  .pickerSelect {
-    background: #3a3a3a;
-  }
-  
-  .pickerSelect:hover {
-    background: #4a4a4a;
-  }
-  
-  .arrow {
-    color: #ccc;
-  }
-  
-  .chartArrawsalt {
-    background-color: #555;
-  }
-  
-  .chartArrawsalt:hover {
-    background-color: #666;
-  }
-}
 
-/* 加载状态 */
-.loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 200px;
-  color: #666;
-}
+  .header {
+    .pickerSelect {
+      background: #3a3a3a;
+      border-color: #4a4a4a;
 
-/* 错误状态 */
-.error {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 200px;
-  color: #ff4d4f;
-  flex-direction: column;
-  gap: 8px;
-}
+      &:hover {
+        background: #4a4a4a;
+      }
 
-.error button {
-  padding: 8px 16px;
-  background: #1890ff;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
+      &:active {
+        background: #555;
+      }
 
-.error button:hover {
-  background: #40a9ff;
+      .selectIcon {
+        color: #fff;
+      }
+
+      .arrow {
+        color: #ccc;
+      }
+    }
+  }
+
+  .currentPCRChart {
+    .chartLoading {
+      background: rgba(0, 0, 0, 0.7);
+    }
+
+    .chartArrawsalt {
+      background-color: #555;
+
+      &:hover {
+        background-color: #666;
+      }
+    }
+  }
+
 }

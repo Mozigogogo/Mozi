@@ -10,12 +10,29 @@ export const handleOptions = (data, type, msg) => {
         }
       },
       legend: {
-        selectedMode: false
+        selectedMode: false,
+        data: ['空', '多', '多空比'],
+        top: '3%',
+        left: 'center',
+        itemWidth: 20,
+        itemHeight: 12,
+        itemGap: 10,
+        textStyle: {
+          fontSize: 11,
+          color: '#666'
+        }
+      },
+      grid: {
+        left: '10%',
+        right: '10%',
+        top: '15%',
+        bottom: '20%',
+        containLabel: false
       },
       yAxis: [{
-        type: 'value',
+        type: 'value'
       }, {
-        type: 'value',
+        type: 'value'
       }],
       xAxis: {
         type: 'category',
@@ -32,7 +49,7 @@ export const handleOptions = (data, type, msg) => {
           type: 'slider',
           start: 80,
           end: 100,
-          bottom: '5%',
+          top: '87%',
           height: 20
         }
       ],
@@ -41,14 +58,14 @@ export const handleOptions = (data, type, msg) => {
           name: '空',
           type: 'bar',
           stack: 'total',
-          color: '#ff3333',
+          color: '#FA5F5F',
           data: data.shortData
         },
         {
           name: '多',
           type: 'bar',
           stack: 'total',
-          color: '#02c076',
+          color: '#11B787',
           emphasis: {
             focus: 'series'
           },
@@ -58,7 +75,13 @@ export const handleOptions = (data, type, msg) => {
           name: '多空比',
           type: 'line',
           yAxisIndex: 1,
-          data: data.longShortData
+          data: data.longShortData,
+          lineStyle: {
+            color: '#FF9A37'
+          },
+          itemStyle: {
+            color: '#FF9A37'
+          }
         }
       ]
     };
@@ -181,7 +204,7 @@ export const handleOptions = (data, type, msg) => {
   }
 
   if (type === 'treemap') {
-    return {
+    const baseConfig = {
       series: [
         {
           type: 'treemap',
@@ -230,62 +253,128 @@ export const handleOptions = (data, type, msg) => {
         },
         confine: true
       },
+    };
+    
+    // 如果是成交量或持仓量界面，添加特殊配置让图表占满
+    if (msg === '成交量' || msg === '持仓量') {
+      baseConfig.series[0] = {
+        ...baseConfig.series[0],
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100%',
+        height: '100%'
+      };
     }
+    
+    return baseConfig;
   }
 
   if (type === 'linebar') {
-    return {
+    console.log('📊 linebar配置 - 输入数据:', data);
+    console.log('📊 linebar配置 - msg:', msg);
+    console.log('📊 xAxisData:', data?.xAxisData);
+    console.log('📊 barData:', data?.barData);
+    console.log('📊 lineData:', data?.lineData);
+    
+    const baseConfig = {
+      grid: {
+        left: '15%',
+        right: '15%',
+        top: '12%',
+        bottom: '25%',
+        containLabel: false
+      },
       tooltip: {
         trigger: 'axis',
         formatter: function (info) {
-          console.log('info', info);
-          let valueList = info[0].data.toolTips;
-          let tips = '';
-          valueList.forEach((item) => {
-            tips += `
-              ${item.exchange}${item.value}
-            `
-          });
-          return tips;
+          if (!info || info.length === 0) return '';
+          console.log('tooltip info', info);
+          try {
+            if (info[0]?.data?.toolTips) {
+              let valueList = info[0].data.toolTips;
+              let tips = '';
+              valueList.forEach((item) => {
+                tips += `${item.exchange}: ${item.value}<br/>`;
+              });
+              return tips;
+            }
+          } catch (e) {
+            console.error('tooltip格式化失败:', e);
+          }
+          return `${info[0].name}: ${info[0].value}`;
         }
       },
       legend: {
+        show: true,
+        top: '0%',
+        data: [msg, '价格'],
         selectedMode: false
       },
       xAxis: [
         {
           type: 'category',
-          data: data.xAxisData,
+          data: data?.xAxisData || [],
           axisPointer: {
             type: 'line'
+          },
+          axisLabel: {
+            rotate: 45,
+            fontSize: 10
           }
         }
       ],
       yAxis: [
         {
           type: 'value',
+          name: msg,
+          position: 'left',
           axisLabel: {
-            formatter: (value) => data.yAxisLeftSlot.replace('{}', value) ?? value
+            formatter: (value) => {
+              if (data?.yAxisLeftSlot) {
+                return data.yAxisLeftSlot.replace('{}', value);
+              }
+              return value;
+            }
           }
         },
         {
           type: 'value',
+          name: '价格',
+          position: 'right',
           axisLabel: {
-            formatter: (value) => data.yAxisRightSlot.replace('{}', value) ?? value
+            formatter: (value) => {
+              if (data?.yAxisRightSlot) {
+                return data.yAxisRightSlot.replace('{}', value);
+              }
+              return value;
+            }
           }
         }
       ],
       series: [
         {
-          name: msg,
+          name: msg || '持仓',
           type: 'bar',
-          data: data.barData
+          data: data?.barData || [],
+          itemStyle: {
+            color: '#11B787'
+          },
+          barWidth: '60%'
         },
         {
           name: '价格',
           type: 'line',
           yAxisIndex: 1,
-          data: data.lineData
+          data: data?.lineData || [],
+          lineStyle: {
+            color: '#FA5F5F',
+            width: 2
+          },
+          itemStyle: {
+            color: '#FA5F5F'
+          }
         }
       ],
       dataZoom: [
@@ -304,10 +393,20 @@ export const handleOptions = (data, type, msg) => {
         }
       ],
     };
+    
+    console.log('✅ linebar配置生成完成:', baseConfig);
+    return baseConfig;
   }
 
   if (type === 'updownbarline') {
     return {
+      grid: {
+        left: '10%',
+        right: '10%',
+        top: '10%',
+        bottom: '25%',
+        containLabel: false
+      },
       tooltip: {
         trigger: 'axis',
         formatter: function (info) {
@@ -331,6 +430,9 @@ export const handleOptions = (data, type, msg) => {
           data: data.xAxisData,
           axisPointer: {
             type: 'line'
+          },
+          axisLabel: {
+            margin: 12  // x轴标签与轴线的距离
           }
         }
       ],
@@ -367,7 +469,14 @@ export const handleOptions = (data, type, msg) => {
           // name: '价格',
           type: 'line',
           yAxisIndex: 1,
-          data: data.coinFee
+          data: data.coinFee,
+          lineStyle: {
+            color: '#FF9A37',
+            width: 2
+          },
+          itemStyle: {
+            color: '#FF9A37'
+          }
         }
       ],
       dataZoom: [
@@ -382,8 +491,10 @@ export const handleOptions = (data, type, msg) => {
           type: 'slider',
           start: 80,
           end: 100,
-          top: '87%',
-          height: 20
+          bottom: '8%',  // 从底部往上8%的位置
+          height: 20,
+          showDataShadow: false,
+          showDetail: false
         }
       ],
     };
