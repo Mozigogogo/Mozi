@@ -22,15 +22,21 @@
 }
 
 .gridListItem {
-  padding: 4px 0; // 8px / 2
-  border-bottom: none;
+  padding: 8px 0; // 与微信小程序保持一致
   cursor: pointer;
   transition: background-color 0.2s;
-  margin-bottom: 5px; // 10px / 2
+}
+
+.gridListItem:last-child {
+  border-bottom: none;
 }
 
 .gridListItem:hover {
   background-color: #f8f9fa;
+}
+
+.gridListItem:active {
+  background-color: #f0f0f0;
 }
 
 .gridContent {
@@ -132,7 +138,7 @@
   display: flex;
   align-items: center;
   width: 100%;
-  gap: 8px; // 16px / 2 序号和内容之间的间距
+  gap: 4px; // 序号和内容之间的间距
   
   .gridContent {
     flex: 1;
@@ -141,12 +147,13 @@
 }
 
 .simpleRankingNumber {
-  width: 20px; // 40px / 2
-  flex: 0 0 20px;
-  font-size: 14px; // 28px / 2
+  width: 24px; // 与微信小程序保持一致
+  flex: 0 0 24px;
+  font-size: 13px; // 微信小程序使用24px，这里除以2约等于12px
   font-weight: 700;
   color: #333;
   text-align: center;
+  line-height: 1.2;
 }
 
 /* 暗色模式 */
@@ -155,9 +162,9 @@
     color: #999;
   }
   
-  .gridListItem {
-    border-bottom-color: #333;
-  }
+  // .gridListItem {
+  //   border-bottom-color: #333;
+  // }
   
   .gridListItem:hover {
     background-color: #1a1a1a;

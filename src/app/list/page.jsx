@@ -35,15 +35,31 @@ export default function List() {
   const pageSize = useRef(100);
   const pageFinish = useRef(false);
   
-  // 从URL或全局状态获取榜单配置
-  // 注意：实际使用时应该从全局状态(如Context或Zustand)获取listParam
-  // 这里暂时从URL获取，后续可以改为全局状态管理
+  // 从URL参数获取榜单配置
   const rankTitle = searchParams.get('rankTitle') || '热门币种';
-  const interFace = searchParams.get('interface') || '/coin/hot_coin';
+  const interFace = searchParams.get('interFace') || '/coin/hot_coin';
   const rankName = searchParams.get('rankName') || '';
   const rankDesc = searchParams.get('rankDesc') || '';
   const fromPlatform = searchParams.get('fromPlatform');
   const searchCoin = searchParams.get('searchCoin');
+  
+  // 从URL参数解析复杂配置
+  const parseJsonParam = (paramName) => {
+    const value = searchParams.get(paramName);
+    if (!value) return null;
+    try {
+      return JSON.parse(value);
+    } catch (e) {
+      console.error(`解析${paramName}参数失败:`, e);
+      return null;
+    }
+  };
+  
+  const gridTitleFromUrl = parseJsonParam('gridTitle');
+  const gridConFromUrl = parseJsonParam('gridCon');
+  const requestDataFromUrl = parseJsonParam('requestData');
+  const selectArrFromUrl = parseJsonParam('selectArr');
+  const showRankingFromUrl = searchParams.get('showRanking') === 'true';
   
   // 判断是否为特殊热门页面
   const isHotSpecial =
@@ -52,30 +68,30 @@ export default function List() {
     rankTitle === '热门版块' ||
     (typeof rankTitle === 'string' && rankTitle.includes('可交易'));
   
-  // 配置数据（对齐小程序的gridTitle和gridCon）
+  // 配置数据（优先使用URL参数，否则使用默认值）
   const config = {
     interFace: interFace,
-    gridTitle: ['币种', '热门指数', '24小时幅度', '加自选', '加监控'],
-    gridCon: [
+    gridTitle: gridTitleFromUrl || ['币种', '热门指数', '24H幅度', '加自选', '加监控'],
+    gridCon: gridConFromUrl || [
       { type: 'Img+Text', data: ['url', 'symbol'] },
       { type: 'Text', data: 'last' },
       { type: 'HighlightArea', data: 'priceChangePercent' },
-      { type: 'AddCollect', data: ['isOwn', 'symbol'] },
+      { type: 'AddCollect', data: ['favorite', 'symbol'] },
       { type: 'AddMonitor', data: 'symbol' }
     ],
-    requestData: {},
+    requestData: requestDataFromUrl || {},
     rankTitle: rankTitle,
     rankName: rankName,
     rankDesc: rankDesc,
-    selectArr: [],
-    showRanking: false,
+    selectArr: selectArrFromUrl || [],
+    showRanking: showRankingFromUrl !== null ? showRankingFromUrl : true, // 默认显示排名序号
     commentCount: 0,
     shareCount: 0,
     fromPlatform: fromPlatform,
     searchCoin: searchCoin,
     headerImg: searchParams.get('headerImg') || '',
     enableLoadMore: true,
-    reponseData: false // 是否使用响应数据的多维度结构
+    reponseData: parseJsonParam('reponseData') || false // 是否使用响应数据的多维度结构
   };
   
   useEffect(() => {
@@ -325,8 +341,15 @@ export default function List() {
             {/* 头部区域 */}
             {showHeader && (
               <div className={styles.headerNew}>
-            {/* 背景图 */}
-            <div className={styles.headerBg} />
+            {/* 背景图（img，可拉伸填充容器） */}
+            <div className={styles.headerBg}>
+              <img
+                src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/range_bg.png"
+                alt="背景"
+                className={styles.headerBgImg}
+                loading="eager"
+              />
+            </div>
             
             {/* 返回按钮 */}
             <div className={styles.backBtn} onClick={goBack}>
@@ -421,21 +444,39 @@ export default function List() {
         
         {/* 滚动列表区域 */}
         <div className={`${styles.scroll} ${showHeader ? styles.showHeader : ''}`}>
-          <MoziGrid
-            length={config.gridTitle.length}
-            colName={config.gridTitle}
-            gridContent={data}
-            callback={(gridCon) => {
-              if (!gridCon.key) return;
-              jump2Detail(gridCon.key);
-            }}
-            hideTitle={true}
-            simpleRanking={config.showRanking}
-          />
-          
-          <InfiniteScroll loadMore={loadMore} hasMore={hasMore}>
-            {hasMore ? '加载中...' : '没有更多了'}
-          </InfiniteScroll>
+          {data.length > 0 ? (
+            <>
+              <MoziGrid
+                length={config.gridTitle.length}
+                colName={config.gridTitle}
+                gridContent={data}
+                callback={(gridCon) => {
+                  if (!gridCon.key) return;
+                  jump2Detail(gridCon.key);
+                }}
+                hideTitle={true}
+                simpleRanking={config.showRanking}
+              />
+              
+              <InfiniteScroll loadMore={loadMore} hasMore={hasMore}>
+                {hasMore ? (
+                  <div style={{ textAlign: 'center', padding: '10px', color: '#999', fontSize: '12px' }}>
+                    加载中...
+                  </div>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '10px', color: '#999', fontSize: '12px' }}>
+                    没有更多了
+                  </div>
+                )}
+              </InfiniteScroll>
+            </>
+          ) : (
+            !isLoading && (
+              <div style={{ textAlign: 'center', padding: '40px', color: '#999', fontSize: '14px' }}>
+                暂无数据
+              </div>
+            )
+          )}
         </div>
       </div>
         </>

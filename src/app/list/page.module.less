@@ -1,4 +1,4 @@
-@headerHeight: 250px; // 500rpx / 2
+@headerHeight: 180px; // 减小头部高度 (小程序500rpx / 2 = 250px，这里优化为180px)
 @tabHeight: 45px;
 @tabOffset: 5px; // 10rpx / 2
 @gridTitleHeight: 30px; // 60rpx / 2
@@ -13,20 +13,26 @@
 .headerNew {
   position: relative;
   height: @headerHeight;
-  overflow: visible;
+  overflow: hidden; // 改为hidden，防止背景溢出
   
   .headerBg {
     position: absolute;
-    top: -5px;
+    top: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 100%;
-    max-width: 750px;
-    height: 240px; // 480px / 2
+    width: 115vw; // Web端使用100vw代替小程序的750px
+    height: 100%; // 填充整个头部高度
     background-image: url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/range_bg.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+    
+    .headerBgImg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: fill; // 允许拉伸，完全填充容器
+    }
   }
 
   .headerCon {
@@ -34,15 +40,16 @@
     display: flex;
     height: 100%;
     box-sizing: border-box;
-    padding: 0 10px; // 20rpx / 2
+    padding: 0 10px;
+    z-index: 1; // 确保内容在背景之上
   }
 
   .backBtn {
     position: absolute;
-    top: 52.5px; // 105px / 2
-    left: 5px; // 10rpx / 2
+    top: 35px; // 调整到新高度的合适位置
+    left: 5px;
     z-index: 30;
-    width: 32px; // 64rpx / 2
+    width: 32px;
     height: 32px;
     border-radius: 50%;
     display: flex;
@@ -51,7 +58,7 @@
     cursor: pointer;
 
     .backIcon {
-      width: 18px; // 36rpx / 2
+      width: 18px;
       height: 18px;
     }
   }
@@ -63,15 +70,15 @@
     justify-content: center;
     color: #fff;
     position: absolute;
-    left: 10px; // 20rpx / 2
-    top: 60%;
+    left: 10px;
+    top: 55%; // 调整垂直位置
     transform: translateY(-50%);
     width: 60%;
 
     .title {
       font-weight: bold;
-      font-size: 30px; // 60px / 2
-      margin-bottom: 10px; // 20px / 2
+      font-size: 26px; // 适当减小字号
+      margin-bottom: 8px;
     }
 
     .rankName {
@@ -104,13 +111,13 @@
 
   .right {
     position: absolute;
-    top: 140px; // 280px / 2
-    right: 42.5px; // 85rpx / 2
+    top: 100px; // 调整到新高度的合适位置
+    right: 42.5px;
     transform: translateY(-50%);
 
     .headerImg {
-      height: 75px; // 150px / 2
-      width: 75px;
+      height: 65px; // 适当减小尺寸
+      width: 65px;
       border-radius: 50%;
       object-fit: contain;
     }
@@ -230,8 +237,12 @@
   // 当有排名序号时，第一列标题向右偏移
   &.withRanking {
     .gridTitleItem:first-child {
-      padding-left: 28px; // (40px + 16px) / 2
+      padding-left: 28px; // 序号宽度 + 间距
     }
+  }
+  
+  .gridTitleItem:first-child {
+    flex-shrink: 0;
   }
 }
 
@@ -243,10 +254,12 @@
 .scroll {
   height: 100vh;
   padding-top: calc(@gridTitleHeight - 15px); // (60rpx - 30rpx) / 2
+  padding-left: 10px; // 左右内边距
+  padding-right: 10px;
   box-sizing: border-box;
   position: relative;
   background-color: #fff;
-  padding-bottom: 10px; // 20px / 2
+  padding-bottom: 20px; // 底部留白
   overflow-y: auto;
 
   .gridText {
@@ -259,14 +272,13 @@
       width: 18px;
       margin-right: 5px; // 10px / 2
       object-fit: contain;
+      border-radius: 50%; // 圆形图标
     }
   }
 
   .list {
-    margin-top: 25px; // 50px / 2
-
     .gridListItem {
-      padding: 0 10px; // 20px / 2
+      padding: 0;
     }
   }
 }
@@ -292,7 +304,7 @@
   
   // 滚动容器增大内边距
   .scroll {
-    padding-top: calc(@gridTitleHeight - 30px) !important; // (60rpx - 60rpx) / 2
+    padding-top: calc(@gridTitleHeight - 10px) !important; // (60rpx - 60rpx) / 2
   }
 }
 
