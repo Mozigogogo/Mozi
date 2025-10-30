@@ -1,15 +1,15 @@
 .gridTitle {
-  font-size: 12px;
+  font-size: 10px; // 20px / 2
   color: #898989;
-
   display: flex;
   align-items: center;
+  margin-bottom: 5px; // 10px / 2
 }
 
 .gridTitleItem {
   display: flex;
   align-items: center;
-  padding: 4px 8px;
+  padding: 2px 4px; // 4px 8px / 2
 }
 
 .gridTitle .text {
@@ -22,21 +22,19 @@
 }
 
 .gridListItem {
-  padding: 8px 0;
-  /* 去除底部分割线 */
+  padding: 4px 0; // 8px / 2
   border-bottom: none;
   cursor: pointer;
   transition: background-color 0.2s;
+  margin-bottom: 5px; // 10px / 2
 }
 
 .gridListItem:hover {
   background-color: #f8f9fa;
 }
 
-
-
 .gridContent {
-  font-size: 13px;
+  font-size: 12px; // 24px / 2
   display: flex;
   align-items: center;
   width: 100%;
@@ -45,7 +43,7 @@
 .gridConItem {
   display: flex;
   align-items: center;
-  padding: 0 8px;
+  padding: 0 4px; // 8px / 2
   word-break: break-all;
 }
 
@@ -58,9 +56,96 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 0;
+  padding: 20px 0; // 40px / 2
   color: #999;
   font-size: 14px;
+  text-align: center;
+}
+
+// 排名布局样式
+.rankingLayout {
+  display: flex;
+  
+  .rankingColumn {
+    width: 75px; // 150px / 2
+    flex: 0 0 75px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 5px; // 10px / 2
+    box-sizing: border-box;
+  }
+
+  .rankingLogoContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .contentColumn {
+    flex: 1;
+  }
+}
+
+.rankingLogoFull {
+  width: 65px; // 130px / 2
+  height: 65px;
+  border-radius: 6px; // 12px / 2
+  border: 0.5px solid #e0e0e0; // 1px / 2
+  background-color: #fff;
+  object-fit: contain;
+}
+
+.logoPlaceholderFull {
+  width: 65px; // 130px / 2
+  height: 65px;
+  border-radius: 6px; // 12px / 2
+  background-color: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px; // 48px / 2
+  color: #666;
+}
+
+// 排名行容器
+.rankingRow {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+// 排名序号样式
+.rankingNumber {
+  width: 11px; // 22px / 2
+  flex: 0 0 11px;
+  font-size: 11px; // 22px / 2
+  font-weight: 700;
+  color: #333;
+  text-align: center;
+}
+
+// 简单序号模式样式
+.simpleRankingRow {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 8px; // 16px / 2 序号和内容之间的间距
+  
+  .gridContent {
+    flex: 1;
+    min-width: 0; // 防止内容溢出
+  }
+}
+
+.simpleRankingNumber {
+  width: 20px; // 40px / 2
+  flex: 0 0 20px;
+  font-size: 14px; // 28px / 2
+  font-weight: 700;
+  color: #333;
   text-align: center;
 }
 

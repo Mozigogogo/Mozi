@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import Web3Provider from "../context/Web3Provider.jsx";
 import WalletAccountSync from "@/components/WalletAccountSync";
 import I18nProvider from "@/components/I18nProvider";
+import { LogoLoading } from "@/components/Loading";
 
 const geistSans = Inter({
   variable: "--font-geist-sans",
@@ -36,7 +37,7 @@ export default function RootLayout({ children }) {
         <I18nProvider>
           <Web3Provider>
             <WalletAccountSync />
-            <Suspense fallback={<div>Loading...</div>}>
+            <Suspense fallback={<LogoLoading visible={true} fullscreen mask image="/images/community/loadding.png" size={72} />}>
               {children}
             </Suspense>
           </Web3Provider>

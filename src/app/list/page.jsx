@@ -1,102 +1,194 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Grid, Picker, InfiniteScroll } from 'antd-mobile';
+import { Grid, InfiniteScroll } from 'antd-mobile';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { request } from '../../utils/request';
 import { jump2Detail } from '../../utils/core';
-import { GardenLoading } from '../../components/Loading';
+import { GardenLoading, LogoLoading } from '../../components/Loading';
 import MoziGrid from '../../components/MoziGrid';
-import HighlightAre from '../../components/HighlightArea';
+import HighlightArea from '../../components/HighlightArea';
 import AddCollect from '../../components/AddCollect';
 import AddMonitor from '../../components/AddMonitor';
 import Layout from '../../components/Layout';
-import { PageLogin } from '../../components/PageLogin';
 import styles from './page.module.less';
+
+const backPng = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/left-arrow.png';
+const loadingImg = '/images/community/loadding.png';
 
 export default function List() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
   const [data, setData] = useState([]);
+  const [renderData, setRenderData] = useState([]);
+  const [readyData, setReadyData] = useState([]);
+  const [readyIndex, setReadyIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [firstLoading, setFirstLoading] = useState(true); // 首次进入页的全屏加载
   const [hasMore, setHasMore] = useState(true);
   const [selected, setSelected] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // 初始未登录状态
-  const [showLogin, setShowLogin] = useState(false); // 控制登录弹窗显示
+  const [headerImg, setHeaderImg] = useState('');
+  const [showHeader, setShowHeader] = useState(false);
   
   const pageNo = useRef(1);
-  const pageSize = useRef(20);
+  const pageSize = useRef(100);
   const pageFinish = useRef(false);
   
-  // 配置数据 - 这些应该根据实际需求配置
+  // 从URL或全局状态获取榜单配置
+  // 注意：实际使用时应该从全局状态(如Context或Zustand)获取listParam
+  // 这里暂时从URL获取，后续可以改为全局状态管理
+  const rankTitle = searchParams.get('rankTitle') || '热门币种';
+  const interFace = searchParams.get('interface') || '/coin/hot_coin';
+  const rankName = searchParams.get('rankName') || '';
+  const rankDesc = searchParams.get('rankDesc') || '';
+  const fromPlatform = searchParams.get('fromPlatform');
+  const searchCoin = searchParams.get('searchCoin');
+  
+  // 判断是否为特殊热门页面
+  const isHotSpecial =
+    rankTitle === '热门币种' ||
+    rankTitle === '热门合约' ||
+    rankTitle === '热门版块' ||
+    (typeof rankTitle === 'string' && rankTitle.includes('可交易'));
+  
+  // 配置数据（对齐小程序的gridTitle和gridCon）
   const config = {
-    interFace: ['/api/list'], // 接口地址
-    gridTitle: ['币种', '价格', '涨跌幅', '操作'], // 表格标题
-    gridCon: [ // 表格内容配置
-      { type: 'Img+Text', data: ['icon', 'symbol'] },
-      { type: 'Text', data: 'price' },
-      { type: 'HighlightArea', data: 'change' },
-      { type: 'AddCollect', data: ['isCollected', 'symbol'] }
+    interFace: interFace,
+    gridTitle: ['币种', '热门指数', '24小时幅度', '加自选', '加监控'],
+    gridCon: [
+      { type: 'Img+Text', data: ['url', 'symbol'] },
+      { type: 'Text', data: 'last' },
+      { type: 'HighlightArea', data: 'priceChangePercent' },
+      { type: 'AddCollect', data: ['isOwn', 'symbol'] },
+      { type: 'AddMonitor', data: 'symbol' }
     ],
-    requestData: [{}], // 请求参数
-    rankTitle: 'Mozi列表',
-    rankName: '',
-    rankDesc: '',
-    selectArr: [], // 选择器选项
-    selectedPick: ''
+    requestData: {},
+    rankTitle: rankTitle,
+    rankName: rankName,
+    rankDesc: rankDesc,
+    selectArr: [],
+    showRanking: false,
+    commentCount: 0,
+    shareCount: 0,
+    fromPlatform: fromPlatform,
+    searchCoin: searchCoin,
+    headerImg: searchParams.get('headerImg') || '',
+    enableLoadMore: true,
+    reponseData: false // 是否使用响应数据的多维度结构
   };
   
   useEffect(() => {
-    checkLoginStatus();
-  }, []);
-
-  const checkLoginStatus = () => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      setIsLoggedIn(true);
-      init();
-    } else {
-      setShowLogin(true);
-    }
-  };
-
-  const handleLoginSuccess = () => {
-    setIsLoggedIn(true);
-    setShowLogin(false);
     init();
-  };
+    
+    // 如果是从可交易平台入口，且没有头图，则使用搜索币种的logo
+    if (config.fromPlatform && !config.headerImg && config.searchCoin) {
+      (async () => {
+        try {
+          const info = await request({
+            url: '/coin/info',
+            data: { coin: config.searchCoin }
+          });
+          if (Array.isArray(info?.data) && info.data[0]?.url) {
+            setHeaderImg(info.data[0].url);
+          }
+        } catch (e) {
+          // ignore
+        }
+      })();
+    }
+    
+    // 如果有selectArr且长度大于0，设置默认选中第一项
+    if (Array.isArray(config.selectArr) && config.selectArr.length > 0) {
+      setSelected(config.selectArr[0]);
+    }
+    
+    // 统一开启头部容器（即使没有tabs也显示标题区）
+    setShowHeader(true);
+  }, []);
+  
+  // 当renderData变化时，转换为grid数据
+  useEffect(() => {
+    const sourceData = config.reponseData ? (readyData[readyIndex] || []) : renderData;
+    const tempData = (Array.isArray(sourceData) ? sourceData : []).map((item) => {
+      const itemObj = {};
+      config.gridCon.forEach((value, index) => {
+        if (value.type === 'key' || value.type === 'img') {
+          itemObj[value.type] = item[value.data];
+        } else {
+          itemObj[`key${index + 1}`] = matchDom(value.type, item, value.data);
+        }
+      });
+      return itemObj;
+    });
+    setData(tempData);
+  }, [renderData, readyData, readyIndex]);
   
   const init = async () => {
+    console.log('init', config);
     try {
       setIsLoading(true);
-      const response = await request({
-        url: config.interFace[0],
+      setFirstLoading(true);
+      const requestData = Array.isArray(config.requestData) && config.requestData.length > 0 
+        ? config.requestData[0] 
+        : config.requestData;
+      
+      const coinData = await request({
+        url: config.interFace,
         data: {
-          ...config.requestData[0],
+          ...requestData,
           pageNo: pageNo.current,
           pageSize: pageSize.current
         }
       });
       
-      if (response && response.data) {
-        const tempData = response.data.map((item) => {
-          const itemObj = {};
-          config.gridCon.forEach((value, index) => {
-            if (value.type === 'key' || value.type === 'img') {
-              itemObj[value.type] = item[value.data];
-            } else {
-              itemObj[`key${index + 1}`] = matchDom(value.type, item, value.data);
-            }
+      if (coinData?.data) {
+        // 处理多维度响应数据（如某些榜单返回对象而非数组）
+        if (config.reponseData) {
+          const tmpResData = Object.keys(coinData?.data).map((resData) => {
+            return coinData?.data[resData];
           });
-          return itemObj;
-        });
-        setData(tempData);
+          console.log('tmpResData', tmpResData);
+          setReadyData(tmpResData);
+        } else {
+          // 普通数组或带list字段的响应
+          const listData = Array.isArray(coinData.data) 
+            ? coinData.data 
+            : (Array.isArray(coinData.data.list) ? coinData.data.list : []);
+          setRenderData(listData);
+        }
+        
+        // 若未传入headerImg：根据首条symbol调用COIN_INFO获取logo作为头图
+        if (!config.headerImg && !headerImg) {
+          try {
+            const arr = Array.isArray(coinData.data)
+              ? coinData.data
+              : (Array.isArray(coinData.data.list) ? coinData.data.list : []);
+            if (arr && arr.length > 0) {
+              const first = arr[0] || {};
+              const firstSymbol = first.symbol || first.coin;
+              if (firstSymbol) {
+                const info = await request({
+                  url: '/coin/info',
+                  data: { coin: firstSymbol }
+                });
+                if (Array.isArray(info?.data) && info.data[0]?.url) {
+                  setHeaderImg(info.data[0].url);
+                } else if (info?.data?.url) {
+                  setHeaderImg(info.data.url);
+                }
+              }
+            }
+          } catch (e) {
+            // ignore
+          }
+        }
       }
     } catch (error) {
       console.error('获取数据失败:', error);
     } finally {
       setIsLoading(false);
+      setFirstLoading(false);
     }
   };
   
@@ -124,121 +216,211 @@ export default function List() {
     return null;
   };
   
+  // Tab切换
+  const onTabChange = async (index) => {
+    console.log('已选择', index);
+    setSelected(config.selectArr[index]);
+    
+    // 如果是响应数据模式，直接切换索引
+    if (config.reponseData) {
+      setReadyIndex(index);
+    }
+    
+    // 如果有多个请求参数，切换时重新请求
+    if (Array.isArray(config.requestData) && config.requestData.length > 0) {
+      // 无感切换：保留当前数据，不触发全屏或局部loading
+      // 重置分页计数
+      pageNo.current = 1;
+      pageFinish.current = false;
+      
+      try {
+        const coinData = await request({
+          url: config.interFace,
+          data: {
+            ...config.requestData[index],
+            pageNo: pageNo.current,
+            pageSize: pageSize.current
+          }
+        });
+        
+        if (coinData?.data) {
+          const listData = Array.isArray(coinData.data) 
+            ? coinData.data 
+            : (Array.isArray(coinData.data.list) ? coinData.data.list : []);
+          setRenderData(listData);
+        }
+      } catch (error) {
+        console.error('切换Tab失败:', error);
+      }
+    }
+  };
+  
+  // 返回按钮
+  const goBack = () => {
+    router.back();
+  };
+  
   const loadMore = async () => {
+    if (!config.enableLoadMore) return;
     if (pageFinish.current) {
       setHasMore(false);
       return;
     }
     
     try {
-      const response = await request({
-        url: config.interFace[0],
+      const requestData = Array.isArray(config.requestData) && config.requestData.length > 0 
+        ? config.requestData[0] 
+        : config.requestData;
+        
+      const coinData = await request({
+        url: config.interFace,
         data: {
-          ...config.requestData[0],
+          ...requestData,
           pageNo: ++pageNo.current,
           pageSize: pageSize.current
         }
       });
       
-      if (response && response.data) {
-        if (pageNo.current * pageSize.current >= response.total) {
+      if (coinData?.data) {
+        // 检查是否到达最后一页
+        if (coinData.data.pageCount && pageNo.current * pageSize.current >= coinData.data.pageCount) {
           pageFinish.current = true;
           setHasMore(false);
         }
         
-        const tempData = response.data.map((item) => {
-          const itemObj = {};
-          config.gridCon.forEach((value, index) => {
-            if (value.type === 'key' || value.type === 'img') {
-              itemObj[value.type] = item[value.data];
-            } else {
-              itemObj[`key${index + 1}`] = matchDom(value.type, item, value.data);
-            }
+        // 处理多维度响应数据
+        if (config.reponseData) {
+          const tmpResData = Object.keys(coinData?.data).map((resData) => {
+            return coinData?.data[resData];
           });
-          return itemObj;
-        });
-        
-        setData(prevData => [...prevData, ...tempData]);
+          setReadyData(prevData => [...prevData, ...tmpResData]);
+        } else {
+          const listData = Array.isArray(coinData.data) 
+            ? coinData.data 
+            : (Array.isArray(coinData.data.list) ? coinData.data.list : []);
+          setRenderData(prevData => [...prevData, ...listData]);
+        }
       }
     } catch (error) {
       console.error('加载更多数据失败:', error);
     }
   };
   
-  const onChange = (value) => {
-    setSelected(config.selectArr[value]);
-    // 这里可以添加选择器变更的回调逻辑
-  };
-  
-  // 未登录时显示空白页面，登录弹窗会自动弹出
-  if (!isLoggedIn) {
-    return (
-      <Layout>
-        <div style={{ padding: '20px', textAlign: 'center', color: '#999' }}>
-          请先登录
-        </div>
-        <PageLogin 
-          show={showLogin} 
-          hideCb={() => setShowLogin(false)}
-          onLoginSuccess={handleLoginSuccess}
-        />
-      </Layout>
-    );
-  }
-  
-  if (isLoading) {
-    return (
-      <Layout>
-        <GardenLoading />
-      </Layout>
-    );
-  }
-  
   return (
     <Layout>
-      <div className={styles.scrollList}>
-        {config.selectArr.length > 0 && (
-          <div className={styles.header}>
-            <div className={styles.left}>
-              <div className={styles.title}>{config.rankTitle}</div>
-              <div>{config.rankName}</div>
-              <div className={styles.desc}>
-                {config.rankDesc && (
-                  <span className={styles.descCon}>{config.rankDesc}</span>
-                )}
-                {config.selectArr && config.selectedPick && (
-                  <Picker
-                    columns={[config.selectArr]}
-                    value={[selected]}
-                    onConfirm={(value) => onChange(value[0])}
-                  >
-                    {(items) => (
-                      <div className={styles.pickerSelect}>
-                        <div className={styles.selectIcon}>{config.selectedPick}</div>
-                        <span>▼</span>
-                      </div>
-                    )}
-                  </Picker>
+      {/* 进入列表页和切换维度请求时显示全屏品牌Loading */}
+      <LogoLoading
+        visible={firstLoading}
+        fullscreen
+        mask
+        image={loadingImg}
+        size={72}
+      />
+      
+      {!firstLoading && (
+        <>
+          {isLoading && <GardenLoading />}
+          
+          <div className={`${styles.scrollList} ${isHotSpecial ? styles.hotcoins : ''} ${styles.rankLarge}`}>
+            {/* 头部区域 */}
+            {showHeader && (
+              <div className={styles.headerNew}>
+            {/* 背景图 */}
+            <div className={styles.headerBg} />
+            
+            {/* 返回按钮 */}
+            <div className={styles.backBtn} onClick={goBack}>
+              <img className={styles.backIcon} src={backPng} alt="返回" />
+            </div>
+            
+            {/* 头部内容 */}
+            <div className={styles.headerCon}>
+              <div className={styles.left}>
+                <div className={styles.title}>{config.rankTitle}</div>
+                {config.rankName && <div className={styles.rankName}>{config.rankName}</div>}
+                <div className={styles.desc}>
+                  {config.rankDesc && <span className={styles.descCon}>{config.rankDesc}</span>}
+                </div>
+              </div>
+              <div className={styles.right}>
+                {(headerImg || data[0]?.img) && (
+                  <img src={headerImg || data[0]?.img} className={styles.headerImg} alt="" />
                 )}
               </div>
             </div>
-            <div className={styles.right}>
-              {data[0]?.img && (
-                <img src={data[0].img} className={styles.headerImg} alt="" />
-              )}
+            
+            {/* Tab切换胶囊 */}
+            {config.selectArr && config.selectArr.length > 0 && (
+              <div className={styles.tabSelect}>
+                {config.selectArr.map((item, index) => (
+                  <div
+                    key={`${item}-${index}`}
+                    className={`${styles.tabItem} ${selected === item ? styles.active : ''}`}
+                    onClick={() => onTabChange(index)}
+                  >
+                    <span className={styles.tabText}>{item}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* 评论/分享胶囊 */}
+            <div className={styles.actionsCapsule}>
+              <div
+                className={styles.capsule}
+                onClick={() => {
+                  router.push('/community');
+                }}
+              >
+                <img
+                  className={styles.capsuleIcon}
+                  src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/comment.png"
+                  alt="评论"
+                />
+                <span className={styles.capsuleText}>{config.commentCount || 0}</span>
+              </div>
+              <div className={styles.divider}></div>
+              <div
+                className={styles.capsule}
+                onClick={() => {
+                  // H5环境下的分享逻辑
+                  if (navigator.share) {
+                    navigator.share({
+                      title: config.rankTitle,
+                      text: `查看${config.rankTitle}排行榜`,
+                      url: window.location.href
+                    }).catch(() => {});
+                  }
+                }}
+              >
+                <img
+                  className={styles.capsuleIcon}
+                  src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/share.png"
+                  alt="分享"
+                />
+                <span className={styles.capsuleText}>{config.shareCount || 0}</span>
+              </div>
             </div>
           </div>
         )}
         
-        <Grid className={`${styles.gridTitle} ${config.selectArr.length > 0 ? styles.showHeaderGrid : ''}`} columns={config.gridTitle.length}>
+        {/* 表格标题栏 */}
+        <Grid 
+          className={`${styles.gridTitle} ${showHeader ? styles.showHeaderGrid : ''} ${config.showRanking ? styles.withRanking : ''}`} 
+          columns={config.gridTitle.length}
+        >
           {config.gridTitle.map((colNameItem, colNameIndex) => (
-            <Grid.Item key={colNameIndex} className={`${styles.gridTitleItem} ${colNameIndex !== 0 ? styles.text : ''}`}>
+            <Grid.Item 
+              key={colNameIndex} 
+              className={`${styles.gridTitleItem} ${colNameIndex !== 0 ? styles.text : ''}`}
+            >
               {colNameItem}
             </Grid.Item>
           ))}
         </Grid>
         
-        <div className={`${styles.scroll} ${config.selectArr.length > 0 ? styles.showHeader : ''}`}>
+        {/* 滚动列表区域 */}
+        <div className={`${styles.scroll} ${showHeader ? styles.showHeader : ''}`}>
           <MoziGrid
             length={config.gridTitle.length}
             colName={config.gridTitle}
@@ -248,6 +430,7 @@ export default function List() {
               jump2Detail(gridCon.key);
             }}
             hideTitle={true}
+            simpleRanking={config.showRanking}
           />
           
           <InfiniteScroll loadMore={loadMore} hasMore={hasMore}>
@@ -255,6 +438,8 @@ export default function List() {
           </InfiniteScroll>
         </div>
       </div>
+        </>
+      )}
     </Layout>
   );
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '@/i18n/config';
+import { LogoLoading } from '@/components/Loading';
 
 export default function I18nProvider({ children }) {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -19,7 +20,7 @@ export default function I18nProvider({ children }) {
   }, []);
 
   if (!isInitialized) {
-    return <div>Loading...</div>;
+    return <LogoLoading visible={true} fullscreen mask image="/images/community/loadding.png" size={72} />;
   }
 
   return <I18nextProvider i18n={i18n}>{children}</I18nextProvider>;
