@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Tabs, Toast, Button, TabBar } from 'antd-mobile';
+import { motion, AnimatePresence } from 'framer-motion';
 import Layout from '../../components/Layout';
 import MoziCard from '../../components/MoziCard';
 import KlineChart from '../../components/KlineChart';
@@ -20,8 +21,18 @@ import {
 } from '../../utils/websocketProtocol';
 import styles from './page.module.less';
 
+// 简单文本组件
+function BubbleText({ text }) {
+  return (
+    <div className={styles.bubbleText}>
+      {text}
+    </div>
+  );
+}
+
 export default function DetailPage() {
   console.log('DetailPage组件开始渲染');
+  const router = useRouter();
   const searchParams = useSearchParams();
   const symbol = searchParams.get('symbol') || '';
   console.log('获取到的symbol:', symbol);
@@ -53,6 +64,10 @@ export default function DetailPage() {
   const isWsAuthenticatedRef = useRef(false); // WebSocket认证状态
   const isFirstRenderRef = useRef(true); // 是否首次渲染
   const currentKlinePeriodRef = useRef('hour'); // 当前K线时间周期
+  
+  // 机器人交互状态
+  const [showRobotBubble, setShowRobotBubble] = useState(false);
+  const robotRef = useRef(null);
   
   // 获取币种信息
   const fetchCoinInfo = async () => {
@@ -702,6 +717,22 @@ export default function DetailPage() {
     switchKlineSubscription();
   }, [activeKlineTab, symbol]);
   
+  // 机器人气泡显示逻辑：页面加载2秒后显示，7秒后自动隐藏
+  useEffect(() => {
+    const showTimer = setTimeout(() => {
+      setShowRobotBubble(true);
+    }, 2000); // 2秒后显示
+    
+    const hideTimer = setTimeout(() => {
+      setShowRobotBubble(false);
+    }, 9000); // 9秒后隐藏（2秒显示延迟 + 7秒显示时间）
+    
+    return () => {
+      clearTimeout(showTimer);
+      clearTimeout(hideTimer);
+    };
+  }, []); // 只在组件挂载时执行一次
+  
   // 渲染币种基本信息
   const renderCoinInfo = () => {
     if (loading) {
@@ -914,14 +945,102 @@ export default function DetailPage() {
           </div>
         </div>
 
-        {/* 悬浮机器人按钮 */}
-        <div className={styles.floatRobotBtn} onClick={() => router.push('/robot')}>
-          <img 
+        {/* 悬浮机器人按钮 - Framer Motion 炫酷版 */}
+        <motion.div 
+          ref={robotRef}
+          className={styles.floatRobotBtn} 
+          onClick={() => router.push('/robot')}
+          whileHover={{ 
+            scale: 1.15,
+            rotate: [0, -10, 10, -10, 0],
+            transition: { duration: 0.5 }
+          }}
+          whileTap={{ scale: 0.9 }}
+          initial={{ scale: 0, rotate: -180, opacity: 0 }}
+          animate={{ scale: 1, rotate: 0, opacity: 1 }}
+          transition={{ 
+            type: "spring",
+            stiffness: 200,
+            damping: 15,
+            delay: 0.5
+          }}
+        >
+          {/* 悬浮光晕效果 */}
+          <motion.div 
+            className={styles.robotGlow}
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.5, 0.8, 0.5],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
+          
+          {/* 机器人图标 */}
+          <motion.img 
             className={styles.robotIcon} 
             src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/AI_Bot.png" 
-            alt="AI助手" 
+            alt="AI助手"
+            animate={{
+              y: [0, -5, 0],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
           />
-        </div>
+          
+          {/* 消息气泡 */}
+          <AnimatePresence>
+            {showRobotBubble && (
+              <motion.div 
+                className={styles.robotBubble}
+                initial={{ 
+                  opacity: 0, 
+                  x: 30, 
+                  scale: 0.3,
+                  rotate: 10
+                }}
+                animate={{ 
+                  opacity: 1, 
+                  x: 0, 
+                  scale: 1,
+                  rotate: 0
+                }}
+                exit={{ 
+                  opacity: 0, 
+                  x: 30, 
+                  scale: 0.3,
+                  rotate: -10
+                }}
+                transition={{ 
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 20
+                }}
+              >
+                <motion.div 
+                  className={styles.bubbleContent}
+                  animate={{
+                    y: [0, -3, 0],
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                >
+                  <BubbleText text="嗨！需要帮助吗？点击我开始对话~" />
+                  <div className={styles.bubbleArrow}></div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
       </div>
     </Layout>
   );

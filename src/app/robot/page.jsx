@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Markdown from 'markdown-to-jsx';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import Layout from '../../components/Layout';
 import { MoziWebSocket } from '../../utils/moziWebSocket';
 import { WS_URL } from '../../utils/constants';
@@ -422,8 +425,115 @@ export default function RobotPage() {
                 <div className={styles.msgContent}>
                   <div className={`${styles.bubble} ${styles[msg.role]} ${msg.error ? styles.error : ''}`}>
                     <div className={styles.text}>
-                      {msg.content || (msg.loading ? '正在思考中' : '')}
-                      {msg.loading && <span className={styles.loadingDots}>...</span>}
+                      {msg.loading ? (
+                        <>
+                          正在思考中
+                          <span className={styles.loadingDots}>...</span>
+                        </>
+                      ) : msg.role === 'assistant' && msg.content ? (
+                        <Markdown
+                          options={{
+                            overrides: {
+                              p: {
+                                props: {
+                                  style: { margin: '0.3em 0', lineHeight: '1.6' }
+                                }
+                              },
+                              code: {
+                                component: ({ className, children, ...props }) => {
+                                  const match = /lang-(\w+)/.exec(className || '');
+                                  const isBlock = className?.includes('lang-');
+                                  
+                                  return isBlock && match ? (
+                                    <SyntaxHighlighter
+                                      style={vscDarkPlus}
+                                      language={match[1]}
+                                      PreTag="div"
+                                      customStyle={{ margin: '0.5em 0', borderRadius: '4px' }}
+                                    >
+                                      {String(children).replace(/\n$/, '')}
+                                    </SyntaxHighlighter>
+                                  ) : (
+                                    <code style={{ 
+                                      backgroundColor: '#f5f5f5', 
+                                      padding: '2px 6px', 
+                                      borderRadius: '3px',
+                                      fontFamily: 'Consolas, Monaco, monospace',
+                                      fontSize: '0.9em'
+                                    }} {...props}>
+                                      {children}
+                                    </code>
+                                  );
+                                }
+                              },
+                              ul: {
+                                props: {
+                                  style: { margin: '0.3em 0', paddingLeft: '1.5em' }
+                                }
+                              },
+                              ol: {
+                                props: {
+                                  style: { margin: '0.3em 0', paddingLeft: '1.5em' }
+                                }
+                              },
+                              li: {
+                                props: {
+                                  style: { margin: '0.2em 0' }
+                                }
+                              },
+                              blockquote: {
+                                props: {
+                                  style: { 
+                                    margin: '0.3em 0', 
+                                    paddingLeft: '1em', 
+                                    borderLeft: '3px solid #ccc',
+                                    color: '#666'
+                                  }
+                                }
+                              },
+                              h1: {
+                                props: {
+                                  style: { margin: '0.6em 0 0.3em', fontSize: '1.5em', fontWeight: 600 }
+                                }
+                              },
+                              h2: {
+                                props: {
+                                  style: { margin: '0.6em 0 0.3em', fontSize: '1.3em', fontWeight: 600 }
+                                }
+                              },
+                              h3: {
+                                props: {
+                                  style: { margin: '0.6em 0 0.3em', fontSize: '1.1em', fontWeight: 600 }
+                                }
+                              },
+                              table: {
+                                props: {
+                                  style: { borderCollapse: 'collapse', margin: '0.5em 0', width: '100%' }
+                                }
+                              },
+                              th: {
+                                props: {
+                                  style: { 
+                                    border: '1px solid #ddd', 
+                                    padding: '0.4em 0.6em',
+                                    backgroundColor: '#f5f5f5',
+                                    fontWeight: 600
+                                  }
+                                }
+                              },
+                              td: {
+                                props: {
+                                  style: { border: '1px solid #ddd', padding: '0.4em 0.6em' }
+                                }
+                              }
+                            }
+                          }}
+                        >
+                          {msg.content}
+                        </Markdown>
+                      ) : (
+                        msg.content || ''
+                      )}
                     </div>
                     
                     {/* Token 消耗信息 */}
