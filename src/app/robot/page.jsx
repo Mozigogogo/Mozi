@@ -20,6 +20,246 @@ import {
 } from '../../utils/websocketProtocol';
 import styles from './page.module.less';
 
+// 流式 Markdown 渲染组件 - 逐行渲染
+const StreamingMarkdown = ({ content, isStreaming }) => {
+  if (!content) return null;
+  
+  // 按换行符分割内容
+  const lines = content.split('\n');
+  
+  if (!isStreaming) {
+    // 完成后，整体渲染
+    return (
+      <Markdown
+        options={{
+          overrides: {
+            p: {
+              props: {
+                style: { margin: '0.3em 0', lineHeight: '1.6' }
+              }
+            },
+            code: {
+              component: ({ className, children, ...props }) => {
+                const match = /lang-(\w+)/.exec(className || '');
+                const isBlock = className?.includes('lang-');
+                
+                return isBlock && match ? (
+                  <SyntaxHighlighter
+                    style={vscDarkPlus}
+                    language={match[1]}
+                    PreTag="div"
+                    customStyle={{ margin: '0.5em 0', borderRadius: '4px' }}
+                  >
+                    {String(children).replace(/\n$/, '')}
+                  </SyntaxHighlighter>
+                ) : (
+                  <code style={{ 
+                    backgroundColor: '#f5f5f5', 
+                    padding: '2px 6px', 
+                    borderRadius: '3px',
+                    fontFamily: 'Consolas, Monaco, monospace',
+                    fontSize: '0.9em'
+                  }} {...props}>
+                    {children}
+                  </code>
+                );
+              }
+            },
+            ul: {
+              props: {
+                style: { margin: '0.3em 0', paddingLeft: '1.5em' }
+              }
+            },
+            ol: {
+              props: {
+                style: { margin: '0.3em 0', paddingLeft: '1.5em' }
+              }
+            },
+            li: {
+              props: {
+                style: { margin: '0.2em 0' }
+              }
+            },
+            blockquote: {
+              props: {
+                style: { 
+                  margin: '0.3em 0', 
+                  paddingLeft: '1em', 
+                  borderLeft: '3px solid #ccc',
+                  color: '#666'
+                }
+              }
+            },
+            h1: {
+              props: {
+                style: { margin: '0.6em 0 0.3em', fontSize: '1.5em', fontWeight: 600 }
+              }
+            },
+            h2: {
+              props: {
+                style: { margin: '0.6em 0 0.3em', fontSize: '1.3em', fontWeight: 600 }
+              }
+            },
+            h3: {
+              props: {
+                style: { margin: '0.6em 0 0.3em', fontSize: '1.1em', fontWeight: 600 }
+              }
+            },
+            table: {
+              props: {
+                style: { borderCollapse: 'collapse', margin: '0.5em 0', width: '100%' }
+              }
+            },
+            th: {
+              props: {
+                style: { 
+                  border: '1px solid #ddd', 
+                  padding: '0.4em 0.6em',
+                  backgroundColor: '#f5f5f5',
+                  fontWeight: 600
+                }
+              }
+            },
+            td: {
+              props: {
+                style: { border: '1px solid #ddd', padding: '0.4em 0.6em' }
+              }
+            }
+          }
+        }}
+      >
+        {content}
+      </Markdown>
+    );
+  }
+  
+  // 流式输出时，逐行渲染
+  if (lines.length === 1) {
+    // 只有一行且还在输入中，显示纯文本
+    return (
+      <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+        {content}
+      </div>
+    );
+  }
+  
+  // 多行内容：前面完整的行用 markdown 渲染，最后一行用纯文本
+  const completedLines = lines.slice(0, -1).join('\n');
+  const currentLine = lines[lines.length - 1];
+  
+  return (
+    <div>
+      {completedLines && (
+        <Markdown
+          options={{
+            overrides: {
+              p: {
+                props: {
+                  style: { margin: '0.3em 0', lineHeight: '1.6' }
+                }
+              },
+              code: {
+                component: ({ className, children, ...props }) => {
+                  const match = /lang-(\w+)/.exec(className || '');
+                  const isBlock = className?.includes('lang-');
+                  
+                  return isBlock && match ? (
+                    <SyntaxHighlighter
+                      style={vscDarkPlus}
+                      language={match[1]}
+                      PreTag="div"
+                      customStyle={{ margin: '0.5em 0', borderRadius: '4px' }}
+                    >
+                      {String(children).replace(/\n$/, '')}
+                    </SyntaxHighlighter>
+                  ) : (
+                    <code style={{ 
+                      backgroundColor: '#f5f5f5', 
+                      padding: '2px 6px', 
+                      borderRadius: '3px',
+                      fontFamily: 'Consolas, Monaco, monospace',
+                      fontSize: '0.9em'
+                    }} {...props}>
+                      {children}
+                    </code>
+                  );
+                }
+              },
+              ul: {
+                props: {
+                  style: { margin: '0.3em 0', paddingLeft: '1.5em' }
+                }
+              },
+              ol: {
+                props: {
+                  style: { margin: '0.3em 0', paddingLeft: '1.5em' }
+                }
+              },
+              li: {
+                props: {
+                  style: { margin: '0.2em 0' }
+                }
+              },
+              blockquote: {
+                props: {
+                  style: { 
+                    margin: '0.3em 0', 
+                    paddingLeft: '1em', 
+                    borderLeft: '3px solid #ccc',
+                    color: '#666'
+                  }
+                }
+              },
+              h1: {
+                props: {
+                  style: { margin: '0.6em 0 0.3em', fontSize: '1.5em', fontWeight: 600 }
+                }
+              },
+              h2: {
+                props: {
+                  style: { margin: '0.6em 0 0.3em', fontSize: '1.3em', fontWeight: 600 }
+                }
+              },
+              h3: {
+                props: {
+                  style: { margin: '0.6em 0 0.3em', fontSize: '1.1em', fontWeight: 600 }
+                }
+              },
+              table: {
+                props: {
+                  style: { borderCollapse: 'collapse', margin: '0.5em 0', width: '100%' }
+                }
+              },
+              th: {
+                props: {
+                  style: { 
+                    border: '1px solid #ddd', 
+                    padding: '0.4em 0.6em',
+                    backgroundColor: '#f5f5f5',
+                    fontWeight: 600
+                  }
+                }
+              },
+              td: {
+                props: {
+                  style: { border: '1px solid #ddd', padding: '0.4em 0.6em' }
+                }
+              }
+            }
+          }}
+        >
+          {completedLines}
+        </Markdown>
+      )}
+      {currentLine && (
+        <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+          {currentLine}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function RobotPage() {
   const router = useRouter();
   const BOT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/AI_Bot.png';
@@ -425,112 +665,20 @@ export default function RobotPage() {
                 <div className={styles.msgContent}>
                   <div className={`${styles.bubble} ${styles[msg.role]} ${msg.error ? styles.error : ''}`}>
                     <div className={styles.text}>
-                      {msg.loading ? (
+                      {msg.loading && !msg.content ? (
                         <>
                           正在思考中
                           <span className={styles.loadingDots}>...</span>
                         </>
                       ) : msg.role === 'assistant' && msg.content ? (
-                        <Markdown
-                          options={{
-                            overrides: {
-                              p: {
-                                props: {
-                                  style: { margin: '0.3em 0', lineHeight: '1.6' }
-                                }
-                              },
-                              code: {
-                                component: ({ className, children, ...props }) => {
-                                  const match = /lang-(\w+)/.exec(className || '');
-                                  const isBlock = className?.includes('lang-');
-                                  
-                                  return isBlock && match ? (
-                                    <SyntaxHighlighter
-                                      style={vscDarkPlus}
-                                      language={match[1]}
-                                      PreTag="div"
-                                      customStyle={{ margin: '0.5em 0', borderRadius: '4px' }}
-                                    >
-                                      {String(children).replace(/\n$/, '')}
-                                    </SyntaxHighlighter>
-                                  ) : (
-                                    <code style={{ 
-                                      backgroundColor: '#f5f5f5', 
-                                      padding: '2px 6px', 
-                                      borderRadius: '3px',
-                                      fontFamily: 'Consolas, Monaco, monospace',
-                                      fontSize: '0.9em'
-                                    }} {...props}>
-                                      {children}
-                                    </code>
-                                  );
-                                }
-                              },
-                              ul: {
-                                props: {
-                                  style: { margin: '0.3em 0', paddingLeft: '1.5em' }
-                                }
-                              },
-                              ol: {
-                                props: {
-                                  style: { margin: '0.3em 0', paddingLeft: '1.5em' }
-                                }
-                              },
-                              li: {
-                                props: {
-                                  style: { margin: '0.2em 0' }
-                                }
-                              },
-                              blockquote: {
-                                props: {
-                                  style: { 
-                                    margin: '0.3em 0', 
-                                    paddingLeft: '1em', 
-                                    borderLeft: '3px solid #ccc',
-                                    color: '#666'
-                                  }
-                                }
-                              },
-                              h1: {
-                                props: {
-                                  style: { margin: '0.6em 0 0.3em', fontSize: '1.5em', fontWeight: 600 }
-                                }
-                              },
-                              h2: {
-                                props: {
-                                  style: { margin: '0.6em 0 0.3em', fontSize: '1.3em', fontWeight: 600 }
-                                }
-                              },
-                              h3: {
-                                props: {
-                                  style: { margin: '0.6em 0 0.3em', fontSize: '1.1em', fontWeight: 600 }
-                                }
-                              },
-                              table: {
-                                props: {
-                                  style: { borderCollapse: 'collapse', margin: '0.5em 0', width: '100%' }
-                                }
-                              },
-                              th: {
-                                props: {
-                                  style: { 
-                                    border: '1px solid #ddd', 
-                                    padding: '0.4em 0.6em',
-                                    backgroundColor: '#f5f5f5',
-                                    fontWeight: 600
-                                  }
-                                }
-                              },
-                              td: {
-                                props: {
-                                  style: { border: '1px solid #ddd', padding: '0.4em 0.6em' }
-                                }
-                              }
-                            }
-                          }}
-                        >
-                          {msg.content}
-                        </Markdown>
+                        // 使用流式 Markdown 组件：逐行渲染
+                        <>
+                          <StreamingMarkdown 
+                            content={msg.content} 
+                            isStreaming={msg.loading} 
+                          />
+                          {msg.loading && <span className={styles.loadingDots}>...</span>}
+                        </>
                       ) : (
                         msg.content || ''
                       )}
