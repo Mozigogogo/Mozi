@@ -43,3 +43,21 @@ export const registerByEmail = (email, password, invitedCode = '') => {
   });
 };
 
+
+/**
+ * 发送邮箱验证码
+ * @param {string} email - 收件人邮箱地址
+ * @param {string} language - 语言设置（zh-中文，en-英文）
+ * @returns {Promise}
+ */
+export const sendVerificationCode = (email, language = 'zh') => {
+  return request({
+    url: '/email/sendVerificationCode',
+    method: 'POST',
+    data: {
+      email,
+      language,
+    },
+  });
+};
+

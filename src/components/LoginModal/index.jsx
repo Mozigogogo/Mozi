@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Popup, Input, Button, Toast } from 'antd-mobile';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
+import { sendVerificationCode } from '../../api/user';
 import styles from './index.module.less';
 
 export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletLogin, initialMode = 'login' }) {
@@ -71,19 +72,21 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
 
     setSendingCode(true);
     try {
-      const res = await request({
-        url: Interface.SEND_EMAIL_CODE,
-        method: 'POST',
-        data: { email, type: mode === 'register' ? 'register' : 'login' }
-      });
+      // 获取当前语言设置，默认为中文
+      const currentLanguage = localStorage.getItem('i18nextLng') || 'zh';
+      // 将语言代码转换为 API 需要的格式（zh 或 en）
+      const language = currentLanguage.startsWith('zh') ? 'zh' : 'en';
+      
+      const res = await sendVerificationCode(email, language);
 
-      if (res?.data?.success) {
+      if (res?.code === 200 || res?.success) {
         Toast.show({ content: '验证码已发送', position: 'center', icon: 'success' });
         setCountdown(60);
       } else {
         Toast.show({ content: res?.message || '发送失败', position: 'center', icon: 'fail' });
       }
     } catch (error) {
+      console.error('发送验证码失败:', error);
       Toast.show({ content: '发送验证码失败，请稍后重试', position: 'center', icon: 'fail' });
     } finally {
       setSendingCode(false);
@@ -110,9 +113,14 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
     setLoading(true);
     try {
       const res = await request({
-        url: Interface.EMAIL_LOGIN,
+        url: Interface.MOZI_LOGIN,
         method: 'POST',
-        data: { email, password }
+        data: { 
+          chanel: 2,  // 2-邮箱登录
+          type: 'login',  // login-登录
+          email, 
+          password 
+        }
       });
 
       if (res?.data?.token) {
@@ -153,17 +161,19 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
     setLoading(true);
     try {
       const res = await request({
-        url: Interface.EMAIL_REGISTER,
+        url: Interface.MOZI_LOGIN,
         method: 'POST',
         data: { 
+          chanel: 2,  // 2-邮箱注册
+          type: 'register',  // register-注册
           email, 
           password, 
-          code: verificationCode,
-          ...(inviteCode && { inviteCode }) // 如果有邀请码就传递
+          verifyCode: verificationCode,  // 验证码（注册时必填）
+          ...(inviteCode && { invitedCode: inviteCode }) // 邀请码（可选）
         }
       });
 
-      if (res?.data?.success) {
+      if (res?.data?.success || res?.code === 0) {
         Toast.show({ content: '注册成功，请登录', position: 'center', icon: 'success' });
         setMode('login');
         setPassword('');
@@ -173,6 +183,7 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
         Toast.show({ content: res?.message || '注册失败', position: 'center', icon: 'fail' });
       }
     } catch (error) {
+      console.error('注册失败:', error);
       Toast.show({ content: '注册失败，请稍后重试', position: 'center', icon: 'fail' });
     } finally {
       setLoading(false);
