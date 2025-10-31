@@ -3,7 +3,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Markdown from 'markdown-to-jsx';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import Layout from '../../components/Layout';
+import ThinkingAnimation from '../../components/ThinkingAnimation';
 import { MoziWebSocket } from '../../utils/moziWebSocket';
 import { WS_URL } from '../../utils/constants';
 import { 
@@ -16,6 +20,293 @@ import {
   getErrorDescription
 } from '../../utils/websocketProtocol';
 import styles from './page.module.less';
+
+// 代码块组件 - 带复制按钮
+const CodeBlock = ({ language, children, ...props }) => {
+  const [copied, setCopied] = useState(false);
+  
+  const handleCopy = () => {
+    const code = String(children).replace(/\n$/, '');
+    navigator.clipboard.writeText(code).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  
+  return (
+    <div style={{ position: 'relative' }}>
+      <button
+        onClick={handleCopy}
+        style={{
+          position: 'absolute',
+          right: '8px',
+          top: '8px',
+          padding: '4px 8px',
+          background: copied ? '#11B787' : 'rgba(255, 255, 255, 0.1)',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          fontSize: '12px',
+          zIndex: 10,
+          transition: 'all 0.2s',
+          backdropFilter: 'blur(4px)',
+        }}
+        onMouseEnter={(e) => {
+          if (!copied) {
+            e.target.style.background = 'rgba(255, 255, 255, 0.2)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!copied) {
+            e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+          }
+        }}
+      >
+        {copied ? '已复制' : '复制'}
+      </button>
+      <SyntaxHighlighter
+        style={vscDarkPlus}
+        language={language}
+        PreTag="div"
+        customStyle={{ margin: '0.5em 0', borderRadius: '4px', paddingTop: '40px' }}
+        {...props}
+      >
+        {String(children).replace(/\n$/, '')}
+      </SyntaxHighlighter>
+    </div>
+  );
+};
+
+// 流式 Markdown 渲染组件 - 逐行渲染
+const StreamingMarkdown = ({ content, isStreaming }) => {
+  if (!content) return null;
+  
+  // 按换行符分割内容
+  const lines = content.split('\n');
+  
+  if (!isStreaming) {
+    // 完成后，整体渲染
+    return (
+      <Markdown
+        options={{
+          overrides: {
+            p: {
+              props: {
+                style: { margin: '0.3em 0', lineHeight: '1.6' }
+              }
+            },
+            code: {
+              component: ({ className, children, ...props }) => {
+                const match = /lang-(\w+)/.exec(className || '');
+                const isBlock = className?.includes('lang-');
+                
+                return isBlock && match ? (
+                  <CodeBlock language={match[1]} {...props}>
+                    {children}
+                  </CodeBlock>
+                ) : (
+                  <code style={{ 
+                    backgroundColor: '#f5f5f5', 
+                    padding: '2px 6px', 
+                    borderRadius: '3px',
+                    fontFamily: 'Consolas, Monaco, monospace',
+                    fontSize: '0.9em'
+                  }} {...props}>
+                    {children}
+                  </code>
+                );
+              }
+            },
+            ul: {
+              props: {
+                style: { margin: '0.3em 0', paddingLeft: '1.5em' }
+              }
+            },
+            ol: {
+              props: {
+                style: { margin: '0.3em 0', paddingLeft: '1.5em' }
+              }
+            },
+            li: {
+              props: {
+                style: { margin: '0.2em 0' }
+              }
+            },
+            blockquote: {
+              props: {
+                style: { 
+                  margin: '0.3em 0', 
+                  paddingLeft: '1em', 
+                  borderLeft: '3px solid #ccc',
+                  color: '#666'
+                }
+              }
+            },
+            h1: {
+              props: {
+                style: { margin: '0.6em 0 0.3em', fontSize: '1.5em', fontWeight: 600 }
+              }
+            },
+            h2: {
+              props: {
+                style: { margin: '0.6em 0 0.3em', fontSize: '1.3em', fontWeight: 600 }
+              }
+            },
+            h3: {
+              props: {
+                style: { margin: '0.6em 0 0.3em', fontSize: '1.1em', fontWeight: 600 }
+              }
+            },
+            table: {
+              props: {
+                style: { borderCollapse: 'collapse', margin: '0.5em 0', width: '100%' }
+              }
+            },
+            th: {
+              props: {
+                style: { 
+                  border: '1px solid #ddd', 
+                  padding: '0.4em 0.6em',
+                  backgroundColor: '#f5f5f5',
+                  fontWeight: 600
+                }
+              }
+            },
+            td: {
+              props: {
+                style: { border: '1px solid #ddd', padding: '0.4em 0.6em' }
+              }
+            }
+          }
+        }}
+      >
+        {content}
+      </Markdown>
+    );
+  }
+  
+  // 流式输出时，逐行渲染
+  if (lines.length === 1) {
+    // 只有一行且还在输入中，显示纯文本
+    return (
+      <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+        {content}
+      </div>
+    );
+  }
+  
+  // 多行内容：前面完整的行用 markdown 渲染，最后一行用纯文本
+  const completedLines = lines.slice(0, -1).join('\n');
+  const currentLine = lines[lines.length - 1];
+  
+  return (
+    <div>
+      {completedLines && (
+        <Markdown
+          options={{
+            overrides: {
+              p: {
+                props: {
+                  style: { margin: '0.3em 0', lineHeight: '1.6' }
+                }
+              },
+              code: {
+                component: ({ className, children, ...props }) => {
+                  const match = /lang-(\w+)/.exec(className || '');
+                  const isBlock = className?.includes('lang-');
+                  
+                  return isBlock && match ? (
+                    <CodeBlock language={match[1]} {...props}>
+                      {children}
+                    </CodeBlock>
+                  ) : (
+                    <code style={{ 
+                      backgroundColor: '#f5f5f5', 
+                      padding: '2px 6px', 
+                      borderRadius: '3px',
+                      fontFamily: 'Consolas, Monaco, monospace',
+                      fontSize: '0.9em'
+                    }} {...props}>
+                      {children}
+                    </code>
+                  );
+                }
+              },
+              ul: {
+                props: {
+                  style: { margin: '0.3em 0', paddingLeft: '1.5em' }
+                }
+              },
+              ol: {
+                props: {
+                  style: { margin: '0.3em 0', paddingLeft: '1.5em' }
+                }
+              },
+              li: {
+                props: {
+                  style: { margin: '0.2em 0' }
+                }
+              },
+              blockquote: {
+                props: {
+                  style: { 
+                    margin: '0.3em 0', 
+                    paddingLeft: '1em', 
+                    borderLeft: '3px solid #ccc',
+                    color: '#666'
+                  }
+                }
+              },
+              h1: {
+                props: {
+                  style: { margin: '0.6em 0 0.3em', fontSize: '1.5em', fontWeight: 600 }
+                }
+              },
+              h2: {
+                props: {
+                  style: { margin: '0.6em 0 0.3em', fontSize: '1.3em', fontWeight: 600 }
+                }
+              },
+              h3: {
+                props: {
+                  style: { margin: '0.6em 0 0.3em', fontSize: '1.1em', fontWeight: 600 }
+                }
+              },
+              table: {
+                props: {
+                  style: { borderCollapse: 'collapse', margin: '0.5em 0', width: '100%' }
+                }
+              },
+              th: {
+                props: {
+                  style: { 
+                    border: '1px solid #ddd', 
+                    padding: '0.4em 0.6em',
+                    backgroundColor: '#f5f5f5',
+                    fontWeight: 600
+                  }
+                }
+              },
+              td: {
+                props: {
+                  style: { border: '1px solid #ddd', padding: '0.4em 0.6em' }
+                }
+              }
+            }
+          }}
+        >
+          {completedLines}
+        </Markdown>
+      )}
+      {currentLine && (
+        <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+          {currentLine}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function RobotPage() {
   const router = useRouter();
@@ -36,7 +327,6 @@ export default function RobotPage() {
   const [isLoadingHistory, setIsLoadingHistory] = useState(false); // 是否正在加载历史记录
   
   const scrollRef = useRef(null);
-  const messagesEndRef = useRef(null); // 用于标记消息列表底部
   const wsRef = useRef(null);
   const conversationIdRef = useRef(null);
   const currentMessageIdRef = useRef(null);
@@ -178,6 +468,25 @@ export default function RobotPage() {
       if (suggested && suggested.length > 0) {
         setSuggestedQuestions(suggested);
       }
+      
+      // AI 回复完成后，确保滚动到最底部
+      setTimeout(() => {
+        if (scrollRef.current) {
+          const container = scrollRef.current;
+          const maxScroll = container.scrollHeight - container.clientHeight;
+          console.log('🎯 AI 回复完成，强制滚动到底部', {
+            scrollHeight: container.scrollHeight,
+            clientHeight: container.clientHeight,
+            maxScroll: maxScroll,
+            canScroll: maxScroll > 0,
+            scrollTopBefore: container.scrollTop
+          });
+          
+          container.scrollTop = container.scrollHeight;
+          
+          console.log('✅ 滚动后 scrollTop:', container.scrollTop);
+        }
+      }, 200);
     });
 
     // 监听 AI 对话错误
@@ -258,17 +567,38 @@ export default function RobotPage() {
     };
   }, []);
 
+  // 滚动到底部的函数 - 可被多处调用
+  const scrollToBottom = (force = false) => {
+    if (scrollRef.current) {
+      const container = scrollRef.current;
+      const maxScroll = container.scrollHeight - container.clientHeight;
+      
+      console.log('📜 滚动到底部', {
+        scrollHeight: container.scrollHeight,
+        scrollTop: container.scrollTop,
+        clientHeight: container.clientHeight,
+        maxScroll: maxScroll,
+        canScroll: maxScroll > 0,
+        force
+      });
+      
+      // 直接设置 scrollTop 到最大值
+      if (maxScroll > 0) {
+        container.scrollTop = container.scrollHeight;
+        console.log('✅ 已滚动到:', container.scrollTop);
+      } else {
+        console.log('⚠️ 内容未溢出，无需滚动');
+      }
+    }
+  };
+
   // 自动滚动到底部 - 使用平滑滚动和 requestAnimationFrame 确保 DOM 更新后滚动
   useEffect(() => {
-    const scrollToBottom = () => {
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
-      }
-    };
-
     // 使用 requestAnimationFrame 确保在 DOM 更新后执行滚动
     requestAnimationFrame(() => {
-      requestAnimationFrame(scrollToBottom);
+      requestAnimationFrame(() => {
+        scrollToBottom();
+      });
     });
   }, [messages]);
 
@@ -422,8 +752,20 @@ export default function RobotPage() {
                 <div className={styles.msgContent}>
                   <div className={`${styles.bubble} ${styles[msg.role]} ${msg.error ? styles.error : ''}`}>
                     <div className={styles.text}>
-                      {msg.content || (msg.loading ? '正在思考中' : '')}
-                      {msg.loading && <span className={styles.loadingDots}>...</span>}
+                      {msg.loading && !msg.content ? (
+                        <ThinkingAnimation />
+                      ) : msg.role === 'assistant' && msg.content ? (
+                        // 使用流式 Markdown 组件：逐行渲染
+                        <>
+                          <StreamingMarkdown 
+                            content={msg.content} 
+                            isStreaming={msg.loading} 
+                          />
+                          {msg.loading && <span className={styles.loadingDots}>...</span>}
+                        </>
+                      ) : (
+                        msg.content || ''
+                      )}
                     </div>
                     
                     {/* Token 消耗信息 */}
@@ -464,25 +806,23 @@ export default function RobotPage() {
               </div>
             ))}
           </div>
-          
-          {/* 建议问题 */}
-          {suggestedQuestions.length > 0 && !isStreaming && (
-            <div className={styles.suggestedQuestions}>
-              <div className={styles.suggestedTitle}>你可能还想问：</div>
-              {suggestedQuestions.map((q, idx) => (
-                <button
-                  key={idx}
-                  className={styles.suggestedBtn}
-                  onClick={() => handleSuggestedQuestion(q)}
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
-          )}
-          {/* 用于滚动定位的底部元素 */}
-          <div ref={messagesEndRef} style={{ height: '1px' }} />
         </div>
+
+        {/* 建议问题 - 固定在输入框上方 */}
+        {suggestedQuestions.length > 0 && !isStreaming && (
+          <div className={styles.suggestedQuestions}>
+            <div className={styles.suggestedTitle}>你可能还想问：</div>
+            {suggestedQuestions.map((q, idx) => (
+              <button
+                key={idx}
+                className={styles.suggestedBtn}
+                onClick={() => handleSuggestedQuestion(q)}
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className={styles.chatInputBar}>
           <div className={styles.inputBox}>

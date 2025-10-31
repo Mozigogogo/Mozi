@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Tabs, Grid, InfiniteScroll } from 'antd-mobile';
 import HighlightArea from '../../components/HighlightArea';
 import { isEmpty } from 'lodash';
@@ -62,8 +63,11 @@ const RankGrid = ({ data, loading, onClick }) => {
 };
 
 export default function FindPage() {
+  const searchParams = useSearchParams();
+  const tabFromUrl = searchParams.get('tab');
+  
   // 状态定义
-  const [pageActiveKey, setPageActiveKey] = useState('market');
+  const [pageActiveKey, setPageActiveKey] = useState(tabFromUrl || 'market');
   const [marketLoading, setMarketLoading] = useState(true);
   const [needLogin, setLogin] = useState(false);
   const needLoop = useRef(true);
@@ -391,6 +395,13 @@ const marketPageSize = 20;
       setMarketLoading(false);
     }
   };
+
+  // 监听 URL 参数变化
+  useEffect(() => {
+    if (tabFromUrl && tabFromUrl !== pageActiveKey) {
+      setPageActiveKey(tabFromUrl);
+    }
+  }, [tabFromUrl]);
 
   // 初始化加载
   useEffect(() => {

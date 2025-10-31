@@ -948,7 +948,7 @@ export default function HomePage() {
                   if (investmentTab === 'topics') {
                     router.push('/community');
                   } else {
-                    jump2Market('rank');
+                    router.push('/find?tab=rank');
                   }
                 }}
               >
