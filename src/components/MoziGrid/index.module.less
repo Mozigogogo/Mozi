@@ -133,23 +133,24 @@
   text-align: center;
 }
 
-// 简单序号模式样式
+// 简单序号模式样式（与微信小程序完全对齐，rpx除以2转px）
 .simpleRankingRow {
   display: flex;
   align-items: center;
   width: 100%;
-  gap: 4px; // 序号和内容之间的间距
+  gap: 8px; // 微信小程序16rpx → 8px
   
-  .gridContent {
+  :global(.adm-grid) {
     flex: 1;
     min-width: 0; // 防止内容溢出
+    margin-bottom: 0; // 移除Grid默认margin
   }
 }
 
 .simpleRankingNumber {
-  width: 24px; // 与微信小程序保持一致
-  flex: 0 0 24px;
-  font-size: 13px; // 微信小程序使用24px，这里除以2约等于12px
+  width: 20px; // 微信小程序40rpx → 20px
+  flex: 0 0 20px;
+  font-size: 14px; // 微信小程序28rpx → 14px
   font-weight: 700;
   color: #333;
   text-align: center;

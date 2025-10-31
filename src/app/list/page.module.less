@@ -49,17 +49,17 @@
     top: 35px; // 调整到新高度的合适位置
     left: 5px;
     z-index: 30;
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    transition: all 0.3s ease;
 
-    .backIcon {
-      width: 18px;
-      height: 18px;
+    &:active {
+      transform: scale(0.95);
     }
   }
 
@@ -71,7 +71,7 @@
     color: #fff;
     position: absolute;
     left: 10px;
-    top: 55%; // 调整垂直位置
+    top: 59%; // 调整垂直位置
     transform: translateY(-50%);
     width: 60%;
 
@@ -232,12 +232,26 @@
 
   .text {
     text-align: right;
+    justify-content: flex-end;
   }
   
-  // 当有排名序号时，第一列标题向右偏移
+  // 当有排名序号时，标题栏也使用flex布局，添加序号占位空间
   &.withRanking {
-    .gridTitleItem:first-child {
-      padding-left: 28px; // 序号宽度 + 间距
+    display: flex !important;
+    padding-left: 10px; // 保持左侧padding
+    
+    // 序号占位（不显示内容，只占空间）
+    &::before {
+      content: '';
+      width: 20px; // 与序号同宽
+      flex: 0 0 20px;
+      margin-right: 8px; // 与序号gap同宽
+    }
+    
+    // Grid组件占据剩余空间
+    :global(.adm-grid) {
+      flex: 1;
+      min-width: 0;
     }
   }
   

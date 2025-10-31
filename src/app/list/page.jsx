@@ -4,16 +4,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Grid, InfiniteScroll } from 'antd-mobile';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { request } from '../../utils/request';
+import { Interface } from '../../utils/constants';
 import { jump2Detail } from '../../utils/core';
 import { GardenLoading, LogoLoading } from '../../components/Loading';
 import MoziGrid from '../../components/MoziGrid';
 import HighlightArea from '../../components/HighlightArea';
 import AddCollect from '../../components/AddCollect';
 import AddMonitor from '../../components/AddMonitor';
-import Layout from '../../components/Layout';
+import { LeftArrowIcon } from '../../components/Icons';
 import styles from './page.module.less';
 
-const backPng = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/left-arrow.png';
 const loadingImg = '/images/community/loadding.png';
 
 export default function List() {
@@ -59,7 +59,9 @@ export default function List() {
   const gridConFromUrl = parseJsonParam('gridCon');
   const requestDataFromUrl = parseJsonParam('requestData');
   const selectArrFromUrl = parseJsonParam('selectArr');
-  const showRankingFromUrl = searchParams.get('showRanking') === 'true';
+  // showRanking：若未传参（null）则默认开启；否则按传参 true/false 解析
+  const showRankingParamRaw = searchParams.get('showRanking');
+  const showRankingFromUrl = showRankingParamRaw === null ? null : (showRankingParamRaw === 'true');
   
   // 判断是否为特殊热门页面
   const isHotSpecial =
@@ -102,7 +104,7 @@ export default function List() {
       (async () => {
         try {
           const info = await request({
-            url: '/coin/info',
+            url: Interface.COIN_INFO,
             data: { coin: config.searchCoin }
           });
           if (Array.isArray(info?.data) && info.data[0]?.url) {
@@ -171,7 +173,8 @@ export default function List() {
           const listData = Array.isArray(coinData.data) 
             ? coinData.data 
             : (Array.isArray(coinData.data.list) ? coinData.data.list : []);
-          setRenderData(listData);
+          // 首次数据去重（应对接口可能返回重复项）
+          setRenderData(dedupeArray(listData));
         }
         
         // 若未传入headerImg：根据首条symbol调用COIN_INFO获取logo作为头图
@@ -185,7 +188,7 @@ export default function List() {
               const firstSymbol = first.symbol || first.coin;
               if (firstSymbol) {
                 const info = await request({
-                  url: '/coin/info',
+                  url: Interface.COIN_INFO,
                   data: { coin: firstSymbol }
                 });
                 if (Array.isArray(info?.data) && info.data[0]?.url) {
@@ -208,6 +211,45 @@ export default function List() {
     }
   };
   
+  // 取唯一标识：优先 symbol/coin，其次 id/name/pair
+  const getItemKey = (item = {}) => {
+    return (
+      item.symbol ||
+      item.coin ||
+      item.id ||
+      item.pair ||
+      item.name ||
+      null
+    );
+  };
+
+  // 对列表去重（同一批数据内部）
+  const dedupeArray = (arr = []) => {
+    const seen = new Set();
+    return arr.filter((it) => {
+      const k = getItemKey(it);
+      if (!k) return true; // 没有key的保留，避免误删
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+  };
+
+  // 合并去重，返回合并结果与新增数量
+  const mergeUnique = (prev = [], next = []) => {
+    const prevKeys = new Set(
+      prev.map((it) => getItemKey(it)).filter(Boolean)
+    );
+    const uniqueIncoming = [];
+    next.forEach((it) => {
+      const k = getItemKey(it);
+      if (k && prevKeys.has(k)) return;
+      if (k) prevKeys.add(k);
+      uniqueIncoming.push(it);
+    });
+    return { merged: [...prev, ...uniqueIncoming], added: uniqueIncoming.length };
+  };
+
   const matchDom = (type, data, dataKey) => {
     if (type === 'Img+Text') {
       return (
@@ -314,7 +356,15 @@ export default function List() {
           const listData = Array.isArray(coinData.data) 
             ? coinData.data 
             : (Array.isArray(coinData.data.list) ? coinData.data.list : []);
-          setRenderData(prevData => [...prevData, ...listData]);
+          // 合并去重；若本次没有新增唯一数据，则认为没有更多了
+          setRenderData(prevData => {
+            const { merged, added } = mergeUnique(prevData, listData);
+            if (added === 0) {
+              pageFinish.current = true;
+              setHasMore(false);
+            }
+            return merged;
+          });
         }
       }
     } catch (error) {
@@ -323,7 +373,7 @@ export default function List() {
   };
   
   return (
-    <Layout>
+    <>
       {/* 进入列表页和切换维度请求时显示全屏品牌Loading */}
       <LogoLoading
         visible={firstLoading}
@@ -353,7 +403,7 @@ export default function List() {
             
             {/* 返回按钮 */}
             <div className={styles.backBtn} onClick={goBack}>
-              <img className={styles.backIcon} src={backPng} alt="返回" />
+              <LeftArrowIcon size={24} color="#fff" strokeWidth={2.5} />
             </div>
             
             {/* 头部内容 */}
@@ -428,19 +478,53 @@ export default function List() {
         )}
         
         {/* 表格标题栏 */}
-        <Grid 
-          className={`${styles.gridTitle} ${showHeader ? styles.showHeaderGrid : ''} ${config.showRanking ? styles.withRanking : ''}`} 
-          columns={config.gridTitle.length}
-        >
-          {config.gridTitle.map((colNameItem, colNameIndex) => (
-            <Grid.Item 
-              key={colNameIndex} 
-              className={`${styles.gridTitleItem} ${colNameIndex !== 0 ? styles.text : ''}`}
-            >
-              {colNameItem}
-            </Grid.Item>
-          ))}
-        </Grid>
+        {config.gridTitle.length === 3 ? (
+          // 三列标题：自定义列宽 20% / 35% / 45%
+          <div className={`${styles.gridTitle} ${showHeader ? styles.showHeaderGrid : ''} ${config.showRanking ? styles.withRanking : ''}`}>
+            {config.gridTitle.map((colNameItem, colNameIndex) => {
+              const widths = ['10%', '35%', '45%'];
+              return (
+                <div
+                  key={colNameIndex}
+                  className={`${styles.gridTitleItem} ${colNameIndex !== 0 ? styles.text : ''}`}
+                  style={{ width: widths[colNameIndex] || `${100 / config.gridTitle.length}%` }}
+                >
+                  {colNameItem}
+                </div>
+              );
+            })}
+          </div>
+        ) : config.gridTitle.length === 2 ? (
+          // 两列标题：自定义列宽 67% / 23%
+          <div className={`${styles.gridTitle} ${showHeader ? styles.showHeaderGrid : ''} ${config.showRanking ? styles.withRanking : ''}`}>
+            {config.gridTitle.map((colNameItem, colNameIndex) => {
+              const widths = ['67%', '23%'];
+              return (
+                <div
+                  key={colNameIndex}
+                  className={`${styles.gridTitleItem} ${colNameIndex !== 0 ? styles.text : ''}`}
+                  style={{ width: widths[colNameIndex] || `${100 / config.gridTitle.length}%` }}
+                >
+                  {colNameItem}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <Grid 
+            className={`${styles.gridTitle} ${showHeader ? styles.showHeaderGrid : ''} ${config.showRanking ? styles.withRanking : ''}`} 
+            columns={config.gridTitle.length}
+          >
+            {config.gridTitle.map((colNameItem, colNameIndex) => (
+              <Grid.Item 
+                key={colNameIndex} 
+                className={`${styles.gridTitleItem} ${colNameIndex !== 0 ? styles.text : ''}`}
+              >
+                {colNameItem}
+              </Grid.Item>
+            ))}
+          </Grid>
+        )}
         
         {/* 滚动列表区域 */}
         <div className={`${styles.scroll} ${showHeader ? styles.showHeader : ''}`}>
@@ -481,6 +565,6 @@ export default function List() {
       </div>
         </>
       )}
-    </Layout>
+    </>
   );
 }

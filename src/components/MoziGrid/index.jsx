@@ -26,11 +26,25 @@ const MoziGrid = ({
 
   const containerStyle = minRows ? { minHeight: `${minRows * ROW_HEIGHT_PX}px` } : undefined;
 
-  // 计算列宽：前两列占更多宽度，最后两列较小
+  // 计算列宽：根据列数和模式（含简单序号）自适配
   const getColWidth = (index) => {
     // 如果提供了自定义列宽，优先使用
     if (columnWidths && columnWidths[index]) {
       return columnWidths[index];
+    }
+    
+    // 简单序号模式下，常见的“序号+3列数据”的布局（总共4列可见）
+    if (simpleRanking && length === 3) {
+      // 对齐小程序：第二列(币种)30%，第三列(指数)20%，第四列(24H变化)50%
+      const widths = ['30%', '20%', '50%'];
+      return widths[index] || `${100 / length}%`;
+    }
+    
+    // 四列数据时的分配（保守默认，除非外部覆盖）
+    if (length === 4) {
+      // 默认：币种(30%) 指标A(20%) 指标B(25%) 指标C(25%)
+      const widths = ['30%', '20%', '25%', '25%'];
+      return widths[index] || `${100 / length}%`;
     }
     
     if (length === 5) {
@@ -124,12 +138,12 @@ const MoziGrid = ({
           </div>
         </div>
       ) : simpleRanking ? (
-        // 简单序号模式：只显示序号，不显示大logo
+        // 简单序号模式：只显示序号，不显示大logo（与微信小程序完全对齐）
         <div>
           {!hideTitle && (
             <div className={styles.gridTitle} style={{ backgroundColor: gridTitleBgColor }}>
               {colName.map((colNameItem, colNameIndex) => (
-                <div 
+                <div
                   key={colNameIndex}
                   className={`${styles.gridTitleItem} ${colNameIndex !== 0 ? styles.text : ''}`}
                   style={{ width: getColWidth(colNameIndex) }}
