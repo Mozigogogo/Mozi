@@ -22,3 +22,29 @@ export const GardenLoading = () => {
     </div>
   );
 };
+
+export const LogoLoading = ({ 
+  visible = false, 
+  fullscreen = false, 
+  mask = false, 
+  image, 
+  size = 72 
+}) => {
+  if (!visible) return null;
+  
+  return (
+    <div className={`${styles.logoLoading} ${fullscreen ? styles.logoLoadingFullscreen : ''} ${mask ? styles.logoLoadingMask : ''}`}>
+      <div className={styles.logoLoadingContent}>
+        {image && (
+          <img 
+            src={typeof image === 'string' ? image : image} 
+            alt="Loading" 
+            className={styles.logoLoadingImage}
+            style={{ width: `${size}px`, height: `${size}px` }}
+          />
+        )}
+        {!image && <SpinLoading color="primary" style={{ '--size': `${size}px` }} />}
+      </div>
+    </div>
+  );
+};
