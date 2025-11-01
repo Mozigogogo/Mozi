@@ -8,6 +8,7 @@
 
   .chatHeader {
     padding: 12px 8px 6px; // 24rpx→12px, 16rpx→8px, 12rpx→6px
+    padding-top: 56px; // 为 NavBar 留出空间（44px NavBar + 12px 原有 padding）
     background: #fff;
     border-bottom: 1px solid #f0f0f0;
 
@@ -365,5 +366,10 @@
       }
     }
   }
+}
+
+// 自定义 NavBar 样式 - 去掉底部边框
+.navBarCustom {
+  border-bottom: none !important;
 }
 
