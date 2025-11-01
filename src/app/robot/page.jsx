@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Markdown from 'markdown-to-jsx';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import Layout from '../../components/Layout';
+import NavBar from '../../components/NavBar';
 import ThinkingAnimation from '../../components/ThinkingAnimation';
 import { MoziWebSocket } from '../../utils/moziWebSocket';
 import { WS_URL } from '../../utils/constants';
@@ -347,11 +347,23 @@ export default function RobotPage() {
       console.log('📌 从本地读取会话 ID:', savedConversationId);
     }
     
+    // 从 localStorage 读取用户 token
+    const token = typeof window !== 'undefined' 
+      ? localStorage.getItem('token') 
+      : null;
+    
+    if (token) {
+      console.log('🔑 找到用户 token，将通过 Sec-WebSocket-Protocol 传递');
+    } else {
+      console.log('⚠️ 未找到用户 token，将以匿名方式连接');
+    }
+    
     const ws = new MoziWebSocket(WS_URL, {
       platform: PLATFORMS.H5,
       version: '1.0.0',
       autoHandshake: true,
       debug: true,
+      token: token,  // 通过 Sec-WebSocket-Protocol 子协议传递 token
     });
 
     wsRef.current = ws;
@@ -720,6 +732,12 @@ export default function RobotPage() {
 
   return (
       <div className={styles.robotPage}>
+        <NavBar 
+          title="AI 助手" 
+          showBack={true}
+          className={styles.navBarCustom}
+        />
+        
         <div className={styles.chatHeader}>
           <div className={styles.chatTitle}>AI 助手</div>
           <div className={styles.chatSubtitle}>

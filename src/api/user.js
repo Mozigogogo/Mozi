@@ -61,3 +61,22 @@ export const sendVerificationCode = (email, language = 'zh') => {
   });
 };
 
+/**
+ * 钱包签名登录
+ * @param {string} address - 钱包地址
+ * @param {string} signature - 用户签名
+ * @returns {Promise}
+ */
+export const loginByWallet = (address, signature) => {
+  return request({
+    url: '/user/login',
+    method: 'POST',
+    data: {
+      type: 'login',
+      chanel: 3,  // 3-钱包登录
+      address,
+      signatrue: signature,  // 注意：后端字段名为 signatrue
+    },
+  });
+};
+

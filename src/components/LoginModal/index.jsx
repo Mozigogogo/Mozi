@@ -8,6 +8,7 @@ import { sendVerificationCode } from '../../api/user';
 import styles from './index.module.less';
 
 export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletLogin, initialMode = 'login' }) {
+  // 表单状态
   const [mode, setMode] = useState(initialMode); // 'login' or 'register'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,6 +17,8 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
   const [loading, setLoading] = useState(false);
   const [sendingCode, setSendingCode] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  
+  // Refs
   const countdownTimerRef = useRef(null);
 
   // 当 initialMode 变化时，更新 mode
@@ -208,7 +211,7 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
     onClose?.();
   };
 
-  // 钱包登录
+  // 钱包登录按钮点击 - 只打开钱包连接弹窗
   const handleWalletLoginClick = () => {
     handleClose();
     onWalletLogin?.();

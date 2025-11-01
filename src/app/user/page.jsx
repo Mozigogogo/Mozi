@@ -117,7 +117,12 @@ export default function UserPage() {
         const res = await request({
           url: Interface.MOZI_LOGIN,
           method: 'POST',
-          data: { address: currentAddress, signature, message },
+          data: {
+            type: 'login',
+            chanel: 3,  // 3-钱包登录
+            address: currentAddress,
+            signatrue: signature  // 注意：后端字段名为 signatrue
+          },
         });
         if (res?.data?.token) localStorage.setItem('token', res.data.token);
         if (res?.data?.user) localStorage.setItem('userInfo', JSON.stringify(res?.data?.user));
