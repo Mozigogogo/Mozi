@@ -5,7 +5,11 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Tabs, Toast, Button, TabBar } from 'antd-mobile';
 import { motion, AnimatePresence } from 'framer-motion';
 import Layout from '../../components/Layout';
+import NavBar from '../../components/NavBar';
 import MoziCard from '../../components/MoziCard';
+import MoziGrid from '../../components/MoziGrid';
+import HighlightArea from '../../components/HighlightArea';
+import AddCollect from '../../components/AddCollect';
 import KlineChart from '../../components/KlineChart';
 import { Loading } from '../../components/Loading';
 import { request } from '../../utils/request';
@@ -51,6 +55,7 @@ export default function DetailPage() {
   const [marketLoading, setMarketLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('chart');
   const [activeKlineTab, setActiveKlineTab] = useState('hour');
+  const [chartType, setChartType] = useState('line'); // 图表类型：line | kline
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [infoExpanded, setInfoExpanded] = useState(false);
@@ -281,13 +286,29 @@ export default function DetailPage() {
       });
       
       if (response?.data && response.data.length > 0) {
-        // 处理市场数据，转换为组件需要的格式
+        // 处理市场数据，转换为MoziGrid需要的格式
         const processedData = response.data.map((item) => ({
-          exchange: item.exchanges,
-          exchangeIcon: item.url,
-          pair: `${symbol}/USDT`,
-          price: item.last,
-          volume24h: item.vol,
+          title: (
+            <div style={{ display: 'flex', width: '100%', alignItems: 'center' }}>
+              <img 
+                src={item.url} 
+                alt={item.exchanges}
+                style={{
+                  height: '18px',
+                  width: '18px',
+                  marginRight: '5px',
+                  borderRadius: '4px',
+                  objectFit: 'contain',
+                  backgroundColor: '#fff',
+                  flexShrink: 0
+                }}
+              />
+              {item.exchanges}
+            </div>
+          ),
+          last: item.last,
+          price24h: <HighlightArea value={item.price24h} />,
+          vol: item.vol,
           usd: item.usd
         }));
         setMarketData(processedData);
@@ -322,6 +343,26 @@ export default function DetailPage() {
   // 切换详细信息展开状态
   const toggleInfoExpanded = () => {
     setInfoExpanded(!infoExpanded);
+  };
+
+  // 图表类型切换
+  const handleChartTypeChange = (type) => {
+    if (type === chartType) return;
+    setChartType(type);
+  };
+
+  // 横屏查看
+  const handleLandscapeClick = () => {
+    // 跳转到横屏页面，传递图表数据和类型
+    const chartData = {
+      hour: klineData.hour,
+      day: klineData.day,
+      week: klineData.week,
+      month: klineData.month,
+      active: activeKlineTab,
+      forceType: chartType
+    };
+    jump2NoTab('landscapechart', chartData);
   };
 
   // 添加/移除自选
@@ -407,11 +448,24 @@ export default function DetailPage() {
     
     // WebSocket 连接和订阅
     console.log('🔄 创建 WebSocket 连接...');
+    
+    // 从 localStorage 读取用户 token
+    const token = typeof window !== 'undefined' 
+      ? localStorage.getItem('token') 
+      : null;
+    
+    if (token) {
+      console.log('🔑 找到用户 token，将通过 Sec-WebSocket-Protocol 传递');
+    } else {
+      console.log('⚠️ 未找到用户 token，将以匿名方式连接');
+    }
+    
     const ws = new MoziWebSocket(WS_URL, {
       platform: PLATFORMS.H5,
       version: '1.0.0',
       autoHandshake: true,
       debug: true,
+      token: token,  // 通过 Sec-WebSocket-Protocol 子协议传递 token
     });
     
     wsRef.current = ws;
@@ -460,51 +514,264 @@ export default function DetailPage() {
     ws.on(WS_EVENTS.KLINE, (data) => {
       console.log('📈 收到 K线数据:', data);
       
-      // 检查是否有 headerData
-      if (!data.data || !data.data.headerData) {
-        console.log('⚠️ K线数据中没有 headerData');
+      // 检查是否有数据
+      if (!data.data) {
+        console.log('⚠️ K线数据为空');
         return;
       }
       
-      const headerData = data.data.headerData;
-      console.log('📊 K线 headerData:', headerData);
+      // 正确的数据结构：data.data.klineData 才是K线数据
+      const { klineData, headerData } = data.data;
       
-      // 处理 K线图表数据
-      if (data.data.klineData && Array.isArray(data.data.klineData)) {
-        console.log('📊 收到 K线图表数据，数量:', data.data.klineData.length);
+      if (!klineData) {
+        console.log('⚠️ klineData 不存在');
+        return;
+      }
+      
+      const { hisKlineData, realKlineData } = klineData;
+      const currentPeriod = currentKlinePeriodRef.current;
+      
+      console.log('📊 收到 K线事件:', { 
+        hisKlineCount: hisKlineData?.length || 0, 
+        hasRealKline: !!realKlineData,
+        hasTimestamp: !!realKlineData?.timestamp,
+        currentPeriod 
+      });
+      
+      // 整合历史数据和实时数据
+      let mergedKlineData = [];
+      
+      // 1. 添加历史K线数据或从 ref 中恢复
+      if (hisKlineData && Array.isArray(hisKlineData) && hisKlineData.length > 0) {
+        console.log('📊 使用历史K线数据，数量:', hisKlineData.length);
+        mergedKlineData = [...hisKlineData];
+      } else {
+        console.log('⚠️ 没有历史K线数据');
+        // 后续会通过函数式更新从 state 中恢复
+      }
+      
+      // 2. 整合实时K线数据
+      if (realKlineData && !realKlineData.error && realKlineData.timestamp) {
+        console.log('🔴 收到实时K线数据:', realKlineData);
         
-        // 转换 K线数据为图表需要的格式
-        const transformedKlineData = {
-          values: [],
-          categoryData: []
+        // 将 timestamp (毫秒) 转换为与 hisKlineData 相同的 dt 格式
+        const realDate = new Date(realKlineData.timestamp);
+        const realDt = realDate.toISOString().slice(0, 19); // "2025-11-03T09:00:00"
+        
+        // 创建标准化的实时K线数据对象
+        const normalizedRealKline = {
+          dt: realDt,
+          open: realKlineData.open,
+          close: realKlineData.close,
+          high: realKlineData.high,
+          low: realKlineData.low,
+          symbol: realKlineData.symbol || 'BTCUSDT',
+          exchanges: realKlineData.exchanges || 'Binance'
         };
         
-        data.data.klineData.forEach(item => {
-          // KlineChart 期望格式: [open, close, low, high]
-          transformedKlineData.values.push([
-            parseFloat(item.open),
-            parseFloat(item.close),
-            parseFloat(item.low),
-            parseFloat(item.high)
-          ]);
+        console.log('🔴 标准化后的实时K线:', normalizedRealKline);
+        
+        // 检查实时数据是否与最后一根历史数据时间相同
+        if (mergedKlineData.length > 0) {
+          const lastHistoricalItem = mergedKlineData[mergedKlineData.length - 1];
+          const lastDt = lastHistoricalItem.dt;
           
-          // 生成时间标签
-          const date = new Date(item.timestamp);
-          const timeLabel = `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+          console.log('⏰ 时间比较:', { 
+            lastDt, 
+            realDt,
+            lastTime: new Date(lastDt).getTime(),
+            realTime: new Date(realDt).getTime()
+          });
+          
+          // 比较时间戳（精确到小时）
+          const lastTime = new Date(lastDt).getTime();
+          const realTime = new Date(realDt).getTime();
+          
+          if (Math.abs(lastTime - realTime) < 60000) {
+            // 时间差小于1分钟，认为是同一根K线（实时更新）
+            console.log('🔄 更新最后一根K线（实时数据）');
+            console.log('   旧数据:', lastHistoricalItem);
+            console.log('   新数据:', normalizedRealKline);
+            mergedKlineData[mergedKlineData.length - 1] = normalizedRealKline;
+          } else if (realTime > lastTime) {
+            // 时间不同且更新，追加新的K线
+            console.log('➕ 追加新的K线');
+            mergedKlineData.push(normalizedRealKline);
+          } else {
+            console.log('⚠️ 实时数据时间早于最后一根K线，忽略');
+          }
+        } else {
+          // 没有历史数据，直接添加实时数据
+          console.log('📊 初始化：添加实时数据');
+          mergedKlineData.push(normalizedRealKline);
+        }
+      } else if (realKlineData?.error) {
+        console.log('⚠️ 实时K线数据获取失败:', realKlineData.error);
+      } else if (!realKlineData?.timestamp) {
+        console.log('⚠️ 实时K线数据缺少 timestamp 字段');
+      }
+      
+      // 3. 转换为图表需要的格式
+      if (mergedKlineData.length > 0) {
+        console.log('📊 整合后的K线数据总数:', mergedKlineData.length);
+        console.log('📊 第一条:', mergedKlineData[0]);
+        console.log('📊 最后一条:', mergedKlineData[mergedKlineData.length - 1]);
+        
+        const transformedKlineData = {
+          values: [],
+          categoryData: [],
+          _rawData: mergedKlineData  // 保存原始数据，用于下次实时更新
+        };
+        
+        mergedKlineData.forEach((item, index) => {
+          // KlineChart 期望格式: [open, close, low, high]
+          const open = parseFloat(item.open || item.Open || 0);
+          const close = parseFloat(item.close || item.Close || 0);
+          const low = parseFloat(item.low || item.Low || 0);
+          const high = parseFloat(item.high || item.High || 0);
+          
+          transformedKlineData.values.push([open, close, low, high]);
+          
+          // 生成时间标签（支持 dt 和 timestamp 字段）
+          const timeStr = item.dt || item.timestamp;
+          let timeLabel = '';
+          
+          if (timeStr) {
+            try {
+              const date = new Date(timeStr);
+              if (!isNaN(date.getTime())) {
+                timeLabel = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+              } else {
+                timeLabel = timeStr;
+                console.warn(`⚠️ 无效的时间格式 (索引 ${index}):`, timeStr);
+              }
+            } catch (error) {
+              console.error(`❌ 时间解析错误 (索引 ${index}):`, timeStr, error);
+              timeLabel = timeStr || `T${index}`;
+            }
+          } else {
+            timeLabel = `T${index}`;
+            console.warn(`⚠️ 缺少时间字段 (索引 ${index}):`, item);
+          }
+          
           transformedKlineData.categoryData.push(timeLabel);
         });
         
-        console.log('✅ K线数据转换完成:', transformedKlineData);
+        console.log('✅ K线数据转换完成，数据点数:', transformedKlineData.values.length);
+        console.log('📊 时间标签示例:', transformedKlineData.categoryData.slice(-3));
         
-        // 使用当前订阅的时间周期来更新数据
-        const currentPeriod = currentKlinePeriodRef.current;
         console.log(`📊 更新 ${currentPeriod} 时间周期的K线数据`);
         
         setKlineData(prev => ({
           ...prev,
           [currentPeriod]: transformedKlineData
         }));
+        return; // 已处理完数据更新
       }
+      
+      // 如果 mergedKlineData 为空但有 realKlineData，使用函数式更新从 state 恢复数据
+      if (mergedKlineData.length === 0 && realKlineData && !realKlineData.error && realKlineData.timestamp) {
+        console.log('📊 从 state 恢复数据并更新实时K线');
+        
+        setKlineData(prev => {
+          const existingData = prev[currentPeriod];
+          let sourceData = [];
+          
+          // 从 state 恢复原始数据
+          if (existingData?._rawData && Array.isArray(existingData._rawData)) {
+            console.log('📊 从 state 恢复了', existingData._rawData.length, '条数据');
+            sourceData = [...existingData._rawData];
+          }
+          
+          // 标准化实时K线数据
+          const realDate = new Date(realKlineData.timestamp);
+          const realDt = realDate.toISOString().slice(0, 19);
+          const normalizedRealKline = {
+            dt: realDt,
+            open: realKlineData.open,
+            close: realKlineData.close,
+            high: realKlineData.high,
+            low: realKlineData.low,
+            symbol: realKlineData.symbol || 'BTCUSDT',
+            exchanges: realKlineData.exchanges || 'Binance'
+          };
+          
+          console.log('🔴 标准化后的实时K线:', normalizedRealKline);
+          
+          // 更新或追加实时数据
+          if (sourceData.length > 0) {
+            const lastItem = sourceData[sourceData.length - 1];
+            const lastTime = new Date(lastItem.dt).getTime();
+            const realTime = new Date(realDt).getTime();
+            
+            console.log('⏰ 时间比较:', { lastDt: lastItem.dt, realDt, timeDiff: realTime - lastTime });
+            
+            if (Math.abs(lastTime - realTime) < 60000) {
+              console.log('🔄 更新最后一根K线');
+              sourceData[sourceData.length - 1] = normalizedRealKline;
+            } else if (realTime > lastTime) {
+              console.log('➕ 追加新的K线');
+              sourceData.push(normalizedRealKline);
+            }
+          } else {
+            console.log('📊 初始化：添加实时数据');
+            sourceData.push(normalizedRealKline);
+          }
+          
+          // 转换为图表格式
+          if (sourceData.length === 0) {
+            console.log('⚠️ 没有可用的K线数据');
+            return prev;
+          }
+          
+          const newTransformedData = {
+            values: [],
+            categoryData: [],
+            _rawData: sourceData
+          };
+          
+          sourceData.forEach((item, index) => {
+            const open = parseFloat(item.open || item.Open || 0);
+            const close = parseFloat(item.close || item.Close || 0);
+            const low = parseFloat(item.low || item.Low || 0);
+            const high = parseFloat(item.high || item.High || 0);
+            newTransformedData.values.push([open, close, low, high]);
+            
+            const timeStr = item.dt || item.timestamp;
+            let timeLabel = '';
+            if (timeStr) {
+              try {
+                const date = new Date(timeStr);
+                if (!isNaN(date.getTime())) {
+                  timeLabel = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+                } else {
+                  timeLabel = timeStr;
+                }
+              } catch (error) {
+                timeLabel = timeStr || `T${index}`;
+              }
+            } else {
+              timeLabel = `T${index}`;
+            }
+            newTransformedData.categoryData.push(timeLabel);
+          });
+          
+          console.log('✅ K线数据转换完成（函数式更新），数据点数:', newTransformedData.values.length);
+          
+          return {
+            ...prev,
+            [currentPeriod]: newTransformedData
+          };
+        });
+      }
+      
+      // 4. 更新 headerData（如果存在）
+      if (!headerData) {
+        console.log('⚠️ K线数据中没有 headerData');
+        return;
+      }
+      
+      console.log('📊 K线 headerData:', headerData);
       
       // 更新 coinInfo
       setCoinInfo(prevInfo => {
@@ -743,17 +1010,28 @@ export default function DetailPage() {
       return <div className={styles.emptyInfo}>币种信息不存在</div>;
     }
     
+    const isPriceDown = String(coinInfo.priceChange_24h).includes('-');
+    
     return (
       <div className={styles.headerContainer}>
         <div className={styles.headerBox}>
           <div className={styles.left}>
             <div className={styles.coinInfo}>
-              <img src={coinInfo.url} alt={coinInfo.symbol} className={styles.coinIcon} />
-              <div className={styles.coinSymbol}>{coinInfo.symbol}</div>
-              <div className={styles.coinPrice}>{coinInfo.currentPrice}</div>
+              <div className={styles.topRow}>
+                <img src={coinInfo.url} alt={coinInfo.symbol} className={styles.coinIcon} />
+                <div className={styles.coinSymbol}>{coinInfo.symbol}</div>
+              </div>
+              <div className={`${styles.coinPrice} ${isPriceDown ? styles.priceDown : styles.priceUp}`}>
+                {coinInfo.currentPrice}
+              </div>
             </div>
             <div className={styles.caretBox}>
-              <div className={`${styles.percentBox} ${String(coinInfo.priceChange_24h).includes('-') ? styles.downPercent : styles.upPercent}`}>
+              <img 
+                src={isPriceDown ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/down.png' : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/up.png'} 
+                className={styles.caretIcon}
+                alt={isPriceDown ? '下跌' : '上涨'}
+              />
+              <div className={`${styles.percentBox} ${isPriceDown ? styles.downPercent : styles.upPercent}`}>
                 <div className={styles.priceItem}>{coinInfo.priceChange_24h}</div>
                 <div>({coinInfo.priceChangePercentage_24h})</div>
               </div>
@@ -811,16 +1089,15 @@ export default function DetailPage() {
         
         {/* 展开收缩按钮 */}
         <div className={styles.coinInfoCaret} onClick={toggleInfoExpanded}>
-          <div className={`${styles.caretIcon} ${infoExpanded ? styles.caretUp : styles.caretDown}`}>
-            {infoExpanded ? '▲' : '▼'}
-          </div>
+          <img 
+            className={styles.arrowIcon} 
+            src={infoExpanded 
+              ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/up.png' 
+              : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/down.png'
+            } 
+            alt={infoExpanded ? '收起' : '展开'}
+          />
         </div>
-        
-        {coinInfo.description && (
-          <MoziCard title="币种介绍">
-            <div className={styles.description}>{coinInfo.description}</div>
-          </MoziCard>
-        )}
       </div>
     );
   };
@@ -836,6 +1113,7 @@ export default function DetailPage() {
     console.log('renderKline - activeKlineTab:', activeKlineTab);
     console.log('renderKline - klineData:', klineData);
     console.log('renderKline - currentKlineData:', currentKlineData);
+    console.log('renderKline - chartType:', chartType);
     
     return (
       <div className={`${styles.box} ${styles.klineContainer}`}>
@@ -843,6 +1121,10 @@ export default function DetailPage() {
           data={currentKlineData}
           activeKey={activeKlineTab}
           onActiveChange={setActiveKlineTab}
+          chartType={chartType}
+          onChartTypeChange={handleChartTypeChange}
+          showLandscapeBtn={true}
+          onLandscapeClick={handleLandscapeClick}
           loading={klineLoading}
         />
       </div>
@@ -865,36 +1147,24 @@ export default function DetailPage() {
     
     return (
       <MoziCard title="市场" sumNum={marketData.length}>
-        <div className={styles.marketContainer}>
-          <div className={styles.marketHeader}>
-            <div className={styles.marketCol}>交易所</div>
-            <div className={styles.marketCol}>交易对</div>
-            <div className={styles.marketCol}>价格</div>
-            <div className={styles.marketCol}>24h成交额</div>
-          </div>
-          
-          <div className={styles.marketList}>
-            {marketData.map((item, index) => (
-              <div key={index} className={styles.marketItem}>
-                <div className={styles.marketCol}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <img src={item.exchangeIcon} alt={item.exchange} className={styles.exchangeIcon} />
-                    <span>{item.exchange}</span>
-                  </div>
-                </div>
-                <div className={styles.marketCol}>{item.pair}</div>
-                <div className={styles.marketCol}>{item.price}</div>
-                <div className={styles.marketCol}>{formatNumber(item.volume24h)}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <MoziGrid
+          length={5}
+          colName={['交易所', '最新价', '24H涨幅', '24H成交量', '24小时成交额']}
+          gridContent={marketData}
+          gridTitleBgColor="transparent"
+        />
       </MoziCard>
     );
   };
   
   return (
     <Layout>
+      {/* 顶部导航栏 */}
+      <NavBar 
+        title={coinInfo?.name || symbol || '币种详情'} 
+        showBack={true}
+      />
+      
       <div className={styles.container}>
         {/* 头部币种信息 */}
         {renderCoinInfo()}
@@ -907,6 +1177,7 @@ export default function DetailPage() {
         >
           <TabBar.Item key="chart" title="图表" />
           <TabBar.Item key="market" title="市场" />
+          <TabBar.Item key="roi" title="投资回报率" />
         </TabBar>
         
         {/* K线图表区域 */}
@@ -922,26 +1193,43 @@ export default function DetailPage() {
             {renderMarket()}
           </div>
         </div>
+
+        {/* 投资回报率区域 */}
+        <div className={styles.roiSection}>
+          <MoziCard title="投资回报率" moreDesc="敬请期待">
+            <div style={{ padding: '10px', color: '#999', fontSize: '12px' }}>敬请期待</div>
+          </MoziCard>
+        </div>
         
-        {/* 底部悬浮窗 */}
+        {/* 底部操作栏 */}
         <div className={styles.footerList}>
-          <div className={styles.footerItem} onClick={toggleFavorite}>
-            <div className={styles.footerIcon}>
-              {isFavorite ? '★' : '☆'}
-            </div>
+          <div className={styles.footerItem}>
+            <AddCollect isOwn={coinInfo?.isSelfSelected || false} symbol={symbol} />
             <div className={styles.footerText}>加自选</div>
           </div>
           <div className={styles.footerItem} onClick={jump2Alert}>
-            <div className={styles.footerIcon}>📢</div>
+            <img 
+              className={styles.footerIcon} 
+              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/bell.png" 
+              alt="告警"
+            />
             <div className={styles.footerText}>告警</div>
           </div>
-          <div className={styles.footerItem} onClick={jump2Community}>
-            <div className={styles.footerIcon}>👥</div>
-            <div className={styles.footerText}>社区</div>
-          </div>
           <div className={styles.footerItem}>
-            <div className={styles.footerIcon}>📤</div>
+            <img 
+              className={styles.footerIcon} 
+              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/share.png" 
+              alt="分享"
+            />
             <div className={styles.footerText}>分享</div>
+          </div>
+          <div className={styles.footerItem} onClick={jump2Community}>
+            <img 
+              className={styles.footerIcon} 
+              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community-no-actived.png" 
+              alt="社区"
+            />
+            <div className={styles.footerText}>社区</div>
           </div>
         </div>
 

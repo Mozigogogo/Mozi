@@ -1,10 +1,19 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as echarts from 'echarts';
+import { TabBar } from 'antd-mobile';
 import styles from './index.module.less';
 
-const KlineChart = ({ data, activeKey = 'hour', onActiveChange }) => {
+const KlineChart = ({ 
+  data, 
+  activeKey = 'hour', 
+  onActiveChange, 
+  chartType = 'line',
+  onChartTypeChange,
+  showLandscapeBtn = false,
+  onLandscapeClick
+}) => {
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
 
@@ -42,15 +51,33 @@ const KlineChart = ({ data, activeKey = 'hour', onActiveChange }) => {
     return result;
   };
 
-  // 获取图表配置
-  const getChartOptions = (processedData) => {
-    // 币圈遵循国外 绿涨红跌 原则
-    const upColor = '#02c076';  // 阳线颜色
-    const upBorderColor = '#008F28'; // 阳线边框颜色
-    const downColor = '#ff3333'; // 阴线颜色
-    const downBorderColor = '#8A0000'; // 阴线边框颜色
+  // 将K线数据转换为折线数据
+  const buildLineDataset = (klineData) => {
+    if (!klineData || !klineData.values) {
+      return { categoryData: [], lineData: [] };
+    }
+    // 如果已经是折线格式，直接返回
+    if (Array.isArray(klineData.lineData)) {
+      return klineData;
+    }
+    const categoryData = klineData.categoryData || [];
+    const values = klineData.values || [];
+    // 取收盘价作为折线数据 (values格式为 [open, close, low, high])
+    const lineData = values.map((v) => {
+      return Array.isArray(v) ? v[1] : (v?.Close ?? v?.close ?? 0);
+    });
+    return { categoryData, lineData };
+  };
 
-    const dataLength = processedData.values.length;
+  // 获取图表配置
+  const getChartOptions = (processedData, type = 'kline') => {
+    // 中国市场习惯：红涨绿跌
+    const upColor = '#FA5F5F';  // 阳线颜色（红色-涨）
+    const upBorderColor = '#FA5F5F'; // 阳线边框颜色
+    const downColor = '#11B787'; // 阴线颜色（绿色-跌）
+    const downBorderColor = '#11B787'; // 阴线边框颜色
+
+    const dataLength = processedData.values?.length || processedData.lineData?.length || 0;
     
     // 根据数据量动态调整显示范围
     let startPercent = 0;
@@ -67,9 +94,94 @@ const KlineChart = ({ data, activeKey = 'hour', onActiveChange }) => {
     }
     // 数据少时（<20条），显示全部
 
+    // 折线图配置
+    if (type === 'line') {
+      const lineDs = buildLineDataset(processedData);
+      return {
+        backgroundColor: 'transparent',
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: 'rgba(245, 245, 245, 0.95)',
+          borderColor: '#ddd',
+          textStyle: {
+            color: '#333'
+          }
+        },
+        grid: {
+          left: '3%',
+          right: '4%',
+          bottom: '15%',
+          top: '10%',
+          containLabel: true
+        },
+        xAxis: {
+          type: 'category',
+          data: lineDs.categoryData,
+          boundaryGap: false,
+          axisLine: { lineStyle: { color: '#ddd' } },
+          axisLabel: { color: '#666' }
+        },
+        yAxis: {
+          type: 'value',
+          scale: true,
+          splitLine: {
+            lineStyle: { color: '#f0f0f0' }
+          },
+          axisLine: { lineStyle: { color: '#ddd' } },
+          axisLabel: { color: '#666' }
+        },
+        dataZoom: [
+          {
+            type: 'inside',
+            start: startPercent,
+            end: endPercent
+          },
+          {
+            show: true,
+            type: 'slider',
+            start: startPercent,
+            end: endPercent,
+            bottom: '5%',
+            height: 20,
+            backgroundColor: '#f5f5f5',
+            fillerColor: 'rgba(17, 183, 135, 0.2)',
+            borderColor: '#ddd'
+          }
+        ],
+        series: [
+          {
+            name: '价格',
+            type: 'line',
+            data: lineDs.lineData,
+            smooth: true,
+            symbol: 'none',
+            lineStyle: {
+              color: '#11B787',
+              width: 2
+            },
+            areaStyle: {
+              color: {
+                type: 'linear',
+                x: 0,
+                y: 0,
+                x2: 0,
+                y2: 1,
+                colorStops: [
+                  { offset: 0, color: 'rgba(17, 183, 135, 0.3)' },
+                  { offset: 1, color: 'rgba(17, 183, 135, 0.05)' }
+                ]
+              }
+            }
+          }
+        ]
+      };
+    }
+
+    // K线图配置
     return {
       backgroundColor: 'transparent',
       legend: {
+        show: false,
         type: 'scroll',
         data: ['K线', 'MA5', 'MA10', 'MA20', 'MA30'],
         selected: {
@@ -250,37 +362,66 @@ const KlineChart = ({ data, activeKey = 'hour', onActiveChange }) => {
   useEffect(() => {
     if (chartInstance.current && data) {
       console.log('📊 ECharts 接收数据:', data);
-      const options = getChartOptions(data);
-      console.log('📊 K线数量:', data.values?.length);
+      const options = getChartOptions(data, chartType);
+      console.log('📊 K线数量:', data.values?.length, '图表类型:', chartType);
       chartInstance.current.setOption(options, true);
     }
-  }, [data]);
-
-  // 时间周期选择
-  const timeOptions = [
-    { key: 'hour', label: '小时' },
-    { key: 'day', label: '日' },
-    { key: 'week', label: '周' },
-    { key: 'month', label: '月' }
-  ];
+  }, [data, chartType]);
 
   return (
     <div className={styles.container}>
-      {/* 时间周期选择 */}
-      <div className={styles.timeSelector}>
-        {timeOptions.map(option => (
-          <button
-            key={option.key}
-            className={`${styles.timeButton} ${activeKey === option.key ? styles.active : ''}`}
-            onClick={() => onActiveChange && onActiveChange(option.key)}
+      {/* 图表类型切换按钮（右上角） */}
+      {onChartTypeChange && (
+        <div className={styles.chartTypeTabs}>
+          <div 
+            className={`${styles.chartTypeBtn} ${chartType === 'line' ? styles.active : ''}`}
+            onClick={() => onChartTypeChange('line')}
           >
-            {option.label}
-          </button>
-        ))}
-      </div>
+            <img 
+              src={chartType === 'line' 
+                ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/graph/line-actived.png'
+                : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/graph/line-no-actived.png'
+              } 
+              className={styles.chartTypeIcon} 
+              alt="折线图"
+            />
+          </div>
+          <div 
+            className={`${styles.chartTypeBtn} ${chartType === 'kline' ? styles.active : ''}`}
+            onClick={() => onChartTypeChange('kline')}
+          >
+            <img 
+              src={chartType === 'kline' 
+                ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/graph/kline-actived.png'
+                : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/graph/kline-no-actived.png'
+              } 
+              className={styles.chartTypeIcon} 
+              alt="K线图"
+            />
+          </div>
+        </div>
+      )}
+      
+      {/* 时间周期选择 - 使用TabBar */}
+      <TabBar className={styles.chartTab} activeKey={activeKey} onChange={onActiveChange}>
+        <TabBar.Item key="hour" title="1H" />
+        <TabBar.Item key="day" title="1日" />
+        <TabBar.Item key="week" title="1周" />
+        <TabBar.Item key="month" title="1月" />
+      </TabBar>
       
       {/* 图表容器 */}
       <div className={styles.chartContainer}>
+        {/* 横屏按钮 */}
+        {showLandscapeBtn && onLandscapeClick && (
+          <div className={styles.landscapeBtn} onClick={onLandscapeClick}>
+            <svg viewBox="0 0 1024 1024" width="16" height="16" fill="currentColor">
+              <path d="M192 256h640v512H192z" fill="none" stroke="currentColor" strokeWidth="64"/>
+              <path d="M704 384l128 128-128 128M320 640L192 512l128-128"/>
+            </svg>
+          </div>
+        )}
+        
         {!data && (
           <div className={styles.loading}>
             <div>加载中...</div>
