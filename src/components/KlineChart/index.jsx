@@ -71,11 +71,11 @@ const KlineChart = ({
 
   // 获取图表配置
   const getChartOptions = (processedData, type = 'kline') => {
-    // 中国市场习惯：红涨绿跌
-    const upColor = '#FA5F5F';  // 阳线颜色（红色-涨）
-    const upBorderColor = '#FA5F5F'; // 阳线边框颜色
-    const downColor = '#11B787'; // 阴线颜色（绿色-跌）
-    const downBorderColor = '#11B787'; // 阴线边框颜色
+    // 国际市场习惯：绿涨红跌
+    const upColor = '#11B787';  // 阳线颜色（绿色-涨）
+    const upBorderColor = '#11B787'; // 阳线边框颜色
+    const downColor = '#FA5F5F'; // 阴线颜色（红色-跌）
+    const downBorderColor = '#FA5F5F'; // 阴线边框颜色
 
     const dataLength = processedData.values?.length || processedData.lineData?.length || 0;
     

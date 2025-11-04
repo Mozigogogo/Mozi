@@ -544,7 +544,8 @@ export default function DetailPage() {
       // 1. 添加历史K线数据或从 ref 中恢复
       if (hisKlineData && Array.isArray(hisKlineData) && hisKlineData.length > 0) {
         console.log('📊 使用历史K线数据，数量:', hisKlineData.length);
-        mergedKlineData = [...hisKlineData];
+        // WebSocket返回的数据是从新到旧，需要反转为从旧到新
+        mergedKlineData = [...hisKlineData].reverse();
       } else {
         console.log('⚠️ 没有历史K线数据');
         // 后续会通过函数式更新从 state 中恢复
