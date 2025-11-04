@@ -149,7 +149,10 @@ export const handleOptions = (data, type, msg) => {
       yAxis: {
         scale: true,
         splitArea: {
-          show: true
+          show: false
+        },
+        splitLine: {
+          show: false  // 去掉横向网格线
         }
       },
       series: [

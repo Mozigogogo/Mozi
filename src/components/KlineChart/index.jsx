@@ -125,7 +125,7 @@ const KlineChart = ({
           type: 'value',
           scale: true,
           splitLine: {
-            lineStyle: { color: '#f0f0f0' }
+            show: false  // 去掉横向网格线
           },
           axisLine: { lineStyle: { color: '#ddd' } },
           axisLabel: { color: '#666' }
@@ -237,11 +237,7 @@ const KlineChart = ({
           show: false
         },
         splitLine: {
-          show: true,
-          lineStyle: {
-            color: '#f0f0f0',
-            type: 'solid'
-          }
+          show: false  // 去掉横向网格线
         },
         axisLine: {
           lineStyle: { color: '#ddd' }
