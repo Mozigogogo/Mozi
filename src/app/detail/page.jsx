@@ -512,51 +512,40 @@ export default function DetailPage() {
     
     // 监听 K线数据更新 - 更新 headerData 和 klineData
     ws.on(WS_EVENTS.KLINE, (data) => {
-      console.log('📈 收到 K线数据:', data);
+      if (!data.data) return;
       
-      // 检查是否有数据
-      if (!data.data) {
-        console.log('⚠️ K线数据为空');
-        return;
-      }
-      
-      // 正确的数据结构：data.data.klineData 才是K线数据
+      // 数据结构: { klineData: { hisKlineData, realKlineData }, headerData }
       const { klineData, headerData } = data.data;
-      
-      if (!klineData) {
-        console.log('⚠️ klineData 不存在');
-        return;
-      }
-      
-      const { hisKlineData, realKlineData } = klineData;
+      const { hisKlineData, realKlineData } = klineData || {};
       const currentPeriod = currentKlinePeriodRef.current;
       
-      console.log('📊 收到 K线事件:', { 
-        hisKlineCount: hisKlineData?.length || 0, 
-        hasRealKline: !!realKlineData,
-        hasTimestamp: !!realKlineData?.timestamp,
-        currentPeriod 
-      });
+      console.log('🔔 ========== K线实时更新 ==========');
+      console.log('📊 周期:', currentPeriod, '| 历史数据:', hisKlineData?.length || 0, '条');
+      
+      if (realKlineData) {
+        console.log('📈 实时K线:', {
+          时间: new Date(realKlineData.timestamp).toLocaleString('zh-CN'),
+          开: realKlineData.open,
+          收: realKlineData.close,
+          高: realKlineData.high,
+          低: realKlineData.low,
+        });
+      }
       
       // 整合历史数据和实时数据
       let mergedKlineData = [];
       
-      // 1. 添加历史K线数据或从 ref 中恢复
+      // 1. 添加历史K线数据
       if (hisKlineData && Array.isArray(hisKlineData) && hisKlineData.length > 0) {
-        console.log('📊 使用历史K线数据，数量:', hisKlineData.length);
-        mergedKlineData = [...hisKlineData];
-      } else {
-        console.log('⚠️ 没有历史K线数据');
-        // 后续会通过函数式更新从 state 中恢复
+        // WebSocket返回的数据是从新到旧，需要反转为从旧到新
+        mergedKlineData = [...hisKlineData].reverse();
       }
       
       // 2. 整合实时K线数据
       if (realKlineData && !realKlineData.error && realKlineData.timestamp) {
-        console.log('🔴 收到实时K线数据:', realKlineData);
-        
         // 将 timestamp (毫秒) 转换为与 hisKlineData 相同的 dt 格式
         const realDate = new Date(realKlineData.timestamp);
-        const realDt = realDate.toISOString().slice(0, 19); // "2025-11-03T09:00:00"
+        const realDt = realDate.toISOString().slice(0, 19);
         
         // 创建标准化的实时K线数据对象
         const normalizedRealKline = {
@@ -569,53 +558,30 @@ export default function DetailPage() {
           exchanges: realKlineData.exchanges || 'Binance'
         };
         
-        console.log('🔴 标准化后的实时K线:', normalizedRealKline);
-        
         // 检查实时数据是否与最后一根历史数据时间相同
         if (mergedKlineData.length > 0) {
           const lastHistoricalItem = mergedKlineData[mergedKlineData.length - 1];
-          const lastDt = lastHistoricalItem.dt;
-          
-          console.log('⏰ 时间比较:', { 
-            lastDt, 
-            realDt,
-            lastTime: new Date(lastDt).getTime(),
-            realTime: new Date(realDt).getTime()
-          });
-          
-          // 比较时间戳（精确到小时）
-          const lastTime = new Date(lastDt).getTime();
+          const lastTime = new Date(lastHistoricalItem.dt).getTime();
           const realTime = new Date(realDt).getTime();
           
           if (Math.abs(lastTime - realTime) < 60000) {
             // 时间差小于1分钟，认为是同一根K线（实时更新）
-            console.log('🔄 更新最后一根K线（实时数据）');
-            console.log('   旧数据:', lastHistoricalItem);
-            console.log('   新数据:', normalizedRealKline);
+            console.log('🔄 更新当前K线');
             mergedKlineData[mergedKlineData.length - 1] = normalizedRealKline;
           } else if (realTime > lastTime) {
             // 时间不同且更新，追加新的K线
-            console.log('➕ 追加新的K线');
+            console.log('➕ 追加新K线');
             mergedKlineData.push(normalizedRealKline);
-          } else {
-            console.log('⚠️ 实时数据时间早于最后一根K线，忽略');
           }
         } else {
-          // 没有历史数据，直接添加实时数据
-          console.log('📊 初始化：添加实时数据');
           mergedKlineData.push(normalizedRealKline);
         }
-      } else if (realKlineData?.error) {
-        console.log('⚠️ 实时K线数据获取失败:', realKlineData.error);
-      } else if (!realKlineData?.timestamp) {
-        console.log('⚠️ 实时K线数据缺少 timestamp 字段');
       }
       
       // 3. 转换为图表需要的格式
       if (mergedKlineData.length > 0) {
-        console.log('📊 整合后的K线数据总数:', mergedKlineData.length);
-        console.log('📊 第一条:', mergedKlineData[0]);
-        console.log('📊 最后一条:', mergedKlineData[mergedKlineData.length - 1]);
+        const lastKline = mergedKlineData[mergedKlineData.length - 1];
+        console.log('📊 当前K线总数:', mergedKlineData.length, '| 最新:', lastKline.dt, lastKline.close);
         
         const transformedKlineData = {
           values: [],
@@ -657,16 +623,12 @@ export default function DetailPage() {
           transformedKlineData.categoryData.push(timeLabel);
         });
         
-        console.log('✅ K线数据转换完成，数据点数:', transformedKlineData.values.length);
-        console.log('📊 时间标签示例:', transformedKlineData.categoryData.slice(-3));
-        
-        console.log(`📊 更新 ${currentPeriod} 时间周期的K线数据`);
-        
         setKlineData(prev => ({
           ...prev,
           [currentPeriod]: transformedKlineData
         }));
-        return; // 已处理完数据更新
+        console.log('✅ K线图已更新\n');
+        return;
       }
       
       // 如果 mergedKlineData 为空但有 realKlineData，使用函数式更新从 state 恢复数据
@@ -771,10 +733,27 @@ export default function DetailPage() {
         return;
       }
       
-      console.log('📊 K线 headerData:', headerData);
+      console.log('🔔 ========== 收到 WebSocket headerData 更新 ==========');
+      console.log('📊 完整 headerData:', JSON.stringify(headerData, null, 2));
+      console.log('🔑 关键字段类型检查:', {
+        currentPrice: {value: headerData.currentPrice, type: typeof headerData.currentPrice},
+        priceChange_24h: {value: headerData.priceChange_24h, type: typeof headerData.priceChange_24h},
+        priceChangePercentage_24h: {value: headerData.priceChangePercentage_24h, type: typeof headerData.priceChangePercentage_24h},
+        marketCapRank: {value: headerData.marketCapRank, type: typeof headerData.marketCapRank},
+        marketCap: {value: headerData.marketCap, type: typeof headerData.marketCap},
+        high_24h: {value: headerData.high_24h, type: typeof headerData.high_24h},
+        low_24h: {value: headerData.low_24h, type: typeof headerData.low_24h},
+      });
       
       // 更新 coinInfo
       setCoinInfo(prevInfo => {
+        console.log('📝 【更新前】coinInfo 当前状态:', {
+          currentPrice: prevInfo?.currentPrice,
+          priceChange_24h: prevInfo?.priceChange_24h,
+          priceChangePercentage_24h: prevInfo?.priceChangePercentage_24h,
+          symbol: prevInfo?.symbol,
+        });
+        
         if (!prevInfo) {
           console.log('⚠️ coinInfo 为空，跳过更新');
           return null;
@@ -782,107 +761,143 @@ export default function DetailPage() {
         
         const updatedInfo = {
           ...prevInfo,
-          // 基本信息
-          currentPrice: headerData.currentPrice || prevInfo.currentPrice,
-          name: headerData.name || prevInfo.name,
-          symbol: headerData.symbol || prevInfo.symbol,
-          url: headerData.url || prevInfo.url,
+          // 基本信息 - 使用 ?? 避免假值被忽略
+          currentPrice: headerData.currentPrice ?? prevInfo.currentPrice,
+          name: headerData.name ?? prevInfo.name,
+          symbol: headerData.symbol ?? prevInfo.symbol,
+          url: headerData.url ?? prevInfo.url,
           
           // 24小时数据
-          priceChange_24h: headerData.priceChange_24h || prevInfo.priceChange_24h,
-          priceChangePercentage_24h: headerData.priceChangePercentage_24h || prevInfo.priceChangePercentage_24h,
-          high_24h: headerData.high_24h || prevInfo.high_24h,
-          low_24h: headerData.low_24h || prevInfo.low_24h,
+          priceChange_24h: headerData.priceChange_24h ?? prevInfo.priceChange_24h,
+          priceChangePercentage_24h: headerData.priceChangePercentage_24h ?? prevInfo.priceChangePercentage_24h,
+          high_24h: headerData.high_24h ?? prevInfo.high_24h,
+          low_24h: headerData.low_24h ?? prevInfo.low_24h,
           
           // 市值数据
-          marketCap: headerData.marketCap || prevInfo.marketCap,
-          marketCapRank: headerData.marketCapRank || prevInfo.marketCapRank,
-          marketCapChange_24h: headerData.marketCapChange_24h || prevInfo.marketCapChange_24h,
-          marketCapChangePercentage_24h: headerData.marketCapChangePercentage_24h || prevInfo.marketCapChangePercentage_24h,
-          fullyDilutedValuation: headerData.fullyDilutedValuation || prevInfo.fullyDilutedValuation,
+          marketCap: headerData.marketCap ?? prevInfo.marketCap,
+          marketCapRank: headerData.marketCapRank ?? prevInfo.marketCapRank,
+          marketCapChange_24h: headerData.marketCapChange_24h ?? prevInfo.marketCapChange_24h,
+          marketCapChangePercentage_24h: headerData.marketCapChangePercentage_24h ?? prevInfo.marketCapChangePercentage_24h,
+          fullyDilutedValuation: headerData.fullyDilutedValuation ?? prevInfo.fullyDilutedValuation,
           
           // 供应量
-          totalSupply: headerData.totalSupply || prevInfo.totalSupply,
-          circulatingSupply: headerData.circulatingSupply || prevInfo.circulatingSupply,
+          totalSupply: headerData.totalSupply ?? prevInfo.totalSupply,
+          circulatingSupply: headerData.circulatingSupply ?? prevInfo.circulatingSupply,
           
           // 成交量
-          totalVolume: headerData.totalVolume || prevInfo.totalVolume,
-          volume: headerData.volume || prevInfo.volume,
-          quoteVolume: headerData.quoteVolume || prevInfo.quoteVolume,
+          totalVolume: headerData.totalVolume ?? prevInfo.totalVolume,
+          volume: headerData.volume ?? prevInfo.volume,
+          quoteVolume: headerData.quoteVolume ?? prevInfo.quoteVolume,
           
           // 历史最高/最低
-          ath: headerData.ath || prevInfo.ath,
-          athDate: headerData.athDate || prevInfo.athDate,
-          athChangePercentage: headerData.athChangePercentage || prevInfo.athChangePercentage,
-          atl: headerData.atl || prevInfo.atl,
-          atlDate: headerData.atlDate || prevInfo.atlDate,
-          atlChangePercentage: headerData.atlChangePercentage || prevInfo.atlChangePercentage,
+          ath: headerData.ath ?? prevInfo.ath,
+          athDate: headerData.athDate ?? prevInfo.athDate,
+          athChangePercentage: headerData.athChangePercentage ?? prevInfo.athChangePercentage,
+          atl: headerData.atl ?? prevInfo.atl,
+          atlDate: headerData.atlDate ?? prevInfo.atlDate,
+          atlChangePercentage: headerData.atlChangePercentage ?? prevInfo.atlChangePercentage,
           
           // 自选状态
           isSelfSelected: headerData.isSelfSelected !== undefined ? headerData.isSelfSelected : prevInfo.isSelfSelected,
         };
         
-        console.log('✅ 更新 coinInfo 成功:', {
-          symbol: updatedInfo.symbol,
+        console.log('✅ 【更新后】coinInfo 新状态:', {
           currentPrice: updatedInfo.currentPrice,
           priceChange_24h: updatedInfo.priceChange_24h,
-          priceChangePercentage_24h: updatedInfo.priceChangePercentage_24h
+          priceChangePercentage_24h: updatedInfo.priceChangePercentage_24h,
+          symbol: updatedInfo.symbol,
+        });
+        
+        console.log('🔄 字段变化对比:', {
+          currentPrice: `${prevInfo.currentPrice} → ${updatedInfo.currentPrice} (变化: ${prevInfo.currentPrice !== updatedInfo.currentPrice})`,
+          priceChange_24h: `${prevInfo.priceChange_24h} → ${updatedInfo.priceChange_24h} (变化: ${prevInfo.priceChange_24h !== updatedInfo.priceChange_24h})`,
+          priceChangePercentage_24h: `${prevInfo.priceChangePercentage_24h} → ${updatedInfo.priceChangePercentage_24h} (变化: ${prevInfo.priceChangePercentage_24h !== updatedInfo.priceChangePercentage_24h})`,
+          marketCap: `${prevInfo.marketCap} → ${updatedInfo.marketCap} (变化: ${prevInfo.marketCap !== updatedInfo.marketCap})`,
         });
         
         return updatedInfo;
       });
       
-      // 更新详细信息（左侧）
-      setCoinInfoLeft(prev => prev.map(item => {
-        if (item.name === '24H最高价' && headerData.high_24h) {
-          return { ...item, value: headerData.high_24h };
-        }
-        if (item.name === '24H最低价' && headerData.low_24h) {
-          return { ...item, value: headerData.low_24h };
-        }
-        if (item.name === '稀释市值' && headerData.fullyDilutedValuation) {
-          return { ...item, value: headerData.fullyDilutedValuation };
-        }
-        if (item.name === '24H市值变化' && headerData.marketCapChange_24h) {
-          return { ...item, value: headerData.marketCapChange_24h };
-        }
-        if (item.name === '24H市值变化百分比' && headerData.marketCapChangePercentage_24h) {
-          return { ...item, value: headerData.marketCapChangePercentage_24h };
-        }
-        if (item.name === '历史最高价时间' && headerData.athDate) {
-          return { ...item, value: headerData.athDate };
-        }
-        if (item.name === '历史最低价时间' && headerData.atlDate) {
-          return { ...item, value: headerData.atlDate };
-        }
-        return item;
-      }));
+      // 更新详细信息（左侧）- 使用显式检查避免假值被忽略
+      setCoinInfoLeft(prev => {
+        console.log('📋 【更新前】coinInfoLeft:', prev);
+        
+        const updated = prev.map(item => {
+          if (item.name === '24H最高价' && headerData.high_24h !== undefined && headerData.high_24h !== null) {
+            console.log(`  ✏️ 更新 24H最高价: ${item.value} → ${headerData.high_24h}`);
+            return { ...item, value: headerData.high_24h };
+          }
+          if (item.name === '24H最低价' && headerData.low_24h !== undefined && headerData.low_24h !== null) {
+            console.log(`  ✏️ 更新 24H最低价: ${item.value} → ${headerData.low_24h}`);
+            return { ...item, value: headerData.low_24h };
+          }
+          if (item.name === '稀释市值' && headerData.fullyDilutedValuation !== undefined && headerData.fullyDilutedValuation !== null) {
+            console.log(`  ✏️ 更新 稀释市值: ${item.value} → ${headerData.fullyDilutedValuation}`);
+            return { ...item, value: headerData.fullyDilutedValuation };
+          }
+          if (item.name === '24H市值变化' && headerData.marketCapChange_24h !== undefined && headerData.marketCapChange_24h !== null) {
+            console.log(`  ✏️ 更新 24H市值变化: ${item.value} → ${headerData.marketCapChange_24h}`);
+            return { ...item, value: headerData.marketCapChange_24h };
+          }
+          if (item.name === '24H市值变化百分比' && headerData.marketCapChangePercentage_24h !== undefined && headerData.marketCapChangePercentage_24h !== null) {
+            console.log(`  ✏️ 更新 24H市值变化百分比: ${item.value} → ${headerData.marketCapChangePercentage_24h}`);
+            return { ...item, value: headerData.marketCapChangePercentage_24h };
+          }
+          if (item.name === '历史最高价时间' && headerData.athDate !== undefined && headerData.athDate !== null) {
+            console.log(`  ✏️ 更新 历史最高价时间: ${item.value} → ${headerData.athDate}`);
+            return { ...item, value: headerData.athDate };
+          }
+          if (item.name === '历史最低价时间' && headerData.atlDate !== undefined && headerData.atlDate !== null) {
+            console.log(`  ✏️ 更新 历史最低价时间: ${item.value} → ${headerData.atlDate}`);
+            return { ...item, value: headerData.atlDate };
+          }
+          return item;
+        });
+        
+        console.log('📋 【更新后】coinInfoLeft:', updated);
+        return updated;
+      });
       
-      // 更新详细信息（右侧）
-      setCoinInfoRight(prev => prev.map(item => {
-        if (item.name === '24H成交额' && headerData.totalVolume) {
-          return { ...item, value: headerData.totalVolume };
-        }
-        if (item.name === '总供应量' && headerData.totalSupply) {
-          return { ...item, value: headerData.totalSupply };
-        }
-        if (item.name === '流通供应量' && headerData.circulatingSupply) {
-          return { ...item, value: headerData.circulatingSupply };
-        }
-        if (item.name === '历史最高价' && headerData.ath) {
-          return { ...item, value: headerData.ath };
-        }
-        if (item.name === '历史最高价百分比' && headerData.athChangePercentage) {
-          return { ...item, value: headerData.athChangePercentage };
-        }
-        if (item.name === '历史最低价' && headerData.atl) {
-          return { ...item, value: headerData.atl };
-        }
-        if (item.name === '历史最低价百分比' && headerData.atlChangePercentage) {
-          return { ...item, value: headerData.atlChangePercentage };
-        }
-        return item;
-      }));
+      // 更新详细信息（右侧）- 使用显式检查避免假值被忽略
+      setCoinInfoRight(prev => {
+        console.log('📋 【更新前】coinInfoRight:', prev);
+        
+        const updated = prev.map(item => {
+          if (item.name === '24H成交额' && headerData.totalVolume !== undefined && headerData.totalVolume !== null) {
+            console.log(`  ✏️ 更新 24H成交额: ${item.value} → ${headerData.totalVolume}`);
+            return { ...item, value: headerData.totalVolume };
+          }
+          if (item.name === '总供应量' && headerData.totalSupply !== undefined && headerData.totalSupply !== null) {
+            console.log(`  ✏️ 更新 总供应量: ${item.value} → ${headerData.totalSupply}`);
+            return { ...item, value: headerData.totalSupply };
+          }
+          if (item.name === '流通供应量' && headerData.circulatingSupply !== undefined && headerData.circulatingSupply !== null) {
+            console.log(`  ✏️ 更新 流通供应量: ${item.value} → ${headerData.circulatingSupply}`);
+            return { ...item, value: headerData.circulatingSupply };
+          }
+          if (item.name === '历史最高价' && headerData.ath !== undefined && headerData.ath !== null) {
+            console.log(`  ✏️ 更新 历史最高价: ${item.value} → ${headerData.ath}`);
+            return { ...item, value: headerData.ath };
+          }
+          if (item.name === '历史最高价百分比' && headerData.athChangePercentage !== undefined && headerData.athChangePercentage !== null) {
+            console.log(`  ✏️ 更新 历史最高价百分比: ${item.value} → ${headerData.athChangePercentage}`);
+            return { ...item, value: headerData.athChangePercentage };
+          }
+          if (item.name === '历史最低价' && headerData.atl !== undefined && headerData.atl !== null) {
+            console.log(`  ✏️ 更新 历史最低价: ${item.value} → ${headerData.atl}`);
+            return { ...item, value: headerData.atl };
+          }
+          if (item.name === '历史最低价百分比' && headerData.atlChangePercentage !== undefined && headerData.atlChangePercentage !== null) {
+            console.log(`  ✏️ 更新 历史最低价百分比: ${item.value} → ${headerData.atlChangePercentage}`);
+            return { ...item, value: headerData.atlChangePercentage };
+          }
+          return item;
+        });
+        
+        console.log('📋 【更新后】coinInfoRight:', updated);
+        console.log('🔔 ========== headerData 更新完成 ==========\n');
+        return updated;
+      });
     });
     
     // 连接 WebSocket

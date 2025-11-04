@@ -88,11 +88,11 @@ export const handleOptions = (data, type, msg) => {
   }
 
   if (type === 'kline') {
-    // K线图配置（中国市场习惯：红涨绿跌）
-    const upColor = '#ff3333';  // 阳线颜色（红色-涨）
-    const upBorderColor = '#8A0000';
-    const downColor = '#02c076'; // 阴线颜色（绿色-跌）
-    const downBorderColor = '#008F28';
+    // K线图配置（国际市场习惯：绿涨红跌）
+    const upColor = '#02c076';  // 阳线颜色（绿色-涨）
+    const upBorderColor = '#008F28';
+    const downColor = '#ff3333'; // 阴线颜色（红色-跌）
+    const downBorderColor = '#8A0000';
 
     // 计算MA线数据
     const calculateMA = (dayCount, data) => {
@@ -149,7 +149,10 @@ export const handleOptions = (data, type, msg) => {
       yAxis: {
         scale: true,
         splitArea: {
-          show: true
+          show: false
+        },
+        splitLine: {
+          show: false  // 去掉横向网格线
         }
       },
       series: [
