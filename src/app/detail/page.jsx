@@ -12,7 +12,7 @@ import HighlightArea from '../../components/HighlightArea';
 import AddCollect from '../../components/AddCollect';
 import KlineChart from '../../components/KlineChart';
 import { Loading } from '../../components/Loading';
-import { CaretUpIcon, CaretDownIcon } from '../../components/Icons';
+import { CaretUpIcon, CaretDownIcon, BellIcon } from '../../components/Icons';
 import { SkeletonPage } from '../../components/Skeleton';
 import { detailPageSkeletonConfig } from '../../components/Skeleton/configs/detailPageConfig';
 import { request } from '../../utils/request';
@@ -54,6 +54,8 @@ export default function DetailPage() {
   const [loading, setLoading] = useState(true);
   const [klineLoading, setKlineLoading] = useState(true);
   const [marketLoading, setMarketLoading] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true); // 是否首次加载
+  const initialLoadTimeoutRef = useRef(null); // 首次加载超时定时器
   const [activeTab, setActiveTab] = useState('chart');
   const [activeKlineTab, setActiveKlineTab] = useState('hour');
   const [chartType, setChartType] = useState('line'); // 图表类型：line | kline
@@ -65,11 +67,18 @@ export default function DetailPage() {
   const needLoop = useRef(true);
   const chartRef = useRef(null);
   const marketRef = useRef(null);
+  const roiRef = useRef(null);
   const wsRef = useRef(null);
   const currentKlineChannelRef = useRef(null); // 当前K线订阅频道ID
   const isWsAuthenticatedRef = useRef(false); // WebSocket认证状态
   const isFirstRenderRef = useRef(true); // 是否首次渲染
   const currentKlinePeriodRef = useRef('hour'); // 当前K线时间周期
+  
+  // WebSocket连接状态管理
+  const wsConnectionStatusRef = useRef('connecting'); // connecting | connected | failed
+  const wsConnectionTimeoutRef = useRef(null); // WebSocket连接超时定时器
+  const useHttpFallbackRef = useRef(false); // 是否使用HTTP降级
+  const pollingTimerRef = useRef(null); // HTTP轮询定时器
   
   // 机器人交互状态
   const [showRobotBubble, setShowRobotBubble] = useState(false);
@@ -186,10 +195,17 @@ export default function DetailPage() {
     };
   };
 
-  // 获取K线数据
+  // 获取K线数据（仅在WebSocket失败时使用）
   const fetchKlineData = async () => {
     if (!symbol) return;
     
+    // 只有在允许使用HTTP降级时才执行
+    if (!useHttpFallbackRef.current) {
+      console.log('WebSocket正在使用中，不执行HTTP请求');
+      return;
+    }
+    
+    console.log('使用HTTP降级模式获取K线数据');
     setKlineLoading(true);
     
     try {
@@ -306,6 +322,8 @@ export default function DetailPage() {
       scrollToSection(chartRef);
     } else if (key === 'market' && marketRef.current) {
       scrollToSection(marketRef);
+    } else if (key === 'roi' && roiRef.current) {
+      scrollToSection(roiRef);
     }
   };
   
@@ -322,16 +340,12 @@ export default function DetailPage() {
 
   // 横屏查看
   const handleLandscapeClick = () => {
-    // 跳转到横屏页面，传递图表数据和类型
-    const chartData = {
-      hour: klineData.hour,
-      day: klineData.day,
-      week: klineData.week,
-      month: klineData.month,
-      active: activeKlineTab,
-      forceType: chartType
-    };
-    jump2NoTab('landscapechart', chartData);
+    // 跳转到横屏页面，只传递币种、周期和图表类型
+    jump2NoTab('landscapechart', {
+      symbol: symbol,
+      period: activeKlineTab,
+      chartType: chartType
+    });
   };
 
   // 添加/移除自选
@@ -379,7 +393,107 @@ export default function DetailPage() {
       window.location.href = '/community';
     }
   };
+
+  // 分享到Telegram
+  const shareToTelegram = () => {
+    if (!coinInfo) return;
+    
+    // 获取当前页面URL
+    const currentUrl = window.location.href;
+    
+    // 构建分享文本
+    const priceChange = coinInfo.priceChange_24h || '0';
+    const priceChangePercent = coinInfo.priceChangePercentage_24h || '0%';
+    const isPriceUp = !String(priceChange).includes('-');
+    const trend = isPriceUp ? '▲' : '▼';
+    
+    const shareText = `━━━━━ MOZI 币种详情 ━━━━━
+
+${coinInfo.name || symbol} (${symbol})
+
+当前价格：$${coinInfo.currentPrice || '0'}
+24H涨跌：${trend} ${priceChange} (${priceChangePercent})
+市值排名：#${coinInfo.marketCapRank || '-'}
+流通市值：${coinInfo.marketCap || '-'}
+
+━━━━━━━━━━━━━━━━━━━━
+查看完整数据 👉 ${currentUrl}`;
+    
+    // 检测是否为移动端
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // 移动端：打开Telegram分享
+      const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(shareText)}`;
+      window.open(telegramUrl, '_blank');
+    } else {
+      // PC端：复制到剪贴板
+      navigator.clipboard.writeText(shareText).then(() => {
+        Toast.show({
+          content: '分享内容已复制到剪贴板',
+          position: 'bottom',
+        });
+      }).catch((err) => {
+        console.error('复制失败:', err);
+        // 降级方案：使用传统方法复制
+        const textArea = document.createElement('textarea');
+        textArea.value = shareText;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          Toast.show({
+            content: '分享内容已复制到剪贴板',
+            position: 'bottom',
+          });
+        } catch (e) {
+          Toast.show({
+            content: '复制失败，请手动复制',
+            position: 'bottom',
+          });
+        }
+        document.body.removeChild(textArea);
+      });
+    }
+  };
   
+
+  // 启动HTTP降级模式
+  const startHttpFallback = () => {
+    console.log('启动HTTP降级模式');
+    useHttpFallbackRef.current = true;
+    
+    // 立即获取一次数据
+    fetchCoinInfo();
+    fetchKlineData();
+    fetchMarketData();
+    
+    // 设置轮询
+    if (pollingTimerRef.current) {
+      clearInterval(pollingTimerRef.current);
+    }
+    pollingTimerRef.current = setInterval(() => {
+      if (needLoop.current && useHttpFallbackRef.current) {
+        fetchCoinInfo();
+        fetchKlineData();
+        fetchMarketData();
+      }
+    }, LOOPTIME);
+  };
+  
+  // 停止HTTP降级模式
+  const stopHttpFallback = () => {
+    console.log('停止HTTP降级模式');
+    useHttpFallbackRef.current = false;
+    
+    // 清除轮询定时器
+    if (pollingTimerRef.current) {
+      clearInterval(pollingTimerRef.current);
+      pollingTimerRef.current = null;
+    }
+  };
 
   // 初始加载
   useEffect(() => {
@@ -391,18 +505,29 @@ export default function DetailPage() {
       return;
     }
     
+    // 设置首次加载超时（1分钟）
+    initialLoadTimeoutRef.current = setTimeout(() => {
+      if (isInitialLoad) {
+        console.warn('首次加载超时，强制结束骨架屏显示');
+        setIsInitialLoad(false);
+        setKlineLoading(false);
+        setLoading(false);
+      }
+    }, 60000); // 60秒
+    
+    // 先获取基本信息（coinInfo和市场数据可以用HTTP）
     fetchCoinInfo();
-    fetchKlineData();
     fetchMarketData();
     
-    // 设置轮询
-    const timer = setInterval(() => {
-      if (needLoop.current) {
-        fetchCoinInfo();
-        fetchKlineData();
-        fetchMarketData();
+    // 设置WebSocket连接超时（10秒）
+    // 如果10秒内WebSocket未连接成功，则启用HTTP降级
+    wsConnectionTimeoutRef.current = setTimeout(() => {
+      if (wsConnectionStatusRef.current !== 'connected') {
+        console.warn('WebSocket连接超时，启用HTTP降级模式');
+        wsConnectionStatusRef.current = 'failed';
+        startHttpFallback();
       }
-    }, LOOPTIME);
+    }, 10000); // 10秒
     
     // WebSocket 连接和订阅
     const token = typeof window !== 'undefined' 
@@ -421,7 +546,18 @@ export default function DetailPage() {
     
     // 监听认证成功后订阅数据
     ws.on('authenticated', (data) => {
+      console.log('✅ WebSocket认证成功');
       isWsAuthenticatedRef.current = true; // 标记已认证
+      wsConnectionStatusRef.current = 'connected'; // 标记连接成功
+      
+      // 清除WebSocket连接超时定时器
+      if (wsConnectionTimeoutRef.current) {
+        clearTimeout(wsConnectionTimeoutRef.current);
+        wsConnectionTimeoutRef.current = null;
+      }
+      
+      // 停止HTTP降级模式（如果已启动）
+      stopHttpFallback();
       
       // 订阅 Ticker 数据（实时价格）
       const tickerChannel = createTickerChannel([symbol], 5000);
@@ -585,6 +721,18 @@ export default function DetailPage() {
           ...prev,
           [currentPeriod]: transformedKlineData
         }));
+        
+        // K线数据更新完成，取消loading
+        setKlineLoading(false);
+        // 首次加载完成
+        if (isInitialLoad) {
+          setIsInitialLoad(false);
+          // 清除超时定时器
+          if (initialLoadTimeoutRef.current) {
+            clearTimeout(initialLoadTimeoutRef.current);
+            initialLoadTimeoutRef.current = null;
+          }
+        }
       }
       
       // 如果 mergedKlineData 为空但有 realKlineData，使用函数式更新从 state 恢复数据
@@ -805,13 +953,55 @@ export default function DetailPage() {
       }
     });
     
+    // 监听WebSocket错误
+    ws.on('error', (error) => {
+      console.error('❌ WebSocket连接错误:', error);
+      if (wsConnectionStatusRef.current === 'connecting') {
+        wsConnectionStatusRef.current = 'failed';
+        // 如果还在连接阶段出错，立即启动HTTP降级
+        startHttpFallback();
+      }
+    });
+    
+    // 监听WebSocket断开连接
+    ws.on('close', () => {
+      console.log('🔌 WebSocket连接关闭');
+      const wasConnected = wsConnectionStatusRef.current === 'connected';
+      wsConnectionStatusRef.current = 'failed';
+      
+      // 如果之前是连接状态，现在断开了，启动HTTP降级
+      if (wasConnected) {
+        console.log('WebSocket断开，切换到HTTP降级模式');
+        startHttpFallback();
+      }
+    });
+    
     // 连接 WebSocket
+    console.log('🔄 开始连接WebSocket...');
     ws.connect();
     
     return () => {
-      clearInterval(timer);
+      // 清除HTTP轮询定时器
+      if (pollingTimerRef.current) {
+        clearInterval(pollingTimerRef.current);
+        pollingTimerRef.current = null;
+      }
+      
+      // 清除WebSocket连接超时定时器
+      if (wsConnectionTimeoutRef.current) {
+        clearTimeout(wsConnectionTimeoutRef.current);
+        wsConnectionTimeoutRef.current = null;
+      }
+      // 清除首次加载超时定时器
+      if (initialLoadTimeoutRef.current) {
+        clearTimeout(initialLoadTimeoutRef.current);
+        initialLoadTimeoutRef.current = null;
+      }
+      
       needLoop.current = false;
       isWsAuthenticatedRef.current = false;
+      wsConnectionStatusRef.current = 'connecting';
+      useHttpFallbackRef.current = false;
       currentKlineChannelRef.current = null;
       currentKlinePeriodRef.current = 'hour';
       isFirstRenderRef.current = true;
@@ -832,8 +1022,17 @@ export default function DetailPage() {
       return;
     }
     
-    // 检查必要条件
-    if (!wsRef.current || !symbol || !isWsAuthenticatedRef.current) {
+    if (!symbol) return;
+    
+    // 如果正在使用HTTP降级模式，暂时不需要切换订阅（数据会通过HTTP轮询获取）
+    if (useHttpFallbackRef.current) {
+      console.log('HTTP降级模式：切换周期时无需WebSocket订阅');
+      return;
+    }
+    
+    // 检查WebSocket连接状态
+    if (!wsRef.current || !isWsAuthenticatedRef.current || wsConnectionStatusRef.current !== 'connected') {
+      console.log('WebSocket未连接，跳过周期切换');
       return;
     }
     
@@ -857,12 +1056,17 @@ export default function DetailPage() {
     
     if (!newPeriod) return;
     
+    // 设置加载状态
+    setKlineLoading(true);
+    
     // 执行订阅切换
     const switchKlineSubscription = async () => {
       const ws = wsRef.current;
       if (!ws) return;
       
       try {
+        console.log(`🔄 切换K线周期到: ${label}`);
+        
         // 1. 如果有旧的订阅，先取消
         if (currentKlineChannelRef.current) {
           await ws.unsubscribe([currentKlineChannelRef.current]);
@@ -877,9 +1081,11 @@ export default function DetailPage() {
         if (response?.data?.channels?.[0]?.channelId) {
           currentKlineChannelRef.current = response.data.channels[0].channelId;
           currentKlinePeriodRef.current = activeKlineTab;
+          console.log(`✅ K线周期切换成功: ${label}`);
         }
       } catch (err) {
         console.error('切换K线订阅失败:', err);
+        setKlineLoading(false);
       }
     };
     
@@ -1075,16 +1281,17 @@ export default function DetailPage() {
       <MoziCard title="市场" sumNum={marketData.length}>
         <MoziGrid
           length={5}
-          colName={['交易所', '最新价', '24H涨幅', '24H成交量', '24小时成交额']}
+          colName={['交易所', '最新价', '24H涨幅', '24H成交量', '24H成交额']}
           gridContent={marketData}
           gridTitleBgColor="transparent"
+          columnWidths={['25%', '22%', '20%', '20%', '22%']}
         />
       </MoziCard>
     );
   };
   
-  // 如果正在加载，显示整页骨架屏
-  if (loading) {
+  // 如果是首次加载且数据未完成，显示整页骨架屏
+  if (isInitialLoad && (loading || klineLoading)) {
     return (
       <Layout>
         <NavBar 
@@ -1136,7 +1343,7 @@ export default function DetailPage() {
         </div>
 
         {/* 投资回报率区域 */}
-        <div className={styles.roiSection}>
+        <div ref={roiRef} className={styles.roiSection}>
           <MoziCard title="投资回报率" moreDesc="敬请期待">
             <div style={{ padding: '10px', color: '#999', fontSize: '12px' }}>敬请期待</div>
           </MoziCard>
@@ -1149,14 +1356,12 @@ export default function DetailPage() {
             <div className={styles.footerText}>加自选</div>
           </div>
           <div className={styles.footerItem} onClick={jump2Alert}>
-            <img 
-              className={styles.footerIcon} 
-              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/bell.png" 
-              alt="告警"
-            />
+            <div style={{ marginBottom: '2.5px' }}>
+              <BellIcon size={20} color="#c7c9cd" />
+            </div>
             <div className={styles.footerText}>告警</div>
           </div>
-          <div className={styles.footerItem}>
+          <div className={styles.footerItem} onClick={shareToTelegram}>
             <img 
               className={styles.footerIcon} 
               src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/share.png" 
