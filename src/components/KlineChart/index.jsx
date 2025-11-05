@@ -237,7 +237,12 @@ const KlineChart = ({
           show: false
         },
         splitLine: {
-          show: false  // 去掉横向网格线
+          show: true,  // K线图显示横向网格线
+          lineStyle: {
+            color: '#e6e6e6',
+            type: 'solid',
+            opacity: 0.5
+          }
         },
         axisLine: {
           lineStyle: { color: '#ddd' }
