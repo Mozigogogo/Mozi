@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import * as echarts from 'echarts';
 import { TabBar } from 'antd-mobile';
+import { Loading } from '../Loading';
+import { LandscapeIcon } from '../Icons';
 import styles from './index.module.less';
 
 const KlineChart = ({ 
@@ -12,7 +14,8 @@ const KlineChart = ({
   chartType = 'line',
   onChartTypeChange,
   showLandscapeBtn = false,
-  onLandscapeClick
+  onLandscapeClick,
+  loading = false
 }) => {
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
@@ -98,54 +101,54 @@ const KlineChart = ({
     if (type === 'line') {
       const lineDs = buildLineDataset(processedData);
       return {
+        animation: false,
+        animationDurationUpdate: 0,
         backgroundColor: 'transparent',
         tooltip: {
           trigger: 'axis',
-          backgroundColor: 'rgba(245, 245, 245, 0.95)',
-          borderColor: '#ddd',
-          textStyle: {
-            color: '#333'
-          }
+          axisPointer: { type: 'line' }
         },
         grid: {
-          left: '3%',
-          right: '4%',
-          bottom: '15%',
-          top: '10%',
-          containLabel: true
+          top: '5%',
+          left: '15%',
+          right: '5%',
+          bottom: '25%'
         },
         xAxis: {
           type: 'category',
           data: lineDs.categoryData,
           boundaryGap: false,
-          axisLine: { lineStyle: { color: '#ddd' } },
-          axisLabel: { color: '#666' }
+          axisLine: {
+            lineStyle: { color: '#D8D8D8' }
+          },
+          splitLine: { show: false },
+          axisTick: { show: false },
+          min: 'dataMin',
+          max: 'dataMax',
+          axisLabel: { color: '#8E8E8E' }
         },
         yAxis: {
           type: 'value',
           scale: true,
-          splitLine: {
-            show: false  // 去掉横向网格线
-          },
-          axisLine: { lineStyle: { color: '#ddd' } },
-          axisLabel: { color: '#666' }
+          splitLine: { show: false },
+          splitArea: { show: false },
+          axisLabel: { color: '#8E8E8E' }
         },
         dataZoom: [
-          {
-            type: 'inside',
-            start: startPercent,
-            end: endPercent
+          { 
+            type: 'inside', 
+            start: 50, 
+            end: 100 
           },
-          {
-            show: true,
-            type: 'slider',
-            start: startPercent,
-            end: endPercent,
-            bottom: '5%',
+          { 
+            show: true, 
+            type: 'slider', 
+            start: 70, 
+            end: 100, 
+            top: '87%', 
             height: 20,
-            backgroundColor: '#f5f5f5',
-            fillerColor: 'rgba(17, 183, 135, 0.2)',
-            borderColor: '#ddd'
+            left: '15%',
+            right: 40
           }
         ],
         series: [
@@ -153,7 +156,7 @@ const KlineChart = ({
             name: '价格',
             type: 'line',
             data: lineDs.lineData,
-            smooth: true,
+            smooth: false,
             symbol: 'none',
             lineStyle: {
               color: '#11B787',
@@ -167,8 +170,8 @@ const KlineChart = ({
                 x2: 0,
                 y2: 1,
                 colorStops: [
-                  { offset: 0, color: 'rgba(17, 183, 135, 0.3)' },
-                  { offset: 1, color: 'rgba(17, 183, 135, 0.05)' }
+                  { offset: 0, color: 'rgba(17, 183, 135, 0.35)' },
+                  { offset: 1, color: 'rgba(17, 183, 135, 0.0)' }
                 ]
               }
             }
@@ -237,7 +240,12 @@ const KlineChart = ({
           show: false
         },
         splitLine: {
-          show: false  // 去掉横向网格线
+          show: true,  // K线图显示横向网格线
+          lineStyle: {
+            color: '#e6e6e6',
+            type: 'solid',
+            opacity: 0.5
+          }
         },
         axisLine: {
           lineStyle: { color: '#ddd' }
@@ -260,6 +268,8 @@ const KlineChart = ({
           end: endPercent,
           bottom: '5%',
           height: 20,
+          left: '7%',
+          right: 40,
           backgroundColor: '#f5f5f5',
           fillerColor: 'rgba(2, 192, 118, 0.2)',
           borderColor: '#ddd',
@@ -411,19 +421,16 @@ const KlineChart = ({
         {/* 横屏按钮 */}
         {showLandscapeBtn && onLandscapeClick && (
           <div className={styles.landscapeBtn} onClick={onLandscapeClick}>
-            <svg viewBox="0 0 1024 1024" width="16" height="16" fill="currentColor">
-              <path d="M192 256h640v512H192z" fill="none" stroke="currentColor" strokeWidth="64"/>
-              <path d="M704 384l128 128-128 128M320 640L192 512l128-128"/>
-            </svg>
+            <LandscapeIcon size={16} color="#fff" />
           </div>
         )}
         
-        {!data && (
-          <div className={styles.loading}>
-            <div>加载中...</div>
-          </div>
-        )}
-        <div ref={chartRef} className={styles.chart}></div>
+          {(loading || !data) && (
+            <div className={styles.loadingWrapper}>
+              <Loading color="#11B787" tip="" />
+            </div>
+          )}
+        <div ref={chartRef} className={styles.chart} style={{ opacity: (loading || !data) ? 0 : 1 }}></div>
       </div>
     </div>
   );

@@ -12,6 +12,9 @@ import HighlightArea from '../../components/HighlightArea';
 import AddCollect from '../../components/AddCollect';
 import KlineChart from '../../components/KlineChart';
 import { Loading } from '../../components/Loading';
+import { CaretUpIcon, CaretDownIcon, BellIcon } from '../../components/Icons';
+import { SkeletonPage } from '../../components/Skeleton';
+import { detailPageSkeletonConfig } from '../../components/Skeleton/configs/detailPageConfig';
 import { request } from '../../utils/request';
 import { Interface, LOOPTIME, WS_URL } from '../../utils/constants';
 import { formatNumber, formatPercent, jump2NoTab } from '../../utils/core';
@@ -35,11 +38,9 @@ function BubbleText({ text }) {
 }
 
 export default function DetailPage() {
-  console.log('DetailPage组件开始渲染');
   const router = useRouter();
   const searchParams = useSearchParams();
   const symbol = searchParams.get('symbol') || '';
-  console.log('获取到的symbol:', symbol);
   
   // 状态定义
   const [coinInfo, setCoinInfo] = useState(null);
@@ -53,6 +54,8 @@ export default function DetailPage() {
   const [loading, setLoading] = useState(true);
   const [klineLoading, setKlineLoading] = useState(true);
   const [marketLoading, setMarketLoading] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true); // 是否首次加载
+  const initialLoadTimeoutRef = useRef(null); // 首次加载超时定时器
   const [activeTab, setActiveTab] = useState('chart');
   const [activeKlineTab, setActiveKlineTab] = useState('hour');
   const [chartType, setChartType] = useState('line'); // 图表类型：line | kline
@@ -64,14 +67,22 @@ export default function DetailPage() {
   const needLoop = useRef(true);
   const chartRef = useRef(null);
   const marketRef = useRef(null);
+  const roiRef = useRef(null);
   const wsRef = useRef(null);
   const currentKlineChannelRef = useRef(null); // 当前K线订阅频道ID
   const isWsAuthenticatedRef = useRef(false); // WebSocket认证状态
   const isFirstRenderRef = useRef(true); // 是否首次渲染
   const currentKlinePeriodRef = useRef('hour'); // 当前K线时间周期
   
+  // WebSocket连接状态管理
+  const wsConnectionStatusRef = useRef('connecting'); // connecting | connected | failed
+  const wsConnectionTimeoutRef = useRef(null); // WebSocket连接超时定时器
+  const useHttpFallbackRef = useRef(false); // 是否使用HTTP降级
+  const pollingTimerRef = useRef(null); // HTTP轮询定时器
+  
   // 机器人交互状态
   const [showRobotBubble, setShowRobotBubble] = useState(false);
+  const [showRobot, setShowRobot] = useState(false);
   const robotRef = useRef(null);
   
   // 获取币种信息
@@ -184,17 +195,17 @@ export default function DetailPage() {
     };
   };
 
-  // 获取K线数据
+  // 获取K线数据（仅在WebSocket失败时使用）
   const fetchKlineData = async () => {
-    console.log('=== fetchKlineData开始执行 ===');
-    console.log('symbol:', symbol);
+    if (!symbol) return;
     
-    if (!symbol) {
-      console.log('symbol为空，直接返回');
+    // 只有在允许使用HTTP降级时才执行
+    if (!useHttpFallbackRef.current) {
+      console.log('WebSocket正在使用中，不执行HTTP请求');
       return;
     }
     
-    console.log('设置loading状态为true');
+    console.log('使用HTTP降级模式获取K线数据');
     setKlineLoading(true);
     
     try {
@@ -241,37 +252,11 @@ export default function DetailPage() {
         week: transformKlineData(weekData?.data),
         month: transformKlineData(monthData?.data)
       });
-
-      console.log('K线数据获取成功:', {
-        hour: transformKlineData(hourData?.data) ? 'success' : 'null',
-        day: transformKlineData(dayData?.data) ? 'success' : 'null',
-        week: transformKlineData(weekData?.data) ? 'success' : 'null',
-        month: transformKlineData(monthData?.data) ? 'success' : 'null'
-      });
-      
-      console.log('原始接口数据示例:', {
-        hourData: hourData?.data,
-        dayData: dayData?.data
-      });
-      
-      console.log('转换后数据示例:', {
-        hour: transformKlineData(hourData?.data),
-        day: transformKlineData(dayData?.data)
-      });
     } catch (error) {
       console.error('获取K线数据失败:', error);
-      // 失败时使用模拟数据作为兜底
-      // console.log('使用模拟数据作为兜底');
-      // setKlineData({
-      //   hour: generateMockKlineData(1),
-      //   day: generateMockKlineData(2),
-      //   week: generateMockKlineData(3),
-      //   month: generateMockKlineData(4)
-      // });
     } finally {
       setKlineLoading(false);
     }
-    console.log('=== fetchKlineData执行完成 ===');
   };
   
   // 获取市场数据
@@ -337,6 +322,8 @@ export default function DetailPage() {
       scrollToSection(chartRef);
     } else if (key === 'market' && marketRef.current) {
       scrollToSection(marketRef);
+    } else if (key === 'roi' && roiRef.current) {
+      scrollToSection(roiRef);
     }
   };
   
@@ -353,16 +340,12 @@ export default function DetailPage() {
 
   // 横屏查看
   const handleLandscapeClick = () => {
-    // 跳转到横屏页面，传递图表数据和类型
-    const chartData = {
-      hour: klineData.hour,
-      day: klineData.day,
-      week: klineData.week,
-      month: klineData.month,
-      active: activeKlineTab,
-      forceType: chartType
-    };
-    jump2NoTab('landscapechart', chartData);
+    // 跳转到横屏页面，只传递币种、周期和图表类型
+    jump2NoTab('landscapechart', {
+      symbol: symbol,
+      period: activeKlineTab,
+      chartType: chartType
+    });
   };
 
   // 添加/移除自选
@@ -410,18 +393,111 @@ export default function DetailPage() {
       window.location.href = '/community';
     }
   };
+
+  // 分享到Telegram
+  const shareToTelegram = () => {
+    if (!coinInfo) return;
+    
+    // 获取当前页面URL
+    const currentUrl = window.location.href;
+    
+    // 构建分享文本
+    const priceChange = coinInfo.priceChange_24h || '0';
+    const priceChangePercent = coinInfo.priceChangePercentage_24h || '0%';
+    const isPriceUp = !String(priceChange).includes('-');
+    const trend = isPriceUp ? '▲' : '▼';
+    
+    const shareText = `━━━━━ MOZI 币种详情 ━━━━━
+
+${coinInfo.name || symbol} (${symbol})
+
+当前价格：$${coinInfo.currentPrice || '0'}
+24H涨跌：${trend} ${priceChange} (${priceChangePercent})
+市值排名：#${coinInfo.marketCapRank || '-'}
+流通市值：${coinInfo.marketCap || '-'}
+
+━━━━━━━━━━━━━━━━━━━━
+查看完整数据 👉 ${currentUrl}`;
+    
+    // 检测是否为移动端
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // 移动端：打开Telegram分享
+      const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(shareText)}`;
+      window.open(telegramUrl, '_blank');
+    } else {
+      // PC端：复制到剪贴板
+      navigator.clipboard.writeText(shareText).then(() => {
+        Toast.show({
+          content: '分享内容已复制到剪贴板',
+          position: 'bottom',
+        });
+      }).catch((err) => {
+        console.error('复制失败:', err);
+        // 降级方案：使用传统方法复制
+        const textArea = document.createElement('textarea');
+        textArea.value = shareText;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          Toast.show({
+            content: '分享内容已复制到剪贴板',
+            position: 'bottom',
+          });
+        } catch (e) {
+          Toast.show({
+            content: '复制失败，请手动复制',
+            position: 'bottom',
+          });
+        }
+        document.body.removeChild(textArea);
+      });
+    }
+  };
   
 
+  // 启动HTTP降级模式
+  const startHttpFallback = () => {
+    console.log('启动HTTP降级模式');
+    useHttpFallbackRef.current = true;
+    
+    // 立即获取一次数据
+    fetchCoinInfo();
+    fetchKlineData();
+    fetchMarketData();
+    
+    // 设置轮询
+    if (pollingTimerRef.current) {
+      clearInterval(pollingTimerRef.current);
+    }
+    pollingTimerRef.current = setInterval(() => {
+      if (needLoop.current && useHttpFallbackRef.current) {
+        fetchCoinInfo();
+        fetchKlineData();
+        fetchMarketData();
+      }
+    }, LOOPTIME);
+  };
+  
+  // 停止HTTP降级模式
+  const stopHttpFallback = () => {
+    console.log('停止HTTP降级模式');
+    useHttpFallbackRef.current = false;
+    
+    // 清除轮询定时器
+    if (pollingTimerRef.current) {
+      clearInterval(pollingTimerRef.current);
+      pollingTimerRef.current = null;
+    }
+  };
 
   // 初始加载
-  console.log('准备执行useEffect，当前symbol:', symbol);
-  console.log('symbol类型:', typeof symbol);
-  console.log('symbol长度:', symbol?.length);
-  
   useEffect(() => {
-    console.log('=== useEffect开始执行 ===');
     if (!symbol) {
-      console.log('symbol为空，显示提示');
       Toast.show({
         content: '币种信息不存在',
         position: 'bottom',
@@ -429,36 +505,34 @@ export default function DetailPage() {
       return;
     }
     
-    console.log('开始调用各个fetch函数');
-    console.log('调用fetchCoinInfo');
+    // 设置首次加载超时（1分钟）
+    initialLoadTimeoutRef.current = setTimeout(() => {
+      if (isInitialLoad) {
+        console.warn('首次加载超时，强制结束骨架屏显示');
+        setIsInitialLoad(false);
+        setKlineLoading(false);
+        setLoading(false);
+      }
+    }, 60000); // 60秒
+    
+    // 先获取基本信息（coinInfo和市场数据可以用HTTP）
     fetchCoinInfo();
-    console.log('调用fetchKlineData');
-    fetchKlineData();
-    console.log('调用fetchMarketData');
     fetchMarketData();
     
-    // 设置轮询
-    const timer = setInterval(() => {
-      if (needLoop.current) {
-        fetchCoinInfo();
-        fetchKlineData();
-        fetchMarketData();
+    // 设置WebSocket连接超时（10秒）
+    // 如果10秒内WebSocket未连接成功，则启用HTTP降级
+    wsConnectionTimeoutRef.current = setTimeout(() => {
+      if (wsConnectionStatusRef.current !== 'connected') {
+        console.warn('WebSocket连接超时，启用HTTP降级模式');
+        wsConnectionStatusRef.current = 'failed';
+        startHttpFallback();
       }
-    }, LOOPTIME);
+    }, 10000); // 10秒
     
     // WebSocket 连接和订阅
-    console.log('🔄 创建 WebSocket 连接...');
-    
-    // 从 localStorage 读取用户 token
     const token = typeof window !== 'undefined' 
       ? localStorage.getItem('token') 
       : null;
-    
-    if (token) {
-      console.log('🔑 找到用户 token，将通过 Sec-WebSocket-Protocol 传递');
-    } else {
-      console.log('⚠️ 未找到用户 token，将以匿名方式连接');
-    }
     
     const ws = new MoziWebSocket(WS_URL, {
       platform: PLATFORMS.H5,
@@ -472,27 +546,32 @@ export default function DetailPage() {
     
     // 监听认证成功后订阅数据
     ws.on('authenticated', (data) => {
-      console.log('✅ 详情页握手成功，开始订阅币种数据:', symbol);
+      console.log('✅ WebSocket认证成功');
       isWsAuthenticatedRef.current = true; // 标记已认证
+      wsConnectionStatusRef.current = 'connected'; // 标记连接成功
+      
+      // 清除WebSocket连接超时定时器
+      if (wsConnectionTimeoutRef.current) {
+        clearTimeout(wsConnectionTimeoutRef.current);
+        wsConnectionTimeoutRef.current = null;
+      }
+      
+      // 停止HTTP降级模式（如果已启动）
+      stopHttpFallback();
       
       // 订阅 Ticker 数据（实时价格）
       const tickerChannel = createTickerChannel([symbol], 5000);
-      ws.subscribe([tickerChannel]).then(() => {
-        console.log(`📊 已订阅 ${symbol} 的 Ticker 数据`);
-      }).catch(err => {
+      ws.subscribe([tickerChannel]).catch(err => {
         console.error('订阅 Ticker 失败:', err);
       });
       
       // 订阅 K线数据（1小时）
       const klineChannel = createKlineChannel([symbol], KLINE_PERIODS.ONE_HOUR, 100);
       ws.subscribe([klineChannel]).then((response) => {
-        console.log(`📈 已订阅 ${symbol} 的 1小时 K线数据`, response);
         // 保存频道ID和时间周期，用于后续切换时取消订阅
         if (response?.data?.channels?.[0]?.channelId) {
           currentKlineChannelRef.current = response.data.channels[0].channelId;
           currentKlinePeriodRef.current = 'hour'; // 初始订阅的是小时线
-          console.log('💾 保存K线频道ID:', currentKlineChannelRef.current);
-          console.log('💾 保存当前时间周期: hour');
         }
       }).catch(err => {
         console.error('订阅 K线失败:', err);
@@ -501,12 +580,48 @@ export default function DetailPage() {
     
     // 监听 Ticker 数据更新
     ws.on(WS_EVENTS.TICKER, (data) => {
-      console.log('💹 收到 Ticker 数据:', data);
-      // 可以更新币种价格等实时数据
       if (data.data && data.data.length > 0) {
         const tickerData = data.data[0];
-        console.log(`${symbol} 最新价格:`, tickerData.price);
-        // 这里可以更新 coinInfo 的实时数据
+        
+        // 更新 coinInfo 的实时数据
+        setCoinInfo(prevInfo => {
+          if (!prevInfo) return null;
+          
+          return {
+            ...prevInfo,
+            // 更新实时价格和涨跌幅
+            currentPrice: tickerData.price ?? tickerData.currentPrice ?? prevInfo.currentPrice,
+            priceChange_24h: tickerData.priceChange_24h ?? prevInfo.priceChange_24h,
+            priceChangePercentage_24h: tickerData.priceChangePercentage_24h ?? prevInfo.priceChangePercentage_24h,
+            high_24h: tickerData.high_24h ?? prevInfo.high_24h,
+            low_24h: tickerData.low_24h ?? prevInfo.low_24h,
+            totalVolume: tickerData.totalVolume ?? tickerData.volume ?? prevInfo.totalVolume,
+            marketCap: tickerData.marketCap ?? prevInfo.marketCap,
+          };
+        });
+        
+        // 同时更新详细信息区域
+        if (tickerData.high_24h !== undefined && tickerData.high_24h !== null) {
+          setCoinInfoLeft(prev => prev.map(item => 
+            item.name === '24H最高价' ? { ...item, value: tickerData.high_24h } : item
+          ));
+        }
+        
+        if (tickerData.low_24h !== undefined && tickerData.low_24h !== null) {
+          setCoinInfoLeft(prev => prev.map(item => 
+            item.name === '24H最低价' ? { ...item, value: tickerData.low_24h } : item
+          ));
+        }
+        
+        if (tickerData.totalVolume !== undefined && tickerData.totalVolume !== null) {
+          setCoinInfoRight(prev => prev.map(item => 
+            item.name === '24H成交额' ? { ...item, value: tickerData.totalVolume } : item
+          ));
+        } else if (tickerData.volume !== undefined && tickerData.volume !== null) {
+          setCoinInfoRight(prev => prev.map(item => 
+            item.name === '24H成交额' ? { ...item, value: tickerData.volume } : item
+          ));
+        }
       }
     });
     
@@ -514,23 +629,10 @@ export default function DetailPage() {
     ws.on(WS_EVENTS.KLINE, (data) => {
       if (!data.data) return;
       
-      // 数据结构: { klineData: { hisKlineData, realKlineData }, headerData }
-      const { klineData, headerData } = data.data;
+      // 数据结构: { klineData: { hisKlineData, realKlineData }, headerData, exchangesPriceData }
+      const { klineData, headerData, exchangesPriceData } = data.data;
       const { hisKlineData, realKlineData } = klineData || {};
       const currentPeriod = currentKlinePeriodRef.current;
-      
-      console.log('🔔 ========== K线实时更新 ==========');
-      console.log('📊 周期:', currentPeriod, '| 历史数据:', hisKlineData?.length || 0, '条');
-      
-      if (realKlineData) {
-        console.log('📈 实时K线:', {
-          时间: new Date(realKlineData.timestamp).toLocaleString('zh-CN'),
-          开: realKlineData.open,
-          收: realKlineData.close,
-          高: realKlineData.high,
-          低: realKlineData.low,
-        });
-      }
       
       // 整合历史数据和实时数据
       let mergedKlineData = [];
@@ -566,11 +668,9 @@ export default function DetailPage() {
           
           if (Math.abs(lastTime - realTime) < 60000) {
             // 时间差小于1分钟，认为是同一根K线（实时更新）
-            console.log('🔄 更新当前K线');
             mergedKlineData[mergedKlineData.length - 1] = normalizedRealKline;
           } else if (realTime > lastTime) {
             // 时间不同且更新，追加新的K线
-            console.log('➕ 追加新K线');
             mergedKlineData.push(normalizedRealKline);
           }
         } else {
@@ -580,9 +680,6 @@ export default function DetailPage() {
       
       // 3. 转换为图表需要的格式
       if (mergedKlineData.length > 0) {
-        const lastKline = mergedKlineData[mergedKlineData.length - 1];
-        console.log('📊 当前K线总数:', mergedKlineData.length, '| 最新:', lastKline.dt, lastKline.close);
-        
         const transformedKlineData = {
           values: [],
           categoryData: [],
@@ -609,15 +706,12 @@ export default function DetailPage() {
                 timeLabel = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
               } else {
                 timeLabel = timeStr;
-                console.warn(`⚠️ 无效的时间格式 (索引 ${index}):`, timeStr);
               }
             } catch (error) {
-              console.error(`❌ 时间解析错误 (索引 ${index}):`, timeStr, error);
               timeLabel = timeStr || `T${index}`;
             }
           } else {
             timeLabel = `T${index}`;
-            console.warn(`⚠️ 缺少时间字段 (索引 ${index}):`, item);
           }
           
           transformedKlineData.categoryData.push(timeLabel);
@@ -627,13 +721,22 @@ export default function DetailPage() {
           ...prev,
           [currentPeriod]: transformedKlineData
         }));
-        console.log('✅ K线图已更新\n');
-        return;
+        
+        // K线数据更新完成，取消loading
+        setKlineLoading(false);
+        // 首次加载完成
+        if (isInitialLoad) {
+          setIsInitialLoad(false);
+          // 清除超时定时器
+          if (initialLoadTimeoutRef.current) {
+            clearTimeout(initialLoadTimeoutRef.current);
+            initialLoadTimeoutRef.current = null;
+          }
+        }
       }
       
       // 如果 mergedKlineData 为空但有 realKlineData，使用函数式更新从 state 恢复数据
       if (mergedKlineData.length === 0 && realKlineData && !realKlineData.error && realKlineData.timestamp) {
-        console.log('📊 从 state 恢复数据并更新实时K线');
         
         setKlineData(prev => {
           const existingData = prev[currentPeriod];
@@ -641,7 +744,6 @@ export default function DetailPage() {
           
           // 从 state 恢复原始数据
           if (existingData?._rawData && Array.isArray(existingData._rawData)) {
-            console.log('📊 从 state 恢复了', existingData._rawData.length, '条数据');
             sourceData = [...existingData._rawData];
           }
           
@@ -658,31 +760,23 @@ export default function DetailPage() {
             exchanges: realKlineData.exchanges || 'Binance'
           };
           
-          console.log('🔴 标准化后的实时K线:', normalizedRealKline);
-          
           // 更新或追加实时数据
           if (sourceData.length > 0) {
             const lastItem = sourceData[sourceData.length - 1];
             const lastTime = new Date(lastItem.dt).getTime();
             const realTime = new Date(realDt).getTime();
             
-            console.log('⏰ 时间比较:', { lastDt: lastItem.dt, realDt, timeDiff: realTime - lastTime });
-            
             if (Math.abs(lastTime - realTime) < 60000) {
-              console.log('🔄 更新最后一根K线');
               sourceData[sourceData.length - 1] = normalizedRealKline;
             } else if (realTime > lastTime) {
-              console.log('➕ 追加新的K线');
               sourceData.push(normalizedRealKline);
             }
           } else {
-            console.log('📊 初始化：添加实时数据');
             sourceData.push(normalizedRealKline);
           }
           
           // 转换为图表格式
           if (sourceData.length === 0) {
-            console.log('⚠️ 没有可用的K线数据');
             return prev;
           }
           
@@ -718,8 +812,6 @@ export default function DetailPage() {
             newTransformedData.categoryData.push(timeLabel);
           });
           
-          console.log('✅ K线数据转换完成（函数式更新），数据点数:', newTransformedData.values.length);
-          
           return {
             ...prev,
             [currentPeriod]: newTransformedData
@@ -728,36 +820,11 @@ export default function DetailPage() {
       }
       
       // 4. 更新 headerData（如果存在）
-      if (!headerData) {
-        console.log('⚠️ K线数据中没有 headerData');
-        return;
-      }
-      
-      console.log('🔔 ========== 收到 WebSocket headerData 更新 ==========');
-      console.log('📊 完整 headerData:', JSON.stringify(headerData, null, 2));
-      console.log('🔑 关键字段类型检查:', {
-        currentPrice: {value: headerData.currentPrice, type: typeof headerData.currentPrice},
-        priceChange_24h: {value: headerData.priceChange_24h, type: typeof headerData.priceChange_24h},
-        priceChangePercentage_24h: {value: headerData.priceChangePercentage_24h, type: typeof headerData.priceChangePercentage_24h},
-        marketCapRank: {value: headerData.marketCapRank, type: typeof headerData.marketCapRank},
-        marketCap: {value: headerData.marketCap, type: typeof headerData.marketCap},
-        high_24h: {value: headerData.high_24h, type: typeof headerData.high_24h},
-        low_24h: {value: headerData.low_24h, type: typeof headerData.low_24h},
-      });
+      if (!headerData) return;
       
       // 更新 coinInfo
       setCoinInfo(prevInfo => {
-        console.log('📝 【更新前】coinInfo 当前状态:', {
-          currentPrice: prevInfo?.currentPrice,
-          priceChange_24h: prevInfo?.priceChange_24h,
-          priceChangePercentage_24h: prevInfo?.priceChangePercentage_24h,
-          symbol: prevInfo?.symbol,
-        });
-        
-        if (!prevInfo) {
-          console.log('⚠️ coinInfo 为空，跳过更新');
-          return null;
-        }
+        if (!prevInfo) return null;
         
         const updatedInfo = {
           ...prevInfo,
@@ -801,113 +868,140 @@ export default function DetailPage() {
           isSelfSelected: headerData.isSelfSelected !== undefined ? headerData.isSelfSelected : prevInfo.isSelfSelected,
         };
         
-        console.log('✅ 【更新后】coinInfo 新状态:', {
-          currentPrice: updatedInfo.currentPrice,
-          priceChange_24h: updatedInfo.priceChange_24h,
-          priceChangePercentage_24h: updatedInfo.priceChangePercentage_24h,
-          symbol: updatedInfo.symbol,
-        });
-        
-        console.log('🔄 字段变化对比:', {
-          currentPrice: `${prevInfo.currentPrice} → ${updatedInfo.currentPrice} (变化: ${prevInfo.currentPrice !== updatedInfo.currentPrice})`,
-          priceChange_24h: `${prevInfo.priceChange_24h} → ${updatedInfo.priceChange_24h} (变化: ${prevInfo.priceChange_24h !== updatedInfo.priceChange_24h})`,
-          priceChangePercentage_24h: `${prevInfo.priceChangePercentage_24h} → ${updatedInfo.priceChangePercentage_24h} (变化: ${prevInfo.priceChangePercentage_24h !== updatedInfo.priceChangePercentage_24h})`,
-          marketCap: `${prevInfo.marketCap} → ${updatedInfo.marketCap} (变化: ${prevInfo.marketCap !== updatedInfo.marketCap})`,
-        });
-        
         return updatedInfo;
       });
       
       // 更新详细信息（左侧）- 使用显式检查避免假值被忽略
-      setCoinInfoLeft(prev => {
-        console.log('📋 【更新前】coinInfoLeft:', prev);
-        
-        const updated = prev.map(item => {
-          if (item.name === '24H最高价' && headerData.high_24h !== undefined && headerData.high_24h !== null) {
-            console.log(`  ✏️ 更新 24H最高价: ${item.value} → ${headerData.high_24h}`);
-            return { ...item, value: headerData.high_24h };
-          }
-          if (item.name === '24H最低价' && headerData.low_24h !== undefined && headerData.low_24h !== null) {
-            console.log(`  ✏️ 更新 24H最低价: ${item.value} → ${headerData.low_24h}`);
-            return { ...item, value: headerData.low_24h };
-          }
-          if (item.name === '稀释市值' && headerData.fullyDilutedValuation !== undefined && headerData.fullyDilutedValuation !== null) {
-            console.log(`  ✏️ 更新 稀释市值: ${item.value} → ${headerData.fullyDilutedValuation}`);
-            return { ...item, value: headerData.fullyDilutedValuation };
-          }
-          if (item.name === '24H市值变化' && headerData.marketCapChange_24h !== undefined && headerData.marketCapChange_24h !== null) {
-            console.log(`  ✏️ 更新 24H市值变化: ${item.value} → ${headerData.marketCapChange_24h}`);
-            return { ...item, value: headerData.marketCapChange_24h };
-          }
-          if (item.name === '24H市值变化百分比' && headerData.marketCapChangePercentage_24h !== undefined && headerData.marketCapChangePercentage_24h !== null) {
-            console.log(`  ✏️ 更新 24H市值变化百分比: ${item.value} → ${headerData.marketCapChangePercentage_24h}`);
-            return { ...item, value: headerData.marketCapChangePercentage_24h };
-          }
-          if (item.name === '历史最高价时间' && headerData.athDate !== undefined && headerData.athDate !== null) {
-            console.log(`  ✏️ 更新 历史最高价时间: ${item.value} → ${headerData.athDate}`);
-            return { ...item, value: headerData.athDate };
-          }
-          if (item.name === '历史最低价时间' && headerData.atlDate !== undefined && headerData.atlDate !== null) {
-            console.log(`  ✏️ 更新 历史最低价时间: ${item.value} → ${headerData.atlDate}`);
-            return { ...item, value: headerData.atlDate };
-          }
-          return item;
-        });
-        
-        console.log('📋 【更新后】coinInfoLeft:', updated);
-        return updated;
-      });
+      setCoinInfoLeft(prev => prev.map(item => {
+        if (item.name === '24H最高价' && headerData.high_24h !== undefined && headerData.high_24h !== null) {
+          return { ...item, value: headerData.high_24h };
+        }
+        if (item.name === '24H最低价' && headerData.low_24h !== undefined && headerData.low_24h !== null) {
+          return { ...item, value: headerData.low_24h };
+        }
+        if (item.name === '稀释市值' && headerData.fullyDilutedValuation !== undefined && headerData.fullyDilutedValuation !== null) {
+          return { ...item, value: headerData.fullyDilutedValuation };
+        }
+        if (item.name === '24H市值变化' && headerData.marketCapChange_24h !== undefined && headerData.marketCapChange_24h !== null) {
+          return { ...item, value: headerData.marketCapChange_24h };
+        }
+        if (item.name === '24H市值变化百分比' && headerData.marketCapChangePercentage_24h !== undefined && headerData.marketCapChangePercentage_24h !== null) {
+          return { ...item, value: headerData.marketCapChangePercentage_24h };
+        }
+        if (item.name === '历史最高价时间' && headerData.athDate !== undefined && headerData.athDate !== null) {
+          return { ...item, value: headerData.athDate };
+        }
+        if (item.name === '历史最低价时间' && headerData.atlDate !== undefined && headerData.atlDate !== null) {
+          return { ...item, value: headerData.atlDate };
+        }
+        return item;
+      }));
       
       // 更新详细信息（右侧）- 使用显式检查避免假值被忽略
-      setCoinInfoRight(prev => {
-        console.log('📋 【更新前】coinInfoRight:', prev);
-        
-        const updated = prev.map(item => {
-          if (item.name === '24H成交额' && headerData.totalVolume !== undefined && headerData.totalVolume !== null) {
-            console.log(`  ✏️ 更新 24H成交额: ${item.value} → ${headerData.totalVolume}`);
-            return { ...item, value: headerData.totalVolume };
-          }
-          if (item.name === '总供应量' && headerData.totalSupply !== undefined && headerData.totalSupply !== null) {
-            console.log(`  ✏️ 更新 总供应量: ${item.value} → ${headerData.totalSupply}`);
-            return { ...item, value: headerData.totalSupply };
-          }
-          if (item.name === '流通供应量' && headerData.circulatingSupply !== undefined && headerData.circulatingSupply !== null) {
-            console.log(`  ✏️ 更新 流通供应量: ${item.value} → ${headerData.circulatingSupply}`);
-            return { ...item, value: headerData.circulatingSupply };
-          }
-          if (item.name === '历史最高价' && headerData.ath !== undefined && headerData.ath !== null) {
-            console.log(`  ✏️ 更新 历史最高价: ${item.value} → ${headerData.ath}`);
-            return { ...item, value: headerData.ath };
-          }
-          if (item.name === '历史最高价百分比' && headerData.athChangePercentage !== undefined && headerData.athChangePercentage !== null) {
-            console.log(`  ✏️ 更新 历史最高价百分比: ${item.value} → ${headerData.athChangePercentage}`);
-            return { ...item, value: headerData.athChangePercentage };
-          }
-          if (item.name === '历史最低价' && headerData.atl !== undefined && headerData.atl !== null) {
-            console.log(`  ✏️ 更新 历史最低价: ${item.value} → ${headerData.atl}`);
-            return { ...item, value: headerData.atl };
-          }
-          if (item.name === '历史最低价百分比' && headerData.atlChangePercentage !== undefined && headerData.atlChangePercentage !== null) {
-            console.log(`  ✏️ 更新 历史最低价百分比: ${item.value} → ${headerData.atlChangePercentage}`);
-            return { ...item, value: headerData.atlChangePercentage };
-          }
-          return item;
-        });
-        
-        console.log('📋 【更新后】coinInfoRight:', updated);
-        console.log('🔔 ========== headerData 更新完成 ==========\n');
-        return updated;
-      });
+      setCoinInfoRight(prev => prev.map(item => {
+        if (item.name === '24H成交额' && headerData.totalVolume !== undefined && headerData.totalVolume !== null) {
+          return { ...item, value: headerData.totalVolume };
+        }
+        if (item.name === '总供应量' && headerData.totalSupply !== undefined && headerData.totalSupply !== null) {
+          return { ...item, value: headerData.totalSupply };
+        }
+        if (item.name === '流通供应量' && headerData.circulatingSupply !== undefined && headerData.circulatingSupply !== null) {
+          return { ...item, value: headerData.circulatingSupply };
+        }
+        if (item.name === '历史最高价' && headerData.ath !== undefined && headerData.ath !== null) {
+          return { ...item, value: headerData.ath };
+        }
+        if (item.name === '历史最高价百分比' && headerData.athChangePercentage !== undefined && headerData.athChangePercentage !== null) {
+          return { ...item, value: headerData.athChangePercentage };
+        }
+        if (item.name === '历史最低价' && headerData.atl !== undefined && headerData.atl !== null) {
+          return { ...item, value: headerData.atl };
+        }
+        if (item.name === '历史最低价百分比' && headerData.atlChangePercentage !== undefined && headerData.atlChangePercentage !== null) {
+          return { ...item, value: headerData.atlChangePercentage };
+        }
+        return item;
+      }));
+      
+      // 5. 更新市场数据（如果存在）
+      if (exchangesPriceData && Array.isArray(exchangesPriceData) && exchangesPriceData.length > 0) {
+        const processedData = exchangesPriceData.map((item) => ({
+          title: (
+            <div style={{ display: 'flex', width: '100%', alignItems: 'center' }}>
+              <img 
+                src={item.url} 
+                alt={item.exchanges}
+                style={{
+                  height: '18px',
+                  width: '18px',
+                  marginRight: '5px',
+                  borderRadius: '4px',
+                  objectFit: 'contain',
+                  backgroundColor: '#fff',
+                  flexShrink: 0
+                }}
+              />
+              {item.exchanges}
+            </div>
+          ),
+          last: item.last,
+          price24h: <HighlightArea value={item.price24h} />,
+          vol: item.vol,
+          usd: item.usd
+        }));
+        setMarketData(processedData);
+      }
+    });
+    
+    // 监听WebSocket错误
+    ws.on('error', (error) => {
+      console.error('❌ WebSocket连接错误:', error);
+      if (wsConnectionStatusRef.current === 'connecting') {
+        wsConnectionStatusRef.current = 'failed';
+        // 如果还在连接阶段出错，立即启动HTTP降级
+        startHttpFallback();
+      }
+    });
+    
+    // 监听WebSocket断开连接
+    ws.on('close', () => {
+      console.log('🔌 WebSocket连接关闭');
+      const wasConnected = wsConnectionStatusRef.current === 'connected';
+      wsConnectionStatusRef.current = 'failed';
+      
+      // 如果之前是连接状态，现在断开了，启动HTTP降级
+      if (wasConnected) {
+        console.log('WebSocket断开，切换到HTTP降级模式');
+        startHttpFallback();
+      }
     });
     
     // 连接 WebSocket
+    console.log('🔄 开始连接WebSocket...');
     ws.connect();
     
     return () => {
-      console.log('🔴 详情页卸载，断开 WebSocket');
-      clearInterval(timer);
+      // 清除HTTP轮询定时器
+      if (pollingTimerRef.current) {
+        clearInterval(pollingTimerRef.current);
+        pollingTimerRef.current = null;
+      }
+      
+      // 清除WebSocket连接超时定时器
+      if (wsConnectionTimeoutRef.current) {
+        clearTimeout(wsConnectionTimeoutRef.current);
+        wsConnectionTimeoutRef.current = null;
+      }
+      // 清除首次加载超时定时器
+      if (initialLoadTimeoutRef.current) {
+        clearTimeout(initialLoadTimeoutRef.current);
+        initialLoadTimeoutRef.current = null;
+      }
+      
       needLoop.current = false;
       isWsAuthenticatedRef.current = false;
+      wsConnectionStatusRef.current = 'connecting';
+      useHttpFallbackRef.current = false;
       currentKlineChannelRef.current = null;
       currentKlinePeriodRef.current = 'hour';
       isFirstRenderRef.current = true;
@@ -924,22 +1018,23 @@ export default function DetailPage() {
   useEffect(() => {
     // 跳过首次渲染（首次渲染时已经在认证成功回调中订阅了）
     if (isFirstRenderRef.current) {
-      console.log('⏭️ 跳过首次渲染的K线订阅切换');
       isFirstRenderRef.current = false;
       return;
     }
     
-    // 检查必要条件
-    if (!wsRef.current || !symbol || !isWsAuthenticatedRef.current) {
-      console.log('⚠️ K线订阅切换条件不满足:', {
-        hasWs: !!wsRef.current,
-        hasSymbol: !!symbol,
-        isAuthenticated: isWsAuthenticatedRef.current
-      });
+    if (!symbol) return;
+    
+    // 如果正在使用HTTP降级模式，暂时不需要切换订阅（数据会通过HTTP轮询获取）
+    if (useHttpFallbackRef.current) {
+      console.log('HTTP降级模式：切换周期时无需WebSocket订阅');
       return;
     }
     
-    console.log(`🔄 K线时间周期切换到: ${activeKlineTab}`);
+    // 检查WebSocket连接状态
+    if (!wsRef.current || !isWsAuthenticatedRef.current || wsConnectionStatusRef.current !== 'connected') {
+      console.log('WebSocket未连接，跳过周期切换');
+      return;
+    }
     
     // 时间周期映射
     const periodMap = {
@@ -959,10 +1054,10 @@ export default function DetailPage() {
     const newPeriod = periodMap[activeKlineTab];
     const label = periodLabel[activeKlineTab];
     
-    if (!newPeriod) {
-      console.error('❌ 未知的时间周期:', activeKlineTab);
-      return;
-    }
+    if (!newPeriod) return;
+    
+    // 设置加载状态
+    setKlineLoading(true);
     
     // 执行订阅切换
     const switchKlineSubscription = async () => {
@@ -970,57 +1065,83 @@ export default function DetailPage() {
       if (!ws) return;
       
       try {
+        console.log(`🔄 切换K线周期到: ${label}`);
+        
         // 1. 如果有旧的订阅，先取消
         if (currentKlineChannelRef.current) {
-          console.log(`📤 取消旧的K线订阅，频道ID:`, currentKlineChannelRef.current);
           await ws.unsubscribe([currentKlineChannelRef.current]);
-          console.log(`✅ 已取消旧订阅`);
           currentKlineChannelRef.current = null;
         }
         
         // 2. 订阅新的K线数据
-        console.log(`📥 订阅新的K线数据: ${label} (${newPeriod})`);
         const klineChannel = createKlineChannel([symbol], newPeriod, 100);
         const response = await ws.subscribe([klineChannel]);
-        console.log(`✅ 已订阅 ${symbol} 的 ${label} K线数据`, response);
         
         // 3. 保存新的频道ID和当前时间周期
         if (response?.data?.channels?.[0]?.channelId) {
           currentKlineChannelRef.current = response.data.channels[0].channelId;
-          currentKlinePeriodRef.current = activeKlineTab; // 更新当前订阅的时间周期
-          console.log('💾 保存新的K线频道ID:', currentKlineChannelRef.current);
-          console.log('💾 保存当前时间周期:', activeKlineTab);
+          currentKlinePeriodRef.current = activeKlineTab;
+          console.log(`✅ K线周期切换成功: ${label}`);
         }
       } catch (err) {
-        console.error(`❌ 切换K线订阅失败:`, err);
+        console.error('切换K线订阅失败:', err);
+        setKlineLoading(false);
       }
     };
     
     switchKlineSubscription();
   }, [activeKlineTab, symbol]);
   
-  // 机器人气泡显示逻辑：页面加载2秒后显示，7秒后自动隐藏
+  // 监听滚动位置，控制机器人显示
   useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
+      const shouldShow = scrollTop > 200;
+      setShowRobot(shouldShow);
+    };
+    
+    // 初始检查
+    handleScroll();
+    
+    // 监听多个滚动事件源
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    document.addEventListener('scroll', handleScroll, { passive: true });
+    
+    // 额外添加轮询检查（兜底方案）
+    const pollInterval = setInterval(() => {
+      handleScroll();
+    }, 500);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('scroll', handleScroll);
+      clearInterval(pollInterval);
+    };
+  }, []);
+  
+  // 机器人气泡显示逻辑
+  useEffect(() => {
+    if (!showRobot) {
+      setShowRobotBubble(false);
+      return;
+    }
+    
     const showTimer = setTimeout(() => {
       setShowRobotBubble(true);
-    }, 2000); // 2秒后显示
+    }, 2000);
     
     const hideTimer = setTimeout(() => {
       setShowRobotBubble(false);
-    }, 9000); // 9秒后隐藏（2秒显示延迟 + 7秒显示时间）
+    }, 9000);
     
     return () => {
       clearTimeout(showTimer);
       clearTimeout(hideTimer);
     };
-  }, []); // 只在组件挂载时执行一次
+  }, [showRobot]);
   
   // 渲染币种基本信息
   const renderCoinInfo = () => {
-    if (loading) {
-      return <Loading />;
-    }
-    
     if (!coinInfo) {
       return <div className={styles.emptyInfo}>币种信息不存在</div>;
     }
@@ -1041,11 +1162,11 @@ export default function DetailPage() {
               </div>
             </div>
             <div className={styles.caretBox}>
-              <img 
-                src={isPriceDown ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/down.png' : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/up.png'} 
-                className={styles.caretIcon}
-                alt={isPriceDown ? '下跌' : '上涨'}
-              />
+              {isPriceDown ? (
+                <CaretDownIcon size={25} color='#FA5F5F' />
+              ) : (
+                <CaretUpIcon size={25} color='#11B787' />
+              )}
               <div className={`${styles.percentBox} ${isPriceDown ? styles.downPercent : styles.upPercent}`}>
                 <div className={styles.priceItem}>{coinInfo.priceChange_24h}</div>
                 <div>({coinInfo.priceChangePercentage_24h})</div>
@@ -1125,10 +1246,6 @@ export default function DetailPage() {
   // 渲染K线图表
   const renderKline = () => {
     const currentKlineData = klineData[activeKlineTab];
-    console.log('renderKline - activeKlineTab:', activeKlineTab);
-    console.log('renderKline - klineData:', klineData);
-    console.log('renderKline - currentKlineData:', currentKlineData);
-    console.log('renderKline - chartType:', chartType);
     
     return (
       <div className={`${styles.box} ${styles.klineContainer}`}>
@@ -1164,20 +1281,36 @@ export default function DetailPage() {
       <MoziCard title="市场" sumNum={marketData.length}>
         <MoziGrid
           length={5}
-          colName={['交易所', '最新价', '24H涨幅', '24H成交量', '24小时成交额']}
+          colName={['交易所', '最新价', '24H涨幅', '24H成交量', '24H成交额']}
           gridContent={marketData}
           gridTitleBgColor="transparent"
+          columnWidths={['25%', '22%', '20%', '20%', '22%']}
         />
       </MoziCard>
     );
   };
   
+  // 如果是首次加载且数据未完成，显示整页骨架屏
+  if (isInitialLoad && (loading || klineLoading)) {
+    return (
+      <Layout>
+        <NavBar 
+          title={symbol || '币种详情'} 
+          showBack={true}
+          showBorder={false}
+        />
+        <SkeletonPage config={detailPageSkeletonConfig} />
+      </Layout>
+    );
+  }
+  
   return (
-    <Layout>
+    <>
       {/* 顶部导航栏 */}
       <NavBar 
         title={coinInfo?.name || symbol || '币种详情'} 
         showBack={true}
+        showBorder={false}
       />
       
       <div className={styles.container}>
@@ -1210,7 +1343,7 @@ export default function DetailPage() {
         </div>
 
         {/* 投资回报率区域 */}
-        <div className={styles.roiSection}>
+        <div ref={roiRef} className={styles.roiSection}>
           <MoziCard title="投资回报率" moreDesc="敬请期待">
             <div style={{ padding: '10px', color: '#999', fontSize: '12px' }}>敬请期待</div>
           </MoziCard>
@@ -1223,14 +1356,12 @@ export default function DetailPage() {
             <div className={styles.footerText}>加自选</div>
           </div>
           <div className={styles.footerItem} onClick={jump2Alert}>
-            <img 
-              className={styles.footerIcon} 
-              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/bell.png" 
-              alt="告警"
-            />
+            <div style={{ marginBottom: '2.5px' }}>
+              <BellIcon size={20} color="#c7c9cd" />
+            </div>
             <div className={styles.footerText}>告警</div>
           </div>
-          <div className={styles.footerItem}>
+          <div className={styles.footerItem} onClick={shareToTelegram}>
             <img 
               className={styles.footerIcon} 
               src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/share.png" 
@@ -1249,25 +1380,27 @@ export default function DetailPage() {
         </div>
 
         {/* 悬浮机器人按钮 - Framer Motion 炫酷版 */}
-        <motion.div 
-          ref={robotRef}
-          className={styles.floatRobotBtn} 
-          onClick={() => router.push('/robot')}
-          whileHover={{ 
-            scale: 1.15,
-            rotate: [0, -10, 10, -10, 0],
-            transition: { duration: 0.5 }
-          }}
-          whileTap={{ scale: 0.9 }}
-          initial={{ scale: 0, rotate: -180, opacity: 0 }}
-          animate={{ scale: 1, rotate: 0, opacity: 1 }}
-          transition={{ 
-            type: "spring",
-            stiffness: 200,
-            damping: 15,
-            delay: 0.5
-          }}
-        >
+        <AnimatePresence>
+          {showRobot && (
+            <motion.div 
+              ref={robotRef}
+              className={styles.floatRobotBtn} 
+              onClick={() => router.push('/robot')}
+              whileHover={{ 
+                scale: 1.15,
+                rotate: [0, -10, 10, -10, 0],
+                transition: { duration: 0.5 }
+              }}
+              whileTap={{ scale: 0.9 }}
+              initial={{ scale: 0, rotate: -180, opacity: 0 }}
+              animate={{ scale: 1, rotate: 0, opacity: 1 }}
+              exit={{ scale: 0, rotate: 180, opacity: 0 }}
+              transition={{ 
+                type: "spring",
+                stiffness: 200,
+                damping: 15
+              }}
+            >
           {/* 悬浮光晕效果 */}
           <motion.div 
             className={styles.robotGlow}
@@ -1343,8 +1476,10 @@ export default function DetailPage() {
               </motion.div>
             )}
           </AnimatePresence>
-        </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-    </Layout>
+    </>
   );
 }
