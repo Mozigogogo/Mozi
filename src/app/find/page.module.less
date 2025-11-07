@@ -8,7 +8,7 @@
 
 .header {
   position: fixed;
-  top: 0;
+  top: 44px; // NavBar 的高度
   left: 0;
   width: 100%;
   z-index: 100;
@@ -28,30 +28,39 @@
       flex: 1;
       font-size: 14px; // H5 保持 14px 比较合适
       font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
     }
 
     .adm-tabs-tab-active {
       color: #11B787;
+    }
+
+    // 隐藏激活指示线（蓝色下划线）
+    .adm-tabs-tab-line {
+      display: none;
     }
   }
 }
 
 .content {
   flex: 1;
-  margin-top: 30px; // 原 60rpx
+  margin-top: 74px; // NavBar(44px) + Tabs(30px)
 }
 
 /* ===== 自选列表样式 ===== */
 .ownBox {
   height: 100vh;
-  padding-top: 55px; // 原 110rpx
+  padding-top: 10px; // 调整为较小的值，因为 .content 已经有 margin-top
 
   .gridTitle {
     font-size: 10px; // 原 20rpx
     color: #898989;
     margin-bottom: 5px; // 原 10rpx
     position: fixed;
-    top: 30px; // 原 60rpx
+    top: 74px; // NavBar(44px) + Tabs(30px)
     background-color: #efefef;
     z-index: 200;
     align-items: center;

@@ -6,6 +6,7 @@ import { Tabs, Grid, PullToRefresh } from 'antd-mobile';
 import HighlightArea from '../../components/HighlightArea';
 import { isEmpty } from 'lodash';
 import Layout from '../../components/Layout';
+import NavBar from '../../components/NavBar';
 import MoziCard from '../../components/MoziCard';
 import MoziGrid from '../../components/MoziGrid';
 import MarketOverview from '../../components/MarketOverview';
@@ -57,6 +58,8 @@ const [marketData, setMarketData] = useState([]);
 const [marketHasMore, setMarketHasMore] = useState(true);
 const marketPageNo = useRef(1);
 const marketPageSize = 8;
+const [isLoadingMore, setIsLoadingMore] = useState(false);
+const loadingTimerRef = useRef(null);
 
   // 自选相关状态
   const [myOwn, setOwn] = useState([]);
@@ -429,8 +432,23 @@ const marketPageSize = 8;
   };
 
   const loadMore = async () => {
-    if (!marketHasMore) return;
+    if (!marketHasMore || isLoadingMore) return;
+    
+    // 显示加载状态
+    setIsLoadingMore(true);
+    
+    // 清除之前的定时器
+    if (loadingTimerRef.current) {
+      clearTimeout(loadingTimerRef.current);
+    }
+    
+    // 加载数据
     await loadMarketData();
+    
+    // 3秒后隐藏加载状态
+    loadingTimerRef.current = setTimeout(() => {
+      setIsLoadingMore(false);
+    }, 3000);
   };
 
   const [isMarketError, setMarketError] = useState(false);
@@ -458,7 +476,13 @@ const marketPageSize = 8;
       }
     }, LOOPTIME);
 
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      // 清理加载定时器
+      if (loadingTimerRef.current) {
+        clearTimeout(loadingTimerRef.current);
+      }
+    };
   }, [pageActiveKey]);
   useEffect(() => {
     if (pageActiveKey === 'market' && marketData.length === 0) {
@@ -637,10 +661,10 @@ const marketPageSize = 8;
                 hideTitle={true}
                 enableLoadMore={true}
                 loadMore={loadMore}
-                hasMore={marketHasMore}
+                hasMore={marketHasMore && isLoadingMore}
                 columnWidths={['30%', '38%', '32%']}
               />
-              {!marketHasMore && marketData.length > 0 && (
+              {!marketHasMore && marketData.length > 0 && !isLoadingMore && (
                 <div className={styles.loadFinish}>已全部加载完毕</div>
               )}
             </Layout>
@@ -746,6 +770,9 @@ const marketPageSize = 8;
   return (
     <Layout bottomPadding={0}>
       <div className={styles.container}>
+        {/* 导航栏 */}
+        <NavBar title="发现" showBack={false} showBorder={false} />
+        
         <div className={styles.header}>
           <Tabs activeKey={pageActiveKey} onChange={handlePageTabChange}>
           <Tabs.Tab title="自选" key="self" />
