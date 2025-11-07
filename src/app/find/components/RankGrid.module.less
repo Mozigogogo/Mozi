@@ -1,0 +1,102 @@
+// 原项目 rpx 单位已除以2转换为 px
+.rankGridContainer {
+  display: flex;
+
+  .rankGridHead {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px; // 原 26rpx
+    margin-right: 15px; // 原 30rpx
+  
+    .firstPic {
+      width: 70px; // 原 140rpx
+      height: 70px; // 原 140rpx
+      margin-bottom: 10px; // 原 20rpx
+      border-radius: 50%;
+      object-fit: cover;
+    }
+  }
+
+  .rankGridDesc {
+    flex: 2;
+  
+    .gridTitle {
+      font-size: 10px; // 原 20rpx
+      color: #898989;
+      margin-bottom: 5px; // 原 10rpx
+    
+      .text {
+        text-align: right;
+      }
+
+      .rankingHeader {
+        width: 24px !important; // 原 48rpx
+        flex: 0 0 24px !important;
+      }
+
+      /* 将第二个标题项（DOM 中第 2 个子元素）左移，靠近序号列 */
+      .gridTitleItem:nth-child(2) {
+        transform: translateX(-50px); // 原 -100rpx
+        padding-left: 0 !important;
+      }
+    }
+      
+    .gridListItem {
+      padding-left: 0;
+    }
+
+    .rankingRow {
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+
+    .rankingNumber {
+      width: 20px; // 原 40rpx
+      flex: 0 0 20px;
+      font-size: 12px; // 原 24rpx
+      font-weight: 700;
+      color: #333;
+      text-align: center;
+      margin-right: 4px; // 原 8rpx
+    }
+    
+    .gridContent {
+      font-size: 12px; // 原 24rpx
+      flex: 1;
+    
+      .gridConItem {
+        display: flex;
+        align-items: center;
+      }
+    
+      .text {
+        justify-content: flex-end;
+      }
+    }
+  }
+}
+
+/* 暗黑模式 */
+@media (prefers-color-scheme: dark) {
+  .rankGridHead {
+    span {
+      color: #e0e0e0;
+    }
+  }
+  
+  .gridTitle {
+    color: #999 !important;
+  }
+  
+  .rankingNumber {
+    color: #e0e0e0 !important;
+  }
+  
+  .gridConItem {
+    color: #e0e0e0 !important;
+  }
+}

@@ -2,18 +2,23 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Tabs, Grid, InfiniteScroll } from 'antd-mobile';
+import { Tabs, Grid, PullToRefresh } from 'antd-mobile';
 import HighlightArea from '../../components/HighlightArea';
 import { isEmpty } from 'lodash';
 import Layout from '../../components/Layout';
 import MoziCard from '../../components/MoziCard';
+import MoziGrid from '../../components/MoziGrid';
+import MarketOverview from '../../components/MarketOverview';
+import AddCollect from '../../components/AddCollect';
+import AddMonitor from '../../components/AddMonitor';
 import { Loading } from '../../components/Loading';
+import { RankGrid } from './components/RankGrid';
 import { request } from '../../utils/request';
 import { Interface, LOOPTIME } from '../../utils/constants';
-import { jump2Detail, jump2List } from '../../utils/core';
+import { jump2Detail } from '../../utils/core';
 import styles from './page.module.less';
 
-// 市场标题组件
+// 市场标题组件（用于行情数据格式化）
 const MarketTitle = ({ url, symbol, totalVolume }) => {
   return (
     <div className={styles.rankTitle}>
@@ -26,7 +31,7 @@ const MarketTitle = ({ url, symbol, totalVolume }) => {
   );
 };
 
-// 市场描述组件
+// 市场描述组件（用于行情数据格式化）
 const MarketDesc = ({ currentPrice, priceChange24h }) => {
   const isPriceDown = String(priceChange24h).includes('-');
   return (
@@ -35,29 +40,6 @@ const MarketDesc = ({ currentPrice, priceChange24h }) => {
       <div className={`${styles.rankPriceChange} ${isPriceDown ? styles.rankRed : styles.rankGreen}`}>
         {priceChange24h}
       </div>
-    </div>
-  );
-};
-
-// 排行榜组件
-const RankGrid = ({ data, loading, onClick }) => {
-  if (loading) {
-    return <Loading />;
-  }
-
-  if (!data || data.length === 0) {
-    return <div className={styles.emptyData}>暂无数据</div>;
-  }
-
-  return (
-    <div className={styles.rankGrid}>
-      {data.map((item, index) => (
-        <div key={index} className={styles.rankItem} onClick={() => onClick(item.symbol)}>
-          <div className={styles.rankIndex}>{index + 1}</div>
-          <MarketTitle url={item.url} symbol={item.symbol} totalVolume={item.totalVolume} />
-          <MarketDesc currentPrice={item.currentPrice} priceChange24h={item.priceChange24h} />
-        </div>
-      ))}
     </div>
   );
 };
@@ -74,7 +56,7 @@ export default function FindPage() {
 const [marketData, setMarketData] = useState([]);
 const [marketHasMore, setMarketHasMore] = useState(true);
 const marketPageNo = useRef(1);
-const marketPageSize = 20;
+const marketPageSize = 8;
 
   // 自选相关状态
   const [myOwn, setOwn] = useState([]);
@@ -337,7 +319,6 @@ const marketPageSize = 20;
 
   // 获取自选列表
   const fetchOwnList = async () => {
-    setOwnLoading(true);
     try {
       const coinSelectRes = await request({
         url: Interface.COIN_SELF
@@ -348,6 +329,8 @@ const marketPageSize = 20;
         setOwnLoading(false);
         return;
       }
+
+      setLogin(false);
 
       if (isEmpty(coinSelectRes?.data)) {
         setOwnError(true);
@@ -361,18 +344,47 @@ const marketPageSize = 20;
         return;
       }
 
-      setOwn(coinSelectRes.data);
+      // 格式化数据，与原项目保持一致
+      const temp_self_select = coinSelectRes.data.map((item) => {
+        return {
+          symbol: (
+            <div className={styles.ownTitle}>
+              <img className={styles.ownImg} src={item.url} alt={item.symbol} />
+              {item.symbol}
+            </div>
+          ),
+          last: item.last,
+          price24h: <HighlightArea value={item.price24h} />,
+          own: <AddCollect symbol={item.symbol} isOwn={true} />,
+          monitor: <AddMonitor symbol={item.symbol} />,
+          key: item.symbol
+        };
+      });
+
+      setOwn(temp_self_select);
+      setOwnLoading(false);
+
+      // 轮询
+      if (needLoop.current) {
+        setTimeout(() => {
+          if (needLoop.current) fetchOwnList();
+        }, LOOPTIME);
+      }
     } catch (error) {
       console.error('获取自选列表失败:', error);
       setOwnError(true);
-    } finally {
       setOwnLoading(false);
     }
   };
 
-  const loadMarketData = async () => {
-    setMarketLoading(true);
+  const loadMarketData = async (isRefresh = false) => {
     try {
+      // 如果是刷新，重置页码
+      if (isRefresh) {
+        marketPageNo.current = 1;
+        setMarketHasMore(true);
+      }
+
       const response = await request({
         url: Interface.find_coin,
         data: {
@@ -380,21 +392,49 @@ const marketPageSize = 20;
           pageSize: marketPageSize
         }
       });
-      if (response?.data?.list) {
-        const newData = response.data.list;
-        setMarketData(prev => [...prev, ...newData]);
-        if (newData.length < marketPageSize) {
-          setMarketHasMore(false);
-        } else {
-          marketPageNo.current++;
-        }
+      
+      if (isEmpty(response?.data?.list)) {
+        setMarketError(true);
+        setMarketLoading(false);
+        return;
       }
+
+      // 格式化数据，与原项目保持一致
+      const tempFindCoin = response.data.list.map((item) => {
+        return {
+          coin: <MarketTitle url={item.url} symbol={item.symbol} totalVolume={item.totalVolume} />,
+          desc: <MarketDesc currentPrice={item.currentPrice} priceChange24h={item.priceChange24h} />,
+          priceChangePercentage24h: <HighlightArea value={item.priceChangePercentage24h} />,
+          key: item.symbol
+        };
+      });
+
+      if (marketPageNo.current === 1) {
+        setMarketData(tempFindCoin);
+      } else {
+        setMarketData(prev => [...prev, ...tempFindCoin]);
+      }
+      
+      if (response.data.list.length < marketPageSize) {
+        setMarketHasMore(false);
+      } else {
+        marketPageNo.current++;
+      }
+      
+      setMarketLoading(false);
     } catch (error) {
       console.error('获取行情数据失败:', error);
-    } finally {
       setMarketLoading(false);
     }
   };
+
+  const loadMore = async () => {
+    if (!marketHasMore) return;
+    await loadMarketData();
+  };
+
+  const [isMarketError, setMarketError] = useState(false);
+  const [isFinish, setFinish] = useState(false);
 
   // 监听 URL 参数变化
   useEffect(() => {
@@ -487,85 +527,126 @@ const marketPageSize = 20;
     jump2Detail(symbol);
   };
 
+  // 添加自选
+  const addOwn = () => {
+    window.location.href = '/search';
+  };
+
   // 渲染自选列表
   const renderOwnList = () => {
-    if (needLogin) {
+    if (ownLoading) {
       return (
-        <Layout needLogin loginCallback={() => {}} />
+        <div className={styles.ownBox}>
+          <Loading color="#11B787" tip="" />
+        </div>
       );
     }
 
     if (isOwnError) {
       return (
-        <Layout isError errMsg="获取自选列表失败" />
+        <div className={styles.ownBox}>
+          <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>数据加载失败</div>
+        </div>
       );
     }
 
-    if (ownLoading) {
-      return <Loading />;
-    }
-
-    if (isEmpty(myOwn)) {
+    if (needLogin) {
       return (
-        <div className={styles.emptyOwn}>
-          <p>暂无自选币种</p>
-          <button className={styles.addOwnBtn} onClick={() => jump2List('market')}>添加自选</button>
+        <div className={styles.ownBox}>
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <div style={{ marginBottom: '16px' }}>请先登录</div>
+            <button 
+              style={{ 
+                backgroundColor: '#11B787', 
+                color: '#fff', 
+                padding: '8px 24px', 
+                border: 'none', 
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }} 
+              onClick={fetchOwnList}
+            >
+              登录
+            </button>
+          </div>
         </div>
       );
     }
 
     return (
-      <div className={styles.ownList}>
-        {myOwn.map((item, index) => (
-          <div key={index} className={styles.ownItem} onClick={() => handleCoinClick(item.symbol)}>
-            <div className={styles.ownLeft}>
-              <img src={item.url} alt={item.symbol} className={styles.ownImg} />
-              <div className={styles.ownInfo}>
-                <div className={styles.ownSymbol}>{item.symbol}</div>
-                <div className={styles.ownName}>{item.name}</div>
-              </div>
-            </div>
-            <div className={styles.ownRight}>
-              <div className={styles.ownPrice}>{item.currentPrice}</div>
-              <div className={`${styles.ownChange} ${String(item.priceChange24h).includes('-') ? styles.rankRed : styles.rankGreen}`}>
-                {item.priceChange24h}
-              </div>
-            </div>
-          </div>
-        ))}
+      <div className={styles.ownBox}>
+        {myOwn.length === 0 ? (
+          <button className={styles.addOwnBtn} onClick={addOwn}>添加自选</button>
+        ) : (
+          <>
+            <Grid className={styles.gridTitle} columns={5}>
+              {['币种', '最新价', '24小时涨幅', '是否自选', '加监控'].map((colNameItem, colNameIndex) => (
+                <Grid.Item key={colNameIndex} className={`${styles.gridTitleItem} ${colNameIndex !== 0 ? styles.text : ''}`}>
+                  {colNameItem}
+                </Grid.Item>
+              ))}
+            </Grid>
+            <MoziGrid
+              length={5}
+              colName={['币种', '最新价', '24小时涨幅', '是否自选', '加自选']}
+              gridContent={myOwn}
+              callback={(gridCon) => { jump2Detail(gridCon.key); }}
+              hideTitle={true}
+            />
+          </>
+        )}
       </div>
     );
   };
 
-  // 渲染排行榜
+  // 下拉刷新处理
+  const handleRefresh = async () => {
+    await loadMarketData(true);
+  };
+
+  // 渲染行情列表
   const renderMarketList = () => {
-    if (marketLoading && marketData.length === 0) {
-      return <Loading />;
-    }
     return (
-      <div className={styles.ownList}>
-        {marketData.map((item, index) => (
-          <div key={index} className={styles.ownItem} onClick={() => handleCoinClick(item.symbol)}>
-            <div className={styles.ownLeft}>
-              <img src={item.url} alt={item.symbol} className={styles.ownImg} />
-              <div className={styles.ownInfo}>
-                <div className={styles.ownSymbol}>{item.symbol}</div>
-                <div className={styles.ownName}>{item.totalVolume}</div>
+      <>
+        {/* 市场概况横向滑动卡片 */}
+        <MarketOverview />
+        
+        <div className={styles.marketBox}>
+          <PullToRefresh onRefresh={handleRefresh}>
+            <Layout isLoading={marketLoading} isError={isMarketError}>
+              <div className={styles.gridTitle}>
+                {[
+                  { name: '币种/市值', width: '30%' },
+                  { name: '最新价格/24H价格变化', width: '38%' },
+                  { name: '24H价格变化', width: '32%' }
+                ].map((colItem, colIndex) => (
+                  <div 
+                    key={colIndex} 
+                    className={`${styles.gridTitleItem} ${colIndex !== 0 ? styles.text : ''}`}
+                    style={{ width: colItem.width }}
+                  >
+                    {colItem.name}
+                  </div>
+                ))}
               </div>
-            </div>
-            <div className={styles.ownRight}>
-              <div className={styles.ownPrice}>{item.currentPrice}</div>
-              <div className={`${styles.ownChange} ${String(item.priceChange24h).includes('-') ? styles.rankRed : styles.rankGreen}` }>
-                {item.priceChange24h}
-              </div>
-            </div>
-            <div className={styles.ownRight}>
-              <HighlightArea value={item.priceChangePercentage24h} />
-            </div>
-          </div>
-        ))}
-        <InfiniteScroll loadMore={loadMarketData} hasMore={marketHasMore} />
-      </div>
+              <MoziGrid
+                length={3}
+                colName={['币种/市值', '最新价格/24H价格变化', '24H价格变化']}
+                gridContent={marketData}
+                callback={(gridCon) => { jump2Detail(gridCon.key); }}
+                hideTitle={true}
+                enableLoadMore={true}
+                loadMore={loadMore}
+                hasMore={marketHasMore}
+                columnWidths={['30%', '38%', '32%']}
+              />
+              {!marketHasMore && marketData.length > 0 && (
+                <div className={styles.loadFinish}>已全部加载完毕</div>
+              )}
+            </Layout>
+          </PullToRefresh>
+        </div>
+      </>
     );
   };
   const renderRankList = () => {
@@ -663,7 +744,7 @@ const marketPageSize = 20;
   };
 
   return (
-    <Layout>
+    <Layout bottomPadding={0}>
       <div className={styles.container}>
         <div className={styles.header}>
           <Tabs activeKey={pageActiveKey} onChange={handlePageTabChange}>

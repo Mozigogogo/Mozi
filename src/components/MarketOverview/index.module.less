@@ -1,0 +1,239 @@
+// 原项目 rpx 单位已除以2转换为 px
+.marketOverview {
+  padding: 10px 10px 0px 10px; // 原 20rpx
+  background-color: transparent;
+  // margin-top: 30px; // 为 TabBar 留出空间
+  
+  .marketCardsScroll {
+    width: 100%;
+    white-space: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+  
+  .marketCardsContent {
+    display: inline-block;
+    .marketCards {
+      display: flex;
+      gap: 6px; // 原 16rpx
+      
+      .marketCard {
+        width: 97px; // 调整宽度以适应3.5个卡片显示
+        height: 93px; 
+        flex-shrink: 0;
+        background-color: #fff;
+        border-radius: 8px; // 原 16rpx
+        padding: 10px 8px; // 原 20rpx 16rpx
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08); // 原 0 2rpx 8rpx
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        border: 1px solid #f0f0f0;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        
+        &:active {
+          transform: scale(0.98);
+          box-shadow: 0 0.5px 2px rgba(0, 0, 0, 0.12); // 原 0 1rpx 4rpx
+        }
+        
+        .cardHeader {
+          display: flex;
+          align-items: center;
+          gap: 4px; // 原 8rpx
+          margin-bottom: 4px; // 原 8rpx
+          
+          .cardIcon {
+            .iconCircle {
+              width: 19px; // 原 38rpx
+              height: 19px; // 原 38rpx
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background-color: transparent;
+              
+              .iconImage {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+              }
+            }
+          }
+          
+          .cardTitle {
+            font-size: 11px; // 减小字体，原 24rpx
+            color: #666;
+            line-height: 1.2;
+            font-weight: 500;
+          }
+        }
+        
+        .cardInfo {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 2px; // 原 4rpx
+          
+          .cardValue {
+            font-size: 12px; // 减小字体，原 26rpx
+            font-weight: 600;
+            color: #333;
+            line-height: 1.2;
+            margin-left: 7.5px; // 原 15rpx
+            margin-top: 2.5px; // 原 5rpx
+            display: flex;
+            align-items: baseline;
+            word-break: break-all;
+
+            .cardValueText {
+              color: #333;
+              max-width: 100%;
+              overflow: hidden;
+              text-overflow: ellipsis;
+
+              &.todayUpdated {
+                color: #41C19A;
+              }
+              
+              &.cardValuePlaceholder {
+                color: #8E8E8E;
+                font-weight: normal;
+              }
+            }
+
+            .cardValuePercentage {
+              margin-left: 2.5px; // 原 5rpx
+              
+              &.positive {
+                color: #11B787;
+              }
+              
+              &.negative {
+                color: #FA5F5F;
+              }
+            }
+          }
+        }
+        
+        .cardChange {
+          font-size: 11px; // 减小字体，原 26rpx
+          line-height: 1.2;
+          margin-top: auto;
+          display: flex;
+          align-items: center;
+          margin-left: 7.5px; // 原 15rpx
+          margin-bottom: 5px; // 原 10rpx
+          
+          &.positive {
+            color: #11B787;
+          }
+          
+          &.negative {
+            color: #FA5F5F;
+          }
+          
+          .changeIcon {
+            width: 8px; // 原 16rpx
+            height: 8px; // 原 16rpx
+            margin-right: 2px; // 原 4rpx
+            object-fit: contain;
+          }
+        }
+
+        .cardAction {
+          width: 100%;
+          font-size: 10px; // 减小字体，原 22rpx
+          line-height: 1;
+          margin-top: auto;
+          align-self: center;
+          color: #333333;
+          border: 1px solid #C6C6C6;
+          border-radius: 5px; // 原 10rpx
+          padding: 6px; // 原 12rpx
+          display: inline-block;
+          box-sizing: border-box;
+          text-align: center;
+          font-weight: 500;
+          
+          &:active {
+            opacity: 0.7;
+          }
+        }
+
+        .cardDesc {
+          font-size: 11px; // 减小字体，原 26rpx
+          font-weight: 500;
+          line-height: 1.2;
+          margin-top: auto;
+          color: #999;
+          
+          &.cardActionButton {
+            width: 100%;
+            font-size: 10px; // 减小字体，原 22rpx
+            line-height: 1;
+            align-self: center;
+            color: #333333;
+            border: 1px solid #C6C6C6;
+            border-radius: 5px; // 原 10rpx
+            padding: 6px; // 原 12rpx
+            display: inline-block;
+            box-sizing: border-box;
+            text-align: center;
+            
+            &:active {
+              opacity: 0.7;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/* 暗黑模式 */
+@media (prefers-color-scheme: dark) {
+  .marketOverview {
+    background: transparent;
+  }
+  
+  .marketCard {
+    background: #1a1a1a !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;
+    border-color: #2a2a2a !important;
+    
+    &:active {
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+    }
+  }
+  
+  .cardTitle {
+    color: #999 !important;
+  }
+  
+  .cardValueText {
+    color: #e0e0e0 !important;
+  }
+  
+  .cardAction {
+    color: #e0e0e0 !important;
+    border-color: #555 !important;
+  }
+  
+  .cardDesc {
+    color: #666 !important;
+    
+    &.cardActionButton {
+      color: #e0e0e0 !important;
+      border-color: #555 !important;
+    }
+  }
+}
+

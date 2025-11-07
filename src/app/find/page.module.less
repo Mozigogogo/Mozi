@@ -1,80 +1,157 @@
+// 原项目 rpx 单位已除以2转换为 px
 .container {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  padding-bottom: 60px;
+  background-color: #efefef;
 }
 
 .header {
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 10;
+  left: 0;
+  width: 100%;
+  z-index: 100;
   background-color: #fff;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border-color);
+  height: 30px; // 原 60rpx
+  font-weight: bold;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+  :global {
+    .adm-tabs-tab-list {
+      height: 30px;
+    }
+
+    .adm-tabs-tab {
+      color: #000;
+      min-width: 60px; // 原 120rpx
+      flex: 1;
+      font-size: 14px; // H5 保持 14px 比较合适
+      font-weight: 600;
+    }
+
+    .adm-tabs-tab-active {
+      color: #11B787;
+    }
+  }
 }
 
 .content {
   flex: 1;
-  padding: 12px;
+  margin-top: 30px; // 原 60rpx
 }
 
-/* 排行榜样式 */
-.rankContainer {
-  margin-top: 16px;
+/* ===== 自选列表样式 ===== */
+.ownBox {
+  height: 100vh;
+  padding-top: 55px; // 原 110rpx
+
+  .gridTitle {
+    font-size: 10px; // 原 20rpx
+    color: #898989;
+    margin-bottom: 5px; // 原 10rpx
+    position: fixed;
+    top: 30px; // 原 60rpx
+    background-color: #efefef;
+    z-index: 200;
+    align-items: center;
+    padding: 5px 10px; // 原 10rpx 20rpx
+    box-sizing: border-box;
+  
+    .text {
+      text-align: right;
+    }
+  }
+
+  .addOwnBtn {
+    background-color: #11B787;
+    color: #fff;
+    width: 120px; // 原 240rpx
+    margin: 20px auto; // 原 40rpx
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    display: block;
+    
+    &:active {
+      opacity: 0.8;
+    }
+  }
 }
 
-.rankGrid {
-  margin-top: 16px;
-}
-
-.rankItem {
+.ownTitle {
   display: flex;
+  width: 100%;
   align-items: center;
-  padding: 12px;
-  border-bottom: 1px solid var(--border-color);
+
+  .ownImg {
+    height: 18px; // 原 36rpx
+    width: 18px; // 原 36rpx
+    margin-right: 5px; // 原 10rpx
+    border-radius: 50%;
+  }
+}
+
+/* ===== 行情列表样式 ===== */
+.marketBox {
   background-color: #fff;
-  cursor: pointer;
-}
+  margin: 10px 0px 0px ;
+  border-radius: 8px;
+  
+  .gridTitle {
+    font-size: 12px; // 原 20rpx，从10px增加到12px
+    color: #898989;
+    margin: 0;
+    background-color: #fff;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    padding: 8px 10px; // 原 10rpx 20rpx，从5px增加到8px
+    box-sizing: border-box;
+    border-radius: 8px 8px 0 0; // 原 20rpx 20rpx 0 0，调整为8px更合适
+  
+    .gridTitleItem {
+      flex-shrink: 0;
+    }
+  
+    .text {
+      text-align: right;
+    }
+  }
 
-.rankItem:last-child {
-  border-bottom: none;
-}
-
-.rankIndex {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background-color: #f5f5f5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--font-size-sm);
-  margin-right: 12px;
+  .loadFinish {
+    text-align: center;
+    padding: 20px;
+    color: #999;
+    font-size: 12px;
+  }
 }
 
 .rankTitle {
   display: flex;
   align-items: center;
-  flex: 1;
 }
 
 .rankImg {
-  width: 24px;
+  width: 24px; // 原 36rpx，从18px增加到24px
   height: 24px;
   border-radius: 50%;
-  margin-right: 8px;
+  margin-right: 8px; // 原 10rpx，从5px增加到8px
   object-fit: cover;
 }
 
 .rankCoin {
   font-weight: 500;
-  font-size: var(--font-size-base);
+  font-size: 15px; // 原 24rpx，从12px增加到15px
+  color: #333;
 }
 
 .rankCoinDesc {
-  font-size: var(--font-size-sm);
+  font-size: 12px; // 原 20rpx，从10px增加到12px
   color: #999;
+  margin-top: 2px;
 }
 
 .rankDesc {
@@ -83,129 +160,90 @@
 
 .rankPrice {
   font-weight: 500;
-  font-size: var(--font-size-base);
+  font-size: 15px; // 原 24rpx，从12px增加到15px
+  color: #333;
 }
 
 .rankPriceChange {
-  font-size: var(--font-size-sm);
+  font-size: 12px; // 原 20rpx，从10px增加到12px
+  margin-top: 2px;
 }
 
 .rankGreen {
-  color: var(--success-color);
+  color: #11B787;
 }
 
 .rankRed {
-  color: var(--error-color);
+  color: #FA5F5F;
 }
 
-/* 自选列表样式 */
-.ownList {
-  margin-top: 16px;
+/* ===== 排行榜容器样式 ===== */
+.rankContainer {
+  padding: 5px 10px 0; // 原 10rpx 20rpx 0
+  padding-top: 40px; // 原 80rpx / 2
+  
+  :global {
+    .adm-card {
+      margin-bottom: 12px;
+    }
+  }
 }
 
-.ownItem {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px;
-  border-bottom: 1px solid var(--border-color);
-  background-color: #fff;
-  cursor: pointer;
-}
-
-.ownItem:last-child {
-  border-bottom: none;
-}
-
-.ownLeft {
+.gridText {
   display: flex;
   align-items: center;
+
+  .gridIcon {
+    height: 18px; // 原 36rpx
+    width: 18px;
+    margin-right: 5px; // 原 10rpx
+    border-radius: 50%;
+  }
 }
 
-.ownImg {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  margin-right: 12px;
-  object-fit: cover;
-}
-
-.ownInfo {
-  display: flex;
-  flex-direction: column;
-}
-
-.ownSymbol {
-  font-weight: 500;
-  font-size: var(--font-size-base);
-}
-
-.ownName {
-  font-size: var(--font-size-sm);
-  color: #999;
-}
-
-.ownRight {
-  text-align: right;
-}
-
-.ownPrice {
-  font-weight: 500;
-  font-size: var(--font-size-base);
-}
-
-.ownChange {
-  font-size: var(--font-size-sm);
-}
-
-.emptyOwn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 200px;
-  color: #999;
-}
-
-.addOwnBtn {
-  margin-top: 16px;
-  padding: 8px 16px;
-  background-color: var(--primary-color);
-  color: #fff;
-  border: none;
-  border-radius: var(--border-radius-base);
-  font-size: var(--font-size-base);
-}
-
-.emptyData {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100px;
-  color: #999;
-}
-
-/* 市场网格样式 */
-.marketGrid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-top: 16px;
-}
-
+/* 暗黑模式 */
 @media (prefers-color-scheme: dark) {
+  .container {
+    background-color: #0f0f0f;
+  }
+  
   .header {
     background-color: #1a1a1a;
-    border-bottom-color: #333;
+    
+    :global {
+      .adm-tabs-tab {
+        color: #e0e0e0;
+      }
+
+      .adm-tabs-tab-active {
+        color: #11B787;
+      }
+    }
   }
   
-  .rankItem,
-  .ownItem {
+  .ownBox .gridTitle {
+    background-color: #0f0f0f;
+  }
+  
+  .marketBox {
     background-color: #1a1a1a;
-    border-bottom-color: #333;
+    
+    .gridTitle {
+      background-color: #1a1a1a;
+      color: #999;
+    }
   }
   
-  .rankIndex {
-    background-color: #333;
+  .rankCoin,
+  .rankPrice {
+    color: #e0e0e0;
+  }
+  
+  .rankCoinDesc {
+    color: #666;
+  }
+  
+  .addOwnBtn {
+    background-color: #11B787;
   }
 }
