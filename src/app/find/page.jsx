@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Tabs, Grid, PullToRefresh } from 'antd-mobile';
 import HighlightArea from '../../components/HighlightArea';
 import { isEmpty } from 'lodash';
@@ -47,6 +47,7 @@ const MarketDesc = ({ currentPrice, priceChange24h }) => {
 
 export default function FindPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const tabFromUrl = searchParams.get('tab');
   
   // 状态定义
@@ -327,23 +328,30 @@ const loadingTimerRef = useRef(null);
         url: Interface.COIN_SELF
       });
 
+      console.log('自选列表接口返回:', coinSelectRes);
+
       if (coinSelectRes?.data?.isLogin === false) {
         setLogin(true);
         setOwnLoading(false);
+        setOwnError(false);
         return;
       }
 
       setLogin(false);
 
-      if (isEmpty(coinSelectRes?.data)) {
+      // 区分真正的错误和空数据
+      if (coinSelectRes?.data === null || coinSelectRes?.data === undefined) {
+        console.error('接口返回数据为空');
         setOwnError(true);
         setOwnLoading(false);
         return;
       }
 
-      if (coinSelectRes?.data.length === 0) {
+      if (Array.isArray(coinSelectRes?.data) && coinSelectRes.data.length === 0) {
+        console.log('用户暂无自选数据');
         setOwnLoading(false);
         setOwn([]);
+        setOwnError(false);
         return;
       }
 
@@ -377,6 +385,7 @@ const loadingTimerRef = useRef(null);
       console.error('获取自选列表失败:', error);
       setOwnError(true);
       setOwnLoading(false);
+      // 不需要轮询
     }
   };
 
@@ -569,7 +578,33 @@ const loadingTimerRef = useRef(null);
     if (isOwnError) {
       return (
         <div className={styles.ownBox}>
-          <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>数据加载失败</div>
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            padding: '40px',
+            color: '#999'
+          }}>
+            <div style={{ marginBottom: '16px' }}>数据加载失败</div>
+            <button 
+              style={{ 
+                backgroundColor: '#11B787', 
+                color: '#fff', 
+                padding: '8px 24px', 
+                border: 'none', 
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+              onClick={() => {
+                setOwnError(false);
+                setOwnLoading(true);
+                fetchOwnList();
+              }}
+            >
+              重新加载
+            </button>
+          </div>
         </div>
       );
     }
@@ -588,7 +623,7 @@ const loadingTimerRef = useRef(null);
                 borderRadius: '4px',
                 cursor: 'pointer'
               }} 
-              onClick={fetchOwnList}
+              onClick={() => router.push('/user?showLogin=true')}
             >
               登录
             </button>
