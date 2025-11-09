@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Form, Input, Button, message } from "antd";
 import { sendVerificationCode } from "@/api/user";
 import styles from "./page.module.less";
@@ -11,8 +11,67 @@ export default function WhitelistPage() {
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
 
+  // 初始化 Amplitude 埋点
+  useEffect(() => {
+    // 加载 Amplitude 核心库
+    const amplitudeScript = document.createElement('script');
+    amplitudeScript.src = 'https://cdn.amplitude.com/libs/analytics-browser-2.11.1-min.js.gz';
+    amplitudeScript.async = true;
+
+    // 加载 Session Replay 插件
+    const sessionReplayScript = document.createElement('script');
+    sessionReplayScript.src = 'https://cdn.amplitude.com/libs/plugin-session-replay-browser-1.23.2-min.js.gz';
+    sessionReplayScript.async = true;
+
+    // 初始化 Amplitude
+    const initScript = document.createElement('script');
+    initScript.innerHTML = `
+      window.amplitude.add(window.sessionReplay.plugin({sampleRate: 1}));
+      window.amplitude.init('262796006c5ab5404c5974f95aa77991', {
+        "autocapture": {
+          "elementInteractions": true
+        }
+      });
+    `;
+
+    // 按顺序加载脚本
+    amplitudeScript.onload = () => {
+      document.head.appendChild(sessionReplayScript);
+      sessionReplayScript.onload = () => {
+        document.head.appendChild(initScript);
+
+        // 初始化完成后，追踪页面访问
+        setTimeout(() => {
+          if (window.amplitude) {
+            window.amplitude.track('Whitelist_Page_Viewed', {
+              timestamp: new Date().toISOString(),
+              userAgent: navigator.userAgent,
+              referrer: document.referrer
+            });
+          }
+        }, 100);
+      };
+    };
+
+    document.head.appendChild(amplitudeScript);
+
+    // 清理函数
+    return () => {
+      // 移除脚本（可选）
+      if (amplitudeScript.parentNode) {
+        amplitudeScript.parentNode.removeChild(amplitudeScript);
+      }
+      if (sessionReplayScript.parentNode) {
+        sessionReplayScript.parentNode.removeChild(sessionReplayScript);
+      }
+      if (initScript.parentNode) {
+        initScript.parentNode.removeChild(initScript);
+      }
+    };
+  }, []);
+
   // 倒计时效果
-  React.useEffect(() => {
+  useEffect(() => {
     if (countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
       return () => clearTimeout(timer);
@@ -25,6 +84,14 @@ export default function WhitelistPage() {
       await form.validateFields(['email']);
       const emailValue = form.getFieldValue('email');
 
+      // Amplitude 埋点：点击 Connect 按钮
+      if (window.amplitude) {
+        window.amplitude.track('Whitelist_Connect_Clicked', {
+          email: emailValue,
+          timestamp: new Date().toISOString()
+        });
+      }
+
       setLoading(true);
       const language = 'en'; // 可以根据需要调整语言
       const res = await sendVerificationCode(emailValue, language);
@@ -34,8 +101,25 @@ export default function WhitelistPage() {
         setEmail(emailValue);
         setStep('verify');
         setCountdown(60);
+
+        // Amplitude 埋点：验证码发送成功
+        if (window.amplitude) {
+          window.amplitude.track('Whitelist_Code_Sent_Success', {
+            email: emailValue,
+            timestamp: new Date().toISOString()
+          });
+        }
       } else {
         message.error(res?.message || 'Failed to send verification code');
+
+        // Amplitude 埋点：验证码发送失败
+        if (window.amplitude) {
+          window.amplitude.track('Whitelist_Code_Sent_Failed', {
+            email: emailValue,
+            error: res?.message || 'Unknown error',
+            timestamp: new Date().toISOString()
+          });
+        }
       }
     } catch (error) {
       if (error.errorFields) {
@@ -44,6 +128,14 @@ export default function WhitelistPage() {
       }
       console.error('发送验证码失败:', error);
       message.error('Failed to send verification code, please try again');
+
+      // Amplitude 埋点：验证码发送异常
+      if (window.amplitude) {
+        window.amplitude.track('Whitelist_Code_Sent_Error', {
+          error: error.message || 'Unknown error',
+          timestamp: new Date().toISOString()
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -52,6 +144,16 @@ export default function WhitelistPage() {
   // 验证验证码
   const handleVerifyCode = async (values) => {
     setLoading(true);
+
+    // Amplitude 埋点：点击 Verify 按钮
+    if (window.amplitude) {
+      window.amplitude.track('Whitelist_Verify_Clicked', {
+        email: email,
+        verificationCode: values.verificationCode,
+        timestamp: new Date().toISOString()
+      });
+    }
+
     try {
       // 这里添加验证码校验逻辑
       // 可以调用后端API验证验证码
@@ -60,11 +162,28 @@ export default function WhitelistPage() {
       // 模拟验证成功
       message.success('Verification successful!');
 
+      // Amplitude 埋点：验证成功
+      if (window.amplitude) {
+        window.amplitude.track('Whitelist_Verify_Success', {
+          email: email,
+          timestamp: new Date().toISOString()
+        });
+      }
+
       // 验证成功后的逻辑，比如跳转到主页
       // router.push('/');
     } catch (error) {
       console.error('验证失败:', error);
       message.error('Verification failed, please try again');
+
+      // Amplitude 埋点：验证失败
+      if (window.amplitude) {
+        window.amplitude.track('Whitelist_Verify_Failed', {
+          email: email,
+          error: error.message || 'Unknown error',
+          timestamp: new Date().toISOString()
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -74,6 +193,14 @@ export default function WhitelistPage() {
   const handleResendCode = async () => {
     if (countdown > 0) return;
 
+    // Amplitude 埋点：点击 Resend 按钮
+    if (window.amplitude) {
+      window.amplitude.track('Whitelist_Resend_Clicked', {
+        email: email,
+        timestamp: new Date().toISOString()
+      });
+    }
+
     setLoading(true);
     try {
       const language = 'en';
@@ -82,12 +209,38 @@ export default function WhitelistPage() {
       if (res?.code === 200 || res?.success) {
         message.success('Verification code resent');
         setCountdown(60);
+
+        // Amplitude 埋点：重新发送成功
+        if (window.amplitude) {
+          window.amplitude.track('Whitelist_Resend_Success', {
+            email: email,
+            timestamp: new Date().toISOString()
+          });
+        }
       } else {
         message.error(res?.message || 'Failed to resend verification code');
+
+        // Amplitude 埋点：重新发送失败
+        if (window.amplitude) {
+          window.amplitude.track('Whitelist_Resend_Failed', {
+            email: email,
+            error: res?.message || 'Unknown error',
+            timestamp: new Date().toISOString()
+          });
+        }
       }
     } catch (error) {
       console.error('重新发送验证码失败:', error);
       message.error('Failed to resend verification code');
+
+      // Amplitude 埋点：重新发送异常
+      if (window.amplitude) {
+        window.amplitude.track('Whitelist_Resend_Error', {
+          email: email,
+          error: error.message || 'Unknown error',
+          timestamp: new Date().toISOString()
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -188,7 +341,16 @@ export default function WhitelistPage() {
               <button
                 type="button"
                 className={styles.backBtn}
-                onClick={() => setStep('email')}
+                onClick={() => {
+                  // Amplitude 埋点：点击返回按钮
+                  if (window.amplitude) {
+                    window.amplitude.track('Whitelist_Back_Clicked', {
+                      email: email,
+                      timestamp: new Date().toISOString()
+                    });
+                  }
+                  setStep('email');
+                }}
               >
                 ← Back to email
               </button>
@@ -202,6 +364,16 @@ export default function WhitelistPage() {
             target="_blank"
             rel="noopener noreferrer"
             className={styles.tgLink}
+            onClick={() => {
+              // Amplitude 埋点：点击 Telegram 链接
+              if (window.amplitude) {
+                window.amplitude.track('Whitelist_Telegram_Clicked', {
+                  email: email || 'not_provided',
+                  step: step,
+                  timestamp: new Date().toISOString()
+                });
+              }
+            }}
           >
             <svg className={styles.tgIcon} viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.692-1.653-1.123-2.678-1.799-1.185-.781-.417-1.21.258-1.911.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.489-1.302.481-.428-.008-1.252-.241-1.865-.44-.752-.244-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.14.121.099.155.232.171.326.016.094.036.308.02.475z"/>
