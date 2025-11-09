@@ -1,129 +1,419 @@
+// 白名单页面样式
 .whitelistBg {
   min-height: 100vh;
-  background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: #f5f5f5;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .whitelistCard {
-  width: 400px;
   background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 2px 16px 0 rgba(0,0,0,0.06);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 48px 32px 24px 32px;
-  gap: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 48px 40px;
+  max-width: 460px;
+  width: 100%;
+  text-align: center;
+  box-sizing: border-box;
+  
+  // PC 端优化
+  @media (min-width: 768px) {
+    padding: 40px 40px;
+    max-width: 460px;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  }
 }
 
 .logo {
-  font-family: inherit;
-  font-size: 2.8rem;
+  font-size: 32px;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  line-height: 1;
-  margin-bottom: 6px;
+  font-style: italic;
+  color: #000;
+  margin-bottom: 24px;
+  letter-spacing: -0.5px;
+  
+  // PC 端优化
+  @media (min-width: 768px) {
+    font-size: 36px;
+    margin-bottom: 18px;
+  }
 }
 
 .title {
-  font-size: 1.5rem;
+  font-size: 24px;
   font-weight: 600;
-  margin-top: 0;
+  color: #000;
+  margin-bottom: 12px;
+  
+  // PC 端优化
+  @media (min-width: 768px) {
+    font-size: 26px;
+    margin-bottom: 10px;
+  }
 }
 
 .tip {
-  color: #868e96;
-  font-size: 0.98rem;
-  margin-bottom: 8px;
+  font-size: 14px;
+  color: #666;
+  line-height: 1.5;
+  margin-bottom: 32px;
+  
+  // PC 端优化
+  @media (min-width: 768px) {
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
 }
 
 .formRow {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  width: 100%;
-  gap: 6px;
-  margin-bottom: 6px;
-}
-.label {
-  font-size: 1.08rem;
-  font-weight: 500;
-}
-.input {
-  width: 100%;
-  height: 40px;
-  font-size: 1rem;
-  border-radius: 8px;
-  border: 1px solid #d6d6e0;
-  outline: none;
-  padding: 0 14px;
-  margin-top: 2px;
-  margin-bottom: 4px;
-  background: #f9f9fa;
-  transition: border 0.2s;
-}
-.input:focus {
-  border: 1.8px solid #a48cfb;
-  background: #fff;
-}
-.connectBtn {
-  width: 100%;
-  background: #a48cfb;
-  color: #fff;
-  font-size: 1.14rem;
-  border: none;
-  border-radius: 8px;
-  padding: 13px 0;
-  margin: 6px 0 0 0;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  cursor: pointer;
-  box-shadow: 0 1px 7px 0 rgba(0,0,0,0.04);
-  transition: background 0.2s, opacity 0.18s;
-}
-.connectBtn:disabled {
-  background: #e0dcfa;
-  color: #999;
-  cursor: not-allowed;
-  opacity: 0.95;
-}
-.tgRow {
-  width: 100%;
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  margin-top: 18px;
-}
-.tgLink {
-  font-size: 1.03rem;
-  color: #6b81f7;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.15s;
-}
-.tgLink:hover {
-  color: #a48cfb;
-}
-.tgIcon {
-  font-size: 18px;
-  margin-right: 1px;
-  position: relative;
-  top: 1px;
-}
-.underline {
-  text-decoration: underline;
-  font-weight: 600;
+  text-align: left;
+  margin-bottom: 24px;
+  
+  // PC 端优化
+  @media (min-width: 768px) {
+    margin-bottom: 18px;
+  }
 }
 
-@media (max-width: 500px) {
+.label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 8px;
+  
+  // PC 端优化
+  @media (min-width: 768px) {
+    font-size: 15px;
+    margin-bottom: 8px;
+  }
+}
+
+.input {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  font-size: 14px;
+  color: #333;
+  background: #fff;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  outline: none;
+  transition: all 0.3s;
+  box-sizing: border-box;
+
+  &::placeholder {
+    color: #bbb;
+  }
+
+  &:focus {
+    border-color: #11B787;
+    box-shadow: 0 0 0 2px rgba(17, 183, 135, 0.1);
+  }
+
+  // PC 端优化
+  @media (min-width: 768px) {
+    height: 48px;
+    padding: 0 14px;
+    font-size: 15px;
+    border-radius: 8px;
+
+    &:hover {
+      border-color: #b3b3b3;
+    }
+
+    &:focus {
+      box-shadow: 0 0 0 3px rgba(17, 183, 135, 0.12);
+    }
+  }
+}
+
+// 表单项按钮容器 - 移除默认的 margin-bottom
+.formItemBtn {
+  margin-bottom: 12px !important;
+
+  @media (min-width: 768px) {
+    margin-bottom: 14px !important;
+  }
+}
+
+.connectBtn {
+  width: 100%;
+  height: 44px;
+  background: #11B787 !important;
+  color: #fff !important;
+  font-size: 16px;
+  font-weight: 600;
+  border: none !important;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  margin-bottom: 0;
+
+  &:hover:not(:disabled) {
+    background: #14D49A !important;
+    box-shadow: 0 2px 8px rgba(17, 183, 135, 0.25) !important;
+  }
+
+  &:active:not(:disabled) {
+    background: #0D9366 !important;
+    box-shadow: 0 1px 4px rgba(17, 183, 135, 0.2) !important;
+  }
+
+  &:disabled {
+    background: #d9d9d9 !important;
+    cursor: not-allowed;
+    color: #999 !important;
+  }
+
+  // PC 端优化
+  @media (min-width: 768px) {
+    height: 48px;
+    font-size: 17px;
+    border-radius: 8px;
+    margin-bottom: 0;
+
+    &:hover:not(:disabled) {
+      background: #14D49A !important;
+      box-shadow: 0 3px 10px rgba(17, 183, 135, 0.3) !important;
+    }
+
+    &:active:not(:disabled) {
+      background: #0D9366 !important;
+      box-shadow: 0 1px 5px rgba(17, 183, 135, 0.25) !important;
+    }
+  }
+}
+
+.tgRow {
+  // padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
+
+  // PC 端优化
+  @media (min-width: 768px) {
+    // padding-top: 8px;
+  }
+}
+
+.tgLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #666;
+  text-decoration: none;
+  transition: color 0.3s ease;
+  cursor: pointer;
+
+  &:hover {
+    color: #11B787;
+  }
+
+  // PC 端优化
+  @media (min-width: 768px) {
+    font-size: 15px;
+    gap: 10px;
+
+    &:hover {
+      color: #11B787;
+    }
+  }
+}
+
+.tgIcon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+
+  // PC 端优化
+  @media (min-width: 768px) {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+.underline {
+  text-decoration: underline;
+  color: inherit;
+  font-weight: 500;
+
+  // PC 端优化
+  @media (min-width: 768px) {
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 2px;
+  }
+}
+
+// 重新发送验证码区域
+.resendRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap:1px;
+  font-size: 13px;
+
+  @media (min-width: 768px) {
+    font-size: 14px;
+    margin-top: 14px;
+  }
+}
+
+.resendText {
+  color: #666;
+}
+
+.resendBtn {
+  background: none;
+  border: none;
+  color: #11B787;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  transition: color 0.3s ease;
+
+  &:hover:not(:disabled) {
+    color: #0FA575;
+  }
+
+  &:disabled {
+    color: #999;
+    cursor: not-allowed;
+    text-decoration: none;
+  }
+}
+
+// 返回按钮区域
+.backRow {
+  display: flex;
+  justify-content: center;
+}
+
+.backBtn {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 8px;
+  transition: color 0.3s ease;
+
+  &:hover {
+    color: #11B787;
+  }
+
+  @media (min-width: 768px) {
+    font-size: 14px;
+  }
+}
+
+// 移动端小屏幕优化
+@media (max-width: 480px) {
+  .whitelistBg {
+    padding: 16px;
+  }
+
   .whitelistCard {
-    width: 96vw;
-    padding: 34px 6vw 18px 6vw;
-    min-width: unset;
+    padding: 32px 24px;
+  }
+
+  .logo {
+    font-size: 28px;
+    margin-bottom: 20px;
+  }
+
+  .title {
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+
+  .tip {
+    font-size: 13px;
+    margin-bottom: 28px;
+  }
+  
+  .input {
+    height: 42px;
+  }
+  
+  .connectBtn {
+    height: 42px;
+    font-size: 15px;
+  }
+}
+
+// 大屏幕优化
+@media (min-width: 1024px) {
+  .whitelistCard {
+    max-width: 480px;
+    padding: 44px 44px;
+    
+    &:hover {
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+
+// 暗黑模式
+@media (prefers-color-scheme: dark) {
+  .whitelistBg {
+    background-color: #0f0f0f;
+  }
+
+  .whitelistCard {
+    background: #1a1a1a;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .logo {
+    color: #fff;
+  }
+
+  .title {
+    color: #fff;
+  }
+
+  .tip {
+    color: #999;
+  }
+
+  .label {
+    color: #e0e0e0;
+  }
+
+  .input {
+    background: #2a2a2a;
+    border-color: #3a3a3a;
+    color: #fff;
+
+    &::placeholder {
+      color: #666;
+    }
+
+    &:focus {
+      border-color: #11B787;
+      background: #2a2a2a;
+    }
+  }
+
+  .tgRow {
+    border-top-color: #2a2a2a;
+  }
+
+  .tgLink {
+    color: #999;
+
+    &:hover {
+      color: #e0e0e0;
+    }
+  }
+
+  .underline {
+    color: #fff;
   }
 }

@@ -1,40 +1,214 @@
-'use client';
-
+"use client";
 import React, { useState } from "react";
+import { Form, Input, Button, message } from "antd";
+import { sendVerificationCode } from "@/api/user";
 import styles from "./page.module.less";
 
 export default function WhitelistPage() {
-  const [email, setEmail] = useState("");
+  const [form] = Form.useForm();
+  const [step, setStep] = useState('email'); // 'email' 或 'verify'
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [countdown, setCountdown] = useState(0);
 
-  // 这里只是做静态还原，如需功能扩展请根据实际需要调整
+  // 倒计时效果
+  React.useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
+
+  // 发送验证码
+  const handleSendCode = async () => {
+    try {
+      await form.validateFields(['email']);
+      const emailValue = form.getFieldValue('email');
+
+      setLoading(true);
+      const language = 'en'; // 可以根据需要调整语言
+      const res = await sendVerificationCode(emailValue, language);
+
+      if (res?.code === 200 || res?.success) {
+        message.success('Verification code sent to your email');
+        setEmail(emailValue);
+        setStep('verify');
+        setCountdown(60);
+      } else {
+        message.error(res?.message || 'Failed to send verification code');
+      }
+    } catch (error) {
+      if (error.errorFields) {
+        // 表单验证错误
+        return;
+      }
+      console.error('发送验证码失败:', error);
+      message.error('Failed to send verification code, please try again');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 验证验证码
+  const handleVerifyCode = async (values) => {
+    setLoading(true);
+    try {
+      // 这里添加验证码校验逻辑
+      // 可以调用后端API验证验证码
+      console.log('验证码:', values.verificationCode);
+
+      // 模拟验证成功
+      message.success('Verification successful!');
+
+      // 验证成功后的逻辑，比如跳转到主页
+      // router.push('/');
+    } catch (error) {
+      console.error('验证失败:', error);
+      message.error('Verification failed, please try again');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 重新发送验证码
+  const handleResendCode = async () => {
+    if (countdown > 0) return;
+
+    setLoading(true);
+    try {
+      const language = 'en';
+      const res = await sendVerificationCode(email, language);
+
+      if (res?.code === 200 || res?.success) {
+        message.success('Verification code resent');
+        setCountdown(60);
+      } else {
+        message.error(res?.message || 'Failed to resend verification code');
+      }
+    } catch (error) {
+      console.error('重新发送验证码失败:', error);
+      message.error('Failed to resend verification code');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className={styles.whitelistBg}>
       <div className={styles.whitelistCard}>
-        <div className={styles.logo}>Zaiiffer</div>
+        <div className={styles.logo}>Moziinnovations</div>
         <div className={styles.title}>Welcome</div>
-        <div className={styles.tip}>Enter your whitelisted email address to continue to Zaiiffer</div>
-        <div className={styles.formRow}>
-          <label className={styles.label} htmlFor="email">Email</label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            className={styles.input}
-            placeholder="email@example.com"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            autoComplete="off"
-          />
+        <div className={styles.tip}>
+          {step === 'email'
+            ? 'Enter your whitelisted email address to continue to Moziinnovations'
+            : `We've sent a verification code to ${email}`
+          }
         </div>
-        <button className={styles.connectBtn} disabled={!email}>{"Connect"}</button>
+
+        {step === 'email' ? (
+          // 邮箱输入界面
+          <Form
+            form={form}
+            layout="vertical"
+            className={styles.antdForm}
+            onFinish={handleSendCode}
+          >
+            <Form.Item
+              label={<span className={styles.label}>Email</span>}
+              name="email"
+              rules={[
+                { required: true, message: "Please input your email!" },
+                { type: 'email', message: 'Invalid email!' }
+              ]}
+            >
+              <Input
+                className={styles.input}
+                placeholder="email@example.com"
+                autoComplete="off"
+              />
+            </Form.Item>
+            <Form.Item className={styles.formItemBtn}>
+              <Button
+                type="primary"
+                htmlType="submit"
+                className={styles.connectBtn}
+                loading={loading}
+                style={{ width: "100%" }}
+              >
+                Connect
+              </Button>
+            </Form.Item>
+          </Form>
+        ) : (
+          // 验证码输入界面
+          <Form
+            form={form}
+            layout="vertical"
+            className={styles.antdForm}
+            onFinish={handleVerifyCode}
+          >
+            <Form.Item
+              label={<span className={styles.label}>Verification Code</span>}
+              name="verificationCode"
+              rules={[
+                { required: true, message: "Please input verification code!" },
+                { len: 6, message: 'Verification code must be 6 digits!' }
+              ]}
+            >
+              <Input
+                className={styles.input}
+                placeholder="Enter 6-digit code"
+                maxLength={6}
+                autoComplete="off"
+              />
+            </Form.Item>
+            <Form.Item className={styles.formItemBtn}>
+              <Button
+                type="primary"
+                htmlType="submit"
+                className={styles.connectBtn}
+                loading={loading}
+                style={{ width: "100%" }}
+              >
+                Verify
+              </Button>
+            </Form.Item>
+            <div className={styles.resendRow}>
+              <span className={styles.resendText}>Didn't receive the code?</span>
+              <button
+                type="button"
+                className={styles.resendBtn}
+                onClick={handleResendCode}
+                disabled={countdown > 0}
+              >
+                {countdown > 0 ? `Resend (${countdown}s)` : 'Resend'}
+              </button>
+            </div>
+            <div className={styles.backRow}>
+              <button
+                type="button"
+                className={styles.backBtn}
+                onClick={() => setStep('email')}
+              >
+                ← Back to email
+              </button>
+            </div>
+          </Form>
+        )}
+
         <div className={styles.tgRow}>
           <a
-            href="https://t.me/+2gX28hyIZN45ZGU1"
+            href="https://t.me/MoziInnovations"
             target="_blank"
             rel="noopener noreferrer"
             className={styles.tgLink}
           >
-            <span className={styles.tgIcon}>🔵</span> Join the <span className={styles.underline}>Official Zaiiffer Telegram</span> channel
+            <svg className={styles.tgIcon} viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.692-1.653-1.123-2.678-1.799-1.185-.781-.417-1.21.258-1.911.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.489-1.302.481-.428-.008-1.252-.241-1.865-.44-.752-.244-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.14.121.099.155.232.171.326.016.094.036.308.02.475z"/>
+            </svg>
+            <span>
+              Join the <span className={styles.underline}>Official Moziinnovations Telegram</span> channel
+            </span>
           </a>
         </div>
       </div>

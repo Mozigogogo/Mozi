@@ -1,3 +1,4 @@
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const withLess = require('next-plugin-less');
 const { API_BASE_URL, PROJECT_ID } = require('./config');
 
@@ -15,6 +16,10 @@ module.exports = withLess({
       ...(config.resolve.alias || {}),
       '@react-native-async-storage/async-storage': false,
     };
+    config.plugins = config.plugins || [];
+    config.plugins.push(
+      new MiniCssExtractPlugin({ filename: '[name].css' })
+    );
     return config;
   },
   env: {

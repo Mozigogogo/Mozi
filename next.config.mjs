@@ -29,9 +29,14 @@ const nextConfig = withLess({
   async redirects() {
     return [
       {
+        source: '/',
+        destination: '/whitelist',
+        permanent: false,
+      },
+      {
         source: '/home',
-        destination: '/',
-        permanent: true,
+        destination: '/whitelist',
+        permanent: false,
       },
     ];
   },
