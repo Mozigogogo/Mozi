@@ -20,7 +20,7 @@ export const metadata = {
   title: "墨子 - 数字货币行情社区",
   description: "墨子数字货币行情社区，提供币种行情、社区讨论等功能",
   icons: {
-    icon: "/favicon.svg",
+    icon: "/icons/logo.jpg",
   },
 };
 
@@ -29,7 +29,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/icons/logo.jpg" type="image/jpeg" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#1677ff" />
       </head>
