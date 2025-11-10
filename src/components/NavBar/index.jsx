@@ -13,6 +13,7 @@ import styles from './index.less';
  * @param {Function} props.onRightClick - 右侧按钮点击事件
  * @param {boolean} props.showMenu - 是否显示右侧菜单按钮
  * @param {boolean} props.showSearch - 是否显示右侧搜索按钮
+ * @param {boolean} props.showBorder - 是否显示底部边框，默认true
  * @param {string} props.className - 自定义类名
  */
 export default function NavBar({
@@ -23,6 +24,7 @@ export default function NavBar({
   onRightClick,
   showMenu = false,
   showSearch = false,
+  showBorder = true,
   className = '',
 }) {
   const router = useRouter();
@@ -48,7 +50,7 @@ export default function NavBar({
   };
 
   return (
-    <div className={`${styles.navBar} ${className}`}>
+    <div className={`${styles.navBar} ${!showBorder ? styles.noBorder : ''} ${className}`}>
       {/* 左侧返回按钮 */}
       <div className={styles.left}>
         {showBack && (

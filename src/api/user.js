@@ -43,3 +43,40 @@ export const registerByEmail = (email, password, invitedCode = '') => {
   });
 };
 
+
+/**
+ * 发送邮箱验证码
+ * @param {string} email - 收件人邮箱地址
+ * @param {string} language - 语言设置（zh-中文，en-英文）
+ * @returns {Promise}
+ */
+export const sendVerificationCode = (email, language = 'zh') => {
+  return request({
+    url: '/email/sendVerificationCode',
+    method: 'POST',
+    data: {
+      email,
+      language,
+    },
+  });
+};
+
+/**
+ * 钱包签名登录
+ * @param {string} address - 钱包地址
+ * @param {string} signature - 用户签名
+ * @returns {Promise}
+ */
+export const loginByWallet = (address, signature) => {
+  return request({
+    url: '/user/login',
+    method: 'POST',
+    data: {
+      type: 'login',
+      chanel: 3,  // 3-钱包登录
+      address,
+      signatrue: signature,  // 注意：后端字段名为 signatrue
+    },
+  });
+};
+

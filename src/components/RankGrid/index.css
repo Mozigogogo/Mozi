@@ -34,12 +34,40 @@
   text-align: right;
 }
 
+.gridTitle .ranking-header {
+  width: 48px !important;
+  flex: 0 0 48px !important;
+}
+
+/* 将第二个标题项（DOM 中第 2 个子元素）左移，靠近序号列 */
+.gridTitle .gridTitleItem:nth-child(2) {
+  transform: translateX(-100px);
+  padding-left: 0 !important;
+}
+
 .gridListItem {
   padding-left: 0;
 }
 
+.ranking-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.ranking-number {
+  width: 40px;
+  flex: 0 0 40px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+  text-align: center;
+  margin-right: 8px;
+}
+
 .gridContent {
   font-size: 24px;
+  flex: 1;
 }
 
 .gridConItem {
@@ -57,17 +85,58 @@
     width: 80px;
     height: 80px;
   }
-  
+
   .rankGridHead {
     font-size: 20px;
     margin-right: 20px;
   }
-  
+
   .gridTitle {
     font-size: 16px;
   }
-  
+
   .gridContent {
     font-size: 18px;
   }
+}
+
+/* 强制移除 antd-mobile List 与 Grid 的分割线（仅作用于 RankGrid 范围） */
+.rankGridDesc .adm-list,
+.rankGridDesc .adm-list-body,
+.rankGridDesc .adm-list-item,
+.rankGridDesc .adm-list-item-content {
+  border: none !important;
+}
+.rankGridDesc .adm-list .adm-list-body::before,
+.rankGridDesc .adm-list .adm-list-body::after,
+.rankGridDesc .adm-list .adm-list-item::before,
+.rankGridDesc .adm-list .adm-list-item::after,
+.rankGridDesc .adm-list-item::before,
+.rankGridDesc .adm-list-item::after {
+  display: none !important;
+  content: none !important;
+}
+
+.rankGridDesc .adm-grid,
+.rankGridDesc .adm-grid-item {
+  border: none !important;
+}
+.rankGridDesc .adm-grid::before,
+.rankGridDesc .adm-grid::after,
+.rankGridDesc .adm-grid-item::before,
+.rankGridDesc .adm-grid-item::after {
+  display: none !important;
+  content: none !important;
+}
+
+
+/* extra: hide more list hairline pseudo elements inside RankGrid only */
+.rankGridDesc .adm-list::before,
+.rankGridDesc .adm-list::after,
+.rankGridDesc .adm-list-content::before,
+.rankGridDesc .adm-list-content::after,
+.rankGridDesc .adm-list-item-content::before,
+.rankGridDesc .adm-list-item-content::after {
+  display: none !important;
+  content: none !important;
 }

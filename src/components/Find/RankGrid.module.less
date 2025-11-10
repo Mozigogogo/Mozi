@@ -1,0 +1,177 @@
+// 原项目 rpx 单位已除以2转换为 px
+.rankGridContainer {
+  display: flex;
+
+  .rankGridHead {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px; // 原 26rpx
+    margin-right: 15px; // 原 30rpx
+
+    .firstPic {
+      width: 70px; // 原 140rpx
+      height: 70px; // 原 140rpx
+      margin-bottom: 10px; // 原 20rpx
+      border-radius: 50%;
+      object-fit: cover;
+    }
+  }
+
+  .rankGridDesc {
+    flex: 2;
+
+    .gridTitle {
+      font-size: 10px; // 原 20rpx
+      color: #898989;
+      margin-bottom: 5px; // 原 10rpx
+
+      .text {
+        text-align: right;
+      }
+
+      .rankingHeader {
+        width: 24px !important; // 原 48rpx
+        flex: 0 0 24px !important;
+      }
+
+      /* 将第二个标题项（DOM 中第 2 个子元素）左移，靠近序号列 */
+      .gridTitleItem:nth-child(2) {
+        transform: translateX(-50px); // 原 -100rpx
+        padding-left: 0 !important;
+      }
+    }
+
+    .gridListItem {
+      padding-left: 0;
+    }
+
+    .rankingRow {
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+
+    .rankingNumber {
+      width: 20px; // 原 40rpx
+      flex: 0 0 20px;
+      font-size: 12px; // 原 24rpx
+      font-weight: 700;
+      color: #333;
+      text-align: center;
+      margin-right: 4px; // 原 8rpx
+    }
+
+    .gridContent {
+      font-size: 12px; // 原 24rpx
+      flex: 1;
+
+      .gridConItem {
+        display: flex;
+        align-items: center;
+      }
+
+      .text {
+        justify-content: flex-end;
+      }
+
+      /* 币种单元格：图标 + 文本 */
+      .gridText {
+        display: flex;
+        align-items: center;
+      }
+      .gridIcon {
+        height: 18px; // 原 36rpx
+        width: 18px;
+        margin-right: 5px; // 原 10rpx
+        border-radius: 50%;
+        object-fit: cover;
+      }
+    }
+  }
+}
+
+/* 暗黑模式 */
+@media (prefers-color-scheme: dark) {
+  .rankGridHead {
+    span {
+      color: #e0e0e0;
+    }
+  }
+
+  .gridTitle {
+    color: #999 !important;
+  }
+
+  .rankingNumber {
+    color: #e0e0e0 !important;
+  }
+
+  .gridConItem {
+    color: #e0e0e0 !important;
+  }
+}
+
+
+/* 强制移除 antd-mobile 在本组件内的分割线与边框 */
+.rankGridDesc {
+  :global(.adm-list),
+  :global(.adm-list-body),
+  :global(.adm-list-item),
+  :global(.adm-list-item-content) {
+    border: none !important;
+  }
+
+  /* 统一去除 List 内容容器的内边距，避免最后一列与标题产生错位间距 */
+  :global(.adm-list-item) {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  :global(.adm-list-item-content) {
+    padding: 0 !important;
+  }
+
+  /* 去除 Grid 默认的间距，保证列宽与标题严格对齐 */
+  :global(.adm-grid) {
+    --adm-grid-gap: 0 !important;
+  }
+
+  /* hairline 实现通常使用 ::before/::after 伪元素，这里整体隐藏 */
+  :global(.adm-list .adm-list-body::before),
+  :global(.adm-list .adm-list-body::after),
+  :global(.adm-list .adm-list-item::before),
+  :global(.adm-list .adm-list-item::after),
+  :global(.adm-list-item::before),
+  :global(.adm-list-item::after) {
+    display: none !important;
+    content: none !important;
+  }
+
+  /* 同步移除 Grid 的分割线（若组件库版本默认带边框） */
+  :global(.adm-grid),
+  :global(.adm-grid-item) {
+    border: none !important;
+  }
+  :global(.adm-grid::before),
+  :global(.adm-grid::after),
+  :global(.adm-grid-item::before),
+  :global(.adm-grid-item::after) {
+    display: none !important;
+    content: none !important;
+  }
+}
+
+/* ���bfab9eadba ��addcf ant�bd-mobile List ��dele Grid ��defca hairline ��efb style�d9�fabaaa */
+.rankGridDesc {
+  :global(.adm-list::before),
+  :global(.adm-list::after),
+  :global(.adm-list-content::before),
+  :global(.adm-list-content::after),
+  :global(.adm-list-item-content::before),
+  :global(.adm-list-item-content::after) {
+    display: none !important;
+    content: none !important;
+  }
+}

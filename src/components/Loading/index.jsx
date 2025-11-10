@@ -3,11 +3,11 @@
 import { SpinLoading } from 'antd-mobile';
 import styles from './index.module.less';
 
-export const Loading = ({ tip = '加载中...' }) => {
+export const Loading = ({ tip = '加载中...', color = 'primary', style }) => {
   return (
     <div className={styles.loading}>
-      <SpinLoading color="primary" />
-      <span className={styles.loadingText}>{tip}</span>
+      <SpinLoading color={color} style={{ '--color': color, ...style }} />
+      {tip && <span className={styles.loadingText}>{tip}</span>}
     </div>
   );
 };

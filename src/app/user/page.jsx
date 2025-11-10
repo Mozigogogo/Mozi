@@ -61,11 +61,16 @@ export default function UserPage() {
     document.cookie = `${encodeURIComponent(name)}=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; SameSite=Lax`;
   };
 
-  // 检查 URL 参数，自动打开注册弹窗
+  // 检查 URL 参数，自动打开注册弹窗或登录弹窗
   useEffect(() => {
     const mode = searchParams.get('mode');
+    const showLogin = searchParams.get('showLogin');
+    
     if (mode === 'register') {
       setLoginModalMode('register');
+      setShowLoginModal(true);
+    } else if (showLogin === 'true') {
+      setLoginModalMode('login');
       setShowLoginModal(true);
     }
   }, [searchParams]);
@@ -117,7 +122,12 @@ export default function UserPage() {
         const res = await request({
           url: Interface.MOZI_LOGIN,
           method: 'POST',
-          data: { address: currentAddress, signature, message },
+          data: {
+            type: 'login',
+            chanel: 3,  // 3-钱包登录
+            address: currentAddress,
+            signatrue: signature  // 注意：后端字段名为 signatrue
+          },
         });
         if (res?.data?.token) localStorage.setItem('token', res.data.token);
         if (res?.data?.user) localStorage.setItem('userInfo', JSON.stringify(res?.data?.user));

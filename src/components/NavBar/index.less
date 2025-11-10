@@ -13,26 +13,35 @@
   z-index: 999;
 
   .left {
-    flex: 0px 0px 60px;
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     justify-content: flex-start;
+    position: relative;
+    z-index: 2;
+    min-width: 60px;
   }
 
   .center {
-    flex: 1;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0 8px;
+    max-width: 60%;
+    z-index: 1;
   }
 
   .right {
-    flex: 0 0 60px;
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     justify-content: flex-end;
     gap: 8px;
+    position: relative;
+    z-index: 2;
+    min-width: 60px;
   }
 
   .backBtn {
@@ -84,6 +93,10 @@
       height: 20px;
     }
   }
+}
+
+.noBorder {
+  border-bottom: none !important;
 }
 
 // 深色模式支持

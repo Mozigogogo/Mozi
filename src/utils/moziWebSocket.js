@@ -36,6 +36,7 @@ export class MoziWebSocket {
       heartbeatTimeout: 90000,      // 90秒超时（3次未响应）
       maxReconnectAttempts: -1,     // -1 表示无限重连
       debug: true,                  // 调试模式
+      token: null,                  // 用户 token，用于身份验证
       ...options
     };
     
@@ -61,7 +62,15 @@ export class MoziWebSocket {
     this._log(`正在连接: ${this.url}`);
     
     try {
-      this.ws = new WebSocket(this.url);
+      // 如果有 token，通过 Sec-WebSocket-Protocol 子协议传递
+      if (this.options.token) {
+        this._log(`使用 token 认证: ${this.options.token.substring(0, 20)}...`);
+        // 直接传递 token 作为子协议，后端可以从 Sec-WebSocket-Protocol 头中读取
+        this.ws = new WebSocket(this.url, this.options.token);
+      } else {
+        this._log('无 token，匿名连接');
+        this.ws = new WebSocket(this.url);
+      }
       this._setupEventListeners();
     } catch (error) {
       this._error('连接创建失败:', error);

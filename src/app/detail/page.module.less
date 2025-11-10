@@ -1,7 +1,7 @@
 .container {
-  width: 100%;
   background-color: #efefef;
-  padding-bottom: 80px;
+  padding-top: 50px; /* 为顶部固定导航栏留出空间 */
+  padding-bottom: 60px;
   box-sizing: border-box;
   min-height: 100vh;
 }
@@ -9,49 +9,22 @@
 .box {
   width: 100%;
   background: #fff;
-  margin-bottom: 20px;
-}
-
-.tabContainer {
-  background: #fff;
-  margin-bottom: 20px;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.chartSection {
-  margin-bottom: 20px;
-}
-
-.marketSection {
-  margin-bottom: 20px;
-}
-
-.marketBox {
-  background: #fff;
-  padding: 16px;
-}
-
-.emptyInfo {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 200px;
-  color: var(--text-secondary);
-  font-size: 14px;
+  margin-bottom: 10px;
+  border-radius: 0px 0px 10px 10px;
 }
 
 /* 头部信息样式 */
 .headerContainer {
+  width: 100%;
   background: #fff;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
+  border-radius: 0px 0px 10px 10px;
 }
 
 .headerBox {
   display: flex;
   justify-content: space-between;
-  padding: 20px;
+  padding: 10px;
 }
 
 .headerBox .left {
@@ -64,157 +37,246 @@
 
 .coinInfo {
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.topRow {
+  display: flex;
   align-items: center;
+  margin-bottom: 3px;
 }
 
 .coinIcon {
-  width: 40px;
-  height: 40px;
-  margin-right: 10px;
-  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  margin-right: 5px;
 }
 
 .coinSymbol {
-  margin-right: 20px;
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 12px;
+  line-height: 1.2;
 }
 
 .coinPrice {
   font-weight: bold;
-  font-size: 30px;
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.priceUp {
+  color: #11B787;
+}
+
+.priceDown {
+  color: #FA5F5F;
 }
 
 .caretBox {
   display: flex;
   align-items: center;
-  margin-top: 10px;
-  font-size: 24px;
+  margin-top: 5px;
+  font-size: 12px;
+  
+  svg {
+    flex-shrink: 0;
+  }
 }
 
 .percentBox {
   display: flex;
-  font-weight: 500;
 }
 
 .priceItem {
-  margin-right: 20px;
+  margin-right: 10px;
 }
 
 .upPercent {
-  color: #02c076;
+  color: #11B787;
 }
 
 .downPercent {
-  color: #ff3333;
+  color: #FA5F5F;
 }
 
 .headerBox .right {
   flex: 1;
   text-align: right;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
 }
 
 .marketRank {
-  color: #02c076;
-  border: 1px solid #02c076;
-  border-radius: 4px;
+  color: #11B787;
+  border: 1px solid #11B787;
+  border-radius: 12.5px;
   display: inline-block;
-  padding: 2px 8px;
-  font-weight: bold;
-  font-size: 12px;
+  padding: 2px 10px;
+  width: fit-content;
 }
 
 .marketItem {
-  margin-top: 10px;
-  font-size: 14px;
+  margin-top: 5px;
+  font-size: 12px;
 }
 
 /* 详细信息区域 */
 .headerInfo {
   display: flex;
-  justify-content: space-between;
-  padding: 0 20px 16px;
+  justify-content: space-evenly;
+  font-size: 11px;
+  padding: 0px 0 7.5px 0;
 }
 
-.headerInfo .left,
+.headerInfo .left {
+  flex: 1;
+  border-right: 1px solid #efefef;
+  padding: 0 10px;
+}
+
 .headerInfo .right {
   flex: 1;
+  padding: 0 10px;
 }
 
 .headerInfoItem {
-  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.headerInfoItem:last-child {
+  margin-bottom: 0;
 }
 
 .headerInfoItem .name {
-  font-size: 12px;
-  color: #999;
-  margin-bottom: 4px;
-}
-
-.headerInfoItem .value {
-  font-size: 14px;
-  font-weight: 500;
+  color: #898989;
 }
 
 /* 展开收缩按钮 */
 .coinInfoCaret {
   display: flex;
   justify-content: center;
-  align-items: center;
-  padding: 10px;
+  padding: 5px;
   cursor: pointer;
-  border-top: 1px solid #f0f0f0;
 }
 
-.caretIcon {
-  font-size: 12px;
-  color: #999;
-  transition: transform 0.3s ease;
+.arrowIcon {
+  width: 20px;
+  height: 20px;
 }
 
-.caretUp {
-  transform: rotate(180deg);
+/* Tab容器样式 */
+.tabContainer {
+  background-color: transparent;
+  height: 24px;
+
+  :global {
+    .adm-tab-bar-wrap {
+      height: 24px !important;
+      min-height: 0 !important;
+    }
+
+    .adm-tab-bar-item {
+      border-bottom: 1px solid transparent;
+      color: #8E8E8E;
+      font-size: 14px !important;
+      
+      .adm-tab-bar-item-title {
+        font-size: 14px !important;
+      }
+    }
+
+    .adm-tab-bar-item-active {
+      border-bottom: none;
+      color: #8E8E8E;
+      position: relative;
+      font-size: 14px !important;
+      
+      .adm-tab-bar-item-title {
+        font-size: 14px !important;
+      }
+      
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 20px;
+        height: 2px;
+        background-color: #11B787;
+      }
+    }
+  }
 }
 
-.caretDown {
-  transform: rotate(0deg);
+/* 图表区域 */
+.chartSection {
+  margin-bottom: 10px;
 }
 
-/* 底部悬浮窗样式 */
-.footerList {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+.klineContainer {
+  padding: 8px 0;
+}
+
+/* 市场行情区域 */
+.marketSection {
+  margin-bottom: 10px;
+}
+
+.marketBox {
   background: #fff;
+  padding: 0;
+}
+
+/* 投资回报率区域 */
+.roiSection {
+  margin-bottom: 10px;
+}
+
+/* 底部操作栏 */
+.footerList {
+  width: 100%;
+  height: 55px;
   display: flex;
   justify-content: space-around;
   align-items: center;
-  padding: 12px 0;
-  border-top: 1px solid #f0f0f0;
-  z-index: 1000;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  background-color: #f5f5f5;
+  padding: 3px;
+  box-sizing: border-box;
+  font-size: 12px;
+  z-index: 999;
 }
 
 .footerItem {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  padding: 0;
+  margin: 0;
+  border-radius: 0;
+  line-height: normal;
+  font-size: 12px;
   cursor: pointer;
-  padding: 8px;
-  transition: opacity 0.2s;
 }
 
-.footerItem:hover {
-  opacity: 0.7;
-}
-
-.footerItem:active {
-  opacity: 0.5;
+.footerItem::after {
+  border: none;
 }
 
 .footerIcon {
-  font-size: 20px;
-  margin-bottom: 4px;
+  width: 20px;
+  height: 20px;
+  margin-bottom: 2.5px;
 }
 
 .footerText {
@@ -222,143 +284,11 @@
   color: #666;
 }
 
-.description {
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--text-primary);
-  white-space: pre-wrap;
-}
-
-/* K线图表样式 */
-.klineContainer {
-  padding: 16px 0;
-}
-
-.klinePlaceholder {
-  height: 300px;
-  background-color: var(--card-background);
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  box-shadow: var(--card-shadow);
-  color: var(--text-secondary);
-  font-size: 14px;
-  text-align: center;
-  line-height: 1.6;
-}
-
-/* 市场数据样式 */
-.marketContainer {
-  /* MoziCard已经提供了padding，这里不需要额外的padding */
-}
-
-.marketHeader {
-  display: flex;
-  background-color: #f5f5f5;
-  padding: 12px 8px;
-  border-radius: 8px 8px 0 0;
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.marketCol {
-  flex: 1;
-  text-align: center;
-  color: #666;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.marketCol:last-child {
-  justify-content: flex-end;
-}
-
-.marketList {
-  margin-bottom: 60px;
-  background-color: #fff;
-  border-radius: 0 0 8px 8px;
-  border: 1px solid #eee;
-  border-top: none;
-}
-
-.marketItem {
-  display: flex;
-  padding: 12px 8px;
-  border-bottom: 1px solid #eee;
-  font-size: 13px;
-}
-
-.marketItem:last-child {
-  border-bottom: none;
-}
-
-.exchangeIcon {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  margin-right: 8px;
-}
-
-/* K线图容器样式 */
-.klineContainer {
-  width: 100%;
-  background: #fff;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* 价格涨跌样式 */
-.priceUp {
-  background-color: rgba(0, 200, 5, 0.1);
-  color: #52c41a;
-}
-
-.priceDown {
-  background-color: rgba(255, 0, 0, 0.1);
-  color: #ff4d4f;
-}
-
-/* 深色模式适配 */
-@media (prefers-color-scheme: dark) {
-  .favoriteBtn {
-    background-color: var(--background-color-dark-light);
-    border-color: var(--border-color-dark);
-  }
-  
-  .infoItem {
-    box-shadow: var(--card-shadow-dark);
-  }
-  
-  .klinePlaceholder {
-    box-shadow: var(--card-shadow-dark);
-  }
-  
-  .marketHeader {
-    background-color: var(--background-color-dark-light);
-  }
-  
-  .marketItem {
-    border-color: var(--border-color-dark);
-  }
-  
-  .priceUp {
-    background-color: rgba(0, 200, 5, 0.2);
-  }
-  
-  .priceDown {
-    background-color: rgba(255, 0, 0, 0.2);
-  }
-}
-
 /* 悬浮机器人按钮 */
 .floatRobotBtn {
   position: fixed;
   right: 20px;
-  bottom: 150px;
+  bottom: 90px; /* 调整位置，往上移动 */
   width: 56px;
   height: 56px;
   border-radius: 50%;
@@ -368,18 +298,8 @@
   justify-content: center;
   cursor: pointer;
   z-index: 999;
-  
-  .robotIcon {
-    width: 52px;
-    height: 52px;
-    display: block;
-    position: relative;
-    z-index: 2;
-    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.15));
-  }
 }
 
-/* 机器人光晕效果 */
 .robotGlow {
   position: absolute;
   width: 100%;
@@ -388,6 +308,15 @@
   background: radial-gradient(circle, rgba(17, 183, 135, 0.4) 0%, rgba(2, 192, 118, 0.2) 50%, transparent 70%);
   z-index: 1;
   pointer-events: none;
+}
+
+.robotIcon {
+  width: 52px;
+  height: 52px;
+  display: block;
+  position: relative;
+  z-index: 2;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.15));
 }
 
 /* 消息气泡容器 */
@@ -418,7 +347,7 @@
     right: 0;
     bottom: 0;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 100%);
-    border-radius: 16px;
+    border-radius: 8px;
     pointer-events: none;
   }
   
@@ -431,6 +360,7 @@
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), transparent);
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask-composite: exclude;
   }
 }
@@ -461,33 +391,44 @@
   filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.1));
 }
 
+/* 空信息提示 */
+.emptyInfo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100px;
+  color: #999;
+  font-size: 14px;
+}
+
+/* 响应式设计 */
 @media (max-width: 768px) {
   .floatRobotBtn {
     right: 16px;
-    bottom: 120px;
+    bottom: 70px; /* 移动端也往上调整 */
     width: 50px;
     height: 50px;
-    
-    .robotIcon {
-      width: 54px;
-      height: 48px;
-    }
+  }
+  
+  .robotIcon {
+    width: 52px;
+    height: 48px;
   }
   
   .robotBubble {
     right: 60px;
     bottom: 5px;
-    min-width: 180px;
-    max-width: 240px;
+    min-width: 160px;
+    max-width: 220px;
   }
   
   .bubbleContent {
-    padding: 12px 15px;
-    border-radius: 14px;
+    padding: 10px 14px;
+    border-radius: 12px;
   }
   
   .bubbleText {
-    font-size: 13px;
+    font-size: 12px;
     line-height: 1.5;
   }
   

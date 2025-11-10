@@ -6,10 +6,11 @@ import { usePathname } from 'next/navigation';
 import { SpinLoading } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
+import { Loading } from '../Loading';
 import { tabBarList } from '../../app/app.config';
 import styles from './index.module.less';
 
-const Layout = ({ children, title, isLoading, isError, errMsg, needLogin, loginCallback }) => {
+const Layout = ({ children, title, isLoading, isError, errMsg, needLogin, loginCallback, bottomPadding = 50 }) => {
   const pathname = usePathname();
   const { t } = useTranslation();
 
@@ -36,7 +37,7 @@ const Layout = ({ children, title, isLoading, isError, errMsg, needLogin, loginC
   if (isLoading) {
     return (
       <div className={styles.loadingBox}>
-        <SpinLoading color="primary" />
+        <Loading color="#11B787" tip="" />
       </div>
     );
   }
@@ -51,7 +52,7 @@ const Layout = ({ children, title, isLoading, isError, errMsg, needLogin, loginC
   }
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} style={{ paddingBottom: `${bottomPadding}px` }}>
       {title && (
         <div className={styles.header}>
           <h1 className={styles.title}>{title}</h1>

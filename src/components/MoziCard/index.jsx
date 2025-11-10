@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SpinLoading, Empty } from 'antd-mobile';
+// 发现Tab排行榜标题的右箭头使用PNG以匹配原项目视觉
 import RankGrid from '../RankGrid';
+import { RightArrowIcon } from '../Icons';
 import styles from './index.module.less';
 
 const MoziCard = ({ 
@@ -29,7 +31,8 @@ const MoziCard = ({
   selectIndex = 0,
   onSelectChange,
   onItemClick,
-  onMoreClick
+  onMoreClick,
+  showArrow
 }) => {
   // 合并默认样式和自定义样式（customStyle 优先级最高）
   const cardStyle = {
@@ -48,8 +51,13 @@ const MoziCard = ({
     // 如果是榜单类型
     if (title && (title.includes('榜') || title.includes('排行'))) {
       return (
-        <div className={styles.rankTitle}>
-          <div>{title}</div>
+        <div className={styles.rankTitle} onClick={callback}>
+          <div className={`${styles.rankTitleText} ${styles.titleWithRangeBg}`}>{title}</div>
+          {showArrow ? (
+            <span className={styles.rankArrow} aria-hidden>
+              <RightArrowIcon size={26} color="#666" />
+            </span>
+          ) : null}
           {/* <div className={styles.rankTitleTime}>实时更新</div> */}
         </div>
       );
@@ -58,8 +66,13 @@ const MoziCard = ({
     // 普通标题
     return (
       <div className={styles.title} onClick={callback}>
-        <span>{title}</span>
+        <span className={styles.rankTitleText}>{title}</span>
         {sumNum > 0 && <span className={styles.titleNum}>({sumNum})</span>}
+        {showArrow ? (
+          <span className={styles.rankArrow} aria-hidden>
+            <RightArrowIcon size={16} color="#666" />
+          </span>
+        ) : null}
       </div>
     );
   };
@@ -189,6 +202,23 @@ const MoziCard = ({
 const CardExtra = ({ type, callback, selectArr = [], selectIndex = 0, moreDesc, pickChange }) => {
   // 对于tabs类型，selected存储实际的item值；其他类型存储index
   const [selected, setSelected] = useState(type === 'tabs' ? selectArr[selectIndex] : selectIndex);
+
+  // 当 selectArr 异步更新时，自动选中第一个（或 selectIndex 指定的）
+  useEffect(() => {
+    if (type === 'tabs') {
+      const hasItems = Array.isArray(selectArr) && selectArr.length > 0;
+      const initialItem = hasItems ? (selectArr[selectIndex] ?? selectArr[0]) : undefined;
+      // 若当前未选中或当前选中项不在新数组中，则初始化选中并同步通知父组件
+      if (hasItems && (!selected || !selectArr.includes(selected))) {
+        setSelected(initialItem);
+        if (typeof pickChange === 'function') {
+          const idx = typeof selectIndex === 'number' ? selectIndex : 0;
+          pickChange(idx);
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectArr, selectIndex, type]);
 
   const handleChange = (e) => {
     const index = parseInt(e.target.value);
