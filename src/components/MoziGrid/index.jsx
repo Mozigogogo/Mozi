@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Grid } from 'antd-mobile';
+import { Grid, InfiniteScroll } from 'antd-mobile';
 import styles from './index.module.less';
 
 const ROW_HEIGHT_PX = 44; // 近似单行高度，用于最小高度计算
@@ -18,13 +18,22 @@ const MoziGrid = ({
   showRanking = false, // 显示排名（大Logo）
   simpleRanking = false, // 简单排名（仅序号）
   gridTitleBgColor = '#F6F6F6',
-  className = ''
+  className = '',
+  enableLoadMore = false, // 是否启用加载更多
+  loadMore, // 加载更多的回调函数
+  hasMore = false // 是否还有更多数据
 }) => {
   const displayData = Array.isArray(gridContent)
     ? (maxRows ? gridContent.slice(0, maxRows) : gridContent)
     : [];
 
   const containerStyle = minRows ? { minHeight: `${minRows * ROW_HEIGHT_PX}px` } : undefined;
+
+  // 对于交易所排行榜样式（showRanking）——如果没有数据，则不渲染任何内容
+  // 这样可以避免显示标题、占位符以及外层的周期/选项容器
+  if (showRanking && (!Array.isArray(gridContent) || gridContent.length === 0)) {
+    return null;
+  }
 
   // 计算列宽：根据列数和模式（含简单序号）自适配
   const getColWidth = (index) => {
@@ -134,6 +143,9 @@ const MoziGrid = ({
                   </div>
                 </div>
               ))}
+              {enableLoadMore && (
+                <InfiniteScroll loadMore={loadMore} hasMore={hasMore} />
+              )}
             </div>
           </div>
         </div>
@@ -186,6 +198,9 @@ const MoziGrid = ({
                 </div>
               </div>
             ))}
+            {enableLoadMore && (
+              <InfiniteScroll loadMore={loadMore} hasMore={hasMore} />
+            )}
           </div>
         </div>
       ) : (
@@ -240,6 +255,9 @@ const MoziGrid = ({
               <div className={styles.emptyData}>
                 暂无数据
               </div>
+            )}
+            {enableLoadMore && (
+              <InfiniteScroll loadMore={loadMore} hasMore={hasMore} />
             )}
           </div>
         </div>

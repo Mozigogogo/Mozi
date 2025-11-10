@@ -61,11 +61,16 @@ export default function UserPage() {
     document.cookie = `${encodeURIComponent(name)}=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; SameSite=Lax`;
   };
 
-  // 检查 URL 参数，自动打开注册弹窗
+  // 检查 URL 参数，自动打开注册弹窗或登录弹窗
   useEffect(() => {
     const mode = searchParams.get('mode');
+    const showLogin = searchParams.get('showLogin');
+    
     if (mode === 'register') {
       setLoginModalMode('register');
+      setShowLoginModal(true);
+    } else if (showLogin === 'true') {
+      setLoginModalMode('login');
       setShowLoginModal(true);
     }
   }, [searchParams]);

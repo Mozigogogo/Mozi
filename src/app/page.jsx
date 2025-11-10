@@ -841,6 +841,7 @@ export default function HomePage() {
                 callback={(gridCon) => { jump2Detail(gridCon.key); }}
                 maxRows={10}
                 minRows={10}
+                gridTitleBgColor="transparent"
               />
               <div className={styles.listMore} onClick={go2List}>
                 查看更多 <RightOutline fontSize={12} />
