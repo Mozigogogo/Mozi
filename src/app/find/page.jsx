@@ -16,8 +16,18 @@ import { Loading } from '../../components/Loading';
 import { RankGrid } from './components/RankGrid';
 import { request } from '../../utils/request';
 import { Interface, LOOPTIME } from '../../utils/constants';
-import { jump2Detail } from '../../utils/core';
+import { jump2Detail, jump2List } from '../../utils/core';
 import styles from './page.module.less';
+
+// 过滤交易所名称中的.com，避免文字过长溢出
+const sanitizeExchangeName = (name) => {
+  if (!name) return '';
+  try {
+    return String(name).replace(/\.com/ig, '');
+  } catch (e) {
+    return name;
+  }
+};
 
 // 市场标题组件（用于行情数据格式化）
 const MarketTitle = ({ url, symbol, totalVolume }) => {
@@ -71,13 +81,40 @@ const loadingTimerRef = useRef(null);
   const [rankActiveKey, setRankActive] = useState('zhangfu');
   
   // 排行榜数据
-  const [exchangeData, setExchangeData] = useState({ exchangeArr: [], exchangeSelect: [{ name: '现货', value: 'SPOT' }, { name: '衍生品', value: 'Futures' }] });
-  const [priceData, setPriceData] = useState({ priceArr: [], priceSelect: [{ name: '1天', value: 'today' }, { name: '3天', value: '3_day' }, { name: '1个月', value: '1_month' }] });
-  const [downData, setDownData] = useState({ downArr: [], downSelect: [{ name: '1天', value: 'today' }, { name: '3天', value: '3_day' }, { name: '1个月', value: '1_month' }] });
-  const [waveData, setWaveData] = useState({ waveArr: [], waveSelect: [{ name: '1天', value: 'today' }, { name: '3天', value: '3_day' }, { name: '1个月', value: '1_month' }] });
-  const [tradeData, setTradeData] = useState({ tradeArr: [], tradeSelect: [{ name: '1天', value: 'today' }, { name: '7天', value: '7_day' }, { name: '1个月', value: '1_month' }] });
+  const [exchangeData, setExchangeData] = useState({ exchangeArr: [], exchangeSelect: [{ name: '现货', value: 'SPOT' }, { name: '衍生品', value: 'Futures' }], topName: '' });
+  const exchangeArr = useRef([]);
+  const exchangeTopNames = useRef([]);
+
+  // 涨幅榜数据
+  const [priceData, setPriceData] = useState({ priceArr: [], priceSelect: [] });
+  const priceArr = useRef([]);
+  const pricePickArr = ['实时', '1天', '1周', '1月', '1年'];
+  const priceDimArr = ['today', '1_day', '7_day', '1_month', '1_year'];
+
+  // 跌幅榜数据
+  const [downData, setDownData] = useState({ downArr: [], downSelect: [] });
+  const downArr = useRef([]);
+  const downPickArr = ['实时', '1天', '1周', '1月', '1年'];
+  const downDimArr = ['today', '1_day', '7_day', '1_month', '1_year'];
+
+  // 波幅榜数据
+  const [waveData, setWaveData] = useState({ waveArr: [], waveSelect: [] });
+  const waveArr = useRef([]);
+  const wavePickArr = ['实时', '1天', '1周', '1月', '1年'];
+  const waveDimArr = ['today', '1_day', '7_day', '1_month', '1_year'];
+
+  // 成交额榜数据
+  const [tradeData, setTradeData] = useState({ tradeArr: [], tradeSelect: [] });
+  const tradeArr = useRef([]);
+  const tradePickArr = ['实时', '1天', '1周', '1月', '1年'];
+  const tradeIntervalsArr = ['today', '1_day', '7_day', '1_month', '1_year'];
   const [xinbiData, setXinbiData] = useState({ xinbiArr: [] });
-  const [upTradeData, setUpTradeData] = useState({ upTradeArr: [], upTradeSelect: [{ name: '1天', value: 'today' }, { name: '7天', value: '7_day' }, { name: '1个月', value: '1_month' }] });
+
+  // 飙升榜数据
+  const [upTradeData, setUpTradeData] = useState({ upTradeArr: [], upTradeSelect: [] });
+  const upTradeArr = useRef([]);
+  const upTradePickArr = ['实时', '1天', '1周', '1月', '1年'];
+  const upTradeIntervalsArr = ['today', '1_day', '7_day', '1_month', '1_year'];
   
   // 各榜单加载状态
   const [isExchangeLoading, setExchangeLoading] = useState(true);
@@ -110,26 +147,94 @@ const loadingTimerRef = useRef(null);
     setExchangeLoading(true);
     setExchangeError(false);
     try {
-      const response = await request({
-        url: Interface.HOT_EXCHANGE,
-        data: { type: exchangeData.exchangeSelect[exchangePickIndex].value }
+      // 分别加载现货和衍生品数据
+      const exchangeSpot = await request({
+        url: Interface.hot_exchange,
+        data: { type: 'SPOT' }
       });
-      if (response?.data) {
-        const formattedData = response.data.slice(0, 3).map(item => ({
-          exchange: item.exchange,
-          usd: item.usd,
-          markets: item.markets,
-          coins: item.coins,
-          url: item.url,
-          key: item.exchange
-        }));
+      const exchangeFutures = await request({
+        url: Interface.hot_exchange,
+        data: { type: 'Futures' }
+      });
 
-        setExchangeData(prev => ({ ...prev, exchangeArr: formattedData }));
+      if (isEmpty(exchangeSpot?.data) && isEmpty(exchangeFutures?.data)) {
+        setExchangeError(true);
+        setExchangeLoading(false);
+        return;
       }
+
+      // 重置数组
+      exchangeArr.current = [];
+      exchangeTopNames.current = [];
+
+      // 处理现货数据
+      if (!isEmpty(exchangeSpot?.data)) {
+        const tempExchangeSpot = exchangeSpot.data.slice(0, 3).map(item => {
+          const showName = sanitizeExchangeName(item.exchange);
+          return {
+            exchange: (
+              <div className={styles.gridText}>
+                <img className={styles.gridIcon} src={item.url} alt={showName} style={{ width: 15, height: 15 }} />
+                {showName}
+              </div>
+            ),
+            usd: item.usd,
+            markets: item.markets,
+            coins: item.coins,
+            img: item.url
+          };
+        });
+        exchangeArr.current.push(tempExchangeSpot);
+        try {
+          const topName = sanitizeExchangeName(exchangeSpot.data[0]?.exchange);
+          if (topName) exchangeTopNames.current.push(topName);
+        } catch (e) {}
+      }
+
+      // 处理衍生品数据
+      if (!isEmpty(exchangeFutures?.data)) {
+        const tempExchangeFutures = exchangeFutures.data.slice(0, 3).map(item => {
+          const showName = sanitizeExchangeName(item.exchange);
+          return {
+            exchange: (
+              <div className={styles.gridText}>
+                <img className={styles.gridIcon} src={item.url} alt={showName} style={{ width: 15, height: 15 }} />
+                {showName}
+              </div>
+            ),
+            usd: item.usd,
+            markets: item.markets,
+            coins: item.coins,
+            img: item.url
+          };
+        });
+        exchangeArr.current.push(tempExchangeFutures);
+        try {
+          const topName = sanitizeExchangeName(exchangeFutures.data[0]?.exchange);
+          if (topName) exchangeTopNames.current.push(topName);
+        } catch (e) {}
+      }
+
+      // 构建 exchangeSelect（保持与初始化一致的格式）
+      const exchangeSelect = [];
+      if (exchangeArr.current[0]) exchangeSelect.push('现货');
+      if (exchangeArr.current[1]) exchangeSelect.push('衍生品');
+
+      setExchangeData({
+        exchangeArr: exchangeArr.current[0] || [],
+        exchangeSelect,
+        topName: exchangeTopNames.current[0] || ''
+      });
+
+      setExchangeLoading(false);
+
+      // 轮询
+      setTimeout(() => {
+        if (needLoop.current) loadExchangeData();
+      }, LOOPTIME);
     } catch (error) {
       console.error('加载交易所排行榜失败:', error);
       setExchangeError(true);
-    } finally {
       setExchangeLoading(false);
     }
   };
@@ -138,24 +243,47 @@ const loadingTimerRef = useRef(null);
     setPriceLoading(true);
     setPriceError(false);
     try {
-      const response = await request({
-        url: Interface.price_change,
-        data: { dim: priceData.priceSelect[pricePickIndex].value }
-      });
-      if (response?.data) {
-        const formattedData = response.data.slice(0, 3).map(item => ({
-          symbol: item.symbol,
-          priceRange: item.priceRange,
-          url: item.url,
-          key: item.symbol,
-          img: item.url
-        }));
-        setPriceData(prev => ({ ...prev, priceArr: formattedData }));
+      priceArr.current = [];
+      const tempPriceSelect = [];
+
+      for (let i = 0; i < priceDimArr.length; i++) {
+        const response = await request({
+          url: Interface.price_change,
+          data: { dim: priceDimArr[i] }
+        });
+
+        if (!isEmpty(response?.data)) {
+          const formattedData = response.data.slice(0, 3).map(item => ({
+            symbol: item.symbol,
+            priceRange: item.priceRange,
+            url: item.url,
+            key: item.symbol,
+            img: item.url
+          }));
+          priceArr.current.push(formattedData);
+          tempPriceSelect.push(pricePickArr[i]);
+        }
       }
+
+      if (priceArr.current.length === 0) {
+        setPriceError(true);
+        setPriceLoading(false);
+        return;
+      }
+
+      setPriceData({
+        priceArr: priceArr.current[0],
+        priceSelect: tempPriceSelect
+      });
+      setPriceLoading(false);
+
+      // 轮询
+      setTimeout(() => {
+        if (needLoop.current) loadPriceData();
+      }, LOOPTIME);
     } catch (error) {
       console.error('加载涨幅榜失败:', error);
       setPriceError(true);
-    } finally {
       setPriceLoading(false);
     }
   };
@@ -164,24 +292,47 @@ const loadingTimerRef = useRef(null);
     setDownLoading(true);
     setDownError(false);
     try {
-      const response = await request({
-        url: Interface.PRICE_DOWNCHANGE,
-        data: { dim: downData.downSelect[downPickIndex].value }
-      });
-      if (response?.data) {
-        const formattedData = response.data.slice(0, 3).map(item => ({
-          symbol: item.symbol,
-          priceRange: item.priceRange,
-          url: item.url,
-          key: item.symbol,
-          img: item.url
-        }));
-        setDownData(prev => ({ ...prev, downArr: formattedData }));
+      downArr.current = [];
+      const tempDownSelect = [];
+
+      for (let i = 0; i < downDimArr.length; i++) {
+        const response = await request({
+          url: Interface.PRICE_DOWNCHANGE,
+          data: { dim: downDimArr[i] }
+        });
+
+        if (!isEmpty(response?.data)) {
+          const formattedData = response.data.slice(0, 3).map(item => ({
+            symbol: item.symbol,
+            priceRange: item.priceRange,
+            url: item.url,
+            key: item.symbol,
+            img: item.url
+          }));
+          downArr.current.push(formattedData);
+          tempDownSelect.push(downPickArr[i]);
+        }
       }
+
+      if (downArr.current.length === 0) {
+        setDownError(true);
+        setDownLoading(false);
+        return;
+      }
+
+      setDownData({
+        downArr: downArr.current[0],
+        downSelect: tempDownSelect
+      });
+      setDownLoading(false);
+
+      // 轮询
+      setTimeout(() => {
+        if (needLoop.current) loadDownData();
+      }, LOOPTIME);
     } catch (error) {
       console.error('加载跌幅榜失败:', error);
       setDownError(true);
-    } finally {
       setDownLoading(false);
     }
   };
@@ -190,24 +341,47 @@ const loadingTimerRef = useRef(null);
     setWaveLoading(true);
     setWaveError(false);
     try {
-      const response = await request({
-        url: Interface.price_wave,
-        data: { dim: waveData.waveSelect[wavePickIndex].value }
-      });
-      if (response?.data) {
-        const formattedData = response.data.slice(0, 3).map(item => ({
-          symbol: item.symbol,
-          priceRange: item.priceRange,
-          url: item.url,
-          key: item.symbol,
-          img: item.url
-        }));
-        setWaveData(prev => ({ ...prev, waveArr: formattedData }));
+      waveArr.current = [];
+      const tempWaveSelect = [];
+
+      for (let i = 0; i < waveDimArr.length; i++) {
+        const response = await request({
+          url: Interface.price_wave,
+          data: { dim: waveDimArr[i] }
+        });
+
+        if (!isEmpty(response?.data)) {
+          const formattedData = response.data.slice(0, 3).map(item => ({
+            symbol: item.symbol,
+            priceRange: item.priceRange,
+            url: item.url,
+            key: item.symbol,
+            img: item.url
+          }));
+          waveArr.current.push(formattedData);
+          tempWaveSelect.push(wavePickArr[i]);
+        }
       }
+
+      if (waveArr.current.length === 0) {
+        setWaveError(true);
+        setWaveLoading(false);
+        return;
+      }
+
+      setWaveData({
+        waveArr: waveArr.current[0],
+        waveSelect: tempWaveSelect
+      });
+      setWaveLoading(false);
+
+      // 轮询
+      setTimeout(() => {
+        if (needLoop.current) loadWaveData();
+      }, LOOPTIME);
     } catch (error) {
       console.error('加载波幅榜失败:', error);
       setWaveError(true);
-    } finally {
       setWaveLoading(false);
     }
   };
@@ -216,24 +390,47 @@ const loadingTimerRef = useRef(null);
     setTradeLoading(true);
     setTradeError(false);
     try {
-      const response = await request({
-        url: Interface.coin_trade,
-        data: { intervals: tradeData.tradeSelect[tradePickIndex].value }
-      });
-      if (response?.data) {
-        const formattedData = response.data.slice(0, 3).map(item => ({
-          symbol: item.symbol,
-          usd: item.usd,
-          url: item.url,
-          key: item.symbol,
-          img: item.url
-        }));
-        setTradeData(prev => ({ ...prev, tradeArr: formattedData }));
+      tradeArr.current = [];
+      const tempTradeSelect = [];
+
+      for (let i = 0; i < tradeIntervalsArr.length; i++) {
+        const response = await request({
+          url: Interface.coin_trade,
+          data: { intervals: tradeIntervalsArr[i] }
+        });
+
+        if (!isEmpty(response?.data)) {
+          const formattedData = response.data.slice(0, 3).map(item => ({
+            symbol: item.symbol,
+            usd: item.usd,
+            url: item.url,
+            key: item.symbol,
+            img: item.url
+          }));
+          tradeArr.current.push(formattedData);
+          tempTradeSelect.push(tradePickArr[i]);
+        }
       }
+
+      if (tradeArr.current.length === 0) {
+        setTradeError(true);
+        setTradeLoading(false);
+        return;
+      }
+
+      setTradeData({
+        tradeArr: tradeArr.current[0],
+        tradeSelect: tempTradeSelect
+      });
+      setTradeLoading(false);
+
+      // 轮询
+      setTimeout(() => {
+        if (needLoop.current) loadTradeData();
+      }, LOOPTIME);
     } catch (error) {
       console.error('加载成交额榜失败:', error);
       setTradeError(true);
-    } finally {
       setTradeLoading(false);
     }
   };
@@ -268,58 +465,115 @@ const loadingTimerRef = useRef(null);
     setUpTradeLoading(true);
     setUpTradeError(false);
     try {
-      const response = await request({
-        url: Interface.PRICE_UPTRADE,
-        data: { intervals: upTradeData.upTradeSelect[upTradePickIndex].value }
-      });
-      if (response?.data) {
-        const formattedData = response.data.slice(0, 3).map(item => ({
-          symbol: item.symbol,
-          movers: item.movers,
-          url: item.url,
-          key: item.symbol,
-          img: item.url
-        }));
-        setUpTradeData(prev => ({ ...prev, upTradeArr: formattedData }));
+      upTradeArr.current = [];
+      const tempUpTradeSelect = [];
+
+      for (let i = 0; i < upTradeIntervalsArr.length; i++) {
+        const response = await request({
+          url: Interface.PRICE_UPTRADE,
+          data: { intervals: upTradeIntervalsArr[i] }
+        });
+
+        if (!isEmpty(response?.data)) {
+          const formattedData = response.data.slice(0, 3).map(item => ({
+            symbol: item.symbol,
+            movers: item.movers,
+            url: item.url,
+            key: item.symbol,
+            img: item.url
+          }));
+          upTradeArr.current.push(formattedData);
+          tempUpTradeSelect.push(upTradePickArr[i]);
+        }
       }
+
+      if (upTradeArr.current.length === 0) {
+        setUpTradeError(true);
+        setUpTradeLoading(false);
+        return;
+      }
+
+      setUpTradeData({
+        upTradeArr: upTradeArr.current[0],
+        upTradeSelect: tempUpTradeSelect
+      });
+      setUpTradeLoading(false);
+
+      // 轮询
+      setTimeout(() => {
+        if (needLoop.current) loadUpTradeData();
+      }, LOOPTIME);
     } catch (error) {
       console.error('加载飙升榜失败:', error);
       setUpTradeError(true);
-    } finally {
       setUpTradeLoading(false);
     }
   };
 
   // 筛选项变化处理函数
   const exchangePickChange = (index) => {
+    // 添加防护性检查，确保数组和索引都存在
+    if (exchangeArr.current && exchangeArr.current[index]) {
+      setExchangeData({
+        ...exchangeData,
+        exchangeArr: exchangeArr.current[index],
+        topName: exchangeTopNames.current[index] || ''
+      });
+    }
     setExchangePickIndex(index);
   };
 
   const pricePickChange = (index) => {
+    if (priceArr.current && priceArr.current[index]) {
+      setPriceData({
+        ...priceData,
+        priceArr: priceArr.current[index]
+      });
+    }
     setPricePickIndex(index);
   };
 
   const downPickChange = (index) => {
+    if (downArr.current && downArr.current[index]) {
+      setDownData({
+        ...downData,
+        downArr: downArr.current[index]
+      });
+    }
     setDownPickIndex(index);
   };
 
   const wavePickChange = (index) => {
+    if (waveArr.current && waveArr.current[index]) {
+      setWaveData({
+        ...waveData,
+        waveArr: waveArr.current[index]
+      });
+    }
     setWavePickIndex(index);
   };
 
   const tradePickChange = (index) => {
+    if (tradeArr.current && tradeArr.current[index]) {
+      setTradeData({
+        ...tradeData,
+        tradeArr: tradeArr.current[index]
+      });
+    }
     setTradePickIndex(index);
   };
 
   const upTradePickChange = (index) => {
+    if (upTradeArr.current && upTradeArr.current[index]) {
+      setUpTradeData({
+        ...upTradeData,
+        upTradeArr: upTradeArr.current[index]
+      });
+    }
     setUpTradePickIndex(index);
   };
 
-  // 跳转到详细列表页面
-  const jump2List = (type) => {
-    // 这里可以根据type跳转到不同的详细页面
-    console.log('跳转到详细列表:', type);
-  };
+
 
   // 获取自选列表
   const fetchOwnList = async () => {
@@ -712,92 +966,137 @@ const loadingTimerRef = useRef(null);
     return (
       <div className={styles.rankContainer}>
         {/* 交易所排行榜 */}
-        <MoziCard
-          title="交易所排行榜"
-          data={exchangeData.exchangeArr}
-          loading={isExchangeLoading}
-          error={isExchangeError}
-          selectData={exchangeData.exchangeSelect}
-          selectIndex={exchangePickIndex}
-          onSelectChange={exchangePickChange}
-          onItemClick={(item) => {}}
-          onMoreClick={() => jump2List('exchange')}
-        />
+        <Layout isLoading={isExchangeLoading} isError={isExchangeError}>
+          <MoziCard
+            title="交易所排行榜"
+            type='tabs'
+            customStyle={{ '--tabs-width': '160px' }}
+            selectArr={exchangeData.exchangeSelect || []}
+            pickChange={exchangePickChange}
+          >
+            <div onClick={() => jump2List('exchange')}>
+              <MoziGrid
+                length={4}
+                colName={['交易所', '24H交易量', '市场', '货币']}
+                gridContent={exchangeData.exchangeArr}
+                showRanking={true}
+                gridTitleBgColor="transparent"
+                extraTopName={exchangeData.topName}
+                callback={(gridCon) => { console.log('点击交易所:', gridCon); }}
+              />
+            </div>
+          </MoziCard>
+        </Layout>
 
         {/* 涨幅榜 */}
-        <MoziCard
-          title="涨幅榜"
-          data={priceData.priceArr}
-          loading={isPriceLoading}
-          error={isPriceError}
-          selectData={priceData.priceSelect}
-          selectIndex={pricePickIndex}
-          onSelectChange={pricePickChange}
-          onItemClick={(item) => handleCoinClick(item.symbol)}
-          onMoreClick={() => jump2List('price')}
-        />
+        <Layout isLoading={isPriceLoading} isError={isPriceError}>
+          <MoziCard
+            title="涨幅榜"
+            type='tabs'
+            customStyle={{ '--tabs-width': '320px' }}
+            selectArr={priceData.priceSelect || []}
+            pickChange={pricePickChange}
+          >
+            <div onClick={() => jump2List('price')}>
+              <RankGrid
+                length={2}
+                colName={['币种', '涨幅']}
+                gridContent={priceData.priceArr}
+              />
+            </div>
+          </MoziCard>
+        </Layout>
 
         {/* 跌幅榜 */}
-        <MoziCard
-          title="跌幅榜"
-          data={downData.downArr}
-          loading={isDownLoading}
-          error={isDownError}
-          selectData={downData.downSelect}
-          selectIndex={downPickIndex}
-          onSelectChange={downPickChange}
-          onItemClick={(item) => handleCoinClick(item.symbol)}
-          onMoreClick={() => jump2List('down')}
-        />
+        <Layout isLoading={isDownLoading} isError={isDownError}>
+          <MoziCard
+            title="跌幅榜"
+            type='tabs'
+            customStyle={{ '--tabs-width': '320px' }}
+            selectArr={downData.downSelect || []}
+            pickChange={downPickChange}
+          >
+            <div onClick={() => jump2List('down')}>
+              <RankGrid
+                length={2}
+                colName={['币种', '跌幅']}
+                gridContent={downData.downArr}
+              />
+            </div>
+          </MoziCard>
+        </Layout>
 
         {/* 波幅榜 */}
-        <MoziCard
-          title="波幅榜"
-          data={waveData.waveArr}
-          loading={isWaveLoading}
-          error={isWaveError}
-          selectData={waveData.waveSelect}
-          selectIndex={wavePickIndex}
-          onSelectChange={wavePickChange}
-          onItemClick={(item) => handleCoinClick(item.symbol)}
-          onMoreClick={() => jump2List('wave')}
-        />
+        <Layout isLoading={isWaveLoading} isError={isWaveError}>
+          <MoziCard
+            title="波幅榜"
+            type='tabs'
+            customStyle={{ '--tabs-width': '320px' }}
+            selectArr={waveData.waveSelect || []}
+            pickChange={wavePickChange}
+          >
+            <div onClick={() => jump2List('wave')}>
+              <RankGrid
+                length={2}
+                colName={['币种', '波幅']}
+                gridContent={waveData.waveArr}
+              />
+            </div>
+          </MoziCard>
+        </Layout>
 
         {/* 成交额榜 */}
-        <MoziCard
-          title="成交额榜"
-          data={tradeData.tradeArr}
-          loading={isTradeLoading}
-          error={isTradeError}
-          selectData={tradeData.tradeSelect}
-          selectIndex={tradePickIndex}
-          onSelectChange={tradePickChange}
-          onItemClick={(item) => handleCoinClick(item.symbol)}
-          onMoreClick={() => jump2List('trade')}
-        />
+        <Layout isLoading={isTradeLoading} isError={isTradeError}>
+          <MoziCard
+            title="成交额榜"
+            type='tabs'
+            customStyle={{ '--tabs-width': '320px' }}
+            selectArr={tradeData.tradeSelect || []}
+            pickChange={tradePickChange}
+          >
+            <div onClick={() => jump2List('trade')}>
+              <RankGrid
+                length={2}
+                colName={['币种', '成交额']}
+                gridContent={tradeData.tradeArr}
+              />
+            </div>
+          </MoziCard>
+        </Layout>
 
         {/* 新币榜 */}
-        <MoziCard
-          title="新币榜"
-          data={xinbiData.xinbiArr}
-          loading={isXinbiLoading}
-          error={isXinbiError}
-          onItemClick={(item) => handleCoinClick(item.symbol)}
-          onMoreClick={() => jump2List('xinbi')}
-        />
+        <Layout isLoading={isXinbiLoading} isError={isXinbiError}>
+          <MoziCard
+            title="新币榜"
+          >
+            <div onClick={() => jump2List('xinbi')}>
+              <RankGrid
+                length={2}
+                colName={['币种', '最新价']}
+                gridContent={xinbiData.xinbiArr}
+              />
+            </div>
+          </MoziCard>
+        </Layout>
 
         {/* 飙升榜 */}
-        <MoziCard
-          title="飙升榜"
-          data={upTradeData.upTradeArr}
-          loading={isUpTradeLoading}
-          error={isUpTradeError}
-          selectData={upTradeData.upTradeSelect}
-          selectIndex={upTradePickIndex}
-          onSelectChange={upTradePickChange}
-          onItemClick={(item) => handleCoinClick(item.symbol)}
-          onMoreClick={() => jump2List('uptrade')}
-        />
+        <Layout isLoading={isUpTradeLoading} isError={isUpTradeError}>
+          <MoziCard
+            title="飙升榜"
+            type='tabs'
+            customStyle={{ '--tabs-width': '320px' }}
+            selectArr={upTradeData.upTradeSelect || []}
+            pickChange={upTradePickChange}
+          >
+            <div onClick={() => jump2List('uptrade')}>
+              <RankGrid
+                length={2}
+                colName={['币种', '增长值']}
+                gridContent={upTradeData.upTradeArr}
+              />
+            </div>
+          </MoziCard>
+        </Layout>
       </div>
     );
   };

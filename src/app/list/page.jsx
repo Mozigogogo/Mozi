@@ -36,13 +36,14 @@ export default function List() {
   const pageFinish = useRef(false);
   
   // 从URL参数获取榜单配置
+  const type = searchParams.get('type');
   const rankTitle = searchParams.get('rankTitle') || '热门币种';
   const interFace = searchParams.get('interFace') || '/coin/hot_coin';
   const rankName = searchParams.get('rankName') || '';
   const rankDesc = searchParams.get('rankDesc') || '';
   const fromPlatform = searchParams.get('fromPlatform');
   const searchCoin = searchParams.get('searchCoin');
-  
+
   // 从URL参数解析复杂配置
   const parseJsonParam = (paramName) => {
     const value = searchParams.get(paramName);
@@ -54,7 +55,7 @@ export default function List() {
       return null;
     }
   };
-  
+
   const gridTitleFromUrl = parseJsonParam('gridTitle');
   const gridConFromUrl = parseJsonParam('gridCon');
   const requestDataFromUrl = parseJsonParam('requestData');
@@ -62,31 +63,59 @@ export default function List() {
   // showRanking：若未传参（null）则默认开启；否则按传参 true/false 解析
   const showRankingParamRaw = searchParams.get('showRanking');
   const showRankingFromUrl = showRankingParamRaw === null ? null : (showRankingParamRaw === 'true');
-  
+
   // 判断是否为特殊热门页面
   const isHotSpecial =
     rankTitle === '热门币种' ||
     rankTitle === '热门合约' ||
     rankTitle === '热门版块' ||
     (typeof rankTitle === 'string' && rankTitle.includes('可交易'));
-  
+
+  // 处理 type=exchange 的特殊情况
+  let finalGridTitle = gridTitleFromUrl;
+  let finalGridCon = gridConFromUrl;
+  let finalRequestData = requestDataFromUrl;
+  let finalSelectArr = selectArrFromUrl;
+  let finalRankTitle = rankTitle;
+  let finalInterFace = interFace;
+  let finalShowRanking = showRankingFromUrl;
+
+  if (type === 'exchange') {
+    finalRankTitle = '交易所排行榜';
+    finalInterFace = Interface.hot_exchange;
+    finalGridTitle = ['交易所', '24H交易量', '市场', '货币'];
+    finalGridCon = [
+      { type: 'Img+Text', data: ['url', 'exchange'] },
+      { type: 'Text', data: 'usd' },
+      { type: 'Text', data: 'markets' },
+      { type: 'Text', data: 'coins' },
+      { type: 'img', data: 'url' }
+    ];
+    finalRequestData = [
+      { type: 'SPOT' },
+      { type: 'Futures' }
+    ];
+    finalSelectArr = ['现货', '衍生品'];
+    finalShowRanking = true;
+  }
+
   // 配置数据（优先使用URL参数，否则使用默认值）
   const config = {
-    interFace: interFace,
-    gridTitle: gridTitleFromUrl || ['币种', '热门指数', '24H幅度', '加自选', '加监控'],
-    gridCon: gridConFromUrl || [
+    interFace: finalInterFace,
+    gridTitle: finalGridTitle || ['币种', '热门指数', '24H幅度', '加自选', '加监控'],
+    gridCon: finalGridCon || [
       { type: 'Img+Text', data: ['url', 'symbol'] },
       { type: 'Text', data: 'last' },
       { type: 'HighlightArea', data: 'priceChangePercent' },
       { type: 'AddCollect', data: ['favorite', 'symbol'] },
       { type: 'AddMonitor', data: 'symbol' }
     ],
-    requestData: requestDataFromUrl || {},
-    rankTitle: rankTitle,
+    requestData: finalRequestData || {},
+    rankTitle: finalRankTitle,
     rankName: rankName,
     rankDesc: rankDesc,
-    selectArr: selectArrFromUrl || [],
-    showRanking: showRankingFromUrl !== null ? showRankingFromUrl : true, // 默认显示排名序号
+    selectArr: finalSelectArr || [],
+    showRanking: finalShowRanking !== null ? finalShowRanking : true, // 默认显示排名序号
     commentCount: 0,
     shareCount: 0,
     fromPlatform: fromPlatform,
