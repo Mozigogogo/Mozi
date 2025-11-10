@@ -29,6 +29,12 @@ const MoziGrid = ({
 
   const containerStyle = minRows ? { minHeight: `${minRows * ROW_HEIGHT_PX}px` } : undefined;
 
+  // 对于交易所排行榜样式（showRanking）——如果没有数据，则不渲染任何内容
+  // 这样可以避免显示标题、占位符以及外层的周期/选项容器
+  if (showRanking && (!Array.isArray(gridContent) || gridContent.length === 0)) {
+    return null;
+  }
+
   // 计算列宽：根据列数和模式（含简单序号）自适配
   const getColWidth = (index) => {
     // 如果提供了自定义列宽，优先使用

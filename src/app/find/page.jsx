@@ -1015,15 +1015,19 @@ const loadingTimerRef = useRef(null);
         {/* 飙升榜 */}
         <MoziCard
           title="飙升榜"
-          data={upTradeData.upTradeArr}
-          loading={isUpTradeLoading}
-          error={isUpTradeError}
-          selectData={upTradeData.upTradeSelect}
-          selectIndex={upTradePickIndex}
-          onSelectChange={upTradePickChange}
-          onItemClick={(item) => handleCoinClick(item.symbol)}
-          onMoreClick={() => jump2List('uptrade')}
-        />
+          type='tabs'
+          customStyle={{ '--tabs-width': '320px' }}
+          selectArr={upTradeData.upTradeSelect || []}
+          pickChange={upTradePickChange}
+        >
+          <div onClick={() => jump2List('uptrade')}>
+            <RankGrid
+              length={2}
+              colName={['币种', '成交额']}
+              gridContent={upTradeData.upTradeArr}
+            />
+          </div>
+        </MoziCard>
       </div>
     );
   };

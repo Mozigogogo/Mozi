@@ -1,18 +1,36 @@
+import { useState } from 'react';
 import { Grid, List } from 'antd-mobile';
 import styles from './RankGrid.module.less';
 
 export const RankGrid = ({ length, colName, gridContent, callback }) => {
+  const [imageErrors, setImageErrors] = useState({});
+
   if (!gridContent || gridContent.length === 0) {
     return null;
   }
 
+  const handleImageError = (key) => {
+    setImageErrors(prev => ({
+      ...prev,
+      [key]: true
+    }));
+  };
+
+  const getImageSrc = (url, key) => {
+    if (imageErrors[key]) {
+      return '/default-coin.svg';
+    }
+    return url || '/default-coin.svg';
+  };
+
   return (
     <div className={styles.rankGridContainer}>
       <div className={styles.rankGridHead}>
-        <img 
-          className={styles.firstPic} 
-          src={gridContent[0].img} 
+        <img
+          className={styles.firstPic}
+          src={getImageSrc(gridContent[0].img, `head-${gridContent[0].key}`)}
           alt={gridContent[0].key}
+          onError={() => handleImageError(`head-${gridContent[0].key}`)}
         />
         <span>{gridContent[0].key}</span>
       </div>
@@ -40,15 +58,28 @@ export const RankGrid = ({ length, colName, gridContent, callback }) => {
                 <span className={styles.rankingNumber}>{index + 1}</span>
                 <Grid className={styles.gridContent} columns={length}>
                   {Object.keys(gridCon).map((gridConItem, gridConIndex) => {
-                    if (gridConItem === 'key' || gridConItem === 'img') {
+                    // 过滤不需要展示为列的字段
+                    if (gridConItem === 'key' || gridConItem === 'img' || gridConItem === 'url') {
                       return null;
                     }
                     return (
-                      <Grid.Item 
-                        key={gridConItem} 
+                      <Grid.Item
+                        key={gridConItem}
                         className={`${styles.gridConItem} ${gridConIndex !== 0 ? styles.text : ''}`}
                       >
-                        {gridCon[gridConItem]}
+                        {gridConItem === 'symbol' ? (
+                          <div className={styles.gridText}>
+                            <img
+                              className={styles.gridIcon}
+                              src={getImageSrc(gridCon.img || gridCon.url, `row-${gridCon.key}`)}
+                              alt={gridCon.symbol}
+                              onError={() => handleImageError(`row-${gridCon.key}`)}
+                            />
+                            {gridCon.symbol}
+                          </div>
+                        ) : (
+                          gridCon[gridConItem]
+                        )}
                       </Grid.Item>
                     );
                   })}
