@@ -17,8 +17,8 @@ const geistMono = Roboto_Mono({
 });
 
 export const metadata = {
-  title: "墨子 - 数字货币行情社区",
-  description: "墨子数字货币行情社区，提供币种行情、社区讨论等功能",
+  title: "Moziinnovations - Digital Currency Community",
+  description: "Moziinnovations digital currency community, providing cryptocurrency market data and community discussions",
   icons: {
     icon: "/icons/logo.jpg",
   },

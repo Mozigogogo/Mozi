@@ -1,7 +1,7 @@
 {
-  "name": "墨子数字货币行情社区",
-  "short_name": "墨子",
-  "description": "墨子数字货币行情社区，提供币种行情、社区讨论等功能",
+  "name": "Moziinnovations - Digital Currency Community",
+  "short_name": "Moziinnovations",
+  "description": "Moziinnovations digital currency community, providing cryptocurrency market data and community discussions",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
