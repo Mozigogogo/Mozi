@@ -13,7 +13,7 @@ import MarketOverview from '../../components/MarketOverview';
 import AddCollect from '../../components/AddCollect';
 import AddMonitor from '../../components/AddMonitor';
 import { Loading } from '../../components/Loading';
-import { RankGrid } from './components/RankGrid';
+import { RankGrid } from '../../components/Find/RankGrid';
 import { request } from '../../utils/request';
 import { Interface, LOOPTIME } from '../../utils/constants';
 import { jump2Detail, jump2List } from '../../utils/core';
@@ -917,17 +917,20 @@ const loadingTimerRef = useRef(null);
           customStyle={{ '--tabs-width': '160px' }}
           selectArr={exchangeData.exchangeSelect || []}
           pickChange={exchangePickChange}
+          showArrow
+          callback={() => jump2List('exchange')}
         >
           <div onClick={() => jump2List('exchange')}>
-            <MoziGrid
-              length={4}
-              colName={['交易所', '24H交易量', '市场', '货币']}
-              gridContent={exchangeData.exchangeArr}
-              showRanking={true}
-              gridTitleBgColor="transparent"
-              extraTopName={exchangeData.topName}
-              callback={(gridCon) => { console.log('点击交易所:', gridCon); }}
-            />
+          <MoziGrid
+            length={4}
+            colName={['交易所', '24H交易量', '市场', '货币']}
+            gridContent={exchangeData.exchangeArr}
+            columnWidths={['30%', '30%', '20%', '20%']}
+            showRanking={true}
+            gridTitleBgColor="transparent"
+            extraTopName={exchangeData.topName}
+            callback={(gridCon) => { console.log('点击交易所:', gridCon); }}
+          />
           </div>
         </MoziCard>
 
@@ -938,6 +941,8 @@ const loadingTimerRef = useRef(null);
           customStyle={{ '--tabs-width': '320px' }}
           selectArr={priceData.priceSelect || []}
           pickChange={pricePickChange}
+          showArrow
+          callback={() => jump2List('price')}
         >
           <div onClick={() => jump2List('price')}>
             <RankGrid
@@ -955,6 +960,8 @@ const loadingTimerRef = useRef(null);
           customStyle={{ '--tabs-width': '320px' }}
           selectArr={downData.downSelect || []}
           pickChange={downPickChange}
+          showArrow
+          callback={() => jump2List('down')}
         >
           <div onClick={() => jump2List('down')}>
             <RankGrid
@@ -972,6 +979,8 @@ const loadingTimerRef = useRef(null);
           customStyle={{ '--tabs-width': '320px' }}
           selectArr={waveData.waveSelect || []}
           pickChange={wavePickChange}
+          showArrow
+          callback={() => jump2List('wave')}
         >
           <div onClick={() => jump2List('wave')}>
             <RankGrid
@@ -989,6 +998,8 @@ const loadingTimerRef = useRef(null);
           customStyle={{ '--tabs-width': '320px' }}
           selectArr={tradeData.tradeSelect || []}
           pickChange={tradePickChange}
+          showArrow
+          callback={() => jump2List('trade')}
         >
           <div onClick={() => jump2List('trade')}>
             <RankGrid
@@ -1002,6 +1013,8 @@ const loadingTimerRef = useRef(null);
         {/* 新币榜 */}
         <MoziCard
           title="新币榜"
+          showArrow
+          callback={() => jump2List('xinbi')}
         >
           <div onClick={() => jump2List('xinbi')}>
             <RankGrid
@@ -1033,7 +1046,7 @@ const loadingTimerRef = useRef(null);
   };
 
   return (
-    <Layout bottomPadding={0}>
+    <Layout bottomPadding={60}>
       <div className={styles.container}>
         {/* 导航栏 */}
         <NavBar title="发现" showBack={false} showBorder={false} />

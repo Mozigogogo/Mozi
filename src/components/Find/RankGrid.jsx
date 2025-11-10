@@ -92,4 +92,3 @@ export const RankGrid = ({ length, colName, gridContent, callback }) => {
     </div>
   );
 };
-
