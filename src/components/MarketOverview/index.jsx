@@ -29,6 +29,11 @@ const MarketOverview = memo(() => {
     }
   });
 
+  // 智能盯盘：拆分币种与百分比，并根据涨跌着色
+  const [smartSymbol, setSmartSymbol] = useState('');
+  const [smartPercentText, setSmartPercentText] = useState('');
+  const [smartIsUp, setSmartIsUp] = useState(null); // true=涨, false=跌, null=无变化/未知
+
   // 使用硬编码的默认值（与原项目保持一致）
   const [marketValue, setMarketValue] = useState('$213215亿');
   const [marketChange, setMarketChange] = useState({
@@ -94,12 +99,24 @@ const MarketOverview = memo(() => {
           return Number.isFinite(num) ? num : undefined;
         };
 
-        let percent = normalizePercent(priceItem?.priceChangePercent) 
-          || normalizePercent(priceItem?.priceChangePercentage24h)
-          || 0;
+        // 兼容不同接口字段：priceChangePercent、priceChangePercentage24h、priceChangePercentage_24h、price24h、price24h_%、priceChange_24h
+        const percentRaw = (
+          normalizePercent(priceItem?.priceChangePercent) ||
+          normalizePercent(priceItem?.priceChangePercentage24h) ||
+          normalizePercent(priceItem?.priceChangePercentage_24h) ||
+          normalizePercent(priceItem?.price24h) ||
+          normalizePercent(priceItem?.['price24h_%']) ||
+          normalizePercent(priceItem?.priceChange_24h) ||
+          0
+        );
 
-        const percentStr = `${Number(percent).toFixed(2)}%`;
-        setSmartValue(`${firstSymbol} ${percentStr}`);
+        const percentStr = `${Number(percentRaw).toFixed(2)}%`;
+        // 拆分展示：币种 + 着色百分比
+        setSmartSymbol(firstSymbol);
+        setSmartPercentText(percentStr);
+        setSmartIsUp(Number(percentRaw) > 0 ? true : (Number(percentRaw) < 0 ? false : null));
+        // value 仅展示币种文本，百分比在渲染阶段插入并着色
+        setSmartValue(firstSymbol);
         setSmartAction('查看详情');
         setSmartOnClick(() => () => jump2Detail(firstSymbol));
       } catch (error) {
@@ -253,15 +270,35 @@ const MarketOverview = memo(() => {
                 
                 <div className={styles.cardInfo}>
                   <div className={styles.cardValue}>
-                    <span 
-                      className={`${styles.cardValueText} ${
-                        card.value === '今日有更新' ? styles.todayUpdated : ''
-                      } ${
-                        card.value === '暂无配置' ? styles.cardValuePlaceholder : ''
-                      }`}
-                    >
-                      {card.value}
-                    </span>
+                    {/* 普通卡片直接展示 value；智能盯盘拆分币种+百分比并着色 */}
+                    {card.id !== 'smart-order' ? (
+                      <span 
+                        className={`${styles.cardValueText} ${
+                          card.value === '今日有更新' ? styles.todayUpdated : ''
+                        } ${
+                          card.value === '暂无配置' ? styles.cardValuePlaceholder : ''
+                        }`}
+                      >
+                        {card.value}
+                      </span>
+                    ) : (
+                      <>
+                        <span className={styles.cardValueText}>{smartSymbol || card.value}</span>
+                        {smartPercentText && (
+                          <span
+                            className={`${styles.cardValuePercentage} ${
+                              smartIsUp === true
+                                ? styles.positive
+                                : smartIsUp === false
+                                  ? styles.negative
+                                  : ''
+                            }`}
+                          >
+                            {smartPercentText}
+                          </span>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
 
