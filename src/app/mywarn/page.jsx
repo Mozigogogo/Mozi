@@ -7,7 +7,7 @@ import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 // 移除 Layout，改用 NavBar 作为页面顶栏
 import NavBar from '../../components/NavBar';
-import { PageLogin } from '../../components/PageLogin';
+import PopLogin from '../../components/PopLogin';
 import Error from '../../components/Error';
 import { isEmpty } from 'lodash';
 import styles from './page.module.less';
@@ -271,18 +271,14 @@ export default function Mywarn() {
     return (
       <div className={styles.box}>
         <NavBar title={'我的告警'} showMenu={false} showBorder={false} />
-        <div className={styles.loginContainer}>
-          <div className={styles.loginIcon}>🔔</div>
-          <div className={styles.loginTitle}>查看我的告警</div>
-          <div className={styles.loginDesc}>登录后可查看和管理您的价格告警</div>
-          <PageLogin 
-            show={true} 
-            onLoginSuccess={init}
-            hideCb={() => {
-              window.history.back();
-            }}
-          />
-        </div>
+        {/* 与原项目一致的登录弹窗（居中卡片 + 遮罩） */}
+        <PopLogin 
+          visible={true}
+          onLoginSuccess={init}
+          onClose={() => {
+            window.history.back();
+          }}
+        />
       </div>
     );
   }
@@ -292,9 +288,8 @@ export default function Mywarn() {
         <NavBar title={'我的告警'} showBorder={false} />
         {Object.keys(warnData.data).length === 0 && !warnData.loading && (
           <div className={styles.emptyContainer}>
-            <div className={styles.emptyIcon}>📊</div>
-            <div className={styles.emptyTitle}>暂无告警设置</div>
-            <div className={styles.emptyDesc}>设置价格告警，及时掌握市场动态</div>
+            {/* 与原项目一致：使用 Error 组件 + 文案“您暂未设置告警” */}
+            <Error errMsg={'您暂未设置告警'} />
             <div 
               className={styles.emptyButton}
               onClick={() => window.history.back()}

@@ -11,7 +11,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 50vh;
+  height: 30vh;
 }
 
 .sideBox {
@@ -249,8 +249,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 60vh;
-  padding: 40px 20px;
+  min-height: 40vh;
+  padding: 0px 20px 40px 20px;
   text-align: center;
 }
 
@@ -276,25 +276,24 @@
 }
 
 .emptyButton {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 12px 24px;
-  border-radius: 24px;
+  background-color: #11B787; /* 与 PopLogin 按钮一致的纯色 */
+  color: #ffffff;
+  width: 150px; /* 统一宽度 */
+  height: 44px; /* 统一高度 */
+  line-height: 44px;
+  border-radius: 10px; /* 统一圆角 */
   font-size: 16px;
   font-weight: 500;
+  text-align: center;
   cursor: pointer;
-  transition: all 0.3s ease;
   border: none;
   outline: none;
 }
 
-.emptyButton:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
+.emptyButton:hover { /* 保持简洁，不做额外动效 */ }
 
 .emptyButton:active {
-  transform: translateY(0);
+  background-color: #0fb182; /* 与 PopLogin 按压态保持一致 */
 }
 
 /* 删除币种按钮 */

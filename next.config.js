@@ -32,13 +32,8 @@ module.exports = withLess({
   async redirects() {
     return [
       {
-        source: '/',
-        destination: '/tg',
-        permanent: false,
-      },
-      {
         source: '/home',
-        destination: '/tg',
+        destination: '/',
         permanent: true,
       },
     ];

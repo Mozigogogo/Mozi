@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Input, Button, Dialog, Toast, Switch } from "antd-mobile";
+import PopLogin from "../../components/PopLogin";
 import { request } from "@/utils/request";
 import { Interface } from "@/utils/constants";
 import { jump2NoTab } from "@/utils/core";
@@ -11,6 +12,8 @@ import styles from "./page.module.less";
 export default function Addwarn() {
   // 按钮状态（移除保存后的公众号弹窗）
   const [btnDisabled, setBtnDisabled] = useState(false);
+  // 登录弹窗显示状态
+  const [showLoginPopup, setShowLoginPopup] = useState(false);
 
   // URL参数中的 symbol，缺省用 BTC
   const getSymbol = () => {
@@ -165,13 +168,7 @@ export default function Addwarn() {
       }
 
       if (addRes.data?.isLogin === false) {
-        Dialog.confirm({
-          content: "请先登录",
-          confirmText: "去登录",
-          onConfirm: () => {
-            window.location.href = "/user";
-          },
-        });
+        setShowLoginPopup(true);
         return;
       }
 
@@ -278,6 +275,15 @@ export default function Addwarn() {
             </div>
 
             {/* 保存成功后不显示公众号弹窗（TG 项目不需要） */}
+            {/* 登录弹窗：原 Dialog.confirm 改为统一 PopLogin */}
+            <PopLogin
+              visible={showLoginPopup}
+              onClose={() => setShowLoginPopup(false)}
+              onLoginSuccess={() => {
+                setShowLoginPopup(false);
+                // 登录成功后可继续保存或刷新数据，如需可在此触发
+              }}
+            />
           </>
         )}
     </div>
