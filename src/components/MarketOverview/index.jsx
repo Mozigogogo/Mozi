@@ -22,10 +22,10 @@ const CalendarIcon = `${CDN_PREFIX}/icon/find_slices/find-calendar%402x.png`;
  */
 const MarketOverview = memo(() => {
   const [smartValue, setSmartValue] = useState('暂无配置');
-  const [smartAction, setSmartAction] = useState('去配置');
+  const [smartAction, setSmartAction] = useState('去配置报警');
   const [smartOnClick, setSmartOnClick] = useState(() => () => {
     if (typeof window !== 'undefined') {
-      window.location.href = '/addwarn';
+      window.location.href = '/tg';
     }
   });
 
@@ -56,7 +56,12 @@ const MarketOverview = memo(() => {
         const token = localStorage.getItem('token');
         if (!token) {
           setSmartValue('暂无配置');
-          setSmartAction('去配置');
+          setSmartAction('去配置报警');
+          setSmartOnClick(() => () => {
+            if (typeof window !== 'undefined') {
+              window.location.href = '/tg';
+            }
+          });
           return;
         }
 
@@ -82,6 +87,13 @@ const MarketOverview = memo(() => {
 
         const firstSymbol = chosenSymbol || Object.keys(groups)[0];
         if (!firstSymbol) {
+          setSmartValue('暂无配置');
+          setSmartAction('去配置报警');
+          setSmartOnClick(() => () => {
+            if (typeof window !== 'undefined') {
+              window.location.href = '/tg';
+            }
+          });
           return;
         }
 

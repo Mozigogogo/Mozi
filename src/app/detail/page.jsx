@@ -417,10 +417,13 @@ export default function DetailPage() {
     }
   };
 
-  // 跳转到告警页面
+  // 跳转到告警页面（先进入 /tg 绑定/对话）
   const jump2Alert = () => {
     if (symbol) {
-      jump2NoTab('addwarn', { symbol });
+      const href = `/tg${symbol ? `?symbol=${encodeURIComponent(symbol)}` : ''}`;
+      window.location.href = href;
+    } else {
+      window.location.href = '/tg';
     }
   };
 
