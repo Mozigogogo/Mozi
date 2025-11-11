@@ -72,6 +72,8 @@ export const Interface = {
   COIN_MARKET: '/detail/exchangeprice',
   // AI建议
   AI_COIN: '/detail/kline/ai',
+  // 投资回报率（ROI）
+  RETURN_INVESTMENT: '/easy/getReturnInvestment',
 
   // 搜索页
   // 币种是否有效

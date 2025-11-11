@@ -1,6 +1,6 @@
 .box {
   background-color: #efefef;
-  padding-bottom: 50px;
+  padding-top: 50px; /* 顶部导航栏高度 */
   box-sizing: border-box;
   min-height: 100vh;
   display: flex;
@@ -25,28 +25,30 @@
 }
 
 .sidebar {
-  width: 200px;
+  width: 100px;
   box-sizing: border-box;
   height: 100%;
+  /* 统一激活颜色为原项目绿色并去掉左侧指示竖线 */
+  --adm-color-primary: #11B787;
 }
 
 .sidebarItem {
-  padding: 20px;
+  padding: 10px;
   display: flex;
   align-items: center;
 }
 
 .sidebarIcon {
-  height: 36px;
-  width: 36px;
-  margin-right: 10px;
+  height: 18px;
+  width: 18px;
+  margin-right: 5px;
   object-fit: contain;
 }
 
 .main {
   flex: auto;
   background-color: #fff;
-  padding: 20px;
+  padding: 10px;
   box-sizing: border-box;
   position: relative;
   overflow-y: auto;
@@ -54,39 +56,36 @@
 
 .mainItem {
   display: flex;
-  margin-bottom: 20px;
   align-items: center;
   justify-content: space-between;
-  padding: 15px;
-  border-radius: 8px;
-  border: 1px solid #f0f0f0;
-  background-color: #fafafa;
+  padding: 8px;
 }
 
 .contentWrapper {
   flex: 1;
   display: flex;
   align-items: center;
-  padding-right: 10px;
+  padding-right: 5px;
 }
 
 .contentLabel {
-  margin-right: 8px;
+  margin-right: 4px;
   font-weight: 500;
   color: #333;
   white-space: nowrap;
+  min-width: 72px;
 }
 
 .contentText {
   cursor: pointer;
-  padding: 8px 12px;
-  border-radius: 8px;
+  padding: 4px 6px;
+  border-radius: 4px;
   transition: all 0.2s;
   border: 1px solid #ddd;
   background-color: #fff;
   display: inline-block;
-  flex: 1;
-  min-width: 80px;
+  flex: none;
+  width: 120px;
 }
 
 .contentText:hover {
@@ -102,18 +101,18 @@
   display: flex;
   align-items: center;
   flex: 1;
-  padding-right: 10px;
-  gap: 8px;
+  padding-right: 5px;
+  gap: 4px;
 }
 
 .editInput {
-  flex: 1;
-  min-width: 120px;
+  flex: none;
+  width: 120px;
 }
 
 .confirmBtn {
-  min-width: 40px;
-  height: 40px;
+  min-width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -177,13 +176,13 @@
 /* 响应式设计 */
 @media (max-width: 768px) {
   .sideBox {
-    flex-direction: column;
-    height: auto;
+    flex-direction: row;
+    height: calc(100vh - 100px);
   }
   
   .sidebar {
-    width: 100%;
-    height: auto;
+    width: 100px;
+    height: 100%;
   }
   
   .main {
@@ -192,9 +191,9 @@
   }
   
   .mainItem {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
+    flex-direction: row;
+    align-items: center;
+    gap: 0;
   }
   
   .contentWrapper {
@@ -203,12 +202,12 @@
   
   .editContainer {
     padding-right: 0;
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    align-items: center;
   }
   
   .editInput {
-    min-width: auto;
+    width: 120px;
   }
 }
 
@@ -296,4 +295,46 @@
 
 .emptyButton:active {
   transform: translateY(0);
+}
+
+/* 删除币种按钮 */
+.deleteCoinBtn {
+  width: auto;
+  height: auto;
+  margin: 20px 30px 0; /* 原项目 40/60px → 对半 */
+  border-radius: 8px; /* 16px → 对半 */
+  background-color: #ff7474;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 8px 12px; /* 16/24px → 对半 */
+}
+
+.deleteCoinText {
+  color: #fff;
+  font-size: 14px; /* 28px → 对半 */
+  font-weight: 600;
+}
+.sidebar :global(.adm-side-bar-indicator) {
+  display: none !important; /* 去掉蓝色竖线 */
+}
+
+/* 缩小每个侧边栏项的高度 */
+.sidebar :global(.adm-side-bar-item) {
+  padding: 8px 8px !important;
+  min-height: 36px;
+}
+
+/* 激活项样式：保持绿色文字，移除左侧竖线/阴影 */
+.sidebar :global(.adm-side-bar-item-active) {
+  background-color: #fff;
+  color: #11B787;
+  border-left: none !important;
+  box-shadow: none !important;
+}
+
+/* 一些版本可能使用其他类名来显示竖线，统一隐藏 */
+.sidebar :global(.adm-side-bar-active-line) {
+  display: none !important;
 }

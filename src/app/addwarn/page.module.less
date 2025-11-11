@@ -151,7 +151,7 @@
 
 .configInput {
   flex: 1;
-  text-align: right;
+  text-align: left;
   font-size: 16px;
   color: #333;
   border: 1px solid #DEE2E8;
@@ -160,6 +160,12 @@
   height: 35px;
   box-sizing: border-box;
   padding-right: 8px;
+}
+
+/* 调整输入框内数字大小与左侧内边距 */
+.configInput :global(.adm-input-element) {
+  font-size: 14px; /* 数字偏大，下调为 14px */
+  padding-left: 8px; /* 与左侧保持适度间距 */
 }
 
 .configUnit {

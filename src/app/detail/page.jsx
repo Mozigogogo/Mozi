@@ -13,8 +13,8 @@ import AddCollect from '../../components/AddCollect';
 import KlineChart from '../../components/KlineChart';
 import { Loading } from '../../components/Loading';
 import { CaretUpIcon, CaretDownIcon, BellIcon } from '../../components/Icons';
-import { SkeletonPage } from '../../components/Skeleton';
-import { detailPageSkeletonConfig } from '../../components/Skeleton/configs/detailPageConfig';
+// import { SkeletonPage } from '../../components/Skeleton';
+// import { detailPageSkeletonConfig } from '../../components/Skeleton/configs/detailPageConfig';
 import { request } from '../../utils/request';
 import { Interface, LOOPTIME, WS_URL } from '../../utils/constants';
 import { formatNumber, formatPercent, jump2NoTab } from '../../utils/core';
@@ -54,6 +54,7 @@ export default function DetailPage() {
   const [loading, setLoading] = useState(true);
   const [klineLoading, setKlineLoading] = useState(true);
   const [marketLoading, setMarketLoading] = useState(true);
+  const [roiLoading, setRoiLoading] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true); // 是否首次加载
   const initialLoadTimeoutRef = useRef(null); // 首次加载超时定时器
   const [activeTab, setActiveTab] = useState('chart');
@@ -73,6 +74,12 @@ export default function DetailPage() {
   const isWsAuthenticatedRef = useRef(false); // WebSocket认证状态
   const isFirstRenderRef = useRef(true); // 是否首次渲染
   const currentKlinePeriodRef = useRef('hour'); // 当前K线时间周期
+  const [roiData, setRoiData] = useState({
+    priceChange1Day: '--',
+    priceChange7Day: '--',
+    priceChange1Month: '--',
+    priceChange1Year: '--'
+  });
   
   // WebSocket连接状态管理
   const wsConnectionStatusRef = useRef('connecting'); // connecting | connected | failed
@@ -307,6 +314,38 @@ export default function DetailPage() {
       setMarketLoading(false);
     }
   };
+
+  // 获取投资回报率（ROI）数据
+  const fetchROIData = async () => {
+    if (!symbol) return;
+    setRoiLoading(true);
+    try {
+      const response = await request({
+        url: Interface.RETURN_INVESTMENT,
+        data: { symbol }
+      });
+      if (response?.data && response.data.length > 0) {
+        const data = response.data[0];
+        setRoiData({
+          priceChange1Day: data.priceChange1Day ?? '--',
+          priceChange7Day: data.priceChange7Day ?? '--',
+          priceChange1Month: data.priceChange1Month ?? '--',
+          priceChange1Year: data.priceChange1Year ?? '--',
+        });
+      } else {
+        setRoiData({
+          priceChange1Day: '--',
+          priceChange7Day: '--',
+          priceChange1Month: '--',
+          priceChange1Year: '--',
+        });
+      }
+    } catch (error) {
+      console.error('获取投资回报率失败:', error);
+    } finally {
+      setRoiLoading(false);
+    }
+  };
   
   // 滚动到指定区域
   const scrollToSection = (sectionRef) => {
@@ -469,6 +508,7 @@ ${coinInfo.name || symbol} (${symbol})
     fetchCoinInfo();
     fetchKlineData();
     fetchMarketData();
+    fetchROIData();
     
     // 设置轮询
     if (pollingTimerRef.current) {
@@ -479,6 +519,7 @@ ${coinInfo.name || symbol} (${symbol})
         fetchCoinInfo();
         fetchKlineData();
         fetchMarketData();
+        fetchROIData();
       }
     }, LOOPTIME);
   };
@@ -518,6 +559,7 @@ ${coinInfo.name || symbol} (${symbol})
     // 先获取基本信息（coinInfo和市场数据可以用HTTP）
     fetchCoinInfo();
     fetchMarketData();
+    fetchROIData();
     
     // 设置WebSocket连接超时（10秒）
     // 如果10秒内WebSocket未连接成功，则启用HTTP降级
@@ -1143,7 +1185,13 @@ ${coinInfo.name || symbol} (${symbol})
   // 渲染币种基本信息
   const renderCoinInfo = () => {
     if (!coinInfo) {
-      return <div className={styles.emptyInfo}>币种信息不存在</div>;
+      return (
+        <div className={styles.headerContainer}>
+          <div className={`${styles.headerBox} ${styles.headerLoading}`}>
+            <Loading tip={null} size={24} />
+          </div>
+        </div>
+      );
     }
     
     const isPriceDown = String(coinInfo.priceChange_24h).includes('-');
@@ -1237,6 +1285,47 @@ ${coinInfo.name || symbol} (${symbol})
       </div>
     );
   };
+
+  // 渲染投资回报率（ROI）
+  const renderROI = () => {
+    if (roiLoading) {
+      return (
+        <MoziCard title="投资回报率">
+          <div className={`${styles.box} ${styles.headerLoading}`} style={{ display: 'flex' }}>
+            <Loading tip={null} size={24} />
+          </div>
+        </MoziCard>
+      );
+    }
+
+    const isNegative = (val) => {
+      if (val === '--') return false;
+      const num = parseFloat(String(val).replace('%', ''));
+      return !isNaN(num) && num < 0;
+    };
+
+    const cards = [
+      { value: roiData.priceChange1Day, label: '日回报率' },
+      { value: roiData.priceChange7Day, label: '周回报率' },
+      { value: roiData.priceChange1Month, label: '月回报率' },
+      { value: roiData.priceChange1Year, label: '年回报率' },
+    ];
+
+    return (
+      <MoziCard title="投资回报率">
+        <div className={styles.roiBox}>
+          <div className={styles.roiGrid}>
+            {cards.map((item, idx) => (
+              <div key={idx} className={`${styles.roiCard} ${isNegative(item.value) ? styles.negative : styles.positive}`}>
+                <div className={styles.roiValue}>{item.value}</div>
+                <div className={styles.roiLabel}>{item.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </MoziCard>
+    );
+  };
   
   // 处理K线时间周期切换
   const handleKlineTabChange = (key) => {
@@ -1290,19 +1379,19 @@ ${coinInfo.name || symbol} (${symbol})
     );
   };
   
-  // 如果是首次加载且数据未完成，显示整页骨架屏
-  if (isInitialLoad && (loading || klineLoading)) {
-    return (
-      <Layout>
-        <NavBar 
-          title={symbol || '币种详情'} 
-          showBack={true}
-          showBorder={false}
-        />
-        <SkeletonPage config={detailPageSkeletonConfig} />
-      </Layout>
-    );
-  }
+  // 【禁用骨架屏】首次加载时不再显示整页骨架屏，仅注释保留
+  // if (isInitialLoad && (loading || klineLoading)) {
+  //   return (
+  //     <Layout>
+  //       <NavBar 
+  //         title={symbol || '币种详情'} 
+  //         showBack={true}
+  //         showBorder={false}
+  //       />
+  //       <SkeletonPage config={detailPageSkeletonConfig} />
+  //     </Layout>
+  //   );
+  // }
   
   return (
     <>
@@ -1344,9 +1433,7 @@ ${coinInfo.name || symbol} (${symbol})
 
         {/* 投资回报率区域 */}
         <div ref={roiRef} className={styles.roiSection}>
-          <MoziCard title="投资回报率" moreDesc="敬请期待">
-            <div style={{ padding: '10px', color: '#999', fontSize: '12px' }}>敬请期待</div>
-          </MoziCard>
+          {renderROI()}
         </div>
         
         {/* 底部操作栏 */}
