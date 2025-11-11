@@ -9,8 +9,7 @@ import { LeftArrowIcon } from "@/components/Icons";
 import styles from "./page.module.less";
 
 export default function Addwarn() {
-  // 弹窗与按钮状态
-  const [showPopup, setShowPopup] = useState(false);
+  // 按钮状态（移除保存后的公众号弹窗）
   const [btnDisabled, setBtnDisabled] = useState(false);
 
   // URL参数中的 symbol，缺省用 BTC
@@ -145,8 +144,23 @@ export default function Addwarn() {
       setBtnDisabled(false);
 
       if (addRes.data === true) {
+        // 保存成功仅提示，不再弹出公众号绑定弹窗
         Toast.show({ content: "保存告警成功" });
-        setShowPopup(true);
+        // 如果已绑定 Telegram，将发送一条确认消息（仅用于用户确认，不代表实时告警）
+        try {
+          const chatId = localStorage.getItem('tgChatId');
+          if (chatId) {
+            const lines = Object.entries(apiData).map(([k, v]) => `${k}: ${v}`).join('\n');
+            fetch('/api/tg/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chatId,
+                text: `⏰ 告警已配置\n币种: ${symbol}\n${lines}`,
+              }),
+            }).catch(() => {});
+          }
+        } catch {}
         return;
       }
 
@@ -263,23 +277,7 @@ export default function Addwarn() {
               </Button>
             </div>
 
-            {/* 成功弹窗 */}
-            <Dialog
-              visible={showPopup}
-              content={
-                <div className={styles.popContainer}>
-                  <div className={styles.contactTitle}>请关注公众号接受告警信息</div>
-                  <img
-                    className={styles.attendPic}
-                    src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/wechat_account.jpg"
-                    alt="公众号二维码"
-                  />
-                </div>
-              }
-              closeOnAction
-              onClose={() => setShowPopup(false)}
-              actions={[{ key: "confirm", text: "确定" }]}
-            />
+            {/* 保存成功后不显示公众号弹窗（TG 项目不需要） */}
           </>
         )}
     </div>

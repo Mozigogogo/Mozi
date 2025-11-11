@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Script from 'next/script';
-import { Button } from 'antd-mobile';
+import { Button, Toast } from 'antd-mobile';
 import styles from './page.module.less';
 
 export default function TgWebAppPage() {
@@ -32,6 +32,37 @@ export default function TgWebAppPage() {
 
   const goHome = () => {
     window.location.href = '/';
+  };
+
+  // 绑定并测试推送：通过内部 API 发送一条消息到当前用户
+  const sendTestMessage = async () => {
+    try {
+      if (!user?.id) {
+        Toast.show({ content: '未获取到 Telegram 用户信息' });
+        return;
+      }
+      const res = await fetch('/api/tg/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chatId: user.id,
+          text: `✅ 绑定成功\nID: ${user.id}\n用户名: ${user.username || ''}`,
+        }),
+      });
+      const data = await res.json();
+      if (data?.ok) {
+        Toast.show({ content: '已发送测试消息，请在 Telegram 查看' });
+        try {
+          // 将 chatId 缓存到本地，便于其他页面（如 addwarn）使用
+          localStorage.setItem('tgChatId', String(user.id));
+        } catch {}
+      } else {
+        Toast.show({ content: `发送失败：${data?.description || '未知错误'}` });
+      }
+    } catch (error) {
+      console.error('发送测试消息错误:', error);
+      Toast.show({ content: '网络错误，稍后再试' });
+    }
   };
 
   return (
@@ -64,6 +95,9 @@ export default function TgWebAppPage() {
         <div className={styles.actions}>
           <Button color='primary' block onClick={goHome}>
             进入应用首页
+          </Button>
+          <Button style={{ marginTop: 12 }} block onClick={sendTestMessage}>
+            绑定并测试推送
           </Button>
         </div>
       </div>
