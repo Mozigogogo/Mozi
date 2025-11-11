@@ -284,8 +284,9 @@ export const handleOptions = (data, type, msg) => {
     
     const baseConfig = {
       grid: {
-        left: '15%',
-        right: '15%',
+        // 参考原项目：持仓页面增加右侧边距以确保Y轴标签完整显示
+        left: msg === '持仓' ? '10%' : '15%',
+        right: msg === '持仓' ? '15%' : '15%',
         top: '12%',
         bottom: '25%',
         containLabel: false
@@ -324,8 +325,33 @@ export const handleOptions = (data, type, msg) => {
             type: 'line'
           },
           axisLabel: {
-            rotate: 45,
-            fontSize: 10
+            // 历史持仓量使用更短的标签并取消旋转
+            rotate: msg === '持仓' ? 0 : 45,
+            fontSize: 10,
+            formatter: (value) => {
+              if (msg === '持仓') {
+                try {
+                  const str = String(value);
+                  const m = str.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+                  if (m) {
+                    const yy = m[1].slice(2);
+                    const mm = m[2].padStart(2, '0');
+                    const dd = m[3].padStart(2, '0');
+                    return `${yy}-${mm}-${dd}`;
+                  }
+                  const d = new Date(str);
+                  if (!isNaN(d.getTime())) {
+                    const yy = String(d.getFullYear()).slice(2);
+                    const mm = String(d.getMonth() + 1).padStart(2, '0');
+                    const dd = String(d.getDate()).padStart(2, '0');
+                    return `${yy}-${mm}-${dd}`;
+                  }
+                } catch (e) {
+                  // fallback
+                }
+              }
+              return value;
+            }
           }
         }
       ],
@@ -334,12 +360,27 @@ export const handleOptions = (data, type, msg) => {
           type: 'value',
           name: msg,
           position: 'left',
+          // 左侧：对齐原项目逻辑——持仓页面去掉美元符号，并按“亿”为单位展示整数
+          min: function(value) {
+            if (msg === '持仓') {
+              return Math.floor(value.min * 0.9);
+            }
+            return undefined;
+          },
+          minInterval: msg === '持仓' ? 1 : undefined,
           axisLabel: {
             formatter: (value) => {
-              if (data?.yAxisLeftSlot) {
-                return data.yAxisLeftSlot.replace('{}', value);
+              if (msg === '成交额') {
+                // 成交额页面：去掉$符号
+                const formatted = data?.yAxisLeftSlot ? data.yAxisLeftSlot.replace('{}', value) : value;
+                return formatted.toString().replace('$', '');
+              } else if (msg === '持仓') {
+                // 历史持仓量：单位已是“亿”，展示整数并去掉$符号
+                const intValue = Math.floor(value);
+                const formatted = data?.yAxisLeftSlot ? data.yAxisLeftSlot.replace('{}', intValue) : intValue;
+                return formatted.toString().replace('$', '');
               }
-              return value;
+              return data?.yAxisLeftSlot ? data.yAxisLeftSlot.replace('{}', value) : value;
             }
           }
         },
@@ -347,12 +388,22 @@ export const handleOptions = (data, type, msg) => {
           type: 'value',
           name: '价格',
           position: 'right',
+          // 右侧：对齐原项目逻辑——持仓页面把“千”转换为“万”，不展示小数，并隐藏辅助线
+          min: msg === '持仓' ? 20000 : undefined,
+          max: msg === '持仓' ? function(value) { return value.max; } : undefined,
+          splitLine: { show: msg === '持仓' ? false : true },
           axisLabel: {
             formatter: (value) => {
-              if (data?.yAxisRightSlot) {
-                return data.yAxisRightSlot.replace('{}', value);
+              if (msg === '成交额') {
+                // 成交额：转换为“万”单位
+                const tenThousandValue = (value / 10000).toFixed(1);
+                return `${tenThousandValue}万`;
+              } else if (msg === '持仓') {
+                // 历史持仓量：当前数据为“千”，转换为“万”，不显示小数
+                const tenThousandValue = Math.floor(value / 10);
+                return `${tenThousandValue}万`;
               }
-              return value;
+              return data?.yAxisRightSlot ? data.yAxisRightSlot.replace('{}', value) : value;
             }
           }
         }
@@ -373,11 +424,11 @@ export const handleOptions = (data, type, msg) => {
           yAxisIndex: 1,
           data: data?.lineData || [],
           lineStyle: {
-            color: '#FA5F5F',
+            color: '#FF9A37',
             width: 2
           },
           itemStyle: {
-            color: '#FA5F5F'
+            color: '#FF9A37'
           }
         }
       ],
