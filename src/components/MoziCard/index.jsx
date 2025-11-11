@@ -32,7 +32,10 @@ const MoziCard = ({
   onSelectChange,
   onItemClick,
   onMoreClick,
-  showArrow
+  showArrow,
+  // 新增：当无数据时隐藏右侧的 tabs/选择器容器
+  hideExtraWhenEmpty = false,
+  hasData = true
 }) => {
   // 合并默认样式和自定义样式（customStyle 优先级最高）
   const cardStyle = {
@@ -182,7 +185,7 @@ const MoziCard = ({
     <div className={`${styles.card} ${className}`} style={cardStyle}>
       <div className={styles.cardHeader}>
         {renderTitle()}
-        {!customTitle && (
+        {!customTitle && (!hideExtraWhenEmpty || hasData) && (
           <CardExtra 
             type={type} 
             callback={callback} 
