@@ -4,6 +4,7 @@ import React, { memo, useEffect, useState } from 'react';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { jump2Detail } from '../../utils/core';
+import { getAggregationDetail } from '../../api/market';
 import styles from './index.module.less';
 
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
@@ -109,61 +110,81 @@ const MarketOverview = memo(() => {
     loadSmartMonitor();
   }, []);
 
-  // 注释掉接口调用，使用硬编码值（与原项目保持一致）
-  // 原项目也没有调用这些接口，只是显示固定的默认值
-  // useEffect(() => {
-  //   const loadMarketCap = async () => {
-  //     try {
-  //       const res = await request({ url: Interface.COIN_SUM });
-  //       if (res?.data?.totalMarketCap) {
-  //         const value = Number(res.data.totalMarketCap);
-  //         const formatted = value >= 1e12 
-  //           ? `$${(value / 1e12).toFixed(2)}T`
-  //           : value >= 1e9
-  //           ? `$${(value / 1e9).toFixed(2)}B`
-  //           : `$${(value / 1e6).toFixed(2)}M`;
-  //         
-  //         setMarketValue(formatted);
-  //         
-  //         const changePercent = res.data.marketCapChangePercentage24h || 0;
-  //         setMarketChange({
-  //           isPositive: changePercent >= 0,
-  //           value: `${Math.abs(changePercent).toFixed(2)}%`
-  //         });
-  //       }
-  //     } catch (error) {
-  //       console.error('加载市值数据失败:', error);
-  //     }
-  //   };
-  //   loadMarketCap();
-  // }, []);
+  // 接入市场聚合数据，动态填充加密总市值与成交量（含涨跌）
+  useEffect(() => {
+    const pick = (obj, keys) => {
+      for (const k of keys) {
+        if (obj && obj[k] !== undefined && obj[k] !== null && obj[k] !== '') {
+          return obj[k];
+        }
+      }
+      return undefined;
+    };
 
-  // useEffect(() => {
-  //   const loadTurnover = async () => {
-  //     try {
-  //       const res = await request({ url: Interface.COIN_SUM });
-  //       if (res?.data?.totalVolume) {
-  //         const value = Number(res.data.totalVolume);
-  //         const formatted = value >= 1e12 
-  //           ? `$${(value / 1e12).toFixed(2)}T`
-  //           : value >= 1e9
-  //           ? `$${(value / 1e9).toFixed(2)}B`
-  //           : `$${(value / 1e6).toFixed(2)}M`;
-  //         
-  //         setTurnoverValue(formatted);
-  //         
-  //         const changePercent = res.data.volumeChangePercentage24h || 0;
-  //         setTurnoverChange({
-  //           isPositive: changePercent >= 0,
-  //           value: `${Math.abs(changePercent).toFixed(2)}%`
-  //         });
-  //       }
-  //     } catch (error) {
-  //       console.error('加载成交额数据失败:', error);
-  //     }
-  //   };
-  //   loadTurnover();
-  // }, []);
+    const formatYi = (val) => {
+      const num = Number(val);
+      if (!Number.isFinite(num)) return '--';
+      return `$${(num / 1e8).toFixed(2)}亿`;
+    };
+
+    const normalizePercent = (v) => {
+      if (v === undefined || v === null || v === '') return '--';
+      if (typeof v === 'string') {
+        const s = v.trim();
+        if (s.endsWith('%')) return s.replace(/\s/g, '');
+        const n = parseFloat(s);
+        return Number.isFinite(n) ? `${n.toFixed(2)}%` : '--';
+      }
+      if (typeof v === 'number') return `${v.toFixed(2)}%`;
+      return '--';
+    };
+
+    const isPositivePercent = (v) => {
+      if (typeof v === 'string') return !v.trim().startsWith('-');
+      if (typeof v === 'number') return v >= 0;
+      return true;
+    };
+
+    let timer;
+    const loadAggregation = async () => {
+      try {
+        const res = await getAggregationDetail();
+        const data = res?.data || {};
+
+        // 市值（优先使用接口文档字段）
+        const capFmt = pick(data, ['globalMarketCapFmt', 'marketCapFmt', 'totalMarketCapFmt', 'totalMarketCapFormat']);
+        const capNum = pick(data, ['totalMarketCap', 'marketCap']);
+        const capStr = capFmt || (capNum !== undefined ? formatYi(capNum) : undefined) || marketValue;
+        setMarketValue(capStr);
+
+        const capChangeRaw = pick(data, ['marketCapChangePctFmt', 'marketCapChangeFmt', 'marketCapChangePercentage24h', 'marketCapChangePerc']);
+        const capChangeStr = normalizePercent(capChangeRaw);
+        setMarketChange({
+          isPositive: isPositivePercent(capChangeRaw ?? capChangeStr),
+          value: capChangeStr.replace('-', '')
+        });
+
+        // 成交量（优先使用接口文档字段）
+        const volFmt = pick(data, ['globalVolume24hFmt', 'totalVolumeFmt', 'volumeFmt']);
+        const volNum = pick(data, ['totalVolume', 'volume']);
+        const volStr = volFmt || (volNum !== undefined ? formatYi(volNum) : undefined) || turnoverValue;
+        setTurnoverValue(volStr);
+
+        const volChangeRaw = pick(data, ['volumeChangePctFmt', 'volumeChangeFmt', 'volumeChangePercentage24h']);
+        const volChangeStr = normalizePercent(volChangeRaw);
+        setTurnoverChange({
+          isPositive: isPositivePercent(volChangeRaw ?? volChangeStr),
+          value: volChangeStr.replace('-', '')
+        });
+      } catch (error) {
+        console.error('加载市场聚合数据失败:', error);
+      }
+    };
+
+    loadAggregation();
+    timer = setInterval(loadAggregation, 30000);
+    return () => clearInterval(timer);
+  }, []);
 
   // 原项目顺序（完全一致）：加密总市值、成交量、智能盯盘、公告日历
   const cards = [
@@ -204,7 +225,7 @@ const MarketOverview = memo(() => {
       isActionButton: true,
       onClick: () => {
         if (typeof window !== 'undefined') {
-          window.location.href = '/me';
+          window.location.href = '/user';
         }
       }
     }
