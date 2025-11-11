@@ -44,6 +44,23 @@ export default function TgWebAppPage() {
         Toast.show({ content: '未获取到 Telegram 用户信息' });
         return;
       }
+      // 发送测试消息到 Telegram，确认 chatId 有效
+      try {
+        const res = await fetch('/api/tg/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chatId: user.id,
+            text: `✅ 绑定成功\nID: ${user.id}\n用户名: ${user.username || ''}`,
+          }),
+        });
+        const data = await res.json();
+        if (data?.ok) {
+          Toast.show({ content: '已发送测试消息，请在 Telegram 查看' });
+        }
+      } catch (e) {
+        console.warn('发送测试消息失败:', e);
+      }
       // 本地绑定（供后续页面使用）
       try {
         localStorage.setItem('tgChatId', String(user.id));
