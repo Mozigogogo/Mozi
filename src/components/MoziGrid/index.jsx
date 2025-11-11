@@ -21,7 +21,8 @@ const MoziGrid = ({
   className = '',
   enableLoadMore = false, // 是否启用加载更多
   loadMore, // 加载更多的回调函数
-  hasMore = false // 是否还有更多数据
+  hasMore = false, // 是否还有更多数据
+  extraTopName = '' // 左侧大 logo 下方显示的名称（如交易所名称）
 }) => {
   const displayData = Array.isArray(gridContent)
     ? (maxRows ? gridContent.slice(0, maxRows) : gridContent)
@@ -87,10 +88,13 @@ const MoziGrid = ({
                 <img 
                   src={displayData[0].img} 
                   className={styles.rankingLogoFull}
-                  alt="Top 1"
+                  alt={extraTopName || 'Top 1'}
                   onError={(e) => console.log('图片加载失败:', e, displayData[0].img)}
                   onLoad={() => console.log('图片加载成功:', displayData[0].img)}
                 />
+                {extraTopName ? (
+                  <div className={styles.rankingTopName} title={extraTopName}>{extraTopName}</div>
+                ) : null}
               </div>
             ) : (
               <div className={styles.logoPlaceholderFull}>🏆</div>

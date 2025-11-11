@@ -1032,6 +1032,8 @@ const loadingTimerRef = useRef(null);
           customStyle={{ '--tabs-width': '320px' }}
           selectArr={upTradeData.upTradeSelect || []}
           pickChange={upTradePickChange}
+          showArrow
+          callback={() => jump2List('uptrade')}
         >
           <div onClick={() => jump2List('uptrade')}>
             <RankGrid
