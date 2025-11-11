@@ -10,13 +10,33 @@ export default function TgWebAppPage() {
   const [ready, setReady] = useState(false);
   const [user, setUser] = useState(null);
   const [theme, setTheme] = useState('light');
+  const [debugInfo, setDebugInfo] = useState({
+    sdkLoaded: false,
+    sdkError: '',
+    tgAvailable: false,
+    platform: '',
+    version: '',
+    colorScheme: '',
+    initDataLen: 0,
+    hasUser: false,
+    initData: '',
+    initDataUnsafeJson: '',
+  });
   const searchParams = useSearchParams();
   const symbol = searchParams.get('symbol') || '';
 
   // 初始化 Telegram WebApp（脚本加载完成后执行）
   const initTelegram = () => {
     const tg = window?.Telegram?.WebApp;
-    if (!tg) return;
+    if (!tg) {
+      setDebugInfo((d) => ({
+        ...d,
+        sdkLoaded: !!window?.Telegram,
+        tgAvailable: false,
+        sdkError: d.sdkError || 'WebApp 不可用：请确认从 Telegram 内通过 WebApp 打开',
+      }));
+      return;
+    }
     try {
       tg.ready();
       tg.expand();
@@ -25,6 +45,21 @@ export default function TgWebAppPage() {
       setReady(true);
       // 主题变化监听
       tg.onEvent('themeChanged', () => setTheme(tg.colorScheme));
+
+      const unsafe = tg.initDataUnsafe || {};
+      const hasUser = !!unsafe.user;
+      setDebugInfo({
+        sdkLoaded: true,
+        sdkError: '',
+        tgAvailable: true,
+        platform: tg.platform || '',
+        version: tg.version || '',
+        colorScheme: tg.colorScheme || '',
+        initDataLen: (tg.initData || '').length,
+        hasUser,
+        initData: tg.initData || '',
+        initDataUnsafeJson: JSON.stringify(unsafe, null, 2),
+      });
     } catch {}
   };
 
@@ -91,7 +126,17 @@ export default function TgWebAppPage() {
       <Script
         src="https://telegram.org/js/telegram-web-app.js"
         strategy="afterInteractive"
-        onLoad={initTelegram}
+        onLoad={() => {
+          setDebugInfo((d) => ({ ...d, sdkLoaded: true, sdkError: '' }));
+          initTelegram();
+        }}
+        onError={() => {
+          setDebugInfo((d) => ({
+            ...d,
+            sdkLoaded: false,
+            sdkError: 'SDK 加载失败：请检查网络或脚本地址',
+          }));
+        }}
       />
 
       <div className={styles.card}>
@@ -119,6 +164,37 @@ export default function TgWebAppPage() {
           <Button style={{ marginTop: 12 }} block onClick={bindAndRedirect}>
             绑定并继续配置
           </Button>
+          <div style={{ marginTop: 12, padding: 12, border: '1px solid #eee', borderRadius: 8 }}>
+            <div style={{ fontWeight: 600, marginBottom: 8 }}>调试面板</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 12 }}>
+              <div>SDK加载：{String(debugInfo.sdkLoaded)}</div>
+              <div>WebApp可用：{String(debugInfo.tgAvailable)}</div>
+              <div>平台：{debugInfo.platform || '—'}</div>
+              <div>版本：{debugInfo.version || '—'}</div>
+              <div>主题：{debugInfo.colorScheme || '—'}</div>
+              <div>initData长度：{debugInfo.initDataLen}</div>
+              <div>存在user：{String(debugInfo.hasUser)}</div>
+            </div>
+            {debugInfo.sdkError ? (
+              <div style={{ color: '#d9534f', marginTop: 8 }}>错误：{debugInfo.sdkError}</div>
+            ) : null}
+            <div style={{ marginTop: 8 }}>
+              <Button size='small' onClick={initTelegram}>重新检测</Button>
+            </div>
+            <details style={{ marginTop: 8 }}>
+              <summary style={{ cursor: 'pointer' }}>展开查看 initData / initDataUnsafe</summary>
+              <div style={{ marginTop: 8 }}>
+                <div style={{ fontSize: 12, color: '#888' }}>initData（原始字符串）</div>
+                <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontSize: 12, background: '#f7f7f7', padding: 8, borderRadius: 6 }}>
+                  {debugInfo.initData || '（空）'}
+                </pre>
+                <div style={{ fontSize: 12, color: '#888' }}>initDataUnsafe（JSON）</div>
+                <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontSize: 12, background: '#f7f7f7', padding: 8, borderRadius: 6 }}>
+                  {debugInfo.initDataUnsafeJson || '（空）'}
+                </pre>
+              </div>
+            </details>
+          </div>
         </div>
       </div>
     </div>
