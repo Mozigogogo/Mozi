@@ -1,18 +1,14 @@
 .container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh; /* 固定视窗高度，内部滚动生效 */
   padding-bottom: 60px;
   background-color: #EEF0F3;
 }
 
 /* 主导航样式 */
 .mainTabs {
-  position: fixed;
-  top: 50px;
-  left: 0;
-  right: 0;
-  z-index: 100;
+  position: static;
   background: #EEF0F3;
   padding: 0px 20px 0;
 }
@@ -42,16 +38,16 @@
   height: 100%;
   object-fit: cover;
   pointer-events: none;
+  transition: opacity 180ms ease-out;
+  will-change: opacity;
 }
 
+.tabImageHidden { opacity: 0; }
+.tabImageVisible { opacity: 1; }
+
 .tabsWrapper {
-  position: fixed;
-  top: 120px;
-  left: 0;
-  right: 0;
-  z-index: 99;
+  position: static;
   background: #EEF0F3;
-  // border-bottom: 1px solid #f5f5f5;
 }
 
 /* 子导航样式 */
@@ -145,7 +141,13 @@
 }
 
 /* 内容列表样式 */
-.contentList { padding: 12px; }
+.scrollContainer {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.contentList { padding:0 12px; }
 
 .contentList.withSubTabs { padding-top: 150px; }
 
@@ -153,9 +155,9 @@
 
 .contentList.topicSubTabs { padding-top: 190px; }
 
-.postsList {
-  margin-top: 16px;
-}
+// .postsList {
+//   margin-top: 16px;
+// }
 
 .postItem {
   background-color: #fff;

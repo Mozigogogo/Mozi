@@ -25,6 +25,7 @@ export default function NavBar({
   showMenu = false,
   showSearch = false,
   showBorder = true,
+  fixed = true,
   className = '',
 }) {
   const router = useRouter();
@@ -50,7 +51,7 @@ export default function NavBar({
   };
 
   return (
-    <div className={`${styles.navBar} ${!showBorder ? styles.noBorder : ''} ${className}`}>
+    <div className={`${styles.navBar} ${!showBorder ? styles.noBorder : ''} ${!fixed ? styles.asStatic : ''} ${className}`}>
       {/* 左侧返回按钮 */}
       <div className={styles.left}>
         {showBack && (
