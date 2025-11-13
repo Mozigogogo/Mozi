@@ -1010,9 +1010,9 @@ const loadingTimerRef = useRef(null);
           showArrow
           hideExtraWhenEmpty
           hasData={(downData.downArr && downData.downArr.length > 0)}
-          callback={() => jump2List('down')}
+          callback={() => router.push('/downrank')}
         >
-          <div onClick={() => jump2List('down')}>
+          <div onClick={() => router.push('/downrank')}>
             {isDownLoading ? (
               <Loading tip="加载中..." />
             ) : (
