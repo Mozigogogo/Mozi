@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Tabs, Button, Dialog, Toast, SpinLoading } from 'antd-mobile';
+import NavBar from '@/components/NavBar';
 import { AddOutline } from 'antd-mobile-icons';
 import { isEmpty } from 'lodash';
 import Layout from '../../components/Layout';
@@ -46,6 +47,16 @@ export default function CommunityPage() {
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [likedPosts, setLikedPosts] = useState({});
+
+  const CDN_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community';
+  const CDN_IMG = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/community';
+  const likeIcon = `${CDN_ICON}/like-no-active.png`;
+  const likeActiveIcon = `${CDN_ICON}/like-active.png`;
+  const commentIcon = `${CDN_ICON}/comment.png`;
+  const recommendActive = `${CDN_IMG}/community-recommend.png`;
+  const recommendInactive = `${CDN_IMG}/recommend-no-actived.png`;
+  const hotActive = `${CDN_IMG}/hot-list-actived.png`;
+  const hotInactive = `${CDN_IMG}/community-hot-list.png`;
 
   // 搜索币种
   const searchCoin = async (value) => {
@@ -345,6 +356,9 @@ export default function CommunityPage() {
               <div className={styles.userInfo} onClick={(e) => { e.stopPropagation(); goToUserPage(post.userId); }}>
                 <img src={post.avatar || '/default-avatar.png'} alt="avatar" className={styles.avatar} />
                 <span className={styles.username}>{post.username}</span>
+                { (post.categoryLabel || post.category || post.type) ? (
+                  <span className={styles.badgeLabel}>{post.categoryLabel || post.category || post.type}</span>
+                ) : null }
               </div>
               <span className={styles.postTime}>{post.createTime}</span>
             </div>
@@ -394,11 +408,15 @@ export default function CommunityPage() {
             
             <div className={styles.postFooter}>
               <div className={styles.postAction} onClick={(e) => { e.stopPropagation(); toggleLike(post.id); }}>
-                <span className={`${styles.actionIcon} ${post.isLiked || likedPosts[post.id] ? styles.liked : ''}`}>👍</span>
+                <img
+                  className={styles.actionIconImg}
+                  src={(post.isLiked || likedPosts[post.id]) ? likeActiveIcon : likeIcon}
+                  alt="like"
+                />
                 <span>{post.likeCount || 0}</span>
               </div>
               <div className={styles.postAction}>
-                <span className={styles.actionIcon}>💬</span>
+                <img className={styles.actionIconImg} src={commentIcon} alt="comment" />
                 <span>{post.commentCount || 0}</span>
               </div>
             </div>
@@ -435,9 +453,9 @@ export default function CommunityPage() {
   // 定义子标签配置
   const subTabs = [
     { key: 'all', title: '全部' },
-    { key: 'discovery', title: '发现好币' },
+    { key: 'currency', title: '币种' },
     { key: 'question', title: '不懂就问' },
-    { key: 'currency', title: '币种' }
+    { key: 'discovery', title: '发现好币' }
   ];
 
   // 定义币种标签配置
@@ -483,79 +501,92 @@ export default function CommunityPage() {
   return (
     <Layout>
       <div className={styles.container}>
-        {/* 主导航 */}
+        {/* 顶部标题与切换 */}
+        {/* 顶部导航栏 */}
+        <NavBar title="社区" showBack={false} showBorder={false} className={styles.navTransparent} />
+
         <div className={styles.mainTabs}>
-          <div className={styles.tabsLeft}>
-            <span 
-              className={`${styles.tabItem} ${mainTab === 'recommend' ? styles.active : ''}`}
+          <div className={styles.bannerSwitch}>
+            <div
+              className={`${styles.bannerCard} ${mainTab === 'recommend' ? styles.active : ''}`}
               onClick={() => setMainTab('recommend')}
             >
-              推荐
-            </span>
-            <span 
-              className={`${styles.tabItem} ${mainTab === 'hot' ? styles.active : ''}`}
+              <img
+                className={styles.tabImage}
+                src={mainTab === 'recommend' ? recommendActive : recommendInactive}
+                alt="精选推荐"
+              />
+            </div>
+            <div
+              className={`${styles.bannerCard} ${mainTab === 'hot' ? styles.active : ''}`}
               onClick={() => setMainTab('hot')}
             >
-              热榜
-            </span>
+              <img
+                className={styles.tabImage}
+                src={mainTab === 'hot' ? hotActive : hotInactive}
+                alt="热门榜单"
+              />
+            </div>
           </div>
         </div>
 
-        {/* 子导航 */}
-        {mainTab === 'recommend' && (
-          <div className={styles.subTabs}>
-            {subTabs.map(item => (
-              <span
-                key={item.key}
-                className={`${styles.subTab} ${subTab === item.key ? styles.active : ''}`}
-                onClick={() => handleSubTabChange(item.key)}
-              >
-                {item.title}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* 币种子标签 */}
-        {mainTab === 'recommend' && subTab === 'currency' && (
-          <div className={styles.coinTabs}>
-            {coinTabs.map(item => (
-              <span
-                key={item.key}
-                className={`${styles.coinTab} ${selectedCoin === item.key ? styles.active : ''}`}
-                onClick={() => handleCoinSelect(item.key)}
-              >
-                {item.title}
-              </span>
-            ))}
-            {dynamicCoin && (
-              <span
-                className={`${styles.coinTab} ${selectedCoin === dynamicCoin ? styles.active : ''}`}
-                onClick={() => handleCoinSelect(dynamicCoin)}
-              >
-                {dynamicCoin}
-              </span>
-            )}
-            <span className={`${styles.coinTab} ${styles.more}`} onClick={handleMoreCoins}>更多</span>
-          </div>
-        )}
-
-        {/* 热榜搜索和创建 */}
-        {mainTab === 'hot' && (
-          <div className={styles.hotSearchBar}>
-            <div className={styles.searchBox} onClick={goToTopicSearch}>
-              <span>搜索话题</span>
+        <div className={styles.tabsWrapper}>
+          {/* 子导航 */}
+          {mainTab === 'recommend' && (
+            <div className={styles.subTabs}>
+              {subTabs.map(item => (
+                <span
+                  key={item.key}
+                  className={`${styles.subTab} ${subTab === item.key ? styles.active : ''}`}
+                  onClick={() => handleSubTabChange(item.key)}
+                >
+                  {item.title}
+                </span>
+              ))}
             </div>
-            <Button className={styles.createTopicBtn} onClick={() => setShowCreateTopic(true)}>
-              创建话题
-            </Button>
-          </div>
-        )}
+          )}
+
+          {/* 币种子标签 */}
+          {mainTab === 'recommend' && subTab === 'currency' && (
+            <div className={styles.coinTabs}>
+              {coinTabs.map(item => (
+                <span
+                  key={item.key}
+                  className={`${styles.coinTab} ${selectedCoin === item.key ? styles.active : ''}`}
+                  onClick={() => handleCoinSelect(item.key)}
+                >
+                  {item.title}
+                </span>
+              ))}
+              {dynamicCoin && (
+                <span
+                  className={`${styles.coinTab} ${selectedCoin === dynamicCoin ? styles.active : ''}`}
+                  onClick={() => handleCoinSelect(dynamicCoin)}
+                >
+                  {dynamicCoin}
+                </span>
+              )}
+              <span className={`${styles.coinTab} ${styles.more}`} onClick={handleMoreCoins}>更多</span>
+            </div>
+          )}
+
+          {/* 热榜搜索和创建 */}
+          {mainTab === 'hot' && (
+            <div className={styles.hotSearchBar}>
+              <div className={styles.searchBox} onClick={goToTopicSearch}>
+                <span>搜索话题</span>
+              </div>
+              <Button className={styles.createTopicBtn} onClick={() => setShowCreateTopic(true)}>
+                创建话题
+              </Button>
+            </div>
+          )}
+        </div>
 
         {/* 内容列表 */}
         <div className={`${styles.contentList} ${
           mainTab === 'recommend' 
-            ? (subTab === 'coin' ? styles.withCoinTabs : styles.withSubTabs) 
+            ? (subTab === 'currency' ? styles.withCoinTabs : styles.withSubTabs) 
             : styles.topicSubTabs
         }`}>
           {mainTab === 'hot' ? (
