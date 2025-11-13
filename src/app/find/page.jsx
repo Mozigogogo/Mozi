@@ -1062,9 +1062,9 @@ const loadingTimerRef = useRef(null);
           showArrow
           hideExtraWhenEmpty
           hasData={(tradeData.tradeArr && tradeData.tradeArr.length > 0)}
-          callback={() => jump2List('trade')}
+          callback={() => router.push('/traderank')}
         >
-          <div onClick={() => jump2List('trade')}>
+          <div onClick={() => router.push('/traderank')}>
             {isTradeLoading ? (
               <Loading tip="加载中..." />
             ) : (
