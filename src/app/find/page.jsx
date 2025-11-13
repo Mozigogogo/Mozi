@@ -1036,9 +1036,9 @@ const loadingTimerRef = useRef(null);
           showArrow
           hideExtraWhenEmpty
           hasData={(waveData.waveArr && waveData.waveArr.length > 0)}
-          callback={() => jump2List('wave')}
+          callback={() => router.push('/waverank')}
         >
-          <div onClick={() => jump2List('wave')}>
+          <div onClick={() => router.push('/waverank')}>
             {isWaveLoading ? (
               <Loading tip="加载中..." />
             ) : (
