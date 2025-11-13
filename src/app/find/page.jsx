@@ -984,9 +984,9 @@ const loadingTimerRef = useRef(null);
           showArrow
           hideExtraWhenEmpty
           hasData={(priceData.priceArr && priceData.priceArr.length > 0)}
-          callback={() => jump2List('price')}
+          callback={() => router.push('/pricerank')}
         >
-          <div onClick={() => jump2List('price')}>
+          <div onClick={() => router.push('/pricerank')}>
             {isPriceLoading ? (
               <Loading tip="加载中..." />
             ) : (
