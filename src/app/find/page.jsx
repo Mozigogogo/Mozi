@@ -1110,9 +1110,17 @@ const loadingTimerRef = useRef(null);
           showArrow
           hideExtraWhenEmpty
           hasData={(upTradeData.upTradeArr && upTradeData.upTradeArr.length > 0)}
-          callback={() => jump2List('uptrade')}
+          callback={() => {
+            const raw = upTradeIntervalsArr[upTradePickIndex];
+            const safe = raw === 'today' ? '1_day' : (raw === '1_year' ? '1_month' : raw);
+            router.push(`/uptraderank?intervals=${encodeURIComponent(safe)}`)
+          }}
         >
-          <div onClick={() => jump2List('uptrade')}>
+          <div onClick={() => {
+            const raw = upTradeIntervalsArr[upTradePickIndex];
+            const safe = raw === 'today' ? '1_day' : (raw === '1_year' ? '1_month' : raw);
+            router.push(`/uptraderank?intervals=${encodeURIComponent(safe)}`)
+          }}>
             {isUpTradeLoading ? (
               <Loading tip="加载中..." />
             ) : (
