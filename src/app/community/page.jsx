@@ -58,6 +58,15 @@ export default function CommunityPage() {
   const hotActive = `${CDN_IMG}/hot-list-actived.png`;
   const hotInactive = `${CDN_IMG}/community-hot-list.png`;
 
+  // 预加载切换图，避免切换瞬间重解码导致卡顿
+  useEffect(() => {
+    [recommendActive, recommendInactive, hotActive, hotInactive].forEach((src) => {
+      const img = new Image();
+      img.decoding = 'async';
+      img.src = src;
+    });
+  }, []);
+
   // 搜索币种
   const searchCoin = async (value) => {
     setSearchKeyword(value);
@@ -503,7 +512,7 @@ export default function CommunityPage() {
       <div className={styles.container}>
         {/* 顶部标题与切换 */}
         {/* 顶部导航栏 */}
-        <NavBar title="社区" showBack={false} showBorder={false} className={styles.navTransparent} />
+        <NavBar title="社区" showBack={false} showBorder={false} fixed={false} className={styles.navTransparent} />
 
         <div className={styles.mainTabs}>
           <div className={styles.bannerSwitch}>
@@ -511,21 +520,19 @@ export default function CommunityPage() {
               className={`${styles.bannerCard} ${mainTab === 'recommend' ? styles.active : ''}`}
               onClick={() => setMainTab('recommend')}
             >
-              <img
-                className={styles.tabImage}
-                src={mainTab === 'recommend' ? recommendActive : recommendInactive}
-                alt="精选推荐"
-              />
+              <img className={`${styles.tabImage} ${mainTab === 'recommend' ? styles.tabImageVisible : styles.tabImageHidden}`}
+                   decoding="async" loading="eager" src={recommendActive} alt="精选推荐" />
+              <img className={`${styles.tabImage} ${mainTab !== 'recommend' ? styles.tabImageVisible : styles.tabImageHidden}`}
+                   decoding="async" loading="eager" src={recommendInactive} alt="精选推荐未选中" />
             </div>
             <div
               className={`${styles.bannerCard} ${mainTab === 'hot' ? styles.active : ''}`}
               onClick={() => setMainTab('hot')}
             >
-              <img
-                className={styles.tabImage}
-                src={mainTab === 'hot' ? hotActive : hotInactive}
-                alt="热门榜单"
-              />
+              <img className={`${styles.tabImage} ${mainTab === 'hot' ? styles.tabImageVisible : styles.tabImageHidden}`}
+                   decoding="async" loading="eager" src={hotActive} alt="热门榜单" />
+              <img className={`${styles.tabImage} ${mainTab !== 'hot' ? styles.tabImageVisible : styles.tabImageHidden}`}
+                   decoding="async" loading="eager" src={hotInactive} alt="热门榜单未选中" />
             </div>
           </div>
         </div>
@@ -583,12 +590,9 @@ export default function CommunityPage() {
           )}
         </div>
 
-        {/* 内容列表 */}
-        <div className={`${styles.contentList} ${
-          mainTab === 'recommend' 
-            ? (subTab === 'currency' ? styles.withCoinTabs : styles.withSubTabs) 
-            : styles.topicSubTabs
-        }`}>
+        {/* 内容列表（内部滚动容器） */}
+        <div className={styles.scrollContainer}>
+        <div className={styles.contentList}>
           {mainTab === 'hot' ? (
             <div className={styles.hotTopics}>
               {hotTopics.length > 0 && hotTopics.map((topic, index) => (
@@ -630,6 +634,7 @@ export default function CommunityPage() {
               {renderPosts()}
             </div>
           )}
+        </div>
         </div>
 
         {/* 发帖按钮 */}
