@@ -454,7 +454,7 @@ export default function UserPage() {
       icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/skin%402x.png'} alt="皮肤中心" style={{ width: 22, height: 22 }} />),
       text: t('user.skinCenter'),
       extra: '',
-      callback: () => Toast.show({ content: t('user.comingSoon'), position: 'bottom' })
+      callback: () => { window.location.href = '/theme'; }
     },
     {
       key: 'contact',
@@ -543,7 +543,7 @@ export default function UserPage() {
                 </div>
                 <div className={styles.actionText}>{t('user.messageNotification')}</div>
               </div>
-              <div className={styles.actionButton} onClick={() => Toast.show({ content: t('user.comingSoon'), position: 'bottom' })}>
+              <div className={styles.actionButton} onClick={() => (window.location.href = '/mylikes')}>
                 <div className={styles.actionIcon}>
                   <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/like%402x.png'} alt="我的点赞" />
                 </div>
