@@ -1,0 +1,112 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #fff;
+}
+
+.header {
+  position: relative;
+  height: 200px;
+  overflow: visible;
+}
+
+.headerBg {
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120vw;
+  max-width: 120vw;
+  height: 190px;
+  background-image: url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/range_bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.backBtn {
+  position: absolute;
+  top: 30px;
+  left: 5px;
+  z-index: 1000;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  // background: rgba(0,0,0,0.2);
+  // box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  cursor: pointer;
+}
+
+.backIcon {
+  width: 36px;
+  height: 36px;
+  color: #fff;
+}
+
+.headerContent {
+  position: relative;
+  height: 100%;
+  padding: 0 10px;
+}
+
+.left {
+  position: absolute;
+  left: 10px;
+  top: 60%;
+  transform: translateY(-50%);
+  width: 60%;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.title {
+  font-weight: 700;
+  font-size: 26px;
+  margin-bottom: 8px;
+}
+
+.rankName {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  padding: 0 8px;
+  color: #fff;
+  background-image: url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/list-top.png');
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  background-position: center;
+  width: auto;
+  max-width: 110px;
+  font-size: 11px;
+}
+
+.desc {
+  display: flex;
+  margin-top: 8px;
+  font-size: 11px;
+  color: #fff;
+}
+
+.descText { color: #A1A1A1; margin-right: 5px; }
+
+.right { position: absolute; top: 110px; right: 42px; transform: translateY(-50%); }
+.headerImg { width: 64px; height: 64px; border-radius: 50%; object-fit: contain; background: #fff; }
+
+/* 新币榜没有左侧维度胶囊，保留右侧操作胶囊 */
+.actionsCapsule { position: absolute; right: 10px; bottom: 3px; display: inline-flex; align-items: center; z-index: 20; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 3px 8px rgba(0,0,0,0.08); padding: 0 6px; }
+.capsuleBtn { height: 22px; display: inline-flex; align-items: center; padding: 0 4px; color: #666; font-size: 10px; cursor: pointer; }
+.capsuleIcon { width: 16px; height: 16px; }
+.capsuleText { margin-left: 3px; }
+.divider { width: 1px; height: 12px; background: #E6E6E6; }
+
+.scroll { flex: 1; overflow: auto; background: #fff; padding: 0 0 12px 0; }
+.gridTitleWrap {}
+.gridText { display: flex; align-items: center; }
+.coinIcon { width: 18px; height: 18px; margin-right: 6px; border-radius: 50%; }

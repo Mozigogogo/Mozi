@@ -950,9 +950,9 @@ const loadingTimerRef = useRef(null);
           showArrow
           hideExtraWhenEmpty
           hasData={(exchangeData.exchangeArr && exchangeData.exchangeArr.length > 0)}
-          callback={() => jump2List('exchange')}
+          callback={() => router.push('/exchangerank')}
         >
-          <div onClick={() => jump2List('exchange')}>
+          <div onClick={() => router.push('/exchangerank')}>
             {isExchangeLoading ? (
               <Loading tip="加载中..." />
             ) : (
@@ -984,9 +984,9 @@ const loadingTimerRef = useRef(null);
           showArrow
           hideExtraWhenEmpty
           hasData={(priceData.priceArr && priceData.priceArr.length > 0)}
-          callback={() => jump2List('price')}
+          callback={() => router.push('/pricerank')}
         >
-          <div onClick={() => jump2List('price')}>
+          <div onClick={() => router.push('/pricerank')}>
             {isPriceLoading ? (
               <Loading tip="加载中..." />
             ) : (
@@ -1010,9 +1010,9 @@ const loadingTimerRef = useRef(null);
           showArrow
           hideExtraWhenEmpty
           hasData={(downData.downArr && downData.downArr.length > 0)}
-          callback={() => jump2List('down')}
+          callback={() => router.push('/downrank')}
         >
-          <div onClick={() => jump2List('down')}>
+          <div onClick={() => router.push('/downrank')}>
             {isDownLoading ? (
               <Loading tip="加载中..." />
             ) : (
@@ -1036,9 +1036,9 @@ const loadingTimerRef = useRef(null);
           showArrow
           hideExtraWhenEmpty
           hasData={(waveData.waveArr && waveData.waveArr.length > 0)}
-          callback={() => jump2List('wave')}
+          callback={() => router.push('/waverank')}
         >
-          <div onClick={() => jump2List('wave')}>
+          <div onClick={() => router.push('/waverank')}>
             {isWaveLoading ? (
               <Loading tip="加载中..." />
             ) : (
@@ -1062,9 +1062,9 @@ const loadingTimerRef = useRef(null);
           showArrow
           hideExtraWhenEmpty
           hasData={(tradeData.tradeArr && tradeData.tradeArr.length > 0)}
-          callback={() => jump2List('trade')}
+          callback={() => router.push('/traderank')}
         >
-          <div onClick={() => jump2List('trade')}>
+          <div onClick={() => router.push('/traderank')}>
             {isTradeLoading ? (
               <Loading tip="加载中..." />
             ) : (
@@ -1084,9 +1084,9 @@ const loadingTimerRef = useRef(null);
           showArrow
           hideExtraWhenEmpty
           hasData={(xinbiData.xinbiArr && xinbiData.xinbiArr.length > 0)}
-          callback={() => jump2List('xinbi')}
+          callback={() => router.push('/newcoinrank')}
         >
-          <div onClick={() => jump2List('xinbi')}>
+          <div onClick={() => router.push('/newcoinrank')}>
             {isXinbiLoading ? (
               <Loading tip="加载中..." />
             ) : (
@@ -1110,9 +1110,17 @@ const loadingTimerRef = useRef(null);
           showArrow
           hideExtraWhenEmpty
           hasData={(upTradeData.upTradeArr && upTradeData.upTradeArr.length > 0)}
-          callback={() => jump2List('uptrade')}
+          callback={() => {
+            const raw = upTradeIntervalsArr[upTradePickIndex];
+            const safe = raw === 'today' ? '1_day' : (raw === '1_year' ? '1_month' : raw);
+            router.push(`/uptraderank?intervals=${encodeURIComponent(safe)}`)
+          }}
         >
-          <div onClick={() => jump2List('uptrade')}>
+          <div onClick={() => {
+            const raw = upTradeIntervalsArr[upTradePickIndex];
+            const safe = raw === 'today' ? '1_day' : (raw === '1_year' ? '1_month' : raw);
+            router.push(`/uptraderank?intervals=${encodeURIComponent(safe)}`)
+          }}>
             {isUpTradeLoading ? (
               <Loading tip="加载中..." />
             ) : (
