@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { SideBar, Switch, Input, Toast } from 'antd-mobile';
+import { SideBar, Switch, Input, Toast, Dialog } from 'antd-mobile';
 import { CheckOutline } from 'antd-mobile-icons';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
-import Layout from '../../components/Layout';
-import { PageLogin } from '../../components/PageLogin';
+// 移除 Layout，改用 NavBar 作为页面顶栏
+import NavBar from '../../components/NavBar';
+import PopLogin from '../../components/PopLogin';
 import Error from '../../components/Error';
 import { isEmpty } from 'lodash';
 import styles from './page.module.less';
@@ -28,6 +29,23 @@ export default function Mywarn() {
     priceFall: '币值跌到',
     priceRiseChange24HPercent: '币值涨超',
     priceFallChange24HPercent: '币值跌超',
+  };
+
+  // 固定的四个报警条件配置（按顺序显示），与原项目一致
+  const fixedWarningCodes = [
+    { code: 'priceRise', defaultContent: '--', unit: '$' },
+    { code: 'priceFall', defaultContent: '--', unit: '$' },
+    { code: 'priceRiseChange24HPercent', defaultContent: '10%', unit: '%' },
+    { code: 'priceFallChange24HPercent', defaultContent: '10%', unit: '%' }
+  ];
+
+  // 标准化告警列表：始终返回四个条件（如后端缺失则使用默认）
+  const getStandardizedWarnContent = () => {
+    const backendContent = warnData.sideData?.warnContent || [];
+    return fixedWarningCodes.map(fixed => {
+      const backendItem = backendContent.find(item => item.code === fixed.code);
+      return backendItem ? backendItem : { code: fixed.code, content: fixed.defaultContent, active: false };
+    });
   };
   
   useEffect(() => {
@@ -84,8 +102,11 @@ export default function Mywarn() {
   };
   
   const startEdit = (item, index) => {
-    // 提取数字部分
-    const numericValue = item.content.replace('%', '');
+    // 提取数字部分，如果是默认值 '--' 则设为空
+    let numericValue = item.content.replace(/[%$]/g, '').trim();
+    if (numericValue === '--') {
+      numericValue = '';
+    }
     setEditValue(numericValue);
     setEditingIndex(index);
   };
@@ -116,16 +137,23 @@ export default function Mywarn() {
       });
       
       if (addRes.data === true) {
-        // 更新本地数据
-        const newWarnContent = warnData.sideData.warnContent.map((warnItem, warnIndex) => {
-          if (index === warnIndex) {
-            return {
-              ...warnItem,
-              content: formattedValue
-            };
-          }
-          return warnItem;
-        });
+        // 更新本地数据：如不存在则追加
+        const backendContent = warnData.sideData.warnContent || [];
+        const existingIndex = backendContent.findIndex(item => item.code === code);
+        let newWarnContent;
+        if (existingIndex >= 0) {
+          newWarnContent = backendContent.map((item, idx) => (
+            idx === existingIndex ? { ...item, content: formattedValue } : item
+          ));
+        } else {
+          // 默认未存在：新增条目，保持当前 active（默认 false）
+          const standardizedContent = getStandardizedWarnContent();
+          const currentItem = standardizedContent[index];
+          newWarnContent = [
+            ...backendContent,
+            { code: currentItem.code, content: formattedValue, active: currentItem.active }
+          ];
+        }
         
         setWarnData({
           ...warnData,
@@ -147,6 +175,17 @@ export default function Mywarn() {
   };
   
   const switchChange = async (code, active, index) => {
+    const standardizedContent = getStandardizedWarnContent();
+    const currentItem = standardizedContent[index];
+    const backendContent = warnData.sideData.warnContent || [];
+    const backendItem = backendContent.find(item => item.code === currentItem.code);
+
+    // 后端未存在该条目且尝试开启，先提示设置值
+    if (!backendItem && !active) {
+      Toast.show('请先设置告警值');
+      return;
+    }
+
     let interfaceurl = Interface.CLOSE_WARN;
     if (!active) {
       interfaceurl = Interface.OPEN_WARN;
@@ -162,13 +201,10 @@ export default function Mywarn() {
       });
       
       if (data) {
-        const newWarnContent = warnData.sideData.warnContent.map((warnItem, warnIndex) => {
-          const newWarnItem = {...warnItem};
-          if (index === warnIndex) {
-            newWarnItem.active = !active;
-          }
-          return newWarnItem;
-        });
+        // 更新后端数据中对应的 active 状态（按 code 匹配）
+        const newWarnContent = backendContent.map((warnItem) => (
+          warnItem.code === code ? { ...warnItem, active: !active } : warnItem
+        ));
         
         setWarnData({
           ...warnData,
@@ -187,35 +223,73 @@ export default function Mywarn() {
       Toast.show(active ? '关闭失败' : '启动失败');
     }
   };
+
+  // 删除当前币种的所有告警
+  const deleteCoinAllWarns = async () => {
+    const symbol = Object.keys(warnData.data)[activeKey];
+    const confirm = await Dialog.confirm({
+      content: `确定要删除 ${symbol} 的所有告警吗？`,
+      cancelText: '取消',
+      confirmText: '删除'
+    });
+    if (!confirm) return;
+
+    try {
+      const { data } = await request({
+        url: Interface.DELETE_COIN_WARN,
+        method: 'POST',
+        data: { symbol }
+      });
+      if (data) {
+        const newData = { ...warnData.data };
+        delete newData[symbol];
+        const symbols = Object.keys(newData);
+        let newActiveKey = '0';
+        let newSideData = null;
+        if (symbols.length > 0) {
+          if (parseInt(activeKey) > 0) {
+            newActiveKey = (parseInt(activeKey) - 1).toString();
+          }
+          if (parseInt(newActiveKey) >= symbols.length) {
+            newActiveKey = (symbols.length - 1).toString();
+          }
+          newSideData = newData[symbols[newActiveKey]];
+        }
+        setWarnData({ ...warnData, data: newData, sideData: newSideData });
+        setActiveKey(newActiveKey);
+        Toast.show('删除成功');
+      } else {
+        Toast.show('删除失败');
+      }
+    } catch (error) {
+      console.error('删除币种告警失败:', error);
+      Toast.show('删除失败');
+    }
+  };
   
   if (warnData.needLogin) {
     return (
-      <Layout>
-        <div className={styles.loginContainer}>
-          <div className={styles.loginIcon}>🔔</div>
-          <div className={styles.loginTitle}>查看我的告警</div>
-          <div className={styles.loginDesc}>登录后可查看和管理您的价格告警</div>
-          <PageLogin 
-            show={true} 
-            onLoginSuccess={init}
-            hideCb={() => {
-              // 用户取消登录，返回上一页
-              window.history.back();
-            }}
-          />
-        </div>
-      </Layout>
+      <div className={styles.box}>
+        <NavBar title={'我的告警'} showMenu={false} showBorder={false} />
+        {/* 与原项目一致的登录弹窗（居中卡片 + 遮罩） */}
+        <PopLogin 
+          visible={true}
+          onLoginSuccess={init}
+          onClose={() => {
+            window.history.back();
+          }}
+        />
+      </div>
     );
   }
   
   return (
-    <Layout isLoading={warnData.loading} isError={warnData.error}>
       <div className={styles.box}>
+        <NavBar title={'我的告警'} showBorder={false} />
         {Object.keys(warnData.data).length === 0 && !warnData.loading && (
           <div className={styles.emptyContainer}>
-            <div className={styles.emptyIcon}>📊</div>
-            <div className={styles.emptyTitle}>暂无告警设置</div>
-            <div className={styles.emptyDesc}>设置价格告警，及时掌握市场动态</div>
+            {/* 与原项目一致：使用 Error 组件 + 文案“您暂未设置告警” */}
+            <Error errMsg={'您暂未设置告警'} />
             <div 
               className={styles.emptyButton}
               onClick={() => window.history.back()}
@@ -252,8 +326,8 @@ export default function Mywarn() {
             </div>
             
             <div className={styles.main}>
-              {warnData.sideData?.warnContent?.length > 0 && 
-                warnData.sideData?.warnContent.map((item, index) => (
+              {warnData.sideData && 
+                getStandardizedWarnContent().map((item, index) => (
                   <div className={styles.mainItem} key={index}>
                     {editingIndex === index ? (
                       <div className={styles.editContainer}>
@@ -290,14 +364,20 @@ export default function Mywarn() {
                     <Switch 
                       checked={item.active} 
                       onChange={() => switchChange(item.code, item.active, index)} 
+                      style={{ '--checked-color': '#11B787', transform: 'scale(0.75)' }}
                     />
                   </div>
                 ))
               }
+              {/* 删除整个币种的按钮 */}
+              {warnData.sideData && (
+                <div className={styles.deleteCoinBtn} onClick={deleteCoinAllWarns}>
+                  <div className={styles.deleteCoinText}>删除 {Object.keys(warnData.data)[activeKey]}</div>
+                </div>
+              )}
             </div>
           </div>
         )}
       </div>
-    </Layout>
   );
 }

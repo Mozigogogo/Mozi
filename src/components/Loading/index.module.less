@@ -15,6 +15,22 @@
   color: #999;
 }
 
+/* 自定义圆环 spinner（与持仓量页面一致） */
+.spinner {
+  width: var(--loading-size, 24px);
+  height: var(--loading-size, 24px);
+  border: calc(var(--loading-size, 24px) / 12) solid var(--loading-ring-color, rgba(17, 183, 135, 0.3));
+  border-top-color: var(--loading-color, #11B787);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .gardenLoading {
   display: flex;
   align-items: center;

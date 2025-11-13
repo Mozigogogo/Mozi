@@ -17,7 +17,7 @@ const Error = ({ errMsg, onRefresh, isRefresh = false }) => {
 
   return (
     <div className={styles.errorBox}>
-      <ExclamationCircleFill fontSize={80} color='#ff3333' />
+      <ExclamationCircleFill fontSize={80} color='#e74c3c' />
       <div className={styles.errorText}>{errMsg || COMMON_MSG}</div>
       {isRefresh && (
         <Button 

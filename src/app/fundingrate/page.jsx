@@ -14,6 +14,27 @@ import styles from './page.module.less';
 // 引入 echarts
 import * as echarts from 'echarts';
 
+// 将右轴单位从“千”转换为“万”，并控制小数位与去零
+function formatRightAxisToWan(value, slot) {
+  if (value === null || value === undefined) return '';
+  let vNum = Number(value);
+  if (Number.isNaN(vNum)) return String(value);
+  // 千 -> 万：数值除以10，单位改为“万”
+  const hasQian = !!(slot && String(slot).includes('千'));
+  const hasWan = !!(slot && String(slot).includes('万'));
+  if (hasQian) vNum = vNum / 10;
+  // 小数位：>=1 保留2位；否则最多6位
+  const abs = Math.abs(vNum);
+  const decimals = abs >= 1 ? 2 : 6;
+  let str = vNum.toFixed(decimals).replace(/\.0+$/,'').replace(/\.([0-9]*?)0+$/,'.$1');
+  if (str.endsWith('.')) str = str.slice(0, -1);
+  // 组装单位
+  let unitSlot = slot || '{}万';
+  if (hasQian) unitSlot = unitSlot.replace('千', '万');
+  if (!unitSlot.includes('万')) unitSlot = unitSlot.replace('{}', '{}万');
+  const formatted = String(unitSlot).includes('{}') ? String(unitSlot).replace('{}', str) : `${str}万`;
+  return String(formatted).replace(/\$/g, '');
+}
 export default function FundingRate() {
   const router = useRouter();
   const [activeKey, setActiveKey] = useState('currentRatio');
@@ -130,8 +151,7 @@ export default function FundingRate() {
               options.yAxis[1].axisLabel = options.yAxis[1].axisLabel || {};
               options.yAxis[1].axisLabel.formatter = (value) => {
                 const slot = chartDataRef.current.data.yAxisRightSlot;
-                const formatted = slot ? String(slot).replace('{}', value) : value;
-                return String(formatted).replace(/\$/g, '');
+                return formatRightAxisToWan(value, slot);
               };
             }
           }
@@ -170,8 +190,7 @@ export default function FundingRate() {
             options.yAxis[1].axisLabel = options.yAxis[1].axisLabel || {};
             options.yAxis[1].axisLabel.formatter = (value) => {
               const slot = chartDataRef.current.data.yAxisRightSlot;
-              const formatted = slot ? String(slot).replace('{}', value) : value;
-              return String(formatted).replace(/\$/g, '');
+              return formatRightAxisToWan(value, slot);
             };
           }
         }
@@ -276,8 +295,7 @@ export default function FundingRate() {
           options.yAxis[1].axisLabel = options.yAxis[1].axisLabel || {};
           options.yAxis[1].axisLabel.formatter = (value) => {
             const slot = frHisData.data.yAxisRightSlot;
-            const formatted = slot ? String(slot).replace('{}', value) : value;
-            return String(formatted).replace(/\$/g, '');
+            return formatRightAxisToWan(value, slot);
           };
         }
         chartInstance.current.setOption(options);
@@ -325,7 +343,9 @@ export default function FundingRate() {
         <div className={styles.currentPCR}>
           <div className={styles.currentPCRChart}>
             {curFundData.loading ? (
-              <Loading />
+              <div className={styles.chartLoading}>
+                <Loading />
+              </div>
             ) : curFundData.close ? (
               <div className={styles.noData}>暂无数据</div>
             ) : (

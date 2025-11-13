@@ -1,113 +1,232 @@
-.box {
-  background-color: var(--background);
-  padding-bottom: 50px;
-  box-sizing: border-box;
-  min-height: calc(100vh - 50px);
-  display: flex;
-  flex-direction: column;
+.container {
+  background-color: #f0f0f0;
+  min-height: 100vh;
+  padding-bottom: 40px;
 }
 
-.sideBox {
-  display: flex;
-  flex-grow: 1;
-  height: calc(100vh - 150px);
-}
-
-.side {
-  flex: none;
-}
-
-.side :global(.adm-side-bar) {
-  width: 100px;
-  box-sizing: border-box;
-  height: 100%;
-}
-
-.side :global(.adm-side-bar-item) {
-  padding: 15px 10px;
-}
-
-.side :global(.adm-side-bar-item-active) {
-  background-color: #fff;
-  color: #45e87f;
-}
-
-@media (prefers-color-scheme: dark) {
-  .side :global(.adm-side-bar-item-active) {
-    background-color: #1a1a1a;
-  }
-}
-
-.main {
-  flex: auto;
-  background-color: #fff;
-  padding: 20px;
-  box-sizing: border-box;
-  position: relative;
-}
-
-@media (prefers-color-scheme: dark) {
-  .main {
-    background-color: #1a1a1a;
-  }
-}
-
-.mainTitle {
-  margin-bottom: 20px;
-  font-weight: bold;
-}
-
-.mainContent {
-  margin-bottom: 20px;
+/* 顶部导航栏 */
+.navBar {
+  position: sticky;
+  top: 0;
+  height: 44px;
+  background: #ffffff;
+  border-bottom: 1px solid #eee;
   display: flex;
   align-items: center;
+  justify-content: center;
+  z-index: 100;
 }
 
-.mainInput {
-  border-bottom: 1px solid #828282;
-  flex: 1;
-}
-
-.unit {
-  margin-left: 5px;
-}
-
-.warnBtn {
+.navLeft {
   position: absolute;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: #fff;
-  background-color: #02c076;
-  width: 80%;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
 }
 
-.warnBtn.hide {
-  opacity: 0.5;
+.navBack {
+  font-size: 20px;
+  color: #333;
 }
 
-.footer {
-  padding: 15px;
+.navTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.navRight {
+  position: absolute;
+  right: 16px;
+}
+
+/* 页面中心 Loading */
+.pageLoading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: 40px;
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #11B787;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+.loadingText {
+  font-size: 14px;
+  color: #999;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 币种价格信息区域 */
+.priceInfo {
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #EEF0F3;
+}
+
+.coinSymbol {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+}
+
+.priceDetails {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.priceLabel {
+  font-size: 14px;
+  color: #949494;
+}
+
+.priceValue {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+}
+
+.priceValue.positive { color: #11B787; }
+.priceValue.negative { color: #FA5F5F; }
+
+.priceChange {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.priceChange.positive { color: #11B787; }
+.priceChange.negative { color: #FA5F5F; }
+
+/* 配置项卡片 */
+.configCard {
+  background: #fff;
+  margin: 8px 16px;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.configItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #f5f5f5;
+  width: 100%;
+  height: 50px;
+  padding: 0 5px;
+}
+
+.configItem:last-child { border-bottom: none; }
+
+.configLabel {
+  font-size: 14px;
+  color: #333;
+  flex-shrink: 0;
+  width: 60px;
+}
+
+.configInputContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  padding: 0 8px;
+}
+
+.configInput {
+  flex: 1;
+  text-align: left;
+  font-size: 16px;
+  color: #333;
+  border: 1px solid #DEE2E8;
+  border-radius: 5px;
+  background: #fff;
+  height: 35px;
   box-sizing: border-box;
-  background-color: #2e2e2e;
-  color: #fff;
-  text-align: center;
+  padding-right: 8px;
 }
 
+/* 调整输入框内数字大小与左侧内边距 */
+.configInput :global(.adm-input-element) {
+  font-size: 14px; /* 数字偏大，下调为 14px */
+  padding-left: 8px; /* 与左侧保持适度间距 */
+}
+
+.configUnit {
+  font-size: 16px;
+  color: #333;
+  flex-shrink: 0;
+}
+
+.configSwitch {
+  flex-shrink: 0;
+  transform: scale(0.8);
+}
+
+/* 底部按钮区域 */
+.bottomButtons {
+  padding: 24px 16px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.saveButton {
+  background: #11B787;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 45px;
+  height: 48px;
+  font-size: 16px;
+  font-weight: 500;
+  width: 100%;
+}
+
+.saveButton:disabled {
+  background: #d9d9d9;
+  color: #999;
+}
+
+.viewButton {
+  background: #FFFFFF;
+  color: #11B787;
+  border-radius: 45px;
+  height: 48px;
+  font-size: 16px;
+  width: 100%;
+}
+
+/* 弹窗容器 */
 .popContainer {
   padding: 20px;
-  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
 .contactTitle {
-  margin-bottom: 15px;
-  font-weight: bold;
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 12px;
 }
 
 .attendPic {
-  width: 200px;
-  height: auto;
+  width: 260px;
+  height: 180px;
 }

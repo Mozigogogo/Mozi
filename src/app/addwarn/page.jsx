@@ -1,185 +1,291 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { SideBar, Input, Button, Dialog, Toast } from 'antd-mobile';
-import Layout from '@/components/Layout';
-import { request } from '@/utils/request';
-import { Interface } from '@/utils/constants';
-import { jump2NoTab } from '@/utils/core';
-import styles from './page.module.less';
+import { useEffect, useState } from "react";
+import { Input, Button, Dialog, Toast, Switch } from "antd-mobile";
+import PopLogin from "../../components/PopLogin";
+import { request } from "@/utils/request";
+import { Interface } from "@/utils/constants";
+import { jump2NoTab } from "@/utils/core";
+import { LeftArrowIcon } from "@/components/Icons";
+import styles from "./page.module.less";
 
 export default function Addwarn() {
-  const [activeKey, setActiveKey] = useState('0');
-  const [inputValue, setInputValue] = useState('');
+  // 按钮状态（移除保存后的公众号弹窗）
   const [btnDisabled, setBtnDisabled] = useState(false);
-  const [showPopup, setShowPopup] = useState(false);
+  // 登录弹窗显示状态
+  const [showLoginPopup, setShowLoginPopup] = useState(false);
 
-  // 从URL获取symbol参数
+  // URL参数中的 symbol，缺省用 BTC
   const getSymbol = () => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get('symbol');
+      return urlParams.get("symbol") || "BTC";
     }
-    return '';
+    return "BTC";
   };
-
   const symbol = getSymbol();
 
-  const data = {
-    '币值涨到': {
-      content: {
-        title: '币值涨到',
-        placeholder: '请输入币值涨超数值',
-      }
-    },
-    '币值跌到': {
-      content: {
-        title: '币值跌到',
-        placeholder: '请输入币值跌超数值',
-      }
-    },
-    '币值涨超': {
-      content: {
-        title: '币值涨超',
-        placeholder: '请输入币值涨超数值',
-        unit: '%'
-      }
-    },
-    '币值跌超': {
-      content: {
-        title: '币值跌超',
-        placeholder: '请输入币值跌超数值',
-        unit: '%'
-      }
-    },
-  };
+  // 配置项状态管理（与原项目一致的四项）
+  const [configs, setConfigs] = useState({
+    priceRise: { value: "", enabled: true, unit: "$", placeholder: "价格涨至" },
+    priceFall: { value: "", enabled: true, unit: "$", placeholder: "价格跌至" },
+    risePercent: { value: "10", enabled: true, unit: "%", placeholder: "日涨幅超" },
+    fallPercent: { value: "10", enabled: false, unit: "%", placeholder: "日跌幅超" },
+  });
 
-  const dataItem = data[Object.keys(data)[parseInt(activeKey)]];
+  // 币价数据状态（顶部价格信息）
+  const [coinData, setCoinData] = useState({
+    symbol,
+    price: "--",
+    change: "--",
+    loading: true,
+  });
 
-  const onChange = (value) => {
-    setInputValue(value);
-  };
-
-  const addwarn = async () => {
-    if (!/^[0-9]+(\.[0-9]+)?$/.test(inputValue)) {
-      Toast.show({
-        content: '请输入数字',
-        icon: 'fail',
+  // 获取币种价格信息并预填默认值
+  const fetchCoinData = async () => {
+    try {
+      const res = await request({
+        url: Interface.coin_info,
+        data: {
+          symbol,
+        },
       });
+
+      if (res?.data) {
+        const coinInfo = res.data;
+        setCoinData({
+          symbol,
+          price: coinInfo.currentPrice || "--",
+          change: coinInfo.priceChangePercentage_24h || "--",
+          loading: false,
+        });
+
+        const currentPrice = parseFloat(coinInfo.currentPrice);
+        if (currentPrice && !isNaN(currentPrice)) {
+          const risePrice = (currentPrice * 1.1).toFixed(currentPrice < 1 ? 6 : 2);
+          const fallPrice = (currentPrice * 0.9).toFixed(currentPrice < 1 ? 6 : 2);
+          setConfigs((prev) => ({
+            ...prev,
+            priceRise: { ...prev.priceRise, value: risePrice },
+            priceFall: { ...prev.priceFall, value: fallPrice },
+          }));
+        }
+      } else {
+        setCoinData((prev) => ({ ...prev, loading: false }));
+      }
+    } catch (error) {
+      console.error("获取币种数据失败:", error);
+      setCoinData((prev) => ({ ...prev, loading: false }));
+    }
+  };
+
+  useEffect(() => {
+    fetchCoinData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [symbol]);
+
+  // 输入值变化
+  const handleInputChange = (key, value) => {
+    setConfigs((prev) => ({
+      ...prev,
+      [key]: { ...prev[key], value },
+    }));
+  };
+
+  // 开关变化
+  const handleSwitchChange = (key, enabled) => {
+    setConfigs((prev) => ({
+      ...prev,
+      [key]: { ...prev[key], enabled },
+    }));
+  };
+
+  // 保存告警（批量提交启用的配置项）
+  const saveWarnings = async () => {
+    setBtnDisabled(true);
+
+    // 收集启用且有值的配置
+    const enabledConfigs = Object.entries(configs).filter(
+      ([, config]) => config.enabled && config.value
+    );
+
+    if (enabledConfigs.length === 0) {
+      Toast.show({ content: "请至少启用一个告警条件" });
+      setBtnDisabled(false);
       return;
     }
 
-    setBtnDisabled(true);
-    const sideKey = ['priceRise', 'priceFall', 'priceRiseChange24HPercent', 'priceFallChange24HPercent'];
-    
+    // 数值校验
+    for (const [, config] of enabledConfigs) {
+      if (!/^[0-9]+(\.[0-9]+)?$/.test(String(config.value))) {
+        Toast.show({ content: `${config.placeholder}请输入有效数字` });
+        setBtnDisabled(false);
+        return;
+      }
+    }
+
+    // 构建提交数据，字段名与原项目一致
+    const apiData = enabledConfigs.reduce((acc, [key, config]) => {
+      let fieldName = key;
+      if (key === "risePercent") fieldName = "priceRiseChange24HPercent";
+      if (key === "fallPercent") fieldName = "priceFallChange24HPercent";
+
+      acc[fieldName] = config.unit === "%" ? `${config.value}%` : config.value;
+      return acc;
+    }, {});
+
     try {
       const addRes = await request({
         url: Interface.ADD_WARN,
-        method: 'POST',
+        method: "POST",
         data: {
           symbol,
-          content: {
-            [sideKey[parseInt(activeKey)]]: activeKey === '0' || activeKey === '1' ? inputValue : `${inputValue}%`
-          }
-        }
+          content: apiData,
+        },
       });
 
       setBtnDisabled(false);
-      
+
       if (addRes.data === true) {
-        Toast.show({
-          content: '添加告警成功',
-          icon: 'success',
-        });
-        setShowPopup(true);
+        // 保存成功仅提示，不再弹出公众号绑定弹窗
+        Toast.show({ content: "保存告警成功" });
+        // 如果已绑定 Telegram，将发送一条确认消息（仅用于用户确认，不代表实时告警）
+        try {
+          const chatId = localStorage.getItem('tgChatId');
+          if (chatId) {
+            const lines = Object.entries(apiData).map(([k, v]) => `${k}: ${v}`).join('\n');
+            fetch('/api/tg/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chatId,
+                text: `⏰ 告警已配置\n币种: ${symbol}\n${lines}`,
+              }),
+            }).catch(() => {});
+          }
+        } catch {}
         return;
       }
-      
+
       if (addRes.data?.isLogin === false) {
-        Dialog.confirm({
-          content: '请先登录',
-          confirmText: '去登录',
-          onConfirm: () => {
-            // 跳转到登录页面或显示登录弹窗
-            window.location.href = '/user';
-          },
-        });
+        setShowLoginPopup(true);
         return;
-      } else {
-        Toast.show({
-          content: addRes.errorMsg || '添加失败',
-          icon: 'fail',
-        });
       }
+
+      Toast.show({ content: addRes.errorMsg || "保存失败" });
     } catch (error) {
       setBtnDisabled(false);
-      Toast.show({
-        content: '网络错误，请稍后再试',
-        icon: 'fail',
-      });
+      Toast.show({ content: "网络错误，请稍后再试" });
+    }
+  };
+
+  // 返回上一页（有历史则回退，无历史则回详情页）
+  const onBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      window.history.back();
+    } else {
+      jump2NoTab("detail", { symbol });
     }
   };
 
   return (
-    <Layout>
-      <div className={styles.box}>
-        <div className={styles.sideBox}>
-          <div className={styles.side}>
-            <SideBar activeKey={activeKey} onChange={setActiveKey}>
-              {Object.keys(data).map((item, index) => (
-                <SideBar.Item key={index.toString()} title={item} />
-              ))}
-            </SideBar>
-          </div>
-          <div className={styles.main}>
-            <div className={styles.mainTitle}>{dataItem.content.title}</div>
-            <div className={styles.mainContent}>
-              <Input 
-                className={styles.mainInput} 
-                type="number" 
-                placeholder={dataItem.content.placeholder} 
-                value={inputValue} 
-                onChange={onChange} 
-                autoFocus
-              />
-              {dataItem.content.unit && <div className={styles.unit}>{dataItem.content.unit}</div>}
-            </div>
-            <Button 
-              className={`${styles.warnBtn} ${inputValue ? styles.show : styles.hide}`} 
-              disabled={btnDisabled} 
-              onClick={addwarn}
-              color="primary"
-            >
-              设置告警
-            </Button>
-          </div>
+    <div className={styles.container}>
+      {/* 顶部导航栏 */}
+      <div className={styles.navBar}>
+        <div className={styles.navLeft} onClick={onBack}>
+          <LeftArrowIcon size={20} color="#333" strokeWidth={2} aria-label="返回" />
         </div>
-        <div className={styles.footer} onClick={() => jump2NoTab('mywarn')}>
-          查看已配置告警
-        </div>
-
-        <Dialog
-          visible={showPopup}
-          content={
-            <div className={styles.popContainer}>
-              <div className={styles.contactTitle}>请关注公众号接受告警信息</div>
-              <img
-                className={styles.attendPic}
-                src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/wechat_account.jpg"
-                alt="公众号二维码"
-              />
-            </div>
-          }
-          closeOnAction
-          onClose={() => setShowPopup(false)}
-          actions={[
-            {
-              key: 'confirm',
-              text: '确定',
-            },
-          ]}
-        />
+        <div className={styles.navTitle}>配置告警</div>
+        <div className={styles.navRight}></div>
       </div>
-    </Layout>
+        {coinData.loading ? (
+          <div className={styles.pageLoading}>
+            <div className={styles.loadingSpinner}></div>
+            <div className={styles.loadingText}>加载中...</div>
+          </div>
+        ) : (
+          <>
+            {/* 顶部价格信息 */}
+            <div className={styles.priceInfo}>
+              <div className={styles.coinSymbol}>{coinData.symbol}</div>
+              <div className={styles.priceDetails}>
+                <div className={styles.priceLabel}>最新价</div>
+                <div
+                  className={`${styles.priceValue} ${
+                    coinData.change && String(coinData.change).includes("-")
+                      ? styles.negative
+                      : styles.positive
+                  }`}
+                >
+                  {coinData.price}
+                </div>
+                <div
+                  className={`${styles.priceChange} ${
+                    coinData.change && String(coinData.change).includes("-")
+                      ? styles.negative
+                      : styles.positive
+                  }`}
+                >
+                  {coinData.change}
+                </div>
+              </div>
+            </div>
+
+            {/* 配置项卡片 */}
+            <div className={styles.configCard}>
+              {Object.entries(configs).map(([key, config]) => (
+                <div key={key} className={styles.configItem}>
+                  <div className={styles.configLabel}>{config.placeholder}</div>
+                  <div className={styles.configInputContainer}>
+                    <Input
+                      className={styles.configInput}
+                      type="number"
+                      value={config.value}
+                      placeholder={config.value || "请输入数值"}
+                      onChange={(val) => handleInputChange(key, val)}
+                    />
+                    <div className={styles.configUnit}>{config.unit}</div>
+                  </div>
+                  <Switch
+                    className={styles.configSwitch}
+                    checked={config.enabled}
+                    onChange={(checked) => handleSwitchChange(key, checked)}
+                    style={{"--checked-color":"#11B787"}}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* 底部按钮 */}
+            <div className={styles.bottomButtons}>
+              <Button
+                className={styles.saveButton}
+                disabled={btnDisabled}
+                onClick={saveWarnings}
+                color="primary"
+              >
+                保存告警
+              </Button>
+              <Button
+                className={styles.viewButton}
+                onClick={() => jump2NoTab("mywarn")}
+              >
+                查看已配置告警
+              </Button>
+            </div>
+
+            {/* 保存成功后不显示公众号弹窗（TG 项目不需要） */}
+            {/* 登录弹窗：原 Dialog.confirm 改为统一 PopLogin */}
+            <PopLogin
+              visible={showLoginPopup}
+              onClose={() => setShowLoginPopup(false)}
+              onLoginSuccess={() => {
+                setShowLoginPopup(false);
+                // 登录成功后可继续保存或刷新数据，如需可在此触发
+              }}
+            />
+          </>
+        )}
+    </div>
   );
 }

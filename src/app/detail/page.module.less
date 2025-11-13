@@ -27,6 +27,13 @@
   padding: 10px;
 }
 
+/* 币种信息未加载时，使用同款白色容器并居中 Loading */
+.headerLoading {
+  min-height: 80px;
+  align-items: center;
+  justify-content: center;
+}
+
 .headerBox .left {
   flex: 1;
   display: flex;
@@ -236,6 +243,51 @@
 /* 投资回报率区域 */
 .roiSection {
   margin-bottom: 10px;
+}
+
+/* ROI 样式（对齐原小程序视觉风格） */
+.roiBox {
+  width: 100%;
+  background: #fff;
+}
+
+.roiGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.roiCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 10px;
+  border-radius: 10px;
+  min-height: 64px;
+}
+
+.positive {
+  background: linear-gradient(135deg, #d4f4e8 0%, #e8f9f1 100%);
+  .roiValue { color: #11B787; }
+}
+
+.negative {
+  background: linear-gradient(135deg, #ffd4d4 0%, #ffe8e8 100%);
+  .roiValue { color: #FA5F5F; }
+}
+
+.roiValue {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.roiLabel {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
 }
 
 /* 底部操作栏 */
