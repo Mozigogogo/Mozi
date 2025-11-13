@@ -49,6 +49,7 @@ export default function UserPage() {
   const [avatarFile, setAvatarFile] = useState(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginModalMode, setLoginModalMode] = useState('login');
+  const [unreadCount, setUnreadCount] = useState(0);
   
   // 简单的 Cookie 读写（仅前端可见；敏感 token 建议服务端 HttpOnly）
   const getCookie = (name) => {
@@ -198,6 +199,23 @@ export default function UserPage() {
       }
     } catch {}
   };
+
+  // 未读通知数量
+  useEffect(() => {
+    let timer;
+    const fetchUnread = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) { setUnreadCount(0); return; }
+        const res = await request({ url: Interface.GET_UNREAD_COUNT });
+        const count = res?.data?.count ?? res?.data ?? 0;
+        if (typeof count === 'number') setUnreadCount(count);
+      } catch {}
+    };
+    fetchUnread();
+    timer = setInterval(fetchUnread, 30000);
+    return () => clearInterval(timer);
+  }, []);
 
   const score = () => {
     if (!userInfo.isLogin) {
@@ -426,7 +444,7 @@ export default function UserPage() {
   const footerList = [
     {
       key: 'language',
-      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/skin%402x.png'} alt="语言设置" style={{ width: 22, height: 22 }} />),
+      icon: (<img src={'/icons/zh-en.svg'} alt="语言设置" style={{ width: 22, height: 22 }} />),
       text: t('user.language'),
       extra: i18n.language === 'zh' ? '中文' : 'English',
       callback: () => changeLanguage()
@@ -518,10 +536,10 @@ export default function UserPage() {
                 </div>
                 <div className={styles.actionText}>{t('user.myComments')}</div>
               </div>
-              <div className={styles.actionButton} onClick={() => Toast.show({ content: t('user.comingSoon'), position: 'bottom' })}>
+              <div className={styles.actionButton} onClick={() => (window.location.href = '/mynotices')}>
                 <div className={styles.actionIcon} style={{ position: 'relative' }}>
                   <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/mail%402x.png'} alt="消息通知" />
-                  <div className={styles.badge}>3</div>
+                  {unreadCount > 0 && <div className={styles.badge}>{unreadCount > 99 ? '99+' : unreadCount}</div>}
                 </div>
                 <div className={styles.actionText}>{t('user.messageNotification')}</div>
               </div>

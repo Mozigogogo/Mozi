@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Avatar, Button, Input, Dialog, Toast, Divider, Ellipsis } from 'antd-mobile';
-import { HeartFill, HeartOutline, MoreOutline, ShareOutline } from 'antd-mobile-icons';
+import { Button, Input, Dialog, Toast, Divider } from 'antd-mobile';
+import { HeartFill, HeartOutline, MoreOutline, SendOutline } from 'antd-mobile-icons';
 import Layout from '@/components/Layout';
 import { Loading } from '@/components/Loading';
 import { request } from '@/utils/request';
@@ -539,7 +539,7 @@ export default function CommentInfo() {
             {/* 一级评论 */}
             <div className={styles.firstComment}>
               <div className={styles.header}>
-                <Avatar src={detail.avatar || 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0'} />
+                <img className={styles.avatar} src={detail.avatar || 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0'} alt="avatar" />
                 <span className={styles.nickname}>{detail.nickName || '匿名用户'}</span>
                 <span className={styles.category}>{detail.category || '普通'}</span>
                 {currentUser && currentUser.userId === detail.userId && (
@@ -621,7 +621,7 @@ export default function CommentInfo() {
                       </span>
                     </div>
                     <div className={styles.shareBtn}>
-                      <ShareOutline fontSize={16} />
+                      <SendOutline fontSize={16} />
                       <span className={styles.shareText}>分享</span>
                     </div>
                   </div>
@@ -639,7 +639,7 @@ export default function CommentInfo() {
               {list.map(item => (
                 <div key={item.id} className={styles.secondComment}>
                   <div className={styles.commentHeader}>
-                    <Avatar src={item.user.avatar} className={styles.avatar} />
+                    <img src={item.user.avatar} className={styles.avatar} alt="avatar" />
                     <span className={styles.nickname}>{item.user.nickname}</span>
                     {currentUser && currentUser.userId === item.user.id && (
                       <div className={styles.commentHandle} onClick={(e) => {
@@ -674,7 +674,7 @@ export default function CommentInfo() {
                   {item.replies && item.replies.length > 0 && item.replies?.slice(0, expandedComments[item.id] ? undefined : 3).map(reply => (
                     <div key={reply.commentId} className={styles.thirdComment}>
                       <div className={styles.commentHeader}>
-                        <Avatar src={reply.user.avatar} className={styles.avatar} />
+                        <img src={reply.user.avatar} className={styles.avatar} alt="avatar" />
                         <span className={styles.nickname}>{reply.user.nickname}</span>
                       </div>
                       
@@ -726,10 +726,10 @@ export default function CommentInfo() {
               <span className={styles.cancelReply} onClick={cancelReply}>取消</span>
             </div>
           )}
-          <Input
+          <input
             className={styles.commentInput}
             value={commentContent}
-            onChange={setCommentContent}
+            onChange={(e)=>setCommentContent(e.target.value)}
             placeholder={replyTo ? `回复 @${replyTo.nickname}...` : "写下你的评论..."}
             maxLength={200}
           />

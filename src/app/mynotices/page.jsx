@@ -20,13 +20,12 @@ const formatTime = (timeStr) => {
   return date.toLocaleDateString("zh-CN", { month: "2-digit", day: "2-digit" });
 };
 
-export default function MyCommentsPage() {
+export default function MyNoticesPage() {
   const [loading, setLoading] = useState(true);
   const [list, setList] = useState([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isLogin, setIsLogin] = useState(false);
-  const [useMock, setUseMock] = useState(false);
 
   const checkLogin = () => {
     try {
@@ -39,39 +38,31 @@ export default function MyCommentsPage() {
     window.location.href = "/user?showLogin=true";
   };
 
-  const loadComments = async (refresh = false) => {
+  const markAsRead = async () => {
+    try {
+      await request({ url: Interface.MARK_NOTICES_READ, method: "POST" });
+    } catch {}
+  };
+
+  const loadNotices = async (refresh = false) => {
     try {
       if (refresh) {
         setPage(1);
         setLoading(true);
       }
       const currentPage = refresh ? 1 : page;
-      if (useMock) {
-        const mock = Array.from({ length: 8 }).map((_, i) => ({
-          id: 54000 + i,
-          title: i % 2 ? 'DeFi 板块出现回暖迹象' : 'BTC 资金费率持续走高，注意回撤风险',
-          content: i % 2 ? '链上活跃度提升，TVL 回升，注意龙头带动效应。' : '短线情绪偏热，建议逐步止盈，设置好风控。',
-          comments: i % 3 ? '我认为还会冲一波' : '说得很有道理，已减仓',
-          createdAt: new Date(Date.now() - (i + 1) * 3600 * 1000).toISOString(),
-          userName: i % 2 ? 'MoziUser' : 'TraderX'
-        }));
-        setList(refresh ? mock : [...list, ...mock]);
-        setHasMore(false);
+      const res = await request({
+        url: Interface.GET_MY_NOTICES,
+        data: { page: currentPage, size: 20 },
+      });
+      if (res?.data) {
+        const newList = res.data;
+        setList(refresh ? newList : [...list, ...newList]);
+        setHasMore((newList?.length || 0) >= 20);
         setPage(currentPage + 1);
-      } else {
-        const res = await request({
-          url: Interface.GET_MY_COMMENTS,
-          data: { page: currentPage, size: 20 },
-        });
-        if (res?.data) {
-          const newComments = res.data;
-          setList(refresh ? newComments : [...list, ...newComments]);
-          setHasMore((newComments?.length || 0) >= 20);
-          setPage(currentPage + 1);
-        }
       }
     } catch (e) {
-      console.error("加载评论失败", e);
+      console.error("加载通知失败", e);
     } finally {
       setLoading(false);
     }
@@ -79,17 +70,20 @@ export default function MyCommentsPage() {
 
   useEffect(() => {
     checkLogin();
-    try {
-      const search = typeof window !== 'undefined' ? window.location.search : '';
-      const params = new URLSearchParams(search);
-      const mockFlag = params.get('mock') === '1' || params.get('mock') === 'true';
-      if (mockFlag) {
-        setUseMock(true);
-        setIsLogin(true);
-      }
-    } catch {}
-    loadComments(true);
+    loadNotices(true);
+    markAsRead();
   }, []);
+
+  useEffect(() => {
+    const onScroll = () => {
+      if (!hasMore || loading) return;
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
+        loadNotices();
+      }
+    };
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [hasMore, loading, page, list]);
 
   const goToPostDetail = (postId) => {
     window.location.href = `/commentinfo?id=${postId}`;
@@ -98,10 +92,10 @@ export default function MyCommentsPage() {
   return (
     <Layout>
       <div className={styles.container}>
-        <NavBar title="我的评论" showBorder={false} />
+        <NavBar title="消息通知" showBorder={false} />
         {!isLogin ? (
           <div className={styles.empty}>
-            <div>请先登录查看评论</div>
+            <div>请先登录查看通知</div>
             <div className={styles.loginBtn} onClick={goLogin}>去登录</div>
           </div>
         ) : (
@@ -109,20 +103,29 @@ export default function MyCommentsPage() {
             {loading && page === 1 ? (
               <Loading />
             ) : list.length === 0 ? (
-              <div className={styles.empty}>暂无评论</div>
+              <div className={styles.empty}>暂无消息通知</div>
             ) : (
               <>
                 {list.map((item, idx) => (
                   <div key={`${item.id}-${idx}`} className={styles.item} onClick={() => goToPostDetail(item.id)}>
-                    {item.title && <div className={styles.postTitle}>{item.title}</div>}
-                    {item.content && <div className={styles.postContent}>{item.content}</div>}
-                    <div className={styles.commentArea}>
-                      <div className={styles.commentLabel}>我的评论</div>
-                      <div className={styles.myComment}>{item.comments}</div>
+                    <div className={styles.userInfo}>
+                      <img className={styles.avatar} src={item.avatar || 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png'} alt="avatar" />
+                      <div className={styles.userDetail}>
+                        <div className={styles.usernameRow}>
+                          <div className={styles.username}>{item.userName || '匿名用户'}</div>
+                          <div className={styles.actionText}>评论了你</div>
+                        </div>
+                        <div className={styles.noticeTime}>{formatTime(item.createdAt)}</div>
+                      </div>
                     </div>
-                    <div className={styles.footer}>
-                      <div>{formatTime(item.createdAt)}</div>
-                      {item.userName ? <div className={styles.author}>回复 @{item.userName}</div> : null}
+
+                    <div className={styles.commentSnap}>
+                      <div className={styles.commentText}>{item.comments}</div>
+                    </div>
+
+                    <div className={styles.postInfo}>
+                      {item.title && <div className={styles.postTitle}>{item.title}</div>}
+                      {item.content && <div className={styles.postContent}>{item.content}</div>}
                     </div>
                   </div>
                 ))}

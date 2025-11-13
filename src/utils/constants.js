@@ -132,6 +132,12 @@ export const Interface = {
   MOZI_COMMENT: '/user/feedback',
   // 我的评论列表
   GET_MY_COMMENTS: '/easy/getMyComments',
+  // 我的通知列表
+  GET_MY_NOTICES: '/easy/getMyMsgAndNotices',
+  // 未读通知数量
+  GET_UNREAD_COUNT: '/easy/getUnreadCount',
+  // 标记通知为已读
+  MARK_NOTICES_READ: '/easy/markNoticesRead',
 
   // 告警
   // 添加告警
