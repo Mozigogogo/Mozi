@@ -1084,9 +1084,9 @@ const loadingTimerRef = useRef(null);
           showArrow
           hideExtraWhenEmpty
           hasData={(xinbiData.xinbiArr && xinbiData.xinbiArr.length > 0)}
-          callback={() => jump2List('xinbi')}
+          callback={() => router.push('/newcoinrank')}
         >
-          <div onClick={() => jump2List('xinbi')}>
+          <div onClick={() => router.push('/newcoinrank')}>
             {isXinbiLoading ? (
               <Loading tip="加载中..." />
             ) : (
