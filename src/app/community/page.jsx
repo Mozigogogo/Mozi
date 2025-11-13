@@ -320,13 +320,13 @@ export default function CommunityPage() {
 
   // 跳转到帖子详情页
   const goToPostDetail = (postId) => {
-    window.location.href = `/commentinfo?postId=${postId}`;
+    window.location.href = `/commentinfo?id=${postId}`;
   };
 
   // 分享帖子
   const handleShare = (e, post) => {
     e.stopPropagation();
-    const shareUrl = `${window.location.origin}/commentinfo?postId=${post.id}`;
+    const shareUrl = `${window.location.origin}/commentinfo?id=${post.id}`;
     const shareData = {
       title: post.title || 'Mozi 社区',
       text: post.title || '来自 Mozi 社区的帖子',

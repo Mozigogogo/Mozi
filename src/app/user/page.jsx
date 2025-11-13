@@ -24,7 +24,7 @@ export default function UserPage() {
   const { t, i18n } = useTranslation();
   const [userInfo, setUserInfo] = useState({
     avatar: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png',
-    nickname: '微信用户',
+    nickname: '用户',
     level: 1,
     isVip: false,
     isLogin: false
@@ -512,7 +512,7 @@ export default function UserPage() {
         {showSecondaryActions && (
           <div className={styles.secondaryActions}>
             <div className={styles.actionRow}>
-              <div className={styles.actionButton} onClick={() => Toast.show({ content: t('user.comingSoon'), position: 'bottom' })}>
+              <div className={styles.actionButton} onClick={() => (window.location.href = '/mycomments')}>
                 <div className={styles.actionIcon}>
                   <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/comment%402x.png'} alt="我的评论" />
                 </div>

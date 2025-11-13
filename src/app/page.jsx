@@ -980,7 +980,7 @@ export default function HomePage() {
             <div className={styles.notice}>
               <NoticeBar
                 className={styles.noticeItem}
-                content="告别手动盯盘，实时波动随时跟进！开启智能告警配置吧！"
+                content="告别盲目设价！先让AI分析走势，再设置精准报警！"
                 color="alert"
                 wrap
                 icon={<img src={HomeAlertIcon} className={styles.noticeIcon} alt="alert" />}
@@ -1132,7 +1132,7 @@ export default function HomePage() {
                     ease: "easeInOut"
                   }}
                 >
-                  <BubbleText text="嗨！需要帮助吗？点击我开始对话~" />
+                  <BubbleText text="嗨！我是您的加密市场分析助手，可以帮您解读行情走势和预测趋势" />
                   <div className={styles.bubbleArrow}></div>
                 </motion.div>
               </motion.div>
