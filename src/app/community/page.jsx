@@ -508,7 +508,7 @@ export default function CommunityPage() {
   };
 
   return (
-    <Layout>
+    <Layout containerMaxHeight="100vh" bottomPadding={0}>
       <div className={styles.container}>
         {/* 顶部标题与切换 */}
         {/* 顶部导航栏 */}
