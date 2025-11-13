@@ -53,10 +53,29 @@ export default function CommunityPage() {
   const likeIcon = `${CDN_ICON}/like-no-active.png`;
   const likeActiveIcon = `${CDN_ICON}/like-active.png`;
   const commentIcon = `${CDN_ICON}/comment.png`;
+  const shareIcon = `${CDN_ICON}/share.png`;
   const recommendActive = `${CDN_IMG}/community-recommend.png`;
   const recommendInactive = `${CDN_IMG}/recommend-no-actived.png`;
   const hotActive = `${CDN_IMG}/hot-list-actived.png`;
   const hotInactive = `${CDN_IMG}/community-hot-list.png`;
+  const publishIcon = `${CDN_IMG}/publish.png`;
+
+  const formatTimeAgo = (time) => {
+    if (!time) return '';
+    const ts = typeof time === 'string' ? Date.parse(time.replace(/-/g, '/')) : +time;
+    if (!Number.isFinite(ts)) return '';
+    const diff = Date.now() - ts;
+    const m = 60 * 1000;
+    const h = 60 * m;
+    const d = 24 * h;
+    if (diff < m) return '刚刚';
+    if (diff < h) return Math.floor(diff / m) + '分钟前';
+    if (diff < d) return Math.floor(diff / h) + '小时前';
+    if (diff < 30 * d) return Math.floor(diff / d) + '天前';
+    const date = new Date(ts);
+    const pad = (n) => (n < 10 ? '0' + n : '' + n);
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  };
 
   // 预加载切换图，避免切换瞬间重解码导致卡顿
   useEffect(() => {
@@ -304,6 +323,28 @@ export default function CommunityPage() {
     window.location.href = `/commentinfo?postId=${postId}`;
   };
 
+  // 分享帖子
+  const handleShare = (e, post) => {
+    e.stopPropagation();
+    const shareUrl = `${window.location.origin}/commentinfo?postId=${post.id}`;
+    const shareData = {
+      title: post.title || 'Mozi 社区',
+      text: post.title || '来自 Mozi 社区的帖子',
+      url: shareUrl
+    };
+    if (navigator.share) {
+      navigator.share(shareData).catch(() => {});
+    } else if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        Toast.show({ content: '链接已复制', position: 'bottom' });
+      }).catch(() => {
+        Toast.show({ content: '无法复制链接', position: 'bottom' });
+      });
+    } else {
+      Toast.show({ content: '请手动分享当前链接', position: 'bottom' });
+    }
+  };
+
   // 跳转到话题详情页
   const goToTopicDetail = (topicId, name, description = "暂无描述") => {
     window.location.href = `/topicinfo?id=${topicId}&title=${name}&description=${description}`;
@@ -361,15 +402,18 @@ export default function CommunityPage() {
       <div className={styles.postsList}>
         {posts.map(post => (
           <div key={post.id} className={styles.postItem} onClick={() => goToPostDetail(post.id)}>
+            <div className={styles.postWatermark} aria-hidden="true" />
             <div className={styles.postHeader}>
               <div className={styles.userInfo} onClick={(e) => { e.stopPropagation(); goToUserPage(post.userId); }}>
                 <img src={post.avatar || '/default-avatar.png'} alt="avatar" className={styles.avatar} />
-                <span className={styles.username}>{post.username}</span>
-                { (post.categoryLabel || post.category || post.type) ? (
-                  <span className={styles.badgeLabel}>{post.categoryLabel || post.category || post.type}</span>
-                ) : null }
+                <div className={styles.userMeta}>
+                  <div className={styles.userRow}>
+                    <span className={styles.username}>{post.username}</span>
+                    <span className={styles.badgeLabel}>{post.categoryLabel || post.category || post.type || '资讯'}</span>
+                  </div>
+                  <span className={styles.postTime}>{formatTimeAgo(post.createTime || post.updatedAt)}</span>
+                </div>
               </div>
-              <span className={styles.postTime}>{post.createTime}</span>
             </div>
             <div className={styles.postContent}>
               <h3 className={styles.postTitle}>{post.title}</h3>
@@ -416,6 +460,13 @@ export default function CommunityPage() {
             )}
             
             <div className={styles.postFooter}>
+              <div className={styles.postAction} onClick={(e) => handleShare(e, post)}>
+                <img className={styles.actionIconImg} src={shareIcon} alt="share" />
+              </div>
+              <div className={styles.postAction}>
+                <img className={styles.actionIconImg} src={commentIcon} alt="comment" />
+                <span>{post.commentCount || 0}</span>
+              </div>
               <div className={styles.postAction} onClick={(e) => { e.stopPropagation(); toggleLike(post.id); }}>
                 <img
                   className={styles.actionIconImg}
@@ -423,10 +474,6 @@ export default function CommunityPage() {
                   alt="like"
                 />
                 <span>{post.likeCount || 0}</span>
-              </div>
-              <div className={styles.postAction}>
-                <img className={styles.actionIconImg} src={commentIcon} alt="comment" />
-                <span>{post.commentCount || 0}</span>
               </div>
             </div>
           </div>
@@ -639,9 +686,9 @@ export default function CommunityPage() {
 
         {/* 发帖按钮 */}
         <div className={styles.floatPostBtn}>
-          <Button className={styles.postBtn} onClick={goToPostPage}>
-            <span className={styles.iconPlus}>+</span>
-          </Button>
+          <button className={styles.postBtn} onClick={goToPostPage} aria-label="发帖">
+            <img className={styles.postBtnImage} src={publishIcon} alt="发帖" />
+          </button>
         </div>
 
         {/* 币种选择器弹窗 */}
