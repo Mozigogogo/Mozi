@@ -84,6 +84,76 @@ const area = {
 
 export default function HomePage() {
   const router = useRouter();
+  // Telegram WebApp 检测状态（不影响现有 UI，仅用于环境检测与本地存储）
+  const [tgInfo, setTgInfo] = useState({
+    available: false,
+    platform: '',
+    version: '',
+    user: null,
+    initDataLen: 0,
+    colorScheme: '',
+  });
+
+  const initTelegram = () => {
+    const tg = window?.Telegram?.WebApp;
+    if (!tg) return;
+    try {
+      tg.ready();
+      tg.expand();
+      const unsafe = tg.initDataUnsafe || {};
+      setTgInfo({
+        available: true,
+        platform: tg.platform || '',
+        version: tg.version || '',
+        user: unsafe.user || null,
+        initDataLen: (tg.initData || '').length,
+        colorScheme: tg.colorScheme || '',
+      });
+      if (unsafe.user?.id) {
+        // 写入本地，供其他页面使用
+        try {
+          localStorage.setItem('tgChatId', String(unsafe.user.id));
+          localStorage.setItem('tgUser', JSON.stringify(unsafe.user));
+          localStorage.setItem('tgBindAt', String(Date.now()));
+        } catch {}
+      }
+      // 主题变化监听（如需）
+      tg.onEvent?.('themeChanged', () => {
+        setTgInfo((d) => ({ ...d, colorScheme: tg.colorScheme || '' }));
+      });
+      console.log('[Telegram] WebApp 检测到:', {
+        available: true,
+        platform: tg.platform,
+        version: tg.version,
+        user: unsafe.user,
+        initDataLen: (tg.initData || '').length,
+      });
+    } catch (e) {
+      console.warn('[Telegram] WebApp 初始化失败:', e);
+    }
+  };
+
+  useEffect(() => {
+    // 进入根路径页面时检测 Telegram WebApp 环境
+    if (typeof window === 'undefined') return;
+    if (window?.Telegram?.WebApp) {
+      initTelegram();
+      return;
+    }
+    // 动态注入 SDK 脚本，避免影响 UI 渲染
+    const script = document.createElement('script');
+    script.src = 'https://telegram.org/js/telegram-web-app.js';
+    script.async = true;
+    script.onload = () => initTelegram();
+    script.onerror = () => {
+      console.warn('[Telegram] SDK 加载失败：请检查网络或脚本地址');
+      setTgInfo((d) => ({ ...d, available: false }));
+    };
+    document.head.appendChild(script);
+    return () => {
+      try { document.head.removeChild(script); } catch {}
+    };
+  }, []);
   
   // 状态定义
   const [hotCoin, setHotCoin] = useState([]);

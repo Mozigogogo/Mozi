@@ -25,7 +25,7 @@ const MarketOverview = memo(() => {
   const [smartAction, setSmartAction] = useState('去配置报警');
   const [smartOnClick, setSmartOnClick] = useState(() => () => {
     if (typeof window !== 'undefined') {
-      window.location.href = '/tg';
+      window.location.href = '/addwarn';
     }
   });
 
@@ -59,7 +59,7 @@ const MarketOverview = memo(() => {
           setSmartAction('去配置报警');
           setSmartOnClick(() => () => {
             if (typeof window !== 'undefined') {
-              window.location.href = '/tg';
+              window.location.href = '/addwarn';
             }
           });
           return;
@@ -67,10 +67,14 @@ const MarketOverview = memo(() => {
 
         const myWarnRes = await request({ url: Interface.MY_WARN });
         const groups = myWarnRes?.data || {};
+        const symbolKeys = Object.keys(groups || {}).filter((k) => {
+          const entry = groups[k];
+          return entry && Array.isArray(entry.warnContent);
+        });
         
         let chosenSymbol = null;
         let latestTs = -Infinity;
-        Object.keys(groups || {}).forEach((symbol) => {
+        symbolKeys.forEach((symbol) => {
           const arr = groups[symbol]?.warnContent || [];
           arr.forEach((item, idx) => {
             if (item?.active) {
@@ -85,13 +89,13 @@ const MarketOverview = memo(() => {
           });
         });
 
-        const firstSymbol = chosenSymbol || Object.keys(groups)[0];
+        const firstSymbol = chosenSymbol || symbolKeys[0];
         if (!firstSymbol) {
           setSmartValue('暂无配置');
           setSmartAction('去配置报警');
           setSmartOnClick(() => () => {
             if (typeof window !== 'undefined') {
-              window.location.href = '/tg';
+              window.location.href = '/addwarn';
             }
           });
           return;
