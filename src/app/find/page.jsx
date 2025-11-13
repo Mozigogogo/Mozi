@@ -950,9 +950,9 @@ const loadingTimerRef = useRef(null);
           showArrow
           hideExtraWhenEmpty
           hasData={(exchangeData.exchangeArr && exchangeData.exchangeArr.length > 0)}
-          callback={() => jump2List('exchange')}
+          callback={() => router.push('/exchangerank')}
         >
-          <div onClick={() => jump2List('exchange')}>
+          <div onClick={() => router.push('/exchangerank')}>
             {isExchangeLoading ? (
               <Loading tip="加载中..." />
             ) : (

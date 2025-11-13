@@ -18,13 +18,16 @@ const MoziGrid = ({
   showRanking = false, // 显示排名（大Logo）
   simpleRanking = false, // 简单排名（仅序号）
   gridTitleBgColor = '#F6F6F6',
+  gridTitleStyle = {},
   className = '',
   enableLoadMore = false, // 是否启用加载更多
   loadMore, // 加载更多的回调函数
   hasMore = false, // 是否还有更多数据
   extraTopName = '', // 左侧大 logo 下方显示的名称（如交易所名称）
   rankingLogoOffsetTop = 0, // 仅用于排行榜左侧大 logo 的下移偏移（px）
-  topNameOffsetTop = 6 // 名称与 logo 的上边距（默认为 6px）
+  topNameOffsetTop = 6, // 名称与 logo 的上边距（默认为 6px）
+  stickyHeader = false, // 是否启用表头吸顶
+  stickyTop = 0 // 吸顶的 top 偏移（相对于滚动容器）
   , stackTopName = false // 是否将名称紧跟在 logo 下方堆叠显示
 }) => {
   const displayData = Array.isArray(gridContent)
@@ -108,7 +111,16 @@ const MoziGrid = ({
             </div>
             <div className={styles.contentColumn}>
               {!hideTitle && (
-                <div className={styles.gridTitle} style={{ backgroundColor: gridTitleBgColor }}>
+                <div 
+                  className={styles.gridTitle} 
+                  style={{ 
+                    backgroundColor: gridTitleBgColor,
+                    position: stickyHeader ? 'sticky' : undefined,
+                    top: stickyHeader ? stickyTop : undefined,
+                    zIndex: stickyHeader ? 5 : undefined,
+                    ...gridTitleStyle
+                  }}
+                >
                   {colName.map((colNameItem, colNameIndex) => (
                     <div 
                       key={colNameIndex}
@@ -164,7 +176,16 @@ const MoziGrid = ({
         // 简单序号模式：只显示序号，不显示大logo（与微信小程序完全对齐）
         <div>
           {!hideTitle && hasData && (
-            <div className={styles.gridTitle} style={{ backgroundColor: gridTitleBgColor }}>
+            <div 
+              className={styles.gridTitle} 
+              style={{ 
+                backgroundColor: gridTitleBgColor,
+                position: stickyHeader ? 'sticky' : undefined,
+                top: stickyHeader ? stickyTop : undefined,
+                zIndex: stickyHeader ? 5 : undefined,
+                ...gridTitleStyle
+              }}
+            >
               {colName.map((colNameItem, colNameIndex) => (
                 <div
                   key={colNameIndex}
@@ -218,7 +239,16 @@ const MoziGrid = ({
         // 原有的普通布局
         <div>
           {!hideTitle && hasData && (
-            <div className={styles.gridTitle} style={{ backgroundColor: gridTitleBgColor }}>
+            <div 
+              className={styles.gridTitle} 
+              style={{ 
+                backgroundColor: gridTitleBgColor,
+                position: stickyHeader ? 'sticky' : undefined,
+                top: stickyHeader ? stickyTop : undefined,
+                zIndex: stickyHeader ? 5 : undefined,
+                ...gridTitleStyle
+              }}
+            >
               {colName.map((colNameItem, colNameIndex) => (
                 <div 
                   key={colNameIndex}
