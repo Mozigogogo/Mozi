@@ -313,6 +313,20 @@
     "zh": "简体中文",
     "en": "English"
   },
+  "search": {
+    "coins": "币种",
+    "inputPrompt": "请输入您想搜索的币种",
+    "invalidCoin": "请输入正确的币种",
+    "relatedSections": "相关版块",
+    "tradeablePlatforms": "可交易{{coin}}平台",
+    "platform": "平台",
+    "chain": "所属链",
+    "withdrawFee": "提取手续费",
+    "withdrawMin": "最小提币量",
+    "pairs": "交易对",
+    "spotPairs": "现货交易对",
+    "derivativePairs": "衍生品交易对"
+  },
   "calendar": {
     "title": "交易所公告",
     "subtitle": "打开订阅推送，免费试用",

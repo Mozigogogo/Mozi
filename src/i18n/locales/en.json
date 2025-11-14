@@ -313,6 +313,20 @@
     "zh": "简体中文",
     "en": "English"
   },
+  "search": {
+    "coins": "Coins",
+    "inputPrompt": "Enter the coin you want to search",
+    "invalidCoin": "Please enter a valid coin",
+    "relatedSections": "Related Sections",
+    "tradeablePlatforms": "Tradeable {{coin}} Platforms",
+    "platform": "Platform",
+    "chain": "Chain",
+    "withdrawFee": "Withdraw Fee",
+    "withdrawMin": "Min Wdrl",
+    "pairs": "Pairs",
+    "spotPairs": "Spot",
+    "derivativePairs": "Derivatives"
+  },
   "calendar": {
     "title": "Exchange Announcements",
     "subtitle": "Subscribe for free",

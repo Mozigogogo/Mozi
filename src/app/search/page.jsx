@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { LeftOutline } from 'antd-mobile-icons';
 import { SearchInput } from '../../components/SearchInput';
@@ -19,6 +20,8 @@ export default function SearchPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const keyword = searchParams.get('keyword') || '';
+  const { t, i18n } = useTranslation();
+  const isEnglish = (i18n.language || 'zh').startsWith('en');
 
   const [showType, setShowType] = useState('none');
   const [searchValue, setSearchValue] = useState(keyword);
@@ -113,130 +116,107 @@ export default function SearchPage() {
   // 主搜索函数
   const reload = async (value) => {
     if (!value) return;
-
     setSearchValue(value);
     setShowType('valid');
 
     try {
-      // 1. 验证币种
-      const isCoin = await request({
-        url: Interface.IS_COIN,
-        data: { coin: value }
+      const isCoin = await request({ url: Interface.IS_COIN, data: { coin: value } });
+      if (!isCoin?.data?.isCoin) { setShowType('invalid'); return; }
+    } catch (e) {
+      return;
+    }
+
+    coinRequest(value);
+
+    const requests = [
+      request({ url: Interface.COIN_AREA, data: { coin: value } }),
+      request({ url: Interface.COIN_PLATFORM, data: { coin: value } }),
+      request({ url: Interface.COIN_SPOT, data: { coin: value } })
+    ];
+
+    const results = await Promise.allSettled(requests);
+
+    const areaRes = results[0];
+    if (areaRes.status === 'fulfilled' && !isEmpty(areaRes.value?.data)) {
+      const temp = areaRes.value.data.slice(0, 4);
+      setAreaData({ length: areaRes.value.data.length, data: temp, loading: false, close: false });
+    } else if (areaRes.status === 'fulfilled') {
+      setAreaData({ close: true });
+    } else {
+      setAreaData(prev => ({ ...prev, loading: false }));
+    }
+
+    const platformRes = results[1];
+    if (platformRes.status === 'fulfilled' && !isEmpty(platformRes.value?.data)) {
+      const temp = platformRes.value.data.slice(0, 3).map((item) => ({
+        title: (
+          <div className={styles.gridText}>
+            <img className={styles.gridIcon} src={item.url} alt={item.exchanges} />
+            <div className={styles.gridName}>{item.exchanges}</div>
+          </div>
+        ),
+        chain: item.chain,
+        withdrawfee: item.withdrawfee,
+        withdrawmin: item.withdrawmin
+      }));
+      setPlatformData({ length: platformRes.value.data.length, data: temp, loading: false, close: false });
+    } else if (platformRes.status === 'fulfilled') {
+      setPlatformData({ close: true });
+    } else {
+      setPlatformData(prev => ({ ...prev, loading: false }));
+    }
+
+    const spotRes = results[2];
+    if (spotRes.status === 'fulfilled' && !isEmpty(spotRes.value?.data)) {
+      const spotArr = [];
+      if (!isEmpty(spotRes.value.data?.spot)) {
+        const spotTemp = spotRes.value.data.spot.slice(0, 3).map((item) => ({
+          title: (
+            <div className={styles.gridText}>
+              <img className={styles.gridIcon} src={item.url} alt={item.symbol} />
+              <div className={styles.gridName}>{item.symbol}</div>
+            </div>
+          ),
+          symbol: item.exchanges,
+          lasts: item.lasts,
+          price24h: <HighlightArea value={item.price24h} />
+        }));
+        spotArr.push(spotTemp);
+      }
+      if (!isEmpty(spotRes.value.data?.nonSpot)) {
+        const nonSpotTemp = spotRes.value.data.nonSpot.slice(0, 3).map((item) => ({
+          title: (
+            <div className={styles.gridText}>
+              <img className={styles.gridIcon} src={item.url} alt={item.symbol} />
+              <div className={styles.gridName}>{item.symbol}</div>
+            </div>
+          ),
+          symbol: item.exchanges,
+          lasts: item.lasts,
+          price24h: <HighlightArea value={item.price24h} />
+        }));
+        spotArr.push(nonSpotTemp);
+      }
+      setSpotData({
+        length: spotRes.value.data.spot?.length > 3 || spotRes.value.data.nonSpot?.length > 3 ? 'more' : false,
+        data: spotArr,
+        loading: false,
+        close: false
       });
-
-      if (!isCoin?.data?.isCoin) {
-        setShowType('invalid');
-        return;
-      }
-
-      // 2. 启动币种信息轮询
-      coinRequest(value);
-
-      // 3. 并发请求其他接口
-      const interfaceList = [Interface.COIN_AREA, Interface.COIN_PLATFORM, Interface.COIN_SPOT];
-
-      for (let i = 0; i < interfaceList.length; i++) {
-        const sectionRes = await request({
-          url: interfaceList[i],
-          data: { coin: value }
-        });
-
-        if (!isEmpty(sectionRes?.data)) {
-          let tempData = null;
-
-          // 相关版块
-          if (interfaceList[i] === Interface.COIN_AREA) {
-            tempData = sectionRes.data.slice(0, 4);
-            setAreaData({
-              length: sectionRes.data.length,
-              data: tempData,
-              loading: false,
-              close: false
-            });
-          }
-
-          // 可交易平台
-          if (interfaceList[i] === Interface.COIN_PLATFORM) {
-            tempData = sectionRes.data.slice(0, 3).map((item) => ({
-              title: (
-                <div className={styles.gridText}>
-                  <img className={styles.gridIcon} src={item.url} alt={item.exchanges} />
-                  <div className={styles.gridName}>{item.exchanges}</div>
-                </div>
-              ),
-              chain: item.chain,
-              withdrawfee: item.withdrawfee,
-              withdrawmin: item.withdrawmin
-            }));
-            setPlatformData({
-              length: sectionRes.data.length,
-              data: tempData,
-              loading: false,
-              close: false
-            });
-          }
-
-          // 交易对
-          if (interfaceList[i] === Interface.COIN_SPOT) {
-            const spotArr = [];
-            if (!isEmpty(sectionRes.data?.spot)) {
-              tempData = sectionRes.data.spot.slice(0, 3).map((item) => ({
-                title: (
-                  <div className={styles.gridText}>
-                    <img className={styles.gridIcon} src={item.url} alt={item.symbol} />
-                    <div className={styles.gridName}>{item.symbol}</div>
-                  </div>
-                ),
-                symbol: item.exchanges,
-                lasts: item.lasts,
-                price24h: <HighlightArea value={item.price24h} />
-              }));
-              spotArr.push(tempData);
-            }
-            if (!isEmpty(sectionRes.data?.nonSpot)) {
-              tempData = sectionRes.data.nonSpot.slice(0, 3).map((item) => ({
-                title: (
-                  <div className={styles.gridText}>
-                    <img className={styles.gridIcon} src={item.url} alt={item.symbol} />
-                    <div className={styles.gridName}>{item.symbol}</div>
-                  </div>
-                ),
-                symbol: item.exchanges,
-                lasts: item.lasts,
-                price24h: <HighlightArea value={item.price24h} />
-              }));
-              spotArr.push(tempData);
-            }
-            setSpotData({
-              length: sectionRes.data.spot?.length > 3 || sectionRes.data.nonSpot?.length > 3 ? 'more' : false,
-              data: spotArr,
-              loading: false,
-              close: false
-            });
-          }
-        } else {
-          // 数据为空，关闭对应模块
-          if (interfaceList[i] === Interface.COIN_AREA) {
-            setAreaData({ close: true });
-          }
-          if (interfaceList[i] === Interface.COIN_PLATFORM) {
-            setPlatformData({ close: true });
-          }
-          if (interfaceList[i] === Interface.COIN_SPOT) {
-            setSpotData({ close: true });
-          }
-        }
-      }
-    } catch (error) {
-      console.error('搜索失败:', error);
-      setShowType('invalid');
+    } else if (spotRes.status === 'fulfilled') {
+      setSpotData({ close: true });
+    } else {
+      setSpotData(prev => ({ ...prev, loading: false }));
     }
   };
 
   const spotColNameList = [
-    [<span key="spot" className={styles.pairTitleStrong}>现货交易对</span>, '交易所', '最新价', '24H变化'],
-    [<span key="nonspot" className={styles.pairTitleStrong}>衍生品交易对</span>, '交易所', '最新价', '24H变化']
+    [<span key="spot" className={styles.pairTitleStrong}>{t('search.spotPairs')}</span>, t('discover.exchange.columns.exchange'), t('home.columns.lastPrice'), t('home.columns.change24h')],
+    [<span key="nonspot" className={styles.pairTitleStrong}>{t('search.derivativePairs')}</span>, t('discover.exchange.columns.exchange'), t('home.columns.lastPrice'), t('home.columns.change24h')]
   ];
+
+  const infoColumnWidths = isEnglish ? ['22%', '24%', '24%', '15%', '15%'] : ['24%', '26%', '20%', '15%', '15%'];
+  const spotColumnWidths = isEnglish ? ['28%', '24%', '26%', '22%'] : ['30%', '25%', '25%', '20%'];
 
   return (
     <div className={styles.indexBox}>
@@ -247,20 +227,20 @@ export default function SearchPage() {
           <div className={styles.navbarLeft} onClick={() => router.back()}>
             <LeftOutline fontSize={24} color="#ffffff" />
           </div>
-          <div className={styles.navbarTitle}>搜索</div>
+          <div className={styles.navbarTitle}>{t('common.search')}</div>
           <div className={styles.navbarRight}></div>
         </div>
 
         {/* 搜索框区域 */}
         <div className={styles.header}>
-          <SearchInput reloadFun={reload} value={searchValue} />
+          <SearchInput reloadFun={reload} value={searchValue} placeholder={t('home.searchPlaceholder')} />
         </div>
 
         {/* 币种头部信息 */}
         {showType === 'valid' && (
           <div className={styles.coinHeaderInfo}>
             <div className={styles.coinHeaderItem}>
-              币种({infoData.length})
+              {t('search.coins')}({infoData.length})
               {infoData.length > 3 && <RightArrowIcon size={20} color="#666666" />}
             </div>
           </div>
@@ -275,11 +255,11 @@ export default function SearchPage() {
       {/* 内容区域 */}
       <div className={styles.contentArea}>
         {showType === 'none' && (
-          <div className={styles.noSearchBox}>请输入您想搜索的币种</div>
+          <div className={styles.noSearchBox}>{t('search.inputPrompt')}</div>
         )}
 
         {showType === 'invalid' && (
-          <div className={styles.noSearchBox}>请输入正确的币种</div>
+          <div className={styles.noSearchBox}>{t('search.invalidCoin')}</div>
         )}
 
         {showType === 'valid' && (
@@ -304,10 +284,11 @@ export default function SearchPage() {
                 ) : (
                   <MoziGrid
                     length={5}
-                    colName={['名称', '最新价', '24H涨幅', '加自选', '加监控']}
+                    colName={[t('home.columns.symbol'), t('home.columns.lastPrice'), t('home.columns.change24h'), t('home.columns.addFavorites'), t('home.columns.addMonitor')]}
                     gridContent={infoData.data || []}
                     callback={(gridCon) => jump2Detail(gridCon.key)}
-                    columnWidths={['24%', '26%', '20%', '15%', '15%']}
+                    columnWidths={infoColumnWidths}
+                    gridTitleBgColor={'transparent'}
                   />
                 )}
               </MoziCard>
@@ -331,7 +312,7 @@ export default function SearchPage() {
                     }}
                     style={{ cursor: areaData.length > 4 ? 'pointer' : 'default' }}
                   >
-                    相关版块({areaData.length})
+                    {t('search.relatedSections')}({areaData.length})
                     {areaData.length > 4 && <RightArrowIcon size={20} color="#666666" />}
                   </div>
                 </div>
@@ -368,7 +349,7 @@ export default function SearchPage() {
                     }}
                     style={{ cursor: platformData.length > 3 ? 'pointer' : 'default' }}
                   >
-                    可交易{searchValue}平台({platformData.length})
+                    {t('search.tradeablePlatforms', { coin: searchValue })}({platformData.length})
                     {platformData.length > 3 && <RightArrowIcon size={20} color="#666666" />}
                   </div>
                 </div>
@@ -378,9 +359,10 @@ export default function SearchPage() {
                   ) : (
                     <MoziGrid
                       length={4}
-                      colName={['平台', '所属链', '提取手续费', '最小提币量']}
+                      colName={[t('search.platform'), t('search.chain'), t('search.withdrawFee'), t('search.withdrawMin')]}
                       gridContent={platformData.data || []}
                       columnWidths={['28%', '25%', '25%', '22%']}
+                      gridTitleBgColor={'transparent'}
                     />
                   )}
                 </MoziCard>
@@ -403,7 +385,7 @@ export default function SearchPage() {
                     }}
                     style={{ cursor: 'pointer' }}
                   >
-                    交易对
+                    {t('search.pairs')}
                     <RightArrowIcon size={20} color="#666666" />
                   </div>
                 </div>
@@ -419,7 +401,8 @@ export default function SearchPage() {
                             length={4}
                             colName={spotColNameList[pairIndex]}
                             gridContent={pairItem}
-                            columnWidths={['30%', '25%', '25%', '20%']}
+                            columnWidths={spotColumnWidths}
+                            gridTitleBgColor={'transparent'}
                           />
                         ))}
                     </>
