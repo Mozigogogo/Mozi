@@ -10,7 +10,7 @@
 .mainTabs {
   position: static;
   background: #EEF0F3;
-  padding: 0px 20px 0;
+  padding: 0px 10px 0;
 }
 
 .headerBar { font-weight: 600; font-size: 16px; margin-bottom: 8px; }
@@ -54,15 +54,17 @@
 .subTabs {
   display: flex;
   align-items: center;
-  padding: 0 16px;
+  padding:6px 10px; /* 40rpx -> 20px */
   background-color: #EEF0F3;
   overflow-x: auto;
   white-space: nowrap;
 }
 
 .subTab {
-  padding: 12px 16px;
-  font-size: 14px;
+  position: relative;
+  display: inline-block;
+  padding: 10px 8px 10px 10px; /* 顶10 底8 */
+  font-size: 14px; /* 28rpx -> 14px */
   color: #666;
   cursor: pointer;
   transition: color 0.3s;
@@ -70,8 +72,20 @@
 }
 
 .subTab.active {
-  color: #1890ff;
-  font-weight: 500;
+  color: #333;
+  font-weight: 600;
+}
+
+.subTab.active::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  width: 21px; /* 42rpx -> 21px */
+  height: 2px; /* 4rpx -> 2px */
+  background: #11B787;
+  border-radius: 2px;
 }
 
 /* 币种标签样式 */
@@ -160,11 +174,26 @@
 // }
 
 .postItem {
-  background-color: #fff;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 16px;
+  padding: 20px;
+  margin: 0 0 16px 0;
+  position: relative;
+}
+
+.postWatermark {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 120px;
+  height: 120px;
+  background-image: url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/find-best-coin.png');
+  background-repeat: no-repeat;
+  background-size: contain;
+  opacity: 0.18;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .postHeader {
@@ -174,23 +203,13 @@
   margin-bottom: 12px;
 }
 
-.userInfo {
-  display: flex;
-  align-items: center;
-}
+.userInfo { display: flex; align-items: flex-start; }
+.userMeta { display: flex; flex-direction: column; }
+.userRow { display: flex; align-items: center; gap: 8px; }
 
-.avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  margin-right: 8px;
-  object-fit: cover;
-}
+.avatar { width: 40px; height: 40px; border-radius: 50%; margin-right: 12px; object-fit: cover; }
 
-.username {
-  font-weight: 500;
-  font-size: var(--font-size-base);
-}
+.username { font-weight: 600; font-size: 14px; color: #333; }
 
 .badgeLabel {
   margin-left: 8px;
@@ -201,27 +220,15 @@
   border-radius: 10px;
 }
 
-.postTime {
-  font-size: var(--font-size-sm);
-  color: #999;
-}
+.postTime { font-size: 12px; color: #999; margin-top: 2px; }
 
 .postContent {
   margin-bottom: 12px;
 }
 
-.postTitle {
-  font-size: var(--font-size-lg);
-  font-weight: 500;
-  margin-bottom: 8px;
-}
+.postTitle { font-size: 16px; font-weight: 600; color: #333; margin-bottom: 6px; }
 
-.postText {
-  font-size: var(--font-size-base);
-  line-height: 1.5;
-  margin-bottom: 8px;
-  word-break: break-word;
-}
+.postText { font-size: 14px; color: #666; line-height: 1.6; margin-bottom: 8px; word-break: break-word; }
 
 .postImages {
   display: flex;
@@ -230,33 +237,18 @@
   margin-top: 8px;
 }
 
-.postImage {
-  width: calc(33.33% - 6px);
-  height: 100px;
-  object-fit: cover;
-  border-radius: 4px;
-}
+.postImage { width: calc(33.33% - 6px); height: 100px; object-fit: cover; border-radius: 6px; }
 
-.postFooter {
-  display: flex;
-  align-items: center;
-  border-top: 1px solid var(--border-color);
-  padding-top: 12px;
-}
+.postFooter { display: flex; align-items: center; gap: 16px; padding-top: 8px;  }
 
-.postAction {
-  display: flex;
-  align-items: center;
-  margin-right: 16px;
-  cursor: pointer;
-}
+.postAction { display: flex; align-items: center; color: #999; cursor: pointer; flex: 1; justify-content: center;}
 
 .actionIcon {
   margin-right: 4px;
   font-size: 16px;
 }
 
-.actionIconImg { width: 18px; height: 18px; margin-right: 6px; }
+.actionIconImg { width: 20px; height: 20px; margin-right: 6px; }
 
 .liked {
   color: var(--primary-color);
@@ -380,34 +372,27 @@
 /* 发帖按钮样式 */
 .floatPostBtn {
   position: fixed;
-  right: 16px;
-  bottom: 80px;
-  z-index: 100;
+  right: 20px; /* 40rpx -> 20px */
+  bottom: 100px; /* 200rpx -> 100px，避开底部tab */
+  z-index: 101;
 }
 
 .postBtn {
-  width: 48px;
-  height: 48px;
+  width: 66px; /* 132rpx -> 66px */
+  height: 66px;
   border-radius: 50%;
-  background-color: #1890ff;
-  color: #fff;
+  background: transparent;
   border: none;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 12px rgba(24, 144, 255, 0.3);
   cursor: pointer;
-  transition: all 0.3s;
 }
 
-.postBtn:hover {
-  transform: scale(1.1);
-}
+.postBtnImage { width: 66px; height: 66px; display: block; }
 
-.iconPlus {
-  font-size: 24px;
-  font-weight: 300;
-}
+.iconPlus { display: none; }
 
 /* 透明导航条：覆盖默认白色背景与边框 */
 .navTransparent { background: #EEF0F3 !important; border-bottom: none !important; }
