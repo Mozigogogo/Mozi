@@ -18,6 +18,7 @@ import { request } from '../../utils/request';
 import { Interface, LOOPTIME } from '../../utils/constants';
 import { jump2Detail, jump2List } from '../../utils/core';
 import styles from './page.module.less';
+import { useTranslation } from 'react-i18next';
 
 // 过滤交易所名称中的.com，避免文字过长溢出
 const sanitizeExchangeName = (name) => {
@@ -58,6 +59,7 @@ const MarketDesc = ({ currentPrice, priceChange24h }) => {
 export default function FindPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { t } = useTranslation();
   const tabFromUrl = searchParams.get('tab');
   
   // 状态定义
@@ -89,28 +91,28 @@ const loadingTimerRef = useRef(null);
   // 涨幅榜数据
   const [priceData, setPriceData] = useState({ priceArr: [], priceSelect: [] });
   const priceArr = useRef([]);
-  const pricePickArr = ['实时', '1天', '1周', '1月', '1年'];
+  const pricePickArr = [t('discover.range.live'), t('discover.range.1d'), t('discover.range.1w'), t('discover.range.1m'), t('discover.range.1y')];
   const priceDimArr = ['today', '1_day', '7_day', '1_month', '1_year'];
   const [isPriceLoading, setPriceLoading] = useState(true);
 
   // 跌幅榜数据
   const [downData, setDownData] = useState({ downArr: [], downSelect: [] });
   const downArr = useRef([]);
-  const downPickArr = ['实时', '1天', '1周', '1月', '1年'];
+  const downPickArr = [t('discover.range.live'), t('discover.range.1d'), t('discover.range.1w'), t('discover.range.1m'), t('discover.range.1y')];
   const downDimArr = ['today', '1_day', '7_day', '1_month', '1_year'];
   const [isDownLoading, setDownLoading] = useState(true);
 
   // 波幅榜数据
   const [waveData, setWaveData] = useState({ waveArr: [], waveSelect: [] });
   const waveArr = useRef([]);
-  const wavePickArr = ['实时', '1天', '1周', '1月', '1年'];
+  const wavePickArr = [t('discover.range.live'), t('discover.range.1d'), t('discover.range.1w'), t('discover.range.1m'), t('discover.range.1y')];
   const waveDimArr = ['today', '1_day', '7_day', '1_month', '1_year'];
   const [isWaveLoading, setWaveLoading] = useState(true);
 
   // 成交额榜数据
   const [tradeData, setTradeData] = useState({ tradeArr: [], tradeSelect: [] });
   const tradeArr = useRef([]);
-  const tradePickArr = ['实时', '1天', '1周', '1月', '1年'];
+  const tradePickArr = [t('discover.range.live'), t('discover.range.1d'), t('discover.range.1w'), t('discover.range.1m'), t('discover.range.1y')];
   const tradeIntervalsArr = ['today', '1_day', '7_day', '1_month', '1_year'];
   const [xinbiData, setXinbiData] = useState({ xinbiArr: [] });
   const [isTradeLoading, setTradeLoading] = useState(true);
@@ -119,7 +121,7 @@ const loadingTimerRef = useRef(null);
   // 飙升榜数据
   const [upTradeData, setUpTradeData] = useState({ upTradeArr: [], upTradeSelect: [] });
   const upTradeArr = useRef([]);
-  const upTradePickArr = ['实时', '1天', '1周', '1月', '1年'];
+  const upTradePickArr = [t('discover.range.live'), t('discover.range.1d'), t('discover.range.1w'), t('discover.range.1m'), t('discover.range.1y')];
   const upTradeIntervalsArr = ['today', '1_day', '7_day', '1_month', '1_year'];
   
   // 飙升榜加载状态（其他榜单的加载状态已移除，因为不再使用Layout包裹）
@@ -207,8 +209,8 @@ const loadingTimerRef = useRef(null);
 
       // 构建 exchangeSelect（保持与初始化一致的格式）
       const exchangeSelect = [];
-      if (exchangeArr.current[0]) exchangeSelect.push('现货');
-      if (exchangeArr.current[1]) exchangeSelect.push('衍生品');
+      if (exchangeArr.current[0]) exchangeSelect.push(t('discover.exchange.types.spot'));
+      if (exchangeArr.current[1]) exchangeSelect.push(t('discover.exchange.types.futures'));
 
       setExchangeData({
         exchangeArr: exchangeArr.current[0] || [],
@@ -815,7 +817,7 @@ const loadingTimerRef = useRef(null);
             padding: '40px',
             color: '#999'
           }}>
-            <div style={{ marginBottom: '16px' }}>数据加载失败</div>
+            <div style={{ marginBottom: '16px' }}>{t('common.error')}</div>
             <button 
               style={{ 
                 backgroundColor: '#11B787', 
@@ -831,7 +833,7 @@ const loadingTimerRef = useRef(null);
                 fetchOwnList();
               }}
             >
-              重新加载
+              {t('common.retry')}
             </button>
           </div>
         </div>
@@ -842,7 +844,7 @@ const loadingTimerRef = useRef(null);
       return (
         <div className={styles.ownBox}>
           <div style={{ textAlign: 'center', padding: '40px' }}>
-            <div style={{ marginBottom: '16px' }}>请先登录</div>
+            <div style={{ marginBottom: '16px' }}>{t('user.pleaseLogin')}</div>
             <button 
               style={{ 
                 backgroundColor: '#11B787', 
@@ -854,7 +856,7 @@ const loadingTimerRef = useRef(null);
               }} 
               onClick={() => router.push('/user?showLogin=true')}
             >
-              登录
+              {t('user.login')}
             </button>
           </div>
         </div>
@@ -864,11 +866,11 @@ const loadingTimerRef = useRef(null);
     return (
       <div className={styles.ownBox}>
         {myOwn.length === 0 ? (
-          <button className={styles.addOwnBtn} onClick={addOwn}>添加自选</button>
+          <button className={styles.addOwnBtn} onClick={addOwn}>{t('discover.addFavoriteButton')}</button>
         ) : (
           <>
             <Grid className={styles.gridTitle} columns={5}>
-              {['币种', '最新价', '24小时涨幅', '是否自选', '加监控'].map((colNameItem, colNameIndex) => (
+              {[t('home.columns.symbol'), t('home.columns.lastPrice'), t('home.columns.change24h'), t('home.columns.addFavorites'), t('home.columns.addMonitor')].map((colNameItem, colNameIndex) => (
                 <Grid.Item key={colNameIndex} className={`${styles.gridTitleItem} ${colNameIndex !== 0 ? styles.text : ''}`}>
                   {colNameItem}
                 </Grid.Item>
@@ -876,7 +878,7 @@ const loadingTimerRef = useRef(null);
             </Grid>
             <MoziGrid
               length={5}
-              colName={['币种', '最新价', '24小时涨幅', '是否自选', '加自选']}
+              colName={[t('home.columns.symbol'), t('home.columns.lastPrice'), t('home.columns.change24h'), t('home.columns.addFavorites'), t('home.columns.addFavorites')]}
               gridContent={myOwn}
               callback={(gridCon) => { jump2Detail(gridCon.key); }}
               hideTitle={true}
@@ -904,9 +906,9 @@ const loadingTimerRef = useRef(null);
             <Layout isLoading={marketLoading} isError={isMarketError}>
               <div className={styles.gridTitle}>
                 {[
-                  { name: '币种/市值', width: '30%' },
-                  { name: '最新价格/24H价格变化', width: '38%' },
-                  { name: '24H价格变化', width: '32%' }
+                  { name: t('discover.columns.symbolMarketCap'), width: '30%' },
+                  { name: t('discover.columns.priceWithChange'), width: '38%' },
+                  { name: t('home.columns.change24h'), width: '32%' }
                 ].map((colItem, colIndex) => (
                   <div 
                     key={colIndex} 
@@ -919,7 +921,7 @@ const loadingTimerRef = useRef(null);
               </div>
               <MoziGrid
                 length={3}
-                colName={['币种/市值', '最新价格/24H价格变化', '24H价格变化']}
+                colName={[t('discover.columns.symbolMarketCap'), t('discover.columns.priceWithChange'), t('home.columns.change24h')]}
                 gridContent={marketData}
                 callback={(gridCon) => { jump2Detail(gridCon.key); }}
                 hideTitle={true}
@@ -929,7 +931,7 @@ const loadingTimerRef = useRef(null);
                 columnWidths={['30%', '38%', '32%']}
               />
               {!marketHasMore && marketData.length > 0 && !isLoadingMore && (
-                <div className={styles.loadFinish}>已全部加载完毕</div>
+                <div className={styles.loadFinish}>{t('discover.loadFinished')}</div>
               )}
             </Layout>
           </PullToRefresh>
@@ -940,9 +942,8 @@ const loadingTimerRef = useRef(null);
   const renderRankList = () => {
     return (
       <div className={styles.rankContainer}>
-        {/* 交易所排行榜 */}
         <MoziCard
-          title="交易所排行榜"
+          title={t('discover.exchangeRank')}
           type='tabs'
           customStyle={{ '--tabs-width': '160px' }}
           selectArr={exchangeData.exchangeSelect || []}
@@ -954,11 +955,11 @@ const loadingTimerRef = useRef(null);
         >
           <div onClick={() => router.push('/exchangerank')}>
             {isExchangeLoading ? (
-              <Loading tip="加载中..." />
+              <Loading tip={t('common.loading')} />
             ) : (
               <MoziGrid
                 length={4}
-                colName={['交易所', '24H交易量', '市场', '货币']}
+                colName={[t('discover.exchange.columns.exchange'), t('discover.exchange.columns.volume24h'), t('discover.exchange.columns.markets'), t('discover.exchange.columns.coins')]}
                 gridContent={exchangeData.exchangeArr}
                 columnWidths={['30%', '30%', '20%', '20%']}
                 showRanking={true}
@@ -976,7 +977,7 @@ const loadingTimerRef = useRef(null);
 
         {/* 涨幅榜 */}
         <MoziCard
-          title="涨幅榜"
+          title={t('home.rank.up')}
           type='tabs'
           customStyle={{ '--tabs-width': '320px' }}
           selectArr={priceData.priceSelect || []}
@@ -988,11 +989,11 @@ const loadingTimerRef = useRef(null);
         >
           <div onClick={() => router.push('/pricerank')}>
             {isPriceLoading ? (
-              <Loading tip="加载中..." />
+              <Loading tip={t('common.loading')} />
             ) : (
               <RankGrid
                 length={2}
-                colName={['币种', '涨幅']}
+                colName={[t('home.columns.symbol'), t('discover.columns.gain')]}
                 gridContent={priceData.priceArr}
                 minRows={3}
               />
@@ -1002,7 +1003,7 @@ const loadingTimerRef = useRef(null);
 
         {/* 跌幅榜 */}
         <MoziCard
-          title="跌幅榜"
+          title={t('home.rank.down')}
           type='tabs'
           customStyle={{ '--tabs-width': '320px' }}
           selectArr={downData.downSelect || []}
@@ -1014,11 +1015,11 @@ const loadingTimerRef = useRef(null);
         >
           <div onClick={() => router.push('/downrank')}>
             {isDownLoading ? (
-              <Loading tip="加载中..." />
+              <Loading tip={t('common.loading')} />
             ) : (
               <RankGrid
                 length={2}
-                colName={['币种', '跌幅']}
+                colName={[t('home.columns.symbol'), t('discover.columns.loss')]}
                 gridContent={downData.downArr}
                 minRows={3}
               />
@@ -1028,7 +1029,7 @@ const loadingTimerRef = useRef(null);
 
         {/* 波幅榜 */}
         <MoziCard
-          title="波幅榜"
+          title={t('home.rank.wave')}
           type='tabs'
           customStyle={{ '--tabs-width': '320px' }}
           selectArr={waveData.waveSelect || []}
@@ -1040,11 +1041,11 @@ const loadingTimerRef = useRef(null);
         >
           <div onClick={() => router.push('/waverank')}>
             {isWaveLoading ? (
-              <Loading tip="加载中..." />
+              <Loading tip={t('common.loading')} />
             ) : (
               <RankGrid
                 length={2}
-                colName={['币种', '波幅']}
+                colName={[t('home.columns.symbol'), t('discover.columns.volatility')]}
                 gridContent={waveData.waveArr}
                 minRows={3}
               />
@@ -1054,7 +1055,7 @@ const loadingTimerRef = useRef(null);
 
         {/* 成交额榜 */}
         <MoziCard
-          title="成交额榜"
+          title={t('home.rank.volume')}
           type='tabs'
           customStyle={{ '--tabs-width': '320px' }}
           selectArr={tradeData.tradeSelect || []}
@@ -1066,11 +1067,11 @@ const loadingTimerRef = useRef(null);
         >
           <div onClick={() => router.push('/traderank')}>
             {isTradeLoading ? (
-              <Loading tip="加载中..." />
+              <Loading tip={t('common.loading')} />
             ) : (
               <RankGrid
                 length={2}
-                colName={['币种', '成交额']}
+                colName={[t('home.columns.symbol'), t('discover.columns.turnover')]}
                 gridContent={tradeData.tradeArr}
                 minRows={3}
               />
@@ -1080,7 +1081,7 @@ const loadingTimerRef = useRef(null);
 
         {/* 新币榜 */}
         <MoziCard
-          title="新币榜"
+          title={t('home.rank.new')}
           showArrow
           hideExtraWhenEmpty
           hasData={(xinbiData.xinbiArr && xinbiData.xinbiArr.length > 0)}
@@ -1088,11 +1089,11 @@ const loadingTimerRef = useRef(null);
         >
           <div onClick={() => router.push('/newcoinrank')}>
             {isXinbiLoading ? (
-              <Loading tip="加载中..." />
+              <Loading tip={t('common.loading')} />
             ) : (
               <RankGrid
                 length={2}
-                colName={['币种', '最新价']}
+                colName={[t('home.columns.symbol'), t('home.columns.lastPrice')]}
                 gridContent={xinbiData.xinbiArr}
                 minRows={3}
               />
@@ -1102,7 +1103,7 @@ const loadingTimerRef = useRef(null);
 
         {/* 飙升榜 */}
         <MoziCard
-          title="飙升榜"
+          title={t('home.rank.surge')}
           type='tabs'
           customStyle={{ '--tabs-width': '320px' }}
           selectArr={upTradeData.upTradeSelect || []}
@@ -1122,11 +1123,11 @@ const loadingTimerRef = useRef(null);
             router.push(`/uptraderank?intervals=${encodeURIComponent(safe)}`)
           }}>
             {isUpTradeLoading ? (
-              <Loading tip="加载中..." />
+              <Loading tip={t('common.loading')} />
             ) : (
               <RankGrid
                 length={2}
-                colName={['币种', '成交额']}
+                colName={[t('home.columns.symbol'), t('discover.columns.turnover')]}
                 gridContent={upTradeData.upTradeArr}
                 minRows={3}
               />
@@ -1141,13 +1142,13 @@ const loadingTimerRef = useRef(null);
     <Layout bottomPadding={60}>
       <div className={styles.container}>
         {/* 导航栏 */}
-        <NavBar title="发现" showBack={false} showBorder={false} />
+        <NavBar title={t('common.find')} showBack={false} showBorder={false} />
         
         <div className={styles.header}>
           <Tabs activeKey={pageActiveKey} onChange={handlePageTabChange}>
-          <Tabs.Tab title="自选" key="self" />
-          <Tabs.Tab title="行情" key="market" />
-          <Tabs.Tab title="排行榜" key="rank" />
+          <Tabs.Tab title={t('discover.tabs.self')} key="self" />
+          <Tabs.Tab title={t('discover.tabs.market')} key="market" />
+          <Tabs.Tab title={t('discover.tabs.rank')} key="rank" />
         </Tabs>
         </div>
 

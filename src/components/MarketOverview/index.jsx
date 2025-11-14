@@ -1,6 +1,7 @@
 'use client';
 
 import React, { memo, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { jump2Detail } from '../../utils/core';
@@ -21,8 +22,9 @@ const CalendarIcon = `${CDN_PREFIX}/icon/find_slices/find-calendar%402x.png`;
  * 尺寸已按照原项目 rpx / 2 转换为 px
  */
 const MarketOverview = memo(() => {
-  const [smartValue, setSmartValue] = useState('暂无配置');
-  const [smartAction, setSmartAction] = useState('去配置报警');
+  const { t } = useTranslation();
+  const [smartValue, setSmartValue] = useState(t('overview.noConfig'));
+  const [smartAction, setSmartAction] = useState(t('overview.configAlarm'));
   const [smartOnClick, setSmartOnClick] = useState(() => () => {
     if (typeof window !== 'undefined') {
       window.location.href = '/addwarn';
@@ -55,8 +57,8 @@ const MarketOverview = memo(() => {
         
         const token = localStorage.getItem('token');
         if (!token) {
-          setSmartValue('暂无配置');
-          setSmartAction('去配置报警');
+          setSmartValue(t('overview.noConfig'));
+          setSmartAction(t('overview.configAlarm'));
           setSmartOnClick(() => () => {
             if (typeof window !== 'undefined') {
               window.location.href = '/addwarn';
@@ -91,8 +93,8 @@ const MarketOverview = memo(() => {
 
         const firstSymbol = chosenSymbol || symbolKeys[0];
         if (!firstSymbol) {
-          setSmartValue('暂无配置');
-          setSmartAction('去配置报警');
+          setSmartValue(t('overview.noConfig'));
+          setSmartAction(t('overview.configAlarm'));
           setSmartOnClick(() => () => {
             if (typeof window !== 'undefined') {
               window.location.href = '/addwarn';
@@ -133,7 +135,7 @@ const MarketOverview = memo(() => {
         setSmartIsUp(Number(percentRaw) > 0 ? true : (Number(percentRaw) < 0 ? false : null));
         // value 仅展示币种文本，百分比在渲染阶段插入并着色
         setSmartValue(firstSymbol);
-        setSmartAction('查看详情');
+        setSmartAction(t('overview.viewDetails'));
         setSmartOnClick(() => () => jump2Detail(firstSymbol));
       } catch (error) {
         console.error('加载智能盯盘数据失败:', error);
@@ -225,7 +227,7 @@ const MarketOverview = memo(() => {
       id: 'total-market-cap',
       icon: CoinIcon,
       iconColor: 'green',
-      title: '加密总市值',
+      title: t('overview.totalMarketCap'),
       value: marketValue,
       change: marketChange,
       onClick: () => {}
@@ -234,7 +236,7 @@ const MarketOverview = memo(() => {
       id: 'volume',
       icon: TurnoverIcon,
       iconColor: 'blue',
-      title: '成交量',
+      title: t('overview.volume'),
       value: turnoverValue,
       change: turnoverChange,
       onClick: () => {}
@@ -243,7 +245,7 @@ const MarketOverview = memo(() => {
       id: 'smart-order',
       icon: MarketMonitoringIcon,
       iconColor: 'orange',
-      title: '智能盯盘',
+      title: t('overview.smartMonitor'),
       value: smartValue,
       action: smartAction,
       onClick: smartOnClick
@@ -252,9 +254,9 @@ const MarketOverview = memo(() => {
       id: 'today',
       icon: CalendarIcon,
       iconColor: 'purple',
-      title: '公告日历',
-      value: '今日有更新',
-      desc: '去订阅',
+      title: t('overview.calendar'),
+      value: t('overview.todayUpdated'),
+      desc: t('overview.subscribe'),
       isActionButton: true,
       onClick: () => {
         if (typeof window !== 'undefined') {
@@ -289,11 +291,7 @@ const MarketOverview = memo(() => {
                     {/* 普通卡片直接展示 value；智能盯盘拆分币种+百分比并着色 */}
                     {card.id !== 'smart-order' ? (
                       <span 
-                        className={`${styles.cardValueText} ${
-                          card.value === '今日有更新' ? styles.todayUpdated : ''
-                        } ${
-                          card.value === '暂无配置' ? styles.cardValuePlaceholder : ''
-                        }`}
+                        className={`${styles.cardValueText} ${card.id === 'today' ? styles.todayUpdated : ''} ${card.id === 'smart-order' && !smartSymbol ? styles.cardValuePlaceholder : ''}`}
                       >
                         {card.value}
                       </span>

@@ -3,9 +3,11 @@
 import React, { useState } from 'react';
 import LoginModal from '../LoginModal';
 import styles from './index.module.less';
+import { useTranslation } from 'react-i18next';
 
 export default function PopLogin({ visible = false, onClose, onLoginSuccess }) {
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const { t } = useTranslation();
 
   if (!visible) return null;
 
@@ -24,8 +26,8 @@ export default function PopLogin({ visible = false, onClose, onLoginSuccess }) {
             src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/login_warn.png'}
             alt={'login-warn'}
           />
-          <div className={styles.loginTitle}>您还未登录</div>
-          <div className={styles.loginBtn} onClick={() => setShowLoginModal(true)}>登录/注册</div>
+          <div className={styles.loginTitle}>{t('auth.notLoggedIn')}</div>
+          <div className={styles.loginBtn} onClick={() => setShowLoginModal(true)}>{t('auth.loginRegister')}</div>
         </div>
       </div>
 
