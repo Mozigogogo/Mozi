@@ -1,20 +1,23 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getMarketDistribution, getFearGreedIndex, getAggregationDetail } from '../../api/market';
 import DistributionChart from './DistributionChart';
 import FearGreedIndex from './FearGreedIndex';
 import BTCMarketShare from './BTCMarketShare';
 import styles from './index.module.less';
 
-export default function MarketDistribution({ title = '涨跌分布', showUpdateTime = true }) {
+export default function MarketDistribution({ showUpdateTime = true }) {
+  const { t } = useTranslation();
+  const title = t('market.marketDistribution');
   // 恐慌贪婪指数
   const [fearGreedIndex, setFearGreedIndex] = useState(76);
-  const [fearGreedCategory, setFearGreedCategory] = useState('贪婪');
+  const [fearGreedCategory, setFearGreedCategory] = useState(t('market.fearGreed.greed'));
   
   // 涨跌分布数据
   const [distributionData, setDistributionData] = useState({
-    updateTime: '加载中...',
+    updateTime: t('common.loading'),
     chartData: [
       { range: '>10%', value: 0, type: 'up' },
       { range: '10-7', value: 0, type: 'up' },
@@ -82,7 +85,7 @@ export default function MarketDistribution({ title = '涨跌分布', showUpdateT
         
         // 获取当前时间
         const now = new Date();
-        const updateTime = `${now.getMonth() + 1}.${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} 更新`;
+        const updateTime = `${now.getMonth() + 1}.${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} ${t('common.updated')}`;
         
         setDistributionData(prev => ({
           updateTime,
@@ -126,9 +129,21 @@ export default function MarketDistribution({ title = '涨跌分布', showUpdateT
         const validIndex = Math.min(Math.max(Number(index) || 0, 0), 100);
         setFearGreedIndex(validIndex);
         
-        // 使用 API 返回的 category 字段
         if (response.data.category) {
-          setFearGreedCategory(response.data.category);
+          const raw = String(response.data.category).toLowerCase();
+          let mapped = t('market.fearGreed.neutral');
+          if (raw.includes('extreme') && raw.includes('fear') || raw.includes('极度恐惧')) {
+            mapped = t('market.fearGreed.extremeFear');
+          } else if (raw.includes('fear') || raw.includes('恐惧')) {
+            mapped = t('market.fearGreed.fear');
+          } else if (raw.includes('neutral') || raw.includes('中性')) {
+            mapped = t('market.fearGreed.neutral');
+          } else if (raw.includes('extreme') && raw.includes('greed') || raw.includes('极度贪婪')) {
+            mapped = t('market.fearGreed.extremeGreed');
+          } else if (raw.includes('greed') || raw.includes('贪婪')) {
+            mapped = t('market.fearGreed.greed');
+          }
+          setFearGreedCategory(mapped);
         }
       }
     } catch (error) {
@@ -175,7 +190,7 @@ export default function MarketDistribution({ title = '涨跌分布', showUpdateT
         <div className={styles.distributionTitle}>{title}</div>
         {showUpdateTime && (
           <div className={styles.distributionUpdateTime}>
-            {loading ? '加载中...' : distributionData.updateTime}
+            {loading ? t('common.loading') : distributionData.updateTime}
           </div>
         )}
       </div>

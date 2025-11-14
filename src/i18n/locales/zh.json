@@ -18,7 +18,8 @@
     "edit": "编辑",
     "delete": "删除",
     "share": "分享",
-    "more": "更多"
+    "more": "更多",
+    "updated": "更新"
   },
   "home": {
     "title": "墨子 - 数字货币行情社区",
@@ -28,7 +29,35 @@
     "derivatives": "衍生品专区",
     "rankList": "实时榜单",
     "opportunities": "投资机会",
-    "notice": "欢迎使用墨子数字货币行情社区"
+    "notice": "欢迎使用墨子数字货币行情社区",
+    "aiNotice": "告别盲目设价！先让AI分析走势，再设置精准报警！",
+    "searchPlaceholder": "请输入搜索的币种",
+    "noTopics": "暂无话题",
+    "discussions": "讨论",
+    "today": "今天",
+    "yesterday": "昨天",
+    "daysAgo": "{{days}}天前",
+    "rank": {
+      "self": "自选榜",
+      "up": "涨幅榜",
+      "down": "跌幅榜",
+      "wave": "波幅榜",
+      "volume": "成交额榜",
+      "new": "新币榜",
+      "surge": "飙升榜"
+    },
+    "columns": {
+      "symbol": "币种",
+      "lastPrice": "最新价",
+      "lastVolume": "最新成交额",
+      "change24h": "24小时幅度",
+      "hotIndex": "热门指数",
+      "contract": "合约",
+      "section": "版块",
+      "addFavorites": "加自选",
+      "addMonitor": "加监控"
+    },
+    "robotBubble": "嗨！我是您的加密市场分析助手，可以帮您解读行情走势和预测趋势!"
   },
   "market": {
     "price": "价格",
@@ -40,7 +69,30 @@
     "fundingRate": "资金费率",
     "positionSize": "持仓量",
     "putCallRatio": "看跌看涨比",
-    "tradeVolume": "交易量"
+    "tradeVolume": "交易量",
+    "marketDistribution": "涨跌分布",
+    "up": "上涨",
+    "neutral": "平",
+    "down": "下跌",
+    "fearGreed": {
+      "title": "恐慌贪婪指数",
+      "tooltipLowTitle": "数值越低（接近0）",
+      "tooltipLow": "投资者越恐惧，市场可能被低估；",
+      "tooltipHighTitle": "数值越高（接近100）",
+      "tooltipHigh": "投资者越贪婪，市场可能过热。",
+      "extremeFear": "极度恐惧",
+      "fear": "恐惧",
+      "neutral": "中性",
+      "greed": "贪婪",
+      "extremeGreed": "极度贪婪"
+    },
+    "btcMarketShare": {
+      "title": "BTC市场占有率",
+      "tooltipUpTitle": "占比上升",
+      "tooltipUp": "说明资金更集中在比特币，市场趋于保守；",
+      "tooltipDownTitle": "占比下降",
+      "tooltipDown": "说明资金流向山寨币，市场更活跃。"
+    }
   },
   "user": {
     "login": "登录",

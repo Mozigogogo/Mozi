@@ -6,31 +6,32 @@
 import { Popover } from 'antd-mobile';
 import styles from './index.module.less';
 import './popover-global.css';
+import { useTranslation } from 'react-i18next';
 
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
 const warnIcon = `${CDN_PREFIX}/icon/warn.png`;
 
-// Tooltip 提示内容
-const TooltipContent = () => (
+const TooltipContent = ({ t }) => (
   <div className={styles.tooltipContent}>
-    <h4 className={styles.tooltipTitle}>BTC市场占有率</h4>
+    <h4 className={styles.tooltipTitle}>{t('market.btcMarketShare.title')}</h4>
     <ul className={styles.tooltipList}>
-      <li><strong>占比上升：</strong>说明资金更集中在比特币，市场趋于保守；</li>
-      <li><strong>占比下降：</strong>说明资金流向山寨币，市场更活跃。</li>
+      <li><strong>{t('market.btcMarketShare.tooltipUpTitle')}:</strong>{t('market.btcMarketShare.tooltipUp')}</li>
+      <li><strong>{t('market.btcMarketShare.tooltipDownTitle')}:</strong>{t('market.btcMarketShare.tooltipDown')}</li>
     </ul>
   </div>
 );
 
 export default function BTCMarketShare({ percentage = '0%', change = '0%' }) {
+  const { t } = useTranslation();
   // 判断涨跌方向
   const isPositive = change.startsWith('+') || (!change.startsWith('-') && parseFloat(change) > 0);
   
   return (
     <div className={styles.indicatorItem}>
       <div className={styles.indicatorHeader}>
-        <span className={styles.indicatorTitle}>BTC市场占有率</span>
+        <span className={styles.indicatorTitle}>{t('market.btcMarketShare.title')}</span>
         <Popover
-          content={<TooltipContent />}
+          content={<TooltipContent t={t} />}
           trigger="click"
           placement="bottom"
         >
