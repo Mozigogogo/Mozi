@@ -49,7 +49,7 @@
     "columns": {
       "symbol": "币种",
       "lastPrice": "最新价",
-      "lastVolume": "最新成交额",
+      "lastVolume": "最新价",
       "change24h": "24小时幅度",
       "hotIndex": "热门指数",
       "contract": "合约",

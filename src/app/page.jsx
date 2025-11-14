@@ -570,83 +570,35 @@ export default function HomePage() {
     setRankActive(value);
   };
 
-  // 跳转到榜单列表页
+  // 跳转到榜单详情页（与发现页一致）
   const go2List = () => {
-    const arrIndex = activeArr.indexOf(rankActiveKey);
-    const requestdimData = [{
-      dim: 'today'
-    }, {
-      dim: '1_day'
-    }, {
-      dim: '3_day'
-    }, {
-      dim: '7_day'
-    }, {
-      dim: '15_day'
-    }, {
-      dim: '1_month'
-    }];
-    const requestintervalData = [{
-      intervals: 'today'
-    }, {
-      intervals: '1_day'
-    }, {
-      intervals: '3_day'
-    }, {
-      intervals: '7_day'
-    }, {
-      intervals: '15_day'
-    }, {
-      intervals: '1_month'
-    }];
-    const requestbiaoshengintervalsData = [{
-      intervals: '1_day'
-    }, {
-      intervals: '3_day'
-    }, {
-      intervals: '7_day'
-    }, {
-      intervals: '15_day'
-    }, {
-      intervals: '1_month'
-    }];
-    const selectArr = ['今日', '1天', '3天', '7天', '15天', '1个月'];
-    const selectbiaoshengArr = ['1天', '3天', '7天', '15天', '1个月'];
-    
-    jump2List({
-      interFace: footerIfList[arrIndex].interface,
-      requestData: arrIndex === 0 ? {
-        pageSize: 100,
-        pageNo: 1
-      } : arrIndex === 4 || arrIndex === 5 ? requestintervalData : arrIndex === 6 ? requestbiaoshengintervalsData : requestdimData,
-      gridTitle: colNameArr[arrIndex],
-      gridCon: [{
-        type: 'Img+Text',
-        data: ['url', 'symbol']
-      }, {
-        type: 'Text',
-        data: arrIndex === 0 ? 'currentPrice' : arrIndex === 6 ? 'movers' : arrIndex === 5 ? 'volume_24h' : 'last'
-      }, {
-        type: 'HighlightArea',
-        data: arrIndex === 0 ? 'priceChangePercentage24h' : arrIndex === 6 ? 'movers' : arrIndex === 4 || arrIndex === 5 ? 'price_24h' : 'priceRange'
-      }, {
-        type: 'AddCollect',
-        data: ['favorite', 'symbol']
-      }, {
-        type: 'AddMonitor',
-        data: 'symbol'
-      }, {
-        type: 'key',
-        data: 'symbol'
-      }, {
-        type: 'img',
-        data: 'url'
-      }],
-      rankTitle: activeArrValue[arrIndex],
-      rankName: 'Top100',
-      rankDesc: '实时更新',
-      selectArr: arrIndex === 6 ? selectbiaoshengArr : selectArr
-    });
+    switch (rankActiveKey) {
+      case 'zixuan':
+        router.push('/selfrank');
+        break;
+      case 'zhangfu':
+        router.push('/pricerank');
+        break;
+      case 'diefu':
+        router.push('/downrank');
+        break;
+      case 'zhenfu':
+        router.push('/waverank');
+        break;
+      case 'chengjiaoe':
+        router.push('/traderank');
+        break;
+      case 'xinbi':
+        router.push('/newcoinrank');
+        break;
+      case 'biaosheng': {
+        const intervals = '1_day';
+        router.push(`/uptraderank?intervals=${encodeURIComponent(intervals)}`);
+        break;
+      }
+      default:
+        router.push('/find?tab=rank');
+    }
   };
 
   // 格式化话题时间
@@ -679,22 +631,7 @@ export default function HomePage() {
           <div className={styles.scrollContent}>
             {/* 热门币种 */}
             <div className={`${styles.treemapBox} ${styles.contentCard}`} onClick={() => {
-              jump2List({
-                interFace: Interface.hot_coin,
-                gridTitle: [t('home.columns.symbol'), t('home.columns.hotIndex'), t('home.columns.change24h')],
-                gridCon: [{
-                  type: 'Text',
-                  data: 'coin'
-                }, {
-                  type: 'Text',
-                  data: 'hot'
-                }, {
-                  type: 'HighlightArea',
-                  data: 'priceChangePercent'
-                }],
-                rankTitle: t('home.hotCoins'),
-                showRanking: true
-              });
+              router.push('/hotrank?type=coin');
             }}>
               <div className={styles.treemapTitle}>{t('home.hotCoins')}</div>
               <div className={styles.centerLoading}>
@@ -714,22 +651,7 @@ export default function HomePage() {
             
             {/* 热门合约 */}
             <div className={`${styles.treemapBox} ${styles.contentCard}`} onClick={() => {
-              jump2List({
-                interFace: Interface.hot_contract,
-                gridTitle: [t('home.columns.contract'), t('home.columns.hotIndex'), t('home.columns.change24h')],
-                gridCon: [{
-                  type: 'Text',
-                  data: 'coin'
-                }, {
-                  type: 'Text',
-                  data: 'hot'
-                }, {
-                  type: 'HighlightArea',
-                  data: 'priceChangePercent'
-                }],
-                rankTitle: t('home.hotContracts'),
-                showRanking: true
-              });
+              router.push('/hotrank?type=contract');
             }}>
               <div className={styles.treemapTitle}>{t('home.hotContracts')}</div>
               <div className={styles.centerLoading}>
@@ -749,19 +671,7 @@ export default function HomePage() {
             
             {/* 热门板块 */}
             <div className={`${styles.treemapBox} ${styles.contentCard} ${styles.last}`} onClick={() => {
-              jump2List({
-                interFace: Interface.hot_industry,
-                gridTitle: [t('home.columns.section'), t('home.columns.change24h')],
-                gridCon: [{
-                  type: 'Text',
-                  data: 'section'
-                }, {
-                  type: 'HighlightArea',
-                  data: 'changes'
-                }],
-                rankTitle: t('home.hotSectors'),
-                showRanking: true
-              });
+              router.push('/hotrank?type=industry');
             }}>
               <div className={styles.treemapTitle}>{t('home.hotSectors')}</div>
               <div className={styles.centerLoading}>
