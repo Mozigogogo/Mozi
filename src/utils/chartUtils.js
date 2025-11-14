@@ -2,6 +2,9 @@ export const handleOptions = (data, type, msg) => {
   console.log('Chart data:', data, 'Type:', type);
   
   if (type === 'samebar') {
+    const labelShort = msg && typeof msg === 'object' && msg.labels && msg.labels.short ? msg.labels.short : '空';
+    const labelLong = msg && typeof msg === 'object' && msg.labels && msg.labels.long ? msg.labels.long : '多';
+    const labelRatio = msg && typeof msg === 'object' && msg.labels && msg.labels.ratio ? msg.labels.ratio : '多空比';
     return {
       tooltip: {
         trigger: 'axis',
@@ -11,7 +14,7 @@ export const handleOptions = (data, type, msg) => {
       },
       legend: {
         selectedMode: false,
-        data: ['空', '多', '多空比'],
+        data: [labelShort, labelLong, labelRatio],
         top: '3%',
         left: 'center',
         itemWidth: 20,
@@ -55,14 +58,14 @@ export const handleOptions = (data, type, msg) => {
       ],
       series: [
         {
-          name: '空',
+          name: labelShort,
           type: 'bar',
           stack: 'total',
           color: '#FA5F5F',
           data: data.shortData
         },
         {
-          name: '多',
+          name: labelLong,
           type: 'bar',
           stack: 'total',
           color: '#11B787',
@@ -208,6 +211,9 @@ export const handleOptions = (data, type, msg) => {
   }
 
   if (type === 'treemap') {
+    const msgText = typeof msg === 'object' ? (msg.tooltipTitle || '持仓量') : msg;
+    const isPositionsize = typeof msg === 'object' ? msg.context === 'positionsize' : (msg === '持仓量');
+    const isTradevol = typeof msg === 'object' ? msg.context === 'tradevol' : (msg === '成交量');
     const baseConfig = {
       series: [
         {
@@ -246,7 +252,7 @@ export const handleOptions = (data, type, msg) => {
           let name = info.name;
           let tip = `
               ${name}
-              ${msg}: ${valueDisplay}
+              ${msgText}: ${valueDisplay}
           `;
           return tip;
         },
@@ -260,7 +266,7 @@ export const handleOptions = (data, type, msg) => {
     };
     
     // 如果是成交量或持仓量界面，添加特殊配置让图表占满
-    if (msg === '成交量' || msg === '持仓量') {
+    if (isTradevol || isPositionsize) {
       baseConfig.series[0] = {
         ...baseConfig.series[0],
         top: 0,
@@ -282,11 +288,15 @@ export const handleOptions = (data, type, msg) => {
     console.log('📊 barData:', data?.barData);
     console.log('📊 lineData:', data?.lineData);
     
+    const isPositionsize = typeof msg === 'object' ? msg.context === 'positionsize' : (msg === '持仓');
+    const isTradevol = typeof msg === 'object' ? msg.context === 'tradevol' : (msg === '成交额');
+    const leftName = typeof msg === 'object' ? (msg.leftName || '持仓') : msg;
+    const rightName = typeof msg === 'object' && msg.rightName ? msg.rightName : '价格';
     const baseConfig = {
       grid: {
         // 参考原项目：持仓页面增加右侧边距以确保Y轴标签完整显示
-        left: msg === '持仓' ? '10%' : '15%',
-        right: msg === '持仓' ? '15%' : '15%',
+        left: isPositionsize ? '10%' : '15%',
+        right: isPositionsize ? '15%' : '15%',
         top: '12%',
         bottom: '25%',
         containLabel: false
@@ -314,7 +324,7 @@ export const handleOptions = (data, type, msg) => {
       legend: {
         show: true,
         top: '0%',
-        data: [msg, '价格'],
+        data: [leftName, rightName],
         selectedMode: false
       },
       xAxis: [
@@ -326,10 +336,10 @@ export const handleOptions = (data, type, msg) => {
           },
           axisLabel: {
             // 历史持仓量使用更短的标签并取消旋转
-            rotate: msg === '持仓' ? 0 : 45,
+            rotate: isPositionsize ? 0 : 45,
             fontSize: 10,
             formatter: (value) => {
-              if (msg === '持仓') {
+              if (isPositionsize) {
                 try {
                   const str = String(value);
                   const m = str.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
@@ -358,23 +368,23 @@ export const handleOptions = (data, type, msg) => {
       yAxis: [
         {
           type: 'value',
-          name: msg,
+          name: leftName,
           position: 'left',
           // 左侧：对齐原项目逻辑——持仓页面去掉美元符号，并按“亿”为单位展示整数
           min: function(value) {
-            if (msg === '持仓') {
+            if (isPositionsize) {
               return Math.floor(value.min * 0.9);
             }
             return undefined;
           },
-          minInterval: msg === '持仓' ? 1 : undefined,
+          minInterval: isPositionsize ? 1 : undefined,
           axisLabel: {
             formatter: (value) => {
-              if (msg === '成交额') {
+              if (isTradevol) {
                 // 成交额页面：去掉$符号
                 const formatted = data?.yAxisLeftSlot ? data.yAxisLeftSlot.replace('{}', value) : value;
                 return formatted.toString().replace('$', '');
-              } else if (msg === '持仓') {
+              } else if (isPositionsize) {
                 // 历史持仓量：单位已是“亿”，展示整数并去掉$符号
                 const intValue = Math.floor(value);
                 const formatted = data?.yAxisLeftSlot ? data.yAxisLeftSlot.replace('{}', intValue) : intValue;
@@ -386,19 +396,19 @@ export const handleOptions = (data, type, msg) => {
         },
         {
           type: 'value',
-          name: '价格',
+          name: rightName,
           position: 'right',
           // 右侧：对齐原项目逻辑——持仓页面把“千”转换为“万”，不展示小数，并隐藏辅助线
-          min: msg === '持仓' ? 20000 : undefined,
-          max: msg === '持仓' ? function(value) { return value.max; } : undefined,
-          splitLine: { show: msg === '持仓' ? false : true },
+          min: isPositionsize ? 20000 : undefined,
+          max: isPositionsize ? function(value) { return value.max; } : undefined,
+          splitLine: { show: isPositionsize ? false : true },
           axisLabel: {
             formatter: (value) => {
-              if (msg === '成交额') {
+              if (isTradevol) {
                 // 成交额：转换为“万”单位
                 const tenThousandValue = (value / 10000).toFixed(1);
                 return `${tenThousandValue}万`;
-              } else if (msg === '持仓') {
+              } else if (isPositionsize) {
                 // 历史持仓量：当前数据为“千”，转换为“万”，不显示小数
                 const tenThousandValue = Math.floor(value / 10);
                 return `${tenThousandValue}万`;
@@ -410,7 +420,7 @@ export const handleOptions = (data, type, msg) => {
       ],
       series: [
         {
-          name: msg || '持仓',
+          name: leftName || '持仓',
           type: 'bar',
           data: data?.barData || [],
           itemStyle: {
@@ -419,7 +429,7 @@ export const handleOptions = (data, type, msg) => {
           barWidth: '60%'
         },
         {
-          name: '价格',
+          name: rightName,
           type: 'line',
           yAxisIndex: 1,
           data: data?.lineData || [],

@@ -68,7 +68,7 @@
     "low24h": "24h最低",
     "fundingRate": "资金费率",
     "positionSize": "持仓量",
-    "putCallRatio": "看跌看涨比",
+    "putCallRatio": "多空比",
     "tradeVolume": "交易量",
     "marketDistribution": "涨跌分布",
     "up": "上涨",
@@ -382,5 +382,46 @@
     "note2": "如果您的推荐人购买会员资格，您将获得积分和20%的费用回扣。",
     "note3": "推荐有效的前提是被邀请用户必须输入邀请码",
     "completed": "已完成"
+  }
+  ,
+  "pcr": {
+    "title": "多空比",
+    "coin": "币种",
+    "tabs": {
+      "activeBuySell": "主动买卖量比",
+      "accountRatio": "人数多空比",
+      "topAccountRatio": "大账户人数多空比",
+      "holdingsRatio": "持仓多空比",
+      "topHoldingsRatio": "大账户持仓多空比"
+    },
+    "section": {
+      "current": "当前多空比",
+      "history": "历史多空比"
+    },
+    "chart": {
+      "exchange": "交易所",
+      "long": "多",
+      "short": "空",
+      "ratio": "多空比"
+    },
+    "empty": "暂无数据",
+    "loadFailed": "数据加载失败",
+    "fetchFailed": "数据获取失败",
+    "noChartData": "暂无图表数据"
+  }
+  ,
+  "positionsize": {
+    "title": "持仓量",
+    "coin": "币种",
+    "section": {
+      "current": "当前持仓量",
+      "history": "历史持仓量"
+    },
+    "chart": {
+      "holdings": "持仓",
+      "price": "价格"
+    },
+    "loadFailed": "数据加载失败",
+    "fetchFailed": "数据获取失败"
   }
 }
