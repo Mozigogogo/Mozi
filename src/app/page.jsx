@@ -44,6 +44,9 @@ const HOME_BANNERS = [
 // 提醒图标
 const HomeAlertIcon = `${CDN_PREFIX}/icon/home-alert.png`;
 
+// 公告栏显示状态（可持久隐藏）
+const NOTICE_HIDE_KEY = 'hideHomeNotice';
+
 // 搜索图标
 const SearchIcon = `${CDN_PREFIX}/icon/community/search.png`;
 
@@ -188,6 +191,14 @@ export default function HomePage() {
   const robotX = useSpring(useTransform(mouseX, [0, 1], [0, 0]), springConfig);
   const robotY = useSpring(useTransform(mouseY, [0, 1], [0, 0]), springConfig);
   const needLoop = useRef(true);
+
+  // 首页公告栏显示控制
+  const [showNotice, setShowNotice] = useState(true);
+  useEffect(() => {
+    try {
+      setShowNotice(localStorage.getItem(NOTICE_HIDE_KEY) !== '1');
+    } catch {}
+  }, []);
 
   // WebSocket 连接 - 进入页面自动连接并握手
   const { sendMessage, isOpen, lastMessage, readyState } = useWebSocket(WS_URL, {
@@ -966,7 +977,7 @@ export default function HomePage() {
             </Swiper>
 
             {/* 搜索框（层叠在 Banner 上） */}
-            <div className={styles.header} onClick={() => router.push('/search')}>
+            <div className={styles.header} style={{ bottom: showNotice ? 38 : 23 }} onClick={() => router.push('/search')}>
               <div className={styles.searchBox}>
                 <div className={styles.searchInput}>请输入搜索的币种</div>
                 <div className={styles.searchCancel}>
@@ -976,16 +987,30 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* 公告栏（层叠在 Banner 上） */}
-            <div className={styles.notice}>
-              <NoticeBar
-                className={styles.noticeItem}
-                content="告别盲目设价！先让AI分析走势，再设置精准报警！"
-                color="alert"
-                wrap
-                icon={<img src={HomeAlertIcon} className={styles.noticeIcon} alt="alert" />}
-              />
-            </div>
+            {/* 公告栏（层叠在 Banner 上，可关闭） */}
+            {showNotice ? (
+              <div className={styles.notice}>
+                <NoticeBar
+                  className={styles.noticeItem}
+                  content="告别盲目设价！先让AI分析走势，再设置精准报警！"
+                  color="alert"
+                  wrap
+                  icon={<img src={HomeAlertIcon} className={styles.noticeIcon} alt="alert" />}
+                  extra={
+                    <span
+                      className={styles.noticeClose}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowNotice(false);
+                        try { localStorage.setItem(NOTICE_HIDE_KEY, '1'); } catch {}
+                      }}
+                      aria-label="关闭"
+                      role="button"
+                    >✕</span>
+                  }
+                />
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -1132,7 +1157,7 @@ export default function HomePage() {
                     ease: "easeInOut"
                   }}
                 >
-                  <BubbleText text="嗨！我是您的加密市场分析助手，可以帮您解读行情走势和预测趋势" />
+                  <BubbleText text="嗨！我是您的加密市场分析助手，可以帮您解读行情走势和预测趋势!" />
                   <div className={styles.bubbleArrow}></div>
                 </motion.div>
               </motion.div>

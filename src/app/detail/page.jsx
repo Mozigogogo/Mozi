@@ -1560,7 +1560,7 @@ ${coinInfo.name || symbol} (${symbol})
                     ease: "easeInOut"
                   }}
                 >
-                  <BubbleText text="嗨！我是您的加密市场分析助手，可以帮您解读行情走势和预测趋势" />
+                  <BubbleText text="嗨！我是您的加密市场分析助手，可以帮您解读行情走势和预测趋势!" />
                   <div className={styles.bubbleArrow}></div>
                 </motion.div>
               </motion.div>
