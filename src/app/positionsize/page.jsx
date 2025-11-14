@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import { Picker, Toast } from 'antd-mobile';
 import { request } from '@/utils/request';
@@ -12,6 +13,7 @@ import styles from './page.module.less';
 
 export default function Positionsize() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [cexArr, setCexArr] = useState([]);
   const [cexSelected, setCexSelected] = useState('');
   const [coinArr, setCoinArr] = useState([]);
@@ -92,6 +94,7 @@ export default function Positionsize() {
       getData({ coin: allCoinData.data[0], exchange: allCexData.data[0] });
     } catch (error) {
       console.error('初始化数据失败:', error);
+      Toast.show(t('positionsize.loadFailed'));
     }
   };
 
@@ -134,7 +137,7 @@ export default function Positionsize() {
       }
       
       if (chartRef.current && psTmpData && psTmpData.length > 0) {
-        const curOption = handleOptions(psTmpData, 'treemap', '持仓量');
+        const curOption = handleOptions(psTmpData, 'treemap', { tooltipTitle: t('positionsize.chart.holdings'), context: 'positionsize' });
         console.log('设置当前持仓量图表配置:', curOption);
         chartRef.current.setOption(curOption);
         setCurLoading(false);
@@ -185,7 +188,7 @@ export default function Positionsize() {
       
       if (chartRef1.current) {
         try {
-          const hisOption = handleOptions(psHisData.data, 'linebar', '持仓');
+          const hisOption = handleOptions(psHisData.data, 'linebar', { leftName: t('positionsize.chart.holdings'), rightName: t('positionsize.chart.price'), context: 'positionsize' });
           console.log('⚙️ 历史持仓量图表配置:', hisOption);
           console.log('📈 series数据:', hisOption.series);
           chartRef1.current.setOption(hisOption, true); // 第二个参数true表示不合并，完全替换
@@ -201,7 +204,7 @@ export default function Positionsize() {
       }
     } catch (error) {
       console.error('获取数据失败:', error);
-      Toast.show('数据获取失败');
+      Toast.show(t('positionsize.fetchFailed'));
       setCurLoading(false);
       setHisLoading(false);
     }
@@ -225,18 +228,18 @@ export default function Positionsize() {
 
   return (
     <>
-      <NavBar title="持仓量" />
+      <NavBar title={t('positionsize.title')} />
       <div className={styles.pcrBox}>
         {/* 币种选择器 - 白色胶囊样式 */}
         <div className={styles.pickerList}>
           <div className={`${styles.pickerItem} ${styles.coinPickerWhite}`}>
-            <div className={styles.pickerTitle}>币种</div>
+            <div className={styles.pickerTitle}>{t('positionsize.coin')}</div>
             <Picker
               columns={[coinArr]}
               value={[coinSelected]}
               onConfirm={onCoinChange}
-              cancelText="取消"
-              confirmText="确定"
+              cancelText={t('common.cancel')}
+              confirmText={t('common.confirm')}
             >
               {(items, actions) => (
                 <div 
@@ -268,7 +271,7 @@ export default function Positionsize() {
         </div>
 
         {/* 当前持仓量 */}
-        <div className={styles.sectionHeader}>当前持仓量</div>
+        <div className={styles.sectionHeader}>{t('positionsize.section.current')}</div>
         <div className={styles.currentPCR}>
           <div className={`${styles.currentPCRChart} ${styles.zoomBottomRight}`}>
             {curLoading && (
@@ -290,7 +293,7 @@ export default function Positionsize() {
         </div>
 
         {/* 历史持仓量 */}
-        <div className={styles.sectionHeader}>历史持仓量</div>
+        <div className={styles.sectionHeader}>{t('positionsize.section.history')}</div>
         <div className={styles.currentPCR}>
           <div className={styles.currentPCRChart}>
             {hisLoading && (

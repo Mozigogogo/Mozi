@@ -383,4 +383,45 @@
     "note3": "The referral is valid only if the invited user enters the invitation code",
     "completed": "Completed"
   }
+  ,
+  "pcr": {
+    "title": "Long/Short Ratio",
+    "coin": "Coin",
+    "tabs": {
+      "activeBuySell": "Buy/Sell Ratio",
+      "accountRatio": "Accounts Long/Short",
+      "topAccountRatio": "Top Accounts Long/Short",
+      "holdingsRatio": "Holdings Long/Short",
+      "topHoldingsRatio": "Top Accounts Holdings"
+    },
+    "section": {
+      "current": "Current Ratio",
+      "history": "Historical Ratio"
+    },
+    "chart": {
+      "exchange": "Exchange",
+      "long": "Long",
+      "short": "Short",
+      "ratio": "Long/Short Ratio"
+    },
+    "empty": "No Data",
+    "loadFailed": "Data load failed",
+    "fetchFailed": "Data fetch failed",
+    "noChartData": "No chart data"
+  }
+  ,
+  "positionsize": {
+    "title": "Open Interest",
+    "coin": "Coin",
+    "section": {
+      "current": "Current Open Interest",
+      "history": "Historical Open Interest"
+    },
+    "chart": {
+      "holdings": "Open Interest",
+      "price": "Price"
+    },
+    "loadFailed": "Data load failed",
+    "fetchFailed": "Data fetch failed"
+  }
 }

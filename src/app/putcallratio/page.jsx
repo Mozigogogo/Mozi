@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import { Picker, Toast } from 'antd-mobile';
 import * as echarts from 'echarts';
 import NavBar from '@/components/NavBar';
@@ -14,12 +15,21 @@ import styles from './page.module.less';
 
 const PutCallRatio = () => {
   const router = useRouter();
-  const [ratioSelected, setRatioSelected] = useState('主动买卖量比');
+  const { t } = useTranslation();
+
+  const ratioTabs = useMemo(() => [
+    t('pcr.tabs.activeBuySell'),
+    t('pcr.tabs.accountRatio'),
+    t('pcr.tabs.topAccountRatio'),
+    t('pcr.tabs.holdingsRatio'),
+    t('pcr.tabs.topHoldingsRatio')
+  ], [t]);
+
+  const [ratioSelected, setRatioSelected] = useState(ratioTabs[0]);
   const [coinSelected, setCoinSelected] = useState('');
   const [cexSelected, setCexSelected] = useState('');
   const [coinArr, setCoinArr] = useState([]);
   const [cexArr, setCexArr] = useState([]);
-  const [ratioArr] = useState(['主动买卖量比', '人数多空比', '大账户人数多空比', '持仓多空比', '大账户持仓多空比']);
   const [ratioTypeArr] = useState(['but_sell_ratio', 'global_account_ratio', 'top_account_ratio', 'global_hold_ratio', 'top_hold_ratio']);
   const [curPCRData, setCurPCRData] = useState({
     loading: true,
@@ -70,7 +80,7 @@ const PutCallRatio = () => {
         setCexSelected(allCexData.data[0]);
 
         // 获取初始数据
-        const ratioTypeSelected = ratioTypeArr[ratioArr.indexOf(ratioSelected)];
+        const ratioTypeSelected = ratioTypeArr[ratioTabs.indexOf(ratioSelected)];
         getData({
           ratioTypeSelected,
           coin: allCoinData.data[0],
@@ -78,7 +88,7 @@ const PutCallRatio = () => {
         });
       } catch (error) {
         console.error('初始化数据失败:', error);
-        Toast.show('数据加载失败');
+        Toast.show(t('pcr.loadFailed'));
       }
     };
 
@@ -111,9 +121,9 @@ const PutCallRatio = () => {
         chartData.current = {
           data: pcrHisData.data,
           type: 'samebar',
-          msg: '历史多空比'
+          msg: t('pcr.section.history')
         };
-        chartRef.current.setOption(handleOptions(pcrHisData.data, 'samebar'));
+        chartRef.current.setOption(handleOptions(pcrHisData.data, 'samebar', { labels: { short: t('pcr.chart.short'), long: t('pcr.chart.long'), ratio: t('pcr.chart.ratio') } }));
         setHisLoading(false);
       }
 
@@ -147,7 +157,7 @@ const PutCallRatio = () => {
       });
     } catch (error) {
       console.error('获取数据失败:', error);
-      Toast.show('数据获取失败');
+      Toast.show(t('pcr.fetchFailed'));
       setCurPCRData(prev => ({ ...prev, loading: false }));
       setHisLoading(false);
     }
@@ -156,7 +166,7 @@ const PutCallRatio = () => {
   // Tab点击切换类型
   const onRatioTabClick = (ratio) => {
     setRatioSelected(ratio);
-    const ratioTypeSelected = ratioTypeArr[ratioArr.indexOf(ratio)];
+    const ratioTypeSelected = ratioTypeArr[ratioTabs.indexOf(ratio)];
     getData({ ratioTypeSelected });
   };
 
@@ -165,7 +175,7 @@ const PutCallRatio = () => {
     const selectedCoin = coinArr[value[0]];
     setCoinSelected(selectedCoin);
     
-    const ratioTypeSelected = ratioTypeArr[ratioArr.indexOf(ratioSelected)];
+    const ratioTypeSelected = ratioTypeArr[ratioTabs.indexOf(ratioSelected)];
     getData({ ratioTypeSelected, coin: selectedCoin });
   };
 
@@ -175,7 +185,7 @@ const PutCallRatio = () => {
     const selectedCex = cexArr[value[0]];
     setCexSelected(selectedCex);
     
-    const ratioTypeSelected = ratioTypeArr[ratioArr.indexOf(ratioSelected)];
+    const ratioTypeSelected = ratioTypeArr[ratioTabs.indexOf(ratioSelected)];
     getData({ ratioTypeSelected, exchange: selectedCex, getType: 'his' });
   };
 
@@ -186,24 +196,24 @@ const PutCallRatio = () => {
       const dataStr = encodeURIComponent(JSON.stringify(chartData.current));
       router.push(`/landscapechart?data=${dataStr}`);
     } else {
-      Toast.show('暂无图表数据');
+      Toast.show(t('pcr.noChartData'));
     }
   };
 
   return (
       <>
-        <NavBar title="多空比" />
+        <NavBar title={t('pcr.title')} />
         <div className={styles.pcrBox}>
         {/* 币种选择器 - 白色胶囊样式 */}
         <div className={styles.pickerList}>
           <div className={`${styles.pickerItem} ${styles.coinPickerWhite}`}>
-            <div className={styles.pickerTitle}>币种</div>
+            <div className={styles.pickerTitle}>{t('pcr.coin')}</div>
             <Picker
               columns={[coinArr.map((item, index) => ({ label: item, value: index }))]}
               value={[coinArr.indexOf(coinSelected)]}
               onConfirm={onCoinChange}
-              cancelText="取消"
-              confirmText="确定"
+              cancelText={t('common.cancel')}
+              confirmText={t('common.confirm')}
             >
               {(items, actions) => (
                 <div 
@@ -223,7 +233,7 @@ const PutCallRatio = () => {
 
         {/* 类型Tab切换 */}
         <div className={styles.ratioTabs}>
-          {ratioArr.map((ratio, index) => (
+          {ratioTabs.map((ratio, index) => (
             <div
               key={index}
               className={`${styles.ratioTab} ${ratioSelected === ratio ? styles.active : ''}`}
@@ -235,7 +245,7 @@ const PutCallRatio = () => {
         </div>
 
         {/* 当前多空比 */}
-        <div className={styles.sectionHeader}>当前多空比</div>
+        <div className={styles.sectionHeader}>{t('pcr.section.current')}</div>
         <div className={styles.currentPCR}>
           <div className={`${styles.currentPCRChart} ${styles.compact}`} style={{ height: curPCRData.loading ? '75px' : 'auto' }}>
             {curPCRData.loading && (
@@ -247,13 +257,13 @@ const PutCallRatio = () => {
               <MoziPCRColChart data={curPCRData.data.list} />
             ) : null}
             {!curPCRData.loading && curPCRData.close && (
-              <div className={styles.emptyData}>暂无数据</div>
+              <div className={styles.emptyData}>{t('pcr.empty')}</div>
             )}
           </div>
         </div>
 
         {/* 历史多空比 */}
-        <div className={styles.sectionHeader}>历史多空比</div>
+        <div className={styles.sectionHeader}>{t('pcr.section.history')}</div>
         <div className={styles.currentPCR}>
           <div className={styles.header}>
             <div>
@@ -261,8 +271,8 @@ const PutCallRatio = () => {
                 columns={[cexArr.map((item, index) => ({ label: item, value: index }))]}
                 value={[cexArr.indexOf(cexSelected)]}
                 onConfirm={onExchangeChange}
-                cancelText="取消"
-                confirmText="确定"
+                cancelText={t('common.cancel')}
+                confirmText={t('common.confirm')}
               >
                 {(items, actions) => (
                   <div 
