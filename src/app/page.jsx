@@ -461,66 +461,86 @@ export default function HomePage() {
   const fetchRankingData = async () => {
     setFooterLoading(true);
     try {
-      const tempFooterList = [];
+      const results = new Array(footerIfList.length).fill([]);
 
-      for (let i = 0; i < footerIfList.length; i++) {
+      const upIndex = activeArr.indexOf('zhangfu');
+      try {
+        const upRes = await request({
+          url: footerIfList[upIndex].interface,
+          data: footerIfList[upIndex].data
+        });
+        const listData = upRes.data || [];
+        if (Array.isArray(listData) && listData.length > 0) {
+          const slicedData = listData.slice(0, 10);
+          results[upIndex] = slicedData.map((item) => ({
+            symbol: (
+              <div className={styles.ownTitle}>
+                <img className={styles.ownImg} src={item.url} alt={item.symbol} />
+                {item.symbol}
+              </div>
+            ),
+            last: item.last || item.volume_24h,
+            priceRange: <HighlightArea value={item.priceRange || item.movers || item.price_24h} />,
+            own: <AddCollect symbol={item.symbol} isOwn={item.favorite} />,
+            monitor: <AddMonitor symbol={item.symbol} />,
+            key: item.symbol
+          }));
+        }
+      } catch (e) {
+        results[upIndex] = [];
+      }
+      setFooterArr(results);
+
+      const promises = footerIfList.map(async (cfg, i) => {
+        if (i === upIndex) return;
         try {
-          const itemListData = await request({
-            url: footerIfList[i].interface,
-            data: footerIfList[i].data
-          });
+          const itemListData = await request({ url: cfg.interface, data: cfg.data });
           let tempData = [];
           if (i === 0) {
-            // 自选榜，数据额外处理
             const listData = itemListData.data?.list || itemListData.data || [];
             if (Array.isArray(listData) && listData.length > 0) {
-              tempData = listData.map((item) => {
-                return {
-                  symbol: (
-                    <div className={styles.ownTitle}>
-                      <img className={styles.ownImg} src={item.url} alt={item.symbol} />
-                      {item.symbol}
-                    </div>
-                  ),
-                  currentPrice: item.currentPrice,
-                  priceChange24h: <HighlightArea value={item.priceChangePercentage24h} />,
-                  own: <AddCollect symbol={item.symbol} isOwn={item.favorite} />,
-                  monitor: <AddMonitor symbol={item.symbol} />,
-                  key: item.symbol,
-                };
-              });
+              tempData = listData.map((item) => ({
+                symbol: (
+                  <div className={styles.ownTitle}>
+                    <img className={styles.ownImg} src={item.url} alt={item.symbol} />
+                    {item.symbol}
+                  </div>
+                ),
+                currentPrice: item.currentPrice,
+                priceChange24h: <HighlightArea value={item.priceChangePercentage24h} />,
+                own: <AddCollect symbol={item.symbol} isOwn={item.favorite} />,
+                monitor: <AddMonitor symbol={item.symbol} />,
+                key: item.symbol,
+              }));
             }
           } else {
             const listData = itemListData.data || [];
-
             if (Array.isArray(listData) && listData.length > 0) {
               const slicedData = listData.slice(0, 10);
-              tempData = slicedData.map((item) => {
-                return {
-                  symbol: (
-                    <div className={styles.ownTitle}>
-                      <img className={styles.ownImg} src={item.url} alt={item.symbol} />
-                      {item.symbol}
-                    </div>
-                  ),
-                  last: item.last || item.volume_24h,
-                  priceRange: <HighlightArea value={item.priceRange || item.movers || item.price_24h} />,
-                  own: <AddCollect symbol={item.symbol} isOwn={item.favorite} />,
-                  monitor: <AddMonitor symbol={item.symbol} />,
-                  key: item.symbol
-                };
-              });
+              tempData = slicedData.map((item) => ({
+                symbol: (
+                  <div className={styles.ownTitle}>
+                    <img className={styles.ownImg} src={item.url} alt={item.symbol} />
+                    {item.symbol}
+                  </div>
+                ),
+                last: item.last || item.volume_24h,
+                priceRange: <HighlightArea value={item.priceRange || item.movers || item.price_24h} />,
+                own: <AddCollect symbol={item.symbol} isOwn={item.favorite} />,
+                monitor: <AddMonitor symbol={item.symbol} />,
+                key: item.symbol
+              }));
             }
           }
-          tempFooterList.push(tempData);
-          } catch (error) {
-            console.error(`榜单${i}请求失败:`, error);
-            // 即使某个榜单失败，也要推入空数组保持索引一致
-            tempFooterList.push([]);
-          }
+          results[i] = tempData;
+        } catch (error) {
+          console.error(`榜单${i}请求失败:`, error);
+          results[i] = [];
         }
+      });
 
-        setFooterArr(tempFooterList);
+      await Promise.allSettled(promises);
+      setFooterArr(results);
     } catch (error) {
       console.error('获取实时榜单数据失败:', error);
     } finally {
