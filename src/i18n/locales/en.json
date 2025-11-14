@@ -424,4 +424,90 @@
     "loadFailed": "Data load failed",
     "fetchFailed": "Data fetch failed"
   }
+  ,
+  "fundingrate": {
+    "title": "Funding Rate",
+    "tabs": {
+      "current": "Current Rate",
+      "history": "Historical Rate"
+    },
+    "section": {
+      "current": "Current Rate",
+      "history": "Historical Rate"
+    },
+    "coin": "Coin",
+    "viewMore": "View More",
+    "fold": "Fold",
+    "empty": "No Data",
+    "select": "Please Select",
+    "unit": {
+      "m": "M",
+      "k": "K"
+    }
+  }
+  ,
+  "tradevol": {
+    "title": "Trading Amount",
+    "coin": "Coin",
+    "section": {
+      "current": "Current Amount",
+      "history": "Historical Amount"
+    },
+    "chart": {
+      "volume": "Volume",
+      "amount": "Amount",
+      "price": "Price"
+    },
+    "loadFailed": "Data load failed",
+    "fetchFailed": "Data fetch failed"
+  }
+  ,
+  "detail": {
+    "title": "Coin Detail",
+    "marketCap": "Market Cap",
+    "tabs": {
+      "chart": "Chart",
+      "market": "Market",
+      "roi": "ROI"
+    },
+    "empty": {
+      "market": "No market data"
+    },
+    "market": {
+      "exchange": "Exchange",
+      "lastPrice": "Last Price",
+      "change24h": "24h Change",
+      "volume24h": "24h Volume",
+      "amount24h": "24h Amount"
+    },
+    "actions": {
+      "favorite": "Favorite",
+      "alert": "Alert",
+      "share": "Share",
+      "community": "Community"
+    },
+    "roi": {
+      "daily": "Daily Return",
+      "weekly": "Weekly Return",
+      "monthly": "Monthly Return",
+      "yearly": "Yearly Return"
+    },
+    "header": {
+      "high24h": "24h High",
+      "low24h": "24h Low",
+      "fdv": "Fully Diluted Valuation",
+      "marketCapChange24h": "24h MktCap Change",
+      "marketCapChangePercent24h": "24h MktCap %",
+      "athDate": "ATH Date",
+      "atlDate": "ATL Date",
+      "totalVolume24h": "24h Volume",
+      "totalSupply": "Total Supply",
+      "circulatingSupply": "Circulating Supply",
+      "ath": "ATH",
+      "athChangePercent": "ATH %",
+      "atl": "ATL",
+      "atlChangePercent": "ATL %"
+    },
+    "robotBubble": "Hi! I'm your crypto market assistant. I help interpret trends and provide forecasts."
+  }
 }

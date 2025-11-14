@@ -19,6 +19,7 @@ import { request } from '../../utils/request';
 import { Interface, LOOPTIME, WS_URL } from '../../utils/constants';
 import { formatNumber, formatPercent, jump2NoTab } from '../../utils/core';
 import { MoziWebSocket } from '../../utils/moziWebSocket';
+import { useTranslation } from 'react-i18next';
 import {
   WS_EVENTS,
   PLATFORMS,
@@ -41,6 +42,7 @@ export default function DetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const symbol = searchParams.get('symbol') || '';
+  const { t } = useTranslation();
   
   // 状态定义
   const [coinInfo, setCoinInfo] = useState(null);
@@ -110,23 +112,23 @@ export default function DetailPage() {
         
         // 设置详细信息
         const headerInfoLeft = [
-          { name: '24H最高价', value: coinData.high_24h },
-          { name: '24H最低价', value: coinData.low_24h },
-          { name: '稀释市值', value: coinData.fullyDilutedValuation },
-          { name: '24H市值变化', value: coinData.marketCapChange_24h },
-          { name: '24H市值变化百分比', value: coinData.marketCapChangePercentage_24h },
-          { name: '历史最高价时间', value: coinData.athDate },
-          { name: '历史最低价时间', value: coinData.atlDate }
+          { name: t('detail.header.high24h'), value: coinData.high_24h },
+          { name: t('detail.header.low24h'), value: coinData.low_24h },
+          { name: t('detail.header.fdv'), value: coinData.fullyDilutedValuation },
+          { name: t('detail.header.marketCapChange24h'), value: coinData.marketCapChange_24h },
+          { name: t('detail.header.marketCapChangePercent24h'), value: coinData.marketCapChangePercentage_24h },
+          { name: t('detail.header.athDate'), value: coinData.athDate },
+          { name: t('detail.header.atlDate'), value: coinData.atlDate }
         ];
         
         const headerInfoRight = [
-          { name: '24H成交额', value: coinData.totalVolume },
-          { name: '总供应量', value: coinData.totalSupply },
-          { name: '流通供应量', value: coinData.circulatingSupply },
-          { name: '历史最高价', value: coinData.ath },
-          { name: '历史最高价百分比', value: coinData.athChangePercentage },
-          { name: '历史最低价', value: coinData.atl },
-          { name: '历史最低价百分比', value: coinData.atlChangePercentage }
+          { name: t('detail.header.totalVolume24h'), value: coinData.totalVolume },
+          { name: t('detail.header.totalSupply'), value: coinData.totalSupply },
+          { name: t('detail.header.circulatingSupply'), value: coinData.circulatingSupply },
+          { name: t('detail.header.ath'), value: coinData.ath },
+          { name: t('detail.header.athChangePercent'), value: coinData.athChangePercentage },
+          { name: t('detail.header.atl'), value: coinData.atl },
+          { name: t('detail.header.atlChangePercent'), value: coinData.atlChangePercentage }
         ];
         
         setCoinInfoLeft(headerInfoLeft);
@@ -1226,7 +1228,7 @@ ${coinInfo.name || symbol} (${symbol})
           </div>
           <div className={styles.right}>
             <div className={styles.marketRank}>No.{coinInfo.marketCapRank}</div>
-            <div className={styles.marketItem}>流通市值 {coinInfo.marketCap}</div>
+            <div className={styles.marketItem}>{t('detail.marketCap')} {coinInfo.marketCap}</div>
           </div>
         </div>
         
@@ -1293,9 +1295,9 @@ ${coinInfo.name || symbol} (${symbol})
   const renderROI = () => {
     if (roiLoading) {
       return (
-        <MoziCard title="投资回报率">
+        <MoziCard title={t('detail.tabs.roi')}>
           <div className={`${styles.box} ${styles.headerLoading}`} style={{ display: 'flex' }}>
-            <Loading tip={null} size={24} />
+            <Loading tip={t('common.loading')} size={24} />
           </div>
         </MoziCard>
       );
@@ -1308,14 +1310,14 @@ ${coinInfo.name || symbol} (${symbol})
     };
 
     const cards = [
-      { value: roiData.priceChange1Day, label: '日回报率' },
-      { value: roiData.priceChange7Day, label: '周回报率' },
-      { value: roiData.priceChange1Month, label: '月回报率' },
-      { value: roiData.priceChange1Year, label: '年回报率' },
+      { value: roiData.priceChange1Day, label: t('detail.roi.daily') },
+      { value: roiData.priceChange7Day, label: t('detail.roi.weekly') },
+      { value: roiData.priceChange1Month, label: t('detail.roi.monthly') },
+      { value: roiData.priceChange1Year, label: t('detail.roi.yearly') },
     ];
 
     return (
-      <MoziCard title="投资回报率">
+      <MoziCard title={t('detail.tabs.roi')}>
         <div className={styles.roiBox}>
           <div className={styles.roiGrid}>
             {cards.map((item, idx) => (
@@ -1358,22 +1360,22 @@ ${coinInfo.name || symbol} (${symbol})
   // 渲染市场数据
   const renderMarket = () => {
     if (marketLoading) {
-      return <Loading />;
+      return <Loading tip={t('common.loading')} />;
     }
     
     if (!marketData || marketData.length === 0) {
       return (
-        <MoziCard title="市场" sumNum={0}>
-          <div className={styles.emptyInfo}>暂无市场数据</div>
+        <MoziCard title={t('detail.tabs.market')} sumNum={0}>
+          <div className={styles.emptyInfo}>{t('detail.empty.market')}</div>
         </MoziCard>
       );
     }
     
     return (
-      <MoziCard title="市场" sumNum={marketData.length}>
+      <MoziCard title={t('detail.tabs.market')} sumNum={marketData.length}>
         <MoziGrid
           length={5}
-          colName={['交易所', '最新价', '24H涨幅', '24H成交量', '24H成交额']}
+          colName={[t('detail.market.exchange'), t('detail.market.lastPrice'), t('detail.market.change24h'), t('detail.market.volume24h'), t('detail.market.amount24h')]}
           gridContent={marketData}
           gridTitleBgColor="transparent"
           columnWidths={['25%', '22%', '20%', '20%', '22%']}
@@ -1400,7 +1402,7 @@ ${coinInfo.name || symbol} (${symbol})
     <>
       {/* 顶部导航栏 */}
       <NavBar 
-        title={coinInfo?.name || symbol || '币种详情'} 
+        title={coinInfo?.name || symbol || t('detail.title')} 
         showBack={true}
         showBorder={false}
       />
@@ -1415,9 +1417,9 @@ ${coinInfo.name || symbol} (${symbol})
           activeKey={activeTab} 
           onChange={handleTabChange}
         >
-          <TabBar.Item key="chart" title="图表" />
-          <TabBar.Item key="market" title="市场" />
-          <TabBar.Item key="roi" title="投资回报率" />
+          <TabBar.Item key="chart" title={t('detail.tabs.chart')} />
+          <TabBar.Item key="market" title={t('detail.tabs.market')} />
+          <TabBar.Item key="roi" title={t('detail.tabs.roi')} />
         </TabBar>
         
         {/* K线图表区域 */}
@@ -1443,29 +1445,29 @@ ${coinInfo.name || symbol} (${symbol})
         <div className={styles.footerList}>
           <div className={styles.footerItem}>
             <AddCollect isOwn={coinInfo?.isSelfSelected || false} symbol={symbol} />
-            <div className={styles.footerText}>加自选</div>
+            <div className={styles.footerText}>{t('detail.actions.favorite')}</div>
           </div>
           <div className={styles.footerItem} onClick={jump2Alert}>
             <div style={{ marginBottom: '2.5px' }}>
               <BellIcon size={20} color="#c7c9cd" />
             </div>
-            <div className={styles.footerText}>告警</div>
+            <div className={styles.footerText}>{t('detail.actions.alert')}</div>
           </div>
           <div className={styles.footerItem} onClick={shareToTelegram}>
             <img 
               className={styles.footerIcon} 
               src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/share.png" 
-              alt="分享"
+              alt={t('detail.actions.share')}
             />
-            <div className={styles.footerText}>分享</div>
+            <div className={styles.footerText}>{t('detail.actions.share')}</div>
           </div>
           <div className={styles.footerItem} onClick={jump2Community}>
             <img 
               className={styles.footerIcon} 
               src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community-no-actived.png" 
-              alt="社区"
+              alt={t('detail.actions.community')}
             />
-            <div className={styles.footerText}>社区</div>
+            <div className={styles.footerText}>{t('detail.actions.community')}</div>
           </div>
         </div>
 
@@ -1560,7 +1562,7 @@ ${coinInfo.name || symbol} (${symbol})
                     ease: "easeInOut"
                   }}
                 >
-                  <BubbleText text="嗨！我是您的加密市场分析助手，可以帮您解读行情走势和预测趋势!" />
+                  <BubbleText text={t('detail.robotBubble')} />
                   <div className={styles.bubbleArrow}></div>
                 </motion.div>
               </motion.div>

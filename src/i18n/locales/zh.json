@@ -69,7 +69,7 @@
     "fundingRate": "资金费率",
     "positionSize": "持仓量",
     "putCallRatio": "多空比",
-    "tradeVolume": "交易量",
+    "tradeVolume": "成交额",
     "marketDistribution": "涨跌分布",
     "up": "上涨",
     "neutral": "平",
@@ -423,5 +423,90 @@
     },
     "loadFailed": "数据加载失败",
     "fetchFailed": "数据获取失败"
+  }
+  ,
+  "fundingrate": {
+    "title": "资金费率",
+    "tabs": {
+      "current": "当前费率",
+      "history": "历史费率"
+    },
+    "section": {
+      "current": "当前费率",
+      "history": "历史费率"
+    },
+    "coin": "币种",
+    "viewMore": "查看更多",
+    "fold": "收起",
+    "empty": "暂无数据",
+    "select": "请选择",
+    "unit": {
+      "m": "亿",
+      "k": "万"
+    }
+  }
+  ,
+  "tradevol": {
+    "title": "成交额",
+    "coin": "币种",
+    "section": {
+      "current": "当前成交额",
+      "history": "历史成交额"
+    },
+    "chart": {
+      "volume": "成交量",
+      "amount": "成交额",
+      "price": "价格"
+    },
+    "loadFailed": "数据加载失败",
+    "fetchFailed": "数据获取失败"
+  }
+  ,
+  "detail": {
+    "title": "币种详情",
+    "marketCap": "流通市值",
+    "tabs": {
+      "chart": "图表",
+      "market": "市场",
+      "roi": "投资回报率"
+    },
+    "empty": {
+      "market": "暂无市场数据"
+    },
+    "market": {
+      "exchange": "交易所",
+      "lastPrice": "最新价",
+      "change24h": "24H涨幅",
+      "volume24h": "24H成交量",
+      "amount24h": "24H成交额"
+    },
+    "actions": {
+      "favorite": "加自选",
+      "alert": "告警",
+      "share": "分享",
+      "community": "社区"
+    },
+    "roi": {
+      "daily": "日回报率",
+      "weekly": "周回报率",
+      "monthly": "月回报率",
+      "yearly": "年回报率"
+    },
+    "header": {
+      "high24h": "24H最高价",
+      "low24h": "24H最低价",
+      "fdv": "稀释市值",
+      "marketCapChange24h": "24H市值变化",
+      "marketCapChangePercent24h": "24H市值变化百分比",
+      "athDate": "历史最高价时间",
+      "atlDate": "历史最低价时间",
+      "totalVolume24h": "24H成交额",
+      "totalSupply": "总供应量",
+      "circulatingSupply": "流通供应量",
+      "ath": "历史最高价",
+      "athChangePercent": "历史最高价百分比",
+      "atl": "历史最低价",
+      "atlChangePercent": "历史最低价百分比"
+    }
   }
 }

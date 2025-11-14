@@ -9,9 +9,11 @@ import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 import { handleOptions } from '@/utils/chartUtils';
 import { DownOutline } from 'antd-mobile-icons';
+import { useTranslation } from 'react-i18next';
 import styles from './page.module.less';
 
 const TradeVol = () => {
+  const { t } = useTranslation();
   const [cexArr, setCexArr] = useState([]);
   const [cexSelected, setCexSelected] = useState('');
   const [coinArr, setCoinArr] = useState([]);
@@ -101,7 +103,7 @@ const TradeVol = () => {
         });
       } catch (error) {
         console.error('初始化数据失败:', error);
-        Toast.show('数据加载失败');
+        Toast.show(t('tradevol.loadFailed'));
       }
     };
 
@@ -144,13 +146,13 @@ const TradeVol = () => {
 
       chartData.current.cur = {
         data: traTmpData,
-        msg: '成交量',
+        msg: { tooltipTitle: t('tradevol.chart.volume'), context: 'tradevol' },
         type: 'treemap'
       };
 
       // 更新当前成交额图表
       if (chartRef.current && traTmpData) {
-        chartRef.current.setOption(handleOptions(traTmpData, 'treemap', '成交量'));
+        chartRef.current.setOption(handleOptions(traTmpData, 'treemap', { tooltipTitle: t('tradevol.chart.volume'), context: 'tradevol' }));
         setCurLoading(false);
       }
 
@@ -170,12 +172,12 @@ const TradeVol = () => {
 
       // 更新历史成交额图表
       if (chartRef1.current && traHisData.data) {
-        chartRef1.current.setOption(handleOptions(traHisData.data, 'linebar', '成交额'));
+        chartRef1.current.setOption(handleOptions(traHisData.data, 'linebar', { leftName: t('tradevol.chart.amount'), rightName: t('tradevol.chart.price'), context: 'tradevol' }));
         setHisLoading(false);
       }
     } catch (error) {
       console.error('获取数据失败:', error);
-      Toast.show('数据获取失败');
+      Toast.show(t('tradevol.fetchFailed'));
       setCurLoading(false);
       setHisLoading(false);
     }
@@ -205,16 +207,18 @@ const TradeVol = () => {
 
   return (
     <>
-      <NavBar title="成交额" className={styles.customNavBar} />
+      <NavBar title={t('tradevol.title')} className={styles.customNavBar} />
       <div className={styles.pcrBox}>
         {/* 币种选择器 */}
         <div className={styles.pickerList}>
           <div className={`${styles.pickerItem} ${styles.coinPickerWhite}`}>
-            <div className={styles.pickerTitle}>币种</div>
+            <div className={styles.pickerTitle}>{t('tradevol.coin')}</div>
             <Picker
               columns={[coinArr]}
               value={[coinSelected]}
               onConfirm={onCoinChange}
+              cancelText={t('common.cancel')}
+              confirmText={t('common.confirm')}
             >
               {(items, actions) => (
                 <div className={styles.pickerSelect} onClick={() => actions?.open()}>
@@ -240,7 +244,7 @@ const TradeVol = () => {
         </div>
 
         {/* 当前成交额 */}
-        <div className={styles.sectionHeader}>当前成交额</div>
+        <div className={styles.sectionHeader}>{t('tradevol.section.current')}</div>
         <div className={styles.currentPCR}>
           <div className={`${styles.currentPCRChart} ${styles.zoomBottomRight}`}>
             {curLoading && (
@@ -256,7 +260,7 @@ const TradeVol = () => {
         </div>
 
         {/* 历史成交额 */}
-        <div className={styles.sectionHeader}>历史成交额</div>
+        <div className={styles.sectionHeader}>{t('tradevol.section.history')}</div>
         <div className={styles.currentPCR}>
           <div className={`${styles.currentPCRChart} ${styles.zoomBottomRight}`}>
             {hisLoading && (
