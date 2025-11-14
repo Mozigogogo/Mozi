@@ -1,16 +1,18 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CloseCircleFill } from 'antd-mobile-icons';
 import styles from './index.module.less';
 
 const searchIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/search.png';
 
 export const SearchInput = ({ 
-  placeholder = '请搜索币种', 
+  placeholder,
   reloadFun, 
   value = '' 
 }) => {
+  const { t } = useTranslation();
   const [inputValue, setInputValue] = useState(value);
   const [closeColor, setCloseColor] = useState('#b2b2b2');
   const inputValueRef = useRef(value);
@@ -53,7 +55,7 @@ export const SearchInput = ({
       <input
         type="text"
         className={styles.searchInput}
-        placeholder={placeholder}
+        placeholder={placeholder || t('home.searchPlaceholder')}
         value={inputValue}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
@@ -63,7 +65,7 @@ export const SearchInput = ({
       </div>
       <div className={styles.searchButton} onClick={() => jump2Search()}>
         <img src={searchIcon} className={styles.searchIconImg} alt="search" />
-        <span className={styles.searchText}>搜索</span>
+        <span className={styles.searchText}>{t('common.search')}</span>
       </div>
     </div>
   );
