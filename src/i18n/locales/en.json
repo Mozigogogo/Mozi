@@ -94,6 +94,54 @@
       "tooltipDown": "Funds flow to altcoins; market more active."
     }
   },
+  "discover": {
+    "tabs": {
+      "self": "Favorites",
+      "market": "Market",
+      "rank": "Rankings"
+    },
+    "columns": {
+      "symbolMarketCap": "Symbol / Mkt Cap",
+      "priceWithChange": "Price / 24h ",
+      "gain": "Gainers",
+      "loss": "Losers",
+      "volatility": "Volatility",
+      "turnover": "Turnover"
+    },
+    "exchangeRank": "Exchange Rankings",
+    "exchange": {
+      "columns": {
+        "exchange": "Exchange",
+        "volume24h": "Volume(24h)",
+        "markets": "Markets",
+        "coins": "Coins"
+      },
+      "types": {
+        "spot": "Spot",
+        "futures": "Derivatives"
+      }
+    },
+    "range": {
+      "live": "Live",
+      "1d": "1d",
+      "1w": "1w",
+      "1m": "1m",
+      "1y": "1y"
+    },
+    "addFavoriteButton": "Add Favorite",
+    "loadFinished": "All loaded"
+  },
+  "overview": {
+    "totalMarketCap": "Market Cap",
+    "volume": "Volume",
+    "smartMonitor": "Alerts",
+    "calendar": "Calendar",
+    "todayUpdated": "Updated",
+    "subscribe": "Subscribe",
+    "noConfig": "No alerts",
+    "configAlarm": "Set Alerts",
+    "viewDetails": "View"
+  },
   "user": {
     "login": "Login",
     "logout": "Logout",
@@ -164,7 +212,41 @@
     "avatarTooLarge": "Avatar file is too large, please select an image smaller than 2MB",
     "saving": "Saving...",
     "saveSuccess": "Saved successfully",
-    "saveFailed": "Save failed"
+    "saveFailed": "Save failed",
+    "defaultNickname": "User",
+    "wechatUser": "Telegram User"
+  },
+  "auth": {
+    "email": "Email",
+    "emailPlaceholder": "Enter email",
+    "password": "Password",
+    "passwordPlaceholder": "Enter password (min 6)",
+    "inviteOptional": "Invite Code (optional)",
+    "invitePlaceholder": "Enter invite code",
+    "verificationCode": "Verification Code",
+    "verificationPlaceholder": "Enter code",
+    "getCode": "Get Code",
+    "noAccount": "No account?",
+    "hasAccount": "Already have an account?",
+    "registerNow": "Register now",
+    "loginNow": "Login now",
+    "or": "or",
+    "walletLogin": "Login with Wallet",
+    "notLoggedIn": "You are not logged in",
+    "loginRegister": "Login / Register",
+    "loginBenefits": "Login to access more features",
+    "fillAll": "Please fill in all fields",
+    "invalidEmail": "Enter a valid email",
+    "passwordTooShort": "Password must be at least 6 characters",
+    "loginSuccess": "Login successful",
+    "loginFailed": "Login failed",
+    "loginFailedRetry": "Login failed, please try again later",
+    "registerSuccess": "Registered, please login",
+    "registerFailed": "Registration failed",
+    "registerFailedRetry": "Registration failed, please try again later",
+    "codeSent": "Verification code sent",
+    "sendFailed": "Send failed",
+    "sendFailedRetry": "Failed to send code, please try again later"
   },
   "community": {
     "title": "Community",

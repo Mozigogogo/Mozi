@@ -24,7 +24,7 @@ export default function UserPage() {
   const { t, i18n } = useTranslation();
   const [userInfo, setUserInfo] = useState({
     avatar: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png',
-    nickname: '用户',
+    nickname: t('user.defaultNickname'),
     level: 1,
     isVip: false,
     isLogin: false
@@ -87,7 +87,9 @@ export default function UserPage() {
       if (ui) {
         try {
           const parsed = JSON.parse(ui);
-          setUserInfo((prev) => ({ ...prev, nickname: parsed.nickName || prev.nickname, avatar: parsed.avatar || prev.avatar }));
+          const parsedNick = (parsed.nickName || '').trim();
+          const displayNick = parsedNick.length > 0 ? parsedNick : t('user.defaultNickname');
+          setUserInfo((prev) => ({ ...prev, nickname: displayNick, avatar: parsed.avatar || prev.avatar }));
         } catch {}
       }
     };
@@ -110,7 +112,7 @@ export default function UserPage() {
     try {
       const currentAddress = address || getCookie('wallet_address');
       if (!currentAddress) {
-        Toast.show({ content: '请先连接钱包', position: 'bottom' });
+        Toast.show({ content: t('user.connectWalletFirst'), position: 'bottom' });
         return;
       }
       const nonce = Math.random().toString(36).slice(2) + Date.now();
@@ -135,9 +137,9 @@ export default function UserPage() {
       } catch {}
 
       setUserInfo((prev) => ({ ...prev, isLogin: true }));
-      Toast.show({ content: '登录成功（已签名）', position: 'bottom' });
+      Toast.show({ content: t('user.loginSuccess'), position: 'bottom' });
     } catch (e) {
-      Toast.show({ content: '签名被取消或失败', position: 'bottom' });
+      Toast.show({ content: t('user.signatureCancelled'), position: 'bottom' });
     } finally {
       signingRef.current = false;
     }
@@ -166,7 +168,7 @@ export default function UserPage() {
       delCookie('wallet_chainId');
     } catch {}
     setUserInfo((prev) => ({ ...prev, isLogin: false }));
-    Toast.show({ content: '退出成功', position: 'bottom' });
+    Toast.show({ content: t('user.logoutSuccess'), position: 'bottom' });
   };
 
   // 开通会员
@@ -192,9 +194,9 @@ export default function UserPage() {
         });
       } else {
         navigator.clipboard.writeText(window.location.origin).then(() => {
-          Toast.show({ content: '链接已复制到剪贴板', position: 'bottom' });
+          Toast.show({ content: t('user.linkCopied'), position: 'bottom' });
         }).catch(() => {
-          Toast.show({ content: '分享失败', position: 'bottom' });
+          Toast.show({ content: t('user.shareFailed'), position: 'bottom' });
         });
       }
     } catch {}
@@ -219,7 +221,7 @@ export default function UserPage() {
 
   const score = () => {
     if (!userInfo.isLogin) {
-      Toast.show({ content: '请先登录', position: 'bottom' });
+      Toast.show({ content: t('user.pleaseLogin'), position: 'bottom' });
       return;
     }
     setPopVis(true);
@@ -236,7 +238,7 @@ export default function UserPage() {
       setPopVis(true);
       setPopType('contact');
     } else {
-      Toast.show({ content: '敬请期待', position: 'bottom' });
+      Toast.show({ content: t('user.comingSoon'), position: 'bottom' });
     }
   };
 
@@ -267,21 +269,21 @@ export default function UserPage() {
         data: { score: reportScore, content: scoreInputRef.current },
       });
       if (res?.data?.isSuccess) {
-        Toast.show({ content: '反馈成功', position: 'bottom' });
+        Toast.show({ content: t('user.feedbackSuccess'), position: 'bottom' });
       } else {
-        Toast.show({ content: '反馈失败', position: 'bottom' });
+        Toast.show({ content: t('user.feedbackFailed'), position: 'bottom' });
       }
     } catch (e) {
-      Toast.show({ content: '反馈失败', position: 'bottom' });
+      Toast.show({ content: t('user.feedbackFailed'), position: 'bottom' });
     }
     setPopVis(false);
   };
 
   const copyToClipboard = (value) => {
     navigator.clipboard.writeText(value).then(() => {
-      Toast.show({ content: '复制成功', position: 'bottom' });
+      Toast.show({ content: t('user.copySuccess'), position: 'bottom' });
     }).catch(() => {
-      Toast.show({ content: '复制失败', position: 'bottom' });
+      Toast.show({ content: t('user.copyFailed'), position: 'bottom' });
     });
   };
 
@@ -306,8 +308,8 @@ export default function UserPage() {
 
   // 打开编辑个人资料弹窗
   const openEditProfile = () => {
-    // 如果昵称是"微信用户"或空，则不填充
-    const nickname = (userInfo.nickname && userInfo.nickname !== '微信用户') ? userInfo.nickname : '';
+    // 如果昵称为空或为默认值，则不预填
+    const nickname = (userInfo.nickname && userInfo.nickname !== t('user.defaultNickname')) ? userInfo.nickname : '';
     setEditNickname(nickname);
     setEditAvatar(userInfo.avatar || DEFAULT_AVATAR);
     setAvatarFile(null);
@@ -364,7 +366,7 @@ export default function UserPage() {
       if (window.__openAppKit) {
         window.__openAppKit();
       } else {
-        Toast.show({ content: '钱包组件尚未就绪', position: 'bottom' });
+        Toast.show({ content: t('user.walletNotReady'), position: 'bottom' });
       }
       return;
     }
