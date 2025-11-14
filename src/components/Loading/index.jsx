@@ -1,11 +1,13 @@
 'use client';
 
 import { SpinLoading } from 'antd-mobile';
+import { useTranslation } from 'react-i18next';
 import styles from './index.module.less';
 
 // 将基础 Loading 改造成与持仓量页面相同的圆环 spinner 样式
 // 支持 size 与 color，自定义 tip 文案
-export const Loading = ({ tip = '加载中...', color = '#11B787', size = 24, style }) => {
+export const Loading = ({ tip, color = '#11B787', size = 24, style }) => {
+  const { t } = useTranslation();
   // 将通用 color 值映射到具体颜色（兼容之前传入的 'primary'/'white'/'black'）
   const mapColor = (c) => {
     if (!c) return '#11B787';
@@ -46,17 +48,18 @@ export const Loading = ({ tip = '加载中...', color = '#11B787', size = 24, st
           '--loading-size': `${size}px`,
         }}
       />
-      {tip && <span className={styles.loadingText}>{tip}</span>}
+      <span className={styles.loadingText}>{tip ?? t('common.loading')}</span>
     </div>
   );
 };
 
 export const GardenLoading = () => {
+  const { t } = useTranslation();
   return (
     <div className={styles.gardenLoading}>
       <div className={styles.gardenLoadingContent}>
         <SpinLoading color="primary" />
-        <span className={styles.loadingText}>加载中...</span>
+        <span className={styles.loadingText}>{t('common.loading')}</span>
       </div>
     </div>
   );

@@ -165,9 +165,9 @@ export default function HomePage() {
   const [hotCoin, setHotCoin] = useState([]);
   const [hotIndustry, setHotIndustry] = useState([]);
   const [hotContract, setHotContract] = useState([]);
-  const [coinLoading, setCoinLoading] = useState(false);
-  const [industryLoading, setIndustryLoading] = useState(false);
-  const [contractLoading, setContractLoading] = useState(false);
+  const [coinLoading, setCoinLoading] = useState(true);
+  const [industryLoading, setIndustryLoading] = useState(true);
+  const [contractLoading, setContractLoading] = useState(true);
   const [myOwn, setOwn] = useState(null);
   const [myOwnLoading, setMyOwnLoading] = useState(true);
   const [popVis, setPopVis] = useState(false);
@@ -328,7 +328,6 @@ export default function HomePage() {
 
   // 获取热门币种
   const fetchHotCoin = async () => {
-    setCoinLoading(true);
     try {
       const response = await request({
         url: Interface.hot_coin,
@@ -348,7 +347,6 @@ export default function HomePage() {
 
   // 获取热门板块数据
   const fetchHotIndustry = async () => {
-    setIndustryLoading(true);
     try {
       const response = await request({
         url: Interface.hot_industry,
@@ -368,7 +366,6 @@ export default function HomePage() {
 
   // 获取热门合约数据
   const fetchHotContract = async () => {
-    setContractLoading(true);
     try {
       const response = await request({
         url: Interface.hot_contract,
