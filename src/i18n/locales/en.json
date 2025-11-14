@@ -18,7 +18,8 @@
     "edit": "Edit",
     "delete": "Delete",
     "share": "Share",
-    "more": "More"
+    "more": "More",
+    "updated": "Updated"
   },
   "home": {
     "title": "Mozi - Crypto Market Community",
@@ -28,7 +29,35 @@
     "derivatives": "Derivatives",
     "rankList": "Rank List",
     "opportunities": "Opportunities",
-    "notice": "Welcome to Mozi Crypto Market Community"
+    "notice": "Welcome to Mozi Crypto Market Community",
+    "aiNotice": "AI analyzes trends—set precise alerts.",
+    "searchPlaceholder": "Enter the coin to search",
+    "noTopics": "No topics",
+    "discussions": "discussions",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "daysAgo": "{{days}} days ago",
+    "rank": {
+      "self": "Favorites",
+      "up": "Gainers",
+      "down": "Losers",
+      "wave": "Volatility",
+      "volume": "Volume",
+      "new": "New Coins",
+      "surge": "Surging"
+    },
+    "columns": {
+      "symbol": "Symbol",
+      "lastPrice": "Last Price",
+      "lastVolume": "24h Volume",
+      "change24h": "24h Change",
+      "hotIndex": "Hot Index",
+      "contract": "Contract",
+      "section": "Sector",
+      "addFavorites": "Favorite",
+      "addMonitor": "Monitor"
+    },
+    "robotBubble": "Hi! I'm your crypto market assistant. I can help interpret trends and provide forecasts."
   },
   "market": {
     "price": "Price",
@@ -37,10 +66,33 @@
     "marketCap": "Market Cap",
     "high24h": "24h High",
     "low24h": "24h Low",
-    "fundingRate": "Funding Rate",
-    "positionSize": "Position Size",
-    "putCallRatio": "Put/Call Ratio",
-    "tradeVolume": "Trade Volume"
+    "fundingRate": "Funding",
+    "positionSize": "Position",
+    "putCallRatio": "P/C Ratio",
+    "tradeVolume": "Volume",
+    "marketDistribution": "Change Distribution",
+    "up": "Up",
+    "neutral": "Neutral",
+    "down": "Down",
+    "fearGreed": {
+      "title": "Fear & Greed Index",
+      "tooltipLowTitle": "Lower value (near 0)",
+      "tooltipLow": "More fear; market may be undervalued.",
+      "tooltipHighTitle": "Higher value (near 100)",
+      "tooltipHigh": "More greed; market may be overheated.",
+      "extremeFear": "Extreme Fear",
+      "fear": "Fear",
+      "neutral": "Neutral",
+      "greed": "Greed",
+      "extremeGreed": "Extreme Greed"
+    },
+    "btcMarketShare": {
+      "title": "BTC Market Share",
+      "tooltipUpTitle": "Rising share",
+      "tooltipUp": "Funds concentrate on BTC; market turns conservative.",
+      "tooltipDownTitle": "Falling share",
+      "tooltipDown": "Funds flow to altcoins; market more active."
+    }
   },
   "user": {
     "login": "Login",

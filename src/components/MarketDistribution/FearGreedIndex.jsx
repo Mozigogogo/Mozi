@@ -6,17 +6,17 @@
 import { Popover } from 'antd-mobile';
 import styles from './index.module.less';
 import './popover-global.css';
+import { useTranslation } from 'react-i18next';
 
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
 const warnIcon = `${CDN_PREFIX}/icon/warn.png`;
 
-// Tooltip 提示内容
-const TooltipContent = () => (
+const TooltipContent = ({ t }) => (
   <div className={styles.tooltipContent}>
-    <h4 className={styles.tooltipTitle}>恐惧贪婪指数</h4>
+    <h4 className={styles.tooltipTitle}>{t('market.fearGreed.title')}</h4>
     <ul className={styles.tooltipList}>
-      <li><strong>数值越低（接近0）：</strong>投资者越恐惧，市场可能被低估；</li>
-      <li><strong>数值越高（接近100）：</strong>投资者越贪婪，市场可能过热。</li>
+      <li><strong>{t('market.fearGreed.tooltipLowTitle')}:</strong>{t('market.fearGreed.tooltipLow')}</li>
+      <li><strong>{t('market.fearGreed.tooltipHighTitle')}:</strong>{t('market.fearGreed.tooltipHigh')}</li>
     </ul>
   </div>
 );
@@ -29,6 +29,7 @@ export default function FearGreedIndex({
   ballTop,
   ballLeft
 }) {
+  const { t } = useTranslation();
   // 计算圆球旋转角度
   // index 从 0-100，对应圆弧从 -90度（左端）到 90度（右端）
   // 0 = 极度恐慌（绿色左端）= -90度
@@ -165,9 +166,9 @@ export default function FearGreedIndex({
   return (
     <div className={styles.indicatorItem}>
       <div className={styles.indicatorHeader}>
-        <span className={styles.indicatorTitle}>恐慌贪婪指数</span>
+        <span className={styles.indicatorTitle}>{t('market.fearGreed.title')}</span>
         <Popover
-          content={<TooltipContent />}
+          content={<TooltipContent t={t} />}
           trigger="click"
           placement="bottom"
         >

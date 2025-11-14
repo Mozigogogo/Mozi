@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { NoticeBar, Grid, TabBar, Swiper } from 'antd-mobile';
+import { useTranslation } from 'react-i18next';
 import { RightOutline } from 'antd-mobile-icons';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -87,6 +88,8 @@ const area = {
 
 export default function HomePage() {
   const router = useRouter();
+  const { t, i18n } = useTranslation();
+  const isEN = (i18n?.language || '').startsWith('en');
   // Telegram WebApp 检测状态（不影响现有 UI，仅用于环境检测与本地存储）
   const [tgInfo, setTgInfo] = useState({
     available: false,
@@ -637,9 +640,9 @@ export default function HomePage() {
     const diff = now - date;
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     
-    if (days === 0) return '今天';
-    if (days === 1) return '昨天';
-    if (days < 7) return `${days}天前`;
+    if (days === 0) return t('home.today');
+    if (days === 1) return t('home.yesterday');
+    if (days < 7) return t('home.daysAgo', { days });
     return date.toLocaleDateString('zh-CN');
   };
 
@@ -661,7 +664,7 @@ export default function HomePage() {
             <div className={`${styles.treemapBox} ${styles.contentCard}`} onClick={() => {
               jump2List({
                 interFace: Interface.hot_coin,
-                gridTitle: ['币种', '热门指数', '24H价格变化'],
+                gridTitle: [t('home.columns.symbol'), t('home.columns.hotIndex'), t('home.columns.change24h')],
                 gridCon: [{
                   type: 'Text',
                   data: 'coin'
@@ -672,14 +675,14 @@ export default function HomePage() {
                   type: 'HighlightArea',
                   data: 'priceChangePercent'
                 }],
-                rankTitle: '热门币种',
+                rankTitle: t('home.hotCoins'),
                 showRanking: true
               });
             }}>
-              <div className={styles.treemapTitle}>热门币种</div>
+              <div className={styles.treemapTitle}>{t('home.hotCoins')}</div>
               <div className={styles.centerLoading}>
                 {coinLoading ? (
-                  <Loading tip="加载中..." />
+                  <Loading tip={t('common.loading')} />
                 ) : (
                   <div style={{ width: '100%', height: '100%', flex: 1 }}>
                     <MoziTreeMap
@@ -696,7 +699,7 @@ export default function HomePage() {
             <div className={`${styles.treemapBox} ${styles.contentCard}`} onClick={() => {
               jump2List({
                 interFace: Interface.hot_contract,
-                gridTitle: ['合约', '热门指数', '24H价格变化'],
+                gridTitle: [t('home.columns.contract'), t('home.columns.hotIndex'), t('home.columns.change24h')],
                 gridCon: [{
                   type: 'Text',
                   data: 'coin'
@@ -707,14 +710,14 @@ export default function HomePage() {
                   type: 'HighlightArea',
                   data: 'priceChangePercent'
                 }],
-                rankTitle: '热门合约',
+                rankTitle: t('home.hotContracts'),
                 showRanking: true
               });
             }}>
-              <div className={styles.treemapTitle}>热门合约</div>
+              <div className={styles.treemapTitle}>{t('home.hotContracts')}</div>
               <div className={styles.centerLoading}>
                 {contractLoading ? (
-                  <Loading tip="加载中..." />
+                  <Loading tip={t('common.loading')} />
                 ) : (
                   <div style={{ width: '100%', height: '100%', flex: 1 }}>
                     <MoziTreeMap
@@ -731,7 +734,7 @@ export default function HomePage() {
             <div className={`${styles.treemapBox} ${styles.contentCard} ${styles.last}`} onClick={() => {
               jump2List({
                 interFace: Interface.hot_industry,
-                gridTitle: ['版块', '24H变化'],
+                gridTitle: [t('home.columns.section'), t('home.columns.change24h')],
                 gridCon: [{
                   type: 'Text',
                   data: 'section'
@@ -739,14 +742,14 @@ export default function HomePage() {
                   type: 'HighlightArea',
                   data: 'changes'
                 }],
-                rankTitle: '热门版块',
+                rankTitle: t('home.hotSectors'),
                 showRanking: true
               });
             }}>
-              <div className={styles.treemapTitle}>热门版块</div>
+              <div className={styles.treemapTitle}>{t('home.hotSectors')}</div>
               <div className={styles.centerLoading}>
                 {industryLoading ? (
-                  <Loading tip="加载中..." />
+                  <Loading tip={t('common.loading')} />
                 ) : (
                   <div style={{ width: '100%', height: '100%', flex: 1 }}>
                     <MoziTreeMap
@@ -769,7 +772,7 @@ export default function HomePage() {
             <div className={styles.topicCards}>
               {topicsLoading ? (
                 <div style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '40px 0' }}>
-                  <Loading tip="加载中..." />
+                  <Loading tip={t('common.loading')} />
                 </div>
               ) : hotTopics && hotTopics.length > 0 ? (
                 hotTopics.slice(0, 3).map((topic, index) => {
@@ -794,7 +797,7 @@ export default function HomePage() {
                         <div className={styles.topicDesc}>{topic.desc || topic.description}</div>
                       )}
                       <div className={`${styles.topicStats} ${!hasDesc ? styles.noDesc : ''}`}>
-                        <div className={styles.topicHot}>🔥 {topic.discussionCount || topic.hot || 0} 讨论</div>
+                        <div className={styles.topicHot}>🔥 {topic.discussionCount || topic.hot || 0} {t('home.discussions')}</div>
                         <div className={styles.topicDate}>{formatTopicTime(topic.createdAt || topic.createTime)}</div>
                       </div>
                     </div>
@@ -805,10 +808,10 @@ export default function HomePage() {
                   <div className={styles.topicRank}>
                     <img src={rankMedals[0]} className={styles.rankMedal} alt="rank-1" />
                   </div>
-                  <div className={styles.topicTitle}>暂无话题</div>
-                  <div className={styles.topicDesc}>敬请期待</div>
+                  <div className={styles.topicTitle}>{t('home.noTopics')}</div>
+                  <div className={styles.topicDesc}>{t('user.comingSoon')}</div>
                   <div className={styles.topicStats}>
-                    <div className={styles.topicHot}>🔥 0 讨论</div>
+                    <div className={styles.topicHot}>🔥 0 {t('home.discussions')}</div>
                     <div className={styles.topicDate}>--</div>
                   </div>
                 </div>
@@ -902,22 +905,28 @@ export default function HomePage() {
     
     return (
       <div ref={rankingSectionRef}>
-        <MoziCard title="实时榜单">
+        <MoziCard title={t('home.rankList')}>
         {/* <Layout isLoading={footerLoading}> */}
           <TabBar className={styles.tabBox} activeKey={rankActiveKey} onChange={rankActiveClick}>
-            <TabBar.Item key='zixuan' title='自选榜' />
-            <TabBar.Item key='zhangfu' title='涨幅榜' />
-            <TabBar.Item key='diefu' title='跌幅榜' />
-            <TabBar.Item key='zhenfu' title='波幅榜' />
-            <TabBar.Item key='chengjiaoe' title='成交额榜' />
-            <TabBar.Item key='xinbi' title='新币榜' />
-            <TabBar.Item key='biaosheng' title='飙升榜' />
+            <TabBar.Item key='zixuan' title={t('home.rank.self')} />
+            <TabBar.Item key='zhangfu' title={t('home.rank.up')} />
+            <TabBar.Item key='diefu' title={t('home.rank.down')} />
+            <TabBar.Item key='zhenfu' title={t('home.rank.wave')} />
+            <TabBar.Item key='chengjiaoe' title={t('home.rank.volume')} />
+            <TabBar.Item key='xinbi' title={t('home.rank.new')} />
+            <TabBar.Item key='biaosheng' title={t('home.rank.surge')} />
           </TabBar>
           {currentRankData.length > 0 && (
             <div>
               <MoziGrid
                 length={5}
-                colName={colNameArr[activeArr.indexOf(rankActiveKey)]}
+                colName={[
+                  t('home.columns.symbol'),
+                  rankActiveKey === 'chengjiaoe' ? t('home.columns.lastVolume') : t('home.columns.lastPrice'),
+                  t('home.columns.change24h'),
+                  t('home.columns.addFavorites'),
+                  t('home.columns.addMonitor')
+                ]}
                 gridContent={currentRankData}
                 callback={(gridCon) => { jump2Detail(gridCon.key); }}
                 maxRows={10}
@@ -925,7 +934,7 @@ export default function HomePage() {
                 gridTitleBgColor="transparent"
               />
               <div className={styles.listMore} onClick={go2List}>
-                查看更多 <RightOutline fontSize={12} />
+                {t('user.viewMore')} <RightOutline fontSize={12} />
               </div>
             </div>
           )}
@@ -935,9 +944,15 @@ export default function HomePage() {
     );
   };
 
-  // 渲染衍生品专区
+  // 渲染衍生品专区（国际化）
   const renderDerivativeArea = () => {
-    const { title, list } = area.derivativeArea;
+    const title = t('home.derivatives');
+    const list = [
+      { icon: bullBearRatioIcon, text: t('market.putCallRatio'), callback: () => { jump2NoTab('putcallratio'); } },
+      { icon: inventoryIcon, text: t('market.positionSize'), callback: () => { jump2NoTab('positionsize'); } },
+      { icon: fundingRateIcon, text: t('market.fundingRate'), callback: () => { jump2NoTab('fundingrate'); } },
+      { icon: volumeTransactionIcon, text: t('market.tradeVolume'), callback: () => { jump2NoTab('tradevol'); } },
+    ];
     return (
       <MoziCard title={title} customStyle={{ borderRadius: '0 0 8px 8px', paddingTop: '5px' }}>
         <div className={styles.derivativeBody}>
@@ -979,10 +994,10 @@ export default function HomePage() {
             {/* 搜索框（层叠在 Banner 上） */}
             <div className={styles.header} style={{ bottom: showNotice ? 38 : 23 }} onClick={() => router.push('/search')}>
               <div className={styles.searchBox}>
-                <div className={styles.searchInput}>请输入搜索的币种</div>
-                <div className={styles.searchCancel}>
-                  <img src={SearchIcon} alt="搜索" className={styles.searchIcon} />
-                  搜索
+                <div className={styles.searchInput}>{t('home.searchPlaceholder')}</div>
+                <div className={styles.searchCancel} style={isEN ? { minWidth: 44, padding: '0 14px' } : undefined}>
+                  <img src={SearchIcon} alt={t('common.search')} className={styles.searchIcon} />
+                  {!isEN && t('common.search')}
                 </div>
               </div>
             </div>
@@ -992,7 +1007,7 @@ export default function HomePage() {
               <div className={styles.notice}>
                 <NoticeBar
                   className={styles.noticeItem}
-                  content="告别盲目设价！先让AI分析走势，再设置精准报警！"
+                  content={t('home.aiNotice')}
                   color="alert"
                   wrap
                   icon={<img src={HomeAlertIcon} className={styles.noticeIcon} alt="alert" />}
@@ -1026,7 +1041,7 @@ export default function HomePage() {
                   className={`${styles.tabItem} ${investmentTab === 'opportunity' ? styles.active : ''}`}
                   onClick={() => setInvestmentTab('opportunity')}
                 >
-                  投资机会
+                  {t('home.opportunities')}
                 </div>
                 <div 
                   className={`${styles.tabItem} ${investmentTab === 'topics' ? styles.active : ''}`}
@@ -1035,7 +1050,7 @@ export default function HomePage() {
                     fetchHotTopics();
                   }}
                 >
-                  话题热榜
+                  {t('community.hotTopics')}
                 </div>
               </div>
               <div 
@@ -1048,7 +1063,7 @@ export default function HomePage() {
                   }
                 }}
               >
-                查看更多 <RightOutline fontSize={12} />
+                {t('user.viewMore')} <RightOutline fontSize={12} />
               </div>
             </div>
           }
@@ -1157,7 +1172,7 @@ export default function HomePage() {
                     ease: "easeInOut"
                   }}
                 >
-                  <BubbleText text="嗨！我是您的加密市场分析助手，可以帮您解读行情走势和预测趋势!" />
+                  <BubbleText text={t('home.robotBubble')} />
                   <div className={styles.bubbleArrow}></div>
                 </motion.div>
               </motion.div>
