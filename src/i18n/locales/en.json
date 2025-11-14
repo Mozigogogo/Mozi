@@ -287,6 +287,28 @@
     "forbidden": "Access forbidden",
     "unknown": "Unknown error"
   },
+  "robot": {
+    "title": "AI Assistant",
+    "subtitle": "Smart Q&A · Quick Response",
+    "connecting": "Connecting...",
+    "conversationId": "Conversation ID",
+    "loadingHistory": "Loading conversation history...",
+    "aiAlt": "AI",
+    "tokens": "Consumed {{tokens}} tokens",
+    "regenerate": "Regenerate",
+    "regenerateAlt": "Regenerate",
+    "me": "Me",
+    "suggestedTitle": "You might also ask:",
+    "inputPlaceholder": "Enter your question...",
+    "send": "Send",
+    "stopAlt": "Stop generating",
+    "copy": "Copy",
+    "copied": "Copied",
+    "sendFailed": "Send failed, please retry",
+    "wsNotConnected": "WebSocket not connected, please refresh",
+    "genericError": "Sorry, something went wrong. Please try later",
+    "welcome": "Hello, I'm your AI assistant! I can help analyze crypto markets and answer investment questions. How can I help you?"
+  },
   "language": {
     "zh": "简体中文",
     "en": "English"

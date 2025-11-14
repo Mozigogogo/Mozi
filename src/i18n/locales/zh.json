@@ -287,6 +287,28 @@
     "forbidden": "没有权限访问",
     "unknown": "未知错误"
   },
+  "robot": {
+    "title": "AI 助手",
+    "subtitle": "智能答疑 · 快速响应",
+    "connecting": "连接中...",
+    "conversationId": "会话ID",
+    "loadingHistory": "正在加载历史对话...",
+    "aiAlt": "AI",
+    "tokens": "消耗 {{tokens}} tokens",
+    "regenerate": "重新生成",
+    "regenerateAlt": "重新生成",
+    "me": "我",
+    "suggestedTitle": "你可能还想问：",
+    "inputPlaceholder": "输入你的问题...",
+    "send": "发送",
+    "stopAlt": "停止生成",
+    "copy": "复制",
+    "copied": "已复制",
+    "sendFailed": "发送失败，请重试",
+    "wsNotConnected": "WebSocket 未连接，请刷新页面重试",
+    "genericError": "抱歉，出现了一些问题，请稍后再试",
+    "welcome": "你好，我是你的AI助手！我可以帮你分析币种行情、解答投资问题。有什么可以帮你？"
+  },
   "language": {
     "zh": "简体中文",
     "en": "English"
