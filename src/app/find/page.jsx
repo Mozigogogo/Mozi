@@ -61,6 +61,7 @@ export default function FindPage() {
   const router = useRouter();
   const { t } = useTranslation();
   const tabFromUrl = searchParams.get('tab');
+  const RANK_LOOPTIME = 6000;
   
   // 状态定义
   const [pageActiveKey, setPageActiveKey] = useState(tabFromUrl || 'market');
@@ -137,8 +138,8 @@ const loadingTimerRef = useRef(null);
   const [upTradePickIndex, setUpTradePickIndex] = useState(0);
 
   // 各榜单数据加载函数
-  const loadExchangeData = async () => {
-    setExchangeLoading(true);
+  const loadExchangeData = async (silent = false) => {
+    if (!silent) setExchangeLoading(true);
     try {
       // 分别加载现货和衍生品数据
       const exchangeSpot = await request({
@@ -218,203 +219,126 @@ const loadingTimerRef = useRef(null);
         topName: exchangeTopNames.current[0] || ''
       });
       setExchangeLoading(false);
-
-      // 轮询
-      setTimeout(() => {
-        if (needLoop.current) loadExchangeData();
-      }, LOOPTIME);
     } catch (error) {
       console.error('加载交易所排行榜失败:', error);
       setExchangeLoading(false);
     }
   };
 
-  const loadPriceData = async () => {
-    setPriceLoading(true);
+  const loadPriceData = async (silent = false) => {
+    if (!silent) setPriceLoading(true);
     try {
-      priceArr.current = [];
-      const tempPriceSelect = [];
-
-      for (let i = 0; i < priceDimArr.length; i++) {
-        const response = await request({
-          url: Interface.price_change,
-          data: { dim: priceDimArr[i] }
-        });
-
-        if (!isEmpty(response?.data)) {
-          const formattedData = response.data.slice(0, 3).map(item => ({
-            symbol: item.symbol,
-            priceRange: item.priceRange,
-            url: item.url,
-            key: item.symbol,
-            img: item.url
-          }));
-          priceArr.current.push(formattedData);
-          tempPriceSelect.push(pricePickArr[i]);
-        }
-      }
-
-      if (priceArr.current.length === 0) {
-        setPriceLoading(false);
-        return;
-      }
-
-      setPriceData({
-        priceArr: priceArr.current[0],
-        priceSelect: tempPriceSelect
+      const dim = priceDimArr[pricePickIndex];
+      const response = await request({
+        url: Interface.price_change,
+        data: { dim }
       });
+      if (!isEmpty(response?.data)) {
+        const formattedData = response.data.slice(0, 3).map(item => ({
+          symbol: item.symbol,
+          priceRange: item.priceRange,
+          url: item.url,
+          key: item.symbol,
+          img: item.url
+        }));
+        setPriceData({
+          priceArr: formattedData,
+          priceSelect: pricePickArr
+        });
+      }
       setPriceLoading(false);
-
-      // 轮询
-      setTimeout(() => {
-        if (needLoop.current) loadPriceData();
-      }, LOOPTIME);
     } catch (error) {
       console.error('加载涨幅榜失败:', error);
       setPriceLoading(false);
     }
   };
 
-  const loadDownData = async () => {
-    setDownLoading(true);
+  const loadDownData = async (silent = false) => {
+    if (!silent) setDownLoading(true);
     try {
-      downArr.current = [];
-      const tempDownSelect = [];
-
-      for (let i = 0; i < downDimArr.length; i++) {
-        const response = await request({
-          url: Interface.PRICE_DOWNCHANGE,
-          data: { dim: downDimArr[i] }
-        });
-
-        if (!isEmpty(response?.data)) {
-          const formattedData = response.data.slice(0, 3).map(item => ({
-            symbol: item.symbol,
-            priceRange: item.priceRange,
-            url: item.url,
-            key: item.symbol,
-            img: item.url
-          }));
-          downArr.current.push(formattedData);
-          tempDownSelect.push(downPickArr[i]);
-        }
-      }
-
-      if (downArr.current.length === 0) {
-        setDownLoading(false);
-        return;
-      }
-
-      setDownData({
-        downArr: downArr.current[0],
-        downSelect: tempDownSelect
+      const dim = downDimArr[downPickIndex];
+      const response = await request({
+        url: Interface.PRICE_DOWNCHANGE,
+        data: { dim }
       });
+      if (!isEmpty(response?.data)) {
+        const formattedData = response.data.slice(0, 3).map(item => ({
+          symbol: item.symbol,
+          priceRange: item.priceRange,
+          url: item.url,
+          key: item.symbol,
+          img: item.url
+        }));
+        setDownData({
+          downArr: formattedData,
+          downSelect: downPickArr
+        });
+      }
       setDownLoading(false);
-
-      // 轮询
-      setTimeout(() => {
-        if (needLoop.current) loadDownData();
-      }, LOOPTIME);
     } catch (error) {
       console.error('加载跌幅榜失败:', error);
       setDownLoading(false);
     }
   };
 
-  const loadWaveData = async () => {
-    setWaveLoading(true);
+  const loadWaveData = async (silent = false) => {
+    if (!silent) setWaveLoading(true);
     try {
-      waveArr.current = [];
-      const tempWaveSelect = [];
-
-      for (let i = 0; i < waveDimArr.length; i++) {
-        const response = await request({
-          url: Interface.price_wave,
-          data: { dim: waveDimArr[i] }
-        });
-
-        if (!isEmpty(response?.data)) {
-          const formattedData = response.data.slice(0, 3).map(item => ({
-            symbol: item.symbol,
-            priceRange: item.priceRange,
-            url: item.url,
-            key: item.symbol,
-            img: item.url
-          }));
-          waveArr.current.push(formattedData);
-          tempWaveSelect.push(wavePickArr[i]);
-        }
-      }
-
-      if (waveArr.current.length === 0) {
-        setWaveLoading(false);
-        return;
-      }
-
-      setWaveData({
-        waveArr: waveArr.current[0],
-        waveSelect: tempWaveSelect
+      const dim = waveDimArr[wavePickIndex];
+      const response = await request({
+        url: Interface.price_wave,
+        data: { dim }
       });
+      if (!isEmpty(response?.data)) {
+        const formattedData = response.data.slice(0, 3).map(item => ({
+          symbol: item.symbol,
+          priceRange: item.priceRange,
+          url: item.url,
+          key: item.symbol,
+          img: item.url
+        }));
+        setWaveData({
+          waveArr: formattedData,
+          waveSelect: wavePickArr
+        });
+      }
       setWaveLoading(false);
-
-      // 轮询
-      setTimeout(() => {
-        if (needLoop.current) loadWaveData();
-      }, LOOPTIME);
     } catch (error) {
       console.error('加载波幅榜失败:', error);
       setWaveLoading(false);
     }
   };
 
-  const loadTradeData = async () => {
-    setTradeLoading(true);
+  const loadTradeData = async (silent = false) => {
+    if (!silent) setTradeLoading(true);
     try {
-      tradeArr.current = [];
-      const tempTradeSelect = [];
-
-      for (let i = 0; i < tradeIntervalsArr.length; i++) {
-        const response = await request({
-          url: Interface.coin_trade,
-          data: { intervals: tradeIntervalsArr[i] }
-        });
-
-        if (!isEmpty(response?.data)) {
-          const formattedData = response.data.slice(0, 3).map(item => ({
-            symbol: item.symbol,
-            usd: item.usd,
-            url: item.url,
-            key: item.symbol,
-            img: item.url
-          }));
-          tradeArr.current.push(formattedData);
-          tempTradeSelect.push(tradePickArr[i]);
-        }
-      }
-
-      if (tradeArr.current.length === 0) {
-        setTradeLoading(false);
-        return;
-      }
-
-      setTradeData({
-        tradeArr: tradeArr.current[0],
-        tradeSelect: tempTradeSelect
+      const intervals = tradeIntervalsArr[tradePickIndex];
+      const response = await request({
+        url: Interface.coin_trade,
+        data: { intervals }
       });
+      if (!isEmpty(response?.data)) {
+        const formattedData = response.data.slice(0, 3).map(item => ({
+          symbol: item.symbol,
+          usd: item.usd,
+          url: item.url,
+          key: item.symbol,
+          img: item.url
+        }));
+        setTradeData({
+          tradeArr: formattedData,
+          tradeSelect: tradePickArr
+        });
+      }
       setTradeLoading(false);
-
-      // 轮询
-      setTimeout(() => {
-        if (needLoop.current) loadTradeData();
-      }, LOOPTIME);
     } catch (error) {
       console.error('加载成交额榜失败:', error);
       setTradeLoading(false);
     }
   };
 
-  const loadXinbiData = async () => {
-    setXinbiLoading(true);
+  const loadXinbiData = async (silent = false) => {
+    if (!silent) setXinbiLoading(true);
     try {
       const response = await request({
         url: Interface.NEW_COIN,
@@ -431,59 +355,61 @@ const loadingTimerRef = useRef(null);
         setXinbiData(prev => ({ ...prev, xinbiArr: formattedData }));
       }
       setXinbiLoading(false);
-
-      // 轮询
-      setTimeout(() => {
-        if (needLoop.current) loadXinbiData();
-      }, LOOPTIME);
     } catch (error) {
       console.error('加载新币榜失败:', error);
       setXinbiLoading(false);
     }
   };
 
-  const loadUpTradeData = async () => {
-    setUpTradeLoading(true);
+  const loadUpTradeData = async (silent = false) => {
+    if (!silent) setUpTradeLoading(true);
     setUpTradeError(false);
     try {
-      upTradeArr.current = [];
-      const tempUpTradeSelect = [];
-
-      for (let i = 0; i < upTradeIntervalsArr.length; i++) {
-        const response = await request({
-          url: Interface.PRICE_UPTRADE,
-          data: { intervals: upTradeIntervalsArr[i] }
+      let intervals = upTradeIntervalsArr[upTradePickIndex];
+      let response = await request({
+        url: Interface.PRICE_UPTRADE,
+        data: { intervals }
+      });
+      if (!isEmpty(response?.data)) {
+        const formattedData = response.data.slice(0, 3).map(item => ({
+          symbol: item.symbol,
+          movers: item.movers,
+          url: item.url,
+          key: item.symbol,
+          img: item.url
+        }));
+        setUpTradeData({
+          upTradeArr: formattedData,
+          upTradeSelect: upTradePickArr
         });
-
-        if (!isEmpty(response?.data)) {
-          const formattedData = response.data.slice(0, 3).map(item => ({
-            symbol: item.symbol,
-            movers: item.movers,
-            url: item.url,
-            key: item.symbol,
-            img: item.url
-          }));
-          upTradeArr.current.push(formattedData);
-          tempUpTradeSelect.push(upTradePickArr[i]);
+      } else {
+        if (intervals === 'today') {
+          intervals = '1_day';
+          setUpTradePickIndex(1);
+          response = await request({
+            url: Interface.PRICE_UPTRADE,
+            data: { intervals }
+          });
+          if (!isEmpty(response?.data)) {
+            const formattedData = response.data.slice(0, 3).map(item => ({
+              symbol: item.symbol,
+              movers: item.movers,
+              url: item.url,
+              key: item.symbol,
+              img: item.url
+            }));
+            setUpTradeData({
+              upTradeArr: formattedData,
+              upTradeSelect: upTradePickArr
+            });
+          } else {
+            setUpTradeError(true);
+          }
+        } else {
+          setUpTradeError(true);
         }
       }
-
-      if (upTradeArr.current.length === 0) {
-        setUpTradeError(true);
-        setUpTradeLoading(false);
-        return;
-      }
-
-      setUpTradeData({
-        upTradeArr: upTradeArr.current[0],
-        upTradeSelect: tempUpTradeSelect
-      });
       setUpTradeLoading(false);
-
-      // 轮询
-      setTimeout(() => {
-        if (needLoop.current) loadUpTradeData();
-      }, LOOPTIME);
     } catch (error) {
       console.error('加载飙升榜失败:', error);
       setUpTradeError(true);
@@ -505,52 +431,22 @@ const loadingTimerRef = useRef(null);
   };
 
   const pricePickChange = (index) => {
-    if (priceArr.current && priceArr.current[index]) {
-      setPriceData({
-        ...priceData,
-        priceArr: priceArr.current[index]
-      });
-    }
     setPricePickIndex(index);
   };
 
   const downPickChange = (index) => {
-    if (downArr.current && downArr.current[index]) {
-      setDownData({
-        ...downData,
-        downArr: downArr.current[index]
-      });
-    }
     setDownPickIndex(index);
   };
 
   const wavePickChange = (index) => {
-    if (waveArr.current && waveArr.current[index]) {
-      setWaveData({
-        ...waveData,
-        waveArr: waveArr.current[index]
-      });
-    }
     setWavePickIndex(index);
   };
 
   const tradePickChange = (index) => {
-    if (tradeArr.current && tradeArr.current[index]) {
-      setTradeData({
-        ...tradeData,
-        tradeArr: tradeArr.current[index]
-      });
-    }
     setTradePickIndex(index);
   };
 
   const upTradePickChange = (index) => {
-    if (upTradeArr.current && upTradeArr.current[index]) {
-      setUpTradeData({
-        ...upTradeData,
-        upTradeArr: upTradeArr.current[index]
-      });
-    }
     setUpTradePickIndex(index);
   };
 
@@ -609,18 +505,11 @@ const loadingTimerRef = useRef(null);
 
       setOwn(temp_self_select);
       setOwnLoading(false);
-
-      // 轮询
-      if (needLoop.current) {
-        setTimeout(() => {
-          if (needLoop.current) fetchOwnList();
-        }, LOOPTIME);
-      }
     } catch (error) {
       console.error('获取自选列表失败:', error);
       setOwnError(true);
       setOwnLoading(false);
-      // 不需要轮询
+      
     }
   };
 
@@ -710,23 +599,29 @@ const loadingTimerRef = useRef(null);
       fetchOwnList();
     }
 
-    // 设置轮询
     const timer = setInterval(() => {
       if (needLoop.current) {
         if (pageActiveKey === 'self') {
           fetchOwnList();
+        } else if (pageActiveKey === 'rank') {
+          loadExchangeData(true);
+          loadPriceData(true);
+          loadDownData(true);
+          loadWaveData(true);
+          loadTradeData(true);
+          loadXinbiData(true);
+          loadUpTradeData(true);
         }
       }
-    }, LOOPTIME);
+    }, RANK_LOOPTIME);
 
     return () => {
       clearInterval(timer);
-      // 清理加载定时器
       if (loadingTimerRef.current) {
         clearTimeout(loadingTimerRef.current);
       }
     };
-  }, [pageActiveKey]);
+  }, [pageActiveKey, pricePickIndex, downPickIndex, wavePickIndex, tradePickIndex, upTradePickIndex]);
   useEffect(() => {
     if (pageActiveKey === 'market' && marketData.length === 0) {
       loadMarketData();
