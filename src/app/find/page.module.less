@@ -52,23 +52,36 @@
 
 /* ===== 自选列表样式 ===== */
 .ownBox {
-  height: 100vh;
-  padding-top: 10px; // 调整为较小的值，因为 .content 已经有 margin-top
+  min-height: calc(100vh - 74px); // 最小高度 = 视口高度 - 顶部导航和标签栏(74px)
+  background-color: #fff; // 整个自选区域白色背景
+  margin-bottom: -60px; // 负边距抵消 Layout 的 bottomPadding，消除断层
+  padding-bottom: 60px; // 为底部导航栏预留空间
 
-  .gridTitle {
-    font-size: 12px; // 原 20rpx，放大字体
+  .ownGridTitle {
+    font-size: 11px; // 适当增大表头字号
     color: #898989;
-    margin-bottom: 5px; // 原 10rpx
+    margin-bottom: 0; // 移除下边距
     position: fixed;
     top: 74px; // NavBar(44px) + Tabs(30px)
     background-color: #efefef;
     z-index: 200;
+    display: flex;
     align-items: center;
-    padding: 5px 10px; // 原 10rpx 20rpx
+    padding: 4px 10px; // 减小垂直内边距
     box-sizing: border-box;
+    width: 100%;
+    border-bottom: 1px solid #f0f0f0; // 添加底部边框区分表头和数据
+  }
   
-    .text {
+  .ownGridTitleItem {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 4px; // 与 MoziGrid 的 gridConItem 对齐
+    
+    &.text {
       text-align: right;
+      justify-content: flex-end;
     }
   }
 
@@ -89,10 +102,25 @@
     }
   }
 
-  // 自选列表专用字体放大样式（与原项目保持一致）
+  // 自选列表专用字体样式
   :global {
     .adm-grid-item {
-      font-size: 14px; // 28rpx → 14px，比普通列表更大
+      font-size: 12px; // 缩小字号使页面不那么拥挤
+    }
+  }
+  
+  // 自选列表内容区域样式调整
+  .ownContent {
+    padding: 0 10px; // 左右内边距与表头对齐
+    
+    :global {
+      .gridListItem {
+        padding: 10px 0; // 减小行间距
+      }
+      
+      .gridContent {
+        font-size: 12px; // 缩小内容字号
+      }
     }
   }
 }
@@ -103,9 +131,9 @@
   align-items: center;
 
   .ownImg {
-    height: 18px; // 原 36rpx
-    width: 18px; // 原 36rpx
-    margin-right: 5px; // 原 10rpx
+    height: 16px; // 缩小图标尺寸
+    width: 16px;
+    margin-right: 4px; // 减小间距
     border-radius: 50%;
   }
 }
@@ -236,8 +264,13 @@
     }
   }
   
-  .ownBox .gridTitle {
-    background-color: #0f0f0f;
+  .ownBox {
+    background-color: #1a1a1a; // 暗黑模式下整个自选区域深色背景
+    
+    .ownGridTitle {
+      background-color: #1a1a1a; // 暗黑模式下表头背景色
+      border-bottom-color: #333; // 暗黑模式下边框颜色
+    }
   }
   
   .marketBox {

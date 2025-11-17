@@ -764,20 +764,32 @@ const loadingTimerRef = useRef(null);
           <button className={styles.addOwnBtn} onClick={addOwn}>{t('discover.addFavoriteButton')}</button>
         ) : (
           <>
-            <Grid className={styles.gridTitle} columns={5}>
-              {[t('home.columns.symbol'), t('home.columns.lastPrice'), t('home.columns.change24h'), t('home.columns.addFavorites'), t('home.columns.addMonitor')].map((colNameItem, colNameIndex) => (
-                <Grid.Item key={colNameIndex} className={`${styles.gridTitleItem} ${colNameIndex !== 0 ? styles.text : ''}`}>
-                  {colNameItem}
-                </Grid.Item>
+            <div className={styles.ownGridTitle}>
+              {[
+                { name: t('home.columns.symbol'), width: '30%' },
+                { name: t('home.columns.lastPrice'), width: '18%' },
+                { name: t('home.columns.change24h'), width: '22%' },
+                { name: t('home.columns.addFavorites'), width: '15%' },
+                { name: t('home.columns.addMonitor'), width: '15%' }
+              ].map((colItem, colIndex) => (
+                <div 
+                  key={colIndex} 
+                  className={`${styles.ownGridTitleItem} ${colIndex !== 0 ? styles.text : ''}`}
+                  style={{ width: colItem.width }}
+                >
+                  {colItem.name}
+                </div>
               ))}
-            </Grid>
-            <MoziGrid
-              length={5}
-              colName={[t('home.columns.symbol'), t('home.columns.lastPrice'), t('home.columns.change24h'), t('home.columns.addFavorites'), t('home.columns.addFavorites')]}
-              gridContent={myOwn}
-              callback={(gridCon) => { jump2Detail(gridCon.key); }}
-              hideTitle={true}
-            />
+            </div>
+            <div style={{ marginTop: '24px' }} className={styles.ownContent}>
+              <MoziGrid
+                length={5}
+                colName={[t('home.columns.symbol'), t('home.columns.lastPrice'), t('home.columns.change24h'), t('home.columns.addFavorites'), t('home.columns.addFavorites')]}
+                gridContent={myOwn}
+                callback={(gridCon) => { jump2Detail(gridCon.key); }}
+                hideTitle={true}
+              />
+            </div>
           </>
         )}
       </div>
