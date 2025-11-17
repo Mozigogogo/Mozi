@@ -62,6 +62,10 @@ export const Interface = {
   NEW_COIN: '/discovery/newsymbolrank',
   // 自选
   COIN_SELF: '/selfselect/all',
+  // 添加自选
+  ADD_OWN: '/selfselect/add',
+  // 取消自选
+  CANCEL_OWN: '/selfselect/cancel',
 
   // 详情页
   // 币种信息
