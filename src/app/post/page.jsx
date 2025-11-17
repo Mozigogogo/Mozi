@@ -5,7 +5,7 @@ import { Input, TextArea, Button, Popup, Picker, Toast } from 'antd-mobile';
 import { SearchOutline, CloseOutline } from 'antd-mobile-icons';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
-import Layout from '../../components/Layout';
+import NavBar from '../../components/NavBar';
 import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './page.module.less';
 
@@ -13,6 +13,13 @@ import styles from './page.module.less';
 if (!Interface.POSTS_UPDATE) {
   Interface.POSTS_UPDATE = '/posts/update';
 }
+
+// 图标资源
+const CDN_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community';
+const templateIcon = `${CDN_ICON}/template.png`;
+const voteIcon = `${CDN_ICON}/vote.png`;
+const currencyIcon = `${CDN_ICON}/currency.png`;
+const topicIcon = `${CDN_ICON}/topic.png`;
 
 export default function PostPage() {
   const router = useRouter();
@@ -56,6 +63,7 @@ export default function PostPage() {
   const [showAskTips, setShowAskTips] = useState(false);
   const [showCommunityRules, setShowCommunityRules] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [activeButton, setActiveButton] = useState(''); // 当前激活的按钮
 
   // 模板配置
   const templates = ["普通", "发现好币", "不懂就问"];
@@ -272,6 +280,7 @@ export default function PostPage() {
   const selectTemplate = (template) => {
     setSelectedTemplate(template);
     setShowTemplates(false);
+    setActiveButton(''); // 立即清除激活状态
     setShowAskTips(false);
     
     if (template === '不懂就问') {
@@ -454,25 +463,20 @@ export default function PostPage() {
   };
 
   return (
-    <Layout title={isUpdate ? '编辑帖子' : '发布帖子'}>
+    <>
+      <NavBar 
+        title={isUpdate ? '编辑帖子' : '发帖'}
+        onBack={() => router.back()}
+      />
       <div className={styles.postContainer}>
-        {/* 顶部用户信息 */}
-        <div className={styles.userInfo}>
-          <img 
-            className={styles.avatar} 
-            src={userInfo?.avatar || 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0'} 
-            alt="头像"
-          />
-          <span className={styles.nickname}>{userInfo?.nickName || ''}</span>
-          <Button 
-            className={styles.publishBtn} 
-            onClick={publishPost} 
-            disabled={publishing}
-            loading={publishing}
-            color="primary"
-          >
-            {isUpdate ? '更新' : '发布'}
-          </Button>
+        <div className={styles.contentWrapper}>
+          {/* 顶部用户头像 */}
+          <div className={styles.userInfo}>
+          <div className={styles.avatarPlaceholder}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="#BDBDBD"/>
+            </svg>
+          </div>
         </div>
 
         {/* 标题输入区 */}
@@ -481,7 +485,7 @@ export default function PostPage() {
             className={styles.titleInput}
             value={title}
             onChange={(value) => value.length <= 20 && setTitle(value)}
-            placeholder={selectedTemplate === '普通' ? '标题（选填）' : selectedTemplate === '发现好币' ? '请输入标题（选填）': '请输入问题'}
+            placeholder={selectedTemplate === '普通' ? '请输入标题（选填）' : selectedTemplate === '发现好币' ? '请输入标题（选填）': '请输入问题'}
             maxLength={20}
           />
           <span className={styles.wordCount}>{title.length}/20</span>
@@ -490,14 +494,41 @@ export default function PostPage() {
         {/* 内容区域 */}
         <div className={styles.contentSection}>
           {(selectedTemplate === '普通' || selectedTemplate === '不懂就问') && (
-            <TextArea
-              className={styles.contentTextarea}
-              placeholder={selectedTemplate === '普通' ? '写下你的想法...' : '详细描述你的问题...'}
-              value={content}
-              onChange={setContent}
-              maxLength={300}
-              rows={8}
-            />
+            <>
+              <TextArea
+                className={styles.contentTextarea}
+                placeholder={selectedTemplate === '普通' ? '写下你的想法...' : '详细描述你的问题...'}
+                value={content}
+                onChange={setContent}
+                maxLength={300}
+                rows={8}
+              />
+              
+              {/* 图片上传区 */}
+              <div className={styles.imageUploader}>
+                <div className={styles.uploadTile}>
+                  <span>+</span>
+                </div>
+              </div>
+              
+              {/* 选中的币种和话题展示 */}
+              {(selectedCoins.length > 0 || selectedTopic) && (
+                <div className={styles.selectedTags}>
+                  {selectedCoins.map((coin, index) => (
+                    <span 
+                      key={index} 
+                      className={styles.coinTag}
+                      onClick={() => removeCoin(index)}
+                    >
+                      ${coin.name || coin.symbol || coin}$
+                    </span>
+                  ))}
+                  {selectedTopic && (
+                    <span className={styles.topicTag}>#{selectedTopic.name}</span>
+                  )}
+                </div>
+              )}
+            </>
           )}
 
           {selectedTemplate === '发现好币' && (
@@ -540,84 +571,116 @@ export default function PostPage() {
           </div>
         )}
 
-        {/* 选中的币种和话题展示 */}
-        <div className={styles.selectedTags}>
-          {selectedCoins.map((coin, index) => (
-            <span 
-              key={index} 
-              className={styles.coinTag}
-              onClick={() => removeCoin(index)}
-            >
-              ${coin.name || coin.symbol || coin}$
-            </span>
-          ))}
-          {selectedTopic && (
-            <span className={styles.topicTag}>#{selectedTopic.name}</span>
-          )}
-        </div>
-
         {/* 底部工具栏 */}
         <div className={styles.bottomToolbar}>
-          <Button 
+          <button 
             className={styles.templateBtn}
-            onClick={() => setShowTemplates(true)}
-            fill="none"
+            onClick={() => {
+              setActiveButton('template');
+              setShowTemplates(true);
+            }}
           >
-            模板
-          </Button>
-          <Button 
+            <div className={`${styles.templateBox} ${activeButton === 'template' ? styles.active : ''}`}>
+              <img className={styles.buttonIcon} src={templateIcon} alt="模板" />
+              模板
+            </div>
+          </button>
+          <button 
             className={styles.templateBtn}
-            onClick={() => setShowVote(true)}
-            fill="none"
+            onClick={() => {
+              setActiveButton('vote');
+              setShowVote(true);
+            }}
           >
-            投票
-          </Button>
-          <Button 
+            <div className={`${styles.templateBox} ${activeButton === 'vote' ? styles.active : ''}`}>
+              <img className={styles.buttonIcon} src={voteIcon} alt="投票" />
+              投票
+            </div>
+          </button>
+          <button 
             className={styles.templateBtn}
-            onClick={() => setShowCoinSelect(true)}
-            fill="none"
+            onClick={() => {
+              setActiveButton('coin');
+              setShowCoinSelect(true);
+            }}
           >
-            币种
-          </Button>
-          <Button 
+            <div className={`${styles.templateBox} ${activeButton === 'coin' ? styles.active : ''}`}>
+              <img className={styles.buttonIcon} src={currencyIcon} alt="币种" />
+              币种
+            </div>
+          </button>
+          <button 
             className={styles.templateBtn}
-            onClick={() => setShowTopicSelect(true)}
-            fill="none"
+            onClick={() => {
+              setActiveButton('topic');
+              setShowTopicSelect(true);
+            }}
           >
-            话题
-          </Button>
+            <div className={`${styles.templateBox} ${activeButton === 'topic' ? styles.active : ''}`}>
+              <img className={styles.buttonIcon} src={topicIcon} alt="话题" />
+              话题
+            </div>
+          </button>
         </div>
 
         {/* 模板选择弹出层 */}
-        <Popup
-          visible={showTemplates}
-          onMaskClick={() => setShowTemplates(false)}
-          position="bottom"
-          bodyStyle={{ borderTopLeftRadius: '8px', borderTopRightRadius: '8px' }}
-        >
-          <div className={styles.popupContent}>
-            <div className={styles.popupHeader}>
-              <span>选择模板</span>
-              <CloseOutline onClick={() => setShowTemplates(false)} />
-            </div>
-            <div className={styles.templateList}>
-              {templates.map((item, index) => (
-                <div
-                  key={index}
-                  className={`${styles.templateItem} ${selectedTemplate === item ? styles.active : ''}`}
-                  onClick={() => selectTemplate(item)}
+        {showTemplates && (
+          <div className={styles.templatePopup}>
+            <div 
+              className={styles.popupMask} 
+              onClick={() => {
+                setShowTemplates(false);
+                setActiveButton('');
+              }}
+            />
+            <div className={styles.popupContent}>
+              <div className={styles.popupHeader}>
+                <span>选择模板</span>
+                <span 
+                  className={styles.closeBtn}
+                  onClick={() => {
+                    setShowTemplates(false);
+                    setActiveButton('');
+                  }}
                 >
-                  <span>{item}</span>
-                </div>
-              ))}
+                  ×
+                </span>
+              </div>
+              <div className={styles.templateList}>
+                {templates.map((item, index) => (
+                  <div
+                    key={index}
+                    className={`${styles.templateItem} ${selectedTemplate === item ? styles.active : ''}`}
+                    onClick={() => selectTemplate(item)}
+                  >
+                    <span>{item}</span>
+                    <div className={styles.demoArea}>
+                      {/* 模板演示区域 */}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </Popup>
+        )}
 
         {/* 其他弹窗... */}
         {/* 由于篇幅限制，这里省略了其他弹窗的实现 */}
-        
+        </div>
+
+        {/* 底部发布按钮 */}
+        <div className={styles.publishBtnWrapper}>
+          <Button 
+            className={styles.publishButton} 
+            onClick={publishPost} 
+            disabled={publishing}
+            loading={publishing}
+            block
+          >
+            {isUpdate ? '更新' : '发布'}
+          </Button>
+        </div>
       </div>
-    </Layout>
+    </>
   );
 }
