@@ -111,6 +111,187 @@
   background-color: #EEF0F3;
 }
 
+/* 不懂就问按钮容器 */
+.questionWrapper {
+  background-color: #EEF0F3;
+}
+
+/* 发现好币 - 两列网格布局 */
+.discoveryGrid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-left: 0;
+  margin-right: 0;
+  padding-left: 0;
+  padding-right: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 发现好币 - 卡片样式 */
+.discoveryCard {
+  flex: 0 0 calc(50% - 4px); /* 每行两个，间距8px（4px * 2） */
+  max-width: calc(50% - 4px);
+  width: calc(50% - 4px);
+  box-sizing: border-box;
+  margin: 0 0 8px 0; /* 底部间距8px */
+  padding: 10px; /* 20rpx ÷ 2 = 10px */
+  background: #fff;
+  border-radius: 8px; /* 16rpx ÷ 2 = 8px */
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06); /* 0 2px 8px ÷ 2 */
+  border-bottom: none;
+  position: relative; /* 为背景图标定位 */
+  min-height: 185px; /* 370rpx ÷ 2 = 185px，固定最小高度 */
+  display: flex;
+  flex-direction: column;
+}
+
+/* 发现好币 - 右上角装饰图标 */
+.findBestCoinBg {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60px; /* 120rpx ÷ 2 = 60px */
+  height: 60px; /* 120rpx ÷ 2 = 60px */
+  z-index: 1;
+  opacity: 0.8;
+}
+
+/* 发现好币 - 用户信息区域 */
+.discoveryUserInfo {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px; /* 20rpx ÷ 2 = 10px */
+  position: relative;
+  z-index: 2; /* 在背景图标之上 */
+}
+
+.discoveryAvatar {
+  width: 28px; /* 56rpx ÷ 2 = 28px */
+  height: 28px; /* 56rpx ÷ 2 = 28px */
+  border-radius: 14px; /* 28rpx ÷ 2 = 14px */
+  margin-right: 6px; /* 12rpx ÷ 2 = 6px */
+  flex-shrink: 0;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+.discoveryUserContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.discoveryNickname {
+  font-size: 13px; /* 26rpx ÷ 2 = 13px */
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 2px; /* 4rpx ÷ 2 = 2px */
+  display: block;
+}
+
+.discoveryTime {
+  font-size: 11px; /* 22rpx ÷ 2 = 11px */
+  color: #999;
+  display: block;
+}
+
+/* 发现好币 - 操作按钮区域 */
+.discoveryActionButtons {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  margin: 0 -5px; /* -10rpx ÷ 2 = -5px */
+  margin-top: auto; /* 推到底部 */
+  position: relative;
+  z-index: 2;
+}
+
+.discoveryActionBtn {
+  display: flex;
+  align-items: center;
+  gap: 3px; /* 6rpx ÷ 2 = 3px */
+  padding: 0;
+  background: none;
+  border: none;
+  margin: 0;
+  font-size: 11px; /* 22rpx ÷ 2 = 11px */
+  cursor: pointer;
+  transition: opacity 0.2s;
+  
+  &:active {
+    opacity: 0.7;
+  }
+  
+  .actionCount {
+    font-size: 11px; /* 22rpx ÷ 2 = 11px */
+    color: #666;
+    font-weight: 500;
+  }
+  
+  &.likeBtn {
+    &.liked {
+      .actionCount {
+        color: #11B787;
+      }
+    }
+  }
+}
+
+.discoveryActionIcon {
+  width: 22px; /* 44rpx ÷ 2 = 22px */
+  height: 22px; /* 44rpx ÷ 2 = 22px */
+  display: block;
+}
+
+/* 发现好币 - 币种信息区域 */
+.coinInfoSection {
+  margin-bottom: 10px; /* 20rpx ÷ 2 = 10px */
+  position: relative;
+  z-index: 2;
+  flex: 1; /* 占据剩余空间 */
+}
+
+.coinInfoRow {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px; /* 8rpx ÷ 2 = 4px */
+  
+  &:last-child {
+    margin-bottom: 0;
+    align-items: flex-start;
+  }
+}
+
+.coinInfoIconImg {
+  width: 14px; /* 28rpx ÷ 2 = 14px */
+  height: 14px; /* 28rpx ÷ 2 = 14px */
+  margin-right: 4px; /* 8rpx ÷ 2 = 4px */
+  flex-shrink: 0;
+}
+
+.coinInfoLabel {
+  font-size: 12px; /* 24rpx ÷ 2 = 12px */
+  color: #666;
+  margin-right: 3px; /* 6rpx ÷ 2 = 3px */
+  flex-shrink: 0;
+}
+
+.coinInfoValue {
+  font-size: 12px; /* 24rpx ÷ 2 = 12px */
+  color: #9A9DA0;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
 .coinTab {
   display: inline-block;
   padding: 4px 8px; /* 16rpx 32rpx -> 8px 16px，这里调整为4px 8px */
@@ -190,7 +371,7 @@
   border: 1px solid #f0f0f0;
   border-radius: 16px;
   padding: 20px;
-  margin: 0 0 16px 0;
+  margin: 0 0 4px 0;
   position: relative;
 }
 
@@ -305,6 +486,9 @@
   color: #999;
   padding: 16px 0;
   font-size: var(--font-size-sm);
+  width: 100%; /* 在两列布局中占据全宽 */
+  flex: 0 0 100%; /* flex布局中占据全宽 */
+  max-width: 100%;
 }
 
 /* 热榜话题样式 */
