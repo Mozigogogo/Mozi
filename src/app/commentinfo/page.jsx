@@ -3,12 +3,20 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button, Input, Dialog, Toast, Divider } from 'antd-mobile';
-import { HeartFill, HeartOutline, MoreOutline, SendOutline } from 'antd-mobile-icons';
+import { MoreOutline } from 'antd-mobile-icons';
+import NavBar from '@/components/NavBar';
 import Layout from '@/components/Layout';
 import { Loading } from '@/components/Loading';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 import styles from './page.module.less';
+
+// 图标资源
+const CDN_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community';
+const likeActiveIcon = `${CDN_ICON}/like-active.png`;
+const likeNoActiveIcon = `${CDN_ICON}/like-no-active.png`;
+const shareIcon = `${CDN_ICON}/share.png`;
+const editIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/edit.png';
 
 export default function CommentInfo() {
   const searchParams = useSearchParams();
@@ -536,6 +544,7 @@ export default function CommentInfo() {
 
   return (
     <Layout>
+      <NavBar title="评论" showBack={true} />
       <div className={styles.commentDetail}>
         {/* 操作菜单 */}
         {showActionSheet && (
@@ -617,7 +626,7 @@ export default function CommentInfo() {
                         className={styles.coinTag}
                         onClick={() => window.location.href = `/detail?symbol=${tag.name}`}
                       >
-                        ${tag.name}$
+                        @{tag.name}
                       </span>
                     ))}
                     
@@ -637,15 +646,17 @@ export default function CommentInfo() {
                   <span className={styles.time}>{(detail.createdAt|| '').replace('T', '    ')}</span>
                   <div className={styles.actionGroup}>
                     <div className={styles.likeBtn} onClick={handlePostLike}>
-                      {detail.isLikedByCurrentUser || likedPosts[detail.id] ? 
-                        <HeartFill fontSize={16} color="red" /> : 
-                        <HeartOutline fontSize={16} />}
+                      <img 
+                        className={styles.likeIcon} 
+                        src={detail.isLikedByCurrentUser || likedPosts[detail.id] ? likeActiveIcon : likeNoActiveIcon} 
+                        alt="点赞" 
+                      />
                       <span className={`${styles.likes} ${likedPosts[detail.id] ? styles.liked : ''}`}>
-                        {detail.likeCnt || 0} 点赞
+                        {detail.likeCnt || 0}
                       </span>
                     </div>
                     <div className={styles.shareBtn} onClick={handleShare}>
-                      <SendOutline fontSize={16} />
+                      <img className={styles.shareIcon} src={shareIcon} alt="分享" />
                       <span className={styles.shareText}>分享</span>
                     </div>
                   </div>
@@ -654,43 +665,48 @@ export default function CommentInfo() {
             </div>
 
             {/* 评论列表 */}
-            <div className={styles.commentList}>
+            <div className={styles.commentSection}>
               <div className={styles.listHeader}>
                 <span className={styles.total}>全部评论</span>
                 <span className={styles.count}>共{list.length}条回复</span>
               </div>
 
+              <div className={styles.commentList}>
               {list.map(item => (
                 <div key={item.id} className={styles.secondComment}>
                   <div className={styles.commentHeader}>
                     <img src={item.user.avatar} className={styles.avatar} alt="avatar" />
                     <span className={styles.nickname}>{item.user.nickname}</span>
-                    {currentUser && currentUser.userId === item.user.id && (
-                      <div className={styles.commentHandle} onClick={(e) => {
+                    <div className={styles.headerRight}>
+                      <div className={styles.likeBtn} onClick={(e) => {
                         e.stopPropagation();
-                        setSelectedPost(item);
-                        setShowActionSheet(true);
+                        handleCommentLike(item.id);
                       }}>
-                        <MoreOutline fontSize={20} />
+                        <img 
+                          className={styles.commentLikeIcon} 
+                          src={likedComments[item.id] ? likeActiveIcon : likeNoActiveIcon} 
+                          alt="点赞" 
+                        />
+                        <span className={`${styles.likeCount} ${likedComments[item.id] ? styles.liked : ''}`}>
+                          {item.likeCount || 0}
+                        </span>
                       </div>
-                    )}
+                      {currentUser && currentUser.userId === item.user.id && (
+                        <div className={styles.commentHandle} onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedPost(item);
+                          setShowActionSheet(true);
+                        }}>
+                          <MoreOutline fontSize={20} />
+                        </div>
+                      )}
+                    </div>
                   </div>
                   
                   <div className={styles.commentContent} onClick={() => handleReply(item, item.user)}>
                     <div className={styles.text}>{item.content}</div>
                     <div className={styles.meta}>
                       <span className={styles.time}>{item.createdAt.replace('T', '   ')}</span>
-                      <div className={styles.likeBtn} onClick={(e) => {
-                        e.stopPropagation();
-                        handleCommentLike(item.id);
-                      }}>
-                        {likedComments[item.id] ? 
-                          <HeartFill fontSize={12} color="red" /> : 
-                          <HeartOutline fontSize={12} />}
-                        <span className={`${styles.likeCount} ${likedComments[item.id] ? styles.liked : ''}`}>
-                          {item.likeCount || 0}
-                        </span>
-                      </div>
                     </div>
                   </div>
 
@@ -731,6 +747,7 @@ export default function CommentInfo() {
                   <Loading />
                 </div>
               )}
+              </div>
 
               {/* 底部提示 */}
               {allLoaded && list.length > 0 && (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Tabs, Button, Dialog, Toast, SpinLoading } from 'antd-mobile';
 import NavBar from '@/components/NavBar';
@@ -53,6 +53,9 @@ export default function CommunityPage() {
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [likedPosts, setLikedPosts] = useState({});
+  
+  // 滚动容器ref
+  const scrollContainerRef = useRef(null);
 
   const CDN_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community';
   const CDN_IMG = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/community';
@@ -205,6 +208,7 @@ export default function CommunityPage() {
       
       if (response?.data?.data?.length > 0) {
         const { data, total, totalPages } = response.data;
+        
         const formattedData = data.map(item => ({
           id: item.id,
           avatar: item.avatar || '/default-avatar.png',
@@ -461,8 +465,17 @@ export default function CommunityPage() {
 
   // 监听滚动加载更多
   useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+    
     const handleScroll = () => {
-      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 1000) {
+      const scrollHeight = scrollContainer.scrollHeight;
+      const scrollTop = scrollContainer.scrollTop;
+      const clientHeight = scrollContainer.clientHeight;
+      const distanceToBottom = scrollHeight - scrollTop - clientHeight;
+      
+      // 距离底部200px时触发加载
+      if (distanceToBottom < 200) {
         if (mainTab === 'recommend' && hasMore && !loading) {
           fetchPosts();
         } else if (mainTab === 'hot' && !hotTopicsAllLoaded && !hotTopicsLoading) {
@@ -471,9 +484,9 @@ export default function CommunityPage() {
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [mainTab, hasMore, loading, hotTopicsAllLoaded, hotTopicsLoading]);
+    scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+    return () => scrollContainer.removeEventListener('scroll', handleScroll);
+  }, [mainTab, hasMore, loading, hotTopicsAllLoaded, hotTopicsLoading, posts.length]);
 
   // 处理从URL参数跳转到特定币种
   useEffect(() => {
@@ -831,7 +844,7 @@ export default function CommunityPage() {
         </div>
 
         {/* 内容列表（内部滚动容器） */}
-        <div className={styles.scrollContainer}>
+        <div ref={scrollContainerRef} className={styles.scrollContainer}>
         <div className={styles.contentList}>
           {/* 币种投票组件 - 仅在币种tab显示 */}
           {mainTab === 'recommend' && subTab === 'currency' && (

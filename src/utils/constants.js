@@ -206,6 +206,14 @@ export const Interface = {
   POSTS_LIKE: '/posts/like',
   // 创建评论
   COMMENTS_NEW: '/comments/new',
+  // 评论点赞
+  COMMENTS_LIKE: '/comments/like/{id}',
+  // 评论取消点赞
+  COMMENTS_UNLIKE: '/comments/unlike/{id}',
+  // 删除评论
+  COMMENTS_DELETE: '/comments/delete/{id}',
+  // 回复评论
+  COMMENTS_REPLIES: '/comments/replies',
   // 更新帖子
   POSTS_UPDATE: '/posts/update',
   // 删除帖子
