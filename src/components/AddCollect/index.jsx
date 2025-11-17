@@ -25,6 +25,7 @@ const AddCollect = ({ isOwn: propIsOwn, symbol, loginCb }) => {
     try {
       const changeOwnRes = await request({
         url,
+        method: 'GET',
         data: {
           coin: symbol
         }

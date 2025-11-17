@@ -1,77 +1,125 @@
-.postContainer {
-  padding: 16px;
-  background: #fff;
+// 页面背景
+.postPageBg {
+  background: #EEF0F3;
   min-height: 100vh;
 }
 
+.postContainer {
+  padding: 16px; /* 32rpx ÷ 2 = 16px */
+  background: #fff;
+  min-height: calc(100vh - 58px); /* 视口高度 - 导航栏 */
+  border-radius: 20px 20px 0 0; /* 40rpx ÷ 2 = 20px */
+  overflow: hidden;
+  margin-top: 58px; /* NavBar高度约50px + 8px间距 */
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 16px;
+}
+
+// 内容包裹层
+.contentWrapper {
+  flex: 1; /* 占据剩余空间 */
+}
+
+// 用户信息区
 .userInfo {
   display: flex;
   align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 16px; /* 32rpx ÷ 2 = 16px */
 }
 
-.avatar {
-  width: 40px;
+.avatarPlaceholder {
+  width: 40px; /* 80rpx ÷ 2 = 40px */
   height: 40px;
-  border-radius: 50%;
-  margin-right: 12px;
+  border-radius: 50%; /* 圆形 */
+  background: #F5F5F5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.nickname {
-  flex: 1;
-  font-size: 16px;
-  color: #333;
-  font-weight: 500;
-}
-
-.publishBtn {
-  background: #45e87f !important;
-  border: none;
-  border-radius: 20px;
-  font-size: 14px;
-  padding: 8px 16px;
-}
-
+// 标题输入区
 .titleSection {
   position: relative;
-  margin-bottom: 16px;
-  background-color: #f5f5f5;
-  border-radius: 8px;
-  padding: 0 12px;
+  margin-bottom: 16px; /* 32rpx ÷ 2 = 16px */
+  background-color: transparent;
+  border-radius: 0;
+  border: none;
+  font-size: 16px; /* 32rpx ÷ 2 = 16px */
+  padding: 0;
 }
 
 .titleInput {
   width: 100%;
-  height: 44px;
-  font-size: 16px;
+  height: 44px; /* 88rpx ÷ 2 = 44px */
+  font-size: 16px; /* 32rpx ÷ 2 = 16px */
   background: transparent;
   border: none;
+  border-bottom: 1px solid #e6e6e6;
+  padding: 0 48px 0 12px; /* 0 96rpx 0 24rpx ÷ 2 */
+  box-sizing: border-box;
+  outline: none;
+  
+  &::placeholder {
+    color: #999;
+  }
 }
 
 .wordCount {
   position: absolute;
-  right: 12px;
+  right: 12px; /* 24rpx ÷ 2 = 12px */
   top: 50%;
   transform: translateY(-50%);
   color: #999;
-  font-size: 12px;
+  font-size: 14px; /* 28rpx ÷ 2 = 14px */
 }
 
+// 内容输入区
 .contentSection {
-  margin-bottom: 16px;
-}
-
-.contentTextarea {
-  width: 100%;
-  min-height: 200px;
-  padding: 12px;
-  font-size: 14px;
-  background: #f5f5f5;
-  border-radius: 8px;
-  border: none;
-  resize: none;
+  .contentTextarea {
+    width: 100%;
+    height: 200px; /* 400rpx ÷ 2 = 200px */
+    padding: 12px; /* 24rpx ÷ 2 = 12px */
+    font-size: 14px; /* 28rpx ÷ 2 = 14px */
+    background: transparent;
+    border-radius: 0;
+    border: none;
+    box-sizing: border-box;
+    resize: none;
+    outline: none;
+    font-family: inherit;
+    
+    &::placeholder {
+      color: #999;
+    }
+  }
+  
+  // 图片上传区域
+  .imageUploader {
+    margin-top: 8px; /* 16rpx ÷ 2 = 8px */
+    display: flex;
+    gap: 6px; /* 12rpx ÷ 2 = 6px */
+    flex-wrap: wrap;
+  }
+  
+  .uploadTile {
+    width: 70px; /* 140rpx ÷ 2 = 70px */
+    height: 70px;
+    border: 1px dashed #dddddd;
+    border-radius: 8px; /* 16rpx ÷ 2 = 8px */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #bdbdbd;
+    font-size: 24px; /* 48rpx ÷ 2 = 24px */
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    
+    &:active {
+      background: #f5f5f5;
+    }
+  }
 }
 
 .discoveryForm {
@@ -151,97 +199,183 @@
   color: #333;
 }
 
+// 选中的标签显示
 .selectedTags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: 6px; /* 12rpx ÷ 2 = 6px */
+  margin-top: 8px; /* 16rpx ÷ 2 = 8px */
+  margin-bottom: 0;
+  
+  .coinTag {
+    display: inline-block;
+    padding: 4px 8px; /* 8rpx 16rpx ÷ 2 */
+    background: #FFF7E6;
+    color: #FF8C00;
+    border-radius: 12px; /* 24rpx ÷ 2 = 12px */
+    font-size: 12px; /* 24rpx ÷ 2 = 12px */
+    cursor: pointer;
+    transition: all 0.2s;
+    
+    &:active {
+      opacity: 0.7;
+    }
+  }
+  
+  .topicTag {
+    display: inline-block;
+    padding: 4px 8px;
+    background: rgba(24, 144, 255, 0.1);
+    color: #1890ff;
+    border-radius: 12px;
+    font-size: 12px;
+  }
 }
 
-.coinTag {
-  display: inline-block;
-  padding: 4px 8px;
-  background: rgba(69, 232, 127, 0.1);
-  color: #45e87f;
-  border-radius: 12px;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.topicTag {
-  display: inline-block;
-  padding: 4px 8px;
-  background: rgba(24, 144, 255, 0.1);
-  color: #1890ff;
-  border-radius: 12px;
-  font-size: 12px;
-}
-
+// 底部工具栏
 .bottomToolbar {
   display: flex;
   align-items: center;
-  justify-content: space-around;
-  padding: 16px 0;
-  border-top: 1px solid #f0f0f0;
+  justify-content: space-between;
+  transition: bottom 0.3s;
+  margin-top: 8px; /* 16rpx ÷ 2 = 8px */
+  
+  .templateBtn {
+    margin: 0;
+    padding: 0;
+    background: none !important;
+    border: none;
+    
+    .templateBox {
+      background-color: transparent;
+      border: 1px solid #DEE2E8;
+      color: #7E7E7E;
+      width: 75px; /* 150rpx ÷ 2 = 75px */
+      height: 30px; /* 60rpx ÷ 2 = 30px */
+      border-radius: 15px; /* 30rpx ÷ 2 = 15px */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px; /* 8rpx ÷ 2 = 4px */
+      transition: all 0.2s ease;
+      font-size: 14px; /* 28rpx ÷ 2 = 14px */
+      
+      .buttonIcon {
+        width: 16px; /* 32rpx ÷ 2 = 16px */
+        height: 16px;
+        flex-shrink: 0;
+        transition: all 0.2s ease;
+        /* 默认状态：灰色 #7E7E7E */
+        filter: brightness(0) saturate(100%) invert(87%) sepia(4%) saturate(347%) hue-rotate(177deg) brightness(95%) contrast(87%);
+      }
+      
+      &.active {
+        background-color: #11B787;
+        border-color: #11B787;
+        color: #fff;
+        
+        .buttonIcon {
+          /* active状态：白色 */
+          filter: brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(7500%) hue-rotate(330deg) brightness(100%) contrast(100%);
+        }
+      }
+    }
+  }
+}
+
+/* 模板选择弹窗 */
+.templatePopup {
   position: fixed;
-  bottom: 0;
   left: 0;
   right: 0;
-  background: #fff;
-  z-index: 100;
+  top: 50%; /* 从屏幕中间往下 */
+  bottom: 0;
+  z-index: 1000;
+
+  .popupMask {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  .popupContent {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #fff;
+    border-radius: 12px 12px 0 0; /* 24rpx ÷ 2 = 12px */
+    padding: 16px; /* 32rpx ÷ 2 = 16px */
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .popupHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px; /* 32rpx ÷ 2 = 16px */
+    font-size: 16px; /* 32rpx ÷ 2 = 16px */
+
+    .closeBtn {
+      font-size: 24px; /* 48rpx ÷ 2 = 24px */
+      color: #999;
+      padding: 0 8px; /* 16rpx ÷ 2 = 8px */
+      cursor: pointer;
+      line-height: 1;
+    }
+  }
+
+  .templateList {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 16px; /* 32rpx ÷ 2 = 16px */
+    gap: 12px; /* 24rpx ÷ 2 = 12px */
+    
+    /* 隐藏滚动条但保持可滚动 */
+    &::-webkit-scrollbar {
+      display: none;
+    }
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+
+    .templateItem {
+      flex: 0 0 200px; /* 400rpx ÷ 2 = 200px */
+      height: 250px; /* 500rpx ÷ 2 = 250px */
+      padding: 12px; /* 24rpx ÷ 2 = 12px */
+      background: #f5f5f5;
+      border-radius: 8px; /* 16rpx ÷ 2 = 8px */
+      font-size: 14px; /* 28rpx ÷ 2 = 14px */
+      color: #333;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      
+      /* 演示区域 */
+      .demoArea {
+        width: 100%;
+        height: 200px; /* 400rpx ÷ 2 = 200px */
+        background: #fff;
+        border-radius: 6px; /* 12rpx ÷ 2 = 6px */
+        margin-top: 8px; /* 16rpx ÷ 2 = 8px */
+      }
+
+      &.active {
+        background: rgba(69, 232, 127, 0.1);
+        color: #11B787;
+      }
+    }
+  }
 }
 
-.templateBtn {
-  background: #f3f3f3 !important;
-  color: #666 !important;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  padding: 8px 12px;
-  min-width: 60px;
-}
-
-.templateBtn:hover {
-  background: #e8e8e8 !important;
-}
-
-/* 弹窗样式 */
-.popupContent {
-  padding: 16px;
-  background: #fff;
-}
-
-.popupHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.templateList {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.templateItem {
-  padding: 12px 16px;
-  background: #f5f5f5;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.templateItem:hover {
-  background: #e8e8e8;
-}
-
-.templateItem.active {
-  background: rgba(69, 232, 127, 0.1);
-  color: #45e87f;
-  border: 1px solid #45e87f;
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 /* 币种选择弹窗 */
@@ -415,7 +549,7 @@
 @media (max-width: 768px) {
   .postContainer {
     padding: 12px;
-    padding-bottom: 80px; /* 为底部工具栏留出空间 */
+    padding-bottom: 60px; /* 为底部工具栏留出空间 */
   }
 
   .userInfo {
@@ -452,5 +586,31 @@
     font-size: 12px;
     padding: 6px 8px;
     min-width: 50px;
+  }
+}
+
+// 底部发布按钮区域（在容器内部，使用flex推到底部）
+.publishBtnWrapper {
+  margin-top: auto; /* 使用flex布局推到底部 */
+  padding: 16px 0 0 0; /* 顶部留出间距 */
+}
+
+.publishButton {
+  width: 100%;
+  height: 44px; /* 88rpx ÷ 2 = 44px */
+  background: #11B787 !important;
+  color: #fff !important;
+  border: none;
+  border-radius: 22px; /* 44rpx ÷ 2 = 22px */
+  font-size: 16px; /* 32rpx ÷ 2 = 16px */
+  font-weight: 500;
+  
+  &:active {
+    opacity: 0.8;
+  }
+  
+  &:disabled {
+    background: #ccc !important;
+    opacity: 0.6;
   }
 }

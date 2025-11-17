@@ -397,8 +397,8 @@ export default function DetailPage() {
     try {
       const response = await request({
         url: isFavorite ? Interface.CANCEL_OWN : Interface.ADD_OWN,
-        method: 'POST',
-        data: { symbol }
+        method: 'GET',
+        data: { coin: symbol }
       });
       
       if (response?.code === 0) {
@@ -419,13 +419,13 @@ export default function DetailPage() {
     }
   };
 
-  // 跳转到告警页面（先进入 /tg 绑定/对话）
+  // 跳转到告警页面
   const jump2Alert = () => {
     if (symbol) {
-      const href = `/tg${symbol ? `?symbol=${encodeURIComponent(symbol)}` : ''}`;
+      const href = `/addwarn?symbol=${encodeURIComponent(symbol)}`;
       window.location.href = href;
     } else {
-      window.location.href = '/tg';
+      window.location.href = '/addwarn';
     }
   };
 

@@ -212,6 +212,30 @@ export default function TopicInfo() {
     router.push(`/post?id=${post.id}&title=${encodeURIComponent(post.title)}&content=${encodeURIComponent(post.content)}&isUpdate=true`);
   };
 
+  // 处理分享到Telegram
+  const handleShare = (e, post) => {
+    if (e) e.stopPropagation();
+    const shareUrl = `${window.location.origin}/commentinfo?id=${post.id}`;
+    const shareText = post.title || '来自 Mozi 社区的帖子';
+    
+    // 检查是否在Telegram环境中
+    const isTelegram = window.Telegram?.WebApp?.initData;
+    
+    if (isTelegram && window.Telegram?.WebApp) {
+      // 使用Telegram Web App API分享
+      try {
+        window.Telegram.WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`);
+      } catch (error) {
+        console.error('Telegram分享失败:', error);
+        // 降级到Telegram分享链接
+        window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`, '_blank');
+      }
+    } else {
+      // 非Telegram环境，使用Telegram分享链接
+      window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`, '_blank');
+    }
+  };
+
   // 下拉刷新
   const onRefresh = async () => {
     try {
@@ -341,7 +365,7 @@ export default function TopicInfo() {
                     <Button 
                       className={styles.actionBtn}
                       fill="none"
-                      onClick={(e) => e.stopPropagation()}
+                      onClick={(e) => handleShare(e, item)}
                     >
                       <SendOutline fontSize={16} />
                       分享
