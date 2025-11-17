@@ -8,7 +8,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  background: #ffffff;
+  /* background默认通过内联样式设置，不在这里定义 */
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   z-index: 999;
 
@@ -102,7 +102,7 @@
 // 深色模式支持
 @media (prefers-color-scheme: dark) {
   .navBar {
-    background: #1c1c1e;
+    /* background通过内联样式设置，深色模式下组件使用者需自行传入深色背景 */
     border-bottom-color: rgba(255, 255, 255, 0.08);
 
     .backBtn,

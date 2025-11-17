@@ -185,21 +185,25 @@ export default function UserPage() {
   };
 
   const handleShare = () => {
-    try {
-      if (navigator.share) {
-        navigator.share({
-          title: 'Mozi行情助手',
-          text: '专业的加密数据分析智能平台',
-          url: window.location.origin,
-        });
-      } else {
-        navigator.clipboard.writeText(window.location.origin).then(() => {
-          Toast.show({ content: t('user.linkCopied'), position: 'bottom' });
-        }).catch(() => {
-          Toast.show({ content: t('user.shareFailed'), position: 'bottom' });
-        });
+    const shareUrl = window.location.origin;
+    const shareText = 'Mozi行情助手 - 专业的加密数据分析智能平台';
+    
+    // 检查是否在Telegram环境中
+    const isTelegram = window.Telegram?.WebApp?.initData;
+    
+    if (isTelegram && window.Telegram?.WebApp) {
+      // 使用Telegram Web App API分享
+      try {
+        window.Telegram.WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`);
+      } catch (error) {
+        console.error('Telegram分享失败:', error);
+        // 降级到Telegram分享链接
+        window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`, '_blank');
       }
-    } catch {}
+    } else {
+      // 非Telegram环境，使用Telegram分享链接
+      window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`, '_blank');
+    }
   };
 
   // 未读通知数量

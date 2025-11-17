@@ -54,7 +54,7 @@
 .subTabs {
   display: flex;
   align-items: center;
-  padding:6px 10px; /* 40rpx -> 20px */
+  padding: 6px 10px 2px; /* 减少底部padding，让两个tab更紧凑 */
   background-color: #EEF0F3;
   overflow-x: auto;
   white-space: nowrap;
@@ -63,7 +63,7 @@
 .subTab {
   position: relative;
   display: inline-block;
-  padding: 10px 8px 10px 10px; /* 顶10 底8 */
+  padding: 10px 8px 8px 10px; /* 减少底部padding */
   font-size: 14px; /* 28rpx -> 14px */
   color: #666;
   cursor: pointer;
@@ -92,20 +92,28 @@
 .coinTabs {
   display: flex;
   align-items: center;
-  padding: 8px 16px;
-  // background-color: #fff;
-  // border-bottom: 1px solid #e5e5e5;
+  padding: 4px 10px 8px; /* 减少上下padding，让与子导航更紧凑 */
+  height: auto; /* 改为自动高度 */
+  background-color: #EEF0F3;
   white-space: nowrap;
+  overflow-x: auto;
+  
+  /* 隐藏滚动条 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .coinTab {
   display: inline-block;
-  padding: 6px 12px;
-  margin-right: 8px;
-  font-size: 12px;
+  padding: 4px 8px; /* 16rpx 32rpx -> 8px 16px，这里调整为4px 8px */
+  margin-right: 8px; /* 16rpx -> 8px */
+  font-size: 12px; /* 24rpx -> 12px */
   color: #666;
   background-color: #f5f5f5;
-  border-radius: 12px;
+  border-radius: 8px; /* 16rpx -> 8px */
   cursor: pointer;
   transition: all 0.3s;
   flex-shrink: 0;
@@ -113,12 +121,12 @@
 
 .coinTab.active {
   color: #fff;
-  background-color: #1890ff;
+  background-color: #11B787; /* 改为品牌绿色，与小程序端一致 */
 }
 
 .coinTab.more {
-  color: #1890ff;
-  background-color: #e6f7ff;
+  color: #11B787; /* 改为品牌绿色 */
+  background-color: #e6fff0; /* 浅绿色背景 */
 }
 
 /* 热榜搜索栏样式 */
@@ -441,83 +449,103 @@
   color: #fff;
 }
 
-/* 币种选择器样式 */
+/* 币种选择器样式 - 与小程序端一致 */
 .coinSelectorFullscreen {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #fff;
+  background-color: #f5f5f5; /* 浅灰色背景 */
   z-index: 1000;
   display: flex;
   flex-direction: column;
+  
+  /* 为整个弹窗添加圆角和阴影 */
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .selectorHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid #e5e5e5;
+  padding: 12px 16px; /* 调整padding */
+  border-bottom: 1px solid #f0f0f0; /* 浅灰色分隔线 */
   background-color: #fff;
+  min-height: 50px; /* 确保有足够高度 */
+  margin-top: 50px; /* 给NavBar留出空间，NavBar高度为50px */
+  border-radius: 12px 12px 0 0; /* 顶部圆角 */
 }
 
 .headerTitle {
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 17px; /* 增大字体 */
+  font-weight: 600; /* 加粗 */
   color: #333;
 }
 
 .close {
-  font-size: 14px;
-  color: #666;
+  font-size: 15px; /* 稍微增大 */
+  color: #333; /* 加深颜色 */
   cursor: pointer;
+  padding: 4px 8px; /* 增加点击区域 */
 }
 
 .selectorSearch {
   flex: 1;
-  padding: 16px;
+  padding: 12px; /* 24rpx -> 12px */
   overflow-y: auto;
+  background-color: #fff; /* 白色背景 */
 }
 
 .selectorSearchBox {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
+  
+  /* 确保搜索框背景为灰色 */
+  :global {
+    .searchBox {
+      background-color: #f5f5f5;
+    }
+  }
 }
 
 .coinItem {
   display: flex;
   align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 20px 0; /* 增加padding，与小程序端一致 */
+  margin-left: 12px; /* 24rpx -> 12px */
   cursor: pointer;
-}
-
-.coinItem:last-child {
-  border-bottom: none;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: #f9f9f9;
+  }
 }
 
 .coinIcon {
-  width: 24px;
+  width: 24px; /* 48rpx -> 24px */
   height: 24px;
   border-radius: 50%;
-  margin-right: 12px;
+  margin-right: 10px; /* 20rpx -> 10px */
+  object-fit: contain;
 }
 
 .coinName {
   flex: 1;
-  font-size: 14px;
+  font-size: 16px; /* 32rpx -> 16px，与小程序端一致的较大字体 */
   color: #333;
 }
 
 .selectedIcon {
-  color: #1890ff;
+  color: #11B787; /* 改为品牌绿色 */
   font-size: 16px;
 }
 
 .loadingText {
   text-align: center;
   padding: 20px;
+  margin-top: 20px; /* 40rpx -> 20px */
   color: #999;
 }
 

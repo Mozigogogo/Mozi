@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Tabs, Button, Dialog, Toast, SpinLoading } from 'antd-mobile';
 import NavBar from '@/components/NavBar';
 import { AddOutline } from 'antd-mobile-icons';
@@ -21,6 +22,8 @@ const GardenLoading = () => (
 );
 
 export default function CommunityPage() {
+  const searchParams = useSearchParams();
+  
   // 状态定义
   const [mainTab, setMainTab] = useState('recommend');
   const [subTab, setSubTab] = useState('all');
@@ -237,13 +240,12 @@ export default function CommunityPage() {
   // 点赞/取消点赞帖子
   const toggleLike = async (postId) => {
     const isLiked = likedPosts[postId];
-    const url = isLiked ? Interface.POSTS_UNLIKE : Interface.POSTS_LIKE;
+    const url = isLiked ? `${Interface.POSTS_UNLIKE}/${postId}` : `${Interface.POSTS_LIKE}/${postId}`;
     
     try {
       await request({
         url,
-        method: 'POST',
-        data: { postId }
+        method: 'GET'
       });
       
       setLikedPosts(prev => ({
@@ -323,25 +325,27 @@ export default function CommunityPage() {
     window.location.href = `/commentinfo?id=${postId}`;
   };
 
-  // 分享帖子
+  // 分享帖子到Telegram
   const handleShare = (e, post) => {
     e.stopPropagation();
     const shareUrl = `${window.location.origin}/commentinfo?id=${post.id}`;
-    const shareData = {
-      title: post.title || 'Mozi 社区',
-      text: post.title || '来自 Mozi 社区的帖子',
-      url: shareUrl
-    };
-    if (navigator.share) {
-      navigator.share(shareData).catch(() => {});
-    } else if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(shareUrl).then(() => {
-        Toast.show({ content: '链接已复制', position: 'bottom' });
-      }).catch(() => {
-        Toast.show({ content: '无法复制链接', position: 'bottom' });
-      });
+    const shareText = post.title || '来自 Mozi 社区的帖子';
+    
+    // 检查是否在Telegram环境中
+    const isTelegram = window.Telegram?.WebApp?.initData;
+    
+    if (isTelegram && window.Telegram?.WebApp) {
+      // 使用Telegram Web App API分享
+      try {
+        window.Telegram.WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`);
+      } catch (error) {
+        console.error('Telegram分享失败:', error);
+        // 降级到Telegram分享链接
+        window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`, '_blank');
+      }
     } else {
-      Toast.show({ content: '请手动分享当前链接', position: 'bottom' });
+      // 非Telegram环境，使用Telegram分享链接
+      window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`, '_blank');
     }
   };
 
@@ -387,6 +391,18 @@ export default function CommunityPage() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [mainTab, hasMore, loading, hotTopicsAllLoaded, hotTopicsLoading]);
+
+  // 处理从URL参数跳转到特定币种
+  useEffect(() => {
+    const symbol = searchParams.get('symbol');
+    if (symbol) {
+      setMainTab('recommend');
+      setSubTab('currency');
+      handleCoinSelect(symbol);
+      // 清除URL参数（可选）
+      window.history.replaceState({}, '', '/community');
+    }
+  }, [searchParams]);
 
   // 渲染帖子列表
   const renderPosts = () => {
@@ -694,8 +710,9 @@ export default function CommunityPage() {
         {/* 币种选择器弹窗 */}
         {showCoinSelector && (
           <div className={styles.coinSelectorFullscreen}>
+            <NavBar title="社区" showBack={false} showBorder={false} backgroundColor="transparent" />
             <div className={styles.selectorHeader}>
-              <span className={styles.headerTitle}>选择币种</span>
+              <span className={styles.headerTitle}>搜索币种</span>
               <span className={styles.close} onClick={() => setShowCoinSelector(false)}>取消</span>
             </div>
             <div className={styles.selectorSearch}>
@@ -703,7 +720,7 @@ export default function CommunityPage() {
                 <SearchInput
                   value={searchKeyword}
                   onChange={searchCoin}
-                  placeholder="搜索币种"
+                  placeholder="请输入币种"
                 />
               </div>
               {searchLoading ? (

@@ -166,6 +166,30 @@ export default function CommentInfo() {
     }
   };
 
+  // 处理分享到Telegram
+  const handleShare = (e) => {
+    if (e) e.stopPropagation();
+    const shareUrl = `${window.location.origin}/commentinfo?id=${detail.id}`;
+    const shareText = detail.title || '来自 Mozi 社区的帖子';
+    
+    // 检查是否在Telegram环境中
+    const isTelegram = window.Telegram?.WebApp?.initData;
+    
+    if (isTelegram && window.Telegram?.WebApp) {
+      // 使用Telegram Web App API分享
+      try {
+        window.Telegram.WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`);
+      } catch (error) {
+        console.error('Telegram分享失败:', error);
+        // 降级到Telegram分享链接
+        window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`, '_blank');
+      }
+    } else {
+      // 非Telegram环境，使用Telegram分享链接
+      window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`, '_blank');
+    }
+  };
+
   // 处理评论点赞/取消点赞
   const handleCommentLike = async (commentId) => {
     try {
@@ -620,7 +644,7 @@ export default function CommentInfo() {
                         {detail.likeCnt || 0} 点赞
                       </span>
                     </div>
-                    <div className={styles.shareBtn}>
+                    <div className={styles.shareBtn} onClick={handleShare}>
                       <SendOutline fontSize={16} />
                       <span className={styles.shareText}>分享</span>
                     </div>
