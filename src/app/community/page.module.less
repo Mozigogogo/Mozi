@@ -92,7 +92,7 @@
 .coinTabs {
   display: flex;
   align-items: center;
-  padding: 4px 10px 8px; /* 减少上下padding，让与子导航更紧凑 */
+  padding: 4px 10px 8px 18px; /* 左侧12px，使币种标签与子导航对齐 (12px + 8px = 20px) */
   height: auto; /* 改为自动高度 */
   background-color: #EEF0F3;
   white-space: nowrap;
@@ -104,6 +104,11 @@
   }
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* 投票组件容器 */
+.voteWrapper {
+  background-color: #EEF0F3;
 }
 
 .coinTab {

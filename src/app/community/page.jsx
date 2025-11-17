@@ -10,6 +10,7 @@ import Layout from '../../components/Layout';
 import { SearchInput } from '../../components/SearchInput';
 import { Loading } from '../../components/Loading';
 import MoziCard from '../../components/MoziCard';
+import BullBearVote from '../../components/BullBearVote';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import styles from './page.module.less';
@@ -41,8 +42,9 @@ export default function CommunityPage() {
   const [hotTopicsLoading, setHotTopicsLoading] = useState(false);
   const [hotTopicsAllLoaded, setHotTopicsAllLoaded] = useState(false);
   const [showCreateTopic, setShowCreateTopic] = useState(false);
-  const [topicTitle, setTopicTitle] = useState('');
-  const [topicDesc, setTopicDesc] = useState('');
+  const [newTopicName, setNewTopicName] = useState('');
+  const [topicTags, setTopicTags] = useState([]);
+  const [voteChoice, setVoteChoice] = useState(null); // 投票选择状态
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -656,6 +658,17 @@ export default function CommunityPage() {
         {/* 内容列表（内部滚动容器） */}
         <div className={styles.scrollContainer}>
         <div className={styles.contentList}>
+          {/* 币种投票组件 - 仅在币种tab显示 */}
+          {mainTab === 'recommend' && subTab === 'currency' && (
+            <div className={styles.voteWrapper}>
+              <BullBearVote
+                title={`您对今天的${selectedCoin}有何看法?`}
+                participants={5445}
+                selected={voteChoice}
+                onSelect={(type) => setVoteChoice(type)}
+              />
+            </div>
+          )}
           {mainTab === 'hot' ? (
             <div className={styles.hotTopics}>
               {hotTopics.length > 0 && hotTopics.map((topic, index) => (
