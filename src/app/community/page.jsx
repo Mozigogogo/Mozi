@@ -43,8 +43,8 @@ export default function CommunityPage() {
   const [hotTopicsLoading, setHotTopicsLoading] = useState(false);
   const [hotTopicsAllLoaded, setHotTopicsAllLoaded] = useState(false);
   const [showCreateTopic, setShowCreateTopic] = useState(false);
-  const [newTopicName, setNewTopicName] = useState('');
-  const [topicTags, setTopicTags] = useState([]);
+  const [topicTitle, setTopicTitle] = useState(''); // 话题名称
+  const [topicDesc, setTopicDesc] = useState(''); // 话题简介
   const [voteChoice, setVoteChoice] = useState(null); // 投票选择状态
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -69,6 +69,10 @@ export default function CommunityPage() {
   const reasonIcon = `${CDN_ICON}/reason.png`;
   const plateIcon = `${CDN_ICON}/plate.png`;
   const integralIcon = `${CDN_ICON}/integral.png`;
+  const nov1Icon = `${CDN_ICON}/Nov1.png`;
+  const nov2Icon = `${CDN_ICON}/Nov2.png`;
+  const nov3Icon = `${CDN_ICON}/Nov3.png`;
+  const hotIcon = `${CDN_ICON}/hot.png`;
 
   const formatTimeAgo = (time) => {
     if (!time) return '';
@@ -325,6 +329,78 @@ export default function CommunityPage() {
   // 跳转到发帖页面
   const goToPostPage = () => {
     window.location.href = '/post';
+  };
+
+  // 创建话题
+  const handleCreateTopic = async () => {
+    console.log('创建话题');
+    if (!topicTitle.trim()) {
+      Toast.show({
+        content: '请输入话题名称',
+        position: 'bottom',
+      });
+      return;
+    }
+    
+    try {
+      const response = await request({
+        url: Interface.CREATE_TOPIC,
+        method: 'POST',
+        data: {
+          name: topicTitle.trim(),
+          description: topicDesc.trim()
+        }
+      });
+      
+      if (response?.code === 0) {
+        Toast.show({
+          content: '创建成功',
+          position: 'bottom',
+        });
+        
+        // 清空输入框
+        setTopicTitle('');
+        setTopicDesc('');
+        
+        // 关闭弹窗
+        setShowCreateTopic(false);
+        
+        // 刷新话题列表
+        setHotTopicsPage(1);
+        setHotTopicsAllLoaded(false);
+        
+        // 重新获取话题列表
+        try {
+          const topicsResponse = await request({
+            url: Interface.HOT_TOPICS_API,
+            data: {
+              page: 1,
+              size
+            }
+          });
+          
+          if (topicsResponse?.data) {
+            const { data, totalPages } = topicsResponse.data;
+            setHotTopics(data);
+            setHotTopicsAllLoaded(1 >= totalPages);
+            setHotTopicsPage(2);
+          }
+        } catch (error) {
+          console.error('获取话题列表失败:', error);
+        }
+      } else {
+        Toast.show({
+          content: response?.errorMsg || '创建失败',
+          position: 'bottom',
+        });
+      }
+    } catch (error) {
+      console.error('创建话题失败:', error);
+      Toast.show({
+        content: '创建失败',
+        position: 'bottom',
+      });
+    }
   };
 
   // 跳转到帖子详情页
@@ -783,14 +859,32 @@ export default function CommunityPage() {
             <div className={styles.hotTopics}>
               {hotTopics.length > 0 && hotTopics.map((topic, index) => (
                 <div key={topic.id} className={styles.hotTopicItem} onClick={() => goToTopicDetail(topic.id, topic.name, topic.description)}>
-                  <div className={styles.topicRank}>{index + 1}</div>
+                  {/* 排名 */}
+                  <div className={`${styles.topicRank} ${index < 3 ? styles.medalRank : ''}`}>
+                    {index === 0 ? (
+                      <img className={styles.rankMedal} src={nov1Icon} alt="第1名" />
+                    ) : index === 1 ? (
+                      <img className={styles.rankMedal} src={nov2Icon} alt="第2名" />
+                    ) : index === 2 ? (
+                      <img className={styles.rankMedal} src={nov3Icon} alt="第3名" />
+                    ) : (
+                      index + 1
+                    )}
+                  </div>
+                  
+                  {/* 话题信息 */}
                   <div className={styles.topicInfo}>
                     <span className={styles.topicTitle}>{topic.name}</span>
                     <span className={styles.topicDesc}>{topic.description || '暂无描述'}</span>
-                    <div className={styles.topicStats}>
-                      <span className={styles.statItem}>热度 {topic.score || 0}</span>
-                      <span className={styles.statItem}>{topic.createdAt?.replace('T', '    ')}</span>
+                  </div>
+                  
+                  {/* 右侧信息 */}
+                  <div className={styles.topicRightInfo}>
+                    <div className={styles.heatText}>
+                      <img className={styles.heatIcon} src={hotIcon} alt="热度" />
+                      <span className={styles.heatValue}>{topic.score || 0}</span>
                     </div>
+                    <span className={styles.timeText}>{topic.createdAt?.replace('T', '    ')}</span>
                   </div>
                 </div>
               ))}
@@ -903,7 +997,7 @@ export default function CommunityPage() {
               </div>
               <Button 
                 className={`${styles.createBtn} ${topicTitle ? styles.active : ''}`}
-                onClick={createTopic}
+                onClick={handleCreateTopic}
               >
                 创建话题
               </Button>
