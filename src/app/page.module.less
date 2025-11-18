@@ -713,12 +713,23 @@
   z-index: 999;
   
   .robotIcon {
-    width: 52px;
-    height: 52px;
+    width: 64px;
+    height: 64px;
     display: block;
     position: relative;
     z-index: 2;
+    flex-shrink: 0;
     filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.15));
+  }
+  
+  .robotIconWrapper {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 
@@ -733,25 +744,35 @@
   pointer-events: none;
 }
 
-/* 消息气泡容器 */
-.robotBubble {
-  position: absolute;
-  right: 70px;
-  bottom: 5px;
-  z-index: 1000;
-  pointer-events: none;
-  min-width: 200px;
-  max-width: 280px;
+/* 椭圆容器 */
+.robotContainer {
+  display: inline-flex;
+  align-items: center;
+  height: 64px;
+  width: 64px; /* 添加默认宽度 */
+  min-width: 64px;
+  max-width: calc(100vw - 100px);
+  border-radius: 32px;
+  padding: 0 24px 0 0;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
 }
 
-.bubbleContent {
-  position: relative;
-  background: rgba(228, 251, 244, 0.9);
-  padding: 14px 18px;
-  border-radius: 16px;
+/* 背景层 */
+.robotContainerBg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(228, 251, 244, 0.95);
+  border-radius: 32px;
   box-shadow: 0 8px 24px rgba(228, 251, 244, 0.5);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  z-index: 0;
+  pointer-events: none;
   
   &::before {
     content: '';
@@ -761,47 +782,33 @@
     right: 0;
     bottom: 0;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 100%);
-    border-radius: 16px;
+    border-radius: 32px;
     pointer-events: none;
   }
-  
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 16px;
-    padding: 1px;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), transparent);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-  }
+}
+
+.robotMessage {
+  color: #1a1a1a;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: visible;
+  padding-left: 16px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
 }
 
 .bubbleText {
   color: #1a1a1a;
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.5;
+  font-weight: 500;
   position: relative;
   z-index: 1;
-  text-align: left;
-  font-weight: 500;
-  text-shadow: none;
-  white-space: normal;
-  word-wrap: break-word;
-  word-break: keep-all;
-}
-
-.bubbleArrow {
-  position: absolute;
-  right: -10px;
-  bottom: 12px;
-  width: 0;
-  height: 0;
-  border-left: 12px solid #E4FBF4;
-  border-top: 10px solid transparent;
-  border-bottom: 10px solid transparent;
-  filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.1));
 }
 
 @media (max-width: 768px) {
@@ -812,33 +819,32 @@
     height: 50px;
     
     .robotIcon {
-      width: 52px;
-      height: 48px;
+      width: 50px;
+      height: 50px;
+    }
+    
+    .robotIconWrapper {
+      width: 50px;
+      height: 50px;
     }
   }
   
-  .robotBubble {
-    right: 60px;
-    bottom: 5px;
-    min-width: 180px;
-    max-width: 240px;
+  .robotContainer {
+    height: 50px;
+    width: 50px;
+    min-width: 50px;
+    max-width: calc(100vw - 80px);
+    border-radius: 25px;
+    padding: 0 20px 0 0;
   }
   
-  .bubbleContent {
-    padding: 12px 15px;
-    border-radius: 14px;
+  .robotMessage {
+    font-size: 12px;
+    padding-left: 10px;
   }
   
   .bubbleText {
-    font-size: 13px;
-    line-height: 1.5;
-  }
-  
-  .bubbleArrow {
-    right: -8px;
-    bottom: 10px;
-    border-left: 10px solid #E4FBF4;
-    border-top: 8px solid transparent;
-    border-bottom: 8px solid transparent;
+    font-size: 12px;
+    line-height: 1.4;
   }
 }
