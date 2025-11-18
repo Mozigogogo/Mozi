@@ -383,8 +383,8 @@
 .postItem {
   background: #fff;
   border: 1px solid #f0f0f0;
-  border-radius: 16px;
-  padding: 20px;
+  border-radius: 10px;
+  padding: 12px;
   margin: 0 0 4px 0;
   position: relative;
 }
@@ -393,12 +393,13 @@
   position: absolute;
   top: 0;
   right: 0;
-  width: 60px;
-  height: 60px;
+  width: 55px;
+  height: 55px;
   background-image: url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/find-best-coin.png');
   background-repeat: no-repeat;
   background-size: contain;
   pointer-events: none;
+  opacity: 0.85;
   z-index: 0;
 }
 
@@ -418,21 +419,22 @@
 .username { font-weight: 600; font-size: 14px; color: #333; }
 
 .badgeLabel {
-  margin-left: 8px;
   padding: 2px 6px;
   font-size: 11px;
-  color: #fff;
-  background: #fa8c16;
-  border-radius: 10px;
+  color:#fa8c16;
+  background: #FFF0E4;
+  border-radius: 4px;
+  font-weight: 500;
 }
 
 .postTime { font-size: 12px; color: #999; margin-top: 2px; }
 
 .postContent {
   margin-bottom: 12px;
+  margin-left: 52px; // 头像宽度(40px) + 右边距(12px) = 52px，让内容与用户信息对齐
 }
 
-.postTitle { font-size: 16px; font-weight: 600; color: #333; margin-bottom: 6px; }
+.postTitle { font-size: 15px; font-weight: 600; color: #333; margin-bottom: 6px; }
 
 .postText { font-size: 14px; color: #666; line-height: 1.6; margin-bottom: 8px; word-break: break-word; }
 
@@ -445,9 +447,9 @@
 
 .postImage { width: calc(33.33% - 6px); height: 100px; object-fit: cover; border-radius: 6px; }
 
-.postFooter { display: flex; align-items: center; gap: 16px; padding-top: 8px;  }
+.postFooter { display: flex; align-items: center; padding-top: 8px; margin-left: 52px; padding-right: 12px; justify-content: space-between; /* 两端对齐，右侧留小距离 */ }
 
-.postAction { display: flex; align-items: center; color: #999; cursor: pointer; flex: 1; justify-content: center;}
+.postAction { display: flex; align-items: center; color: #999; cursor: pointer; }
 
 .actionIcon {
   margin-right: 4px;
@@ -659,6 +661,7 @@
   flex-wrap: wrap;
   gap: 8px;
   margin: 8px 0;
+  margin-left: 52px; // 与标题内容对齐
 }
 
 /* 币种标签样式 */

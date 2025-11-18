@@ -542,10 +542,20 @@ export default function CommentInfo() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [allLoaded, loading, loadingMore]);
 
+  // 点击页面其他地方取消回复
+  const handlePageClick = (e) => {
+    // 如果点击的不是输入框和提交按钮，则取消回复
+    if (replyTo && 
+        !e.target.closest(`.${styles.commentInputContainer}`) &&
+        !e.target.closest(`.${styles.commentContent}`)) {
+      setReplyTo(null);
+    }
+  };
+
   return (
     <Layout>
-      <NavBar title="评论" showBack={true} />
-      <div className={styles.commentDetail}>
+      <NavBar title="评论" showBack={true} backgroundColor="#EEF0F3" showBorder={false} />
+      <div className={styles.commentDetail} onClick={handlePageClick}>
         {/* 操作菜单 */}
         {showActionSheet && (
           <div className={styles.actionSheetMask} onClick={() => setShowActionSheet(false)}>
@@ -750,7 +760,7 @@ export default function CommentInfo() {
               </div>
 
               {/* 底部提示 */}
-              {allLoaded && list.length > 0 && (
+              {allLoaded && (
                 <div className={styles.listFooter}>
                   <span className={styles.footerText}>评论已到底部</span>
                 </div>
@@ -761,12 +771,7 @@ export default function CommentInfo() {
 
         {/* 评论输入框 */}
         <div className={styles.commentInputContainer}>
-          {replyTo && (
-            <div className={styles.replyInfo}>
-              <span className={styles.replyText}>回复 @{replyTo.nickname}</span>
-              <span className={styles.cancelReply} onClick={cancelReply}>取消</span>
-            </div>
-          )}
+          {/* 回复提示条已隐藏 */}
           <input
             className={styles.commentInput}
             value={commentContent}
