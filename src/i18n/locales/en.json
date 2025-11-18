@@ -57,7 +57,7 @@
       "addFavorites": "Favorite",
       "addMonitor": "Monitor"
     },
-    "robotBubble": "Hi! I'm your crypto market assistant. I can help interpret trends and provide forecasts."
+    "robotBubble": "Welcome to Mozi, how can I help you?"
   },
   "market": {
     "price": "Price",
@@ -508,6 +508,6 @@
       "atl": "ATL",
       "atlChangePercent": "ATL %"
     },
-    "robotBubble": "Hi! I'm your crypto market assistant. I help interpret trends and provide forecasts."
+    "robotBubble": "Welcome to Mozi, how can I help you?"
   }
 }

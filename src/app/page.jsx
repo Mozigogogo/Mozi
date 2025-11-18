@@ -750,47 +750,18 @@ export default function HomePage() {
     }
   };
 
-  // 监听滚动到实时榜单 - 触发机器人气泡
+  // 页面加载时立即显示机器人气泡
   useEffect(() => {
-    if (!rankingSectionRef.current) return;
-
-    let hideTimer = null;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            // 进入视口，显示气泡
-            setShowRobotBubble(true);
-            
-            // 7秒后自动隐藏气泡
-            hideTimer = setTimeout(() => {
-              setShowRobotBubble(false);
-            }, 7000);
-          } else {
-            // 离开视口，立即隐藏气泡并清除定时器
-            if (hideTimer) {
-              clearTimeout(hideTimer);
-            }
-            setShowRobotBubble(false);
-          }
-        });
-      },
-      {
-        threshold: 0.2, // 当20%可见时触发
-        rootMargin: '0px'
-      }
-    );
-
-    observer.observe(rankingSectionRef.current);
-
+    // 立即显示气泡
+    setShowRobotBubble(true);
+    
+    // 5秒后自动隐藏
+    const hideTimer = setTimeout(() => {
+      setShowRobotBubble(false);
+    }, 5000);
+    
     return () => {
-      if (hideTimer) {
-        clearTimeout(hideTimer);
-      }
-      if (rankingSectionRef.current) {
-        observer.unobserve(rankingSectionRef.current);
-      }
+      clearTimeout(hideTimer);
     };
   }, []);
 
