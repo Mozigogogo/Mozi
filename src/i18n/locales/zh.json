@@ -30,7 +30,7 @@
     "rankList": "实时榜单",
     "opportunities": "投资机会",
     "notice": "欢迎使用墨子数字货币行情社区",
-    "aiNotice": "告别盲目设价！先让AI分析走势，再设置精准报警！",
+    "aiNotice": "告别手动盯盘！先让AI分析走势，再设置精准报警！",
     "searchPlaceholder": "请输入搜索的币种",
     "noTopics": "暂无话题",
     "discussions": "讨论",
@@ -57,7 +57,7 @@
       "addFavorites": "加自选",
       "addMonitor": "加监控"
     },
-    "robotBubble": "欢迎来到Mozi,我能帮助您什么呢"
+    "robotBubble": "欢迎来到Mozi,需要什么帮助？"
   },
   "market": {
     "price": "价格",
