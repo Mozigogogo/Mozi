@@ -2,12 +2,20 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Button, ActionSheet, Toast, PullToRefresh, InfiniteScroll } from 'antd-mobile';
-import { SendOutline, MessageOutline, HeartFill, MoreOutline } from 'antd-mobile-icons';
+import { Button, ActionSheet, Toast, InfiniteScroll } from 'antd-mobile';
+import { MoreOutline } from 'antd-mobile-icons';
 import Layout from '../../components/Layout';
+import NavBar from '../../components/NavBar';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import styles from './page.module.less';
+
+// CDN图标
+const shareIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/share.png';
+const commentIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/messages-comment.png';
+const likeIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/like-no-active.png';
+const likeActiveIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/like-active.png';
+const publishIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/community/publish.png';
 
 export default function TopicInfo() {
   const router = useRouter();
@@ -279,7 +287,8 @@ export default function TopicInfo() {
   ];
 
   return (
-    <Layout title="话题详情">
+    <Layout>
+      <NavBar title="话题详情" showBack={true} backgroundColor="#ffffff" showBorder={false} />
       <div className={styles.topicDetail}>
         {/* 话题头部 */}
         <div className={styles.topicHeader}>
@@ -298,8 +307,7 @@ export default function TopicInfo() {
             <div className={styles.total}>全部帖子</div>
           </div>
 
-          <PullToRefresh onRefresh={onRefresh}>
-            <div>
+          <div>
               {posts.map(item => (
                 <div key={item.id} className={styles.commentCard} onClick={() => navigateToCommentInfo(item.id)}>
                   {/* 用户自己的帖子显示编辑按钮 */}
@@ -367,11 +375,11 @@ export default function TopicInfo() {
                       fill="none"
                       onClick={(e) => handleShare(e, item)}
                     >
-                      <SendOutline fontSize={16} />
+                      <img className={styles.actionIcon} src={shareIcon} alt="分享" />
                       分享
                     </Button>
                     <Button className={styles.actionBtn} fill="none">
-                      <MessageOutline fontSize={16} />
+                      <img className={styles.actionIcon} src={commentIcon} alt="评论" />
                       {item.comments}
                     </Button>
                     <Button 
@@ -379,7 +387,7 @@ export default function TopicInfo() {
                       fill="none"
                       onClick={(e) => handleLike(e, item.id)}
                     >
-                      <HeartFill fontSize={16} color={likedPosts[item.id] ? '#ff4d4f' : undefined} />
+                      <img className={styles.actionIcon} src={likedPosts[item.id] ? likeActiveIcon : likeIcon} alt="点赞" />
                       {item.likes}
                     </Button>
                   </div>
@@ -398,13 +406,12 @@ export default function TopicInfo() {
                 )}
               </InfiniteScroll>
             </div>
-          </PullToRefresh>
         </div>
 
         {/* 悬浮发帖按钮 */}
         <div className={styles.floatPostBtn}>
           <Button className={styles.postBtn} onClick={handlePost}>
-            <div className={styles.iconPlus}>+</div>
+            <img className={styles.postBtnIcon} src={publishIcon} alt="发帖" />
           </Button>
         </div>
 

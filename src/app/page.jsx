@@ -750,47 +750,34 @@ export default function HomePage() {
     }
   };
 
-  // 监听滚动到实时榜单 - 触发机器人气泡
+  // 机器人动画状态
+  const [robotAnimState, setRobotAnimState] = useState('hidden'); // hidden -> rolling-in -> showing -> rolling-out -> resting
+  
+  // 页面加载时触发机器人滚动动画
   useEffect(() => {
-    if (!rankingSectionRef.current) return;
-
-    let hideTimer = null;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            // 进入视口，显示气泡
-            setShowRobotBubble(true);
-            
-            // 7秒后自动隐藏气泡
-            hideTimer = setTimeout(() => {
-              setShowRobotBubble(false);
-            }, 7000);
-          } else {
-            // 离开视口，立即隐藏气泡并清除定时器
-            if (hideTimer) {
-              clearTimeout(hideTimer);
-            }
-            setShowRobotBubble(false);
-          }
-        });
-      },
-      {
-        threshold: 0.2, // 当20%可见时触发
-        rootMargin: '0px'
-      }
-    );
-
-    observer.observe(rankingSectionRef.current);
-
+    const timer1 = setTimeout(() => {
+      setRobotAnimState('rolling-in');
+      setShowRobotBubble(true);
+    }, 500);
+    
+    const timer2 = setTimeout(() => {
+      setRobotAnimState('showing');
+    }, 2300); // 滚动1.8秒后停下
+    
+    const timer3 = setTimeout(() => {
+      setShowRobotBubble(false);
+      setRobotAnimState('rolling-out');
+    }, 7300); // 显示5秒后开始退出
+    
+    const timer4 = setTimeout(() => {
+      setRobotAnimState('resting'); // 滚回右侧后保持显示
+    }, 8400); // 滚回右侧（1.1秒完成）
+    
     return () => {
-      if (hideTimer) {
-        clearTimeout(hideTimer);
-      }
-      if (rankingSectionRef.current) {
-        observer.unobserve(rankingSectionRef.current);
-      }
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+      clearTimeout(timer4);
     };
   }, []);
 
@@ -1006,7 +993,7 @@ export default function HomePage() {
         {/* 实时榜单 */}
         {renderRealTimeRanking()}
 
-        {/* 悬浮机器人按钮 - Framer Motion 炫酷版 */}
+        {/* 悬浮机器人按钮 - 从右滚到左 */}
         <motion.div 
           ref={robotRef}
           className={styles.floatRobotBtn} 
@@ -1015,96 +1002,152 @@ export default function HomePage() {
             x: robotX,
             y: robotY,
           }}
-          whileHover={{ 
-            scale: 1.15,
-            rotate: [0, -10, 10, -10, 0],
-            transition: { duration: 0.5 }
+          initial={{ 
+            x: typeof window !== 'undefined' ? window.innerWidth : 500,
+            opacity: 0 
           }}
-          whileTap={{ scale: 0.9 }}
-          initial={{ scale: 0, rotate: -180, opacity: 0 }}
-          animate={{ scale: 1, rotate: 0, opacity: 1 }}
-          transition={{ 
-            type: "spring",
-            stiffness: 200,
-            damping: 15,
-            delay: 0.5
-          }}
+          animate={
+            robotAnimState === 'hidden' ? { 
+              x: typeof window !== 'undefined' ? window.innerWidth : 500,
+              opacity: 0 
+            } :
+            robotAnimState === 'rolling-in' ? { 
+              x: typeof window !== 'undefined' ? -window.innerWidth / 2 + 100 : -200,
+              opacity: 1 
+            } :
+            robotAnimState === 'showing' ? { 
+              x: typeof window !== 'undefined' ? -window.innerWidth / 2 + 100 : -200,
+              opacity: 1 
+            } :
+            robotAnimState === 'rolling-out' ? { 
+              x: typeof window !== 'undefined' ? window.innerWidth : 500,
+              opacity: 1 
+            } :
+            robotAnimState === 'resting' ? { 
+              x: 0,
+              opacity: 1 
+            } :
+            { 
+              x: 0,
+              opacity: 1 
+            }
+          }
+          transition={
+            robotAnimState === 'rolling-out' ? {
+              x: { duration: 1.1, ease: "easeInOut" },
+              opacity: { duration: 0.4 }
+            } :
+            robotAnimState === 'resting' ? {
+              x: { duration: 0.3, ease: "easeOut" },
+              opacity: { duration: 0.2 }
+            } : {
+              x: { duration: 1.8, ease: "easeInOut" },
+              opacity: { duration: 0.6 }
+            }
+          }
         >
-          {/* 悬浮光晕效果 */}
-          <motion.div 
-            className={styles.robotGlow}
+          {/* 椭圆容器 - 包裹机器人和文字 */}
+          <motion.div
+            className={styles.robotContainer}
+            initial={{ width: 64 }}
             animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.5, 0.8, 0.5],
+              width: robotAnimState === 'rolling-in' || robotAnimState === 'showing' ? 'auto' : 64
             }}
             transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut"
+              duration: robotAnimState === 'rolling-in' ? 1.2 : 
+                         robotAnimState === 'rolling-out' ? 0.3 : 0.4,
+              ease: [0.4, 0, 0.2, 1],
+              delay: robotAnimState === 'rolling-in' ? 0.4 : 
+                     robotAnimState === 'rolling-out' ? 0.8 : 0
             }}
-          />
+          >
+            {/* 背景层 - 只在需要时显示 */}
+            <motion.div
+              className={styles.robotContainerBg}
+              initial={{ opacity: 0 }}
+              animate={{
+                opacity: robotAnimState === 'rolling-in' || robotAnimState === 'showing' ? 1 : 0
+              }}
+              transition={{
+                duration: 0.6,
+                ease: "easeInOut",
+                delay: robotAnimState === 'rolling-in' ? 0.6 : 0
+              }}
+            />
           
-          {/* 机器人图标 */}
-          <motion.img 
-            className={styles.robotIcon} 
-            src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/AI_Bot.png" 
-            alt="AI助手"
-            animate={{
-              y: [0, -5, 0],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-          
-          {/* 消息气泡 */}
-          <AnimatePresence>
-            {showRobotBubble && (
+            {/* 机器人图标容器（包含光晕） */}
+            <div className={styles.robotIconWrapper}>
+              {/* 悬浮光晕效果 */}
               <motion.div 
-                className={styles.robotBubble}
-                initial={{ 
-                  opacity: 0, 
-                  x: 30, 
-                  scale: 0.3,
-                  rotate: 10
+                className={styles.robotGlow}
+                animate={
+                  robotAnimState === 'showing' || robotAnimState === 'resting' ? {
+                    scale: [1, 1.2, 1],
+                    opacity: [0.5, 0.8, 0.5],
+                  } : {
+                    scale: 1,
+                    opacity: 0.5
+                  }
+                }
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut"
                 }}
-                animate={{ 
-                  opacity: 1, 
-                  x: 0, 
-                  scale: 1,
+              />
+              
+              {/* 机器人图标 */}
+              <motion.img 
+              className={styles.robotIcon} 
+              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/AI_Bot.png" 
+              alt="AI助手"
+              initial={{ rotate: 0 }}
+              animate={
+                robotAnimState === 'showing' || robotAnimState === 'resting' ? {
+                  y: [0, -5, 0],
+                  rotate: -720
+                } :
+                robotAnimState === 'rolling-in' ? {
+                  rotate: -720
+                } :
+                robotAnimState === 'rolling-out' ? {
                   rotate: 0
-                }}
-                exit={{ 
-                  opacity: 0, 
-                  x: 30, 
-                  scale: 0.3,
-                  rotate: -10
-                }}
-                transition={{ 
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 20
-                }}
-              >
+                } : {
+                  rotate: 0
+                }
+              }
+              transition={
+                robotAnimState === 'rolling-in' ? {
+                  rotate: { duration: 1.8, ease: "linear" }
+                } :
+                robotAnimState === 'rolling-out' ? {
+                  rotate: { duration: 1.1, ease: "linear" }
+                } :
+                robotAnimState === 'showing' || robotAnimState === 'resting' ? {
+                  y: { duration: 2, repeat: Infinity, ease: "easeInOut" },
+                  rotate: { duration: 0 }
+                } : {
+                  duration: 0
+                }
+              }
+            />
+            </div>
+            
+            {/* 欢迎消息文字 */}
+            <AnimatePresence>
+              {(robotAnimState === 'rolling-in' || robotAnimState === 'showing') && (
                 <motion.div 
-                  className={styles.bubbleContent}
-                  animate={{
-                    y: [0, -3, 0],
-                  }}
-                  transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
+                  className={styles.robotMessage}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
                 >
                   <BubbleText text={t('home.robotBubble')} />
-                  <div className={styles.bubbleArrow}></div>
                 </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              )}
+            </AnimatePresence>
+          </motion.div>
         </motion.div>
       </div>
     </Layout>
