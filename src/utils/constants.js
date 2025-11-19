@@ -228,6 +228,8 @@ export const Interface = {
   TOPIC_POSTS: '/posts/topic',
   // 创建投票
   CREATE_VOTE: '/api/vote/create',
+  // 上传文件
+  UPLOAD_FILE: '/easy/uploadFile',
 
   // 是否展示全部内容
   SHOW_ALL: '/switch/status',

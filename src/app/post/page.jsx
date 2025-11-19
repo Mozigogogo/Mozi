@@ -64,6 +64,8 @@ export default function PostPage() {
   const [showCommunityRules, setShowCommunityRules] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [activeButton, setActiveButton] = useState(''); // 当前激活的按钮
+  const [images, setImages] = useState([]); // 已选择的图片
+  const fileInputRef = useRef(null); // 文件选择input的引用
 
   // 模板配置
   const templates = ["普通", "发现好币", "不懂就问"];
@@ -203,8 +205,10 @@ export default function PostPage() {
 
   // 发布或更新内容
   const publishPost = async () => {
-    const userInfo = localStorage.getItem('userInfo');
-    if (!userInfo) {
+    const token = localStorage.getItem('token');
+    
+    // 只检查 token，因为 API 调用只需要 token
+    if (!token) {
       Toast.show({
         content: '请先登录',
         duration: 2000
@@ -230,7 +234,8 @@ export default function PostPage() {
         topicIds: selectedTopic ? [selectedTopic.id] : [],
         tags: selectedCoins.length > 0 ? selectedCoins.map(coin => {
           return coin.symbol || (typeof coin === 'string' ? coin : '');
-        }).filter(Boolean) : []
+        }).filter(Boolean) : [],
+        images // 添加图片数据
       };
       
       // 如果有投票信息，添加到postData中
@@ -417,6 +422,103 @@ export default function PostPage() {
     setShowTopicSelect(false);
   };
 
+  // 选择图片
+  const handleChooseImage = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    // 检查图片数量限制
+    if (images.length + files.length > 9) {
+      Toast.show({
+        content: '最多只能上传9张图片'
+      });
+      return;
+    }
+
+    // 显示加载提示
+    Toast.show({
+      icon: 'loading',
+      content: '上传中...',
+      duration: 0
+    });
+
+    try {
+      // 上传所有选择的图片
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+          const token = localStorage.getItem('token');
+          const response = await fetch(`/api${Interface.UPLOAD_FILE}`, {
+            method: 'POST',
+            headers: {
+              'authentication': token || ''
+            },
+            body: formData
+          });
+
+          const data = await response.json();
+          console.log('图片上传响应:', data);
+          
+          if (data.code === 0 && data.data) {
+            console.log('图片上传成功，URL:', data.data);
+            return data.data; // 返回上传后的图片URL
+          } else {
+            console.error('上传失败:', data.msg || data.errorMsg);
+            // 如果是登录相关错误，抛出特殊错误
+            if (data.msg && data.msg.includes('登录')) {
+              throw new Error(data.msg);
+            }
+            return null;
+          }
+        } catch (error) {
+          console.error('上传图片失败:', error);
+          return null;
+        }
+      });
+
+      const uploadedUrls = await Promise.all(uploadPromises);
+      // 过滤掉上传失败的图片
+      const validUrls = uploadedUrls.filter(url => url !== null);
+
+      Toast.clear();
+
+      if (validUrls.length > 0) {
+        const newImages = [...images, ...validUrls];
+        console.log('更新图片列表:', newImages);
+        setImages(newImages);
+        Toast.show({
+          content: `成功上传${validUrls.length}张图片`,
+          duration: 2000
+        });
+      } else {
+        Toast.show({
+          content: '图片上传失败'
+        });
+      }
+    } catch (error) {
+      Toast.clear();
+      console.error('选择图片失败', error);
+      // 显示具体的错误消息
+      Toast.show({
+        content: error.message || '选择图片失败'
+      });
+    }
+
+    // 清空input，以便可以再次选择相同的文件
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // 删除图片
+  const handleRemoveImage = (index) => {
+    const newImages = [...images];
+    newImages.splice(index, 1);
+    setImages(newImages);
+  };
+
   // 创建话题
   const handleCreateTopic = async () => {
     if (!topicTitle.trim()) {
@@ -506,9 +608,38 @@ export default function PostPage() {
               
               {/* 图片上传区 */}
               <div className={styles.imageUploader}>
-                <div className={styles.uploadTile}>
-                  <span>+</span>
-                </div>
+                {/* 隐藏的文件输入框 */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  style={{ display: 'none' }}
+                  onChange={handleChooseImage}
+                />
+                
+                {/* 已上传的图片展示 */}
+                {images.map((src, idx) => (
+                  <div key={idx} className={styles.imageWrapper}>
+                    <img className={styles.uploadedImg} src={src} alt="" />
+                    <div 
+                      className={styles.deleteIcon} 
+                      onClick={() => handleRemoveImage(idx)}
+                    >
+                      ×
+                    </div>
+                  </div>
+                ))}
+                
+                {/* 上传按钮 */}
+                {images.length < 9 && (
+                  <div 
+                    className={styles.uploadTile}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <span>+</span>
+                  </div>
+                )}
               </div>
               
               {/* 选中的币种和话题展示 */}

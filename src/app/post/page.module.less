@@ -120,6 +120,44 @@
       background: #f5f5f5;
     }
   }
+
+  .imageWrapper {
+    position: relative;
+    width: 70px; /* 140rpx ÷ 2 = 70px */
+    height: 70px;
+
+    .uploadedImg {
+      width: 100%;
+      height: 100%;
+      border-radius: 8px; /* 16rpx ÷ 2 = 8px */
+      object-fit: cover;
+    }
+
+    .deleteIcon {
+      position: absolute;
+      top: -4px; /* -8rpx ÷ 2 = -4px */
+      right: -4px;
+      width: 16px; /* 32rpx ÷ 2 = 16px */
+      height: 16px;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px; /* 24rpx ÷ 2 = 12px */
+      font-family: Arial, sans-serif;
+      line-height: 1;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15); /* 0 2rpx 8rpx ÷ 2 */
+      z-index: 10;
+      cursor: pointer;
+      transform: translateY(-0.5px);
+      
+      &:active {
+        background: rgba(0, 0, 0, 0.9);
+      }
+    }
+  }
 }
 
 .discoveryForm {
