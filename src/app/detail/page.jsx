@@ -13,6 +13,7 @@ import AddCollect from '../../components/AddCollect';
 import KlineChart from '../../components/KlineChart';
 import { Loading } from '../../components/Loading';
 import { CaretUpIcon, CaretDownIcon, BellIcon } from '../../components/Icons';
+import FloatingRobot from '../../components/FloatingRobot';
 // import { SkeletonPage } from '../../components/Skeleton';
 // import { detailPageSkeletonConfig } from '../../components/Skeleton/configs/detailPageConfig';
 import { request } from '../../utils/request';
@@ -28,15 +29,6 @@ import {
   createKlineChannel,
 } from '../../utils/websocketProtocol';
 import styles from './page.module.less';
-
-// 简单文本组件
-function BubbleText({ text }) {
-  return (
-    <div className={styles.bubbleText}>
-      {text}
-    </div>
-  );
-}
 
 export default function DetailPage() {
   const router = useRouter();
@@ -89,10 +81,6 @@ export default function DetailPage() {
   const useHttpFallbackRef = useRef(false); // 是否使用HTTP降级
   const pollingTimerRef = useRef(null); // HTTP轮询定时器
   
-  // 机器人交互状态
-  const [showRobotBubble, setShowRobotBubble] = useState(false);
-  const [showRobot, setShowRobot] = useState(false);
-  const robotRef = useRef(null);
   
   // 获取币种信息
   const fetchCoinInfo = async () => {
@@ -1139,54 +1127,6 @@ ${coinInfo.name || symbol} (${symbol})
     switchKlineSubscription();
   }, [activeKlineTab, symbol]);
   
-  // 监听滚动位置，控制机器人显示
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
-      const shouldShow = scrollTop > 200;
-      setShowRobot(shouldShow);
-    };
-    
-    // 初始检查
-    handleScroll();
-    
-    // 监听多个滚动事件源
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    document.addEventListener('scroll', handleScroll, { passive: true });
-    
-    // 额外添加轮询检查（兜底方案）
-    const pollInterval = setInterval(() => {
-      handleScroll();
-    }, 500);
-    
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      document.removeEventListener('scroll', handleScroll);
-      clearInterval(pollInterval);
-    };
-  }, []);
-  
-  // 机器人气泡显示逻辑
-  useEffect(() => {
-    if (!showRobot) {
-      setShowRobotBubble(false);
-      return;
-    }
-    
-    const showTimer = setTimeout(() => {
-      setShowRobotBubble(true);
-    }, 2000);
-    
-    const hideTimer = setTimeout(() => {
-      setShowRobotBubble(false);
-    }, 9000);
-    
-    return () => {
-      clearTimeout(showTimer);
-      clearTimeout(hideTimer);
-    };
-  }, [showRobot]);
-  
   // 渲染币种基本信息
   const renderCoinInfo = () => {
     if (!coinInfo) {
@@ -1471,106 +1411,13 @@ ${coinInfo.name || symbol} (${symbol})
           </div>
         </div>
 
-        {/* 悬浮机器人按钮 - Framer Motion 炫酷版 */}
-        <AnimatePresence>
-          {showRobot && (
-            <motion.div 
-              ref={robotRef}
-              className={styles.floatRobotBtn} 
-              onClick={() => router.push('/robot')}
-              whileHover={{ 
-                scale: 1.15,
-                rotate: [0, -10, 10, -10, 0],
-                transition: { duration: 0.5 }
-              }}
-              whileTap={{ scale: 0.9 }}
-              initial={{ scale: 0, rotate: -180, opacity: 0 }}
-              animate={{ scale: 1, rotate: 0, opacity: 1 }}
-              exit={{ scale: 0, rotate: 180, opacity: 0 }}
-              transition={{ 
-                type: "spring",
-                stiffness: 200,
-                damping: 15
-              }}
-            >
-          {/* 悬浮光晕效果 */}
-          <motion.div 
-            className={styles.robotGlow}
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.5, 0.8, 0.5],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-          
-          {/* 机器人图标 */}
-          <motion.img 
-            className={styles.robotIcon} 
-            src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/AI_Bot.png" 
-            alt="AI助手"
-            animate={{
-              y: [0, -5, 0],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-          
-          {/* 消息气泡 */}
-          <AnimatePresence>
-            {showRobotBubble && (
-              <motion.div 
-                className={styles.robotBubble}
-                initial={{ 
-                  opacity: 0, 
-                  x: 30, 
-                  scale: 0.3,
-                  rotate: 10
-                }}
-                animate={{ 
-                  opacity: 1, 
-                  x: 0, 
-                  scale: 1,
-                  rotate: 0
-                }}
-                exit={{ 
-                  opacity: 0, 
-                  x: 30, 
-                  scale: 0.3,
-                  rotate: -10
-                }}
-                transition={{ 
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 20
-                }}
-              >
-                <motion.div 
-                  className={styles.bubbleContent}
-                  animate={{
-                    y: [0, -3, 0],
-                  }}
-                  transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                >
-                  <BubbleText text={t('detail.robotBubble')} />
-                  <div className={styles.bubbleArrow}></div>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* 悬浮机器人按钮 - 使用新的FloatingRobot组件 */}
+        <FloatingRobot 
+          message={t('detail.robotMessage', { symbol: symbol.toUpperCase() })}
+          targetPath="/robot"
+          autoPlay={true}
+          startDelay={2000}
+        />
       </div>
     </>
   );

@@ -508,6 +508,7 @@
       "athChangePercent": "历史最高价百分比",
       "atl": "历史最低价",
       "atlChangePercent": "历史最低价百分比"
-    }
+    },
+    "robotMessage": "想听听我对{{symbol}}的看法吗？"
   }
 }
