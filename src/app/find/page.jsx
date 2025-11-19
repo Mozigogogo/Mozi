@@ -761,37 +761,44 @@ const loadingTimerRef = useRef(null);
 
     return (
       <div className={styles.ownBox}>
+        {/* 表头始终显示，根据是否有数据动态调整背景色和边框 */}
+        <div 
+          className={styles.ownGridTitle}
+          style={{ 
+            backgroundColor: myOwn.length > 0 ? '#efefef' : '#fff',
+            borderBottom: myOwn.length > 0 ? '1px solid #f0f0f0' : 'none'
+          }}
+        >
+          {myOwn.length > 0 && [
+            { name: t('home.columns.symbol'), width: '30%' },
+            { name: t('home.columns.lastPrice'), width: '18%' },
+            { name: t('home.columns.change24h'), width: '22%' },
+            { name: t('home.columns.addFavorites'), width: '15%' },
+            { name: t('home.columns.addMonitor'), width: '15%' }
+          ].map((colItem, colIndex) => (
+            <div 
+              key={colIndex} 
+              className={`${styles.ownGridTitleItem} ${colIndex !== 0 ? styles.text : ''}`}
+              style={{ width: colItem.width }}
+            >
+              {colItem.name}
+            </div>
+          ))}
+        </div>
+        
+        {/* 内容区域：无数据显示按钮，有数据显示列表 */}
         {myOwn.length === 0 ? (
           <button className={styles.addOwnBtn} onClick={addOwn}>{t('discover.addFavoriteButton')}</button>
         ) : (
-          <>
-            <div className={styles.ownGridTitle}>
-              {[
-                { name: t('home.columns.symbol'), width: '30%' },
-                { name: t('home.columns.lastPrice'), width: '18%' },
-                { name: t('home.columns.change24h'), width: '22%' },
-                { name: t('home.columns.addFavorites'), width: '15%' },
-                { name: t('home.columns.addMonitor'), width: '15%' }
-              ].map((colItem, colIndex) => (
-                <div 
-                  key={colIndex} 
-                  className={`${styles.ownGridTitleItem} ${colIndex !== 0 ? styles.text : ''}`}
-                  style={{ width: colItem.width }}
-                >
-                  {colItem.name}
-                </div>
-              ))}
-            </div>
-            <div style={{ marginTop: '24px' }} className={styles.ownContent}>
-              <MoziGrid
-                length={5}
-                colName={[t('home.columns.symbol'), t('home.columns.lastPrice'), t('home.columns.change24h'), t('home.columns.addFavorites'), t('home.columns.addFavorites')]}
-                gridContent={myOwn}
-                callback={(gridCon) => { jump2Detail(gridCon.key); }}
-                hideTitle={true}
-              />
-            </div>
-          </>
+          <div className={styles.ownContent}>
+            <MoziGrid
+              length={5}
+              colName={[t('home.columns.symbol'), t('home.columns.lastPrice'), t('home.columns.change24h'), t('home.columns.addFavorites'), t('home.columns.addFavorites')]}
+              gridContent={myOwn}
+              callback={(gridCon) => { jump2Detail(gridCon.key); }}
+              hideTitle={true}
+            />
+          </div>
         )}
       </div>
     );
@@ -1049,8 +1056,16 @@ const loadingTimerRef = useRef(null);
     );
   };
 
+  // 根据当前tab动态设置bottomPadding
+  const getBottomPadding = () => {
+    if (pageActiveKey === 'rank') {
+      return 50; // 排行榜页面
+    }
+    return 0; // 自选和行情页面
+  };
+
   return (
-    <Layout bottomPadding={60}>
+    <Layout bottomPadding={getBottomPadding()}>
       <div className={styles.container}>
         {/* 导航栏 */}
         <NavBar title={t('common.find')} showBack={false} showBorder={false} />

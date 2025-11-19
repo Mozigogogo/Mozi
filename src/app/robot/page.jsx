@@ -9,6 +9,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import NavBar from '../../components/NavBar';
 import ThinkingAnimation from '../../components/ThinkingAnimation';
+import PopLogin from '../../components/PopLogin';
 import { MoziWebSocket } from '../../utils/moziWebSocket';
 import { WS_URL } from '../../utils/constants';
 import { 
@@ -328,6 +329,7 @@ export default function RobotPage() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [suggestedQuestions, setSuggestedQuestions] = useState([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false); // 是否正在加载历史记录
+  const [showPopLogin, setShowPopLogin] = useState(false); // 登录提示弹窗状态
   
   const scrollRef = useRef(null);
   const wsRef = useRef(null);
@@ -335,6 +337,21 @@ export default function RobotPage() {
   const currentMessageIdRef = useRef(null);
   const currentRequestIdRef = useRef(null);
   const hasLoadedHistoryRef = useRef(false); // 标记是否已加载过历史记录
+  
+  // 检查登录状态
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) {
+      // 未登录，显示登录提示弹窗
+      setShowPopLogin(true);
+    }
+  }, []);
+  
+  // 登录成功回调
+  const handleLoginSuccess = () => {
+    // 登录成功后刷新页面，重新初始化 WebSocket
+    window.location.reload();
+  };
 
   // 初始化 WebSocket
   useEffect(() => {
@@ -879,6 +896,13 @@ export default function RobotPage() {
             </button>
           )}
         </div>
+        
+        {/* 登录提示弹窗 */}
+        <PopLogin
+          visible={showPopLogin}
+          onClose={() => setShowPopLogin(false)}
+          onLoginSuccess={handleLoginSuccess}
+        />
       </div>
   );
 }
