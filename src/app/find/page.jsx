@@ -12,6 +12,7 @@ import MoziGrid from '../../components/MoziGrid';
 import MarketOverview from '../../components/MarketOverview';
 import AddCollect from '../../components/AddCollect';
 import AddMonitor from '../../components/AddMonitor';
+import FloatingRobot from '../../components/FloatingRobot';
 import { Loading } from '../../components/Loading';
 import { RankGrid } from '../../components/Find/RankGrid';
 import { request } from '../../utils/request';
@@ -843,6 +844,9 @@ const loadingTimerRef = useRef(null);
             </Layout>
           </PullToRefresh>
         </div>
+        
+        {/* 悬浮机器人按钮 */}
+        <FloatingRobot message={t('discover.robotMessage')} />
       </>
     );
   };
