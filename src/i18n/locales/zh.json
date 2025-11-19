@@ -129,7 +129,8 @@
       "1y": "1年"
     },
     "addFavoriteButton": "添加自选",
-    "loadFinished": "已全部加载完毕"
+    "loadFinished": "已全部加载完毕",
+    "robotMessage": "想听听我对行情的分析吗？"
   },
   "overview": {
     "totalMarketCap": "加密总市值",
@@ -507,6 +508,7 @@
       "athChangePercent": "历史最高价百分比",
       "atl": "历史最低价",
       "atlChangePercent": "历史最低价百分比"
-    }
+    },
+    "robotMessage": "想听听我对{{symbol}}的看法吗？"
   }
 }
