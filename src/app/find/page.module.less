@@ -56,6 +56,7 @@
   background-color: #fff; // 整个自选区域白色背景
   margin-bottom: -60px; // 负边距抵消 Layout 的 bottomPadding，消除断层
   padding-bottom: 60px; // 为底部导航栏预留空间
+  padding-top: 28px; // 为固定表头预留空间 (表头高度约28px)
 
   .ownGridTitle {
     font-size: 11px; // 适当增大表头字号
@@ -89,7 +90,7 @@
     background-color: #11B787;
     color: #fff;
     width: 120px; // 原 240rpx
-    margin: 20px auto; // 原 40rpx
+    margin: 40px auto; // 增加上边距，确保与表头有足够间距
     padding: 8px 16px;
     border: none;
     border-radius: 4px;
