@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 import { RightOutline } from 'antd-mobile-icons';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { motion, useMotionValue, useTransform, useSpring, AnimatePresence } from 'framer-motion';
 import Layout from '../components/Layout';
 import MoziCard from '../components/MoziCard';
 import MoziTreeMap from '../components/MoziTreeMap';
@@ -17,6 +16,7 @@ import HighlightArea from '../components/HighlightArea';
 import AddCollect from '../components/AddCollect';
 import AddMonitor from '../components/AddMonitor';
 import MarketDistribution from '../components/MarketDistribution';
+import FloatingRobot from '../components/FloatingRobot';
 import { request } from '../utils/request';
 import { Interface, LOOPTIME, WS_URL } from '../utils/constants';
 import { jump2Detail, jump2Market, jump2List, jump2NoTab } from '../utils/core';
@@ -25,15 +25,6 @@ import styles from './page.module.less';
 
 // CDN 图片前缀
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
-
-// 简单文本组件
-function BubbleText({ text }) {
-  return (
-    <div className={styles.bubbleText}>
-      {text}
-    </div>
-  );
-}
 
 // 首页背景轮播图
 const HOME_BANNERS = [
@@ -180,19 +171,7 @@ export default function HomePage() {
   const [lastTopicsLoadTime, setLastTopicsLoadTime] = useState(null);
   const topicsCacheTimer = useRef(null);
   
-  // 机器人交互状态
-  const [showRobotBubble, setShowRobotBubble] = useState(false);
   const rankingSectionRef = useRef(null);
-  const robotRef = useRef(null);
-  
-  // 鼠标位置用于磁吸效果
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-  
-  // 机器人位置弹簧动画
-  const springConfig = { damping: 25, stiffness: 150 };
-  const robotX = useSpring(useTransform(mouseX, [0, 1], [0, 0]), springConfig);
-  const robotY = useSpring(useTransform(mouseY, [0, 1], [0, 0]), springConfig);
   const needLoop = useRef(true);
 
   // 首页公告栏显示控制
@@ -750,69 +729,6 @@ export default function HomePage() {
     }
   };
 
-  // 机器人动画状态
-  const [robotAnimState, setRobotAnimState] = useState('hidden'); // hidden -> rolling-in -> showing -> rolling-out -> resting
-  
-  // 页面加载时触发机器人滚动动画
-  useEffect(() => {
-    const timer1 = setTimeout(() => {
-      setRobotAnimState('rolling-in');
-      setShowRobotBubble(true);
-    }, 500);
-    
-    const timer2 = setTimeout(() => {
-      setRobotAnimState('showing');
-    }, 2300); // 滚动1.8秒后停下
-    
-    const timer3 = setTimeout(() => {
-      setShowRobotBubble(false);
-      setRobotAnimState('rolling-out');
-    }, 7300); // 显示5秒后开始退出
-    
-    const timer4 = setTimeout(() => {
-      setRobotAnimState('resting'); // 滚回右侧后保持显示
-    }, 8400); // 滚回右侧（1.1秒完成）
-    
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
-      clearTimeout(timer4);
-    };
-  }, []);
-
-  // 鼠标磁吸效果
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      if (!robotRef.current) return;
-      
-      const rect = robotRef.current.getBoundingClientRect();
-      const robotCenterX = rect.left + rect.width / 2;
-      const robotCenterY = rect.top + rect.height / 2;
-      
-      const distanceX = e.clientX - robotCenterX;
-      const distanceY = e.clientY - robotCenterY;
-      const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
-      
-      // 磁吸范围：150px
-      const magnetRange = 150;
-      if (distance < magnetRange) {
-        const magnetStrength = (magnetRange - distance) / magnetRange;
-        const moveX = (distanceX / distance) * magnetStrength * 15;
-        const moveY = (distanceY / distance) * magnetStrength * 15;
-        
-        mouseX.set(moveX);
-        mouseY.set(moveY);
-      } else {
-        mouseX.set(0);
-        mouseY.set(0);
-      }
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [mouseX, mouseY]);
-
   // 渲染实时榜单
   const renderRealTimeRanking = () => {
     const currentRankData = footerArr[activeArr.indexOf(rankActiveKey)] || [];
@@ -993,162 +909,8 @@ export default function HomePage() {
         {/* 实时榜单 */}
         {renderRealTimeRanking()}
 
-        {/* 悬浮机器人按钮 - 从右滚到左 */}
-        <motion.div 
-          ref={robotRef}
-          className={styles.floatRobotBtn} 
-          onClick={() => router.push('/robot')}
-          style={{
-            x: robotX,
-            y: robotY,
-          }}
-          initial={{ 
-            x: typeof window !== 'undefined' ? window.innerWidth : 500,
-            opacity: 0 
-          }}
-          animate={
-            robotAnimState === 'hidden' ? { 
-              x: typeof window !== 'undefined' ? window.innerWidth : 500,
-              opacity: 0 
-            } :
-            robotAnimState === 'rolling-in' ? { 
-              x: typeof window !== 'undefined' ? -window.innerWidth / 2 + 100 : -200,
-              opacity: 1 
-            } :
-            robotAnimState === 'showing' ? { 
-              x: typeof window !== 'undefined' ? -window.innerWidth / 2 + 100 : -200,
-              opacity: 1 
-            } :
-            robotAnimState === 'rolling-out' ? { 
-              x: typeof window !== 'undefined' ? window.innerWidth : 500,
-              opacity: 1 
-            } :
-            robotAnimState === 'resting' ? { 
-              x: 0,
-              opacity: 1 
-            } :
-            { 
-              x: 0,
-              opacity: 1 
-            }
-          }
-          transition={
-            robotAnimState === 'rolling-out' ? {
-              x: { duration: 1.1, ease: "easeInOut" },
-              opacity: { duration: 0.4 }
-            } :
-            robotAnimState === 'resting' ? {
-              x: { duration: 0.3, ease: "easeOut" },
-              opacity: { duration: 0.2 }
-            } : {
-              x: { duration: 1.8, ease: "easeInOut" },
-              opacity: { duration: 0.6 }
-            }
-          }
-        >
-          {/* 椭圆容器 - 包裹机器人和文字 */}
-          <motion.div
-            className={styles.robotContainer}
-            initial={{ width: 64 }}
-            animate={{
-              width: robotAnimState === 'rolling-in' || robotAnimState === 'showing' ? 'auto' : 64
-            }}
-            transition={{
-              duration: robotAnimState === 'rolling-in' ? 1.2 : 
-                         robotAnimState === 'rolling-out' ? 0.3 : 0.4,
-              ease: [0.4, 0, 0.2, 1],
-              delay: robotAnimState === 'rolling-in' ? 0.4 : 
-                     robotAnimState === 'rolling-out' ? 0.8 : 0
-            }}
-          >
-            {/* 背景层 - 只在需要时显示 */}
-            <motion.div
-              className={styles.robotContainerBg}
-              initial={{ opacity: 0 }}
-              animate={{
-                opacity: robotAnimState === 'rolling-in' || robotAnimState === 'showing' ? 1 : 0
-              }}
-              transition={{
-                duration: 0.6,
-                ease: "easeInOut",
-                delay: robotAnimState === 'rolling-in' ? 0.6 : 0
-              }}
-            />
-          
-            {/* 机器人图标容器（包含光晕） */}
-            <div className={styles.robotIconWrapper}>
-              {/* 悬浮光晕效果 */}
-              <motion.div 
-                className={styles.robotGlow}
-                animate={
-                  robotAnimState === 'showing' || robotAnimState === 'resting' ? {
-                    scale: [1, 1.2, 1],
-                    opacity: [0.5, 0.8, 0.5],
-                  } : {
-                    scale: 1,
-                    opacity: 0.5
-                  }
-                }
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              />
-              
-              {/* 机器人图标 */}
-              <motion.img 
-              className={styles.robotIcon} 
-              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/AI_Bot.png" 
-              alt="AI助手"
-              initial={{ rotate: 0 }}
-              animate={
-                robotAnimState === 'showing' || robotAnimState === 'resting' ? {
-                  y: [0, -5, 0],
-                  rotate: -720
-                } :
-                robotAnimState === 'rolling-in' ? {
-                  rotate: -720
-                } :
-                robotAnimState === 'rolling-out' ? {
-                  rotate: 0
-                } : {
-                  rotate: 0
-                }
-              }
-              transition={
-                robotAnimState === 'rolling-in' ? {
-                  rotate: { duration: 1.8, ease: "linear" }
-                } :
-                robotAnimState === 'rolling-out' ? {
-                  rotate: { duration: 1.1, ease: "linear" }
-                } :
-                robotAnimState === 'showing' || robotAnimState === 'resting' ? {
-                  y: { duration: 2, repeat: Infinity, ease: "easeInOut" },
-                  rotate: { duration: 0 }
-                } : {
-                  duration: 0
-                }
-              }
-            />
-            </div>
-            
-            {/* 欢迎消息文字 */}
-            <AnimatePresence>
-              {(robotAnimState === 'rolling-in' || robotAnimState === 'showing') && (
-                <motion.div 
-                  className={styles.robotMessage}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <BubbleText text={t('home.robotBubble')} />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        </motion.div>
+        {/* 悬浮机器人按钮 - 使用新的FloatingRobot组件 */}
+        <FloatingRobot />
       </div>
     </Layout>
   );
