@@ -8,7 +8,6 @@ import { AddOutline } from 'antd-mobile-icons';
 import { isEmpty } from 'lodash';
 import Layout from '../../components/Layout';
 import { SearchInput } from '../../components/SearchInput';
-import { Loading } from '../../components/Loading';
 import MoziCard from '../../components/MoziCard';
 import BullBearVote from '../../components/BullBearVote';
 import QuestionButtons from '../../components/QuestionButtons';
@@ -18,8 +17,9 @@ import styles from './page.module.less';
 
 // 加载组件
 const GardenLoading = () => (
-  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-    <SpinLoading style={{ '--size': '24px' }} />
+  <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
+    <SpinLoading color="#00b578" style={{ '--size': '24px' }} />
+    <span style={{ fontSize: '14px', color: '#999' }}>加载中...</span>
   </div>
 );
 
@@ -709,7 +709,7 @@ export default function CommunityPage() {
             </div>
           </div>
         ))}
-        {loading && <Loading />}
+        {loading && <GardenLoading />}
         {!hasMore && posts.length > 0 && (
           <div className={styles.noMore}>没有更多了</div>
         )}
@@ -728,7 +728,7 @@ export default function CommunityPage() {
               <span className={styles.topicCount}>{topic.postCount}篇</span>
             </div>
           ))}
-          {hotTopicsLoading && <Loading />}
+          {hotTopicsLoading && <GardenLoading />}
           {hotTopicsAllLoaded && hotTopics.length > 0 && (
             <div className={styles.noMore}>没有更多了</div>
           )}
