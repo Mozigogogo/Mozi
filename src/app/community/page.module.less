@@ -376,6 +376,17 @@
   padding-right: 0;
 }
 
+/* 热门榜单页面移除左右padding */
+.contentList:has(.hotTopics) {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* 热门榜单页面容器底部padding调整 */
+.container:has(.hotTopics) {
+  padding-bottom: 45px;
+}
+
 // .postsList {
 //   margin-top: 16px;
 // }
@@ -558,8 +569,8 @@
 }
 
 .rankMedal {
-  width: 21px; /* 42rpx ÷ 2 = 21px */
-  height: 21px; /* 42rpx ÷ 2 = 21px */
+  width: 18px; 
+  height: 21px; 
   display: block;
 }
 

@@ -133,6 +133,22 @@ export default function PostPage() {
     }
   }, [showCoinSelect, coinList]);
 
+  // 监听话题选择弹出层状态变化
+  useEffect(() => {
+    if (showTopicSelect && topics.length === 0) {
+      // 当打开话题选择弹出层且没有话题数据时，加载热门话题
+      loadHotTopics();
+    }
+  }, [showTopicSelect]);
+
+  // 监听话题搜索关键词变化
+  useEffect(() => {
+    if (topicSearchKeyword.trim() === '') {
+      // 如果话题搜索关键词为空，重新加载热门话题
+      loadHotTopics();
+    }
+  }, [topicSearchKeyword]);
+
   const initData = async () => {
     try {
       const userInfo = localStorage.getItem('userInfo');
@@ -157,8 +173,11 @@ export default function PostPage() {
         }
       });
       
+      console.log('热门话题接口响应:', response);
+      
       if (response?.data) {
         const { data, totalPages } = response.data;
+        console.log('话题数据:', data);
         if (data && Array.isArray(data)) {
           setTopics(prev => hotTopicsPage === 1 ? data : [...prev, ...data]);
           setHotTopicsAllLoaded(hotTopicsPage >= totalPages);
@@ -404,7 +423,10 @@ export default function PostPage() {
         data: { keyword }
       });
       
+      console.log('搜索话题接口响应:', response);
+      
       if (response?.data?.data && Array.isArray(response.data?.data)) {
+        console.log('搜索到的话题:', response.data.data);
         setTopics(response?.data?.data);
         if (response?.data?.data.length === 0) {
           Toast.show({
@@ -926,6 +948,109 @@ export default function PostPage() {
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* 话题选择弹出层 */}
+        {showTopicSelect && (
+          <div className={styles.topicPopup}>
+            <div 
+              className={styles.popupMask} 
+              onClick={() => {
+                setShowTopicSelect(false);
+                setActiveButton('');
+              }}
+            />
+            <div className={styles.popupContent}>
+              <div className={styles.popupHeader}>
+                <div className={styles.searchWrapper}>
+                  <Input
+                    className={styles.searchInput}
+                    value={topicSearchKeyword}
+                    onChange={(value) => setTopicSearchKeyword(value)}
+                    placeholder='搜索话题'
+                    onEnterPress={(e) => searchTopics(e.target.value)}
+                  />
+                </div>
+                <button className={styles.createTopicBtn} onClick={() => setShowCreateTopic(true)}>
+                  创建话题
+                </button>
+                <button 
+                  className={styles.cancelBtn} 
+                  onClick={() => {
+                    setShowTopicSelect(false);
+                    setActiveButton('');
+                  }}
+                >
+                  取消
+                </button>
+              </div>
+              {/* 话题展示区域 */}
+              <div className={styles.searchResults}>
+                <div className={styles.resultsTitle}>话题列表</div>
+                <div className={styles.resultsList}>
+                  {topics.length > 0 ? (
+                    topics.map(topic => (
+                      <div
+                        key={topic.id}
+                        className={styles.topicItem}
+                        onClick={() => selectTopic(topic)}
+                      >
+                        <div className={styles.topicName}>#{topic.name}</div>
+                        {topic.description && <div className={styles.topicDescription}>{topic.description}</div>}
+                      </div>
+                    ))
+                  ) : (
+                    <div className={styles.noResults}>
+                      <span>{topicSearchKeyword ? '未找到相关话题' : '加载中...'}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 创建话题弹窗 */}
+        {showCreateTopic && (
+          <div className={styles.topicCreatorMask} onClick={() => setShowCreateTopic(false)}>
+            <div className={styles.topicCreator} onClick={e => e.stopPropagation()}>
+              <div className={styles.creatorHeader}>
+                <span>创建话题</span>
+                <span className={styles.closeIcon} onClick={() => setShowCreateTopic(false)}>×</span>
+              </div>
+              <div className={styles.creatorContent}>
+                <div className={styles.inputGroup}>
+                  <span className={styles.label}>话题名称</span>
+                  <Input
+                    className={styles.titleInput}
+                    value={topicTitle}
+                    onChange={(value) => setTopicTitle(value)}
+                    placeholder="请输入话题名称（必填）"
+                  />
+                </div>
+                <div className={styles.inputGroup}>
+                  <span className={styles.label}>话题简介</span>
+                  <TextArea
+                    className={styles.descInput}
+                    value={topicDesc}
+                    onChange={(value) => value.length <= 60 && setTopicDesc(value)}
+                    placeholder="请输入话题简介（选填，最多60字）"
+                    maxLength={60}
+                    rows={3}
+                  />
+                  <span className={styles.wordCount}>{topicDesc.length}/60</span>
+                </div>
+              </div>
+              <Button
+                className={`${styles.createBtn} ${topicTitle ? styles.active : ''}`}
+                onClick={handleCreateTopic}
+                disabled={!topicTitle}
+                block
+              >
+                创建话题
+              </Button>
             </div>
           </div>
         )}

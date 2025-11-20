@@ -332,7 +332,32 @@ export default function CommunityPage() {
 
   // 跳转到发帖页面
   const goToPostPage = () => {
-    window.location.href = '/post';
+    // 根据当前标签页确定要使用的模板
+    let templateType = '';
+    let urlParams = '';
+    
+    if (mainTab === 'recommend') {
+      if (subTab === 'discovery') {
+        templateType = '发现好币';
+      } else if (subTab === 'question') {
+        templateType = '不懂就问';
+      } else if (subTab === 'currency' && selectedCoin) {
+        // 币种标签下，携带币种信息
+        templateType = '普通';
+        urlParams = `&symbol=${selectedCoin}`;
+        console.log('携带币种参数:', selectedCoin);
+      } else {
+        templateType = '普通';
+      }
+    } else {
+      // 热榜页面默认使用普通模板
+      templateType = '普通';
+    }
+    
+    const url = `/post?templateType=${encodeURIComponent(templateType)}${urlParams}`;
+    console.log('跳转URL:', url);
+    
+    window.location.href = url;
   };
 
   // 创建话题
