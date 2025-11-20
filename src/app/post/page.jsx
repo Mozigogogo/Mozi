@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Input, TextArea, Button, Popup, Picker, Toast } from 'antd-mobile';
 import { SearchOutline, CloseOutline } from 'antd-mobile-icons';
+import { useTranslation } from 'react-i18next';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import NavBar from '../../components/NavBar';
@@ -22,6 +23,7 @@ const currencyIcon = `${CDN_ICON}/currency.png`;
 const topicIcon = `${CDN_ICON}/topic.png`;
 
 export default function PostPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [title, setTitle] = useState('');
@@ -122,6 +124,14 @@ export default function PostPage() {
       setSelectedCoins([{ symbol: symbol, name: symbol }]);
     }
   }, [searchParams]);
+
+  // 监听币种选择弹出层状态变化
+  useEffect(() => {
+    if (showCoinSelect && coinList.length > 0) {
+      // 当打开币种选择弹出层且有币种列表数据时，显示所有币种
+      setSearchResults(coinList);
+    }
+  }, [showCoinSelect, coinList]);
 
   const initData = async () => {
     try {
@@ -596,71 +606,51 @@ export default function PostPage() {
         {/* 内容区域 */}
         <div className={styles.contentSection}>
           {(selectedTemplate === '普通' || selectedTemplate === '不懂就问') && (
-            <>
-              <TextArea
-                className={styles.contentTextarea}
-                placeholder={selectedTemplate === '普通' ? '写下你的想法...' : '详细描述你的问题...'}
-                value={content}
-                onChange={setContent}
-                maxLength={300}
-                rows={8}
-              />
-              
-              {/* 图片上传区 */}
-              <div className={styles.imageUploader}>
-                {/* 隐藏的文件输入框 */}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  style={{ display: 'none' }}
-                  onChange={handleChooseImage}
-                />
-                
-                {/* 已上传的图片展示 */}
-                {images.map((src, idx) => (
-                  <div key={idx} className={styles.imageWrapper}>
-                    <img className={styles.uploadedImg} src={src} alt="" />
-                    <div 
-                      className={styles.deleteIcon} 
-                      onClick={() => handleRemoveImage(idx)}
-                    >
-                      ×
-                    </div>
-                  </div>
-                ))}
-                
-                {/* 上传按钮 */}
-                {images.length < 9 && (
-                  <div 
-                    className={styles.uploadTile}
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <span>+</span>
-                  </div>
-                )}
-              </div>
-              
-              {/* 选中的币种和话题展示 */}
-              {(selectedCoins.length > 0 || selectedTopic) && (
-                <div className={styles.selectedTags}>
-                  {selectedCoins.map((coin, index) => (
-                    <span 
-                      key={index} 
-                      className={styles.coinTag}
-                      onClick={() => removeCoin(index)}
-                    >
-                      ${coin.name || coin.symbol || coin}$
-                    </span>
-                  ))}
-                  {selectedTopic && (
-                    <span className={styles.topicTag}>#{selectedTopic.name}</span>
-                  )}
-                </div>
-              )}
-            </>
+            <TextArea
+              className={styles.contentTextarea}
+              placeholder={selectedTemplate === '普通' ? '写下你的想法...' : '详细描述你的问题...'}
+              value={content}
+              onChange={setContent}
+              maxLength={300}
+              rows={8}
+            />
           )}
+          
+          {/* 图片上传区 - 对所有模板开放 */}
+          <div className={styles.imageUploader}>
+            {/* 隐藏的文件输入框 */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              style={{ display: 'none' }}
+              onChange={handleChooseImage}
+            />
+            
+            {/* 已上传的图片展示 */}
+            {images.map((src, idx) => (
+              <div key={idx} className={styles.imageWrapper}>
+                <img className={styles.uploadedImg} src={src} alt="" />
+                <div 
+                  className={styles.deleteIcon} 
+                  onClick={() => handleRemoveImage(idx)}
+                >
+                  ×
+                </div>
+              </div>
+            ))}
+            
+            {/* 上传按钮 */}
+            {images.length < 9 && (
+              <div 
+                className={styles.uploadTile}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <span>+</span>
+              </div>
+            )}
+          </div>
 
           {selectedTemplate === '发现好币' && (
             <div className={styles.discoveryForm}>
@@ -671,7 +661,7 @@ export default function PostPage() {
                   onChange={setContent}
                   placeholder="请输入推荐理由"
                   maxLength={300}
-                  rows={6}
+                  className={styles.discoveryTextarea}
                 />
               </div>
               <div className={styles.formItem}>
@@ -686,6 +676,24 @@ export default function PostPage() {
                   <span className={styles.iconArrow}>›</span>
                 </div>
               </div>
+            </div>
+          )}
+          
+          {/* 选中的币种和话题展示 */}
+          {(selectedCoins.length > 0 || selectedTopic) && (
+            <div className={styles.selectedTags}>
+              {selectedCoins.map((coin, index) => (
+                <span 
+                  key={index} 
+                  className={styles.coinTag}
+                  onClick={() => removeCoin(index)}
+                >
+                  ${coin.name || coin.symbol || coin}$
+                </span>
+              ))}
+              {selectedTopic && (
+                <span className={styles.topicTag}>#{selectedTopic.name}</span>
+              )}
             </div>
           )}
         </div>
@@ -795,8 +803,195 @@ export default function PostPage() {
           </div>
         )}
 
-        {/* 其他弹窗... */}
-        {/* 由于篇幅限制，这里省略了其他弹窗的实现 */}
+        {/* 投票弹窗 */}
+        {showVote && (
+          <div className={styles.votePopup}>
+            <div 
+              className={styles.popupMask} 
+              onClick={() => {
+                setShowVote(false);
+                setActiveButton('');
+              }}
+            />
+            <div className={styles.popupContent}>
+              <div className={styles.popupHeader}>
+                <span>创建投票</span>
+                <div className={styles.headerBtns}>
+                  <button className={styles.createBtn} onClick={createVote}>创建</button>
+                  <button 
+                    className={styles.closeBtn}
+                    onClick={() => {
+                      setShowVote(false);
+                      setActiveButton('');
+                    }}
+                  >
+                    取消
+                  </button>
+                </div>
+              </div>
+              <div className={styles.voteForm}>
+                <div className={styles.voteTitleInput}>
+                  <Input
+                    value={voteTitle}
+                    onChange={(value) => value.length <= 20 && setVoteTitle(value)}
+                    placeholder="请输入投票主题"
+                    maxLength={20}
+                  />
+                  <span className={styles.wordCount}>{voteTitle.length}/20</span>
+                </div>
+                <div className={styles.voteOptionsList}>
+                  {voteOptions.map((option, index) => (
+                    <div key={index} className={styles.optionItem}>
+                      <Input
+                        className={styles.optionInput}
+                        value={option}
+                        onChange={(value) => updateVoteOption(index, value)}
+                        placeholder={`选项${index + 1}`}
+                      />
+                      {voteOptions.length > 2 && (
+                        <span 
+                          className={styles.deleteBtn}
+                          onClick={() => deleteVoteOption(index)}
+                        >
+                          ×
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <Button className={styles.addOptionBtn} onClick={addVoteOption}>
+                  添加选项
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 币种选择弹窗 */}
+        {showCoinSelect && (
+          <div className={styles.coinPopup}>
+            <div 
+              className={styles.popupMask} 
+              onClick={() => {
+                setShowCoinSelect(false);
+                setActiveButton('');
+              }}
+            />
+            <div className={styles.popupContent}>
+              <div className={styles.coinHeader}>
+                <div className={styles.searchBox}>
+                  <SearchOutline fontSize={16} />
+                  <input
+                    className={styles.searchInput}
+                    value={searchKeyword}
+                    onChange={(e) => setSearchKeyword(e.target.value)}
+                    placeholder="搜索币种"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        searchCoin(searchKeyword);
+                      }
+                    }}
+                  />
+                </div>
+                <button 
+                  className={styles.cancelBtn}
+                  onClick={() => {
+                    setShowCoinSelect(false);
+                    setActiveButton('');
+                  }}
+                >
+                  取消
+                </button>
+              </div>
+              {/* 搜索结果展示区域 */}
+              <div className={styles.searchResults}>
+                <div className={styles.resultsTitle}>币种列表</div>
+                <div className={styles.resultsList}>
+                  {searchResults.length > 0 ? (
+                    searchResults.map((coin, index) => (
+                      <div
+                        key={index}
+                        className={styles.resultItem}
+                        onClick={() => selectCoin(coin)}
+                      >
+                        <img className={styles.coinIcon} src={coin.url} alt="" />
+                        <span className={styles.coinSymbol}>{coin.symbol}</span>
+                        {coin.name && <span className={styles.coinName}>{coin.name}</span>}
+                      </div>
+                    ))
+                  ) : (
+                    <div className={styles.noResults}>
+                      <span>暂无币种数据</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 不懂就问提示弹窗 */}
+        {showAskTips && (
+          <div className={styles.askTipsContainer}>
+            <div className={styles.askTipsBox}>
+              <div className={styles.askTipsHeader}>
+                <span>{t('community.askTips.title')}</span>
+                <span className={styles.closeIcon} onClick={() => setShowAskTips(false)}>×</span>
+              </div>
+              <div className={styles.askTipsContent}>
+                <div className={styles.tipItem}>
+                  <span className={styles.tipIcon}>📝</span>
+                  <span className={styles.tipText}>{t('community.askTips.standardAccurate')}</span>
+                </div>
+                <div className={styles.tipItem}>
+                  <span className={styles.tipIcon}>💡</span>
+                  <span className={styles.tipText}>{t('community.askTips.discussionValue')}</span>
+                </div>
+                <div className={styles.tipItem}>
+                  <span className={styles.tipIcon}>👀</span>
+                  <span className={styles.tipText}>{t('community.askTips.objectiveTrue')}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 社区公约弹窗 */}
+        {showCommunityRules && (
+          <div className={styles.communityRulesMask}>
+            <div className={styles.communityRulesPopup}>
+              <div className={styles.rulesHeader}>
+                <span className={styles.rulesTitle}>{t('community.communityRules.title')}</span>
+              </div>
+              <div className={styles.rulesContent}>
+                <div className={styles.rulesText}>
+                  {t('community.communityRules.greeting')}
+                  <br /><br />
+                  {t('community.communityRules.welcome')}
+                  <br /><br />
+                  {t('community.communityRules.followRules')}
+                  <br /><br />
+                  {t('community.communityRules.respectOthers')}
+                  <br /><br />
+                  {t('community.communityRules.respectFacts')}
+                  <br /><br />
+                  {t('community.communityRules.respectPlatform')}
+                  <br /><br />
+                  {t('community.communityRules.closing')}
+                </div>
+              </div>
+              <div className={styles.rulesFooter}>
+                <Button 
+                  className={styles.confirmBtn} 
+                  onClick={() => setShowCommunityRules(false)}
+                  block
+                >
+                  {t('community.communityRules.confirmButton')}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
         </div>
 
         {/* 底部发布按钮 */}
