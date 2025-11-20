@@ -228,12 +228,20 @@ export const Interface = {
   TOPIC_POSTS: '/posts/topic',
   // 创建投票
   CREATE_VOTE: '/api/vote/create',
+  // 上传文件
+  UPLOAD_FILE: '/easy/uploadFile',
 
   // 是否展示全部内容
   SHOW_ALL: '/switch/status',
   
   // 涨跌分布
   MARKET_DISTRIBUTION: '/easy/getGainAndLossDistDa',
+  
+  // 添加告警
+  ADD_ALARM: '/alarm/add',
+  
+  // 删除告警
+  DELETE_ALARM: '/alarm/delete',
 };
 
 // 业务中使用到的联系邮箱和链上地址（打包报错缺失导出）

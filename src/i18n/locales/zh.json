@@ -257,7 +257,24 @@
     "reply": "回复",
     "topic": "话题",
     "hotTopics": "热门话题",
-    "trending": "热门动态"
+    "trending": "热门动态",
+    "communityRules": {
+      "title": "社区公约",
+      "greeting": "亲爱的用户，您好：",
+      "welcome": "欢迎来到Mozi社区，我们希望打造一个友善、有趣、有料的Web3社区，让每一个用户都能学习到健康的Web3理念，感受到友善有趣的社区氛围。",
+      "followRules": "所以希望每一个用户都能遵守以下社区公约：",
+      "respectOthers": "尊重他人，不对他人进行基于外貌、地域、理念等方面的人身攻击、辱骂、恶意刷屏等又不友善行为；",
+      "respectFacts": "尊重事实，不发表不实言论；",
+      "respectPlatform": "尊重平台，不发表恶意营销相关内容，不恶意灌水。",
+      "closing": "一个友善温暖的社区，需要大家一起来守护，感谢~",
+      "confirmButton": "好的，知道了"
+    },
+    "askTips": {
+      "title": "如何更好地提问?",
+      "standardAccurate": "规范准确：规范使用语句标点清晰表述",
+      "discussionValue": "讨论价值：鼓励专业、实用、脑洞等价值讨论",
+      "objectiveTrue": "客观真实：理性客观地陈述问题和事实"
+    }
   },
   "warning": {
     "addWarning": "添加预警",

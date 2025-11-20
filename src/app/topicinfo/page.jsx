@@ -379,7 +379,7 @@ export default function TopicInfo() {
                       分享
                     </Button>
                     <Button className={styles.actionBtn} fill="none">
-                      <img className={styles.actionIcon} src={commentIcon} alt="评论" />
+                      <img className={styles.commentIcon} src={commentIcon} alt="评论" />
                       {item.comments}
                     </Button>
                     <Button 

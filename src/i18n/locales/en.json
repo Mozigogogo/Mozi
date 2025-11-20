@@ -256,7 +256,24 @@
     "reply": "Reply",
     "topic": "Topic",
     "hotTopics": "Hot Topics",
-    "trending": "Trending"
+    "trending": "Trending",
+    "communityRules": {
+      "title": "Community Guidelines",
+      "greeting": "Dear User,",
+      "welcome": "Welcome to Mozi community. We aim to build a friendly, interesting, and valuable Web3 community where every user can learn healthy Web3 concepts and experience a warm and friendly community atmosphere.",
+      "followRules": "Therefore, we hope every user can follow these community guidelines:",
+      "respectOthers": "Respect others - Do not engage in personal attacks, insults, or malicious spamming based on appearance, region, beliefs, or other unfriendly behaviors;",
+      "respectFacts": "Respect facts - Do not post false statements;",
+      "respectPlatform": "Respect the platform - Do not post malicious marketing content or spam.",
+      "closing": "A friendly and warm community needs everyone's protection. Thank you~",
+      "confirmButton": "Got it"
+    },
+    "askTips": {
+      "title": "How to ask better questions?",
+      "standardAccurate": "Be clear and accurate: Use proper grammar and punctuation",
+      "discussionValue": "Add value: Encourage professional, practical, and creative discussions",
+      "objectiveTrue": "Be objective: Present problems and facts rationally"
+    }
   },
   "warning": {
     "addWarning": "Add Warning",

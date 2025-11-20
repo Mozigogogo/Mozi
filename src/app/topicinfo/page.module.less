@@ -167,18 +167,20 @@
   display: flex;
   justify-content: space-between;
   padding-top: 10px;
+  padding-left: 40px;
+  padding-right: 40px;
 }
 
 .actionBtn {
   display: flex;
-  align-items: center;
+  align-items: center; /* 居中对齐，图标和文字在同一行 */
   justify-content: center;
   font-size: 12px;
   color: #999;
   background: none;
   border: none;
   padding: 0;
-  gap: 4px;
+  gap: 4px; /* 图标和文字之间的间距 */
   min-height: auto;
   height: auto;
 }
@@ -186,6 +188,14 @@
 .actionIcon {
   width: 22px;
   height: 22px;
+  flex-shrink: 0; /* 防止图标被压缩 */
+}
+
+/* 中间评论图标单独控制 */
+.commentIcon {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0; /* 防止图标被压缩 */
 }
 
 .actionBtn.liked {
@@ -307,8 +317,8 @@
   }
   
   .postBtn {
-    width: 45px;
-    height: 45px;
+    width: 66px;
+    height: 66px;
   }
   
   .iconPlus {
