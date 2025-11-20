@@ -130,8 +130,11 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
 
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
-        if (res?.data?.user) {
-          localStorage.setItem('userInfo', JSON.stringify(res.data.user));
+        if (res?.data?.userInfo) {
+          localStorage.setItem('userInfo', JSON.stringify(res.data.userInfo));
+        }
+        if (res?.data?.userId) {
+          localStorage.setItem('userId', res.data.userId);
         }
         Toast.show({ content: t('auth.loginSuccess'), position: 'center', icon: 'success' });
         onLoginSuccess?.();

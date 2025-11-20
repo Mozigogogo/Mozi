@@ -104,6 +104,40 @@ export default function Addwarn() {
   const saveWarnings = async () => {
     setBtnDisabled(true);
 
+    // 获取 userId
+    const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+    
+    if (!userId) {
+      Toast.show({ content: "请先登录" });
+      setBtnDisabled(false);
+      setShowLoginPopup(true);
+      return;
+    }
+
+    // 判断是否为 Telegram 环境
+    const isTelegram = typeof window !== 'undefined' && window.Telegram?.WebApp?.initData;
+    
+    // 获取渠道和 ID
+    let channel = 'pc';  // 默认为 pc
+    let chatId = null;
+    
+    if (isTelegram) {
+      channel = 'tg';
+      // 从 Telegram WebApp 获取 chatId
+      chatId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString();
+      
+      // 如果没有从 WebApp 获取到，尝试从 localStorage 获取
+      if (!chatId && typeof window !== 'undefined') {
+        chatId = localStorage.getItem('tgChatId');
+      }
+      
+      if (!chatId) {
+        Toast.show({ content: "无法获取 Telegram Chat ID" });
+        setBtnDisabled(false);
+        return;
+      }
+    }
+
     // 收集启用且有值的配置
     const enabledConfigs = Object.entries(configs).filter(
       ([, config]) => config.enabled && config.value
@@ -124,8 +158,8 @@ export default function Addwarn() {
       }
     }
 
-    // 构建提交数据，字段名与原项目一致
-    const apiData = enabledConfigs.reduce((acc, [key, config]) => {
+    // 构建 content 对象，字段名与原项目一致
+    const content = enabledConfigs.reduce((acc, [key, config]) => {
       let fieldName = key;
       if (key === "risePercent") fieldName = "priceRiseChange24HPercent";
       if (key === "fallPercent") fieldName = "priceFallChange24HPercent";
@@ -135,44 +169,35 @@ export default function Addwarn() {
     }, {});
 
     try {
+      // 构建请求数据
+      const requestData = {
+        symbol,
+        channel: channel,             // 根据环境动态设置：tg 或 pc
+        content: content              // 告警配置内容
+      };
+      
+      // 如果是 Telegram 渠道，添加 userId 和 chatId
+      if (channel === 'tg') {
+        requestData.userId = userId;
+        if (chatId) {
+          requestData.id = chatId;
+        }
+      }
+      
       const addRes = await request({
-        url: Interface.ADD_WARN,
+        url: Interface.ADD_ALARM || '/alarm/add',
         method: "POST",
-        data: {
-          symbol,
-          content: apiData,
-        },
+        data: requestData,
       });
 
       setBtnDisabled(false);
 
-      if (addRes.data === true) {
-        // 保存成功仅提示，不再弹出公众号绑定弹窗
+      if (addRes.code === 0 && addRes.data === true) {
         Toast.show({ content: "保存告警成功" });
-        // 如果已绑定 Telegram，将发送一条确认消息（仅用于用户确认，不代表实时告警）
-        try {
-          const chatId = localStorage.getItem('tgChatId');
-          if (chatId) {
-            const lines = Object.entries(apiData).map(([k, v]) => `${k}: ${v}`).join('\n');
-            fetch('/api/tg/send', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                chatId,
-                text: `⏰ 告警已配置\n币种: ${symbol}\n${lines}`,
-              }),
-            }).catch(() => {});
-          }
-        } catch {}
         return;
       }
 
-      if (addRes.data?.isLogin === false) {
-        setShowLoginPopup(true);
-        return;
-      }
-
-      Toast.show({ content: addRes.errorMsg || "保存失败" });
+            Toast.show({ content: addRes.errorMsg || "保存失败" });
     } catch (error) {
       setBtnDisabled(false);
       Toast.show({ content: "网络错误，请稍后再试" });

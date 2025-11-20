@@ -235,12 +235,18 @@ export default function Mywarn() {
     if (!confirm) return;
 
     try {
-      const { data } = await request({
-        url: Interface.DELETE_COIN_WARN,
-        method: 'POST',
-        data: { symbol }
+      // 获取 token
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      
+      const res = await request({
+        url: `${Interface.DELETE_ALARM || '/alarm/delete'}?symbol=${symbol}`,
+        method: 'DELETE',
+        headers: {
+          authentication: token
+        }
       });
-      if (data) {
+      
+      if (res.code === 0 && res.data === true) {
         const newData = { ...warnData.data };
         delete newData[symbol];
         const symbols = Object.keys(newData);
@@ -259,7 +265,7 @@ export default function Mywarn() {
         setActiveKey(newActiveKey);
         Toast.show('删除成功');
       } else {
-        Toast.show('删除失败');
+        Toast.show(res.message || '删除失败');
       }
     } catch (error) {
       console.error('删除币种告警失败:', error);

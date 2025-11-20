@@ -164,6 +164,7 @@ export default function UserPage() {
     try {
       localStorage.removeItem('token');
       localStorage.removeItem('userInfo');
+      localStorage.removeItem('userId');
       delCookie('wallet_address');
       delCookie('wallet_chainId');
     } catch {}
