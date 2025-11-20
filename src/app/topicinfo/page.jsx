@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Button, ActionSheet, Toast, InfiniteScroll } from 'antd-mobile';
+import { Button, ActionSheet, Toast, InfiniteScroll, SpinLoading } from 'antd-mobile';
 import { MoreOutline } from 'antd-mobile-icons';
 import Layout from '../../components/Layout';
 import NavBar from '../../components/NavBar';
@@ -308,7 +308,19 @@ export default function TopicInfo() {
           </div>
 
           <div>
-              {posts.map(item => (
+            {loading && posts.length === 0 ? (
+              <div className={styles.emptyContainer}>
+                <div className={styles.loadingContent}>
+                  <SpinLoading size="large" color="#00b578" />
+                  <div className={styles.loadingText}>加载中...</div>
+                </div>
+              </div>
+            ) : posts.length === 0 ? (
+              <div className={styles.emptyContainer}>
+                <div className={styles.emptyText}>暂无帖子</div>
+              </div>
+            ) : (
+              posts.map(item => (
                 <div key={item.id} className={styles.commentCard} onClick={() => navigateToCommentInfo(item.id)}>
                   {/* 用户自己的帖子显示编辑按钮 */}
                   {item.userId === currentUserId && (
@@ -392,20 +404,21 @@ export default function TopicInfo() {
                     </Button>
                   </div>
                 </div>
-              ))}
+              ))
+            )}
 
+            {posts.length > 0 && (
               <InfiniteScroll loadMore={loadMore} hasMore={hasMore}>
                 {hasMore ? (
                   <div className={styles.loadingMore}>加载中...</div>
                 ) : (
                   <div className={styles.listFooter}>
-                    <div className={styles.footerText}>
-                      {posts.length === 0 ? '暂无帖子' : '已加载全部内容'}
-                    </div>
+                    <div className={styles.footerText}>已加载全部内容</div>
                   </div>
                 )}
               </InfiniteScroll>
-            </div>
+            )}
+          </div>
         </div>
 
         {/* 悬浮发帖按钮 */}
