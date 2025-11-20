@@ -1,8 +1,17 @@
 .commentDetail {
+  padding-top: 54px; /* NavBar高度44px + 10px间距 */
   padding-bottom: 120px;
+  padding-left: 12.5px; /* 25rpx ÷ 2 = 12.5px */
+  padding-right: 12.5px;
   box-sizing: border-box;
   min-height: calc(100vh - 50px);
-  background-color: var(--background);
+  background-color: #EEF0F3;
+}
+
+@media (prefers-color-scheme: dark) {
+  .commentDetail {
+    background-color: #1a1a1a;
+  }
 }
 
 .editActions {
@@ -166,9 +175,11 @@
 }
 
 .firstComment {
-  padding: 24px;
-  padding-bottom: 0;
+  padding: 12px; /* 24rpx ÷ 2 = 12px */
+  padding-bottom: 12px; /* 给底部添加padding */
   background: #fff;
+  border-radius: 10px; /* 20rpx ÷ 2 = 10px */
+  margin-bottom: 10px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -185,13 +196,23 @@
 }
 
 .avatar {
-  margin-right: 12px;
+  width: 24px; /* 48rpx ÷ 2 = 24px */
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 6px; /* 12rpx ÷ 2 = 6px */
+  border: 1px solid #f0f0f0;
 }
 
 .nickname {
-  font-size: 15px;
+  font-size: 17px; /* 34rpx ÷ 2 = 17px */
   color: #333;
   font-weight: 500;
+}
+
+.secondComment .nickname {
+  font-size: 15px; /* 30rpx ÷ 2 = 15px */
+  flex: 1;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -201,12 +222,12 @@
 }
 
 .category {
-  margin-left: 10px;
-  font-size: 11px;
-  color: #45e87f;
-  background: rgba(69, 232, 127, 0.1);
-  padding: 4px 10px;
-  border-radius: 12px;
+  margin-left: 5px; /* 10rpx ÷ 2 = 5px */
+  font-size: 11px; /* 22rpx ÷ 2 = 11px */
+  color: #11B787;
+  background: #EBFDF8;
+  padding: 2px 5px; /* 4rpx & 10rpx */
+  border-radius: 6px; /* 12rpx ÷ 2 = 6px */
 }
 
 .postInfo {
@@ -214,10 +235,10 @@
 }
 
 .title {
-  font-size: 16px;
+  font-size: 15px; /* 30rpx ÷ 2 = 15px */
   font-weight: 500;
   color: #333;
-  margin-bottom: 20px;
+  margin-bottom: 10px; /* 20rpx ÷ 2 = 10px */
   display: block;
 }
 
@@ -228,10 +249,10 @@
 }
 
 .content {
-  font-size: 14px;
+  font-size: 14px; /* 28rpx ÷ 2 = 14px */
   color: #666;
   line-height: 1.6;
-  margin-bottom: 20px;
+  margin-bottom: 10px; /* 20rpx ÷ 2 = 10px */
   display: block;
 }
 
@@ -244,7 +265,6 @@
 .tagsTopicsContainer {
   display: flex;
   flex-wrap: wrap;
-  margin-bottom: 20px;
 }
 
 .coinTag,
@@ -265,8 +285,8 @@
 }
 
 .coinTag {
-  color: #ff9500;
-  background: rgba(255, 149, 0, 0.1);
+  color: #7F7F7F;
+  background: #EEF0F3;
 }
 
 .topicTag {
@@ -278,8 +298,13 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 15px;
-  padding: 15px 0 0;
+  padding: 7.5px 0 0; /* 15rpx ÷ 2 */
+}
+
+@media (prefers-color-scheme: dark) {
+  .postStats {
+    border-top-color: #333;
+  }
 }
 
 .time {
@@ -296,12 +321,18 @@
   display: flex;
   align-items: center;
   margin-right: 30px;
+  cursor: pointer;
+}
+
+.likeIcon {
+  width: 22px; /* 44rpx ÷ 2 */
+  height: 22px;
 }
 
 .likes {
   font-size: 12px;
   color: #666;
-  margin-left: 8px;
+  margin-left: 4px; /* 8rpx ÷ 2 */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -321,12 +352,18 @@
   border: none;
   padding: 0;
   margin: 0;
+  cursor: pointer;
+}
+
+.shareIcon {
+  width: 22px; /* 44rpx ÷ 2 */
+  height: 22px;
 }
 
 .shareText {
   font-size: 12px;
   color: #666;
-  margin-left: 8px;
+  margin-left: 4px; /* 8rpx ÷ 2 */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -335,22 +372,30 @@
   }
 }
 
+.commentSection {
+  /* 评论区域外层容器 */
+  margin-top: 10px;
+}
+
+.listHeader {
+  padding: 10px; /* 20rpx ÷ 2 */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent; /* 透明背景，显示灰色 */
+}
+
 .commentList {
-  border-top: 1px solid #f0f0f0;
+  background: #fff;
+  border-radius: 10px; /* 20rpx ÷ 2 = 10px */
+  overflow: hidden;
+  padding: 0;
 }
 
 @media (prefers-color-scheme: dark) {
   .commentList {
-    border-top: 1px solid #333;
+    background: #1a1a1a;
   }
-}
-
-.listHeader {
-  padding: 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
 }
 
 .total {
@@ -371,14 +416,20 @@
 }
 
 .secondComment {
-  padding: 20px;
-  margin-bottom: 15px;
-  background: #fff;
+  padding: 10px; /* 20rpx ÷ 2 = 10px */
+  margin-bottom: 0;
+  background: transparent;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.secondComment:last-child {
+  border-bottom: none;
 }
 
 @media (prefers-color-scheme: dark) {
   .secondComment {
-    background: #1a1a1a;
+    background: transparent;
+    border-bottom-color: #333;
   }
 }
 
@@ -386,18 +437,27 @@
   position: relative;
   display: flex;
   align-items: center;
-  margin-bottom: 12px;
+  justify-content: space-between;
+  margin-bottom: 6px; /* 12rpx ÷ 2 = 6px */
+}
+
+.secondComment .avatar {
+  width: 25px; /* 50rpx ÷ 2 = 25px */
+  height: 25px;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .commentHandle {
-  position: absolute;
-  top: 10px;
-  right: 10px;
   z-index: 10;
 }
 
 .commentContent {
-  margin-left: 52px;
+  margin-left: 26px; /* 52rpx ÷ 2 */
 }
 
 .text {
@@ -413,16 +473,33 @@
 }
 
 .meta {
-  margin-top: 10px;
-  font-size: 12px;
+  margin-top: 5px; /* 10rpx ÷ 2 */
+  font-size: 12px; /* 24rpx ÷ 2 */
   color: #999;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
+.secondComment .commentHeader .likeBtn {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  background: transparent;
+  margin-right: 0;
+  cursor: pointer;
+}
+
+.commentLikeIcon {
+  width: 22px; /* 44rpx ÷ 2 */
+  height: 22px;
+  margin-right: 2.5px; /* 5rpx ÷ 2 */
+}
+
 .likeCount {
-  margin-left: 5px;
+  margin-left: 2.5px; /* 5rpx ÷ 2 */
+  font-size: 11px; /* 22rpx ÷ 2 */
+  color: #666;
 }
 
 .likeCount.liked {
@@ -452,10 +529,15 @@
 }
 
 .thirdComment {
-  margin: 15px 0 0 52px;
-  padding: 15px;
-  background: #f9f9f9;
-  border-radius: 12px;
+  margin: 7.5px 0 0 26px; /* 15rpx & 52rpx */
+  padding: 7.5px; /* 15rpx ÷ 2 */
+  background: #F4F6F8;
+  border-radius: 6px; /* 12rpx ÷ 2 */
+}
+
+.thirdComment .avatar {
+  width: 18px; /* 36rpx ÷ 2 = 18px */
+  height: 18px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -466,7 +548,7 @@
 
 .replyHint {
   font-size: 13px;
-  color: #45e87f;
+  color: #999;
   margin-right: 5px;
   font-weight: 500;
 }
@@ -481,15 +563,23 @@
 .loadingMore {
   display: flex;
   justify-content: center;
-  padding: 20px 0;
+  padding: 10px 0; /* 20rpx ÷ 2 */
+  background: #fff;
+}
+
+@media (prefers-color-scheme: dark) {
+  .loadingMore {
+    background: #1a1a1a;
+  }
 }
 
 .listFooter {
   text-align: center;
-  padding: 20px 0 100px;
+  padding: 10px 0; /* 20rpx ÷ 2 */
   color: #999;
-  font-size: 12px;
-  margin-bottom: 60px;
+  font-size: 12px; /* 24rpx ÷ 2 */
+  background: transparent; /* 透明背景，显示灰色 */
+  margin-top: 5px; /* 10rpx ÷ 2 */
 }
 
 /* 评论输入框样式 */
@@ -500,10 +590,11 @@
   right: 0;
   display: flex;
   align-items: center;
-  padding: 15px 20px;
+  padding: 7.5px 10px; /* 15rpx & 20rpx */
+  padding-bottom: calc(7.5px + env(safe-area-inset-bottom)); /* 适配底部安全区域 */
   background-color: #fff;
   border-top: 1px solid #eee;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 -1px 5px rgba(0, 0, 0, 0.05); /* 0 -2rpx 10rpx */
   z-index: 100;
 }
 
@@ -553,12 +644,19 @@
 
 .commentInput {
   flex: 1;
-  padding: 10px 15px;
-  border-radius: 20px;
+  min-height: 38px; /* 76rpx ÷ 2 */
+  padding: 10px 10px 10px 30px; /* 预留左侧图标空间 */
+  border-radius: 10px; /* 20rpx ÷ 2 */
   background-color: #f5f5f5;
-  font-size: 14px;
+  background-image: url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/edit.png');
+  background-repeat: no-repeat;
+  background-position: 10px center;
+  background-size: 14px 14px; /* 28rpx ÷ 2 */
+  font-size: 14px; /* 28rpx ÷ 2 */
   box-sizing: border-box;
   line-height: 1.5;
+  border: none;
+  outline: none;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -568,9 +666,17 @@
 }
 
 .submitBtn {
-  width: 70px;
-  margin-left: 15px;
-  border-radius: 20px;
-  font-size: 14px;
+  width: 75px; /* 150rpx ÷ 2 */
+  min-height: 38px; /* 76rpx ÷ 2 */
+  margin-left: 7.5px; /* 15rpx ÷ 2 */
+  border-radius: 17.5px; /* 35rpx ÷ 2 */
+  background-color: #11B787;
+  color: #fff;
+  font-size: 12px; /* 24rpx ÷ 2 */
   font-weight: 500;
+  border: none;
+}
+
+.submitBtn:disabled {
+  background-color: #ccc;
 }

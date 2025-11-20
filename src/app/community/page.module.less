@@ -1,97 +1,306 @@
 .container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh; /* 固定视窗高度，内部滚动生效 */
   padding-bottom: 60px;
-  background-color: #f5f5f5;
+  background-color: #EEF0F3;
 }
 
 /* 主导航样式 */
 .mainTabs {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background-color: #fff;
-  padding: 0 16px;
-  border-bottom: 1px solid #e5e5e5;
+  position: static;
+  background: #EEF0F3;
+  padding: 0px 10px 0;
 }
 
-.tabsLeft {
+.headerBar { font-weight: 600; font-size: 16px; margin-bottom: 8px; }
+
+.bannerSwitch { display: flex; gap: 12px; }
+.bannerCard {
+  flex: 1;
+  height: 70px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
-  height: 44px;
-}
-
-.tabItem {
+  justify-content: center;
+  background: #f3f3f3;
   position: relative;
-  padding: 12px 16px;
-  font-size: 16px;
-  font-weight: 500;
-  color: #666;
-  cursor: pointer;
-  transition: color 0.3s;
+  overflow: hidden;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
 }
+.bannerCard.active { box-shadow: 0 6px 16px rgba(17,183,135,0.18); border: 1px solid #11B787; }
 
-.tabItem.active {
-  color: #1890ff;
-}
-
-.tabItem.active::after {
-  content: '';
+.tabImage {
   position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 20px;
-  height: 2px;
-  background-color: #1890ff;
-  border-radius: 1px;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  transition: opacity 180ms ease-out;
+  will-change: opacity;
+}
+
+.tabImageHidden { opacity: 0; }
+.tabImageVisible { opacity: 1; }
+
+.tabsWrapper {
+  position: static;
+  background: #EEF0F3;
 }
 
 /* 子导航样式 */
 .subTabs {
   display: flex;
   align-items: center;
-  padding: 0 16px;
-  background-color: #fff;
-  border-bottom: 1px solid #e5e5e5;
+  padding: 6px 10px 2px; /* 减少底部padding，让两个tab更紧凑 */
+  background-color: #EEF0F3;
   overflow-x: auto;
   white-space: nowrap;
 }
 
 .subTab {
-  padding: 12px 16px;
-  font-size: 14px;
+  position: relative;
+  display: inline-block;
+  padding: 10px 8px 4px 10px; /* 减少底部padding */
+  font-size: 14px; /* 28rpx -> 14px */
   color: #666;
   cursor: pointer;
   transition: color 0.3s;
   flex-shrink: 0;
+  margin-bottom: 5px;
 }
 
 .subTab.active {
-  color: #1890ff;
-  font-weight: 500;
+  color: #333;
+  font-weight: 600;
+}
+
+.subTab.active::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  width: 21px; /* 42rpx -> 21px */
+  height: 2px; /* 4rpx -> 2px */
+  background: #11B787;
+  border-radius: 2px;
 }
 
 /* 币种标签样式 */
 .coinTabs {
   display: flex;
   align-items: center;
-  padding: 8px 16px;
-  background-color: #fff;
-  border-bottom: 1px solid #e5e5e5;
-  overflow-x: auto;
+  padding: 4px 10px 8px 18px; /* 左侧12px，使币种标签与子导航对齐 (12px + 8px = 20px) */
+  height: auto; /* 改为自动高度 */
+  background-color: #EEF0F3;
   white-space: nowrap;
+  overflow-x: auto;
+  
+  /* 隐藏滚动条 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* 投票组件容器 */
+.voteWrapper {
+  background-color: #EEF0F3;
+}
+
+/* 不懂就问按钮容器 */
+.questionWrapper {
+  background-color: #EEF0F3;
+}
+
+/* 发现好币 - 两列网格布局 */
+.discoveryGrid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-left: 0;
+  margin-right: 0;
+  padding-left: 0;
+  padding-right: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 发现好币 - 卡片样式 */
+.discoveryCard {
+  flex: 0 0 calc(50% - 4px); /* 每行两个，间距8px（4px * 2） */
+  max-width: calc(50% - 4px);
+  width: calc(50% - 4px);
+  box-sizing: border-box;
+  margin: 0 0 8px 0; /* 底部间距8px */
+  padding: 10px; /* 20rpx ÷ 2 = 10px */
+  background: #fff;
+  border-radius: 8px; /* 16rpx ÷ 2 = 8px */
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06); /* 0 2px 8px ÷ 2 */
+  border-bottom: none;
+  position: relative; /* 为背景图标定位 */
+  min-height: 185px; /* 370rpx ÷ 2 = 185px，固定最小高度 */
+  display: flex;
+  flex-direction: column;
+}
+
+/* 发现好币 - 右上角装饰图标 */
+.findBestCoinBg {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60px; /* 120rpx ÷ 2 = 60px */
+  height: 60px; /* 120rpx ÷ 2 = 60px */
+  z-index: 1;
+  opacity: 0.8;
+}
+
+/* 发现好币 - 用户信息区域 */
+.discoveryUserInfo {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px; /* 20rpx ÷ 2 = 10px */
+  position: relative;
+  z-index: 2; /* 在背景图标之上 */
+}
+
+.discoveryAvatar {
+  width: 28px; /* 56rpx ÷ 2 = 28px */
+  height: 28px; /* 56rpx ÷ 2 = 28px */
+  border-radius: 14px; /* 28rpx ÷ 2 = 14px */
+  margin-right: 6px; /* 12rpx ÷ 2 = 6px */
+  flex-shrink: 0;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+.discoveryUserContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.discoveryNickname {
+  font-size: 13px; /* 26rpx ÷ 2 = 13px */
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 2px; /* 4rpx ÷ 2 = 2px */
+  display: block;
+}
+
+.discoveryTime {
+  font-size: 11px; /* 22rpx ÷ 2 = 11px */
+  color: #999;
+  display: block;
+}
+
+/* 发现好币 - 操作按钮区域 */
+.discoveryActionButtons {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  margin: 0 -5px; /* -10rpx ÷ 2 = -5px */
+  margin-top: auto; /* 推到底部 */
+  position: relative;
+  z-index: 2;
+}
+
+.discoveryActionBtn {
+  display: flex;
+  align-items: center;
+  gap: 3px; /* 6rpx ÷ 2 = 3px */
+  padding: 0;
+  background: none;
+  border: none;
+  margin: 0;
+  font-size: 11px; /* 22rpx ÷ 2 = 11px */
+  cursor: pointer;
+  transition: opacity 0.2s;
+  
+  &:active {
+    opacity: 0.7;
+  }
+  
+  .actionCount {
+    font-size: 11px; /* 22rpx ÷ 2 = 11px */
+    color: #666;
+    font-weight: 500;
+  }
+  
+  &.likeBtn {
+    &.liked {
+      .actionCount {
+        color: #11B787;
+      }
+    }
+  }
+}
+
+.discoveryActionIcon {
+  width: 22px; /* 44rpx ÷ 2 = 22px */
+  height: 22px; /* 44rpx ÷ 2 = 22px */
+  display: block;
+}
+
+/* 发现好币 - 币种信息区域 */
+.coinInfoSection {
+  margin-bottom: 10px; /* 20rpx ÷ 2 = 10px */
+  position: relative;
+  z-index: 2;
+  flex: 1; /* 占据剩余空间 */
+}
+
+.coinInfoRow {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px; /* 8rpx ÷ 2 = 4px */
+  
+  &:last-child {
+    margin-bottom: 0;
+    align-items: flex-start;
+  }
+}
+
+.coinInfoIconImg {
+  width: 14px; /* 28rpx ÷ 2 = 14px */
+  height: 14px; /* 28rpx ÷ 2 = 14px */
+  margin-right: 4px; /* 8rpx ÷ 2 = 4px */
+  flex-shrink: 0;
+}
+
+.coinInfoLabel {
+  font-size: 12px; /* 24rpx ÷ 2 = 12px */
+  color: #666;
+  margin-right: 3px; /* 6rpx ÷ 2 = 3px */
+  flex-shrink: 0;
+}
+
+.coinInfoValue {
+  font-size: 12px; /* 24rpx ÷ 2 = 12px */
+  color: #9A9DA0;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+  word-break: break-word;
 }
 
 .coinTab {
   display: inline-block;
-  padding: 6px 12px;
-  margin-right: 8px;
-  font-size: 12px;
+  padding: 4px 8px; /* 16rpx 32rpx -> 8px 16px，这里调整为4px 8px */
+  margin-right: 8px; /* 16rpx -> 8px */
+  font-size: 12px; /* 24rpx -> 12px */
   color: #666;
   background-color: #f5f5f5;
-  border-radius: 12px;
+  border-radius: 8px; /* 16rpx -> 8px */
   cursor: pointer;
   transition: all 0.3s;
   flex-shrink: 0;
@@ -99,74 +308,110 @@
 
 .coinTab.active {
   color: #fff;
-  background-color: #1890ff;
+  background-color: #11B787; /* 改为品牌绿色，与小程序端一致 */
 }
 
 .coinTab.more {
-  color: #1890ff;
-  background-color: #e6f7ff;
+  color: #11B787; /* 改为品牌绿色 */
+  background-color: #e6fff0; /* 浅绿色背景 */
 }
 
 /* 热榜搜索栏样式 */
 .hotSearchBar {
+  background: #EEF0F3;
+  padding: 10px; /* 20rpx ÷ 2 = 10px */
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  background-color: #fff;
-  border-bottom: 1px solid #e5e5e5;
 }
 
 .searchBox {
   flex: 1;
-  height: 32px;
-  line-height: 32px;
-  padding: 0 12px;
-  background-color: #f5f5f5;
-  border-radius: 16px;
-  font-size: 14px;
-  color: #999;
+  margin-right: 10px; /* 20rpx ÷ 2 = 10px */
+  width: 100%;
+  height: 36px; /* 72rpx ÷ 2 = 36px */
+  background: #fff;
+  border-radius: 18px; /* 36rpx ÷ 2 = 18px */
+  padding: 0 15px; /* 30rpx ÷ 2 = 15px */
+  font-size: 14px; /* 28rpx ÷ 2 = 14px */
+  display: flex;
+  align-items: center;
+  color: #b2b2b2;
   cursor: pointer;
 }
 
 .createTopicBtn {
-  margin-left: 12px;
-  padding: 6px 12px;
-  font-size: 12px;
-  background-color: #1890ff;
+  height: 36px; /* 72rpx ÷ 2 = 36px */
+  line-height: 36px;
+  padding: 0 15px; /* 30rpx ÷ 2 = 15px */
+  background: #11B787;
   color: #fff;
+  border-radius: 18px; /* 36rpx ÷ 2 = 18px */
+  font-size: 14px; /* 28rpx ÷ 2 = 14px */
   border: none;
-  border-radius: 4px;
   cursor: pointer;
+  flex-shrink: 0;
+  
+  &:active {
+    opacity: 0.8;
+  }
 }
 
 /* 内容列表样式 */
-.contentList {
+.scrollContainer {
   flex: 1;
-  padding: 12px;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.contentList { padding:0 12px; }
+
+.contentList.withSubTabs { padding-top: 150px; }
+
+.contentList.withCoinTabs { padding-top: 320px; }
+
+.contentList.topicSubTabs { 
+  padding-top: 0; /* 搜索栏已在文档流中，不需要额外padding */
+  padding-left: 0;
+  padding-right: 0;
 }
 
-.contentList.withSubTabs {
-  padding-top: 12px;
+/* 热门榜单页面移除左右padding */
+.contentList:has(.hotTopics) {
+  padding-left: 0;
+  padding-right: 0;
 }
 
-.contentList.withCoinTabs {
-  padding-top: 12px;
+/* 热门榜单页面容器底部padding调整 */
+.container:has(.hotTopics) {
+  padding-bottom: 45px;
 }
 
-.contentList.topicSubTabs {
-  padding-top: 12px;
-}
-
-.postsList {
-  margin-top: 16px;
-}
+// .postsList {
+//   margin-top: 16px;
+// }
 
 .postItem {
-  background-color: #fff;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 10px;
+  padding: 12px;
+  margin: 0 0 4px 0;
+  position: relative;
+}
+
+.postWatermark {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 55px;
+  height: 55px;
+  background-image: url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/find-best-coin.png');
+  background-repeat: no-repeat;
+  background-size: contain;
+  pointer-events: none;
+  opacity: 0.85;
+  z-index: 0;
 }
 
 .postHeader {
@@ -176,45 +421,33 @@
   margin-bottom: 12px;
 }
 
-.userInfo {
-  display: flex;
-  align-items: center;
-}
+.userInfo { display: flex; align-items: flex-start; }
+.userMeta { display: flex; flex-direction: column; }
+.userRow { display: flex; align-items: center; gap: 8px; }
 
-.avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  margin-right: 8px;
-  object-fit: cover;
-}
+.avatar { width: 40px; height: 40px; border-radius: 50%; margin-right: 12px; object-fit: cover; }
 
-.username {
+.username { font-weight: 600; font-size: 14px; color: #333; }
+
+.badgeLabel {
+  padding: 2px 6px;
+  font-size: 11px;
+  color:#fa8c16;
+  background: #FFF0E4;
+  border-radius: 4px;
   font-weight: 500;
-  font-size: var(--font-size-base);
 }
 
-.postTime {
-  font-size: var(--font-size-sm);
-  color: #999;
-}
+.postTime { font-size: 12px; color: #999; margin-top: 2px; }
 
 .postContent {
   margin-bottom: 12px;
+  margin-left: 52px; // 头像宽度(40px) + 右边距(12px) = 52px，让内容与用户信息对齐
 }
 
-.postTitle {
-  font-size: var(--font-size-lg);
-  font-weight: 500;
-  margin-bottom: 8px;
-}
+.postTitle { font-size: 15px; font-weight: 600; color: #333; margin-bottom: 6px; }
 
-.postText {
-  font-size: var(--font-size-base);
-  line-height: 1.5;
-  margin-bottom: 8px;
-  word-break: break-word;
-}
+.postText { font-size: 14px; color: #666; line-height: 1.6; margin-bottom: 8px; word-break: break-word; }
 
 .postImages {
   display: flex;
@@ -223,31 +456,18 @@
   margin-top: 8px;
 }
 
-.postImage {
-  width: calc(33.33% - 6px);
-  height: 100px;
-  object-fit: cover;
-  border-radius: 4px;
-}
+.postImage { width: calc(33.33% - 6px); height: 100px; object-fit: cover; border-radius: 6px; }
 
-.postFooter {
-  display: flex;
-  align-items: center;
-  border-top: 1px solid var(--border-color);
-  padding-top: 12px;
-}
+.postFooter { display: flex; align-items: center; padding-top: 8px; margin-left: 52px; padding-right: 12px; justify-content: space-between; /* 两端对齐，右侧留小距离 */ }
 
-.postAction {
-  display: flex;
-  align-items: center;
-  margin-right: 16px;
-  cursor: pointer;
-}
+.postAction { display: flex; align-items: center; color: #999; cursor: pointer; }
 
 .actionIcon {
   margin-right: 4px;
   font-size: 16px;
 }
+
+.actionIconImg { width: 20px; height: 20px; margin-right: 6px; }
 
 .liked {
   color: var(--primary-color);
@@ -293,55 +513,81 @@
   color: #999;
   padding: 16px 0;
   font-size: var(--font-size-sm);
+  width: 100%; /* 在两列布局中占据全宽 */
+  flex: 0 0 100%; /* flex布局中占据全宽 */
+  max-width: 100%;
 }
 
 /* 热榜话题样式 */
 .hotTopics {
-  background-color: #fff;
-  border-radius: 8px;
+  border-radius: 20px 20px 0 0; /* 40rpx ÷ 2 = 20px */
   overflow: hidden;
+  background: #fff;
+  min-height: calc(100vh - 200px); /* 确保有足够高度，但不需要100vh */
+  margin-top: 0; /* 紧贴搜索栏 */
 }
 
 .hotTopicItem {
   display: flex;
-  align-items: center;
-  padding: 16px;
-  border-bottom: 1px solid #f0f0f0;
+  align-items: stretch;
+  padding: 15px; /* 30rpx ÷ 2 = 15px */
+  border-bottom: 1px solid #f5f5f5;
+  background: #fff;
+  min-height: 60px; /* 120rpx ÷ 2 = 60px */
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: #f9f9f9;
+  }
+  
+  &:last-child {
+    border-bottom: none;
+  }
 }
 
-.hotTopicItem:hover {
-  background-color: #f9f9f9;
-}
-
-.hotTopicItem:last-child {
-  border-bottom: none;
-}
-
+/* 排名 */
 .topicRank {
-  width: 24px;
-  height: 24px;
-  line-height: 24px;
+  width: 21px; /* 42rpx ÷ 2 = 21px */
+  height: 21px; /* 42rpx ÷ 2 = 21px */
+  line-height: 21px;
   text-align: center;
-  font-size: 12px;
-  font-weight: bold;
-  color: #666;
-  margin-right: 12px;
+  font-size: 13px; /* 26rpx ÷ 2 = 13px */
+  color: #11B787;
+  background: #E7F8F3;
+  border-radius: 50%;
+  margin-right: 10px; /* 20rpx ÷ 2 = 10px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  
+  /* 前三名奖章样式，去除背景色 */
+  &.medalRank {
+    background: transparent;
+  }
 }
 
+.rankMedal {
+  width: 18px; 
+  height: 21px; 
+  display: block;
+}
+
+/* 话题信息 */
 .topicInfo {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   min-width: 0;
 }
 
 .topicTitle {
   display: block;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 15px; /* 30rpx ÷ 2 = 15px */
   color: #333;
-  margin-bottom: 4px;
+  margin-bottom: 8px; /* 16rpx ÷ 2 = 8px */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -349,56 +595,76 @@
 
 .topicDesc {
   display: block;
-  font-size: 12px;
-  color: #999;
-  margin-bottom: 8px;
+  font-size: 14px; /* 28rpx ÷ 2 = 14px */
+  color: #818181;
+  margin-top: auto;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.topicStats {
+/* 右侧信息 */
+.topicRightInfo {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-left: 10px; /* 20rpx ÷ 2 = 10px */
+  flex-shrink: 0;
 }
 
-.statItem {
-  font-size: 11px;
+.heatText {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px; /* 6rpx ÷ 2 = 3px */
+}
+
+.heatIcon {
+  width: 12.5px; /* 25rpx ÷ 2 = 12.5px */
+  height: 12.5px; /* 25rpx ÷ 2 = 12.5px */
+}
+
+.heatValue {
+  font-size: 12px; /* 24rpx ÷ 2 = 12px */
+  color: #FA5F5F;
+  text-align: right;
+}
+
+.timeText {
+  font-size: 12px; /* 24rpx ÷ 2 = 12px */
   color: #999;
-  margin-right: 12px;
+  text-align: right;
+  margin-top: auto;
 }
 
 /* 发帖按钮样式 */
 .floatPostBtn {
   position: fixed;
-  right: 16px;
-  bottom: 80px;
-  z-index: 100;
+  right: 20px; /* 40rpx -> 20px */
+  bottom: 100px; /* 200rpx -> 100px，避开底部tab */
+  z-index: 101;
 }
 
 .postBtn {
-  width: 48px;
-  height: 48px;
+  width: 66px; /* 132rpx -> 66px */
+  height: 66px;
   border-radius: 50%;
-  background-color: #1890ff;
-  color: #fff;
+  background: transparent;
   border: none;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 12px rgba(24, 144, 255, 0.3);
   cursor: pointer;
-  transition: all 0.3s;
 }
 
-.postBtn:hover {
-  transform: scale(1.1);
-}
+.postBtnImage { width: 66px; height: 66px; display: block; }
 
-.iconPlus {
-  font-size: 24px;
-  font-weight: 300;
-}
+.iconPlus { display: none; }
+
+/* 透明导航条：覆盖默认白色背景与边框 */
+.navTransparent { background: #EEF0F3 !important; border-bottom: none !important; }
 
 /* 币种和话题标签容器 */
 .tagsTopicsContainer {
@@ -406,6 +672,7 @@
   flex-wrap: wrap;
   gap: 8px;
   margin: 8px 0;
+  margin-left: 52px; // 与标题内容对齐
 }
 
 /* 币种标签样式 */
@@ -446,83 +713,103 @@
   color: #fff;
 }
 
-/* 币种选择器样式 */
+/* 币种选择器样式 - 与小程序端一致 */
 .coinSelectorFullscreen {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #fff;
+  background-color: #f5f5f5; /* 浅灰色背景 */
   z-index: 1000;
   display: flex;
   flex-direction: column;
+  
+  /* 为整个弹窗添加圆角和阴影 */
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .selectorHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid #e5e5e5;
+  padding: 12px 16px; /* 调整padding */
+  border-bottom: 1px solid #f0f0f0; /* 浅灰色分隔线 */
   background-color: #fff;
+  min-height: 50px; /* 确保有足够高度 */
+  margin-top: 50px; /* 给NavBar留出空间，NavBar高度为50px */
+  border-radius: 12px 12px 0 0; /* 顶部圆角 */
 }
 
 .headerTitle {
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 17px; /* 增大字体 */
+  font-weight: 600; /* 加粗 */
   color: #333;
 }
 
 .close {
-  font-size: 14px;
-  color: #666;
+  font-size: 15px; /* 稍微增大 */
+  color: #333; /* 加深颜色 */
   cursor: pointer;
+  padding: 4px 8px; /* 增加点击区域 */
 }
 
 .selectorSearch {
   flex: 1;
-  padding: 16px;
+  padding: 12px; /* 24rpx -> 12px */
   overflow-y: auto;
+  background-color: #fff; /* 白色背景 */
 }
 
 .selectorSearchBox {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
+  
+  /* 确保搜索框背景为灰色 */
+  :global {
+    .searchBox {
+      background-color: #f5f5f5;
+    }
+  }
 }
 
 .coinItem {
   display: flex;
   align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 20px 0; /* 增加padding，与小程序端一致 */
+  margin-left: 12px; /* 24rpx -> 12px */
   cursor: pointer;
-}
-
-.coinItem:last-child {
-  border-bottom: none;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: #f9f9f9;
+  }
 }
 
 .coinIcon {
-  width: 24px;
+  width: 24px; /* 48rpx -> 24px */
   height: 24px;
   border-radius: 50%;
-  margin-right: 12px;
+  margin-right: 10px; /* 20rpx -> 10px */
+  object-fit: contain;
 }
 
 .coinName {
   flex: 1;
-  font-size: 14px;
+  font-size: 16px; /* 32rpx -> 16px，与小程序端一致的较大字体 */
   color: #333;
 }
 
 .selectedIcon {
-  color: #1890ff;
+  color: #11B787; /* 改为品牌绿色 */
   font-size: 16px;
 }
 
 .loadingText {
   text-align: center;
   padding: 20px;
+  margin-top: 20px; /* 40rpx -> 20px */
   color: #999;
 }
 
@@ -533,134 +820,134 @@
   font-size: 14px;
 }
 
-/* 创建话题弹窗样式 */
+/* 创建话题弹窗样式 - 底部抽屉式 */
 .topicCreatorMask {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.5);
   z-index: 1000;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
+  align-items: flex-end; /* 底部对齐 */
 }
 
 .topicCreator {
-  background-color: #fff;
-  border-radius: 8px;
   width: 100%;
-  max-width: 400px;
-  max-height: 80vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  background: #fff;
+  border-radius: 16px 16px 0 0; /* 32rpx ÷ 2 = 16px */
+  padding: 16px; /* 32rpx ÷ 2 = 16px */
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 .creatorHeader {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 16px;
-  border-bottom: 1px solid #e5e5e5;
-  font-size: 16px;
-  font-weight: 500;
+  align-items: center;
+  margin-bottom: 16px; /* 32rpx ÷ 2 = 16px */
+  
+  & > span:first-child {
+    font-size: 16px; /* 32rpx ÷ 2 = 16px */
+    font-weight: bold;
+    color: #333;
+  }
+  
+  .close {
+    font-size: 20px; /* 40rpx ÷ 2 = 20px */
+    color: #999;
+    cursor: pointer;
+    line-height: 1;
+    
+    &:hover {
+      color: #666;
+    }
+  }
 }
 
 .creatorContent {
-  flex: 1;
-  padding: 16px;
-  overflow-y: auto;
-}
-
-.inputGroup {
-  margin-bottom: 16px;
-}
-
-.label {
-  display: block;
-  font-size: 14px;
-  color: #333;
-  margin-bottom: 8px;
-}
-
-.titleInput {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.3s;
-}
-
-.titleInput:focus {
-  border-color: #1890ff;
-}
-
-.descInput {
-  width: 100%;
-  height: 80px;
-  padding: 8px 12px;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
-  font-size: 14px;
-  resize: none;
-  outline: none;
-  transition: border-color 0.3s;
-  font-family: inherit;
-}
-
-.descInput:focus {
-  border-color: #1890ff;
-}
-
-.wordCount {
-  display: block;
-  text-align: right;
-  font-size: 12px;
-  color: #999;
-  margin-top: 4px;
+  .inputGroup {
+    margin-bottom: 12px; /* 24rpx ÷ 2 = 12px */
+    
+    .label {
+      font-size: 14px; /* 28rpx ÷ 2 = 14px */
+      color: #666;
+      margin-bottom: 6px; /* 12rpx ÷ 2 = 6px */
+      display: block;
+    }
+    
+    .titleInput {
+      width: 100%;
+      height: 44px; /* 88rpx ÷ 2 = 44px */
+      background: #f5f5f5;
+      border-radius: 8px; /* 16rpx ÷ 2 = 8px */
+      padding: 0 12px; /* 24rpx ÷ 2 = 12px */
+      font-size: 14px; /* 28rpx ÷ 2 = 14px */
+      box-sizing: border-box;
+      border: none;
+      outline: none;
+      
+      &::placeholder {
+        color: #999;
+      }
+    }
+    
+    .descInput {
+      width: 100%;
+      height: 100px; /* 200rpx ÷ 2 = 100px */
+      background: #f5f5f5;
+      border-radius: 8px; /* 16rpx ÷ 2 = 8px */
+      padding: 12px; /* 24rpx ÷ 2 = 12px */
+      font-size: 14px; /* 28rpx ÷ 2 = 14px */
+      box-sizing: border-box;
+      border: none;
+      outline: none;
+      resize: none;
+      font-family: inherit;
+      
+      &::placeholder {
+        color: #999;
+      }
+    }
+    
+    .wordCount {
+      text-align: right;
+      font-size: 12px; /* 24rpx ÷ 2 = 12px */
+      color: #999;
+      margin-top: 4px; /* 8rpx ÷ 2 = 4px */
+    }
+  }
 }
 
 .createBtn {
   width: 100%;
-  padding: 12px;
-  background-color: #d9d9d9;
-  color: #999;
+  height: 44px; /* 88rpx ÷ 2 = 44px */
+  background: #ccc;
+  color: #fff;
+  border-radius: 22px; /* 44rpx ÷ 2 = 22px */
+  font-size: 16px; /* 32rpx ÷ 2 = 16px */
+  margin-top: 16px; /* 32rpx ÷ 2 = 16px */
   border: none;
-  border-radius: 0 0 8px 8px;
-  font-size: 16px;
   cursor: not-allowed;
   transition: all 0.3s;
-}
-
-.createBtn.active {
-  background-color: #1890ff;
-  color: #fff;
-  cursor: pointer;
-}
-
-/* 加载和空状态样式 */
-.loadingMore {
-  text-align: center;
-  padding: 20px;
-}
-
-.listFooter {
-  text-align: center;
-  padding: 16px;
-  color: #999;
-  font-size: 12px;
-}
-
-.emptyContent {
-  text-align: center;
-  padding: 40px 20px;
-  color: #999;
-  font-size: 14px;
+  
+  &.active {
+    background: #11B787;
+    cursor: pointer;
+    
+    &:active {
+      opacity: 0.8;
+    }
+  }
 }
 
 @media (prefers-color-scheme: dark) {

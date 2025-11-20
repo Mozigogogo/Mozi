@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Markdown from 'markdown-to-jsx';
@@ -8,6 +9,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import NavBar from '../../components/NavBar';
 import ThinkingAnimation from '../../components/ThinkingAnimation';
+import PopLogin from '../../components/PopLogin';
 import { MoziWebSocket } from '../../utils/moziWebSocket';
 import { WS_URL } from '../../utils/constants';
 import { 
@@ -24,6 +26,7 @@ import styles from './page.module.less';
 // 代码块组件 - 带复制按钮
 const CodeBlock = ({ language, children, ...props }) => {
   const [copied, setCopied] = useState(false);
+  const { t } = useTranslation();
   
   const handleCopy = () => {
     const code = String(children).replace(/\n$/, '');
@@ -63,7 +66,7 @@ const CodeBlock = ({ language, children, ...props }) => {
           }
         }}
       >
-        {copied ? '已复制' : '复制'}
+        {copied ? t('robot.copied') : t('robot.copy')}
       </button>
       <SyntaxHighlighter
         style={vscDarkPlus}
@@ -310,6 +313,7 @@ const StreamingMarkdown = ({ content, isStreaming }) => {
 
 export default function RobotPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const BOT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/AI_Bot.png';
 
   const [inputValue, setInputValue] = useState('');
@@ -317,7 +321,7 @@ export default function RobotPage() {
     { 
       id: 'welcome-1', 
       role: 'assistant', 
-      content: '你好，我是你的AI助手！我可以帮你分析币种行情、解答投资问题。有什么可以帮你？', 
+      content: t('robot.welcome'), 
       time: Date.now() 
     }
   ]);
@@ -325,6 +329,7 @@ export default function RobotPage() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [suggestedQuestions, setSuggestedQuestions] = useState([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false); // 是否正在加载历史记录
+  const [showPopLogin, setShowPopLogin] = useState(false); // 登录提示弹窗状态
   
   const scrollRef = useRef(null);
   const wsRef = useRef(null);
@@ -332,6 +337,21 @@ export default function RobotPage() {
   const currentMessageIdRef = useRef(null);
   const currentRequestIdRef = useRef(null);
   const hasLoadedHistoryRef = useRef(false); // 标记是否已加载过历史记录
+  
+  // 检查登录状态
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) {
+      // 未登录，显示登录提示弹窗
+      setShowPopLogin(true);
+    }
+  }, []);
+  
+  // 登录成功回调
+  const handleLoginSuccess = () => {
+    // 登录成功后刷新页面，重新初始化 WebSocket
+    window.location.reload();
+  };
 
   // 初始化 WebSocket
   useEffect(() => {
@@ -505,7 +525,7 @@ export default function RobotPage() {
     ws.on(WS_EVENTS.AI_CHAT_ERROR, (data) => {
       console.error('❌ AI 对话错误:', data);
       const errorCode = data.code;
-      const errorMsg = data.message || getErrorDescription(errorCode) || '抱歉，出现了一些问题，请稍后再试';
+      const errorMsg = data.message || getErrorDescription(errorCode) || t('robot.genericError');
       
       setIsStreaming(false);
       currentMessageIdRef.current = null;
@@ -659,14 +679,14 @@ export default function RobotPage() {
         console.error('发送消息失败:', error);
         setMessages(prev => prev.map(msg => 
           msg.requestId === requestId 
-            ? { ...msg, content: '发送失败，请重试', loading: false, error: true }
+            ? { ...msg, content: t('robot.sendFailed'), loading: false, error: true }
             : msg
         ));
       }
     } else {
       setMessages(prev => prev.map(msg => 
         msg.requestId === requestId 
-          ? { ...msg, content: 'WebSocket 未连接，请刷新页面重试', loading: false, error: true }
+          ? { ...msg, content: t('robot.wsNotConnected'), loading: false, error: true }
           : msg
       ));
     }
@@ -733,18 +753,18 @@ export default function RobotPage() {
   return (
       <div className={styles.robotPage}>
         <NavBar 
-          title="AI 助手" 
+          title={t('robot.title')} 
           showBack={true}
           className={styles.navBarCustom}
         />
         
         <div className={styles.chatHeader}>
-          <div className={styles.chatTitle}>AI 助手</div>
+          <div className={styles.chatTitle}>{t('robot.title')}</div>
           <div className={styles.chatSubtitle}>
-            智能答疑 · 快速响应
-            {isConnecting && <span className={styles.connecting}> (连接中...)</span>}
+            {t('robot.subtitle')}
+            {isConnecting && <span className={styles.connecting}> ({t('robot.connecting')})</span>}
             {conversationIdRef.current && (
-              <span className={styles.conversationId}> | 会话ID: {conversationIdRef.current.slice(-8)}</span>
+              <span className={styles.conversationId}> | {t('robot.conversationId')}: {conversationIdRef.current.slice(-8)}</span>
             )}
           </div>
         </div>
@@ -753,7 +773,7 @@ export default function RobotPage() {
           {/* 加载历史记录提示 */}
           {isLoadingHistory && (
             <div className={styles.loadingHistory}>
-              <div className={styles.loadingText}>正在加载历史对话...</div>
+              <div className={styles.loadingText}>{t('robot.loadingHistory')}</div>
             </div>
           )}
           
@@ -762,7 +782,7 @@ export default function RobotPage() {
               <div key={msg.id} className={`${styles.msgRow} ${msg.role === 'user' ? styles.right : styles.left}`}>
                 {msg.role === 'assistant' && (
                   <div className={styles.avatarCol}>
-                    <img className={styles.avatar} src={BOT_AVATAR} alt="AI" />
+                    <img className={styles.avatar} src={BOT_AVATAR} alt={t('robot.aiAlt')} />
                     <span className={styles.timeUnder}>{formatTime(msg.time)}</span>
                   </div>
                 )}
@@ -789,7 +809,7 @@ export default function RobotPage() {
                     {/* Token 消耗信息 */}
                     {msg.tokens && (
                       <div className={styles.tokenInfo}>
-                        消耗 {msg.tokens} tokens
+                        {t('robot.tokens', { tokens: msg.tokens })}
                       </div>
                     )}
                   </div>
@@ -809,7 +829,7 @@ export default function RobotPage() {
                           height={14}
                           className={styles.reloadIcon}
                         />
-                        重新生成
+                        {t('robot.regenerate')}
                       </button>
                     </div>
                   )}
@@ -817,7 +837,7 @@ export default function RobotPage() {
 
                 {msg.role === 'user' && (
                   <div className={styles.avatarCol}>
-                    <div className={styles.userAvatar}>我</div>
+                    <div className={styles.userAvatar}>{t('robot.me')}</div>
                     <span className={styles.timeUnder}>{formatTime(msg.time)}</span>
                   </div>
                 )}
@@ -827,9 +847,9 @@ export default function RobotPage() {
         </div>
 
         {/* 建议问题 - 固定在输入框上方 */}
-        {suggestedQuestions.length > 0 && !isStreaming && (
-          <div className={styles.suggestedQuestions}>
-            <div className={styles.suggestedTitle}>你可能还想问：</div>
+          {suggestedQuestions.length > 0 && !isStreaming && (
+            <div className={styles.suggestedQuestions}>
+            <div className={styles.suggestedTitle}>{t('robot.suggestedTitle')}</div>
             {suggestedQuestions.map((q, idx) => (
               <button
                 key={idx}
@@ -847,7 +867,7 @@ export default function RobotPage() {
             <input
               className={styles.input}
               value={inputValue}
-              placeholder="输入你的问题..."
+              placeholder={t('robot.inputPlaceholder')}
               onKeyPress={(e) => e.key === 'Enter' && !isStreaming && handleSend()}
               onChange={(e) => setInputValue(e.target.value)}
               disabled={isConnecting || isStreaming}
@@ -860,7 +880,7 @@ export default function RobotPage() {
             >
               <Image 
                 src="/icons/pause.svg" 
-                alt="停止生成" 
+                alt={t('robot.stopAlt')} 
                 width={18} 
                 height={18}
                 className={styles.pauseIcon}
@@ -872,10 +892,17 @@ export default function RobotPage() {
               onClick={() => handleSend()}
               disabled={isConnecting || !inputValue.trim()}
             >
-              发送
+              {t('robot.send')}
             </button>
           )}
         </div>
+        
+        {/* 登录提示弹窗 */}
+        <PopLogin
+          visible={showPopLogin}
+          onClose={() => setShowPopLogin(false)}
+          onLoginSuccess={handleLoginSuccess}
+        />
       </div>
   );
 }

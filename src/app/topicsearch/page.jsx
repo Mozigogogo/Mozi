@@ -2,12 +2,14 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { PullToRefresh, InfiniteScroll, Toast } from 'antd-mobile';
-import Layout from '../../components/Layout';
+import { InfiniteScroll, Toast, SpinLoading } from 'antd-mobile';
 import { SearchInput } from '../../components/SearchInput';
 import { Interface } from '../../utils/constants';
 import { request } from '../../utils/request';
 import styles from './page.module.less';
+
+const hotIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/hot.png';
+const leftArrowIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/left-arrow.png';
 
 export default function TopicSearch() {
   const router = useRouter();
@@ -83,58 +85,104 @@ export default function TopicSearch() {
     router.push(`/topicinfo?id=${topicId}`);
   };
 
-  // 下拉刷新
-  const onRefresh = async () => {
-    if (searchValue) {
-      await searchTopics(searchValue);
-    }
+  // 返回上一页
+  const goBack = () => {
+    router.back();
+  };
+
+  // 高亮显示搜索关键词
+  const highlightKeyword = (text, keyword) => {
+    if (!keyword || !text) return text;
+    
+    const regex = new RegExp(`(${keyword})`, 'gi');
+    const parts = text.split(regex);
+    
+    return parts.map((part, index) => {
+      if (part.toLowerCase() === keyword.toLowerCase()) {
+        return (
+          <span key={index} style={{ color: '#47C89D' }}>
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
   };
 
   return (
-    <Layout title="话题搜索">
-      <div className={styles.topicSearch}>
-        <SearchInput
-          value={searchValue}
-          reloadFun={searchTopics}
-          placeholder="搜索话题"
-        />
+    <div className={styles.topicSearchPage}>
+      {/* 自定义导航栏 */}
+      <div className={styles.customNavbar}>
+        {/* 顶部导航区域 */}
+        <div className={styles.navbarTop}>
+          <div className={styles.navbarLeft} onClick={goBack}>
+            <img src={leftArrowIcon} className={styles.leftArrowIcon} alt="返回" />
+          </div>
+          <div className={styles.navbarTitle}>话题搜索</div>
+          <div className={styles.navbarRight}>
+            {/* 右侧按钮移除 */}
+          </div>
+        </div>
         
+        {/* 搜索框 */}
+        <div className={styles.navbarSearch}>
+          <SearchInput
+            value={searchValue}
+            reloadFun={searchTopics}
+            placeholder="搜索话题"
+          />
+        </div>
+        
+        {/* 搜索框下方的圆角盒子 */}
+        <div className={styles.searchBottomBox}></div>
+      </div>
+
+      <div className={styles.topicSearch}>
         {loading && topics.length === 0 ? (
           <div className={styles.loadingBox}>
-            <div className={styles.loadingText}>搜索中...</div>
+            <SpinLoading style={{ '--size': '32px' }} />
           </div>
         ) : (
-          <PullToRefresh onRefresh={onRefresh}>
-            <div className={styles.topicList}>
-              {topics.map(topic => (
-                <div
-                  key={topic.id}
-                  className={styles.topicItem}
-                  onClick={() => goToTopicDetail(topic.id)}
-                >
-                  <div className={styles.topicTitle}>{topic.name}</div>
-                  <div className={styles.topicDesc}>{topic.description}</div>
+          <div className={styles.topicList}>
+            {topics.map(topic => (
+              <div
+                key={topic.id}
+                className={styles.topicItem}
+                onClick={() => goToTopicDetail(topic.id)}
+              >
+                <div className={styles.topicContent}>
+                  <div className={styles.topicTitle}>
+                    {highlightKeyword(topic.name, searchValue)}
+                  </div>
+                  <div className={styles.topicDesc}>
+                    {highlightKeyword(topic.description, searchValue)}
+                  </div>
                   <div className={styles.topicMeta}>
                     <span className={styles.topicTime}>
-                      {topic.createdAt?.replace('T', ' ')}
+                      {topic.createdAt?.replace('T', '    ')}
                     </span>
                   </div>
                 </div>
-              ))}
-              
-              <InfiniteScroll loadMore={loadMore} hasMore={hasMore}>
-                {hasMore ? (
-                  <div className={styles.loadingMore}>加载中...</div>
-                ) : (
-                  <div className={styles.loadingMore}>
-                    {topics.length === 0 ? '暂无话题' : '已加载全部内容'}
+                {topic.hot && (
+                  <div className={styles.topicHot}>
+                    <img src={hotIcon} className={styles.hotIcon} alt="热门" />
                   </div>
                 )}
-              </InfiniteScroll>
-            </div>
-          </PullToRefresh>
+              </div>
+            ))}
+            {loading && (
+              <div className={styles.loadingMore}>
+                <SpinLoading style={{ '--size': '24px' }} />
+              </div>
+            )}
+            {!loading && topics.length === 0 && searchValue && (
+              <div className={styles.emptyBox}>
+                暂无搜索结果
+              </div>
+            )}
+          </div>
         )}
       </div>
-    </Layout>
+    </div>
   );
 }

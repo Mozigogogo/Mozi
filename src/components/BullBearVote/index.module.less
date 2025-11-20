@@ -1,0 +1,70 @@
+.bbvContainer {
+  background: #fff;
+  border-radius: 8px; /* 16px(rpx) ÷ 2 = 8px */
+  padding: 8px; /* 16px(rpx) ÷ 2 = 8px */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03); /* 0 4px 12px ÷ 2 */
+  margin: 0 0px 12px; /* 左右间距与币种标签对齐 */
+
+  &.isDisabled {
+    opacity: 0.7;
+  }
+}
+
+.bbvHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px; /* 12px(rpx) ÷ 2 = 6px */
+}
+
+.bbvTitle {
+  font-size: 14px; /* 28px(rpx) ÷ 2 = 14px */
+  color: #333;
+  font-weight: 400; /* 原项目没有设置font-weight，保持默认 */
+}
+
+.bbvCount {
+  font-size: 11px; /* 22px(rpx) ÷ 2 = 11px */
+  color: #999;
+}
+
+.bbvBody {
+  display: flex;
+  border-radius: 6px; /* 12px(rpx) ÷ 2 = 6px */
+  overflow: hidden;
+  background: #fff;
+  align-items: stretch;
+}
+
+.bbvBtn {
+  flex: 1;
+  height: 27px; /* 54px(rpx) ÷ 2 = 27px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px; /* 24px(rpx) ÷ 2 = 12px */
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:active {
+    transform: scale(0.98);
+  }
+  
+  &.bull {
+    background: url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/community/community-up.png') no-repeat center;
+    background-size: 100% 100%;
+    border-radius: 6px 0 0 6px; /* 12px(rpx) ÷ 2 = 6px */
+  }
+  
+  &.bear {
+    background: url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/community/community-down.png') no-repeat center;
+    background-size: 100% 100%;
+    border-radius: 0 6px 6px 0; /* 12px(rpx) ÷ 2 = 6px */
+  }
+  
+  &.active {
+    filter: brightness(1.05);
+    font-weight: 600;
+  }
+}

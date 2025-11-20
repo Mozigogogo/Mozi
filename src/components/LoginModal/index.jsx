@@ -2,12 +2,14 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Popup, Input, Button, Toast } from 'antd-mobile';
+import { useTranslation } from 'react-i18next';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { sendVerificationCode } from '../../api/user';
 import styles from './index.module.less';
 
 export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletLogin, initialMode = 'login' }) {
+  const { t } = useTranslation();
   // 表单状态
   const [mode, setMode] = useState(initialMode); // 'login' or 'register'
   const [email, setEmail] = useState('');
@@ -64,12 +66,12 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
   // 发送验证码
   const handleSendCode = async () => {
     if (!email) {
-      Toast.show({ content: '请输入邮箱地址', position: 'center' });
+      Toast.show({ content: t('auth.fillAll'), position: 'center' });
       return;
     }
 
     if (!validateEmail(email)) {
-      Toast.show({ content: '请输入有效的邮箱地址', position: 'center' });
+      Toast.show({ content: t('auth.invalidEmail'), position: 'center' });
       return;
     }
 
@@ -83,14 +85,14 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
       const res = await sendVerificationCode(email, language);
 
       if (res?.code === 200 || res?.success) {
-        Toast.show({ content: '验证码已发送', position: 'center', icon: 'success' });
+        Toast.show({ content: t('auth.codeSent'), position: 'center', icon: 'success' });
         setCountdown(60);
       } else {
-        Toast.show({ content: res?.message || '发送失败', position: 'center', icon: 'fail' });
+        Toast.show({ content: res?.message || t('auth.sendFailed'), position: 'center', icon: 'fail' });
       }
     } catch (error) {
       console.error('发送验证码失败:', error);
-      Toast.show({ content: '发送验证码失败，请稍后重试', position: 'center', icon: 'fail' });
+      Toast.show({ content: t('auth.sendFailedRetry'), position: 'center', icon: 'fail' });
     } finally {
       setSendingCode(false);
     }
@@ -99,17 +101,17 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
   // 处理登录
   const handleLogin = async () => {
     if (!email || !password) {
-      Toast.show({ content: '请填写完整信息', position: 'center' });
+      Toast.show({ content: t('auth.fillAll'), position: 'center' });
       return;
     }
 
     if (!validateEmail(email)) {
-      Toast.show({ content: '请输入有效的邮箱地址', position: 'center' });
+      Toast.show({ content: t('auth.invalidEmail'), position: 'center' });
       return;
     }
 
     if (password.length < 6) {
-      Toast.show({ content: '密码长度不能少于6位', position: 'center' });
+      Toast.show({ content: t('auth.passwordTooShort'), position: 'center' });
       return;
     }
 
@@ -128,17 +130,20 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
 
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
-        if (res?.data?.user) {
-          localStorage.setItem('userInfo', JSON.stringify(res.data.user));
+        if (res?.data?.userInfo) {
+          localStorage.setItem('userInfo', JSON.stringify(res.data.userInfo));
         }
-        Toast.show({ content: '登录成功', position: 'center', icon: 'success' });
+        if (res?.data?.userId) {
+          localStorage.setItem('userId', res.data.userId);
+        }
+        Toast.show({ content: t('auth.loginSuccess'), position: 'center', icon: 'success' });
         onLoginSuccess?.();
         handleClose();
       } else {
-        Toast.show({ content: res?.message || '登录失败', position: 'center', icon: 'fail' });
+        Toast.show({ content: res?.message || t('auth.loginFailed'), position: 'center', icon: 'fail' });
       }
     } catch (error) {
-      Toast.show({ content: '登录失败，请稍后重试', position: 'center', icon: 'fail' });
+      Toast.show({ content: t('auth.loginFailedRetry'), position: 'center', icon: 'fail' });
     } finally {
       setLoading(false);
     }
@@ -147,17 +152,17 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
   // 处理注册
   const handleRegister = async () => {
     if (!email || !password || !verificationCode) {
-      Toast.show({ content: '请填写完整信息', position: 'center' });
+      Toast.show({ content: t('auth.fillAll'), position: 'center' });
       return;
     }
 
     if (!validateEmail(email)) {
-      Toast.show({ content: '请输入有效的邮箱地址', position: 'center' });
+      Toast.show({ content: t('auth.invalidEmail'), position: 'center' });
       return;
     }
 
     if (password.length < 6) {
-      Toast.show({ content: '密码长度不能少于6位', position: 'center' });
+      Toast.show({ content: t('auth.passwordTooShort'), position: 'center' });
       return;
     }
 
@@ -177,17 +182,17 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
       });
 
       if (res?.data?.success || res?.code === 0) {
-        Toast.show({ content: '注册成功，请登录', position: 'center', icon: 'success' });
+        Toast.show({ content: t('auth.registerSuccess'), position: 'center', icon: 'success' });
         setMode('login');
         setPassword('');
         setVerificationCode('');
         setInviteCode('');
       } else {
-        Toast.show({ content: res?.message || '注册失败', position: 'center', icon: 'fail' });
+        Toast.show({ content: res?.message || t('auth.registerFailed'), position: 'center', icon: 'fail' });
       }
     } catch (error) {
       console.error('注册失败:', error);
-      Toast.show({ content: '注册失败，请稍后重试', position: 'center', icon: 'fail' });
+      Toast.show({ content: t('auth.registerFailedRetry'), position: 'center', icon: 'fail' });
     } finally {
       setLoading(false);
     }
@@ -233,7 +238,7 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
     >
       <div className={styles.loginModal}>
         <div className={styles.header}>
-          <h2 className={styles.title}>{mode === 'login' ? '登录' : '注册'}</h2>
+          <h2 className={styles.title}>{mode === 'login' ? t('user.login') : t('user.register')}</h2>
           <button className={styles.closeBtn} onClick={handleClose}>×</button>
         </div>
 
@@ -241,10 +246,10 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
           <div className={styles.contentInner}>
             {/* 邮箱输入 */}
             <div className={styles.formItem}>
-              <label className={styles.label}>邮箱</label>
+              <label className={styles.label}>{t('auth.email')}</label>
               <Input
                 className={styles.input}
-                placeholder='请输入邮箱地址'
+                placeholder={t('auth.emailPlaceholder')}
                 value={email}
                 onChange={setEmail}
                 type='email'
@@ -254,10 +259,10 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
 
             {/* 密码输入 - 登录和注册都需要 */}
             <div className={styles.formItem}>
-              <label className={styles.label}>密码</label>
+              <label className={styles.label}>{t('auth.password')}</label>
               <Input
                 className={styles.input}
-                placeholder='请输入密码（至少6位）'
+                placeholder={t('auth.passwordPlaceholder')}
                 value={password}
                 onChange={setPassword}
                 type='password'
@@ -268,10 +273,10 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
             {/* 注册模式下的邀请码（可选） */}
             {mode === 'register' && (
               <div className={styles.formItem}>
-                <label className={styles.label}>邀请码（可选）</label>
+                <label className={styles.label}>{t('auth.inviteOptional')}</label>
                 <Input
                   className={styles.input}
-                  placeholder='请输入邀请码'
+                  placeholder={t('auth.invitePlaceholder')}
                   value={inviteCode}
                   onChange={setInviteCode}
                   clearable
@@ -282,11 +287,11 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
             {/* 注册模式下的验证码 */}
             {mode === 'register' && (
               <div className={styles.formItem}>
-                <label className={styles.label}>验证码</label>
+                <label className={styles.label}>{t('auth.verificationCode')}</label>
                 <div className={styles.codeInputWrapper}>
                   <Input
                     className={styles.codeInput}
-                    placeholder='请输入验证码'
+                    placeholder={t('auth.verificationPlaceholder')}
                     value={verificationCode}
                     onChange={setVerificationCode}
                     clearable
@@ -298,7 +303,7 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
                     disabled={countdown > 0}
                     size='small'
                   >
-                    {countdown > 0 ? `${countdown}s` : '获取验证码'}
+                    {countdown > 0 ? `${countdown}s` : t('auth.getCode')}
                   </Button>
                 </div>
               </div>
@@ -309,22 +314,22 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
               className={`${styles.submitBtn} ${loading ? styles.loading : ''}`}
               onClick={loading ? undefined : (mode === 'login' ? handleLogin : handleRegister)}
             >
-              {loading ? '加载中...' : (mode === 'login' ? '登录' : '注册')}
+              {loading ? t('common.loading') : (mode === 'login' ? t('user.login') : t('user.register'))}
             </div>
 
             {/* 切换模式 */}
             <div className={styles.switchMode}>
               <span className={styles.switchText}>
-                {mode === 'login' ? '还没有账号？' : '已有账号？'}
+                {mode === 'login' ? t('auth.noAccount') : t('auth.hasAccount')}
               </span>
               <button className={styles.switchBtn} onClick={toggleMode}>
-                {mode === 'login' ? '立即注册' : '立即登录'}
+                {mode === 'login' ? t('auth.registerNow') : t('auth.loginNow')}
               </button>
             </div>
 
             {/* 分割线 */}
             <div className={styles.divider}>
-              <span className={styles.dividerText}>或</span>
+              <span className={styles.dividerText}>{t('auth.or')}</span>
             </div>
 
             {/* 钱包登录按钮 */}
@@ -333,7 +338,7 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
               onClick={handleWalletLoginClick}
             >
               <img src="/icons/wallet.svg" alt="wallet" className={styles.walletIcon} />
-              <span>使用钱包登录</span>
+              <span>{t('auth.walletLogin')}</span>
             </div>
           </div>
         </div>

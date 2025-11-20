@@ -18,7 +18,8 @@
     "edit": "编辑",
     "delete": "删除",
     "share": "分享",
-    "more": "更多"
+    "more": "更多",
+    "updated": "更新"
   },
   "home": {
     "title": "墨子 - 数字货币行情社区",
@@ -28,7 +29,35 @@
     "derivatives": "衍生品专区",
     "rankList": "实时榜单",
     "opportunities": "投资机会",
-    "notice": "欢迎使用墨子数字货币行情社区"
+    "notice": "欢迎使用墨子数字货币行情社区",
+    "aiNotice": "告别手动盯盘！先让AI分析走势，再设置精准报警！",
+    "searchPlaceholder": "请输入搜索的币种",
+    "noTopics": "暂无话题",
+    "discussions": "讨论",
+    "today": "今天",
+    "yesterday": "昨天",
+    "daysAgo": "{{days}}天前",
+    "rank": {
+      "self": "自选榜",
+      "up": "涨幅榜",
+      "down": "跌幅榜",
+      "wave": "波幅榜",
+      "volume": "成交额榜",
+      "new": "新币榜",
+      "surge": "飙升榜"
+    },
+    "columns": {
+      "symbol": "币种",
+      "lastPrice": "最新价",
+      "lastVolume": "最新价",
+      "change24h": "24小时幅度",
+      "hotIndex": "热门指数",
+      "contract": "合约",
+      "section": "版块",
+      "addFavorites": "加自选",
+      "addMonitor": "加监控"
+    },
+    "robotBubble": "欢迎来到Mozi,需要什么帮助？"
   },
   "market": {
     "price": "价格",
@@ -39,8 +68,80 @@
     "low24h": "24h最低",
     "fundingRate": "资金费率",
     "positionSize": "持仓量",
-    "putCallRatio": "看跌看涨比",
-    "tradeVolume": "交易量"
+    "putCallRatio": "多空比",
+    "tradeVolume": "成交额",
+    "marketDistribution": "涨跌分布",
+    "up": "上涨",
+    "neutral": "平",
+    "down": "下跌",
+    "fearGreed": {
+      "title": "恐慌贪婪指数",
+      "tooltipLowTitle": "数值越低（接近0）",
+      "tooltipLow": "投资者越恐惧，市场可能被低估；",
+      "tooltipHighTitle": "数值越高（接近100）",
+      "tooltipHigh": "投资者越贪婪，市场可能过热。",
+      "extremeFear": "极度恐惧",
+      "fear": "恐惧",
+      "neutral": "中性",
+      "greed": "贪婪",
+      "extremeGreed": "极度贪婪"
+    },
+    "btcMarketShare": {
+      "title": "BTC市场占有率",
+      "tooltipUpTitle": "占比上升",
+      "tooltipUp": "说明资金更集中在比特币，市场趋于保守；",
+      "tooltipDownTitle": "占比下降",
+      "tooltipDown": "说明资金流向山寨币，市场更活跃。"
+    }
+  },
+  "discover": {
+    "tabs": {
+      "self": "自选",
+      "market": "行情",
+      "rank": "排行榜"
+    },
+    "columns": {
+      "symbolMarketCap": "币种/市值",
+      "priceWithChange": "最新价格/24H价格变化",
+      "gain": "涨幅",
+      "loss": "跌幅",
+      "volatility": "波幅",
+      "turnover": "成交额"
+    },
+    "exchangeRank": "交易所排行榜",
+    "exchange": {
+      "columns": {
+        "exchange": "交易所",
+        "volume24h": "24H交易量",
+        "markets": "市场",
+        "coins": "货币"
+      },
+      "types": {
+        "spot": "现货",
+        "futures": "衍生品"
+      }
+    },
+    "range": {
+      "live": "实时",
+      "1d": "1天",
+      "1w": "1周",
+      "1m": "1月",
+      "1y": "1年"
+    },
+    "addFavoriteButton": "添加自选",
+    "loadFinished": "已全部加载完毕",
+    "robotMessage": "想听听我对行情的分析吗？"
+  },
+  "overview": {
+    "totalMarketCap": "加密总市值",
+    "volume": "成交量",
+    "smartMonitor": "智能盯盘",
+    "calendar": "公告日历",
+    "todayUpdated": "今日有更新",
+    "subscribe": "去订阅",
+    "noConfig": "暂无配置",
+    "configAlarm": "去配置报警",
+    "viewDetails": "查看详情"
   },
   "user": {
     "login": "登录",
@@ -112,7 +213,41 @@
     "avatarTooLarge": "头像文件太大，请选择小于2MB的图片",
     "saving": "保存中...",
     "saveSuccess": "保存成功",
-    "saveFailed": "保存失败"
+    "saveFailed": "保存失败",
+    "defaultNickname": "用户",
+    "wechatUser": "微信用户"
+  },
+  "auth": {
+    "email": "邮箱",
+    "emailPlaceholder": "请输入邮箱地址",
+    "password": "密码",
+    "passwordPlaceholder": "请输入密码（至少6位）",
+    "inviteOptional": "邀请码（可选）",
+    "invitePlaceholder": "请输入邀请码",
+    "verificationCode": "验证码",
+    "verificationPlaceholder": "请输入验证码",
+    "getCode": "获取验证码",
+    "noAccount": "还没有账号？",
+    "hasAccount": "已有账号？",
+    "registerNow": "立即注册",
+    "loginNow": "立即登录",
+    "or": "或",
+    "walletLogin": "使用钱包登录",
+    "notLoggedIn": "您还未登录",
+    "loginRegister": "登录/注册",
+    "loginBenefits": "登录后可享受更多功能",
+    "fillAll": "请填写完整信息",
+    "invalidEmail": "请输入有效的邮箱地址",
+    "passwordTooShort": "密码长度不能少于6位",
+    "loginSuccess": "登录成功",
+    "loginFailed": "登录失败",
+    "loginFailedRetry": "登录失败，请稍后重试",
+    "registerSuccess": "注册成功，请登录",
+    "registerFailed": "注册失败",
+    "registerFailedRetry": "注册失败，请稍后重试",
+    "codeSent": "验证码已发送",
+    "sendFailed": "发送失败",
+    "sendFailedRetry": "发送验证码失败，请稍后重试"
   },
   "community": {
     "title": "社区",
@@ -122,7 +257,24 @@
     "reply": "回复",
     "topic": "话题",
     "hotTopics": "热门话题",
-    "trending": "热门动态"
+    "trending": "热门动态",
+    "communityRules": {
+      "title": "社区公约",
+      "greeting": "亲爱的用户，您好：",
+      "welcome": "欢迎来到Mozi社区，我们希望打造一个友善、有趣、有料的Web3社区，让每一个用户都能学习到健康的Web3理念，感受到友善有趣的社区氛围。",
+      "followRules": "所以希望每一个用户都能遵守以下社区公约：",
+      "respectOthers": "尊重他人，不对他人进行基于外貌、地域、理念等方面的人身攻击、辱骂、恶意刷屏等又不友善行为；",
+      "respectFacts": "尊重事实，不发表不实言论；",
+      "respectPlatform": "尊重平台，不发表恶意营销相关内容，不恶意灌水。",
+      "closing": "一个友善温暖的社区，需要大家一起来守护，感谢~",
+      "confirmButton": "好的，知道了"
+    },
+    "askTips": {
+      "title": "如何更好地提问?",
+      "standardAccurate": "规范准确：规范使用语句标点清晰表述",
+      "discussionValue": "讨论价值：鼓励专业、实用、脑洞等价值讨论",
+      "objectiveTrue": "客观真实：理性客观地陈述问题和事实"
+    }
   },
   "warning": {
     "addWarning": "添加预警",
@@ -153,9 +305,45 @@
     "forbidden": "没有权限访问",
     "unknown": "未知错误"
   },
+  "robot": {
+    "title": "AI 助手",
+    "subtitle": "智能答疑 · 快速响应",
+    "connecting": "连接中...",
+    "conversationId": "会话ID",
+    "loadingHistory": "正在加载历史对话...",
+    "aiAlt": "AI",
+    "tokens": "消耗 {{tokens}} tokens",
+    "regenerate": "重新生成",
+    "regenerateAlt": "重新生成",
+    "me": "我",
+    "suggestedTitle": "你可能还想问：",
+    "inputPlaceholder": "输入你的问题...",
+    "send": "发送",
+    "stopAlt": "停止生成",
+    "copy": "复制",
+    "copied": "已复制",
+    "sendFailed": "发送失败，请重试",
+    "wsNotConnected": "WebSocket 未连接，请刷新页面重试",
+    "genericError": "抱歉，出现了一些问题，请稍后再试",
+    "welcome": "你好，我是你的AI助手！我可以帮你分析币种行情、解答投资问题。有什么可以帮你？"
+  },
   "language": {
     "zh": "简体中文",
     "en": "English"
+  },
+  "search": {
+    "coins": "币种",
+    "inputPrompt": "请输入您想搜索的币种",
+    "invalidCoin": "请输入正确的币种",
+    "relatedSections": "相关版块",
+    "tradeablePlatforms": "可交易{{coin}}平台",
+    "platform": "平台",
+    "chain": "所属链",
+    "withdrawFee": "提取手续费",
+    "withdrawMin": "最小提币量",
+    "pairs": "交易对",
+    "spotPairs": "现货交易对",
+    "derivativePairs": "衍生品交易对"
   },
   "calendar": {
     "title": "交易所公告",
@@ -212,5 +400,132 @@
     "note2": "如果您的推荐人购买会员资格，您将获得积分和20%的费用回扣。",
     "note3": "推荐有效的前提是被邀请用户必须输入邀请码",
     "completed": "已完成"
+  }
+  ,
+  "pcr": {
+    "title": "多空比",
+    "coin": "币种",
+    "tabs": {
+      "activeBuySell": "主动买卖量比",
+      "accountRatio": "人数多空比",
+      "topAccountRatio": "大账户人数多空比",
+      "holdingsRatio": "持仓多空比",
+      "topHoldingsRatio": "大账户持仓多空比"
+    },
+    "section": {
+      "current": "当前多空比",
+      "history": "历史多空比"
+    },
+    "chart": {
+      "exchange": "交易所",
+      "long": "多",
+      "short": "空",
+      "ratio": "多空比"
+    },
+    "empty": "暂无数据",
+    "loadFailed": "数据加载失败",
+    "fetchFailed": "数据获取失败",
+    "noChartData": "暂无图表数据"
+  }
+  ,
+  "positionsize": {
+    "title": "持仓量",
+    "coin": "币种",
+    "section": {
+      "current": "当前持仓量",
+      "history": "历史持仓量"
+    },
+    "chart": {
+      "holdings": "持仓",
+      "price": "价格"
+    },
+    "loadFailed": "数据加载失败",
+    "fetchFailed": "数据获取失败"
+  }
+  ,
+  "fundingrate": {
+    "title": "资金费率",
+    "tabs": {
+      "current": "当前费率",
+      "history": "历史费率"
+    },
+    "section": {
+      "current": "当前费率",
+      "history": "历史费率"
+    },
+    "coin": "币种",
+    "viewMore": "查看更多",
+    "fold": "收起",
+    "empty": "暂无数据",
+    "select": "请选择",
+    "unit": {
+      "m": "亿",
+      "k": "万"
+    }
+  }
+  ,
+  "tradevol": {
+    "title": "成交额",
+    "coin": "币种",
+    "section": {
+      "current": "当前成交额",
+      "history": "历史成交额"
+    },
+    "chart": {
+      "volume": "成交量",
+      "amount": "成交额",
+      "price": "价格"
+    },
+    "loadFailed": "数据加载失败",
+    "fetchFailed": "数据获取失败"
+  }
+  ,
+  "detail": {
+    "title": "币种详情",
+    "marketCap": "流通市值",
+    "tabs": {
+      "chart": "图表",
+      "market": "市场",
+      "roi": "投资回报率"
+    },
+    "empty": {
+      "market": "暂无市场数据"
+    },
+    "market": {
+      "exchange": "交易所",
+      "lastPrice": "最新价",
+      "change24h": "24H涨幅",
+      "volume24h": "24H成交量",
+      "amount24h": "24H成交额"
+    },
+    "actions": {
+      "favorite": "加自选",
+      "alert": "告警",
+      "share": "分享",
+      "community": "社区"
+    },
+    "roi": {
+      "daily": "日回报率",
+      "weekly": "周回报率",
+      "monthly": "月回报率",
+      "yearly": "年回报率"
+    },
+    "header": {
+      "high24h": "24H最高价",
+      "low24h": "24H最低价",
+      "fdv": "稀释市值",
+      "marketCapChange24h": "24H市值变化",
+      "marketCapChangePercent24h": "24H市值变化百分比",
+      "athDate": "历史最高价时间",
+      "atlDate": "历史最低价时间",
+      "totalVolume24h": "24H成交额",
+      "totalSupply": "总供应量",
+      "circulatingSupply": "流通供应量",
+      "ath": "历史最高价",
+      "athChangePercent": "历史最高价百分比",
+      "atl": "历史最低价",
+      "atlChangePercent": "历史最低价百分比"
+    },
+    "robotMessage": "想听听我对{{symbol}}的看法吗？"
   }
 }

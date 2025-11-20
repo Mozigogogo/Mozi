@@ -2,11 +2,13 @@
 
 import React, { useState } from 'react';
 import { Modal, Button, Toast } from 'antd-mobile';
+import { useTranslation } from 'react-i18next';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 // import styles from './index.module.less';
 
 export const PageLogin = ({ show = false, hideCb, onLoginSuccess }) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -19,7 +21,7 @@ export const PageLogin = ({ show = false, hideCb, onLoginSuccess }) => {
       // 模拟登录成功
       localStorage.setItem('token', 'mock_token');
       Toast.show({
-        content: '登录成功',
+        content: t('user.loginSuccess'),
         duration: 2000,
       });
       
@@ -29,7 +31,7 @@ export const PageLogin = ({ show = false, hideCb, onLoginSuccess }) => {
     } catch (error) {
       console.error('登录失败:', error);
       Toast.show({
-        content: '登录失败',
+        content: t('error.unknown'),
         duration: 2000,
       });
     } finally {
@@ -46,19 +48,19 @@ export const PageLogin = ({ show = false, hideCb, onLoginSuccess }) => {
       visible={show}
       content={
         <div style={{ padding: '20px', textAlign: 'center' }}>
-          <div style={{ fontSize: '18px', fontWeight: '600', color: '#333', marginBottom: '12px' }}>您还未登录</div>
-          <div style={{ fontSize: '14px', color: '#666', lineHeight: '1.5' }}>登录后可享受更多功能</div>
+          <div style={{ fontSize: '18px', fontWeight: '600', color: '#333', marginBottom: '12px' }}>{t('auth.notLoggedIn')}</div>
+          <div style={{ fontSize: '14px', color: '#666', lineHeight: '1.5' }}>{t('auth.loginBenefits')}</div>
         </div>
       }
       actions={[
         {
           key: 'cancel',
-          text: '取消',
+          text: t('common.cancel'),
           onClick: handleCancel,
         },
         {
           key: 'login',
-          text: '登录/注册',
+          text: t('auth.loginRegister'),
           primary: true,
           loading: loading,
           onClick: handleLogin,

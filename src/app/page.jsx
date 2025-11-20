@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { NoticeBar, Grid, TabBar, Swiper } from 'antd-mobile';
+import { useTranslation } from 'react-i18next';
 import { RightOutline } from 'antd-mobile-icons';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { motion, useMotionValue, useTransform, useSpring, AnimatePresence } from 'framer-motion';
 import Layout from '../components/Layout';
 import MoziCard from '../components/MoziCard';
 import MoziTreeMap from '../components/MoziTreeMap';
@@ -16,6 +16,7 @@ import HighlightArea from '../components/HighlightArea';
 import AddCollect from '../components/AddCollect';
 import AddMonitor from '../components/AddMonitor';
 import MarketDistribution from '../components/MarketDistribution';
+import FloatingRobot from '../components/FloatingRobot';
 import { request } from '../utils/request';
 import { Interface, LOOPTIME, WS_URL } from '../utils/constants';
 import { jump2Detail, jump2Market, jump2List, jump2NoTab } from '../utils/core';
@@ -24,15 +25,6 @@ import styles from './page.module.less';
 
 // CDN 图片前缀
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
-
-// 简单文本组件
-function BubbleText({ text }) {
-  return (
-    <div className={styles.bubbleText}>
-      {text}
-    </div>
-  );
-}
 
 // 首页背景轮播图
 const HOME_BANNERS = [
@@ -43,6 +35,9 @@ const HOME_BANNERS = [
 
 // 提醒图标
 const HomeAlertIcon = `${CDN_PREFIX}/icon/home-alert.png`;
+
+// 公告栏显示状态（可持久隐藏）
+const NOTICE_HIDE_KEY = 'hideHomeNotice';
 
 // 搜索图标
 const SearchIcon = `${CDN_PREFIX}/icon/community/search.png`;
@@ -84,14 +79,86 @@ const area = {
 
 export default function HomePage() {
   const router = useRouter();
+  const { t, i18n } = useTranslation();
+  const isEN = (i18n?.language || '').startsWith('en');
+  // Telegram WebApp 检测状态（不影响现有 UI，仅用于环境检测与本地存储）
+  const [tgInfo, setTgInfo] = useState({
+    available: false,
+    platform: '',
+    version: '',
+    user: null,
+    initDataLen: 0,
+    colorScheme: '',
+  });
+
+  const initTelegram = () => {
+    const tg = window?.Telegram?.WebApp;
+    if (!tg) return;
+    try {
+      tg.ready();
+      tg.expand();
+      const unsafe = tg.initDataUnsafe || {};
+      setTgInfo({
+        available: true,
+        platform: tg.platform || '',
+        version: tg.version || '',
+        user: unsafe.user || null,
+        initDataLen: (tg.initData || '').length,
+        colorScheme: tg.colorScheme || '',
+      });
+      if (unsafe.user?.id) {
+        // 写入本地，供其他页面使用
+        try {
+          localStorage.setItem('tgChatId', String(unsafe.user.id));
+          localStorage.setItem('tgUser', JSON.stringify(unsafe.user));
+          localStorage.setItem('tgBindAt', String(Date.now()));
+        } catch {}
+      }
+      // 主题变化监听（如需）
+      tg.onEvent?.('themeChanged', () => {
+        setTgInfo((d) => ({ ...d, colorScheme: tg.colorScheme || '' }));
+      });
+      console.log('[Telegram] WebApp 检测到:', {
+        available: true,
+        platform: tg.platform,
+        version: tg.version,
+        user: unsafe.user,
+        initDataLen: (tg.initData || '').length,
+      });
+    } catch (e) {
+      console.warn('[Telegram] WebApp 初始化失败:', e);
+    }
+  };
+
+  useEffect(() => {
+    // 进入根路径页面时检测 Telegram WebApp 环境
+    if (typeof window === 'undefined') return;
+    if (window?.Telegram?.WebApp) {
+      initTelegram();
+      return;
+    }
+    // 动态注入 SDK 脚本，避免影响 UI 渲染
+    const script = document.createElement('script');
+    script.src = 'https://telegram.org/js/telegram-web-app.js';
+    script.async = true;
+    script.onload = () => initTelegram();
+    script.onerror = () => {
+      console.warn('[Telegram] SDK 加载失败：请检查网络或脚本地址');
+      setTgInfo((d) => ({ ...d, available: false }));
+    };
+    document.head.appendChild(script);
+    return () => {
+      try { document.head.removeChild(script); } catch {}
+    };
+  }, []);
   
   // 状态定义
   const [hotCoin, setHotCoin] = useState([]);
   const [hotIndustry, setHotIndustry] = useState([]);
   const [hotContract, setHotContract] = useState([]);
-  const [coinLoading, setCoinLoading] = useState(false);
-  const [industryLoading, setIndustryLoading] = useState(false);
-  const [contractLoading, setContractLoading] = useState(false);
+  const [coinLoading, setCoinLoading] = useState(true);
+  const [industryLoading, setIndustryLoading] = useState(true);
+  const [contractLoading, setContractLoading] = useState(true);
   const [myOwn, setOwn] = useState(null);
   const [myOwnLoading, setMyOwnLoading] = useState(true);
   const [popVis, setPopVis] = useState(false);
@@ -104,20 +171,16 @@ export default function HomePage() {
   const [lastTopicsLoadTime, setLastTopicsLoadTime] = useState(null);
   const topicsCacheTimer = useRef(null);
   
-  // 机器人交互状态
-  const [showRobotBubble, setShowRobotBubble] = useState(false);
   const rankingSectionRef = useRef(null);
-  const robotRef = useRef(null);
-  
-  // 鼠标位置用于磁吸效果
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-  
-  // 机器人位置弹簧动画
-  const springConfig = { damping: 25, stiffness: 150 };
-  const robotX = useSpring(useTransform(mouseX, [0, 1], [0, 0]), springConfig);
-  const robotY = useSpring(useTransform(mouseY, [0, 1], [0, 0]), springConfig);
   const needLoop = useRef(true);
+
+  // 首页公告栏显示控制
+  const [showNotice, setShowNotice] = useState(true);
+  useEffect(() => {
+    try {
+      setShowNotice(localStorage.getItem(NOTICE_HIDE_KEY) !== '1');
+    } catch {}
+  }, []);
 
   // WebSocket 连接 - 进入页面自动连接并握手
   const { sendMessage, isOpen, lastMessage, readyState } = useWebSocket(WS_URL, {
@@ -200,7 +263,7 @@ export default function HomePage() {
     ['币种', '最新价', '24小时幅度', '加自选', '加监控'],
     ['币种', '最新价', '24小时幅度', '加自选', '加监控'],
     ['币种', '最新价', '24小时幅度', '加自选', '加监控'],
-    ['币种', '最新成交额', '24小时幅度', '加自选', '加监控'],
+    ['币种', '最新价', '24小时幅度', '加自选', '加监控'],
     ['币种', '最新价', '24小时幅度', '加自选', '加监控'],
     ['币种', '最新价', '24小时幅度', '加自选', '加监控']
   ];
@@ -244,7 +307,6 @@ export default function HomePage() {
 
   // 获取热门币种
   const fetchHotCoin = async () => {
-    setCoinLoading(true);
     try {
       const response = await request({
         url: Interface.hot_coin,
@@ -264,7 +326,6 @@ export default function HomePage() {
 
   // 获取热门板块数据
   const fetchHotIndustry = async () => {
-    setIndustryLoading(true);
     try {
       const response = await request({
         url: Interface.hot_industry,
@@ -284,7 +345,6 @@ export default function HomePage() {
 
   // 获取热门合约数据
   const fetchHotContract = async () => {
-    setContractLoading(true);
     try {
       const response = await request({
         url: Interface.hot_contract,
@@ -377,66 +437,86 @@ export default function HomePage() {
   const fetchRankingData = async () => {
     setFooterLoading(true);
     try {
-      const tempFooterList = [];
+      const results = new Array(footerIfList.length).fill([]);
 
-      for (let i = 0; i < footerIfList.length; i++) {
+      const upIndex = activeArr.indexOf('zhangfu');
+      try {
+        const upRes = await request({
+          url: footerIfList[upIndex].interface,
+          data: footerIfList[upIndex].data
+        });
+        const listData = upRes.data || [];
+        if (Array.isArray(listData) && listData.length > 0) {
+          const slicedData = listData.slice(0, 10);
+          results[upIndex] = slicedData.map((item) => ({
+            symbol: (
+              <div className={styles.ownTitle}>
+                <img className={styles.ownImg} src={item.url} alt={item.symbol} />
+                {item.symbol}
+              </div>
+            ),
+            last: item.last || item.volume_24h,
+            priceRange: <HighlightArea value={item.priceRange || item.movers || item.price_24h} />,
+            own: <AddCollect symbol={item.symbol} isOwn={item.favorite} />,
+            monitor: <AddMonitor symbol={item.symbol} />,
+            key: item.symbol
+          }));
+        }
+      } catch (e) {
+        results[upIndex] = [];
+      }
+      setFooterArr(results);
+
+      const promises = footerIfList.map(async (cfg, i) => {
+        if (i === upIndex) return;
         try {
-          const itemListData = await request({
-            url: footerIfList[i].interface,
-            data: footerIfList[i].data
-          });
+          const itemListData = await request({ url: cfg.interface, data: cfg.data });
           let tempData = [];
           if (i === 0) {
-            // 自选榜，数据额外处理
             const listData = itemListData.data?.list || itemListData.data || [];
             if (Array.isArray(listData) && listData.length > 0) {
-              tempData = listData.map((item) => {
-                return {
-                  symbol: (
-                    <div className={styles.ownTitle}>
-                      <img className={styles.ownImg} src={item.url} alt={item.symbol} />
-                      {item.symbol}
-                    </div>
-                  ),
-                  currentPrice: item.currentPrice,
-                  priceChange24h: <HighlightArea value={item.priceChangePercentage24h} />,
-                  own: <AddCollect symbol={item.symbol} isOwn={item.favorite} />,
-                  monitor: <AddMonitor symbol={item.symbol} />,
-                  key: item.symbol,
-                };
-              });
+              tempData = listData.map((item) => ({
+                symbol: (
+                  <div className={styles.ownTitle}>
+                    <img className={styles.ownImg} src={item.url} alt={item.symbol} />
+                    {item.symbol}
+                  </div>
+                ),
+                currentPrice: item.currentPrice,
+                priceChange24h: <HighlightArea value={item.priceChangePercentage24h} />,
+                own: <AddCollect symbol={item.symbol} isOwn={item.favorite} />,
+                monitor: <AddMonitor symbol={item.symbol} />,
+                key: item.symbol,
+              }));
             }
           } else {
             const listData = itemListData.data || [];
-
             if (Array.isArray(listData) && listData.length > 0) {
               const slicedData = listData.slice(0, 10);
-              tempData = slicedData.map((item) => {
-                return {
-                  symbol: (
-                    <div className={styles.ownTitle}>
-                      <img className={styles.ownImg} src={item.url} alt={item.symbol} />
-                      {item.symbol}
-                    </div>
-                  ),
-                  last: item.last || item.volume_24h,
-                  priceRange: <HighlightArea value={item.priceRange || item.movers || item.price_24h} />,
-                  own: <AddCollect symbol={item.symbol} isOwn={item.favorite} />,
-                  monitor: <AddMonitor symbol={item.symbol} />,
-                  key: item.symbol
-                };
-              });
+              tempData = slicedData.map((item) => ({
+                symbol: (
+                  <div className={styles.ownTitle}>
+                    <img className={styles.ownImg} src={item.url} alt={item.symbol} />
+                    {item.symbol}
+                  </div>
+                ),
+                last: item.last || item.volume_24h,
+                priceRange: <HighlightArea value={item.priceRange || item.movers || item.price_24h} />,
+                own: <AddCollect symbol={item.symbol} isOwn={item.favorite} />,
+                monitor: <AddMonitor symbol={item.symbol} />,
+                key: item.symbol
+              }));
             }
           }
-          tempFooterList.push(tempData);
-          } catch (error) {
-            console.error(`榜单${i}请求失败:`, error);
-            // 即使某个榜单失败，也要推入空数组保持索引一致
-            tempFooterList.push([]);
-          }
+          results[i] = tempData;
+        } catch (error) {
+          console.error(`榜单${i}请求失败:`, error);
+          results[i] = [];
         }
+      });
 
-        setFooterArr(tempFooterList);
+      await Promise.allSettled(promises);
+      setFooterArr(results);
     } catch (error) {
       console.error('获取实时榜单数据失败:', error);
     } finally {
@@ -469,83 +549,35 @@ export default function HomePage() {
     setRankActive(value);
   };
 
-  // 跳转到榜单列表页
+  // 跳转到榜单详情页（与发现页一致）
   const go2List = () => {
-    const arrIndex = activeArr.indexOf(rankActiveKey);
-    const requestdimData = [{
-      dim: 'today'
-    }, {
-      dim: '1_day'
-    }, {
-      dim: '3_day'
-    }, {
-      dim: '7_day'
-    }, {
-      dim: '15_day'
-    }, {
-      dim: '1_month'
-    }];
-    const requestintervalData = [{
-      intervals: 'today'
-    }, {
-      intervals: '1_day'
-    }, {
-      intervals: '3_day'
-    }, {
-      intervals: '7_day'
-    }, {
-      intervals: '15_day'
-    }, {
-      intervals: '1_month'
-    }];
-    const requestbiaoshengintervalsData = [{
-      intervals: '1_day'
-    }, {
-      intervals: '3_day'
-    }, {
-      intervals: '7_day'
-    }, {
-      intervals: '15_day'
-    }, {
-      intervals: '1_month'
-    }];
-    const selectArr = ['今日', '1天', '3天', '7天', '15天', '1个月'];
-    const selectbiaoshengArr = ['1天', '3天', '7天', '15天', '1个月'];
-    
-    jump2List({
-      interFace: footerIfList[arrIndex].interface,
-      requestData: arrIndex === 0 ? {
-        pageSize: 100,
-        pageNo: 1
-      } : arrIndex === 4 || arrIndex === 5 ? requestintervalData : arrIndex === 6 ? requestbiaoshengintervalsData : requestdimData,
-      gridTitle: colNameArr[arrIndex],
-      gridCon: [{
-        type: 'Img+Text',
-        data: ['url', 'symbol']
-      }, {
-        type: 'Text',
-        data: arrIndex === 0 ? 'currentPrice' : arrIndex === 6 ? 'movers' : arrIndex === 5 ? 'volume_24h' : 'last'
-      }, {
-        type: 'HighlightArea',
-        data: arrIndex === 0 ? 'priceChangePercentage24h' : arrIndex === 6 ? 'movers' : arrIndex === 4 || arrIndex === 5 ? 'price_24h' : 'priceRange'
-      }, {
-        type: 'AddCollect',
-        data: ['favorite', 'symbol']
-      }, {
-        type: 'AddMonitor',
-        data: 'symbol'
-      }, {
-        type: 'key',
-        data: 'symbol'
-      }, {
-        type: 'img',
-        data: 'url'
-      }],
-      rankTitle: activeArrValue[arrIndex],
-      rankName: 'Top100',
-      rankDesc: '实时更新',
-      selectArr: arrIndex === 6 ? selectbiaoshengArr : selectArr
-    });
+    switch (rankActiveKey) {
+      case 'zixuan':
+        router.push('/selfrank');
+        break;
+      case 'zhangfu':
+        router.push('/pricerank');
+        break;
+      case 'diefu':
+        router.push('/downrank');
+        break;
+      case 'zhenfu':
+        router.push('/waverank');
+        break;
+      case 'chengjiaoe':
+        router.push('/traderank');
+        break;
+      case 'xinbi':
+        router.push('/newcoinrank');
+        break;
+      case 'biaosheng': {
+        const intervals = '1_day';
+        router.push(`/uptraderank?intervals=${encodeURIComponent(intervals)}`);
+        break;
+      }
+      default:
+        router.push('/find?tab=rank');
+    }
   };
 
   // 格式化话题时间
@@ -556,9 +588,9 @@ export default function HomePage() {
     const diff = now - date;
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     
-    if (days === 0) return '今天';
-    if (days === 1) return '昨天';
-    if (days < 7) return `${days}天前`;
+    if (days === 0) return t('home.today');
+    if (days === 1) return t('home.yesterday');
+    if (days < 7) return t('home.daysAgo', { days });
     return date.toLocaleDateString('zh-CN');
   };
 
@@ -578,27 +610,12 @@ export default function HomePage() {
           <div className={styles.scrollContent}>
             {/* 热门币种 */}
             <div className={`${styles.treemapBox} ${styles.contentCard}`} onClick={() => {
-              jump2List({
-                interFace: Interface.hot_coin,
-                gridTitle: ['币种', '热门指数', '24H价格变化'],
-                gridCon: [{
-                  type: 'Text',
-                  data: 'coin'
-                }, {
-                  type: 'Text',
-                  data: 'hot'
-                }, {
-                  type: 'HighlightArea',
-                  data: 'priceChangePercent'
-                }],
-                rankTitle: '热门币种',
-                showRanking: true
-              });
+              router.push('/hotrank?type=coin');
             }}>
-              <div className={styles.treemapTitle}>热门币种</div>
+              <div className={styles.treemapTitle}>{t('home.hotCoins')}</div>
               <div className={styles.centerLoading}>
                 {coinLoading ? (
-                  <Loading tip="加载中..." />
+                  <Loading tip={t('common.loading')} />
                 ) : (
                   <div style={{ width: '100%', height: '100%', flex: 1 }}>
                     <MoziTreeMap
@@ -613,27 +630,12 @@ export default function HomePage() {
             
             {/* 热门合约 */}
             <div className={`${styles.treemapBox} ${styles.contentCard}`} onClick={() => {
-              jump2List({
-                interFace: Interface.hot_contract,
-                gridTitle: ['合约', '热门指数', '24H价格变化'],
-                gridCon: [{
-                  type: 'Text',
-                  data: 'coin'
-                }, {
-                  type: 'Text',
-                  data: 'hot'
-                }, {
-                  type: 'HighlightArea',
-                  data: 'priceChangePercent'
-                }],
-                rankTitle: '热门合约',
-                showRanking: true
-              });
+              router.push('/hotrank?type=contract');
             }}>
-              <div className={styles.treemapTitle}>热门合约</div>
+              <div className={styles.treemapTitle}>{t('home.hotContracts')}</div>
               <div className={styles.centerLoading}>
                 {contractLoading ? (
-                  <Loading tip="加载中..." />
+                  <Loading tip={t('common.loading')} />
                 ) : (
                   <div style={{ width: '100%', height: '100%', flex: 1 }}>
                     <MoziTreeMap
@@ -648,24 +650,12 @@ export default function HomePage() {
             
             {/* 热门板块 */}
             <div className={`${styles.treemapBox} ${styles.contentCard} ${styles.last}`} onClick={() => {
-              jump2List({
-                interFace: Interface.hot_industry,
-                gridTitle: ['版块', '24H变化'],
-                gridCon: [{
-                  type: 'Text',
-                  data: 'section'
-                }, {
-                  type: 'HighlightArea',
-                  data: 'changes'
-                }],
-                rankTitle: '热门版块',
-                showRanking: true
-              });
+              router.push('/hotrank?type=industry');
             }}>
-              <div className={styles.treemapTitle}>热门版块</div>
+              <div className={styles.treemapTitle}>{t('home.hotSectors')}</div>
               <div className={styles.centerLoading}>
                 {industryLoading ? (
-                  <Loading tip="加载中..." />
+                  <Loading tip={t('common.loading')} />
                 ) : (
                   <div style={{ width: '100%', height: '100%', flex: 1 }}>
                     <MoziTreeMap
@@ -688,7 +678,7 @@ export default function HomePage() {
             <div className={styles.topicCards}>
               {topicsLoading ? (
                 <div style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '40px 0' }}>
-                  <Loading tip="加载中..." />
+                  <Loading tip={t('common.loading')} />
                 </div>
               ) : hotTopics && hotTopics.length > 0 ? (
                 hotTopics.slice(0, 3).map((topic, index) => {
@@ -713,7 +703,7 @@ export default function HomePage() {
                         <div className={styles.topicDesc}>{topic.desc || topic.description}</div>
                       )}
                       <div className={`${styles.topicStats} ${!hasDesc ? styles.noDesc : ''}`}>
-                        <div className={styles.topicHot}>🔥 {topic.discussionCount || topic.hot || 0} 讨论</div>
+                        <div className={styles.topicHot}>🔥 {topic.discussionCount || topic.hot || 0} {t('home.discussions')}</div>
                         <div className={styles.topicDate}>{formatTopicTime(topic.createdAt || topic.createTime)}</div>
                       </div>
                     </div>
@@ -724,10 +714,10 @@ export default function HomePage() {
                   <div className={styles.topicRank}>
                     <img src={rankMedals[0]} className={styles.rankMedal} alt="rank-1" />
                   </div>
-                  <div className={styles.topicTitle}>暂无话题</div>
-                  <div className={styles.topicDesc}>敬请期待</div>
+                  <div className={styles.topicTitle}>{t('home.noTopics')}</div>
+                  <div className={styles.topicDesc}>{t('user.comingSoon')}</div>
                   <div className={styles.topicStats}>
-                    <div className={styles.topicHot}>🔥 0 讨论</div>
+                    <div className={styles.topicHot}>🔥 0 {t('home.discussions')}</div>
                     <div className={styles.topicDate}>--</div>
                   </div>
                 </div>
@@ -739,104 +729,34 @@ export default function HomePage() {
     }
   };
 
-  // 监听滚动到实时榜单 - 触发机器人气泡
-  useEffect(() => {
-    if (!rankingSectionRef.current) return;
-
-    let hideTimer = null;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            // 进入视口，显示气泡
-            setShowRobotBubble(true);
-            
-            // 7秒后自动隐藏气泡
-            hideTimer = setTimeout(() => {
-              setShowRobotBubble(false);
-            }, 7000);
-          } else {
-            // 离开视口，立即隐藏气泡并清除定时器
-            if (hideTimer) {
-              clearTimeout(hideTimer);
-            }
-            setShowRobotBubble(false);
-          }
-        });
-      },
-      {
-        threshold: 0.2, // 当20%可见时触发
-        rootMargin: '0px'
-      }
-    );
-
-    observer.observe(rankingSectionRef.current);
-
-    return () => {
-      if (hideTimer) {
-        clearTimeout(hideTimer);
-      }
-      if (rankingSectionRef.current) {
-        observer.unobserve(rankingSectionRef.current);
-      }
-    };
-  }, []);
-
-  // 鼠标磁吸效果
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      if (!robotRef.current) return;
-      
-      const rect = robotRef.current.getBoundingClientRect();
-      const robotCenterX = rect.left + rect.width / 2;
-      const robotCenterY = rect.top + rect.height / 2;
-      
-      const distanceX = e.clientX - robotCenterX;
-      const distanceY = e.clientY - robotCenterY;
-      const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
-      
-      // 磁吸范围：150px
-      const magnetRange = 150;
-      if (distance < magnetRange) {
-        const magnetStrength = (magnetRange - distance) / magnetRange;
-        const moveX = (distanceX / distance) * magnetStrength * 15;
-        const moveY = (distanceY / distance) * magnetStrength * 15;
-        
-        mouseX.set(moveX);
-        mouseY.set(moveY);
-      } else {
-        mouseX.set(0);
-        mouseY.set(0);
-      }
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [mouseX, mouseY]);
-
   // 渲染实时榜单
   const renderRealTimeRanking = () => {
     const currentRankData = footerArr[activeArr.indexOf(rankActiveKey)] || [];
     
     return (
       <div ref={rankingSectionRef}>
-        <MoziCard title="实时榜单">
+        <MoziCard title={t('home.rankList')}>
         {/* <Layout isLoading={footerLoading}> */}
           <TabBar className={styles.tabBox} activeKey={rankActiveKey} onChange={rankActiveClick}>
-            <TabBar.Item key='zixuan' title='自选榜' />
-            <TabBar.Item key='zhangfu' title='涨幅榜' />
-            <TabBar.Item key='diefu' title='跌幅榜' />
-            <TabBar.Item key='zhenfu' title='波幅榜' />
-            <TabBar.Item key='chengjiaoe' title='成交额榜' />
-            <TabBar.Item key='xinbi' title='新币榜' />
-            <TabBar.Item key='biaosheng' title='飙升榜' />
+            <TabBar.Item key='zixuan' title={t('home.rank.self')} />
+            <TabBar.Item key='zhangfu' title={t('home.rank.up')} />
+            <TabBar.Item key='diefu' title={t('home.rank.down')} />
+            <TabBar.Item key='zhenfu' title={t('home.rank.wave')} />
+            <TabBar.Item key='chengjiaoe' title={t('home.rank.volume')} />
+            <TabBar.Item key='xinbi' title={t('home.rank.new')} />
+            <TabBar.Item key='biaosheng' title={t('home.rank.surge')} />
           </TabBar>
           {currentRankData.length > 0 && (
             <div>
               <MoziGrid
                 length={5}
-                colName={colNameArr[activeArr.indexOf(rankActiveKey)]}
+                colName={[
+                  t('home.columns.symbol'),
+                  rankActiveKey === 'chengjiaoe' ? t('home.columns.lastVolume') : t('home.columns.lastPrice'),
+                  t('home.columns.change24h'),
+                  t('home.columns.addFavorites'),
+                  t('home.columns.addMonitor')
+                ]}
                 gridContent={currentRankData}
                 callback={(gridCon) => { jump2Detail(gridCon.key); }}
                 maxRows={10}
@@ -844,7 +764,7 @@ export default function HomePage() {
                 gridTitleBgColor="transparent"
               />
               <div className={styles.listMore} onClick={go2List}>
-                查看更多 <RightOutline fontSize={12} />
+                {t('user.viewMore')} <RightOutline fontSize={12} />
               </div>
             </div>
           )}
@@ -854,9 +774,15 @@ export default function HomePage() {
     );
   };
 
-  // 渲染衍生品专区
+  // 渲染衍生品专区（国际化）
   const renderDerivativeArea = () => {
-    const { title, list } = area.derivativeArea;
+    const title = t('home.derivatives');
+    const list = [
+      { icon: bullBearRatioIcon, text: t('market.putCallRatio'), callback: () => { jump2NoTab('putcallratio'); } },
+      { icon: inventoryIcon, text: t('market.positionSize'), callback: () => { jump2NoTab('positionsize'); } },
+      { icon: fundingRateIcon, text: t('market.fundingRate'), callback: () => { jump2NoTab('fundingrate'); } },
+      { icon: volumeTransactionIcon, text: t('market.tradeVolume'), callback: () => { jump2NoTab('tradevol'); } },
+    ];
     return (
       <MoziCard title={title} customStyle={{ borderRadius: '0 0 8px 8px', paddingTop: '5px' }}>
         <div className={styles.derivativeBody}>
@@ -896,26 +822,40 @@ export default function HomePage() {
             </Swiper>
 
             {/* 搜索框（层叠在 Banner 上） */}
-            <div className={styles.header} onClick={() => router.push('/search')}>
+            <div className={styles.header} style={{ bottom: showNotice ? 38 : 23 }} onClick={() => router.push('/search')}>
               <div className={styles.searchBox}>
-                <div className={styles.searchInput}>请输入搜索的币种</div>
-                <div className={styles.searchCancel}>
-                  <img src={SearchIcon} alt="搜索" className={styles.searchIcon} />
-                  搜索
+                <div className={styles.searchInput}>{t('home.searchPlaceholder')}</div>
+                <div className={styles.searchCancel} style={isEN ? { minWidth: 44, padding: '0 14px' } : undefined}>
+                  <img src={SearchIcon} alt={t('common.search')} className={styles.searchIcon} />
+                  {!isEN && t('common.search')}
                 </div>
               </div>
             </div>
 
-            {/* 公告栏（层叠在 Banner 上） */}
-            <div className={styles.notice}>
-              <NoticeBar
-                className={styles.noticeItem}
-                content="告别手动盯盘，实时波动随时跟进！开启智能告警配置吧！"
-                color="alert"
-                wrap
-                icon={<img src={HomeAlertIcon} className={styles.noticeIcon} alt="alert" />}
-              />
-            </div>
+            {/* 公告栏（层叠在 Banner 上，可关闭） */}
+            {showNotice ? (
+              <div className={styles.notice}>
+                <NoticeBar
+                  className={styles.noticeItem}
+                  content={t('home.aiNotice')}
+                  color="alert"
+                  wrap
+                  icon={<img src={HomeAlertIcon} className={styles.noticeIcon} alt="alert" />}
+                  extra={
+                    <span
+                      className={styles.noticeClose}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowNotice(false);
+                        try { localStorage.setItem(NOTICE_HIDE_KEY, '1'); } catch {}
+                      }}
+                      aria-label="关闭"
+                      role="button"
+                    >✕</span>
+                  }
+                />
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -931,7 +871,7 @@ export default function HomePage() {
                   className={`${styles.tabItem} ${investmentTab === 'opportunity' ? styles.active : ''}`}
                   onClick={() => setInvestmentTab('opportunity')}
                 >
-                  投资机会
+                  {t('home.opportunities')}
                 </div>
                 <div 
                   className={`${styles.tabItem} ${investmentTab === 'topics' ? styles.active : ''}`}
@@ -940,7 +880,7 @@ export default function HomePage() {
                     fetchHotTopics();
                   }}
                 >
-                  话题热榜
+                  {t('community.hotTopics')}
                 </div>
               </div>
               <div 
@@ -953,7 +893,7 @@ export default function HomePage() {
                   }
                 }}
               >
-                查看更多 <RightOutline fontSize={12} />
+                {t('user.viewMore')} <RightOutline fontSize={12} />
               </div>
             </div>
           }
@@ -969,106 +909,8 @@ export default function HomePage() {
         {/* 实时榜单 */}
         {renderRealTimeRanking()}
 
-        {/* 悬浮机器人按钮 - Framer Motion 炫酷版 */}
-        <motion.div 
-          ref={robotRef}
-          className={styles.floatRobotBtn} 
-          onClick={() => router.push('/robot')}
-          style={{
-            x: robotX,
-            y: robotY,
-          }}
-          whileHover={{ 
-            scale: 1.15,
-            rotate: [0, -10, 10, -10, 0],
-            transition: { duration: 0.5 }
-          }}
-          whileTap={{ scale: 0.9 }}
-          initial={{ scale: 0, rotate: -180, opacity: 0 }}
-          animate={{ scale: 1, rotate: 0, opacity: 1 }}
-          transition={{ 
-            type: "spring",
-            stiffness: 200,
-            damping: 15,
-            delay: 0.5
-          }}
-        >
-          {/* 悬浮光晕效果 */}
-          <motion.div 
-            className={styles.robotGlow}
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.5, 0.8, 0.5],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-          
-          {/* 机器人图标 */}
-          <motion.img 
-            className={styles.robotIcon} 
-            src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/AI_Bot.png" 
-            alt="AI助手"
-            animate={{
-              y: [0, -5, 0],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-          
-          {/* 消息气泡 */}
-          <AnimatePresence>
-            {showRobotBubble && (
-              <motion.div 
-                className={styles.robotBubble}
-                initial={{ 
-                  opacity: 0, 
-                  x: 30, 
-                  scale: 0.3,
-                  rotate: 10
-                }}
-                animate={{ 
-                  opacity: 1, 
-                  x: 0, 
-                  scale: 1,
-                  rotate: 0
-                }}
-                exit={{ 
-                  opacity: 0, 
-                  x: 30, 
-                  scale: 0.3,
-                  rotate: -10
-                }}
-                transition={{ 
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 20
-                }}
-              >
-                <motion.div 
-                  className={styles.bubbleContent}
-                  animate={{
-                    y: [0, -3, 0],
-                  }}
-                  transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                >
-                  <BubbleText text="嗨！需要帮助吗？点击我开始对话~" />
-                  <div className={styles.bubbleArrow}></div>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
+        {/* 悬浮机器人按钮 - 使用新的FloatingRobot组件 */}
+        <FloatingRobot />
       </div>
     </Layout>
   );

@@ -1,13 +1,15 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './index.module.less';
 
 export const MoziPCRColChart = ({ data }) => {
+  const { t } = useTranslation();
   if (!data || !Array.isArray(data)) {
     return (
       <div className={styles.PCRBox}>
-        <div className={styles.emptyData}>暂无数据</div>
+        <div className={styles.emptyData}>{t('pcr.empty')}</div>
       </div>
     );
   }
@@ -15,10 +17,10 @@ export const MoziPCRColChart = ({ data }) => {
   return (
     <div className={styles.PCRBox}>
       <div className={styles.PCRDesc}>
-        <div className={styles.PCRDescName}>交易所</div>
+        <div className={styles.PCRDescName}>{t('pcr.chart.exchange')}</div>
         <div className={styles.PCRDescContent}>
-          <div>多</div>
-          <div>空</div>
+          <div>{t('pcr.chart.long')}</div>
+          <div>{t('pcr.chart.short')}</div>
         </div>
       </div>
       <div className={styles.PCRList}>

@@ -1,9 +1,11 @@
 'use client';
 
 import React, { memo, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { jump2Detail } from '../../utils/core';
+import { getAggregationDetail } from '../../api/market';
 import styles from './index.module.less';
 
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
@@ -20,13 +22,19 @@ const CalendarIcon = `${CDN_PREFIX}/icon/find_slices/find-calendar%402x.png`;
  * 尺寸已按照原项目 rpx / 2 转换为 px
  */
 const MarketOverview = memo(() => {
-  const [smartValue, setSmartValue] = useState('暂无配置');
-  const [smartAction, setSmartAction] = useState('去配置');
+  const { t } = useTranslation();
+  const [smartValue, setSmartValue] = useState(t('overview.noConfig'));
+  const [smartAction, setSmartAction] = useState(t('overview.configAlarm'));
   const [smartOnClick, setSmartOnClick] = useState(() => () => {
     if (typeof window !== 'undefined') {
       window.location.href = '/addwarn';
     }
   });
+
+  // 智能盯盘：拆分币种与百分比，并根据涨跌着色
+  const [smartSymbol, setSmartSymbol] = useState('');
+  const [smartPercentText, setSmartPercentText] = useState('');
+  const [smartIsUp, setSmartIsUp] = useState(null); // true=涨, false=跌, null=无变化/未知
 
   // 使用硬编码的默认值（与原项目保持一致）
   const [marketValue, setMarketValue] = useState('$213215亿');
@@ -49,17 +57,26 @@ const MarketOverview = memo(() => {
         
         const token = localStorage.getItem('token');
         if (!token) {
-          setSmartValue('暂无配置');
-          setSmartAction('去配置');
+          setSmartValue(t('overview.noConfig'));
+          setSmartAction(t('overview.configAlarm'));
+          setSmartOnClick(() => () => {
+            if (typeof window !== 'undefined') {
+              window.location.href = '/addwarn';
+            }
+          });
           return;
         }
 
         const myWarnRes = await request({ url: Interface.MY_WARN });
         const groups = myWarnRes?.data || {};
+        const symbolKeys = Object.keys(groups || {}).filter((k) => {
+          const entry = groups[k];
+          return entry && Array.isArray(entry.warnContent);
+        });
         
         let chosenSymbol = null;
         let latestTs = -Infinity;
-        Object.keys(groups || {}).forEach((symbol) => {
+        symbolKeys.forEach((symbol) => {
           const arr = groups[symbol]?.warnContent || [];
           arr.forEach((item, idx) => {
             if (item?.active) {
@@ -74,8 +91,15 @@ const MarketOverview = memo(() => {
           });
         });
 
-        const firstSymbol = chosenSymbol || Object.keys(groups)[0];
+        const firstSymbol = chosenSymbol || symbolKeys[0];
         if (!firstSymbol) {
+          setSmartValue(t('overview.noConfig'));
+          setSmartAction(t('overview.configAlarm'));
+          setSmartOnClick(() => () => {
+            if (typeof window !== 'undefined') {
+              window.location.href = '/addwarn';
+            }
+          });
           return;
         }
 
@@ -93,13 +117,25 @@ const MarketOverview = memo(() => {
           return Number.isFinite(num) ? num : undefined;
         };
 
-        let percent = normalizePercent(priceItem?.priceChangePercent) 
-          || normalizePercent(priceItem?.priceChangePercentage24h)
-          || 0;
+        // 兼容不同接口字段：priceChangePercent、priceChangePercentage24h、priceChangePercentage_24h、price24h、price24h_%、priceChange_24h
+        const percentRaw = (
+          normalizePercent(priceItem?.priceChangePercent) ||
+          normalizePercent(priceItem?.priceChangePercentage24h) ||
+          normalizePercent(priceItem?.priceChangePercentage_24h) ||
+          normalizePercent(priceItem?.price24h) ||
+          normalizePercent(priceItem?.['price24h_%']) ||
+          normalizePercent(priceItem?.priceChange_24h) ||
+          0
+        );
 
-        const percentStr = `${Number(percent).toFixed(2)}%`;
-        setSmartValue(`${firstSymbol} ${percentStr}`);
-        setSmartAction('查看详情');
+        const percentStr = `${Number(percentRaw).toFixed(2)}%`;
+        // 拆分展示：币种 + 着色百分比
+        setSmartSymbol(firstSymbol);
+        setSmartPercentText(percentStr);
+        setSmartIsUp(Number(percentRaw) > 0 ? true : (Number(percentRaw) < 0 ? false : null));
+        // value 仅展示币种文本，百分比在渲染阶段插入并着色
+        setSmartValue(firstSymbol);
+        setSmartAction(t('overview.viewDetails'));
         setSmartOnClick(() => () => jump2Detail(firstSymbol));
       } catch (error) {
         console.error('加载智能盯盘数据失败:', error);
@@ -109,61 +145,81 @@ const MarketOverview = memo(() => {
     loadSmartMonitor();
   }, []);
 
-  // 注释掉接口调用，使用硬编码值（与原项目保持一致）
-  // 原项目也没有调用这些接口，只是显示固定的默认值
-  // useEffect(() => {
-  //   const loadMarketCap = async () => {
-  //     try {
-  //       const res = await request({ url: Interface.COIN_SUM });
-  //       if (res?.data?.totalMarketCap) {
-  //         const value = Number(res.data.totalMarketCap);
-  //         const formatted = value >= 1e12 
-  //           ? `$${(value / 1e12).toFixed(2)}T`
-  //           : value >= 1e9
-  //           ? `$${(value / 1e9).toFixed(2)}B`
-  //           : `$${(value / 1e6).toFixed(2)}M`;
-  //         
-  //         setMarketValue(formatted);
-  //         
-  //         const changePercent = res.data.marketCapChangePercentage24h || 0;
-  //         setMarketChange({
-  //           isPositive: changePercent >= 0,
-  //           value: `${Math.abs(changePercent).toFixed(2)}%`
-  //         });
-  //       }
-  //     } catch (error) {
-  //       console.error('加载市值数据失败:', error);
-  //     }
-  //   };
-  //   loadMarketCap();
-  // }, []);
+  // 接入市场聚合数据，动态填充加密总市值与成交量（含涨跌）
+  useEffect(() => {
+    const pick = (obj, keys) => {
+      for (const k of keys) {
+        if (obj && obj[k] !== undefined && obj[k] !== null && obj[k] !== '') {
+          return obj[k];
+        }
+      }
+      return undefined;
+    };
 
-  // useEffect(() => {
-  //   const loadTurnover = async () => {
-  //     try {
-  //       const res = await request({ url: Interface.COIN_SUM });
-  //       if (res?.data?.totalVolume) {
-  //         const value = Number(res.data.totalVolume);
-  //         const formatted = value >= 1e12 
-  //           ? `$${(value / 1e12).toFixed(2)}T`
-  //           : value >= 1e9
-  //           ? `$${(value / 1e9).toFixed(2)}B`
-  //           : `$${(value / 1e6).toFixed(2)}M`;
-  //         
-  //         setTurnoverValue(formatted);
-  //         
-  //         const changePercent = res.data.volumeChangePercentage24h || 0;
-  //         setTurnoverChange({
-  //           isPositive: changePercent >= 0,
-  //           value: `${Math.abs(changePercent).toFixed(2)}%`
-  //         });
-  //       }
-  //     } catch (error) {
-  //       console.error('加载成交额数据失败:', error);
-  //     }
-  //   };
-  //   loadTurnover();
-  // }, []);
+    const formatYi = (val) => {
+      const num = Number(val);
+      if (!Number.isFinite(num)) return '--';
+      return `$${(num / 1e8).toFixed(2)}亿`;
+    };
+
+    const normalizePercent = (v) => {
+      if (v === undefined || v === null || v === '') return '--';
+      if (typeof v === 'string') {
+        const s = v.trim();
+        if (s.endsWith('%')) return s.replace(/\s/g, '');
+        const n = parseFloat(s);
+        return Number.isFinite(n) ? `${n.toFixed(2)}%` : '--';
+      }
+      if (typeof v === 'number') return `${v.toFixed(2)}%`;
+      return '--';
+    };
+
+    const isPositivePercent = (v) => {
+      if (typeof v === 'string') return !v.trim().startsWith('-');
+      if (typeof v === 'number') return v >= 0;
+      return true;
+    };
+
+    let timer;
+    const loadAggregation = async () => {
+      try {
+        const res = await getAggregationDetail();
+        const data = res?.data || {};
+
+        // 市值（优先使用接口文档字段）
+        const capFmt = pick(data, ['globalMarketCapFmt', 'marketCapFmt', 'totalMarketCapFmt', 'totalMarketCapFormat']);
+        const capNum = pick(data, ['totalMarketCap', 'marketCap']);
+        const capStr = capFmt || (capNum !== undefined ? formatYi(capNum) : undefined) || marketValue;
+        setMarketValue(capStr);
+
+        const capChangeRaw = pick(data, ['marketCapChangePctFmt', 'marketCapChangeFmt', 'marketCapChangePercentage24h', 'marketCapChangePerc']);
+        const capChangeStr = normalizePercent(capChangeRaw);
+        setMarketChange({
+          isPositive: isPositivePercent(capChangeRaw ?? capChangeStr),
+          value: capChangeStr.replace('-', '')
+        });
+
+        // 成交量（优先使用接口文档字段）
+        const volFmt = pick(data, ['globalVolume24hFmt', 'totalVolumeFmt', 'volumeFmt']);
+        const volNum = pick(data, ['totalVolume', 'volume']);
+        const volStr = volFmt || (volNum !== undefined ? formatYi(volNum) : undefined) || turnoverValue;
+        setTurnoverValue(volStr);
+
+        const volChangeRaw = pick(data, ['volumeChangePctFmt', 'volumeChangeFmt', 'volumeChangePercentage24h']);
+        const volChangeStr = normalizePercent(volChangeRaw);
+        setTurnoverChange({
+          isPositive: isPositivePercent(volChangeRaw ?? volChangeStr),
+          value: volChangeStr.replace('-', '')
+        });
+      } catch (error) {
+        console.error('加载市场聚合数据失败:', error);
+      }
+    };
+
+    loadAggregation();
+    timer = setInterval(loadAggregation, 30000);
+    return () => clearInterval(timer);
+  }, []);
 
   // 原项目顺序（完全一致）：加密总市值、成交量、智能盯盘、公告日历
   const cards = [
@@ -171,7 +227,7 @@ const MarketOverview = memo(() => {
       id: 'total-market-cap',
       icon: CoinIcon,
       iconColor: 'green',
-      title: '加密总市值',
+      title: t('overview.totalMarketCap'),
       value: marketValue,
       change: marketChange,
       onClick: () => {}
@@ -180,7 +236,7 @@ const MarketOverview = memo(() => {
       id: 'volume',
       icon: TurnoverIcon,
       iconColor: 'blue',
-      title: '成交量',
+      title: t('overview.volume'),
       value: turnoverValue,
       change: turnoverChange,
       onClick: () => {}
@@ -189,7 +245,7 @@ const MarketOverview = memo(() => {
       id: 'smart-order',
       icon: MarketMonitoringIcon,
       iconColor: 'orange',
-      title: '智能盯盘',
+      title: t('overview.smartMonitor'),
       value: smartValue,
       action: smartAction,
       onClick: smartOnClick
@@ -198,13 +254,13 @@ const MarketOverview = memo(() => {
       id: 'today',
       icon: CalendarIcon,
       iconColor: 'purple',
-      title: '公告日历',
-      value: '今日有更新',
-      desc: '去订阅',
+      title: t('overview.calendar'),
+      value: t('overview.todayUpdated'),
+      desc: t('overview.subscribe'),
       isActionButton: true,
       onClick: () => {
         if (typeof window !== 'undefined') {
-          window.location.href = '/me';
+          window.location.href = '/user';
         }
       }
     }
@@ -232,15 +288,31 @@ const MarketOverview = memo(() => {
                 
                 <div className={styles.cardInfo}>
                   <div className={styles.cardValue}>
-                    <span 
-                      className={`${styles.cardValueText} ${
-                        card.value === '今日有更新' ? styles.todayUpdated : ''
-                      } ${
-                        card.value === '暂无配置' ? styles.cardValuePlaceholder : ''
-                      }`}
-                    >
-                      {card.value}
-                    </span>
+                    {/* 普通卡片直接展示 value；智能盯盘拆分币种+百分比并着色 */}
+                    {card.id !== 'smart-order' ? (
+                      <span 
+                        className={`${styles.cardValueText} ${card.id === 'today' ? styles.todayUpdated : ''} ${card.id === 'smart-order' && !smartSymbol ? styles.cardValuePlaceholder : ''}`}
+                      >
+                        {card.value}
+                      </span>
+                    ) : (
+                      <>
+                        <span className={styles.cardValueText}>{smartSymbol || card.value}</span>
+                        {smartPercentText && (
+                          <span
+                            className={`${styles.cardValuePercentage} ${
+                              smartIsUp === true
+                                ? styles.positive
+                                : smartIsUp === false
+                                  ? styles.negative
+                                  : ''
+                            }`}
+                          >
+                            {smartPercentText}
+                          </span>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
 

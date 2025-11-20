@@ -13,12 +13,14 @@ import AddCollect from '../../components/AddCollect';
 import KlineChart from '../../components/KlineChart';
 import { Loading } from '../../components/Loading';
 import { CaretUpIcon, CaretDownIcon, BellIcon } from '../../components/Icons';
-import { SkeletonPage } from '../../components/Skeleton';
-import { detailPageSkeletonConfig } from '../../components/Skeleton/configs/detailPageConfig';
+import FloatingRobot from '../../components/FloatingRobot';
+// import { SkeletonPage } from '../../components/Skeleton';
+// import { detailPageSkeletonConfig } from '../../components/Skeleton/configs/detailPageConfig';
 import { request } from '../../utils/request';
 import { Interface, LOOPTIME, WS_URL } from '../../utils/constants';
 import { formatNumber, formatPercent, jump2NoTab } from '../../utils/core';
 import { MoziWebSocket } from '../../utils/moziWebSocket';
+import { useTranslation } from 'react-i18next';
 import {
   WS_EVENTS,
   PLATFORMS,
@@ -28,19 +30,11 @@ import {
 } from '../../utils/websocketProtocol';
 import styles from './page.module.less';
 
-// 简单文本组件
-function BubbleText({ text }) {
-  return (
-    <div className={styles.bubbleText}>
-      {text}
-    </div>
-  );
-}
-
 export default function DetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const symbol = searchParams.get('symbol') || '';
+  const { t } = useTranslation();
   
   // 状态定义
   const [coinInfo, setCoinInfo] = useState(null);
@@ -54,6 +48,7 @@ export default function DetailPage() {
   const [loading, setLoading] = useState(true);
   const [klineLoading, setKlineLoading] = useState(true);
   const [marketLoading, setMarketLoading] = useState(true);
+  const [roiLoading, setRoiLoading] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true); // 是否首次加载
   const initialLoadTimeoutRef = useRef(null); // 首次加载超时定时器
   const [activeTab, setActiveTab] = useState('chart');
@@ -73,6 +68,12 @@ export default function DetailPage() {
   const isWsAuthenticatedRef = useRef(false); // WebSocket认证状态
   const isFirstRenderRef = useRef(true); // 是否首次渲染
   const currentKlinePeriodRef = useRef('hour'); // 当前K线时间周期
+  const [roiData, setRoiData] = useState({
+    priceChange1Day: '--',
+    priceChange7Day: '--',
+    priceChange1Month: '--',
+    priceChange1Year: '--'
+  });
   
   // WebSocket连接状态管理
   const wsConnectionStatusRef = useRef('connecting'); // connecting | connected | failed
@@ -80,10 +81,6 @@ export default function DetailPage() {
   const useHttpFallbackRef = useRef(false); // 是否使用HTTP降级
   const pollingTimerRef = useRef(null); // HTTP轮询定时器
   
-  // 机器人交互状态
-  const [showRobotBubble, setShowRobotBubble] = useState(false);
-  const [showRobot, setShowRobot] = useState(false);
-  const robotRef = useRef(null);
   
   // 获取币种信息
   const fetchCoinInfo = async () => {
@@ -103,23 +100,23 @@ export default function DetailPage() {
         
         // 设置详细信息
         const headerInfoLeft = [
-          { name: '24H最高价', value: coinData.high_24h },
-          { name: '24H最低价', value: coinData.low_24h },
-          { name: '稀释市值', value: coinData.fullyDilutedValuation },
-          { name: '24H市值变化', value: coinData.marketCapChange_24h },
-          { name: '24H市值变化百分比', value: coinData.marketCapChangePercentage_24h },
-          { name: '历史最高价时间', value: coinData.athDate },
-          { name: '历史最低价时间', value: coinData.atlDate }
+          { name: t('detail.header.high24h'), value: coinData.high_24h },
+          { name: t('detail.header.low24h'), value: coinData.low_24h },
+          { name: t('detail.header.fdv'), value: coinData.fullyDilutedValuation },
+          { name: t('detail.header.marketCapChange24h'), value: coinData.marketCapChange_24h },
+          { name: t('detail.header.marketCapChangePercent24h'), value: coinData.marketCapChangePercentage_24h },
+          { name: t('detail.header.athDate'), value: coinData.athDate },
+          { name: t('detail.header.atlDate'), value: coinData.atlDate }
         ];
         
         const headerInfoRight = [
-          { name: '24H成交额', value: coinData.totalVolume },
-          { name: '总供应量', value: coinData.totalSupply },
-          { name: '流通供应量', value: coinData.circulatingSupply },
-          { name: '历史最高价', value: coinData.ath },
-          { name: '历史最高价百分比', value: coinData.athChangePercentage },
-          { name: '历史最低价', value: coinData.atl },
-          { name: '历史最低价百分比', value: coinData.atlChangePercentage }
+          { name: t('detail.header.totalVolume24h'), value: coinData.totalVolume },
+          { name: t('detail.header.totalSupply'), value: coinData.totalSupply },
+          { name: t('detail.header.circulatingSupply'), value: coinData.circulatingSupply },
+          { name: t('detail.header.ath'), value: coinData.ath },
+          { name: t('detail.header.athChangePercent'), value: coinData.athChangePercentage },
+          { name: t('detail.header.atl'), value: coinData.atl },
+          { name: t('detail.header.atlChangePercent'), value: coinData.atlChangePercentage }
         ];
         
         setCoinInfoLeft(headerInfoLeft);
@@ -307,6 +304,38 @@ export default function DetailPage() {
       setMarketLoading(false);
     }
   };
+
+  // 获取投资回报率（ROI）数据
+  const fetchROIData = async () => {
+    if (!symbol) return;
+    setRoiLoading(true);
+    try {
+      const response = await request({
+        url: Interface.RETURN_INVESTMENT,
+        data: { symbol }
+      });
+      if (response?.data && response.data.length > 0) {
+        const data = response.data[0];
+        setRoiData({
+          priceChange1Day: data.priceChange1Day ?? '--',
+          priceChange7Day: data.priceChange7Day ?? '--',
+          priceChange1Month: data.priceChange1Month ?? '--',
+          priceChange1Year: data.priceChange1Year ?? '--',
+        });
+      } else {
+        setRoiData({
+          priceChange1Day: '--',
+          priceChange7Day: '--',
+          priceChange1Month: '--',
+          priceChange1Year: '--',
+        });
+      }
+    } catch (error) {
+      console.error('获取投资回报率失败:', error);
+    } finally {
+      setRoiLoading(false);
+    }
+  };
   
   // 滚动到指定区域
   const scrollToSection = (sectionRef) => {
@@ -356,8 +385,8 @@ export default function DetailPage() {
     try {
       const response = await request({
         url: isFavorite ? Interface.CANCEL_OWN : Interface.ADD_OWN,
-        method: 'POST',
-        data: { symbol }
+        method: 'GET',
+        data: { coin: symbol }
       });
       
       if (response?.code === 0) {
@@ -381,7 +410,10 @@ export default function DetailPage() {
   // 跳转到告警页面
   const jump2Alert = () => {
     if (symbol) {
-      jump2NoTab('addwarn', { symbol });
+      const href = `/addwarn?symbol=${encodeURIComponent(symbol)}`;
+      window.location.href = href;
+    } else {
+      window.location.href = '/addwarn';
     }
   };
 
@@ -469,6 +501,7 @@ ${coinInfo.name || symbol} (${symbol})
     fetchCoinInfo();
     fetchKlineData();
     fetchMarketData();
+    fetchROIData();
     
     // 设置轮询
     if (pollingTimerRef.current) {
@@ -479,6 +512,7 @@ ${coinInfo.name || symbol} (${symbol})
         fetchCoinInfo();
         fetchKlineData();
         fetchMarketData();
+        fetchROIData();
       }
     }, LOOPTIME);
   };
@@ -518,6 +552,7 @@ ${coinInfo.name || symbol} (${symbol})
     // 先获取基本信息（coinInfo和市场数据可以用HTTP）
     fetchCoinInfo();
     fetchMarketData();
+    fetchROIData();
     
     // 设置WebSocket连接超时（10秒）
     // 如果10秒内WebSocket未连接成功，则启用HTTP降级
@@ -1092,58 +1127,16 @@ ${coinInfo.name || symbol} (${symbol})
     switchKlineSubscription();
   }, [activeKlineTab, symbol]);
   
-  // 监听滚动位置，控制机器人显示
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
-      const shouldShow = scrollTop > 200;
-      setShowRobot(shouldShow);
-    };
-    
-    // 初始检查
-    handleScroll();
-    
-    // 监听多个滚动事件源
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    document.addEventListener('scroll', handleScroll, { passive: true });
-    
-    // 额外添加轮询检查（兜底方案）
-    const pollInterval = setInterval(() => {
-      handleScroll();
-    }, 500);
-    
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      document.removeEventListener('scroll', handleScroll);
-      clearInterval(pollInterval);
-    };
-  }, []);
-  
-  // 机器人气泡显示逻辑
-  useEffect(() => {
-    if (!showRobot) {
-      setShowRobotBubble(false);
-      return;
-    }
-    
-    const showTimer = setTimeout(() => {
-      setShowRobotBubble(true);
-    }, 2000);
-    
-    const hideTimer = setTimeout(() => {
-      setShowRobotBubble(false);
-    }, 9000);
-    
-    return () => {
-      clearTimeout(showTimer);
-      clearTimeout(hideTimer);
-    };
-  }, [showRobot]);
-  
   // 渲染币种基本信息
   const renderCoinInfo = () => {
     if (!coinInfo) {
-      return <div className={styles.emptyInfo}>币种信息不存在</div>;
+      return (
+        <div className={styles.headerContainer}>
+          <div className={`${styles.headerBox} ${styles.headerLoading}`}>
+            <Loading tip={null} size={24} />
+          </div>
+        </div>
+      );
     }
     
     const isPriceDown = String(coinInfo.priceChange_24h).includes('-');
@@ -1175,7 +1168,7 @@ ${coinInfo.name || symbol} (${symbol})
           </div>
           <div className={styles.right}>
             <div className={styles.marketRank}>No.{coinInfo.marketCapRank}</div>
-            <div className={styles.marketItem}>流通市值 {coinInfo.marketCap}</div>
+            <div className={styles.marketItem}>{t('detail.marketCap')} {coinInfo.marketCap}</div>
           </div>
         </div>
         
@@ -1237,6 +1230,47 @@ ${coinInfo.name || symbol} (${symbol})
       </div>
     );
   };
+
+  // 渲染投资回报率（ROI）
+  const renderROI = () => {
+    if (roiLoading) {
+      return (
+        <MoziCard title={t('detail.tabs.roi')}>
+          <div className={`${styles.box} ${styles.headerLoading}`} style={{ display: 'flex' }}>
+            <Loading tip={t('common.loading')} size={24} />
+          </div>
+        </MoziCard>
+      );
+    }
+
+    const isNegative = (val) => {
+      if (val === '--') return false;
+      const num = parseFloat(String(val).replace('%', ''));
+      return !isNaN(num) && num < 0;
+    };
+
+    const cards = [
+      { value: roiData.priceChange1Day, label: t('detail.roi.daily') },
+      { value: roiData.priceChange7Day, label: t('detail.roi.weekly') },
+      { value: roiData.priceChange1Month, label: t('detail.roi.monthly') },
+      { value: roiData.priceChange1Year, label: t('detail.roi.yearly') },
+    ];
+
+    return (
+      <MoziCard title={t('detail.tabs.roi')}>
+        <div className={styles.roiBox}>
+          <div className={styles.roiGrid}>
+            {cards.map((item, idx) => (
+              <div key={idx} className={`${styles.roiCard} ${isNegative(item.value) ? styles.negative : styles.positive}`}>
+                <div className={styles.roiValue}>{item.value}</div>
+                <div className={styles.roiLabel}>{item.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </MoziCard>
+    );
+  };
   
   // 处理K线时间周期切换
   const handleKlineTabChange = (key) => {
@@ -1266,22 +1300,22 @@ ${coinInfo.name || symbol} (${symbol})
   // 渲染市场数据
   const renderMarket = () => {
     if (marketLoading) {
-      return <Loading />;
+      return <Loading tip={t('common.loading')} />;
     }
     
     if (!marketData || marketData.length === 0) {
       return (
-        <MoziCard title="市场" sumNum={0}>
-          <div className={styles.emptyInfo}>暂无市场数据</div>
+        <MoziCard title={t('detail.tabs.market')} sumNum={0}>
+          <div className={styles.emptyInfo}>{t('detail.empty.market')}</div>
         </MoziCard>
       );
     }
     
     return (
-      <MoziCard title="市场" sumNum={marketData.length}>
+      <MoziCard title={t('detail.tabs.market')} sumNum={marketData.length}>
         <MoziGrid
           length={5}
-          colName={['交易所', '最新价', '24H涨幅', '24H成交量', '24H成交额']}
+          colName={[t('detail.market.exchange'), t('detail.market.lastPrice'), t('detail.market.change24h'), t('detail.market.volume24h'), t('detail.market.amount24h')]}
           gridContent={marketData}
           gridTitleBgColor="transparent"
           columnWidths={['25%', '22%', '20%', '20%', '22%']}
@@ -1290,25 +1324,25 @@ ${coinInfo.name || symbol} (${symbol})
     );
   };
   
-  // 如果是首次加载且数据未完成，显示整页骨架屏
-  if (isInitialLoad && (loading || klineLoading)) {
-    return (
-      <Layout>
-        <NavBar 
-          title={symbol || '币种详情'} 
-          showBack={true}
-          showBorder={false}
-        />
-        <SkeletonPage config={detailPageSkeletonConfig} />
-      </Layout>
-    );
-  }
+  // 【禁用骨架屏】首次加载时不再显示整页骨架屏，仅注释保留
+  // if (isInitialLoad && (loading || klineLoading)) {
+  //   return (
+  //     <Layout>
+  //       <NavBar 
+  //         title={symbol || '币种详情'} 
+  //         showBack={true}
+  //         showBorder={false}
+  //       />
+  //       <SkeletonPage config={detailPageSkeletonConfig} />
+  //     </Layout>
+  //   );
+  // }
   
   return (
     <>
       {/* 顶部导航栏 */}
       <NavBar 
-        title={coinInfo?.name || symbol || '币种详情'} 
+        title={coinInfo?.name || symbol || t('detail.title')} 
         showBack={true}
         showBorder={false}
       />
@@ -1323,9 +1357,9 @@ ${coinInfo.name || symbol} (${symbol})
           activeKey={activeTab} 
           onChange={handleTabChange}
         >
-          <TabBar.Item key="chart" title="图表" />
-          <TabBar.Item key="market" title="市场" />
-          <TabBar.Item key="roi" title="投资回报率" />
+          <TabBar.Item key="chart" title={t('detail.tabs.chart')} />
+          <TabBar.Item key="market" title={t('detail.tabs.market')} />
+          <TabBar.Item key="roi" title={t('detail.tabs.roi')} />
         </TabBar>
         
         {/* K线图表区域 */}
@@ -1344,141 +1378,46 @@ ${coinInfo.name || symbol} (${symbol})
 
         {/* 投资回报率区域 */}
         <div ref={roiRef} className={styles.roiSection}>
-          <MoziCard title="投资回报率" moreDesc="敬请期待">
-            <div style={{ padding: '10px', color: '#999', fontSize: '12px' }}>敬请期待</div>
-          </MoziCard>
+          {renderROI()}
         </div>
         
         {/* 底部操作栏 */}
         <div className={styles.footerList}>
           <div className={styles.footerItem}>
             <AddCollect isOwn={coinInfo?.isSelfSelected || false} symbol={symbol} />
-            <div className={styles.footerText}>加自选</div>
+            <div className={styles.footerText}>{t('detail.actions.favorite')}</div>
           </div>
           <div className={styles.footerItem} onClick={jump2Alert}>
             <div style={{ marginBottom: '2.5px' }}>
               <BellIcon size={20} color="#c7c9cd" />
             </div>
-            <div className={styles.footerText}>告警</div>
+            <div className={styles.footerText}>{t('detail.actions.alert')}</div>
           </div>
           <div className={styles.footerItem} onClick={shareToTelegram}>
             <img 
               className={styles.footerIcon} 
               src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/share.png" 
-              alt="分享"
+              alt={t('detail.actions.share')}
             />
-            <div className={styles.footerText}>分享</div>
+            <div className={styles.footerText}>{t('detail.actions.share')}</div>
           </div>
           <div className={styles.footerItem} onClick={jump2Community}>
             <img 
               className={styles.footerIcon} 
               src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community-no-actived.png" 
-              alt="社区"
+              alt={t('detail.actions.community')}
             />
-            <div className={styles.footerText}>社区</div>
+            <div className={styles.footerText}>{t('detail.actions.community')}</div>
           </div>
         </div>
 
-        {/* 悬浮机器人按钮 - Framer Motion 炫酷版 */}
-        <AnimatePresence>
-          {showRobot && (
-            <motion.div 
-              ref={robotRef}
-              className={styles.floatRobotBtn} 
-              onClick={() => router.push('/robot')}
-              whileHover={{ 
-                scale: 1.15,
-                rotate: [0, -10, 10, -10, 0],
-                transition: { duration: 0.5 }
-              }}
-              whileTap={{ scale: 0.9 }}
-              initial={{ scale: 0, rotate: -180, opacity: 0 }}
-              animate={{ scale: 1, rotate: 0, opacity: 1 }}
-              exit={{ scale: 0, rotate: 180, opacity: 0 }}
-              transition={{ 
-                type: "spring",
-                stiffness: 200,
-                damping: 15
-              }}
-            >
-          {/* 悬浮光晕效果 */}
-          <motion.div 
-            className={styles.robotGlow}
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.5, 0.8, 0.5],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-          
-          {/* 机器人图标 */}
-          <motion.img 
-            className={styles.robotIcon} 
-            src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/AI_Bot.png" 
-            alt="AI助手"
-            animate={{
-              y: [0, -5, 0],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-          
-          {/* 消息气泡 */}
-          <AnimatePresence>
-            {showRobotBubble && (
-              <motion.div 
-                className={styles.robotBubble}
-                initial={{ 
-                  opacity: 0, 
-                  x: 30, 
-                  scale: 0.3,
-                  rotate: 10
-                }}
-                animate={{ 
-                  opacity: 1, 
-                  x: 0, 
-                  scale: 1,
-                  rotate: 0
-                }}
-                exit={{ 
-                  opacity: 0, 
-                  x: 30, 
-                  scale: 0.3,
-                  rotate: -10
-                }}
-                transition={{ 
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 20
-                }}
-              >
-                <motion.div 
-                  className={styles.bubbleContent}
-                  animate={{
-                    y: [0, -3, 0],
-                  }}
-                  transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                >
-                  <BubbleText text="嗨！需要帮助吗？点击我开始对话~" />
-                  <div className={styles.bubbleArrow}></div>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* 悬浮机器人按钮 - 使用新的FloatingRobot组件 */}
+        <FloatingRobot 
+          message={t('detail.robotMessage', { symbol: symbol.toUpperCase() })}
+          targetPath="/robot"
+          autoPlay={true}
+          startDelay={2000}
+        />
       </div>
     </>
   );

@@ -4,8 +4,10 @@
 'use client';
 
 import styles from './index.module.less';
+import { useTranslation } from 'react-i18next';
 
 export default function DistributionChart({ chartData, statistics }) {
+  const { t } = useTranslation();
   // 获取最大值用于计算柱状图高度
   const maxValue = Math.max(...chartData.map(item => item.value));
 
@@ -50,14 +52,14 @@ export default function DistributionChart({ chartData, statistics }) {
       <div className={styles.statisticsRow}>
         <div className={`${styles.statItem} ${styles.up}`}>
           <div className={styles.statIcon}>▲</div>
-          <div className={styles.statText}>上涨 {statistics.up}</div>
+          <div className={styles.statText}>{t('market.up')} {statistics.up}</div>
         </div>
         <div className={`${styles.statItem} ${styles.neutral}`}>
-          <div className={styles.statText}>平 {statistics.neutral}</div>
+          <div className={styles.statText}>{t('market.neutral')} {statistics.neutral}</div>
         </div>
         <div className={`${styles.statItem} ${styles.down}`}>
           <div className={styles.statIcon}>▼</div>
-          <div className={styles.statText}>下跌 {statistics.down}</div>
+          <div className={styles.statText}>{t('market.down')} {statistics.down}</div>
         </div>
       </div>
     </div>

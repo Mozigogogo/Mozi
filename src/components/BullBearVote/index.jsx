@@ -1,0 +1,46 @@
+'use client';
+
+import { useMemo } from 'react';
+import styles from './index.module.less';
+
+export default function BullBearVote({
+  title = '您对今天的BTC有何看法?',
+  participants = 0,
+  selected = null, // 'bull' | 'bear' | null
+  disabled = false,
+  onSelect = () => {}
+}) {
+  const displayCount = useMemo(() => {
+    if (!participants) return '';
+    return `${participants}人参与`;
+  }, [participants]);
+
+  const handleSelect = (type) => {
+    if (disabled) return;
+    if (selected === type) return;
+    onSelect?.(type);
+  };
+
+  return (
+    <div className={`${styles.bbvContainer} ${disabled ? styles.isDisabled : ''}`}>
+      <div className={styles.bbvHeader}>
+        <span className={styles.bbvTitle}>{title}</span>
+        {!!participants && <span className={styles.bbvCount}>{displayCount}</span>}
+      </div>
+      <div className={styles.bbvBody}>
+        <div
+          className={`${styles.bbvBtn} ${styles.bull} ${selected === 'bull' ? styles.active : ''}`}
+          onClick={() => handleSelect('bull')}
+        >
+          <span>看涨</span>
+        </div>
+        <div
+          className={`${styles.bbvBtn} ${styles.bear} ${selected === 'bear' ? styles.active : ''}`}
+          onClick={() => handleSelect('bear')}
+        >
+          <span>看跌</span>
+        </div>
+      </div>
+    </div>
+  );
+}

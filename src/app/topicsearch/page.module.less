@@ -1,122 +1,206 @@
+// 页面容器
+.topicSearchPage {
+  min-height: 100vh;
+  background-color: #EEF0F3;
+
+  // 自定义导航栏
+  .customNavbar {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 180px; /* 增加导航栏高度，让视觉效果更接近原项目 */
+    padding: 10px 16px 10px 16px; /* 减少顶部padding */
+    background-image: url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/home-bg.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: #1a1a1a; // fallback color
+
+    // 网格叠加层
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+      background-size: 15px 15px; /* 30rpx ÷ 2 = 15px */
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    // 顶部导航区域
+    .navbarTop {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      margin-top: 20px; /* 减少顶部间距 */
+      margin-bottom: 25px; /* 增加底部间距，给搜索框更多空间 */
+      z-index: 2;
+    }
+
+    .navbarLeft {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      width: 32px; /* 与NavBar的backBtn对齐 */
+      height: 32px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+
+      &:active {
+        opacity: 0.6;
+      }
+
+      .leftArrowIcon {
+        width: 12px; /* 宽度更小 */
+        height: 16px; /* 高度保持不变 */
+      }
+    }
+
+    .navbarTitle {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 18px; /* 36rpx ÷ 2 = 18px */
+      font-weight: 500;
+      color: #ffffff;
+      z-index: 2;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    .navbarRight {
+      display: flex;
+      align-items: center;
+      gap: 12px; /* 增加图标间距 */
+      z-index: 2;
+
+      .iconButton {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
+        font-size: 20px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+
+        &:active {
+          background-color: rgba(255, 255, 255, 0.25);
+        }
+      }
+    }
+
+    // 搜索框区域
+    .navbarSearch {
+      z-index: 2;
+      margin-top: auto;
+      margin-bottom: 20px; /* 增加搜索框下方间距，给圆角盒子更多空间 */
+    }
+
+    // 搜索框下方的圆角盒子
+    .searchBottomBox {
+      background-color: #EEF0F3;
+      border-top-left-radius: 24px; /* 增加圆角，使其更明显 */
+      border-top-right-radius: 24px;
+      height: 20px; /* 增加高度 */
+      z-index: 2;
+      margin: 0 -16px -10px -16px; /* 负边距使其延伸到导航栏边缘 */
+    }
+  }
+}
+
 .topicSearch {
-  padding: 10px;
-}
+  padding: 0 10px 10px 10px; /* 0 20rpx 20rpx 20rpx ÷ 2 */
+  background-color: #EEF0F3;
 
-.searchBox {
-  background-color: var(--adm-color-background);
-}
-
-.loadingBox {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 20px;
-  padding: 40px 0;
-}
-
-.loadingText {
-  font-size: 14px;
-  color: var(--adm-color-weak);
-}
-
-.topicList {
-  margin-top: 10px;
-}
-
-.topicItem {
-  background: var(--adm-color-white);
-  border-radius: 6px;
-  padding: 8px;
-  margin-bottom: 8px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.topicItem:hover {
-  background-color: var(--adm-color-background);
-}
-
-.topicTitle {
-  font-size: 16px;
-  font-weight: bold;
-  color: var(--adm-color-text);
-  margin-bottom: 4px;
-}
-
-.topicDesc {
-  font-size: 14px;
-  color: var(--adm-color-text-secondary);
-  margin-bottom: 6px;
-  line-height: 1.4;
-}
-
-.topicMeta {
-  font-size: 12px;
-  color: var(--adm-color-weak);
-}
-
-.topicTime {
-  margin-right: 10px;
-}
-
-.loadingMore {
-  display: flex;
-  justify-content: center;
-  padding: 10px 0;
-  font-size: 12px;
-  color: var(--adm-color-weak);
-}
-
-/* 暗色模式适配 */
-@media (prefers-color-scheme: dark) {
-  .topicSearch {
-    background-color: #000;
+  .loadingBox {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    padding: 20px 0;
   }
-  
-  .topicItem {
-    background-color: #1a1a1a;
-    border-color: #333;
-  }
-  
-  .topicItem:hover {
-    background-color: #2a2a2a;
-  }
-  
-  .topicTitle {
-    color: #fff;
-  }
-  
-  .topicDesc {
-    color: #999;
-  }
-  
-  .topicMeta,
-  .loadingText,
-  .loadingMore {
-    color: #666;
-  }
-}
 
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .topicSearch {
-    padding: 8px;
-  }
-  
-  .topicItem {
-    padding: 12px;
-    margin-bottom: 12px;
-  }
-  
-  .topicTitle {
-    font-size: 15px;
-  }
-  
-  .topicDesc {
-    font-size: 13px;
-  }
-  
-  .topicMeta {
-    font-size: 11px;
+  .topicList {
+    margin-top: 10px; /* 20rpx ÷ 2 = 10px */
+
+    .topicItem {
+      background: #fff;
+      border-radius: 10px; /* 20rpx ÷ 2 = 10px */
+      padding: 8px; /* 16rpx ÷ 2 = 8px */
+      margin-bottom: 8px; /* 16rpx ÷ 2 = 8px */
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: background-color 0.2s;
+
+      &:active {
+        background-color: #f5f5f5;
+      }
+
+      .topicContent {
+        flex: 1;
+        
+        .topicTitle {
+          font-size: 16px; /* 32rpx ÷ 2 = 16px */
+          font-weight: bold;
+          color: #333;
+          margin-bottom: 4px; /* 8rpx ÷ 2 = 4px */
+        }
+
+        .topicDesc {
+          font-size: 14px; /* 28rpx ÷ 2 = 14px */
+          color: #9A9DA0;
+          margin-bottom: 6px; /* 12rpx ÷ 2 = 6px */
+        }
+
+        .topicMeta {
+          font-size: 12px; /* 24rpx ÷ 2 = 12px */
+          color: #999;
+
+          .topicTime {
+            margin-right: 10px; /* 20rpx ÷ 2 = 10px */
+            color: #9A9DA0;
+          }
+        }
+      }
+
+      .topicHot {
+        flex-shrink: 0;
+        margin-left: 8px; /* 16rpx ÷ 2 = 8px */
+        display: flex;
+        align-items: center;
+
+        .hotIcon {
+          width: 12.5px; /* 25rpx ÷ 2 = 12.5px */
+          height: 12.5px;
+        }
+      }
+    }
+
+    .loadingMore {
+      display: flex;
+      justify-content: center;
+      padding: 10px 0; /* 20rpx ÷ 2 = 10px */
+    }
+    
+    .emptyBox {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 40px 20px;
+      color: #999;
+      font-size: 14px;
+    }
   }
 }

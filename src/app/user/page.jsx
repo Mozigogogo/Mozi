@@ -24,7 +24,7 @@ export default function UserPage() {
   const { t, i18n } = useTranslation();
   const [userInfo, setUserInfo] = useState({
     avatar: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png',
-    nickname: '微信用户',
+    nickname: t('user.defaultNickname'),
     level: 1,
     isVip: false,
     isLogin: false
@@ -49,6 +49,7 @@ export default function UserPage() {
   const [avatarFile, setAvatarFile] = useState(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginModalMode, setLoginModalMode] = useState('login');
+  const [unreadCount, setUnreadCount] = useState(0);
   
   // 简单的 Cookie 读写（仅前端可见；敏感 token 建议服务端 HttpOnly）
   const getCookie = (name) => {
@@ -86,7 +87,9 @@ export default function UserPage() {
       if (ui) {
         try {
           const parsed = JSON.parse(ui);
-          setUserInfo((prev) => ({ ...prev, nickname: parsed.nickName || prev.nickname, avatar: parsed.avatar || prev.avatar }));
+          const parsedNick = (parsed.nickName || '').trim();
+          const displayNick = parsedNick.length > 0 ? parsedNick : t('user.defaultNickname');
+          setUserInfo((prev) => ({ ...prev, nickname: displayNick, avatar: parsed.avatar || prev.avatar }));
         } catch {}
       }
     };
@@ -109,7 +112,7 @@ export default function UserPage() {
     try {
       const currentAddress = address || getCookie('wallet_address');
       if (!currentAddress) {
-        Toast.show({ content: '请先连接钱包', position: 'bottom' });
+        Toast.show({ content: t('user.connectWalletFirst'), position: 'bottom' });
         return;
       }
       const nonce = Math.random().toString(36).slice(2) + Date.now();
@@ -134,9 +137,9 @@ export default function UserPage() {
       } catch {}
 
       setUserInfo((prev) => ({ ...prev, isLogin: true }));
-      Toast.show({ content: '登录成功（已签名）', position: 'bottom' });
+      Toast.show({ content: t('user.loginSuccess'), position: 'bottom' });
     } catch (e) {
-      Toast.show({ content: '签名被取消或失败', position: 'bottom' });
+      Toast.show({ content: t('user.signatureCancelled'), position: 'bottom' });
     } finally {
       signingRef.current = false;
     }
@@ -161,11 +164,12 @@ export default function UserPage() {
     try {
       localStorage.removeItem('token');
       localStorage.removeItem('userInfo');
+      localStorage.removeItem('userId');
       delCookie('wallet_address');
       delCookie('wallet_chainId');
     } catch {}
     setUserInfo((prev) => ({ ...prev, isLogin: false }));
-    Toast.show({ content: '退出成功', position: 'bottom' });
+    Toast.show({ content: t('user.logoutSuccess'), position: 'bottom' });
   };
 
   // 开通会员
@@ -182,26 +186,47 @@ export default function UserPage() {
   };
 
   const handleShare = () => {
-    try {
-      if (navigator.share) {
-        navigator.share({
-          title: 'Mozi行情助手',
-          text: '专业的加密数据分析智能平台',
-          url: window.location.origin,
-        });
-      } else {
-        navigator.clipboard.writeText(window.location.origin).then(() => {
-          Toast.show({ content: '链接已复制到剪贴板', position: 'bottom' });
-        }).catch(() => {
-          Toast.show({ content: '分享失败', position: 'bottom' });
-        });
+    const shareUrl = window.location.origin;
+    const shareText = 'Mozi行情助手 - 专业的加密数据分析智能平台';
+    
+    // 检查是否在Telegram环境中
+    const isTelegram = window.Telegram?.WebApp?.initData;
+    
+    if (isTelegram && window.Telegram?.WebApp) {
+      // 使用Telegram Web App API分享
+      try {
+        window.Telegram.WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`);
+      } catch (error) {
+        console.error('Telegram分享失败:', error);
+        // 降级到Telegram分享链接
+        window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`, '_blank');
       }
-    } catch {}
+    } else {
+      // 非Telegram环境，使用Telegram分享链接
+      window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`, '_blank');
+    }
   };
+
+  // 未读通知数量
+  useEffect(() => {
+    let timer;
+    const fetchUnread = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) { setUnreadCount(0); return; }
+        const res = await request({ url: Interface.GET_UNREAD_COUNT });
+        const count = res?.data?.count ?? res?.data ?? 0;
+        if (typeof count === 'number') setUnreadCount(count);
+      } catch {}
+    };
+    fetchUnread();
+    timer = setInterval(fetchUnread, 30000);
+    return () => clearInterval(timer);
+  }, []);
 
   const score = () => {
     if (!userInfo.isLogin) {
-      Toast.show({ content: '请先登录', position: 'bottom' });
+      Toast.show({ content: t('user.pleaseLogin'), position: 'bottom' });
       return;
     }
     setPopVis(true);
@@ -218,7 +243,7 @@ export default function UserPage() {
       setPopVis(true);
       setPopType('contact');
     } else {
-      Toast.show({ content: '敬请期待', position: 'bottom' });
+      Toast.show({ content: t('user.comingSoon'), position: 'bottom' });
     }
   };
 
@@ -249,21 +274,21 @@ export default function UserPage() {
         data: { score: reportScore, content: scoreInputRef.current },
       });
       if (res?.data?.isSuccess) {
-        Toast.show({ content: '反馈成功', position: 'bottom' });
+        Toast.show({ content: t('user.feedbackSuccess'), position: 'bottom' });
       } else {
-        Toast.show({ content: '反馈失败', position: 'bottom' });
+        Toast.show({ content: t('user.feedbackFailed'), position: 'bottom' });
       }
     } catch (e) {
-      Toast.show({ content: '反馈失败', position: 'bottom' });
+      Toast.show({ content: t('user.feedbackFailed'), position: 'bottom' });
     }
     setPopVis(false);
   };
 
   const copyToClipboard = (value) => {
     navigator.clipboard.writeText(value).then(() => {
-      Toast.show({ content: '复制成功', position: 'bottom' });
+      Toast.show({ content: t('user.copySuccess'), position: 'bottom' });
     }).catch(() => {
-      Toast.show({ content: '复制失败', position: 'bottom' });
+      Toast.show({ content: t('user.copyFailed'), position: 'bottom' });
     });
   };
 
@@ -288,8 +313,8 @@ export default function UserPage() {
 
   // 打开编辑个人资料弹窗
   const openEditProfile = () => {
-    // 如果昵称是"微信用户"或空，则不填充
-    const nickname = (userInfo.nickname && userInfo.nickname !== '微信用户') ? userInfo.nickname : '';
+    // 如果昵称为空或为默认值，则不预填
+    const nickname = (userInfo.nickname && userInfo.nickname !== t('user.defaultNickname')) ? userInfo.nickname : '';
     setEditNickname(nickname);
     setEditAvatar(userInfo.avatar || DEFAULT_AVATAR);
     setAvatarFile(null);
@@ -346,7 +371,7 @@ export default function UserPage() {
       if (window.__openAppKit) {
         window.__openAppKit();
       } else {
-        Toast.show({ content: '钱包组件尚未就绪', position: 'bottom' });
+        Toast.show({ content: t('user.walletNotReady'), position: 'bottom' });
       }
       return;
     }
@@ -426,7 +451,7 @@ export default function UserPage() {
   const footerList = [
     {
       key: 'language',
-      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/skin%402x.png'} alt="语言设置" style={{ width: 22, height: 22 }} />),
+      icon: (<img src={'/icons/zh-en.svg'} alt="语言设置" style={{ width: 22, height: 22 }} />),
       text: t('user.language'),
       extra: i18n.language === 'zh' ? '中文' : 'English',
       callback: () => changeLanguage()
@@ -436,7 +461,7 @@ export default function UserPage() {
       icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/skin%402x.png'} alt="皮肤中心" style={{ width: 22, height: 22 }} />),
       text: t('user.skinCenter'),
       extra: '',
-      callback: () => Toast.show({ content: t('user.comingSoon'), position: 'bottom' })
+      callback: () => { window.location.href = '/theme'; }
     },
     {
       key: 'contact',
@@ -512,20 +537,20 @@ export default function UserPage() {
         {showSecondaryActions && (
           <div className={styles.secondaryActions}>
             <div className={styles.actionRow}>
-              <div className={styles.actionButton} onClick={() => Toast.show({ content: t('user.comingSoon'), position: 'bottom' })}>
+              <div className={styles.actionButton} onClick={() => (window.location.href = '/mycomments')}>
                 <div className={styles.actionIcon}>
                   <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/comment%402x.png'} alt="我的评论" />
                 </div>
                 <div className={styles.actionText}>{t('user.myComments')}</div>
               </div>
-              <div className={styles.actionButton} onClick={() => Toast.show({ content: t('user.comingSoon'), position: 'bottom' })}>
+              <div className={styles.actionButton} onClick={() => (window.location.href = '/mynotices')}>
                 <div className={styles.actionIcon} style={{ position: 'relative' }}>
                   <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/mail%402x.png'} alt="消息通知" />
-                  <div className={styles.badge}>3</div>
+                  {unreadCount > 0 && <div className={styles.badge}>{unreadCount > 99 ? '99+' : unreadCount}</div>}
                 </div>
                 <div className={styles.actionText}>{t('user.messageNotification')}</div>
               </div>
-              <div className={styles.actionButton} onClick={() => Toast.show({ content: t('user.comingSoon'), position: 'bottom' })}>
+              <div className={styles.actionButton} onClick={() => (window.location.href = '/mylikes')}>
                 <div className={styles.actionIcon}>
                   <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/like%402x.png'} alt="我的点赞" />
                 </div>

@@ -62,6 +62,10 @@ export const Interface = {
   NEW_COIN: '/discovery/newsymbolrank',
   // 自选
   COIN_SELF: '/selfselect/all',
+  // 添加自选
+  ADD_OWN: '/selfselect/add',
+  // 取消自选
+  CANCEL_OWN: '/selfselect/cancel',
 
   // 详情页
   // 币种信息
@@ -72,6 +76,8 @@ export const Interface = {
   COIN_MARKET: '/detail/exchangeprice',
   // AI建议
   AI_COIN: '/detail/kline/ai',
+  // 投资回报率（ROI）
+  RETURN_INVESTMENT: '/easy/getReturnInvestment',
 
   // 搜索页
   // 币种是否有效
@@ -124,10 +130,22 @@ export const Interface = {
   USER_INFO: '/user/info',
   // 更新用户信息
   UPDATE_USER_INFO: '/user/info',
+  // 编辑用户主题
+  EDIT_USER_THEME: '/user/editUserTheme',
   // 用户帖子列表
   USER_POSTS: '/user/posts',
   // 评论
   MOZI_COMMENT: '/user/feedback',
+  // 我的评论列表
+  GET_MY_COMMENTS: '/easy/getMyComments',
+  // 我的点赞列表
+  GET_MY_LIKES: '/easy/getMyLikes',
+  // 我的通知列表
+  GET_MY_NOTICES: '/easy/getMyMsgAndNotices',
+  // 未读通知数量
+  GET_UNREAD_COUNT: '/easy/getUnreadCount',
+  // 标记通知为已读
+  MARK_NOTICES_READ: '/easy/markNoticesRead',
 
   // 告警
   // 添加告警
@@ -192,6 +210,14 @@ export const Interface = {
   POSTS_LIKE: '/posts/like',
   // 创建评论
   COMMENTS_NEW: '/comments/new',
+  // 评论点赞
+  COMMENTS_LIKE: '/comments/like/{id}',
+  // 评论取消点赞
+  COMMENTS_UNLIKE: '/comments/unlike/{id}',
+  // 删除评论
+  COMMENTS_DELETE: '/comments/delete/{id}',
+  // 回复评论
+  COMMENTS_REPLIES: '/comments/replies',
   // 更新帖子
   POSTS_UPDATE: '/posts/update',
   // 删除帖子
@@ -202,12 +228,20 @@ export const Interface = {
   TOPIC_POSTS: '/posts/topic',
   // 创建投票
   CREATE_VOTE: '/api/vote/create',
+  // 上传文件
+  UPLOAD_FILE: '/easy/uploadFile',
 
   // 是否展示全部内容
   SHOW_ALL: '/switch/status',
   
   // 涨跌分布
   MARKET_DISTRIBUTION: '/easy/getGainAndLossDistDa',
+  
+  // 添加告警
+  ADD_ALARM: '/alarm/add',
+  
+  // 删除告警
+  DELETE_ALARM: '/alarm/delete',
 };
 
 // 业务中使用到的联系邮箱和链上地址（打包报错缺失导出）

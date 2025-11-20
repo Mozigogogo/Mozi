@@ -18,7 +18,8 @@
     "edit": "Edit",
     "delete": "Delete",
     "share": "Share",
-    "more": "More"
+    "more": "More",
+    "updated": "Updated"
   },
   "home": {
     "title": "Mozi - Crypto Market Community",
@@ -28,7 +29,35 @@
     "derivatives": "Derivatives",
     "rankList": "Rank List",
     "opportunities": "Opportunities",
-    "notice": "Welcome to Mozi Crypto Market Community"
+    "notice": "Welcome to Mozi Crypto Market Community",
+    "aiNotice": "AI analyzes trends—set precise alerts.",
+    "searchPlaceholder": "Enter the coin to search",
+    "noTopics": "No topics",
+    "discussions": "discussions",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "daysAgo": "{{days}} days ago",
+    "rank": {
+      "self": "Favorites",
+      "up": "Gainers",
+      "down": "Losers",
+      "wave": "Volatility",
+      "volume": "Volume",
+      "new": "New Coins",
+      "surge": "Surging"
+    },
+    "columns": {
+      "symbol": "Symbol",
+      "lastPrice": "Last Price",
+      "lastVolume": "24h Volume",
+      "change24h": "24h Change",
+      "hotIndex": "Hot Index",
+      "contract": "Contract",
+      "section": "Sector",
+      "addFavorites": "Favorite",
+      "addMonitor": "Monitor"
+    },
+    "robotBubble": "Welcome to Mozi, how can I help you?"
   },
   "market": {
     "price": "Price",
@@ -37,10 +66,81 @@
     "marketCap": "Market Cap",
     "high24h": "24h High",
     "low24h": "24h Low",
-    "fundingRate": "Funding Rate",
-    "positionSize": "Position Size",
-    "putCallRatio": "Put/Call Ratio",
-    "tradeVolume": "Trade Volume"
+    "fundingRate": "Funding",
+    "positionSize": "Position",
+    "putCallRatio": "P/C Ratio",
+    "tradeVolume": "Volume",
+    "marketDistribution": "Change Distribution",
+    "up": "Up",
+    "neutral": "Neutral",
+    "down": "Down",
+    "fearGreed": {
+      "title": "Fear & Greed Index",
+      "tooltipLowTitle": "Lower value (near 0)",
+      "tooltipLow": "More fear; market may be undervalued.",
+      "tooltipHighTitle": "Higher value (near 100)",
+      "tooltipHigh": "More greed; market may be overheated.",
+      "extremeFear": "Extreme Fear",
+      "fear": "Fear",
+      "neutral": "Neutral",
+      "greed": "Greed",
+      "extremeGreed": "Extreme Greed"
+    },
+    "btcMarketShare": {
+      "title": "BTC Market Share",
+      "tooltipUpTitle": "Rising share",
+      "tooltipUp": "Funds concentrate on BTC; market turns conservative.",
+      "tooltipDownTitle": "Falling share",
+      "tooltipDown": "Funds flow to altcoins; market more active."
+    }
+  },
+  "discover": {
+    "tabs": {
+      "self": "Favorites",
+      "market": "Market",
+      "rank": "Rankings"
+    },
+    "columns": {
+      "symbolMarketCap": "Symbol / Mkt Cap",
+      "priceWithChange": "Price / 24h ",
+      "gain": "Gainers",
+      "loss": "Losers",
+      "volatility": "Volatility",
+      "turnover": "Turnover"
+    },
+    "exchangeRank": "Exchange Rankings",
+    "exchange": {
+      "columns": {
+        "exchange": "Exchange",
+        "volume24h": "Volume(24h)",
+        "markets": "Markets",
+        "coins": "Coins"
+      },
+      "types": {
+        "spot": "Spot",
+        "futures": "Derivatives"
+      }
+    },
+    "range": {
+      "live": "Live",
+      "1d": "1d",
+      "1w": "1w",
+      "1m": "1m",
+      "1y": "1y"
+    },
+    "addFavoriteButton": "Add Favorite",
+    "loadFinished": "All loaded"
+  },
+  "overview": {
+    "totalMarketCap": "Market Cap",
+    "volume": "Volume",
+    "smartMonitor": "Alerts",
+    "calendar": "Calendar",
+    "todayUpdated": "Updated",
+    "subscribe": "Subscribe",
+    "noConfig": "No alerts",
+    "configAlarm": "Set Alerts",
+    "viewDetails": "View"
   },
   "user": {
     "login": "Login",
@@ -112,7 +212,41 @@
     "avatarTooLarge": "Avatar file is too large, please select an image smaller than 2MB",
     "saving": "Saving...",
     "saveSuccess": "Saved successfully",
-    "saveFailed": "Save failed"
+    "saveFailed": "Save failed",
+    "defaultNickname": "User",
+    "wechatUser": "Telegram User"
+  },
+  "auth": {
+    "email": "Email",
+    "emailPlaceholder": "Enter email",
+    "password": "Password",
+    "passwordPlaceholder": "Enter password (min 6)",
+    "inviteOptional": "Invite Code (optional)",
+    "invitePlaceholder": "Enter invite code",
+    "verificationCode": "Verification Code",
+    "verificationPlaceholder": "Enter code",
+    "getCode": "Get Code",
+    "noAccount": "No account?",
+    "hasAccount": "Already have an account?",
+    "registerNow": "Register now",
+    "loginNow": "Login now",
+    "or": "or",
+    "walletLogin": "Login with Wallet",
+    "notLoggedIn": "You are not logged in",
+    "loginRegister": "Login / Register",
+    "loginBenefits": "Login to access more features",
+    "fillAll": "Please fill in all fields",
+    "invalidEmail": "Enter a valid email",
+    "passwordTooShort": "Password must be at least 6 characters",
+    "loginSuccess": "Login successful",
+    "loginFailed": "Login failed",
+    "loginFailedRetry": "Login failed, please try again later",
+    "registerSuccess": "Registered, please login",
+    "registerFailed": "Registration failed",
+    "registerFailedRetry": "Registration failed, please try again later",
+    "codeSent": "Verification code sent",
+    "sendFailed": "Send failed",
+    "sendFailedRetry": "Failed to send code, please try again later"
   },
   "community": {
     "title": "Community",
@@ -122,7 +256,24 @@
     "reply": "Reply",
     "topic": "Topic",
     "hotTopics": "Hot Topics",
-    "trending": "Trending"
+    "trending": "Trending",
+    "communityRules": {
+      "title": "Community Guidelines",
+      "greeting": "Dear User,",
+      "welcome": "Welcome to Mozi community. We aim to build a friendly, interesting, and valuable Web3 community where every user can learn healthy Web3 concepts and experience a warm and friendly community atmosphere.",
+      "followRules": "Therefore, we hope every user can follow these community guidelines:",
+      "respectOthers": "Respect others - Do not engage in personal attacks, insults, or malicious spamming based on appearance, region, beliefs, or other unfriendly behaviors;",
+      "respectFacts": "Respect facts - Do not post false statements;",
+      "respectPlatform": "Respect the platform - Do not post malicious marketing content or spam.",
+      "closing": "A friendly and warm community needs everyone's protection. Thank you~",
+      "confirmButton": "Got it"
+    },
+    "askTips": {
+      "title": "How to ask better questions?",
+      "standardAccurate": "Be clear and accurate: Use proper grammar and punctuation",
+      "discussionValue": "Add value: Encourage professional, practical, and creative discussions",
+      "objectiveTrue": "Be objective: Present problems and facts rationally"
+    }
   },
   "warning": {
     "addWarning": "Add Warning",
@@ -153,9 +304,45 @@
     "forbidden": "Access forbidden",
     "unknown": "Unknown error"
   },
+  "robot": {
+    "title": "AI Assistant",
+    "subtitle": "Smart Q&A · Quick Response",
+    "connecting": "Connecting...",
+    "conversationId": "Conversation ID",
+    "loadingHistory": "Loading conversation history...",
+    "aiAlt": "AI",
+    "tokens": "Consumed {{tokens}} tokens",
+    "regenerate": "Regenerate",
+    "regenerateAlt": "Regenerate",
+    "me": "Me",
+    "suggestedTitle": "You might also ask:",
+    "inputPlaceholder": "Enter your question...",
+    "send": "Send",
+    "stopAlt": "Stop generating",
+    "copy": "Copy",
+    "copied": "Copied",
+    "sendFailed": "Send failed, please retry",
+    "wsNotConnected": "WebSocket not connected, please refresh",
+    "genericError": "Sorry, something went wrong. Please try later",
+    "welcome": "Hello, I'm your AI assistant! I can help analyze crypto markets and answer investment questions. How can I help you?"
+  },
   "language": {
     "zh": "简体中文",
     "en": "English"
+  },
+  "search": {
+    "coins": "Coins",
+    "inputPrompt": "Enter the coin you want to search",
+    "invalidCoin": "Please enter a valid coin",
+    "relatedSections": "Related Sections",
+    "tradeablePlatforms": "Tradeable {{coin}} Platforms",
+    "platform": "Platform",
+    "chain": "Chain",
+    "withdrawFee": "Withdraw Fee",
+    "withdrawMin": "Min Wdrl",
+    "pairs": "Pairs",
+    "spotPairs": "Spot",
+    "derivativePairs": "Derivatives"
   },
   "calendar": {
     "title": "Exchange Announcements",
@@ -212,5 +399,132 @@
     "note2": "If your referral purchases membership, you will receive points and a 20% commission rebate.",
     "note3": "The referral is valid only if the invited user enters the invitation code",
     "completed": "Completed"
+  }
+  ,
+  "pcr": {
+    "title": "Long/Short Ratio",
+    "coin": "Coin",
+    "tabs": {
+      "activeBuySell": "Buy/Sell Ratio",
+      "accountRatio": "Accounts Long/Short",
+      "topAccountRatio": "Top Accounts Long/Short",
+      "holdingsRatio": "Holdings Long/Short",
+      "topHoldingsRatio": "Top Accounts Holdings"
+    },
+    "section": {
+      "current": "Current Ratio",
+      "history": "Historical Ratio"
+    },
+    "chart": {
+      "exchange": "Exchange",
+      "long": "Long",
+      "short": "Short",
+      "ratio": "Long/Short Ratio"
+    },
+    "empty": "No Data",
+    "loadFailed": "Data load failed",
+    "fetchFailed": "Data fetch failed",
+    "noChartData": "No chart data"
+  }
+  ,
+  "positionsize": {
+    "title": "Open Interest",
+    "coin": "Coin",
+    "section": {
+      "current": "Current Open Interest",
+      "history": "Historical Open Interest"
+    },
+    "chart": {
+      "holdings": "Open Interest",
+      "price": "Price"
+    },
+    "loadFailed": "Data load failed",
+    "fetchFailed": "Data fetch failed"
+  }
+  ,
+  "fundingrate": {
+    "title": "Funding Rate",
+    "tabs": {
+      "current": "Current Rate",
+      "history": "Historical Rate"
+    },
+    "section": {
+      "current": "Current Rate",
+      "history": "Historical Rate"
+    },
+    "coin": "Coin",
+    "viewMore": "View More",
+    "fold": "Fold",
+    "empty": "No Data",
+    "select": "Please Select",
+    "unit": {
+      "m": "M",
+      "k": "K"
+    }
+  }
+  ,
+  "tradevol": {
+    "title": "Trading Amount",
+    "coin": "Coin",
+    "section": {
+      "current": "Current Amount",
+      "history": "Historical Amount"
+    },
+    "chart": {
+      "volume": "Volume",
+      "amount": "Amount",
+      "price": "Price"
+    },
+    "loadFailed": "Data load failed",
+    "fetchFailed": "Data fetch failed"
+  }
+  ,
+  "detail": {
+    "title": "Coin Detail",
+    "marketCap": "Market Cap",
+    "tabs": {
+      "chart": "Chart",
+      "market": "Market",
+      "roi": "ROI"
+    },
+    "empty": {
+      "market": "No market data"
+    },
+    "market": {
+      "exchange": "Exchange",
+      "lastPrice": "Last Price",
+      "change24h": "24h Change",
+      "volume24h": "24h Volume",
+      "amount24h": "24h Amount"
+    },
+    "actions": {
+      "favorite": "Favorite",
+      "alert": "Alert",
+      "share": "Share",
+      "community": "Community"
+    },
+    "roi": {
+      "daily": "Daily Return",
+      "weekly": "Weekly Return",
+      "monthly": "Monthly Return",
+      "yearly": "Yearly Return"
+    },
+    "header": {
+      "high24h": "24h High",
+      "low24h": "24h Low",
+      "fdv": "Fully Diluted Valuation",
+      "marketCapChange24h": "24h MktCap Change",
+      "marketCapChangePercent24h": "24h MktCap %",
+      "athDate": "ATH Date",
+      "atlDate": "ATL Date",
+      "totalVolume24h": "24h Volume",
+      "totalSupply": "Total Supply",
+      "circulatingSupply": "Circulating Supply",
+      "ath": "ATH",
+      "athChangePercent": "ATH %",
+      "atl": "ATL",
+      "atlChangePercent": "ATL %"
+    },
+    "robotBubble": "Welcome to Mozi, how can I help you?"
   }
 }
