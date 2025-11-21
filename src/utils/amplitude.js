@@ -135,7 +135,8 @@ export const HomeEvents = {
   RANK_TAB_SWITCHED: 'Home_Rank_Tab_Switched',
   SEARCH_CLICKED: 'Home_Search_Clicked',
   BANNER_CLICKED: 'Home_Banner_Clicked',
-  REFRESH_TRIGGERED: 'Home_Refresh_Triggered'
+  REFRESH_TRIGGERED: 'Home_Refresh_Triggered',
+  AI_CLICKED: 'Home_AI_Clicked'
 };
 
 /**
@@ -184,6 +185,17 @@ export const ProfileEvents = {
   LOGOUT_CLICKED: 'Profile_Logout_Clicked'
 };
 
+/**
+ * AI 助手事件
+ */
+export const AIEvents = {
+  PAGE_VIEWED: 'AI_Page_Viewed',
+  QUESTION_SENT: 'AI_Question_Sent',
+  RESPONSE_RECEIVED: 'AI_Response_Received',
+  BACK_CLICKED: 'AI_Back_Clicked',
+  INPUT_FOCUSED: 'AI_Input_Focused'
+};
+
 export default {
   initAmplitude,
   trackEvent,
@@ -193,5 +205,6 @@ export default {
   HomeEvents,
   FindEvents,
   CommunityEvents,
-  ProfileEvents
+  ProfileEvents,
+  AIEvents
 };
