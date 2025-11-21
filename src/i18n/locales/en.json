@@ -57,7 +57,7 @@
       "addFavorites": "Favorite",
       "addMonitor": "Monitor"
     },
-    "robotBubble": "Welcome to Mozi, how can I help you?"
+    "robotBubble": "Welcome to Mozi, what can I help you?"
   },
   "market": {
     "price": "Price",
@@ -152,6 +152,8 @@
     "settings": "Settings",
     "language": "Language",
     "selectLanguage": "Select Language",
+    "subscriptionEnabled": "Subscription enabled",
+    "subscriptionDisabled": "Subscription disabled",
     "theme": "Theme",
     "skinCenter": "Skin Center",
     "notifications": "Notifications",
@@ -257,6 +259,56 @@
     "topic": "Topic",
     "hotTopics": "Hot Topics",
     "trending": "Trending",
+    "tabs": {
+      "recommend": "Recommended",
+      "hot": "Hot Topics",
+      "all": "All",
+      "currency": "Coins",
+      "question": "Q&A",
+      "discovery": "Discover Coins"
+    },
+    "actions": {
+      "searchTopic": "Search Topics",
+      "createTopic": "Create Topic",
+      "searchCoin": "Search Coins",
+      "more": "More",
+      "share": "Share",
+      "loading": "Loading...",
+      "noMorePosts": "No more posts",
+      "noPosts": "No posts yet",
+      "noDescription": "No description",
+      "reachedBottom": "Reached the bottom",
+      "noMoreContent": "No more content",
+      "enterCoinName": "Enter coin name"
+    },
+    "messages": {
+      "createTopicSuccess": "Topic created successfully",
+      "createTopicFailed": "Failed to create topic, please try again",
+      "createFailed": "Creation failed",
+      "searchCoinFailed": "Failed to search coins",
+      "enterTopicName": "Please enter topic name"
+    },
+    "topicCreate": {
+      "topicName": "Topic Name",
+      "topicDescription": "Topic Description",
+      "topicNamePlaceholder": "Enter topic name (required)",
+      "topicDescriptionPlaceholder": "Enter topic description (optional, max 60 characters)"
+    },
+    "noCoinFound": "No coins found",
+    "coinInfo": {
+      "coinName": "Coin Name: ",
+      "votingQuestion": "What's your view on {{coin}} today?",
+      "sector": "Sector: "
+    },
+    "voting": {
+      "bullish": "Bullish",
+      "bearish": "Bearish",
+      "participants": "{{count}} participants"
+    },
+    "questionButtons": {
+      "askQuestion": "Ask Question",
+      "answerQuestion": "Answer Question"
+    },
     "communityRules": {
       "title": "Community Guidelines",
       "greeting": "Dear User,",
@@ -324,7 +376,7 @@
     "sendFailed": "Send failed, please retry",
     "wsNotConnected": "WebSocket not connected, please refresh",
     "genericError": "Sorry, something went wrong. Please try later",
-    "welcome": "Hello, I'm your AI assistant! I can help analyze crypto markets and answer investment questions. How can I help you?"
+    "welcome": "Hello, I'm your AI assistant! I can help analyze crypto markets and answer investment questions. What can I help you?"
   },
   "language": {
     "zh": "简体中文",
@@ -525,6 +577,115 @@
       "atl": "ATL",
       "atlChangePercent": "ATL %"
     },
-    "robotBubble": "Welcome to Mozi, how can I help you?"
+    "robotBubble": "Welcome to Mozi, what can I help you?"
+  },
+  "post": {
+    "title": "Post",
+    "editPost": "Edit Post",
+    "selectTemplate": "Select Template",
+    "titlePlaceholder": "Enter title (optional)",
+    "questionPlaceholder": "Enter your question",
+    "contentPlaceholder": "Share your thoughts...",
+    "questionContentPlaceholder": "Describe your question in detail...",
+    "recommendReason": "Recommendation Reason",
+    "recommendReasonPlaceholder": "Enter recommendation reason",
+    "coinName": "Coin Name",
+    "coinSelectPlaceholder": "Please select your coin",
+    "templates": {
+      "normal": "Normal",
+      "discovery": "Discover Coins", 
+      "question": "Q&A"
+    },
+    "buttons": {
+      "template": "Template",
+      "vote": "Vote",
+      "coin": "Coin",
+      "topic": "Topic",
+      "publish": "Publish",
+      "update": "Update"
+    },
+    "messages": {
+      "publishSuccess": "Published successfully",
+      "publishFailed": "Publish failed",
+      "updateSuccess": "Updated successfully",
+      "updateFailed": "Update failed",
+      "selectCoin": "Please select at least one coin",
+      "voteAdded": "Vote added",
+      "fillVoteInfo": "Please fill in complete vote information",
+      "coinNotFound": "No matching coins found",
+      "searchCoinFailed": "Failed to search coins",
+      "topicNotFound": "No related topics found",
+      "searchTopicFailed": "Failed to search topics",
+      "pleaseLogin": "Please login first",
+      "createFailed": "Creation failed"
+    },
+    "vote": {
+      "createVote": "Create Vote",
+      "create": "Create",
+      "cancel": "Cancel",
+      "voteTitlePlaceholder": "Enter vote topic",
+      "voteOptionPlaceholder": "Enter option",
+      "addOption": "Add Option",
+      "bullish": "Bullish",
+      "bearish": "Bearish"
+    },
+    "discovery": {
+      "selectedCoins": "{{count}} coins selected"
+    },
+    "coin": {
+      "searchPlaceholder": "Search coins",
+      "coinList": "Coin List",
+      "noData": "No coins available"
+    },
+    "topic": {
+      "searchPlaceholder": "Search topics",
+      "createTopic": "Create Topic",
+      "topicList": "Topic List",
+      "topicName": "Topic Name",
+      "topicDescription": "Topic Description",
+      "topicNamePlaceholder": "Enter topic name (required)",
+      "topicDescriptionPlaceholder": "Enter topic description (optional, max 60 characters)",
+      "noResults": "No topics found"
+    }
+  },
+  "alarm": {
+    "confirmDelete": "Are you sure you want to delete all alerts for {{symbol}}?",
+    "deleteSuccess": "Deleted successfully",
+    "deleteFailed": "Delete failed",
+    "deleteButton": "Delete {{symbol}}"
+  },
+  "comment": {
+    "title": "Comments",
+    "share": "Share",
+    "allComments": "All Comments",
+    "replyCount": "{{count}} replies",
+    "endOfList": "End of comments",
+    "inputPlaceholder": "Write your comment...",
+    "replyPlaceholder": "Reply to @{{nickname}}...",
+    "send": "Send",
+    "messages": {
+      "fetchFailed": "Failed to fetch comments",
+      "operationFailed": "Operation failed",
+      "confirmDelete": "Are you sure you want to delete this comment?",
+      "deleteSuccess": "Deleted successfully",
+      "deleteFailed": "Delete failed",
+      "inputRequired": "Please enter comment content",
+      "commentSuccess": "Comment posted successfully",
+      "commentFailed": "Failed to post comment",
+      "replySuccess": "Reply posted successfully",
+      "replyFailed": "Failed to post reply"
+    }
+  },
+  "time": {
+    "justNow": "Just now",
+    "minutesAgo": "{{count}} minutes ago",
+    "hoursAgo": "{{count}} hours ago",
+    "daysAgo": "{{count}} days ago"
+  },
+  "topicSearch": {
+    "title": "Topic Search",
+    "placeholder": "Search topics",
+    "searchFailed": "Search failed",
+    "noResults": "No results found"
   }
 }

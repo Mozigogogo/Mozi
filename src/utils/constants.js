@@ -146,6 +146,10 @@ export const Interface = {
   GET_UNREAD_COUNT: '/easy/getUnreadCount',
   // 标记通知为已读
   MARK_NOTICES_READ: '/easy/markNoticesRead',
+  // 获取我的交互数据
+  GET_MY_INTERFACE: '/easy/getMyInterface',
+  // 订阅公告
+  SUBSCRIBE_ANNOUNCEMENT: '/announcement/subscribe',
 
   // 告警
   // 添加告警
