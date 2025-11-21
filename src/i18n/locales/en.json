@@ -152,6 +152,8 @@
     "settings": "Settings",
     "language": "Language",
     "selectLanguage": "Select Language",
+    "subscriptionEnabled": "Subscription enabled",
+    "subscriptionDisabled": "Subscription disabled",
     "theme": "Theme",
     "skinCenter": "Skin Center",
     "notifications": "Notifications",
@@ -619,5 +621,11 @@
     "discovery": {
       "selectedCoins": "{{count}} coins selected"
     }
+  },
+  "alarm": {
+    "confirmDelete": "Are you sure you want to delete all alerts for {{symbol}}?",
+    "deleteSuccess": "Deleted successfully",
+    "deleteFailed": "Delete failed",
+    "deleteButton": "Delete {{symbol}}"
   }
 }

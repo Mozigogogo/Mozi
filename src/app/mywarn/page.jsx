@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { SideBar, Switch, Input, Toast, Dialog } from 'antd-mobile';
 import { CheckOutline } from 'antd-mobile-icons';
+import { useTranslation } from 'react-i18next';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 // 移除 Layout，改用 NavBar 作为页面顶栏
@@ -13,6 +14,7 @@ import { isEmpty } from 'lodash';
 import styles from './page.module.less';
 
 export default function Mywarn() {
+  const { t } = useTranslation();
   const [activeKey, setActiveKey] = useState('0');
   const [warnData, setWarnData] = useState({
     loading: true,
@@ -228,9 +230,9 @@ export default function Mywarn() {
   const deleteCoinAllWarns = async () => {
     const symbol = Object.keys(warnData.data)[activeKey];
     const confirm = await Dialog.confirm({
-      content: `确定要删除 ${symbol} 的所有告警吗？`,
-      cancelText: '取消',
-      confirmText: '删除'
+      content: t('alarm.confirmDelete', { symbol }) || `确定要删除 ${symbol} 的所有告警吗？`,
+      cancelText: t('common.cancel') || '取消',
+      confirmText: t('common.delete') || '删除'
     });
     if (!confirm) return;
 
@@ -239,14 +241,16 @@ export default function Mywarn() {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
       
       const res = await request({
-        url: `${Interface.DELETE_ALARM || '/alarm/delete'}?symbol=${symbol}`,
+        url: `${Interface.DELETE_ALARM}?symbol=${symbol}`,
         method: 'DELETE',
         headers: {
           authentication: token
         }
       });
       
-      if (res.code === 0 && res.data === true) {
+      console.log('删除告警响应:', res);
+      
+      if ((res.code === 200 || res.code === 0) && res.data === true) {
         const newData = { ...warnData.data };
         delete newData[symbol];
         const symbols = Object.keys(newData);
@@ -263,13 +267,13 @@ export default function Mywarn() {
         }
         setWarnData({ ...warnData, data: newData, sideData: newSideData });
         setActiveKey(newActiveKey);
-        Toast.show('删除成功');
+        Toast.show(t('alarm.deleteSuccess') || '删除成功');
       } else {
-        Toast.show(res.message || '删除失败');
+        Toast.show(res.message || t('alarm.deleteFailed') || '删除失败');
       }
     } catch (error) {
       console.error('删除币种告警失败:', error);
-      Toast.show('删除失败');
+      Toast.show(t('alarm.deleteFailed') || '删除失败');
     }
   };
   
@@ -378,7 +382,7 @@ export default function Mywarn() {
               {/* 删除整个币种的按钮 */}
               {warnData.sideData && (
                 <div className={styles.deleteCoinBtn} onClick={deleteCoinAllWarns}>
-                  <div className={styles.deleteCoinText}>删除 {Object.keys(warnData.data)[activeKey]}</div>
+                  <div className={styles.deleteCoinText}>{t('alarm.deleteButton', { symbol: Object.keys(warnData.data)[activeKey] }) || `删除 ${Object.keys(warnData.data)[activeKey]}`}</div>
                 </div>
               )}
             </div>

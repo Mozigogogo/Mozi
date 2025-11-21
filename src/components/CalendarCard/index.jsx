@@ -10,7 +10,9 @@ import styles from './index.module.less';
  */
 export default function CalendarCard({ onDateChange, onToggleChange, defaultToggle = true, enableDark = false }) {
   const { t, i18n } = useTranslation();
-  const [selectedDate, setSelectedDate] = useState(null);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const [selectedDate, setSelectedDate] = useState(today);
   const [isToggleOn, setIsToggleOn] = useState(defaultToggle);
   const [currentMonth, setCurrentMonth] = useState(new Date());
 

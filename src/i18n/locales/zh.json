@@ -153,6 +153,8 @@
     "settings": "设置",
     "language": "语言设置",
     "selectLanguage": "选择语言",
+    "subscriptionEnabled": "订阅成功",
+    "subscriptionDisabled": "取消订阅",
     "theme": "主题",
     "skinCenter": "皮肤中心",
     "notifications": "通知",
@@ -620,5 +622,11 @@
     "discovery": {
       "selectedCoins": "已选择 {{count}} 个币种"
     }
+  },
+  "alarm": {
+    "confirmDelete": "确定要删除 {{symbol}} 的所有告警吗？",
+    "deleteSuccess": "删除成功",
+    "deleteFailed": "删除失败",
+    "deleteButton": "删除 {{symbol}}"
   }
 }
