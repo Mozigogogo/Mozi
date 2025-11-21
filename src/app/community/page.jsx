@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Tabs, Button, Dialog, Toast, SpinLoading } from 'antd-mobile';
+import { useTranslation } from 'react-i18next';
 import NavBar from '@/components/NavBar';
 import { AddOutline } from 'antd-mobile-icons';
 import { isEmpty } from 'lodash';
@@ -16,15 +17,16 @@ import { Interface } from '../../utils/constants';
 import styles from './page.module.less';
 
 // 加载组件
-const GardenLoading = () => (
+const GardenLoading = ({ t }) => (
   <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
     <SpinLoading color="#00b578" style={{ '--size': '24px' }} />
-    <span style={{ fontSize: '14px', color: '#999' }}>加载中...</span>
+    <span style={{ fontSize: '14px', color: '#999' }}>{t('community.actions.loading')}</span>
   </div>
 );
 
 export default function CommunityPage() {
   const searchParams = useSearchParams();
+  const { t } = useTranslation();
   
   // 状态定义
   const [mainTab, setMainTab] = useState('recommend');
@@ -128,7 +130,7 @@ export default function CommunityPage() {
         setSearchResults([]);
       }
     } catch (error) {
-      console.error('搜索币种失败:', error);
+      console.error(t('community.messages.searchCoinFailed'), error);
       setSearchResults([]);
     } finally {
       setSearchLoading(false);
@@ -308,7 +310,7 @@ export default function CommunityPage() {
       });
       
       Toast.show({
-        content: '创建话题成功',
+        content: t('community.messages.createTopicSuccess'),
         position: 'bottom',
       });
       
@@ -324,7 +326,7 @@ export default function CommunityPage() {
     } catch (error) {
       console.error('创建话题失败:', error);
       Toast.show({
-        content: '创建话题失败，请稍后再试',
+        content: t('community.messages.createTopicFailed'),
         position: 'bottom',
       });
     }
@@ -462,8 +464,9 @@ export default function CommunityPage() {
   };
 
   // 跳转到话题详情页
-  const goToTopicDetail = (topicId, name, description = "暂无描述") => {
-    window.location.href = `/topicinfo?id=${topicId}&title=${name}&description=${description}`;
+  const goToTopicDetail = (topicId, name, description = null) => {
+    const defaultDesc = description || t('community.actions.noDescription');
+    window.location.href = `/topicinfo?id=${topicId}&title=${name}&description=${defaultDesc}`;
   };
 
   // 跳转到话题搜索页
@@ -530,7 +533,7 @@ export default function CommunityPage() {
     if (posts.length === 0 && !loading) {
       return (
         <div className={styles.emptyContainer}>
-          <p>暂无帖子</p>
+          <p>{t('community.actions.noPosts')}</p>
         </div>
       );
     }
@@ -573,7 +576,7 @@ export default function CommunityPage() {
                 <div className={styles.coinInfoSection}>
                   <div className={styles.coinInfoRow}>
                     <img className={styles.coinInfoIconImg} src={integralIcon} alt="" />
-                    <span className={styles.coinInfoLabel}>币种名称：</span>
+                    <span className={styles.coinInfoLabel}>{t('community.coinInfo.coinName')}</span>
                     <span className={styles.coinInfoValue}>
                       {post.tags && post.tags.length > 0 ? post.tags[0].name : 'Bitcoin'}
                     </span>
@@ -581,7 +584,7 @@ export default function CommunityPage() {
                   
                   <div className={styles.coinInfoRow}>
                     <img className={styles.coinInfoIconImg} src={plateIcon} alt="" />
-                    <span className={styles.coinInfoLabel}>所属板块：</span>
+                    <span className={styles.coinInfoLabel}>{t('community.coinInfo.sector')}</span>
                     <span className={styles.coinInfoValue}>
                       {post.tags && post.tags.length > 0 ? 'Cash' : 'DeFi'}
                     </span>
@@ -709,9 +712,9 @@ export default function CommunityPage() {
             </div>
           </div>
         ))}
-        {loading && <GardenLoading />}
+        {loading && <GardenLoading t={t} />}
         {!hasMore && posts.length > 0 && (
-          <div className={styles.noMore}>没有更多了</div>
+          <div className={styles.noMore}>{t('community.actions.noMorePosts')}</div>
         )}
       </div>
     );
@@ -720,7 +723,7 @@ export default function CommunityPage() {
   // 渲染热门话题
   const renderHotTopics = () => {
     return (
-      <MoziCard title="热门话题" type="more" callback={goToTopicSearch}>
+      <MoziCard title={t('community.hotTopics')} type="more" callback={goToTopicSearch}>
         <div className={styles.topicsList}>
           {hotTopics.map(topic => (
             <div key={topic.id} className={styles.topicItem} onClick={() => goToTopicDetail(topic.id, topic.title, topic.description)}>
@@ -728,9 +731,9 @@ export default function CommunityPage() {
               <span className={styles.topicCount}>{topic.postCount}篇</span>
             </div>
           ))}
-          {hotTopicsLoading && <GardenLoading />}
+          {hotTopicsLoading && <GardenLoading t={t} />}
           {hotTopicsAllLoaded && hotTopics.length > 0 && (
-            <div className={styles.noMore}>没有更多了</div>
+            <div className={styles.noMore}>{t('community.actions.noMorePosts')}</div>
           )}
         </div>
       </MoziCard>
@@ -739,10 +742,10 @@ export default function CommunityPage() {
 
   // 定义子标签配置
   const subTabs = [
-    { key: 'all', title: '全部' },
-    { key: 'currency', title: '币种' },
-    { key: 'question', title: '不懂就问' },
-    { key: 'discovery', title: '发现好币' }
+    { key: 'all', title: t('community.tabs.all') },
+    { key: 'currency', title: t('community.tabs.currency') },
+    { key: 'question', title: t('community.tabs.question') },
+    { key: 'discovery', title: t('community.tabs.discovery') }
   ];
 
   // 定义币种标签配置
@@ -790,7 +793,7 @@ export default function CommunityPage() {
       <div className={styles.container}>
         {/* 顶部标题与切换 */}
         {/* 顶部导航栏 */}
-        <NavBar title="社区" showBack={false} showBorder={false} fixed={false} className={styles.navTransparent} />
+        <NavBar title={t('community.title')} showBack={false} showBorder={false} fixed={false} className={styles.navTransparent} />
 
         <div className={styles.mainTabs}>
           <div className={styles.bannerSwitch}>
@@ -799,18 +802,18 @@ export default function CommunityPage() {
               onClick={() => setMainTab('recommend')}
             >
               <img className={`${styles.tabImage} ${mainTab === 'recommend' ? styles.tabImageVisible : styles.tabImageHidden}`}
-                   decoding="async" loading="eager" src={recommendActive} alt="精选推荐" />
+                   decoding="async" loading="eager" src={recommendActive} alt={t('community.tabs.recommend')} />
               <img className={`${styles.tabImage} ${mainTab !== 'recommend' ? styles.tabImageVisible : styles.tabImageHidden}`}
-                   decoding="async" loading="eager" src={recommendInactive} alt="精选推荐未选中" />
+                   decoding="async" loading="eager" src={recommendInactive} alt={t('community.tabs.recommend')} />
             </div>
             <div
               className={`${styles.bannerCard} ${mainTab === 'hot' ? styles.active : ''}`}
               onClick={() => setMainTab('hot')}
             >
               <img className={`${styles.tabImage} ${mainTab === 'hot' ? styles.tabImageVisible : styles.tabImageHidden}`}
-                   decoding="async" loading="eager" src={hotActive} alt="热门榜单" />
+                   decoding="async" loading="eager" src={hotActive} alt={t('community.tabs.hot')} />
               <img className={`${styles.tabImage} ${mainTab !== 'hot' ? styles.tabImageVisible : styles.tabImageHidden}`}
-                   decoding="async" loading="eager" src={hotInactive} alt="热门榜单未选中" />
+                   decoding="async" loading="eager" src={hotInactive} alt={t('community.tabs.hot')} />
             </div>
           </div>
         </div>
@@ -851,7 +854,7 @@ export default function CommunityPage() {
                   {dynamicCoin}
                 </span>
               )}
-              <span className={`${styles.coinTab} ${styles.more}`} onClick={handleMoreCoins}>更多</span>
+              <span className={`${styles.coinTab} ${styles.more}`} onClick={handleMoreCoins}>{t('community.actions.more')}</span>
             </div>
           )}
 
@@ -859,10 +862,10 @@ export default function CommunityPage() {
           {mainTab === 'hot' && (
             <div className={styles.hotSearchBar}>
               <div className={styles.searchBox} onClick={goToTopicSearch}>
-                <span>搜索话题</span>
+                <span>{t('community.actions.searchTopic')}</span>
               </div>
               <Button className={styles.createTopicBtn} onClick={() => setShowCreateTopic(true)}>
-                创建话题
+                {t('community.actions.createTopic')}
               </Button>
             </div>
           )}
@@ -875,7 +878,7 @@ export default function CommunityPage() {
           {mainTab === 'recommend' && subTab === 'currency' && (
             <div className={styles.voteWrapper}>
               <BullBearVote
-                title={`您对今天的${selectedCoin}有何看法?`}
+                title={t('community.coinInfo.votingQuestion', { coin: selectedCoin })}
                 participants={5445}
                 selected={voteChoice}
                 onSelect={(type) => setVoteChoice(type)}
@@ -913,7 +916,7 @@ export default function CommunityPage() {
                   {/* 话题信息 */}
                   <div className={styles.topicInfo}>
                     <span className={styles.topicTitle}>{topic.name}</span>
-                    <span className={styles.topicDesc}>{topic.description || '暂无描述'}</span>
+                    <span className={styles.topicDesc}>{topic.description || t('community.actions.noDescription')}</span>
                   </div>
                   
                   {/* 右侧信息 */}
@@ -928,17 +931,17 @@ export default function CommunityPage() {
               ))}
               {hotTopicsLoading && !pullRefresh && (
                 <div className={styles.loadingMore}>
-                  <GardenLoading />
+                  <GardenLoading t={t} />
                 </div>
               )}
               {hotTopicsAllLoaded && hotTopics.length > 0 && (
                 <div className={styles.listFooter}>
-                  <span>已经到底了</span>
+                  <span>{t('community.actions.reachedBottom')}</span>
                 </div>
               )}
               {!hotTopicsLoading && hotTopics.length === 0 && (
                 <div className={styles.emptyContent}>
-                  <span>暂无更多内容</span>
+                  <span>{t('community.actions.noMoreContent')}</span>
                 </div>
               )}
             </div>
@@ -946,7 +949,7 @@ export default function CommunityPage() {
             <div>
               {pullRefresh && (
                 <div className={styles.loadingMore}>
-                  <GardenLoading />
+                  <GardenLoading t={t} />
                 </div>
               )}
               {renderPosts()}
@@ -975,12 +978,12 @@ export default function CommunityPage() {
                 <SearchInput
                   value={searchKeyword}
                   onChange={searchCoin}
-                  placeholder="请输入币种"
+                  placeholder={t('community.actions.enterCoinName')}
                 />
               </div>
               {searchLoading ? (
                 <div className={styles.loadingText}>
-                  <GardenLoading />
+                  <GardenLoading t={t} />
                 </div>
               ) : searchResults.length > 0 ? (
                 searchResults.map(coin => (

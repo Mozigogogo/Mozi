@@ -257,6 +257,49 @@
     "topic": "Topic",
     "hotTopics": "Hot Topics",
     "trending": "Trending",
+    "tabs": {
+      "recommend": "Recommended",
+      "hot": "Hot Topics",
+      "all": "All",
+      "currency": "Coins",
+      "question": "Q&A",
+      "discovery": "Discover Coins"
+    },
+    "actions": {
+      "searchTopic": "Search Topics",
+      "createTopic": "Create Topic",
+      "searchCoin": "Search Coins",
+      "more": "More",
+      "share": "Share",
+      "loading": "Loading...",
+      "noMorePosts": "No more posts",
+      "noPosts": "No posts yet",
+      "noDescription": "No description",
+      "reachedBottom": "Reached the bottom",
+      "noMoreContent": "No more content",
+      "enterCoinName": "Enter coin name"
+    },
+    "messages": {
+      "createTopicSuccess": "Topic created successfully",
+      "createTopicFailed": "Failed to create topic, please try again",
+      "createFailed": "Creation failed",
+      "searchCoinFailed": "Failed to search coins",
+      "enterTopicName": "Please enter topic name"
+    },
+    "coinInfo": {
+      "coinName": "Coin Name: ",
+      "votingQuestion": "What's your view on {{coin}} today?",
+      "sector": "Sector: "
+    },
+    "voting": {
+      "bullish": "Bullish",
+      "bearish": "Bearish",
+      "participants": "{{count}} participants"
+    },
+    "questionButtons": {
+      "askQuestion": "Ask Question",
+      "answerQuestion": "Answer Question"
+    },
     "communityRules": {
       "title": "Community Guidelines",
       "greeting": "Dear User,",
@@ -526,5 +569,55 @@
       "atlChangePercent": "ATL %"
     },
     "robotBubble": "Welcome to Mozi, how can I help you?"
+  },
+  "post": {
+    "title": "Post",
+    "editPost": "Edit Post",
+    "titlePlaceholder": "Enter title (optional)",
+    "questionPlaceholder": "Enter your question",
+    "contentPlaceholder": "Share your thoughts...",
+    "questionContentPlaceholder": "Describe your question in detail...",
+    "recommendReason": "Recommendation Reason",
+    "recommendReasonPlaceholder": "Enter recommendation reason",
+    "coinName": "Coin Name",
+    "coinSelectPlaceholder": "Please select your coin",
+    "templates": {
+      "normal": "Normal",
+      "discovery": "Discover Coins", 
+      "question": "Q&A"
+    },
+    "buttons": {
+      "template": "Template",
+      "vote": "Vote",
+      "coin": "Coin",
+      "topic": "Topic",
+      "publish": "Publish",
+      "update": "Update"
+    },
+    "messages": {
+      "publishSuccess": "Published successfully",
+      "publishFailed": "Publish failed",
+      "updateSuccess": "Updated successfully",
+      "updateFailed": "Update failed",
+      "selectCoin": "Please select at least one coin",
+      "voteAdded": "Vote added",
+      "fillVoteInfo": "Please fill in complete vote information",
+      "coinNotFound": "No matching coins found",
+      "searchCoinFailed": "Failed to search coins",
+      "topicNotFound": "No related topics found",
+      "searchTopicFailed": "Failed to search topics",
+      "pleaseLogin": "Please login first",
+      "createFailed": "Creation failed"
+    },
+    "vote": {
+      "createVote": "Create Vote",
+      "create": "Create",
+      "cancel": "Cancel",
+      "voteTitlePlaceholder": "Enter vote topic",
+      "voteOptionPlaceholder": "Enter option"
+    },
+    "discovery": {
+      "selectedCoins": "{{count}} coins selected"
+    }
   }
 }

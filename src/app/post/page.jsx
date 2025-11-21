@@ -70,7 +70,11 @@ export default function PostPage() {
   const fileInputRef = useRef(null); // 文件选择input的引用
 
   // 模板配置
-  const templates = ["普通", "发现好币", "不懂就问"];
+  const templates = [
+    { key: "普通", label: t('post.templates.normal') },
+    { key: "发现好币", label: t('post.templates.discovery') },
+    { key: "不懂就问", label: t('post.templates.question') }
+  ];
 
   useEffect(() => {
     initData();
@@ -108,7 +112,8 @@ export default function PostPage() {
     // 根据传入的模板类型自动选择模板
     if (templateType) {
       const decodedTemplateType = decodeURIComponent(templateType);
-      if (templates.includes(decodedTemplateType)) {
+      const templateExists = templates.some(template => template.key === decodedTemplateType);
+      if (templateExists) {
         setSelectedTemplate(decodedTemplateType);
         
         // 如果选择了"不懂就问"模板，显示提示弹窗
@@ -239,7 +244,7 @@ export default function PostPage() {
     // 只检查 token，因为 API 调用只需要 token
     if (!token) {
       Toast.show({
-        content: '请先登录',
+        content: t('post.messages.pleaseLogin'),
         duration: 2000
       });
       return;
@@ -248,7 +253,7 @@ export default function PostPage() {
     // 验证'发现好币'模板必须选择至少一个币种
     if (selectedTemplate === '发现好币' && selectedCoins.length === 0) {
       Toast.show({
-        content: '请选择至少一个币种'
+        content: t('post.messages.selectCoin')
       });
       return;
     }
@@ -289,7 +294,7 @@ export default function PostPage() {
       if (response?.code === 0) {
         localStorage.setItem('needRefreshCommunity', 'true');
         Toast.show({
-          content: isUpdate ? '更新成功' : '发布成功',
+          content: isUpdate ? t('post.messages.updateSuccess') : t('post.messages.publishSuccess'),
           duration: 1000,
           afterClose: () => {
             router.back();
@@ -297,13 +302,13 @@ export default function PostPage() {
         });
       } else {
         Toast.show({
-          content: isUpdate ? '更新失败' : '发布失败'
+          content: isUpdate ? t('post.messages.updateFailed') : t('post.messages.publishFailed')
         });
       }
     } catch (error) {
       console.error(isUpdate ? '更新失败:' : '发布失败:', error);
       Toast.show({
-        content: isUpdate ? '更新失败' : '发布失败'
+        content: isUpdate ? t('post.messages.updateFailed') : t('post.messages.publishFailed')
       });
     } finally {
       setPublishing(false);
@@ -326,7 +331,7 @@ export default function PostPage() {
   const createVote = () => {
     if (!voteTitle || voteOptions.some(opt => !opt)) {
       Toast.show({
-        content: '请填写完整的投票信息'
+        content: t('post.messages.fillVoteInfo')
       });
       return;
     }
@@ -335,7 +340,7 @@ export default function PostPage() {
     setShowVote(false);
     
     Toast.show({
-      content: '投票已添加'
+      content: t('post.messages.voteAdded')
     });
   };
 
@@ -378,13 +383,13 @@ export default function PostPage() {
       } else {
         setSearchResults([]);
         Toast.show({
-          content: '未找到匹配的币种'
+          content: t('post.messages.coinNotFound')
         });
       }
     } catch (error) {
       console.error('搜索币种失败:', error);
       Toast.show({
-        content: '搜索币种失败'
+        content: t('post.messages.searchCoinFailed')
       });
     }
   };
@@ -430,20 +435,20 @@ export default function PostPage() {
         setTopics(response?.data?.data);
         if (response?.data?.data.length === 0) {
           Toast.show({
-            content: '未找到相关话题'
+            content: t('post.messages.topicNotFound')
           });
         }
       } else {
         setTopics([]);
         Toast.show({
-          content: '未找到相关话题'
+          content: t('post.messages.topicNotFound')
         });
       }
     } catch (error) {
       console.error('搜索话题失败:', error);
       setTopics([]);
       Toast.show({
-        content: '搜索话题失败'
+        content: t('post.messages.searchTopicFailed')
       });
     }
   };
@@ -585,13 +590,13 @@ export default function PostPage() {
         loadHotTopics();
       } else {
         Toast.show({
-          content: response?.errorMsg || '创建失败'
+          content: response?.errorMsg || t('post.messages.createFailed')
         });
       }
     } catch (error) {
       console.error('创建话题失败:', error);
       Toast.show({
-        content: '创建失败'
+        content: t('post.messages.createFailed')
       });
     }
   };
@@ -599,7 +604,7 @@ export default function PostPage() {
   return (
     <>
       <NavBar 
-        title={isUpdate ? '编辑帖子' : '发帖'}
+        title={isUpdate ? t('post.editPost') : t('post.title')}
         onBack={() => router.back()}
       />
       <div className={styles.postContainer}>
@@ -619,7 +624,7 @@ export default function PostPage() {
             className={styles.titleInput}
             value={title}
             onChange={(value) => value.length <= 20 && setTitle(value)}
-            placeholder={selectedTemplate === '普通' ? '请输入标题（选填）' : selectedTemplate === '发现好币' ? '请输入标题（选填）': '请输入问题'}
+            placeholder={selectedTemplate === '不懂就问' ? t('post.questionPlaceholder') : t('post.titlePlaceholder')}
             maxLength={20}
           />
           <span className={styles.wordCount}>{title.length}/20</span>
@@ -630,7 +635,7 @@ export default function PostPage() {
           {(selectedTemplate === '普通' || selectedTemplate === '不懂就问') && (
             <TextArea
               className={styles.contentTextarea}
-              placeholder={selectedTemplate === '普通' ? '写下你的想法...' : '详细描述你的问题...'}
+              placeholder={selectedTemplate === '普通' ? t('post.contentPlaceholder') : t('post.questionContentPlaceholder')}
               value={content}
               onChange={setContent}
               maxLength={300}
@@ -677,23 +682,23 @@ export default function PostPage() {
           {selectedTemplate === '发现好币' && (
             <div className={styles.discoveryForm}>
               <div className={styles.formItem}>
-                <span className={styles.label}>推荐理由</span>
+                <span className={styles.label}>{t('post.recommendReason')}</span>
                 <TextArea
                   value={content}
                   onChange={setContent}
-                  placeholder="请输入推荐理由"
+                  placeholder={t('post.recommendReasonPlaceholder')}
                   maxLength={300}
                   className={styles.discoveryTextarea}
                 />
               </div>
               <div className={styles.formItem}>
-                <span className={styles.label}>币种名称</span>
+                <span className={styles.label}>{t('post.coinName')}</span>
                 <div 
                   className={styles.coinSelectBtn}
                   onClick={() => setShowCoinSelect(true)}
                 >
                   <span className={styles.placeholder}>
-                    {selectedCoins.length > 0 ? `已选择 ${selectedCoins.length} 个币种` : '请选择你的币种'}
+                    {selectedCoins.length > 0 ? t('post.discovery.selectedCoins', { count: selectedCoins.length }) : t('post.coinSelectPlaceholder')}
                   </span>
                   <span className={styles.iconArrow}>›</span>
                 </div>
@@ -742,8 +747,8 @@ export default function PostPage() {
             }}
           >
             <div className={`${styles.templateBox} ${activeButton === 'template' ? styles.active : ''}`}>
-              <img className={styles.buttonIcon} src={templateIcon} alt="模板" />
-              模板
+              <img className={styles.buttonIcon} src={templateIcon} alt={t('post.buttons.template')} />
+              {t('post.buttons.template')}
             </div>
           </button>
           <button 
@@ -754,8 +759,8 @@ export default function PostPage() {
             }}
           >
             <div className={`${styles.templateBox} ${activeButton === 'vote' ? styles.active : ''}`}>
-              <img className={styles.buttonIcon} src={voteIcon} alt="投票" />
-              投票
+              <img className={styles.buttonIcon} src={voteIcon} alt={t('post.buttons.vote')} />
+              {t('post.buttons.vote')}
             </div>
           </button>
           <button 
@@ -766,8 +771,8 @@ export default function PostPage() {
             }}
           >
             <div className={`${styles.templateBox} ${activeButton === 'coin' ? styles.active : ''}`}>
-              <img className={styles.buttonIcon} src={currencyIcon} alt="币种" />
-              币种
+              <img className={styles.buttonIcon} src={currencyIcon} alt={t('post.buttons.coin')} />
+              {t('post.buttons.coin')}
             </div>
           </button>
           <button 
@@ -778,8 +783,8 @@ export default function PostPage() {
             }}
           >
             <div className={`${styles.templateBox} ${activeButton === 'topic' ? styles.active : ''}`}>
-              <img className={styles.buttonIcon} src={topicIcon} alt="话题" />
-              话题
+              <img className={styles.buttonIcon} src={topicIcon} alt={t('post.buttons.topic')} />
+              {t('post.buttons.topic')}
             </div>
           </button>
         </div>
@@ -811,10 +816,10 @@ export default function PostPage() {
                 {templates.map((item, index) => (
                   <div
                     key={index}
-                    className={`${styles.templateItem} ${selectedTemplate === item ? styles.active : ''}`}
-                    onClick={() => selectTemplate(item)}
+                    className={`${styles.templateItem} ${selectedTemplate === item.key ? styles.active : ''}`}
+                    onClick={() => selectTemplate(item.key)}
                   >
-                    <span>{item}</span>
+                    <span>{item.label}</span>
                     <div className={styles.demoArea}>
                       {/* 模板演示区域 */}
                     </div>
@@ -837,9 +842,9 @@ export default function PostPage() {
             />
             <div className={styles.popupContent}>
               <div className={styles.popupHeader}>
-                <span>创建投票</span>
+                <span>{t('post.vote.createVote')}</span>
                 <div className={styles.headerBtns}>
-                  <button className={styles.createBtn} onClick={createVote}>创建</button>
+                  <button className={styles.createBtn} onClick={createVote}>{t('post.vote.create')}</button>
                   <button 
                     className={styles.closeBtn}
                     onClick={() => {
@@ -847,7 +852,7 @@ export default function PostPage() {
                       setActiveButton('');
                     }}
                   >
-                    取消
+                    {t('post.vote.cancel')}
                   </button>
                 </div>
               </div>
@@ -856,7 +861,7 @@ export default function PostPage() {
                   <Input
                     value={voteTitle}
                     onChange={(value) => value.length <= 20 && setVoteTitle(value)}
-                    placeholder="请输入投票主题"
+                    placeholder={t('post.vote.voteTitlePlaceholder')}
                     maxLength={20}
                   />
                   <span className={styles.wordCount}>{voteTitle.length}/20</span>
@@ -868,7 +873,7 @@ export default function PostPage() {
                         className={styles.optionInput}
                         value={option}
                         onChange={(value) => updateVoteOption(index, value)}
-                        placeholder={`选项${index + 1}`}
+                        placeholder={`${t('post.vote.voteOptionPlaceholder')} ${index + 1}`}
                       />
                       {voteOptions.length > 2 && (
                         <span 
@@ -1128,7 +1133,7 @@ export default function PostPage() {
             loading={publishing}
             block
           >
-            {isUpdate ? '更新' : '发布'}
+{isUpdate ? t('post.buttons.update') : t('post.buttons.publish')}
           </Button>
         </div>
       </div>

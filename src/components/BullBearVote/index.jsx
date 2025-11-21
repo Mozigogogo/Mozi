@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './index.module.less';
 
 export default function BullBearVote({
@@ -10,10 +11,12 @@ export default function BullBearVote({
   disabled = false,
   onSelect = () => {}
 }) {
+  const { t } = useTranslation();
+  
   const displayCount = useMemo(() => {
     if (!participants) return '';
-    return `${participants}人参与`;
-  }, [participants]);
+    return t('community.voting.participants', { count: participants });
+  }, [participants, t]);
 
   const handleSelect = (type) => {
     if (disabled) return;
@@ -32,13 +35,13 @@ export default function BullBearVote({
           className={`${styles.bbvBtn} ${styles.bull} ${selected === 'bull' ? styles.active : ''}`}
           onClick={() => handleSelect('bull')}
         >
-          <span>看涨</span>
+          <span>{t('community.voting.bullish')}</span>
         </div>
         <div
           className={`${styles.bbvBtn} ${styles.bear} ${selected === 'bear' ? styles.active : ''}`}
           onClick={() => handleSelect('bear')}
         >
-          <span>看跌</span>
+          <span>{t('community.voting.bearish')}</span>
         </div>
       </div>
     </div>
