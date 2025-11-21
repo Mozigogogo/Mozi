@@ -661,7 +661,7 @@ export default function UserPage() {
               </div>
               <div className={styles.actionText}>{t('user.myFavorites')}</div>
             </div>
-            <div className={styles.actionButton} onClick={() => (window.location.href = '/alert')}>
+            <div className={styles.actionButton} onClick={() => (window.location.href = '/mywarn')}>
               <div className={styles.actionIcon}>
                 <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/me-alert%402x.png'} alt="我的报警" />
               </div>
