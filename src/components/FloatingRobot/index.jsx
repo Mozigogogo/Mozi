@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, useMotionValue, useTransform, useSpring, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { trackEvent, HomeEvents } from '@/utils/amplitude';
 import styles from './index.module.less';
 
 // 简单文本组件
@@ -174,11 +175,23 @@ export default function FloatingRobot({
 
   const displayMessage = message || t('home.robotBubble');
 
+  // AI 按钮点击处理
+  const handleRobotClick = () => {
+    // 埋点：点击AI按钮
+    trackEvent(HomeEvents.AI_CLICKED, {
+      targetPath,
+      robotState: robotAnimState
+    });
+    
+    // 跳转到目标页面
+    router.push(targetPath);
+  };
+
   return (
     <motion.div 
       ref={robotRef}
       className={styles.floatRobotBtn} 
-      onClick={() => router.push(targetPath)}
+      onClick={handleRobotClick}
       style={{
         x: robotX,
         y: robotY,
