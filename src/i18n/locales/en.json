@@ -129,7 +129,8 @@
       "1y": "1y"
     },
     "addFavoriteButton": "Add Favorite",
-    "loadFinished": "All loaded"
+    "loadFinished": "All loaded",
+    "robotMessage": "Want to hear my analysis of the market?"
   },
   "overview": {
     "totalMarketCap": "Market Cap",
@@ -577,7 +578,8 @@
       "atl": "ATL",
       "atlChangePercent": "ATL %"
     },
-    "robotBubble": "Welcome to Mozi, what can I help you?"
+    "robotBubble": "Welcome to Mozi, what can I help you?",
+    "robotMessage": "Want to hear my thoughts on {{symbol}}?"
   },
   "post": {
     "title": "Post",

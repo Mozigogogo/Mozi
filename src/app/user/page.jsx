@@ -12,6 +12,8 @@ import LoginModal from '../../components/LoginModal';
 import { RightArrowIcon } from '../../components/Icons';
 import { request } from '../../utils/request';
 import { Interface, EMAIL, COINKEY } from '../../utils/constants';
+import { useAmplitude } from '../../hooks/useAmplitude';
+import { ProfileEvents } from '../../utils/amplitude';
 import styles from './page.module.less';
 
 export default function UserPage() {
@@ -22,6 +24,7 @@ export default function UserPage() {
   const { address, isConnected } = useAccount();
   const { signMessageAsync } = useSignMessage();
   const { t, i18n } = useTranslation();
+  const { track } = useAmplitude('Profile');
   const [userInfo, setUserInfo] = useState({
     avatar: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png',
     nickname: t('user.defaultNickname'),

@@ -21,6 +21,8 @@ import { request } from '../utils/request';
 import { Interface, LOOPTIME, WS_URL } from '../utils/constants';
 import { jump2Detail, jump2Market, jump2List, jump2NoTab } from '../utils/core';
 import { useWebSocket } from '../utils/useWebSocket';
+import { useAmplitude } from '../hooks/useAmplitude';
+import { HomeEvents } from '../utils/amplitude';
 import styles from './page.module.less';
 
 // CDN 图片前缀
@@ -80,6 +82,7 @@ const area = {
 export default function HomePage() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
+  const { track } = useAmplitude('Home');
   const isEN = (i18n?.language || '').startsWith('en');
   // Telegram WebApp 检测状态（不影响现有 UI，仅用于环境检测与本地存储）
   const [tgInfo, setTgInfo] = useState({
