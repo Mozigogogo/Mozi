@@ -18,6 +18,8 @@ import { RankGrid } from '../../components/Find/RankGrid';
 import { request } from '../../utils/request';
 import { Interface, LOOPTIME } from '../../utils/constants';
 import { jump2Detail, jump2List } from '../../utils/core';
+import { useAmplitude } from '../../hooks/useAmplitude';
+import { FindEvents } from '../../utils/amplitude';
 import styles from './page.module.less';
 import { useTranslation } from 'react-i18next';
 
@@ -61,6 +63,7 @@ export default function FindPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { t } = useTranslation();
+  const { track } = useAmplitude('Find');
   const tabFromUrl = searchParams.get('tab');
   const RANK_LOOPTIME = 6000;
   
