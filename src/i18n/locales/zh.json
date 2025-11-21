@@ -153,6 +153,8 @@
     "settings": "设置",
     "language": "语言设置",
     "selectLanguage": "选择语言",
+    "subscriptionEnabled": "订阅成功",
+    "subscriptionDisabled": "取消订阅",
     "theme": "主题",
     "skinCenter": "皮肤中心",
     "notifications": "通知",
@@ -258,6 +260,56 @@
     "topic": "话题",
     "hotTopics": "热门话题",
     "trending": "热门动态",
+    "tabs": {
+      "recommend": "精选推荐",
+      "hot": "热门榜单",
+      "all": "全部",
+      "currency": "币种",
+      "question": "不懂就问",
+      "discovery": "发现好币"
+    },
+    "actions": {
+      "searchTopic": "搜索话题",
+      "createTopic": "创建话题",
+      "searchCoin": "搜索币种",
+      "more": "更多",
+      "share": "分享",
+      "loading": "加载中...",
+      "noMorePosts": "没有更多了",
+      "noPosts": "暂无帖子",
+      "noDescription": "暂无描述",
+      "reachedBottom": "已经到底了",
+      "noMoreContent": "暂无更多内容",
+      "enterCoinName": "请输入币种"
+    },
+    "messages": {
+      "createTopicSuccess": "创建话题成功",
+      "createTopicFailed": "创建话题失败，请稍后再试",
+      "createFailed": "创建失败",
+      "searchCoinFailed": "搜索币种失败",
+      "enterTopicName": "请输入话题名称"
+    },
+    "topicCreate": {
+      "topicName": "话题名称",
+      "topicDescription": "话题简介",
+      "topicNamePlaceholder": "请输入话题名称（必填）",
+      "topicDescriptionPlaceholder": "请输入话题简介（选填，最多60字）"
+    },
+    "noCoinFound": "未找到相关币种",
+    "coinInfo": {
+      "coinName": "币种名称：",
+      "votingQuestion": "您对今天的{{coin}}有何看法?",
+      "sector": "所属板块："
+    },
+    "voting": {
+      "bullish": "看涨",
+      "bearish": "看跌",
+      "participants": "{{count}}人参与"
+    },
+    "questionButtons": {
+      "askQuestion": "提个问题",
+      "answerQuestion": "回答问题"
+    },
     "communityRules": {
       "title": "社区公约",
       "greeting": "亲爱的用户，您好：",
@@ -527,5 +579,114 @@
       "atlChangePercent": "历史最低价百分比"
     },
     "robotMessage": "想听听我对{{symbol}}的看法吗？"
+  },
+  "post": {
+    "title": "发帖",
+    "editPost": "编辑帖子",
+    "selectTemplate": "选择模板",
+    "titlePlaceholder": "请输入标题（选填）",
+    "questionPlaceholder": "请输入问题",
+    "contentPlaceholder": "写下你的想法...",
+    "questionContentPlaceholder": "详细描述你的问题...",
+    "recommendReason": "推荐理由",
+    "recommendReasonPlaceholder": "请输入推荐理由",
+    "coinName": "币种名称",
+    "coinSelectPlaceholder": "请选择你的币种",
+    "templates": {
+      "normal": "普通",
+      "discovery": "发现好币", 
+      "question": "不懂就问"
+    },
+    "buttons": {
+      "template": "模板",
+      "vote": "投票",
+      "coin": "币种",
+      "topic": "话题",
+      "publish": "发布",
+      "update": "更新"
+    },
+    "messages": {
+      "publishSuccess": "发布成功",
+      "publishFailed": "发布失败",
+      "updateSuccess": "更新成功",
+      "updateFailed": "更新失败",
+      "selectCoin": "请选择至少一个币种",
+      "voteAdded": "投票已添加",
+      "fillVoteInfo": "请填写完整的投票信息",
+      "coinNotFound": "未找到匹配的币种",
+      "searchCoinFailed": "搜索币种失败",
+      "topicNotFound": "未找到相关话题",
+      "searchTopicFailed": "搜索话题失败",
+      "pleaseLogin": "请先登录",
+      "createFailed": "创建失败"
+    },
+    "vote": {
+      "createVote": "创建投票",
+      "create": "创建",
+      "cancel": "取消",
+      "voteTitlePlaceholder": "请输入投票主题",
+      "voteOptionPlaceholder": "请输入选项",
+      "addOption": "添加选项",
+      "bullish": "看涨",
+      "bearish": "看跌"
+    },
+    "discovery": {
+      "selectedCoins": "已选择 {{count}} 个币种"
+    },
+    "coin": {
+      "searchPlaceholder": "搜索币种",
+      "coinList": "币种列表",
+      "noData": "暂无币种数据"
+    },
+    "topic": {
+      "searchPlaceholder": "搜索话题",
+      "createTopic": "创建话题",
+      "topicList": "话题列表",
+      "topicName": "话题名称",
+      "topicDescription": "话题简介",
+      "topicNamePlaceholder": "请输入话题名称（必填）",
+      "topicDescriptionPlaceholder": "请输入话题简介（选填，最多60字）",
+      "noResults": "未找到相关话题"
+    }
+  },
+  "alarm": {
+    "confirmDelete": "确定要删除 {{symbol}} 的所有告警吗？",
+    "deleteSuccess": "删除成功",
+    "deleteFailed": "删除失败",
+    "deleteButton": "删除 {{symbol}}"
+  },
+  "comment": {
+    "title": "评论",
+    "share": "分享",
+    "allComments": "全部评论",
+    "replyCount": "共{{count}}条回复",
+    "endOfList": "评论已到底部",
+    "inputPlaceholder": "写下你的评论...",
+    "replyPlaceholder": "回复 @{{nickname}}...",
+    "send": "发送",
+    "messages": {
+      "fetchFailed": "获取评论失败",
+      "operationFailed": "操作失败",
+      "confirmDelete": "确定要删除这条评论吗？",
+      "deleteSuccess": "删除成功",
+      "deleteFailed": "删除失败",
+      "inputRequired": "请输入评论内容",
+      "commentSuccess": "评论成功",
+      "commentFailed": "评论失败",
+      "replySuccess": "回复成功",
+      "replyFailed": "回复失败"
+    }
+  },
+  "time": {
+    "justNow": "刚刚",
+    "minutesAgo": "{{count}}分钟前",
+    "hoursAgo": "{{count}}小时前",
+    "daysAgo": "{{count}}天前"
+  },
+  "topicSearch": {
+    "title": "话题搜索",
+    "placeholder": "搜索话题",
+    "searchFailed": "搜索失败",
+    "noResults": "暂无搜索结果"
   }
 }

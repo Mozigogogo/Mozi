@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button, Input, Dialog, Toast, Divider } from 'antd-mobile';
 import { MoreOutline } from 'antd-mobile-icons';
+import { useTranslation } from 'react-i18next';
 import NavBar from '@/components/NavBar';
 import Layout from '@/components/Layout';
 import { Loading } from '@/components/Loading';
@@ -19,6 +20,7 @@ const shareIcon = `${CDN_ICON}/share.png`;
 const editIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/edit.png';
 
 export default function CommentInfo() {
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const commentId = searchParams.get('id');
   
@@ -131,7 +133,7 @@ export default function CommentInfo() {
     } catch (error) {
       console.error('获取评论列表失败:', error);
       Toast.show({
-        content: '获取评论失败',
+        content: t('comment.messages.fetchFailed'),
         icon: 'fail',
       });
     } finally {
@@ -246,7 +248,7 @@ export default function CommentInfo() {
     } catch (error) {
       console.error('评论点赞操作失败:', error);
       Toast.show({
-        content: '操作失败',
+        content: t('comment.messages.operationFailed'),
         icon: 'fail',
       });
     }
@@ -256,7 +258,7 @@ export default function CommentInfo() {
   const handleDeleteComment = async (commentId) => {
     try {
       Dialog.confirm({
-        content: '确定要删除这条评论吗？',
+        content: t('comment.messages.confirmDelete'),
         onConfirm: async () => {
           Toast.show({
             icon: 'loading',
@@ -284,7 +286,7 @@ export default function CommentInfo() {
     } catch (error) {
       console.error('删除评论失败:', error);
       Toast.show({
-        content: '删除失败',
+        content: t('comment.messages.deleteFailed'),
         icon: 'fail',
       });
     }
@@ -322,7 +324,7 @@ export default function CommentInfo() {
           } else {
             Toast.show({
               icon: 'fail',
-              content: '删除失败',
+              content: t('comment.messages.deleteFailed'),
             });
           }
         } catch (error) {
@@ -364,7 +366,7 @@ export default function CommentInfo() {
   const handleSubmitComment = async () => {
     if (!commentContent.trim()) {
       Toast.show({
-        content: '请输入评论内容',
+        content: t('comment.messages.inputRequired'),
         icon: 'fail',
       });
       return;
@@ -408,7 +410,7 @@ export default function CommentInfo() {
       if (response?.data) {
         Toast.show({
           icon: 'success',
-          content: replyTo ? '回复成功' : '评论成功',
+          content: replyTo ? t('comment.messages.replySuccess') : t('comment.messages.commentSuccess'),
         });
         // 清空评论内容和回复对象
         setCommentContent('');
@@ -439,7 +441,7 @@ export default function CommentInfo() {
       console.error(replyTo ? '回复失败:' : '提交评论失败:', error);
       Toast.show({
         icon: 'fail',
-        content: replyTo ? '回复失败' : '评论失败',
+        content: replyTo ? t('comment.messages.replyFailed') : t('comment.messages.commentFailed'),
       });
     } finally {
       setSubmitting(false);
@@ -554,7 +556,7 @@ export default function CommentInfo() {
 
   return (
     <Layout>
-      <NavBar title="评论" showBack={true} backgroundColor="#EEF0F3" showBorder={false} />
+      <NavBar title={t('comment.title')} showBack={true} backgroundColor="#EEF0F3" showBorder={false} />
       <div className={styles.commentDetail} onClick={handlePageClick}>
         {/* 操作菜单 */}
         {showActionSheet && (
@@ -666,8 +668,8 @@ export default function CommentInfo() {
                       </span>
                     </div>
                     <div className={styles.shareBtn} onClick={handleShare}>
-                      <img className={styles.shareIcon} src={shareIcon} alt="分享" />
-                      <span className={styles.shareText}>分享</span>
+                      <img className={styles.shareIcon} src={shareIcon} alt="share" />
+                      <span className={styles.shareText}>{t('comment.share')}</span>
                     </div>
                   </div>
                 </div>
@@ -677,8 +679,8 @@ export default function CommentInfo() {
             {/* 评论列表 */}
             <div className={styles.commentSection}>
               <div className={styles.listHeader}>
-                <span className={styles.total}>全部评论</span>
-                <span className={styles.count}>共{list.length}条回复</span>
+                <span className={styles.total}>{t('comment.allComments')}</span>
+                <span className={styles.count}>{t('comment.replyCount', { count: list.length })}</span>
               </div>
 
               <div className={styles.commentList}>
@@ -762,7 +764,7 @@ export default function CommentInfo() {
               {/* 底部提示 */}
               {allLoaded && (
                 <div className={styles.listFooter}>
-                  <span className={styles.footerText}>评论已到底部</span>
+                  <span className={styles.footerText}>{t('comment.endOfList')}</span>
                 </div>
               )}
             </div>
@@ -776,7 +778,7 @@ export default function CommentInfo() {
             className={styles.commentInput}
             value={commentContent}
             onChange={(e)=>setCommentContent(e.target.value)}
-            placeholder={replyTo ? `回复 @${replyTo.nickname}...` : "写下你的评论..."}
+            placeholder={replyTo ? t('comment.replyPlaceholder', { nickname: replyTo.nickname }) : t('comment.inputPlaceholder')}
             maxLength={200}
           />
           <Button
@@ -786,7 +788,7 @@ export default function CommentInfo() {
             loading={submitting}
             color="primary"
           >
-            发送
+            {t('comment.send')}
           </Button>
         </div>
       </div>

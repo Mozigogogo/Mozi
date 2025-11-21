@@ -305,7 +305,8 @@
 .bottomToolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: space-between; /* 保持按钮均匀分布 */
+  gap: 6px; /* 按钮之间的最小间距 */
   transition: bottom 0.3s;
   margin-top: 8px; /* 16rpx ÷ 2 = 8px */
   
@@ -319,8 +320,9 @@
       background-color: transparent;
       border: 1px solid #DEE2E8;
       color: #7E7E7E;
-      width: 75px; /* 150rpx ÷ 2 = 75px */
+      min-width: 75px; /* 最小宽度，英文模式下自动扩展 */
       height: 30px; /* 60rpx ÷ 2 = 30px */
+      padding: 0 12px; /* 添加左右内边距以适应更长的文本 */
       border-radius: 15px; /* 30rpx ÷ 2 = 15px */
       display: flex;
       align-items: center;
@@ -328,6 +330,7 @@
       gap: 4px; /* 8rpx ÷ 2 = 4px */
       transition: all 0.2s ease;
       font-size: 14px; /* 28rpx ÷ 2 = 14px */
+      white-space: nowrap; /* 防止文本换行 */
       
       .buttonIcon {
         width: 16px; /* 32rpx ÷ 2 = 16px */
@@ -857,9 +860,11 @@
   }
 
   .templateBtn {
-    font-size: 12px;
-    padding: 6px 8px;
-    min-width: 50px;
+    .templateBox {
+      font-size: 12px;
+      padding: 0 10px;
+      min-width: 65px; /* 小屏幕下也要确保英文文本有足够空间 */
+    }
   }
 }
 
@@ -1266,10 +1271,14 @@
           background: #f5f5f5;
           border-radius: 8px;
           padding: 0 12px;
-          font-size: 14px;
+          font-size: 13px;
           box-sizing: border-box;
           border: none;
           outline: none;
+          
+          &::placeholder {
+            font-size: 13px;
+          }
         }
         
         .descInput {
@@ -1278,11 +1287,15 @@
           background: #f5f5f5;
           border-radius: 8px;
           padding: 12px;
-          font-size: 14px;
+          font-size: 13px;
           box-sizing: border-box;
           border: none;
           outline: none;
           resize: vertical;
+          
+          &::placeholder {
+            font-size: 13px;
+          }
         }
         
         .wordCount {

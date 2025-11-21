@@ -50,6 +50,9 @@ export default function UserPage() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginModalMode, setLoginModalMode] = useState('login');
   const [unreadCount, setUnreadCount] = useState(0);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [interfaceData, setInterfaceData] = useState(null);
+  const [isAnnouncementOn, setIsAnnouncementOn] = useState(false); // 公告订阅开关，默认关闭
   
   // 简单的 Cookie 读写（仅前端可见；敏感 token 建议服务端 HttpOnly）
   const getCookie = (name) => {
@@ -222,6 +225,145 @@ export default function UserPage() {
     fetchUnread();
     timer = setInterval(fetchUnread, 30000);
     return () => clearInterval(timer);
+  }, []);
+
+  // 格式化日期为 YYYY-MM-DD
+  const formatDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // 检测当前平台环境
+  const getPlatform = () => {
+    // 检查是否在 Telegram 环境中
+    if (typeof window !== 'undefined' && window.Telegram?.WebApp?.initData) {
+      return 'tg';
+    }
+    return 'pc';
+  };
+
+  // 获取 Telegram chatId
+  const getTelegramChatId = () => {
+    if (typeof window !== 'undefined' && window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
+      return String(window.Telegram.WebApp.initDataUnsafe.user.id);
+    }
+    return null;
+  };
+
+  // 处理公告订阅开关
+  const handleAnnouncementToggle = async (isOn) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        Toast.show({ 
+          content: t('user.pleaseLogin'), 
+          position: 'bottom' 
+        });
+        return;
+      }
+
+      const platform = getPlatform();
+      const userId = localStorage.getItem('userId') || 'unknown';
+      
+      // 构建请求数据
+      const requestData = {
+        userId: userId,
+        status: isOn ? 1 : 0,
+        channel: platform
+      };
+
+      // 如果是 TG 环境，需要添加 chatId
+      if (platform === 'tg') {
+        const chatId = getTelegramChatId();
+        if (!chatId) {
+          Toast.show({ 
+            content: 'Unable to get Telegram chat ID', 
+            position: 'bottom' 
+          });
+          return;
+        }
+        requestData.chatId = chatId;
+      }
+
+      console.log('订阅公告请求:', requestData);
+
+      const res = await request({
+        url: Interface.SUBSCRIBE_ANNOUNCEMENT,
+        method: 'POST',
+        data: requestData
+      });
+
+      if (res?.code === 200 || res?.code === 0) {
+        setIsAnnouncementOn(isOn);
+        Toast.show({ 
+          content: isOn ? t('user.subscriptionEnabled') || '订阅成功' : t('user.subscriptionDisabled') || '取消订阅',
+          position: 'bottom' 
+        });
+        console.log('订阅状态更新成功');
+      } else {
+        Toast.show({ 
+          content: res?.message || '操作失败', 
+          position: 'bottom' 
+        });
+        console.error('订阅状态更新失败:', res);
+      }
+    } catch (error) {
+      console.error('处理订阅失败:', error);
+      Toast.show({ 
+        content: '操作失败，请稍后重试', 
+        position: 'bottom' 
+      });
+    }
+  };
+
+  // 获取我的交互数据
+  const fetchMyInterface = async (date) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.log('未登录，跳过接口调用');
+        return;
+      }
+
+      const timeStr = formatDate(date);
+      const platform = getPlatform();
+      console.log('调用接口，日期:', timeStr, '平台:', platform);
+
+      const res = await request({
+        url: Interface.GET_MY_INTERFACE,
+        method: 'POST',
+        data: {
+          platform: platform,
+          limit: 20,
+          time: timeStr
+        }
+      });
+
+      if (res?.code === 200 || res?.code === 0) {
+        console.log('接口返回数据:', res.data);
+        setInterfaceData(res.data);
+      } else {
+        console.error('接口返回错误:', res);
+      }
+    } catch (error) {
+      console.error('获取我的交互数据失败:', error);
+    }
+  };
+
+  // 处理日历日期选择
+  const handleDateChange = (date) => {
+    console.log('选择日期:', date);
+    setSelectedDate(date);
+    fetchMyInterface(date);
+  };
+
+  // 页面加载时，默认选中当天日期并调用接口
+  useEffect(() => {
+    const today = new Date();
+    setSelectedDate(today);
+    fetchMyInterface(today);
   }, []);
 
   const score = () => {
@@ -519,7 +661,7 @@ export default function UserPage() {
               </div>
               <div className={styles.actionText}>{t('user.myFavorites')}</div>
             </div>
-            <div className={styles.actionButton} onClick={() => (window.location.href = '/alert')}>
+            <div className={styles.actionButton} onClick={() => (window.location.href = '/mywarn')}>
               <div className={styles.actionIcon}>
                 <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/me-alert%402x.png'} alt="我的报警" />
               </div>
@@ -628,7 +770,11 @@ export default function UserPage() {
 
         {showCalendarSection && (
           <div className={styles.calendarSection}>
-            <CalendarCard />
+            <CalendarCard 
+              onDateChange={handleDateChange}
+              onToggleChange={handleAnnouncementToggle}
+              defaultToggle={isAnnouncementOn}
+            />
           </div>
         )}
 

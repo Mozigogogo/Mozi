@@ -218,6 +218,7 @@ export const handleOptions = (data, type, msg) => {
       series: [
         {
           type: 'treemap',
+          roam: (isPositionsize || isTradevol) ? false : true, // 持仓量和成交额页面禁用缩放
           label: {
             show: true,
             position: ['5%', '30%'],

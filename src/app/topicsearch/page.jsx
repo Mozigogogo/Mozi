@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { InfiniteScroll, Toast, SpinLoading } from 'antd-mobile';
+import { useTranslation } from 'react-i18next';
 import { SearchInput } from '../../components/SearchInput';
 import { Interface } from '../../utils/constants';
 import { request } from '../../utils/request';
@@ -12,6 +13,7 @@ const hotIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/ic
 const leftArrowIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/left-arrow.png';
 
 export default function TopicSearch() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [searchValue, setSearchValue] = useState('');
   const [loading, setLoading] = useState(false);
@@ -45,7 +47,7 @@ export default function TopicSearch() {
     } catch (error) {
       console.error('搜索话题失败:', error);
       Toast.show({
-        content: '搜索失败',
+        content: t('topicSearch.searchFailed'),
         icon: 'fail'
       });
     } finally {
@@ -118,7 +120,7 @@ export default function TopicSearch() {
           <div className={styles.navbarLeft} onClick={goBack}>
             <img src={leftArrowIcon} className={styles.leftArrowIcon} alt="返回" />
           </div>
-          <div className={styles.navbarTitle}>话题搜索</div>
+          <div className={styles.navbarTitle}>{t('topicSearch.title')}</div>
           <div className={styles.navbarRight}>
             {/* 右侧按钮移除 */}
           </div>
@@ -129,7 +131,7 @@ export default function TopicSearch() {
           <SearchInput
             value={searchValue}
             reloadFun={searchTopics}
-            placeholder="搜索话题"
+            placeholder={t('topicSearch.placeholder')}
           />
         </div>
         
@@ -177,7 +179,7 @@ export default function TopicSearch() {
             )}
             {!loading && topics.length === 0 && searchValue && (
               <div className={styles.emptyBox}>
-                暂无搜索结果
+                {t('topicSearch.noResults')}
               </div>
             )}
           </div>
