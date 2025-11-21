@@ -14,6 +14,8 @@ import BullBearVote from '../../components/BullBearVote';
 import QuestionButtons from '../../components/QuestionButtons';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
+import { useAmplitude } from '../../hooks/useAmplitude';
+import { CommunityEvents } from '../../utils/amplitude';
 import styles from './page.module.less';
 
 // 加载组件
@@ -27,6 +29,7 @@ const GardenLoading = ({ t }) => (
 export default function CommunityPage() {
   const searchParams = useSearchParams();
   const { t } = useTranslation();
+  const { track, trackClick } = useAmplitude('Community');
   
   // 状态定义
   const [mainTab, setMainTab] = useState('recommend');
@@ -266,6 +269,13 @@ export default function CommunityPage() {
     const isLiked = likedPosts[postId];
     const url = isLiked ? `${Interface.POSTS_UNLIKE}/${postId}` : `${Interface.POSTS_LIKE}/${postId}`;
     
+    // Amplitude 埋点
+    track(isLiked ? CommunityEvents.POST_UNLIKED : CommunityEvents.POST_LIKED, {
+      postId,
+      tab: mainTab,
+      subTab
+    });
+    
     try {
       await request({
         url,
@@ -277,7 +287,7 @@ export default function CommunityPage() {
         [postId]: !isLiked
       }));
       
-      setPosts(prev => prev.map(post => {
+      setPosts(prevPosts => prevPosts.map(post => {
         if (post.id === postId) {
           return {
             ...post,
@@ -451,6 +461,14 @@ export default function CommunityPage() {
     e.stopPropagation();
     const shareUrl = `${window.location.origin}/commentinfo?id=${post.id}`;
     const shareText = post.title || '来自 Mozi 社区的帖子';
+    
+    // Amplitude 埋点
+    track(CommunityEvents.POST_SHARED, {
+      postId: post.id,
+      postTitle: post.title,
+      tab: mainTab,
+      subTab
+    });
     
     // 检查是否在Telegram环境中
     const isTelegram = window.Telegram?.WebApp?.initData;
@@ -766,23 +784,6 @@ export default function CommunityPage() {
     { key: 'ETH', title: 'ETH' },
     { key: 'BNB', title: 'BNB' },
     { key: 'DOGE', title: 'DOGE' },
-    { key: 'XRP', title: 'XRP' }
-  ];
-
-  // 处理币种选择
-  const handleCoinSelect = (coin) => {
-    setSelectedCoin(coin);
-    setShowCoinSelector(false);
-    
-    // 检查选中的币种是否在coinTabs中
-    const isInCoinTabs = coinTabs.some(tab => tab.key === coin);
-    if (!isInCoinTabs) {
-      // 如果不在coinTabs中，设置为动态展示的币种
-      setDynamicCoin(coin);
-    } else {
-      // 如果在coinTabs中，清除动态币种
-      setDynamicCoin(null);
-    }
   };
 
   // 处理更多币种
@@ -790,9 +791,39 @@ export default function CommunityPage() {
     setShowCoinSelector(true);
   };
 
+  // 处理币种选择
+  const handleCoinSelect = (coin) => {
+    // Amplitude 埋点
+    track(CommunityEvents.COIN_SELECTED, {
+      coin,
+      source: 'selector'
+    });
+    
+    setSelectedCoin(coin);
+    setShowCoinSelector(false);
+    
+    // 重置页码
+    setPage(1);
+    setPosts([]);
+    setHasMore(true);
+    
+    // 如果币种不在默认列表中，添加为动态币种
+    const coinExists = coinTabs.some(item => item.key === coin);
+    if (!coinExists) {
+      setDynamicCoin(coin);
+    }
+  };
+
   // 处理子标签切换
   const handleSubTabChange = (tab) => {
     if (tab !== subTab) {
+      // Amplitude 埋点
+      track(CommunityEvents.TAB_SWITCHED, {
+        from: subTab,
+        to: tab,
+        mainTab: mainTab
+      });
+      
       setSubTab(tab);
       setPage(1);
       setHasMore(true);
