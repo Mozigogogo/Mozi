@@ -38,7 +38,7 @@ export default function PostPage() {
   });
   const [showVote, setShowVote] = useState(false);
   const [voteTitle, setVoteTitle] = useState('');
-  const [voteOptions, setVoteOptions] = useState(['看涨', '看跌']);
+  const [voteOptions, setVoteOptions] = useState([]);
   const [hasVote, setHasVote] = useState(false);
   const [voteId, setVoteId] = useState(null);
 
@@ -755,6 +755,10 @@ export default function PostPage() {
             className={styles.templateBtn}
             onClick={() => {
               setActiveButton('vote');
+              // 初始化默认投票选项
+              if (voteOptions.length === 0) {
+                setVoteOptions([t('post.vote.bullish'), t('post.vote.bearish')]);
+              }
               setShowVote(true);
             }}
           >
@@ -795,13 +799,13 @@ export default function PostPage() {
             <div 
               className={styles.popupMask} 
               onClick={() => {
-                setShowTemplates(false);
+                setShowTemplates(false);  
                 setActiveButton('');
               }}
             />
             <div className={styles.popupContent}>
               <div className={styles.popupHeader}>
-                <span>选择模板</span>
+                <span>{t('post.selectTemplate')}</span>
                 <span 
                   className={styles.closeBtn}
                   onClick={() => {
@@ -887,7 +891,7 @@ export default function PostPage() {
                   ))}
                 </div>
                 <Button className={styles.addOptionBtn} onClick={addVoteOption}>
-                  添加选项
+                  {t('post.vote.addOption')}
                 </Button>
               </div>
             </div>
@@ -912,7 +916,7 @@ export default function PostPage() {
                     className={styles.searchInput}
                     value={searchKeyword}
                     onChange={(e) => setSearchKeyword(e.target.value)}
-                    placeholder="搜索币种"
+                    placeholder={t('post.coin.searchPlaceholder')}
                     onKeyPress={(e) => {
                       if (e.key === 'Enter') {
                         searchCoin(searchKeyword);
@@ -927,12 +931,12 @@ export default function PostPage() {
                     setActiveButton('');
                   }}
                 >
-                  取消
+                  {t('common.cancel')}
                 </button>
               </div>
               {/* 搜索结果展示区域 */}
               <div className={styles.searchResults}>
-                <div className={styles.resultsTitle}>币种列表</div>
+                <div className={styles.resultsTitle}>{t('post.coin.coinList')}</div>
                 <div className={styles.resultsList}>
                   {searchResults.length > 0 ? (
                     searchResults.map((coin, index) => (
@@ -948,7 +952,7 @@ export default function PostPage() {
                     ))
                   ) : (
                     <div className={styles.noResults}>
-                      <span>暂无币种数据</span>
+                      <span>{t('post.coin.noData')}</span>
                     </div>
                   )}
                 </div>
@@ -974,12 +978,12 @@ export default function PostPage() {
                     className={styles.searchInput}
                     value={topicSearchKeyword}
                     onChange={(value) => setTopicSearchKeyword(value)}
-                    placeholder='搜索话题'
+                    placeholder={t('post.topic.searchPlaceholder')}
                     onEnterPress={(e) => searchTopics(e.target.value)}
                   />
                 </div>
                 <button className={styles.createTopicBtn} onClick={() => setShowCreateTopic(true)}>
-                  创建话题
+                  {t('post.topic.createTopic')}
                 </button>
                 <button 
                   className={styles.cancelBtn} 
@@ -988,12 +992,12 @@ export default function PostPage() {
                     setActiveButton('');
                   }}
                 >
-                  取消
+                  {t('common.cancel')}
                 </button>
               </div>
               {/* 话题展示区域 */}
               <div className={styles.searchResults}>
-                <div className={styles.resultsTitle}>话题列表</div>
+                <div className={styles.resultsTitle}>{t('post.topic.topicList')}</div>
                 <div className={styles.resultsList}>
                   {topics.length > 0 ? (
                     topics.map(topic => (
@@ -1008,7 +1012,7 @@ export default function PostPage() {
                     ))
                   ) : (
                     <div className={styles.noResults}>
-                      <span>{topicSearchKeyword ? '未找到相关话题' : '加载中...'}</span>
+                      <span>{topicSearchKeyword ? t('post.topic.noResults') : t('common.loading')}</span>
                     </div>
                   )}
                 </div>
@@ -1022,26 +1026,26 @@ export default function PostPage() {
           <div className={styles.topicCreatorMask} onClick={() => setShowCreateTopic(false)}>
             <div className={styles.topicCreator} onClick={e => e.stopPropagation()}>
               <div className={styles.creatorHeader}>
-                <span>创建话题</span>
+                <span>{t('post.topic.createTopic')}</span>
                 <span className={styles.closeIcon} onClick={() => setShowCreateTopic(false)}>×</span>
               </div>
               <div className={styles.creatorContent}>
                 <div className={styles.inputGroup}>
-                  <span className={styles.label}>话题名称</span>
+                  <span className={styles.label}>{t('post.topic.topicName')}</span>
                   <Input
                     className={styles.titleInput}
                     value={topicTitle}
                     onChange={(value) => setTopicTitle(value)}
-                    placeholder="请输入话题名称（必填）"
+                    placeholder={t('post.topic.topicNamePlaceholder')}
                   />
                 </div>
                 <div className={styles.inputGroup}>
-                  <span className={styles.label}>话题简介</span>
+                  <span className={styles.label}>{t('post.topic.topicDescription')}</span>
                   <TextArea
                     className={styles.descInput}
                     value={topicDesc}
                     onChange={(value) => value.length <= 60 && setTopicDesc(value)}
-                    placeholder="请输入话题简介（选填，最多60字）"
+                    placeholder={t('post.topic.topicDescriptionPlaceholder')}
                     maxLength={60}
                     rows={3}
                   />
@@ -1054,7 +1058,7 @@ export default function PostPage() {
                 disabled={!topicTitle}
                 block
               >
-                创建话题
+                {t('post.topic.createTopic')}
               </Button>
             </div>
           </div>

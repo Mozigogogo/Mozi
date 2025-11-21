@@ -57,7 +57,7 @@
       "addFavorites": "Favorite",
       "addMonitor": "Monitor"
     },
-    "robotBubble": "Welcome to Mozi, how can I help you?"
+    "robotBubble": "Welcome to Mozi, what can I help you?"
   },
   "market": {
     "price": "Price",
@@ -288,6 +288,13 @@
       "searchCoinFailed": "Failed to search coins",
       "enterTopicName": "Please enter topic name"
     },
+    "topicCreate": {
+      "topicName": "Topic Name",
+      "topicDescription": "Topic Description",
+      "topicNamePlaceholder": "Enter topic name (required)",
+      "topicDescriptionPlaceholder": "Enter topic description (optional, max 60 characters)"
+    },
+    "noCoinFound": "No coins found",
     "coinInfo": {
       "coinName": "Coin Name: ",
       "votingQuestion": "What's your view on {{coin}} today?",
@@ -369,7 +376,7 @@
     "sendFailed": "Send failed, please retry",
     "wsNotConnected": "WebSocket not connected, please refresh",
     "genericError": "Sorry, something went wrong. Please try later",
-    "welcome": "Hello, I'm your AI assistant! I can help analyze crypto markets and answer investment questions. How can I help you?"
+    "welcome": "Hello, I'm your AI assistant! I can help analyze crypto markets and answer investment questions. What can I help you?"
   },
   "language": {
     "zh": "简体中文",
@@ -570,11 +577,12 @@
       "atl": "ATL",
       "atlChangePercent": "ATL %"
     },
-    "robotBubble": "Welcome to Mozi, how can I help you?"
+    "robotBubble": "Welcome to Mozi, what can I help you?"
   },
   "post": {
     "title": "Post",
     "editPost": "Edit Post",
+    "selectTemplate": "Select Template",
     "titlePlaceholder": "Enter title (optional)",
     "questionPlaceholder": "Enter your question",
     "contentPlaceholder": "Share your thoughts...",
@@ -616,10 +624,28 @@
       "create": "Create",
       "cancel": "Cancel",
       "voteTitlePlaceholder": "Enter vote topic",
-      "voteOptionPlaceholder": "Enter option"
+      "voteOptionPlaceholder": "Enter option",
+      "addOption": "Add Option",
+      "bullish": "Bullish",
+      "bearish": "Bearish"
     },
     "discovery": {
       "selectedCoins": "{{count}} coins selected"
+    },
+    "coin": {
+      "searchPlaceholder": "Search coins",
+      "coinList": "Coin List",
+      "noData": "No coins available"
+    },
+    "topic": {
+      "searchPlaceholder": "Search topics",
+      "createTopic": "Create Topic",
+      "topicList": "Topic List",
+      "topicName": "Topic Name",
+      "topicDescription": "Topic Description",
+      "topicNamePlaceholder": "Enter topic name (required)",
+      "topicDescriptionPlaceholder": "Enter topic description (optional, max 60 characters)",
+      "noResults": "No topics found"
     }
   },
   "alarm": {
@@ -627,5 +653,39 @@
     "deleteSuccess": "Deleted successfully",
     "deleteFailed": "Delete failed",
     "deleteButton": "Delete {{symbol}}"
+  },
+  "comment": {
+    "title": "Comments",
+    "share": "Share",
+    "allComments": "All Comments",
+    "replyCount": "{{count}} replies",
+    "endOfList": "End of comments",
+    "inputPlaceholder": "Write your comment...",
+    "replyPlaceholder": "Reply to @{{nickname}}...",
+    "send": "Send",
+    "messages": {
+      "fetchFailed": "Failed to fetch comments",
+      "operationFailed": "Operation failed",
+      "confirmDelete": "Are you sure you want to delete this comment?",
+      "deleteSuccess": "Deleted successfully",
+      "deleteFailed": "Delete failed",
+      "inputRequired": "Please enter comment content",
+      "commentSuccess": "Comment posted successfully",
+      "commentFailed": "Failed to post comment",
+      "replySuccess": "Reply posted successfully",
+      "replyFailed": "Failed to post reply"
+    }
+  },
+  "time": {
+    "justNow": "Just now",
+    "minutesAgo": "{{count}} minutes ago",
+    "hoursAgo": "{{count}} hours ago",
+    "daysAgo": "{{count}} days ago"
+  },
+  "topicSearch": {
+    "title": "Topic Search",
+    "placeholder": "Search topics",
+    "searchFailed": "Search failed",
+    "noResults": "No results found"
   }
 }

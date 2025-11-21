@@ -65,6 +65,11 @@ export default function CommunityPage() {
   const likeActiveIcon = `${CDN_ICON}/like-active.png`;
   const commentIcon = `${CDN_ICON}/comment.png`;
   const shareIcon = `${CDN_ICON}/share.png`;
+  // 发现好币专用图标（大拇指样式）
+  const messagesLikeNoActivedIcon = `${CDN_ICON}/messages-like-no-actived.png`;
+  const messagesLikeActiveIcon = `${CDN_ICON}/messages-like-active.png`;
+  const messagesCommentIcon = `${CDN_ICON}/messages-comment.png`;
+  const messagesShareIcon = `${CDN_ICON}/messages-share.png`;
   const recommendActive = `${CDN_IMG}/community-recommend.png`;
   const recommendInactive = `${CDN_IMG}/recommend-no-actived.png`;
   const hotActive = `${CDN_IMG}/hot-list-actived.png`;
@@ -87,10 +92,10 @@ export default function CommunityPage() {
     const m = 60 * 1000;
     const h = 60 * m;
     const d = 24 * h;
-    if (diff < m) return '刚刚';
-    if (diff < h) return Math.floor(diff / m) + '分钟前';
-    if (diff < d) return Math.floor(diff / h) + '小时前';
-    if (diff < 30 * d) return Math.floor(diff / d) + '天前';
+    if (diff < m) return t('time.justNow');
+    if (diff < h) return t('time.minutesAgo', { count: Math.floor(diff / m) });
+    if (diff < d) return t('time.hoursAgo', { count: Math.floor(diff / h) });
+    if (diff < 30 * d) return t('time.daysAgo', { count: Math.floor(diff / d) });
     const date = new Date(ts);
     const pad = (n) => (n < 10 ? '0' + n : '' + n);
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
@@ -217,6 +222,7 @@ export default function CommunityPage() {
           username: item.nickName || '匿名用户',
           title: item.title,
           content: item.content,
+          category: item.category, // 添加 category 字段映射
           commentCount: item.commentCnt || 0,
           likeCount: item.likeCnt || 0,
           userId: item.userId,
@@ -224,6 +230,7 @@ export default function CommunityPage() {
           topics: item.topics || [],
           isLiked: item.isLikedByCurrentUser || false,
           createTime: item.updatedAt?.replace('T', ' ') || '',
+          updatedAt: item.updatedAt,
           images: item.images || []
         }));
         
@@ -367,7 +374,7 @@ export default function CommunityPage() {
     console.log('创建话题');
     if (!topicTitle.trim()) {
       Toast.show({
-        content: '请输入话题名称',
+        content: t('community.messages.enterTopicName'),
         position: 'bottom',
       });
       return;
@@ -421,14 +428,14 @@ export default function CommunityPage() {
         }
       } else {
         Toast.show({
-          content: response?.errorMsg || '创建失败',
+          content: response?.errorMsg || t('community.messages.createFailed'),
           position: 'bottom',
         });
       }
     } catch (error) {
       console.error('创建话题失败:', error);
       Toast.show({
-        content: '创建失败',
+        content: t('community.messages.createFailed'),
         position: 'bottom',
       });
     }
@@ -671,7 +678,7 @@ export default function CommunityPage() {
                   >
                     <img
                       className={styles.discoveryActionIcon}
-                      src={(post.isLiked || likedPosts[post.id]) ? likeActiveIcon : likeIcon}
+                      src={(post.isLiked || likedPosts[post.id]) ? messagesLikeActiveIcon : messagesLikeNoActivedIcon}
                       alt="like"
                     />
                     <span className={styles.actionCount}>{post.likeCount || 0}</span>
@@ -681,11 +688,11 @@ export default function CommunityPage() {
                     className={`${styles.discoveryActionBtn} ${styles.shareBtn}`}
                     onClick={(e) => handleShare(e, post)}
                   >
-                    <img className={styles.discoveryActionIcon} src={shareIcon} alt="share" />
+                    <img className={styles.discoveryActionIcon} src={messagesShareIcon} alt="share" />
                   </button>
                   
                   <button className={`${styles.discoveryActionBtn} ${styles.commentBtn}`}>
-                    <img className={styles.discoveryActionIcon} src={commentIcon} alt="comment" />
+                    <img className={styles.discoveryActionIcon} src={messagesCommentIcon} alt="comment" />
                     <span className={styles.actionCount}>{post.commentCount || 0}</span>
                   </button>
                 </>
@@ -712,7 +719,12 @@ export default function CommunityPage() {
             </div>
           </div>
         ))}
-        {loading && <GardenLoading t={t} />}
+        {loading && posts.length === 0 && (
+          <div className={styles.centerLoading}>
+            <GardenLoading t={t} />
+          </div>
+        )}
+        {loading && posts.length > 0 && <GardenLoading t={t} />}
         {!hasMore && posts.length > 0 && (
           <div className={styles.noMore}>{t('community.actions.noMorePosts')}</div>
         )}
@@ -970,8 +982,8 @@ export default function CommunityPage() {
           <div className={styles.coinSelectorFullscreen}>
             <NavBar title="社区" showBack={false} showBorder={false} backgroundColor="transparent" />
             <div className={styles.selectorHeader}>
-              <span className={styles.headerTitle}>搜索币种</span>
-              <span className={styles.close} onClick={() => setShowCoinSelector(false)}>取消</span>
+              <span className={styles.headerTitle}>{t('community.actions.searchCoin')}</span>
+              <span className={styles.close} onClick={() => setShowCoinSelector(false)}>{t('common.cancel')}</span>
             </div>
             <div className={styles.selectorSearch}>
               <div className={styles.selectorSearchBox}>
@@ -1000,7 +1012,7 @@ export default function CommunityPage() {
                   </div>
                 ))
               ) : searchKeyword ? (
-                <div className={styles.noResult}>未找到相关币种</div>
+                <div className={styles.noResult}>{t('community.noCoinFound')}</div>
               ) : null}
             </div>
           </div>
@@ -1011,26 +1023,26 @@ export default function CommunityPage() {
           <div className={styles.topicCreatorMask} onClick={() => setShowCreateTopic(false)}>
             <div className={styles.topicCreator} onClick={e => e.stopPropagation()}>
               <div className={styles.creatorHeader}>
-                <span>创建话题</span>
+                <span>{t('community.actions.createTopic')}</span>
                 <span className={styles.close} onClick={() => setShowCreateTopic(false)}>×</span>
               </div>
               <div className={styles.creatorContent}>
                 <div className={styles.inputGroup}>
-                  <span className={styles.label}>话题名称</span>
+                  <span className={styles.label}>{t('community.topicCreate.topicName')}</span>
                   <input
                     className={styles.titleInput}
                     value={topicTitle}
                     onChange={e => setTopicTitle(e.target.value)}
-                    placeholder="请输入话题名称（必填）"
+                    placeholder={t('community.topicCreate.topicNamePlaceholder')}
                   />
                 </div>
                 <div className={styles.inputGroup}>
-                  <span className={styles.label}>话题简介</span>
+                  <span className={styles.label}>{t('community.topicCreate.topicDescription')}</span>
                   <textarea
                     className={styles.descInput}
                     value={topicDesc}
                     onChange={e => e.target.value.length <= 60 && setTopicDesc(e.target.value)}
-                    placeholder="请输入话题简介（选填，最多60字）"
+                    placeholder={t('community.topicCreate.topicDescriptionPlaceholder')}
                     maxLength={60}
                   />
                   <span className={styles.wordCount}>{topicDesc.length}/60</span>
@@ -1040,7 +1052,7 @@ export default function CommunityPage() {
                 className={`${styles.createBtn} ${topicTitle ? styles.active : ''}`}
                 onClick={handleCreateTopic}
               >
-                创建话题
+                {t('community.actions.createTopic')}
               </Button>
             </div>
           </div>
