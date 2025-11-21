@@ -783,8 +783,8 @@ export default function CommunityPage() {
     { key: 'BTC', title: 'BTC' },
     { key: 'ETH', title: 'ETH' },
     { key: 'BNB', title: 'BNB' },
-    { key: 'DOGE', title: 'DOGE' },
-  };
+    { key: 'DOGE', title: 'DOGE' }
+  ];
 
   // 处理更多币种
   const handleMoreCoins = () => {
