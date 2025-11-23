@@ -12,6 +12,7 @@ import ThinkingAnimation from '../../components/ThinkingAnimation';
 import PopLogin from '../../components/PopLogin';
 import { MoziWebSocket } from '../../utils/moziWebSocket';
 import { WS_URL } from '../../utils/constants';
+import { trackEvent, trackPageView, AIEvents } from '@/utils/amplitude';
 import { 
   WS_EVENTS, 
   PLATFORMS, 
@@ -347,6 +348,11 @@ export default function RobotPage() {
     }
   }, []);
   
+  // 埋点：页面浏览
+  useEffect(() => {
+    trackPageView('AI Assistant');
+  }, []);
+  
   // 登录成功回调
   const handleLoginSuccess = () => {
     // 登录成功后刷新页面，重新初始化 WebSocket
@@ -480,6 +486,15 @@ export default function RobotPage() {
       
       setIsStreaming(false);
       currentMessageIdRef.current = null;
+      
+      // 埋点：AI 回复完成
+      trackEvent(AIEvents.RESPONSE_RECEIVED, {
+        conversationId,
+        messageId,
+        tokensUsed: tokens,
+        responseLength: fullContent?.length || 0,
+        hasSuggestedQuestions: suggested && suggested.length > 0
+      });
       
       // 更新消息状态
       setMessages(prev => prev.map(msg => {
@@ -638,6 +653,15 @@ export default function RobotPage() {
   const handleSend = (text = null) => {
     const message = text || inputValue.trim();
     if (!message || isConnecting || isStreaming) return;
+
+    // 埋点：用户发送问题（记录问题内容）
+    trackEvent(AIEvents.QUESTION_SENT, {
+      question: message,
+      questionLength: message.length,
+      conversationId: conversationIdRef.current,
+      isSuggestedQuestion: text !== null, // 是否是点击建议问题
+      timestamp: Date.now()
+    });
 
     // 添加用户消息
     const userMsg = {
@@ -870,6 +894,7 @@ export default function RobotPage() {
               placeholder={t('robot.inputPlaceholder')}
               onKeyPress={(e) => e.key === 'Enter' && !isStreaming && handleSend()}
               onChange={(e) => setInputValue(e.target.value)}
+              onFocus={() => trackEvent(AIEvents.INPUT_FOCUSED)}
               disabled={isConnecting || isStreaming}
             />
           </div>
