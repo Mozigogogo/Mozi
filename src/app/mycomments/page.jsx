@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslation } from 'react-i18next';
 import Layout from "@/components/Layout";
 import { Loading } from "@/components/Loading";
 import NavBar from "@/components/NavBar";
@@ -8,19 +9,20 @@ import { request } from "@/utils/request";
 import { Interface } from "@/utils/constants";
 import styles from "./page.module.less";
 
-const formatTime = (timeStr) => {
+const formatTime = (timeStr, t) => {
   if (!timeStr) return "";
   const date = new Date(timeStr);
   const diff = Date.now() - date.getTime();
   const m = 60 * 1000, h = 60 * m, d = 24 * h;
-  if (diff < m) return "刚刚";
-  if (diff < h) return Math.floor(diff / m) + "分钟前";
-  if (diff < d) return Math.floor(diff / h) + "小时前";
-  if (diff < 7 * d) return Math.floor(diff / d) + "天前";
+  if (diff < m) return t('time.justNow');
+  if (diff < h) return t('time.minutesAgo', { count: Math.floor(diff / m) });
+  if (diff < d) return t('time.hoursAgo', { count: Math.floor(diff / h) });
+  if (diff < 7 * d) return t('time.daysAgo', { count: Math.floor(diff / d) });
   return date.toLocaleDateString("zh-CN", { month: "2-digit", day: "2-digit" });
 };
 
 export default function MyCommentsPage() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [list, setList] = useState([]);
   const [page, setPage] = useState(1);
@@ -71,7 +73,7 @@ export default function MyCommentsPage() {
         }
       }
     } catch (e) {
-      console.error("加载评论失败", e);
+      console.error(t('myComments.loadFailed'), e);
     } finally {
       setLoading(false);
     }
@@ -98,18 +100,18 @@ export default function MyCommentsPage() {
   return (
     <Layout>
       <div className={styles.container}>
-        <NavBar title="我的评论" showBorder={false} />
+        <NavBar title={t('myComments.title')} showBorder={false} />
         {!isLogin ? (
           <div className={styles.empty}>
-            <div>请先登录查看评论</div>
-            <div className={styles.loginBtn} onClick={goLogin}>去登录</div>
+            <div>{t('myComments.pleaseLogin')}</div>
+            <div className={styles.loginBtn} onClick={goLogin}>{t('myComments.goLogin')}</div>
           </div>
         ) : (
           <div className={styles.scroll}>
             {loading && page === 1 ? (
               <Loading />
             ) : list.length === 0 ? (
-              <div className={styles.empty}>暂无评论</div>
+              <div className={styles.empty}>{t('myComments.empty')}</div>
             ) : (
               <>
                 {list.map((item, idx) => (
@@ -117,21 +119,21 @@ export default function MyCommentsPage() {
                     {item.title && <div className={styles.postTitle}>{item.title}</div>}
                     {item.content && <div className={styles.postContent}>{item.content}</div>}
                     <div className={styles.commentArea}>
-                      <div className={styles.commentLabel}>我的评论</div>
+                      <div className={styles.commentLabel}>{t('myComments.myCommentLabel')}</div>
                       <div className={styles.myComment}>{item.comments}</div>
                     </div>
                     <div className={styles.footer}>
-                      <div>{formatTime(item.createdAt)}</div>
-                      {item.userName ? <div className={styles.author}>回复 @{item.userName}</div> : null}
+                      <div>{formatTime(item.createdAt, t)}</div>
+                      {item.userName ? <div className={styles.author}>{t('myComments.replyTo')}{item.userName}</div> : null}
                     </div>
                   </div>
                 ))}
 
                 {loading && page > 1 && (
-                  <div className={styles.loadingMore}>加载中...</div>
+                  <div className={styles.loadingMore}>{t('myComments.loadingMore')}</div>
                 )}
                 {!hasMore && list.length > 0 && (
-                  <div className={styles.noMore}>没有更多了</div>
+                  <div className={styles.noMore}>{t('myComments.noMore')}</div>
                 )}
               </>
             )}

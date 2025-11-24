@@ -4,11 +4,13 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Toast, Button, Input, Picker, Image as AntdImage } from 'antd-mobile';
 import { LeftOutline } from 'antd-mobile-icons';
+import { useTranslation } from 'react-i18next';
 import styles from './page.module.less';
 import './kyc-global.css';
 
 export default function KycPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     realName: '',
     idNumber: '',
@@ -18,14 +20,14 @@ export default function KycPage() {
   });
   const [idCardFront, setIdCardFront] = useState('');
   const [idCardBack, setIdCardBack] = useState('');
-  const [countries] = useState([
-    [{ label: '中国', value: '中国' }],
-    [{ label: '美国', value: '美国' }],
-    [{ label: '日本', value: '日本' }],
-    [{ label: '韩国', value: '韩国' }],
-    [{ label: '新加坡', value: '新加坡' }],
-    [{ label: '其他', value: '其他' }]
-  ]);
+  const countries = [
+    [{ label: t('kyc.countries.china'), value: 'china' }],
+    [{ label: t('kyc.countries.usa'), value: 'usa' }],
+    [{ label: t('kyc.countries.japan'), value: 'japan' }],
+    [{ label: t('kyc.countries.korea'), value: 'korea' }],
+    [{ label: t('kyc.countries.singapore'), value: 'singapore' }],
+    [{ label: t('kyc.countries.other'), value: 'other' }]
+  ];
   const [countryPickerVisible, setCountryPickerVisible] = useState(false);
 
   const handleInputChange = (field, value) => {
@@ -67,38 +69,38 @@ export default function KycPage() {
   const handleSubmit = () => {
     // 验证表单
     if (!formData.realName) {
-      Toast.show({ content: '请输入真实姓名', position: 'center' });
+      Toast.show({ content: t('kyc.messages.nameRequired'), position: 'center' });
       return;
     }
     if (!formData.idNumber) {
-      Toast.show({ content: '请输入证件号码', position: 'center' });
+      Toast.show({ content: t('kyc.messages.idRequired'), position: 'center' });
       return;
     }
     if (!formData.country) {
-      Toast.show({ content: '请选择国家/地区', position: 'center' });
+      Toast.show({ content: t('kyc.messages.countryRequired'), position: 'center' });
       return;
     }
     if (!formData.phone) {
-      Toast.show({ content: '请输入手机号码', position: 'center' });
+      Toast.show({ content: t('kyc.messages.phoneRequired'), position: 'center' });
       return;
     }
     if (!formData.email) {
-      Toast.show({ content: '请输入邮箱地址', position: 'center' });
+      Toast.show({ content: t('kyc.messages.emailRequired'), position: 'center' });
       return;
     }
     if (!idCardFront || !idCardBack) {
-      Toast.show({ content: '请上传证件照片', position: 'center' });
+      Toast.show({ content: t('kyc.messages.photoRequired'), position: 'center' });
       return;
     }
 
     // 提交认证
-    Toast.show({ content: '提交中...', icon: 'loading', duration: 0 });
+    Toast.show({ content: t('kyc.messages.submitting'), icon: 'loading', duration: 0 });
     
     // 模拟API调用
     setTimeout(() => {
       Toast.clear();
       Toast.show({
-        content: '您的认证申请已提交，我们将在1-3个工作日内完成审核。',
+        content: t('kyc.messages.submitSuccess'),
         position: 'center',
         duration: 3000,
         afterClose: () => {
@@ -115,60 +117,60 @@ export default function KycPage() {
         <button className={styles.backBtn} onClick={() => router.back()}>
           <LeftOutline />
         </button>
-        <div className={styles.navTitle}>KYC认证</div>
+        <div className={styles.navTitle}>{t('kyc.title')}</div>
       </div>
 
       <div className={styles.kycHeader}>
-        <h1 className={styles.kycTitle}>实名认证</h1>
-        <p className={styles.kycSubtitle}>完成认证后可享受更多权益</p>
+        <h1 className={styles.kycTitle}>{t('kyc.pageTitle')}</h1>
+        <p className={styles.kycSubtitle}>{t('kyc.subtitle')}</p>
       </div>
 
       <div className={styles.kycBenefits}>
         <div className={styles.benefitItem}>
           <div className={styles.benefitIcon}>✓</div>
-          <span className={styles.benefitText}>提升账户安全性</span>
+          <span className={styles.benefitText}>{t('kyc.benefits.security')}</span>
         </div>
         <div className={styles.benefitItem}>
           <div className={styles.benefitIcon}>✓</div>
-          <span className={styles.benefitText}>解锁高级功能</span>
+          <span className={styles.benefitText}>{t('kyc.benefits.features')}</span>
         </div>
         <div className={styles.benefitItem}>
           <div className={styles.benefitIcon}>✓</div>
-          <span className={styles.benefitText}>获得额外积分奖励</span>
+          <span className={styles.benefitText}>{t('kyc.benefits.rewards')}</span>
         </div>
       </div>
 
       <div className={styles.formSection}>
-        <h3 className={styles.sectionTitle}>基本信息</h3>
+        <h3 className={styles.sectionTitle}>{t('kyc.basicInfo')}</h3>
         
         <div className={styles.formItem}>
-          <label className={styles.formLabel}>真实姓名</label>
+          <label className={styles.formLabel}>{t('kyc.form.realName')}</label>
           <Input
             className={styles.formInput}
-            placeholder='请输入您的真实姓名'
+            placeholder={t('kyc.form.realNamePlaceholder')}
             value={formData.realName}
             onChange={(value) => handleInputChange('realName', value)}
           />
         </div>
 
         <div className={styles.formItem}>
-          <label className={styles.formLabel}>证件号码</label>
+          <label className={styles.formLabel}>{t('kyc.form.idNumber')}</label>
           <Input
             className={styles.formInput}
-            placeholder='请输入身份证/护照号码'
+            placeholder={t('kyc.form.idNumberPlaceholder')}
             value={formData.idNumber}
             onChange={(value) => handleInputChange('idNumber', value)}
           />
         </div>
 
         <div className={styles.formItem}>
-          <label className={styles.formLabel}>国家/地区</label>
+          <label className={styles.formLabel}>{t('kyc.form.country')}</label>
           <div 
             className={styles.formPicker}
             onClick={() => setCountryPickerVisible(true)}
           >
             <span className={formData.country ? styles.pickerValue : styles.pickerPlaceholder}>
-              {formData.country || '请选择国家/地区'}
+              {formData.country ? t(`kyc.countries.${formData.country}`) : t('kyc.form.countryPlaceholder')}
             </span>
             <span className={styles.pickerArrow}>›</span>
           </div>
@@ -181,22 +183,22 @@ export default function KycPage() {
         </div>
 
         <div className={styles.formItem}>
-          <label className={styles.formLabel}>手机号码</label>
+          <label className={styles.formLabel}>{t('kyc.form.phone')}</label>
           <Input
             className={styles.formInput}
             type='number'
-            placeholder='请输入手机号码'
+            placeholder={t('kyc.form.phonePlaceholder')}
             value={formData.phone}
             onChange={(value) => handleInputChange('phone', value)}
           />
         </div>
 
         <div className={styles.formItem}>
-          <label className={styles.formLabel}>邮箱地址</label>
+          <label className={styles.formLabel}>{t('kyc.form.email')}</label>
           <Input
             className={styles.formInput}
             type='text'
-            placeholder='请输入邮箱地址'
+            placeholder={t('kyc.form.emailPlaceholder')}
             value={formData.email}
             onChange={(value) => handleInputChange('email', value)}
           />
@@ -204,28 +206,28 @@ export default function KycPage() {
       </div>
 
       <div className={styles.uploadSection}>
-        <h3 className={styles.sectionTitle}>证件照片</h3>
-        <p className={styles.sectionDesc}>请上传清晰的证件照片，确保信息完整可见</p>
+        <h3 className={styles.sectionTitle}>{t('kyc.documentPhotos')}</h3>
+        <p className={styles.sectionDesc}>{t('kyc.documentPhotoDesc')}</p>
 
         <div className={styles.uploadGrid}>
           <div className={styles.uploadItem} onClick={() => handleImageUpload('front')}>
             {idCardFront ? (
-              <img src={idCardFront} className={styles.uploadPreview} alt="证件正面" />
+              <img src={idCardFront} className={styles.uploadPreview} alt={t('kyc.form.frontAlt')} />
             ) : (
               <div className={styles.uploadPlaceholder}>
                 <span className={styles.uploadIcon}>+</span>
-                <span className={styles.uploadText}>上传证件正面</span>
+                <span className={styles.uploadText}>{t('kyc.form.uploadFront')}</span>
               </div>
             )}
           </div>
 
           <div className={styles.uploadItem} onClick={() => handleImageUpload('back')}>
             {idCardBack ? (
-              <img src={idCardBack} className={styles.uploadPreview} alt="证件反面" />
+              <img src={idCardBack} className={styles.uploadPreview} alt={t('kyc.form.backAlt')} />
             ) : (
               <div className={styles.uploadPlaceholder}>
                 <span className={styles.uploadIcon}>+</span>
-                <span className={styles.uploadText}>上传证件反面</span>
+                <span className={styles.uploadText}>{t('kyc.form.uploadBack')}</span>
               </div>
             )}
           </div>
@@ -233,15 +235,15 @@ export default function KycPage() {
       </div>
 
       <div className={styles.tipsSection}>
-        <h4 className={styles.tipsTitle}>温馨提示</h4>
-        <p className={styles.tipsText}>• 请确保上传的证件照片清晰完整</p>
-        <p className={styles.tipsText}>• 您的个人信息将被严格保密</p>
-        <p className={styles.tipsText}>• 审核通过后将获得 +200 积分奖励</p>
+        <h4 className={styles.tipsTitle}>{t('kyc.tips.title')}</h4>
+        <p className={styles.tipsText}>{t('kyc.tips.clearPhoto')}</p>
+        <p className={styles.tipsText}>{t('kyc.tips.privacy')}</p>
+        <p className={styles.tipsText}>{t('kyc.tips.reward')}</p>
       </div>
 
       <div className={styles.submitSection}>
         <Button className={styles.submitBtn} onClick={handleSubmit} block>
-          提交认证
+          {t('kyc.buttons.submit')}
         </Button>
       </div>
     </div>

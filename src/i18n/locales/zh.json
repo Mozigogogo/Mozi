@@ -94,6 +94,44 @@
       "tooltipDown": "说明资金流向山寨币，市场更活跃。"
     }
   },
+  "theme": {
+    "selectTheme": "选择你喜欢的主题",
+    "switching": "切换中...",
+    "switchSuccess": "主题已切换",
+    "switchFailed": "切换失败",
+    "switchFailedRetry": "切换失败，请重试",
+    "current": "当前",
+    "themes": {
+      "default": {
+        "name": "默认主题",
+        "description": "清新绿色，经典配色"
+      },
+      "silver": {
+        "name": "钛合银",
+        "description": "科技质感，银灰配色"
+      },
+      "blue": {
+        "name": "海洋蓝",
+        "description": "沉稳大气，专业配色"
+      },
+      "purple": {
+        "name": "梦幻紫",
+        "description": "优雅神秘，时尚配色"
+      },
+      "orange": {
+        "name": "活力橙",
+        "description": "热情洋溢，活力配色"
+      },
+      "red": {
+        "name": "中国红",
+        "description": "喜庆热烈，传统配色"
+      },
+      "dark": {
+        "name": "暗黑模式",
+        "description": "护眼舒适，夜间专属"
+      }
+    }
+  },
   "discover": {
     "tabs": {
       "self": "自选",
@@ -177,6 +215,7 @@
     "feedbackDesc": "留言你想要的功能",
     "recommendFriend": "推荐朋友",
     "recommendDesc": "分享你的喜爱",
+    "shareText": "Mozi行情助手 - 专业的加密数据分析智能平台",
     "myPoints": "我的积分",
     "yesterdayPoints": "昨日积分：+{{points}}",
     "currentRank": "当前排名：总榜第 {{rank}} 名",
@@ -217,7 +256,17 @@
     "saveSuccess": "保存成功",
     "saveFailed": "保存失败",
     "defaultNickname": "用户",
-    "wechatUser": "微信用户"
+    "wechatUser": "微信用户",
+    "aboutMozi": {
+      "intro": "Mozi 是一家专业的加密数据分析智能平台，致力于为全球用户提供精准，实时的加密货币市场数据和分析服务，简化交易，降低交易的门槛，帮助用户在加密货币市场中做出明智的投资决策，降低风险，获得更高的收益。",
+      "description": "作为一家专业的加密数据分析平台，为解决用户去哪里买，买什么，怎么买的痛点，Mozi通过整合多种数据，提供详尽的搜索和丰富的各类排行榜让用户探索，包括但不限于交易所排行榜，热门币种排行榜，价格涨跌幅榜，目前覆盖主流交易所的数据。为了保证数据的准确性和实时性，Mozi 团队由经验丰富的专业人士组成，涵盖交易、数据开发、数据分析,人工智能，和平台架构，他们的专业知识和技能为平台数据的准确性和可靠性提供了强大支持。作为初创公司，Mozi 秉持墨子兼爱非攻的理念，致力于在全球传播这一理念。同时也诚邀感兴趣的技术，运营，产品以及投资机构联系我们。",
+      "mission": "Mozi使命：",
+      "missionText": "让财富触手可及",
+      "vision": "Mozi愿景：",
+      "visionText": "让交易更简单，更智能，更安全",
+      "values": "Mozi价值观：",
+      "valuesText": "兼爱 务实 专注 创新 自由"
+    }
   },
   "auth": {
     "email": "邮箱",
@@ -428,6 +477,7 @@
     "myPoints": "我的积分",
     "myInvites": "我的邀请",
     "season": "赛季",
+    "seasonName": "S5赛季",
     "historyRecord": "历史记录",
     "inviteRewardTitle": "每次推荐均可获得积分奖励！",
     "inviteReward": "邀请有奖",
@@ -451,7 +501,75 @@
     "note1": "每天前20个推荐均可获得积分。",
     "note2": "如果您的推荐人购买会员资格，您将获得积分和20%的费用回扣。",
     "note3": "推荐有效的前提是被邀请用户必须输入邀请码",
-    "completed": "已完成"
+    "completed": "已完成",
+    "centerTitle": "积分中心",
+    "toSeparator": "至",
+    "verifying": "验证中",
+    "pleaseRegister": "请先注册",
+    "joinAlarmSubtitle": "添加一个报警",
+    "certificationSubtitle": "身份认证",
+    "dailyRewardTasksTitle": "每日奖励任务",
+    "tasks": {
+      "firstRegister": {
+        "title": "首次注册账号",
+        "button": "去注册"
+      },
+      "followTwitter": {
+        "title": "关注我们的Twitter",
+        "button": "去关注"
+      },
+      "joinCommunity": {
+        "title": "加入我们的社群",
+        "button": "去加入"
+      },
+      "earlyBird": {
+        "title": "早鸟活动",
+        "button": "去参加"
+      },
+      "setAlarm": {
+        "title": "设置报警功能",
+        "button": "去设置"
+      },
+      "videoLearn": {
+        "title": "完成视频学习",
+        "button": "去学习"
+      },
+      "verify": "验证",
+      "completed": "已完成"
+    },
+    "messages": {
+      "taskNotCompleted": "任务尚未完成，请先完成任务",
+      "verifyFailed": "验证失败，请稍后重试",
+      "pointsEarned": "+{{points}}积分",
+      "loadFailed": "加载积分历史失败:"
+    },
+    "dailyTasks": {
+      "like": {
+        "title": "每日点赞",
+        "label": "每个赞"
+      },
+      "post": {
+        "title": "发帖",
+        "label": "每条帖子"
+      },
+      "receivedLike": {
+        "title": "收到赞",
+        "label": "每次被赞"
+      },
+      "reply": {
+        "title": "回复",
+        "label": "回复一次"
+      },
+      "postReplied": {
+        "title": "帖子收到回复",
+        "label": "收到回复"
+      }
+    }
+  }
+  ,
+  "pointsHistory": {
+    "title": "积分历史",
+    "empty": "暂无积分记录"
   }
   ,
   "pcr": {
@@ -688,5 +806,119 @@
     "placeholder": "搜索话题",
     "searchFailed": "搜索失败",
     "noResults": "暂无搜索结果"
+  },
+  "videoLearn": {
+    "title": "视频学习",
+    "listTitle": "学习列表",
+    "duration": "时长",
+    "complete": "完成可获得",
+    "videos": {
+      "platformTutorial": {
+        "title": "MOZI 平台使用教程",
+        "description": "了解如何使用 MOZI 平台的基本功能"
+      },
+      "priceAlert": {
+        "title": "如何设置价格告警",
+        "description": "学习如何设置和管理币种价格告警功能"
+      },
+      "pointsSystem": {
+        "title": "积分系统玩法介绍",
+        "description": "了解如何通过完成任务、互动获得积分奖励"
+      }
+    },
+    "messages": {
+      "pointsEarned": "恭喜获得 {{points}} 积分！",
+      "videoLoadFailed": "视频加载失败",
+      "loadRecordFailed": "加载视频完成记录失败:",
+      "saveRecordFailed": "保存视频完成记录失败:"
+    }
+  },
+  "kyc": {
+    "title": "KYC认证",
+    "pageTitle": "实名认证",
+    "subtitle": "完成认证后可享受更多权益",
+    "benefits": {
+      "security": "提升账户安全性",
+      "features": "解锁高级功能",
+      "rewards": "获得额外积分奖励"
+    },
+    "basicInfo": "基本信息",
+    "documentPhotos": "证件照片",
+    "documentPhotoDesc": "请上传清晰的证件照片，确保信息完整可见",
+    "tips": {
+      "title": "温馨提示",
+      "clearPhoto": "• 请确保上传的证件照片清晰完整",
+      "privacy": "• 您的个人信息将被严格保密",
+      "reward": "• 审核通过后将获得 +200 积分奖励"
+    },
+    "form": {
+      "realName": "真实姓名",
+      "realNamePlaceholder": "请输入您的真实姓名",
+      "idNumber": "证件号码",
+      "idNumberPlaceholder": "请输入身份证/护照号码",
+      "country": "国家/地区",
+      "countryPlaceholder": "请选择国家/地区",
+      "phone": "手机号码",
+      "phonePlaceholder": "请输入手机号码",
+      "email": "邮箱地址",
+      "emailPlaceholder": "请输入邮箱地址",
+      "uploadFront": "上传证件正面",
+      "uploadBack": "上传证件反面",
+      "frontAlt": "证件正面",
+      "backAlt": "证件反面"
+    },
+    "countries": {
+      "china": "中国",
+      "usa": "美国",
+      "japan": "日本",
+      "korea": "韩国",
+      "singapore": "新加坡",
+      "other": "其他"
+    },
+    "buttons": {
+      "submit": "提交认证"
+    },
+    "messages": {
+      "nameRequired": "请输入真实姓名",
+      "idRequired": "请输入证件号码",
+      "countryRequired": "请选择国家/地区",
+      "phoneRequired": "请输入手机号码",
+      "emailRequired": "请输入邮箱地址",
+      "photoRequired": "请上传证件照片",
+      "submitting": "提交中...",
+      "submitSuccess": "您的认证申请已提交，我们将在1-3个工作日内完成审核。"
+    }
+  },
+  "myComments": {
+    "title": "我的评论",
+    "empty": "暂无评论",
+    "pleaseLogin": "请先登录查看评论",
+    "goLogin": "去登录",
+    "myCommentLabel": "我的评论",
+    "replyTo": "回复 @",
+    "loadingMore": "加载中...",
+    "noMore": "没有更多了",
+    "loadFailed": "加载评论失败"
+  },
+  "myNotices": {
+    "title": "消息通知",
+    "empty": "暂无消息通知",
+    "pleaseLogin": "请先登录查看通知",
+    "goLogin": "去登录",
+    "commentedYou": "评论了你",
+    "anonymousUser": "匿名用户",
+    "loadingMore": "加载中...",
+    "noMore": "没有更多了",
+    "loadFailed": "加载通知失败"
+  },
+  "myLikes": {
+    "title": "我的点赞",
+    "empty": "暂无点赞",
+    "pleaseLogin": "请先登录查看点赞",
+    "goLogin": "去登录",
+    "anonymousUser": "匿名用户",
+    "loadingMore": "加载中...",
+    "noMore": "没有更多了",
+    "loadFailed": "加载点赞失败"
   }
 }

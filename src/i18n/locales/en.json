@@ -94,6 +94,44 @@
       "tooltipDown": "Funds flow to altcoins; market more active."
     }
   },
+  "theme": {
+    "selectTheme": "Choose your favorite theme",
+    "switching": "Switching...",
+    "switchSuccess": "Theme switched",
+    "switchFailed": "Switch failed",
+    "switchFailedRetry": "Switch failed, please try again",
+    "current": "Current",
+    "themes": {
+      "default": {
+        "name": "Default",
+        "description": "Fresh green, classic palette"
+      },
+      "silver": {
+        "name": "Titanium Silver",
+        "description": "Tech style, silver-grey palette"
+      },
+      "blue": {
+        "name": "Ocean Blue",
+        "description": "Calm and professional palette"
+      },
+      "purple": {
+        "name": "Dreamy Purple",
+        "description": "Elegant, mysterious, fashionable"
+      },
+      "orange": {
+        "name": "Vibrant Orange",
+        "description": "Passionate, energetic palette"
+      },
+      "red": {
+        "name": "China Red",
+        "description": "Festive, traditional palette"
+      },
+      "dark": {
+        "name": "Dark Mode",
+        "description": "Eye-friendly, night mode"
+      }
+    }
+  },
   "discover": {
     "tabs": {
       "self": "Favorites",
@@ -158,9 +196,9 @@
     "theme": "Theme",
     "skinCenter": "Skin Center",
     "notifications": "Notifications",
-    "myWarnings": "My Alerts",
+    "myWarnings": "Alerts",
     "myFavorites": "Favorites",
-    "followTwitter": "Follow Twitter",
+    "followTwitter": "Twitter",
     "myComments": "comments",
     "myLikes": "likes",
     "messageNotification": "Messages",
@@ -177,6 +215,7 @@
     "feedbackDesc": "Tell us what you want",
     "recommendFriend": "Recommend",
     "recommendDesc": "Share your favorites",
+    "shareText": "Mozi - Professional Crypto Data Analysis Platform",
     "myPoints": "My Points",
     "yesterdayPoints": "Yesterday: +{{points}}",
     "currentRank": "Current Rank: #{{rank}}",
@@ -217,7 +256,17 @@
     "saveSuccess": "Saved successfully",
     "saveFailed": "Save failed",
     "defaultNickname": "User",
-    "wechatUser": "Telegram User"
+    "wechatUser": "Telegram User",
+    "aboutMozi": {
+      "intro": "Mozi is a professional crypto data analysis platform dedicated to providing global users with accurate, real-time cryptocurrency market data and analysis services. We simplify trading, lower barriers, help users make informed investment decisions, reduce risks, and achieve higher returns.",
+      "description": "As a professional crypto data analysis platform, Mozi solves users' pain points of where to buy, what to buy, and how to buy by integrating multiple data sources, providing comprehensive search and rich rankings for users to explore, including but not limited to exchange rankings, popular coin rankings, and price change rankings, currently covering data from mainstream exchanges. To ensure data accuracy and timeliness, the Mozi team consists of experienced professionals covering trading, data development, data analysis, AI, and platform architecture. Their expertise provides strong support for platform data accuracy and reliability. As a startup, Mozi upholds the philosophy of Mozi's universal love and non-aggression, committed to spreading this philosophy globally. We also sincerely invite interested technical, operational, product teams and investment institutions to contact us.",
+      "mission": "Mission:",
+      "missionText": "Make Wealth Within Reach",
+      "vision": "Vision:",
+      "visionText": "Make Trading Simpler, Smarter, and Safer",
+      "values": "Values:",
+      "valuesText": "Universal Love · Pragmatic · Focus · Innovation · Freedom"
+    }
   },
   "auth": {
     "email": "Email",
@@ -428,8 +477,9 @@
     "myPoints": "My Points",
     "myInvites": "My Invites",
     "season": "Season",
+    "seasonName": "S5 Season",
     "historyRecord": "History",
-    "inviteRewardTitle": "Get points rewards for every referral!",
+    "inviteRewardTitle": "Earn points per referral!",
     "inviteReward": "Invite Reward",
     "perInvite": "Per invite",
     "inviteLink": "Invite Link",
@@ -451,7 +501,75 @@
     "note1": "The first 20 referrals each day can earn points.",
     "note2": "If your referral purchases membership, you will receive points and a 20% commission rebate.",
     "note3": "The referral is valid only if the invited user enters the invitation code",
-    "completed": "Completed"
+    "completed": "Completed",
+    "centerTitle": "Points Center",
+    "toSeparator": "to",
+    "verifying": "Verifying",
+    "pleaseRegister": "Please register first",
+    "joinAlarmSubtitle": "Add an alarm",
+    "certificationSubtitle": "Identity verification",
+    "dailyRewardTasksTitle": "Daily reward tasks",
+    "tasks": {
+      "firstRegister": {
+        "title": "First Registration",
+        "button": "Start"
+      },
+      "followTwitter": {
+        "title": "Follow Our Twitter",
+        "button": "Start"
+      },
+      "joinCommunity": {
+        "title": "Join Our Community",
+        "button": "Start"
+      },
+      "earlyBird": {
+        "title": "Early Bird Activity",
+        "button": "Start"
+      },
+      "setAlarm": {
+        "title": "Set Alarm Function",
+        "button": "Start"
+      },
+      "videoLearn": {
+        "title": "Complete Video Learning",
+        "button": "Start"
+      },
+      "verify": "Verify",
+      "completed": "Completed"
+    },
+    "messages": {
+      "taskNotCompleted": "Task not completed, please complete the task first",
+      "verifyFailed": "Verification failed, please try again later",
+      "pointsEarned": "+{{points}} Points",
+      "loadFailed": "Failed to load points history:"
+    },
+    "dailyTasks": {
+      "like": {
+        "title": "Daily Likes",
+        "label": "Per like"
+      },
+      "post": {
+        "title": "Posts",
+        "label": "Per post"
+      },
+      "receivedLike": {
+        "title": "Received Likes",
+        "label": "Per like received"
+      },
+      "reply": {
+        "title": "Replies",
+        "label": "Per reply"
+      },
+      "postReplied": {
+        "title": "Post Replies",
+        "label": "Per reply received"
+      }
+    }
+  }
+  ,
+  "pointsHistory": {
+    "title": "Points History",
+    "empty": "No points records yet"
   }
   ,
   "pcr": {
@@ -689,5 +807,119 @@
     "placeholder": "Search topics",
     "searchFailed": "Search failed",
     "noResults": "No results found"
+  },
+  "videoLearn": {
+    "title": "Video Learning",
+    "listTitle": "Learning List",
+    "duration": "Duration",
+    "complete": "Complete to earn",
+    "videos": {
+      "platformTutorial": {
+        "title": "MOZI Platform Tutorial",
+        "description": "Learn how to use the basic features of MOZI platform"
+      },
+      "priceAlert": {
+        "title": "How to Set Price Alerts",
+        "description": "Learn how to set and manage coin price alert functions"
+      },
+      "pointsSystem": {
+        "title": "Points System Introduction",
+        "description": "Learn how to earn points through tasks and interactions"
+      }
+    },
+    "messages": {
+      "pointsEarned": "Congratulations! You earned {{points}} points!",
+      "videoLoadFailed": "Video loading failed",
+      "loadRecordFailed": "Failed to load video completion records:",
+      "saveRecordFailed": "Failed to save video completion records:"
+    }
+  },
+  "kyc": {
+    "title": "KYC Verification",
+    "pageTitle": "Identity Verification",
+    "subtitle": "Complete verification to enjoy more benefits",
+    "benefits": {
+      "security": "Enhanced Account Security",
+      "features": "Unlock Advanced Features",
+      "rewards": "Earn Extra Points"
+    },
+    "basicInfo": "Basic Information",
+    "documentPhotos": "ID Documents",
+    "documentPhotoDesc": "Please upload clear photos of your ID, ensuring all information is visible",
+    "tips": {
+      "title": "Tips",
+      "clearPhoto": "• Ensure uploaded ID photos are clear and complete",
+      "privacy": "• Your personal information will be kept strictly confidential",
+      "reward": "• Get +200 points after verification approval"
+    },
+    "form": {
+      "realName": "Full Name",
+      "realNamePlaceholder": "Enter your full name",
+      "idNumber": "ID Number",
+      "idNumberPlaceholder": "Enter ID/Passport number",
+      "country": "Country/Region",
+      "countryPlaceholder": "Select country/region",
+      "phone": "Phone Number",
+      "phonePlaceholder": "Enter phone number",
+      "email": "Email Address",
+      "emailPlaceholder": "Enter email address",
+      "uploadFront": "Upload ID Front",
+      "uploadBack": "Upload ID Back",
+      "frontAlt": "ID Front",
+      "backAlt": "ID Back"
+    },
+    "countries": {
+      "china": "China",
+      "usa": "United States",
+      "japan": "Japan",
+      "korea": "South Korea",
+      "singapore": "Singapore",
+      "other": "Other"
+    },
+    "buttons": {
+      "submit": "Submit Verification"
+    },
+    "messages": {
+      "nameRequired": "Please enter your full name",
+      "idRequired": "Please enter ID number",
+      "countryRequired": "Please select country/region",
+      "phoneRequired": "Please enter phone number",
+      "emailRequired": "Please enter email address",
+      "photoRequired": "Please upload ID photos",
+      "submitting": "Submitting...",
+      "submitSuccess": "Your verification application has been submitted. We will complete the review within 1-3 business days."
+    }
+  },
+  "myComments": {
+    "title": "My Comments",
+    "empty": "No comments yet",
+    "pleaseLogin": "Please login to view comments",
+    "goLogin": "Login",
+    "myCommentLabel": "My comment",
+    "replyTo": "Reply to @",
+    "loadingMore": "Loading...",
+    "noMore": "No more",
+    "loadFailed": "Failed to load comments"
+  },
+  "myNotices": {
+    "title": "Notifications",
+    "empty": "No notifications",
+    "pleaseLogin": "Please login to view notifications",
+    "goLogin": "Login",
+    "commentedYou": "commented on your post",
+    "anonymousUser": "Anonymous",
+    "loadingMore": "Loading...",
+    "noMore": "No more",
+    "loadFailed": "Failed to load notifications"
+  },
+  "myLikes": {
+    "title": "My Likes",
+    "empty": "No likes yet",
+    "pleaseLogin": "Please login to view likes",
+    "goLogin": "Login",
+    "anonymousUser": "Anonymous",
+    "loadingMore": "Loading...",
+    "noMore": "No more",
+    "loadFailed": "Failed to load likes"
   }
 }
