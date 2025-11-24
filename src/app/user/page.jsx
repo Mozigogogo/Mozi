@@ -9,6 +9,7 @@ import Layout from '../../components/Layout';
 import CalendarCard from '../../components/CalendarCard';
 import NewCoinListing from '../../components/NewCoinListing';
 import LoginModal from '../../components/LoginModal';
+import SocialMediaPopup from '../../components/SocialMediaPopup';
 import { RightArrowIcon } from '../../components/Icons';
 import { request } from '../../utils/request';
 import { Interface, EMAIL, COINKEY } from '../../utils/constants';
@@ -620,7 +621,10 @@ export default function UserPage() {
       icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/social%402x.png'} alt="社交媒体" style={{ width: 22, height: 22 }} />),
       text: t('user.socialMedia'),
       extra: '',
-      callback: () => Toast.show({ content: t('user.comingSoon'), position: 'bottom' })
+      callback: () => {
+        setPopVis(true);
+        setPopType('social');
+      }
     },
     {
       key: 'about',
@@ -816,8 +820,14 @@ export default function UserPage() {
           onMaskClick={() => setPopVis(false)}
           onClose={() => setPopVis(false)}
           position='bottom'
-          bodyStyle={{ borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}
+          bodyStyle={
+            popType === 'social' 
+              ? { background: 'transparent', padding: 0 }
+              : { borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }
+          }
         >
+          {popType === 'social' && <SocialMediaPopup />}
+
           {popType === 'about' && (
             <div className={styles.popContainer}>
               <div className={styles.aboutItem}>
