@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslation } from 'react-i18next';
 import Layout from "@/components/Layout";
 import { Loading } from "@/components/Loading";
 import NavBar from "@/components/NavBar";
@@ -11,19 +12,20 @@ import styles from "./page.module.less";
 const likeActiveIcon = "https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/like-active.png";
 const commentIcon = "https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/messages-comment.png";
 
-const formatTime = (timeStr) => {
+const formatTime = (timeStr, t) => {
   if (!timeStr) return "";
   const date = new Date(timeStr);
   const diff = Date.now() - date.getTime();
   const m = 60 * 1000, h = 60 * m, d = 24 * h;
-  if (diff < m) return "刚刚";
-  if (diff < h) return Math.floor(diff / m) + "分钟前";
-  if (diff < d) return Math.floor(diff / h) + "小时前";
-  if (diff < 7 * d) return Math.floor(diff / d) + "天前";
+  if (diff < m) return t('time.justNow');
+  if (diff < h) return t('time.minutesAgo', { count: Math.floor(diff / m) });
+  if (diff < d) return t('time.hoursAgo', { count: Math.floor(diff / h) });
+  if (diff < 7 * d) return t('time.daysAgo', { count: Math.floor(diff / d) });
   return date.toLocaleDateString("zh-CN", { month: "2-digit", day: "2-digit" });
 };
 
 export default function MyLikesPage() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [list, setList] = useState([]);
   const [page, setPage] = useState(1);
@@ -59,7 +61,7 @@ export default function MyLikesPage() {
         setPage(currentPage + 1);
       }
     } catch (e) {
-      console.error("加载点赞失败", e);
+      console.error(t('myLikes.loadFailed'), e);
     } finally {
       setLoading(false);
     }
@@ -88,18 +90,18 @@ export default function MyLikesPage() {
   return (
     <Layout>
       <div className={styles.container}>
-        <NavBar title="我的点赞" showBorder={false} />
+        <NavBar title={t('myLikes.title')} showBorder={false} />
         {!isLogin ? (
           <div className={styles.empty}>
-            <div>请先登录查看点赞</div>
-            <div className={styles.loginBtn} onClick={goLogin}>去登录</div>
+            <div>{t('myLikes.pleaseLogin')}</div>
+            <div className={styles.loginBtn} onClick={goLogin}>{t('myLikes.goLogin')}</div>
           </div>
         ) : (
           <div className={styles.scroll}>
             {loading && page === 1 ? (
               <Loading />
             ) : list.length === 0 ? (
-              <div className={styles.empty}>暂无点赞</div>
+              <div className={styles.empty}>{t('myLikes.empty')}</div>
             ) : (
               <>
                 {list.map((item, idx) => (
@@ -107,8 +109,8 @@ export default function MyLikesPage() {
                     <div className={styles.userInfo}>
                       <img className={styles.avatar} src={item.avatar || 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png'} alt="avatar" />
                       <div className={styles.userDetail}>
-                        <div className={styles.username}>{item.userName || '匿名用户'}</div>
-                        <div className={styles.postTime}>{formatTime(item.createdAt)}</div>
+                        <div className={styles.username}>{item.userName || t('myLikes.anonymousUser')}</div>
+                        <div className={styles.postTime}>{formatTime(item.createdAt, t)}</div>
                       </div>
                     </div>
 
@@ -131,10 +133,10 @@ export default function MyLikesPage() {
                 ))}
 
                 {loading && page > 1 && (
-                  <div className={styles.loadingMore}>加载中...</div>
+                  <div className={styles.loadingMore}>{t('myLikes.loadingMore')}</div>
                 )}
                 {!hasMore && list.length > 0 && (
-                  <div className={styles.noMore}>没有更多了</div>
+                  <div className={styles.noMore}>{t('myLikes.noMore')}</div>
                 )}
               </>
             )}

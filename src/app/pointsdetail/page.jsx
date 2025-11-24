@@ -15,7 +15,7 @@ export default function PointsDetail() {
   
   const pointsData = {
     totalPoints: 45123,
-    season: 'S5赛季',
+    season: t('pointsDetail.seasonName'),
     seasonStart: '2025-09-25',
     seasonEnd: '2025-10-25',
     inviteLink: 'y79lll/e]suow\'eloos\'s//:sd14',
@@ -26,14 +26,17 @@ export default function PointsDetail() {
     pendingRewards: 0
   };
 
-  const [tasksList, setTasksList] = useState([
-    { id: 1, icon: '/point/contact_person@2x.png', title: '首次注册账号', points: 50, status: 'pending', btnText: '去注册', needsAction: true },
-    { id: 2, icon: '/point/like@2x.png', title: '关注我们的Twitter', points: 50, status: 'pending', btnText: '去关注', needsAction: true },
-    { id: 3, icon: '/point/social_group@2x.png', title: '加入我们的社群', points: 50, status: 'pending', btnText: '去加入', needsAction: true },
-    { id: 4, icon: '/point/twitter@2x.png', title: '早鸟活动', points: 200, status: 'pending', btnText: '去参加', needsAction: true },
-    { id: 5, icon: '/point/set_alert@2x.png', title: '设置报警功能', points: 100, status: 'pending', btnText: '去设置', needsAction: true },
-    { id: 6, icon: '/point/video@2x.png', title: '完成视频学习', points: 50, status: 'pending', btnText: '去学习', needsAction: true }
-  ]);
+  // 使用函数延迟初始化任务列表，确保 t() 在组件渲染时可用
+  const getInitialTasks = () => [
+    { id: 1, icon: '/point/contact_person@2x.png', titleKey: 'pointsDetail.tasks.firstRegister.title', btnTextKey: 'pointsDetail.tasks.firstRegister.button', points: 50, status: 'pending', needsAction: true },
+    { id: 2, icon: '/point/like@2x.png', titleKey: 'pointsDetail.tasks.followTwitter.title', btnTextKey: 'pointsDetail.tasks.followTwitter.button', points: 50, status: 'pending', needsAction: true },
+    { id: 3, icon: '/point/social_group@2x.png', titleKey: 'pointsDetail.tasks.joinCommunity.title', btnTextKey: 'pointsDetail.tasks.joinCommunity.button', points: 50, status: 'pending', needsAction: true },
+    { id: 4, icon: '/point/twitter@2x.png', titleKey: 'pointsDetail.tasks.earlyBird.title', btnTextKey: 'pointsDetail.tasks.earlyBird.button', points: 200, status: 'pending', needsAction: true },
+    { id: 5, icon: '/point/set_alert@2x.png', titleKey: 'pointsDetail.tasks.setAlarm.title', btnTextKey: 'pointsDetail.tasks.setAlarm.button', points: 100, status: 'pending', needsAction: true },
+    { id: 6, icon: '/point/video@2x.png', titleKey: 'pointsDetail.tasks.videoLearn.title', btnTextKey: 'pointsDetail.tasks.videoLearn.button', points: 50, status: 'pending', needsAction: true }
+  ];
+  
+  const [tasksList, setTasksList] = useState(getInitialTasks());
   const [verifyingTaskId, setVerifyingTaskId] = useState(null);
 
   // 页面加载时恢复任务状态
@@ -45,32 +48,67 @@ export default function PointsDetail() {
           const tasks = JSON.parse(savedTasks);
           setTasksList(tasks);
         } catch (e) {
-          console.error('恢复任务状态失败:', e);
+          console.error('Failed to restore task state:', e);
         }
       }
     }
   }, []);
 
   const dailyInvestments = [
-    { id: 1, icon: '/point/glove_praise@2x.png', title: '每日点赞', rewardLabel: '每个赞', reward: 4, current: 3, total: 47 },
-    { id: 2, icon: '/point/paper_airplane@2x.png', title: '发帖', rewardLabel: '每条帖子', reward: 10, current: 10, total: 47 },
+    {
+      id: 1,
+      icon: '/point/glove_praise@2x.png',
+      titleKey: 'pointsDetail.dailyTasks.like.title',
+      rewardLabelKey: 'pointsDetail.dailyTasks.like.label',
+      reward: 4,
+      current: 3,
+      total: 47,
+    },
+    {
+      id: 2,
+      icon: '/point/paper_airplane@2x.png',
+      titleKey: 'pointsDetail.dailyTasks.post.title',
+      rewardLabelKey: 'pointsDetail.dailyTasks.post.label',
+      reward: 10,
+      current: 10,
+      total: 47,
+    },
     // 注意：仓库中该文件名有前导空格，使用 URL 编码以确保能加载
-    { id: 3, icon: '/point/%20no_glove_praise@2x.png', title: '收到赞', rewardLabel: '每次被赞', reward: 4, current: 7, total: 47 },
-    { id: 4, icon: '/point/notification_1@2x.png', title: '回复', rewardLabel: '回复一次', reward: 4, current: 9, total: 10 },
-    { id: 5, icon: '/point/notification_2@2x.png', title: '帖子收到回复', rewardLabel: '收到回复', reward: 4, current: 10, total: 10, completed: true }
+    {
+      id: 3,
+      icon: '/point/%20no_glove_praise@2x.png',
+      titleKey: 'pointsDetail.dailyTasks.receivedLike.title',
+      rewardLabelKey: 'pointsDetail.dailyTasks.receivedLike.label',
+      reward: 4,
+      current: 7,
+      total: 47,
+    },
+    {
+      id: 4,
+      icon: '/point/notification_1@2x.png',
+      titleKey: 'pointsDetail.dailyTasks.reply.title',
+      rewardLabelKey: 'pointsDetail.dailyTasks.reply.label',
+      reward: 4,
+      current: 9,
+      total: 10,
+    },
+    {
+      id: 5,
+      icon: '/point/notification_2@2x.png',
+      titleKey: 'pointsDetail.dailyTasks.postReplied.title',
+      rewardLabelKey: 'pointsDetail.dailyTasks.postReplied.label',
+      reward: 4,
+      current: 10,
+      total: 10,
+      completed: true,
+    },
   ];
 
   // 获取任务的原始按钮文本
-  const getOriginalBtnText = (taskTitle) => {
-    const btnTextMap = {
-      '首次注册账号': '去注册',
-      '关注我们的Twitter': '去关注',
-      '加入我们的社群': '去加入',
-      '早鸟活动': '去参加',
-      '设置报警功能': '去设置',
-      '完成视频学习': '去学习'
-    };
-    return btnTextMap[taskTitle] || '去完成';
+  const getOriginalBtnText = (titleKey) => {
+    // 从 titleKey 推导出对应的 btnTextKey
+    const btnTextKey = titleKey.replace('.title', '.button');
+    return t(btnTextKey);
   };
 
   // 验证任务完成
@@ -80,13 +118,13 @@ export default function PointsDetail() {
       let isCompleted = false;
       
       // 根据不同任务进行验证
-      if (task.title === '首次注册账号' || task.title === '早鸟活动' || task.title === '设置报警功能') {
+      if (task.titleKey === 'pointsDetail.tasks.firstRegister.title' || task.titleKey === 'pointsDetail.tasks.earlyBird.title' || task.titleKey === 'pointsDetail.tasks.setAlarm.title') {
         // 检查用户是否已登录（检查 localStorage 中的 token）
         const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
         if (token) {
           isCompleted = true;
         }
-      } else if (task.title === '完成视频学习') {
+      } else if (task.titleKey === 'pointsDetail.tasks.videoLearn.title') {
         // 检查本地存储的视频完成状态
         try {
           const saved = typeof window !== 'undefined' ? localStorage.getItem('completedVideos') : null;
@@ -100,7 +138,7 @@ export default function PointsDetail() {
             }
           }
         } catch (e) {
-          console.error('校验视频学习完成状态失败', e);
+          console.error('Failed to verify video learning completion status', e);
         }
       }
       
@@ -108,7 +146,7 @@ export default function PointsDetail() {
         // 验证成功，更新为已完成
         const updatedTasks = tasksList.map(t => 
           t.id === task.id 
-            ? { ...t, status: 'completed', btnText: '已完成', needsAction: false }
+            ? { ...t, status: 'completed', needsAction: false }
             : t
         );
         setTasksList(updatedTasks);
@@ -118,12 +156,12 @@ export default function PointsDetail() {
           localStorage.setItem('pointsTasks', JSON.stringify(updatedTasks));
         }
         
-        Toast.show({ content: `+${task.points}积分`, icon: 'success', position: 'center' });
+        Toast.show({ content: t('pointsDetail.messages.pointsEarned', { points: task.points }), icon: 'success', position: 'center' });
       } else {
         // 验证失败，恢复成原来的状态
         const updatedTasks = tasksList.map(t => 
           t.id === task.id 
-            ? { ...t, btnText: getOriginalBtnText(t.title), needsAction: true }
+            ? { ...t, needsAction: true }
             : t
         );
         setTasksList(updatedTasks);
@@ -133,15 +171,15 @@ export default function PointsDetail() {
           localStorage.setItem('pointsTasks', JSON.stringify(updatedTasks));
         }
         
-        Toast.show({ content: '任务尚未完成，请先完成任务', position: 'center' });
+        Toast.show({ content: t('pointsDetail.messages.taskNotCompleted'), position: 'center' });
       }
     } catch (error) {
-      console.error('验证任务失败:', error);
+      console.error('Failed to verify task:', error);
       
       // 验证出错时也恢复成原来的状态
       const updatedTasks = tasksList.map(t => 
         t.id === task.id 
-          ? { ...t, btnText: getOriginalBtnText(t.title), needsAction: true }
+          ? { ...t, needsAction: true }
           : t
       );
       setTasksList(updatedTasks);
@@ -151,7 +189,7 @@ export default function PointsDetail() {
         localStorage.setItem('pointsTasks', JSON.stringify(updatedTasks));
       }
       
-      Toast.show({ content: '验证失败，请稍后重试', position: 'center' });
+      Toast.show({ content: t('pointsDetail.messages.verifyFailed'), position: 'center' });
     } finally {
       setVerifyingTaskId(null);
     }
@@ -160,7 +198,7 @@ export default function PointsDetail() {
   const handleTaskClick = (task) => {
     // 如果任务已完成，不处理
     if (task.status === 'completed') {
-      Toast.show({ content: '任务已完成', position: 'bottom' });
+      Toast.show({ content: t('pointsDetail.taskCompleted'), position: 'bottom' });
       return;
     }
 
@@ -174,7 +212,7 @@ export default function PointsDetail() {
       // 立即标记为待验证状态
       const updatedTasks = tasksList.map(t => 
         t.id === task.id 
-          ? { ...t, btnText: '验证', needsAction: false }
+          ? { ...t, needsAction: false }
           : t
       );
       setTasksList(updatedTasks);
@@ -185,16 +223,16 @@ export default function PointsDetail() {
       }
       
       // 跳转到对应页面
-      if (task.title === '首次注册账号') {
+      if (task.titleKey === 'pointsDetail.tasks.firstRegister.title') {
         router.push('/user?mode=register');
         return;
       }
 
-      if (task.title === '早鸟活动') {
+      if (task.titleKey === 'pointsDetail.tasks.earlyBird.title') {
         // 早鸟活动：检查是否注册
         const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
         if (!token) {
-          Toast.show({ content: '请先注册', position: 'bottom' });
+          Toast.show({ content: t('pointsDetail.pleaseRegister'), position: 'bottom' });
           router.push('/user?mode=register');
           return;
         }
@@ -202,29 +240,29 @@ export default function PointsDetail() {
         return;
       }
 
-      if (task.title === '完成视频学习') {
+      if (task.titleKey === 'pointsDetail.tasks.videoLearn.title') {
         router.push('/videolearn');
         return;
       }
 
-      if (task.title === '关注我们的Twitter') {
+      if (task.titleKey === 'pointsDetail.tasks.followTwitter.title') {
         // 跳转到 X (Twitter) 账号
         window.open('https://x.com/Innovation56171', '_blank');
         return;
       }
 
-      if (task.title === '加入我们的社群') {
+      if (task.titleKey === 'pointsDetail.tasks.joinCommunity.title') {
         // 跳转到 Telegram 社群链接
         window.open('https://t.me/MoziInnovations', '_blank');
         return;
       }
 
-      if (task.title === '设置报警功能') {
+      if (task.titleKey === 'pointsDetail.tasks.setAlarm.title') {
         router.push('/addwarn?symbol=BTC');
         return;
       }
 
-      Toast.show({ content: `${task.title}功能开发中`, position: 'bottom' });
+      Toast.show({ content: t('pointsDetail.historyFeatureInDevelopment'), position: 'bottom' });
     } else {
       // 如果是验证状态（needsAction为false），点击进行验证
       verifyTask(task);
@@ -233,14 +271,14 @@ export default function PointsDetail() {
 
   const copyToClipboard = (text, label) => {
     navigator.clipboard.writeText(text).then(() => {
-      Toast.show({ content: `${label}已复制`, position: 'bottom' });
+      Toast.show({ content: t('pointsDetail.linkCopied'), position: 'bottom' });
     }).catch(() => {
-      Toast.show({ content: '复制失败', position: 'bottom', icon: 'fail' });
+      Toast.show({ content: t('pointsDetail.copyFailed'), position: 'bottom', icon: 'fail' });
     });
   };
 
   const tabs = [
-    { key: 'myPoints', title: t('pointsDetail.myPoints', '我的积分') }
+    { key: 'myPoints', title: t('pointsDetail.myPoints') }
   ];
 
   return (
@@ -251,7 +289,7 @@ export default function PointsDetail() {
           <button className={styles.backBtn} onClick={() => router.back()}>
             <LeftOutline />
           </button>
-          <div className={styles.navTitle}>积分中心</div>
+          <div className={styles.navTitle}>{t('pointsDetail.centerTitle')}</div>
         </div>
         {/* 顶部Tab */}
         <div className={styles.tabsContainer}>
@@ -277,7 +315,7 @@ export default function PointsDetail() {
                 <h2 className={styles.seasonTitle}>{pointsData.season}</h2>
                 <div className={styles.seasonDuration}>
                   <ClockCircleOutline className={styles.clockIcon} />
-                  {pointsData.seasonStart} 至 {pointsData.seasonEnd}
+                  {pointsData.seasonStart} {t('pointsDetail.toSeparator')} {pointsData.seasonEnd}
                 </div>
               </div>
             </div>
@@ -386,7 +424,7 @@ export default function PointsDetail() {
           <div className={styles.tasksSection}>
             <div className={styles.tasksSectionHeader}>
               <img src="/point/Emoji_2@2x.png" alt="Praise" className={styles.headerIconImg} />
-              <h3>{t('pointsDetail.fanRewardsTitle')}</h3>
+              <h3>{t('pointsDetail.dailyRewardTasksTitle')}</h3>
             </div>
             
             <div className={styles.tasksList}>
@@ -397,8 +435,16 @@ export default function PointsDetail() {
                 const isWaitingVerify = !task.needsAction && task.status === 'pending'; // 待验证状态
                 
                 // 按钮文本
-                let btnText = task.btnText;
-                if (isVerifying) btnText = '验证中';
+                let btnText;
+                if (isCompleted) {
+                  btnText = t('pointsDetail.tasks.completed');
+                } else if (isVerifying) {
+                  btnText = t('pointsDetail.verifying');
+                } else if (isWaitingVerify) {
+                  btnText = t('pointsDetail.tasks.verify');
+                } else {
+                  btnText = t(task.btnTextKey);
+                }
                 
                 // 按钮样式
                 let btnClassName = styles.taskBtn;
@@ -409,10 +455,10 @@ export default function PointsDetail() {
                 return (
                   <div key={task.id} className={`${styles.taskItem} ${isCompleted ? styles.completed : ''}`}>
                     <div className={styles.taskIconWrapper}>
-                      <img src={task.icon} alt={task.title} className={styles.taskIconImg} />
+                      <img src={task.icon} alt={t(task.titleKey)} className={styles.taskIconImg} />
                     </div>
                     <div className={styles.taskInfo}>
-                      <div className={styles.taskTitle}>{task.title}</div>
+                      <div className={styles.taskTitle}>{t(task.titleKey)}</div>
                       <div className={styles.taskPoints}>
                         +{task.points}
                         <img src="/point/coin_icon@2x.png" alt="Coin" className={styles.taskCoinIcon} />
@@ -436,11 +482,11 @@ export default function PointsDetail() {
             
           </div>
 
-          {/* 每日投资排行 */}
+          {/* 每日奖励任务 */}
           <div className={styles.dailyInvestmentSection}>
             <div className={styles.sectionHeader}>
               <img src="/point/Emoji_3@2x.png" alt="Daily" className={styles.headerIconImg} />
-              <h3>每日奖励任务</h3>
+              <h3>{t('pointsDetail.dailyRewardTasksTitle')}</h3>
             </div>
 
             <div className={styles.investmentList}>
@@ -450,9 +496,9 @@ export default function PointsDetail() {
                     <img src={item.icon} alt={item.title} className={styles.investmentIconImg} />
                   </div>
                   <div className={styles.investmentInfo}>
-                    <div className={styles.investmentTitle}>{item.title}</div>
+                    <div className={styles.investmentTitle}>{t(item.titleKey)}</div>
                     <div className={styles.investmentSubtitle}>
-                      <span>{item.rewardLabel}</span>
+                      <span>{t(item.rewardLabelKey)}</span>
                       <span className={styles.rewardValue}>+{item.reward}</span>
                       <img src="/point/coin_icon@2x.png" alt="coin" className={styles.investmentCoinIcon} />
                     </div>
@@ -489,7 +535,7 @@ export default function PointsDetail() {
             <button className={styles.bottomBtn} onClick={() => router.push('/addwarn?symbol=BTC')}>
               <div className={styles.bottomBtnContent}>
                 <div className={styles.bottomBtnTitle}>{t('pointsDetail.joinAlarm')}</div>
-                <div className={styles.bottomBtnSubtitle}>Add an alarm</div>
+                <div className={styles.bottomBtnSubtitle}>{t('pointsDetail.joinAlarmSubtitle')}</div>
               </div>
               <img src="/point/point_alert@2x.png" alt="Alert" className={styles.bottomIcon} />
             </button>
@@ -497,7 +543,7 @@ export default function PointsDetail() {
             <button className={styles.bottomBtn} onClick={() => router.push('/kyc')}>
               <div className={styles.bottomBtnContent}>
                 <div className={styles.bottomBtnTitle}>{t('pointsDetail.certification')}</div>
-                <div className={styles.bottomBtnSubtitle}>certification</div>
+                <div className={styles.bottomBtnSubtitle}>{t('pointsDetail.certificationSubtitle')}</div>
               </div>
               <img src="/point/Certification@2x.png" alt="Certification" className={styles.bottomIcon} />
             </button>

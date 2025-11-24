@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Toast } from 'antd-mobile';
 import { LeftOutline } from 'antd-mobile-icons';
+import { useTranslation } from 'react-i18next';
 import CustomVideo from '../../components/CustomVideo';
 import styles from './page.module.less';
 
 export default function VideoLearnPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [currentVideo, setCurrentVideo] = useState(0);
   const [completedVideos, setCompletedVideos] = useState({});
   const COIN_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/point/coin_icon@2x.png';
@@ -17,24 +19,24 @@ export default function VideoLearnPage() {
   const videos = [
     {
       id: 1,
-      title: 'MOZI 平台使用教程',
-      description: '了解如何使用 MOZI 平台的基本功能',
+      titleKey: 'videoLearn.videos.platformTutorial.title',
+      descriptionKey: 'videoLearn.videos.platformTutorial.description',
       url: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/video/Record_2025-10-14-09-14-37_e39d2c7de19156b0683cd93e8735f348.mp4',
       duration: '00:58',
       points: 10
     },
     {
       id: 2,
-      title: '如何设置价格告警',
-      description: '学习如何设置和管理币种价格告警功能',
+      titleKey: 'videoLearn.videos.priceAlert.title',
+      descriptionKey: 'videoLearn.videos.priceAlert.description',
       url: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/video/Record_2025-10-14-09-14-37_e39d2c7de19156b0683cd93e8735f348.mp4',
       duration: '00:58',
       points: 15
     },
     {
       id: 3,
-      title: '积分系统玩法介绍',
-      description: '了解如何通过完成任务、互动获得积分奖励',
+      titleKey: 'videoLearn.videos.pointsSystem.title',
+      descriptionKey: 'videoLearn.videos.pointsSystem.description',
       url: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/video/Record_2025-10-14-09-14-37_e39d2c7de19156b0683cd93e8735f348.mp4',
       duration: '00:58',
       points: 20
@@ -42,7 +44,7 @@ export default function VideoLearnPage() {
   ];
 
   useEffect(() => {
-    console.log('视频学习页面加载');
+    console.log('Video learning page loaded');
     // 保存视频总数供任务页验证使用
     if (typeof window !== 'undefined') {
       localStorage.setItem('videoLearnTotal', videos.length.toString());
@@ -54,7 +56,7 @@ export default function VideoLearnPage() {
           setCompletedVideos(JSON.parse(saved));
         }
       } catch (e) {
-        console.error('加载视频完成记录失败:', e);
+        console.error(t('videoLearn.messages.loadRecordFailed'), e);
       }
     }
   }, []);
@@ -72,12 +74,12 @@ export default function VideoLearnPage() {
         localStorage.setItem('completedVideos', JSON.stringify(newCompleted));
         localStorage.setItem('videoLearnTotal', videos.length.toString());
       } catch (e) {
-        console.error('保存视频完成记录失败:', e);
+        console.error(t('videoLearn.messages.saveRecordFailed'), e);
       }
     }
     
     Toast.show({
-      content: `恭喜获得 ${videos[currentVideo].points} 积分！`,
+      content: t('videoLearn.messages.pointsEarned', { points: videos[currentVideo].points }),
       icon: 'success',
       duration: 2000
     });
@@ -85,9 +87,9 @@ export default function VideoLearnPage() {
 
   // 视频错误回调
   const handleVideoError = (e) => {
-    console.error('视频播放错误:', e);
+    console.error('Video playback error:', e);
     Toast.show({
-      content: '视频加载失败',
+      content: t('videoLearn.messages.videoLoadFailed'),
       icon: 'fail',
       duration: 2000
     });
@@ -100,7 +102,7 @@ export default function VideoLearnPage() {
         <button className={styles.backBtn} onClick={() => router.back()}>
           <LeftOutline />
         </button>
-        <div className={styles.navTitle}>视频学习</div>
+        <div className={styles.navTitle}>{t('videoLearn.title')}</div>
       </div>
 
       <div className={styles.videoSection}>
@@ -114,21 +116,21 @@ export default function VideoLearnPage() {
         />
         
         <div className={styles.videoInfo}>
-          <div className={styles.videoTitle}>{videos[currentVideo].title}</div>
-          <div className={styles.videoDesc}>{videos[currentVideo].description}</div>
+          <div className={styles.videoTitle}>{t(videos[currentVideo].titleKey)}</div>
+          <div className={styles.videoDesc}>{t(videos[currentVideo].descriptionKey)}</div>
           <div className={styles.videoMeta}>
-            <div className={styles.videoDuration}>时长: {videos[currentVideo].duration}</div>
+            <div className={styles.videoDuration}>{t('videoLearn.duration')}: {videos[currentVideo].duration}</div>
             <div className={styles.videoPoints}>
-              <span>完成可获得</span>
+              <span>{t('videoLearn.complete')}</span>
               <span className={styles.pointsNum}>+{videos[currentVideo].points}</span>
-              <img className={styles.coinInlineIcon} src={COIN_ICON} alt="积分" />
+              <img className={styles.coinInlineIcon} src={COIN_ICON} alt="Points" />
             </div>
           </div>
         </div>
       </div>
 
       <div className={styles.videoListSection}>
-        <div className={styles.sectionTitle}>学习列表</div>
+        <div className={styles.sectionTitle}>{t('videoLearn.listTitle')}</div>
         <div className={styles.videoList}>
           {videos.map((video, index) => (
             <div
@@ -138,7 +140,7 @@ export default function VideoLearnPage() {
             >
               <div className={styles.videoItemNumber}>{index + 1}</div>
               <div className={styles.videoItemInfo}>
-                <div className={styles.videoItemTitle}>{video.title}</div>
+                <div className={styles.videoItemTitle}>{t(video.titleKey)}</div>
                 <div className={styles.videoItemDuration}>
                   {video.duration}
                   {completedVideos[video.id] && ' ✓'}
@@ -146,7 +148,7 @@ export default function VideoLearnPage() {
               </div>
               <div className={styles.videoItemPoints}>
                 <span>+{video.points}</span>
-                <img className={styles.coinInlineIcon} src={COIN_ICON} alt="积分" />
+                <img className={styles.coinInlineIcon} src={COIN_ICON} alt="Points" />
               </div>
             </div>
           ))}
