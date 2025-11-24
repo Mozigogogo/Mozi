@@ -921,5 +921,11 @@
     "loadingMore": "Loading...",
     "noMore": "No more",
     "loadFailed": "Failed to load likes"
+  },
+  "socialMedia": {
+    "title": "Follow Us",
+    "twitter": "X (Twitter)",
+    "telegramGroup": "Telegram",
+    "xiaohongshu": "Red Book"
   }
 }
