@@ -920,5 +920,11 @@
     "loadingMore": "加载中...",
     "noMore": "没有更多了",
     "loadFailed": "加载点赞失败"
+  },
+  "socialMedia": {
+    "title": "关注我们",
+    "twitter": "X (Twitter)",
+    "telegramGroup": "Telegram",
+    "xiaohongshu": "小红书"
   }
 }
