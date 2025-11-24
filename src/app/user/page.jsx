@@ -193,7 +193,7 @@ export default function UserPage() {
 
   const handleShare = () => {
     const shareUrl = window.location.origin;
-    const shareText = 'Mozi行情助手 - 专业的加密数据分析智能平台';
+    const shareText = t('user.shareText');
     
     // 检查是否在Telegram环境中
     const isTelegram = window.Telegram?.WebApp?.initData;
@@ -821,25 +821,23 @@ export default function UserPage() {
           {popType === 'about' && (
             <div className={styles.popContainer}>
               <div className={styles.aboutItem}>
-                Mozi 是一家专业的加密数据分析智能平台，致力于为全球用户提供精准，实时的加密货币市场数据和分析服务，简化交易，降低交易的门槛，帮助用户在加密货币市场中做出明智的投资决策，降低风险，获得更高的收益。
+                {t('user.aboutMozi.intro')}
               </div>
               <br />
               <div className={`${styles.aboutItem} ${styles.secDesc}`}>
-                作为一家专业的加密数据分析平台，为解决用户去哪里买，买什么，怎么买的痛点，Mozi通过整合多种数据，提供详尽的搜索和丰富的各类排行榜让用户探索，包括但不限于交易所排行榜，热门币种排行榜，价格涨跌幅榜，目前覆盖主流交易所的数据。
-                为了保证数据的准确性和实时性，Mozi 团队由经验丰富的专业人士组成，涵盖交易、数据开发、数据分析,人工智能，和平台架构，他们的专业知识和技能为平台数据的准确性和可靠性提供了强大支持。
-                作为初创公司，Mozi 秉持墨子兼爱非攻的理念，致力于在全球传播这一理念。同时也诚邀感兴趣的技术，运营，产品以及投资机构联系我们。
+                {t('user.aboutMozi.description')}
               </div>
               <div className={`${styles.aboutItem} ${styles.secCon}`}>
-                <strong>Mozi使命：</strong>
-                让财富触手可及
+                <strong>{t('user.aboutMozi.mission')}</strong>
+                {t('user.aboutMozi.missionText')}
               </div>
               <div className={styles.aboutItem}>
-                <strong>Mozi愿景：</strong>
-                让交易更简单，更智能，更安全
+                <strong>{t('user.aboutMozi.vision')}</strong>
+                {t('user.aboutMozi.visionText')}
               </div>
               <div className={styles.aboutItem}>
-                <strong>Mozi价值观：</strong>
-                兼爱 务实 专注 创新 自由
+                <strong>{t('user.aboutMozi.values')}</strong>
+                {t('user.aboutMozi.valuesText')}
               </div>
             </div>
           )}
