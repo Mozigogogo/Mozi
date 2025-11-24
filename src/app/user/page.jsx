@@ -11,6 +11,7 @@ import NewCoinListing from '../../components/NewCoinListing';
 import LoginModal from '../../components/LoginModal';
 import SocialMediaPopup from '../../components/SocialMediaPopup';
 import { RightArrowIcon } from '../../components/Icons';
+import CopyIcon from '../../components/Icons/CopyIcon';
 import { request } from '../../utils/request';
 import { Interface, EMAIL, COINKEY } from '../../utils/constants';
 import { useAmplitude } from '../../hooks/useAmplitude';
@@ -46,7 +47,7 @@ export default function UserPage() {
   const [showCalendarSection, setShowCalendarSection] = useState(true);
   const [showThemeOption, setShowThemeOption] = useState(true);
   const [showSocialOption, setShowSocialOption] = useState(true);
-  const [showContactPop, setShowContactPop] = useState(false);
+  const [showContactPop, setShowContactPop] = useState(true);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [editNickname, setEditNickname] = useState('');
   const [editAvatar, setEditAvatar] = useState('');
@@ -883,8 +884,10 @@ export default function UserPage() {
             <div className={`${styles.popContainer} ${styles.contactContainer}`}>
               <div className={styles.contactTitle}>{t('user.welcomeContact')}</div>
               <div className={styles.contactEmail}>
-                <span>{EMAIL}</span>
-                <div className={styles.contactCopy} onClick={() => copyToClipboard(EMAIL)}>📋</div>
+                <span>Email: {EMAIL}</span>
+                <div className={styles.contactCopy} onClick={() => copyToClipboard(EMAIL)}>
+                  <CopyIcon width={20} height={20} color="var(--text-secondary)" />
+                </div>
               </div>
             </div>
           )}
@@ -907,21 +910,27 @@ export default function UserPage() {
                   <img className={styles.attendPic} src='https://image-1317406749.cos.ap-shanghai.myqcloud.com/BTC-simple.jpg' alt='BTC地址' />
                   <div className={styles.contactEmail}>
                     <span className={styles.coinKey}>{COINKEY.BTC}</span>
-                    <div className={styles.contactCopy} onClick={() => copyToClipboard(COINKEY.BTC)}>📋</div>
+                    <div className={styles.contactCopy} onClick={() => copyToClipboard(COINKEY.BTC)}>
+                      <CopyIcon width={20} height={20} color="var(--text-secondary)" />
+                    </div>
                   </div>
                 </div>
                 <div className={styles.rewardBox}>
                   <img className={styles.attendPic} src='https://image-1317406749.cos.ap-shanghai.myqcloud.com/ETH-simple.jpg' alt='ETH地址' />
                   <div className={styles.contactEmail}>
                     <span>{COINKEY.ETH}</span>
-                    <div className={styles.contactCopy} onClick={() => copyToClipboard(COINKEY.ETH)}>📋</div>
+                    <div className={styles.contactCopy} onClick={() => copyToClipboard(COINKEY.ETH)}>
+                      <CopyIcon width={20} height={20} color="var(--text-secondary)" />
+                    </div>
                   </div>
                 </div>
                 <div className={styles.rewardBox}>
                   <img className={styles.attendPic} src='https://image-1317406749.cos.ap-shanghai.myqcloud.com/Tron-simple.jpg' alt='Tron地址' />
                   <div className={styles.contactEmail}>
                     <span>{COINKEY.TRON}</span>
-                    <div className={styles.contactCopy} onClick={() => copyToClipboard(COINKEY.TRON)}>📋</div>
+                    <div className={styles.contactCopy} onClick={() => copyToClipboard(COINKEY.TRON)}>
+                      <CopyIcon width={20} height={20} color="var(--text-secondary)" />
+                    </div>
                   </div>
                 </div>
               </div>
