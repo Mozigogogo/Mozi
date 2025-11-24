@@ -215,6 +215,7 @@
     "feedbackDesc": "Tell us what you want",
     "recommendFriend": "Recommend",
     "recommendDesc": "Share your favorites",
+    "shareText": "Mozi - Professional Crypto Data Analysis Platform",
     "myPoints": "My Points",
     "yesterdayPoints": "Yesterday: +{{points}}",
     "currentRank": "Current Rank: #{{rank}}",
@@ -255,7 +256,17 @@
     "saveSuccess": "Saved successfully",
     "saveFailed": "Save failed",
     "defaultNickname": "User",
-    "wechatUser": "Telegram User"
+    "wechatUser": "Telegram User",
+    "aboutMozi": {
+      "intro": "Mozi is a professional crypto data analysis platform dedicated to providing global users with accurate, real-time cryptocurrency market data and analysis services. We simplify trading, lower barriers, help users make informed investment decisions, reduce risks, and achieve higher returns.",
+      "description": "As a professional crypto data analysis platform, Mozi solves users' pain points of where to buy, what to buy, and how to buy by integrating multiple data sources, providing comprehensive search and rich rankings for users to explore, including but not limited to exchange rankings, popular coin rankings, and price change rankings, currently covering data from mainstream exchanges. To ensure data accuracy and timeliness, the Mozi team consists of experienced professionals covering trading, data development, data analysis, AI, and platform architecture. Their expertise provides strong support for platform data accuracy and reliability. As a startup, Mozi upholds the philosophy of Mozi's universal love and non-aggression, committed to spreading this philosophy globally. We also sincerely invite interested technical, operational, product teams and investment institutions to contact us.",
+      "mission": "Mission:",
+      "missionText": "Make Wealth Within Reach",
+      "vision": "Vision:",
+      "visionText": "Make Trading Simpler, Smarter, and Safer",
+      "values": "Values:",
+      "valuesText": "Universal Love · Pragmatic · Focus · Innovation · Freedom"
+    }
   },
   "auth": {
     "email": "Email",
