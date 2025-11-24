@@ -40,7 +40,19 @@ const nextConfig = withLess({
       {
         source: '/(.*)',
         headers: [
-          { key: 'X-Frame-Options', value: 'DENY' },
+          // 允许在 Telegram 域中以 iframe 方式加载 WebApp
+          // 注意：X-Frame-Options 无法做域白名单，只能 DENY / SAMEORIGIN
+          // 所以这里改用 CSP 的 frame-ancestors 来限制允许的嵌入来源
+          {
+            key: 'Content-Security-Policy',
+            value:
+              "default-src 'self' https: data: blob:; " +
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; " +
+              "style-src 'self' 'unsafe-inline' https:; " +
+              "img-src 'self' data: https: blob:; " +
+              "connect-src 'self' https: wss:; " +
+              "frame-ancestors 'self' https://web.telegram.org https://*.telegram.org;",
+          },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'X-XSS-Protection', value: '1; mode=block' },
         ],
