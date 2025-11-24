@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useCallback } from 'react';
-import { initAmplitude, trackEvent, trackPageView, trackButtonClick } from '@/utils/amplitude';
+import { initAmplitude, trackEvent, trackPageView, trackButtonClick, isAmplitudeEnabled } from '@/utils/amplitude';
 
 /**
  * 使用 Amplitude 的 Hook
@@ -18,12 +18,14 @@ export const useAmplitude = (pageName, options = {}) => {
     autocapture = true
   } = options;
 
-  // 初始化 Amplitude
+  // 初始化 Amplitude（仅生产环境）
   useEffect(() => {
-    initAmplitude({ sampleRate, autocapture }).catch((error) => {
-      console.error('Failed to initialize Amplitude:', error);
-    });
-  }, []);
+    if (isAmplitudeEnabled()) {
+      initAmplitude({ sampleRate, autocapture }).catch((error) => {
+        console.error('Failed to initialize Amplitude:', error);
+      });
+    }
+  }, [sampleRate, autocapture]);
 
   // 自动追踪页面浏览
   useEffect(() => {
