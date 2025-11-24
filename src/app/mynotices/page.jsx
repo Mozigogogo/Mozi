@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslation } from 'react-i18next';
 import Layout from "@/components/Layout";
 import { Loading } from "@/components/Loading";
 import NavBar from "@/components/NavBar";
@@ -8,19 +9,20 @@ import { request } from "@/utils/request";
 import { Interface } from "@/utils/constants";
 import styles from "./page.module.less";
 
-const formatTime = (timeStr) => {
+const formatTime = (timeStr, t) => {
   if (!timeStr) return "";
   const date = new Date(timeStr);
   const diff = Date.now() - date.getTime();
   const m = 60 * 1000, h = 60 * m, d = 24 * h;
-  if (diff < m) return "刚刚";
-  if (diff < h) return Math.floor(diff / m) + "分钟前";
-  if (diff < d) return Math.floor(diff / h) + "小时前";
-  if (diff < 7 * d) return Math.floor(diff / d) + "天前";
+  if (diff < m) return t('time.justNow');
+  if (diff < h) return t('time.minutesAgo', { count: Math.floor(diff / m) });
+  if (diff < d) return t('time.hoursAgo', { count: Math.floor(diff / h) });
+  if (diff < 7 * d) return t('time.daysAgo', { count: Math.floor(diff / d) });
   return date.toLocaleDateString("zh-CN", { month: "2-digit", day: "2-digit" });
 };
 
 export default function MyNoticesPage() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [list, setList] = useState([]);
   const [page, setPage] = useState(1);
@@ -62,7 +64,7 @@ export default function MyNoticesPage() {
         setPage(currentPage + 1);
       }
     } catch (e) {
-      console.error("加载通知失败", e);
+      console.error(t('myNotices.loadFailed'), e);
     } finally {
       setLoading(false);
     }
@@ -92,18 +94,18 @@ export default function MyNoticesPage() {
   return (
     <Layout>
       <div className={styles.container}>
-        <NavBar title="消息通知" showBorder={false} />
+        <NavBar title={t('myNotices.title')} showBorder={false} />
         {!isLogin ? (
           <div className={styles.empty}>
-            <div>请先登录查看通知</div>
-            <div className={styles.loginBtn} onClick={goLogin}>去登录</div>
+            <div>{t('myNotices.pleaseLogin')}</div>
+            <div className={styles.loginBtn} onClick={goLogin}>{t('myNotices.goLogin')}</div>
           </div>
         ) : (
           <div className={styles.scroll}>
             {loading && page === 1 ? (
               <Loading />
             ) : list.length === 0 ? (
-              <div className={styles.empty}>暂无消息通知</div>
+              <div className={styles.empty}>{t('myNotices.empty')}</div>
             ) : (
               <>
                 {list.map((item, idx) => (
@@ -112,10 +114,10 @@ export default function MyNoticesPage() {
                       <img className={styles.avatar} src={item.avatar || 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png'} alt="avatar" />
                       <div className={styles.userDetail}>
                         <div className={styles.usernameRow}>
-                          <div className={styles.username}>{item.userName || '匿名用户'}</div>
-                          <div className={styles.actionText}>评论了你</div>
+                          <div className={styles.username}>{item.userName || t('myNotices.anonymousUser')}</div>
+                          <div className={styles.actionText}>{t('myNotices.commentedYou')}</div>
                         </div>
-                        <div className={styles.noticeTime}>{formatTime(item.createdAt)}</div>
+                        <div className={styles.noticeTime}>{formatTime(item.createdAt, t)}</div>
                       </div>
                     </div>
 
@@ -131,10 +133,10 @@ export default function MyNoticesPage() {
                 ))}
 
                 {loading && page > 1 && (
-                  <div className={styles.loadingMore}>加载中...</div>
+                  <div className={styles.loadingMore}>{t('myNotices.loadingMore')}</div>
                 )}
                 {!hasMore && list.length > 0 && (
-                  <div className={styles.noMore}>没有更多了</div>
+                  <div className={styles.noMore}>{t('myNotices.noMore')}</div>
                 )}
               </>
             )}

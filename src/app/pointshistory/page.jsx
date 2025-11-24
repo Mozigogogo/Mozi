@@ -128,10 +128,10 @@ export default function PointsHistoryPage() {
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
     
-    if (minutes < 1) return '刚刚';
-    if (minutes < 60) return `${minutes}分钟前`;
-    if (hours < 24) return `${hours}小时前`;
-    if (days < 7) return `${days}天前`;
+    if (minutes < 1) return t('time.justNow');
+    if (minutes < 60) return t('time.minutesAgo', { count: minutes });
+    if (hours < 24) return t('time.hoursAgo', { count: hours });
+    if (days < 7) return t('time.daysAgo', { count: days });
     
     return timeStr.split(' ')[0];
   };
@@ -153,14 +153,14 @@ export default function PointsHistoryPage() {
           <button className={styles.backBtn} onClick={() => router.back()}>
             <LeftOutline />
           </button>
-          <div className={styles.navTitle}>积分历史</div>
+          <div className={styles.navTitle}>{t('pointsHistory.title', '积分历史')}</div>
         </div>
 
         {/* 历史记录列表 */}
         <div className={styles.historyScroll}>
           {historyList.length === 0 && !loading && (
             <div className={styles.emptyState}>
-              <div className={styles.emptyText}>暂无积分记录</div>
+              <div className={styles.emptyText}>{t('pointsHistory.empty')}</div>
             </div>
           )}
 
@@ -191,13 +191,13 @@ export default function PointsHistoryPage() {
 
           {loading && (
             <div className={styles.loadingMore}>
-              <span>加载中...</span>
+              <span>{t('common.loading')}</span>
             </div>
           )}
 
           {!loading && historyList.length > 0 && (
             <div className={styles.noMore}>
-              <span>没有更多了</span>
+              <span>{t('common.noMore')}</span>
             </div>
           )}
         </div>
