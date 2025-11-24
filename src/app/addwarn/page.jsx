@@ -183,6 +183,13 @@ export default function Addwarn() {
           requestData.id = chatId;
         }
       }
+
+      // 调试日志：打印本次请求的完整参数
+      console.log('[AddWarn] 即将发起保存告警请求', {
+        url: Interface.ADD_ALARM || '/alarm/add',
+        method: 'POST',
+        data: requestData,
+      });
       
       const addRes = await request({
         url: Interface.ADD_ALARM || '/alarm/add',
@@ -190,16 +197,26 @@ export default function Addwarn() {
         data: requestData,
       });
 
+      // 调试日志：打印接口返回结果
+      console.log('[AddWarn] 保存告警接口返回', addRes);
+
       setBtnDisabled(false);
 
       if (addRes.code === 0 && addRes.data === true) {
+        console.log('[AddWarn] 保存告警成功');
         Toast.show({ content: "保存告警成功" });
         return;
       }
 
-            Toast.show({ content: addRes.errorMsg || "保存失败" });
+      console.warn('[AddWarn] 保存告警失败', {
+        code: addRes.code,
+        errorMsg: addRes.errorMsg,
+        raw: addRes,
+      });
+      Toast.show({ content: addRes.errorMsg || "保存失败" });
     } catch (error) {
       setBtnDisabled(false);
+      console.error('[AddWarn] 保存告警接口异常', error);
       Toast.show({ content: "网络错误，请稍后再试" });
     }
   };
