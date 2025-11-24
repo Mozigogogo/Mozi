@@ -926,5 +926,16 @@
     "twitter": "X (Twitter)",
     "telegramGroup": "Telegram",
     "xiaohongshu": "小红书"
+  },
+  "welcomePopup": {
+    "earnPoints": "获取积分",
+    "register": "注册",
+    "completeTasks": "完成每日任务",
+    "inviteFriends": "邀请好友",
+    "joinCommunity": "加入社群入驻门户",
+    "slogan": "自由交易 不被定义",
+    "feature1": "更大影响力，更丰厚奖励",
+    "feature2": "立即开启积分探索之旅",
+    "joinNow": "立即加入"
   }
 }

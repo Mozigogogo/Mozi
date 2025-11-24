@@ -17,6 +17,7 @@ import AddCollect from '../components/AddCollect';
 import AddMonitor from '../components/AddMonitor';
 import MarketDistribution from '../components/MarketDistribution';
 import FloatingRobot from '../components/FloatingRobot';
+import WelcomePopup from '../components/WelcomePopup';
 import { request } from '../utils/request';
 import { Interface, LOOPTIME, WS_URL } from '../utils/constants';
 import { jump2Detail, jump2Market, jump2List, jump2NoTab } from '../utils/core';
@@ -28,11 +29,18 @@ import styles from './page.module.less';
 // CDN 图片前缀
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
 
-// 首页背景轮播图
-const HOME_BANNERS = [
+// 首页背景轮播图（中文版）
+const HOME_BANNERS_ZH = [
   `${CDN_PREFIX}/image/home/banner1.png`,
   `${CDN_PREFIX}/image/home/banner2.png`,
   `${CDN_PREFIX}/image/home/banner3.png`,
+];
+
+// 首页背景轮播图（英文版）
+const HOME_BANNERS_EN = [
+  '/point/home_en_banner_1.png',
+  '/point/home_en_banner_2.png',
+  '/point/home_en_banner_3.png',
 ];
 
 // 提醒图标
@@ -40,6 +48,9 @@ const HomeAlertIcon = `${CDN_PREFIX}/icon/home-alert.png`;
 
 // 公告栏显示状态（可持久隐藏）
 const NOTICE_HIDE_KEY = 'hideHomeNotice';
+
+// 欢迎弹窗显示状态（仅首次访问显示）
+const WELCOME_SHOWN_KEY = 'welcomePopupShown';
 
 // 搜索图标
 const SearchIcon = `${CDN_PREFIX}/icon/community/search.png`;
@@ -84,6 +95,13 @@ export default function HomePage() {
   const { t, i18n } = useTranslation();
   const { track } = useAmplitude('Home');
   const isEN = (i18n?.language || '').startsWith('en');
+  
+  // 根据语言选择 banner 图片
+  const HOME_BANNERS = isEN ? HOME_BANNERS_EN : HOME_BANNERS_ZH;
+  
+  // 欢迎弹窗状态
+  const [showWelcomePopup, setShowWelcomePopup] = useState(false);
+  
   // Telegram WebApp 检测状态（不影响现有 UI，仅用于环境检测与本地存储）
   const [tgInfo, setTgInfo] = useState({
     available: false,
@@ -130,6 +148,65 @@ export default function HomePage() {
       });
     } catch (e) {
       console.warn('[Telegram] WebApp 初始化失败:', e);
+    }
+  };
+
+  // 检测是否首次访问，显示欢迎弹窗
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      const hasShown = localStorage.getItem(WELCOME_SHOWN_KEY);
+      if (!hasShown) {
+        // 根据语言预加载对应的弹窗图片
+        const bgImage = isEN ? '/point/point_en_modal_bg.png' : '/point/point_modal_bg.png';
+        const rightImage = isEN ? '/point/ponit_en_modal_right_text.png' : '/point/ponit_modal_right_text.png';
+        
+        const preloadImages = [
+          bgImage,
+          '/point/ponit_modal_logo.png',
+          rightImage
+        ];
+        
+        let loadedCount = 0;
+        const totalImages = preloadImages.length;
+        
+        preloadImages.forEach((src) => {
+          const img = new window.Image();
+          img.onload = () => {
+            loadedCount++;
+            // 所有图片加载完成后显示弹窗
+            if (loadedCount === totalImages) {
+              setTimeout(() => {
+                setShowWelcomePopup(true);
+                // 注意：不在这里保存状态，等用户点击按钮时才保存
+              }, 500);
+            }
+          };
+          img.onerror = () => {
+            loadedCount++;
+            // 即使加载失败也继续
+            if (loadedCount === totalImages) {
+              setTimeout(() => {
+                setShowWelcomePopup(true);
+                // 注意：不在这里保存状态，等用户点击按钮时才保存
+              }, 500);
+            }
+          };
+          img.src = src;
+        });
+      }
+    } catch (e) {
+      console.warn('检测欢迎弹窗状态失败:', e);
+    }
+  }, [isEN]);
+  
+  // 处理弹窗确认（用户点击按钮时才保存状态）
+  const handleWelcomeConfirm = () => {
+    try {
+      localStorage.setItem(WELCOME_SHOWN_KEY, 'true');
+    } catch (e) {
+      console.warn('保存欢迎弹窗状态失败:', e);
     }
   };
 
@@ -825,7 +902,7 @@ export default function HomePage() {
             </Swiper>
 
             {/* 搜索框（层叠在 Banner 上） */}
-            <div className={styles.header} style={{ bottom: showNotice ? 38 : 23 }} onClick={() => router.push('/search')}>
+            <div className={styles.header} style={{ bottom: showNotice ? 34 : 23 }} onClick={() => router.push('/search')}>
               <div className={styles.searchBox}>
                 <div className={styles.searchInput}>{t('home.searchPlaceholder')}</div>
                 <div className={styles.searchCancel} style={isEN ? { minWidth: 44, padding: '0 14px' } : undefined}>
@@ -914,6 +991,13 @@ export default function HomePage() {
 
         {/* 悬浮机器人按钮 - 使用新的FloatingRobot组件 */}
         <FloatingRobot />
+        
+        {/* 欢迎弹窗 */}
+        <WelcomePopup 
+          visible={showWelcomePopup}
+          onClose={() => setShowWelcomePopup(false)}
+          onConfirm={handleWelcomeConfirm}
+        />
       </div>
     </Layout>
   );

@@ -927,5 +927,16 @@
     "twitter": "X (Twitter)",
     "telegramGroup": "Telegram",
     "xiaohongshu": "Red Book"
+  },
+  "welcomePopup": {
+    "earnPoints": "Earn Points",
+    "register": "Register",
+    "completeTasks": "Complete Daily Tasks",
+    "inviteFriends": "Invite Friends",
+    "joinCommunity": "Join Community Portal",
+    "slogan": "Trade Freely, Undefined",
+    "feature1": "Greater Impact, Richer Rewards",
+    "feature2": "Start Your Points Journey Now",
+    "joinNow": "Join Now"
   }
 }
