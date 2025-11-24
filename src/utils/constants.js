@@ -249,7 +249,7 @@ export const Interface = {
 };
 
 // 业务中使用到的联系邮箱和链上地址（打包报错缺失导出）
-export const EMAIL = 'contact@moziinnovations.com';
+export const EMAIL = 'notice@moziinnovations.com';
 export const COINKEY = {
   BTC: 'bc1qxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
   ETH: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
