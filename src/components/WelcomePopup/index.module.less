@@ -1,0 +1,214 @@
+.popupOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+}
+
+.container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeBtn {
+  width: 28px;
+  height: 28px;
+  margin-top: 6px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.card {
+  position: relative;
+  width: calc(100vw - 48px);
+  max-width: 380px;
+  height: 300px;
+  border-radius: 24px;
+  padding: 0;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.brandLogo {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 140px;
+  height: 40px;
+  object-fit: contain;
+  z-index: 5;
+}
+
+.pointsCard {
+  position: absolute;
+  top: -36px;
+  right: -28px;
+  width:173px;
+  height: auto;
+  object-fit: contain;
+  z-index: 10;
+}
+
+.logoSection {
+  position: relative;
+  margin: 12px 0 8px;
+}
+
+.moziLogo {
+  font-size: 42px;
+  font-weight: 900;
+  background: linear-gradient(135deg, #34D399 0%, #10B981 50%, #059669 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 2px;
+  text-align: center;
+  font-style: italic;
+  text-shadow: 0 2px 8px rgba(52, 211, 153, 0.3);
+}
+
+.decorIcons {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.star,
+.coin,
+.planet {
+  position: absolute;
+  font-size: 16px;
+  animation: float 3s ease-in-out infinite;
+}
+
+.star {
+  top: -8px;
+  left: 16px;
+  animation-delay: 0s;
+}
+
+.coin {
+  top: 8px;
+  right: 24px;
+  animation-delay: 0.5s;
+}
+
+.planet {
+  bottom: -4px;
+  right: 40px;
+  animation-delay: 1s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.slogan {
+  font-size: 18px;
+  font-weight: 900;
+  color: #fff;
+  text-align: center;
+  margin-bottom: 10px;
+  line-height: 1.3;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.features {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.featureTag {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 10px;
+  white-space: nowrap;
+  
+  &.yellow {
+    background: linear-gradient(90deg, #FCD34D 0%, #F59E0B 100%);
+    color: #78350F;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+  }
+  
+  &.green {
+    background: linear-gradient(90deg, #34D399 0%, #10B981 100%);
+    color: #064E3B;
+    box-shadow: 0 2px 8px rgba(52, 211, 153, 0.2);
+  }
+}
+
+.mascot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 12px 0;
+  min-height: 60px;
+}
+
+.mascotImage {
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+}
+
+.mascotPlaceholder {
+  font-size: 50px;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+}
+
+.joinButton {
+  width: auto;
+  max-width: calc(100% - 32px);
+  margin: 0 30px 22px;
+  background: linear-gradient(90deg, #34D399 0%, #10B981 100%);
+  border: none;
+  border-radius: 18px;
+  padding: 10px 32px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(52, 211, 153, 0.5);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  
+  &:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(52, 211, 153, 0.3);
+  }
+}
