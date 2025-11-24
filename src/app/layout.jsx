@@ -5,6 +5,7 @@ import Web3Provider from "../context/Web3Provider.jsx";
 import WalletAccountSync from "@/components/WalletAccountSync";
 import I18nProvider from "@/components/I18nProvider";
 import { LogoLoading } from "@/components/Loading";
+import VConsoleLoader from "@/components/VConsole";
 
 const geistSans = Inter({
   variable: "--font-geist-sans",
@@ -34,6 +35,7 @@ export default function RootLayout({ children }) {
         <meta name="theme-color" content="#1677ff" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
+        <VConsoleLoader />
         <I18nProvider>
           <Web3Provider>
             <WalletAccountSync />

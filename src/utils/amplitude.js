@@ -11,12 +11,30 @@ const AMPLITUDE_CORE_URL = 'https://cdn.amplitude.com/libs/analytics-browser-2.1
 const SESSION_REPLAY_URL = 'https://cdn.amplitude.com/libs/plugin-session-replay-browser-1.23.2-min.js.gz';
 
 /**
+ * 检查是否应该启用 Amplitude（仅生产环境）
+ */
+const isAmplitudeEnabled = () => {
+  // 只在生产环境启用 Amplitude
+  const isProduction = process.env.NEXT_PUBLIC_APP_ENV === 'production';
+  
+  if (!isProduction) {
+    console.log('[Amplitude] 当前环境:', process.env.NEXT_PUBLIC_APP_ENV || 'development', '- 已禁用');
+  }
+  
+  return isProduction;
+};
+
+/**
  * 初始化 Amplitude
  * @param {Object} options - 配置选项
  * @param {number} options.sampleRate - Session Replay 采样率 (0-1)
  * @param {boolean} options.autocapture - 是否启用自动捕获
  */
 export const initAmplitude = (options = {}) => {
+  // 非生产环境不初始化
+  if (!isAmplitudeEnabled()) {
+    return Promise.resolve(null);
+  }
   const {
     sampleRate = 1,
     autocapture = true
@@ -76,6 +94,12 @@ export const initAmplitude = (options = {}) => {
  * @param {Object} eventProperties - 事件属性
  */
 export const trackEvent = (eventName, eventProperties = {}) => {
+  // 非生产环境只打印日志
+  if (!isAmplitudeEnabled()) {
+    console.log('[Amplitude Dev] Event:', eventName, eventProperties);
+    return;
+  }
+
   if (!window.amplitude) {
     console.warn('Amplitude not initialized');
     return;
@@ -117,6 +141,12 @@ export const trackButtonClick = (buttonName, properties = {}) => {
  * @param {Object} userProperties - 用户属性
  */
 export const setUserProperties = (userProperties) => {
+  // 非生产环境只打印日志
+  if (!isAmplitudeEnabled()) {
+    console.log('[Amplitude Dev] User Properties:', userProperties);
+    return;
+  }
+
   if (!window.amplitude) {
     console.warn('Amplitude not initialized');
     return;
@@ -196,12 +226,15 @@ export const AIEvents = {
   INPUT_FOCUSED: 'AI_Input_Focused'
 };
 
+export { isAmplitudeEnabled };
+
 export default {
   initAmplitude,
   trackEvent,
   trackPageView,
   trackButtonClick,
   setUserProperties,
+  isAmplitudeEnabled,
   HomeEvents,
   FindEvents,
   CommunityEvents,
