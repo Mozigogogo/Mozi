@@ -11,8 +11,10 @@
   --border-radius-base: 4px;
   --border-color: #eee;
   --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  color-scheme: light; /* 强制亮色模式 */
 }
 
+/* 暂时禁用暗黑主题
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
@@ -20,6 +22,7 @@
     --border-color: #303030;
   }
 }
+*/
 
 html,
 body {
@@ -130,6 +133,7 @@ a {
   font-weight: 600 !important;
 }
 
+/* 暂时禁用暗黑主题
 @media (prefers-color-scheme: dark) {
   .card {
     background: #1a1a1a;
@@ -139,3 +143,4 @@ a {
     background: #1a1a1a;
   }
 }
+*/

@@ -19,7 +19,21 @@
     "delete": "删除",
     "share": "分享",
     "more": "更多",
-    "updated": "更新"
+    "updated": "更新",
+    "linkCopied": "链接已复制",
+    "loadFailed": "加载失败，请稍后重试",
+    "noData": "暂无数据"
+  },
+  "exchangeRank": {
+    "realTimeUpdate": "实时更新"
+  },
+  "priceRank": {
+    "symbol": "币种",
+    "gainers": "涨幅",
+    "losers": "跌幅",
+    "volatility": "波幅",
+    "turnover": "成交额",
+    "latestPrice": "最新价"
   },
   "home": {
     "title": "墨子 - 数字货币行情社区",
