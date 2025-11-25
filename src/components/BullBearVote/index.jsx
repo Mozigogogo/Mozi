@@ -14,7 +14,6 @@ export default function BullBearVote({
   const { t } = useTranslation();
   
   const displayCount = useMemo(() => {
-    if (!participants) return '';
     return t('community.voting.participants', { count: participants });
   }, [participants, t]);
 
@@ -28,7 +27,7 @@ export default function BullBearVote({
     <div className={`${styles.bbvContainer} ${disabled ? styles.isDisabled : ''}`}>
       <div className={styles.bbvHeader}>
         <span className={styles.bbvTitle}>{title}</span>
-        {!!participants && <span className={styles.bbvCount}>{displayCount}</span>}
+        <span className={styles.bbvCount}>{displayCount}</span>
       </div>
       <div className={styles.bbvBody}>
         <div

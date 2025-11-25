@@ -66,6 +66,13 @@
   margin-right: 0;
 }
 
+/* 当只有一条数据时，卡片占满整个容器宽度 */
+.coinItem:only-child {
+  width: 100%;
+  max-width: 100%;
+  margin-right: 0;
+}
+
 .coinInfo {
   display: flex;
   align-items: center;
@@ -92,9 +99,20 @@
   color: #999;
 }
 
+.coinTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 6px 0;
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
 .coinDetails {
   font-size: 13px;
-  color: #333;
+  color: #666;
   line-height: 1.4;
   margin: 0;
   white-space: normal;
@@ -108,6 +126,9 @@
   padding: 8px 10px;
   border-radius: 10px;
   margin-top: auto;
+  min-height: 48px; /* 固定为两行高度：(11px字体 * 1.3行高 * 2行) + (8px上padding + 8px下padding) ≈ 38px */
+  display: flex;
+  align-items: flex-start;
 }
 
 .coinLink {
@@ -118,5 +139,25 @@
   word-break: break-all;
   overflow-wrap: break-word;
   line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* 限制最多显示2行 */
+  line-clamp: 2; /* 标准属性 */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.emptyState {
+  background: #fff;
+  border-radius: 16px;
+  padding: 40px 20px;
+  text-align: center;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.emptyText {
+  font-size: 14px;
+  color: #999;
+  margin: 0;
 }
 
