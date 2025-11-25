@@ -27,10 +27,10 @@ export default function Mywarn() {
   const [editValue, setEditValue] = useState('');
   
   const code2Content = {
-    priceRise: '币值涨到',
-    priceFall: '币值跌到',
-    priceRiseChange24HPercent: '币值涨超',
-    priceFallChange24HPercent: '币值跌超',
+    priceRise: t('myAlarm.priceRiseTo'),
+    priceFall: t('myAlarm.priceFallTo'),
+    priceRiseChange24HPercent: t('myAlarm.riseOver'),
+    priceFallChange24HPercent: t('myAlarm.fallOver'),
   };
 
   // 固定的四个报警条件配置（按顺序显示），与原项目一致
@@ -117,7 +117,7 @@ export default function Mywarn() {
     setEditingIndex(-1);
     
     if (!/^[0-9]+(\.[0-9]+)?$/.test(editValue)) {
-      Toast.show('请输入数字');
+      Toast.show(t('myAlarm.enterNumber'));
       return;
     }
     
@@ -166,13 +166,13 @@ export default function Mywarn() {
         });
         
         setEditValue('');
-        Toast.show('修改成功');
+        Toast.show(t('myAlarm.editSuccess'));
       } else {
-        Toast.show(addRes.errorMsg || '修改失败');
+        Toast.show(addRes.errorMsg || t('myAlarm.editFailed'));
       }
     } catch (error) {
       console.error('修改告警失败:', error);
-      Toast.show('修改失败');
+      Toast.show(t('myAlarm.editFailed'));
     }
   };
   
@@ -184,7 +184,7 @@ export default function Mywarn() {
 
     // 后端未存在该条目且尝试开启，先提示设置值
     if (!backendItem && !active) {
-      Toast.show('请先设置告警值');
+      Toast.show(t('myAlarm.setValueFirst'));
       return;
     }
 
@@ -216,13 +216,13 @@ export default function Mywarn() {
           }
         });
         
-        Toast.show(active ? '关闭成功' : '启动成功');
+        Toast.show(active ? t('myAlarm.disableSuccess') : t('myAlarm.enableSuccess'));
       } else {
-        Toast.show(active ? '关闭失败' : '启动失败');
+        Toast.show(active ? t('myAlarm.disableFailed') : t('myAlarm.enableFailed'));
       }
     } catch (error) {
       console.error('切换告警状态失败:', error);
-      Toast.show(active ? '关闭失败' : '启动失败');
+      Toast.show(active ? t('myAlarm.disableFailed') : t('myAlarm.enableFailed'));
     }
   };
 
@@ -280,7 +280,7 @@ export default function Mywarn() {
   if (warnData.needLogin) {
     return (
       <div className={styles.box}>
-        <NavBar title={'我的告警'} showMenu={false} showBorder={false} />
+        <NavBar title={t('myAlarm.title')} showMenu={false} showBorder={false} />
         {/* 与原项目一致的登录弹窗（居中卡片 + 遮罩） */}
         <PopLogin 
           visible={true}
@@ -295,16 +295,16 @@ export default function Mywarn() {
   
   return (
       <div className={styles.box}>
-        <NavBar title={'我的告警'} showBorder={false} />
+        <NavBar title={t('myAlarm.title')} showBorder={false} />
         {Object.keys(warnData.data).length === 0 && !warnData.loading && (
           <div className={styles.emptyContainer}>
             {/* 与原项目一致：使用 Error 组件 + 文案“您暂未设置告警” */}
-            <Error errMsg={'您暂未设置告警'} />
+            <Error errMsg={t('myAlarm.noAlerts')} />
             <div 
               className={styles.emptyButton}
               onClick={() => window.history.back()}
             >
-              返回设置告警
+              {t('myAlarm.goBack')}
             </div>
           </div>
         )}
@@ -348,7 +348,7 @@ export default function Mywarn() {
                           className={styles.editInput}
                           value={editValue}
                           onChange={setEditValue}
-                          placeholder='请输入数字'
+                          placeholder={t('myAlarm.enterNumber')}
                           type='number'
                         />
                         <div 
