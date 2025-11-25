@@ -581,12 +581,22 @@ export default function CommunityPage() {
 
   // 处理从URL参数跳转到特定币种
   useEffect(() => {
+    const tab = searchParams.get('tab');
+    const coin = searchParams.get('coin');
     const symbol = searchParams.get('symbol');
-    if (symbol) {
+    
+    // 优先处理 tab + coin 参数（从详情页跳转）
+    if (tab === 'currency' && coin) {
+      setMainTab('recommend');
+      setSubTab('currency');
+      handleCoinSelect(coin);
+      // 清除URL参数
+      window.history.replaceState({}, '', '/community');
+    } else if (symbol) {
+      // 兼容旧的 symbol 参数
       setMainTab('recommend');
       setSubTab('currency');
       handleCoinSelect(symbol);
-      // 清除URL参数（可选）
       window.history.replaceState({}, '', '/community');
     }
   }, [searchParams]);
