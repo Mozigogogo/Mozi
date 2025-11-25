@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import styles from "./page.module.less";
 import MoziGrid from "@/components/MoziGrid";
 import { request } from "@/utils/request";
@@ -12,13 +13,14 @@ const SHARE_ICON = "https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets
 
 export default function NewCoinRankPage() {
   const router = useRouter();
+  const { t } = useTranslation();
 
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [headerImg, setHeaderImg] = useState("");
 
-  const gridTitle = useMemo(() => ["币种", "最新价"], []);
+  const gridTitle = useMemo(() => [t('priceRank.symbol'), t('priceRank.latestPrice')], [t]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -59,10 +61,10 @@ export default function NewCoinRankPage() {
   const onShare = async () => {
     try {
       if (navigator.share) {
-        await navigator.share({ title: '新币榜', text: '新币榜', url: window.location.href });
+        await navigator.share({ title: t('home.rank.new'), text: t('home.rank.new'), url: window.location.href });
       } else {
         await navigator.clipboard.writeText(window.location.href);
-        alert('链接已复制');
+        alert(t('common.linkCopied'));
       }
     } catch {}
   };
@@ -78,9 +80,9 @@ export default function NewCoinRankPage() {
         </div>
         <div className={styles.headerContent}>
           <div className={styles.left}>
-            <div className={styles.title}>新币榜</div>
+            <div className={styles.title}>{t('home.rank.new')}</div>
             <div className={styles.rankName}>Top100</div>
-            <div className={styles.desc}><span className={styles.descText}>实时更新</span></div>
+            <div className={styles.desc}><span className={styles.descText}>{t('exchangeRank.realTimeUpdate')}</span></div>
           </div>
           <div className={styles.right}>
             {headerImg ? <img className={styles.headerImg} src={headerImg} alt="logo" /> : null}
@@ -114,9 +116,9 @@ export default function NewCoinRankPage() {
           className={styles.gridTitleWrap}
         />
 
-        {loading && <div style={{ padding: 16, textAlign: 'center' }}>加载中...</div>}
-        {!loading && error && <div style={{ padding: 16, textAlign: 'center' }}>加载失败，请稍后重试</div>}
-        {!loading && !error && list.length === 0 && <div style={{ padding: 16, textAlign: 'center' }}>暂无数据</div>}
+        {loading && <div style={{ padding: 16, textAlign: 'center' }}>{t('common.loading')}</div>}
+        {!loading && error && <div style={{ padding: 16, textAlign: 'center' }}>{t('common.loadFailed')}</div>}
+        {!loading && !error && list.length === 0 && <div style={{ padding: 16, textAlign: 'center' }}>{t('common.noData')}</div>}
       </div>
     </div>
   );

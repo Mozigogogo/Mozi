@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import styles from "./page.module.less";
 import MoziGrid from "@/components/MoziGrid";
 import { request } from "@/utils/request";
@@ -13,17 +14,18 @@ const SHARE_ICON = "https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets
 export default function UpTradeRankPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useTranslation();
 
-  const tabs = useMemo(() => (
-    [
-      { label: "1天", value: "1_day" },
-      { label: "1周", value: "7_day" },
-      { label: "1月", value: "1_month" },
-    ]
-  ), []);
+  const tabs = useMemo(() => [
+    { label: t('discover.range.live'), value: "today" },
+    { label: t('discover.range.1d'), value: "1_day" },
+    { label: t('discover.range.1w'), value: "7_day" },
+    { label: t('discover.range.1m'), value: "1_month" },
+    { label: t('discover.range.1y'), value: "1_year" },
+  ], [t]);
 
-  const initialIntervals = (searchParams && searchParams.get('intervals')) || '1_day';
-  const allowed = new Set(["1_day","7_day","1_month"]);
+  const initialIntervals = (searchParams && searchParams.get('intervals')) || 'today';
+  const allowed = new Set(["today","1_day","7_day","1_month","1_year"]);
   const normalized = allowed.has(initialIntervals) ? initialIntervals : '1_day';
   const defaultIndex = Math.max(0, tabs.findIndex(t => t.value === normalized));
   const [tabIndex, setTabIndex] = useState(defaultIndex);
@@ -32,7 +34,7 @@ export default function UpTradeRankPage() {
   const [error, setError] = useState(false);
   const [headerImg, setHeaderImg] = useState("");
 
-  const gridTitle = useMemo(() => ["币种", "成交额"], []);
+  const gridTitle = useMemo(() => [t('priceRank.symbol'), t('priceRank.turnover')], [t]);
 
   const fetchData = async (intervals) => {
     setLoading(true);
@@ -73,10 +75,10 @@ export default function UpTradeRankPage() {
   const onShare = async () => {
     try {
       if (navigator.share) {
-        await navigator.share({ title: '飙升榜', text: '实时飙升榜', url: window.location.href });
+        await navigator.share({ title: t('home.rank.surge'), text: t('exchangeRank.realTimeUpdate'), url: window.location.href });
       } else {
         await navigator.clipboard.writeText(window.location.href);
-        alert('链接已复制');
+        alert(t('common.linkCopied'));
       }
     } catch {}
   };
@@ -92,16 +94,16 @@ export default function UpTradeRankPage() {
         </div>
         <div className={styles.headerContent}>
           <div className={styles.left}>
-            <div className={styles.title}>飙升榜</div>
+            <div className={styles.title}>{t('home.rank.surge')}</div>
             <div className={styles.rankName}>Top100</div>
-            <div className={styles.desc}><span className={styles.descText}>实时更新</span></div>
+            <div className={styles.desc}><span className={styles.descText}>{t('exchangeRank.realTimeUpdate')}</span></div>
           </div>
           <div className={styles.right}>
             {headerImg ? <img className={styles.headerImg} src={headerImg} alt="logo" /> : null}
           </div>
           <div className={styles.tabsCapsule}>
-            {tabs.map((t, i) => (
-              <div key={t.value} className={`${styles.tabItem} ${i === tabIndex ? styles.tabItemActive : ''}`} onClick={() => setTabIndex(i)}>{t.label}</div>
+            {tabs.map((tab, i) => (
+              <div key={tab.value} className={`${styles.tabItem} ${i === tabIndex ? styles.tabItemActive : ''}`} onClick={() => setTabIndex(i)}>{tab.label}</div>
             ))}
           </div>
           <div className={styles.actionsCapsule}>
@@ -133,9 +135,9 @@ export default function UpTradeRankPage() {
           className={styles.gridTitleWrap}
         />
 
-        {loading && <div style={{ padding: 16, textAlign: 'center' }}>加载中...</div>}
-        {!loading && error && <div style={{ padding: 16, textAlign: 'center' }}>加载失败，请稍后重试</div>}
-        {!loading && !error && list.length === 0 && <div style={{ padding: 16, textAlign: 'center' }}>暂无数据</div>}
+        {loading && <div style={{ padding: 16, textAlign: 'center' }}>{t('common.loading')}</div>}
+        {!loading && error && <div style={{ padding: 16, textAlign: 'center' }}>{t('common.loadFailed')}</div>}
+        {!loading && !error && list.length === 0 && <div style={{ padding: 16, textAlign: 'center' }}>{t('common.noData')}</div>}
       </div>
     </div>
   );
