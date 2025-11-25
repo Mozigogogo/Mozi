@@ -13,35 +13,7 @@ import styles from './index.module.less';
 const NewCoinListing = ({ showMore = false, data = [], onMoreClick }) => {
   const { t } = useTranslation();
   
-  // 默认数据（如果没有传入data）
-  const defaultData = [
-    {
-      id: 1,
-      exchange: 'Binance',
-      exchangeIcon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/biannce.png',
-      listingTime: '2025-05-07 10:00:10',
-      details: t('user.defaultCoin1Details'),
-      link: 'https://www.bitget.com/zh-CN/support/articles/1256060381977'
-    },
-    {
-      id: 2,
-      exchange: 'OKX',
-      exchangeIcon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/biannce.png',
-      listingTime: '2025-05-08 14:30:00',
-      details: t('user.defaultCoin2Details'),
-      link: 'https://www.okx.com/support/hc/zh-cn/articles/18649384847757'
-    },
-    {
-      id: 3,
-      exchange: 'Bybit',
-      exchangeIcon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/biannce.png',
-      listingTime: '2025-05-09 16:00:00',
-      details: t('user.defaultCoin3Details'),
-      link: 'https://announcements.bybit.com/article/pol-listing'
-    }
-  ];
-
-  const coinListings = data.length > 0 ? data : defaultData;
+  const coinListings = data || [];
 
   return (
     <div className={styles.wrapper}>
@@ -57,24 +29,40 @@ const NewCoinListing = ({ showMore = false, data = [], onMoreClick }) => {
       
       {/* 新币上线内容容器：横向滑动列表 */}
       <div className={styles.container}>
-        <div className={styles.scroll}>
-          {coinListings.map((coin, index) => {
-            const isLast = index === coinListings.length - 1;
-            return (
-              <div className={`${styles.coinItem} ${isLast ? styles.last : ''}`} key={coin.id}>
-                <div className={styles.coinInfo}>
-                  <img className={styles.exchangeIcon} src={coin.exchangeIcon} alt={coin.exchange} />
-                  <span className={styles.exchangeName}>{coin.exchange}</span>
-                  <span className={styles.listingTime}>{coin.listingTime}</span>
+        {coinListings.length === 0 ? (
+          <div className={styles.emptyState}>
+            <p className={styles.emptyText}>{t('user.noNewListings') || '暂无新币上线'}</p>
+          </div>
+        ) : (
+          <div className={styles.scroll}>
+            {coinListings.map((coin, index) => {
+              const isLast = index === coinListings.length - 1;
+              // 适配多种字段格式
+              const exchangeName = coin.exchanges || coin.exchange || coin.name;
+              const exchangeIcon = coin.logoUrl || coin.exchangeIcon || coin.icon;
+              const listingTime = coin.ctime || coin.listingTime || coin.time;
+              const details = coin.deteil || coin.details || coin.description;
+              const title = coin.title;
+              const link = coin.link;
+              
+              return (
+                <div className={`${styles.coinItem} ${isLast ? styles.last : ''}`} key={coin.id || index}>
+                  <div className={styles.coinInfo}>
+                    <img className={styles.exchangeIcon} src={exchangeIcon} alt={exchangeName} />
+                    <span className={styles.exchangeName}>{exchangeName}</span>
+                    <span className={styles.listingTime}>{listingTime}</span>
+                  </div>
+                  {title && <p className={styles.coinTitle}>{title}</p>}
+                  {details && (
+                    <div className={styles.coinLinkContainer}>
+                      <span className={styles.coinLink}>{t('user.details')} {details}</span>
+                    </div>
+                  )}
                 </div>
-                <p className={styles.coinDetails}>{coin.details}</p>
-                <div className={styles.coinLinkContainer}>
-                  <span className={styles.coinLink}>{t('user.details')} {coin.link}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
