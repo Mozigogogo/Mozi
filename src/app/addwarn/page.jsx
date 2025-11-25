@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Input, Button, Dialog, Toast, Switch } from "antd-mobile";
 import PopLogin from "../../components/PopLogin";
 import { request } from "@/utils/request";
@@ -10,6 +11,7 @@ import { LeftArrowIcon } from "@/components/Icons";
 import styles from "./page.module.less";
 
 export default function Addwarn() {
+  const { t } = useTranslation();
   // 按钮状态（移除保存后的公众号弹窗）
   const [btnDisabled, setBtnDisabled] = useState(false);
   // 登录弹窗显示状态
@@ -27,10 +29,10 @@ export default function Addwarn() {
 
   // 配置项状态管理（与原项目一致的四项）
   const [configs, setConfigs] = useState({
-    priceRise: { value: "", enabled: true, unit: "$", placeholder: "价格涨至" },
-    priceFall: { value: "", enabled: true, unit: "$", placeholder: "价格跌至" },
-    risePercent: { value: "10", enabled: true, unit: "%", placeholder: "日涨幅超" },
-    fallPercent: { value: "10", enabled: false, unit: "%", placeholder: "日跌幅超" },
+    priceRise: { value: "", enabled: true, unit: "$", labelKey: "addAlarm.priceRise" },
+    priceFall: { value: "", enabled: true, unit: "$", labelKey: "addAlarm.priceFall" },
+    risePercent: { value: "10", enabled: true, unit: "%", labelKey: "addAlarm.risePercent" },
+    fallPercent: { value: "10", enabled: false, unit: "%", labelKey: "addAlarm.fallPercent" },
   });
 
   // 币价数据状态（顶部价格信息）
@@ -108,7 +110,7 @@ export default function Addwarn() {
     const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
     
     if (!userId) {
-      Toast.show({ content: "请先登录" });
+      Toast.show({ content: t('addAlarm.pleaseLogin') });
       setBtnDisabled(false);
       setShowLoginPopup(true);
       return;
@@ -132,7 +134,7 @@ export default function Addwarn() {
       }
       
       if (!chatId) {
-        Toast.show({ content: "无法获取 Telegram Chat ID" });
+        Toast.show({ content: t('addAlarm.cannotGetChatId') });
         setBtnDisabled(false);
         return;
       }
@@ -144,7 +146,7 @@ export default function Addwarn() {
     );
 
     if (enabledConfigs.length === 0) {
-      Toast.show({ content: "请至少启用一个告警条件" });
+      Toast.show({ content: t('addAlarm.atLeastOne') });
       setBtnDisabled(false);
       return;
     }
@@ -152,7 +154,7 @@ export default function Addwarn() {
     // 数值校验
     for (const [, config] of enabledConfigs) {
       if (!/^[0-9]+(\.[0-9]+)?$/.test(String(config.value))) {
-        Toast.show({ content: `${config.placeholder}请输入有效数字` });
+        Toast.show({ content: t('addAlarm.invalidNumber', { field: t(config.labelKey) }) });
         setBtnDisabled(false);
         return;
       }
@@ -204,7 +206,7 @@ export default function Addwarn() {
 
       if (addRes.code === 0 && addRes.data === true) {
         console.log('[AddWarn] 保存告警成功');
-        Toast.show({ content: "保存告警成功" });
+        Toast.show({ content: t('addAlarm.saveSuccess') });
         return;
       }
 
@@ -213,11 +215,11 @@ export default function Addwarn() {
         errorMsg: addRes.errorMsg,
         raw: addRes,
       });
-      Toast.show({ content: addRes.errorMsg || "保存失败" });
+      Toast.show({ content: addRes.errorMsg || t('addAlarm.saveFailed') });
     } catch (error) {
       setBtnDisabled(false);
       console.error('[AddWarn] 保存告警接口异常', error);
-      Toast.show({ content: "网络错误，请稍后再试" });
+      Toast.show({ content: t('addAlarm.networkError') });
     }
   };
 
@@ -237,13 +239,13 @@ export default function Addwarn() {
         <div className={styles.navLeft} onClick={onBack}>
           <LeftArrowIcon size={20} color="#333" strokeWidth={2} aria-label="返回" />
         </div>
-        <div className={styles.navTitle}>配置告警</div>
+        <div className={styles.navTitle}>{t('addAlarm.title')}</div>
         <div className={styles.navRight}></div>
       </div>
         {coinData.loading ? (
           <div className={styles.pageLoading}>
             <div className={styles.loadingSpinner}></div>
-            <div className={styles.loadingText}>加载中...</div>
+            <div className={styles.loadingText}>{t('addAlarm.loading')}</div>
           </div>
         ) : (
           <>
@@ -251,7 +253,7 @@ export default function Addwarn() {
             <div className={styles.priceInfo}>
               <div className={styles.coinSymbol}>{coinData.symbol}</div>
               <div className={styles.priceDetails}>
-                <div className={styles.priceLabel}>最新价</div>
+                <div className={styles.priceLabel}>{t('addAlarm.latestPrice')}</div>
                 <div
                   className={`${styles.priceValue} ${
                     coinData.change && String(coinData.change).includes("-")
@@ -277,13 +279,13 @@ export default function Addwarn() {
             <div className={styles.configCard}>
               {Object.entries(configs).map(([key, config]) => (
                 <div key={key} className={styles.configItem}>
-                  <div className={styles.configLabel}>{config.placeholder}</div>
+                  <div className={styles.configLabel}>{t(config.labelKey)}</div>
                   <div className={styles.configInputContainer}>
                     <Input
                       className={styles.configInput}
                       type="number"
                       value={config.value}
-                      placeholder={config.value || "请输入数值"}
+                      placeholder={config.value || t('addAlarm.placeholder')}
                       onChange={(val) => handleInputChange(key, val)}
                     />
                     <div className={styles.configUnit}>{config.unit}</div>
@@ -306,13 +308,13 @@ export default function Addwarn() {
                 onClick={saveWarnings}
                 color="primary"
               >
-                保存告警
+                {t('addAlarm.saveAlarm')}
               </Button>
               <Button
                 className={styles.viewButton}
                 onClick={() => jump2NoTab("mywarn")}
               >
-                查看已配置告警
+                {t('addAlarm.viewAlarms')}
               </Button>
             </div>
 
