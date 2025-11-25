@@ -57,6 +57,9 @@ export default function UserPage() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [selectedDate, setSelectedDate] = useState(null);
   const [interfaceData, setInterfaceData] = useState(null);
+  const [newCoinListings, setNewCoinListings] = useState([]); // 新币上线数据
+  const [isInterfaceLoaded, setIsInterfaceLoaded] = useState(false); // 接口是否已加载完成
+  const [isInterfaceSuccess, setIsInterfaceSuccess] = useState(false); // 接口是否调用成功
   const [isAnnouncementOn, setIsAnnouncementOn] = useState(false); // 公告订阅开关，默认关闭
   
   // 简单的 Cookie 读写（仅前端可见；敏感 token 建议服务端 HttpOnly）
@@ -266,7 +269,7 @@ export default function UserPage() {
           content: t('user.pleaseLogin'), 
           position: 'bottom' 
         });
-        return;
+        return false;
       }
 
       const platform = getPlatform();
@@ -300,26 +303,32 @@ export default function UserPage() {
         data: requestData
       });
 
-      if (res?.code === 200 || res?.code === 0) {
+      console.log('订阅接口返回:', res);
+
+      // 基于 success 字段判断接口是否成功
+      if (res?.success === true) {
         setIsAnnouncementOn(isOn);
         Toast.show({ 
           content: isOn ? t('user.subscriptionEnabled') || '订阅成功' : t('user.subscriptionDisabled') || '取消订阅',
           position: 'bottom' 
         });
         console.log('订阅状态更新成功');
+        return true; // 成功，允许切换
       } else {
         Toast.show({ 
-          content: res?.message || '操作失败', 
+          content: res?.errorMsg || res?.message || t('user.interfaceNotReady'), 
           position: 'bottom' 
         });
         console.error('订阅状态更新失败:', res);
+        return false; // 失败，阻止切换
       }
     } catch (error) {
       console.error('处理订阅失败:', error);
       Toast.show({ 
-        content: '操作失败，请稍后重试', 
+        content: t('user.operationFailed') || '操作失败，请稍后重试', 
         position: 'bottom' 
       });
+      return false; // 异常，阻止切换
     }
   };
 
@@ -346,11 +355,39 @@ export default function UserPage() {
         }
       });
 
-      if (res?.code === 200 || res?.code === 0) {
-        console.log('接口返回数据:', res.data);
+      console.log('接口完整返回:', res);
+      
+      // 基于 success 字段判断接口是否成功
+      if (res?.success === true) {
+        console.log('接口调用成功，数据:', res.data);
         setInterfaceData(res.data);
+        setIsInterfaceLoaded(true); // 记录接口已加载完成
+        setIsInterfaceSuccess(true); // 记录接口调用成功
+        
+        // 转换新币上线数据格式
+        const rawData = Array.isArray(res.data) ? res.data : (res.data?.newCoinListings || res.data?.listings || []);
+        
+        if (rawData && rawData.length > 0) {
+          const formattedListings = rawData.map((item, index) => ({
+            id: item.id || index + 1,
+            exchange: item.exchanges || item.exchange || 'Unknown',
+            exchangeIcon: item.logoUrl || item.exchangeIcon || 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/biannce.png',
+            listingTime: item.ctime || item.listingTime || '',
+            title: item.title || '',
+            details: item.deteil || item.details || '',
+            link: item.link || ''
+          }));
+          setNewCoinListings(formattedListings);
+          console.log('转换后的新币上线数据:', formattedListings);
+        } else {
+          setNewCoinListings([]);
+          console.log('接口成功但无新币上线数据');
+        }
       } else {
-        console.error('接口返回错误:', res);
+        console.log('接口调用失败:', res?.errorMsg || '未知错误');
+        setNewCoinListings([]);
+        setIsInterfaceLoaded(true); // 记录接口已加载完成
+        setIsInterfaceSuccess(false); // 记录接口调用失败
       }
     } catch (error) {
       console.error('获取我的交互数据失败:', error);
@@ -788,7 +825,7 @@ export default function UserPage() {
 
         {showNewCoinListing && (
           <div className={styles.newCoinSection}>
-            <NewCoinListing showMore={false} />
+            <NewCoinListing showMore={false} data={newCoinListings} />
           </div>
         )}
 

@@ -16,10 +16,16 @@ export default function CalendarCard({ onDateChange, onToggleChange, defaultTogg
   const [isToggleOn, setIsToggleOn] = useState(defaultToggle);
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  const handleToggleChange = () => {
+  const handleToggleChange = async () => {
     const next = !isToggleOn;
+    // 先调用回调，如果返回 false 则不切换状态
+    if (onToggleChange) {
+      const result = await onToggleChange(next);
+      if (result === false) {
+        return; // 阻止切换
+      }
+    }
     setIsToggleOn(next);
-    onToggleChange && onToggleChange(next);
   };
 
   const handleDateClick = (date, isCurrentMonth) => {
