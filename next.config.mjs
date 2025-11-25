@@ -55,6 +55,8 @@ const nextConfig = withLess({
           },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'X-XSS-Protection', value: '1; mode=block' },
+          // 不设置 X-Frame-Options，让 CSP frame-ancestors 控制 iframe 嵌入
+          { key: 'X-Frame-Options', value: '' },
         ],
       },
     ];
