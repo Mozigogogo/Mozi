@@ -42,7 +42,7 @@ export default function MyNoticesPage() {
 
   const markAsRead = async () => {
     try {
-      await request({ url: Interface.MARK_NOTICES_READ, method: "GET" });
+      await request({ url: Interface.MARK_NOTICES_READ, method: "POST" });
     } catch {}
   };
 
