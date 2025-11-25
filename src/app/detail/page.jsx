@@ -420,9 +420,8 @@ export default function DetailPage() {
   // 跳转到社区页面
   const jump2Community = () => {
     if (symbol) {
-      // 将币种信息存储到localStorage，供社区页面使用
-      localStorage.setItem('communityCoinSymbol', symbol);
-      window.location.href = '/community';
+      // 通过URL参数传递币种信息，自动切换到币种tab并选中对应币种
+      window.location.href = `/community?tab=currency&coin=${symbol}`;
     }
   };
 
