@@ -51,6 +51,7 @@ export default function CommunityPage() {
   const [topicTitle, setTopicTitle] = useState(''); // 话题名称
   const [topicDesc, setTopicDesc] = useState(''); // 话题简介
   const [voteChoice, setVoteChoice] = useState(null); // 投票选择状态
+  const [voteData, setVoteData] = useState({ totalCount: 0, hasVoted: false, userVoteType: null }); // 投票数据
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -112,6 +113,36 @@ export default function CommunityPage() {
       img.src = src;
     });
   }, []);
+
+  // 获取看涨看跌统计数据
+  const fetchVoteData = async (symbol) => {
+    try {
+      const res = await request({
+        url: Interface.GET_UP_AND_DOWN_COUNT,
+        method: 'GET',
+        data: { symbol }
+      });
+      
+      console.log('投票接口返回:', res);
+      
+      if (res?.success === true) {
+        const data = res.data || {};
+        setVoteData({
+          totalCount: data.totalCount || 0,
+          hasVoted: data.hasVoted || false,
+          userVoteType: data.userVoteType || null
+        });
+        // 如果用户已投票，设置选中状态
+        if (data.hasVoted && data.userVoteType) {
+          setVoteChoice(data.userVoteType === 'bullish' ? 'bull' : 'bear');
+        } else {
+          setVoteChoice(null);
+        }
+      }
+    } catch (error) {
+      console.error('获取投票数据失败:', error);
+    }
+  };
 
   // 搜索币种
   const searchCoin = async (value) => {
@@ -513,6 +544,13 @@ export default function CommunityPage() {
       setHotTopicsPage(1);
       setHotTopicsAllLoaded(false);
       fetchHotTopics(true);
+    }
+  }, [mainTab, subTab, selectedCoin]);
+
+  // 当币种变化时，获取投票数据
+  useEffect(() => {
+    if (mainTab === 'recommend' && subTab === 'currency' && selectedCoin) {
+      fetchVoteData(selectedCoin);
     }
   }, [mainTab, subTab, selectedCoin]);
 
@@ -922,8 +960,9 @@ export default function CommunityPage() {
             <div className={styles.voteWrapper}>
               <BullBearVote
                 title={t('community.coinInfo.votingQuestion', { coin: selectedCoin })}
-                participants={5445}
+                participants={voteData.totalCount}
                 selected={voteChoice}
+                disabled={voteData.hasVoted}
                 onSelect={(type) => setVoteChoice(type)}
               />
             </div>
