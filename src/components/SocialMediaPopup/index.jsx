@@ -25,7 +25,7 @@ export default function SocialMediaPopup() {
       id: 'xiaohongshu',
       name: t('socialMedia.xiaohongshu'),
       icon: '/icons/xiaohongshu.svg',
-      url: 'https://www.xiaohongshu.com/user/profile/your_id',
+      url: 'https://xhslink.com/m/60xi0L4Wsea',
       borderColor: '#FF2442'
     }
   ];

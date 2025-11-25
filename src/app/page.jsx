@@ -151,63 +151,54 @@ export default function HomePage() {
     }
   };
 
-  // 检测是否首次访问，显示欢迎弹窗
+  // 每次访问都显示欢迎弹窗（禁用本地状态保存）
   useEffect(() => {
     if (typeof window === 'undefined') return;
     
     try {
-      const hasShown = localStorage.getItem(WELCOME_SHOWN_KEY);
-      if (!hasShown) {
-        // 根据语言预加载对应的弹窗图片
-        const bgImage = isEN ? '/point/point_en_modal_bg.png' : '/point/point_modal_bg.png';
-        const rightImage = isEN ? '/point/ponit_en_modal_right_text.png' : '/point/ponit_modal_right_text.png';
-        
-        const preloadImages = [
-          bgImage,
-          '/point/ponit_modal_logo.png',
-          rightImage
-        ];
-        
-        let loadedCount = 0;
-        const totalImages = preloadImages.length;
-        
-        preloadImages.forEach((src) => {
-          const img = new window.Image();
-          img.onload = () => {
-            loadedCount++;
-            // 所有图片加载完成后显示弹窗
-            if (loadedCount === totalImages) {
-              setTimeout(() => {
-                setShowWelcomePopup(true);
-                // 注意：不在这里保存状态，等用户点击按钮时才保存
-              }, 500);
-            }
-          };
-          img.onerror = () => {
-            loadedCount++;
-            // 即使加载失败也继续
-            if (loadedCount === totalImages) {
-              setTimeout(() => {
-                setShowWelcomePopup(true);
-                // 注意：不在这里保存状态，等用户点击按钮时才保存
-              }, 500);
-            }
-          };
-          img.src = src;
-        });
-      }
+      // 根据语言预加载对应的弹窗图片
+      const bgImage = isEN ? '/point/point_en_modal_bg.png' : '/point/point_modal_bg.png';
+      const rightImage = isEN ? '/point/ponit_en_modal_right_text.png' : '/point/ponit_modal_right_text.png';
+      
+      const preloadImages = [
+        bgImage,
+        '/point/ponit_modal_logo.png',
+        rightImage
+      ];
+      
+      let loadedCount = 0;
+      const totalImages = preloadImages.length;
+      
+      preloadImages.forEach((src) => {
+        const img = new window.Image();
+        img.onload = () => {
+          loadedCount++;
+          // 所有图片加载完成后显示弹窗
+          if (loadedCount === totalImages) {
+            setTimeout(() => {
+              setShowWelcomePopup(true);
+            }, 500);
+          }
+        };
+        img.onerror = () => {
+          loadedCount++;
+          // 即使加载失败也继续
+          if (loadedCount === totalImages) {
+            setTimeout(() => {
+              setShowWelcomePopup(true);
+            }, 500);
+          }
+        };
+        img.src = src;
+      });
     } catch (e) {
       console.warn('检测欢迎弹窗状态失败:', e);
     }
   }, [isEN]);
   
-  // 处理弹窗确认（用户点击按钮时才保存状态）
+  // 处理弹窗确认（禁用本地状态保存，每次访问都显示）
   const handleWelcomeConfirm = () => {
-    try {
-      localStorage.setItem(WELCOME_SHOWN_KEY, 'true');
-    } catch (e) {
-      console.warn('保存欢迎弹窗状态失败:', e);
-    }
+    // 不再保存状态到 localStorage
   };
 
   useEffect(() => {

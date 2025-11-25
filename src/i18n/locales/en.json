@@ -19,7 +19,21 @@
     "delete": "Delete",
     "share": "Share",
     "more": "More",
-    "updated": "Updated"
+    "updated": "Updated",
+    "linkCopied": "Link copied",
+    "loadFailed": "Failed to load, please try again",
+    "noData": "No data"
+  },
+  "exchangeRank": {
+    "realTimeUpdate": "Real-time update"
+  },
+  "priceRank": {
+    "symbol": "Symbol",
+    "gainers": "Gainers",
+    "losers": "Losers",
+    "volatility": "Volatility",
+    "turnover": "Turnover",
+    "latestPrice": "Latest Price"
   },
   "home": {
     "title": "Mozi - Crypto Market Community",
@@ -161,10 +175,10 @@
     },
     "range": {
       "live": "Live",
-      "1d": "1d",
-      "1w": "1w",
-      "1m": "1m",
-      "1y": "1y"
+      "1d": "1D",
+      "1w": "1W",
+      "1m": "1M",
+      "1y": "1Y"
     },
     "addFavoriteButton": "Add Favorite",
     "loadFinished": "All loaded",
