@@ -35,18 +35,22 @@ export default function ThemeCenterPage() {
     if (!theme) return;
 
     try {
-      const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
-      if (!userInfo || !userInfo.userId) {
+      const token = localStorage.getItem("token");
+      if (!token) {
         Toast.show({ content: t("auth.notLoggedIn") || t("user.pleaseLogin"), position: "bottom" });
         return;
       }
 
+      const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
+
       Toast.show({ icon: "loading", content: t("theme.switching"), duration: 0 });
+
+      const storedUserId = (userInfo && userInfo.userId) || localStorage.getItem("userId");
 
       const res = await request({
         url: Interface.EDIT_USER_THEME,
         method: "POST",
-        data: { userId: userInfo.userId, themeColor: theme.themeColor },
+        data: { userId: storedUserId, themeColor: theme.themeColor },
       });
 
       Toast.clear();
