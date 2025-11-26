@@ -997,5 +997,14 @@
     "feature1": "更大影响力，更丰厚奖励",
     "feature2": "立即开启积分探索之旅",
     "joinNow": "立即加入"
+  },
+  "rankDiscuss": {
+    "title": "{{rankName}}讨论区",
+    "placeholder": "分享你对{{rankName}}的看法",
+    "submit": "发布",
+    "noComments": "暂无评论，快来发表第一条吧~",
+    "loginToComment": "登录后参与讨论",
+    "commentSuccess": "发布成功",
+    "commentFailed": "发布失败，请重试"
   }
 }
