@@ -28,7 +28,8 @@ const GardenLoading = ({ t }) => (
 
 export default function CommunityPage() {
   const searchParams = useSearchParams();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isEn = i18n.language === 'en';
   const { track, trackClick } = useAmplitude('Community');
   
   // 状态定义
@@ -74,10 +75,12 @@ export default function CommunityPage() {
   const messagesLikeActiveIcon = `${CDN_ICON}/messages-like-active.png`;
   const messagesCommentIcon = `${CDN_ICON}/messages-comment.png`;
   const messagesShareIcon = `${CDN_ICON}/messages-share.png`;
-  const recommendActive = `${CDN_IMG}/community-recommend.png`;
-  const recommendInactive = `${CDN_IMG}/recommend-no-actived.png`;
-  const hotActive = `${CDN_IMG}/hot-list-actived.png`;
-  const hotInactive = `${CDN_IMG}/community-hot-list.png`;
+  const recommendActive = isEn ? '/images/community/recommend_en_active@2x.png' : '/images/community/recomand_active@2x.png';
+  const recommendInactive = isEn ? '/images/community/recommend_en_no_active@2x.png' : '/images/community/recomand_no_active@2x.png';
+  const hotActive = isEn ? '/images/community/hot_range_en_active@2x.png' : '/images/community/hot_range_active@2x.png';
+  const hotInactive = isEn ? '/images/community/hot_range_en_no_active@2x.png' : '/images/community/hot_range_no_active@2x.png';
+  const newsActive = isEn ? '/images/community/news_en_active@2x.png' : '/images/community/news_active@2x.png';
+  const newsInactive = isEn ? '/images/community/news_en_no_active@2x.png' : '/images/community/news_no_active@2x.png';
   const publishIcon = `${CDN_IMG}/publish.png`;
   const findBestCoinIcon = `${CDN_ICON}/find-best-coin.png`;
   const reasonIcon = `${CDN_ICON}/reason.png`;
@@ -107,7 +110,7 @@ export default function CommunityPage() {
 
   // 预加载切换图，避免切换瞬间重解码导致卡顿
   useEffect(() => {
-    [recommendActive, recommendInactive, hotActive, hotInactive].forEach((src) => {
+    [recommendActive, recommendInactive, hotActive, hotInactive, newsActive, newsInactive].forEach((src) => {
       const img = new Image();
       img.decoding = 'async';
       img.src = src;
@@ -603,7 +606,12 @@ export default function CommunityPage() {
 
   // 渲染帖子列表
   const renderPosts = () => {
-    if (posts.length === 0 && !loading) {
+    // 快讯tab只显示category为news的帖子
+    const filteredPosts = mainTab === 'news' 
+      ? posts.filter(post => post.category === 'news')
+      : posts;
+
+    if (filteredPosts.length === 0 && !loading) {
       return (
         <div className={styles.emptyContainer}>
           <p>{t('community.actions.noPosts')}</p>
@@ -616,7 +624,7 @@ export default function CommunityPage() {
 
     return (
       <div className={`${styles.postsList} ${isDiscovery ? styles.discoveryGrid : ''}`}>
-        {posts.map(post => (
+        {filteredPosts.map(post => (
           <div 
             key={post.id} 
             className={`${styles.postItem} ${isDiscovery ? styles.discoveryCard : ''}`} 
@@ -898,6 +906,15 @@ export default function CommunityPage() {
                    decoding="async" loading="eager" src={recommendInactive} alt={t('community.tabs.recommend')} />
             </div>
             <div
+              className={`${styles.bannerCard} ${mainTab === 'news' ? styles.active : ''}`}
+              onClick={() => setMainTab('news')}
+            >
+              <img className={`${styles.tabImage} ${mainTab === 'news' ? styles.tabImageVisible : styles.tabImageHidden}`}
+                   decoding="async" loading="eager" src={newsActive} alt={t('community.tabs.news')} />
+              <img className={`${styles.tabImage} ${mainTab !== 'news' ? styles.tabImageVisible : styles.tabImageHidden}`}
+                   decoding="async" loading="eager" src={newsInactive} alt={t('community.tabs.news')} />
+            </div>
+            <div
               className={`${styles.bannerCard} ${mainTab === 'hot' ? styles.active : ''}`}
               onClick={() => setMainTab('hot')}
             >
@@ -922,6 +939,15 @@ export default function CommunityPage() {
                   {item.title}
                 </span>
               ))}
+            </div>
+          )}
+
+          {/* 快讯子导航 */}
+          {mainTab === 'news' && (
+            <div className={styles.subTabs}>
+              <span className={`${styles.subTab} ${styles.active}`}>
+                {t('community.tabs.all')}
+              </span>
             </div>
           )}
 
