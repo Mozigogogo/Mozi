@@ -18,31 +18,33 @@
 .bannerSwitch { display: flex; gap: 12px; }
 .bannerCard {
   flex: 1;
-  height: 70px;
-  border-radius: 16px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f3f3f3;
+  background: transparent;
   position: relative;
   overflow: hidden;
-  border: 1px solid #f0f0f0;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+  border: none;
+  box-shadow: none;
 }
-.bannerCard.active { box-shadow: 0 6px 16px rgba(17,183,135,0.18); border: 1px solid #11B787; }
+.bannerCard.active { box-shadow: 0 6px 16px rgba(17,183,135,0.18); border: none; }
 
 .tabImage {
-  position: absolute;
-  inset: 0;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  display: block;
   pointer-events: none;
   transition: opacity 180ms ease-out;
   will-change: opacity;
 }
 
-.tabImageHidden { opacity: 0; }
+.tabImageHidden { 
+  opacity: 0; 
+  position: absolute;
+  top: 0;
+  left: 0;
+}
 .tabImageVisible { opacity: 1; }
 
 .tabsWrapper {
@@ -341,19 +343,23 @@
 }
 
 .createTopicBtn {
-  height: 36px; /* 72rpx ÷ 2 = 36px */
-  line-height: 36px;
-  padding: 0 15px; /* 30rpx ÷ 2 = 15px */
-  background: #11B787;
-  color: #fff;
-  border-radius: 18px; /* 36rpx ÷ 2 = 18px */
-  font-size: 14px; /* 28rpx ÷ 2 = 14px */
-  border: none;
+  height: 36px !important;
+  line-height: 36px !important;
+  padding: 0 15px !important;
+  background: #11B787 !important;
+  color: #fff !important;
+  border-radius: 18px !important;
+  font-size: 14px !important;
+  border: none !important;
   cursor: pointer;
   flex-shrink: 0;
   
   &:active {
     opacity: 0.8;
+  }
+  
+  &::before {
+    display: none !important;
   }
 }
 
