@@ -10,7 +10,8 @@ import styles from './page.module.less';
 
 export default function PointsDetail() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isEnglish = i18n.language === 'en';
   const [activeTab, setActiveTab] = useState('myPoints');
   
   const pointsData = {
@@ -336,7 +337,12 @@ export default function PointsDetail() {
           </div>
 
           {/* MOZI横幅 */}
-          <div className={styles.moziBanner}>
+          <div 
+            className={styles.moziBanner}
+            style={{ 
+              backgroundImage: `url('${isEnglish ? '/point/piont_banner1.png' : '/point/define_bg@2x.png'}')` 
+            }}
+          >
             {/* 背景图片自带文字，无需额外内容 */}
           </div>
         </div>
@@ -478,7 +484,12 @@ export default function PointsDetail() {
           </div>
 
           {/* 获得更多积分横幅 */}
-          <div className={styles.earnMoreBanner}>
+          <div 
+            className={styles.earnMoreBanner}
+            style={{ 
+              backgroundImage: `url('${isEnglish ? '/point/point_banner2.png' : '/point/last_bg@2x.png'}')` 
+            }}
+          >
             
           </div>
 

@@ -414,7 +414,13 @@
     "1h": "1 Hour",
     "4h": "4 Hours",
     "1d": "1 Day",
-    "1w": "1 Week"
+    "1w": "1 Week",
+    "period": {
+      "hour": "1H",
+      "day": "1D",
+      "week": "1W",
+      "month": "1M"
+    }
   },
   "error": {
     "network": "Network error, please check your connection",
