@@ -149,8 +149,11 @@ export default function ExchangeRankPage() {
           stickyTop={0}
           gridTitleBgColor="#dfdfdf"
           gridTitleStyle={{ borderBottom: '1px solid #e6e6e6' }}
-          columnWidths={["30%","20%","25%","25%"]}
+          columnWidths={["30%","25%","25%","25%"]}
           className={styles.gridTitleWrap}
+          contentFontSize="15px"
+          titleFontSize="13px"
+          rowPadding="10px 0"
         />
 
         {loading && <div style={{ padding: 16, textAlign: 'center' }}>{t('common.loading')}</div>}
