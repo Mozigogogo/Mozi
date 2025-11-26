@@ -127,7 +127,7 @@ export default function HotRankPage() {
     window.open(telegramUrl, '_blank');
   };
 
-  const toCommunity = () => router.push('/community');
+  const toCommunity = () => router.push(`/rankdiscuss?type=hot&name=${encodeURIComponent(title)}`);
 
   const isIndustry = type === "industry";
   const columnWidths = isIndustry ? ["60%", "40%"] : ["50%", "25%", "25%"];

@@ -106,7 +106,7 @@ export default function SelfRankPage() {
             {headerImg ? <img className={styles.headerImg} src={headerImg} alt="logo" /> : null}
           </div>
           <div className={styles.actionsCapsule}>
-            <div className={styles.capsuleBtn} onClick={() => router.push('/community')}>
+            <div className={styles.capsuleBtn} onClick={() => router.push(`/rankdiscuss?type=self&name=${encodeURIComponent('自选榜')}`)}>
               <img className={styles.capsuleIcon} src={COMMENT_ICON} alt="评论" />
               <span className={styles.capsuleText}>0</span>
             </div>
