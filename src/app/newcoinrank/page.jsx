@@ -58,15 +58,11 @@ export default function NewCoinRankPage() {
     }
   };
 
-  const onShare = async () => {
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: t('home.rank.new'), text: t('home.rank.new'), url: window.location.href });
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        alert(t('common.linkCopied'));
-      }
-    } catch {}
+  const onShare = () => {
+    const shareUrl = encodeURIComponent(window.location.href);
+    const shareText = encodeURIComponent(t('home.rank.new'));
+    const telegramUrl = `https://t.me/share/url?url=${shareUrl}&text=${shareText}`;
+    window.open(telegramUrl, '_blank');
   };
 
   return (

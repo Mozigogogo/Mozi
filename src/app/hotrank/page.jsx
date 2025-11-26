@@ -120,15 +120,11 @@ export default function HotRankPage() {
     }
   };
 
-  const onShare = async () => {
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: title, text: title, url: window.location.href });
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        alert(t('common.copySuccess'));
-      }
-    } catch {}
+  const onShare = () => {
+    const shareUrl = encodeURIComponent(window.location.href);
+    const shareText = encodeURIComponent(title);
+    const telegramUrl = `https://t.me/share/url?url=${shareUrl}&text=${shareText}`;
+    window.open(telegramUrl, '_blank');
   };
 
   const toCommunity = () => router.push('/community');

@@ -80,15 +80,11 @@ export default function SelfRankPage() {
     }
   };
 
-  const onShare = async () => {
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: '自选榜', text: '我的自选榜', url: window.location.href });
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        alert('链接已复制');
-      }
-    } catch {}
+  const onShare = () => {
+    const shareUrl = encodeURIComponent(window.location.href);
+    const shareText = encodeURIComponent('自选榜');
+    const telegramUrl = `https://t.me/share/url?url=${shareUrl}&text=${shareText}`;
+    window.open(telegramUrl, '_blank');
   };
 
   return (

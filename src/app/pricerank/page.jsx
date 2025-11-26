@@ -70,15 +70,11 @@ export default function PriceRankPage() {
     }
   };
 
-  const onShare = async () => {
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: t('home.rank.up'), text: t('exchangeRank.realTimeUpdate'), url: window.location.href });
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        alert(t('common.linkCopied'));
-      }
-    } catch {}
+  const onShare = () => {
+    const shareUrl = encodeURIComponent(window.location.href);
+    const shareText = encodeURIComponent(`${t('home.rank.up')} - ${t('exchangeRank.realTimeUpdate')}`);
+    const telegramUrl = `https://t.me/share/url?url=${shareUrl}&text=${shareText}`;
+    window.open(telegramUrl, '_blank');
   };
 
   return (
