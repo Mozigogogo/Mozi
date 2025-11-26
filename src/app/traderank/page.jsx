@@ -70,15 +70,11 @@ export default function TradeRankPage() {
     }
   };
 
-  const onShare = async () => {
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: t('home.rank.volume'), text: t('exchangeRank.realTimeUpdate'), url: window.location.href });
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        alert(t('common.linkCopied'));
-      }
-    } catch {}
+  const onShare = () => {
+    const shareUrl = encodeURIComponent(window.location.href);
+    const shareText = encodeURIComponent(`${t('home.rank.volume')} - ${t('exchangeRank.realTimeUpdate')}`);
+    const telegramUrl = `https://t.me/share/url?url=${shareUrl}&text=${shareText}`;
+    window.open(telegramUrl, '_blank');
   };
 
   return (
@@ -105,7 +101,7 @@ export default function TradeRankPage() {
             ))}
           </div>
           <div className={styles.actionsCapsule}>
-            <div className={styles.capsuleBtn} onClick={() => router.push('/community')}>
+            <div className={styles.capsuleBtn} onClick={() => router.push(`/rankdiscuss?type=trade&name=${encodeURIComponent(t('home.rank.volume'))}`)}>
               <img className={styles.capsuleIcon} src={COMMENT_ICON} alt="评论" />
               <span className={styles.capsuleText}>0</span>
             </div>
@@ -131,6 +127,9 @@ export default function TradeRankPage() {
           gridTitleStyle={{ borderBottom: '1px solid #e6e6e6' }}
           columnWidths={["60%","40%"]}
           className={styles.gridTitleWrap}
+          contentFontSize="15px"
+          titleFontSize="13px"
+          rowPadding="11px 0"
         />
 
         {loading && <div style={{ padding: 16, textAlign: 'center' }}>{t('common.loading')}</div>}

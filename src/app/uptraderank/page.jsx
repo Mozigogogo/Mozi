@@ -26,7 +26,9 @@ export default function UpTradeRankPage() {
 
   const initialIntervals = (searchParams && searchParams.get('intervals')) || 'today';
   const allowed = new Set(["today","1_day","7_day","1_month","1_year"]);
-  const normalized = allowed.has(initialIntervals) ? initialIntervals : '1_day';
+  // 1_day 视为 today，默认选中"实时"
+  const normalized = (initialIntervals === '1_day' || initialIntervals === 'today') ? 'today' : 
+                     (allowed.has(initialIntervals) ? initialIntervals : 'today');
   const defaultIndex = Math.max(0, tabs.findIndex(t => t.value === normalized));
   const [tabIndex, setTabIndex] = useState(defaultIndex);
   const [list, setList] = useState([]);
@@ -62,7 +64,11 @@ export default function UpTradeRankPage() {
     }
   };
 
-  useEffect(() => { fetchData(tabs[tabIndex].value); }, [tabIndex]);
+  useEffect(() => {
+    // "实时"(today) 对应 API 参数 1_day
+    const apiInterval = tabs[tabIndex].value === 'today' ? '1_day' : tabs[tabIndex].value;
+    fetchData(apiInterval);
+  }, [tabIndex]);
 
   const onBack = () => {
     if (typeof window !== 'undefined' && window.history.length > 1) {
@@ -72,15 +78,11 @@ export default function UpTradeRankPage() {
     }
   };
 
-  const onShare = async () => {
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: t('home.rank.surge'), text: t('exchangeRank.realTimeUpdate'), url: window.location.href });
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        alert(t('common.linkCopied'));
-      }
-    } catch {}
+  const onShare = () => {
+    const shareUrl = encodeURIComponent(window.location.href);
+    const shareText = encodeURIComponent(`${t('home.rank.surge')} - ${t('exchangeRank.realTimeUpdate')}`);
+    const telegramUrl = `https://t.me/share/url?url=${shareUrl}&text=${shareText}`;
+    window.open(telegramUrl, '_blank');
   };
 
   return (
@@ -107,7 +109,7 @@ export default function UpTradeRankPage() {
             ))}
           </div>
           <div className={styles.actionsCapsule}>
-            <div className={styles.capsuleBtn} onClick={() => router.push('/community')}>
+            <div className={styles.capsuleBtn} onClick={() => router.push(`/rankdiscuss?type=surge&name=${encodeURIComponent(t('home.rank.surge'))}`)}>
               <img className={styles.capsuleIcon} src={COMMENT_ICON} alt="评论" />
               <span className={styles.capsuleText}>0</span>
             </div>
@@ -133,6 +135,9 @@ export default function UpTradeRankPage() {
           gridTitleStyle={{ borderBottom: '1px solid #e6e6e6' }}
           columnWidths={["60%","40%"]}
           className={styles.gridTitleWrap}
+          contentFontSize="15px"
+          titleFontSize="13px"
+          rowPadding="10px 0"
         />
 
         {loading && <div style={{ padding: 16, textAlign: 'center' }}>{t('common.loading')}</div>}

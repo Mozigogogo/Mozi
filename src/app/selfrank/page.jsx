@@ -80,15 +80,11 @@ export default function SelfRankPage() {
     }
   };
 
-  const onShare = async () => {
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: '自选榜', text: '我的自选榜', url: window.location.href });
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        alert('链接已复制');
-      }
-    } catch {}
+  const onShare = () => {
+    const shareUrl = encodeURIComponent(window.location.href);
+    const shareText = encodeURIComponent('自选榜');
+    const telegramUrl = `https://t.me/share/url?url=${shareUrl}&text=${shareText}`;
+    window.open(telegramUrl, '_blank');
   };
 
   return (
@@ -110,7 +106,7 @@ export default function SelfRankPage() {
             {headerImg ? <img className={styles.headerImg} src={headerImg} alt="logo" /> : null}
           </div>
           <div className={styles.actionsCapsule}>
-            <div className={styles.capsuleBtn} onClick={() => router.push('/community')}>
+            <div className={styles.capsuleBtn} onClick={() => router.push(`/rankdiscuss?type=self&name=${encodeURIComponent('自选榜')}`)}>
               <img className={styles.capsuleIcon} src={COMMENT_ICON} alt="评论" />
               <span className={styles.capsuleText}>0</span>
             </div>
