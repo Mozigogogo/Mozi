@@ -8,7 +8,7 @@ import styles from './index.module.less';
 /**
  * H5 版 CalendarCard（等价于小程序版）
  */
-export default function CalendarCard({ onDateChange, onToggleChange, defaultToggle = true, enableDark = false }) {
+export default function CalendarCard({ onDateChange, onToggleChange, onMonthChange, defaultToggle = true, enableDark = false, eventDates = [] }) {
   const { t, i18n } = useTranslation();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -38,6 +38,8 @@ export default function CalendarCard({ onDateChange, onToggleChange, defaultTogg
     const newMonth = new Date(currentMonth);
     newMonth.setMonth(newMonth.getMonth() + direction);
     setCurrentMonth(newMonth);
+    // 通知父组件月份变化
+    onMonthChange && onMonthChange(newMonth);
   };
 
   const formatMonthYear = () => {
@@ -82,14 +84,9 @@ export default function CalendarCard({ onDateChange, onToggleChange, defaultTogg
       const isToday = currentDate.getTime() === today.getTime();
       const isSelected = !!selectedDate && currentDate.getTime() === selectedDate.getTime();
 
-      const todayTime = today.getTime();
-      const currentTime = currentDate.getTime();
-      const oneDayMs = 24 * 60 * 60 * 1000;
-      const hasEvents = isCurrentMonth && (
-        currentTime === todayTime - oneDayMs ||
-        currentTime === todayTime - 2 * oneDayMs ||
-        currentTime === todayTime - 3 * oneDayMs
-      );
+      // 检查当前日期是否在 eventDates 中
+      const currentDay = currentDate.getDate();
+      const hasEvents = isCurrentMonth && eventDates.includes(currentDay);
 
       days.push({
         date: currentDate,
