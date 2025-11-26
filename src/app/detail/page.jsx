@@ -1079,10 +1079,10 @@ ${coinInfo.name || symbol} (${symbol})
     };
     
     const periodLabel = {
-      'hour': '1小时',
-      'day': '1天',
-      'week': '1周',
-      'month': '1月'
+      'hour': t('chart.period.hour'),
+      'day': t('chart.period.day'),
+      'week': t('chart.period.week'),
+      'month': t('chart.period.month')
     };
     
     const newPeriod = periodMap[activeKlineTab];

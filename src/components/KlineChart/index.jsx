@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import * as echarts from 'echarts';
 import { TabBar } from 'antd-mobile';
+import { useTranslation } from 'react-i18next';
 import { Loading } from '../Loading';
 import { LandscapeIcon } from '../Icons';
 import styles from './index.module.less';
@@ -17,6 +18,7 @@ const KlineChart = ({
   onLandscapeClick,
   loading = false
 }) => {
+  const { t } = useTranslation();
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
 
@@ -410,10 +412,10 @@ const KlineChart = ({
       
       {/* 时间周期选择 - 使用TabBar */}
       <TabBar className={styles.chartTab} activeKey={activeKey} onChange={onActiveChange}>
-        <TabBar.Item key="hour" title="1H" />
-        <TabBar.Item key="day" title="1日" />
-        <TabBar.Item key="week" title="1周" />
-        <TabBar.Item key="month" title="1月" />
+        <TabBar.Item key="hour" title={t('chart.period.hour')} />
+        <TabBar.Item key="day" title={t('chart.period.day')} />
+        <TabBar.Item key="week" title={t('chart.period.week')} />
+        <TabBar.Item key="month" title={t('chart.period.month')} />
       </TabBar>
       
       {/* 图表容器 */}
