@@ -27,8 +27,11 @@ const MoziGrid = ({
   rankingLogoOffsetTop = 0, // 仅用于排行榜左侧大 logo 的下移偏移（px）
   topNameOffsetTop = 6, // 名称与 logo 的上边距（默认为 6px）
   stickyHeader = false, // 是否启用表头吸顶
-  stickyTop = 0 // 吸顶的 top 偏移（相对于滚动容器）
-  , stackTopName = false // 是否将名称紧跟在 logo 下方堆叠显示
+  stickyTop = 0, // 吸顶的 top 偏移（相对于滚动容器）
+  stackTopName = false, // 是否将名称紧跟在 logo 下方堆叠显示
+  contentFontSize = null, // 内容字体大小，传入如 '16px'
+  titleFontSize = null, // 标题字体大小，传入如 '13px'
+  rowPadding = null // 行间距，传入如 '12px 0'
 }) => {
   const displayData = Array.isArray(gridContent)
     ? (maxRows ? gridContent.slice(0, maxRows) : gridContent)
@@ -118,6 +121,7 @@ const MoziGrid = ({
                     position: stickyHeader ? 'sticky' : undefined,
                     top: stickyHeader ? stickyTop : undefined,
                     zIndex: stickyHeader ? 5 : undefined,
+                    fontSize: titleFontSize || undefined,
                     ...gridTitleStyle
                   }}
                 >
@@ -136,7 +140,8 @@ const MoziGrid = ({
                 {displayData.map((gridCon, index) => (
                   <div 
                     key={index}
-                    className={styles.gridListItem} 
+                    className={styles.gridListItem}
+                    style={rowPadding ? { padding: rowPadding } : undefined}
                     onClick={(e) => {
                       e.stopPropagation();
                       callback && callback(gridCon);
@@ -183,6 +188,7 @@ const MoziGrid = ({
                 position: stickyHeader ? 'sticky' : undefined,
                 top: stickyHeader ? stickyTop : undefined,
                 zIndex: stickyHeader ? 5 : undefined,
+                fontSize: titleFontSize || undefined,
                 ...gridTitleStyle
               }}
             >
@@ -201,15 +207,16 @@ const MoziGrid = ({
             {hasData && displayData.map((gridCon, index) => (
               <div 
                 key={index}
-                className={styles.gridListItem} 
+                className={styles.gridListItem}
+                style={rowPadding ? { padding: rowPadding } : undefined}
                 onClick={(e) => {
                   e.stopPropagation();
                   callback && callback(gridCon);
                 }}
               >
                 <div className={styles.simpleRankingRow}>
-                  <span className={styles.simpleRankingNumber}>{index + 1}</span>
-                  <div className={styles.gridContent}>
+                  <span className={styles.simpleRankingNumber} style={contentFontSize ? { fontSize: contentFontSize } : undefined}>{index + 1}</span>
+                  <div className={styles.gridContent} style={contentFontSize ? { fontSize: contentFontSize } : undefined}>
                     {Object.keys(gridCon).map((gridConItem, gridConIndex) => {
                       if (gridConItem === 'key' || gridConItem === 'img') {
                         return null;
@@ -246,6 +253,7 @@ const MoziGrid = ({
                 position: stickyHeader ? 'sticky' : undefined,
                 top: stickyHeader ? stickyTop : undefined,
                 zIndex: stickyHeader ? 5 : undefined,
+                fontSize: titleFontSize || undefined,
                 ...gridTitleStyle
               }}
             >
@@ -266,7 +274,8 @@ const MoziGrid = ({
               displayData.map((gridCon, index) => (
                 <div 
                   key={index}
-                  className={styles.gridListItem} 
+                  className={styles.gridListItem}
+                  style={rowPadding ? { padding: rowPadding } : undefined}
                   onClick={(e) => {
                     e.stopPropagation();
                     callback && callback(gridCon);

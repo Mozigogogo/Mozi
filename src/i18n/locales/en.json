@@ -160,7 +160,7 @@
       "volatility": "Volatility",
       "turnover": "Turnover"
     },
-    "exchangeRank": "Exchange Rankings",
+    "exchangeRank": "Exchange Rank",
     "exchange": {
       "columns": {
         "exchange": "Exchange",
