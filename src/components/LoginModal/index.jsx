@@ -131,7 +131,12 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
         if (res?.data?.userInfo) {
-          localStorage.setItem('userInfo', JSON.stringify(res.data.userInfo));
+          // 将 subscribeAnnouncement 一起存入 userInfo
+          const userInfoWithSubscribe = {
+            ...res.data.userInfo,
+            subscribeAnnouncement: res.data.subscribeAnnouncement
+          };
+          localStorage.setItem('userInfo', JSON.stringify(userInfoWithSubscribe));
         }
         if (res?.data?.userId) {
           localStorage.setItem('userId', res.data.userId);

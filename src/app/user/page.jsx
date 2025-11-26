@@ -61,6 +61,7 @@ export default function UserPage() {
   const [isInterfaceLoaded, setIsInterfaceLoaded] = useState(false); // 接口是否已加载完成
   const [isInterfaceSuccess, setIsInterfaceSuccess] = useState(false); // 接口是否调用成功
   const [isAnnouncementOn, setIsAnnouncementOn] = useState(false); // 公告订阅开关，默认关闭
+  const [calendarEventDates, setCalendarEventDates] = useState([]); // 日历上有事件的日期（日期数字数组）
   
   // 简单的 Cookie 读写（仅前端可见；敏感 token 建议服务端 HttpOnly）
   const getCookie = (name) => {
@@ -101,6 +102,10 @@ export default function UserPage() {
           const parsedNick = (parsed.nickName || '').trim();
           const displayNick = parsedNick.length > 0 ? parsedNick : t('user.defaultNickname');
           setUserInfo((prev) => ({ ...prev, nickname: displayNick, avatar: parsed.avatar || prev.avatar }));
+          // 根据登录返回的 subscribeAnnouncement 字段初始化开关状态
+          if (parsed.subscribeAnnouncement !== undefined) {
+            setIsAnnouncementOn(parsed.subscribeAnnouncement === 1);
+          }
         } catch {}
       }
     };
@@ -112,6 +117,78 @@ export default function UserPage() {
       window.removeEventListener('focus', onFocus);
       clearInterval(timer);
     };
+  }, []);
+
+  // 页面加载时调用 getMyInterface 接口（只传年月）
+  const initialFetchDone = useRef(false);
+  useEffect(() => {
+    if (initialFetchDone.current) return;
+    initialFetchDone.current = true;
+
+    const fetchInitialData = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const now = new Date();
+      const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const platform = typeof window !== 'undefined' && window.Telegram?.WebApp?.initData ? 'tg' : 'pc';
+
+      try {
+        const res = await request({
+          url: Interface.GET_MY_INTERFACE,
+          method: 'POST',
+          data: {
+            platform: platform,
+            limit: 20,
+            time: timeStr
+          }
+        });
+
+        if (res?.success === true && res.data) {
+          setInterfaceData(res.data);
+          setIsInterfaceLoaded(true);
+          setIsInterfaceSuccess(true);
+
+          // 转换新币上线数据格式
+          const rawData = Array.isArray(res.data) ? res.data : (res.data?.newCoinListings || res.data?.listings || []);
+          if (rawData && rawData.length > 0) {
+            const formattedListings = rawData.map((item, index) => ({
+              id: item.id || index + 1,
+              exchange: item.exchanges || item.exchange || 'Unknown',
+              exchangeIcon: item.logoUrl || item.exchangeIcon || 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/biannce.png',
+              listingTime: item.ctime || item.listingTime || '',
+              title: item.title || '',
+              details: item.deteil || item.details || '',
+              link: item.link || ''
+            }));
+            setNewCoinListings(formattedListings);
+
+            // 从 ctime 提取日期，显示日历小点点
+            const eventDays = rawData
+              .map(item => {
+                if (!item.ctime) return null;
+                // ctime 格式: "2025-11-18 12:03:45"
+                const match = item.ctime.match(/^\d{4}-(\d{2})-(\d{2})/);
+                if (match) {
+                  const itemMonth = parseInt(match[1], 10);
+                  const itemDay = parseInt(match[2], 10);
+                  // 只取当前月份的日期
+                  if (itemMonth === now.getMonth() + 1) {
+                    return itemDay;
+                  }
+                }
+                return null;
+              })
+              .filter(day => day !== null);
+            setCalendarEventDates([...new Set(eventDays)]); // 去重
+          }
+        }
+      } catch (error) {
+        console.error('初始加载接口失败:', error);
+      }
+    };
+
+    fetchInitialData();
   }, []);
 
   // 每次都强制签名登录
@@ -144,7 +221,14 @@ export default function UserPage() {
           },
         });
         if (res?.data?.token) localStorage.setItem('token', res.data.token);
-        if (res?.data?.user) localStorage.setItem('userInfo', JSON.stringify(res?.data?.user));
+        if (res?.data?.user) {
+          // 将 subscribeAnnouncement 一起存入 userInfo
+          const userInfoWithSubscribe = {
+            ...res.data.user,
+            subscribeAnnouncement: res.data.subscribeAnnouncement
+          };
+          localStorage.setItem('userInfo', JSON.stringify(userInfoWithSubscribe));
+        }
       } catch {}
 
       setUserInfo((prev) => ({ ...prev, isLogin: true }));
@@ -241,6 +325,13 @@ export default function UserPage() {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  };
+
+  // 格式化日期为 YYYY-MM (只要年月)
+  const formatYearMonth = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
   };
 
   // 检测当前平台环境
@@ -401,6 +492,59 @@ export default function UserPage() {
     fetchMyInterface(date);
   };
 
+  // 处理日历月份切换
+  const handleMonthChange = async (newMonth) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const year = newMonth.getFullYear();
+    const month = String(newMonth.getMonth() + 1).padStart(2, '0');
+    const timeStr = `${year}-${month}`;
+    const platform = typeof window !== 'undefined' && window.Telegram?.WebApp?.initData ? 'tg' : 'pc';
+
+    try {
+      const res = await request({
+        url: Interface.GET_MY_INTERFACE,
+        method: 'POST',
+        data: {
+          platform: platform,
+          limit: 20,
+          time: timeStr
+        }
+      });
+
+      if (res?.success === true && res.data) {
+        const rawData = Array.isArray(res.data) ? res.data : (res.data?.newCoinListings || res.data?.listings || []);
+        if (rawData && rawData.length > 0) {
+          // 从 ctime 提取日期
+          const targetMonth = newMonth.getMonth() + 1;
+          const eventDays = rawData
+            .map(item => {
+              if (!item.ctime) return null;
+              const match = item.ctime.match(/^\d{4}-(\d{2})-(\d{2})/);
+              if (match) {
+                const itemMonth = parseInt(match[1], 10);
+                const itemDay = parseInt(match[2], 10);
+                if (itemMonth === targetMonth) {
+                  return itemDay;
+                }
+              }
+              return null;
+            })
+            .filter(day => day !== null);
+          setCalendarEventDates([...new Set(eventDays)]);
+        } else {
+          setCalendarEventDates([]);
+        }
+      } else {
+        setCalendarEventDates([]);
+      }
+    } catch (error) {
+      console.error('月份切换加载失败:', error);
+      setCalendarEventDates([]);
+    }
+  };
+
   // 页面加载时，默认选中当天日期并调用接口
   useEffect(() => {
     const today = new Date();
@@ -541,6 +685,10 @@ export default function UserPage() {
         try {
           const parsed = JSON.parse(ui);
           setUserInfo((prev) => ({ ...prev, nickname: parsed.nickName || prev.nickname, avatar: parsed.avatar || prev.avatar }));
+          // 根据登录返回的 subscribeAnnouncement 字段初始化开关状态
+          if (parsed.subscribeAnnouncement !== undefined) {
+            setIsAnnouncementOn(parsed.subscribeAnnouncement === 1);
+          }
         } catch {}
       }
     };
@@ -818,7 +966,9 @@ export default function UserPage() {
             <CalendarCard 
               onDateChange={handleDateChange}
               onToggleChange={handleAnnouncementToggle}
+              onMonthChange={handleMonthChange}
               defaultToggle={isAnnouncementOn}
+              eventDates={calendarEventDates}
             />
           </div>
         )}
