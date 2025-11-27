@@ -38,6 +38,7 @@ export default function UserPage() {
   const EDIT_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/edit.png';
   const [popVis, setPopVis] = useState(false);
   const [popType, setPopType] = useState('');
+  const [rewardPopVis, setRewardPopVis] = useState(false); // 单独的打赏弹窗状态
   const [reportScore, setReportScore] = useState(null);
   const [scoreDisable, setScoreDisable] = useState(true);
   const scoreInputRef = useRef('');
@@ -581,8 +582,7 @@ export default function UserPage() {
   };
 
   const reward = () => {
-    setPopVis(true);
-    setPopType('reward');
+    setRewardPopVis(true); // 使用单独的打赏弹窗
   };
 
   const onScoreSelect = (scoreValue) => {
@@ -1086,44 +1086,6 @@ export default function UserPage() {
             </div>
           )}
 
-          {popType === 'reward' && (
-            <div className={styles.scrollContainer}>
-              <div className={styles.contactTitle}>{t('user.donateSupport')}</div>
-              <div className={styles.rewardScrollBox}>
-                <div className={styles.rewardBox}>
-                  <img className={styles.attendPic} src='https://image-1317406749.cos.ap-shanghai.myqcloud.com/wechat_pay.jpg' alt='微信支付' />
-                </div>
-                <div className={styles.rewardBox}>
-                  <img className={styles.attendPic} src='https://image-1317406749.cos.ap-shanghai.myqcloud.com/BTC-simple.jpg' alt='BTC地址' />
-                  <div className={styles.contactEmail}>
-                    <span className={styles.coinKey}>{COINKEY.BTC}</span>
-                    <div className={styles.contactCopy} onClick={() => copyToClipboard(COINKEY.BTC)}>
-                      <CopyIcon width={20} height={20} color="var(--text-secondary)" />
-                    </div>
-                  </div>
-                </div>
-                <div className={styles.rewardBox}>
-                  <img className={styles.attendPic} src='https://image-1317406749.cos.ap-shanghai.myqcloud.com/ETH-simple.jpg' alt='ETH地址' />
-                  <div className={styles.contactEmail}>
-                    <span>{COINKEY.ETH}</span>
-                    <div className={styles.contactCopy} onClick={() => copyToClipboard(COINKEY.ETH)}>
-                      <CopyIcon width={20} height={20} color="var(--text-secondary)" />
-                    </div>
-                  </div>
-                </div>
-                <div className={styles.rewardBox}>
-                  <img className={styles.attendPic} src='https://image-1317406749.cos.ap-shanghai.myqcloud.com/Tron-simple.jpg' alt='Tron地址' />
-                  <div className={styles.contactEmail}>
-                    <span>{COINKEY.TRON}</span>
-                    <div className={styles.contactCopy} onClick={() => copyToClipboard(COINKEY.TRON)}>
-                      <CopyIcon width={20} height={20} color="var(--text-secondary)" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-          
           {popType === 'language' && (
             <div className={styles.popContainer}>
               <div className={styles.contactTitle}>{t('user.selectLanguage')}</div>
@@ -1150,6 +1112,58 @@ export default function UserPage() {
             </div>
           )}
         </Popup>
+
+        {/* 自定义打赏弹窗 - 两页布局 */}
+        {rewardPopVis && (
+          <div className={styles.rewardMask} onClick={() => setRewardPopVis(false)}>
+            <div className={styles.rewardPopup} onClick={(e) => e.stopPropagation()}>
+              <div className={styles.contactTitle}>{t('user.donateSupport')}</div>
+              <div className={styles.rewardScrollBox}>
+                {/* 第一页：区块链地址列表 */}
+                <div className={styles.rewardPage}>
+                  <div className={styles.addressList}>
+                    <div className={styles.addressItem}>
+                      <div className={styles.addressLabel}>BTC</div>
+                      <div className={styles.addressContent}>
+                        <span className={styles.addressText}>{COINKEY.BTC}</span>
+                        <div className={styles.contactCopy} onClick={() => copyToClipboard(COINKEY.BTC)}>
+                          <CopyIcon width={18} height={18} color="var(--text-secondary)" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className={styles.addressItem}>
+                      <div className={styles.addressLabel}>ETH</div>
+                      <div className={styles.addressContent}>
+                        <span className={styles.addressText}>{COINKEY.ETH}</span>
+                        <div className={styles.contactCopy} onClick={() => copyToClipboard(COINKEY.ETH)}>
+                          <CopyIcon width={18} height={18} color="var(--text-secondary)" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className={styles.addressItem}>
+                      <div className={styles.addressLabel}>TRON</div>
+                      <div className={styles.addressContent}>
+                        <span className={styles.addressText}>{COINKEY.TRON}</span>
+                        <div className={styles.contactCopy} onClick={() => copyToClipboard(COINKEY.TRON)}>
+                          <CopyIcon width={18} height={18} color="var(--text-secondary)" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className={styles.swipeHint}>{t('user.swipeToWechat')}</div>
+                </div>
+                
+                {/* 第二页：微信支付二维码 */}
+                <div className={styles.rewardPage}>
+                  <div className={styles.qrcodeBox}>
+                    <img className={styles.qrcodeImg} src='https://image-1317406749.cos.ap-shanghai.myqcloud.com/wechat_pay.jpg' alt={t('user.wechatPay')} />
+                    <div className={styles.qrcodeLabel}>{t('user.wechatPay')}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 编辑用户信息弹窗 */}
         <Popup

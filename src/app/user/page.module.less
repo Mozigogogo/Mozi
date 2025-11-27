@@ -612,25 +612,125 @@
   overflow-y: auto;
 }
 
+/* 自定义打赏弹窗 */
+.rewardMask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.rewardPopup {
+  background: #fff;
+  border-radius: 8px 8px 0 0;
+  width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+  max-height: 70vh;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
 .rewardScrollBox {
   display: flex;
   overflow-x: auto;
-  gap: 12px;
-  padding-bottom: 10px;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-.rewardBox {
-  font-size: 14px;
-  min-width: 240px;
+/* 每一页 */
+.rewardPage {
+  min-width: 100%;
+  max-width: 100%;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  box-sizing: border-box;
+  scroll-snap-align: center;
 }
 
-.coinKey {
-  word-wrap: break-word;
-  word-break: break-all;
-  white-space: normal;
+/* 地址列表样式 */
+.addressList {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.addressItem {
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.addressLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.addressContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.addressText {
   font-size: 12px;
-  max-width: 200px;
+  color: #666;
+  word-break: break-all;
+  flex: 1;
+}
+
+.swipeHint {
+  margin-top: 20px;
+  font-size: 12px;
+  color: #999;
+  text-align: center;
+}
+
+/* 二维码页样式 */
+.qrcodeBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.qrcodeImg {
+  width: 280px;
+  height: 280px;
+  object-fit: contain;
+}
+
+.qrcodeLabel {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #666;
 }
 
 .contactContainer {

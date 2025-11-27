@@ -253,7 +253,7 @@ export const Interface = {
 // 业务中使用到的联系邮箱和链上地址（打包报错缺失导出）
 export const EMAIL = 'notice@moziinnovations.com';
 export const COINKEY = {
-  BTC: 'bc1qxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-  ETH: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
-  TRON: 'Txxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+  BTC: 'bc1p3pdyjgxcyhw7x24dr4fe8ral5p8w02tjfetfjc4h08v02lrrl5mqhv2val',
+  ETH: '0xbD2858bC9F46fad5892174893c99924A6eF169C3',
+  TRON: 'TXBGXsZN8GBjY6v1mtJN8gDqD2BxUxk2Xw'
 };
