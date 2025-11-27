@@ -794,6 +794,7 @@ export default function UserPage() {
           type: 'login',
           chanel: 3,  // 3-钱包登录
           address: tonAddress,
+          signatrue: tonWallet.account?.publicKey,
         }
       });
       
