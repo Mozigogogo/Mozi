@@ -396,6 +396,17 @@
       "standardAccurate": "Be clear and accurate: Use proper grammar and punctuation",
       "discussionValue": "Add value: Encourage professional, practical, and creative discussions",
       "objectiveTrue": "Be objective: Present problems and facts rationally"
+    },
+    "topicDetail": {
+      "title": "Topic Details",
+      "allPosts": "All Posts",
+      "noPosts": "No posts yet",
+      "noDescription": "No description",
+      "defaultTitle": "Topic Title",
+      "allLoaded": "All content loaded",
+      "deleteFailed": "Delete failed",
+      "edit": "Edit",
+      "delete": "Delete"
     }
   },
   "warning": {
