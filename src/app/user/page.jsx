@@ -769,6 +769,13 @@ export default function UserPage() {
     if (!tonWallet) return;
     
     try {
+      // 调试：打印 TON 钱包返回的完整数据
+      console.log('=== TON Wallet 完整数据 ===');
+      console.log('tonWallet:', JSON.stringify(tonWallet, null, 2));
+      console.log('tonWallet.account:', tonWallet.account);
+      console.log('tonWallet.device:', tonWallet.device);
+      console.log('=== END ===');
+      
       Toast.show({ icon: 'loading', content: t('user.loggingIn') || '登录中...', duration: 0 });
       
       // 获取 TON 钱包地址
@@ -779,14 +786,14 @@ export default function UserPage() {
         return;
       }
       
-      // 调用后端接口进行 TON 钱包登录
+      // 调用后端接口进行 TON 钱包登录（与非 TG 环境保持一致）
       const res = await request({
         url: Interface.MOZI_LOGIN,
         method: 'POST',
         data: {
+          type: 'login',
+          chanel: 3,  // 3-钱包登录
           address: tonAddress,
-          chain: 'TON',
-          chanel: 3, // TON 钱包渠道
         }
       });
       
