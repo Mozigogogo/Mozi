@@ -396,6 +396,17 @@
       "standardAccurate": "规范准确：规范使用语句标点清晰表述",
       "discussionValue": "讨论价值：鼓励专业、实用、脑洞等价值讨论",
       "objectiveTrue": "客观真实：理性客观地陈述问题和事实"
+    },
+    "topicDetail": {
+      "title": "话题详情",
+      "allPosts": "全部帖子",
+      "noPosts": "暂无帖子",
+      "noDescription": "暂无描述",
+      "defaultTitle": "话题标题",
+      "allLoaded": "已加载全部内容",
+      "deleteFailed": "删除失败",
+      "edit": "编辑",
+      "delete": "删除"
     }
   },
   "warning": {
