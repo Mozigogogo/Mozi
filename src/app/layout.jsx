@@ -3,6 +3,7 @@ import "./globals.css";
 import { Suspense } from "react";
 import Web3Provider from "../context/Web3Provider.jsx";
 import ThemeProvider from "../context/ThemeProvider.jsx";
+import TonConnectProvider from "../context/TonConnectProvider.jsx";
 import WalletAccountSync from "@/components/WalletAccountSync";
 import I18nProvider from "@/components/I18nProvider";
 import { LogoLoading } from "@/components/Loading";
@@ -39,12 +40,14 @@ export default function RootLayout({ children }) {
         <VConsoleLoader />
         <ThemeProvider>
           <I18nProvider>
-            <Web3Provider>
-              <WalletAccountSync />
-              <Suspense fallback={<LogoLoading visible={true} fullscreen mask image="/images/community/loadding.png" size={72} />}>
-                {children}
-              </Suspense>
-            </Web3Provider>
+            <TonConnectProvider>
+              <Web3Provider>
+                <WalletAccountSync />
+                <Suspense fallback={<LogoLoading visible={true} fullscreen mask image="/images/community/loadding.png" size={72} />}>
+                  {children}
+                </Suspense>
+              </Web3Provider>
+            </TonConnectProvider>
           </I18nProvider>
         </ThemeProvider>
       </body>
