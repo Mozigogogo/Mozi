@@ -275,6 +275,9 @@
     "saving": "保存中...",
     "saveSuccess": "保存成功",
     "saveFailed": "保存失败",
+    "loggingIn": "登录中...",
+    "walletAddressError": "获取钱包地址失败",
+    "walletConnectFailed": "钱包连接失败",
     "defaultNickname": "用户",
     "wechatUser": "微信用户",
     "aboutMozi": {

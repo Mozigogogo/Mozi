@@ -787,6 +787,12 @@ export default function UserPage() {
       }
       
       // 调用后端接口进行 TON 钱包登录（与非 TG 环境保持一致）
+      console.log('=== TON 钱包登录传参 ===', {
+        type: 'login',
+        chanel: 3,
+        address: tonAddress,
+        signatrue: tonWallet.account?.publicKey,
+      });
       const res = await request({
         url: Interface.MOZI_LOGIN,
         method: 'POST',
@@ -797,6 +803,7 @@ export default function UserPage() {
           signatrue: tonWallet.account?.publicKey,
         }
       });
+      
       
       Toast.clear();
       
