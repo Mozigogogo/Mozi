@@ -246,6 +246,18 @@ export default function UserPage() {
     setShowLoginModal(true);
   };
 
+  // 关闭登录弹窗并清除 URL 参数
+  const handleCloseLoginModal = () => {
+    setShowLoginModal(false);
+    // 清除 URL 中的 showLogin 和 mode 参数
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('showLogin') || url.searchParams.has('mode')) {
+      url.searchParams.delete('showLogin');
+      url.searchParams.delete('mode');
+      window.history.replaceState({}, '', url.pathname + url.search);
+    }
+  };
+
   // 监听连接完成后自动发起签名
   useEffect(() => {
     if (pendingSignRef.current && isConnected && address) {
@@ -1234,7 +1246,7 @@ export default function UserPage() {
         {/* 登录注册弹窗 */}
         <LoginModal
           visible={showLoginModal}
-          onClose={() => setShowLoginModal(false)}
+          onClose={handleCloseLoginModal}
           onLoginSuccess={handleLoginSuccess}
           onWalletLogin={handleWalletLogin}
           initialMode={loginModalMode}
