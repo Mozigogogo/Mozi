@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAccount, useDisconnect, useSignMessage } from 'wagmi';
+import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { Button, Avatar, List, Dialog, Toast, Popup, Grid, TextArea } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import Layout from '../../components/Layout';
@@ -18,6 +19,12 @@ import { useAmplitude } from '../../hooks/useAmplitude';
 import { ProfileEvents } from '../../utils/amplitude';
 import styles from './page.module.less';
 
+// 检测是否在 Telegram 环境中
+const isTelegramEnv = () => {
+  if (typeof window === 'undefined') return false;
+  return !!(window.Telegram?.WebApp?.initData);
+};
+
 export default function UserPage() {
   // 状态定义
   const router = useRouter();
@@ -27,6 +34,10 @@ export default function UserPage() {
   const { signMessageAsync } = useSignMessage();
   const { t, i18n } = useTranslation();
   const { track } = useAmplitude('Profile');
+  
+  // TON Connect hooks (用于 Telegram 环境)
+  const [tonConnectUI] = useTonConnectUI();
+  const tonWallet = useTonWallet();
   const [userInfo, setUserInfo] = useState({
     avatar: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png',
     nickname: t('user.defaultNickname'),
@@ -265,10 +276,22 @@ export default function UserPage() {
       triggerSignatureLogin();
     }
   }, [isConnected, address]);
+
+  // 监听 TON 钱包连接状态变化 (Telegram 环境)
+  useEffect(() => {
+    if (isTelegramEnv() && tonWallet && !userInfo.isLogin) {
+      // TON 钱包已连接，自动进行登录
+      handleTonWalletLogin();
+    }
+  }, [tonWallet]);
   
   // 退出登录
-  const handleLogout = () => {
+  const handleLogout = async () => {
     try { disconnect?.(); } catch {}
+    // 在 Telegram 环境下断开 TON Connect
+    if (isTelegramEnv() && tonConnectUI) {
+      try { await tonConnectUI.disconnect(); } catch {}
+    }
     try {
       localStorage.removeItem('token');
       localStorage.removeItem('userInfo');
@@ -710,6 +733,25 @@ export default function UserPage() {
   // 处理钱包登录
   const handleWalletLogin = async () => {
     if (typeof window === 'undefined') return;
+    
+    // 在 Telegram 环境中使用 TON Connect
+    if (isTelegramEnv()) {
+      try {
+        if (tonWallet) {
+          // 已连接 TON 钱包，进行登录
+          await handleTonWalletLogin();
+        } else {
+          // 打开 TON Connect 钱包选择
+          await tonConnectUI.openModal();
+        }
+      } catch (error) {
+        console.error('TON Connect 错误:', error);
+        Toast.show({ content: t('user.walletConnectFailed') || '钱包连接失败', position: 'bottom' });
+      }
+      return;
+    }
+    
+    // 非 Telegram 环境使用原有的 wagmi 钱包
     if (!isConnected) {
       pendingSignRef.current = true;
       if (window.__openAppKit) {
@@ -720,6 +762,58 @@ export default function UserPage() {
       return;
     }
     await triggerSignatureLogin();
+  };
+
+  // TON 钱包登录处理
+  const handleTonWalletLogin = async () => {
+    if (!tonWallet) return;
+    
+    try {
+      Toast.show({ icon: 'loading', content: t('user.loggingIn') || '登录中...', duration: 0 });
+      
+      // 获取 TON 钱包地址
+      const tonAddress = tonWallet.account?.address;
+      if (!tonAddress) {
+        Toast.clear();
+        Toast.show({ content: t('user.walletAddressError') || '获取钱包地址失败', position: 'bottom' });
+        return;
+      }
+      
+      // 调用后端接口进行 TON 钱包登录
+      const res = await request({
+        url: Interface.MOZI_LOGIN,
+        method: 'POST',
+        data: {
+          address: tonAddress,
+          chain: 'TON',
+          chanel: 3, // TON 钱包渠道
+        }
+      });
+      
+      Toast.clear();
+      
+      if (res?.data?.token) {
+        localStorage.setItem('token', res.data.token);
+        if (res?.data?.userInfo) {
+          const userInfoWithSubscribe = {
+            ...res.data.userInfo,
+            subscribeAnnouncement: res.data.subscribeAnnouncement
+          };
+          localStorage.setItem('userInfo', JSON.stringify(userInfoWithSubscribe));
+        }
+        if (res?.data?.userId) {
+          localStorage.setItem('userId', res.data.userId);
+        }
+        Toast.show({ content: t('auth.loginSuccess') || '登录成功', position: 'center', icon: 'success' });
+        handleLoginSuccess();
+      } else {
+        Toast.show({ content: res?.message || t('auth.loginFailed') || '登录失败', position: 'bottom' });
+      }
+    } catch (error) {
+      Toast.clear();
+      console.error('TON 钱包登录失败:', error);
+      Toast.show({ content: t('auth.loginFailedRetry') || '登录失败，请重试', position: 'bottom' });
+    }
   };
 
   // 保存用户信息
