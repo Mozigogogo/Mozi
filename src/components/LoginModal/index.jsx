@@ -314,20 +314,6 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
               />
             </div>
 
-            {/* 注册模式下的邀请码（可选） */}
-            {mode === 'register' && (
-              <div className={styles.formItem}>
-                <label className={styles.label}>{t('auth.inviteOptional')}</label>
-                <Input
-                  className={styles.input}
-                  placeholder={t('auth.invitePlaceholder')}
-                  value={inviteCode}
-                  onChange={setInviteCode}
-                  clearable
-                />
-              </div>
-            )}
-
             {/* 注册模式下的验证码 */}
             {mode === 'register' && (
               <div className={styles.formItem}>
@@ -350,6 +336,20 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
                     {countdown > 0 ? `${countdown}s` : t('auth.getCode')}
                   </Button>
                 </div>
+              </div>
+            )}
+
+            {/* 注册模式下的邀请码（可选） */}
+            {mode === 'register' && (
+              <div className={styles.formItem}>
+                <label className={styles.label}>{t('auth.inviteOptional')}</label>
+                <Input
+                  className={styles.input}
+                  placeholder={t('auth.invitePlaceholder')}
+                  value={inviteCode}
+                  onChange={setInviteCode}
+                  clearable
+                />
               </div>
             )}
 
