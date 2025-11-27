@@ -124,7 +124,18 @@ export default function MyCommentsPage() {
                     </div>
                     <div className={styles.footer}>
                       <div>{formatTime(item.createdAt, t)}</div>
-                      {item.userName ? <div className={styles.author}>{t('myComments.replyTo')}{item.userName}</div> : null}
+                      {item.userName ? (
+                        <div className={styles.authorInfo}>
+                          {item.avatar && (
+                            <img 
+                              className={styles.authorAvatar} 
+                              src={item.avatar} 
+                              alt="" 
+                            />
+                          )}
+                          <span className={styles.author}>{t('myComments.replyTo')}{item.userName}</span>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 ))}
