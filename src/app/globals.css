@@ -1,4 +1,5 @@
 :root {
+  /* 默认亮色主题变量 */
   --background: #f5f5f5;
   --foreground: #171717;
   --primary-color: #1677ff;
@@ -11,25 +12,43 @@
   --border-radius-base: 4px;
   --border-color: #eee;
   --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  color-scheme: light; /* 强制亮色模式 */
+  --card-bg: #ffffff;
+  --text-primary: #1a1a1a;
+  --text-secondary: #666666;
+  --text-tertiary: #999999;
+  color-scheme: light;
 }
 
-/* 暂时禁用暗黑主题
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --border-color: #303030;
-  }
+/* 暗色主题变量 - 通过 data-theme 属性控制 */
+:root[data-theme="dark"] {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --border-color: #303030;
+  --card-bg: #1a1a1a;
+  --text-primary: #ffffff;
+  --text-secondary: #b3b3b3;
+  --text-tertiary: #808080;
+  --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
 }
-*/
 
-/* 强制亮色主题 - 覆盖系统深色模式 */
+/* 
+ * 主题控制说明：
+ * 1. 主题完全由 ThemeProvider 通过 data-theme 属性控制
+ * 2. 系统深色模式被禁用，不会影响应用主题
+ * 3. 所有组件应使用 CSS 变量 (--background, --foreground 等)
+ */
+
+/* 强制禁用系统深色模式 - 始终使用亮色变量 */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="dark"]) {
     --background: #f5f5f5 !important;
     --foreground: #171717 !important;
     --border-color: #eee !important;
+    --card-bg: #ffffff !important;
+    --text-primary: #1a1a1a !important;
+    --text-secondary: #666666 !important;
+    --text-tertiary: #999999 !important;
     color-scheme: light !important;
   }
 }
