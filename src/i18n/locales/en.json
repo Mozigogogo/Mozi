@@ -275,6 +275,9 @@
     "saving": "Saving...",
     "saveSuccess": "Saved successfully",
     "saveFailed": "Save failed",
+    "loggingIn": "Logging in...",
+    "walletAddressError": "Failed to get wallet address",
+    "walletConnectFailed": "Wallet connection failed",
     "defaultNickname": "User",
     "wechatUser": "Telegram User",
     "aboutMozi": {
