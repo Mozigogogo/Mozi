@@ -188,10 +188,10 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
 
       if (res?.data?.success || res?.code === 0) {
         Toast.show({ content: t('auth.registerSuccess'), position: 'center', icon: 'success' });
-        setMode('login');
-        setPassword('');
+        // 注册成功后自动登录
         setVerificationCode('');
         setInviteCode('');
+        await autoLoginAfterRegister();
       } else {
         Toast.show({ content: res?.message || t('auth.registerFailed'), position: 'center', icon: 'fail' });
       }
@@ -200,6 +200,45 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
       Toast.show({ content: t('auth.registerFailedRetry'), position: 'center', icon: 'fail' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 注册成功后自动登录
+  const autoLoginAfterRegister = async () => {
+    try {
+      const res = await request({
+        url: Interface.MOZI_LOGIN,
+        method: 'POST',
+        data: { 
+          chanel: 2,
+          type: 'login',
+          email, 
+          password 
+        }
+      });
+
+      if (res?.data?.token) {
+        localStorage.setItem('token', res.data.token);
+        if (res?.data?.userInfo) {
+          const userInfoWithSubscribe = {
+            ...res.data.userInfo,
+            subscribeAnnouncement: res.data.subscribeAnnouncement
+          };
+          localStorage.setItem('userInfo', JSON.stringify(userInfoWithSubscribe));
+        }
+        if (res?.data?.userId) {
+          localStorage.setItem('userId', res.data.userId);
+        }
+        Toast.show({ content: t('auth.loginSuccess'), position: 'center', icon: 'success' });
+        onLoginSuccess?.();
+        handleClose();
+      } else {
+        // 自动登录失败，切换到登录模式让用户手动登录
+        setMode('login');
+      }
+    } catch (error) {
+      console.error('自动登录失败:', error);
+      setMode('login');
     }
   };
 
@@ -234,10 +273,10 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
       onClose={handleClose}
       position='bottom'
       bodyStyle={{
-        borderTopLeftRadius: '24px',
-        borderTopRightRadius: '24px',
+        borderTopLeftRadius: '0',
+        borderTopRightRadius: '0',
         backgroundColor: '#ffffff',
-        maxHeight: '85vh',
+        height: '100vh',
         padding: '0',
       }}
     >
