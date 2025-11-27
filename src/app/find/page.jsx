@@ -700,7 +700,7 @@ const loadingTimerRef = useRef(null);
     if (ownLoading) {
       return (
         <div className={styles.ownBox}>
-          <Loading color="#11B787" tip="" />
+          <Loading color="#11B787" />
         </div>
       );
     }
@@ -821,7 +821,7 @@ const loadingTimerRef = useRef(null);
         
         <div className={styles.marketBox}>
           <PullToRefresh onRefresh={handleRefresh}>
-            <Layout isLoading={marketLoading} isError={isMarketError}>
+            <Layout isLoading={marketLoading} isError={isMarketError} loadingTop={120}>
               <div className={styles.gridTitle}>
                 {[
                   { name: t('discover.columns.symbolMarketCap'), width: '30%' },
