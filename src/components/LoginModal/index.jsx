@@ -323,7 +323,7 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
                     className={styles.codeInput}
                     placeholder={t('auth.verificationPlaceholder')}
                     value={verificationCode}
-                    onChange={setVerificationCode}
+                    onChange={(val) => setVerificationCode(val.replace(/\s/g, ''))}
                     clearable
                   />
                   <Button
