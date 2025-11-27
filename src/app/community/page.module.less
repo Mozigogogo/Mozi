@@ -542,6 +542,15 @@
   background: #fff;
   min-height: calc(100vh - 200px); /* 确保有足够高度，但不需要100vh */
   margin-top: 0; /* 紧贴搜索栏 */
+  padding-bottom: 40px; /* 为底部 tabBar 预留空间，避免 loading 被遮挡 */
+}
+
+/* 热门榜单加载更多 loading */
+.loadingMore {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 0;
 }
 
 .hotTopicItem {

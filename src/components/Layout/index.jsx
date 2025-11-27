@@ -10,7 +10,7 @@ import { Loading } from '../Loading';
 import { tabBarList } from '../../app/app.config';
 import styles from './index.module.less';
 
-const Layout = ({ children, title, isLoading, isError, errMsg, needLogin, loginCallback, bottomPadding = 50, containerMaxHeight, containerHeight }) => {
+const Layout = ({ children, title, isLoading, isError, errMsg, needLogin, loginCallback, bottomPadding = 50, containerMaxHeight, containerHeight, loadingTop }) => {
   const pathname = usePathname();
   const { t } = useTranslation();
 
@@ -35,9 +35,16 @@ const Layout = ({ children, title, isLoading, isError, errMsg, needLogin, loginC
   }
 
   if (isLoading) {
+    const loadingStyle = loadingTop ? {
+      alignItems: 'flex-start',
+      paddingTop: `${loadingTop}px`,
+      height: 'auto',
+      minHeight: '80vh'
+    } : {};
+    
     return (
-      <div className={styles.loadingBox}>
-        <Loading color="#11B787" tip="" />
+      <div className={styles.loadingBox} style={loadingStyle}>
+        <Loading color="#11B787" />
       </div>
     );
   }
