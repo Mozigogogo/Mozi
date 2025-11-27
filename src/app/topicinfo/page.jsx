@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button, ActionSheet, Toast, InfiniteScroll, SpinLoading } from 'antd-mobile';
 import { MoreOutline } from 'antd-mobile-icons';
+import { useTranslation } from 'react-i18next';
 import Layout from '../../components/Layout';
 import NavBar from '../../components/NavBar';
 import { request } from '../../utils/request';
@@ -20,6 +21,7 @@ const publishIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/asset
 export default function TopicInfo() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useTranslation();
   const [topicId, setTopicId] = useState(null);
   const [detail, setDetail] = useState({
     id: 1,
@@ -52,8 +54,8 @@ export default function TopicInfo() {
       // 设置话题详情
       setDetail({
         id: Number(id),
-        title: title || '话题标题',
-        description: description || '暂无描述',
+        title: title || t('community.topicDetail.defaultTitle'),
+        description: description || t('community.topicDetail.noDescription'),
         followers: Number(followers) || 0,
         posts: Number(postCount) || 0
       });
@@ -202,14 +204,14 @@ export default function TopicInfo() {
         setPosts(prev => prev.filter(post => post.id !== postId));
       } else {
         Toast.show({
-          content: '删除失败',
+          content: t('community.topicDetail.deleteFailed'),
           icon: 'fail'
         });
       }
     } catch (error) {
       console.error('删除帖子失败:', error);
       Toast.show({
-        content: '删除失败',
+        content: t('community.topicDetail.deleteFailed'),
         icon: 'fail'
       });
     }
@@ -264,7 +266,7 @@ export default function TopicInfo() {
 
   const actionSheetActions = [
     {
-      text: '编辑',
+      text: t('community.topicDetail.edit'),
       key: 'edit',
       onClick: () => {
         if (selectedPost) {
@@ -274,7 +276,7 @@ export default function TopicInfo() {
       }
     },
     {
-      text: '删除',
+      text: t('community.topicDetail.delete'),
       key: 'delete',
       danger: true,
       onClick: () => {
@@ -288,7 +290,7 @@ export default function TopicInfo() {
 
   return (
     <Layout>
-      <NavBar title="话题详情" showBack={true} backgroundColor="#ffffff" showBorder={false} />
+      <NavBar title={t('community.topicDetail.title')} showBack={true} backgroundColor="#ffffff" showBorder={false} />
       <div className={styles.topicDetail}>
         {/* 话题头部 */}
         <div className={styles.topicHeader}>
@@ -304,7 +306,7 @@ export default function TopicInfo() {
         {/* 帖子列表 */}
         <div className={styles.postList}>
           <div className={styles.listHeader}>
-            <div className={styles.total}>全部帖子</div>
+            <div className={styles.total}>{t('community.topicDetail.allPosts')}</div>
           </div>
 
           <div>
@@ -312,12 +314,12 @@ export default function TopicInfo() {
               <div className={styles.emptyContainer}>
                 <div className={styles.loadingContent}>
                   <SpinLoading size="large" color="#00b578" />
-                  <div className={styles.loadingText}>加载中...</div>
+                  <div className={styles.loadingText}>{t('common.loading')}</div>
                 </div>
               </div>
             ) : posts.length === 0 ? (
               <div className={styles.emptyContainer}>
-                <div className={styles.emptyText}>暂无帖子</div>
+                <div className={styles.emptyText}>{t('community.topicDetail.noPosts')}</div>
               </div>
             ) : (
               posts.map(item => (
@@ -387,8 +389,8 @@ export default function TopicInfo() {
                       fill="none"
                       onClick={(e) => handleShare(e, item)}
                     >
-                      <img className={styles.actionIcon} src={shareIcon} alt="分享" />
-                      分享
+                      <img className={styles.actionIcon} src={shareIcon} alt={t('common.share')} />
+                      {t('common.share')}
                     </Button>
                     <Button className={styles.actionBtn} fill="none">
                       <img className={styles.commentIcon} src={commentIcon} alt="评论" />
@@ -410,10 +412,10 @@ export default function TopicInfo() {
             {posts.length > 0 && (
               <InfiniteScroll loadMore={loadMore} hasMore={hasMore}>
                 {hasMore ? (
-                  <div className={styles.loadingMore}>加载中...</div>
+                  <div className={styles.loadingMore}>{t('common.loading')}</div>
                 ) : (
                   <div className={styles.listFooter}>
-                    <div className={styles.footerText}>已加载全部内容</div>
+                    <div className={styles.footerText}>{t('community.topicDetail.allLoaded')}</div>
                   </div>
                 )}
               </InfiniteScroll>
