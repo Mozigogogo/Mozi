@@ -1048,7 +1048,7 @@ export default function CommunityPage() {
                 </div>
               ))}
               {hotTopicsLoading && !pullRefresh && (
-                <div className={styles.loadingMore}>
+                <div className={styles.loadingMore} style={hotTopics.length === 0 ? { paddingTop: '60px' } : {}}>
                   <GardenLoading t={t} />
                 </div>
               )}
