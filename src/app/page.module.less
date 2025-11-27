@@ -131,7 +131,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0px; /* 紧贴 banner 底部 */
+  bottom: -1px; /* 稍微向下延伸，消除黑线 */
   margin: 0;
   color: #333333;
   font-size: 11px;
@@ -146,10 +146,18 @@
 
   .noticeItem {
     border-radius: 10px 10px 0px 0px; /* 只有顶部圆角 */
-    padding: 5px 10px;
-    line-height: 1.4;
+    padding: 4px 10px; /* 减小上下padding */
+    line-height: 1.3;
     align-items: center;
-    min-height: 28px; /* 确保最小高度 */
+    min-height: 24px; /* 减小最小高度 */
+    border-bottom: none; /* 移除底部边框 */
+    
+    // 移除 antd-mobile NoticeBar 可能的边框
+    :global {
+      .adm-notice-bar {
+        border: none;
+      }
+    }
 
     // 覆盖 antd-mobile 默认样式
     :global {
@@ -245,11 +253,13 @@
   height: 270px;
   min-height: 270px; /* 确保最小高度 */
   max-height: 270px; /* 限制最大高度 */
-  overflow: hidden; /* 隐藏溢出内容 */
+  overflow: visible; /* 允许通知栏稍微溢出 */
+  background: transparent; /* 确保背景透明，避免黑线 */
 }
 .bgBannerSwiper {
   width: 100%;
   height: 100%;
+  overflow: hidden; /* 在这里裁剪图片内容 */
   
   /* 覆盖 antd-mobile Swiper 默认样式 */
   :global {
@@ -326,8 +336,8 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  min-height: 0; /* 关键：允许 flex 子元素收缩 */
 }
 
 .loadingBox {
@@ -592,6 +602,11 @@
     bottom: 36px; /* 移动端调整底部距离 */
   }
 
+  .notice {
+    left: 0;
+    right: 0;
+  }
+
   .treemapBox {
     min-width: 310px;
     margin-right: 10px;
@@ -668,13 +683,16 @@
   }
   
   .notice {
+    left: 0;
+    right: 0;
+    
     .noticeItem {
-      padding: 4px 8px;
-      min-height: 26px;
+      padding: 3px 8px;
+      min-height: 22px;
       
       :global {
         .adm-notice-bar-content {
-          font-size: 12px;
+          font-size: 11px;
         }
       }
     }
