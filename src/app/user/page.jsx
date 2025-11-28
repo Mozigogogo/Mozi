@@ -279,6 +279,10 @@ export default function UserPage() {
 
   // 监听 TON 钱包连接状态变化 (Telegram 环境)
   useEffect(() => {
+    // 先检查 localStorage 中是否已有 token，避免重复登录
+    const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('token');
+    if (hasToken) return;
+    
     if (isTelegramEnv() && tonWallet && !userInfo.isLogin) {
       // TON 钱包已连接，自动进行登录
       handleTonWalletLogin();
