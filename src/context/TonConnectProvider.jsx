@@ -2,10 +2,8 @@
 
 import { TonConnectUIProvider } from '@tonconnect/ui-react';
 
-// TON Connect manifest URL
-const manifestUrl = typeof window !== 'undefined' 
-  ? `${window.location.origin}/tonconnect-manifest.json`
-  : 'https://mozi.app/tonconnect-manifest.json';
+// TON Connect manifest URL - 使用 CDN 托管确保可访问
+const manifestUrl = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/tonconnect-manifest.json';
 
 export default function TonConnectProvider({ children }) {
   return (
