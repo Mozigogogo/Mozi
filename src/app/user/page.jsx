@@ -869,11 +869,27 @@ export default function UserPage() {
 
       if (res?.data) {
         // 更新本地用户信息
+        const newNickname = editNickname.trim();
+        const newAvatar = res.data; // 服务器返回的头像URL
+        
         setUserInfo(prev => ({
           ...prev,
-          nickname: editNickname.trim(),
-          avatar: res.data // 服务器返回的头像URL
+          nickname: newNickname,
+          avatar: newAvatar
         }));
+
+        // 同步更新 localStorage，防止定时器读取旧数据覆盖
+        try {
+          const storedUserInfo = localStorage.getItem('userInfo');
+          if (storedUserInfo) {
+            const parsed = JSON.parse(storedUserInfo);
+            parsed.nickName = newNickname;
+            parsed.avatar = newAvatar;
+            localStorage.setItem('userInfo', JSON.stringify(parsed));
+          }
+        } catch (e) {
+          console.error('更新localStorage失败:', e);
+        }
 
         Toast.clear();
         Toast.show({
