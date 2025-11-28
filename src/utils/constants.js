@@ -258,6 +258,10 @@ export const Interface = {
   TASK_LIST: '/task/list',
   // 获取积分榜单
   TASK_RANKING: '/task/ranking',
+  // 获取邀请列表
+  TASK_INVITATION_LIST: '/task/invitation/list',
+  // 完成任务
+  TASK_COMPLETE: '/task/complete',
 };
 
 // 业务中使用到的联系邮箱和链上地址（打包报错缺失导出）

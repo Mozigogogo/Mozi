@@ -68,10 +68,39 @@ export default function PointsDetail() {
     }
   }, [t]);
 
-  // 页面加载时获取积分数据
+  // 获取邀请列表数据
+  const fetchInvitationList = useCallback(async () => {
+    try {
+      const res = await request({
+        url: Interface.TASK_INVITATION_LIST,
+        method: 'GET'
+      });
+      
+      if (res?.code === 0 && res?.data) {
+        const data = res.data;
+        // 根据接口返回的邀请列表更新统计数据
+        const invitations = data.invitations || data || [];
+        setPointsData(prev => ({
+          ...prev,
+          inviteCode: data.invitationCode || prev.inviteCode,
+          inviteLink: data.inviteLink || prev.inviteLink,
+          totalInvites: data.totalInvites ?? invitations.length ?? prev.totalInvites,
+          activeInvites: data.activeInvites ?? invitations.filter(i => i.status === 'active' || i.isActive).length ?? prev.activeInvites,
+          earnedPoints: data.earnedPoints ?? prev.earnedPoints,
+          pendingRewards: data.pendingRewards ?? prev.pendingRewards
+        }));
+        console.log('邀请列表数据:', data);
+      }
+    } catch (error) {
+      console.error('获取邀请列表失败:', error);
+    }
+  }, []);
+
+  // 页面加载时获取积分数据和邀请列表
   useEffect(() => {
     fetchPointsData();
-  }, [fetchPointsData]);
+    fetchInvitationList();
+  }, [fetchPointsData, fetchInvitationList]);
 
   // 使用函数延迟初始化任务列表，确保 t() 在组件渲染时可用
   const getInitialTasks = () => [
@@ -223,38 +252,23 @@ export default function PointsDetail() {
     return t(btnTextKey);
   };
 
-  // 验证任务完成
+  // 验证任务完成 - 调用后端接口
   const verifyTask = async (task) => {
     try {
       setVerifyingTaskId(task.id);
-      let isCompleted = false;
       
-      // 根据不同任务进行验证
-      if (task.titleKey === 'pointsDetail.tasks.firstRegister.title' || task.titleKey === 'pointsDetail.tasks.earlyBird.title' || task.titleKey === 'pointsDetail.tasks.setAlarm.title') {
-        // 检查用户是否已登录（检查 localStorage 中的 token）
-        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-        if (token) {
-          isCompleted = true;
+      // 调用后端接口完成任务
+      const res = await request({
+        url: Interface.TASK_COMPLETE,
+        method: 'POST',
+        data: {
+          taskCode: task.taskCode || task.id
         }
-      } else if (task.titleKey === 'pointsDetail.tasks.videoLearn.title') {
-        // 检查本地存储的视频完成状态
-        try {
-          const saved = typeof window !== 'undefined' ? localStorage.getItem('completedVideos') : null;
-          const total = typeof window !== 'undefined' ? localStorage.getItem('videoLearnTotal') : '0';
-          if (saved) {
-            const map = JSON.parse(saved);
-            const finished = Object.values(map).filter(Boolean).length;
-            const totalNum = parseInt(total) || 0;
-            if (totalNum > 0 && finished >= totalNum) {
-              isCompleted = true;
-            }
-          }
-        } catch (e) {
-          console.error('Failed to verify video learning completion status', e);
-        }
-      }
+      });
       
-      if (isCompleted) {
+      console.log('任务完成接口返回:', res);
+      
+      if (res?.code === 0 && res?.data?.success) {
         // 验证成功，更新为已完成
         const updatedTasks = tasksList.map(t => 
           t.id === task.id 
@@ -268,7 +282,12 @@ export default function PointsDetail() {
           localStorage.setItem('pointsTasks', JSON.stringify(updatedTasks));
         }
         
-        Toast.show({ content: t('pointsDetail.messages.pointsEarned', { points: task.points }), icon: 'success', position: 'center' });
+        // 显示成功提示，使用接口返回的消息或默认消息
+        const successMsg = res?.data?.message || t('pointsDetail.messages.pointsEarned', { points: task.points });
+        Toast.show({ content: successMsg, icon: 'success', position: 'center' });
+        
+        // 刷新积分数据
+        fetchPointsData();
       } else {
         // 验证失败，恢复成原来的状态
         const updatedTasks = tasksList.map(t => 
@@ -283,10 +302,11 @@ export default function PointsDetail() {
           localStorage.setItem('pointsTasks', JSON.stringify(updatedTasks));
         }
         
-        Toast.show({ content: t('pointsDetail.messages.taskNotCompleted'), position: 'center' });
+        const errorMsg = res?.message || res?.msg || t('pointsDetail.messages.taskNotCompleted');
+        Toast.show({ content: errorMsg, position: 'center' });
       }
     } catch (error) {
-      console.error('Failed to verify task:', error);
+      console.error('任务完成接口调用失败:', error);
       
       // 验证出错时也恢复成原来的状态
       const updatedTasks = tasksList.map(t => 
