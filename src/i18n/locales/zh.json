@@ -575,6 +575,14 @@
         "title": "完成视频学习",
         "button": "去学习"
       },
+      "dailyLogin": {
+        "title": "每日登录",
+        "button": "去登录"
+      },
+      "inviteUser": {
+        "title": "邀请好友",
+        "button": "去邀请"
+      },
       "verify": "验证",
       "completed": "已完成"
     },

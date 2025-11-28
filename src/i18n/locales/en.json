@@ -575,6 +575,14 @@
         "title": "Complete Video Learning",
         "button": "Start"
       },
+      "dailyLogin": {
+        "title": "Daily Login",
+        "button": "Login"
+      },
+      "inviteUser": {
+        "title": "Invite Friends",
+        "button": "Invite"
+      },
       "verify": "Verify",
       "completed": "Completed"
     },

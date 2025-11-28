@@ -248,6 +248,16 @@ export const Interface = {
   
   // 删除告警
   DELETE_ALARM: '/alarm/delete',
+
+  // 积分
+  // 获取用户积分
+  TASK_POINTS: '/task/points',
+  // 获取积分历史记录
+  TASK_POINTS_HISTORY: '/task/points/history',
+  // 获取任务列表
+  TASK_LIST: '/task/list',
+  // 获取积分榜单
+  TASK_RANKING: '/task/ranking',
 };
 
 // 业务中使用到的联系邮箱和链上地址（打包报错缺失导出）
