@@ -118,32 +118,86 @@ export default function CommunityPage() {
   }, []);
 
   // 获取看涨看跌统计数据
-  const fetchVoteData = async (symbol) => {
+  const fetchVoteData = async (coinType) => {
     try {
       const res = await request({
-        url: Interface.GET_UP_AND_DOWN_COUNT,
+        url: Interface.LIKE_COIN_COUNT,
         method: 'GET',
-        data: { symbol }
+        data: { coinType }
       });
       
-      console.log('投票接口返回:', res);
+      console.log('查询投票数量:', res);
       
-      if (res?.success === true) {
+      if (res?.success === true || res?.code === 0) {
         const data = res.data || {};
         setVoteData({
-          totalCount: data.totalCount || 0,
-          hasVoted: data.hasVoted || false,
-          userVoteType: data.userVoteType || null
+          upCount: data.upCount || 0,
+          downCount: data.downCount || 0,
+          totalCount: (data.upCount || 0) + (data.downCount || 0),
+          hasVoted: false,
+          userVoteType: null
         });
-        // 如果用户已投票，设置选中状态
-        if (data.hasVoted && data.userVoteType) {
-          setVoteChoice(data.userVoteType === 'bullish' ? 'bull' : 'bear');
-        } else {
-          setVoteChoice(null);
-        }
       }
+      setVoteChoice(null);
     } catch (error) {
       console.error('获取投票数据失败:', error);
+    }
+  };
+
+  // 提交看涨看跌投票
+  const submitVote = async (type) => {
+    if (!selectedCoin) return;
+    
+    try {
+      const voteType = type === 'bull' ? 'up' : 'down';
+      const res = await request({
+        url: Interface.LIKE_COIN_VOTE,
+        method: 'POST',
+        data: {
+          coinType: selectedCoin,
+          type: voteType
+        }
+      });
+      
+      console.log('投票提交返回:', res);
+      
+      if (res?.success === true || res?.code === 0) {
+        setVoteChoice(type);
+        
+        // 投票成功后查询最新数量
+        const countRes = await request({
+          url: Interface.LIKE_COIN_COUNT,
+          method: 'GET',
+          data: { coinType: selectedCoin }
+        });
+        
+        if (countRes?.success === true || countRes?.code === 0) {
+          const data = countRes.data || {};
+          setVoteData({
+            upCount: data.upCount || 0,
+            downCount: data.downCount || 0,
+            totalCount: (data.upCount || 0) + (data.downCount || 0),
+            hasVoted: true,
+            userVoteType: type === 'bull' ? 'bullish' : 'bearish'
+          });
+        }
+        
+        Toast.show({
+          content: t('community.voting.voteSuccess'),
+          position: 'bottom',
+        });
+      } else {
+        Toast.show({
+          content: res?.errorMsg || res?.message || t('community.voting.voteFailed'),
+          position: 'bottom',
+        });
+      }
+    } catch (error) {
+      console.error('投票失败:', error);
+      Toast.show({
+        content: t('community.voting.voteFailed'),
+        position: 'bottom',
+      });
     }
   };
 
@@ -999,20 +1053,20 @@ export default function CommunityPage() {
                 participants={voteData.totalCount}
                 selected={voteChoice}
                 disabled={voteData.hasVoted}
-                onSelect={(type) => setVoteChoice(type)}
+                onSelect={(type) => submitVote(type)}
               />
             </div>
           )}
           
-          {/* 不懂就问按钮组件 - 仅在不懂就问tab显示 */}
-          {mainTab === 'recommend' && subTab === 'question' && (
+          {/* 不懂就问按钮组件 - 暂时隐藏 */}
+          {/* {mainTab === 'recommend' && subTab === 'question' && (
             <div className={styles.questionWrapper}>
               <QuestionButtons 
                 onAskQuestion={goToPostPage}
                 onAnswerQuestion={goToPostPage}
               />
             </div>
-          )}
+          )} */}
           
           {mainTab === 'hot' ? (
             <div className={styles.hotTopics}>

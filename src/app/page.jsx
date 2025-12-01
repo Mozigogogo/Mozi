@@ -349,22 +349,22 @@ export default function HomePage() {
   }, {
     interface: Interface.price_change,
     data: {
-      dim: 'today'
+      dim: 0
     }
   }, {
     interface: Interface.PRICE_DOWNCHANGE,
     data: {
-      dim: 'today'
+      dim: 0
     }
   }, {
     interface: Interface.price_wave,
     data: {
-      dim: 'today'
+      dim: 0
     }
   }, {
     interface: Interface.coin_trade,
     data: {
-      intervals: 'today'
+      intervals: 0
     }
   }, {
     interface: Interface.NEW_COIN,

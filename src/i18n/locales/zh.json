@@ -377,7 +377,9 @@
     "voting": {
       "bullish": "看涨",
       "bearish": "看跌",
-      "participants": "{{count}}人参与"
+      "participants": "{{count}}人参与",
+      "voteSuccess": "投票成功",
+      "voteFailed": "投票失败，请稍后再试"
     },
     "questionButtons": {
       "askQuestion": "提个问题",

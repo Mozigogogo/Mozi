@@ -377,7 +377,9 @@
     "voting": {
       "bullish": "Bullish",
       "bearish": "Bearish",
-      "participants": "{{count}} participants"
+      "participants": "{{count}} participants",
+      "voteSuccess": "Vote submitted",
+      "voteFailed": "Vote failed, please try again"
     },
     "questionButtons": {
       "askQuestion": "Ask Question",
