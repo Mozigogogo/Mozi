@@ -147,6 +147,49 @@ export default function CommunityPage() {
     }
   };
 
+  // 提交看涨看跌投票
+  const submitVote = async (type) => {
+    if (!selectedCoin) return;
+    
+    try {
+      const res = await request({
+        url: Interface.LIKE_COIN_VOTE,
+        method: 'POST',
+        data: {
+          coinType: selectedCoin,
+          type: type === 'bull' ? 'up' : 'down'
+        }
+      });
+      
+      console.log('投票提交返回:', res);
+      
+      if (res?.success === true || res?.code === 0) {
+        setVoteChoice(type);
+        setVoteData(prev => ({
+          ...prev,
+          hasVoted: true,
+          userVoteType: type === 'bull' ? 'bullish' : 'bearish',
+          totalCount: prev.totalCount + 1
+        }));
+        Toast.show({
+          content: t('community.voting.voteSuccess'),
+          position: 'bottom',
+        });
+      } else {
+        Toast.show({
+          content: res?.errorMsg || res?.message || t('community.voting.voteFailed'),
+          position: 'bottom',
+        });
+      }
+    } catch (error) {
+      console.error('投票失败:', error);
+      Toast.show({
+        content: t('community.voting.voteFailed'),
+        position: 'bottom',
+      });
+    }
+  };
+
   // 搜索币种
   const searchCoin = async (value) => {
     setSearchKeyword(value);
@@ -999,7 +1042,7 @@ export default function CommunityPage() {
                 participants={voteData.totalCount}
                 selected={voteChoice}
                 disabled={voteData.hasVoted}
-                onSelect={(type) => setVoteChoice(type)}
+                onSelect={(type) => submitVote(type)}
               />
             </div>
           )}
