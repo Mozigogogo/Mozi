@@ -191,24 +191,33 @@
 }
 
 .tgRow {
-  // padding-top: 8px;
+  padding-top: 20px;
+  margin-top: 20px;
   border-top: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: center;
 
   // PC 端优化
   @media (min-width: 768px) {
-    // padding-top: 8px;
+    padding-top: 24px;
+    margin-top: 24px;
   }
 }
 
 .tgLink {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
   color: #666;
   text-decoration: none;
   transition: color 0.3s ease;
   cursor: pointer;
+  line-height: 1.4;
+  text-align: center;
+  flex-wrap: nowrap;
+  white-space: nowrap;
 
   &:hover {
     color: #11B787;
@@ -218,6 +227,7 @@
   @media (min-width: 768px) {
     font-size: 15px;
     gap: 10px;
+    flex-wrap: nowrap;
 
     &:hover {
       color: #11B787;
@@ -226,9 +236,10 @@
 }
 
 .tgIcon {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
+  color: #11B787;
 
   // PC 端优化
   @media (min-width: 768px) {
@@ -239,13 +250,15 @@
 
 .underline {
   text-decoration: underline;
-  color: inherit;
+  color: #11B787;
   font-weight: 500;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
 
   // PC 端优化
   @media (min-width: 768px) {
     text-decoration-thickness: 1.5px;
-    text-underline-offset: 2px;
+    text-underline-offset: 3px;
   }
 }
 
@@ -345,6 +358,21 @@
     height: 42px;
     font-size: 15px;
   }
+
+  .tgRow {
+    padding-top: 16px;
+    margin-top: 16px;
+  }
+
+  .tgLink {
+    font-size: 11px;
+    gap: 5px;
+  }
+
+  .tgIcon {
+    width: 16px;
+    height: 16px;
+  }
 }
 
 // 大屏幕优化
@@ -409,11 +437,15 @@
     color: #999;
 
     &:hover {
-      color: #e0e0e0;
+      color: #11B787;
     }
   }
 
+  .tgIcon {
+    color: #11B787;
+  }
+
   .underline {
-    color: #fff;
+    color: #11B787;
   }
 }
