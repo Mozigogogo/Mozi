@@ -1047,15 +1047,15 @@ export default function CommunityPage() {
             </div>
           )}
           
-          {/* 不懂就问按钮组件 - 仅在不懂就问tab显示 */}
-          {mainTab === 'recommend' && subTab === 'question' && (
+          {/* 不懂就问按钮组件 - 暂时隐藏 */}
+          {/* {mainTab === 'recommend' && subTab === 'question' && (
             <div className={styles.questionWrapper}>
               <QuestionButtons 
                 onAskQuestion={goToPostPage}
                 onAnswerQuestion={goToPostPage}
               />
             </div>
-          )}
+          )} */}
           
           {mainTab === 'hot' ? (
             <div className={styles.hotTopics}>
