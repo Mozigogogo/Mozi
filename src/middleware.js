@@ -18,6 +18,7 @@ export function middleware(request) {
     '/manifest.json',
     '/icons',
     '/images',
+    '/dfd8f2ae8e6634994ec4216a51edbb12.txt',  // 微信域名验证文件
   ];
 
   // 检查是否是允许的路径
