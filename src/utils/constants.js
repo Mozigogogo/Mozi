@@ -150,10 +150,10 @@ export const Interface = {
   GET_MY_INTERFACE: '/easy/getMyInterface',
   // 订阅公告
   SUBSCRIBE_ANNOUNCEMENT: '/announcement/subscribe',
-  // 获取看涨看跌统计
-  GET_UP_AND_DOWN_COUNT: '/easy/getUpAndDownCount',
   // 看涨看跌投票
   LIKE_COIN_VOTE: '/likeCoin/downOrUp',
+  // 查询看涨看跌数量
+  LIKE_COIN_COUNT: '/likeCoin/downOrUpCount',
 
   // 告警
   // 添加告警
