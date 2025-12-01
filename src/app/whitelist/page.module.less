@@ -85,12 +85,12 @@
   font-size: 14px;
   font-weight: 500;
   color: #333;
-  margin-bottom: 8px;
+  margin-bottom: 0;
   
   // PC 端优化
   @media (min-width: 768px) {
     font-size: 15px;
-    margin-bottom: 8px;
+    margin-bottom: 0;
   }
 }
 
@@ -447,5 +447,58 @@
 
   .underline {
     color: #11B787;
+  }
+}
+
+// 成功页面样式
+.successContainer {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.successIcon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  background: #11B787;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  color: #fff;
+  
+  @media (min-width: 768px) {
+    width: 72px;
+    height: 72px;
+    font-size: 36px;
+    margin-bottom: 24px;
+  }
+}
+
+.successTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+  
+  @media (min-width: 768px) {
+    font-size: 22px;
+    margin-bottom: 14px;
+  }
+}
+
+.successText {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+  
+  strong {
+    color: #11B787;
+    font-weight: 500;
+  }
+  
+  @media (min-width: 768px) {
+    font-size: 15px;
   }
 }

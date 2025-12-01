@@ -1,14 +1,15 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Form, Input, Button, message } from "antd";
-import { sendVerificationCode } from "@/api/user";
+import { sendVerificationCode, whitelistRegister } from "@/api/user";
 import styles from "./page.module.less";
 
 export default function WhitelistPage() {
   const [form] = Form.useForm();
-  const [step, setStep] = useState('email'); // 'email' 或 'verify'
+  const [step, setStep] = useState('email'); // 'email', 'verify', 'success'
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
 
   // 初始化 Amplitude 埋点
@@ -155,23 +156,34 @@ export default function WhitelistPage() {
     }
 
     try {
-      // 这里添加验证码校验逻辑
-      // 可以调用后端API验证验证码
-      console.log('验证码:', values.verificationCode);
+      // 调用白名单注册接口
+      const res = await whitelistRegister(email, values.verificationCode, values.password);
 
-      // 模拟验证成功
-      message.success('Verification successful!');
+      if (res?.code === 200 || res?.success) {
+        message.success('Registration successful! You are now on the whitelist.');
 
-      // Amplitude 埋点：验证成功
-      if (window.amplitude) {
-        window.amplitude.track('Whitelist_Verify_Success', {
-          email: email,
-          timestamp: new Date().toISOString()
-        });
+        // Amplitude 埋点：注册成功
+        if (window.amplitude) {
+          window.amplitude.track('Whitelist_Register_Success', {
+            email: email,
+            timestamp: new Date().toISOString()
+          });
+        }
+
+        // 显示成功页面
+        setStep('success');
+      } else {
+        message.error(res?.message || 'Registration failed, please try again');
+
+        // Amplitude 埋点：注册失败
+        if (window.amplitude) {
+          window.amplitude.track('Whitelist_Register_Failed', {
+            email: email,
+            error: res?.message || 'Unknown error',
+            timestamp: new Date().toISOString()
+          });
+        }
       }
-
-      // 验证成功后的逻辑，比如跳转到主页
-      // router.push('/');
     } catch (error) {
       console.error('验证失败:', error);
       message.error('Verification failed, please try again');
@@ -201,7 +213,7 @@ export default function WhitelistPage() {
       });
     }
 
-    setLoading(true);
+    setResendLoading(true);
     try {
       const language = 'en';
       const res = await sendVerificationCode(email, language);
@@ -242,7 +254,7 @@ export default function WhitelistPage() {
         });
       }
     } finally {
-      setLoading(false);
+      setResendLoading(false);
     }
   };
 
@@ -251,14 +263,16 @@ export default function WhitelistPage() {
       <div className={styles.whitelistCard}>
         <div className={styles.logo}>Moziinnovations</div>
         <div className={styles.title}>Welcome</div>
-        <div className={styles.tip}>
-          {step === 'email'
-            ? 'Enter your whitelisted email address to continue to Moziinnovations'
-            : `We've sent a verification code to ${email}`
-          }
-        </div>
+        {step !== 'success' && (
+          <div className={styles.tip}>
+            {step === 'email'
+              ? 'Enter your email address to join the whitelist'
+              : `We've sent a verification code to ${email}`
+            }
+          </div>
+        )}
 
-        {step === 'email' ? (
+        {step === 'email' && (
           // 邮箱输入界面
           <Form
             form={form}
@@ -292,7 +306,9 @@ export default function WhitelistPage() {
               </Button>
             </Form.Item>
           </Form>
-        ) : (
+        )}
+
+        {step === 'verify' && (
           // 验证码输入界面
           <Form
             form={form}
@@ -307,12 +323,28 @@ export default function WhitelistPage() {
                 { required: true, message: "Please input verification code!" },
                 { len: 6, message: 'Verification code must be 6 digits!' }
               ]}
+              style={{ marginBottom: 8 }}
             >
               <Input
                 className={styles.input}
                 placeholder="Enter 6-digit code"
                 maxLength={6}
                 autoComplete="off"
+              />
+            </Form.Item>
+            <Form.Item
+              label={<span className={styles.label}>Password</span>}
+              name="password"
+              rules={[
+                { required: true, message: "Please set your password!" },
+                { min: 6, message: 'Password must be at least 6 characters!' }
+              ]}
+              style={{ marginBottom: 12 }}
+            >
+              <Input.Password
+                className={styles.input}
+                placeholder="Set your password"
+                autoComplete="new-password"
               />
             </Form.Item>
             <Form.Item className={styles.formItemBtn}>
@@ -323,7 +355,7 @@ export default function WhitelistPage() {
                 loading={loading}
                 style={{ width: "100%" }}
               >
-                Verify
+                Join Whitelist
               </Button>
             </Form.Item>
             <div className={styles.resendRow}>
@@ -332,9 +364,9 @@ export default function WhitelistPage() {
                 type="button"
                 className={styles.resendBtn}
                 onClick={handleResendCode}
-                disabled={countdown > 0}
+                disabled={countdown > 0 || resendLoading}
               >
-                {countdown > 0 ? `Resend (${countdown}s)` : 'Resend'}
+                {resendLoading ? 'Sending...' : countdown > 0 ? `Resend (${countdown}s)` : 'Resend'}
               </button>
             </div>
             <div className={styles.backRow}>
@@ -356,6 +388,17 @@ export default function WhitelistPage() {
               </button>
             </div>
           </Form>
+        )}
+
+        {step === 'success' && (
+          // 成功界面
+          <div className={styles.successContainer}>
+            <div className={styles.successIcon}>✓</div>
+            <div className={styles.successTitle}>You're on the whitelist!</div>
+            <div className={styles.successText}>
+              Thank you for registering. We'll notify you at <strong>{email}</strong> when we launch.
+            </div>
+          </div>
         )}
 
         <div className={styles.tgRow}>

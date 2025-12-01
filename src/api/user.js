@@ -62,6 +62,28 @@ export const sendVerificationCode = (email, language = 'zh') => {
 };
 
 /**
+ * 白名单用户注册
+ * @param {string} email - 邮箱地址
+ * @param {string} verificationCode - 验证码
+ * @param {string} password - 密码
+ * @returns {Promise}
+ */
+export const whitelistRegister = (email, verificationCode, password) => {
+  return request({
+    url: '/user/login',
+    method: 'POST',
+    data: {
+      chanel: 2,            // 2-邮箱注册
+      type: 'register',
+      email,
+      verificationCode,
+      password,
+      source: 'whitelist',  // 标识白名单用户来源
+    },
+  });
+};
+
+/**
  * 钱包签名登录
  * @param {string} address - 钱包地址
  * @param {string} signature - 用户签名
