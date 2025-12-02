@@ -48,8 +48,18 @@ export default function WhitelistPage() {
     i18n.changeLanguage(lang);
   }, []);
 
-  // 初始化 Amplitude 埋点
+  // 初始化 Amplitude 埋点（仅生产环境）
   useEffect(() => {
+    // 仅在生产环境且非 localhost 时启用
+    const isProduction = process.env.NODE_ENV === 'production';
+    const isLocalhost = typeof window !== 'undefined' && 
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    
+    if (!isProduction || isLocalhost) {
+      console.log('[Amplitude] Disabled in development/localhost environment');
+      return;
+    }
+
     // 加载 Amplitude 核心库
     const amplitudeScript = document.createElement('script');
     amplitudeScript.src = 'https://cdn.amplitude.com/libs/analytics-browser-2.11.1-min.js.gz';
