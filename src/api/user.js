@@ -76,7 +76,7 @@ export const whitelistRegister = (email, verificationCode, password) => {
       chanel: 2,            // 2-邮箱注册
       type: 'register',
       email,
-      verificationCode,
+      verifyCode: verificationCode,
       password,
       source: 'whitelist',  // 标识白名单用户来源
     },

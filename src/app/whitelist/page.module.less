@@ -18,6 +18,7 @@
   width: 100%;
   text-align: center;
   box-sizing: border-box;
+  position: relative;
   
   // PC 端优化
   @media (min-width: 768px) {
@@ -26,6 +27,47 @@
     border-radius: 16px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   }
+}
+
+.topRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 10;
+}
+
+.backBtnTop {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  color: #666;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #11B787;
+  }
+}
+
+.langSelect {
+  min-width: 90px;
+  
+  :global {
+    .ant-select-selector {
+      border-radius: 6px !important;
+      font-size: 13px !important;
+    }
+  }
+}
+
+.langDropdown {
+  z-index: 1000;
 }
 
 .logo {
@@ -190,26 +232,29 @@
   }
 }
 
-.tgRow {
+.socialRow {
   padding-top: 20px;
   margin-top: 20px;
   border-top: 1px solid #f0f0f0;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
 
   // PC 端优化
   @media (min-width: 768px) {
     padding-top: 24px;
     margin-top: 24px;
+    gap: 14px;
   }
 }
 
-.tgLink {
+.socialLink {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 14px;
   color: #666;
   text-decoration: none;
   transition: color 0.3s ease;
@@ -218,6 +263,9 @@
   text-align: center;
   flex-wrap: nowrap;
   white-space: nowrap;
+  background: transparent;
+  border: none;
+  padding: 0;
 
   &:hover {
     color: #11B787;
@@ -235,9 +283,9 @@
   }
 }
 
-.tgIcon {
-  width: 18px;
-  height: 18px;
+.socialIcon {
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
   color: #11B787;
 
@@ -245,6 +293,29 @@
   @media (min-width: 768px) {
     width: 22px;
     height: 22px;
+  }
+}
+
+.qrcodeContainer {
+  display: flex;
+  justify-content: center;
+  padding: 16px 0;
+}
+
+.qrcodeImage {
+  width: 240px;
+  height: 240px;
+  object-fit: contain;
+}
+
+.wechatModal {
+  :global {
+    .ant-modal-header {
+      text-align: center;
+    }
+    .ant-modal-title {
+      text-align: center;
+    }
   }
 }
 
@@ -457,22 +528,23 @@
 }
 
 .successIcon {
-  width: 64px;
-  height: 64px;
   margin: 0 auto 20px;
-  background: #11B787;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
-  color: #fff;
+  
+  svg {
+    width: 64px;
+    height: 64px;
+  }
   
   @media (min-width: 768px) {
-    width: 72px;
-    height: 72px;
-    font-size: 36px;
     margin-bottom: 24px;
+    
+    svg {
+      width: 72px;
+      height: 72px;
+    }
   }
 }
 
