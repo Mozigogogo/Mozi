@@ -140,7 +140,7 @@ export default function WhitelistPage() {
       }
 
       setLoading(true);
-      const language = 'en'; // 可以根据需要调整语言
+      const language = i18n.language || 'en'; // 根据当前语言设置
       const res = await sendVerificationCode(emailValue, language);
 
       if (res?.code === 200 || res?.success) {
@@ -270,7 +270,7 @@ export default function WhitelistPage() {
 
     setResendLoading(true);
     try {
-      const language = 'en';
+      const language = i18n.language || 'en'; // 根据当前语言设置
       const res = await sendVerificationCode(email, language);
 
       if (res?.code === 200 || res?.success) {

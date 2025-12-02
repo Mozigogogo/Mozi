@@ -1,22 +1,29 @@
-// 白名单页面样式
+// 白名单页面样式 - 强制浅色主题
 .whitelistBg {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f5f5f5;
+  background-color: #f5f5f5 !important;
   padding: 20px;
   box-sizing: border-box;
+  color-scheme: light !important;
+  
+  // 禁用暗色主题
+  * {
+    color-scheme: light !important;
+  }
 }
 
 .whitelistCard {
-  background: #fff;
+  background: #fff !important;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   padding: 48px 40px;
   max-width: 460px;
   width: 100%;
   text-align: center;
+  color: #333 !important;
   box-sizing: border-box;
   position: relative;
   
@@ -472,68 +479,8 @@
   }
 }
 
-// 暗黑模式
-@media (prefers-color-scheme: dark) {
-  .whitelistBg {
-    background-color: #0f0f0f;
-  }
-
-  .whitelistCard {
-    background: #1a1a1a;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  }
-
-  .logo {
-    color: #fff;
-  }
-
-  .title {
-    color: #fff;
-  }
-
-  .tip {
-    color: #999;
-  }
-
-  .label {
-    color: #e0e0e0;
-  }
-
-  .input {
-    background: #2a2a2a;
-    border-color: #3a3a3a;
-    color: #fff;
-
-    &::placeholder {
-      color: #666;
-    }
-
-    &:focus {
-      border-color: #11B787;
-      background: #2a2a2a;
-    }
-  }
-
-  .tgRow {
-    border-top-color: #2a2a2a;
-  }
-
-  .tgLink {
-    color: #999;
-
-    &:hover {
-      color: #11B787;
-    }
-  }
-
-  .tgIcon {
-    color: #11B787;
-  }
-
-  .underline {
-    color: #11B787;
-  }
-}
+// 暗黑模式 - 已禁用，强制使用浅色主题
+// @media (prefers-color-scheme: dark) { ... }
 
 // 成功页面样式
 .successContainer {
