@@ -19,6 +19,7 @@ export function middleware(request) {
     '/icons',
     '/images',
     '/dfd8f2ae8e6634994ec4216a51edbb12.txt',  // 微信域名验证文件
+    '/Vc5OIbZbn2.txt'
   ];
 
   // 检查是否是允许的路径
