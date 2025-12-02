@@ -41,13 +41,13 @@
 .backBtnTop {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 4PX;
   background: transparent;
   border: none;
   color: #666;
-  font-size: 14px;
+  font-size: 16PX;
   cursor: pointer;
-  padding: 4px 0;
+  padding: 4PX 0;
   transition: color 0.2s;
 
   &:hover {
@@ -243,9 +243,9 @@
 
   // PC 端优化
   @media (min-width: 768px) {
-    padding-top: 24px;
-    margin-top: 24px;
-    gap: 14px;
+    padding-top: 16PX;
+    margin-top: 16PX;
+    gap: 10PX;
   }
 }
 
@@ -525,6 +525,10 @@
 .successContainer {
   text-align: center;
   padding: 20px 0;
+  
+  @media (min-width: 768px) {
+    padding: 10PX 0;
+  }
 }
 
 .successIcon {
