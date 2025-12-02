@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Toast, Tabs } from 'antd-mobile';
 import { ClockCircleOutline, LeftOutline } from 'antd-mobile-icons';
 import { useTranslation } from 'react-i18next';
 import Layout from '../../components/Layout';
+import { request } from '../../utils/request';
+import { Interface } from '../../utils/constants';
 import styles from './page.module.less';
 
 export default function PointsDetail() {
@@ -13,19 +15,92 @@ export default function PointsDetail() {
   const { t, i18n } = useTranslation();
   const isEnglish = i18n.language === 'en';
   const [activeTab, setActiveTab] = useState('myPoints');
+  const [pointsLoading, setPointsLoading] = useState(false);
   
-  const pointsData = {
-    totalPoints: 45123,
+  // 积分数据 state，初始使用默认值
+  const [pointsData, setPointsData] = useState({
+    totalPoints: 0,
     season: t('pointsDetail.seasonName'),
     seasonStart: '2025-09-25',
     seasonEnd: '2025-10-25',
-    inviteLink: 'y79lll/e]suow\'eloos\'s//:sd14',
-    inviteCode: '30L234',
-    totalInvites: 50,
-    earnedPoints: 21323,
-    activeInvites: 50,
+    inviteLink: '',
+    inviteCode: '',
+    totalInvites: 0,
+    earnedPoints: 0,
+    activeInvites: 0,
     pendingRewards: 0
-  };
+  });
+
+  // 获取用户积分数据
+  const fetchPointsData = useCallback(async () => {
+    try {
+      setPointsLoading(true);
+      const res = await request({
+        url: Interface.TASK_POINTS,
+        method: 'GET'
+      });
+      
+      if (res?.code === 0 && res?.data) {
+        const data = res.data;
+        setPointsData(prev => ({
+          ...prev,
+          totalPoints: data.totalPoints ?? prev.totalPoints,
+          dailyPoints: data.dailyPoints ?? 0,
+          monthlyPoints: data.monthlyPoints ?? 0,
+          inviteLink: data.inviteLink ?? prev.inviteLink,
+          inviteCode: data.inviteCode ?? prev.inviteCode,
+          totalInvites: data.totalInvites ?? prev.totalInvites,
+          earnedPoints: data.earnedPoints ?? prev.earnedPoints,
+          activeInvites: data.activeInvites ?? prev.activeInvites,
+          pendingRewards: data.pendingRewards ?? prev.pendingRewards,
+          seasonStart: data.seasonStart ?? prev.seasonStart,
+          seasonEnd: data.seasonEnd ?? prev.seasonEnd
+        }));
+      }
+    } catch (error) {
+      console.error('获取积分数据失败:', error);
+      Toast.show({
+        content: t('pointsDetail.fetchFailed') || '获取积分数据失败',
+        icon: 'fail'
+      });
+    } finally {
+      setPointsLoading(false);
+    }
+  }, [t]);
+
+  // 获取邀请列表数据
+  const fetchInvitationList = useCallback(async () => {
+    try {
+      const res = await request({
+        url: Interface.TASK_INVITATION_LIST,
+        method: 'GET'
+      });
+      
+      if (res?.code === 0 && res?.data) {
+        const data = res.data;
+        // 根据接口返回的邀请列表更新统计数据
+        const invitations = data.invitations || data || [];
+        setPointsData(prev => ({
+          ...prev,
+          inviteCode: data.invitationCode || prev.inviteCode,
+          inviteLink: data.inviteLink || prev.inviteLink,
+          totalInvites: data.totalInvites ?? invitations.length ?? prev.totalInvites,
+          activeInvites: data.activeInvites ?? invitations.filter(i => i.status === 'active' || i.isActive).length ?? prev.activeInvites,
+          earnedPoints: data.earnedPoints ?? prev.earnedPoints,
+          pendingRewards: data.pendingRewards ?? prev.pendingRewards
+        }));
+        console.log('邀请列表数据:', data);
+      }
+    } catch (error) {
+      console.error('获取邀请列表失败:', error);
+    }
+  }, []);
+
+  // 页面加载时获取积分数据和邀请列表
+  useEffect(() => {
+    fetchPointsData();
+    fetchInvitationList();
+  }, [fetchPointsData, fetchInvitationList]);
 
   // 使用函数延迟初始化任务列表，确保 t() 在组件渲染时可用
   const getInitialTasks = () => [
@@ -39,21 +114,86 @@ export default function PointsDetail() {
   
   const [tasksList, setTasksList] = useState(getInitialTasks());
   const [verifyingTaskId, setVerifyingTaskId] = useState(null);
+  const [tasksLoading, setTasksLoading] = useState(false);
 
-  // 页面加载时恢复任务状态
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedTasks = localStorage.getItem('pointsTasks');
-      if (savedTasks) {
-        try {
-          const tasks = JSON.parse(savedTasks);
-          setTasksList(tasks);
-        } catch (e) {
-          console.error('Failed to restore task state:', e);
+  // 任务类型到图标的映射
+  const taskIconMap = {
+    'REGISTER': '/point/contact_person@2x.png',
+    'FOLLOW_TWITTER': '/point/like@2x.png',
+    'JOIN_COMMUNITY': '/point/social_group@2x.png',
+    'COMMUNITY': '/point/social_group@2x.png',
+    'EARLY_BIRD': '/point/twitter@2x.png',
+    'SET_ALARM': '/point/set_alert@2x.png',
+    'ALARM': '/point/set_alert@2x.png',
+    'VIDEO_LEARN': '/point/video@2x.png',
+    'VIDEO': '/point/video@2x.png',
+    'WECHAT': '/point/like@2x.png',
+    'DAILY_LOGIN': '/point/contact_person@2x.png',
+    'INVITE_USER': '/point/invite@2x.png',
+  };
+
+  // 任务类型到国际化 key 的映射（用于按钮文本）
+  const taskKeyMap = {
+    'REGISTER': 'firstRegister',
+    'FOLLOW_TWITTER': 'followTwitter',
+    'JOIN_COMMUNITY': 'joinCommunity',
+    'COMMUNITY': 'joinCommunity',
+    'EARLY_BIRD': 'earlyBird',
+    'SET_ALARM': 'setAlarm',
+    'ALARM': 'setAlarm',
+    'VIDEO_LEARN': 'videoLearn',
+    'VIDEO': 'videoLearn',
+    'WECHAT': 'followTwitter',
+    'DAILY_LOGIN': 'dailyLogin',
+    'INVITE_USER': 'inviteUser',
+  };
+
+  // 获取任务列表
+  const fetchTaskList = useCallback(async () => {
+    try {
+      setTasksLoading(true);
+      const res = await request({
+        url: Interface.TASK_LIST,
+        method: 'GET'
+      });
+      
+      if (res?.code === 0 && res?.data) {
+        const tasks = res.data.tasks || res.data || [];
+        // 将接口数据映射到组件需要的格式
+        const mappedTasks = tasks.map((task, index) => {
+          const taskKey = taskKeyMap[task.taskCode] || 'setAlarm';
+          return {
+            id: task.id || index + 1,
+            taskCode: task.taskCode,
+            icon: taskIconMap[task.taskCode] || '/point/set_alert@2x.png',
+            // 直接使用接口返回的任务名称
+            title: task.taskName,
+            titleKey: `pointsDetail.tasks.${taskKey}.title`,
+            btnTextKey: `pointsDetail.tasks.${taskKey}.button`,
+            // 使用 rewardPoints 字段
+            points: task.rewardPoints || 0,
+            // 使用 isCompleted 字段判断状态
+            status: task.isCompleted ? 'completed' : 'pending',
+            needsAction: !task.isCompleted
+          };
+        });
+        
+        if (mappedTasks.length > 0) {
+          setTasksList(mappedTasks);
         }
       }
+    } catch (error) {
+      console.error('获取任务列表失败:', error);
+      // 接口失败时保留默认任务列表
+    } finally {
+      setTasksLoading(false);
     }
   }, []);
+
+  // 页面加载时获取任务列表
+  useEffect(() => {
+    fetchTaskList();
+  }, [fetchTaskList]);
 
   const dailyInvestments = [
     {
@@ -112,38 +252,23 @@ export default function PointsDetail() {
     return t(btnTextKey);
   };
 
-  // 验证任务完成
+  // 验证任务完成 - 调用后端接口
   const verifyTask = async (task) => {
     try {
       setVerifyingTaskId(task.id);
-      let isCompleted = false;
       
-      // 根据不同任务进行验证
-      if (task.titleKey === 'pointsDetail.tasks.firstRegister.title' || task.titleKey === 'pointsDetail.tasks.earlyBird.title' || task.titleKey === 'pointsDetail.tasks.setAlarm.title') {
-        // 检查用户是否已登录（检查 localStorage 中的 token）
-        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-        if (token) {
-          isCompleted = true;
+      // 调用后端接口完成任务
+      const res = await request({
+        url: Interface.TASK_COMPLETE,
+        method: 'POST',
+        data: {
+          taskCode: task.taskCode || task.id
         }
-      } else if (task.titleKey === 'pointsDetail.tasks.videoLearn.title') {
-        // 检查本地存储的视频完成状态
-        try {
-          const saved = typeof window !== 'undefined' ? localStorage.getItem('completedVideos') : null;
-          const total = typeof window !== 'undefined' ? localStorage.getItem('videoLearnTotal') : '0';
-          if (saved) {
-            const map = JSON.parse(saved);
-            const finished = Object.values(map).filter(Boolean).length;
-            const totalNum = parseInt(total) || 0;
-            if (totalNum > 0 && finished >= totalNum) {
-              isCompleted = true;
-            }
-          }
-        } catch (e) {
-          console.error('Failed to verify video learning completion status', e);
-        }
-      }
+      });
       
-      if (isCompleted) {
+      console.log('任务完成接口返回:', res);
+      
+      if (res?.code === 0 && res?.data?.success) {
         // 验证成功，更新为已完成
         const updatedTasks = tasksList.map(t => 
           t.id === task.id 
@@ -157,7 +282,12 @@ export default function PointsDetail() {
           localStorage.setItem('pointsTasks', JSON.stringify(updatedTasks));
         }
         
-        Toast.show({ content: t('pointsDetail.messages.pointsEarned', { points: task.points }), icon: 'success', position: 'center' });
+        // 显示成功提示，使用接口返回的消息或默认消息
+        const successMsg = res?.data?.message || t('pointsDetail.messages.pointsEarned', { points: task.points });
+        Toast.show({ content: successMsg, icon: 'success', position: 'center' });
+        
+        // 刷新积分数据
+        fetchPointsData();
       } else {
         // 验证失败，恢复成原来的状态
         const updatedTasks = tasksList.map(t => 
@@ -172,10 +302,11 @@ export default function PointsDetail() {
           localStorage.setItem('pointsTasks', JSON.stringify(updatedTasks));
         }
         
-        Toast.show({ content: t('pointsDetail.messages.taskNotCompleted'), position: 'center' });
+        const errorMsg = res?.message || res?.msg || t('pointsDetail.messages.taskNotCompleted');
+        Toast.show({ content: errorMsg, position: 'center' });
       }
     } catch (error) {
-      console.error('Failed to verify task:', error);
+      console.error('任务完成接口调用失败:', error);
       
       // 验证出错时也恢复成原来的状态
       const updatedTasks = tasksList.map(t => 
@@ -464,7 +595,7 @@ export default function PointsDetail() {
                       <img src={task.icon} alt={t(task.titleKey)} className={styles.taskIconImg} />
                     </div>
                     <div className={styles.taskInfo}>
-                      <div className={styles.taskTitle}>{t(task.titleKey)}</div>
+                      <div className={styles.taskTitle}>{task.title || t(task.titleKey)}</div>
                       <div className={styles.taskPoints}>
                         +{task.points}
                         <img src="/point/coin_icon@2x.png" alt="Coin" className={styles.taskCoinIcon} />
@@ -497,7 +628,7 @@ export default function PointsDetail() {
           <div className={styles.dailyInvestmentSection}>
             <div className={styles.sectionHeader}>
               <img src="/point/Emoji_3@2x.png" alt="Daily" className={styles.headerIconImg} />
-              <h3>{t('pointsDetail.dailyRewardTasksTitle')}</h3>
+              <h3>{t('pointsDetail.fanRewardsTitle')}</h3>
             </div>
 
             <div className={styles.investmentList}>
