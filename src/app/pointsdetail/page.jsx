@@ -628,7 +628,7 @@ export default function PointsDetail() {
           <div className={styles.dailyInvestmentSection}>
             <div className={styles.sectionHeader}>
               <img src="/point/Emoji_3@2x.png" alt="Daily" className={styles.headerIconImg} />
-              <h3>{t('pointsDetail.dailyRewardTasksTitle')}</h3>
+              <h3>{t('pointsDetail.fanRewardsTitle')}</h3>
             </div>
 
             <div className={styles.investmentList}>

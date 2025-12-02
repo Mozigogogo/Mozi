@@ -533,7 +533,7 @@
     "copyFailed": "复制失败",
     "historyFeatureInDevelopment": "历史记录功能开发中",
     "moziSlogan": "自由交易 不被定义",
-    "fanRewardsTitle": "做任务得积分奖励",
+    "fanRewardsTitle": "每日奖励任务",
     "earnMorePoints": "获得更多积分",
     "dailyInvestmentTitle": "每日投资排行",
     "taskCompleted": "任务已完成",
@@ -549,7 +549,7 @@
     "pleaseRegister": "请先注册",
     "joinAlarmSubtitle": "添加一个报警",
     "certificationSubtitle": "身份认证",
-    "dailyRewardTasksTitle": "每日奖励任务",
+    "dailyRewardTasksTitle": "做任务得积分奖励",
     "tasks": {
       "firstRegister": {
         "title": "首次注册账号",

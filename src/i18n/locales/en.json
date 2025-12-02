@@ -533,7 +533,7 @@
     "copyFailed": "Copy Failed",
     "historyFeatureInDevelopment": "History feature in development",
     "moziSlogan": "Free Trading, Unlimited",
-    "fanRewardsTitle": "Earn Points by Completing Tasks",
+    "fanRewardsTitle": "Daily Reward Tasks",
     "earnMorePoints": "Earn More Points",
     "dailyInvestmentTitle": "Daily Investment Ranking",
     "taskCompleted": "Task Completed",
@@ -549,7 +549,7 @@
     "pleaseRegister": "Please register first",
     "joinAlarmSubtitle": "Add an alarm",
     "certificationSubtitle": "Identity verification",
-    "dailyRewardTasksTitle": "Daily reward tasks",
+    "dailyRewardTasksTitle": "Earn Points by Tasks",
     "tasks": {
       "firstRegister": {
         "title": "First Registration",
