@@ -594,7 +594,8 @@
       "taskNotCompleted": "Task not completed, please complete the task first",
       "verifyFailed": "Verification failed, please try again later",
       "pointsEarned": "+{{points}} Points",
-      "loadFailed": "Failed to load points history:"
+      "loadFailed": "Failed to load points history:",
+      "videosRemaining": "{{count}} videos remaining"
     },
     "dailyTasks": {
       "like": {

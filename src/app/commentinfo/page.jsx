@@ -166,6 +166,20 @@ export default function CommentInfo() {
           ...prev,
           likeCnt: isLiked ? prev.likeCnt - 1 : prev.likeCnt + 1
         }));
+
+        // 点赞成功后，调用每日点赞任务完成接口
+        if (!isLiked) {
+          try {
+            await request({
+              url: Interface.TASK_COMPLETE,
+              method: 'POST',
+              data: { taskCode: 'DAILY_LIKE' }
+            });
+            console.log('🔍 [DEBUG] 每日点赞任务上报成功');
+          } catch (taskError) {
+            console.error('每日点赞任务上报失败:', taskError);
+          }
+        }
       }
     } catch (error) {
       console.error('点赞操作失败:', error);
@@ -412,6 +426,19 @@ export default function CommentInfo() {
           icon: 'success',
           content: replyTo ? t('comment.messages.replySuccess') : t('comment.messages.commentSuccess'),
         });
+
+        // 回复/评论成功后，调用回复任务完成接口
+        try {
+          await request({
+            url: Interface.TASK_COMPLETE,
+            method: 'POST',
+            data: { taskCode: 'REPLY' }
+          });
+          console.log('🔍 [DEBUG] 回复任务上报成功');
+        } catch (taskError) {
+          console.error('回复任务上报失败:', taskError);
+        }
+
         // 清空评论内容和回复对象
         setCommentContent('');
         setReplyTo(null);

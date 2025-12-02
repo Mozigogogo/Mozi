@@ -385,6 +385,20 @@ export default function CommunityPage() {
         }
         return post;
       }));
+
+      // 点赞成功后，调用每日点赞任务完成接口
+      if (!isLiked) {
+        try {
+          await request({
+            url: Interface.TASK_COMPLETE,
+            method: 'POST',
+            data: { taskCode: 'DAILY_LIKE' }
+          });
+          console.log('🔍 [DEBUG] 每日点赞任务上报成功');
+        } catch (taskError) {
+          console.error('每日点赞任务上报失败:', taskError);
+        }
+      }
     } catch (error) {
       console.error(`${isLiked ? '取消点赞' : '点赞'}失败:`, error);
       Toast.show({

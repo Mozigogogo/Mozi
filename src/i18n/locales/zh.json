@@ -594,7 +594,8 @@
       "taskNotCompleted": "任务尚未完成，请先完成任务",
       "verifyFailed": "验证失败，请稍后重试",
       "pointsEarned": "+{{points}}积分",
-      "loadFailed": "加载积分历史失败:"
+      "loadFailed": "加载积分历史失败:",
+      "videosRemaining": "还有 {{count}} 个视频未观看"
     },
     "dailyTasks": {
       "like": {
