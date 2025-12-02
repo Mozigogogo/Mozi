@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Row, Col, Card, Tabs, Table, Tag, Carousel, Statistic, Progress } from 'antd';
+import { Row, Col, Card, Tabs, Table, Tag, Carousel } from 'antd';
 import { 
-  FireOutlined, 
   RiseOutlined, 
   FallOutlined,
   HeartOutlined,
@@ -16,6 +15,8 @@ import Image from 'next/image';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import styles from './index.module.less';
+import MarketDistribution from '../MarketDistribution';
+import TopicHotList from '../TopicHotList';
 
 // CDN 图片前缀
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
@@ -35,13 +36,6 @@ const derivativeIcons = {
   volume: `${CDN_PREFIX}/icon/volume-transaction.png`,
 };
 
-// 奖牌图标
-const rankMedals = [
-  `${CDN_PREFIX}/icon/gold.png`,
-  `${CDN_PREFIX}/icon/silver.png`,
-  `${CDN_PREFIX}/icon/copper.png`,
-];
-
 /**
  * PC端首页内容组件
  */
@@ -51,16 +45,18 @@ export default function PCHome() {
   const isEN = (i18n?.language || '').startsWith('en');
 
   // 状态
-  const [hotTopics, setHotTopics] = useState([]);
-  const [topicsLoading, setTopicsLoading] = useState(false);
   const [rankData, setRankData] = useState([]);
   const [rankLoading, setRankLoading] = useState(false);
   const [activeRankTab, setActiveRankTab] = useState('zhangfu');
-  const [marketStats, setMarketStats] = useState({
-    fearGreed: 76,
-    btcDominance: 54.30,
-    btcChange: 1.2,
-  });
+  const [activeBanner, setActiveBanner] = useState(0);
+
+  // 自动轮播
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveBanner((prev) => (prev + 1) % HOME_BANNERS_ZH.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
 
   // 合约专区数据
   const derivativeItems = [
@@ -125,22 +121,6 @@ export default function PCHome() {
     },
   ];
 
-  // 获取话题热榜
-  const fetchHotTopics = async () => {
-    setTopicsLoading(true);
-    try {
-      const res = await request({
-        url: Interface.HOT_TOPICS_API || '/topic/hot',
-        data: { pageSize: 10 },
-      });
-      setHotTopics(res?.data?.data || res?.data || []);
-    } catch (e) {
-      console.error('获取话题热榜失败:', e);
-    } finally {
-      setTopicsLoading(false);
-    }
-  };
-
   // 获取榜单数据
   const fetchRankData = async (rankType = 'zhangfu') => {
     setRankLoading(true);
@@ -172,7 +152,6 @@ export default function PCHome() {
   };
 
   useEffect(() => {
-    fetchHotTopics();
     fetchRankData('zhangfu');
   }, []);
 
@@ -183,16 +162,34 @@ export default function PCHome() {
 
   return (
     <div className={styles.pcHome}>
-      {/* Banner 轮播 */}
-      <Card className={styles.bannerCard} bodyStyle={{ padding: 0 }}>
-        <Carousel autoplay>
-          {HOME_BANNERS_ZH.map((url, idx) => (
-            <div key={idx}>
-              <img src={url} alt={`banner-${idx}`} className={styles.bannerImg} />
-            </div>
+      {/* Banner 3D轮播 */}
+      <div className={styles.bannerWrapper}>
+        <div className={styles.carousel3d}>
+          {HOME_BANNERS_ZH.map((url, idx) => {
+            const position = (idx - activeBanner + HOME_BANNERS_ZH.length) % HOME_BANNERS_ZH.length;
+            let posClass = '';
+            if (position === 0) posClass = styles.active;
+            else if (position === 1) posClass = styles.next;
+            else if (position === HOME_BANNERS_ZH.length - 1) posClass = styles.prev;
+            else posClass = styles.hidden;
+            
+            return (
+              <div key={idx} className={`${styles.carouselItem} ${posClass}`} onClick={() => setActiveBanner(idx)}>
+                <img src={url} alt={`banner-${idx}`} />
+              </div>
+            );
+          })}
+        </div>
+        <div className={styles.carouselDots}>
+          {HOME_BANNERS_ZH.map((_, idx) => (
+            <span 
+              key={idx} 
+              className={`${styles.dot} ${idx === activeBanner ? styles.dotActive : ''}`}
+              onClick={() => setActiveBanner(idx)}
+            />
           ))}
-        </Carousel>
-      </Card>
+        </div>
+      </div>
 
       {/* 合约专区 - 4列 */}
       <Row gutter={16} className={styles.derivativeRow}>
@@ -216,103 +213,13 @@ export default function PCHome() {
         ))}
       </Row>
 
-      {/* 投资机会 / 话题热榜 */}
-      <Card className={styles.topicsCard}>
-        <div className={styles.sectionHeader}>
-          <Tabs
-            activeKey="topics"
-            items={[
-              { key: 'opportunity', label: '投资机会' },
-              { key: 'topics', label: '话题热榜' },
-            ]}
-          />
-          <a className={styles.moreLink} onClick={() => router.push('/community')}>
-            查看更多 <RightOutlined />
-          </a>
-        </div>
+      {/* 投资机会 / 话题热榜 - 使用共享组件 */}
+      <TopicHotList isPC={true} />
 
-        {/* 话题卡片 - 4列 */}
-        <Row gutter={16}>
-          {(hotTopics.length > 0 ? hotTopics.slice(0, 4) : Array(4).fill({})).map((topic, idx) => (
-            <Col span={6} key={topic.id || idx}>
-              <Card className={styles.topicCard} hoverable>
-                <div className={styles.topicRank}>
-                  {idx < 3 ? (
-                    <img src={rankMedals[idx]} alt={`rank-${idx + 1}`} className={styles.medalIcon} />
-                  ) : (
-                    <span className={styles.rankNum}>{String(idx + 1).padStart(2, '0')}</span>
-                  )}
-                </div>
-                <div className={styles.topicTitle}>{topic.title || '暂无话题'}</div>
-                <div className={styles.topicDesc}>{topic.desc || topic.description || '敬请期待'}</div>
-                <div className={styles.topicMeta}>
-                  <span className={styles.topicHot}>
-                    <FireOutlined /> {topic.discussionCount || 0} 讨论
-                  </span>
-                  <span className={styles.topicDate}>{topic.createdAt?.slice(0, 10) || '--'}</span>
-                </div>
-              </Card>
-            </Col>
-          ))}
-        </Row>
-      </Card>
-
-      {/* 涨跌分布 - 3列 */}
-      <Row gutter={16} className={styles.statsRow}>
-        <Col span={12}>
-          <Card title="涨跌分布" extra={<span className={styles.updateTime}>12.12 09:58 更新</span>}>
-            <div className={styles.statsLegend}>
-              <span className={styles.upCount}><RiseOutlined /> 上涨 1213</span>
-              <span className={styles.flatCount}>平 106</span>
-              <span className={styles.downCount}><FallOutlined /> 下跌 1213</span>
-            </div>
-            <div className={styles.chartPlaceholder}>
-              {/* 柱状图占位 - 后续接入 echarts */}
-              <div className={styles.barChart}>
-                {[100, 100, 79, 79, 3022, 288, 106, 28, 24, 50].map((h, i) => (
-                  <div 
-                    key={i} 
-                    className={`${styles.bar} ${i < 4 ? styles.downBar : styles.upBar}`}
-                    style={{ height: `${Math.min(h / 30, 100)}%` }}
-                  />
-                ))}
-              </div>
-            </div>
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card className={styles.fearGreedCard}>
-            <div className={styles.fearGreedTitle}>恐惧贪婪指数</div>
-            <Progress
-              type="dashboard"
-              percent={marketStats.fearGreed}
-              format={(percent) => (
-                <div className={styles.fearGreedValue}>
-                  <div className={styles.fearGreedNum}>{percent}</div>
-                  <div className={styles.fearGreedLabel}>贪婪</div>
-                </div>
-              )}
-              strokeColor="#11B787"
-              trailColor="#f0f0f0"
-              size={140}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card className={styles.btcDominanceCard}>
-            <div className={styles.btcTitle}>BTC市场占有率</div>
-            <Statistic 
-              value={marketStats.btcDominance} 
-              precision={2} 
-              suffix="%" 
-              className={styles.btcValue}
-            />
-            <Tag color="success" className={styles.btcChange}>
-              <RiseOutlined /> +{marketStats.btcChange}%
-            </Tag>
-          </Card>
-        </Col>
-      </Row>
+      {/* 涨跌分布 - 使用移动端组件，PC端左右布局 */}
+      <div className={styles.marketDistributionWrapper}>
+        <MarketDistribution isPC={true} />
+      </div>
 
       {/* 实时榜单 */}
       <Card className={styles.rankCard}>

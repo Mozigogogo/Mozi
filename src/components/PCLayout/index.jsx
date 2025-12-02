@@ -215,22 +215,11 @@ export default function PCLayout({ children }) {
         </Sider>
 
         {/* 右侧 Content */}
-        <Content className={styles.content}>
+        <Content className={`${styles.content} ${collapsed ? styles.contentCollapsed : ''}`}>
           {children}
         </Content>
       </Layout>
 
-      {/* 底部 Footer */}
-      <Footer className={styles.footer}>
-        <div className={styles.footerInner}>
-          <div className={styles.links}>
-            <Link href="#">关于我们</Link>
-            <Link href="#">联系我们</Link>
-            <Link href="#">帮助中心</Link>
-          </div>
-          <Text type="secondary">© 2024 MoziInnovations. All rights reserved.</Text>
-        </div>
-      </Footer>
     </Layout>
   );
 }
