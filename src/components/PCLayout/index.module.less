@@ -172,6 +172,11 @@
   overflow: auto;
   background: #fff;
   border-right: 1px solid #f0f0f0;
+
+  :global(.ant-layout-sider-children) {
+    display: flex;
+    flex-direction: column;
+  }
 }
 
 .user {
@@ -187,20 +192,54 @@
   white-space: nowrap;
 }
 
-.createBtn {
-  padding: 16px;
+/* 侧边栏底部 */
+.siderFooter {
   margin-top: auto;
+  padding: 16px;
+  border-top: 1px solid #f0f0f0;
+}
 
-  :global(.ant-btn-primary) {
-    background: #11B787;
-    border-color: #11B787;
-    border-radius: 20px;
-    height: 40px;
+.footerLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-bottom: 12px;
+
+  a {
+    color: #666;
+    font-size: 12px;
+    text-decoration: none;
 
     &:hover {
-      background: #0ea678;
-      border-color: #0ea678;
+      color: #11B787;
     }
+  }
+}
+
+.socialIcons {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.socialIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+
+  img {
+    width: 16px;
+    height: 16px;
+    filter: brightness(0) invert(1);
+  }
+
+  &:hover {
+    background: #11B787;
   }
 }
 

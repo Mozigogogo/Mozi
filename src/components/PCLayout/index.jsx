@@ -81,19 +81,26 @@ export default function PCLayout({ children }) {
   // 菜单项配置
   const menuItems = [
     { key: '/', icon: <HomeOutlined />, label: '首页' },
-    { key: '/find', icon: <CompassOutlined />, label: '发现' },
+    { key: '/find', icon: <LineChartOutlined />, label: '发现' },
     { key: '/community', icon: <TeamOutlined />, label: '社区' },
     { type: 'divider' },
     {
-      key: 'data',
-      label: '数据',
+      key: 'mine',
+      label: '我的',
       type: 'group',
       children: [
-        { key: '/mycomments', icon: <MessageOutlined />, label: '我的评论' },
-        { key: '/mylikes', icon: <HeartOutlined />, label: '我的收藏' },
-        { key: '/mywarn', icon: <BellOutlined />, label: '我的订阅' },
-        { key: '/selfrank', icon: <LineChartOutlined />, label: '我的赛道' },
+        { key: '/selfrank', icon: <PlusOutlined />, label: '我的自选' },
+        { key: '/mywarn', icon: <BellOutlined />, label: '我的报警' },
+        { key: '/subscribe', icon: <MessageOutlined />, label: '我的订阅' },
+        { key: '/achievement', icon: <HeartOutlined />, label: '我的成就' },
       ],
+    },
+    { type: 'divider' },
+    {
+      key: 'coinlist',
+      label: '创建的币单',
+      type: 'group',
+      children: [],
     },
   ];
 
@@ -165,6 +172,7 @@ export default function PCLayout({ children }) {
           collapsed={collapsed}
           onCollapse={setCollapsed}
           theme="light"
+          trigger={null}
         >
           {/* 用户信息 */}
           <div className={styles.user}>
@@ -183,18 +191,27 @@ export default function PCLayout({ children }) {
             style={{ borderRight: 0 }}
           />
 
-          {/* 发帖按钮 */}
-          <div className={styles.createBtn}>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              block={!collapsed}
-              shape={collapsed ? 'circle' : 'default'}
-              onClick={() => router.push('/post')}
-            >
-              {!collapsed && '创建帖子'}
-            </Button>
-          </div>
+          {/* 底部链接和社交图标 */}
+          {!collapsed && (
+            <div className={styles.siderFooter}>
+              <div className={styles.footerLinks}>
+                <a href="#">关于我们</a>
+                <a href="#">服务</a>
+                <a href="#">联盟计划</a>
+              </div>
+              <div className={styles.footerLinks}>
+                <a href="#">邀请奖励</a>
+                <a href="#">帮助中心</a>
+                <a href="#">Video Guides</a>
+              </div>
+              <div className={styles.socialIcons}>
+                <a href="#" className={styles.socialIcon}><img src="/icons/telegram-group.svg" alt="Telegram" /></a>
+                <a href="#" className={styles.socialIcon}><img src="/icons/x-logo.svg" alt="X" /></a>
+                <a href="#" className={styles.socialIcon}><img src="/icons/discord.svg" alt="Discord" /></a>
+                <a href="#" className={styles.socialIcon}><img src="/icons/xiaohongshu.svg" alt="小红书" /></a>
+              </div>
+            </div>
+          )}
         </Sider>
 
         {/* 右侧 Content */}
