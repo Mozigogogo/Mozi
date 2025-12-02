@@ -16,6 +16,29 @@ export default function WhitelistPage() {
   const [resendLoading, setResendLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [wechatModalVisible, setWechatModalVisible] = useState(false);
+  const [modalWidth, setModalWidth] = useState(320);
+  const [qrcodeSize, setQrcodeSize] = useState(240);
+
+  // 根据屏幕尺寸动态设置弹窗和二维码大小
+  useEffect(() => {
+    const updateSizes = () => {
+      const width = window.innerWidth;
+      if (width >= 1200) {
+        setModalWidth(480);
+        setQrcodeSize(380);
+      } else if (width >= 768) {
+        setModalWidth(360);
+        setQrcodeSize(280);
+      } else {
+        setModalWidth(320);
+        setQrcodeSize(240);
+      }
+    };
+    
+    updateSizes();
+    window.addEventListener('resize', updateSizes);
+    return () => window.removeEventListener('resize', updateSizes);
+  }, []);
 
   // 根据系统语言自动设置
   useEffect(() => {
@@ -484,12 +507,12 @@ export default function WhitelistPage() {
           onCancel={() => setWechatModalVisible(false)}
           footer={null}
           centered
-          width={320}
+          width={modalWidth}
           title={t('whitelist.scanQrcode')}
           className={styles.wechatModal}
         >
           <div className={styles.qrcodeContainer}>
-            <img src={wechatQrcode.src} alt="WeChat QR Code" className={styles.qrcodeImage} />
+            <img src={wechatQrcode.src} alt="WeChat QR Code" className={styles.qrcodeImage} style={{ width: qrcodeSize, height: qrcodeSize }} />
           </div>
         </Modal>
       </div>
