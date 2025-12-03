@@ -8,7 +8,7 @@ import FearGreedIndex from './FearGreedIndex';
 import BTCMarketShare from './BTCMarketShare';
 import styles from './index.module.less';
 
-export default function MarketDistribution({ showUpdateTime = true }) {
+export default function MarketDistribution({ showUpdateTime = true, isPC = false }) {
   const { t } = useTranslation();
   const title = t('market.marketDistribution');
   // 恐慌贪婪指数
@@ -183,6 +183,48 @@ export default function MarketDistribution({ showUpdateTime = true }) {
     console.log('恐慌贪婪指数被点击');
   };
 
+  // PC端布局：左右分布
+  if (isPC) {
+    return (
+      <div className={`${styles.marketDistributionWrapper} ${styles.pcMode}`}>
+        {/* 标题区域 */}
+        <div className={styles.distributionHeader}>
+          <div className={styles.distributionTitle}>{title}</div>
+          {showUpdateTime && (
+            <div className={styles.distributionUpdateTime}>
+              {loading ? t('common.loading') : distributionData.updateTime}
+            </div>
+          )}
+        </div>
+
+        {/* PC端左右布局 */}
+        <div className={styles.pcContent}>
+          {/* 左侧：涨跌分布柱状图 */}
+          <div className={styles.pcLeft}>
+            <DistributionChart 
+              chartData={distributionData.chartData}
+              statistics={distributionData.statistics}
+            />
+          </div>
+
+          {/* 右侧：恐惧贪婪指数 + BTC市场占有率 */}
+          <div className={styles.pcRight}>
+            <FearGreedIndex 
+              index={fearGreedIndex}
+              category={fearGreedCategory}
+              onClick={handleFearGreedClick}
+            />
+            <BTCMarketShare 
+              percentage={distributionData.btcMarketShare.percentage}
+              change={distributionData.btcMarketShare.change}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 移动端布局：上下分布
   return (
     <div className={styles.marketDistributionWrapper}>
       {/* 标题区域 - 独立出来 */}

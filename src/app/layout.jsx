@@ -8,6 +8,7 @@ import WalletAccountSync from "@/components/WalletAccountSync";
 import I18nProvider from "@/components/I18nProvider";
 import { LogoLoading } from "@/components/Loading";
 import VConsoleLoader from "@/components/VConsole";
+import InviteCodeHandler from "@/components/InviteCodeHandler";
 
 const geistSans = Inter({
   variable: "--font-geist-sans",
@@ -38,6 +39,9 @@ export default function RootLayout({ children }) {
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <VConsoleLoader />
+        <Suspense fallback={null}>
+          <InviteCodeHandler />
+        </Suspense>
         <ThemeProvider>
           <I18nProvider>
             <TonConnectProvider>

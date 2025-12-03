@@ -28,6 +28,17 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
     setMode(initialMode);
   }, [initialMode]);
 
+  // 自动获取存储的邀请码
+  useEffect(() => {
+    if (visible) {
+      const storedInviteCode = localStorage.getItem('inviteCode');
+      if (storedInviteCode) {
+        setInviteCode(storedInviteCode);
+        console.log('🔍 [LoginModal] 自动填充邀请码:', storedInviteCode);
+      }
+    }
+  }, [visible]);
+
   // 清理定时器
   useEffect(() => {
     return () => {
@@ -141,6 +152,19 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
         if (res?.data?.userId) {
           localStorage.setItem('userId', res.data.userId);
         }
+        
+        // 登录成功后，调用每日登录任务完成接口
+        try {
+          await request({
+            url: Interface.TASK_COMPLETE,
+            method: 'POST',
+            data: { taskCode: 'DAILY_LOGIN' }
+          });
+          console.log('🔍 [DEBUG] 每日登录任务上报成功');
+        } catch (taskError) {
+          console.error('每日登录任务上报失败:', taskError);
+        }
+        
         Toast.show({ content: t('auth.loginSuccess'), position: 'center', icon: 'success' });
         onLoginSuccess?.();
         handleClose();
@@ -229,6 +253,19 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
         if (res?.data?.userId) {
           localStorage.setItem('userId', res.data.userId);
         }
+        
+        // 登录成功后，调用每日登录任务完成接口
+        try {
+          await request({
+            url: Interface.TASK_COMPLETE,
+            method: 'POST',
+            data: { taskCode: 'DAILY_LOGIN' }
+          });
+          console.log('🔍 [DEBUG] 每日登录任务上报成功');
+        } catch (taskError) {
+          console.error('每日登录任务上报失败:', taskError);
+        }
+        
         Toast.show({ content: t('auth.loginSuccess'), position: 'center', icon: 'success' });
         onLoginSuccess?.();
         handleClose();

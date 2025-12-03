@@ -43,6 +43,8 @@
     "derivatives": "Derivatives",
     "rankList": "Rank List",
     "opportunities": "Opportunities",
+    "investmentOpportunity": "Investment Opportunity",
+    "topicHot": "Hot Topics",
     "notice": "Welcome to Mozi Crypto Market Community",
     "aiNotice": "AI analyzes trends—set precise alerts.",
     "searchPlaceholder": "Enter the coin to search",
@@ -535,7 +537,7 @@
     "copyFailed": "Copy Failed",
     "historyFeatureInDevelopment": "History feature in development",
     "moziSlogan": "Free Trading, Unlimited",
-    "fanRewardsTitle": "Earn Points by Completing Tasks",
+    "fanRewardsTitle": "Daily Reward Tasks",
     "earnMorePoints": "Earn More Points",
     "dailyInvestmentTitle": "Daily Investment Ranking",
     "taskCompleted": "Task Completed",
@@ -551,7 +553,7 @@
     "pleaseRegister": "Please register first",
     "joinAlarmSubtitle": "Add an alarm",
     "certificationSubtitle": "Identity verification",
-    "dailyRewardTasksTitle": "Daily reward tasks",
+    "dailyRewardTasksTitle": "Earn Points by Tasks",
     "tasks": {
       "firstRegister": {
         "title": "First Registration",
@@ -577,6 +579,14 @@
         "title": "Complete Video Learning",
         "button": "Start"
       },
+      "dailyLogin": {
+        "title": "Daily Login",
+        "button": "Login"
+      },
+      "inviteUser": {
+        "title": "Invite Friends",
+        "button": "Invite"
+      },
       "verify": "Verify",
       "completed": "Completed"
     },
@@ -584,7 +594,8 @@
       "taskNotCompleted": "Task not completed, please complete the task first",
       "verifyFailed": "Verification failed, please try again later",
       "pointsEarned": "+{{points}} Points",
-      "loadFailed": "Failed to load points history:"
+      "loadFailed": "Failed to load points history:",
+      "videosRemaining": "{{count}} videos remaining"
     },
     "dailyTasks": {
       "like": {

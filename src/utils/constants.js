@@ -3,6 +3,18 @@ import { WS_URL as CONFIG_WS_URL } from '../../config/index.js';
 // 通用兜底提示语
 export const COMMON_MSG = '网络繁忙，请稍后再试';
 
+// 判断是否为正式环境
+const isProduction = process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_APP_ENV === 'production';
+
+// Telegram Bot 用户名（根据环境切换）
+export const TG_BOT_USERNAME = isProduction ? 'Moziinovations_bot' : 'test_moz_bot';
+
+// 生成 TG 邀请链接
+export const getTgInviteLink = (inviteCode) => {
+  if (!inviteCode) return '';
+  return `https://t.me/${TG_BOT_USERNAME}?start=${inviteCode}`;
+};
+
 // 接口基础URL - 使用代理路径避免跨域
 export const INTERFACE_URL = '/api';
 
@@ -128,6 +140,8 @@ export const Interface = {
   SEND_EMAIL_CODE: '/user/email/code',
   // 用户信息
   USER_INFO: '/user/info',
+  // 用户详细数据（含邀请码）
+  USER_DATA_INFO: '/user/datainfo',
   // 更新用户信息
   UPDATE_USER_INFO: '/user/info',
   // 编辑用户主题
@@ -250,6 +264,20 @@ export const Interface = {
   
   // 删除告警
   DELETE_ALARM: '/alarm/delete',
+
+  // 积分
+  // 获取用户积分
+  TASK_POINTS: '/task/points',
+  // 获取积分历史记录
+  TASK_POINTS_HISTORY: '/task/points/history',
+  // 获取任务列表
+  TASK_LIST: '/task/list',
+  // 获取积分榜单
+  TASK_RANKING: '/task/ranking',
+  // 获取邀请列表
+  TASK_INVITATION_LIST: '/task/invitation/list',
+  // 完成任务
+  TASK_COMPLETE: '/task/complete',
 };
 
 // 业务中使用到的联系邮箱和链上地址（打包报错缺失导出）

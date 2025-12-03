@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Toast } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import Layout from '../../components/Layout';
+import { request } from '../../utils/request';
+import { Interface } from '../../utils/constants';
 import styles from './page.module.less';
 
 export default function PointsRank() {
@@ -14,48 +16,55 @@ export default function PointsRank() {
   const [loading, setLoading] = useState(false);
   const [rankData, setRankData] = useState({});
 
-  // 模拟数据生成器
-  const makeList = (basePoints) => {
-    const avatars = [
-      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
-      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face',
-      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
-      'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop&crop=face',
-      'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face',
-      'https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=100&h=100&fit=crop&crop=face',
-      'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop&crop=face'
-    ];
-    
-    return Array.from({ length: 25 }).map((_, idx) => {
-      const rank = idx + 1;
-      return {
-        id: rank,
-        name: rank === 25 ? '牛爷爷' : (rank === 3 ? 'GGBond' : rank === 4 ? '超人强' : '张三'),
-        avatar: avatars[idx % avatars.length],
-        points: basePoints - (rank - 1) * 10,
-        rank,
-        isMe: rank === 25
-      };
-    });
-  };
+  // 默认头像
+  const defaultAvatar = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face';
 
-  const mockData = {
-    daily: makeList(2000),
-    monthly: makeList(5200),
-    total: makeList(10000)
-  };
-
-  useEffect(() => {
-    loadRankData();
+  // 获取排行榜数据
+  const fetchRankData = useCallback(async (type) => {
+    try {
+      const res = await request({
+        url: Interface.TASK_RANKING,
+        method: 'GET',
+        params: {
+          type: type,
+          limit: 50
+        }
+      });
+      
+      if (res?.code === 0 && res?.data) {
+        const rankings = res.data.rankings || res.data || [];
+        // 映射接口数据到组件格式
+        return rankings.map((item, index) => ({
+          id: item.userId || index + 1,
+          name: item.nickname || item.userName || '匿名用户',
+          avatar: item.avatar || defaultAvatar,
+          points: item.totalPoints || item.dailyPoints || item.monthlyPoints || 0,
+          rank: item.rank || index + 1,
+          isMe: item.isCurrentUser || false
+        }));
+      }
+      return [];
+    } catch (error) {
+      console.error(`获取${type}排行榜失败:`, error);
+      return [];
+    }
   }, []);
 
+  // 加载所有类型的排行榜数据
   const loadRankData = useCallback(async () => {
     setLoading(true);
     try {
-      // 模拟API调用延迟
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setRankData(mockData);
+      const [dailyList, monthlyList, totalList] = await Promise.all([
+        fetchRankData('daily'),
+        fetchRankData('monthly'),
+        fetchRankData('total')
+      ]);
+      
+      setRankData({
+        daily: dailyList,
+        monthly: monthlyList,
+        total: totalList
+      });
     } catch (error) {
       console.error('加载排行榜数据失败:', error);
       Toast.show({
@@ -65,7 +74,11 @@ export default function PointsRank() {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, t]);
+  }, [fetchRankData, t]);
+
+  useEffect(() => {
+    loadRankData();
+  }, [loadRankData]);
 
   const handleTabChange = (key) => {
     setActiveTab(key);

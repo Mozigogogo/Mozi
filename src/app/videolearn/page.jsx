@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Toast } from 'antd-mobile';
 import { LeftOutline } from 'antd-mobile-icons';
 import { useTranslation } from 'react-i18next';
 import CustomVideo from '../../components/CustomVideo';
+import { request } from '../../utils/request';
+import { Interface } from '../../utils/constants';
 import styles from './page.module.less';
 
 export default function VideoLearnPage() {
@@ -61,6 +63,31 @@ export default function VideoLearnPage() {
     }
   }, []);
 
+  // 调用视频任务完成接口
+  const completeVideoTask = useCallback(async () => {
+    try {
+      console.log('🔍 [DEBUG] 所有视频已看完，调用任务完成接口');
+      const res = await request({
+        url: Interface.TASK_COMPLETE,
+        method: 'POST',
+        data: { taskCode: 'VIDEO' }
+      });
+      console.log('🔍 [DEBUG] 视频任务完成结果:', res);
+      
+      if (res?.code === 0) {
+        Toast.show({
+          content: t('videoLearn.messages.allCompleted') || '恭喜！已完成所有视频学习任务',
+          icon: 'success',
+          duration: 3000
+        });
+        // 标记任务已完成
+        localStorage.setItem('videoTaskCompleted', 'true');
+      }
+    } catch (error) {
+      console.error('视频任务完成接口调用失败:', error);
+    }
+  }, [t]);
+
   const handleVideoEnd = () => {
     const videoId = videos[currentVideo].id;
     
@@ -83,6 +110,16 @@ export default function VideoLearnPage() {
       icon: 'success',
       duration: 2000
     });
+
+    // 检查是否所有视频都已完成
+    const allCompleted = videos.every(v => newCompleted[v.id]);
+    if (allCompleted) {
+      // 检查是否已经调用过完成接口
+      const taskCompleted = localStorage.getItem('videoTaskCompleted');
+      if (!taskCompleted) {
+        completeVideoTask();
+      }
+    }
   };
 
   // 视频错误回调

@@ -365,12 +365,15 @@
         justify-content: space-between;
         gap: 10px;
         flex: 1;
+        min-width: 0; // 允许 flex 子元素收缩
+        overflow: hidden;
         
         .inviteInputText {
           font-size: 12px;
           color: #fff;
           font-family: monospace;
           flex: 1;
+          min-width: 0; // 允许文本收缩
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;

@@ -1,9 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { LeftOutline } from 'antd-mobile-icons';
+import { Toast } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
+import { request } from '../../utils/request';
+import { Interface } from '../../utils/constants';
 import styles from './page.module.less';
 
 export default function PointsHistoryPage() {
@@ -11,110 +14,78 @@ export default function PointsHistoryPage() {
   const { t } = useTranslation();
   const [historyList, setHistoryList] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  // CDN 图片资源
-  const CDN_BASE = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/point';
-
-  // 模拟数据（实际应该从接口获取）
-  const mockHistory = [
-    {
-      id: 1,
-      type: 'task',
-      typeName: '任务奖励',
-      title: '完成视频学习',
-      points: 50,
-      status: 'add',
-      createTime: '2025-10-14 10:30:25'
-    },
-    {
-      id: 2,
-      type: 'task',
-      typeName: '任务奖励',
-      title: '设置报警功能',
-      points: 100,
-      status: 'add',
-      createTime: '2025-10-14 09:15:10'
-    },
-    {
-      id: 3,
-      type: 'daily',
-      typeName: '每日任务',
-      title: '每日点赞',
-      points: 4,
-      status: 'add',
-      createTime: '2025-10-14 08:20:00'
-    },
-    {
-      id: 4,
-      type: 'daily',
-      typeName: '每日任务',
-      title: '发帖',
-      points: 10,
-      status: 'add',
-      createTime: '2025-10-13 20:45:30'
-    },
-    {
-      id: 5,
-      type: 'invite',
-      typeName: '邀请奖励',
-      title: '邀请好友成功',
-      points: 500,
-      status: 'add',
-      createTime: '2025-10-13 16:30:00'
-    },
-    {
-      id: 6,
-      type: 'daily',
-      typeName: '每日任务',
-      title: '收到赞',
-      points: 4,
-      status: 'add',
-      createTime: '2025-10-13 14:25:15'
-    },
-    {
-      id: 7,
-      type: 'task',
-      typeName: '任务奖励',
-      title: '加入社群',
-      points: 50,
-      status: 'add',
-      createTime: '2025-10-12 11:10:20'
-    },
-    {
-      id: 8,
-      type: 'task',
-      typeName: '任务奖励',
-      title: '首次注册账号',
-      points: 50,
-      status: 'add',
-      createTime: '2025-10-12 10:00:00'
-    }
-  ];
-
-  useEffect(() => {
-    loadHistoryData();
-  }, []);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const scrollRef = useRef(null);
+  const PAGE_SIZE = 20;
 
   // 加载历史数据
-  const loadHistoryData = async () => {
+  const loadHistoryData = useCallback(async (pageNum = 1, isLoadMore = false) => {
     try {
-      setLoading(true);
+      if (isLoadMore) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
       
-      // TODO: 调用真实接口
-      // const { data } = await request({
-      //   url: '/api/points/history',
-      //   method: 'GET'
-      // })
+      const res = await request({
+        url: Interface.TASK_POINTS_HISTORY,
+        method: 'GET',
+        params: {
+          page: pageNum,
+          size: PAGE_SIZE
+        }
+      });
       
-      // 模拟数据加载
-      setTimeout(() => {
-        setHistoryList(mockHistory);
-        setLoading(false);
-      }, 500);
-      
+      if (res?.code === 0 && res?.data) {
+        const newList = res.data.list || res.data || [];
+        
+        if (isLoadMore) {
+          setHistoryList(prev => [...prev, ...newList]);
+        } else {
+          setHistoryList(newList);
+        }
+        
+        // 判断是否还有更多数据
+        const total = res.data.total || 0;
+        const currentTotal = isLoadMore ? historyList.length + newList.length : newList.length;
+        setHasMore(currentTotal < total || newList.length >= PAGE_SIZE);
+        setPage(pageNum);
+      } else {
+        if (!isLoadMore) {
+          setHistoryList([]);
+        }
+        setHasMore(false);
+      }
     } catch (error) {
       console.error('加载积分历史失败:', error);
+      Toast.show({
+        content: t('pointsHistory.loadFailed') || '加载失败',
+        icon: 'fail'
+      });
+    } finally {
       setLoading(false);
+      setLoadingMore(false);
+    }
+  }, [t, historyList.length]);
+
+  useEffect(() => {
+    loadHistoryData(1, false);
+  }, []);
+
+  // 加载更多
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMore) {
+      loadHistoryData(page + 1, true);
+    }
+  };
+
+  // 滚动加载更多
+  const handleScroll = (e) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.target;
+    if (scrollHeight - scrollTop - clientHeight < 100 && hasMore && !loadingMore) {
+      handleLoadMore();
     }
   };
 
@@ -157,7 +128,7 @@ export default function PointsHistoryPage() {
         </div>
 
         {/* 历史记录列表 */}
-        <div className={styles.historyScroll}>
+        <div className={styles.historyScroll} ref={scrollRef} onScroll={handleScroll}>
           {historyList.length === 0 && !loading && (
             <div className={styles.emptyState}>
               <div className={styles.emptyText}>{t('pointsHistory.empty')}</div>
@@ -189,13 +160,13 @@ export default function PointsHistoryPage() {
             </div>
           ))}
 
-          {loading && (
+          {(loading || loadingMore) && (
             <div className={styles.loadingMore}>
               <span>{t('common.loading')}</span>
             </div>
           )}
 
-          {!loading && historyList.length > 0 && (
+          {!loading && !loadingMore && historyList.length > 0 && !hasMore && (
             <div className={styles.noMore}>
               <span>{t('common.noMore')}</span>
             </div>

@@ -102,6 +102,66 @@ export default function Addwarn() {
     }));
   };
 
+  // 检查是否可以完成每日任务（每天早上9点刷新）
+  const canCompleteDailyTask = () => {
+    if (typeof window === 'undefined') return false;
+    
+    const lastCompleteTime = localStorage.getItem('dailyAlarmTaskCompleteTime');
+    if (!lastCompleteTime) return true;
+    
+    const lastTime = new Date(parseInt(lastCompleteTime));
+    const now = new Date();
+    
+    // 获取今天早上9点的时间戳
+    const today9am = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 0, 0);
+    
+    // 如果当前时间在早上9点之前，则使用昨天的9点作为分界线
+    const resetTime = now.getHours() < 9 
+      ? new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 9, 0, 0)
+      : today9am;
+    
+    // 如果上次完成时间在分界线之前，则可以再次完成
+    return lastTime < resetTime;
+  };
+
+  // 完成每日告警任务
+  const completeDailyAlarmTask = async () => {
+    // 检查今天是否已完成
+    if (!canCompleteDailyTask()) {
+      console.log('[AddWarn] 今日告警任务已完成，无需重复提交');
+      return;
+    }
+    
+    try {
+      const res = await request({
+        url: Interface.TASK_COMPLETE,
+        method: 'POST',
+        data: {
+          taskCode: 'ALARM'  // 告警任务编码
+        }
+      });
+      
+      console.log('[AddWarn] 完成告警任务接口返回:', res);
+      
+      if (res?.code === 0 && res?.data?.success) {
+        // 记录完成时间
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('dailyAlarmTaskCompleteTime', Date.now().toString());
+        }
+        console.log('[AddWarn] 每日告警任务完成成功');
+        
+        // 显示积分奖励提示（如果接口返回了积分信息）
+        if (res?.data?.message) {
+          Toast.show({ content: res.data.message, icon: 'success' });
+        }
+      } else {
+        console.warn('[AddWarn] 完成告警任务失败:', res?.msg || res?.message);
+      }
+    } catch (error) {
+      console.error('[AddWarn] 完成告警任务接口异常:', error);
+    }
+  };
+
   // 保存告警（批量提交启用的配置项）
   const saveWarnings = async () => {
     setBtnDisabled(true);
@@ -207,6 +267,9 @@ export default function Addwarn() {
       if (addRes.code === 0 && addRes.data === true) {
         console.log('[AddWarn] 保存告警成功');
         Toast.show({ content: t('addAlarm.saveSuccess') });
+        
+        // 完成每日告警任务（每天早上9点刷新）
+        await completeDailyAlarmTask();
         return;
       }
 

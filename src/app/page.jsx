@@ -18,6 +18,8 @@ import AddMonitor from '../components/AddMonitor';
 import MarketDistribution from '../components/MarketDistribution';
 import FloatingRobot from '../components/FloatingRobot';
 import WelcomePopup from '../components/WelcomePopup';
+import PCLayout from '../components/PCLayout';
+import PCHome from '../components/PCHome';
 import { request } from '../utils/request';
 import { Interface, LOOPTIME, WS_URL } from '../utils/constants';
 import { jump2Detail, jump2Market, jump2List, jump2NoTab } from '../utils/core';
@@ -95,6 +97,18 @@ export default function HomePage() {
   const { t, i18n } = useTranslation();
   const { track } = useAmplitude('Home');
   const isEN = (i18n?.language || '').startsWith('en');
+  
+  // PC端设备检测
+  const [isPC, setIsPC] = useState(false);
+  
+  useEffect(() => {
+    const checkDevice = () => {
+      setIsPC(window.innerWidth >= 1024);
+    };
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+    return () => window.removeEventListener('resize', checkDevice);
+  }, []);
   
   // 根据语言选择 banner 图片
   const HOME_BANNERS = isEN ? HOME_BANNERS_EN : HOME_BANNERS_ZH;
@@ -872,6 +886,16 @@ export default function HomePage() {
     );
   };
 
+  // PC端渲染
+  if (isPC) {
+    return (
+      <PCLayout>
+        <PCHome />
+      </PCLayout>
+    );
+  }
+
+  // 移动端渲染
   return (
     <Layout>
       <div className={styles.indexBox}>

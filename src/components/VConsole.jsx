@@ -6,6 +6,11 @@ export default function VConsoleLoader() {
   useEffect(() => {
     // 判断是否需要启用 VConsole
     const shouldEnableVConsole = () => {
+      // PC端不显示 vConsole
+      if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+        return false;
+      }
+
       // 本地开发环境
       if (process.env.NODE_ENV === 'development') {
         return true;

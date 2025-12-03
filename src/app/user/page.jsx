@@ -713,7 +713,7 @@ export default function UserPage() {
   };
 
   // 处理登录成功
-  const handleLoginSuccess = () => {
+  const handleLoginSuccess = async () => {
     const syncLogin = () => {
       const hasToken = !!localStorage.getItem('token');
       const walletAddr = getCookie('wallet_address');
@@ -732,6 +732,18 @@ export default function UserPage() {
       }
     };
     syncLogin();
+
+    // 登录成功后，调用每日登录任务完成接口
+    try {
+      await request({
+        url: Interface.TASK_COMPLETE,
+        method: 'POST',
+        data: { taskCode: 'DAILY_LOGIN' }
+      });
+      console.log('🔍 [DEBUG] 每日登录任务上报成功');
+    } catch (taskError) {
+      console.error('每日登录任务上报失败:', taskError);
+    }
   };
 
   // 处理钱包登录

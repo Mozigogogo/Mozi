@@ -293,6 +293,21 @@ export default function PostPage() {
 
       if (response?.code === 0) {
         localStorage.setItem('needRefreshCommunity', 'true');
+        
+        // 发帖成功后，调用发帖任务完成接口（仅新帖子，不是更新）
+        if (!isUpdate) {
+          try {
+            await request({
+              url: Interface.TASK_COMPLETE,
+              method: 'POST',
+              data: { taskCode: 'POST' }
+            });
+            console.log('🔍 [DEBUG] 发帖任务上报成功');
+          } catch (taskError) {
+            console.error('发帖任务上报失败:', taskError);
+          }
+        }
+        
         Toast.show({
           content: isUpdate ? t('post.messages.updateSuccess') : t('post.messages.publishSuccess'),
           duration: 1000,
