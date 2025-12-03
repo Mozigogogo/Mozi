@@ -3,6 +3,15 @@ import { WS_URL as CONFIG_WS_URL } from '../../config/index.js';
 // 通用兜底提示语
 export const COMMON_MSG = '网络繁忙，请稍后再试';
 
+// Telegram Bot 用户名（用于生成邀请链接）
+export const TG_BOT_USERNAME = 'Moziinovations_bot';
+
+// 生成 TG 邀请链接
+export const getTgInviteLink = (inviteCode) => {
+  if (!inviteCode) return '';
+  return `https://t.me/${TG_BOT_USERNAME}?start=${inviteCode}`;
+};
+
 // 接口基础URL - 使用代理路径避免跨域
 export const INTERFACE_URL = '/api';
 
@@ -128,6 +137,8 @@ export const Interface = {
   SEND_EMAIL_CODE: '/user/email/code',
   // 用户信息
   USER_INFO: '/user/info',
+  // 用户详细数据（含邀请码）
+  USER_DATA_INFO: '/user/datainfo',
   // 更新用户信息
   UPDATE_USER_INFO: '/user/info',
   // 编辑用户主题

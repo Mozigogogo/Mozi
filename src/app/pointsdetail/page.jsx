@@ -7,7 +7,7 @@ import { ClockCircleOutline, LeftOutline } from 'antd-mobile-icons';
 import { useTranslation } from 'react-i18next';
 import Layout from '../../components/Layout';
 import { request } from '../../utils/request';
-import { Interface } from '../../utils/constants';
+import { Interface, getTgInviteLink } from '../../utils/constants';
 import styles from './page.module.less';
 
 export default function PointsDetail() {
@@ -68,6 +68,28 @@ export default function PointsDetail() {
     }
   }, [t]);
 
+  // 获取用户数据（含邀请码）
+  const fetchUserDataInfo = useCallback(async () => {
+    try {
+      const res = await request({
+        url: Interface.USER_DATA_INFO,
+        method: 'GET'
+      });
+      
+      console.log('🔍 [DEBUG] 用户数据接口返回:', res);
+      
+      if (res?.code === 0 && res?.data) {
+        const data = res.data;
+        setPointsData(prev => ({
+          ...prev,
+          inviteCode: data.inviteCode || data.invitationCode || prev.inviteCode,
+        }));
+      }
+    } catch (error) {
+      console.error('获取用户数据失败:', error);
+    }
+  }, []);
+
   // 获取邀请列表数据
   const fetchInvitationList = useCallback(async () => {
     try {
@@ -96,11 +118,12 @@ export default function PointsDetail() {
     }
   }, []);
 
-  // 页面加载时获取积分数据和邀请列表
+  // 页面加载时获取积分数据、用户数据和邀请列表
   useEffect(() => {
     fetchPointsData();
+    fetchUserDataInfo();
     fetchInvitationList();
-  }, [fetchPointsData, fetchInvitationList]);
+  }, [fetchPointsData, fetchUserDataInfo, fetchInvitationList]);
 
   // 使用函数延迟初始化任务列表，确保 t() 在组件渲染时可用
   const getInitialTasks = () => [
@@ -164,6 +187,7 @@ export default function PointsDetail() {
         const tasks = res.data.activityTaskList || [];
         // 将接口数据映射到组件需要的格式
         const mappedTasks = tasks
+          .filter(task => task.taskCode !== 'WECHAT' && task.taskCode !== 'INVITE_USER') // 过滤掉 WECHAT 和邀请好友任务不展示
           .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
           .map((task, index) => {
             const taskKey = taskKeyMap[task.taskCode] || 'setAlarm';
@@ -437,7 +461,8 @@ export default function PointsDetail() {
         }
         break;
       case 'WECHAT':
-        // 关注公众号 - 跳转到 Twitter
+      case 'TWITTER':
+        // 关注 Twitter 官方账号
         window.open('https://x.com/Innovation56171', '_blank');
         break;
       case 'COMMUNITY':
@@ -456,9 +481,10 @@ export default function PointsDetail() {
         }
         break;
       case 'INVITE_USER':
-        // 邀请好友 - 复制邀请链接
-        if (pointsData.inviteLink) {
-          navigator.clipboard.writeText(pointsData.inviteLink);
+        // 邀请好友 - 复制 TG 邀请链接
+        const tgLink = getTgInviteLink(pointsData.inviteCode);
+        if (tgLink) {
+          navigator.clipboard.writeText(tgLink);
           Toast.show({ content: t('pointsDetail.linkCopied'), position: 'bottom' });
         }
         break;
@@ -579,9 +605,9 @@ export default function PointsDetail() {
             <div className={styles.inviteInputBox}>
               <div className={styles.inviteInputLabel}>{t('pointsDetail.inviteLink')}</div>
               <div className={styles.inviteInputContent}>
-                <span className={styles.inviteInputText}>{pointsData.inviteLink}</span>
+                <span className={styles.inviteInputText}>{getTgInviteLink(pointsData.inviteCode)}</span>
                 <button 
-                  onClick={() => copyToClipboard(pointsData.inviteLink, t('pointsDetail.inviteLink'))} 
+                  onClick={() => copyToClipboard(getTgInviteLink(pointsData.inviteCode), t('pointsDetail.inviteLink'))} 
                   className={styles.copyIconBtn}>
                   <img src="/point/copy@2x.png" alt="Copy" className={styles.copyIcon} />
                 </button>
@@ -610,16 +636,6 @@ export default function PointsDetail() {
               <div className={styles.statCard}>
                 <div className={styles.statValue}>{pointsData.earnedPoints}</div>
                 <div className={styles.statLabel}>{t('pointsDetail.earnedPoints')}</div>
-              </div>
-              <div className={styles.statCard}>
-                <div className={styles.statValue}>{pointsData.activeInvites}</div>
-                <div className={styles.statLabel}>{t('pointsDetail.activeInvites')}</div>
-              </div>
-              <div className={styles.statCard}>
-                <div className={styles.statValue}>
-                  {pointsData.pendingRewards === 0 ? <img src="/point/info@2x.png" alt="Info" className={styles.infoIcon} /> : pointsData.pendingRewards}
-                </div>
-                <div className={styles.statLabel}>{t('pointsDetail.pendingRewards')}</div>
               </div>
             </div>
 
@@ -719,7 +735,7 @@ export default function PointsDetail() {
                     <div className={styles.investmentInfo}>
                       <div className={styles.investmentTitle}>{item.title}</div>
                       <div className={styles.investmentSubtitle}>
-                        <span>{item.rewardLabel}</span>
+                        <span>{item.rewardLabel?.replace(/\+?\d+/g, '').trim()}</span>
                         <span className={styles.rewardValue}>+{item.reward}</span>
                         <img src="/point/coin_icon@2x.png" alt="coin" className={styles.investmentCoinIcon} />
                       </div>

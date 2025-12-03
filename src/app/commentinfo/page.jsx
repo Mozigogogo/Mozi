@@ -231,6 +231,20 @@ export default function CommentInfo() {
           ...prev,
           [commentId]: !isLiked
         }));
+
+        // 点赞成功后，调用每日点赞任务完成接口
+        if (!isLiked) {
+          try {
+            await request({
+              url: Interface.TASK_COMPLETE,
+              method: 'POST',
+              data: { taskCode: 'DAILY_LIKE' }
+            });
+            console.log('🔍 [DEBUG] 评论点赞任务上报成功');
+          } catch (taskError) {
+            console.error('评论点赞任务上报失败:', taskError);
+          }
+        }
         
         // 更新评论列表中的点赞数
         setList(prevList => prevList.map(item => {
