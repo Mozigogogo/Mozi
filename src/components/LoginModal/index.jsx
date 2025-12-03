@@ -28,6 +28,17 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
     setMode(initialMode);
   }, [initialMode]);
 
+  // 自动获取存储的邀请码
+  useEffect(() => {
+    if (visible) {
+      const storedInviteCode = localStorage.getItem('inviteCode');
+      if (storedInviteCode) {
+        setInviteCode(storedInviteCode);
+        console.log('🔍 [LoginModal] 自动填充邀请码:', storedInviteCode);
+      }
+    }
+  }, [visible]);
+
   // 清理定时器
   useEffect(() => {
     return () => {

@@ -1,0 +1,12 @@
+{
+  "name": "mozi-telegram-bot",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node telegram-bot.js"
+  },
+  "dependencies": {
+    "telegraf": "^4.15.0",
+    "axios": "^1.6.0",
+    "https-proxy-agent": "^7.0.0"
+  }
+}
