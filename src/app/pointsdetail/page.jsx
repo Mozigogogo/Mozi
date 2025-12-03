@@ -502,11 +502,41 @@ export default function PointsDetail() {
   };
 
   const copyToClipboard = (text, label) => {
-    navigator.clipboard.writeText(text).then(() => {
-      Toast.show({ content: t('pointsDetail.linkCopied'), position: 'bottom' });
-    }).catch(() => {
+    // 优先使用 navigator.clipboard API
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        Toast.show({ content: t('pointsDetail.linkCopied'), position: 'bottom' });
+      }).catch(() => {
+        // 降级方案
+        fallbackCopy(text);
+      });
+    } else {
+      // 降级方案
+      fallbackCopy(text);
+    }
+  };
+
+  // 降级复制方案（兼容 TG 小程序）
+  const fallbackCopy = (text) => {
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-9999px';
+      textArea.style.top = '-9999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      if (successful) {
+        Toast.show({ content: t('pointsDetail.linkCopied'), position: 'bottom' });
+      } else {
+        Toast.show({ content: t('pointsDetail.copyFailed'), position: 'bottom', icon: 'fail' });
+      }
+    } catch (err) {
       Toast.show({ content: t('pointsDetail.copyFailed'), position: 'bottom', icon: 'fail' });
-    });
+    }
   };
 
   const tabs = [
