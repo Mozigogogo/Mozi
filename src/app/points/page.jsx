@@ -6,7 +6,7 @@ import { Toast } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import Layout from '../../components/Layout';
 import { request } from '../../utils/request';
-import { Interface } from '../../utils/constants';
+import { Interface, getTgInviteLink } from '../../utils/constants';
 import styles from './page.module.less';
 
 export default function PointsRank() {
@@ -15,9 +15,10 @@ export default function PointsRank() {
   const [activeTab, setActiveTab] = useState('daily');
   const [loading, setLoading] = useState(false);
   const [rankData, setRankData] = useState({});
+  const [inviteCode, setInviteCode] = useState('');
 
   // 默认头像
-  const defaultAvatar = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face';
+  const defaultAvatar = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png';
 
   // 获取排行榜数据
   const fetchRankData = useCallback(async (type) => {
@@ -36,9 +37,9 @@ export default function PointsRank() {
         // 映射接口数据到组件格式
         return rankings.map((item, index) => ({
           id: item.userId || index + 1,
-          name: item.nickname || item.userName || '匿名用户',
+          name: item.nickName || item.nickname || item.userName || '匿名用户',
           avatar: item.avatar || defaultAvatar,
-          points: item.totalPoints || item.dailyPoints || item.monthlyPoints || 0,
+          points: item.points || item.totalPoints || item.dailyPoints || item.monthlyPoints || 0,
           rank: item.rank || index + 1,
           isMe: item.isCurrentUser || false
         }));
@@ -76,9 +77,42 @@ export default function PointsRank() {
     }
   }, [fetchRankData, t]);
 
+  // 获取用户邀请码
+  const fetchInviteCode = useCallback(async () => {
+    try {
+      const res = await request({
+        url: Interface.USER_DATA_INFO,
+        method: 'GET'
+      });
+      if (res?.code === 0 && res?.data?.inviteCode) {
+        setInviteCode(res.data.inviteCode);
+      }
+    } catch (error) {
+      console.error('获取邀请码失败:', error);
+    }
+  }, []);
+
   useEffect(() => {
     loadRankData();
-  }, [loadRankData]);
+    fetchInviteCode();
+  }, [loadRankData, fetchInviteCode]);
+
+  // 分享到 Telegram
+  const handleShareToTelegram = () => {
+    if (!inviteCode) {
+      Toast.show({
+        content: t('points.pleaseLoginFirst') || '请先登录',
+        position: 'bottom'
+      });
+      return;
+    }
+    
+    const tgLink = getTgInviteLink(inviteCode);
+    const shareText = t('points.shareText') || '来 MOZI 一起赚积分吧！';
+    const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(tgLink)}&text=${encodeURIComponent(shareText)}`;
+    
+    window.open(telegramShareUrl, '_blank');
+  };
 
   const handleTabChange = (key) => {
     setActiveTab(key);
@@ -213,7 +247,7 @@ export default function PointsRank() {
         )}
 
         {/* 邀请好友悬浮按钮 */}
-        <div className={styles.inviteFloatBtn} onClick={() => Toast.show(t('points.shareFeatureInDevelopment'))}>
+        <div className={styles.inviteFloatBtn} onClick={handleShareToTelegram}>
           <div className={styles.inviteIconWrap}>
             <img className={styles.inviteIcon} src='https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/score-invite.png' alt={t('points.inviteChallenge')} />
           </div>

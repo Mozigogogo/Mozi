@@ -94,6 +94,8 @@ export default function PointsHistoryPage() {
 
   // 格式化时间
   const formatTime = (timeStr) => {
+    if (!timeStr) return '';
+    
     const now = new Date();
     const time = new Date(timeStr);
     const diff = now - time;
@@ -148,8 +150,8 @@ export default function PointsHistoryPage() {
                 <div className={styles.itemHeader}>
                   <div className={styles.itemTitle}>{item.title}</div>
                   <div className={styles.itemPoints}>
-                    <span className={`${styles.pointsText} ${item.status === 'add' ? styles.add : styles.sub}`}>
-                      {item.status === 'add' ? '+' : '-'}{item.points}
+                    <span className={`${styles.pointsText} ${item.points >= 0 ? styles.add : styles.sub}`}>
+                      {item.points >= 0 ? '+' : ''}{item.points}
                     </span>
                     <img src="/point/coin_icon@2x.png" className={styles.coinIcon} alt="积分" />
                   </div>
