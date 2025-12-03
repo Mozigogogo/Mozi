@@ -143,14 +143,12 @@ export default function UserPage() {
 
       const now = new Date();
       const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      const platform = typeof window !== 'undefined' && window.Telegram?.WebApp?.initData ? 'tg' : 'pc';
 
       try {
         const res = await request({
           url: Interface.GET_MY_INTERFACE,
           method: 'POST',
           data: {
-            platform: platform,
             limit: 20,
             time: timeStr
           }
@@ -473,14 +471,12 @@ export default function UserPage() {
       }
 
       const timeStr = formatDate(date);
-      const platform = getPlatform();
-      console.log('调用接口，日期:', timeStr, '平台:', platform);
+      console.log('调用接口，日期:', timeStr);
 
       const res = await request({
         url: Interface.GET_MY_INTERFACE,
         method: 'POST',
         data: {
-          platform: platform,
           limit: 20,
           time: timeStr
         }
@@ -540,14 +536,12 @@ export default function UserPage() {
     const year = newMonth.getFullYear();
     const month = String(newMonth.getMonth() + 1).padStart(2, '0');
     const timeStr = `${year}-${month}`;
-    const platform = typeof window !== 'undefined' && window.Telegram?.WebApp?.initData ? 'tg' : 'pc';
 
     try {
       const res = await request({
         url: Interface.GET_MY_INTERFACE,
         method: 'POST',
         data: {
-          platform: platform,
           limit: 20,
           time: timeStr
         }
@@ -1121,7 +1115,7 @@ export default function UserPage() {
               onToggleChange={handleAnnouncementToggle}
               onMonthChange={handleMonthChange}
               defaultToggle={isAnnouncementOn}
-              eventDates={calendarEventDates}
+              eventDates={isInterfaceLoaded ? calendarEventDates : []}
             />
           </div>
         )}
