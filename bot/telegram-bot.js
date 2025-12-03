@@ -5,13 +5,16 @@
  */
 
 const { Telegraf } = require('telegraf');
-const { HttpsProxyAgent } = require('https-proxy-agent');
 
-// Bot Token
-const BOT_TOKEN = '8322914400:AAHdQw2bpxe1QbTwtCnDNmCc5TK-tdQnsOY';
+// 环境变量配置
+const BOT_TOKEN = process.env.BOT_TOKEN;
+const APP_URL = process.env.APP_URL || 'https://moziinnovations-production.up.railway.app';
 
-// 代理配置（如果需要）- 替换为你的代理地址，不需要代理则设为 null
-const PROXY_URL = 'http://127.0.0.1:7890';
+// 检查必要的环境变量
+if (!BOT_TOKEN) {
+  console.error('❌ 错误: 请设置 BOT_TOKEN 环境变量');
+  process.exit(1);
+}
 
 // 国际化文本配置
 const i18n = {
@@ -38,14 +41,8 @@ const getTexts = (languageCode) => {
   return isZh ? i18n.zh : i18n.en;
 };
 
-// 创建 Bot 实例（带代理）
-const bot = PROXY_URL 
-  ? new Telegraf(BOT_TOKEN, {
-      telegram: {
-        agent: new HttpsProxyAgent(PROXY_URL)
-      }
-    })
-  : new Telegraf(BOT_TOKEN);
+// 创建 Bot 实例
+const bot = new Telegraf(BOT_TOKEN);
 
 // 监听 /start 命令
 bot.start(async (ctx) => {
@@ -65,8 +62,8 @@ bot.start(async (ctx) => {
   
   // 生成小程序链接（带邀请码）
   const appUrl = inviteCode 
-    ? `https://moziinnovations-production.up.railway.app?inviteCode=${inviteCode}`
-    : 'https://moziinnovations-production.up.railway.app';
+    ? `${APP_URL}?inviteCode=${inviteCode}`
+    : APP_URL;
   
   // 回复消息
   const message = inviteCode ? texts.welcomeWithInvite(inviteCode) : texts.welcome;
