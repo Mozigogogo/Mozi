@@ -321,14 +321,27 @@ export default function CommunityPage() {
           topics: item.topics || [],
           isLiked: item.isLikedByCurrentUser || false,
           createTime: item.updatedAt?.replace('T', ' ') || '',
+          createdAt: item.createdAt,
           updatedAt: item.updatedAt,
-          images: item.images || []
+          images: item.images || [],
+          userType: item.userType
         }));
         
+        // 按 createdAt 倒序排序，最新的在前面
+        const sortedData = formattedData.sort((a, b) => {
+          const dateA = new Date(a.createdAt || 0);
+          const dateB = new Date(b.createdAt || 0);
+          return dateB - dateA;
+        });
+        
         if (reset) {
-          setPosts(formattedData);
+          setPosts(sortedData);
         } else {
-          setPosts(prev => [...prev, ...formattedData]);
+          setPosts(prev => [...prev, ...sortedData].sort((a, b) => {
+            const dateA = new Date(a.createdAt || 0);
+            const dateB = new Date(b.createdAt || 0);
+            return dateB - dateA;
+          }));
         }
         setPage(currentPage + 1);
         setHasMore(currentPage < totalPages);
@@ -674,9 +687,9 @@ export default function CommunityPage() {
 
   // 渲染帖子列表
   const renderPosts = () => {
-    // 快讯tab只显示category为news的帖子
+    // 快讯tab只显示userType为virtual的帖子
     const filteredPosts = mainTab === 'news' 
-      ? posts.filter(post => post.category === 'news')
+      ? posts.filter(post => post.userType === 'virtual')
       : posts;
 
     if (filteredPosts.length === 0 && !loading) {
