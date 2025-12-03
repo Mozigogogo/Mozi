@@ -343,12 +343,11 @@
       background-color: #2E2E2E;
       border: 1px solid rgba(255,255,255,0.2);
       border-radius: 8px;
-      padding: 0 12px;
+      padding: 12px;
       margin-bottom: 12px;
-      min-height: 33px;
-      height: 33px;
+      min-height: 44px;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       box-sizing: border-box;
 
       .inviteInputLabel {
@@ -356,7 +355,7 @@
         color: #FFFFFF;
         margin-right: 10px;
         white-space: nowrap;
-        line-height: 1;
+        line-height: 1.4;
       }
 
       .inviteInputContent {
@@ -373,12 +372,10 @@
           color: #fff;
           font-family: monospace;
           flex: 1;
-          min-width: 0; // 允许文本收缩
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          line-height: 1;
-          text-align: end;
+          min-width: 0;
+          word-break: break-all;
+          line-height: 1.4;
+          text-align: left;
         }
         
         .copyIconBtn {

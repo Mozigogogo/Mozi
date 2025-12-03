@@ -269,7 +269,7 @@ export const Interface = {
   // 获取用户积分
   TASK_POINTS: '/task/points',
   // 获取积分历史记录
-  TASK_POINTS_HISTORY: '/task/points/history',
+  TASK_POINTS_HISTORY: '/task/v1/pointsHistory',
   // 获取任务列表
   TASK_LIST: '/task/list',
   // 获取积分榜单
