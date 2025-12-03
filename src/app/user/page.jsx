@@ -156,8 +156,6 @@ export default function UserPage() {
 
         if (res?.success === true && res.data) {
           setInterfaceData(res.data);
-          setIsInterfaceLoaded(true);
-          setIsInterfaceSuccess(true);
 
           // 转换新币上线数据格式
           const rawData = Array.isArray(res.data) ? res.data : (res.data?.newCoinListings || res.data?.listings || []);
@@ -192,6 +190,10 @@ export default function UserPage() {
               .filter(day => day !== null);
             setCalendarEventDates([...new Set(eventDays)]); // 去重
           }
+          
+          // 最后设置加载完成状态，确保数据已准备好
+          setIsInterfaceLoaded(true);
+          setIsInterfaceSuccess(true);
         }
       } catch (error) {
         console.error('初始加载接口失败:', error);
@@ -532,6 +534,9 @@ export default function UserPage() {
   const handleMonthChange = async (newMonth) => {
     const token = localStorage.getItem('token');
     if (!token) return;
+
+    // 切换月份时先清空小点，避免旧数据闪烁
+    setCalendarEventDates([]);
 
     const year = newMonth.getFullYear();
     const month = String(newMonth.getMonth() + 1).padStart(2, '0');
