@@ -3,8 +3,11 @@ import { WS_URL as CONFIG_WS_URL } from '../../config/index.js';
 // 通用兜底提示语
 export const COMMON_MSG = '网络繁忙，请稍后再试';
 
-// Telegram Bot 用户名（用于生成邀请链接）
-export const TG_BOT_USERNAME = 'Moziinovations_bot';
+// 判断是否为正式环境
+const isProduction = process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_APP_ENV === 'production';
+
+// Telegram Bot 用户名（根据环境切换）
+export const TG_BOT_USERNAME = isProduction ? 'Moziinovations_bot' : 'test_moz_bot';
 
 // 生成 TG 邀请链接
 export const getTgInviteLink = (inviteCode) => {
