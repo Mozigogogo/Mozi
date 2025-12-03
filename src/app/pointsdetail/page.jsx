@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Toast, Tabs } from 'antd-mobile';
 import { ClockCircleOutline, LeftOutline } from 'antd-mobile-icons';
@@ -12,6 +12,9 @@ import styles from './page.module.less';
 
 export default function PointsDetail() {
   const router = useRouter();
+  
+  // 防止重复调用的标记
+  const isDataFetchedRef = useRef(false);
   const { t, i18n } = useTranslation();
   const isEnglish = i18n.language === 'en';
   const [activeTab, setActiveTab] = useState('myPoints');
@@ -118,12 +121,16 @@ export default function PointsDetail() {
     }
   }, []);
 
-  // 页面加载时获取积分数据、用户数据和邀请列表
+  // 页面加载时获取所有数据（只执行一次）
   useEffect(() => {
+    if (isDataFetchedRef.current) return;
+    isDataFetchedRef.current = true;
+    
     fetchPointsData();
     fetchUserDataInfo();
     fetchInvitationList();
-  }, [fetchPointsData, fetchUserDataInfo, fetchInvitationList]);
+    fetchAllTasks();
+  }, []);
 
   // 使用函数延迟初始化任务列表，确保 t() 在组件渲染时可用
   const getInitialTasks = () => [
@@ -138,6 +145,10 @@ export default function PointsDetail() {
   const [tasksList, setTasksList] = useState(getInitialTasks());
   const [verifyingTaskId, setVerifyingTaskId] = useState(null);
   const [tasksLoading, setTasksLoading] = useState(false);
+  
+  // 每日任务列表 state
+  const [dailyInvestments, setDailyInvestments] = useState([]);
+  const [dailyTasksLoading, setDailyTasksLoading] = useState(false);
 
   // 任务类型到图标的映射
   const taskIconMap = {
@@ -171,23 +182,23 @@ export default function PointsDetail() {
     'INVITE_USER': 'inviteUser',
   };
 
-  // 获取任务列表（活动任务）
-  const fetchTaskList = useCallback(async () => {
+  // 获取任务列表（活动任务 + 每日任务，合并为一次接口调用）
+  const fetchAllTasks = useCallback(async () => {
     try {
       setTasksLoading(true);
+      setDailyTasksLoading(true);
       const res = await request({
         url: Interface.TASK_LIST,
         method: 'GET'
       });
       
-      console.log('🔍 [DEBUG] 活动任务 - activityTaskList:', res?.data?.activityTaskList);
+      console.log('🔍 [DEBUG] TASK_LIST 接口返回:', res);
       
       if (res?.code === 0 && res?.data) {
-        // 使用 activityTaskList 字段
-        const tasks = res.data.activityTaskList || [];
-        // 将接口数据映射到组件需要的格式
-        const mappedTasks = tasks
-          .filter(task => task.taskCode !== 'WECHAT' && task.taskCode !== 'INVITE_USER') // 过滤掉 WECHAT 和邀请好友任务不展示
+        // 处理活动任务 activityTaskList
+        const activityTasks = res.data.activityTaskList || [];
+        const mappedTasks = activityTasks
+          .filter(task => task.taskCode !== 'WECHAT' && task.taskCode !== 'INVITE_USER')
           .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
           .map((task, index) => {
             const taskKey = taskKeyMap[task.taskCode] || 'setAlarm';
@@ -195,39 +206,53 @@ export default function PointsDetail() {
               id: task.id || index + 1,
               taskCode: task.taskCode,
               icon: taskIconMap[task.taskCode] || '/point/set_alert@2x.png',
-              // 直接使用接口返回的任务名称
               title: task.taskName,
               titleKey: `pointsDetail.tasks.${taskKey}.title`,
               btnTextKey: `pointsDetail.tasks.${taskKey}.button`,
-              // 使用 rewardPoints 字段
               points: task.rewardPoints || 0,
-              // 使用 isCompleted 字段判断状态
               status: task.isCompleted ? 'completed' : 'pending',
               needsAction: !task.isCompleted
             };
           });
         
-        console.log('🔍 [DEBUG] 映射后的活动任务:', mappedTasks);
-        
         if (mappedTasks.length > 0) {
           setTasksList(mappedTasks);
+        }
+
+        // 处理每日任务 dailyTaskList
+        const dailyTasks = res.data.dailyTaskList || [];
+        if (dailyTasks.length > 0) {
+          const mappedDailyTasks = dailyTasks
+            .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+            .map((task, index) => ({
+              id: task.taskCode || index + 1,
+              icon: dailyTaskIconMap[task.taskCode] || '/point/glove_praise@2x.png',
+              title: task.taskName,
+              rewardLabel: task.taskDesc,
+              reward: task.rewardPoints || 0,
+              current: task.currentProgress || 0,
+              total: task.targetProgress || 1,
+              completed: task.isCompleted || false,
+            }));
+          setDailyInvestments(mappedDailyTasks);
         }
       }
     } catch (error) {
       console.error('获取任务列表失败:', error);
-      // 接口失败时保留默认任务列表
     } finally {
       setTasksLoading(false);
+      setDailyTasksLoading(false);
     }
   }, []);
 
-  // 页面加载时获取任务列表
-  useEffect(() => {
-    fetchTaskList();
-  }, [fetchTaskList]);
+  // 早鸟检查标记
+  const isEarlyBirdCheckedRef = useRef(false);
 
   // 早鸟用户自动完成逻辑：2026年3月前注册登录的用户自动完成
   useEffect(() => {
+    if (isEarlyBirdCheckedRef.current) return;
+    isEarlyBirdCheckedRef.current = true;
+    
     const checkEarlyBird = async () => {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
       const now = new Date();
@@ -246,7 +271,7 @@ export default function PointsDetail() {
           
           if (res?.code === 0) {
             // 刷新任务列表和积分
-            fetchTaskList();
+            fetchAllTasks();
             fetchPointsData();
           }
         } catch (error) {
@@ -258,7 +283,7 @@ export default function PointsDetail() {
     // 延迟执行，等待任务列表加载完成
     const timer = setTimeout(checkEarlyBird, 1000);
     return () => clearTimeout(timer);
-  }, [fetchTaskList, fetchPointsData]);
+  }, []);
 
   // 每日任务图标映射
   const dailyTaskIconMap = {
@@ -269,70 +294,6 @@ export default function PointsDetail() {
     'POST_RECEIVE_REPLY': '/point/notification_2@2x.png',
     'DAILY_LOGIN': '/point/contact_person@2x.png',
   };
-
-  // 每日任务列表 state
-  const [dailyInvestments, setDailyInvestments] = useState([]);
-  const [dailyTasksLoading, setDailyTasksLoading] = useState(false);
-
-  // 获取每日任务列表
-  const fetchDailyTasks = useCallback(async () => {
-    try {
-      setDailyTasksLoading(true);
-      console.log('🔍 [DEBUG] 开始获取每日任务列表...');
-      
-      const res = await request({
-        url: Interface.TASK_LIST,
-        method: 'GET'
-      });
-      
-      console.log('🔍 [DEBUG] TASK_LIST 接口返回:', res);
-      console.log('🔍 [DEBUG] res.code:', res?.code);
-      console.log('🔍 [DEBUG] res.data:', res?.data);
-      console.log('🔍 [DEBUG] res.data.dailyTaskList:', res?.data?.dailyTaskList);
-      
-      if (res?.code === 0 && res?.data) {
-        // 正确的字段名是 dailyTaskList（没有 s）
-        const tasks = res.data.dailyTaskList || res.data.tasks || (Array.isArray(res.data) ? res.data : []);
-        console.log('🔍 [DEBUG] 解析后的 tasks:', tasks);
-        console.log('🔍 [DEBUG] tasks 长度:', tasks.length);
-        
-        if (tasks.length > 0) {
-          const dailyTasks = tasks
-            .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
-            .map((task, index) => {
-              const mapped = {
-                id: task.taskCode || index + 1,
-                icon: dailyTaskIconMap[task.taskCode] || '/point/glove_praise@2x.png',
-                title: task.taskName,
-                rewardLabel: task.taskDesc,
-                reward: task.rewardPoints || 0,
-                current: task.currentProgress || 0,
-                total: task.targetProgress || 1,
-                completed: task.isCompleted || false,
-              };
-              console.log('🔍 [DEBUG] 映射任务:', task.taskCode, '->', mapped);
-              return mapped;
-            });
-          
-          console.log('🔍 [DEBUG] 最终 dailyTasks:', dailyTasks);
-          setDailyInvestments(dailyTasks);
-        } else {
-          console.log('⚠️ [DEBUG] tasks 为空数组');
-        }
-      } else {
-        console.log('⚠️ [DEBUG] 接口返回异常, code:', res?.code);
-      }
-    } catch (error) {
-      console.error('❌ [DEBUG] 获取每日任务列表失败:', error);
-    } finally {
-      setDailyTasksLoading(false);
-    }
-  }, []);
-
-  // 页面加载时获取每日任务列表
-  useEffect(() => {
-    fetchDailyTasks();
-  }, [fetchDailyTasks]);
 
   // 获取任务的原始按钮文本
   const getOriginalBtnText = (titleKey) => {

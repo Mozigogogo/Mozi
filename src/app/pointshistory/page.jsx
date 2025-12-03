@@ -18,6 +18,7 @@ export default function PointsHistoryPage() {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const scrollRef = useRef(null);
+  const isDataFetchedRef = useRef(false);
   const PAGE_SIZE = 20;
 
   // 加载历史数据
@@ -34,7 +35,7 @@ export default function PointsHistoryPage() {
         method: 'GET',
         params: {
           page: pageNum,
-          size: PAGE_SIZE
+          limit: PAGE_SIZE
         }
       });
       
@@ -71,6 +72,8 @@ export default function PointsHistoryPage() {
   }, [t, historyList.length]);
 
   useEffect(() => {
+    if (isDataFetchedRef.current) return;
+    isDataFetchedRef.current = true;
     loadHistoryData(1, false);
   }, []);
 
