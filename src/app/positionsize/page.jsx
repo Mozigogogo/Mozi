@@ -188,7 +188,13 @@ export default function Positionsize() {
       
       if (chartRef1.current) {
         try {
-          const hisOption = handleOptions(psHisData.data, 'linebar', { leftName: t('positionsize.chart.holdings'), rightName: t('positionsize.chart.price'), context: 'positionsize' });
+          const hisOption = handleOptions(psHisData.data, 'linebar', { 
+          leftName: t('positionsize.chart.holdings'), 
+          rightName: t('positionsize.chart.price'), 
+          context: 'positionsize',
+          unitYi: t('positionsize.unit.yi'),
+          unitWan: t('positionsize.unit.wan')
+        });
           console.log('⚙️ 历史持仓量图表配置:', hisOption);
           console.log('📈 series数据:', hisOption.series);
           chartRef1.current.setOption(hisOption, true); // 第二个参数true表示不合并，完全替换

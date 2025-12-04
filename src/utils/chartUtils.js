@@ -293,6 +293,9 @@ export const handleOptions = (data, type, msg) => {
     const isTradevol = typeof msg === 'object' ? msg.context === 'tradevol' : (msg === '成交额');
     const leftName = typeof msg === 'object' ? (msg.leftName || '持仓') : msg;
     const rightName = typeof msg === 'object' && msg.rightName ? msg.rightName : '价格';
+    // 国际化单位
+    const unitYi = typeof msg === 'object' && msg.unitYi ? msg.unitYi : '亿';
+    const unitWan = typeof msg === 'object' && msg.unitWan ? msg.unitWan : '万';
     const baseConfig = {
       grid: {
         // 参考原项目：持仓页面增加右侧边距以确保Y轴标签完整显示
@@ -386,10 +389,9 @@ export const handleOptions = (data, type, msg) => {
                 const formatted = data?.yAxisLeftSlot ? data.yAxisLeftSlot.replace('{}', value) : value;
                 return formatted.toString().replace('$', '');
               } else if (isPositionsize) {
-                // 历史持仓量：单位已是“亿”，展示整数并去掉$符号
+                // 历史持仓量：使用国际化单位，展示整数
                 const intValue = Math.floor(value);
-                const formatted = data?.yAxisLeftSlot ? data.yAxisLeftSlot.replace('{}', intValue) : intValue;
-                return formatted.toString().replace('$', '');
+                return `${intValue}${unitYi}`;
               }
               return data?.yAxisLeftSlot ? data.yAxisLeftSlot.replace('{}', value) : value;
             }
@@ -408,11 +410,11 @@ export const handleOptions = (data, type, msg) => {
               if (isTradevol) {
                 // 成交额：转换为“万”单位
                 const tenThousandValue = (value / 10000).toFixed(1);
-                return `${tenThousandValue}万`;
+                return `${tenThousandValue}${unitWan}`;
               } else if (isPositionsize) {
                 // 历史持仓量：当前数据为“千”，转换为“万”，不显示小数
                 const tenThousandValue = Math.floor(value / 10);
-                return `${tenThousandValue}万`;
+                return `${tenThousandValue}${unitWan}`;
               }
               return data?.yAxisRightSlot ? data.yAxisRightSlot.replace('{}', value) : value;
             }

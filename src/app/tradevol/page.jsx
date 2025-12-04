@@ -172,7 +172,13 @@ const TradeVol = () => {
 
       // 更新历史成交额图表
       if (chartRef1.current && traHisData.data) {
-        chartRef1.current.setOption(handleOptions(traHisData.data, 'linebar', { leftName: t('tradevol.chart.amount'), rightName: t('tradevol.chart.price'), context: 'tradevol' }));
+        chartRef1.current.setOption(handleOptions(traHisData.data, 'linebar', { 
+          leftName: t('tradevol.chart.amount'), 
+          rightName: t('tradevol.chart.price'), 
+          context: 'tradevol',
+          unitYi: t('tradevol.unit.yi'),
+          unitWan: t('tradevol.unit.wan')
+        }));
         setHisLoading(false);
       }
     } catch (error) {

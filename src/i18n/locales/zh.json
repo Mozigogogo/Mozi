@@ -516,7 +516,9 @@
     "shareFeatureInDevelopment": "分享功能开发中",
     "back": "返回",
     "rank": "排名",
-    "points": "积分"
+    "points": "积分",
+    "me": "我",
+    "myRank": "我的排名"
   },
   "pointsDetail": {
     "myPoints": "我的积分",
@@ -663,6 +665,10 @@
       "holdings": "持仓",
       "price": "价格"
     },
+    "unit": {
+      "yi": "亿",
+      "wan": "万"
+    },
     "loadFailed": "数据加载失败",
     "fetchFailed": "数据获取失败"
   }
@@ -699,6 +705,10 @@
       "volume": "成交量",
       "amount": "成交额",
       "price": "价格"
+    },
+    "unit": {
+      "yi": "亿",
+      "wan": "万"
     },
     "loadFailed": "数据加载失败",
     "fetchFailed": "数据获取失败"

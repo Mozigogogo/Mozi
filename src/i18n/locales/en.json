@@ -516,7 +516,9 @@
     "shareFeatureInDevelopment": "Share feature in development",
     "back": "Back",
     "rank": "Rank",
-    "points": "Points"
+    "points": "Points",
+    "me": "Me",
+    "myRank": "My Rank"
   },
   "pointsDetail": {
     "myPoints": "My Points",
@@ -663,6 +665,10 @@
       "holdings": "Open Interest",
       "price": "Price"
     },
+    "unit": {
+      "yi": "B",
+      "wan": "M"
+    },
     "loadFailed": "Data load failed",
     "fetchFailed": "Data fetch failed"
   }
@@ -699,6 +705,10 @@
       "volume": "Volume",
       "amount": "Amount",
       "price": "Price"
+    },
+    "unit": {
+      "yi": "B",
+      "wan": "M"
     },
     "loadFailed": "Data load failed",
     "fetchFailed": "Data fetch failed"
