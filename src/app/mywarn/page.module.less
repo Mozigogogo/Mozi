@@ -279,9 +279,9 @@
 .emptyButton {
   background-color: #11B787; /* 与 PopLogin 按钮一致的纯色 */
   color: #ffffff;
-  width: 150px; /* 统一宽度 */
+  min-width: 150px; /* 最小宽度 */
   height: 44px; /* 统一高度 */
-  line-height: 44px;
+  padding: 0 20px; /* 左右内边距 */
   border-radius: 10px; /* 统一圆角 */
   font-size: 16px;
   font-weight: 500;
@@ -289,6 +289,10 @@
   cursor: pointer;
   border: none;
   outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap; /* 防止文本换行 */
 }
 
 .emptyButton:hover { /* 保持简洁，不做额外动效 */ }
