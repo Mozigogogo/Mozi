@@ -459,6 +459,7 @@
     "loadingHistory": "Loading conversation history...",
     "aiAlt": "AI",
     "tokens": "Consumed {{tokens}} tokens",
+    "thinking": "Thinking",
     "regenerate": "Regenerate",
     "regenerateAlt": "Regenerate",
     "me": "Me",
