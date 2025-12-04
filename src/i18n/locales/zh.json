@@ -665,6 +665,10 @@
       "holdings": "持仓",
       "price": "价格"
     },
+    "unit": {
+      "yi": "亿",
+      "wan": "万"
+    },
     "loadFailed": "数据加载失败",
     "fetchFailed": "数据获取失败"
   }
@@ -701,6 +705,10 @@
       "volume": "成交量",
       "amount": "成交额",
       "price": "价格"
+    },
+    "unit": {
+      "yi": "亿",
+      "wan": "万"
     },
     "loadFailed": "数据加载失败",
     "fetchFailed": "数据获取失败"

@@ -665,6 +665,10 @@
       "holdings": "Open Interest",
       "price": "Price"
     },
+    "unit": {
+      "yi": "B",
+      "wan": "M"
+    },
     "loadFailed": "Data load failed",
     "fetchFailed": "Data fetch failed"
   }
@@ -701,6 +705,10 @@
       "volume": "Volume",
       "amount": "Amount",
       "price": "Price"
+    },
+    "unit": {
+      "yi": "B",
+      "wan": "M"
     },
     "loadFailed": "Data load failed",
     "fetchFailed": "Data fetch failed"
