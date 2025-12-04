@@ -68,7 +68,11 @@ bot.start(async (ctx) => {
   // 回复消息
   const message = inviteCode ? texts.welcomeWithInvite(inviteCode) : texts.welcome;
   
-  await ctx.reply(message, {
+  // 发送带图片的消息
+  const welcomeImage = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/twitter.jpg';
+  
+  await ctx.replyWithPhoto(welcomeImage, {
+    caption: message,
     reply_markup: {
       inline_keyboard: [[
         { text: texts.openApp, web_app: { url: appUrl } }
