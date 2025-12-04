@@ -734,11 +734,11 @@ export default function PointsDetail() {
                         <div className={styles.progressBar}>
                           <div 
                             className={styles.progressFill} 
-                            style={{ width: `${item.total > 0 ? (item.current / item.total * 100) : 100}%` }}
+                            style={{ width: `${Math.min(item.total > 0 ? (item.current / item.total * 100) : 100, 100)}%` }}
                           />
                           <div
                             className={styles.progressHandle}
-                            style={{ left: `${item.total > 0 ? (item.current / item.total * 100) : 100}%` }}
+                            style={{ left: `${Math.min(item.total > 0 ? (item.current / item.total * 100) : 100, 100)}%` }}
                           >
                             <span>{item.current}</span>
                           </div>
