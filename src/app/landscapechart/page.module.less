@@ -86,6 +86,51 @@
   }
 }
 
+/* 竖屏旋转提示 */
+.rotateOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rotateContent {
+  text-align: center;
+  color: #fff;
+}
+
+.rotateIcon {
+  font-size: 60px;
+  margin-bottom: 20px;
+  animation: rotatePhone 2s ease-in-out infinite;
+}
+
+@keyframes rotatePhone {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(90deg);
+  }
+}
+
+.rotateText {
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+.rotateHint {
+  font-size: 14px;
+  color: #999;
+}
+
 /* 暗色模式 */
 :global([data-theme="dark"]) {
   .chartBox {

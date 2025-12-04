@@ -25,6 +25,27 @@ const LandscapeChart = () => {
   const [klineData, setKlineData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [urlChartData, setUrlChartData] = useState(null);
+  const [isPortrait, setIsPortrait] = useState(false);
+
+  // 检测屏幕方向
+  useEffect(() => {
+    const checkOrientation = () => {
+      const portrait = window.innerHeight > window.innerWidth;
+      setIsPortrait(portrait);
+    };
+    
+    // 初始检测
+    checkOrientation();
+    
+    // 监听方向变化
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
+    
+    return () => {
+      window.removeEventListener('resize', checkOrientation);
+      window.removeEventListener('orientationchange', checkOrientation);
+    };
+  }, []);
 
   // 获取URL参数
   const symbol = searchParams.get('symbol');
@@ -551,6 +572,17 @@ const LandscapeChart = () => {
 
   return (
     <div className={styles.chartBox}>
+      {/* 竖屏提示 */}
+      {isPortrait && (
+        <div className={styles.rotateOverlay}>
+          <div className={styles.rotateContent}>
+            <div className={styles.rotateIcon}>📱</div>
+            <div className={styles.rotateText}>请旋转设备至横屏查看图表</div>
+            <div className={styles.rotateHint}>Rotate your device to landscape mode</div>
+          </div>
+        </div>
+      )}
+      
       <div className={styles.chartHeader}>
         <div className={styles.chartClose} onClick={handleClose}>
           <span>✕</span>
