@@ -123,7 +123,11 @@ export default function Positionsize() {
       console.log('treemapData', psTmpData);
       chartData.current.cur = {
         data: psTmpData,
-        msg: '持仓量',
+        msg: { 
+          tooltipTitle: t('positionsize.chart.holdings'), 
+          context: 'positionsize',
+          title: t('positionsize.section.current')
+        },
         type: 'treemap'
       };
       
@@ -172,9 +176,18 @@ export default function Positionsize() {
         return;
       }
 
+      const hisMsg = {
+        leftName: t('positionsize.chart.holdings'), 
+        rightName: t('positionsize.chart.price'), 
+        context: 'positionsize',
+        unitYi: t('positionsize.unit.yi'),
+        unitWan: t('positionsize.unit.wan'),
+        title: t('positionsize.section.history')
+      };
       chartData.current.his = {
         data: psHisData.data,
-        type: 'linebar'
+        type: 'linebar',
+        msg: hisMsg
       };
       
       // 确保图表已初始化，如果没有则初始化
@@ -188,13 +201,7 @@ export default function Positionsize() {
       
       if (chartRef1.current) {
         try {
-          const hisOption = handleOptions(psHisData.data, 'linebar', { 
-          leftName: t('positionsize.chart.holdings'), 
-          rightName: t('positionsize.chart.price'), 
-          context: 'positionsize',
-          unitYi: t('positionsize.unit.yi'),
-          unitWan: t('positionsize.unit.wan')
-        });
+          const hisOption = handleOptions(psHisData.data, 'linebar', hisMsg);
           console.log('⚙️ 历史持仓量图表配置:', hisOption);
           console.log('📈 series数据:', hisOption.series);
           chartRef1.current.setOption(hisOption, true); // 第二个参数true表示不合并，完全替换
@@ -228,8 +235,14 @@ export default function Positionsize() {
   };
 
   const jump2Land = (type) => {
-    // 跳转到横屏图表页面的逻辑
-    console.log('跳转到横屏图表:', type, chartData.current[type]);
+    const data = chartData.current[type];
+    if (data) {
+      // 使用 sessionStorage 存储大数据，避免 URL 过长导致 431 错误
+      sessionStorage.setItem('landscapeChartData', JSON.stringify(data));
+      router.push('/landscapechart?source=storage');
+    } else {
+      Toast.show(t('positionsize.noChartData') || '暂无图表数据');
+    }
   };
 
   return (

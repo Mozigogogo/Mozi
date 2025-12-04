@@ -118,12 +118,20 @@ const PutCallRatio = () => {
 
       // 更新图表
       if (chartRef.current && pcrHisData?.data) {
+        const chartMsg = { 
+          labels: { 
+            short: t('pcr.chart.short'), 
+            long: t('pcr.chart.long'), 
+            ratio: t('pcr.chart.ratio') 
+          },
+          title: t('pcr.section.history')
+        };
         chartData.current = {
           data: pcrHisData.data,
           type: 'samebar',
-          msg: t('pcr.section.history')
+          msg: chartMsg
         };
-        chartRef.current.setOption(handleOptions(pcrHisData.data, 'samebar', { labels: { short: t('pcr.chart.short'), long: t('pcr.chart.long'), ratio: t('pcr.chart.ratio') } }));
+        chartRef.current.setOption(handleOptions(pcrHisData.data, 'samebar', chartMsg));
         setHisLoading(false);
       }
 
@@ -192,9 +200,9 @@ const PutCallRatio = () => {
   // 跳转到横屏图表
   const jump2Land = () => {
     if (chartData.current) {
-      // 使用 Next.js 路由跳转到横屏页面
-      const dataStr = encodeURIComponent(JSON.stringify(chartData.current));
-      router.push(`/landscapechart?data=${dataStr}`);
+      // 使用 sessionStorage 存储大数据，避免 URL 过长导致 431 错误
+      sessionStorage.setItem('landscapeChartData', JSON.stringify(chartData.current));
+      router.push('/landscapechart?source=storage');
     } else {
       Toast.show(t('pcr.noChartData'));
     }
@@ -296,7 +304,7 @@ const PutCallRatio = () => {
                 <div className={styles.spinner} />
               </div>
             )}
-            <div className={styles.chartArrawsalt} onClick={jump2Land}>
+            <div className={`${styles.chartArrawsalt} ${styles.hisChartBtn}`} onClick={jump2Land}>
               <span className={styles.fullscreenIcon}>⛶</span>
             </div>
             <div ref={chartContainerRef} className={styles.chart}></div>

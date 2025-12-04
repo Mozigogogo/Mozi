@@ -11,6 +11,7 @@ import {
   KLINE_PERIODS,
   createKlineChannel,
 } from '@/utils/websocketProtocol';
+import { handleOptions } from '@/utils/chartUtils';
 import styles from './page.module.less';
 
 const LandscapeChart = () => {
@@ -23,11 +24,13 @@ const LandscapeChart = () => {
   
   const [klineData, setKlineData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [urlChartData, setUrlChartData] = useState(null);
 
   // 获取URL参数
   const symbol = searchParams.get('symbol');
   const period = searchParams.get('period') || 'hour';
   const chartType = searchParams.get('chartType') || 'line';
+  const dataParam = searchParams.get('data');
 
   // 时间周期映射
   const periodMap = {
@@ -284,8 +287,67 @@ const LandscapeChart = () => {
     };
   };
 
+  // 处理 URL 传递的图表数据（非K线图）
+  useEffect(() => {
+    // 优先从 sessionStorage 读取（避免 URL 过长）
+    const source = searchParams.get('source');
+    if (source === 'storage') {
+      try {
+        const storedData = sessionStorage.getItem('landscapeChartData');
+        if (storedData) {
+          const parsedData = JSON.parse(storedData);
+          console.log('📊 从sessionStorage读取图表数据:', parsedData);
+          setUrlChartData(parsedData);
+          setLoading(false);
+          // 读取后清除，避免重复使用
+          sessionStorage.removeItem('landscapeChartData');
+        }
+      } catch (error) {
+        console.error('解析sessionStorage图表数据失败:', error);
+        setLoading(false);
+      }
+    } else if (dataParam) {
+      try {
+        const parsedData = JSON.parse(decodeURIComponent(dataParam));
+        console.log('📊 解析URL传递的图表数据:', parsedData);
+        setUrlChartData(parsedData);
+        setLoading(false);
+      } catch (error) {
+        console.error('解析图表数据失败:', error);
+        setLoading(false);
+      }
+    }
+  }, [dataParam, searchParams]);
+
+  // 渲染 URL 传递的图表数据
+  useEffect(() => {
+    if (!urlChartData || !chartContainerRef.current) return;
+    
+    // 确保图表已初始化
+    if (!chartRef.current) {
+      chartRef.current = echarts.init(chartContainerRef.current);
+    }
+    
+    const { data, type, msg } = urlChartData;
+    console.log('📊 渲染图表 - 类型:', type);
+    const options = handleOptions(data, type, msg);
+    // 横屏优化配置
+    if (options.grid) {
+      options.grid.left = '8%';
+      options.grid.right = '5%';
+      options.grid.top = '12%';
+      options.grid.bottom = '18%';
+    }
+    chartRef.current.setOption(options, true);
+  }, [urlChartData]);
+
   // WebSocket 连接和数据订阅
   useEffect(() => {
+    // 如果是 URL 传递的数据，不需要 WebSocket
+    if (dataParam) {
+      return;
+    }
+    
     if (!symbol) {
       console.warn('缺少币种参数');
       return;
@@ -494,7 +556,9 @@ const LandscapeChart = () => {
           <span>✕</span>
         </div>
         <div className={styles.chartTitle}>
-          {symbol} - {period === 'hour' ? '1小时' : period === 'day' ? '1日' : period === 'week' ? '1周' : '1月'}
+          {urlChartData 
+            ? (typeof urlChartData.msg === 'object' ? urlChartData.msg.title : urlChartData.msg) || '图表'
+            : `${symbol} - ${period === 'hour' ? '1小时' : period === 'day' ? '1日' : period === 'week' ? '1周' : '1月'}`}
           {loading && <span className={styles.loadingText}> 加载中...</span>}
         </div>
       </div>

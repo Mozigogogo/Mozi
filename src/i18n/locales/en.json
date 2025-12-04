@@ -670,7 +670,8 @@
       "wan": "M"
     },
     "loadFailed": "Data load failed",
-    "fetchFailed": "Data fetch failed"
+    "fetchFailed": "Data fetch failed",
+    "noChartData": "No chart data"
   }
   ,
   "fundingrate": {
@@ -711,7 +712,8 @@
       "wan": "M"
     },
     "loadFailed": "Data load failed",
-    "fetchFailed": "Data fetch failed"
+    "fetchFailed": "Data fetch failed",
+    "noChartData": "No chart data"
   }
   ,
   "detail": {

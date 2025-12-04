@@ -670,7 +670,8 @@
       "wan": "万"
     },
     "loadFailed": "数据加载失败",
-    "fetchFailed": "数据获取失败"
+    "fetchFailed": "数据获取失败",
+    "noChartData": "暂无图表数据"
   }
   ,
   "fundingrate": {
@@ -711,7 +712,8 @@
       "wan": "万"
     },
     "loadFailed": "数据加载失败",
-    "fetchFailed": "数据获取失败"
+    "fetchFailed": "数据获取失败",
+    "noChartData": "暂无图表数据"
   }
   ,
   "detail": {

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { Picker, Toast } from 'antd-mobile';
 import * as echarts from 'echarts';
 import Layout from '@/components/Layout';
@@ -13,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import styles from './page.module.less';
 
 const TradeVol = () => {
+  const router = useRouter();
   const { t } = useTranslation();
   const [cexArr, setCexArr] = useState([]);
   const [cexSelected, setCexSelected] = useState('');
@@ -144,15 +146,20 @@ const TradeVol = () => {
         };
       });
 
+      const curMsg = { 
+        tooltipTitle: t('tradevol.chart.volume'), 
+        context: 'tradevol',
+        title: t('tradevol.section.current')
+      };
       chartData.current.cur = {
         data: traTmpData,
-        msg: { tooltipTitle: t('tradevol.chart.volume'), context: 'tradevol' },
+        msg: curMsg,
         type: 'treemap'
       };
 
       // 更新当前成交额图表
       if (chartRef.current && traTmpData) {
-        chartRef.current.setOption(handleOptions(traTmpData, 'treemap', { tooltipTitle: t('tradevol.chart.volume'), context: 'tradevol' }));
+        chartRef.current.setOption(handleOptions(traTmpData, 'treemap', curMsg));
         setCurLoading(false);
       }
 
@@ -165,20 +172,23 @@ const TradeVol = () => {
         }
       });
 
+      const hisMsg = { 
+        leftName: t('tradevol.chart.amount'), 
+        rightName: t('tradevol.chart.price'), 
+        context: 'tradevol',
+        unitYi: t('tradevol.unit.yi'),
+        unitWan: t('tradevol.unit.wan'),
+        title: t('tradevol.section.history')
+      };
       chartData.current.his = {
         data: traHisData.data,
-        type: 'linebar'
+        type: 'linebar',
+        msg: hisMsg
       };
 
       // 更新历史成交额图表
       if (chartRef1.current && traHisData.data) {
-        chartRef1.current.setOption(handleOptions(traHisData.data, 'linebar', { 
-          leftName: t('tradevol.chart.amount'), 
-          rightName: t('tradevol.chart.price'), 
-          context: 'tradevol',
-          unitYi: t('tradevol.unit.yi'),
-          unitWan: t('tradevol.unit.wan')
-        }));
+        chartRef1.current.setOption(handleOptions(traHisData.data, 'linebar', hisMsg));
         setHisLoading(false);
       }
     } catch (error) {
@@ -205,9 +215,13 @@ const TradeVol = () => {
 
   // 跳转到横屏图表
   const jump2Land = (type) => {
-    if (chartData.current[type]) {
-      // 在H5中可以通过路由跳转或弹窗显示横屏图表
-      console.log('跳转到横屏图表', chartData.current[type]);
+    const data = chartData.current[type];
+    if (data) {
+      // 使用 sessionStorage 存储大数据，避免 URL 过长导致 431 错误
+      sessionStorage.setItem('landscapeChartData', JSON.stringify(data));
+      router.push('/landscapechart?source=storage');
+    } else {
+      Toast.show(t('tradevol.noChartData') || '暂无图表数据');
     }
   };
 
@@ -259,7 +273,7 @@ const TradeVol = () => {
               </div>
             )}
             <div className={styles.chartArrawsalt} onClick={() => jump2Land('cur')}>
-              <span className={styles.fullscreenIcon}>⤢</span>
+              <span className={styles.fullscreenIcon}>⛶</span>
             </div>
             <div ref={chartContainerRef} className={styles.chart}></div>
           </div>
@@ -275,7 +289,7 @@ const TradeVol = () => {
               </div>
             )}
             <div className={styles.chartArrawsalt} onClick={() => jump2Land('his')}>
-              <span className={styles.fullscreenIcon}>⤢</span>
+              <span className={styles.fullscreenIcon}>⛶</span>
             </div>
             <div ref={chartContainerRef1} className={styles.chart}></div>
           </div>
