@@ -516,7 +516,9 @@
     "shareFeatureInDevelopment": "Share feature in development",
     "back": "Back",
     "rank": "Rank",
-    "points": "Points"
+    "points": "Points",
+    "me": "Me",
+    "myRank": "My Rank"
   },
   "pointsDetail": {
     "myPoints": "My Points",

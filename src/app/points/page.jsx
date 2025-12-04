@@ -15,7 +15,9 @@ export default function PointsRank() {
   const [activeTab, setActiveTab] = useState('daily');
   const [loading, setLoading] = useState(false);
   const [rankData, setRankData] = useState({});
+  const [currentUserData, setCurrentUserData] = useState({});
   const [inviteCode, setInviteCode] = useState('');
+  const [userInfo, setUserInfo] = useState({ avatar: null, nickname: null });
 
   // 默认头像
   const defaultAvatar = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png';
@@ -35,7 +37,7 @@ export default function PointsRank() {
       if (res?.code === 0 && res?.data) {
         const rankings = res.data.rankings || res.data || [];
         // 映射接口数据到组件格式
-        return rankings.map((item, index) => ({
+        const list = rankings.map((item, index) => ({
           id: item.userId || index + 1,
           name: item.nickName || item.nickname || item.userName || '匿名用户',
           avatar: item.avatar || defaultAvatar,
@@ -43,11 +45,18 @@ export default function PointsRank() {
           rank: item.rank || index + 1,
           isMe: item.isCurrentUser || false
         }));
+        
+        // 返回排行榜列表和当前用户数据
+        return {
+          list,
+          currentUserRank: res.data.currentUserRank,
+          currentUserPoints: res.data.currentUserPoints
+        };
       }
-      return [];
+      return { list: [], currentUserRank: null, currentUserPoints: null };
     } catch (error) {
       console.error(`获取${type}排行榜失败:`, error);
-      return [];
+      return { list: [], currentUserRank: null, currentUserPoints: null };
     }
   }, []);
 
@@ -55,16 +64,23 @@ export default function PointsRank() {
   const loadRankData = useCallback(async () => {
     setLoading(true);
     try {
-      const [dailyList, monthlyList, totalList] = await Promise.all([
+      const [dailyData, monthlyData, totalData] = await Promise.all([
         fetchRankData('daily'),
         fetchRankData('monthly'),
         fetchRankData('total')
       ]);
       
       setRankData({
-        daily: dailyList,
-        monthly: monthlyList,
-        total: totalList
+        daily: dailyData.list,
+        monthly: monthlyData.list,
+        total: totalData.list
+      });
+      
+      // 保存当前用户的排名数据
+      setCurrentUserData({
+        daily: { rank: dailyData.currentUserRank, points: dailyData.currentUserPoints },
+        monthly: { rank: monthlyData.currentUserRank, points: monthlyData.currentUserPoints },
+        total: { rank: totalData.currentUserRank, points: totalData.currentUserPoints }
       });
     } catch (error) {
       console.error('加载排行榜数据失败:', error);
@@ -77,25 +93,31 @@ export default function PointsRank() {
     }
   }, [fetchRankData, t]);
 
-  // 获取用户邀请码
-  const fetchInviteCode = useCallback(async () => {
+  // 获取用户信息（包括邀请码、头像、昵称）
+  const fetchUserInfo = useCallback(async () => {
     try {
       const res = await request({
         url: Interface.USER_DATA_INFO,
         method: 'GET'
       });
-      if (res?.code === 0 && res?.data?.inviteCode) {
-        setInviteCode(res.data.inviteCode);
+      if (res?.code === 0 && res?.data) {
+        if (res.data.inviteCode) {
+          setInviteCode(res.data.inviteCode);
+        }
+        setUserInfo({
+          avatar: res.data.avatar || null,
+          nickname: res.data.nickName || res.data.nickname || null
+        });
       }
     } catch (error) {
-      console.error('获取邀请码失败:', error);
+      console.error('获取用户信息失败:', error);
     }
   }, []);
 
   useEffect(() => {
     loadRankData();
-    fetchInviteCode();
-  }, [loadRankData, fetchInviteCode]);
+    fetchUserInfo();
+  }, [loadRankData, fetchUserInfo]);
 
   // 分享到 Telegram
   const handleShareToTelegram = () => {
@@ -123,7 +145,14 @@ export default function PointsRank() {
   const top1 = listData.find((i) => i.rank === 1);
   const top2 = listData.find((i) => i.rank === 2);
   const top3 = listData.find((i) => i.rank === 3);
-  const myRank = listData.find((i) => i.isMe);
+  // 优先使用 API 返回的 currentUserRank 和 currentUserPoints
+  const currentUserInfo = currentUserData[activeTab] || {};
+  const myRank = currentUserInfo.rank ? {
+    rank: currentUserInfo.rank,
+    points: currentUserInfo.points ?? 0,
+    name: userInfo.nickname || t('points.me') || '我',
+    avatar: userInfo.avatar || defaultAvatar
+  } : listData.find((i) => i.isMe);
   const restList = listData.filter((i) => i.rank > 3);
 
   return (

@@ -112,14 +112,26 @@ export default function PointsHistoryPage() {
     return timeStr.split(' ')[0];
   };
 
-  // 获取类型图标
-  const getTypeIcon = (type) => {
+  // 根据 taskCode 获取类型图标（与积分中心任务图标保持一致）
+  const getTypeIcon = (taskCode) => {
     const icons = {
-      task: '/point/set_alert@2x.png',
-      daily: '/point/glove_praise@2x.png',
-      invite: '/point/invite@2x.png'
+      // 每日任务图标
+      'DAILY_LIKE': '/point/glove_praise@2x.png',
+      'POST': '/point/paper_airplane@2x.png',
+      'RECEIVE_LIKE': '/point/%20no_glove_praise@2x.png',
+      'REPLY': '/point/notification_1@2x.png',
+      'POST_RECEIVE_REPLY': '/point/notification_2@2x.png',
+      'DAILY_LOGIN': '/point/contact_person@2x.png',
+      // 活动任务图标
+      'INVITE_USER': '/point/invite@2x.png',
+      'REGISTER': '/point/contact_person@2x.png',
+      'FOLLOW_TWITTER': '/point/like@2x.png',
+      'JOIN_COMMUNITY': '/point/social_group@2x.png',
+      'COMMUNITY': '/point/social_group@2x.png',
+      'SET_ALARM': '/point/set_alert@2x.png',
+      'VIDEO_LEARN': '/point/video@2x.png',
     };
-    return icons[type] || icons.task;
+    return icons[taskCode] || '/point/glove_praise@2x.png';
   };
 
   return (
@@ -143,12 +155,12 @@ export default function PointsHistoryPage() {
           {historyList.map(item => (
             <div key={item.id} className={styles.historyItem}>
               <div className={styles.itemIcon}>
-                <img src={getTypeIcon(item.type)} className={styles.iconImg} alt={item.typeName} />
+                <img src={getTypeIcon(item.taskCode)} className={styles.iconImg} alt={item.taskName} />
               </div>
               
               <div className={styles.itemContent}>
                 <div className={styles.itemHeader}>
-                  <div className={styles.itemTitle}>{item.title}</div>
+                  <div className={styles.itemTitle}>{item.taskName}</div>
                   <div className={styles.itemPoints}>
                     <span className={`${styles.pointsText} ${item.points >= 0 ? styles.add : styles.sub}`}>
                       {item.points >= 0 ? '+' : ''}{item.points}
@@ -158,8 +170,7 @@ export default function PointsHistoryPage() {
                 </div>
                 
                 <div className={styles.itemFooter}>
-                  <span className={styles.itemType}>{item.typeName}</span>
-                  <span className={styles.itemTime}>{formatTime(item.createTime)}</span>
+                  <span className={styles.itemTime}>{formatTime(item.createdAt)}</span>
                 </div>
               </div>
             </div>
