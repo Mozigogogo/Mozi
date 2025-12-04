@@ -690,8 +690,8 @@
     "empty": "No Data",
     "select": "Please Select",
     "unit": {
-      "m": "M",
-      "k": "K"
+      "b": "B",
+      "m": "M"
     }
   }
   ,
