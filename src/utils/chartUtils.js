@@ -339,11 +339,12 @@ export const handleOptions = (data, type, msg) => {
             type: 'line'
           },
           axisLabel: {
-            // 历史持仓量使用更短的标签并取消旋转
-            rotate: isPositionsize ? 0 : 45,
+            // 历史持仓量和成交额使用更短的标签并取消旋转
+            rotate: (isPositionsize || isTradevol) ? 0 : 45,
             fontSize: 10,
             formatter: (value) => {
-              if (isPositionsize) {
+              // 持仓量和成交额都使用 yy-mm-dd 格式
+              if (isPositionsize || isTradevol) {
                 try {
                   const str = String(value);
                   const m = str.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);

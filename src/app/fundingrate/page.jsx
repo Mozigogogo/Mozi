@@ -279,7 +279,11 @@ export default function FundingRate() {
 
       // 更新图表
       if (chartInstance.current && frHisData?.data) {
-        chartDataRef.current = { data: frHisData.data, type: 'updownbarline' };
+        chartDataRef.current = { 
+          data: frHisData.data, 
+          type: 'updownbarline',
+          msg: { title: t('fundingrate.section.history') }
+        };
         const options = handleOptions(frHisData.data, 'updownbarline');
         // 专用 grid 布局与轴格式
         options.grid = {
@@ -331,10 +335,9 @@ export default function FundingRate() {
     }
     
     try {
-      // 将图表数据转换为 JSON 字符串并编码
-      const dataStr = encodeURIComponent(JSON.stringify(chartDataRef.current));
-      // 跳转到横屏图表页面
-      router.push(`/landscapechart?data=${dataStr}`);
+      // 使用 sessionStorage 存储大数据，避免 URL 过长导致 431 错误
+      sessionStorage.setItem('landscapeChartData', JSON.stringify(chartDataRef.current));
+      router.push('/landscapechart?source=storage');
     } catch (error) {
       console.error('跳转横屏图表失败:', error);
     }
@@ -497,7 +500,9 @@ export default function FundingRate() {
                   <div className={styles.spinner} />
                 </div>
               )}
-              <div className={styles.chartArrawsalt} onClick={jumpToLandscape}></div>
+              <div className={`${styles.chartArrawsalt} ${styles.hisChartBtn}`} onClick={jumpToLandscape}>
+                <span className={styles.fullscreenIcon}>⛶</span>
+              </div>
               <div ref={chartRef} className={styles.chart}></div>
             </div>
           )}
