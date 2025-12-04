@@ -386,9 +386,9 @@ export const handleOptions = (data, type, msg) => {
           axisLabel: {
             formatter: (value) => {
               if (isTradevol) {
-                // 成交额页面：去掉$符号
-                const formatted = data?.yAxisLeftSlot ? data.yAxisLeftSlot.replace('{}', value) : value;
-                return formatted.toString().replace('$', '');
+                // 成交额页面：使用国际化单位
+                const intValue = Math.floor(value);
+                return `${intValue}${unitYi}`;
               } else if (isPositionsize) {
                 // 历史持仓量：使用国际化单位，展示整数
                 const intValue = Math.floor(value);

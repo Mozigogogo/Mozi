@@ -187,8 +187,8 @@ export default function FundingRate() {
               const slot = chartDataRef.current.data.yAxisLeftSlot;
               let formatted = slot ? String(slot).replace('{}', value) : value;
               formatted = String(formatted).replace(/\$/g, '');
-              formatted = String(formatted).replace(/亿/g, t('fundingrate.unit.m'));
-              formatted = String(formatted).replace(/万/g, t('fundingrate.unit.k'));
+              formatted = String(formatted).replace(/亿/g, t('fundingrate.unit.b'));
+              formatted = String(formatted).replace(/万/g, t('fundingrate.unit.m'));
               return formatted;
             };
           }
@@ -196,7 +196,7 @@ export default function FundingRate() {
             options.yAxis[1].axisLabel = options.yAxis[1].axisLabel || {};
             options.yAxis[1].axisLabel.formatter = (value) => {
               const slot = chartDataRef.current.data.yAxisRightSlot;
-              return formatRightAxisToWan(value, slot, t('fundingrate.unit.k'));
+              return formatRightAxisToWan(value, slot, t('fundingrate.unit.m'));
             };
           }
         }
@@ -299,8 +299,8 @@ export default function FundingRate() {
               const slot = frHisData.data.yAxisLeftSlot;
               let formatted = slot ? String(slot).replace('{}', value) : value;
               formatted = String(formatted).replace(/\$/g, '');
-              formatted = String(formatted).replace(/亿/g, t('fundingrate.unit.m'));
-              formatted = String(formatted).replace(/万/g, t('fundingrate.unit.k'));
+              formatted = String(formatted).replace(/亿/g, t('fundingrate.unit.b'));
+              formatted = String(formatted).replace(/万/g, t('fundingrate.unit.m'));
               return formatted;
             };
           }
@@ -308,7 +308,7 @@ export default function FundingRate() {
             options.yAxis[1].axisLabel = options.yAxis[1].axisLabel || {};
             options.yAxis[1].axisLabel.formatter = (value) => {
               const slot = frHisData.data.yAxisRightSlot;
-              return formatRightAxisToWan(value, slot, t('fundingrate.unit.k'));
+              return formatRightAxisToWan(value, slot, t('fundingrate.unit.m'));
             };
           }
         chartInstance.current.setOption(options);

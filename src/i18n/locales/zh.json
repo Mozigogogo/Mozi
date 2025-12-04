@@ -459,6 +459,7 @@
     "loadingHistory": "正在加载历史对话...",
     "aiAlt": "AI",
     "tokens": "消耗 {{tokens}} tokens",
+    "thinking": "正在思考中",
     "regenerate": "重新生成",
     "regenerateAlt": "重新生成",
     "me": "我",
@@ -690,8 +691,8 @@
     "empty": "暂无数据",
     "select": "请选择",
     "unit": {
-      "m": "亿",
-      "k": "万"
+      "b": "亿",
+      "m": "万"
     }
   }
   ,

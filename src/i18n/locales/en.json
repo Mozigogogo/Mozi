@@ -459,6 +459,7 @@
     "loadingHistory": "Loading conversation history...",
     "aiAlt": "AI",
     "tokens": "Consumed {{tokens}} tokens",
+    "thinking": "Thinking",
     "regenerate": "Regenerate",
     "regenerateAlt": "Regenerate",
     "me": "Me",
@@ -690,8 +691,8 @@
     "empty": "No Data",
     "select": "Please Select",
     "unit": {
-      "m": "M",
-      "k": "K"
+      "b": "B",
+      "m": "M"
     }
   }
   ,
