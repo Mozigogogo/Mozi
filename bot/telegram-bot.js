@@ -10,6 +10,10 @@ const { Telegraf } = require('telegraf');
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const APP_URL = process.env.APP_URL || 'https://moziinnovations-production.up.railway.app';
 
+// 社交媒体链接
+const TG_COMMUNITY_URL = 'https://t.me/MoziInnovations';
+const TWITTER_URL = 'https://x.com/Innovation56171';
+
 // 检查必要的环境变量
 if (!BOT_TOKEN) {
   console.error('❌ 错误: 请设置 BOT_TOKEN 环境变量');
@@ -22,6 +26,8 @@ const i18n = {
     welcomeWithInvite: (code) => `🎉 欢迎加入 MoziInnovations！\n\n您已通过邀请码 ${code} 加入，快来注册吧！`,
     welcome: '👋 欢迎使用 MoziInnovations！',
     openApp: '🚀 打开 MoziInnovations',
+    joinCommunity: '💬 加入社区',
+    followX: '🐦 关注 X',
     bindSuccess: '邀请绑定成功',
     bindFailed: '邀请绑定失败',
   },
@@ -29,7 +35,9 @@ const i18n = {
     welcomeWithInvite: (code) => `🎉 Welcome to MoziInnovations!\n\nYou have joined via invite code ${code}, come and register now!`,
     welcome: '👋 Welcome to MoziInnovations!',
     openApp: '🚀 Open MoziInnovations',
-    bindSuccess: 'Invitation bindingsuccessful',
+    joinCommunity: '💬 Join Community',
+    followX: '🐦 Follow X',
+    bindSuccess: 'Invitation binding successful',
     bindFailed: 'Invitation binding failed',
   }
 };
@@ -74,9 +82,11 @@ bot.start(async (ctx) => {
   await ctx.replyWithPhoto(welcomeImage, {
     caption: message,
     reply_markup: {
-      inline_keyboard: [[
-        { text: texts.openApp, web_app: { url: appUrl } }
-      ]]
+      inline_keyboard: [
+        [{ text: texts.openApp, web_app: { url: appUrl } }],
+        [{ text: texts.joinCommunity, url: TG_COMMUNITY_URL }],
+        [{ text: texts.followX, url: TWITTER_URL }]
+      ]
     }
   });
 });
