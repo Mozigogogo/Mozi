@@ -472,7 +472,12 @@
     "sendFailed": "Send failed, please retry",
     "wsNotConnected": "WebSocket not connected, please refresh",
     "genericError": "Sorry, something went wrong. Please try later",
-    "welcome": "Hello, I'm your AI assistant! I can help analyze crypto markets and answer investment questions. What can I help you?"
+    "welcome": "Hello, I'm your AI assistant! I can help analyze crypto markets and answer investment questions. What can I help you?",
+    "suggest": {
+      "analyzeTrend": "Help me analyze {{symbol}}'s trend",
+      "isGoodToBuy": "Is now a good time to buy {{symbol}}?",
+      "technicalView": "How does {{symbol}} look technically?"
+    }
   },
   "language": {
     "zh": "简体中文",

@@ -767,6 +767,26 @@ export default function RobotPage() {
     handleSend(question);
   };
 
+  const getSuggestedQuestionDisplay = (question) => {
+    if (!question) return '';
+    const trendMatch = question.match(/^帮我分析一下\s+(.+?)\s+的走势$/);
+    if (trendMatch) {
+      const symbol = trendMatch[1].trim();
+      return t('robot.suggest.analyzeTrend', { symbol });
+    }
+    const buyMatch = question.match(/^(.+?)\s+现在适合买入吗？$/);
+    if (buyMatch) {
+      const symbol = buyMatch[1].trim();
+      return t('robot.suggest.isGoodToBuy', { symbol });
+    }
+    const techMatch = question.match(/^(.+?)\s+的技术面如何？$/);
+    if (techMatch) {
+      const symbol = techMatch[1].trim();
+      return t('robot.suggest.technicalView', { symbol });
+    }
+    return question;
+  };
+
   // 格式化时间
   const formatTime = (ts) => {
     const d = new Date(ts);
@@ -880,7 +900,7 @@ export default function RobotPage() {
                 className={styles.suggestedBtn}
                 onClick={() => handleSuggestedQuestion(q)}
               >
-                {q}
+                {getSuggestedQuestionDisplay(q)}
               </button>
             ))}
           </div>
