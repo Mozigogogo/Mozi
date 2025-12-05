@@ -22,7 +22,8 @@
     "updated": "Updated",
     "linkCopied": "Link copied",
     "loadFailed": "Failed to load, please try again",
-    "noData": "No data"
+    "noData": "No data",
+    "noTasks": "No tasks available"
   },
   "exchangeRank": {
     "realTimeUpdate": "Real-time update"

@@ -144,11 +144,11 @@ export default function PointsDetail() {
   
   const [tasksList, setTasksList] = useState(getInitialTasks());
   const [verifyingTaskId, setVerifyingTaskId] = useState(null);
-  const [tasksLoading, setTasksLoading] = useState(false);
+  const [tasksLoading, setTasksLoading] = useState(true);
   
   // 每日任务列表 state
   const [dailyInvestments, setDailyInvestments] = useState([]);
-  const [dailyTasksLoading, setDailyTasksLoading] = useState(false);
+  const [dailyTasksLoading, setDailyTasksLoading] = useState(true);
 
   // 任务类型到图标的映射
   const taskIconMap = {
@@ -646,52 +646,68 @@ export default function PointsDetail() {
             </div>
             
             <div className={styles.tasksList}>
-              {tasksList.map(task => {
-                // 判断按钮状态
-                const isVerifying = verifyingTaskId === task.id;
-                const isCompleted = task.status === 'completed';
-                const isWaitingVerify = !task.needsAction && task.status === 'pending'; // 待验证状态
-                
-                // 按钮文本
-                let btnText;
-                if (isCompleted) {
-                  btnText = t('pointsDetail.tasks.completed');
-                } else if (isVerifying) {
-                  btnText = t('pointsDetail.verifying');
-                } else if (isWaitingVerify) {
-                  btnText = t('pointsDetail.tasks.verify');
-                } else {
-                  btnText = t(task.btnTextKey);
-                }
-                
-                // 按钮样式
-                let btnClassName = styles.taskBtn;
-                if (isCompleted) btnClassName += ` ${styles.completedBtn}`;
-                else if (isVerifying) btnClassName += ` ${styles.verifyingBtn}`;
-                else if (isWaitingVerify) btnClassName += ` ${styles.verifyBtn}`;
-                
-                return (
-                  <div key={task.id} className={`${styles.taskItem} ${isCompleted ? styles.completed : ''}`}>
-                    <div className={styles.taskIconWrapper}>
-                      <img src={task.icon} alt={t(task.titleKey)} className={styles.taskIconImg} />
-                    </div>
-                    <div className={styles.taskInfo}>
-                      <div className={styles.taskTitle}>{task.title || t(task.titleKey)}</div>
-                      <div className={styles.taskPoints}>
-                        +{task.points}
-                        <img src="/point/coin_icon@2x.png" alt="Coin" className={styles.taskCoinIcon} />
-                      </div>
-                    </div>
-                    <button 
-                      className={btnClassName}
-                      onClick={() => handleTaskClick(task)}
-                      disabled={isVerifying}
-                    >
-                      {btnText}
-                    </button>
+              {tasksLoading ? (
+                <div className={styles.loadingContainer}>
+                  <div className={styles.spinner}>
+                    <div className={styles.spinnerRing}></div>
+                    <div className={styles.spinnerRing}></div>
+                    <div className={styles.spinnerRing}></div>
+                    <img src="/point/coin_icon@2x.png" alt="Loading" className={styles.spinnerCoin} />
                   </div>
-                );
-              })}
+                </div>
+              ) : tasksList.length === 0 ? (
+                <div className={styles.emptyState}>
+                  <img src="/point/Emoji_2@2x.png" alt="Empty" className={styles.emptyIcon} />
+                  <div className={styles.emptyText}>{t('common.noTasks') || '暂无任务'}</div>
+                </div>
+              ) : (
+                tasksList.map(task => {
+                  // 判断按钮状态
+                  const isVerifying = verifyingTaskId === task.id;
+                  const isCompleted = task.status === 'completed';
+                  const isWaitingVerify = !task.needsAction && task.status === 'pending'; // 待验证状态
+                  
+                  // 按钮文本
+                  let btnText;
+                  if (isCompleted) {
+                    btnText = t('pointsDetail.tasks.completed');
+                  } else if (isVerifying) {
+                    btnText = t('pointsDetail.verifying');
+                  } else if (isWaitingVerify) {
+                    btnText = t('pointsDetail.tasks.verify');
+                  } else {
+                    btnText = t(task.btnTextKey);
+                  }
+                  
+                  // 按钮样式
+                  let btnClassName = styles.taskBtn;
+                  if (isCompleted) btnClassName += ` ${styles.completedBtn}`;
+                  else if (isVerifying) btnClassName += ` ${styles.verifyingBtn}`;
+                  else if (isWaitingVerify) btnClassName += ` ${styles.verifyBtn}`;
+                  
+                  return (
+                    <div key={task.id} className={`${styles.taskItem} ${isCompleted ? styles.completed : ''}`}>
+                      <div className={styles.taskIconWrapper}>
+                        <img src={task.icon} alt={t(task.titleKey)} className={styles.taskIconImg} />
+                      </div>
+                      <div className={styles.taskInfo}>
+                        <div className={styles.taskTitle}>{task.title || t(task.titleKey)}</div>
+                        <div className={styles.taskPoints}>
+                          +{task.points}
+                          <img src="/point/coin_icon@2x.png" alt="Coin" className={styles.taskCoinIcon} />
+                        </div>
+                      </div>
+                      <button 
+                        className={btnClassName}
+                        onClick={() => handleTaskClick(task)}
+                        disabled={isVerifying}
+                      >
+                        {btnText}
+                      </button>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
 
@@ -714,9 +730,19 @@ export default function PointsDetail() {
 
             <div className={styles.investmentList}>
               {dailyTasksLoading ? (
-                <div className={styles.loading}>{t('common.loading')}</div>
+                <div className={styles.loadingContainer}>
+                  <div className={styles.spinner}>
+                    <div className={styles.spinnerRing}></div>
+                    <div className={styles.spinnerRing}></div>
+                    <div className={styles.spinnerRing}></div>
+                    <img src="/point/coin_icon@2x.png" alt="Loading" className={styles.spinnerCoin} />
+                  </div>
+                </div>
               ) : dailyInvestments.length === 0 ? (
-                <div className={styles.emptyTip}>{t('common.noData')}</div>
+                <div className={styles.emptyState}>
+                  <img src="/point/Emoji_3@2x.png" alt="Empty" className={styles.emptyIcon} />
+                  <div className={styles.emptyText}>{t('common.noTasks') || '暂无任务'}</div>
+                </div>
               ) : (
                 dailyInvestments.map(item => (
                   <div key={item.id} className={styles.investmentItem}>
