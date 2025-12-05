@@ -1000,7 +1000,7 @@ export default function UserPage() {
           )}
 
           <div className={styles.actionButtons}>
-            <div className={styles.actionButton} onClick={() => (window.location.href = '/market?type=favorite')}>
+            <div className={styles.actionButton} onClick={() => (window.location.href = '/find?tab=self')}>
               <div className={styles.actionIcon}>
                 <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/optional%402x.png'} alt="我的自选" />
               </div>
