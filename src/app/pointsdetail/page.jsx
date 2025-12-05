@@ -111,7 +111,7 @@ export default function PointsDetail() {
           inviteLink: data.inviteLink || prev.inviteLink,
           totalInvites: data.totalInvites ?? invitations.length ?? prev.totalInvites,
           activeInvites: data.activeInvites ?? invitations.filter(i => i.status === 'active' || i.isActive).length ?? prev.activeInvites,
-          earnedPoints: data.earnedPoints ?? prev.earnedPoints,
+          earnedPoints: data.totalInvitePoints ?? data.earnedPoints ?? prev.earnedPoints,
           pendingRewards: data.pendingRewards ?? prev.pendingRewards
         }));
         console.log('邀请列表数据:', data);
