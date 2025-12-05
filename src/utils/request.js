@@ -18,6 +18,11 @@ instance.interceptors.request.use(
     if (token) {
       config.headers.authentication = token;
     }
+    
+    // 从localStorage获取用户选择的语言
+    const language = localStorage.getItem('i18nextLng') || 'en';
+    config.headers['Accept-Language'] = language;
+    
     return config;
   },
   (error) => {

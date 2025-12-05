@@ -22,7 +22,8 @@
     "updated": "更新",
     "linkCopied": "链接已复制",
     "loadFailed": "加载失败，请稍后重试",
-    "noData": "暂无数据"
+    "noData": "暂无数据",
+    "noTasks": "暂无任务"
   },
   "exchangeRank": {
     "realTimeUpdate": "实时更新"
