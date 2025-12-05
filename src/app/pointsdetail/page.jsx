@@ -132,17 +132,8 @@ export default function PointsDetail() {
     fetchAllTasks();
   }, []);
 
-  // 使用函数延迟初始化任务列表，确保 t() 在组件渲染时可用
-  const getInitialTasks = () => [
-    { id: 1, icon: '/point/contact_person@2x.png', titleKey: 'pointsDetail.tasks.firstRegister.title', btnTextKey: 'pointsDetail.tasks.firstRegister.button', points: 50, status: 'pending', needsAction: true },
-    { id: 2, icon: '/point/like@2x.png', titleKey: 'pointsDetail.tasks.followTwitter.title', btnTextKey: 'pointsDetail.tasks.followTwitter.button', points: 50, status: 'pending', needsAction: true },
-    { id: 3, icon: '/point/social_group@2x.png', titleKey: 'pointsDetail.tasks.joinCommunity.title', btnTextKey: 'pointsDetail.tasks.joinCommunity.button', points: 50, status: 'pending', needsAction: true },
-    { id: 4, icon: '/point/twitter@2x.png', titleKey: 'pointsDetail.tasks.earlyBird.title', btnTextKey: 'pointsDetail.tasks.earlyBird.button', points: 200, status: 'pending', needsAction: true },
-    { id: 5, icon: '/point/set_alert@2x.png', titleKey: 'pointsDetail.tasks.setAlarm.title', btnTextKey: 'pointsDetail.tasks.setAlarm.button', points: 100, status: 'pending', needsAction: true },
-    { id: 6, icon: '/point/video@2x.png', titleKey: 'pointsDetail.tasks.videoLearn.title', btnTextKey: 'pointsDetail.tasks.videoLearn.button', points: 50, status: 'pending', needsAction: true }
-  ];
-  
-  const [tasksList, setTasksList] = useState(getInitialTasks());
+  // 任务列表初始为空数组，等待接口返回数据
+  const [tasksList, setTasksList] = useState([]);
   const [verifyingTaskId, setVerifyingTaskId] = useState(null);
   const [tasksLoading, setTasksLoading] = useState(true);
   
@@ -215,27 +206,26 @@ export default function PointsDetail() {
             };
           });
         
-        if (mappedTasks.length > 0) {
-          setTasksList(mappedTasks);
-        }
+        // 无论是否有数据都设置，空数组也设置
+        setTasksList(mappedTasks);
 
         // 处理每日任务 dailyTaskList
         const dailyTasks = res.data.dailyTaskList || [];
-        if (dailyTasks.length > 0) {
-          const mappedDailyTasks = dailyTasks
-            .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
-            .map((task, index) => ({
-              id: task.taskCode || index + 1,
-              icon: dailyTaskIconMap[task.taskCode] || '/point/glove_praise@2x.png',
-              title: task.taskName,
-              rewardLabel: task.taskDesc,
-              reward: task.rewardPoints || 0,
-              current: task.currentProgress || 0,
-              total: task.targetProgress || 1,
-              completed: task.isCompleted || false,
-            }));
-          setDailyInvestments(mappedDailyTasks);
-        }
+        const mappedDailyTasks = dailyTasks
+          .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+          .map((task, index) => ({
+            id: task.taskCode || index + 1,
+            icon: dailyTaskIconMap[task.taskCode] || '/point/glove_praise@2x.png',
+            title: task.taskName,
+            rewardLabel: task.taskDesc,
+            reward: task.rewardPoints || 0,
+            current: task.currentProgress || 0,
+            total: task.targetProgress || 1,
+            completed: task.isCompleted || false,
+          }));
+        
+        // 无论是否有数据都设置，空数组也设置
+        setDailyInvestments(mappedDailyTasks);
       }
     } catch (error) {
       console.error('获取任务列表失败:', error);
