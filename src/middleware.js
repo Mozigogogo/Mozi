@@ -20,7 +20,7 @@ export function middleware(request) {
     '/images',
     '/dfd8f2ae8e6634994ec4216a51edbb12.txt',  // 微信域名验证文件
     '/Vc5OIbZbn2.txt',
-    'MP_verify_DyHloNZH8DTupLU3.txt'
+    '/MP_verify_DyHloNZH8DTupLU3.txt'
   ];
 
   // 检查是否是允许的路径
