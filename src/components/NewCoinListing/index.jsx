@@ -9,8 +9,9 @@ import styles from './index.module.less';
  * @param {boolean} showMore - 是否显示"查看更多"
  * @param {Array} data - 新币上线数据列表
  * @param {Function} onMoreClick - 点击"查看更多"的回调
+ * @param {boolean} loading - 是否正在加载
  */
-const NewCoinListing = ({ showMore = false, data = [], onMoreClick }) => {
+const NewCoinListing = ({ showMore = false, data = [], onMoreClick, loading = false }) => {
   const { t } = useTranslation();
   
   const coinListings = data || [];
@@ -29,7 +30,11 @@ const NewCoinListing = ({ showMore = false, data = [], onMoreClick }) => {
       
       {/* 新币上线内容容器：横向滑动列表 */}
       <div className={styles.container}>
-        {coinListings.length === 0 ? (
+        {loading ? (
+          <div className={styles.loadingState}>
+            <div className={styles.loadingSpinner}></div>
+          </div>
+        ) : coinListings.length === 0 ? (
           <div className={styles.emptyState}>
             <p className={styles.emptyText}>{t('user.noNewListings') || '暂无新币上线'}</p>
           </div>

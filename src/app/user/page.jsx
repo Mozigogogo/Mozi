@@ -74,6 +74,7 @@ export default function UserPage() {
   const [isInterfaceSuccess, setIsInterfaceSuccess] = useState(false); // 接口是否调用成功
   const [isAnnouncementOn, setIsAnnouncementOn] = useState(false); // 公告订阅开关，默认关闭
   const [calendarEventDates, setCalendarEventDates] = useState([]); // 日历上有事件的日期（日期数字数组）
+  const [isLoadingNewCoins, setIsLoadingNewCoins] = useState(false); // 新币上线数据加载状态
   
   // 简单的 Cookie 读写（仅前端可见；敏感 token 建议服务端 HttpOnly）
   const getCookie = (name) => {
@@ -513,6 +514,9 @@ export default function UserPage() {
       const timeStr = formatDate(date);
       console.log('调用接口，日期:', timeStr);
 
+      // 开始加载，显示加载状态
+      setIsLoadingNewCoins(true);
+
       const res = await request({
         url: Interface.GET_MY_INTERFACE,
         method: 'POST',
@@ -558,6 +562,9 @@ export default function UserPage() {
       }
     } catch (error) {
       console.error('获取我的交互数据失败:', error);
+    } finally {
+      // 无论成功或失败，都结束加载状态
+      setIsLoadingNewCoins(false);
     }
   };
 
@@ -565,6 +572,8 @@ export default function UserPage() {
   const handleDateChange = (date) => {
     console.log('选择日期:', date);
     setSelectedDate(date);
+    // 清空当前数据，显示加载状态
+    setNewCoinListings([]);
     fetchMyInterface(date);
   };
 
@@ -1354,7 +1363,7 @@ export default function UserPage() {
 
         {showNewCoinListing && (
           <div className={styles.newCoinSection}>
-            <NewCoinListing showMore={false} data={newCoinListings} />
+            <NewCoinListing showMore={false} data={newCoinListings} loading={isLoadingNewCoins} />
           </div>
         )}
 
