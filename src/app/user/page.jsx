@@ -155,22 +155,11 @@ export default function UserPage() {
         });
 
         if (res?.success === true && res.data) {
-          setInterfaceData(res.data);
-
-          // 转换新币上线数据格式
+          // 初始加载只用于获取日历小点，不显示新币上线列表
+          // 新币上线列表由用户选择具体日期后显示
+          
           const rawData = Array.isArray(res.data) ? res.data : (res.data?.newCoinListings || res.data?.listings || []);
           if (rawData && rawData.length > 0) {
-            const formattedListings = rawData.map((item, index) => ({
-              id: item.id || index + 1,
-              exchange: item.exchanges || item.exchange || 'Unknown',
-              exchangeIcon: item.logoUrl || item.exchangeIcon || 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/biannce.png',
-              listingTime: item.ctime || item.listingTime || '',
-              title: item.title || '',
-              details: item.deteil || item.details || '',
-              link: item.link || ''
-            }));
-            setNewCoinListings(formattedListings);
-
             // 从 ctime 提取日期，显示日历小点点
             const eventDays = rawData
               .map(item => {
@@ -604,7 +593,7 @@ export default function UserPage() {
       if (res?.success === true && res.data) {
         const rawData = Array.isArray(res.data) ? res.data : (res.data?.newCoinListings || res.data?.listings || []);
         if (rawData && rawData.length > 0) {
-          // 从 ctime 提取日期
+          // 从 ctime 提取日期，只用于显示日历小点
           const targetMonth = newMonth.getMonth() + 1;
           const eventDays = rawData
             .map(item => {
@@ -621,6 +610,9 @@ export default function UserPage() {
             })
             .filter(day => day !== null);
           setCalendarEventDates([...new Set(eventDays)]);
+          
+          // 注意：这里不更新 newCoinListings
+          // 新币上线列表只在用户选择具体日期时更新
         } else {
           setCalendarEventDates([]);
         }
