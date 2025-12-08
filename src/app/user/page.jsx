@@ -761,7 +761,8 @@ export default function UserPage() {
   };
 
   // 处理登录成功
-  const handleLoginSuccess = async () => {
+  // isWalletLogin: 是否为钱包登录（钱包登录不使用 Telegram 用户名）
+  const handleLoginSuccess = async (isWalletLogin = false) => {
     const syncLogin = () => {
       const hasToken = !!localStorage.getItem('token');
       const walletAddr = getCookie('wallet_address');
@@ -793,8 +794,9 @@ export default function UserPage() {
       console.error('每日登录任务上报失败:', taskError);
     }
 
-    // 如果是 Telegram 环境，自动更新用户信息
-    if (isTelegramEnv()) {
+    // 如果是 Telegram 环境且不是钱包登录，才更新 Telegram 用户信息
+    // 钱包登录优先使用钱包地址格式，不使用 Telegram 用户名
+    if (isTelegramEnv() && !isWalletLogin) {
       await updateTelegramUserInfo();
     }
   };
@@ -1063,15 +1065,12 @@ export default function UserPage() {
           localStorage.setItem('userId', res.data.userId);
         }
         Toast.show({ content: t('auth.loginSuccess') || '登录成功', position: 'center', icon: 'success' });
-        handleLoginSuccess();
         
-        // 钱包登录成功后，检查是否需要更新用户名
+        // 钱包登录成功后，优先使用钱包地址格式作为用户名
         await updateWalletUserInfo(tonAddress);
         
-        // 如果在 Telegram 环境，还要尝试更新 Telegram 用户信息
-        if (isTelegramEnv()) {
-          await updateTelegramUserInfo();
-        }
+        // 标记为钱包登录，不使用 Telegram 用户名
+        handleLoginSuccess(true);
       } else {
         Toast.show({ content: res?.message || t('auth.loginFailed') || '登录失败', position: 'bottom' });
       }
