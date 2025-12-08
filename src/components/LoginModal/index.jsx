@@ -32,10 +32,38 @@ const getTelegramUserInfo = () => {
   };
 };
 
-// 自动更新 Telegram 用户信息到后端
+// 自动更新 Telegram 用户信息到后端（仅首次）
 const updateTelegramUserInfo = async () => {
   const tgUserInfo = getTelegramUserInfo();
   if (!tgUserInfo) return;
+
+  // 检查后端返回的用户信息中是否已有自定义昵称
+  const storedUserInfo = localStorage.getItem('userInfo');
+  if (storedUserInfo) {
+    try {
+      const parsed = JSON.parse(storedUserInfo);
+      const currentNickname = (parsed.nickName || '').trim();
+      
+      // 如果后端已有昵称且不为空，说明用户已经设置过，不要覆盖
+      // 排除一些明显的默认值
+      const defaultNicknames = [
+        '',
+        'Please Login',
+        '请登录',
+        'Telegram User',
+        'User',
+        '用户',
+        '默认用户'
+      ];
+      
+      if (currentNickname && !defaultNicknames.includes(currentNickname)) {
+        console.log('⏭️ LoginModal - 用户已有自定义昵称，跳过自动更新', { currentNickname });
+        return;
+      }
+    } catch (e) {
+      console.error('解析用户信息失败:', e);
+    }
+  }
 
   try {
     // 构建昵称：优先使用 username，其次使用 first_name + last_name
@@ -44,7 +72,7 @@ const updateTelegramUserInfo = async () => {
       nickname = `${tgUserInfo.firstName} ${tgUserInfo.lastName}`.trim();
     }
     
-    console.log('=== LoginModal - 更新 Telegram 用户信息 ===', {
+    console.log('=== LoginModal - 首次更新 Telegram 用户信息 ===', {
       nickname,
       avatar: tgUserInfo.photoUrl
     });
@@ -62,6 +90,7 @@ const updateTelegramUserInfo = async () => {
 
     if (res?.data) {
       console.log('✅ LoginModal - Telegram 用户信息更新成功');
+      
       // 同步更新 localStorage
       try {
         const storedUserInfo = localStorage.getItem('userInfo');

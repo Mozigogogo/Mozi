@@ -848,34 +848,35 @@ export default function UserPage() {
   };
 
   // 自动更新 Telegram 用户信息到后端（仅首次注册时）
-  const updateTelegramUserInfo = async (isNewUser = false) => {
+  const updateTelegramUserInfo = async () => {
     const tgUserInfo = getTelegramUserInfo();
     if (!tgUserInfo) return;
 
-    // 检查用户是否已经设置过昵称（非默认昵称）
+    // 检查后端返回的用户信息中是否已有自定义昵称
     const storedUserInfo = localStorage.getItem('userInfo');
-    let hasCustomNickname = false;
-    
     if (storedUserInfo) {
       try {
         const parsed = JSON.parse(storedUserInfo);
-        const currentNickname = parsed.nickName || '';
-        // 如果昵称不为空且不是默认昵称，说明用户已经设置过
-        hasCustomNickname = currentNickname && 
-                           currentNickname !== t('user.defaultNickname') &&
-                           currentNickname !== 'Telegram User' &&
-                           currentNickname.trim().length > 0;
+        const currentNickname = (parsed.nickName || '').trim();
+        
+        // 如果后端已有昵称且不为空，说明用户已经设置过，不要覆盖
+        // 排除一些明显的默认值
+        const defaultNicknames = [
+          '',
+          t('user.defaultNickname'),
+          'Telegram User',
+          'User',
+          '用户',
+          '默认用户'
+        ];
+        
+        if (currentNickname && !defaultNicknames.includes(currentNickname)) {
+          console.log('⏭️ 用户已有自定义昵称，跳过自动更新', { currentNickname });
+          return;
+        }
       } catch (e) {
         console.error('解析用户信息失败:', e);
       }
-    }
-
-    // 只有在以下情况才更新：
-    // 1. 明确标记为新用户（首次注册）
-    // 2. 用户还没有设置过自定义昵称
-    if (!isNewUser && hasCustomNickname) {
-      console.log('⏭️ 用户已有自定义昵称，跳过自动更新');
-      return;
     }
 
     try {
@@ -885,11 +886,9 @@ export default function UserPage() {
         nickname = `${tgUserInfo.firstName} ${tgUserInfo.lastName}`.trim();
       }
       
-      console.log('=== 更新 Telegram 用户信息 ===', {
+      console.log('=== 首次更新 Telegram 用户信息 ===', {
         nickname,
-        avatar: tgUserInfo.photoUrl || DEFAULT_AVATAR,
-        isNewUser,
-        hasCustomNickname
+        avatar: tgUserInfo.photoUrl || DEFAULT_AVATAR
       });
 
       const res = await request({
@@ -903,6 +902,7 @@ export default function UserPage() {
 
       if (res?.data) {
         console.log('✅ Telegram 用户信息更新成功');
+        
         // 更新本地用户信息
         setUserInfo(prev => ({
           ...prev,
