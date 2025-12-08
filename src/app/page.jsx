@@ -51,8 +51,9 @@ const HomeAlertIcon = `${CDN_PREFIX}/icon/home-alert.png`;
 // 公告栏显示状态（可持久隐藏）
 const NOTICE_HIDE_KEY = 'hideHomeNotice';
 
-// 欢迎弹窗显示状态（仅首次访问显示）
+// 欢迎弹窗显示状态（每个UTC日期显示一次）
 const WELCOME_SHOWN_KEY = 'welcomePopupShown';
+const WELCOME_LAST_SHOWN_KEY = 'welcomePopupLastShownDate';
 
 // 搜索图标
 const SearchIcon = `${CDN_PREFIX}/icon/community/search.png`;
@@ -165,54 +166,68 @@ export default function HomePage() {
     }
   };
 
-  // 每次访问都显示欢迎弹窗（禁用本地状态保存）
+  // 按UTC日期显示欢迎弹窗（每个UTC日期只显示一次）
   useEffect(() => {
     if (typeof window === 'undefined') return;
     
     try {
-      // 根据语言预加载对应的弹窗图片
-      const bgImage = isEN ? '/point/point_en_modal_bg.png' : '/point/point_modal_bg.png';
-      const rightImage = isEN ? '/point/ponit_en_modal_right_text.png' : '/point/ponit_modal_right_text.png';
+      // 获取当前UTC日期（格式：YYYY-MM-DD）
+      const now = new Date();
+      const currentUTCDate = now.toISOString().split('T')[0];
       
-      const preloadImages = [
-        bgImage,
-        '/point/ponit_modal_logo.png',
-        rightImage
-      ];
+      // 检查上次显示的UTC日期
+      const lastShownDate = localStorage.getItem(WELCOME_LAST_SHOWN_KEY);
       
-      let loadedCount = 0;
-      const totalImages = preloadImages.length;
-      
-      preloadImages.forEach((src) => {
-        const img = new window.Image();
-        img.onload = () => {
-          loadedCount++;
-          // 所有图片加载完成后显示弹窗
-          if (loadedCount === totalImages) {
-            setTimeout(() => {
-              setShowWelcomePopup(true);
-            }, 500);
-          }
-        };
-        img.onerror = () => {
-          loadedCount++;
-          // 即使加载失败也继续
-          if (loadedCount === totalImages) {
-            setTimeout(() => {
-              setShowWelcomePopup(true);
-            }, 500);
-          }
-        };
-        img.src = src;
-      });
+      // 如果从未显示过，或者当前UTC日期与上次显示日期不同，则显示弹窗
+      if (!lastShownDate || lastShownDate !== currentUTCDate) {
+        // 根据语言预加载对应的弹窗图片
+        const bgImage = isEN ? '/point/point_en_modal_bg.png' : '/point/point_modal_bg.png';
+        const rightImage = isEN ? '/point/ponit_en_modal_right_text.png' : '/point/ponit_modal_right_text.png';
+        
+        const preloadImages = [
+          bgImage,
+          '/point/ponit_modal_logo.png',
+          rightImage
+        ];
+        
+        let loadedCount = 0;
+        const totalImages = preloadImages.length;
+        
+        preloadImages.forEach((src) => {
+          const img = new window.Image();
+          img.onload = () => {
+            loadedCount++;
+            // 所有图片加载完成后显示弹窗
+            if (loadedCount === totalImages) {
+              setTimeout(() => {
+                setShowWelcomePopup(true);
+                // 记录当前UTC日期
+                localStorage.setItem(WELCOME_LAST_SHOWN_KEY, currentUTCDate);
+              }, 500);
+            }
+          };
+          img.onerror = () => {
+            loadedCount++;
+            // 即使加载失败也继续
+            if (loadedCount === totalImages) {
+              setTimeout(() => {
+                setShowWelcomePopup(true);
+                // 记录当前UTC日期
+                localStorage.setItem(WELCOME_LAST_SHOWN_KEY, currentUTCDate);
+              }, 500);
+            }
+          };
+          img.src = src;
+        });
+      }
     } catch (e) {
       console.warn('检测欢迎弹窗状态失败:', e);
     }
   }, [isEN]);
   
-  // 处理弹窗确认（禁用本地状态保存，每次访问都显示）
+  // 处理弹窗确认
   const handleWelcomeConfirm = () => {
-    // 不再保存状态到 localStorage
+    // UTC日期已在显示时记录
   };
 
   useEffect(() => {
