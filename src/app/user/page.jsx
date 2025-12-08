@@ -241,6 +241,12 @@ export default function UserPage() {
           };
           localStorage.setItem('userInfo', JSON.stringify(userInfoWithSubscribe));
         }
+        if (res?.data?.userId) {
+          localStorage.setItem('userId', res.data.userId);
+        }
+        
+        // 钱包登录成功后，检查是否需要更新用户名
+        await updateWalletUserInfo(currentAddress);
       } catch {}
 
       setUserInfo((prev) => ({ ...prev, isLogin: true }));
@@ -847,6 +853,79 @@ export default function UserPage() {
     };
   };
 
+  // 格式化钱包地址为简短格式（前4位 + *** + 后3位）
+  const formatWalletAddress = (address) => {
+    if (!address || address.length < 8) return address;
+    return `${address.slice(0, 4)}***${address.slice(-3)}`;
+  };
+
+  // 钱包登录后更新用户名（如果 nickName 为 null）
+  const updateWalletUserInfo = async (walletAddress) => {
+    if (!walletAddress) return;
+
+    // 检查后端返回的用户信息
+    const storedUserInfo = localStorage.getItem('userInfo');
+    if (storedUserInfo) {
+      try {
+        const parsed = JSON.parse(storedUserInfo);
+        const currentNickname = parsed.nickName;
+        
+        // 如果 nickName 不为 null，说明用户已经设置过，不要覆盖
+        if (currentNickname !== null && currentNickname !== undefined) {
+          console.log('⏭️ 钱包用户已有昵称，跳过自动更新', { currentNickname });
+          return;
+        }
+      } catch (e) {
+        console.error('解析用户信息失败:', e);
+      }
+    }
+
+    try {
+      // 使用钱包地址的简短格式作为昵称
+      const nickname = formatWalletAddress(walletAddress);
+      
+      console.log('=== 更新钱包用户信息 ===', {
+        walletAddress,
+        nickname
+      });
+
+      const res = await request({
+        url: Interface.UPDATE_USER_INFO,
+        method: 'POST',
+        data: {
+          nickName: nickname,
+          avatar: DEFAULT_AVATAR,
+        }
+      });
+
+      if (res?.data) {
+        console.log('✅ 钱包用户信息更新成功');
+        
+        // 更新本地用户信息
+        setUserInfo(prev => ({
+          ...prev,
+          nickname: nickname,
+          avatar: res.data // 服务器返回的头像URL
+        }));
+
+        // 同步更新 localStorage
+        try {
+          const storedUserInfo = localStorage.getItem('userInfo');
+          if (storedUserInfo) {
+            const parsed = JSON.parse(storedUserInfo);
+            parsed.nickName = nickname;
+            parsed.avatar = res.data;
+            localStorage.setItem('userInfo', JSON.stringify(parsed));
+          }
+        } catch (e) {
+          console.error('更新localStorage失败:', e);
+        }
+      }
+    } catch (error) {
+      console.error('❌ 更新钱包用户信息失败:', error);
+    }
+  };
+
   // 自动更新 Telegram 用户信息到后端（仅首次注册时）
   const updateTelegramUserInfo = async () => {
     const tgUserInfo = getTelegramUserInfo();
@@ -986,7 +1065,10 @@ export default function UserPage() {
         Toast.show({ content: t('auth.loginSuccess') || '登录成功', position: 'center', icon: 'success' });
         handleLoginSuccess();
         
-        // 登录成功后，自动更新 Telegram 用户信息
+        // 钱包登录成功后，检查是否需要更新用户名
+        await updateWalletUserInfo(tonAddress);
+        
+        // 如果在 Telegram 环境，还要尝试更新 Telegram 用户信息
         if (isTelegramEnv()) {
           await updateTelegramUserInfo();
         }
