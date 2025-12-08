@@ -74,6 +74,7 @@ export default function UserPage() {
   const [isInterfaceSuccess, setIsInterfaceSuccess] = useState(false); // 接口是否调用成功
   const [isAnnouncementOn, setIsAnnouncementOn] = useState(false); // 公告订阅开关，默认关闭
   const [calendarEventDates, setCalendarEventDates] = useState([]); // 日历上有事件的日期（日期数字数组）
+  const [isLoadingNewCoins, setIsLoadingNewCoins] = useState(false); // 新币上线数据加载状态
   
   // 简单的 Cookie 读写（仅前端可见；敏感 token 建议服务端 HttpOnly）
   const getCookie = (name) => {
@@ -155,22 +156,11 @@ export default function UserPage() {
         });
 
         if (res?.success === true && res.data) {
-          setInterfaceData(res.data);
-
-          // 转换新币上线数据格式
+          // 初始加载只用于获取日历小点，不显示新币上线列表
+          // 新币上线列表由用户选择具体日期后显示
+          
           const rawData = Array.isArray(res.data) ? res.data : (res.data?.newCoinListings || res.data?.listings || []);
           if (rawData && rawData.length > 0) {
-            const formattedListings = rawData.map((item, index) => ({
-              id: item.id || index + 1,
-              exchange: item.exchanges || item.exchange || 'Unknown',
-              exchangeIcon: item.logoUrl || item.exchangeIcon || 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/biannce.png',
-              listingTime: item.ctime || item.listingTime || '',
-              title: item.title || '',
-              details: item.deteil || item.details || '',
-              link: item.link || ''
-            }));
-            setNewCoinListings(formattedListings);
-
             // 从 ctime 提取日期，显示日历小点点
             const eventDays = rawData
               .map(item => {
@@ -241,6 +231,12 @@ export default function UserPage() {
           };
           localStorage.setItem('userInfo', JSON.stringify(userInfoWithSubscribe));
         }
+        if (res?.data?.userId) {
+          localStorage.setItem('userId', res.data.userId);
+        }
+        
+        // 钱包登录成功后，检查是否需要更新用户名
+        await updateWalletUserInfo(currentAddress);
       } catch {}
 
       setUserInfo((prev) => ({ ...prev, isLogin: true }));
@@ -296,14 +292,57 @@ export default function UserPage() {
     if (isTelegramEnv() && tonConnectUI) {
       try { await tonConnectUI.disconnect(); } catch {}
     }
+    
+    // 清除所有用户相关的本地缓存数据
     try {
+      // 清除认证相关
       localStorage.removeItem('token');
       localStorage.removeItem('userInfo');
       localStorage.removeItem('userId');
+      
+      // 清除邀请码
+      localStorage.removeItem('inviteCode');
+      
+      // 清除 Telegram 相关数据
+      localStorage.removeItem('tgChatId');
+      localStorage.removeItem('tgUser');
+      localStorage.removeItem('tgBindAt');
+      
+      // 清除任务相关数据
+      localStorage.removeItem('pointsTasks');
+      localStorage.removeItem('dailyAlarmTaskCompleteTime');
+      localStorage.removeItem('videoTaskCompleted');
+      localStorage.removeItem('completedVideos');
+      localStorage.removeItem('videoLearnTotal');
+      
+      // 清除 AI 对话相关
+      localStorage.removeItem('ai_conversation_id');
+      
+      // 清除 WebSocket 客户端 ID
+      localStorage.removeItem('mozi_client_id');
+      
+      // 清除社区相关标记
+      localStorage.removeItem('needRefreshCommunity');
+      localStorage.removeItem('lastPostPageVisit');
+      
+      // 清除 Cookie
       delCookie('wallet_address');
       delCookie('wallet_chainId');
-    } catch {}
-    setUserInfo((prev) => ({ ...prev, isLogin: false }));
+      
+      console.log('✅ 已清除所有用户缓存数据');
+    } catch (error) {
+      console.error('❌ 清除缓存数据失败:', error);
+    }
+    
+    // 重置用户状态
+    setUserInfo({
+      avatar: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png',
+      nickname: t('user.defaultNickname'),
+      level: 1,
+      isVip: false,
+      isLogin: false
+    });
+    
     Toast.show({ content: t('user.logoutSuccess'), position: 'bottom' });
   };
 
@@ -475,6 +514,9 @@ export default function UserPage() {
       const timeStr = formatDate(date);
       console.log('调用接口，日期:', timeStr);
 
+      // 开始加载，显示加载状态
+      setIsLoadingNewCoins(true);
+
       const res = await request({
         url: Interface.GET_MY_INTERFACE,
         method: 'POST',
@@ -520,6 +562,9 @@ export default function UserPage() {
       }
     } catch (error) {
       console.error('获取我的交互数据失败:', error);
+    } finally {
+      // 无论成功或失败，都结束加载状态
+      setIsLoadingNewCoins(false);
     }
   };
 
@@ -527,6 +572,8 @@ export default function UserPage() {
   const handleDateChange = (date) => {
     console.log('选择日期:', date);
     setSelectedDate(date);
+    // 清空当前数据，显示加载状态
+    setNewCoinListings([]);
     fetchMyInterface(date);
   };
 
@@ -555,7 +602,7 @@ export default function UserPage() {
       if (res?.success === true && res.data) {
         const rawData = Array.isArray(res.data) ? res.data : (res.data?.newCoinListings || res.data?.listings || []);
         if (rawData && rawData.length > 0) {
-          // 从 ctime 提取日期
+          // 从 ctime 提取日期，只用于显示日历小点
           const targetMonth = newMonth.getMonth() + 1;
           const eventDays = rawData
             .map(item => {
@@ -572,6 +619,9 @@ export default function UserPage() {
             })
             .filter(day => day !== null);
           setCalendarEventDates([...new Set(eventDays)]);
+          
+          // 注意：这里不更新 newCoinListings
+          // 新币上线列表只在用户选择具体日期时更新
         } else {
           setCalendarEventDates([]);
         }
@@ -712,7 +762,8 @@ export default function UserPage() {
   };
 
   // 处理登录成功
-  const handleLoginSuccess = async () => {
+  // isWalletLogin: 是否为钱包登录（钱包登录不使用 Telegram 用户名）
+  const handleLoginSuccess = async (isWalletLogin = false) => {
     const syncLogin = () => {
       const hasToken = !!localStorage.getItem('token');
       const walletAddr = getCookie('wallet_address');
@@ -742,6 +793,12 @@ export default function UserPage() {
       console.log('🔍 [DEBUG] 每日登录任务上报成功');
     } catch (taskError) {
       console.error('每日登录任务上报失败:', taskError);
+    }
+
+    // 如果是 Telegram 环境且不是钱包登录，才更新 Telegram 用户信息
+    // 钱包登录优先使用钱包地址格式，不使用 Telegram 用户名
+    if (isTelegramEnv() && !isWalletLogin) {
+      await updateTelegramUserInfo();
     }
   };
 
@@ -777,6 +834,180 @@ export default function UserPage() {
       return;
     }
     await triggerSignatureLogin();
+  };
+
+  // 获取 Telegram 用户信息
+  const getTelegramUserInfo = () => {
+    if (typeof window === 'undefined' || !window.Telegram?.WebApp?.initDataUnsafe?.user) {
+      return null;
+    }
+    
+    const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+    console.log('=== Telegram 用户信息 ===', tgUser);
+    
+    return {
+      username: tgUser.username || tgUser.first_name || tgUser.last_name || 'Telegram User',
+      firstName: tgUser.first_name || '',
+      lastName: tgUser.last_name || '',
+      // Telegram 头像需要通过 Bot API 获取，这里先使用默认头像
+      // 如果后端支持通过 user_id 获取头像，可以传递 tgUser.id
+      photoUrl: tgUser.photo_url || null,
+      userId: tgUser.id
+    };
+  };
+
+  // 格式化钱包地址为简短格式（前4位 + *** + 后3位）
+  const formatWalletAddress = (address) => {
+    if (!address || address.length < 8) return address;
+    return `${address.slice(0, 4)}***${address.slice(-3)}`;
+  };
+
+  // 钱包登录后更新用户名（如果 nickName 为 null）
+  const updateWalletUserInfo = async (walletAddress) => {
+    if (!walletAddress) return;
+
+    // 检查后端返回的用户信息
+    const storedUserInfo = localStorage.getItem('userInfo');
+    if (storedUserInfo) {
+      try {
+        const parsed = JSON.parse(storedUserInfo);
+        const currentNickname = parsed.nickName;
+        
+        // 如果 nickName 不为 null，说明用户已经设置过，不要覆盖
+        if (currentNickname !== null && currentNickname !== undefined) {
+          console.log('⏭️ 钱包用户已有昵称，跳过自动更新', { currentNickname });
+          return;
+        }
+      } catch (e) {
+        console.error('解析用户信息失败:', e);
+      }
+    }
+
+    try {
+      // 使用钱包地址的简短格式作为昵称
+      const nickname = formatWalletAddress(walletAddress);
+      
+      console.log('=== 更新钱包用户信息 ===', {
+        walletAddress,
+        nickname
+      });
+
+      const res = await request({
+        url: Interface.UPDATE_USER_INFO,
+        method: 'POST',
+        data: {
+          nickName: nickname,
+          avatar: DEFAULT_AVATAR,
+        }
+      });
+
+      if (res?.data) {
+        console.log('✅ 钱包用户信息更新成功');
+        
+        // 更新本地用户信息
+        setUserInfo(prev => ({
+          ...prev,
+          nickname: nickname,
+          avatar: res.data // 服务器返回的头像URL
+        }));
+
+        // 同步更新 localStorage
+        try {
+          const storedUserInfo = localStorage.getItem('userInfo');
+          if (storedUserInfo) {
+            const parsed = JSON.parse(storedUserInfo);
+            parsed.nickName = nickname;
+            parsed.avatar = res.data;
+            localStorage.setItem('userInfo', JSON.stringify(parsed));
+          }
+        } catch (e) {
+          console.error('更新localStorage失败:', e);
+        }
+      }
+    } catch (error) {
+      console.error('❌ 更新钱包用户信息失败:', error);
+    }
+  };
+
+  // 自动更新 Telegram 用户信息到后端（仅首次注册时）
+  const updateTelegramUserInfo = async () => {
+    const tgUserInfo = getTelegramUserInfo();
+    if (!tgUserInfo) return;
+
+    // 检查后端返回的用户信息中是否已有自定义昵称
+    const storedUserInfo = localStorage.getItem('userInfo');
+    if (storedUserInfo) {
+      try {
+        const parsed = JSON.parse(storedUserInfo);
+        const currentNickname = (parsed.nickName || '').trim();
+        
+        // 如果后端已有昵称且不为空，说明用户已经设置过，不要覆盖
+        // 排除一些明显的默认值
+        const defaultNicknames = [
+          '',
+          t('user.defaultNickname'),
+          'Telegram User',
+          'User',
+          '用户',
+          '默认用户'
+        ];
+        
+        if (currentNickname && !defaultNicknames.includes(currentNickname)) {
+          console.log('⏭️ 用户已有自定义昵称，跳过自动更新', { currentNickname });
+          return;
+        }
+      } catch (e) {
+        console.error('解析用户信息失败:', e);
+      }
+    }
+
+    try {
+      // 构建昵称：优先使用 username，其次使用 first_name + last_name
+      let nickname = tgUserInfo.username;
+      if (!nickname && (tgUserInfo.firstName || tgUserInfo.lastName)) {
+        nickname = `${tgUserInfo.firstName} ${tgUserInfo.lastName}`.trim();
+      }
+      
+      console.log('=== 首次更新 Telegram 用户信息 ===', {
+        nickname,
+        avatar: tgUserInfo.photoUrl || DEFAULT_AVATAR
+      });
+
+      const res = await request({
+        url: Interface.UPDATE_USER_INFO,
+        method: 'POST',
+        data: {
+          nickName: nickname,
+          avatar: tgUserInfo.photoUrl || DEFAULT_AVATAR,
+        }
+      });
+
+      if (res?.data) {
+        console.log('✅ Telegram 用户信息更新成功');
+        
+        // 更新本地用户信息
+        setUserInfo(prev => ({
+          ...prev,
+          nickname: nickname,
+          avatar: res.data // 服务器返回的头像URL
+        }));
+
+        // 同步更新 localStorage
+        try {
+          const storedUserInfo = localStorage.getItem('userInfo');
+          if (storedUserInfo) {
+            const parsed = JSON.parse(storedUserInfo);
+            parsed.nickName = nickname;
+            parsed.avatar = res.data;
+            localStorage.setItem('userInfo', JSON.stringify(parsed));
+          }
+        } catch (e) {
+          console.error('更新localStorage失败:', e);
+        }
+      }
+    } catch (error) {
+      console.error('❌ 更新 Telegram 用户信息失败:', error);
+    }
   };
 
   // TON 钱包登录处理
@@ -835,7 +1066,12 @@ export default function UserPage() {
           localStorage.setItem('userId', res.data.userId);
         }
         Toast.show({ content: t('auth.loginSuccess') || '登录成功', position: 'center', icon: 'success' });
-        handleLoginSuccess();
+        
+        // 钱包登录成功后，优先使用钱包地址格式作为用户名
+        await updateWalletUserInfo(tonAddress);
+        
+        // 标记为钱包登录，不使用 Telegram 用户名
+        handleLoginSuccess(true);
       } else {
         Toast.show({ content: res?.message || t('auth.loginFailed') || '登录失败', position: 'bottom' });
       }
@@ -1127,7 +1363,7 @@ export default function UserPage() {
 
         {showNewCoinListing && (
           <div className={styles.newCoinSection}>
-            <NewCoinListing showMore={false} data={newCoinListings} />
+            <NewCoinListing showMore={false} data={newCoinListings} loading={isLoadingNewCoins} />
           </div>
         )}
 
