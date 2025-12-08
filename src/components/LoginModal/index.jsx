@@ -8,6 +8,78 @@ import { Interface } from '../../utils/constants';
 import { sendVerificationCode } from '../../api/user';
 import styles from './index.module.less';
 
+// 检测是否在 Telegram 环境中
+const isTelegramEnv = () => {
+  if (typeof window === 'undefined') return false;
+  return !!(window.Telegram?.WebApp?.initData);
+};
+
+// 获取 Telegram 用户信息
+const getTelegramUserInfo = () => {
+  if (typeof window === 'undefined' || !window.Telegram?.WebApp?.initDataUnsafe?.user) {
+    return null;
+  }
+  
+  const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+  console.log('=== LoginModal - Telegram 用户信息 ===', tgUser);
+  
+  return {
+    username: tgUser.username || tgUser.first_name || tgUser.last_name || 'Telegram User',
+    firstName: tgUser.first_name || '',
+    lastName: tgUser.last_name || '',
+    photoUrl: tgUser.photo_url || null,
+    userId: tgUser.id
+  };
+};
+
+// 自动更新 Telegram 用户信息到后端
+const updateTelegramUserInfo = async () => {
+  const tgUserInfo = getTelegramUserInfo();
+  if (!tgUserInfo) return;
+
+  try {
+    // 构建昵称：优先使用 username，其次使用 first_name + last_name
+    let nickname = tgUserInfo.username;
+    if (!nickname && (tgUserInfo.firstName || tgUserInfo.lastName)) {
+      nickname = `${tgUserInfo.firstName} ${tgUserInfo.lastName}`.trim();
+    }
+    
+    console.log('=== LoginModal - 更新 Telegram 用户信息 ===', {
+      nickname,
+      avatar: tgUserInfo.photoUrl
+    });
+
+    const DEFAULT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png';
+    
+    const res = await request({
+      url: Interface.UPDATE_USER_INFO,
+      method: 'POST',
+      data: {
+        nickName: nickname,
+        avatar: tgUserInfo.photoUrl || DEFAULT_AVATAR,
+      }
+    });
+
+    if (res?.data) {
+      console.log('✅ LoginModal - Telegram 用户信息更新成功');
+      // 同步更新 localStorage
+      try {
+        const storedUserInfo = localStorage.getItem('userInfo');
+        if (storedUserInfo) {
+          const parsed = JSON.parse(storedUserInfo);
+          parsed.nickName = nickname;
+          parsed.avatar = res.data;
+          localStorage.setItem('userInfo', JSON.stringify(parsed));
+        }
+      } catch (e) {
+        console.error('更新localStorage失败:', e);
+      }
+    }
+  } catch (error) {
+    console.error('❌ LoginModal - 更新 Telegram 用户信息失败:', error);
+  }
+};
+
 export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletLogin, initialMode = 'login' }) {
   const { t } = useTranslation();
   // 表单状态
@@ -166,6 +238,12 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
         }
         
         Toast.show({ content: t('auth.loginSuccess'), position: 'center', icon: 'success' });
+        
+        // 如果是 Telegram 环境，自动更新用户信息
+        if (isTelegramEnv()) {
+          await updateTelegramUserInfo();
+        }
+        
         onLoginSuccess?.();
         handleClose();
       } else {
@@ -267,6 +345,12 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
         }
         
         Toast.show({ content: t('auth.loginSuccess'), position: 'center', icon: 'success' });
+        
+        // 如果是 Telegram 环境，自动更新用户信息
+        if (isTelegramEnv()) {
+          await updateTelegramUserInfo();
+        }
+        
         onLoginSuccess?.();
         handleClose();
       } else {

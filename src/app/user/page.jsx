@@ -296,14 +296,57 @@ export default function UserPage() {
     if (isTelegramEnv() && tonConnectUI) {
       try { await tonConnectUI.disconnect(); } catch {}
     }
+    
+    // 清除所有用户相关的本地缓存数据
     try {
+      // 清除认证相关
       localStorage.removeItem('token');
       localStorage.removeItem('userInfo');
       localStorage.removeItem('userId');
+      
+      // 清除邀请码
+      localStorage.removeItem('inviteCode');
+      
+      // 清除 Telegram 相关数据
+      localStorage.removeItem('tgChatId');
+      localStorage.removeItem('tgUser');
+      localStorage.removeItem('tgBindAt');
+      
+      // 清除任务相关数据
+      localStorage.removeItem('pointsTasks');
+      localStorage.removeItem('dailyAlarmTaskCompleteTime');
+      localStorage.removeItem('videoTaskCompleted');
+      localStorage.removeItem('completedVideos');
+      localStorage.removeItem('videoLearnTotal');
+      
+      // 清除 AI 对话相关
+      localStorage.removeItem('ai_conversation_id');
+      
+      // 清除 WebSocket 客户端 ID
+      localStorage.removeItem('mozi_client_id');
+      
+      // 清除社区相关标记
+      localStorage.removeItem('needRefreshCommunity');
+      localStorage.removeItem('lastPostPageVisit');
+      
+      // 清除 Cookie
       delCookie('wallet_address');
       delCookie('wallet_chainId');
-    } catch {}
-    setUserInfo((prev) => ({ ...prev, isLogin: false }));
+      
+      console.log('✅ 已清除所有用户缓存数据');
+    } catch (error) {
+      console.error('❌ 清除缓存数据失败:', error);
+    }
+    
+    // 重置用户状态
+    setUserInfo({
+      avatar: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png',
+      nickname: t('user.defaultNickname'),
+      level: 1,
+      isVip: false,
+      isLogin: false
+    });
+    
     Toast.show({ content: t('user.logoutSuccess'), position: 'bottom' });
   };
 
@@ -743,6 +786,11 @@ export default function UserPage() {
     } catch (taskError) {
       console.error('每日登录任务上报失败:', taskError);
     }
+
+    // 如果是 Telegram 环境，自动更新用户信息
+    if (isTelegramEnv()) {
+      await updateTelegramUserInfo();
+    }
   };
 
   // 处理钱包登录
@@ -777,6 +825,79 @@ export default function UserPage() {
       return;
     }
     await triggerSignatureLogin();
+  };
+
+  // 获取 Telegram 用户信息
+  const getTelegramUserInfo = () => {
+    if (typeof window === 'undefined' || !window.Telegram?.WebApp?.initDataUnsafe?.user) {
+      return null;
+    }
+    
+    const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+    console.log('=== Telegram 用户信息 ===', tgUser);
+    
+    return {
+      username: tgUser.username || tgUser.first_name || tgUser.last_name || 'Telegram User',
+      firstName: tgUser.first_name || '',
+      lastName: tgUser.last_name || '',
+      // Telegram 头像需要通过 Bot API 获取，这里先使用默认头像
+      // 如果后端支持通过 user_id 获取头像，可以传递 tgUser.id
+      photoUrl: tgUser.photo_url || null,
+      userId: tgUser.id
+    };
+  };
+
+  // 自动更新 Telegram 用户信息到后端
+  const updateTelegramUserInfo = async () => {
+    const tgUserInfo = getTelegramUserInfo();
+    if (!tgUserInfo) return;
+
+    try {
+      // 构建昵称：优先使用 username，其次使用 first_name + last_name
+      let nickname = tgUserInfo.username;
+      if (!nickname && (tgUserInfo.firstName || tgUserInfo.lastName)) {
+        nickname = `${tgUserInfo.firstName} ${tgUserInfo.lastName}`.trim();
+      }
+      
+      console.log('=== 更新 Telegram 用户信息 ===', {
+        nickname,
+        avatar: tgUserInfo.photoUrl || DEFAULT_AVATAR
+      });
+
+      const res = await request({
+        url: Interface.UPDATE_USER_INFO,
+        method: 'POST',
+        data: {
+          nickName: nickname,
+          avatar: tgUserInfo.photoUrl || DEFAULT_AVATAR,
+        }
+      });
+
+      if (res?.data) {
+        console.log('✅ Telegram 用户信息更新成功');
+        // 更新本地用户信息
+        setUserInfo(prev => ({
+          ...prev,
+          nickname: nickname,
+          avatar: res.data // 服务器返回的头像URL
+        }));
+
+        // 同步更新 localStorage
+        try {
+          const storedUserInfo = localStorage.getItem('userInfo');
+          if (storedUserInfo) {
+            const parsed = JSON.parse(storedUserInfo);
+            parsed.nickName = nickname;
+            parsed.avatar = res.data;
+            localStorage.setItem('userInfo', JSON.stringify(parsed));
+          }
+        } catch (e) {
+          console.error('更新localStorage失败:', e);
+        }
+      }
+    } catch (error) {
+      console.error('❌ 更新 Telegram 用户信息失败:', error);
+    }
   };
 
   // TON 钱包登录处理
@@ -836,6 +957,11 @@ export default function UserPage() {
         }
         Toast.show({ content: t('auth.loginSuccess') || '登录成功', position: 'center', icon: 'success' });
         handleLoginSuccess();
+        
+        // 登录成功后，自动更新 Telegram 用户信息
+        if (isTelegramEnv()) {
+          await updateTelegramUserInfo();
+        }
       } else {
         Toast.show({ content: res?.message || t('auth.loginFailed') || '登录失败', position: 'bottom' });
       }
