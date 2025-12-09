@@ -25,10 +25,12 @@ export default function BullBearVote({
 
   return (
     <div className={`${styles.bbvContainer} ${disabled ? styles.isDisabled : ''}`}>
-      <div className={styles.bbvHeader}>
-        <span className={styles.bbvTitle}>{title}</span>
-        <span className={styles.bbvCount}>{displayCount}</span>
-      </div>
+      {title && (
+        <div className={styles.bbvHeader}>
+          <span className={styles.bbvTitle}>{title}</span>
+          <span className={styles.bbvCount}>{displayCount}</span>
+        </div>
+      )}
       <div className={styles.bbvBody}>
         <div
           className={`${styles.bbvBtn} ${styles.bull} ${selected === 'bull' ? styles.active : ''}`}
