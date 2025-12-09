@@ -11,6 +11,7 @@ import Layout from '../../components/Layout';
 import { SearchInput } from '../../components/SearchInput';
 import MoziCard from '../../components/MoziCard';
 import BullBearVote from '../../components/BullBearVote';
+import BullBearIndicator from '../../components/BullBearIndicator';
 import QuestionButtons from '../../components/QuestionButtons';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
@@ -1074,15 +1075,31 @@ export default function CommunityPage() {
         <div className={styles.contentList}>
           {/* 币种投票组件 - 仅在币种tab显示 */}
           {mainTab === 'recommend' && subTab === 'currency' && (
-            <div className={styles.voteWrapper}>
-              <BullBearVote
-                title={t('community.coinInfo.votingQuestion', { coin: selectedCoin })}
-                participants={voteData.totalCount}
-                selected={voteChoice}
-                disabled={voteData.hasVoted}
-                onSelect={(type) => submitVote(type)}
-              />
-            </div>
+            <MoziCard 
+              customTitle={
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                  <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                    {t('community.coinInfo.votingQuestion', { coin: selectedCoin })}
+                  </span>
+                  <span style={{ fontSize: '11px', color: '#999' }}>
+                    {t('community.voting.participants', { count: voteData.totalCount || 0 })}
+                  </span>
+                </div>
+              }
+            >
+              <div>
+                {/* 看涨看跌指示器（带投票功能） */}
+                <BullBearIndicator 
+                  upCount={voteData.upCount || 0}
+                  downCount={voteData.downCount || 0}
+                  participants={voteData.totalCount}
+                  selected={voteChoice}
+                  onSelect={(type) => submitVote(type)}
+                  showParticipants={false}
+                  showPercentage={true}
+                />
+              </div>
+            </MoziCard>
           )}
           
           {/* 不懂就问按钮组件 - 暂时隐藏 */}
@@ -1176,7 +1193,7 @@ export default function CommunityPage() {
               <div className={styles.selectorSearchBox}>
                 <SearchInput
                   value={searchKeyword}
-                  onChange={searchCoin}
+                  reloadFun={searchCoin}
                   placeholder={t('community.actions.enterCoinName')}
                 />
               </div>
