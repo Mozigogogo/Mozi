@@ -91,9 +91,13 @@
 .derivativeCard {
   border-radius: 12px;
   box-shadow: none !important;
+  height: 120px;
 
   :global(.ant-card-body) {
     padding: 16px 20px;
+    height: 100%;
+    display: flex;
+    align-items: center;
   }
 }
 
@@ -101,11 +105,12 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%;
 }
 
 .derivativeIcon {
-  width: 48px;
-  height: 48px;
+  width: 90px;
+  height: 100px;
   object-fit: contain;
 }
 
@@ -128,6 +133,7 @@
 .derivativeArrow {
   color: #ccc;
   font-size: 14px;
+  margin-left: auto;
 }
 
 /* 涨跌分布区域 - PC端适配 */

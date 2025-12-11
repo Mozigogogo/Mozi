@@ -60,10 +60,10 @@ export default function PCHome() {
 
   // 合约专区数据
   const derivativeItems = [
-    { icon: derivativeIcons.bullBear, title: '多空比', subtitle: 'DUOKONGRB', path: '/putcallratio' },
-    { icon: derivativeIcons.inventory, title: '持仓量', subtitle: 'CHICHANANG', path: '/positionsize' },
-    { icon: derivativeIcons.fundingRate, title: '资金费率', subtitle: 'ZIJINFEILV', path: '/fundingrate' },
-    { icon: derivativeIcons.volume, title: '成交额', subtitle: 'CHENGJIAOE', path: '/tradevol' },
+    { icon: derivativeIcons.bullBear, title: '多空比', subtitle: 'Long/Short Ratio', path: '/putcallratio' },
+    { icon: derivativeIcons.inventory, title: '持仓量', subtitle: 'Open Interest', path: '/positionsize' },
+    { icon: derivativeIcons.fundingRate, title: '资金费率', subtitle: 'Funding Rate', path: '/fundingrate' },
+    { icon: derivativeIcons.volume, title: '成交额', subtitle: 'Trading Volume', path: '/tradevol' },
   ];
 
   // 榜单 Tab 配置
