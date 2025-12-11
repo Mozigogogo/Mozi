@@ -72,9 +72,28 @@ export default function UserPage() {
   const [newCoinListings, setNewCoinListings] = useState([]); // 新币上线数据
   const [isInterfaceLoaded, setIsInterfaceLoaded] = useState(false); // 接口是否已加载完成
   const [isInterfaceSuccess, setIsInterfaceSuccess] = useState(false); // 接口是否调用成功
-  const [isAnnouncementOn, setIsAnnouncementOn] = useState(false); // 公告订阅开关，默认关闭
+  const [isAnnouncementOn, setIsAnnouncementOn] = useState(() => {
+    // 初始化时从 localStorage 读取订阅状态
+    try {
+      const storedUserInfo = localStorage.getItem('userInfo');
+      if (storedUserInfo) {
+        const parsed = JSON.parse(storedUserInfo);
+        return parsed.subscribeAnnouncement === 1;
+      }
+    } catch (e) {
+      console.error('读取订阅状态失败:', e);
+    }
+    return false; // 默认关闭
+  });
   const [calendarEventDates, setCalendarEventDates] = useState([]); // 日历上有事件的日期（日期数字数组）
   const [isLoadingNewCoins, setIsLoadingNewCoins] = useState(false); // 新币上线数据加载状态
+  
+  // 积分相关数据
+  const [pointsData, setPointsData] = useState({
+    totalPoints: 0,
+    yesterdayPoints: 0,
+    pointsRanking: 0
+  });
   
   // 简单的 Cookie 读写（仅前端可见；敏感 token 建议服务端 HttpOnly）
   const getCookie = (name) => {
@@ -101,6 +120,39 @@ export default function UserPage() {
     }
   }, [searchParams]);
 
+  // 获取用户积分数据
+  const fetchUserPointsData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const res = await request({
+        url: Interface.USER_DATA_INFO,
+        method: 'GET'
+      });
+
+      if (res?.data) {
+        console.log('✅ 获取用户积分数据成功:', res.data);
+        
+        // 保存完整的 dataInfo 数据到 localStorage
+        try {
+          localStorage.setItem('userDataInfo', JSON.stringify(res.data));
+          console.log('✅ 已保存 dataInfo 到 localStorage');
+        } catch (e) {
+          console.error('❌ 保存 dataInfo 到 localStorage 失败:', e);
+        }
+        
+        setPointsData({
+          totalPoints: res.data.totalPoints || 0,
+          yesterdayPoints: res.data.yesterdayPoints || 0,
+          pointsRanking: res.data.pointsRanking || 0
+        });
+      }
+    } catch (error) {
+      console.error('❌ 获取用户积分数据失败:', error);
+    }
+  };
+
   // 首次与聚焦时同步登录态（来自 token 或钱包地址 Cookie）
   useEffect(() => {
     const syncLogin = () => {
@@ -122,7 +174,17 @@ export default function UserPage() {
         } catch {}
       }
     };
+    
+    // 首次加载时同步登录态
     syncLogin();
+    
+    // 首次加载时获取积分数据（只调用一次）
+    const hasToken = !!localStorage.getItem('token');
+    const walletAddr = getCookie('wallet_address');
+    if (hasToken || !!walletAddr) {
+      fetchUserPointsData();
+    }
+    
     const onFocus = () => syncLogin();
     window.addEventListener('focus', onFocus);
     const timer = setInterval(syncLogin, 2000);
@@ -299,6 +361,7 @@ export default function UserPage() {
       localStorage.removeItem('token');
       localStorage.removeItem('userInfo');
       localStorage.removeItem('userId');
+      localStorage.removeItem('userDataInfo'); // 清除 dataInfo 数据
       
       // 清除邀请码
       localStorage.removeItem('inviteCode');
@@ -478,6 +541,20 @@ export default function UserPage() {
       // 基于 success 字段判断接口是否成功
       if (res?.success === true) {
         setIsAnnouncementOn(isOn);
+        
+        // 同步更新 localStorage 中的 userInfo
+        try {
+          const storedUserInfo = localStorage.getItem('userInfo');
+          if (storedUserInfo) {
+            const parsed = JSON.parse(storedUserInfo);
+            parsed.subscribeAnnouncement = isOn ? 1 : 0;
+            localStorage.setItem('userInfo', JSON.stringify(parsed));
+            console.log('✅ 已同步订阅状态到 localStorage:', isOn ? 1 : 0);
+          }
+        } catch (e) {
+          console.error('❌ 更新 localStorage 失败:', e);
+        }
+        
         Toast.show({ 
           content: isOn ? t('user.subscriptionEnabled') || '订阅成功' : t('user.subscriptionDisabled') || '取消订阅',
           position: 'bottom' 
@@ -782,6 +859,9 @@ export default function UserPage() {
       }
     };
     syncLogin();
+
+    // 登录成功后，获取积分数据
+    await fetchUserPointsData();
 
     // 登录成功后，调用每日登录任务完成接口
     try {
@@ -1336,10 +1416,10 @@ export default function UserPage() {
             <div className={styles.pointsInfo} onClick={() => router.push('/pointsdetail')}>
               <span className={styles.pointsTitle}>{t('user.myPoints')}</span>
               <div className={styles.pointsValueRow}>
-                <span className={styles.pointsValue}>2000</span>
-                <span className={styles.pointsDaily}>{t('user.yesterdayPoints', { points: 100 })}</span>
+                <span className={styles.pointsValue}>{pointsData.totalPoints}</span>
+                <span className={styles.pointsDaily}>{t('user.yesterdayPoints', { points: pointsData.yesterdayPoints })}</span>
               </div>
-              <span className={styles.pointsRank}>{t('user.currentRank', { rank: 23 })}</span>
+              <span className={styles.pointsRank}>{t('user.currentRank', { rank: pointsData.pointsRanking })}</span>
             </div>
             <div className={styles.pointsAction} onClick={() => router.push('/points')}>
               <span className={styles.pointsButton}>{t('user.pointsRanking')}</span>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RightArrowIcon } from '../Icons';
 import styles from './index.module.less';
@@ -15,6 +15,11 @@ export default function CalendarCard({ onDateChange, onToggleChange, onMonthChan
   const [selectedDate, setSelectedDate] = useState(today);
   const [isToggleOn, setIsToggleOn] = useState(defaultToggle);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  // 监听 defaultToggle 变化，同步更新内部状态
+  useEffect(() => {
+    setIsToggleOn(defaultToggle);
+  }, [defaultToggle]);
 
   const handleToggleChange = async () => {
     const next = !isToggleOn;
