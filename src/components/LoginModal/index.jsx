@@ -254,23 +254,37 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
           localStorage.setItem('userId', res.data.userId);
         }
         
-        // 登录成功后，调用每日登录任务完成接口
-        try {
-          await request({
-            url: Interface.TASK_COMPLETE,
-            method: 'POST',
-            data: { taskCode: 'DAILY_LOGIN' }
-          });
-          console.log('🔍 [DEBUG] 每日登录任务上报成功');
-        } catch (taskError) {
-          console.error('每日登录任务上报失败:', taskError);
-        }
+        // 登录成功后，异步调用 datainfo 接口获取用户详细信息（不阻塞登录流程）
+        request({
+          url: Interface.USER_DATA_INFO,
+          method: 'GET'
+        }).then((dataInfoRes) => {
+          if (dataInfoRes?.data) {
+            console.log('✅ [LoginModal] 获取用户详细信息成功:', dataInfoRes.data);
+            localStorage.setItem('userDataInfo', JSON.stringify(dataInfoRes.data));
+          }
+        }).catch((dataInfoError) => {
+          console.error('❌ [LoginModal] 获取用户详细信息失败:', dataInfoError);
+        });
+        
+        // 登录成功后，异步调用每日登录任务完成接口（不阻塞登录流程）
+        request({
+          url: Interface.TASK_COMPLETE,
+          method: 'POST',
+          data: { taskCode: 'DAILY_LOGIN' }
+        }).then(() => {
+          console.log('✅ [LoginModal] 每日登录任务上报成功');
+        }).catch((taskError) => {
+          console.error('❌ [LoginModal] 每日登录任务上报失败:', taskError);
+        });
         
         Toast.show({ content: t('auth.loginSuccess'), position: 'center', icon: 'success' });
         
-        // 如果是 Telegram 环境，自动更新用户信息
+        // 如果是 Telegram 环境，异步更新用户信息（不阻塞登录流程）
         if (isTelegramEnv()) {
-          await updateTelegramUserInfo();
+          updateTelegramUserInfo().catch((err) => {
+            console.error('❌ [LoginModal] 更新 Telegram 用户信息失败:', err);
+          });
         }
         
         onLoginSuccess?.();
@@ -361,23 +375,37 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
           localStorage.setItem('userId', res.data.userId);
         }
         
-        // 登录成功后，调用每日登录任务完成接口
-        try {
-          await request({
-            url: Interface.TASK_COMPLETE,
-            method: 'POST',
-            data: { taskCode: 'DAILY_LOGIN' }
-          });
-          console.log('🔍 [DEBUG] 每日登录任务上报成功');
-        } catch (taskError) {
-          console.error('每日登录任务上报失败:', taskError);
-        }
+        // 登录成功后，异步调用 datainfo 接口获取用户详细信息（不阻塞登录流程）
+        request({
+          url: Interface.USER_DATA_INFO,
+          method: 'GET'
+        }).then((dataInfoRes) => {
+          if (dataInfoRes?.data) {
+            console.log('✅ [LoginModal] 获取用户详细信息成功:', dataInfoRes.data);
+            localStorage.setItem('userDataInfo', JSON.stringify(dataInfoRes.data));
+          }
+        }).catch((dataInfoError) => {
+          console.error('❌ [LoginModal] 获取用户详细信息失败:', dataInfoError);
+        });
+        
+        // 登录成功后，异步调用每日登录任务完成接口（不阻塞登录流程）
+        request({
+          url: Interface.TASK_COMPLETE,
+          method: 'POST',
+          data: { taskCode: 'DAILY_LOGIN' }
+        }).then(() => {
+          console.log('✅ [LoginModal] 每日登录任务上报成功');
+        }).catch((taskError) => {
+          console.error('❌ [LoginModal] 每日登录任务上报失败:', taskError);
+        });
         
         Toast.show({ content: t('auth.loginSuccess'), position: 'center', icon: 'success' });
         
-        // 如果是 Telegram 环境，自动更新用户信息
+        // 如果是 Telegram 环境，异步更新用户信息（不阻塞登录流程）
         if (isTelegramEnv()) {
-          await updateTelegramUserInfo();
+          updateTelegramUserInfo().catch((err) => {
+            console.error('❌ [LoginModal] 更新 Telegram 用户信息失败:', err);
+          });
         }
         
         onLoginSuccess?.();
@@ -508,7 +536,11 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
               className={`${styles.submitBtn} ${loading ? styles.loading : ''}`}
               onClick={loading ? undefined : (mode === 'login' ? handleLogin : handleRegister)}
             >
-              {loading ? t('common.loading') : (mode === 'login' ? t('user.login') : t('user.register'))}
+              {loading ? (
+                <span className={styles.loadingSpinner}></span>
+              ) : (
+                mode === 'login' ? t('user.login') : t('user.register')
+              )}
             </div>
 
             {/* 切换模式 */}
