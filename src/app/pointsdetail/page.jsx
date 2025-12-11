@@ -71,25 +71,25 @@ export default function PointsDetail() {
     }
   }, [t]);
 
-  // 获取用户数据（含邀请码）
-  const fetchUserDataInfo = useCallback(async () => {
+  // 获取用户数据（含邀请码）- 从本地存储读取
+  const fetchUserDataInfo = useCallback(() => {
     try {
-      const res = await request({
-        url: Interface.USER_DATA_INFO,
-        method: 'GET'
-      });
+      // 从 localStorage 读取 userDataInfo
+      const storedData = localStorage.getItem('userDataInfo');
       
-      console.log('🔍 [DEBUG] 用户数据接口返回:', res);
-      
-      if (res?.code === 0 && res?.data) {
-        const data = res.data;
+      if (storedData) {
+        const data = JSON.parse(storedData);
+        console.log('🔍 [DEBUG] 从本地读取用户数据:', data);
+        
         setPointsData(prev => ({
           ...prev,
           inviteCode: data.inviteCode || data.invitationCode || prev.inviteCode,
         }));
+      } else {
+        console.log('⚠️ [DEBUG] 本地未找到 userDataInfo 数据');
       }
     } catch (error) {
-      console.error('获取用户数据失败:', error);
+      console.error('读取本地用户数据失败:', error);
     }
   }, []);
 
@@ -189,7 +189,12 @@ export default function PointsDetail() {
         // 处理活动任务 activityTaskList
         const activityTasks = res.data.activityTaskList || [];
         const mappedTasks = activityTasks
-          .filter(task => task.taskCode !== 'WECHAT' && task.taskCode !== 'INVITE_USER')
+          .filter(task => 
+            task.taskCode !== 'WECHAT' && 
+            task.taskCode !== 'INVITE_USER' && 
+            task.taskCode !== 'VIDEO_LEARN' && 
+            task.taskCode !== 'VIDEO'
+          )
           .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
           .map((task, index) => {
             const taskKey = taskKeyMap[task.taskCode] || 'setAlarm';

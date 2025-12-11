@@ -20,6 +20,7 @@ import {
 import { useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
+import PCSearchResults from '../PCSearchResults';
 import styles from './index.module.less';
 
 const searchIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/search.png';
@@ -41,6 +42,8 @@ export default function PCLayout({ children }) {
   // 搜索框状态
   const [searchValue, setSearchValue] = useState('');
   const searchRef = useRef('');
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [searchKeyword, setSearchKeyword] = useState('');
 
   useEffect(() => {
     const storedUser = localStorage.getItem('userInfo');
@@ -57,7 +60,8 @@ export default function PCLayout({ children }) {
   const handleSearch = () => {
     const keyword = searchRef.current.trim();
     if (keyword) {
-      router.push(`/search?keyword=${encodeURIComponent(keyword)}`);
+      setSearchKeyword(keyword);
+      setShowSearchResults(true);
     }
   };
 
@@ -76,6 +80,8 @@ export default function PCLayout({ children }) {
   const clearSearch = () => {
     setSearchValue('');
     searchRef.current = '';
+    setShowSearchResults(false);
+    setSearchKeyword('');
   };
 
   // 菜单项配置
@@ -216,7 +222,11 @@ export default function PCLayout({ children }) {
 
         {/* 右侧 Content */}
         <Content className={`${styles.content} ${collapsed ? styles.contentCollapsed : ''}`}>
-          {children}
+          {showSearchResults ? (
+            <PCSearchResults keyword={searchKeyword} onClose={() => setShowSearchResults(false)} />
+          ) : (
+            children
+          )}
         </Content>
       </Layout>
 
