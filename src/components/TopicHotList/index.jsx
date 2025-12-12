@@ -3,9 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
+import { SpinLoading } from 'antd-mobile';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
-import { Loading } from '../Loading';
 import MoziTreeMap from '../MoziTreeMap';
 import styles from './index.module.less';
 
@@ -26,7 +26,7 @@ export default function TopicHotList({ isPC = false }) {
   const router = useRouter();
   const { t } = useTranslation();
   
-  const [activeTab, setActiveTab] = useState('topics');
+  const [activeTab, setActiveTab] = useState('opportunity'); // 默认显示投资机会（包含热门币种）
   const [hotTopics, setHotTopics] = useState([]);
   const [topicsLoading, setTopicsLoading] = useState(false);
   const [hotCoin, setHotCoin] = useState([]);
@@ -130,7 +130,7 @@ export default function TopicHotList({ isPC = false }) {
     if (topicsLoading) {
       return (
         <div className={styles.loadingWrap}>
-          <Loading tip={t('common.loading')} />
+          <SpinLoading color='#11B787' />
         </div>
       );
     }
@@ -196,7 +196,9 @@ export default function TopicHotList({ isPC = false }) {
           <div className={styles.treemapTitle}>{t('home.hotCoins')}</div>
           <div className={styles.treemapContent}>
             {coinLoading ? (
-              <Loading tip={t('common.loading')} />
+              <div className={styles.loadingWrap}>
+                <SpinLoading color='#11B787' />
+              </div>
             ) : (
               <MoziTreeMap list={hotCoin} name='coin' desc='priceChangePercent' />
             )}
@@ -208,7 +210,9 @@ export default function TopicHotList({ isPC = false }) {
           <div className={styles.treemapTitle}>{t('home.hotContracts')}</div>
           <div className={styles.treemapContent}>
             {contractLoading ? (
-              <Loading tip={t('common.loading')} />
+              <div className={styles.loadingWrap}>
+                <SpinLoading color='#11B787' />
+              </div>
             ) : (
               <MoziTreeMap list={hotContract} name='coin' desc='priceChangePercent' />
             )}
@@ -220,7 +224,9 @@ export default function TopicHotList({ isPC = false }) {
           <div className={styles.treemapTitle}>{t('home.hotSectors')}</div>
           <div className={styles.treemapContent}>
             {industryLoading ? (
-              <Loading tip={t('common.loading')} />
+              <div className={styles.loadingWrap}>
+                <SpinLoading color='#11B787' />
+              </div>
             ) : (
               <MoziTreeMap list={hotIndustry} name='section' desc='changes' />
             )}
