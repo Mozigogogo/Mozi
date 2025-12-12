@@ -36,13 +36,13 @@ export default function PointsRank() {
       
       if (res?.code === 0 && res?.data) {
         const rankings = res.data.rankings || res.data || [];
-        // 映射接口数据到组件格式
+        // 直接按照接口返回的 rankings 数组顺序映射，不重新排序
         const list = rankings.map((item, index) => ({
           id: item.userId || index + 1,
           name: item.nickName || item.nickname || item.userName || '匿名用户',
           avatar: item.avatar || defaultAvatar,
           points: item.points || item.totalPoints || item.dailyPoints || item.monthlyPoints || 0,
-          rank: item.rank || index + 1,
+          rank: index + 1, // 直接使用数组索引+1作为排名，保持接口返回的顺序
           isMe: item.isCurrentUser || false
         }));
         
