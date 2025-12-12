@@ -291,10 +291,15 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
         onLoginSuccess?.();
         handleClose();
       } else {
-        Toast.show({ content: res?.message || t('auth.loginFailed'), position: 'center', icon: 'fail' });
+        // 优先显示 errorMsg，其次显示 message
+        const errorMessage = res?.errorMsg || res?.message || t('auth.loginFailed');
+        Toast.show({ content: errorMessage, position: 'center', icon: 'fail' });
       }
     } catch (error) {
-      Toast.show({ content: t('auth.loginFailedRetry'), position: 'center', icon: 'fail' });
+      console.error('登录失败:', error);
+      // 如果 error 中有 errorMsg 或 message，优先显示
+      const errorMessage = error?.errorMsg || error?.message || t('auth.loginFailedRetry');
+      Toast.show({ content: errorMessage, position: 'center', icon: 'fail' });
     } finally {
       setLoading(false);
     }
@@ -340,11 +345,15 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
         setInviteCode('');
         await autoLoginAfterRegister();
       } else {
-        Toast.show({ content: res?.message || t('auth.registerFailed'), position: 'center', icon: 'fail' });
+        // 优先显示 errorMsg，其次显示 message
+        const errorMessage = res?.errorMsg || res?.message || t('auth.registerFailed');
+        Toast.show({ content: errorMessage, position: 'center', icon: 'fail' });
       }
     } catch (error) {
       console.error('注册失败:', error);
-      Toast.show({ content: t('auth.registerFailedRetry'), position: 'center', icon: 'fail' });
+      // 如果 error 中有 errorMsg 或 message，优先显示
+      const errorMessage = error?.errorMsg || error?.message || t('auth.registerFailedRetry');
+      Toast.show({ content: errorMessage, position: 'center', icon: 'fail' });
     } finally {
       setLoading(false);
     }
@@ -414,11 +423,19 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
         onLoginSuccess?.();
         handleClose();
       } else {
-        // 自动登录失败，切换到登录模式让用户手动登录
+        // 自动登录失败，显示错误信息并切换到登录模式
+        const errorMessage = res?.errorMsg || res?.message;
+        if (errorMessage) {
+          Toast.show({ content: errorMessage, position: 'center', icon: 'fail' });
+        }
         setMode('login');
       }
     } catch (error) {
       console.error('自动登录失败:', error);
+      const errorMessage = error?.errorMsg || error?.message;
+      if (errorMessage) {
+        Toast.show({ content: errorMessage, position: 'center', icon: 'fail' });
+      }
       setMode('login');
     }
   };
