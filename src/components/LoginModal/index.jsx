@@ -236,7 +236,8 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
           chanel: 2,  // 2-邮箱登录
           type: 'login',  // login-登录
           email, 
-          password 
+          password,
+          channel: isTelegramEnv() ? 'tg' : 'pc'  // 添加渠道参数
         }
       });
 
@@ -327,7 +328,8 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
           email, 
           password, 
           verifyCode: verificationCode,  // 验证码（注册时必填）
-          ...(inviteCode && { invitedCode: inviteCode }) // 邀请码（可选）
+          ...(inviteCode && { invitedCode: inviteCode }), // 邀请码（可选）
+          channel: isTelegramEnv() ? 'tg' : 'pc'  // 添加渠道参数
         }
       });
 
@@ -358,7 +360,8 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
           chanel: 2,
           type: 'login',
           email, 
-          password 
+          password,
+          channel: isTelegramEnv() ? 'tg' : 'pc'  // 添加渠道参数
         }
       });
 
