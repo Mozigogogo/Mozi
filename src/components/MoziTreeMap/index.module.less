@@ -70,7 +70,33 @@
   font-size: 14px;
 }
 
-/* 响应式调整 */
+/* PC 端适配 - 使用大写 PX 阻止转换 */
+@media (min-width: 769px) {
+  .treemapContainer {
+    grid-auto-rows: minmax(50PX, 1fr) !important; /* PC 端自动填充容器高度 */
+    border-radius: 4PX; /* PC 端容器圆角 */
+  }
+  
+  .treemapItem {
+    padding: 6PX 4PX;
+    height: 100%; /* 自动填充 grid 单元格高度 */
+    min-height: 50PX;
+    border-radius: 4PX; /* PC 端每个块的圆角 */
+  }
+  
+  .itemName {
+    font-size: 13PX; /* 增加字体大小 */
+    margin-bottom: 4PX;
+    line-height: 1.3;
+  }
+  
+  .itemValue {
+    font-size: 12PX; /* 增加字体大小 */
+    line-height: 1.3;
+  }
+}
+
+/* 移动端响应式调整 */
 @media (max-width: 768px) {
   .treemapItem {
     padding: 10px 6px;
