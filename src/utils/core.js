@@ -1,8 +1,11 @@
 // 页面跳转函数
 
 // 跳转到详情页
-export const jump2Detail = (symbol) => {
-  window.location.href = `/detail?symbol=${symbol}`;
+export const jump2Detail = (symbol, fromFavorite = false) => {
+  const url = fromFavorite 
+    ? `/detail?symbol=${symbol}&fromFavorite=1`
+    : `/detail?symbol=${symbol}`;
+  window.location.href = url;
 };
 
 // 跳转到市场页

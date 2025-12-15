@@ -96,7 +96,12 @@ export default function PCHome() {
       key: 'symbol',
       render: (text, record) => (
         <div className={styles.coinCell}>
-          <img src={record.url} alt={text} className={styles.coinIcon} />
+          <img 
+            src={record.url || '/default-coin.svg'} 
+            alt={text} 
+            className={styles.coinIcon}
+            onError={(e) => { e.target.src = '/default-coin.svg'; }}
+          />
           <span>{text}</span>
         </div>
       ),

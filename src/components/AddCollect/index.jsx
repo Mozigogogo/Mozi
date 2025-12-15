@@ -9,7 +9,7 @@ import styles from './index.module.less';
 
 let isClick = false;
 
-const AddCollect = ({ isOwn: propIsOwn, symbol, loginCb }) => {
+const AddCollect = ({ isOwn: propIsOwn, symbol, loginCb, onSuccess }) => {
   const [isOwn, setOwn] = useState(null);
   const [showLogin, setShowLogin] = useState(false);
 
@@ -51,6 +51,11 @@ const AddCollect = ({ isOwn: propIsOwn, symbol, loginCb }) => {
           icon: 'success'
         });
         setOwn(!curOwn);
+        
+        // 调用成功回调
+        if (onSuccess) {
+          onSuccess(!curOwn);
+        }
       }
     } catch (error) {
       console.error('操作失败:', error);
