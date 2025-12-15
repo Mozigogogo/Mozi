@@ -450,7 +450,8 @@
     "notFound": "Page not found",
     "unauthorized": "Unauthorized, please login first",
     "forbidden": "Access forbidden",
-    "unknown": "Unknown error"
+    "unknown": "Unknown error",
+    "sessionExpired": "Session expired, please login again"
   },
   "robot": {
     "title": "AI Assistant",

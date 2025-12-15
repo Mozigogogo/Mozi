@@ -544,6 +544,27 @@
         color: #fff;
       }
     }
+    
+    // 移除实时榜单中Grid组件的所有边框线
+    .adm-grid {
+      border: none !important;
+    }
+    
+    .adm-grid-item {
+      border: none !important;
+      border-bottom: none !important;
+      border-right: none !important;
+    }
+    
+    // 移除伪元素边框
+    .adm-grid::before,
+    .adm-grid::after,
+    .adm-grid-item::before,
+    .adm-grid-item::after {
+      display: none !important;
+      content: none !important;
+      border: none !important;
+    }
   }
 }
 

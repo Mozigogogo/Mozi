@@ -29,9 +29,25 @@ export default function UserPage() {
   // 状态定义
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { disconnect } = useDisconnect();
-  const { address, isConnected } = useAccount();
-  const { signMessageAsync } = useSignMessage();
+  
+  // 安全地使用 wagmi hooks，避免服务端渲染错误
+  let disconnect, address, isConnected, signMessageAsync;
+  try {
+    const disconnectHook = useDisconnect();
+    disconnect = disconnectHook.disconnect;
+    const accountHook = useAccount();
+    address = accountHook.address;
+    isConnected = accountHook.isConnected;
+    const signHook = useSignMessage();
+    signMessageAsync = signHook.signMessageAsync;
+  } catch (e) {
+    // 如果 wagmi hooks 失败，使用默认值
+    disconnect = () => {};
+    address = null;
+    isConnected = false;
+    signMessageAsync = null;
+  }
+  
   const { t, i18n } = useTranslation();
   const { track } = useAmplitude('Profile');
   
@@ -111,12 +127,19 @@ export default function UserPage() {
     const mode = searchParams.get('mode');
     const showLogin = searchParams.get('showLogin');
     
-    if (mode === 'register') {
-      setLoginModalMode('register');
-      setShowLoginModal(true);
-    } else if (showLogin === 'true') {
-      setLoginModalMode('login');
-      setShowLoginModal(true);
+    if (mode === 'register' || showLogin === 'true') {
+      // 使用 requestAnimationFrame 确保在下一帧渲染，让页面先完成初始渲染
+      requestAnimationFrame(() => {
+        // 给页面更多时间完成渲染和稳定，避免卡顿感
+        setTimeout(() => {
+          if (mode === 'register') {
+            setLoginModalMode('register');
+          } else {
+            setLoginModalMode('login');
+          }
+          setShowLoginModal(true);
+        }, 300); // 300ms的延迟，让页面完全渲染完成后再弹出，更丝滑
+      });
     }
   }, [searchParams]);
 
