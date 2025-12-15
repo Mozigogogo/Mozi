@@ -127,12 +127,19 @@ export default function UserPage() {
     const mode = searchParams.get('mode');
     const showLogin = searchParams.get('showLogin');
     
-    if (mode === 'register') {
-      setLoginModalMode('register');
-      setShowLoginModal(true);
-    } else if (showLogin === 'true') {
-      setLoginModalMode('login');
-      setShowLoginModal(true);
+    if (mode === 'register' || showLogin === 'true') {
+      // 使用 requestAnimationFrame 确保在下一帧渲染，让页面先完成初始渲染
+      requestAnimationFrame(() => {
+        // 给页面更多时间完成渲染和稳定，避免卡顿感
+        setTimeout(() => {
+          if (mode === 'register') {
+            setLoginModalMode('register');
+          } else {
+            setLoginModalMode('login');
+          }
+          setShowLoginModal(true);
+        }, 300); // 300ms的延迟，让页面完全渲染完成后再弹出，更丝滑
+      });
     }
   }, [searchParams]);
 

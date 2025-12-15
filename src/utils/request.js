@@ -48,20 +48,21 @@ instance.interceptors.response.use(
           ? '登录已失效，请重新登录' 
           : 'Session expired, please login again';
         
-        // 尝试使用 antd-mobile 的 Toast（项目中已经在使用）
-        // 如果不可用，则使用 alert
+        // 尝试使用 antd-mobile 的 Toast
         try {
           // 动态导入 antd-mobile Toast
           import('antd-mobile').then(({ Toast }) => {
             Toast.show({
               content: message,
-              position: 'bottom',
-              duration: 2000
+              position: 'center',
+              duration: 1500,
+              maskClickable: false
             });
-            // Toast显示后跳转
+            // 给用户1.5秒时间看到提示后跳转到用户页面
+            // 跳转后页面会有300ms延迟再弹出登录框，整体更流畅
             setTimeout(() => {
               window.location.href = '/user?showLogin=true';
-            }, 500);
+            }, 1500);
           }).catch(() => {
             // 如果导入失败，直接跳转
             window.location.href = '/user?showLogin=true';
