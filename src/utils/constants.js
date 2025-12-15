@@ -259,6 +259,9 @@ export const Interface = {
   // 涨跌分布
   MARKET_DISTRIBUTION: '/easy/getGainAndLossDistDa',
   
+  // 榜单分享次数
+  GET_SHARE_COUNT: '/discovery/getShareCount',
+  
   // 添加告警
   ADD_ALARM: '/alarm/add',
   

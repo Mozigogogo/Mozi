@@ -7,6 +7,7 @@ import MoziGrid from "@/components/MoziGrid";
 import { request } from "@/utils/request";
 import { Interface } from "@/utils/constants";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useShareCount } from "@/hooks/useShareCount";
 
 const COMMENT_ICON = "https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/comment.png";
 const SHARE_ICON = "https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/share.png";
@@ -15,6 +16,7 @@ export default function UpTradeRankPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useTranslation();
+  const { shareCount, incrementShareCount } = useShareCount('trademovers');
 
   const tabs = useMemo(() => [
     { label: t('discover.range.live'), value: "today" },
@@ -79,6 +81,9 @@ export default function UpTradeRankPage() {
   };
 
   const onShare = () => {
+    // 增加分享次数
+    incrementShareCount();
+    
     const shareUrl = encodeURIComponent(window.location.href);
     const shareText = encodeURIComponent(`${t('home.rank.surge')} - ${t('exchangeRank.realTimeUpdate')}`);
     const telegramUrl = `https://t.me/share/url?url=${shareUrl}&text=${shareText}`;
@@ -116,7 +121,7 @@ export default function UpTradeRankPage() {
             <div className={styles.divider} />
             <div className={styles.capsuleBtn} onClick={onShare}>
               <img className={styles.capsuleIcon} src={SHARE_ICON} alt="分享" />
-              <span className={styles.capsuleText}>0</span>
+              <span className={styles.capsuleText}>{shareCount}</span>
             </div>
           </div>
         </div>
