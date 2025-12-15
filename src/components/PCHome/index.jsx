@@ -94,6 +94,8 @@ export default function PCHome() {
       title: '币种',
       dataIndex: 'symbol',
       key: 'symbol',
+      align: 'center',
+      width: 250,
       render: (text, record) => (
         <div className={styles.coinCell}>
           <img 
