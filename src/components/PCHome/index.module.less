@@ -473,14 +473,60 @@
 
 .viewMore {
   text-align: center;
-  padding: 16px;
   color: #999;
   font-size: 14px;
   cursor: pointer;
-  border-top: 1px solid #f0f0f0;
-  margin-top: 16px;
+  margin: 16px auto 0;
+  width: 160px;
+  height: 40px;
+  background: rgba(227, 234, 250, 0);
+  border-radius: 20px;
+  border: 1px solid #D4D4D4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
 
   &:hover {
     color: #11B787;
+    border-color: #11B787;
+  }
+}
+
+/* 24h幅度 Tag 样式覆盖 */
+.rankCard {
+  :global {
+    /* 确保表格单元格居中 */
+    .ant-table-cell {
+      vertical-align: middle;
+    }
+
+    /* 24h幅度列居中 */
+    .ant-table-tbody > tr > td:nth-child(3) {
+      text-align: center;
+    }
+
+    .ant-tag {
+      width: 100px;
+      height: 36px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      font-size: 14px;
+      font-weight: 500;
+      margin: 0;
+    }
+
+    .ant-tag-success {
+      background: #11B787 !important;
+      color: #fff !important;
+    }
+
+    .ant-tag-error {
+      background: #FF5858 !important;
+      color: #fff !important;
+    }
   }
 }
