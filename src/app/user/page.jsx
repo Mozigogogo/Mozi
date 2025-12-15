@@ -29,9 +29,25 @@ export default function UserPage() {
   // 状态定义
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { disconnect } = useDisconnect();
-  const { address, isConnected } = useAccount();
-  const { signMessageAsync } = useSignMessage();
+  
+  // 安全地使用 wagmi hooks，避免服务端渲染错误
+  let disconnect, address, isConnected, signMessageAsync;
+  try {
+    const disconnectHook = useDisconnect();
+    disconnect = disconnectHook.disconnect;
+    const accountHook = useAccount();
+    address = accountHook.address;
+    isConnected = accountHook.isConnected;
+    const signHook = useSignMessage();
+    signMessageAsync = signHook.signMessageAsync;
+  } catch (e) {
+    // 如果 wagmi hooks 失败，使用默认值
+    disconnect = () => {};
+    address = null;
+    isConnected = false;
+    signMessageAsync = null;
+  }
+  
   const { t, i18n } = useTranslation();
   const { track } = useAmplitude('Profile');
   
