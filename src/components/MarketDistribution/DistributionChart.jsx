@@ -23,8 +23,8 @@ export default function DistributionChart({ chartData, statistics }) {
 
   // 计算柱状图高度
   const getBarHeight = (value) => {
-    const maxHeight = 100;
-    return Math.min(Math.max((value / maxValue) * 100, 4), maxHeight);
+    const maxHeight = 120; // 增加最大高度
+    return Math.min(Math.max((value / maxValue) * 120, 4), maxHeight);
   };
 
   return (

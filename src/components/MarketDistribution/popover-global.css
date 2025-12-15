@@ -14,3 +14,11 @@
   padding: 0 !important;
 }
 
+/* PC端适配 - 增大Popover */
+@media (min-width: 769px) {
+  .adm-popover-inner {
+    border-radius: 12px !important;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2) !important;
+  }
+}
+

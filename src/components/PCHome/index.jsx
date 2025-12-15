@@ -222,27 +222,36 @@ export default function PCHome() {
       </div>
 
       {/* 实时榜单 */}
-      <Card className={styles.rankCard}>
-        <Tabs
-          activeKey={activeRankTab}
-          onChange={handleRankTabChange}
-          items={rankTabs}
-        />
-        <Table
-          columns={columns}
-          dataSource={rankData}
-          loading={rankLoading}
-          pagination={false}
-          size="middle"
-          onRow={(record) => ({
-            onClick: () => router.push(`/detail?symbol=${record.symbol}`),
-            style: { cursor: 'pointer' },
-          })}
-        />
-        <div className={styles.viewMore} onClick={() => router.push('/pricerank')}>
-          查看更多 <RightOutlined />
+      <div className={styles.rankSection}>
+        {/* 标题和Tab在容器外面 */}
+        <div className={styles.rankHeader}>
+          <h2 className={styles.rankTitle}>实时榜单</h2>
+          <Tabs
+            activeKey={activeRankTab}
+            onChange={handleRankTabChange}
+            items={rankTabs}
+            className={styles.rankTabs}
+          />
         </div>
-      </Card>
+        
+        {/* 表格在白色卡片里 */}
+        <Card className={styles.rankCard}>
+          <Table
+            columns={columns}
+            dataSource={rankData}
+            loading={rankLoading}
+            pagination={false}
+            size="middle"
+            onRow={(record) => ({
+              onClick: () => router.push(`/detail?symbol=${record.symbol}`),
+              style: { cursor: 'pointer' },
+            })}
+          />
+          <div className={styles.viewMore} onClick={() => router.push('/pricerank')}>
+            查看更多 <RightOutlined />
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }
