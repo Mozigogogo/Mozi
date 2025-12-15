@@ -533,6 +533,52 @@ export default function HomePage() {
     }
   };
 
+  // 单独刷新自选榜数据
+  const refreshSelfSelectRank = async () => {
+    try {
+      const res = await request({
+        url: Interface.COIN_SELF,
+        data: { pageSize: 10, pageNo: 1 }
+      });
+      
+      const listData = res.data || [];
+      let tempData = [];
+      
+      if (res.data?.isLogin === false) {
+        tempData = [];
+      } else if (Array.isArray(listData) && listData.length > 0) {
+        tempData = listData.map((item) => ({
+          symbol: (
+            <div className={styles.ownTitle}>
+              <img 
+                className={styles.ownImg} 
+                src={item.url || '/default-coin.svg'} 
+                alt={item.symbol}
+                onError={(e) => { e.target.src = '/default-coin.svg'; }}
+              />
+              {item.symbol}
+            </div>
+          ),
+          last: item.last,
+          priceRange: <HighlightArea value={item.price24h} />,
+          own: <AddCollect symbol={item.symbol} isOwn={true} onSuccess={refreshSelfSelectRank} />,
+          monitor: <AddMonitor symbol={item.symbol} />,
+          key: item.symbol,
+          isFavorite: true, // 自选榜中的币种都是已收藏的
+        }));
+      }
+      
+      // 更新自选榜数据（索引0）
+      setFooterArr(prev => {
+        const newArr = [...prev];
+        newArr[0] = tempData;
+        return newArr;
+      });
+    } catch (error) {
+      console.error('刷新自选榜失败:', error);
+    }
+  };
+
   // 获取实时榜单数据
   const fetchRankingData = async (isInitial = false) => {
     // 只在首次加载时显示 loading，后续刷新静默更新
@@ -573,7 +619,8 @@ export default function HomePage() {
             priceRange: <HighlightArea value={item.priceRange || item.movers || item.price_24h} />,
             own: <AddCollect symbol={item.symbol} isOwn={item.favorite} />,
             monitor: <AddMonitor symbol={item.symbol} />,
-            key: item.symbol
+            key: item.symbol,
+            isFavorite: item.favorite || false, // 保存收藏状态
           }));
         }
       } catch (e) {
@@ -614,7 +661,7 @@ export default function HomePage() {
                   ),
                   last: item.last,
                   priceRange: <HighlightArea value={item.price24h} />,
-                  own: <AddCollect symbol={item.symbol} isOwn={item.favorite} />,
+                  own: <AddCollect symbol={item.symbol} isOwn={true} onSuccess={refreshSelfSelectRank} />,
                   monitor: <AddMonitor symbol={item.symbol} />,
                   key: item.symbol,
                 };
@@ -643,7 +690,8 @@ export default function HomePage() {
                 priceRange: <HighlightArea value={item.priceRange || item.movers || item.price_24h} />,
                 own: <AddCollect symbol={item.symbol} isOwn={item.favorite} />,
                 monitor: <AddMonitor symbol={item.symbol} />,
-                key: item.symbol
+                key: item.symbol,
+                isFavorite: item.favorite || false, // 保存收藏状态
               }));
             }
           }
@@ -690,6 +738,11 @@ export default function HomePage() {
   // 榜单切换处理
   const rankActiveClick = (value) => {
     setRankActive(value);
+    
+    // 如果切换到自选榜，立即刷新自选榜数据
+    if (value === 'zixuan') {
+      refreshSelfSelectRank();
+    }
   };
 
   // 跳转到榜单详情页（与发现页一致）
@@ -892,7 +945,7 @@ export default function HomePage() {
             <TabBar.Item key='xinbi' title={t('home.rank.new')} />
             <TabBar.Item key='biaosheng' title={t('home.rank.surge')} />
           </TabBar>
-          {currentRankData.length > 0 && (
+          {currentRankData.length > 0 ? (
             <div>
               <MoziGrid
                 length={5}
@@ -904,7 +957,10 @@ export default function HomePage() {
                   t('home.columns.addMonitor')
                 ]}
                 gridContent={currentRankData}
-                callback={(gridCon) => { jump2Detail(gridCon.key); }}
+                callback={(gridCon) => { 
+                  // 如果币种已收藏（isFavorite为true），传入 fromFavorite 参数
+                  jump2Detail(gridCon.key, gridCon.isFavorite === true); 
+                }}
                 maxRows={10}
                 minRows={10}
                 gridTitleBgColor="transparent"
@@ -913,7 +969,11 @@ export default function HomePage() {
                 {t('user.viewMore')} <RightOutline fontSize={12} />
               </div>
             </div>
-          )}
+          ) : rankActiveKey === 'zixuan' ? (
+            <div style={{ padding: '40px 0', textAlign: 'center', color: '#999' }}>
+              {t('home.noFavorites')}
+            </div>
+          ) : null}
         {/* </Layout> */}
       </MoziCard>
       </div>

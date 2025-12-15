@@ -34,6 +34,7 @@ export default function DetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const symbol = searchParams.get('symbol') || '';
+  const fromFavorite = searchParams.get('fromFavorite') === '1'; // 是否从自选榜进入
   const { t } = useTranslation();
   
   // 状态定义
@@ -1383,7 +1384,10 @@ ${coinInfo.name || symbol} (${symbol})
         {/* 底部操作栏 */}
         <div className={styles.footerList}>
           <div className={styles.footerItem}>
-            <AddCollect isOwn={coinInfo?.isSelfSelected || false} symbol={symbol} />
+            <AddCollect 
+              isOwn={fromFavorite ? true : (coinInfo?.isSelfSelected || false)} 
+              symbol={symbol} 
+            />
             <div className={styles.footerText}>{t('detail.actions.favorite')}</div>
           </div>
           <div className={styles.footerItem} onClick={jump2Alert}>
