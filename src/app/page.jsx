@@ -534,10 +534,19 @@ export default function HomePage() {
   };
 
   // 获取实时榜单数据
-  const fetchRankingData = async () => {
-    setFooterLoading(true);
+  const fetchRankingData = async (isInitial = false) => {
+    // 只在首次加载时显示 loading，后续刷新静默更新
+    if (isInitial) {
+      setFooterLoading(true);
+    }
     try {
-      const results = new Array(footerIfList.length).fill([]);
+      // 使用当前的 footerArr 作为基础，避免数据闪烁
+      const results = [...footerArr];
+      // 如果是首次加载，初始化为空数组
+      if (results.length === 0) {
+        results.length = footerIfList.length;
+        results.fill([]);
+      }
 
       const upIndex = activeArr.indexOf('zhangfu');
       try {
@@ -551,7 +560,12 @@ export default function HomePage() {
           results[upIndex] = slicedData.map((item) => ({
             symbol: (
               <div className={styles.ownTitle}>
-                <img className={styles.ownImg} src={item.url} alt={item.symbol} />
+                <img 
+                  className={styles.ownImg} 
+                  src={item.url || '/default-coin.svg'} 
+                  alt={item.symbol}
+                  onError={(e) => { e.target.src = '/default-coin.svg'; }}
+                />
                 {item.symbol}
               </div>
             ),
@@ -563,9 +577,10 @@ export default function HomePage() {
           }));
         }
       } catch (e) {
-        results[upIndex] = [];
+        // 保留旧数据，不要设置为空数组
+        // results[upIndex] = [];
       }
-      setFooterArr(results);
+      // 不要在这里更新，等所有数据都获取完成
 
       const promises = footerIfList.map(async (cfg, i) => {
         if (i === upIndex) return;
@@ -588,7 +603,12 @@ export default function HomePage() {
                 return {
                   symbol: (
                     <div className={styles.ownTitle}>
-                      <img className={styles.ownImg} src={item.url || '/default-coin.svg'} alt={item.symbol} />
+                      <img 
+                        className={styles.ownImg} 
+                        src={item.url || '/default-coin.svg'} 
+                        alt={item.symbol}
+                        onError={(e) => { e.target.src = '/default-coin.svg'; }}
+                      />
                       {item.symbol}
                     </div>
                   ),
@@ -610,7 +630,12 @@ export default function HomePage() {
               tempData = slicedData.map((item) => ({
                 symbol: (
                   <div className={styles.ownTitle}>
-                    <img className={styles.ownImg} src={item.url} alt={item.symbol} />
+                    <img 
+                      className={styles.ownImg} 
+                      src={item.url || '/default-coin.svg'} 
+                      alt={item.symbol}
+                      onError={(e) => { e.target.src = '/default-coin.svg'; }}
+                    />
                     {item.symbol}
                   </div>
                 ),
@@ -625,16 +650,20 @@ export default function HomePage() {
           results[i] = tempData;
         } catch (error) {
           console.error(`榜单${i}请求失败:`, error);
-          results[i] = [];
+          // 保留旧数据，不要设置为空数组
+          // results[i] = [];
         }
       });
 
       await Promise.allSettled(promises);
+      // 所有数据获取完成后，一次性更新
       setFooterArr(results);
     } catch (error) {
       console.error('获取实时榜单数据失败:', error);
     } finally {
-      setFooterLoading(false);
+      if (isInitial) {
+        setFooterLoading(false);
+      }
     }
   };
 
@@ -644,7 +673,7 @@ export default function HomePage() {
     fetchHotIndustry();
     fetchHotContract();
     fetchOwnList();
-    fetchRankingData();
+    fetchRankingData(true); // 首次加载
 
     // 设置轮询
     const interval = setInterval(() => {
@@ -652,7 +681,7 @@ export default function HomePage() {
       fetchHotIndustry();
       fetchHotContract();
       fetchOwnList();
-      fetchRankingData();
+      fetchRankingData(false); // 后续刷新，静默更新
     }, 30000); // 30秒轮询一次
 
     return () => clearInterval(interval);

@@ -37,7 +37,12 @@ const sanitizeExchangeName = (name) => {
 const MarketTitle = ({ url, symbol, totalVolume }) => {
   return (
     <div className={styles.rankTitle}>
-      <img className={styles.rankImg} src={url} alt={symbol} />
+      <img 
+        className={styles.rankImg} 
+        src={url || '/default-coin.svg'} 
+        alt={symbol}
+        onError={(e) => { e.target.src = '/default-coin.svg'; }}
+      />
       <div>
         <div className={styles.rankCoin}>{symbol}</div>
         <div className={styles.rankCoinDesc}>{totalVolume}</div>
@@ -171,14 +176,20 @@ const loadingTimerRef = useRef(null);
           return {
             exchange: (
               <div className={styles.gridText}>
-                <img className={styles.gridIcon} src={item.url} alt={showName} style={{ width: 15, height: 15 }} />
+                <img 
+                  className={styles.gridIcon} 
+                  src={item.url || '/default-coin.svg'} 
+                  alt={showName} 
+                  style={{ width: 15, height: 15 }}
+                  onError={(e) => { e.target.src = '/default-coin.svg'; }}
+                />
                 {showName}
               </div>
             ),
             usd: item.usd,
             markets: item.markets,
             coins: item.coins,
-            img: item.url
+            img: item.url || '/default-coin.svg'
           };
         });
         exchangeArr.current.push(tempExchangeSpot);
@@ -195,14 +206,20 @@ const loadingTimerRef = useRef(null);
           return {
             exchange: (
               <div className={styles.gridText}>
-                <img className={styles.gridIcon} src={item.url} alt={showName} style={{ width: 15, height: 15 }} />
+                <img 
+                  className={styles.gridIcon} 
+                  src={item.url || '/default-coin.svg'} 
+                  alt={showName} 
+                  style={{ width: 15, height: 15 }}
+                  onError={(e) => { e.target.src = '/default-coin.svg'; }}
+                />
                 {showName}
               </div>
             ),
             usd: item.usd,
             markets: item.markets,
             coins: item.coins,
-            img: item.url
+            img: item.url || '/default-coin.svg'
           };
         });
         exchangeArr.current.push(tempExchangeFutures);
@@ -495,7 +512,12 @@ const loadingTimerRef = useRef(null);
         return {
           symbol: (
             <div className={styles.ownTitle}>
-              <img className={styles.ownImg} src={item.url} alt={item.symbol} />
+              <img 
+                className={styles.ownImg} 
+                src={item.url || '/default-coin.svg'} 
+                alt={item.symbol}
+                onError={(e) => { e.target.src = '/default-coin.svg'; }}
+              />
               {item.symbol}
             </div>
           ),
