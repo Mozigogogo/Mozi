@@ -33,7 +33,50 @@ instance.interceptors.request.use(
 // 响应拦截器
 instance.interceptors.response.use(
   (response) => {
-    return response.data;
+    const data = response.data;
+    
+    // 检查返回的code是否为401
+    if (data && data.code === 401) {
+      // 清除token
+      clearToken();
+      
+      // 只在浏览器环境中执行
+      if (typeof window !== 'undefined') {
+        // 获取当前语言
+        const language = localStorage.getItem('i18nextLng') || 'zh';
+        const message = language === 'zh' 
+          ? '登录已失效，请重新登录' 
+          : 'Session expired, please login again';
+        
+        // 尝试使用 antd-mobile 的 Toast
+        try {
+          // 动态导入 antd-mobile Toast
+          import('antd-mobile').then(({ Toast }) => {
+            Toast.show({
+              content: message,
+              position: 'center',
+              duration: 1500,
+              maskClickable: false
+            });
+            // 给用户1.5秒时间看到提示后跳转到用户页面
+            // 跳转后页面会有300ms延迟再弹出登录框，整体更流畅
+            setTimeout(() => {
+              window.location.href = '/user?showLogin=true';
+            }, 1500);
+          }).catch(() => {
+            // 如果导入失败，直接跳转
+            window.location.href = '/user?showLogin=true';
+          });
+        } catch (e) {
+          // 如果出错，直接跳转
+          window.location.href = '/user?showLogin=true';
+        }
+      }
+      
+      return Promise.reject(new Error('Session expired'));
+    }
+    
+    return data;
   },
   (error) => {
     return Promise.reject(error);

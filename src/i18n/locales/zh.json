@@ -450,7 +450,8 @@
     "notFound": "页面未找到",
     "unauthorized": "未授权，请先登录",
     "forbidden": "没有权限访问",
-    "unknown": "未知错误"
+    "unknown": "未知错误",
+    "sessionExpired": "登录已失效，请重新登录"
   },
   "robot": {
     "title": "AI 助手",

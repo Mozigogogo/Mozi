@@ -175,3 +175,91 @@ a {
   }
 }
 */
+
+/* 全局移除 antd-mobile Grid 组件的所有边框线 */
+.adm-grid {
+  border: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  border-left: none !important;
+  border-right: none !important;
+}
+
+.adm-grid-item {
+  border: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  border-left: none !important;
+  border-right: none !important;
+}
+
+/* 移除 Grid 组件的伪元素边框 */
+.adm-grid::before,
+.adm-grid::after {
+  display: none !important;
+  content: none !important;
+  border: none !important;
+  background: none !important;
+}
+
+.adm-grid-item::before,
+.adm-grid-item::after {
+  display: none !important;
+  content: none !important;
+  border: none !important;
+  background: none !important;
+}
+
+/* 全局移除 antd Table 组件的所有边框线 */
+.ant-table-wrapper {
+  border: none !important;
+}
+
+.ant-table {
+  border: none !important;
+}
+
+.ant-table-container {
+  border: none !important;
+}
+
+.ant-table-content {
+  border: none !important;
+}
+
+.ant-table table {
+  border: none !important;
+  border-collapse: collapse !important;
+}
+
+.ant-table-thead > tr > th {
+  border: none !important;
+  border-bottom: none !important;
+  background: transparent !important;
+}
+
+.ant-table-tbody > tr > td {
+  border: none !important;
+  border-bottom: none !important;
+  border-top: none !important;
+}
+
+.ant-table-tbody > tr {
+  border: none !important;
+}
+
+.ant-table-cell {
+  border: none !important;
+  border-bottom: none !important;
+}
+
+/* 移除 Table 的伪元素边框 */
+.ant-table::before,
+.ant-table::after,
+.ant-table-cell::before,
+.ant-table-cell::after {
+  display: none !important;
+  content: none !important;
+  border: none !important;
+  background: none !important;
+}
