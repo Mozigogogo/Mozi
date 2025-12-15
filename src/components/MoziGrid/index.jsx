@@ -151,7 +151,7 @@ const MoziGrid = ({
                       <span className={styles.rankingNumber}>{index + 1}</span>
                       <div className={styles.gridContent}>
                         {Object.keys(gridCon).map((gridConItem, gridConIndex) => {
-                          if (gridConItem === 'key' || gridConItem === 'img') {
+                          if (gridConItem === 'key' || gridConItem === 'img' || gridConItem === 'isFavorite') {
                             return null;
                           }
                           const rawCellValue = gridCon[gridConItem];
@@ -218,7 +218,7 @@ const MoziGrid = ({
                   <span className={styles.simpleRankingNumber} style={contentFontSize ? { fontSize: contentFontSize } : undefined}>{index + 1}</span>
                   <div className={styles.gridContent} style={contentFontSize ? { fontSize: contentFontSize } : undefined}>
                     {Object.keys(gridCon).map((gridConItem, gridConIndex) => {
-                      if (gridConItem === 'key' || gridConItem === 'img') {
+                      if (gridConItem === 'key' || gridConItem === 'img' || gridConItem === 'isFavorite') {
                         return null;
                       }
                       const rawCellValue = gridCon[gridConItem];
@@ -283,7 +283,7 @@ const MoziGrid = ({
                 >
                   <div className={styles.gridContent}>
                     {Object.keys(gridCon).map((gridConItem, gridConIndex) => {
-                      if (gridConItem === 'key' || gridConItem === 'img') {
+                      if (gridConItem === 'key' || gridConItem === 'img' || gridConItem === 'isFavorite') {
                         return null;
                       }
                       const rawCellValue = gridCon[gridConItem];
