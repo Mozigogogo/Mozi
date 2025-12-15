@@ -388,20 +388,35 @@
 }
 
 /* 实时榜单 */
-.rankCard {
-  border-radius: 12px;
+.rankSection {
+  margin-bottom: 20px;
+}
 
-  :global(.ant-card-body) {
-    padding: 20px;
-  }
+.rankHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
 
+.rankTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0px 30px 0px 0px;
+}
+
+.rankTabs {
   :global(.ant-tabs-nav) {
-    margin-bottom: 16px;
+    margin-bottom: 0;
+
+    &::before {
+      display: none;
+    }
   }
 
   :global(.ant-tabs-tab) {
     padding: 8px 16px;
-    margin: 0 4px;
+    margin: 0 !important;
     border-radius: 8px;
     background: #f5f5f5;
     border: none;
@@ -413,14 +428,23 @@
 
   :global(.ant-tabs-tab-active) {
     background: #11B787;
+    border-radius: 20px;
 
-    .ant-tabs-tab-btn {
-      color: #fff;
+    :global(.ant-tabs-tab-btn) {
+      color: #fff !important;
     }
   }
 
   :global(.ant-tabs-ink-bar) {
     display: none;
+  }
+}
+
+.rankCard {
+  border-radius: 12px;
+
+  :global(.ant-card-body) {
+    padding: 20px;
   }
 }
 
