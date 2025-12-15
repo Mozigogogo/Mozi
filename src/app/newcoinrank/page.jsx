@@ -7,6 +7,7 @@ import MoziGrid from "@/components/MoziGrid";
 import { request } from "@/utils/request";
 import { Interface } from "@/utils/constants";
 import { useRouter } from "next/navigation";
+import { useShareCount } from "@/hooks/useShareCount";
 
 const COMMENT_ICON = "https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/comment.png";
 const SHARE_ICON = "https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/share.png";
@@ -14,6 +15,7 @@ const SHARE_ICON = "https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets
 export default function NewCoinRankPage() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { shareCount, incrementShareCount } = useShareCount('newsymbol');
 
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -59,6 +61,9 @@ export default function NewCoinRankPage() {
   };
 
   const onShare = () => {
+    // 增加分享次数
+    incrementShareCount();
+    
     const shareUrl = encodeURIComponent(window.location.href);
     const shareText = encodeURIComponent(t('home.rank.new'));
     const telegramUrl = `https://t.me/share/url?url=${shareUrl}&text=${shareText}`;
@@ -91,7 +96,7 @@ export default function NewCoinRankPage() {
             <div className={styles.divider} />
             <div className={styles.capsuleBtn} onClick={onShare}>
               <img className={styles.capsuleIcon} src={SHARE_ICON} alt="分享" />
-              <span className={styles.capsuleText}>0</span>
+              <span className={styles.capsuleText}>{shareCount}</span>
             </div>
           </div>
         </div>

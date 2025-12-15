@@ -370,7 +370,7 @@ export default function HomePage() {
 
   // 实时榜单接口配置
   const footerIfList = [{
-    interface: Interface.find_coin,
+    interface: Interface.COIN_SELF,
     data: {
       pageSize: 10,
       pageNo: 1
@@ -573,21 +573,35 @@ export default function HomePage() {
           const itemListData = await request({ url: cfg.interface, data: cfg.data });
           let tempData = [];
           if (i === 0) {
-            const listData = itemListData.data?.list || itemListData.data || [];
-            if (Array.isArray(listData) && listData.length > 0) {
-              tempData = listData.map((item) => ({
-                symbol: (
-                  <div className={styles.ownTitle}>
-                    <img className={styles.ownImg} src={item.url} alt={item.symbol} />
-                    {item.symbol}
-                  </div>
-                ),
-                currentPrice: item.currentPrice,
-                priceChange24h: <HighlightArea value={item.priceChangePercentage24h} />,
-                own: <AddCollect symbol={item.symbol} isOwn={item.favorite} />,
-                monitor: <AddMonitor symbol={item.symbol} />,
-                key: item.symbol,
-              }));
+            // 自选榜：返回数组，字段为 symbol, price24h, last, url
+            console.log('自选榜完整响应:', itemListData);
+            const listData = itemListData.data || [];
+            console.log('自选榜原始数据:', listData);
+            
+            // 检查是否需要登录
+            if (itemListData.data?.isLogin === false) {
+              console.log('自选榜需要登录');
+              tempData = [];
+            } else if (Array.isArray(listData) && listData.length > 0) {
+              tempData = listData.map((item) => {
+                console.log('自选榜单项:', item);
+                return {
+                  symbol: (
+                    <div className={styles.ownTitle}>
+                      <img className={styles.ownImg} src={item.url || '/default-coin.svg'} alt={item.symbol} />
+                      {item.symbol}
+                    </div>
+                  ),
+                  last: item.last,
+                  priceRange: <HighlightArea value={item.price24h} />,
+                  own: <AddCollect symbol={item.symbol} isOwn={item.favorite} />,
+                  monitor: <AddMonitor symbol={item.symbol} />,
+                  key: item.symbol,
+                };
+              });
+              console.log('自选榜处理后数据:', tempData);
+            } else {
+              console.log('自选榜数据为空或格式不正确');
             }
           } else {
             const listData = itemListData.data || [];
@@ -832,6 +846,9 @@ export default function HomePage() {
   // 渲染实时榜单
   const renderRealTimeRanking = () => {
     const currentRankData = footerArr[activeArr.indexOf(rankActiveKey)] || [];
+    console.log('当前榜单类型:', rankActiveKey, '索引:', activeArr.indexOf(rankActiveKey));
+    console.log('当前榜单数据:', currentRankData);
+    console.log('所有榜单数据:', footerArr);
     
     return (
       <div ref={rankingSectionRef}>
