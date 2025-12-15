@@ -678,6 +678,22 @@ const loadingTimerRef = useRef(null);
     }
   }, [upTradePickIndex]);
 
+  // 行情数据轮询 - 每5秒刷新一次
+  useEffect(() => {
+    if (pageActiveKey !== 'market') return;
+
+    const marketTimer = setInterval(() => {
+      if (needLoop.current && marketData.length > 0) {
+        // 静默刷新第一页数据
+        loadMarketData(true);
+      }
+    }, 5000);
+
+    return () => {
+      clearInterval(marketTimer);
+    };
+  }, [pageActiveKey, marketData.length]);
+
   // 切换页面标签
   const handlePageTabChange = (key) => {
     setPageActiveKey(key);
