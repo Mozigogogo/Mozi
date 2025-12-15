@@ -77,6 +77,17 @@ export default function PCHome() {
     { key: 'biaosheng', label: '飙升榜' },
   ];
 
+  // 榜单接口映射
+  const interfaceMap = {
+    zixuan: Interface.COIN_SELF,
+    zhangfu: Interface.price_change,
+    diefu: Interface.PRICE_DOWNCHANGE,
+    zhenfu: Interface.price_wave,
+    chengjiaoe: Interface.coin_trade,
+    xinbi: Interface.NEW_COIN,
+    biaosheng: Interface.PRICE_UPTRADE,
+  };
+
   // 表格列配置
   const columns = [
     {
@@ -125,24 +136,42 @@ export default function PCHome() {
   const fetchRankData = async (rankType = 'zhangfu') => {
     setRankLoading(true);
     try {
-      const interfaceMap = {
-        zhangfu: Interface.price_change,
-        diefu: Interface.PRICE_DOWNCHANGE,
-        zhenfu: Interface.price_wave,
-        chengjiaoe: Interface.coin_trade,
-        xinbi: Interface.NEW_COIN,
-      };
+      const apiUrl = interfaceMap[rankType] || Interface.price_change;
+      
+      // 根据不同榜单类型设置不同的请求参数
+      let requestData = {};
+      if (rankType === 'chengjiaoe') {
+        requestData = { intervals: 0 };
+      } else if (rankType === 'zixuan') {
+        requestData = { pageSize: 10, pageNo: 1 };
+      } else if (rankType === 'biaosheng') {
+        requestData = { intervals: '7_day' };
+      } else {
+        requestData = { dim: 0 };
+      }
+      
       const res = await request({
-        url: interfaceMap[rankType] || Interface.price_change,
-        data: rankType === 'chengjiaoe' ? { intervals: 0 } : { dim: 0 },
+        url: apiUrl,
+        data: requestData,
       });
-      const list = res?.data?.slice?.(0, 10) || [];
-      setRankData(list.map((item, i) => ({
+      
+      // 自选榜的数据结构可能不同，需要特殊处理
+      let list = [];
+      if (rankType === 'zixuan') {
+        // 自选榜返回的是数组，字段为 price24h 和 last
+        list = res?.data || [];
+      } else {
+        list = res?.data?.slice?.(0, 10) || [];
+      }
+      
+      setRankData(list.slice(0, 10).map((item) => ({
         key: item.symbol,
         symbol: item.symbol,
-        url: item.url,
-        last: item.last || item.volume_24h,
-        priceRange: parseFloat(item.priceRange || item.price_24h || 0),
+        url: item.url || '/default-coin.svg',
+        // 自选榜使用 last 字段，其他榜单可能用 currentPrice 或 volume_24h
+        last: item.last || item.currentPrice || item.volume_24h,
+        // 自选榜使用 price24h 字段，其他榜单使用不同字段名
+        priceRange: parseFloat(item.price24h || item.priceRange || item.priceChangePercentage24h || item.price_24h || 0),
       })));
     } catch (e) {
       console.error('获取榜单失败:', e);
