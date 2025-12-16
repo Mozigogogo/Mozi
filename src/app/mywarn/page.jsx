@@ -57,8 +57,10 @@ export default function Mywarn() {
   const init = async () => {
     try {
       // 判断是否为 Telegram 环境
-      const isTelegram = typeof window !== 'undefined' && window.Telegram?.WebApp?.initData;
-      const channel = isTelegram ? 'tg' : 'pc';
+      const { isTelegramEnv } = await import('../../utils/core');
+      const channel = isTelegramEnv() ? 'tg' : 'pc';
+      
+      console.log('[MyWarn] 当前环境:', channel, 'Telegram WebApp:', window.Telegram?.WebApp);
       
       const { data } = await request({
         url: Interface.MY_WARN,
@@ -248,8 +250,10 @@ export default function Mywarn() {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
       
       // 判断是否为 Telegram 环境
-      const isTelegram = typeof window !== 'undefined' && window.Telegram?.WebApp?.initData;
-      const channel = isTelegram ? 'tg' : 'pc';
+      const { isTelegramEnv } = await import('../../utils/core');
+      const channel = isTelegramEnv() ? 'tg' : 'pc';
+      
+      console.log('[MyWarn] 删除告警 - 当前环境:', channel);
       
       const res = await request({
         url: `${Interface.DELETE_ALARM}?symbol=${symbol}&channel=${channel}`,
