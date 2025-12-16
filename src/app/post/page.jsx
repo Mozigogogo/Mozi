@@ -292,8 +292,6 @@ export default function PostPage() {
       });
 
       if (response?.code === 0) {
-        localStorage.setItem('needRefreshCommunity', 'true');
-        
         // 发帖成功后，调用发帖任务完成接口（仅新帖子，不是更新）
         if (!isUpdate) {
           try {
@@ -312,7 +310,13 @@ export default function PostPage() {
           content: isUpdate ? t('post.messages.updateSuccess') : t('post.messages.publishSuccess'),
           duration: 1000,
           afterClose: () => {
-            router.back();
+            // 发布成功后跳转到社区页并标记需要刷新
+            if (!isUpdate) {
+              localStorage.setItem('needRefreshCommunity', 'true');
+              router.push('/community');
+            } else {
+              router.back();
+            }
           }
         });
       } else {
@@ -490,7 +494,7 @@ export default function PostPage() {
     // 显示加载提示
     Toast.show({
       icon: 'loading',
-      content: '上传中...',
+      content: t('post.messages.uploading'),
       duration: 0
     });
 
@@ -541,12 +545,12 @@ export default function PostPage() {
         console.log('更新图片列表:', newImages);
         setImages(newImages);
         Toast.show({
-          content: `成功上传${validUrls.length}张图片`,
+          content: t('post.messages.uploadSuccess', { count: validUrls.length }),
           duration: 2000
         });
       } else {
         Toast.show({
-          content: '图片上传失败'
+          content: t('post.messages.uploadFailed')
         });
       }
     } catch (error) {

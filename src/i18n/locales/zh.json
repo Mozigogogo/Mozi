@@ -811,7 +811,10 @@
       "topicNotFound": "未找到相关话题",
       "searchTopicFailed": "搜索话题失败",
       "pleaseLogin": "请先登录",
-      "createFailed": "创建失败"
+      "createFailed": "创建失败",
+      "uploading": "上传中...",
+      "uploadSuccess": "成功上传{{count}}张图片",
+      "uploadFailed": "图片上传失败"
     },
     "vote": {
       "createVote": "创建投票",

@@ -812,7 +812,10 @@
       "topicNotFound": "No related topics found",
       "searchTopicFailed": "Failed to search topics",
       "pleaseLogin": "Please login first",
-      "createFailed": "Creation failed"
+      "createFailed": "Creation failed",
+      "uploading": "Uploading...",
+      "uploadSuccess": "Successfully uploaded {{count}} image(s)",
+      "uploadFailed": "Image upload failed"
     },
     "vote": {
       "createVote": "Create Vote",
