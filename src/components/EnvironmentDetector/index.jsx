@@ -8,7 +8,18 @@ export default function EnvironmentDetector() {
 
     const detectEnvironment = () => {
       const telegramWebApp = window.Telegram?.WebApp;
-      const isTelegram = !!telegramWebApp;
+      
+      // 关键：即使脚本加载了，也要检查是否真的在 Telegram 环境中
+      // 真正的 Telegram 环境会有以下特征之一：
+      // 1. initData 不为空（最可靠）
+      // 2. initDataUnsafe 有内容
+      // 3. platform 不是 'unknown'
+      const hasInitData = telegramWebApp?.initData && telegramWebApp.initData.length > 0;
+      const hasInitDataUnsafe = telegramWebApp?.initDataUnsafe && Object.keys(telegramWebApp.initDataUnsafe).length > 0;
+      const hasPlatform = telegramWebApp?.platform && telegramWebApp.platform !== 'unknown';
+      
+      // 只有满足以上任一条件，才认为是真正的 Telegram 环境
+      const isTelegram = hasInitData || hasInitDataUnsafe || hasPlatform;
       const channel = isTelegram ? 'tg' : 'pc';
       
       localStorage.setItem('appChannel', channel);
@@ -16,36 +27,24 @@ export default function EnvironmentDetector() {
       console.log('[EnvironmentDetector] 环境检测结果:', {
         channel,
         isTelegram,
-        hasTelegram: !!window.Telegram,
         hasWebApp: !!telegramWebApp,
+        hasInitData,
+        hasInitDataUnsafe,
+        hasPlatform,
         platform: telegramWebApp?.platform,
-        version: telegramWebApp?.version,
-        initData: telegramWebApp?.initData,
-        initDataType: typeof telegramWebApp?.initData,
-        initDataLength: telegramWebApp?.initData?.length
+        initDataLength: telegramWebApp?.initData?.length || 0,
+        initDataUnsafeKeys: telegramWebApp?.initDataUnsafe ? Object.keys(telegramWebApp.initDataUnsafe) : []
       });
       
-      if (isTelegram && telegramWebApp.ready) {
+      if (isTelegram && telegramWebApp?.ready) {
         telegramWebApp.ready();
       }
     };
 
-    if (window.Telegram?.WebApp) {
-      detectEnvironment();
-      return;
-    }
-
-    let attempts = 0;
-    const maxAttempts = 30;
-    const pollInterval = setInterval(() => {
-      attempts++;
-      if (window.Telegram?.WebApp || attempts >= maxAttempts) {
-        clearInterval(pollInterval);
-        detectEnvironment();
-      }
-    }, 100);
+    // 延迟检测，等待脚本加载
+    const timer = setTimeout(detectEnvironment, 500);
     
-    return () => clearInterval(pollInterval);
+    return () => clearTimeout(timer);
   }, []);
 
   return null;
