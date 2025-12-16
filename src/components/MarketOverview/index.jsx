@@ -67,7 +67,16 @@ const MarketOverview = memo(() => {
           return;
         }
 
-        const myWarnRes = await request({ url: Interface.MY_WARN });
+        // 判断是否为 Telegram 环境
+        const isTelegram = typeof window !== 'undefined' && window.Telegram?.WebApp?.initData;
+        const channel = isTelegram ? 'tg' : 'pc';
+        
+        const myWarnRes = await request({ 
+          url: Interface.MY_WARN,
+          data: {
+            channel: channel
+          }
+        });
         const groups = myWarnRes?.data || {};
         const symbolKeys = Object.keys(groups || {}).filter((k) => {
           const entry = groups[k];
