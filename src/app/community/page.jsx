@@ -686,6 +686,18 @@ export default function CommunityPage() {
     return () => scrollContainer.removeEventListener('scroll', handleScroll);
   }, [mainTab, hasMore, loading, hotTopicsAllLoaded, hotTopicsLoading, posts.length]);
 
+  // 监听从发布页返回后的刷新需求
+  useEffect(() => {
+    const needRefresh = localStorage.getItem('needRefreshCommunity');
+    if (needRefresh === 'true') {
+      localStorage.removeItem('needRefreshCommunity');
+      // 刷新帖子列表
+      if (mainTab === 'recommend' || mainTab === 'news') {
+        fetchPosts(true);
+      }
+    }
+  }, [mainTab]);
+
   // 处理从URL参数跳转到特定币种
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -777,7 +789,7 @@ export default function CommunityPage() {
                   
                   <div className={styles.coinInfoRow}>
                     <img className={styles.coinInfoIconImg} src={reasonIcon} alt="" />
-                    <span className={styles.coinInfoLabel}>推荐理由：</span>
+                    <span className={styles.coinInfoLabel}>{t('post.recommendReason')}：</span>
                     <span className={styles.coinInfoValue}>
                       {post.content || '大饼即将上涨，请注意'}
                     </span>

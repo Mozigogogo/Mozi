@@ -21,6 +21,9 @@ const templateIcon = `${CDN_ICON}/template.png`;
 const voteIcon = `${CDN_ICON}/vote.png`;
 const currencyIcon = `${CDN_ICON}/currency.png`;
 const topicIcon = `${CDN_ICON}/topic.png`;
+const integralIcon = `${CDN_ICON}/integral.png`;
+const plateIcon = `${CDN_ICON}/plate.png`;
+const reasonIcon = `${CDN_ICON}/reason.png`;
 
 export default function PostPage() {
   const { t } = useTranslation();
@@ -48,6 +51,7 @@ export default function PostPage() {
   const [selectedCoins, setSelectedCoins] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
   const [coinList, setCoinList] = useState([]);
+  const [sector, setSector] = useState(''); // 所属版块
   
   // 话题相关状态
   const [selectedTopic, setSelectedTopic] = useState(null);
@@ -250,12 +254,20 @@ export default function PostPage() {
       return;
     }
 
-    // 验证'发现好币'模板必须选择至少一个币种
-    if (selectedTemplate === '发现好币' && selectedCoins.length === 0) {
-      Toast.show({
-        content: t('post.messages.selectCoin')
-      });
-      return;
+    // 验证'发现好币'模板必须选择至少一个币种和填写推荐理由
+    if (selectedTemplate === '发现好币') {
+      if (selectedCoins.length === 0) {
+        Toast.show({
+          content: t('post.messages.selectCoin')
+        });
+        return;
+      }
+      if (!content || content.trim() === '') {
+        Toast.show({
+          content: t('post.messages.reasonRequired')
+        });
+        return;
+      }
     }
 
     setPublishing(true);
@@ -271,6 +283,11 @@ export default function PostPage() {
         }).filter(Boolean) : [],
         images // 添加图片数据
       };
+      
+      // 如果是发现好币模板，添加sector字段
+      if (selectedTemplate === '发现好币' && sector) {
+        postData.sector = sector;
+      }
       
       // 如果有投票信息，添加到postData中
       if (hasVote) {
@@ -292,8 +309,6 @@ export default function PostPage() {
       });
 
       if (response?.code === 0) {
-        localStorage.setItem('needRefreshCommunity', 'true');
-        
         // 发帖成功后，调用发帖任务完成接口（仅新帖子，不是更新）
         if (!isUpdate) {
           try {
@@ -312,7 +327,13 @@ export default function PostPage() {
           content: isUpdate ? t('post.messages.updateSuccess') : t('post.messages.publishSuccess'),
           duration: 1000,
           afterClose: () => {
-            router.back();
+            // 发布成功后跳转到社区页并标记需要刷新
+            if (!isUpdate) {
+              localStorage.setItem('needRefreshCommunity', 'true');
+              router.push('/community');
+            } else {
+              router.back();
+            }
           }
         });
       } else {
@@ -411,6 +432,34 @@ export default function PostPage() {
 
   // 选择币种
   const selectCoin = (coin) => {
+    // 如果是发现好币模板，只允许选择一个币种，直接替换
+    if (selectedTemplate === '发现好币') {
+      const newCoinSymbol = coin.symbol || coin.name || coin;
+      const oldCoinSymbol = selectedCoins.length > 0 
+        ? (selectedCoins[0].symbol || selectedCoins[0].name || selectedCoins[0])
+        : '';
+      
+      setSelectedCoins([coin]);
+      
+      // 处理推荐理由
+      if (!content || content.trim() === '') {
+        // 如果推荐理由为空，自动填充
+        const templates = t('post.recommendTemplates', { returnObjects: true });
+        const randomIndex = Math.floor(Math.random() * templates.length);
+        const template = templates[randomIndex];
+        const filledContent = template.replace('{{symbol}}', newCoinSymbol);
+        setContent(filledContent);
+      } else if (oldCoinSymbol && content.includes(oldCoinSymbol)) {
+        // 如果推荐理由中包含旧币种名称，替换为新币种
+        const updatedContent = content.replace(new RegExp(oldCoinSymbol, 'g'), newCoinSymbol);
+        setContent(updatedContent);
+      }
+      
+      setShowCoinSelect(false);
+      return;
+    }
+    
+    // 其他模板允许选择多个币种
     const exists = selectedCoins.some(item => 
       (item.symbol && item.symbol === coin.symbol) || 
       (item.name && item.name === coin.name) ||
@@ -490,7 +539,7 @@ export default function PostPage() {
     // 显示加载提示
     Toast.show({
       icon: 'loading',
-      content: '上传中...',
+      content: t('post.messages.uploading'),
       duration: 0
     });
 
@@ -541,12 +590,12 @@ export default function PostPage() {
         console.log('更新图片列表:', newImages);
         setImages(newImages);
         Toast.show({
-          content: `成功上传${validUrls.length}张图片`,
+          content: t('post.messages.uploadSuccess', { count: validUrls.length }),
           duration: 2000
         });
       } else {
         Toast.show({
-          content: '图片上传失败'
+          content: t('post.messages.uploadFailed')
         });
       }
     } catch (error) {
@@ -648,75 +697,137 @@ export default function PostPage() {
         {/* 内容区域 */}
         <div className={styles.contentSection}>
           {(selectedTemplate === '普通' || selectedTemplate === '不懂就问') && (
-            <TextArea
-              className={styles.contentTextarea}
-              placeholder={selectedTemplate === '普通' ? t('post.contentPlaceholder') : t('post.questionContentPlaceholder')}
-              value={content}
-              onChange={setContent}
-              maxLength={300}
-              rows={8}
-            />
+            <>
+              <TextArea
+                className={styles.contentTextarea}
+                placeholder={selectedTemplate === '普通' ? t('post.contentPlaceholder') : t('post.questionContentPlaceholder')}
+                value={content}
+                onChange={setContent}
+                maxLength={300}
+                rows={8}
+              />
+              
+              {/* 图片上传区 - 普通和不懂就问模板 */}
+              <div className={styles.imageUploader}>
+                {/* 隐藏的文件输入框 */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  style={{ display: 'none' }}
+                  onChange={handleChooseImage}
+                />
+                
+                {/* 已上传的图片展示 */}
+                {images.map((src, idx) => (
+                  <div key={idx} className={styles.imageWrapper}>
+                    <img className={styles.uploadedImg} src={src} alt="" />
+                    <div 
+                      className={styles.deleteIcon} 
+                      onClick={() => handleRemoveImage(idx)}
+                    >
+                      ×
+                    </div>
+                  </div>
+                ))}
+                
+                {/* 上传按钮 */}
+                {images.length < 9 && (
+                  <div 
+                    className={styles.uploadTile}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <span>+</span>
+                  </div>
+                )}
+              </div>
+            </>
           )}
-          
-          {/* 图片上传区 - 对所有模板开放 */}
-          <div className={styles.imageUploader}>
-            {/* 隐藏的文件输入框 */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              style={{ display: 'none' }}
-              onChange={handleChooseImage}
-            />
-            
-            {/* 已上传的图片展示 */}
-            {images.map((src, idx) => (
-              <div key={idx} className={styles.imageWrapper}>
-                <img className={styles.uploadedImg} src={src} alt="" />
-                <div 
-                  className={styles.deleteIcon} 
-                  onClick={() => handleRemoveImage(idx)}
-                >
-                  ×
-                </div>
-              </div>
-            ))}
-            
-            {/* 上传按钮 */}
-            {images.length < 9 && (
-              <div 
-                className={styles.uploadTile}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <span>+</span>
-              </div>
-            )}
-          </div>
 
           {selectedTemplate === '发现好币' && (
             <div className={styles.discoveryForm}>
-              <div className={styles.formItem}>
-                <span className={styles.label}>{t('post.recommendReason')}</span>
-                <TextArea
-                  value={content}
-                  onChange={setContent}
-                  placeholder={t('post.recommendReasonPlaceholder')}
-                  maxLength={300}
-                  className={styles.discoveryTextarea}
-                />
-              </div>
-              <div className={styles.formItem}>
-                <span className={styles.label}>{t('post.coinName')}</span>
-                <div 
-                  className={styles.coinSelectBtn}
-                  onClick={() => setShowCoinSelect(true)}
-                >
-                  <span className={styles.placeholder}>
-                    {selectedCoins.length > 0 ? t('post.discovery.selectedCoins', { count: selectedCoins.length }) : t('post.coinSelectPlaceholder')}
+              {/* 大输入框 - 显示三个字段的信息 */}
+              <div className={styles.discoveryInfoBox}>
+                {/* 1. 币种名称 - 必填 */}
+                <div className={styles.coinInfoRow} onClick={() => setShowCoinSelect(true)}>
+                  <img className={styles.coinInfoIconImg} src={integralIcon} alt="" />
+                  <span className={styles.coinInfoLabel}>
+                    {t('post.coinName')}
+                    <span className={styles.required}>*</span>
+                  </span>
+                  <span className={selectedCoins.length > 0 ? styles.coinInfoValue : styles.coinInfoPlaceholder}>
+                    {selectedCoins.length > 0 
+                      ? (selectedCoins[0]?.symbol || selectedCoins[0]?.name || selectedCoins[0])
+                      : t('post.coinSelectPlaceholder')}
                   </span>
                   <span className={styles.iconArrow}>›</span>
                 </div>
+
+                {/* 2. 所属版块 - 选填 */}
+                <div className={styles.coinInfoRow}>
+                  <img className={styles.coinInfoIconImg} src={plateIcon} alt="" />
+                  <span className={styles.coinInfoLabel}>{t('community.coinInfo.sector')}</span>
+                  <Input
+                    value={sector}
+                    onChange={setSector}
+                    placeholder={t('post.sectorPlaceholder')}
+                    className={styles.sectorInputInline}
+                  />
+                </div>
+
+                {/* 3. 推荐理由 - 必填 */}
+                <div className={styles.coinInfoRow}>
+                  <img className={styles.coinInfoIconImg} src={reasonIcon} alt="" />
+                  <span className={styles.coinInfoLabel}>
+                    {t('post.recommendReason')}
+                    <span className={styles.required}>*</span>
+                  </span>
+                  <TextArea
+                    value={content}
+                    onChange={setContent}
+                    placeholder={t('post.recommendReasonPlaceholder')}
+                    maxLength={300}
+                    className={styles.reasonTextareaInline}
+                    rows={2}
+                  />
+                </div>
+              </div>
+
+              {/* 4. 图片上传区 - 发现好币模板 */}
+              <div className={styles.imageUploader}>
+                {/* 隐藏的文件输入框 */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  style={{ display: 'none' }}
+                  onChange={handleChooseImage}
+                />
+                
+                {/* 已上传的图片展示 */}
+                {images.map((src, idx) => (
+                  <div key={idx} className={styles.imageWrapper}>
+                    <img className={styles.uploadedImg} src={src} alt="" />
+                    <div 
+                      className={styles.deleteIcon} 
+                      onClick={() => handleRemoveImage(idx)}
+                    >
+                      ×
+                    </div>
+                  </div>
+                ))}
+                
+                {/* 上传按钮 */}
+                {images.length < 9 && (
+                  <div 
+                    className={styles.uploadTile}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <span>+</span>
+                  </div>
+                )}
               </div>
             </div>
           )}

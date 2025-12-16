@@ -782,10 +782,17 @@
     "questionPlaceholder": "Enter your question",
     "contentPlaceholder": "Share your thoughts...",
     "questionContentPlaceholder": "Describe your question in detail...",
-    "recommendReason": "Recommendation Reason",
+    "recommendReason": "Reason",
     "recommendReasonPlaceholder": "Enter recommendation reason",
-    "coinName": "Coin Name",
+    "coinName": "Coin",
     "coinSelectPlaceholder": "Please select your coin",
+    "sectorPlaceholder": "Enter sector (optional)",
+    "recommendTemplates": [
+      "{{symbol}} is an amazing coin worth watching!",
+      "{{symbol}} has huge potential, bullish on its future!",
+      "{{symbol}} has strong technology, highly recommended!",
+      "{{symbol}} is a great investment choice!"
+    ],
     "templates": {
       "normal": "Normal",
       "discovery": "Discover Coins", 
@@ -812,7 +819,11 @@
       "topicNotFound": "No related topics found",
       "searchTopicFailed": "Failed to search topics",
       "pleaseLogin": "Please login first",
-      "createFailed": "Creation failed"
+      "createFailed": "Creation failed",
+      "uploading": "Uploading...",
+      "uploadSuccess": "Successfully uploaded {{count}} image(s)",
+      "uploadFailed": "Image upload failed",
+      "reasonRequired": "Please enter recommendation reason"
     },
     "vote": {
       "createVote": "Create Vote",
