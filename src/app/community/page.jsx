@@ -789,7 +789,7 @@ export default function CommunityPage() {
                   
                   <div className={styles.coinInfoRow}>
                     <img className={styles.coinInfoIconImg} src={reasonIcon} alt="" />
-                    <span className={styles.coinInfoLabel}>推荐理由：</span>
+                    <span className={styles.coinInfoLabel}>{t('post.recommendReason')}：</span>
                     <span className={styles.coinInfoValue}>
                       {post.content || '大饼即将上涨，请注意'}
                     </span>

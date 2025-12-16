@@ -184,6 +184,8 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 0; /* 允许flex子元素收缩 */
+  overflow: hidden;
 }
 
 .discoveryNickname {
@@ -192,6 +194,10 @@
   color: #333;
   margin-bottom: 2px; /* 4rpx ÷ 2 = 2px */
   display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 
 .discoveryTime {

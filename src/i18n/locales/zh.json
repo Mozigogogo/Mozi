@@ -785,6 +785,13 @@
     "recommendReasonPlaceholder": "请输入推荐理由",
     "coinName": "币种名称",
     "coinSelectPlaceholder": "请选择你的币种",
+    "sectorPlaceholder": "请输入所属版块（选填）",
+    "recommendTemplates": [
+      "{{symbol}}是一个很棒的币，值得关注！",
+      "{{symbol}}潜力巨大，看好未来发展！",
+      "{{symbol}}技术实力强，推荐大家了解！",
+      "{{symbol}}是个不错的投资选择！"
+    ],
     "templates": {
       "normal": "普通",
       "discovery": "发现好币", 
@@ -814,7 +821,8 @@
       "createFailed": "创建失败",
       "uploading": "上传中...",
       "uploadSuccess": "成功上传{{count}}张图片",
-      "uploadFailed": "图片上传失败"
+      "uploadFailed": "图片上传失败",
+      "reasonRequired": "请填写推荐理由"
     },
     "vote": {
       "createVote": "创建投票",
