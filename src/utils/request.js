@@ -30,6 +30,10 @@ instance.interceptors.request.use(
   }
 );
 
+// 401 提示防抖：记录上次提示时间，5秒内不重复提示
+let last401ToastTime = 0;
+const TOAST_THROTTLE_TIME = 5000; // 5秒
+
 // 响应拦截器
 instance.interceptors.response.use(
   (response) => {
@@ -42,34 +46,33 @@ instance.interceptors.response.use(
       
       // 只在浏览器环境中执行
       if (typeof window !== 'undefined') {
-        // 获取当前语言
-        const language = localStorage.getItem('i18nextLng') || 'zh';
-        const message = language === 'zh' 
-          ? '登录已失效，请重新登录' 
-          : 'Session expired, please login again';
+        const now = Date.now();
         
-        // 尝试使用 antd-mobile 的 Toast
-        try {
-          // 动态导入 antd-mobile Toast
-          import('antd-mobile').then(({ Toast }) => {
-            Toast.show({
-              content: message,
-              position: 'center',
-              duration: 1500,
-              maskClickable: false
+        // 检查是否在防抖时间内
+        if (now - last401ToastTime > TOAST_THROTTLE_TIME) {
+          last401ToastTime = now;
+          
+          // 获取当前语言
+          const language = localStorage.getItem('i18nextLng') || 'zh';
+          const message = language === 'zh' 
+            ? '登录已失效，请重新登录' 
+            : 'Session expired, please login again';
+          
+          // 显示 Toast 提示，不自动跳转
+          try {
+            import('antd-mobile').then(({ Toast }) => {
+              Toast.show({
+                content: message,
+                position: 'center',
+                duration: 2000,
+                maskClickable: false
+              });
+            }).catch(() => {
+              console.warn('Toast 加载失败');
             });
-            // 给用户1.5秒时间看到提示后跳转到用户页面
-            // 跳转后页面会有300ms延迟再弹出登录框，整体更流畅
-            setTimeout(() => {
-              window.location.href = '/user?showLogin=true';
-            }, 1500);
-          }).catch(() => {
-            // 如果导入失败，直接跳转
-            window.location.href = '/user?showLogin=true';
-          });
-        } catch (e) {
-          // 如果出错，直接跳转
-          window.location.href = '/user?showLogin=true';
+          } catch (e) {
+            console.warn('Toast 显示失败:', e);
+          }
         }
       }
       
