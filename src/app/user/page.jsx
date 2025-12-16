@@ -22,7 +22,9 @@ import styles from './page.module.less';
 // 检测是否在 Telegram 环境中
 const isTelegramEnv = () => {
   if (typeof window === 'undefined') return false;
-  return !!(window.Telegram?.WebApp?.initData);
+  // 优先从 localStorage 读取
+  const channel = localStorage.getItem('appChannel');
+  return channel === 'tg';
 };
 
 export default function UserPage() {
@@ -450,7 +452,7 @@ export default function UserPage() {
     const shareText = t('user.shareText');
     
     // 检查是否在Telegram环境中
-    const isTelegram = window.Telegram?.WebApp?.initData;
+    const isTelegram = localStorage.getItem('appChannel') === 'tg';
     
     if (isTelegram && window.Telegram?.WebApp) {
       // 使用Telegram Web App API分享
@@ -501,11 +503,9 @@ export default function UserPage() {
 
   // 检测当前平台环境
   const getPlatform = () => {
-    // 检查是否在 Telegram 环境中
-    if (typeof window !== 'undefined' && window.Telegram?.WebApp?.initData) {
-      return 'tg';
-    }
-    return 'pc';
+    if (typeof window === 'undefined') return 'pc';
+    // 从 localStorage 读取环境信息
+    return localStorage.getItem('appChannel') || 'pc';
   };
 
   // 获取 Telegram chatId

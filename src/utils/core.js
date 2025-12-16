@@ -5,6 +5,29 @@ export const isTelegramEnv = () => {
   return !!(window.Telegram?.WebApp?.initData);
 };
 
+/**
+ * 获取当前应用运行的渠道（channel）
+ * @returns {string} 'tg' 表示 Telegram 环境，'pc' 表示 PC/Web 环境
+ */
+export const getAppChannel = () => {
+  if (typeof window === 'undefined') return 'pc';
+  
+  // 优先从 localStorage 读取（由 EnvironmentDetector 组件在应用启动时设置）
+  const savedChannel = localStorage.getItem('appChannel');
+  if (savedChannel) {
+    return savedChannel;
+  }
+  
+  // 如果 localStorage 中没有，则实时检测（兜底逻辑）
+  const isTelegram = !!(window.Telegram?.WebApp?.initData);
+  const channel = isTelegram ? 'tg' : 'pc';
+  
+  // 保存到 localStorage 供下次使用
+  localStorage.setItem('appChannel', channel);
+  
+  return channel;
+};
+
 // 页面跳转函数
 
 // 跳转到详情页

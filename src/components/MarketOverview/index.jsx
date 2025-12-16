@@ -67,9 +67,9 @@ const MarketOverview = memo(() => {
           return;
         }
 
-        // 判断是否为 Telegram 环境
-        const { isTelegramEnv } = await import('../../utils/core');
-        const channel = isTelegramEnv() ? 'tg' : 'pc';
+        // 从统一的工具函数获取当前环境
+        const { getAppChannel } = await import('../../utils/core');
+        const channel = getAppChannel();
         
         console.log('[MarketOverview] 当前环境:', channel, 'Telegram WebApp:', window.Telegram?.WebApp);
         
