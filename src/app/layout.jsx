@@ -9,6 +9,7 @@ import I18nProvider from "@/components/I18nProvider";
 import { LogoLoading } from "@/components/Loading";
 import VConsoleLoader from "@/components/VConsole";
 import InviteCodeHandler from "@/components/InviteCodeHandler";
+import EnvironmentDetector from "@/components/EnvironmentDetector";
 
 const geistSans = Inter({
   variable: "--font-geist-sans",
@@ -38,6 +39,7 @@ export default function RootLayout({ children }) {
         <meta name="theme-color" content="#1677ff" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
+        <EnvironmentDetector />
         <VConsoleLoader />
         <Suspense fallback={null}>
           <InviteCodeHandler />
