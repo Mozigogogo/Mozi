@@ -56,8 +56,15 @@ export default function Mywarn() {
   
   const init = async () => {
     try {
+      // 判断是否为 Telegram 环境
+      const isTelegram = typeof window !== 'undefined' && window.Telegram?.WebApp?.initData;
+      const channel = isTelegram ? 'tg' : 'pc';
+      
       const { data } = await request({
         url: Interface.MY_WARN,
+        data: {
+          channel: channel
+        }
       });
       
       if (isEmpty(data)) {
@@ -240,8 +247,12 @@ export default function Mywarn() {
       // 获取 token
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
       
+      // 判断是否为 Telegram 环境
+      const isTelegram = typeof window !== 'undefined' && window.Telegram?.WebApp?.initData;
+      const channel = isTelegram ? 'tg' : 'pc';
+      
       const res = await request({
-        url: `${Interface.DELETE_ALARM}?symbol=${symbol}`,
+        url: `${Interface.DELETE_ALARM}?symbol=${symbol}&channel=${channel}`,
         method: 'DELETE',
         headers: {
           authentication: token
