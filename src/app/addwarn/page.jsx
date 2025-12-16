@@ -176,15 +176,13 @@ export default function Addwarn() {
       return;
     }
 
-    // 判断是否为 Telegram 环境
-    const isTelegram = typeof window !== 'undefined' && window.Telegram?.WebApp?.initData;
+    // 从统一的工具函数获取当前环境
+    const { getAppChannel } = await import('@/utils/core');
+    const channel = getAppChannel();
     
-    // 获取渠道和 ID
-    let channel = 'pc';  // 默认为 pc
+    // 获取 chatId（仅 Telegram 环境需要）
     let chatId = null;
-    
-    if (isTelegram) {
-      channel = 'tg';
+    if (channel === 'tg') {
       // 从 Telegram WebApp 获取 chatId
       chatId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString();
       

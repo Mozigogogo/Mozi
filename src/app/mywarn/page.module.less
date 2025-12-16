@@ -59,6 +59,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px;
+  gap: 8px;
+  min-width: 0; /* 允许子元素收缩 */
 }
 
 .contentWrapper {
@@ -66,6 +68,8 @@
   display: flex;
   align-items: center;
   padding-right: 5px;
+  min-width: 0; /* 允许内容收缩 */
+  overflow: hidden; /* 防止溢出 */
 }
 
 .contentLabel {
@@ -85,8 +89,12 @@
   border: 1px solid #ddd;
   background-color: #fff;
   display: inline-block;
-  flex: none;
-  width: 120px;
+  flex: 1;
+  max-width: 120px;
+  min-width: 80px; /* 设置最小宽度 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .contentText:hover {
@@ -104,16 +112,21 @@
   flex: 1;
   padding-right: 5px;
   gap: 4px;
+  min-width: 0; /* 允许内容收缩 */
+  overflow: hidden; /* 防止溢出 */
 }
 
 .editInput {
-  flex: none;
-  width: 120px;
+  flex: 1;
+  max-width: 120px;
+  min-width: 80px; /* 设置最小宽度，防止过度收缩 */
 }
 
 .confirmBtn {
   min-width: 20px;
+  width: 20px;
   height: 20px;
+  flex-shrink: 0; /* 防止被压缩 */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -124,6 +137,14 @@
 
 .confirmBtn:hover {
   background-color: #f0f0f0;
+}
+
+.switchWrapper {
+  flex-shrink: 0; /* 防止开关被压缩 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px; /* 确保开关有足够空间 */
 }
 
 /* 暗色模式适配 */
@@ -194,21 +215,39 @@
   .mainItem {
     flex-direction: row;
     align-items: center;
-    gap: 0;
+    gap: 8px;
+    padding: 8px 4px; /* 减少左右内边距 */
   }
   
   .contentWrapper {
     padding-right: 0;
   }
   
+  .contentLabel {
+    width: 70px; /* 在小屏幕上缩小标签宽度 */
+    font-size: 13px;
+  }
+  
   .editContainer {
     padding-right: 0;
     flex-direction: row;
     align-items: center;
+    gap: 4px;
   }
   
   .editInput {
-    width: 120px;
+    max-width: 100px; /* 在小屏幕上缩小输入框 */
+    min-width: 70px;
+  }
+  
+  .contentText {
+    max-width: 100px;
+    min-width: 70px;
+    font-size: 13px;
+  }
+  
+  .switchWrapper {
+    min-width: 35px; /* 在小屏幕上稍微缩小 */
   }
 }
 

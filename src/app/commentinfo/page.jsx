@@ -197,7 +197,7 @@ export default function CommentInfo() {
     const shareText = detail.title || '来自 Mozi 社区的帖子';
     
     // 检查是否在Telegram环境中
-    const isTelegram = window.Telegram?.WebApp?.initData;
+    const isTelegram = localStorage.getItem('appChannel') === 'tg';
     
     if (isTelegram && window.Telegram?.WebApp) {
       // 使用Telegram Web App API分享

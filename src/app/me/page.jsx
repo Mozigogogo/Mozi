@@ -87,7 +87,7 @@ export default function Me() {
     const shareText = 'Mozi行情助手 - 专业的加密数据分析智能平台';
     
     // 检查是否在Telegram环境中
-    const isTelegram = window.Telegram?.WebApp?.initData;
+    const isTelegram = localStorage.getItem('appChannel') === 'tg';
     
     if (isTelegram && window.Telegram?.WebApp) {
       // 使用Telegram Web App API分享

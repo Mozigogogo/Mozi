@@ -11,7 +11,9 @@ import styles from './index.module.less';
 // 检测是否在 Telegram 环境中
 const isTelegramEnv = () => {
   if (typeof window === 'undefined') return false;
-  return !!(window.Telegram?.WebApp?.initData);
+  // 优先从 localStorage 读取
+  const channel = localStorage.getItem('appChannel');
+  return channel === 'tg';
 };
 
 // 获取 Telegram 用户信息

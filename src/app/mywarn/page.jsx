@@ -56,11 +56,11 @@ export default function Mywarn() {
   
   const init = async () => {
     try {
-      // 判断是否为 Telegram 环境
-      const { isTelegramEnv } = await import('../../utils/core');
-      const channel = isTelegramEnv() ? 'tg' : 'pc';
+      // 从统一的工具函数获取当前环境
+      const { getAppChannel } = await import('../../utils/core');
+      const channel = getAppChannel();
       
-      console.log('[MyWarn] 当前环境:', channel, 'Telegram WebApp:', window.Telegram?.WebApp);
+      console.log('[MyWarn] 当前环境:', channel);
       
       const { data } = await request({
         url: Interface.MY_WARN,
@@ -249,9 +249,9 @@ export default function Mywarn() {
       // 获取 token
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
       
-      // 判断是否为 Telegram 环境
-      const { isTelegramEnv } = await import('../../utils/core');
-      const channel = isTelegramEnv() ? 'tg' : 'pc';
+      // 从统一的工具函数获取当前环境
+      const { getAppChannel } = await import('../../utils/core');
+      const channel = getAppChannel();
       
       console.log('[MyWarn] 删除告警 - 当前环境:', channel);
       
@@ -386,11 +386,13 @@ export default function Mywarn() {
                         </span>
                       </div>
                     )}
-                    <Switch 
-                      checked={item.active} 
-                      onChange={() => switchChange(item.code, item.active, index)} 
-                      style={{ '--checked-color': '#11B787', transform: 'scale(0.75)' }}
-                    />
+                    <div className={styles.switchWrapper}>
+                      <Switch 
+                        checked={item.active} 
+                        onChange={() => switchChange(item.code, item.active, index)} 
+                        style={{ '--checked-color': '#11B787', transform: 'scale(0.75)' }}
+                      />
+                    </div>
                   </div>
                 ))
               }
