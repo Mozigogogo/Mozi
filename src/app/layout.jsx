@@ -1,4 +1,5 @@
 import { Inter, Roboto_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { Suspense } from "react";
 import Web3Provider from "../context/Web3Provider.jsx";
@@ -10,6 +11,7 @@ import { LogoLoading } from "@/components/Loading";
 import VConsoleLoader from "@/components/VConsole";
 import InviteCodeHandler from "@/components/InviteCodeHandler";
 import EnvironmentDetector from "@/components/EnvironmentDetector";
+import TelegramDebugInfo from "@/components/TelegramDebugInfo";
 
 const geistSans = Inter({
   variable: "--font-geist-sans",
@@ -39,7 +41,13 @@ export default function RootLayout({ children }) {
         <meta name="theme-color" content="#1677ff" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
+        {/* Telegram WebApp 官方脚本 - 必须最先加载 */}
+        <Script 
+          src="https://telegram.org/js/telegram-web-app.js" 
+          strategy="beforeInteractive"
+        />
         <EnvironmentDetector />
+        <TelegramDebugInfo />
         <VConsoleLoader />
         <Suspense fallback={null}>
           <InviteCodeHandler />

@@ -386,11 +386,13 @@ export default function Mywarn() {
                         </span>
                       </div>
                     )}
-                    <Switch 
-                      checked={item.active} 
-                      onChange={() => switchChange(item.code, item.active, index)} 
-                      style={{ '--checked-color': '#11B787', transform: 'scale(0.75)' }}
-                    />
+                    <div className={styles.switchWrapper}>
+                      <Switch 
+                        checked={item.active} 
+                        onChange={() => switchChange(item.code, item.active, index)} 
+                        style={{ '--checked-color': '#11B787', transform: 'scale(0.75)' }}
+                      />
+                    </div>
                   </div>
                 ))
               }
