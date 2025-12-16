@@ -278,7 +278,8 @@ export default function CommunityPage() {
 
   // 获取帖子列表
   const fetchPosts = async (reset = false) => {
-    if ((loading && !reset) || mainTab !== 'recommend') return;
+    // 支持精选推荐和快讯两个标签
+    if ((loading && !reset) || (mainTab !== 'recommend' && mainTab !== 'news')) return;
     
     setLoading(true);
     const currentPage = reset ? 1 : page;
@@ -328,8 +329,20 @@ export default function CommunityPage() {
           userType: item.userType
         }));
         
+        // 根据标签过滤不同的 userType
+        // 精选推荐：只显示 userType === 'real' 的帖子
+        // 快讯：只显示 userType === 'virtual' 的帖子
+        const filteredData = formattedData.filter(item => {
+          if (mainTab === 'recommend') {
+            return item.userType === 'real';
+          } else if (mainTab === 'news') {
+            return item.userType === 'virtual';
+          }
+          return true; // 其他情况显示所有
+        });
+        
         // 按 createdAt 倒序排序，最新的在前面
-        const sortedData = formattedData.sort((a, b) => {
+        const sortedData = filteredData.sort((a, b) => {
           const dateA = new Date(a.createdAt || 0);
           const dateB = new Date(b.createdAt || 0);
           return dateB - dateA;
@@ -629,6 +642,9 @@ export default function CommunityPage() {
       setHotTopicsPage(1);
       setHotTopicsAllLoaded(false);
       fetchHotTopics(true);
+    } else if (mainTab === 'news') {
+      // 快讯标签：加载所有帖子，渲染时会过滤 userType === 'virtual'
+      fetchPosts(true);
     }
   }, [mainTab, subTab, selectedCoin]);
 
@@ -652,7 +668,7 @@ export default function CommunityPage() {
       
       // 距离底部200px时触发加载
       if (distanceToBottom < 200) {
-        if (mainTab === 'recommend' && hasMore && !loading) {
+        if ((mainTab === 'recommend' || mainTab === 'news') && hasMore && !loading) {
           fetchPosts();
         } else if (mainTab === 'hot' && !hotTopicsAllLoaded && !hotTopicsLoading) {
           fetchHotTopics();
