@@ -11,7 +11,6 @@ import { LogoLoading } from "@/components/Loading";
 import VConsoleLoader from "@/components/VConsole";
 import InviteCodeHandler from "@/components/InviteCodeHandler";
 import EnvironmentDetector from "@/components/EnvironmentDetector";
-import TelegramDebugInfo from "@/components/TelegramDebugInfo";
 
 const geistSans = Inter({
   variable: "--font-geist-sans",
@@ -47,7 +46,6 @@ export default function RootLayout({ children }) {
           strategy="beforeInteractive"
         />
         <EnvironmentDetector />
-        <TelegramDebugInfo />
         <VConsoleLoader />
         <Suspense fallback={null}>
           <InviteCodeHandler />

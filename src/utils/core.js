@@ -1,7 +1,19 @@
-// Telegram 环境检测 - 只检查 WebApp 对象，不检查 initData
+/**
+ * Telegram 环境检测
+ * 即使加载了 Telegram 脚本，也要检查是否真的在 Telegram 环境中运行
+ */
 export const isTelegramEnv = () => {
   if (typeof window === 'undefined') return false;
-  return !!(window.Telegram?.WebApp);
+  
+  const telegramWebApp = window.Telegram?.WebApp;
+  if (!telegramWebApp) return false;
+  
+  // 检查是否有真实的 Telegram 数据
+  const hasInitData = telegramWebApp.initData && telegramWebApp.initData.length > 0;
+  const hasInitDataUnsafe = telegramWebApp.initDataUnsafe && Object.keys(telegramWebApp.initDataUnsafe).length > 0;
+  const hasPlatform = telegramWebApp.platform && telegramWebApp.platform !== 'unknown';
+  
+  return hasInitData || hasInitDataUnsafe || hasPlatform;
 };
 
 /**
@@ -18,12 +30,29 @@ export const getAppChannel = () => {
   }
   
   // 如果 localStorage 中没有，则实时检测（兜底逻辑）
-  // 只检查 WebApp 对象，不检查 initData（可能为空字符串）
-  const isTelegram = !!(window.Telegram?.WebApp);
+  const telegramWebApp = window.Telegram?.WebApp;
+  if (!telegramWebApp) {
+    localStorage.setItem('appChannel', 'pc');
+    return 'pc';
+  }
+  
+  // 检查是否有真实的 Telegram 数据
+  const hasInitData = telegramWebApp.initData && telegramWebApp.initData.length > 0;
+  const hasInitDataUnsafe = telegramWebApp.initDataUnsafe && Object.keys(telegramWebApp.initDataUnsafe).length > 0;
+  const hasPlatform = telegramWebApp.platform && telegramWebApp.platform !== 'unknown';
+  
+  const isTelegram = hasInitData || hasInitDataUnsafe || hasPlatform;
   const channel = isTelegram ? 'tg' : 'pc';
   
   // 保存到 localStorage 供下次使用
   localStorage.setItem('appChannel', channel);
+  
+  console.log('[getAppChannel] 实时检测环境:', { 
+    channel, 
+    hasInitData, 
+    hasInitDataUnsafe, 
+    hasPlatform 
+  });
   
   return channel;
 };
