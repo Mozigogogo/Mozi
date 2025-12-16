@@ -1,8 +1,7 @@
-// Telegram 环境检测
+// Telegram 环境检测 - 只检查 WebApp 对象，不检查 initData
 export const isTelegramEnv = () => {
   if (typeof window === 'undefined') return false;
-  // 检查是否存在 Telegram WebApp 对象和 initData
-  return !!(window.Telegram?.WebApp?.initData);
+  return !!(window.Telegram?.WebApp);
 };
 
 /**
@@ -19,7 +18,8 @@ export const getAppChannel = () => {
   }
   
   // 如果 localStorage 中没有，则实时检测（兜底逻辑）
-  const isTelegram = !!(window.Telegram?.WebApp?.initData);
+  // 只检查 WebApp 对象，不检查 initData（可能为空字符串）
+  const isTelegram = !!(window.Telegram?.WebApp);
   const channel = isTelegram ? 'tg' : 'pc';
   
   // 保存到 localStorage 供下次使用
