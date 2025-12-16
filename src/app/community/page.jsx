@@ -635,10 +635,16 @@ export default function CommunityPage() {
 
   // 初始化加载
   useEffect(() => {
+    // 切换标签时，先清空帖子列表并重置分页状态
+    setPosts([]);
+    setPage(1);
+    setHasMore(true);
+    
     if (mainTab === 'recommend') {
       fetchPosts(true);
     } else if (mainTab === 'hot') {
       // 重置热榜状态并获取数据
+      setHotTopics([]);
       setHotTopicsPage(1);
       setHotTopicsAllLoaded(false);
       fetchHotTopics(true);
