@@ -1,3 +1,10 @@
+// Telegram 环境检测
+export const isTelegramEnv = () => {
+  if (typeof window === 'undefined') return false;
+  // 检查是否存在 Telegram WebApp 对象和 initData
+  return !!(window.Telegram?.WebApp?.initData);
+};
+
 // 页面跳转函数
 
 // 跳转到详情页

@@ -68,8 +68,10 @@ const MarketOverview = memo(() => {
         }
 
         // 判断是否为 Telegram 环境
-        const isTelegram = typeof window !== 'undefined' && window.Telegram?.WebApp?.initData;
-        const channel = isTelegram ? 'tg' : 'pc';
+        const { isTelegramEnv } = await import('../../utils/core');
+        const channel = isTelegramEnv() ? 'tg' : 'pc';
+        
+        console.log('[MarketOverview] 当前环境:', channel, 'Telegram WebApp:', window.Telegram?.WebApp);
         
         const myWarnRes = await request({ 
           url: Interface.MY_WARN,
