@@ -86,25 +86,25 @@ export default function PCLayout({ children }) {
 
   // 菜单项配置
   const menuItems = [
-    { key: '/', icon: <HomeOutlined />, label: '首页' },
-    { key: '/find', icon: <LineChartOutlined />, label: '发现' },
-    { key: '/community', icon: <TeamOutlined />, label: '社区' },
+    { key: '/', icon: <HomeOutlined />, label: t('pcLayout.menu.home') },
+    { key: '/find', icon: <LineChartOutlined />, label: t('pcLayout.menu.discover') },
+    { key: '/community', icon: <TeamOutlined />, label: t('pcLayout.menu.community') },
     { type: 'divider' },
     {
       key: 'mine',
-      label: '我的',
+      label: t('pcLayout.menu.mine'),
       type: 'group',
       children: [
-        { key: '/selfrank', icon: <PlusOutlined />, label: '我的自选' },
-        { key: '/mywarn', icon: <BellOutlined />, label: '我的报警' },
-        { key: '/subscribe', icon: <MessageOutlined />, label: '我的订阅' },
-        { key: '/achievement', icon: <HeartOutlined />, label: '我的成就' },
+        { key: '/selfrank', icon: <PlusOutlined />, label: t('pcLayout.menu.myFavorites') },
+        { key: '/mywarn', icon: <BellOutlined />, label: t('pcLayout.menu.myAlerts') },
+        { key: '/subscribe', icon: <MessageOutlined />, label: t('pcLayout.menu.mySubscription') },
+        { key: '/achievement', icon: <HeartOutlined />, label: t('pcLayout.menu.myAchievements') },
       ],
     },
     { type: 'divider' },
     {
       key: 'coinlist',
-      label: '创建的币单',
+      label: t('pcLayout.menu.createdLists'),
       type: 'group',
       children: [],
     },
@@ -184,7 +184,7 @@ export default function PCLayout({ children }) {
           <div className={styles.user}>
             <Avatar size={40} src={userInfo?.avatar} icon={<UserOutlined />} />
             {!collapsed && (
-              <Text strong className={styles.userName}>{userInfo?.nickname || '未登录'}</Text>
+              <Text strong className={styles.userName}>{userInfo?.nickname || t('pcLayout.user.notLoggedIn')}</Text>
             )}
           </div>
 
@@ -201,14 +201,14 @@ export default function PCLayout({ children }) {
           {!collapsed && (
             <div className={styles.siderFooter}>
               <div className={styles.footerLinks}>
-                <a href="#">关于我们</a>
-                <a href="#">服务</a>
-                <a href="#">联盟计划</a>
+                <a href="#">{t('pcLayout.footer.aboutUs')}</a>
+                <a href="#">{t('pcLayout.footer.service')}</a>
+                <a href="#">{t('pcLayout.footer.affiliate')}</a>
               </div>
               <div className={styles.footerLinks}>
-                <a href="#">邀请奖励</a>
-                <a href="#">帮助中心</a>
-                <a href="#">Video Guides</a>
+                <a href="#">{t('pcLayout.footer.inviteRewards')}</a>
+                <a href="#">{t('pcLayout.footer.helpCenter')}</a>
+                <a href="#">{t('pcLayout.footer.videoGuides')}</a>
               </div>
               <div className={styles.socialIcons}>
                 <a href="#" className={styles.socialIcon}><img src="/icons/telegram-group.svg" alt="Telegram" /></a>

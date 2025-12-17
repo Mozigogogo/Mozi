@@ -1068,5 +1068,79 @@
     "loginToComment": "登录后参与讨论",
     "commentSuccess": "发布成功",
     "commentFailed": "发布失败，请重试"
+  },
+  "pcHome": {
+    "banner": {
+      "topic": "热议话题 尽在社区",
+      "topicSub": "全网话题 即时捕捉",
+      "price": "价格波动 一键提醒",
+      "priceSub": "实时比价 买在最低 卖在最高"
+    },
+    "features": {
+      "multiSource": "多源比价",
+      "multiSourceSub": "MULTI-SOURCE RATIO",
+      "realTime": "持念更新",
+      "realTimeSub": "REAL-TIME UPDATE",
+      "tradingTips": "前高准确",
+      "tradingTipsSub": "TRADING TIPS",
+      "highValue": "成交额",
+      "highValueSub": "TRADING VALUE"
+    },
+    "derivatives": {
+      "title": "衍生品专区",
+      "longShort": "多空比",
+      "longShortSub": "Long/Short Ratio",
+      "openInterest": "持仓量",
+      "openInterestSub": "Open Interest",
+      "fundingRate": "资金费率",
+      "fundingRateSub": "Funding Rate",
+      "volume": "成交额",
+      "volumeSub": "Trading Volume"
+    },
+    "ranks": {
+      "title": "热门排行",
+      "viewMore": "查看更多",
+      "self": "自选榜",
+      "gainers": "涨幅榜",
+      "losers": "跌幅榜",
+      "volatility": "波幅榜",
+      "volume": "成交额",
+      "newCoins": "新币榜",
+      "surging": "飙升榜"
+    },
+    "table": {
+      "coin": "币种",
+      "price": "最新价",
+      "change24h": "24h涨跌幅",
+      "high24h": "24h最高",
+      "low24h": "24h最低",
+      "volume24h": "24h成交额",
+      "favorite": "加自选",
+      "monitor": "加监控"
+    }
+  },
+  "pcLayout": {
+    "menu": {
+      "home": "首页",
+      "discover": "发现",
+      "community": "社区",
+      "mine": "我的",
+      "myFavorites": "我的自选",
+      "myAlerts": "我的报警",
+      "mySubscription": "我的订阅",
+      "myAchievements": "我的成就",
+      "createdLists": "创建的币单"
+    },
+    "footer": {
+      "aboutUs": "关于我们",
+      "service": "服务",
+      "affiliate": "联盟计划",
+      "inviteRewards": "邀请奖励",
+      "helpCenter": "帮助中心",
+      "videoGuides": "Video Guides"
+    },
+    "user": {
+      "notLoggedIn": "未登录"
+    }
   }
 }

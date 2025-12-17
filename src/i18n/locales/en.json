@@ -1069,5 +1069,79 @@
     "loginToComment": "Login to join the discussion",
     "commentSuccess": "Posted successfully",
     "commentFailed": "Failed to post, please try again"
+  },
+  "pcHome": {
+    "banner": {
+      "topic": "Hot Topics in Community",
+      "topicSub": "Capture Trending Topics",
+      "price": "Price Alerts at Your Fingertips",
+      "priceSub": "Real-time Comparison Buy Low Sell High"
+    },
+    "features": {
+      "multiSource": "Multi-Source Comparison",
+      "multiSourceSub": "MULTI-SOURCE RATIO",
+      "realTime": "Real-Time Updates",
+      "realTimeSub": "REAL-TIME UPDATE",
+      "tradingTips": "High Accuracy",
+      "tradingTipsSub": "TRADING TIPS",
+      "highValue": "Trading Volume",
+      "highValueSub": "TRADING VALUE"
+    },
+    "derivatives": {
+      "title": "Derivatives Zone",
+      "longShort": "Long/Short Ratio",
+      "longShortSub": "Long/Short Ratio",
+      "openInterest": "Open Interest",
+      "openInterestSub": "Open Interest",
+      "fundingRate": "Funding Rate",
+      "fundingRateSub": "Funding Rate",
+      "volume": "Trading Volume",
+      "volumeSub": "Trading Volume"
+    },
+    "ranks": {
+      "title": "Live Rankings",
+      "viewMore": "View More",
+      "self": "Favorites",
+      "gainers": "Gainers",
+      "losers": "Losers",
+      "volatility": "Volatility",
+      "volume": "Volume",
+      "newCoins": "New Coins",
+      "surging": "Surging"
+    },
+    "table": {
+      "coin": "Coin",
+      "price": "Latest Price",
+      "change24h": "24h Change",
+      "high24h": "24h High",
+      "low24h": "24h Low",
+      "volume24h": "24h Volume",
+      "favorite": "Favorite",
+      "monitor": "Monitor"
+    }
+  },
+  "pcLayout": {
+    "menu": {
+      "home": "Home",
+      "discover": "Discover",
+      "community": "Community",
+      "mine": "Mine",
+      "myFavorites": "My Favorites",
+      "myAlerts": "My Alerts",
+      "mySubscription": "My Subscription",
+      "myAchievements": "My Achievements",
+      "createdLists": "Created Lists"
+    },
+    "footer": {
+      "aboutUs": "About Us",
+      "service": "Service",
+      "affiliate": "Affiliate",
+      "inviteRewards": "Invite Rewards",
+      "helpCenter": "Help Center",
+      "videoGuides": "Video Guides"
+    },
+    "user": {
+      "notLoggedIn": "Not Logged In"
+    }
   }
 }
