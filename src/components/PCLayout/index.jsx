@@ -11,6 +11,8 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
 import PCSearchResults from '../PCSearchResults';
+import PCFindContent from '../PCFindContent';
+import PCCommunityContent from '../PCCommunityContent';
 import request from '@/utils/request';
 import Interface from '@/utils/constants';
 import styles from './index.module.less';
@@ -103,9 +105,21 @@ export default function PCLayout({ children }) {
     setSearchKeyword('');
   };
 
+  // 内容显示状态 - 用于PC端tab切换
+  const [activeContent, setActiveContent] = useState(null);
+
   // 自定义图标组件 - 支持激活状态
   const CustomIcon = ({ src, activeSrc, itemKey, alt = 'icon' }) => {
-    const isActive = pathname === itemKey || pathname.startsWith(itemKey + '/');
+    // 判断是否激活：
+    // 1. 如果有activeContent，只有当itemKey等于activeContent时才激活
+    // 2. 如果没有activeContent，根据pathname判断
+    let isActive = false;
+    if (activeContent) {
+      isActive = activeContent === itemKey;
+    } else {
+      isActive = pathname === itemKey || pathname.startsWith(itemKey + '/');
+    }
+    
     const iconSrc = isActive && activeSrc ? activeSrc : src;
     
     return (
@@ -205,14 +219,41 @@ export default function PCLayout({ children }) {
   ];
 
   const handleMenuClick = ({ key }) => {
-    router.push(key);
+    console.log('Menu clicked:', key);
+    // PC端：发现和社区页面在右侧显示内容，不跳转路由
+    if (key === '/find' || key === '/community') {
+      console.log('Setting activeContent to:', key);
+      setActiveContent(key);
+      setShowSearchResults(false);
+    } else {
+      // 其他页面正常跳转
+      console.log('Navigating to:', key);
+      setActiveContent(null);
+      router.push(key);
+    }
   };
 
   const getSelectedKey = () => {
+    // 如果有activeContent，优先使用它
+    if (activeContent) {
+      return [activeContent];
+    }
     const allItems = menuItems.flatMap(item => item.children || [item]);
     const matched = allItems.find(item => pathname === item.key || pathname.startsWith(item.key + '/'));
     return matched ? [matched.key] : ['/'];
   };
+
+  // 当路由变化时，清除activeContent
+  useEffect(() => {
+    if (pathname !== '/find' && pathname !== '/community') {
+      setActiveContent(null);
+    }
+  }, [pathname]);
+
+  // 调试：监听activeContent变化
+  useEffect(() => {
+    console.log('activeContent changed to:', activeContent);
+  }, [activeContent]);
 
   return (
     <Layout className={styles.layout}>
@@ -340,11 +381,18 @@ export default function PCLayout({ children }) {
 
         {/* 右侧 Content */}
         <Content className={`${styles.content} ${collapsed ? styles.contentCollapsed : ''}`}>
-          {showSearchResults ? (
-            <PCSearchResults keyword={searchKeyword} onClose={() => setShowSearchResults(false)} />
-          ) : (
-            children
-          )}
+          {(() => {
+            console.log('Rendering content, activeContent:', activeContent, 'showSearchResults:', showSearchResults);
+            if (showSearchResults) {
+              return <PCSearchResults keyword={searchKeyword} onClose={() => setShowSearchResults(false)} />;
+            } else if (activeContent === '/find') {
+              return <PCFindContent />;
+            } else if (activeContent === '/community') {
+              return <PCCommunityContent />;
+            } else {
+              return children;
+            }
+          })()}
         </Content>
       </Layout>
 

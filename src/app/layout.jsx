@@ -11,6 +11,7 @@ import { LogoLoading } from "@/components/Loading";
 import VConsoleLoader from "@/components/VConsole";
 import InviteCodeHandler from "@/components/InviteCodeHandler";
 import EnvironmentDetector from "@/components/EnvironmentDetector";
+import RouteChangeHandler from "@/components/RouteChangeHandler";
 
 const geistSans = Inter({
   variable: "--font-geist-sans",
@@ -46,6 +47,7 @@ export default function RootLayout({ children }) {
           strategy="beforeInteractive"
         />
         <EnvironmentDetector />
+        <RouteChangeHandler />
         <VConsoleLoader />
         <Suspense fallback={null}>
           <InviteCodeHandler />
