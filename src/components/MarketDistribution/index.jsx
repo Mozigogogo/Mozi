@@ -213,6 +213,7 @@ export default function MarketDistribution({ showUpdateTime = true, isPC = false
               index={fearGreedIndex}
               category={fearGreedCategory}
               onClick={handleFearGreedClick}
+              isPC={true}
             />
             <BTCMarketShare 
               percentage={distributionData.btcMarketShare.percentage}
