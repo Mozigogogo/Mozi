@@ -64,6 +64,10 @@ export default function CommunityPage() {
   
   // 滚动容器ref
   const scrollContainerRef = useRef(null);
+  
+  // 请求标识ref，用于防止竞态条件
+  const fetchPostsRequestIdRef = useRef(0);
+  const fetchHotTopicsRequestIdRef = useRef(0);
 
   const CDN_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community';
   const CDN_IMG = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/community';
@@ -237,6 +241,10 @@ export default function CommunityPage() {
   // 获取热榜话题
   const fetchHotTopics = async (reset = false) => {
     if (hotTopicsLoading && !reset) return;
+    
+    // 生成新的请求ID
+    const requestId = ++fetchHotTopicsRequestIdRef.current;
+    
     setHotTopicsLoading(true);
     
     const currentPage = reset ? 1 : hotTopicsPage;
@@ -249,6 +257,12 @@ export default function CommunityPage() {
           size: 10
         }
       });
+      
+      // 检查是否是最新的请求，如果不是则忽略结果
+      if (requestId !== fetchHotTopicsRequestIdRef.current) {
+        console.log('忽略过期的热榜请求');
+        return;
+      }
       
       if (response?.data?.data?.length > 0) {
         const { data, totalPages } = response.data;
@@ -272,6 +286,11 @@ export default function CommunityPage() {
         setHotTopicsLoading(false);
       }
     } catch (error) {
+      // 检查是否是最新的请求
+      if (requestId !== fetchHotTopicsRequestIdRef.current) {
+        return;
+      }
+      
       console.error('获取热榜话题失败:', error);
       Toast.show({
         content: '获取热榜数据失败，请稍后再试',
@@ -291,6 +310,9 @@ export default function CommunityPage() {
     // 如果正在加载且不是重置操作，则不重复加载
     if (loading && !reset) return;
     
+    // 生成新的请求ID，用于识别最新请求
+    const requestId = ++fetchPostsRequestIdRef.current;
+    
     setLoading(true);
     const currentPage = reset ? 1 : page;
     
@@ -301,8 +323,10 @@ export default function CommunityPage() {
         size
       };
       
-      // 只有在推荐tab下才处理subTab的筛选条件
+      // 根据mainTab设置userType参数
       if (mainTab === 'recommend') {
+        requestData.userType = 'real'; // 精选推荐：真实用户
+        
         // 根据subTab设置不同的参数
         if (subTab === 'discovery') {
           requestData.category = '发现好币';
@@ -312,13 +336,20 @@ export default function CommunityPage() {
           requestData.symbol = selectedCoin;
         }
         // 'all' 标签不需要额外参数
+      } else if (mainTab === 'news') {
+        requestData.userType = 'virtual'; // 快讯：虚拟用户
       }
-      // 快讯tab不添加任何筛选条件，只传page和size
       
       const response = await request({
         url: Interface.POSTS_API,
         data: requestData
       });
+      
+      // 检查是否是最新的请求，如果不是则忽略结果（防止竞态条件）
+      if (requestId !== fetchPostsRequestIdRef.current) {
+        console.log('忽略过期的帖子请求，requestId:', requestId, '当前最新:', fetchPostsRequestIdRef.current);
+        return;
+      }
       
       if (response?.data?.data?.length > 0) {
         const { data, total, totalPages } = response.data;
@@ -343,7 +374,7 @@ export default function CommunityPage() {
           userType: item.userType
         }));
         
-        // 根据标签过滤不同的 userType
+        // 前端兜底过滤：根据标签过滤不同的 userType
         // 精选推荐：显示非 'virtual' 的帖子（包括 'real'、'jinancn' 等真实用户）
         // 快讯：只显示 userType === 'virtual' 的帖子
         const filteredData = formattedData.filter(item => {
@@ -394,6 +425,12 @@ export default function CommunityPage() {
         }
       }
     } catch (error) {
+      // 检查是否是最新的请求
+      if (requestId !== fetchPostsRequestIdRef.current) {
+        console.log('忽略过期请求的错误');
+        return;
+      }
+      
       console.error('获取帖子列表失败:', error);
       Toast.show({
         content: '获取帖子列表失败，请稍后再试',
