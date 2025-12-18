@@ -361,6 +361,7 @@ export default function CommunityPage() {
           title: item.title,
           content: item.content,
           category: item.category, // 添加 category 字段映射
+          sector: item.sector, // 所属板块字段
           commentCount: item.commentCnt || 0,
           likeCount: item.likeCnt || 0,
           userId: item.userId,
@@ -893,7 +894,7 @@ export default function CommunityPage() {
                     <img className={styles.coinInfoIconImg} src={plateIcon} alt="" />
                     <span className={styles.coinInfoLabel}>{t('community.coinInfo.sector')}</span>
                     <span className={styles.coinInfoValue}>
-                      {post.tags && post.tags.length > 0 ? 'Cash' : 'DeFi'}
+                      {post.sector || 'DeFi'}
                     </span>
                   </div>
                   
