@@ -41,14 +41,32 @@ export default function PCLayout({ children }) {
   const [searchKeyword, setSearchKeyword] = useState('');
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('userInfo');
-    if (storedUser) {
-      try {
-        setUserInfo(JSON.parse(storedUser));
-      } catch (e) {
-        console.error('Parse user info error:', e);
+    const syncUserInfo = () => {
+      const storedUser = localStorage.getItem('userInfo');
+      if (storedUser) {
+        try {
+          setUserInfo(JSON.parse(storedUser));
+        } catch (e) {
+          console.error('Parse user info error:', e);
+        }
+      } else {
+        setUserInfo(null);
       }
-    }
+    };
+    
+    // 首次加载时同步
+    syncUserInfo();
+    
+    // 监听storage事件（跨标签页同步）
+    window.addEventListener('storage', syncUserInfo);
+    
+    // 定期检查userInfo变化（同一标签页内的更新）
+    const timer = setInterval(syncUserInfo, 1000);
+    
+    return () => {
+      window.removeEventListener('storage', syncUserInfo);
+      clearInterval(timer);
+    };
   }, []);
 
   // 获取未读通知数
@@ -328,7 +346,7 @@ export default function PCLayout({ children }) {
           <div className={styles.user}>
             <Avatar size={40} src={userInfo?.avatar} icon={<UserOutlined />} />
             {!collapsed && (
-              <Text strong className={styles.userName}>{userInfo?.nickname || t('pcLayout.user.notLoggedIn')}</Text>
+              <Text strong className={styles.userName}>{userInfo?.nickName || userInfo?.nickname || t('pcLayout.user.notLoggedIn')}</Text>
             )}
           </div>
 

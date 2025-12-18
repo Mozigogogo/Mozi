@@ -3,7 +3,6 @@
 import React, { memo, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, Row, Col } from 'antd';
-import { RiseOutlined, FallOutlined } from '@ant-design/icons';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { jump2Detail } from '../../utils/core';
@@ -11,6 +10,8 @@ import { getAggregationDetail } from '../../api/market';
 import styles from './index.module.less';
 
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
+const UpIcon = `${CDN_PREFIX}/icon/find/up.png`;
+const DownIcon = `${CDN_PREFIX}/icon/find/down.png`;
 const CoinIcon = `${CDN_PREFIX}/icon/find_slices/find-coin%402x.png`;
 const TurnoverIcon = `${CDN_PREFIX}/icon/find_slices/find-vol%402x.png`;
 const MarketMonitoringIcon = `${CDN_PREFIX}/icon/find_slices/find-watch%402x.png`;
@@ -272,21 +273,34 @@ const PCMarketOverview = memo(() => {
             onClick={card.onClick}
           >
             <div className={styles.cardHeader}>
+              <span className={styles.cardTitle}>{card.title}</span>
               <div className={styles.cardIcon}>
                 <img src={card.icon} alt={card.title} />
               </div>
-              <span className={styles.cardTitle}>{card.title}</span>
             </div>
             
             <div className={styles.cardContent}>
               <div className={styles.cardValue}>
                 {card.id !== 'smart-order' ? (
-                  <span className={`${styles.valueText} ${card.id === 'today' ? styles.todayText : ''}`}>
-                    {card.value}
-                  </span>
+                  <>
+                    {card.value?.startsWith('$') ? (
+                      <>
+                        <span className={styles.currencySymbol}>$</span>
+                        <span className={`${styles.valueText} ${card.id === 'today' ? styles.todayText : ''}`}>
+                          {card.value.substring(1)}
+                        </span>
+                      </>
+                    ) : (
+                      <span className={`${styles.valueText} ${card.id === 'today' ? styles.todayText : ''}`}>
+                        {card.value}
+                      </span>
+                    )}
+                  </>
                 ) : (
                   <>
-                    <span className={styles.valueText}>{card.smartSymbol || card.value}</span>
+                    <span className={`${styles.valueText} ${!card.smartSymbol ? styles.placeholderText : ''}`}>
+                      {card.smartSymbol || card.value}
+                    </span>
                     {card.smartPercentText && (
                       <span
                         className={`${styles.percentText} ${
@@ -306,7 +320,11 @@ const PCMarketOverview = memo(() => {
 
               {card.change && (
                 <div className={`${styles.cardChange} ${card.change.isPositive ? styles.positive : styles.negative}`}>
-                  {card.change.isPositive ? <RiseOutlined /> : <FallOutlined />}
+                  <img 
+                    src={card.change.isPositive ? UpIcon : DownIcon} 
+                    alt="trend"
+                    className={styles.changeIcon}
+                  />
                   <span>{card.change.value}</span>
                 </div>
               )}
