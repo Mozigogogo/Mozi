@@ -1,0 +1,85 @@
+.pcFindContent {
+  padding: 0;
+
+  .mainTabs {
+    background: #fff;
+    padding: 16px 24px 0;
+    margin-bottom: 16px;
+    border-radius: 8px;
+
+    :global {
+      .ant-tabs-nav {
+        margin-bottom: 0;
+      }
+
+      .ant-tabs-tab {
+        font-size: 16px;
+        font-weight: 500;
+        padding: 12px 0;
+        margin-right: 32px;
+
+        &.ant-tabs-tab-active {
+          .ant-tabs-tab-btn {
+            color: #11B787;
+          }
+        }
+      }
+
+      .ant-tabs-ink-bar {
+        background: #11B787;
+      }
+    }
+  }
+
+  .contentCard {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+    :global {
+      .ant-card-body {
+        padding: 24px;
+      }
+
+      .ant-table {
+        .ant-table-thead > tr > th {
+          background: #fafafa;
+          font-weight: 600;
+          color: #333;
+        }
+
+        .ant-table-tbody > tr {
+          &:hover {
+            background: #f5f5f5;
+          }
+        }
+      }
+    }
+  }
+
+  .rankTypeSelector {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+
+    .rankTypeItem {
+      padding: 8px 16px;
+      border-radius: 20px;
+      background: #f5f5f5;
+      color: #666;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 14px;
+
+      &:hover {
+        background: #e6f7f1;
+        color: #11B787;
+      }
+
+      &.active {
+        background: #11B787;
+        color: #fff;
+      }
+    }
+  }
+}

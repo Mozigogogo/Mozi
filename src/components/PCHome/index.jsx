@@ -60,21 +60,21 @@ export default function PCHome() {
 
   // 合约专区数据
   const derivativeItems = [
-    { icon: derivativeIcons.bullBear, title: '多空比', subtitle: 'Long/Short Ratio', path: '/putcallratio' },
-    { icon: derivativeIcons.inventory, title: '持仓量', subtitle: 'Open Interest', path: '/positionsize' },
-    { icon: derivativeIcons.fundingRate, title: '资金费率', subtitle: 'Funding Rate', path: '/fundingrate' },
-    { icon: derivativeIcons.volume, title: '成交额', subtitle: 'Trading Volume', path: '/tradevol' },
+    { icon: derivativeIcons.bullBear, title: t('pcHome.derivatives.longShort'), subtitle: t('pcHome.derivatives.longShortSub'), path: '/putcallratio' },
+    { icon: derivativeIcons.inventory, title: t('pcHome.derivatives.openInterest'), subtitle: t('pcHome.derivatives.openInterestSub'), path: '/positionsize' },
+    { icon: derivativeIcons.fundingRate, title: t('pcHome.derivatives.fundingRate'), subtitle: t('pcHome.derivatives.fundingRateSub'), path: '/fundingrate' },
+    { icon: derivativeIcons.volume, title: t('pcHome.derivatives.volume'), subtitle: t('pcHome.derivatives.volumeSub'), path: '/tradevol' },
   ];
 
   // 榜单 Tab 配置
   const rankTabs = [
-    { key: 'zixuan', label: '自选榜' },
-    { key: 'zhangfu', label: '涨幅榜' },
-    { key: 'diefu', label: '跌幅榜' },
-    { key: 'zhenfu', label: '波幅榜' },
-    { key: 'chengjiaoe', label: '成交额' },
-    { key: 'xinbi', label: '新币榜' },
-    { key: 'biaosheng', label: '飙升榜' },
+    { key: 'zixuan', label: t('pcHome.ranks.self') },
+    { key: 'zhangfu', label: t('pcHome.ranks.gainers') },
+    { key: 'diefu', label: t('pcHome.ranks.losers') },
+    { key: 'zhenfu', label: t('pcHome.ranks.volatility') },
+    { key: 'chengjiaoe', label: t('pcHome.ranks.volume') },
+    { key: 'xinbi', label: t('pcHome.ranks.newCoins') },
+    { key: 'biaosheng', label: t('pcHome.ranks.surging') },
   ];
 
   // 榜单接口映射
@@ -91,7 +91,7 @@ export default function PCHome() {
   // 表格列配置
   const columns = [
     {
-      title: '币种',
+      title: t('pcHome.table.coin'),
       dataIndex: 'symbol',
       key: 'symbol',
       align: 'center',
@@ -109,13 +109,13 @@ export default function PCHome() {
       ),
     },
     {
-      title: '最新价',
+      title: t('pcHome.table.price'),
       dataIndex: 'last',
       key: 'last',
       align: 'right',
     },
     {
-      title: '24h幅度',
+      title: t('pcHome.table.change24h'),
       dataIndex: 'priceRange',
       key: 'priceRange',
       align: 'center',
@@ -126,13 +126,13 @@ export default function PCHome() {
       ),
     },
     {
-      title: '加自选',
+      title: t('pcHome.table.favorite'),
       key: 'addFavorite',
       align: 'center',
       render: () => <HeartOutlined className={styles.actionIcon} />,
     },
     {
-      title: '加监控',
+      title: t('pcHome.table.monitor'),
       key: 'addMonitor',
       align: 'center',
       render: () => <BellOutlined className={styles.actionIcon} />,
@@ -261,7 +261,7 @@ export default function PCHome() {
       <div className={styles.rankSection}>
         {/* 标题和Tab在容器外面 */}
         <div className={styles.rankHeader}>
-          <h2 className={styles.rankTitle}>实时榜单</h2>
+          <h2 className={styles.rankTitle}>{t('pcHome.ranks.title')}</h2>
           <Tabs
             activeKey={activeRankTab}
             onChange={handleRankTabChange}
@@ -284,7 +284,7 @@ export default function PCHome() {
             })}
           />
           <div className={styles.viewMore} onClick={() => router.push('/pricerank')}>
-            查看更多 <RightOutlined />
+            {t('pcHome.ranks.viewMore')} <RightOutlined />
           </div>
         </Card>
       </div>

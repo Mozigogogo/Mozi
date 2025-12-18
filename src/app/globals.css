@@ -263,3 +263,19 @@ a {
   border: none !important;
   background: none !important;
 }
+
+/* 防止滚动条出现/消失时页面抖动 */
+html {
+  overflow-y: scroll !important;
+  scrollbar-gutter: stable;
+}
+
+body {
+  overflow-y: scroll !important;
+  scrollbar-gutter: stable;
+}
+
+/* 防止 antd-mobile 的 Popover/Mask 修改 body 的 overflow */
+body.adm-overflow-hidden {
+  overflow-y: scroll !important;
+}

@@ -30,9 +30,29 @@ instance.interceptors.request.use(
   }
 );
 
-// 401 提示防抖：记录上次提示时间，5秒内不重复提示
-let last401ToastTime = 0;
-const TOAST_THROTTLE_TIME = 5000; // 5秒
+// 401 提示控制：使用 sessionStorage 确保每个会话只提示一次
+// 使用 sessionStorage 而不是变量，这样刷新页面会重置，但标签页切换不会
+const SESSION_EXPIRED_KEY = 'session_expired_shown';
+
+// 检查是否已经显示过会话过期提示
+const hasShownSessionExpired = () => {
+  if (typeof window === 'undefined') return false;
+  return sessionStorage.getItem(SESSION_EXPIRED_KEY) === 'true';
+};
+
+// 标记已显示会话过期提示
+const markSessionExpiredShown = () => {
+  if (typeof window !== 'undefined') {
+    sessionStorage.setItem(SESSION_EXPIRED_KEY, 'true');
+  }
+};
+
+// 重置会话过期提示标志（用于路由切换时）
+export const resetSessionExpiredFlag = () => {
+  if (typeof window !== 'undefined') {
+    sessionStorage.removeItem(SESSION_EXPIRED_KEY);
+  }
+};
 
 // 响应拦截器
 instance.interceptors.response.use(
@@ -44,35 +64,47 @@ instance.interceptors.response.use(
       // 清除token
       clearToken();
       
-      // 只在浏览器环境中执行
-      if (typeof window !== 'undefined') {
-        const now = Date.now();
+      // 只在浏览器环境中执行，且本次会话未提示过
+      if (typeof window !== 'undefined' && !hasShownSessionExpired()) {
+        markSessionExpiredShown();
         
-        // 检查是否在防抖时间内
-        if (now - last401ToastTime > TOAST_THROTTLE_TIME) {
-          last401ToastTime = now;
-          
-          // 获取当前语言
-          const language = localStorage.getItem('i18nextLng') || 'zh';
-          const message = language === 'zh' 
-            ? '登录已失效，请重新登录' 
-            : 'Session expired, please login again';
-          
-          // 显示 Toast 提示，不自动跳转
-          try {
+        // 获取当前语言
+        const language = localStorage.getItem('i18nextLng') || 'zh';
+        const message = language === 'zh' 
+          ? '登录已失效，请重新登录' 
+          : 'Session expired, please login again';
+        
+        // 检测是否为PC端
+        const appChannel = localStorage.getItem('appChannel');
+        const isPC = appChannel === 'pc';
+        
+        // 显示提示，不自动跳转
+        try {
+          if (isPC) {
+            // PC端使用 antd 的 message
+            import('antd').then(({ message: antdMessage }) => {
+              antdMessage.warning({
+                content: message,
+                duration: 3,
+              });
+            }).catch(() => {
+              console.warn('Antd message 加载失败');
+            });
+          } else {
+            // 移动端使用 antd-mobile 的 Toast
             import('antd-mobile').then(({ Toast }) => {
               Toast.show({
                 content: message,
                 position: 'center',
                 duration: 2000,
-                maskClickable: false
+                maskClickable: true  // 允许点击遮罩关闭
               });
             }).catch(() => {
               console.warn('Toast 加载失败');
             });
-          } catch (e) {
-            console.warn('Toast 显示失败:', e);
           }
+        } catch (e) {
+          console.warn('提示显示失败:', e);
         }
       }
       
