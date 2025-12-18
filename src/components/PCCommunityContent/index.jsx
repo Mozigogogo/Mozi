@@ -67,13 +67,17 @@ export default function PCCommunityContent() {
         size: 20
       };
       
-      if (subTab === 'discovery') {
-        requestData.category = '发现好币';
-      } else if (subTab === 'question') {
-        requestData.category = '不懂就问';
-      } else if (subTab === 'currency' && selectedCoin) {
-        requestData.symbol = selectedCoin;
+      // 只有在推荐tab下才处理subTab的筛选条件
+      if (activeTab === 'recommend') {
+        if (subTab === 'discovery') {
+          requestData.category = '发现好币';
+        } else if (subTab === 'question') {
+          requestData.category = '不懂就问';
+        } else if (subTab === 'currency' && selectedCoin) {
+          requestData.symbol = selectedCoin;
+        }
       }
+      // 快讯tab不添加任何筛选条件，只传page和size
       
       const response = await request({
         url: Interface.POSTS_API,
