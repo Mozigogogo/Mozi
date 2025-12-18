@@ -220,14 +220,17 @@ export default function UserPage() {
   }, []);
 
   // 页面加载时调用 getMyInterface 接口（只传年月）
-  const initialFetchDone = useRef(false);
+  // 监听登录状态变化，登录后重新调用
   useEffect(() => {
-    if (initialFetchDone.current) return;
-    initialFetchDone.current = true;
-
     const fetchInitialData = async () => {
       const token = localStorage.getItem('token');
-      if (!token) return;
+      if (!token) {
+        // 未登录时重置状态
+        setIsInterfaceLoaded(false);
+        setIsInterfaceSuccess(false);
+        setCalendarEventDates([]);
+        return;
+      }
 
       const now = new Date();
       const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -274,11 +277,13 @@ export default function UserPage() {
         }
       } catch (error) {
         console.error('初始加载接口失败:', error);
+        setIsInterfaceLoaded(true);
+        setIsInterfaceSuccess(false);
       }
     };
 
     fetchInitialData();
-  }, []);
+  }, [userInfo.isLogin]); // 监听登录状态变化
 
   // 每次都强制签名登录
   const signingRef = useRef(false);
