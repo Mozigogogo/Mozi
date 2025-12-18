@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Tabs, Card, Table, Tag, Spin } from 'antd';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { HeartOutlined, BellOutlined, RightOutlined } from '@ant-design/icons';
+import { HeartOutlined, BellOutlined } from '@ant-design/icons';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
+import PCMarketOverview from '../PCMarketOverview';
 import styles from './index.module.less';
 
 /**
@@ -26,10 +27,10 @@ export default function PCFindContent() {
   // 表格列配置 - 行情
   const marketColumns = [
     {
-      title: t('discover.columns.symbolMarketCap'),
+      title: t('home.columns.symbol'),
       dataIndex: 'symbol',
       key: 'symbol',
-      width: 200,
+      width: 150,
       render: (text, record) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <img 
@@ -38,36 +39,56 @@ export default function PCFindContent() {
             style={{ width: 24, height: 24, borderRadius: '50%' }}
             onError={(e) => { e.target.src = '/default-coin.svg'; }}
           />
-          <div>
-            <div style={{ fontWeight: 500 }}>{text}</div>
-            <div style={{ fontSize: '12px', color: '#999' }}>{record.totalVolume}</div>
-          </div>
+          <span style={{ fontWeight: 500 }}>{text}</span>
         </div>
       ),
     },
     {
-      title: t('discover.columns.priceWithChange'),
-      key: 'price',
+      title: t('home.columns.lastPrice'),
+      dataIndex: 'currentPrice',
+      key: 'currentPrice',
       align: 'right',
-      render: (_, record) => (
-        <div>
-          <div>{record.currentPrice}</div>
-          <Tag color={record.priceChange24h?.includes('-') ? 'error' : 'success'}>
-            {record.priceChange24h}
-          </Tag>
-        </div>
-      ),
+      width: 150,
     },
     {
-      title: t('home.columns.change24h'),
+      title: t('discover.columns.symbolMarketCap'),
+      dataIndex: 'totalVolume',
+      key: 'totalVolume',
+      align: 'right',
+      width: 150,
+    },
+    {
+      title: '24H价格变化',
       dataIndex: 'priceChangePercentage24h',
       key: 'priceChangePercentage24h',
-      align: 'center',
-      render: (value) => (
-        <Tag color={value?.includes('-') ? 'error' : 'success'}>
-          {value}
-        </Tag>
-      ),
+      align: 'right',
+      width: 120,
+      render: (value) => {
+        const isNegative = value?.toString().includes('-');
+        return (
+          <span style={{ color: isNegative ? '#ff4d4f' : '#52c41a' }}>
+            {value}
+          </span>
+        );
+      },
+    },
+    {
+      title: '24H价格变化%',
+      dataIndex: 'priceChange24h',
+      key: 'priceChange24h',
+      align: 'right',
+      width: 120,
+      render: (value) => {
+        const isNegative = value?.toString().includes('-');
+        return (
+          <Tag 
+            color={isNegative ? 'error' : 'success'}
+            style={{ minWidth: '70px', textAlign: 'center' }}
+          >
+            {value}
+          </Tag>
+        );
+      },
     },
   ];
 
@@ -270,6 +291,13 @@ export default function PCFindContent() {
         items={tabs}
         className={styles.mainTabs}
       />
+
+      {activeTab === 'market' && (
+        <>
+          {/* 市场统计卡片 - 使用PC专用组件 */}
+          <PCMarketOverview />
+        </>
+      )}
 
       <Card className={styles.contentCard}>
         {activeTab === 'rank' && (
