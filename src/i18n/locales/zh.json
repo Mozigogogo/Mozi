@@ -325,7 +325,18 @@
     "registerFailedRetry": "注册失败，请稍后重试",
     "codeSent": "验证码已发送",
     "sendFailed": "发送失败",
-    "sendFailedRetry": "发送验证码失败，请稍后重试"
+    "sendFailedRetry": "发送验证码失败，请稍后重试",
+    "login": "登录",
+    "register": "注册",
+    "joinCommunity": "加入我们的社群",
+    "followTwitter": "关注我们的Twitter",
+    "otherMethods": "或使用其他方式",
+    "walletLoginBtn": "钱包登录",
+    "recaptchaNotice": "本网站受 Google reCAPTCHA 保护，以确保您不是机器人。",
+    "learnMore": "了解更多",
+    "fillAllRequired": "请填写所有必填项",
+    "walletConnecting": "钱包连接功能初始化中，请稍后重试",
+    "walletConnectFailed": "钱包连接失败"
   },
   "community": {
     "title": "社区",

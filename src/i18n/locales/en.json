@@ -325,7 +325,18 @@
     "registerFailedRetry": "Registration failed, please try again later",
     "codeSent": "Verification code sent",
     "sendFailed": "Send failed",
-    "sendFailedRetry": "Failed to send code, please try again later"
+    "sendFailedRetry": "Failed to send code, please try again later",
+    "login": "Login",
+    "register": "Register",
+    "joinCommunity": "Join Our Community",
+    "followTwitter": "Follow Us on Twitter",
+    "otherMethods": "or use other methods",
+    "walletLoginBtn": "Wallet Login",
+    "recaptchaNotice": "This site is protected by Google reCAPTCHA to ensure you are not a robot.",
+    "learnMore": "Learn More",
+    "fillAllRequired": "Please fill in all required fields",
+    "walletConnecting": "Wallet connection initializing, please try again later",
+    "walletConnectFailed": "Wallet connection failed"
   },
   "community": {
     "title": "Community",

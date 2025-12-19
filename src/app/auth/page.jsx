@@ -1,0 +1,507 @@
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAccount } from 'wagmi';
+import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
+import { message } from 'antd';
+import { useTranslation } from 'react-i18next';
+import { request } from '../../utils/request';
+import { Interface } from '../../utils/constants';
+import { sendVerificationCode } from '../../api/user';
+import styles from './page.module.less';
+
+// 检测是否在 Telegram 环境中
+const isTelegramEnv = () => {
+  if (typeof window === 'undefined') return false;
+  const channel = localStorage.getItem('appChannel');
+  return channel === 'tg';
+};
+
+export default function PCLoginPage() {
+  const router = useRouter();
+  const { t } = useTranslation();
+  
+  // Web3 钱包 hooks
+  const { address: web3Address, isConnected: web3Connected } = useAccount();
+  
+  // TON Connect hooks
+  const [tonConnectUI] = useTonConnectUI();
+  const tonWallet = useTonWallet();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
+  const [isRegister, setIsRegister] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+  const [sendingCode, setSendingCode] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const countdownTimerRef = useRef(null);
+
+  // 清理定时器
+  useEffect(() => {
+    return () => {
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current);
+      }
+    };
+  }, []);
+
+  // 倒计时
+  useEffect(() => {
+    if (countdown > 0) {
+      countdownTimerRef.current = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(countdownTimerRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current);
+      }
+    };
+  }, [countdown]);
+
+  // 验证邮箱格式
+  const validateEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
+  // 发送验证码
+  const handleSendCode = async () => {
+    if (!email) {
+      message.warning(t('auth.emailPlaceholder'));
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      message.warning(t('auth.invalidEmail'));
+      return;
+    }
+
+    setSendingCode(true);
+    try {
+      const currentLanguage = localStorage.getItem('i18nextLng') || 'zh';
+      const language = currentLanguage.startsWith('zh') ? 'zh' : 'en';
+      
+      const res = await sendVerificationCode(email, language);
+
+      if (res?.code === 200 || res?.success) {
+        message.success(t('auth.codeSent'));
+        setCountdown(60);
+      } else {
+        message.error(res?.message || t('auth.sendFailed'));
+      }
+    } catch (error) {
+      console.error('发送验证码失败:', error);
+      message.error(t('auth.sendFailedRetry'));
+    } finally {
+      setSendingCode(false);
+    }
+  };
+
+  // 处理登录
+  const handleLogin = async () => {
+    if (!email || !password) {
+      message.warning(t('auth.fillAllRequired'));
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      message.warning(t('auth.invalidEmail'));
+      return;
+    }
+
+    if (password.length < 6) {
+      message.warning(t('auth.passwordTooShort'));
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await request({
+        url: Interface.MOZI_LOGIN,
+        method: 'POST',
+        data: { 
+          chanel: 2,
+          type: 'login',
+          email, 
+          password,
+          channel: 'pc'
+        }
+      });
+
+      if (res?.data?.token) {
+        localStorage.setItem('token', res.data.token);
+        if (res?.data?.userInfo) {
+          const userInfoWithSubscribe = {
+            ...res.data.userInfo,
+            subscribeAnnouncement: res.data.subscribeAnnouncement
+          };
+          localStorage.setItem('userInfo', JSON.stringify(userInfoWithSubscribe));
+        }
+        if (res?.data?.userId) {
+          localStorage.setItem('userId', res.data.userId);
+        }
+        
+        // 获取用户详细信息
+        request({
+          url: Interface.USER_DATA_INFO,
+          method: 'GET'
+        }).then((dataInfoRes) => {
+          if (dataInfoRes?.data) {
+            localStorage.setItem('userDataInfo', JSON.stringify(dataInfoRes.data));
+          }
+        }).catch((error) => {
+          console.error('获取用户详细信息失败:', error);
+        });
+        
+        // 完成每日登录任务
+        request({
+          url: Interface.TASK_COMPLETE,
+          method: 'POST',
+          data: { taskCode: 'DAILY_LOGIN' }
+        }).catch((error) => {
+          console.error('每日登录任务上报失败:', error);
+        });
+        
+        message.success(t('auth.loginSuccess'));
+        router.push('/');
+      } else {
+        const errorMessage = res?.errorMsg || res?.message || t('auth.loginFailed');
+        message.error(errorMessage);
+      }
+    } catch (error) {
+      console.error('登录失败:', error);
+      const errorMessage = error?.errorMsg || error?.message || t('auth.loginFailedRetry');
+      message.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 处理注册
+  const handleRegister = async () => {
+    if (!email || !password || !verificationCode) {
+      message.warning(t('auth.fillAllRequired'));
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      message.warning(t('auth.invalidEmail'));
+      return;
+    }
+
+    if (password.length < 6) {
+      message.warning(t('auth.passwordTooShort'));
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await request({
+        url: Interface.MOZI_LOGIN,
+        method: 'POST',
+        data: { 
+          chanel: 2,
+          type: 'register',
+          email, 
+          password, 
+          verifyCode: verificationCode,
+          ...(inviteCode && { invitedCode: inviteCode }),
+          channel: 'pc'
+        }
+      });
+
+      if (res?.data?.success || res?.code === 0) {
+        message.success(t('auth.registerSuccess'));
+        setVerificationCode('');
+        setInviteCode('');
+        await autoLoginAfterRegister();
+      } else {
+        const errorMessage = res?.errorMsg || res?.message || t('auth.registerFailed');
+        message.error(errorMessage);
+      }
+    } catch (error) {
+      console.error('注册失败:', error);
+      const errorMessage = error?.errorMsg || error?.message || t('auth.registerFailedRetry');
+      message.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 注册成功后自动登录
+  const autoLoginAfterRegister = async () => {
+    try {
+      const res = await request({
+        url: Interface.MOZI_LOGIN,
+        method: 'POST',
+        data: { 
+          chanel: 2,
+          type: 'login',
+          email, 
+          password,
+          channel: 'pc'
+        }
+      });
+
+      if (res?.data?.token) {
+        localStorage.setItem('token', res.data.token);
+        if (res?.data?.userInfo) {
+          const userInfoWithSubscribe = {
+            ...res.data.userInfo,
+            subscribeAnnouncement: res.data.subscribeAnnouncement
+          };
+          localStorage.setItem('userInfo', JSON.stringify(userInfoWithSubscribe));
+        }
+        if (res?.data?.userId) {
+          localStorage.setItem('userId', res.data.userId);
+        }
+        
+        request({
+          url: Interface.USER_DATA_INFO,
+          method: 'GET'
+        }).then((dataInfoRes) => {
+          if (dataInfoRes?.data) {
+            localStorage.setItem('userDataInfo', JSON.stringify(dataInfoRes.data));
+          }
+        }).catch((error) => {
+          console.error('获取用户详细信息失败:', error);
+        });
+        
+        request({
+          url: Interface.TASK_COMPLETE,
+          method: 'POST',
+          data: { taskCode: 'DAILY_LOGIN' }
+        }).catch((error) => {
+          console.error('每日登录任务上报失败:', error);
+        });
+        
+        message.success(t('auth.loginSuccess'));
+        router.push('/');
+      } else {
+        const errorMessage = res?.errorMsg || res?.message;
+        if (errorMessage) {
+          message.error(errorMessage);
+        }
+        setIsRegister(false);
+      }
+    } catch (error) {
+      console.error('自动登录失败:', error);
+      const errorMessage = error?.errorMsg || error?.message;
+      if (errorMessage) {
+        message.error(errorMessage);
+      }
+      setIsRegister(false);
+    }
+  };
+
+  const handleEmailLogin = () => {
+    if (isRegister) {
+      handleRegister();
+    } else {
+      handleLogin();
+    }
+  };
+
+  // 处理钱包登录
+  const handleWeb3Login = async () => {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      if (isTelegramEnv()) {
+        // Telegram 环境使用 TON Connect
+        if (tonWallet) {
+          await handleTonWalletLogin();
+        } else {
+          await tonConnectUI.openModal();
+        }
+      } else {
+        // PC 环境：直接打开钱包连接弹窗
+        if (typeof window.__openAppKit === 'function') {
+          window.__openAppKit();
+        } else {
+          console.error('AppKit 未初始化');
+          message.warning(t('auth.walletConnecting'));
+        }
+      }
+    } catch (error) {
+      console.error('钱包连接错误:', error);
+      message.error(t('auth.walletConnectFailed'));
+    }
+  };
+
+  // TON 钱包登录处理
+  const handleTonWalletLogin = async () => {
+    if (!tonWallet) return;
+    
+    try {
+      const walletAddress = tonWallet.account.address;
+      console.log('TON 钱包登录:', walletAddress);
+      
+      // TODO: 调用后端 TON 钱包登录接口
+      // 这里需要实现具体的登录逻辑
+      
+    } catch (error) {
+      console.error('TON 钱包登录失败:', error);
+      message.error(t('auth.walletConnectFailed'));
+    }
+  };
+
+  // 监听 Web3 钱包连接状态
+  useEffect(() => {
+    if (web3Connected && web3Address) {
+      console.log('Web3 钱包已连接:', web3Address);
+      // TODO: 自动进行钱包登录
+    }
+  }, [web3Connected, web3Address]);
+
+  // 监听 TON 钱包连接状态
+  useEffect(() => {
+    if (tonWallet) {
+      console.log('TON 钱包已连接:', tonWallet.account.address);
+      handleTonWalletLogin();
+    }
+  }, [tonWallet]);
+
+  const toggleMode = () => {
+    setIsRegister(!isRegister);
+    setPassword('');
+    setVerificationCode('');
+    setInviteCode('');
+  };
+
+  return (
+    <div className={styles.container}>
+      {/* 左侧内容区 */}
+      <div className={styles.leftSection}>
+        <div className={styles.leftContent}>
+          {/* 社交链接 */}
+          <div className={styles.communityCard}>
+            <div className={styles.communityLinks}>
+              <a href="https://t.me/MoziInnovations" target="_blank" rel="noopener noreferrer" className={styles.communityLink}>{t('auth.joinCommunity')}</a>
+              <a href="https://x.com/Innovation56171" target="_blank" rel="noopener noreferrer" className={styles.communityLink}>{t('auth.followTwitter')}</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 右侧登录区 */}
+      <div className={styles.rightSection}>
+        <div className={styles.loginBox}>
+          <h2 className={styles.loginTitle}>{isRegister ? t('auth.register') : t('auth.login')}</h2>
+
+          {/* 邮箱输入 */}
+          <div className={styles.emailInput}>
+            <input
+              type="email"
+              className={styles.emailField}
+              placeholder={t('auth.emailPlaceholder')}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+
+          {/* 密码输入 */}
+          <div className={styles.passwordInput}>
+            <input
+              type="password"
+              className={styles.passwordField}
+              placeholder={t('auth.passwordPlaceholder')}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+
+          {/* 注册模式下的验证码 */}
+          {isRegister && (
+            <div className={styles.codeInputWrapper}>
+              <input
+                type="text"
+                className={styles.codeField}
+                placeholder={t('auth.verificationPlaceholder')}
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value)}
+              />
+              <button 
+                className={`${styles.codeButton} ${sendingCode ? styles.loading : ''}`}
+                onClick={handleSendCode}
+                disabled={countdown > 0 || sendingCode}
+              >
+                {sendingCode ? (
+                  <span className={styles.loadingSpinner}></span>
+                ) : countdown > 0 ? (
+                  `${countdown}s`
+                ) : (
+                  t('auth.getCode')
+                )}
+              </button>
+            </div>
+          )}
+
+          {/* 注册模式下的邀请码（可选） */}
+          {isRegister && (
+            <div className={styles.inviteInput}>
+              <input
+                type="text"
+                className={styles.inviteField}
+                placeholder={t('auth.inviteOptional')}
+                value={inviteCode}
+                onChange={(e) => setInviteCode(e.target.value)}
+              />
+            </div>
+          )}
+
+          {/* 登录/注册按钮 */}
+          <button 
+            className={`${styles.loginButton} ${loading ? styles.loading : ''}`}
+            onClick={loading ? undefined : handleEmailLogin}
+          >
+            {loading ? (
+              <span className={styles.loadingSpinner}></span>
+            ) : (
+              isRegister ? t('auth.register') : t('auth.login')
+            )}
+          </button>
+
+          {/* 注册/登录链接 */}
+          <div className={styles.registerLink}>
+            {isRegister ? t('auth.hasAccount') : t('auth.noAccount')}
+            <a href="#" onClick={(e) => { e.preventDefault(); toggleMode(); }}>
+              {isRegister ? t('auth.loginNow') : t('auth.registerNow')}
+            </a>
+          </div>
+
+          {/* 分隔线 */}
+          <div className={styles.divider}>
+            <span>{t('auth.otherMethods')}</span>
+          </div>
+
+          {/* 第三方登录按钮 */}
+          <div className={styles.socialLogins}>
+            <button className={styles.walletBtn} onClick={handleWeb3Login}>
+              <img src="/icons/wallet.svg" alt="wallet" className={styles.walletIcon} />
+              <span>{t('auth.walletLoginBtn')}</span>
+            </button>
+          </div>
+
+          {/* 底部提示 */}
+          <div className={styles.footer}>
+            {t('auth.recaptchaNotice')}
+            <a href="#">{t('auth.learnMore')}</a>
+          </div>
+        </div>
+      </div>
+
+      {/* 右下角帮助按钮 */}
+      <button className={styles.helpButton}>?</button>
+    </div>
+  );
+}
