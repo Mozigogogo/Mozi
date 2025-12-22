@@ -173,11 +173,11 @@ export default function SearchPage() {
         const spotTemp = spotRes.value.data.spot.slice(0, 3).map((item) => ({
           title: (
             <div className={styles.gridText}>
-              <img className={styles.gridIcon} src={item.url} alt={item.symbol} />
-              <div className={styles.gridName}>{item.symbol}</div>
+              <img className={styles.gridIcon} src={item.url} alt={item.exchanges} />
+              <div className={styles.gridName}>{item.exchanges}</div>
             </div>
           ),
-          symbol: item.exchanges,
+          symbol: item.symbol,
           lasts: item.lasts,
           price24h: <HighlightArea value={item.price24h} />
         }));
@@ -187,11 +187,11 @@ export default function SearchPage() {
         const nonSpotTemp = spotRes.value.data.nonSpot.slice(0, 3).map((item) => ({
           title: (
             <div className={styles.gridText}>
-              <img className={styles.gridIcon} src={item.url} alt={item.symbol} />
-              <div className={styles.gridName}>{item.symbol}</div>
+              <img className={styles.gridIcon} src={item.url} alt={item.exchanges} />
+              <div className={styles.gridName}>{item.exchanges}</div>
             </div>
           ),
-          symbol: item.exchanges,
+          symbol: item.symbol,
           lasts: item.lasts,
           price24h: <HighlightArea value={item.price24h} />
         }));
@@ -211,8 +211,8 @@ export default function SearchPage() {
   };
 
   const spotColNameList = [
-    [<span key="spot" className={styles.pairTitleStrong}>{t('search.spotPairs')}</span>, t('discover.exchange.columns.exchange'), t('home.columns.lastPrice'), t('home.columns.change24hShort')],
-    [<span key="nonspot" className={styles.pairTitleStrong}>{t('search.derivativePairs')}</span>, t('discover.exchange.columns.exchange'), t('home.columns.lastPrice'), t('home.columns.change24hShort')]
+    [<span key="spot" className={styles.pairTitleStrong}>{t('search.spotPairs')}</span>, t('search.tradingPair'), t('home.columns.lastPrice'), t('home.columns.change24hShort')],
+    [<span key="nonspot" className={styles.pairTitleStrong}>{t('search.derivativePairs')}</span>, t('search.tradingPair'), t('home.columns.lastPrice'), t('home.columns.change24hShort')]
   ];
 
   const infoColumnWidths = isEnglish ? ['22%', '24%', '24%', '15%', '15%'] : ['24%', '26%', '20%', '15%', '15%'];
@@ -387,9 +387,20 @@ export default function SearchPage() {
                     onClick={() => {
                       jump2List({
                         showHeader: true,
-                        rankTitle: `${searchValue.toUpperCase()}交易对`,
+                        rankTitle: `${searchValue.toUpperCase()}${t('search.pairs')}`,
                         interFace: Interface.COIN_SPOT,
-                        requestData: { coin: searchValue }
+                        requestData: { coin: searchValue },
+                        rankName: t('search.pairs'),
+                        selectArr: [t('search.spotPairs'), t('search.derivativePairs')],
+                        reponseData: true,
+                        gridTitle: [t('discover.exchange.columns.exchange'), t('search.tradingPair'), t('home.columns.lastPrice'), t('home.columns.change24hShort')],
+                        gridCon: [
+                          { type: 'Img+Text', data: ['url', 'exchanges'] },
+                          { type: 'Text', data: 'symbol' },
+                          { type: 'Text', data: 'lasts' },
+                          { type: 'HighlightArea', data: 'price24h' },
+                          { type: 'img', data: 'url' }
+                        ]
                       });
                     }}
                     style={{ cursor: 'pointer' }}

@@ -509,6 +509,7 @@
     "withdrawFee": "提取手续费",
     "withdrawMin": "最小提币量",
     "pairs": "交易对",
+    "tradingPair": "交易对",
     "spotPairs": "现货交易对",
     "derivativePairs": "衍生品交易对"
   },

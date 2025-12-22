@@ -1,5 +1,5 @@
-@headerHeight: 180px; // 减小头部高度 (小程序500rpx / 2 = 250px，这里优化为180px)
-@tabHeight: 45px;
+@headerHeight: 205px; // 与交易所排行榜保持一致
+@tabHeight: 26px; // 与交易所排行榜保持一致
 @tabOffset: 5px; // 10rpx / 2
 @gridTitleHeight: 30px; // 60rpx / 2
 
@@ -13,15 +13,16 @@
 .headerNew {
   position: relative;
   height: @headerHeight;
-  overflow: hidden; // 改为hidden，防止背景溢出
+  overflow: visible; // 与交易所排行榜一致
   
   .headerBg {
     position: absolute;
-    top: 0;
+    top: -2px; // 与交易所排行榜一致
     left: 50%;
     transform: translateX(-50%);
-    width: 115vw; // Web端使用100vw代替小程序的750px
-    height: 100%; // 填充整个头部高度
+    width: 120vw; // 与交易所排行榜一致
+    max-width: 120vw;
+    height: 190px; // 与交易所排行榜一致
     background-image: url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/range_bg.png');
     background-size: cover;
     background-position: center;
@@ -31,22 +32,22 @@
       width: 100%;
       height: 100%;
       display: block;
-      object-fit: fill; // 允许拉伸，完全填充容器
+      object-fit: fill;
     }
   }
 
   .headerCon {
     position: relative;
     display: flex;
-    height: 100%;
+    height: 97%; // 与交易所排行榜一致
     box-sizing: border-box;
     padding: 0 10px;
-    z-index: 1; // 确保内容在背景之上
+    z-index: 1;
   }
 
   .backBtn {
     position: absolute;
-    top: 35px; // 调整到新高度的合适位置
+    top: 30px; // 与交易所排行榜一致
     left: 5px;
     z-index: 30;
     width: 36px;
@@ -82,7 +83,7 @@
     }
 
     .rankName {
-      display: flex;
+      display: none; // 隐藏 rankName 标签
       align-items: center;
       justify-content: center;
       height: 20px; // 40px / 2
@@ -127,15 +128,15 @@
 // Tab切换胶囊
 .tabSelect {
   position: absolute;
-  left: 10px; // 20rpx / 2
+  left: 10px;
   bottom: 0px;
   height: @tabHeight;
   background: #ffffff;
-  border-radius: 25px; // 50rpx / 2
+  border-radius: 13px; // 与交易所排行榜一致
   display: inline-flex;
   align-items: stretch;
-  padding: 2px; // 4px / 2
-  box-shadow: 0 5px 15px rgba(0,0,0,0.12); // 10rpx 30rpx / 2
+  padding: 2px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.08); // 与交易所排行榜一致
   z-index: 20;
 
   .tabItem {
@@ -145,24 +146,20 @@
     justify-content: center;
     height: 100%;
     color: #666;
-    font-size: 13px; // 26rpx / 2
-    border-radius: 20px; // 40rpx / 2
-    margin: 0 4px 0 0; // 8rpx / 2
-    white-space: nowrap;
-    max-width: none;
-    padding: 0 10px; // 20rpx / 2
+    font-size: 12px; // 与交易所排行榜一致
+    border-radius: 10px; // 与交易所排行榜一致
+    margin-right: 3px; // 与交易所排行榜一致
+    padding: 0 8px; // 与交易所排行榜一致
     cursor: pointer;
-    transition: all 0.2s ease;
 
     &.active {
       background: #11B787;
       color: #fff;
-      box-shadow: 0 3px 8px rgba(17,183,135,0.35); // 6rpx 16rpx / 2
+      box-shadow: 0 3px 8px rgba(17,183,135,0.35);
     }
 
     .tabText {
       display: inline-block;
-      padding: 0 4px; // 8rpx / 2
     }
   }
 }
@@ -170,35 +167,36 @@
 // 评论/分享胶囊
 .actionsCapsule {
   position: absolute;
-  right: 10px; // 20rpx / 2
-  bottom: 3px; // 6px / 2
+  right: 10px;
+  bottom: 0px;
+  height: 28px; // 与交易所排行榜一致
   display: inline-flex;
   align-items: center;
   z-index: 20;
   background: #ffffff;
-  border-radius: 15px; // 30px / 2
+  border-radius: 14px; // 与交易所排行榜一致
   overflow: hidden;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.12); // 10rpx 30rpx / 2
-  padding: 0 7.5px; // 15px / 2
+  box-shadow: 0 3px 8px rgba(0,0,0,0.08); // 与交易所排行榜一致
+  padding: 0 8px; // 与交易所排行榜一致
 
   .capsule {
-    height: 25px; // 50px / 2
+    height: 100%; // 与交易所排行榜一致
     background: #ffffff;
     display: inline-flex;
     align-items: center;
-    padding: 0 5px; // 10rpx / 2
+    padding: 0 6px; // 与交易所排行榜一致
     color: #666;
-    font-size: 13px; // 26rpx / 2
+    font-size: 12px; // 与交易所排行榜一致
     cursor: pointer;
     border: none;
 
     .capsuleIcon {
-      width: 21px; // 42rpx / 2
-      height: 21px;
+      width: 16px; // 与交易所排行榜一致
+      height: 16px;
     }
 
     .capsuleText {
-      margin-left: 2.5px; // 5rpx / 2
+      margin-left: 3px; // 与交易所排行榜一致
     }
   }
 
@@ -221,10 +219,13 @@
   z-index: 10;
   display: flex; // 添加 flex 布局
   align-items: center;
-  padding: 5px 10px; // 10px 20px / 2
+  padding: 5px 0; // 上下 5px，左右 0（与榜单详情页保持一致）
   box-sizing: border-box;
   height: @gridTitleHeight;
   width: 100%;
+  
+  // 使用 box-shadow 向上延伸背景色，遮挡缝隙
+  box-shadow: 0 -5px 0 0 #dfdfdf;
 
   .gridTitleItem {
     display: flex;
@@ -239,13 +240,14 @@
   // 当有排名序号时，标题栏也使用flex布局，添加序号占位空间
   &.withRanking {
     display: flex !important;
-    padding-left: 10px; // 保持左侧padding
+    padding-left: 0; // 移除左侧padding，由序号占位控制
     
     // 序号占位（不显示内容，只占空间）
     &::before {
       content: '';
       width: 20px; // 与序号同宽
       flex: 0 0 20px;
+      margin-left: 8px; // 左侧间距
       margin-right: 8px; // 与序号gap同宽
     }
     
@@ -268,13 +270,13 @@
 // 滚动列表区域
 .scroll {
   height: 100vh;
-  padding-top: calc(@gridTitleHeight - 15px); // (60rpx - 30rpx) / 2
-  padding-left: 10px; // 左右内边距
-  padding-right: 10px;
+  padding-top: @gridTitleHeight; // 为表格标题栏留出空间
+  padding-left: 0; // 与榜单详情页保持一致
+  padding-right: 0; // 与榜单详情页保持一致
   box-sizing: border-box;
   position: relative;
   background-color: #fff;
-  padding-bottom: 20px; // 底部留白
+  padding-bottom: 12px; // 与榜单详情页保持一致
   overflow-y: auto;
 
   .gridText {
@@ -300,6 +302,7 @@
 
 .showHeader {
   height: calc(100vh - (@headerHeight + @tabOffset));
+  padding-top: @gridTitleHeight; // 为表格标题栏留出空间
 }
 
 // 热门币种特殊样式
@@ -310,16 +313,12 @@
   
   .showHeader {
     height: calc(100vh - (@headerHeight - 16px)) !important;
+    padding-top: @gridTitleHeight !important; // 为表格标题栏留出空间
   }
   
   // 隐藏评论/分享胶囊
   .headerNew .actionsCapsule {
     display: none;
-  }
-  
-  // 滚动容器增大内边距
-  .scroll {
-    padding-top: calc(@gridTitleHeight - 10px) !important; // (60rpx - 60rpx) / 2
   }
 }
 

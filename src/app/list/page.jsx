@@ -507,43 +507,45 @@ export default function List() {
               </div>
             )}
             
-            {/* 评论/分享胶囊 */}
-            <div className={styles.actionsCapsule}>
-              <div
-                className={styles.capsule}
-                onClick={() => {
-                  router.push('/community');
-                }}
-              >
-                <img
-                  className={styles.capsuleIcon}
-                  src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/comment.png"
-                  alt="评论"
-                />
-                <span className={styles.capsuleText}>{config.commentCount || 0}</span>
+            {/* 评论/分享胶囊 - 有Tab切换的页面不显示（如交易对、交易所排行榜） */}
+            {(!config.selectArr || config.selectArr.length === 0) && (
+              <div className={styles.actionsCapsule}>
+                <div
+                  className={styles.capsule}
+                  onClick={() => {
+                    router.push('/community');
+                  }}
+                >
+                  <img
+                    className={styles.capsuleIcon}
+                    src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/comment.png"
+                    alt="评论"
+                  />
+                  <span className={styles.capsuleText}>{config.commentCount || 0}</span>
+                </div>
+                <div className={styles.divider}></div>
+                <div
+                  className={styles.capsule}
+                  onClick={() => {
+                    // H5环境下的分享逻辑
+                    if (navigator.share) {
+                      navigator.share({
+                        title: config.rankTitle,
+                        text: `查看${config.rankTitle}排行榜`,
+                        url: window.location.href
+                      }).catch(() => {});
+                    }
+                  }}
+                >
+                  <img
+                    className={styles.capsuleIcon}
+                    src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/share.png"
+                    alt="分享"
+                  />
+                  <span className={styles.capsuleText}>{config.shareCount || 0}</span>
+                </div>
               </div>
-              <div className={styles.divider}></div>
-              <div
-                className={styles.capsule}
-                onClick={() => {
-                  // H5环境下的分享逻辑
-                  if (navigator.share) {
-                    navigator.share({
-                      title: config.rankTitle,
-                      text: `查看${config.rankTitle}排行榜`,
-                      url: window.location.href
-                    }).catch(() => {});
-                  }
-                }}
-              >
-                <img
-                  className={styles.capsuleIcon}
-                  src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/share.png"
-                  alt="分享"
-                />
-                <span className={styles.capsuleText}>{config.shareCount || 0}</span>
-              </div>
-            </div>
+            )}
           </div>
         )}
         
@@ -553,7 +555,7 @@ export default function List() {
           <div className={`${styles.gridTitle} ${showHeader ? styles.showHeaderGrid : ''} ${config.showRanking ? styles.withRanking : ''}`}>
             {config.gridTitle.map((colNameItem, colNameIndex) => {
               // 优先使用传入的 columnWidths，否则使用默认值
-              const defaultWidths = ['20%', '25%', '25%', '22%'];
+              const defaultWidths = ['20%', '28%', '25%', '25%'];
               const widths = config.columnWidths || defaultWidths;
               return (
                 <div

@@ -509,6 +509,7 @@
     "withdrawFee": "Withdraw Fee",
     "withdrawMin": "Min Wdrl",
     "pairs": "Pairs",
+    "tradingPair": "Pair",
     "spotPairs": "Spot",
     "derivativePairs": "Derivatives"
   },
