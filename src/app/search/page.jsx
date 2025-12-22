@@ -343,7 +343,16 @@ export default function SearchPage() {
                           showHeader: true,
                           rankTitle: `可交易${searchValue.toUpperCase()}平台`,
                           interFace: Interface.COIN_PLATFORM,
-                          requestData: { coin: searchValue }
+                          requestData: { coin: searchValue },
+                          gridTitle: [t('search.platform'), t('search.chain'), t('search.withdrawFee'), t('search.withdrawMin')],
+                          gridCon: [
+                            { type: 'Img+Text', data: ['url', 'exchanges'] },
+                            { type: 'Text', data: 'chain' },
+                            { type: 'Text', data: 'withdrawfee' },
+                            { type: 'Text', data: 'withdrawmin' }
+                          ],
+                          columnWidths: ['20%', '28%', '25%', '25%'],
+                          showRanking: false
                         });
                       }
                     }}
@@ -361,7 +370,7 @@ export default function SearchPage() {
                       length={4}
                       colName={[t('search.platform'), t('search.chain'), t('search.withdrawFee'), t('search.withdrawMin')]}
                       gridContent={platformData.data || []}
-                      columnWidths={['28%', '25%', '25%', '22%']}
+                      columnWidths={['20%', '28%', '25%', '25%']}
                       gridTitleBgColor={'transparent'}
                     />
                   )}

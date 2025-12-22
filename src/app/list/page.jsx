@@ -60,6 +60,7 @@ export default function List() {
   const gridConFromUrl = parseJsonParam('gridCon');
   const requestDataFromUrl = parseJsonParam('requestData');
   const selectArrFromUrl = parseJsonParam('selectArr');
+  const columnWidthsFromUrl = parseJsonParam('columnWidths'); // 新增：列宽配置
   // showRanking：若未传参（null）则默认开启；否则按传参 true/false 解析
   const showRankingParamRaw = searchParams.get('showRanking');
   const showRankingFromUrl = showRankingParamRaw === null ? null : (showRankingParamRaw === 'true');
@@ -122,7 +123,8 @@ export default function List() {
     searchCoin: searchCoin,
     headerImg: searchParams.get('headerImg') || '',
     enableLoadMore: true,
-    reponseData: parseJsonParam('reponseData') || false // 是否使用响应数据的多维度结构
+    reponseData: parseJsonParam('reponseData') || false, // 是否使用响应数据的多维度结构
+    columnWidths: columnWidthsFromUrl || null // 自定义列宽
   };
   
   useEffect(() => {
@@ -157,6 +159,12 @@ export default function List() {
   // 当renderData变化时，转换为grid数据
   useEffect(() => {
     const sourceData = config.reponseData ? (readyData[readyIndex] || []) : renderData;
+    console.log('[List useEffect] 数据转换开始:', {
+      sourceDataLength: sourceData?.length,
+      firstSourceItem: sourceData?.[0],
+      gridConConfig: config.gridCon
+    });
+    
     const tempData = (Array.isArray(sourceData) ? sourceData : []).map((item) => {
       const itemObj = {};
       config.gridCon.forEach((value, index) => {
@@ -168,17 +176,32 @@ export default function List() {
       });
       return itemObj;
     });
+    
+    console.log('[List useEffect] 转换后的数据:', {
+      tempDataLength: tempData.length,
+      firstTempItem: tempData[0]
+    });
+    
     setData(tempData);
   }, [renderData, readyData, readyIndex]);
   
   const init = async () => {
-    console.log('init', config);
+    console.log('[List init] 开始初始化，配置:', config);
     try {
       setIsLoading(true);
       setFirstLoading(true);
       const requestData = Array.isArray(config.requestData) && config.requestData.length > 0 
         ? config.requestData[0] 
         : config.requestData;
+      
+      console.log('[List init] 请求参数:', {
+        url: config.interFace,
+        data: {
+          ...requestData,
+          pageNo: pageNo.current,
+          pageSize: pageSize.current
+        }
+      });
       
       const coinData = await request({
         url: config.interFace,
@@ -189,21 +212,33 @@ export default function List() {
         }
       });
       
+      console.log('[List init] 接口返回原始数据:', coinData);
+      console.log('[List init] coinData.data类型:', Array.isArray(coinData?.data) ? '数组' : typeof coinData?.data);
+      console.log('[List init] coinData.data长度:', coinData?.data?.length);
+      
       if (coinData?.data) {
         // 处理多维度响应数据（如某些榜单返回对象而非数组）
         if (config.reponseData) {
           const tmpResData = Object.keys(coinData?.data).map((resData) => {
             return coinData?.data[resData];
           });
-          console.log('tmpResData', tmpResData);
+          console.log('[List init] 多维度数据处理结果:', tmpResData);
           setReadyData(tmpResData);
         } else {
           // 普通数组或带list字段的响应
           const listData = Array.isArray(coinData.data) 
             ? coinData.data 
             : (Array.isArray(coinData.data.list) ? coinData.data.list : []);
+          console.log('[List init] 列表数据:', {
+            isArray: Array.isArray(coinData.data),
+            hasListField: coinData.data.list !== undefined,
+            listDataLength: listData.length,
+            firstItem: listData[0]
+          });
           // 首次数据去重（应对接口可能返回重复项）
-          setRenderData(dedupeArray(listData));
+          const dedupedData = dedupeArray(listData);
+          console.log('[List init] 去重后数据长度:', dedupedData.length);
+          setRenderData(dedupedData);
         }
         
         // 若未传入headerImg：根据首条symbol调用COIN_INFO获取logo作为头图
@@ -241,7 +276,13 @@ export default function List() {
   };
   
   // 取唯一标识：优先 symbol/coin，其次 id/name/pair
+  // 对于可交易平台数据，使用 exchanges+chain 作为唯一标识
   const getItemKey = (item = {}) => {
+    // 如果是可交易平台数据（有 exchanges 和 chain 字段），使用组合键
+    if (item.exchanges && item.chain) {
+      return `${item.exchanges}-${item.chain}`;
+    }
+    
     return (
       item.symbol ||
       item.coin ||
@@ -507,11 +548,30 @@ export default function List() {
         )}
         
         {/* 表格标题栏 */}
-        {config.gridTitle.length === 3 ? (
-          // 三列标题：自定义列宽 20% / 35% / 45%
+        {config.gridTitle.length === 4 ? (
+          // 四列标题：使用自定义列宽或默认列宽
           <div className={`${styles.gridTitle} ${showHeader ? styles.showHeaderGrid : ''} ${config.showRanking ? styles.withRanking : ''}`}>
             {config.gridTitle.map((colNameItem, colNameIndex) => {
-              const widths = ['10%', '35%', '45%'];
+              // 优先使用传入的 columnWidths，否则使用默认值
+              const defaultWidths = ['20%', '25%', '25%', '22%'];
+              const widths = config.columnWidths || defaultWidths;
+              return (
+                <div
+                  key={colNameIndex}
+                  className={`${styles.gridTitleItem} ${colNameIndex !== 0 ? styles.text : ''}`}
+                  style={{ width: widths[colNameIndex] || `${100 / config.gridTitle.length}%` }}
+                >
+                  {colNameItem}
+                </div>
+              );
+            })}
+          </div>
+        ) : config.gridTitle.length === 3 ? (
+          // 三列标题：使用自定义列宽或默认列宽
+          <div className={`${styles.gridTitle} ${showHeader ? styles.showHeaderGrid : ''} ${config.showRanking ? styles.withRanking : ''}`}>
+            {config.gridTitle.map((colNameItem, colNameIndex) => {
+              const defaultWidths = ['10%', '35%', '45%'];
+              const widths = config.columnWidths || defaultWidths;
               return (
                 <div
                   key={colNameIndex}
@@ -524,10 +584,11 @@ export default function List() {
             })}
           </div>
         ) : config.gridTitle.length === 2 ? (
-          // 两列标题：自定义列宽 67% / 23%
+          // 两列标题：使用自定义列宽或默认列宽
           <div className={`${styles.gridTitle} ${showHeader ? styles.showHeaderGrid : ''} ${config.showRanking ? styles.withRanking : ''}`}>
             {config.gridTitle.map((colNameItem, colNameIndex) => {
-              const widths = ['67%', '23%'];
+              const defaultWidths = ['67%', '23%'];
+              const widths = config.columnWidths || defaultWidths;
               return (
                 <div
                   key={colNameIndex}

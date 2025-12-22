@@ -101,7 +101,9 @@ export const jump2List = (config) => {
     selectArr,
     reponseData,
     fromPlatform,
-    searchCoin
+    searchCoin,
+    showRanking,
+    columnWidths
   } = config;
   
   const queryParams = new URLSearchParams();
@@ -117,6 +119,8 @@ export const jump2List = (config) => {
   if (reponseData) queryParams.append('reponseData', JSON.stringify(reponseData));
   if (fromPlatform !== undefined) queryParams.append('fromPlatform', fromPlatform);
   if (searchCoin) queryParams.append('searchCoin', searchCoin);
+  if (showRanking !== undefined) queryParams.append('showRanking', showRanking);
+  if (columnWidths) queryParams.append('columnWidths', JSON.stringify(columnWidths));
   
   window.location.href = `/list?${queryParams.toString()}`;
 };
