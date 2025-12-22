@@ -679,7 +679,7 @@ export default function CommentInfo() {
                         className={styles.coinTag}
                         onClick={() => window.location.href = `/detail?symbol=${tag.name}`}
                       >
-                        @{tag.name}
+                        ${tag.name}$
                       </span>
                     ))}
                     
