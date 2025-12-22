@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import styles from "../pricerank/page.module.less";
 import MoziGrid from "@/components/MoziGrid";
 import HighlightArea from "@/components/HighlightArea";
+import { Loading } from "@/components/Loading";
 import { request } from "@/utils/request";
 import { Interface } from "@/utils/constants";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -165,27 +166,32 @@ export default function HotRankPage() {
       </div>
 
       <div className={styles.scroll}>
-        <MoziGrid
-          length={gridTitle.length}
-          colName={gridTitle}
-          gridContent={list.map((it) => (
-            isIndustry
-              ? { key1: it.col1, key2: it.col2, img: it.img, key: it.key }
-              : { key1: it.col1, key2: it.col2, key3: it.col3, img: it.img, key: it.key }
-          ))}
-          hideTitle={false}
-          simpleRanking
-          stickyHeader
-          stickyTop={0}
-          gridTitleBgColor="#dfdfdf"
-          gridTitleStyle={{ borderBottom: '1px solid #e6e6e6', paddingLeft: 28 }}
-          columnWidths={columnWidths}
-          className={styles.gridTitleWrap}
-        />
+        {loading ? (
+          <Loading />
+        ) : (
+          <>
+            <MoziGrid
+              length={gridTitle.length}
+              colName={gridTitle}
+              gridContent={list.map((it) => (
+                isIndustry
+                  ? { key1: it.col1, key2: it.col2, img: it.img, key: it.key }
+                  : { key1: it.col1, key2: it.col2, key3: it.col3, img: it.img, key: it.key }
+              ))}
+              hideTitle={false}
+              simpleRanking
+              stickyHeader
+              stickyTop={0}
+              gridTitleBgColor="#dfdfdf"
+              gridTitleStyle={{ borderBottom: '1px solid #e6e6e6', paddingLeft: 28 }}
+              columnWidths={columnWidths}
+              className={styles.gridTitleWrap}
+            />
 
-        {loading && <div style={{ padding: 16, textAlign: 'center' }}>{t('common.loading')}</div>}
-        {!loading && error && <div style={{ padding: 16, textAlign: 'center' }}>{t('common.error')}</div>}
-        {!loading && !error && list.length === 0 && <div style={{ padding: 16, textAlign: 'center' }}>{t('common.noData')}</div>}
+            {error && <div style={{ padding: 16, textAlign: 'center' }}>{t('common.error')}</div>}
+            {!error && list.length === 0 && <div style={{ padding: 16, textAlign: 'center' }}>{t('common.noData')}</div>}
+          </>
+        )}
       </div>
     </div>
   );
