@@ -1,0 +1,522 @@
+.container {
+  display: flex;
+  min-height: 100vh;
+  height: 100vh;
+  background: #000;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  z-index: 1000;
+}
+
+// 左侧内容区
+.leftSection {
+  width: 40%;
+  background: url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/home/banner1.png') left center / cover no-repeat;
+  padding: 60PX 60PX 60PX 40PX;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  overflow-y: auto;
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 0;
+  }
+}
+
+.leftContent {
+  max-width: 500PX;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  height: 100%;
+  padding-bottom: 40PX;
+  padding-left: 60PX;
+}
+
+.title {
+  font-size: 48PX;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 20PX;
+}
+
+.subtitle {
+  font-size: 16PX;
+  color: #999;
+  line-height: 1.6;
+  margin-bottom: 40PX;
+}
+
+// 图表卡片
+.chartCard {
+  background: #1a1a1a;
+  border-radius: 16PX;
+  padding: 20PX;
+  margin-bottom: 30PX;
+  border: 1PX solid #2a2a2a;
+}
+
+.chartHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15PX;
+}
+
+.chartTitle {
+  display: flex;
+  align-items: center;
+  gap: 10PX;
+}
+
+.pair {
+  color: #fff;
+  font-size: 16PX;
+  font-weight: 600;
+}
+
+.star {
+  font-size: 18PX;
+}
+
+.chartPrice {
+  margin-bottom: 20PX;
+}
+
+.priceValue {
+  font-size: 32PX;
+  font-weight: bold;
+  color: #11B787;
+  margin-bottom: 5PX;
+}
+
+.priceChange {
+  font-size: 14PX;
+  color: #11B787;
+}
+
+.mockChart {
+  height: 200PX;
+  background: linear-gradient(to top, rgba(17, 183, 135, 0.1) 0%, transparent 100%);
+  border-radius: 8PX;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 20PX;
+    left: 20PX;
+    right: 20PX;
+    height: 2PX;
+    background: linear-gradient(to right, transparent, #11B787, transparent);
+  }
+}
+
+// 社区卡片
+.communityCard {
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  border: none;
+}
+
+.communityTitle {
+  color: #fff;
+  font-size: 16PX;
+  margin-bottom: 15PX;
+}
+
+.communityLinks {
+  display: flex;
+  gap: 15PX;
+}
+
+.communityLink {
+  color: #11B787;
+  text-decoration: none;
+  font-size: 14PX;
+  
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// 右侧登录区
+.rightSection {
+  width: 60%;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40PX;
+  overflow-y: auto;
+}
+
+.loginBox {
+  width: 100%;
+  max-width: 500PX;
+}
+
+.loginTitle {
+  font-size: 40PX;
+  font-weight: bold;
+  color: #000;
+  margin-bottom: 40PX;
+}
+
+// 邮箱输入
+.emailInput {
+  margin-bottom: 24PX;
+}
+
+.emailField {
+  width: 100%;
+  padding: 18PX 20PX;
+  border: 1PX solid #e5e5e5;
+  border-radius: 10PX;
+  font-size: 20PX;
+  
+  &:focus {
+    outline: none;
+    border-color: #11B787;
+    box-shadow: 0 0 0 3PX rgba(17, 183, 135, 0.1);
+  }
+  
+  &::placeholder {
+    color: #999;
+    font-size: 20PX;
+  }
+}
+
+// 密码输入
+.passwordInput {
+  margin-bottom: 24PX;
+}
+
+.passwordField {
+  width: 100%;
+  padding: 18PX 20PX;
+  border: 1PX solid #e5e5e5;
+  border-radius: 10PX;
+  font-size: 20PX;
+  
+  &:focus {
+    outline: none;
+    border-color: #11B787;
+    box-shadow: 0 0 0 3PX rgba(17, 183, 135, 0.1);
+  }
+  
+  &::placeholder {
+    color: #999;
+    font-size: 20PX;
+  }
+}
+
+// 验证码输入
+.codeInputWrapper {
+  display: flex;
+  gap: 12PX;
+  margin-bottom: 24PX;
+}
+
+.codeField {
+  flex: 1;
+  padding: 18PX 20PX;
+  border: 1PX solid #e5e5e5;
+  border-radius: 10PX;
+  font-size: 20PX;
+  
+  &:focus {
+    outline: none;
+    border-color: #11B787;
+    box-shadow: 0 0 0 3PX rgba(17, 183, 135, 0.1);
+  }
+  
+  &::placeholder {
+    color: #999;
+    font-size: 20PX;
+  }
+}
+
+.codeButton {
+  padding: 18PX 24PX;
+  background: #fff;
+  border: 1PX solid #11B787;
+  border-radius: 10PX;
+  color: #11B787;
+  font-size: 20PX;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120PX;
+  
+  &:hover:not(:disabled):not(.loading) {
+    background: #11B787;
+    color: #fff;
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  &.loading {
+    cursor: not-allowed;
+    
+    .loadingSpinner {
+      border-color: rgba(17, 183, 135, 0.3);
+      border-top-color: #11B787;
+    }
+  }
+}
+
+// 邀请码输入
+.inviteInput {
+  margin-bottom: 24PX;
+}
+
+.inviteField {
+  width: 100%;
+  padding: 18PX 20PX;
+  border: 1PX solid #e5e5e5;
+  border-radius: 10PX;
+  font-size: 20PX;
+  
+  &:focus {
+    outline: none;
+    border-color: #11B787;
+    box-shadow: 0 0 0 3PX rgba(17, 183, 135, 0.1);
+  }
+  
+  &::placeholder {
+    color: #999;
+    font-size: 20PX;
+  }
+}
+
+// 登录按钮
+.loginButton {
+  width: 100%;
+  padding: 16PX;
+  background: #11B787;
+  color: #fff;
+  border: none;
+  border-radius: 10PX;
+  font-size: 18PX;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-bottom: 24PX;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  
+  &:hover:not(.loading) {
+    background: #0d9468;
+    transform: translateY(-2PX);
+    box-shadow: 0 4PX 12PX rgba(17, 183, 135, 0.3);
+  }
+  
+  &:active:not(.loading) {
+    transform: translateY(0);
+  }
+  
+  &.loading {
+    cursor: not-allowed;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      animation: shimmer 1.5s infinite;
+    }
+  }
+}
+
+.loadingSpinner {
+  display: inline-block;
+  width: 24PX;
+  height: 24PX;
+  border: 3PX solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shimmer {
+  to {
+    left: 100%;
+  }
+}
+
+// 注册链接
+.registerLink {
+  text-align: center;
+  font-size: 16PX;
+  color: #666;
+  margin-bottom: 30PX;
+  
+  a {
+    color: #11B787;
+    text-decoration: none;
+    font-weight: 500;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+// 分隔线
+.divider {
+  position: relative;
+  text-align: center;
+  margin: 35PX 0;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1PX;
+    background: #e5e5e5;
+  }
+  
+  span {
+    position: relative;
+    background: #fff;
+    padding: 0 20PX;
+    color: #999;
+    font-size: 14PX;
+  }
+}
+
+// 第三方登录
+.socialLogins {
+  display: flex;
+  flex-direction: column;
+  gap: 14PX;
+  margin-bottom: 35PX;
+}
+
+.walletBtn {
+  width: 100%;
+  height: 52PX;
+  background: linear-gradient(135deg, #42A5F5 0%, #1E88E5 100%);
+  border: 1PX solid #1E88E5;
+  border-radius: 10PX;
+  font-size: 18PX;
+  font-weight: 500;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  box-shadow: 0 2PX 12PX rgba(30, 136, 229, 0.25);
+  cursor: pointer;
+  
+  &:hover {
+    background: linear-gradient(135deg, #1E88E5 0%, #1976D2 100%);
+    border-color: #1976D2;
+    box-shadow: 0 4PX 16PX rgba(25, 118, 210, 0.3);
+    transform: translateY(-2PX);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
+  .walletIcon {
+    width: 20PX;
+    height: 20PX;
+    margin-right: 8PX;
+    flex-shrink: 0;
+  }
+  
+  span {
+    line-height: 1;
+  }
+}
+
+// 底部提示
+.footer {
+  font-size: 13PX;
+  color: #999;
+  line-height: 1.8;
+  text-align: center;
+  
+  a {
+    color: #11B787;
+    text-decoration: none;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+// 帮助按钮
+.helpButton {
+  position: fixed;
+  bottom: 30PX;
+  right: 30PX;
+  width: 50PX;
+  height: 50PX;
+  border-radius: 50%;
+  background: #11B787;
+  color: #fff;
+  border: none;
+  font-size: 24PX;
+  cursor: pointer;
+  box-shadow: 0 4PX 12PX rgba(17, 183, 135, 0.3);
+  transition: all 0.3s;
+  
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6PX 16PX rgba(17, 183, 135, 0.4);
+  }
+}
+
+// 响应式
+@media (max-width: 1024PX) {
+  .leftSection {
+    display: none;
+  }
+  
+  .rightSection {
+    width: 100%;
+  }
+}

@@ -136,8 +136,8 @@ export default function FundingRate() {
           const options = handleOptions(chartDataRef.current.data, chartDataRef.current.type);
           if (chartDataRef.current.type === 'updownbarline') {
             options.grid = {
-              left: '17%',
-              right: '17%',
+              left: '10%',
+              right: '3%',  // 减少右侧边距，让图表占据更多空间
               top: '5%',
               bottom: '25%',
               containLabel: false
@@ -145,17 +145,14 @@ export default function FundingRate() {
             if (options.yAxis && options.yAxis[0]) {
               options.yAxis[0].axisLabel = options.yAxis[0].axisLabel || {};
               options.yAxis[0].axisLabel.formatter = (value) => {
-                const slot = chartDataRef.current.data.yAxisLeftSlot;
-                const formatted = slot ? String(slot).replace('{}', value) : value;
-                return String(formatted).replace(/\$/g, '');
+                // 左侧显示百分比，最多保留5位小数
+                const percentage = (value * 100).toFixed(5);
+                // 去除末尾多余的0
+                return `${parseFloat(percentage)}%`;
               };
             }
             if (options.yAxis && options.yAxis[1]) {
-              options.yAxis[1].axisLabel = options.yAxis[1].axisLabel || {};
-              options.yAxis[1].axisLabel.formatter = (value) => {
-                const slot = chartDataRef.current.data.yAxisRightSlot;
-                return formatRightAxisToWan(value, slot);
-              };
+              options.yAxis[1].show = false;  // 隐藏右侧Y轴
             }
           }
           chartInstance.current.setOption(options);
@@ -175,8 +172,8 @@ export default function FundingRate() {
         const options = handleOptions(chartDataRef.current.data, chartDataRef.current.type);
         if (chartDataRef.current.type === 'updownbarline') {
           options.grid = {
-            left: '17%',
-            right: '17%',
+            left: '10%',
+            right: '3%',  // 减少右侧边距，让图表占据更多空间
             top: '5%',
             bottom: '25%',
             containLabel: false
@@ -184,20 +181,14 @@ export default function FundingRate() {
           if (options.yAxis && options.yAxis[0]) {
             options.yAxis[0].axisLabel = options.yAxis[0].axisLabel || {};
             options.yAxis[0].axisLabel.formatter = (value) => {
-              const slot = chartDataRef.current.data.yAxisLeftSlot;
-              let formatted = slot ? String(slot).replace('{}', value) : value;
-              formatted = String(formatted).replace(/\$/g, '');
-              formatted = String(formatted).replace(/亿/g, t('fundingrate.unit.b'));
-              formatted = String(formatted).replace(/万/g, t('fundingrate.unit.m'));
-              return formatted;
+              // 左侧显示百分比，最多保留5位小数
+              const percentage = (value * 100).toFixed(5);
+              // 去除末尾多余的0
+              return `${parseFloat(percentage)}%`;
             };
           }
           if (options.yAxis && options.yAxis[1]) {
-            options.yAxis[1].axisLabel = options.yAxis[1].axisLabel || {};
-            options.yAxis[1].axisLabel.formatter = (value) => {
-              const slot = chartDataRef.current.data.yAxisRightSlot;
-              return formatRightAxisToWan(value, slot, t('fundingrate.unit.m'));
-            };
+            options.yAxis[1].show = false;  // 隐藏右侧Y轴
           }
         }
         chartInstance.current.setOption(options);
@@ -287,8 +278,8 @@ export default function FundingRate() {
         const options = handleOptions(frHisData.data, 'updownbarline');
         // 专用 grid 布局与轴格式
         options.grid = {
-          left: '17%',
-          right: '17%',
+          left: '10%',
+          right: '3%',  // 减少右侧边距，让图表占据更多空间
           top: '5%',
           bottom: '25%',
           containLabel: false
@@ -296,20 +287,14 @@ export default function FundingRate() {
           if (options.yAxis && options.yAxis[0]) {
             options.yAxis[0].axisLabel = options.yAxis[0].axisLabel || {};
             options.yAxis[0].axisLabel.formatter = (value) => {
-              const slot = frHisData.data.yAxisLeftSlot;
-              let formatted = slot ? String(slot).replace('{}', value) : value;
-              formatted = String(formatted).replace(/\$/g, '');
-              formatted = String(formatted).replace(/亿/g, t('fundingrate.unit.b'));
-              formatted = String(formatted).replace(/万/g, t('fundingrate.unit.m'));
-              return formatted;
+              // 左侧显示百分比，最多保留5位小数
+              const percentage = (value * 100).toFixed(5);
+              // 去除末尾多余的0
+              return `${parseFloat(percentage)}%`;
             };
           }
           if (options.yAxis && options.yAxis[1]) {
-            options.yAxis[1].axisLabel = options.yAxis[1].axisLabel || {};
-            options.yAxis[1].axisLabel.formatter = (value) => {
-              const slot = frHisData.data.yAxisRightSlot;
-              return formatRightAxisToWan(value, slot, t('fundingrate.unit.m'));
-            };
+            options.yAxis[1].show = false;  // 隐藏右侧Y轴
           }
         chartInstance.current.setOption(options);
       } else {

@@ -66,7 +66,13 @@ export default function PCFindContent() {
       render: (value) => {
         const isNegative = value?.toString().includes('-');
         return (
-          <span style={{ color: isNegative ? '#ff4d4f' : '#52c41a' }}>
+          <span style={{ 
+            fontFamily: 'Microsoft YaHei',
+            fontWeight: 400,
+            fontSize: '14px',
+            color: isNegative ? '#FA5F5F' : '#11B787',
+            lineHeight: '23px'
+          }}>
             {value}
           </span>
         );
@@ -81,12 +87,20 @@ export default function PCFindContent() {
       render: (value) => {
         const isNegative = value?.toString().includes('-');
         return (
-          <Tag 
-            color={isNegative ? 'error' : 'success'}
-            style={{ minWidth: '70px', textAlign: 'center' }}
-          >
-            {value}
-          </Tag>
+          <div style={{ 
+            width: '82px',
+            height: '32px',
+            background: isNegative ? '#FA5F5F' : '#11B787',
+            borderRadius: '10px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#FFFFFF',
+            fontSize: '14px',
+            fontWeight: 500
+          }}>
+            {value}%
+          </div>
         );
       },
     },
@@ -279,7 +293,7 @@ export default function PCFindContent() {
 
   const tabs = [
     { key: 'market', label: t('discover.tabs.market') },
-    { key: 'self', label: t('discover.tabs.self') },
+    // { key: 'self', label: t('discover.tabs.self') }, // 隐藏自选tab
     { key: 'rank', label: t('discover.tabs.rank') },
   ];
 
@@ -299,21 +313,31 @@ export default function PCFindContent() {
         </>
       )}
 
-      <Card className={styles.contentCard}>
-        {activeTab === 'rank' && (
-          <div className={styles.rankTypeSelector}>
-            {rankTypes.map(type => (
-              <div
-                key={type.key}
-                className={`${styles.rankTypeItem} ${activeRankType === type.key ? styles.active : ''}`}
-                onClick={() => handleRankTypeChange(type.key)}
-              >
-                {type.label}
-              </div>
-            ))}
-          </div>
-        )}
+      {activeTab === 'rank' && (
+        <div className={styles.rankTypeSelector}>
+          {rankTypes.map(type => (
+            <div
+              key={type.key}
+              className={`${styles.rankTypeItem} ${activeRankType === type.key ? styles.active : ''}`}
+              onClick={() => handleRankTypeChange(type.key)}
+            >
+              {type.label}
+            </div>
+          ))}
+        </div>
+      )}
 
+      {activeTab === 'market' && (
+        <div className={styles.tableHeader}>
+          <div className={styles.headerCell}>{t('home.columns.symbol')}</div>
+          <div className={styles.headerCell}>{t('home.columns.lastPrice')}</div>
+          <div className={styles.headerCell}>{t('discover.columns.symbolMarketCap')}</div>
+          <div className={styles.headerCell}>24H价格变化</div>
+          <div className={styles.headerCell}>24H价格变化%</div>
+        </div>
+      )}
+
+      <Card className={styles.contentCard}>
         <Spin spinning={loading}>
           {activeTab === 'market' && (
             <Table

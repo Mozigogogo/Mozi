@@ -325,7 +325,10 @@ export default function CommunityPage() {
       
       // 根据mainTab设置userType参数
       if (mainTab === 'recommend') {
-        requestData.userType = 'real'; // 精选推荐：真实用户
+        // 币种tab不传userType参数，其他tab传userType=real
+        if (subTab !== 'currency') {
+          requestData.userType = 'real'; // 精选推荐：真实用户
+        }
         
         // 根据subTab设置不同的参数
         if (subTab === 'discovery') {
@@ -376,10 +379,16 @@ export default function CommunityPage() {
         }));
         
         // 前端兜底过滤：根据标签过滤不同的 userType
-        // 精选推荐：显示非 'virtual' 的帖子（包括 'real'、'jinancn' 等真实用户）
+        // 精选推荐-币种tab：不过滤，显示所有帖子
+        // 精选推荐-其他tab：显示非 'virtual' 的帖子（包括 'real'、'jinancn' 等真实用户）
         // 快讯：只显示 userType === 'virtual' 的帖子
         const filteredData = formattedData.filter(item => {
           if (mainTab === 'recommend') {
+            // 币种tab不过滤userType，显示所有帖子
+            if (subTab === 'currency') {
+              return true;
+            }
+            // 其他tab过滤掉virtual类型
             return item.userType !== 'virtual';
           } else if (mainTab === 'news') {
             return item.userType === 'virtual';
