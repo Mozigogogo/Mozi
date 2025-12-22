@@ -68,6 +68,7 @@
       "lastPrice": "Last Price",
       "lastVolume": "24h Volume",
       "change24h": "24h Change",
+      "change24hShort": "24(H) Change",
       "hotIndex": "Hot Index",
       "contract": "Contract",
       "section": "Sector",
@@ -508,6 +509,7 @@
     "withdrawFee": "Withdraw Fee",
     "withdrawMin": "Min Wdrl",
     "pairs": "Pairs",
+    "tradingPair": "Pair",
     "spotPairs": "Spot",
     "derivativePairs": "Derivatives"
   },

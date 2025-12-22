@@ -15,6 +15,8 @@ import { Loading } from '../components/Loading';
 import HighlightArea from '../components/HighlightArea';
 import AddCollect from '../components/AddCollect';
 import AddMonitor from '../components/AddMonitor';
+import AdaptiveSymbolText from '../components/AdaptiveSymbolText';
+import AdaptivePrice from '../components/AdaptivePrice';
 import MarketDistribution from '../components/MarketDistribution';
 import FloatingRobot from '../components/FloatingRobot';
 import WelcomePopup from '../components/WelcomePopup';
@@ -548,18 +550,8 @@ export default function HomePage() {
         tempData = [];
       } else if (Array.isArray(listData) && listData.length > 0) {
         tempData = listData.map((item) => ({
-          symbol: (
-            <div className={styles.ownTitle}>
-              <img 
-                className={styles.ownImg} 
-                src={item.url || '/default-coin.svg'} 
-                alt={item.symbol}
-                onError={(e) => { e.target.src = '/default-coin.svg'; }}
-              />
-              {item.symbol}
-            </div>
-          ),
-          last: item.last,
+          symbol: <AdaptiveSymbolText symbol={item.symbol} iconUrl={item.url} />,
+          last: <AdaptivePrice price={item.last} />,
           priceRange: <HighlightArea value={item.price24h} />,
           own: <AddCollect symbol={item.symbol} isOwn={true} onSuccess={refreshSelfSelectRank} />,
           monitor: <AddMonitor symbol={item.symbol} />,
@@ -604,18 +596,8 @@ export default function HomePage() {
         if (Array.isArray(listData) && listData.length > 0) {
           const slicedData = listData.slice(0, 10);
           results[upIndex] = slicedData.map((item) => ({
-            symbol: (
-              <div className={styles.ownTitle}>
-                <img 
-                  className={styles.ownImg} 
-                  src={item.url || '/default-coin.svg'} 
-                  alt={item.symbol}
-                  onError={(e) => { e.target.src = '/default-coin.svg'; }}
-                />
-                {item.symbol}
-              </div>
-            ),
-            last: item.last || item.volume_24h,
+            symbol: <AdaptiveSymbolText symbol={item.symbol} iconUrl={item.url} />,
+            last: <AdaptivePrice price={item.last || item.volume_24h} />,
             priceRange: <HighlightArea value={item.priceRange || item.movers || item.price_24h} />,
             own: <AddCollect symbol={item.symbol} isOwn={item.favorite} />,
             monitor: <AddMonitor symbol={item.symbol} />,
@@ -648,18 +630,8 @@ export default function HomePage() {
               tempData = listData.map((item) => {
                 console.log('自选榜单项:', item);
                 return {
-                  symbol: (
-                    <div className={styles.ownTitle}>
-                      <img 
-                        className={styles.ownImg} 
-                        src={item.url || '/default-coin.svg'} 
-                        alt={item.symbol}
-                        onError={(e) => { e.target.src = '/default-coin.svg'; }}
-                      />
-                      {item.symbol}
-                    </div>
-                  ),
-                  last: item.last,
+                  symbol: <AdaptiveSymbolText symbol={item.symbol} iconUrl={item.url} />,
+                  last: <AdaptivePrice price={item.last} />,
                   priceRange: <HighlightArea value={item.price24h} />,
                   own: <AddCollect symbol={item.symbol} isOwn={true} onSuccess={refreshSelfSelectRank} />,
                   monitor: <AddMonitor symbol={item.symbol} />,
@@ -675,18 +647,8 @@ export default function HomePage() {
             if (Array.isArray(listData) && listData.length > 0) {
               const slicedData = listData.slice(0, 10);
               tempData = slicedData.map((item) => ({
-                symbol: (
-                  <div className={styles.ownTitle}>
-                    <img 
-                      className={styles.ownImg} 
-                      src={item.url || '/default-coin.svg'} 
-                      alt={item.symbol}
-                      onError={(e) => { e.target.src = '/default-coin.svg'; }}
-                    />
-                    {item.symbol}
-                  </div>
-                ),
-                last: item.last || item.volume_24h,
+                symbol: <AdaptiveSymbolText symbol={item.symbol} iconUrl={item.url} />,
+                last: <AdaptivePrice price={item.last || item.volume_24h} />,
                 priceRange: <HighlightArea value={item.priceRange || item.movers || item.price_24h} />,
                 own: <AddCollect symbol={item.symbol} isOwn={item.favorite} />,
                 monitor: <AddMonitor symbol={item.symbol} />,
@@ -933,7 +895,7 @@ export default function HomePage() {
     console.log('所有榜单数据:', footerArr);
     
     return (
-      <div ref={rankingSectionRef}>
+      <div ref={rankingSectionRef} className={styles.realTimeRankingSection}>
         <MoziCard title={t('home.rankList')}>
         {/* <Layout isLoading={footerLoading}> */}
           <TabBar className={styles.tabBox} activeKey={rankActiveKey} onChange={rankActiveClick}>
@@ -964,6 +926,7 @@ export default function HomePage() {
                 maxRows={10}
                 minRows={10}
                 gridTitleBgColor="transparent"
+                columnWidths={['32%', '23%', '25%', '15%', '15%']}
               />
               <div className={styles.listMore} onClick={go2List}>
                 {t('user.viewMore')} <RightOutline fontSize={12} />

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import styles from "./page.module.less";
 import MoziGrid from "@/components/MoziGrid";
+import { Loading } from "@/components/Loading";
 import { request } from "@/utils/request";
 import { Interface } from "@/utils/constants";
 import { useRouter } from "next/navigation";
@@ -103,26 +104,31 @@ export default function NewCoinRankPage() {
       </div>
 
       <div className={styles.scroll}>
-        <MoziGrid
-          length={2}
-          colName={gridTitle}
-          gridContent={list.map((it) => ({ key1: it.col1, key2: it.col2, img: it.img, key: it.key }))}
-          hideTitle={false}
-          simpleRanking
-          stickyHeader
-          stickyTop={0}
-          gridTitleBgColor="#dfdfdf"
-          gridTitleStyle={{ borderBottom: '1px solid #e6e6e6' }}
-          columnWidths={["60%","40%"]}
-          className={styles.gridTitleWrap}
-          contentFontSize="15px"
-          titleFontSize="13px"
-          rowPadding="10px 0"
-        />
+        {loading ? (
+          <Loading />
+        ) : (
+          <>
+            <MoziGrid
+              length={2}
+              colName={gridTitle}
+              gridContent={list.map((it) => ({ key1: it.col1, key2: it.col2, img: it.img, key: it.key }))}
+              hideTitle={false}
+              simpleRanking
+              stickyHeader
+              stickyTop={0}
+              gridTitleBgColor="#dfdfdf"
+              gridTitleStyle={{ borderBottom: '1px solid #e6e6e6' }}
+              columnWidths={["60%","40%"]}
+              className={styles.gridTitleWrap}
+              contentFontSize="15px"
+              titleFontSize="13px"
+              rowPadding="10px 0"
+            />
 
-        {loading && <div style={{ padding: 16, textAlign: 'center' }}>{t('common.loading')}</div>}
-        {!loading && error && <div style={{ padding: 16, textAlign: 'center' }}>{t('common.loadFailed')}</div>}
-        {!loading && !error && list.length === 0 && <div style={{ padding: 16, textAlign: 'center' }}>{t('common.noData')}</div>}
+            {error && <div style={{ padding: 16, textAlign: 'center' }}>{t('common.loadFailed')}</div>}
+            {!error && list.length === 0 && <div style={{ padding: 16, textAlign: 'center' }}>{t('common.noData')}</div>}
+          </>
+        )}
       </div>
     </div>
   );

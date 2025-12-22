@@ -189,10 +189,31 @@
 }
 
 /* 响应式设计 */
-@media (max-width: 768px) {
+@media (max-width: 768px) and (min-width: 376px) {
+  .gridTitle {
+    font-size: clamp(13px, 2.2vw, 18px);
+  }
+  
+  .gridTitleItem {
+    padding: 3px 6px;
+  }
+  
+  .gridContent {
+    font-size: 12px;
+  }
+  
+  .gridConItem {
+    padding: 0 6px;
+  }
+  
+  .gridListItem {
+    padding: 6px 0;
+  }
+}
+
+@media (max-width: 375px) {
   .gridTitle {
     font-size: 11px;
-
   }
   
   .gridTitleItem {

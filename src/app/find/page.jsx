@@ -368,7 +368,7 @@ const loadingTimerRef = useRef(null);
       if (response?.data) {
         const formattedData = response.data.slice(0, 3).map(item => ({
           symbol: item.symbol,
-          volume_24h: item.volume_24h,
+          volume_24h: item.last, // 使用 last 字段作为最新价
           url: item.url,
           key: item.symbol,
           img: item.url

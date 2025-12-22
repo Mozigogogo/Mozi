@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import styles from "../pricerank/page.module.less";
 import MoziGrid from "@/components/MoziGrid";
 import HighlightArea from "@/components/HighlightArea";
+import { Loading } from "@/components/Loading";
 import { request } from "@/utils/request";
 import { Interface } from "@/utils/constants";
 import { useRouter } from "next/navigation";
@@ -125,27 +126,30 @@ export default function SelfRankPage() {
       </div>
 
       <div className={styles.scroll}>
-        {needLogin ? (
+        {loading ? (
+          <Loading />
+        ) : needLogin ? (
           <div style={{ padding: 16, textAlign: 'center' }}>请先登录后查看自选</div>
         ) : (
-          <MoziGrid
-            length={2}
-            colName={gridTitle}
-            gridContent={list.map((it) => ({ key1: it.col1, key2: it.col2, img: it.img, key: it.key }))}
-            hideTitle={false}
-            simpleRanking
-            stickyHeader
-            stickyTop={0}
-            gridTitleBgColor="#dfdfdf"
-            gridTitleStyle={{ borderBottom: '1px solid #e6e6e6' }}
-            columnWidths={["60%","40%"]}
-            className={styles.gridTitleWrap}
-          />
-        )}
+          <>
+            <MoziGrid
+              length={2}
+              colName={gridTitle}
+              gridContent={list.map((it) => ({ key1: it.col1, key2: it.col2, img: it.img, key: it.key }))}
+              hideTitle={false}
+              simpleRanking
+              stickyHeader
+              stickyTop={0}
+              gridTitleBgColor="#dfdfdf"
+              gridTitleStyle={{ borderBottom: '1px solid #e6e6e6' }}
+              columnWidths={["60%","40%"]}
+              className={styles.gridTitleWrap}
+            />
 
-        {loading && <div style={{ padding: 16, textAlign: 'center' }}>加载中...</div>}
-        {!loading && error && <div style={{ padding: 16, textAlign: 'center' }}>加载失败，请稍后重试</div>}
-        {!loading && !error && !needLogin && list.length === 0 && <div style={{ padding: 16, textAlign: 'center' }}>暂无数据</div>}
+            {error && <div style={{ padding: 16, textAlign: 'center' }}>加载失败，请稍后重试</div>}
+            {!error && list.length === 0 && <div style={{ padding: 16, textAlign: 'center' }}>暂无数据</div>}
+          </>
+        )}
       </div>
     </div>
   );
