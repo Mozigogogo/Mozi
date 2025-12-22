@@ -341,7 +341,7 @@ export default function SearchPage() {
                       if (platformData.length > 3) {
                         jump2List({
                           showHeader: true,
-                          rankTitle: `可交易${searchValue.toUpperCase()}平台`,
+                          rankTitle: t('search.tradeablePlatforms', { coin: searchValue.toUpperCase() }),
                           interFace: Interface.COIN_PLATFORM,
                           requestData: { coin: searchValue },
                           gridTitle: [t('search.platform'), t('search.chain'), t('search.withdrawFee'), t('search.withdrawMin')],
@@ -370,7 +370,7 @@ export default function SearchPage() {
                       length={4}
                       colName={[t('search.platform'), t('search.chain'), t('search.withdrawFee'), t('search.withdrawMin')]}
                       gridContent={platformData.data || []}
-                      columnWidths={['20%', '28%', '25%', '25%']}
+                      columnWidths={['28%', '25%', '23%', '24%']}
                       gridTitleBgColor={'transparent'}
                     />
                   )}
