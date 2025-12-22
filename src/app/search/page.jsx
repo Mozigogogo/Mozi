@@ -211,8 +211,8 @@ export default function SearchPage() {
   };
 
   const spotColNameList = [
-    [<span key="spot" className={styles.pairTitleStrong}>{t('search.spotPairs')}</span>, t('discover.exchange.columns.exchange'), t('home.columns.lastPrice'), t('home.columns.change24h')],
-    [<span key="nonspot" className={styles.pairTitleStrong}>{t('search.derivativePairs')}</span>, t('discover.exchange.columns.exchange'), t('home.columns.lastPrice'), t('home.columns.change24h')]
+    [<span key="spot" className={styles.pairTitleStrong}>{t('search.spotPairs')}</span>, t('discover.exchange.columns.exchange'), t('home.columns.lastPrice'), t('home.columns.change24hShort')],
+    [<span key="nonspot" className={styles.pairTitleStrong}>{t('search.derivativePairs')}</span>, t('discover.exchange.columns.exchange'), t('home.columns.lastPrice'), t('home.columns.change24hShort')]
   ];
 
   const infoColumnWidths = isEnglish ? ['22%', '24%', '24%', '15%', '15%'] : ['24%', '26%', '20%', '15%', '15%'];
@@ -284,7 +284,7 @@ export default function SearchPage() {
                 ) : (
                   <MoziGrid
                     length={5}
-                    colName={[t('home.columns.symbol'), t('home.columns.lastPrice'), t('home.columns.change24h'), t('home.columns.addFavorites'), t('home.columns.addMonitor')]}
+                    colName={[t('home.columns.symbol'), t('home.columns.lastPrice'), t('home.columns.change24hShort'), t('home.columns.addFavorites'), t('home.columns.addMonitor')]}
                     gridContent={infoData.data || []}
                     callback={(gridCon) => jump2Detail(gridCon.key)}
                     columnWidths={infoColumnWidths}
