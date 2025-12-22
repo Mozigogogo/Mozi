@@ -471,7 +471,7 @@ export const handleOptions = (data, type, msg) => {
     return {
       grid: {
         left: '10%',
-        right: '10%',
+        right: '3%',  // 减少右侧边距，让图表占据更多空间
         top: '10%',
         bottom: '25%',
         containLabel: false
@@ -509,14 +509,17 @@ export const handleOptions = (data, type, msg) => {
         {
           type: 'value',
           axisLabel: {
-            formatter: (value) => data.yAxisLeftSlot.replace('{}', value) ?? value
+            formatter: (value) => {
+              // 左侧显示百分比，最多保留5位小数
+              const percentage = (value * 100).toFixed(5);
+              // 去除末尾多余的0
+              return `${parseFloat(percentage)}%`;
+            }
           }
         },
         {
           type: 'value',
-          axisLabel: {
-            formatter: (value) => data.yAxisRightSlot.replace('{}', value) ?? value
-          }
+          show: false  // 隐藏右侧Y轴
         }
       ],
       series: [
@@ -561,9 +564,11 @@ export const handleOptions = (data, type, msg) => {
           start: 80,
           end: 100,
           bottom: '8%',  // 从底部往上8%的位置
-          height: 20,
+          height: 15,  // 减小高度
           showDataShadow: false,
-          showDetail: false
+          showDetail: false,
+          left: '15%',  // 左侧留出更多空间，让滑轨向右移
+          right: '50px'  // 右侧留出空间给全屏按钮
         }
       ],
     };
