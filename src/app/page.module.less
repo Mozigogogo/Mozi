@@ -518,6 +518,17 @@
   }
 }
 
+/* 实时榜单区域样式 */
+.realTimeRankingSection {
+  /* 实时榜单最新价列 - 动态字号 */
+  :global {
+    .gridContent > .gridConItem:nth-child(2) {
+      font-size: clamp(13px, 2.5vw, 16px) !important;
+      font-weight: 500 !important;
+    }
+  }
+}
+
 /* 实时榜单样式 */
 .tabBox {
   width: 100%;
@@ -536,7 +547,11 @@
         border: 1px solid transparent;
         color: #333;
         padding: 10px 1px;
-        font-size: 11px;
+        font-size: clamp(11px, 2.2vw, 14px) !important;
+      }
+      
+      .adm-tab-bar-item-title {
+        font-size: clamp(11px, 2.2vw, 14px) !important;
       }
     
       .adm-tab-bar-item-active {
@@ -571,6 +586,8 @@
 .ownTitle {
   display: flex;
   width: 100%;
+  font-size: clamp(14px, 3.5vw, 18px); /* 动态字号：最小15px，最大20px，随屏幕变化 */
+  font-weight: 500; /* 增加字重，让文字更清晰 */
 
   .ownImg {
     height: 18px;
@@ -580,6 +597,14 @@
     margin-right: 5px;
     object-fit: cover;
   }
+}
+
+/* 实时榜单最新价文字样式 */
+.priceText {
+  font-size: clamp(14px, 3vw, 18px) !important; /* 动态字号：最小14px，最大18px */
+  font-weight: normal !important; /* 正常字重 */
+  color: #333 !important;
+  display: inline-block;
 }
 
 .listMore {
@@ -683,6 +708,21 @@
   .topicHot,
   .topicDate {
     font-size: 10px;
+  }
+  
+  /* 确保移动端实时榜单最新价的动态字号生效 */
+  .priceText {
+    font-size: clamp(14px, 3vw, 18px) !important;
+    font-weight: normal !important;
+  }
+  
+  .realTimeRankingSection {
+    :global {
+      .gridContent > .gridConItem:nth-child(2) {
+        font-size: clamp(13px, 2.5vw, 16px) !important;
+        font-weight: 500 !important;
+      }
+    }
   }
 }
 

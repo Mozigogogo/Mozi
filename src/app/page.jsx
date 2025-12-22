@@ -559,7 +559,7 @@ export default function HomePage() {
               {item.symbol}
             </div>
           ),
-          last: item.last,
+          last: <span className={styles.priceText}>{item.last}</span>,
           priceRange: <HighlightArea value={item.price24h} />,
           own: <AddCollect symbol={item.symbol} isOwn={true} onSuccess={refreshSelfSelectRank} />,
           monitor: <AddMonitor symbol={item.symbol} />,
@@ -615,7 +615,7 @@ export default function HomePage() {
                 {item.symbol}
               </div>
             ),
-            last: item.last || item.volume_24h,
+            last: <span className={styles.priceText}>{item.last || item.volume_24h}</span>,
             priceRange: <HighlightArea value={item.priceRange || item.movers || item.price_24h} />,
             own: <AddCollect symbol={item.symbol} isOwn={item.favorite} />,
             monitor: <AddMonitor symbol={item.symbol} />,
@@ -659,7 +659,7 @@ export default function HomePage() {
                       {item.symbol}
                     </div>
                   ),
-                  last: item.last,
+                  last: <span className={styles.priceText}>{item.last}</span>,
                   priceRange: <HighlightArea value={item.price24h} />,
                   own: <AddCollect symbol={item.symbol} isOwn={true} onSuccess={refreshSelfSelectRank} />,
                   monitor: <AddMonitor symbol={item.symbol} />,
@@ -686,7 +686,7 @@ export default function HomePage() {
                     {item.symbol}
                   </div>
                 ),
-                last: item.last || item.volume_24h,
+                last: <span className={styles.priceText}>{item.last || item.volume_24h}</span>,
                 priceRange: <HighlightArea value={item.priceRange || item.movers || item.price_24h} />,
                 own: <AddCollect symbol={item.symbol} isOwn={item.favorite} />,
                 monitor: <AddMonitor symbol={item.symbol} />,
@@ -933,7 +933,7 @@ export default function HomePage() {
     console.log('所有榜单数据:', footerArr);
     
     return (
-      <div ref={rankingSectionRef}>
+      <div ref={rankingSectionRef} className={styles.realTimeRankingSection}>
         <MoziCard title={t('home.rankList')}>
         {/* <Layout isLoading={footerLoading}> */}
           <TabBar className={styles.tabBox} activeKey={rankActiveKey} onChange={rankActiveClick}>
@@ -964,6 +964,7 @@ export default function HomePage() {
                 maxRows={10}
                 minRows={10}
                 gridTitleBgColor="transparent"
+                columnWidths={['32%', '23%', '25%', '15%', '15%']}
               />
               <div className={styles.listMore} onClick={go2List}>
                 {t('user.viewMore')} <RightOutline fontSize={12} />

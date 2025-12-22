@@ -29,14 +29,14 @@
 }
 
 .distributionTitle {
-  font-size: 16px;
+  font-size: clamp(16px, 4vw, 22px);
   font-weight: 500;
   color: #333;
   line-height: 1.2;
 }
 
 .distributionUpdateTime {
-  font-size: 11px;
+  font-size: clamp(14px, 3vw, 16px);
   color: #999;
   white-space: nowrap;
   flex-shrink: 0;
@@ -141,7 +141,7 @@
 }
 
 .statText {
-  font-size: 12px;
+  font-size: clamp(12px, 2.5vw, 16px);
   font-weight: 500;
 }
 
@@ -318,11 +318,11 @@
 // 响应式设计
 @media (max-width: 768px) {
   .distributionTitle {
-    font-size: 15px;
+    font-size: clamp(16px, 3.5vw, 20px) !important;
   }
   
   .distributionUpdateTime {
-    font-size: 10px;
+    font-size: clamp(11px, 3vw, 18px);
   }
   
   .chartBars {
@@ -340,6 +340,10 @@
   .bar {
     max-width: 14px;
     max-height: 80px;
+  }
+  
+  .statText {
+    font-size: clamp(12px, 2.5vw, 16px) !important;
   }
   
   .fearGreedChart {
