@@ -152,7 +152,7 @@ export default function PCHome() {
       } else if (rankType === 'zixuan') {
         requestData = { pageSize: 10, pageNo: 1 };
       } else if (rankType === 'biaosheng') {
-        requestData = { intervals: '7_day' };
+        requestData = { intervals: '7_day' };  // 飙升榜使用7天数据
       } else {
         requestData = { dim: 0 };
       }
@@ -177,8 +177,11 @@ export default function PCHome() {
         url: item.url || '/default-coin.svg',
         // 自选榜使用 last 字段，其他榜单可能用 currentPrice 或 volume_24h
         last: item.last || item.currentPrice || item.volume_24h,
-        // 自选榜使用 price24h 字段，其他榜单使用不同字段名
-        priceRange: parseFloat(item.price24h || item.priceRange || item.priceChangePercentage24h || item.price_24h || 0),
+        // 飙升榜使用 price_24h 字段显示24小时幅度，自选榜使用 price24h，其他榜单使用 priceRange
+        priceRange: parseFloat(
+          rankType === 'biaosheng' ? (item.price_24h || 0) :  // 飙升榜优先使用 price_24h
+          (item.price24h || item.priceRange || item.priceChangePercentage24h || item.price_24h || 0)
+        ),
       })));
     } catch (e) {
       console.error('获取榜单失败:', e);

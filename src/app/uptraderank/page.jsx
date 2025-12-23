@@ -20,18 +20,15 @@ export default function UpTradeRankPage() {
   const { shareCount, incrementShareCount } = useShareCount('trademovers');
 
   const tabs = useMemo(() => [
-    { label: t('discover.range.live'), value: "today" },
-    { label: t('discover.range.1d'), value: "1_day" },
     { label: t('discover.range.1w'), value: "7_day" },
     { label: t('discover.range.1m'), value: "1_month" },
-    { label: t('discover.range.1y'), value: "1_year" },
+    { label: t('discover.range.2m'), value: "2_month" },
   ], [t]);
 
-  const initialIntervals = (searchParams && searchParams.get('intervals')) || 'today';
-  const allowed = new Set(["today","1_day","7_day","1_month","1_year"]);
-  // 1_day 视为 today，默认选中"实时"
-  const normalized = (initialIntervals === '1_day' || initialIntervals === 'today') ? 'today' : 
-                     (allowed.has(initialIntervals) ? initialIntervals : 'today');
+  const initialIntervals = (searchParams && searchParams.get('intervals')) || '7_day';
+  const allowed = new Set(["7_day","1_month","2_month"]);
+  // 默认选中"7天"
+  const normalized = allowed.has(initialIntervals) ? initialIntervals : '7_day';
   const defaultIndex = Math.max(0, tabs.findIndex(t => t.value === normalized));
   const [tabIndex, setTabIndex] = useState(defaultIndex);
   const [list, setList] = useState([]);
@@ -68,8 +65,8 @@ export default function UpTradeRankPage() {
   };
 
   useEffect(() => {
-    // "实时"(today) 对应 API 参数 1_day
-    const apiInterval = tabs[tabIndex].value === 'today' ? '1_day' : tabs[tabIndex].value;
+    // 直接使用选中的时间周期
+    const apiInterval = tabs[tabIndex].value;
     fetchData(apiInterval);
   }, [tabIndex]);
 
