@@ -267,6 +267,10 @@ export default function HomePage() {
   const [rankActiveKey, setRankActive] = useState('zhangfu');
   const [footerArr, setFooterArr] = useState([]);
   const [footerLoading, setFooterLoading] = useState(true);
+  // 每个榜单独立的 loading 状态
+  const [rankLoadingStates, setRankLoadingStates] = useState(Array(7).fill(true));
+  // 每个榜单是否已经加载过（用于区分首次加载和无数据）
+  const [rankLoadedStates, setRankLoadedStates] = useState(Array(7).fill(false));
   const [investmentTab, setInvestmentTab] = useState('opportunity');
   const [hotTopics, setHotTopics] = useState([]);
   const [topicsLoading, setTopicsLoading] = useState(false);
@@ -275,6 +279,8 @@ export default function HomePage() {
   
   const rankingSectionRef = useRef(null);
   const needLoop = useRef(true);
+  // 用于防止竞态的请求ID
+  const rankRequestIds = useRef(Array(7).fill(0));
 
   // 首页公告栏显示控制
   const [showNotice, setShowNotice] = useState(true);
@@ -573,74 +579,55 @@ export default function HomePage() {
 
   // 获取实时榜单数据
   const fetchRankingData = async (isInitial = false) => {
-    // 只在首次加载时显示 loading，后续刷新静默更新
+    // 只在首次加载时显示全局 loading
     if (isInitial) {
       setFooterLoading(true);
+      // 只在首次加载时初始化数组
+      setFooterArr(Array(footerIfList.length).fill([]));
     }
+    
     try {
-      // 使用当前的 footerArr 作为基础，避免数据闪烁
-      const results = [...footerArr];
-      // 如果是首次加载，初始化为空数组
-      if (results.length === 0) {
-        results.length = footerIfList.length;
-        results.fill([]);
-      }
-
-      const upIndex = activeArr.indexOf('zhangfu');
-      try {
-        const upRes = await request({
-          url: footerIfList[upIndex].interface,
-          data: footerIfList[upIndex].data
-        });
-        const listData = upRes.data || [];
-        if (Array.isArray(listData) && listData.length > 0) {
-          const slicedData = listData.slice(0, 10);
-          results[upIndex] = slicedData.map((item) => ({
-            symbol: <AdaptiveSymbolText symbol={item.symbol} iconUrl={item.url} />,
-            last: <AdaptivePrice price={item.last || item.volume_24h} />,
-            priceRange: <HighlightArea value={item.priceRange || item.movers || item.price_24h} />,
-            own: <AddCollect symbol={item.symbol} isOwn={item.favorite} />,
-            monitor: <AddMonitor symbol={item.symbol} />,
-            key: item.symbol,
-            isFavorite: item.favorite || false, // 保存收藏状态
-          }));
-        }
-      } catch (e) {
-        // 保留旧数据，不要设置为空数组
-        // results[upIndex] = [];
-      }
-      // 不要在这里更新，等所有数据都获取完成
-
+      // 并发请求所有榜单，每个榜单独立更新
       const promises = footerIfList.map(async (cfg, i) => {
-        if (i === upIndex) return;
+        // 生成新的请求ID，用于防止竞态
+        const requestId = ++rankRequestIds.current[i];
+        
+        // 只在首次加载时设置该榜单的 loading 状态
+        if (isInitial) {
+          setRankLoadingStates(prev => {
+            const newStates = [...prev];
+            newStates[i] = true;
+            return newStates;
+          });
+        }
+        
         try {
           const itemListData = await request({ url: cfg.interface, data: cfg.data });
+          
+          // 检查是否是最新的请求（防止竞态）
+          if (requestId !== rankRequestIds.current[i]) {
+            return;
+          }
+          
           let tempData = [];
+          
           if (i === 0) {
             // 自选榜：返回数组，字段为 symbol, price24h, last, url
-            console.log('自选榜完整响应:', itemListData);
             const listData = itemListData.data || [];
-            console.log('自选榜原始数据:', listData);
             
             // 检查是否需要登录
             if (itemListData.data?.isLogin === false) {
-              console.log('自选榜需要登录');
               tempData = [];
             } else if (Array.isArray(listData) && listData.length > 0) {
-              tempData = listData.map((item) => {
-                console.log('自选榜单项:', item);
-                return {
-                  symbol: <AdaptiveSymbolText symbol={item.symbol} iconUrl={item.url} />,
-                  last: <AdaptivePrice price={item.last} />,
-                  priceRange: <HighlightArea value={item.price24h} />,
-                  own: <AddCollect symbol={item.symbol} isOwn={true} onSuccess={refreshSelfSelectRank} />,
-                  monitor: <AddMonitor symbol={item.symbol} />,
-                  key: item.symbol,
-                };
-              });
-              console.log('自选榜处理后数据:', tempData);
-            } else {
-              console.log('自选榜数据为空或格式不正确');
+              tempData = listData.map((item) => ({
+                symbol: <AdaptiveSymbolText symbol={item.symbol} iconUrl={item.url} />,
+                last: <AdaptivePrice price={item.last} />,
+                priceRange: <HighlightArea value={item.price24h} />,
+                own: <AddCollect symbol={item.symbol} isOwn={true} onSuccess={refreshSelfSelectRank} />,
+                monitor: <AddMonitor symbol={item.symbol} />,
+                key: item.symbol,
+                isFavorite: true,
+              }));
             }
           } else if (i === 6) {
             // 飙升榜（索引6）：使用 price_24h 字段显示24小时幅度
@@ -668,21 +655,92 @@ export default function HomePage() {
                 own: <AddCollect symbol={item.symbol} isOwn={item.favorite} />,
                 monitor: <AddMonitor symbol={item.symbol} />,
                 key: item.symbol,
-                isFavorite: item.favorite || false, // 保存收藏状态
+                isFavorite: item.favorite || false,
               }));
             }
           }
-          results[i] = tempData;
+          
+          // 只有在有新数据或首次加载时才更新
+          // 轮询刷新时，如果接口返回空数据，保留旧数据
+          if (tempData.length > 0 || isInitial) {
+            setFooterArr(prev => {
+              const newArr = [...prev];
+              // 确保数组长度足够
+              if (newArr.length < footerIfList.length) {
+                newArr.length = footerIfList.length;
+                for (let j = 0; j < footerIfList.length; j++) {
+                  if (!newArr[j]) newArr[j] = [];
+                }
+              }
+              newArr[i] = tempData;
+              return newArr;
+            });
+          }
+          
+          // 标记该榜单已加载完成
+          setRankLoadedStates(prev => {
+            const newStates = [...prev];
+            newStates[i] = true;
+            return newStates;
+          });
+          
+          // 只在首次加载时取消 loading 状态
+          if (isInitial) {
+            // 使用 setTimeout 确保数据渲染后再取消 loading
+            setTimeout(() => {
+              setRankLoadingStates(prev => {
+                const newStates = [...prev];
+                newStates[i] = false;
+                return newStates;
+              });
+            }, 0);
+          }
+          
         } catch (error) {
           console.error(`榜单${i}请求失败:`, error);
-          // 保留旧数据，不要设置为空数组
-          // results[i] = [];
+          
+          // 检查是否是最新的请求
+          if (requestId !== rankRequestIds.current[i]) {
+            return;
+          }
+          
+          // 只在首次加载时处理失败情况
+          if (isInitial) {
+            // 标记该榜单已加载完成（即使失败）
+            setRankLoadedStates(prev => {
+              const newStates = [...prev];
+              newStates[i] = true;
+              return newStates;
+            });
+            
+            // 失败时设置为空数组以显示"暂无数据"
+            setFooterArr(prev => {
+              const newArr = [...prev];
+              if (newArr.length < footerIfList.length) {
+                newArr.length = footerIfList.length;
+                for (let j = 0; j < footerIfList.length; j++) {
+                  if (!newArr[j]) newArr[j] = [];
+                }
+              }
+              if (!newArr[i] || newArr[i].length === 0) {
+                newArr[i] = [];
+              }
+              return newArr;
+            });
+            
+            // 取消该榜单的 loading 状态
+            setRankLoadingStates(prev => {
+              const newStates = [...prev];
+              newStates[i] = false;
+              return newStates;
+            });
+          }
+          // 轮询刷新时失败，不做任何处理，保留旧数据
         }
       });
 
+      // 等待所有请求完成（成功或失败）
       await Promise.allSettled(promises);
-      // 所有数据获取完成后，一次性更新
-      setFooterArr(results);
     } catch (error) {
       console.error('获取实时榜单数据失败:', error);
     } finally {
@@ -904,15 +962,14 @@ export default function HomePage() {
 
   // 渲染实时榜单
   const renderRealTimeRanking = () => {
-    const currentRankData = footerArr[activeArr.indexOf(rankActiveKey)] || [];
-    console.log('当前榜单类型:', rankActiveKey, '索引:', activeArr.indexOf(rankActiveKey));
-    console.log('当前榜单数据:', currentRankData);
-    console.log('所有榜单数据:', footerArr);
+    const currentIndex = activeArr.indexOf(rankActiveKey);
+    const currentRankData = footerArr[currentIndex] || [];
+    const isLoading = rankLoadingStates[currentIndex];
+    const isLoaded = rankLoadedStates[currentIndex];
     
     return (
       <div ref={rankingSectionRef} className={styles.realTimeRankingSection}>
         <MoziCard title={t('home.rankList')}>
-        {/* <Layout isLoading={footerLoading}> */}
           <TabBar className={styles.tabBox} activeKey={rankActiveKey} onChange={rankActiveClick}>
             <TabBar.Item key='zixuan' title={t('home.rank.self')} />
             <TabBar.Item key='zhangfu' title={t('home.rank.up')} />
@@ -922,38 +979,45 @@ export default function HomePage() {
             <TabBar.Item key='xinbi' title={t('home.rank.new')} />
             <TabBar.Item key='biaosheng' title={t('home.rank.surge')} />
           </TabBar>
-          {currentRankData.length > 0 ? (
-            <div>
-              <MoziGrid
-                length={5}
-                colName={[
-                  t('home.columns.symbol'),
-                  rankActiveKey === 'chengjiaoe' ? t('home.columns.lastVolume') : t('home.columns.lastPrice'),
-                  t('home.columns.change24h'),
-                  t('home.columns.addFavorites'),
-                  t('home.columns.addMonitor')
-                ]}
-                gridContent={currentRankData}
-                callback={(gridCon) => { 
-                  // 如果币种已收藏（isFavorite为true），传入 fromFavorite 参数
-                  jump2Detail(gridCon.key, gridCon.isFavorite === true); 
-                }}
-                maxRows={10}
-                minRows={10}
-                gridTitleBgColor="transparent"
-                columnWidths={['32%', '23%', '25%', '15%', '15%']}
-              />
-              <div className={styles.listMore} onClick={go2List}>
-                {t('user.viewMore')} <RightOutline fontSize={12} />
+          
+          {/* 始终保持内容区域，避免折叠 */}
+          <div style={{ minHeight: '180px' }}>
+            {isLoading ? (
+              <div style={{ padding: '40px 0', textAlign: 'center' }}>
+                <Loading tip={t('common.loading')} />
               </div>
-            </div>
-          ) : rankActiveKey === 'zixuan' ? (
-            <div style={{ padding: '40px 0', textAlign: 'center', color: '#999' }}>
-              {t('home.noFavorites')}
-            </div>
-          ) : null}
-        {/* </Layout> */}
-      </MoziCard>
+            ) : currentRankData.length > 0 ? (
+              <div>
+                <MoziGrid
+                  length={5}
+                  colName={[
+                    t('home.columns.symbol'),
+                    rankActiveKey === 'chengjiaoe' ? t('home.columns.lastVolume') : t('home.columns.lastPrice'),
+                    t('home.columns.change24h'),
+                    t('home.columns.addFavorites'),
+                    t('home.columns.addMonitor')
+                  ]}
+                  gridContent={currentRankData}
+                  callback={(gridCon) => { 
+                    // 如果币种已收藏（isFavorite为true），传入 fromFavorite 参数
+                    jump2Detail(gridCon.key, gridCon.isFavorite === true); 
+                  }}
+                  maxRows={10}
+                  minRows={10}
+                  gridTitleBgColor="transparent"
+                  columnWidths={['32%', '23%', '25%', '15%', '15%']}
+                />
+                <div className={styles.listMore} onClick={go2List}>
+                  {t('user.viewMore')} <RightOutline fontSize={12} />
+                </div>
+              </div>
+            ) : isLoaded ? (
+              <div style={{ padding: '40px 0', textAlign: 'center', color: '#999' }}>
+                {rankActiveKey === 'zixuan' ? t('home.noFavorites') : t('common.noData')}
+              </div>
+            ) : null}
+          </div>
+        </MoziCard>
       </div>
     );
   };
