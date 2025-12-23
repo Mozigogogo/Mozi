@@ -403,7 +403,7 @@ export default function HomePage() {
   }, {
     interface: Interface.PRICE_UPTRADE,
     data: {
-      intervals: '7_day'
+      intervals: '7_day'  // 飙升榜使用7天数据
     }
   }];
 
@@ -642,6 +642,21 @@ export default function HomePage() {
             } else {
               console.log('自选榜数据为空或格式不正确');
             }
+          } else if (i === 6) {
+            // 飙升榜（索引6）：使用 price_24h 字段显示24小时幅度
+            const listData = itemListData.data || [];
+            if (Array.isArray(listData) && listData.length > 0) {
+              const slicedData = listData.slice(0, 10);
+              tempData = slicedData.map((item) => ({
+                symbol: <AdaptiveSymbolText symbol={item.symbol} iconUrl={item.url} />,
+                last: <AdaptivePrice price={item.last || item.volume_24h} />,
+                priceRange: <HighlightArea value={item.price_24h} />,  // 飙升榜使用 price_24h 字段
+                own: <AddCollect symbol={item.symbol} isOwn={item.favorite} />,
+                monitor: <AddMonitor symbol={item.symbol} />,
+                key: item.symbol,
+                isFavorite: item.favorite || false,
+              }));
+            }
           } else {
             const listData = itemListData.data || [];
             if (Array.isArray(listData) && listData.length > 0) {
@@ -729,7 +744,7 @@ export default function HomePage() {
         router.push('/newcoinrank');
         break;
       case 'biaosheng': {
-        const intervals = '1_day';
+        const intervals = '7_day';  // 飙升榜默认使用7天
         router.push(`/uptraderank?intervals=${encodeURIComponent(intervals)}`);
         break;
       }

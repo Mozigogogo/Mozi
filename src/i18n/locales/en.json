@@ -60,7 +60,7 @@
       "down": "Losers",
       "wave": "Volatility",
       "volume": "Volume",
-      "new": "New Coins",
+      "new": "New",
       "surge": "Surging"
     },
     "columns": {
@@ -183,6 +183,7 @@
       "1d": "1D",
       "1w": "1W",
       "1m": "1M",
+      "2m": "2M",
       "1y": "1Y"
     },
     "addFavoriteButton": "Add Favorite",
@@ -1119,7 +1120,7 @@
       "losers": "Losers",
       "volatility": "Volatility",
       "volume": "Volume",
-      "newCoins": "New Coins",
+      "newCoins": "New",
       "surging": "Surging"
     },
     "table": {

@@ -248,7 +248,7 @@ export default function PCFindContent() {
           break;
         case 'surging':
           url = Interface.PRICE_UPTRADE;
-          data = { intervals: '1_day' };
+          data = { intervals: '7_day' };  // 飙升榜默认使用7天数据
           break;
       }
       

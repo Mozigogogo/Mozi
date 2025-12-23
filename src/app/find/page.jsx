@@ -131,8 +131,8 @@ const loadingTimerRef = useRef(null);
   // 飙升榜数据
   const [upTradeData, setUpTradeData] = useState({ upTradeArr: [], upTradeSelect: [] });
   const upTradeArr = useRef([]);
-  const upTradePickArr = [t('discover.range.live'), t('discover.range.1d'), t('discover.range.1w'), t('discover.range.1m'), t('discover.range.1y')];
-  const upTradeIntervalsArr = ['today', '1_day', '7_day', '1_month', '1_year'];
+  const upTradePickArr = [t('discover.range.1w'), t('discover.range.1m'), t('discover.range.2m')];
+  const upTradeIntervalsArr = ['7_day', '1_month', '2_month'];
   
   // 飙升榜加载状态（其他榜单的加载状态已移除，因为不再使用Layout包裹）
   const [isUpTradeLoading, setUpTradeLoading] = useState(true);
@@ -404,31 +404,7 @@ const loadingTimerRef = useRef(null);
           upTradeSelect: upTradePickArr
         });
       } else {
-        if (intervals === 'today') {
-          intervals = '1_day';
-          setUpTradePickIndex(1);
-          response = await request({
-            url: Interface.PRICE_UPTRADE,
-            data: { intervals }
-          });
-          if (!isEmpty(response?.data)) {
-            const formattedData = response.data.slice(0, 3).map(item => ({
-              symbol: item.symbol,
-              movers: item.movers,
-              url: item.url,
-              key: item.symbol,
-              img: item.url
-            }));
-            setUpTradeData({
-              upTradeArr: formattedData,
-              upTradeSelect: upTradePickArr
-            });
-          } else {
-            setUpTradeError(true);
-          }
-        } else {
-          setUpTradeError(true);
-        }
+        setUpTradeError(true);
       }
       setUpTradeLoading(false);
     } catch (error) {
@@ -1072,14 +1048,14 @@ const loadingTimerRef = useRef(null);
           hasData={(upTradeData.upTradeArr && upTradeData.upTradeArr.length > 0)}
           callback={() => {
             const raw = upTradeIntervalsArr[upTradePickIndex];
-            const safe = raw === 'today' ? '1_day' : (raw === '1_year' ? '1_month' : raw);
-            router.push(`/uptraderank?intervals=${encodeURIComponent(safe)}`)
+            // 直接使用当前选中的时间周期，不需要转换
+            router.push(`/uptraderank?intervals=${encodeURIComponent(raw)}`)
           }}
         >
           <div onClick={() => {
             const raw = upTradeIntervalsArr[upTradePickIndex];
-            const safe = raw === 'today' ? '1_day' : (raw === '1_year' ? '1_month' : raw);
-            router.push(`/uptraderank?intervals=${encodeURIComponent(safe)}`)
+            // 直接使用当前选中的时间周期，不需要转换
+            router.push(`/uptraderank?intervals=${encodeURIComponent(raw)}`)
           }}>
             {isUpTradeLoading ? (
               <Loading tip={t('common.loading')} />
