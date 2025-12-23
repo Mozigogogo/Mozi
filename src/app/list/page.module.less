@@ -267,6 +267,12 @@
   top: calc(@headerHeight + @tabOffset);
 }
 
+// 可交易平台页面的表格标题栏（紧贴头部，无间隙）
+.tradeablePlatformGrid {
+  top: @headerHeight !important;
+  box-shadow: none !important; // 移除向上延伸的阴影，因为没有Tab胶囊
+}
+
 // 滚动列表区域
 .scroll {
   height: 100vh;
@@ -319,6 +325,19 @@
   // 隐藏评论/分享胶囊
   .headerNew .actionsCapsule {
     display: none;
+  }
+}
+
+// 可交易平台特殊样式（无Tab切换，表格紧贴头部）
+.tradeablePlatform {
+  .showHeader {
+    height: calc(100vh - @headerHeight) !important;
+    padding-top: @gridTitleHeight !important;
+  }
+  
+  // 可交易平台的背景图填充满整个头部容器
+  .headerNew .headerBg {
+    height: 100% !important;
   }
 }
 

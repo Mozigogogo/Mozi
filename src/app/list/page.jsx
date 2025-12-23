@@ -127,6 +127,9 @@ export default function List() {
     columnWidths: columnWidthsFromUrl || null // 自定义列宽
   };
   
+  // 判断是否为可交易平台页面
+  const isTradeablePlatform = finalInterFace === '/search/symbolfees';
+  
   useEffect(() => {
     init();
     
@@ -457,7 +460,7 @@ export default function List() {
         <>
           {isLoading && <GardenLoading />}
           
-          <div className={`${styles.scrollList} ${isHotSpecial ? styles.hotcoins : ''} ${styles.rankLarge}`}>
+          <div className={`${styles.scrollList} ${isHotSpecial ? styles.hotcoins : ''} ${isTradeablePlatform ? styles.tradeablePlatform : ''} ${styles.rankLarge}`}>
             {/* 头部区域 */}
             {showHeader && (
               <div className={styles.headerNew}>
@@ -507,8 +510,10 @@ export default function List() {
               </div>
             )}
             
-            {/* 评论/分享胶囊 - 有Tab切换的页面不显示（如交易对、交易所排行榜） */}
-            {(!config.selectArr || config.selectArr.length === 0) && (
+            {/* 评论/分享胶囊 - 有Tab切换的页面不显示（如交易对、交易所排行榜），可交易平台页面也不显示 */}
+            {(!config.selectArr || config.selectArr.length === 0) && 
+             !config.rankTitle?.includes('可交易') && 
+             !config.rankTitle?.includes('Tradeable') && (
               <div className={styles.actionsCapsule}>
                 <div
                   className={styles.capsule}
@@ -552,7 +557,9 @@ export default function List() {
         {/* 表格标题栏 */}
         {config.gridTitle.length === 4 ? (
           // 四列标题：使用自定义列宽或默认列宽
-          <div className={`${styles.gridTitle} ${showHeader ? styles.showHeaderGrid : ''} ${config.showRanking ? styles.withRanking : ''}`}>
+          <div 
+            className={`${styles.gridTitle} ${showHeader ? styles.showHeaderGrid : ''} ${config.showRanking ? styles.withRanking : ''} ${isTradeablePlatform ? styles.tradeablePlatformGrid : ''}`}
+          >
             {config.gridTitle.map((colNameItem, colNameIndex) => {
               // 优先使用传入的 columnWidths，否则使用默认值
               const defaultWidths = ['20%', '28%', '25%', '25%'];
