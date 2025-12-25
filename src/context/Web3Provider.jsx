@@ -37,6 +37,12 @@ const modal = createAppKit({
     url: 'https://moziinnovations.com',
     icons: ['https://avatars.githubusercontent.com/u/179229932']
   },
+  themeVariables: {
+    '--apkt-z-index': 9999,
+    '--apkt-accent': '#11B787',
+  },
+  featuredWalletIds: [],
+  enableAnalytics: false,
 })
 
 export default function Web3Provider({ children }) {
@@ -65,6 +71,65 @@ export default function Web3Provider({ children }) {
       }
     }
   }
+
+  // 动态调整 AppKit 弹窗尺寸（穿透 Shadow DOM）
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const observer = new MutationObserver(() => {
+      // 查找所有可能的弹窗元素
+      const modalElements = document.querySelectorAll('appkit-modal, w3m-modal, wcm-modal, wui-modal');
+      
+      modalElements.forEach(modalEl => {
+        if (modalEl && modalEl.shadowRoot) {
+          // 检查是否已经注入过样式
+          if (!modalEl.shadowRoot.querySelector('#custom-modal-size')) {
+            const style = document.createElement('style');
+            style.id = 'custom-modal-size';
+            style.textContent = `
+              /* 桌面端尺寸 */
+              wui-card {
+                max-width: 480px !important;
+                width: 90vw !important;
+                max-height: 85vh !important;
+              }
+              
+              /* 移动端占满屏幕 */
+              @media (max-width: 768px) {
+                wui-card {
+                  max-width: 100vw !important;
+                  width: 100vw !important;
+                  max-height: 90vh !important;
+                  margin: 0 !important;
+                  border-radius: 16px 16px 0 0 !important;
+                }
+                
+                /* 移除外层容器的 padding */
+                wui-flex[data-type="vertical"] {
+                  padding: 0 !important;
+                }
+                
+                /* 调整内容区域 */
+                wui-flex {
+                  width: 100% !important;
+                  max-width: 100% !important;
+                }
+              }
+            `;
+            modalEl.shadowRoot.appendChild(style);
+            console.log('[Web3Provider] 已注入弹窗尺寸样式');
+          }
+        }
+      });
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   // 仅客户端渲染，无需 cookies 初始态
   return (

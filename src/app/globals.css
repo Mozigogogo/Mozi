@@ -303,3 +303,46 @@ body.adm-overflow-hidden {
   font-size: 18px !important;
   margin-right: 8px !important;
 }
+
+/* AppKit (WalletConnect) 钱包弹窗尺寸调整 */
+:root {
+  --apkt-z-index: 9999;
+}
+
+/* 覆盖 AppKit 弹窗容器 */
+appkit-modal,
+w3m-modal,
+wcm-modal,
+wui-modal {
+  --apkt-z-index: 9999 !important;
+  --wcm-z-index: 9999 !important;
+}
+
+/* 直接覆盖弹窗卡片容器 */
+appkit-modal wui-card,
+w3m-modal wui-card,
+wcm-modal wui-card {
+  max-width: 480px !important;
+  width: 90vw !important;
+  max-height: 85vh !important;
+}
+
+/* 移动端适配 - 占满屏幕 */
+@media (max-width: 768px) {
+  appkit-modal wui-card,
+  w3m-modal wui-card,
+  wcm-modal wui-card {
+    max-width: 100vw !important;
+    width: 100vw !important;
+    max-height: 90vh !important;
+    margin: 0 !important;
+    border-radius: 16px 16px 0 0 !important;
+  }
+  
+  appkit-modal,
+  w3m-modal,
+  wcm-modal,
+  wui-modal {
+    padding: 0 !important;
+  }
+}
