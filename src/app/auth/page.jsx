@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAccount } from 'wagmi';
+import { useAccount, useSignMessage } from 'wagmi';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { message } from 'antd';
 import { useTranslation } from 'react-i18next';
@@ -24,6 +24,7 @@ export default function PCLoginPage() {
   
   // Web3 钱包 hooks
   const { address: web3Address, isConnected: web3Connected } = useAccount();
+  const { signMessageAsync } = useSignMessage();
   
   // TON Connect hooks
   const [tonConnectUI] = useTonConnectUI();
@@ -37,6 +38,8 @@ export default function PCLoginPage() {
   const [sendingCode, setSendingCode] = useState(false);
   const [loading, setLoading] = useState(false);
   const countdownTimerRef = useRef(null);
+  const signingRef = useRef(false);
+  const pendingSignRef = useRef(false);
 
   // 清理定时器
   useEffect(() => {
@@ -325,16 +328,105 @@ export default function PCLoginPage() {
         }
       } else {
         // PC 环境：直接打开钱包连接弹窗
-        if (typeof window.__openAppKit === 'function') {
-          window.__openAppKit();
+        if (!web3Connected) {
+          pendingSignRef.current = true;
+          if (typeof window.__openAppKit === 'function') {
+            window.__openAppKit();
+          } else {
+            console.error('AppKit 未初始化');
+            message.warning(t('auth.walletConnecting'));
+          }
         } else {
-          console.error('AppKit 未初始化');
-          message.warning(t('auth.walletConnecting'));
+          // 已连接，直接触发签名登录
+          await triggerWeb3SignatureLogin();
         }
       }
     } catch (error) {
       console.error('钱包连接错误:', error);
       message.error(t('auth.walletConnectFailed'));
+    }
+  };
+
+  // Web3 钱包签名登录
+  const triggerWeb3SignatureLogin = async () => {
+    if (signingRef.current) return;
+    signingRef.current = true;
+    
+    try {
+      const currentAddress = web3Address;
+      if (!currentAddress) {
+        message.warning(t('auth.connectWalletFirst') || '请先连接钱包');
+        return;
+      }
+
+      const nonce = Math.random().toString(36).slice(2) + Date.now();
+      const domain = typeof location !== 'undefined' ? location.host : 'moziinnovations.com';
+      const statement = 'Sign in to Mozi';
+      const messageToSign = `Domain: ${domain}\nAddress: ${currentAddress}\nNonce: ${nonce}\nTimestamp: ${new Date().toISOString()}\nStatement: ${statement}`;
+      
+      const signature = await signMessageAsync({ message: messageToSign });
+
+      const res = await request({
+        url: Interface.MOZI_LOGIN,
+        method: 'POST',
+        data: {
+          type: 'login',
+          chanel: 3,  // 3-钱包登录
+          address: currentAddress,
+          signatrue: signature,  // 注意：后端字段名为 signatrue
+          channel: 'pc'
+        },
+      });
+
+      if (res?.data?.token) {
+        localStorage.setItem('token', res.data.token);
+        if (res?.data?.user) {
+          const userInfoWithSubscribe = {
+            ...res.data.user,
+            subscribeAnnouncement: res.data.subscribeAnnouncement
+          };
+          localStorage.setItem('userInfo', JSON.stringify(userInfoWithSubscribe));
+        }
+        if (res?.data?.userId) {
+          localStorage.setItem('userId', res.data.userId);
+        }
+        
+        // 获取用户详细信息
+        request({
+          url: Interface.USER_DATA_INFO,
+          method: 'GET'
+        }).then((dataInfoRes) => {
+          if (dataInfoRes?.data) {
+            localStorage.setItem('userDataInfo', JSON.stringify(dataInfoRes.data));
+          }
+        }).catch((error) => {
+          console.error('获取用户详细信息失败:', error);
+        });
+        
+        // 完成每日登录任务
+        request({
+          url: Interface.TASK_COMPLETE,
+          method: 'POST',
+          data: { taskCode: 'DAILY_LOGIN' }
+        }).catch((error) => {
+          console.error('每日登录任务上报失败:', error);
+        });
+        
+        message.success(t('auth.loginSuccess'));
+        router.push('/');
+      } else {
+        const errorMessage = res?.errorMsg || res?.message || t('auth.loginFailed');
+        message.error(errorMessage);
+      }
+    } catch (error) {
+      console.error('钱包签名登录失败:', error);
+      if (error?.message?.includes('User rejected')) {
+        message.warning(t('auth.signatureCancelled') || '签名已取消');
+      } else {
+        message.error(t('auth.walletConnectFailed'));
+      }
+    } finally {
+      signingRef.current = false;
     }
   };
 
@@ -355,11 +447,12 @@ export default function PCLoginPage() {
     }
   };
 
-  // 监听 Web3 钱包连接状态
+  // 监听 Web3 钱包连接状态 - 连接后自动触发签名登录
   useEffect(() => {
-    if (web3Connected && web3Address) {
-      console.log('Web3 钱包已连接:', web3Address);
-      // TODO: 自动进行钱包登录
+    if (pendingSignRef.current && web3Connected && web3Address) {
+      pendingSignRef.current = false;
+      console.log('Web3 钱包已连接，触发签名登录:', web3Address);
+      triggerWeb3SignatureLogin();
     }
   }, [web3Connected, web3Address]);
 

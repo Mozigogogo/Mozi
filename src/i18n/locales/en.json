@@ -1155,7 +1155,8 @@
       "videoGuides": "Video Guides"
     },
     "user": {
-      "notLoggedIn": "Not Logged In"
+      "notLoggedIn": "Not Logged In",
+      "pcUser": "PC User"
     }
   }
 }

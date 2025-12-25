@@ -42,6 +42,22 @@ export default function PCLayout({ children }) {
 
   useEffect(() => {
     const syncUserInfo = () => {
+      // 优先从 userDataInfo 中读取用户信息
+      const storedUserDataInfo = localStorage.getItem('userDataInfo');
+      if (storedUserDataInfo) {
+        try {
+          const parsed = JSON.parse(storedUserDataInfo);
+          // userDataInfo 中包含 userInfo 对象
+          if (parsed.userInfo) {
+            setUserInfo(parsed.userInfo);
+            return;
+          }
+        } catch (e) {
+          console.error('Parse userDataInfo error:', e);
+        }
+      }
+      
+      // 回退：从 userInfo 中读取
       const storedUser = localStorage.getItem('userInfo');
       if (storedUser) {
         try {
@@ -346,7 +362,12 @@ export default function PCLayout({ children }) {
           <div className={styles.user}>
             <Avatar size={40} src={userInfo?.avatar} icon={<UserOutlined />} />
             {!collapsed && (
-              <Text strong className={styles.userName}>{userInfo?.nickName || userInfo?.nickname || t('pcLayout.user.notLoggedIn')}</Text>
+              <Text strong className={styles.userName}>
+                {userInfo 
+                  ? (userInfo.nickName || userInfo.nickname || t('pcLayout.user.pcUser'))
+                  : t('pcLayout.user.notLoggedIn')
+                }
+              </Text>
             )}
           </div>
 

@@ -1154,7 +1154,8 @@
       "videoGuides": "Video Guides"
     },
     "user": {
-      "notLoggedIn": "未登录"
+      "notLoggedIn": "未登录",
+      "pcUser": "PC用户"
     }
   }
 }
