@@ -13,6 +13,7 @@ import Image from 'next/image';
 import PCSearchResults from '../PCSearchResults';
 import PCFindContent from '../PCFindContent';
 import PCCommunityContent from '../PCCommunityContent';
+import PCLoginModal from '../PCLoginModal';
 import request from '@/utils/request';
 import Interface from '@/utils/constants';
 import styles from './index.module.less';
@@ -33,6 +34,7 @@ export default function PCLayout({ children }) {
   const [userInfo, setUserInfo] = useState(null);
   const [collapsed, setCollapsed] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   
   // 搜索框状态
   const [searchValue, setSearchValue] = useState('');
@@ -359,7 +361,12 @@ export default function PCLayout({ children }) {
           trigger={null}
         >
           {/* 用户信息 */}
-          <div className={styles.user}>
+          <div 
+            className={styles.user}
+            onClick={() => setShowLoginModal(true)}
+            style={{ cursor: 'pointer', position: 'relative' }}
+            id="user-info-trigger"
+          >
             <Avatar size={40} src={userInfo?.avatar} icon={<UserOutlined />} />
             {!collapsed && (
               <Text strong className={styles.userName}>
@@ -435,6 +442,39 @@ export default function PCLayout({ children }) {
         </Content>
       </Layout>
 
+      {/* 登录弹窗 */}
+      <PCLoginModal
+        open={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        collapsed={collapsed}
+        onSuccess={() => {
+          // 登录成功后刷新用户信息
+          const syncUserInfo = () => {
+            const storedUserDataInfo = localStorage.getItem('userDataInfo');
+            if (storedUserDataInfo) {
+              try {
+                const parsed = JSON.parse(storedUserDataInfo);
+                if (parsed.userInfo) {
+                  setUserInfo(parsed.userInfo);
+                  return;
+                }
+              } catch (e) {
+                console.error('Parse userDataInfo error:', e);
+              }
+            }
+            
+            const storedUser = localStorage.getItem('userInfo');
+            if (storedUser) {
+              try {
+                setUserInfo(JSON.parse(storedUser));
+              } catch (e) {
+                console.error('Parse user info error:', e);
+              }
+            }
+          };
+          syncUserInfo();
+        }}
+      />
     </Layout>
   );
 }

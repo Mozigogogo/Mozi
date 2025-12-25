@@ -1,0 +1,264 @@
+/* 登录面板 - 相对于左上角用户信息定位 */
+.loginPanel {
+  position: fixed;
+  top: 66px; /* Header高度64px + 间距6px */
+  left: 180px; /* Sider宽度200px + 间距6px */
+  width: 483px;
+  max-height: calc(100vh - 100px);
+  background: #FFFFFF;
+  box-shadow: 0px 5px 18px 3px rgba(167, 180, 176, 0.13);
+  border-radius: 10px;
+  border: 1px solid #EFEFEF;
+  z-index: 1001;
+  overflow: hidden; /* 隐藏所有滚动条 */
+  padding: 24px;
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Sider收起时的定位 */
+.loginPanelCollapsed {
+  left: 86px; /* 收起后的Sider宽度80px + 间距6px */
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.loginModal {
+  :global {
+    .ant-modal-content {
+      border-radius: 16px;
+      padding: 0;
+    }
+
+    .ant-modal-body {
+      padding: 24px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+  }
+}
+
+/* 已登录状态 - 用户头像区域 */
+.userHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.avatar {
+  margin-bottom: 12px;
+}
+
+.userName {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* 已登录内容区域 */
+.loggedInContent {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 用户统计 */
+.userStats {
+  display: flex;
+  justify-content: space-around;
+  padding: 16px 0;
+  margin-bottom: 16px;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  position: relative;
+  
+  /* 添加右侧竖线分隔符 */
+  &:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 48px;
+    background: #EFEFEF;
+  }
+}
+
+.statValue {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.statLabel {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* 邀请码区域 */
+.inviteCodeSection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  margin-bottom: 16px;
+}
+
+.inviteLabel {
+  font-size: 14px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.inviteCodeWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 159px;
+  height: 36px;
+  background: #F5F5F5;
+  border-radius: 18px;
+  padding: 0 12px;
+}
+
+.inviteCode {
+  font-family: Microsoft YaHei;
+  font-weight: 400;
+  font-size: 14px;
+  color: #666666;
+  line-height: 36px;
+  white-space: nowrap;
+}
+
+.copyButton {
+  padding: 0;
+  height: auto;
+  color: #11B787;
+  font-size: 12px;
+  
+  &:hover {
+    color: #0fa076;
+  }
+}
+
+.signInButton {
+  margin-left: auto;
+  width: 136px;
+  height: 36px;
+  background: transparent;
+  border-radius: 18px;
+  border: 1px solid #C9C9C9;
+  color: var(--text-primary);
+  
+  &:hover {
+    border-color: #11B787;
+    color: #11B787;
+  }
+}
+
+/* 积分卡片 */
+.pointsCard {
+  padding: 20px;
+  background: linear-gradient(135deg, #11B787 0%, #0fa076 100%);
+  border-radius: 12px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.pointsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.pointsTitle {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.pointsDetail {
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0.9;
+  
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.pointsValue {
+  font-size: 48px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.pointsInfo {
+  font-size: 14px;
+  margin-bottom: 8px;
+  opacity: 0.9;
+}
+
+.pointsRank {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* 底部菜单 - 与移动端一致 */
+.footerMenu {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-top: 8px;
+  margin-top: 16px;
+}
+
+.footerMenuItem {
+  display: flex;
+  align-items: center;
+  padding: 16px 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+  min-height: 56px;
+  
+  &:hover {
+    background: rgba(17, 183, 135, 0.05);
+  }
+}
+
+.footerMenuIcon {
+  width: 22px;
+  height: 22px;
+  margin-right: 12px;
+}
+
+.footerMenuText {
+  flex: 1;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.footerMenuArrow {
+  color: var(--text-tertiary);
+  font-size: 14px;
+  margin-left: 8px;
+}
