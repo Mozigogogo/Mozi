@@ -571,12 +571,42 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
             {t('user.pointsDetail') || '积分榜单'} <RightOutlined />
           </span>
         </div>
-        <div className={styles.pointsValue}>{userDataInfo?.points || 2000}</div>
-        <div className={styles.pointsInfo}>
-          <span>{t('user.todayPoints') || '昨日积分'}: +{userDataInfo?.todayPoints || 100}</span>
+        <div className={styles.pointsValueRow}>
+          <div className={styles.pointsValue}>{userDataInfo?.points || 2000}</div>
+          <div className={styles.pointsInfo}>
+            <span>{t('user.todayPoints') || '昨日积分'}: +{userDataInfo?.todayPoints || 100}</span>
+          </div>
         </div>
         <div className={styles.pointsRank}>
-          {t('user.currentRank') || '当前排名'}: {t('user.rankTop') || '总榜第'} {userDataInfo?.rank || 23} {t('user.rankSuffix') || '名'}
+          {t('user.currentRank') || '当前排名'}: {t('user.rankTop') || '总榜第'} {userDataInfo?.rank || 23} {t('user.rankSuffix')}
+        </div>
+      </div>
+
+      {/* 操作卡片 */}
+      <div className={styles.actionCards}>
+        <div className={styles.actionCard}>
+          <div className={styles.actionIcon}>
+            <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/feedback%402x.png" alt="产品功能反馈" />
+          </div>
+          <div className={styles.actionTextRow}>
+            <div className={styles.actionContent}>
+              <div className={styles.actionTitle}>{t('user.productFeedback') || '产品功能反馈'}</div>
+              <div className={styles.actionDesc}>{t('user.feedbackDesc') || '留言你想要的功能'}</div>
+            </div>
+            <RightOutlined className={styles.actionArrow} />
+          </div>
+        </div>
+        <div className={styles.actionCard}>
+          <div className={styles.actionIcon}>
+            <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/me-share%402x.png" alt="推荐朋友" />
+          </div>
+          <div className={styles.actionTextRow}>
+            <div className={styles.actionContent}>
+              <div className={styles.actionTitle}>{t('user.recommendFriend') || '推荐朋友'}</div>
+              <div className={styles.actionDesc}>{t('user.shareYourLove') || '分享你的喜爱'}</div>
+            </div>
+            <RightOutlined className={styles.actionArrow} />
+          </div>
         </div>
       </div>
 
