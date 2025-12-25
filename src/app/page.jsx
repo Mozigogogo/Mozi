@@ -113,6 +113,21 @@ export default function HomePage() {
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
   
+  // PC端未登录跳转到登录页
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    // 检测是否为PC端
+    if (window.innerWidth >= 1024) {
+      // 检查是否已登录
+      const token = localStorage.getItem('token');
+      if (!token) {
+        // 未登录，跳转到登录页
+        router.push('/auth');
+      }
+    }
+  }, [router]);
+  
   // 根据语言选择 banner 图片
   const HOME_BANNERS = isEN ? HOME_BANNERS_EN : HOME_BANNERS_ZH;
   
