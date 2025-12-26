@@ -532,15 +532,15 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
       {/* 用户统计 */}
       <div className={styles.userStats}>
         <div className={styles.statItem}>
-          <div className={styles.statValue}>{userDataInfo?.dynamicCount || 3}</div>
+          <div className={styles.statValue}>{isLoggedIn ? (userDataInfo?.dynamicCount || 0) : 0}</div>
           <div className={styles.statLabel}>{t('user.dynamics') || '动态'}</div>
         </div>
         <div className={styles.statItem}>
-          <div className={styles.statValue}>{userDataInfo?.followCount || 3}</div>
+          <div className={styles.statValue}>{isLoggedIn ? (userDataInfo?.followCount || 0) : 0}</div>
           <div className={styles.statLabel}>{t('user.following') || '关注'}</div>
         </div>
         <div className={styles.statItem}>
-          <div className={styles.statValue}>{userDataInfo?.fansCount || 3}</div>
+          <div className={styles.statValue}>{isLoggedIn ? (userDataInfo?.fansCount || 0) : 0}</div>
           <div className={styles.statLabel}>{t('user.followers') || '粉丝'}</div>
         </div>
       </div>
@@ -549,17 +549,24 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
       <div className={styles.inviteCodeSection}>
         <span className={styles.inviteLabel}>{t('user.inviteCode') || '邀请码'}</span>
         <div className={styles.inviteCodeWrapper}>
-          <span className={styles.inviteCode}>{userInfo?.inviteCode || userDataInfo?.inviteCode || 'hSH7c7'}</span>
+          <span className={styles.inviteCode}>
+            {isLoggedIn ? (userInfo?.inviteCode || userDataInfo?.inviteCode || '--') : '--'}
+          </span>
           <Button 
             type="link" 
             className={styles.copyButton}
             onClick={handleCopyInviteCode}
+            disabled={!isLoggedIn}
           >
             {t('common.copy') || '复制'}
           </Button>
         </div>
-        <Button type="default" className={styles.signInButton}>
-          {t('user.signIn') || '签到'}
+        <Button 
+          type="default" 
+          className={`${styles.signInButton} ${!isLoggedIn ? styles.loginButton : ''}`}
+          onClick={isLoggedIn ? undefined : () => router.push('/auth')}
+        >
+          {isLoggedIn ? (t('user.signIn') || '签到') : (t('auth.login') || '登录')}
         </Button>
       </div>
 
@@ -572,13 +579,21 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
           </span>
         </div>
         <div className={styles.pointsValueRow}>
-          <div className={styles.pointsValue}>{userDataInfo?.points || 2000}</div>
+          <div className={styles.pointsValue}>{isLoggedIn ? (userDataInfo?.points || 0) : 0}</div>
           <div className={styles.pointsInfo}>
-            <span>{t('user.todayPoints') || '昨日积分'}: +{userDataInfo?.todayPoints || 100}</span>
+            <span>{t('user.todayPoints') || '昨日积分'}: +{isLoggedIn ? (userDataInfo?.todayPoints || 0) : 0}</span>
           </div>
         </div>
         <div className={styles.pointsRank}>
-          {t('user.currentRank') || '当前排名'}: {t('user.rankTop') || '总榜第'} {userDataInfo?.rank || 23} {t('user.rankSuffix')}
+          {isLoggedIn ? (
+            <>
+              当前排名：{t('user.rankTop') || '总榜第'} {userDataInfo?.rank || '--'} {userDataInfo?.rank && (t('user.rankSuffix') || '名')}
+            </>
+          ) : (
+            <>
+              当前排名：--
+            </>
+          )}
         </div>
       </div>
 
@@ -630,19 +645,20 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
           <RightOutlined className={styles.footerMenuArrow} />
         </div>
         
-        <div className={styles.footerMenuItem} onClick={handleLogout}>
-          <LogoutOutlined className={styles.footerMenuIcon} style={{ fontSize: '22px' }} />
-          <span className={styles.footerMenuText}>{t('user.logout')}</span>
-          <RightOutlined className={styles.footerMenuArrow} />
-        </div>
+        {isLoggedIn && (
+          <div className={styles.footerMenuItem} onClick={handleLogout}>
+            <LogoutOutlined className={styles.footerMenuIcon} style={{ fontSize: '22px' }} />
+            <span className={styles.footerMenuText}>{t('user.logout')}</span>
+            <RightOutlined className={styles.footerMenuArrow} />
+          </div>
+        )}
       </div>
     </div>
   );
 
-  // 渲染未登录状态 - 不应该显示此弹窗
+  // 渲染未登录状态 - 显示与已登录相同的内容
   const renderLoginContent = () => {
-    // 未登录状态不应该打开此弹窗，直接返回null
-    return null;
+    return renderLoggedInContent();
   };
 
   // 点击外部关闭弹窗
