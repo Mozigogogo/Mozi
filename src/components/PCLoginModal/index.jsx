@@ -526,23 +526,130 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
     setInviteCode('');
   };
 
+  // 用户统计配置
+  const userStatsItems = [
+    {
+      key: 'dynamics',
+      dataKey: 'dynamicCount',
+      label: 'user.dynamics',
+      fallback: '动态'
+    },
+    {
+      key: 'following',
+      dataKey: 'followCount',
+      label: 'user.following',
+      fallback: '关注'
+    },
+    {
+      key: 'followers',
+      dataKey: 'fansCount',
+      label: 'user.followers',
+      fallback: '粉丝'
+    }
+  ];
+
+  // 操作卡片配置
+  const actionCardItems = [
+    {
+      key: 'feedback',
+      icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/feedback%402x.png',
+      title: 'user.productFeedback',
+      titleFallback: '产品功能反馈',
+      desc: 'user.feedbackDesc',
+      descFallback: '留言你想要的功能',
+      alt: '产品功能反馈',
+      onClick: () => {
+        // 跳转到反馈页面或打开反馈表单
+        router.push('/feedback');
+      }
+    },
+    {
+      key: 'recommend',
+      icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/me-share%402x.png',
+      title: 'user.recommendFriend',
+      titleFallback: '推荐朋友',
+      desc: 'user.shareYourLove',
+      descFallback: '分享你的喜爱',
+      alt: '推荐朋友',
+      onClick: () => {
+        // 打开分享功能
+        const inviteCode = userInfo?.inviteCode || userDataInfo?.inviteCode || '';
+        const shareUrl = `${window.location.origin}?invite=${inviteCode}`;
+        const shareText = `加入 MoziInnovations，使用我的邀请码：${inviteCode}`;
+        
+        // 尝试使用 Web Share API
+        if (navigator.share) {
+          navigator.share({
+            title: 'MoziInnovations',
+            text: shareText,
+            url: shareUrl
+          }).catch(err => console.log('分享取消', err));
+        } else {
+          // 降级方案：复制链接
+          navigator.clipboard.writeText(shareUrl);
+          message.success(t('common.copySuccess') || '链接已复制到剪贴板');
+        }
+      }
+    }
+  ];
+
+  // 底部菜单配置
+  const footerMenuItems = [
+    {
+      key: 'contact',
+      icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/me-contact%402x.png',
+      label: 'user.contactSupport',
+      alt: '联系客服',
+      onClick: () => {
+        // 打开客服对话或跳转到客服页面
+        window.open('https://t.me/your_support_channel', '_blank');
+      }
+    },
+    {
+      key: 'social',
+      icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/social%402x.png',
+      label: 'user.findUsOnSocial',
+      alt: '社交媒体',
+      onClick: () => {
+        // 跳转到社交媒体页面
+        router.push('/social');
+      }
+    },
+    {
+      key: 'donate',
+      icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/donate%402x.png',
+      label: 'user.donate',
+      alt: '捐赠',
+      onClick: () => {
+        // 跳转到捐赠页面
+        router.push('/donate');
+      }
+    },
+    {
+      key: 'logout',
+      icon: 'logout', // 特殊标记，使用 LogoutOutlined 组件
+      label: 'user.logout',
+      alt: '退出登录',
+      onClick: handleLogout,
+      showOnlyWhenLoggedIn: true // 只在登录时显示
+    }
+  ];
+
   // 渲染已登录状态
   const renderLoggedInContent = () => (
     <div className={styles.loggedInContent}>
       {/* 用户统计 */}
       <div className={styles.userStats}>
-        <div className={styles.statItem}>
-          <div className={styles.statValue}>{isLoggedIn ? (userDataInfo?.dynamicCount || 0) : 0}</div>
-          <div className={styles.statLabel}>{t('user.dynamics') || '动态'}</div>
-        </div>
-        <div className={styles.statItem}>
-          <div className={styles.statValue}>{isLoggedIn ? (userDataInfo?.followCount || 0) : 0}</div>
-          <div className={styles.statLabel}>{t('user.following') || '关注'}</div>
-        </div>
-        <div className={styles.statItem}>
-          <div className={styles.statValue}>{isLoggedIn ? (userDataInfo?.fansCount || 0) : 0}</div>
-          <div className={styles.statLabel}>{t('user.followers') || '粉丝'}</div>
-        </div>
+        {userStatsItems.map(item => (
+          <div key={item.key} className={styles.statItem}>
+            <div className={styles.statValue}>
+              {isLoggedIn ? (userDataInfo?.[item.dataKey] || 0) : 0}
+            </div>
+            <div className={styles.statLabel}>
+              {t(item.label) || item.fallback}
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* 邀请码 */}
@@ -599,59 +706,50 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
 
       {/* 操作卡片 */}
       <div className={styles.actionCards}>
-        <div className={styles.actionCard}>
-          <div className={styles.actionIcon}>
-            <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/feedback%402x.png" alt="产品功能反馈" />
-          </div>
-          <div className={styles.actionTextRow}>
-            <div className={styles.actionContent}>
-              <div className={styles.actionTitle}>{t('user.productFeedback') || '产品功能反馈'}</div>
-              <div className={styles.actionDesc}>{t('user.feedbackDesc') || '留言你想要的功能'}</div>
+        {actionCardItems.map(item => (
+          <div key={item.key} className={styles.actionCard} onClick={item.onClick}>
+            <div className={styles.actionIcon}>
+              <img src={item.icon} alt={item.alt} />
             </div>
-            <RightOutlined className={styles.actionArrow} />
-          </div>
-        </div>
-        <div className={styles.actionCard}>
-          <div className={styles.actionIcon}>
-            <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/me-share%402x.png" alt="推荐朋友" />
-          </div>
-          <div className={styles.actionTextRow}>
-            <div className={styles.actionContent}>
-              <div className={styles.actionTitle}>{t('user.recommendFriend') || '推荐朋友'}</div>
-              <div className={styles.actionDesc}>{t('user.shareYourLove') || '分享你的喜爱'}</div>
+            <div className={styles.actionTextRow}>
+              <div className={styles.actionContent}>
+                <div className={styles.actionTitle}>
+                  {t(item.title) || item.titleFallback}
+                </div>
+                <div className={styles.actionDesc}>
+                  {t(item.desc) || item.descFallback}
+                </div>
+              </div>
+              <RightOutlined className={styles.actionArrow} />
             </div>
-            <RightOutlined className={styles.actionArrow} />
           </div>
-        </div>
+        ))}
       </div>
 
       {/* 底部菜单 */}
       <div className={styles.footerMenu}>
-        <div className={styles.footerMenuItem}>
-          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/me-contact%402x.png" alt="联系客服" className={styles.footerMenuIcon} />
-          <span className={styles.footerMenuText}>{t('user.contactSupport')}</span>
-          <RightOutlined className={styles.footerMenuArrow} />
-        </div>
-        
-        <div className={styles.footerMenuItem}>
-          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/social%402x.png" alt="社交媒体" className={styles.footerMenuIcon} />
-          <span className={styles.footerMenuText}>{t('user.findUsOnSocial')}</span>
-          <RightOutlined className={styles.footerMenuArrow} />
-        </div>
-        
-        <div className={styles.footerMenuItem}>
-          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/donate%402x.png" alt="捐赠" className={styles.footerMenuIcon} />
-          <span className={styles.footerMenuText}>{t('user.donate')}</span>
-          <RightOutlined className={styles.footerMenuArrow} />
-        </div>
-        
-        {isLoggedIn && (
-          <div className={styles.footerMenuItem} onClick={handleLogout}>
-            <LogoutOutlined className={styles.footerMenuIcon} style={{ fontSize: '22px' }} />
-            <span className={styles.footerMenuText}>{t('user.logout')}</span>
-            <RightOutlined className={styles.footerMenuArrow} />
-          </div>
-        )}
+        {footerMenuItems
+          .filter(item => !item.showOnlyWhenLoggedIn || isLoggedIn)
+          .map(item => (
+            <div 
+              key={item.key} 
+              className={styles.footerMenuItem}
+              onClick={item.onClick}
+            >
+              {item.icon === 'logout' ? (
+                <LogoutOutlined className={styles.footerMenuIcon} style={{ fontSize: '22px' }} />
+              ) : (
+                <img 
+                  src={item.icon} 
+                  alt={item.alt} 
+                  className={styles.footerMenuIcon} 
+                />
+              )}
+              <span className={styles.footerMenuText}>{t(item.label)}</span>
+              <RightOutlined className={styles.footerMenuArrow} />
+            </div>
+          ))
+        }
       </div>
     </div>
   );
