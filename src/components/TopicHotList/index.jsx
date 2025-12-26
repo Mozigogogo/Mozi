@@ -187,51 +187,60 @@ export default function TopicHotList({ isPC = false }) {
     );
   };
 
+  // 投资机会配置
+  const opportunityItems = [
+    {
+      key: 'coin',
+      title: 'home.hotCoins',
+      route: '/hotrank?type=coin',
+      loading: coinLoading,
+      data: hotCoin,
+      mapProps: { name: 'coin', desc: 'priceChangePercent' }
+    },
+    {
+      key: 'contract',
+      title: 'home.hotContracts',
+      route: '/hotrank?type=contract',
+      loading: contractLoading,
+      data: hotContract,
+      mapProps: { name: 'coin', desc: 'priceChangePercent' }
+    },
+    {
+      key: 'industry',
+      title: 'home.hotSectors',
+      route: '/hotrank?type=industry',
+      loading: industryLoading,
+      data: hotIndustry,
+      mapProps: { name: 'section', desc: 'changes' }
+    }
+  ];
+
   // 渲染投资机会
   const renderOpportunity = () => {
     return (
       <div className={styles.opportunityWrap}>
-        {/* 热门币种 */}
-        <div className={styles.treemapBox} onClick={() => router.push('/hotrank?type=coin')}>
-          <div className={styles.treemapTitle}>{t('home.hotCoins')}</div>
-          <div className={styles.treemapContent}>
-            {coinLoading ? (
-              <div className={styles.loadingWrap}>
-                <SpinLoading color='#11B787' />
-              </div>
-            ) : (
-              <MoziTreeMap list={hotCoin} name='coin' desc='priceChangePercent' />
-            )}
+        {opportunityItems.map(item => (
+          <div 
+            key={item.key}
+            className={styles.treemapBox} 
+            onClick={() => router.push(item.route)}
+          >
+            <div className={styles.treemapTitle}>{t(item.title)}</div>
+            <div className={styles.treemapContent}>
+              {item.loading ? (
+                <div className={styles.loadingWrap}>
+                  <SpinLoading color='#11B787' />
+                </div>
+              ) : (
+                <MoziTreeMap 
+                  list={item.data} 
+                  name={item.mapProps.name} 
+                  desc={item.mapProps.desc} 
+                />
+              )}
+            </div>
           </div>
-        </div>
-        
-        {/* 热门合约 */}
-        <div className={styles.treemapBox} onClick={() => router.push('/hotrank?type=contract')}>
-          <div className={styles.treemapTitle}>{t('home.hotContracts')}</div>
-          <div className={styles.treemapContent}>
-            {contractLoading ? (
-              <div className={styles.loadingWrap}>
-                <SpinLoading color='#11B787' />
-              </div>
-            ) : (
-              <MoziTreeMap list={hotContract} name='coin' desc='priceChangePercent' />
-            )}
-          </div>
-        </div>
-        
-        {/* 热门板块 */}
-        <div className={styles.treemapBox} onClick={() => router.push('/hotrank?type=industry')}>
-          <div className={styles.treemapTitle}>{t('home.hotSectors')}</div>
-          <div className={styles.treemapContent}>
-            {industryLoading ? (
-              <div className={styles.loadingWrap}>
-                <SpinLoading color='#11B787' />
-              </div>
-            ) : (
-              <MoziTreeMap list={hotIndustry} name='section' desc='changes' />
-            )}
-          </div>
-        </div>
+        ))}
       </div>
     );
   };

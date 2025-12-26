@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Row, Col, Card, Tabs, Table, Tag, Carousel } from 'antd';
 import { 
   RiseOutlined, 
@@ -58,35 +58,76 @@ export default function PCHome() {
     return () => clearInterval(timer);
   }, []);
 
-  // 合约专区数据
-  const derivativeItems = [
-    { icon: derivativeIcons.bullBear, title: t('pcHome.derivatives.longShort'), subtitle: t('pcHome.derivatives.longShortSub'), path: '/putcallratio' },
-    { icon: derivativeIcons.inventory, title: t('pcHome.derivatives.openInterest'), subtitle: t('pcHome.derivatives.openInterestSub'), path: '/positionsize' },
-    { icon: derivativeIcons.fundingRate, title: t('pcHome.derivatives.fundingRate'), subtitle: t('pcHome.derivatives.fundingRateSub'), path: '/fundingrate' },
-    { icon: derivativeIcons.volume, title: t('pcHome.derivatives.volume'), subtitle: t('pcHome.derivatives.volumeSub'), path: '/tradevol' },
-  ];
+  // 合约专区数据 - 使用 useMemo 优化
+  const derivativeItems = useMemo(() => [
+    { 
+      key: 'longShort',
+      icon: derivativeIcons.bullBear, 
+      title: t('pcHome.derivatives.longShort'), 
+      subtitle: t('pcHome.derivatives.longShortSub'), 
+      path: '/putcallratio' 
+    },
+    { 
+      key: 'openInterest',
+      icon: derivativeIcons.inventory, 
+      title: t('pcHome.derivatives.openInterest'), 
+      subtitle: t('pcHome.derivatives.openInterestSub'), 
+      path: '/positionsize' 
+    },
+    { 
+      key: 'fundingRate',
+      icon: derivativeIcons.fundingRate, 
+      title: t('pcHome.derivatives.fundingRate'), 
+      subtitle: t('pcHome.derivatives.fundingRateSub'), 
+      path: '/fundingrate' 
+    },
+    { 
+      key: 'volume',
+      icon: derivativeIcons.volume, 
+      title: t('pcHome.derivatives.volume'), 
+      subtitle: t('pcHome.derivatives.volumeSub'), 
+      path: '/tradevol' 
+    },
+  ], [t]);
 
-  // 榜单 Tab 配置
-  const rankTabs = [
-    { key: 'zixuan', label: t('pcHome.ranks.self') },
-    { key: 'zhangfu', label: t('pcHome.ranks.gainers') },
-    { key: 'diefu', label: t('pcHome.ranks.losers') },
-    { key: 'zhenfu', label: t('pcHome.ranks.volatility') },
-    { key: 'chengjiaoe', label: t('pcHome.ranks.volume') },
-    { key: 'xinbi', label: t('pcHome.ranks.newCoins') },
-    { key: 'biaosheng', label: t('pcHome.ranks.surging') },
-  ];
-
-  // 榜单接口映射
-  const interfaceMap = {
-    zixuan: Interface.COIN_SELF,
-    zhangfu: Interface.price_change,
-    diefu: Interface.PRICE_DOWNCHANGE,
-    zhenfu: Interface.price_wave,
-    chengjiaoe: Interface.coin_trade,
-    xinbi: Interface.NEW_COIN,
-    biaosheng: Interface.PRICE_UPTRADE,
-  };
+  // 榜单 Tab 配置 - 使用 useMemo 优化，整合接口映射
+  const rankTabs = useMemo(() => [
+    { 
+      key: 'zixuan', 
+      label: t('pcHome.ranks.self'),
+      interface: Interface.COIN_SELF
+    },
+    { 
+      key: 'zhangfu', 
+      label: t('pcHome.ranks.gainers'),
+      interface: Interface.price_change
+    },
+    { 
+      key: 'diefu', 
+      label: t('pcHome.ranks.losers'),
+      interface: Interface.PRICE_DOWNCHANGE
+    },
+    { 
+      key: 'zhenfu', 
+      label: t('pcHome.ranks.volatility'),
+      interface: Interface.price_wave
+    },
+    { 
+      key: 'chengjiaoe', 
+      label: t('pcHome.ranks.volume'),
+      interface: Interface.coin_trade
+    },
+    { 
+      key: 'xinbi', 
+      label: t('pcHome.ranks.newCoins'),
+      interface: Interface.NEW_COIN
+    },
+    { 
+      key: 'biaosheng', 
+      label: t('pcHome.ranks.surging'),
+      interface: Interface.PRICE_UPTRADE
+    },
+  ], [t]);
 
   // 表格列配置
   const columns = [
@@ -143,7 +184,9 @@ export default function PCHome() {
   const fetchRankData = async (rankType = 'zhangfu') => {
     setRankLoading(true);
     try {
-      const apiUrl = interfaceMap[rankType] || Interface.price_change;
+      // 从配置中查找对应的接口
+      const tabConfig = rankTabs.find(tab => tab.key === rankType);
+      const apiUrl = tabConfig?.interface || Interface.price_change;
       
       // 根据不同榜单类型设置不同的请求参数
       let requestData = {};
@@ -232,8 +275,8 @@ export default function PCHome() {
 
       {/* 合约专区 - 4列 */}
       <Row gutter={16} className={styles.derivativeRow}>
-        {derivativeItems.map((item, idx) => (
-          <Col span={6} key={idx}>
+        {derivativeItems.map((item) => (
+          <Col span={6} key={item.key}>
             <Card 
               className={styles.derivativeCard} 
               hoverable
