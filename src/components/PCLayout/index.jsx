@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Layout, Menu, Avatar, Badge, Button, Typography, ConfigProvider } from 'antd';
 import {
   UserOutlined,
@@ -165,8 +165,8 @@ export default function PCLayout({ children }) {
     );
   };
 
-  // 菜单项配置
-  const menuItems = [
+  // 菜单项配置 - 使用 useMemo 根据折叠状态动态生成
+  const menuItems = useMemo(() => [
     { 
       key: '/', 
       icon: <CustomIcon 
@@ -200,7 +200,7 @@ export default function PCLayout({ children }) {
     { type: 'divider' },
     {
       key: 'mine',
-      label: t('pcLayout.menu.mine'),
+      label: collapsed ? '' : t('pcLayout.menu.mine'), // 折叠时隐藏分组标签
       type: 'group',
       children: [
         { 
@@ -248,11 +248,11 @@ export default function PCLayout({ children }) {
     { type: 'divider' },
     {
       key: 'coinlist',
-      label: t('pcLayout.menu.createdLists'),
+      label: collapsed ? '' : t('pcLayout.menu.createdLists'), // 折叠时隐藏分组标签
       type: 'group',
       children: [],
     },
-  ];
+  ], [t, collapsed, activeContent, pathname]); // 添加 collapsed 作为依赖
 
   const handleMenuClick = ({ key }) => {
     console.log('Menu clicked:', key);
@@ -399,6 +399,7 @@ export default function PCLayout({ children }) {
               items={menuItems}
               onClick={handleMenuClick}
               style={{ borderRight: 0 }}
+              inlineCollapsed={collapsed}
             />
           </ConfigProvider>
 
