@@ -586,15 +586,15 @@ export default function PCLoginPage() {
           </div>
 
           {/* 底部提示 */}
-          <div className={styles.footer}>
+          {/* <div className={styles.footer}>
             {t('auth.recaptchaNotice')}
             <a href="#">{t('auth.learnMore')}</a>
-          </div>
+          </div> */}
         </div>
       </div>
 
-      {/* 右下角帮助按钮 */}
-      <button className={styles.helpButton}>?</button>
+      {/* 右下角帮助按钮
+      <button className={styles.helpButton}>?</button> */}
     </div>
   );
 }
