@@ -112,7 +112,6 @@ export default function HomePage() {
     window.addEventListener('resize', checkDevice);
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
-  
   // 根据语言选择 banner 图片
   const HOME_BANNERS = isEN ? HOME_BANNERS_EN : HOME_BANNERS_ZH;
   

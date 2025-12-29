@@ -36,6 +36,11 @@ const MarketOverview = memo(() => {
   const [smartPercentText, setSmartPercentText] = useState('');
   const [smartIsUp, setSmartIsUp] = useState(null); // true=涨, false=跌, null=无变化/未知
 
+  // 公告日历：检查当天是否有新币上线
+  const [hasTodayUpdate, setHasTodayUpdate] = useState(false);
+  const [calendarValue, setCalendarValue] = useState(t('overview.subscribe'));
+  const [calendarDesc, setCalendarDesc] = useState(t('overview.subscribe'));
+
   // 使用硬编码的默认值（与原项目保持一致）
   const [marketValue, setMarketValue] = useState('$213215亿');
   const [marketChange, setMarketChange] = useState({
@@ -156,6 +161,68 @@ const MarketOverview = memo(() => {
     loadSmartMonitor();
   }, []);
 
+  // 检查当天是否有新币上线公告
+  useEffect(() => {
+    const checkTodayUpdate = async () => {
+      try {
+        if (typeof window === 'undefined') return;
+        
+        const token = localStorage.getItem('token');
+        if (!token) {
+          // 未登录时显示"去订阅"
+          setHasTodayUpdate(false);
+          setCalendarValue(t('overview.subscribe'));
+          setCalendarDesc(t('overview.subscribe'));
+          return;
+        }
+
+        // 获取当天日期 YYYY-MM-DD
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        
+        // 调用接口获取当天的新币上线数据
+        const res = await request({
+          url: Interface.GET_MY_INTERFACE,
+          method: 'POST',
+          data: {
+            limit: 50,
+            time: todayStr
+          }
+        });
+
+        if (res?.success === true && res.data) {
+          const rawData = Array.isArray(res.data) ? res.data : (res.data?.newCoinListings || res.data?.listings || []);
+          
+          // 检查是否有当天的数据
+          const hasTodayData = rawData && rawData.length > 0;
+          
+          setHasTodayUpdate(hasTodayData);
+          if (hasTodayData) {
+            // 有数据：显示"今日有更新"
+            setCalendarValue(t('overview.todayUpdated'));
+            setCalendarDesc(t('overview.subscribe'));
+          } else {
+            // 无数据：显示"暂无公告"
+            setCalendarValue(t('overview.noAnnouncement'));
+            setCalendarDesc(t('overview.subscribe'));
+          }
+        } else {
+          // 接口失败或无数据：显示"暂无公告"
+          setHasTodayUpdate(false);
+          setCalendarValue(t('overview.noAnnouncement'));
+          setCalendarDesc(t('overview.subscribe'));
+        }
+      } catch (error) {
+        console.error('检查今日更新失败:', error);
+        setHasTodayUpdate(false);
+        setCalendarValue(t('overview.noAnnouncement'));
+        setCalendarDesc(t('overview.subscribe'));
+      }
+    };
+
+    checkTodayUpdate();
+  }, []);
+
   // 接入市场聚合数据，动态填充加密总市值与成交量（含涨跌）
   useEffect(() => {
     const pick = (obj, keys) => {
@@ -266,9 +333,10 @@ const MarketOverview = memo(() => {
       icon: CalendarIcon,
       iconColor: 'purple',
       title: t('overview.calendar'),
-      value: t('overview.todayUpdated'),
-      desc: t('overview.subscribe'),
+      value: calendarValue,
+      desc: calendarDesc,
       isActionButton: true,
+      hasTodayUpdate: hasTodayUpdate, // 传递状态用于样式判断
       onClick: () => {
         if (typeof window !== 'undefined') {
           window.location.href = '/user';
@@ -302,7 +370,7 @@ const MarketOverview = memo(() => {
                     {/* 普通卡片直接展示 value；智能盯盘拆分币种+百分比并着色 */}
                     {card.id !== 'smart-order' ? (
                       <span 
-                        className={`${styles.cardValueText} ${card.id === 'today' ? styles.todayUpdated : ''} ${card.id === 'smart-order' && !smartSymbol ? styles.cardValuePlaceholder : ''}`}
+                        className={`${styles.cardValueText} ${card.id === 'today' && card.hasTodayUpdate ? styles.todayUpdated : ''} ${card.id === 'smart-order' && !smartSymbol ? styles.cardValuePlaceholder : ''}`}
                       >
                         {card.value}
                       </span>

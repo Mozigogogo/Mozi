@@ -20,6 +20,7 @@
     "share": "分享",
     "more": "更多",
     "updated": "更新",
+    "copy": "复制",
     "linkCopied": "链接已复制",
     "loadFailed": "加载失败，请稍后重试",
     "noData": "暂无数据",
@@ -197,6 +198,7 @@
     "calendar": "公告日历",
     "todayUpdated": "今日有更新",
     "subscribe": "去订阅",
+    "noAnnouncement": "暂无公告",
     "noConfig": "暂无配置",
     "configAlarm": "去配置报警",
     "viewDetails": "查看详情"
@@ -221,13 +223,20 @@
     "followTwitter": "关注Twitter",
     "myComments": "我的评论",
     "myLikes": "我的点赞",
+    "dynamics": "动态",
+    "following": "关注",
+    "followers": "粉丝",
+    "inviteCode": "邀请码",
+    "signIn": "签到",
     "messageNotification": "消息通知",
     "favorites": "我的收藏",
     "followOfficialAccount": "关注公众号",
     "welcomeFollowUs": "欢迎关注我们的公众号",
     "contactUs": "联系我们",
+    "contactSupport": "联系客服",
     "welcomeContact": "欢迎联系我们",
     "socialMedia": "到社交媒体找我们",
+    "findUsOnSocial": "到社交媒体找我们",
     "about": "关于",
     "donate": "捐赠",
     "donateSupport": "如果觉着好用，欢迎打赏支持",
@@ -235,13 +244,19 @@
     "wechatPay": "微信支付",
     "feedback": "产品功能反馈",
     "feedbackDesc": "留言你想要的功能",
+    "productFeedback": "产品功能反馈",
     "recommendFriend": "推荐朋友",
     "recommendDesc": "分享你的喜爱",
+    "shareYourLove": "分享你的喜爱",
     "shareText": "Mozi行情助手 - 专业的加密数据分析智能平台",
     "myPoints": "我的积分",
     "yesterdayPoints": "昨日积分：+{{points}}",
+    "todayPoints": "昨日积分",
     "currentRank": "当前排名：总榜第 {{rank}} 名",
+    "rankTop": "总榜第",
+    "rankSuffix": "名",
     "pointsRanking": "积分榜单",
+    "pointsDetail": "积分榜单",
     "newCoinListing": "新币上线",
     "viewMore": "查看更多",
     "noNewListings": "暂无新币上线",
@@ -1154,7 +1169,8 @@
       "videoGuides": "Video Guides"
     },
     "user": {
-      "notLoggedIn": "未登录"
+      "notLoggedIn": "未登录",
+      "pcUser": "PC用户"
     }
   }
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Layout, Menu, Avatar, Badge, Button, Typography, ConfigProvider } from 'antd';
 import {
   UserOutlined,
@@ -13,6 +13,7 @@ import Image from 'next/image';
 import PCSearchResults from '../PCSearchResults';
 import PCFindContent from '../PCFindContent';
 import PCCommunityContent from '../PCCommunityContent';
+import PCLoginModal from '../PCLoginModal';
 import request from '@/utils/request';
 import Interface from '@/utils/constants';
 import styles from './index.module.less';
@@ -33,6 +34,7 @@ export default function PCLayout({ children }) {
   const [userInfo, setUserInfo] = useState(null);
   const [collapsed, setCollapsed] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   
   // 搜索框状态
   const [searchValue, setSearchValue] = useState('');
@@ -42,6 +44,22 @@ export default function PCLayout({ children }) {
 
   useEffect(() => {
     const syncUserInfo = () => {
+      // 优先从 userDataInfo 中读取用户信息
+      const storedUserDataInfo = localStorage.getItem('userDataInfo');
+      if (storedUserDataInfo) {
+        try {
+          const parsed = JSON.parse(storedUserDataInfo);
+          // userDataInfo 中包含 userInfo 对象
+          if (parsed.userInfo) {
+            setUserInfo(parsed.userInfo);
+            return;
+          }
+        } catch (e) {
+          console.error('Parse userDataInfo error:', e);
+        }
+      }
+      
+      // 回退：从 userInfo 中读取
       const storedUser = localStorage.getItem('userInfo');
       if (storedUser) {
         try {
@@ -147,8 +165,8 @@ export default function PCLayout({ children }) {
     );
   };
 
-  // 菜单项配置
-  const menuItems = [
+  // 菜单项配置 - 使用 useMemo 根据折叠状态动态生成
+  const menuItems = useMemo(() => [
     { 
       key: '/', 
       icon: <CustomIcon 
@@ -182,7 +200,7 @@ export default function PCLayout({ children }) {
     { type: 'divider' },
     {
       key: 'mine',
-      label: t('pcLayout.menu.mine'),
+      label: collapsed ? '' : t('pcLayout.menu.mine'), // 折叠时隐藏分组标签
       type: 'group',
       children: [
         { 
@@ -230,11 +248,11 @@ export default function PCLayout({ children }) {
     { type: 'divider' },
     {
       key: 'coinlist',
-      label: t('pcLayout.menu.createdLists'),
+      label: collapsed ? '' : t('pcLayout.menu.createdLists'), // 折叠时隐藏分组标签
       type: 'group',
       children: [],
     },
-  ];
+  ], [t, collapsed, activeContent, pathname]); // 添加 collapsed 作为依赖
 
   const handleMenuClick = ({ key }) => {
     console.log('Menu clicked:', key);
@@ -343,10 +361,20 @@ export default function PCLayout({ children }) {
           trigger={null}
         >
           {/* 用户信息 */}
-          <div className={styles.user}>
+          <div 
+            className={styles.user}
+            onClick={() => setShowLoginModal(true)}
+            style={{ cursor: 'pointer', position: 'relative' }}
+            id="user-info-trigger"
+          >
             <Avatar size={40} src={userInfo?.avatar} icon={<UserOutlined />} />
             {!collapsed && (
-              <Text strong className={styles.userName}>{userInfo?.nickName || userInfo?.nickname || t('pcLayout.user.notLoggedIn')}</Text>
+              <Text strong className={styles.userName}>
+                {userInfo 
+                  ? (userInfo.nickName || userInfo.nickname || t('pcLayout.user.pcUser'))
+                  : t('pcLayout.user.notLoggedIn')
+                }
+              </Text>
             )}
           </div>
 
@@ -371,6 +399,7 @@ export default function PCLayout({ children }) {
               items={menuItems}
               onClick={handleMenuClick}
               style={{ borderRight: 0 }}
+              inlineCollapsed={collapsed}
             />
           </ConfigProvider>
 
@@ -414,6 +443,39 @@ export default function PCLayout({ children }) {
         </Content>
       </Layout>
 
+      {/* 登录弹窗 */}
+      <PCLoginModal
+        open={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        collapsed={collapsed}
+        onSuccess={() => {
+          // 登录成功后刷新用户信息
+          const syncUserInfo = () => {
+            const storedUserDataInfo = localStorage.getItem('userDataInfo');
+            if (storedUserDataInfo) {
+              try {
+                const parsed = JSON.parse(storedUserDataInfo);
+                if (parsed.userInfo) {
+                  setUserInfo(parsed.userInfo);
+                  return;
+                }
+              } catch (e) {
+                console.error('Parse userDataInfo error:', e);
+              }
+            }
+            
+            const storedUser = localStorage.getItem('userInfo');
+            if (storedUser) {
+              try {
+                setUserInfo(JSON.parse(storedUser));
+              } catch (e) {
+                console.error('Parse user info error:', e);
+              }
+            }
+          };
+          syncUserInfo();
+        }}
+      />
     </Layout>
   );
 }

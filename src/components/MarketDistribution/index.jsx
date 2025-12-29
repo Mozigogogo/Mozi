@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getMarketDistribution, getFearGreedIndex, getAggregationDetail } from '../../api/market';
 import DistributionChart from './DistributionChart';
@@ -183,6 +183,27 @@ export default function MarketDistribution({ showUpdateTime = true, isPC = false
     console.log('恐慌贪婪指数被点击');
   };
 
+  // 底部指标配置 - 使用 useMemo 优化
+  const indicators = useMemo(() => [
+    {
+      key: 'fearGreed',
+      component: FearGreedIndex,
+      props: {
+        index: fearGreedIndex,
+        category: fearGreedCategory,
+        onClick: handleFearGreedClick
+      }
+    },
+    {
+      key: 'btcShare',
+      component: BTCMarketShare,
+      props: {
+        percentage: distributionData.btcMarketShare.percentage,
+        change: distributionData.btcMarketShare.change
+      }
+    }
+  ], [fearGreedIndex, fearGreedCategory, distributionData.btcMarketShare]);
+
   // PC端布局：左右分布
   if (isPC) {
     return (
@@ -209,16 +230,9 @@ export default function MarketDistribution({ showUpdateTime = true, isPC = false
 
           {/* 右侧：恐惧贪婪指数 + BTC市场占有率 */}
           <div className={styles.pcRight}>
-            <FearGreedIndex 
-              index={fearGreedIndex}
-              category={fearGreedCategory}
-              onClick={handleFearGreedClick}
-              isPC={true}
-            />
-            <BTCMarketShare 
-              percentage={distributionData.btcMarketShare.percentage}
-              change={distributionData.btcMarketShare.change}
-            />
+            {indicators.map(({ key, component: Component, props }) => (
+              <Component key={key} {...props} isPC={true} />
+            ))}
           </div>
         </div>
       </div>
@@ -248,18 +262,9 @@ export default function MarketDistribution({ showUpdateTime = true, isPC = false
 
       {/* 底部指标 */}
       <div className={styles.indicatorsRow}>
-        {/* 恐慌贪婪指数 */}
-        <FearGreedIndex 
-          index={fearGreedIndex}
-          category={fearGreedCategory}
-          onClick={handleFearGreedClick}
-        />
-
-        {/* BTC市场占有率 */}
-        <BTCMarketShare 
-          percentage={distributionData.btcMarketShare.percentage}
-          change={distributionData.btcMarketShare.change}
-        />
+        {indicators.map(({ key, component: Component, props }) => (
+          <Component key={key} {...props} />
+        ))}
       </div>
     </div>
   );

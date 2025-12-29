@@ -20,6 +20,7 @@
     "share": "Share",
     "more": "More",
     "updated": "Updated",
+    "copy": "Copy",
     "linkCopied": "Link copied",
     "loadFailed": "Failed to load, please try again",
     "noData": "No data",
@@ -197,6 +198,7 @@
     "calendar": "Calendar",
     "todayUpdated": "Updated",
     "subscribe": "Subscribe",
+    "noAnnouncement": "No Announcement",
     "noConfig": "No alerts",
     "configAlarm": "Set Alerts",
     "viewDetails": "View"
@@ -221,13 +223,20 @@
     "followTwitter": "Twitter",
     "myComments": "comments",
     "myLikes": "likes",
+    "dynamics": "Dynamics",
+    "following": "Following",
+    "followers": "Followers",
+    "inviteCode": "Invite Code",
+    "signIn": "Sign In",
     "messageNotification": "Messages",
     "favorites": "Favorites",
     "followOfficialAccount": "Follow Us",
     "welcomeFollowUs": "Welcome to follow our official account",
     "contactUs": "Contact Us",
+    "contactSupport": "Contact Support",
     "welcomeContact": "Welcome to contact us",
     "socialMedia": "Find us on social media",
+    "findUsOnSocial": "Find us on social media",
     "about": "About",
     "donate": "Donate",
     "donateSupport": "If you like it, welcome to donate",
@@ -235,13 +244,19 @@
     "wechatPay": "WeChat Pay",
     "feedback": "Feedback",
     "feedbackDesc": "Tell us what you want",
+    "productFeedback": "Product Feedback",
     "recommendFriend": "Recommend",
     "recommendDesc": "Share your favorites",
+    "shareYourLove": "Share your love",
     "shareText": "Mozi - Professional Crypto Data Analysis Platform",
     "myPoints": "My Points",
     "yesterdayPoints": "Yesterday: +{{points}}",
-    "currentRank": "Current Rank: #{{rank}}",
+    "todayPoints": "Yesterday Points",
+    "currentRank": "Current Rank",
+    "rankTop": "Overall Rank #",
+    "rankSuffix": "",
     "pointsRanking": "Rankings",
+    "pointsDetail": "Points Rank",
     "newCoinListing": "New Listings",
     "viewMore": "View More",
     "noNewListings": "No New Listings",
@@ -1155,7 +1170,8 @@
       "videoGuides": "Video Guides"
     },
     "user": {
-      "notLoggedIn": "Not Logged In"
+      "notLoggedIn": "Not Logged In",
+      "pcUser": "PC User"
     }
   }
 }
