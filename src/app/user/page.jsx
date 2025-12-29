@@ -179,19 +179,38 @@ export default function UserPage() {
   };
 
   // 首次与聚焦时同步登录态（来自 token 或钱包地址 Cookie）
+  const hasCalledPointsDataRef = useRef(false);
+  
   useEffect(() => {
     const syncLogin = () => {
       const hasToken = !!localStorage.getItem('token');
       const walletAddr = getCookie('wallet_address');
       const loggedIn = hasToken || !!walletAddr;
-      setUserInfo((prev) => ({ ...prev, isLogin: loggedIn }));
+      
+      // 只在登录状态真正改变时才更新 state，避免不必要的重渲染
+      setUserInfo((prev) => {
+        if (prev.isLogin !== loggedIn) {
+          return { ...prev, isLogin: loggedIn };
+        }
+        return prev;
+      });
+      
       const ui = localStorage.getItem('userInfo');
       if (ui) {
         try {
           const parsed = JSON.parse(ui);
           const parsedNick = (parsed.nickName || '').trim();
           const displayNick = parsedNick.length > 0 ? parsedNick : t('user.defaultNickname');
-          setUserInfo((prev) => ({ ...prev, nickname: displayNick, avatar: parsed.avatar || prev.avatar }));
+          
+          // 只在数据真正改变时才更新，避免不必要的重渲染
+          setUserInfo((prev) => {
+            const needUpdate = prev.nickname !== displayNick || prev.avatar !== (parsed.avatar || prev.avatar);
+            if (needUpdate) {
+              return { ...prev, nickname: displayNick, avatar: parsed.avatar || prev.avatar };
+            }
+            return prev;
+          });
+          
           // 根据登录返回的 subscribeAnnouncement 字段初始化开关状态
           if (parsed.subscribeAnnouncement !== undefined) {
             setIsAnnouncementOn(parsed.subscribeAnnouncement === 1);
@@ -206,7 +225,8 @@ export default function UserPage() {
     // 首次加载时获取积分数据（只调用一次）
     const hasToken = !!localStorage.getItem('token');
     const walletAddr = getCookie('wallet_address');
-    if (hasToken || !!walletAddr) {
+    if ((hasToken || !!walletAddr) && !hasCalledPointsDataRef.current) {
+      hasCalledPointsDataRef.current = true;
       fetchUserPointsData();
     }
     
@@ -221,9 +241,23 @@ export default function UserPage() {
 
   // 页面加载时调用 getMyInterface 接口（只传年月）
   // 监听登录状态变化，登录后重新调用
+  const hasCalledInitialDataRef = useRef(false);
+  const lastLoginStateRef = useRef(false);
+  
   useEffect(() => {
     const fetchInitialData = async () => {
       const token = localStorage.getItem('token');
+      const isLoggedIn = !!token;
+      
+      // 如果登录状态没有变化，且已经调用过，则跳过
+      if (hasCalledInitialDataRef.current && lastLoginStateRef.current === isLoggedIn) {
+        return;
+      }
+      
+      // 更新状态追踪
+      lastLoginStateRef.current = isLoggedIn;
+      hasCalledInitialDataRef.current = true;
+      
       if (!token) {
         // 未登录时重置状态
         setIsInterfaceLoaded(false);
@@ -240,7 +274,7 @@ export default function UserPage() {
           url: Interface.GET_MY_INTERFACE,
           method: 'POST',
           data: {
-            limit: 20,
+            limit: 200,
             time: timeStr
           }
         });
@@ -274,6 +308,10 @@ export default function UserPage() {
           // 最后设置加载完成状态，确保数据已准备好
           setIsInterfaceLoaded(true);
           setIsInterfaceSuccess(true);
+          
+          // 默认选中当天日期并获取详细数据
+          setSelectedDate(now);
+          fetchMyInterface(now);
         }
       } catch (error) {
         console.error('初始加载接口失败:', error);
@@ -626,7 +664,7 @@ export default function UserPage() {
         url: Interface.GET_MY_INTERFACE,
         method: 'POST',
         data: {
-          limit: 20,
+          limit: 50,
           time: timeStr
         }
       });
@@ -699,7 +737,7 @@ export default function UserPage() {
         url: Interface.GET_MY_INTERFACE,
         method: 'POST',
         data: {
-          limit: 20,
+          limit: 50,
           time: timeStr
         }
       });
@@ -739,12 +777,8 @@ export default function UserPage() {
     }
   };
 
-  // 页面加载时，默认选中当天日期并调用接口
-  useEffect(() => {
-    const today = new Date();
-    setSelectedDate(today);
-    fetchMyInterface(today);
-  }, []);
+  // 注意：页面加载时的默认日期选择已合并到上面的 fetchInitialData 中
+  // 避免重复调用接口
 
   const score = () => {
     if (!userInfo.isLogin) {
