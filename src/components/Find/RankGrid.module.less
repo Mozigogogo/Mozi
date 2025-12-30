@@ -236,3 +236,116 @@
     height: 20PX !important;
   }
 }
+
+
+/* PC端列标题样式 */
+.pcRankGridContainer .pcRankGridDesc .gridTitle {
+  font-family: 'Microsoft YaHei', sans-serif !important;
+  font-weight: 400 !important;
+  font-size: 16PX !important;
+  color: #AAAAAA !important;
+}
+
+.pcRankGridContainer .pcRankGridDesc .gridTitle .gridTitleItem {
+  font-family: 'Microsoft YaHei', sans-serif !important;
+  font-weight: 400 !important;
+  font-size: 16PX !important;
+  color: #AAAAAA !important;
+}
+
+.pcRankGridContainer .pcRankGridDesc .gridTitle :global(.adm-grid-item) {
+  font-family: 'Microsoft YaHei', sans-serif !important;
+  font-weight: 400 !important;
+  font-size: 16PX !important;
+  color: #AAAAAA !important;
+}
+
+/* PC端表格内容样式 */
+.pcRankGridContainer .pcRankGridDesc .gridContent {
+  font-family: 'Microsoft YaHei', sans-serif !important;
+  font-weight: 400 !important;
+  font-size: 16PX !important;
+  color: #333333 !important;
+}
+
+.pcRankGridContainer .pcRankGridDesc .gridConItem {
+  font-family: 'Microsoft YaHei', sans-serif !important;
+  font-weight: 400 !important;
+  font-size: 16PX !important;
+  color: #333333 !important;
+}
+
+.pcRankGridContainer .pcRankGridDesc .rankingNumber {
+  font-family: 'Microsoft YaHei', sans-serif !important;
+  font-weight: 400 !important;
+  font-size: 16PX !important;
+  color: #333333 !important;
+}
+
+.pcRankGridContainer .pcRankGridDesc .gridContent :global(.adm-grid-item) {
+  font-family: 'Microsoft YaHei', sans-serif !important;
+  font-weight: 400 !important;
+  font-size: 16PX !important;
+  color: #333333 !important;
+}
+
+
+/* PC端表格行样式 */
+.pcRankGridContainer .pcRankGridDesc .gridListItem {
+  height: 49PX !important;
+  background: #F8F8F8 !important;
+  border-radius: 10PX !important;
+  margin-bottom: 8PX !important;
+  padding: 0 12PX !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.pcRankGridContainer .pcRankGridDesc .gridListItem:hover {
+  background-color: #f0f0f0 !important;
+}
+
+.pcRankGridContainer .pcRankGridDesc .rankingRow {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+/* 覆盖 antd-mobile List.Item 的样式 */
+.pcRankGridContainer .pcRankGridDesc :global(.adm-list-item) {
+  height: 49PX !important;
+  background: #F8F8F8 !important;
+  border-radius: 10PX !important;
+  margin-bottom: 8PX !important;
+  padding: 0 12PX !important;
+}
+
+.pcRankGridContainer .pcRankGridDesc :global(.adm-list-item-content) {
+  padding: 0 !important;
+  height: 100% !important;
+}
+
+
+/* PC端标题间距调整 */
+.pcRankGridContainer .pcRankGridDesc .gridTitle {
+  margin-bottom: 8PX !important;
+}
+
+
+/* PC端序号宽度调整 */
+.pcRankGridContainer .pcRankGridDesc .rankingNumber {
+  width: 20PX !important;
+  flex: 0 0 20PX !important;
+  margin-right: 12PX !important;
+}
+
+
+/* PC端第一列去除左padding */
+.pcRankGridContainer .pcRankGridDesc .gridContent .gridConItem:first-child {
+  padding-left: 0 !important;
+}
+
+.pcRankGridContainer .pcRankGridDesc .gridTitle .gridTitleItem:first-child {
+  padding-left: 0 !important;
+}
