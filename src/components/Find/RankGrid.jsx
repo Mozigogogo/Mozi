@@ -4,7 +4,7 @@ import styles from './RankGrid.module.less';
 
 const ROW_HEIGHT_PX = 44; // 近似单行高度，用于空状态最小高度计算
 
-export const RankGrid = ({ length, colName, gridContent, callback, minRows }) => {
+export const RankGrid = ({ length, colName, gridContent, callback, minRows, isPC = false }) => {
   const [imageErrors, setImageErrors] = useState({});
   const hasData = Array.isArray(gridContent) && gridContent.length > 0;
   const firstItem = hasData ? gridContent[0] : {};
@@ -25,11 +25,11 @@ export const RankGrid = ({ length, colName, gridContent, callback, minRows }) =>
   };
 
   return (
-    <div className={styles.rankGridContainer} style={containerStyle}>
+    <div className={`${styles.rankGridContainer} ${isPC ? styles.pcRankGridContainer : ''}`} style={containerStyle}>
       {hasData && (
-        <div className={styles.rankGridHead}>
+        <div className={`${styles.rankGridHead} ${isPC ? styles.pcRankGridHead : ''}`}>
           <img
-            className={styles.firstPic}
+            className={`${styles.firstPic} ${isPC ? styles.pcFirstPic : ''}`}
             src={getImageSrc(firstItem.img || firstItem.url, `head-${firstItem.key || 'empty'}`)}
             alt={firstItem.symbol || firstItem.key || 'empty'}
             onError={() => handleImageError(`head-${firstItem.key || 'empty'}`)}
@@ -37,7 +37,7 @@ export const RankGrid = ({ length, colName, gridContent, callback, minRows }) =>
           <span>{firstItem.exchange || firstItem.name || firstItem.title || firstItem.symbol || firstItem.key || ''}</span>
         </div>
       )}
-      <div className={styles.rankGridDesc}>
+      <div className={`${styles.rankGridDesc} ${isPC ? styles.pcRankGridDesc : ''}`}>
         {hasData && (
           <Grid className={styles.gridTitle} columns={length + 1}>
             <Grid.Item className={styles.rankingHeader}></Grid.Item>

@@ -299,3 +299,113 @@
     filter: brightness(0.85);
   }
 }
+
+/* PC端样式定制 */
+.pcCard {
+  border-radius: 12PX;
+  box-shadow: 0 2PX 8PX rgba(0, 0, 0, 0.06);
+  margin-bottom: 16PX;
+  transition: box-shadow 0.3s ease;
+  background: #fff;
+  border: 1PX solid #f0f0f0;
+
+  &:hover {
+    box-shadow: 0 4PX 12PX rgba(0, 0, 0, 0.1);
+  }
+  
+  /* PC端标题样式 */
+  .title,
+  .rankTitle,
+  .rankTitleText {
+    width: auto;
+    min-width: 110PX;
+    height: 18PX;
+    font-family: 'Microsoft YaHei', sans-serif;
+    font-weight: bold;
+    font-size: 18PX;
+    color: #333333;
+    line-height: 22PX;
+  }
+  
+  /* PC端标题底部背景 */
+  .titleWithRangeBg::after {
+    width: 75PX;
+    height: 10PX;
+    background: #11B787;
+    opacity: 0.5;
+    bottom: -2PX;
+  }
+}
+
+.pcCardHeader {
+  padding: 16PX 20PX;
+  border-bottom: 1PX solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pcCardBody {
+  padding: 0;
+  
+  /* PC端排行榜横向布局 */
+  :global {
+    .rankGridContainer {
+      display: flex;
+      flex-direction: row;
+      padding: 16PX 20PX;
+    }
+    
+    .rankGridHead {
+      flex: 0 0 120PX;
+      margin-right: 20PX;
+    }
+    
+    .rankGridDesc {
+      flex: 1;
+    }
+  }
+}
+
+/* PC端 tabs 样式 */
+.pcTabsContainer {
+  width: auto;
+  min-width: 200PX;
+  height: 32PX;
+  padding: 2PX;
+  border-radius: 16PX;
+  background-color: #f5f5f5;
+}
+
+.pcTabItem {
+  font-size: 13PX;
+  padding: 0 16PX;
+  border-radius: 14PX;
+  min-width: 60PX;
+}
+
+.pcTabActive {
+  background-color: #11B787;
+  color: #fff;
+  box-shadow: 0 2PX 4PX rgba(17, 183, 135, 0.3);
+}
+
+:global([data-theme="dark"]) {
+  .pcCard {
+    background-color: #1a1a1a;
+    box-shadow: 0 2PX 8PX rgba(0, 0, 0, 0.3);
+    border-color: #333;
+
+    &:hover {
+      box-shadow: 0 4PX 12PX rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  .pcCardHeader {
+    border-bottom-color: #333;
+  }
+
+  .pcTabsContainer {
+    background-color: #2a2a2a;
+  }
+}
