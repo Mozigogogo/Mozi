@@ -702,6 +702,7 @@ export default function PCFindContent() {
                       minRows={3}
                       stackTopName={true}
                       callback={(gridCon) => { console.log('点击交易所:', gridCon); }}
+                      isPC={true}
                     />
                   )}
                 </div>
