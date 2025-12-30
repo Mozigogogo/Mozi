@@ -190,3 +190,49 @@
     content: none !important;
   }
 }
+
+
+/* PC端样式 */
+.pcRankGridContainer {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.pcRankGridHead {
+  flex: 0 0 156PX;
+  margin-right: 20PX;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 10PX;
+}
+
+.pcFirstPic {
+  width: 156PX !important;
+  height: 156PX !important;
+  margin-bottom: 12PX !important;
+}
+
+.pcRankGridDesc {
+  flex: 1;
+  
+  .gridTitle {
+    font-size: 12PX;
+    padding: 8PX 0;
+  }
+  
+  .rankingNumber {
+    font-size: 14PX;
+  }
+  
+  .gridContent {
+    font-size: 14PX;
+  }
+  
+  .gridIcon {
+    width: 20PX !important;
+    height: 20PX !important;
+  }
+}

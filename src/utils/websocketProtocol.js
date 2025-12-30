@@ -160,12 +160,21 @@ export function generateClientId() {
  */
 export function createHandshakeMessage(platform = PLATFORMS.H5, version = '1.0.0') {
   const timestamp = Date.now();
+  
+  // 获取用户选择的语言
+  let language = 'zh';
+  if (typeof window !== 'undefined') {
+    const i18nextLng = localStorage.getItem('i18nextLng');
+    language = i18nextLng === 'en' ? 'en' : 'zh';
+  }
+  
   return {
     event: WS_EVENTS.HELLO,
     data: {
       clientId: generateClientId(),
       platform: platform,
-      version: version
+      version: version,
+      language: language  // 添加语言信息
     },
     timestamp: timestamp,
     requestId: `req-hello-${timestamp}`
