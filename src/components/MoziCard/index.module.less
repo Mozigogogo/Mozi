@@ -319,7 +319,6 @@
   .rankTitle,
   .rankTitleText {
     width: auto;
-    min-width: 110PX;
     height: 18PX;
     font-family: 'Microsoft YaHei', sans-serif;
     font-weight: bold;
@@ -330,11 +329,17 @@
   
   /* PC端标题底部背景 */
   .titleWithRangeBg::after {
-    width: 75PX;
+    width: 100%;
+    max-width: 75PX;
     height: 10PX;
     background: #11B787;
     opacity: 0.5;
     bottom: -2PX;
+  }
+  
+  /* PC端箭头间距调整 */
+  .rankArrow {
+    margin-left: 4PX;
   }
 }
 
@@ -348,21 +353,22 @@
 
 .pcCardBody {
   padding: 0;
+  overflow: visible !important;
   
-  /* PC端排行榜横向布局 */
+  /* PC端排行榜横向布局 - 使用属性选择器匹配CSS Modules生成的类名 */
   :global {
-    .rankGridContainer {
+    [class*="rankGridContainer"] {
       display: flex;
       flex-direction: row;
       padding: 16PX 20PX;
     }
     
-    .rankGridHead {
-      flex: 0 0 120PX;
-      margin-right: 20PX;
+    [class*="rankGridHead"] {
+      flex: 0 0 280PX !important;
+      margin-right: 30PX !important;
     }
     
-    .rankGridDesc {
+    [class*="rankGridDesc"] {
       flex: 1;
     }
   }

@@ -319,7 +319,7 @@
   .contentColumn {
     .gridListItem {
       height: 49PX;
-      background: #F8F8F8;
+      background: transparent;
       border-radius: 10PX;
       margin-bottom: 8PX;
       padding: 0 12PX;
@@ -390,4 +390,25 @@
       }
     }
   }
+}
+
+// PC端第一列logo和名称样式 - 与RankGrid对齐
+.pcFirstColumn {
+  display: flex !important;
+  align-items: flex-end !important;
+  line-height: 1 !important;
+  
+  span {
+    line-height: 1 !important;
+  }
+}
+
+.pcCoinLogo {
+  width: 23PX !important;
+  height: 23PX !important;
+  margin-right: 8PX !important;
+  margin-left: 0 !important;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block !important;
 }

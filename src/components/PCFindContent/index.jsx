@@ -285,18 +285,7 @@ export default function PCFindContent() {
         const tempExchangeSpot = exchangeSpot.data.slice(0, 3).map(item => {
           const showName = sanitizeExchangeName(item.exchange);
           return {
-            exchange: (
-              <div className={styles.gridText}>
-                <img 
-                  className={styles.gridIcon} 
-                  src={item.url || '/default-coin.svg'} 
-                  alt={showName} 
-                  style={{ width: 15, height: 15 }}
-                  onError={(e) => { e.target.src = '/default-coin.svg'; }}
-                />
-                {showName}
-              </div>
-            ),
+            exchange: showName,  // PC端只传递名称，不包含logo
             usd: item.usd,
             markets: item.markets,
             coins: item.coins,
@@ -314,18 +303,7 @@ export default function PCFindContent() {
         const tempExchangeFutures = exchangeFutures.data.slice(0, 3).map(item => {
           const showName = sanitizeExchangeName(item.exchange);
           return {
-            exchange: (
-              <div className={styles.gridText}>
-                <img 
-                  className={styles.gridIcon} 
-                  src={item.url || '/default-coin.svg'} 
-                  alt={showName} 
-                  style={{ width: 15, height: 15 }}
-                  onError={(e) => { e.target.src = '/default-coin.svg'; }}
-                />
-                {showName}
-              </div>
-            ),
+            exchange: showName,  // PC端只传递名称，不包含logo
             usd: item.usd,
             markets: item.markets,
             coins: item.coins,

@@ -95,12 +95,14 @@
 
   .contentCard {
     border-radius: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     margin-top: 0;
+    background: transparent;
+    border: none;
 
     :global {
-      .ant-card-body {
+      .ant-card {
         padding: 0;
+        background: transparent;
       }
 
       .ant-table {
@@ -210,7 +212,7 @@
     display: flex;
     flex-direction: column;
     gap: 16PX;
-    padding: 0 24PX;
+    // padding: 0 24PX;
   }
 
   .gridText {

@@ -157,6 +157,25 @@ const MoziGrid = ({
                           }
                           const rawCellValue = gridCon[gridConItem];
                           const displayValue = typeof rawCellValue === 'string' ? rawCellValue.replace(/^\$/, '') : rawCellValue;
+                          
+                          // PC模式下第一列显示logo+名称
+                          if (isPC && gridConIndex === 0 && gridCon.img) {
+                            return (
+                              <div 
+                                key={gridConIndex}
+                                className={`${styles.gridConItem} ${styles.pcFirstColumn}`}
+                                style={{ width: getColWidth(gridConIndex) }}
+                              >
+                                <img 
+                                  src={gridCon.img} 
+                                  className={styles.pcCoinLogo}
+                                  alt={displayValue}
+                                />
+                                <span>{displayValue}</span>
+                              </div>
+                            );
+                          }
+                          
                           return (
                             <div 
                               key={gridConIndex}
