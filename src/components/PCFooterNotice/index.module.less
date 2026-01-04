@@ -1,0 +1,55 @@
+.footerNotice {
+  width: auto;
+  height: 40PX;
+  background-color: #E6F7F1;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  position: fixed;
+  bottom: 0;
+  left: 200PX; /* 侧边栏宽度 */
+  right: 0;
+  z-index: 98;
+  border-top: 1PX solid rgba(17, 183, 135, 0.1);
+  transition: left 0.2s ease;
+}
+
+/* 当侧边栏收起时调整位置 */
+.footerNoticeCollapsed {
+  left: 80PX; /* 收起后的侧边栏宽度 */
+}
+
+.noticeContent {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  animation: scroll var(--animation-duration, 30s) linear infinite;
+  will-change: transform;
+}
+
+.noticeText {
+  font-family: 'Microsoft YaHei', sans-serif;
+  font-weight: 400;
+  font-size: 14PX;
+  color: var(--text-color, #11B787);
+  line-height: 40PX;
+  padding: 0 20PX;
+  display: inline-block;
+}
+
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* 暗黑模式 */
+:global([data-theme="dark"]) {
+  .footerNotice {
+    background-color: rgba(17, 183, 135, 0.1);
+    border-top-color: rgba(17, 183, 135, 0.2);
+  }
+}

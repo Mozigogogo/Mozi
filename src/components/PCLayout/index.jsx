@@ -14,6 +14,7 @@ import PCSearchResults from '../PCSearchResults';
 import PCFindContent from '../PCFindContent';
 import PCCommunityContent from '../PCCommunityContent';
 import PCLoginModal from '../PCLoginModal';
+import PCFooterNotice from '../PCFooterNotice';
 import request from '@/utils/request';
 import Interface from '@/utils/constants';
 import styles from './index.module.less';
@@ -35,6 +36,13 @@ export default function PCLayout({ children }) {
   const [collapsed, setCollapsed] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  
+  // 公告栏数据
+  const [notices, setNotices] = useState([
+    '告别手动盯盘！先让AI分析走势，再设置精准报警！',
+    '告别手动盯盘！先让AI分析走势，再设置精准报警！',
+    '告别手动盯盘！先让AI分析走势，再设置精准报警！'
+  ]);
   
   // 搜索框状态
   const [searchValue, setSearchValue] = useState('');
@@ -428,18 +436,25 @@ export default function PCLayout({ children }) {
 
         {/* 右侧 Content */}
         <Content className={`${styles.content} ${collapsed ? styles.contentCollapsed : ''}`}>
-          {(() => {
-            console.log('Rendering content, activeContent:', activeContent, 'showSearchResults:', showSearchResults);
-            if (showSearchResults) {
-              return <PCSearchResults keyword={searchKeyword} onClose={() => setShowSearchResults(false)} />;
-            } else if (activeContent === '/find') {
-              return <PCFindContent />;
-            } else if (activeContent === '/community') {
-              return <PCCommunityContent />;
-            } else {
-              return children;
-            }
-          })()}
+          <div className={styles.contentWrapper}>
+            <div className={styles.contentMain}>
+              {(() => {
+                console.log('Rendering content, activeContent:', activeContent, 'showSearchResults:', showSearchResults);
+                if (showSearchResults) {
+                  return <PCSearchResults keyword={searchKeyword} onClose={() => setShowSearchResults(false)} />;
+                } else if (activeContent === '/find') {
+                  return <PCFindContent />;
+                } else if (activeContent === '/community') {
+                  return <PCCommunityContent />;
+                } else {
+                  return children;
+                }
+              })()}
+            </div>
+            
+            {/* 底部公告栏 - 只在内容区域显示 */}
+            <PCFooterNotice notices={notices} collapsed={collapsed} />
+          </div>
         </Content>
       </Layout>
 
