@@ -8,6 +8,9 @@ import { Interface } from '@/utils/constants';
 import SectionTitle from '@/components/SectionTitle';
 import DiscoveryPostCard from '@/components/DiscoveryPostCard';
 import PostCard from '@/components/PostCard';
+import SplitLayout from '@/components/SplitLayout';
+import CoinTabBar from '@/components/CoinTabBar';
+import BullBearIndicator from '@/components/BullBearIndicator';
 import styles from './index.module.less';
 
 /**
@@ -18,9 +21,23 @@ export default function PCCommunityContent() {
   
   const [discoveryPosts, setDiscoveryPosts] = useState([]); // 发现好币帖子
   const [questionPosts, setQuestionPosts] = useState([]); // 不懂就问帖子
+  const [coinPosts, setCoinPosts] = useState([]); // 币种帖子
   const [likedPosts, setLikedPosts] = useState({});
   const [loading, setLoading] = useState(false); // 加载状态
   const [questionLoading, setQuestionLoading] = useState(false); // 不懂就问加载状态
+  const [coinLoading, setCoinLoading] = useState(false); // 币种帖子加载状态
+  const [selectedCoin, setSelectedCoin] = useState('BTC'); // 当前选中的币种
+  const [voteChoice, setVoteChoice] = useState(null); // 投票选择状态
+  const [voteData, setVoteData] = useState({ upCount: 0, downCount: 0, totalCount: 0, hasVoted: false, userVoteType: null }); // 投票数据
+  
+  // 固定币种配置
+  const coinTabs = [
+    { key: 'BTC', title: 'BTC' },
+    { key: 'ETH', title: 'ETH' },
+    { key: 'BNB', title: 'BNB' },
+    { key: 'DOGE', title: 'DOGE' },
+    { key: 'XRP', title: 'XRP' }
+  ];
 
   // 格式化时间
   const formatTimeAgo = (time) => {
@@ -139,6 +156,123 @@ export default function PCCommunityContent() {
     }
   };
 
+  // 获取币种相关帖子
+  const fetchCoinPosts = async (coin) => {
+    setCoinLoading(true);
+    try {
+      const response = await request({
+        url: Interface.POSTS_API,
+        data: {
+          page: 1,
+          size: 10,
+          tag: coin // 根据币种标签筛选
+        }
+      });
+      
+      if (response?.data?.data?.length > 0) {
+        const formattedData = response.data.data.map(item => ({
+          id: item.id,
+          avatar: item.avatar || '/default-avatar.png',
+          username: item.nickName || '匿名用户',
+          title: item.title,
+          content: item.content,
+          category: item.category,
+          categoryLabel: item.category,
+          commentCount: item.commentCnt || 0,
+          likeCount: item.likeCnt || 0,
+          userId: item.userId,
+          tags: item.tags || [],
+          topics: item.topics || [],
+          isLiked: item.isLikedByCurrentUser || false,
+          createTime: item.updatedAt?.replace('T', ' ') || '',
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt,
+          images: item.images || []
+        }));
+        
+        setCoinPosts(formattedData);
+      } else {
+        setCoinPosts([]);
+      }
+    } catch (error) {
+      console.error('获取币种帖子失败:', error);
+      setCoinPosts([]);
+    } finally {
+      setCoinLoading(false);
+    }
+  };
+
+  // 获取看涨看跌统计数据
+  const fetchVoteData = async (coinType) => {
+    try {
+      const res = await request({
+        url: Interface.LIKE_COIN_COUNT,
+        method: 'GET',
+        data: { coinType }
+      });
+      
+      if (res?.success === true || res?.code === 0) {
+        const data = res.data || {};
+        setVoteData({
+          upCount: data.upCount || 0,
+          downCount: data.downCount || 0,
+          totalCount: (data.upCount || 0) + (data.downCount || 0),
+          hasVoted: false,
+          userVoteType: null
+        });
+      }
+      setVoteChoice(null);
+    } catch (error) {
+      console.error('获取投票数据失败:', error);
+    }
+  };
+
+  // 提交看涨看跌投票
+  const submitVote = async (type) => {
+    if (!selectedCoin) return;
+    
+    try {
+      const voteType = type === 'bull' ? 'up' : 'down';
+      const res = await request({
+        url: Interface.LIKE_COIN_VOTE,
+        method: 'POST',
+        data: {
+          coinType: selectedCoin,
+          type: voteType
+        }
+      });
+      
+      if (res?.success === true || res?.code === 0) {
+        setVoteChoice(type);
+        
+        // 投票成功后查询最新数量
+        const countRes = await request({
+          url: Interface.LIKE_COIN_COUNT,
+          method: 'GET',
+          data: { coinType: selectedCoin }
+        });
+        
+        if (countRes?.success === true || countRes?.code === 0) {
+          const data = countRes.data || {};
+          setVoteData({
+            upCount: data.upCount || 0,
+            downCount: data.downCount || 0,
+            totalCount: (data.upCount || 0) + (data.downCount || 0),
+            hasVoted: true,
+            userVoteType: type === 'bull' ? 'bullish' : 'bearish'
+          });
+        }
+        
+        message.success('投票成功');
+      } else {
+        message.error(res?.errorMsg || res?.message || '投票失败');
+      }
+    } catch (error) {
+      console.error('投票失败:', error);
+      message.error('投票失败');
+    }
+  };
+
   // 点赞/取消点赞
   const toggleLike = async (e, postId) => {
     e.stopPropagation();
@@ -201,7 +335,14 @@ export default function PCCommunityContent() {
   useEffect(() => {
     fetchDiscoveryPosts(); // 加载发现好币帖子
     fetchQuestionPosts(); // 加载不懂就问帖子
+    fetchCoinPosts(selectedCoin); // 加载币种帖子
   }, []);
+
+  // 币种切换时重新加载
+  useEffect(() => {
+    fetchCoinPosts(selectedCoin);
+    fetchVoteData(selectedCoin);
+  }, [selectedCoin]);
 
   return (
     <div className={styles.pcCommunityContent}>
@@ -272,6 +413,77 @@ export default function PCCommunityContent() {
           <Empty description="暂无不懂就问帖子" />
         )}
       </div>
+      
+      {/* 币种、热门榜单 */}
+      {/* 70/30 分栏容器 */}
+      <SplitLayout
+        leftContent={
+          <div>
+            {/* 不懂就问模块标题 + 币种标签栏 */}
+            <SectionTitle 
+              title="币种" 
+              onMoreClick={() => router.push('/list?category=不懂就问')}
+              extra={
+                <CoinTabBar
+                  coinTabs={coinTabs}
+                  selectedCoin={selectedCoin}
+                  onCoinSelect={setSelectedCoin}
+                  onMoreClick={() => console.log('点击更多币种')}
+                  moreText="更多"
+                  isPC={true}
+                />
+              }
+            />
+            
+            {/* 看涨看跌投票组件 */}
+            <BullBearIndicator
+              upCount={voteData.upCount}
+              downCount={voteData.downCount}
+              participants={voteData.totalCount}
+              selected={voteChoice}
+              onSelect={(type) => submitVote(type)}
+              showParticipants={true}
+              showPercentage={true}
+              isPC={true}
+              coinSymbol={selectedCoin}
+            />
+            
+            {/* 币种相关帖子列表 */}
+            {coinLoading ? (
+              <div className={styles.loadingContainer}>
+                <Spin size="large" tip="加载中..." />
+              </div>
+            ) : coinPosts.length > 0 ? (
+              <div className={styles.coinPostsList}>
+                {coinPosts.map(post => (
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    onPostClick={goToPostDetail}
+                    onUserClick={goToUserPage}
+                    onLikeClick={(postId) => toggleLike(null, postId)}
+                    onShareClick={handleShare}
+                    onTagClick={(tagName) => router.push(`/detail?symbol=${tagName}`)}
+                    onTopicClick={(topicId, topicName) => router.push(`/topicinfo?id=${topicId}&title=${topicName}`)}
+                    isLiked={post.isLiked || likedPosts[post.id]}
+                    formatTimeAgo={formatTimeAgo}
+                    isPC={true}
+                  />
+                ))}
+              </div>
+            ) : (
+              <Empty description={`暂无${selectedCoin}相关帖子`} />
+            )}
+          </div>
+        }
+        rightContent={
+          <div>
+            {/* 右侧内容区域 (30%) */}
+          </div>
+        }
+        leftWidth={70}
+        gap={20}
+      />
     </div>
   );
 }

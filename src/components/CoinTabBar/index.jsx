@@ -10,6 +10,7 @@ import styles from './index.module.less';
  * @param {Function} onCoinSelect - 币种选择回调
  * @param {Function} onMoreClick - 点击"更多"按钮回调
  * @param {string} moreText - "更多"按钮文本
+ * @param {boolean} isPC - 是否为PC端，默认false
  */
 export default function CoinTabBar({ 
   coinTabs, 
@@ -17,14 +18,15 @@ export default function CoinTabBar({
   dynamicCoin,
   onCoinSelect,
   onMoreClick,
-  moreText = '更多'
+  moreText = '更多',
+  isPC = false
 }) {
   return (
-    <div className={styles.coinTabs}>
+    <div className={`${styles.coinTabs} ${isPC ? styles.pcCoinTabs : ''}`}>
       {coinTabs.map(item => (
         <span
           key={item.key}
-          className={`${styles.coinTab} ${selectedCoin === item.key ? styles.active : ''}`}
+          className={`${styles.coinTab} ${isPC ? styles.pcCoinTab : ''} ${selectedCoin === item.key ? styles.active : ''}`}
           onClick={() => onCoinSelect(item.key)}
         >
           {item.title}
@@ -33,7 +35,7 @@ export default function CoinTabBar({
       
       {dynamicCoin && (
         <span
-          className={`${styles.coinTab} ${selectedCoin === dynamicCoin ? styles.active : ''}`}
+          className={`${styles.coinTab} ${isPC ? styles.pcCoinTab : ''} ${selectedCoin === dynamicCoin ? styles.active : ''}`}
           onClick={() => onCoinSelect(dynamicCoin)}
         >
           {dynamicCoin}
@@ -41,7 +43,7 @@ export default function CoinTabBar({
       )}
       
       <span 
-        className={`${styles.coinTab} ${styles.more}`} 
+        className={`${styles.coinTab} ${styles.more} ${isPC ? styles.pcMore : ''}`} 
         onClick={onMoreClick}
       >
         {moreText}
