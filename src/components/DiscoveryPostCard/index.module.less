@@ -1,0 +1,340 @@
+/* 发现好币卡片样式 - 基础样式 */
+.discoveryCard {
+  position: relative;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+}
+
+/* PC端样式 */
+.pcCard {
+  padding: 16PX;
+  border-radius: 12PX;
+  box-shadow: 0 2PX 8PX rgba(0, 0, 0, 0.06);
+  min-height: 240PX;
+  
+  &:hover {
+    box-shadow: 0 4PX 12PX rgba(0, 0, 0, 0.1);
+    transform: translateY(-2PX);
+  }
+}
+
+/* 移动端样式 */
+.mobileCard {
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  min-height: 185px;
+  
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+/* 右上角装饰图标 */
+.findBestCoinBg {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  opacity: 0.8;
+}
+
+.pcCard .findBestCoinBg {
+  width: 60PX;
+  height: 60PX;
+}
+
+.mobileCard .findBestCoinBg {
+  width: 60px;
+  height: 60px;
+}
+
+/* 用户信息区域 */
+.discoveryUserInfo {
+  display: flex;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+}
+
+.pcCard .discoveryUserInfo {
+  margin-bottom: 12PX;
+}
+
+.mobileCard .discoveryUserInfo {
+  margin-bottom: 10px;
+}
+
+.discoveryAvatar {
+  flex-shrink: 0;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+.pcCard .discoveryAvatar {
+  width: 40PX;
+  height: 40PX;
+  border-radius: 20PX;
+  margin-right: 8PX;
+  
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+.mobileCard .discoveryAvatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 14px;
+  margin-right: 6px;
+}
+
+.discoveryUserContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.discoveryNickname {
+  font-weight: 600;
+  color: #333;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.pcCard .discoveryNickname {
+  font-size: 16PX;
+  margin-bottom: 2PX;
+}
+
+.mobileCard .discoveryNickname {
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+
+.discoveryTime {
+  color: #999;
+  display: block;
+}
+
+.pcCard .discoveryTime {
+  font-size: 14PX;
+}
+
+.mobileCard .discoveryTime {
+  font-size: 11px;
+}
+
+/* 币种信息区域 */
+.coinInfoSection {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+}
+
+.pcCard .coinInfoSection {
+//   margin-bottom: 12PX;
+    padding-top: 10PX;
+}
+
+.mobileCard .coinInfoSection {
+  margin-bottom: 10px;
+}
+
+.coinInfoRow {
+  display: flex;
+  align-items: center;
+  
+  &:last-child {
+    align-items: flex-start;
+  }
+}
+
+.pcCard .coinInfoRow {
+  margin-bottom: 8PX;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.mobileCard .coinInfoRow {
+  margin-bottom: 4px;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.coinInfoIconImg {
+  flex-shrink: 0;
+}
+
+.pcCard .coinInfoIconImg {
+  width: 18PX;
+  height: 18PX;
+  margin-right: 6PX;
+}
+
+.mobileCard .coinInfoIconImg {
+  width: 14px;
+  height: 14px;
+  margin-right: 4px;
+}
+
+.coinInfoLabel {
+  color: #666;
+  flex-shrink: 0;
+}
+
+.pcCard .coinInfoLabel {
+  font-size: 16PX;
+  margin-right: 4PX;
+}
+
+.mobileCard .coinInfoLabel {
+  font-size: 12px;
+  margin-right: 3px;
+}
+
+.coinInfoValue {
+  color: #9A9DA0;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.pcCard .coinInfoValue {
+  font-size: 16PX;
+}
+
+.mobileCard .coinInfoValue {
+  font-size: 12px;
+}
+
+/* 操作按钮区域 */
+.discoveryActionButtons {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  margin-top: auto;
+  position: relative;
+  z-index: 2;
+}
+
+.pcCard .discoveryActionButtons {
+  padding-top: 12PX;
+  border-top: 1PX solid #f0f0f0;
+}
+
+.mobileCard .discoveryActionButtons {
+  margin: 0 -5px;
+}
+
+.discoveryActionBtn {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  background: none;
+  border: none;
+  margin: 0;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  
+  .actionCount {
+    color: #666;
+    font-weight: 500;
+    line-height: 1;
+    vertical-align: bottom;
+  }
+  
+  &.likeBtn {
+    &.liked {
+      .actionCount {
+        color: #11B787;
+      }
+    }
+  }
+}
+
+.pcCard .discoveryActionBtn {
+  gap: 4PX;
+  font-size: 16PX;
+  
+  &:hover {
+    opacity: 0.7;
+  }
+  
+  .actionCount {
+    font-size: 16PX;
+  }
+}
+
+.mobileCard .discoveryActionBtn {
+  gap: 3px;
+  font-size: 11px;
+  
+  &:active {
+    opacity: 0.7;
+  }
+  
+  .actionCount {
+    font-size: 11px;
+  }
+}
+
+.discoveryActionIcon {
+  display: inline-block;
+  vertical-align: bottom;
+}
+
+.pcCard .discoveryActionIcon {
+  width: 24PX;
+  height: 24PX;
+}
+
+.mobileCard .discoveryActionIcon {
+  width: 22px;
+  height: 22px;
+}
+
+.pcIcon {
+  width: 24PX !important;
+  height: 24PX !important;
+}
+
+/* 暗黑模式 */
+:global([data-theme="dark"]) {
+  .discoveryCard {
+    background: #1f1f1f;
+    box-shadow: 0 2PX 8PX rgba(0, 0, 0, 0.3);
+  }
+  
+  .discoveryNickname {
+    color: #ffffff;
+  }
+  
+  .coinInfoLabel,
+  .coinInfoValue,
+  .actionCount {
+    color: #999999;
+  }
+  
+  .discoveryActionButtons {
+    border-top-color: #333333;
+  }
+}
