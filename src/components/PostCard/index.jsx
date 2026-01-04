@@ -19,6 +19,7 @@ const shareIcon = `${CDN_ICON}/share.png`;
  * @param {Function} onTopicClick - 点击话题回调
  * @param {boolean} isLiked - 是否已点赞
  * @param {Function} formatTimeAgo - 时间格式化函数
+ * @param {boolean} isPC - 是否为PC端
  */
 export default function PostCard({
   post,
@@ -29,11 +30,12 @@ export default function PostCard({
   onTagClick,
   onTopicClick,
   isLiked = false,
-  formatTimeAgo
+  formatTimeAgo,
+  isPC = false
 }) {
   return (
     <div 
-      className={styles.postItem} 
+      className={`${styles.postItem} ${isPC ? styles.pcPostItem : ''}`} 
       onClick={() => onPostClick?.(post.id)}
     >
       <div className={styles.postWatermark} aria-hidden="true" />

@@ -8,6 +8,121 @@
   position: relative;
 }
 
+/* PC端样式 */
+.pcPostItem {
+  border-radius: 12PX;
+  padding: 12PX 16PX;
+  margin: 0;
+  cursor: pointer;
+  transition: box-shadow 0.3s;
+  
+  &:hover {
+    box-shadow: 0 4PX 12PX rgba(0, 0, 0, 0.08);
+  }
+  
+  .postWatermark {
+    width: 45PX;
+    height: 45PX;
+    opacity: 0.7;
+  }
+  
+  .postHeader {
+    margin-bottom: 8PX;
+  }
+  
+  .avatar {
+    width: 36PX;
+    height: 36PX;
+    margin-right: 10PX;
+  }
+  
+  .username {
+    font-size: 14PX;
+    font-weight: 600;
+  }
+  
+  .userRow {
+    gap: 6PX;
+  }
+  
+  .badgeLabel {
+    padding: 2PX 6PX;
+    font-size: 11PX;
+  }
+  
+  .postTime {
+    font-size: 12PX;
+    margin-top: 1PX;
+  }
+  
+  .postContent {
+    margin-left: 0;
+    margin-bottom: 8PX;
+  }
+  
+  .postTitle {
+    font-size: 15PX;
+    margin-bottom: 4PX;
+  }
+  
+  .postText {
+    font-size: 14PX;
+    line-height: 1.5;
+  }
+  
+  .postImages {
+    gap: 6PX;
+    margin-top: 6PX;
+  }
+  
+  .postImage {
+    width: calc(33.33% - 4PX);
+    height: 90PX;
+  }
+  
+  .tagsTopicsContainer {
+    margin-left: 0;
+    gap: 6PX;
+    margin-top: 6PX;
+    margin-bottom: 6PX;
+  }
+  
+  .coinTag,
+  .topicTag {
+    padding: 3PX 6PX;
+    font-size: 11PX;
+  }
+  
+  .postFooter {
+    margin-left: 46PX;
+    padding-top: 6PX;
+  }
+  
+  .postFooter {
+    padding-top: 12PX;
+    margin-left: 0;
+    padding-left: 0;
+    padding-right: 0;
+    border-top: 1PX solid #F0F0F0;
+    justify-content: space-around;
+  }
+  
+  .actionIconImg {
+    width: 24PX;
+    height: 24PX;
+    margin-right: 4PX;
+  }
+  
+  .postAction {
+    gap: 4PX;
+    font-size: 16PX;
+    
+    span {
+      font-size: 16PX;
+    }
+  }
+}
+
 .postWatermark {
   position: absolute;
   top: 0;

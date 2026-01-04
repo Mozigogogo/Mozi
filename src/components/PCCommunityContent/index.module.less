@@ -2,10 +2,36 @@
   padding: 0;
 
   .discoverySection {
-    margin-bottom: 32PX;
+    margin-bottom: 20PX;
   }
 
   .discoveryGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16PX;
+    
+    @media (max-width: 1400px) {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    
+    @media (max-width: 1024px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .loadingContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400PX;
+    width: 100%;
+  }
+
+  .questionSection {
+    margin-bottom: 20PX;
+  }
+
+  .questionList {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 16PX;
