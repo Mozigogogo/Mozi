@@ -304,9 +304,8 @@
 .pcCard {
   width: 100%;
   background: #FFFFFF;
-  border-radius: 16PX;
+  border-radius: 16PX !important;
   box-shadow: 0 2PX 8PX rgba(0, 0, 0, 0.06);
-  margin-bottom: 16PX;
   transition: box-shadow 0.3s ease;
   border: 1PX solid #f0f0f0;
 
@@ -332,9 +331,16 @@
     width: 100%;
     max-width: 75PX;
     height: 10PX;
-    background: #11B787;
-    opacity: 0.5;
+    background: url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/find/range-bg.png') no-repeat left center / 100% 100%;
+    opacity: 1;
     bottom: -2PX;
+    z-index: 0;
+  }
+  
+  /* 确保标题文字在底纹之上 */
+  .rankTitleText {
+    position: relative;
+    z-index: 1;
   }
   
   /* PC端箭头间距调整 */
@@ -345,7 +351,7 @@
 
 .pcCardHeader {
   padding: 16PX 20PX;
-  border-bottom: 1PX solid #f0f0f0;
+  border-bottom: none;
   display: flex;
   justify-content: space-between;
   align-items: center;
