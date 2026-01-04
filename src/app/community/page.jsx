@@ -14,6 +14,7 @@ import BullBearVote from '../../components/BullBearVote';
 import BullBearIndicator from '../../components/BullBearIndicator';
 import QuestionButtons from '../../components/QuestionButtons';
 import DiscoveryPostCard from '../../components/DiscoveryPostCard';
+import PostCard from '../../components/PostCard';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { useAmplitude } from '../../hooks/useAmplitude';
@@ -888,86 +889,19 @@ export default function CommunityPage() {
               isPC={false}
             />
           ) : (
-            // 普通帖子使用原来的布局
-            <div 
-              key={post.id} 
-              className={styles.postItem} 
-              onClick={() => goToPostDetail(post.id)}
-            >
-              <div className={styles.postWatermark} aria-hidden="true" />
-              
-              <div className={styles.postHeader}>
-                <div className={styles.userInfo} onClick={(e) => { e.stopPropagation(); goToUserPage(post.userId); }}>
-                  <img src={post.avatar || '/default-avatar.png'} alt="avatar" className={styles.avatar} />
-                  <div className={styles.userMeta}>
-                    <div className={styles.userRow}>
-                      <span className={styles.username}>{post.username}</span>
-                      <span className={styles.badgeLabel}>{post.categoryLabel || post.category || post.type || '资讯'}</span>
-                    </div>
-                    <span className={styles.postTime}>{formatTimeAgo(post.createTime || post.updatedAt)}</span>
-                  </div>
-                </div>
-              </div>
-              <div className={styles.postContent}>
-                <h3 className={styles.postTitle}>{post.title}</h3>
-                <p className={styles.postText}>{post.content}</p>
-                {post.images && post.images.length > 0 && (
-                  <div className={styles.postImages}>
-                    {post.images.map((image, index) => (
-                      <img key={index} src={image} alt="post" className={styles.postImage} />
-                    ))}
-                  </div>
-                )}
-              </div>
-              
-              {(post.tags?.length > 0 || post.topics?.length > 0) && (
-                <div className={styles.tagsTopicsContainer}>
-                  {post.tags?.map(tag => (
-                    <span 
-                      key={`tag-${tag.id}`} 
-                      className={styles.coinTag}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        window.location.href = `/detail?symbol=${tag.name}`;
-                      }}
-                    >
-                      ${tag.name}$
-                    </span>
-                  ))}
-                  
-                  {post.topics?.map(topic => (
-                    <span 
-                      key={`topic-${topic.id}`} 
-                      className={styles.topicTag}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        window.location.href = `/topicinfo?id=${topic.id}&title=${topic.name}`;
-                      }}
-                    >
-                      #{topic.name}
-                    </span>
-                  ))}
-                </div>
-              )}
-              
-              <div className={styles.postFooter}>
-                <div className={styles.postAction} onClick={(e) => handleShare(e, post)}>
-                  <img className={styles.actionIconImg} src={shareIcon} alt="share" />
-                </div>
-                <div className={styles.postAction}>
-                  <img className={styles.actionIconImg} src={commentIcon} alt="comment" />
-                  <span>{post.commentCount || 0}</span>
-                </div>
-                <div className={styles.postAction} onClick={(e) => { e.stopPropagation(); toggleLike(post.id); }}>
-                  <img
-                    className={styles.actionIconImg}
-                    src={(post.isLiked || likedPosts[post.id]) ? likeActiveIcon : likeIcon}
-                    alt="like"
-                  />
-                  <span>{post.likeCount || 0}</span>
-                </div>
-              </div>
-            </div>
+            // 普通帖子使用PostCard组件
+            <PostCard
+              key={post.id}
+              post={post}
+              onPostClick={goToPostDetail}
+              onUserClick={goToUserPage}
+              onLikeClick={(postId) => toggleLike(postId)}
+              onShareClick={handleShare}
+              onTagClick={(tagName) => window.location.href = `/detail?symbol=${tagName}`}
+              onTopicClick={(topicId, topicName) => window.location.href = `/topicinfo?id=${topicId}&title=${topicName}`}
+              isLiked={post.isLiked || likedPosts[post.id]}
+              formatTimeAgo={formatTimeAgo}
+            />
           )
         ))}
         {loading && posts.length === 0 && (

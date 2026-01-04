@@ -1,0 +1,187 @@
+/* 普通帖子卡片样式 - 与原始社区页面完全一致 */
+.postItem {
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 10px;
+  padding: 12px;
+  margin: 0 0 4px 0;
+  position: relative;
+}
+
+.postWatermark {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 55px;
+  height: 55px;
+  background-image: url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/find-best-coin.png');
+  background-repeat: no-repeat;
+  background-size: contain;
+  pointer-events: none;
+  opacity: 0.85;
+  z-index: 0;
+}
+
+.postHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.userInfo { 
+  display: flex; 
+  align-items: flex-start; 
+}
+
+.userMeta { 
+  display: flex; 
+  flex-direction: column; 
+}
+
+.userRow { 
+  display: flex; 
+  align-items: center; 
+  gap: 8px; 
+}
+
+.avatar { 
+  width: 40px; 
+  height: 40px; 
+  border-radius: 50%; 
+  margin-right: 12px; 
+  object-fit: cover; 
+}
+
+.username { 
+  font-weight: 600; 
+  font-size: 14px; 
+  color: #333; 
+}
+
+.badgeLabel {
+  padding: 2px 6px;
+  font-size: 11px;
+  color:#fa8c16;
+  background: #FFF0E4;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.postTime { 
+  font-size: 12px; 
+  color: #999; 
+  margin-top: 2px; 
+}
+
+.postContent {
+  margin-bottom: 12px;
+  margin-left: 52px; // 头像宽度(40px) + 右边距(12px) = 52px，让内容与用户信息对齐
+}
+
+.postTitle { 
+  font-size: 15px; 
+  font-weight: 600; 
+  color: #333; 
+  margin-bottom: 6px; 
+}
+
+.postText { 
+  font-size: 14px; 
+  color: #666; 
+  line-height: 1.6; 
+  margin-bottom: 8px; 
+  word-break: break-word; 
+}
+
+.postImages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.postImage { 
+  width: calc(33.33% - 6px); 
+  height: 100px; 
+  object-fit: contain; 
+  border-radius: 6px; 
+}
+
+/* 币种和话题标签容器 */
+.tagsTopicsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+  margin-left: 52px; // 与标题内容对齐
+}
+
+/* 币种标签样式 */
+.coinTag {
+  display: inline-block;
+  padding: 4px 8px;
+  background-color: #fff2e8;
+  color: #fa8c16;
+  border: 1px solid #ffd591;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.coinTag:hover {
+  background-color: #fa8c16;
+  color: #fff;
+}
+
+/* 话题标签样式 */
+.topicTag {
+  display: inline-block;
+  padding: 4px 8px;
+  background-color: #e6f7ff;
+  color: #1890ff;
+  border: 1px solid #91d5ff;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.topicTag:hover {
+  background-color: #1890ff;
+  color: #fff;
+}
+
+.postFooter { 
+  display: flex; 
+  align-items: center; 
+  padding-top: 8px; 
+  margin-left: 52px; 
+  padding-right: 12px; 
+  justify-content: space-between; /* 两端对齐，右侧留小距离 */ 
+}
+
+.postAction { 
+  display: flex; 
+  align-items: center; 
+  color: #999; 
+  cursor: pointer; 
+}
+
+.actionIcon {
+  margin-right: 4px;
+  font-size: 16px;
+}
+
+.actionIconImg { 
+  width: 20px; 
+  height: 20px; 
+  margin-right: 6px; 
+}
+
+.liked {
+  color: var(--primary-color);
+}
