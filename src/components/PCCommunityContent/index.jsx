@@ -15,6 +15,7 @@ import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 import BullBearVote from '@/components/BullBearVote';
 import BullBearIndicator from '@/components/BullBearIndicator';
+import SectionTitle from '@/components/SectionTitle';
 import styles from './index.module.less';
 
 /**
@@ -269,40 +270,10 @@ export default function PCCommunityContent() {
 
   return (
     <div className={styles.pcCommunityContent}>
-      <div className={styles.header}>
-        <Tabs
-          activeKey={activeTab}
-          onChange={handleTabChange}
-          items={mainTabs}
-          className={styles.mainTabs}
-        />
-        <Button 
-          type="primary" 
-          icon={<PlusOutlined />}
-          onClick={goToPostPage}
-          className={styles.postButton}
-        >
-          {t('community.actions.publish')}
-        </Button>
-      </div>
-
-      {activeTab === 'recommend' && (
-        <>
-          <Tabs
-            activeKey={subTab}
-            onChange={handleSubTabChange}
-            items={subTabs}
-            className={styles.subTabs}
-          />
-
-          {subTab === 'currency' && (
-            <div className={styles.voteSection}>
-              <BullBearVote coinType={selectedCoin} />
-              <BullBearIndicator coinType={selectedCoin} />
-            </div>
-          )}
-        </>
-      )}
+      <SectionTitle 
+        title="发现好币" 
+        onMoreClick={() => handleSubTabChange('discovery')}
+      />
 
       <div className={styles.content} ref={scrollContainerRef}>
         {activeTab === 'hot' ? (
