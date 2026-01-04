@@ -146,3 +146,77 @@
   color: #999;
   font-size: 14px;
 }
+
+/* PC端样式 */
+.pcMode {
+  border-radius: 16PX 16PX 0 0; /* 上方两个角有圆角 */
+  margin: 0;
+  padding-bottom: 0;
+  min-height: auto;
+  background: #FFFFFF; /* PC端需要白色背景 */
+  overflow: hidden; /* 确保子元素不超出圆角 */
+  
+  .hotTopicItem {
+    padding: 12PX 16PX;
+    border-bottom: 1PX solid #F0F0F0;
+    min-height: 72PX; /* 固定高度为72PX */
+    height: 72PX;
+    
+    &:hover {
+      background-color: #F9F9F9;
+    }
+  }
+  
+  .topicRank {
+    width: 24PX;
+    height: 24PX;
+    line-height: 24PX;
+    font-size: 14PX;
+    margin-right: 12PX;
+  }
+  
+  .rankMedal {
+    width: 24PX;
+    height: 24PX;
+  }
+  
+  .topicTitle {
+    font-size: 14PX;
+    margin-bottom: 4PX;
+  }
+  
+  .topicDesc {
+    font-size: 12PX;
+  }
+  
+  .topicRightInfo {
+    margin-left: 12PX;
+  }
+  
+  .heatIcon {
+    width: 14PX;
+    height: 14PX;
+  }
+  
+  .heatValue {
+    font-size: 12PX;
+  }
+  
+  .timeText {
+    display: none; /* PC端不显示时间 */
+  }
+  
+  .loadingMore {
+    padding: 40PX 0;
+  }
+  
+  .listFooter {
+    padding: 20PX 0;
+    font-size: 13PX;
+  }
+  
+  .emptyContent {
+    padding: 40PX 0;
+    font-size: 13PX;
+  }
+}

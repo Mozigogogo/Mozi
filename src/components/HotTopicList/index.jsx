@@ -14,6 +14,7 @@ import styles from './index.module.less';
  * @param {string} nov2Icon - 第2名图标
  * @param {string} nov3Icon - 第3名图标
  * @param {string} hotIcon - 热度图标
+ * @param {boolean} isPC - 是否为PC端，默认false
  */
 export default function HotTopicList({
   topics = [],
@@ -24,12 +25,13 @@ export default function HotTopicList({
   nov1Icon,
   nov2Icon,
   nov3Icon,
-  hotIcon
+  hotIcon,
+  isPC = false
 }) {
   const { t } = useTranslation();
 
   return (
-    <div className={styles.hotTopics}>
+    <div className={`${styles.hotTopics} ${isPC ? styles.pcMode : ''}`}>
       {topics.length > 0 && topics.map((topic, index) => (
         <div 
           key={topic.id} 

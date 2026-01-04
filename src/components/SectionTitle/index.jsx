@@ -15,6 +15,7 @@ import styles from './index.module.less';
  * @param {Function} onMoreClick - 查看更多点击回调
  * @param {string} moreText - 查看更多文本，默认"查看更多"
  * @param {boolean} showMore - 是否显示查看更多，默认true
+ * @param {React.ReactNode} rightContent - 右侧自定义内容（如搜索框），优先级高于查看更多
  */
 export default function SectionTitle({ 
   title,
@@ -25,7 +26,8 @@ export default function SectionTitle({
   showUnderline = true,
   onMoreClick,
   moreText = '查看更多',
-  showMore = true
+  showMore = true,
+  rightContent
 }) {
   return (
     <div className={`${styles.sectionTitle} ${className}`}>
@@ -36,12 +38,14 @@ export default function SectionTitle({
         showDecorator={showDecorator}
         showUnderline={showUnderline}
       />
-      {showMore && onMoreClick && (
+      {rightContent ? (
+        rightContent
+      ) : showMore && onMoreClick ? (
         <ViewMoreLink 
           text={moreText}
           onClick={onMoreClick}
         />
-      )}
+      ) : null}
     </div>
   );
 }

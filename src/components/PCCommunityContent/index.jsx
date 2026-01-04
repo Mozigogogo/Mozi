@@ -11,6 +11,8 @@ import PostCard from '@/components/PostCard';
 import SplitLayout from '@/components/SplitLayout';
 import CoinTabBar from '@/components/CoinTabBar';
 import BullBearIndicator from '@/components/BullBearIndicator';
+import HotTopicSearchBar from '@/components/HotTopicSearchBar';
+import HotTopicList from '@/components/HotTopicList';
 import styles from './index.module.less';
 
 /**
@@ -29,6 +31,10 @@ export default function PCCommunityContent() {
   const [selectedCoin, setSelectedCoin] = useState('BTC'); // 当前选中的币种
   const [voteChoice, setVoteChoice] = useState(null); // 投票选择状态
   const [voteData, setVoteData] = useState({ upCount: 0, downCount: 0, totalCount: 0, hasVoted: false, userVoteType: null }); // 投票数据
+  const [hotTopics, setHotTopics] = useState([]); // 热门话题列表
+  const [hotTopicsLoading, setHotTopicsLoading] = useState(false); // 热门话题加载状态
+  const [hotTopicsPage, setHotTopicsPage] = useState(1); // 热门话题当前页码
+  const [hotTopicsAllLoaded, setHotTopicsAllLoaded] = useState(false); // 热门话题是否全部加载完
   
   // 固定币种配置
   const coinTabs = [
@@ -38,6 +44,13 @@ export default function PCCommunityContent() {
     { key: 'DOGE', title: 'DOGE' },
     { key: 'XRP', title: 'XRP' }
   ];
+
+  // 图标配置
+  const CDN_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community';
+  const nov1Icon = `${CDN_ICON}/Nov1.png`;
+  const nov2Icon = `${CDN_ICON}/Nov2.png`;
+  const nov3Icon = `${CDN_ICON}/Nov3.png`;
+  const hotIcon = `${CDN_ICON}/hot.png`;
 
   // 格式化时间
   const formatTimeAgo = (time) => {
@@ -202,6 +215,70 @@ export default function PCCommunityContent() {
     }
   };
 
+  // 获取热门话题
+  const fetchHotTopics = async (reset = false) => {
+    if (hotTopicsLoading) return;
+    if (!reset && hotTopicsAllLoaded) return;
+    
+    setHotTopicsLoading(true);
+    const currentPage = reset ? 1 : hotTopicsPage;
+    
+    try {
+      // 如果是重置（初始加载），一次性加载3页
+      if (reset) {
+        const requests = [1, 2, 3].map(page => 
+          request({
+            url: Interface.HOT_TOPICS_API,
+            data: {
+              page,
+              size: 10
+            }
+          })
+        );
+        
+        const responses = await Promise.all(requests);
+        const allData = [];
+        let maxTotalPages = 0;
+        
+        responses.forEach(response => {
+          if (response?.data?.data?.length > 0) {
+            allData.push(...response.data.data);
+            maxTotalPages = Math.max(maxTotalPages, response.data.totalPages || 0);
+          }
+        });
+        
+        setHotTopics(allData);
+        setHotTopicsPage(4); // 下次从第4页开始
+        setHotTopicsAllLoaded(3 >= maxTotalPages);
+      } else {
+        // 正常分页加载
+        const response = await request({
+          url: Interface.HOT_TOPICS_API,
+          data: {
+            page: currentPage,
+            size: 10
+          }
+        });
+        
+        if (response?.data?.data?.length > 0) {
+          const { data, totalPages } = response.data;
+          setHotTopics(prev => [...prev, ...data]);
+          setHotTopicsPage(currentPage + 1);
+          setHotTopicsAllLoaded(currentPage >= totalPages);
+        } else {
+          setHotTopicsAllLoaded(true);
+        }
+      }
+    } catch (error) {
+      console.error('获取热门话题失败:', error);
+      if (reset) {
+        setHotTopics([]);
+      }
+    } finally {
+      setHotTopicsLoading(false);
+    }
+  };
+
   // 获取看涨看跌统计数据
   const fetchVoteData = async (coinType) => {
     try {
@@ -331,11 +408,18 @@ export default function PCCommunityContent() {
     router.push(`/commentinfo?id=${postId}`);
   };
 
+  // 跳转到话题详情页
+  const goToTopicDetail = (topicId, name, description = null) => {
+    const defaultDesc = description || '暂无简介';
+    router.push(`/topicinfo?id=${topicId}&title=${name}&description=${defaultDesc}`);
+  };
+
   // 初始加载
   useEffect(() => {
     fetchDiscoveryPosts(); // 加载发现好币帖子
     fetchQuestionPosts(); // 加载不懂就问帖子
     fetchCoinPosts(selectedCoin); // 加载币种帖子
+    fetchHotTopics(); // 加载热门话题
   }, []);
 
   // 币种切换时重新加载
@@ -478,7 +562,31 @@ export default function PCCommunityContent() {
         }
         rightContent={
           <div>
-            {/* 右侧内容区域 (30%) */}
+            {/* 热门榜单 */}
+            <SectionTitle 
+              title="热门榜单"
+              rightContent={
+                <HotTopicSearchBar
+                  onSearchClick={() => router.push('/topicsearch')}
+                  onCreateClick={() => console.log('创建话题')}
+                  searchPlaceholder="搜索话题"
+                  createButtonText="创建话题"
+                  isPC={true}
+                />
+              }
+            />
+            <HotTopicList
+              topics={hotTopics}
+              loading={hotTopicsLoading}
+              allLoaded={true}
+              pullRefresh={false}
+              onTopicClick={goToTopicDetail}
+              nov1Icon={nov1Icon}
+              nov2Icon={nov2Icon}
+              nov3Icon={nov3Icon}
+              hotIcon={hotIcon}
+              isPC={true}
+            />
           </div>
         }
         leftWidth={70}
