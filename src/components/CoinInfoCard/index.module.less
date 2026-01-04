@@ -1,0 +1,131 @@
+.coinInfoCard {
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+
+    .coinName {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .coinIcon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+      }
+
+      .symbol {
+        font-size: 28px;
+        font-weight: 600;
+        color: #1A1A1A;
+      }
+    }
+
+    .marketCap {
+      font-size: 20px;
+      font-weight: 500;
+      color: #11B787;
+    }
+  }
+
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+
+    .priceInfo {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      .price {
+        font-size: 32px;
+        font-weight: 600;
+        color: #1A1A1A;
+        line-height: 1;
+      }
+
+      .change24h {
+        font-size: 18px;
+        color: #999999;
+      }
+    }
+
+    .changePercent {
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 24px;
+      font-weight: 600;
+
+      &.positive {
+        background: #11B787;
+        color: #FFFFFF;
+      }
+
+      &.negative {
+        background: #FF4D4F;
+        color: #FFFFFF;
+      }
+    }
+  }
+}
+
+// PC端样式
+.pcMode {
+  border-radius: 16PX;
+  padding: 24PX;
+
+  .header {
+    margin-bottom: 24PX;
+
+    .coinName {
+      gap: 12PX;
+
+      .coinIcon {
+        width: 48PX;
+        height: 48PX;
+      }
+
+      .symbol {
+        font-size: 28PX;
+      }
+    }
+
+    .marketCap {
+      font-size: 20PX;
+    }
+  }
+
+  .footer {
+    .priceInfo {
+      gap: 8PX;
+
+      .price {
+        font-size: 32PX;
+      }
+
+      .change24h {
+        font-size: 18PX;
+      }
+    }
+
+    .changePercent {
+      padding: 12PX 24PX;
+      border-radius: 12PX;
+      font-size: 24PX;
+    }
+  }
+}

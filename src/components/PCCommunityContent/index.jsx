@@ -13,6 +13,7 @@ import CoinTabBar from '@/components/CoinTabBar';
 import BullBearIndicator from '@/components/BullBearIndicator';
 import HotTopicSearchBar from '@/components/HotTopicSearchBar';
 import HotTopicList from '@/components/HotTopicList';
+import CommentInput from '@/components/CommentInput';
 import styles from './index.module.less';
 
 /**
@@ -33,8 +34,6 @@ export default function PCCommunityContent() {
   const [voteData, setVoteData] = useState({ upCount: 0, downCount: 0, totalCount: 0, hasVoted: false, userVoteType: null }); // 投票数据
   const [hotTopics, setHotTopics] = useState([]); // 热门话题列表
   const [hotTopicsLoading, setHotTopicsLoading] = useState(false); // 热门话题加载状态
-  const [hotTopicsPage, setHotTopicsPage] = useState(1); // 热门话题当前页码
-  const [hotTopicsAllLoaded, setHotTopicsAllLoaded] = useState(false); // 热门话题是否全部加载完
   
   // 固定币种配置
   const coinTabs = [
@@ -216,64 +215,29 @@ export default function PCCommunityContent() {
   };
 
   // 获取热门话题
-  const fetchHotTopics = async (reset = false) => {
+  const fetchHotTopics = async () => {
     if (hotTopicsLoading) return;
-    if (!reset && hotTopicsAllLoaded) return;
     
     setHotTopicsLoading(true);
-    const currentPage = reset ? 1 : hotTopicsPage;
     
     try {
-      // 如果是重置（初始加载），一次性加载3页
-      if (reset) {
-        const requests = [1, 2, 3].map(page => 
-          request({
-            url: Interface.HOT_TOPICS_API,
-            data: {
-              page,
-              size: 10
-            }
-          })
-        );
-        
-        const responses = await Promise.all(requests);
-        const allData = [];
-        let maxTotalPages = 0;
-        
-        responses.forEach(response => {
-          if (response?.data?.data?.length > 0) {
-            allData.push(...response.data.data);
-            maxTotalPages = Math.max(maxTotalPages, response.data.totalPages || 0);
-          }
-        });
-        
-        setHotTopics(allData);
-        setHotTopicsPage(4); // 下次从第4页开始
-        setHotTopicsAllLoaded(3 >= maxTotalPages);
-      } else {
-        // 正常分页加载
-        const response = await request({
-          url: Interface.HOT_TOPICS_API,
-          data: {
-            page: currentPage,
-            size: 10
-          }
-        });
-        
-        if (response?.data?.data?.length > 0) {
-          const { data, totalPages } = response.data;
-          setHotTopics(prev => [...prev, ...data]);
-          setHotTopicsPage(currentPage + 1);
-          setHotTopicsAllLoaded(currentPage >= totalPages);
-        } else {
-          setHotTopicsAllLoaded(true);
+      // PC端直接加载40条数据
+      const response = await request({
+        url: Interface.HOT_TOPICS_API,
+        data: {
+          page: 1,
+          size: 40
         }
+      });
+      
+      if (response?.data?.data?.length > 0) {
+        setHotTopics(response.data.data);
+      } else {
+        setHotTopics([]);
       }
     } catch (error) {
       console.error('获取热门话题失败:', error);
-      if (reset) {
-        setHotTopics([]);
-      }
+      setHotTopics([]);
     } finally {
       setHotTopicsLoading(false);
     }
@@ -412,6 +376,46 @@ export default function PCCommunityContent() {
   const goToTopicDetail = (topicId, name, description = null) => {
     const defaultDesc = description || '暂无简介';
     router.push(`/topicinfo?id=${topicId}&title=${name}&description=${defaultDesc}`);
+  };
+
+  // 处理评论提交
+  const handleCommentSubmit = async (content) => {
+    // 由于这是币种讨论区，我们需要创建一个新帖子而不是评论
+    // 如果需要评论特定帖子，应该在帖子详情页进行
+    try {
+      const response = await request({
+        url: Interface.POST_NEW,
+        method: 'POST',
+        data: {
+          title: `关于 ${selectedCoin} 的讨论`,
+          content: content,
+          category: '不懂就问',
+          tags: [selectedCoin]
+        }
+      });
+
+      if (response?.data || response?.success) {
+        message.success('发表成功');
+        // 刷新币种帖子列表
+        fetchCoinPosts(selectedCoin);
+        
+        // 尝试完成发帖任务
+        try {
+          await request({
+            url: Interface.TASK_COMPLETE,
+            method: 'POST',
+            data: { taskCode: 'POST' }
+          });
+        } catch (taskError) {
+          console.error('发帖任务上报失败:', taskError);
+        }
+      } else {
+        message.error(response?.message || response?.errorMsg || '发表失败');
+      }
+    } catch (error) {
+      console.error('发表失败:', error);
+      message.error('发表失败，请稍后重试');
+    }
   };
 
   // 初始加载
@@ -558,6 +562,15 @@ export default function PCCommunityContent() {
             ) : (
               <Empty description={`暂无${selectedCoin}相关帖子`} />
             )}
+            
+            {/* 评论输入框 */}
+            <div style={{ marginTop: '20PX' }}>
+              <CommentInput
+                placeholder={`发表关于 ${selectedCoin} 的看法`}
+                onSubmit={handleCommentSubmit}
+                isPC={true}
+              />
+            </div>
           </div>
         }
         rightContent={
