@@ -34,8 +34,8 @@
   position: relative;
   min-width: 60px;
   border-radius: 8px 0 0 8px;
-  // 反梯形：左宽右窄（上边比下边短）- 偏移量3px
-  clip-path: polygon(0 0, 100% 0, calc(100% - 3px) 100%, 0 100%);
+  // 反梯形：左宽右窄（上边比下边短）- 移动端偏移量6px
+  clip-path: polygon(0 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
   
   &.clickable {
     cursor: pointer;
@@ -67,8 +67,8 @@
   position: relative;
   min-width: 60px;
   border-radius: 0 8px 8px 0;
-  // 反向梯形：上窄下宽（上边左侧收窄，下边完整）- 偏移量3px
-  clip-path: polygon(3px 0, 100% 0, 100% 100%, 0 100%);
+  // 反向梯形：上窄下宽（上边左侧收窄，下边完整）- 移动端偏移量6px
+  clip-path: polygon(6px 0, 100% 0, 100% 100%, 0 100%);
   
   &.clickable {
     cursor: pointer;
@@ -168,6 +168,8 @@
 .pcBullSide {
   border-radius: 8PX 0 0 8PX;
   min-width: 80PX;
+  // PC端间隙 - 偏移量6PX
+  clip-path: polygon(0 0, 100% 0, calc(100% - 10PX) 100%, 0 100%);
   
   .label {
     font-size: 16PX;
@@ -178,6 +180,8 @@
 .pcBearSide {
   border-radius: 0 8PX 8PX 0;
   min-width: 80PX;
+  // PC端间隙 - 偏移量6PX
+  clip-path: polygon(10PX 0, 100% 0, 100% 100%, 0 100%);
   
   .label {
     font-size: 16PX;

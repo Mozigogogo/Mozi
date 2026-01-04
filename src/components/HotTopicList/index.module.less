@@ -1,0 +1,148 @@
+/* 热榜话题样式 */
+.hotTopics {
+  border-radius: 20px 20px 0 0; /* 40rpx ÷ 2 = 20px */
+  overflow: hidden;
+  background: #fff;
+  min-height: calc(100vh - 200px); /* 确保有足够高度，但不需要100vh */
+  margin-top: 0; /* 紧贴搜索栏 */
+  margin-left: -12px; /* 抵消 contentList 的左padding */
+  margin-right: -12px; /* 抵消 contentList 的右padding */
+  padding-bottom: 40px; /* 为底部 tabBar 预留空间，避免 loading 被遮挡 */
+}
+
+/* 热门榜单加载更多 loading */
+.loadingMore {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 0;
+}
+
+.hotTopicItem {
+  display: flex;
+  align-items: stretch;
+  padding: 15px; /* 30rpx ÷ 2 = 15px */
+  border-bottom: 1px solid #f5f5f5;
+  background: #fff;
+  min-height: 60px; /* 120rpx ÷ 2 = 60px */
+  cursor: pointer;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: #f9f9f9;
+  }
+  
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+/* 排名 */
+.topicRank {
+  width: 21px; /* 42rpx ÷ 2 = 21px */
+  height: 21px; /* 42rpx ÷ 2 = 21px */
+  line-height: 21px;
+  text-align: center;
+  font-size: 13px; /* 26rpx ÷ 2 = 13px */
+  color: #11B787;
+  background: #E7F8F3;
+  border-radius: 50%;
+  margin-right: 10px; /* 20rpx ÷ 2 = 10px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  
+  /* 前三名奖章样式，去除背景色 */
+  &.medalRank {
+    background: transparent;
+  }
+}
+
+.rankMedal {
+  width: 18px; 
+  height: 21px; 
+  display: block;
+}
+
+/* 话题信息 */
+.topicInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.topicTitle {
+  display: block;
+  font-size: 15px; /* 30rpx ÷ 2 = 15px */
+  color: #333;
+  margin-bottom: 8px; /* 16rpx ÷ 2 = 8px */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topicDesc {
+  display: block;
+  font-size: 14px; /* 28rpx ÷ 2 = 14px */
+  color: #818181;
+  margin-top: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 右侧信息 */
+.topicRightInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-left: 10px; /* 20rpx ÷ 2 = 10px */
+  flex-shrink: 0;
+}
+
+.heatText {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px; /* 6rpx ÷ 2 = 3px */
+}
+
+.heatIcon {
+  width: 12.5px; /* 25rpx ÷ 2 = 12.5px */
+  height: 12.5px; /* 25rpx ÷ 2 = 12.5px */
+}
+
+.heatValue {
+  font-size: 12px; /* 24rpx ÷ 2 = 12px */
+  color: #FA5F5F;
+  text-align: right;
+}
+
+.timeText {
+  font-size: 11px; /* 22rpx ÷ 2 = 11px */
+  color: #ccc;
+  text-align: right;
+  margin-top: auto;
+}
+
+.listFooter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 0;
+  color: #999;
+  font-size: 13px;
+}
+
+.emptyContent {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 0;
+  color: #999;
+  font-size: 14px;
+}

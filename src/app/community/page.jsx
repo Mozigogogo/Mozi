@@ -19,6 +19,7 @@ import MainTabSwitch from '../../components/MainTabSwitch';
 import SubTabBar from '../../components/SubTabBar';
 import CoinTabBar from '../../components/CoinTabBar';
 import HotTopicSearchBar from '../../components/HotTopicSearchBar';
+import HotTopicList from '../../components/HotTopicList';
 import FloatingPostButton from '../../components/FloatingPostButton';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
@@ -1111,54 +1112,17 @@ export default function CommunityPage() {
           )} */}
           
           {mainTab === 'hot' ? (
-            <div className={styles.hotTopics}>
-              {hotTopics.length > 0 && hotTopics.map((topic, index) => (
-                <div key={topic.id} className={styles.hotTopicItem} onClick={() => goToTopicDetail(topic.id, topic.name, topic.description)}>
-                  {/* 排名 */}
-                  <div className={`${styles.topicRank} ${index < 3 ? styles.medalRank : ''}`}>
-                    {index === 0 ? (
-                      <img className={styles.rankMedal} src={nov1Icon} alt="第1名" />
-                    ) : index === 1 ? (
-                      <img className={styles.rankMedal} src={nov2Icon} alt="第2名" />
-                    ) : index === 2 ? (
-                      <img className={styles.rankMedal} src={nov3Icon} alt="第3名" />
-                    ) : (
-                      index + 1
-                    )}
-                  </div>
-                  
-                  {/* 话题信息 */}
-                  <div className={styles.topicInfo}>
-                    <span className={styles.topicTitle}>{topic.name}</span>
-                    <span className={styles.topicDesc}>{topic.description || t('community.actions.noDescription')}</span>
-                  </div>
-                  
-                  {/* 右侧信息 */}
-                  <div className={styles.topicRightInfo}>
-                    <div className={styles.heatText}>
-                      <img className={styles.heatIcon} src={hotIcon} alt="热度" />
-                      <span className={styles.heatValue}>{topic.score || 0}</span>
-                    </div>
-                    <span className={styles.timeText}>{topic.createdAt?.replace('T', '    ')}</span>
-                  </div>
-                </div>
-              ))}
-              {hotTopicsLoading && !pullRefresh && (
-                <div className={styles.loadingMore} style={hotTopics.length === 0 ? { paddingTop: '60px' } : {}}>
-                  <GardenLoading t={t} />
-                </div>
-              )}
-              {hotTopicsAllLoaded && hotTopics.length > 0 && (
-                <div className={styles.listFooter}>
-                  <span>{t('community.actions.reachedBottom')}</span>
-                </div>
-              )}
-              {!hotTopicsLoading && hotTopics.length === 0 && (
-                <div className={styles.emptyContent}>
-                  <span>{t('community.actions.noMoreContent')}</span>
-                </div>
-              )}
-            </div>
+            <HotTopicList
+              topics={hotTopics}
+              loading={hotTopicsLoading}
+              allLoaded={hotTopicsAllLoaded}
+              pullRefresh={pullRefresh}
+              onTopicClick={goToTopicDetail}
+              nov1Icon={nov1Icon}
+              nov2Icon={nov2Icon}
+              nov3Icon={nov3Icon}
+              hotIcon={hotIcon}
+            />
           ) : (
             <div>
               {pullRefresh && (
