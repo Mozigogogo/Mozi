@@ -15,6 +15,9 @@ import BullBearIndicator from '../../components/BullBearIndicator';
 import QuestionButtons from '../../components/QuestionButtons';
 import DiscoveryPostCard from '../../components/DiscoveryPostCard';
 import PostCard from '../../components/PostCard';
+import MainTabSwitch from '../../components/MainTabSwitch';
+import SubTabBar from '../../components/SubTabBar';
+import CoinTabBar from '../../components/CoinTabBar';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { useAmplitude } from '../../hooks/useAmplitude';
@@ -115,14 +118,22 @@ export default function CommunityPage() {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
   };
 
-  // 预加载切换图，避免切换瞬间重解码导致卡顿
-  useEffect(() => {
-    [recommendActive, recommendInactive, hotActive, hotInactive, newsActive, newsInactive].forEach((src) => {
-      const img = new Image();
-      img.decoding = 'async';
-      img.src = src;
-    });
-  }, []);
+  // 主导航tab图片配置
+  const tabImages = {
+    recommendActive,
+    recommendInactive,
+    hotActive,
+    hotInactive,
+    newsActive,
+    newsInactive
+  };
+
+  // 主导航tab标签配置
+  const tabLabels = {
+    recommend: t('community.tabs.recommend'),
+    news: t('community.tabs.news'),
+    hot: t('community.tabs.hot')
+  };
 
   // 获取看涨看跌统计数据
   const fetchVoteData = async (coinType) => {
@@ -1005,85 +1016,43 @@ export default function CommunityPage() {
         {/* 顶部导航栏 */}
         <NavBar title={t('community.title')} showBack={false} showBorder={false} fixed={false} className={styles.navTransparent} />
 
-        <div className={styles.mainTabs}>
-          <div className={styles.bannerSwitch}>
-            <div
-              className={`${styles.bannerCard} ${mainTab === 'recommend' ? styles.active : ''}`}
-              onClick={() => setMainTab('recommend')}
-            >
-              <img className={`${styles.tabImage} ${mainTab === 'recommend' ? styles.tabImageVisible : styles.tabImageHidden}`}
-                   decoding="async" loading="eager" src={recommendActive} alt={t('community.tabs.recommend')} />
-              <img className={`${styles.tabImage} ${mainTab !== 'recommend' ? styles.tabImageVisible : styles.tabImageHidden}`}
-                   decoding="async" loading="eager" src={recommendInactive} alt={t('community.tabs.recommend')} />
-            </div>
-            <div
-              className={`${styles.bannerCard} ${mainTab === 'news' ? styles.active : ''}`}
-              onClick={() => setMainTab('news')}
-            >
-              <img className={`${styles.tabImage} ${mainTab === 'news' ? styles.tabImageVisible : styles.tabImageHidden}`}
-                   decoding="async" loading="eager" src={newsActive} alt={t('community.tabs.news')} />
-              <img className={`${styles.tabImage} ${mainTab !== 'news' ? styles.tabImageVisible : styles.tabImageHidden}`}
-                   decoding="async" loading="eager" src={newsInactive} alt={t('community.tabs.news')} />
-            </div>
-            <div
-              className={`${styles.bannerCard} ${mainTab === 'hot' ? styles.active : ''}`}
-              onClick={() => setMainTab('hot')}
-            >
-              <img className={`${styles.tabImage} ${mainTab === 'hot' ? styles.tabImageVisible : styles.tabImageHidden}`}
-                   decoding="async" loading="eager" src={hotActive} alt={t('community.tabs.hot')} />
-              <img className={`${styles.tabImage} ${mainTab !== 'hot' ? styles.tabImageVisible : styles.tabImageHidden}`}
-                   decoding="async" loading="eager" src={hotInactive} alt={t('community.tabs.hot')} />
-            </div>
-          </div>
-        </div>
+        {/* 主导航切换 */}
+        <MainTabSwitch 
+          activeTab={mainTab}
+          onTabChange={setMainTab}
+          tabImages={tabImages}
+          tabLabels={tabLabels}
+        />
 
         <div className={styles.tabsWrapper}>
           {/* 子导航 */}
           {mainTab === 'recommend' && (
-            <div className={styles.subTabs}>
-              {subTabs.map(item => (
-                <span
-                  key={item.key}
-                  className={`${styles.subTab} ${subTab === item.key ? styles.active : ''}`}
-                  onClick={() => handleSubTabChange(item.key)}
-                >
-                  {item.title}
-                </span>
-              ))}
-            </div>
+            <SubTabBar 
+              tabs={subTabs}
+              activeTab={subTab}
+              onTabChange={handleSubTabChange}
+            />
           )}
 
           {/* 快讯子导航 */}
           {mainTab === 'news' && (
-            <div className={styles.subTabs}>
-              <span className={`${styles.subTab} ${styles.active}`}>
-                {t('community.tabs.all')}
-              </span>
-            </div>
+            <SubTabBar 
+              tabs={[{ key: 'all', title: t('community.tabs.all') }]}
+              activeTab="all"
+              onTabChange={() => {}}
+            />
           )}
 
           {/* 币种子标签 */}
           {mainTab === 'recommend' && subTab === 'currency' && (
-            <div className={styles.coinTabs}>
-              {coinTabs.map(item => (
-                <span
-                  key={item.key}
-                  className={`${styles.coinTab} ${selectedCoin === item.key ? styles.active : ''}`}
-                  onClick={() => handleCoinSelect(item.key)}
-                >
-                  {item.title}
-                </span>
-              ))}
-              {dynamicCoin && (
-                <span
-                  className={`${styles.coinTab} ${selectedCoin === dynamicCoin ? styles.active : ''}`}
-                  onClick={() => handleCoinSelect(dynamicCoin)}
-                >
-                  {dynamicCoin}
-                </span>
-              )}
-              <span className={`${styles.coinTab} ${styles.more}`} onClick={handleMoreCoins}>{t('community.actions.more')}</span>
-            </div>
+            <CoinTabBar 
+              coinTabs={coinTabs}
+              selectedCoin={selectedCoin}
+              dynamicCoin={dynamicCoin}
+              onCoinSelect={handleCoinSelect}
+              onMoreClick={handleMoreCoins}
+              moreText={t('community.actions.more')}
+            />
           )}
 
           {/* 热榜搜索和创建 */}
