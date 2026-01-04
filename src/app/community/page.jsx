@@ -18,6 +18,8 @@ import PostCard from '../../components/PostCard';
 import MainTabSwitch from '../../components/MainTabSwitch';
 import SubTabBar from '../../components/SubTabBar';
 import CoinTabBar from '../../components/CoinTabBar';
+import HotTopicSearchBar from '../../components/HotTopicSearchBar';
+import FloatingPostButton from '../../components/FloatingPostButton';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { useAmplitude } from '../../hooks/useAmplitude';
@@ -1057,14 +1059,12 @@ export default function CommunityPage() {
 
           {/* 热榜搜索和创建 */}
           {mainTab === 'hot' && (
-            <div className={styles.hotSearchBar}>
-              <div className={styles.searchBox} onClick={goToTopicSearch}>
-                <span>{t('community.actions.searchTopic')}</span>
-              </div>
-              <Button className={styles.createTopicBtn} onClick={() => setShowCreateTopic(true)}>
-                {t('community.actions.createTopic')}
-              </Button>
-            </div>
+            <HotTopicSearchBar 
+              onSearchClick={goToTopicSearch}
+              onCreateClick={() => setShowCreateTopic(true)}
+              searchPlaceholder={t('community.actions.searchTopic')}
+              createButtonText={t('community.actions.createTopic')}
+            />
           )}
         </div>
 
@@ -1173,11 +1173,12 @@ export default function CommunityPage() {
         </div>
 
         {/* 发帖按钮 */}
-        <div className={styles.floatPostBtn}>
-          <button className={styles.postBtn} onClick={goToPostPage} aria-label="发帖">
-            <img className={styles.postBtnImage} src={publishIcon} alt="发帖" />
-          </button>
-        </div>
+        <FloatingPostButton 
+          onClick={goToPostPage}
+          iconSrc={publishIcon}
+          ariaLabel={t('community.actions.publish')}
+          altText={t('community.actions.publish')}
+        />
 
         {/* 币种选择器弹窗 */}
         {showCoinSelector && (
