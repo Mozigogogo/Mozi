@@ -302,11 +302,11 @@
 
 /* PC端样式定制 */
 .pcCard {
-  border-radius: 12PX;
+  width: 100%;
+  background: #FFFFFF;
+  border-radius: 16PX !important;
   box-shadow: 0 2PX 8PX rgba(0, 0, 0, 0.06);
-  margin-bottom: 16PX;
   transition: box-shadow 0.3s ease;
-  background: #fff;
   border: 1PX solid #f0f0f0;
 
   &:hover {
@@ -318,7 +318,6 @@
   .rankTitle,
   .rankTitleText {
     width: auto;
-    min-width: 110PX;
     height: 18PX;
     font-family: 'Microsoft YaHei', sans-serif;
     font-weight: bold;
@@ -329,17 +328,30 @@
   
   /* PC端标题底部背景 */
   .titleWithRangeBg::after {
-    width: 75PX;
+    width: 100%;
+    max-width: 75PX;
     height: 10PX;
-    background: #11B787;
-    opacity: 0.5;
+    background: url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/find/range-bg.png') no-repeat left center / 100% 100%;
+    opacity: 1;
     bottom: -2PX;
+    z-index: 0;
+  }
+  
+  /* 确保标题文字在底纹之上 */
+  .rankTitleText {
+    position: relative;
+    z-index: 1;
+  }
+  
+  /* PC端箭头间距调整 */
+  .rankArrow {
+    margin-left: 4PX;
   }
 }
 
 .pcCardHeader {
   padding: 16PX 20PX;
-  border-bottom: 1PX solid #f0f0f0;
+  border-bottom: none;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -347,21 +359,22 @@
 
 .pcCardBody {
   padding: 0;
+  overflow: visible !important;
   
-  /* PC端排行榜横向布局 */
+  /* PC端排行榜横向布局 - 使用属性选择器匹配CSS Modules生成的类名 */
   :global {
-    .rankGridContainer {
+    [class*="rankGridContainer"] {
       display: flex;
       flex-direction: row;
       padding: 16PX 20PX;
     }
     
-    .rankGridHead {
-      flex: 0 0 120PX;
-      margin-right: 20PX;
+    [class*="rankGridHead"] {
+      flex: 0 0 280PX !important;
+      margin-right: 30PX !important;
     }
     
-    .rankGridDesc {
+    [class*="rankGridDesc"] {
       flex: 1;
     }
   }

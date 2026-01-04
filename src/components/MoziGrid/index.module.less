@@ -91,11 +91,64 @@
   }
 }
 
+// PC端排名布局样式
+.pcRankGridContainer {
+  display: flex;
+  
+  .rankingColumn {
+    width: 280PX;
+    flex: 0 0 280PX;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 10PX;
+    box-sizing: border-box;
+  }
+
+  .rankingLogoContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .contentColumn {
+    flex: 1;
+    margin-left: 30PX;
+    max-width: calc(100% - 310PX);
+    
+    .gridTitle {
+      font-family: 'Microsoft YaHei', sans-serif;
+      font-weight: 400;
+      font-size: 16PX;
+      color: #AAAAAA;
+      
+      .gridTitleItem {
+        font-family: 'Microsoft YaHei', sans-serif;
+        font-weight: 400;
+        font-size: 16PX;
+        color: #AAAAAA;
+      }
+    }
+  }
+}
+
 .rankingLogoFull {
   width: 65px; // 130px / 2
   height: 65px;
   border-radius: 6px; // 12px / 2
   border: 0.5px solid #e0e0e0; // 1px / 2
+  background-color: #fff;
+  object-fit: contain;
+}
+
+// PC端排名logo样式
+.pcRankingLogoFull {
+  width: 156PX;
+  height: 156PX;
+  border-radius: 12PX;
+  border: 1PX solid #e0e0e0;
   background-color: #fff;
   object-fit: contain;
 }
@@ -231,4 +284,131 @@
   .gridListItem {
     padding: 6px 0;
   }
+}
+
+
+// PC端表格内容样式
+.pcRankGridContainer {
+  .contentColumn {
+    .gridContent {
+      font-family: 'Microsoft YaHei', sans-serif;
+      font-weight: 400;
+      font-size: 16PX;
+      color: #333333;
+    }
+    
+    .gridConItem {
+      font-family: 'Microsoft YaHei', sans-serif;
+      font-weight: 400;
+      font-size: 16PX;
+      color: #333333;
+    }
+    
+    .rankingNumber {
+      font-family: 'Microsoft YaHei', sans-serif;
+      font-weight: 400;
+      font-size: 16PX;
+      color: #333333;
+    }
+  }
+}
+
+
+// PC端表格行样式
+.pcRankGridContainer {
+  .contentColumn {
+    .gridListItem {
+      height: 49PX;
+      background: transparent;
+      border-radius: 10PX;
+      margin-bottom: 8PX;
+      padding: 0 12PX;
+      display: flex;
+      align-items: center;
+      
+      &:hover {
+        background-color: #f0f0f0;
+      }
+    }
+    
+    .rankingRow {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+    }
+  }
+}
+
+
+// PC端交易所名称样式
+.pcRankGridContainer {
+  .rankingTopName {
+    width: 156PX;
+    font-size: 24PX;
+    font-weight: 500;
+    color: #666666;
+    margin-top: 12PX;
+  }
+}
+
+
+// PC端标题间距调整
+.pcRankGridContainer {
+  .contentColumn {
+    .gridTitle {
+      margin-bottom: 4PX;
+    }
+  }
+}
+
+
+// PC端序号宽度调整
+.pcRankGridContainer {
+  .contentColumn {
+    .rankingNumber {
+      width: 20PX !important;
+      flex: 0 0 20PX !important;
+      margin-right: 12PX !important;
+    }
+  }
+}
+
+
+// PC端第一列去除左padding
+.pcRankGridContainer {
+  .contentColumn {
+    .gridContent {
+      .gridConItem:first-child {
+        padding-left: 0 !important;
+      }
+    }
+    
+    .gridTitle {
+      .gridTitleItem:first-child {
+        padding-left: 0 !important;
+      }
+    }
+  }
+}
+
+// PC端第一列logo和名称样式 - 与RankGrid对齐
+.pcFirstColumn {
+  display: flex !important;
+  align-items: flex-end !important;
+  line-height: 1 !important;
+  
+  span {
+    line-height: 1 !important;
+  }
+}
+
+.pcCoinLogo {
+  width: 23PX !important;
+  height: 23PX !important;
+  margin-right: 8PX !important;
+  margin-left: 0 !important;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block !important;
 }

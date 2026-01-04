@@ -10,6 +10,8 @@ export const RankGrid = ({ length, colName, gridContent, callback, minRows, isPC
   const firstItem = hasData ? gridContent[0] : {};
   const containerStyle = minRows ? { minHeight: `${minRows * ROW_HEIGHT_PX}px` } : undefined;
 
+ 
+
   const handleImageError = (key) => {
     setImageErrors(prev => ({
       ...prev,
@@ -39,60 +41,114 @@ export const RankGrid = ({ length, colName, gridContent, callback, minRows, isPC
       )}
       <div className={`${styles.rankGridDesc} ${isPC ? styles.pcRankGridDesc : ''}`}>
         {hasData && (
-          <Grid className={styles.gridTitle} columns={length + 1}>
-            <Grid.Item className={styles.rankingHeader}></Grid.Item>
-            {colName.map((colNameItem, colNameIndex) => (
-              <Grid.Item 
-                key={colNameIndex} 
-                className={`${styles.gridTitleItem} ${colNameIndex !== 0 ? styles.text : ''}`}
-              >
-                {colNameItem}
-              </Grid.Item>
-            ))}
-          </Grid>
+          isPC ? (
+            // PC端使用div布局
+            <div className={`${styles.titleRow} ${styles.pcTitleRow}`}>
+              {colName.map((colNameItem, colNameIndex) => (
+                <div 
+                  key={colNameIndex} 
+                  className={`${styles.titleCell} ${colNameIndex !== 0 ? styles.textRight : ''}`}
+                >
+                  {colNameItem}
+                </div>
+              ))}
+            </div>
+          ) : (
+            // 移动端使用Grid布局
+            <Grid className={styles.gridTitle} columns={length + 1}>
+              <Grid.Item className={styles.rankingHeader}></Grid.Item>
+              {colName.map((colNameItem, colNameIndex) => (
+                <Grid.Item 
+                  key={colNameIndex} 
+                  className={`${styles.gridTitleItem} ${colNameIndex !== 0 ? styles.text : ''}`}
+                >
+                  {colNameItem}
+                </Grid.Item>
+              ))}
+            </Grid>
+          )
         )}
         {hasData ? (
           <List>
-            {gridContent.map((gridCon, index) => (
+            {gridContent.map((gridCon, index) => {
+              const filteredKeys = Object.keys(gridCon).filter(key => key !== 'key' && key !== 'img' && key !== 'url');
+              console.log(`🔍 Row ${index + 1} Debug:`, {
+                allKeys: Object.keys(gridCon),
+                filteredKeys,
+                gridConData: gridCon
+              });
+              
+              return (
               <List.Item 
                 key={index} 
                 className={styles.gridListItem} 
                 onClick={() => callback && callback(gridCon)}
                 clickable={false}
               >
-                <div className={styles.rankingRow}>
-                  <span className={styles.rankingNumber}>{index + 1}</span>
-                  <Grid className={styles.gridContent} columns={length}>
-                    {Object.keys(gridCon).map((gridConItem, gridConIndex) => {
-                      // 过滤不需要展示为列的字段
-                      if (gridConItem === 'key' || gridConItem === 'img' || gridConItem === 'url') {
-                        return null;
-                      }
-                      return (
-                        <Grid.Item
-                          key={gridConItem}
-                          className={`${styles.gridConItem} ${gridConIndex !== 0 ? styles.text : ''}`}
-                        >
-                          {gridConItem === 'symbol' ? (
-                            <div className={styles.gridText}>
-                              <img
-                                className={styles.gridIcon}
-                                src={getImageSrc(gridCon.img || gridCon.url, `row-${gridCon.key}`)}
-                                alt={gridCon.symbol}
-                                onError={() => handleImageError(`row-${gridCon.key}`)}
-                              />
-                              {gridCon.symbol}
-                            </div>
-                          ) : (
-                            gridCon[gridConItem]
-                          )}
-                        </Grid.Item>
-                      );
-                    })}
-                  </Grid>
-                </div>
+                {isPC ? (
+                  // PC端使用div布局
+                  <div className={`${styles.contentRow} ${styles.pcContentRow}`}>
+                    {filteredKeys.map((gridConItem, gridConIndex) => {
+                        return (
+                          <div
+                            key={gridConItem}
+                            className={`${styles.contentCell} ${gridConIndex !== 0 ? styles.textRight : ''}`}
+                          >
+                            {gridConItem === 'symbol' ? (
+                              <div className={styles.gridText}>
+                                <span className={styles.rankingNumber}>{index + 1}</span>
+                                <img
+                                  className={styles.gridIcon}
+                                  src={getImageSrc(gridCon.img || gridCon.url, `row-${gridCon.key}`)}
+                                  alt={gridCon.symbol}
+                                  onError={() => handleImageError(`row-${gridCon.key}`)}
+                                />
+                                <span>{gridCon.symbol}</span>
+                              </div>
+                            ) : (
+                              gridCon[gridConItem]
+                            )}
+                          </div>
+                        );
+                      })}
+                  </div>
+                ) : (
+                  // 移动端使用Grid布局
+                  <div className={styles.rankingRow}>
+                    <span className={styles.rankingNumber}>{index + 1}</span>
+                    <Grid className={styles.gridContent} columns={length}>
+                      {Object.keys(gridCon).map((gridConItem, gridConIndex) => {
+                        // 过滤不需要展示为列的字段
+                        if (gridConItem === 'key' || gridConItem === 'img' || gridConItem === 'url') {
+                          return null;
+                        }
+                        return (
+                          <Grid.Item
+                            key={gridConItem}
+                            className={`${styles.gridConItem} ${gridConIndex !== 0 ? styles.text : ''}`}
+                          >
+                            {gridConItem === 'symbol' ? (
+                              <div className={styles.gridText}>
+                                <img
+                                  className={styles.gridIcon}
+                                  src={getImageSrc(gridCon.img || gridCon.url, `row-${gridCon.key}`)}
+                                  alt={gridCon.symbol}
+                                  onError={() => handleImageError(`row-${gridCon.key}`)}
+                                />
+                                {gridCon.symbol}
+                              </div>
+                            ) : (
+                              gridCon[gridConItem]
+                            )}
+                          </Grid.Item>
+                        );
+                      })}
+                    </Grid>
+                  </div>
+                )}
               </List.Item>
-            ))}
+            )}
+            )}
           </List>
         ) : null}
       </div>

@@ -285,18 +285,7 @@ export default function PCFindContent() {
         const tempExchangeSpot = exchangeSpot.data.slice(0, 3).map(item => {
           const showName = sanitizeExchangeName(item.exchange);
           return {
-            exchange: (
-              <div className={styles.gridText}>
-                <img 
-                  className={styles.gridIcon} 
-                  src={item.url || '/default-coin.svg'} 
-                  alt={showName} 
-                  style={{ width: 15, height: 15 }}
-                  onError={(e) => { e.target.src = '/default-coin.svg'; }}
-                />
-                {showName}
-              </div>
-            ),
+            exchange: showName,  // PC端只传递名称，不包含logo
             usd: item.usd,
             markets: item.markets,
             coins: item.coins,
@@ -314,18 +303,7 @@ export default function PCFindContent() {
         const tempExchangeFutures = exchangeFutures.data.slice(0, 3).map(item => {
           const showName = sanitizeExchangeName(item.exchange);
           return {
-            exchange: (
-              <div className={styles.gridText}>
-                <img 
-                  className={styles.gridIcon} 
-                  src={item.url || '/default-coin.svg'} 
-                  alt={showName} 
-                  style={{ width: 15, height: 15 }}
-                  onError={(e) => { e.target.src = '/default-coin.svg'; }}
-                />
-                {showName}
-              </div>
-            ),
+            exchange: showName,  // PC端只传递名称，不包含logo
             usd: item.usd,
             markets: item.markets,
             coins: item.coins,
@@ -646,32 +624,34 @@ export default function PCFindContent() {
       )}
 
       <Card className={styles.contentCard}>
-        <Spin spinning={loading}>
-          {activeTab === 'market' && (
-            <Table
-              columns={marketColumns}
-              dataSource={marketData}
-              pagination={{ pageSize: 20 }}
-              onRow={(record) => ({
-                onClick: () => router.push(`/detail?symbol=${record.symbol}`),
-                style: { cursor: 'pointer' },
-              })}
-            />
-          )}
+        {/* 排行榜tab不需要外层loading，每个卡片有独立loading状态 */}
+        {activeTab === 'rank' ? (
+          <>
+            {activeTab === 'market' && (
+              <Table
+                columns={marketColumns}
+                dataSource={marketData}
+                pagination={{ pageSize: 20 }}
+                onRow={(record) => ({
+                  onClick: () => router.push(`/detail?symbol=${record.symbol}`),
+                  style: { cursor: 'pointer' },
+                })}
+              />
+            )}
 
-          {activeTab === 'self' && (
-            <Table
-              columns={selfColumns}
-              dataSource={selfData}
-              pagination={false}
-              onRow={(record) => ({
-                onClick: () => router.push(`/detail?symbol=${record.symbol}`),
-                style: { cursor: 'pointer' },
-              })}
-            />
-          )}
+            {activeTab === 'self' && (
+              <Table
+                columns={selfColumns}
+                dataSource={selfData}
+                pagination={false}
+                onRow={(record) => ({
+                  onClick: () => router.push(`/detail?symbol=${record.symbol}`),
+                  style: { cursor: 'pointer' },
+                })}
+              />
+            )}
 
-          {activeTab === 'rank' && (
+            {activeTab === 'rank' && (
             <div className={styles.rankContainer}>
               <MoziCard
                 title={t('discover.exchangeRank')}
@@ -687,7 +667,7 @@ export default function PCFindContent() {
               >
                 <div onClick={() => router.push('/exchangerank')}>
                   {isExchangeLoading ? (
-                    <Spin />
+                    <div className={styles.spinContainer}><Spin /></div>
                   ) : (
                     <MoziGrid
                       length={4}
@@ -702,6 +682,7 @@ export default function PCFindContent() {
                       minRows={3}
                       stackTopName={true}
                       callback={(gridCon) => { console.log('点击交易所:', gridCon); }}
+                      isPC={true}
                     />
                   )}
                 </div>
@@ -721,7 +702,7 @@ export default function PCFindContent() {
               >
                 <div onClick={() => router.push('/pricerank')}>
                   {isPriceLoading ? (
-                    <Spin />
+                    <div className={styles.spinContainer}><Spin /></div>
                   ) : (
                     <RankGrid
                       length={2}
@@ -748,7 +729,7 @@ export default function PCFindContent() {
               >
                 <div onClick={() => router.push('/downrank')}>
                   {isDownLoading ? (
-                    <Spin />
+                    <div className={styles.spinContainer}><Spin /></div>
                   ) : (
                     <RankGrid
                       length={2}
@@ -775,7 +756,7 @@ export default function PCFindContent() {
               >
                 <div onClick={() => router.push('/waverank')}>
                   {isWaveLoading ? (
-                    <Spin />
+                    <div className={styles.spinContainer}><Spin /></div>
                   ) : (
                     <RankGrid
                       length={2}
@@ -802,7 +783,7 @@ export default function PCFindContent() {
               >
                 <div onClick={() => router.push('/traderank')}>
                   {isTradeLoading ? (
-                    <Spin />
+                    <div className={styles.spinContainer}><Spin /></div>
                   ) : (
                     <RankGrid
                       length={2}
@@ -825,7 +806,7 @@ export default function PCFindContent() {
               >
                 <div onClick={() => router.push('/newcoinrank')}>
                   {isXinbiLoading ? (
-                    <Spin />
+                    <div className={styles.spinContainer}><Spin /></div>
                   ) : (
                     <RankGrid
                       length={2}
@@ -858,7 +839,7 @@ export default function PCFindContent() {
                   router.push(`/uptraderank?intervals=${encodeURIComponent(raw)}`)
                 }}>
                   {isUpTradeLoading ? (
-                    <Spin />
+                    <div className={styles.spinContainer}><Spin /></div>
                   ) : (
                     <RankGrid
                       length={2}
@@ -872,7 +853,34 @@ export default function PCFindContent() {
               </MoziCard>
             </div>
           )}
-        </Spin>
+          </>
+        ) : (
+          <Spin spinning={loading}>
+            {activeTab === 'market' && (
+              <Table
+                columns={marketColumns}
+                dataSource={marketData}
+                pagination={{ pageSize: 20 }}
+                onRow={(record) => ({
+                  onClick: () => router.push(`/detail?symbol=${record.symbol}`),
+                  style: { cursor: 'pointer' },
+                })}
+              />
+            )}
+
+            {activeTab === 'self' && (
+              <Table
+                columns={selfColumns}
+                dataSource={selfData}
+                pagination={false}
+                onRow={(record) => ({
+                  onClick: () => router.push(`/detail?symbol=${record.symbol}`),
+                  style: { cursor: 'pointer' },
+                })}
+              />
+            )}
+          </Spin>
+        )}
       </Card>
     </div>
   );

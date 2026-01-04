@@ -194,19 +194,32 @@
 
 /* PC端样式 */
 .pcRankGridContainer {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-start !important;
 }
 
 .pcRankGridHead {
-  flex: 0 0 156PX;
-  margin-right: 20PX;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding-top: 10PX;
+  flex: 0 0 280PX !important;
+  width: 280PX !important;
+  min-width: 280PX !important;
+  max-width: 280PX !important;
+  margin-right: 30PX !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  padding-top: 10PX !important;
+  
+  /* 币种名称样式 - 与交易所排行榜对齐 */
+  > span {
+    width: 156PX;
+    font-size: 24PX;
+    font-weight: 500;
+    color: #666666;
+    margin-top: 12PX;
+    text-align: center;
+  }
 }
 
 .pcFirstPic {
@@ -230,9 +243,263 @@
   .gridContent {
     font-size: 14PX;
   }
+}
+
+
+/* PC端列标题样式 */
+.pcRankGridContainer .pcRankGridDesc .gridTitle {
+  font-family: 'Microsoft YaHei', sans-serif !important;
+  font-weight: 400 !important;
+  font-size: 16PX !important;
+  color: #AAAAAA !important;
   
-  .gridIcon {
-    width: 20PX !important;
-    height: 20PX !important;
+  /* 强制Grid正确分配列宽 */
+  :global(.adm-grid) {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0 !important;
+  }
+  
+  /* 强制覆盖Grid.Item的span属性 */
+  :global(.adm-grid-item) {
+    grid-column: span 1 !important;
   }
 }
+
+.pcRankGridContainer .pcRankGridDesc .gridTitle .gridTitleItem {
+  font-family: 'Microsoft YaHei', sans-serif !important;
+  font-weight: 400 !important;
+  font-size: 16PX !important;
+  color: #AAAAAA !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.pcRankGridContainer .pcRankGridDesc .gridTitle .text {
+  justify-content: flex-end !important;
+}
+
+.pcRankGridContainer .pcRankGridDesc .gridTitle :global(.adm-grid-item) {
+  font-family: 'Microsoft YaHei', sans-serif !important;
+  font-weight: 400 !important;
+  font-size: 16PX !important;
+  color: #AAAAAA !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* 第二列标题右对齐 */
+.pcRankGridContainer .pcRankGridDesc .gridTitle :global(.adm-grid-item:nth-child(2)) {
+  justify-content: flex-end !important;
+}
+
+/* PC端表格内容样式 */
+.pcRankGridContainer .pcRankGridDesc .gridContent {
+  font-family: 'Microsoft YaHei', sans-serif !important;
+  font-weight: 400 !important;
+  font-size: 16PX !important;
+  color: #333333 !important;
+  width: 100%;
+  
+  /* 强制Grid正确分配列宽 */
+  :global(.adm-grid) {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0 !important;
+  }
+  
+  /* 强制覆盖Grid.Item的span属性 */
+  :global(.adm-grid-item) {
+    grid-column: span 1 !important;
+  }
+}
+
+.pcRankGridContainer .pcRankGridDesc .gridConItem {
+  font-family: 'Microsoft YaHei', sans-serif !important;
+  font-weight: 400 !important;
+  font-size: 16PX !important;
+  color: #333333 !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.pcRankGridContainer .pcRankGridDesc .gridContent .text {
+  justify-content: flex-end !important;
+}
+
+/* 第二列内容右对齐 */
+.pcRankGridContainer .pcRankGridDesc .gridContent :global(.adm-grid-item:nth-child(2)) {
+  justify-content: flex-end !important;
+}
+
+/* PC端序号样式 - 在gridText内部 */
+.pcRankGridContainer .pcRankGridDesc .gridText .rankingNumber {
+  width: 20PX;
+  flex: 0 0 20PX;
+  margin-right: 4PX;
+  font-family: 'Microsoft YaHei', sans-serif !important;
+  font-weight: 400 !important;
+  font-size: 16PX !important;
+  color: #333333 !important;
+  text-align: center;
+  display: inline-block;
+}
+
+.pcRankGridContainer .pcRankGridDesc .gridContent :global(.adm-grid-item) {
+  font-family: 'Microsoft YaHei', sans-serif !important;
+  font-weight: 400 !important;
+  font-size: 16PX !important;
+  color: #333333 !important;
+}
+
+
+/* PC端表格行样式 */
+.pcRankGridContainer .pcRankGridDesc .gridListItem {
+  height: 49PX !important;
+  background: #F8F8F8 !important;
+  border-radius: 10PX !important;
+  margin-bottom: 8PX !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+.pcRankGridContainer .pcRankGridDesc .gridListItem:hover {
+  background-color: #f0f0f0 !important;
+  cursor: pointer;
+}
+
+/* 覆盖 antd-mobile List.Item 的样式 */
+.pcRankGridContainer .pcRankGridDesc :global(.adm-list-item) {
+  height: 49PX !important;
+  background: transparent !important;
+  border-radius: 10PX !important;
+  margin-bottom: 8PX !important;
+  padding: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.pcRankGridContainer .pcRankGridDesc :global(.adm-list-item-content) {
+  padding: 0 !important;
+  height: 100% !important;
+  width: 100% !important;
+}
+
+.pcRankGridContainer .pcRankGridDesc :global(.adm-list-item-content-main) {
+  padding: 0 !important;
+  width: 100% !important;
+}
+
+
+/* PC端标题间距调整 */
+.pcRankGridContainer .pcRankGridDesc .gridTitle {
+  margin-bottom: 8PX !important;
+}
+
+
+/* PC端序号宽度调整 */
+.pcRankGridContainer .pcRankGridDesc .rankingNumber {
+  width: 20PX !important;
+  flex: 0 0 20PX !important;
+  margin-right: 12PX !important;
+}
+
+
+/* PC端第一列去除左padding */
+.pcRankGridContainer .pcRankGridDesc .gridContent .gridConItem:first-child {
+  padding-left: 0 !important;
+}
+
+.pcRankGridContainer .pcRankGridDesc .gridTitle .gridTitleItem:first-child {
+  padding-left: 0 !important;
+}
+
+
+/* PC端标题行和内容行 - 使用CSS Grid布局 */
+.pcTitleRow {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 0 !important;
+  width: 100% !important;
+  margin-bottom: 8PX !important;
+}
+
+.titleCell {
+  display: flex;
+  align-items: center;
+  font-family: 'Microsoft YaHei', sans-serif;
+  font-weight: 400;
+  font-size: 16PX;
+  color: #AAAAAA;
+  padding: 8PX 0;
+}
+
+.pcContentRow {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 0 !important;
+  width: 100% !important;
+}
+
+.contentCell {
+  display: flex;
+  align-items: center;
+  font-family: 'Microsoft YaHei', sans-serif;
+  font-weight: 400;
+  font-size: 16PX;
+  color: #333333;
+}
+
+.textRight {
+  justify-content: flex-end !important;
+}
+
+/* PC端币种logo大小和间距 */
+.pcRankGridContainer .pcRankGridDesc .gridIcon {
+  width: 23PX !important;
+  height: 23PX !important;
+  margin-right: 8PX !important;
+  margin-left: 0 !important;
+}
+
+/* PC端gridText底部对齐 - 序号、logo、币种名称都底部对齐 */
+.pcRankGridContainer .pcRankGridDesc .gridText {
+  display: flex !important;
+  align-items: flex-end !important;
+  line-height: 1 !important;
+}
+
+/* 确保序号底部对齐 */
+.pcRankGridContainer .pcRankGridDesc .gridText .rankingNumber {
+  align-self: flex-end !important;
+  line-height: 1 !important;
+}
+
+/* 确保logo底部对齐 */
+.pcRankGridContainer .pcRankGridDesc .gridText .gridIcon {
+  align-self: flex-end !important;
+  display: block !important;
+}
+
+/* 确保币种名称底部对齐 */
+.pcRankGridContainer .pcRankGridDesc .gridText > span {
+  align-self: flex-end !important;
+  line-height: 1 !important;
+}
+
+/* PC端List.Item样式调整 */
+.pcRankGridContainer .pcRankGridDesc :global(.adm-list-item) {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.pcRankGridContainer .pcRankGridDesc :global(.adm-list-item-content) {
+  padding: 0 !important;
+}
+
+.pcRankGridContainer .pcRankGridDesc :global(.adm-list-item-content-main) {
+  padding: 0 !important;
+}
+
