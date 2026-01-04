@@ -10,22 +10,7 @@ export const RankGrid = ({ length, colName, gridContent, callback, minRows, isPC
   const firstItem = hasData ? gridContent[0] : {};
   const containerStyle = minRows ? { minHeight: `${minRows * ROW_HEIGHT_PX}px` } : undefined;
 
-  // 调试信息
-  console.log('🔍 RankGrid Debug:', {
-    isPC,
-    hasData,
-    length,
-    colName,
-    firstItem: firstItem?.symbol || 'no data',
-    gridContentSample: hasData ? gridContent[0] : null,
-    gridContentKeys: hasData ? Object.keys(gridContent[0]) : [],
-    filteredKeys: hasData ? Object.keys(gridContent[0]).filter(key => key !== 'key' && key !== 'img' && key !== 'url') : [],
-    containerClass: `${styles.rankGridContainer} ${isPC ? styles.pcRankGridContainer : ''}`,
-    headClass: `${styles.rankGridHead} ${isPC ? styles.pcRankGridHead : ''}`,
-    titleRowClass: styles.titleRow,
-    titleRankingNumberClass: styles.titleRankingNumber,
-    gridTitleClass: styles.gridTitle
-  });
+ 
 
   const handleImageError = (key) => {
     setImageErrors(prev => ({
