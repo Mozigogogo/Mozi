@@ -152,9 +152,28 @@
   border-radius: 16PX 16PX 0 0; /* 上方两个角有圆角 */
   margin: 0;
   padding-bottom: 0;
-  min-height: auto;
+  flex: 1; /* 占据父容器剩余空间 */
+  overflow-y: auto; /* 允许内部滚动 */
   background: #FFFFFF; /* PC端需要白色背景 */
-  overflow: hidden; /* 确保子元素不超出圆角 */
+  
+  /* 自定义滚动条样式 */
+  &::-webkit-scrollbar {
+    width: 6PX;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #F5F5F5;
+    border-radius: 3PX;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #CCCCCC;
+    border-radius: 3PX;
+    
+    &:hover {
+      background: #999999;
+    }
+  }
   
   .hotTopicItem {
     padding: 12PX 16PX;
@@ -207,7 +226,7 @@
   }
   
   .loadingMore {
-    padding: 40PX 0;
+    padding: 200PX 0; /* PC端加载状态占满高度 */
   }
   
   .listFooter {
@@ -216,7 +235,7 @@
   }
   
   .emptyContent {
-    padding: 40PX 0;
+    padding: 200PX 0; /* PC端空状态占满高度 */
     font-size: 13PX;
   }
 }

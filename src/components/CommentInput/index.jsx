@@ -56,6 +56,7 @@ export default function CommentInput({
           alt="发送" 
           className={styles.submitIcon}
         />
+        <span className={styles.submitText}>发表</span>
       </button>
     </div>
   );

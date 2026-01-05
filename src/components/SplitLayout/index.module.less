@@ -2,12 +2,17 @@
 .splitContainer {
   display: flex;
   width: 100%;
+  align-items: stretch; /* 确保左右两列高度一致 */
 }
 
 .leftColumn {
   /* 宽度通过内联样式动态设置 */
+  display: flex;
+  flex-direction: column;
 }
 
 .rightColumn {
   /* 宽度通过内联样式动态设置 */
+  display: flex;
+  flex-direction: column;
 }

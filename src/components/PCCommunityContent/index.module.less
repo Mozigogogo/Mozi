@@ -23,7 +23,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 400PX;
+    min-height: 200PX;
     width: 100%;
   }
 
@@ -286,5 +286,51 @@
         color: #999;
       }
     }
+  }
+}
+
+.coinCardsGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20PX;
+  margin-top: 20PX;
+  
+  @media (max-width: 1600px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  @media (max-width: 1400px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.leftContentWrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.leftContentMain {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.commentInputWrapper {
+  margin-top: 12PX;
+  flex-shrink: 0;
+}
+
+.rightContentWrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* 与左侧高度一致 */
+  
+  /* 确保SectionTitle不占用flex空间 */
+  > :first-child {
+    flex-shrink: 0;
   }
 }

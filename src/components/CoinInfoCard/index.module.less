@@ -1,7 +1,7 @@
 .coinInfoCard {
   background: #FFFFFF;
-  border-radius: 16px;
-  padding: 24px;
+  border-radius: 12px;
+  padding: 16px;
   cursor: pointer;
   transition: all 0.3s ease;
 
@@ -14,28 +14,28 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
 
     .coinName {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
 
       .coinIcon {
-        width: 48px;
-        height: 48px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
       }
 
       .symbol {
-        font-size: 28px;
+        font-size: 18px;
         font-weight: 600;
         color: #1A1A1A;
       }
     }
 
     .marketCap {
-      font-size: 20px;
+      font-size: 14px;
       font-weight: 500;
       color: #11B787;
     }
@@ -49,25 +49,25 @@
     .priceInfo {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 4px;
 
       .price {
-        font-size: 32px;
+        font-size: 20px;
         font-weight: 600;
         color: #1A1A1A;
         line-height: 1;
       }
 
       .change24h {
-        font-size: 18px;
+        font-size: 12px;
         color: #999999;
       }
     }
 
     .changePercent {
-      padding: 12px 24px;
-      border-radius: 12px;
-      font-size: 24px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 16px;
       font-weight: 600;
 
       &.positive {
@@ -85,47 +85,47 @@
 
 // PC端样式
 .pcMode {
-  border-radius: 16PX;
-  padding: 24PX;
+  border-radius: 12PX;
+  padding: 16PX;
 
   .header {
-    margin-bottom: 24PX;
+    margin-bottom: 16PX;
 
     .coinName {
-      gap: 12PX;
+      gap: 8PX;
 
       .coinIcon {
-        width: 48PX;
-        height: 48PX;
+        width: 32PX;
+        height: 32PX;
       }
 
       .symbol {
-        font-size: 28PX;
+        font-size: 18PX;
       }
     }
 
     .marketCap {
-      font-size: 20PX;
+      font-size: 14PX;
     }
   }
 
   .footer {
     .priceInfo {
-      gap: 8PX;
+      gap: 4PX;
 
       .price {
-        font-size: 32PX;
+        font-size: 20PX;
       }
 
       .change24h {
-        font-size: 18PX;
+        font-size: 12PX;
       }
     }
 
     .changePercent {
-      padding: 12PX 24PX;
-      border-radius: 12PX;
-      font-size: 24PX;
+      padding: 6PX 12PX;
+      border-radius: 8PX;
+      font-size: 16PX;
     }
   }
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Empty, message, Spin } from 'antd';
 import { useRouter } from 'next/navigation';
 import { request } from '@/utils/request';
@@ -14,6 +14,7 @@ import BullBearIndicator from '@/components/BullBearIndicator';
 import HotTopicSearchBar from '@/components/HotTopicSearchBar';
 import HotTopicList from '@/components/HotTopicList';
 import CommentInput from '@/components/CommentInput';
+import CoinInfoCard from '@/components/CoinInfoCard';
 import styles from './index.module.less';
 
 /**
@@ -34,6 +35,11 @@ export default function PCCommunityContent() {
   const [voteData, setVoteData] = useState({ upCount: 0, downCount: 0, totalCount: 0, hasVoted: false, userVoteType: null }); // 投票数据
   const [hotTopics, setHotTopics] = useState([]); // 热门话题列表
   const [hotTopicsLoading, setHotTopicsLoading] = useState(false); // 热门话题加载状态
+  const [coinInfoData, setCoinInfoData] = useState({}); // 币种信息数据
+  const [leftHeight, setLeftHeight] = useState(600); // 左侧容器高度
+  
+  // 用于引用左侧容器
+  const leftContentRef = useRef(null);
   
   // 固定币种配置
   const coinTabs = [
@@ -176,7 +182,7 @@ export default function PCCommunityContent() {
         url: Interface.POSTS_API,
         data: {
           page: 1,
-          size: 10,
+          size: 5, // 最多显示5个帖子
           tag: coin // 根据币种标签筛选
         }
       });
@@ -240,6 +246,55 @@ export default function PCCommunityContent() {
       setHotTopics([]);
     } finally {
       setHotTopicsLoading(false);
+    }
+  };
+
+  // 获取币种信息
+  const fetchCoinInfo = async (coins) => {
+    try {
+      // 并行请求所有币种信息
+      const requests = coins.map(coin => 
+        request({
+          url: Interface.COIN_INFO,
+          data: { coin: coin.key }
+        })
+      );
+      
+      const responses = await Promise.all(requests);
+      const coinData = {};
+      
+      responses.forEach((response, index) => {
+        const coin = coins[index];
+        if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
+          const data = response.data[0];
+          
+          // 解析价格和涨跌幅
+          const price = parseFloat(data.last) || 0;
+          // price24h 可能是 "3.58%" 或 3.58，需要处理
+          let changePercent = 0;
+          if (typeof data.price24h === 'string') {
+            changePercent = parseFloat(data.price24h.replace('%', '')) || 0;
+          } else {
+            changePercent = parseFloat(data.price24h) || 0;
+          }
+          
+          // 计算24小时价格变化值
+          const change24h = price * (changePercent / 100);
+          
+          coinData[coin.key] = {
+            icon: data.url,
+            price: price,
+            changePercent: changePercent,
+            change24h: change24h,
+            // 市值数据（如果API返回的话）
+            marketCap: data.marketCap || data.market_cap || null
+          };
+        }
+      });
+      
+      setCoinInfoData(coinData);
+    } catch (error) {
+      console.error('获取币种信息失败:', error);
     }
   };
 
@@ -424,6 +479,7 @@ export default function PCCommunityContent() {
     fetchQuestionPosts(); // 加载不懂就问帖子
     fetchCoinPosts(selectedCoin); // 加载币种帖子
     fetchHotTopics(); // 加载热门话题
+    fetchCoinInfo(coinTabs); // 加载币种信息
   }, []);
 
   // 币种切换时重新加载
@@ -431,6 +487,37 @@ export default function PCCommunityContent() {
     fetchCoinPosts(selectedCoin);
     fetchVoteData(selectedCoin);
   }, [selectedCoin]);
+
+  // 动态计算左侧容器高度
+  useEffect(() => {
+    const updateHeight = () => {
+      if (leftContentRef.current) {
+        const height = leftContentRef.current.offsetHeight;
+        setLeftHeight(height);
+      }
+    };
+
+    // 初始计算
+    updateHeight();
+
+    // 监听窗口大小变化
+    window.addEventListener('resize', updateHeight);
+
+    // 使用 MutationObserver 监听内容变化
+    const observer = new MutationObserver(updateHeight);
+    if (leftContentRef.current) {
+      observer.observe(leftContentRef.current, {
+        childList: true,
+        subtree: true,
+        attributes: true
+      });
+    }
+
+    return () => {
+      window.removeEventListener('resize', updateHeight);
+      observer.disconnect();
+    };
+  }, [coinPosts, coinLoading]); // 当帖子列表或加载状态变化时重新计算
 
   return (
     <div className={styles.pcCommunityContent}>
@@ -444,7 +531,7 @@ export default function PCCommunityContent() {
       <div className={styles.discoverySection}>
         {loading ? (
           <div className={styles.loadingContainer}>
-            <Spin size="large" tip="加载中..." />
+            <Spin tip="加载中..." />
           </div>
         ) : discoveryPosts.length > 0 ? (
           <div className={styles.discoveryGrid}>
@@ -477,7 +564,7 @@ export default function PCCommunityContent() {
       <div className={styles.questionSection}>
         {questionLoading ? (
           <div className={styles.loadingContainer}>
-            <Spin size="large" tip="加载中..." />
+            <Spin tip="加载中..." />
           </div>
         ) : questionPosts.length > 0 ? (
           <div className={styles.questionList}>
@@ -506,65 +593,67 @@ export default function PCCommunityContent() {
       {/* 70/30 分栏容器 */}
       <SplitLayout
         leftContent={
-          <div>
-            {/* 不懂就问模块标题 + 币种标签栏 */}
-            <SectionTitle 
-              title="币种" 
-              onMoreClick={() => router.push('/list?category=不懂就问')}
-              extra={
-                <CoinTabBar
-                  coinTabs={coinTabs}
-                  selectedCoin={selectedCoin}
-                  onCoinSelect={setSelectedCoin}
-                  onMoreClick={() => console.log('点击更多币种')}
-                  moreText="更多"
-                  isPC={true}
-                />
-              }
-            />
-            
-            {/* 看涨看跌投票组件 */}
-            <BullBearIndicator
-              upCount={voteData.upCount}
-              downCount={voteData.downCount}
-              participants={voteData.totalCount}
-              selected={voteChoice}
-              onSelect={(type) => submitVote(type)}
-              showParticipants={true}
-              showPercentage={true}
-              isPC={true}
-              coinSymbol={selectedCoin}
-            />
-            
-            {/* 币种相关帖子列表 */}
-            {coinLoading ? (
-              <div className={styles.loadingContainer}>
-                <Spin size="large" tip="加载中..." />
-              </div>
-            ) : coinPosts.length > 0 ? (
-              <div className={styles.coinPostsList}>
-                {coinPosts.map(post => (
-                  <PostCard
-                    key={post.id}
-                    post={post}
-                    onPostClick={goToPostDetail}
-                    onUserClick={goToUserPage}
-                    onLikeClick={(postId) => toggleLike(null, postId)}
-                    onShareClick={handleShare}
-                    onTagClick={(tagName) => router.push(`/detail?symbol=${tagName}`)}
-                    onTopicClick={(topicId, topicName) => router.push(`/topicinfo?id=${topicId}&title=${topicName}`)}
-                    isLiked={post.isLiked || likedPosts[post.id]}
-                    formatTimeAgo={formatTimeAgo}
+          <div className={styles.leftContentWrapper} ref={leftContentRef}>
+            <div className={styles.leftContentMain}>
+              {/* 不懂就问模块标题 + 币种标签栏 */}
+              <SectionTitle 
+                title="币种" 
+                onMoreClick={() => router.push('/list?category=不懂就问')}
+                extra={
+                  <CoinTabBar
+                    coinTabs={coinTabs}
+                    selectedCoin={selectedCoin}
+                    onCoinSelect={setSelectedCoin}
+                    onMoreClick={() => console.log('点击更多币种')}
+                    moreText="更多"
                     isPC={true}
                   />
-                ))}
-              </div>
-            ) : (
-              <Empty description={`暂无${selectedCoin}相关帖子`} />
-            )}
+                }
+              />
+              
+              {/* 看涨看跌投票组件 */}
+              <BullBearIndicator
+                upCount={voteData.upCount}
+                downCount={voteData.downCount}
+                participants={voteData.totalCount}
+                selected={voteChoice}
+                onSelect={(type) => submitVote(type)}
+                showParticipants={true}
+                showPercentage={true}
+                isPC={true}
+                coinSymbol={selectedCoin}
+              />
+              
+              {/* 币种相关帖子列表 */}
+              {coinLoading ? (
+                <div className={styles.loadingContainer}>
+                  <Spin tip="加载中..." />
+                </div>
+              ) : coinPosts.length > 0 ? (
+                <div className={styles.coinPostsList}>
+                  {coinPosts.map(post => (
+                    <PostCard
+                      key={post.id}
+                      post={post}
+                      onPostClick={goToPostDetail}
+                      onUserClick={goToUserPage}
+                      onLikeClick={(postId) => toggleLike(null, postId)}
+                      onShareClick={handleShare}
+                      onTagClick={(tagName) => router.push(`/detail?symbol=${tagName}`)}
+                      onTopicClick={(topicId, topicName) => router.push(`/topicinfo?id=${topicId}&title=${topicName}`)}
+                      isLiked={post.isLiked || likedPosts[post.id]}
+                      formatTimeAgo={formatTimeAgo}
+                      isPC={true}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <Empty description={`暂无${selectedCoin}相关帖子`} />
+              )}
+            </div>
             
-            {/* 评论输入框 */}
-            <div style={{ marginTop: '20PX' }}>
+            {/* 评论输入框 - 固定在底部 */}
+            <div className={styles.commentInputWrapper}>
               <CommentInput
                 placeholder={`发表关于 ${selectedCoin} 的看法`}
                 onSubmit={handleCommentSubmit}
@@ -574,7 +663,7 @@ export default function PCCommunityContent() {
           </div>
         }
         rightContent={
-          <div>
+          <div className={styles.rightContentWrapper} style={{ height: `${leftHeight}px` }}>
             {/* 热门榜单 */}
             <SectionTitle 
               title="热门榜单"
@@ -605,6 +694,26 @@ export default function PCCommunityContent() {
         leftWidth={70}
         gap={20}
       />
+      
+      {/* 币种信息卡片列表 */}
+      <div className={styles.coinCardsGrid}>
+        {coinTabs.map(coin => {
+          const coinData = coinInfoData[coin.key] || {};
+          return (
+            <CoinInfoCard
+              key={coin.key}
+              symbol={coin.key}
+              icon={coinData.icon}
+              price={coinData.price}
+              change24h={coinData.change24h}
+              changePercent={coinData.changePercent}
+              marketCap={coinData.marketCap}
+              isPC={true}
+              onClick={() => router.push(`/detail?symbol=${coin.key}`)}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }

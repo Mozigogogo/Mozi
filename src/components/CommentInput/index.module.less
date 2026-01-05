@@ -27,12 +27,17 @@
     background: #F5F5F5;
     color: #999;
   }
+  
+  &:focus {
+    outline: none;
+    border: none;
+  }
 }
 
 .submitBtn {
   width: 88px;
   height: 37px;
-  padding: 0;
+  padding: 0 12px;
   background: #11B787;
   border: none;
   border-radius: 8px;
@@ -41,6 +46,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   
   &:disabled {
     background: #CCCCCC;
@@ -59,20 +65,30 @@
   display: block;
 }
 
+.submitText {
+  font-size: 14px;
+  font-weight: 500;
+  color: #FFFFFF;
+  line-height: 1;
+}
+
 /* PC端样式 */
 .pcMode {
   background: #FFFFFF;
-  border: 1PX solid #E5E5E5;
-  border-radius: 8PX;
+  border: none;
+  border-radius: 24PX;
   padding: 8PX;
   
   .input {
     height: 32PX;
     font-size: 13PX;
     border-radius: 16PX;
+    border: none;
+    padding: 0 20PX;
     
     &:focus {
-      border: 1PX solid #11B787;
+      outline: none;
+      border: none;
     }
   }
   
@@ -80,6 +96,8 @@
     width: 88PX;
     height: 37PX;
     border-radius: 8PX;
+    padding: 0 12PX;
+    gap: 6PX;
     
     &:hover:not(:disabled) {
       background: #0FA076;
@@ -89,6 +107,10 @@
   .submitIcon {
     width: 20PX;
     height: 20PX;
+  }
+  
+  .submitText {
+    font-size: 14PX;
   }
 }
 
