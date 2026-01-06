@@ -81,6 +81,13 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
             }
           }
         }
+      } else {
+        // 未登录时，自动填充邀请码
+        const storedInviteCode = localStorage.getItem('inviteCode');
+        if (storedInviteCode) {
+          setInviteCode(storedInviteCode);
+          console.log('🔍 [PCLoginModal] 自动填充邀请码:', storedInviteCode);
+        }
       }
     }
   }, [open]);
@@ -303,6 +310,8 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
         message.success(t('auth.registerSuccess'));
         setVerificationCode('');
         setInviteCode('');
+        // 清除 localStorage 中的邀请码
+        localStorage.removeItem('inviteCode');
         await autoLoginAfterRegister();
       } else {
         const errorMessage = res?.errorMsg || res?.message || t('auth.registerFailed');
