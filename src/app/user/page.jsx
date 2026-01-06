@@ -1199,9 +1199,11 @@ export default function UserPage() {
       
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
-        if (res?.data?.userInfo) {
+        
+        const userData = res?.data?.userInfo || res?.data?.user;
+        if (userData) {
           const userInfoWithSubscribe = {
-            ...res.data.userInfo,
+            ...userData,
             subscribeAnnouncement: res.data.subscribeAnnouncement
           };
           localStorage.setItem('userInfo', JSON.stringify(userInfoWithSubscribe));
@@ -1209,6 +1211,31 @@ export default function UserPage() {
         if (res?.data?.userId) {
           localStorage.setItem('userId', res.data.userId);
         }
+        
+        // 获取用户详细信息（与邮箱登录对齐）
+        request({
+          url: Interface.USER_DATA_INFO,
+          method: 'GET'
+        }).then((dataInfoRes) => {
+          if (dataInfoRes?.data) {
+            console.log('✅ [TON钱包登录] 获取用户详细信息成功:', dataInfoRes.data);
+            localStorage.setItem('userDataInfo', JSON.stringify(dataInfoRes.data));
+          }
+        }).catch((dataInfoError) => {
+          console.error('❌ [TON钱包登录] 获取用户详细信息失败:', dataInfoError);
+        });
+        
+        // 完成每日登录任务（与邮箱登录对齐）
+        request({
+          url: Interface.TASK_COMPLETE,
+          method: 'POST',
+          data: { taskCode: 'DAILY_LOGIN' }
+        }).then(() => {
+          console.log('✅ [TON钱包登录] 每日登录任务上报成功');
+        }).catch((taskError) => {
+          console.error('❌ [TON钱包登录] 每日登录任务上报失败:', taskError);
+        });
+        
         Toast.show({ content: t('auth.loginSuccess') || '登录成功', position: 'center', icon: 'success' });
         
         // 检查该钱包地址是否首次登录
