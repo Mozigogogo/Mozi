@@ -1,0 +1,31 @@
+/* 发帖按钮样式 */
+.floatPostBtn {
+  position: fixed;
+  right: 20px; /* 40rpx -> 20px */
+  bottom: 100px; /* 200rpx -> 100px，避开底部tab */
+  z-index: 101;
+}
+
+.postBtn {
+  width: 66px; /* 132rpx -> 66px */
+  height: 66px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+  
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.postBtnImage { 
+  width: 66px; 
+  height: 66px; 
+  display: block; 
+}

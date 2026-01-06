@@ -15,6 +15,9 @@ import styles from './index.module.less';
  * @param {function} onSelect - 选择回调函数
  * @param {number} participants - 参与人数（可选）
  * @param {boolean} showParticipants - 是否显示参与人数，默认true
+ * @param {boolean} isPC - 是否为PC端，默认false
+ * @param {string} question - PC端显示的问题文本（可选）
+ * @param {string} coinSymbol - 币种符号，用于生成问题文本（可选）
  */
 const BullBearIndicator = ({ 
   upCount = 0, 
@@ -26,7 +29,10 @@ const BullBearIndicator = ({
   disabled = false,
   onSelect,
   participants = 0,
-  showParticipants = true
+  showParticipants = true,
+  isPC = false,
+  question,
+  coinSymbol
 }) => {
   const { t } = useTranslation();
   
@@ -44,6 +50,13 @@ const BullBearIndicator = ({
     return t('community.voting.participants', { count: participants });
   }, [participants, t]);
 
+  // PC端问题文本
+  const questionText = useMemo(() => {
+    if (question) return question;
+    if (coinSymbol) return `您对今天的${coinSymbol}有何看法?`;
+    return '您对今天的行情有何看法?';
+  }, [question, coinSymbol]);
+
   // 处理点击
   const handleSelect = (type) => {
     if (onSelect) {
@@ -52,35 +65,50 @@ const BullBearIndicator = ({
   };
 
   return (
-    <div className={styles.container}>
-      {/* 参与人数 */}
-      {showParticipants && participants > 0 && (
-        <div className={styles.participantsCount}>{displayCount}</div>
+    <div className={`${styles.container} ${isPC ? styles.pcContainer : ''}`}>
+      {/* PC端左侧文本 */}
+      {isPC && (
+        <div className={styles.pcLeftContent}>
+          <span className={styles.pcQuestion}>{questionText}</span>
+        </div>
       )}
       
-      {/* 指示器 */}
-      <div className={`${styles.indicator} ${disabled ? styles.disabled : ''}`}>
-        <div 
-          className={`${styles.bullSide} ${selected === 'bull' ? styles.selected : ''} ${onSelect ? styles.clickable : ''}`}
-          style={{ width: `${bullPercentage}%` }}
-          onClick={() => handleSelect('bull')}
-        >
-          <span className={styles.label}>{bullText}</span>
-        </div>
-        {/* 中间分隔间隙 */}
-        <div className={styles.divider} />
-        <div 
-          className={`${styles.bearSide} ${selected === 'bear' ? styles.selected : ''} ${onSelect ? styles.clickable : ''}`}
-          style={{ width: `${bearPercentage}%` }}
-          onClick={() => handleSelect('bear')}
-        >
-          <span className={styles.label}>{bearText}</span>
+      {/* 参与人数（移动端） */}
+      {!isPC && showParticipants && participants > 0 && (
+        <div className={`${styles.participantsCount} ${isPC ? styles.pcParticipantsCount : ''}`}>{displayCount}</div>
+      )}
+      
+      {/* 指示器容器 */}
+      <div className={isPC ? styles.pcIndicatorWrapper : ''}>
+        {/* PC端参与人数（在投票条左侧） */}
+        {isPC && (
+          <span className={styles.pcParticipants}>{participants}人参与</span>
+        )}
+        
+        {/* 指示器 */}
+        <div className={`${styles.indicator} ${isPC ? styles.pcIndicator : ''} ${disabled ? styles.disabled : ''}`}>
+          <div 
+            className={`${styles.bullSide} ${isPC ? styles.pcBullSide : ''} ${selected === 'bull' ? styles.selected : ''} ${onSelect ? styles.clickable : ''}`}
+            style={{ width: `${bullPercentage}%` }}
+            onClick={() => handleSelect('bull')}
+          >
+            <span className={`${styles.label} ${isPC ? styles.pcLabel : ''}`}>{bullText}</span>
+          </div>
+          {/* 中间分隔间隙 */}
+          <div className={styles.divider} />
+          <div 
+            className={`${styles.bearSide} ${isPC ? styles.pcBearSide : ''} ${selected === 'bear' ? styles.selected : ''} ${onSelect ? styles.clickable : ''}`}
+            style={{ width: `${bearPercentage}%` }}
+            onClick={() => handleSelect('bear')}
+          >
+            <span className={`${styles.label} ${isPC ? styles.pcLabel : ''}`}>{bearText}</span>
+          </div>
         </div>
       </div>
       
-      {/* 百分比 */}
-      {showPercentage && (
-        <div className={styles.percentages}>
+      {/* 百分比（移动端） */}
+      {!isPC && showPercentage && (
+        <div className={`${styles.percentages} ${isPC ? styles.pcPercentages : ''}`}>
           <span className={styles.bullPercent}>{bullPercentage.toFixed(0)}%</span>
           <span className={styles.bearPercent}>{bearPercentage.toFixed(0)}%</span>
         </div>

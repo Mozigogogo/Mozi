@@ -1,0 +1,49 @@
+/* 主导航样式 */
+.mainTabs {
+  position: static;
+  background: #EEF0F3;
+  padding: 0px 10px 0;
+}
+
+.bannerSwitch { 
+  display: flex; 
+  gap: 12px; 
+}
+
+.bannerCard {
+  flex: 1;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  position: relative;
+  overflow: hidden;
+  border: none;
+  box-shadow: none;
+}
+
+.bannerCard.active { 
+  box-shadow: 0 6px 16px rgba(17,183,135,0.18); 
+  border: none; 
+}
+
+.tabImage {
+  width: 100%;
+  height: auto;
+  display: block;
+  pointer-events: none;
+  transition: opacity 180ms ease-out;
+  will-change: opacity;
+}
+
+.tabImageHidden { 
+  opacity: 0; 
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.tabImageVisible { 
+  opacity: 1; 
+}

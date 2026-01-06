@@ -1,0 +1,13 @@
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 0 10PX 0;
+  
+  /* 当有rightContent时，限制其宽度 */
+  > :last-child {
+    max-width: 60%;
+    flex-shrink: 0;
+  }
+}

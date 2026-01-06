@@ -1,0 +1,39 @@
+.viewMoreLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 34PX;
+  padding: 0 16PX;
+  font-size: 14PX;
+  color: #999999;
+  background: rgba(227, 234, 250, 0);
+  border-radius: 17PX;
+  border: 1PX solid #D4D4D4;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  user-select: none;
+  
+  &:hover {
+    color: #11B787;
+    border-color: #11B787;
+  }
+  
+  &:active {
+    color: #0fa076;
+    border-color: #0fa076;
+  }
+}
+
+/* 暗黑模式 */
+:global([data-theme="dark"]) {
+  .viewMoreLink {
+    color: #999999;
+    border-color: #D4D4D4;
+    
+    &:hover {
+      color: #11B787;
+      border-color: #11B787;
+    }
+  }
+}

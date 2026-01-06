@@ -1,0 +1,67 @@
+.titleWrapper {
+  display: flex;
+  align-items: center;
+  gap: 6PX;
+}
+
+.decorator {
+  width: 4PX;
+  height: 16PX;
+  background: #11B787;
+  border-radius: 2PX;
+  flex-shrink: 0;
+}
+
+.titleContent {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.title {
+  position: relative;
+  margin: 0;
+  height: 24PX;
+  font-family: Microsoft YaHei;
+  font-weight: bold;
+  font-size: 24PX;
+  color: #333333;
+  line-height: 24PX;
+  display: flex;
+  align-items: center;
+  gap: 6PX;
+  z-index: 1;
+}
+
+.title.withUnderline::after {
+  content: '';
+  position: absolute;
+  bottom: -2PX;
+  left: 0;
+  width: 100%;
+  max-width: 75PX;
+  height: 10PX;
+  background: url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/find/range-bg.png') no-repeat left center / 100% 100%;
+  opacity: 1;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  font-size: 20PX;
+}
+
+.extra {
+  display: flex;
+  align-items: center;
+  margin-left: 12PX;
+}
+
+/* 暗黑模式 */
+:global([data-theme="dark"]) {
+  .title {
+    color: #ffffff;
+  }
+}

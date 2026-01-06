@@ -1,0 +1,144 @@
+/* 评论输入框样式 */
+.commentInput {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: #F5F5F5;
+  border-radius: 8px;
+}
+
+.input {
+  flex: 1;
+  height: 36px;
+  padding: 0 12px;
+  background: #FFFFFF;
+  border: none;
+  border-radius: 18px;
+  font-size: 14px;
+  color: #333;
+  outline: none;
+  
+  &::placeholder {
+    color: #999;
+  }
+  
+  &:disabled {
+    background: #F5F5F5;
+    color: #999;
+  }
+  
+  &:focus {
+    outline: none;
+    border: none;
+  }
+}
+
+.submitBtn {
+  width: 88px;
+  height: 37px;
+  padding: 0 12px;
+  background: #11B787;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  
+  &:disabled {
+    background: #CCCCCC;
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+  
+  &:active:not(:disabled) {
+    opacity: 0.8;
+  }
+}
+
+.submitIcon {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.submitText {
+  font-size: 14px;
+  font-weight: 500;
+  color: #FFFFFF;
+  line-height: 1;
+}
+
+/* PC端样式 */
+.pcMode {
+  background: #FFFFFF;
+  border: none;
+  border-radius: 24PX;
+  padding: 8PX;
+  
+  .input {
+    height: 32PX;
+    font-size: 13PX;
+    border-radius: 16PX;
+    border: none;
+    padding: 0 20PX;
+    
+    &:focus {
+      outline: none;
+      border: none;
+    }
+  }
+  
+  .submitBtn {
+    width: 88PX;
+    height: 37PX;
+    border-radius: 8PX;
+    padding: 0 12PX;
+    gap: 6PX;
+    
+    &:hover:not(:disabled) {
+      background: #0FA076;
+    }
+  }
+  
+  .submitIcon {
+    width: 20PX;
+    height: 20PX;
+  }
+  
+  .submitText {
+    font-size: 14PX;
+  }
+}
+
+/* 暗黑模式 */
+:global([data-theme="dark"]) {
+  .commentInput {
+    background-color: #1a1a1a;
+  }
+  
+  .input {
+    background-color: #2a2a2a;
+    color: #fff;
+    
+    &::placeholder {
+      color: #666;
+    }
+  }
+  
+  .pcMode {
+    background-color: #1a1a1a;
+    border-color: #333;
+    
+    .input {
+      background-color: #2a2a2a;
+      
+      &:focus {
+        border-color: #11B787;
+      }
+    }
+  }
+}
