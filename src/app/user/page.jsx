@@ -1178,6 +1178,7 @@ export default function UserPage() {
       console.log('=== TON 钱包登录传参 ===', {
         type: 'login',
         chanel: 3,
+        channel: 'tg',
         address: tonAddress,
         signatrue: tonWallet.account?.publicKey,
       });
@@ -1187,6 +1188,7 @@ export default function UserPage() {
         data: {
           type: 'login',
           chanel: 3,  // 3-钱包登录
+          channel: 'tg',
           address: tonAddress,
           signatrue: tonWallet.account?.publicKey,
         }
