@@ -433,6 +433,27 @@ export default function UserPage() {
       handleTonWalletLogin();
     }
   }, [tonWallet]);
+
+  // 监听URL中的邀请码参数
+  useEffect(() => {
+    const inviteCode = searchParams.get('inviteCode') || searchParams.get('invite');
+    
+    if (inviteCode) {
+      console.log('🔍 [UserPage] 检测到邀请码:', inviteCode);
+      // 存储到 localStorage
+      localStorage.setItem('inviteCode', inviteCode);
+      
+      // 检查用户是否已登录
+      const token = localStorage.getItem('token');
+      if (!token) {
+        // 未登录，自动打开登录弹窗
+        console.log('🔍 [UserPage] 用户未登录，自动打开登录弹窗');
+        setShowLoginModal(true);
+      } else {
+        console.log('🔍 [UserPage] 用户已登录，邀请码已保存');
+      }
+    }
+  }, [searchParams]);
   
   // 退出登录
   const handleLogout = async () => {
@@ -1161,7 +1182,18 @@ export default function UserPage() {
         return;
       }
       
+      // 获取邀请码（如果有）
+      const inviteCode = localStorage.getItem('inviteCode');
+      
       // 调用后端接口进行 TON 钱包登录（与非 TG 环境保持一致）
+      console.log('=== TON 钱包登录传参 ===', {
+        type: 'login',
+        chanel: 3,
+        channel: 'tg',
+        address: tonAddress,
+        signatrue: tonWallet.account?.publicKey,
+        ...(inviteCode && { invitedCode: inviteCode }),
+      });
       const res = await request({
         url: Interface.MOZI_LOGIN,
         method: 'POST',
@@ -1171,6 +1203,7 @@ export default function UserPage() {
           channel: 'tg',
           address: tonAddress,
           signatrue: tonWallet.account?.publicKey,
+          ...(inviteCode && { invitedCode: inviteCode }), // 传递邀请码
         }
       });
       
@@ -1224,6 +1257,11 @@ export default function UserPage() {
         }).catch((taskError) => {
           console.error('❌ [TON钱包登录] 每日登录任务上报失败:', taskError);
         });
+        // 登录成功后清除邀请码
+        if (inviteCode) {
+          localStorage.removeItem('inviteCode');
+          console.log('✅ [TON钱包登录] 邀请码已使用并清除');
+        }
         
         Toast.show({ content: t('auth.loginSuccess') || '登录成功', position: 'center', icon: 'success' });
         
