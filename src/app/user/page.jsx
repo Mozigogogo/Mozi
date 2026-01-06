@@ -1211,8 +1211,8 @@ export default function UserPage() {
         }
         Toast.show({ content: t('auth.loginSuccess') || '登录成功', position: 'center', icon: 'success' });
         
-        // 钱包登录成功后，优先使用钱包地址格式作为用户名
-        await updateWalletUserInfo(tonAddress);
+        // TON钱包登录成功后，使用Telegram用户信息更新（与邮箱登录一样）
+        await updateTelegramUserInfo();
         
         // 标记为钱包登录，不使用 Telegram 用户名
         handleLoginSuccess(true);
