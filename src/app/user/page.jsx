@@ -196,27 +196,49 @@ export default function UserPage() {
       });
       
       const ui = localStorage.getItem('userInfo');
+      const dataInfo = localStorage.getItem('userDataInfo');
+      
+      let displayNick = t('user.defaultNickname');
+      let displayAvatar = DEFAULT_AVATAR;
+      
+      // 昵称：优先从 userDataInfo.userInfo.nickName 读取
+      if (dataInfo) {
+        try {
+          const dataInfoParsed = JSON.parse(dataInfo);
+          const nickFromDataInfo = (dataInfoParsed.userInfo?.nickName || '').trim();
+          if (nickFromDataInfo) {
+            displayNick = nickFromDataInfo;
+          }
+        } catch (e) {
+          console.error('解析 userDataInfo 失败:', e);
+        }
+      }
+      
+      // 头像：从 userInfo.avatar 读取
       if (ui) {
         try {
           const parsed = JSON.parse(ui);
-          const parsedNick = (parsed.nickName || '').trim();
-          const displayNick = parsedNick.length > 0 ? parsedNick : t('user.defaultNickname');
-          
-          // 只在数据真正改变时才更新，避免不必要的重渲染
-          setUserInfo((prev) => {
-            const needUpdate = prev.nickname !== displayNick || prev.avatar !== (parsed.avatar || prev.avatar);
-            if (needUpdate) {
-              return { ...prev, nickname: displayNick, avatar: parsed.avatar || prev.avatar };
-            }
-            return prev;
-          });
+          if (parsed.avatar) {
+            displayAvatar = parsed.avatar;
+          }
           
           // 根据登录返回的 subscribeAnnouncement 字段初始化开关状态
           if (parsed.subscribeAnnouncement !== undefined) {
             setIsAnnouncementOn(parsed.subscribeAnnouncement === 1);
           }
-        } catch {}
+        } catch (e) {
+          console.error('解析 userInfo 失败:', e);
+        }
       }
+      
+      // 只在数据真正改变时才更新，避免不必要的重渲染
+      setUserInfo((prev) => {
+        const needUpdate = prev.nickname !== displayNick || prev.avatar !== displayAvatar;
+        if (needUpdate) {
+          return { ...prev, nickname: displayNick, avatar: displayAvatar };
+        }
+        return prev;
+      });
     };
     
     // 首次加载时同步登录态
@@ -1319,17 +1341,33 @@ export default function UserPage() {
           avatar: newAvatar
         }));
 
-        // 同步更新 localStorage，防止定时器读取旧数据覆盖
+        // 同步更新 localStorage.userInfo（头像）
         try {
           const storedUserInfo = localStorage.getItem('userInfo');
           if (storedUserInfo) {
             const parsed = JSON.parse(storedUserInfo);
-            parsed.nickName = newNickname;
             parsed.avatar = newAvatar;
             localStorage.setItem('userInfo', JSON.stringify(parsed));
+            console.log('✅ 已更新 userInfo.avatar');
           }
         } catch (e) {
-          console.error('更新localStorage失败:', e);
+          console.error('更新 userInfo 失败:', e);
+        }
+        
+        // 同步更新 localStorage.userDataInfo（昵称）
+        try {
+          const storedDataInfo = localStorage.getItem('userDataInfo');
+          if (storedDataInfo) {
+            const parsed = JSON.parse(storedDataInfo);
+            if (!parsed.userInfo) {
+              parsed.userInfo = {};
+            }
+            parsed.userInfo.nickName = newNickname;
+            localStorage.setItem('userDataInfo', JSON.stringify(parsed));
+            console.log('✅ 已更新 userDataInfo.userInfo.nickName');
+          }
+        } catch (e) {
+          console.error('更新 userDataInfo 失败:', e);
         }
 
         Toast.clear();
