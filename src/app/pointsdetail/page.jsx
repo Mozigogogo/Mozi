@@ -140,6 +140,9 @@ export default function PointsDetail() {
   // 每日任务列表 state
   const [dailyInvestments, setDailyInvestments] = useState([]);
   const [dailyTasksLoading, setDailyTasksLoading] = useState(true);
+  
+  // 用于控制是否显示 loading（只在首次加载时显示）
+  const isFirstTaskLoadRef = useRef(true);
 
   // 任务类型到图标的映射
   const taskIconMap = {
@@ -176,8 +179,12 @@ export default function PointsDetail() {
   // 获取任务列表（活动任务 + 每日任务，合并为一次接口调用）
   const fetchAllTasks = useCallback(async () => {
     try {
-      setTasksLoading(true);
-      setDailyTasksLoading(true);
+      // 只在首次加载时显示 loading
+      if (isFirstTaskLoadRef.current) {
+        setTasksLoading(true);
+        setDailyTasksLoading(true);
+      }
+      
       const res = await request({
         url: Interface.TASK_LIST,
         method: 'GET'
@@ -235,8 +242,12 @@ export default function PointsDetail() {
     } catch (error) {
       console.error('获取任务列表失败:', error);
     } finally {
-      setTasksLoading(false);
-      setDailyTasksLoading(false);
+      // 只在首次加载时关闭 loading
+      if (isFirstTaskLoadRef.current) {
+        setTasksLoading(false);
+        setDailyTasksLoading(false);
+        isFirstTaskLoadRef.current = false; // 标记首次加载完成
+      }
     }
   }, []);
 
