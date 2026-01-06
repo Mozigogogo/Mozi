@@ -157,12 +157,9 @@ export default function UserPage() {
       });
 
       if (res?.data) {
-        console.log('✅ 获取用户积分数据成功:', res.data);
-        
         // 保存完整的 dataInfo 数据到 localStorage
         try {
           localStorage.setItem('userDataInfo', JSON.stringify(res.data));
-          console.log('✅ 已保存 dataInfo 到 localStorage');
         } catch (e) {
           console.error('❌ 保存 dataInfo 到 localStorage 失败:', e);
         }
@@ -481,8 +478,6 @@ export default function UserPage() {
       // 清除 Cookie
       delCookie('wallet_address');
       delCookie('wallet_chainId');
-      
-      console.log('✅ 已清除所有用户缓存数据');
     } catch (error) {
       console.error('❌ 清除缓存数据失败:', error);
     }
@@ -616,15 +611,11 @@ export default function UserPage() {
         requestData.chatId = chatId;
       }
 
-      console.log('订阅公告请求:', requestData);
-
       const res = await request({
         url: Interface.SUBSCRIBE_ANNOUNCEMENT,
         method: 'POST',
         data: requestData
       });
-
-      console.log('订阅接口返回:', res);
 
       // 基于 success 字段判断接口是否成功
       if (res?.success === true) {
@@ -637,7 +628,6 @@ export default function UserPage() {
             const parsed = JSON.parse(storedUserInfo);
             parsed.subscribeAnnouncement = isOn ? 1 : 0;
             localStorage.setItem('userInfo', JSON.stringify(parsed));
-            console.log('✅ 已同步订阅状态到 localStorage:', isOn ? 1 : 0);
           }
         } catch (e) {
           console.error('❌ 更新 localStorage 失败:', e);
@@ -647,7 +637,6 @@ export default function UserPage() {
           content: isOn ? t('user.subscriptionEnabled') || '订阅成功' : t('user.subscriptionDisabled') || '取消订阅',
           position: 'bottom' 
         });
-        console.log('订阅状态更新成功');
         return true; // 成功，允许切换
       } else {
         Toast.show({ 
@@ -672,12 +661,10 @@ export default function UserPage() {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.log('未登录，跳过接口调用');
         return;
       }
 
       const timeStr = formatDate(date);
-      console.log('调用接口，日期:', timeStr);
 
       // 开始加载，显示加载状态
       setIsLoadingNewCoins(true);
@@ -691,11 +678,8 @@ export default function UserPage() {
         }
       });
 
-      console.log('接口完整返回:', res);
-      
       // 基于 success 字段判断接口是否成功
       if (res?.success === true) {
-        console.log('接口调用成功，数据:', res.data);
         setInterfaceData(res.data);
         setIsInterfaceLoaded(true); // 记录接口已加载完成
         setIsInterfaceSuccess(true); // 记录接口调用成功
@@ -714,13 +698,10 @@ export default function UserPage() {
             link: item.link || ''
           }));
           setNewCoinListings(formattedListings);
-          console.log('转换后的新币上线数据:', formattedListings);
         } else {
           setNewCoinListings([]);
-          console.log('接口成功但无新币上线数据');
         }
       } else {
-        console.log('接口调用失败:', res?.errorMsg || '未知错误');
         setNewCoinListings([]);
         setIsInterfaceLoaded(true); // 记录接口已加载完成
         setIsInterfaceSuccess(false); // 记录接口调用失败
@@ -735,7 +716,6 @@ export default function UserPage() {
 
   // 处理日历日期选择
   const handleDateChange = (date) => {
-    console.log('选择日期:', date);
     setSelectedDate(date);
     // 清空当前数据，显示加载状态
     setNewCoinListings([]);
@@ -954,7 +934,6 @@ export default function UserPage() {
         method: 'POST',
         data: { taskCode: 'DAILY_LOGIN' }
       });
-      console.log('🔍 [DEBUG] 每日登录任务上报成功');
     } catch (taskError) {
       console.error('每日登录任务上报失败:', taskError);
     }
@@ -1007,7 +986,6 @@ export default function UserPage() {
     }
     
     const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
-    console.log('=== Telegram 用户信息 ===', tgUser);
     
     return {
       username: tgUser.username || tgUser.first_name || tgUser.last_name || 'Telegram User',
@@ -1039,7 +1017,6 @@ export default function UserPage() {
         
         // 如果 nickName 不为 null，说明用户已经设置过，不要覆盖
         if (currentNickname !== null && currentNickname !== undefined) {
-          console.log('⏭️ 钱包用户已有昵称，跳过自动更新', { currentNickname });
           return;
         }
       } catch (e) {
@@ -1066,8 +1043,6 @@ export default function UserPage() {
       });
 
       if (res?.data) {
-        console.log('✅ 钱包用户信息更新成功');
-        
         // 更新本地用户信息
         setUserInfo(prev => ({
           ...prev,
@@ -1117,7 +1092,6 @@ export default function UserPage() {
         ];
         
         if (currentNickname && !defaultNicknames.includes(currentNickname)) {
-          console.log('⏭️ 用户已有自定义昵称，跳过自动更新', { currentNickname });
           return;
         }
       } catch (e) {
@@ -1147,8 +1121,6 @@ export default function UserPage() {
       });
 
       if (res?.data) {
-        console.log('✅ Telegram 用户信息更新成功');
-        
         // 更新本地用户信息
         setUserInfo(prev => ({
           ...prev,
@@ -1179,13 +1151,6 @@ export default function UserPage() {
     if (!tonWallet) return;
     
     try {
-      // 调试：打印 TON 钱包返回的完整数据
-      console.log('=== TON Wallet 完整数据 ===');
-      console.log('tonWallet:', JSON.stringify(tonWallet, null, 2));
-      console.log('tonWallet.account:', tonWallet.account);
-      console.log('tonWallet.device:', tonWallet.device);
-      console.log('=== END ===');
-      
       Toast.show({ icon: 'loading', content: t('user.loggingIn') || '登录中...', duration: 0 });
       
       // 获取 TON 钱包地址
@@ -1197,13 +1162,6 @@ export default function UserPage() {
       }
       
       // 调用后端接口进行 TON 钱包登录（与非 TG 环境保持一致）
-      console.log('=== TON 钱包登录传参 ===', {
-        type: 'login',
-        chanel: 3,
-        channel: 'tg',
-        address: tonAddress,
-        signatrue: tonWallet.account?.publicKey,
-      });
       const res = await request({
         url: Interface.MOZI_LOGIN,
         method: 'POST',
@@ -1240,8 +1198,17 @@ export default function UserPage() {
           method: 'GET'
         }).then((dataInfoRes) => {
           if (dataInfoRes?.data) {
-            console.log('✅ [TON钱包登录] 获取用户详细信息成功:', dataInfoRes.data);
+            console.log('✅ [TON钱包登录] 获取用户详细信息成功');
+            console.log('  - dataInfo完整数据:', dataInfoRes.data);
+            console.log('  - dataInfo.userInfo:', dataInfoRes.data.userInfo);
+            console.log('  - dataInfo.userInfo.nickName:', dataInfoRes.data.userInfo?.nickName);
+            console.log('  - dataInfo.userInfo.avatar:', dataInfoRes.data.userInfo?.avatar);
+            
             localStorage.setItem('userDataInfo', JSON.stringify(dataInfoRes.data));
+            
+            console.log('📝 [TON钱包登录] localStorage 最终状态:');
+            console.log('  - userInfo:', localStorage.getItem('userInfo'));
+            console.log('  - userDataInfo:', localStorage.getItem('userDataInfo'));
           }
         }).catch((dataInfoError) => {
           console.error('❌ [TON钱包登录] 获取用户详细信息失败:', dataInfoError);
@@ -1265,21 +1232,11 @@ export default function UserPage() {
         const hasLoggedBefore = localStorage.getItem(walletLoginKey);
         const isFirstLogin = !hasLoggedBefore;
         
-        console.log('🔍 [TON钱包登录] 首次登录检测:', { 
-          tonAddress, 
-          isFirstLogin,
-          walletLoginKey 
-        });
-        
         // 只在首次登录时更新Telegram用户信息
         if (isFirstLogin) {
-          console.log('🎉 [TON钱包登录] 首次登录，更新Telegram用户信息');
           await updateTelegramUserInfo();
           // 标记该钱包地址已登录过
           localStorage.setItem(walletLoginKey, Date.now().toString());
-          console.log('✅ [TON钱包登录] 已标记钱包地址登录记录');
-        } else {
-          console.log('⏭️ [TON钱包登录] 非首次登录，跳过更新Telegram用户信息');
         }
         
         // 标记为钱包登录
@@ -1348,7 +1305,6 @@ export default function UserPage() {
             const parsed = JSON.parse(storedUserInfo);
             parsed.avatar = newAvatar;
             localStorage.setItem('userInfo', JSON.stringify(parsed));
-            console.log('✅ 已更新 userInfo.avatar');
           }
         } catch (e) {
           console.error('更新 userInfo 失败:', e);
@@ -1364,7 +1320,6 @@ export default function UserPage() {
             }
             parsed.userInfo.nickName = newNickname;
             localStorage.setItem('userDataInfo', JSON.stringify(parsed));
-            console.log('✅ 已更新 userDataInfo.userInfo.nickName');
           }
         } catch (e) {
           console.error('更新 userDataInfo 失败:', e);
