@@ -435,15 +435,73 @@ export default function PCLoginPage() {
     if (!tonWallet) return;
     
     try {
-      const walletAddress = tonWallet.account.address;
-      console.log('TON 钱包登录:', walletAddress);
+      const tonAddress = tonWallet.account?.address;
+      if (!tonAddress) {
+        message.warning(t('user.walletAddressError') || '获取钱包地址失败');
+        return;
+      }
       
-      // TODO: 调用后端 TON 钱包登录接口
-      // 这里需要实现具体的登录逻辑
+      console.log('TON 钱包登录:', tonAddress);
       
+      const res = await request({
+        url: Interface.MOZI_LOGIN,
+        method: 'POST',
+        data: {
+          type: 'login',
+          chanel: 3,  // 3-钱包登录
+          channel: 'tg',
+          address: tonAddress,
+          signatrue: tonWallet.account?.publicKey,
+        }
+      });
+      
+      if (res?.data?.token) {
+        localStorage.setItem('token', res.data.token);
+        
+        const userData = res?.data?.userInfo || res?.data?.user;
+        if (userData) {
+          const userInfoWithSubscribe = {
+            ...userData,
+            subscribeAnnouncement: res.data.subscribeAnnouncement
+          };
+          localStorage.setItem('userInfo', JSON.stringify(userInfoWithSubscribe));
+        }
+        if (res?.data?.userId) {
+          localStorage.setItem('userId', res.data.userId);
+        }
+        
+        // 获取用户详细信息（与邮箱登录对齐）
+        request({
+          url: Interface.USER_DATA_INFO,
+          method: 'GET'
+        }).then((dataInfoRes) => {
+          if (dataInfoRes?.data) {
+            console.log('✅ [TON钱包登录] 获取用户详细信息成功:', dataInfoRes.data);
+            localStorage.setItem('userDataInfo', JSON.stringify(dataInfoRes.data));
+          }
+        }).catch((error) => {
+          console.error('❌ [TON钱包登录] 获取用户详细信息失败:', error);
+        });
+        
+        // 完成每日登录任务（与邮箱登录对齐）
+        request({
+          url: Interface.TASK_COMPLETE,
+          method: 'POST',
+          data: { taskCode: 'DAILY_LOGIN' }
+        }).catch((error) => {
+          console.error('❌ [TON钱包登录] 每日登录任务上报失败:', error);
+        });
+        
+        message.success(t('auth.loginSuccess'));
+        router.push('/');
+      } else {
+        const errorMessage = res?.errorMsg || res?.message || t('auth.loginFailed');
+        message.error(errorMessage);
+      }
     } catch (error) {
       console.error('TON 钱包登录失败:', error);
-      message.error(t('auth.walletConnectFailed'));
+      const errorMessage = error?.errorMsg || error?.message || t('auth.walletConnectFailed');
+      message.error(errorMessage);
     }
   };
 
