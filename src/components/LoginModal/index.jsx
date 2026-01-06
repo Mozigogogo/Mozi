@@ -115,6 +115,7 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
   const { t } = useTranslation();
   // 表单状态
   const [mode, setMode] = useState(initialMode); // 'login' or 'register'
+  const [showEmailForm, setShowEmailForm] = useState(false); // 控制是否显示邮箱表单
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
@@ -450,6 +451,21 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
     setInviteCode('');
   };
 
+  // 处理邮箱登录按钮点击
+  const handleEmailLoginClick = () => {
+    setShowEmailForm(true);
+  };
+
+  // 返回到登录方式选择
+  const handleBackToChoice = () => {
+    setShowEmailForm(false);
+    setEmail('');
+    setPassword('');
+    setVerificationCode('');
+    setInviteCode('');
+    setMode('login');
+  };
+
   // 关闭弹窗
   const handleClose = () => {
     setEmail('');
@@ -457,6 +473,8 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
     setVerificationCode('');
     setInviteCode('');
     setCountdown(0);
+    setShowEmailForm(false);
+    setMode('login');
     onClose?.();
   };
 
@@ -473,121 +491,136 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
       onClose={handleClose}
       position='bottom'
       bodyStyle={{
-        borderTopLeftRadius: '0',
-        borderTopRightRadius: '0',
+        borderTopLeftRadius: showEmailForm ? '0' : '16px',
+        borderTopRightRadius: showEmailForm ? '0' : '16px',
         backgroundColor: '#ffffff',
-        height: '100vh',
+        height: showEmailForm ? '100vh' : 'auto',
+        maxHeight: showEmailForm ? '100vh' : '85vh',
         padding: '0',
       }}
     >
-      <div className={styles.loginModal}>
-        <div className={styles.header}>
-          <h2 className={styles.title}>{mode === 'login' ? t('user.login') : t('user.register')}</h2>
-          <button className={styles.closeBtn} onClick={handleClose}>×</button>
-        </div>
+      <div className={`${styles.loginModal} ${showEmailForm ? styles.fullHeight : ''}`}>
+        {showEmailForm && (
+          <div className={styles.header}>
+            <button className={styles.backBtn} onClick={handleBackToChoice}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            <h2 className={styles.title}>
+              {mode === 'login' ? t('user.login') : t('user.register')}
+            </h2>
+          </div>
+        )}
 
         <div className={styles.content}>
           <div className={styles.contentInner}>
-            {/* 邮箱输入 */}
-            <div className={styles.formItem}>
-              <label className={styles.label}>{t('auth.email')}</label>
-              <Input
-                className={styles.input}
-                placeholder={t('auth.emailPlaceholder')}
-                value={email}
-                onChange={setEmail}
-                type='email'
-                clearable
-              />
-            </div>
+            {!showEmailForm ? (
+              // 登录方式选择页面
+              <>
+                {/* 钱包登录按钮 */}
+                <div className={styles.walletBtn} onClick={handleWalletLoginClick}>
+                  <img src="/icons/user/login_wallet.png" alt="wallet" className={styles.walletIcon} />
+                  <span>{t('auth.walletLoginBtn')}</span>
+                </div>
 
-            {/* 密码输入 - 登录和注册都需要 */}
-            <div className={styles.formItem}>
-              <label className={styles.label}>{t('auth.password')}</label>
-              <Input
-                className={styles.input}
-                placeholder={t('auth.passwordPlaceholder')}
-                value={password}
-                onChange={setPassword}
-                type='password'
-                clearable
-              />
-            </div>
-
-            {/* 注册模式下的验证码 */}
-            {mode === 'register' && (
-              <div className={styles.formItem}>
-                <label className={styles.label}>{t('auth.verificationCode')}</label>
-                <div className={styles.codeInputWrapper}>
+                {/* 邮箱登录按钮 */}
+                <div className={styles.emailBtn} onClick={handleEmailLoginClick}>
+                  <img src="/icons/user/login_email.png" alt="email" className={styles.emailIcon} />
+                  <span>{t('auth.emailLoginBtn') || '邮箱登录'}</span>
+                </div>
+              </>
+            ) : (
+              // 邮箱登录表单页面
+              <>
+                {/* 邮箱输入 */}
+                <div className={styles.formItem}>
+                  <label className={styles.label}>{t('auth.email')}</label>
                   <Input
-                    className={styles.codeInput}
-                    placeholder={t('auth.verificationPlaceholder')}
-                    value={verificationCode}
-                    onChange={(val) => setVerificationCode(val.replace(/\s/g, ''))}
+                    className={styles.input}
+                    placeholder={t('auth.emailPlaceholder')}
+                    value={email}
+                    onChange={setEmail}
+                    type='email'
                     clearable
                   />
-                  <Button
-                    className={styles.codeBtn}
-                    onClick={handleSendCode}
-                    loading={sendingCode}
-                    disabled={countdown > 0}
-                    size='small'
-                  >
-                    {countdown > 0 ? `${countdown}s` : t('auth.getCode')}
-                  </Button>
                 </div>
-              </div>
+
+                {/* 密码输入 - 登录和注册都需要 */}
+                <div className={styles.formItem}>
+                  <label className={styles.label}>{t('auth.password')}</label>
+                  <Input
+                    className={styles.input}
+                    placeholder={t('auth.passwordPlaceholder')}
+                    value={password}
+                    onChange={setPassword}
+                    type='password'
+                    clearable
+                  />
+                </div>
+
+                {/* 注册模式下的验证码 */}
+                {mode === 'register' && (
+                  <div className={styles.formItem}>
+                    <label className={styles.label}>{t('auth.verificationCode')}</label>
+                    <div className={styles.codeInputWrapper}>
+                      <Input
+                        className={styles.codeInput}
+                        placeholder={t('auth.verificationPlaceholder')}
+                        value={verificationCode}
+                        onChange={(val) => setVerificationCode(val.replace(/\s/g, ''))}
+                        clearable
+                      />
+                      <Button
+                        className={styles.codeBtn}
+                        onClick={handleSendCode}
+                        loading={sendingCode}
+                        disabled={countdown > 0}
+                        size='small'
+                      >
+                        {countdown > 0 ? `${countdown}s` : t('auth.getCode')}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* 注册模式下的邀请码（可选） */}
+                {mode === 'register' && (
+                  <div className={styles.formItem}>
+                    <label className={styles.label}>{t('auth.inviteOptional')}</label>
+                    <Input
+                      className={styles.input}
+                      placeholder={t('auth.invitePlaceholder')}
+                      value={inviteCode}
+                      onChange={setInviteCode}
+                      clearable
+                    />
+                  </div>
+                )}
+
+                {/* 提交按钮 */}
+                <div
+                  className={`${styles.submitBtn} ${loading ? styles.loading : ''}`}
+                  onClick={loading ? undefined : (mode === 'login' ? handleLogin : handleRegister)}
+                >
+                  {loading ? (
+                    <span className={styles.loadingSpinner}></span>
+                  ) : (
+                    mode === 'login' ? t('user.login') : t('user.register')
+                  )}
+                </div>
+
+                {/* 切换模式 */}
+                <div className={styles.switchMode}>
+                  <span className={styles.switchText}>
+                    {mode === 'login' ? t('auth.noAccount') : t('auth.hasAccount')}
+                  </span>
+                  <button className={styles.switchBtn} onClick={toggleMode}>
+                    {mode === 'login' ? t('auth.registerNow') : t('auth.loginNow')}
+                  </button>
+                </div>
+              </>
             )}
-
-            {/* 注册模式下的邀请码（可选） */}
-            {mode === 'register' && (
-              <div className={styles.formItem}>
-                <label className={styles.label}>{t('auth.inviteOptional')}</label>
-                <Input
-                  className={styles.input}
-                  placeholder={t('auth.invitePlaceholder')}
-                  value={inviteCode}
-                  onChange={setInviteCode}
-                  clearable
-                />
-              </div>
-            )}
-
-            {/* 提交按钮 */}
-            <div
-              className={`${styles.submitBtn} ${loading ? styles.loading : ''}`}
-              onClick={loading ? undefined : (mode === 'login' ? handleLogin : handleRegister)}
-            >
-              {loading ? (
-                <span className={styles.loadingSpinner}></span>
-              ) : (
-                mode === 'login' ? t('user.login') : t('user.register')
-              )}
-            </div>
-
-            {/* 切换模式 */}
-            <div className={styles.switchMode}>
-              <span className={styles.switchText}>
-                {mode === 'login' ? t('auth.noAccount') : t('auth.hasAccount')}
-              </span>
-              <button className={styles.switchBtn} onClick={toggleMode}>
-                {mode === 'login' ? t('auth.registerNow') : t('auth.loginNow')}
-              </button>
-            </div>
-
-            {/* 分割线 */}
-            <div className={styles.divider}>
-              <span className={styles.dividerText}>{t('auth.or')}</span>
-            </div>
-
-            {/* 钱包登录按钮 */}
-            <div
-              className={styles.walletBtn}
-              onClick={handleWalletLoginClick}
-            >
-              <img src="/icons/wallet.svg" alt="wallet" className={styles.walletIcon} />
-              <span>{t('auth.walletLogin')}</span>
-            </div>
           </div>
         </div>
       </div>
