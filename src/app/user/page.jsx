@@ -1406,7 +1406,12 @@ export default function UserPage() {
           {userInfo.isLogin ? (
             <div className={styles.headerUser}>
               <img className={styles.headerAvatar} src={userInfo.avatar || DEFAULT_AVATAR} alt="头像" />
-              <span>{address ? `${address.slice(0, 6)}...${address.slice(-4)}` : (userInfo.nickname || t('user.profile'))}</span>
+              <span>
+                {!isTelegramEnv() && address 
+                  ? `${address.slice(0, 6)}...${address.slice(-4)}` 
+                  : (userInfo.nickname || t('user.profile'))
+                }
+              </span>
               <img className={styles.editIcon} src={EDIT_ICON} alt="编辑" onClick={openEditProfile} />
             </div>
           ) : (
