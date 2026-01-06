@@ -346,6 +346,8 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
         // 注册成功后自动登录
         setVerificationCode('');
         setInviteCode('');
+        // 清除localStorage中的邀请码
+        localStorage.removeItem('inviteCode');
         await autoLoginAfterRegister();
       } else {
         // 优先显示 errorMsg，其次显示 message
