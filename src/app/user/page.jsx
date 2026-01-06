@@ -106,6 +106,9 @@ export default function UserPage() {
   const [calendarEventDates, setCalendarEventDates] = useState([]); // 日历上有事件的日期（日期数字数组）
   const [isLoadingNewCoins, setIsLoadingNewCoins] = useState(false); // 新币上线数据加载状态
   
+  // 用于记录当前组件生命周期内是否已经为邀请码弹出过登录弹窗
+  const hasShownInviteModalRef = useRef(false);
+  
   // 积分相关数据
   const [pointsData, setPointsData] = useState({
     totalPoints: 0,
@@ -406,13 +409,6 @@ export default function UserPage() {
   const handleCloseLoginModal = () => {
     setShowLoginModal(false);
     
-    // 如果有邀请码，标记用户已经看过并关闭了弹窗
-    const inviteCode = searchParams.get('inviteCode') || searchParams.get('invite');
-    if (inviteCode) {
-      sessionStorage.setItem('hasShownInviteModal', 'true');
-      console.log('🔍 [UserPage] 用户关闭了邀请弹窗，已标记不再自动弹出');
-    }
-    
     // 清除 URL 中的 showLogin 和 mode 参数
     const url = new URL(window.location.href);
     if (url.searchParams.has('showLogin') || url.searchParams.has('mode')) {
@@ -454,18 +450,18 @@ export default function UserPage() {
       // 检查用户是否已登录
       const token = localStorage.getItem('token');
       if (!token) {
-        // 检查是否已经显示过邀请码弹窗（用户关闭过）
-        const hasShownInviteModal = sessionStorage.getItem('hasShownInviteModal');
-        
-        if (!hasShownInviteModal) {
-          // 未登录且未显示过弹窗，自动打开登录弹窗
+        // 检查在当前组件生命周期内是否已经弹出过
+        if (!hasShownInviteModalRef.current) {
+          // 未登录且本次会话未弹出过，自动打开登录弹窗
           console.log('🔍 [UserPage] 用户未登录，自动打开登录弹窗');
+          hasShownInviteModalRef.current = true; // 标记已弹出
+          
           // 使用 setTimeout 确保组件已完全挂载
           setTimeout(() => {
             setShowLoginModal(true);
           }, 300);
         } else {
-          console.log('🔍 [UserPage] 用户已关闭过邀请弹窗，不再自动弹出');
+          console.log('🔍 [UserPage] 本次会话已弹出过邀请弹窗，不再重复弹出');
         }
       } else {
         console.log('🔍 [UserPage] 用户已登录，邀请码已保存');
