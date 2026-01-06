@@ -2,111 +2,15 @@
   display: flex;
   flex-direction: column;
   height: 100vh; /* 固定视窗高度，内部滚动生效 */
-  padding-bottom: 60px;
+  padding-bottom: 49px;
   background-color: #EEF0F3;
-}
-
-/* 主导航样式 */
-.mainTabs {
-  position: static;
-  background: #EEF0F3;
-  padding: 0px 10px 0;
 }
 
 .headerBar { font-weight: 600; font-size: 16px; margin-bottom: 8px; }
 
-.bannerSwitch { display: flex; gap: 12px; }
-.bannerCard {
-  flex: 1;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  position: relative;
-  overflow: hidden;
-  border: none;
-  box-shadow: none;
-}
-.bannerCard.active { box-shadow: 0 6px 16px rgba(17,183,135,0.18); border: none; }
-
-.tabImage {
-  width: 100%;
-  height: auto;
-  display: block;
-  pointer-events: none;
-  transition: opacity 180ms ease-out;
-  will-change: opacity;
-}
-
-.tabImageHidden { 
-  opacity: 0; 
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-.tabImageVisible { opacity: 1; }
-
 .tabsWrapper {
   position: static;
   background: #EEF0F3;
-}
-
-/* 子导航样式 */
-.subTabs {
-  display: flex;
-  align-items: center;
-  padding: 6px 10px 2px; /* 减少底部padding，让两个tab更紧凑 */
-  background-color: #EEF0F3;
-  overflow-x: auto;
-  white-space: nowrap;
-}
-
-.subTab {
-  position: relative;
-  display: inline-block;
-  padding: 10px 8px 4px 10px; /* 减少底部padding */
-  font-size: 14px; /* 28rpx -> 14px */
-  color: #666;
-  cursor: pointer;
-  transition: color 0.3s;
-  flex-shrink: 0;
-  margin-bottom: 5px;
-}
-
-.subTab.active {
-  color: #333;
-  font-weight: 600;
-}
-
-.subTab.active::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: 0;
-  width: 21px; /* 42rpx -> 21px */
-  height: 2px; /* 4rpx -> 2px */
-  background: #11B787;
-  border-radius: 2px;
-}
-
-/* 币种标签样式 */
-.coinTabs {
-  display: flex;
-  align-items: center;
-  padding: 4px 10px 8px 18px; /* 左侧12px，使币种标签与子导航对齐 (12px + 8px = 20px) */
-  height: auto; /* 改为自动高度 */
-  background-color: #EEF0F3;
-  white-space: nowrap;
-  overflow-x: auto;
-  
-  /* 隐藏滚动条 */
-  &::-webkit-scrollbar {
-    display: none;
-  }
-  -ms-overflow-style: none;
-  scrollbar-width: none;
 }
 
 /* 投票组件容器 */
@@ -299,74 +203,6 @@
   text-overflow: ellipsis;
   line-height: 1.4;
   word-break: break-word;
-}
-
-.coinTab {
-  display: inline-block;
-  padding: 4px 8px; /* 16rpx 32rpx -> 8px 16px，这里调整为4px 8px */
-  margin-right: 8px; /* 16rpx -> 8px */
-  font-size: 12px; /* 24rpx -> 12px */
-  color: #666;
-  background-color: #f5f5f5;
-  border-radius: 8px; /* 16rpx -> 8px */
-  cursor: pointer;
-  transition: all 0.3s;
-  flex-shrink: 0;
-}
-
-.coinTab.active {
-  color: #fff;
-  background-color: #11B787; /* 改为品牌绿色，与小程序端一致 */
-}
-
-.coinTab.more {
-  color: #11B787; /* 改为品牌绿色 */
-  background-color: #e6fff0; /* 浅绿色背景 */
-}
-
-/* 热榜搜索栏样式 */
-.hotSearchBar {
-  background: #EEF0F3;
-  padding: 10px; /* 20rpx ÷ 2 = 10px */
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.searchBox {
-  flex: 1;
-  margin-right: 10px; /* 20rpx ÷ 2 = 10px */
-  width: 100%;
-  height: 36px; /* 72rpx ÷ 2 = 36px */
-  background: #fff;
-  border-radius: 18px; /* 36rpx ÷ 2 = 18px */
-  padding: 0 15px; /* 30rpx ÷ 2 = 15px */
-  font-size: 14px; /* 28rpx ÷ 2 = 14px */
-  display: flex;
-  align-items: center;
-  color: #b2b2b2;
-  cursor: pointer;
-}
-
-.createTopicBtn {
-  height: 36px !important;
-  line-height: 36px !important;
-  padding: 0 15px !important;
-  background: #11B787 !important;
-  color: #fff !important;
-  border-radius: 18px !important;
-  font-size: 14px !important;
-  border: none !important;
-  cursor: pointer;
-  flex-shrink: 0;
-  
-  &:active {
-    opacity: 0.8;
-  }
-  
-  &::before {
-    display: none !important;
-  }
 }
 
 /* 内容列表样式 */
@@ -670,31 +506,6 @@
   margin-top: auto;
 }
 
-/* 发帖按钮样式 */
-.floatPostBtn {
-  position: fixed;
-  right: 20px; /* 40rpx -> 20px */
-  bottom: 100px; /* 200rpx -> 100px，避开底部tab */
-  z-index: 101;
-}
-
-.postBtn {
-  width: 66px; /* 132rpx -> 66px */
-  height: 66px;
-  border-radius: 50%;
-  background: transparent;
-  border: none;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.postBtnImage { width: 66px; height: 66px; display: block; }
-
-.iconPlus { display: none; }
-
 /* 透明导航条：覆盖默认白色背景与边框 */
 .navTransparent { background: #EEF0F3 !important; border-bottom: none !important; }
 
@@ -988,9 +799,7 @@
   }
   
   .mainTabs,
-  .subTabs,
-  .coinTabs,
-  .hotSearchBar {
+  .subTabs {
     background-color: #1a1a1a;
     border-bottom-color: #333;
   }
@@ -1003,21 +812,6 @@
   .tabItem.active,
   .subTab.active {
     color: #1890ff;
-  }
-  
-  .coinTab {
-    background-color: #333;
-    color: #999;
-  }
-  
-  .coinTab.active {
-    background-color: #1890ff;
-    color: #fff;
-  }
-  
-  .searchBox {
-    background-color: #333;
-    color: #999;
   }
   
   .hotTopics,

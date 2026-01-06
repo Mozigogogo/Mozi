@@ -1,0 +1,131 @@
+.coinInfoCard {
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+
+    .coinName {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .coinIcon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+      }
+
+      .symbol {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1A1A1A;
+      }
+    }
+
+    .marketCap {
+      font-size: 14px;
+      font-weight: 500;
+      color: #11B787;
+    }
+  }
+
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+
+    .priceInfo {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+
+      .price {
+        font-size: 20px;
+        font-weight: 600;
+        color: #1A1A1A;
+        line-height: 1;
+      }
+
+      .change24h {
+        font-size: 12px;
+        color: #999999;
+      }
+    }
+
+    .changePercent {
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+
+      &.positive {
+        background: #11B787;
+        color: #FFFFFF;
+      }
+
+      &.negative {
+        background: #FF4D4F;
+        color: #FFFFFF;
+      }
+    }
+  }
+}
+
+// PC端样式
+.pcMode {
+  border-radius: 12PX;
+  padding: 16PX;
+
+  .header {
+    margin-bottom: 16PX;
+
+    .coinName {
+      gap: 8PX;
+
+      .coinIcon {
+        width: 32PX;
+        height: 32PX;
+      }
+
+      .symbol {
+        font-size: 18PX;
+      }
+    }
+
+    .marketCap {
+      font-size: 14PX;
+    }
+  }
+
+  .footer {
+    .priceInfo {
+      gap: 4PX;
+
+      .price {
+        font-size: 20PX;
+      }
+
+      .change24h {
+        font-size: 12PX;
+      }
+    }
+
+    .changePercent {
+      padding: 6PX 12PX;
+      border-radius: 8PX;
+      font-size: 16PX;
+    }
+  }
+}

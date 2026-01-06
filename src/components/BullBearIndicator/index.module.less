@@ -34,7 +34,7 @@
   position: relative;
   min-width: 60px;
   border-radius: 8px 0 0 8px;
-  // 反梯形：左宽右窄（上边比下边短）- 偏移量6px
+  // 反梯形：左宽右窄（上边比下边短）- 移动端偏移量6px
   clip-path: polygon(0 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
   
   &.clickable {
@@ -67,7 +67,7 @@
   position: relative;
   min-width: 60px;
   border-radius: 0 8px 8px 0;
-  // 反向梯形：上窄下宽（上边左侧收窄，下边完整）- 偏移量6px
+  // 反向梯形：上窄下宽（上边左侧收窄，下边完整）- 移动端偏移量6px
   clip-path: polygon(6px 0, 100% 0, 100% 100%, 0 100%);
   
   &.clickable {
@@ -116,4 +116,89 @@
   .bearSide .label {
     font-size: 13px;
   }
+}
+
+/* PC端样式 */
+.pcContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16PX;
+  padding: 12PX 16PX;
+  background: #FFFFFF;
+  border-radius: 8PX;
+}
+
+.pcLeftContent {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  margin-right: 12PX;
+}
+
+.pcQuestion {
+  font-size: 16PX;
+  color: #333;
+  font-weight: 500;
+}
+
+.pcIndicatorWrapper {
+  display: flex;
+  align-items: center;
+  gap: 12PX;
+}
+
+.pcParticipants {
+  font-size: 14PX;
+  color: #999;
+  white-space: nowrap;
+}
+
+.pcContainer .participantsCount {
+  display: none; // PC端不在上方显示
+}
+
+.pcIndicator {
+  height: 36PX;
+  border-radius: 8PX;
+  flex: 0 0 480PX;
+  width: 480PX;
+}
+
+.pcBullSide {
+  border-radius: 8PX 0 0 8PX;
+  min-width: 80PX;
+  // PC端间隙 - 偏移量6PX
+  clip-path: polygon(0 0, 100% 0, calc(100% - 10PX) 100%, 0 100%);
+  
+  .label {
+    font-size: 16PX;
+    font-weight: 600;
+  }
+}
+
+.pcBearSide {
+  border-radius: 0 8PX 8PX 0;
+  min-width: 80PX;
+  // PC端间隙 - 偏移量6PX
+  clip-path: polygon(10PX 0, 100% 0, 100% 100%, 0 100%);
+  
+  .label {
+    font-size: 16PX;
+    font-weight: 600;
+  }
+}
+
+.pcLabel {
+  font-size: 16PX;
+  font-weight: 600;
+}
+
+.pcPercentages {
+  display: none; // PC端不显示百分比
+}
+
+.pcParticipantsCount {
+  font-size: 13PX;
+  margin-bottom: 8PX;
 }

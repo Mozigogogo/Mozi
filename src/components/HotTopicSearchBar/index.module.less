@@ -1,0 +1,118 @@
+/* 热榜搜索栏样式 */
+.hotSearchBar {
+  background: #EEF0F3;
+  padding: 10px; /* 20rpx ÷ 2 = 10px */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.searchBox {
+  flex: 1;
+  width: 100%;
+  height: 36px; /* 72rpx ÷ 2 = 36px */
+  background: #fff;
+  border-radius: 18px; /* 36rpx ÷ 2 = 18px */
+  padding: 0 0 0 15px; /* 只保留左侧padding */
+  font-size: 14px; /* 28rpx ÷ 2 = 14px */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+.searchText {
+  flex: 1;
+  color: #b2b2b2;
+  cursor: pointer;
+  padding-right: 8px; /* 给文本和按钮之间留一点间距 */
+}
+
+.createTopicBtn {
+  height: 36px !important; /* 与searchBox同高 */
+  line-height: 36px !important;
+  padding: 0 12px !important;
+  background: #11B787 !important;
+  color: #fff !important;
+  border-radius: 18px !important;
+  font-size: 14px !important;
+  border: none !important;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin: 0 !important; /* 移除所有margin */
+  
+  &:active {
+    opacity: 0.8;
+  }
+  
+  &::before {
+    display: none !important;
+  }
+}
+
+/* PC端样式 */
+.pcMode {
+  background: transparent;
+  padding: 0;
+  width: 100%; /* 占满父容器分配的空间 */
+  
+  .searchBox {
+    width: 100%; /* 占满pcMode容器的100% */
+    height: 32PX;
+    border-radius: 16PX;
+    padding: 0 0 0 12PX; /* 只保留左侧padding */
+    font-size: 13PX;
+    border: 1PX solid #E5E5E5;
+    
+    &:hover {
+      border-color: #11B787;
+    }
+  }
+  
+  .searchText {
+    font-size: 13PX;
+    padding-right: 8PX;
+  }
+  
+  .createTopicBtn {
+    height: 32PX !important; /* 与searchBox同高 */
+    line-height: 32PX !important;
+    padding: 0 10PX !important;
+    border-radius: 16PX !important;
+    font-size: 12PX !important;
+    margin: 0 !important; /* 移除所有margin */
+    
+    &:hover {
+      background: #0FA076 !important;
+    }
+  }
+}
+
+/* 暗黑模式 */
+:global([data-theme="dark"]) {
+  .hotSearchBar {
+    background-color: #1a1a1a;
+    border-bottom-color: #333;
+  }
+  
+  .searchBox {
+    background-color: #333;
+  }
+  
+  .searchText {
+    color: #999;
+  }
+  
+  .pcMode {
+    background: transparent;
+    
+    .searchBox {
+      background-color: #2a2a2a;
+      border-color: #444;
+      
+      &:hover {
+        border-color: #11B787;
+      }
+    }
+  }
+}

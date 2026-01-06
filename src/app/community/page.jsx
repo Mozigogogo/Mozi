@@ -13,6 +13,14 @@ import MoziCard from '../../components/MoziCard';
 import BullBearVote from '../../components/BullBearVote';
 import BullBearIndicator from '../../components/BullBearIndicator';
 import QuestionButtons from '../../components/QuestionButtons';
+import DiscoveryPostCard from '../../components/DiscoveryPostCard';
+import PostCard from '../../components/PostCard';
+import MainTabSwitch from '../../components/MainTabSwitch';
+import SubTabBar from '../../components/SubTabBar';
+import CoinTabBar from '../../components/CoinTabBar';
+import HotTopicSearchBar from '../../components/HotTopicSearchBar';
+import HotTopicList from '../../components/HotTopicList';
+import FloatingPostButton from '../../components/FloatingPostButton';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { useAmplitude } from '../../hooks/useAmplitude';
@@ -113,14 +121,22 @@ export default function CommunityPage() {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
   };
 
-  // 预加载切换图，避免切换瞬间重解码导致卡顿
-  useEffect(() => {
-    [recommendActive, recommendInactive, hotActive, hotInactive, newsActive, newsInactive].forEach((src) => {
-      const img = new Image();
-      img.decoding = 'async';
-      img.src = src;
-    });
-  }, []);
+  // 主导航tab图片配置
+  const tabImages = {
+    recommendActive,
+    recommendInactive,
+    hotActive,
+    hotInactive,
+    newsActive,
+    newsInactive
+  };
+
+  // 主导航tab标签配置
+  const tabLabels = {
+    recommend: t('community.tabs.recommend'),
+    news: t('community.tabs.news'),
+    hot: t('community.tabs.hot')
+  };
 
   // 获取看涨看跌统计数据
   const fetchVoteData = async (coinType) => {
@@ -662,8 +678,20 @@ export default function CommunityPage() {
   };
 
   // 分享帖子到Telegram
-  const handleShare = (e, post) => {
-    e.stopPropagation();
+  const handleShare = (eOrPost, maybePost) => {
+    // 兼容两种调用方式：
+    // 1. handleShare(post) - 从DiscoveryPostCard调用
+    // 2. handleShare(e, post) - 从普通帖子调用
+    let post;
+    if (maybePost) {
+      // 有两个参数，第一个是event
+      eOrPost.stopPropagation();
+      post = maybePost;
+    } else {
+      // 只有一个参数，就是post
+      post = eOrPost;
+    }
+    
     const shareUrl = `${window.location.origin}/commentinfo?id=${post.id}`;
     const shareText = post.title || '来自 Mozi 社区的帖子';
     
@@ -861,173 +889,34 @@ export default function CommunityPage() {
     return (
       <div className={`${styles.postsList} ${isDiscovery ? styles.discoveryGrid : ''}`}>
         {filteredPosts.map(post => (
-          <div 
-            key={post.id} 
-            className={`${styles.postItem} ${isDiscovery ? styles.discoveryCard : ''}`} 
-            onClick={() => goToPostDetail(post.id)}
-          >
-            {/* 发现好币右上角装饰图标 */}
-            {isDiscovery && (
-              <img src={findBestCoinIcon} className={styles.findBestCoinBg} alt="" />
-            )}
-            
-            <div className={styles.postWatermark} aria-hidden="true" />
-            
-            {isDiscovery ? (
-              // 发现好币专用布局
-              <>
-                <div className={styles.discoveryUserInfo}>
-                  <img 
-                    src={post.avatar || '/default-avatar.png'} 
-                    alt="avatar" 
-                    className={styles.discoveryAvatar}
-                    onClick={(e) => { e.stopPropagation(); goToUserPage(post.userId); }}
-                  />
-                  <div className={styles.discoveryUserContent}>
-                    <span className={styles.discoveryNickname}>{post.username}</span>
-                    <span className={styles.discoveryTime}>{formatTimeAgo(post.createTime || post.updatedAt)}</span>
-                  </div>
-                </div>
-                
-                {/* 币种信息区域 */}
-                <div className={styles.coinInfoSection}>
-                  <div className={styles.coinInfoRow}>
-                    <img className={styles.coinInfoIconImg} src={integralIcon} alt="" />
-                    <span className={styles.coinInfoLabel}>{t('community.coinInfo.coinName')}</span>
-                    <span className={styles.coinInfoValue}>
-                      {post.tags && post.tags.length > 0 ? post.tags[0].name : 'Bitcoin'}
-                    </span>
-                  </div>
-                  
-                  <div className={styles.coinInfoRow}>
-                    <img className={styles.coinInfoIconImg} src={plateIcon} alt="" />
-                    <span className={styles.coinInfoLabel}>{t('community.coinInfo.sector')}</span>
-                    <span className={styles.coinInfoValue}>
-                      {post.sector || 'DeFi'}
-                    </span>
-                  </div>
-                  
-                  <div className={styles.coinInfoRow}>
-                    <img className={styles.coinInfoIconImg} src={reasonIcon} alt="" />
-                    <span className={styles.coinInfoLabel}>{t('post.recommendReason')}：</span>
-                    <span className={styles.coinInfoValue}>
-                      {post.content || '大饼即将上涨，请注意'}
-                    </span>
-                  </div>
-                </div>
-              </>
-            ) : (
-              // 普通布局
-              <>
-                <div className={styles.postHeader}>
-                  <div className={styles.userInfo} onClick={(e) => { e.stopPropagation(); goToUserPage(post.userId); }}>
-                    <img src={post.avatar || '/default-avatar.png'} alt="avatar" className={styles.avatar} />
-                    <div className={styles.userMeta}>
-                      <div className={styles.userRow}>
-                        <span className={styles.username}>{post.username}</span>
-                        <span className={styles.badgeLabel}>{post.categoryLabel || post.category || post.type || '资讯'}</span>
-                      </div>
-                      <span className={styles.postTime}>{formatTimeAgo(post.createTime || post.updatedAt)}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className={styles.postContent}>
-                  <h3 className={styles.postTitle}>{post.title}</h3>
-                  <p className={styles.postText}>{post.content}</p>
-                  {post.images && post.images.length > 0 && (
-                    <div className={styles.postImages}>
-                      {post.images.map((image, index) => (
-                        <img key={index} src={image} alt="post" className={styles.postImage} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-            {/* 币种和话题标签 - 发现好币页面不显示 */}
-            {!isDiscovery && (post.tags?.length > 0 || post.topics?.length > 0) && (
-              <div className={styles.tagsTopicsContainer}>
-                {/* 币种标签 */}
-                {post.tags?.map(tag => (
-                  <span 
-                    key={`tag-${tag.id}`} 
-                    className={styles.coinTag}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      window.location.href = `/detail?symbol=${tag.name}`;
-                    }}
-                  >
-                    ${tag.name}$
-                  </span>
-                ))}
-                
-                {/* 话题标签 */}
-                {post.topics?.map(topic => (
-                  <span 
-                    key={`topic-${topic.id}`} 
-                    className={styles.topicTag}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      window.location.href = `/topicinfo?id=${topic.id}&title=${topic.name}`;
-                    }}
-                  >
-                    #{topic.name}
-                  </span>
-                ))}
-              </div>
-            )}
-            
-            {/* 操作按钮 - 根据页面类型显示不同样式 */}
-            <div className={isDiscovery ? styles.discoveryActionButtons : styles.postFooter}>
-              {isDiscovery ? (
-                // 发现好币专用按钮样式
-                <>
-                  <button 
-                    className={`${styles.discoveryActionBtn} ${styles.likeBtn} ${(post.isLiked || likedPosts[post.id]) ? styles.liked : ''}`}
-                    onClick={(e) => { e.stopPropagation(); toggleLike(post.id); }}
-                  >
-                    <img
-                      className={styles.discoveryActionIcon}
-                      src={(post.isLiked || likedPosts[post.id]) ? messagesLikeActiveIcon : messagesLikeNoActivedIcon}
-                      alt="like"
-                    />
-                    <span className={styles.actionCount}>{post.likeCount || 0}</span>
-                  </button>
-                  
-                  <button 
-                    className={`${styles.discoveryActionBtn} ${styles.shareBtn}`}
-                    onClick={(e) => handleShare(e, post)}
-                  >
-                    <img className={styles.discoveryActionIcon} src={messagesShareIcon} alt="share" />
-                  </button>
-                  
-                  <button className={`${styles.discoveryActionBtn} ${styles.commentBtn}`}>
-                    <img className={styles.discoveryActionIcon} src={messagesCommentIcon} alt="comment" />
-                    <span className={styles.actionCount}>{post.commentCount || 0}</span>
-                  </button>
-                </>
-              ) : (
-                // 普通按钮样式
-                <>
-                  <div className={styles.postAction} onClick={(e) => handleShare(e, post)}>
-                    <img className={styles.actionIconImg} src={shareIcon} alt="share" />
-                  </div>
-                  <div className={styles.postAction}>
-                    <img className={styles.actionIconImg} src={commentIcon} alt="comment" />
-                    <span>{post.commentCount || 0}</span>
-                  </div>
-                  <div className={styles.postAction} onClick={(e) => { e.stopPropagation(); toggleLike(post.id); }}>
-                    <img
-                      className={styles.actionIconImg}
-                      src={(post.isLiked || likedPosts[post.id]) ? likeActiveIcon : likeIcon}
-                      alt="like"
-                    />
-                    <span>{post.likeCount || 0}</span>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
+          isDiscovery ? (
+            // 发现好币使用DiscoveryPostCard组件
+            <DiscoveryPostCard
+              key={post.id}
+              post={post}
+              onPostClick={goToPostDetail}
+              onUserClick={goToUserPage}
+              onLikeClick={(postId) => toggleLike(postId)}
+              onShareClick={handleShare}
+              isLiked={post.isLiked || likedPosts[post.id]}
+              formatTimeAgo={formatTimeAgo}
+              isPC={false}
+            />
+          ) : (
+            // 普通帖子使用PostCard组件
+            <PostCard
+              key={post.id}
+              post={post}
+              onPostClick={goToPostDetail}
+              onUserClick={goToUserPage}
+              onLikeClick={(postId) => toggleLike(postId)}
+              onShareClick={handleShare}
+              onTagClick={(tagName) => window.location.href = `/detail?symbol=${tagName}`}
+              onTopicClick={(topicId, topicName) => window.location.href = `/topicinfo?id=${topicId}&title=${topicName}`}
+              isLiked={post.isLiked || likedPosts[post.id]}
+              formatTimeAgo={formatTimeAgo}
+            />
+          )
         ))}
         {loading && posts.length === 0 && (
           <div className={styles.centerLoading}>
@@ -1130,97 +1019,53 @@ export default function CommunityPage() {
         {/* 顶部导航栏 */}
         <NavBar title={t('community.title')} showBack={false} showBorder={false} fixed={false} className={styles.navTransparent} />
 
-        <div className={styles.mainTabs}>
-          <div className={styles.bannerSwitch}>
-            <div
-              className={`${styles.bannerCard} ${mainTab === 'recommend' ? styles.active : ''}`}
-              onClick={() => setMainTab('recommend')}
-            >
-              <img className={`${styles.tabImage} ${mainTab === 'recommend' ? styles.tabImageVisible : styles.tabImageHidden}`}
-                   decoding="async" loading="eager" src={recommendActive} alt={t('community.tabs.recommend')} />
-              <img className={`${styles.tabImage} ${mainTab !== 'recommend' ? styles.tabImageVisible : styles.tabImageHidden}`}
-                   decoding="async" loading="eager" src={recommendInactive} alt={t('community.tabs.recommend')} />
-            </div>
-            <div
-              className={`${styles.bannerCard} ${mainTab === 'news' ? styles.active : ''}`}
-              onClick={() => setMainTab('news')}
-            >
-              <img className={`${styles.tabImage} ${mainTab === 'news' ? styles.tabImageVisible : styles.tabImageHidden}`}
-                   decoding="async" loading="eager" src={newsActive} alt={t('community.tabs.news')} />
-              <img className={`${styles.tabImage} ${mainTab !== 'news' ? styles.tabImageVisible : styles.tabImageHidden}`}
-                   decoding="async" loading="eager" src={newsInactive} alt={t('community.tabs.news')} />
-            </div>
-            <div
-              className={`${styles.bannerCard} ${mainTab === 'hot' ? styles.active : ''}`}
-              onClick={() => setMainTab('hot')}
-            >
-              <img className={`${styles.tabImage} ${mainTab === 'hot' ? styles.tabImageVisible : styles.tabImageHidden}`}
-                   decoding="async" loading="eager" src={hotActive} alt={t('community.tabs.hot')} />
-              <img className={`${styles.tabImage} ${mainTab !== 'hot' ? styles.tabImageVisible : styles.tabImageHidden}`}
-                   decoding="async" loading="eager" src={hotInactive} alt={t('community.tabs.hot')} />
-            </div>
-          </div>
-        </div>
+        {/* 主导航切换 */}
+        <MainTabSwitch 
+          activeTab={mainTab}
+          onTabChange={setMainTab}
+          tabImages={tabImages}
+          tabLabels={tabLabels}
+        />
 
         <div className={styles.tabsWrapper}>
           {/* 子导航 */}
           {mainTab === 'recommend' && (
-            <div className={styles.subTabs}>
-              {subTabs.map(item => (
-                <span
-                  key={item.key}
-                  className={`${styles.subTab} ${subTab === item.key ? styles.active : ''}`}
-                  onClick={() => handleSubTabChange(item.key)}
-                >
-                  {item.title}
-                </span>
-              ))}
-            </div>
+            <SubTabBar 
+              tabs={subTabs}
+              activeTab={subTab}
+              onTabChange={handleSubTabChange}
+            />
           )}
 
           {/* 快讯子导航 */}
           {mainTab === 'news' && (
-            <div className={styles.subTabs}>
-              <span className={`${styles.subTab} ${styles.active}`}>
-                {t('community.tabs.all')}
-              </span>
-            </div>
+            <SubTabBar 
+              tabs={[{ key: 'all', title: t('community.tabs.all') }]}
+              activeTab="all"
+              onTabChange={() => {}}
+            />
           )}
 
           {/* 币种子标签 */}
           {mainTab === 'recommend' && subTab === 'currency' && (
-            <div className={styles.coinTabs}>
-              {coinTabs.map(item => (
-                <span
-                  key={item.key}
-                  className={`${styles.coinTab} ${selectedCoin === item.key ? styles.active : ''}`}
-                  onClick={() => handleCoinSelect(item.key)}
-                >
-                  {item.title}
-                </span>
-              ))}
-              {dynamicCoin && (
-                <span
-                  className={`${styles.coinTab} ${selectedCoin === dynamicCoin ? styles.active : ''}`}
-                  onClick={() => handleCoinSelect(dynamicCoin)}
-                >
-                  {dynamicCoin}
-                </span>
-              )}
-              <span className={`${styles.coinTab} ${styles.more}`} onClick={handleMoreCoins}>{t('community.actions.more')}</span>
-            </div>
+            <CoinTabBar 
+              coinTabs={coinTabs}
+              selectedCoin={selectedCoin}
+              dynamicCoin={dynamicCoin}
+              onCoinSelect={handleCoinSelect}
+              onMoreClick={handleMoreCoins}
+              moreText={t('community.actions.more')}
+            />
           )}
 
           {/* 热榜搜索和创建 */}
           {mainTab === 'hot' && (
-            <div className={styles.hotSearchBar}>
-              <div className={styles.searchBox} onClick={goToTopicSearch}>
-                <span>{t('community.actions.searchTopic')}</span>
-              </div>
-              <Button className={styles.createTopicBtn} onClick={() => setShowCreateTopic(true)}>
-                {t('community.actions.createTopic')}
-              </Button>
-            </div>
+            <HotTopicSearchBar 
+              onSearchClick={goToTopicSearch}
+              onCreateClick={() => setShowCreateTopic(true)}
+              searchPlaceholder={t('community.actions.searchTopic')}
+              createButtonText={t('community.actions.createTopic')}
+            />
           )}
         </div>
 
@@ -1267,54 +1112,17 @@ export default function CommunityPage() {
           )} */}
           
           {mainTab === 'hot' ? (
-            <div className={styles.hotTopics}>
-              {hotTopics.length > 0 && hotTopics.map((topic, index) => (
-                <div key={topic.id} className={styles.hotTopicItem} onClick={() => goToTopicDetail(topic.id, topic.name, topic.description)}>
-                  {/* 排名 */}
-                  <div className={`${styles.topicRank} ${index < 3 ? styles.medalRank : ''}`}>
-                    {index === 0 ? (
-                      <img className={styles.rankMedal} src={nov1Icon} alt="第1名" />
-                    ) : index === 1 ? (
-                      <img className={styles.rankMedal} src={nov2Icon} alt="第2名" />
-                    ) : index === 2 ? (
-                      <img className={styles.rankMedal} src={nov3Icon} alt="第3名" />
-                    ) : (
-                      index + 1
-                    )}
-                  </div>
-                  
-                  {/* 话题信息 */}
-                  <div className={styles.topicInfo}>
-                    <span className={styles.topicTitle}>{topic.name}</span>
-                    <span className={styles.topicDesc}>{topic.description || t('community.actions.noDescription')}</span>
-                  </div>
-                  
-                  {/* 右侧信息 */}
-                  <div className={styles.topicRightInfo}>
-                    <div className={styles.heatText}>
-                      <img className={styles.heatIcon} src={hotIcon} alt="热度" />
-                      <span className={styles.heatValue}>{topic.score || 0}</span>
-                    </div>
-                    <span className={styles.timeText}>{topic.createdAt?.replace('T', '    ')}</span>
-                  </div>
-                </div>
-              ))}
-              {hotTopicsLoading && !pullRefresh && (
-                <div className={styles.loadingMore} style={hotTopics.length === 0 ? { paddingTop: '60px' } : {}}>
-                  <GardenLoading t={t} />
-                </div>
-              )}
-              {hotTopicsAllLoaded && hotTopics.length > 0 && (
-                <div className={styles.listFooter}>
-                  <span>{t('community.actions.reachedBottom')}</span>
-                </div>
-              )}
-              {!hotTopicsLoading && hotTopics.length === 0 && (
-                <div className={styles.emptyContent}>
-                  <span>{t('community.actions.noMoreContent')}</span>
-                </div>
-              )}
-            </div>
+            <HotTopicList
+              topics={hotTopics}
+              loading={hotTopicsLoading}
+              allLoaded={hotTopicsAllLoaded}
+              pullRefresh={pullRefresh}
+              onTopicClick={goToTopicDetail}
+              nov1Icon={nov1Icon}
+              nov2Icon={nov2Icon}
+              nov3Icon={nov3Icon}
+              hotIcon={hotIcon}
+            />
           ) : (
             <div>
               {pullRefresh && (
@@ -1329,11 +1137,12 @@ export default function CommunityPage() {
         </div>
 
         {/* 发帖按钮 */}
-        <div className={styles.floatPostBtn}>
-          <button className={styles.postBtn} onClick={goToPostPage} aria-label="发帖">
-            <img className={styles.postBtnImage} src={publishIcon} alt="发帖" />
-          </button>
-        </div>
+        <FloatingPostButton 
+          onClick={goToPostPage}
+          iconSrc={publishIcon}
+          ariaLabel={t('community.actions.publish')}
+          altText={t('community.actions.publish')}
+        />
 
         {/* 币种选择器弹窗 */}
         {showCoinSelector && (

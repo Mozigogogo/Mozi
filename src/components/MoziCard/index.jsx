@@ -35,7 +35,9 @@ const MoziCard = ({
   showArrow,
   // 新增：当无数据时隐藏右侧的 tabs/选择器容器
   hideExtraWhenEmpty = false,
-  hasData = true
+  hasData = true,
+  // 新增：PC端标识，用于定制PC端样式
+  isPC = false
 }) => {
   // 合并默认样式和自定义样式（customStyle 优先级最高）
   const cardStyle = {
@@ -182,8 +184,8 @@ const MoziCard = ({
 
   // 通用渲染逻辑
   return (
-    <div className={`${styles.card} ${className}`} style={cardStyle}>
-      <div className={styles.cardHeader}>
+    <div className={`${styles.card} ${isPC ? styles.pcCard : ''} ${className}`} style={cardStyle}>
+      <div className={`${styles.cardHeader} ${isPC ? styles.pcCardHeader : ''}`}>
         {renderTitle()}
         {!customTitle && (!hideExtraWhenEmpty || hasData) && (
           <CardExtra 
@@ -191,18 +193,19 @@ const MoziCard = ({
             callback={callback} 
             selectArr={selectArr} 
             moreDesc={moreDesc} 
-            pickChange={pickChange} 
+            pickChange={pickChange}
+            isPC={isPC}
           />
         )}
       </div>
-      <div className={styles.cardBody}>
+      <div className={`${styles.cardBody} ${isPC ? styles.pcCardBody : ''}`}>
         {children}
       </div>
     </div>
   );
 };
 
-const CardExtra = ({ type, callback, selectArr = [], selectIndex = 0, moreDesc, pickChange }) => {
+const CardExtra = ({ type, callback, selectArr = [], selectIndex = 0, moreDesc, pickChange, isPC = false }) => {
   // 对于tabs类型，selected存储实际的item值；其他类型存储index
   const [selected, setSelected] = useState(type === 'tabs' ? selectArr[selectIndex] : selectIndex);
 
@@ -256,11 +259,11 @@ const CardExtra = ({ type, callback, selectArr = [], selectIndex = 0, moreDesc, 
   } else if (type === 'tabs') {
     // 添加tabs类型支持（与原项目保持一致，selected比较item值）
     return (
-      <div className={styles.tabsContainer}>
+      <div className={`${styles.tabsContainer} ${isPC ? styles.pcTabsContainer : ''}`}>
         {selectArr.map((item, index) => (
           <div 
             key={index}
-            className={`${styles.tabItem} ${selected === item ? styles.tabActive : ''}`}
+            className={`${styles.tabItem} ${isPC ? styles.pcTabItem : ''} ${selected === item ? styles.tabActive : ''} ${selected === item && isPC ? styles.pcTabActive : ''}`}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();

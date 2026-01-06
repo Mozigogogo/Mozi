@@ -294,13 +294,18 @@ export default function HomePage() {
     onOpen: () => {
       console.log('✅ WebSocket 连接已建立');
       
-      // 自动发送握手消息
+      // 获取用户选择的语言
+      const i18nextLng = typeof window !== 'undefined' ? localStorage.getItem('i18nextLng') : null;
+      const language = i18nextLng === 'en' ? 'en' : 'zh';
+      
+      // 自动发送握手消息，包含语言信息
       const handshakeMessage = {
         event: "hello",
         data: {
           clientId: `web-${Date.now()}`,
           platform: "h5",
-          version: "1.0.0"
+          version: "1.0.0",
+          language: language  // 添加语言信息：'en' 或 'zh'
         },
         requestId: `req-hello-${Date.now()}`,
         timestamp: Date.now()

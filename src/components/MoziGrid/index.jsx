@@ -31,7 +31,8 @@ const MoziGrid = ({
   stackTopName = false, // 是否将名称紧跟在 logo 下方堆叠显示
   contentFontSize = null, // 内容字体大小，传入如 '16px'
   titleFontSize = null, // 标题字体大小，传入如 '13px'
-  rowPadding = null // 行间距，传入如 '12px 0'
+  rowPadding = null, // 行间距，传入如 '12px 0'
+  isPC = false // PC端模式
 }) => {
   const displayData = Array.isArray(gridContent)
     ? (maxRows ? gridContent.slice(0, maxRows) : gridContent)
@@ -89,7 +90,7 @@ const MoziGrid = ({
       {showRanking && !simpleRanking ? (
         // 当显示排名时：仅在有数据时渲染内容；无数据保持卡片为空白但维持最小高度
         hasData ? (
-          <div className={styles.rankingLayout}>
+          <div className={isPC ? styles.pcRankGridContainer : styles.rankingLayout}>
             <div className={styles.rankingColumn}>
               {displayData[0].img ? (
                 <div 
@@ -101,7 +102,7 @@ const MoziGrid = ({
                 >
                   <img 
                     src={displayData[0].img} 
-                    className={styles.rankingLogoFull}
+                    className={isPC ? styles.pcRankingLogoFull : styles.rankingLogoFull}
                     alt={extraTopName || 'Top 1'}
                     onError={(e) => console.log('图片加载失败:', e, displayData[0].img)}
                     onLoad={() => console.log('图片加载成功:', displayData[0].img)}
@@ -156,6 +157,25 @@ const MoziGrid = ({
                           }
                           const rawCellValue = gridCon[gridConItem];
                           const displayValue = typeof rawCellValue === 'string' ? rawCellValue.replace(/^\$/, '') : rawCellValue;
+                          
+                          // PC模式下第一列显示logo+名称
+                          if (isPC && gridConIndex === 0 && gridCon.img) {
+                            return (
+                              <div 
+                                key={gridConIndex}
+                                className={`${styles.gridConItem} ${styles.pcFirstColumn}`}
+                                style={{ width: getColWidth(gridConIndex) }}
+                              >
+                                <img 
+                                  src={gridCon.img} 
+                                  className={styles.pcCoinLogo}
+                                  alt={displayValue}
+                                />
+                                <span>{displayValue}</span>
+                              </div>
+                            );
+                          }
+                          
                           return (
                             <div 
                               key={gridConIndex}

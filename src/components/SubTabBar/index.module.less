@@ -1,0 +1,38 @@
+/* 子导航样式 */
+.subTabs {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px 2px; /* 减少底部padding，让两个tab更紧凑 */
+  background-color: #EEF0F3;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.subTab {
+  position: relative;
+  display: inline-block;
+  padding: 10px 8px 4px 10px; /* 减少底部padding */
+  font-size: 14px; /* 28rpx -> 14px */
+  color: #666;
+  cursor: pointer;
+  transition: color 0.3s;
+  flex-shrink: 0;
+  margin-bottom: 5px;
+}
+
+.subTab.active {
+  color: #333;
+  font-weight: 600;
+}
+
+.subTab.active::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  width: 21px; /* 42rpx -> 21px */
+  height: 2px; /* 4rpx -> 2px */
+  background: #11B787;
+  border-radius: 2px;
+}
