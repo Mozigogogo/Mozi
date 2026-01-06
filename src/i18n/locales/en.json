@@ -252,7 +252,7 @@
     "myPoints": "My Points",
     "yesterdayPoints": "Yesterday: +{{points}}",
     "todayPoints": "Yesterday Points",
-    "currentRank": "Current Rank",
+    "currentRank": "Current Rank: #{{rank}}",
     "rankTop": "Overall Rank #",
     "rankSuffix": "",
     "pointsRanking": "Rankings",
