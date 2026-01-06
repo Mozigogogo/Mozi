@@ -349,11 +349,15 @@
     "followTwitter": "Follow Us on Twitter",
     "otherMethods": "or use other methods",
     "walletLoginBtn": "Wallet Login",
+    "emailLoginBtn": "Email Login",
+    "back": "Back",
     "recaptchaNotice": "This site is protected by Google reCAPTCHA to ensure you are not a robot.",
     "learnMore": "Learn More",
     "fillAllRequired": "Please fill in all required fields",
     "walletConnecting": "Wallet connection initializing, please try again later",
-    "walletConnectFailed": "Wallet connection failed"
+    "walletConnectFailed": "Wallet connection failed",
+    "signatureCancelled": "Signature cancelled",
+    "connectWalletFirst": "Please connect wallet first"
   },
   "community": {
     "title": "Community",

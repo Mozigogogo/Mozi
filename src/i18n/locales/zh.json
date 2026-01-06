@@ -349,11 +349,15 @@
     "followTwitter": "关注我们的Twitter",
     "otherMethods": "或使用其他方式",
     "walletLoginBtn": "钱包登录",
+    "emailLoginBtn": "邮箱登录",
+    "back": "返回",
     "recaptchaNotice": "本网站受 Google reCAPTCHA 保护，以确保您不是机器人。",
     "learnMore": "了解更多",
     "fillAllRequired": "请填写所有必填项",
     "walletConnecting": "钱包连接功能初始化中，请稍后重试",
-    "walletConnectFailed": "钱包连接失败"
+    "walletConnectFailed": "钱包连接失败",
+    "signatureCancelled": "签名已取消",
+    "connectWalletFirst": "请先连接钱包"
   },
   "community": {
     "title": "社区",
