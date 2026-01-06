@@ -1211,10 +1211,29 @@ export default function UserPage() {
         }
         Toast.show({ content: t('auth.loginSuccess') || '登录成功', position: 'center', icon: 'success' });
         
-        // TON钱包登录成功后，使用Telegram用户信息更新（与邮箱登录一样）
-        await updateTelegramUserInfo();
+        // 检查该钱包地址是否首次登录
+        const walletLoginKey = `wallet_logged_${tonAddress}`;
+        const hasLoggedBefore = localStorage.getItem(walletLoginKey);
+        const isFirstLogin = !hasLoggedBefore;
         
-        // 标记为钱包登录，不使用 Telegram 用户名
+        console.log('🔍 [TON钱包登录] 首次登录检测:', { 
+          tonAddress, 
+          isFirstLogin,
+          walletLoginKey 
+        });
+        
+        // 只在首次登录时更新Telegram用户信息
+        if (isFirstLogin) {
+          console.log('🎉 [TON钱包登录] 首次登录，更新Telegram用户信息');
+          await updateTelegramUserInfo();
+          // 标记该钱包地址已登录过
+          localStorage.setItem(walletLoginKey, Date.now().toString());
+          console.log('✅ [TON钱包登录] 已标记钱包地址登录记录');
+        } else {
+          console.log('⏭️ [TON钱包登录] 非首次登录，跳过更新Telegram用户信息');
+        }
+        
+        // 标记为钱包登录
         handleLoginSuccess(true);
       } else {
         Toast.show({ content: res?.message || t('auth.loginFailed') || '登录失败', position: 'bottom' });
