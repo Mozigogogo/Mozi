@@ -311,7 +311,7 @@ export default function RobotPage() {
     { 
       id: 'welcome-1', 
       role: 'assistant', 
-      content: t('robot.welcome'), 
+      content: '', 
       time: Date.now() 
     }
   ]);
@@ -323,6 +323,15 @@ export default function RobotPage() {
   const currentAiMsgIdRef = useRef(null);
   const conversationIdRef = useRef(null);
   const messageIdRef = useRef(null);
+
+  // 设置欢迎消息
+  useEffect(() => {
+    setMessages(prev => prev.map(msg => 
+      msg.id === 'welcome-1' && !msg.content
+        ? { ...msg, content: t('robot.welcome') }
+        : msg
+    ));
+  }, [t]);
 
   // 使用 SSE Stream Hook
   const { sendMessage, isStreaming, abort } = useSSEStream(
@@ -590,23 +599,25 @@ export default function RobotPage() {
                 )}
 
                 <div className={styles.msgContent}>
-                  <div className={`${styles.bubble} ${styles[msg.role]} ${msg.error ? styles.error : ''}`}>
-                    <div className={styles.text}>
-                      {msg.loading && !msg.content ? (
-                        <ThinkingAnimation />
-                      ) : msg.role === 'assistant' && msg.content ? (
-                        <>
-                          <StreamingMarkdown 
-                            content={msg.content} 
-                            isStreaming={msg.loading} 
-                          />
-                          {msg.loading && <span className={styles.loadingDots}>...</span>}
-                        </>
-                      ) : (
-                        msg.content || ''
-                      )}
+                  {msg.loading && !msg.content ? (
+                    <ThinkingAnimation />
+                  ) : (
+                    <div className={`${styles.bubble} ${styles[msg.role]} ${msg.error ? styles.error : ''}`}>
+                      <div className={styles.text}>
+                        {msg.role === 'assistant' && msg.content ? (
+                          <>
+                            <StreamingMarkdown 
+                              content={msg.content} 
+                              isStreaming={msg.loading} 
+                            />
+                            {msg.loading && <span className={styles.loadingDots}>...</span>}
+                          </>
+                        ) : (
+                          msg.content || ''
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {msg.role === 'user' && (
