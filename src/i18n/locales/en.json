@@ -511,7 +511,9 @@
     "suggest": {
       "analyzeTrend": "Help me analyze {{symbol}}'s trend",
       "isGoodToBuy": "Is now a good time to buy {{symbol}}?",
-      "technicalView": "How does {{symbol}} look technically?"
+      "technicalView": "How does {{symbol}} look technically?",
+      "topGainer": "What's the top gainer today?",
+      "fearGreedIndex": "What's the Fear & Greed Index?"
     }
   },
   "language": {

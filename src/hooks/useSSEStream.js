@@ -41,10 +41,12 @@ export function useSSEStream(url, options = {}) {
     setIsStreaming(true);
 
     try {
+      // 支持 headers 为函数，实现动态获取
+      const dynamicHeaders = typeof headers === 'function' ? headers() : headers;
       const requestHeaders = {
         'Content-Type': 'application/json',
         'Accept': '*/*',
-        ...headers,
+        ...dynamicHeaders,
       };
 
       if (getToken) {

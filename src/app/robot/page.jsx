@@ -328,6 +328,11 @@ export default function RobotPage() {
   const { sendMessage, isStreaming, abort } = useSSEStream(
     `${INTERFACE_URL}${Interface.AI_CHAT_STREAM}`,
     {
+      headers: () => ({
+        'Accept-Language': typeof window !== 'undefined' 
+          ? (localStorage.getItem('i18nextLng') || 'zh') 
+          : 'zh',
+      }),
       getToken: () => typeof window !== 'undefined' ? localStorage.getItem('token') : null,
       onStart: () => {
         // AI 开始回复
@@ -539,6 +544,14 @@ export default function RobotPage() {
     if (techMatch) {
       const symbol = techMatch[1].trim();
       return t('robot.suggest.technicalView', { symbol });
+    }
+    // 今天涨幅最大的币种是什么？
+    if (question.includes('今天涨幅最大的币种是什么')) {
+      return t('robot.suggest.topGainer');
+    }
+    // 恐惧与贪婪指数是多少？
+    if (question.includes('恐惧与贪婪指数是多少')) {
+      return t('robot.suggest.fearGreedIndex');
     }
     return question;
   };
