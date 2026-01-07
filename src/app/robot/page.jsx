@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Markdown from 'markdown-to-jsx';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -10,18 +9,9 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import NavBar from '../../components/NavBar';
 import ThinkingAnimation from '../../components/ThinkingAnimation';
 import PopLogin from '../../components/PopLogin';
-import { MoziWebSocket } from '../../utils/moziWebSocket';
-import { WS_URL } from '../../utils/constants';
 import { trackEvent, trackPageView, AIEvents } from '@/utils/amplitude';
-import { 
-  WS_EVENTS, 
-  PLATFORMS, 
-  createAIChatMessage,
-  createAIChatStopMessage,
-  createAIChatRegenerateMessage,
-  createAIChatHistoryMessage,
-  getErrorDescription
-} from '../../utils/websocketProtocol';
+import { useSSEStream } from '@/hooks/useSSEStream';
+import { INTERFACE_URL, Interface } from '@/utils/constants';
 import styles from './page.module.less';
 
 // 代码块组件 - 带复制按钮
@@ -313,7 +303,6 @@ const StreamingMarkdown = ({ content, isStreaming }) => {
 };
 
 export default function RobotPage() {
-  const router = useRouter();
   const { t } = useTranslation();
   const BOT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/AI_Bot.png';
 
@@ -326,24 +315,102 @@ export default function RobotPage() {
       time: Date.now() 
     }
   ]);
-  const [isConnecting, setIsConnecting] = useState(true);
-  const [isStreaming, setIsStreaming] = useState(false);
   const [suggestedQuestions, setSuggestedQuestions] = useState([]);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false); // 是否正在加载历史记录
-  const [showPopLogin, setShowPopLogin] = useState(false); // 登录提示弹窗状态
+  const [showPopLogin, setShowPopLogin] = useState(false);
   
   const scrollRef = useRef(null);
-  const wsRef = useRef(null);
-  const conversationIdRef = useRef(null);
-  const currentMessageIdRef = useRef(null);
   const currentRequestIdRef = useRef(null);
-  const hasLoadedHistoryRef = useRef(false); // 标记是否已加载过历史记录
+  const currentAiMsgIdRef = useRef(null);
+  const conversationIdRef = useRef(null);
+  const messageIdRef = useRef(null);
+
+  // 使用 SSE Stream Hook
+  const { sendMessage, isStreaming, abort } = useSSEStream(
+    `${INTERFACE_URL}${Interface.AI_CHAT_STREAM}`,
+    {
+      getToken: () => typeof window !== 'undefined' ? localStorage.getItem('token') : null,
+      onStart: () => {
+        console.log('🤖 AI 开始回复');
+      },
+      onChunk: (chunk, accumulated, eventData) => {
+        // 更新消息内容
+        if (currentAiMsgIdRef.current) {
+          setMessages(prev => prev.map(msg => 
+            msg.id === currentAiMsgIdRef.current
+              ? { 
+                  ...msg, 
+                  content: accumulated, 
+                  loading: true,
+                  conversationId: eventData?.conversationId || msg.conversationId,
+                  messageId: eventData?.messageId || msg.messageId
+                }
+              : msg
+          ));
+
+          // 保存 conversationId 和 messageId
+          if (eventData?.conversationId) {
+            conversationIdRef.current = eventData.conversationId;
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('ai_conversation_id', eventData.conversationId);
+            }
+          }
+          if (eventData?.messageId) {
+            messageIdRef.current = eventData.messageId;
+          }
+        }
+      },
+      onComplete: (fullContent, eventData) => {
+        console.log('✅ AI 回复完成');
+        // 更新消息状态为完成
+        if (currentAiMsgIdRef.current) {
+          setMessages(prev => prev.map(msg => 
+            msg.id === currentAiMsgIdRef.current
+              ? { 
+                  ...msg, 
+                  content: fullContent,
+                  loading: false,
+                  tokens: eventData?.tokens,
+                  conversationId: eventData?.conversationId || msg.conversationId,
+                  messageId: eventData?.messageId || msg.messageId
+                }
+              : msg
+          ));
+        }
+        currentAiMsgIdRef.current = null;
+
+        // 更新建议问题
+        if (eventData?.suggestedQuestions && eventData.suggestedQuestions.length > 0) {
+          setSuggestedQuestions(eventData.suggestedQuestions);
+        }
+
+        // 埋点：AI 回复完成
+        trackEvent(AIEvents.RESPONSE_RECEIVED, {
+          requestId: currentRequestIdRef.current,
+          responseLength: fullContent.length,
+          conversationId: eventData?.conversationId,
+          messageId: eventData?.messageId,
+          tokens: eventData?.tokens
+        });
+      },
+      onError: (error) => {
+        console.error('❌ AI 对话错误:', error);
+        // 更新消息为错误状态
+        if (currentAiMsgIdRef.current) {
+          setMessages(prev => prev.map(msg => 
+            msg.id === currentAiMsgIdRef.current
+              ? { ...msg, content: t('robot.sendFailed') || '发送失败，请重试', loading: false, error: true }
+              : msg
+          ));
+        }
+        currentAiMsgIdRef.current = null;
+      }
+    }
+  );
   
   // 检查登录状态
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (!token) {
-      // 未登录，显示登录提示弹窗
       setShowPopLogin(true);
     }
   }, []);
@@ -355,299 +422,23 @@ export default function RobotPage() {
   
   // 登录成功回调
   const handleLoginSuccess = () => {
-    // 登录成功后刷新页面，重新初始化 WebSocket
     window.location.reload();
   };
 
-  // 初始化 WebSocket
-  useEffect(() => {
-    console.log('🤖 初始化 AI 对话 WebSocket');
-    
-    // 尝试从 localStorage 读取上次的 conversationId
-    const savedConversationId = typeof window !== 'undefined' 
-      ? localStorage.getItem('ai_conversation_id') 
-      : null;
-    
-    if (savedConversationId) {
-      conversationIdRef.current = savedConversationId;
-      console.log('📌 从本地读取会话 ID:', savedConversationId);
-    }
-    
-    // 从 localStorage 读取用户 token
-    const token = typeof window !== 'undefined' 
-      ? localStorage.getItem('token') 
-      : null;
-    
-    if (token) {
-      console.log('🔑 找到用户 token，将通过 Sec-WebSocket-Protocol 传递');
-    } else {
-      console.log('⚠️ 未找到用户 token，将以匿名方式连接');
-    }
-    
-    const ws = new MoziWebSocket(WS_URL, {
-      platform: PLATFORMS.H5,
-      version: '1.0.0',
-      autoHandshake: true,
-      debug: true,
-      token: token,  // 通过 Sec-WebSocket-Protocol 子协议传递 token
-    });
-
-    wsRef.current = ws;
-
-    // 监听认证成功
-    ws.on('authenticated', (data) => {
-      console.log('✅ AI 对话 WebSocket 认证成功');
-      setIsConnecting(false);
-      
-      // 认证成功后，立即请求历史记录
-      if (!hasLoadedHistoryRef.current && ws.isConnected) {
-        const conversationId = conversationIdRef.current;
-        console.log(`📜 请求历史对话记录... (会话ID: ${conversationId || '无'})`);
-        setIsLoadingHistory(true);
-        try {
-          // 使用保存的 conversationId 查询历史记录
-          const historyMessage = createAIChatHistoryMessage(conversationId, 50);
-          ws.send(historyMessage);
-          hasLoadedHistoryRef.current = true;
-        } catch (error) {
-          console.error('❌ 请求历史记录失败:', error);
-          setIsLoadingHistory(false);
-        }
-      }
-    });
-
-    // 监听 AI 开始回复
-    ws.on(WS_EVENTS.AI_CHAT_START, (data) => {
-      console.log('🤖 AI 开始回复:', data);
-      const { conversationId, messageId } = data.data || {};
-      
-      if (conversationId) {
-        conversationIdRef.current = conversationId;
-        // 保存到 localStorage
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('ai_conversation_id', conversationId);
-        }
-      }
-      if (messageId) {
-        currentMessageIdRef.current = messageId;
-      }
-      
-      setIsStreaming(true);
-      
-      // 更新 loading 消息的 ID
-      setMessages(prev => prev.map(msg => {
-        if (msg.requestId === data.requestId && msg.loading) {
-          return { ...msg, messageId: messageId };
-        }
-        return msg;
-      }));
-    });
-
-    // 监听 AI 流式响应
-    ws.on(WS_EVENTS.AI_CHAT_STREAM, (data) => {
-      console.log('📝 AI 流式响应:', data);
-      const { content, delta, isComplete, conversationId, messageId } = data.data || {};
-      
-      setMessages(prev => {
-        const lastMsg = prev[prev.length - 1];
-        
-        // 如果最后一条是 AI 的流式消息，更新它
-        if (lastMsg && lastMsg.role === 'assistant' && lastMsg.loading) {
-          return prev.map((msg, idx) => 
-            idx === prev.length - 1 
-              ? { 
-                  ...msg, 
-                  content: content || msg.content, // 使用累积内容
-                  loading: !isComplete,
-                  messageId: messageId || msg.messageId,
-                  conversationId: conversationId || msg.conversationId
-                }
-              : msg
-          );
-        }
-        
-        // 否则添加新的流式消息
-        return [...prev, {
-          id: `ai-${Date.now()}`,
-          messageId: messageId,
-          conversationId: conversationId,
-          role: 'assistant',
-          content: content || '',
-          time: Date.now(),
-          loading: !isComplete
-        }];
-      });
-    });
-
-    // 监听 AI 回复完成
-    ws.on(WS_EVENTS.AI_CHAT_COMPLETE, (data) => {
-      console.log('✅ AI 回复完成:', data);
-      const { fullContent, tokens, suggestedQuestions: suggested, conversationId, messageId } = data.data || {};
-      
-      setIsStreaming(false);
-      currentMessageIdRef.current = null;
-      
-      // 埋点：AI 回复完成
-      trackEvent(AIEvents.RESPONSE_RECEIVED, {
-        conversationId,
-        messageId,
-        tokensUsed: tokens,
-        responseLength: fullContent?.length || 0,
-        hasSuggestedQuestions: suggested && suggested.length > 0
-      });
-      
-      // 更新消息状态
-      setMessages(prev => prev.map(msg => {
-        if (msg.messageId === messageId || msg.loading) {
-          return {
-            ...msg,
-            content: fullContent || msg.content,
-            loading: false,
-            tokens: tokens,
-            messageId: messageId,
-            conversationId: conversationId
-          };
-        }
-        return msg;
-      }));
-      
-      // 更新建议问题
-      if (suggested && suggested.length > 0) {
-        setSuggestedQuestions(suggested);
-      }
-      
-      // AI 回复完成后，确保滚动到最底部
-      setTimeout(() => {
-        if (scrollRef.current) {
-          const container = scrollRef.current;
-          const maxScroll = container.scrollHeight - container.clientHeight;
-          console.log('🎯 AI 回复完成，强制滚动到底部', {
-            scrollHeight: container.scrollHeight,
-            clientHeight: container.clientHeight,
-            maxScroll: maxScroll,
-            canScroll: maxScroll > 0,
-            scrollTopBefore: container.scrollTop
-          });
-          
-          container.scrollTop = container.scrollHeight;
-          
-          console.log('✅ 滚动后 scrollTop:', container.scrollTop);
-        }
-      }, 200);
-    });
-
-    // 监听 AI 对话错误
-    ws.on(WS_EVENTS.AI_CHAT_ERROR, (data) => {
-      console.error('❌ AI 对话错误:', data);
-      const errorCode = data.code;
-      const errorMsg = data.message || getErrorDescription(errorCode) || t('robot.genericError');
-      
-      setIsStreaming(false);
-      currentMessageIdRef.current = null;
-      
-      setMessages(prev => {
-        const lastMsg = prev[prev.length - 1];
-        if (lastMsg && lastMsg.loading) {
-          return prev.map((msg, idx) => 
-            idx === prev.length - 1 
-              ? { ...msg, content: errorMsg, loading: false, error: true, errorCode: errorCode }
-              : msg
-          );
-        }
-        return [...prev, {
-          id: `error-${Date.now()}`,
-          role: 'assistant',
-          content: errorMsg,
-          time: Date.now(),
-          error: true,
-          errorCode: errorCode
-        }];
-      });
-    });
-
-    // 监听历史记录响应
-    ws.on(WS_EVENTS.AI_CHAT_HISTORY_RESPONSE, (data) => {
-      console.log('📜 收到历史记录:', data);
-      setIsLoadingHistory(false);
-      
-      const { messages: historyMessages, conversationId, suggestedQuestions } = data.data || {};
-      
-      // 处理建议问题
-      if (suggestedQuestions && Array.isArray(suggestedQuestions) && suggestedQuestions.length > 0) {
-        console.log('💡 收到建议问题:', suggestedQuestions);
-        setSuggestedQuestions(suggestedQuestions);
-      }
-      
-      if (historyMessages && historyMessages.length > 0) {
-        console.log(`✅ 加载了 ${historyMessages.length} 条历史消息`);
-        
-        // 如果有历史记录，保存 conversationId
-        if (conversationId) {
-          conversationIdRef.current = conversationId;
-          // 保存到 localStorage
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('ai_conversation_id', conversationId);
-          }
-          console.log('📌 设置并保存会话 ID:', conversationId);
-        }
-        
-        // 格式化历史消息
-        const formattedMessages = historyMessages.map(msg => ({
-          id: msg.messageId || `history-${msg.timestamp}`,
-          messageId: msg.messageId,
-          role: msg.role === 'system' ? 'assistant' : msg.role, // 将 system 映射为 assistant
-          content: msg.content,
-          time: msg.timestamp || Date.now(),
-        }));
-        
-        // 如果有历史记录，替换掉默认的欢迎消息
-        setMessages(formattedMessages);
-      } else {
-        console.log('📭 没有历史记录，显示默认欢迎消息');
-        // 没有历史记录，保持默认的欢迎消息
-      }
-    });
-
-    // 连接 WebSocket
-    ws.connect();
-
-    return () => {
-      console.log('🔴 AI 对话页面卸载，断开 WebSocket');
-      if (wsRef.current) {
-        wsRef.current.disconnect();
-        wsRef.current = null;
-      }
-    };
-  }, []);
-
-  // 滚动到底部的函数 - 可被多处调用
-  const scrollToBottom = (force = false) => {
+  // 滚动到底部的函数
+  const scrollToBottom = () => {
     if (scrollRef.current) {
       const container = scrollRef.current;
       const maxScroll = container.scrollHeight - container.clientHeight;
       
-      console.log('📜 滚动到底部', {
-        scrollHeight: container.scrollHeight,
-        scrollTop: container.scrollTop,
-        clientHeight: container.clientHeight,
-        maxScroll: maxScroll,
-        canScroll: maxScroll > 0,
-        force
-      });
-      
-      // 直接设置 scrollTop 到最大值
       if (maxScroll > 0) {
         container.scrollTop = container.scrollHeight;
-        console.log('✅ 已滚动到:', container.scrollTop);
-      } else {
-        console.log('⚠️ 内容未溢出，无需滚动');
       }
     }
   };
 
-  // 自动滚动到底部 - 使用平滑滚动和 requestAnimationFrame 确保 DOM 更新后滚动
+  // 自动滚动到底部
   useEffect(() => {
-    // 使用 requestAnimationFrame 确保在 DOM 更新后执行滚动
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         scrollToBottom();
@@ -655,17 +446,16 @@ export default function RobotPage() {
     });
   }, [messages]);
 
-  // 发送消息
-  const handleSend = (text = null) => {
+  // 发送消息 - 使用 SSE Stream Hook
+  const handleSend = async (text = null) => {
     const message = text || inputValue.trim();
-    if (!message || isConnecting || isStreaming) return;
+    if (!message || isStreaming) return;
 
-    // 埋点：用户发送问题（记录问题内容）
+    // 埋点：用户发送问题
     trackEvent(AIEvents.QUESTION_SENT, {
       question: message,
       questionLength: message.length,
-      conversationId: conversationIdRef.current,
-      isSuggestedQuestion: text !== null, // 是否是点击建议问题
+      isSuggestedQuestion: text !== null,
       timestamp: Date.now()
     });
 
@@ -678,15 +468,18 @@ export default function RobotPage() {
     };
     setMessages(prev => [...prev, userMsg]);
     setInputValue('');
-    setSuggestedQuestions([]); // 清除建议问题
+    setSuggestedQuestions([]);
 
     // 生成请求 ID
-    const requestId = `req-ai-${Date.now()}`;
+    const requestId = `req_${Date.now()}`;
     currentRequestIdRef.current = requestId;
 
     // 添加 AI 加载消息
+    const aiMsgId = `ai-loading-${Date.now()}`;
+    currentAiMsgIdRef.current = aiMsgId;
+    
     setMessages(prev => [...prev, {
-      id: `ai-loading-${Date.now()}`,
+      id: aiMsgId,
       role: 'assistant',
       content: '',
       time: Date.now(),
@@ -694,78 +487,35 @@ export default function RobotPage() {
       requestId: requestId
     }]);
 
-    // 通过 WebSocket 发送 AI 对话请求
-    if (wsRef.current && wsRef.current.isConnected) {
-      try {
-        const chatMessage = createAIChatMessage(
-          message,
-          conversationIdRef.current,
-          null, // 可以传入上下文信息，如 { symbols: ['BTC'], userProfile: {...} }
-          requestId
-        );
-        wsRef.current.send(chatMessage);
-        console.log('📤 发送 AI 对话请求:', chatMessage);
-      } catch (error) {
-        console.error('发送消息失败:', error);
-        setMessages(prev => prev.map(msg => 
-          msg.requestId === requestId 
-            ? { ...msg, content: t('robot.sendFailed'), loading: false, error: true }
-            : msg
-        ));
-      }
-    } else {
-      setMessages(prev => prev.map(msg => 
-        msg.requestId === requestId 
-          ? { ...msg, content: t('robot.wsNotConnected'), loading: false, error: true }
-          : msg
-      ));
+    try {
+      // 使用 SSE Stream Hook 发送消息
+      await sendMessage({
+        requestId: requestId,
+        message: message
+      });
+    } catch (error) {
+      console.error('发送消息失败:', error);
     }
   };
 
   // 停止生成
   const handleStop = () => {
-    if (!isStreaming || !currentMessageIdRef.current) return;
+    if (!isStreaming) return;
     
-    if (wsRef.current && wsRef.current.isConnected) {
-      try {
-        const stopMessage = createAIChatStopMessage(
-          conversationIdRef.current,
-          currentMessageIdRef.current
-        );
-        wsRef.current.send(stopMessage);
-        console.log('🛑 停止生成:', stopMessage);
-        setIsStreaming(false);
-      } catch (error) {
-        console.error('停止生成失败:', error);
-      }
-    }
-  };
-
-  // 重新生成
-  const handleRegenerate = (messageId) => {
-    if (!messageId || isStreaming) return;
+    // 中止 SSE 流
+    abort();
     
-    if (wsRef.current && wsRef.current.isConnected) {
-      try {
-        const regenerateMessage = createAIChatRegenerateMessage(
-          conversationIdRef.current,
-          messageId
-        );
-        wsRef.current.send(regenerateMessage);
-        console.log('🔄 重新生成:', regenerateMessage);
-        
-        // 添加加载消息
-        setMessages(prev => [...prev, {
-          id: `ai-regenerate-${Date.now()}`,
-          role: 'assistant',
-          content: '',
-          time: Date.now(),
-          loading: true
-        }]);
-      } catch (error) {
-        console.error('重新生成失败:', error);
-      }
+    // 更新消息状态
+    if (currentAiMsgIdRef.current) {
+      setMessages(prev => prev.map(msg => 
+        msg.id === currentAiMsgIdRef.current
+          ? { ...msg, loading: false }
+          : msg
+      ));
     }
+    
+    currentAiMsgIdRef.current = null;
+    console.log('🛑 停止生成');
   };
 
   // 点击建议问题
@@ -812,23 +562,12 @@ export default function RobotPage() {
           <div className={styles.chatTitle}>{t('robot.title')}</div>
           <div className={styles.chatSubtitle}>
             {t('robot.subtitle')}
-            {isConnecting && <span className={styles.connecting}> ({t('robot.connecting')})</span>}
-            {conversationIdRef.current && (
-              <span className={styles.conversationId}> | {t('robot.conversationId')}: {conversationIdRef.current.slice(-8)}</span>
-            )}
           </div>
         </div>
 
         <div className={styles.chatScroll} ref={scrollRef}>
-          {/* 加载历史记录提示 */}
-          {isLoadingHistory && (
-            <div className={styles.loadingHistory}>
-              <div className={styles.loadingText}>{t('robot.loadingHistory')}</div>
-            </div>
-          )}
-          
           <div className={styles.messages}>
-            {messages.map((msg, idx) => (
+            {messages.map((msg) => (
               <div key={msg.id} className={`${styles.msgRow} ${msg.role === 'user' ? styles.right : styles.left}`}>
                 {msg.role === 'assistant' && (
                   <div className={styles.avatarCol}>
@@ -843,7 +582,6 @@ export default function RobotPage() {
                       {msg.loading && !msg.content ? (
                         <ThinkingAnimation />
                       ) : msg.role === 'assistant' && msg.content ? (
-                        // 使用流式 Markdown 组件：逐行渲染
                         <>
                           <StreamingMarkdown 
                             content={msg.content} 
@@ -855,34 +593,7 @@ export default function RobotPage() {
                         msg.content || ''
                       )}
                     </div>
-                    
-                    {/* Token 消耗信息 */}
-                    {msg.tokens && (
-                      <div className={styles.tokenInfo}>
-                        {t('robot.tokens', { tokens: msg.tokens })}
-                      </div>
-                    )}
                   </div>
-                  
-                  {/* AI 消息操作按钮 */}
-                  {msg.role === 'assistant' && !msg.loading && msg.messageId && (
-                    <div className={styles.msgActions}>
-                      <button 
-                        className={styles.actionBtn}
-                        onClick={() => handleRegenerate(msg.messageId)}
-                        disabled={isStreaming}
-                      >
-                        <Image 
-                          src="/icons/reload.svg" 
-                          alt="重新生成" 
-                          width={14} 
-                          height={14}
-                          className={styles.reloadIcon}
-                        />
-                        {t('robot.regenerate')}
-                      </button>
-                    </div>
-                  )}
                 </div>
 
                 {msg.role === 'user' && (
@@ -897,8 +608,8 @@ export default function RobotPage() {
         </div>
 
         {/* 建议问题 - 固定在输入框上方 */}
-          {suggestedQuestions.length > 0 && !isStreaming && (
-            <div className={styles.suggestedQuestions}>
+        {suggestedQuestions.length > 0 && !isStreaming && (
+          <div className={styles.suggestedQuestions}>
             <div className={styles.suggestedTitle}>{t('robot.suggestedTitle')}</div>
             {suggestedQuestions.map((q, idx) => (
               <button
@@ -918,10 +629,10 @@ export default function RobotPage() {
               className={styles.input}
               value={inputValue}
               placeholder={t('robot.inputPlaceholder')}
-              onKeyPress={(e) => e.key === 'Enter' && !isStreaming && handleSend()}
+              onKeyDown={(e) => e.key === 'Enter' && !isStreaming && handleSend()}
               onChange={(e) => setInputValue(e.target.value)}
               onFocus={() => trackEvent(AIEvents.INPUT_FOCUSED)}
-              disabled={isConnecting || isStreaming}
+              disabled={isStreaming}
             />
           </div>
           {isStreaming ? (
@@ -941,7 +652,7 @@ export default function RobotPage() {
             <button 
               className={styles.sendBtn} 
               onClick={() => handleSend()}
-              disabled={isConnecting || !inputValue.trim()}
+              disabled={!inputValue.trim()}
             >
               {t('robot.send')}
             </button>
@@ -957,4 +668,3 @@ export default function RobotPage() {
       </div>
   );
 }
-

@@ -281,6 +281,10 @@ export const Interface = {
   TASK_INVITATION_LIST: '/task/invitation/list',
   // 完成任务
   TASK_COMPLETE: '/task/complete',
+
+  // AI 对话
+  // AI 流式对话
+  AI_CHAT_STREAM: '/ai/chat/stream',
 };
 
 // 业务中使用到的联系邮箱和链上地址（打包报错缺失导出）
