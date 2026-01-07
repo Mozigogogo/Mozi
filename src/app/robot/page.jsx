@@ -330,7 +330,7 @@ export default function RobotPage() {
     {
       getToken: () => typeof window !== 'undefined' ? localStorage.getItem('token') : null,
       onStart: () => {
-        console.log('🤖 AI 开始回复');
+        // AI 开始回复
       },
       onChunk: (chunk, accumulated, eventData) => {
         // 更新消息内容
@@ -360,11 +360,11 @@ export default function RobotPage() {
         }
       },
       onComplete: (fullContent, eventData) => {
-        console.log('✅ AI 回复完成');
-        // 更新消息状态为完成
+        // AI 回复完成
         if (currentAiMsgIdRef.current) {
+          const msgId = currentAiMsgIdRef.current;
           setMessages(prev => prev.map(msg => 
-            msg.id === currentAiMsgIdRef.current
+            msg.id === msgId
               ? { 
                   ...msg, 
                   content: fullContent,
@@ -393,7 +393,7 @@ export default function RobotPage() {
         });
       },
       onError: (error) => {
-        console.error('❌ AI 对话错误:', error);
+        // AI 对话错误
         // 更新消息为错误状态
         if (currentAiMsgIdRef.current) {
           setMessages(prev => prev.map(msg => 
@@ -494,7 +494,7 @@ export default function RobotPage() {
         message: message
       });
     } catch (error) {
-      console.error('发送消息失败:', error);
+      // 发送消息失败
     }
   };
 
@@ -515,7 +515,7 @@ export default function RobotPage() {
     }
     
     currentAiMsgIdRef.current = null;
-    console.log('🛑 停止生成');
+    // 停止生成
   };
 
   // 点击建议问题
