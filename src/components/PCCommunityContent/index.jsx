@@ -15,6 +15,7 @@ import HotTopicSearchBar from '@/components/HotTopicSearchBar';
 import HotTopicList from '@/components/HotTopicList';
 import CommentInput from '@/components/CommentInput';
 import CoinInfoCard from '@/components/CoinInfoCard';
+import PCTopicSearchModal from '@/components/PCTopicSearchModal';
 import styles from './index.module.less';
 
 /**
@@ -39,6 +40,9 @@ export default function PCCommunityContent() {
   const [hotTopicsAllLoaded, setHotTopicsAllLoaded] = useState(false); // 热门话题是否全部加载完
   const [coinInfoData, setCoinInfoData] = useState({}); // 币种信息数据
   const [searchKeyword, setSearchKeyword] = useState(''); // 搜索关键词
+  const [searchResults, setSearchResults] = useState([]); // 搜索结果
+  const [searchLoading, setSearchLoading] = useState(false); // 搜索加载状态
+  const [showSearchPanel, setShowSearchPanel] = useState(false); // 是否显示搜索下拉面板
   
   // 用于引用右侧热门榜单容器
   const hotTopicsContainerRef = useRef(null);
@@ -274,11 +278,46 @@ export default function PCCommunityContent() {
   };
 
   // 处理搜索
-  const handleSearch = (keyword) => {
+  const handleSearch = async (keyword) => {
     setSearchKeyword(keyword);
-    setHotTopicsPage(1);
-    setHotTopicsAllLoaded(false);
-    fetchHotTopics(true, keyword);
+    
+    // 如果关键词为空，关闭搜索面板
+    if (!keyword.trim()) {
+      setShowSearchPanel(false);
+      setSearchResults([]);
+      return;
+    }
+    
+    // 显示搜索面板并开始搜索
+    setShowSearchPanel(true);
+    setSearchLoading(true);
+    
+    try {
+      const response = await request({
+        url: Interface.HOT_TOPICS_API,
+        data: {
+          page: 1,
+          size: 20,
+          keyword: keyword.trim()
+        }
+      });
+      
+      if (response?.data?.data?.length > 0) {
+        setSearchResults(response.data.data);
+      } else {
+        setSearchResults([]);
+      }
+    } catch (error) {
+      console.error('搜索话题失败:', error);
+      setSearchResults([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  // 关闭搜索面板
+  const handleCloseSearchPanel = () => {
+    setShowSearchPanel(false);
   };
 
   // 获取币种信息
@@ -711,20 +750,34 @@ export default function PCCommunityContent() {
         }
         rightContent={
           <div className={styles.rightContentWrapper}>
-            {/* 热门榜单 */}
-            <SectionTitle 
-              title="热门榜单"
-              rightContent={
-                <HotTopicSearchBar
-                  onSearchClick={() => router.push('/topicsearch')}
-                  onSearch={handleSearch}
-                  onCreateClick={() => console.log('创建话题')}
-                  searchPlaceholder="搜索话题"
-                  createButtonText="创建话题"
-                  isPC={true}
-                />
-              }
-            />
+            {/* 热门榜单标题和搜索框 */}
+            <div className={styles.hotTopicHeader}>
+              <SectionTitle 
+                title="热门榜单"
+                rightContent={
+                  <HotTopicSearchBar
+                    onSearchClick={() => router.push('/topicsearch')}
+                    onSearch={handleSearch}
+                    onCreateClick={() => console.log('创建话题')}
+                    searchPlaceholder="搜索话题"
+                    createButtonText="创建话题"
+                    isPC={true}
+                  />
+                }
+              />
+              {/* 搜索下拉面板 */}
+              <PCTopicSearchModal
+                visible={showSearchPanel}
+                onClose={handleCloseSearchPanel}
+                results={searchResults}
+                loading={searchLoading}
+                onTopicClick={goToTopicDetail}
+                nov1Icon={nov1Icon}
+                nov2Icon={nov2Icon}
+                nov3Icon={nov3Icon}
+                hotIcon={hotIcon}
+              />
+            </div>
             <div 
               ref={hotTopicsContainerRef}
               className={styles.hotTopicsScrollContainer}

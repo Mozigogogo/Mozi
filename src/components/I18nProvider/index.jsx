@@ -6,10 +6,11 @@ import i18n from '@/i18n/config';
 import { LogoLoading } from '@/components/Loading';
 
 export default function I18nProvider({ children }) {
-  const [isInitialized, setIsInitialized] = useState(i18n.isInitialized);
+  // 初始值设为 false，避免 hydration 不匹配
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    // 确保 i18n 已初始化
+    // 客户端检查 i18n 是否已初始化
     if (i18n.isInitialized) {
       setIsInitialized(true);
     } else {

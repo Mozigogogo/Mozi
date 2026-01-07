@@ -963,7 +963,7 @@
     "title": "Topic Search",
     "placeholder": "Search topics",
     "searchFailed": "Search failed",
-    "noResults": "No results found"
+    "noResults": "No related content"
   },
   "videoLearn": {
     "title": "Video Learning",
