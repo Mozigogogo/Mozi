@@ -292,8 +292,6 @@ export default function HomePage() {
   // WebSocket 连接 - 进入页面自动连接并握手
   const { sendMessage, isOpen, lastMessage, readyState } = useWebSocket(WS_URL, {
     onOpen: () => {
-      console.log('✅ WebSocket 连接已建立');
-      
       // 自动发送握手消息
       const handshakeMessage = {
         event: "hello",
@@ -308,23 +306,12 @@ export default function HomePage() {
       
       // 延迟100ms确保连接稳定
       setTimeout(() => {
-        const sent = sendMessage(handshakeMessage);
-        if (sent) {
-          console.log('📤 已发送握手消息:', handshakeMessage);
-        } else {
-          console.error('❌ 发送握手消息失败');
-        }
+        sendMessage(handshakeMessage);
       }, 100);
     },
     onMessage: (message) => {
       try {
         const data = JSON.parse(message);
-        console.log('📥 收到 WebSocket 消息:', data);
-        
-        // 处理握手响应
-        if (data.event === 'welcome') {
-          console.log('🤝 握手成功！Session ID:', data.data?.sessionId);
-        }
         
         // 处理 ping/pong 心跳
         if (data.event === 'ping') {
@@ -334,23 +321,17 @@ export default function HomePage() {
           });
         }
         
-        // 处理其他消息类型
-        if (data.event === 'ticker') {
-          console.log('💹 收到 Ticker 数据:', data.data);
-          // 更新价格数据
-        } else if (data.event === 'ranking') {
-          console.log('📊 收到榜单数据:', data.data);
-          // 更新榜单数据
-        }
+        // 处理其他消息类型（ticker、ranking等）
+        // 更新价格数据或榜单数据
       } catch (error) {
-        console.error('⚠️ 解析 WebSocket 消息失败:', error);
+        console.error('解析 WebSocket 消息失败:', error);
       }
     },
     onClose: () => {
-      console.log('🔴 WebSocket 连接已关闭');
+      // WebSocket 连接已关闭
     },
     onError: (error) => {
-      console.error('❌ WebSocket 错误:', error);
+      console.error('WebSocket 错误:', error);
     },
     autoConnect: true, // 自动连接
     reconnectInterval: 5000, // 5秒后重连

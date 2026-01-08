@@ -74,7 +74,6 @@ export const useWebSocket = (url, options = {}) => {
       heartbeatTimerRef.current = setInterval(() => {
         if (wsRef.current?.readyState === WebSocket.OPEN) {
           wsRef.current.send(heartbeatMessage);
-          console.log('[WebSocket] 发送心跳:', heartbeatMessage);
         }
       }, heartbeatInterval);
     }
@@ -83,14 +82,12 @@ export const useWebSocket = (url, options = {}) => {
   // 重连
   const reconnect = useCallback(() => {
     if (reconnectAttempts !== -1 && reconnectCountRef.current >= reconnectAttempts) {
-      console.log('[WebSocket] 已达到最大重连次数');
       return;
     }
 
     clearReconnectTimer();
     reconnectTimerRef.current = setTimeout(() => {
       reconnectCountRef.current++;
-      console.log(`[WebSocket] 尝试重连 (${reconnectCountRef.current}/${reconnectAttempts === -1 ? '∞' : reconnectAttempts})`);
       connect();
     }, reconnectInterval);
   }, [reconnectInterval, reconnectAttempts]);
@@ -108,12 +105,10 @@ export const useWebSocket = (url, options = {}) => {
     }
 
     try {
-      console.log('[WebSocket] 正在连接:', url);
       const ws = new WebSocket(url);
       wsRef.current = ws;
 
       ws.onopen = (event) => {
-        console.log('[WebSocket] 连接成功');
         setReadyState(WebSocket.OPEN);
         reconnectCountRef.current = 0;
         clearReconnectTimer();
@@ -122,7 +117,6 @@ export const useWebSocket = (url, options = {}) => {
       };
 
       ws.onmessage = (event) => {
-        console.log('[WebSocket] 收到消息:', event.data);
         setLastMessage(event.data);
         onMessageRef.current?.(event.data);
       };
@@ -134,7 +128,6 @@ export const useWebSocket = (url, options = {}) => {
       };
 
       ws.onclose = (event) => {
-        console.log('[WebSocket] 连接关闭:', event.code, event.reason);
         setReadyState(WebSocket.CLOSED);
         clearHeartbeatTimer();
         onCloseRef.current?.(event);
@@ -156,7 +149,6 @@ export const useWebSocket = (url, options = {}) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       const data = typeof message === 'string' ? message : JSON.stringify(message);
       wsRef.current.send(data);
-      console.log('[WebSocket] 发送消息:', data);
       return true;
     } else {
       console.warn('[WebSocket] 连接未就绪，无法发送消息');
@@ -166,7 +158,6 @@ export const useWebSocket = (url, options = {}) => {
 
   // 手动断开连接
   const disconnect = useCallback(() => {
-    console.log('[WebSocket] 手动断开连接');
     clearReconnectTimer();
     clearHeartbeatTimer();
     if (wsRef.current) {
@@ -178,7 +169,6 @@ export const useWebSocket = (url, options = {}) => {
 
   // 重新连接
   const reconnectManually = useCallback(() => {
-    console.log('[WebSocket] 手动重新连接');
     reconnectCountRef.current = 0;
     disconnect();
     setTimeout(() => {
@@ -194,7 +184,6 @@ export const useWebSocket = (url, options = {}) => {
 
     // 清理函数
     return () => {
-      console.log('[WebSocket] 组件卸载，清理连接');
       clearReconnectTimer();
       clearHeartbeatTimer();
       if (wsRef.current) {
