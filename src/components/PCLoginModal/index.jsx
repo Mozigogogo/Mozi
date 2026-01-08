@@ -680,7 +680,7 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
         <Button 
           type="default" 
           className={`${styles.signInButton} ${!isLoggedIn ? styles.loginButton : ''}`}
-          onClick={isLoggedIn ? undefined : () => router.push('/auth')}
+          onClick={isLoggedIn ? () => router.push('/points') : () => router.push('/auth')}
         >
           {isLoggedIn ? (t('user.signIn') || '签到') : (t('auth.login') || '登录')}
         </Button>
