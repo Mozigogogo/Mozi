@@ -623,29 +623,31 @@ export default function PCCommunityContent() {
 
       {/* 发现好币帖子列表 */}
       <div className={styles.discoverySection}>
-        {loading ? (
-          <div className={styles.loadingContainer}>
-            <Spin tip="加载中..." />
-          </div>
-        ) : discoveryPosts.length > 0 ? (
-          <div className={styles.discoveryGrid}>
-            {discoveryPosts.map(post => (
-              <DiscoveryPostCard
-                key={post.id}
-                post={post}
-                onPostClick={goToPostDetail}
-                onUserClick={goToUserPage}
-                onLikeClick={toggleLike}
-                onShareClick={handleShare}
-                isLiked={post.isLiked || likedPosts[post.id]}
-                formatTimeAgo={formatTimeAgo}
-                isPC={true}
-              />
-            ))}
-          </div>
-        ) : (
-          <Empty description="暂无发现好币帖子" />
-        )}
+        <div className={styles.discoveryGrid}>
+          {loading ? (
+            <div className={styles.loadingContainer}>
+              <Spin tip="加载中..." />
+            </div>
+          ) : discoveryPosts.length > 0 ? (
+            <>
+              {discoveryPosts.map(post => (
+                <DiscoveryPostCard
+                  key={post.id}
+                  post={post}
+                  onPostClick={goToPostDetail}
+                  onUserClick={goToUserPage}
+                  onLikeClick={toggleLike}
+                  onShareClick={handleShare}
+                  isLiked={post.isLiked || likedPosts[post.id]}
+                  formatTimeAgo={formatTimeAgo}
+                  isPC={true}
+                />
+              ))}
+            </>
+          ) : (
+            <Empty description="暂无发现好币帖子" />
+          )}
+        </div>
       </div>
 
       {/* 不懂就问模块 */}
@@ -656,31 +658,33 @@ export default function PCCommunityContent() {
 
       {/* 不懂就问帖子列表 */}
       <div className={styles.questionSection}>
-        {questionLoading ? (
-          <div className={styles.loadingContainer}>
-            <Spin tip="加载中..." />
-          </div>
-        ) : questionPosts.length > 0 ? (
-          <div className={styles.questionList}>
-            {questionPosts.map(post => (
-              <PostCard
-                key={post.id}
-                post={post}
-                onPostClick={goToPostDetail}
-                onUserClick={goToUserPage}
-                onLikeClick={(postId) => toggleLike(null, postId)}
-                onShareClick={handleShare}
-                onTagClick={(tagName) => router.push(`/detail?symbol=${tagName}`)}
-                onTopicClick={(topicId, topicName) => router.push(`/topicinfo?id=${topicId}&title=${topicName}`)}
-                isLiked={post.isLiked || likedPosts[post.id]}
-                formatTimeAgo={formatTimeAgo}
-                isPC={true}
-              />
-            ))}
-          </div>
-        ) : (
-          <Empty description="暂无不懂就问帖子" />
-        )}
+        <div className={styles.questionList}>
+          {questionLoading ? (
+            <div className={styles.loadingContainer}>
+              <Spin tip="加载中..." />
+            </div>
+          ) : questionPosts.length > 0 ? (
+            <>
+              {questionPosts.map(post => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  onPostClick={goToPostDetail}
+                  onUserClick={goToUserPage}
+                  onLikeClick={(postId) => toggleLike(null, postId)}
+                  onShareClick={handleShare}
+                  onTagClick={(tagName) => router.push(`/detail?symbol=${tagName}`)}
+                  onTopicClick={(topicId, topicName) => router.push(`/topicinfo?id=${topicId}&title=${topicName}`)}
+                  isLiked={post.isLiked || likedPosts[post.id]}
+                  formatTimeAgo={formatTimeAgo}
+                  isPC={true}
+                />
+              ))}
+            </>
+          ) : (
+            <Empty description="暂无不懂就问帖子" />
+          )}
+        </div>
       </div>
       
       {/* 币种、热门榜单 */}
