@@ -16,6 +16,7 @@ import HotTopicList from '@/components/HotTopicList';
 import CommentInput from '@/components/CommentInput';
 import CoinInfoCard from '@/components/CoinInfoCard';
 import PCTopicSearchModal from '@/components/PCTopicSearchModal';
+import FloatingPostButton from '@/components/FloatingPostButton';
 import styles from './index.module.less';
 
 /**
@@ -58,10 +59,12 @@ export default function PCCommunityContent() {
 
   // 图标配置
   const CDN_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community';
+  const CDN_IMG = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/community';
   const nov1Icon = `${CDN_ICON}/Nov1.png`;
   const nov2Icon = `${CDN_ICON}/Nov2.png`;
   const nov3Icon = `${CDN_ICON}/Nov3.png`;
   const hotIcon = `${CDN_ICON}/hot.png`;
+  const publishIcon = `${CDN_IMG}/publish.png`;
 
   // 格式化时间
   const formatTimeAgo = (time) => {
@@ -245,8 +248,11 @@ export default function PCCommunityContent() {
         requestData.keyword = keyword;
       }
       
+      // 根据是否有搜索关键词选择不同的接口
+      const apiUrl = keyword ? Interface.TOPIC_SEARCH : Interface.HOT_TOPICS_API;
+      
       const response = await request({
-        url: Interface.HOT_TOPICS_API,
+        url: apiUrl,
         data: requestData
       });
       
@@ -294,7 +300,7 @@ export default function PCCommunityContent() {
     
     try {
       const response = await request({
-        url: Interface.HOT_TOPICS_API,
+        url: Interface.TOPIC_SEARCH,
         data: {
           page: 1,
           size: 20,
@@ -502,6 +508,11 @@ export default function PCCommunityContent() {
   const goToTopicDetail = (topicId, name, description = null) => {
     const defaultDesc = description || '暂无简介';
     router.push(`/topicinfo?id=${topicId}&title=${name}&description=${defaultDesc}`);
+  };
+
+  // 跳转到发帖页面
+  const goToPostPage = () => {
+    router.push('/post');
   };
 
   // 处理评论提交
@@ -772,6 +783,7 @@ export default function PCCommunityContent() {
                 results={searchResults}
                 loading={searchLoading}
                 onTopicClick={goToTopicDetail}
+                searchKeyword={searchKeyword}
                 nov1Icon={nov1Icon}
                 nov2Icon={nov2Icon}
                 nov3Icon={nov3Icon}
@@ -799,6 +811,17 @@ export default function PCCommunityContent() {
         }
         leftWidth={70}
         gap={20}
+      />
+      
+      {/* 发帖按钮 - 固定在屏幕右下角 */}
+      <FloatingPostButton 
+        onClick={goToPostPage}
+        iconSrc={publishIcon}
+        ariaLabel="发帖"
+        altText="发帖"
+        size={70}
+        right={80}
+        bottom={80}
       />
       
       {/* 币种信息卡片列表 */}

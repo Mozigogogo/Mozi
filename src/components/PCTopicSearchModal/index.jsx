@@ -18,9 +18,25 @@ export default function PCTopicSearchModal({
   nov2Icon = '/icons/nov2.svg',
   nov3Icon = '/icons/nov3.svg',
   hotIcon = '/icons/hot.svg',
+  searchKeyword = '', // 新增：搜索关键词
 }) {
   const { t } = useTranslation();
   const panelRef = useRef(null);
+
+  // 高亮关键词函数
+  const highlightKeyword = (text, keyword) => {
+    if (!keyword || !text) return text;
+    
+    const regex = new RegExp(`(${keyword})`, 'gi');
+    const parts = text.split(regex);
+    
+    return parts.map((part, index) => {
+      if (part.toLowerCase() === keyword.toLowerCase()) {
+        return <span key={index} className={styles.highlight}>{part}</span>;
+      }
+      return part;
+    });
+  };
 
   // 点击外部关闭
   useEffect(() => {
@@ -76,29 +92,18 @@ export default function PCTopicSearchModal({
               className={styles.resultItem}
               onClick={() => handleTopicClick(topic)}
             >
-              {/* 左侧排名 */}
-              <div className={styles.rankCol}>
-                {index === 0 ? (
-                  <img className={styles.rankMedal} src={nov1Icon} alt="1" />
-                ) : index === 1 ? (
-                  <img className={styles.rankMedal} src={nov2Icon} alt="2" />
-                ) : index === 2 ? (
-                  <img className={styles.rankMedal} src={nov3Icon} alt="3" />
-                ) : (
-                  <span className={styles.rankNum}>{index + 1}</span>
-                )}
-              </div>
-
               {/* 中间内容 */}
               <div className={styles.topicContent}>
                 {/* 标题行：标题 + 热度图标 */}
                 <div className={styles.titleRow}>
-                  <span className={styles.topicName}>{topic.name}</span>
+                  <span className={styles.topicName}>
+                    {highlightKeyword(topic.name, searchKeyword)}
+                  </span>
                   <img className={styles.hotIcon} src={hotIcon} alt="hot" />
                 </div>
                 {/* 描述 */}
                 <div className={styles.topicDesc}>
-                  {topic.description || t('community.actions.noDescription')}
+                  {highlightKeyword(topic.description || t('community.actions.noDescription'), searchKeyword)}
                 </div>
                 {/* 时间 */}
                 <div className={styles.timeText}>
