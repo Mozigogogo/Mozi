@@ -739,7 +739,7 @@ export default function RobotPage() {
             <div className={styles.loadingOverlay}>
               <div className={styles.loadingContent}>
                 <ThinkingAnimation />
-                <div className={styles.loadingText}>正在加载历史消息...</div>
+                <div className={styles.loadingText}>{t('robot.loadingHistory')}</div>
               </div>
             </div>
           )}

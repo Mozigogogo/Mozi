@@ -491,7 +491,7 @@
     "subtitle": "Smart Q&A · Quick Response",
     "connecting": "Connecting...",
     "conversationId": "Conversation ID",
-    "loadingHistory": "Loading conversation history...",
+    "loadingHistory": "Loading chat history...",
     "aiAlt": "AI",
     "tokens": "Consumed {{tokens}} tokens",
     "thinking": "Thinking",
