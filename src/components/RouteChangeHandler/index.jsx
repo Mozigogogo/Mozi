@@ -13,7 +13,6 @@ export default function RouteChangeHandler() {
 
   useEffect(() => {
     // 路由变化时重置会话过期提示标志
-    console.log('Route changed to:', pathname, '- Resetting session expired flag');
     resetSessionExpiredFlag();
   }, [pathname]);
 

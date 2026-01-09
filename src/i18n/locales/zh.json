@@ -491,7 +491,7 @@
     "subtitle": "智能答疑 · 快速响应",
     "connecting": "连接中...",
     "conversationId": "会话ID",
-    "loadingHistory": "正在加载历史对话...",
+    "loadingHistory": "正在加载历史消息...",
     "aiAlt": "AI",
     "tokens": "消耗 {{tokens}} tokens",
     "thinking": "正在思考中",
@@ -962,7 +962,7 @@
     "title": "话题搜索",
     "placeholder": "搜索话题",
     "searchFailed": "搜索失败",
-    "noResults": "暂无搜索结果"
+    "noResults": "暂无相关内容"
   },
   "videoLearn": {
     "title": "视频学习",

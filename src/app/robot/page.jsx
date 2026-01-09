@@ -317,12 +317,14 @@ export default function RobotPage() {
   ]);
   const [suggestedQuestions, setSuggestedQuestions] = useState([]);
   const [showPopLogin, setShowPopLogin] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true); // 历史记录加载状态
   
   const scrollRef = useRef(null);
   const currentRequestIdRef = useRef(null);
   const currentAiMsgIdRef = useRef(null);
   const conversationIdRef = useRef(null);
   const messageIdRef = useRef(null);
+  const historyLoadedRef = useRef(false); // 防止重复加载历史记录
 
   // 设置欢迎消息
   useEffect(() => {
@@ -332,6 +334,108 @@ export default function RobotPage() {
         : msg
     ));
   }, [t]);
+
+  // 加载聊天历史记录
+  useEffect(() => {
+    const loadChatHistory = async () => {
+      // 防止重复加载
+      if (historyLoadedRef.current) {
+        console.log('⏭️ 历史记录已加载，跳过重复请求');
+        return;
+      }
+      
+      historyLoadedRef.current = true;
+
+      try {
+        // 从 localStorage 获取 conversationId
+        const savedConversationId = typeof window !== 'undefined' 
+          ? localStorage.getItem('ai_conversation_id') 
+          : null;
+        
+        console.log('🔍 检查历史记录 conversationId:', savedConversationId);
+        
+        // 如果有 conversationId，保存到 ref
+        if (savedConversationId) {
+          conversationIdRef.current = savedConversationId;
+        }
+
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        const lang = typeof window !== 'undefined' 
+          ? (localStorage.getItem('i18nextLng') || 'zh') 
+          : 'zh';
+
+        // 构建URL - 如果有conversationId就带上，没有就不带
+        const url = savedConversationId 
+          ? `${INTERFACE_URL}${Interface.AI_CHAT_HISTORY}/${savedConversationId}`
+          : `${INTERFACE_URL}${Interface.AI_CHAT_HISTORY}`;
+        
+        console.log('📡 正在加载聊天历史:', url);
+
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Accept-Language': lang,
+            ...(token ? { 'Authentication': `${token}` } : {})
+          }
+        });
+
+        console.log('📥 历史记录响应状态:', response.status);
+
+        if (!response.ok) {
+          throw new Error(`Failed to load chat history: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('📦 历史记录数据:', data);
+        
+        // 检查返回的数据格式 - 格式：{ code: 0, data: { conversationId, messages, suggestedQuestions } }
+        if (data.code === 0 && data.data && data.data.conversationId && data.data.messages && Array.isArray(data.data.messages)) {
+          // 过滤掉 system 角色的消息，只保留 user 和 assistant 的对话
+          const historyMessages = data.data.messages
+            .filter(item => item.role !== 'system')
+            .map((item, index) => {
+              return {
+                id: `history-${item.role}-${index}-${Date.now()}`,
+                role: item.role, // 'user' 或 'assistant'
+                content: item.content || '',
+                time: Date.now() - (data.data.messages.length - index) * 1000, // 模拟时间戳
+                conversationId: data.data.conversationId
+              };
+            });
+
+          console.log('✅ 加载了', historyMessages.length, '条历史消息');
+
+          // 如果有历史记录，替换欢迎消息
+          if (historyMessages.length > 0) {
+            setMessages(historyMessages);
+            
+            // 保存 conversationId
+            if (data.data.conversationId) {
+              conversationIdRef.current = data.data.conversationId;
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('ai_conversation_id', data.data.conversationId);
+              }
+            }
+            
+            // 保存建议问题
+            if (data.data.suggestedQuestions && Array.isArray(data.data.suggestedQuestions)) {
+              setSuggestedQuestions(data.data.suggestedQuestions);
+              console.log('✅ 加载了', data.data.suggestedQuestions.length, '个建议问题');
+            }
+          }
+        } else {
+          console.log('⚠️ 数据格式不符合预期或无历史记录:', data);
+        }
+      } catch (error) {
+        console.error('❌ 加载聊天历史失败:', error);
+        // 加载失败时保持欢迎消息
+      } finally {
+        setIsLoadingHistory(false); // 加载完成
+      }
+    };
+
+    loadChatHistory();
+  }, []);
 
   // 使用 SSE Stream Hook
   const { sendMessage, isStreaming, abort } = useSSEStream(
@@ -629,6 +733,16 @@ export default function RobotPage() {
               </div>
             ))}
           </div>
+          
+          {/* 历史记录加载遮罩层 - 只遮罩聊天区域 */}
+          {isLoadingHistory && (
+            <div className={styles.loadingOverlay}>
+              <div className={styles.loadingContent}>
+                <ThinkingAnimation />
+                <div className={styles.loadingText}>{t('robot.loadingHistory')}</div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 建议问题 - 固定在输入框上方 */}
