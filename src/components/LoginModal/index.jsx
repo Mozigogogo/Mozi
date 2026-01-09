@@ -22,15 +22,29 @@ const getTelegramUserInfo = () => {
     return null;
   }
   
-  const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
-  console.log('=== LoginModal - Telegram 用户信息 ===', tgUser);
+  const tg = window.Telegram.WebApp;
+  const tgUser = tg.initDataUnsafe.user;
+  
+  // 打印完整的 Telegram 数据用于调试
+  console.log('=== LoginModal - Telegram 完整数据 ===');
+  console.log('用户信息:', tgUser);
+  console.log('initData (原始字符串):', tg.initData);
+  console.log('initDataUnsafe (完整对象):', tg.initDataUnsafe);
+  console.log('Hash (签名):', tg.initDataUnsafe?.hash);
+  console.log('Auth Date:', tg.initDataUnsafe?.auth_date);
+  console.log('Platform:', tg.platform);
+  console.log('Version:', tg.version);
   
   return {
     username: tgUser.username || tgUser.first_name || tgUser.last_name || 'Telegram User',
     firstName: tgUser.first_name || '',
     lastName: tgUser.last_name || '',
     photoUrl: tgUser.photo_url || null,
-    userId: tgUser.id
+    userId: tgUser.id,
+    // 添加 hash 和 initData 用于后端验证
+    hash: tg.initDataUnsafe?.hash,
+    authDate: tg.initDataUnsafe?.auth_date,
+    initData: tg.initData
   };
 };
 

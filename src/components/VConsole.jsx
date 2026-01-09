@@ -6,6 +6,9 @@ export default function VConsoleLoader() {
   useEffect(() => {
     // 判断是否需要启用 VConsole
     const shouldEnableVConsole = () => {
+      // 暂时禁用 VConsole
+      return false;
+      
       // PC端不显示 vConsole
       if (typeof window !== 'undefined' && window.innerWidth >= 768) {
         return false;
