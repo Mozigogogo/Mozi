@@ -500,8 +500,8 @@ export default function UserPage() {
       localStorage.removeItem('completedVideos');
       localStorage.removeItem('videoLearnTotal');
       
-      // 清除 AI 对话相关
-      localStorage.removeItem('ai_conversation_id');
+      // 注意：不清除 AI 对话相关的 conversationId，保留用户的聊天历史
+      // localStorage.removeItem('ai_conversation_id');
       
       // 清除 WebSocket 客户端 ID
       localStorage.removeItem('mozi_client_id');

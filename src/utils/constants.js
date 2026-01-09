@@ -285,6 +285,10 @@ export const Interface = {
   // AI 对话
   // AI 流式对话
   AI_CHAT_STREAM: '/ai/chat/stream',
+  // AI 聊天历史记录
+  AI_CHAT_HISTORY: '/ai/chat/history',
+  // AI 会话列表
+  AI_CHAT_CONVERSATIONS: '/ai/chat/conversations',
 };
 
 // 业务中使用到的联系邮箱和链上地址（打包报错缺失导出）
