@@ -25,6 +25,10 @@
     align-items: center;
     min-height: 200PX;
     width: 100%;
+    background: #FFFFFF;
+    border-radius: 8PX;
+    padding: 40PX 20PX;
+    grid-column: 1 / -1; /* 占满整个grid的宽度 */
   }
 
   .questionSection {
@@ -308,29 +312,88 @@
   }
 }
 
+.coinHotTopicSection {
+  max-height: 1200PX; /* 固定最小高度 */
+  // height: auto; /* 允许内容撑开 */
+}
+
 .leftContentWrapper {
   display: flex;
   flex-direction: column;
   height: 100%;
 }
 
+.leftContentHeader {
+  flex-shrink: 0; /* 固定在顶部，不参与滚动 */
+}
+
 .leftContentMain {
   flex: 1;
   overflow-y: auto;
+  min-height: 0; /* 允许flex子元素缩小 */
+  
+  /* 自定义滚动条样式 */
+  &::-webkit-scrollbar {
+    width: 6PX;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #d9d9d9;
+    border-radius: 3PX;
+    
+    &:hover {
+      background: #bfbfbf;
+    }
+  }
 }
 
 .commentInputWrapper {
   margin-top: 12PX;
-  flex-shrink: 0;
+  flex-shrink: 0; /* 固定在底部，不参与滚动 */
 }
 
 .rightContentWrapper {
   display: flex;
   flex-direction: column;
   height: 100%; /* 与左侧高度一致 */
+  position: relative; /* 为绝对定位的按钮提供参照 */
   
   /* 确保SectionTitle不占用flex空间 */
   > :first-child {
     flex-shrink: 0;
+  }
+}
+
+.hotTopicHeader {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.hotTopicsScrollContainer {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0; /* 关键：允许flex子元素缩小到内容以下 */
+  
+  /* 自定义滚动条样式 */
+  &::-webkit-scrollbar {
+    width: 6PX;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #d9d9d9;
+    border-radius: 3PX;
+    
+    &:hover {
+      background: #bfbfbf;
+    }
   }
 }

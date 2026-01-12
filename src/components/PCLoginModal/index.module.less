@@ -3,7 +3,7 @@
   position: fixed;
   top: 66px; /* Header高度64px + 间距6px */
   left: 180px; /* Sider宽度200px + 间距6px */
-  width: 483px;
+  width: 400px;
   max-height: calc(100vh - 100px);
   background: #FFFFFF;
   box-shadow: 0px 5px 18px 3px rgba(167, 180, 176, 0.13);
@@ -11,7 +11,7 @@
   border: 1px solid #EFEFEF;
   z-index: 1001;
   overflow: hidden; /* 隐藏所有滚动条 */
-  padding: 24px;
+  padding: 20px;
   animation: slideIn 0.3s ease-out;
 }
 
@@ -51,16 +51,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px 0;
+  padding: 16px 0;
   border-bottom: 1px solid var(--border-color);
 }
 
 .avatar {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .userName {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -75,15 +75,15 @@
 .userStats {
   display: flex;
   justify-content: space-around;
-  padding: 16px 0;
-  margin-bottom: 16px;
+  padding: 14px 0;
+  margin-bottom: 14px;
 }
 
 .statItem {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex: 1;
   position: relative;
   
@@ -95,19 +95,19 @@
     top: 50%;
     transform: translateY(-50%);
     width: 1px;
-    height: 48px;
+    height: 40px;
     background: #EFEFEF;
   }
 }
 
 .statValue {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--text-primary);
 }
 
 .statLabel {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-secondary);
 }
 
@@ -115,13 +115,13 @@
 .inviteCodeSection {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 0;
-  margin-bottom: 16px;
+  gap: 10px;
+  padding: 10px 0;
+  margin-bottom: 14px;
 }
 
 .inviteLabel {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-secondary);
   white-space: nowrap;
 }
@@ -131,19 +131,19 @@
   align-items: center;
   justify-content: center;
   gap: 4px;
-  width: 159px;
-  height: 36px;
+  width: 140px;
+  height: 32px;
   background: #F5F5F5;
-  border-radius: 18px;
-  padding: 0 12px;
+  border-radius: 16px;
+  padding: 0 10px;
 }
 
 .inviteCode {
   font-family: Microsoft YaHei;
   font-weight: 400;
-  font-size: 14px;
+  font-size: 13px;
   color: #666666;
-  line-height: 36px;
+  line-height: 32px;
   white-space: nowrap;
 }
 
@@ -151,7 +151,7 @@
   padding: 0;
   height: auto;
   color: #11B787;
-  font-size: 12px;
+  font-size: 11px;
   
   &:hover {
     color: #0fa076;
@@ -160,12 +160,13 @@
 
 .signInButton {
   margin-left: auto;
-  width: 136px;
-  height: 36px;
+  width: 120px;
+  height: 32px;
   background: transparent;
-  border-radius: 18px;
+  border-radius: 16px;
   border: 1px solid #C9C9C9;
   color: var(--text-primary);
+  font-size: 13px;
   
   &:hover {
     border-color: #11B787;
@@ -188,40 +189,40 @@
 
 /* 积分卡片 */
 .pointsCard {
-  padding: 20px 10px 20px 20px;
-  height: 143px;
+  padding: 16px 10px 16px 16px;
+  height: 120px;
   background-image: url('/images/pc/pc_score_rank.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  border-radius: 12px;
+  border-radius: 10px;
   color: white;
   position: relative;
   overflow: hidden;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .pointsHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .pointsTitle {
   font-family: Microsoft YaHei;
   font-weight: 400;
-  font-size: 14px;
+  font-size: 13px;
   color: #FFFFFF;
-  line-height: 23px;
+  line-height: 20px;
 }
 
 .pointsDetail {
   font-family: Microsoft YaHei;
   font-weight: 400;
-  font-size: 14px;
+  font-size: 13px;
   color: #11B787;
-  line-height: 23px;
+  line-height: 20px;
   cursor: pointer;
   
   &:hover {
@@ -232,40 +233,40 @@
 .pointsValueRow {
   display: flex;
   align-items: flex-end;
-  gap: 12px;
-  margin-bottom: 8px;
+  gap: 10px;
+  margin-bottom: 6px;
 }
 
 .pointsValue {
   font-family: DIN;
   font-weight: bold;
-  font-size: 32px;
+  font-size: 28px;
   color: #FFFFFF;
-  line-height: 23px;
+  line-height: 20px;
 }
 
 .pointsInfo {
   font-family: Microsoft YaHei;
   font-weight: 400;
-  font-size: 14px;
+  font-size: 13px;
   color: #FFFFFF;
 }
 
 .pointsRank {
   position: absolute;
-  bottom: 20px;
-  left: 20px;
+  bottom: 16px;
+  left: 16px;
   font-family: Microsoft YaHei;
   font-weight: 400;
-  font-size: 14px;
+  font-size: 13px;
   color: #FFFFFF;
-  line-height: 23px;
+  line-height: 20px;
 }
 
 /* 操作卡片 */
 .actionCards {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
@@ -274,7 +275,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: 16px;
+  padding: 12px;
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.2s;
@@ -285,9 +286,9 @@
 }
 
 .actionIcon {
-  width: 28px;
-  height: 28px;
-  margin-bottom: 12px;
+  width: 24px;
+  height: 24px;
+  margin-bottom: 10px;
   
   img {
     width: 100%;
@@ -312,21 +313,21 @@
 }
 
 .actionTitle {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--text-primary);
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .actionDesc {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-secondary);
 }
 
 .actionArrow {
   color: var(--text-tertiary);
-  font-size: 14px;
-  margin-left: 8px;
+  font-size: 13px;
+  margin-left: 6px;
 }
 
 /* 底部菜单 - 与移动端一致 */
@@ -334,16 +335,16 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding-top: 8px;
+  padding-top: 6px;
 }
 
 .footerMenuItem {
   display: flex;
   align-items: center;
-  padding: 16px 8px;
+  padding: 14px 6px;
   cursor: pointer;
   transition: background 0.2s;
-  min-height: 56px;
+  min-height: 48px;
   
   &:hover {
     background: rgba(17, 183, 135, 0.05);
@@ -351,19 +352,19 @@
 }
 
 .footerMenuIcon {
-  width: 22px;
-  height: 22px;
-  margin-right: 12px;
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
 }
 
 .footerMenuText {
   flex: 1;
-  font-size: 15px;
+  font-size: 14px;
   color: var(--text-primary);
 }
 
 .footerMenuArrow {
   color: var(--text-tertiary);
-  font-size: 14px;
-  margin-left: 8px;
+  font-size: 13px;
+  margin-left: 6px;
 }

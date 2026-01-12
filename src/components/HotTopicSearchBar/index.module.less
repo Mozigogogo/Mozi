@@ -28,6 +28,24 @@
   padding-right: 8px; /* 给文本和按钮之间留一点间距 */
 }
 
+.searchInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13PX;
+  color: #333;
+  padding-right: 8PX;
+  
+  &::placeholder {
+    color: #b2b2b2;
+  }
+  
+  &:focus {
+    outline: none;
+  }
+}
+
 .createTopicBtn {
   height: 36px !important; /* 与searchBox同高 */
   line-height: 36px !important;

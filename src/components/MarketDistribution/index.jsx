@@ -168,13 +168,10 @@ export default function MarketDistribution({ showUpdateTime = true, isPC = false
               change: btcDominanceChangeFmt || prev.btcMarketShare.change
             }
           }));
-          console.log('✅ 更新BTC市场占有率:', btcDominanceFmt, '变化:', btcDominanceChangeFmt);
-        } else {
-          console.log('⚠️ BTC市场占有率数据为空，保持旧值:', response.data);
         }
       }
     } catch (error) {
-      console.error('❌ 获取市场聚合数据失败:', error);
+      console.error('获取市场聚合数据失败:', error);
     }
   };
 

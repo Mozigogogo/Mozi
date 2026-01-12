@@ -1,0 +1,112 @@
+/* PC端话题搜索下拉面板样式 */
+.dropdownPanel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 8PX;
+  background: #fff;
+  border-radius: 12PX;
+  box-shadow: 0 4PX 20PX rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  animation: slideDown 0.2s ease;
+  overflow: hidden;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10PX);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.resultList {
+  max-height: 500PX;
+  overflow-y: auto;
+  padding: 8PX 0;
+}
+
+.loadingWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40PX 0;
+}
+
+.emptyWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40PX 0;
+  color: #999;
+  font-size: 14PX;
+}
+
+.resultItem {
+  display: flex;
+  align-items: flex-start;
+  padding: 16PX 20PX;
+  cursor: pointer;
+  border-bottom: 1PX solid #F0F0F0;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #FAFAFA;
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+/* 中间内容 */
+.topicContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 8PX;
+  margin-bottom: 8PX;
+}
+
+.topicName {
+  font-size: 16PX;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.4;
+}
+
+.highlight {
+  color: #11B787;
+}
+
+.hotIcon {
+  width: 14PX;
+  height: 14PX;
+  flex-shrink: 0;
+}
+
+.topicDesc {
+  font-size: 14PX;
+  color: #999;
+  line-height: 1.6;
+  margin-bottom: 8PX;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.timeText {
+  font-size: 12PX;
+  color: #D0D0D0;
+  line-height: 1.4;
+}

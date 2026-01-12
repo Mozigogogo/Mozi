@@ -106,6 +106,9 @@ export default function UserPage() {
   const [calendarEventDates, setCalendarEventDates] = useState([]); // 日历上有事件的日期（日期数字数组）
   const [isLoadingNewCoins, setIsLoadingNewCoins] = useState(false); // 新币上线数据加载状态
   
+  // 用于记录当前组件生命周期内是否已经为邀请码弹出过登录弹窗
+  const hasShownInviteModalRef = useRef(false);
+  
   // 积分相关数据
   const [pointsData, setPointsData] = useState({
     totalPoints: 0,
@@ -157,12 +160,9 @@ export default function UserPage() {
       });
 
       if (res?.data) {
-        console.log('✅ 获取用户积分数据成功:', res.data);
-        
         // 保存完整的 dataInfo 数据到 localStorage
         try {
           localStorage.setItem('userDataInfo', JSON.stringify(res.data));
-          console.log('✅ 已保存 dataInfo 到 localStorage');
         } catch (e) {
           console.error('❌ 保存 dataInfo 到 localStorage 失败:', e);
         }
@@ -196,27 +196,49 @@ export default function UserPage() {
       });
       
       const ui = localStorage.getItem('userInfo');
+      const dataInfo = localStorage.getItem('userDataInfo');
+      
+      let displayNick = t('user.defaultNickname');
+      let displayAvatar = DEFAULT_AVATAR;
+      
+      // 昵称：优先从 userDataInfo.userInfo.nickName 读取
+      if (dataInfo) {
+        try {
+          const dataInfoParsed = JSON.parse(dataInfo);
+          const nickFromDataInfo = (dataInfoParsed.userInfo?.nickName || '').trim();
+          if (nickFromDataInfo) {
+            displayNick = nickFromDataInfo;
+          }
+        } catch (e) {
+          console.error('解析 userDataInfo 失败:', e);
+        }
+      }
+      
+      // 头像：从 userInfo.avatar 读取
       if (ui) {
         try {
           const parsed = JSON.parse(ui);
-          const parsedNick = (parsed.nickName || '').trim();
-          const displayNick = parsedNick.length > 0 ? parsedNick : t('user.defaultNickname');
-          
-          // 只在数据真正改变时才更新，避免不必要的重渲染
-          setUserInfo((prev) => {
-            const needUpdate = prev.nickname !== displayNick || prev.avatar !== (parsed.avatar || prev.avatar);
-            if (needUpdate) {
-              return { ...prev, nickname: displayNick, avatar: parsed.avatar || prev.avatar };
-            }
-            return prev;
-          });
+          if (parsed.avatar) {
+            displayAvatar = parsed.avatar;
+          }
           
           // 根据登录返回的 subscribeAnnouncement 字段初始化开关状态
           if (parsed.subscribeAnnouncement !== undefined) {
             setIsAnnouncementOn(parsed.subscribeAnnouncement === 1);
           }
-        } catch {}
+        } catch (e) {
+          console.error('解析 userInfo 失败:', e);
+        }
       }
+      
+      // 只在数据真正改变时才更新，避免不必要的重渲染
+      setUserInfo((prev) => {
+        const needUpdate = prev.nickname !== displayNick || prev.avatar !== displayAvatar;
+        if (needUpdate) {
+          return { ...prev, nickname: displayNick, avatar: displayAvatar };
+        }
+        return prev;
+      });
     };
     
     // 首次加载时同步登录态
@@ -386,6 +408,7 @@ export default function UserPage() {
   // 关闭登录弹窗并清除 URL 参数
   const handleCloseLoginModal = () => {
     setShowLoginModal(false);
+    
     // 清除 URL 中的 showLogin 和 mode 参数
     const url = new URL(window.location.href);
     if (url.searchParams.has('showLogin') || url.searchParams.has('mode')) {
@@ -414,6 +437,37 @@ export default function UserPage() {
       handleTonWalletLogin();
     }
   }, [tonWallet]);
+
+  // 监听URL中的邀请码参数
+  useEffect(() => {
+    const inviteCode = searchParams.get('inviteCode') || searchParams.get('invite');
+    
+    if (inviteCode) {
+      console.log('🔍 [UserPage] 检测到邀请码:', inviteCode);
+      // 存储到 localStorage
+      localStorage.setItem('inviteCode', inviteCode);
+      
+      // 检查用户是否已登录
+      const token = localStorage.getItem('token');
+      if (!token) {
+        // 检查在当前组件生命周期内是否已经弹出过
+        if (!hasShownInviteModalRef.current) {
+          // 未登录且本次会话未弹出过，自动打开登录弹窗
+          console.log('🔍 [UserPage] 用户未登录，自动打开登录弹窗');
+          hasShownInviteModalRef.current = true; // 标记已弹出
+          
+          // 使用 setTimeout 确保组件已完全挂载
+          setTimeout(() => {
+            setShowLoginModal(true);
+          }, 300);
+        } else {
+          console.log('🔍 [UserPage] 本次会话已弹出过邀请弹窗，不再重复弹出');
+        }
+      } else {
+        console.log('🔍 [UserPage] 用户已登录，邀请码已保存');
+      }
+    }
+  }, [searchParams]);
   
   // 退出登录
   const handleLogout = async () => {
@@ -446,8 +500,8 @@ export default function UserPage() {
       localStorage.removeItem('completedVideos');
       localStorage.removeItem('videoLearnTotal');
       
-      // 清除 AI 对话相关
-      localStorage.removeItem('ai_conversation_id');
+      // 注意：不清除 AI 对话相关的 conversationId，保留用户的聊天历史
+      // localStorage.removeItem('ai_conversation_id');
       
       // 清除 WebSocket 客户端 ID
       localStorage.removeItem('mozi_client_id');
@@ -459,8 +513,6 @@ export default function UserPage() {
       // 清除 Cookie
       delCookie('wallet_address');
       delCookie('wallet_chainId');
-      
-      console.log('✅ 已清除所有用户缓存数据');
     } catch (error) {
       console.error('❌ 清除缓存数据失败:', error);
     }
@@ -594,15 +646,11 @@ export default function UserPage() {
         requestData.chatId = chatId;
       }
 
-      console.log('订阅公告请求:', requestData);
-
       const res = await request({
         url: Interface.SUBSCRIBE_ANNOUNCEMENT,
         method: 'POST',
         data: requestData
       });
-
-      console.log('订阅接口返回:', res);
 
       // 基于 success 字段判断接口是否成功
       if (res?.success === true) {
@@ -615,7 +663,6 @@ export default function UserPage() {
             const parsed = JSON.parse(storedUserInfo);
             parsed.subscribeAnnouncement = isOn ? 1 : 0;
             localStorage.setItem('userInfo', JSON.stringify(parsed));
-            console.log('✅ 已同步订阅状态到 localStorage:', isOn ? 1 : 0);
           }
         } catch (e) {
           console.error('❌ 更新 localStorage 失败:', e);
@@ -625,7 +672,6 @@ export default function UserPage() {
           content: isOn ? t('user.subscriptionEnabled') || '订阅成功' : t('user.subscriptionDisabled') || '取消订阅',
           position: 'bottom' 
         });
-        console.log('订阅状态更新成功');
         return true; // 成功，允许切换
       } else {
         Toast.show({ 
@@ -650,12 +696,10 @@ export default function UserPage() {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.log('未登录，跳过接口调用');
         return;
       }
 
       const timeStr = formatDate(date);
-      console.log('调用接口，日期:', timeStr);
 
       // 开始加载，显示加载状态
       setIsLoadingNewCoins(true);
@@ -669,11 +713,8 @@ export default function UserPage() {
         }
       });
 
-      console.log('接口完整返回:', res);
-      
       // 基于 success 字段判断接口是否成功
       if (res?.success === true) {
-        console.log('接口调用成功，数据:', res.data);
         setInterfaceData(res.data);
         setIsInterfaceLoaded(true); // 记录接口已加载完成
         setIsInterfaceSuccess(true); // 记录接口调用成功
@@ -692,13 +733,10 @@ export default function UserPage() {
             link: item.link || ''
           }));
           setNewCoinListings(formattedListings);
-          console.log('转换后的新币上线数据:', formattedListings);
         } else {
           setNewCoinListings([]);
-          console.log('接口成功但无新币上线数据');
         }
       } else {
-        console.log('接口调用失败:', res?.errorMsg || '未知错误');
         setNewCoinListings([]);
         setIsInterfaceLoaded(true); // 记录接口已加载完成
         setIsInterfaceSuccess(false); // 记录接口调用失败
@@ -713,7 +751,6 @@ export default function UserPage() {
 
   // 处理日历日期选择
   const handleDateChange = (date) => {
-    console.log('选择日期:', date);
     setSelectedDate(date);
     // 清空当前数据，显示加载状态
     setNewCoinListings([]);
@@ -932,7 +969,6 @@ export default function UserPage() {
         method: 'POST',
         data: { taskCode: 'DAILY_LOGIN' }
       });
-      console.log('🔍 [DEBUG] 每日登录任务上报成功');
     } catch (taskError) {
       console.error('每日登录任务上报失败:', taskError);
     }
@@ -985,7 +1021,6 @@ export default function UserPage() {
     }
     
     const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
-    console.log('=== Telegram 用户信息 ===', tgUser);
     
     return {
       username: tgUser.username || tgUser.first_name || tgUser.last_name || 'Telegram User',
@@ -1017,7 +1052,6 @@ export default function UserPage() {
         
         // 如果 nickName 不为 null，说明用户已经设置过，不要覆盖
         if (currentNickname !== null && currentNickname !== undefined) {
-          console.log('⏭️ 钱包用户已有昵称，跳过自动更新', { currentNickname });
           return;
         }
       } catch (e) {
@@ -1044,8 +1078,6 @@ export default function UserPage() {
       });
 
       if (res?.data) {
-        console.log('✅ 钱包用户信息更新成功');
-        
         // 更新本地用户信息
         setUserInfo(prev => ({
           ...prev,
@@ -1095,7 +1127,6 @@ export default function UserPage() {
         ];
         
         if (currentNickname && !defaultNicknames.includes(currentNickname)) {
-          console.log('⏭️ 用户已有自定义昵称，跳过自动更新', { currentNickname });
           return;
         }
       } catch (e) {
@@ -1125,8 +1156,6 @@ export default function UserPage() {
       });
 
       if (res?.data) {
-        console.log('✅ Telegram 用户信息更新成功');
-        
         // 更新本地用户信息
         setUserInfo(prev => ({
           ...prev,
@@ -1157,13 +1186,6 @@ export default function UserPage() {
     if (!tonWallet) return;
     
     try {
-      // 调试：打印 TON 钱包返回的完整数据
-      console.log('=== TON Wallet 完整数据 ===');
-      console.log('tonWallet:', JSON.stringify(tonWallet, null, 2));
-      console.log('tonWallet.account:', tonWallet.account);
-      console.log('tonWallet.device:', tonWallet.device);
-      console.log('=== END ===');
-      
       Toast.show({ icon: 'loading', content: t('user.loggingIn') || '登录中...', duration: 0 });
       
       // 获取 TON 钱包地址
@@ -1174,6 +1196,9 @@ export default function UserPage() {
         return;
       }
       
+      // 获取邀请码（如果有）
+      const inviteCode = localStorage.getItem('inviteCode');
+      
       // 调用后端接口进行 TON 钱包登录（与非 TG 环境保持一致）
       console.log('=== TON 钱包登录传参 ===', {
         type: 'login',
@@ -1181,6 +1206,7 @@ export default function UserPage() {
         channel: 'tg',
         address: tonAddress,
         signatrue: tonWallet.account?.publicKey,
+        ...(inviteCode && { invitedCode: inviteCode }),
       });
       const res = await request({
         url: Interface.MOZI_LOGIN,
@@ -1191,6 +1217,7 @@ export default function UserPage() {
           channel: 'tg',
           address: tonAddress,
           signatrue: tonWallet.account?.publicKey,
+          ...(inviteCode && { invitedCode: inviteCode }), // 传递邀请码
         }
       });
       
@@ -1199,9 +1226,11 @@ export default function UserPage() {
       
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
-        if (res?.data?.userInfo) {
+        
+        const userData = res?.data?.userInfo || res?.data?.user;
+        if (userData) {
           const userInfoWithSubscribe = {
-            ...res.data.userInfo,
+            ...userData,
             subscribeAnnouncement: res.data.subscribeAnnouncement
           };
           localStorage.setItem('userInfo', JSON.stringify(userInfoWithSubscribe));
@@ -1209,12 +1238,60 @@ export default function UserPage() {
         if (res?.data?.userId) {
           localStorage.setItem('userId', res.data.userId);
         }
+        
+        // 获取用户详细信息（与邮箱登录对齐）
+        request({
+          url: Interface.USER_DATA_INFO,
+          method: 'GET'
+        }).then((dataInfoRes) => {
+          if (dataInfoRes?.data) {
+            console.log('✅ [TON钱包登录] 获取用户详细信息成功');
+            console.log('  - dataInfo完整数据:', dataInfoRes.data);
+            console.log('  - dataInfo.userInfo:', dataInfoRes.data.userInfo);
+            console.log('  - dataInfo.userInfo.nickName:', dataInfoRes.data.userInfo?.nickName);
+            console.log('  - dataInfo.userInfo.avatar:', dataInfoRes.data.userInfo?.avatar);
+            
+            localStorage.setItem('userDataInfo', JSON.stringify(dataInfoRes.data));
+            
+            console.log('📝 [TON钱包登录] localStorage 最终状态:');
+            console.log('  - userInfo:', localStorage.getItem('userInfo'));
+            console.log('  - userDataInfo:', localStorage.getItem('userDataInfo'));
+          }
+        }).catch((dataInfoError) => {
+          console.error('❌ [TON钱包登录] 获取用户详细信息失败:', dataInfoError);
+        });
+        
+        // 完成每日登录任务（与邮箱登录对齐）
+        request({
+          url: Interface.TASK_COMPLETE,
+          method: 'POST',
+          data: { taskCode: 'DAILY_LOGIN' }
+        }).then(() => {
+          console.log('✅ [TON钱包登录] 每日登录任务上报成功');
+        }).catch((taskError) => {
+          console.error('❌ [TON钱包登录] 每日登录任务上报失败:', taskError);
+        });
+        // 登录成功后清除邀请码
+        if (inviteCode) {
+          localStorage.removeItem('inviteCode');
+          console.log('✅ [TON钱包登录] 邀请码已使用并清除');
+        }
+        
         Toast.show({ content: t('auth.loginSuccess') || '登录成功', position: 'center', icon: 'success' });
         
-        // 钱包登录成功后，优先使用钱包地址格式作为用户名
-        await updateWalletUserInfo(tonAddress);
+        // 检查该钱包地址是否首次登录
+        const walletLoginKey = `wallet_logged_${tonAddress}`;
+        const hasLoggedBefore = localStorage.getItem(walletLoginKey);
+        const isFirstLogin = !hasLoggedBefore;
         
-        // 标记为钱包登录，不使用 Telegram 用户名
+        // 只在首次登录时更新Telegram用户信息
+        if (isFirstLogin) {
+          await updateTelegramUserInfo();
+          // 标记该钱包地址已登录过
+          localStorage.setItem(walletLoginKey, Date.now().toString());
+        }
+        
+        // 标记为钱包登录
         handleLoginSuccess(true);
       } else {
         Toast.show({ content: res?.message || t('auth.loginFailed') || '登录失败', position: 'bottom' });
@@ -1273,17 +1350,31 @@ export default function UserPage() {
           avatar: newAvatar
         }));
 
-        // 同步更新 localStorage，防止定时器读取旧数据覆盖
+        // 同步更新 localStorage.userInfo（头像）
         try {
           const storedUserInfo = localStorage.getItem('userInfo');
           if (storedUserInfo) {
             const parsed = JSON.parse(storedUserInfo);
-            parsed.nickName = newNickname;
             parsed.avatar = newAvatar;
             localStorage.setItem('userInfo', JSON.stringify(parsed));
           }
         } catch (e) {
-          console.error('更新localStorage失败:', e);
+          console.error('更新 userInfo 失败:', e);
+        }
+        
+        // 同步更新 localStorage.userDataInfo（昵称）
+        try {
+          const storedDataInfo = localStorage.getItem('userDataInfo');
+          if (storedDataInfo) {
+            const parsed = JSON.parse(storedDataInfo);
+            if (!parsed.userInfo) {
+              parsed.userInfo = {};
+            }
+            parsed.userInfo.nickName = newNickname;
+            localStorage.setItem('userDataInfo', JSON.stringify(parsed));
+          }
+        } catch (e) {
+          console.error('更新 userDataInfo 失败:', e);
         }
 
         Toast.clear();
@@ -1367,7 +1458,12 @@ export default function UserPage() {
           {userInfo.isLogin ? (
             <div className={styles.headerUser}>
               <img className={styles.headerAvatar} src={userInfo.avatar || DEFAULT_AVATAR} alt="头像" />
-              <span>{address ? `${address.slice(0, 6)}...${address.slice(-4)}` : (userInfo.nickname || t('user.profile'))}</span>
+              <span>
+                {!isTelegramEnv() && address 
+                  ? `${address.slice(0, 6)}...${address.slice(-4)}` 
+                  : (userInfo.nickname || t('user.profile'))
+                }
+              </span>
               <img className={styles.editIcon} src={EDIT_ICON} alt="编辑" onClick={openEditProfile} />
             </div>
           ) : (

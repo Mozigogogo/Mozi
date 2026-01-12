@@ -6,23 +6,33 @@ import i18n from '@/i18n/config';
 import { LogoLoading } from '@/components/Loading';
 
 export default function I18nProvider({ children }) {
+  // 初始值设为 false，避免 hydration 不匹配
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    // 确保 i18n 已初始化
+    // 客户端检查 i18n 是否已初始化
     if (i18n.isInitialized) {
       setIsInitialized(true);
     } else {
-      i18n.on('initialized', () => {
+      const handleInitialized = () => {
         setIsInitialized(true);
-      });
+      };
+      i18n.on('initialized', handleInitialized);
+      return () => {
+        i18n.off('initialized', handleInitialized);
+      };
     }
   }, []);
 
-  if (!isInitialized) {
-    return <LogoLoading visible={true} fullscreen mask image="/images/community/loadding.png" size={72} />;
-  }
-
-  return <I18nextProvider i18n={i18n}>{children}</I18nextProvider>;
+  // 始终用 I18nextProvider 包裹，确保子组件能访问 i18n 实例
+  return (
+    <I18nextProvider i18n={i18n}>
+      {!isInitialized ? (
+        <LogoLoading visible={true} fullscreen mask image="/images/community/loadding.png" size={72} />
+      ) : (
+        children
+      )}
+    </I18nextProvider>
+  );
 }
 

@@ -24,18 +24,6 @@ export default function EnvironmentDetector() {
       
       localStorage.setItem('appChannel', channel);
       
-      console.log('[EnvironmentDetector] 环境检测结果:', {
-        channel,
-        isTelegram,
-        hasWebApp: !!telegramWebApp,
-        hasInitData,
-        hasInitDataUnsafe,
-        hasPlatform,
-        platform: telegramWebApp?.platform,
-        initDataLength: telegramWebApp?.initData?.length || 0,
-        initDataUnsafeKeys: telegramWebApp?.initDataUnsafe ? Object.keys(telegramWebApp.initDataUnsafe) : []
-      });
-      
       if (isTelegram && telegramWebApp?.ready) {
         telegramWebApp.ready();
       }

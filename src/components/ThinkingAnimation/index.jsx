@@ -1,85 +1,32 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { useTranslation } from 'react-i18next';
+import { useRef, useEffect } from 'react';
+import Lottie from 'lottie-react';
+import loadingAnimation from '../../../public/loadding/loadding.json';
 
-// 正在思考的动画组件 - 波浪式跳动
+// 正在思考的动画组件 - 使用 Lottie 动画
 const ThinkingAnimation = () => {
-  const { t } = useTranslation();
-  
+  const lottieRef = useRef(null);
+
+  useEffect(() => {
+    // 设置动画速度为 3 倍
+    if (lottieRef.current) {
+      lottieRef.current.setSpeed(3);
+    }
+  }, []);
+
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px'
-    }}>
-      <span>{t('robot.thinking')}</span>
-      <div style={{ 
-        display: 'flex', 
-        gap: '4px',
-        alignItems: 'center'
-      }}>
-        <motion.span
-          animate={{ 
-            y: [0, -4, 0]
-          }}
-          transition={{
-            duration: 1.2,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 0
-          }}
-          style={{ 
-            display: 'inline-block',
-            fontSize: '20px',
-            lineHeight: '1',
-            color: '#999'
-          }}
-        >
-          •
-        </motion.span>
-        <motion.span
-          animate={{ 
-            y: [0, -4, 0]
-          }}
-          transition={{
-            duration: 1.2,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 0.3
-          }}
-          style={{ 
-            display: 'inline-block',
-            fontSize: '20px',
-            lineHeight: '1',
-            color: '#999'
-          }}
-        >
-          •
-        </motion.span>
-        <motion.span
-          animate={{ 
-            y: [0, -4, 0]
-          }}
-          transition={{
-            duration: 1.2,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 0.6
-          }}
-          style={{ 
-            display: 'inline-block',
-            fontSize: '20px',
-            lineHeight: '1',
-            color: '#999'
-          }}
-        >
-          •
-        </motion.span>
-      </div>
-    </div>
+    <Lottie
+      lottieRef={lottieRef}
+      animationData={loadingAnimation}
+      loop={true}
+      autoplay={true}
+      style={{
+        width: 40,
+        height: 40,
+      }}
+    />
   );
 };
 
 export default ThinkingAnimation;
-

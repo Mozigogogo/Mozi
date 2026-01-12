@@ -15,6 +15,8 @@ import HotTopicSearchBar from '@/components/HotTopicSearchBar';
 import HotTopicList from '@/components/HotTopicList';
 import CommentInput from '@/components/CommentInput';
 import CoinInfoCard from '@/components/CoinInfoCard';
+import PCTopicSearchModal from '@/components/PCTopicSearchModal';
+import FloatingPostButton from '@/components/FloatingPostButton';
 import styles from './index.module.less';
 
 /**
@@ -35,11 +37,16 @@ export default function PCCommunityContent() {
   const [voteData, setVoteData] = useState({ upCount: 0, downCount: 0, totalCount: 0, hasVoted: false, userVoteType: null }); // 投票数据
   const [hotTopics, setHotTopics] = useState([]); // 热门话题列表
   const [hotTopicsLoading, setHotTopicsLoading] = useState(false); // 热门话题加载状态
+  const [hotTopicsPage, setHotTopicsPage] = useState(1); // 热门话题当前页码
+  const [hotTopicsAllLoaded, setHotTopicsAllLoaded] = useState(false); // 热门话题是否全部加载完
   const [coinInfoData, setCoinInfoData] = useState({}); // 币种信息数据
-  const [leftHeight, setLeftHeight] = useState(600); // 左侧容器高度
+  const [searchKeyword, setSearchKeyword] = useState(''); // 搜索关键词
+  const [searchResults, setSearchResults] = useState([]); // 搜索结果
+  const [searchLoading, setSearchLoading] = useState(false); // 搜索加载状态
+  const [showSearchPanel, setShowSearchPanel] = useState(false); // 是否显示搜索下拉面板
   
-  // 用于引用左侧容器
-  const leftContentRef = useRef(null);
+  // 用于引用右侧热门榜单容器
+  const hotTopicsContainerRef = useRef(null);
   
   // 固定币种配置
   const coinTabs = [
@@ -52,10 +59,12 @@ export default function PCCommunityContent() {
 
   // 图标配置
   const CDN_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community';
+  const CDN_IMG = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/community';
   const nov1Icon = `${CDN_ICON}/Nov1.png`;
   const nov2Icon = `${CDN_ICON}/Nov2.png`;
   const nov3Icon = `${CDN_ICON}/Nov3.png`;
   const hotIcon = `${CDN_ICON}/hot.png`;
+  const publishIcon = `${CDN_IMG}/publish.png`;
 
   // 格式化时间
   const formatTimeAgo = (time) => {
@@ -220,33 +229,101 @@ export default function PCCommunityContent() {
     }
   };
 
-  // 获取热门话题
-  const fetchHotTopics = async () => {
-    if (hotTopicsLoading) return;
+  // 获取热门话题（支持分页和搜索）
+  const fetchHotTopics = async (reset = false, keyword = '') => {
+    if (hotTopicsLoading && !reset) return;
     
     setHotTopicsLoading(true);
     
+    const currentPage = reset ? 1 : hotTopicsPage;
+    
     try {
-      // PC端直接加载40条数据
+      const requestData = {
+        page: currentPage,
+        size: 20 // 每页20条
+      };
+      
+      // 如果有搜索关键词，添加到请求中
+      if (keyword) {
+        requestData.keyword = keyword;
+      }
+      
+      // 根据是否有搜索关键词选择不同的接口
+      const apiUrl = keyword ? Interface.TOPIC_SEARCH : Interface.HOT_TOPICS_API;
+      
       const response = await request({
-        url: Interface.HOT_TOPICS_API,
+        url: apiUrl,
+        data: requestData
+      });
+      
+      if (response?.data?.data?.length > 0) {
+        const { data, totalPages } = response.data;
+        
+        if (reset || currentPage === 1) {
+          setHotTopics(data);
+        } else {
+          setHotTopics(prev => [...prev, ...data]);
+        }
+        
+        setHotTopicsPage(currentPage + 1);
+        setHotTopicsAllLoaded(currentPage >= totalPages);
+      } else {
+        if (reset || currentPage === 1) {
+          setHotTopics([]);
+        }
+        setHotTopicsAllLoaded(true);
+      }
+    } catch (error) {
+      console.error('获取热门话题失败:', error);
+      if (reset || currentPage === 1) {
+        setHotTopics([]);
+      }
+    } finally {
+      setHotTopicsLoading(false);
+    }
+  };
+
+  // 处理搜索
+  const handleSearch = async (keyword) => {
+    setSearchKeyword(keyword);
+    
+    // 如果关键词为空，关闭搜索面板
+    if (!keyword.trim()) {
+      setShowSearchPanel(false);
+      setSearchResults([]);
+      return;
+    }
+    
+    // 显示搜索面板并开始搜索
+    setShowSearchPanel(true);
+    setSearchLoading(true);
+    
+    try {
+      const response = await request({
+        url: Interface.TOPIC_SEARCH,
         data: {
           page: 1,
-          size: 40
+          size: 20,
+          keyword: keyword.trim()
         }
       });
       
       if (response?.data?.data?.length > 0) {
-        setHotTopics(response.data.data);
+        setSearchResults(response.data.data);
       } else {
-        setHotTopics([]);
+        setSearchResults([]);
       }
     } catch (error) {
-      console.error('获取热门话题失败:', error);
-      setHotTopics([]);
+      console.error('搜索话题失败:', error);
+      setSearchResults([]);
     } finally {
-      setHotTopicsLoading(false);
+      setSearchLoading(false);
     }
+  };
+
+  // 关闭搜索面板
+  const handleCloseSearchPanel = () => {
+    setShowSearchPanel(false);
   };
 
   // 获取币种信息
@@ -433,6 +510,11 @@ export default function PCCommunityContent() {
     router.push(`/topicinfo?id=${topicId}&title=${name}&description=${defaultDesc}`);
   };
 
+  // 跳转到发帖页面
+  const goToPostPage = () => {
+    router.push('/post');
+  };
+
   // 处理评论提交
   const handleCommentSubmit = async (content) => {
     // 由于这是币种讨论区，我们需要创建一个新帖子而不是评论
@@ -478,46 +560,58 @@ export default function PCCommunityContent() {
     fetchDiscoveryPosts(); // 加载发现好币帖子
     fetchQuestionPosts(); // 加载不懂就问帖子
     fetchCoinPosts(selectedCoin); // 加载币种帖子
-    fetchHotTopics(); // 加载热门话题
+    fetchHotTopics(true); // 加载热门话题（重置）
     fetchCoinInfo(coinTabs); // 加载币种信息
   }, []);
+  
+  // 监听热门榜单滚动加载更多
+  useEffect(() => {
+    const container = hotTopicsContainerRef.current;
+    if (!container) return;
+    
+    let scrollTimer = null;
+    let isLoadingMore = false;
+    
+    const handleScroll = () => {
+      if (isLoadingMore) return;
+      
+      if (scrollTimer) {
+        clearTimeout(scrollTimer);
+      }
+      
+      scrollTimer = setTimeout(() => {
+        const scrollHeight = container.scrollHeight;
+        const scrollTop = container.scrollTop;
+        const clientHeight = container.clientHeight;
+        const distanceToBottom = scrollHeight - scrollTop - clientHeight;
+        
+        // 距离底部100px时触发加载
+        if (distanceToBottom < 100 && !hotTopicsAllLoaded && !hotTopicsLoading) {
+          isLoadingMore = true;
+          fetchHotTopics(false, searchKeyword).finally(() => {
+            setTimeout(() => {
+              isLoadingMore = false;
+            }, 100);
+          });
+        }
+      }, 300);
+    };
+    
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      if (scrollTimer) {
+        clearTimeout(scrollTimer);
+      }
+    };
+  }, [hotTopicsAllLoaded, hotTopicsLoading, searchKeyword]);
 
   // 币种切换时重新加载
   useEffect(() => {
     fetchCoinPosts(selectedCoin);
     fetchVoteData(selectedCoin);
   }, [selectedCoin]);
-
-  // 动态计算左侧容器高度
-  useEffect(() => {
-    const updateHeight = () => {
-      if (leftContentRef.current) {
-        const height = leftContentRef.current.offsetHeight;
-        setLeftHeight(height);
-      }
-    };
-
-    // 初始计算
-    updateHeight();
-
-    // 监听窗口大小变化
-    window.addEventListener('resize', updateHeight);
-
-    // 使用 MutationObserver 监听内容变化
-    const observer = new MutationObserver(updateHeight);
-    if (leftContentRef.current) {
-      observer.observe(leftContentRef.current, {
-        childList: true,
-        subtree: true,
-        attributes: true
-      });
-    }
-
-    return () => {
-      window.removeEventListener('resize', updateHeight);
-      observer.disconnect();
-    };
-  }, [coinPosts, coinLoading]); // 当帖子列表或加载状态变化时重新计算
 
   return (
     <div className={styles.pcCommunityContent}>
@@ -529,29 +623,31 @@ export default function PCCommunityContent() {
 
       {/* 发现好币帖子列表 */}
       <div className={styles.discoverySection}>
-        {loading ? (
-          <div className={styles.loadingContainer}>
-            <Spin tip="加载中..." />
-          </div>
-        ) : discoveryPosts.length > 0 ? (
-          <div className={styles.discoveryGrid}>
-            {discoveryPosts.map(post => (
-              <DiscoveryPostCard
-                key={post.id}
-                post={post}
-                onPostClick={goToPostDetail}
-                onUserClick={goToUserPage}
-                onLikeClick={toggleLike}
-                onShareClick={handleShare}
-                isLiked={post.isLiked || likedPosts[post.id]}
-                formatTimeAgo={formatTimeAgo}
-                isPC={true}
-              />
-            ))}
-          </div>
-        ) : (
-          <Empty description="暂无发现好币帖子" />
-        )}
+        <div className={styles.discoveryGrid}>
+          {loading ? (
+            <div className={styles.loadingContainer}>
+              <Spin tip="加载中..." />
+            </div>
+          ) : discoveryPosts.length > 0 ? (
+            <>
+              {discoveryPosts.map(post => (
+                <DiscoveryPostCard
+                  key={post.id}
+                  post={post}
+                  onPostClick={goToPostDetail}
+                  onUserClick={goToUserPage}
+                  onLikeClick={toggleLike}
+                  onShareClick={handleShare}
+                  isLiked={post.isLiked || likedPosts[post.id]}
+                  formatTimeAgo={formatTimeAgo}
+                  isPC={true}
+                />
+              ))}
+            </>
+          ) : (
+            <Empty description="暂无发现好币帖子" />
+          )}
+        </div>
       </div>
 
       {/* 不懂就问模块 */}
@@ -562,40 +658,43 @@ export default function PCCommunityContent() {
 
       {/* 不懂就问帖子列表 */}
       <div className={styles.questionSection}>
-        {questionLoading ? (
-          <div className={styles.loadingContainer}>
-            <Spin tip="加载中..." />
-          </div>
-        ) : questionPosts.length > 0 ? (
-          <div className={styles.questionList}>
-            {questionPosts.map(post => (
-              <PostCard
-                key={post.id}
-                post={post}
-                onPostClick={goToPostDetail}
-                onUserClick={goToUserPage}
-                onLikeClick={(postId) => toggleLike(null, postId)}
-                onShareClick={handleShare}
-                onTagClick={(tagName) => router.push(`/detail?symbol=${tagName}`)}
-                onTopicClick={(topicId, topicName) => router.push(`/topicinfo?id=${topicId}&title=${topicName}`)}
-                isLiked={post.isLiked || likedPosts[post.id]}
-                formatTimeAgo={formatTimeAgo}
-                isPC={true}
-              />
-            ))}
-          </div>
-        ) : (
-          <Empty description="暂无不懂就问帖子" />
-        )}
+        <div className={styles.questionList}>
+          {questionLoading ? (
+            <div className={styles.loadingContainer}>
+              <Spin tip="加载中..." />
+            </div>
+          ) : questionPosts.length > 0 ? (
+            <>
+              {questionPosts.map(post => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  onPostClick={goToPostDetail}
+                  onUserClick={goToUserPage}
+                  onLikeClick={(postId) => toggleLike(null, postId)}
+                  onShareClick={handleShare}
+                  onTagClick={(tagName) => router.push(`/detail?symbol=${tagName}`)}
+                  onTopicClick={(topicId, topicName) => router.push(`/topicinfo?id=${topicId}&title=${topicName}`)}
+                  isLiked={post.isLiked || likedPosts[post.id]}
+                  formatTimeAgo={formatTimeAgo}
+                  isPC={true}
+                />
+              ))}
+            </>
+          ) : (
+            <Empty description="暂无不懂就问帖子" />
+          )}
+        </div>
       </div>
       
       {/* 币种、热门榜单 */}
       {/* 70/30 分栏容器 */}
       <SplitLayout
+        className={styles.coinHotTopicSection}
         leftContent={
-          <div className={styles.leftContentWrapper} ref={leftContentRef}>
-            <div className={styles.leftContentMain}>
-              {/* 不懂就问模块标题 + 币种标签栏 */}
+          <div className={styles.leftContentWrapper}>
+            {/* 不懂就问模块标题 + 币种标签栏 - 固定在顶部 */}
+            <div className={styles.leftContentHeader}>
               <SectionTitle 
                 title="币种" 
                 onMoreClick={() => router.push('/list?category=不懂就问')}
@@ -611,7 +710,7 @@ export default function PCCommunityContent() {
                 }
               />
               
-              {/* 看涨看跌投票组件 */}
+              {/* 看涨看跌投票组件 - 固定在顶部 */}
               <BullBearIndicator
                 upCount={voteData.upCount}
                 downCount={voteData.downCount}
@@ -623,8 +722,10 @@ export default function PCCommunityContent() {
                 isPC={true}
                 coinSymbol={selectedCoin}
               />
-              
-              {/* 币种相关帖子列表 */}
+            </div>
+            
+            {/* 币种相关帖子列表 - 可滚动区域 */}
+            <div className={styles.leftContentMain}>
               {coinLoading ? (
                 <div className={styles.loadingContainer}>
                   <Spin tip="加载中..." />
@@ -663,36 +764,68 @@ export default function PCCommunityContent() {
           </div>
         }
         rightContent={
-          <div className={styles.rightContentWrapper} style={{ height: `${leftHeight}px` }}>
-            {/* 热门榜单 */}
-            <SectionTitle 
-              title="热门榜单"
-              rightContent={
-                <HotTopicSearchBar
-                  onSearchClick={() => router.push('/topicsearch')}
-                  onCreateClick={() => console.log('创建话题')}
-                  searchPlaceholder="搜索话题"
-                  createButtonText="创建话题"
-                  isPC={true}
-                />
-              }
-            />
-            <HotTopicList
-              topics={hotTopics}
-              loading={hotTopicsLoading}
-              allLoaded={true}
-              pullRefresh={false}
-              onTopicClick={goToTopicDetail}
-              nov1Icon={nov1Icon}
-              nov2Icon={nov2Icon}
-              nov3Icon={nov3Icon}
-              hotIcon={hotIcon}
-              isPC={true}
-            />
+          <div className={styles.rightContentWrapper}>
+            {/* 热门榜单标题和搜索框 */}
+            <div className={styles.hotTopicHeader}>
+              <SectionTitle 
+                title="热门榜单"
+                rightContent={
+                  <HotTopicSearchBar
+                    onSearchClick={() => router.push('/topicsearch')}
+                    onSearch={handleSearch}
+                    onCreateClick={() => console.log('创建话题')}
+                    searchPlaceholder="搜索话题"
+                    createButtonText="创建话题"
+                    isPC={true}
+                  />
+                }
+              />
+              {/* 搜索下拉面板 */}
+              <PCTopicSearchModal
+                visible={showSearchPanel}
+                onClose={handleCloseSearchPanel}
+                results={searchResults}
+                loading={searchLoading}
+                onTopicClick={goToTopicDetail}
+                searchKeyword={searchKeyword}
+                nov1Icon={nov1Icon}
+                nov2Icon={nov2Icon}
+                nov3Icon={nov3Icon}
+                hotIcon={hotIcon}
+              />
+            </div>
+            <div 
+              ref={hotTopicsContainerRef}
+              className={styles.hotTopicsScrollContainer}
+            >
+              <HotTopicList
+                topics={hotTopics}
+                loading={hotTopicsLoading}
+                allLoaded={hotTopicsAllLoaded}
+                pullRefresh={false}
+                onTopicClick={goToTopicDetail}
+                nov1Icon={nov1Icon}
+                nov2Icon={nov2Icon}
+                nov3Icon={nov3Icon}
+                hotIcon={hotIcon}
+                isPC={true}
+              />
+            </div>
           </div>
         }
         leftWidth={70}
         gap={20}
+      />
+      
+      {/* 发帖按钮 - 固定在屏幕右下角 */}
+      <FloatingPostButton 
+        onClick={goToPostPage}
+        iconSrc={publishIcon}
+        ariaLabel="发帖"
+        altText="发帖"
+        size={70}
+        right={80}
+        bottom={80}
       />
       
       {/* 币种信息卡片列表 */}

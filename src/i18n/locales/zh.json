@@ -349,11 +349,15 @@
     "followTwitter": "关注我们的Twitter",
     "otherMethods": "或使用其他方式",
     "walletLoginBtn": "钱包登录",
+    "emailLoginBtn": "邮箱登录",
+    "back": "返回",
     "recaptchaNotice": "本网站受 Google reCAPTCHA 保护，以确保您不是机器人。",
     "learnMore": "了解更多",
     "fillAllRequired": "请填写所有必填项",
     "walletConnecting": "钱包连接功能初始化中，请稍后重试",
-    "walletConnectFailed": "钱包连接失败"
+    "walletConnectFailed": "钱包连接失败",
+    "signatureCancelled": "签名已取消",
+    "connectWalletFirst": "请先连接钱包"
   },
   "community": {
     "title": "社区",
@@ -487,7 +491,7 @@
     "subtitle": "智能答疑 · 快速响应",
     "connecting": "连接中...",
     "conversationId": "会话ID",
-    "loadingHistory": "正在加载历史对话...",
+    "loadingHistory": "正在加载历史消息...",
     "aiAlt": "AI",
     "tokens": "消耗 {{tokens}} tokens",
     "thinking": "正在思考中",
@@ -507,7 +511,9 @@
     "suggest": {
       "analyzeTrend": "帮我分析一下 {{symbol}} 的走势",
       "isGoodToBuy": "{{symbol}} 现在适合买入吗？",
-      "technicalView": "{{symbol}} 的技术面如何？"
+      "technicalView": "{{symbol}} 的技术面如何？",
+      "topGainer": "今天涨幅最大的币种是什么？",
+      "fearGreedIndex": "恐惧与贪婪指数是多少？"
     }
   },
   "language": {
@@ -956,7 +962,7 @@
     "title": "话题搜索",
     "placeholder": "搜索话题",
     "searchFailed": "搜索失败",
-    "noResults": "暂无搜索结果"
+    "noResults": "暂无相关内容"
   },
   "videoLearn": {
     "title": "视频学习",

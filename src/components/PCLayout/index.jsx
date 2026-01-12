@@ -15,8 +15,8 @@ import PCFindContent from '../PCFindContent';
 import PCCommunityContent from '../PCCommunityContent';
 import PCLoginModal from '../PCLoginModal';
 import PCFooterNotice from '../PCFooterNotice';
-import request from '@/utils/request';
-import Interface from '@/utils/constants';
+import { request } from '@/utils/request';
+import { Interface } from '@/utils/constants';
 import styles from './index.module.less';
 
 const searchIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/search.png';
@@ -86,8 +86,8 @@ export default function PCLayout({ children }) {
     // 监听storage事件（跨标签页同步）
     window.addEventListener('storage', syncUserInfo);
     
-    // 定期检查userInfo变化（同一标签页内的更新）
-    const timer = setInterval(syncUserInfo, 1000);
+    // 定期检查userInfo变化（同一标签页内的更新）- 改为5秒一次
+    const timer = setInterval(syncUserInfo, 5000);
     
     return () => {
       window.removeEventListener('storage', syncUserInfo);
@@ -152,7 +152,36 @@ export default function PCLayout({ children }) {
   // 内容显示状态 - 用于PC端tab切换
   const [activeContent, setActiveContent] = useState(null);
 
-  // 自定义图标组件 - 支持激活状态
+  // 预加载所有图标 - 优化：使用link标签预加载，更快
+  useEffect(() => {
+    const iconUrls = [
+      '/icons/pc/home@2x.png',
+      '/icons/pc/home_actived@2x.png',
+      '/icons/pc/find.png',
+      '/icons/pc/find_actived@2x.png',
+      '/icons/pc/social.png',
+      '/icons/pc/social_actived.png',
+      '/icons/pc/Collection@2x.png',
+      '/icons/pc/Collection_actived@2x.png',
+      '/icons/pc/alert@2x.png',
+      '/icons/pc/alert_actived@2x.png',
+      '/icons/pc/Subscribe.png',
+      '/icons/pc/Subscribe_actived.png',
+      '/icons/pc/Achievement.png',
+      '/icons/pc/Achievement_actived.png',
+    ];
+
+    // 使用link标签预加载，比Image对象更快
+    iconUrls.forEach(url => {
+      const link = document.createElement('link');
+      link.rel = 'prefetch';
+      link.href = url;
+      link.as = 'image';
+      document.head.appendChild(link);
+    });
+  }, []);
+
+  // 自定义图标组件 - 使用双图标避免闪烁
   const CustomIcon = ({ src, activeSrc, itemKey, alt = 'icon' }) => {
     // 判断是否激活：
     // 1. 如果有activeContent，只有当itemKey等于activeContent时才激活
@@ -164,11 +193,33 @@ export default function PCLayout({ children }) {
       isActive = pathname === itemKey || pathname.startsWith(itemKey + '/');
     }
     
-    const iconSrc = isActive && activeSrc ? activeSrc : src;
-    
     return (
-      <span className="ant-menu-item-icon">
-        <img src={iconSrc} alt={alt} style={{ width: 16, height: 16, objectFit: 'contain' }} />
+      <span className="ant-menu-item-icon" style={{ position: 'relative', display: 'inline-block', width: 16, height: 16 }}>
+        <img 
+          src={src}
+          alt={alt} 
+          style={{ 
+            width: 16, 
+            height: 16, 
+            objectFit: 'contain',
+            opacity: isActive ? 0 : 1,
+            transition: 'opacity 0.15s ease'
+          }} 
+        />
+        <img 
+          src={activeSrc}
+          alt={`${alt}-active`} 
+          style={{ 
+            width: 16, 
+            height: 16, 
+            objectFit: 'contain',
+            opacity: isActive ? 1 : 0,
+            transition: 'opacity 0.15s ease',
+            position: 'absolute',
+            top: 0,
+            left: 0
+          }} 
+        />
       </span>
     );
   };
@@ -263,15 +314,12 @@ export default function PCLayout({ children }) {
   ], [t, collapsed, activeContent, pathname]); // 添加 collapsed 作为依赖
 
   const handleMenuClick = ({ key }) => {
-    console.log('Menu clicked:', key);
     // PC端：发现和社区页面在右侧显示内容，不跳转路由
     if (key === '/find' || key === '/community') {
-      console.log('Setting activeContent to:', key);
       setActiveContent(key);
       setShowSearchResults(false);
     } else {
       // 其他页面正常跳转
-      console.log('Navigating to:', key);
       setActiveContent(null);
       router.push(key);
     }
@@ -293,11 +341,6 @@ export default function PCLayout({ children }) {
       setActiveContent(null);
     }
   }, [pathname]);
-
-  // 调试：监听activeContent变化
-  useEffect(() => {
-    console.log('activeContent changed to:', activeContent);
-  }, [activeContent]);
 
   return (
     <Layout className={styles.layout}>
@@ -439,7 +482,6 @@ export default function PCLayout({ children }) {
           <div className={styles.contentWrapper}>
             <div className={styles.contentMain}>
               {(() => {
-                console.log('Rendering content, activeContent:', activeContent, 'showSearchResults:', showSearchResults);
                 if (showSearchResults) {
                   return <PCSearchResults keyword={searchKeyword} onClose={() => setShowSearchResults(false)} />;
                 } else if (activeContent === '/find') {
