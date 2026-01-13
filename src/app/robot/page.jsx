@@ -441,11 +441,14 @@ export default function RobotPage() {
   const { sendMessage, isStreaming, abort } = useSSEStream(
     `${INTERFACE_URL}${Interface.AI_CHAT_STREAM}`,
     {
-      headers: () => ({
-        'Accept-Language': typeof window !== 'undefined' 
+      headers: () => {
+        const lang = typeof window !== 'undefined' 
           ? (localStorage.getItem('i18nextLng') || 'zh') 
-          : 'zh',
-      }),
+          : 'zh';
+        return {
+          'language': lang,
+        };
+      },
       getToken: () => typeof window !== 'undefined' ? localStorage.getItem('token') : null,
       onStart: () => {
         // AI 开始回复
