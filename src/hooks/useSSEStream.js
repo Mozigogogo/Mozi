@@ -45,7 +45,7 @@ export function useSSEStream(url, options = {}) {
       const dynamicHeaders = typeof headers === 'function' ? headers() : headers;
       const requestHeaders = {
         'Content-Type': 'application/json',
-        'Accept': '*/*',
+        'Accept': 'application/json, text/plain, */*',
         ...dynamicHeaders,
       };
 
