@@ -4,12 +4,11 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
-  padding: 20px;
   animation: fadeIn 0.3s ease;
 }
 
@@ -43,67 +42,10 @@
   }
 }
 
-.backgroundImage {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 120%;
-  max-width: 450px;
-  z-index: 0;
-  pointer-events: none;
-  
-  img {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
-}
-
-.starBackground {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 120%;
-  max-width: 450px;
-  z-index: 1;
-  pointer-events: none;
-  
-  img {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
-}
-
-.frameImage {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 85%;
-  max-width: 320px;
-  z-index: 2;
-  pointer-events: none;
-  
-  > img {
-    width: 100%;
-    height: auto;
-    display: block;
-    image-rendering: -webkit-optimize-contrast;
-    image-rendering: crisp-edges;
-  }
-}
-
-.glassBackground {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 108%;
-  z-index: 10;
-  pointer-events: none;
+.mergedBackground {
+  position: relative;
+  width: 100%;
+  max-width: 375px;
   
   img {
     width: 100%;
@@ -115,8 +57,8 @@
 .activityTitle {
   position: absolute;
   height: 64px;
-  left: 28px;
-  top: 27px;
+  left: 61px;
+  top: 316px;
   font-family: 'Source-KeynoteartHans', sans-serif;
   font-style: italic;
   font-weight: 900;
@@ -150,8 +92,8 @@
 
 .activitySubtitle {
   position: absolute;
-  left: 60px;
-  top: 103px;
+  left: 86px;
+  top: 392px;
   font-family: 'Source-KeynoteartHans', sans-serif;
   font-weight: 900;
   font-style: normal;
@@ -163,12 +105,11 @@
 }
 
 .participateButton {
-  width: 180px;
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  top: 155px;
-  padding: 10px 30px;
+  top: 440px;
+  padding: 10px 48px;
   background: #11B787;
   border-radius: 100px;
   border: none;
@@ -190,51 +131,30 @@
   }
 }
 
-.logoImage {
-  position: absolute;
-  top: 8%;
-  left: 8%;
-  width: 45%;
-  max-width: 150px;
-  z-index: 3;
-  
-  img {
-    width: 100%;
-    height: auto;
-    display: block;
-    image-rendering: -webkit-optimize-contrast;
-    image-rendering: crisp-edges;
-  }
-}
+// /* 响应式适配 */
+// @media (max-width: 768px) {
+//   .modalMask {
+//     // padding: 16px;
+//   }
+// }
 
-.ipImage {
-  position: absolute;
-  top: -24%;
-  right: -18%;
-  width: 90%;
-  z-index: 3;
-  
-  img {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
-}
 
-.closeBtn {
-  position: relative;
-  z-index: 4;
-  margin-top: 24px;
-  width: 48px;
-  height: 48px;
+.closeButton {
+  position: absolute;
+  top: 535px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 32px;
   background: transparent;
   border: none;
-  border-radius: 50%;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
   transition: all 0.3s ease;
+  pointer-events: auto;
+  z-index: 100;
   
   img {
     width: 24px;
@@ -242,17 +162,10 @@
   }
   
   &:hover {
-    transform: scale(1.1);
+    transform: translateX(-50%) scale(1.1);
   }
   
   &:active {
-    transform: scale(0.95);
-  }
-}
-
-/* 响应式适配 */
-@media (max-width: 768px) {
-  .modalMask {
-    padding: 16px;
+    transform: translateX(-50%) scale(0.95);
   }
 }
