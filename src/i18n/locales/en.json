@@ -1178,6 +1178,12 @@
     "user": {
       "notLoggedIn": "Not Logged In",
       "pcUser": "PC User"
+    },
+    "activity": {
+      "title": "MOZI",
+      "subtitle": "Limited Beta Tester Recruitment",
+      "description": "Try our products and get rewards for feedback!!",
+      "joinBtn": "Join Now"
     }
   }
 }
