@@ -3,26 +3,35 @@
 import { useState, useEffect } from 'react';
 import styles from './index.module.less';
 
-export default function ActivityModal({ visible, onClose, onConfirm }) {
+export default function ActivityModal({ visible, onClose, onConfirm, onImagesLoaded }) {
   const [imageLoaded, setImageLoaded] = useState(false);
 
   // 预加载活动图片
   useEffect(() => {
-    // 在页面加载时就预加载图片，不等弹窗显示
+    let loadedCount = 0;
+    const totalImages = 2;
+    
+    const checkAllLoaded = () => {
+      loadedCount++;
+      if (loadedCount === totalImages) {
+        setImageLoaded(true);
+        // 通知父组件图片已加载完成
+        onImagesLoaded?.();
+      }
+    };
+
+    // 预加载活动背景图
     const preloadImage = new Image();
-    preloadImage.onload = () => {
-      setImageLoaded(true);
-    };
-    preloadImage.onerror = () => {
-      // 即使加载失败也显示，避免永久不显示
-      setImageLoaded(true);
-    };
+    preloadImage.onload = checkAllLoaded;
+    preloadImage.onerror = checkAllLoaded; // 即使失败也继续
     preloadImage.src = '/images/activity/activity_bg.png';
     
     // 预加载关闭按钮图标
     const preloadCloseIcon = new Image();
+    preloadCloseIcon.onload = checkAllLoaded;
+    preloadCloseIcon.onerror = checkAllLoaded;
     preloadCloseIcon.src = '/images/activity/close.svg';
-  }, []);
+  }, [onImagesLoaded]);
 
   if (!visible) return null;
 

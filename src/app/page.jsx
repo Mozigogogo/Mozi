@@ -125,6 +125,9 @@ export default function HomePage() {
   // 活动弹窗状态
   const [showActivityModal, setShowActivityModal] = useState(false);
   
+  // 活动弹窗图片加载状态
+  const [activityImagesLoaded, setActivityImagesLoaded] = useState(false);
+  
   // Telegram WebApp 检测状态（不影响现有 UI，仅用于环境检测与本地存储）
   const [tgInfo, setTgInfo] = useState({
     available: false,
@@ -756,8 +759,14 @@ export default function HomePage() {
     }
   };
 
-  // 初始化数据加载
+  // 初始化数据加载 - 等待活动弹窗图片加载完成后再请求接口
   useEffect(() => {
+    // 如果活动弹窗图片还未加载完成，等待
+    if (!activityImagesLoaded) {
+      return;
+    }
+
+    // 图片加载完成后，开始请求接口
     fetchHotCoin();
     fetchHotIndustry();
     fetchHotContract();
@@ -774,7 +783,7 @@ export default function HomePage() {
     }, 30000); // 30秒轮询一次
 
     return () => clearInterval(interval);
-  }, []);
+  }, [activityImagesLoaded]); // 依赖活动弹窗图片加载状态
 
   // 榜单切换处理
   const rankActiveClick = (value) => {
@@ -1188,6 +1197,7 @@ export default function HomePage() {
           visible={showActivityModal}
           onClose={() => setShowActivityModal(false)}
           onConfirm={handleActivityConfirm}
+          onImagesLoaded={() => setActivityImagesLoaded(true)}
         />
       </div>
     </Layout>
