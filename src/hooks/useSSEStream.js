@@ -41,11 +41,20 @@ export function useSSEStream(url, options = {}) {
     setIsStreaming(true);
 
     try {
+      // 从 localStorage 获取 i18next 语言设置
+      const getLanguage = () => {
+        if (typeof window !== 'undefined') {
+          return localStorage.getItem('i18nextLng') || navigator.language || 'en';
+        }
+        return 'en';
+      };
+
       // 支持 headers 为函数，实现动态获取
       const dynamicHeaders = typeof headers === 'function' ? headers() : headers;
       const requestHeaders = {
         'Content-Type': 'application/json',
-        'Accept': 'application/json, text/plain, */*',
+        'Accept': 'text/event-stream',
+        'Accept-Language': getLanguage(),
         ...dynamicHeaders,
       };
 
@@ -58,10 +67,16 @@ export function useSSEStream(url, options = {}) {
 
       onStart();
 
+      // 自动添加 language 参数到 payload
+      const payloadWithLanguage = {
+        ...payload,
+        language: getLanguage(),
+      };
+
       const response = await fetch(url, {
         method: 'POST',
         headers: requestHeaders,
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payloadWithLanguage),
         signal: abortControllerRef.current.signal,
       });
 
