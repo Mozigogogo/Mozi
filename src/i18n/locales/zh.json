@@ -1177,6 +1177,12 @@
     "user": {
       "notLoggedIn": "未登录",
       "pcUser": "PC用户"
+    },
+    "activity": {
+      "title": "MOZI",
+      "subtitle": "限量体验官招募中",
+      "description": "行体验产品 反馈拿奖！！",
+      "joinBtn": "参与体验"
     }
   }
 }
