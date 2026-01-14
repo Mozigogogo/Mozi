@@ -71,6 +71,8 @@ export default function UserPage() {
   const [reportScore, setReportScore] = useState(null);
   const [scoreDisable, setScoreDisable] = useState(true);
   const scoreInputRef = useRef('');
+  const [selectedGoodFeatures, setSelectedGoodFeatures] = useState([]); // 您觉得好的功能
+  const [selectedBadFeatures, setSelectedBadFeatures] = useState([]); // 建议调整的功能
   const [showSecondaryActions, setShowSecondaryActions] = useState(true);
   const [showPointsSection, setShowPointsSection] = useState(true);
   const [showNewCoinListing, setShowNewCoinListing] = useState(true);
@@ -858,12 +860,39 @@ export default function UserPage() {
     scoreInputRef.current = value;
   };
 
+  // 切换"您觉得好的功能"选项
+  const toggleGoodFeature = (feature) => {
+    setSelectedGoodFeatures(prev => {
+      if (prev.includes(feature)) {
+        return prev.filter(f => f !== feature);
+      } else {
+        return [...prev, feature];
+      }
+    });
+  };
+
+  // 切换"建议调整的功能"选项
+  const toggleBadFeature = (feature) => {
+    setSelectedBadFeatures(prev => {
+      if (prev.includes(feature)) {
+        return prev.filter(f => f !== feature);
+      } else {
+        return [...prev, feature];
+      }
+    });
+  };
+
   const submitScore = async () => {
     try {
       const res = await request({
         url: Interface.MOZI_COMMENT,
         method: 'POST',
-        data: { score: reportScore, content: scoreInputRef.current },
+        data: { 
+          score: reportScore, 
+          content: scoreInputRef.current,
+          goodFeatures: selectedGoodFeatures,
+          badFeatures: selectedBadFeatures
+        },
       });
       if (res?.data?.isSuccess) {
         Toast.show({ content: t('user.feedbackSuccess'), position: 'bottom' });
@@ -874,6 +903,9 @@ export default function UserPage() {
       Toast.show({ content: t('user.feedbackFailed'), position: 'bottom' });
     }
     setPopVis(false);
+    // 重置选择
+    setSelectedGoodFeatures([]);
+    setSelectedBadFeatures([]);
   };
 
   const copyToClipboard = (value) => {
@@ -1669,8 +1701,46 @@ export default function UserPage() {
           )}
 
           {popType === 'score' && (
-            <div className={styles.popContainer}>
-              <div>{t('user.feedbackQuestion')}</div>
+            <div className={styles.scorePopContainer}>
+              <div className={styles.feedbackTitle}>
+                <div>评价得奖励</div>
+                <div>hi~给出您的小小建议吧~</div>
+              </div>
+              <div className={styles.feedbackContent}>
+                {/* 您觉得好的功能 */}
+                <div className={styles.feedbackSection}>
+                  <div className={styles.feedbackSectionTitle}>您觉得好的功能</div>
+                  <Grid className={styles.featureGrid} columns={3} gap={10}>
+                    {['行情看板', '预警功能', 'AI对话', '市场数据', '社区内容', '合约数据'].map((feature) => (
+                      <Grid.Item key={feature}>
+                        <div 
+                          className={`${styles.featureTag} ${selectedGoodFeatures.includes(feature) ? styles.featureTagSelected : ''}`}
+                          onClick={() => toggleGoodFeature(feature)}
+                        >
+                          {feature}
+                        </div>
+                      </Grid.Item>
+                    ))}
+                  </Grid>
+                </div>
+
+                {/* 建议调整的功能 */}
+                <div className={styles.feedbackSection}>
+                  <div className={styles.feedbackSectionTitle}>建议调整的功能</div>
+                  <Grid className={styles.featureGrid} columns={3} gap={10}>
+                    {['行情看板', '预警功能', 'AI对话', '市场数据', '社区内容', '合约数据'].map((feature) => (
+                      <Grid.Item key={feature}>
+                        <div 
+                          className={`${styles.featureTag} ${selectedBadFeatures.includes(feature) ? styles.featureTagSelected : ''}`}
+                          onClick={() => toggleBadFeature(feature)}
+                        >
+                          {feature}
+                        </div>
+                      </Grid.Item>
+                    ))}
+                  </Grid>
+                </div>
+              </div>
               <div className={styles.scoreDesc}>
                 <span>{t('user.veryUnwilling')}</span>
                 <span>{t('user.veryWilling')}</span>

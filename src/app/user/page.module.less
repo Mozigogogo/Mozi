@@ -477,8 +477,109 @@
 .popContainer {
   padding: 20px;
   box-sizing: border-box;
-  max-height: 70vh;
   overflow-y: auto;
+}
+
+.scorePopContainer {
+  padding: 20px;
+  box-sizing: border-box;
+  max-height: 80vh;
+  overflow-y: auto;
+  background-image: url('/images/activity/feedback_modal.svg');
+  background-size: 100% auto;
+  background-position: top center;
+  background-repeat: no-repeat;
+}
+
+.feedbackTitle {
+  position: relative;
+  margin-bottom: 22px;
+  
+  div:first-child {
+    font-family: YouSheBiaoTiHei, sans-serif;
+    font-weight: 700;
+    font-size: 32px;
+    line-height: 1;
+    letter-spacing: -2px;
+    color: #FFFFFF;
+    text-shadow: 
+      2px 2px 0px rgba(0, 0, 0, 0.1),
+      4px 4px 0px rgba(0, 0, 0, 0.08),
+      6px 6px 0px rgba(0, 0, 0, 0.06),
+      8px 8px 10px rgba(0, 0, 0, 0.15);
+    margin-bottom: 4px;
+  }
+  
+  div:last-child {
+    font-size: 14px;
+    color:#0B7556;
+    padding-left: 4px;
+    line-height: 1.4;
+  }
+}
+
+.feedbackContent {
+  background: #FFFFFF;
+  box-shadow: 0px 0px 5px 1px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(17.7306px);
+  border-radius: 20px;
+  padding: 12px;
+  margin-bottom: 20px;
+  min-height: 100px;
+}
+
+.feedbackSection {
+  margin-bottom: 24px;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.feedbackSectionTitle {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 12px;
+  padding-left: 0;
+  text-align: left;
+}
+
+.featureGrid {
+  width: 100%;
+  
+  :global {
+    .adm-grid-item {
+      padding: 0;
+    }
+  }
+}
+
+.featureTag {
+  background: #F5F5F5;
+  border-radius: 20px;
+  padding: 8px 16px;
+  text-align: center;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.3s;
+  white-space: nowrap;
+  
+  &:hover {
+    background: #E8F8F4;
+  }
+  
+  &:active {
+    background: #C9F6E7;
+    color: #0B7556;
+  }
+}
+
+.featureTagSelected {
+  background: #C9F6E7 !important;
+  color: #0B7556 !important;
+  font-weight: 500;
 }
 
 .aboutItem {
