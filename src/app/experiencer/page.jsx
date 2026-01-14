@@ -77,82 +77,36 @@ export default function ExperiencerPage() {
     }
   };
 
+  const handleBack = () => {
+    router.back();
+  };
+
   return (
-    <Layout>
+    <Layout bottomPadding={0}>
       <div className={styles.container}>
-        <div className={styles.header}>
-          <h1 className={styles.title}>MOZI 限量体验官招募</h1>
-          <p className={styles.subtitle}>行体验产品 反馈拿奖！！</p>
+        {/* 背景图片层 */}
+        <div className={styles.backgroundImage} />
+        
+        {/* 返回按钮 */}
+        <div className={styles.backButton} onClick={handleBack}>
+          <img src="/images/activity/left_arrow.svg" alt="返回" />
         </div>
-
-        <div className={styles.content}>
-          <div className={styles.description}>
-            <h2>体验官权益</h2>
-            <ul>
-              <li>优先体验最新功能</li>
-              <li>参与产品决策讨论</li>
-              <li>获得专属奖励和福利</li>
-              <li>加入体验官专属社群</li>
-            </ul>
+        
+        {/* Logo */}
+        <div className={styles.logo}>
+          <img src="/images/activity/logo.png" alt="Logo" />
+        </div>
+        
+        {/* 内容层 */}
+        <div className={styles.contentWrapper}>
+          <div className={styles.overlayImage}>
+            <img src="/images/activity/image.png" alt="内容图片" />
           </div>
-
-          <div className={styles.formSection}>
-            <h2>申请成为体验官</h2>
-            
-            <div className={styles.formItem}>
-              <label className={styles.label}>姓名</label>
-              <Input
-                placeholder="请输入您的姓名"
-                value={formData.name}
-                onChange={val => handleInputChange('name', val)}
-                className={styles.input}
-              />
+          
+          <div className={styles.contentContainer}>
+            <div className={styles.titleBg}>
+              <img src="/images/activity/h5_content.png" alt="内容背景" />
             </div>
-
-            <div className={styles.formItem}>
-              <label className={styles.label}>邮箱</label>
-              <Input
-                placeholder="请输入您的邮箱"
-                type="email"
-                value={formData.email}
-                onChange={val => handleInputChange('email', val)}
-                className={styles.input}
-              />
-            </div>
-
-            <div className={styles.formItem}>
-              <label className={styles.label}>Telegram</label>
-              <Input
-                placeholder="请输入您的 Telegram 账号"
-                value={formData.telegram}
-                onChange={val => handleInputChange('telegram', val)}
-                className={styles.input}
-              />
-            </div>
-
-            <div className={styles.formItem}>
-              <label className={styles.label}>申请理由</label>
-              <TextArea
-                placeholder="请简单介绍一下您为什么想成为体验官"
-                rows={4}
-                maxLength={200}
-                showCount
-                value={formData.reason}
-                onChange={val => handleInputChange('reason', val)}
-                className={styles.textarea}
-              />
-            </div>
-
-            <Button
-              block
-              color="primary"
-              size="large"
-              loading={loading}
-              onClick={handleSubmit}
-              className={styles.submitButton}
-            >
-              提交申请
-            </Button>
           </div>
         </div>
       </div>

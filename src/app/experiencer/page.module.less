@@ -1,8 +1,117 @@
 .container {
+  min-height: 100%;
+  position: relative;
+  overflow: hidden;
+  background-color: #000; // 纯黑色作为最底层
+}
+
+// 背景图片层（第一层，最底部）
+.backgroundImage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('/images/activity/h5_page.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 0;
+  
+  // 在背景图片上添加半透明遮罩层
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(38, 39, 40, 0.7); // 半透明遮罩覆盖在图片上
+    z-index: 1;
+  }
+}
+
+// 返回按钮
+.backButton {
+  position: absolute;
+  top: 40px;
+  left: 20px;
+  z-index: 10;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  
+  img {
+    width: 24px;
+    height: 24px;
+  }
+  
+  &:active {
+    opacity: 0.7;
+  }
+}
+
+// Logo
+.logo {
+  position: absolute;
+  top: 25px;
+  left: 60px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  height: 40px;
+  
+  img {
+    height: 32px;
+    width: auto;
+  }
+}
+
+// 内容包裹层（最上层）
+.contentWrapper {
+  position: relative;
+  z-index: 2;
   min-height: 100vh;
-  background: linear-gradient(180deg, #0a1929 0%, #1a2332 100%);
-  padding: 20px;
-  padding-bottom: 80px;
+  padding: 100px 20px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.contentContainer {
+  width: 100%;
+  max-width: 600px;
+}
+
+.titleBg {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  
+  img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+}
+
+.overlayImage {
+  position: absolute;
+  top: 12%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+  
+  img {
+    max-width: 90vw;
+    width: 118px;
+    height: auto;
+    display: block;
+  }
 }
 
 .header {
