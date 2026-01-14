@@ -1207,5 +1207,11 @@
     "successMessage": "Successfully joined MOZI Experience Program!",
     "joinPrompt": "Join our community to learn about rewards!",
     "joinButton": "Join Community"
+  },
+  "activityModal": {
+    "title": "MOZI",
+    "subtitle": "Beta Tester Recruitment",
+    "description": "Test & Earn Rewards!",
+    "joinButton": "Join Now"
   }
 }

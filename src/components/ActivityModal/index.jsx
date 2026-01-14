@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './index.module.less';
 
 export default function ActivityModal({ visible, onClose, onConfirm, onImagesLoaded }) {
+  const { t, i18n } = useTranslation();
   const [imageLoaded, setImageLoaded] = useState(false);
 
   // 预加载活动图片
@@ -76,19 +78,19 @@ export default function ActivityModal({ visible, onClose, onConfirm, onImagesLoa
               </button>
               
               {/* 活动标题文字 */}
-              <div className={styles.activityTitle}>
-                <div>MOZI</div>
-                <div>限量体验官招募中</div>
+              <div className={`${styles.activityTitle} ${i18n.language === 'en' ? styles.activityTitleEn : ''}`}>
+                <div>{t('activityModal.title')}</div>
+                <div>{t('activityModal.subtitle')}</div>
               </div>
               
               {/* 副标题文字 */}
-              <div className={styles.activitySubtitle}>
-                行体验产品  反馈拿奖！！
+              <div className={`${styles.activitySubtitle} ${i18n.language === 'en' ? styles.activitySubtitleEn : ''}`}>
+                {t('activityModal.description')}
               </div>
               
               {/* 参与体验按钮 */}
               <button className={styles.participateButton} onClick={handleButtonClick}>
-                参与体验
+                {t('activityModal.joinButton')}
               </button>
             </>
           )}
