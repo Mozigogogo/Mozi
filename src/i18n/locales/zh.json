@@ -1200,5 +1200,11 @@
       "description": "行体验产品 反馈拿奖！！",
       "joinBtn": "参与体验"
     }
+  },
+  "feedbackSuccess": {
+    "title": "反馈成功",
+    "successMessage": "已成功参加MOZI体验官共创计划！",
+    "joinPrompt": "加入社群参加讨论，了解奖励信息！",
+    "joinButton": "加入社区"
   }
 }

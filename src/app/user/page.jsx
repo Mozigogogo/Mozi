@@ -11,6 +11,7 @@ import CalendarCard from '../../components/CalendarCard';
 import NewCoinListing from '../../components/NewCoinListing';
 import LoginModal from '../../components/LoginModal';
 import SocialMediaPopup from '../../components/SocialMediaPopup';
+import FeedbackSuccessModal from '../../components/FeedbackSuccessModal';
 import { RightArrowIcon } from '../../components/Icons';
 import CopyIcon from '../../components/Icons/CopyIcon';
 import { request } from '../../utils/request';
@@ -107,6 +108,7 @@ export default function UserPage() {
   });
   const [calendarEventDates, setCalendarEventDates] = useState([]); // 日历上有事件的日期（日期数字数组）
   const [isLoadingNewCoins, setIsLoadingNewCoins] = useState(false); // 新币上线数据加载状态
+  const [showSuccessModal, setShowSuccessModal] = useState(false); // 成功反馈弹窗状态
   
   // 用于记录当前组件生命周期内是否已经为邀请码弹出过登录弹窗
   const hasShownInviteModalRef = useRef(false);
@@ -261,6 +263,12 @@ export default function UserPage() {
       window.removeEventListener('focus', onFocus);
       clearInterval(timer);
     };
+  }, []);
+
+  // 预加载反馈成功弹窗的图片资源
+  useEffect(() => {
+    const preloadImage = new Image();
+    preloadImage.src = '/images/activity/toast_modal.png';
   }, []);
 
   // 页面加载时调用 getMyInterface 接口（只传年月）
@@ -895,14 +903,16 @@ export default function UserPage() {
         },
       });
       if (res?.data?.isSuccess) {
-        Toast.show({ content: t('user.feedbackSuccess'), position: 'bottom' });
+        // 关闭反馈弹窗
+        setPopVis(false);
+        // 显示成功弹窗
+        setShowSuccessModal(true);
       } else {
         Toast.show({ content: t('user.feedbackFailed'), position: 'bottom' });
       }
     } catch (e) {
       Toast.show({ content: t('user.feedbackFailed'), position: 'bottom' });
     }
-    setPopVis(false);
     // 重置选择
     setSelectedGoodFeatures([]);
     setSelectedBadFeatures([]);
@@ -1959,6 +1969,12 @@ export default function UserPage() {
           onLoginSuccess={handleLoginSuccess}
           onWalletLogin={handleWalletLogin}
           initialMode={loginModalMode}
+        />
+
+        {/* 成功反馈弹窗 */}
+        <FeedbackSuccessModal
+          visible={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
         />
       </div>
     </Layout>

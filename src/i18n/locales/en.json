@@ -1201,5 +1201,11 @@
       "description": "Try our products and get rewards for feedback!!",
       "joinBtn": "Join Now"
     }
+  },
+  "feedbackSuccess": {
+    "title": "Feedback Success",
+    "successMessage": "Successfully joined MOZI Experience Program!",
+    "joinPrompt": "Join our community to learn about rewards!",
+    "joinButton": "Join Community"
   }
 }
