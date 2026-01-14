@@ -255,8 +255,8 @@ export default function HomePage() {
   
   // 处理活动弹窗确认
   const handleActivityConfirm = () => {
-    // 跳转到活动页面或执行其他操作
-    router.push('/whitelist'); // 假设活动页面是白名单页面
+    // 跳转到体验官页面
+    router.push('/experiencer');
   };
 
   useEffect(() => {
