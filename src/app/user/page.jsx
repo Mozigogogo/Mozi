@@ -1707,8 +1707,10 @@ export default function UserPage() {
                 <div>hi~给出您的小小建议吧~</div>
               </div>
               <div className={styles.feedbackContent}>
-                {/* 您觉得好的功能 */}
-                <div className={styles.feedbackSection}>
+                {/* 功能选择区域 */}
+                <div className={styles.feedbackSelectSection}>
+                  {/* 您觉得好的功能 */}
+                  <div className={styles.feedbackSection}>
                   <div className={styles.feedbackSectionTitle}>您觉得好的功能</div>
                   <Grid className={styles.featureGrid} columns={3} gap={10}>
                     {['行情看板', '预警功能', 'AI对话', '市场数据', '社区内容', '合约数据'].map((feature) => (
@@ -1740,28 +1742,33 @@ export default function UserPage() {
                     ))}
                   </Grid>
                 </div>
+                </div>
+
+                {/* 积分活动容器 */}
+                <div className={styles.scoreContainer}>
+                  <div className={styles.scoreRecommendText}>您是否愿意向您的朋友推荐Mozi</div>
+                  <div className={styles.scoreDesc}>
+                    <span>{t('user.veryUnwilling')}</span>
+                    <span>{t('user.veryWilling')}</span>
+                  </div>
+                  <Grid className={styles.scoreList} columns={10} gap={5}>
+                    {[1,2,3,4,5,6,7,8,9,10].map((item) => (
+                      <Grid.Item key={item} className={`${styles.scoreItem} ${item === reportScore ? styles.scoreActive : ''}`} onClick={() => onScoreSelect(item)}>
+                        {item}
+                      </Grid.Item>
+                    ))}
+                  </Grid>
+                </div>
               </div>
-              <div className={styles.scoreDesc}>
-                <span>{t('user.veryUnwilling')}</span>
-                <span>{t('user.veryWilling')}</span>
-              </div>
-              <Grid className={styles.scoreList} columns={10} gap={5}>
-                {[1,2,3,4,5,6,7,8,9,10].map((item) => (
-                  <Grid.Item key={item} className={`${styles.scoreItem} ${item === reportScore ? styles.scoreActive : ''}`} onClick={() => onScoreSelect(item)}>
-                    {item}
-                  </Grid.Item>
-                ))}
-              </Grid>
               <div className={styles.scoreCon}>
                 <div>
-                  <span>{t('user.moreFeedback')}</span>
-                  <span className={styles.scoreConDesc}>{t('user.optional')}</span>
+                  <span>请填写建议反馈，我们将根据您的内容抽取奖励！</span>
                 </div>
-                <TextArea className={styles.scoreText} placeholder={t('user.feedbackPlaceholder')} maxLength={200} onChange={onScoreTextChange} rows={4} />
+                <TextArea className={styles.scoreTextArea} placeholder="感谢反馈，期待您的更多建议！" maxLength={200} onChange={onScoreTextChange} rows={4} />
               </div>
               <Button className={`${styles.scoreBtn} ${scoreDisable ? styles.scoreBtnDisable : ''}`} onClick={submitScore} disabled={scoreDisable} block>
-                {t('common.submit')}
-          </Button>
+                提交反馈
+              </Button>
             </div>
           )}
 
