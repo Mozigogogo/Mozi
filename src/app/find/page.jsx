@@ -834,7 +834,13 @@ const loadingTimerRef = useRef(null);
         <MarketOverview />
         
         <div className={styles.marketBox}>
-          <PullToRefresh onRefresh={handleRefresh}>
+          <PullToRefresh 
+            onRefresh={handleRefresh}
+            pullingText={t('discover.pullToRefresh.pulling')}
+            canReleaseText={t('discover.pullToRefresh.canRelease')}
+            refreshingText={t('discover.pullToRefresh.refreshing')}
+            completeText={t('discover.pullToRefresh.complete')}
+          >
             <Layout isLoading={marketLoading} isError={isMarketError} loadingTop={120}>
               <div className={styles.gridTitle}>
                 {[

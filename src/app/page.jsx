@@ -100,6 +100,7 @@ export default function HomePage() {
   const { t, i18n } = useTranslation();
   const { track } = useAmplitude('Home');
   const isEN = (i18n?.language || '').startsWith('en');
+  const language = isEN ? 'en' : 'zh';
   
   // PC端设备检测
   const [isPC, setIsPC] = useState(false);
