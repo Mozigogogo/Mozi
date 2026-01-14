@@ -1671,6 +1671,8 @@ export default function UserPage() {
           bodyStyle={
             popType === 'social' 
               ? { background: 'transparent', padding: 0 }
+              : popType === 'score'
+              ? { borderTopLeftRadius: '20px', borderTopRightRadius: '20px' }
               : { borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }
           }
         >
