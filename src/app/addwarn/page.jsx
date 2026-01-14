@@ -152,7 +152,7 @@ export default function Addwarn() {
         
         // 显示积分奖励提示（如果接口返回了积分信息）
         if (res?.data?.message) {
-          Toast.show({ content: res.data.message, icon: 'success' });
+           Toast.show({ content: t('pointsDetail.taskCompletedSuccess'), icon: 'success' });
         }
       } else {
         console.warn('[AddWarn] 完成告警任务失败:', res?.msg || res?.message);

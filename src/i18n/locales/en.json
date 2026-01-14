@@ -189,7 +189,13 @@
     },
     "addFavoriteButton": "Add Favorite",
     "loadFinished": "All loaded",
-    "robotMessage": "Want to hear my analysis of the market?"
+    "robotMessage": "Want to hear my analysis of the market?",
+    "pullToRefresh": {
+      "pulling": "Pull to refresh",
+      "canRelease": "Release to refresh",
+      "refreshing": "Loading...",
+      "complete": "Refresh complete"
+    }
   },
   "overview": {
     "totalMarketCap": "Market Cap",
@@ -587,6 +593,8 @@
     "earnMorePoints": "Earn More Points",
     "dailyInvestmentTitle": "Daily Investment Ranking",
     "taskCompleted": "Task Completed",
+    "taskCompletedSuccess": "Task Completed",
+    "fetchFailed": "Failed to fetch points data",
     "joinAlarm": "Join Alarm",
     "certification": "Certification",
     "note1": "The first 20 referrals each day can earn points.",

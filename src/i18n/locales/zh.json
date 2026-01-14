@@ -189,7 +189,13 @@
     },
     "addFavoriteButton": "添加自选",
     "loadFinished": "已全部加载完毕",
-    "robotMessage": "想听听我对行情的分析吗？"
+    "robotMessage": "想听听我对行情的分析吗？",
+    "pullToRefresh": {
+      "pulling": "下拉刷新",
+      "canRelease": "释放立即刷新",
+      "refreshing": "加载中...",
+      "complete": "刷新成功"
+    }
   },
   "overview": {
     "totalMarketCap": "加密总市值",
@@ -587,6 +593,8 @@
     "earnMorePoints": "获得更多积分",
     "dailyInvestmentTitle": "每日投资排行",
     "taskCompleted": "任务已完成",
+    "taskCompletedSuccess": "任务完成",
+    "fetchFailed": "获取积分数据失败",
     "joinAlarm": "加入警报通",
     "certification": "认证",
     "note1": "每天前20个推荐均可获得积分。",
