@@ -1705,17 +1705,24 @@ export default function UserPage() {
           {popType === 'score' && (
             <div className={styles.scorePopContainer}>
               <div className={styles.feedbackTitle}>
-                <div>评价得奖励</div>
-                <div>hi~给出您的小小建议吧~</div>
+                <div>{t('user.feedbackTitle')}</div>
+                <div>{t('user.feedbackSubtitle')}</div>
               </div>
               <div className={styles.feedbackContent}>
                 {/* 功能选择区域 */}
                 <div className={styles.feedbackSelectSection}>
                   {/* 您觉得好的功能 */}
                   <div className={styles.feedbackSection}>
-                  <div className={styles.feedbackSectionTitle}>您觉得好的功能</div>
+                  <div className={styles.feedbackSectionTitle}>{t('user.goodFeatures')}</div>
                   <Grid className={styles.featureGrid} columns={3} gap={10}>
-                    {['行情看板', '预警功能', 'AI对话', '市场数据', '社区内容', '合约数据'].map((feature) => (
+                    {[
+                      t('user.featureOptions.marketBoard'),
+                      t('user.featureOptions.alertFunction'),
+                      t('user.featureOptions.aiChat'),
+                      t('user.featureOptions.marketData'),
+                      t('user.featureOptions.communityContent'),
+                      t('user.featureOptions.contractData')
+                    ].map((feature) => (
                       <Grid.Item key={feature}>
                         <div 
                           className={`${styles.featureTag} ${selectedGoodFeatures.includes(feature) ? styles.featureTagSelected : ''}`}
@@ -1730,9 +1737,16 @@ export default function UserPage() {
 
                 {/* 建议调整的功能 */}
                 <div className={styles.feedbackSection}>
-                  <div className={styles.feedbackSectionTitle}>建议调整的功能</div>
+                  <div className={styles.feedbackSectionTitle}>{t('user.badFeatures')}</div>
                   <Grid className={styles.featureGrid} columns={3} gap={10}>
-                    {['行情看板', '预警功能', 'AI对话', '市场数据', '社区内容', '合约数据'].map((feature) => (
+                    {[
+                      t('user.featureOptions.marketBoard'),
+                      t('user.featureOptions.alertFunction'),
+                      t('user.featureOptions.aiChat'),
+                      t('user.featureOptions.marketData'),
+                      t('user.featureOptions.communityContent'),
+                      t('user.featureOptions.contractData')
+                    ].map((feature) => (
                       <Grid.Item key={feature}>
                         <div 
                           className={`${styles.featureTag} ${selectedBadFeatures.includes(feature) ? styles.featureTagSelected : ''}`}
@@ -1748,7 +1762,7 @@ export default function UserPage() {
 
                 {/* 积分活动容器 */}
                 <div className={styles.scoreContainer}>
-                  <div className={styles.scoreRecommendText}>您是否愿意向您的朋友推荐Mozi</div>
+                  <div className={styles.scoreRecommendText}>{t('user.recommendQuestion')}</div>
                   <div className={styles.scoreDesc}>
                     <span>{t('user.veryUnwilling')}</span>
                     <span>{t('user.veryWilling')}</span>
@@ -1764,12 +1778,12 @@ export default function UserPage() {
               </div>
               <div className={styles.scoreCon}>
                 <div>
-                  <span>请填写建议反馈，我们将根据您的内容抽取奖励！</span>
+                  <span>{t('user.feedbackInputTitle')}</span>
                 </div>
-                <TextArea className={styles.scoreTextArea} placeholder="感谢反馈，期待您的更多建议！" maxLength={200} onChange={onScoreTextChange} rows={4} />
+                <TextArea className={styles.scoreTextArea} placeholder={t('user.feedbackInputPlaceholder')} maxLength={200} onChange={onScoreTextChange} rows={4} />
               </div>
               <Button className={`${styles.scoreBtn} ${scoreDisable ? styles.scoreBtnDisable : ''}`} onClick={submitScore} disabled={scoreDisable} block>
-                提交反馈
+                {t('user.submitFeedback')}
               </Button>
             </div>
           )}
