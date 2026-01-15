@@ -237,21 +237,22 @@ export default function HomePage() {
   // }, [isEN]);
   
   // 每次进入页面都显示活动弹窗
-  // 只在首次进入 App 时显示活动弹窗
+  // 只在首次进入 App 时显示活动弹窗（使用 sessionStorage，关闭小程序后自动清除）
   useEffect(() => {
     if (typeof window === 'undefined') return;
     
     try {
-      // 检查是否已经显示过活动弹窗
-      const hasShownActivity = localStorage.getItem(ACTIVITY_LAST_SHOWN_KEY);
+      // 使用 sessionStorage 检查本次会话是否已经显示过活动弹窗
+      // sessionStorage 会在关闭标签页/小程序时自动清除
+      const hasShownActivity = sessionStorage.getItem(ACTIVITY_LAST_SHOWN_KEY);
       
-      // 如果从未显示过，则显示弹窗
+      // 如果本次会话从未显示过，则显示弹窗
       if (!hasShownActivity) {
         // 延迟500ms显示活动弹窗
         const timer = setTimeout(() => {
           setShowActivityModal(true);
-          // 标记已显示过
-          localStorage.setItem(ACTIVITY_LAST_SHOWN_KEY, 'true');
+          // 标记本次会话已显示过
+          sessionStorage.setItem(ACTIVITY_LAST_SHOWN_KEY, 'true');
         }, 500);
         
         return () => clearTimeout(timer);

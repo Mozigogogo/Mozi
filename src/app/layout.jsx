@@ -12,7 +12,6 @@ import VConsoleLoader from "@/components/VConsole";
 import InviteCodeHandler from "@/components/InviteCodeHandler";
 import EnvironmentDetector from "@/components/EnvironmentDetector";
 import RouteChangeHandler from "@/components/RouteChangeHandler";
-import AppLifecycleHandler from "@/components/AppLifecycleHandler";
 
 const geistSans = Inter({
   variable: "--font-geist-sans",
@@ -49,7 +48,6 @@ export default function RootLayout({ children }) {
         />
         <EnvironmentDetector />
         <RouteChangeHandler />
-        <AppLifecycleHandler />
         <VConsoleLoader />
         <Suspense fallback={null}>
           <InviteCodeHandler />
