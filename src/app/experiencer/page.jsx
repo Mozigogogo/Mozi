@@ -1,18 +1,43 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import Layout from '@/components/Layout';
 import styles from './page.module.less';
 
 export default function ExperiencerPage() {
   const router = useRouter();
+  const { i18n, t } = useTranslation();
+  const [imageLoaded, setImageLoaded] = useState(false);
+  
+  // 根据语言选择图片
+  const activityImage = useMemo(() => {
+    const isEN = (i18n?.language || '').startsWith('en');
+    return isEN ? '/images/activity/h5_activity_en.png' : '/images/activity/h5_activity_zh.png';
+  }, [i18n?.language]);
 
-  // 预加载关键图片资源
+  // 判断是否为英文模式
+  const isEN = useMemo(() => {
+    return (i18n?.language || '').startsWith('en');
+  }, [i18n?.language]);
+
+  // 预加载关键图片资源并监听加载完成
   useEffect(() => {
+    setImageLoaded(false); // 重置加载状态
     const preloadImage = new Image();
-    preloadImage.src = '/images/activity/h5_activity_zh.png';
-  }, []);
+    
+    preloadImage.onload = () => {
+      setImageLoaded(true);
+    };
+    
+    preloadImage.onerror = () => {
+      // 即使加载失败也显示按钮，避免永久隐藏
+      setImageLoaded(true);
+    };
+    
+    preloadImage.src = activityImage;
+  }, [activityImage]);
 
   const handleExperience = () => {
     // 跳转到首页
@@ -25,7 +50,13 @@ export default function ExperiencerPage() {
   };
 
   const handleBack = () => {
-    router.back();
+    // 检查是否有历史记录
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+    } else {
+      // 没有历史记录，返回首页
+      router.push('/');
+    }
   };
 
   return (
@@ -48,23 +79,40 @@ export default function ExperiencerPage() {
         <div className={styles.contentWrapper}> 
           <div className={styles.contentContainer}>
             <div className={styles.contentBg}>
-              <img src="/images/activity/h5_activity_zh.png" alt="内容背景" />
+              <img 
+                src={activityImage} 
+                alt="内容背景"
+                onLoad={() => setImageLoaded(true)}
+                onError={() => setImageLoaded(true)}
+              />
               
               {/* 去提交按钮 - 相对于背景图片定位在左下角 */}
-              <button className={styles.littleSubmitButton} onClick={handleSubmit}>
-                去提交
-              </button>
+              {imageLoaded && (
+                <button 
+                  className={`${styles.littleSubmitButton} ${isEN ? styles.littleSubmitButtonEN : ''}`} 
+                  onClick={handleSubmit}
+                >
+                  {t('experiencer.submit')}
+                </button>
+              )}
               
               {/* 去体验按钮 - 相对于背景图片定位在右上角 */}
-              <button className={styles.bgButton} onClick={handleExperience}>
-                去体验
-              </button>
+              {imageLoaded && (
+                <button 
+                  className={`${styles.bgButton} ${isEN ? styles.bgButtonEN : ''}`} 
+                  onClick={handleExperience}
+                >
+                  {t('experiencer.experience')}
+                </button>
+              )}
             </div>
             
             {/* 开始体验按钮 */}
-            <button className={styles.experienceButton} onClick={handleExperience}>
-              开始体验
-            </button>
+            {imageLoaded && (
+              <button className={styles.experienceButton} onClick={handleExperience}>
+                {t('experiencer.startExperience')}
+              </button>
+            )}
           </div>
         </div>
       </div>

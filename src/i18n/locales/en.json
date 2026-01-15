@@ -914,8 +914,8 @@
   "addAlarm": {
     "title": "Configure Alert",
     "latestPrice": "Latest Price",
-    "priceRise": "Price Rise To",
-    "priceFall": "Price Fall To",
+    "priceRise": "Rise To",
+    "priceFall": "Fall To",
     "risePercent": "Daily Rise Over",
     "fallPercent": "Daily Fall Over",
     "saveAlarm": "Save Alert",
@@ -932,8 +932,8 @@
   },
   "myAlarm": {
     "title": "My Alerts",
-    "priceRiseTo": "Price Rise To",
-    "priceFallTo": "Price Fall To",
+    "priceRiseTo": "Rise To",
+    "priceFallTo": "Fall To",
     "riseOver": "Rise Over",
     "fallOver": "Fall Over",
     "enterNumber": "Enter number",
@@ -1213,5 +1213,10 @@
     "subtitle": "Beta Tester Recruitment",
     "description": "Test & Earn Rewards!",
     "joinButton": "Join Now"
+  },
+  "experiencer": {
+    "submit": "Submit",
+    "experience": "Try Now",
+    "startExperience": "Start Experience"
   }
 }

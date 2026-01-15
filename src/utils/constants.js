@@ -149,7 +149,7 @@ export const Interface = {
   // 用户帖子列表
   USER_POSTS: '/user/posts',
   // 评论
-  MOZI_COMMENT: '/user/feedback',
+  MOZI_COMMENT: '/feedback/add',
   // 我的评论列表
   GET_MY_COMMENTS: '/easy/getMyComments',
   // 我的点赞列表
