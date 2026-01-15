@@ -109,6 +109,7 @@ export default function UserPage() {
   const [calendarEventDates, setCalendarEventDates] = useState([]); // 日历上有事件的日期（日期数字数组）
   const [isLoadingNewCoins, setIsLoadingNewCoins] = useState(false); // 新币上线数据加载状态
   const [showSuccessModal, setShowSuccessModal] = useState(false); // 成功反馈弹窗状态
+  const [submittingFeedback, setSubmittingFeedback] = useState(false); // 提交反馈的 loading 状态
   
   // 用于记录当前组件生命周期内是否已经为邀请码弹出过登录弹窗
   const hasShownInviteModalRef = useRef(false);
@@ -922,6 +923,7 @@ export default function UserPage() {
   };
 
   const submitScore = async () => {
+    setSubmittingFeedback(true);
     try {
       const res = await request({
         url: Interface.MOZI_COMMENT,
@@ -943,6 +945,8 @@ export default function UserPage() {
       }
     } catch (e) {
       Toast.show({ content: t('user.feedbackFailed'), position: 'bottom' });
+    } finally {
+      setSubmittingFeedback(false);
     }
     // 重置选择
     setSelectedGoodFeatures([]);
@@ -1823,8 +1827,17 @@ export default function UserPage() {
                 </div>
                 <TextArea className={styles.scoreTextArea} placeholder={t('user.feedbackInputPlaceholder')} maxLength={200} onChange={onScoreTextChange} rows={4} />
               </div>
-              <Button className={`${styles.scoreBtn} ${scoreDisable ? styles.scoreBtnDisable : ''}`} onClick={submitScore} disabled={scoreDisable} block>
-                {t('user.submitFeedback')}
+              <Button 
+                className={`${styles.scoreBtn} ${scoreDisable ? styles.scoreBtnDisable : ''} ${submittingFeedback ? styles.loading : ''}`} 
+                onClick={submittingFeedback ? undefined : submitScore} 
+                disabled={scoreDisable || submittingFeedback} 
+                block
+              >
+                {submittingFeedback ? (
+                  <span className={styles.loadingSpinner}></span>
+                ) : (
+                  t('user.submitFeedback')
+                )}
               </Button>
             </div>
           )}
