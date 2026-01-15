@@ -1,11 +1,18 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Layout from '@/components/Layout';
 import styles from './page.module.less';
 
 export default function ExperiencerPage() {
   const router = useRouter();
+
+  // 预加载关键图片资源
+  useEffect(() => {
+    const preloadImage = new Image();
+    preloadImage.src = '/images/activity/h5_activity_zh.png';
+  }, []);
 
   const handleExperience = () => {
     // 跳转到首页
