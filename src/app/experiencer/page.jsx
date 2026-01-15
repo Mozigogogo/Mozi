@@ -50,7 +50,13 @@ export default function ExperiencerPage() {
   };
 
   const handleBack = () => {
-    router.back();
+    // 检查是否有历史记录
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+    } else {
+      // 没有历史记录，返回首页
+      router.push('/');
+    }
   };
 
   return (
