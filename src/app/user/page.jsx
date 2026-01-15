@@ -158,24 +158,14 @@ export default function UserPage() {
     const openFeedback = searchParams.get('openFeedback');
     
     if (openFeedback === 'true') {
-      // 检查用户是否已登录
-      const token = localStorage.getItem('token');
-      if (!token) {
-        // 未登录，打开登录弹窗
-        requestAnimationFrame(() => {
-          setTimeout(() => {
-            setShowLoginModal(true);
-          }, 300);
-        });
-      } else {
-        // 已登录，打开反馈弹窗
-        requestAnimationFrame(() => {
-          setTimeout(() => {
-            setPopVis(true);
-            setPopType('score');
-          }, 300);
-        });
-      }
+      // 无论是否登录，都打开反馈弹窗
+      // 在提交时会检查登录状态
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          setPopVis(true);
+          setPopType('score');
+        }, 300);
+      });
       
       // 清除 URL 中的 openFeedback 参数
       const url = new URL(window.location.href);
@@ -923,6 +913,22 @@ export default function UserPage() {
   };
 
   const submitScore = async () => {
+    // 检查用户是否登录
+    const token = localStorage.getItem('token');
+    if (!token) {
+      // 先关闭反馈弹窗
+      setPopVis(false);
+      // 延迟显示 Toast 和打开登录弹窗，确保 Toast 可见
+      setTimeout(() => {
+        Toast.show({ content: t('user.pleaseLogin'), position: 'top', duration: 2000 });
+        // 再延迟一点打开登录弹窗，让用户看到提示
+        setTimeout(() => {
+          setShowLoginModal(true);
+        }, 500);
+      }, 100);
+      return;
+    }
+    
     setSubmittingFeedback(true);
     try {
       const res = await request({
@@ -1724,7 +1730,7 @@ export default function UserPage() {
           {popType === 'social' && <SocialMediaPopup />}
 
           {popType === 'about' && (
-            <div className={styles.popContainer}>
+            <div className={`${styles.popContainer} ${styles.aboutContainer}`}>
               <div className={styles.aboutItem}>
                 {t('user.aboutMozi.intro')}
               </div>
