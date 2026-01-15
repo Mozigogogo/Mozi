@@ -86,11 +86,12 @@
   max-width: 600px;
 }
 
-.titleBg {
+.contentBg {
   width: 100%;
   display: flex;
   justify-content: center;
   margin-bottom: 20px;
+  position: relative;
   
   img {
     width: 100%;
@@ -99,18 +100,90 @@
   }
 }
 
-.overlayImage {
-  position: absolute;
-  top: 12%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 5;
+.experienceButton {
+  width: 80%;
+  max-width: 300px;
+  height: 50px;
+  background: #11B787;
+  border-radius: 35.98px;
+  border: none;
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin: 20px auto 0;
+  display: block;
   
-  img {
-    max-width: 90vw;
-    width: 118px;
-    height: auto;
-    display: block;
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+}
+
+.smallExperienceButton {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 59px;
+  height: 24px;
+  background: #11B787;
+  border-radius: 35.98px;
+  border: none;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10;
+  
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+}
+
+.littleSubmitButton {
+  position: absolute;
+  bottom: 87px;
+  right: 38px;
+  width: 59px;
+  height: 24px;
+  background: #11B787;
+  border-radius: 35.98px;
+  border: none;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10;
+  
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+}
+
+.bgButton {
+  position: absolute;
+  bottom: 157px;
+  right: 38px;
+  width: 59px;
+  height: 24px;
+  background: #11B787;
+  border-radius: 35.98px;
+  border: none;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10;
+  
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.9;
   }
 }
 

@@ -152,6 +152,37 @@ export default function UserPage() {
     }
   }, [searchParams]);
 
+  // 检查 URL 参数，自动打开反馈弹窗
+  useEffect(() => {
+    const openFeedback = searchParams.get('openFeedback');
+    
+    if (openFeedback === 'true') {
+      // 检查用户是否已登录
+      const token = localStorage.getItem('token');
+      if (!token) {
+        // 未登录，打开登录弹窗
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            setShowLoginModal(true);
+          }, 300);
+        });
+      } else {
+        // 已登录，打开反馈弹窗
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            setPopVis(true);
+            setPopType('score');
+          }, 300);
+        });
+      }
+      
+      // 清除 URL 中的 openFeedback 参数
+      const url = new URL(window.location.href);
+      url.searchParams.delete('openFeedback');
+      window.history.replaceState({}, '', url.pathname + url.search);
+    }
+  }, [searchParams]);
+
   // 获取用户积分数据
   const fetchUserPointsData = async () => {
     try {
