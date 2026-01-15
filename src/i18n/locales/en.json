@@ -1213,5 +1213,10 @@
     "subtitle": "Beta Tester Recruitment",
     "description": "Test & Earn Rewards!",
     "joinButton": "Join Now"
+  },
+  "experiencer": {
+    "submit": "Submit",
+    "experience": "Try Now",
+    "startExperience": "Start Experience"
   }
 }

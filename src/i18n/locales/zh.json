@@ -1212,5 +1212,10 @@
     "subtitle": "限量体验官招募中",
     "description": "行体验产品  反馈拿奖！！",
     "joinButton": "参与体验"
+  },
+  "experiencer": {
+    "submit": "去提交",
+    "experience": "去体验",
+    "startExperience": "开始体验"
   }
 }
