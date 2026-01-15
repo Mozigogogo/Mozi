@@ -269,6 +269,22 @@
     "interfaceNotReady": "Data loading failed, please try again later",
     "operationFailed": "Operation failed, please try again later",
     "feedbackQuestion": "How likely are you to recommend Mozi to your friends?",
+    "feedbackTitle": "Rate & Earn Rewards",
+    "feedbackSubtitle": "hi~ Share your thoughts with us~",
+    "goodFeatures": "Features you like",
+    "badFeatures": "Features to improve",
+    "recommendQuestion": "Recommend Mozi to friends?",
+    "feedbackInputTitle": "Please share your feedback!",
+    "feedbackInputPlaceholder": "Thanks for your feedback!",
+    "submitFeedback": "Submit Feedback",
+    "featureOptions": {
+      "marketBoard": "Market",
+      "alertFunction": "Alerts",
+      "aiChat": "AI Chat",
+      "marketData": "Data",
+      "communityContent": "Community",
+      "contractData": "Contracts"
+    },
     "veryUnwilling": "Very Unlikely",
     "veryWilling": "Very Likely",
     "moreFeedback": "More Feedback",
@@ -1185,5 +1201,17 @@
       "description": "Try our products and get rewards for feedback!!",
       "joinBtn": "Join Now"
     }
+  },
+  "feedbackSuccess": {
+    "title": "Feedback Success",
+    "successMessage": "Successfully joined MOZI Experience Program!",
+    "joinPrompt": "Join our community to learn about rewards!",
+    "joinButton": "Join Community"
+  },
+  "activityModal": {
+    "title": "MOZI",
+    "subtitle": "Beta Tester Recruitment",
+    "description": "Test & Earn Rewards!",
+    "joinButton": "Join Now"
   }
 }

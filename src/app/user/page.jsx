@@ -11,6 +11,7 @@ import CalendarCard from '../../components/CalendarCard';
 import NewCoinListing from '../../components/NewCoinListing';
 import LoginModal from '../../components/LoginModal';
 import SocialMediaPopup from '../../components/SocialMediaPopup';
+import FeedbackSuccessModal from '../../components/FeedbackSuccessModal';
 import { RightArrowIcon } from '../../components/Icons';
 import CopyIcon from '../../components/Icons/CopyIcon';
 import { request } from '../../utils/request';
@@ -71,6 +72,8 @@ export default function UserPage() {
   const [reportScore, setReportScore] = useState(null);
   const [scoreDisable, setScoreDisable] = useState(true);
   const scoreInputRef = useRef('');
+  const [selectedGoodFeatures, setSelectedGoodFeatures] = useState([]); // 您觉得好的功能
+  const [selectedBadFeatures, setSelectedBadFeatures] = useState([]); // 建议调整的功能
   const [showSecondaryActions, setShowSecondaryActions] = useState(true);
   const [showPointsSection, setShowPointsSection] = useState(true);
   const [showNewCoinListing, setShowNewCoinListing] = useState(true);
@@ -105,6 +108,7 @@ export default function UserPage() {
   });
   const [calendarEventDates, setCalendarEventDates] = useState([]); // 日历上有事件的日期（日期数字数组）
   const [isLoadingNewCoins, setIsLoadingNewCoins] = useState(false); // 新币上线数据加载状态
+  const [showSuccessModal, setShowSuccessModal] = useState(false); // 成功反馈弹窗状态
   
   // 用于记录当前组件生命周期内是否已经为邀请码弹出过登录弹窗
   const hasShownInviteModalRef = useRef(false);
@@ -145,6 +149,37 @@ export default function UserPage() {
           setShowLoginModal(true);
         }, 300); // 300ms的延迟，让页面完全渲染完成后再弹出，更丝滑
       });
+    }
+  }, [searchParams]);
+
+  // 检查 URL 参数，自动打开反馈弹窗
+  useEffect(() => {
+    const openFeedback = searchParams.get('openFeedback');
+    
+    if (openFeedback === 'true') {
+      // 检查用户是否已登录
+      const token = localStorage.getItem('token');
+      if (!token) {
+        // 未登录，打开登录弹窗
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            setShowLoginModal(true);
+          }, 300);
+        });
+      } else {
+        // 已登录，打开反馈弹窗
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            setPopVis(true);
+            setPopType('score');
+          }, 300);
+        });
+      }
+      
+      // 清除 URL 中的 openFeedback 参数
+      const url = new URL(window.location.href);
+      url.searchParams.delete('openFeedback');
+      window.history.replaceState({}, '', url.pathname + url.search);
     }
   }, [searchParams]);
 
@@ -259,6 +294,12 @@ export default function UserPage() {
       window.removeEventListener('focus', onFocus);
       clearInterval(timer);
     };
+  }, []);
+
+  // 预加载反馈成功弹窗的图片资源
+  useEffect(() => {
+    const preloadImage = new Image();
+    preloadImage.src = '/images/activity/toast_modal.png';
   }, []);
 
   // 页面加载时调用 getMyInterface 接口（只传年月）
@@ -858,22 +899,54 @@ export default function UserPage() {
     scoreInputRef.current = value;
   };
 
+  // 切换"您觉得好的功能"选项
+  const toggleGoodFeature = (feature) => {
+    setSelectedGoodFeatures(prev => {
+      if (prev.includes(feature)) {
+        return prev.filter(f => f !== feature);
+      } else {
+        return [...prev, feature];
+      }
+    });
+  };
+
+  // 切换"建议调整的功能"选项
+  const toggleBadFeature = (feature) => {
+    setSelectedBadFeatures(prev => {
+      if (prev.includes(feature)) {
+        return prev.filter(f => f !== feature);
+      } else {
+        return [...prev, feature];
+      }
+    });
+  };
+
   const submitScore = async () => {
     try {
       const res = await request({
         url: Interface.MOZI_COMMENT,
         method: 'POST',
-        data: { score: reportScore, content: scoreInputRef.current },
+        data: { 
+          score: reportScore, 
+          content: scoreInputRef.current,
+          goodFeatures: selectedGoodFeatures,
+          badFeatures: selectedBadFeatures
+        },
       });
       if (res?.data?.isSuccess) {
-        Toast.show({ content: t('user.feedbackSuccess'), position: 'bottom' });
+        // 关闭反馈弹窗
+        setPopVis(false);
+        // 显示成功弹窗
+        setShowSuccessModal(true);
       } else {
         Toast.show({ content: t('user.feedbackFailed'), position: 'bottom' });
       }
     } catch (e) {
       Toast.show({ content: t('user.feedbackFailed'), position: 'bottom' });
     }
-    setPopVis(false);
+    // 重置选择
+    setSelectedGoodFeatures([]);
+    setSelectedBadFeatures([]);
   };
 
   const copyToClipboard = (value) => {
@@ -1639,6 +1712,8 @@ export default function UserPage() {
           bodyStyle={
             popType === 'social' 
               ? { background: 'transparent', padding: 0 }
+              : popType === 'score'
+              ? { borderTopLeftRadius: '20px', borderTopRightRadius: '20px' }
               : { borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }
           }
         >
@@ -1669,29 +1744,88 @@ export default function UserPage() {
           )}
 
           {popType === 'score' && (
-            <div className={styles.popContainer}>
-              <div>{t('user.feedbackQuestion')}</div>
-              <div className={styles.scoreDesc}>
-                <span>{t('user.veryUnwilling')}</span>
-                <span>{t('user.veryWilling')}</span>
+            <div className={styles.scorePopContainer}>
+              <div className={styles.feedbackTitle}>
+                <div>{t('user.feedbackTitle')}</div>
+                <div>{t('user.feedbackSubtitle')}</div>
               </div>
-              <Grid className={styles.scoreList} columns={10} gap={5}>
-                {[1,2,3,4,5,6,7,8,9,10].map((item) => (
-                  <Grid.Item key={item} className={`${styles.scoreItem} ${item === reportScore ? styles.scoreActive : ''}`} onClick={() => onScoreSelect(item)}>
-                    {item}
-                  </Grid.Item>
-                ))}
-              </Grid>
+              <div className={styles.feedbackContent}>
+                {/* 功能选择区域 */}
+                <div className={styles.feedbackSelectSection}>
+                  {/* 您觉得好的功能 */}
+                  <div className={styles.feedbackSection}>
+                  <div className={styles.feedbackSectionTitle}>{t('user.goodFeatures')}</div>
+                  <Grid className={styles.featureGrid} columns={3} gap={10}>
+                    {[
+                      t('user.featureOptions.marketBoard'),
+                      t('user.featureOptions.alertFunction'),
+                      t('user.featureOptions.aiChat'),
+                      t('user.featureOptions.marketData'),
+                      t('user.featureOptions.communityContent'),
+                      t('user.featureOptions.contractData')
+                    ].map((feature) => (
+                      <Grid.Item key={feature}>
+                        <div 
+                          className={`${styles.featureTag} ${selectedGoodFeatures.includes(feature) ? styles.featureTagSelected : ''}`}
+                          onClick={() => toggleGoodFeature(feature)}
+                        >
+                          {feature}
+                        </div>
+                      </Grid.Item>
+                    ))}
+                  </Grid>
+                </div>
+
+                {/* 建议调整的功能 */}
+                <div className={styles.feedbackSection}>
+                  <div className={styles.feedbackSectionTitle}>{t('user.badFeatures')}</div>
+                  <Grid className={styles.featureGrid} columns={3} gap={10}>
+                    {[
+                      t('user.featureOptions.marketBoard'),
+                      t('user.featureOptions.alertFunction'),
+                      t('user.featureOptions.aiChat'),
+                      t('user.featureOptions.marketData'),
+                      t('user.featureOptions.communityContent'),
+                      t('user.featureOptions.contractData')
+                    ].map((feature) => (
+                      <Grid.Item key={feature}>
+                        <div 
+                          className={`${styles.featureTag} ${selectedBadFeatures.includes(feature) ? styles.featureTagSelected : ''}`}
+                          onClick={() => toggleBadFeature(feature)}
+                        >
+                          {feature}
+                        </div>
+                      </Grid.Item>
+                    ))}
+                  </Grid>
+                </div>
+                </div>
+
+                {/* 积分活动容器 */}
+                <div className={styles.scoreContainer}>
+                  <div className={styles.scoreRecommendText}>{t('user.recommendQuestion')}</div>
+                  <div className={styles.scoreDesc}>
+                    <span>{t('user.veryUnwilling')}</span>
+                    <span>{t('user.veryWilling')}</span>
+                  </div>
+                  <Grid className={styles.scoreList} columns={10} gap={5}>
+                    {[1,2,3,4,5,6,7,8,9,10].map((item) => (
+                      <Grid.Item key={item} className={`${styles.scoreItem} ${item === reportScore ? styles.scoreActive : ''}`} onClick={() => onScoreSelect(item)}>
+                        {item}
+                      </Grid.Item>
+                    ))}
+                  </Grid>
+                </div>
+              </div>
               <div className={styles.scoreCon}>
                 <div>
-                  <span>{t('user.moreFeedback')}</span>
-                  <span className={styles.scoreConDesc}>{t('user.optional')}</span>
+                  <span>{t('user.feedbackInputTitle')}</span>
                 </div>
-                <TextArea className={styles.scoreText} placeholder={t('user.feedbackPlaceholder')} maxLength={200} onChange={onScoreTextChange} rows={4} />
+                <TextArea className={styles.scoreTextArea} placeholder={t('user.feedbackInputPlaceholder')} maxLength={200} onChange={onScoreTextChange} rows={4} />
               </div>
               <Button className={`${styles.scoreBtn} ${scoreDisable ? styles.scoreBtnDisable : ''}`} onClick={submitScore} disabled={scoreDisable} block>
-                {t('common.submit')}
-          </Button>
+                {t('user.submitFeedback')}
+              </Button>
             </div>
           )}
 
@@ -1866,6 +2000,12 @@ export default function UserPage() {
           onLoginSuccess={handleLoginSuccess}
           onWalletLogin={handleWalletLogin}
           initialMode={loginModalMode}
+        />
+
+        {/* 成功反馈弹窗 */}
+        <FeedbackSuccessModal
+          visible={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
         />
       </div>
     </Layout>
