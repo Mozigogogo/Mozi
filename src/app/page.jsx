@@ -237,15 +237,28 @@ export default function HomePage() {
   // }, [isEN]);
   
   // 每次进入页面都显示活动弹窗
+  // 只在首次进入 App 时显示活动弹窗
   useEffect(() => {
     if (typeof window === 'undefined') return;
     
-    // 延迟500ms显示活动弹窗
-    const timer = setTimeout(() => {
-      setShowActivityModal(true);
-    }, 500);
-    
-    return () => clearTimeout(timer);
+    try {
+      // 检查是否已经显示过活动弹窗
+      const hasShownActivity = localStorage.getItem(ACTIVITY_LAST_SHOWN_KEY);
+      
+      // 如果从未显示过，则显示弹窗
+      if (!hasShownActivity) {
+        // 延迟500ms显示活动弹窗
+        const timer = setTimeout(() => {
+          setShowActivityModal(true);
+          // 标记已显示过
+          localStorage.setItem(ACTIVITY_LAST_SHOWN_KEY, 'true');
+        }, 500);
+        
+        return () => clearTimeout(timer);
+      }
+    } catch (e) {
+      console.warn('检测活动弹窗状态失败:', e);
+    }
   }, []);
   
   // 处理弹窗确认
