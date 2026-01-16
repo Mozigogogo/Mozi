@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAccount, useDisconnect, useSignMessage } from 'wagmi';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
-import { Button, Avatar, List, Dialog, Toast, Popup, Grid, TextArea } from 'antd-mobile';
+import { Button, Avatar, List, Dialog, Toast, Popup, Grid } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import Layout from '../../components/Layout';
 import CalendarCard from '../../components/CalendarCard';
@@ -1831,7 +1831,13 @@ export default function UserPage() {
                 <div>
                   <span>{t('user.feedbackInputTitle')}</span>
                 </div>
-                <TextArea className={styles.scoreTextArea} placeholder={t('user.feedbackInputPlaceholder')} maxLength={200} onChange={onScoreTextChange} rows={4} />
+                <textarea 
+                  className={styles.scoreTextArea} 
+                  placeholder={t('user.feedbackInputPlaceholder')} 
+                  maxLength={200} 
+                  onChange={(e) => onScoreTextChange(e.target.value)} 
+                  rows={4}
+                />
               </div>
               <Button 
                 className={`${styles.scoreBtn} ${scoreDisable ? styles.scoreBtnDisable : ''} ${submittingFeedback ? styles.loading : ''}`} 

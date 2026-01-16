@@ -225,11 +225,16 @@
 
   .input {
     height: 36px; // 72rpx→36px
-    font-size: 14px; // 28rpx→14px
+    font-size: 16px; // 改为 16px 防止 iOS 缩放
     width: 100%;
     border: none;
     background: transparent;
     outline: none;
+    font-family: inherit;
+    
+    // 防止 iOS 自动缩放 - 关键设置
+    -webkit-text-size-adjust: 100%;
+    touch-action: manipulation;
 
     &:disabled {
       color: #999;
@@ -237,6 +242,7 @@
 
     &::placeholder {
       color: #999;
+      font-size: 16px; // placeholder 也要 16px
     }
   }
 
