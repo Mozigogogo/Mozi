@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { NoticeBar, Grid, TabBar, Swiper } from 'antd-mobile';
+import { NoticeBar, Grid, TabBar } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import { RightOutline } from 'antd-mobile-icons';
 import { useRouter } from 'next/navigation';
@@ -33,20 +33,6 @@ import styles from './page.module.less';
 
 // CDN 图片前缀
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
-
-// 首页背景轮播图（中文版）
-const HOME_BANNERS_ZH = [
-  `${CDN_PREFIX}/image/home/banner1.png`,
-  `${CDN_PREFIX}/image/home/banner2.png`,
-  `${CDN_PREFIX}/image/home/banner3.png`,
-];
-
-// 首页背景轮播图（英文版）
-const HOME_BANNERS_EN = [
-  '/point/home_en_banner_1.png',
-  '/point/home_en_banner_2.png',
-  '/point/home_en_banner_3.png',
-];
 
 // 提醒图标
 const HomeAlertIcon = `${CDN_PREFIX}/icon/home-alert.png`;
@@ -116,8 +102,6 @@ export default function HomePage() {
     window.addEventListener('resize', checkDevice);
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
-  // 根据语言选择 banner 图片
-  const HOME_BANNERS = isEN ? HOME_BANNERS_EN : HOME_BANNERS_ZH;
   
   // 欢迎弹窗状态
   const [showWelcomePopup, setShowWelcomePopup] = useState(false);
@@ -1093,20 +1077,9 @@ export default function HomePage() {
       <div className={styles.indexBox}>
         {/* 顶部区域：Banner + 搜索框 + 公告栏 */}
         <div className={styles.heroWrap}>
-          {/* 背景轮播图 */}
+          {/* 背景图片 */}
           <div className={styles.bgBanner}>
-            <Swiper
-              className={styles.bgBannerSwiper}
-              loop
-              autoplay
-              indicator={() => null}
-            >
-              {HOME_BANNERS.map((url, idx) => (
-                <Swiper.Item key={idx}>
-                  <img className={styles.bgBannerImage} src={url} alt={`banner-${idx}`} />
-                </Swiper.Item>
-              ))}
-            </Swiper>
+            <img className={styles.bgBannerImage} src="/images/new_home/banner.png" alt="banner" />
 
             {/* 搜索框（层叠在 Banner 上） */}
             <div className={styles.header} style={{ bottom: showNotice ? 34 : 23 }} onClick={() => router.push('/search')}>
