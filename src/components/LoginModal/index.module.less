@@ -108,21 +108,26 @@
       border: 1px solid #e5e5e5;
       border-radius: 12px;
       color: #1a1a1a;
-      font-size: 15px;
+      font-size: 16px; // iOS 防止自动缩放：最小 16px
       height: 38px;
       width: 100%;
       transition: all 0.3s;
+      
+      // 防止 iOS 自动缩放 - 关键设置
+      -webkit-text-size-adjust: 100%;
+      touch-action: manipulation;
 
       &:focus {
         border-color: #4CAF50;
         background: #fff;
+        font-size: 16px; // 聚焦时也保持 16px
       }
 
       :global {
         .adm-input {
           background: transparent;
           color: #1a1a1a;
-          font-size: 15px;
+          font-size: 16px; // iOS 防止自动缩放：最小 16px
           height: 38px;
           padding: 0 16px;
           
@@ -130,10 +135,12 @@
             color: #1a1a1a;
             height: 100%;
             padding-left: 4px;
+            font-size: 16px !important; // 强制 16px
             
             &::placeholder {
               color: #999;
               padding-left: 0;
+              font-size: 16px; // placeholder 也要 16px
             }
           }
         }
@@ -151,18 +158,24 @@
         border: 1px solid #e5e5e5;
         border-radius: 12px;
         color: #1a1a1a;
-        font-size: 15px;
+        font-size: 16px; // iOS 防止自动缩放：最小 16px
         height: 38px;
+        
+        // 防止 iOS 自动缩放 - 关键设置
+        -webkit-text-size-adjust: 100%;
+        touch-action: manipulation;
 
         &:focus {
           border-color: #4CAF50;
           background: #fff;
+          font-size: 16px; // 聚焦时也保持 16px
         }
 
         :global {
           .adm-input {
             background: transparent;
             color: #1a1a1a;
+            font-size: 16px; // iOS 防止自动缩放：最小 16px
             height: 38px;
             padding: 0 16px;
             
@@ -170,10 +183,12 @@
               color: #1a1a1a;
               height: 100%;
               padding-left: 4px;
+              font-size: 16px !important; // 强制 16px
               
               &::placeholder {
                 color: #999;
                 padding-left: 0;
+                font-size: 16px; // placeholder 也要 16px
               }
             }
           }
@@ -417,12 +432,18 @@
     .adm-input-element {
       background: transparent !important;
       color: #1a1a1a !important;
-      font-size: 14px !important;
+      font-size: 16px !important; // iOS 防止自动缩放：最小 16px
       padding-left: 8px !important;
+      -webkit-text-size-adjust: 100% !important;
+      touch-action: manipulation !important;
 
       &::placeholder {
         color: #999 !important;
-        font-size: 13px !important;
+        font-size: 16px !important; // iOS 防止自动缩放：最小 16px
+      }
+      
+      &:focus {
+        font-size: 16px !important; // 聚焦时也保持 16px
       }
     }
   }

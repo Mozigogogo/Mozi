@@ -18,6 +18,7 @@ import { request } from '../../utils/request';
 import { Interface, EMAIL, COINKEY } from '../../utils/constants';
 import { useAmplitude } from '../../hooks/useAmplitude';
 import { ProfileEvents } from '../../utils/amplitude';
+import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
 import styles from './page.module.less';
 
 // 检测是否在 Telegram 环境中
@@ -913,6 +914,9 @@ export default function UserPage() {
   };
 
   const submitScore = async () => {
+    // iOS 修复：强制失焦所有输入框，防止 viewport 缩放问题
+    forceBlurAndResetViewport();
+    
     // 检查用户是否登录
     const token = localStorage.getItem('token');
     if (!token) {
