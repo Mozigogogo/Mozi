@@ -1,0 +1,115 @@
+// FeedbackSuccessModal 样式
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 9998;
+}
+
+.modalContent {
+  position: fixed;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 85%;
+  max-width: 400px;
+  background: transparent;
+  z-index: 9999;
+  pointer-events: none; // 让容器本身不响应点击
+}
+
+.imageContainer {
+  width: 100%;
+  height: 440px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  clip-path: inset(66px 10px 0 5px round 20px);
+}
+
+.successImage {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center center;
+  border-radius: 20px;
+}
+
+.mainWrapper {
+  position: absolute;
+  top: 69%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 85%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.titleWrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.mainTitle {
+  font-family: Roboto;
+  font-weight: 700;
+  font-style: normal;
+  font-size: 24px;
+  color: #0B7556;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.contentWrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.subText {
+  font-size: 15px;
+  color: #313030;
+//   margin: 0 0 40px 0;
+  text-align: center;
+  line-height: 1.6;
+}
+.subText2 {
+  font-size: 12px;
+  color: #313030;
+//   margin: 0 0 40px 0;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.joinButton {
+  width: 68%;
+  max-width: 320px;
+  height: 44px;
+  background: linear-gradient(135deg, #16AB7F 0%, #13956E 100%);
+  border: none;
+  border-radius: 28px;
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(22, 171, 127, 0.3);
+
+  &:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(22, 171, 127, 0.4);
+  }
+}

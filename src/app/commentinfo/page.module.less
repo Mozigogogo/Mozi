@@ -653,11 +653,20 @@
   background-repeat: no-repeat;
   background-position: 10px center;
   background-size: 14px 14px; /* 28rpx ÷ 2 */
-  font-size: 14px; /* 28rpx ÷ 2 */
+  font-size: 16px; /* 改为 16px 防止 iOS 缩放 */
   box-sizing: border-box;
   line-height: 1.5;
   border: none;
   outline: none;
+  font-family: inherit;
+  
+  // 防止 iOS 自动缩放 - 关键设置
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+  
+  &::placeholder {
+    font-size: 16px; /* placeholder 也要 16px */
+  }
 }
 
 :global([data-theme="dark"]) {
@@ -673,7 +682,7 @@
   border-radius: 17.5px; /* 35rpx ÷ 2 */
   background-color: #11B787;
   color: #fff;
-  font-size: 12px; /* 24rpx ÷ 2 */
+  font-size: 16px; /* 24rpx ÷ 2 */
   font-weight: 500;
   border: none;
 }

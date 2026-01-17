@@ -20,6 +20,7 @@ import AdaptivePrice from '../components/AdaptivePrice';
 import MarketDistribution from '../components/MarketDistribution';
 import FloatingRobot from '../components/FloatingRobot';
 import WelcomePopup from '../components/WelcomePopup';
+import ActivityModal from '../components/ActivityModal';
 import PCLayout from '../components/PCLayout';
 import PCHome from '../components/PCHome';
 import { request } from '../utils/request';
@@ -56,6 +57,9 @@ const NOTICE_HIDE_KEY = 'hideHomeNotice';
 // 欢迎弹窗显示状态（每个UTC日期显示一次）
 const WELCOME_SHOWN_KEY = 'welcomePopupShown';
 const WELCOME_LAST_SHOWN_KEY = 'welcomePopupLastShownDate';
+
+// 活动弹窗显示状态（每个UTC日期显示一次）
+const ACTIVITY_LAST_SHOWN_KEY = 'activityModalLastShownDate';
 
 // 搜索图标
 const SearchIcon = `${CDN_PREFIX}/icon/community/search.png`;
@@ -119,6 +123,12 @@ export default function HomePage() {
   // 欢迎弹窗状态
   const [showWelcomePopup, setShowWelcomePopup] = useState(false);
   
+  // 活动弹窗状态
+  const [showActivityModal, setShowActivityModal] = useState(false);
+  
+  // 活动弹窗图片加载状态
+  const [activityImagesLoaded, setActivityImagesLoaded] = useState(false);
+  
   // Telegram WebApp 检测状态（不影响现有 UI，仅用于环境检测与本地存储）
   const [tgInfo, setTgInfo] = useState({
     available: false,
@@ -168,68 +178,100 @@ export default function HomePage() {
     }
   };
 
-  // 按UTC日期显示欢迎弹窗（每个UTC日期只显示一次）
+  // 按UTC日期显示欢迎弹窗（每个UTC日期只显示一次）- 已隐藏
+  // useEffect(() => {
+  //   if (typeof window === 'undefined') return;
+  //   
+  //   try {
+  //     // 获取当前UTC日期（格式：YYYY-MM-DD）
+  //     const now = new Date();
+  //     const currentUTCDate = now.toISOString().split('T')[0];
+  //     
+  //     // 检查上次显示的UTC日期
+  //     const lastShownDate = localStorage.getItem(WELCOME_LAST_SHOWN_KEY);
+  //     
+  //     // 如果从未显示过，或者当前UTC日期与上次显示日期不同，则显示弹窗
+  //     if (!lastShownDate || lastShownDate !== currentUTCDate) {
+  //       // 根据语言预加载对应的弹窗图片
+  //       const bgImage = isEN ? '/point/point_en_modal_bg.png' : '/point/point_modal_bg.png';
+  //       const rightImage = isEN ? '/point/ponit_en_modal_right_text.png' : '/point/ponit_modal_right_text.png';
+  //       
+  //       const preloadImages = [
+  //         bgImage,
+  //         '/point/ponit_modal_logo.png',
+  //         rightImage
+  //       ];
+  //       
+  //       let loadedCount = 0;
+  //       const totalImages = preloadImages.length;
+  //       
+  //       preloadImages.forEach((src) => {
+  //         const img = new window.Image();
+  //         img.onload = () => {
+  //           loadedCount++;
+  //           // 所有图片加载完成后显示弹窗
+  //           if (loadedCount === totalImages) {
+  //             setTimeout(() => {
+  //               setShowWelcomePopup(true);
+  //               // 记录当前UTC日期
+  //               localStorage.setItem(WELCOME_LAST_SHOWN_KEY, currentUTCDate);
+  //             }, 500);
+  //           }
+  //         };
+  //         img.onerror = () => {
+  //           loadedCount++;
+  //           // 即使加载失败也继续
+  //           if (loadedCount === totalImages) {
+  //             setTimeout(() => {
+  //               setShowWelcomePopup(true);
+  //               // 记录当前UTC日期
+  //               localStorage.setItem(WELCOME_LAST_SHOWN_KEY, currentUTCDate);
+  //             }, 500);
+  //           }
+  //         };
+  //         img.src = src;
+  //       });
+  //     }
+  //   } catch (e) {
+  //     console.warn('检测欢迎弹窗状态失败:', e);
+  //   }
+  // }, [isEN]);
+  
+  // 每次进入页面都显示活动弹窗
+  // 只在首次进入 App 时显示活动弹窗（使用 sessionStorage，关闭小程序后自动清除）
   useEffect(() => {
     if (typeof window === 'undefined') return;
     
     try {
-      // 获取当前UTC日期（格式：YYYY-MM-DD）
-      const now = new Date();
-      const currentUTCDate = now.toISOString().split('T')[0];
+      // 使用 sessionStorage 检查本次会话是否已经显示过活动弹窗
+      // sessionStorage 会在关闭标签页/小程序时自动清除
+      const hasShownActivity = sessionStorage.getItem(ACTIVITY_LAST_SHOWN_KEY);
       
-      // 检查上次显示的UTC日期
-      const lastShownDate = localStorage.getItem(WELCOME_LAST_SHOWN_KEY);
-      
-      // 如果从未显示过，或者当前UTC日期与上次显示日期不同，则显示弹窗
-      if (!lastShownDate || lastShownDate !== currentUTCDate) {
-        // 根据语言预加载对应的弹窗图片
-        const bgImage = isEN ? '/point/point_en_modal_bg.png' : '/point/point_modal_bg.png';
-        const rightImage = isEN ? '/point/ponit_en_modal_right_text.png' : '/point/ponit_modal_right_text.png';
+      // 如果本次会话从未显示过，则显示弹窗
+      if (!hasShownActivity) {
+        // 延迟500ms显示活动弹窗
+        const timer = setTimeout(() => {
+          setShowActivityModal(true);
+          // 标记本次会话已显示过
+          sessionStorage.setItem(ACTIVITY_LAST_SHOWN_KEY, 'true');
+        }, 500);
         
-        const preloadImages = [
-          bgImage,
-          '/point/ponit_modal_logo.png',
-          rightImage
-        ];
-        
-        let loadedCount = 0;
-        const totalImages = preloadImages.length;
-        
-        preloadImages.forEach((src) => {
-          const img = new window.Image();
-          img.onload = () => {
-            loadedCount++;
-            // 所有图片加载完成后显示弹窗
-            if (loadedCount === totalImages) {
-              setTimeout(() => {
-                setShowWelcomePopup(true);
-                // 记录当前UTC日期
-                localStorage.setItem(WELCOME_LAST_SHOWN_KEY, currentUTCDate);
-              }, 500);
-            }
-          };
-          img.onerror = () => {
-            loadedCount++;
-            // 即使加载失败也继续
-            if (loadedCount === totalImages) {
-              setTimeout(() => {
-                setShowWelcomePopup(true);
-                // 记录当前UTC日期
-                localStorage.setItem(WELCOME_LAST_SHOWN_KEY, currentUTCDate);
-              }, 500);
-            }
-          };
-          img.src = src;
-        });
+        return () => clearTimeout(timer);
       }
     } catch (e) {
-      console.warn('检测欢迎弹窗状态失败:', e);
+      console.warn('检测活动弹窗状态失败:', e);
     }
-  }, [isEN]);
+  }, []);
   
   // 处理弹窗确认
   const handleWelcomeConfirm = () => {
     // UTC日期已在显示时记录
+  };
+  
+  // 处理活动弹窗确认
+  const handleActivityConfirm = () => {
+    // 跳转到体验官页面
+    router.push('/experiencer');
   };
 
   useEffect(() => {
@@ -300,7 +342,7 @@ export default function HomePage() {
           clientId: `web-${Date.now()}`,
           platform: "h5",
           version: "1.0.0",
-          language: language  // 添加语言信息：'en' 或 'zh'
+          language: i18n?.language || 'en'  // 添加语言信息：'en' 或 'zh'
         },
         requestId: `req-hello-${Date.now()}`,
         timestamp: Date.now()
@@ -732,8 +774,14 @@ export default function HomePage() {
     }
   };
 
-  // 初始化数据加载
+  // 初始化数据加载 - 等待活动弹窗图片加载完成后再请求接口
   useEffect(() => {
+    // 如果活动弹窗图片还未加载完成，等待
+    if (!activityImagesLoaded) {
+      return;
+    }
+
+    // 图片加载完成后，开始请求接口
     fetchHotCoin();
     fetchHotIndustry();
     fetchHotContract();
@@ -750,7 +798,7 @@ export default function HomePage() {
     }, 30000); // 30秒轮询一次
 
     return () => clearInterval(interval);
-  }, []);
+  }, [activityImagesLoaded]); // 依赖活动弹窗图片加载状态
 
   // 榜单切换处理
   const rankActiveClick = (value) => {
@@ -1152,11 +1200,19 @@ export default function HomePage() {
         {/* 悬浮机器人按钮 - 使用新的FloatingRobot组件 */}
         <FloatingRobot />
         
-        {/* 欢迎弹窗 */}
-        <WelcomePopup 
+        {/* 欢迎弹窗 - 已隐藏 */}
+        {/* <WelcomePopup 
           visible={showWelcomePopup}
           onClose={() => setShowWelcomePopup(false)}
           onConfirm={handleWelcomeConfirm}
+        /> */}
+        
+        {/* 活动弹窗 */}
+        <ActivityModal
+          visible={showActivityModal}
+          onClose={() => setShowActivityModal(false)}
+          onConfirm={handleActivityConfirm}
+          onImagesLoaded={() => setActivityImagesLoaded(true)}
         />
       </div>
     </Layout>

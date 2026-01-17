@@ -1,0 +1,357 @@
+.container {
+  min-height: 100%;
+  position: relative;
+  overflow: hidden;
+  background-color: #000; // 纯黑色作为最底层
+}
+
+// 背景图片层（第一层，最底部）
+.backgroundImage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('/images/activity/h5_page.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 0;
+  
+  // 在背景图片上添加半透明遮罩层
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(38, 39, 40, 0.7); // 半透明遮罩覆盖在图片上
+    z-index: 1;
+  }
+}
+
+// 返回按钮
+.backButton {
+  position: absolute;
+  top: 40px;
+  left: 20px;
+  z-index: 10;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  
+  img {
+    width: 17px;
+    height: 17px;
+  }
+  
+  &:active {
+    opacity: 0.7;
+  }
+}
+
+// Logo
+.logo {
+  position: absolute;
+  top: 25px;
+  left: 60px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  height: 40px;
+  
+  img {
+    height: 32px;
+    width: auto;
+  }
+}
+
+// 内容包裹层（最上层）
+.contentWrapper {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  padding: 66px 20px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.contentContainer {
+  width: 100%;
+  max-width: 600px;
+}
+
+.contentBg {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  position: relative;
+  
+  img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+}
+
+.experienceButton {
+  width: 80%;
+  max-width: 300px;
+  height: 50px;
+  background: #11B787;
+  border-radius: 35.98px;
+  border: none;
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin: 20px auto 0;
+  display: block;
+  animation: fadeIn 0.4s ease-in;
+  
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+}
+
+.smallExperienceButton {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 59px;
+  height: 24px;
+  background: #11B787;
+  border-radius: 35.98px;
+  border: none;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10;
+  
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+}
+
+.littleSubmitButton {
+  position: absolute;
+  bottom: 87px;
+  right: 38px;
+  width: 59px;
+  height: 24px;
+  background: #11B787;
+  border-radius: 35.98px;
+  border: none;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10;
+  animation: fadeIn 0.4s ease-in;
+  
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+}
+
+.bgButton {
+  position: absolute;
+  bottom: 157px;
+  right: 38px;
+  width: 59px;
+  height: 24px;
+  background: #11B787;
+  border-radius: 35.98px;
+  border: none;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10;
+  animation: fadeIn 0.4s ease-in;
+  
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+}
+
+// 英文模式下的按钮位置调整
+.bgButtonEN {
+  bottom: 223px; // 英文模式下 bottom 值更大
+}
+
+.littleSubmitButtonEN {
+  bottom: 153px; // 英文模式下也相应调整
+}
+
+.header {
+  text-align: center;
+  padding: 40px 20px 30px;
+  
+  .title {
+    font-size: 28px;
+    font-weight: bold;
+    color: #fff;
+    margin: 0 0 12px;
+    line-height: 1.3;
+  }
+  
+  .subtitle {
+    font-size: 16px;
+    color: #00d4aa;
+    margin: 0;
+  }
+}
+
+.content {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.description {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  backdrop-filter: blur(10px);
+  
+  h2 {
+    font-size: 18px;
+    color: #fff;
+    margin: 0 0 16px;
+    font-weight: 600;
+  }
+  
+  ul {
+    margin: 0;
+    padding-left: 20px;
+    
+    li {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 14px;
+      line-height: 2;
+      
+      &::marker {
+        color: #00d4aa;
+      }
+    }
+  }
+}
+
+.formSection {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 24px 20px;
+  backdrop-filter: blur(10px);
+  
+  h2 {
+    font-size: 18px;
+    color: #fff;
+    margin: 0 0 20px;
+    font-weight: 600;
+  }
+}
+
+.formItem {
+  margin-bottom: 20px;
+  
+  .label {
+    display: block;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+  
+  :global {
+    .adm-input {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: #fff;
+      padding: 12px;
+      font-size: 14px;
+      
+      &::placeholder {
+        color: rgba(255, 255, 255, 0.4);
+      }
+      
+      &:focus {
+        border-color: #00d4aa;
+        background: rgba(255, 255, 255, 0.1);
+      }
+    }
+    
+    .adm-text-area {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: #fff;
+      padding: 12px;
+      font-size: 14px;
+      
+      textarea {
+        color: #fff;
+        
+        &::placeholder {
+          color: rgba(255, 255, 255, 0.4);
+        }
+      }
+      
+      &:focus-within {
+        border-color: #00d4aa;
+        background: rgba(255, 255, 255, 0.1);
+      }
+    }
+    
+    .adm-text-area-count {
+      color: rgba(255, 255, 255, 0.5);
+    }
+  }
+}
+
+.submitButton {
+  margin-top: 32px;
+  height: 48px;
+  border-radius: 24px;
+  background: linear-gradient(90deg, #00d4aa 0%, #00b894 100%);
+  border: none;
+  font-size: 16px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 212, 170, 0.3);
+  
+  &:active {
+    background: linear-gradient(90deg, #00b894 0%, #009977 100%);
+  }
+  
+  &:global(.adm-button-loading) {
+    opacity: 0.7;
+  }
+}
+
+// 淡入动画
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

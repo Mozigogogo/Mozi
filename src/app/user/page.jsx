@@ -4,19 +4,21 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAccount, useDisconnect, useSignMessage } from 'wagmi';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
-import { Button, Avatar, List, Dialog, Toast, Popup, Grid, TextArea } from 'antd-mobile';
+import { Button, Avatar, List, Dialog, Toast, Popup, Grid } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import Layout from '../../components/Layout';
 import CalendarCard from '../../components/CalendarCard';
 import NewCoinListing from '../../components/NewCoinListing';
 import LoginModal from '../../components/LoginModal';
 import SocialMediaPopup from '../../components/SocialMediaPopup';
+import FeedbackSuccessModal from '../../components/FeedbackSuccessModal';
 import { RightArrowIcon } from '../../components/Icons';
 import CopyIcon from '../../components/Icons/CopyIcon';
 import { request } from '../../utils/request';
 import { Interface, EMAIL, COINKEY } from '../../utils/constants';
 import { useAmplitude } from '../../hooks/useAmplitude';
 import { ProfileEvents } from '../../utils/amplitude';
+import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
 import styles from './page.module.less';
 
 // 检测是否在 Telegram 环境中
@@ -71,6 +73,8 @@ export default function UserPage() {
   const [reportScore, setReportScore] = useState(null);
   const [scoreDisable, setScoreDisable] = useState(true);
   const scoreInputRef = useRef('');
+  const [selectedGoodFeatures, setSelectedGoodFeatures] = useState([]); // 您觉得好的功能
+  const [selectedBadFeatures, setSelectedBadFeatures] = useState([]); // 建议调整的功能
   const [showSecondaryActions, setShowSecondaryActions] = useState(true);
   const [showPointsSection, setShowPointsSection] = useState(true);
   const [showNewCoinListing, setShowNewCoinListing] = useState(true);
@@ -105,6 +109,8 @@ export default function UserPage() {
   });
   const [calendarEventDates, setCalendarEventDates] = useState([]); // 日历上有事件的日期（日期数字数组）
   const [isLoadingNewCoins, setIsLoadingNewCoins] = useState(false); // 新币上线数据加载状态
+  const [showSuccessModal, setShowSuccessModal] = useState(false); // 成功反馈弹窗状态
+  const [submittingFeedback, setSubmittingFeedback] = useState(false); // 提交反馈的 loading 状态
   
   // 用于记录当前组件生命周期内是否已经为邀请码弹出过登录弹窗
   const hasShownInviteModalRef = useRef(false);
@@ -145,6 +151,27 @@ export default function UserPage() {
           setShowLoginModal(true);
         }, 300); // 300ms的延迟，让页面完全渲染完成后再弹出，更丝滑
       });
+    }
+  }, [searchParams]);
+
+  // 检查 URL 参数，自动打开反馈弹窗
+  useEffect(() => {
+    const openFeedback = searchParams.get('openFeedback');
+    
+    if (openFeedback === 'true') {
+      // 无论是否登录，都打开反馈弹窗
+      // 在提交时会检查登录状态
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          setPopVis(true);
+          setPopType('score');
+        }, 300);
+      });
+      
+      // 清除 URL 中的 openFeedback 参数
+      const url = new URL(window.location.href);
+      url.searchParams.delete('openFeedback');
+      window.history.replaceState({}, '', url.pathname + url.search);
     }
   }, [searchParams]);
 
@@ -259,6 +286,12 @@ export default function UserPage() {
       window.removeEventListener('focus', onFocus);
       clearInterval(timer);
     };
+  }, []);
+
+  // 预加载反馈成功弹窗的图片资源
+  useEffect(() => {
+    const preloadImage = new Image();
+    preloadImage.src = '/images/activity/toast_modal.png';
   }, []);
 
   // 页面加载时调用 getMyInterface 接口（只传年月）
@@ -858,22 +891,76 @@ export default function UserPage() {
     scoreInputRef.current = value;
   };
 
+  // 切换"您觉得好的功能"选项
+  const toggleGoodFeature = (feature) => {
+    setSelectedGoodFeatures(prev => {
+      if (prev.includes(feature)) {
+        return prev.filter(f => f !== feature);
+      } else {
+        return [...prev, feature];
+      }
+    });
+  };
+
+  // 切换"建议调整的功能"选项
+  const toggleBadFeature = (feature) => {
+    setSelectedBadFeatures(prev => {
+      if (prev.includes(feature)) {
+        return prev.filter(f => f !== feature);
+      } else {
+        return [...prev, feature];
+      }
+    });
+  };
+
   const submitScore = async () => {
+    // iOS 修复：强制失焦所有输入框，防止 viewport 缩放问题
+    forceBlurAndResetViewport();
+    
+    // 检查用户是否登录
+    const token = localStorage.getItem('token');
+    if (!token) {
+      // 先关闭反馈弹窗
+      setPopVis(false);
+      // 延迟显示 Toast 和打开登录弹窗，确保 Toast 可见
+      setTimeout(() => {
+        Toast.show({ content: t('user.pleaseLogin'), position: 'top', duration: 2000 });
+        // 再延迟一点打开登录弹窗，让用户看到提示
+        setTimeout(() => {
+          setShowLoginModal(true);
+        }, 500);
+      }, 100);
+      return;
+    }
+    
+    setSubmittingFeedback(true);
     try {
       const res = await request({
         url: Interface.MOZI_COMMENT,
         method: 'POST',
-        data: { score: reportScore, content: scoreInputRef.current },
+        data: { 
+          score: reportScore, 
+          content: scoreInputRef.current,
+          goodFeatures: selectedGoodFeatures,
+          badFeatures: selectedBadFeatures
+        },
       });
       if (res?.data?.isSuccess) {
-        Toast.show({ content: t('user.feedbackSuccess'), position: 'bottom' });
+        // 关闭反馈弹窗
+        setPopVis(false);
+        // 显示成功弹窗
+        setShowSuccessModal(true);
       } else {
         Toast.show({ content: t('user.feedbackFailed'), position: 'bottom' });
       }
     } catch (e) {
       Toast.show({ content: t('user.feedbackFailed'), position: 'bottom' });
+    } finally {
+      setSubmittingFeedback(false);
     }
-    setPopVis(false);
+    // 重置选择
+    setSelectedGoodFeatures([]);
+    setSelectedBadFeatures([]);
   };
 
   const copyToClipboard = (value) => {
@@ -1639,13 +1726,15 @@ export default function UserPage() {
           bodyStyle={
             popType === 'social' 
               ? { background: 'transparent', padding: 0 }
+              : popType === 'score'
+              ? { borderTopLeftRadius: '20px', borderTopRightRadius: '20px' }
               : { borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }
           }
         >
           {popType === 'social' && <SocialMediaPopup />}
 
           {popType === 'about' && (
-            <div className={styles.popContainer}>
+            <div className={`${styles.popContainer} ${styles.aboutContainer}`}>
               <div className={styles.aboutItem}>
                 {t('user.aboutMozi.intro')}
               </div>
@@ -1669,29 +1758,103 @@ export default function UserPage() {
           )}
 
           {popType === 'score' && (
-            <div className={styles.popContainer}>
-              <div>{t('user.feedbackQuestion')}</div>
-              <div className={styles.scoreDesc}>
-                <span>{t('user.veryUnwilling')}</span>
-                <span>{t('user.veryWilling')}</span>
+            <div className={styles.scorePopContainer}>
+              <div className={styles.feedbackTitle}>
+                <div>{t('user.feedbackTitle')}</div>
+                <div>{t('user.feedbackSubtitle')}</div>
               </div>
-              <Grid className={styles.scoreList} columns={10} gap={5}>
-                {[1,2,3,4,5,6,7,8,9,10].map((item) => (
-                  <Grid.Item key={item} className={`${styles.scoreItem} ${item === reportScore ? styles.scoreActive : ''}`} onClick={() => onScoreSelect(item)}>
-                    {item}
-                  </Grid.Item>
-                ))}
-              </Grid>
+              <div className={styles.feedbackContent}>
+                {/* 功能选择区域 */}
+                <div className={styles.feedbackSelectSection}>
+                  {/* 您觉得好的功能 */}
+                  <div className={styles.feedbackSection}>
+                  <div className={styles.feedbackSectionTitle}>{t('user.goodFeatures')}</div>
+                  <Grid className={styles.featureGrid} columns={3} gap={10}>
+                    {[
+                      t('user.featureOptions.marketBoard'),
+                      t('user.featureOptions.alertFunction'),
+                      t('user.featureOptions.aiChat'),
+                      t('user.featureOptions.marketData'),
+                      t('user.featureOptions.communityContent'),
+                      t('user.featureOptions.contractData')
+                    ].map((feature) => (
+                      <Grid.Item key={feature}>
+                        <div 
+                          className={`${styles.featureTag} ${selectedGoodFeatures.includes(feature) ? styles.featureTagSelected : ''}`}
+                          onClick={() => toggleGoodFeature(feature)}
+                        >
+                          {feature}
+                        </div>
+                      </Grid.Item>
+                    ))}
+                  </Grid>
+                </div>
+
+                {/* 建议调整的功能 */}
+                <div className={styles.feedbackSection}>
+                  <div className={styles.feedbackSectionTitle}>{t('user.badFeatures')}</div>
+                  <Grid className={styles.featureGrid} columns={3} gap={10}>
+                    {[
+                      t('user.featureOptions.marketBoard'),
+                      t('user.featureOptions.alertFunction'),
+                      t('user.featureOptions.aiChat'),
+                      t('user.featureOptions.marketData'),
+                      t('user.featureOptions.communityContent'),
+                      t('user.featureOptions.contractData')
+                    ].map((feature) => (
+                      <Grid.Item key={feature}>
+                        <div 
+                          className={`${styles.featureTag} ${selectedBadFeatures.includes(feature) ? styles.featureTagSelected : ''}`}
+                          onClick={() => toggleBadFeature(feature)}
+                        >
+                          {feature}
+                        </div>
+                      </Grid.Item>
+                    ))}
+                  </Grid>
+                </div>
+                </div>
+
+                {/* 积分活动容器 */}
+                <div className={styles.scoreContainer}>
+                  <div className={styles.scoreRecommendText}>{t('user.recommendQuestion')}</div>
+                  <div className={styles.scoreDesc}>
+                    <span>{t('user.veryUnwilling')}</span>
+                    <span>{t('user.veryWilling')}</span>
+                  </div>
+                  <Grid className={styles.scoreList} columns={10} gap={5}>
+                    {[1,2,3,4,5,6,7,8,9,10].map((item) => (
+                      <Grid.Item key={item} className={`${styles.scoreItem} ${item === reportScore ? styles.scoreActive : ''}`} onClick={() => onScoreSelect(item)}>
+                        {item}
+                      </Grid.Item>
+                    ))}
+                  </Grid>
+                </div>
+              </div>
               <div className={styles.scoreCon}>
                 <div>
-                  <span>{t('user.moreFeedback')}</span>
-                  <span className={styles.scoreConDesc}>{t('user.optional')}</span>
+                  <span>{t('user.feedbackInputTitle')}</span>
                 </div>
-                <TextArea className={styles.scoreText} placeholder={t('user.feedbackPlaceholder')} maxLength={200} onChange={onScoreTextChange} rows={4} />
+                <textarea 
+                  className={styles.scoreTextArea} 
+                  placeholder={t('user.feedbackInputPlaceholder')} 
+                  maxLength={200} 
+                  onChange={(e) => onScoreTextChange(e.target.value)} 
+                  rows={4}
+                />
               </div>
-              <Button className={`${styles.scoreBtn} ${scoreDisable ? styles.scoreBtnDisable : ''}`} onClick={submitScore} disabled={scoreDisable} block>
-                {t('common.submit')}
-          </Button>
+              <Button 
+                className={`${styles.scoreBtn} ${scoreDisable ? styles.scoreBtnDisable : ''} ${submittingFeedback ? styles.loading : ''}`} 
+                onClick={submittingFeedback ? undefined : submitScore} 
+                disabled={scoreDisable || submittingFeedback} 
+                block
+              >
+                {submittingFeedback ? (
+                  <span className={styles.loadingSpinner}></span>
+                ) : (
+                  t('user.submitFeedback')
+                )}
+              </Button>
             </div>
           )}
 
@@ -1866,6 +2029,12 @@ export default function UserPage() {
           onLoginSuccess={handleLoginSuccess}
           onWalletLogin={handleWalletLogin}
           initialMode={loginModalMode}
+        />
+
+        {/* 成功反馈弹窗 */}
+        <FeedbackSuccessModal
+          visible={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
         />
       </div>
     </Layout>

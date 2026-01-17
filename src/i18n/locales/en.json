@@ -275,6 +275,22 @@
     "interfaceNotReady": "Data loading failed, please try again later",
     "operationFailed": "Operation failed, please try again later",
     "feedbackQuestion": "How likely are you to recommend Mozi to your friends?",
+    "feedbackTitle": "Rate & Earn Rewards",
+    "feedbackSubtitle": "hi~ Share your thoughts with us~",
+    "goodFeatures": "Features you like",
+    "badFeatures": "Features to improve",
+    "recommendQuestion": "Recommend Mozi to friends?",
+    "feedbackInputTitle": "Please share your feedback!",
+    "feedbackInputPlaceholder": "Thanks for your feedback!",
+    "submitFeedback": "Submit Feedback",
+    "featureOptions": {
+      "marketBoard": "Market",
+      "alertFunction": "Alerts",
+      "aiChat": "AI Chat",
+      "marketData": "Data",
+      "communityContent": "Community",
+      "contractData": "Contracts"
+    },
     "veryUnwilling": "Very Unlikely",
     "veryWilling": "Very Likely",
     "moreFeedback": "More Feedback",
@@ -906,8 +922,8 @@
   "addAlarm": {
     "title": "Configure Alert",
     "latestPrice": "Latest Price",
-    "priceRise": "Price Rise To",
-    "priceFall": "Price Fall To",
+    "priceRise": "Rise To",
+    "priceFall": "Fall To",
     "risePercent": "Daily Rise Over",
     "fallPercent": "Daily Fall Over",
     "saveAlarm": "Save Alert",
@@ -924,8 +940,8 @@
   },
   "myAlarm": {
     "title": "My Alerts",
-    "priceRiseTo": "Price Rise To",
-    "priceFallTo": "Price Fall To",
+    "priceRiseTo": "Rise To",
+    "priceFallTo": "Fall To",
     "riseOver": "Rise Over",
     "fallOver": "Fall Over",
     "enterNumber": "Enter number",
@@ -1186,6 +1202,29 @@
     "user": {
       "notLoggedIn": "Not Logged In",
       "pcUser": "PC User"
+    },
+    "activity": {
+      "title": "MOZI",
+      "subtitle": "Limited Beta Tester Recruitment",
+      "description": "Try our products and get rewards for feedback!!",
+      "joinBtn": "Join Now"
     }
+  },
+  "feedbackSuccess": {
+    "title": "Feedback Success",
+    "successMessage": "Successfully joined MOZI Experience Program!",
+    "joinPrompt": "Join our community to learn about rewards!",
+    "joinButton": "Join Community"
+  },
+  "activityModal": {
+    "title": "MOZI",
+    "subtitle": "Beta Tester Recruitment",
+    "description": "Test & Earn Rewards!",
+    "joinButton": "Join Now"
+  },
+  "experiencer": {
+    "submit": "Submit",
+    "experience": "Try Now",
+    "startExperience": "Start Experience"
   }
 }
