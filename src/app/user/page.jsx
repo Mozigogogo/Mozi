@@ -1506,7 +1506,7 @@ export default function UserPage() {
         Toast.clear();
         Toast.show({
           content: t('user.saveSuccess') || '保存成功',
-          position: 'bottom',
+          position: 'center',
           icon: 'success'
         });
         setShowEditProfile(false);
@@ -1514,7 +1514,7 @@ export default function UserPage() {
         Toast.clear();
         Toast.show({
           content: t('user.saveFailed') || '保存失败',
-          position: 'bottom',
+          position: 'center',
           icon: 'fail'
         });
       }
@@ -1523,7 +1523,7 @@ export default function UserPage() {
       Toast.clear();
       Toast.show({
         content: t('user.saveFailed') || '保存失败',
-        position: 'bottom',
+        position: 'center',
         icon: 'fail'
       });
     }
