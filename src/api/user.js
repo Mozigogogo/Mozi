@@ -80,3 +80,42 @@ export const loginByWallet = (address, signature) => {
   });
 };
 
+/**
+ * Telegram 环境直接登录
+ * @param {Object} params - 登录参数
+ * @param {string} params.telegram_id - Telegram 用户 ID
+ * @param {string} params.username - Telegram 用户名
+ * @param {string} params.photo_url - Telegram 头像 URL
+ * @param {string} params.hash - Telegram 提供的签名 hash
+ * @param {string} params.invite_code - 邀请码（可选）
+ * @param {string} params.channel - 渠道，固定为 'tg'
+ * @param {string} params.env - 环境，'test' 或 'production'
+ * @returns {Promise}
+ */
+export const loginByTelegram = (params) => {
+  return request({
+    url: '/user/login',
+    method: 'POST',
+    data: {
+      telegram_id: params.telegram_id,
+      username: params.username,
+      photo_url: params.photo_url,
+      hash: params.hash,
+      invite_code: params.invite_code || '',
+      channel: 'tg',
+      env: params.env || 'test',
+    },
+  });
+};
+
+/**
+ * 获取用户详细数据（含邀请码等）
+ * @returns {Promise}
+ */
+export const getUserDataInfo = () => {
+  return request({
+    url: '/user/datainfo',
+    method: 'GET',
+  });
+};
+

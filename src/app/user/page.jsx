@@ -16,6 +16,7 @@ import { RightArrowIcon } from '../../components/Icons';
 import CopyIcon from '../../components/Icons/CopyIcon';
 import { request } from '../../utils/request';
 import { Interface, EMAIL, COINKEY } from '../../utils/constants';
+import { loginByTelegram } from '../../api/user';
 import { useAmplitude } from '../../hooks/useAmplitude';
 import { ProfileEvents } from '../../utils/amplitude';
 import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
@@ -459,17 +460,163 @@ export default function UserPage() {
     }
   }, [isConnected, address]);
 
-  // 监听 TON 钱包连接状态变化 (Telegram 环境)
+  // Telegram 环境自动登录（使用 Telegram initData 参数直接登录）
+  const tgLoginAttemptedRef = useRef(false);
+  
   useEffect(() => {
+    // 只在 Telegram 环境中执行
+    if (!isTelegramEnv()) return;
+    
     // 先检查 localStorage 中是否已有 token，避免重复登录
     const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('token');
     if (hasToken) return;
     
-    if (isTelegramEnv() && tonWallet && !userInfo.isLogin) {
-      // TON 钱包已连接，自动进行登录
-      handleTonWalletLogin();
+    // 避免重复尝试登录
+    if (tgLoginAttemptedRef.current) return;
+    
+    // 执行 Telegram 自动登录
+    handleTelegramAutoLogin();
+  }, []);
+  
+  // Telegram 自动登录处理函数
+  const handleTelegramAutoLogin = async () => {
+    if (typeof window === 'undefined' || !window.Telegram?.WebApp) {
+      console.log('❌ [TG登录] 非 Telegram WebApp 环境');
+      return;
     }
-  }, [tonWallet]);
+    
+    tgLoginAttemptedRef.current = true;
+    
+    const tgWebApp = window.Telegram.WebApp;
+    const initData = tgWebApp.initData;
+    const initDataUnsafe = tgWebApp.initDataUnsafe;
+    
+    if (!initData || !initDataUnsafe?.user) {
+      console.log('❌ [TG登录] 无法获取 Telegram initData');
+      return;
+    }
+    
+    const tgUser = initDataUnsafe.user;
+    
+    // 从 initData 解析 hash
+    const urlParams = new URLSearchParams(initData);
+    const hash = urlParams.get('hash');
+    
+    if (!hash) {
+      console.log('❌ [TG登录] 无法获取 hash');
+      return;
+    }
+    
+    // 获取邀请码（从 URL 参数或 localStorage）
+    const inviteCode = searchParams.get('inviteCode') || searchParams.get('invite') || localStorage.getItem('inviteCode') || '';
+    
+    // 判断环境（正式环境或测试环境）
+    const isProduction = process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_APP_ENV === 'production';
+    const env = isProduction ? 'production' : 'test';
+    
+    console.log('🚀 [TG登录] 开始 Telegram 自动登录');
+    console.log('========== TG 登录参数 ==========');
+    console.log('telegram_id:', String(tgUser.id));
+    console.log('username:', tgUser.username || tgUser.first_name || '');
+    console.log('photo_url:', tgUser.photo_url || '');
+    console.log('hash:', hash);
+    console.log('invite_code:', inviteCode);
+    console.log('channel:', 'tg');
+    console.log('env:', env);
+    console.log('完整 initData:', initData);
+    console.log('================================');
+    
+    try {
+      Toast.show({ icon: 'loading', content: t('user.loggingIn') || '登录中...', duration: 0 });
+      
+      const res = await loginByTelegram({
+        telegram_id: String(tgUser.id),
+        username: tgUser.username || tgUser.first_name || '',
+        photo_url: tgUser.photo_url || '',
+        hash: hash,
+        invite_code: inviteCode,
+        env: env
+      });
+      
+      Toast.clear();
+      
+      if (res?.data?.token) {
+        // 保存 token
+        localStorage.setItem('token', res.data.token);
+        
+        // 保存用户信息
+        const userData = res?.data?.userInfo || res?.data?.user;
+        if (userData) {
+          const userInfoWithSubscribe = {
+            ...userData,
+            subscribeAnnouncement: res.data.subscribeAnnouncement
+          };
+          localStorage.setItem('userInfo', JSON.stringify(userInfoWithSubscribe));
+        }
+        
+        if (res?.data?.userId) {
+          localStorage.setItem('userId', res.data.userId);
+        }
+        
+        // 登录成功后清除邀请码
+        if (inviteCode) {
+          localStorage.removeItem('inviteCode');
+          console.log('✅ [TG登录] 邀请码已使用并清除');
+        }
+        
+        // 同步调用 /user/datainfo 获取用户详细信息
+        try {
+          const dataInfoRes = await request({
+            url: Interface.USER_DATA_INFO,
+            method: 'GET'
+          });
+          
+          if (dataInfoRes?.data) {
+            console.log('✅ [TG登录] 获取用户详细信息成功');
+            localStorage.setItem('userDataInfo', JSON.stringify(dataInfoRes.data));
+            
+            // 更新积分数据
+            setPointsData({
+              totalPoints: dataInfoRes.data.totalPoints || 0,
+              yesterdayPoints: dataInfoRes.data.yesterdayPoints || 0,
+              pointsRanking: dataInfoRes.data.pointsRanking || 0
+            });
+          }
+        } catch (dataInfoError) {
+          console.error('❌ [TG登录] 获取用户详细信息失败:', dataInfoError);
+        }
+        
+        // 完成每日登录任务
+        try {
+          await request({
+            url: Interface.TASK_COMPLETE,
+            method: 'POST',
+            data: { taskCode: 'DAILY_LOGIN' }
+          });
+          console.log('✅ [TG登录] 每日登录任务上报成功');
+        } catch (taskError) {
+          console.error('❌ [TG登录] 每日登录任务上报失败:', taskError);
+        }
+        
+        Toast.show({ content: t('auth.loginSuccess') || '登录成功', position: 'center', icon: 'success' });
+        
+        // 更新登录状态
+        setUserInfo(prev => ({ ...prev, isLogin: true }));
+        
+        // 调用登录成功处理
+        handleLoginSuccess(false);
+        
+        console.log('✅ [TG登录] Telegram 自动登录成功');
+      } else {
+        console.error('❌ [TG登录] 登录失败:', res?.message || res?.errorMsg);
+        Toast.show({ content: res?.message || res?.errorMsg || t('auth.loginFailed') || '登录失败', position: 'bottom' });
+      }
+    } catch (error) {
+      Toast.clear();
+      console.error('❌ [TG登录] 登录异常:', error);
+      Toast.show({ content: t('auth.loginFailedRetry') || '登录失败，请重试', position: 'bottom' });
+    }
+  };
 
   // 监听URL中的邀请码参数
   useEffect(() => {
