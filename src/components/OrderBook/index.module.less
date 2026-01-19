@@ -146,6 +146,11 @@
 }
 
 .dropdown:hover {
+  opacity: 1;
+}
+
+.dropdown:hover .dropdownText,
+.dropdown:hover .dropdownArrow {
   opacity: 0.9;
 }
 
@@ -178,6 +183,7 @@
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   z-index: 10000;
+  opacity: 1;
 }
 
 .dropdownOption {
@@ -396,4 +402,17 @@
   padding: 12px;
   font-size: 12px;
   color: #999;
+}
+
+.alarmButton {
+  width: 100%;
+  margin-top: 10px;
+  border: none;
+  border-radius: 100px;
+  background: rgba(17, 183, 135, 1);
+  opacity: 1;
+  color: #fff;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 600;
 }

@@ -41,11 +41,17 @@ export default function OrderBook({
   tag = '限时体验',
   endTime = null,
   showHeader = true,
-  dropdownOptions = ['今日榜单前五', '今日榜单前十', '本周榜单前五'],
+  dropdownOptions = ['今日榜单前五', '今日榜单前十'],
 }) {
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [selectedOption, setSelectedOption] = useState(dropdownOptions[0]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const visibleRowsCount = useMemo(() => {
+    const trimmed = String(selectedOption ?? '').trim();
+    const limit = trimmed.includes('前五') ? 5 : 10;
+    return Math.min(maxRows, limit);
+  }, [maxRows, selectedOption]);
 
   useEffect(() => {
     if (!endTime) return;
@@ -68,24 +74,26 @@ export default function OrderBook({
     return () => clearInterval(timer);
   }, [endTime]);
   const rows = useMemo(() => {
-    const maxLen = Math.min(Math.max(bids.length, asks.length), maxRows);
+    const maxLen = Math.min(Math.max(bids.length, asks.length), visibleRowsCount);
     return Array.from({ length: maxLen }).map((_, idx) => ({
       bid: bids[idx] || null,
       ask: asks[idx] || null,
     }));
-  }, [asks, bids, maxRows]);
+  }, [asks, bids, visibleRowsCount]);
 
   const { maxBid, maxAsk } = useMemo(() => {
+    const visibleBids = bids.slice(0, visibleRowsCount);
+    const visibleAsks = asks.slice(0, visibleRowsCount);
     const maxBidVal = Math.max(
       1,
-      ...bids.map((x) => Number(x?.value ?? 0)).filter((n) => Number.isFinite(n))
+      ...visibleBids.map((x) => Number(x?.value ?? 0)).filter((n) => Number.isFinite(n))
     );
     const maxAskVal = Math.max(
       1,
-      ...asks.map((x) => Number(x?.value ?? 0)).filter((n) => Number.isFinite(n))
+      ...visibleAsks.map((x) => Number(x?.value ?? 0)).filter((n) => Number.isFinite(n))
     );
     return { maxBid: maxBidVal, maxAsk: maxAskVal };
-  }, [asks, bids]);
+  }, [asks, bids, visibleRowsCount]);
 
   if (!rows.length) {
     return <div className={styles.empty}>暂无订单薄数据</div>;
@@ -207,6 +215,10 @@ export default function OrderBook({
           );
         })}
       </div>
+
+      <button type="button" className={styles.alarmButton}>
+        一键告警
+      </button>
     </div>
   );
 }
