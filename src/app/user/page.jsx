@@ -190,7 +190,26 @@ export default function UserPage() {
       if (res?.data) {
         // 保存完整的 dataInfo 数据到 localStorage
         try {
-          localStorage.setItem('userDataInfo', JSON.stringify(res.data));
+          let nextDataInfo = res.data;
+          const rawUserInfo = localStorage.getItem('userInfo');
+          if (rawUserInfo) {
+            try {
+              const parsedUserInfo = JSON.parse(rawUserInfo);
+              const nickName = parsedUserInfo?.nickName;
+              const avatar = parsedUserInfo?.avatar;
+              if (nickName || avatar) {
+                nextDataInfo = {
+                  ...res.data,
+                  userInfo: {
+                    ...(res.data?.userInfo || {}),
+                    ...(nickName ? { nickName } : {}),
+                    ...(avatar ? { avatar } : {})
+                  }
+                };
+              }
+            } catch {}
+          }
+          localStorage.setItem('userDataInfo', JSON.stringify(nextDataInfo));
         } catch (e) {
           console.error('❌ 保存 dataInfo 到 localStorage 失败:', e);
         }
@@ -228,9 +247,29 @@ export default function UserPage() {
       
       let displayNick = t('user.defaultNickname');
       let displayAvatar = DEFAULT_AVATAR;
-      
-      // 昵称：优先从 userDataInfo.userInfo.nickName 读取
-      if (dataInfo) {
+
+      // 昵称/头像：优先从 userInfo 读取（登录接口写入）
+      if (ui) {
+        try {
+          const parsed = JSON.parse(ui);
+          if (parsed.nickName) {
+            displayNick = parsed.nickName;
+          }
+          if (parsed.avatar) {
+            displayAvatar = parsed.avatar;
+          }
+
+          // 根据登录返回的 subscribeAnnouncement 字段初始化开关状态
+          if (parsed.subscribeAnnouncement !== undefined) {
+            setIsAnnouncementOn(parsed.subscribeAnnouncement === 1);
+          }
+        } catch (e) {
+          console.error('解析 userInfo 失败:', e);
+        }
+      }
+
+      // 兜底：如果 userInfo 没有 nickName，再从 userDataInfo.userInfo.nickName 读取
+      if (displayNick === t('user.defaultNickname') && dataInfo) {
         try {
           const dataInfoParsed = JSON.parse(dataInfo);
           const nickFromDataInfo = (dataInfoParsed.userInfo?.nickName || '').trim();
@@ -239,23 +278,6 @@ export default function UserPage() {
           }
         } catch (e) {
           console.error('解析 userDataInfo 失败:', e);
-        }
-      }
-      
-      // 头像：从 userInfo.avatar 读取
-      if (ui) {
-        try {
-          const parsed = JSON.parse(ui);
-          if (parsed.avatar) {
-            displayAvatar = parsed.avatar;
-          }
-          
-          // 根据登录返回的 subscribeAnnouncement 字段初始化开关状态
-          if (parsed.subscribeAnnouncement !== undefined) {
-            setIsAnnouncementOn(parsed.subscribeAnnouncement === 1);
-          }
-        } catch (e) {
-          console.error('解析 userInfo 失败:', e);
         }
       }
       
@@ -1029,7 +1051,7 @@ export default function UserPage() {
         try {
           const parsed = JSON.parse(ui);
           setUserInfo((prev) => ({ ...prev, nickname: parsed.nickName || prev.nickname, avatar: parsed.avatar || prev.avatar }));
-          if (parsed?.nickName) {
+          if (parsed?.nickName || parsed?.avatar) {
             try {
               const rawDataInfo = localStorage.getItem('userDataInfo');
               const dataInfo = rawDataInfo ? JSON.parse(rawDataInfo) : {};
@@ -1037,7 +1059,8 @@ export default function UserPage() {
                 ...dataInfo,
                 userInfo: {
                   ...(dataInfo?.userInfo || {}),
-                  nickName: parsed.nickName,
+                  ...(parsed?.nickName ? { nickName: parsed.nickName } : {}),
+                  ...(parsed?.avatar ? { avatar: parsed.avatar } : {}),
                 },
               };
               localStorage.setItem('userDataInfo', JSON.stringify(next));
