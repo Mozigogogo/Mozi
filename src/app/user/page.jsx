@@ -16,7 +16,6 @@ import { RightArrowIcon } from '../../components/Icons';
 import CopyIcon from '../../components/Icons/CopyIcon';
 import { request } from '../../utils/request';
 import { Interface, EMAIL, COINKEY } from '../../utils/constants';
-import { loginByTelegram } from '../../api/user';
 import { useAmplitude } from '../../hooks/useAmplitude';
 import { ProfileEvents } from '../../utils/amplitude';
 import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
@@ -459,191 +458,6 @@ export default function UserPage() {
       triggerSignatureLogin();
     }
   }, [isConnected, address]);
-
-  // Telegram 环境自动登录（使用 Telegram initData 参数直接登录）
-  const tgLoginAttemptedRef = useRef(false);
-  
-  useEffect(() => {
-    // 只在 Telegram 环境中执行
-    if (!isTelegramEnv()) return;
-    
-    // 先检查 localStorage 中是否已有 token，避免重复登录
-    const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('token');
-    if (hasToken) return;
-    
-    // 避免重复尝试登录
-    if (tgLoginAttemptedRef.current) return;
-    
-    // 执行 Telegram 自动登录
-    handleTelegramAutoLogin();
-  }, []);
-  
-  // Telegram 自动登录处理函数
-  const handleTelegramAutoLogin = async () => {
-    if (typeof window === 'undefined' || !window.Telegram?.WebApp) {
-      console.log('❌ [TG登录] 非 Telegram WebApp 环境');
-      return;
-    }
-    
-    tgLoginAttemptedRef.current = true;
-    
-    const tgWebApp = window.Telegram.WebApp;
-    
-    // 打印 TG 环境原始参数数据
-    console.log('========== TG 原始数据 ==========');
-    console.log('window.Telegram.WebApp:', tgWebApp);
-    console.log('initData (原始字符串):', tgWebApp.initData);
-    console.log('initDataUnsafe (完整对象):', tgWebApp.initDataUnsafe);
-    console.log('initDataUnsafe.hash:', tgWebApp.initDataUnsafe?.hash);
-    console.log('initDataUnsafe.auth_date:', tgWebApp.initDataUnsafe?.auth_date);
-    console.log('initDataUnsafe.query_id:', tgWebApp.initDataUnsafe?.query_id);
-    console.log('platform:', tgWebApp.platform);
-    console.log('version:', tgWebApp.version);
-    console.log('colorScheme:', tgWebApp.colorScheme);
-    console.log('================================');
-    
-    const initData = tgWebApp.initData;
-    const initDataUnsafe = tgWebApp.initDataUnsafe;
-    
-    if (!initData || !initDataUnsafe?.user) {
-      console.log('❌ [TG登录] 无法获取 Telegram initData');
-      return;
-    }
-    
-    const tgUser = initDataUnsafe.user;
-    
-    // 打印用户原始数据
-    console.log('========== TG 用户原始数据 ==========');
-    console.log('user 对象:', tgUser);
-    console.log('user.id:', tgUser.id);
-    console.log('user.first_name:', tgUser.first_name);
-    console.log('user.last_name:', tgUser.last_name);
-    console.log('user.username:', tgUser.username);
-    console.log('user.language_code:', tgUser.language_code);
-    console.log('user.photo_url:', tgUser.photo_url);
-    console.log('user.is_premium:', tgUser.is_premium);
-    console.log('====================================');
-    
-    // 从 initData 解析 hash
-    const urlParams = new URLSearchParams(initData);
-    const hash = urlParams.get('hash');
-    
-    if (!hash) {
-      console.log('❌ [TG登录] 无法获取 hash');
-      return;
-    }
-    
-    // 获取邀请码（从 URL 参数或 localStorage）
-    const inviteCode = searchParams.get('inviteCode') || searchParams.get('invite') || localStorage.getItem('inviteCode') || '';
-    
-    // 判断环境（正式环境或测试环境）
-    // 直接使用 Railway 的 NEXT_PUBLIC_APP_ENV 环境变量
-    const env = process.env.NEXT_PUBLIC_APP_ENV || 'test';
-    
-    console.log('🚀 [TG登录] 开始 Telegram 自动登录');
-    console.log('========== TG 登录参数 ==========');
-    console.log('type:', 'login');
-    console.log('telegramId:', String(tgUser.id));
-    console.log('username:', tgUser.username || tgUser.first_name || '');
-    console.log('photoUrl:', tgUser.photo_url || '');
-    console.log('hash:', hash);
-    console.log('inviteCode:', inviteCode);
-    console.log('channel:', 'tg');
-    console.log('env:', env);
-    console.log('完整 initData:', initData);
-    console.log('================================');
-    
-    try {
-      Toast.show({ icon: 'loading', content: t('user.loggingIn') || '登录中...', duration: 0 });
-      
-      const res = await loginByTelegram({
-        telegramId: String(tgUser.id),
-        username: tgUser.username || tgUser.first_name || '',
-        photoUrl: tgUser.photo_url || '',
-        hash: hash,
-        inviteCode: inviteCode,
-        env: env
-      });
-      
-      Toast.clear();
-      
-      if (res?.data?.token) {
-        // 保存 token
-        localStorage.setItem('token', res.data.token);
-        
-        // 保存用户信息
-        const userData = res?.data?.userInfo || res?.data?.user;
-        if (userData) {
-          const userInfoWithSubscribe = {
-            ...userData,
-            subscribeAnnouncement: res.data.subscribeAnnouncement
-          };
-          localStorage.setItem('userInfo', JSON.stringify(userInfoWithSubscribe));
-        }
-        
-        if (res?.data?.userId) {
-          localStorage.setItem('userId', res.data.userId);
-        }
-        
-        // 登录成功后清除邀请码
-        if (inviteCode) {
-          localStorage.removeItem('inviteCode');
-          console.log('✅ [TG登录] 邀请码已使用并清除');
-        }
-        
-        // 同步调用 /user/datainfo 获取用户详细信息
-        try {
-          const dataInfoRes = await request({
-            url: Interface.USER_DATA_INFO,
-            method: 'GET'
-          });
-          
-          if (dataInfoRes?.data) {
-            console.log('✅ [TG登录] 获取用户详细信息成功');
-            localStorage.setItem('userDataInfo', JSON.stringify(dataInfoRes.data));
-            
-            // 更新积分数据
-            setPointsData({
-              totalPoints: dataInfoRes.data.totalPoints || 0,
-              yesterdayPoints: dataInfoRes.data.yesterdayPoints || 0,
-              pointsRanking: dataInfoRes.data.pointsRanking || 0
-            });
-          }
-        } catch (dataInfoError) {
-          console.error('❌ [TG登录] 获取用户详细信息失败:', dataInfoError);
-        }
-        
-        // 完成每日登录任务
-        try {
-          await request({
-            url: Interface.TASK_COMPLETE,
-            method: 'POST',
-            data: { taskCode: 'DAILY_LOGIN' }
-          });
-          console.log('✅ [TG登录] 每日登录任务上报成功');
-        } catch (taskError) {
-          console.error('❌ [TG登录] 每日登录任务上报失败:', taskError);
-        }
-        
-        Toast.show({ content: t('auth.loginSuccess') || '登录成功', position: 'center', icon: 'success' });
-        
-        // 更新登录状态
-        setUserInfo(prev => ({ ...prev, isLogin: true }));
-        
-        // 调用登录成功处理
-        handleLoginSuccess(false);
-        
-        console.log('✅ [TG登录] Telegram 自动登录成功');
-      } else {
-        console.error('❌ [TG登录] 登录失败:', res?.message || res?.errorMsg);
-        Toast.show({ content: res?.message || res?.errorMsg || t('auth.loginFailed') || '登录失败', position: 'bottom' });
-      }
-    } catch (error) {
-      Toast.clear();
-      console.error('❌ [TG登录] 登录异常:', error);
-      Toast.show({ content: t('auth.loginFailedRetry') || '登录失败，请重试', position: 'bottom' });
-    }
-  };
 
   // 监听URL中的邀请码参数
   useEffect(() => {
@@ -1729,7 +1543,7 @@ export default function UserPage() {
             </div>
           ) : (
             <div className={styles.loginBox}>
-              <div className={styles.headerUser} onClick={handleLogin}>
+              <div className={styles.headerUser} onClick={isTelegramEnv() ? undefined : handleLogin}>
                 <img className={styles.headerAvatar} src={DEFAULT_AVATAR} alt="头像" />
                 <span>{t('user.pleaseLogin')}</span>
               </div>
@@ -1888,7 +1702,7 @@ export default function UserPage() {
           </List>
         </div>
 
-        {userInfo.isLogin && (
+        {userInfo.isLogin && !isTelegramEnv() && (
           <Button className={styles.logoutBtn} onClick={handleLogout}>{t('user.logout')}</Button>
         )}
         
