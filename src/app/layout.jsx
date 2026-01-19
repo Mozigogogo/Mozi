@@ -12,6 +12,7 @@ import VConsoleLoader from "@/components/VConsole";
 import InviteCodeHandler from "@/components/InviteCodeHandler";
 import EnvironmentDetector from "@/components/EnvironmentDetector";
 import RouteChangeHandler from "@/components/RouteChangeHandler";
+import TelegramAutoLogin from "@/components/TelegramAutoLogin";
 
 const geistSans = Inter({
   variable: "--font-geist-sans",
@@ -54,6 +55,7 @@ export default function RootLayout({ children }) {
         <Suspense fallback={null}>
           <InviteCodeHandler />
         </Suspense>
+        <TelegramAutoLogin />
         <ThemeProvider>
           <I18nProvider>
             <TonConnectProvider>
