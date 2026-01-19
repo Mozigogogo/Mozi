@@ -97,6 +97,7 @@ export const loginByTelegram = (params) => {
     url: '/user/login',
     method: 'POST',
     data: {
+      type: 'login',  // 操作类型：login-登录
       telegram_id: params.telegram_id,
       username: params.username,
       photo_url: params.photo_url,

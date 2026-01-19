@@ -134,6 +134,20 @@ const handleTelegramDirectLogin = async (onLoginSuccess, onClose, t) => {
   }
   
   const tgWebApp = window.Telegram.WebApp;
+  
+  // 打印 TG 环境原始参数数据
+  console.log('========== TG 原始数据 ==========');
+  console.log('window.Telegram.WebApp:', tgWebApp);
+  console.log('initData (原始字符串):', tgWebApp.initData);
+  console.log('initDataUnsafe (完整对象):', tgWebApp.initDataUnsafe);
+  console.log('initDataUnsafe.hash:', tgWebApp.initDataUnsafe?.hash);
+  console.log('initDataUnsafe.auth_date:', tgWebApp.initDataUnsafe?.auth_date);
+  console.log('initDataUnsafe.query_id:', tgWebApp.initDataUnsafe?.query_id);
+  console.log('platform:', tgWebApp.platform);
+  console.log('version:', tgWebApp.version);
+  console.log('colorScheme:', tgWebApp.colorScheme);
+  console.log('================================');
+  
   const initData = tgWebApp.initData;
   const initDataUnsafe = tgWebApp.initDataUnsafe;
   
@@ -143,6 +157,18 @@ const handleTelegramDirectLogin = async (onLoginSuccess, onClose, t) => {
   }
   
   const tgUser = initDataUnsafe.user;
+  
+  // 打印用户原始数据
+  console.log('========== TG 用户原始数据 ==========');
+  console.log('user 对象:', tgUser);
+  console.log('user.id:', tgUser.id);
+  console.log('user.first_name:', tgUser.first_name);
+  console.log('user.last_name:', tgUser.last_name);
+  console.log('user.username:', tgUser.username);
+  console.log('user.language_code:', tgUser.language_code);
+  console.log('user.photo_url:', tgUser.photo_url);
+  console.log('user.is_premium:', tgUser.is_premium);
+  console.log('====================================');
   
   // 从 initData 解析 hash
   const urlParams = new URLSearchParams(initData);
@@ -156,12 +182,12 @@ const handleTelegramDirectLogin = async (onLoginSuccess, onClose, t) => {
   // 获取邀请码
   const inviteCode = localStorage.getItem('inviteCode') || '';
   
-  // 判断环境
-  const isProduction = process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_APP_ENV === 'production';
-  const env = isProduction ? 'production' : 'test';
+  // 判断环境（直接使用 Railway 的 NEXT_PUBLIC_APP_ENV 环境变量）
+  const env = process.env.NEXT_PUBLIC_APP_ENV || 'test';
   
   console.log('🚀 [LoginModal] Telegram 直接登录');
   console.log('========== TG 登录参数 ==========');
+  console.log('type:', 'login');
   console.log('telegram_id:', String(tgUser.id));
   console.log('username:', tgUser.username || tgUser.first_name || '');
   console.log('photo_url:', tgUser.photo_url || '');
@@ -657,8 +683,8 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
             {!showEmailForm ? (
               // 登录方式选择页面
               <>
-                {/* Telegram 直接登录按钮（仅在 TG 环境显示） */}
-                {isTelegramEnv() && (
+                {isTelegramEnv() ? (
+                  /* TG 环境：只显示 Telegram 登录按钮 */
                   <div 
                     className={styles.walletBtn} 
                     onClick={() => handleTelegramDirectLogin(onLoginSuccess, handleClose, t)}
@@ -669,19 +695,22 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
                     </svg>
                     <span>{t('auth.telegramLoginBtn') || 'Telegram 登录'}</span>
                   </div>
+                ) : (
+                  /* 非 TG 环境：显示钱包和邮箱登录按钮 */
+                  <>
+                    {/* 钱包登录按钮 */}
+                    <div className={styles.walletBtn} onClick={handleWalletLoginClick}>
+                      <img src="/icons/user/login_wallet.png" alt="wallet" className={styles.walletIcon} />
+                      <span>{t('auth.walletLoginBtn')}</span>
+                    </div>
+
+                    {/* 邮箱登录按钮 */}
+                    <div className={styles.emailBtn} onClick={handleEmailLoginClick}>
+                      <img src="/icons/user/login_email.png" alt="email" className={styles.emailIcon} />
+                      <span>{t('auth.emailLoginBtn') || '邮箱登录'}</span>
+                    </div>
+                  </>
                 )}
-
-                {/* 钱包登录按钮 */}
-                <div className={styles.walletBtn} onClick={handleWalletLoginClick}>
-                  <img src="/icons/user/login_wallet.png" alt="wallet" className={styles.walletIcon} />
-                  <span>{t('auth.walletLoginBtn')}</span>
-                </div>
-
-                {/* 邮箱登录按钮 */}
-                <div className={styles.emailBtn} onClick={handleEmailLoginClick}>
-                  <img src="/icons/user/login_email.png" alt="email" className={styles.emailIcon} />
-                  <span>{t('auth.emailLoginBtn') || '邮箱登录'}</span>
-                </div>
               </>
             ) : (
               // 邮箱登录表单页面

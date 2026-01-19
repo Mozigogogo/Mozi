@@ -488,6 +488,20 @@ export default function UserPage() {
     tgLoginAttemptedRef.current = true;
     
     const tgWebApp = window.Telegram.WebApp;
+    
+    // 打印 TG 环境原始参数数据
+    console.log('========== TG 原始数据 ==========');
+    console.log('window.Telegram.WebApp:', tgWebApp);
+    console.log('initData (原始字符串):', tgWebApp.initData);
+    console.log('initDataUnsafe (完整对象):', tgWebApp.initDataUnsafe);
+    console.log('initDataUnsafe.hash:', tgWebApp.initDataUnsafe?.hash);
+    console.log('initDataUnsafe.auth_date:', tgWebApp.initDataUnsafe?.auth_date);
+    console.log('initDataUnsafe.query_id:', tgWebApp.initDataUnsafe?.query_id);
+    console.log('platform:', tgWebApp.platform);
+    console.log('version:', tgWebApp.version);
+    console.log('colorScheme:', tgWebApp.colorScheme);
+    console.log('================================');
+    
     const initData = tgWebApp.initData;
     const initDataUnsafe = tgWebApp.initDataUnsafe;
     
@@ -497,6 +511,18 @@ export default function UserPage() {
     }
     
     const tgUser = initDataUnsafe.user;
+    
+    // 打印用户原始数据
+    console.log('========== TG 用户原始数据 ==========');
+    console.log('user 对象:', tgUser);
+    console.log('user.id:', tgUser.id);
+    console.log('user.first_name:', tgUser.first_name);
+    console.log('user.last_name:', tgUser.last_name);
+    console.log('user.username:', tgUser.username);
+    console.log('user.language_code:', tgUser.language_code);
+    console.log('user.photo_url:', tgUser.photo_url);
+    console.log('user.is_premium:', tgUser.is_premium);
+    console.log('====================================');
     
     // 从 initData 解析 hash
     const urlParams = new URLSearchParams(initData);
@@ -511,11 +537,12 @@ export default function UserPage() {
     const inviteCode = searchParams.get('inviteCode') || searchParams.get('invite') || localStorage.getItem('inviteCode') || '';
     
     // 判断环境（正式环境或测试环境）
-    const isProduction = process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_APP_ENV === 'production';
-    const env = isProduction ? 'production' : 'test';
+    // 直接使用 Railway 的 NEXT_PUBLIC_APP_ENV 环境变量
+    const env = process.env.NEXT_PUBLIC_APP_ENV || 'test';
     
     console.log('🚀 [TG登录] 开始 Telegram 自动登录');
     console.log('========== TG 登录参数 ==========');
+    console.log('type:', 'login');
     console.log('telegram_id:', String(tgUser.id));
     console.log('username:', tgUser.username || tgUser.first_name || '');
     console.log('photo_url:', tgUser.photo_url || '');
