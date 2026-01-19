@@ -3,6 +3,8 @@
   background: #fff;
   border-radius: 12px;
   padding: 12px;
+  position: relative;
+  z-index: 20;
 }
 
 .header {
@@ -68,14 +70,27 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 24px;
+  width: 24px;
   height: 24px;
-  background: #11b787;
+  background-image: url('/images/new_detail/cutdown_bg.svg');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
   color: #fff;
+  font-family: var(--font-chakra-petch), 'Chakra Petch', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-style: normal;
+  font-weight: 700;
   font-size: 12px;
-  font-weight: 600;
-  border-radius: 50%;
-  padding: 0 4px;
+  line-height: 11.43px;
+  letter-spacing: 0;
+  text-align: center;
+  text-transform: lowercase;
+  padding: 0;
+}
+
+.countdownValue {
+  display: inline-block;
+  transform: translate(-0.5px, 0.5px);
 }
 
 .countdownText {
@@ -99,8 +114,10 @@
 
 .legendLeft {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
+  align-items: flex-start;
+  gap: 4px;
 }
 
 .legendItem {
@@ -111,34 +128,43 @@
 
 .legendRight {
   position: relative;
+  z-index: 10000;
 }
 
 .dropdown {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
+  gap: 6px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
   cursor: pointer;
   user-select: none;
   transition: all 0.2s;
 }
 
 .dropdown:hover {
-  border-color: #11b787;
+  opacity: 1;
+}
+
+.dropdown:hover .dropdownText,
+.dropdown:hover .dropdownArrow {
+  opacity: 0.9;
 }
 
 .dropdownText {
-  font-size: 12px;
-  color: #333;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(80, 93, 111, 1);
   white-space: nowrap;
 }
 
 .dropdownArrow {
-  color: #666;
+  width: 16px;
+  height: 16px;
+  color: #4b5563;
   transition: transform 0.2s;
 }
 
@@ -156,7 +182,8 @@
   border-radius: 6px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  z-index: 100;
+  z-index: 10000;
+  opacity: 1;
 }
 
 .dropdownOption {
@@ -185,29 +212,58 @@
 }
 
 .bidDot {
-  background: #11b787;
+  background: #11B787;
 }
 
 .askDot {
-  background: #fa5f5f;
+  background: #F04A4A;
 }
 
 .legendText {
-  font-size: 12px;
-  color: #666;
+  font-size: 10px;
+  color: #333;
 }
 
 .list {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  position: relative;
+}
+
+.list::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 68px;
+  right: 68px;
+  background-image: repeating-linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.12) 0,
+    rgba(0, 0, 0, 0.12) 1px,
+    transparent 1px,
+    transparent 32px
+  );
+  -webkit-mask-image: repeating-linear-gradient(to bottom, #000 0, #000 2px, transparent 2px, transparent 8px);
+  mask-image: repeating-linear-gradient(to bottom, #000 0, #000 2px, transparent 2px, transparent 8px);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .row {
+  position: relative;
   display: grid;
-  grid-template-columns: 1fr 1.6fr 1fr;
+  grid-template-columns: 16px 1fr 16px;
   align-items: center;
   column-gap: 6px;
+  z-index: 1;
+}
+
+.iconCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .side {
@@ -252,24 +308,64 @@
 }
 
 .bidValue {
-  color: #0e8f69;
+  color: #094533;
+  background: rgba(249, 251, 250, 0.74);
+  border: 1px solid #e2e5e3;
+  border-radius: 3px;
+  box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.15);
 }
 
 .askValue {
-  color: #cc4a4a;
+  color: #610300;
+  background: rgba(249, 251, 250, 0.74);
+  border: 1px solid #e2e5e3;
+  border-radius: 3px;
+  box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.15);
 }
 
 .barCell {
   width: 100%;
+  position: relative;
 }
 
 .barBg {
   position: relative;
   width: 100%;
+  height: 24px;
+  border-radius: 3px 3px 3px 3px;
+  overflow: visible;
+}
+
+.barTrack {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
   height: 12px;
-  border-radius: 6px;
-  background: #f4f6f8;
+  border-radius: 3px;
   overflow: hidden;
+  z-index: 1;
+}
+
+.bidPrice {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  min-width: 46px;
+  text-align: center;
+}
+
+.askPrice {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  min-width: 46px;
+  text-align: center;
 }
 
 .midLine {
@@ -278,7 +374,7 @@
   top: 0;
   bottom: 0;
   width: 1px;
-  background: rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.25);
 }
 
 .bidBar {
@@ -286,7 +382,10 @@
   right: 50%;
   top: 0;
   bottom: 0;
-  background: rgba(17, 183, 135, 0.35);
+  background:#11B787;
+  border-radius: 3px 0 0 3px;
+  box-shadow: 0px 0px 5px 0px rgba(255, 255, 255, 0.3) inset,
+    0px 0px 10px 4px rgba(0, 255, 170, 1) inset;
 }
 
 .askBar {
@@ -294,11 +393,26 @@
   left: 50%;
   top: 0;
   bottom: 0;
-  background: rgba(250, 95, 95, 0.35);
+  background: #F04A4A;
+  border-radius: 0 3px 3px 0;
+  box-shadow: 0px 0px 5px 0px rgba(216, 31, 31, 1) inset;
 }
 
 .empty {
   padding: 12px;
   font-size: 12px;
   color: #999;
+}
+
+.alarmButton {
+  width: 100%;
+  margin-top: 10px;
+  border: none;
+  border-radius: 100px;
+  background: rgba(17, 183, 135, 1);
+  opacity: 1;
+  color: #fff;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 600;
 }

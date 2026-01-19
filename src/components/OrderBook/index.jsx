@@ -3,6 +3,24 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import styles from './index.module.less';
 
+const exchangeIcons = [
+  '/icons/new_detail/Ellipse%203832.png',
+  '/icons/new_detail/Ellipse%203834.png',
+  '/icons/new_detail/Ellipse%203835.png',
+  '/icons/new_detail/Ellipse%203836.png',
+  '/icons/new_detail/Ellipse%203837.png',
+  '/icons/new_detail/Ellipse%203838.png',
+  '/icons/new_detail/Ellipse%203839.png',
+  '/icons/new_detail/Ellipse%203840.png',
+  '/icons/new_detail/Frame%202087326500.png',
+];
+
+const pickExchangeIcon = (seed) => {
+  if (!exchangeIcons.length) return null;
+  const idx = Math.abs((seed * 9301 + 49297) % 233280) % exchangeIcons.length;
+  return exchangeIcons[idx];
+};
+
 const defaultFormatValue = (val) => {
   if (val === null || val === undefined || val === '') return '--';
   const num = Number(val);
@@ -23,11 +41,17 @@ export default function OrderBook({
   tag = '限时体验',
   endTime = null,
   showHeader = true,
-  dropdownOptions = ['今日榜单前五', '今日榜单前十', '本周榜单前五'],
+  dropdownOptions = ['今日榜单前五', '今日榜单前十'],
 }) {
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [selectedOption, setSelectedOption] = useState(dropdownOptions[0]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const visibleRowsCount = useMemo(() => {
+    const trimmed = String(selectedOption ?? '').trim();
+    const limit = trimmed.includes('前五') ? 5 : 10;
+    return Math.min(maxRows, limit);
+  }, [maxRows, selectedOption]);
 
   useEffect(() => {
     if (!endTime) return;
@@ -50,24 +74,26 @@ export default function OrderBook({
     return () => clearInterval(timer);
   }, [endTime]);
   const rows = useMemo(() => {
-    const maxLen = Math.min(Math.max(bids.length, asks.length), maxRows);
+    const maxLen = Math.min(Math.max(bids.length, asks.length), visibleRowsCount);
     return Array.from({ length: maxLen }).map((_, idx) => ({
       bid: bids[idx] || null,
       ask: asks[idx] || null,
     }));
-  }, [asks, bids, maxRows]);
+  }, [asks, bids, visibleRowsCount]);
 
   const { maxBid, maxAsk } = useMemo(() => {
+    const visibleBids = bids.slice(0, visibleRowsCount);
+    const visibleAsks = asks.slice(0, visibleRowsCount);
     const maxBidVal = Math.max(
       1,
-      ...bids.map((x) => Number(x?.value ?? 0)).filter((n) => Number.isFinite(n))
+      ...visibleBids.map((x) => Number(x?.value ?? 0)).filter((n) => Number.isFinite(n))
     );
     const maxAskVal = Math.max(
       1,
-      ...asks.map((x) => Number(x?.value ?? 0)).filter((n) => Number.isFinite(n))
+      ...visibleAsks.map((x) => Number(x?.value ?? 0)).filter((n) => Number.isFinite(n))
     );
     return { maxBid: maxBidVal, maxAsk: maxAskVal };
-  }, [asks, bids]);
+  }, [asks, bids, visibleRowsCount]);
 
   if (!rows.length) {
     return <div className={styles.empty}>暂无订单薄数据</div>;
@@ -85,13 +111,21 @@ export default function OrderBook({
             <div className={styles.countdown}>
               <span className={styles.countdownLabel}>距结束</span>
               <div className={styles.countdownNumbers}>
-                <span className={styles.countdownCircle}>{String(countdown.days).padStart(2, '0')}</span>
+                <span className={styles.countdownCircle}>
+                  <span className={styles.countdownValue}>{String(countdown.days).padStart(2, '0')}</span>
+                </span>
                 <span className={styles.countdownText}>天</span>
-                <span className={styles.countdownCircle}>{String(countdown.hours).padStart(2, '0')}</span>
+                <span className={styles.countdownCircle}>
+                  <span className={styles.countdownValue}>{String(countdown.hours).padStart(2, '0')}</span>
+                </span>
                 <span className={styles.countdownText}>时</span>
-                <span className={styles.countdownCircle}>{String(countdown.minutes).padStart(2, '0')}</span>
+                <span className={styles.countdownCircle}>
+                  <span className={styles.countdownValue}>{String(countdown.minutes).padStart(2, '0')}</span>
+                </span>
                 <span className={styles.countdownText}>分</span>
-                <span className={styles.countdownCircle}>{String(countdown.seconds).padStart(2, '0')}</span>
+                <span className={styles.countdownCircle}>
+                  <span className={styles.countdownValue}>{String(countdown.seconds).padStart(2, '0')}</span>
+                </span>
                 <span className={styles.countdownText}>秒</span>
               </div>
             </div>
@@ -144,29 +178,35 @@ export default function OrderBook({
           const bidPct = Math.max(0, Math.min(100, (bidValue / maxBid) * 100));
           const askPct = Math.max(0, Math.min(100, (askValue / maxAsk) * 100));
 
+          const bidOpacity = Math.min(1, Math.max(0.6, 0.6 + (bidPct / 100) * 0.4));
+          const askOpacity = Math.min(1, Math.max(0.6, 0.6 + (askPct / 100) * 0.4));
+
           return (
             <div key={idx} className={styles.row}>
-              <div className={styles.side}>
-                {row.bid?.icon ? (
-                  <img className={styles.icon} src={row.bid.icon} alt="bid" />
+              <div className={styles.iconCell}>
+                {pickExchangeIcon(idx * 2) ? (
+                  <img className={styles.icon} src={pickExchangeIcon(idx * 2)} alt="exchange" />
                 ) : (
                   <span className={styles.iconPlaceholder} />
                 )}
-                <div className={`${styles.value} ${styles.bidValue}`}>{formatValue(row.bid?.value)}</div>
               </div>
 
               <div className={styles.barCell}>
                 <div className={styles.barBg}>
-                  <div className={styles.midLine} />
-                  <div className={styles.bidBar} style={{ width: `${bidPct}%` }} />
-                  <div className={styles.askBar} style={{ width: `${askPct}%` }} />
+                  <div className={`${styles.value} ${styles.bidValue} ${styles.bidPrice}`}>{formatValue(row.bid?.value)}</div>
+                  <div className={`${styles.value} ${styles.askValue} ${styles.askPrice}`}>{formatValue(row.ask?.value)}</div>
+
+                  <div className={styles.barTrack}>
+                    <div className={styles.midLine} />
+                    <div className={styles.bidBar} style={{ width: `${bidPct}%`, opacity: bidOpacity }} />
+                    <div className={styles.askBar} style={{ width: `${askPct}%`, opacity: askOpacity }} />
+                  </div>
                 </div>
               </div>
 
-              <div className={`${styles.side} ${styles.rightSide}`}>
-                <div className={`${styles.value} ${styles.askValue}`}>{formatValue(row.ask?.value)}</div>
-                {row.ask?.icon ? (
-                  <img className={styles.icon} src={row.ask.icon} alt="ask" />
+              <div className={styles.iconCell}>
+                {pickExchangeIcon(idx * 2 + 1) ? (
+                  <img className={styles.icon} src={pickExchangeIcon(idx * 2 + 1)} alt="exchange" />
                 ) : (
                   <span className={styles.iconPlaceholder} />
                 )}
@@ -175,6 +215,10 @@ export default function OrderBook({
           );
         })}
       </div>
+
+      <button type="button" className={styles.alarmButton}>
+        一键告警
+      </button>
     </div>
   );
 }

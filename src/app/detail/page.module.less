@@ -1,7 +1,7 @@
 .container {
   background-color: #efefef;
   padding-top: 50px; /* 为顶部固定导航栏留出空间 */
-  padding-bottom: 60px;
+  padding-bottom: 90px;
   box-sizing: border-box;
   min-height: 100vh;
 }
@@ -297,18 +297,33 @@
 /* 底部操作栏 */
 .footerList {
   width: 100%;
-  height: 55px;
+  height: 74px;
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   align-items: center;
   position: fixed;
   bottom: 0;
   left: 0;
-  background-color: #f5f5f5;
-  padding: 3px;
+  background-color: #fff;
+  padding: 12px 14px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
   box-sizing: border-box;
   font-size: 12px;
   z-index: 999;
+  border-top-left-radius: 30px;
+  border-top-right-radius: 30px;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.footerLeft {
+  display: flex;
+  align-items: center;
+  gap: 35px;
+}
+
+.footerRight {
+  display: flex;
+  align-items: center;
 }
 
 .footerItem {
@@ -338,6 +353,37 @@
 .footerText {
   font-size: 12px;
   color: #666;
+}
+
+.alarmPill {
+  display: flex;
+  align-items: stretch;
+  border-radius: 100px;
+  overflow: hidden;
+}
+
+.alarmConfig {
+  border: none;
+  padding: 12px 20px;
+  background: rgba(178, 235, 220, 1);
+  color: rgba(11, 122, 94, 1);
+  font-family: 'PingFang SC', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0;
+}
+
+.alarmStart {
+  border: none;
+  padding: 12px 20px;
+  background: rgba(11, 122, 94, 1);
+  color: #fff;
+  font-family: 'PingFang SC', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0;
 }
 
 /* 悬浮机器人按钮 */

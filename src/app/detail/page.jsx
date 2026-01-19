@@ -1426,34 +1426,33 @@ ${coinInfo.name || symbol} (${symbol})
         
         {/* 底部操作栏 */}
         <div className={styles.footerList}>
-          <div className={styles.footerItem}>
-            <AddCollect 
-              isOwn={fromFavorite ? true : (coinInfo?.isSelfSelected || false)} 
-              symbol={symbol} 
-            />
-            <div className={styles.footerText}>{t('detail.actions.favorite')}</div>
-          </div>
-          <div className={styles.footerItem} onClick={jump2Alert}>
-            <div style={{ marginBottom: '2.5px' }}>
-              <BellIcon size={20} color="#c7c9cd" />
+          <div className={styles.footerLeft}>
+            <div className={styles.footerItem}>
+              <AddCollect 
+                isOwn={fromFavorite ? true : (coinInfo?.isSelfSelected || false)} 
+                symbol={symbol} 
+              />
+              <div className={styles.footerText}>{t('detail.actions.favorite')}</div>
             </div>
-            <div className={styles.footerText}>{t('detail.actions.alert')}</div>
+            <div className={styles.footerItem} onClick={jump2Community}>
+              <img 
+                className={styles.footerIcon} 
+                src="/icons/new_detail/community.svg" 
+                alt={t('detail.actions.community')}
+              />
+              <div className={styles.footerText}>{t('detail.actions.community')}</div>
+            </div>
           </div>
-          <div className={styles.footerItem} onClick={shareToTelegram}>
-            <img 
-              className={styles.footerIcon} 
-              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/share.png" 
-              alt={t('detail.actions.share')}
-            />
-            <div className={styles.footerText}>{t('detail.actions.share')}</div>
-          </div>
-          <div className={styles.footerItem} onClick={jump2Community}>
-            <img 
-              className={styles.footerIcon} 
-              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community-no-actived.png" 
-              alt={t('detail.actions.community')}
-            />
-            <div className={styles.footerText}>{t('detail.actions.community')}</div>
+
+          <div className={styles.footerRight}>
+            <div className={styles.alarmPill}>
+              <button type="button" className={styles.alarmConfig} onClick={jump2Alert}>
+                配置告警
+              </button>
+              <button type="button" className={styles.alarmStart} onClick={jump2Alert}>
+                立即开启
+              </button>
+            </div>
           </div>
         </div>
 

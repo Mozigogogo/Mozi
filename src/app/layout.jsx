@@ -1,4 +1,4 @@
-import { Inter, Roboto_Mono } from "next/font/google";
+import { Inter, Roboto_Mono, Chakra_Petch } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { Suspense } from "react";
@@ -24,6 +24,12 @@ const geistMono = Roboto_Mono({
   subsets: ["latin"],
 });
 
+const chakraPetch = Chakra_Petch({
+  variable: "--font-chakra-petch",
+  subsets: ["latin"],
+  weight: ["700"],
+});
+
 export const metadata = {
   title: "墨子 - 数字货币行情社区",
   description: "墨子数字货币行情社区，提供币种行情、社区讨论等功能",
@@ -43,7 +49,7 @@ export default function RootLayout({ children }) {
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#1677ff" />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${chakraPetch.variable}`} suppressHydrationWarning>
         {/* Telegram WebApp 官方脚本 - 必须最先加载 */}
         <Script 
           src="https://telegram.org/js/telegram-web-app.js" 
