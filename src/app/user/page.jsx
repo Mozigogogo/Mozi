@@ -511,11 +511,12 @@ export default function UserPage() {
     const inviteCode = searchParams.get('inviteCode') || searchParams.get('invite') || localStorage.getItem('inviteCode') || '';
     
     // 判断环境（正式环境或测试环境）
-    const isProduction = process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_APP_ENV === 'production';
-    const env = isProduction ? 'production' : 'test';
+    // 直接使用 Railway 的 NEXT_PUBLIC_APP_ENV 环境变量
+    const env = process.env.NEXT_PUBLIC_APP_ENV || 'test';
     
     console.log('🚀 [TG登录] 开始 Telegram 自动登录');
     console.log('========== TG 登录参数 ==========');
+    console.log('type:', 'login');
     console.log('telegram_id:', String(tgUser.id));
     console.log('username:', tgUser.username || tgUser.first_name || '');
     console.log('photo_url:', tgUser.photo_url || '');
