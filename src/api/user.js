@@ -99,11 +99,11 @@ export const loginByTelegram = (params) => {
     data: {
       type: 'login',  // 操作类型：login-登录
       chanel: 3,  // 3-Telegram登录
-      telegram_id: params.telegram_id,
+      telegramId: params.telegramId,
       username: params.username,
-      photo_url: params.photo_url,
+      photoUrl: params.photoUrl,
       hash: params.hash,
-      invite_code: params.invite_code || '',
+      inviteCode: params.inviteCode || '',
       channel: 'tg',
       env: params.env || 'test',
     },
