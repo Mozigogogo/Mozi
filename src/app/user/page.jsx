@@ -135,6 +135,7 @@ export default function UserPage() {
 
   // 检查 URL 参数，自动打开注册弹窗或登录弹窗
   useEffect(() => {
+    if (isTelegramEnv()) return;
     const mode = searchParams.get('mode');
     const showLogin = searchParams.get('showLogin');
     
@@ -467,6 +468,9 @@ export default function UserPage() {
       console.log('🔍 [UserPage] 检测到邀请码:', inviteCode);
       // 存储到 localStorage
       localStorage.setItem('inviteCode', inviteCode);
+
+      // TG 环境下不自动弹登录/注册弹窗
+      if (isTelegramEnv()) return;
       
       // 检查用户是否已登录
       const token = localStorage.getItem('token');
