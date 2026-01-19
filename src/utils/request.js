@@ -77,6 +77,7 @@ instance.interceptors.response.use(
         // 检测是否为PC端
         const appChannel = localStorage.getItem('appChannel');
         const isPC = appChannel === 'pc';
+        const isTG = appChannel === 'tg';
         
         // 显示提示，不自动跳转
         try {
@@ -90,7 +91,7 @@ instance.interceptors.response.use(
             }).catch(() => {
               console.warn('Antd message 加载失败');
             });
-          } else {
+          } else if (!isTG) {
             // 移动端使用 antd-mobile 的 Toast
             import('antd-mobile').then(({ Toast }) => {
               Toast.show({
