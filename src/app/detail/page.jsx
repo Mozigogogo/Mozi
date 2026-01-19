@@ -11,6 +11,7 @@ import MoziGrid from '../../components/MoziGrid';
 import HighlightArea from '../../components/HighlightArea';
 import AddCollect from '../../components/AddCollect';
 import KlineChart from '../../components/KlineChart';
+import OrderBook from '../../components/OrderBook';
 import { Loading } from '../../components/Loading';
 import { CaretUpIcon, CaretDownIcon, BellIcon } from '../../components/Icons';
 import FloatingRobot from '../../components/FloatingRobot';
@@ -75,6 +76,11 @@ export default function DetailPage() {
     priceChange1Month: '--',
     priceChange1Year: '--'
   });
+
+  const [orderBook, setOrderBook] = useState({
+    bids: [],
+    asks: []
+  });
   
   // WebSocket连接状态管理
   const wsConnectionStatusRef = useRef('connecting'); // connecting | connected | failed
@@ -128,6 +134,25 @@ export default function DetailPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const generateMockOrderBook = (iconUrl) => {
+    const genSide = () => {
+      const base = 4e9 + Math.random() * 8e9;
+      return Array.from({ length: 10 }).map((_, idx) => {
+        const drift = (10 - idx) / 10;
+        const value = base * drift * (0.7 + Math.random() * 0.6);
+        return {
+          value,
+          icon: iconUrl || null,
+        };
+      });
+    };
+
+    return {
+      bids: genSide(),
+      asks: genSide(),
+    };
   };
   
   // 模拟K线数据
@@ -1048,6 +1073,10 @@ ${coinInfo.name || symbol} (${symbol})
       }
     };
   }, [symbol]);
+
+  useEffect(() => {
+    setOrderBook(generateMockOrderBook(coinInfo?.url));
+  }, [symbol, coinInfo?.url]);
   
   // 监听K线时间周期切换，动态切换订阅
   useEffect(() => {
@@ -1231,6 +1260,17 @@ ${coinInfo.name || symbol} (${symbol})
     );
   };
 
+  const renderOrderBook = () => {
+    const endTime = new Date(Date.now() + 13 * 24 * 60 * 60 * 1000 + 12 * 60 * 60 * 1000 + 41 * 60 * 1000 + 8 * 1000);
+    return (
+      <OrderBook 
+        bids={orderBook.bids} 
+        asks={orderBook.asks}
+        endTime={endTime}
+      />
+    );
+  };
+
   // 渲染投资回报率（ROI）
   const renderROI = () => {
     if (roiLoading) {
@@ -1366,6 +1406,9 @@ ${coinInfo.name || symbol} (${symbol})
         <div ref={chartRef} className={styles.chartSection}>
           <div className={styles.box}>
             {renderKline()}
+          </div>
+          <div className={styles.orderBookSection}>
+            {renderOrderBook()}
           </div>
         </div>
         

@@ -5,7 +5,7 @@ import { Popup, Input, Button, Toast } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
-import { sendVerificationCode } from '../../api/user';
+import { sendVerificationCode, loginByTelegram } from '../../api/user';
 import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
 import styles from './index.module.less';
 
@@ -123,6 +123,122 @@ const updateTelegramUserInfo = async () => {
     }
   } catch (error) {
     console.error('❌ LoginModal - 更新 Telegram 用户信息失败:', error);
+  }
+};
+
+// Telegram 直接登录处理函数
+const handleTelegramDirectLogin = async (onLoginSuccess, onClose, t) => {
+  if (typeof window === 'undefined' || !window.Telegram?.WebApp) {
+    Toast.show({ content: '非 Telegram 环境', position: 'bottom' });
+    return;
+  }
+  
+  const tgWebApp = window.Telegram.WebApp;
+  const initData = tgWebApp.initData;
+  const initDataUnsafe = tgWebApp.initDataUnsafe;
+  
+  if (!initData || !initDataUnsafe?.user) {
+    Toast.show({ content: '无法获取 Telegram 用户信息', position: 'bottom' });
+    return;
+  }
+  
+  const tgUser = initDataUnsafe.user;
+  
+  // 从 initData 解析 hash
+  const urlParams = new URLSearchParams(initData);
+  const hash = urlParams.get('hash');
+  
+  if (!hash) {
+    Toast.show({ content: '无法获取验证信息', position: 'bottom' });
+    return;
+  }
+  
+  // 获取邀请码
+  const inviteCode = localStorage.getItem('inviteCode') || '';
+  
+  // 判断环境
+  const isProduction = process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_APP_ENV === 'production';
+  const env = isProduction ? 'production' : 'test';
+  
+  console.log('🚀 [LoginModal] Telegram 直接登录');
+  console.log('========== TG 登录参数 ==========');
+  console.log('telegram_id:', String(tgUser.id));
+  console.log('username:', tgUser.username || tgUser.first_name || '');
+  console.log('photo_url:', tgUser.photo_url || '');
+  console.log('hash:', hash);
+  console.log('invite_code:', inviteCode);
+  console.log('channel:', 'tg');
+  console.log('env:', env);
+  console.log('完整 initData:', initData);
+  console.log('================================');
+  
+  try {
+    Toast.show({ icon: 'loading', content: t('user.loggingIn') || '登录中...', duration: 0 });
+    
+    const res = await loginByTelegram({
+      telegram_id: String(tgUser.id),
+      username: tgUser.username || tgUser.first_name || '',
+      photo_url: tgUser.photo_url || '',
+      hash: hash,
+      invite_code: inviteCode,
+      env: env
+    });
+    
+    Toast.clear();
+    
+    if (res?.data?.token) {
+      localStorage.setItem('token', res.data.token);
+      
+      const userData = res?.data?.userInfo || res?.data?.user;
+      if (userData) {
+        const userInfoWithSubscribe = {
+          ...userData,
+          subscribeAnnouncement: res.data.subscribeAnnouncement
+        };
+        localStorage.setItem('userInfo', JSON.stringify(userInfoWithSubscribe));
+      }
+      
+      if (res?.data?.userId) {
+        localStorage.setItem('userId', res.data.userId);
+      }
+      
+      // 清除邀请码
+      if (inviteCode) {
+        localStorage.removeItem('inviteCode');
+      }
+      
+      // 获取用户详细信息
+      request({
+        url: Interface.USER_DATA_INFO,
+        method: 'GET'
+      }).then((dataInfoRes) => {
+        if (dataInfoRes?.data) {
+          localStorage.setItem('userDataInfo', JSON.stringify(dataInfoRes.data));
+        }
+      }).catch((err) => {
+        console.error('❌ 获取用户详细信息失败:', err);
+      });
+      
+      // 完成每日登录任务
+      request({
+        url: Interface.TASK_COMPLETE,
+        method: 'POST',
+        data: { taskCode: 'DAILY_LOGIN' }
+      }).catch((err) => {
+        console.error('❌ 每日登录任务上报失败:', err);
+      });
+      
+      Toast.show({ content: t('auth.loginSuccess') || '登录成功', position: 'center', icon: 'success' });
+      
+      onLoginSuccess?.();
+      onClose?.();
+    } else {
+      Toast.show({ content: res?.message || res?.errorMsg || t('auth.loginFailed') || '登录失败', position: 'bottom' });
+    }
+  } catch (error) {
+    Toast.clear();
+    console.error('❌ Telegram 登录失败:', error);
+    Toast.show({ content: t('auth.loginFailedRetry') || '登录失败，请重试', position: 'bottom' });
   }
 };
 
@@ -541,6 +657,20 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
             {!showEmailForm ? (
               // 登录方式选择页面
               <>
+                {/* Telegram 直接登录按钮（仅在 TG 环境显示） */}
+                {isTelegramEnv() && (
+                  <div 
+                    className={styles.walletBtn} 
+                    onClick={() => handleTelegramDirectLogin(onLoginSuccess, handleClose, t)}
+                    style={{ background: '#0088cc' }}
+                  >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="white" style={{ marginRight: '8px' }}>
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+                    </svg>
+                    <span>{t('auth.telegramLoginBtn') || 'Telegram 登录'}</span>
+                  </div>
+                )}
+
                 {/* 钱包登录按钮 */}
                 <div className={styles.walletBtn} onClick={handleWalletLoginClick}>
                   <img src="/icons/user/login_wallet.png" alt="wallet" className={styles.walletIcon} />
