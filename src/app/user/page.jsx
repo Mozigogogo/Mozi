@@ -1029,6 +1029,20 @@ export default function UserPage() {
         try {
           const parsed = JSON.parse(ui);
           setUserInfo((prev) => ({ ...prev, nickname: parsed.nickName || prev.nickname, avatar: parsed.avatar || prev.avatar }));
+          if (parsed?.nickName) {
+            try {
+              const rawDataInfo = localStorage.getItem('userDataInfo');
+              const dataInfo = rawDataInfo ? JSON.parse(rawDataInfo) : {};
+              const next = {
+                ...dataInfo,
+                userInfo: {
+                  ...(dataInfo?.userInfo || {}),
+                  nickName: parsed.nickName,
+                },
+              };
+              localStorage.setItem('userDataInfo', JSON.stringify(next));
+            } catch {}
+          }
           // 根据登录返回的 subscribeAnnouncement 字段初始化开关状态
           if (parsed.subscribeAnnouncement !== undefined) {
             setIsAnnouncementOn(parsed.subscribeAnnouncement === 1);
