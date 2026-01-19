@@ -102,8 +102,6 @@ export default function TelegramAutoLogin() {
       console.log('================================');
 
       try {
-        Toast.show({ icon: 'loading', content: '登录中...', duration: 0 });
-
         const res = await loginByTelegram({
           telegramId: String(tgUser.id),
           username: tgUser.username || tgUser.first_name || '',
@@ -112,8 +110,6 @@ export default function TelegramAutoLogin() {
           inviteCode: inviteCode,
           env: env
         });
-
-        Toast.clear();
 
         if (res?.data?.token) {
           // 保存 token
@@ -179,8 +175,6 @@ export default function TelegramAutoLogin() {
             console.error('❌ [TG自动登录] 每日登录任务上报失败:', taskError);
           }
 
-          Toast.show({ content: '登录成功', position: 'center', icon: 'success' });
-
           console.log('✅ [TG自动登录] Telegram 自动登录成功');
           
           // 触发页面刷新以更新状态
@@ -190,9 +184,7 @@ export default function TelegramAutoLogin() {
           Toast.show({ content: res?.message || res?.errorMsg || '登录失败', position: 'bottom' });
         }
       } catch (error) {
-        Toast.clear();
         console.error('❌ [TG自动登录] 登录异常:', error);
-        Toast.show({ content: '登录失败，请重试', position: 'bottom' });
       }
     };
 

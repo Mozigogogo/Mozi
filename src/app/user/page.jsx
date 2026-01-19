@@ -1471,8 +1471,17 @@ export default function UserPage() {
           const storedUserInfo = localStorage.getItem('userInfo');
           if (storedUserInfo) {
             const parsed = JSON.parse(storedUserInfo);
+            parsed.nickName = newNickname;
             parsed.avatar = newAvatar;
             localStorage.setItem('userInfo', JSON.stringify(parsed));
+          } else {
+            localStorage.setItem(
+              'userInfo',
+              JSON.stringify({
+                nickName: newNickname,
+                avatar: newAvatar,
+              })
+            );
           }
         } catch (e) {
           console.error('更新 userInfo 失败:', e);
@@ -1487,6 +1496,7 @@ export default function UserPage() {
               parsed.userInfo = {};
             }
             parsed.userInfo.nickName = newNickname;
+            parsed.userInfo.avatar = newAvatar;
             localStorage.setItem('userDataInfo', JSON.stringify(parsed));
           }
         } catch (e) {
