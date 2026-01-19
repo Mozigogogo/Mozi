@@ -119,15 +119,19 @@ export default function TelegramAutoLogin() {
           // 保存 token
           localStorage.setItem('token', res.data.token);
 
-          // 保存用户信息
-          const userData = res?.data?.userInfo || res?.data?.user;
-          if (userData) {
-            const userInfoWithSubscribe = {
-              ...userData,
-              subscribeAnnouncement: res.data.subscribeAnnouncement
-            };
-            localStorage.setItem('userInfo', JSON.stringify(userInfoWithSubscribe));
-          }
+          // 保存用户信息，完全依赖后端返回的 nickName
+          const userData = res?.data?.userInfo || res?.data?.user || {};
+          const nickName = userData.nickName || '';
+          const avatar = userData.avatar || tgUser.photo_url || '';
+          
+          const userInfoWithSubscribe = {
+            ...userData,
+            nickName: nickName,
+            avatar: avatar,
+            subscribeAnnouncement: res.data.subscribeAnnouncement
+          };
+          localStorage.setItem('userInfo', JSON.stringify(userInfoWithSubscribe));
+          console.log('✅ [TG自动登录] 用户信息已保存:', { nickName, avatar });
 
           if (res?.data?.userId) {
             localStorage.setItem('userId', res.data.userId);
@@ -139,7 +143,7 @@ export default function TelegramAutoLogin() {
             console.log('✅ [TG自动登录] 邀请码已使用并清除');
           }
 
-          // 同步调用 /user/datainfo 获取用户详细信息
+          // 同步调用 /user/datainfo 获取用户详细信息（仅用于积分等数据，不覆盖 nickName/avatar）
           try {
             const dataInfoRes = await request({
               url: Interface.USER_DATA_INFO,
@@ -148,7 +152,16 @@ export default function TelegramAutoLogin() {
 
             if (dataInfoRes?.data) {
               console.log('✅ [TG自动登录] 获取用户详细信息成功');
-              localStorage.setItem('userDataInfo', JSON.stringify(dataInfoRes.data));
+              // 保留本地已有的 nickName/avatar，不让 datainfo 覆盖
+              const nextDataInfo = {
+                ...dataInfoRes.data,
+                userInfo: {
+                  ...(dataInfoRes.data?.userInfo || {}),
+                  nickName: nickName,
+                  avatar: avatar
+                }
+              };
+              localStorage.setItem('userDataInfo', JSON.stringify(nextDataInfo));
             }
           } catch (dataInfoError) {
             console.error('❌ [TG自动登录] 获取用户详细信息失败:', dataInfoError);
