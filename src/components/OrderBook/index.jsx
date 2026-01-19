@@ -3,6 +3,24 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import styles from './index.module.less';
 
+const exchangeIcons = [
+  '/icons/new_detail/Ellipse%203832.png',
+  '/icons/new_detail/Ellipse%203834.png',
+  '/icons/new_detail/Ellipse%203835.png',
+  '/icons/new_detail/Ellipse%203836.png',
+  '/icons/new_detail/Ellipse%203837.png',
+  '/icons/new_detail/Ellipse%203838.png',
+  '/icons/new_detail/Ellipse%203839.png',
+  '/icons/new_detail/Ellipse%203840.png',
+  '/icons/new_detail/Frame%202087326500.png',
+];
+
+const pickExchangeIcon = (seed) => {
+  if (!exchangeIcons.length) return null;
+  const idx = Math.abs((seed * 9301 + 49297) % 233280) % exchangeIcons.length;
+  return exchangeIcons[idx];
+};
+
 const defaultFormatValue = (val) => {
   if (val === null || val === undefined || val === '') return '--';
   const num = Number(val);
@@ -85,13 +103,21 @@ export default function OrderBook({
             <div className={styles.countdown}>
               <span className={styles.countdownLabel}>距结束</span>
               <div className={styles.countdownNumbers}>
-                <span className={styles.countdownCircle}>{String(countdown.days).padStart(2, '0')}</span>
+                <span className={styles.countdownCircle}>
+                  <span className={styles.countdownValue}>{String(countdown.days).padStart(2, '0')}</span>
+                </span>
                 <span className={styles.countdownText}>天</span>
-                <span className={styles.countdownCircle}>{String(countdown.hours).padStart(2, '0')}</span>
+                <span className={styles.countdownCircle}>
+                  <span className={styles.countdownValue}>{String(countdown.hours).padStart(2, '0')}</span>
+                </span>
                 <span className={styles.countdownText}>时</span>
-                <span className={styles.countdownCircle}>{String(countdown.minutes).padStart(2, '0')}</span>
+                <span className={styles.countdownCircle}>
+                  <span className={styles.countdownValue}>{String(countdown.minutes).padStart(2, '0')}</span>
+                </span>
                 <span className={styles.countdownText}>分</span>
-                <span className={styles.countdownCircle}>{String(countdown.seconds).padStart(2, '0')}</span>
+                <span className={styles.countdownCircle}>
+                  <span className={styles.countdownValue}>{String(countdown.seconds).padStart(2, '0')}</span>
+                </span>
                 <span className={styles.countdownText}>秒</span>
               </div>
             </div>
@@ -144,29 +170,35 @@ export default function OrderBook({
           const bidPct = Math.max(0, Math.min(100, (bidValue / maxBid) * 100));
           const askPct = Math.max(0, Math.min(100, (askValue / maxAsk) * 100));
 
+          const bidOpacity = Math.min(1, Math.max(0.6, 0.6 + (bidPct / 100) * 0.4));
+          const askOpacity = Math.min(1, Math.max(0.6, 0.6 + (askPct / 100) * 0.4));
+
           return (
             <div key={idx} className={styles.row}>
-              <div className={styles.side}>
-                {row.bid?.icon ? (
-                  <img className={styles.icon} src={row.bid.icon} alt="bid" />
+              <div className={styles.iconCell}>
+                {pickExchangeIcon(idx * 2) ? (
+                  <img className={styles.icon} src={pickExchangeIcon(idx * 2)} alt="exchange" />
                 ) : (
                   <span className={styles.iconPlaceholder} />
                 )}
-                <div className={`${styles.value} ${styles.bidValue}`}>{formatValue(row.bid?.value)}</div>
               </div>
 
               <div className={styles.barCell}>
                 <div className={styles.barBg}>
-                  <div className={styles.midLine} />
-                  <div className={styles.bidBar} style={{ width: `${bidPct}%` }} />
-                  <div className={styles.askBar} style={{ width: `${askPct}%` }} />
+                  <div className={`${styles.value} ${styles.bidValue} ${styles.bidPrice}`}>{formatValue(row.bid?.value)}</div>
+                  <div className={`${styles.value} ${styles.askValue} ${styles.askPrice}`}>{formatValue(row.ask?.value)}</div>
+
+                  <div className={styles.barTrack}>
+                    <div className={styles.midLine} />
+                    <div className={styles.bidBar} style={{ width: `${bidPct}%`, opacity: bidOpacity }} />
+                    <div className={styles.askBar} style={{ width: `${askPct}%`, opacity: askOpacity }} />
+                  </div>
                 </div>
               </div>
 
-              <div className={`${styles.side} ${styles.rightSide}`}>
-                <div className={`${styles.value} ${styles.askValue}`}>{formatValue(row.ask?.value)}</div>
-                {row.ask?.icon ? (
-                  <img className={styles.icon} src={row.ask.icon} alt="ask" />
+              <div className={styles.iconCell}>
+                {pickExchangeIcon(idx * 2 + 1) ? (
+                  <img className={styles.icon} src={pickExchangeIcon(idx * 2 + 1)} alt="exchange" />
                 ) : (
                   <span className={styles.iconPlaceholder} />
                 )}
