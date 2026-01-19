@@ -188,11 +188,11 @@ const handleTelegramDirectLogin = async (onLoginSuccess, onClose, t) => {
   console.log('🚀 [LoginModal] Telegram 直接登录');
   console.log('========== TG 登录参数 ==========');
   console.log('type:', 'login');
-  console.log('telegram_id:', String(tgUser.id));
+  console.log('telegramId:', String(tgUser.id));
   console.log('username:', tgUser.username || tgUser.first_name || '');
-  console.log('photo_url:', tgUser.photo_url || '');
+  console.log('photoUrl:', tgUser.photo_url || '');
   console.log('hash:', hash);
-  console.log('invite_code:', inviteCode);
+  console.log('inviteCode:', inviteCode);
   console.log('channel:', 'tg');
   console.log('env:', env);
   console.log('完整 initData:', initData);
@@ -202,11 +202,11 @@ const handleTelegramDirectLogin = async (onLoginSuccess, onClose, t) => {
     Toast.show({ icon: 'loading', content: t('user.loggingIn') || '登录中...', duration: 0 });
     
     const res = await loginByTelegram({
-      telegram_id: String(tgUser.id),
+      telegramId: String(tgUser.id),
       username: tgUser.username || tgUser.first_name || '',
-      photo_url: tgUser.photo_url || '',
+      photoUrl: tgUser.photo_url || '',
       hash: hash,
-      invite_code: inviteCode,
+      inviteCode: inviteCode,
       env: env
     });
     
