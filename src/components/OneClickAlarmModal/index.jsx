@@ -97,36 +97,6 @@ export default function OneClickAlarmModal({
   const [email, setEmail] = useState(init.email);
   const [pushEnabled, setPushEnabled] = useState(init.pushEnabled);
 
-  const footer = (
-    <div className={styles.footerActions}>
-      <button
-        type="button"
-        className={styles.primaryBtn}
-        onClick={() => {
-          onConfirm?.({
-            phoneEnabled,
-            countryCode,
-            phone,
-            emailEnabled,
-            email,
-            pushEnabled,
-          });
-        }}
-      >
-        {confirmText}
-      </button>
-      <button
-        type="button"
-        className={styles.secondaryBtn}
-        onClick={() => {
-          onSkip?.();
-          onClose?.();
-        }}
-      >
-        {skipText}
-      </button>
-    </div>
-  );
 
   return (
     <BottomSheetModal
@@ -136,8 +106,8 @@ export default function OneClickAlarmModal({
         <div className={styles.header}>
         </div>
       }
-      footer={footer}
       sheetClassName={styles.sheet}
+      bodyClassName={styles.bodyNoPadding}
       maxHeight="90vh"
     >
       <div className={styles.content}>
@@ -208,6 +178,35 @@ export default function OneClickAlarmModal({
               <span className={styles.rowLabel}>推送</span>
             </div>
             <Toggle checked={pushEnabled} onChange={setPushEnabled} />
+          </div>
+
+          <div className={styles.footerActions}>
+            <button
+              type="button"
+              className={styles.primaryBtn}
+              onClick={() => {
+                onConfirm?.({
+                  phoneEnabled,
+                  countryCode,
+                  phone,
+                  emailEnabled,
+                  email,
+                  pushEnabled,
+                });
+              }}
+            >
+              {confirmText}
+            </button>
+            <button
+              type="button"
+              className={styles.secondaryBtn}
+              onClick={() => {
+                onSkip?.();
+                onClose?.();
+              }}
+            >
+              {skipText}
+            </button>
           </div>
         </div>
       </div>

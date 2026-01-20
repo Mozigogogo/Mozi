@@ -173,7 +173,7 @@ export default function OrderBook({
         </div>
       </div>
 
-      <div className={styles.list}>
+      <div className={`${styles.list} ${selectedOption.includes('前五') ? styles.listTop5 : ''} ${selectedOption.includes('前十') ? styles.listTop10 : ''}`}>
         {rows.map((row, idx) => {
           const bidValue = row.bid ? Number(row.bid.value ?? 0) : 0;
           const askValue = row.ask ? Number(row.ask.value ?? 0) : 0;

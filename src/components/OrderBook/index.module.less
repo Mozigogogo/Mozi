@@ -1,7 +1,7 @@
 .container {
   width: 100%;
   background: #fff;
-  border-radius: 12px;
+  border-radius:0px 0px 12px 12px;
   padding: 12px;
   position: relative;
   z-index: 20;
@@ -231,6 +231,44 @@
   position: relative;
 }
 
+.listTop5 {
+  gap: 30px;
+
+  .row {
+    min-height: 28px;
+    grid-template-columns: 20px 1fr 20px;
+  }
+
+  .barTrack {
+    height: 24px;
+  }
+
+  .icon,
+  .iconPlaceholder {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.listTop10 {
+  gap: 1px;
+
+  .row {
+    min-height: 28px;
+    grid-template-columns: 20px 1fr 20px;
+  }
+
+  .barTrack {
+    height: 24px;
+  }
+
+  .icon,
+  .iconPlaceholder {
+    width: 20px;
+    height: 20px;
+  }
+}
+
 .list::before {
   content: '';
   position: absolute;
@@ -295,7 +333,7 @@
 }
 
 .value {
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1;
   padding: 4px 6px;
   border-radius: 4px;
@@ -305,6 +343,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   border: 1px solid rgba(0, 0, 0, 0.06);
+  font-weight: 500;
 }
 
 .bidValue {

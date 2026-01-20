@@ -18,6 +18,7 @@ export default function BottomSheetModal({
   maxHeight = '85vh',
   className = '',
   sheetClassName = '',
+  bodyClassName = '',
 }) {
   const [rendered, setRendered] = useState(open);
   const [closing, setClosing] = useState(false);
@@ -111,7 +112,7 @@ export default function BottomSheetModal({
           </div>
         )}
 
-        <div className={styles.body}>{children}</div>
+        <div className={`${styles.body} ${bodyClassName}`}>{children}</div>
 
         {footer && <div className={styles.footer}>{footer}</div>}
       </div>
