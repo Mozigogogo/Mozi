@@ -135,6 +135,7 @@ export default function UserPage() {
 
   // 检查 URL 参数，自动打开注册弹窗或登录弹窗
   useEffect(() => {
+    if (isTelegramEnv()) return;
     const mode = searchParams.get('mode');
     const showLogin = searchParams.get('showLogin');
     
@@ -189,7 +190,26 @@ export default function UserPage() {
       if (res?.data) {
         // 保存完整的 dataInfo 数据到 localStorage
         try {
-          localStorage.setItem('userDataInfo', JSON.stringify(res.data));
+          let nextDataInfo = res.data;
+          const rawUserInfo = localStorage.getItem('userInfo');
+          if (rawUserInfo) {
+            try {
+              const parsedUserInfo = JSON.parse(rawUserInfo);
+              const nickName = parsedUserInfo?.nickName;
+              const avatar = parsedUserInfo?.avatar;
+              if (nickName || avatar) {
+                nextDataInfo = {
+                  ...res.data,
+                  userInfo: {
+                    ...(res.data?.userInfo || {}),
+                    ...(nickName ? { nickName } : {}),
+                    ...(avatar ? { avatar } : {})
+                  }
+                };
+              }
+            } catch {}
+          }
+          localStorage.setItem('userDataInfo', JSON.stringify(nextDataInfo));
         } catch (e) {
           console.error('❌ 保存 dataInfo 到 localStorage 失败:', e);
         }
@@ -227,9 +247,29 @@ export default function UserPage() {
       
       let displayNick = t('user.defaultNickname');
       let displayAvatar = DEFAULT_AVATAR;
-      
-      // 昵称：优先从 userDataInfo.userInfo.nickName 读取
-      if (dataInfo) {
+
+      // 昵称/头像：优先从 userInfo 读取（登录接口写入）
+      if (ui) {
+        try {
+          const parsed = JSON.parse(ui);
+          if (parsed.nickName) {
+            displayNick = parsed.nickName;
+          }
+          if (parsed.avatar) {
+            displayAvatar = parsed.avatar;
+          }
+
+          // 根据登录返回的 subscribeAnnouncement 字段初始化开关状态
+          if (parsed.subscribeAnnouncement !== undefined) {
+            setIsAnnouncementOn(parsed.subscribeAnnouncement === 1);
+          }
+        } catch (e) {
+          console.error('解析 userInfo 失败:', e);
+        }
+      }
+
+      // 兜底：如果 userInfo 没有 nickName，再从 userDataInfo.userInfo.nickName 读取
+      if (displayNick === t('user.defaultNickname') && dataInfo) {
         try {
           const dataInfoParsed = JSON.parse(dataInfo);
           const nickFromDataInfo = (dataInfoParsed.userInfo?.nickName || '').trim();
@@ -238,23 +278,6 @@ export default function UserPage() {
           }
         } catch (e) {
           console.error('解析 userDataInfo 失败:', e);
-        }
-      }
-      
-      // 头像：从 userInfo.avatar 读取
-      if (ui) {
-        try {
-          const parsed = JSON.parse(ui);
-          if (parsed.avatar) {
-            displayAvatar = parsed.avatar;
-          }
-          
-          // 根据登录返回的 subscribeAnnouncement 字段初始化开关状态
-          if (parsed.subscribeAnnouncement !== undefined) {
-            setIsAnnouncementOn(parsed.subscribeAnnouncement === 1);
-          }
-        } catch (e) {
-          console.error('解析 userInfo 失败:', e);
         }
       }
       
@@ -459,18 +482,6 @@ export default function UserPage() {
     }
   }, [isConnected, address]);
 
-  // 监听 TON 钱包连接状态变化 (Telegram 环境)
-  useEffect(() => {
-    // 先检查 localStorage 中是否已有 token，避免重复登录
-    const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('token');
-    if (hasToken) return;
-    
-    if (isTelegramEnv() && tonWallet && !userInfo.isLogin) {
-      // TON 钱包已连接，自动进行登录
-      handleTonWalletLogin();
-    }
-  }, [tonWallet]);
-
   // 监听URL中的邀请码参数
   useEffect(() => {
     const inviteCode = searchParams.get('inviteCode') || searchParams.get('invite');
@@ -479,6 +490,9 @@ export default function UserPage() {
       console.log('🔍 [UserPage] 检测到邀请码:', inviteCode);
       // 存储到 localStorage
       localStorage.setItem('inviteCode', inviteCode);
+
+      // TG 环境下不自动弹登录/注册弹窗
+      if (isTelegramEnv()) return;
       
       // 检查用户是否已登录
       const token = localStorage.getItem('token');
@@ -1037,6 +1051,21 @@ export default function UserPage() {
         try {
           const parsed = JSON.parse(ui);
           setUserInfo((prev) => ({ ...prev, nickname: parsed.nickName || prev.nickname, avatar: parsed.avatar || prev.avatar }));
+          if (parsed?.nickName || parsed?.avatar) {
+            try {
+              const rawDataInfo = localStorage.getItem('userDataInfo');
+              const dataInfo = rawDataInfo ? JSON.parse(rawDataInfo) : {};
+              const next = {
+                ...dataInfo,
+                userInfo: {
+                  ...(dataInfo?.userInfo || {}),
+                  ...(parsed?.nickName ? { nickName: parsed.nickName } : {}),
+                  ...(parsed?.avatar ? { avatar: parsed.avatar } : {}),
+                },
+              };
+              localStorage.setItem('userDataInfo', JSON.stringify(next));
+            } catch {}
+          }
           // 根据登录返回的 subscribeAnnouncement 字段初始化开关状态
           if (parsed.subscribeAnnouncement !== undefined) {
             setIsAnnouncementOn(parsed.subscribeAnnouncement === 1);
@@ -1442,8 +1471,17 @@ export default function UserPage() {
           const storedUserInfo = localStorage.getItem('userInfo');
           if (storedUserInfo) {
             const parsed = JSON.parse(storedUserInfo);
+            parsed.nickName = newNickname;
             parsed.avatar = newAvatar;
             localStorage.setItem('userInfo', JSON.stringify(parsed));
+          } else {
+            localStorage.setItem(
+              'userInfo',
+              JSON.stringify({
+                nickName: newNickname,
+                avatar: newAvatar,
+              })
+            );
           }
         } catch (e) {
           console.error('更新 userInfo 失败:', e);
@@ -1458,6 +1496,7 @@ export default function UserPage() {
               parsed.userInfo = {};
             }
             parsed.userInfo.nickName = newNickname;
+            parsed.userInfo.avatar = newAvatar;
             localStorage.setItem('userDataInfo', JSON.stringify(parsed));
           }
         } catch (e) {
@@ -1467,7 +1506,7 @@ export default function UserPage() {
         Toast.clear();
         Toast.show({
           content: t('user.saveSuccess') || '保存成功',
-          position: 'bottom',
+          position: 'center',
           icon: 'success'
         });
         setShowEditProfile(false);
@@ -1475,7 +1514,7 @@ export default function UserPage() {
         Toast.clear();
         Toast.show({
           content: t('user.saveFailed') || '保存失败',
-          position: 'bottom',
+          position: 'center',
           icon: 'fail'
         });
       }
@@ -1484,7 +1523,7 @@ export default function UserPage() {
       Toast.clear();
       Toast.show({
         content: t('user.saveFailed') || '保存失败',
-        position: 'bottom',
+        position: 'center',
         icon: 'fail'
       });
     }
@@ -1555,7 +1594,7 @@ export default function UserPage() {
             </div>
           ) : (
             <div className={styles.loginBox}>
-              <div className={styles.headerUser} onClick={handleLogin}>
+              <div className={styles.headerUser} onClick={isTelegramEnv() ? undefined : handleLogin}>
                 <img className={styles.headerAvatar} src={DEFAULT_AVATAR} alt="头像" />
                 <span>{t('user.pleaseLogin')}</span>
               </div>
@@ -1714,7 +1753,7 @@ export default function UserPage() {
           </List>
         </div>
 
-        {userInfo.isLogin && (
+        {userInfo.isLogin && !isTelegramEnv() && (
           <Button className={styles.logoutBtn} onClick={handleLogout}>{t('user.logout')}</Button>
         )}
         

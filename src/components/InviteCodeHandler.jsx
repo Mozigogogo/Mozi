@@ -3,6 +3,12 @@
 import { useEffect } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 
+const isTelegramEnv = () => {
+  if (typeof window === 'undefined') return false;
+  const channel = localStorage.getItem('appChannel');
+  return channel === 'tg';
+};
+
 /**
  * 邀请码处理组件
  * 从 URL 参数中获取邀请码，存储并自动跳转到 /user 页面触发钱包登录
@@ -20,6 +26,9 @@ export default function InviteCodeHandler({ onShowLogin }) {
       console.log('🔍 [InviteCode] 获取到邀请码:', inviteCode);
       // 存储到 localStorage
       localStorage.setItem('inviteCode', inviteCode);
+
+      // TG 环境下不进行自动跳转
+      if (isTelegramEnv()) return;
       
       // 检查用户是否已登录
       const token = localStorage.getItem('token');

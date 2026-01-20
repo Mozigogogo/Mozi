@@ -806,7 +806,10 @@
       "favorite": "加自选",
       "alert": "告警",
       "share": "分享",
-      "community": "社区"
+      "community": "社区",
+      "configAlarm": "配置告警",
+      "startNow": "立即开启",
+      "comingSoon": "敬请期待"
     },
     "roi": {
       "daily": "日回报率",
