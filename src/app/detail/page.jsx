@@ -82,6 +82,9 @@ export default function DetailPage() {
     asks: []
   });
   
+  // 控制大单侦测区域显示/隐藏
+  const showOrderBook = false;
+  
   // WebSocket连接状态管理
   const wsConnectionStatusRef = useRef('connecting'); // connecting | connected | failed
   const wsConnectionTimeoutRef = useRef(null); // WebSocket连接超时定时器
@@ -138,10 +141,10 @@ export default function DetailPage() {
 
   const generateMockOrderBook = (iconUrl) => {
     const genSide = () => {
-      const base = 4e9 + Math.random() * 8e9;
+      const baseValue = 10e9 + Math.random() * 4e9;
       return Array.from({ length: 10 }).map((_, idx) => {
-        const drift = (10 - idx) / 10;
-        const value = base * drift * (0.7 + Math.random() * 0.6);
+        const decay = 1 - idx * 0.1;
+        const value = baseValue * decay * (0.9 + Math.random() * 0.2);
         return {
           value,
           icon: iconUrl || null,
@@ -1407,9 +1410,11 @@ ${coinInfo.name || symbol} (${symbol})
           <div className={styles.box}>
             {renderKline()}
           </div>
-          <div className={styles.orderBookSection}>
-            {renderOrderBook()}
-          </div>
+          {showOrderBook && (
+            <div className={styles.orderBookSection}>
+              {renderOrderBook()}
+            </div>
+          )}
         </div>
         
         {/* 市场行情区域 */}
@@ -1442,15 +1447,23 @@ ${coinInfo.name || symbol} (${symbol})
               />
               <div className={styles.footerText}>{t('detail.actions.community')}</div>
             </div>
+            <div className={styles.footerItem} onClick={shareToTelegram}>
+              <img 
+                className={styles.footerIcon} 
+                src="/icons/new_detail/share.svg" 
+                alt={t('detail.actions.share')}
+              />
+              <div className={styles.footerText}>{t('detail.actions.share')}</div>
+            </div>
           </div>
 
           <div className={styles.footerRight}>
             <div className={styles.alarmPill}>
               <button type="button" className={styles.alarmConfig} onClick={jump2Alert}>
-                配置告警
+                {t('detail.actions.configAlarm')}
               </button>
-              <button type="button" className={styles.alarmStart} onClick={jump2Alert}>
-                立即开启
+              <button type="button" className={styles.alarmStart} onClick={() => Toast.show({ content: t('detail.actions.comingSoon'), position: 'bottom' })}>
+                {t('detail.actions.startNow')}
               </button>
             </div>
           </div>

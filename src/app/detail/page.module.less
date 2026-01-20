@@ -315,10 +315,14 @@
   box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08);
 }
 
+:global(body[data-modal-open="true"]) .footerList {
+  display: none;
+}
+
 .footerLeft {
   display: flex;
   align-items: center;
-  gap: 35px;
+  gap: 20px;
 }
 
 .footerRight {
@@ -364,26 +368,28 @@
 
 .alarmConfig {
   border: none;
-  padding: 12px 20px;
+  padding: 12px 16px;
   background: rgba(178, 235, 220, 1);
   color: rgba(11, 122, 94, 1);
   font-family: 'PingFang SC', sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 16px;
   letter-spacing: 0;
+  white-space: nowrap;
 }
 
 .alarmStart {
   border: none;
-  padding: 12px 20px;
+  padding: 12px 16px;
   background: rgba(11, 122, 94, 1);
   color: #fff;
   font-family: 'PingFang SC', sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 16px;
   letter-spacing: 0;
+  white-space: nowrap;
 }
 
 /* 悬浮机器人按钮 */
