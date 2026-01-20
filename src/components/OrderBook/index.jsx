@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
+import OneClickAlarmModal from '../OneClickAlarmModal';
 import styles from './index.module.less';
 
 const exchangeIcons = [
@@ -46,6 +47,7 @@ export default function OrderBook({
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [selectedOption, setSelectedOption] = useState(dropdownOptions[0]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [alarmModalOpen, setAlarmModalOpen] = useState(false);
 
   const visibleRowsCount = useMemo(() => {
     const trimmed = String(selectedOption ?? '').trim();
@@ -216,9 +218,19 @@ export default function OrderBook({
         })}
       </div>
 
-      <button type="button" className={styles.alarmButton}>
+      <button type="button" className={styles.alarmButton} onClick={() => setAlarmModalOpen(true)}>
         一键告警
       </button>
+
+      <OneClickAlarmModal
+        open={alarmModalOpen}
+        onClose={() => setAlarmModalOpen(false)}
+        onConfirm={(values) => {
+          console.log('告警配置:', values);
+          setAlarmModalOpen(false);
+        }}
+        onSkip={() => setAlarmModalOpen(false)}
+      />
     </div>
   );
 }

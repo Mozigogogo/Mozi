@@ -315,10 +315,15 @@
   box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08);
 }
 
+:global(body[data-modal-open="true"]) .footerList {
+  display: none;
+}
+
 .footerLeft {
   display: flex;
   align-items: center;
   gap: 35px;
+  margin-left: 10px;
 }
 
 .footerRight {
