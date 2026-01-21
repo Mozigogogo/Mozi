@@ -925,6 +925,8 @@
     "priceFall": "价格跌至",
     "risePercent": "日涨幅超",
     "fallPercent": "日跌幅超",
+    "bigOrderDetect": "大单侦测",
+    "exchangeSpreadMonitor": "交易所价差监控",
     "saveAlarm": "保存告警",
     "viewAlarms": "查看已配置告警",
     "loading": "加载中...",

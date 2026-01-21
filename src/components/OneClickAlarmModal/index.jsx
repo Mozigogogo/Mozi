@@ -101,6 +101,8 @@ export default function OneClickAlarmModal({
     priceFall: { value: '', enabled: true, unit: '$', labelKey: 'addAlarm.priceFall' },
     risePercent: { value: '10', enabled: true, unit: '%', labelKey: 'addAlarm.risePercent' },
     fallPercent: { value: '10', enabled: false, unit: '%', labelKey: 'addAlarm.fallPercent' },
+    bigOrderDetect: { value: '', enabled: false, unit: '', labelKey: 'addAlarm.bigOrderDetect', type: 'switchOnly' },
+    exchangeSpreadMonitor: { value: '', enabled: false, unit: '', labelKey: 'addAlarm.exchangeSpreadMonitor', type: 'switchOnly' },
   });
 
   const [coinData, setCoinData] = useState({
@@ -245,7 +247,10 @@ export default function OneClickAlarmModal({
       }
     }
 
-    const enabledConfigs = Object.entries(configs).filter(([, config]) => config.enabled && config.value);
+    const enabledConfigs = Object.entries(configs).filter(([, config]) => {
+      if (!config.enabled) return false;
+      return config.type === 'switchOnly' ? true : Boolean(config.value);
+    });
 
     if (enabledConfigs.length === 0) {
       Toast.show({ content: t('addAlarm.atLeastOne') });
@@ -254,6 +259,7 @@ export default function OneClickAlarmModal({
     }
 
     for (const [, config] of enabledConfigs) {
+      if (config.type === 'switchOnly') continue;
       if (!/^[0-9]+(\.[0-9]+)?$/.test(String(config.value))) {
         Toast.show({ content: t('addAlarm.invalidNumber', { field: t(config.labelKey) }) });
         setBtnDisabled(false);
@@ -265,6 +271,11 @@ export default function OneClickAlarmModal({
       let fieldName = key;
       if (key === 'risePercent') fieldName = 'priceRiseChange24HPercent';
       if (key === 'fallPercent') fieldName = 'priceFallChange24HPercent';
+
+      if (config.type === 'switchOnly') {
+        acc[fieldName] = true;
+        return acc;
+      }
 
       acc[fieldName] = config.unit === '%' ? `${config.value}%` : config.value;
       return acc;
@@ -358,16 +369,20 @@ export default function OneClickAlarmModal({
                     {Object.entries(configs).map(([key, config]) => (
                       <div key={key} className={configStyles.configItem}>
                         <div className={configStyles.configLabel}>{t(config.labelKey)}</div>
-                        <div className={configStyles.configInputContainer}>
-                          <Input
-                            className={configStyles.configInput}
-                            type="number"
-                            value={config.value}
-                            placeholder={config.value || t('addAlarm.placeholder')}
-                            onChange={(val) => handleInputChange(key, val)}
-                          />
-                          <div className={configStyles.configUnit}>{config.unit}</div>
-                        </div>
+                        {config.type === 'switchOnly' ? (
+                          <div className={configStyles.switchOnlySpacer} />
+                        ) : (
+                          <div className={configStyles.configInputContainer}>
+                            <Input
+                              className={configStyles.configInput}
+                              type="number"
+                              value={config.value}
+                              placeholder={config.value || t('addAlarm.placeholder')}
+                              onChange={(val) => handleInputChange(key, val)}
+                            />
+                            <div className={configStyles.configUnit}>{config.unit}</div>
+                          </div>
+                        )}
                         <Switch
                           className={configStyles.configSwitch}
                           checked={config.enabled}

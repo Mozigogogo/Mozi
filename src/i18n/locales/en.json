@@ -926,6 +926,8 @@
     "priceFall": "Fall To",
     "risePercent": "Daily Rise Over",
     "fallPercent": "Daily Fall Over",
+    "bigOrderDetect": "Large Order Detection",
+    "exchangeSpreadMonitor": "Exchange Spread Monitoring",
     "saveAlarm": "Save Alert",
     "viewAlarms": "View Configured Alerts",
     "loading": "Loading...",
