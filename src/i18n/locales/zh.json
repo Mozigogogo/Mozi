@@ -827,6 +827,11 @@
     },
     "robotMessage": "想听听我对{{symbol}}的看法吗？"
   },
+  "countryPicker": {
+    "back": "返回",
+    "title": "选择国家/地区",
+    "searchPlaceholder": "搜索国家/区号"
+  },
   "post": {
     "title": "发帖",
     "editPost": "编辑帖子",

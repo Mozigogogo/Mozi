@@ -83,7 +83,7 @@ export default function DetailPage() {
   });
   
   // 控制大单侦测区域显示/隐藏
-  const showOrderBook = false;
+  const showOrderBook = true;
   
   // WebSocket连接状态管理
   const wsConnectionStatusRef = useRef('connecting'); // connecting | connected | failed

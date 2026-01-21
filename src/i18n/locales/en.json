@@ -828,6 +828,11 @@
     "robotBubble": "Welcome to Mozi, what can I help you?",
     "robotMessage": "Want to hear my thoughts on {{symbol}}?"
   },
+  "countryPicker": {
+    "back": "Back",
+    "title": "Select Country/Region",
+    "searchPlaceholder": "Search country/dial code"
+  },
   "post": {
     "title": "Post",
     "editPost": "Edit Post",
