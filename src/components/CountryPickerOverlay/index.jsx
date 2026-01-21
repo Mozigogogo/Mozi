@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { allCountries } from 'country-telephone-data';
 import { useTranslation } from 'react-i18next';
+import { LeftArrowIcon } from '../Icons';
 import styles from './index.module.less';
 
 export default function CountryPickerOverlay({
@@ -110,8 +111,14 @@ export default function CountryPickerOverlay({
       <div className={styles.mask} onClick={() => onClose?.()} />
       <div className={styles.panel}>
         <div className={styles.header}>
-          <button type="button" className={styles.back} onClick={() => onClose?.()}>
-            {resolvedBackText}
+          <button
+            type="button"
+            className={styles.back}
+            onClick={() => onClose?.()}
+            aria-label={resolvedBackText}
+            title={resolvedBackText}
+          >
+            <LeftArrowIcon size={20} color="rgba(49, 48, 48, 1)" />
           </button>
           <div className={styles.title}>{resolvedTitle}</div>
           <div className={styles.headerRight} />

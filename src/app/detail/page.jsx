@@ -12,6 +12,7 @@ import HighlightArea from '../../components/HighlightArea';
 import AddCollect from '../../components/AddCollect';
 import KlineChart from '../../components/KlineChart';
 import OrderBook from '../../components/OrderBook';
+import OneClickAlarmModal from '../../components/OneClickAlarmModal';
 import { Loading } from '../../components/Loading';
 import { CaretUpIcon, CaretDownIcon, BellIcon } from '../../components/Icons';
 import FloatingRobot from '../../components/FloatingRobot';
@@ -61,6 +62,7 @@ export default function DetailPage() {
   const [infoExpanded, setInfoExpanded] = useState(false);
   const [coinInfoLeft, setCoinInfoLeft] = useState([]);
   const [coinInfoRight, setCoinInfoRight] = useState([]);
+  const [oneClickAlarmOpen, setOneClickAlarmOpen] = useState(false);
   const needLoop = useRef(true);
   const chartRef = useRef(null);
   const marketRef = useRef(null);
@@ -1462,7 +1464,7 @@ ${coinInfo.name || symbol} (${symbol})
               <button type="button" className={styles.alarmConfig} onClick={jump2Alert}>
                 {t('detail.actions.configAlarm')}
               </button>
-              <button type="button" className={styles.alarmStart} onClick={() => Toast.show({ content: t('detail.actions.comingSoon'), position: 'bottom' })}>
+              <button type="button" className={styles.alarmStart} onClick={() => setOneClickAlarmOpen(true)}>
                 {t('detail.actions.startNow')}
               </button>
             </div>
@@ -1477,6 +1479,15 @@ ${coinInfo.name || symbol} (${symbol})
           startDelay={2000}
         />
       </div>
+
+      <OneClickAlarmModal
+        open={oneClickAlarmOpen}
+        onClose={() => setOneClickAlarmOpen(false)}
+        onConfirm={() => {
+          setOneClickAlarmOpen(false);
+        }}
+        onSkip={() => setOneClickAlarmOpen(false)}
+      />
     </>
   );
 }

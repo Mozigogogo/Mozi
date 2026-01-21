@@ -83,10 +83,6 @@ export default function OneClickAlarmModal({
   const [pushEnabled, setPushEnabled] = useState(init.pushEnabled);
 
   const [countryPickerOpen, setCountryPickerOpen] = useState(false);
-  useEffect(() => {
-    if (phoneEnabled) return;
-    setCountryPickerOpen(false);
-  }, [phoneEnabled]);
 
 
   return (
@@ -112,15 +108,13 @@ export default function OneClickAlarmModal({
               <Toggle checked={phoneEnabled} onChange={setPhoneEnabled} />
             </div>
 
-            <div className={`${styles.inputRow} ${!phoneEnabled ? styles.inputRowDisabled : ''}`}>
+            <div className={styles.inputRow}>
               <span className={styles.inputIcon}><PhoneInputIcon /></span>
               <div className={styles.countryCodeWrap}>
                 <button
                   type="button"
                   className={styles.countryPickerTrigger}
-                  disabled={!phoneEnabled}
                   onClick={() => {
-                    if (!phoneEnabled) return;
                     setCountryPickerOpen(true);
                   }}
                 >
@@ -133,7 +127,6 @@ export default function OneClickAlarmModal({
                 placeholder="请输入手机号"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                disabled={!phoneEnabled}
                 inputMode="tel"
               />
             </div>
@@ -148,14 +141,13 @@ export default function OneClickAlarmModal({
               <Toggle checked={emailEnabled} onChange={setEmailEnabled} />
             </div>
 
-            <div className={`${styles.inputRow} ${!emailEnabled ? styles.inputRowDisabled : ''}`}>
+            <div className={styles.inputRow}>
               <span className={styles.inputIcon}><MailInputIcon /></span>
               <input
                 className={styles.input}
                 placeholder="请输入邮箱"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                disabled={!emailEnabled}
                 inputMode="email"
               />
             </div>
