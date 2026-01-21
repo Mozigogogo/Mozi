@@ -1,31 +1,107 @@
 .sheet {
-  border-top-left-radius: 18px;
-  border-top-right-radius: 18px;
-  background-image: url('/images/new_detail/modal_bg.svg');
-  background-size: 100% auto;
-  background-position: bottom center;
-  background-repeat: no-repeat;
+  background: #fff;
 }
 
+.sheetConfig {
+  position: relative;
+  isolation: isolate;
+  background: transparent;
+  overflow: visible;
+  border-radius: 0 !important;
+}
+
+.sheetOneClick {
+  position: relative;
+  isolation: isolate;
+  background: transparent;
+  overflow: visible;
+  border-radius: 0 !important;
+}
+
+.sheetInnerMask {
+  border-radius: 0 !important;
+  background: linear-gradient(
+      180deg,
+      #A1EADD 0%,
+      rgba(161, 234, 221, 0) 26.5507%
+    ),
+    #fff;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20375%20447'%20preserveAspectRatio='none'%3E%3Cpath%20fill='white'%20d='M0.954241%2029.9885C0.979531%2018.962%209.92443%2010.0362%2020.9509%2010.0344L233.113%2010C236.476%209.99947%20239.614%2011.6894%20241.464%2014.4975L252.036%2030.5401C253.886%2033.3478%20257.024%2035.0376%20260.386%2035.0376H354.049C365.075%2035.0376%20374.022%2043.9623%20374.049%2054.989L375%20446.038H0L0.954241%2029.9885Z'/%3E%3C/svg%3E");
+  -webkit-mask-size: 100% calc(100% + 1px);
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: bottom center;
+  mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20375%20447'%20preserveAspectRatio='none'%3E%3Cpath%20fill='white'%20d='M0.954241%2029.9885C0.979531%2018.962%209.92443%2010.0362%2020.9509%2010.0344L233.113%2010C236.476%209.99947%20239.614%2011.6894%20241.464%2014.4975L252.036%2030.5401C253.886%2033.3478%20257.024%2035.0376%20260.386%2035.0376H354.049C365.075%2035.0376%20374.022%2043.9623%20374.049%2054.989L375%20446.038H0L0.954241%2029.9885Z'/%3E%3C/svg%3E");
+  mask-size: 100% calc(100% + 1px);
+  mask-repeat: no-repeat;
+  mask-position: bottom center;
+}
+
+.sheetConfig::before,
+.sheetOneClick::before {
+  content: '';
+  position: absolute;
+  top: -42px;
+  right: 10px;
+  width: 128px;
+  height: 128px;
+  z-index: 10;
+  background-image: url('/images/new_detail/alert.svg');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  pointer-events: none;
+}
+
+.alertTextImage {
+  position: absolute;
+  top: 10px;
+  left: 16px;
+  width: 210px;
+  height: 77px;
+  z-index: 11;
+  pointer-events: none;
+  object-fit: contain;
+}
 .bodyNoPadding {
-  padding-bottom: 0;
+  padding: 47px 16px 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .header {
-  height: 92px;
-  padding: 14px 16px;
+  height: 0;
+  padding: 0;
 }
 
 .content {
   padding-bottom: 0;
+  flex: 1;
+  min-height: 0;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
 }
 
 .card {
   background: #ffffff;
-  border-radius: 14px 14px 0 0;
+  border-radius: 20px 20px 0 0;
   box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.2);
   overflow: hidden;
   padding: 16px;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.cardContent {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 16px;
 }
 
 .row {
@@ -357,6 +433,13 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  padding: 16px 0 calc(16px + env(safe-area-inset-bottom));
+  flex-shrink: 0;
+  background: #fff;
+  border-top: 1px solid #f0f0f0;
+  margin: 0 -16px -16px;
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
 .primaryBtn {

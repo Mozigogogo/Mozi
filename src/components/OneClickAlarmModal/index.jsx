@@ -71,7 +71,7 @@ export default function OneClickAlarmModal({
   skipText = '暂不开启',
   initialValue,
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const init = useMemo(
     () => ({
       phoneEnabled: true,
@@ -322,14 +322,23 @@ export default function OneClickAlarmModal({
       <BottomSheetModal
         open={open}
         onClose={onClose}
-        header={
+        header={mode === 'config' ? null : (
           <div className={styles.header}>
           </div>
-        }
-        sheetClassName={styles.sheet}
+        )}
+        sheetClassName={`${styles.sheet} ${mode === 'config' ? styles.sheetConfig : styles.sheetOneClick}`}
+        sheetInnerClassName={styles.sheetInnerMask}
         bodyClassName={mode === 'config' ? configStyles.configBody : styles.bodyNoPadding}
-        maxHeight="90vh"
+        height={mode === 'config' ? '85vh' : undefined}
+        maxHeight={mode === 'config' ? '92vh' : '90vh'}
       >
+        {(mode === 'config' || mode === 'oneClick') && (
+          <img 
+            src={i18n.language === 'en' ? '/images/new_detail/alert_text_en.svg' : '/images/new_detail/alert_text_zh.svg'}
+            alt="alert text"
+            className={styles.alertTextImage}
+          />
+        )}
         {mode === 'config' ? (
           <div className={configStyles.configModeWrap}>
             {coinData.loading ? (
@@ -427,66 +436,68 @@ export default function OneClickAlarmModal({
         ) : (
           <div className={styles.content}>
             <div className={styles.card}>
-              <div className={styles.row}>
-                <div className={styles.rowLeft}>
-                  <span className={styles.icon}><PhoneAlarmIcon /></span>
-                  <span className={styles.rowLabel}>电话告警</span>
+              <div className={styles.cardContent}>
+                <div className={styles.row}>
+                  <div className={styles.rowLeft}>
+                    <span className={styles.icon}><PhoneAlarmIcon /></span>
+                    <span className={styles.rowLabel}>电话告警</span>
+                  </div>
+                  <Toggle checked={phoneEnabled} onChange={setPhoneEnabled} />
                 </div>
-                <Toggle checked={phoneEnabled} onChange={setPhoneEnabled} />
-              </div>
 
-              <div className={styles.inputRow}>
-                <span className={styles.inputIcon}><PhoneInputIcon /></span>
-                <div className={styles.countryCodeWrap}>
-                  <button
-                    type="button"
-                    className={styles.countryPickerTrigger}
-                    onClick={() => {
-                      setCountryPickerOpen(true);
-                    }}
-                  >
-                    <span className={styles.countryPickerTriggerValue}>{countryCode}</span>
-                    <img className={styles.countryPickerTriggerArrow} src="/icons/new_detail/down_arrow.svg" alt="down" />
-                  </button>
+                <div className={styles.inputRow}>
+                  <span className={styles.inputIcon}><PhoneInputIcon /></span>
+                  <div className={styles.countryCodeWrap}>
+                    <button
+                      type="button"
+                      className={styles.countryPickerTrigger}
+                      onClick={() => {
+                        setCountryPickerOpen(true);
+                      }}
+                    >
+                      <span className={styles.countryPickerTriggerValue}>{countryCode}</span>
+                      <img className={styles.countryPickerTriggerArrow} src="/icons/new_detail/down_arrow.svg" alt="down" />
+                    </button>
+                  </div>
+                  <input
+                    className={styles.input}
+                    placeholder="请输入手机号"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    inputMode="tel"
+                  />
                 </div>
-                <input
-                  className={styles.input}
-                  placeholder="请输入手机号"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  inputMode="tel"
-                />
-              </div>
 
-              <div className={styles.divider} />
+                <div className={styles.divider} />
 
-              <div className={styles.row}>
-                <div className={styles.rowLeft}>
-                  <span className={styles.icon}><MailAlarmIcon /></span>
-                  <span className={styles.rowLabel}>邮件告警</span>
+                <div className={styles.row}>
+                  <div className={styles.rowLeft}>
+                    <span className={styles.icon}><MailAlarmIcon /></span>
+                    <span className={styles.rowLabel}>邮件告警</span>
+                  </div>
+                  <Toggle checked={emailEnabled} onChange={setEmailEnabled} />
                 </div>
-                <Toggle checked={emailEnabled} onChange={setEmailEnabled} />
-              </div>
 
-              <div className={styles.inputRow}>
-                <span className={styles.inputIcon}><MailInputIcon /></span>
-                <input
-                  className={styles.input}
-                  placeholder="请输入邮箱"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  inputMode="email"
-                />
-              </div>
-
-              <div className={styles.divider} />
-
-              <div className={styles.row}>
-                <div className={styles.rowLeft}>
-                  <span className={styles.icon}><PushAlarmIcon /></span>
-                  <span className={styles.rowLabel}>推送</span>
+                <div className={styles.inputRow}>
+                  <span className={styles.inputIcon}><MailInputIcon /></span>
+                  <input
+                    className={styles.input}
+                    placeholder="请输入邮箱"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    inputMode="email"
+                  />
                 </div>
-                <Toggle checked={pushEnabled} onChange={setPushEnabled} />
+
+                <div className={styles.divider} />
+
+                <div className={styles.row}>
+                  <div className={styles.rowLeft}>
+                    <span className={styles.icon}><PushAlarmIcon /></span>
+                    <span className={styles.rowLabel}>推送</span>
+                  </div>
+                  <Toggle checked={pushEnabled} onChange={setPushEnabled} />
+                </div>
               </div>
 
               <div className={styles.footerActions}>
