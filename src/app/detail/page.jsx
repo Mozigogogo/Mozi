@@ -63,6 +63,7 @@ export default function DetailPage() {
   const [coinInfoLeft, setCoinInfoLeft] = useState([]);
   const [coinInfoRight, setCoinInfoRight] = useState([]);
   const [oneClickAlarmOpen, setOneClickAlarmOpen] = useState(false);
+  const [oneClickAlarmMode, setOneClickAlarmMode] = useState('oneClick');
   const needLoop = useRef(true);
   const chartRef = useRef(null);
   const marketRef = useRef(null);
@@ -440,12 +441,8 @@ export default function DetailPage() {
 
   // 跳转到告警页面
   const jump2Alert = () => {
-    if (symbol) {
-      const href = `/addwarn?symbol=${encodeURIComponent(symbol)}`;
-      window.location.href = href;
-    } else {
-      window.location.href = '/addwarn';
-    }
+    setOneClickAlarmMode('config');
+    setOneClickAlarmOpen(true);
   };
 
   // 跳转到社区页面
@@ -1464,7 +1461,14 @@ ${coinInfo.name || symbol} (${symbol})
               <button type="button" className={styles.alarmConfig} onClick={jump2Alert}>
                 {t('detail.actions.configAlarm')}
               </button>
-              <button type="button" className={styles.alarmStart} onClick={() => setOneClickAlarmOpen(true)}>
+              <button
+                type="button"
+                className={styles.alarmStart}
+                onClick={() => {
+                  setOneClickAlarmMode('oneClick');
+                  setOneClickAlarmOpen(true);
+                }}
+              >
                 {t('detail.actions.startNow')}
               </button>
             </div>
@@ -1482,6 +1486,8 @@ ${coinInfo.name || symbol} (${symbol})
 
       <OneClickAlarmModal
         open={oneClickAlarmOpen}
+        mode={oneClickAlarmMode}
+        symbol={symbol || 'BTC'}
         onClose={() => setOneClickAlarmOpen(false)}
         onConfirm={() => {
           setOneClickAlarmOpen(false);
