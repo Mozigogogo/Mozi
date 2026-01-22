@@ -42,6 +42,8 @@ export default function OrderBook({
   endTime = null,
   showHeader = true,
   dropdownOptions = ['今日榜单前五', '今日榜单前十'],
+  showMask = false, // 是否显示遮罩
+  onSubscribe, // 订阅回调
 }) {
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [selectedOption, setSelectedOption] = useState(dropdownOptions[0]);
@@ -215,6 +217,54 @@ export default function OrderBook({
           );
         })}
       </div>
+
+      {/* 遮罩层 */}
+      {showMask && (
+        <div className={styles.maskOverlay}>
+          <div className={styles.maskCard}>
+            <div className={styles.maskHeader}>
+              <div className={styles.maskTitleSection}>
+                <h2 className={styles.maskHeaderTitle}>{title}</h2>
+              </div>
+              <div className={styles.maskLegend}>
+                <div className={styles.maskLegendItem}>
+                  <span className={`${styles.maskDot} ${styles.maskBidDot}`} />
+                  <span className={styles.maskLegendText}>买入</span>
+                </div>
+                <div className={styles.maskLegendItem}>
+                  <span className={`${styles.maskDot} ${styles.maskAskDot}`} />
+                  <span className={styles.maskLegendText}>卖出</span>
+                </div>
+              </div>
+            </div>
+            <div className={styles.maskHeaderBadge} />
+
+            <div className={styles.maskContent}>
+              <h2 className={styles.maskTitle}>限时福利已结束</h2>
+              
+              <div className={styles.maskSubtitleWrapper}>
+                <span className={styles.maskBullet}>•</span>
+                <span className={styles.maskSubtitle}>会员专享查看权限</span>
+              </div>
+
+              <p className={styles.maskDescription}>
+                本部分内容属会员创测期限制查看，会员可支持国服最新资讯
+              </p>
+
+              <button 
+                className={styles.maskButton}
+                onClick={() => {
+                  if (onSubscribe) {
+                    onSubscribe();
+                  }
+                }}
+              >
+                点击订阅解锁
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -4,7 +4,8 @@
   border-radius:0px 0px 12px 12px;
   padding: 12px;
   position: relative;
-  z-index: 20;
+  z-index: 1;
+  overflow: hidden;
 }
 
 .header {
@@ -441,4 +442,176 @@
   padding: 12px;
   font-size: 12px;
   color: #999;
+}
+
+/* 遮罩层样式 */
+.maskOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.95);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease-out;
+  border-radius: 26px;
+  backdrop-filter: blur(2px);
+  pointer-events: auto;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.maskCard {
+  width: 100%;
+  height: 100%;
+  background-image: url('/images/new_detail/vip_mask.svg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 26px;
+  padding: 0 20px 20px 20px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  z-index: 10000;
+}
+
+.maskHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 12px;
+}
+
+.maskTitleSection {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.maskHeaderTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.maskHeaderBadge {
+  position: absolute;
+  top: -2px;
+  right: 0px;
+  width: 91px;
+  height: 37px;
+  background-image: url('/images/new_detail/experience_end_badge.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.maskLegend {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.maskLegendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.maskDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.maskBidDot {
+  background: #11B787;
+}
+
+.maskAskDot {
+  background: #F04A4A;
+}
+
+.maskLegendText {
+  font-size: 10px;
+  color: #333;
+}
+
+.maskContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  flex: 1;
+  padding: 10px 0;
+}
+
+.maskTitle {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 16px 0;
+}
+
+.maskSubtitleWrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.maskBullet {
+  font-size: 16px;
+  color: #333;
+}
+
+.maskSubtitle {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+}
+
+.maskDescription {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.6;
+  margin: 0 0 24px 0;
+  max-width: 320px;
+}
+
+.maskButton {
+  width: 200px;
+  height: 48px;
+  background: linear-gradient(135deg, #8B6F47 0%, #6B5435 100%);
+  border: none;
+  border-radius: 24px;
+  color: #FFF;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(139, 111, 71, 0.3);
+}
+
+.maskButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(139, 111, 71, 0.4);
+}
+
+.maskButton:active {
+  transform: translateY(0);
 }

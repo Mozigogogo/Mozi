@@ -1263,12 +1263,20 @@ ${coinInfo.name || symbol} (${symbol})
   };
 
   const renderOrderBook = () => {
-    const endTime = new Date(Date.now() + 13 * 24 * 60 * 60 * 1000 + 12 * 60 * 60 * 1000 + 41 * 60 * 1000 + 8 * 1000);
+    const endTime = new Date(Date.now() - 24 * 60 * 60 * 1000); // 测试用：已过期
+    const now = new Date();
+    const isExpired = now > endTime;
+    
     return (
       <OrderBook 
         bids={orderBook.bids} 
         asks={orderBook.asks}
         endTime={endTime}
+        showMask={isExpired}
+        onSubscribe={() => {
+          console.log('订阅会员');
+          // 这里可以跳转到订阅页面
+        }}
       />
     );
   };
