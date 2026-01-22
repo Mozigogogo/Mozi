@@ -1263,7 +1263,7 @@ ${coinInfo.name || symbol} (${symbol})
   };
 
   const renderOrderBook = () => {
-    const endTime = new Date(Date.now() - 24 * 60 * 60 * 1000); // 测试用：已过期
+    const endTime = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30天后过期
     const now = new Date();
     const isExpired = now > endTime;
     
