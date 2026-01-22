@@ -15,9 +15,11 @@ export default function BottomSheetModal({
   closeOnEsc = true,
   disableBodyScroll = true,
   zIndex = 9999,
+  height,
   maxHeight = '85vh',
   className = '',
   sheetClassName = '',
+  sheetInnerClassName = '',
   bodyClassName = '',
 }) {
   const [rendered, setRendered] = useState(open);
@@ -90,6 +92,7 @@ export default function BottomSheetModal({
 
   const sheetStyle = {
     maxHeight,
+    ...(height ? { height } : null),
   };
 
   const modalContent = (
@@ -106,15 +109,17 @@ export default function BottomSheetModal({
         role="dialog"
         aria-modal="true"
       >
-        {(header || title) && (
-          <div className={styles.header}>
-            {header || <div className={styles.title}>{title}</div>}
-          </div>
-        )}
+        <div className={`${styles.sheetInner} ${sheetInnerClassName}`}>
+          {(header || title) && (
+            <div className={styles.header}>
+              {header || <div className={styles.title}>{title}</div>}
+            </div>
+          )}
 
-        <div className={`${styles.body} ${bodyClassName}`}>{children}</div>
+          <div className={`${styles.body} ${bodyClassName}`}>{children}</div>
 
-        {footer && <div className={styles.footer}>{footer}</div>}
+          {footer && <div className={styles.footer}>{footer}</div>}
+        </div>
       </div>
     </div>
   );

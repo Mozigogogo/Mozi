@@ -1,8 +1,17 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Input, Button, Toast, Switch } from 'antd-mobile';
 import BottomSheetModal from '../BottomSheetModal';
+import CountryPickerOverlay from '../CountryPickerOverlay';
+import PopLogin from '../PopLogin';
+import { request } from '../../utils/request';
+import { Interface } from '../../utils/constants';
+import { jump2NoTab } from '../../utils/core';
+import { saveAlarmSettings } from '../../api/user';
 import styles from './index.module.less';
+import configStyles from './config.module.less';
 
 function Toggle({ checked, onChange, disabled }) {
   return (
@@ -22,47 +31,31 @@ function Toggle({ checked, onChange, disabled }) {
 
 function PhoneAlarmIcon() {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="24" height="24" rx="6" fill="#E8F5F1"/>
-      <path d="M9.5 15H14.5M7 14V5C7 4.448 7.448 4 8 4H16C16.552 4 17 4.448 17 5V14C17 14.552 16.552 15 16 15H8C7.448 15 7 14.552 7 14Z" stroke="#11B787" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-      <circle cx="17" cy="7" r="3" fill="#11B787"/>
-    </svg>
+    <img src="/icons/new_detail/telephone.svg" alt="phone" width="45" height="45" />
   );
 }
 
 function MailAlarmIcon() {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="24" height="24" rx="6" fill="#E8F5F1"/>
-      <path d="M5 8L12 12L19 8M5 8V16C5 16.552 5.448 17 6 17H18C18.552 17 19 16.552 19 16V8M5 8C5 7.448 5.448 7 6 7H18C18.552 7 19 7.448 19 8" stroke="#11B787" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
+    <img src="/icons/new_detail/email.svg" alt="email" width="24" height="24" />
   );
 }
 
 function PushAlarmIcon() {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="24" height="24" rx="6" fill="#FFF3E0"/>
-      <path d="M12 18C12.83 18 13.5 17.33 13.5 16.5H10.5C10.5 17.33 11.17 18 12 18Z" fill="#FFA726"/>
-      <path d="M16 13V10C16 7.79 14.21 6 12 6C9.79 6 8 7.79 8 10V13L6.5 14.5V15H17.5V14.5L16 13Z" stroke="#FFA726" strokeWidth="1.2" strokeLinejoin="round"/>
-      <circle cx="16" cy="7" r="2" fill="#FFA726"/>
-    </svg>
+    <img src="/icons/new_detail/push.svg" alt="push" width="24" height="24" />
   );
 }
 
 function PhoneInputIcon() {
   return (
-    <svg width="14" height="16" viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M5.75 11.86H8.25M2.6 10.96V1.96C2.6 0.964 3.406 0.159 4.4 0.159H9.6C10.594 0.159 11.4 0.964 11.4 1.96V10.96C11.4 11.954 10.594 12.759 9.6 12.759H4.4C3.406 12.759 2.6 11.954 2.6 10.96Z" stroke="#999999" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
+    <img src="/icons/new_detail/telephone_num.svg" alt="phone" width="14" height="16" />
   );
 }
 
 function MailInputIcon() {
   return (
-    <svg width="18" height="14" viewBox="0 0 18 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M15.5 0.409H2.5C1.5 0.409 0.67 1.283 0.67 2.409V11.891C0.67 13.071 1.626 14.027 2.806 14.027H15.195C16.375 14.027 17.33 13.071 17.33 11.891V2.562C17.33 1.509 16.568 0.635 15.566 0.459C15.544 0.426 15.522 0.409 15.5 0.409ZM16.084 11.891C16.084 12.382 15.685 12.781 15.195 12.781H2.806C2.315 12.781 1.916 12.382 1.916 11.891V2.562C1.916 2.505 1.922 2.449 1.932 2.394L6.801 6.932C7.28 7.378 7.89 7.601 8.5 7.601C9.11 7.601 9.72 7.378 10.199 6.932L15.068 2.394C15.078 2.448 15.084 2.505 15.084 2.562V11.891Z" fill="#999999"/>
-    </svg>
+    <img src="/icons/new_detail/email_num.svg" alt="email" width="18" height="14" />
   );
 }
 
@@ -71,12 +64,15 @@ export default function OneClickAlarmModal({
   onClose,
   onConfirm,
   onSkip,
-  title = '一键告警',
-  subtitle = '实时监控 即时提醒',
-  confirmText = '开启告警',
-  skipText = '暂不开启',
+  mode = 'oneClick',
+  symbol = 'BTC',
+  title,
+  subtitle,
+  confirmText,
+  skipText,
   initialValue,
 }) {
+  const { t, i18n } = useTranslation();
   const init = useMemo(
     () => ({
       phoneEnabled: true,
@@ -97,119 +93,499 @@ export default function OneClickAlarmModal({
   const [email, setEmail] = useState(init.email);
   const [pushEnabled, setPushEnabled] = useState(init.pushEnabled);
 
+  const [countryPickerOpen, setCountryPickerOpen] = useState(false);
+
+  const [btnDisabled, setBtnDisabled] = useState(false);
+  const [showLoginPopup, setShowLoginPopup] = useState(false);
+  const [hideInputs, setHideInputs] = useState(false); // 控制输入框显示/隐藏
+  const [configs, setConfigs] = useState({
+    priceRise: { value: '', enabled: true, unit: '$', labelKey: 'addAlarm.priceRise' },
+    priceFall: { value: '', enabled: true, unit: '$', labelKey: 'addAlarm.priceFall' },
+    risePercent: { value: '10', enabled: true, unit: '%', labelKey: 'addAlarm.risePercent' },
+    fallPercent: { value: '10', enabled: false, unit: '%', labelKey: 'addAlarm.fallPercent' },
+    bigOrderDetect: { value: '', enabled: false, unit: '', labelKey: 'addAlarm.bigOrderDetect', type: 'switchOnly' },
+    exchangeSpreadMonitor: { value: '', enabled: false, unit: '', labelKey: 'addAlarm.exchangeSpreadMonitor', type: 'switchOnly' },
+  });
+
+  const [coinData, setCoinData] = useState({
+    symbol,
+    price: '--',
+    change: '--',
+    loading: true,
+  });
+
+  useEffect(() => {
+    if (!open) return;
+    if (mode !== 'config') return;
+
+    setBtnDisabled(false);
+    setShowLoginPopup(false);
+    setCoinData({
+      symbol,
+      price: '--',
+      change: '--',
+      loading: true,
+    });
+
+    const fetchCoinData = async () => {
+      try {
+        const res = await request({
+          url: Interface.coin_info,
+          data: { symbol },
+        });
+
+        if (res?.data) {
+          const coinInfo = res.data;
+          setCoinData({
+            symbol,
+            price: coinInfo.currentPrice || '--',
+            change: coinInfo.priceChangePercentage_24h || '--',
+            loading: false,
+          });
+
+          const currentPrice = parseFloat(coinInfo.currentPrice);
+          if (currentPrice && !isNaN(currentPrice)) {
+            const risePrice = (currentPrice * 1.1).toFixed(currentPrice < 1 ? 6 : 2);
+            const fallPrice = (currentPrice * 0.9).toFixed(currentPrice < 1 ? 6 : 2);
+            setConfigs((prev) => ({
+              ...prev,
+              priceRise: { ...prev.priceRise, value: risePrice },
+              priceFall: { ...prev.priceFall, value: fallPrice },
+            }));
+          }
+        } else {
+          setCoinData((prev) => ({ ...prev, loading: false }));
+        }
+      } catch (error) {
+        console.error('获取币种数据失败:', error);
+        setCoinData((prev) => ({ ...prev, loading: false }));
+      }
+    };
+
+    fetchCoinData();
+  }, [open, mode, symbol]);
+
+  const handleInputChange = (key, value) => {
+    setConfigs((prev) => ({
+      ...prev,
+      [key]: { ...prev[key], value },
+    }));
+  };
+
+  const handleSwitchChange = (key, enabled) => {
+    setConfigs((prev) => ({
+      ...prev,
+      [key]: { ...prev[key], enabled },
+    }));
+  };
+
+  const canCompleteDailyTask = () => {
+    if (typeof window === 'undefined') return false;
+
+    const lastCompleteTime = localStorage.getItem('dailyAlarmTaskCompleteTime');
+    if (!lastCompleteTime) return true;
+
+    const lastTime = new Date(parseInt(lastCompleteTime));
+    const now = new Date();
+    const today9am = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 0, 0);
+    const resetTime = now.getHours() < 9
+      ? new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 9, 0, 0)
+      : today9am;
+
+    return lastTime < resetTime;
+  };
+
+  const completeDailyAlarmTask = async () => {
+    if (!canCompleteDailyTask()) return;
+
+    try {
+      const res = await request({
+        url: Interface.TASK_COMPLETE,
+        method: 'POST',
+        data: {
+          taskCode: 'ALARM',
+        },
+      });
+
+      if (res?.code === 0 && res?.data?.success) {
+        if (typeof window !== 'undefined')
+          localStorage.setItem('dailyAlarmTaskCompleteTime', Date.now().toString());
+        if (res?.data?.message) {
+          Toast.show({ content: res.data.message, icon: 'success' });
+        }
+      }
+    } catch (error) {
+      console.error('[OneClickAlarmModal] 完成告警任务接口异常:', error);
+    }
+  };
+
+  // 处理开启告警
+  const handleEnableAlarm = async () => {
+    try {
+      const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+      
+      if (!userId) {
+        Toast.show({ content: t('oneClickAlarm.pleaseLogin') });
+        setShowLoginPopup(true);
+        return;
+      }
+
+      const { getAppChannel } = await import('../../utils/core');
+      const channel = getAppChannel();
+
+      const requestData = {
+        phoneEnabled,
+        countryCode,
+        phone,
+        emailEnabled,
+        email,
+        pushEnabled,
+        channel,
+      };
+
+      // 调用 API
+      const res = await saveAlarmSettings(requestData);
+
+      if (res?.code === 0) {
+        Toast.show({ content: t('oneClickAlarm.enableSuccess'), icon: 'success' });
+        setHideInputs(true); // 隐藏输入框
+        
+        // 调用原有的 onConfirm 回调
+        onConfirm?.({
+          phoneEnabled,
+          countryCode,
+          phone,
+          emailEnabled,
+          email,
+          pushEnabled,
+        });
+      } else {
+        Toast.show({ content: res?.errorMsg || t('oneClickAlarm.enableFailed') });
+      }
+    } catch (error) {
+      console.error('开启告警失败:', error);
+      Toast.show({ content: t('oneClickAlarm.networkError') });
+    }
+  };
+
+  const saveWarnings = async () => {
+    setBtnDisabled(true);
+
+    const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+
+    if (!userId) {
+      Toast.show({ content: t('addAlarm.pleaseLogin') });
+      setBtnDisabled(false);
+      setShowLoginPopup(true);
+      return;
+    }
+
+    const { getAppChannel } = await import('../../utils/core');
+    const channel = getAppChannel();
+
+    let chatId = null;
+    if (channel === 'tg') {
+      chatId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString();
+
+      if (!chatId && typeof window !== 'undefined') {
+        chatId = localStorage.getItem('tgChatId');
+      }
+
+      if (!chatId) {
+        Toast.show({ content: t('addAlarm.cannotGetChatId') });
+        setBtnDisabled(false);
+        return;
+      }
+    }
+
+    const enabledConfigs = Object.entries(configs).filter(([, config]) => {
+      if (!config.enabled) return false;
+      return config.type === 'switchOnly' ? true : Boolean(config.value);
+    });
+
+    if (enabledConfigs.length === 0) {
+      Toast.show({ content: t('addAlarm.atLeastOne') });
+      setBtnDisabled(false);
+      return;
+    }
+
+    for (const [, config] of enabledConfigs) {
+      if (config.type === 'switchOnly') continue;
+      if (!/^[0-9]+(\.[0-9]+)?$/.test(String(config.value))) {
+        Toast.show({ content: t('addAlarm.invalidNumber', { field: t(config.labelKey) }) });
+        setBtnDisabled(false);
+        return;
+      }
+    }
+
+    const content = enabledConfigs.reduce((acc, [key, config]) => {
+      let fieldName = key;
+      if (key === 'risePercent') fieldName = 'priceRiseChange24HPercent';
+      if (key === 'fallPercent') fieldName = 'priceFallChange24HPercent';
+
+      if (config.type === 'switchOnly') {
+        acc[fieldName] = true;
+        return acc;
+      }
+
+      acc[fieldName] = config.unit === '%' ? `${config.value}%` : config.value;
+      return acc;
+    }, {});
+
+    try {
+      const requestData = {
+        symbol,
+        channel: channel,
+        content: content,
+      };
+
+      if (channel === 'tg') {
+        requestData.userId = userId;
+        if (chatId) requestData.id = chatId;
+      }
+
+      const addRes = await request({
+        url: Interface.ADD_ALARM || '/alarm/add',
+        method: 'POST',
+        data: requestData,
+      });
+
+      setBtnDisabled(false);
+
+      if (addRes.code === 0 && addRes.data === true) {
+        Toast.show({ content: t('addAlarm.saveSuccess') });
+        await completeDailyAlarmTask();
+        onClose?.();
+        return;
+      }
+
+      Toast.show({ content: addRes.errorMsg || t('addAlarm.saveFailed') });
+    } catch (error) {
+      setBtnDisabled(false);
+      console.error('[OneClickAlarmModal] 保存告警接口异常', error);
+      Toast.show({ content: t('addAlarm.networkError') });
+    }
+  };
+
 
   return (
-    <BottomSheetModal
-      open={open}
-      onClose={onClose}
-      header={
-        <div className={styles.header}>
-        </div>
-      }
-      sheetClassName={styles.sheet}
-      bodyClassName={styles.bodyNoPadding}
-      maxHeight="90vh"
-    >
-      <div className={styles.content}>
-        <div className={styles.card}>
-          <div className={styles.row}>
-            <div className={styles.rowLeft}>
-              <span className={styles.icon}><PhoneAlarmIcon /></span>
-              <span className={styles.rowLabel}>电话告警</span>
+    <>
+      <BottomSheetModal
+        open={open}
+        onClose={onClose}
+        header={mode === 'config' ? null : (
+          <div className={styles.header}>
+          </div>
+        )}
+        sheetClassName={`${styles.sheet} ${mode === 'config' ? styles.sheetConfig : styles.sheetOneClick}`}
+        sheetInnerClassName={styles.sheetInnerMask}
+        bodyClassName={mode === 'config' ? configStyles.configBody : styles.bodyNoPadding}
+        height={mode === 'config' ? '85vh' : undefined}
+        maxHeight={mode === 'config' ? '92vh' : '90vh'}
+      >
+        {(mode === 'config' || mode === 'oneClick') && (
+          <img 
+            src={i18n.language === 'en' ? '/images/new_detail/alert_text_en.svg' : '/images/new_detail/alert_text_zh.svg'}
+            alt="alert text"
+            className={styles.alertTextImage}
+          />
+        )}
+        {mode === 'config' ? (
+          <div className={configStyles.configModeWrap}>
+            {coinData.loading ? (
+              <div className={configStyles.pageLoading}>
+                <div className={configStyles.loadingSpinner} />
+                <div className={configStyles.loadingText}>{t('addAlarm.loading')}</div>
+              </div>
+            ) : (
+              <>
+                <div className={configStyles.configScroll}>
+                  <div className={`${configStyles.priceInfo} ${configStyles.configPriceInfo}`}>
+                    <div className={configStyles.coinSymbol}>{coinData.symbol}</div>
+                    <div className={configStyles.priceDetails}>
+                      <div className={configStyles.priceLabel}>{t('addAlarm.latestPrice')}</div>
+                      <div
+                        className={`${configStyles.priceValue} ${
+                          coinData.change && String(coinData.change).includes('-')
+                            ? configStyles.negative
+                            : configStyles.positive
+                        }`}
+                      >
+                        {coinData.price}
+                      </div>
+                      <div
+                        className={`${configStyles.priceChange} ${
+                          coinData.change && String(coinData.change).includes('-')
+                            ? configStyles.negative
+                            : configStyles.positive
+                        }`}
+                      >
+                        {coinData.change}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={configStyles.configCard}>
+                    {Object.entries(configs).map(([key, config]) => (
+                      <div key={key} className={configStyles.configItem}>
+                        <div className={configStyles.configLabel}>{t(config.labelKey)}</div>
+                        {config.type === 'switchOnly' ? (
+                          <div className={configStyles.switchOnlySpacer} />
+                        ) : (
+                          <div className={configStyles.configInputContainer}>
+                            <Input
+                              className={configStyles.configInput}
+                              type="number"
+                              value={config.value}
+                              placeholder={config.value || t('addAlarm.placeholder')}
+                              onChange={(val) => handleInputChange(key, val)}
+                            />
+                            <div className={configStyles.configUnit}>{config.unit}</div>
+                          </div>
+                        )}
+                        <Switch
+                          className={configStyles.configSwitch}
+                          checked={config.enabled}
+                          onChange={(checked) => handleSwitchChange(key, checked)}
+                          style={{ '--checked-color': '#11B787' }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className={`${configStyles.bottomButtons} ${configStyles.configBottomButtons}`}>
+                  <Button
+                    className={configStyles.saveButton}
+                    disabled={btnDisabled}
+                    onClick={saveWarnings}
+                    color="primary"
+                  >
+                    {t('addAlarm.saveAlarm')}
+                  </Button>
+                  <Button
+                    className={configStyles.viewButton}
+                    onClick={() => {
+                      onClose?.();
+                      jump2NoTab('mywarn');
+                    }}
+                  >
+                    {t('addAlarm.viewAlarms')}
+                  </Button>
+                </div>
+
+                <PopLogin
+                  visible={showLoginPopup}
+                  onClose={() => setShowLoginPopup(false)}
+                  onLoginSuccess={() => {
+                    setShowLoginPopup(false);
+                  }}
+                />
+              </>
+            )}
+          </div>
+        ) : (
+          <div className={styles.content}>
+            <div className={styles.card}>
+              <div className={styles.cardContent}>
+                <div className={styles.row}>
+                  <div className={styles.rowLeft}>
+                    <span className={styles.icon}><PhoneAlarmIcon /></span>
+                    <span className={styles.rowLabel}>{t('oneClickAlarm.phoneAlarm')}</span>
+                  </div>
+                  <Toggle checked={phoneEnabled} onChange={setPhoneEnabled} />
+                </div>
+
+                {!hideInputs && (
+                  <div className={styles.inputRow}>
+                    <span className={styles.inputIcon}><PhoneInputIcon /></span>
+                    <div className={styles.countryCodeWrap}>
+                      <button
+                        type="button"
+                        className={styles.countryPickerTrigger}
+                        onClick={() => {
+                          setCountryPickerOpen(true);
+                        }}
+                      >
+                        <span className={styles.countryPickerTriggerValue}>{countryCode}</span>
+                        <img className={styles.countryPickerTriggerArrow} src="/icons/new_detail/down_arrow.svg" alt="down" />
+                      </button>
+                    </div>
+                    <input
+                      className={styles.input}
+                      placeholder={t('oneClickAlarm.phonePlaceholder')}
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      inputMode="tel"
+                    />
+                  </div>
+                )}
+
+                <div className={styles.divider} />
+
+                <div className={styles.row}>
+                  <div className={styles.rowLeft}>
+                    <span className={styles.icon}><MailAlarmIcon /></span>
+                    <span className={styles.rowLabel}>{t('oneClickAlarm.emailAlarm')}</span>
+                  </div>
+                  <Toggle checked={emailEnabled} onChange={setEmailEnabled} />
+                </div>
+
+                {!hideInputs && (
+                  <div className={styles.inputRow}>
+                    <span className={styles.inputIcon}><MailInputIcon /></span>
+                    <input
+                      className={styles.input}
+                      placeholder={t('oneClickAlarm.emailPlaceholder')}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      inputMode="email"
+                    />
+                  </div>
+                )}
+
+                <div className={styles.divider} />
+
+                <div className={styles.row}>
+                  <div className={styles.rowLeft}>
+                    <span className={styles.icon}><PushAlarmIcon /></span>
+                    <span className={styles.rowLabel}>{t('oneClickAlarm.pushAlarm')}</span>
+                  </div>
+                  <Toggle checked={pushEnabled} onChange={setPushEnabled} />
+                </div>
+              </div>
+
+              <div className={styles.footerActions}>
+                <button
+                  type="button"
+                  className={styles.primaryBtn}
+                  onClick={handleEnableAlarm}
+                >
+                  {confirmText || t('oneClickAlarm.confirmButton')}
+                </button>
+                <button
+                  type="button"
+                  className={styles.secondaryBtn}
+                  onClick={() => {
+                    onSkip?.();
+                    onClose?.();
+                  }}
+                >
+                  {skipText || t('oneClickAlarm.skipButton')}
+                </button>
+              </div>
             </div>
-            <Toggle checked={phoneEnabled} onChange={setPhoneEnabled} />
           </div>
+        )}
+      </BottomSheetModal>
 
-          <div className={`${styles.inputRow} ${!phoneEnabled ? styles.inputRowDisabled : ''}`}>
-            <span className={styles.inputIcon}><PhoneInputIcon /></span>
-            <div className={styles.countryCodeWrap}>
-              <select
-                className={styles.countrySelect}
-                value={countryCode}
-                onChange={(e) => setCountryCode(e.target.value)}
-                disabled={!phoneEnabled}
-              >
-                <option value={'+86'}>+86</option>
-                <option value={'+1'}>+1</option>
-                <option value={'+81'}>+81</option>
-                <option value={'+82'}>+82</option>
-                <option value={'+852'}>+852</option>
-                <option value={'+853'}>+853</option>
-                <option value={'+886'}>+886</option>
-              </select>
-            </div>
-            <input
-              className={styles.input}
-              placeholder="请输入手机号"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              disabled={!phoneEnabled}
-              inputMode="tel"
-            />
-          </div>
-
-          <div className={styles.divider} />
-
-          <div className={styles.row}>
-            <div className={styles.rowLeft}>
-              <span className={styles.icon}><MailAlarmIcon /></span>
-              <span className={styles.rowLabel}>邮件告警</span>
-            </div>
-            <Toggle checked={emailEnabled} onChange={setEmailEnabled} />
-          </div>
-
-          <div className={`${styles.inputRow} ${!emailEnabled ? styles.inputRowDisabled : ''}`}>
-            <span className={styles.inputIcon}><MailInputIcon /></span>
-            <input
-              className={styles.input}
-              placeholder="请输入邮箱"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={!emailEnabled}
-              inputMode="email"
-            />
-          </div>
-
-          <div className={styles.divider} />
-
-          <div className={styles.row}>
-            <div className={styles.rowLeft}>
-              <span className={styles.icon}><PushAlarmIcon /></span>
-              <span className={styles.rowLabel}>推送</span>
-            </div>
-            <Toggle checked={pushEnabled} onChange={setPushEnabled} />
-          </div>
-
-          <div className={styles.footerActions}>
-            <button
-              type="button"
-              className={styles.primaryBtn}
-              onClick={() => {
-                onConfirm?.({
-                  phoneEnabled,
-                  countryCode,
-                  phone,
-                  emailEnabled,
-                  email,
-                  pushEnabled,
-                });
-              }}
-            >
-              {confirmText}
-            </button>
-            <button
-              type="button"
-              className={styles.secondaryBtn}
-              onClick={() => {
-                onSkip?.();
-                onClose?.();
-              }}
-            >
-              {skipText}
-            </button>
-          </div>
-        </div>
-      </div>
-    </BottomSheetModal>
+      {mode === 'oneClick' && (
+        <CountryPickerOverlay
+          open={countryPickerOpen}
+          onClose={() => setCountryPickerOpen(false)}
+          onSelect={(c) => setCountryCode(c.dialCode)}
+        />
+      )}
+    </>
   );
 }

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
-import OneClickAlarmModal from '../OneClickAlarmModal';
+import { useTranslation } from 'react-i18next';
+import BarChart from '@/components/BarChart';
 import styles from './index.module.less';
 
 const exchangeIcons = [
@@ -38,16 +39,23 @@ export default function OrderBook({
   asks = [],
   maxRows = 10,
   formatValue = defaultFormatValue,
-  title = '大单侦测',
-  tag = '限时体验',
+  title,
+  tag,
   endTime = null,
   showHeader = true,
-  dropdownOptions = ['今日榜单前五', '今日榜单前十'],
+  dropdownOptions,
+  showMask = false, // 是否显示遮罩
+  onSubscribe, // 订阅回调
 }) {
+  const { t, i18n } = useTranslation();
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-  const [selectedOption, setSelectedOption] = useState(dropdownOptions[0]);
+  const [selectedOption, setSelectedOption] = useState(dropdownOptions?.[0] || t('orderBook.top5'));
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [alarmModalOpen, setAlarmModalOpen] = useState(false);
+
+  // 使用国际化配置作为默认值
+  const displayTitle = title || t('orderBook.title');
+  const displayTag = tag || t('orderBook.limitedExperience');
+  const displayDropdownOptions = dropdownOptions || [t('orderBook.top5'), t('orderBook.top10')];
 
   const visibleRowsCount = useMemo(() => {
     const trimmed = String(selectedOption ?? '').trim();
@@ -98,37 +106,37 @@ export default function OrderBook({
   }, [asks, bids, visibleRowsCount]);
 
   if (!rows.length) {
-    return <div className={styles.empty}>暂无订单薄数据</div>;
+    return <div className={styles.empty}>{t('orderBook.noData')}</div>;
   }
 
   return (
-    <div className={styles.container}>
+    <div className={`${styles.container} ${showMask ? styles.containerMasked : ''}`}>
       {showHeader && (
         <div className={styles.header}>
           <div className={styles.titleSection}>
-            <h2 className={styles.title}>{title}</h2>
-            {tag && <span className={styles.badge}>{tag}</span>}
+            <h2 className={styles.title}>{displayTitle}</h2>
+            {displayTag && <span className={styles.badge}>{displayTag}</span>}
           </div>
           {endTime && (
             <div className={styles.countdown}>
-              <span className={styles.countdownLabel}>距结束</span>
+              <span className={styles.countdownLabel}>{t('orderBook.endIn')}</span>
               <div className={styles.countdownNumbers}>
                 <span className={styles.countdownCircle}>
                   <span className={styles.countdownValue}>{String(countdown.days).padStart(2, '0')}</span>
                 </span>
-                <span className={styles.countdownText}>天</span>
+                <span className={styles.countdownText}>{t('orderBook.days')}</span>
                 <span className={styles.countdownCircle}>
                   <span className={styles.countdownValue}>{String(countdown.hours).padStart(2, '0')}</span>
                 </span>
-                <span className={styles.countdownText}>时</span>
+                <span className={styles.countdownText}>{t('orderBook.hours')}</span>
                 <span className={styles.countdownCircle}>
                   <span className={styles.countdownValue}>{String(countdown.minutes).padStart(2, '0')}</span>
                 </span>
-                <span className={styles.countdownText}>分</span>
+                <span className={styles.countdownText}>{t('orderBook.minutes')}</span>
                 <span className={styles.countdownCircle}>
                   <span className={styles.countdownValue}>{String(countdown.seconds).padStart(2, '0')}</span>
                 </span>
-                <span className={styles.countdownText}>秒</span>
+                <span className={styles.countdownText}>{t('orderBook.seconds')}</span>
               </div>
             </div>
           )}
@@ -139,11 +147,11 @@ export default function OrderBook({
         <div className={styles.legendLeft}>
           <div className={styles.legendItem}>
             <span className={`${styles.dot} ${styles.bidDot}`} />
-            <span className={styles.legendText}>买入</span>
+            <span className={styles.legendText}>{t('orderBook.buy')}</span>
           </div>
           <div className={styles.legendItem}>
             <span className={`${styles.dot} ${styles.askDot}`} />
-            <span className={styles.legendText}>卖出</span>
+            <span className={styles.legendText}>{t('orderBook.sell')}</span>
           </div>
         </div>
         <div className={styles.legendRight}>
@@ -154,7 +162,7 @@ export default function OrderBook({
             </svg>
             {dropdownOpen && (
               <div className={styles.dropdownMenu}>
-                {dropdownOptions.map((option, idx) => (
+                {displayDropdownOptions.map((option, idx) => (
                   <div
                     key={idx}
                     className={`${styles.dropdownOption} ${option === selectedOption ? styles.dropdownOptionActive : ''}`}
@@ -218,19 +226,72 @@ export default function OrderBook({
         })}
       </div>
 
-      <button type="button" className={styles.alarmButton} onClick={() => setAlarmModalOpen(true)}>
-        一键告警
-      </button>
+      {/* 遮罩层 */}
+      {showMask && (
+        <div className={styles.maskOverlay}>
+          <div className={styles.maskCard}>
+            <div className={styles.maskHeader}>
+              <div className={styles.maskTitleSection}>
+                <h2 className={styles.maskHeaderTitle}>{displayTitle}</h2>
+              </div>
+              <div className={styles.maskLegend}>
+                <div className={styles.maskLegendItem}>
+                  <span className={`${styles.maskDot} ${styles.maskBidDot}`} />
+                  <span className={styles.maskLegendText}>{t('orderBook.buy')}</span>
+                </div>
+                <div className={styles.maskLegendItem}>
+                  <span className={`${styles.maskDot} ${styles.maskAskDot}`} />
+                  <span className={styles.maskLegendText}>{t('orderBook.sell')}</span>
+                </div>
+              </div>
+            </div>
+            <div 
+              className={styles.maskHeaderBadge}
+              style={{
+                backgroundImage: `url('/images/new_detail/experience_end_badge${i18n.language === 'en' ? '_en' : ''}.svg')`
+              }}
+            />
 
-      <OneClickAlarmModal
-        open={alarmModalOpen}
-        onClose={() => setAlarmModalOpen(false)}
-        onConfirm={(values) => {
-          console.log('告警配置:', values);
-          setAlarmModalOpen(false);
-        }}
-        onSkip={() => setAlarmModalOpen(false)}
-      />
+            <div className={styles.maskContent}>
+              <h2 className={styles.maskTitle}>{t('orderBook.benefitEnded')}</h2>
+              
+              <div className={styles.maskSubtitleWrapper}>
+                <span className={styles.maskBullet}>•</span>
+                <span className={styles.maskSubtitle}>{t('orderBook.memberExclusive')}</span>
+              </div>
+
+              <p className={styles.maskDescription}>
+                {t('orderBook.memberDescription')}
+              </p>
+
+              <button 
+                className={styles.maskButton}
+                onClick={() => {
+                  if (onSubscribe) {
+                    onSubscribe();
+                  }
+                }}
+              >
+                {t('orderBook.subscribeUnlock')}
+              </button>
+
+              <img src="/images/new_detail/vip_right_mask.svg" alt="VIP" className={styles.maskVipIcon} />
+            </div>
+
+            {/* 红绿柱状图 - 绝对定位覆盖在下方 */}
+            <div className={styles.chartOverlay}>
+              <BarChart 
+                data={[
+                  { leftValue: 12.3, rightValue: 12.3 },
+                  { leftValue: 11.4, rightValue: 10 },
+                  { leftValue: 10, rightValue: 10 },
+                  { leftValue: 9, rightValue: 10 },
+                ]} 
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
