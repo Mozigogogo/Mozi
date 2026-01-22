@@ -121,3 +121,22 @@ export const getUserDataInfo = () => {
   });
 };
 
+/**
+ * 保存告警设置（绑定邮箱和手机号）
+ * @param {Object} params - 告警设置参数
+ * @param {boolean} params.phoneEnabled - 是否启用电话告警
+ * @param {string} params.countryCode - 国家代码（如 +86）
+ * @param {string} params.phone - 手机号
+ * @param {boolean} params.emailEnabled - 是否启用邮件告警
+ * @param {string} params.email - 邮箱地址
+ * @param {boolean} params.pushEnabled - 是否启用推送
+ * @param {string} params.channel - 渠道信息
+ * @returns {Promise}
+ */
+export const saveAlarmSettings = (params) => {
+  return request({
+    url: '/alarm/settings/save',
+    method: 'POST',
+    data: params,
+  });
+};

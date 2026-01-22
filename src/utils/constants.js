@@ -268,6 +268,9 @@ export const Interface = {
   // 删除告警
   DELETE_ALARM: '/alarm/delete',
 
+  // 绑定邮箱和手机号（一键告警设置）
+  SAVE_ALARM_SETTINGS: '/alarm/settings/save',
+
   // 积分
   // 获取用户积分
   TASK_POINTS: '/task/points',
