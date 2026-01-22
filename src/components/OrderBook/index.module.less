@@ -486,7 +486,7 @@
   display: flex;
   flex-direction: column;
   gap: 1px;
-  padding: 12px;
+  padding: 10px 20px 8px 20px;
   flex-shrink: 0;
 }
 
@@ -553,22 +553,27 @@
 .maskContent {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
+  align-items: flex-start;
+  text-align: left;
   flex: 1;
-  padding: 20px;
+  padding:30px;
   background: rgba(255, 255, 255, 0.48);
   backdrop-filter: blur(25px);
   -webkit-backdrop-filter: blur(25px);
   min-height: 0;
+  position: relative;
+  z-index: 2;
 }
 
 .maskTitle {
-  font-size: 24px;
-  font-weight: 600;
-  color: #333;
-  margin: 0 0 16px 0;
+  font-family: PingFang SC;
+  font-weight: 400;
+  font-style: Medium;
+  font-size: 16px;
+  line-height: 100%;
+  letter-spacing: 0px;
+  color: rgba(49, 31, 0, 1);
+  margin-bottom: 5px;
 }
 
 .maskSubtitleWrapper {
@@ -584,31 +589,50 @@
 }
 
 .maskSubtitle {
-  font-size: 16px;
-  font-weight: 500;
-  color: #333;
+  font-family: PingFang SC;
+  font-weight: 300;
+  font-style: Light;
+  font-size: 12px;
+  line-height: 100%;
+  letter-spacing: 0px;
+  color: rgba(49, 31, 0, 1);
+
+}
+
+.maskVipIcon {
+  position: absolute;
+  right: 5px;
+  top: 0;
+  width: auto;
+  height: 106px;
 }
 
 .maskDescription {
-  font-size: 13px;
-  color: #666;
-  line-height: 1.6;
-  margin: 0 0 24px 0;
-  max-width: 320px;
+  font-family: PingFang SC;
+  font-weight: 300;
+  font-style: Light;
+  font-size: 9px;
+  line-height: 100%;
+  letter-spacing: 0px;
+  color:rgba(102, 102, 102, 1);
 }
 
 .maskButton {
-  width: 200px;
-  height: 48px;
-  background: linear-gradient(135deg, #8B6F47 0%, #6B5435 100%);
+  width: 95.25;
+  height: 27;
+  border-radius: 75px;
+  background: rgba(102, 64, 19, 1);
   border: none;
   border-radius: 24px;
   color: #FFF;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 400;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 12px rgba(139, 111, 71, 0.3);
+  margin: 40px auto 0;
+  display: block;
+  padding: 8px 10px;
 }
 
 .maskButton:hover {
@@ -618,4 +642,17 @@
 
 .maskButton:active {
   transform: translateY(0);
+}
+
+.chartOverlay {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  padding: 20px;
+  pointer-events: none;
+  max-height: 180px;
+  overflow: hidden;
+  z-index: 1;
 }

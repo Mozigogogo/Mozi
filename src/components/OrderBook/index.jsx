@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
+import BarChart from '@/components/BarChart';
 import styles from './index.module.less';
 
 const exchangeIcons = [
@@ -261,6 +262,20 @@ export default function OrderBook({
               >
                 点击订阅解锁
               </button>
+
+              <img src="/images/new_detail/vip_right_mask.svg" alt="VIP" className={styles.maskVipIcon} />
+            </div>
+
+            {/* 红绿柱状图 - 绝对定位覆盖在下方 */}
+            <div className={styles.chartOverlay}>
+              <BarChart 
+                data={[
+                  { leftValue: 12.3, rightValue: 12.3 },
+                  { leftValue: 11.4, rightValue: 10 },
+                  { leftValue: 10, rightValue: 10 },
+                  { leftValue: 9, rightValue: 10 },
+                ]} 
+              />
             </div>
           </div>
         </div>
