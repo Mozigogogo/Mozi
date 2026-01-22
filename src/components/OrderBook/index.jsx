@@ -103,7 +103,7 @@ export default function OrderBook({
   }
 
   return (
-    <div className={styles.container}>
+    <div className={`${styles.container} ${showMask ? styles.containerMasked : ''}`}>
       {showHeader && (
         <div className={styles.header}>
           <div className={styles.titleSection}>
