@@ -66,10 +66,10 @@ export default function OneClickAlarmModal({
   onSkip,
   mode = 'oneClick',
   symbol = 'BTC',
-  title = '一键告警',
-  subtitle = '实时监控 即时提醒',
-  confirmText = '开启告警',
-  skipText = '暂不开启',
+  title,
+  subtitle,
+  confirmText,
+  skipText,
   initialValue,
 }) {
   const { t, i18n } = useTranslation();
@@ -225,7 +225,7 @@ export default function OneClickAlarmModal({
       const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
       
       if (!userId) {
-        Toast.show({ content: '请先登录' });
+        Toast.show({ content: t('oneClickAlarm.pleaseLogin') });
         setShowLoginPopup(true);
         return;
       }
@@ -247,7 +247,7 @@ export default function OneClickAlarmModal({
       const res = await saveAlarmSettings(requestData);
 
       if (res?.code === 0) {
-        Toast.show({ content: '开启成功', icon: 'success' });
+        Toast.show({ content: t('oneClickAlarm.enableSuccess'), icon: 'success' });
         setHideInputs(true); // 隐藏输入框
         
         // 调用原有的 onConfirm 回调
@@ -260,11 +260,11 @@ export default function OneClickAlarmModal({
           pushEnabled,
         });
       } else {
-        Toast.show({ content: res?.errorMsg || '开启失败' });
+        Toast.show({ content: res?.errorMsg || t('oneClickAlarm.enableFailed') });
       }
     } catch (error) {
       console.error('开启告警失败:', error);
-      Toast.show({ content: '网络错误，请重试' });
+      Toast.show({ content: t('oneClickAlarm.networkError') });
     }
   };
 
@@ -491,7 +491,7 @@ export default function OneClickAlarmModal({
                 <div className={styles.row}>
                   <div className={styles.rowLeft}>
                     <span className={styles.icon}><PhoneAlarmIcon /></span>
-                    <span className={styles.rowLabel}>电话告警</span>
+                    <span className={styles.rowLabel}>{t('oneClickAlarm.phoneAlarm')}</span>
                   </div>
                   <Toggle checked={phoneEnabled} onChange={setPhoneEnabled} />
                 </div>
@@ -513,7 +513,7 @@ export default function OneClickAlarmModal({
                     </div>
                     <input
                       className={styles.input}
-                      placeholder="请输入手机号"
+                      placeholder={t('oneClickAlarm.phonePlaceholder')}
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       inputMode="tel"
@@ -526,7 +526,7 @@ export default function OneClickAlarmModal({
                 <div className={styles.row}>
                   <div className={styles.rowLeft}>
                     <span className={styles.icon}><MailAlarmIcon /></span>
-                    <span className={styles.rowLabel}>邮件告警</span>
+                    <span className={styles.rowLabel}>{t('oneClickAlarm.emailAlarm')}</span>
                   </div>
                   <Toggle checked={emailEnabled} onChange={setEmailEnabled} />
                 </div>
@@ -536,7 +536,7 @@ export default function OneClickAlarmModal({
                     <span className={styles.inputIcon}><MailInputIcon /></span>
                     <input
                       className={styles.input}
-                      placeholder="请输入邮箱"
+                      placeholder={t('oneClickAlarm.emailPlaceholder')}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       inputMode="email"
@@ -549,7 +549,7 @@ export default function OneClickAlarmModal({
                 <div className={styles.row}>
                   <div className={styles.rowLeft}>
                     <span className={styles.icon}><PushAlarmIcon /></span>
-                    <span className={styles.rowLabel}>推送</span>
+                    <span className={styles.rowLabel}>{t('oneClickAlarm.pushAlarm')}</span>
                   </div>
                   <Toggle checked={pushEnabled} onChange={setPushEnabled} />
                 </div>
@@ -561,7 +561,7 @@ export default function OneClickAlarmModal({
                   className={styles.primaryBtn}
                   onClick={handleEnableAlarm}
                 >
-                  {confirmText}
+                  {confirmText || t('oneClickAlarm.confirmButton')}
                 </button>
                 <button
                   type="button"
@@ -571,7 +571,7 @@ export default function OneClickAlarmModal({
                     onClose?.();
                   }}
                 >
-                  {skipText}
+                  {skipText || t('oneClickAlarm.skipButton')}
                 </button>
               </div>
             </div>

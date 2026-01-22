@@ -1228,5 +1228,38 @@
     "submit": "Submit",
     "experience": "Try Now",
     "startExperience": "Start Experience"
+  },
+  "oneClickAlarm": {
+    "title": "One-Click Alerts",
+    "subtitle": "Real-time Monitoring · Instant Alerts",
+    "phoneAlarm": "Phone Alert",
+    "emailAlarm": "Email Alert",
+    "pushAlarm": "Push",
+    "phonePlaceholder": "Enter phone number",
+    "emailPlaceholder": "Enter email",
+    "confirmButton": "Enable Alerts",
+    "skipButton": "Skip",
+    "enableSuccess": "Enabled successfully",
+    "enableFailed": "Enable failed",
+    "pleaseLogin": "Please login first",
+    "networkError": "Network error, please retry"
+  },
+  "orderBook": {
+    "title": "Large Order Detection",
+    "limitedExperience": "Limited Experience",
+    "buy": "Buy",
+    "sell": "Sell",
+    "top5": "Top 5 Today",
+    "top10": "Top 10 Today",
+    "noData": "No order book data",
+    "endIn": "Ends in",
+    "days": "days",
+    "hours": "hrs",
+    "minutes": "mins",
+    "seconds": "secs",
+    "benefitEnded": "Limited Benefit Ended",
+    "memberExclusive": "Member Exclusive Access",
+    "memberDescription": "Member-only content during testing period.",
+    "subscribeUnlock": "Subscribe to Unlock"
   }
 }

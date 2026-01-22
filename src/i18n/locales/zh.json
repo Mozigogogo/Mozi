@@ -1227,5 +1227,38 @@
     "submit": "去提交",
     "experience": "去体验",
     "startExperience": "开始体验"
+  },
+  "oneClickAlarm": {
+    "title": "一键告警",
+    "subtitle": "实时监控 即时提醒",
+    "phoneAlarm": "电话告警",
+    "emailAlarm": "邮件告警",
+    "pushAlarm": "推送",
+    "phonePlaceholder": "请输入手机号",
+    "emailPlaceholder": "请输入邮箱",
+    "confirmButton": "开启告警",
+    "skipButton": "暂不开启",
+    "enableSuccess": "开启成功",
+    "enableFailed": "开启失败",
+    "pleaseLogin": "请先登录",
+    "networkError": "网络错误，请重试"
+  },
+  "orderBook": {
+    "title": "大单侦测",
+    "limitedExperience": "限时体验",
+    "buy": "买入",
+    "sell": "卖出",
+    "top5": "今日榜单前五",
+    "top10": "今日榜单前十",
+    "noData": "暂无订单薄数据",
+    "endIn": "距结束",
+    "days": "天",
+    "hours": "时",
+    "minutes": "分",
+    "seconds": "秒",
+    "benefitEnded": "限时福利已结束",
+    "memberExclusive": "会员专享查看权限",
+    "memberDescription": "本部分内容属会员创测期限制查看，会员可支持国服最新资讯",
+    "subscribeUnlock": "点击订阅解锁"
   }
 }
