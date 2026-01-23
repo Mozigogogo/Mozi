@@ -1,12 +1,9 @@
 /* 合约专区 */
 .derivativeContainer {
+  position: relative;
   width: calc(100% - 20px);
   margin: 0 10px 10px 10px;
   background-color: #ffffff;
-  background-image: url('/images/new_home/derivatives_bg.svg');
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  background-position: center;
   padding: 16px;
   box-sizing: border-box;
   border-radius: 20px;
@@ -15,10 +12,18 @@
 }
 
 .derivativeTitle {
+  position: absolute;
+  top: -3px;
+  left: -4px;
   font-size: 16px;
   font-weight: 600;
   color: #313030;
-  margin-bottom: 12px;
+  padding: 8px 20px;
+  background-image: url('/images/new_home/contract_area_bg.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: left top;
+  z-index: 1;
 }
 
 .derivativeItem {
@@ -30,8 +35,8 @@
     margin-bottom: 5px;
     
     img {
-      width: 50px;
-      height: 35px;
+      width: 28px;
+      height: 28px;
       object-fit: contain;
     }
   }
@@ -44,8 +49,8 @@
   /* 移动端调整 - 使用iPhone SE尺寸时放大图标 */
   @media (max-width: 768px) {
     .derivativeIcon img {
-      width: 75px;
-      height: 52px;
+      width: 28px;
+      height: 28px;
     }
     
     span {
@@ -56,6 +61,7 @@
 
 .derivativeBody {
   padding: 0;
+  padding-top: 10px; // 为绝对定位的标题留出空间
 
   // 覆盖 Grid 组件默认样式
   :global {

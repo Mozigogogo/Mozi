@@ -6,14 +6,11 @@ import { Grid } from 'antd-mobile';
 import { jump2NoTab } from '../../utils/core';
 import styles from './index.module.less';
 
-// CDN 图片前缀
-const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
-
-// 合约专区图标（使用CDN）
-const bullBearRatioIcon = `${CDN_PREFIX}/icon/bull-bear-ratio.png`;
-const inventoryIcon = `${CDN_PREFIX}/icon/inventory.png`;
-const fundingRateIcon = `${CDN_PREFIX}/icon/funding-rate.png`;
-const volumeTransactionIcon = `${CDN_PREFIX}/icon/volume-transaction.png`;
+// 合约专区图标（使用本地SVG）
+const bullBearRatioIcon = '/images/new_home/bull_bear_ratio.png';
+const inventoryIcon = '/images/new_home/position_size.png';
+const fundingRateIcon = '/images/new_home/funding_rate.png';
+const volumeTransactionIcon = '/images/new_home/trade_volume.png';
 
 export default function DerivativeArea() {
   const { t } = useTranslation();
