@@ -59,7 +59,13 @@ export default function MyNoticesPage() {
       });
       if (res?.data) {
         const newList = res.data;
-        setList(refresh ? newList : [...list, ...newList]);
+        // Sort by createdAt in descending order (newest first)
+        const sortedList = newList.sort((a, b) => {
+          const dateA = new Date(a.createdAt).getTime();
+          const dateB = new Date(b.createdAt).getTime();
+          return dateB - dateA;
+        });
+        setList(refresh ? sortedList : [...list, ...sortedList]);
         setHasMore((newList?.length || 0) >= 20);
         setPage(currentPage + 1);
       }

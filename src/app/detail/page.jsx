@@ -11,6 +11,8 @@ import MoziGrid from '../../components/MoziGrid';
 import HighlightArea from '../../components/HighlightArea';
 import AddCollect from '../../components/AddCollect';
 import KlineChart from '../../components/KlineChart';
+import OrderBook from '../../components/OrderBook';
+import OneClickAlarmModal from '../../components/OneClickAlarmModal';
 import { Loading } from '../../components/Loading';
 import { CaretUpIcon, CaretDownIcon, BellIcon } from '../../components/Icons';
 import FloatingRobot from '../../components/FloatingRobot';
@@ -60,6 +62,8 @@ export default function DetailPage() {
   const [infoExpanded, setInfoExpanded] = useState(false);
   const [coinInfoLeft, setCoinInfoLeft] = useState([]);
   const [coinInfoRight, setCoinInfoRight] = useState([]);
+  const [oneClickAlarmOpen, setOneClickAlarmOpen] = useState(false);
+  const [oneClickAlarmMode, setOneClickAlarmMode] = useState('oneClick');
   const needLoop = useRef(true);
   const chartRef = useRef(null);
   const marketRef = useRef(null);
@@ -75,6 +79,14 @@ export default function DetailPage() {
     priceChange1Month: '--',
     priceChange1Year: '--'
   });
+
+  const [orderBook, setOrderBook] = useState({
+    bids: [],
+    asks: []
+  });
+  
+  // 控制大单侦测区域显示/隐藏
+  const showOrderBook = true;
   
   // WebSocket连接状态管理
   const wsConnectionStatusRef = useRef('connecting'); // connecting | connected | failed
@@ -128,6 +140,25 @@ export default function DetailPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const generateMockOrderBook = (iconUrl) => {
+    const genSide = () => {
+      const baseValue = 10e9 + Math.random() * 4e9;
+      return Array.from({ length: 10 }).map((_, idx) => {
+        const decay = 1 - idx * 0.1;
+        const value = baseValue * decay * (0.9 + Math.random() * 0.2);
+        return {
+          value,
+          icon: iconUrl || null,
+        };
+      });
+    };
+
+    return {
+      bids: genSide(),
+      asks: genSide(),
+    };
   };
   
   // 模拟K线数据
@@ -410,12 +441,8 @@ export default function DetailPage() {
 
   // 跳转到告警页面
   const jump2Alert = () => {
-    if (symbol) {
-      const href = `/addwarn?symbol=${encodeURIComponent(symbol)}`;
-      window.location.href = href;
-    } else {
-      window.location.href = '/addwarn';
-    }
+    setOneClickAlarmMode('config');
+    setOneClickAlarmOpen(true);
   };
 
   // 跳转到社区页面
@@ -1048,6 +1075,10 @@ ${coinInfo.name || symbol} (${symbol})
       }
     };
   }, [symbol]);
+
+  useEffect(() => {
+    setOrderBook(generateMockOrderBook(coinInfo?.url));
+  }, [symbol, coinInfo?.url]);
   
   // 监听K线时间周期切换，动态切换订阅
   useEffect(() => {
@@ -1231,6 +1262,25 @@ ${coinInfo.name || symbol} (${symbol})
     );
   };
 
+  const renderOrderBook = () => {
+    const endTime = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30天后过期
+    const now = new Date();
+    const isExpired = now > endTime;
+    
+    return (
+      <OrderBook 
+        bids={orderBook.bids} 
+        asks={orderBook.asks}
+        endTime={endTime}
+        showMask={isExpired}
+        onSubscribe={() => {
+          console.log('订阅会员');
+          // 这里可以跳转到订阅页面
+        }}
+      />
+    );
+  };
+
   // 渲染投资回报率（ROI）
   const renderROI = () => {
     if (roiLoading) {
@@ -1367,6 +1417,11 @@ ${coinInfo.name || symbol} (${symbol})
           <div className={styles.box}>
             {renderKline()}
           </div>
+          {showOrderBook && (
+            <div className={styles.orderBookSection}>
+              {renderOrderBook()}
+            </div>
+          )}
         </div>
         
         {/* 市场行情区域 */}
@@ -1383,34 +1438,48 @@ ${coinInfo.name || symbol} (${symbol})
         
         {/* 底部操作栏 */}
         <div className={styles.footerList}>
-          <div className={styles.footerItem}>
-            <AddCollect 
-              isOwn={fromFavorite ? true : (coinInfo?.isSelfSelected || false)} 
-              symbol={symbol} 
-            />
-            <div className={styles.footerText}>{t('detail.actions.favorite')}</div>
-          </div>
-          <div className={styles.footerItem} onClick={jump2Alert}>
-            <div style={{ marginBottom: '2.5px' }}>
-              <BellIcon size={20} color="#c7c9cd" />
+          <div className={styles.footerLeft}>
+            <div className={styles.footerItem}>
+              <AddCollect 
+                isOwn={fromFavorite ? true : (coinInfo?.isSelfSelected || false)} 
+                symbol={symbol} 
+              />
+              <div className={styles.footerText}>{t('detail.actions.favorite')}</div>
             </div>
-            <div className={styles.footerText}>{t('detail.actions.alert')}</div>
+            <div className={styles.footerItem} onClick={jump2Community}>
+              <img 
+                className={styles.footerIcon} 
+                src="/icons/new_detail/community.svg" 
+                alt={t('detail.actions.community')}
+              />
+              <div className={styles.footerText}>{t('detail.actions.community')}</div>
+            </div>
+            <div className={styles.footerItem} onClick={shareToTelegram}>
+              <img 
+                className={styles.footerIcon} 
+                src="/icons/new_detail/share.svg" 
+                alt={t('detail.actions.share')}
+              />
+              <div className={styles.footerText}>{t('detail.actions.share')}</div>
+            </div>
           </div>
-          <div className={styles.footerItem} onClick={shareToTelegram}>
-            <img 
-              className={styles.footerIcon} 
-              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/share.png" 
-              alt={t('detail.actions.share')}
-            />
-            <div className={styles.footerText}>{t('detail.actions.share')}</div>
-          </div>
-          <div className={styles.footerItem} onClick={jump2Community}>
-            <img 
-              className={styles.footerIcon} 
-              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community-no-actived.png" 
-              alt={t('detail.actions.community')}
-            />
-            <div className={styles.footerText}>{t('detail.actions.community')}</div>
+
+          <div className={styles.footerRight}>
+            <div className={styles.alarmPill}>
+              <button type="button" className={styles.alarmConfig} onClick={jump2Alert}>
+                {t('detail.actions.configAlarm')}
+              </button>
+              <button
+                type="button"
+                className={styles.alarmStart}
+                onClick={() => {
+                  setOneClickAlarmMode('oneClick');
+                  setOneClickAlarmOpen(true);
+                }}
+              >
+                {t('detail.actions.startNow')}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1422,6 +1491,17 @@ ${coinInfo.name || symbol} (${symbol})
           startDelay={2000}
         />
       </div>
+
+      <OneClickAlarmModal
+        open={oneClickAlarmOpen}
+        mode={oneClickAlarmMode}
+        symbol={symbol || 'BTC'}
+        onClose={() => setOneClickAlarmOpen(false)}
+        onConfirm={() => {
+          setOneClickAlarmOpen(false);
+        }}
+        onSkip={() => setOneClickAlarmOpen(false)}
+      />
     </>
   );
 }

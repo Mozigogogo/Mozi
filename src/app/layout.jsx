@@ -1,4 +1,4 @@
-import { Inter, Roboto_Mono } from "next/font/google";
+import { Inter, Roboto_Mono, Chakra_Petch } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { Suspense } from "react";
@@ -12,6 +12,7 @@ import VConsoleLoader from "@/components/VConsole";
 import InviteCodeHandler from "@/components/InviteCodeHandler";
 import EnvironmentDetector from "@/components/EnvironmentDetector";
 import RouteChangeHandler from "@/components/RouteChangeHandler";
+import TelegramAutoLogin from "@/components/TelegramAutoLogin";
 
 const geistSans = Inter({
   variable: "--font-geist-sans",
@@ -21,6 +22,12 @@ const geistSans = Inter({
 const geistMono = Roboto_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const chakraPetch = Chakra_Petch({
+  variable: "--font-chakra-petch",
+  subsets: ["latin"],
+  weight: ["700"],
 });
 
 export const metadata = {
@@ -35,12 +42,14 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#1677ff" />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${chakraPetch.variable}`} suppressHydrationWarning>
         {/* Telegram WebApp 官方脚本 - 必须最先加载 */}
         <Script 
           src="https://telegram.org/js/telegram-web-app.js" 
@@ -52,6 +61,7 @@ export default function RootLayout({ children }) {
         <Suspense fallback={null}>
           <InviteCodeHandler />
         </Suspense>
+        <TelegramAutoLogin />
         <ThemeProvider>
           <I18nProvider>
             <TonConnectProvider>

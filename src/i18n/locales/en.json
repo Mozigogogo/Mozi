@@ -798,7 +798,10 @@
       "favorite": "Favorite",
       "alert": "Alert",
       "share": "Share",
-      "community": "Community"
+      "community": "Community",
+      "configAlarm": "Config",
+      "startNow": "Start",
+      "comingSoon": "Coming Soon"
     },
     "roi": {
       "daily": "Daily Return",
@@ -824,6 +827,11 @@
     },
     "robotBubble": "Welcome to Mozi, what can I help you?",
     "robotMessage": "Want to hear my thoughts on {{symbol}}?"
+  },
+  "countryPicker": {
+    "back": "Back",
+    "title": "Select Country/Region",
+    "searchPlaceholder": "Search country/dial code"
   },
   "post": {
     "title": "Post",
@@ -918,6 +926,8 @@
     "priceFall": "Fall To",
     "risePercent": "Daily Rise Over",
     "fallPercent": "Daily Fall Over",
+    "bigOrderDetect": "Large Order Detection",
+    "exchangeSpreadMonitor": "Exchange Spread Monitoring",
     "saveAlarm": "Save Alert",
     "viewAlarms": "View Configured Alerts",
     "loading": "Loading...",
@@ -1218,5 +1228,38 @@
     "submit": "Submit",
     "experience": "Try Now",
     "startExperience": "Start Experience"
+  },
+  "oneClickAlarm": {
+    "title": "One-Click Alerts",
+    "subtitle": "Real-time Monitoring · Instant Alerts",
+    "phoneAlarm": "Phone Alert",
+    "emailAlarm": "Email Alert",
+    "pushAlarm": "Push",
+    "phonePlaceholder": "Enter phone number",
+    "emailPlaceholder": "Enter email",
+    "confirmButton": "Enable Alerts",
+    "skipButton": "Skip",
+    "enableSuccess": "Enabled successfully",
+    "enableFailed": "Enable failed",
+    "pleaseLogin": "Please login first",
+    "networkError": "Network error, please retry"
+  },
+  "orderBook": {
+    "title": "Large Order Detection",
+    "limitedExperience": "Limited Experience",
+    "buy": "Buy",
+    "sell": "Sell",
+    "top5": "Top 5 Today",
+    "top10": "Top 10 Today",
+    "noData": "No order book data",
+    "endIn": "Ends in",
+    "days": "d",
+    "hours": "h",
+    "minutes": "m",
+    "seconds": "s",
+    "benefitEnded": "Limited Benefit Ended",
+    "memberExclusive": "Member Exclusive Access",
+    "memberDescription": "Member-only content during testing period.",
+    "subscribeUnlock": "Subscribe to Unlock"
   }
 }
