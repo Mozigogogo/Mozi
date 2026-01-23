@@ -26,82 +26,85 @@
   position: absolute; /* 绝对定位 */
   left: 0;
   right: 0;
-  bottom: 38px; /* 相对父容器底部的固定距离 */
+  bottom: 10px; /* 相对父容器底部的固定距离 */
   z-index: 5;
   transform: translateZ(0); /* 开启硬件加速，提升渲染性能 */
   will-change: auto; /* 优化动画性能 */
 
   .searchBox {
     width: 100%;
-    height: 48px; /* 增加高度从 40px 到 48px */
-    border-radius: 24px; /* 相应调整圆角 */
+    height: 48px;
+    border-radius: 24px;
     display: flex;
     background-color: #fff;
     justify-content: space-between;
     align-items: center;
-    padding: 0 3px 0 20px;
+    padding: 0 4px 0 20px;
     box-sizing: border-box;
     position: relative;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* 添加阴影，增强视觉层次 */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   
     .searchInput {
       flex: 1;
       color: #b2b2b2;
-      font-size: 14px;
-      white-space: nowrap; /* 防止文字换行 */
+      font-size: 15px;
+      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
   
     .searchCancel {
-      height: 90%;
-      width: 90px; /* 增加宽度从 70px 到 90px */
-      min-width: 90px; /* 防止按钮被压缩 */
-      flex-shrink: 0; /* 不允许缩小 */
-      background-color:#47C89D;
-      border-radius: 22px; /* 相应调整圆角 */
+      height: 36px; /* 匹配SVG高度 */
+      width: auto;
+      min-width: 77px; /* 匹配SVG宽度 */
+      padding: 0 16px;
+      flex-shrink: 0;
+      background-color: #11B787; /* 匹配SVG颜色 */
+      border-radius: 18px; /* 匹配SVG圆角 */
       display: flex;
       justify-content: center;
       align-items: center;
       color: #fff;
-      font-size: 13px;
+      font-size: 15px;
       font-weight: 500;
-      gap: 4px;
+      gap: 6px;
     }
     
     .searchIcon {
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
       display: block;
-      filter: brightness(0) invert(1); // 将图标变为白色
-      flex-shrink: 0; /* 图标不允许缩小 */
+      filter: brightness(0) invert(1);
+      flex-shrink: 0;
     }
   }
 
   /* 移动端调整 */
   @media (max-width: 768px) {
     padding: 0 8px;
-    bottom: 38px; /* 移动端保持相同的底部距离 */
+    bottom: 10px;
     
     .searchBox {
-      height: 40px; /* 移动端高度改为 40px */
+      height: 40px;
       border-radius: 20px;
       padding: 0 3px 0 16px;
       
       .searchInput {
-        font-size: 13px;
+        font-size: 14px;
       }
       
       .searchCancel {
-        width: 80px; /* 移动端宽度从 60px 增加到 80px */
-        min-width: 80px;
-        font-size: 12px;
-        border-radius: 18px;
+        height: 34px; /* 移动端稍小 */
+        min-width: 70px;
+        padding: 0 14px;
+        font-size: 14px;
+        border-radius: 17px;
+        background-color: #11B787; /* 保持一致的颜色 */
       }
       
       .searchIcon {
-        width: 14px;
-        height: 14px;
+        width: 16px;
+        height: 16px;
       }
     }
   }
@@ -111,25 +114,27 @@
     padding: 0 6px;
     
     .searchBox {
-      height: 40px; /* 超小屏幕高度从 34px 增加到 40px */
+      height: 40px;
       border-radius: 20px;
-      padding: 0 2px 0 12px;
+      padding: 0 3px 0 12px;
       
       .searchInput {
-        font-size: 12px;
+        font-size: 13px;
       }
       
       .searchCancel {
-        width: 70px; /* 超小屏幕宽度从 55px 增加到 70px */
-        min-width: 70px;
-        font-size: 11px;
-        gap: 2px;
-        border-radius: 18px;
+        height: 34px;
+        min-width: 65px;
+        padding: 0 12px;
+        font-size: 13px;
+        gap: 4px;
+        border-radius: 17px;
+        background-color: #11B787; /* 保持一致的颜色 */
       }
       
       .searchIcon {
-        width: 12px;
-        height: 12px;
+        width: 14px;
+        height: 14px;
       }
     }
   }
@@ -285,7 +290,7 @@
 }
 .bgBannerImage {
   width: 100%;
-  height: 210px; /* 固定高度为 210px */
+  height: 180px; /* 固定高度为 180px */
   min-height: auto; /* 移除最小高度限制 */
   display: block;
   object-fit: contain; /* 改为 contain，完整显示图片 */
@@ -658,12 +663,12 @@
   }
   
   .bgBannerImage {
-    height: 210px; /* 移动端也使用 210px */
+    height: 180px; /* 移动端也使用 180px */
     min-height: auto;
   }
 
   .header {
-    bottom: 36px; /* 移动端调整底部距离 */
+    bottom: 14px; /* 移动端调整底部距离 */
   }
 
   .notice {
@@ -753,12 +758,12 @@
   }
   
   .bgBannerImage {
-    height: 210px; /* 小屏幕也使用 210px */
+    height: 180px; /* 小屏幕也使用 180px */
     min-height: auto;
   }
   
   .header {
-    bottom: 34px; /* 小屏幕进一步调整 */
+    bottom: 10px; /* 小屏幕进一步调整 */
   }
   
   .notice {

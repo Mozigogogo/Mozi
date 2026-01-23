@@ -21,6 +21,7 @@ import MarketDistribution from '../components/MarketDistribution';
 import FloatingRobot from '../components/FloatingRobot';
 import WelcomePopup from '../components/WelcomePopup';
 import ActivityModal from '../components/ActivityModal';
+import PinkContainer from '../components/PinkContainer';
 import PCLayout from '../components/PCLayout';
 import PCHome from '../components/PCHome';
 import { request } from '../utils/request';
@@ -1082,7 +1083,7 @@ export default function HomePage() {
             <img className={styles.bgBannerImage} src="/images/new_home/banner.png" alt="banner" />
 
             {/* 搜索框（层叠在 Banner 上） */}
-            <div className={styles.header} style={{ bottom: showNotice ? 34 : 23 }} onClick={() => router.push('/search')}>
+            <div className={styles.header} style={{ bottom: showNotice ? 10 : 10 }} onClick={() => router.push('/search')}>
               <div className={styles.searchBox}>
                 <div className={styles.searchInput}>{t('home.searchPlaceholder')}</div>
                 <div className={styles.searchCancel} style={isEN ? { minWidth: 44, padding: '0 14px' } : undefined}>
@@ -1092,35 +1093,18 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* 公告栏（层叠在 Banner 上，可关闭） */}
-            {showNotice ? (
-              <div className={styles.notice}>
-                <NoticeBar
-                  className={styles.noticeItem}
-                  content={t('home.aiNotice')}
-                  color="alert"
-                  wrap
-                  icon={<img src={HomeAlertIcon} className={styles.noticeIcon} alt="alert" />}
-                  extra={
-                    <span
-                      className={styles.noticeClose}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowNotice(false);
-                        try { localStorage.setItem(NOTICE_HIDE_KEY, '1'); } catch {}
-                      }}
-                      aria-label="关闭"
-                      role="button"
-                    >✕</span>
-                  }
-                />
-              </div>
-            ) : null}
+            {/* 公告栏已隐藏 */}
           </div>
         </div>
 
+        {/* 粉色背景容器 */}
+        <PinkContainer />
+
         {/* 合约专区 */}
         {renderDerivativeArea()}
+
+        {/* 涨跌分布 */}
+        <MarketDistribution />
 
         {/* 投资机会 */}
         <MoziCard
@@ -1162,9 +1146,6 @@ export default function HomePage() {
         >
           {renderInvestmentOpportunity()}
         </MoziCard>
-
-        {/* 涨跌分布 */}
-        <MarketDistribution />
 
         {/* 实时榜单 */}
         {renderRealTimeRanking()}
