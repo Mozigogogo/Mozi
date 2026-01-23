@@ -92,7 +92,7 @@
     "tradeVolume": "成交额",
     "marketDistribution": "涨跌分布",
     "up": "上涨",
-    "neutral": "平",
+    "neutral": "持平",
     "down": "下跌",
     "fearGreed": {
       "title": "恐慌贪婪指数",
