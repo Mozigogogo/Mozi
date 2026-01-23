@@ -27,9 +27,9 @@ import InvestmentSection from '../components/InvestmentSection';
 import RealTimeRanking from '../components/RealTimeRanking';
 import PCLayout from '../components/PCLayout';
 import PCHome from '../components/PCHome';
-import { request } from '../utils/request';
-import { Interface, LOOPTIME, WS_URL } from '../utils/constants';
+import { LOOPTIME, WS_URL } from '../utils/constants';
 import { jump2Detail, jump2Market, jump2List, jump2NoTab } from '../utils/core';
+import * as homeApi from '../api/home';
 import { useWebSocket } from '../utils/useWebSocket';
 import { useAmplitude } from '../hooks/useAmplitude';
 import { HomeEvents } from '../utils/amplitude';
@@ -352,52 +352,13 @@ export default function HomePage() {
     ['币种', '最新价', '24小时幅度', '加自选', '加监控']
   ];
 
-  // 实时榜单接口配置
-  const footerIfList = [{
-    interface: Interface.COIN_SELF,
-    data: {
-      pageSize: 10,
-      pageNo: 1
-    }
-  }, {
-    interface: Interface.price_change,
-    data: {
-      dim: 0
-    }
-  }, {
-    interface: Interface.PRICE_DOWNCHANGE,
-    data: {
-      dim: 0
-    }
-  }, {
-    interface: Interface.price_wave,
-    data: {
-      dim: 0
-    }
-  }, {
-    interface: Interface.coin_trade,
-    data: {
-      intervals: 0
-    }
-  }, {
-    interface: Interface.NEW_COIN,
-    data: {}
-  }, {
-    interface: Interface.PRICE_UPTRADE,
-    data: {
-      intervals: '7_day'  // 飙升榜使用7天数据
-    }
-  }];
+  // 实时榜单配置 - 榜单数量
+  const RANK_COUNT = 7; // 7个榜单：自选、涨幅、跌幅、波幅、成交额、新币、飙升
 
   // 获取热门币种
   const fetchHotCoin = async () => {
     try {
-      const response = await request({
-        url: Interface.hot_coin,
-        data: {
-          pageSize: 10
-        }
-      });
+      const response = await homeApi.getHotCoins(10);
       if (response?.data) {
         setHotCoin(response.data);
       }
@@ -411,12 +372,7 @@ export default function HomePage() {
   // 获取热门板块数据
   const fetchHotIndustry = async () => {
     try {
-      const response = await request({
-        url: Interface.hot_industry,
-        data: {
-          pageSize: 10
-        }
-      });
+      const response = await homeApi.getHotIndustries(10);
       if (response?.data) {
         setHotIndustry(response.data);
       }
@@ -430,12 +386,7 @@ export default function HomePage() {
   // 获取热门合约数据
   const fetchHotContract = async () => {
     try {
-      const response = await request({
-        url: Interface.hot_contract,
-        data: {
-          pageSize: 10
-        }
-      });
+      const response = await homeApi.getHotContracts(10);
       if (response?.data) {
         setHotContract(response.data);
       }
@@ -473,12 +424,7 @@ export default function HomePage() {
     
     setTopicsLoading(true);
     try {
-      const response = await request({
-        url: Interface.HOT_TOPICS_API || '/topic/hot',
-        data: {
-          pageSize: 10
-        }
-      });
+      const response = await homeApi.getHotTopics(10);
       setHotTopics(response?.data?.data || response?.data || []);
       setLastTopicsLoadTime(now);
       
@@ -504,9 +450,7 @@ export default function HomePage() {
   const fetchOwnList = async () => {
     setMyOwnLoading(true);
     try {
-      const response = await request({
-        url: Interface.COIN_SELF
-      });
+      const response = await homeApi.getSelfSelectRank();
       if (response?.data) {
         setOwn(response.data);
       }
@@ -520,10 +464,7 @@ export default function HomePage() {
   // 单独刷新自选榜数据
   const refreshSelfSelectRank = async () => {
     try {
-      const res = await request({
-        url: Interface.COIN_SELF,
-        data: { pageSize: 10, pageNo: 1 }
-      });
+      const res = await homeApi.getSelfSelectRank(10, 1);
       
       const listData = res.data || [];
       let tempData = [];
@@ -559,12 +500,12 @@ export default function HomePage() {
     if (isInitial) {
       setFooterLoading(true);
       // 只在首次加载时初始化数组
-      setFooterArr(Array(footerIfList.length).fill([]));
+      setFooterArr(Array(RANK_COUNT).fill([]));
     }
     
     try {
       // 并发请求所有榜单，每个榜单独立更新
-      const promises = footerIfList.map(async (cfg, i) => {
+      const promises = Array.from({ length: RANK_COUNT }).map(async (_, i) => {
         // 生成新的请求ID，用于防止竞态
         const requestId = ++rankRequestIds.current[i];
         
@@ -578,7 +519,33 @@ export default function HomePage() {
         }
         
         try {
-          const itemListData = await request({ url: cfg.interface, data: cfg.data });
+          // 使用新的 API 根据索引获取对应榜单数据
+          let itemListData;
+          switch (i) {
+            case 0: // 自选榜
+              itemListData = await homeApi.getSelfSelectRank(10, 1);
+              break;
+            case 1: // 涨幅榜
+              itemListData = await homeApi.getPriceChangeRank(0);
+              break;
+            case 2: // 跌幅榜
+              itemListData = await homeApi.getPriceDownChangeRank(0);
+              break;
+            case 3: // 波幅榜
+              itemListData = await homeApi.getPriceWaveRank(0);
+              break;
+            case 4: // 成交额榜
+              itemListData = await homeApi.getTradeRank(0);
+              break;
+            case 5: // 新币榜
+              itemListData = await homeApi.getNewCoinRank();
+              break;
+            case 6: // 飙升榜
+              itemListData = await homeApi.getPriceUpTradeRank('7_day');
+              break;
+            default:
+              itemListData = { data: [] };
+          }
           
           // 检查是否是最新的请求（防止竞态）
           if (requestId !== rankRequestIds.current[i]) {
@@ -642,9 +609,9 @@ export default function HomePage() {
             setFooterArr(prev => {
               const newArr = [...prev];
               // 确保数组长度足够
-              if (newArr.length < footerIfList.length) {
-                newArr.length = footerIfList.length;
-                for (let j = 0; j < footerIfList.length; j++) {
+              if (newArr.length < RANK_COUNT) {
+                newArr.length = RANK_COUNT;
+                for (let j = 0; j < RANK_COUNT; j++) {
                   if (!newArr[j]) newArr[j] = [];
                 }
               }
@@ -692,9 +659,9 @@ export default function HomePage() {
             // 失败时设置为空数组以显示"暂无数据"
             setFooterArr(prev => {
               const newArr = [...prev];
-              if (newArr.length < footerIfList.length) {
-                newArr.length = footerIfList.length;
-                for (let j = 0; j < footerIfList.length; j++) {
+              if (newArr.length < RANK_COUNT) {
+                newArr.length = RANK_COUNT;
+                for (let j = 0; j < RANK_COUNT; j++) {
                   if (!newArr[j]) newArr[j] = [];
                 }
               }
