@@ -22,6 +22,7 @@ import FloatingRobot from '../components/FloatingRobot';
 import WelcomePopup from '../components/WelcomePopup';
 import ActivityModal from '../components/ActivityModal';
 import PinkContainer from '../components/PinkContainer';
+import DerivativeArea from '../components/DerivativeArea';
 import PCLayout from '../components/PCLayout';
 import PCHome from '../components/PCHome';
 import { request } from '../utils/request';
@@ -50,41 +51,6 @@ const ACTIVITY_LAST_SHOWN_KEY = 'activityModalLastShownDate';
 
 // 搜索图标
 const SearchIcon = `${CDN_PREFIX}/icon/community/search.png`;
-
-// 合约专区图标（使用CDN）
-const bullBearRatioIcon = `${CDN_PREFIX}/icon/bull-bear-ratio.png`;
-const inventoryIcon = `${CDN_PREFIX}/icon/inventory.png`;
-const fundingRateIcon = `${CDN_PREFIX}/icon/funding-rate.png`;
-const volumeTransactionIcon = `${CDN_PREFIX}/icon/volume-transaction.png`;
-
-// 区块内容
-const area = {
-  derivativeArea: {
-    title: '合约专区',
-    list: [
-      {
-        icon: bullBearRatioIcon,
-        text: '多空比',
-        callback: () => { jump2NoTab('putcallratio'); }
-      },
-      {
-        icon: inventoryIcon,
-        text: '持仓量',
-        callback: () => { jump2NoTab('positionsize'); }
-      },
-      {
-        icon: fundingRateIcon,
-        text: '资金费率',
-        callback: () => { jump2NoTab('fundingrate'); }
-      },
-      {
-        icon: volumeTransactionIcon,
-        text: '成交额',
-        callback: () => { jump2NoTab('tradevol'); }
-      }
-    ]
-  }
-};
 
 export default function HomePage() {
   const router = useRouter();
@@ -1036,33 +1002,6 @@ export default function HomePage() {
     );
   };
 
-  // 渲染衍生品专区（国际化）
-  const renderDerivativeArea = () => {
-    const title = t('home.derivatives');
-    const list = [
-      { icon: bullBearRatioIcon, text: t('market.putCallRatio'), callback: () => { jump2NoTab('putcallratio'); } },
-      { icon: inventoryIcon, text: t('market.positionSize'), callback: () => { jump2NoTab('positionsize'); } },
-      { icon: fundingRateIcon, text: t('market.fundingRate'), callback: () => { jump2NoTab('fundingrate'); } },
-      { icon: volumeTransactionIcon, text: t('market.tradeVolume'), callback: () => { jump2NoTab('tradevol'); } },
-    ];
-    return (
-      <MoziCard title={title} customStyle={{ borderRadius: '0 0 8px 8px', paddingTop: '5px' }}>
-        <div className={styles.derivativeBody}>
-          <Grid columns={4}>
-            {list.map((item, index) => (
-              <Grid.Item key={index} className={styles.derivativeItem} onClick={item.callback}>
-                <div className={styles.derivativeIcon}>
-                  <img src={item.icon} alt={item.text} />
-                </div>
-                <span>{item.text}</span>
-              </Grid.Item>
-            ))}
-          </Grid>
-        </div>
-      </MoziCard>
-    );
-  };
-
   // PC端渲染
   if (isPC) {
     return (
@@ -1101,7 +1040,7 @@ export default function HomePage() {
         <PinkContainer />
 
         {/* 合约专区 */}
-        {renderDerivativeArea()}
+        <DerivativeArea />
 
         {/* 涨跌分布 */}
         <MarketDistribution />

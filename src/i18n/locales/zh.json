@@ -42,7 +42,7 @@
     "hotCoins": "热门币种",
     "hotSectors": "热门板块",
     "hotContracts": "热门合约",
-    "derivatives": "衍生品专区",
+    "derivatives": "合约专区",
     "rankList": "实时榜单",
     "opportunities": "投资机会",
     "investmentOpportunity": "投资机会",
@@ -1148,7 +1148,7 @@
       "highValueSub": "TRADING VALUE"
     },
     "derivatives": {
-      "title": "衍生品专区",
+      "title": "合约专区",
       "longShort": "多空比",
       "longShortSub": "Long/Short Ratio",
       "openInterest": "持仓量",
