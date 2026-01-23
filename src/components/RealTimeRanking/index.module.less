@@ -1,0 +1,83 @@
+/* 实时榜单区域样式 */
+.realTimeRankingSection {
+  /* 实时榜单最新价列 - 动态字号 */
+  :global {
+    .gridContent > .gridConItem:nth-child(2) {
+      font-size: clamp(13px, 2.5vw, 16px) !important;
+      font-weight: 500 !important;
+    }
+    
+    /* 防止切换tab时抖动 - 只针对首页实时榜单 */
+    .gridListItem {
+      min-height: 48px;
+    }
+    
+    .gridContent {
+      min-height: 24px;
+    }
+  }
+}
+
+/* 实时榜单样式 */
+.tabBox {
+  width: 100%;
+  height: 25px;
+  margin-bottom: 10px;
+  font-size: 12px;
+
+  :global {
+    .adm-tab-bar-wrap {
+      gap: 10px;
+      height: 100%;
+      min-height: 0;
+  
+      .adm-tab-bar-item {
+        border-radius: 5px;
+        border: 1px solid transparent;
+        color: #333;
+        padding: 10px 1px;
+        font-size: clamp(11px, 2.2vw, 14px) !important;
+      }
+      
+      .adm-tab-bar-item-title {
+        font-size: clamp(11px, 2.2vw, 14px) !important;
+      }
+    
+      .adm-tab-bar-item-active {
+        background-color: #11B787;
+        color: #fff;
+      }
+    }
+    
+    // 移除实时榜单中Grid组件的所有边框线
+    .adm-grid {
+      border: none !important;
+    }
+    
+    .adm-grid-item {
+      border: none !important;
+      border-bottom: none !important;
+      border-right: none !important;
+    }
+    
+    // 移除伪元素边框
+    .adm-grid::before,
+    .adm-grid::after,
+    .adm-grid-item::before,
+    .adm-grid-item::after {
+      display: none !important;
+    }
+  }
+}
+
+.listMore {
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+  padding: 10px 0;
+  cursor: pointer;
+  
+  &:hover {
+    color: #666;
+  }
+}
