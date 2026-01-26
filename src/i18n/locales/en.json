@@ -384,6 +384,8 @@
     "topic": "Topic",
     "hotTopics": "Hot Topics",
     "trending": "Trending",
+    "views": "views",
+    "posts": "posts",
     "tabs": {
       "recommend": "Recommended",
       "hot": "Hot Topics",

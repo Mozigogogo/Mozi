@@ -25,6 +25,7 @@ import PinkContainer from '../components/PinkContainer';
 import DerivativeArea from '../components/DerivativeArea';
 import InvestmentSection from '../components/InvestmentSection';
 import RealTimeRanking from '../components/RealTimeRanking';
+import HotTopics from '../components/HotTopics';
 import PCLayout from '../components/PCLayout';
 import PCHome from '../components/PCHome';
 import { LOOPTIME, WS_URL } from '../utils/constants';
@@ -802,6 +803,9 @@ export default function HomePage() {
 
         {/* 涨跌分布 */}
         <MarketDistribution />
+
+        {/* 热门话题 */}
+        <HotTopics limit={10} showViewMore={true} />
 
         {/* 投资机会 */}
         <InvestmentSection
