@@ -41,12 +41,6 @@ const HotTopics = ({ limit = 10, showViewMore = true }) => {
   if (loading) {
     return (
       <div className={styles.container}>
-        <div className={styles.header}>
-          <h3 className={styles.title}>
-            <span className={styles.icon}>🔥</span>
-            {t('community.hotTopics')}
-          </h3>
-        </div>
         <div className={styles.skeleton}>
           {[...Array(8)].map((_, i) => (
             <div key={i} className={styles.skeletonItem} />
@@ -61,7 +55,10 @@ const HotTopics = ({ limit = 10, showViewMore = true }) => {
       {/* 第一行：标题 + 1个话题 */}
       <div className={styles.firstRow}>
         <h3 className={styles.title}>
-          {t('community.hotTopics')}
+          <span className={styles.char1}>热</span>
+          <span className={styles.char2}>聊</span>
+          <span className={styles.char3}>话</span>
+          <span className={styles.char4}>题</span>
         </h3>
         {topics[0] && (
           <div
