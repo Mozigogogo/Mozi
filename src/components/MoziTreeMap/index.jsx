@@ -81,12 +81,21 @@ const MoziTreeMap = ({ list = [], name, desc }) => {
       {newList.map((item, index) => {
         // 判断是涨还是跌
         const value = String(item[desc]);
+        const numericValue = parseFloat(value.replace('%', ''));
+        const isZero = numericValue === 0;
         const isNegative = value.includes('-');
+        
+        let colorClass = styles.green;
+        if (isZero) {
+          colorClass = styles.gray;
+        } else if (isNegative) {
+          colorClass = styles.red;
+        }
         
         return (
           <Grid.Item 
             key={index} 
-            className={`${styles.treemapItem} ${isNegative ? styles.red : styles.green}`}
+            className={`${styles.treemapItem} ${colorClass}`}
             span={item.span}
           >
             <div className={styles.itemName}>{item[name]}</div>

@@ -805,9 +805,9 @@ export default function HomePage() {
         <MarketDistribution />
 
         {/* 热门话题 */}
-        <HotTopics limit={10} showViewMore={true} />
+        <HotTopics limit={4} showViewMore={true} />
 
-        {/* 投资机会 */}
+        {/* 热门板块 */}
         <InvestmentSection
           hotCoin={hotCoin}
           hotContract={hotContract}
