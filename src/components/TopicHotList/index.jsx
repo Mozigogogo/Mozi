@@ -254,7 +254,7 @@ export default function TopicHotList({ isPC = false }) {
             className={`${styles.tab} ${activeTab === 'opportunity' ? styles.active : ''}`}
             onClick={() => setActiveTab('opportunity')}
           >
-            {t('home.investmentOpportunity')}
+            {t('home.hotMarkets')}
           </div>
           <div 
             className={`${styles.tab} ${activeTab === 'topics' ? styles.active : ''}`}
