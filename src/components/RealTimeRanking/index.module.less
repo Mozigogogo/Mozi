@@ -1,5 +1,7 @@
 /* 实时榜单区域样式 */
 .realTimeRankingSection {
+  padding: 0 10px;
+  
   /* 实时榜单最新价列 - 动态字号 */
   :global {
     .gridContent > .gridConItem:nth-child(2) {
@@ -18,34 +20,114 @@
   }
 }
 
+/* 榜单标题样式 - 在白色容器外面 */
+.rankingTitle {
+  font-family: 'PingFang SC', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 16px;
+  line-height: 100%;
+  letter-spacing: 0px;
+  color: rgba(49, 48, 48, 1);
+  padding: 0px 0px;
+  position: relative;
+  margin-bottom: 10px;
+  
+  /* 添加左下角底纹装饰 */
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0px;
+    bottom: 8px;
+    width: 60px;
+    height: 12px;
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+
 /* 实时榜单样式 */
 .tabBox {
   width: 100%;
-  height: 25px;
   margin-bottom: 10px;
   font-size: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  position: relative;
+  
+  /* 隐藏滚动条但保持滚动功能 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  
+  &::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
 
   :global {
     .adm-tab-bar-wrap {
       gap: 10px;
       height: 100%;
       min-height: 0;
+      flex-wrap: nowrap;
+      width: max-content;
+      min-width: 100%;
+      position: relative;
+      
+      /* 灰色底部边框线 - 放在这里可以覆盖整个滚动区域 */
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 1px;
+        background: rgba(0, 0, 0, 0.1);
+        z-index: 1;
+      }
   
       .adm-tab-bar-item {
         border-radius: 5px;
         border: 1px solid transparent;
         color: #333;
-        padding: 10px 1px;
-        font-size: clamp(11px, 2.2vw, 14px) !important;
+        padding: 10px 1px 12px 1px;
+        font-size: clamp(14px, 2.2vw, 16px) !important;
+        flex-shrink: 0;
+        white-space: nowrap;
+        background-color: transparent;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
       
       .adm-tab-bar-item-title {
-        font-size: clamp(11px, 2.2vw, 14px) !important;
+        font-size: clamp(14px, 2.2vw, 16px) !important;
+        line-height: 1 !important;
       }
     
       .adm-tab-bar-item-active {
-        background-color: #11B787;
-        color: #fff;
+        background-color: transparent;
+        color: #11B787;
+        font-weight: 600;
+        padding: 10px 1px 12px 1px !important;
+        
+        .adm-tab-bar-item-title {
+          line-height: 1 !important;
+        }
+        
+        /* 绿色激活下划线，覆盖在灰色线上 */
+        &::after {
+          content: '';
+          position: absolute;
+          bottom: -1px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 48px;
+          height: 2px;
+          border-radius: 10px;
+          background: rgba(17, 183, 135, 1);
+          z-index: 2;
+        }
       }
     }
     

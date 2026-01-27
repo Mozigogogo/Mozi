@@ -1,7 +1,6 @@
 'use client';
 
 import { useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { TabBar } from 'antd-mobile';
 import { RightOutline } from 'antd-mobile-icons';
@@ -20,7 +19,6 @@ export default function RealTimeRanking({
   onJump2Detail,
   onGo2List
 }) {
-  const router = useRouter();
   const { t } = useTranslation();
   const rankingSectionRef = useRef(null);
 
@@ -31,7 +29,17 @@ export default function RealTimeRanking({
 
   return (
     <div ref={rankingSectionRef} className={styles.realTimeRankingSection}>
-      <MoziCard title={t('home.rankList')}>
+      {/* 标题在外面 */}
+      <div className={styles.rankingTitle}>{t('home.rankList')}</div>
+      
+      {/* 内容在白色背景容器内 */}
+      <MoziCard
+        hideHeader={true}
+        borderRadius="20px"
+        customStyle={{
+          boxShadow: '0px 0px 4px 0px rgba(0, 0, 0, 0.05)'
+        }}
+      >
         <TabBar className={styles.tabBox} activeKey={rankActiveKey} onChange={onRankActiveClick}>
           <TabBar.Item key='zixuan' title={t('home.rank.self')} />
           <TabBar.Item key='zhangfu' title={t('home.rank.up')} />
