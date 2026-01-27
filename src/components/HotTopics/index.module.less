@@ -11,6 +11,11 @@
   align-items: center;
   margin-bottom: 5px;
   padding-left: 140px; /* 左边空出140px给标题 */
+  
+  /* 英文时调整padding */
+  &:has(.titleEN) {
+    padding-left: 110px; /* 英文标题更窄，减少padding */
+  }
 }
 
 .title {
@@ -43,6 +48,20 @@
     background-repeat: no-repeat;
     background-position: center;
     z-index: -1;
+  }
+}
+
+/* 英文标题样式 - 精简版 */
+.titleEN {
+  font-size: 14px;
+  font-weight: 600;
+  width: 100px;
+  height: 32px;
+  line-height: 32px;
+  top: 0;
+  
+  &::before {
+    display: none; /* 英文不显示背景图 */
   }
 }
 
@@ -166,7 +185,12 @@
 
   .firstRow {
     margin-bottom: 5px;
-    padding-left: 85px; /* 移动端也保持120px */
+    padding-left: 95px; /* 移动端中文标题 */
+    
+    /* 英文时调整padding */
+    &:has(.titleEN) {
+      padding-left: 85px; /* 移动端英文标题更窄 */
+    }
   }
 
   .secondRow {
@@ -181,6 +205,14 @@
     font-size: 16px;
     width: 85px;
     left: 8px; /* 移动端调整left位置 */
+  }
+  
+  /* 移动端英文标题 */
+  .titleEN {
+    font-size: 13px;
+    width: 75px;
+    height: 28px;
+    line-height: 28px;
   }
 
   .topicTag {

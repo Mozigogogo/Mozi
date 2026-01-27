@@ -77,7 +77,17 @@
       "addMonitor": "加监控"
     },
     "noFavorites": "暂无收藏自选",
-    "robotBubble": "欢迎来到Mozi,需要什么帮助？"
+    "robotBubble": "欢迎来到Mozi,需要什么帮助？",
+    "quickActions": {
+      "ai": "AI问答",
+      "priceMonitor": "价格监控",
+      "noticeMonitor": "公告监控",
+      "sectorSelect": "板块选币",
+      "news": "快讯",
+      "discoverCoins": "发现好币",
+      "askQuestion": "不懂就问",
+      "rankingSelect": "榜单选币"
+    }
   },
   "market": {
     "price": "价格",

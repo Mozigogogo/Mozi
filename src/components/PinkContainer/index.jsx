@@ -13,49 +13,49 @@ export default function PinkContainer() {
     {
       id: 'ai',
       icon: '/icons/new_detail/ai_chat.svg',
-      label: 'AI问答',
+      label: t('home.quickActions.ai'),
       onClick: () => router.push('/robot')
     },
     {
       id: 'price',
       icon: '/icons/new_detail/price_wran.svg',
-      label: '价格监控',
+      label: t('home.quickActions.priceMonitor'),
       onClick: () => router.push('/mywarn')
     },
     {
       id: 'notice',
       icon: '/icons/new_detail/announcement_onitoring.svg',
-      label: '公告监控',
+      label: t('home.quickActions.noticeMonitor'),
       onClick: () => router.push('/mynotices')
     },
     {
       id: 'sector',
       icon: '/icons/new_detail/block_select.svg',
-      label: '板块选币',
+      label: t('home.quickActions.sectorSelect'),
       onClick: () => router.push('/find')
     },
     {
       id: 'news',
       icon: '/icons/new_detail/breaking.svg',
-      label: '快讯',
-      onClick: () => router.push('/community')
+      label: t('home.quickActions.news'),
+      onClick: () => router.push('/community?tab=news')
     },
     {
       id: 'discover',
       icon: '/icons/new_detail/find_coin.svg',
-      label: '发现好币',
-      onClick: () => router.push('/find')
+      label: t('home.quickActions.discoverCoins'),
+      onClick: () => router.push('/community?tab=discovery')
     },
     {
       id: 'ask',
       icon: '/icons/new_detail/question.svg',
-      label: '不懂就问',
-      onClick: () => router.push('/robot')
+      label: t('home.quickActions.askQuestion'),
+      onClick: () => router.push('/community?tab=question')
     },
     {
       id: 'ranking',
       icon: '/icons/new_detail/List_selected_coins.svg',
-      label: '榜单选币',
+      label: t('home.quickActions.rankingSelect'),
       onClick: () => router.push('/find?tab=rank')
     }
   ];

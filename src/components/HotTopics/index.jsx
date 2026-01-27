@@ -8,9 +8,10 @@ import styles from './index.module.less';
 
 const HotTopics = ({ limit = 10, showViewMore = true }) => {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(true);
+  const isEN = (i18n?.language || '').startsWith('en');
 
   useEffect(() => {
     fetchHotTopics();
@@ -54,11 +55,17 @@ const HotTopics = ({ limit = 10, showViewMore = true }) => {
     <div className={styles.container}>
       {/* 第一行：标题 + 1个话题 */}
       <div className={styles.firstRow}>
-        <h3 className={styles.title}>
-          <span className={styles.char1}>热</span>
-          <span className={styles.char2}>聊</span>
-          <span className={styles.char3}>话</span>
-          <span className={styles.char4}>题</span>
+        <h3 className={`${styles.title} ${isEN ? styles.titleEN : ''}`}>
+          {isEN ? (
+            t('community.hotTopics')
+          ) : (
+            <>
+              <span className={styles.char1}>热</span>
+              <span className={styles.char2}>聊</span>
+              <span className={styles.char3}>话</span>
+              <span className={styles.char4}>题</span>
+            </>
+          )}
         </h3>
         {topics[0] && (
           <div
