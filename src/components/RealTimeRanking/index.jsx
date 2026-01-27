@@ -75,7 +75,7 @@ export default function RealTimeRanking({
                 maxRows={10}
                 minRows={10}
                 gridTitleBgColor="transparent"
-                columnWidths={['32%', '23%', '25%', '15%', '15%']}
+                columnWidths={['28%', '24%', '24%', '15%', '15%']}
               />
               <div className={styles.listMore} onClick={onGo2List}>
                 {t('user.viewMore')} <RightOutline fontSize={12} />

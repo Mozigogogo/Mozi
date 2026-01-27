@@ -475,7 +475,7 @@ export default function HomePage() {
       } else if (Array.isArray(listData) && listData.length > 0) {
         tempData = listData.map((item) => ({
           symbol: <AdaptiveSymbolText symbol={item.symbol} iconUrl={item.url} />,
-          last: <AdaptivePrice price={item.last} />,
+          last: <AdaptivePrice price={item.last} formatSmallDecimal />,
           priceRange: <HighlightArea value={item.price24h} />,
           own: <AddCollect symbol={item.symbol} isOwn={true} onSuccess={refreshSelfSelectRank} />,
           monitor: <AddMonitor symbol={item.symbol} />,
@@ -565,7 +565,7 @@ export default function HomePage() {
             } else if (Array.isArray(listData) && listData.length > 0) {
               tempData = listData.map((item) => ({
                 symbol: <AdaptiveSymbolText symbol={item.symbol} iconUrl={item.url} />,
-                last: <AdaptivePrice price={item.last} />,
+                last: <AdaptivePrice price={item.last} formatSmallDecimal />,
                 priceRange: <HighlightArea value={item.price24h} />,
                 own: <AddCollect symbol={item.symbol} isOwn={true} onSuccess={refreshSelfSelectRank} />,
                 monitor: <AddMonitor symbol={item.symbol} />,
@@ -580,7 +580,12 @@ export default function HomePage() {
               const slicedData = listData.slice(0, 10);
               tempData = slicedData.map((item) => ({
                 symbol: <AdaptiveSymbolText symbol={item.symbol} iconUrl={item.url} />,
-                last: <AdaptivePrice price={item.last || item.volume_24h} />,
+                last: (
+                  <AdaptivePrice
+                    price={item.last || item.volume_24h}
+                    formatSmallDecimal
+                  />
+                ),
                 priceRange: <HighlightArea value={item.price_24h} />,  // 飙升榜使用 price_24h 字段
                 own: <AddCollect symbol={item.symbol} isOwn={item.favorite} />,
                 monitor: <AddMonitor symbol={item.symbol} />,
@@ -594,7 +599,12 @@ export default function HomePage() {
               const slicedData = listData.slice(0, 10);
               tempData = slicedData.map((item) => ({
                 symbol: <AdaptiveSymbolText symbol={item.symbol} iconUrl={item.url} />,
-                last: <AdaptivePrice price={item.last || item.volume_24h} />,
+                last: (
+                  <AdaptivePrice
+                    price={item.last || item.volume_24h}
+                    formatSmallDecimal
+                  />
+                ),
                 priceRange: <HighlightArea value={item.priceRange || item.movers || item.price_24h} />,
                 own: <AddCollect symbol={item.symbol} isOwn={item.favorite} />,
                 monitor: <AddMonitor symbol={item.symbol} />,
