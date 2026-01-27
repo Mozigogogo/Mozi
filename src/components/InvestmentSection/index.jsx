@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { RightOutline } from 'antd-mobile-icons';
 import MoziCard from '@/components/MoziCard';
-import MoziTreeMap from '@/components/MoziTreeMap';
+import HomeTreeMap from '@/components/HomeTreeMap';
 import { Skeleton } from '@/components/Skeleton';
 import styles from './index.module.less';
 
@@ -123,7 +123,7 @@ export default function InvestmentSection({
                   </div>
                 ) : (
                   <div style={{ width: '100%', height: '100%', flex: 1 }}>
-                    <MoziTreeMap
+                    <HomeTreeMap
                       list={firstPageIndustry}
                       name='section'
                       desc='changes'
@@ -141,7 +141,7 @@ export default function InvestmentSection({
               >
                 <div className={styles.centerLoading}>
                   <div style={{ width: '100%', height: '100%', flex: 1 }}>
-                    <MoziTreeMap
+                    <HomeTreeMap
                       list={secondPageIndustry}
                       name='section'
                       desc='changes'
@@ -178,7 +178,7 @@ export default function InvestmentSection({
           <div 
             className={styles.moreBtn}
             onClick={() => {
-              router.push('/find?tab=rank');
+              router.push('/hotsector');
             }}
           >
             {t('user.viewMore')} <RightOutline fontSize={12} />

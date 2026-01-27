@@ -1,0 +1,29 @@
+.sortButton {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  color: #999999;
+  cursor: pointer;
+  user-select: none;
+  padding: 8px 12px;
+  
+  span {
+    line-height: 1;
+  }
+
+  .arrows {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    
+    svg {
+      display: block;
+      transition: all 0.2s;
+    }
+  }
+
+  &:active {
+    opacity: 0.7;
+  }
+}

@@ -32,7 +32,7 @@ export default function PinkContainer() {
       id: 'sector',
       icon: '/icons/new_detail/block_select.svg',
       label: t('home.quickActions.sectorSelect'),
-      onClick: () => router.push('/find')
+      onClick: () => router.push('/hotsector')
     },
     {
       id: 'news',

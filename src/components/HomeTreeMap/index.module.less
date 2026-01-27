@@ -1,7 +1,7 @@
 .treemapContainer {
   position: relative;
   width: 100%;
-  min-height: 600px;
+  height: 100%;
   border-radius: 8px;
   overflow: hidden;
 }
@@ -31,19 +31,4 @@
 .emptyText {
   color: #666;
   font-size: 14px;
-}
-
-/* PC 端适配 */
-@media (min-width: 769px) {
-  .treemapContainer {
-    min-height: 700px;
-    border-radius: 4px;
-  }
-}
-
-/* 移动端响应式调整 */
-@media (max-width: 768px) {
-  .treemapContainer {
-    min-height: 500px;
-  }
 }

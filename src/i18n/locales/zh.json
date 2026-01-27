@@ -1272,5 +1272,25 @@
     "memberExclusive": "会员专享查看权限",
     "memberDescription": "本部分内容属会员创测期限制查看，会员可支持国服最新资讯",
     "subscribeUnlock": "点击订阅解锁"
+  },
+  "hotsector": {
+    "title": "热门板块",
+    "shareText": "查看热门板块涨跌幅热力图",
+    "filter": {
+      "range": "涨跌幅",
+      "marketCap": "市值",
+      "volume": "成交额",
+      "increase": "按涨跌幅",
+      "decrease": "按跌幅",
+      "amplitude": "按振幅",
+      "allMarketCap": "按总市值",
+      "largeMarketCap": "大市值",
+      "midMarketCap": "中市值",
+      "smallMarketCap": "小市值",
+      "allVolume": "按成交额",
+      "highVolume": "高成交",
+      "midVolume": "中成交",
+      "lowVolume": "低成交"
+    }
   }
 }

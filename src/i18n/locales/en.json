@@ -1273,5 +1273,25 @@
     "memberExclusive": "Member Exclusive Access",
     "memberDescription": "Member-only content during testing period.",
     "subscribeUnlock": "Subscribe to Unlock"
+  },
+  "hotsector": {
+    "title": "Hot Sectors",
+    "shareText": "Check out the Hot Sectors Heatmap",
+    "filter": {
+      "range": "Change",
+      "marketCap": "Market Cap",
+      "volume": "Volume",
+      "increase": "By Change",
+      "decrease": "By Decline",
+      "amplitude": "By Amplitude",
+      "allMarketCap": "By Total Market Cap",
+      "largeMarketCap": "Large Cap",
+      "midMarketCap": "Mid Cap",
+      "smallMarketCap": "Small Cap",
+      "allVolume": "By Volume",
+      "highVolume": "High Volume",
+      "midVolume": "Mid Volume",
+      "lowVolume": "Low Volume"
+    }
   }
 }
