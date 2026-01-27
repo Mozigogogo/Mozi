@@ -82,21 +82,34 @@ const MoziTreeMap = ({ list = [], name, desc }) => {
         // 判断是涨还是跌
         const value = String(item[desc]);
         const numericValue = parseFloat(value.replace('%', ''));
-        const isZero = numericValue === 0;
-        const isNegative = value.includes('-');
         
-        let colorClass = styles.green;
-        if (isZero) {
-          colorClass = styles.gray;
-        } else if (isNegative) {
-          colorClass = styles.red;
+        // 根据百分比范围设置颜色，与底部图例对齐
+        let backgroundColor = '#B3B3B3'; // 默认灰色 (0.0%)
+        
+        if (numericValue > 5.0) {
+          backgroundColor = '#11B787'; // >+5.0%
+        } else if (numericValue > 2.0) {
+          backgroundColor = 'rgba(17, 183, 135, 0.8)'; // +2.0% ~ +5.0%
+        } else if (numericValue > 0.5) {
+          backgroundColor = 'rgba(17, 183, 135, 0.6)'; // +0.5% ~ +2.0%
+        } else if (numericValue > 0) {
+          backgroundColor = 'rgba(17, 183, 135, 0.4)'; // 0.0% ~ +0.5%
+        } else if (numericValue < -5.0) {
+          backgroundColor = '#F04A4A'; // <-5.0%
+        } else if (numericValue < -2.0) {
+          backgroundColor = 'rgba(240, 74, 74, 0.8)'; // -5.0% ~ -2.0%
+        } else if (numericValue < -0.5) {
+          backgroundColor = 'rgba(240, 74, 74, 0.6)'; // -2.0% ~ -0.5%
+        } else if (numericValue < 0) {
+          backgroundColor = 'rgba(240, 74, 74, 0.4)'; // -0.5% ~ 0.0%
         }
         
         return (
           <Grid.Item 
             key={index} 
-            className={`${styles.treemapItem} ${colorClass}`}
+            className={styles.treemapItem}
             span={item.span}
+            style={{ backgroundColor }}
           >
             <div className={styles.itemName}>{item[name]}</div>
             <div className={styles.itemValue}>{item[desc]}</div>

@@ -178,7 +178,7 @@ export default function InvestmentSection({
           <div 
             className={styles.moreBtn}
             onClick={() => {
-              router.push('/find?tab=rank');
+              router.push('/hotsector');
             }}
           >
             {t('user.viewMore')} <RightOutline fontSize={12} />
