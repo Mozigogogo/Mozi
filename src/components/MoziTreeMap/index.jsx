@@ -1,95 +1,192 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
+import * as d3 from 'd3';
 import styles from './index.module.less';
 
 const MoziTreeMap = ({ list = [], name, desc }) => {
-  const [processedList, setProcessedList] = useState([]);
+  const containerRef = useRef(null);
 
   useEffect(() => {
-    if (list && list.length > 0) {
-      const processed = processData(list);
-      setProcessedList(processed);
-    }
-  }, [list]);
+    if (!list || list.length === 0 || !containerRef.current) return;
 
-  // 处理数据，根据数值大小分配权重
-  const processData = (data) => {
-    // 计算所有项的绝对值
-    const withAbsValues = data.map(item => {
-      const value = parseFloat(String(item[desc]).replace('%', ''));
-      const absValue = Math.abs(value);
-      return {
-        ...item,
-        absValue,
-        originalValue: value
-      };
-    });
+    // 清空容器
+    const container = d3.select(containerRef.current);
+    container.selectAll('*').remove();
 
-    // 按绝对值降序排序
-    withAbsValues.sort((a, b) => b.absValue - a.absValue);
+    // 获取容器尺寸
+    const width = containerRef.current.clientWidth;
+    const height = 600; // 固定高度
 
-    // 计算总值用于归一化
-    const totalAbsValue = withAbsValues.reduce((sum, item) => sum + item.absValue, 0);
+    // 准备数据结构（D3 需要层次化数据）
+    const data = {
+      name: 'root',
+      children: list.map(item => ({
+        name: item[name],
+        value: Math.abs(parseFloat(String(item[desc]).replace('%', ''))),
+        change: parseFloat(String(item[desc]).replace('%', '')),
+        changeStr: item[desc]
+      }))
+    };
 
-    // 为每个项分配面积比例（面积与数值成正比）
-    return withAbsValues.map((item) => {
-      // 计算该项占总面积的百分比
-      const areaPercent = (item.absValue / totalAbsValue) * 100;
-      
-      // 将面积百分比映射到宽度
-      // 使用平方根让宽度更接近面积的视觉比例
-      // 设置最小宽度为 15%，最大宽度为 50%
-      const widthPercent = Math.max(15, Math.min(50, Math.sqrt(areaPercent) * 15));
-      
-      // 计算 flexBasis
-      const flexBasis = `calc(${widthPercent.toFixed(2)}% - 2px)`;
-      
-      // 根据面积百分比计算合适的高度
-      let minHeight;
-      if (areaPercent > 15) {
-        minHeight = '100px';
-      } else if (areaPercent > 10) {
-        minHeight = '85px';
-      } else if (areaPercent > 5) {
-        minHeight = '75px';
-      } else {
-        minHeight = '65px';
-      }
+    // 创建层次结构
+    const root = d3.hierarchy(data)
+      .sum(d => d.value)
+      .sort((a, b) => b.value - a.value);
 
-      return {
-        ...item,
-        flexBasis,
-        minHeight,
-        areaPercent
-      };
-    });
-  };
+    // 创建 treemap 布局（使用 Squarified 算法）
+    const treemap = d3.treemap()
+      .size([width, height])
+      .padding(2)
+      .round(true)
+      .tile(d3.treemapSquarify.ratio(1)); // 黄金比例
 
-  // 根据数值获取颜色
-  const getColor = (value) => {
-    const numericValue = parseFloat(String(value).replace('%', ''));
-    
-    if (numericValue > 5.0) {
-      return 'rgba(6, 194, 112, 1)';
-    } else if (numericValue > 2.0) {
-      return 'rgba(6, 194, 112, 0.8)';
-    } else if (numericValue > 0.5) {
-      return 'rgba(6, 194, 112, 0.6)';
-    } else if (numericValue > 0) {
-      return 'rgba(6, 194, 112, 0.4)';
-    } else if (numericValue < -5.0) {
-      return 'rgba(255, 91, 91, 1)';
-    } else if (numericValue < -2.0) {
-      return 'rgba(255, 91, 91, 0.8)';
-    } else if (numericValue < -0.5) {
-      return 'rgba(255, 91, 91, 0.6)';
-    } else if (numericValue < 0) {
-      return 'rgba(255, 91, 91, 0.4)';
-    }
-    
-    return '#B3B3B3';
-  };
+    // 计算布局
+    treemap(root);
+
+    // 颜色映射函数
+    const getColor = (change) => {
+      if (change > 5.0) return 'rgba(6, 194, 112, 1)';
+      if (change > 2.0) return 'rgba(6, 194, 112, 0.8)';
+      if (change > 0.5) return 'rgba(6, 194, 112, 0.6)';
+      if (change > 0) return 'rgba(6, 194, 112, 0.4)';
+      if (change < -5.0) return 'rgba(255, 91, 91, 1)';
+      if (change < -2.0) return 'rgba(255, 91, 91, 0.8)';
+      if (change < -0.5) return 'rgba(255, 91, 91, 0.6)';
+      if (change < 0) return 'rgba(255, 91, 91, 0.4)';
+      return '#B3B3B3';
+    };
+
+    // 渲染节点
+    const nodes = container
+      .selectAll('.treemap-node')
+      .data(root.leaves())
+      .join('div')
+      .attr('class', styles.treemapItem)
+      .style('position', 'absolute')
+      .style('left', d => `${d.x0}px`)
+      .style('top', d => `${d.y0}px`)
+      .style('width', d => `${d.x1 - d.x0}px`)
+      .style('height', d => `${d.y1 - d.y0}px`)
+      .style('background-color', d => getColor(d.data.change))
+      .style('overflow', 'hidden')
+      .style('border-radius', d => {
+        // 根据块的大小动态调整圆角
+        const itemWidth = d.x1 - d.x0;
+        const itemHeight = d.y1 - d.y0;
+        const minSize = Math.min(itemWidth, itemHeight);
+        
+        if (minSize > 100) return '10px';
+        if (minSize > 60) return '8px';
+        if (minSize > 40) return '6px';
+        if (minSize > 25) return '4px';
+        return '3px';
+      })
+      .html(d => {
+        const itemWidth = d.x1 - d.x0;
+        const itemHeight = d.y1 - d.y0;
+        
+        // 降低显示文本的最小尺寸要求
+        if (itemWidth < 25 || itemHeight < 20) {
+          return ''; // 太小的块不显示文本
+        }
+        
+        // 根据块的大小调整字体
+        const nameFontSize = Math.max(9, Math.min(itemWidth / 8, itemHeight / 4, 14));
+        const valueFontSize = Math.max(11, Math.min(itemWidth / 6, itemHeight / 3, 16));
+        
+        // 根据块大小决定显示内容
+        let content = '';
+        
+        // 计算块的面积作为判断依据
+        const area = itemWidth * itemHeight;
+        
+        if (area > 2400 || (itemWidth > 60 && itemHeight > 35)) {
+          // 大块：显示名称和数值
+          content = `
+            <div style="
+              font-size: ${nameFontSize}px;
+              font-weight: 500;
+              line-height: 1.2;
+              margin-bottom: 2px;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              display: -webkit-box;
+              -webkit-line-clamp: 2;
+              -webkit-box-orient: vertical;
+              word-break: break-word;
+            ">${d.data.name}</div>
+            <div style="
+              font-size: ${valueFontSize}px;
+              font-weight: 700;
+              font-family: Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+            ">${d.data.changeStr}</div>
+          `;
+        } else if (area > 1200 || (itemWidth > 40 && itemHeight > 25)) {
+          // 中块：只显示数值
+          content = `
+            <div style="
+              font-size: ${valueFontSize}px;
+              font-weight: 700;
+              font-family: Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+            ">${d.data.changeStr}</div>
+          `;
+        } else {
+          // 小块：只显示名称缩写
+          const maxChars = Math.floor(itemWidth / 6.5);
+          let displayName = d.data.name;
+          
+          if (displayName.length > maxChars && maxChars > 3) {
+            displayName = displayName.substring(0, maxChars - 1) + '...';
+          } else if (displayName.length > maxChars) {
+            displayName = displayName.substring(0, Math.max(2, maxChars));
+          }
+          
+          content = `
+            <div style="
+              font-size: ${Math.max(8, Math.min(nameFontSize, 10))}px;
+              font-weight: 500;
+              line-height: 1.1;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+              max-width: 100%;
+            ">${displayName}</div>
+          `;
+        }
+        
+        return `
+          <div style="
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            padding: 2px;
+            color: #fff;
+            text-align: center;
+          ">
+            ${content}
+          </div>
+        `;
+      });
+
+    // 添加悬停效果
+    nodes
+      .on('mouseenter', function() {
+        d3.select(this)
+          .style('opacity', '0.9')
+          .style('transform', 'scale(1.02)')
+          .style('z-index', '10');
+      })
+      .on('mouseleave', function() {
+        d3.select(this)
+          .style('opacity', '1')
+          .style('transform', 'scale(1)')
+          .style('z-index', '1');
+      });
+
+  }, [list, name, desc]);
 
   if (!list || list.length === 0) {
     return (
@@ -100,22 +197,11 @@ const MoziTreeMap = ({ list = [], name, desc }) => {
   }
 
   return (
-    <div className={styles.treemapContainer}>
-      {processedList.map((item, index) => (
-        <div
-          key={index}
-          className={styles.treemapItem}
-          style={{
-            backgroundColor: getColor(item[desc]),
-            flexBasis: item.flexBasis,
-            minHeight: item.minHeight
-          }}
-        >
-          <div className={styles.itemName}>{item[name]}</div>
-          <div className={styles.itemValue}>{item[desc]}</div>
-        </div>
-      ))}
-    </div>
+    <div 
+      ref={containerRef} 
+      className={styles.treemapContainer}
+      style={{ position: 'relative', width: '100%', minHeight: '600px' }}
+    />
   );
 };
 
