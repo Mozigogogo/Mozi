@@ -1,13 +1,24 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TabBar } from 'antd-mobile';
 import { RightOutline } from 'antd-mobile-icons';
 import MoziCard from '@/components/MoziCard';
 import MoziGrid from '@/components/MoziGrid';
+import { Skeleton } from '@/components/Skeleton';
 import { Loading } from '@/components/Loading';
 import styles from './index.module.less';
+
+// 预加载图标
+const preloadImages = [
+  '/icons/new_detail/like_actived.svg',
+  '/icons/new_detail/like_no_actived.svg',
+  '/icons/new_home/monitor-bell.svg'
+];
+
+// 控制是否显示骨架屏（临时开关）
+const SHOW_SKELETON = false;
 
 export default function RealTimeRanking({
   activeArr = [],
@@ -21,6 +32,14 @@ export default function RealTimeRanking({
 }) {
   const { t } = useTranslation();
   const rankingSectionRef = useRef(null);
+
+  // 预加载图标
+  useEffect(() => {
+    preloadImages.forEach(src => {
+      const img = new Image();
+      img.src = src;
+    });
+  }, []);
 
   const currentIndex = activeArr.indexOf(rankActiveKey);
   const currentRankData = footerArr[currentIndex] || [];
@@ -53,9 +72,61 @@ export default function RealTimeRanking({
         {/* 始终保持内容区域，避免折叠 */}
         <div style={{ minHeight: '180px' }}>
           {isLoading ? (
-            <div style={{ padding: '40px 0', textAlign: 'center' }}>
-              <Loading tip={t('common.loading')} />
-            </div>
+            SHOW_SKELETON ? (
+              <div style={{ padding: '12px 16px' }}>
+                {/* 骨架屏：模拟10行数据 */}
+                {Array.from({ length: 10 }).map((_, index) => (
+                  <div key={index} style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '8px',
+                    marginBottom: index < 9 ? '12px' : '0'
+                  }}>
+                    {/* 币种图标 */}
+                    <Skeleton config={{ 
+                      type: 'circle', 
+                      size: 24 
+                    }} />
+                    {/* 币种名称 */}
+                    <Skeleton config={{ 
+                      type: 'element', 
+                      width: '60px', 
+                      height: '16px', 
+                      borderRadius: '4px' 
+                    }} />
+                    {/* 价格 */}
+                    <Skeleton config={{ 
+                      type: 'element', 
+                      width: '70px', 
+                      height: '16px', 
+                      borderRadius: '4px',
+                      style: { marginLeft: 'auto' }
+                    }} />
+                    {/* 涨跌幅 */}
+                    <Skeleton config={{ 
+                      type: 'element', 
+                      width: '50px', 
+                      height: '20px', 
+                      borderRadius: '4px' 
+                    }} />
+                    {/* 收藏按钮 */}
+                    <Skeleton config={{ 
+                      type: 'circle', 
+                      size: 20 
+                    }} />
+                    {/* 监控按钮 */}
+                    <Skeleton config={{ 
+                      type: 'circle', 
+                      size: 20 
+                    }} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ padding: '40px 0', textAlign: 'center' }}>
+                <Loading tip={t('common.loading')} />
+              </div>
+            )
           ) : currentRankData.length > 0 ? (
             <div>
               <MoziGrid
