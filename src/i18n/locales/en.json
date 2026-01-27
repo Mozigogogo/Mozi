@@ -45,7 +45,7 @@
     "derivatives": "Derivatives",
     "rankList": "Rank List",
     "opportunities": "Opportunities",
-    "investmentOpportunity": "Investment Opportunity",
+    "hotMarkets": "Hot Markets",
     "topicHot": "Hot Topics",
     "notice": "Welcome to Mozi Crypto Market Community",
     "aiNotice": "AI analyzes trends—set precise alerts.",
@@ -77,7 +77,17 @@
       "addMonitor": "Monitor"
     },
     "noFavorites": "No Favorites",
-    "robotBubble": "Welcome to Mozi, what can I help you?"
+    "robotBubble": "Welcome to Mozi, what can I help you?",
+    "quickActions": {
+      "ai": "AI Q&A",
+      "priceMonitor": "Price Alert",
+      "noticeMonitor": "News Alert",
+      "sectorSelect": "Sectors",
+      "news": "News",
+      "discoverCoins": "Discover",
+      "askQuestion": "Q&A",
+      "rankingSelect": "Rankings"
+    }
   },
   "market": {
     "price": "Price",
@@ -384,6 +394,8 @@
     "topic": "Topic",
     "hotTopics": "Hot Topics",
     "trending": "Trending",
+    "views": "views",
+    "posts": "posts",
     "tabs": {
       "recommend": "Recommended",
       "hot": "Hot Topics",

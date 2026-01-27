@@ -1,0 +1,254 @@
+.container {
+  background: transparent;
+  padding: 0 10px;
+  margin: 10px 10px 16px 10px;
+  position: relative; /* 父相 */
+}
+
+/* 第一行：标题（130px）+ 1个话题（剩余空间） */
+.firstRow {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+  padding-left: 140px; /* 左边空出140px给标题 */
+  
+  /* 英文时调整padding */
+  &:has(.titleEN) {
+    padding-left: 110px; /* 英文标题更窄，减少padding */
+  }
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  width: 130px;
+  height: 38px;
+  color: var(--text-primary, #1a1a1a);
+  margin: 0;
+  white-space: nowrap;
+  position: absolute; /* 子绝 */
+  top: -3.5px;
+  left: 10px;
+  line-height: 38px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1;
+  
+  /* 使用 before 伪类显示背景图片 */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('/images/new_home/hot_topic_title_bg.svg');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: -1;
+  }
+}
+
+/* 英文标题样式 - 精简版 */
+.titleEN {
+  font-size: 14px;
+  font-weight: 600;
+  width: 100px;
+  height: 32px;
+  line-height: 32px;
+  top: 0;
+  
+  &::before {
+    display: none; /* 英文不显示背景图 */
+  }
+}
+
+/* 热聊话题四个字的颜色 */
+.char1 {
+  color: #FF7700;
+}
+
+.char2 {
+  color: #D30000;
+}
+
+.char3 {
+  color: #313030;
+}
+
+.char4 {
+  color: #313030;
+}
+
+.firstRow .topicTag {
+  flex: 1; /* 第一行的话题占剩余空间 */
+}
+
+/* 第二行：1个话题（100%） */
+.secondRow {
+  margin-bottom: 10px;
+}
+
+.secondRow .topicTag {
+  width: 100%;
+}
+
+/* 第三行：2个话题（各50%） */
+.thirdRow {
+  display: flex;
+  gap: 10px;
+}
+
+.thirdRow .topicTag {
+  flex: 0 0 calc(50% - 5px);
+}
+
+.topicTag {
+  display: block;
+  height: 32px;
+  padding: 6px 12px;
+  background: rgba(17, 183, 135, 0.1);
+  border: none;
+  border-radius: 19px;
+  color: rgba(11, 117, 86, 1);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+
+  &:hover {
+    background: #C8E8DD;
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.skeleton {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 0 10px;
+  max-height: calc(32px * 3 + 20px);
+  overflow: hidden;
+  justify-content: space-between;
+  
+  &::after {
+    content: '';
+    flex: auto;
+  }
+}
+
+.skeletonItem {
+  height: 32px;
+  flex: 0 0 calc(50% - 5px);
+  background: #DBF1EC;
+  border-radius: 19px;
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: shimmer 1.5s infinite;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 8px;
+  }
+
+  .firstRow {
+    margin-bottom: 5px;
+    padding-left: 95px; /* 移动端中文标题 */
+    
+    /* 英文时调整padding */
+    &:has(.titleEN) {
+      padding-left: 85px; /* 移动端英文标题更窄 */
+    }
+  }
+
+  .secondRow {
+    margin-bottom: 8px;
+  }
+
+  .thirdRow {
+    gap: 8px;
+  }
+
+  .title {
+    font-size: 16px;
+    width: 85px;
+    left: 8px; /* 移动端调整left位置 */
+  }
+  
+  /* 移动端英文标题 */
+  .titleEN {
+    font-size: 13px;
+    width: 75px;
+    height: 28px;
+    line-height: 28px;
+  }
+
+  .topicTag {
+    height: 32px;
+    padding: 6px 12px;
+    font-size: 14px;
+  }
+
+  .thirdRow .topicTag {
+    flex: 0 0 calc(50% - 4px);
+  }
+
+  .skeleton {
+    padding: 0 8px;
+    gap: 8px;
+    max-height: calc(32px * 3 + 16px);
+  }
+
+  .skeletonItem {
+    height: 32px;
+    flex: 0 0 calc(50% - 4px);
+    
+    &:nth-child(1),
+    &:nth-child(2) {
+      flex: 0 0 100%;
+    }
+  }
+}
+
+/* 暗色主题支持 */
+@media (prefers-color-scheme: dark) {
+  .skeletonItem {
+    background: #DBF1EC;
+    
+    &::after {
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    }
+  }
+}

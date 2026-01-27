@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { NoticeBar, Grid, TabBar, Swiper } from 'antd-mobile';
+import { NoticeBar, Grid, TabBar } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import { RightOutline } from 'antd-mobile-icons';
 import { useRouter } from 'next/navigation';
@@ -21,11 +21,16 @@ import MarketDistribution from '../components/MarketDistribution';
 import FloatingRobot from '../components/FloatingRobot';
 import WelcomePopup from '../components/WelcomePopup';
 import ActivityModal from '../components/ActivityModal';
+import PinkContainer from '../components/PinkContainer';
+import DerivativeArea from '../components/DerivativeArea';
+import InvestmentSection from '../components/InvestmentSection';
+import RealTimeRanking from '../components/RealTimeRanking';
+import HotTopics from '../components/HotTopics';
 import PCLayout from '../components/PCLayout';
 import PCHome from '../components/PCHome';
-import { request } from '../utils/request';
-import { Interface, LOOPTIME, WS_URL } from '../utils/constants';
+import { LOOPTIME, WS_URL } from '../utils/constants';
 import { jump2Detail, jump2Market, jump2List, jump2NoTab } from '../utils/core';
+import * as homeApi from '../api/home';
 import { useWebSocket } from '../utils/useWebSocket';
 import { useAmplitude } from '../hooks/useAmplitude';
 import { HomeEvents } from '../utils/amplitude';
@@ -33,20 +38,6 @@ import styles from './page.module.less';
 
 // CDN 图片前缀
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
-
-// 首页背景轮播图（中文版）
-const HOME_BANNERS_ZH = [
-  `${CDN_PREFIX}/image/home/banner1.png`,
-  `${CDN_PREFIX}/image/home/banner2.png`,
-  `${CDN_PREFIX}/image/home/banner3.png`,
-];
-
-// 首页背景轮播图（英文版）
-const HOME_BANNERS_EN = [
-  '/point/home_en_banner_1.png',
-  '/point/home_en_banner_2.png',
-  '/point/home_en_banner_3.png',
-];
 
 // 提醒图标
 const HomeAlertIcon = `${CDN_PREFIX}/icon/home-alert.png`;
@@ -63,41 +54,6 @@ const ACTIVITY_LAST_SHOWN_KEY = 'activityModalLastShownDate';
 
 // 搜索图标
 const SearchIcon = `${CDN_PREFIX}/icon/community/search.png`;
-
-// 合约专区图标（使用CDN）
-const bullBearRatioIcon = `${CDN_PREFIX}/icon/bull-bear-ratio.png`;
-const inventoryIcon = `${CDN_PREFIX}/icon/inventory.png`;
-const fundingRateIcon = `${CDN_PREFIX}/icon/funding-rate.png`;
-const volumeTransactionIcon = `${CDN_PREFIX}/icon/volume-transaction.png`;
-
-// 区块内容
-const area = {
-  derivativeArea: {
-    title: '合约专区',
-    list: [
-      {
-        icon: bullBearRatioIcon,
-        text: '多空比',
-        callback: () => { jump2NoTab('putcallratio'); }
-      },
-      {
-        icon: inventoryIcon,
-        text: '持仓量',
-        callback: () => { jump2NoTab('positionsize'); }
-      },
-      {
-        icon: fundingRateIcon,
-        text: '资金费率',
-        callback: () => { jump2NoTab('fundingrate'); }
-      },
-      {
-        icon: volumeTransactionIcon,
-        text: '成交额',
-        callback: () => { jump2NoTab('tradevol'); }
-      }
-    ]
-  }
-};
 
 export default function HomePage() {
   const router = useRouter();
@@ -116,8 +72,6 @@ export default function HomePage() {
     window.addEventListener('resize', checkDevice);
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
-  // 根据语言选择 banner 图片
-  const HOME_BANNERS = isEN ? HOME_BANNERS_EN : HOME_BANNERS_ZH;
   
   // 欢迎弹窗状态
   const [showWelcomePopup, setShowWelcomePopup] = useState(false);
@@ -399,52 +353,13 @@ export default function HomePage() {
     ['币种', '最新价', '24小时幅度', '加自选', '加监控']
   ];
 
-  // 实时榜单接口配置
-  const footerIfList = [{
-    interface: Interface.COIN_SELF,
-    data: {
-      pageSize: 10,
-      pageNo: 1
-    }
-  }, {
-    interface: Interface.price_change,
-    data: {
-      dim: 0
-    }
-  }, {
-    interface: Interface.PRICE_DOWNCHANGE,
-    data: {
-      dim: 0
-    }
-  }, {
-    interface: Interface.price_wave,
-    data: {
-      dim: 0
-    }
-  }, {
-    interface: Interface.coin_trade,
-    data: {
-      intervals: 0
-    }
-  }, {
-    interface: Interface.NEW_COIN,
-    data: {}
-  }, {
-    interface: Interface.PRICE_UPTRADE,
-    data: {
-      intervals: '7_day'  // 飙升榜使用7天数据
-    }
-  }];
+  // 实时榜单配置 - 榜单数量
+  const RANK_COUNT = 7; // 7个榜单：自选、涨幅、跌幅、波幅、成交额、新币、飙升
 
   // 获取热门币种
   const fetchHotCoin = async () => {
     try {
-      const response = await request({
-        url: Interface.hot_coin,
-        data: {
-          pageSize: 10
-        }
-      });
+      const response = await homeApi.getHotCoins(10);
       if (response?.data) {
         setHotCoin(response.data);
       }
@@ -458,12 +373,7 @@ export default function HomePage() {
   // 获取热门板块数据
   const fetchHotIndustry = async () => {
     try {
-      const response = await request({
-        url: Interface.hot_industry,
-        data: {
-          pageSize: 10
-        }
-      });
+      const response = await homeApi.getHotIndustries(20); // 获取20条数据，支持两页显示
       if (response?.data) {
         setHotIndustry(response.data);
       }
@@ -477,12 +387,7 @@ export default function HomePage() {
   // 获取热门合约数据
   const fetchHotContract = async () => {
     try {
-      const response = await request({
-        url: Interface.hot_contract,
-        data: {
-          pageSize: 10
-        }
-      });
+      const response = await homeApi.getHotContracts(10);
       if (response?.data) {
         setHotContract(response.data);
       }
@@ -520,12 +425,7 @@ export default function HomePage() {
     
     setTopicsLoading(true);
     try {
-      const response = await request({
-        url: Interface.HOT_TOPICS_API || '/topic/hot',
-        data: {
-          pageSize: 10
-        }
-      });
+      const response = await homeApi.getHotTopics(10);
       setHotTopics(response?.data?.data || response?.data || []);
       setLastTopicsLoadTime(now);
       
@@ -551,9 +451,7 @@ export default function HomePage() {
   const fetchOwnList = async () => {
     setMyOwnLoading(true);
     try {
-      const response = await request({
-        url: Interface.COIN_SELF
-      });
+      const response = await homeApi.getSelfSelectRank();
       if (response?.data) {
         setOwn(response.data);
       }
@@ -567,10 +465,7 @@ export default function HomePage() {
   // 单独刷新自选榜数据
   const refreshSelfSelectRank = async () => {
     try {
-      const res = await request({
-        url: Interface.COIN_SELF,
-        data: { pageSize: 10, pageNo: 1 }
-      });
+      const res = await homeApi.getSelfSelectRank(10, 1);
       
       const listData = res.data || [];
       let tempData = [];
@@ -580,7 +475,7 @@ export default function HomePage() {
       } else if (Array.isArray(listData) && listData.length > 0) {
         tempData = listData.map((item) => ({
           symbol: <AdaptiveSymbolText symbol={item.symbol} iconUrl={item.url} />,
-          last: <AdaptivePrice price={item.last} />,
+          last: <AdaptivePrice price={item.last} formatSmallDecimal />,
           priceRange: <HighlightArea value={item.price24h} />,
           own: <AddCollect symbol={item.symbol} isOwn={true} onSuccess={refreshSelfSelectRank} />,
           monitor: <AddMonitor symbol={item.symbol} />,
@@ -606,12 +501,12 @@ export default function HomePage() {
     if (isInitial) {
       setFooterLoading(true);
       // 只在首次加载时初始化数组
-      setFooterArr(Array(footerIfList.length).fill([]));
+      setFooterArr(Array(RANK_COUNT).fill([]));
     }
     
     try {
       // 并发请求所有榜单，每个榜单独立更新
-      const promises = footerIfList.map(async (cfg, i) => {
+      const promises = Array.from({ length: RANK_COUNT }).map(async (_, i) => {
         // 生成新的请求ID，用于防止竞态
         const requestId = ++rankRequestIds.current[i];
         
@@ -625,7 +520,33 @@ export default function HomePage() {
         }
         
         try {
-          const itemListData = await request({ url: cfg.interface, data: cfg.data });
+          // 使用新的 API 根据索引获取对应榜单数据
+          let itemListData;
+          switch (i) {
+            case 0: // 自选榜
+              itemListData = await homeApi.getSelfSelectRank(10, 1);
+              break;
+            case 1: // 涨幅榜
+              itemListData = await homeApi.getPriceChangeRank(0);
+              break;
+            case 2: // 跌幅榜
+              itemListData = await homeApi.getPriceDownChangeRank(0);
+              break;
+            case 3: // 波幅榜
+              itemListData = await homeApi.getPriceWaveRank(0);
+              break;
+            case 4: // 成交额榜
+              itemListData = await homeApi.getTradeRank(0);
+              break;
+            case 5: // 新币榜
+              itemListData = await homeApi.getNewCoinRank();
+              break;
+            case 6: // 飙升榜
+              itemListData = await homeApi.getPriceUpTradeRank('7_day');
+              break;
+            default:
+              itemListData = { data: [] };
+          }
           
           // 检查是否是最新的请求（防止竞态）
           if (requestId !== rankRequestIds.current[i]) {
@@ -644,7 +565,7 @@ export default function HomePage() {
             } else if (Array.isArray(listData) && listData.length > 0) {
               tempData = listData.map((item) => ({
                 symbol: <AdaptiveSymbolText symbol={item.symbol} iconUrl={item.url} />,
-                last: <AdaptivePrice price={item.last} />,
+                last: <AdaptivePrice price={item.last} formatSmallDecimal />,
                 priceRange: <HighlightArea value={item.price24h} />,
                 own: <AddCollect symbol={item.symbol} isOwn={true} onSuccess={refreshSelfSelectRank} />,
                 monitor: <AddMonitor symbol={item.symbol} />,
@@ -659,7 +580,12 @@ export default function HomePage() {
               const slicedData = listData.slice(0, 10);
               tempData = slicedData.map((item) => ({
                 symbol: <AdaptiveSymbolText symbol={item.symbol} iconUrl={item.url} />,
-                last: <AdaptivePrice price={item.last || item.volume_24h} />,
+                last: (
+                  <AdaptivePrice
+                    price={item.last || item.volume_24h}
+                    formatSmallDecimal
+                  />
+                ),
                 priceRange: <HighlightArea value={item.price_24h} />,  // 飙升榜使用 price_24h 字段
                 own: <AddCollect symbol={item.symbol} isOwn={item.favorite} />,
                 monitor: <AddMonitor symbol={item.symbol} />,
@@ -673,7 +599,12 @@ export default function HomePage() {
               const slicedData = listData.slice(0, 10);
               tempData = slicedData.map((item) => ({
                 symbol: <AdaptiveSymbolText symbol={item.symbol} iconUrl={item.url} />,
-                last: <AdaptivePrice price={item.last || item.volume_24h} />,
+                last: (
+                  <AdaptivePrice
+                    price={item.last || item.volume_24h}
+                    formatSmallDecimal
+                  />
+                ),
                 priceRange: <HighlightArea value={item.priceRange || item.movers || item.price_24h} />,
                 own: <AddCollect symbol={item.symbol} isOwn={item.favorite} />,
                 monitor: <AddMonitor symbol={item.symbol} />,
@@ -689,9 +620,9 @@ export default function HomePage() {
             setFooterArr(prev => {
               const newArr = [...prev];
               // 确保数组长度足够
-              if (newArr.length < footerIfList.length) {
-                newArr.length = footerIfList.length;
-                for (let j = 0; j < footerIfList.length; j++) {
+              if (newArr.length < RANK_COUNT) {
+                newArr.length = RANK_COUNT;
+                for (let j = 0; j < RANK_COUNT; j++) {
                   if (!newArr[j]) newArr[j] = [];
                 }
               }
@@ -739,9 +670,9 @@ export default function HomePage() {
             // 失败时设置为空数组以显示"暂无数据"
             setFooterArr(prev => {
               const newArr = [...prev];
-              if (newArr.length < footerIfList.length) {
-                newArr.length = footerIfList.length;
-                for (let j = 0; j < footerIfList.length; j++) {
+              if (newArr.length < RANK_COUNT) {
+                newArr.length = RANK_COUNT;
+                for (let j = 0; j < RANK_COUNT; j++) {
                   if (!newArr[j]) newArr[j] = [];
                 }
               }
@@ -840,244 +771,6 @@ export default function HomePage() {
     }
   };
 
-  // 格式化话题时间
-  const formatTopicTime = (dateStr) => {
-    if (!dateStr) return '--';
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diff = now - date;
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    
-    if (days === 0) return t('home.today');
-    if (days === 1) return t('home.yesterday');
-    if (days < 7) return t('home.daysAgo', { days });
-    return date.toLocaleDateString('zh-CN');
-  };
-
-  // 奖牌图标URL
-  const rankMedals = [
-    `${CDN_PREFIX}/icon/gold.png`,
-    `${CDN_PREFIX}/icon/silver.png`, 
-    `${CDN_PREFIX}/icon/copper.png`
-  ];
-
-  // 渲染投资机会（可滑动）
-  const renderInvestmentOpportunity = () => {
-    if (investmentTab === 'opportunity') {
-      // 投资机会 Tab
-      return (
-        <div className={styles.scrollContainer}>
-          <div className={styles.scrollContent}>
-            {/* 热门币种 */}
-            <div className={`${styles.treemapBox} ${styles.contentCard}`} onClick={() => {
-              router.push('/hotrank?type=coin');
-            }}>
-              <div className={styles.treemapTitle}>{t('home.hotCoins')}</div>
-              <div className={styles.centerLoading}>
-                {coinLoading ? (
-                  <Loading tip={t('common.loading')} />
-                ) : (
-                  <div style={{ width: '100%', height: '100%', flex: 1 }}>
-                    <MoziTreeMap
-                      list={hotCoin}
-                      name='coin'
-                      desc='priceChangePercent'
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            {/* 热门合约 */}
-            <div className={`${styles.treemapBox} ${styles.contentCard}`} onClick={() => {
-              router.push('/hotrank?type=contract');
-            }}>
-              <div className={styles.treemapTitle}>{t('home.hotContracts')}</div>
-              <div className={styles.centerLoading}>
-                {contractLoading ? (
-                  <Loading tip={t('common.loading')} />
-                ) : (
-                  <div style={{ width: '100%', height: '100%', flex: 1 }}>
-                    <MoziTreeMap
-                      list={hotContract}
-                      name='coin'
-                      desc='priceChangePercent'
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            {/* 热门板块 */}
-            <div className={`${styles.treemapBox} ${styles.contentCard} ${styles.last}`} onClick={() => {
-              router.push('/hotrank?type=industry');
-            }}>
-              <div className={styles.treemapTitle}>{t('home.hotSectors')}</div>
-              <div className={styles.centerLoading}>
-                {industryLoading ? (
-                  <Loading tip={t('common.loading')} />
-                ) : (
-                  <div style={{ width: '100%', height: '100%', flex: 1 }}>
-                    <MoziTreeMap
-                      list={hotIndustry}
-                      name='section'
-                      desc='changes'
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    } else {
-      // 话题热榜 Tab
-      return (
-        <div className={styles.scrollContainer}>
-          <div className={styles.topicsContent}>
-            <div className={styles.topicCards}>
-              {topicsLoading ? (
-                <div style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '40px 0' }}>
-                  <Loading tip={t('common.loading')} />
-                </div>
-              ) : hotTopics && hotTopics.length > 0 ? (
-                hotTopics.slice(0, 3).map((topic, index) => {
-                  const hasDesc = Boolean(topic.desc || topic.description);
-                  return (
-                    <div 
-                      className={`${styles.topicCard} ${!hasDesc ? styles.noDesc : ''}`}
-                      key={topic.id || index}
-                      onClick={() => {
-                        router.push('/community');
-                      }}
-                    >
-                      <div className={styles.topicRank}>
-                        <img 
-                          src={rankMedals[index] || rankMedals[2]} 
-                          className={styles.rankMedal}
-                          alt={`rank-${index + 1}`}
-                        />
-                      </div>
-                      <div className={styles.topicTitle}>{topic.title || topic.name}</div>
-                      {hasDesc && (
-                        <div className={styles.topicDesc}>{topic.desc || topic.description}</div>
-                      )}
-                      <div className={`${styles.topicStats} ${!hasDesc ? styles.noDesc : ''}`}>
-                        <div className={styles.topicHot}>🔥 {topic.discussionCount || topic.hot || 0} {t('home.discussions')}</div>
-                        <div className={styles.topicDate}>{formatTopicTime(topic.createdAt || topic.createTime)}</div>
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className={styles.topicCard}>
-                  <div className={styles.topicRank}>
-                    <img src={rankMedals[0]} className={styles.rankMedal} alt="rank-1" />
-                  </div>
-                  <div className={styles.topicTitle}>{t('home.noTopics')}</div>
-                  <div className={styles.topicDesc}>{t('user.comingSoon')}</div>
-                  <div className={styles.topicStats}>
-                    <div className={styles.topicHot}>🔥 0 {t('home.discussions')}</div>
-                    <div className={styles.topicDate}>--</div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      );
-    }
-  };
-
-  // 渲染实时榜单
-  const renderRealTimeRanking = () => {
-    const currentIndex = activeArr.indexOf(rankActiveKey);
-    const currentRankData = footerArr[currentIndex] || [];
-    const isLoading = rankLoadingStates[currentIndex];
-    const isLoaded = rankLoadedStates[currentIndex];
-    
-    return (
-      <div ref={rankingSectionRef} className={styles.realTimeRankingSection}>
-        <MoziCard title={t('home.rankList')}>
-          <TabBar className={styles.tabBox} activeKey={rankActiveKey} onChange={rankActiveClick}>
-            <TabBar.Item key='zixuan' title={t('home.rank.self')} />
-            <TabBar.Item key='zhangfu' title={t('home.rank.up')} />
-            <TabBar.Item key='diefu' title={t('home.rank.down')} />
-            <TabBar.Item key='zhenfu' title={t('home.rank.wave')} />
-            <TabBar.Item key='chengjiaoe' title={t('home.rank.volume')} />
-            <TabBar.Item key='xinbi' title={t('home.rank.new')} />
-            <TabBar.Item key='biaosheng' title={t('home.rank.surge')} />
-          </TabBar>
-          
-          {/* 始终保持内容区域，避免折叠 */}
-          <div style={{ minHeight: '180px' }}>
-            {isLoading ? (
-              <div style={{ padding: '40px 0', textAlign: 'center' }}>
-                <Loading tip={t('common.loading')} />
-              </div>
-            ) : currentRankData.length > 0 ? (
-              <div>
-                <MoziGrid
-                  length={5}
-                  colName={[
-                    t('home.columns.symbol'),
-                    rankActiveKey === 'chengjiaoe' ? t('home.columns.lastVolume') : t('home.columns.lastPrice'),
-                    t('home.columns.change24h'),
-                    t('home.columns.addFavorites'),
-                    t('home.columns.addMonitor')
-                  ]}
-                  gridContent={currentRankData}
-                  callback={(gridCon) => { 
-                    // 如果币种已收藏（isFavorite为true），传入 fromFavorite 参数
-                    jump2Detail(gridCon.key, gridCon.isFavorite === true); 
-                  }}
-                  maxRows={10}
-                  minRows={10}
-                  gridTitleBgColor="transparent"
-                  columnWidths={['32%', '23%', '25%', '15%', '15%']}
-                />
-                <div className={styles.listMore} onClick={go2List}>
-                  {t('user.viewMore')} <RightOutline fontSize={12} />
-                </div>
-              </div>
-            ) : isLoaded ? (
-              <div style={{ padding: '40px 0', textAlign: 'center', color: '#999' }}>
-                {rankActiveKey === 'zixuan' ? t('home.noFavorites') : t('common.noData')}
-              </div>
-            ) : null}
-          </div>
-        </MoziCard>
-      </div>
-    );
-  };
-
-  // 渲染衍生品专区（国际化）
-  const renderDerivativeArea = () => {
-    const title = t('home.derivatives');
-    const list = [
-      { icon: bullBearRatioIcon, text: t('market.putCallRatio'), callback: () => { jump2NoTab('putcallratio'); } },
-      { icon: inventoryIcon, text: t('market.positionSize'), callback: () => { jump2NoTab('positionsize'); } },
-      { icon: fundingRateIcon, text: t('market.fundingRate'), callback: () => { jump2NoTab('fundingrate'); } },
-      { icon: volumeTransactionIcon, text: t('market.tradeVolume'), callback: () => { jump2NoTab('tradevol'); } },
-    ];
-    return (
-      <MoziCard title={title} customStyle={{ borderRadius: '0 0 8px 8px', paddingTop: '5px' }}>
-        <div className={styles.derivativeBody}>
-          <Grid columns={4}>
-            {list.map((item, index) => (
-              <Grid.Item key={index} className={styles.derivativeItem} onClick={item.callback}>
-                <div className={styles.derivativeIcon}>
-                  <img src={item.icon} alt={item.text} />
-                </div>
-                <span>{item.text}</span>
-              </Grid.Item>
-            ))}
-          </Grid>
-        </div>
-      </MoziCard>
-    );
-  };
-
   // PC端渲染
   if (isPC) {
     return (
@@ -1093,23 +786,12 @@ export default function HomePage() {
       <div className={styles.indexBox}>
         {/* 顶部区域：Banner + 搜索框 + 公告栏 */}
         <div className={styles.heroWrap}>
-          {/* 背景轮播图 */}
+          {/* 背景图片 */}
           <div className={styles.bgBanner}>
-            <Swiper
-              className={styles.bgBannerSwiper}
-              loop
-              autoplay
-              indicator={() => null}
-            >
-              {HOME_BANNERS.map((url, idx) => (
-                <Swiper.Item key={idx}>
-                  <img className={styles.bgBannerImage} src={url} alt={`banner-${idx}`} />
-                </Swiper.Item>
-              ))}
-            </Swiper>
+            <img className={styles.bgBannerImage} src="/images/new_home/banner.png" alt="banner" />
 
             {/* 搜索框（层叠在 Banner 上） */}
-            <div className={styles.header} style={{ bottom: showNotice ? 34 : 23 }} onClick={() => router.push('/search')}>
+            <div className={styles.header} style={{ bottom: showNotice ? 10 : 10 }} onClick={() => router.push('/search')}>
               <div className={styles.searchBox}>
                 <div className={styles.searchInput}>{t('home.searchPlaceholder')}</div>
                 <div className={styles.searchCancel} style={isEN ? { minWidth: 44, padding: '0 14px' } : undefined}>
@@ -1119,82 +801,46 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* 公告栏（层叠在 Banner 上，可关闭） */}
-            {showNotice ? (
-              <div className={styles.notice}>
-                <NoticeBar
-                  className={styles.noticeItem}
-                  content={t('home.aiNotice')}
-                  color="alert"
-                  wrap
-                  icon={<img src={HomeAlertIcon} className={styles.noticeIcon} alt="alert" />}
-                  extra={
-                    <span
-                      className={styles.noticeClose}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowNotice(false);
-                        try { localStorage.setItem(NOTICE_HIDE_KEY, '1'); } catch {}
-                      }}
-                      aria-label="关闭"
-                      role="button"
-                    >✕</span>
-                  }
-                />
-              </div>
-            ) : null}
+            {/* 公告栏已隐藏 */}
           </div>
         </div>
 
-        {/* 合约专区 */}
-        {renderDerivativeArea()}
+        {/* 粉色背景容器 */}
+        <PinkContainer />
 
-        {/* 投资机会 */}
-        <MoziCard
-          customTitle={
-            <div className={styles.investmentHeader}>
-              <div className={styles.investmentTabs}>
-                <div 
-                  className={`${styles.tabItem} ${investmentTab === 'opportunity' ? styles.active : ''}`}
-                  onClick={() => setInvestmentTab('opportunity')}
-                >
-                  {t('home.opportunities')}
-                </div>
-                <div 
-                  className={`${styles.tabItem} ${investmentTab === 'topics' ? styles.active : ''}`}
-                  onClick={() => {
-                    setInvestmentTab('topics');
-                    fetchHotTopics();
-                  }}
-                >
-                  {t('community.hotTopics')}
-                </div>
-              </div>
-              <div 
-                className={styles.moreBtn}
-                onClick={() => {
-                  if (investmentTab === 'topics') {
-                    router.push('/community');
-                  } else {
-                    router.push('/find?tab=rank');
-                  }
-                }}
-              >
-                {t('user.viewMore')} <RightOutline fontSize={12} />
-              </div>
-            </div>
-          }
-          customStyle={{ backgroundColor: 'transparent' }}
-          className={styles.investmentCard}
-        >
-          {renderInvestmentOpportunity()}
-        </MoziCard>
+        {/* 合约专区 */}
+        <DerivativeArea />
 
         {/* 涨跌分布 */}
         <MarketDistribution />
 
+        {/* 热门话题 */}
+        <HotTopics limit={4} showViewMore={true} />
+
+        {/* 热门板块 */}
+        <InvestmentSection
+          hotCoin={hotCoin}
+          hotContract={hotContract}
+          hotIndustry={hotIndustry}
+          hotTopics={hotTopics}
+          coinLoading={coinLoading}
+          contractLoading={contractLoading}
+          industryLoading={industryLoading}
+          topicsLoading={topicsLoading}
+          onFetchHotTopics={fetchHotTopics}
+        />
+
         {/* 实时榜单 */}
-        {renderRealTimeRanking()}
+        <RealTimeRanking
+          activeArr={activeArr}
+          footerArr={footerArr}
+          rankActiveKey={rankActiveKey}
+          rankLoadingStates={rankLoadingStates}
+          rankLoadedStates={rankLoadedStates}
+          onRankActiveClick={rankActiveClick}
+          onJump2Detail={jump2Detail}
+          onGo2List={go2List}
+        />
 
         {/* 悬浮机器人按钮 - 使用新的FloatingRobot组件 */}
         <FloatingRobot />
