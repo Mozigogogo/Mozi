@@ -118,7 +118,38 @@ export default function HotSectorPage() {
       {/* 热力图 */}
       <div className={styles.content}>
         {loading ? (
-          <div className={styles.loading}>加载中...</div>
+          <div className={styles.skeletonGrid}>
+            {/* 模拟热力图的网格布局 - 增加更多骨架块填满空间 */}
+            <div className={styles.skeletonItem} style={{ gridColumn: 'span 2', gridRow: 'span 2' }}></div>
+            <div className={styles.skeletonItem}></div>
+            <div className={styles.skeletonItem}></div>
+            <div className={styles.skeletonItem} style={{ gridColumn: 'span 2' }}></div>
+            <div className={styles.skeletonItem}></div>
+            <div className={styles.skeletonItem}></div>
+            <div className={styles.skeletonItem}></div>
+            <div className={styles.skeletonItem}></div>
+            <div className={styles.skeletonItem}></div>
+            <div className={styles.skeletonItem}></div>
+            <div className={styles.skeletonItem} style={{ gridColumn: 'span 2' }}></div>
+            <div className={styles.skeletonItem}></div>
+            <div className={styles.skeletonItem}></div>
+            <div className={styles.skeletonItem} style={{ gridColumn: 'span 2', gridRow: 'span 2' }}></div>
+            <div className={styles.skeletonItem}></div>
+            <div className={styles.skeletonItem}></div>
+            <div className={styles.skeletonItem}></div>
+            <div className={styles.skeletonItem}></div>
+            <div className={styles.skeletonItem}></div>
+            <div className={styles.skeletonItem}></div>
+            <div className={styles.skeletonItem} style={{ gridColumn: 'span 2' }}></div>
+            <div className={styles.skeletonItem}></div>
+            <div className={styles.skeletonItem}></div>
+            <div className={styles.skeletonItem}></div>
+            <div className={styles.skeletonItem}></div>
+            <div className={styles.skeletonItem} style={{ gridRow: 'span 2' }}></div>
+            <div className={styles.skeletonItem}></div>
+            <div className={styles.skeletonItem}></div>
+            <div className={styles.skeletonItem}></div>
+          </div>
         ) : (
           <MoziTreeMap
             list={sectorData}
