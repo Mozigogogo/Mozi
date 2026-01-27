@@ -59,7 +59,7 @@ export default function OrderBook({
 
   const visibleRowsCount = useMemo(() => {
     const trimmed = String(selectedOption ?? '').trim();
-    const limit = trimmed.includes('前五') ? 5 : 10;
+    const limit = (trimmed.includes('前五') || trimmed.includes('Top 5')) ? 5 : 10;
     return Math.min(maxRows, limit);
   }, [maxRows, selectedOption]);
 
@@ -181,7 +181,7 @@ export default function OrderBook({
         </div>
       </div>
 
-      <div className={`${styles.list} ${selectedOption.includes('前五') ? styles.listTop5 : ''} ${selectedOption.includes('前十') ? styles.listTop10 : ''}`}>
+      <div className={`${styles.list} ${(selectedOption.includes('前五') || selectedOption.includes('Top 5')) ? styles.listTop5 : ''} ${(selectedOption.includes('前十') || selectedOption.includes('Top 10')) ? styles.listTop10 : ''}`}>
         {rows.map((row, idx) => {
           const bidValue = row.bid ? Number(row.bid.value ?? 0) : 0;
           const askValue = row.ask ? Number(row.ask.value ?? 0) : 0;
