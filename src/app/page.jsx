@@ -373,7 +373,7 @@ export default function HomePage() {
   // 获取热门板块数据
   const fetchHotIndustry = async () => {
     try {
-      const response = await homeApi.getHotIndustries(10);
+      const response = await homeApi.getHotIndustries(20); // 获取20条数据，支持两页显示
       if (response?.data) {
         setHotIndustry(response.data);
       }
