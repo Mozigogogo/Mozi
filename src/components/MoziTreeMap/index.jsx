@@ -31,8 +31,8 @@ const MoziTreeMap = ({ list = [], name, desc }) => {
 
     // 创建层次结构
     const root = d3.hierarchy(data)
-      .sum(d => d.value)
-      .sort((a, b) => b.value - a.value);
+      .sum(d => d.value);
+      // 移除自动排序，保持传入数据的顺序
 
     // 创建 treemap 布局（使用 Squarified 算法）
     const treemap = d3.treemap()
@@ -123,21 +123,34 @@ const MoziTreeMap = ({ list = [], name, desc }) => {
             ">${d.data.changeStr}</div>
           `;
         } else if (area > 1200 || (itemWidth > 40 && itemHeight > 25)) {
-          // 中块：只显示数值
-          content = `
-            <div style="
-              font-size: ${valueFontSize}px;
-              font-weight: 700;
-              font-family: Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
-            ">${d.data.changeStr}</div>
-          `;
-        } else {
-          // 小块：只显示名称缩写
+          // 中块：优先显示名称（缩写）
           const maxChars = Math.floor(itemWidth / 6.5);
           let displayName = d.data.name;
           
           if (displayName.length > maxChars && maxChars > 3) {
             displayName = displayName.substring(0, maxChars - 1) + '...';
+          } else if (displayName.length > maxChars) {
+            displayName = displayName.substring(0, Math.max(2, maxChars));
+          }
+          
+          content = `
+            <div style="
+              font-size: ${Math.max(9, Math.min(nameFontSize, 12))}px;
+              font-weight: 500;
+              line-height: 1.2;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+              max-width: 100%;
+            ">${displayName}</div>
+          `;
+        } else {
+          // 小块：也优先显示名称缩写
+          const maxChars = Math.floor(itemWidth / 7);
+          let displayName = d.data.name;
+          
+          if (displayName.length > maxChars && maxChars > 2) {
+            displayName = displayName.substring(0, Math.max(2, maxChars - 1)) + '...';
           } else if (displayName.length > maxChars) {
             displayName = displayName.substring(0, Math.max(2, maxChars));
           }
