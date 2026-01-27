@@ -1,71 +1,94 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Grid } from 'antd-mobile';
 import styles from './index.module.less';
 
 const MoziTreeMap = ({ list = [], name, desc }) => {
-  const [newList, setList] = useState([]);
-
-  // 交换数组元素
-  const swapElements = (arr, index1, index2) => {
-    const temp = arr[index1];
-    arr[index1] = arr[index2];
-    arr[index2] = temp;
-  };
+  const [processedList, setProcessedList] = useState([]);
 
   useEffect(() => {
     if (list && list.length > 0) {
-      const handledArr = handleArr(list);
-      setList(handledArr);
+      const processed = processData(list);
+      setProcessedList(processed);
     }
   }, [list]);
 
-  // 处理数组，计算 span 和调整布局
-  const handleArr = (arr) => {
-    // 按绝对值排序，找出最大的两个
-    let sortedArr = arr.slice().sort((a, b) => {
-      const aVal = Math.abs(parseFloat(String(a[desc]).replace('%', '')));
-      const bVal = Math.abs(parseFloat(String(b[desc]).replace('%', '')));
-      return bVal - aVal;
+  // 处理数据，根据数值大小分配权重
+  const processData = (data) => {
+    // 计算所有项的绝对值
+    const withAbsValues = data.map(item => {
+      const value = parseFloat(String(item[desc]).replace('%', ''));
+      const absValue = Math.abs(value);
+      return {
+        ...item,
+        absValue,
+        originalValue: value
+      };
     });
-    
-    let maxValue1 = sortedArr[0][desc];
-    let maxValue2 = sortedArr[1] ? sortedArr[1][desc] : maxValue1;
 
-    const tempArr = arr.slice();
+    // 按绝对值降序排序
+    withAbsValues.sort((a, b) => b.absValue - a.absValue);
 
-    // 给前两个最大值设置 span=2，其他为 span=1
-    let bigSpanNum = 0;
-    tempArr.forEach(item => {
-      if (bigSpanNum === 2) {
-        item.span = 1;
+    // 计算总值用于归一化
+    const totalAbsValue = withAbsValues.reduce((sum, item) => sum + item.absValue, 0);
+
+    // 为每个项分配面积比例（面积与数值成正比）
+    return withAbsValues.map((item) => {
+      // 计算该项占总面积的百分比
+      const areaPercent = (item.absValue / totalAbsValue) * 100;
+      
+      // 将面积百分比映射到宽度
+      // 使用平方根让宽度更接近面积的视觉比例
+      // 设置最小宽度为 15%，最大宽度为 50%
+      const widthPercent = Math.max(15, Math.min(50, Math.sqrt(areaPercent) * 15));
+      
+      // 计算 flexBasis
+      const flexBasis = `calc(${widthPercent.toFixed(2)}% - 2px)`;
+      
+      // 根据面积百分比计算合适的高度
+      let minHeight;
+      if (areaPercent > 15) {
+        minHeight = '100px';
+      } else if (areaPercent > 10) {
+        minHeight = '85px';
+      } else if (areaPercent > 5) {
+        minHeight = '75px';
       } else {
-        if (item[desc] === maxValue1 || item[desc] === maxValue2) {
-          item.span = 2;
-          bigSpanNum++;
-        } else {
-          item.span = 1;
-        }
+        minHeight = '65px';
       }
-    });
 
-    // 调整布局，确保 span=2 的项不会出现在奇数位置
-    let sumSpan = 0;
-    tempArr.forEach((item, index) => {
-      if (item.span === 2) {
-        if ((sumSpan + item.span) % 4 === 1) {
-          if (tempArr[index - 1].span === 2) {
-            swapElements(tempArr, index, index - 2);
-          } else {
-            swapElements(tempArr, index, index - 1);
-          }
-        }
-      }
-      sumSpan += item.span;
+      return {
+        ...item,
+        flexBasis,
+        minHeight,
+        areaPercent
+      };
     });
+  };
 
-    return tempArr;
+  // 根据数值获取颜色
+  const getColor = (value) => {
+    const numericValue = parseFloat(String(value).replace('%', ''));
+    
+    if (numericValue > 5.0) {
+      return 'rgba(6, 194, 112, 1)';
+    } else if (numericValue > 2.0) {
+      return 'rgba(6, 194, 112, 0.8)';
+    } else if (numericValue > 0.5) {
+      return 'rgba(6, 194, 112, 0.6)';
+    } else if (numericValue > 0) {
+      return 'rgba(6, 194, 112, 0.4)';
+    } else if (numericValue < -5.0) {
+      return 'rgba(255, 91, 91, 1)';
+    } else if (numericValue < -2.0) {
+      return 'rgba(255, 91, 91, 0.8)';
+    } else if (numericValue < -0.5) {
+      return 'rgba(255, 91, 91, 0.6)';
+    } else if (numericValue < 0) {
+      return 'rgba(255, 91, 91, 0.4)';
+    }
+    
+    return '#B3B3B3';
   };
 
   if (!list || list.length === 0) {
@@ -77,46 +100,22 @@ const MoziTreeMap = ({ list = [], name, desc }) => {
   }
 
   return (
-    <Grid className={styles.treemapContainer} columns={4} gap={4}>
-      {newList.map((item, index) => {
-        // 判断是涨还是跌
-        const value = String(item[desc]);
-        const numericValue = parseFloat(value.replace('%', ''));
-        
-        // 根据百分比范围设置颜色，与底部图例对齐
-        let backgroundColor = '#B3B3B3'; // 默认灰色 (0.0%)
-        
-        if (numericValue > 5.0) {
-          backgroundColor = '#11B787'; // >+5.0%
-        } else if (numericValue > 2.0) {
-          backgroundColor = 'rgba(17, 183, 135, 0.8)'; // +2.0% ~ +5.0%
-        } else if (numericValue > 0.5) {
-          backgroundColor = 'rgba(17, 183, 135, 0.6)'; // +0.5% ~ +2.0%
-        } else if (numericValue > 0) {
-          backgroundColor = 'rgba(17, 183, 135, 0.4)'; // 0.0% ~ +0.5%
-        } else if (numericValue < -5.0) {
-          backgroundColor = '#F04A4A'; // <-5.0%
-        } else if (numericValue < -2.0) {
-          backgroundColor = 'rgba(240, 74, 74, 0.8)'; // -5.0% ~ -2.0%
-        } else if (numericValue < -0.5) {
-          backgroundColor = 'rgba(240, 74, 74, 0.6)'; // -2.0% ~ -0.5%
-        } else if (numericValue < 0) {
-          backgroundColor = 'rgba(240, 74, 74, 0.4)'; // -0.5% ~ 0.0%
-        }
-        
-        return (
-          <Grid.Item 
-            key={index} 
-            className={styles.treemapItem}
-            span={item.span}
-            style={{ backgroundColor }}
-          >
-            <div className={styles.itemName}>{item[name]}</div>
-            <div className={styles.itemValue}>{item[desc]}</div>
-          </Grid.Item>
-        );
-      })}
-    </Grid>
+    <div className={styles.treemapContainer}>
+      {processedList.map((item, index) => (
+        <div
+          key={index}
+          className={styles.treemapItem}
+          style={{
+            backgroundColor: getColor(item[desc]),
+            flexBasis: item.flexBasis,
+            minHeight: item.minHeight
+          }}
+        >
+          <div className={styles.itemName}>{item[name]}</div>
+          <div className={styles.itemValue}>{item[desc]}</div>
+        </div>
+      ))}
+    </div>
   );
 };
 

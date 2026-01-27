@@ -1275,6 +1275,7 @@
   },
   "hotsector": {
     "title": "热门板块",
+    "shareText": "查看热门板块涨跌幅热力图",
     "filter": {
       "range": "涨跌幅",
       "marketCap": "市值",

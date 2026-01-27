@@ -1276,6 +1276,7 @@
   },
   "hotsector": {
     "title": "Hot Sectors",
+    "shareText": "Check out the Hot Sectors Heatmap",
     "filter": {
       "range": "Change",
       "marketCap": "Market Cap",

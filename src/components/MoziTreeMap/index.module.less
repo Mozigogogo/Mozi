@@ -1,15 +1,9 @@
 .treemapContainer {
-  border-radius: 8px;
-  overflow: hidden;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
   width: 100%;
-  height: 100%;
-  grid-auto-rows: 1fr !important; /* 关键：让每行高度平均分配填满容器 */
-  
-  :global {
-    .adm-grid-item {
-      padding: 0;
-    }
-  }
+  padding: 12px 0;
 }
 
 .treemapItem {
@@ -20,31 +14,18 @@
   align-items: center;
   flex-direction: column;
   padding: 12px 8px;
-  flex-wrap: wrap;
   border-radius: 10px;
-  width: 100%;
-  height: 100%;
-  min-height: 60px;
   box-sizing: border-box;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex-grow: 1;
+  flex-shrink: 0;
   
   &:hover {
     opacity: 0.9;
     transform: scale(1.02);
+    z-index: 10;
   }
-}
-
-.green {
-  background-color: rgba(6, 194, 112, 1);
-}
-
-.red {
-  background-color: rgba(255, 91, 91, 1);
-}
-
-.gray {
-  background-color: rgba(179, 179, 179, 1);
 }
 
 .itemName {
@@ -52,16 +33,21 @@
   font-weight: 500;
   word-break: break-word;
   white-space: normal;
-  line-height: 1.2;
+  line-height: 1.3;
   text-align: center;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .itemValue {
   font-size: 16px;
-  font-weight: 500;
-  font-family: Roboto 2 DRAFT Condensed;
   font-weight: 700;
-  font-style: Bold;
+  font-family: Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+  white-space: nowrap;
 }
 
 .emptyContainer {
@@ -78,44 +64,44 @@
   font-size: 14px;
 }
 
-/* PC 端适配 - 使用大写 PX 阻止转换 */
+/* PC 端适配 */
 @media (min-width: 769px) {
   .treemapContainer {
-    grid-auto-rows: minmax(50PX, 1fr) !important; /* PC 端自动填充容器高度 */
-    border-radius: 4PX; /* PC 端容器圆角 */
+    gap: 4px;
+    padding: 16px 0;
   }
   
   .treemapItem {
-    padding: 6PX 4PX;
-    height: 100%; /* 自动填充 grid 单元格高度 */
-    min-height: 50PX;
-    border-radius: 4PX; /* PC 端每个块的圆角 */
+    padding: 10px 8px;
+    border-radius: 4px;
   }
   
   .itemName {
-    font-size: 13PX; /* 增加字体大小 */
-    margin-bottom: 4PX;
-    line-height: 1.3;
+    font-size: 13px;
+    margin-bottom: 6px;
   }
   
   .itemValue {
-    font-size: 12PX; /* 增加字体大小 */
-    line-height: 1.3;
+    font-size: 14px;
   }
 }
 
 /* 移动端响应式调整 */
 @media (max-width: 768px) {
+  .treemapContainer {
+    gap: 4px;
+  }
+  
   .treemapItem {
     padding: 10px 6px;
-    min-height: 50px;
   }
   
   .itemName {
-    font-size: 12px;
+    font-size: 11px;
+    -webkit-line-clamp: 2;
   }
   
   .itemValue {
-    font-size: 16px;
+    font-size: 14px;
   }
 }

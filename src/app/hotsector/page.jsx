@@ -69,8 +69,23 @@ export default function HotSectorPage() {
     router.back();
   };
 
-  const handleRefresh = () => {
-    fetchSectorData();
+  const handleShare = () => {
+    // Telegram 分享功能
+    const shareUrl = window.location.href;
+    const shareText = t('hotsector.shareText');
+    
+    // 检查是否在 Telegram WebApp 环境中
+    if (window.Telegram?.WebApp) {
+      window.Telegram.WebApp.openTelegramLink(
+        `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`
+      );
+    } else {
+      // 普通浏览器环境，打开 Telegram 分享链接
+      window.open(
+        `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`,
+        '_blank'
+      );
+    }
   };
 
   return (
@@ -85,10 +100,10 @@ export default function HotSectorPage() {
             </svg>
           </div>
           <div className={styles.title}>{t('hotsector.title')}</div>
-          <div className={styles.refreshButton} onClick={handleRefresh}>
+          <div className={styles.shareButton} onClick={handleShare}>
             <Image 
               src="/icons/new_home/external-link.svg" 
-              alt="external link" 
+              alt="share" 
               width={17} 
               height={16}
             />
@@ -163,15 +178,15 @@ export default function HotSectorPage() {
       <div className={styles.legend}>
         <div className={styles.legendBar}>
           <div className={styles.legendColorBar}>
-            <div className={styles.colorSegment} style={{ background: '#11B787' }}></div>
-            <div className={styles.colorSegment} style={{ background: 'rgba(17, 183, 135, 0.8)' }}></div>
-            <div className={styles.colorSegment} style={{ background: 'rgba(17, 183, 135, 0.6)' }}></div>
-            <div className={styles.colorSegment} style={{ background: 'rgba(17, 183, 135, 0.4)' }}></div>
+            <div className={styles.colorSegment} style={{ background: 'rgba(6, 194, 112, 1)' }}></div>
+            <div className={styles.colorSegment} style={{ background: 'rgba(6, 194, 112, 0.8)' }}></div>
+            <div className={styles.colorSegment} style={{ background: 'rgba(6, 194, 112, 0.6)' }}></div>
+            <div className={styles.colorSegment} style={{ background: 'rgba(6, 194, 112, 0.4)' }}></div>
             <div className={styles.colorSegment} style={{ background: '#B3B3B3' }}></div>
-            <div className={styles.colorSegment} style={{ background: 'rgba(240, 74, 74, 0.4)' }}></div>
-            <div className={styles.colorSegment} style={{ background: 'rgba(240, 74, 74, 0.6)' }}></div>
-            <div className={styles.colorSegment} style={{ background: 'rgba(240, 74, 74, 0.8)' }}></div>
-            <div className={styles.colorSegment} style={{ background: '#F04A4A' }}></div>
+            <div className={styles.colorSegment} style={{ background: 'rgba(255, 91, 91, 0.4)' }}></div>
+            <div className={styles.colorSegment} style={{ background: 'rgba(255, 91, 91, 0.6)' }}></div>
+            <div className={styles.colorSegment} style={{ background: 'rgba(255, 91, 91, 0.8)' }}></div>
+            <div className={styles.colorSegment} style={{ background: 'rgba(255, 91, 91, 1)' }}></div>
           </div>
         </div>
         <div className={styles.legendLabels}>
