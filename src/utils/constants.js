@@ -52,6 +52,8 @@ export const Interface = {
   hot_coin: '/showhot/coinprice',
   // 热门版块
   hot_industry: '/showhot/sections',
+  // 热门版块（分页）
+  hot_sections_paginated: '/showhot/sections',
   // 热门合约
   hot_contract: '/showhot/contractprice',
   

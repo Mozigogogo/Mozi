@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import SortButton from '@/components/SortButton';
 import MoziTreeMap from '@/components/MoziTreeMap';
+import { fetchHotSectionsData } from '@/api/market';
 import styles from './page.module.less';
 
 export default function HotSectorPage() {
@@ -26,21 +27,15 @@ export default function HotSectorPage() {
   const fetchSectorData = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:3000/api/showhot/sections?pageSize=100&pageNo=1');
-      const result = await response.json();
+      // 使用封装的 API 方法获取数据
+      const formattedData = await fetchHotSectionsData({ 
+        pageSize: 100, 
+        pageNo: 1 
+      });
       
-      if (result.success && result.data) {
-        // 转换API数据格式为 MoziTreeMap 需要的格式
-        let formattedData = result.data.map(item => ({
-          sectorName: item.section,
-          changePercent: item.changes
-        }));
-        
-        // 根据排序设置排序数据
-        formattedData = sortData(formattedData);
-        
-        setSectorData(formattedData);
-      }
+      // 根据排序设置排序数据
+      const sortedData = sortData(formattedData);
+      setSectorData(sortedData);
     } catch (error) {
       console.error('Failed to fetch sector data:', error);
     } finally {
