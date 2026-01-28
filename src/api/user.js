@@ -169,16 +169,11 @@ export const generateBindCode = () => {
 
 /**
  * 确认账号绑定
- * 用户B使用用户A的ID和验证码，将自己绑定到用户A
- * @param {Object} params - 绑定参数
- * @param {string} params.targetUserId - 目标用户ID（用户A的ID）
- * @param {string} params.verificationCode - 验证码
+ * 用户B使用验证码，将自己绑定到用户A
+ * @param {string} bindCode - 验证码
  * @returns {Promise<{userId: string, token: string}>}
  * @example
- * const result = await confirmBind({
- *   targetUserId: "uuid-abc-123",
- *   verificationCode: "123456"
- * });
+ * const result = await confirmBind("QD2BMG");
  * // 返回示例：
  * // {
  * //   code: 0,
@@ -189,13 +184,12 @@ export const generateBindCode = () => {
  * //   }
  * // }
  */
-export const confirmBind = (params) => {
+export const confirmBind = (bindCode) => {
   return request({
     url: Interface.CONFIRM_BIND,
     method: 'POST',
     data: {
-      targetUserId: params.targetUserId,
-      verificationCode: params.verificationCode,
+      bindCode,
     },
   });
 };

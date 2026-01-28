@@ -17,7 +17,6 @@ export default function AccountBindModal({ visible, onClose }) {
   const [isGenerating, setIsGenerating] = useState(false);
   
   // 绑定账号相关状态
-  const [targetUserId, setTargetUserId] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [isBinding, setIsBinding] = useState(false);
 
@@ -71,14 +70,6 @@ export default function AccountBindModal({ visible, onClose }) {
 
   // 确认绑定
   const handleConfirmBind = async () => {
-    if (!targetUserId.trim()) {
-      Toast.show({
-        content: t('accountBind.enterUserId') || '请输入用户ID',
-        position: 'top'
-      });
-      return;
-    }
-    
     if (!verificationCode.trim()) {
       Toast.show({
         content: t('accountBind.enterCode') || '请输入验证码',
@@ -89,10 +80,7 @@ export default function AccountBindModal({ visible, onClose }) {
     
     setIsBinding(true);
     try {
-      const result = await confirmBind({
-        targetUserId: targetUserId.trim(),
-        verificationCode: verificationCode.trim()
-      });
+      const result = await confirmBind(verificationCode.trim());
       
       if (result?.code === 0 && result?.data) {
         // 绑定成功，更新 token
@@ -163,7 +151,6 @@ export default function AccountBindModal({ visible, onClose }) {
     setGeneratedCode('');
     setUserId('');
     setRemainingSeconds(0);
-    setTargetUserId('');
     setVerificationCode('');
     setActiveTab('generate');
     onClose();
@@ -268,20 +255,7 @@ export default function AccountBindModal({ visible, onClose }) {
           <Tabs.Tab title={t('accountBind.bindTab') || '绑定账号'} key="bind">
             <div className={styles.tabContent}>
               <div className={styles.description}>
-                {t('accountBind.bindDesc') || '输入目标用户的ID和验证码进行绑定'}
-              </div>
-              
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>
-                  {t('accountBind.targetUserId') || '目标用户ID'}
-                </label>
-                <Input
-                  placeholder={t('accountBind.enterUserId') || '请输入用户ID'}
-                  value={targetUserId}
-                  onChange={setTargetUserId}
-                  clearable
-                  className={styles.input}
-                />
+                {t('accountBind.bindDesc') || '输入验证码进行绑定'}
               </div>
               
               <div className={styles.formGroup}>

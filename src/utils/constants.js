@@ -54,6 +54,8 @@ export const Interface = {
   hot_industry: '/showhot/sections',
   // 热门版块（分页）
   hot_sections_paginated: '/showhot/sections',
+  // 板块详情
+  SECTOR_DETAIL: '/showhot/sectiondetail',
   // 热门合约
   hot_contract: '/showhot/contractprice',
   
