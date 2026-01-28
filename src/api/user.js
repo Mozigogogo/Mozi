@@ -145,7 +145,7 @@ export const saveAlarmSettings = (params) => {
 /**
  * 生成账号绑定验证码
  * 用户A为自己生成验证码，供其他账号绑定使用
- * @returns {Promise<{userId: string, verificationCode: string, remainingSeconds: number}>}
+ * @returns {Promise<{userId: string, bindCode: string, expiresIn: number}>}
  * @example
  * const result = await generateBindCode();
  * // 返回示例：
@@ -153,10 +153,11 @@ export const saveAlarmSettings = (params) => {
  * //   code: 0,
  * //   errorMsg: null,
  * //   data: {
- * //     userId: "uuid-abc-123",
- * //     verificationCode: "123456",
- * //     remainingSeconds: 300
- * //   }
+ * //     userId: "664c19e7-3482-47a4-b48a-2913abb1e5af",
+ * //     bindCode: "QD2BMG",
+ * //     expiresIn: 1800
+ * //   },
+ * //   success: true
  * // }
  */
 export const generateBindCode = () => {

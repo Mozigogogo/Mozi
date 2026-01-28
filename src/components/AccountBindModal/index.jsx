@@ -45,9 +45,9 @@ export default function AccountBindModal({ visible, onClose }) {
       const result = await generateBindCode();
       
       if (result?.code === 0 && result?.data) {
-        setGeneratedCode(result.data.verificationCode);
+        setGeneratedCode(result.data.bindCode);
         setUserId(result.data.userId);
-        setRemainingSeconds(result.data.remainingSeconds || 300);
+        setRemainingSeconds(result.data.expiresIn || 300);
         Toast.show({
           content: t('accountBind.generateSuccess') || '验证码生成成功',
           position: 'top'
