@@ -788,7 +788,11 @@ export default function HomePage() {
         <div className={styles.heroWrap}>
           {/* 背景图片 */}
           <div className={styles.bgBanner}>
-            <img className={styles.bgBannerImage} src="/images/new_home/banner.png" alt="banner" />
+            <img 
+              className={styles.bgBannerImage} 
+              src={isEN ? '/images/new_home/banner_en.svg' : '/images/new_home/banner_zh.svg'} 
+              alt="banner" 
+            />
 
             {/* 搜索框（层叠在 Banner 上） */}
             <div className={styles.header} style={{ bottom: showNotice ? 10 : 10 }} onClick={() => router.push('/search')}>
