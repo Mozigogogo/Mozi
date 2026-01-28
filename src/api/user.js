@@ -2,6 +2,7 @@
  * 用户相关 API
  */
 import { request } from '../utils/request';
+import { Interface } from '../utils/constants';
 
 
 /**
@@ -138,5 +139,62 @@ export const saveAlarmSettings = (params) => {
     url: '/alarm/settings/save',
     method: 'POST',
     data: params,
+  });
+};
+
+/**
+ * 生成账号绑定验证码
+ * 用户A为自己生成验证码，供其他账号绑定使用
+ * @returns {Promise<{userId: string, verificationCode: string, remainingSeconds: number}>}
+ * @example
+ * const result = await generateBindCode();
+ * // 返回示例：
+ * // {
+ * //   code: 0,
+ * //   errorMsg: null,
+ * //   data: {
+ * //     userId: "uuid-abc-123",
+ * //     verificationCode: "123456",
+ * //     remainingSeconds: 300
+ * //   }
+ * // }
+ */
+export const generateBindCode = () => {
+  return request({
+    url: Interface.GENERATE_BIND_CODE,
+    method: 'POST',
+  });
+};
+
+/**
+ * 确认账号绑定
+ * 用户B使用用户A的ID和验证码，将自己绑定到用户A
+ * @param {Object} params - 绑定参数
+ * @param {string} params.targetUserId - 目标用户ID（用户A的ID）
+ * @param {string} params.verificationCode - 验证码
+ * @returns {Promise<{userId: string, token: string}>}
+ * @example
+ * const result = await confirmBind({
+ *   targetUserId: "uuid-abc-123",
+ *   verificationCode: "123456"
+ * });
+ * // 返回示例：
+ * // {
+ * //   code: 0,
+ * //   errorMsg: null,
+ * //   data: {
+ * //     userId: "uuid-abc-123",
+ * //     token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ * //   }
+ * // }
+ */
+export const confirmBind = (params) => {
+  return request({
+    url: Interface.CONFIRM_BIND,
+    method: 'POST',
+    data: {
+      targetUserId: params.targetUserId,
+      verificationCode: params.verificationCode,
+    },
   });
 };

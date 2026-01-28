@@ -327,6 +327,7 @@
     "walletConnectFailed": "钱包连接失败",
     "defaultNickname": "用户",
     "wechatUser": "微信用户",
+    "accountBindLabel": "账号绑定",
     "aboutMozi": {
       "intro": "Mozi 是一家专业的加密数据分析智能平台，致力于为全球用户提供精准，实时的加密货币市场数据和分析服务，简化交易，降低交易的门槛，帮助用户在加密货币市场中做出明智的投资决策，降低风险，获得更高的收益。",
       "description": "作为一家专业的加密数据分析平台，为解决用户去哪里买，买什么，怎么买的痛点，Mozi通过整合多种数据，提供详尽的搜索和丰富的各类排行榜让用户探索，包括但不限于交易所排行榜，热门币种排行榜，价格涨跌幅榜，目前覆盖主流交易所的数据。为了保证数据的准确性和实时性，Mozi 团队由经验丰富的专业人士组成，涵盖交易、数据开发、数据分析,人工智能，和平台架构，他们的专业知识和技能为平台数据的准确性和可靠性提供了强大支持。作为初创公司，Mozi 秉持墨子兼爱非攻的理念，致力于在全球传播这一理念。同时也诚邀感兴趣的技术，运营，产品以及投资机构联系我们。",
@@ -337,6 +338,29 @@
       "values": "Mozi价值观：",
       "valuesText": "兼爱 务实 专注 创新 自由"
     }
+  },
+  "accountBind": {
+    "title": "账号绑定",
+    "generateTab": "生成验证码",
+    "bindTab": "绑定账号",
+    "generateDesc": "生成验证码供其他账号绑定到您的账号",
+    "bindDesc": "输入目标用户的ID和验证码进行绑定",
+    "generateButton": "生成验证码",
+    "userId": "用户ID",
+    "code": "验证码",
+    "expiresIn": "有效期",
+    "regenerate": "重新生成",
+    "targetUserId": "目标用户ID",
+    "verificationCode": "验证码",
+    "enterUserId": "请输入用户ID",
+    "enterCode": "请输入验证码",
+    "confirmBind": "确认绑定",
+    "generateSuccess": "验证码生成成功",
+    "generateFailed": "生成失败",
+    "generateError": "生成验证码失败，请重试",
+    "bindSuccess": "绑定成功",
+    "bindFailed": "绑定失败",
+    "bindError": "绑定失败，请重试"
   },
   "auth": {
     "email": "邮箱",

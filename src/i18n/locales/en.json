@@ -327,6 +327,7 @@
     "walletConnectFailed": "Wallet connection failed",
     "defaultNickname": "User",
     "wechatUser": "Telegram User",
+    "accountBindLabel": "Account Binding",
     "aboutMozi": {
       "intro": "Mozi is a professional crypto data analysis platform dedicated to providing global users with accurate, real-time cryptocurrency market data and analysis services. We simplify trading, lower barriers, help users make informed investment decisions, reduce risks, and achieve higher returns.",
       "description": "As a professional crypto data analysis platform, Mozi solves users' pain points of where to buy, what to buy, and how to buy by integrating multiple data sources, providing comprehensive search and rich rankings for users to explore, including but not limited to exchange rankings, popular coin rankings, and price change rankings, currently covering data from mainstream exchanges. To ensure data accuracy and timeliness, the Mozi team consists of experienced professionals covering trading, data development, data analysis, AI, and platform architecture. Their expertise provides strong support for platform data accuracy and reliability. As a startup, Mozi upholds the philosophy of Mozi's universal love and non-aggression, committed to spreading this philosophy globally. We also sincerely invite interested technical, operational, product teams and investment institutions to contact us.",
@@ -337,6 +338,29 @@
       "values": "Values:",
       "valuesText": "Universal Love · Pragmatic · Focus · Innovation · Freedom"
     }
+  },
+  "accountBind": {
+    "title": "Account Binding",
+    "generateTab": "Generate Code",
+    "bindTab": "Bind Account",
+    "generateDesc": "Generate a verification code for other accounts to bind to your account",
+    "bindDesc": "Enter the target user's ID and verification code to bind",
+    "generateButton": "Generate Code",
+    "userId": "User ID",
+    "code": "Verification Code",
+    "expiresIn": "Expires In",
+    "regenerate": "Regenerate",
+    "targetUserId": "Target User ID",
+    "verificationCode": "Verification Code",
+    "enterUserId": "Please enter user ID",
+    "enterCode": "Please enter verification code",
+    "confirmBind": "Confirm Binding",
+    "generateSuccess": "Verification code generated successfully",
+    "generateFailed": "Generation failed",
+    "generateError": "Failed to generate verification code, please try again",
+    "bindSuccess": "Binding successful",
+    "bindFailed": "Binding failed",
+    "bindError": "Binding failed, please try again"
   },
   "auth": {
     "email": "Email",

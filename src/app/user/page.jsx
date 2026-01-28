@@ -12,6 +12,7 @@ import NewCoinListing from '../../components/NewCoinListing';
 import LoginModal from '../../components/LoginModal';
 import SocialMediaPopup from '../../components/SocialMediaPopup';
 import FeedbackSuccessModal from '../../components/FeedbackSuccessModal';
+import AccountBindModal from '../../components/AccountBindModal';
 import { RightArrowIcon } from '../../components/Icons';
 import CopyIcon from '../../components/Icons/CopyIcon';
 import { request } from '../../utils/request';
@@ -111,6 +112,7 @@ export default function UserPage() {
   const [isLoadingNewCoins, setIsLoadingNewCoins] = useState(false); // 新币上线数据加载状态
   const [showSuccessModal, setShowSuccessModal] = useState(false); // 成功反馈弹窗状态
   const [submittingFeedback, setSubmittingFeedback] = useState(false); // 提交反馈的 loading 状态
+  const [showAccountBindModal, setShowAccountBindModal] = useState(false); // 账号绑定弹窗状态
   
   // 用于记录当前组件生命周期内是否已经为邀请码弹出过登录弹窗
   const hasShownInviteModalRef = useRef(false);
@@ -1545,6 +1547,19 @@ export default function UserPage() {
       callback: () => { window.location.href = '/theme'; }
     },
     {
+      key: 'accountBind',
+      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/link%402x.png'} alt="账号绑定" style={{ width: 22, height: 22 }} />),
+      text: t('user.accountBindLabel') || '账号绑定',
+      extra: '',
+      callback: () => {
+        if (!userInfo.isLogin) {
+          Toast.show({ content: t('user.pleaseLogin'), position: 'bottom' });
+          return;
+        }
+        setShowAccountBindModal(true);
+      }
+    },
+    {
       key: 'contact',
       icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/me-contact%402x.png'} alt="联系我们" style={{ width: 22, height: 22 }} />),
       text: t('user.contactUs'),
@@ -2074,6 +2089,12 @@ export default function UserPage() {
         <FeedbackSuccessModal
           visible={showSuccessModal}
           onClose={() => setShowSuccessModal(false)}
+        />
+
+        {/* 账号绑定弹窗 */}
+        <AccountBindModal
+          visible={showAccountBindModal}
+          onClose={() => setShowAccountBindModal(false)}
         />
       </div>
     </Layout>

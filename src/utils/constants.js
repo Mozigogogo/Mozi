@@ -170,6 +170,10 @@ export const Interface = {
   LIKE_COIN_VOTE: '/likeCoin/downOrUp',
   // 查询看涨看跌数量
   LIKE_COIN_COUNT: '/likeCoin/downOrUpCount',
+  // 生成账号绑定验证码
+  GENERATE_BIND_CODE: '/api/user/bind/generateCode',
+  // 确认账号绑定
+  CONFIRM_BIND: '/api/user/bind/confirmBind',
 
   // 告警
   // 添加告警
