@@ -26,7 +26,7 @@ export default function PinkContainer() {
       id: 'notice',
       icon: '/icons/new_detail/announcement_onitoring.svg',
       label: t('home.quickActions.noticeMonitor'),
-      onClick: () => router.push('/mynotices')
+      onClick: () => router.push('/user?scrollTo=calendar')
     },
     {
       id: 'sector',

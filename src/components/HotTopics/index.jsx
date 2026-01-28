@@ -32,7 +32,8 @@ const HotTopics = ({ limit = 10, showViewMore = true }) => {
   };
 
   const handleTopicClick = (topic) => {
-    router.push(`/topicinfo?id=${topic.id}`);
+    // 跳转到社区页面的热榜tab
+    router.push(`/community?tab=hot`);
   };
 
   const handleViewMore = () => {

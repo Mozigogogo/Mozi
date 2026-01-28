@@ -140,6 +140,23 @@ export default function UserPage() {
     if (isTelegramEnv()) return;
     const mode = searchParams.get('mode');
     const showLogin = searchParams.get('showLogin');
+    const scrollTo = searchParams.get('scrollTo');
+    
+    // 处理滚动到指定位置
+    if (scrollTo === 'calendar') {
+      // 延迟滚动，确保页面已完全渲染
+      setTimeout(() => {
+        const calendarSection = document.querySelector(`.${styles.calendarSection}`);
+        if (calendarSection) {
+          // 使用 center 对齐，让日历显示在屏幕中间位置
+          calendarSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 500);
+      
+      // 清除 URL 参数
+      window.history.replaceState({}, '', '/user');
+      return;
+    }
     
     if (mode === 'register' || showLogin === 'true') {
       // 使用 requestAnimationFrame 确保在下一帧渲染，让页面先完成初始渲染
