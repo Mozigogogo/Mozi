@@ -1,0 +1,239 @@
+.container {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #4ECDC4 0%, #E8F5F4 30%, #FFFFFF 60%);
+  padding-bottom: 20px;
+}
+
+.navbar {
+  background: transparent;
+  color: #000;
+  
+  :global {
+    .adm-nav-bar-back-arrow {
+      color: #000;
+      font-size: 20px;
+    }
+    
+    .adm-nav-bar-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+  }
+}
+
+.navRight {
+  display: flex;
+  gap: 12px;
+  
+  .iconBtn {
+    font-size: 20px;
+    cursor: pointer;
+  }
+}
+
+.content {
+  padding: 0 16px;
+}
+
+.sectorCard {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  
+  .cardHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    
+    .sectorName {
+      font-size: 18px;
+      font-weight: 600;
+      color: #000;
+    }
+    
+    .sectorChange {
+      font-size: 14px;
+      font-weight: 500;
+      padding: 4px 8px;
+      border-radius: 6px;
+      
+      &.positive {
+        color: #00C087;
+        background: rgba(0, 192, 135, 0.1);
+      }
+      
+      &.negative {
+        color: #FF6B6B;
+        background: rgba(255, 107, 107, 0.1);
+      }
+    }
+  }
+  
+  .cardStats {
+    display: flex;
+    gap: 40px;
+    
+    .statItem {
+      flex: 1;
+      
+      .statLabel {
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 8px;
+      }
+      
+      .statValue {
+        font-size: 20px;
+        font-weight: 600;
+        color: #000;
+      }
+    }
+  }
+}
+
+.sortBar {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px 8px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  
+  .sortItem {
+    flex: 1;
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+    cursor: pointer;
+    user-select: none;
+    
+    &.active {
+      color: #000;
+      font-weight: 600;
+    }
+    
+    &:first-child {
+      flex: 1.2;
+      text-align: left;
+      padding-left: 8px;
+    }
+    
+    &:nth-child(4),
+    &:nth-child(5) {
+      flex: 0.8;
+    }
+  }
+}
+
+.coinList {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  
+  .empty {
+    padding: 60px 20px;
+    text-align: center;
+    color: #999;
+    font-size: 14px;
+  }
+}
+
+.coinItem {
+  display: flex;
+  align-items: center;
+  padding: 16px 12px;
+  border-bottom: 1px solid #f5f5f5;
+  
+  &:last-child {
+    border-bottom: none;
+  }
+  
+  .coinInfo {
+    flex: 1.2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    
+    .coinIcon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    
+    .coinIconPlaceholder {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 600;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+    }
+    
+    .coinSymbol {
+      font-size: 14px;
+      font-weight: 600;
+      color: #000;
+    }
+  }
+  
+  .coinPrice {
+    flex: 1;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: #000;
+  }
+  
+  .coinChange {
+    flex: 1;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 6px;
+    
+    &.positive {
+      color: #00C087;
+      background: rgba(0, 192, 135, 0.1);
+    }
+    
+    &.negative {
+      color: #FF6B6B;
+      background: rgba(255, 107, 107, 0.1);
+    }
+  }
+  
+  .likeBtn,
+  .monitorBtn {
+    flex: 0.8;
+    text-align: center;
+    font-size: 20px;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.2s;
+    
+    &:active {
+      transform: scale(1.2);
+    }
+  }
+}
+
+// 响应式适配
+@media (min-width: 768px) {
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+}

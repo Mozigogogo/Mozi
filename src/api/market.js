@@ -51,6 +51,47 @@ export const fetchHotSectionsData = async ({ pageSize = 100, pageNo = 1 } = {}) 
   }
 };
 
+/**
+ * 获取板块详情
+ * @param {string} sectionName - 板块名称
+ * @returns {Promise}
+ */
+export const getSectorDetail = (sectionName) => {
+  return request({
+    url: Interface.SECTOR_DETAIL,
+    method: 'GET',
+    params: { sectionName },
+  });
+};
+
+// ==================== 自选币种相关 ====================
+
+/**
+ * 添加自选币种
+ * @param {string} symbol - 币种符号
+ * @returns {Promise}
+ */
+export const addOwnCoin = (symbol) => {
+  return request({
+    url: Interface.ADD_OWN,
+    method: 'POST',
+    data: { symbol },
+  });
+};
+
+/**
+ * 取消自选币种
+ * @param {string} symbol - 币种符号
+ * @returns {Promise}
+ */
+export const cancelOwnCoin = (symbol) => {
+  return request({
+    url: Interface.CANCEL_OWN,
+    method: 'POST',
+    data: { symbol },
+  });
+};
+
 // ==================== 市场数据相关 ====================
 
 /**

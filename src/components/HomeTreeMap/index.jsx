@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import * as d3 from 'd3';
 import styles from './index.module.less';
 
 const HomeTreeMap = ({ list = [], name, desc }) => {
+  const router = useRouter();
   const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
@@ -232,22 +234,27 @@ const HomeTreeMap = ({ list = [], name, desc }) => {
         `;
       });
 
-    // 添加悬停效果
+    // 添加悬停效果和点击事件
     nodes
       .on('mouseenter', function() {
         d3.select(this)
           .style('opacity', '0.9')
           .style('transform', 'scale(1.02)')
-          .style('z-index', '10');
+          .style('z-index', '10')
+          .style('cursor', 'pointer');
       })
       .on('mouseleave', function() {
         d3.select(this)
           .style('opacity', '1')
           .style('transform', 'scale(1)')
           .style('z-index', '1');
+      })
+      .on('click', function(event, d) {
+        // 跳转到板块详情页，传递板块名称
+        router.push(`/sectordetail?name=${encodeURIComponent(d.data.name)}`);
       });
 
-  }, [list, name, desc, dimensions]);
+  }, [list, name, desc, dimensions, router]);
 
   if (!list || list.length === 0) {
     return (

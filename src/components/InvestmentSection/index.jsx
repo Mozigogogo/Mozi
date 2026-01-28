@@ -99,7 +99,6 @@ export default function InvestmentSection({
             {/* 第一页 */}
             <div 
               className={styles.pageContainer}
-              onClick={() => router.push('/hotrank?type=industry')}
             >
               <div className={styles.centerLoading}>
                 {industryLoading ? (
@@ -137,7 +136,6 @@ export default function InvestmentSection({
             {hasSecondPage && !industryLoading && (
               <div 
                 className={styles.pageContainer}
-                onClick={() => router.push('/hotrank?type=industry')}
               >
                 <div className={styles.centerLoading}>
                   <div style={{ width: '100%', height: '100%', flex: 1 }}>
