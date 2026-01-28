@@ -7,16 +7,33 @@
 .navbar {
   background: transparent;
   color: #000;
+  height: 56px;
   
   :global {
+    .adm-nav-bar {
+      height: 56px;
+      padding: 0 16px;
+    }
+    
     .adm-nav-bar-back-arrow {
       color: #000;
-      font-size: 20px;
+      font-size: 22px;
     }
     
     .adm-nav-bar-title {
-      font-size: 18px;
-      font-weight: 600;
+      font-family: 'PingFang SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-weight: 500;
+      font-size: 16px;
+      line-height: 51.22px;
+      letter-spacing: 0;
+      text-align: center;
+      text-transform: capitalize;
+      color: rgba(0, 0, 0, 1);
+    }
+    
+    .adm-nav-bar-left,
+    .adm-nav-bar-right {
+      padding: 0;
     }
   }
 }
@@ -24,10 +41,17 @@
 .navRight {
   display: flex;
   gap: 12px;
+  align-items: center;
   
   .iconBtn {
-    font-size: 20px;
+    width: 24px;
+    height: 24px;
     cursor: pointer;
+    transition: opacity 0.2s;
+    
+    &:active {
+      opacity: 0.6;
+    }
   }
 }
 
@@ -36,11 +60,13 @@
 }
 
 .sectorCard {
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  padding: 20px;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-radius: 20px;
+  padding: 10px 20px;
   margin-bottom: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   
   .cardHeader {
@@ -50,25 +76,68 @@
     margin-bottom: 20px;
     
     .sectorName {
-      font-size: 18px;
-      font-weight: 600;
-      color: #000;
+      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      font-size: 16px;
+      line-height: 100%;
+      letter-spacing: 0;
+      text-transform: capitalize;
+      color: rgba(49, 48, 48, 1);
     }
     
     .sectorChange {
-      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
       font-weight: 500;
-      padding: 4px 8px;
-      border-radius: 6px;
+      font-size: 12px;
+      line-height: 100%;
+      padding: 4px 10px;
+      border-radius: 3px;
+      background: #C9F6E7;
+      position: relative;
       
       &.positive {
-        color: #00C087;
-        background: rgba(0, 192, 135, 0.1);
+        color: #0B7556;
+        background: #C9F6E7;
+        
+        &::before {
+          content: '';
+          position: absolute;
+          left: 6px;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 0;
+          height: 0;
+          border-left: 3px solid transparent;
+          border-right: 3px solid transparent;
+          border-bottom: 4px solid #00BE87;
+        }
+        
+        // 为箭头留出空间
+        padding-left: 16px;
       }
       
       &.negative {
         color: #FF6B6B;
         background: rgba(255, 107, 107, 0.1);
+        
+        &::before {
+          content: '';
+          position: absolute;
+          left: 6px;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 0;
+          height: 0;
+          border-left: 3px solid transparent;
+          border-right: 3px solid transparent;
+          border-top: 4px solid #FF6B6B;
+        }
+        
+        // 为箭头留出空间
+        padding-left: 16px;
       }
     }
   }
@@ -81,15 +150,24 @@
       flex: 1;
       
       .statLabel {
+        font-family: 'PingFang SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-weight: 300;
         font-size: 12px;
-        color: #666;
+        line-height: 100%;
+        letter-spacing: 0;
+        vertical-align: bottom;
+        color: rgba(102, 102, 102, 1);
         margin-bottom: 8px;
       }
       
       .statValue {
+        font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-weight: 700;
         font-size: 20px;
-        font-weight: 600;
-        color: #000;
+        line-height: 100%;
+        letter-spacing: 0;
+        text-transform: capitalize;
+        color: rgba(11, 117, 86, 1);
       }
     }
   }
@@ -98,34 +176,33 @@
 .sortBar {
   display: flex;
   align-items: center;
-  background: #fff;
+  background: transparent;
   border-radius: 12px;
   padding: 12px 8px;
   margin-bottom: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  gap: 4px;
+  
+  // SortButton 组件的容器
+  :global {
+    .sortButton {
+      flex: 1;
+      
+      &:first-child {
+        flex: 1.2;
+      }
+    }
+  }
   
   .sortItem {
-    flex: 1;
+    flex: 0.6;
     text-align: center;
     font-size: 12px;
     color: #666;
     cursor: pointer;
     user-select: none;
     
-    &.active {
-      color: #000;
-      font-weight: 600;
-    }
-    
-    &:first-child {
-      flex: 1.2;
-      text-align: left;
-      padding-left: 8px;
-    }
-    
-    &:nth-child(4),
-    &:nth-child(5) {
-      flex: 0.8;
+    &:last-child {
+      margin-left: -8px;
     }
   }
 }

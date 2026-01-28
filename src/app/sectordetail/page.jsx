@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { NavBar, PullToRefresh, Toast } from 'antd-mobile';
 import { getSectorDetail, addOwnCoin, cancelOwnCoin } from '@/api/market';
+import SortButton from '@/components/SortButton';
 import styles from './page.module.less';
 
 export default function SectorDetailPage() {
@@ -16,7 +17,7 @@ export default function SectorDetailPage() {
   
   const [sectorInfo, setSectorInfo] = useState({
     name: sectorName,
-    change: '+2.25%',
+    change: '2.25%',
     marketCap: '$1.2亿',
     volume: '$1.5亿'
   });
@@ -26,6 +27,20 @@ export default function SectorDetailPage() {
   const [sortOrder, setSortOrder] = useState('desc'); // asc, desc
   const [loading, setLoading] = useState(false);
 
+  // 排序处理
+  const handleSortChange = (field, order) => {
+    setSortBy(field);
+    setSortOrder(order);
+    
+    // 执行排序
+    const sorted = [...coinList].sort((a, b) => {
+      const aVal = a[field] || 0;
+      const bVal = b[field] || 0;
+      return order === 'asc' ? aVal - bVal : bVal - aVal;
+    });
+    
+    setCoinList(sorted);
+  };
   // 获取板块详情数据
   const fetchSectorDetail = async () => {
     setLoading(true);
@@ -38,7 +53,7 @@ export default function SectorDetailPage() {
         // 更新板块信息
         setSectorInfo({
           name: data.sectionName || sectorName,
-          change: data.change24h ? `${data.change24h >= 0 ? '+' : ''}${data.change24h.toFixed(2)}%` : '+0.00%',
+          change: data.change24h ? `${data.change24h.toFixed(2)}%` : '0.00%',
           marketCap: data.totalMarketCap || '$0',
           volume: data.totalVolume || '$0'
         });
@@ -73,25 +88,6 @@ export default function SectorDetailPage() {
   useEffect(() => {
     fetchSectorDetail();
   }, [sectorName]);
-
-  // 排序处理
-  const handleSort = (field) => {
-    if (sortBy === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(field);
-      setSortOrder('desc');
-    }
-    
-    // 执行排序
-    const sorted = [...coinList].sort((a, b) => {
-      const aVal = a[field] || 0;
-      const bVal = b[field] || 0;
-      return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
-    });
-    
-    setCoinList(sorted);
-  };
 
   // 收藏/取消收藏
   const handleLike = async (coin) => {
@@ -146,8 +142,16 @@ export default function SectorDetailPage() {
         onBack={() => router.back()}
         right={
           <div className={styles.navRight}>
-            <span className={styles.iconBtn}>👥</span>
-            <span className={styles.iconBtn}>🔄</span>
+            <img 
+              src="/icons/new_sector/group.svg" 
+              alt="group" 
+              className={styles.iconBtn}
+            />
+            <img 
+              src="/icons/new_sector/share.svg" 
+              alt="share" 
+              className={styles.iconBtn}
+            />
           </div>
         }
         className={styles.navbar}
@@ -161,7 +165,7 @@ export default function SectorDetailPage() {
           <div className={styles.sectorCard}>
             <div className={styles.cardHeader}>
               <span className={styles.sectorName}>{sectorInfo.name}</span>
-              <span className={`${styles.sectorChange} ${sectorInfo.change.startsWith('+') ? styles.positive : styles.negative}`}>
+              <span className={`${styles.sectorChange} ${parseFloat(sectorInfo.change) >= 0 ? styles.positive : styles.negative}`}>
                 {sectorInfo.change}
               </span>
             </div>
@@ -179,24 +183,21 @@ export default function SectorDetailPage() {
 
           {/* 排序栏 */}
           <div className={styles.sortBar}>
-            <div 
-              className={`${styles.sortItem} ${sortBy === 'marketCap' ? styles.active : ''}`}
-              onClick={() => handleSort('marketCap')}
-            >
-              成分币种 {sortBy === 'marketCap' && (sortOrder === 'asc' ? '▲' : '▼')}
-            </div>
-            <div 
-              className={`${styles.sortItem} ${sortBy === 'price' ? styles.active : ''}`}
-              onClick={() => handleSort('price')}
-            >
-              最新价 {sortBy === 'price' && (sortOrder === 'asc' ? '▲' : '▼')}
-            </div>
-            <div 
-              className={`${styles.sortItem} ${sortBy === 'change24h' ? styles.active : ''}`}
-              onClick={() => handleSort('change24h')}
-            >
-              24h涨跌 {sortBy === 'change24h' && (sortOrder === 'asc' ? '▲' : '▼')}
-            </div>
+            <SortButton
+              label="成分币种"
+              value="marketCap"
+              onChange={handleSortChange}
+            />
+            <SortButton
+              label="最新价"
+              value="price"
+              onChange={handleSortChange}
+            />
+            <SortButton
+              label="24h涨跌"
+              value="change24h"
+              onChange={handleSortChange}
+            />
             <div className={styles.sortItem}>自加选</div>
             <div className={styles.sortItem}>加监控</div>
           </div>
