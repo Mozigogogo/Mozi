@@ -60,6 +60,11 @@ export default function HotSectorPage() {
     setActiveSort({ field, order });
   };
 
+  const handleSectorClick = (sectorData) => {
+    // 跳转到板块详情页面
+    router.push(`/sectordetail?name=${encodeURIComponent(sectorData.name)}`);
+  };
+
   const handleBack = () => {
     router.back();
   };
@@ -165,6 +170,7 @@ export default function HotSectorPage() {
             list={sectorData}
             name="sectorName"
             desc="changePercent"
+            onItemClick={handleSectorClick}
           />
         )}
       </div>

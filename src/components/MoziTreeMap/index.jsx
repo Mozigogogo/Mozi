@@ -4,7 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import styles from './index.module.less';
 
-const MoziTreeMap = ({ list = [], name, desc }) => {
+const MoziTreeMap = ({ list = [], name, desc, onItemClick }) => {
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -184,8 +184,9 @@ const MoziTreeMap = ({ list = [], name, desc }) => {
         `;
       });
 
-    // 添加悬停效果
+    // 添加悬停效果和点击事件
     nodes
+      .style('cursor', onItemClick ? 'pointer' : 'default')
       .on('mouseenter', function() {
         d3.select(this)
           .style('opacity', '0.9')
@@ -197,9 +198,14 @@ const MoziTreeMap = ({ list = [], name, desc }) => {
           .style('opacity', '1')
           .style('transform', 'scale(1)')
           .style('z-index', '1');
+      })
+      .on('click', function(event, d) {
+        if (onItemClick) {
+          onItemClick(d.data);
+        }
       });
 
-  }, [list, name, desc]);
+  }, [list, name, desc, onItemClick]);
 
   if (!list || list.length === 0) {
     return (
