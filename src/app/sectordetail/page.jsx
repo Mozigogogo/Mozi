@@ -307,11 +307,12 @@ export default function SectorDetailPage() {
               <div className={styles.empty}>暂无数据</div>
             ) : (
               coinList.map(coin => (
-                <div key={coin.id} className={styles.coinItem}>
-                  <div 
-                    className={styles.coinInfo}
-                    onClick={() => goToCoinDetail(coin.symbol)}
-                  >
+                <div 
+                  key={coin.id} 
+                  className={styles.coinItem}
+                  onClick={() => goToCoinDetail(coin.symbol)}
+                >
+                  <div className={styles.coinInfo}>
                     {coin.icon ? (
                       <img src={coin.icon} alt={coin.symbol} className={styles.coinIcon} />
                     ) : (
@@ -335,7 +336,10 @@ export default function SectorDetailPage() {
                   
                   <div 
                     className={styles.likeBtn}
-                    onClick={() => handleLike(coin)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleLike(coin);
+                    }}
                   >
                     <img 
                       src={coin.isLiked ? '/icons/new_detail/like_actived.svg' : '/icons/new_detail/like_no_actived.svg'}
@@ -346,7 +350,10 @@ export default function SectorDetailPage() {
                   
                   <div 
                     className={styles.monitorBtn}
-                    onClick={() => handleMonitor(coin)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMonitor(coin);
+                    }}
                   >
                     <img 
                       src="/icons/new_home/monitor-bell.svg"
