@@ -201,22 +201,27 @@ export default function SectorDetailPage() {
     }
   };
 
-  // 监控/取消监控
-  const handleMonitor = (coinId) => {
-    // TODO: 调用监控 API
-    setCoinList(prev => prev.map(coin => 
-      coin.id === coinId ? { ...coin, isMonitored: !coin.isMonitored } : coin
-    ));
-    
-    Toast.show({
-      content: t('common.success') || '操作成功',
-      position: 'top'
-    });
+  // 监控/取消监控 - 跳转到告警配置页面
+  const handleMonitor = (coin) => {
+    router.push(`/addwarn?symbol=${coin.symbol}`);
   };
 
   // 跳转到币种详情
   const goToCoinDetail = (symbol) => {
     router.push(`/detail?symbol=${symbol}`);
+  };
+
+  // 跳转到板块讨论区
+  const handleGoToCommunity = () => {
+    router.push(`/rankdiscuss?type=sector&name=${encodeURIComponent(sectorInfo.name)}`);
+  };
+
+  // 分享到 Telegram
+  const handleShare = () => {
+    const shareUrl = encodeURIComponent(window.location.href);
+    const shareText = encodeURIComponent(`${sectorInfo.name} ${t('sectorDetail.sector') || '板块'} - ${sectorInfo.change}`);
+    const telegramUrl = `https://t.me/share/url?url=${shareUrl}&text=${shareText}`;
+    window.open(telegramUrl, '_blank');
   };
 
   return (
@@ -229,11 +234,13 @@ export default function SectorDetailPage() {
               src="/icons/new_sector/group.svg" 
               alt="group" 
               className={styles.iconBtn}
+              onClick={handleGoToCommunity}
             />
             <img 
               src="/icons/new_sector/share.svg" 
               alt="share" 
               className={styles.iconBtn}
+              onClick={handleShare}
             />
           </div>
         }
@@ -339,13 +346,12 @@ export default function SectorDetailPage() {
                   
                   <div 
                     className={styles.monitorBtn}
-                    onClick={() => handleMonitor(coin.id)}
+                    onClick={() => handleMonitor(coin)}
                   >
                     <img 
                       src="/icons/new_home/monitor-bell.svg"
                       alt="monitor"
                       className={styles.iconImg}
-                      style={{ opacity: coin.isMonitored ? 1 : 0.3 }}
                     />
                   </div>
                 </div>
