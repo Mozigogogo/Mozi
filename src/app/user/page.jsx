@@ -17,6 +17,7 @@ import { RightArrowIcon } from '../../components/Icons';
 import CopyIcon from '../../components/Icons/CopyIcon';
 import { request } from '../../utils/request';
 import { Interface, EMAIL, COINKEY } from '../../utils/constants';
+import { loginByWallet } from '../../api/user';
 import { useAmplitude } from '../../hooks/useAmplitude';
 import { ProfileEvents } from '../../utils/amplitude';
 import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
@@ -439,16 +440,8 @@ export default function UserPage() {
       const signature = await signMessageAsync({ message });
 
       try {
-        const res = await request({
-          url: Interface.MOZI_LOGIN,
-          method: 'POST',
-          data: {
-            type: 'login',
-            chanel: 3,  // 3-钱包登录
-            address: currentAddress,
-            signatrue: signature  // 注意：后端字段名为 signatrue
-          },
-        });
+        const res = await loginByWallet(currentAddress, signature);
+        
         if (res?.data?.token) localStorage.setItem('token', res.data.token);
         if (res?.data?.user) {
           // 将 subscribeAnnouncement 一起存入 userInfo
@@ -1336,26 +1329,12 @@ export default function UserPage() {
       
       // 调用后端接口进行 TON 钱包登录（与非 TG 环境保持一致）
       console.log('=== TON 钱包登录传参 ===', {
-        type: 'login',
-        chanel: 3,
-        channel: 'tg',
         address: tonAddress,
         signatrue: tonWallet.account?.publicKey,
         ...(inviteCode && { invitedCode: inviteCode }),
       });
-      const res = await request({
-        url: Interface.MOZI_LOGIN,
-        method: 'POST',
-        data: {
-          type: 'login',
-          chanel: 3,  // 3-钱包登录
-          channel: 'tg',
-          address: tonAddress,
-          signatrue: tonWallet.account?.publicKey,
-          ...(inviteCode && { invitedCode: inviteCode }), // 传递邀请码
-        }
-      });
       
+      const res = await loginByWallet(tonAddress, tonWallet.account?.publicKey, 'tg', inviteCode);
       
       Toast.clear();
       

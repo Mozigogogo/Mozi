@@ -93,10 +93,9 @@ export default function AccountBindModal({ visible, onClose }) {
           position: 'top'
         });
         
-        // 延迟关闭弹窗并刷新页面
+        // 延迟关闭弹窗
         setTimeout(() => {
           onClose();
-          window.location.reload();
         }, 1500);
       } else {
         Toast.show({

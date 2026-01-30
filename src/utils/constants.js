@@ -279,6 +279,14 @@ export const Interface = {
   // 绑定邮箱和手机号（一键告警设置）
   SAVE_ALARM_SETTINGS: '/alarm/settings/save',
 
+  // 告警配置
+  // 查询告警配置
+  GET_ALERT_CONFIG: '/user/alert/config',
+  // 新增告警配置
+  ADD_ALERT_CONFIG: '/user/alert/config/add',
+  // 修改告警配置
+  UPDATE_ALERT_CONFIG: '/user/alert/config/update',
+
   // 积分
   // 获取用户积分
   TASK_POINTS: '/task/points',
