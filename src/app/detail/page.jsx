@@ -147,18 +147,28 @@ export default function DetailPage() {
     try {
       const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
       
-      // 如果用户未登录，不调用接口
+      // 如果用户未登录，清空配置并返回
       if (!userId) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('alertConfig');
+        }
         return;
       }
       
       const { getAlertConfig } = await import('../../api/user');
       const res = await getAlertConfig();
       
-      if (res?.code === 0 && res?.data) {
-        // 将配置保存到 localStorage
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('alertConfig', JSON.stringify(res.data));
+      if (res?.code === 0) {
+        if (res.data) {
+          // 有配置数据，保存到 localStorage
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('alertConfig', JSON.stringify(res.data));
+          }
+        } else {
+          // data 为 null，清空 localStorage 中的旧配置
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('alertConfig');
+          }
         }
       }
     } catch (error) {

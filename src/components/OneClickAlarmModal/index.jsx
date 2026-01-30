@@ -117,6 +117,59 @@ export default function OneClickAlarmModal({
     loading: true,
   });
 
+  // 在弹窗打开时检查告警配置（从 localStorage 读取，detail 页面已经调用接口更新）
+  useEffect(() => {
+    if (!open || mode !== 'oneClick') return;
+
+    const checkAlertConfig = () => {
+      try {
+        const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+        
+        if (!userId) {
+          // 未登录，显示输入框
+          setHideInputs(false);
+          return;
+        }
+
+        // 从 localStorage 读取告警配置（detail 页面进入时已调用接口更新）
+        const alertConfigStr = typeof window !== 'undefined' ? localStorage.getItem('alertConfig') : null;
+        
+        if (alertConfigStr) {
+          const alertConfig = JSON.parse(alertConfigStr);
+          
+          // 有配置数据，隐藏输入框
+          setHideInputs(true);
+          
+          // 预填充表单数据
+          if (alertConfig.alertPhone) {
+            setPhone(alertConfig.alertPhone);
+          }
+          if (alertConfig.alertEmail) {
+            setEmail(alertConfig.alertEmail);
+          }
+          if (alertConfig.phoneEnabled !== undefined) {
+            setPhoneEnabled(alertConfig.phoneEnabled === 1);
+          }
+          if (alertConfig.emailEnabled !== undefined) {
+            setEmailEnabled(alertConfig.emailEnabled === 1);
+          }
+          if (alertConfig.defaultEnabled !== undefined) {
+            setPushEnabled(alertConfig.defaultEnabled === 1);
+          }
+        } else {
+          // localStorage 中没有配置数据，显示输入框
+          setHideInputs(false);
+        }
+      } catch (error) {
+        console.error('读取告警配置失败:', error);
+        // 出错时显示输入框
+        setHideInputs(false);
+      }
+    };
+
+    checkAlertConfig();
+  }, [open, mode]);
+
   useEffect(() => {
     if (!open) return;
     if (mode !== 'config') return;
