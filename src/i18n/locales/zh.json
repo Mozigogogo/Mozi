@@ -961,8 +961,8 @@
     "priceFall": "价格跌至",
     "risePercent": "日涨幅超",
     "fallPercent": "日跌幅超",
-    "bigOrderDetect": "大单侦测",
-    "exchangeSpreadMonitor": "交易所价差监控",
+    "bigOrderDetect": "大单成交检测",
+    "exchangeSpreadMonitor": "交易所价差",
     "saveAlarm": "保存告警",
     "viewAlarms": "查看已配置告警",
     "loading": "加载中...",
@@ -1285,7 +1285,7 @@
     "atLeastOneMethod": "请至少开启一种告警方式"
   },
   "orderBook": {
-    "title": "大单侦测",
+    "title": "大单成交检测",
     "limitedExperience": "限时体验",
     "buy": "买入",
     "sell": "卖出",

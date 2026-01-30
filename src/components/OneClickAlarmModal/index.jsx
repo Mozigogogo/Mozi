@@ -107,7 +107,7 @@ export default function OneClickAlarmModal({
     risePercent: { value: '10', enabled: true, unit: '%', labelKey: 'addAlarm.risePercent' },
     fallPercent: { value: '10', enabled: false, unit: '%', labelKey: 'addAlarm.fallPercent' },
     bigOrderDetect: { value: '', enabled: false, unit: '', labelKey: 'addAlarm.bigOrderDetect', type: 'switchOnly' },
-    exchangeSpreadMonitor: { value: '', enabled: false, unit: '', labelKey: 'addAlarm.exchangeSpreadMonitor', type: 'switchOnly' },
+    exchangeSpreadMonitor: { value: '', enabled: false, unit: '%', labelKey: 'addAlarm.exchangeSpreadMonitor' },
   });
 
   const [coinData, setCoinData] = useState({
@@ -514,13 +514,13 @@ export default function OneClickAlarmModal({
                     </div>
                   </div>
 
+                  {/* 第一组：价格告警 */}
                   <div className={configStyles.configCard}>
-                    {Object.entries(configs).map(([key, config]) => (
-                      <div key={key} className={configStyles.configItem}>
-                        <div className={configStyles.configLabel}>{t(config.labelKey)}</div>
-                        {config.type === 'switchOnly' ? (
-                          <div className={configStyles.switchOnlySpacer} />
-                        ) : (
+                    {['priceRise', 'priceFall', 'risePercent', 'fallPercent'].map((key) => {
+                      const config = configs[key];
+                      return (
+                        <div key={key} className={configStyles.configItem}>
+                          <div className={configStyles.configLabel}>{t(config.labelKey)}</div>
                           <div className={configStyles.configInputContainer}>
                             <Input
                               className={configStyles.configInput}
@@ -531,15 +531,62 @@ export default function OneClickAlarmModal({
                             />
                             <div className={configStyles.configUnit}>{config.unit}</div>
                           </div>
-                        )}
-                        <Switch
-                          className={configStyles.configSwitch}
-                          checked={config.enabled}
-                          onChange={(checked) => handleSwitchChange(key, checked)}
-                          style={{ '--checked-color': '#11B787' }}
-                        />
-                      </div>
-                    ))}
+                          <Switch
+                            className={configStyles.configSwitch}
+                            checked={config.enabled}
+                            onChange={(checked) => handleSwitchChange(key, checked)}
+                            style={{ '--checked-color': '#11B787' }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* 第二组：大单成交检测 */}
+                  <div className={configStyles.configCard}>
+                    {['bigOrderDetect'].map((key) => {
+                      const config = configs[key];
+                      return (
+                        <div key={key} className={configStyles.configItem}>
+                          <div className={configStyles.configLabel}>{t(config.labelKey)}</div>
+                          <div className={configStyles.switchOnlySpacer} />
+                          <Switch
+                            className={configStyles.configSwitch}
+                            checked={config.enabled}
+                            onChange={(checked) => handleSwitchChange(key, checked)}
+                            style={{ '--checked-color': '#11B787' }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* 第三组：交易所价差 */}
+                  <div className={configStyles.configCard}>
+                    {['exchangeSpreadMonitor'].map((key) => {
+                      const config = configs[key];
+                      return (
+                        <div key={key} className={configStyles.configItem}>
+                          <div className={configStyles.configLabel}>{t(config.labelKey)}</div>
+                          <div className={configStyles.configInputContainer}>
+                            <Input
+                              className={configStyles.configInput}
+                              type="number"
+                              value={config.value}
+                              placeholder={t('addAlarm.placeholder')}
+                              onChange={(val) => handleInputChange(key, val)}
+                            />
+                            <div className={configStyles.configUnit}>{config.unit}</div>
+                          </div>
+                          <Switch
+                            className={configStyles.configSwitch}
+                            checked={config.enabled}
+                            onChange={(checked) => handleSwitchChange(key, checked)}
+                            style={{ '--checked-color': '#11B787' }}
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
