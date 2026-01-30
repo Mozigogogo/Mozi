@@ -36,8 +36,8 @@ export default function UserPage() {
   // 状态定义
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { t } = useTranslation();
-  const { trackEvent } = useAmplitude();
+  const { t, i18n } = useTranslation();
+  const { trackEvent, track } = useAmplitude('Profile');
   
   // 使用告警配置 Hook
   const { fetchConfig: fetchAlertConfigFromHook } = useAlertConfig({ autoFetch: false });
@@ -59,9 +59,6 @@ export default function UserPage() {
     isConnected = false;
     signMessageAsync = null;
   }
-  
-  const { t, i18n } = useTranslation();
-  const { track } = useAmplitude('Profile');
   
   // TON Connect hooks (用于 Telegram 环境)
   const [tonConnectUI] = useTonConnectUI();
