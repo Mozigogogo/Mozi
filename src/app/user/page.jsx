@@ -18,6 +18,7 @@ import CopyIcon from '../../components/Icons/CopyIcon';
 import { request } from '../../utils/request';
 import { Interface, EMAIL, COINKEY } from '../../utils/constants';
 import { loginByWallet } from '../../api/user';
+import { fetchUserAlertConfig } from '../../api/user';
 import { useAmplitude } from '../../hooks/useAmplitude';
 import { ProfileEvents } from '../../utils/amplitude';
 import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
@@ -245,6 +246,23 @@ export default function UserPage() {
     }
   };
 
+  // 获取用户告警配置
+  const fetchAlertConfig = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const config = await fetchUserAlertConfig();
+      
+      if (config) {
+        // 将配置保存到 localStorage
+        localStorage.setItem('alertConfig', JSON.stringify(config));
+      }
+    } catch (error) {
+      console.error('❌ 获取告警配置失败:', error);
+    }
+  };
+
   // 首次与聚焦时同步登录态（来自 token 或钱包地址 Cookie）
   const hasCalledPointsDataRef = useRef(false);
   
@@ -314,12 +332,13 @@ export default function UserPage() {
     // 首次加载时同步登录态
     syncLogin();
     
-    // 首次加载时获取积分数据（只调用一次）
+    // 首次加载时获取积分数据和告警配置（只调用一次）
     const hasToken = !!localStorage.getItem('token');
     const walletAddr = getCookie('wallet_address');
     if ((hasToken || !!walletAddr) && !hasCalledPointsDataRef.current) {
       hasCalledPointsDataRef.current = true;
       fetchUserPointsData();
+      fetchAlertConfig();
     }
     
     const onFocus = () => syncLogin();

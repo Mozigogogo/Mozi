@@ -1278,7 +1278,11 @@
     "enableSuccess": "Enabled successfully",
     "enableFailed": "Enable failed",
     "pleaseLogin": "Please login first",
-    "networkError": "Network error, please retry"
+    "networkError": "Network error, please retry",
+    "phoneRequired": "Please enter phone number",
+    "emailRequired": "Please enter email",
+    "emailInvalid": "Invalid email format",
+    "atLeastOneMethod": "Please enable at least one alert method"
   },
   "orderBook": {
     "title": "Large Order Detection",

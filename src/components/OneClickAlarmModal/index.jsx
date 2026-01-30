@@ -9,7 +9,7 @@ import PopLogin from '../PopLogin';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { jump2NoTab } from '../../utils/core';
-import { saveAlarmSettings } from '../../api/user';
+import { saveAlarmSettings, createAlertConfig } from '../../api/user';
 import styles from './index.module.less';
 import configStyles from './config.module.less';
 
@@ -98,6 +98,8 @@ export default function OneClickAlarmModal({
   const [btnDisabled, setBtnDisabled] = useState(false);
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [hideInputs, setHideInputs] = useState(false); // 控制输入框显示/隐藏
+  const [phoneError, setPhoneError] = useState(''); // 手机号错误提示
+  const [emailError, setEmailError] = useState(''); // 邮箱错误提示
   const [configs, setConfigs] = useState({
     priceRise: { value: '', enabled: true, unit: '$', labelKey: 'addAlarm.priceRise' },
     priceFall: { value: '', enabled: true, unit: '$', labelKey: 'addAlarm.priceFall' },
@@ -222,6 +224,10 @@ export default function OneClickAlarmModal({
   // 处理开启告警
   const handleEnableAlarm = async () => {
     try {
+      // 清空之前的错误提示
+      setPhoneError('');
+      setEmailError('');
+
       const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
       
       if (!userId) {
@@ -230,24 +236,37 @@ export default function OneClickAlarmModal({
         return;
       }
 
-      const { getAppChannel } = await import('../../utils/core');
-      const channel = getAppChannel();
+      // 至少需要开启一种告警方式
+      if (!phoneEnabled && !emailEnabled) {
+        Toast.show({ content: t('oneClickAlarm.atLeastOneMethod') });
+        return;
+      }
 
-      const requestData = {
-        phoneEnabled,
-        countryCode,
-        phone,
-        emailEnabled,
-        email,
-        pushEnabled,
-        channel,
+      // 邮箱格式验证（只在有输入内容时才验证）
+      if (emailEnabled && email && email.trim() !== '') {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email.trim())) {
+          setEmailError(t('oneClickAlarm.emailInvalid'));
+          return;
+        }
+      }
+
+      // 构建告警配置参数（无论开关状态，都传递输入的值）
+      const alertConfig = {
+        alertPhone: phone || '',  // 传递手机号，无论是否开启
+        alertEmail: email || '',  // 传递邮箱，无论是否开启
+        phoneEnabled: phoneEnabled ? 1 : 0,
+        emailEnabled: emailEnabled ? 1 : 0,
+        defaultEnabled: pushEnabled ? 1 : 0  // 推送开关状态
       };
 
-      // 调用 API
-      const res = await saveAlarmSettings(requestData);
+      // 调用新增告警配置接口
+      const result = await createAlertConfig(alertConfig);
 
-      if (res?.code === 0) {
-        Toast.show({ content: t('oneClickAlarm.enableSuccess'), icon: 'success' });
+      if (result.success) {
+        // 保存配置到 localStorage
+        localStorage.setItem('alertConfig', JSON.stringify(result.data));
+        
         setHideInputs(true); // 隐藏输入框
         
         // 调用原有的 onConfirm 回调
@@ -259,12 +278,25 @@ export default function OneClickAlarmModal({
           email,
           pushEnabled,
         });
+        
+        // 延迟关闭弹窗
+        setTimeout(() => {
+          onClose?.();
+        }, 500);
       } else {
-        Toast.show({ content: res?.errorMsg || t('oneClickAlarm.enableFailed') });
+        // 后端返回的错误用 Toast 提示
+        Toast.show({ 
+          content: result.error || t('oneClickAlarm.enableFailed'),
+          maskStyle: { zIndex: 10000 } // 确保 Toast 在弹窗之上
+        });
       }
     } catch (error) {
-      console.error('开启告警失败:', error);
-      Toast.show({ content: t('oneClickAlarm.networkError') });
+      console.error('❌ 开启告警失败:', error);
+      // 网络错误用 Toast 提示
+      Toast.show({ 
+        content: t('oneClickAlarm.networkError'),
+        maskStyle: { zIndex: 10000 } // 确保 Toast 在弹窗之上
+      });
     }
   };
 
@@ -497,28 +529,34 @@ export default function OneClickAlarmModal({
                 </div>
 
                 {!hideInputs && (
-                  <div className={styles.inputRow}>
-                    <span className={styles.inputIcon}><PhoneInputIcon /></span>
-                    <div className={styles.countryCodeWrap}>
-                      <button
-                        type="button"
-                        className={styles.countryPickerTrigger}
-                        onClick={() => {
-                          setCountryPickerOpen(true);
+                  <>
+                    <div className={styles.inputRow}>
+                      <span className={styles.inputIcon}><PhoneInputIcon /></span>
+                      <div className={styles.countryCodeWrap}>
+                        <button
+                          type="button"
+                          className={styles.countryPickerTrigger}
+                          onClick={() => {
+                            setCountryPickerOpen(true);
+                          }}
+                        >
+                          <span className={styles.countryPickerTriggerValue}>{countryCode}</span>
+                          <img className={styles.countryPickerTriggerArrow} src="/icons/new_detail/down_arrow.svg" alt="down" />
+                        </button>
+                      </div>
+                      <input
+                        className={styles.input}
+                        placeholder={t('oneClickAlarm.phonePlaceholder')}
+                        value={phone}
+                        onChange={(e) => {
+                          setPhone(e.target.value);
+                          if (phoneError) setPhoneError(''); // 清除错误提示
                         }}
-                      >
-                        <span className={styles.countryPickerTriggerValue}>{countryCode}</span>
-                        <img className={styles.countryPickerTriggerArrow} src="/icons/new_detail/down_arrow.svg" alt="down" />
-                      </button>
+                        inputMode="tel"
+                      />
                     </div>
-                    <input
-                      className={styles.input}
-                      placeholder={t('oneClickAlarm.phonePlaceholder')}
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      inputMode="tel"
-                    />
-                  </div>
+                    {phoneError && <div className={styles.errorText}>{phoneError}</div>}
+                  </>
                 )}
 
                 <div className={styles.divider} />
@@ -532,16 +570,22 @@ export default function OneClickAlarmModal({
                 </div>
 
                 {!hideInputs && (
-                  <div className={styles.inputRow}>
-                    <span className={styles.inputIcon}><MailInputIcon /></span>
-                    <input
-                      className={styles.input}
-                      placeholder={t('oneClickAlarm.emailPlaceholder')}
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      inputMode="email"
-                    />
-                  </div>
+                  <>
+                    <div className={styles.inputRow}>
+                      <span className={styles.inputIcon}><MailInputIcon /></span>
+                      <input
+                        className={styles.input}
+                        placeholder={t('oneClickAlarm.emailPlaceholder')}
+                        value={email}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          if (emailError) setEmailError(''); // 清除错误提示
+                        }}
+                        inputMode="email"
+                      />
+                    </div>
+                    {emailError && <div className={styles.errorText}>{emailError}</div>}
+                  </>
                 )}
 
                 <div className={styles.divider} />

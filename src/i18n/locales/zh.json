@@ -1277,7 +1277,11 @@
     "enableSuccess": "开启成功",
     "enableFailed": "开启失败",
     "pleaseLogin": "请先登录",
-    "networkError": "网络错误，请重试"
+    "networkError": "网络错误，请重试",
+    "phoneRequired": "请输入手机号",
+    "emailRequired": "请输入邮箱",
+    "emailInvalid": "邮箱格式不正确",
+    "atLeastOneMethod": "请至少开启一种告警方式"
   },
   "orderBook": {
     "title": "大单侦测",

@@ -142,6 +142,30 @@ export default function DetailPage() {
     }
   };
 
+  // 获取用户告警配置
+  const fetchUserAlertConfig = async () => {
+    try {
+      const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+      
+      // 如果用户未登录，不调用接口
+      if (!userId) {
+        return;
+      }
+      
+      const { getAlertConfig } = await import('../../api/user');
+      const res = await getAlertConfig();
+      
+      if (res?.code === 0 && res?.data) {
+        // 将配置保存到 localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('alertConfig', JSON.stringify(res.data));
+        }
+      }
+    } catch (error) {
+      console.error('获取告警配置失败:', error);
+    }
+  };
+
   const generateMockOrderBook = (iconUrl) => {
     const genSide = () => {
       const baseValue = 10e9 + Math.random() * 4e9;
@@ -580,6 +604,9 @@ ${coinInfo.name || symbol} (${symbol})
     fetchCoinInfo();
     fetchMarketData();
     fetchROIData();
+    
+    // 获取用户告警配置
+    fetchUserAlertConfig();
     
     // 设置WebSocket连接超时（10秒）
     // 如果10秒内WebSocket未连接成功，则启用HTTP降级
