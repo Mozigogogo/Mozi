@@ -9,7 +9,7 @@ import PopLogin from '../PopLogin';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { jump2NoTab } from '../../utils/core';
-import { saveAlarmSettings, createAlertConfig } from '../../api/user';
+import { saveAlarmSettings, createAlertConfig, modifyAlertConfig } from '../../api/user';
 import styles from './index.module.less';
 import configStyles from './config.module.less';
 
@@ -305,17 +305,35 @@ export default function OneClickAlarmModal({
       // 开始 loading
       setIsLoading(true);
 
-      // 构建告警配置参数（无论开关状态，都传递输入的值）
+      // 构建告警配置参数（只在开关打开时传递对应的值）
       const alertConfig = {
-        alertPhone: phone || '',  // 传递手机号，无论是否开启
-        alertEmail: email || '',  // 传递邮箱，无论是否开启
         phoneEnabled: phoneEnabled ? 1 : 0,
         emailEnabled: emailEnabled ? 1 : 0,
         defaultEnabled: pushEnabled ? 1 : 0  // 推送开关状态
       };
 
-      // 调用新增告警配置接口
-      const result = await createAlertConfig(alertConfig);
+      // 只在开关打开时才传递对应的联系方式
+      if (phoneEnabled && phone) {
+        alertConfig.alertPhone = phone;
+      }
+      if (emailEnabled && email) {
+        alertConfig.alertEmail = email;
+      }
+
+      // 检查 localStorage 中是否已有告警配置
+      const existingConfigStr = typeof window !== 'undefined' ? localStorage.getItem('alertConfig') : null;
+      const hasExistingConfig = existingConfigStr && existingConfigStr !== 'null';
+      
+      let result;
+      if (hasExistingConfig) {
+        // 已有配置，调用修改接口
+        console.log('📝 检测到已有配置，调用修改接口');
+        result = await modifyAlertConfig(alertConfig);
+      } else {
+        // 无配置，调用新增接口
+        console.log('📝 未检测到配置，调用新增接口');
+        result = await createAlertConfig(alertConfig);
+      }
 
       if (result.success) {
         // 保存配置到 localStorage
@@ -632,7 +650,7 @@ export default function OneClickAlarmModal({
                   <Toggle checked={phoneEnabled} onChange={setPhoneEnabled} />
                 </div>
 
-                {!hideInputs && (
+                {phoneEnabled && (
                   <>
                     <div className={styles.inputRow}>
                       <span className={styles.inputIcon}><PhoneInputIcon /></span>
@@ -673,7 +691,7 @@ export default function OneClickAlarmModal({
                   <Toggle checked={emailEnabled} onChange={setEmailEnabled} />
                 </div>
 
-                {!hideInputs && (
+                {emailEnabled && (
                   <>
                     <div className={styles.inputRow}>
                       <span className={styles.inputIcon}><MailInputIcon /></span>

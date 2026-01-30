@@ -334,11 +334,6 @@ export const createAlertConfig = async (config) => {
         console.error('❌ 开启电话告警时，alertPhone 不能为空');
         return { success: false, error: '开启电话告警时，手机号不能为空' };
       }
-      // 验证手机号格式（1开头11位）
-      if (!/^1\d{10}$/.test(alertPhone)) {
-        console.error('❌ 手机号格式不正确，应为1开头的11位数字');
-        return { success: false, error: '手机号格式不正确' };
-      }
     }
     
     // 验证邮箱告警
@@ -437,11 +432,6 @@ export const modifyAlertConfig = async (config) => {
       if (!alertPhone || alertPhone.trim() === '') {
         console.error('❌ 开启电话告警时，alertPhone 不能为空');
         return { success: false, error: '开启电话告警时，手机号不能为空' };
-      }
-      // 验证手机号格式（1开头11位）
-      if (!/^1\d{10}$/.test(alertPhone)) {
-        console.error('❌ 手机号格式不正确，应为1开头的11位数字');
-        return { success: false, error: '手机号格式不正确' };
       }
     }
     
