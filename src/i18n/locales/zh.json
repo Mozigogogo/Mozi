@@ -1274,6 +1274,7 @@
     "emailPlaceholder": "请输入邮箱",
     "confirmButton": "开启告警",
     "skipButton": "暂不开启",
+    "loading": "加载中...",
     "enableSuccess": "开启成功",
     "enableFailed": "开启失败",
     "pleaseLogin": "请先登录",

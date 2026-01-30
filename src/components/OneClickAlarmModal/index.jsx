@@ -100,6 +100,7 @@ export default function OneClickAlarmModal({
   const [hideInputs, setHideInputs] = useState(false); // 控制输入框显示/隐藏
   const [phoneError, setPhoneError] = useState(''); // 手机号错误提示
   const [emailError, setEmailError] = useState(''); // 邮箱错误提示
+  const [isLoading, setIsLoading] = useState(false); // 开启告警按钮的 loading 状态
   const [configs, setConfigs] = useState({
     priceRise: { value: '', enabled: true, unit: '$', labelKey: 'addAlarm.priceRise' },
     priceFall: { value: '', enabled: true, unit: '$', labelKey: 'addAlarm.priceFall' },
@@ -223,6 +224,9 @@ export default function OneClickAlarmModal({
 
   // 处理开启告警
   const handleEnableAlarm = async () => {
+    // 防止重复点击
+    if (isLoading) return;
+
     try {
       // 清空之前的错误提示
       setPhoneError('');
@@ -236,12 +240,6 @@ export default function OneClickAlarmModal({
         return;
       }
 
-      // 至少需要开启一种告警方式
-      if (!phoneEnabled && !emailEnabled) {
-        Toast.show({ content: t('oneClickAlarm.atLeastOneMethod') });
-        return;
-      }
-
       // 邮箱格式验证（只在有输入内容时才验证）
       if (emailEnabled && email && email.trim() !== '') {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -250,6 +248,9 @@ export default function OneClickAlarmModal({
           return;
         }
       }
+
+      // 开始 loading
+      setIsLoading(true);
 
       // 构建告警配置参数（无论开关状态，都传递输入的值）
       const alertConfig = {
@@ -282,6 +283,7 @@ export default function OneClickAlarmModal({
         // 延迟关闭弹窗
         setTimeout(() => {
           onClose?.();
+          setIsLoading(false); // 关闭弹窗后重置 loading 状态
         }, 500);
       } else {
         // 后端返回的错误用 Toast 提示
@@ -289,6 +291,7 @@ export default function OneClickAlarmModal({
           content: result.error || t('oneClickAlarm.enableFailed'),
           maskStyle: { zIndex: 10000 } // 确保 Toast 在弹窗之上
         });
+        setIsLoading(false); // 失败后重置 loading 状态
       }
     } catch (error) {
       console.error('❌ 开启告警失败:', error);
@@ -297,6 +300,7 @@ export default function OneClickAlarmModal({
         content: t('oneClickAlarm.networkError'),
         maskStyle: { zIndex: 10000 } // 确保 Toast 在弹窗之上
       });
+      setIsLoading(false); // 异常后重置 loading 状态
     }
   };
 
@@ -602,10 +606,15 @@ export default function OneClickAlarmModal({
               <div className={styles.footerActions}>
                 <button
                   type="button"
-                  className={styles.primaryBtn}
+                  className={`${styles.primaryBtn} ${isLoading ? styles.loading : ''}`}
                   onClick={handleEnableAlarm}
+                  disabled={isLoading}
                 >
-                  {confirmText || t('oneClickAlarm.confirmButton')}
+                  {isLoading ? (
+                    <span className={styles.loadingSpinner}></span>
+                  ) : (
+                    confirmText || t('common.confirm')
+                  )}
                 </button>
                 <button
                   type="button"
@@ -614,8 +623,9 @@ export default function OneClickAlarmModal({
                     onSkip?.();
                     onClose?.();
                   }}
+                  disabled={isLoading}
                 >
-                  {skipText || t('oneClickAlarm.skipButton')}
+                  {skipText || t('common.cancel')}
                 </button>
               </div>
             </div>

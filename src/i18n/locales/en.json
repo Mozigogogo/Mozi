@@ -1275,6 +1275,7 @@
     "emailPlaceholder": "Enter email",
     "confirmButton": "Enable Alerts",
     "skipButton": "Skip",
+    "loading": "Loading...",
     "enableSuccess": "Enabled successfully",
     "enableFailed": "Enable failed",
     "pleaseLogin": "Please login first",
