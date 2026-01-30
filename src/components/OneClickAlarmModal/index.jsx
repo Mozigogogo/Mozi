@@ -142,7 +142,17 @@ export default function OneClickAlarmModal({
           
           // 预填充表单数据
           if (alertConfig.alertPhone) {
-            setPhone(alertConfig.alertPhone);
+            // 解析国家区号和手机号
+            const phoneStr = alertConfig.alertPhone;
+            // 尝试匹配国家区号（+开头的数字）
+            const match = phoneStr.match(/^(\+\d+)(.+)$/);
+            if (match) {
+              setCountryCode(match[1]); // 国家区号，如 +86
+              setPhone(match[2]); // 手机号
+            } else {
+              // 如果没有匹配到区号，直接使用原值
+              setPhone(phoneStr);
+            }
           }
           if (alertConfig.alertEmail) {
             setEmail(alertConfig.alertEmail);
@@ -314,7 +324,8 @@ export default function OneClickAlarmModal({
 
       // 只在开关打开时才传递对应的联系方式
       if (phoneEnabled && phone) {
-        alertConfig.alertPhone = phone;
+        // 拼接国家区号和手机号
+        alertConfig.alertPhone = `${countryCode}${phone}`;
       }
       if (emailEnabled && email) {
         alertConfig.alertEmail = email;
