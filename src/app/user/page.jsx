@@ -18,7 +18,7 @@ import CopyIcon from '../../components/Icons/CopyIcon';
 import { request } from '../../utils/request';
 import { Interface, EMAIL, COINKEY } from '../../utils/constants';
 import { loginByWallet } from '../../api/user';
-import { fetchUserAlertConfig } from '../../api/user';
+import { useAlertConfig } from '../../hooks/useAlertConfig';
 import { useAmplitude } from '../../hooks/useAmplitude';
 import { ProfileEvents } from '../../utils/amplitude';
 import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
@@ -36,6 +36,11 @@ export default function UserPage() {
   // 状态定义
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useTranslation();
+  const { trackEvent } = useAmplitude();
+  
+  // 使用告警配置 Hook
+  const { fetchConfig: fetchAlertConfigFromHook } = useAlertConfig({ autoFetch: false });
   
   // 安全地使用 wagmi hooks，避免服务端渲染错误
   let disconnect, address, isConnected, signMessageAsync;
@@ -246,20 +251,20 @@ export default function UserPage() {
     }
   };
 
-  // 获取用户告警配置
+  // 获取用户告警配置（使用 Hook）
   const fetchAlertConfig = async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const config = await fetchUserAlertConfig();
+      console.log('🔄 [User Page] 开始获取告警配置...');
       
-      if (config) {
-        // 将配置保存到 localStorage
-        localStorage.setItem('alertConfig', JSON.stringify(config));
-      }
+      // 使用 Hook 提供的方法（自动处理缓存和防重复）
+      await fetchAlertConfigFromHook();
+      
+      console.log('✅ [User Page] 告警配置获取完成');
     } catch (error) {
-      console.error('❌ 获取告警配置失败:', error);
+      console.error('❌ [User Page] 获取告警配置失败:', error);
     }
   };
 

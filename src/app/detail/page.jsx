@@ -23,6 +23,7 @@ import { Interface, LOOPTIME, WS_URL } from '../../utils/constants';
 import { formatNumber, formatPercent, jump2NoTab } from '../../utils/core';
 import { MoziWebSocket } from '../../utils/moziWebSocket';
 import { useTranslation } from 'react-i18next';
+import { useAlertConfig } from '../../hooks/useAlertConfig';
 import {
   WS_EVENTS,
   PLATFORMS,
@@ -38,6 +39,9 @@ export default function DetailPage() {
   const symbol = searchParams.get('symbol') || '';
   const fromFavorite = searchParams.get('fromFavorite') === '1'; // 是否从自选榜进入
   const { t } = useTranslation();
+  
+  // 使用告警配置 Hook（自动获取）
+  const { fetchConfig: fetchAlertConfig } = useAlertConfig({ autoFetch: false });
   
   // 状态定义
   const [coinInfo, setCoinInfo] = useState(null);
@@ -142,7 +146,7 @@ export default function DetailPage() {
     }
   };
 
-  // 获取用户告警配置
+  // 获取用户告警配置（使用 Hook 的 fetchConfig 方法）
   const fetchUserAlertConfig = async () => {
     try {
       const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
@@ -155,24 +159,10 @@ export default function DetailPage() {
         return;
       }
       
-      const { getAlertConfig } = await import('../../api/user');
-      const res = await getAlertConfig();
-      
-      if (res?.code === 0) {
-        if (res.data) {
-          // 有配置数据，保存到 localStorage
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('alertConfig', JSON.stringify(res.data));
-          }
-        } else {
-          // data 为 null，清空 localStorage 中的旧配置
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('alertConfig');
-          }
-        }
-      }
+      // 使用 Hook 提供的方法获取配置（自动处理缓存和防重复）
+      await fetchAlertConfig();
     } catch (error) {
-      console.error('获取告警配置失败:', error);
+      console.error('❌ 获取告警配置失败:', error);
     }
   };
 
