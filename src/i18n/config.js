@@ -5,7 +5,31 @@ import { initReactI18next } from 'react-i18next';
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 
-const initialLng = (typeof window !== 'undefined' && (localStorage.getItem('i18nextLng') || 'en')) || 'en';
+// 获取初始语言，如果 localStorage 中没有，则使用默认值并保存
+const getInitialLanguage = () => {
+  if (typeof window === 'undefined') {
+    return 'en';
+  }
+  
+  const storedLng = localStorage.getItem('i18nextLng');
+  
+  // 如果已经有保存的语言，直接使用
+  if (storedLng) {
+    return storedLng;
+  }
+  
+  // 如果没有保存的语言，使用默认值并保存到 localStorage
+  const defaultLng = 'en';
+  try {
+    localStorage.setItem('i18nextLng', defaultLng);
+  } catch (e) {
+    console.warn('无法保存语言设置到 localStorage:', e);
+  }
+  
+  return defaultLng;
+};
+
+const initialLng = getInitialLanguage();
 
 // 配置 i18n
 i18n

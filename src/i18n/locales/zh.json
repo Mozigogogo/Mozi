@@ -189,7 +189,13 @@
     },
     "addFavoriteButton": "添加自选",
     "loadFinished": "已全部加载完毕",
-    "robotMessage": "想听听我对行情的分析吗？"
+    "robotMessage": "想听听我对行情的分析吗？",
+    "pullToRefresh": {
+      "pulling": "下拉刷新",
+      "canRelease": "释放立即刷新",
+      "refreshing": "加载中...",
+      "complete": "刷新成功"
+    }
   },
   "overview": {
     "totalMarketCap": "加密总市值",
@@ -268,7 +274,23 @@
     "interfaceLoading": "数据加载中，请稍候",
     "interfaceNotReady": "数据加载失败，请稍后再试",
     "operationFailed": "操作失败，请稍后重试",
-    "feedbackQuestion": "根据您的使用经历，请问您有多大可能向您的朋友推荐Mozi行情助手",
+    "feedbackQuestion": "评价得奖励\nhi~给出您的小小建议吧~",
+    "feedbackTitle": "评价得奖励",
+    "feedbackSubtitle": "hi~给出您的小小建议吧~",
+    "goodFeatures": "您觉得好的功能",
+    "badFeatures": "建议调整的功能",
+    "recommendQuestion": "您是否愿意向您的朋友推荐Mozi",
+    "feedbackInputTitle": "请填写建议反馈，我们将根据您的内容抽取奖励！",
+    "feedbackInputPlaceholder": "感谢反馈，期待您的更多建议！",
+    "submitFeedback": "提交反馈",
+    "featureOptions": {
+      "marketBoard": "行情看板",
+      "alertFunction": "预警功能",
+      "aiChat": "AI对话",
+      "marketData": "市场数据",
+      "communityContent": "社区内容",
+      "contractData": "合约数据"
+    },
     "veryUnwilling": "极不愿意",
     "veryWilling": "非常愿意",
     "moreFeedback": "更多反馈",
@@ -587,6 +609,8 @@
     "earnMorePoints": "获得更多积分",
     "dailyInvestmentTitle": "每日投资排行",
     "taskCompleted": "任务已完成",
+    "taskCompletedSuccess": "任务完成",
+    "fetchFailed": "获取积分数据失败",
     "joinAlarm": "加入警报通",
     "certification": "认证",
     "note1": "每天前20个推荐均可获得积分。",
@@ -782,7 +806,10 @@
       "favorite": "加自选",
       "alert": "告警",
       "share": "分享",
-      "community": "社区"
+      "community": "社区",
+      "configAlarm": "配置告警",
+      "startNow": "立即开启",
+      "comingSoon": "敬请期待"
     },
     "roi": {
       "daily": "日回报率",
@@ -1177,6 +1204,29 @@
     "user": {
       "notLoggedIn": "未登录",
       "pcUser": "PC用户"
+    },
+    "activity": {
+      "title": "MOZI",
+      "subtitle": "限量体验官招募中",
+      "description": "行体验产品 反馈拿奖！！",
+      "joinBtn": "参与体验"
     }
+  },
+  "feedbackSuccess": {
+    "title": "反馈成功",
+    "successMessage": "已成功参加MOZI体验官共创计划！",
+    "joinPrompt": "加入社群参加讨论，了解奖励信息！",
+    "joinButton": "加入社区"
+  },
+  "activityModal": {
+    "title": "MOZI",
+    "subtitle": "限量体验官招募中",
+    "description": "行体验产品  反馈拿奖！！",
+    "joinButton": "参与体验"
+  },
+  "experiencer": {
+    "submit": "去提交",
+    "experience": "去体验",
+    "startExperience": "开始体验"
   }
 }

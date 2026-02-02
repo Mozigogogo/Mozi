@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { sendVerificationCode } from '../../api/user';
+import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
 import styles from './page.module.less';
 
 // 检测是否在 Telegram 环境中
@@ -111,6 +112,9 @@ export default function PCLoginPage() {
 
   // 处理登录
   const handleLogin = async () => {
+    // iOS 修复：强制失焦输入框，防止 viewport 缩放问题
+    forceBlurAndResetViewport();
+    
     if (!email || !password) {
       message.warning(t('auth.fillAllRequired'));
       return;
@@ -191,6 +195,9 @@ export default function PCLoginPage() {
 
   // 处理注册
   const handleRegister = async () => {
+    // iOS 修复：强制失焦输入框，防止 viewport 缩放问题
+    forceBlurAndResetViewport();
+    
     if (!email || !password || !verificationCode) {
       message.warning(t('auth.fillAllRequired'));
       return;

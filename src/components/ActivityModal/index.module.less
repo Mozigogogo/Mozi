@@ -1,0 +1,185 @@
+.modalMask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modalContent {
+  position: relative;
+  width: 100%;
+  max-width: 375px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: slideUp 0.4s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.mergedBackground {
+  position: relative;
+  width: 100%;
+  max-width: 375px;
+  
+  img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+}
+
+.activityTitle {
+  position: absolute;
+  height: 64px;
+  left: 61px;
+  top: 316px;
+  font-family: 'Source-KeynoteartHans', sans-serif;
+  font-style: italic;
+  font-weight: 900;
+  font-size: 26.4397px;
+  color: #06523C;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  text-align: left;
+  padding: 0 10px;
+  box-sizing: border-box;
+  transform: skewX(-2deg);
+  
+  div {
+    font-weight: 900;
+    -webkit-text-stroke: 0.8px #FFFFFF;
+    paint-order: stroke fill;
+    text-shadow: 
+      -0.8px -0.8px 0 #FFFFFF,
+      0.8px -0.8px 0 #FFFFFF,
+      -0.8px 0.8px 0 #FFFFFF,
+      0.8px 0.8px 0 #FFFFFF,
+      0 -0.8px 0 #FFFFFF,
+      0 0.8px 0 #FFFFFF,
+      -0.8px 0 0 #FFFFFF,
+      0.8px 0 0 #FFFFFF;
+  }
+}
+
+// 英文模式下的标题样式 - 减小行间距
+.activityTitleEn {
+  top: 323px;
+  gap: 10px;
+  
+  div {
+    line-height: 0.9;
+  }
+}
+
+.activitySubtitle {
+  position: absolute;
+  left: 86px;
+  top: 392px;
+  font-family: 'Source-KeynoteartHans', sans-serif;
+  font-weight: 900;
+  font-style: normal;
+  font-size: 16px;
+  line-height: 100%;
+  letter-spacing: 0px;
+  color: #0B7556;
+  transform: skewX(-2deg);
+}
+
+// 英文模式下的副标题样式
+.activitySubtitleEn {
+  top: 407px;
+}
+
+.participateButton {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 440px;
+  padding: 10px 48px;
+  background: #11B787;
+  border-radius: 100px;
+  border: none;
+  color: #FFFFFF;
+  font-family: 'Source-KeynoteartHans', sans-serif;
+  font-weight: 900;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  pointer-events: auto;
+  
+  &:hover {
+    opacity: 0.9;
+    transform: translateX(-50%) scale(1.05);
+  }
+  
+  &:active {
+    transform: translateX(-50%) scale(0.98);
+  }
+}
+
+// /* 响应式适配 */
+// @media (max-width: 768px) {
+//   .modalMask {
+//     // padding: 16px;
+//   }
+// }
+
+
+.closeButton {
+  position: absolute;
+  top: 535px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  pointer-events: auto;
+  z-index: 100;
+  
+  img {
+    width: 24px;
+    height: 24px;
+  }
+  
+  &:hover {
+    transform: translateX(-50%) scale(1.1);
+  }
+  
+  &:active {
+    transform: translateX(-50%) scale(0.95);
+  }
+}

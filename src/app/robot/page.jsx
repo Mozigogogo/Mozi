@@ -12,6 +12,7 @@ import PopLogin from '../../components/PopLogin';
 import { trackEvent, trackPageView, AIEvents } from '@/utils/amplitude';
 import { useSSEStream } from '@/hooks/useSSEStream';
 import { INTERFACE_URL, Interface } from '@/utils/constants';
+import { forceBlurAndResetViewport } from '@/utils/iosViewportFix';
 import styles from './page.module.less';
 
 // 代码块组件 - 带复制按钮
@@ -441,11 +442,14 @@ export default function RobotPage() {
   const { sendMessage, isStreaming, abort } = useSSEStream(
     `${INTERFACE_URL}${Interface.AI_CHAT_STREAM}`,
     {
-      headers: () => ({
-        'Accept-Language': typeof window !== 'undefined' 
+      headers: () => {
+        const lang = typeof window !== 'undefined' 
           ? (localStorage.getItem('i18nextLng') || 'zh') 
-          : 'zh',
-      }),
+          : 'zh';
+        return {
+          'language': lang,
+        };
+      },
       getToken: () => typeof window !== 'undefined' ? localStorage.getItem('token') : null,
       onStart: () => {
         // AI 开始回复
@@ -566,6 +570,9 @@ export default function RobotPage() {
 
   // 发送消息 - 使用 SSE Stream Hook
   const handleSend = async (text = null) => {
+    // iOS 修复：强制失焦输入框，防止 viewport 缩放问题
+    forceBlurAndResetViewport();
+    
     const message = text || inputValue.trim();
     if (!message || isStreaming) return;
 

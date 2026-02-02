@@ -10,6 +10,7 @@ import Layout from '@/components/Layout';
 import { Loading } from '@/components/Loading';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
+import { forceBlurAndResetViewport } from '@/utils/iosViewportFix';
 import styles from './page.module.less';
 
 // 图标资源
@@ -392,6 +393,9 @@ export default function CommentInfo() {
 
   // 提交评论或回复
   const handleSubmitComment = async () => {
+    // iOS 修复：强制失焦输入框，防止 viewport 缩放问题
+    forceBlurAndResetViewport();
+    
     if (!commentContent.trim()) {
       Toast.show({
         content: t('comment.messages.inputRequired'),

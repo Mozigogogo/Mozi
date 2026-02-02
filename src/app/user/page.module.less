@@ -477,8 +477,155 @@
 .popContainer {
   padding: 20px;
   box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.aboutContainer {
   max-height: 70vh;
   overflow-y: auto;
+}
+
+.scorePopContainer {
+  padding: 20px;
+  box-sizing: border-box;
+  max-height: 85vh;
+  overflow-y: auto;
+  background-image: url('/images/activity/feedback_modal.svg');
+  background-size: 100% auto;
+  background-position: top center;
+  background-repeat: no-repeat;
+}
+
+.feedbackTitle {
+  position: relative;
+  margin-bottom: 22px;
+  
+  div:first-child {
+    font-family: YouSheBiaoTiHei, sans-serif;
+    font-weight: 700;
+    font-size: 32px;
+    line-height: 1;
+    letter-spacing: -2px;
+    color: #FFFFFF;
+    text-shadow: 
+      2px 2px 0px rgba(0, 0, 0, 0.1),
+      4px 4px 0px rgba(0, 0, 0, 0.08),
+      6px 6px 0px rgba(0, 0, 0, 0.06),
+      8px 8px 10px rgba(0, 0, 0, 0.15);
+    margin-bottom: 4px;
+  }
+  
+  div:last-child {
+    font-size: 14px;
+    color:#0B7556;
+    padding-left: 4px;
+    line-height: 1.4;
+  }
+}
+
+.feedbackContent {
+  margin-bottom: 8px;
+}
+
+.feedbackSelectSection {
+  background: #FFFFFF;
+  box-shadow: 0px 0px 5px 1px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(17.7306px);
+  border-radius: 20px;
+  padding: 12px;
+  margin-bottom: 10px;
+  min-height: 100px;
+}
+
+.feedbackSection {
+  margin-bottom: 12px;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.scoreContainer {
+  position: relative;
+  margin-top: 8px;
+  width: 100%;
+  aspect-ratio: 346 / 133;
+  background-image: url('/images/activity/score.svg');
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.scoreRecommendText {
+  position: absolute;
+  height: 23px;
+  left: 67px;
+  top: 20px;
+  font-family: 'PingFang SC', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 23px;
+  color: #0B7556;
+}
+
+.scoreText {
+  position: absolute;
+  height: 23px;
+  left: 66px;
+  top: 20px;
+  font-family: 'PingFang SC', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-style: normal;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 23px;
+  color: #0B7556;
+}
+
+.feedbackSectionTitle {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 12px;
+  padding-left: 0;
+  text-align: left;
+}
+
+.featureGrid {
+  width: 100%;
+  
+  :global {
+    .adm-grid-item {
+      padding: 0;
+    }
+  }
+}
+
+.featureTag {
+  background: #F5F5F5;
+  border-radius: 20px;
+  padding: 8px 16px;
+  text-align: center;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.3s;
+  white-space: nowrap;
+  
+  &:hover {
+    background: #E8F8F4;
+  }
+  
+  &:active {
+    background: #C9F6E7;
+    color: #0B7556;
+  }
+}
+
+.featureTagSelected {
+  background: #C9F6E7 !important;
+  color: #0B7556 !important;
+  font-weight: 500;
 }
 
 .aboutItem {
@@ -496,41 +643,57 @@
 }
 
 .scoreDesc {
+  position: absolute;
+  bottom: 48px;
+  left: 12px;
+  right: 12px;
   display: flex;
   justify-content: space-between;
   font-size: 12px;
-  margin-top: 10px;
-  color: #898989;
+  color:#11B787;
 }
 
 .scoreList {
-  margin-top: 16px;
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
 }
 
 .scoreItem {
-  background-color: #efefef;
-  width: 32px;
-  height: 32px;
+  background-color: transparent;
+  width: 28px;
+  height: 28px;
   text-align: center;
-  line-height: 32px;
-  border-radius: 8px;
-  color: #000;
+  line-height: 26px;
+  border-radius: 50%;
+  border: 1px solid #0000000D !important;
+  color: #0B7556;
   cursor: pointer;
   transition: all 0.3s;
+  font-size: 14px;
 }
 
 .scoreItem:hover {
-  background-color: #ddd;
+  background-color: rgba(11, 117, 86, 0.1);
 }
 
 .scoreActive {
   background-color: #11B787 !important;
   color: #fff !important;
+  border-color: #11B787 !important;
 }
 
 .scoreCon {
-  margin-top: 16px;
-  margin-bottom: 16px;
+  margin-top: 12px;
+  margin-bottom: 12px;
+  
+  > div:first-child {
+    font-family: 'PingFang SC', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    color: #000;
+  }
 }
 
 .scoreConDesc {
@@ -538,25 +701,77 @@
   font-size: 12px;
 }
 
-.scoreText {
-  box-sizing: border-box;
+.scoreTextArea {
   width: 100%;
-  border: 1px solid #efefef;
-  margin-top: 10px;
-  padding: 10px;
-  border-radius: 4px;
+  margin-top: 12px;
+  background: #F5F5F5;
+  border-radius: 20px;
+  border: none;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: 400;
+  color: #333;
+  height: 110px;
+  resize: none;
+  outline: none;
+  font-family: inherit;
+  line-height: 1.5;
+  
+  // 防止 iOS 自动缩放 - 关键设置
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+  
+  &::placeholder {
+    color: #999999;
+    font-size: 16px;
+    font-weight: 400;
+  }
+  
+  &:focus {
+    background: #F5F5F5;
+    border: none;
+    outline: none;
+  }
 }
+
+
 
 .scoreBtn {
   background-color: #11B787;
   color: #fff;
   margin-top: 16px;
   border: none;
+  height: 44px;
+  border-radius: 100px;
+  font-size: 16px;
+  font-weight: 500;
+  position: relative;
+  
+  &.loading {
+    cursor: not-allowed;
+    opacity: 0.8;
+  }
 }
 
 .scoreBtnDisable {
-  background-color: #f8f8f8 !important;
-  color: #00000040 !important;
+  background-color: #11B787 !important;
+  color: #fff !important;
+}
+
+.loadingSpinner {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* 联系我们与赏 */

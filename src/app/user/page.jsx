@@ -4,19 +4,21 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAccount, useDisconnect, useSignMessage } from 'wagmi';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
-import { Button, Avatar, List, Dialog, Toast, Popup, Grid, TextArea } from 'antd-mobile';
+import { Button, Avatar, List, Dialog, Toast, Popup, Grid } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import Layout from '../../components/Layout';
 import CalendarCard from '../../components/CalendarCard';
 import NewCoinListing from '../../components/NewCoinListing';
 import LoginModal from '../../components/LoginModal';
 import SocialMediaPopup from '../../components/SocialMediaPopup';
+import FeedbackSuccessModal from '../../components/FeedbackSuccessModal';
 import { RightArrowIcon } from '../../components/Icons';
 import CopyIcon from '../../components/Icons/CopyIcon';
 import { request } from '../../utils/request';
 import { Interface, EMAIL, COINKEY } from '../../utils/constants';
 import { useAmplitude } from '../../hooks/useAmplitude';
 import { ProfileEvents } from '../../utils/amplitude';
+import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
 import styles from './page.module.less';
 
 // 检测是否在 Telegram 环境中
@@ -71,6 +73,8 @@ export default function UserPage() {
   const [reportScore, setReportScore] = useState(null);
   const [scoreDisable, setScoreDisable] = useState(true);
   const scoreInputRef = useRef('');
+  const [selectedGoodFeatures, setSelectedGoodFeatures] = useState([]); // 您觉得好的功能
+  const [selectedBadFeatures, setSelectedBadFeatures] = useState([]); // 建议调整的功能
   const [showSecondaryActions, setShowSecondaryActions] = useState(true);
   const [showPointsSection, setShowPointsSection] = useState(true);
   const [showNewCoinListing, setShowNewCoinListing] = useState(true);
@@ -105,6 +109,8 @@ export default function UserPage() {
   });
   const [calendarEventDates, setCalendarEventDates] = useState([]); // 日历上有事件的日期（日期数字数组）
   const [isLoadingNewCoins, setIsLoadingNewCoins] = useState(false); // 新币上线数据加载状态
+  const [showSuccessModal, setShowSuccessModal] = useState(false); // 成功反馈弹窗状态
+  const [submittingFeedback, setSubmittingFeedback] = useState(false); // 提交反馈的 loading 状态
   
   // 用于记录当前组件生命周期内是否已经为邀请码弹出过登录弹窗
   const hasShownInviteModalRef = useRef(false);
@@ -129,6 +135,7 @@ export default function UserPage() {
 
   // 检查 URL 参数，自动打开注册弹窗或登录弹窗
   useEffect(() => {
+    if (isTelegramEnv()) return;
     const mode = searchParams.get('mode');
     const showLogin = searchParams.get('showLogin');
     
@@ -148,6 +155,27 @@ export default function UserPage() {
     }
   }, [searchParams]);
 
+  // 检查 URL 参数，自动打开反馈弹窗
+  useEffect(() => {
+    const openFeedback = searchParams.get('openFeedback');
+    
+    if (openFeedback === 'true') {
+      // 无论是否登录，都打开反馈弹窗
+      // 在提交时会检查登录状态
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          setPopVis(true);
+          setPopType('score');
+        }, 300);
+      });
+      
+      // 清除 URL 中的 openFeedback 参数
+      const url = new URL(window.location.href);
+      url.searchParams.delete('openFeedback');
+      window.history.replaceState({}, '', url.pathname + url.search);
+    }
+  }, [searchParams]);
+
   // 获取用户积分数据
   const fetchUserPointsData = async () => {
     try {
@@ -162,7 +190,26 @@ export default function UserPage() {
       if (res?.data) {
         // 保存完整的 dataInfo 数据到 localStorage
         try {
-          localStorage.setItem('userDataInfo', JSON.stringify(res.data));
+          let nextDataInfo = res.data;
+          const rawUserInfo = localStorage.getItem('userInfo');
+          if (rawUserInfo) {
+            try {
+              const parsedUserInfo = JSON.parse(rawUserInfo);
+              const nickName = parsedUserInfo?.nickName;
+              const avatar = parsedUserInfo?.avatar;
+              if (nickName || avatar) {
+                nextDataInfo = {
+                  ...res.data,
+                  userInfo: {
+                    ...(res.data?.userInfo || {}),
+                    ...(nickName ? { nickName } : {}),
+                    ...(avatar ? { avatar } : {})
+                  }
+                };
+              }
+            } catch {}
+          }
+          localStorage.setItem('userDataInfo', JSON.stringify(nextDataInfo));
         } catch (e) {
           console.error('❌ 保存 dataInfo 到 localStorage 失败:', e);
         }
@@ -200,9 +247,29 @@ export default function UserPage() {
       
       let displayNick = t('user.defaultNickname');
       let displayAvatar = DEFAULT_AVATAR;
-      
-      // 昵称：优先从 userDataInfo.userInfo.nickName 读取
-      if (dataInfo) {
+
+      // 昵称/头像：优先从 userInfo 读取（登录接口写入）
+      if (ui) {
+        try {
+          const parsed = JSON.parse(ui);
+          if (parsed.nickName) {
+            displayNick = parsed.nickName;
+          }
+          if (parsed.avatar) {
+            displayAvatar = parsed.avatar;
+          }
+
+          // 根据登录返回的 subscribeAnnouncement 字段初始化开关状态
+          if (parsed.subscribeAnnouncement !== undefined) {
+            setIsAnnouncementOn(parsed.subscribeAnnouncement === 1);
+          }
+        } catch (e) {
+          console.error('解析 userInfo 失败:', e);
+        }
+      }
+
+      // 兜底：如果 userInfo 没有 nickName，再从 userDataInfo.userInfo.nickName 读取
+      if (displayNick === t('user.defaultNickname') && dataInfo) {
         try {
           const dataInfoParsed = JSON.parse(dataInfo);
           const nickFromDataInfo = (dataInfoParsed.userInfo?.nickName || '').trim();
@@ -211,23 +278,6 @@ export default function UserPage() {
           }
         } catch (e) {
           console.error('解析 userDataInfo 失败:', e);
-        }
-      }
-      
-      // 头像：从 userInfo.avatar 读取
-      if (ui) {
-        try {
-          const parsed = JSON.parse(ui);
-          if (parsed.avatar) {
-            displayAvatar = parsed.avatar;
-          }
-          
-          // 根据登录返回的 subscribeAnnouncement 字段初始化开关状态
-          if (parsed.subscribeAnnouncement !== undefined) {
-            setIsAnnouncementOn(parsed.subscribeAnnouncement === 1);
-          }
-        } catch (e) {
-          console.error('解析 userInfo 失败:', e);
         }
       }
       
@@ -259,6 +309,12 @@ export default function UserPage() {
       window.removeEventListener('focus', onFocus);
       clearInterval(timer);
     };
+  }, []);
+
+  // 预加载反馈成功弹窗的图片资源
+  useEffect(() => {
+    const preloadImage = new Image();
+    preloadImage.src = '/images/activity/toast_modal.png';
   }, []);
 
   // 页面加载时调用 getMyInterface 接口（只传年月）
@@ -426,18 +482,6 @@ export default function UserPage() {
     }
   }, [isConnected, address]);
 
-  // 监听 TON 钱包连接状态变化 (Telegram 环境)
-  useEffect(() => {
-    // 先检查 localStorage 中是否已有 token，避免重复登录
-    const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('token');
-    if (hasToken) return;
-    
-    if (isTelegramEnv() && tonWallet && !userInfo.isLogin) {
-      // TON 钱包已连接，自动进行登录
-      handleTonWalletLogin();
-    }
-  }, [tonWallet]);
-
   // 监听URL中的邀请码参数
   useEffect(() => {
     const inviteCode = searchParams.get('inviteCode') || searchParams.get('invite');
@@ -446,6 +490,9 @@ export default function UserPage() {
       console.log('🔍 [UserPage] 检测到邀请码:', inviteCode);
       // 存储到 localStorage
       localStorage.setItem('inviteCode', inviteCode);
+
+      // TG 环境下不自动弹登录/注册弹窗
+      if (isTelegramEnv()) return;
       
       // 检查用户是否已登录
       const token = localStorage.getItem('token');
@@ -858,22 +905,76 @@ export default function UserPage() {
     scoreInputRef.current = value;
   };
 
+  // 切换"您觉得好的功能"选项
+  const toggleGoodFeature = (feature) => {
+    setSelectedGoodFeatures(prev => {
+      if (prev.includes(feature)) {
+        return prev.filter(f => f !== feature);
+      } else {
+        return [...prev, feature];
+      }
+    });
+  };
+
+  // 切换"建议调整的功能"选项
+  const toggleBadFeature = (feature) => {
+    setSelectedBadFeatures(prev => {
+      if (prev.includes(feature)) {
+        return prev.filter(f => f !== feature);
+      } else {
+        return [...prev, feature];
+      }
+    });
+  };
+
   const submitScore = async () => {
+    // iOS 修复：强制失焦所有输入框，防止 viewport 缩放问题
+    forceBlurAndResetViewport();
+    
+    // 检查用户是否登录
+    const token = localStorage.getItem('token');
+    if (!token) {
+      // 先关闭反馈弹窗
+      setPopVis(false);
+      // 延迟显示 Toast 和打开登录弹窗，确保 Toast 可见
+      setTimeout(() => {
+        Toast.show({ content: t('user.pleaseLogin'), position: 'top', duration: 2000 });
+        // 再延迟一点打开登录弹窗，让用户看到提示
+        setTimeout(() => {
+          setShowLoginModal(true);
+        }, 500);
+      }, 100);
+      return;
+    }
+    
+    setSubmittingFeedback(true);
     try {
       const res = await request({
         url: Interface.MOZI_COMMENT,
         method: 'POST',
-        data: { score: reportScore, content: scoreInputRef.current },
+        data: { 
+          score: reportScore, 
+          content: scoreInputRef.current,
+          goodFeatures: selectedGoodFeatures,
+          badFeatures: selectedBadFeatures
+        },
       });
       if (res?.data?.isSuccess) {
-        Toast.show({ content: t('user.feedbackSuccess'), position: 'bottom' });
+        // 关闭反馈弹窗
+        setPopVis(false);
+        // 显示成功弹窗
+        setShowSuccessModal(true);
       } else {
         Toast.show({ content: t('user.feedbackFailed'), position: 'bottom' });
       }
     } catch (e) {
       Toast.show({ content: t('user.feedbackFailed'), position: 'bottom' });
+    } finally {
+      setSubmittingFeedback(false);
     }
-    setPopVis(false);
+    // 重置选择
+    setSelectedGoodFeatures([]);
+    setSelectedBadFeatures([]);
   };
 
   const copyToClipboard = (value) => {
@@ -950,6 +1051,21 @@ export default function UserPage() {
         try {
           const parsed = JSON.parse(ui);
           setUserInfo((prev) => ({ ...prev, nickname: parsed.nickName || prev.nickname, avatar: parsed.avatar || prev.avatar }));
+          if (parsed?.nickName || parsed?.avatar) {
+            try {
+              const rawDataInfo = localStorage.getItem('userDataInfo');
+              const dataInfo = rawDataInfo ? JSON.parse(rawDataInfo) : {};
+              const next = {
+                ...dataInfo,
+                userInfo: {
+                  ...(dataInfo?.userInfo || {}),
+                  ...(parsed?.nickName ? { nickName: parsed.nickName } : {}),
+                  ...(parsed?.avatar ? { avatar: parsed.avatar } : {}),
+                },
+              };
+              localStorage.setItem('userDataInfo', JSON.stringify(next));
+            } catch {}
+          }
           // 根据登录返回的 subscribeAnnouncement 字段初始化开关状态
           if (parsed.subscribeAnnouncement !== undefined) {
             setIsAnnouncementOn(parsed.subscribeAnnouncement === 1);
@@ -1355,8 +1471,17 @@ export default function UserPage() {
           const storedUserInfo = localStorage.getItem('userInfo');
           if (storedUserInfo) {
             const parsed = JSON.parse(storedUserInfo);
+            parsed.nickName = newNickname;
             parsed.avatar = newAvatar;
             localStorage.setItem('userInfo', JSON.stringify(parsed));
+          } else {
+            localStorage.setItem(
+              'userInfo',
+              JSON.stringify({
+                nickName: newNickname,
+                avatar: newAvatar,
+              })
+            );
           }
         } catch (e) {
           console.error('更新 userInfo 失败:', e);
@@ -1371,6 +1496,7 @@ export default function UserPage() {
               parsed.userInfo = {};
             }
             parsed.userInfo.nickName = newNickname;
+            parsed.userInfo.avatar = newAvatar;
             localStorage.setItem('userDataInfo', JSON.stringify(parsed));
           }
         } catch (e) {
@@ -1380,7 +1506,7 @@ export default function UserPage() {
         Toast.clear();
         Toast.show({
           content: t('user.saveSuccess') || '保存成功',
-          position: 'bottom',
+          position: 'center',
           icon: 'success'
         });
         setShowEditProfile(false);
@@ -1388,7 +1514,7 @@ export default function UserPage() {
         Toast.clear();
         Toast.show({
           content: t('user.saveFailed') || '保存失败',
-          position: 'bottom',
+          position: 'center',
           icon: 'fail'
         });
       }
@@ -1397,7 +1523,7 @@ export default function UserPage() {
       Toast.clear();
       Toast.show({
         content: t('user.saveFailed') || '保存失败',
-        position: 'bottom',
+        position: 'center',
         icon: 'fail'
       });
     }
@@ -1468,7 +1594,7 @@ export default function UserPage() {
             </div>
           ) : (
             <div className={styles.loginBox}>
-              <div className={styles.headerUser} onClick={handleLogin}>
+              <div className={styles.headerUser} onClick={isTelegramEnv() ? undefined : handleLogin}>
                 <img className={styles.headerAvatar} src={DEFAULT_AVATAR} alt="头像" />
                 <span>{t('user.pleaseLogin')}</span>
               </div>
@@ -1627,7 +1753,7 @@ export default function UserPage() {
           </List>
         </div>
 
-        {userInfo.isLogin && (
+        {userInfo.isLogin && !isTelegramEnv() && (
           <Button className={styles.logoutBtn} onClick={handleLogout}>{t('user.logout')}</Button>
         )}
         
@@ -1639,13 +1765,15 @@ export default function UserPage() {
           bodyStyle={
             popType === 'social' 
               ? { background: 'transparent', padding: 0 }
+              : popType === 'score'
+              ? { borderTopLeftRadius: '20px', borderTopRightRadius: '20px' }
               : { borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }
           }
         >
           {popType === 'social' && <SocialMediaPopup />}
 
           {popType === 'about' && (
-            <div className={styles.popContainer}>
+            <div className={`${styles.popContainer} ${styles.aboutContainer}`}>
               <div className={styles.aboutItem}>
                 {t('user.aboutMozi.intro')}
               </div>
@@ -1669,29 +1797,103 @@ export default function UserPage() {
           )}
 
           {popType === 'score' && (
-            <div className={styles.popContainer}>
-              <div>{t('user.feedbackQuestion')}</div>
-              <div className={styles.scoreDesc}>
-                <span>{t('user.veryUnwilling')}</span>
-                <span>{t('user.veryWilling')}</span>
+            <div className={styles.scorePopContainer}>
+              <div className={styles.feedbackTitle}>
+                <div>{t('user.feedbackTitle')}</div>
+                <div>{t('user.feedbackSubtitle')}</div>
               </div>
-              <Grid className={styles.scoreList} columns={10} gap={5}>
-                {[1,2,3,4,5,6,7,8,9,10].map((item) => (
-                  <Grid.Item key={item} className={`${styles.scoreItem} ${item === reportScore ? styles.scoreActive : ''}`} onClick={() => onScoreSelect(item)}>
-                    {item}
-                  </Grid.Item>
-                ))}
-              </Grid>
+              <div className={styles.feedbackContent}>
+                {/* 功能选择区域 */}
+                <div className={styles.feedbackSelectSection}>
+                  {/* 您觉得好的功能 */}
+                  <div className={styles.feedbackSection}>
+                  <div className={styles.feedbackSectionTitle}>{t('user.goodFeatures')}</div>
+                  <Grid className={styles.featureGrid} columns={3} gap={10}>
+                    {[
+                      t('user.featureOptions.marketBoard'),
+                      t('user.featureOptions.alertFunction'),
+                      t('user.featureOptions.aiChat'),
+                      t('user.featureOptions.marketData'),
+                      t('user.featureOptions.communityContent'),
+                      t('user.featureOptions.contractData')
+                    ].map((feature) => (
+                      <Grid.Item key={feature}>
+                        <div 
+                          className={`${styles.featureTag} ${selectedGoodFeatures.includes(feature) ? styles.featureTagSelected : ''}`}
+                          onClick={() => toggleGoodFeature(feature)}
+                        >
+                          {feature}
+                        </div>
+                      </Grid.Item>
+                    ))}
+                  </Grid>
+                </div>
+
+                {/* 建议调整的功能 */}
+                <div className={styles.feedbackSection}>
+                  <div className={styles.feedbackSectionTitle}>{t('user.badFeatures')}</div>
+                  <Grid className={styles.featureGrid} columns={3} gap={10}>
+                    {[
+                      t('user.featureOptions.marketBoard'),
+                      t('user.featureOptions.alertFunction'),
+                      t('user.featureOptions.aiChat'),
+                      t('user.featureOptions.marketData'),
+                      t('user.featureOptions.communityContent'),
+                      t('user.featureOptions.contractData')
+                    ].map((feature) => (
+                      <Grid.Item key={feature}>
+                        <div 
+                          className={`${styles.featureTag} ${selectedBadFeatures.includes(feature) ? styles.featureTagSelected : ''}`}
+                          onClick={() => toggleBadFeature(feature)}
+                        >
+                          {feature}
+                        </div>
+                      </Grid.Item>
+                    ))}
+                  </Grid>
+                </div>
+                </div>
+
+                {/* 积分活动容器 */}
+                <div className={styles.scoreContainer}>
+                  <div className={styles.scoreRecommendText}>{t('user.recommendQuestion')}</div>
+                  <div className={styles.scoreDesc}>
+                    <span>{t('user.veryUnwilling')}</span>
+                    <span>{t('user.veryWilling')}</span>
+                  </div>
+                  <Grid className={styles.scoreList} columns={10} gap={5}>
+                    {[1,2,3,4,5,6,7,8,9,10].map((item) => (
+                      <Grid.Item key={item} className={`${styles.scoreItem} ${item === reportScore ? styles.scoreActive : ''}`} onClick={() => onScoreSelect(item)}>
+                        {item}
+                      </Grid.Item>
+                    ))}
+                  </Grid>
+                </div>
+              </div>
               <div className={styles.scoreCon}>
                 <div>
-                  <span>{t('user.moreFeedback')}</span>
-                  <span className={styles.scoreConDesc}>{t('user.optional')}</span>
+                  <span>{t('user.feedbackInputTitle')}</span>
                 </div>
-                <TextArea className={styles.scoreText} placeholder={t('user.feedbackPlaceholder')} maxLength={200} onChange={onScoreTextChange} rows={4} />
+                <textarea 
+                  className={styles.scoreTextArea} 
+                  placeholder={t('user.feedbackInputPlaceholder')} 
+                  maxLength={200} 
+                  onChange={(e) => onScoreTextChange(e.target.value)} 
+                  rows={4}
+                />
               </div>
-              <Button className={`${styles.scoreBtn} ${scoreDisable ? styles.scoreBtnDisable : ''}`} onClick={submitScore} disabled={scoreDisable} block>
-                {t('common.submit')}
-          </Button>
+              <Button 
+                className={`${styles.scoreBtn} ${scoreDisable ? styles.scoreBtnDisable : ''} ${submittingFeedback ? styles.loading : ''}`} 
+                onClick={submittingFeedback ? undefined : submitScore} 
+                disabled={scoreDisable || submittingFeedback} 
+                block
+              >
+                {submittingFeedback ? (
+                  <span className={styles.loadingSpinner}></span>
+                ) : (
+                  t('user.submitFeedback')
+                )}
+              </Button>
             </div>
           )}
 
@@ -1866,6 +2068,12 @@ export default function UserPage() {
           onLoginSuccess={handleLoginSuccess}
           onWalletLogin={handleWalletLogin}
           initialMode={loginModalMode}
+        />
+
+        {/* 成功反馈弹窗 */}
+        <FeedbackSuccessModal
+          visible={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
         />
       </div>
     </Layout>

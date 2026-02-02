@@ -63,7 +63,7 @@ export default function PointsDetail() {
     } catch (error) {
       console.error('获取积分数据失败:', error);
       Toast.show({
-        content: t('pointsDetail.fetchFailed') || '获取积分数据失败',
+        content: t('pointsDetail.fetchFailed'),
         icon: 'fail'
       });
     } finally {
@@ -664,7 +664,7 @@ export default function PointsDetail() {
               ) : tasksList.length === 0 ? (
                 <div className={styles.emptyState}>
                   <img src="/point/Emoji_2@2x.png" alt="Empty" className={styles.emptyIcon} />
-                  <div className={styles.emptyText}>{t('common.noTasks') || '暂无任务'}</div>
+                  <div className={styles.emptyText}>{t('common.noTasks')}</div>
                 </div>
               ) : (
                 tasksList.map(task => {
@@ -747,7 +747,7 @@ export default function PointsDetail() {
               ) : dailyInvestments.length === 0 ? (
                 <div className={styles.emptyState}>
                   <img src="/point/Emoji_3@2x.png" alt="Empty" className={styles.emptyIcon} />
-                  <div className={styles.emptyText}>{t('common.noTasks') || '暂无任务'}</div>
+                  <div className={styles.emptyText}>{t('common.noTasks')}</div>
                 </div>
               ) : (
                 dailyInvestments.map(item => (
