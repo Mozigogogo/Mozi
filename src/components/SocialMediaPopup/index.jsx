@@ -11,7 +11,7 @@ export default function SocialMediaPopup() {
       id: 'twitter',
       name: t('socialMedia.twitter'),
       icon: '/icons/x-logo.svg',
-      url: 'https://x.com/Innovation56171',
+      url: 'https://x.com/moziinnovation',
       borderColor: '#000000'
     },
     {

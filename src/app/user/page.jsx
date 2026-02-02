@@ -842,7 +842,7 @@ export default function UserPage() {
 
   const attendUs = () => {
     // 跳转到 X (Twitter) 账号
-    window.open('https://x.com/Innovation56171', '_blank');
+    window.open('https://x.com/moziinnovation', '_blank');
   };
 
   const reward = () => {
