@@ -430,7 +430,7 @@ export default function PointsDetail() {
       case 'WECHAT':
       case 'TWITTER':
         // 关注 Twitter 官方账号
-        window.open('https://x.com/Innovation56171', '_blank');
+        window.open('https://x.com/moziinnovation', '_blank');
         break;
       case 'COMMUNITY':
         window.open('https://t.me/MoziInnovations', '_blank');

@@ -342,7 +342,7 @@ export default function HomePage() {
           clientId: `web-${Date.now()}`,
           platform: "h5",
           version: "1.0.0",
-          language: i18n?.language || 'en'  // 添加语言信息：'en' 或 'zh'
+          language: i18n?.language || 'zh'  // 添加语言信息：'en' 或 'zh'
         },
         requestId: `req-hello-${Date.now()}`,
         timestamp: Date.now()
