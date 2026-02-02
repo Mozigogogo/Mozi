@@ -324,8 +324,10 @@ export default function OneClickAlarmModal({
 
       // 只在开关打开时才传递对应的联系方式
       if (phoneEnabled && phone) {
-        // 拼接国家区号和手机号
-        alertConfig.alertPhone = `${countryCode}${phone}`;
+        // 只传递手机号（不包含国家码）
+        alertConfig.alertPhone = phone;
+        // 单独传递国家码参数
+        alertConfig.alertPhoneCountryCode = countryCode;
       }
       if (emailEnabled && email) {
         alertConfig.alertEmail = email;

@@ -271,6 +271,7 @@ export const fetchUserAlertConfig = async () => {
  * 新增告警配置
  * @param {Object} params - 告警配置参数
  * @param {string} params.alertPhone - 告警电话（1开头11位手机号，可选）
+ * @param {string} params.alertPhoneCountryCode - 告警电话国家码（如 +1, +86，可选）
  * @param {string} params.alertEmail - 告警邮箱（标准邮箱格式，可选）
  * @param {number} params.phoneEnabled - 电话告警开关：0-关闭，1-开启
  * @param {number} params.emailEnabled - 邮箱告警开关：0-关闭，1-开启
@@ -279,6 +280,7 @@ export const fetchUserAlertConfig = async () => {
  * @example
  * const result = await addAlertConfig({
  *   alertPhone: "13800138000",
+ *   alertPhoneCountryCode: "+86",
  *   alertEmail: "test@gmail.com",
  *   phoneEnabled: 1,
  *   emailEnabled: 1,
@@ -297,6 +299,7 @@ export const addAlertConfig = (params) => {
  * 新增告警配置（封装方法，带参数验证和错误处理）
  * @param {Object} config - 告警配置对象
  * @param {string} config.alertPhone - 告警电话
+ * @param {string} config.alertPhoneCountryCode - 告警电话国家码（如 +1, +86）
  * @param {string} config.alertEmail - 告警邮箱
  * @param {number} config.phoneEnabled - 电话告警开关：0-关闭，1-开启
  * @param {number} config.emailEnabled - 邮箱告警开关：0-关闭，1-开启
@@ -305,6 +308,7 @@ export const addAlertConfig = (params) => {
  * @example
  * const result = await createAlertConfig({
  *   alertPhone: "13800138000",
+ *   alertPhoneCountryCode: "+86",
  *   alertEmail: "test@gmail.com",
  *   phoneEnabled: 1,
  *   emailEnabled: 1,
@@ -314,7 +318,7 @@ export const addAlertConfig = (params) => {
 export const createAlertConfig = async (config) => {
   try {
     // 参数验证
-    const { alertPhone, alertEmail, phoneEnabled, emailEnabled, defaultEnabled } = config;
+    const { alertPhone, alertPhoneCountryCode, alertEmail, phoneEnabled, emailEnabled, defaultEnabled } = config;
     
     // 验证必填字段
     if (phoneEnabled === undefined || emailEnabled === undefined || defaultEnabled === undefined) {
@@ -370,6 +374,7 @@ export const createAlertConfig = async (config) => {
  * 修改告警配置
  * @param {Object} params - 告警配置参数
  * @param {string} params.alertPhone - 告警电话（1开头11位手机号，可选）
+ * @param {string} params.alertPhoneCountryCode - 告警电话国家码（如 +1, +86，可选）
  * @param {string} params.alertEmail - 告警邮箱（标准邮箱格式，可选）
  * @param {number} params.phoneEnabled - 电话告警开关：0-关闭，1-开启
  * @param {number} params.emailEnabled - 邮箱告警开关：0-关闭，1-开启
@@ -378,6 +383,7 @@ export const createAlertConfig = async (config) => {
  * @example
  * const result = await updateAlertConfig({
  *   alertPhone: "13900139000",
+ *   alertPhoneCountryCode: "+86",
  *   alertEmail: "new@gmail.com",
  *   phoneEnabled: 0,
  *   emailEnabled: 1,
@@ -396,6 +402,7 @@ export const updateAlertConfig = (params) => {
  * 修改告警配置（封装方法，带参数验证和错误处理）
  * @param {Object} config - 告警配置对象
  * @param {string} config.alertPhone - 告警电话
+ * @param {string} config.alertPhoneCountryCode - 告警电话国家码（如 +1, +86）
  * @param {string} config.alertEmail - 告警邮箱
  * @param {number} config.phoneEnabled - 电话告警开关：0-关闭，1-开启
  * @param {number} config.emailEnabled - 邮箱告警开关：0-关闭，1-开启
@@ -404,6 +411,7 @@ export const updateAlertConfig = (params) => {
  * @example
  * const result = await modifyAlertConfig({
  *   alertPhone: "13900139000",
+ *   alertPhoneCountryCode: "+86",
  *   alertEmail: "new@gmail.com",
  *   phoneEnabled: 0,
  *   emailEnabled: 1,
@@ -413,7 +421,7 @@ export const updateAlertConfig = (params) => {
 export const modifyAlertConfig = async (config) => {
   try {
     // 参数验证（与 createAlertConfig 相同）
-    const { alertPhone, alertEmail, phoneEnabled, emailEnabled, defaultEnabled } = config;
+    const { alertPhone, alertPhoneCountryCode, alertEmail, phoneEnabled, emailEnabled, defaultEnabled } = config;
     
     // 验证必填字段
     if (phoneEnabled === undefined || emailEnabled === undefined || defaultEnabled === undefined) {
@@ -470,6 +478,7 @@ export const modifyAlertConfig = async (config) => {
  * 自动查询现有配置，如果存在则修改，不存在则新增
  * @param {Object} config - 告警配置对象
  * @param {string} config.alertPhone - 告警电话
+ * @param {string} config.alertPhoneCountryCode - 告警电话国家码（如 +1, +86）
  * @param {string} config.alertEmail - 告警邮箱
  * @param {number} config.phoneEnabled - 电话告警开关：0-关闭，1-开启
  * @param {number} config.emailEnabled - 邮箱告警开关：0-关闭，1-开启
@@ -478,6 +487,7 @@ export const modifyAlertConfig = async (config) => {
  * @example
  * const result = await saveAlertConfig({
  *   alertPhone: "13800138000",
+ *   alertPhoneCountryCode: "+86",
  *   alertEmail: "test@gmail.com",
  *   phoneEnabled: 1,
  *   emailEnabled: 1,
