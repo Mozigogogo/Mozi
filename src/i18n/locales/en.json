@@ -21,6 +21,8 @@
     "more": "More",
     "updated": "Updated",
     "copy": "Copy",
+    "copySuccess": "Copied successfully",
+    "copyFailed": "Copy failed",
     "linkCopied": "Link copied",
     "loadFailed": "Failed to load, please try again",
     "noData": "No data",
@@ -360,7 +362,14 @@
     "generateError": "Failed to generate verification code, please try again",
     "bindSuccess": "Binding successful",
     "bindFailed": "Binding failed",
-    "bindError": "Binding failed, please try again"
+    "bindError": "Binding failed, please try again",
+    "linkCodeModal": {
+      "title": "Share Your Benefits",
+      "copyCode": "Copy Code",
+      "validFor": "Valid for: ",
+      "tipText": "Enter this linking code in our <strong>Telegram Bot</strong> to link your account",
+      "noteText": "*Note: To ensure security, each account can only be linked to one <keyword>Email</keyword>, one <keyword>Telegram ID</keyword>, and one <keyword>Wallet Address</keyword>."
+    }
   },
   "auth": {
     "email": "Email",

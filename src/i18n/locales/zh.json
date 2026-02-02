@@ -21,6 +21,8 @@
     "more": "更多",
     "updated": "更新",
     "copy": "复制",
+    "copySuccess": "复制成功",
+    "copyFailed": "复制失败",
     "linkCopied": "链接已复制",
     "loadFailed": "加载失败，请稍后重试",
     "noData": "暂无数据",
@@ -360,7 +362,14 @@
     "generateError": "生成验证码失败，请重试",
     "bindSuccess": "绑定成功",
     "bindFailed": "绑定失败",
-    "bindError": "绑定失败，请重试"
+    "bindError": "绑定失败，请重试",
+    "linkCodeModal": {
+      "title": "绑定您的权益",
+      "copyCode": "复制权益码",
+      "validFor": "有效期：",
+      "tipText": "在我们的 <strong>Telegram Bot</strong> 中输入此链接代码以关联您的账户",
+      "noteText": "*注意：为确保安全，每个账户只能关联一个<keyword>邮箱</keyword>、一个 <keyword>Telegram ID</keyword> 和一个<keyword>钱包地址</keyword>。"
+    }
   },
   "auth": {
     "email": "邮箱",

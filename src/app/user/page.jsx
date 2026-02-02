@@ -13,6 +13,7 @@ import LoginModal from '../../components/LoginModal';
 import SocialMediaPopup from '../../components/SocialMediaPopup';
 import FeedbackSuccessModal from '../../components/FeedbackSuccessModal';
 import AccountBindModal from '../../components/AccountBindModal';
+import AlertConfirmModal from '../../components/AlertConfirmModal';
 import { RightArrowIcon } from '../../components/Icons';
 import CopyIcon from '../../components/Icons/CopyIcon';
 import { request } from '../../utils/request';
@@ -117,6 +118,7 @@ export default function UserPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false); // 成功反馈弹窗状态
   const [submittingFeedback, setSubmittingFeedback] = useState(false); // 提交反馈的 loading 状态
   const [showAccountBindModal, setShowAccountBindModal] = useState(false); // 账号绑定弹窗状态
+  const [showAlertConfirmModal, setShowAlertConfirmModal] = useState(false); // 验证码弹窗状态
   
   // 用于记录当前组件生命周期内是否已经为邀请码弹出过登录弹窗
   const hasShownInviteModalRef = useRef(false);
@@ -2112,6 +2114,18 @@ export default function UserPage() {
         <AccountBindModal
           visible={showAccountBindModal}
           onClose={() => setShowAccountBindModal(false)}
+        />
+
+        {/* 验证码弹窗 */}
+        <AlertConfirmModal
+          open={showAlertConfirmModal}
+          onClose={() => setShowAlertConfirmModal(false)}
+          onConfirm={() => {
+            console.log('验证码已复制');
+            setShowAlertConfirmModal(false);
+          }}
+          code="123456"
+          expiresIn={900}
         />
       </div>
     </Layout>
