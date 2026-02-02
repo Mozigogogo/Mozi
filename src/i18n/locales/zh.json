@@ -364,12 +364,19 @@
     "bindFailed": "绑定失败",
     "bindError": "绑定失败，请重试",
     "linkCodeModal": {
-      "title": "绑定您的权益",
+      "title": "关联您的权益",
       "copyCode": "复制权益码",
       "validFor": "有效期：",
       "tipText": "在我们的 <strong>Telegram Bot</strong> 中输入此链接代码以关联您的账户",
       "noteText": "*注意：为确保安全，每个账户只能关联一个<keyword>邮箱</keyword>、一个 <keyword>Telegram ID</keyword> 和一个<keyword>钱包地址</keyword>。"
     }
+  },
+  "telegramBind": {
+    "title": "重要提示",
+    "mainText": "如果您曾在 Telegram/PC 使用过Mozi，可以通过绑定账号来同步您的<strong>订阅权益与历史数据</strong>",
+    "warningText": "绑定成功后，您<strong>当前的账号配置将被覆盖且失效</strong>，请在操作前确认",
+    "cancelButton": "暂不绑定",
+    "confirmButton": "立即关联"
   },
   "auth": {
     "email": "邮箱",

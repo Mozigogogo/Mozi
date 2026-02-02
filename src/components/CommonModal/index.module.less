@@ -1,19 +1,44 @@
+// 弹窗最外层容器
+.modalWrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+
+// 遮罩层
+.mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  animation: fadeIn 0.3s ease;
+}
+
+// 弹窗主体
 .modalBody {
+  position: relative;
+  z-index: 1;
   background: white;
   border-radius: 16px;
-  padding: 0;
   max-width: 90vw;
   width: 340px;
   box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.15);
   overflow: hidden;
   max-height: 90vh;
-  position: relative;
-  left: 50%;
-  transform: translateX(-50%);
+  animation: slideUp 0.3s ease;
 }
 
 .container {
-  padding: 5px 12px 5px;
+  padding: 28px 24px 28px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -47,7 +72,8 @@
   margin-bottom: 24px;
 }
 
-.confirmButton {
+// 单按钮模式的确认按钮
+.singleConfirmButton {
   width: 100%;
   height: 48px;
   background: #11B787;
@@ -79,5 +105,84 @@
     transform: none;
     box-shadow: none;
     opacity: 0.6;
+  }
+}
+
+// 双按钮模式的按钮组
+.doubleButtonGroup {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.cancelButton,
+.confirmButton {
+  flex: 1;
+  height: 48px;
+  border-radius: 26px;
+  font-family: 'PingFang SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  outline: none;
+}
+
+.cancelButton {
+  background: white;
+  color:rgba(153, 153, 153, 1);
+  border: 1.5px solid rgba(153, 153, 153, 1);
+
+  &:hover {
+    background: #F5F5F5;
+    border-color: #BFBFBF;
+  }
+
+  &:active {
+    background: #EBEBEB;
+  }
+}
+
+.confirmButton {
+  background: #1DB88E;
+  color: white;
+  border: none;
+
+  &:hover {
+    background: #19A67E;
+    box-shadow: 0 4px 12px rgba(29, 184, 142, 0.3);
+  }
+
+  &:active {
+    background: #17956F;
+    box-shadow: 0 2px 8px rgba(29, 184, 142, 0.2);
+  }
+
+  &:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+// 动画效果
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

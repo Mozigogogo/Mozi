@@ -371,6 +371,13 @@
       "noteText": "*Note: To ensure security, each account can only be linked to one <keyword>Email</keyword>, one <keyword>Telegram ID</keyword>, and one <keyword>Wallet Address</keyword>."
     }
   },
+  "telegramBind": {
+    "title": "IMPORTANT NOTICE",
+    "mainText": "You may have used Mozi on Telegram/ PC before. Linking your account will sync your <strong>subscription and historical data</strong>.",
+    "warningText": "After linking: <strong>Your current settings will be overwritten and invalidated</strong>.Please confirm before proceeding.",
+    "cancelButton": "Not Now",
+    "confirmButton": "Link Account"
+  },
   "auth": {
     "email": "Email",
     "emailPlaceholder": "Enter email",
