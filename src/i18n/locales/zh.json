@@ -379,7 +379,7 @@
     "confirmButton": "立即关联",
     "step2Title": "关联账户并获取福利",
     "step2InputPlaceholder": "输入6位数字代码",
-    "step2Description": "请访问我们的<strong>电脑网站</strong>，点击<strong>按钮</strong><icon/>，以复制您的 <strong>6 位链接代码</strong>",
+    "step2Description": "请访问我们的<strong>PC网站</strong>，点击<strong>按钮</strong><icon/>，以复制您的 <strong>6 位链接代码</strong>",
     "step2CancelButton": "暂不绑定",
     "step2ConfirmButton": "立即关联"
   },

@@ -13,6 +13,7 @@ import LoginModal from '../../components/LoginModal';
 import SocialMediaPopup from '../../components/SocialMediaPopup';
 import FeedbackSuccessModal from '../../components/FeedbackSuccessModal';
 import AccountBindModal from '../../components/AccountBindModal';
+import TelegramBindModal from '../../components/TelegramBindModal';
 import AlertConfirmModal from '../../components/AlertConfirmModal';
 import { RightArrowIcon } from '../../components/Icons';
 import CopyIcon from '../../components/Icons/CopyIcon';
@@ -118,6 +119,7 @@ export default function UserPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false); // 成功反馈弹窗状态
   const [submittingFeedback, setSubmittingFeedback] = useState(false); // 提交反馈的 loading 状态
   const [showAccountBindModal, setShowAccountBindModal] = useState(false); // 账号绑定弹窗状态
+  const [showTelegramBindModal, setShowTelegramBindModal] = useState(false); // Telegram 绑定弹窗状态
   const [showAlertConfirmModal, setShowAlertConfirmModal] = useState(false); // 验证码弹窗状态
   
   // 用于记录当前组件生命周期内是否已经为邀请码弹出过登录弹窗
@@ -1767,6 +1769,25 @@ export default function UserPage() {
           </div>
         )}
 
+        {/* 弹窗控制按钮 */}
+        <div className={styles.modalControlSection}>
+          <div className={styles.modalControlTitle}>弹窗控制</div>
+          <div className={styles.modalControlButtons}>
+            <Button
+              className={styles.modalControlBtn}
+              onClick={() => setShowTelegramBindModal(true)}
+            >
+              打开 Telegram 绑定弹窗
+            </Button>
+            <Button
+              className={styles.modalControlBtn}
+              onClick={() => setShowAlertConfirmModal(true)}
+            >
+              打开权益码弹窗
+            </Button>
+          </div>
+        </div>
+
         <div className={styles.flexSpacer}></div>
 
         <div className={styles.footer}>
@@ -2114,6 +2135,17 @@ export default function UserPage() {
         <AccountBindModal
           visible={showAccountBindModal}
           onClose={() => setShowAccountBindModal(false)}
+        />
+
+        {/* Telegram 绑定弹窗 */}
+        <TelegramBindModal
+          open={showTelegramBindModal}
+          onClose={() => setShowTelegramBindModal(false)}
+          onConfirm={(linkCode) => {
+            console.log('Telegram 绑定验证码:', linkCode);
+            setShowTelegramBindModal(false);
+            Toast.show({ content: '绑定成功', position: 'bottom' });
+          }}
         />
 
         {/* 验证码弹窗 */}

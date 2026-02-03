@@ -4,23 +4,89 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Toast } from 'antd-mobile';
 import CommonModal from '../CommonModal';
+import { generateBindCode } from '@/api/user';
 import styles from './index.module.less';
 
-export default function AlertConfirmModal({
+export default function BenefitCodeModal({
   open = false,
   onClose,
   onConfirm,
-  code = '123456',
-  expiresIn = 900, // 默认15分钟（900秒）
   title,
 }) {
   const { t } = useTranslation();
-  const [countdown, setCountdown] = useState(expiresIn);
+  const [code, setCode] = useState('');
+  const [userId, setUserId] = useState('');
+  const [countdown, setCountdown] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  // 检测是否在 Telegram 环境中
+  const isTelegramEnv = () => {
+    if (typeof window === 'undefined') return false;
+    // 优先从 localStorage 读取
+    const channel = localStorage.getItem('appChannel');
+    return channel === 'tg';
+  };
+
+  // 根据环境获取平台名称
+  const getPlatformName = () => {
+    return isTelegramEnv() ? 'PC' : 'Telegram Bot';
+  };
+
+  // 当弹窗打开时，调用接口获取权益码
+  useEffect(() => {
+    if (open) {
+      fetchBindCode();
+    } else {
+      // 关闭时重置状态
+      setCode('');
+      setUserId('');
+      setCountdown(0);
+    }
+  }, [open]);
+
+  // 获取权益码
+  const fetchBindCode = async () => {
+    setLoading(true);
+    try {
+      const result = await generateBindCode();
+      
+      if (result?.code === 0 && result?.data) {
+        setCode(result.data.bindCode);
+        setUserId(result.data.userId);
+        setCountdown(result.data.expiresIn || 900);
+        
+        Toast.show({
+          content: '权益码生成成功',
+          icon: 'success',
+          position: 'top',
+          maskStyle: { zIndex: 10000 }
+        });
+      } else {
+        Toast.show({
+          content: result?.errorMsg || '生成权益码失败',
+          icon: 'fail',
+          position: 'top',
+          maskStyle: { zIndex: 10000 }
+        });
+        onClose?.();
+      }
+    } catch (error) {
+      console.error('生成权益码失败:', error);
+      Toast.show({
+        content: '生成权益码失败，请重试',
+        icon: 'fail',
+        position: 'top',
+        maskStyle: { zIndex: 10000 }
+      });
+      onClose?.();
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // 倒计时逻辑
   useEffect(() => {
-    if (!open) {
-      setCountdown(expiresIn);
+    if (!open || countdown <= 0) {
       return;
     }
 
@@ -35,7 +101,7 @@ export default function AlertConfirmModal({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [open, expiresIn]);
+  }, [open, countdown]);
 
   // 格式化倒计时
   const formatCountdown = (seconds) => {
@@ -122,8 +188,9 @@ export default function AlertConfirmModal({
 
       if (copySuccess) {
         Toast.show({
-          content: t('common.copySuccess'),
+          content: '复制成功',
           icon: 'success',
+          maskStyle: { zIndex: 10000 }
         });
         onConfirm?.();
       } else {
@@ -132,38 +199,11 @@ export default function AlertConfirmModal({
     } catch (error) {
       console.error('复制失败:', error);
       Toast.show({
-        content: t('common.copyFailed'),
+        content: '复制失败',
         icon: 'fail',
+        maskStyle: { zIndex: 10000 }
       });
     }
-  };
-
-  // 渲染带关键词高亮的文本
-  const renderTextWithKeywords = (text) => {
-    const parts = text.split(/(<keyword>.*?<\/keyword>)/g);
-    return parts.map((part, index) => {
-      if (part.startsWith('<keyword>') && part.endsWith('</keyword>')) {
-        const keyword = part.replace(/<\/?keyword>/g, '');
-        return (
-          <span key={index} className={styles.noteKeyword}>
-            {keyword}
-          </span>
-        );
-      }
-      return part;
-    });
-  };
-
-  // 渲染带强调的文本
-  const renderTextWithStrong = (text) => {
-    const parts = text.split(/(<strong>.*?<\/strong>)/g);
-    return parts.map((part, index) => {
-      if (part.startsWith('<strong>') && part.endsWith('</strong>')) {
-        const strongText = part.replace(/<\/?strong>/g, '');
-        return <strong key={index}>{strongText}</strong>;
-      }
-      return part;
-    });
   };
 
   return (
@@ -171,32 +211,57 @@ export default function AlertConfirmModal({
       open={open}
       onClose={onClose}
       onConfirm={handleCopyCode}
-      title={title || t('accountBind.linkCodeModal.title')}
-      confirmText={t('accountBind.linkCodeModal.copyCode')}
-      confirmDisabled={countdown === 0}
+      title={title || '关联您的权益'}
+      confirmText="复制权益码"
+      confirmDisabled={countdown === 0 || loading || !code}
     >
       {/* 直接在这里写自定义内容 */}
       <div className={styles.codeContent}>
-        {/* 验证码显示区域 */}
-        <div className={styles.codeBox}>
-          <div className={styles.codeNumber}>{code}</div>
-        </div>
+        {loading ? (
+          <>
+            {/* 骨架屏加载效果 */}
+            <div className={styles.codeBox}>
+              <div className={styles.codeNumber}>------</div>
+            </div>
 
-        {/* 倒计时 */}
-        <div className={styles.countdown}>
-          {t('accountBind.linkCodeModal.validFor')}
-          <span className={styles.countdownTime}>{formatCountdown(countdown)}</span>
-        </div>
+            <div className={styles.countdown}>
+              <span className={`${styles.skeletonText} ${styles.skeletonShort}`}></span>
+            </div>
 
-        {/* 提示文本 */}
-        <div className={styles.tipText}>
-          {renderTextWithStrong(t('accountBind.linkCodeModal.tipText'))}
-        </div>
+            <div className={styles.tipText}>
+              <div className={`${styles.skeletonText} ${styles.skeletonLong}`}></div>
+              <div className={`${styles.skeletonText} ${styles.skeletonMedium}`}></div>
+            </div>
 
-        {/* 注意事项 */}
-        <div className={styles.noteText}>
-          {renderTextWithKeywords(t('accountBind.linkCodeModal.noteText'))}
-        </div>
+            <div className={styles.noteText}>
+              <div className={`${styles.skeletonText} ${styles.skeletonLong}`}></div>
+              <div className={`${styles.skeletonText} ${styles.skeletonMedium}`}></div>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* 验证码显示区域 */}
+            <div className={styles.codeBox}>
+              <div className={styles.codeNumber}>{code || '------'}</div>
+            </div>
+
+            {/* 倒计时 */}
+            <div className={styles.countdown}>
+              有效期：
+              <span className={styles.countdownTime}>{formatCountdown(countdown)}</span>
+            </div>
+
+            {/* 提示文本 */}
+            <div className={styles.tipText}>
+              在我们的 <strong>{getPlatformName()}</strong> 中输入此链接代码以关联您的账户
+            </div>
+
+            {/* 注意事项 */}
+            <div className={styles.noteText}>
+              *注意：为确保安全，每个账户只能关联一个<span className={styles.noteKeyword}>邮箱</span>、一个<span className={styles.noteKeyword}>Telegram ID</span>和一个<span className={styles.noteKeyword}>钱包地址</span>。
+            </div>
+          </>
+        )}
       </div>
     </CommonModal>
   );

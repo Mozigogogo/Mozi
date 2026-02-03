@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Toast } from 'antd-mobile';
 import Image from 'next/image';
 import CommonModal from '@/components/CommonModal';
+import { confirmBind } from '@/api/user';
 import styles from './index.module.less';
 
 /**
@@ -12,7 +14,7 @@ import styles from './index.module.less';
  * @param {function} onClose - 关闭回调（点击"暂不绑定"）
  * @param {function} onConfirm - 确认回调（点击"立即关联"）
  */
-export default function TelegramBindModal({
+export default function BindBenefitCodeModal({
   open = false,
   onClose,
   onConfirm,
@@ -20,6 +22,20 @@ export default function TelegramBindModal({
   const { t } = useTranslation();
   const [step, setStep] = useState(1); // 1: 初始状态, 2: 输入验证码状态
   const [linkCode, setLinkCode] = useState('');
+  const [isBinding, setIsBinding] = useState(false); // 绑定中状态
+
+  // 检测是否在 Telegram 环境中
+  const isTelegramEnv = () => {
+    if (typeof window === 'undefined') return false;
+    // 优先从 localStorage 读取
+    const channel = localStorage.getItem('appChannel');
+    return channel === 'tg';
+  };
+
+  // 根据环境获取平台名称
+  const getPlatformName = () => {
+    return isTelegramEnv() ? 'PC网站' : 'Telegram Bot';
+  };
 
   // 渲染带 <strong> 标签的文本
   const renderTextWithStrong = (text) => {
@@ -35,8 +51,12 @@ export default function TelegramBindModal({
 
   // 渲染带图标和加粗的文本
   const renderTextWithIcon = (text) => {
-    // 先处理 <strong> 标签和 <icon/> 的组合
-    const parts = text.split(/(<strong>.*?<\/strong>|<icon\/>)/g);
+    // 先根据环境替换平台名称
+    const platformName = getPlatformName();
+    const processedText = text.replace(/PC网站/g, platformName);
+    
+    // 再处理 <strong> 标签和 <icon/> 的组合
+    const parts = processedText.split(/(<strong>.*?<\/strong>|<icon\/>)/g);
     
     return parts.map((part, index) => {
       // 处理 <strong> 标签
@@ -68,9 +88,72 @@ export default function TelegramBindModal({
   };
 
   // 处理第二步的确认按钮
-  const handleStep2Confirm = () => {
-    if (onConfirm) {
-      onConfirm(linkCode);
+  const handleStep2Confirm = async () => {
+    // 验证输入
+    if (!linkCode || linkCode.trim().length === 0) {
+      Toast.show({
+        content: '请输入权益码',
+        icon: 'fail',
+        position: 'top',
+        maskStyle: { zIndex: 10000 }
+      });
+      return;
+    }
+
+    if (linkCode.trim().length !== 6) {
+      Toast.show({
+        content: '权益码必须是6位',
+        icon: 'fail',
+        position: 'top',
+        maskStyle: { zIndex: 10000 }
+      });
+      return;
+    }
+
+    setIsBinding(true);
+    try {
+      const result = await confirmBind(linkCode.trim());
+      
+      if (result?.code === 0 && result?.data) {
+        // 绑定成功，更新 token
+        if (result.data.token) {
+          localStorage.setItem('token', result.data.token);
+        }
+        
+        Toast.show({
+          content: '绑定成功',
+          icon: 'success',
+          position: 'top',
+          maskStyle: { zIndex: 10000 }
+        });
+        
+        // 调用父组件的 onConfirm 回调
+        if (onConfirm) {
+          onConfirm(linkCode);
+        }
+        
+        // 延迟关闭弹窗
+        setTimeout(() => {
+          handleClose();
+        }, 1500);
+      } else {
+        Toast.show({
+          content: result?.errorMsg || '绑定失败，请检查权益码是否正确',
+          icon: 'fail',
+          position: 'top',
+          maskStyle: { zIndex: 10000 }
+        });
+      }
+    } catch (error) {
+      console.error('绑定失败:', error);
+      Toast.show({
+        content: '绑定失败，请重试',
+        icon: 'fail',
+        position: 'top',
+        maskStyle: { zIndex: 10000 }
+      });
+    } finally {
+      setIsBinding(false);
     }
   };
 
@@ -148,6 +231,8 @@ export default function TelegramBindModal({
       cancelText={t('telegramBind.cancelButton')}
       confirmText={step === 1 ? t('telegramBind.confirmButton') : t('telegramBind.step2ConfirmButton')}
       closeOnMaskClick={true}
+      confirmDisabled={step === 2 && (isBinding || !linkCode.trim())}
+      confirmLoading={isBinding}
     >
       {step === 1 ? step1Content : step2Content}
     </CommonModal>

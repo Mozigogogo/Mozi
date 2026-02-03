@@ -14,6 +14,7 @@ import styles from './index.module.less';
  * @param {string} confirmText - 确认按钮文字
  * @param {string} cancelText - 取消按钮文字
  * @param {boolean} confirmDisabled - 确认按钮是否禁用
+ * @param {boolean} confirmLoading - 确认按钮是否显示加载状态
  * @param {boolean} showConfirmButton - 是否显示确认按钮（单按钮模式）
  * @param {boolean} showDoubleButtons - 是否显示双按钮（取消+确认）
  * @param {boolean} closeOnMaskClick - 点击遮罩层是否关闭（默认 true）
@@ -27,6 +28,7 @@ export default function CommonModal({
   confirmText,
   cancelText,
   confirmDisabled = false,
+  confirmLoading = false,
   showConfirmButton = true,
   showDoubleButtons = false,
   closeOnMaskClick = true,
@@ -48,7 +50,7 @@ export default function CommonModal({
   if (!open) return null;
 
   const handleConfirm = () => {
-    if (confirmDisabled) return;
+    if (confirmDisabled || confirmLoading) return;
     onConfirm?.();
   };
 
@@ -87,27 +89,36 @@ export default function CommonModal({
                 type="button"
                 className={styles.cancelButton}
                 onClick={onClose}
+                disabled={confirmLoading}
               >
                 {cancelText || (i18n.language === 'en' ? 'Cancel' : '取消')}
               </button>
               <button
                 type="button"
-                className={styles.confirmButton}
+                className={`${styles.confirmButton} ${confirmLoading ? styles.loading : ''}`}
                 onClick={handleConfirm}
-                disabled={confirmDisabled}
+                disabled={confirmDisabled || confirmLoading}
               >
-                {confirmText || (i18n.language === 'en' ? 'Confirm' : '确认')}
+                {confirmLoading ? (
+                  <span className={styles.loadingSpinner}></span>
+                ) : (
+                  confirmText || (i18n.language === 'en' ? 'Confirm' : '确认')
+                )}
               </button>
             </div>
           ) : showConfirmButton ? (
             // 单按钮模式：只有确认按钮
             <button
               type="button"
-              className={styles.singleConfirmButton}
+              className={`${styles.singleConfirmButton} ${confirmLoading ? styles.loading : ''}`}
               onClick={handleConfirm}
-              disabled={confirmDisabled}
+              disabled={confirmDisabled || confirmLoading}
             >
-              {confirmText || (i18n.language === 'en' ? 'Copy Benefits Code' : '复制权益码')}
+              {confirmLoading ? (
+                <span className={styles.loadingSpinner}></span>
+              ) : (
+                confirmText || (i18n.language === 'en' ? 'Copy Benefits Code' : '复制权益码')
+              )}
             </button>
           ) : null}
         </div>

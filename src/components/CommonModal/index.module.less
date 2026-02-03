@@ -87,6 +87,10 @@
   cursor: pointer;
   transition: all 0.2s ease;
   outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 
   &:hover {
     background: #0fa076;
@@ -105,6 +109,11 @@
     transform: none;
     box-shadow: none;
     opacity: 0.6;
+  }
+
+  &.loading {
+    cursor: not-allowed;
+    opacity: 0.8;
   }
 }
 
@@ -148,6 +157,10 @@
   background: #1DB88E;
   color: white;
   border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 
   &:hover {
     background: #19A67E;
@@ -163,6 +176,28 @@
     background: #cccccc;
     cursor: not-allowed;
     opacity: 0.6;
+  }
+
+  &.loading {
+    cursor: not-allowed;
+    opacity: 0.8;
+  }
+}
+
+// Loading spinner 样式
+.loadingSpinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 

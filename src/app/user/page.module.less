@@ -330,6 +330,52 @@
 // .newCoinSection {
 // }
 
+/* 弹窗控制区域 */
+.modalControlSection {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  margin: 12px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.modalControlTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+  padding-left: 4px;
+}
+
+.modalControlButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modalControlBtn {
+  background: linear-gradient(135deg, #11B787 0%, #0fa076 100%);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  height: 44px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(17, 183, 135, 0.2);
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(17, 183, 135, 0.3);
+  }
+  
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(17, 183, 135, 0.2);
+  }
+}
+
 /* 弹性占位，推底退出按钮 */
 .flexSpacer {
   flex: 1 1 auto;
