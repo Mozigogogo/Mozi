@@ -24,6 +24,7 @@ import { useAlertConfig } from '../../hooks/useAlertConfig';
 import { useAmplitude } from '../../hooks/useAmplitude';
 import { ProfileEvents } from '../../utils/amplitude';
 import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
+import VipBanner from '../../components/VipBanner';
 import styles from './page.module.less';
 
 // 检测是否在 Telegram 环境中
@@ -73,7 +74,9 @@ export default function UserPage() {
     isLogin: false
   });
   const DEFAULT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png';
-  const EDIT_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/edit.png';
+  const EDIT_ICON = '/icons/new_user/edit.svg';
+  const BIND_ICON = '/icons/new_user/bind.svg';
+  const VIP_ICON = '/icons/new_user/vip.svg';
   const [popVis, setPopVis] = useState(false);
   const [popType, setPopType] = useState('');
   const [rewardPopVis, setRewardPopVis] = useState(false); // 单独的打赏弹窗状态
@@ -124,6 +127,18 @@ export default function UserPage() {
   
   // 用于记录当前组件生命周期内是否已经为邀请码弹出过登录弹窗
   const hasShownInviteModalRef = useRef(false);
+
+  // 首次登录引导弹窗
+  useEffect(() => {
+    // 只有已登录用户才显示
+    if (userInfo.isLogin) {
+      const hasShown = localStorage.getItem('hasShownBindGuide');
+      if (!hasShown) {
+        setShowBindBenefitCodeModal(true);
+        localStorage.setItem('hasShownBindGuide', 'true');
+      }
+    }
+  }, [userInfo.isLogin]);
   
   // 积分相关数据
   const [pointsData, setPointsData] = useState({
@@ -1567,19 +1582,7 @@ export default function UserPage() {
       extra: '',
       callback: () => { window.location.href = '/theme'; }
     },
-    {
-      key: 'accountBind',
-      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/link%402x.png'} alt="账号绑定" style={{ width: 22, height: 22 }} />),
-      text: t('user.accountBindLabel') || '账号绑定',
-      extra: '',
-      callback: () => {
-        if (!userInfo.isLogin) {
-          Toast.show({ content: t('user.pleaseLogin'), position: 'bottom' });
-          return;
-        }
-        setShowAccountBindModal(true);
-      }
-    },
+
     {
       key: 'contact',
       icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/me-contact%402x.png'} alt="联系我们" style={{ width: 22, height: 22 }} />),
@@ -1616,34 +1619,105 @@ export default function UserPage() {
   return (
     <Layout>
       <div className={styles.container}>
-        {/* Banner 区域 */}
-        <div className={styles.bannerSection}>
+        {/* Banner 区域 - 仅包含头部信息 */}
+        <div className={styles.topBannerWrapper}>
           <div className={styles.headerBox}>
             {userInfo.isLogin ? (
-              <div className={styles.headerUser}>
-                <img className={styles.headerAvatar} src={userInfo.avatar || DEFAULT_AVATAR} alt="头像" />
-                <span>
-                  {!isTelegramEnv() && address 
-                    ? `${address.slice(0, 6)}...${address.slice(-4)}` 
-                    : (userInfo.nickname || t('user.profile'))
-                  }
-                </span>
-                <img className={styles.editIcon} src={EDIT_ICON} alt="编辑" onClick={openEditProfile} />
+              <div className={styles.headerContentTop}>
+                {/* 第一行：头像、昵称 */}
+                <div className={styles.userInfoRow}>
+                  <div className={styles.avatarWrapper}>
+                     <img className={styles.headerAvatar} src={userInfo.avatar || DEFAULT_AVATAR} alt="头像" />
+                     {/* 验证图标 */}
+                     <img className={styles.verifyIcon} src={VIP_ICON} alt="verify" onError={(e) => e.target.style.display = 'none'} />
+                  </div>
+                  <div className={styles.infoContent}>
+                      <div className={styles.nicknameWrapper}>
+                          <span className={styles.nickname}>
+                            {userInfo.nickname || "无为而治"}
+                          </span>
+                      </div>
+                  </div>
+                </div>
+
+                {/* 第二行：标签 */}
+                <div className={styles.tagsRow}>
+                    <span className={styles.userTag}>合规从业者</span>
+                    <span className={styles.userTag}>内容创作者</span>
+                    <span className={styles.userTag}>专职交易员</span>
+                    <span className={styles.userTag}>社群运营</span>
+                </div>
+
+                {/* 第三行：简介 */}
+                <div className={styles.bioRow}>
+                    {userInfo.bio || "资金流动大师，金融NO.1"}
+                </div>
               </div>
             ) : (
               <div className={styles.loginBox}>
-                <div className={styles.headerUser} onClick={isTelegramEnv() ? undefined : handleLogin}>
-                  <img className={styles.headerAvatar} src={DEFAULT_AVATAR} alt="头像" />
-                  <span>{t('user.pleaseLogin')}</span>
+                <div className={styles.headerContentTop} onClick={isTelegramEnv() ? undefined : handleLogin}>
+                  <div className={styles.userInfoRow}>
+                    <div className={styles.avatarWrapper}>
+                        <img className={styles.headerAvatar} src={DEFAULT_AVATAR} alt="头像" />
+                    </div>
+                     <div className={styles.infoContent}>
+                          <div className={styles.nicknameWrapper}>
+                            <span className={styles.nickname}>{t('user.pleaseLogin')}</span>
+                          </div>
+                          <div className={styles.bioRow}>
+                             登录后查看更多精彩内容
+                          </div>
+                     </div>
+                  </div>
                 </div>
               </div>
             )}
           </div>
         </div>
 
+        {/* 统计数据和操作按钮区域 - 白色背景 */}
+        {userInfo.isLogin && (
+          <div className={styles.statsAndActionsWrapper}>
+                <div className={styles.statsActionRow}>
+                    <div className={styles.statsGroup}>
+                        <div className={styles.statItem}>
+                            <span className={styles.statValue}>123</span>
+                            <span className={styles.statLabel}>关注</span>
+                        </div>
+                        <div className={styles.statItem}>
+                             <span className={styles.statValue}>123</span>
+                             <span className={styles.statLabel}>粉丝</span>
+                        </div>
+                         <div className={styles.statItem}>
+                             <span className={styles.statValue}>123</span>
+                             <span className={styles.statLabel}>获赞</span>
+                        </div>
+                        <div className={styles.statItem}>
+                             <span className={styles.statValue}>123W</span>
+                             <span className={styles.statLabel}>积分</span>
+                        </div>
+                    </div>
+                    <div className={styles.actionGroup}>
+                        <div className={styles.profileBtn} onClick={() => window.location.href = '/selfrank'}>
+                            个人主页
+                        </div>
+                        <div className={styles.iconBtn} onClick={openEditProfile}>
+                             {/* 编辑图标 */}
+                             <img src={EDIT_ICON} alt="edit" />
+                        </div>
+                        <div className={styles.iconBtn} onClick={() => setShowBenefitCodeModal(true)}>
+                             {/* 链接/分享图标 */}
+                             <img src={BIND_ICON} alt="link" />
+                        </div>
+                    </div>
+                </div>
+          </div>
+        )}
+
         {/* 内容区域 */}
         <div className={styles.contentWrapper}>
           <div className={styles.contentSection}>
+            <VipBanner onClick={() => setShowBenefitCodeModal(true)} />
             <div className={styles.actionButtons}>
             <div className={styles.actionButton} onClick={() => (window.location.href = '/find?tab=self')}>
               <div className={styles.actionIcon}>
@@ -1774,25 +1848,6 @@ export default function UserPage() {
               <NewCoinListing showMore={false} data={newCoinListings} loading={isLoadingNewCoins} />
             </div>
           )}
-
-          {/* 弹窗控制按钮 */}
-          <div className={styles.modalControlSection}>
-            <div className={styles.modalControlTitle}>弹窗控制</div>
-            <div className={styles.modalControlButtons}>
-              <Button
-                className={styles.modalControlBtn}
-                onClick={() => setShowBindBenefitCodeModal(true)}
-              >
-                打开绑定权益码弹窗
-              </Button>
-              <Button
-                className={styles.modalControlBtn}
-                onClick={() => setShowBenefitCodeModal(true)}
-              >
-                打开权益码弹窗
-              </Button>
-            </div>
-          </div>
 
           <div className={styles.flexSpacer}></div>
 

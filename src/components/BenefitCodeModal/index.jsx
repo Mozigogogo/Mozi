@@ -54,13 +54,6 @@ export default function BenefitCodeModal({
         setCode(result.data.bindCode);
         setUserId(result.data.userId);
         setCountdown(result.data.expiresIn || 900);
-        
-        Toast.show({
-          content: t('accountBind.linkCodeModal.codeGenerateSuccess'),
-          icon: 'success',
-          position: 'top',
-          maskStyle: { zIndex: 10000 }
-        });
       } else {
         Toast.show({
           content: result?.errorMsg || t('accountBind.linkCodeModal.codeGenerateFailed'),

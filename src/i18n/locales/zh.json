@@ -328,6 +328,8 @@
     "walletAddressError": "获取钱包地址失败",
     "walletConnectFailed": "钱包连接失败",
     "defaultNickname": "用户",
+    "vipBannerText": "免费试用14天，马上开启新体验!",
+    "subscribeNow": "立即订阅",
     "wechatUser": "微信用户",
     "accountBindLabel": "账号绑定",
     "aboutMozi": {

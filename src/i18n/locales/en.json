@@ -328,6 +328,8 @@
     "walletAddressError": "Failed to get wallet address",
     "walletConnectFailed": "Wallet connection failed",
     "defaultNickname": "User",
+    "vipBannerText": "Free 14-day trial, start new experience now!",
+    "subscribeNow": "Subscribe Now",
     "wechatUser": "Telegram User",
     "accountBindLabel": "Account Binding",
     "aboutMozi": {
