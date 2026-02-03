@@ -1,12 +1,33 @@
 .container {
   width: 100%;
-  padding: 0 16px 24px 16px;
+  // padding: 0 16px 24px 16px;
   box-sizing: border-box;
   background: #EEF0F3 url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/me-bg.png') no-repeat top center;
   background-size: 100% 300px;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+.bannerSection {
+  width: 100%;
+  /* 让 banner 和下方内容区有明确间距 */
+  padding:0 16px 12px 16px;
+
+}
+
+.contentWrapper {
+  width: 100%;
+  /* 统一控制内容区域与 Banner 之间的间距和左右留白 */
+  background: rgba(238, 240, 243, 1);
+  box-sizing: border-box;
+  border-radius: 20px 20px 0 0;
+}
+
+.contentSection {
+  width: 100%;
+  margin-top: 12px;
+  padding: 0 16px 12px 16px;
 }
 
 .headerBox {
@@ -45,7 +66,8 @@
 .actionButtons {
   background: #fff;
   border-radius: 16px;
-  margin: 10px 0 0;
+  /* 现在已经有 contentSection 的间距了，这里不再额外顶开 */
+  margin: 0;
   padding: 16px 16px;
   display: flex;
   justify-content: space-around;
@@ -88,6 +110,7 @@
   background: #fff;
   border-radius: 16px;
   padding: 16px 16px;
+  margin-top: 12px;
   // box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
