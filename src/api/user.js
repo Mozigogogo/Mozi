@@ -200,9 +200,94 @@ export const confirmBind = (bindCode) => {
   return request({
     url: Interface.CONFIRM_BIND,
     method: 'POST',
-    data: {
-      bindCode,
-    },
+    data: { bindCode },
+  });
+};
+
+/**
+ * 获取未读通知数量
+ * @returns {Promise}
+ */
+export const getUnreadNoticeCount = () => {
+  return request({
+    url: Interface.GET_UNREAD_COUNT,
+  });
+};
+
+/**
+ * 订阅/取消订阅公告
+ * @param {Object} params
+ * @param {string} params.userId
+ * @param {number} params.status - 1: 开启, 0: 关闭
+ * @param {string} params.channel
+ * @param {string} [params.chatId]
+ * @returns {Promise}
+ */
+export const subscribeAnnouncement = (params) => {
+  return request({
+    url: Interface.SUBSCRIBE_ANNOUNCEMENT,
+    method: 'POST',
+    data: params,
+  });
+};
+
+/**
+ * 获取我的交互数据
+ * @param {Object} params
+ * @param {number} params.limit
+ * @param {string} params.time - "YYYY-MM" or "YYYY-MM-DD"
+ * @returns {Promise}
+ */
+export const getMyInterface = (params) => {
+  return request({
+    url: Interface.GET_MY_INTERFACE,
+    method: 'POST',
+    data: params,
+  });
+};
+
+/**
+ * 更新用户信息
+ * @param {Object} params
+ * @param {string} [params.nickName]
+ * @param {string} [params.avatar]
+ * @returns {Promise}
+ */
+export const updateUserInfo = (params) => {
+  return request({
+    url: Interface.UPDATE_USER_INFO,
+    method: 'POST',
+    data: params,
+  });
+};
+
+/**
+ * 提交反馈
+ * @param {Object} params
+ * @param {number} params.score
+ * @param {string} params.content
+ * @param {string[]} params.goodFeatures
+ * @param {string[]} params.badFeatures
+ * @returns {Promise}
+ */
+export const submitFeedback = (params) => {
+  return request({
+    url: Interface.MOZI_COMMENT,
+    method: 'POST',
+    data: params,
+  });
+};
+
+/**
+ * 完成任务
+ * @param {string} taskCode
+ * @returns {Promise}
+ */
+export const completeTask = (taskCode) => {
+  return request({
+    url: Interface.TASK_COMPLETE,
+    method: 'POST',
+    data: { taskCode },
   });
 };
 

@@ -4,28 +4,37 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAccount, useDisconnect, useSignMessage } from 'wagmi';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
-import { Button, Avatar, List, Dialog, Toast, Popup, Grid } from 'antd-mobile';
+import { Button, Toast } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
-import Layout from '../../components/Layout';
-import CalendarCard from '../../components/CalendarCard';
-import NewCoinListing from '../../components/NewCoinListing';
-import LoginModal from '../../components/LoginModal';
-import SocialMediaPopup from '../../components/SocialMediaPopup';
-import FeedbackSuccessModal from '../../components/FeedbackSuccessModal';
-import AccountBindModal from '../../components/AccountBindModal';
-import BindBenefitCodeModal from '../../components/BindBenefitCodeModal';
-import BenefitCodeModal from '../../components/BenefitCodeModal';
-import { RightArrowIcon } from '../../components/Icons';
-import CopyIcon from '../../components/Icons/CopyIcon';
-import { request } from '../../utils/request';
-import { Interface, EMAIL, COINKEY } from '../../utils/constants';
-import { loginByWallet } from '../../api/user';
-import { useAlertConfig } from '../../hooks/useAlertConfig';
-import { useAmplitude } from '../../hooks/useAmplitude';
-import { ProfileEvents } from '../../utils/amplitude';
-import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
-import VipBanner from '../../components/VipBanner';
-import styles from './page.module.less';
+import Layout from '@/components/Layout';
+import CalendarCard from '@/components/CalendarCard';
+import NewCoinListing from '@/components/NewCoinListing';
+import LoginModal from '@/components/LoginModal';
+import FeedbackSuccessModal from '@/components/FeedbackSuccessModal';
+import AccountBindModal from '@/components/AccountBindModal';
+import BindBenefitCodeModal from '@/components/BindBenefitCodeModal';
+import BenefitCodeModal from '@/components/BenefitCodeModal';
+import { 
+  loginByWallet, 
+  getUserDataInfo, 
+  getMyInterface, 
+  getUnreadNoticeCount, 
+  subscribeAnnouncement, 
+  completeTask, 
+  updateUserInfo 
+} from '@/api/user';
+import UserInfo from '@/app/user/components/UserInfo';
+import StatsAndActions from '@/app/user/components/StatsAndActions';
+import UserActions from '@/app/user/components/UserActions';
+import PointsSection from '@/app/user/components/PointsSection';
+import UserMenu from '@/app/user/components/UserMenu';
+import RewardPopup from '@/app/user/components/RewardPopup';
+import EditProfilePopup from '@/app/user/components/EditProfilePopup';
+import FeedbackPopup from '@/app/user/components/FeedbackPopup';
+import GeneralPopup from '@/app/user/components/GeneralPopup';
+import { useAlertConfig } from '@/hooks/useAlertConfig';
+import VipBanner from '@/components/VipBanner';
+import styles from '@/app/user/page.module.less';
 
 // 检测是否在 Telegram 环境中
 const isTelegramEnv = () => {
@@ -40,7 +49,6 @@ export default function UserPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t, i18n } = useTranslation();
-  const { trackEvent, track } = useAmplitude('Profile');
   
   // 使用告警配置 Hook
   const { fetchConfig: fetchAlertConfigFromHook } = useAlertConfig({ autoFetch: false });
@@ -74,36 +82,15 @@ export default function UserPage() {
     isLogin: false
   });
   const DEFAULT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png';
-  const EDIT_ICON = '/icons/new_user/edit.svg';
-  const BIND_ICON = '/icons/new_user/bind.svg';
-  const VIP_ICON = '/icons/new_user/vip.svg';
   const [popVis, setPopVis] = useState(false);
   const [popType, setPopType] = useState('');
   const [rewardPopVis, setRewardPopVis] = useState(false); // 单独的打赏弹窗状态
-  const [reportScore, setReportScore] = useState(null);
-  const [scoreDisable, setScoreDisable] = useState(true);
-  const scoreInputRef = useRef('');
-  const [selectedGoodFeatures, setSelectedGoodFeatures] = useState([]); // 您觉得好的功能
-  const [selectedBadFeatures, setSelectedBadFeatures] = useState([]); // 建议调整的功能
-  const [showSecondaryActions, setShowSecondaryActions] = useState(true);
-  const [showPointsSection, setShowPointsSection] = useState(true);
-  const [showNewCoinListing, setShowNewCoinListing] = useState(true);
-  const [showCalendarSection, setShowCalendarSection] = useState(true);
-  const [showThemeOption, setShowThemeOption] = useState(true);
-  const [showSocialOption, setShowSocialOption] = useState(true);
-  const [showContactPop, setShowContactPop] = useState(true);
   const [showEditProfile, setShowEditProfile] = useState(false);
-  const [editNickname, setEditNickname] = useState('');
-  const [editAvatar, setEditAvatar] = useState('');
-  const [avatarFile, setAvatarFile] = useState(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginModalMode, setLoginModalMode] = useState('login');
   const [unreadCount, setUnreadCount] = useState(0);
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [interfaceData, setInterfaceData] = useState(null);
   const [newCoinListings, setNewCoinListings] = useState([]); // 新币上线数据
   const [isInterfaceLoaded, setIsInterfaceLoaded] = useState(false); // 接口是否已加载完成
-  const [isInterfaceSuccess, setIsInterfaceSuccess] = useState(false); // 接口是否调用成功
   const [isAnnouncementOn, setIsAnnouncementOn] = useState(() => {
     // 初始化时从 localStorage 读取订阅状态
     try {
@@ -120,7 +107,6 @@ export default function UserPage() {
   const [calendarEventDates, setCalendarEventDates] = useState([]); // 日历上有事件的日期（日期数字数组）
   const [isLoadingNewCoins, setIsLoadingNewCoins] = useState(false); // 新币上线数据加载状态
   const [showSuccessModal, setShowSuccessModal] = useState(false); // 成功反馈弹窗状态
-  const [submittingFeedback, setSubmittingFeedback] = useState(false); // 提交反馈的 loading 状态
   const [showAccountBindModal, setShowAccountBindModal] = useState(false); // 账号绑定弹窗状态
   const [showBindBenefitCodeModal, setShowBindBenefitCodeModal] = useState(false); // 绑定权益码弹窗状态
   const [showBenefitCodeModal, setShowBenefitCodeModal] = useState(false); // 权益码弹窗状态
@@ -224,10 +210,7 @@ export default function UserPage() {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const res = await request({
-        url: Interface.USER_DATA_INFO,
-        method: 'GET'
-      });
+      const res = await getUserDataInfo();
 
       if (res?.data) {
         // 保存完整的 dataInfo 数据到 localStorage
@@ -399,7 +382,6 @@ export default function UserPage() {
       if (!token) {
         // 未登录时重置状态
         setIsInterfaceLoaded(false);
-        setIsInterfaceSuccess(false);
         setCalendarEventDates([]);
         return;
       }
@@ -408,14 +390,10 @@ export default function UserPage() {
       const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
       try {
-        const res = await request({
-          url: Interface.GET_MY_INTERFACE,
-          method: 'POST',
-          data: {
-            limit: 200,
-            time: timeStr
-          }
-        });
+        const res = await getMyInterface({
+        limit: 200,
+        time: timeStr
+      });
 
         if (res?.success === true && res.data) {
           // 初始加载只用于获取日历小点，不显示新币上线列表
@@ -445,16 +423,13 @@ export default function UserPage() {
           
           // 最后设置加载完成状态，确保数据已准备好
           setIsInterfaceLoaded(true);
-          setIsInterfaceSuccess(true);
           
           // 默认选中当天日期并获取详细数据
-          setSelectedDate(now);
           fetchMyInterface(now);
         }
       } catch (error) {
         console.error('初始加载接口失败:', error);
         setIsInterfaceLoaded(true);
-        setIsInterfaceSuccess(false);
       }
     };
 
@@ -628,19 +603,6 @@ export default function UserPage() {
     Toast.show({ content: t('user.logoutSuccess'), position: 'bottom' });
   };
 
-  // 开通会员
-  const handleVip = () => {
-    Dialog.confirm({
-      content: '是否开通墨子VIP会员？',
-      onConfirm: () => {
-        Toast.show({
-          content: '请在小程序中开通会员',
-          position: 'bottom',
-        });
-      },
-    });
-  };
-
   const handleShare = () => {
     const shareUrl = window.location.origin;
     const shareText = t('user.shareText');
@@ -670,7 +632,7 @@ export default function UserPage() {
       try {
         const token = localStorage.getItem('token');
         if (!token) { setUnreadCount(0); return; }
-        const res = await request({ url: Interface.GET_UNREAD_COUNT });
+        const res = await getUnreadNoticeCount();
         const count = res?.data?.count ?? res?.data ?? 0;
         if (typeof count === 'number') setUnreadCount(count);
       } catch {}
@@ -686,13 +648,6 @@ export default function UserPage() {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
-  };
-
-  // 格式化日期为 YYYY-MM (只要年月)
-  const formatYearMonth = (date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    return `${year}-${month}`;
   };
 
   // 检测当前平台环境
@@ -745,11 +700,7 @@ export default function UserPage() {
         requestData.chatId = chatId;
       }
 
-      const res = await request({
-        url: Interface.SUBSCRIBE_ANNOUNCEMENT,
-        method: 'POST',
-        data: requestData
-      });
+      const res = await subscribeAnnouncement(requestData);
 
       // 基于 success 字段判断接口是否成功
       if (res?.success === true) {
@@ -803,20 +754,14 @@ export default function UserPage() {
       // 开始加载，显示加载状态
       setIsLoadingNewCoins(true);
 
-      const res = await request({
-        url: Interface.GET_MY_INTERFACE,
-        method: 'POST',
-        data: {
-          limit: 50,
-          time: timeStr
-        }
+      const res = await getMyInterface({
+        limit: 50,
+        time: timeStr
       });
 
       // 基于 success 字段判断接口是否成功
       if (res?.success === true) {
-        setInterfaceData(res.data);
         setIsInterfaceLoaded(true); // 记录接口已加载完成
-        setIsInterfaceSuccess(true); // 记录接口调用成功
         
         // 转换新币上线数据格式
         const rawData = Array.isArray(res.data) ? res.data : (res.data?.newCoinListings || res.data?.listings || []);
@@ -838,7 +783,6 @@ export default function UserPage() {
       } else {
         setNewCoinListings([]);
         setIsInterfaceLoaded(true); // 记录接口已加载完成
-        setIsInterfaceSuccess(false); // 记录接口调用失败
       }
     } catch (error) {
       console.error('获取我的交互数据失败:', error);
@@ -850,7 +794,6 @@ export default function UserPage() {
 
   // 处理日历日期选择
   const handleDateChange = (date) => {
-    setSelectedDate(date);
     // 清空当前数据，显示加载状态
     setNewCoinListings([]);
     fetchMyInterface(date);
@@ -869,13 +812,9 @@ export default function UserPage() {
     const timeStr = `${year}-${month}`;
 
     try {
-      const res = await request({
-        url: Interface.GET_MY_INTERFACE,
-        method: 'POST',
-        data: {
-          limit: 50,
-          time: timeStr
-        }
+      const res = await getMyInterface({
+        limit: 50,
+        time: timeStr
       });
 
       if (res?.success === true && res.data) {
@@ -931,12 +870,8 @@ export default function UserPage() {
   };
 
   const contact = () => {
-    if (showContactPop) {
-      setPopVis(true);
-      setPopType('contact');
-    } else {
-      Toast.show({ content: t('user.comingSoon'), position: 'bottom' });
-    }
+    setPopVis(true);
+    setPopType('contact');
   };
 
   const attendUs = () => {
@@ -948,146 +883,9 @@ export default function UserPage() {
     setRewardPopVis(true); // 使用单独的打赏弹窗
   };
 
-  const onScoreSelect = (scoreValue) => {
-    setReportScore(scoreValue);
-    setScoreDisable(false);
-  };
-
-  const onScoreTextChange = (value) => {
-    scoreInputRef.current = value;
-  };
-
-  // 切换"您觉得好的功能"选项
-  const toggleGoodFeature = (feature) => {
-    setSelectedGoodFeatures(prev => {
-      if (prev.includes(feature)) {
-        return prev.filter(f => f !== feature);
-      } else {
-        return [...prev, feature];
-      }
-    });
-  };
-
-  // 切换"建议调整的功能"选项
-  const toggleBadFeature = (feature) => {
-    setSelectedBadFeatures(prev => {
-      if (prev.includes(feature)) {
-        return prev.filter(f => f !== feature);
-      } else {
-        return [...prev, feature];
-      }
-    });
-  };
-
-  const submitScore = async () => {
-    // iOS 修复：强制失焦所有输入框，防止 viewport 缩放问题
-    forceBlurAndResetViewport();
-    
-    // 检查用户是否登录
-    const token = localStorage.getItem('token');
-    if (!token) {
-      // 先关闭反馈弹窗
-      setPopVis(false);
-      // 延迟显示 Toast 和打开登录弹窗，确保 Toast 可见
-      setTimeout(() => {
-        Toast.show({ content: t('user.pleaseLogin'), position: 'top', duration: 2000 });
-        // 再延迟一点打开登录弹窗，让用户看到提示
-        setTimeout(() => {
-          setShowLoginModal(true);
-        }, 500);
-      }, 100);
-      return;
-    }
-    
-    setSubmittingFeedback(true);
-    try {
-      const res = await request({
-        url: Interface.MOZI_COMMENT,
-        method: 'POST',
-        data: { 
-          score: reportScore, 
-          content: scoreInputRef.current,
-          goodFeatures: selectedGoodFeatures,
-          badFeatures: selectedBadFeatures
-        },
-      });
-      if (res?.data?.isSuccess) {
-        // 关闭反馈弹窗
-        setPopVis(false);
-        // 显示成功弹窗
-        setShowSuccessModal(true);
-      } else {
-        Toast.show({ content: t('user.feedbackFailed'), position: 'bottom' });
-      }
-    } catch (e) {
-      Toast.show({ content: t('user.feedbackFailed'), position: 'bottom' });
-    } finally {
-      setSubmittingFeedback(false);
-    }
-    // 重置选择
-    setSelectedGoodFeatures([]);
-    setSelectedBadFeatures([]);
-  };
-
-  const copyToClipboard = (value) => {
-    navigator.clipboard.writeText(value).then(() => {
-      Toast.show({ content: t('user.copySuccess'), position: 'bottom' });
-    }).catch(() => {
-      Toast.show({ content: t('user.copyFailed'), position: 'bottom' });
-    });
-  };
-
-  const changeLanguage = () => {
-    setPopVis(true);
-    setPopType('language');
-  };
-  
-  const selectLanguage = (lng) => {
-    i18n.changeLanguage(lng);
-    // 确保语言设置被持久化到 localStorage
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('i18nextLng', lng);
-    }
-    Toast.show({
-      content: lng === 'zh' ? '已切换到中文' : 'Switched to English',
-      duration: 1000,
-      position: 'bottom'
-    });
-    setPopVis(false);
-  };
-
   // 打开编辑个人资料弹窗
   const openEditProfile = () => {
-    // 如果昵称为空或为默认值，则不预填
-    const nickname = (userInfo.nickname && userInfo.nickname !== t('user.defaultNickname')) ? userInfo.nickname : '';
-    setEditNickname(nickname);
-    setEditAvatar(userInfo.avatar || DEFAULT_AVATAR);
-    setAvatarFile(null);
     setShowEditProfile(true);
-  };
-
-  // 处理头像选择
-  const handleAvatarChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // 检查文件大小（限制为2MB）
-      if (file.size > 2 * 1024 * 1024) {
-        Toast.show({
-          content: t('user.avatarTooLarge') || '头像文件太大，请选择小于2MB的图片',
-          position: 'bottom',
-          icon: 'fail'
-        });
-        return;
-      }
-      
-      // 读取文件并转换为 base64
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setEditAvatar(event.target.result);
-        setAvatarFile(file);
-      };
-      reader.readAsDataURL(file);
-    }
   };
 
   // 处理登录成功
@@ -1132,11 +930,7 @@ export default function UserPage() {
 
     // 登录成功后，调用每日登录任务完成接口
     try {
-      await request({
-        url: Interface.TASK_COMPLETE,
-        method: 'POST',
-        data: { taskCode: 'DAILY_LOGIN' }
-      });
+      await completeTask('DAILY_LOGIN');
     } catch (taskError) {
       console.error('每日登录任务上报失败:', taskError);
     }
@@ -1236,13 +1030,9 @@ export default function UserPage() {
         nickname
       });
 
-      const res = await request({
-        url: Interface.UPDATE_USER_INFO,
-        method: 'POST',
-        data: {
-          nickName: nickname,
-          avatar: DEFAULT_AVATAR,
-        }
+      const res = await updateUserInfo({
+        nickName: nickname,
+        avatar: DEFAULT_AVATAR,
       });
 
       if (res?.data) {
@@ -1314,13 +1104,9 @@ export default function UserPage() {
         avatar: tgUserInfo.photoUrl || DEFAULT_AVATAR
       });
 
-      const res = await request({
-        url: Interface.UPDATE_USER_INFO,
-        method: 'POST',
-        data: {
-          nickName: nickname,
-          avatar: tgUserInfo.photoUrl || DEFAULT_AVATAR,
-        }
+      const res = await updateUserInfo({
+        nickName: nickname,
+        avatar: tgUserInfo.photoUrl || DEFAULT_AVATAR,
       });
 
       if (res?.data) {
@@ -1394,18 +1180,15 @@ export default function UserPage() {
         }
         
         // 获取用户详细信息（与邮箱登录对齐）
-        request({
-          url: Interface.USER_DATA_INFO,
-          method: 'GET'
-        }).then((dataInfoRes) => {
-          if (dataInfoRes?.data) {
+        getUserDataInfo().then(res => {
+          if (res?.data) {
             console.log('✅ [TON钱包登录] 获取用户详细信息成功');
-            console.log('  - dataInfo完整数据:', dataInfoRes.data);
-            console.log('  - dataInfo.userInfo:', dataInfoRes.data.userInfo);
-            console.log('  - dataInfo.userInfo.nickName:', dataInfoRes.data.userInfo?.nickName);
-            console.log('  - dataInfo.userInfo.avatar:', dataInfoRes.data.userInfo?.avatar);
+            console.log('  - dataInfo完整数据:', res.data);
+            console.log('  - dataInfo.userInfo:', res.data.userInfo);
+            console.log('  - dataInfo.userInfo.nickName:', res.data.userInfo?.nickName);
+            console.log('  - dataInfo.userInfo.avatar:', res.data.userInfo?.avatar);
             
-            localStorage.setItem('userDataInfo', JSON.stringify(dataInfoRes.data));
+            localStorage.setItem('userDataInfo', JSON.stringify(res.data));
             
             console.log('📝 [TON钱包登录] localStorage 最终状态:');
             console.log('  - userInfo:', localStorage.getItem('userInfo'));
@@ -1416,11 +1199,7 @@ export default function UserPage() {
         });
         
         // 完成每日登录任务（与邮箱登录对齐）
-        request({
-          url: Interface.TASK_COMPLETE,
-          method: 'POST',
-          data: { taskCode: 'DAILY_LOGIN' }
-        }).then(() => {
+        completeTask('DAILY_LOGIN').then(() => {
           console.log('✅ [TON钱包登录] 每日登录任务上报成功');
         }).catch((taskError) => {
           console.error('❌ [TON钱包登录] 每日登录任务上报失败:', taskError);
@@ -1457,115 +1236,7 @@ export default function UserPage() {
     }
   };
 
-  // 保存用户信息
-  const saveUserProfile = async () => {
-    if (!editNickname || editNickname.trim().length === 0) {
-      Toast.show({
-        content: t('user.nicknameRequired') || '请输入昵称',
-        position: 'bottom',
-        icon: 'fail'
-      });
-      return;
-    }
 
-    if (editNickname.length > 50) {
-      Toast.show({
-        content: t('user.nicknameTooLong') || '昵称不能超过50个字符',
-        position: 'bottom',
-        icon: 'fail'
-      });
-      return;
-    }
-
-    Toast.show({
-      icon: 'loading',
-      content: t('user.saving') || '保存中...',
-      duration: 0
-    });
-
-    try {
-      const res = await request({
-        url: Interface.UPDATE_USER_INFO,
-        method: 'POST',
-        data: {
-          avatar: editAvatar,
-          nickName: editNickname.trim(),
-        }
-      });
-
-      if (res?.data) {
-        // 更新本地用户信息
-        const newNickname = editNickname.trim();
-        const newAvatar = res.data; // 服务器返回的头像URL
-        
-        setUserInfo(prev => ({
-          ...prev,
-          nickname: newNickname,
-          avatar: newAvatar
-        }));
-
-        // 同步更新 localStorage.userInfo（头像）
-        try {
-          const storedUserInfo = localStorage.getItem('userInfo');
-          if (storedUserInfo) {
-            const parsed = JSON.parse(storedUserInfo);
-            parsed.nickName = newNickname;
-            parsed.avatar = newAvatar;
-            localStorage.setItem('userInfo', JSON.stringify(parsed));
-          } else {
-            localStorage.setItem(
-              'userInfo',
-              JSON.stringify({
-                nickName: newNickname,
-                avatar: newAvatar,
-              })
-            );
-          }
-        } catch (e) {
-          console.error('更新 userInfo 失败:', e);
-        }
-        
-        // 同步更新 localStorage.userDataInfo（昵称）
-        try {
-          const storedDataInfo = localStorage.getItem('userDataInfo');
-          if (storedDataInfo) {
-            const parsed = JSON.parse(storedDataInfo);
-            if (!parsed.userInfo) {
-              parsed.userInfo = {};
-            }
-            parsed.userInfo.nickName = newNickname;
-            parsed.userInfo.avatar = newAvatar;
-            localStorage.setItem('userDataInfo', JSON.stringify(parsed));
-          }
-        } catch (e) {
-          console.error('更新 userDataInfo 失败:', e);
-        }
-
-        Toast.clear();
-        Toast.show({
-          content: t('user.saveSuccess') || '保存成功',
-          position: 'center',
-          icon: 'success'
-        });
-        setShowEditProfile(false);
-      } else {
-        Toast.clear();
-        Toast.show({
-          content: t('user.saveFailed') || '保存失败',
-          position: 'center',
-          icon: 'fail'
-        });
-      }
-    } catch (error) {
-      console.error('保存用户信息失败:', error);
-      Toast.clear();
-      Toast.show({
-        content: t('user.saveFailed') || '保存失败',
-        position: 'center',
-        icon: 'fail'
-      });
-    }
-  };
 
   const footerList = [
     {
@@ -1573,7 +1244,10 @@ export default function UserPage() {
       icon: (<img src={'/icons/zh-en.svg'} alt="语言设置" style={{ width: 22, height: 22 }} />),
       text: t('user.language'),
       extra: i18n.language === 'zh' ? '中文' : 'English',
-      callback: () => changeLanguage()
+      callback: () => {
+        setPopVis(true);
+        setPopType('language');
+      }
     },
     {
       key: 'theme',
@@ -1620,254 +1294,59 @@ export default function UserPage() {
     <Layout>
       <div className={styles.container}>
         {/* Banner 区域 - 仅包含头部信息 */}
-        <div className={styles.topBannerWrapper}>
-          <div className={styles.headerBox}>
-            {userInfo.isLogin ? (
-              <div className={styles.headerContentTop}>
-                {/* 第一行：头像、昵称 */}
-                <div className={styles.userInfoRow}>
-                  <div className={styles.avatarWrapper}>
-                     <img className={styles.headerAvatar} src={userInfo.avatar || DEFAULT_AVATAR} alt="头像" />
-                     {/* 验证图标 */}
-                     <img className={styles.verifyIcon} src={VIP_ICON} alt="verify" onError={(e) => e.target.style.display = 'none'} />
-                  </div>
-                  <div className={styles.infoContent}>
-                      <div className={styles.nicknameWrapper}>
-                          <span className={styles.nickname}>
-                            {userInfo.nickname || "无为而治"}
-                          </span>
-                      </div>
-                  </div>
-                </div>
-
-                {/* 第二行：标签 */}
-                <div className={styles.tagsRow}>
-                    <span className={styles.userTag}>合规从业者</span>
-                    <span className={styles.userTag}>内容创作者</span>
-                    <span className={styles.userTag}>专职交易员</span>
-                    <span className={styles.userTag}>社群运营</span>
-                </div>
-
-                {/* 第三行：简介 */}
-                <div className={styles.bioRow}>
-                    {userInfo.bio || "资金流动大师，金融NO.1"}
-                </div>
-              </div>
-            ) : (
-              <div className={styles.loginBox}>
-                <div className={styles.headerContentTop} onClick={isTelegramEnv() ? undefined : handleLogin}>
-                  <div className={styles.userInfoRow}>
-                    <div className={styles.avatarWrapper}>
-                        <img className={styles.headerAvatar} src={DEFAULT_AVATAR} alt="头像" />
-                    </div>
-                     <div className={styles.infoContent}>
-                          <div className={styles.nicknameWrapper}>
-                            <span className={styles.nickname}>{t('user.pleaseLogin')}</span>
-                          </div>
-                          <div className={styles.bioRow}>
-                             登录后查看更多精彩内容
-                          </div>
-                     </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        <UserInfo 
+          userInfo={userInfo} 
+          handleLogin={handleLogin} 
+          isTelegramEnv={isTelegramEnv()} 
+        />
 
         {/* 统计数据和操作按钮区域 - 白色背景 */}
-        {userInfo.isLogin && (
-          <div className={styles.statsAndActionsWrapper}>
-                <div className={styles.statsActionRow}>
-                    <div className={styles.statsGroup}>
-                        <div className={styles.statItem}>
-                            <span className={styles.statValue}>123</span>
-                            <span className={styles.statLabel}>关注</span>
-                        </div>
-                        <div className={styles.statItem}>
-                             <span className={styles.statValue}>123</span>
-                             <span className={styles.statLabel}>粉丝</span>
-                        </div>
-                         <div className={styles.statItem}>
-                             <span className={styles.statValue}>123</span>
-                             <span className={styles.statLabel}>获赞</span>
-                        </div>
-                        <div className={styles.statItem}>
-                             <span className={styles.statValue}>123W</span>
-                             <span className={styles.statLabel}>积分</span>
-                        </div>
-                    </div>
-                    <div className={styles.actionGroup}>
-                        <div className={styles.profileBtn} onClick={() => window.location.href = '/selfrank'}>
-                            个人主页
-                        </div>
-                        <div className={styles.iconBtn} onClick={openEditProfile}>
-                             {/* 编辑图标 */}
-                             <img src={EDIT_ICON} alt="edit" />
-                        </div>
-                        <div className={styles.iconBtn} onClick={() => setShowBenefitCodeModal(true)}>
-                             {/* 链接/分享图标 */}
-                             <img src={BIND_ICON} alt="link" />
-                        </div>
-                    </div>
-                </div>
-          </div>
-        )}
+        <StatsAndActions 
+          userInfo={userInfo} 
+          openEditProfile={openEditProfile} 
+          setShowBenefitCodeModal={setShowBenefitCodeModal} 
+        />
 
         {/* 内容区域 */}
         <div className={styles.contentWrapper}>
           <div className={styles.contentSection}>
             <VipBanner onClick={() => setShowBenefitCodeModal(true)} />
-            <div className={styles.actionButtons}>
-            <div className={styles.actionButton} onClick={() => (window.location.href = '/find?tab=self')}>
-              <div className={styles.actionIcon}>
-                <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/optional%402x.png'} alt="我的自选" />
-              </div>
-              <div className={styles.actionText}>{t('user.myFavorites')}</div>
-            </div>
-            <div className={styles.actionButton} onClick={() => (window.location.href = '/mywarn')}>
-              <div className={styles.actionIcon}>
-                <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/me-alert%402x.png'} alt="我的报警" />
-              </div>
-              <div className={styles.actionText}>{t('user.myWarnings')}</div>
-            </div>
-            <div className={styles.actionButton} onClick={attendUs}>
-              <div className={styles.actionIcon}>
-                <img className={styles.actionIconImg} src={'/icons/twitter.svg'} alt={t('user.followTwitter')} />
-              </div>
-              <div className={styles.actionText}>{t('user.followTwitter')}</div>
-            </div>
-          </div>
+            <UserActions 
+              userInfo={userInfo} 
+              t={t} 
+              attendUs={attendUs} 
+              unreadCount={unreadCount} 
+              handleLogin={handleLogin} 
+              score={score} 
+              handleShare={handleShare} 
+              isTelegramEnv={isTelegramEnv()} 
+            />
           
-        {showSecondaryActions && (
-            <div className={styles.secondaryActions}>
-              <div className={styles.actionRow}>
-                <div className={styles.actionButton} onClick={() => (window.location.href = '/mycomments')}>
-                  <div className={styles.actionIcon}>
-                    <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/comment%402x.png'} alt="我的评论" />
-                  </div>
-                  <div className={styles.actionText}>{t('user.myComments')}</div>
-                </div>
-                <div className={styles.actionButton} onClick={() => (window.location.href = '/mynotices')}>
-                  <div className={styles.actionIcon} style={{ position: 'relative' }}>
-                    <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/mail%402x.png'} alt="消息通知" />
-                    {unreadCount > 0 && <div className={styles.badge}>{unreadCount > 99 ? '99+' : unreadCount}</div>}
-                  </div>
-                  <div className={styles.actionText}>{t('user.messageNotification')}</div>
-                </div>
-                <div className={styles.actionButton} onClick={() => (window.location.href = '/mylikes')}>
-                  <div className={styles.actionIcon}>
-                    <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/like%402x.png'} alt="我的点赞" />
-                  </div>
-                  <div className={styles.actionText}>{t('user.myLikes')}</div>
-                </div>
-              </div>
-            </div>
-          )}
+          <PointsSection 
+            pointsData={pointsData} 
+            t={t} 
+            router={router} 
+          />
 
-          <div className={styles.horizontalButtons}>
-            {!userInfo.isLogin ? (
-              <div className={`${styles.horizontalBtn} ${styles.left}`} onClick={handleLogin}>
-                <div className={styles.btnIcon}>
-                  <img className={styles.btnIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/feedback%402x.png'} alt="反馈" />
-                </div>
-                <div className={styles.btnBottom}>
-                  <div className={styles.btnContent}>
-                    <div className={styles.btnText}>{t('user.feedback')}</div>
-                    <div className={styles.btnSubtext}>{t('user.feedbackDesc')}</div>
-                  </div>
-                  <div className={styles.btnArrow}>
-                    <RightArrowIcon size={24} color="#A5A9AF" />
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className={`${styles.horizontalBtn} ${styles.left}`} onClick={score}>
-                <div className={styles.btnIcon}>
-                  <img className={styles.btnIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/feedback%402x.png'} alt="反馈" />
-                </div>
-                <div className={styles.btnBottom}>
-                  <div className={styles.btnContent}>
-                    <div className={styles.btnText}>{t('user.feedback')}</div>
-                    <div className={styles.btnSubtext}>{t('user.feedbackDesc')}</div>
-                  </div>
-                  <div className={styles.btnArrow}>
-                    <RightArrowIcon size={24} color="#A5A9AF" />
-                  </div>
-                </div>
-              </div>
-            )}
-            <div className={`${styles.horizontalBtn} ${styles.right}`} onClick={handleShare}>
-              <div className={styles.btnIcon}>
-                <img className={styles.btnIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/me-share%402x.png'} alt="推荐朋友" />
-              </div>
-              <div className={styles.btnBottom}>
-                <div className={styles.btnContent}>
-                  <div className={styles.btnText}>{t('user.recommendFriend')}</div>
-                  <div className={styles.btnSubtext}>{t('user.recommendDesc')}</div>
-                </div>
-                <div className={styles.btnArrow}>
-                  <RightArrowIcon size={24} color="#A5A9AF" />
-                </div>
-              </div>
-            </div>
+          <div className={styles.calendarSection}>
+            <CalendarCard 
+              onDateChange={handleDateChange}
+              onToggleChange={handleAnnouncementToggle}
+              onMonthChange={handleMonthChange}
+              defaultToggle={isAnnouncementOn}
+              eventDates={isInterfaceLoaded ? calendarEventDates : []}
+            />
           </div>
-          
-          {showPointsSection && (
-            <div className={styles.pointsSection}>
-              <div className={styles.pointsInfo} onClick={() => router.push('/pointsdetail')}>
-                <span className={styles.pointsTitle}>{t('user.myPoints')}</span>
-                <div className={styles.pointsValueRow}>
-                  <span className={styles.pointsValue}>{pointsData.totalPoints}</span>
-                  <span className={styles.pointsDaily}>{t('user.yesterdayPoints', { points: pointsData.yesterdayPoints })}</span>
-                </div>
-                <span className={styles.pointsRank}>{t('user.currentRank', { rank: pointsData.pointsRanking })}</span>
-              </div>
-              <div className={styles.pointsAction} onClick={() => router.push('/points')}>
-                <span className={styles.pointsButton}>{t('user.pointsRanking')}</span>
-                <RightArrowIcon size={18} color="#fff"  />
-              </div>
-              <img className={styles.pointsCoin} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/integral-coin.png'} alt="coin" />
-            </div>
-          )}
 
-          {showCalendarSection && (
-            <div className={styles.calendarSection}>
-              <CalendarCard 
-                onDateChange={handleDateChange}
-                onToggleChange={handleAnnouncementToggle}
-                onMonthChange={handleMonthChange}
-                defaultToggle={isAnnouncementOn}
-                eventDates={isInterfaceLoaded ? calendarEventDates : []}
-              />
-            </div>
-          )}
-
-          {showNewCoinListing && (
-            <div className={styles.newCoinSection}>
-              <NewCoinListing showMore={false} data={newCoinListings} loading={isLoadingNewCoins} />
-            </div>
-          )}
+          <div className={styles.newCoinSection}>
+            <NewCoinListing showMore={false} data={newCoinListings} loading={isLoadingNewCoins} />
+          </div>
 
           <div className={styles.flexSpacer}></div>
 
-          <div className={styles.footer}>
-            <List className={styles.footerList}>
-              {footerList.map((item, index) => {
-                if (item.key === 'theme' && !showThemeOption) return null;
-                if (item.key === 'social' && !showSocialOption) return null;
-                return (
-                  <List.Item key={index} className={`${styles.footerItem} ${index === footerList.length - 1 ? styles.last : ''}`} onClick={item.callback}>
-                    <div className={styles.footerBtn}>
-                      <div className={styles.icon}>{item.icon}</div>
-                      <div className={styles.text}>{item.text}</div>
-                      <div className={styles.extra}>{item.extra}</div>
-                    </div>
-                </List.Item>
-                );
-              })}
-            </List>
-          </div>
+          <UserMenu 
+            footerList={footerList} 
+          />
 
             {userInfo.isLogin && !isTelegramEnv() && (
               <Button className={styles.logoutBtn} onClick={handleLogout}>{t('user.logout')}</Button>
@@ -1875,309 +1354,39 @@ export default function UserPage() {
           </div>
         </div>
         
-        <Popup
-          visible={popVis}
-          onMaskClick={() => setPopVis(false)}
+        {/* 通用弹窗 (关于我们, 联系我们, 关注我们, 语言切换, 社交媒体) */}
+        <GeneralPopup
+          visible={popVis && popType !== 'score'}
+          popType={popType}
           onClose={() => setPopVis(false)}
-          position='bottom'
-          bodyStyle={
-            popType === 'social' 
-              ? { background: 'transparent', padding: 0 }
-              : popType === 'score'
-              ? { borderTopLeftRadius: '20px', borderTopRightRadius: '20px' }
-              : { borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }
-          }
-        >
-          {popType === 'social' && <SocialMediaPopup />}
+          t={t}
+          i18n={i18n}
+        />
 
-          {popType === 'about' && (
-            <div className={`${styles.popContainer} ${styles.aboutContainer}`}>
-              <div className={styles.aboutItem}>
-                {t('user.aboutMozi.intro')}
-              </div>
-              <br />
-              <div className={`${styles.aboutItem} ${styles.secDesc}`}>
-                {t('user.aboutMozi.description')}
-              </div>
-              <div className={`${styles.aboutItem} ${styles.secCon}`}>
-                <strong>{t('user.aboutMozi.mission')}</strong>
-                {t('user.aboutMozi.missionText')}
-              </div>
-              <div className={styles.aboutItem}>
-                <strong>{t('user.aboutMozi.vision')}</strong>
-                {t('user.aboutMozi.visionText')}
-              </div>
-              <div className={styles.aboutItem}>
-                <strong>{t('user.aboutMozi.values')}</strong>
-                {t('user.aboutMozi.valuesText')}
-              </div>
-            </div>
-          )}
-
-          {popType === 'score' && (
-            <div className={styles.scorePopContainer}>
-              <div className={styles.feedbackTitle}>
-                <div>{t('user.feedbackTitle')}</div>
-                <div>{t('user.feedbackSubtitle')}</div>
-              </div>
-              <div className={styles.feedbackContent}>
-                {/* 功能选择区域 */}
-                <div className={styles.feedbackSelectSection}>
-                  {/* 您觉得好的功能 */}
-                  <div className={styles.feedbackSection}>
-                  <div className={styles.feedbackSectionTitle}>{t('user.goodFeatures')}</div>
-                  <Grid className={styles.featureGrid} columns={3} gap={10}>
-                    {[
-                      t('user.featureOptions.marketBoard'),
-                      t('user.featureOptions.alertFunction'),
-                      t('user.featureOptions.aiChat'),
-                      t('user.featureOptions.marketData'),
-                      t('user.featureOptions.communityContent'),
-                      t('user.featureOptions.contractData')
-                    ].map((feature) => (
-                      <Grid.Item key={feature}>
-                        <div 
-                          className={`${styles.featureTag} ${selectedGoodFeatures.includes(feature) ? styles.featureTagSelected : ''}`}
-                          onClick={() => toggleGoodFeature(feature)}
-                        >
-                          {feature}
-                        </div>
-                      </Grid.Item>
-                    ))}
-                  </Grid>
-                </div>
-
-                {/* 建议调整的功能 */}
-                <div className={styles.feedbackSection}>
-                  <div className={styles.feedbackSectionTitle}>{t('user.badFeatures')}</div>
-                  <Grid className={styles.featureGrid} columns={3} gap={10}>
-                    {[
-                      t('user.featureOptions.marketBoard'),
-                      t('user.featureOptions.alertFunction'),
-                      t('user.featureOptions.aiChat'),
-                      t('user.featureOptions.marketData'),
-                      t('user.featureOptions.communityContent'),
-                      t('user.featureOptions.contractData')
-                    ].map((feature) => (
-                      <Grid.Item key={feature}>
-                        <div 
-                          className={`${styles.featureTag} ${selectedBadFeatures.includes(feature) ? styles.featureTagSelected : ''}`}
-                          onClick={() => toggleBadFeature(feature)}
-                        >
-                          {feature}
-                        </div>
-                      </Grid.Item>
-                    ))}
-                  </Grid>
-                </div>
-                </div>
-
-                {/* 积分活动容器 */}
-                <div className={styles.scoreContainer}>
-                  <div className={styles.scoreRecommendText}>{t('user.recommendQuestion')}</div>
-                  <div className={styles.scoreDesc}>
-                    <span>{t('user.veryUnwilling')}</span>
-                    <span>{t('user.veryWilling')}</span>
-                  </div>
-                  <Grid className={styles.scoreList} columns={10} gap={5}>
-                    {[1,2,3,4,5,6,7,8,9,10].map((item) => (
-                      <Grid.Item key={item} className={`${styles.scoreItem} ${item === reportScore ? styles.scoreActive : ''}`} onClick={() => onScoreSelect(item)}>
-                        {item}
-                      </Grid.Item>
-                    ))}
-                  </Grid>
-                </div>
-              </div>
-              <div className={styles.scoreCon}>
-                <div>
-                  <span>{t('user.feedbackInputTitle')}</span>
-                </div>
-                <textarea 
-                  className={styles.scoreTextArea} 
-                  placeholder={t('user.feedbackInputPlaceholder')} 
-                  maxLength={200} 
-                  onChange={(e) => onScoreTextChange(e.target.value)} 
-                  rows={4}
-                />
-              </div>
-              <Button 
-                className={`${styles.scoreBtn} ${scoreDisable ? styles.scoreBtnDisable : ''} ${submittingFeedback ? styles.loading : ''}`} 
-                onClick={submittingFeedback ? undefined : submitScore} 
-                disabled={scoreDisable || submittingFeedback} 
-                block
-              >
-                {submittingFeedback ? (
-                  <span className={styles.loadingSpinner}></span>
-                ) : (
-                  t('user.submitFeedback')
-                )}
-              </Button>
-            </div>
-          )}
-
-          {popType === 'contact' && showContactPop && (
-            <div className={`${styles.popContainer} ${styles.contactContainer}`}>
-              <div className={styles.contactTitle}>{t('user.welcomeContact')}</div>
-              <div className={styles.contactEmail}>
-                <span>Email: {EMAIL}</span>
-                <div className={styles.contactCopy} onClick={() => copyToClipboard(EMAIL)}>
-                  <CopyIcon width={20} height={20} color="var(--text-secondary)" />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {popType === 'attend' && (
-            <div className={styles.popContainer}>
-              <div className={styles.contactTitle}>{t('user.welcomeFollowUs')}</div>
-              <img className={styles.attendPic} src='https://image-1317406749.cos.ap-shanghai.myqcloud.com/wechat_account.jpg' alt='公众号二维码' />
-            </div>
-          )}
-
-          {popType === 'language' && (
-            <div className={styles.popContainer}>
-              <div className={styles.contactTitle}>{t('user.selectLanguage')}</div>
-              <List className={styles.languageList}>
-                <List.Item 
-                  className={`${styles.languageItem} ${i18n.language === 'zh' ? styles.languageItemActive : ''}`}
-                  onClick={() => selectLanguage('zh')}
-                >
-                  <div className={styles.languageOption}>
-                    <span>简体中文</span>
-                    {i18n.language === 'zh' && <span className={styles.languageCheck}>✓</span>}
-                  </div>
-                </List.Item>
-                <List.Item 
-                  className={`${styles.languageItem} ${i18n.language === 'en' ? styles.languageItemActive : ''}`}
-                  onClick={() => selectLanguage('en')}
-                >
-                  <div className={styles.languageOption}>
-                    <span>English</span>
-                    {i18n.language === 'en' && <span className={styles.languageCheck}>✓</span>}
-                  </div>
-                </List.Item>
-              </List>
-            </div>
-          )}
-        </Popup>
+        {/* 意见反馈弹窗 */}
+        <FeedbackPopup
+          visible={popVis && popType === 'score'}
+          onClose={() => setPopVis(false)}
+          t={t}
+          setShowLoginModal={setShowLoginModal}
+          setShowSuccessModal={setShowSuccessModal}
+        />
 
         {/* 自定义打赏弹窗 - 两页布局 */}
-        {rewardPopVis && (
-          <div className={styles.rewardMask} onClick={() => setRewardPopVis(false)}>
-            <div className={styles.rewardPopup} onClick={(e) => e.stopPropagation()}>
-              <div className={styles.contactTitle}>{t('user.donateSupport')}</div>
-              <div className={styles.rewardScrollBox}>
-                {/* 第一页：区块链地址列表 */}
-                <div className={styles.rewardPage}>
-                  <div className={styles.addressList}>
-                    <div className={styles.addressItem}>
-                      <div className={styles.addressLabel}>BTC</div>
-                      <div className={styles.addressContent}>
-                        <span className={styles.addressText}>{COINKEY.BTC}</span>
-                        <div className={styles.contactCopy} onClick={() => copyToClipboard(COINKEY.BTC)}>
-                          <CopyIcon width={18} height={18} color="var(--text-secondary)" />
-                        </div>
-                      </div>
-                    </div>
-                    <div className={styles.addressItem}>
-                      <div className={styles.addressLabel}>ETH</div>
-                      <div className={styles.addressContent}>
-                        <span className={styles.addressText}>{COINKEY.ETH}</span>
-                        <div className={styles.contactCopy} onClick={() => copyToClipboard(COINKEY.ETH)}>
-                          <CopyIcon width={18} height={18} color="var(--text-secondary)" />
-                        </div>
-                      </div>
-                    </div>
-                    <div className={styles.addressItem}>
-                      <div className={styles.addressLabel}>TRON</div>
-                      <div className={styles.addressContent}>
-                        <span className={styles.addressText}>{COINKEY.TRON}</span>
-                        <div className={styles.contactCopy} onClick={() => copyToClipboard(COINKEY.TRON)}>
-                          <CopyIcon width={18} height={18} color="var(--text-secondary)" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className={styles.swipeHint}>{t('user.swipeToWechat')}</div>
-                </div>
-                
-                {/* 第二页：微信支付二维码 */}
-                <div className={styles.rewardPage}>
-                  <div className={styles.qrcodeBox}>
-                    <img className={styles.qrcodeImg} src='https://image-1317406749.cos.ap-shanghai.myqcloud.com/wechat_pay.jpg' alt={t('user.wechatPay')} />
-                    <div className={styles.qrcodeLabel}>{t('user.wechatPay')}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        <RewardPopup 
+          visible={rewardPopVis}
+          onClose={() => setRewardPopVis(false)}
+          t={t}
+        />
 
         {/* 编辑用户信息弹窗 */}
-        <Popup
+        <EditProfilePopup 
           visible={showEditProfile}
-          onMaskClick={() => setShowEditProfile(false)}
           onClose={() => setShowEditProfile(false)}
-          position='bottom'
-          bodyStyle={{
-            borderTopLeftRadius: '24px',
-            borderTopRightRadius: '24px',
-            minHeight: '50vh',
-            maxHeight: '80vh',
-            padding: '24px'
-          }}
-        >
-          <div className={styles.editProfileContainer}>
-            <div className={styles.editProfileTitle}>{t('user.editProfile') || '编辑个人资料'}</div>
-            
-            {/* 头像编辑 */}
-            <div className={styles.editAvatarSection}>
-              <div className={styles.editLabel}>{t('user.avatar') || '头像'}</div>
-              <div className={styles.editAvatarBox}>
-                <img className={styles.editAvatarPreview} src={editAvatar} alt="头像预览" />
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarChange}
-                  style={{ display: 'none' }}
-                  id="avatar-upload"
-                />
-                <label htmlFor="avatar-upload" className={styles.editAvatarBtn}>
-                  {t('user.changeAvatar') || '更换头像'}
-                </label>
-              </div>
-            </div>
-
-            {/* 昵称编辑 */}
-            <div className={styles.editNicknameSection}>
-              <div className={styles.editLabel}>{t('user.nickname') || '昵称'}</div>
-              <input
-                type="text"
-                className={styles.editNicknameInput}
-                value={editNickname}
-                onChange={(e) => setEditNickname(e.target.value)}
-                placeholder={t('user.enterNickname') || '请输入用户名'}
-                maxLength={50}
-              />
-            </div>
-
-            {/* 保存按钮 */}
-            <div className={styles.editButtonGroup}>
-              <Button
-                className={styles.editCancelBtn}
-                onClick={() => setShowEditProfile(false)}
-              >
-                {t('common.cancel') || '取消'}
-              </Button>
-              <Button
-                className={styles.editSaveBtn}
-                onClick={saveUserProfile}
-              >
-                {t('common.save') || '保存'}
-              </Button>
-            </div>
-          </div>
-        </Popup>
+          t={t}
+          userInfo={userInfo}
+          setUserInfo={setUserInfo}
+        />
 
         {/* 登录注册弹窗 */}
         <LoginModal
