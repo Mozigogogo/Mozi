@@ -56,14 +56,14 @@ export default function BenefitCodeModal({
         setCountdown(result.data.expiresIn || 900);
         
         Toast.show({
-          content: '权益码生成成功',
+          content: t('accountBind.linkCodeModal.codeGenerateSuccess'),
           icon: 'success',
           position: 'top',
           maskStyle: { zIndex: 10000 }
         });
       } else {
         Toast.show({
-          content: result?.errorMsg || '生成权益码失败',
+          content: result?.errorMsg || t('accountBind.linkCodeModal.codeGenerateFailed'),
           icon: 'fail',
           position: 'top',
           maskStyle: { zIndex: 10000 }
@@ -73,7 +73,7 @@ export default function BenefitCodeModal({
     } catch (error) {
       console.error('生成权益码失败:', error);
       Toast.show({
-        content: '生成权益码失败，请重试',
+        content: t('accountBind.linkCodeModal.codeGenerateError'),
         icon: 'fail',
         position: 'top',
         maskStyle: { zIndex: 10000 }
@@ -94,6 +94,20 @@ export default function BenefitCodeModal({
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
+          // 倒计时结束，自动重新获取验证码
+          Toast.show({
+            content: t('accountBind.linkCodeModal.codeExpired'),
+            icon: 'loading',
+            position: 'top',
+            maskStyle: { zIndex: 10000 },
+            duration: 1500
+          });
+          
+          // 延迟一下再调用，让用户看到提示
+          setTimeout(() => {
+            fetchBindCode();
+          }, 1500);
+          
           return 0;
         }
         return prev - 1;
@@ -188,7 +202,7 @@ export default function BenefitCodeModal({
 
       if (copySuccess) {
         Toast.show({
-          content: '复制成功',
+          content: t('accountBind.linkCodeModal.copySuccess'),
           icon: 'success',
           maskStyle: { zIndex: 10000 }
         });
@@ -199,7 +213,7 @@ export default function BenefitCodeModal({
     } catch (error) {
       console.error('复制失败:', error);
       Toast.show({
-        content: '复制失败',
+        content: t('accountBind.linkCodeModal.copyFailed'),
         icon: 'fail',
         maskStyle: { zIndex: 10000 }
       });

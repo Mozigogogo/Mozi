@@ -368,7 +368,13 @@
       "copyCode": "Copy Code",
       "validFor": "Valid for: ",
       "tipText": "Enter this linking code in our <strong>Telegram Bot</strong> to link your account",
-      "noteText": "*Note: To ensure security, each account can only be linked to one <keyword>Email</keyword>, one <keyword>Telegram ID</keyword>, and one <keyword>Wallet Address</keyword>."
+      "noteText": "*Note: To ensure security, each account can only be linked to one <keyword>Email</keyword>, one <keyword>Telegram ID</keyword>, and one <keyword>Wallet Address</keyword>.",
+      "codeGenerateSuccess": "Benefit code generated successfully",
+      "codeGenerateFailed": "Failed to generate benefit code",
+      "codeGenerateError": "Failed to generate benefit code, please try again",
+      "codeExpired": "Code expired, regenerating...",
+      "copySuccess": "Copied successfully",
+      "copyFailed": "Copy failed"
     }
   },
   "telegramBind": {
@@ -381,7 +387,12 @@
     "step2InputPlaceholder": "Enter 6-digit code",
     "step2Description": "Please go to our <strong>PC Website</strong> and click the <strong>button</strong> <icon/>, to copy your <strong>6-digit linking code</strong>",
     "step2CancelButton": "Not Now",
-    "step2ConfirmButton": "Link Now"
+    "step2ConfirmButton": "Link Now",
+    "enterCode": "Please enter benefit code",
+    "codeLength": "Benefit code must be 6 digits",
+    "bindSuccess": "Binding successful",
+    "bindFailed": "Binding failed, please check if the code is correct",
+    "bindError": "Binding failed, please try again"
   },
   "auth": {
     "email": "Email",

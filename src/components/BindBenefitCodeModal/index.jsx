@@ -92,7 +92,7 @@ export default function BindBenefitCodeModal({
     // 验证输入
     if (!linkCode || linkCode.trim().length === 0) {
       Toast.show({
-        content: '请输入权益码',
+        content: t('telegramBind.enterCode'),
         icon: 'fail',
         position: 'top',
         maskStyle: { zIndex: 10000 }
@@ -102,7 +102,7 @@ export default function BindBenefitCodeModal({
 
     if (linkCode.trim().length !== 6) {
       Toast.show({
-        content: '权益码必须是6位',
+        content: t('telegramBind.codeLength'),
         icon: 'fail',
         position: 'top',
         maskStyle: { zIndex: 10000 }
@@ -121,7 +121,7 @@ export default function BindBenefitCodeModal({
         }
         
         Toast.show({
-          content: '绑定成功',
+          content: t('telegramBind.bindSuccess'),
           icon: 'success',
           position: 'top',
           maskStyle: { zIndex: 10000 }
@@ -138,7 +138,7 @@ export default function BindBenefitCodeModal({
         }, 1500);
       } else {
         Toast.show({
-          content: result?.errorMsg || '绑定失败，请检查权益码是否正确',
+          content: result?.errorMsg || t('telegramBind.bindFailed'),
           icon: 'fail',
           position: 'top',
           maskStyle: { zIndex: 10000 }
@@ -147,7 +147,7 @@ export default function BindBenefitCodeModal({
     } catch (error) {
       console.error('绑定失败:', error);
       Toast.show({
-        content: '绑定失败，请重试',
+        content: t('telegramBind.bindError'),
         icon: 'fail',
         position: 'top',
         maskStyle: { zIndex: 10000 }

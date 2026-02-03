@@ -368,7 +368,13 @@
       "copyCode": "复制权益码",
       "validFor": "有效期：",
       "tipText": "在我们的 <strong>Telegram Bot</strong> 中输入此链接代码以关联您的账户",
-      "noteText": "*注意：为确保安全，每个账户只能关联一个<keyword>邮箱</keyword>、一个 <keyword>Telegram ID</keyword> 和一个<keyword>钱包地址</keyword>。"
+      "noteText": "*注意：为确保安全，每个账户只能关联一个<keyword>邮箱</keyword>、一个 <keyword>Telegram ID</keyword> 和一个<keyword>钱包地址</keyword>。",
+      "codeGenerateSuccess": "权益码生成成功",
+      "codeGenerateFailed": "生成权益码失败",
+      "codeGenerateError": "生成权益码失败，请重试",
+      "codeExpired": "验证码已过期，正在重新获取...",
+      "copySuccess": "复制成功",
+      "copyFailed": "复制失败"
     }
   },
   "telegramBind": {
@@ -381,7 +387,12 @@
     "step2InputPlaceholder": "输入6位数字代码",
     "step2Description": "请访问我们的<strong>PC网站</strong>，点击<strong>按钮</strong><icon/>，以复制您的 <strong>6 位链接代码</strong>",
     "step2CancelButton": "暂不绑定",
-    "step2ConfirmButton": "立即关联"
+    "step2ConfirmButton": "立即关联",
+    "enterCode": "请输入权益码",
+    "codeLength": "权益码必须是6位",
+    "bindSuccess": "绑定成功",
+    "bindFailed": "绑定失败，请检查权益码是否正确",
+    "bindError": "绑定失败，请重试"
   },
   "auth": {
     "email": "邮箱",
