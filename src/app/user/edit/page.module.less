@@ -1,0 +1,179 @@
+.container {
+  min-height: 100vh;
+  background-color: #F5F6FA;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 40px;
+}
+
+.navBar {
+  background-color: #F5F6FA;
+  --height: 44px;
+  
+  :global {
+    .adm-nav-bar-title {
+      font-weight: 600;
+      font-size: 17px;
+    }
+  }
+}
+
+.headerSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0 30px;
+}
+
+.avatarWrapper {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+
+.nicknameWrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nickname {
+  font-size: 20px;
+  font-weight: 700;
+  color: #000;
+}
+
+.editNameIcon {
+  width: 16px;
+  height: 16px;
+  opacity: 0.6;
+}
+
+.formCard {
+  background: #fff;
+  margin: 0 16px;
+  border-radius: 24px;
+  padding: 8px 16px;
+}
+
+.formItem {
+  display: flex;
+  align-items: flex-start;
+  padding: 20px 0;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.iconWrapper {
+  width: 24px;
+  height: 24px;
+  margin-right: 12px;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+  }
+}
+
+.itemContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-size: 14px;
+  color: #999;
+  margin-bottom: 8px;
+  line-height: 1;
+}
+
+.valueWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.value {
+  font-size: 16px;
+  color: #333;
+  font-weight: 500;
+  flex: 1;
+  line-height: 1.4;
+  
+  &.placeholder {
+    color: #CCC;
+  }
+}
+
+.input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 16px;
+  color: #333;
+  font-weight: 500;
+  padding: 0;
+  background: transparent;
+  
+  &::placeholder {
+    color: #CCC;
+  }
+}
+
+.textarea {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 16px;
+  color: #333;
+  font-weight: 500;
+  padding: 0;
+  background: transparent;
+  resize: none;
+  min-height: 24px;
+  font-family: inherit;
+}
+
+.arrow {
+  color: #CCC;
+  font-size: 16px;
+  margin-left: 8px;
+}
+
+.saveButtonWrapper {
+  padding: 30px 16px;
+  margin-top: auto;
+}
+
+.saveButton {
+  width: 100%;
+  height: 50px;
+  border-radius: 25px;
+  background: #11B787;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  border: none;
+  
+  &:active {
+    opacity: 0.9;
+  }
+}

@@ -1,7 +1,9 @@
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import styles from '@/app/user/page.module.less';
 
 const StatsAndActions = ({ userInfo, openEditProfile, setShowBenefitCodeModal }) => {
+  const router = useRouter();
   const EDIT_ICON = '/icons/new_user/edit.svg';
   const BIND_ICON = '/icons/new_user/bind.svg';
 
@@ -29,7 +31,7 @@ const StatsAndActions = ({ userInfo, openEditProfile, setShowBenefitCodeModal })
                 </div>
             </div>
             <div className={styles.actionGroup}>
-                <div className={styles.profileBtn} onClick={() => window.location.href = '/selfrank'}>
+                <div className={styles.profileBtn} onClick={() => router.push('/user/edit')}>
                     个人主页
                 </div>
                 <div className={styles.iconBtn} onClick={openEditProfile}>
