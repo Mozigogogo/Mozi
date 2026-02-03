@@ -373,10 +373,15 @@
   },
   "telegramBind": {
     "title": "IMPORTANT NOTICE",
-    "mainText": "You may have used Mozi on Telegram/ PC before. Linking your account will sync your <strong>subscription and historical data</strong>.",
+    "mainText": "You may have used Mozi on Telegram/PC before. Linking your account will sync your <strong>subscription and historical data</strong>.",
     "warningText": "After linking: <strong>Your current settings will be overwritten and invalidated</strong>.Please confirm before proceeding.",
     "cancelButton": "Not Now",
-    "confirmButton": "Link Account"
+    "confirmButton": "Link Account",
+    "step2Title": "Link Account & Get Benefits",
+    "step2InputPlaceholder": "Enter 6-digit code",
+    "step2Description": "Please go to our <strong>PC Website</strong> and click the <strong>button</strong> <icon/>, to copy your <strong>6-digit linking code</strong>",
+    "step2CancelButton": "Not Now",
+    "step2ConfirmButton": "Link Now"
   },
   "auth": {
     "email": "Email",
