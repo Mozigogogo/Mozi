@@ -75,6 +75,7 @@
   align-items: center;
   justify-content: space-between;
   background-color: #EEF0F3;
+  border-bottom: 2px solid rgba(238, 240, 243, 1);
 }
 
 .coinSymbol {
@@ -91,7 +92,7 @@
 
 .priceLabel {
   font-size: 14px;
-  color: #949494;
+  color: rgba(102, 102, 102, 1);
 }
 
 .priceValue {
@@ -101,11 +102,11 @@
 }
 
 .positive {
-  color: #11B787;
+  color: rgba(11, 117, 86, 1);
 }
 
 .negative {
-  color: #FA5F5F;
+  color: rgba(117, 11, 13, 1);
 }
 
 .priceChange {
@@ -115,16 +116,17 @@
 
 .configCard {
   background: #fff;
-  margin: 8px 0;
-  border-radius: 8px;
-  padding: 8px;
+  border-radius: 10px;
+  padding: 4px 8px;
+  margin-bottom: 10px;
+  box-shadow: 0px 4px 30px 0px rgba(27, 25, 86, 0.1);
 }
 
 .configItem {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #f5f5f5;
+  border-bottom: none;
   width: 100%;
   height: 50px;
   padding: 0 5px;
@@ -153,26 +155,32 @@
 
 .configInput {
   flex: 1;
-  text-align: left;
+  text-align: center;
   font-size: 16px;
   color: #333;
-  border: 1px solid #DEE2E8;
-  border-radius: 5px;
+  border: 1px solid rgba(153, 153, 153, 1);
+  border-radius: 10px;
   background: #fff;
   height: 35px;
   box-sizing: border-box;
-  padding-right: 8px;
+  padding: 0 8px;
 }
 
 .configInput :global(.adm-input-element) {
   font-size: 14px;
-  padding-left: 8px;
+  text-align: center;
 }
 
 .configUnit {
-  font-size: 16px;
-  color: #333;
+  font-family: Poppins, sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 22px;
+  letter-spacing: 0px;
+  color: rgba(49, 48, 48, 1);
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
 }
 
 .configSwitch {

@@ -8,7 +8,7 @@ import { message } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
-import { sendVerificationCode } from '../../api/user';
+import { sendVerificationCode, loginByEmail, registerByEmail, loginByWallet } from '../../api/user';
 import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
 import styles from './page.module.less';
 
@@ -132,17 +132,7 @@ export default function PCLoginPage() {
 
     setLoading(true);
     try {
-      const res = await request({
-        url: Interface.MOZI_LOGIN,
-        method: 'POST',
-        data: { 
-          chanel: 2,
-          type: 'login',
-          email, 
-          password,
-          channel: 'pc'
-        }
-      });
+      const res = await loginByEmail(email, password, '', 'pc');
 
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
@@ -215,19 +205,7 @@ export default function PCLoginPage() {
 
     setLoading(true);
     try {
-      const res = await request({
-        url: Interface.MOZI_LOGIN,
-        method: 'POST',
-        data: { 
-          chanel: 2,
-          type: 'register',
-          email, 
-          password, 
-          verifyCode: verificationCode,
-          ...(inviteCode && { invitedCode: inviteCode }),
-          channel: 'pc'
-        }
-      });
+      const res = await registerByEmail(email, password, verificationCode, inviteCode, 'pc');
 
       if (res?.data?.success || res?.code === 0) {
         message.success(t('auth.registerSuccess'));
@@ -250,17 +228,7 @@ export default function PCLoginPage() {
   // 注册成功后自动登录
   const autoLoginAfterRegister = async () => {
     try {
-      const res = await request({
-        url: Interface.MOZI_LOGIN,
-        method: 'POST',
-        data: { 
-          chanel: 2,
-          type: 'login',
-          email, 
-          password,
-          channel: 'pc'
-        }
-      });
+      const res = await loginByEmail(email, password, '', 'pc');
 
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
@@ -373,17 +341,7 @@ export default function PCLoginPage() {
       
       const signature = await signMessageAsync({ message: messageToSign });
 
-      const res = await request({
-        url: Interface.MOZI_LOGIN,
-        method: 'POST',
-        data: {
-          type: 'login',
-          chanel: 3,  // 3-钱包登录
-          address: currentAddress,
-          signatrue: signature,  // 注意：后端字段名为 signatrue
-          channel: 'pc'
-        },
-      });
+      const res = await loginByWallet(currentAddress, signature, 'pc');
 
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
@@ -450,17 +408,8 @@ export default function PCLoginPage() {
       
       console.log('TON 钱包登录:', tonAddress);
       
-      const res = await request({
-        url: Interface.MOZI_LOGIN,
-        method: 'POST',
-        data: {
-          type: 'login',
-          chanel: 3,  // 3-钱包登录
-          channel: 'tg',
-          address: tonAddress,
-          signatrue: tonWallet.account?.publicKey,
-        }
-      });
+      const inviteCode = localStorage.getItem('inviteCode');
+      const res = await loginByWallet(tonAddress, tonWallet.account?.publicKey, 'tg', inviteCode);
       
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);

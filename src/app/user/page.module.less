@@ -1,40 +1,217 @@
 .container {
   width: 100%;
-  padding: 0 16px 24px 16px;
   box-sizing: border-box;
-  background: #EEF0F3 url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/me-bg.png') no-repeat top center;
-  background-size: 100% 300px;
+  background: #FFFFFF;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
+.topBannerWrapper {
+  width: 100%;
+  background: url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/me-bg.png') no-repeat center;
+  background-size: cover;
+  padding: 50px 12px 0px 12px;
+  box-sizing: border-box;
+}
+
+.headerContentTop {
+  display: flex;
+  flex-direction: column;
+  cursor: default;
+}
+
+.statsAndActionsWrapper {
+  background: #FFFFFF;
+  padding: 0 12px 12px 12px;
+}
+
+.contentWrapper {
+  width: 100%;
+  /* 统一控制内容区域与 Banner 之间的间距和左右留白 */
+  background: rgba(238, 240, 243, 1);
+  box-sizing: border-box;
+  border-radius: 20px 20px 0 0;
+}
+
+.contentSection {
+  width: 100%;
+  margin-top: 12px;
+  padding: 0 12px 12px 12px;
+}
+
 .headerBox {
   background: transparent;
-  padding: 0px 0 10px;
 }
 
 .headerUser {
   display: flex;
-  padding: 10px 14px;
+  flex-direction: column;
+}
+
+.userInfoRow {
+  display: flex;
   align-items: center;
-  margin-top: 60px;
-  cursor: pointer;
+}
+
+.avatarWrapper {
+  position: relative;
+  margin-right: 16px;
 }
 
 .headerAvatar {
-  width: 60px;
-  height: 60px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
-  margin-right: 12px;
   object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.editIcon {
-  width: 16px;
-  height: 16px;
-  margin-left: 10px;
+.verifyIcon {
+  position: absolute;
+  bottom: 0;
+  right: -5px;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.nicknameWrapper {
+  display: flex;
+  align-items: center;
+}
+
+.nickname {
+  font-size: 24px;
+  font-weight: 700;
+  background: linear-gradient(180deg, #F8D5A9 4.06%, #E5B372 33.13%, #DE9E4C 54.37%, #663409 90%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-all;
+}
+
+.tagsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  margin-bottom: 4px;
+}
+
+.userTag {
+  background: rgba(255, 255, 255, 0.32);
+  border: 0.62px solid rgba(233, 233, 233, 1);
+  padding: 0px 4px;
+  font-size: 12px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+}
+
+.bioRow {
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 13px;
+  line-height: 22px;
+  letter-spacing: 0px;
   vertical-align: middle;
+  margin-bottom: 8px;
+}
+
+.statsActionRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.statsGroup {
+  display: flex;
+  gap: 12px;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.statValue {
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 16px;
+  letter-spacing: 0px;
+  vertical-align: middle;
+  text-transform: uppercase;
+
+}
+
+.statLabel {
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0px;
+  margin-top: 4px;
+  color: rgba(158, 157, 163, 1);
+}
+
+.actionGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profileBtn {
+  background: rgba(255, 255, 255, 0.32);
+  border: 0.5px solid rgba(233, 233, 233, 1);
+  border-radius: 20px;
+  padding: 0 12px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(49, 48, 48, 1);
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  
+  &:active {
+    background: #f5f5f5;
+  }
+}
+
+.iconBtn {
+  width: 45px;
+  height: 30px;
+  opacity: 1;
+  border-radius: 100px;
+  gap: 10px;
+  border-width: 0.5px;
+  padding: 4px 12px 4px 12px;
+  border: 0.5px solid rgba(233, 233, 233, 1);
+  background:  rgba(255, 255, 255, 0.32);
+  font-family: 'PingFang SC', Roboto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+  }
+  
+  &:active {
+    background: #f5f5f5;
+  }
 }
 
 .loginBox {
@@ -45,7 +222,8 @@
 .actionButtons {
   background: #fff;
   border-radius: 16px;
-  margin: 10px 0 0;
+  /* 现在已经有 contentSection 的间距了，这里不再额外顶开 */
+  margin: 0;
   padding: 16px 16px;
   display: flex;
   justify-content: space-around;
@@ -88,6 +266,7 @@
   background: #fff;
   border-radius: 16px;
   padding: 16px 16px;
+  margin-top: 12px;
   // box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
@@ -329,6 +508,8 @@
 /* 新币上线占位 */
 // .newCoinSection {
 // }
+
+
 
 /* 弹性占位，推底退出按钮 */
 .flexSpacer {

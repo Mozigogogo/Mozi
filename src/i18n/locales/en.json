@@ -21,6 +21,8 @@
     "more": "More",
     "updated": "Updated",
     "copy": "Copy",
+    "copySuccess": "Copied successfully",
+    "copyFailed": "Copy failed",
     "linkCopied": "Link copied",
     "loadFailed": "Failed to load, please try again",
     "noData": "No data",
@@ -326,6 +328,8 @@
     "walletAddressError": "Failed to get wallet address",
     "walletConnectFailed": "Wallet connection failed",
     "defaultNickname": "User",
+    "vipBannerText": "Free 14-day trial, start new experience now!",
+    "subscribeNow": "Subscribe Now",
     "wechatUser": "Telegram User",
     "accountBindLabel": "Account Binding",
     "aboutMozi": {
@@ -360,6 +364,36 @@
     "generateError": "Failed to generate verification code, please try again",
     "bindSuccess": "Binding successful",
     "bindFailed": "Binding failed",
+    "bindError": "Binding failed, please try again",
+    "linkCodeModal": {
+      "title": "Share Your Benefits",
+      "copyCode": "Copy Code",
+      "validFor": "Valid for: ",
+      "tipText": "Enter this linking code in our <strong>Telegram Bot</strong> to link your account",
+      "noteText": "*Note: To ensure security, each account can only be linked to one <keyword>Email</keyword>, one <keyword>Telegram ID</keyword>, and one <keyword>Wallet Address</keyword>.",
+      "codeGenerateSuccess": "Benefit code generated successfully",
+      "codeGenerateFailed": "Failed to generate benefit code",
+      "codeGenerateError": "Failed to generate benefit code, please try again",
+      "codeExpired": "Code expired, regenerating...",
+      "copySuccess": "Copied successfully",
+      "copyFailed": "Copy failed"
+    }
+  },
+  "telegramBind": {
+    "title": "IMPORTANT NOTICE",
+    "mainText": "You may have used Mozi on Telegram/ PC before. Linking your account will sync your <strong>subscription and historical data</strong>.",
+    "warningText": "After linking: <strong>Your current settings will be overwritten and invalidated</strong>.Please confirm before proceeding.",
+    "cancelButton": "Not Now",
+    "confirmButton": "Link Account",
+    "step2Title": "Link Account & Get Benefits",
+    "step2InputPlaceholder": "Enter 6-digit code",
+    "step2Description": "Please go to our <strong>PC Website</strong> and click the <strong>button</strong> <icon/>, to copy your <strong>6-digit linking code</strong>",
+    "step2CancelButton": "Not Now",
+    "step2ConfirmButton": "Link Now",
+    "enterCode": "Please enter benefit code",
+    "codeLength": "Benefit code must be 6 digits",
+    "bindSuccess": "Binding successful",
+    "bindFailed": "Binding failed, please check if the code is correct",
     "bindError": "Binding failed, please try again"
   },
   "auth": {
@@ -1275,10 +1309,15 @@
     "emailPlaceholder": "Enter email",
     "confirmButton": "Enable Alerts",
     "skipButton": "Skip",
+    "loading": "Loading...",
     "enableSuccess": "Enabled successfully",
     "enableFailed": "Enable failed",
     "pleaseLogin": "Please login first",
-    "networkError": "Network error, please retry"
+    "networkError": "Network error, please retry",
+    "phoneRequired": "Please enter phone number",
+    "emailRequired": "Please enter email",
+    "emailInvalid": "Invalid email format",
+    "atLeastOneMethod": "Please enable at least one alert method"
   },
   "orderBook": {
     "title": "Large Order Detection",

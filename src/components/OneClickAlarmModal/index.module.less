@@ -146,6 +146,16 @@
   padding: 0 12px;
 }
 
+.errorText {
+  margin: -4px 14px 8px 14px;
+  padding-left: 12px;
+  font-family: 'PingFang SC', sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  color: #ff4d4f;
+}
+
 .inputIcon {
   display: flex;
   align-items: center;
@@ -436,7 +446,6 @@
   padding: 16px 0 calc(16px + env(safe-area-inset-bottom));
   flex-shrink: 0;
   background: #fff;
-  border-top: 1px solid #f0f0f0;
   margin: 0 -16px -16px;
   padding-left: 16px;
   padding-right: 16px;
@@ -458,6 +467,33 @@
   color: #ffffff;
   font-size: 16px;
   font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &.loading {
+    opacity: 0.8;
+  }
+}
+
+.loadingSpinner {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .secondaryBtn {
@@ -477,4 +513,19 @@
   color: rgba(17, 24, 39, 0.72);
   font-size: 16px;
   font-weight: 700;
- }
+  cursor: pointer;
+  transition: opacity 0.2s;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.checkingConfig {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: 40px 0;
+}

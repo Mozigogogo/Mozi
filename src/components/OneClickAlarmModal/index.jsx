@@ -9,7 +9,7 @@ import PopLogin from '../PopLogin';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { jump2NoTab } from '../../utils/core';
-import { saveAlarmSettings } from '../../api/user';
+import { saveAlarmSettings, createAlertConfig, modifyAlertConfig } from '../../api/user';
 import styles from './index.module.less';
 import configStyles from './config.module.less';
 
@@ -98,13 +98,16 @@ export default function OneClickAlarmModal({
   const [btnDisabled, setBtnDisabled] = useState(false);
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [hideInputs, setHideInputs] = useState(false); // 控制输入框显示/隐藏
+  const [phoneError, setPhoneError] = useState(''); // 手机号错误提示
+  const [emailError, setEmailError] = useState(''); // 邮箱错误提示
+  const [isLoading, setIsLoading] = useState(false); // 开启告警按钮的 loading 状态
   const [configs, setConfigs] = useState({
     priceRise: { value: '', enabled: true, unit: '$', labelKey: 'addAlarm.priceRise' },
     priceFall: { value: '', enabled: true, unit: '$', labelKey: 'addAlarm.priceFall' },
     risePercent: { value: '10', enabled: true, unit: '%', labelKey: 'addAlarm.risePercent' },
     fallPercent: { value: '10', enabled: false, unit: '%', labelKey: 'addAlarm.fallPercent' },
     bigOrderDetect: { value: '', enabled: false, unit: '', labelKey: 'addAlarm.bigOrderDetect', type: 'switchOnly' },
-    exchangeSpreadMonitor: { value: '', enabled: false, unit: '', labelKey: 'addAlarm.exchangeSpreadMonitor', type: 'switchOnly' },
+    exchangeSpreadMonitor: { value: '', enabled: false, unit: '%', labelKey: 'addAlarm.exchangeSpreadMonitor' },
   });
 
   const [coinData, setCoinData] = useState({
@@ -113,6 +116,69 @@ export default function OneClickAlarmModal({
     change: '--',
     loading: true,
   });
+
+  // 在弹窗打开时检查告警配置（从 localStorage 读取，detail 页面已经调用接口更新）
+  useEffect(() => {
+    if (!open || mode !== 'oneClick') return;
+
+    const checkAlertConfig = () => {
+      try {
+        const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+        
+        if (!userId) {
+          // 未登录，显示输入框
+          setHideInputs(false);
+          return;
+        }
+
+        // 从 localStorage 读取告警配置（detail 页面进入时已调用接口更新）
+        const alertConfigStr = typeof window !== 'undefined' ? localStorage.getItem('alertConfig') : null;
+        
+        if (alertConfigStr) {
+          const alertConfig = JSON.parse(alertConfigStr);
+          
+          // 有配置数据，隐藏输入框
+          setHideInputs(true);
+          
+          // 预填充表单数据
+          if (alertConfig.alertPhone) {
+            // 解析国家区号和手机号
+            const phoneStr = alertConfig.alertPhone;
+            // 尝试匹配国家区号（+开头的数字）
+            const match = phoneStr.match(/^(\+\d+)(.+)$/);
+            if (match) {
+              setCountryCode(match[1]); // 国家区号，如 +86
+              setPhone(match[2]); // 手机号
+            } else {
+              // 如果没有匹配到区号，直接使用原值
+              setPhone(phoneStr);
+            }
+          }
+          if (alertConfig.alertEmail) {
+            setEmail(alertConfig.alertEmail);
+          }
+          if (alertConfig.phoneEnabled !== undefined) {
+            setPhoneEnabled(alertConfig.phoneEnabled === 1);
+          }
+          if (alertConfig.emailEnabled !== undefined) {
+            setEmailEnabled(alertConfig.emailEnabled === 1);
+          }
+          if (alertConfig.defaultEnabled !== undefined) {
+            setPushEnabled(alertConfig.defaultEnabled === 1);
+          }
+        } else {
+          // localStorage 中没有配置数据，显示输入框
+          setHideInputs(false);
+        }
+      } catch (error) {
+        console.error('读取告警配置失败:', error);
+        // 出错时显示输入框
+        setHideInputs(false);
+      }
+    };
+
+    checkAlertConfig();
+  }, [open, mode]);
 
   useEffect(() => {
     if (!open) return;
@@ -221,7 +287,14 @@ export default function OneClickAlarmModal({
 
   // 处理开启告警
   const handleEnableAlarm = async () => {
+    // 防止重复点击
+    if (isLoading) return;
+
     try {
+      // 清空之前的错误提示
+      setPhoneError('');
+      setEmailError('');
+
       const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
       
       if (!userId) {
@@ -230,24 +303,55 @@ export default function OneClickAlarmModal({
         return;
       }
 
-      const { getAppChannel } = await import('../../utils/core');
-      const channel = getAppChannel();
+      // 邮箱格式验证（只在有输入内容时才验证）
+      if (emailEnabled && email && email.trim() !== '') {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email.trim())) {
+          setEmailError(t('oneClickAlarm.emailInvalid'));
+          return;
+        }
+      }
 
-      const requestData = {
-        phoneEnabled,
-        countryCode,
-        phone,
-        emailEnabled,
-        email,
-        pushEnabled,
-        channel,
+      // 开始 loading
+      setIsLoading(true);
+
+      // 构建告警配置参数（只在开关打开时传递对应的值）
+      const alertConfig = {
+        phoneEnabled: phoneEnabled ? 1 : 0,
+        emailEnabled: emailEnabled ? 1 : 0,
+        defaultEnabled: pushEnabled ? 1 : 0  // 推送开关状态
       };
 
-      // 调用 API
-      const res = await saveAlarmSettings(requestData);
+      // 只在开关打开时才传递对应的联系方式
+      if (phoneEnabled && phone) {
+        // 只传递手机号（不包含国家码）
+        alertConfig.alertPhone = phone;
+        // 单独传递国家码参数
+        alertConfig.alertPhoneCountryCode = countryCode;
+      }
+      if (emailEnabled && email) {
+        alertConfig.alertEmail = email;
+      }
 
-      if (res?.code === 0) {
-        Toast.show({ content: t('oneClickAlarm.enableSuccess'), icon: 'success' });
+      // 检查 localStorage 中是否已有告警配置
+      const existingConfigStr = typeof window !== 'undefined' ? localStorage.getItem('alertConfig') : null;
+      const hasExistingConfig = existingConfigStr && existingConfigStr !== 'null';
+      
+      let result;
+      if (hasExistingConfig) {
+        // 已有配置，调用修改接口
+        console.log('📝 检测到已有配置，调用修改接口');
+        result = await modifyAlertConfig(alertConfig);
+      } else {
+        // 无配置，调用新增接口
+        console.log('📝 未检测到配置，调用新增接口');
+        result = await createAlertConfig(alertConfig);
+      }
+
+      if (result.success) {
+        // 保存配置到 localStorage
+        localStorage.setItem('alertConfig', JSON.stringify(result.data));
+        
         setHideInputs(true); // 隐藏输入框
         
         // 调用原有的 onConfirm 回调
@@ -259,12 +363,28 @@ export default function OneClickAlarmModal({
           email,
           pushEnabled,
         });
+        
+        // 延迟关闭弹窗
+        setTimeout(() => {
+          onClose?.();
+          setIsLoading(false); // 关闭弹窗后重置 loading 状态
+        }, 500);
       } else {
-        Toast.show({ content: res?.errorMsg || t('oneClickAlarm.enableFailed') });
+        // 后端返回的错误用 Toast 提示
+        Toast.show({ 
+          content: result.error || t('oneClickAlarm.enableFailed'),
+          maskStyle: { zIndex: 10000 } // 确保 Toast 在弹窗之上
+        });
+        setIsLoading(false); // 失败后重置 loading 状态
       }
     } catch (error) {
-      console.error('开启告警失败:', error);
-      Toast.show({ content: t('oneClickAlarm.networkError') });
+      console.error('❌ 开启告警失败:', error);
+      // 网络错误用 Toast 提示
+      Toast.show({ 
+        content: t('oneClickAlarm.networkError'),
+        maskStyle: { zIndex: 10000 } // 确保 Toast 在弹窗之上
+      });
+      setIsLoading(false); // 异常后重置 loading 状态
     }
   };
 
@@ -425,13 +545,13 @@ export default function OneClickAlarmModal({
                     </div>
                   </div>
 
+                  {/* 第一组：价格告警 */}
                   <div className={configStyles.configCard}>
-                    {Object.entries(configs).map(([key, config]) => (
-                      <div key={key} className={configStyles.configItem}>
-                        <div className={configStyles.configLabel}>{t(config.labelKey)}</div>
-                        {config.type === 'switchOnly' ? (
-                          <div className={configStyles.switchOnlySpacer} />
-                        ) : (
+                    {['priceRise', 'priceFall', 'risePercent', 'fallPercent'].map((key) => {
+                      const config = configs[key];
+                      return (
+                        <div key={key} className={configStyles.configItem}>
+                          <div className={configStyles.configLabel}>{t(config.labelKey)}</div>
                           <div className={configStyles.configInputContainer}>
                             <Input
                               className={configStyles.configInput}
@@ -442,15 +562,62 @@ export default function OneClickAlarmModal({
                             />
                             <div className={configStyles.configUnit}>{config.unit}</div>
                           </div>
-                        )}
-                        <Switch
-                          className={configStyles.configSwitch}
-                          checked={config.enabled}
-                          onChange={(checked) => handleSwitchChange(key, checked)}
-                          style={{ '--checked-color': '#11B787' }}
-                        />
-                      </div>
-                    ))}
+                          <Switch
+                            className={configStyles.configSwitch}
+                            checked={config.enabled}
+                            onChange={(checked) => handleSwitchChange(key, checked)}
+                            style={{ '--checked-color': '#11B787' }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* 第二组：大单成交检测 */}
+                  <div className={configStyles.configCard}>
+                    {['bigOrderDetect'].map((key) => {
+                      const config = configs[key];
+                      return (
+                        <div key={key} className={configStyles.configItem}>
+                          <div className={configStyles.configLabel}>{t(config.labelKey)}</div>
+                          <div className={configStyles.switchOnlySpacer} />
+                          <Switch
+                            className={configStyles.configSwitch}
+                            checked={config.enabled}
+                            onChange={(checked) => handleSwitchChange(key, checked)}
+                            style={{ '--checked-color': '#11B787' }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* 第三组：交易所价差 */}
+                  <div className={configStyles.configCard}>
+                    {['exchangeSpreadMonitor'].map((key) => {
+                      const config = configs[key];
+                      return (
+                        <div key={key} className={configStyles.configItem}>
+                          <div className={configStyles.configLabel}>{t(config.labelKey)}</div>
+                          <div className={configStyles.configInputContainer}>
+                            <Input
+                              className={configStyles.configInput}
+                              type="number"
+                              value={config.value}
+                              placeholder={t('addAlarm.placeholder')}
+                              onChange={(val) => handleInputChange(key, val)}
+                            />
+                            <div className={configStyles.configUnit}>{config.unit}</div>
+                          </div>
+                          <Switch
+                            className={configStyles.configSwitch}
+                            checked={config.enabled}
+                            onChange={(checked) => handleSwitchChange(key, checked)}
+                            style={{ '--checked-color': '#11B787' }}
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -496,29 +663,35 @@ export default function OneClickAlarmModal({
                   <Toggle checked={phoneEnabled} onChange={setPhoneEnabled} />
                 </div>
 
-                {!hideInputs && (
-                  <div className={styles.inputRow}>
-                    <span className={styles.inputIcon}><PhoneInputIcon /></span>
-                    <div className={styles.countryCodeWrap}>
-                      <button
-                        type="button"
-                        className={styles.countryPickerTrigger}
-                        onClick={() => {
-                          setCountryPickerOpen(true);
+                {phoneEnabled && (
+                  <>
+                    <div className={styles.inputRow}>
+                      <span className={styles.inputIcon}><PhoneInputIcon /></span>
+                      <div className={styles.countryCodeWrap}>
+                        <button
+                          type="button"
+                          className={styles.countryPickerTrigger}
+                          onClick={() => {
+                            setCountryPickerOpen(true);
+                          }}
+                        >
+                          <span className={styles.countryPickerTriggerValue}>{countryCode}</span>
+                          <img className={styles.countryPickerTriggerArrow} src="/icons/new_detail/down_arrow.svg" alt="down" />
+                        </button>
+                      </div>
+                      <input
+                        className={styles.input}
+                        placeholder={t('oneClickAlarm.phonePlaceholder')}
+                        value={phone}
+                        onChange={(e) => {
+                          setPhone(e.target.value);
+                          if (phoneError) setPhoneError(''); // 清除错误提示
                         }}
-                      >
-                        <span className={styles.countryPickerTriggerValue}>{countryCode}</span>
-                        <img className={styles.countryPickerTriggerArrow} src="/icons/new_detail/down_arrow.svg" alt="down" />
-                      </button>
+                        inputMode="tel"
+                      />
                     </div>
-                    <input
-                      className={styles.input}
-                      placeholder={t('oneClickAlarm.phonePlaceholder')}
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      inputMode="tel"
-                    />
-                  </div>
+                    {phoneError && <div className={styles.errorText}>{phoneError}</div>}
+                  </>
                 )}
 
                 <div className={styles.divider} />
@@ -531,17 +704,23 @@ export default function OneClickAlarmModal({
                   <Toggle checked={emailEnabled} onChange={setEmailEnabled} />
                 </div>
 
-                {!hideInputs && (
-                  <div className={styles.inputRow}>
-                    <span className={styles.inputIcon}><MailInputIcon /></span>
-                    <input
-                      className={styles.input}
-                      placeholder={t('oneClickAlarm.emailPlaceholder')}
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      inputMode="email"
-                    />
-                  </div>
+                {emailEnabled && (
+                  <>
+                    <div className={styles.inputRow}>
+                      <span className={styles.inputIcon}><MailInputIcon /></span>
+                      <input
+                        className={styles.input}
+                        placeholder={t('oneClickAlarm.emailPlaceholder')}
+                        value={email}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          if (emailError) setEmailError(''); // 清除错误提示
+                        }}
+                        inputMode="email"
+                      />
+                    </div>
+                    {emailError && <div className={styles.errorText}>{emailError}</div>}
+                  </>
                 )}
 
                 <div className={styles.divider} />
@@ -558,10 +737,15 @@ export default function OneClickAlarmModal({
               <div className={styles.footerActions}>
                 <button
                   type="button"
-                  className={styles.primaryBtn}
+                  className={`${styles.primaryBtn} ${isLoading ? styles.loading : ''}`}
                   onClick={handleEnableAlarm}
+                  disabled={isLoading}
                 >
-                  {confirmText || t('oneClickAlarm.confirmButton')}
+                  {isLoading ? (
+                    <span className={styles.loadingSpinner}></span>
+                  ) : (
+                    confirmText || t('common.confirm')
+                  )}
                 </button>
                 <button
                   type="button"
@@ -570,8 +754,9 @@ export default function OneClickAlarmModal({
                     onSkip?.();
                     onClose?.();
                   }}
+                  disabled={isLoading}
                 >
-                  {skipText || t('oneClickAlarm.skipButton')}
+                  {skipText || t('common.cancel')}
                 </button>
               </div>
             </div>

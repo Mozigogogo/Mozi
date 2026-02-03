@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
-import { sendVerificationCode } from '../../api/user';
+import { sendVerificationCode, loginByEmail, registerByEmail, loginByWallet } from '../../api/user';
 import styles from './index.module.less';
 
 // 检测是否在 Telegram 环境中
@@ -207,17 +207,7 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
 
     setLoading(true);
     try {
-      const res = await request({
-        url: Interface.MOZI_LOGIN,
-        method: 'POST',
-        data: { 
-          chanel: 2,
-          type: 'login',
-          email, 
-          password,
-          channel: 'pc'
-        }
-      });
+      const res = await loginByEmail(email, password, '', 'pc');
 
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
@@ -292,19 +282,7 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
 
     setLoading(true);
     try {
-      const res = await request({
-        url: Interface.MOZI_LOGIN,
-        method: 'POST',
-        data: { 
-          chanel: 2,
-          type: 'register',
-          email, 
-          password, 
-          verifyCode: verificationCode,
-          ...(inviteCode && { invitedCode: inviteCode }),
-          channel: 'pc'
-        }
-      });
+      const res = await registerByEmail(email, password, verificationCode, inviteCode, 'pc');
 
       if (res?.data?.success || res?.code === 0) {
         message.success(t('auth.registerSuccess'));
@@ -329,17 +307,7 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
   // 注册成功后自动登录
   const autoLoginAfterRegister = async () => {
     try {
-      const res = await request({
-        url: Interface.MOZI_LOGIN,
-        method: 'POST',
-        data: { 
-          chanel: 2,
-          type: 'login',
-          email, 
-          password,
-          channel: 'pc'
-        }
-      });
+      const res = await loginByEmail(email, password, '', 'pc');
 
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
@@ -424,17 +392,7 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
       
       const signature = await signMessageAsync({ message: messageToSign });
 
-      const res = await request({
-        url: Interface.MOZI_LOGIN,
-        method: 'POST',
-        data: {
-          type: 'login',
-          chanel: 3,
-          address: currentAddress,
-          signatrue: signature,
-          channel: 'pc'
-        },
-      });
+      const res = await loginByWallet(currentAddress, signature, 'pc');
 
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);

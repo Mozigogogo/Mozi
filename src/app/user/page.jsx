@@ -13,13 +13,18 @@ import LoginModal from '../../components/LoginModal';
 import SocialMediaPopup from '../../components/SocialMediaPopup';
 import FeedbackSuccessModal from '../../components/FeedbackSuccessModal';
 import AccountBindModal from '../../components/AccountBindModal';
+import BindBenefitCodeModal from '../../components/BindBenefitCodeModal';
+import BenefitCodeModal from '../../components/BenefitCodeModal';
 import { RightArrowIcon } from '../../components/Icons';
 import CopyIcon from '../../components/Icons/CopyIcon';
 import { request } from '../../utils/request';
 import { Interface, EMAIL, COINKEY } from '../../utils/constants';
+import { loginByWallet } from '../../api/user';
+import { useAlertConfig } from '../../hooks/useAlertConfig';
 import { useAmplitude } from '../../hooks/useAmplitude';
 import { ProfileEvents } from '../../utils/amplitude';
 import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
+import VipBanner from '../../components/VipBanner';
 import styles from './page.module.less';
 
 // 检测是否在 Telegram 环境中
@@ -34,6 +39,11 @@ export default function UserPage() {
   // 状态定义
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t, i18n } = useTranslation();
+  const { trackEvent, track } = useAmplitude('Profile');
+  
+  // 使用告警配置 Hook
+  const { fetchConfig: fetchAlertConfigFromHook } = useAlertConfig({ autoFetch: false });
   
   // 安全地使用 wagmi hooks，避免服务端渲染错误
   let disconnect, address, isConnected, signMessageAsync;
@@ -53,9 +63,6 @@ export default function UserPage() {
     signMessageAsync = null;
   }
   
-  const { t, i18n } = useTranslation();
-  const { track } = useAmplitude('Profile');
-  
   // TON Connect hooks (用于 Telegram 环境)
   const [tonConnectUI] = useTonConnectUI();
   const tonWallet = useTonWallet();
@@ -67,7 +74,9 @@ export default function UserPage() {
     isLogin: false
   });
   const DEFAULT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png';
-  const EDIT_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/edit.png';
+  const EDIT_ICON = '/icons/new_user/edit.svg';
+  const BIND_ICON = '/icons/new_user/bind.svg';
+  const VIP_ICON = '/icons/new_user/vip.svg';
   const [popVis, setPopVis] = useState(false);
   const [popType, setPopType] = useState('');
   const [rewardPopVis, setRewardPopVis] = useState(false); // 单独的打赏弹窗状态
@@ -113,9 +122,23 @@ export default function UserPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false); // 成功反馈弹窗状态
   const [submittingFeedback, setSubmittingFeedback] = useState(false); // 提交反馈的 loading 状态
   const [showAccountBindModal, setShowAccountBindModal] = useState(false); // 账号绑定弹窗状态
+  const [showBindBenefitCodeModal, setShowBindBenefitCodeModal] = useState(false); // 绑定权益码弹窗状态
+  const [showBenefitCodeModal, setShowBenefitCodeModal] = useState(false); // 权益码弹窗状态
   
   // 用于记录当前组件生命周期内是否已经为邀请码弹出过登录弹窗
   const hasShownInviteModalRef = useRef(false);
+
+  // 首次登录引导弹窗
+  useEffect(() => {
+    // 只有已登录用户才显示
+    if (userInfo.isLogin) {
+      const hasShown = localStorage.getItem('hasShownBindGuide');
+      if (!hasShown) {
+        setShowBindBenefitCodeModal(true);
+        localStorage.setItem('hasShownBindGuide', 'true');
+      }
+    }
+  }, [userInfo.isLogin]);
   
   // 积分相关数据
   const [pointsData, setPointsData] = useState({
@@ -244,6 +267,23 @@ export default function UserPage() {
     }
   };
 
+  // 获取用户告警配置（使用 Hook）
+  const fetchAlertConfig = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      console.log('🔄 [User Page] 开始获取告警配置...');
+      
+      // 使用 Hook 提供的方法（自动处理缓存和防重复）
+      await fetchAlertConfigFromHook();
+      
+      console.log('✅ [User Page] 告警配置获取完成');
+    } catch (error) {
+      console.error('❌ [User Page] 获取告警配置失败:', error);
+    }
+  };
+
   // 首次与聚焦时同步登录态（来自 token 或钱包地址 Cookie）
   const hasCalledPointsDataRef = useRef(false);
   
@@ -313,12 +353,13 @@ export default function UserPage() {
     // 首次加载时同步登录态
     syncLogin();
     
-    // 首次加载时获取积分数据（只调用一次）
+    // 首次加载时获取积分数据和告警配置（只调用一次）
     const hasToken = !!localStorage.getItem('token');
     const walletAddr = getCookie('wallet_address');
     if ((hasToken || !!walletAddr) && !hasCalledPointsDataRef.current) {
       hasCalledPointsDataRef.current = true;
       fetchUserPointsData();
+      fetchAlertConfig();
     }
     
     const onFocus = () => syncLogin();
@@ -439,16 +480,8 @@ export default function UserPage() {
       const signature = await signMessageAsync({ message });
 
       try {
-        const res = await request({
-          url: Interface.MOZI_LOGIN,
-          method: 'POST',
-          data: {
-            type: 'login',
-            chanel: 3,  // 3-钱包登录
-            address: currentAddress,
-            signatrue: signature  // 注意：后端字段名为 signatrue
-          },
-        });
+        const res = await loginByWallet(currentAddress, signature);
+        
         if (res?.data?.token) localStorage.setItem('token', res.data.token);
         if (res?.data?.user) {
           // 将 subscribeAnnouncement 一起存入 userInfo
@@ -1336,26 +1369,12 @@ export default function UserPage() {
       
       // 调用后端接口进行 TON 钱包登录（与非 TG 环境保持一致）
       console.log('=== TON 钱包登录传参 ===', {
-        type: 'login',
-        chanel: 3,
-        channel: 'tg',
         address: tonAddress,
         signatrue: tonWallet.account?.publicKey,
         ...(inviteCode && { invitedCode: inviteCode }),
       });
-      const res = await request({
-        url: Interface.MOZI_LOGIN,
-        method: 'POST',
-        data: {
-          type: 'login',
-          chanel: 3,  // 3-钱包登录
-          channel: 'tg',
-          address: tonAddress,
-          signatrue: tonWallet.account?.publicKey,
-          ...(inviteCode && { invitedCode: inviteCode }), // 传递邀请码
-        }
-      });
       
+      const res = await loginByWallet(tonAddress, tonWallet.account?.publicKey, 'tg', inviteCode);
       
       Toast.clear();
       
@@ -1563,19 +1582,7 @@ export default function UserPage() {
       extra: '',
       callback: () => { window.location.href = '/theme'; }
     },
-    {
-      key: 'accountBind',
-      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/link%402x.png'} alt="账号绑定" style={{ width: 22, height: 22 }} />),
-      text: t('user.accountBindLabel') || '账号绑定',
-      extra: '',
-      callback: () => {
-        if (!userInfo.isLogin) {
-          Toast.show({ content: t('user.pleaseLogin'), position: 'bottom' });
-          return;
-        }
-        setShowAccountBindModal(true);
-      }
-    },
+
     {
       key: 'contact',
       icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/me-contact%402x.png'} alt="联系我们" style={{ width: 22, height: 22 }} />),
@@ -1612,28 +1619,106 @@ export default function UserPage() {
   return (
     <Layout>
       <div className={styles.container}>
-        <div className={styles.headerBox}>
-          {userInfo.isLogin ? (
-            <div className={styles.headerUser}>
-              <img className={styles.headerAvatar} src={userInfo.avatar || DEFAULT_AVATAR} alt="头像" />
-              <span>
-                {!isTelegramEnv() && address 
-                  ? `${address.slice(0, 6)}...${address.slice(-4)}` 
-                  : (userInfo.nickname || t('user.profile'))
-                }
-              </span>
-              <img className={styles.editIcon} src={EDIT_ICON} alt="编辑" onClick={openEditProfile} />
-            </div>
-          ) : (
-            <div className={styles.loginBox}>
-              <div className={styles.headerUser} onClick={isTelegramEnv() ? undefined : handleLogin}>
-                <img className={styles.headerAvatar} src={DEFAULT_AVATAR} alt="头像" />
-                <span>{t('user.pleaseLogin')}</span>
-              </div>
-            </div>
-          )}
+        {/* Banner 区域 - 仅包含头部信息 */}
+        <div className={styles.topBannerWrapper}>
+          <div className={styles.headerBox}>
+            {userInfo.isLogin ? (
+              <div className={styles.headerContentTop}>
+                {/* 第一行：头像、昵称 */}
+                <div className={styles.userInfoRow}>
+                  <div className={styles.avatarWrapper}>
+                     <img className={styles.headerAvatar} src={userInfo.avatar || DEFAULT_AVATAR} alt="头像" />
+                     {/* 验证图标 */}
+                     <img className={styles.verifyIcon} src={VIP_ICON} alt="verify" onError={(e) => e.target.style.display = 'none'} />
+                  </div>
+                  <div className={styles.infoContent}>
+                      <div className={styles.nicknameWrapper}>
+                          <span className={styles.nickname}>
+                            {userInfo.nickname || "无为而治"}
+                          </span>
+                      </div>
+                  </div>
+                </div>
 
-          <div className={styles.actionButtons}>
+                {/* 第二行：标签 */}
+                <div className={styles.tagsRow}>
+                    <span className={styles.userTag}>合规从业者</span>
+                    <span className={styles.userTag}>内容创作者</span>
+                    <span className={styles.userTag}>专职交易员</span>
+                    <span className={styles.userTag}>社群运营</span>
+                </div>
+
+                {/* 第三行：简介 */}
+                <div className={styles.bioRow}>
+                    {userInfo.bio || "资金流动大师，金融NO.1"}
+                </div>
+              </div>
+            ) : (
+              <div className={styles.loginBox}>
+                <div className={styles.headerContentTop} onClick={isTelegramEnv() ? undefined : handleLogin}>
+                  <div className={styles.userInfoRow}>
+                    <div className={styles.avatarWrapper}>
+                        <img className={styles.headerAvatar} src={DEFAULT_AVATAR} alt="头像" />
+                    </div>
+                     <div className={styles.infoContent}>
+                          <div className={styles.nicknameWrapper}>
+                            <span className={styles.nickname}>{t('user.pleaseLogin')}</span>
+                          </div>
+                          <div className={styles.bioRow}>
+                             登录后查看更多精彩内容
+                          </div>
+                     </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 统计数据和操作按钮区域 - 白色背景 */}
+        {userInfo.isLogin && (
+          <div className={styles.statsAndActionsWrapper}>
+                <div className={styles.statsActionRow}>
+                    <div className={styles.statsGroup}>
+                        <div className={styles.statItem}>
+                            <span className={styles.statValue}>123</span>
+                            <span className={styles.statLabel}>关注</span>
+                        </div>
+                        <div className={styles.statItem}>
+                             <span className={styles.statValue}>123</span>
+                             <span className={styles.statLabel}>粉丝</span>
+                        </div>
+                         <div className={styles.statItem}>
+                             <span className={styles.statValue}>123</span>
+                             <span className={styles.statLabel}>获赞</span>
+                        </div>
+                        <div className={styles.statItem}>
+                             <span className={styles.statValue}>123W</span>
+                             <span className={styles.statLabel}>积分</span>
+                        </div>
+                    </div>
+                    <div className={styles.actionGroup}>
+                        <div className={styles.profileBtn} onClick={() => window.location.href = '/selfrank'}>
+                            个人主页
+                        </div>
+                        <div className={styles.iconBtn} onClick={openEditProfile}>
+                             {/* 编辑图标 */}
+                             <img src={EDIT_ICON} alt="edit" />
+                        </div>
+                        <div className={styles.iconBtn} onClick={() => setShowBenefitCodeModal(true)}>
+                             {/* 链接/分享图标 */}
+                             <img src={BIND_ICON} alt="link" />
+                        </div>
+                    </div>
+                </div>
+          </div>
+        )}
+
+        {/* 内容区域 */}
+        <div className={styles.contentWrapper}>
+          <div className={styles.contentSection}>
+            <VipBanner onClick={() => setShowBenefitCodeModal(true)} />
+            <div className={styles.actionButtons}>
             <div className={styles.actionButton} onClick={() => (window.location.href = '/find?tab=self')}>
               <div className={styles.actionIcon}>
                 <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/optional%402x.png'} alt="我的自选" />
@@ -1652,142 +1737,143 @@ export default function UserPage() {
               </div>
               <div className={styles.actionText}>{t('user.followTwitter')}</div>
             </div>
-            </div>
           </div>
           
         {showSecondaryActions && (
-          <div className={styles.secondaryActions}>
-            <div className={styles.actionRow}>
-              <div className={styles.actionButton} onClick={() => (window.location.href = '/mycomments')}>
-                <div className={styles.actionIcon}>
-                  <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/comment%402x.png'} alt="我的评论" />
+            <div className={styles.secondaryActions}>
+              <div className={styles.actionRow}>
+                <div className={styles.actionButton} onClick={() => (window.location.href = '/mycomments')}>
+                  <div className={styles.actionIcon}>
+                    <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/comment%402x.png'} alt="我的评论" />
+                  </div>
+                  <div className={styles.actionText}>{t('user.myComments')}</div>
                 </div>
-                <div className={styles.actionText}>{t('user.myComments')}</div>
-              </div>
-              <div className={styles.actionButton} onClick={() => (window.location.href = '/mynotices')}>
-                <div className={styles.actionIcon} style={{ position: 'relative' }}>
-                  <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/mail%402x.png'} alt="消息通知" />
-                  {unreadCount > 0 && <div className={styles.badge}>{unreadCount > 99 ? '99+' : unreadCount}</div>}
+                <div className={styles.actionButton} onClick={() => (window.location.href = '/mynotices')}>
+                  <div className={styles.actionIcon} style={{ position: 'relative' }}>
+                    <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/mail%402x.png'} alt="消息通知" />
+                    {unreadCount > 0 && <div className={styles.badge}>{unreadCount > 99 ? '99+' : unreadCount}</div>}
+                  </div>
+                  <div className={styles.actionText}>{t('user.messageNotification')}</div>
                 </div>
-                <div className={styles.actionText}>{t('user.messageNotification')}</div>
-              </div>
-              <div className={styles.actionButton} onClick={() => (window.location.href = '/mylikes')}>
-                <div className={styles.actionIcon}>
-                  <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/like%402x.png'} alt="我的点赞" />
-                </div>
-                <div className={styles.actionText}>{t('user.myLikes')}</div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className={styles.horizontalButtons}>
-          {!userInfo.isLogin ? (
-            <div className={`${styles.horizontalBtn} ${styles.left}`} onClick={handleLogin}>
-              <div className={styles.btnIcon}>
-                <img className={styles.btnIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/feedback%402x.png'} alt="反馈" />
-              </div>
-              <div className={styles.btnBottom}>
-                <div className={styles.btnContent}>
-                  <div className={styles.btnText}>{t('user.feedback')}</div>
-                  <div className={styles.btnSubtext}>{t('user.feedbackDesc')}</div>
-                </div>
-                <div className={styles.btnArrow}>
-                  <RightArrowIcon size={24} color="#A5A9AF" />
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className={`${styles.horizontalBtn} ${styles.left}`} onClick={score}>
-              <div className={styles.btnIcon}>
-                <img className={styles.btnIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/feedback%402x.png'} alt="反馈" />
-              </div>
-              <div className={styles.btnBottom}>
-                <div className={styles.btnContent}>
-                  <div className={styles.btnText}>{t('user.feedback')}</div>
-                  <div className={styles.btnSubtext}>{t('user.feedbackDesc')}</div>
-                </div>
-                <div className={styles.btnArrow}>
-                  <RightArrowIcon size={24} color="#A5A9AF" />
+                <div className={styles.actionButton} onClick={() => (window.location.href = '/mylikes')}>
+                  <div className={styles.actionIcon}>
+                    <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/like%402x.png'} alt="我的点赞" />
+                  </div>
+                  <div className={styles.actionText}>{t('user.myLikes')}</div>
                 </div>
               </div>
             </div>
           )}
-          <div className={`${styles.horizontalBtn} ${styles.right}`} onClick={handleShare}>
-            <div className={styles.btnIcon}>
-              <img className={styles.btnIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/me-share%402x.png'} alt="推荐朋友" />
-            </div>
-            <div className={styles.btnBottom}>
-              <div className={styles.btnContent}>
-                <div className={styles.btnText}>{t('user.recommendFriend')}</div>
-                <div className={styles.btnSubtext}>{t('user.recommendDesc')}</div>
-              </div>
-              <div className={styles.btnArrow}>
-                <RightArrowIcon size={24} color="#A5A9AF" />
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {showPointsSection && (
-          <div className={styles.pointsSection}>
-            <div className={styles.pointsInfo} onClick={() => router.push('/pointsdetail')}>
-              <span className={styles.pointsTitle}>{t('user.myPoints')}</span>
-              <div className={styles.pointsValueRow}>
-                <span className={styles.pointsValue}>{pointsData.totalPoints}</span>
-                <span className={styles.pointsDaily}>{t('user.yesterdayPoints', { points: pointsData.yesterdayPoints })}</span>
-              </div>
-              <span className={styles.pointsRank}>{t('user.currentRank', { rank: pointsData.pointsRanking })}</span>
-            </div>
-            <div className={styles.pointsAction} onClick={() => router.push('/points')}>
-              <span className={styles.pointsButton}>{t('user.pointsRanking')}</span>
-              <RightArrowIcon size={18} color="#fff"  />
-            </div>
-            <img className={styles.pointsCoin} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/integral-coin.png'} alt="coin" />
-          </div>
-        )}
 
-        {showCalendarSection && (
-          <div className={styles.calendarSection}>
-            <CalendarCard 
-              onDateChange={handleDateChange}
-              onToggleChange={handleAnnouncementToggle}
-              onMonthChange={handleMonthChange}
-              defaultToggle={isAnnouncementOn}
-              eventDates={isInterfaceLoaded ? calendarEventDates : []}
-            />
-          </div>
-        )}
-
-        {showNewCoinListing && (
-          <div className={styles.newCoinSection}>
-            <NewCoinListing showMore={false} data={newCoinListings} loading={isLoadingNewCoins} />
-          </div>
-        )}
-
-        <div className={styles.flexSpacer}></div>
-
-        <div className={styles.footer}>
-          <List className={styles.footerList}>
-            {footerList.map((item, index) => {
-              if (item.key === 'theme' && !showThemeOption) return null;
-              if (item.key === 'social' && !showSocialOption) return null;
-              return (
-                <List.Item key={index} className={`${styles.footerItem} ${index === footerList.length - 1 ? styles.last : ''}`} onClick={item.callback}>
-                  <div className={styles.footerBtn}>
-                    <div className={styles.icon}>{item.icon}</div>
-                    <div className={styles.text}>{item.text}</div>
-                    <div className={styles.extra}>{item.extra}</div>
+          <div className={styles.horizontalButtons}>
+            {!userInfo.isLogin ? (
+              <div className={`${styles.horizontalBtn} ${styles.left}`} onClick={handleLogin}>
+                <div className={styles.btnIcon}>
+                  <img className={styles.btnIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/feedback%402x.png'} alt="反馈" />
+                </div>
+                <div className={styles.btnBottom}>
+                  <div className={styles.btnContent}>
+                    <div className={styles.btnText}>{t('user.feedback')}</div>
+                    <div className={styles.btnSubtext}>{t('user.feedbackDesc')}</div>
                   </div>
-              </List.Item>
-              );
-            })}
-          </List>
-        </div>
+                  <div className={styles.btnArrow}>
+                    <RightArrowIcon size={24} color="#A5A9AF" />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className={`${styles.horizontalBtn} ${styles.left}`} onClick={score}>
+                <div className={styles.btnIcon}>
+                  <img className={styles.btnIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/feedback%402x.png'} alt="反馈" />
+                </div>
+                <div className={styles.btnBottom}>
+                  <div className={styles.btnContent}>
+                    <div className={styles.btnText}>{t('user.feedback')}</div>
+                    <div className={styles.btnSubtext}>{t('user.feedbackDesc')}</div>
+                  </div>
+                  <div className={styles.btnArrow}>
+                    <RightArrowIcon size={24} color="#A5A9AF" />
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className={`${styles.horizontalBtn} ${styles.right}`} onClick={handleShare}>
+              <div className={styles.btnIcon}>
+                <img className={styles.btnIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/me-share%402x.png'} alt="推荐朋友" />
+              </div>
+              <div className={styles.btnBottom}>
+                <div className={styles.btnContent}>
+                  <div className={styles.btnText}>{t('user.recommendFriend')}</div>
+                  <div className={styles.btnSubtext}>{t('user.recommendDesc')}</div>
+                </div>
+                <div className={styles.btnArrow}>
+                  <RightArrowIcon size={24} color="#A5A9AF" />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {showPointsSection && (
+            <div className={styles.pointsSection}>
+              <div className={styles.pointsInfo} onClick={() => router.push('/pointsdetail')}>
+                <span className={styles.pointsTitle}>{t('user.myPoints')}</span>
+                <div className={styles.pointsValueRow}>
+                  <span className={styles.pointsValue}>{pointsData.totalPoints}</span>
+                  <span className={styles.pointsDaily}>{t('user.yesterdayPoints', { points: pointsData.yesterdayPoints })}</span>
+                </div>
+                <span className={styles.pointsRank}>{t('user.currentRank', { rank: pointsData.pointsRanking })}</span>
+              </div>
+              <div className={styles.pointsAction} onClick={() => router.push('/points')}>
+                <span className={styles.pointsButton}>{t('user.pointsRanking')}</span>
+                <RightArrowIcon size={18} color="#fff"  />
+              </div>
+              <img className={styles.pointsCoin} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/integral-coin.png'} alt="coin" />
+            </div>
+          )}
 
-        {userInfo.isLogin && !isTelegramEnv() && (
-          <Button className={styles.logoutBtn} onClick={handleLogout}>{t('user.logout')}</Button>
-        )}
+          {showCalendarSection && (
+            <div className={styles.calendarSection}>
+              <CalendarCard 
+                onDateChange={handleDateChange}
+                onToggleChange={handleAnnouncementToggle}
+                onMonthChange={handleMonthChange}
+                defaultToggle={isAnnouncementOn}
+                eventDates={isInterfaceLoaded ? calendarEventDates : []}
+              />
+            </div>
+          )}
+
+          {showNewCoinListing && (
+            <div className={styles.newCoinSection}>
+              <NewCoinListing showMore={false} data={newCoinListings} loading={isLoadingNewCoins} />
+            </div>
+          )}
+
+          <div className={styles.flexSpacer}></div>
+
+          <div className={styles.footer}>
+            <List className={styles.footerList}>
+              {footerList.map((item, index) => {
+                if (item.key === 'theme' && !showThemeOption) return null;
+                if (item.key === 'social' && !showSocialOption) return null;
+                return (
+                  <List.Item key={index} className={`${styles.footerItem} ${index === footerList.length - 1 ? styles.last : ''}`} onClick={item.callback}>
+                    <div className={styles.footerBtn}>
+                      <div className={styles.icon}>{item.icon}</div>
+                      <div className={styles.text}>{item.text}</div>
+                      <div className={styles.extra}>{item.extra}</div>
+                    </div>
+                </List.Item>
+                );
+              })}
+            </List>
+          </div>
+
+            {userInfo.isLogin && !isTelegramEnv() && (
+              <Button className={styles.logoutBtn} onClick={handleLogout}>{t('user.logout')}</Button>
+            )}
+          </div>
+        </div>
         
         <Popup
           visible={popVis}
@@ -2112,6 +2198,27 @@ export default function UserPage() {
         <AccountBindModal
           visible={showAccountBindModal}
           onClose={() => setShowAccountBindModal(false)}
+        />
+
+        {/* 绑定权益码弹窗 */}
+        <BindBenefitCodeModal
+          open={showBindBenefitCodeModal}
+          onClose={() => setShowBindBenefitCodeModal(false)}
+          onConfirm={(linkCode) => {
+            console.log('绑定权益码:', linkCode);
+            setShowBindBenefitCodeModal(false);
+            Toast.show({ content: '绑定成功', position: 'bottom' });
+          }}
+        />
+
+        {/* 权益码弹窗 */}
+        <BenefitCodeModal
+          open={showBenefitCodeModal}
+          onClose={() => setShowBenefitCodeModal(false)}
+          onConfirm={() => {
+            console.log('权益码已复制');
+            setShowBenefitCodeModal(false);
+          }}
         />
       </div>
     </Layout>

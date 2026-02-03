@@ -5,7 +5,7 @@ import { Popup, Input, Button, Toast } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
-import { sendVerificationCode, loginByTelegram } from '../../api/user';
+import { sendVerificationCode, loginByTelegram, loginByEmail, registerByEmail } from '../../api/user';
 import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
 import styles from './index.module.less';
 
@@ -392,17 +392,8 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
 
     setLoading(true);
     try {
-      const res = await request({
-        url: Interface.MOZI_LOGIN,
-        method: 'POST',
-        data: { 
-          chanel: 2,  // 2-邮箱登录
-          type: 'login',  // login-登录
-          email, 
-          password,
-          channel: isTelegramEnv() ? 'tg' : 'pc'  // 添加渠道参数
-        }
-      });
+      const channel = isTelegramEnv() ? 'tg' : 'pc';
+      const res = await loginByEmail(email, password, '', channel);
 
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
@@ -490,19 +481,8 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
 
     setLoading(true);
     try {
-      const res = await request({
-        url: Interface.MOZI_LOGIN,
-        method: 'POST',
-        data: { 
-          chanel: 2,  // 2-邮箱注册
-          type: 'register',  // register-注册
-          email, 
-          password, 
-          verifyCode: verificationCode,  // 验证码（注册时必填）
-          ...(inviteCode && { invitedCode: inviteCode }), // 邀请码（可选）
-          channel: isTelegramEnv() ? 'tg' : 'pc'  // 添加渠道参数
-        }
-      });
+      const channel = isTelegramEnv() ? 'tg' : 'pc';
+      const res = await registerByEmail(email, password, verificationCode, inviteCode, channel);
 
       if (res?.data?.success || res?.code === 0) {
         Toast.show({ content: t('auth.registerSuccess'), position: 'center', icon: 'success' });
@@ -530,17 +510,8 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
   // 注册成功后自动登录
   const autoLoginAfterRegister = async () => {
     try {
-      const res = await request({
-        url: Interface.MOZI_LOGIN,
-        method: 'POST',
-        data: { 
-          chanel: 2,
-          type: 'login',
-          email, 
-          password,
-          channel: isTelegramEnv() ? 'tg' : 'pc'  // 添加渠道参数
-        }
-      });
+      const channel = isTelegramEnv() ? 'tg' : 'pc';
+      const res = await loginByEmail(email, password, '', channel);
 
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);

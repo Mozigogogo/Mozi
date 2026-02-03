@@ -23,6 +23,7 @@ import { Interface, LOOPTIME, WS_URL } from '../../utils/constants';
 import { formatNumber, formatPercent, jump2NoTab } from '../../utils/core';
 import { MoziWebSocket } from '../../utils/moziWebSocket';
 import { useTranslation } from 'react-i18next';
+import { useAlertConfig } from '../../hooks/useAlertConfig';
 import {
   WS_EVENTS,
   PLATFORMS,
@@ -38,6 +39,9 @@ export default function DetailPage() {
   const symbol = searchParams.get('symbol') || '';
   const fromFavorite = searchParams.get('fromFavorite') === '1'; // 是否从自选榜进入
   const { t } = useTranslation();
+  
+  // 使用告警配置 Hook（自动获取）
+  const { fetchConfig: fetchAlertConfig } = useAlertConfig({ autoFetch: false });
   
   // 状态定义
   const [coinInfo, setCoinInfo] = useState(null);
@@ -139,6 +143,26 @@ export default function DetailPage() {
       console.error('获取币种信息失败:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 获取用户告警配置（使用 Hook 的 fetchConfig 方法）
+  const fetchUserAlertConfig = async () => {
+    try {
+      const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+      
+      // 如果用户未登录，清空配置并返回
+      if (!userId) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('alertConfig');
+        }
+        return;
+      }
+      
+      // 使用 Hook 提供的方法获取配置（自动处理缓存和防重复）
+      await fetchAlertConfig();
+    } catch (error) {
+      console.error('❌ 获取告警配置失败:', error);
     }
   };
 
@@ -580,6 +604,9 @@ ${coinInfo.name || symbol} (${symbol})
     fetchCoinInfo();
     fetchMarketData();
     fetchROIData();
+    
+    // 获取用户告警配置
+    fetchUserAlertConfig();
     
     // 设置WebSocket连接超时（10秒）
     // 如果10秒内WebSocket未连接成功，则启用HTTP降级
