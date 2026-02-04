@@ -117,7 +117,7 @@ export default function TelegramAutoLogin() {
       const env = process.env.NEXT_PUBLIC_APP_ENV || 'test';
 
       console.log('🚀 [TG自动登录] 开始 Telegram 自动登录');
-      Toast.show({ content: '正在自动登录...', icon: 'loading' });
+      // Toast.show({ content: '正在自动登录...', icon: 'loading' });
 
       console.log('========== TG 登录参数 ==========');
       console.log('type:', 'login');
@@ -159,7 +159,7 @@ export default function TelegramAutoLogin() {
           console.log('✅ [TG自动登录] 获取到 token:', token.substring(0, 10) + '...');
           // 保存 token
           localStorage.setItem('token', token);
-          Toast.show({ content: '登录成功', icon: 'success' });
+          // Toast.show({ content: '登录成功', icon: 'success' });
 
           // 保存用户信息
 
