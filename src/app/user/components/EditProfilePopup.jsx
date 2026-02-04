@@ -177,7 +177,7 @@ const EditProfilePopup = ({ visible, onClose, t, userInfo, setUserInfo }) => {
     width: '24px',
     height: '24px',
     marginRight: '12px',
-    marginTop: '2px'
+    marginTop: '0'
   };
 
   const contentStyle = {

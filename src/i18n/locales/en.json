@@ -1,4 +1,43 @@
 {
+  "editProfile": {
+    "title": "Edit Profile",
+    "identity": {
+      "label": "Identity Tag",
+      "placeholder": "Please select your identity tag",
+      "options": {
+        "compliance": "Compliance Practitioner",
+        "trader": "Professional Trader",
+        "quant": "Quant Researcher",
+        "creator": "Content Creator",
+        "community_builder": "Community Operator",
+        "institution": "Institutional Practitioner",
+        "project_member": "Project Member",
+        "researcher": "Research Analyst",
+        "educator": "Educational Blogger",
+        "retail": "Retail Investor"
+      }
+    },
+    "bio": {
+      "label": "Bio",
+      "placeholder": "Enter your bio, max 20 characters"
+    },
+    "email": {
+      "label": "Alert Email",
+      "placeholder": "Enter email for alerts"
+    },
+    "phone": {
+      "label": "Alert Phone",
+      "placeholder": "Enter phone number for alerts"
+    },
+    "commission": {
+      "label": "Get Commission",
+      "placeholder": "Enter TronUSDT address for commission"
+    },
+    "imageSizeLimit": "Image size cannot exceed 5MB",
+    "saveSuccess": "Saved successfully",
+    "saveFailed": "Save failed",
+    "saveFailedRetry": "Save failed, please try again"
+  },
   "common": {
     "home": "Home",
     "find": "Discover",

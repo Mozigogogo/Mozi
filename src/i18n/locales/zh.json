@@ -1,4 +1,43 @@
 {
+  "editProfile": {
+    "title": "编辑资料",
+    "identity": {
+      "label": "身份标签",
+      "placeholder": "请选择您的身份标签",
+      "options": {
+        "compliance": "合规从业者",
+        "trader": "专职交易员",
+        "quant": "量化研究员",
+        "creator": "内容创作者",
+        "community_builder": "社区运营",
+        "institution": "机构从业者",
+        "project_member": "项目方成员",
+        "researcher": "投研分析师",
+        "educator": "教育型博主",
+        "retail": "普通投资者"
+      }
+    },
+    "bio": {
+      "label": "个人简介",
+      "placeholder": "请输入您的个人简介，不超过20个字"
+    },
+    "email": {
+      "label": "告警邮件",
+      "placeholder": "请输入电子邮件地址以便于接受告警"
+    },
+    "phone": {
+      "label": "告警电话",
+      "placeholder": "请输入电话号码以便于接受告警"
+    },
+    "commission": {
+      "label": "获取分佣",
+      "placeholder": "请输入:TronUSDT地址以获取分佣"
+    },
+    "imageSizeLimit": "图片大小不能超过 5MB",
+    "saveSuccess": "保存成功",
+    "saveFailed": "保存失败",
+    "saveFailedRetry": "保存失败，请重试"
+  },
   "common": {
     "home": "首页",
     "find": "发现",
