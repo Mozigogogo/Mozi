@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Toast } from 'antd-mobile';
 import { loginByTelegram } from '@/api/user';
 import request from '@/api/index';
-import Interface from '@/utils/constants';
+import { Interface } from '@/utils/constants';
 import { LogoLoading } from '@/components/Loading';
 
 /**
