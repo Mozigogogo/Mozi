@@ -1426,5 +1426,67 @@
       "midVolume": "中成交",
       "lowVolume": "低成交"
     }
+  },
+  "vip": {
+    "title": "会员充值",
+    "card": {
+      "title": "Mozi Pro",
+      "subtitle": "解锁高级功能",
+      "badge": "PRO"
+    },
+    "status": {
+      "locked": "暂未解锁"
+    },
+    "plan": {
+      "year": "年卡",
+      "quarter": "季卡",
+      "month": "月卡",
+      "currency": "$"
+    },
+    "recommend": "推荐",
+    "month": "月",
+    "basic": "基础版",
+    "privilege": "会员权益",
+    "purchaseSuccess": "购买功能开发中...",
+    "section": {
+      "benefits": "会员权益"
+    },
+    "table": {
+      "benefit": "权益",
+      "basic": "基础版",
+      "vip": "VIP版"
+    },
+    "benefit": {
+      "basicChart": "基础行情",
+      "basicPush": "APP基础推送",
+      "dailyTrial": "每日1次体验",
+      "withAds": "含广告",
+      "defaultTheme": "默认主题",
+      "vipChart": "主流交易所实时大单",
+      "vipPush": "电话+邮件强触达",
+      "unlimitedAnalysis": "无限次智能分析",
+      "ogBadge": "黑金专属OG标识",
+      "noAds": "纯净无广沉浸式",
+      "alphaGroup": "专属Alpha核心群",
+      "multiTheme": "多主题 自由切换"
+    },
+    "confirmPurchase": "确认购买",
+    "result": {
+      "success": {
+        "title": "充值成功",
+        "desc": "恭喜您成为尊贵的VIP会员",
+        "validity": "有效期至",
+        "btn": "立即体验权益"
+      },
+      "fail": {
+        "title": "充值失败",
+        "desc": "支付过程似乎遇到了一些问题",
+        "btn": "重新支付"
+      },
+      "processing": {
+        "title": "支付确认中",
+        "desc": "正在查询您的支付结果，请稍候..."
+      }
+    }
   }
 }

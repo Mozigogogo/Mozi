@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Toast } from 'antd-mobile';
 import { loginByTelegram } from '@/api/user';
 import request from '@/api/index';
 import Interface from '@/utils/constants';
+import { LogoLoading } from '@/components/Loading';
 
 /**
  * Telegram 自动登录组件
@@ -12,6 +13,7 @@ import Interface from '@/utils/constants';
  */
 export default function TelegramAutoLogin() {
   const loginAttemptedRef = useRef(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const handleTelegramAutoLogin = async () => {
@@ -20,18 +22,14 @@ export default function TelegramAutoLogin() {
         return;
       }
 
-      // 检查是否已登录
-      const existingToken = localStorage.getItem('token');
-      if (existingToken) {
-        console.log('✅ [TG自动登录] 用户已登录，跳过自动登录');
-        return;
-      }
-
       // 检查是否在 Telegram 环境
       if (typeof window === 'undefined' || !window.Telegram?.WebApp) {
         console.log('❌ [TG自动登录] 非 Telegram WebApp 环境');
         return;
       }
+      
+      // 在 Telegram 环境下，显示加载中遮罩
+      setIsLoading(true);
 
       loginAttemptedRef.current = true;
 
@@ -55,10 +53,27 @@ export default function TelegramAutoLogin() {
 
       if (!initData || !initDataUnsafe?.user) {
         console.log('❌ [TG自动登录] 无法获取 Telegram initData');
+        setIsLoading(false);
         return;
       }
 
       const tgUser = initDataUnsafe.user;
+
+      // 检查本地是否有昵称和头像
+      let hasLocalProfile = false;
+      try {
+        const storedUserInfoStr = localStorage.getItem('userInfo');
+        if (storedUserInfoStr) {
+          const storedUserInfo = JSON.parse(storedUserInfoStr);
+          // 如果本地有昵称且不为空，则认为已有本地配置
+          if (storedUserInfo.nickName && storedUserInfo.nickName.trim()) {
+            hasLocalProfile = true;
+            console.log('✅ [TG自动登录] 检测到本地已有用户信息，将在登录时不传递 TG 昵称和头像');
+          }
+        }
+      } catch (e) {
+        console.error('❌ [TG自动登录] 检查本地用户信息失败:', e);
+      }
 
       // 打印用户原始数据
       console.log('========== TG 用户原始数据 ==========');
@@ -78,6 +93,7 @@ export default function TelegramAutoLogin() {
 
       if (!hash) {
         console.log('❌ [TG自动登录] 无法获取 hash');
+        setIsLoading(false);
         return;
       }
 
@@ -92,8 +108,8 @@ export default function TelegramAutoLogin() {
       console.log('========== TG 登录参数 ==========');
       console.log('type:', 'login');
       console.log('telegramId:', String(tgUser.id));
-      console.log('username:', tgUser.username || tgUser.first_name || '');
-      console.log('photoUrl:', tgUser.photo_url || '');
+      console.log('username:', hasLocalProfile ? '[Local Profile Exists - Omitted]' : (tgUser.username || tgUser.first_name || ''));
+      console.log('photoUrl:', hasLocalProfile ? '[Local Profile Exists - Omitted]' : (tgUser.photo_url || ''));
       console.log('hash:', hash);
       console.log('inviteCode:', inviteCode);
       console.log('channel:', 'tg');
@@ -102,10 +118,14 @@ export default function TelegramAutoLogin() {
       console.log('================================');
 
       try {
+        // 如果本地已有用户信息，则不传递 TG 的用户名和头像，避免覆盖
+        const username = hasLocalProfile ? '' : (tgUser.username || tgUser.first_name || '');
+        const photoUrl = hasLocalProfile ? '' : (tgUser.photo_url || '');
+
         const res = await loginByTelegram({
           telegramId: String(tgUser.id),
-          username: tgUser.username || tgUser.first_name || '',
-          photoUrl: tgUser.photo_url || '',
+          username: username,
+          photoUrl: photoUrl,
           hash: hash,
           inviteCode: inviteCode,
           env: env
@@ -115,11 +135,28 @@ export default function TelegramAutoLogin() {
           // 保存 token
           localStorage.setItem('token', res.data.token);
 
-          // 保存用户信息，完全依赖后端返回的 nickName
+          // 保存用户信息
           const userData = res?.data?.userInfo || res?.data?.user || {};
-          const nickName = userData.nickName || '';
-          const avatar = userData.avatar || tgUser.photo_url || '';
+          let nickName = userData.nickName;
+          let avatar = userData.avatar;
           
+          // 如果本地已有配置，且后端返回为空，则保留本地配置
+          if (hasLocalProfile) {
+            try {
+               const currentStored = JSON.parse(localStorage.getItem('userInfo') || '{}');
+               if (!nickName && currentStored.nickName) {
+                   nickName = currentStored.nickName;
+               }
+               if (!avatar && currentStored.avatar) {
+                   avatar = currentStored.avatar;
+               }
+            } catch(e) {}
+          }
+          
+          // 兜底逻辑
+          if (!nickName) nickName = '';
+          if (!avatar) avatar = tgUser.photo_url || '';
+
           const userInfoWithSubscribe = {
             ...userData,
             nickName: nickName,
@@ -185,17 +222,18 @@ export default function TelegramAutoLogin() {
         }
       } catch (error) {
         console.error('❌ [TG自动登录] 登录异常:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     // 延迟执行，确保 Telegram WebApp SDK 已加载
     const timer = setTimeout(() => {
       handleTelegramAutoLogin();
-    }, 500);
+    }, 100);
 
     return () => clearTimeout(timer);
   }, []);
 
-  // 这是一个无 UI 的组件
-  return null;
+  return <LogoLoading visible={isLoading} fullscreen mask image="/images/community/loadding.png" />;
 }
