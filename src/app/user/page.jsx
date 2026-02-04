@@ -350,6 +350,12 @@ export default function UserPage() {
     // 监听 TG 自动登录成功事件
     const onTgLoginSuccess = () => {
       console.log('🚀 [User Page] 收到 tg-login-success 事件，立即同步状态');
+      // 打印当前的 localStorage 状态
+      console.log('🔍 [User Page] localStorage 状态检查:', {
+        token: localStorage.getItem('token') ? '存在' : '缺失',
+        userInfo: localStorage.getItem('userInfo'),
+        userId: localStorage.getItem('userId')
+      });
       syncLogin();
       fetchUserPointsData();
       fetchAlertConfig();
