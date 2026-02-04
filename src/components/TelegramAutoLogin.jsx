@@ -2,9 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Toast } from 'antd-mobile';
-import { loginByTelegram } from '@/api/user';
-import request from '@/api/index';
-import { Interface } from '@/utils/constants';
+import { loginByTelegram, getUserDataInfo, completeTask } from '@/api/user';
 import { LogoLoading } from '@/components/Loading';
 
 /**
@@ -119,6 +117,8 @@ export default function TelegramAutoLogin() {
       const env = process.env.NEXT_PUBLIC_APP_ENV || 'test';
 
       console.log('🚀 [TG自动登录] 开始 Telegram 自动登录');
+      Toast.show({ content: '正在自动登录...', icon: 'loading' });
+
       console.log('========== TG 登录参数 ==========');
       console.log('type:', 'login');
       console.log('telegramId:', String(tgUser.id));
@@ -128,7 +128,11 @@ export default function TelegramAutoLogin() {
       console.log('inviteCode:', inviteCode);
       console.log('channel:', 'tg');
       console.log('env:', env);
-      console.log('完整 initData:', initData);
+      try {
+        console.log('完整 initData:', initData);
+      } catch (e) {
+        console.log('完整 initData 打印失败');
+      }
       console.log('================================');
 
       try {
@@ -136,6 +140,7 @@ export default function TelegramAutoLogin() {
         const username = hasLocalProfile ? '' : (tgUser.username || tgUser.first_name || '');
         const photoUrl = hasLocalProfile ? '' : (tgUser.photo_url || '');
 
+        console.log('🚀 [TG自动登录] 调用 loginByTelegram 接口...');
         const res = await loginByTelegram({
           telegramId: String(tgUser.id),
           username: username,
@@ -151,8 +156,12 @@ export default function TelegramAutoLogin() {
         const token = res?.data?.token || res?.token || res?.data?.accessToken;
 
         if (token) {
+          console.log('✅ [TG自动登录] 获取到 token:', token.substring(0, 10) + '...');
           // 保存 token
           localStorage.setItem('token', token);
+          Toast.show({ content: '登录成功', icon: 'success' });
+
+          // 保存用户信息
 
           // 保存用户信息
           const userData = res?.data?.userInfo || res?.data?.user || res?.user || {};
@@ -198,10 +207,8 @@ export default function TelegramAutoLogin() {
 
           // 同步调用 /user/datainfo 获取用户详细信息（仅用于积分等数据，不覆盖 nickName/avatar）
           try {
-            const dataInfoRes = await request({
-              url: Interface.USER_DATA_INFO,
-              method: 'GET'
-            });
+            console.log('🚀 [TG自动登录] 调用 getUserDataInfo...');
+            const dataInfoRes = await getUserDataInfo();
 
             if (dataInfoRes?.data) {
               console.log('✅ [TG自动登录] 获取用户详细信息成功');
@@ -222,11 +229,8 @@ export default function TelegramAutoLogin() {
 
           // 完成每日登录任务
           try {
-            await request({
-              url: Interface.TASK_COMPLETE,
-              method: 'POST',
-              data: { taskCode: 'DAILY_LOGIN' }
-            });
+            console.log('🚀 [TG自动登录] 调用 completeTask(DAILY_LOGIN)...');
+            await completeTask('DAILY_LOGIN');
             console.log('✅ [TG自动登录] 每日登录任务上报成功');
           } catch (taskError) {
             console.error('❌ [TG自动登录] 每日登录任务上报失败:', taskError);
