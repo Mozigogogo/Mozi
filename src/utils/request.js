@@ -61,6 +61,23 @@ instance.interceptors.response.use(
     
     // 检查返回的code是否为401
     if (data && data.code === 401) {
+      // 检查请求使用的 token 是否与当前存储的 token 一致
+      // 防止并发请求或旧请求的 401 误删新登录的 token
+      if (typeof window !== 'undefined') {
+        const currentToken = localStorage.getItem('token');
+        // 获取请求头中的 token，兼容不同写法
+        const requestToken = response.config?.headers?.authentication || 
+                             response.config?.headers?.Authentication || 
+                             response.config?.headers?.['authentication'];
+        
+        // 如果当前有 token，但请求没有带 token，或者请求带的 token 与当前不一致
+        // 则认为该 401 不应该影响当前的登录态
+        if (currentToken && requestToken !== currentToken) {
+           console.warn('⚠️ [Request] 忽略非当前 Token 的 401 响应', { requestToken: requestToken ? 'Exist' : 'None' });
+           return data;
+        }
+      }
+
       // 清除token
       clearToken();
       
