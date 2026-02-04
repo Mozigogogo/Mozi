@@ -346,10 +346,21 @@ export default function UserPage() {
     }
     
     const onFocus = () => syncLogin();
+    
+    // 监听 TG 自动登录成功事件
+    const onTgLoginSuccess = () => {
+      console.log('🚀 [User Page] 收到 tg-login-success 事件，立即同步状态');
+      syncLogin();
+      fetchUserPointsData();
+      fetchAlertConfig();
+    };
+
     window.addEventListener('focus', onFocus);
+    window.addEventListener('tg-login-success', onTgLoginSuccess);
     const timer = setInterval(syncLogin, 2000);
     return () => {
       window.removeEventListener('focus', onFocus);
+      window.removeEventListener('tg-login-success', onTgLoginSuccess);
       clearInterval(timer);
     };
   }, []);
