@@ -1,4 +1,43 @@
 {
+  "editProfile": {
+    "title": "Edit Profile",
+    "identity": {
+      "label": "Identity Tag",
+      "placeholder": "Please select your identity tag",
+      "options": {
+        "compliance": "Compliance Practitioner",
+        "trader": "Professional Trader",
+        "quant": "Quant Researcher",
+        "creator": "Content Creator",
+        "community_builder": "Community Operator",
+        "institution": "Institutional Practitioner",
+        "project_member": "Project Member",
+        "researcher": "Research Analyst",
+        "educator": "Educational Blogger",
+        "retail": "Retail Investor"
+      }
+    },
+    "bio": {
+      "label": "Bio",
+      "placeholder": "Enter your bio, max 20 characters"
+    },
+    "email": {
+      "label": "Alert Email",
+      "placeholder": "Enter email for alerts"
+    },
+    "phone": {
+      "label": "Alert Phone",
+      "placeholder": "Enter phone number for alerts"
+    },
+    "commission": {
+      "label": "Get Commission",
+      "placeholder": "Enter TronUSDT address for commission"
+    },
+    "imageSizeLimit": "Image size cannot exceed 5MB",
+    "saveSuccess": "Saved successfully",
+    "saveFailed": "Save failed",
+    "saveFailedRetry": "Save failed, please try again"
+  },
   "common": {
     "home": "Home",
     "find": "Discover",
@@ -248,6 +287,8 @@
     "contactSupport": "Contact Support",
     "welcomeContact": "Welcome to contact us",
     "socialMedia": "Find us on social media",
+    "socialMediaAlt": "Social Media",
+    "officialAccountQRCodeAlt": "Official Account QR Code",
     "findUsOnSocial": "Find us on social media",
     "about": "About",
     "donate": "Donate",
@@ -257,18 +298,48 @@
     "feedback": "Feedback",
     "feedbackDesc": "Tell us what you want",
     "productFeedback": "Product Feedback",
+    "feedbackFailed": "Failed to submit feedback, please try again",
     "recommendFriend": "Recommend",
     "recommendDesc": "Share your favorites",
     "shareYourLove": "Share your love",
     "shareText": "Mozi - Professional Crypto Data Analysis Platform",
     "myPoints": "My Points",
+    "defaultNickname": "Default User",
+    "defaultBio": "Master of financial flow, Finance NO.1",
+    "pleaseLogin": "Please Login",
+    "loginTip": "Login to view more content",
+    "personalPage": "Personal",
+    "tags": {
+      "compliance": "Compliance",
+      "creator": "Creator",
+      "trader": "Trader",
+      "community": "Community"
+    },
+    "stats": {
+      "following": "Following",
+      "followers": "Followers",
+      "likes": "Likes",
+      "points": "Points"
+    },
+    "toast": {
+      "avatarTooLarge": "Avatar file too large, please select image under 2MB",
+      "nicknameRequired": "Please enter nickname",
+      "nicknameTooLong": "Nickname cannot exceed 50 characters",
+      "saving": "Saving..."
+    },
     "yesterdayPoints": "Yesterday: +{{points}}",
+    "yesterdayPointsText": "Yesterday ",
     "todayPoints": "Yesterday Points",
     "currentRank": "Current Rank: #{{rank}}",
+    "currentRankLabel": "Current Rank: ",
     "rankTop": "Overall Rank #",
+    "rankPrefix": "Overall Rank # ",
     "rankSuffix": "",
     "pointsRanking": "Rankings",
+    "earnPoints": "Earn Points",
     "pointsDetail": "Points Rank",
+    "officialAccountQRCode": "Official Account QR Code",
+    "feedbackShort": "Feedback",
     "newCoinListing": "New Listings",
     "viewMore": "View More",
     "noNewListings": "No New Listings",
@@ -289,6 +360,7 @@
     "feedbackInputTitle": "Please share your feedback!",
     "feedbackInputPlaceholder": "Thanks for your feedback!",
     "submitFeedback": "Submit Feedback",
+    "earnPoints": "Earn Points",
     "featureOptions": {
       "marketBoard": "Market",
       "alertFunction": "Alerts",
@@ -328,8 +400,8 @@
     "walletAddressError": "Failed to get wallet address",
     "walletConnectFailed": "Wallet connection failed",
     "defaultNickname": "User",
-    "vipBannerText": "Free 14-day trial, start new experience now!",
-    "subscribeNow": "Subscribe Now",
+    "vipBannerText": "Try now - 14 days free",
+    "subscribeNow": "Subscribe",
     "wechatUser": "Telegram User",
     "accountBindLabel": "Account Binding",
     "aboutMozi": {
@@ -342,6 +414,7 @@
       "values": "Values:",
       "valuesText": "Universal Love · Pragmatic · Focus · Innovation · Freedom"
     }
+    
   },
   "accountBind": {
     "title": "Account Binding",

@@ -1,4 +1,43 @@
 {
+  "editProfile": {
+    "title": "编辑资料",
+    "identity": {
+      "label": "身份标签",
+      "placeholder": "请选择您的身份标签",
+      "options": {
+        "compliance": "合规从业者",
+        "trader": "专职交易员",
+        "quant": "量化研究员",
+        "creator": "内容创作者",
+        "community_builder": "社区运营",
+        "institution": "机构从业者",
+        "project_member": "项目方成员",
+        "researcher": "投研分析师",
+        "educator": "教育型博主",
+        "retail": "普通投资者"
+      }
+    },
+    "bio": {
+      "label": "个人简介",
+      "placeholder": "请输入您的个人简介，不超过20个字"
+    },
+    "email": {
+      "label": "告警邮件",
+      "placeholder": "请输入电子邮件地址以便于接受告警"
+    },
+    "phone": {
+      "label": "告警电话",
+      "placeholder": "请输入电话号码以便于接受告警"
+    },
+    "commission": {
+      "label": "获取分佣",
+      "placeholder": "请输入:TronUSDT地址以获取分佣"
+    },
+    "imageSizeLimit": "图片大小不能超过 5MB",
+    "saveSuccess": "保存成功",
+    "saveFailed": "保存失败",
+    "saveFailedRetry": "保存失败，请重试"
+  },
   "common": {
     "home": "首页",
     "find": "发现",
@@ -248,6 +287,8 @@
     "contactSupport": "联系客服",
     "welcomeContact": "欢迎联系我们",
     "socialMedia": "到社交媒体找我们",
+    "socialMediaAlt": "社交媒体",
+    "officialAccountQRCodeAlt": "公众号二维码",
     "findUsOnSocial": "到社交媒体找我们",
     "about": "关于",
     "donate": "捐赠",
@@ -257,18 +298,48 @@
     "feedback": "产品功能反馈",
     "feedbackDesc": "留言你想要的功能",
     "productFeedback": "产品功能反馈",
+    "feedbackFailed": "提交反馈失败，请重试",
     "recommendFriend": "推荐朋友",
     "recommendDesc": "分享你的喜爱",
     "shareYourLove": "分享你的喜爱",
     "shareText": "Mozi行情助手 - 专业的加密数据分析智能平台",
     "myPoints": "我的积分",
+    "defaultNickname": "无为而治",
+    "defaultBio": "资金流动大师，金融NO.1",
+    "pleaseLogin": "请登录",
+    "loginTip": "登录后查看更多精彩内容",
+    "personalPage": "个人主页",
+    "tags": {
+      "compliance": "合规从业者",
+      "creator": "内容创作者",
+      "trader": "专职交易员",
+      "community": "社群运营"
+    },
+    "stats": {
+      "following": "关注",
+      "followers": "粉丝",
+      "likes": "获赞",
+      "points": "积分"
+    },
+    "toast": {
+      "avatarTooLarge": "头像文件太大，请选择小于2MB的图片",
+      "nicknameRequired": "请输入昵称",
+      "nicknameTooLong": "昵称不能超过50个字符",
+      "saving": "保存中..."
+    },
     "yesterdayPoints": "昨日积分：+{{points}}",
+    "yesterdayPointsText": "昨日积分",
     "todayPoints": "昨日积分",
     "currentRank": "当前排名：总榜第 {{rank}} 名",
+    "currentRankLabel": "当前排名：",
     "rankTop": "总榜第",
-    "rankSuffix": "名",
+    "rankPrefix": "总榜第 ",
+    "rankSuffix": " 名",
     "pointsRanking": "积分榜单",
+    "earnPoints": "赚积分",
     "pointsDetail": "积分榜单",
+    "officialAccountQRCode": "公众号二维码",
+    "feedbackShort": "反馈",
     "newCoinListing": "新币上线",
     "viewMore": "查看更多",
     "noNewListings": "暂无新币上线",
