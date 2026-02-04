@@ -21,11 +21,11 @@ const EditProfilePopup = ({ visible, onClose, t, userInfo, setUserInfo }) => {
   const [avatarFile, setAvatarFile] = useState(null);
   
   // 新增字段状态
-  const [bio, setBio] = useState('资金流动大师，金融NO.1');
+  const [bio, setBio] = useState(t('user.defaultBio'));
   const [email, setEmail] = useState('carlakorsgaard@gmail.com');
   const [phone, setPhone] = useState('+8234567900');
   const [inviteCode, setInviteCode] = useState('TronUSDTbinubho');
-  const [tags, setTags] = useState('内容创作者');
+  const [tags, setTags] = useState(t('user.tags.creator'));
 
   useEffect(() => {
     if (visible && userInfo) {
@@ -45,7 +45,7 @@ const EditProfilePopup = ({ visible, onClose, t, userInfo, setUserInfo }) => {
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
         Toast.show({
-          content: t('user.avatarTooLarge') || '头像文件太大，请选择小于2MB的图片',
+          content: t('user.toast.avatarTooLarge'),
           position: 'bottom',
           icon: 'fail'
         });
@@ -64,7 +64,7 @@ const EditProfilePopup = ({ visible, onClose, t, userInfo, setUserInfo }) => {
   const saveUserProfile = async () => {
     if (!editNickname || editNickname.trim().length === 0) {
       Toast.show({
-        content: t('user.nicknameRequired') || '请输入昵称',
+        content: t('user.toast.nicknameRequired'),
         position: 'bottom',
         icon: 'fail'
       });
@@ -73,7 +73,7 @@ const EditProfilePopup = ({ visible, onClose, t, userInfo, setUserInfo }) => {
 
     if (editNickname.length > 50) {
       Toast.show({
-        content: t('user.nicknameTooLong') || '昵称不能超过50个字符',
+        content: t('user.toast.nicknameTooLong'),
         position: 'bottom',
         icon: 'fail'
       });
@@ -82,7 +82,7 @@ const EditProfilePopup = ({ visible, onClose, t, userInfo, setUserInfo }) => {
 
     Toast.show({
       icon: 'loading',
-      content: t('user.saving') || '保存中...',
+      content: t('user.toast.saving'),
       duration: 0
     });
 

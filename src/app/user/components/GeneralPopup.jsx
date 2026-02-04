@@ -89,7 +89,7 @@ const GeneralPopup = ({ visible, popType, onClose, t, i18n }) => {
       {popType === 'attend' && (
         <div className={styles.popContainer}>
           <div className={styles.contactTitle}>{t('user.welcomeFollowUs')}</div>
-          <img className={styles.attendPic} src='https://image-1317406749.cos.ap-shanghai.myqcloud.com/wechat_account.jpg' alt='公众号二维码' />
+          <img className={styles.attendPic} src='https://image-1317406749.cos.ap-shanghai.myqcloud.com/wechat_account.jpg' alt={t('user.officialAccountQRCodeAlt')} />
         </div>
       )}
 

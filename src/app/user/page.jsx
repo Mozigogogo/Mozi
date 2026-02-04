@@ -1241,7 +1241,7 @@ export default function UserPage() {
   const footerList = [
     {
       key: 'language',
-      icon: (<img src={'/icons/zh-en.svg'} alt="语言设置" style={{ width: 22, height: 22 }} />),
+      icon: (<img src={'/icons/zh-en.svg'} alt={t('user.language')} style={{ width: 22, height: 22 }} />),
       text: t('user.language'),
       extra: i18n.language === 'zh' ? '中文' : 'English',
       callback: () => {
@@ -1251,7 +1251,7 @@ export default function UserPage() {
     },
     {
       key: 'theme',
-      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/skin%402x.png'} alt="皮肤中心" style={{ width: 22, height: 22 }} />),
+      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/skin%402x.png'} alt={t('user.skinCenter')} style={{ width: 22, height: 22 }} />),
       text: t('user.skinCenter'),
       extra: '',
       callback: () => { window.location.href = '/theme'; }
@@ -1259,14 +1259,14 @@ export default function UserPage() {
 
     {
       key: 'contact',
-      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/me-contact%402x.png'} alt="联系我们" style={{ width: 22, height: 22 }} />),
+      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/me-contact%402x.png'} alt={t('user.contactUs')} style={{ width: 22, height: 22 }} />),
       text: t('user.contactUs'),
       extra: '',
       callback: () => contact()
     },
     {
       key: 'social',
-      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/social%402x.png'} alt="社交媒体" style={{ width: 22, height: 22 }} />),
+      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/social%402x.png'} alt={t('user.socialMediaAlt')} style={{ width: 22, height: 22 }} />),
       text: t('user.socialMedia'),
       extra: '',
       callback: () => {
@@ -1276,14 +1276,14 @@ export default function UserPage() {
     },
     {
       key: 'about',
-      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/about%402x.png'} alt="关于" style={{ width: 22, height: 22 }} />),
+      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/about%402x.png'} alt={t('user.about')} style={{ width: 22, height: 22 }} />),
       text: t('user.about'),
       extra: '',
       callback: () => about()
     },
     {
       key: 'donate',
-      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/donate%402x.png'} alt="捐赠" style={{ width: 22, height: 22 }} />),
+      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/donate%402x.png'} alt={t('user.donate')} style={{ width: 22, height: 22 }} />),
       text: t('user.donate'),
       extra: '',
       callback: () => reward()
@@ -1311,6 +1311,13 @@ export default function UserPage() {
         <div className={styles.contentWrapper}>
           <div className={styles.contentSection}>
             <VipBanner onClick={() => setShowBenefitCodeModal(true)} />
+            
+            <PointsSection 
+              pointsData={pointsData} 
+              t={t} 
+              router={router} 
+            />
+
             <UserActions 
               userInfo={userInfo} 
               t={t} 
@@ -1321,12 +1328,6 @@ export default function UserPage() {
               handleShare={handleShare} 
               isTelegramEnv={isTelegramEnv()} 
             />
-          
-          <PointsSection 
-            pointsData={pointsData} 
-            t={t} 
-            router={router} 
-          />
 
           <div className={styles.calendarSection}>
             <CalendarCard 

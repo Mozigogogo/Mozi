@@ -1,10 +1,13 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from '@/app/user/page.module.less';
 
 const DEFAULT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png';
 const VIP_ICON = '/icons/new_user/vip.svg';
 
 const UserInfo = ({ userInfo, handleLogin, isTelegramEnv }) => {
+  const { t } = useTranslation();
+
   return (
     <div className={styles.topBannerWrapper}>
       <div className={styles.headerBox}>
@@ -20,7 +23,7 @@ const UserInfo = ({ userInfo, handleLogin, isTelegramEnv }) => {
               <div className={styles.infoContent}>
                 <div className={styles.nicknameWrapper}>
                   <span className={styles.nickname}>
-                    {userInfo.nickname || "无为而治"}
+                    {userInfo.nickname || t('user.defaultNickname')}
                   </span>
                 </div>
               </div>
@@ -28,15 +31,15 @@ const UserInfo = ({ userInfo, handleLogin, isTelegramEnv }) => {
 
             {/* 第二行：标签 */}
             <div className={styles.tagsRow}>
-              <span className={styles.userTag}>合规从业者</span>
-              <span className={styles.userTag}>内容创作者</span>
-              <span className={styles.userTag}>专职交易员</span>
-              <span className={styles.userTag}>社群运营</span>
+              <span className={styles.userTag}>{t('user.tags.compliance')}</span>
+              <span className={styles.userTag}>{t('user.tags.creator')}</span>
+              <span className={styles.userTag}>{t('user.tags.trader')}</span>
+              <span className={styles.userTag}>{t('user.tags.community')}</span>
             </div>
 
             {/* 第三行：简介 */}
             <div className={styles.bioRow}>
-              {userInfo.bio || "资金流动大师，金融NO.1"}
+              {userInfo.bio || t('user.defaultBio')}
             </div>
           </div>
         ) : (
@@ -48,10 +51,10 @@ const UserInfo = ({ userInfo, handleLogin, isTelegramEnv }) => {
                 </div>
                 <div className={styles.infoContent}>
                   <div className={styles.nicknameWrapper}>
-                    <span className={styles.nickname}>请登录</span>
+                    <span className={styles.nickname}>{t('user.pleaseLogin')}</span>
                   </div>
                   <div className={styles.bioRow}>
-                    登录后查看更多精彩内容
+                    {t('user.loginTip')}
                   </div>
                 </div>
               </div>
