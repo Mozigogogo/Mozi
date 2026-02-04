@@ -1310,7 +1310,7 @@ export default function UserPage() {
         {/* 内容区域 */}
         <div className={styles.contentWrapper}>
           <div className={styles.contentSection}>
-            <VipBanner onClick={() => setShowBenefitCodeModal(true)} />
+            <VipBanner onClick={() => router.push('/vip-recharge')} />
             
             <PointsSection 
               pointsData={pointsData} 

@@ -1429,5 +1429,67 @@
       "midVolume": "Mid Volume",
       "lowVolume": "Low Volume"
     }
+  },
+  "vip": {
+    "title": "VIP Center",
+    "card": {
+      "title": "Mozi Pro",
+      "subtitle": "Unlock Advanced Features",
+      "badge": "PRO"
+    },
+    "status": {
+      "locked": "Locked"
+    },
+    "plan": {
+      "year": "Annual",
+      "quarter": "Quarterly",
+      "month": "Monthly",
+      "currency": "$"
+    },
+    "recommend": "Recommend",
+    "month": "Month",
+    "basic": "Basic",
+    "privilege": "VIP Privilege",
+    "purchaseSuccess": "Purchase feature in development...",
+    "section": {
+      "benefits": "Member Benefits"
+    },
+    "table": {
+      "benefit": "Benefit",
+      "basic": "Basic",
+      "vip": "VIP"
+    },
+    "benefit": {
+      "basicChart": "Basic Chart",
+      "basicPush": "Basic Push",
+      "dailyTrial": "1 Daily Trial",
+      "withAds": "With Ads",
+      "defaultTheme": "Default Theme",
+      "vipChart": "Real-time Large Orders",
+      "vipPush": "Phone + Email Push",
+      "unlimitedAnalysis": "Unlimited AI Analysis",
+      "ogBadge": "OG Badge",
+      "noAds": "No Ads",
+      "alphaGroup": "Alpha Group",
+      "multiTheme": "Multi-theme"
+    },
+    "confirmPurchase": "Confirm Purchase",
+    "result": {
+      "success": {
+        "title": "Recharge Successful",
+        "desc": "Congratulations on becoming a VIP member",
+        "validity": "Valid until",
+        "btn": "Enjoy Benefits"
+      },
+      "fail": {
+        "title": "Recharge Failed",
+        "desc": "There was a problem with the payment",
+        "btn": "Retry Payment"
+      },
+      "processing": {
+        "title": "Processing Payment",
+        "desc": "Checking your payment result, please wait..."
+      }
+    }
   }
 }
