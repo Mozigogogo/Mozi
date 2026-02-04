@@ -235,5 +235,6 @@ export default function TelegramAutoLogin() {
     return () => clearTimeout(timer);
   }, []);
 
-  return <LogoLoading visible={isLoading} fullscreen mask image="/images/community/loadding.png" />;
+  // return <LogoLoading visible={isLoading} fullscreen mask image="/images/community/loadding.png" />;
+  return null;
 }
