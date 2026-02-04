@@ -17,14 +17,28 @@ export default function TelegramAutoLogin() {
 
   useEffect(() => {
     const handleTelegramAutoLogin = async () => {
+      console.log('🔄 [TG自动登录] 准备执行自动登录流程...', new Date().toISOString());
+      
       // 防止重复执行
       if (loginAttemptedRef.current) {
+        console.log('⚠️ [TG自动登录] 检测到已执行过登录，跳过本次执行');
         return;
       }
 
       // 检查是否在 Telegram 环境
-      if (typeof window === 'undefined' || !window.Telegram?.WebApp) {
-        console.log('❌ [TG自动登录] 非 Telegram WebApp 环境');
+      const isWindowDefined = typeof window !== 'undefined';
+      const hasTelegram = isWindowDefined && !!window.Telegram;
+      const hasWebApp = hasTelegram && !!window.Telegram.WebApp;
+      
+      console.log('🔍 [TG自动登录] 环境检查详情:', {
+        isWindowDefined,
+        hasTelegram,
+        hasWebApp,
+        userAgent: isWindowDefined ? window.navigator.userAgent : 'N/A'
+      });
+
+      if (!isWindowDefined || !hasWebApp) {
+        console.log('❌ [TG自动登录] 环境检查失败: 非 Telegram WebApp 环境');
         return;
       }
       
@@ -130,13 +144,18 @@ export default function TelegramAutoLogin() {
           inviteCode: inviteCode,
           env: env
         });
+        
+        console.log('🚀 [TG自动登录] 登录接口返回:', JSON.stringify(res, null, 2));
 
-        if (res?.data?.token) {
+        // 尝试从多个位置获取 token
+        const token = res?.data?.token || res?.token || res?.data?.accessToken;
+
+        if (token) {
           // 保存 token
-          localStorage.setItem('token', res.data.token);
+          localStorage.setItem('token', token);
 
           // 保存用户信息
-          const userData = res?.data?.userInfo || res?.data?.user || {};
+          const userData = res?.data?.userInfo || res?.data?.user || res?.user || {};
           let nickName = userData.nickName;
           let avatar = userData.avatar;
           
@@ -161,13 +180,14 @@ export default function TelegramAutoLogin() {
             ...userData,
             nickName: nickName,
             avatar: avatar,
-            subscribeAnnouncement: res.data.subscribeAnnouncement
+            subscribeAnnouncement: res.data?.subscribeAnnouncement || res.subscribeAnnouncement
           };
           localStorage.setItem('userInfo', JSON.stringify(userInfoWithSubscribe));
           console.log('✅ [TG自动登录] 用户信息已保存:', { nickName, avatar });
 
-          if (res?.data?.userId) {
-            localStorage.setItem('userId', res.data.userId);
+          const userId = res?.data?.userId || res?.userId;
+          if (userId) {
+            localStorage.setItem('userId', userId);
           }
 
           // 登录成功后清除邀请码
@@ -217,8 +237,8 @@ export default function TelegramAutoLogin() {
           // 触发页面刷新以更新状态
           window.dispatchEvent(new CustomEvent('tg-login-success'));
         } else {
-          console.error('❌ [TG自动登录] 登录失败:', res?.message || res?.errorMsg);
-          Toast.show({ content: res?.message || res?.errorMsg || '登录失败', position: 'bottom' });
+          console.error('❌ [TG自动登录] 登录失败: 未找到 token', res);
+          Toast.show({ content: res?.message || res?.errorMsg || '登录失败(无token)', position: 'bottom' });
         }
       } catch (error) {
         console.error('❌ [TG自动登录] 登录异常:', error);
