@@ -1,4 +1,51 @@
 {
+  "vipRecharge": {
+    "title": "VIP Recharge",
+    "lockBadge": "Locked",
+    "recommend": "Best",
+    "confirmPurchase": "Purchase Now",
+    "plans": {
+      "yearly": {
+        "title": "Yearly",
+        "price": "$ 299.99",
+        "unit": "$ 24.99/mo"
+      },
+      "quarterly": {
+        "title": "Quarterly",
+        "price": "$ 74.99",
+        "unit": "$ 24.99/mo"
+      },
+      "monthly": {
+        "title": "Monthly",
+        "price": "$ 24.99",
+        "unit": "$ 24.99/mo"
+      }
+    },
+    "basic": {
+      "title": "Basic",
+      "subtitle": "BASIC",
+      "features": {
+        "market": "Basic Data",
+        "push": "Basic Push",
+        "ai": "1 AI Trial/Day",
+        "ad": "Contains Ads",
+        "skin": "Default Theme"
+      }
+    },
+    "vip": {
+      "title": "VIP",
+      "subtitle": "VIP/PRO",
+      "features": {
+        "market": "Live Large Orders",
+        "push": "Phone & Email",
+        "ai": "Unlimited AI",
+        "tags": "OG Tag",
+        "ad": "No Ads",
+        "group": "Alpha Group",
+        "skin": "Multi-theme"
+      }
+    }
+  },
   "editProfile": {
     "title": "Edit Profile",
     "identity": {

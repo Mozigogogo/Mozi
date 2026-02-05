@@ -1,4 +1,51 @@
 {
+  "vipRecharge": {
+    "title": "会员充值",
+    "lockBadge": "暂未解锁",
+    "recommend": "推荐",
+    "confirmPurchase": "确认购买",
+    "plans": {
+      "yearly": {
+        "title": "年卡",
+        "price": "$ 299.99",
+        "unit": "$ 24.99/月"
+      },
+      "quarterly": {
+        "title": "季卡",
+        "price": "$ 74.99",
+        "unit": "$ 24.99/月"
+      },
+      "monthly": {
+        "title": "月卡",
+        "price": "$ 24.99",
+        "unit": "$ 24.99/月"
+      }
+    },
+    "basic": {
+      "title": "基础版",
+      "subtitle": "BASIC",
+      "features": {
+        "market": "基础行情",
+        "push": "APP基础推送",
+        "ai": "每日1次体验",
+        "ad": "含广告",
+        "skin": "默认主题"
+      }
+    },
+    "vip": {
+      "title": "会员权益",
+      "subtitle": "VIP/PRO",
+      "features": {
+        "market": "主流交易所实时大单",
+        "push": "电话+邮件强触达",
+        "ai": "无限次 智能分析",
+        "tags": "黑金专属OG标识",
+        "ad": "纯净无广沉浸式",
+        "group": "专属Alpha核心群",
+        "skin": "多主题 自由切换"
+      }
+    }
+  },
   "editProfile": {
     "title": "编辑资料",
     "identity": {

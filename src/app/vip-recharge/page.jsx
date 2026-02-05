@@ -3,61 +3,60 @@
 import React from 'react';
 import NavBar from '@/components/NavBar';
 import { useTranslation } from 'react-i18next';
-import { 
-  HistogramOutline,
-  MailOutline,
-  SmileOutline,
-  LockOutline,
-  TeamOutline,
-  AppOutline,
-  CheckShieldOutline,
-  StopOutline,
-  TagOutline
-} from 'antd-mobile-icons';
 import styles from './page.module.less';
-
-const Tags = ({ text }) => {
-  return <span className={styles.lockedTag}>{text}</span>;
-};
-
-// Dividers moved to public/images/recharge
 
 export default function VipRechargePage() {
   const { t } = useTranslation();
 
   const plans = [
-    { title: '年卡', price: '$ 299.99', unit: '24.66/月', recommend: true, id: 'yearly' },
-    { title: '季卡', price: '$ 74.99', unit: '25.00/月', id: 'quarterly' },
-    { title: '月卡', price: '$ 24.99', unit: '24.99/月', id: 'monthly' },
+    { 
+      title: t('vipRecharge.plans.yearly.title'), 
+      price: t('vipRecharge.plans.yearly.price'), 
+      unit: t('vipRecharge.plans.yearly.unit'), 
+      recommend: true, 
+      id: 'yearly' 
+    },
+    { 
+      title: t('vipRecharge.plans.quarterly.title'), 
+      price: t('vipRecharge.plans.quarterly.price'), 
+      unit: t('vipRecharge.plans.quarterly.unit'), 
+      id: 'quarterly' 
+    },
+    { 
+      title: t('vipRecharge.plans.monthly.title'), 
+      price: t('vipRecharge.plans.monthly.price'), 
+      unit: t('vipRecharge.plans.monthly.unit'), 
+      id: 'monthly' 
+    },
   ];
 
   const [selectedPlanId, setSelectedPlanId] = React.useState(plans.find(p => p.recommend)?.id || plans[0].id);
 
   const basicFeatures = [
-    { icon: <img src="/images/recharge/market_situation.svg" alt="market" />, text: '基础行情', active: true },
-    { icon: <img src="/images/recharge/push.svg" alt="push" />, text: 'APP基础推送', active: true },
-    { icon: <img src="/images/recharge/ai.svg" alt="ai" />, text: '每日1次体验', active: true },
+    { icon: <img src="/images/recharge/market_situation.svg" alt="market" />, text: t('vipRecharge.basic.features.market'), active: true },
+    { icon: <img src="/images/recharge/push.svg" alt="push" />, text: t('vipRecharge.basic.features.push'), active: true },
+    { icon: <img src="/images/recharge/ai.svg" alt="ai" />, text: t('vipRecharge.basic.features.ai'), active: true },
     { icon: <img src="/images/recharge/tags.svg" alt="tags" />, text: '', active: false, locked: true },
-    { icon: <img src="/images/recharge/advertisement.svg" alt="ad" />, text: '含广告', active: true },
+    { icon: <img src="/images/recharge/advertisement.svg" alt="ad" />, text: t('vipRecharge.basic.features.ad'), active: true },
     { icon: <img src="/images/recharge/group.svg" alt="group" />, text: '', active: false, locked: true },
-    { icon: <img src="/images/recharge/skin.svg" alt="skin" />, text: '默认主题', active: true },
+    { icon: <img src="/images/recharge/skin.svg" alt="skin" />, text: t('vipRecharge.basic.features.skin'), active: true },
   ];
 
   const vipFeatures = [
-    { icon: <img src="/images/recharge/market_situation.svg" alt="market" />, text: '主流交易所实时大单' },
-    { icon: <img src="/images/recharge/push.svg" alt="push" />, text: '电话+邮件强触达' },
-    { icon: <img src="/images/recharge/ai.svg" alt="ai" />, text: '无限次 智能分析' },
-    { icon: <img src="/images/recharge/tags.svg" alt="tags" />, text: '黑金专属OG标识' },
-    { icon: <img src="/images/recharge/advertisement.svg" alt="ad" />, text: '纯净无广沉浸式' },
-    { icon: <img src="/images/recharge/group.svg" alt="group" />, text: '专属Alpha核心群' },
-    { icon: <img src="/images/recharge/skin.svg" alt="skin" />, text: '多主题 自由切换' },
+    { icon: <img src="/images/recharge/market_situation.svg" alt="market" />, text: t('vipRecharge.vip.features.market') },
+    { icon: <img src="/images/recharge/push.svg" alt="push" />, text: t('vipRecharge.vip.features.push') },
+    { icon: <img src="/images/recharge/ai.svg" alt="ai" />, text: t('vipRecharge.vip.features.ai') },
+    { icon: <img src="/images/recharge/tags.svg" alt="tags" />, text: t('vipRecharge.vip.features.tags') },
+    { icon: <img src="/images/recharge/advertisement.svg" alt="ad" />, text: t('vipRecharge.vip.features.ad') },
+    { icon: <img src="/images/recharge/group.svg" alt="group" />, text: t('vipRecharge.vip.features.group') },
+    { icon: <img src="/images/recharge/skin.svg" alt="skin" />, text: t('vipRecharge.vip.features.skin') },
   ];
 
   return (
     <div className={styles.container}>
       {/* Navbar */}
       <NavBar
-        title={t('vip.title') || '会员充值'}
+        title={t('vipRecharge.title')}
         backgroundColor="rgba(58, 36, 14, 1)"
         showBorder={false}
         fixed={true}
@@ -65,7 +64,7 @@ export default function VipRechargePage() {
       />
 
       <div className={styles.lockBadge}>
-        暂未解锁
+        {t('vipRecharge.lockBadge')}
       </div>
       
       <div className={styles.content}>
@@ -77,7 +76,7 @@ export default function VipRechargePage() {
               className={`${styles.planCard} ${selectedPlanId === plan.id ? styles.active : ''}`}
               onClick={() => setSelectedPlanId(plan.id)}
             >
-              {plan.recommend && <div className={styles.recommendBadge}>推荐</div>}
+              {plan.recommend && <div className={styles.recommendBadge}>{t('vipRecharge.recommend')}</div>}
               <div className={styles.planTitle}>{plan.title}</div>
               <div className={styles.planPrice}>{plan.price}</div>
               <div className={styles.planUnit}>{plan.unit}</div>
@@ -90,9 +89,9 @@ export default function VipRechargePage() {
           {/* Basic Column */}
           <div className={styles.basicColumn}>
             <div className={styles.colHeader}>
-              <div className={styles.colTitle}>基础版</div>
-              <div className={styles.colSubtitle}>BASIC</div>
-              <img src="/images/recharge/basic_divider.svg" alt="divider" style={{ width: '100%', marginBottom: 16, marginTop: 8 }} />
+              <div className={styles.colTitle}>{t('vipRecharge.basic.title')}</div>
+              <div className={styles.colSubtitle}>{t('vipRecharge.basic.subtitle')}</div>
+              <img src="/images/recharge/basic_divider.svg" alt="divider" className={styles.dividerLine} />
             </div>
             <div className={styles.featureList}>
               {basicFeatures.map((feature, index) => (
@@ -108,10 +107,11 @@ export default function VipRechargePage() {
           {/* VIP Column */}
           <div className={styles.vipColumn}>
              <div className={styles.colHeader}>
-              <div className={styles.colTitle}>会员权益</div>
-              <div className={styles.colSubtitle}>VIP/PRO</div>
+              <div className={styles.colTitle}>{t('vipRecharge.vip.title')}</div>
+              <div className={styles.colSubtitle}>{t('vipRecharge.vip.subtitle')}</div>
               {/* Tiny crown decoration could go here */}
-              <img src="/images/recharge/vip_divider.svg" alt="divider" style={{ width: '100%', marginBottom: 16, marginTop: 8 }} />
+              <img src="/icons/new_user/vip_logo.png" alt="vip logo" className={styles.vipLogo} />
+              <img src="/images/recharge/vip_divider.svg" alt="divider" className={styles.dividerLine} />
             </div>
             <div className={styles.featureList}>
               {vipFeatures.map((feature, index) => (
@@ -128,7 +128,7 @@ export default function VipRechargePage() {
       {/* Footer Button */}
       <div className={styles.footer}>
         <button className={styles.confirmButton}>
-          {t('vip.confirmPurchase') || '确认购买'}
+          {t('vipRecharge.confirmPurchase')}
         </button>
       </div>
     </div>
