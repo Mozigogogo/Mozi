@@ -7,6 +7,7 @@
   background-size: 100% 100%;
   background-position: top center;
   padding-bottom: 80px; /* Increased padding for fixed footer */
+  font-family: "PingFang SC", "Roboto", sans-serif;
 }
 
 .content {
@@ -183,7 +184,15 @@
 
 .colHeader {
   text-align: left;
-  padding: 18px 22px 0px;
+  padding: 18px 12px 0px;
+  position: relative;
+}
+
+.vipLogo {
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  height: 110px;
 }
 
 .colTitle {
@@ -206,6 +215,18 @@
 
 .vipColumn .colSubtitle {
   color: #997A50;
+}
+
+.dividerLine {
+  width: 100%;
+  height: 8px; /* Increased height for visibility */
+  display: block;
+  margin-top: 8px;
+  margin-bottom: 16px;
+}
+
+.basicColumn .dividerLine {
+  filter: brightness(2); /* Increase contrast against dark background */
 }
 
 .featureList {
@@ -297,13 +318,5 @@
   border: none;
   font-size: 16px;
   font-weight: 600;
-  color: #333;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.confirmButton:active {
-  opacity: 0.9;
+  color: #462A0A;
 }
