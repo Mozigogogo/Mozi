@@ -16,6 +16,12 @@ import {
 } from 'antd-mobile-icons';
 import styles from './page.module.less';
 
+const Tags = ({ text }) => {
+  return <span className={styles.lockedTag}>{text}</span>;
+};
+
+// Dividers moved to public/images/recharge
+
 export default function VipRechargePage() {
   const { t } = useTranslation();
 
@@ -28,23 +34,23 @@ export default function VipRechargePage() {
   const [selectedPlanId, setSelectedPlanId] = React.useState(plans.find(p => p.recommend)?.id || plans[0].id);
 
   const basicFeatures = [
-    { icon: <HistogramOutline />, text: '基础行情', active: true },
-    { icon: <MailOutline />, text: 'APP基础推送', active: true },
-    { icon: <SmileOutline />, text: '每日1次体验', active: true },
-    { icon: <LockOutline />, text: '', active: false, locked: true },
-    { icon: <TagOutline />, text: '含广告', active: true }, // Using Tag for AD
-    { icon: <LockOutline />, text: '', active: false, locked: true },
-    { icon: <AppOutline />, text: '默认主题', active: true },
+    { icon: <img src="/images/recharge/market_situation.svg" alt="market" />, text: '基础行情', active: true },
+    { icon: <img src="/images/recharge/push.svg" alt="push" />, text: 'APP基础推送', active: true },
+    { icon: <img src="/images/recharge/ai.svg" alt="ai" />, text: '每日1次体验', active: true },
+    { icon: <img src="/images/recharge/tags.svg" alt="tags" />, text: '', active: false, locked: true },
+    { icon: <img src="/images/recharge/advertisement.svg" alt="ad" />, text: '含广告', active: true },
+    { icon: <img src="/images/recharge/group.svg" alt="group" />, text: '', active: false, locked: true },
+    { icon: <img src="/images/recharge/skin.svg" alt="skin" />, text: '默认主题', active: true },
   ];
 
   const vipFeatures = [
-    { icon: <HistogramOutline />, text: '主流交易所实时大单' },
-    { icon: <MailOutline />, text: '电话+邮件强触达' },
-    { icon: <SmileOutline />, text: '无限次 智能分析' },
-    { icon: <CheckShieldOutline />, text: '黑金专属OG标识' },
-    { icon: <StopOutline />, text: '纯净无广沉浸式' },
-    { icon: <TeamOutline />, text: '专属Alpha核心群' },
-    { icon: <AppOutline />, text: '多主题 自由切换' },
+    { icon: <img src="/images/recharge/market_situation.svg" alt="market" />, text: '主流交易所实时大单' },
+    { icon: <img src="/images/recharge/push.svg" alt="push" />, text: '电话+邮件强触达' },
+    { icon: <img src="/images/recharge/ai.svg" alt="ai" />, text: '无限次 智能分析' },
+    { icon: <img src="/images/recharge/tags.svg" alt="tags" />, text: '黑金专属OG标识' },
+    { icon: <img src="/images/recharge/advertisement.svg" alt="ad" />, text: '纯净无广沉浸式' },
+    { icon: <img src="/images/recharge/group.svg" alt="group" />, text: '专属Alpha核心群' },
+    { icon: <img src="/images/recharge/skin.svg" alt="skin" />, text: '多主题 自由切换' },
   ];
 
   return (
@@ -57,6 +63,10 @@ export default function VipRechargePage() {
         fixed={true}
         color="white"
       />
+
+      <div className={styles.lockBadge}>
+        暂未解锁
+      </div>
       
       <div className={styles.content}>
         {/* Plan Selection */}
@@ -82,12 +92,14 @@ export default function VipRechargePage() {
             <div className={styles.colHeader}>
               <div className={styles.colTitle}>基础版</div>
               <div className={styles.colSubtitle}>BASIC</div>
+              <img src="/images/recharge/basic_divider.svg" alt="divider" style={{ width: '100%', marginBottom: 16, marginTop: 8 }} />
             </div>
             <div className={styles.featureList}>
               {basicFeatures.map((feature, index) => (
                 <div key={index} className={`${styles.featureItem} ${feature.locked ? styles.locked : ''}`}>
                   <span className={styles.icon}>{feature.icon}</span>
                   {feature.text && <span className={styles.text}>{feature.text}</span>}
+                  {feature.locked && <img src="/images/recharge/lock.svg" alt="locked" className={styles.lockedIcon} />}
                 </div>
               ))}
             </div>
@@ -99,6 +111,7 @@ export default function VipRechargePage() {
               <div className={styles.colTitle}>会员权益</div>
               <div className={styles.colSubtitle}>VIP/PRO</div>
               {/* Tiny crown decoration could go here */}
+              <img src="/images/recharge/vip_divider.svg" alt="divider" style={{ width: '100%', marginBottom: 16, marginTop: 8 }} />
             </div>
             <div className={styles.featureList}>
               {vipFeatures.map((feature, index) => (
