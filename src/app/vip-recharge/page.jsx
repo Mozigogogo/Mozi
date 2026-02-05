@@ -1,8 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import NavBar from '@/components/NavBar';
 import { useTranslation } from 'react-i18next';
+import { Toast } from 'antd-mobile';
+import { isTelegramEnv, handleVipPurchase } from '@/utils/core';
 import styles from './page.module.less';
 
 export default function VipRechargePage() {
@@ -51,6 +53,10 @@ export default function VipRechargePage() {
     { icon: <img src="/images/recharge/group.svg" alt="group" />, text: t('vipRecharge.vip.features.group') },
     { icon: <img src="/images/recharge/skin.svg" alt="skin" />, text: t('vipRecharge.vip.features.skin') },
   ];
+
+  const handlePurchase = async () => {
+    await handleVipPurchase(selectedPlanId, t);
+  };
 
   return (
     <div className={styles.container}>
@@ -127,7 +133,7 @@ export default function VipRechargePage() {
 
       {/* Footer Button */}
       <div className={styles.footer}>
-        <button className={styles.confirmButton}>
+        <button className={styles.confirmButton} onClick={handlePurchase}>
           {t('vipRecharge.confirmPurchase')}
         </button>
       </div>

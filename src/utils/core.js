@@ -1,5 +1,8 @@
+import { Toast } from 'antd-mobile';
+
 /**
  * Telegram 环境检测
+
  * 即使加载了 Telegram 脚本，也要检查是否真的在 Telegram 环境中运行
  */
 export const isTelegramEnv = () => {
@@ -55,6 +58,116 @@ export const getAppChannel = () => {
   });
   
   return channel;
+};
+
+/**
+ * 调起 Telegram Stars 支付
+ * @param {string} invoiceUrl - 从后端获取的支付链接
+ * @returns {Promise<string>} - 返回支付状态 'paid' | 'failed' | 'cancelled'
+ */
+export const requestTelegramPayment = (invoiceUrl) => {
+  return new Promise((resolve, reject) => {
+    if (!isTelegramEnv()) {
+      reject(new Error('Not in Telegram environment'));
+      return;
+    }
+
+    const tg = window.Telegram?.WebApp;
+    if (!tg) {
+      reject(new Error('Telegram WebApp not initialized'));
+      return;
+    }
+
+    // 定义一次性回调处理
+    const handleInvoiceClosed = (params) => {
+      const { status } = params;
+      console.log('[TG Payment Utils] Invoice closed:', params);
+      
+      // 移除监听，防止内存泄漏
+      tg.offEvent('invoiceClosed', handleInvoiceClosed);
+      
+      if (status === 'paid') {
+        resolve('paid');
+      } else if (status === 'failed') {
+        reject(new Error('Payment failed'));
+      } else {
+        resolve('cancelled');
+      }
+    };
+
+    // 绑定事件
+    tg.onEvent('invoiceClosed', handleInvoiceClosed);
+
+    // 调起支付
+    try {
+      tg.openInvoice(invoiceUrl);
+    } catch (e) {
+      tg.offEvent('invoiceClosed', handleInvoiceClosed);
+      reject(e);
+    }
+  });
+};
+
+/**
+ * 处理 VIP 购买流程
+ * @param {string} planId - 选择的套餐 ID
+ * @param {Function} t - i18n 翻译函数
+ */
+export const handleVipPurchase = async (planId, t) => {
+  // 1. 环境检测
+  if (isTelegramEnv()) {
+    Toast.show({
+      icon: 'loading',
+      content: t('vipRecharge.result.processing.title'),
+      duration: 0,
+    });
+
+    try {
+      // 2. 模拟调用后端创建订单 (TODO: 替换为真实 API)
+      console.log(`[TG Payment] Creating invoice for plan: ${planId}`);
+      await new Promise(resolve => setTimeout(resolve, 800)); // 模拟网络请求
+
+      // 临时 Mock：因为没有后端，这里留空或抛出提示
+      const invoiceUrl = ""; 
+
+      Toast.clear();
+
+      if (invoiceUrl) {
+        // 3. 调起支付
+        const status = await requestTelegramPayment(invoiceUrl);
+        
+        if (status === 'paid') {
+          Toast.show({
+            icon: 'success',
+            content: t('vipRecharge.result.success.title'),
+          });
+          // TODO: 刷新用户状态，检查后端是否已确认到账
+        } else if (status === 'cancelled') {
+          // 用户取消，无需提示错误
+          console.log('[TG Payment] User cancelled');
+        }
+      } else {
+        // 提示开发者/用户
+        Toast.show({
+          content: 'Stars Payment Backend Not Ready',
+        });
+        console.warn('[TG Payment] Missing invoiceUrl. Backend integration required to generate link via Bot API.');
+      }
+
+    } catch (error) {
+      console.error('[TG Payment] Error:', error);
+      Toast.clear();
+      Toast.show({
+        icon: 'fail',
+        content: t('vipRecharge.result.fail.title'),
+      });
+    }
+  } else {
+    // 非 Telegram 环境
+    Toast.show({
+      content: t('vipRecharge.purchaseSuccess'),
+    });
+  }
 };
 
 // 页面跳转函数
