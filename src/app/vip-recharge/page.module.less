@@ -1,5 +1,6 @@
 .container {
   min-height: 100vh;
+  position: relative; /* Added for absolute positioning context */
   background-color: rgba(58, 36, 14, 1);
   background-image: url('/images/recharge/recharge_bg.png');
   background-repeat: no-repeat;
@@ -9,20 +10,21 @@
 }
 
 .content {
-  padding: 230px 16px 0px;
+  padding: 240px 16px 0px;
 }
 
 
 
 .lockBadge {
   position: absolute;
-  top: 16px;
-  left: 16px;
-  background: rgba(0, 0, 0, 0.6);
-  color: #fff;
+  top: 110px; /* Adjusted to be below NavBar */
+  left: 35px;
+  background: rgba(64, 57, 48, 1);
+  color: rgba(243, 205, 164, 1);
   font-size: 12px;
-  padding: 4px 12px;
-  border-radius: 12px;
+  padding: 4px 8px;
+  border-radius: 10px;
+  z-index: 10;
 }
 
 .cardContent {
@@ -51,41 +53,90 @@
 
 .planCard {
   flex: 1;
-  background: #1A1A1A;
-  border-radius: 12px;
-  padding: 20px 8px;
+  /* border removed to use pseudo-element for sizing */
+  background: transparent;
+  border-radius: 20px;
+  padding: 25px 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   position: relative;
-  border: 1px solid #333;
   cursor: pointer;
+  z-index: 1;
+}
+
+/* Pseudo-element for background and border */
+.planCard::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 20px;
+  z-index: -1;
   transition: all 0.3s ease;
+  
+  /* Default border/background style */
+  border: 1px solid transparent;
+  background-clip: padding-box, border-box;
+  background-origin: padding-box, border-box;
+  background-image: 
+    linear-gradient(rgba(20, 20, 20, 1), rgba(20, 20, 20, 1)), 
+    linear-gradient(270deg, rgba(247, 226, 195, 0.2) 0%, rgba(243, 208, 166, 0.2) 100%);
 }
 
 .active {
-  border: 1px solid #E8C189;
-  background: #25201A;
+  /* No layout changes on the main element to prevent jitter */
+  margin: 0;
+  padding: 25px 8px;
+  transform: none;
+  box-shadow: none;
+  border: none;
+  background: none;
+}
+
+/* Expand the pseudo-element when active */
+.active::before {
+  top: -6px;    /* Reduced from -10px */
+  bottom: -6px; /* Reduced from -10px */
+  left: -5px;   /* Increased from -5px */
+  right: -5px;  /* Increased from -5px */
+  
+  border: 2px solid transparent;
+  background-image: 
+    linear-gradient(rgba(37, 34, 31, 1), rgba(37, 34, 31, 1)), 
+    linear-gradient(270deg, #F7E2C3 0%, #F3D0A6 100%);
+    
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+/* Adjust badge position when active because visual border moves */
+.active .recommendBadge {
+  top: -6px; /* Match expansion exactly */
+  left: -5px; /* Match expansion exactly */
 }
 
 .recommendBadge {
   position: absolute;
+  width: 45%;
   top: 0;
   left: 0;
-  background: #E8C189;
-  color: #333;
-  font-size: 10px;
+  background: linear-gradient(270deg, #F7E2C3 0%, #F3D0A6 100%);
+  color: rgba(3, 3, 3, 1);
+  font-size: 14px;
   padding: 2px 8px;
-  border-bottom-right-radius: 8px;
-  border-top-left-radius: 12px;
-  font-weight: 600;
+  border-bottom-right-radius: 20px;
+  border-top-left-radius: 20px;
+  font-weight: 400;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.3s ease; /* Add transition to match pseudo-element expansion */
 }
 
 .planTitle {
   font-size: 14px;
-  color: #ccc;
-  margin-bottom: 8px;
+  color: rgba(194, 194, 207, 1);
+  margin-bottom: 4px;
 }
 
 .active .planTitle {
@@ -101,48 +152,52 @@
 }
 
 .planUnit {
-  font-size: 10px;
-  color: #666;
+  font-size: 12px;
+  color: rgba(134, 136, 135, 1);
+  margin-top: 4px;
 }
 
 /* Comparison Section */
 .comparisonSection {
   display: flex;
-  border-radius: 16px;
+  border-radius: 20px;
   overflow: hidden;
-  border: 1px solid #333;
+  gap: 10px;
 }
 
 .basicColumn {
   flex: 1;
   background: #111;
-  padding: 20px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(243, 208, 166, 0.2);
 }
 
 .vipColumn {
   flex: 1;
-  background: linear-gradient(180deg, #5A4022 0%, #3A240E 100%);
-  padding: 20px 12px;
-  border-left: 1px solid #444;
+  background: linear-gradient(180deg, rgba(90, 64, 34, 0.9) 0%, rgba(58, 36, 14, 0.9) 100%), url('/images/recharge/vip_select_bg.png') no-repeat left -10px bottom -30px / 120% 120%;
+  border-radius: 16px; /* Individual radius */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Ensure content respects radius */
 }
 
 .colHeader {
-  margin-bottom: 20px;
   text-align: left;
+  padding: 18px 22px 0px;
 }
 
 .colTitle {
-  font-size: 16px;
-  font-weight: 600;
-  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  color: rgba(213, 213, 213, 1);
   margin-bottom: 4px;
 }
 
 .colSubtitle {
   font-size: 12px;
-  color: #666;
+  color: rgba(98, 98, 98, 1);
   font-style: italic;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .vipColumn .colTitle {
@@ -156,7 +211,8 @@
 .featureList {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
+  padding:0 10px 12px 10px;
 }
 
 .featureItem {
@@ -173,9 +229,16 @@
   align-items: center;
 }
 
+.icon img {
+  width: 1em;
+  height: 1em;
+  display: block;
+}
+
 .text {
-  font-size: 12px;
-  color: #999;
+  font-size: 13px;
+  color: rgba(150, 149, 150, 1);
+  font-weight: 400;
 }
 
 .vipColumn .icon {
@@ -183,16 +246,35 @@
 }
 
 .vipColumn .text {
-  color: #E8C189;
+  color: rgba(204, 167, 110, 1);
 }
 
 .locked {
   justify-content: flex-start;
-  opacity: 0.5;
+  opacity: 1; /* Changed from 0.5 to 1 to make tag visible clearly */
 }
 
 .locked .icon {
-  color: #E8C189; /* Gold lock icon as in image */
+  color: #666; /* Reset lock icon color if needed, or keep gold */
+}
+
+.lockedTag {
+  background: rgba(46, 35, 22, 1);
+  border: 1px solid #5A4022;
+  color: #997A50;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.lockedIcon {
+  width: 18px;
+  height: 18px;
+  display: block;
 }
 
 /* Footer Button */
