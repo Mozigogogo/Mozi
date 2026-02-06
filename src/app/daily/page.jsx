@@ -2,6 +2,8 @@
 
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import Image from 'next/image';
+import { DailyFooterIcon } from '@/components/Icons';
 import styles from './page.module.less';
 
 const useAutoHideScrollbar = (className, timeout = 3000) => {
@@ -95,7 +97,11 @@ export default function DailyPage() {
       
       {/* Footer Area */}
        <div className={styles.footerArea}>
-         {/* Footer content goes here */}
+         <div className={styles.logoContainer}>
+           <div className={styles.logoIcon}></div>
+           <span className={styles.logoText}>MoziInnovations</span>
+         </div>
+         <DailyFooterIcon className={styles.footerIcon} />
        </div>
     </div>
   );
