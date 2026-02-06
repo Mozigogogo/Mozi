@@ -1,4 +1,15 @@
 {
+  "daily": {
+    "title": "MOZI Daily",
+    "weekDay": "Thursday",
+    "table": {
+      "time": "Time",
+      "country": "Country",
+      "event": "Event",
+      "values": "Actual/Forecast/Prev"
+    },
+    "note": "Today's macro volatility depends entirely on the US CPI data released at 13:30 EST (early morning Beijing time). Before the data release, the market is in a 'data vacuum' period, and volatility may narrow. Investors are advised to focus on stock logic, that is, whether the current market pricing for 'inflation stickiness' and 'economic resilience' is sufficient, and prepare for directional breakthroughs that the data may trigger."
+  },
   "vipRecharge": {
     "title": "VIP Recharge",
     "lockBadge": "Locked",

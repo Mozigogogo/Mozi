@@ -1,0 +1,250 @@
+.container {
+  min-height: 100vh;
+  /* Stack calendar on top of daily background */
+  background-image: url('/images/daily/daily_bg.png');
+  background-repeat: no-repeat;
+  background-position: center 0; /* Align to top */
+  background-size: 100% 100%; /* Fixed width for calendar card, reduced height */
+  display: flex;
+  flex-direction: column;
+  color: white;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Roboto', 'Segoe UI', Helvetica, Arial, sans-serif;
+  overflow-x: hidden;
+  align-items: center;
+  background-color: rgba(15, 23, 42, 1);
+}
+
+/* Header Styles (Date) - Removed */
+.headerArea {
+  width: 100%;
+  height: 25vh; /* Adjust based on background image visual */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.dateNumber {
+  font-size: 113px;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+  color: rgba(255, 225, 0, 1); /* Yellow */
+  margin-left: 30px;
+}
+
+.monthYear {
+  font-size: 30px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 1);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 5px;
+}
+
+.dayOfWeek {
+  font-size: 23px;
+  font-weight: 400;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 1);
+  margin-top: 2px;
+  margin-left: 50px;
+}
+
+.contentArea {
+  width: 100%;
+  height: 520px; /* Increased fixed height to accommodate absolute positioning content */
+  /* Remove flex: 1 to respect fixed height, or keep it but ensure height is enough */
+  display: block; /* Changed from flex to block for absolute positioning context */
+  position: relative;
+  padding: 0; /* Remove padding as we position absolutely */
+  box-sizing: border-box;
+  background-image: url('/images/daily/calendar.png');
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: 100% 100%;
+  margin-top: 35px;
+}
+
+.cardHeader {
+  position: absolute;
+  top: 9%; /* Adjust based on green area height */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 85%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 2;
+}
+
+.cardTitle {
+  font-size: 20px;
+  font-weight: 900;
+  color: rgba(15, 23, 42, 1);
+  /* Keep specific font for cardTitle as requested, or remove if it should also be pingfang/roboto */
+  /* Assuming the user means "except these texts" refers to the specific ones in red boxes which might be PangMenZhengDao or similar special fonts */
+  /* If the user wants cardTitle to stay as is (PangMenZhengDao), we keep it. */
+  font-family: 'PangMenZhengDao', 'PingFang SC', 'Roboto', sans-serif;
+}
+
+.cardArrow {
+  width: 9px;
+  height: 17px;
+  cursor: pointer;
+}
+
+.tableHeader {
+  position: absolute;
+  top: 16%; /* Adjust based on yellow strip location */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%; /* Further increased width to fully cover gaps */
+  display: grid;
+  grid-template-columns: 1.3fr 0.8fr 2.4fr 3.0fr;
+  column-gap: 10px; /* Added gap between columns */
+  padding: 8px 7.5%; /* Match width of tableBody (85%) */
+  box-sizing: border-box;
+  font-size: 14px;
+  font-weight: 500;
+  color: #000;
+  background-color: rgba(255, 225, 0, 1); /* Yellow header background requested */
+  border-bottom: none;
+  z-index: 2;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Added shadow for depth */
+}
+
+.tableBody {
+  position: absolute;
+  top: 23%; /* Start of white area */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 85%;
+  height: auto;
+  max-height: 33%; /* Max height adjusted to avoid overlap with note card */
+  overflow-y: auto;
+  
+  /* Custom Scrollbar */
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+    margin-block: 4px; /* Make scrollbar appear shorter */
+  }
+  &::-webkit-scrollbar-thumb {
+    background: transparent; /* Hidden by default */
+    border-radius: 4px;
+    transition: background-color 0.3s;
+  }
+  
+  &.scrolling::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1); /* Visible when scrolling */
+  }
+  
+  &.scrolling::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.2);
+  }
+  z-index: 2;
+}
+
+.noteCard {
+  position: absolute;
+  bottom:13%; /* Bottom yellow area */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 85%;
+  background: rgba(254, 224, 0, 1);
+  padding: 15px;
+  border-radius: 20px;
+  font-size: 14px;
+  line-height: 16px;
+  color: #000;
+  font-weight: 400;
+  max-height: 155px;
+  overflow-y: auto; /* Allow scrolling if text exceeds height */
+  
+  /* Custom Scrollbar */
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+    margin-block: 4px; /* Make scrollbar appear shorter */
+  }
+  &::-webkit-scrollbar-thumb {
+    background: transparent; /* Hidden by default */
+    border-radius: 4px;
+    transition: background-color 0.3s;
+  }
+  
+  &.scrolling::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1); /* Visible when scrolling */
+  }
+
+  &.scrolling::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.2);
+  }
+  
+  box-shadow: 0px 1px 4px 4px rgba(0, 0, 0, 0.1);
+  z-index: 2;
+}
+
+.noteCard strong {
+  font-weight: 800;
+}
+
+.tableRow {
+  display: grid;
+  grid-template-columns: 1.3fr 0.8fr 2.4fr 3.0fr;
+  column-gap: 10px; /* Added gap between columns */
+  padding: 10px 0;
+  font-size: 12px;
+  border-bottom: 1px solid #eee;
+  align-items: center;
+  color: #000;
+}
+
+.tableRow:last-child {
+  border-bottom: none;
+}
+
+.time { font-weight: 500; color: rgba(15, 23, 42, 1); font-size: 14px; }
+.country { font-weight: 600; color: rgba(15, 23, 42, 1); font-size: 14px; }
+.event { 
+  font-size: 14px; 
+  white-space: nowrap;
+  overflow: hidden;
+  color: rgba(15, 23, 42, 1);
+  text-overflow: ellipsis;
+}
+.value { font-weight: 600; text-align: right; }
+
+.footerArea {
+  width: 100%;
+  height: 10vh; /* Adjust based on background image visual */
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 20px 20px 20px; /* Padding bottom for visual balance */
+  box-sizing: border-box;
+}
+
+/* Decorative Images */
+.splitImage {
+  position: absolute;
+  top: 15.5%; /* Positioned between table body and note card */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  z-index: 3;
+}
+
+.vectorImage {
+  position: absolute;
+  bottom: 2%; /* Positioned near the split */
+  right: -2%;
+  width: 66px; /* Adjust size as needed */
+  z-index: 4;
+}
