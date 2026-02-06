@@ -5,3 +5,4 @@ export { BellIcon } from './BellIcon';
 export { LandscapeIcon } from './LandscapeIcon';
 export { default as CaretUpIcon } from './CaretUpIcon';
 export { default as CaretDownIcon } from './CaretDownIcon';
+export { default as DailyFooterIcon } from './DailyFooterIcon';
