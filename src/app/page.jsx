@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { NoticeBar, Grid, TabBar } from 'antd-mobile';
+import { NoticeBar, Grid, TabBar, Swiper } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import { RightOutline } from 'antd-mobile-icons';
 import { useRouter } from 'next/navigation';
@@ -788,11 +788,28 @@ export default function HomePage() {
         <div className={styles.heroWrap}>
           {/* 背景图片 */}
           <div className={styles.bgBanner}>
-            <img 
-              className={styles.bgBannerImage} 
-              src={isEN ? '/images/new_home/banner_en.svg' : '/images/new_home/banner_zh.svg'} 
-              alt="banner" 
-            />
+            <Swiper loop autoplay indicator={() => null}>
+              {(isEN 
+                ? [
+                    '/images/new_home/banner1_en.png',
+                    '/images/new_home/banner2_en.png',
+                    '/images/new_home/banner3_en.png'
+                  ]
+                : [
+                    '/images/new_home/banner1_zh.png',
+                    '/images/new_home/banner2_zh.png',
+                    '/images/new_home/banner3_zh.png'
+                  ]
+              ).map((src, index) => (
+                <Swiper.Item key={index}>
+                  <img 
+                    className={styles.bgBannerImage} 
+                    src={src} 
+                    alt={`banner-${index}`} 
+                  />
+                </Swiper.Item>
+              ))}
+            </Swiper>
 
             {/* 搜索框（层叠在 Banner 上） */}
             <div className={styles.header} style={{ bottom: showNotice ? 10 : 10 }} onClick={() => router.push('/search')}>
