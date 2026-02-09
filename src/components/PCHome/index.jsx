@@ -295,13 +295,13 @@ export default function PCHome() {
         ))}
       </Row>
 
-      {/* 投资机会 / 话题热榜 - 使用共享组件 */}
-      <TopicHotList isPC={true} />
+      {/* 投资机会 / 话题热榜 - 使用共享组件 - 暂时隐藏 */}
+      {/* <TopicHotList isPC={true} /> */}
 
-      {/* 涨跌分布 - 使用移动端组件，PC端左右布局 */}
-      <div className={styles.marketDistributionWrapper}>
+      {/* 涨跌分布 - 使用移动端组件，PC端左右布局 - 暂时隐藏 */}
+      {/* <div className={styles.marketDistributionWrapper}>
         <MarketDistribution isPC={true} />
-      </div>
+      </div> */}
 
       {/* 实时榜单 */}
       <div className={styles.rankSection}>

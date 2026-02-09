@@ -108,7 +108,7 @@ export const loginByGoogle = (token, inviteCode = '', channel = 'pc') => {
     data: {
       chanel: 5,  // 5-Google
       type: 'login',
-      token,
+      googleToken: token,
       ...(inviteCode && { invitedCode: inviteCode }),
       channel,
     },
