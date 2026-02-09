@@ -13,6 +13,7 @@ import InviteCodeHandler from "@/components/InviteCodeHandler";
 import EnvironmentDetector from "@/components/EnvironmentDetector";
 import RouteChangeHandler from "@/components/RouteChangeHandler";
 import TelegramAutoLogin from "@/components/TelegramAutoLogin";
+import GoogleAuthProvider from "../context/GoogleAuthProvider";
 
 const geistSans = Inter({
   variable: "--font-geist-sans",
@@ -64,14 +65,16 @@ export default function RootLayout({ children }) {
         <TelegramAutoLogin />
         <ThemeProvider>
           <I18nProvider>
-            <TonConnectProvider>
-              <Web3Provider>
-                <WalletAccountSync />
-                <Suspense fallback={<LogoLoading visible={true} fullscreen mask image="/images/community/loadding.png" size={72} />}>
-                  {children}
-                </Suspense>
-              </Web3Provider>
-            </TonConnectProvider>
+            <GoogleAuthProvider>
+              <TonConnectProvider>
+                <Web3Provider>
+                  <WalletAccountSync />
+                  <Suspense fallback={<LogoLoading visible={true} fullscreen mask image="/images/community/loadding.png" size={72} />}>
+                    {children}
+                  </Suspense>
+                </Web3Provider>
+              </TonConnectProvider>
+            </GoogleAuthProvider>
           </I18nProvider>
         </ThemeProvider>
       </body>

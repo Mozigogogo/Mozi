@@ -95,6 +95,27 @@ export const loginByWallet = (address, signature, channel = 'pc', invitedCode = 
 };
 
 /**
+ * Google 登录
+ * @param {string} token - Google ID Token
+ * @param {string} inviteCode - 邀请码（可选）
+ * @param {string} channel - 渠道（pc/tg，可选）
+ * @returns {Promise}
+ */
+export const loginByGoogle = (token, inviteCode = '', channel = 'pc') => {
+  return request({
+    url: Interface.MOZI_LOGIN,
+    method: 'POST',
+    data: {
+      chanel: 5,  // 5-Google
+      type: 'login',
+      token,
+      ...(inviteCode && { invitedCode: inviteCode }),
+      channel,
+    },
+  });
+};
+
+/**
  * Telegram 环境直接登录
  * @param {Object} params - 登录参数
  * @param {string} params.telegramId - Telegram 用户 ID

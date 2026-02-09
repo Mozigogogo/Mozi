@@ -562,6 +562,7 @@
     "followTwitter": "关注我们的Twitter",
     "otherMethods": "或使用其他方式",
     "walletLoginBtn": "钱包登录",
+    "googleLoginBtn": "使用 Google 登录",
     "emailLoginBtn": "邮箱登录",
     "back": "返回",
     "recaptchaNotice": "本网站受 Google reCAPTCHA 保护，以确保您不是机器人。",

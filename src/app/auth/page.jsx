@@ -8,7 +8,8 @@ import { message } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
-import { sendVerificationCode, loginByEmail, registerByEmail, loginByWallet } from '../../api/user';
+import { sendVerificationCode, loginByEmail, registerByEmail, loginByWallet, loginByGoogle } from '../../api/user';
+import { useGoogleLogin } from '@react-oauth/google';
 import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
 import styles from './page.module.less';
 
@@ -288,6 +289,71 @@ export default function PCLoginPage() {
       handleLogin();
     }
   };
+
+  // Google 登录成功处理
+  const handleGoogleLoginSuccess = async (tokenResponse) => {
+    // iOS 修复
+    forceBlurAndResetViewport();
+    
+    setLoading(true);
+    try {
+      console.log('Google login success:', tokenResponse);
+      // 使用 access_token 调用后端接口
+      const res = await loginByGoogle(tokenResponse.access_token, inviteCode, 'pc');
+
+      if (res?.data?.token) {
+        localStorage.setItem('token', res.data.token);
+        if (res?.data?.userInfo) {
+          const userInfoWithSubscribe = {
+            ...res.data.userInfo,
+            subscribeAnnouncement: res.data.subscribeAnnouncement
+          };
+          localStorage.setItem('userInfo', JSON.stringify(userInfoWithSubscribe));
+        }
+        if (res?.data?.userId) {
+          localStorage.setItem('userId', res.data.userId);
+        }
+        
+        // 获取用户详细信息
+        request({
+          url: Interface.USER_DATA_INFO,
+          method: 'GET'
+        }).then((dataInfoRes) => {
+          if (dataInfoRes?.data) {
+            localStorage.setItem('userDataInfo', JSON.stringify(dataInfoRes.data));
+          }
+        }).catch((error) => {
+          console.error('获取用户详细信息失败:', error);
+        });
+        
+        // 完成每日登录任务
+        request({
+          url: Interface.TASK_COMPLETE,
+          method: 'POST',
+          data: { taskCode: 'DAILY_LOGIN' }
+        }).catch((error) => {
+          console.error('每日登录任务上报失败:', error);
+        });
+        
+        message.success(t('auth.loginSuccess'));
+        router.push('/');
+      } else {
+        const errorMessage = res?.errorMsg || res?.message || t('auth.loginFailed');
+        message.error(errorMessage);
+      }
+    } catch (error) {
+      console.error('Google登录失败:', error);
+      const errorMessage = error?.errorMsg || error?.message || t('auth.loginFailedRetry');
+      message.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: handleGoogleLoginSuccess,
+    onError: () => message.error(t('auth.loginFailed')),
+  });
 
   // 处理钱包登录
   const handleWeb3Login = async () => {
@@ -593,6 +659,10 @@ export default function PCLoginPage() {
 
           {/* 第三方登录按钮 */}
           <div className={styles.socialLogins}>
+            <button className={styles.googleBtn} onClick={() => googleLogin()}>
+              <img src="/icons/google.svg" alt="google" className={styles.googleIcon} />
+              <span>{t('auth.googleLoginBtn')}</span>
+            </button>
             <button className={styles.walletBtn} onClick={handleWeb3Login}>
               <img src="/icons/wallet.svg" alt="wallet" className={styles.walletIcon} />
               <span>{t('auth.walletLoginBtn')}</span>
