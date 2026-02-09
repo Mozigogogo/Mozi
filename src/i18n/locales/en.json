@@ -573,7 +573,20 @@
     "walletConnecting": "Wallet connection initializing, please try again later",
     "walletConnectFailed": "Wallet connection failed",
     "signatureCancelled": "Signature cancelled",
-    "connectWalletFirst": "Please connect wallet first"
+    "connectWalletFirst": "Please connect wallet first",
+    "registerMozi": "Sign up for Mozi",
+    "continueWithGoogle": "Continue with Google",
+    "continueWithWallet": "Continue with Wallet",
+    "continueWithEmail": "Continue with Email",
+    "goToLogin": "Log in",
+    "rememberPassword": "Remember password",
+    "forgetPassword": "Forgot password?",
+    "goToRegister": "Sign up",
+    "loginMozi": "Log in to Mozi",
+    "emailInputPlaceholder": "Enter email",
+    "passwordInputPlaceholder": "Enter password (min 6 chars)",
+    "codePlaceholder": "Verification Code",
+    "inviteCodePlaceholder": "Invite Code (Optional)"
   },
   "community": {
     "title": "Community",

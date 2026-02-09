@@ -49,6 +49,13 @@ export default function RootLayout({ children }) {
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#1677ff" />
+        {/* Preload critical images */}
+        <link rel="preload" href="/images/new_login/modal_bg.png" as="image" />
+        <link rel="preload" href="/images/new_login/logo.svg" as="image" />
+        <link rel="preload" href="/images/new_login/google.svg" as="image" />
+        <link rel="preload" href="/images/new_login/wallet.svg" as="image" />
+        <link rel="preload" href="/images/new_login/email.svg" as="image" />
+        <link rel="preload" href="/images/new_login/close.svg" as="image" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} ${chakraPetch.variable}`} suppressHydrationWarning>
         {/* Telegram WebApp 官方脚本 - 必须最先加载 */}
