@@ -13,7 +13,7 @@ import Image from 'next/image';
 import PCSearchResults from '../PCSearchResults';
 import PCFindContent from '../PCFindContent';
 import PCCommunityContent from '../PCCommunityContent';
-import PCLoginModal from '../PCLoginModal';
+import PCAuthModal from '../PCAuthModal';
 import PCFooterNotice from '../PCFooterNotice';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
@@ -501,10 +501,9 @@ export default function PCLayout({ children }) {
       </Layout>
 
       {/* 登录弹窗 */}
-      <PCLoginModal
+      <PCAuthModal
         open={showLoginModal}
         onClose={() => setShowLoginModal(false)}
-        collapsed={collapsed}
         onSuccess={() => {
           // 登录成功后刷新用户信息
           const syncUserInfo = () => {

@@ -1,0 +1,302 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.outerContainer {
+  width: 31.25vw;
+  min-width: 500px;
+  max-width: 580px;
+  height: auto;
+  min-height: auto;
+  padding: 20px;
+  box-sizing: border-box;
+  
+  background-size: 100% 100%;
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.imageBg {
+  background: url('/images/new_login/modal_bg.png') no-repeat center center;
+  background-size: 100% 100%;
+}
+
+.fallbackBg {
+  background: linear-gradient(180deg, #D4F2E7 0%, #FFFFFF 100%);
+  background-size: 100% 100%;
+}
+
+.innerContainer {
+  width: 100%;
+  height: auto;
+  background: transparent;
+  
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.closeButton {
+  position: absolute;
+  top: 16px;
+  right: 24px;
+  width: 35px;
+  height: 35px;
+  font-size: 20px;
+  color: #333;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 0;
+  z-index: 10;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 0.7;
+  }
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+
+.logo {
+  width: 82px;
+  height: 82px;
+  margin-bottom: 12px;
+  background: rgba(17, 25, 44, 1);
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  img {
+    width: 78px;
+    height: 78px;
+    object-fit: contain;
+    margin-bottom: 6px;
+  }
+}
+
+.title {
+  color: var(--Paragraph, #32403B);
+  font-family: "Dairyland Medium";
+  font-size: 30px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 43.783px;
+  margin-bottom: 22px;
+  text-align: center;
+}
+
+.buttonGroup {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 0 40px;
+}
+
+.authButton {
+  width: 100%;
+  height: 58px;
+  border-radius: 148.352px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  position: relative;
+  
+  padding: 11px 24px;
+  gap: 23px;
+  align-self: stretch;
+  
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  .icon {
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+
+    img {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+    }
+  }
+}
+
+.googleButton {
+  background: var(--grey-Surface-Default, #FFF);
+  border: 2.967px solid var(--grey-300-Divider-light, #D8DCDE);
+  color: #333;
+  border-radius: 148.352px;
+
+  &:hover {
+    border-color: #b0b0b0;
+    background: #fcfcfc;
+  }
+}
+
+.walletButton {
+  background: var(--brand-Facebook, #1877F2);
+  color: #FFFFFF;
+  border-radius: 148.352px;
+  
+  &:hover {
+    background: #1664d8;
+  }
+}
+
+.emailButton {
+  background: #FF7700;
+  color: #FFFFFF;
+  border-radius: 148.352px;
+  
+  &:hover {
+    background: #FF8800;
+  }
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  color: #333;
+  font-size: 17px;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #D8DCDE;
+  }
+
+  &::before {
+    margin-right: 12px;
+  }
+
+  &::after {
+    margin-left: 12px;
+  }
+}
+
+.footer {
+  margin-top: 24px;
+  font-size: 18px;
+  color: #666;
+  text-align: center;
+  width: 100%;
+  
+  .link {
+    color: #00B96B;
+    cursor: pointer;
+    margin-left: 4px;
+    font-weight: 500;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.header {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 8px;
+}
+
+.backButton {
+  padding: 0;
+  font-size: 18px;
+  color: #333;
+  
+  &:hover {
+    background: transparent;
+    color: #00B96B;
+  }
+}
+
+.form {
+  width: 100%;
+}
+
+.quickLoginRow {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.circleButton {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 1px solid #E0E0E0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: #00B96B;
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+
+  img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+  }
+}
+
+/* Modal Override Removed */
