@@ -564,6 +564,7 @@
     "followTwitter": "Follow Us on Twitter",
     "otherMethods": "or use other methods",
     "walletLoginBtn": "Wallet Login",
+    "googleLoginBtn": "Sign in with Google",
     "emailLoginBtn": "Email Login",
     "back": "Back",
     "recaptchaNotice": "This site is protected by Google reCAPTCHA to ensure you are not a robot.",
