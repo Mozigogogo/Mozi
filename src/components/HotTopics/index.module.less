@@ -5,17 +5,9 @@
   position: relative; /* 父相 */
 }
 
-/* 第一行：标题（130px）+ 1个话题（剩余空间） */
+/* 第一行：标题（130px） */
 .firstRow {
-  display: flex;
-  align-items: center;
-  margin-bottom: 5px;
-  padding-left: 140px; /* 左边空出140px给标题 */
-  
-  /* 英文时调整padding */
-  &:has(.titleEN) {
-    padding-left: 110px; /* 英文标题更窄，减少padding */
-  }
+  display: none;
 }
 
 .title {
@@ -24,11 +16,9 @@
   width: 130px;
   height: 38px;
   color: var(--text-primary, #1a1a1a);
-  margin: 0;
+  margin: 0 0 10px 0;
   white-space: nowrap;
-  position: absolute; /* 子绝 */
-  top: -3.5px;
-  left: 10px;
+  position: relative;
   line-height: 38px;
   display: flex;
   justify-content: center;
@@ -58,7 +48,7 @@
   width: 100px;
   height: 32px;
   line-height: 32px;
-  top: 0;
+  margin-bottom: 10px;
   
   &::before {
     display: none; /* 英文不显示背景图 */
@@ -82,27 +72,49 @@
   color: #313030;
 }
 
-.firstRow .topicTag {
-  flex: 1; /* 第一行的话题占剩余空间 */
-}
-
-/* 第二行：1个话题（100%） */
-.secondRow {
-  margin-bottom: 10px;
-}
-
-.secondRow .topicTag {
+/* 弹幕滚动相关样式 */
+.scrollWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   width: 100%;
+  overflow: hidden;
+  /* 遮罩效果，让两边有渐变消失的感觉 */
+  mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
 }
 
-/* 第三行：2个话题（各50%） */
-.thirdRow {
+.scrollRow {
+  display: flex;
+  width: 100%;
+  overflow: hidden;
+}
+
+.scrollContent {
   display: flex;
   gap: 10px;
+  padding-right: 10px; /* 循环连接处的间距 */
+  animation: scroll 20s linear infinite;
+  width: max-content; /* 确保宽度包含所有子元素 */
 }
 
-.thirdRow .topicTag {
-  flex: 0 0 calc(50% - 5px);
+/* 偶数行速度稍慢，制造错落感 */
+.scrollRow:nth-child(2n) .scrollContent {
+  animation-duration: 25s;
+}
+
+/* 第三行速度再慢一点 */
+.scrollRow:nth-child(3n) .scrollContent {
+  animation-duration: 30s;
+}
+
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 .topicTag {
@@ -122,6 +134,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   box-sizing: border-box;
+  flex: none; /* 防止被压缩 */
+  max-width: 200px; /* 限制最大宽度 */
 
   &:hover {
     background: #C8E8DD;
@@ -132,6 +146,12 @@
     transform: translateY(0);
   }
 }
+
+/* 移除旧的布局样式 */
+.firstRow, .secondRow, .thirdRow {
+  display: none;
+}
+
 
 .skeleton {
   display: flex;
@@ -184,13 +204,7 @@
   }
 
   .firstRow {
-    margin-bottom: 5px;
-    padding-left: 95px; /* 移动端中文标题 */
-    
-    /* 英文时调整padding */
-    &:has(.titleEN) {
-      padding-left: 85px; /* 移动端英文标题更窄 */
-    }
+    display: none;
   }
 
   .secondRow {
@@ -204,7 +218,7 @@
   .title {
     font-size: 16px;
     width: 85px;
-    left: 8px; /* 移动端调整left位置 */
+    margin: 0 0 8px 0;
   }
   
   /* 移动端英文标题 */

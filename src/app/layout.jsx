@@ -54,7 +54,12 @@ export default function RootLayout({ children }) {
         <link rel="preload" href="/images/new_login/logo.svg" as="image" />
         <link rel="preload" href="/images/new_login/google.svg" as="image" />
         <link rel="preload" href="/images/new_login/wallet.svg" as="image" />
-        <link rel="preload" href="/images/new_login/email.svg" as="image" />
+        <link rel="preload" href="/images/new_login/email_default.svg" as="image" />
+        <link rel="preload" href="/images/new_login/email_active.svg" as="image" />
+        <link rel="preload" href="/images/new_login/password.svg" as="image" />
+        <link rel="preload" href="/images/new_login/password_active.svg" as="image" />
+        <link rel="preload" href="/images/new_login/open_eyes.png" as="image" />
+        <link rel="preload" href="/images/new_login/close_eyes.svg" as="image" />
         <link rel="preload" href="/images/new_login/close.svg" as="image" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} ${chakraPetch.variable}`} suppressHydrationWarning>
