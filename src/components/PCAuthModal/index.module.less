@@ -9,7 +9,7 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  backdrop-filter: blur(4px);
+  /* backdrop-filter removed for performance */
   animation: fadeIn 0.2s ease-out;
 }
 
@@ -138,7 +138,6 @@
   font-size: 16px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
   position: relative;
   gap: 12px;
   
@@ -216,18 +215,20 @@
 
 .footer {
   margin-top: 24px;
-  font-size: 14px;
-  color: #6B7280;
+  font-size: 16px;
+  color: #666;
   text-align: center;
 }
 
 .link {
-  color: #00B96B;
+  color: rgba(17, 183, 135, 1);
   cursor: pointer;
   margin-left: 4px;
   font-weight: 500;
+  font-size: 16px;
   
   &:hover {
+    color: rgba(17, 183, 135, 1);
     text-decoration: underline;
   }
 }
@@ -248,6 +249,21 @@
   padding: 0 20px;
 }
 
+.customCheckbox {
+  font-size: 16px;
+  :global {
+    .ant-checkbox-checked .ant-checkbox-inner {
+      background-color: rgba(17, 183, 135, 1) !important;
+      border-color: rgba(17, 183, 135, 1) !important;
+    }
+    .ant-checkbox-wrapper:hover .ant-checkbox-inner,
+    .ant-checkbox:hover .ant-checkbox-inner,
+    .ant-checkbox-input:focus + .ant-checkbox-inner {
+      border-color: rgba(17, 183, 135, 1) !important;
+    }
+  }
+}
+
 .quickLoginRow {
   display: flex;
   justify-content: center;
@@ -262,22 +278,17 @@
   background: rgba(255, 255, 255, 0.2);
   border: 1px solid rgba(255, 255, 255, 1);
   box-shadow: 0 1.039px 2.078px 0 rgba(0, 0, 0, 0.05), 0 0 2.078px 0 rgba(255, 255, 255, 0.70) inset, 0 1.039px 1.039px 0 rgba(255, 255, 255, 0.50) inset, 0 0 15.585px 0 rgba(255, 255, 255, 0.20) inset, 0 15.585px 31.17px 0 rgba(255, 255, 255, 0.20) inset, 0 0 3px 0 rgba(0, 0, 0, 0.08), 0 2px 3px 0 rgba(0, 0, 0, 0.17);
-  backdrop-filter: blur(15.585177421569824px);
+  /* backdrop-filter removed for performance */
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s;
   
   &:hover {
-    transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     border-color: #00B96B;
   }
-  
-  &:active {
-    transform: translateY(0);
-  }
+
 
   img {
     width: 24px;
@@ -295,10 +306,13 @@
   border-radius: 148.352px;
   padding: 0 16px;
   box-sizing: border-box;
-  transition: all 0.2s;
   
   /* Ensure it matches the requested style */
-  border: none;
+  border: 1px solid transparent;
+
+  &:focus-within {
+    border-color: rgba(17, 183, 135, 1);
+  }
 }
 
 .nativeInput {
@@ -307,7 +321,7 @@
   outline: none;
   background: transparent;
   height: 100%;
-  font-size: 14px;
+  font-size: 16px;
   color: #333;
   margin-left: 8px;
   padding: 0;
@@ -323,60 +337,62 @@
   &:-webkit-autofill:focus, 
   &:-webkit-autofill:active {
       -webkit-box-shadow: 0 0 0 1000px #F2F3F5 inset !important;
-      -webkit-text-fill-color: #333 !important;
-      transition: background-color 5000s ease-in-out 0s;
-      background-color: transparent !important;
+  }
+}
+
+.verifyButton {
+  height: 32px;
+  border-radius: 16px;
+  border: 1px solid rgba(17, 183, 135, 1);
+  color: rgba(17, 183, 135, 1);
+  background: transparent;
+  font-size: 14px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-left: 8px;
+  white-space: nowrap;
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  &:hover:not(:disabled) {
+    background: rgba(17, 183, 135, 0.1);
   }
 }
 
 .prefixIcon {
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   
   img {
-    width: 22px;
-    height: 22px;
+    width: 100%;
+    height: 100%;
     object-fit: contain;
   }
 }
 
 .suffixIcon {
+  width: 22px;
+  height: 22px;
+  margin-left: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   cursor: pointer;
-  margin-left: 8px;
   
   img {
-    width: 22px;
-    height: 22px;
+    width: 100%;
+    height: 100%;
     object-fit: contain;
-  }
-}
-
-.customInput {
-  border-radius: 148.352px !important;
-  height: 48px !important;
-  background: #F2F3F5 !important;
-  border: none !important;
-  
-  :global {
-    .ant-input {
-      background: transparent !important;
-    }
-    
-    // Fix for autofill background
-    input:-webkit-autofill,
-    input:-webkit-autofill:hover, 
-    input:-webkit-autofill:focus, 
-    input:-webkit-autofill:active {
-        -webkit-box-shadow: 0 0 0 1000px #F2F3F5 inset !important;
-        -webkit-text-fill-color: #333 !important;
-        transition: background-color 5000s ease-in-out 0s;
-        background-color: transparent !important;
-    }
   }
 }

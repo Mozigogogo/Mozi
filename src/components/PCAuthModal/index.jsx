@@ -4,8 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { message, Button, Input, Checkbox } from 'antd';
 import { 
   CloseOutlined, 
-  ArrowLeftOutlined,
-  GiftOutlined
+  ArrowLeftOutlined
 } from '@ant-design/icons';
 import { useAccount, useSignMessage, useDisconnect } from 'wagmi';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
@@ -50,7 +49,13 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
   const [rememberPassword, setRememberPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [bgLoaded, setBgLoaded] = useState(true); // Default to true, assuming image works, fallback on error
-
+  
+  // Focus states for input icons
+  const [isEmailFocused, setIsEmailFocused] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  const [isVerificationFocused, setIsVerificationFocused] = useState(false);
+  const [isInviteCodeFocused, setIsInviteCodeFocused] = useState(false);
+  
   // Preload background image
   useEffect(() => {
     const img = new Image();
@@ -361,13 +366,160 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
 
     // Email Login/Register Form
     const isRegister = mode === 'email_register';
+    
+    // Register Layout
+    if (isRegister) {
+      return (
+        <>
+          <div className={styles.logo} style={{ margin: '0 auto 12px' }}>
+            <img src="/images/new_login/logo.svg" alt="Mozi" />
+          </div>
+          
+          <div className={styles.title} style={{ marginTop: 0, marginBottom: 12 }}>
+            {t('auth.registerMozi') || '注册mozi账号'}
+          </div>
+
+          <div className={styles.form}>
+            {/* Email Input */}
+            <div className={styles.inputWrapper} style={{ marginBottom: 16 }}>
+              <div className={styles.prefixIcon}>
+                <img 
+                  src={isEmailFocused ? "/images/new_login/email_active.svg" : "/images/new_login/email_default.svg"} 
+                  alt="email" 
+                />
+              </div>
+              <input 
+                type="email"
+                placeholder={t('auth.emailInputPlaceholder') || '请输入邮箱'} 
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                onFocus={() => setIsEmailFocused(true)}
+                onBlur={() => setIsEmailFocused(false)}
+                className={styles.nativeInput}
+              />
+            </div>
+            
+            {/* Password Input */}
+            <div className={styles.inputWrapper} style={{ marginBottom: 16 }}>
+              <div className={styles.prefixIcon}>
+                <img 
+                  src={isPasswordFocused ? "/images/new_login/password_active.svg" : "/images/new_login/password.svg"} 
+                  alt="password" 
+                />
+              </div>
+              <input
+                type={passwordVisible ? "text" : "password"}
+                placeholder={t('auth.passwordInputPlaceholder') || '请输入密码 (至少6位)'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                onFocus={() => setIsPasswordFocused(true)}
+                onBlur={() => setIsPasswordFocused(false)}
+                className={styles.nativeInput}
+              />
+              <div className={styles.suffixIcon} onClick={() => setPasswordVisible(!passwordVisible)}>
+                <img 
+                  src={passwordVisible ? "/images/new_login/open_eyes.png" : "/images/new_login/close_eyes.svg"} 
+                  alt="toggle visibility" 
+                />
+              </div>
+            </div>
+
+            {/* Verification Code Input */}
+            <div className={styles.inputWrapper} style={{ marginBottom: 16 }}>
+              <div className={styles.prefixIcon}>
+                <img 
+                  src={isVerificationFocused ? "/images/new_login/verify_active.svg" : "/images/new_login/verify.svg"} 
+                  alt="verify" 
+                />
+              </div>
+              <input 
+                type="text"
+                placeholder={t('auth.codePlaceholder') || '验证码'}
+                value={verificationCode}
+                onChange={e => setVerificationCode(e.target.value)}
+                onFocus={() => setIsVerificationFocused(true)}
+                onBlur={() => setIsVerificationFocused(false)}
+                className={styles.nativeInput}
+              />
+              <button 
+                className={styles.verifyButton}
+                onClick={handleSendCode}
+                disabled={sendingCode || countdown > 0}
+              >
+                {countdown > 0 ? `${countdown}s` : (t('auth.getCode') || '获取验证码')}
+              </button>
+            </div>
+            
+            {/* Invite Code Input */}
+            <div className={styles.inputWrapper} style={{ marginBottom: 24 }}>
+              <div className={styles.prefixIcon}>
+                <img 
+                  src={isInviteCodeFocused ? "/images/new_login/invite_active.svg" : "/images/new_login/invite.svg"} 
+                  alt="invite" 
+                />
+              </div>
+              <input 
+                type="text"
+                placeholder={t('auth.inviteCodePlaceholder') || '请输入邀请码 (可选)'}
+                value={inviteCode}
+                onChange={e => setInviteCode(e.target.value)}
+                onFocus={() => setIsInviteCodeFocused(true)}
+                onBlur={() => setIsInviteCodeFocused(false)}
+                className={styles.nativeInput}
+              />
+            </div>
+
+            {/* Divider */}
+            <div className={styles.divider} style={{ marginBottom: 24 }}>or</div>
+
+            {/* Social Buttons (Google, Wallet) */}
+            <div className={styles.quickLoginRow}>
+              <button className={styles.circleButton} onClick={() => googleLogin()}>
+                <img src="/images/new_login/google.svg" alt="Google" />
+              </button>
+              <button className={styles.circleButton} onClick={handleWeb3Login}>
+                <img src="/images/new_login/wallet_green.svg" alt="Wallet" />
+              </button>
+            </div>
+            
+            {/* Register Button */}
+            <Button 
+              type="primary" 
+              block 
+              size="large"
+              onClick={handleEmailAuth}
+              loading={loading}
+              style={{ 
+                borderRadius: 48, 
+                height: 48, 
+                background: '#00B96B',
+                border: 'none',
+                fontSize: 16,
+                fontWeight: 500
+              }}
+            >
+              {t('auth.register') || '注册'}
+            </Button>
+            
+            <div className={styles.footer}>
+              {t('auth.hasAccount') || '已有账户？'} 
+              <span className={styles.link} onClick={() => setMode('email_login')}>
+                {t('auth.goToLogin') || '去登录'}
+              </span>
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    // Login Layout
     return (
       <>
         <div className={styles.logo} style={{ margin: '0 auto 12px' }}>
           <img src="/images/new_login/logo.svg" alt="Mozi" />
         </div>
         
-        <div className={styles.title} style={{ marginTop: 0 }}>
+        <div className={styles.title} style={{ marginTop: 0, marginBottom: 12 }}>
           {isRegister ? (t('auth.registerMozi') || '注册mozi账号') : (t('auth.loginMozi') || '登录mozi账号')}
         </div>
 
@@ -386,13 +538,19 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
           
           <div className={styles.inputWrapper} style={{ marginBottom: 16 }}>
             <div className={styles.prefixIcon}>
-              <img src="/images/new_login/email_default.svg" alt="email" />
+              <img 
+                src={isEmailFocused ? "/images/new_login/email_active.svg" : "/images/new_login/email_default.svg"} 
+                alt="email" 
+                style={{ width: 22, height: 22 }} 
+              />
             </div>
             <input 
               type="email"
               placeholder={t('auth.emailInputPlaceholder') || '请输入邮箱'} 
               value={email}
               onChange={e => setEmail(e.target.value)}
+              onFocus={() => setIsEmailFocused(true)}
+              onBlur={() => setIsEmailFocused(false)}
               className={styles.nativeInput}
             />
           </div>
@@ -423,18 +581,24 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
 
           <div className={styles.inputWrapper} style={{ marginBottom: 16 }}>
             <div className={styles.prefixIcon}>
-              <img src="/images/new_login/password.svg" alt="password" />
+              <img 
+                src={isPasswordFocused ? "/images/new_login/password_active.svg" : "/images/new_login/password.svg"} 
+                alt="password" 
+                style={{ width: 22, height: 22 }} 
+              />
             </div>
             <input
               type={passwordVisible ? "text" : "password"}
               placeholder={t('auth.passwordInputPlaceholder') || '请输入密码 (至少6位)'}
               value={password}
               onChange={e => setPassword(e.target.value)}
+              onFocus={() => setIsPasswordFocused(true)}
+              onBlur={() => setIsPasswordFocused(false)}
               className={styles.nativeInput}
             />
             <div className={styles.suffixIcon} onClick={() => setPasswordVisible(!passwordVisible)}>
               <img 
-                src={passwordVisible ? "/images/new_login/open_eyes.svg" : "/images/new_login/close_eyes.svg"} 
+                src={passwordVisible ? "/images/new_login/open_eyes.png" : "/images/new_login/close_eyes.svg"} 
                 alt="toggle visibility" 
               />
             </div>
@@ -443,24 +607,26 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
           {isRegister && (
             <div className={styles.inputWrapper} style={{ marginBottom: 24 }}>
               <div className={styles.prefixIcon}>
-                <GiftOutlined style={{ color: '#999', fontSize: 18 }} />
+                <GiftOutlined style={{ color: isInviteCodeFocused ? "rgba(17, 183, 135, 1)" : "#999", fontSize: 18 }} />
               </div>
               <input 
                 type="text"
                 placeholder={t('auth.inviteCodePlaceholder') || '请输入邀请码 (可选)'}
                 value={inviteCode}
                 onChange={e => setInviteCode(e.target.value)}
+                onFocus={() => setIsInviteCodeFocused(true)}
+                onBlur={() => setIsInviteCodeFocused(false)}
                 className={styles.nativeInput}
               />
             </div>
           )}
 
           {!isRegister && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, padding: '0 8px' }}>
-              <Checkbox checked={rememberPassword} onChange={e => setRememberPassword(e.target.checked)}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 52, padding: '0 8px' }}>
+              <Checkbox checked={rememberPassword} onChange={e => setRememberPassword(e.target.checked)} className={styles.customCheckbox}>
                 {t('auth.rememberPassword') || '记住密码'}
               </Checkbox>
-              <a href="#" className={styles.link} onClick={handleForgetPassword} style={{ color: '#00B96B' }}>
+              <a href="#" className={styles.link} onClick={handleForgetPassword} >
                 {t('auth.forgetPassword') || '忘记密码？'}
               </a>
             </div>
