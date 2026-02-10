@@ -14,6 +14,7 @@ import PCSearchResults from '../PCSearchResults';
 import PCFindContent from '../PCFindContent';
 import PCCommunityContent from '../PCCommunityContent';
 import PCAuthModal from '../PCAuthModal';
+import PCUserPanel from '../PCUserPanel';
 import PCFooterNotice from '../PCFooterNotice';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
@@ -49,6 +50,7 @@ export default function PCLayout({ children }) {
   const searchRef = useRef('');
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [showUserPanel, setShowUserPanel] = useState(false);
 
   useEffect(() => {
     const syncUserInfo = () => {
@@ -414,7 +416,9 @@ export default function PCLayout({ children }) {
           {/* 用户信息 */}
           <div 
             className={styles.user}
-            onClick={() => setShowLoginModal(true)}
+            onClick={() => {
+              setShowUserPanel(!showUserPanel);
+            }}
             style={{ cursor: 'pointer', position: 'relative' }}
             id="user-info-trigger"
           >
@@ -530,6 +534,17 @@ export default function PCLayout({ children }) {
             }
           };
           syncUserInfo();
+        }}
+      />
+
+      {/* 个人中心面板 */}
+      <PCUserPanel
+        open={showUserPanel}
+        onClose={() => setShowUserPanel(false)}
+        collapsed={collapsed}
+        onLogin={() => {
+          setShowUserPanel(false);
+          setShowLoginModal(true);
         }}
       />
     </Layout>

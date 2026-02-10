@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import { message, Button, Input, Checkbox } from 'antd';
 import { 
   CloseOutlined, 
-  ArrowLeftOutlined
+  ArrowLeftOutlined,
+  LoadingOutlined
 } from '@ant-design/icons';
 import { useAccount, useSignMessage, useDisconnect } from 'wagmi';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
@@ -371,17 +372,17 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
     if (isRegister) {
       return (
         <>
-          <div className={styles.logo} style={{ margin: '0 auto 12px' }}>
+          <div className={styles.logo}>
             <img src="/images/new_login/logo.svg" alt="Mozi" />
           </div>
           
-          <div className={styles.title} style={{ marginTop: 0, marginBottom: 12 }}>
+          <div className={styles.title}>
             {t('auth.registerMozi') || '注册mozi账号'}
           </div>
 
           <div className={styles.form}>
             {/* Email Input */}
-            <div className={styles.inputWrapper} style={{ marginBottom: 16 }}>
+            <div className={styles.inputWrapper}>
               <div className={styles.prefixIcon}>
                 <img 
                   src={isEmailFocused ? "/images/new_login/email_active.svg" : "/images/new_login/email_default.svg"} 
@@ -400,7 +401,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
             </div>
             
             {/* Password Input */}
-            <div className={styles.inputWrapper} style={{ marginBottom: 16 }}>
+            <div className={styles.inputWrapper}>
               <div className={styles.prefixIcon}>
                 <img 
                   src={isPasswordFocused ? "/images/new_login/password_active.svg" : "/images/new_login/password.svg"} 
@@ -425,7 +426,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
             </div>
 
             {/* Verification Code Input */}
-            <div className={styles.inputWrapper} style={{ marginBottom: 16 }}>
+            <div className={styles.inputWrapper}>
               <div className={styles.prefixIcon}>
                 <img 
                   src={isVerificationFocused ? "/images/new_login/verify_active.svg" : "/images/new_login/verify.svg"} 
@@ -446,12 +447,12 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
                 onClick={handleSendCode}
                 disabled={sendingCode || countdown > 0}
               >
-                {countdown > 0 ? `${countdown}s` : (t('auth.getCode') || '获取验证码')}
+                {sendingCode ? <LoadingOutlined /> : (countdown > 0 ? `${countdown}s` : (t('auth.getCode') || '获取验证码'))}
               </button>
             </div>
             
             {/* Invite Code Input */}
-            <div className={styles.inputWrapper} style={{ marginBottom: 24 }}>
+            <div className={`${styles.inputWrapper} ${styles.inputWrapperLast}`}>
               <div className={styles.prefixIcon}>
                 <img 
                   src={isInviteCodeFocused ? "/images/new_login/invite_active.svg" : "/images/new_login/invite.svg"} 
@@ -470,7 +471,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
             </div>
 
             {/* Divider */}
-            <div className={styles.divider} style={{ marginBottom: 24 }}>or</div>
+            <div className={styles.divider}>or</div>
 
             {/* Social Buttons (Google, Wallet) */}
             <div className={styles.quickLoginRow}>
@@ -489,14 +490,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
               size="large"
               onClick={handleEmailAuth}
               loading={loading}
-              style={{ 
-                borderRadius: 48, 
-                height: 48, 
-                background: '#00B96B',
-                border: 'none',
-                fontSize: 16,
-                fontWeight: 500
-              }}
+              className={styles.submitButton}
             >
               {t('auth.register') || '注册'}
             </Button>
@@ -515,12 +509,12 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
     // Login Layout
     return (
       <>
-        <div className={styles.logo} style={{ margin: '0 auto 12px' }}>
+        <div className={styles.logo}>
           <img src="/images/new_login/logo.svg" alt="Mozi" />
         </div>
         
-        <div className={styles.title} style={{ marginTop: 0, marginBottom: 12 }}>
-          {isRegister ? (t('auth.registerMozi') || '注册mozi账号') : (t('auth.loginMozi') || '登录mozi账号')}
+        <div className={styles.title}>
+          {t('auth.loginMozi') || '登录mozi账号'}
         </div>
 
         <div className={styles.form}>
@@ -531,17 +525,16 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
             <button className={styles.circleButton} onClick={handleWeb3Login}>
               <img src="/images/new_login/wallet_green.svg" alt="Wallet" />
             </button>
-            <button className={styles.circleButton} onClick={() => isRegister ? setMode('email_login') : setMode('email_register')}>
+            <button className={styles.circleButton} onClick={() => setMode('email_register')}>
                <img src="/images/new_login/email_green.svg" alt="email" />
             </button>
           </div>
           
-          <div className={styles.inputWrapper} style={{ marginBottom: 16 }}>
+          <div className={styles.inputWrapper}>
             <div className={styles.prefixIcon}>
               <img 
                 src={isEmailFocused ? "/images/new_login/email_active.svg" : "/images/new_login/email_default.svg"} 
                 alt="email" 
-                style={{ width: 22, height: 22 }} 
               />
             </div>
             <input 
@@ -554,37 +547,12 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
               className={styles.nativeInput}
             />
           </div>
-          
-          {isRegister && (
-             <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-               <div className={styles.inputWrapper}>
-                 <input 
-                   type="text"
-                   placeholder={t('auth.codePlaceholder') || '验证码'}
-                   value={verificationCode}
-                   onChange={e => setVerificationCode(e.target.value)}
-                   className={styles.nativeInput}
-                   style={{ marginLeft: 0 }}
-                 />
-               </div>
-               <Button 
-                 size="large" 
-                 onClick={handleSendCode}
-                 disabled={sendingCode || countdown > 0}
-                 className={styles.customInput}
-                 style={{ width: 120 }}
-               >
-                 {countdown > 0 ? `${countdown}s` : (t('auth.sendCode') || '发送验证码')}
-               </Button>
-             </div>
-          )}
 
-          <div className={styles.inputWrapper} style={{ marginBottom: 16 }}>
+          <div className={styles.inputWrapper}>
             <div className={styles.prefixIcon}>
               <img 
                 src={isPasswordFocused ? "/images/new_login/password_active.svg" : "/images/new_login/password.svg"} 
                 alt="password" 
-                style={{ width: 22, height: 22 }} 
               />
             </div>
             <input
@@ -604,33 +572,14 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
             </div>
           </div>
           
-          {isRegister && (
-            <div className={styles.inputWrapper} style={{ marginBottom: 24 }}>
-              <div className={styles.prefixIcon}>
-                <GiftOutlined style={{ color: isInviteCodeFocused ? "rgba(17, 183, 135, 1)" : "#999", fontSize: 18 }} />
-              </div>
-              <input 
-                type="text"
-                placeholder={t('auth.inviteCodePlaceholder') || '请输入邀请码 (可选)'}
-                value={inviteCode}
-                onChange={e => setInviteCode(e.target.value)}
-                onFocus={() => setIsInviteCodeFocused(true)}
-                onBlur={() => setIsInviteCodeFocused(false)}
-                className={styles.nativeInput}
-              />
-            </div>
-          )}
-
-          {!isRegister && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 52, padding: '0 8px' }}>
-              <Checkbox checked={rememberPassword} onChange={e => setRememberPassword(e.target.checked)} className={styles.customCheckbox}>
-                {t('auth.rememberPassword') || '记住密码'}
-              </Checkbox>
-              <a href="#" className={styles.link} onClick={handleForgetPassword} >
-                {t('auth.forgetPassword') || '忘记密码？'}
-              </a>
-            </div>
-          )}
+          <div className={styles.rememberRow}>
+            <Checkbox checked={rememberPassword} onChange={e => setRememberPassword(e.target.checked)} className={styles.customCheckbox}>
+              {t('auth.rememberPassword') || '记住密码'}
+            </Checkbox>
+            <a href="#" className={styles.link} onClick={handleForgetPassword} >
+              {t('auth.forgetPassword') || '忘记密码？'}
+            </a>
+          </div>
           
           <Button 
             type="primary" 
@@ -638,34 +587,16 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
             size="large"
             onClick={handleEmailAuth}
             loading={loading}
-            style={{ 
-              borderRadius: 48, 
-              height: 48, 
-              background: '#00B96B',
-              border: 'none',
-              fontSize: 16,
-              fontWeight: 500
-            }}
+            className={styles.submitButton}
           >
-            {isRegister ? (t('auth.register') || '注册') : (t('auth.login') || '登录')}
+            {t('auth.login') || '登录'}
           </Button>
           
           <div className={styles.footer}>
-            {isRegister ? (
-              <>
-                {t('auth.hasAccount') || '已有账户？'} 
-                <span className={styles.link} onClick={() => setMode('email_login')}>
-                  {t('auth.goToLogin') || '去登录'}
-                </span>
-              </>
-            ) : (
-              <>
-                {t('auth.noAccount') || '没有账户？'} 
-                <span className={styles.link} onClick={() => setMode('email_register')}>
-                  {t('auth.goToRegister') || '立即注册'}
-                </span>
-              </>
-            )}
+            {t('auth.noAccount') || '没有账户？'} 
+            <span className={styles.link} onClick={() => setMode('email_register')}>
+              {t('auth.goToRegister') || '立即注册'}
+            </span>
           </div>
         </div>
       </>
