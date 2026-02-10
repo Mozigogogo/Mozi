@@ -25,8 +25,8 @@
 
 .outerContainer {
   width: 31.25vw;
-  min-width: 500px;
-  max-width: 580px;
+  min-width: 480px;
+  max-width: 520px;
   height: auto;
   min-height: auto;
   padding: 20px;
@@ -99,23 +99,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   
   img {
-    width: 78px;
-    height: 78px;
+    width: 100%;
+    height: 100%;
     object-fit: contain;
-    margin-bottom: 6px;
   }
 }
 
 .title {
-  color: var(--Paragraph, #32403B);
-  font-family: "Dairyland Medium";
-  font-size: 30px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 43.783px;
-  margin-bottom: 22px;
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 32px;
+  margin-top: 10px;
   text-align: center;
 }
 
@@ -123,129 +121,115 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 0 40px;
+  gap: 16px;
 }
 
 .authButton {
   width: 100%;
-  height: 58px;
+  height: 48px;
   border-radius: 148.352px;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  font-size: 18px;
-  font-weight: 600;
+  padding: 0 24px;
+  background: #F2F3F5;
+  color: #333;
+  font-size: 16px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  border: none;
   position: relative;
-  
-  padding: 11px 24px;
-  gap: 23px;
-  align-self: stretch;
+  gap: 12px;
   
   &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   }
-
+  
   &:active {
-    transform: translateY(0);
+    opacity: 0.9;
   }
+}
 
-  .icon {
-    font-size: 24px;
-    display: flex;
-    align-items: center;
-
-    img {
-      width: 24px;
-      height: 24px;
-      object-fit: contain;
-    }
+.icon {
+  width: 22px;
+  height: 22px;
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
   }
 }
 
 .googleButton {
-  background: var(--grey-Surface-Default, #FFF);
-  border: 2.967px solid var(--grey-300-Divider-light, #D8DCDE);
-  color: #333;
   border-radius: 148.352px;
-
-  &:hover {
-    border-color: #b0b0b0;
-    background: #fcfcfc;
-  }
+  border: 2.967px solid var(--grey-300-Divider-light, #D8DCDE);
+  background: var(--grey-Surface-Default, #FFF);
+  color: #333; /* Ensure text is dark on white bg */
 }
 
 .walletButton {
-  background: var(--brand-Facebook, #1877F2);
-  color: #FFFFFF;
   border-radius: 148.352px;
-  
-  &:hover {
-    background: #1664d8;
-  }
+  background: var(--brand-Facebook, #1877F2);
+  color: #FFF; /* White text for blue bg */
+  border: none;
 }
 
 .emailButton {
-  background: #FF7700;
-  color: #FFFFFF;
   border-radius: 148.352px;
-  
-  &:hover {
-    background: #FF8800;
-  }
+  background: linear-gradient(0deg, #F70 0%, #F70 100%), #07C160;
+  color: #FFF; /* White text for orange/green bg */
+  border: none;
 }
 
 .divider {
-  display: flex;
-  align-items: center;
   width: 100%;
-  color: #333;
-  font-size: 17px;
-
+  text-align: center;
+  color: #9CA3AF;
+  font-size: 14px;
+  position: relative;
+  
   &::before,
   &::after {
     content: '';
-    flex: 1;
+    position: absolute;
+    top: 50%;
+    width: 42%;
     height: 1px;
-    background: #D8DCDE;
+    background: #E5E7EB;
   }
-
+  
   &::before {
-    margin-right: 12px;
+    left: 0;
   }
-
+  
   &::after {
-    margin-left: 12px;
+    right: 0;
   }
 }
 
 .footer {
   margin-top: 24px;
-  font-size: 18px;
-  color: #666;
+  font-size: 14px;
+  color: #6B7280;
   text-align: center;
-  width: 100%;
-  
-  .link {
-    color: #00B96B;
-    cursor: pointer;
-    margin-left: 4px;
-    font-weight: 500;
-    
-    &:hover {
-      text-decoration: underline;
-    }
-  }
 }
 
-.header {
-  width: 100%;
-  display: flex;
-  justify-content: flex-start;
-  margin-bottom: 8px;
+.link {
+  color: #00B96B;
+  cursor: pointer;
+  margin-left: 4px;
+  font-weight: 500;
+  
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 .backButton {
@@ -261,6 +245,7 @@
 
 .form {
   width: 100%;
+  padding: 0 20px;
 }
 
 .quickLoginRow {
@@ -274,8 +259,10 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: #FFFFFF;
-  border: 1px solid #E0E0E0;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 1);
+  box-shadow: 0 1.039px 2.078px 0 rgba(0, 0, 0, 0.05), 0 0 2.078px 0 rgba(255, 255, 255, 0.70) inset, 0 1.039px 1.039px 0 rgba(255, 255, 255, 0.50) inset, 0 0 15.585px 0 rgba(255, 255, 255, 0.20) inset, 0 15.585px 31.17px 0 rgba(255, 255, 255, 0.20) inset, 0 0 3px 0 rgba(0, 0, 0, 0.08), 0 2px 3px 0 rgba(0, 0, 0, 0.17);
+  backdrop-filter: blur(15.585177421569824px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -299,4 +286,97 @@
   }
 }
 
-/* Modal Override Removed */
+.inputWrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 48px;
+  background: #F2F3F5;
+  border-radius: 148.352px;
+  padding: 0 16px;
+  box-sizing: border-box;
+  transition: all 0.2s;
+  
+  /* Ensure it matches the requested style */
+  border: none;
+}
+
+.nativeInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  height: 100%;
+  font-size: 14px;
+  color: #333;
+  margin-left: 8px;
+  padding: 0;
+  width: 100%; /* Ensure it takes available width */
+  
+  &::placeholder {
+    color: #BFBFBF; 
+  }
+
+  /* Fix for autofill background */
+  &:-webkit-autofill,
+  &:-webkit-autofill:hover, 
+  &:-webkit-autofill:focus, 
+  &:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 1000px #F2F3F5 inset !important;
+      -webkit-text-fill-color: #333 !important;
+      transition: background-color 5000s ease-in-out 0s;
+      background-color: transparent !important;
+  }
+}
+
+.prefixIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  
+  img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+  }
+}
+
+.suffixIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  margin-left: 8px;
+  
+  img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+  }
+}
+
+.customInput {
+  border-radius: 148.352px !important;
+  height: 48px !important;
+  background: #F2F3F5 !important;
+  border: none !important;
+  
+  :global {
+    .ant-input {
+      background: transparent !important;
+    }
+    
+    // Fix for autofill background
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover, 
+    input:-webkit-autofill:focus, 
+    input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 1000px #F2F3F5 inset !important;
+        -webkit-text-fill-color: #333 !important;
+        transition: background-color 5000s ease-in-out 0s;
+        background-color: transparent !important;
+    }
+  }
+}

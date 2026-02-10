@@ -5,11 +5,7 @@ import { message, Button, Input, Checkbox } from 'antd';
 import { 
   CloseOutlined, 
   ArrowLeftOutlined,
-  EyeOutlined,
-  EyeInvisibleOutlined,
-  GiftOutlined,
-  MailOutlined,
-  KeyOutlined
+  GiftOutlined
 } from '@ant-design/icons';
 import { useAccount, useSignMessage, useDisconnect } from 'wagmi';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
@@ -50,6 +46,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
   const [password, setPassword] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [inviteCode, setInviteCode] = useState('');
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const [rememberPassword, setRememberPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [bgLoaded, setBgLoaded] = useState(true); // Default to true, assuming image works, fallback on error
@@ -380,61 +377,82 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
               <img src="/images/new_login/google.svg" alt="Google" />
             </button>
             <button className={styles.circleButton} onClick={handleWeb3Login}>
-              <img src="/images/new_login/wallet.svg" alt="Wallet" />
+              <img src="/images/new_login/wallet_green.svg" alt="Wallet" />
             </button>
             <button className={styles.circleButton} onClick={() => isRegister ? setMode('email_login') : setMode('email_register')}>
-               <img src="/images/new_login/email.svg" alt="email" />
+               <img src="/images/new_login/email_green.svg" alt="email" />
             </button>
           </div>
           
-          <Input 
-            placeholder={t('auth.emailInputPlaceholder') || '请输入邮箱'} 
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            size="large"
-            style={{ marginBottom: 16, borderRadius: 48, height: 48, background: '#F5F7FA', border: 'none' }}
-            prefix={<MailOutlined style={{ color: '#999', fontSize: 18, marginLeft: 8 }} />}
-          />
+          <div className={styles.inputWrapper} style={{ marginBottom: 16 }}>
+            <div className={styles.prefixIcon}>
+              <img src="/images/new_login/email_default.svg" alt="email" />
+            </div>
+            <input 
+              type="email"
+              placeholder={t('auth.emailInputPlaceholder') || '请输入邮箱'} 
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className={styles.nativeInput}
+            />
+          </div>
           
           {isRegister && (
              <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-               <Input 
-                 placeholder={t('auth.codePlaceholder') || '验证码'}
-                 value={verificationCode}
-                 onChange={e => setVerificationCode(e.target.value)}
-                 size="large"
-                 style={{ borderRadius: 48, height: 48, background: '#F5F7FA', border: 'none' }}
-               />
+               <div className={styles.inputWrapper}>
+                 <input 
+                   type="text"
+                   placeholder={t('auth.codePlaceholder') || '验证码'}
+                   value={verificationCode}
+                   onChange={e => setVerificationCode(e.target.value)}
+                   className={styles.nativeInput}
+                   style={{ marginLeft: 0 }}
+                 />
+               </div>
                <Button 
                  size="large" 
                  onClick={handleSendCode}
                  disabled={sendingCode || countdown > 0}
-                 style={{ borderRadius: 48, height: 48, width: 120, background: '#F5F7FA', border: 'none' }}
+                 className={styles.customInput}
+                 style={{ width: 120 }}
                >
                  {countdown > 0 ? `${countdown}s` : (t('auth.sendCode') || '发送验证码')}
                </Button>
              </div>
           )}
 
-          <Input.Password
-            placeholder={t('auth.passwordInputPlaceholder') || '请输入密码 (至少6位)'}
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            size="large"
-            style={{ marginBottom: 16, borderRadius: 48, height: 48, background: '#F5F7FA', border: 'none' }}
-            prefix={<KeyOutlined style={{ color: '#999', fontSize: 18, marginLeft: 8 }} rotate={-45} />}
-            iconRender={visible => (visible ? <EyeOutlined /> : <EyeInvisibleOutlined />)}
-          />
+          <div className={styles.inputWrapper} style={{ marginBottom: 16 }}>
+            <div className={styles.prefixIcon}>
+              <img src="/images/new_login/password.svg" alt="password" />
+            </div>
+            <input
+              type={passwordVisible ? "text" : "password"}
+              placeholder={t('auth.passwordInputPlaceholder') || '请输入密码 (至少6位)'}
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              className={styles.nativeInput}
+            />
+            <div className={styles.suffixIcon} onClick={() => setPasswordVisible(!passwordVisible)}>
+              <img 
+                src={passwordVisible ? "/images/new_login/open_eyes.svg" : "/images/new_login/close_eyes.svg"} 
+                alt="toggle visibility" 
+              />
+            </div>
+          </div>
           
           {isRegister && (
-            <Input 
-              placeholder={t('auth.inviteCodePlaceholder') || '请输入邀请码 (可选)'}
-              value={inviteCode}
-              onChange={e => setInviteCode(e.target.value)}
-              size="large"
-              style={{ marginBottom: 24, borderRadius: 48, height: 48, background: '#F5F7FA', border: 'none' }}
-              prefix={<GiftOutlined style={{ color: '#999', fontSize: 18, marginLeft: 8 }} />}
-            />
+            <div className={styles.inputWrapper} style={{ marginBottom: 24 }}>
+              <div className={styles.prefixIcon}>
+                <GiftOutlined style={{ color: '#999', fontSize: 18 }} />
+              </div>
+              <input 
+                type="text"
+                placeholder={t('auth.inviteCodePlaceholder') || '请输入邀请码 (可选)'}
+                value={inviteCode}
+                onChange={e => setInviteCode(e.target.value)}
+                className={styles.nativeInput}
+              />
+            </div>
           )}
 
           {!isRegister && (
