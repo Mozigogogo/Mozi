@@ -34,32 +34,38 @@
 }
 
 .userInfoSection {
-  padding: 20px 16px;
+  padding: 0px 16px 10px;
 }
 
 .userHeader {
   display: flex;
   align-items: flex-start;
-  margin-bottom: 12px;
+  margin-bottom: 7px;
+}
+
+.leftColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 12px;
 }
 
 .avatarWrapper {
   position: relative;
-  margin-right: 12px;
+  margin-bottom: 7px; /* 增加头像和标签之间的间距 */
 }
 
 .avatar {
-  width: 64px;
-  height: 64px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
-  border: 2px solid #fff;
   object-fit: cover;
 }
 
 .verifyIcon {
   position: absolute;
-  bottom: 0;
-  right: -4px;
+  bottom: 3px;
+  right: -1px;
   width: 20px;
   height: 20px;
 }
@@ -75,8 +81,9 @@
 .nameRow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   margin-bottom: 4px;
+  gap: 11px;
 }
 
 .nickname {
@@ -89,7 +96,7 @@
 }
 
 .followBtn {
-  background: #00B96B;
+  background: rgba(17, 183, 135, 1);
   border-radius: 14px;
   padding: 4px 12px;
   color: #fff;
@@ -106,25 +113,25 @@
 }
 
 .tag {
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.32);
   border: 0.5px solid #E9E9E9;
-  border-radius: 4px;
+  border-radius: 20px;
   padding: 2px 6px;
   font-size: 10px;
-  color: #666;
+  color: rgba(49, 48, 48, 1);
 }
 
 .bio {
   font-size: 13px;
-  color: #666;
-  margin-bottom: 16px;
+  color: rgba(49, 48, 48, 1);
+  margin-bottom: 7px;
   line-height: 1.4;
 }
 
 .statsRow {
   display: flex;
-  gap: 24px;
-  margin-bottom: 24px;
+  gap: 15px;
+  margin-bottom: 8px;
 }
 
 .statItem {
@@ -135,14 +142,14 @@
 
 .statValue {
   font-size: 16px;
-  font-weight: 600;
-  color: #333;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 1);
   line-height: 1.2;
 }
 
 .statLabel {
   font-size: 11px;
-  color: #999;
+  color: rgba(158, 157, 163, 1);
   margin-top: 2px;
 }
 
@@ -150,69 +157,100 @@
   background: #fff;
   border-radius: 20px 20px 0 0;
   margin-top: -20px;
-  padding-top: 20px;
   flex: 1;
 }
 
 .tabs {
   display: flex;
-  justify-content: space-around;
-  border-bottom: 1px solid #f5f5f5;
-  margin-bottom: 8px;
+  justify-content: space-between; /* 使用 space-between 确保卡片分散排列 */
+  gap: 12px; /* 卡片之间的间距 */
+  padding: 8px 12px; /* 增加内边距 */
+  background: transparent; /* 背景透明 */
+  border-bottom: none; /* 移除底部边框 */
+  margin-bottom: 0;
 }
 
 .tabItem {
-  padding: 12px 0;
-  font-size: 15px;
-  color: #666;
+  flex: 1; /* 每个卡片占据相同的宽度 */
+  padding: 16px 8px; /* 增加卡片内边距 */
+  font-size: 16px;
+  color: rgba(0, 0, 0, 1); /* 默认标题颜色 */
   position: relative;
   cursor: pointer;
+  
+  /* 未激活样式 */
+  border-radius: 20px;
+  border: 0.5px solid #E9E9E9;
+  background: linear-gradient(0deg, #FAFAFA 0%, #FAFAFA 100%), rgba(255, 255, 255, 0.32);
+  
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
 }
 
 .tabItemActive {
-  color: #333;
+  color: #11B787; /* 选中状态标题颜色 */
   font-weight: 600;
   
+  /* 激活样式 */
+  border-radius: 20px;
+  border: 0.5px solid #E9E9E9;
+  background: #FFF;
+  box-shadow: none;
+  
+  /* 移除之前的下划线样式 */
   &::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 20px;
-    height: 3px;
-    background: #00B96B;
-    border-radius: 2px;
+    display: none;
   }
 }
 
 .subText {
-  font-size: 10px;
-  color: #999;
+  font-size: 11px;
+  color: rgba(158, 157, 163, 1); /* 默认副标题颜色 */
   display: block;
   text-align: center;
-  margin-top: 2px;
+  margin-top: 4px;
   font-weight: normal;
+}
+
+.listContainer {
+  background: #fff;
+  border-radius: 20px 20px 0 0; /* 只保留上方的圆角 */
+  margin: 0 0 0px; /* 底部边距改为0 */
+  overflow: hidden; 
+  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.05);
+  padding-bottom: 20px; /* 增加底部内边距，给查看更多留空间 */
 }
 
 .listHeader {
   display: flex;
   align-items: center;
-  padding: 8px 16px;
+  padding: 12px 16px;
   font-size: 12px;
   color: #999;
+  background: #fff;
+  border-bottom: 2.5px solid #E9E9E9; /* 表头和内容之间的分割线 */
 }
 
 .colCoin { flex: 1.2; }
 .colPrice { flex: 1.2; text-align: right; }
 .colChange { width: 88px; flex: none; text-align: right; display: flex; justify-content: flex-end; }
-.colAction { width: 100px; flex: none; display: flex; justify-content: flex-end; gap: 12px; text-align: right; }
+.colAction { width: 115px; flex: none; display: flex; justify-content: flex-end; gap: 16px; text-align: right; }
+
+.actionCell {
+  width: 44px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
 
 .listItem {
   display: flex;
   align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid #f9f9f9;
+  padding: 8px 16px;
 }
 
 .coinInfo {
@@ -230,13 +268,13 @@
 .coinSymbol {
   font-size: 14px;
   font-weight: 600;
-  color: #333;
+  color: rgba(49, 48, 48, 1);
 }
 
 .price {
   font-size: 14px;
   font-weight: 600;
-  color: #333;
+  color: rgba(49, 48, 48, 1);
   text-align: right;
 }
 
@@ -249,7 +287,7 @@
 
 .changeTag {
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: 5px;
   font-size: 12px;
   font-weight: 500;
   min-width: 60px;
@@ -257,13 +295,13 @@
 }
 
 .changeUp {
-  background: #E6F8F0;
-  color: #00B96B;
+  background: #C9F6E7;
+  color: rgba(11, 117, 86, 1);
 }
 
 .changeDown {
-  background: #FFF1F0;
-  color: #FF4D4F;
+  background: #F6C9CA;
+  color: rgba(117, 11, 13, 1);
 }
 
 .actionIcons {
@@ -273,20 +311,14 @@
   align-items: center;
 }
 
-.actionIcon {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-}
-
 .viewMore {
   text-align: center;
-  padding: 16px;
+  padding: 16px 0 0; /* 调整内边距 */
+  font-size: 13px;
   color: #999;
-  font-size: 12px;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  cursor: pointer;
 }

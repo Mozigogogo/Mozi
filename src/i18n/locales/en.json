@@ -116,6 +116,7 @@
     "delete": "Delete",
     "share": "Share",
     "more": "More",
+    "viewMore": "View More",
     "updated": "Updated",
     "copy": "Copy",
     "copySuccess": "Copied successfully",
@@ -326,7 +327,9 @@
       "coin": "Coin",
       "price": "Price",
       "change24h": "24h Change",
-      "actionHeader": "Fav/Monitor"
+      "actionHeader": "Fav/Monitor",
+      "actionHeaderWatchlist": "Fav",
+      "actionHeaderMonitor": "Monitor"
     },
     "logout": "Logout",
     "loginRegister": "Login/Register",
