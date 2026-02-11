@@ -836,7 +836,7 @@ export default function HomePage() {
         <MarketDistribution />
 
         {/* 热门话题 */}
-        <HotTopics limit={4} showViewMore={true} />
+        <HotTopics limit={30} showViewMore={true} />
 
         {/* 热门板块 */}
         <InvestmentSection

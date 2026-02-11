@@ -1,6 +1,6 @@
 .container {
   background: transparent;
-  padding: 0 10px;
+  // padding: 0 10px;
   margin: 10px 10px 16px 10px;
   position: relative; /* 父相 */
 }
@@ -94,18 +94,18 @@
   display: flex;
   gap: 10px;
   padding-right: 10px; /* 循环连接处的间距 */
-  animation: scroll 20s linear infinite;
+  animation: scroll 60s linear infinite;
   width: max-content; /* 确保宽度包含所有子元素 */
 }
 
 /* 偶数行速度稍慢，制造错落感 */
 .scrollRow:nth-child(2n) .scrollContent {
-  animation-duration: 25s;
+  animation-duration: 80s;
 }
 
 /* 第三行速度再慢一点 */
 .scrollRow:nth-child(3n) .scrollContent {
-  animation-duration: 30s;
+  animation-duration: 100s;
 }
 
 @keyframes scroll {
@@ -199,9 +199,9 @@
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .container {
-    padding: 0 8px;
-  }
+  // .container {
+  //   padding: 0 8px;
+  // }
 
   .firstRow {
     display: none;

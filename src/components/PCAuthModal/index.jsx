@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
-import { sendVerificationCode, loginByEmail, registerByEmail, loginByWallet, loginByGoogle } from '../../api/user';
+import { sendVerificationCode, loginByEmail, registerByEmail, loginByWallet, loginByGoogle, resetPassword } from '../../api/user';
 import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
 import styles from './index.module.less';
 
@@ -265,7 +265,32 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
   
   const handleForgetPassword = (e) => {
     e.preventDefault();
-    message.info(t('auth.contactSupport') || 'Please contact customer support to reset password');
+    setMode('email_forget');
+  };
+
+  const handleResetPassword = async () => {
+    if (!email || !password || !verificationCode) {
+      message.warning(t('auth.fillAllRequired') || 'Please fill in all required fields');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await resetPassword(email, password, verificationCode);
+      if (res?.data?.success || res?.code === 0) {
+        message.success(t('auth.resetSuccess') || 'Password reset successful');
+        setMode('email_login');
+        setPassword('');
+        setVerificationCode('');
+      } else {
+        message.error(res?.message || res?.errorMsg || t('auth.resetFailed') || 'Reset failed');
+      }
+    } catch (error) {
+      console.error('Reset password failed:', error);
+      message.error(error?.errorMsg || error?.message || t('auth.resetFailed') || 'Reset failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAuthResponse = (res) => {
@@ -497,6 +522,113 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
             
             <div className={styles.footer}>
               {t('auth.hasAccount') || '已有账户？'} 
+              <span className={styles.link} onClick={() => setMode('email_login')}>
+                {t('auth.goToLogin') || '去登录'}
+              </span>
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    // Login Layout
+    const isForget = mode === 'email_forget';
+    if (isForget) {
+      return (
+        <>
+          <div className={styles.logo}>
+            <img src="/images/new_login/logo.svg" alt="Mozi" />
+          </div>
+          
+          <div className={styles.title}>
+            {t('auth.resetPassword') || '重置密码'}
+          </div>
+
+          <div className={styles.form}>
+            {/* Email Input */}
+            <div className={styles.inputWrapper}>
+              <div className={styles.prefixIcon}>
+                <img 
+                  src={isEmailFocused ? "/images/new_login/email_active.svg" : "/images/new_login/email_default.svg"} 
+                  alt="email" 
+                />
+              </div>
+              <input 
+                type="email"
+                placeholder={t('auth.emailInputPlaceholder') || '请输入邮箱'} 
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                onFocus={() => setIsEmailFocused(true)}
+                onBlur={() => setIsEmailFocused(false)}
+                className={styles.nativeInput}
+              />
+            </div>
+            
+            {/* Password Input */}
+            <div className={styles.inputWrapper}>
+              <div className={styles.prefixIcon}>
+                <img 
+                  src={isPasswordFocused ? "/images/new_login/password_active.svg" : "/images/new_login/password.svg"} 
+                  alt="password" 
+                />
+              </div>
+              <input
+                type={passwordVisible ? "text" : "password"}
+                placeholder={t('auth.newPasswordPlaceholder') || '请输入新密码 (至少6位)'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                onFocus={() => setIsPasswordFocused(true)}
+                onBlur={() => setIsPasswordFocused(false)}
+                className={styles.nativeInput}
+              />
+              <div className={styles.suffixIcon} onClick={() => setPasswordVisible(!passwordVisible)}>
+                <img 
+                  src={passwordVisible ? "/images/new_login/open_eyes.png" : "/images/new_login/close_eyes.svg"} 
+                  alt="toggle visibility" 
+                />
+              </div>
+            </div>
+
+            {/* Verification Code Input */}
+            <div className={styles.inputWrapper}>
+              <div className={styles.prefixIcon}>
+                <img 
+                  src={isVerificationFocused ? "/images/new_login/verify_active.svg" : "/images/new_login/verify.svg"} 
+                  alt="verify" 
+                />
+              </div>
+              <input 
+                type="text"
+                placeholder={t('auth.codePlaceholder') || '验证码'}
+                value={verificationCode}
+                onChange={e => setVerificationCode(e.target.value)}
+                onFocus={() => setIsVerificationFocused(true)}
+                onBlur={() => setIsVerificationFocused(false)}
+                className={styles.nativeInput}
+              />
+              <button 
+                className={styles.verifyButton}
+                onClick={handleSendCode}
+                disabled={sendingCode || countdown > 0}
+              >
+                {sendingCode ? <LoadingOutlined /> : (countdown > 0 ? `${countdown}s` : (t('auth.getCode') || '获取验证码'))}
+              </button>
+            </div>
+            
+            {/* Submit Button */}
+            <Button 
+              type="primary" 
+              block 
+              size="large"
+              onClick={handleResetPassword}
+              loading={loading}
+              className={styles.submitButton}
+            >
+              {t('auth.confirmReset') || '确认重置'}
+            </Button>
+            
+            <div className={styles.footer}>
+              {t('auth.rememberedPassword') || '想起来了？'} 
               <span className={styles.link} onClick={() => setMode('email_login')}>
                 {t('auth.goToLogin') || '去登录'}
               </span>

@@ -584,7 +584,13 @@
     "emailInputPlaceholder": "请输入邮箱",
     "passwordInputPlaceholder": "请输入密码 (至少6位)",
     "codePlaceholder": "验证码",
-    "inviteCodePlaceholder": "请输入邀请码 (可选)"
+    "inviteCodePlaceholder": "请输入邀请码 (可选)",
+    "resetPassword": "重置密码",
+    "newPasswordPlaceholder": "请输入新密码 (至少6位)",
+    "confirmReset": "确认重置",
+    "rememberedPassword": "想起来了？",
+    "resetSuccess": "重置密码成功",
+    "resetFailed": "重置失败"
   },
   "community": {
     "title": "社区",

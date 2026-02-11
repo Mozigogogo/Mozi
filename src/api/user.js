@@ -53,6 +53,27 @@ export const registerByEmail = (email, password, verifyCode, invitedCode = '', c
   });
 };
 
+/**
+ * 重置密码
+ * @param {string} email - 邮箱地址
+ * @param {string} password - 新密码
+ * @param {string} verifyCode - 验证码
+ * @returns {Promise}
+ */
+export const resetPassword = (email, password, verifyCode) => {
+  return request({
+    url: Interface.MOZI_LOGIN,
+    method: 'POST',
+    data: {
+      chanel: 2,  // 2-邮箱
+      type: 'forget',
+      email,
+      password,
+      verifyCode,
+    },
+  });
+};
+
 
 /**
  * 发送邮箱验证码
