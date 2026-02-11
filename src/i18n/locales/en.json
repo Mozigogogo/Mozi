@@ -586,7 +586,13 @@
     "emailInputPlaceholder": "Enter email",
     "passwordInputPlaceholder": "Enter password (min 6 chars)",
     "codePlaceholder": "Verification Code",
-    "inviteCodePlaceholder": "Invite Code (Optional)"
+    "inviteCodePlaceholder": "Invite Code (Optional)",
+    "resetPassword": "Reset Password",
+    "newPasswordPlaceholder": "Enter new password (min 6 chars)",
+    "confirmReset": "Confirm Reset",
+    "rememberedPassword": "Remembered?",
+    "resetSuccess": "Password reset successful",
+    "resetFailed": "Reset failed"
   },
   "community": {
     "title": "Community",
