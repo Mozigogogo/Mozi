@@ -314,6 +314,20 @@
   },
   "user": {
     "login": "登录",
+    "tabs": {
+      "watchlist": "自选",
+      "watchlistDesc": "他选购的商品",
+      "monitor": "监控",
+      "monitorDesc": "他监控的商品",
+      "content": "内容",
+      "contentDesc": "他发布的内容"
+    },
+    "list": {
+      "coin": "币种",
+      "price": "最新价格",
+      "change24h": "24h幅度",
+      "actionHeader": "自加选 加监控"
+    },
     "logout": "退出登录",
     "loginRegister": "登录/注册",
     "pleaseLogin": "请登录",

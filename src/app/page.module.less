@@ -1,15 +1,23 @@
 .indexBox {
-  background-color: #efefef;
-  background-image: url('/images/new_home/home_bg.png');
-  background-size: cover;
-  background-position: center top;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
   padding: 0;
   box-sizing: border-box;
   min-height: 100vh;
   overflow: hidden;
   position: relative;
+  z-index: 0;
+
+  &::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: url('/images/new_home/full_screen_bg.svg') no-repeat center top;
+    background-size: cover;
+    z-index: -1;
+    pointer-events: none;
+  }
 }
 
 // 顶部组合容器：banner + 搜索框

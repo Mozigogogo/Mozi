@@ -468,7 +468,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
                 className={styles.nativeInput}
               />
               <button 
-                className={styles.verifyButton}
+                className={`${styles.verifyButton} ${countdown > 0 ? styles.counting : ''}`}
                 onClick={handleSendCode}
                 disabled={sendingCode || countdown > 0}
               >
@@ -607,7 +607,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
                 className={styles.nativeInput}
               />
               <button 
-                className={styles.verifyButton}
+                className={`${styles.verifyButton} ${countdown > 0 ? styles.counting : ''}`}
                 onClick={handleSendCode}
                 disabled={sendingCode || countdown > 0}
               >
