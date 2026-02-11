@@ -10,22 +10,34 @@ const HotTopics = ({ limit = 10, showViewMore = true }) => {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const [topics, setTopics] = useState([]);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const isEN = (i18n?.language || '').startsWith('en');
 
   useEffect(() => {
-    fetchHotTopics();
+    fetchHotTopics(1);
   }, []);
 
-  const fetchHotTopics = async () => {
+  const fetchHotTopics = async (pageNum = 1) => {
     try {
-      setLoading(true);
-      const response = await homeApi.getHotTopics(limit);
+      if (pageNum === 1) setLoading(true);
+      // Use limit prop for pageSize
+      const response = await homeApi.getHotTopics(limit, pageNum);
       const data = response?.data?.data || response?.data || [];
-      setTopics(Array.isArray(data) ? data : []);
+      
+      const newTopics = Array.isArray(data) ? data : [];
+      if (newTopics.length > 0) {
+        setTopics(newTopics);
+        setPage(pageNum);
+      } else if (pageNum > 1) {
+        // If no more data, loop back to page 1
+        fetchHotTopics(1);
+      } else {
+        setTopics([]);
+      }
     } catch (error) {
       console.error('Failed to fetch hot topics:', error);
-      setTopics([]);
+      if (pageNum === 1) setTopics([]);
     } finally {
       setLoading(false);
     }
@@ -70,24 +82,37 @@ const HotTopics = ({ limit = 10, showViewMore = true }) => {
 
       {/* 弹幕滚动区域 */}
       <div className={styles.scrollWrapper}>
-        {[0, 1, 2].map((rowIndex) => {
-          // 分配话题到3个轨道
-          const rowTopics = topics.filter((_, i) => i % 3 === rowIndex);
-          
-          // 如果该行没有话题，不渲染
-          if (rowTopics.length === 0) return null;
+        {(() => {
+          // Calculate the last active row index to trigger pagination only once per cycle
+          const activeRowIndices = [0, 1, 2].filter(r => topics.filter((_, i) => i % 3 === r).length > 0);
+          const lastActiveRowIndex = activeRowIndices.length > 0 ? activeRowIndices[activeRowIndices.length - 1] : -1;
 
-          // 为了视觉效果，如果话题太少，多复制几份确保填满屏幕
-          // 这里的 renderTopics 是该行的一组基础数据
-          let renderTopics = [...rowTopics];
-          if (renderTopics.length < 3) {
-             renderTopics = [...renderTopics, ...renderTopics];
-          }
+          return [0, 1, 2].map((rowIndex) => {
+            // 分配话题到3个轨道
+            const rowTopics = topics.filter((_, i) => i % 3 === rowIndex);
+            
+            // 如果该行没有话题，不渲染
+            if (rowTopics.length === 0) return null;
 
-          return (
-            <div key={rowIndex} className={styles.scrollRow}>
-              <div className={styles.scrollContent}>
-                {/* 第一组数据 */}
+            // 为了视觉效果，如果话题太少，多复制几份确保填满屏幕
+            // 这里的 renderTopics 是该行的一组基础数据
+            let renderTopics = [...rowTopics];
+            if (renderTopics.length < 3) {
+              renderTopics = [...renderTopics, ...renderTopics];
+            }
+
+            return (
+              <div key={rowIndex} className={styles.scrollRow}>
+                <div 
+                  className={styles.scrollContent}
+                  onAnimationIteration={() => {
+                    // Only trigger pagination when the slowest/last row finishes its loop
+                    if (rowIndex === lastActiveRowIndex) {
+                      fetchHotTopics(page + 1);
+                    }
+                  }}
+                >
+                  {/* 第一组数据 */}
                 {renderTopics.map((topic, i) => (
                   <div
                     key={`r${rowIndex}-1-${topic.id}-${i}`}
@@ -110,7 +135,7 @@ const HotTopics = ({ limit = 10, showViewMore = true }) => {
               </div>
             </div>
           );
-        })}
+        })})()}
       </div>
     </div>
   );

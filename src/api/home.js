@@ -55,11 +55,12 @@ export const getHotContracts = (pageSize = 10) => {
  * @param {number} pageSize - 每页数量，默认10
  * @returns {Promise}
  */
-export const getHotTopics = (pageSize = 10) => {
+export const getHotTopics = (size = 10, page = 1) => {
   return request({
     url: Interface.HOT_TOPICS_API,
     data: {
-      pageSize,
+      size,
+      page,
     },
   });
 };
