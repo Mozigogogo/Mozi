@@ -314,6 +314,20 @@
   },
   "user": {
     "login": "Login",
+    "tabs": {
+      "watchlist": "Watchlist",
+      "watchlistDesc": "His watchlist",
+      "monitor": "Monitor",
+      "monitorDesc": "His monitored items",
+      "content": "Content",
+      "contentDesc": "His published content"
+    },
+    "list": {
+      "coin": "Coin",
+      "price": "Price",
+      "change24h": "24h Change",
+      "actionHeader": "Fav/Monitor"
+    },
     "logout": "Logout",
     "loginRegister": "Login/Register",
     "pleaseLogin": "Please Login",

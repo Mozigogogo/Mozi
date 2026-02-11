@@ -1,0 +1,292 @@
+.container {
+  width: 100%;
+  min-height: 100vh;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+.topBanner {
+  width: 100%;
+  /* Using a placeholder or the same bg as user page */
+  background: url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/me-bg.png') no-repeat center;
+  background-size: cover;
+  padding: 0;
+}
+
+.navBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  height: 44px;
+}
+
+.navIcon {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.rightIcons {
+  display: flex;
+  gap: 16px;
+}
+
+.userInfoSection {
+  padding: 20px 16px;
+}
+
+.userHeader {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.avatarWrapper {
+  position: relative;
+  margin-right: 12px;
+}
+
+.avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  object-fit: cover;
+}
+
+.verifyIcon {
+  position: absolute;
+  bottom: 0;
+  right: -4px;
+  width: 20px;
+  height: 20px;
+}
+
+.userInfoRight {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: 4px;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.nickname {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  background: linear-gradient(180deg, #F8D5A9 4.06%, #E5B372 33.13%, #DE9E4C 54.37%, #663409 90%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.followBtn {
+  background: #00B96B;
+  border-radius: 14px;
+  padding: 4px 12px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+}
+
+.tagRow {
+  display: flex;
+}
+
+.tag {
+  background: rgba(255, 255, 255, 0.5);
+  border: 0.5px solid #E9E9E9;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 10px;
+  color: #666;
+}
+
+.bio {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 16px;
+  line-height: 1.4;
+}
+
+.statsRow {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.statValue {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.2;
+}
+
+.statLabel {
+  font-size: 11px;
+  color: #999;
+  margin-top: 2px;
+}
+
+.contentBody {
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  margin-top: -20px;
+  padding-top: 20px;
+  flex: 1;
+}
+
+.tabs {
+  display: flex;
+  justify-content: space-around;
+  border-bottom: 1px solid #f5f5f5;
+  margin-bottom: 8px;
+}
+
+.tabItem {
+  padding: 12px 0;
+  font-size: 15px;
+  color: #666;
+  position: relative;
+  cursor: pointer;
+}
+
+.tabItemActive {
+  color: #333;
+  font-weight: 600;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 3px;
+    background: #00B96B;
+    border-radius: 2px;
+  }
+}
+
+.subText {
+  font-size: 10px;
+  color: #999;
+  display: block;
+  text-align: center;
+  margin-top: 2px;
+  font-weight: normal;
+}
+
+.listHeader {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  font-size: 12px;
+  color: #999;
+}
+
+.colCoin { flex: 1.2; }
+.colPrice { flex: 1.2; text-align: right; }
+.colChange { width: 88px; flex: none; text-align: right; display: flex; justify-content: flex-end; }
+.colAction { width: 100px; flex: none; display: flex; justify-content: flex-end; gap: 12px; text-align: right; }
+
+.listItem {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f9f9f9;
+}
+
+.coinInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.coinIcon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+.coinSymbol {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.price {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  text-align: right;
+}
+
+.changeBox {
+  text-align: right;
+  padding-right: 0px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.changeTag {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  min-width: 60px;
+  text-align: center;
+}
+
+.changeUp {
+  background: #E6F8F0;
+  color: #00B96B;
+}
+
+.changeDown {
+  background: #FFF1F0;
+  color: #FF4D4F;
+}
+
+.actionIcons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  align-items: center;
+}
+
+.actionIcon {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.viewMore {
+  text-align: center;
+  padding: 16px;
+  color: #999;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+}
