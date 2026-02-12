@@ -248,7 +248,8 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
     try {
       const currentLanguage = localStorage.getItem('i18nextLng') || 'zh';
       const language = currentLanguage.startsWith('zh') ? 'zh' : 'en';
-      const res = await sendVerificationCode(email, language);
+      const type = mode === 'email_forget' ? 'reset_password' : '';
+      const res = await sendVerificationCode(email, language, type);
       
       if (res?.code === 200 || res?.success) {
         message.success(t('auth.codeSent') || 'Verification code sent');

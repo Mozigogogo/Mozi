@@ -62,13 +62,11 @@ export const registerByEmail = (email, password, verifyCode, invitedCode = '', c
  */
 export const resetPassword = (email, password, verifyCode) => {
   return request({
-    url: Interface.MOZI_LOGIN,
+    url: Interface.RESET_PASSWORD,
     method: 'POST',
     data: {
-      chanel: 2,  // 2-邮箱
-      type: 'forget',
       email,
-      password,
+      newPassword: password,
       verifyCode,
     },
   });
@@ -79,15 +77,17 @@ export const resetPassword = (email, password, verifyCode) => {
  * 发送邮箱验证码
  * @param {string} email - 收件人邮箱地址
  * @param {string} language - 语言设置（zh-中文，en-英文）
+ * @param {string} type - 验证码类型（可选）
  * @returns {Promise}
  */
-export const sendVerificationCode = (email, language = 'zh') => {
+export const sendVerificationCode = (email, language = 'zh', type = '') => {
   return request({
-    url: '/email/sendVerificationCode',
+    url: Interface.SEND_VERIFICATION_CODE,
     method: 'POST',
     data: {
       email,
       language,
+      ...(type && { type }),
     },
   });
 };
