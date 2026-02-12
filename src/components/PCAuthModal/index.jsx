@@ -16,6 +16,7 @@ import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { sendVerificationCode, loginByEmail, registerByEmail, loginByWallet, loginByGoogle, resetPassword } from '../../api/user';
 import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
+import { encrypt, decrypt } from '../../utils/security';
 import styles from './index.module.less';
 
 // Detect Telegram environment
@@ -76,18 +77,26 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
     if (open) {
       setMode(initialMode);
       // Load remembered email
-      const rememberedEmail = localStorage.getItem('rememberedEmail');
-      const rememberedPass = localStorage.getItem('rememberedPassword') === 'true';
+      // const rememberedEmail = localStorage.getItem('rememberedEmail');
+      // const rememberedPassData = localStorage.getItem('rememberedPasswordData');
       
-      if (rememberedEmail && rememberedPass) {
-        setEmail(rememberedEmail);
-        setRememberPassword(true);
-      } else {
-        setEmail('');
-        setRememberPassword(false);
-      }
+      // if (rememberedEmail && rememberedPassData) {
+      //   setEmail(rememberedEmail);
+      //   const decryptedPass = decrypt(rememberedPassData);
+      //   if (decryptedPass) {
+      //     setPassword(decryptedPass);
+      //     setRememberPassword(true);
+      //   } else {
+      //     // Decryption failed or empty
+      //     setRememberPassword(false);
+      //     setPassword('');
+      //   }
+      // } else {
+      //   setEmail('');
+      //   setRememberPassword(false);
+      //   setPassword('');
+      // }
       
-      setPassword('');
       setVerificationCode('');
       setInviteCode(localStorage.getItem('inviteCode') || '');
     }
@@ -248,7 +257,8 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
     try {
       const currentLanguage = localStorage.getItem('i18nextLng') || 'zh';
       const language = currentLanguage.startsWith('zh') ? 'zh' : 'en';
-      const res = await sendVerificationCode(email, language);
+      const type = mode === 'email_forget' ? 'reset_password' : '';
+      const res = await sendVerificationCode(email, language, type);
       
       if (res?.code === 200 || res?.success) {
         message.success(t('auth.codeSent') || 'Verification code sent');
@@ -306,13 +316,16 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
       }
       
       // Handle Remember Password
-      if (rememberPassword && email) {
-        localStorage.setItem('rememberedEmail', email);
-        localStorage.setItem('rememberedPassword', 'true');
-      } else {
-        localStorage.removeItem('rememberedEmail');
-        localStorage.removeItem('rememberedPassword');
-      }
+      // if (rememberPassword && email && password) {
+      //   localStorage.setItem('rememberedEmail', email);
+      //   // Encrypt password before storing
+      //   const encryptedPass = encrypt(password);
+      //   localStorage.setItem('rememberedPasswordData', encryptedPass);
+      // } else {
+      //   localStorage.removeItem('rememberedEmail');
+      //   localStorage.removeItem('rememberedPasswordData');
+      //   localStorage.removeItem('rememberedPassword'); // Clean up legacy key
+      // }
 
       // Fetch user detailed info
       request({
@@ -705,9 +718,9 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
           </div>
           
           <div className={styles.rememberRow}>
-            <Checkbox checked={rememberPassword} onChange={e => setRememberPassword(e.target.checked)} className={styles.customCheckbox}>
+            {/* <Checkbox checked={rememberPassword} onChange={e => setRememberPassword(e.target.checked)} className={styles.customCheckbox}>
               {t('auth.rememberPassword') || '记住密码'}
-            </Checkbox>
+            </Checkbox> */}
             <a href="#" className={styles.link} onClick={handleForgetPassword} >
               {t('auth.forgetPassword') || '忘记密码？'}
             </a>

@@ -140,8 +140,12 @@ export const Interface = {
   EMAIL_LOGIN: '/user/email/login',
   // 邮箱注册
   EMAIL_REGISTER: '/user/email/register',
+  // 重置密码
+  RESET_PASSWORD: '/user/resetPassword',
   // 发送邮箱验证码
   SEND_EMAIL_CODE: '/user/email/code',
+  // 发送验证码(通用)
+  SEND_VERIFICATION_CODE: '/email/sendVerificationCode',
   // 用户信息
   USER_INFO: '/user/info',
   // 用户详细数据（含邀请码）

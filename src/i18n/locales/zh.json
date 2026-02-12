@@ -116,6 +116,7 @@
     "delete": "删除",
     "share": "分享",
     "more": "更多",
+    "viewMore": "查看更多",
     "updated": "更新",
     "copy": "复制",
     "copySuccess": "复制成功",
@@ -326,7 +327,9 @@
       "coin": "币种",
       "price": "最新价格",
       "change24h": "24h幅度",
-      "actionHeader": "自加选 加监控"
+      "actionHeader": "加自选 加监控",
+      "actionHeaderWatchlist": "加自选",
+      "actionHeaderMonitor": "加监控"
     },
     "logout": "退出登录",
     "loginRegister": "登录/注册",
