@@ -3,7 +3,8 @@ import styles from './index.module.less';
 import { useTranslation } from 'react-i18next';
 
 const GetPointsModal = ({ visible, points = 10, onClose }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isEnglish = i18n.language === 'en';
 
   if (!visible) return null;
 
@@ -11,7 +12,7 @@ const GetPointsModal = ({ visible, points = 10, onClose }) => {
     <div className={styles.mask} onClick={onClose}>
       <div className={styles.container} onClick={e => e.stopPropagation()}>
         <img 
-          src="/icons/new_home/get_ponit.png" 
+          src={isEnglish ? "/icons/new_home/get_point_en.png" : "/icons/new_home/get_ponit.png"}
           alt="Get Points" 
           className={styles.mainImage}
         />

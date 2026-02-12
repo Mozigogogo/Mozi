@@ -306,6 +306,8 @@ export const Interface = {
   TASK_COMPLETE: '/task/complete',
 
   // AI 对话
+  // AI 技术分析
+  AI_ANALYZE: '/v1/analyze',
   // AI 流式对话
   AI_CHAT_STREAM: '/ai/chat/stream',
   // AI 聊天历史记录
