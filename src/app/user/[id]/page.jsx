@@ -6,6 +6,9 @@ import { useTranslation } from 'react-i18next';
 import { LeftOutline, MoreOutline } from 'antd-mobile-icons';
 import { FavoriteIcon } from '@/components/Icons/FavoriteIcon';
 import { BellIcon } from '@/components/Icons/BellIcon';
+import MonitorContent from '@/components/MonitorContent';
+import { Skeleton } from '@/components/Skeleton';
+import UserPosts from '../components/UserPosts';
 import styles from './page.module.less';
 
 // Simple Icon Components for Demo
@@ -47,6 +50,15 @@ export default function UserProfile({ params }) {
   const router = useRouter();
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('watchlist');
+  const [watchlistLoading, setWatchlistLoading] = useState(true);
+
+  // Simulate loading for watchlist
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setWatchlistLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className={styles.container}>
@@ -132,48 +144,83 @@ export default function UserProfile({ params }) {
           </div>
         </div>
 
-        {/* List Container */}
-        <div className={styles.listContainer}>
-          {/* List Header */}
-          <div className={styles.listHeader}>
-            <span className={styles.colCoin}>{t('user.list.coin') || '币种'}</span>
-            <span className={styles.colPrice}>{t('user.list.price') || '最新价格'}</span>
-            <span className={styles.colChange}>{t('user.list.change24h') || '24h幅度'}</span>
-            <div className={styles.colAction}>
-              <span className={styles.actionCell}>{t('user.list.actionHeaderWatchlist') || '自加选'}</span>
-              <span className={styles.actionCell}>{t('user.list.actionHeaderMonitor') || '加监控'}</span>
-            </div>
-          </div>
-
-          {/* Coin List */}
-          <div className={styles.coinList}>
-            {MOCK_COINS.map((coin, index) => (
-              <div key={index} className={styles.listItem}>
-                <div className={`${styles.colCoin} ${styles.coinInfo}`}>
-                  <img src={coin.icon} alt={coin.symbol} className={styles.coinIcon} />
-                  <span className={styles.coinSymbol}>{coin.symbol}</span>
-                </div>
-                <div className={`${styles.colPrice} ${styles.price}`}>{coin.price}</div>
-                <div className={`${styles.colChange} ${styles.changeBox}`}>
-                  <div className={`${styles.changeTag} ${styles.changeUp}`}>
-                    {coin.change}
-                  </div>
-                </div>
-                <div className={`${styles.colAction} ${styles.actionIcons}`}>
-                  <div className={styles.actionCell}><HeartIcon /></div>
-                  <div className={styles.actionCell}><MonitorIcon /></div>
-                </div>
+        {/* Content Area */}
+        {activeTab === 'watchlist' && (
+          <div className={styles.listContainer}>
+            {/* List Header */}
+            <div className={styles.listHeader}>
+              <span className={styles.colCoin}>{t('user.list.coin') || '币种'}</span>
+              <span className={styles.colPrice}>{t('user.list.price') || '最新价格'}</span>
+              <span className={styles.colChange}>{t('user.list.change24h') || '24h幅度'}</span>
+              <div className={styles.colAction}>
+                <span className={styles.actionCell}>{t('user.list.actionHeaderWatchlist') || '自加选'}</span>
+                <span className={styles.actionCell}>{t('user.list.actionHeaderMonitor') || '加监控'}</span>
               </div>
-            ))}
-          </div>
+            </div>
 
-          <div className={styles.viewMore}>
-            {t('common.viewMore') || '查看更多'} &gt;
+            {/* Coin List */}
+            {watchlistLoading ? (
+              <div className={styles.coinList}>
+                {Array(8).fill(0).map((_, i) => (
+                  <div key={i} className={styles.listItem} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div className={`${styles.colCoin} ${styles.coinInfo}`} style={{ gap: '12px' }}>
+                      <Skeleton config={{ type: 'circle', size: 32 }} />
+                      <Skeleton config={{ type: 'element', width: 60, height: 16 }} />
+                    </div>
+                    <div className={styles.colPrice}>
+                      <Skeleton config={{ type: 'element', width: 80, height: 16 }} />
+                    </div>
+                    <div className={styles.colChange}>
+                      <Skeleton config={{ type: 'element', width: 60, height: 28, borderRadius: 4 }} />
+                    </div>
+                    <div className={styles.colAction} style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end' }}>
+                      <Skeleton config={{ type: 'circle', size: 20 }} />
+                      <Skeleton config={{ type: 'circle', size: 20 }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className={styles.coinList}>
+                {MOCK_COINS.map((coin, index) => (
+                  <div key={index} className={styles.listItem}>
+                    <div className={`${styles.colCoin} ${styles.coinInfo}`}>
+                      <img src={coin.icon} alt={coin.symbol} className={styles.coinIcon} />
+                      <span className={styles.coinSymbol}>{coin.symbol}</span>
+                    </div>
+                    <div className={`${styles.colPrice} ${styles.price}`}>{coin.price}</div>
+                    <div className={`${styles.colChange} ${styles.changeBox}`}>
+                      <div className={`${styles.changeTag} ${styles.changeUp}`}>
+                        {coin.change}
+                      </div>
+                    </div>
+                    <div className={`${styles.colAction} ${styles.actionIcons}`}>
+                      <div className={styles.actionCell}><HeartIcon /></div>
+                      <div className={styles.actionCell}><MonitorIcon /></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!watchlistLoading && (
+              <div className={styles.viewMore}>
+                {t('common.viewMore') || '查看更多'} &gt;
+              </div>
+            )}
           </div>
-        </div>
+        )}
+
+        {activeTab === 'monitor' && (
+          <div style={{ height: 'calc(100vh - 280px)', background: '#fff' }}>
+            <MonitorContent showNavBar={false} showBackOnEmpty={false} readOnly={true} className={styles.monitorContainer} />
+          </div>
+        )}
+
+        {activeTab === 'content' && (
+          <UserPosts userId={params.id} />
+        )}
       </div>
     </div>
   );
 }
-
-
