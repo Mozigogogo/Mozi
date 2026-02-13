@@ -259,6 +259,18 @@
       "dark": {
         "name": "暗黑模式",
         "description": "护眼舒适，夜间专属"
+      },
+      "pink": {
+        "name": "少女粉",
+        "description": "温柔浪漫，甜美配色"
+      },
+      "yellow": {
+        "name": "辉煌金",
+        "description": "明亮耀眼，尊贵配色"
+      },
+      "black": {
+        "name": "极夜黑",
+        "description": "深邃神秘，极致配色"
       }
     }
   },

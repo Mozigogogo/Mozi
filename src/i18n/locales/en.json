@@ -259,6 +259,18 @@
       "dark": {
         "name": "Dark Mode",
         "description": "Eye-friendly, night mode"
+      },
+      "pink": {
+        "name": "Girlish Pink",
+        "description": "Gentle, romantic, sweet palette"
+      },
+      "yellow": {
+        "name": "Glorious Gold",
+        "description": "Bright, dazzling, noble palette"
+      },
+      "black": {
+        "name": "Midnight Black",
+        "description": "Deep, mysterious, ultimate palette"
       }
     }
   },

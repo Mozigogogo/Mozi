@@ -482,6 +482,35 @@ export default function CommunityPage() {
       tab: mainTab,
       subTab
     });
+
+    // 1. 震动反馈 (仅点赞时震动)
+    if (!isLiked) {
+      // 仅 Telegram 环境震动
+      if (typeof window !== 'undefined' && window.Telegram?.WebApp?.HapticFeedback) {
+        try {
+          window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+        } catch (e) {
+          console.warn('TG Haptic feedback failed:', e);
+        }
+      }
+    }
+    
+    // 2. 乐观更新 (Optimistic UI Update)
+    setLikedPosts(prev => ({
+      ...prev,
+      [postId]: !isLiked
+    }));
+    
+    setPosts(prevPosts => prevPosts.map(post => {
+      if (post.id === postId) {
+        return {
+          ...post,
+          likeCount: isLiked ? post.likeCount - 1 : post.likeCount + 1,
+          isLiked: !isLiked
+        };
+      }
+      return post;
+    }));
     
     try {
       await request({
@@ -489,22 +518,6 @@ export default function CommunityPage() {
         method: 'GET'
       });
       
-      setLikedPosts(prev => ({
-        ...prev,
-        [postId]: !isLiked
-      }));
-      
-      setPosts(prevPosts => prevPosts.map(post => {
-        if (post.id === postId) {
-          return {
-            ...post,
-            likeCount: isLiked ? post.likeCount - 1 : post.likeCount + 1,
-            isLiked: !isLiked
-          };
-        }
-        return post;
-      }));
-
       // 点赞成功后，调用每日点赞任务完成接口
       if (!isLiked) {
         try {
@@ -520,6 +533,24 @@ export default function CommunityPage() {
       }
     } catch (error) {
       console.error(`${isLiked ? '取消点赞' : '点赞'}失败:`, error);
+      
+      // 3. 失败回滚 (Revert State)
+      setLikedPosts(prev => ({
+        ...prev,
+        [postId]: isLiked
+      }));
+      
+      setPosts(prevPosts => prevPosts.map(post => {
+        if (post.id === postId) {
+          return {
+            ...post,
+            likeCount: isLiked ? post.likeCount + 1 : post.likeCount - 1,
+            isLiked: isLiked
+          };
+        }
+        return post;
+      }));
+
       Toast.show({
         content: `${isLiked ? '取消点赞' : '点赞'}失败，请稍后再试`,
         position: 'bottom',

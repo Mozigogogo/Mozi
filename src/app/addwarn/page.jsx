@@ -388,7 +388,6 @@ export default function Addwarn() {
                 className={styles.saveButton}
                 disabled={btnDisabled}
                 onClick={saveWarnings}
-                color="primary"
               >
                 {t('addAlarm.saveAlarm')}
               </Button>
