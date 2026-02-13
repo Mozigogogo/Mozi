@@ -54,6 +54,26 @@ export const resetSessionExpiredFlag = () => {
   }
 };
 
+// 任务积分映射表
+const TASK_POINTS_MAP = {
+  // 一次性任务
+  'ALARM': 10,
+  'VIDEO': 15,
+  'WECHAT': 20,
+  'COMMUNITY': 20,
+  'EARLY_BIRD': 50,
+  'INVITE_USER': 500,
+  'TWITTER': 10,
+  
+  // 重复性/日常任务
+  'DAILY_LIKE': 4,
+  'POST': 10,
+  'RECEIVE_LIKE': 4,
+  'REPLY': 4,
+  'POST_RECEIVE_REPLY': 4,
+  'DAILY_LOGIN': 5
+};
+
 // 响应拦截器
 instance.interceptors.response.use(
   (response) => {
@@ -69,10 +89,27 @@ instance.interceptors.response.use(
       if (isTaskComplete) {
          try {
            if (typeof window !== 'undefined') {
+             let points = data.data.points || data.data.rewardPoints;
+             
+             // 如果接口未返回积分，尝试从请求参数的 taskCode 映射获取
+             if (!points && response.config.data) {
+               try {
+                 const requestData = typeof response.config.data === 'string' 
+                   ? JSON.parse(response.config.data) 
+                   : response.config.data;
+                   
+                 if (requestData && requestData.taskCode) {
+                   points = TASK_POINTS_MAP[requestData.taskCode];
+                 }
+               } catch (parseError) {
+                 console.warn('解析请求数据失败:', parseError);
+               }
+             }
+             
              // 触发自定义事件，由 Layout 监听并显示弹窗
              const event = new CustomEvent('SHOW_POINTS_MODAL', { 
                detail: { 
-                 points: data.data.points || data.data.rewardPoints || 10 
+                 points: points || 10 // 如果都获取不到，默认显示 10
                } 
              });
              window.dispatchEvent(event);
