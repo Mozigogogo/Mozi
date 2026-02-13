@@ -148,42 +148,65 @@ export default function CommentInfo() {
 
   // 处理帖子点赞/取消点赞
   const handlePostLike = async () => {
+    const isLiked = likedPosts[detail.id];
+    const url = isLiked ? Interface.POSTS_UNLIKE + '/' + detail.id : Interface.POSTS_LIKE + '/' + detail.id;
+
+    // 1. 震动反馈 (仅点赞时震动)
+    if (!isLiked) {
+      // 仅 Telegram 环境震动
+      if (typeof window !== 'undefined' && window.Telegram?.WebApp?.HapticFeedback) {
+        try {
+          window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+        } catch (e) {
+          console.warn('TG Haptic feedback failed:', e);
+        }
+      }
+    }
+
+    // 2. 乐观更新
+    setLikedPosts(prev => ({
+      ...prev,
+      [detail.id]: !isLiked
+    }));
+    
+    setDetail(prev => ({
+      ...prev,
+      likeCnt: isLiked ? prev.likeCnt - 1 : prev.likeCnt + 1
+    }));
+
     try {
-      const isLiked = likedPosts[detail.id];
       const response = await request({
-        url: isLiked ? Interface.POSTS_UNLIKE + '/' + detail.id : Interface.POSTS_LIKE + '/' + detail.id,
+        url,
         method: 'get'
       });
 
-      if (response?.code === 0) {
-        // 更新点赞状态
-        setLikedPosts(prev => ({
-          ...prev,
-          [detail.id]: !isLiked
-        }));
-        
-        // 更新点赞数
-        setDetail(prev => ({
-          ...prev,
-          likeCnt: isLiked ? prev.likeCnt - 1 : prev.likeCnt + 1
-        }));
-
-        // 点赞成功后，调用每日点赞任务完成接口
-        if (!isLiked) {
-          try {
-            await request({
-              url: Interface.TASK_COMPLETE,
-              method: 'POST',
-              data: { taskCode: 'DAILY_LIKE' }
-            });
-            console.log('🔍 [DEBUG] 每日点赞任务上报成功');
-          } catch (taskError) {
-            console.error('每日点赞任务上报失败:', taskError);
-          }
+      // 点赞成功后，调用每日点赞任务完成接口
+      if (!isLiked) {
+        try {
+          await request({
+            url: Interface.TASK_COMPLETE,
+            method: 'POST',
+            data: { taskCode: 'DAILY_LIKE' }
+          });
+          console.log('🔍 [DEBUG] 每日点赞任务上报成功');
+        } catch (taskError) {
+          console.error('每日点赞任务上报失败:', taskError);
         }
       }
     } catch (error) {
       console.error('点赞操作失败:', error);
+      
+      // 3. 失败回滚
+      setLikedPosts(prev => ({
+        ...prev,
+        [detail.id]: isLiked
+      }));
+      
+      setDetail(prev => ({
+        ...prev,
+        likeCnt: isLiked ? prev.likeCnt + 1 : prev.likeCnt - 1
+      }));
+
       Toast.show({
         content: '操作失败',
         icon: 'fail',
@@ -217,65 +240,107 @@ export default function CommentInfo() {
 
   // 处理评论点赞/取消点赞
   const handleCommentLike = async (commentId) => {
+    const isLiked = likedComments[commentId];
+    const url = isLiked 
+      ? Interface.COMMENTS_UNLIKE.replace('{id}', commentId) 
+      : Interface.COMMENTS_LIKE.replace('{id}', commentId);
+
+    // 1. 震动反馈 (仅点赞时震动)
+    if (!isLiked) {
+      // 仅 Telegram 环境震动
+      if (typeof window !== 'undefined' && window.Telegram?.WebApp?.HapticFeedback) {
+        try {
+          window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+        } catch (e) {
+          console.warn('TG Haptic feedback failed:', e);
+        }
+      }
+    }
+
+    // 2. 乐观更新
+    setLikedComments(prev => ({
+      ...prev,
+      [commentId]: !isLiked
+    }));
+    
+    setList(prevList => prevList.map(item => {
+      if (item.id === commentId) {
+        return {
+          ...item,
+          likeCount: isLiked ? item.likeCount - 1 : item.likeCount + 1
+        };
+      }
+      if (item.replies && item.replies.length > 0) {
+        const updatedReplies = item.replies.map(reply => {
+          if (reply.commentId === commentId) {
+            return {
+              ...reply,
+              likeCount: isLiked ? reply.likeCount - 1 : reply.likeCount + 1
+            };
+          }
+          return reply;
+        });
+        return {
+          ...item,
+          replies: updatedReplies
+        };
+      }
+      return item;
+    }));
+
     try {
-      const isLiked = likedComments[commentId];
       const response = await request({
-        url: isLiked 
-          ? Interface.COMMENTS_UNLIKE.replace('{id}', commentId) 
-          : Interface.COMMENTS_LIKE.replace('{id}', commentId),
+        url,
         method: 'get'
       });
 
-      if (response?.code === 0) {
-        // 更新点赞状态
-        setLikedComments(prev => ({
-          ...prev,
-          [commentId]: !isLiked
-        }));
-
-        // 点赞成功后，调用每日点赞任务完成接口
-        if (!isLiked) {
-          try {
-            await request({
-              url: Interface.TASK_COMPLETE,
-              method: 'POST',
-              data: { taskCode: 'DAILY_LIKE' }
-            });
-            console.log('🔍 [DEBUG] 评论点赞任务上报成功');
-          } catch (taskError) {
-            console.error('评论点赞任务上报失败:', taskError);
-          }
+      // 点赞成功后，调用每日点赞任务完成接口
+      if (!isLiked) {
+        try {
+          await request({
+            url: Interface.TASK_COMPLETE,
+            method: 'POST',
+            data: { taskCode: 'DAILY_LIKE' }
+          });
+          console.log('🔍 [DEBUG] 评论点赞任务上报成功');
+        } catch (taskError) {
+          console.error('评论点赞任务上报失败:', taskError);
         }
-        
-        // 更新评论列表中的点赞数
-        setList(prevList => prevList.map(item => {
-          if (item.id === commentId) {
-            return {
-              ...item,
-              likeCount: isLiked ? item.likeCount - 1 : item.likeCount + 1
-            };
-          }
-          // 检查回复列表
-          if (item.replies && item.replies.length > 0) {
-            const updatedReplies = item.replies.map(reply => {
-              if (reply.commentId === commentId) {
-                return {
-                  ...reply,
-                  likeCount: isLiked ? reply.likeCount - 1 : reply.likeCount + 1
-                };
-              }
-              return reply;
-            });
-            return {
-              ...item,
-              replies: updatedReplies
-            };
-          }
-          return item;
-        }));
       }
     } catch (error) {
       console.error('评论点赞操作失败:', error);
+      
+      // 3. 失败回滚
+      setLikedComments(prev => ({
+        ...prev,
+        [commentId]: isLiked
+      }));
+      
+      setList(prevList => prevList.map(item => {
+        if (item.id === commentId) {
+          return {
+            ...item,
+            likeCount: isLiked ? item.likeCount + 1 : item.likeCount - 1
+          };
+        }
+        if (item.replies && item.replies.length > 0) {
+          const updatedReplies = item.replies.map(reply => {
+            if (reply.commentId === commentId) {
+              return {
+                ...reply,
+                likeCount: isLiked ? reply.likeCount + 1 : reply.likeCount - 1
+              };
+            }
+            return reply;
+          });
+          return {
+            ...item,
+            replies: updatedReplies
+          };
+        }
+        return item;
+      }));
+
       Toast.show({
         content: t('comment.messages.operationFailed'),
         icon: 'fail',

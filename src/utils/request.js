@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { INTERFACE_URL } from './constants.js';
+import { INTERFACE_URL, Interface } from './constants.js';
 
 // 创建axios实例
 const instance = axios.create({
@@ -59,6 +59,30 @@ instance.interceptors.response.use(
   (response) => {
     const data = response.data;
     
+    // 全局任务完成监听：只要是任务完成接口且返回成功，就触发积分弹窗
+    if (data && data.code === 0 && data.data && data.data.success) {
+      const isTaskComplete = response.config.url && (
+        response.config.url.includes(Interface.TASK_COMPLETE) || 
+        response.config.url.includes('/task/complete')
+      );
+      
+      if (isTaskComplete) {
+         try {
+           if (typeof window !== 'undefined') {
+             // 触发自定义事件，由 Layout 监听并显示弹窗
+             const event = new CustomEvent('SHOW_POINTS_MODAL', { 
+               detail: { 
+                 points: data.data.points || data.data.rewardPoints || 10 
+               } 
+             });
+             window.dispatchEvent(event);
+           }
+         } catch (e) {
+           console.error('Trigger points modal failed:', e);
+         }
+      }
+    }
+
     // 检查返回的code是否为401
     if (data && data.code === 401) {
       // 检查请求使用的 token 是否与当前存储的 token 一致

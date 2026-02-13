@@ -11,6 +11,7 @@ import ThinkingAnimation from '../../components/ThinkingAnimation';
 import PopLogin from '../../components/PopLogin';
 import { trackEvent, trackPageView, AIEvents } from '@/utils/amplitude';
 import { INTERFACE_URL, Interface } from '@/utils/constants';
+import { request } from '@/utils/request';
 import { useSSEStream } from '@/hooks/useSSEStream';
 import { forceBlurAndResetViewport } from '@/utils/iosViewportFix';
 import styles from './page.module.less';
@@ -329,6 +330,20 @@ export default function RobotPage() {
   const abortControllerRef = useRef(null);
   // const [isStreaming, setIsStreaming] = useState(false); // 使用 hook 中的 isStreaming
 
+  // 检查并完成任务
+  const checkAndCompleteTask = async (taskCode = 'ALARM') => {
+    try {
+      // 只负责调用接口，成功后的弹窗由全局拦截器处理
+      await request({
+        url: Interface.TASK_COMPLETE,
+        method: 'POST',
+        data: { taskCode }
+      });
+    } catch (error) {
+      console.error('Task completion check failed:', error);
+    }
+  };
+
   // 设置欢迎消息
   useEffect(() => {
     setMessages(prev => prev.map(msg => 
@@ -515,6 +530,9 @@ export default function RobotPage() {
           messageId: eventData?.messageId,
           tokens: eventData?.tokens
         });
+
+        // 尝试完成任务 (这里以 ALARM 为例，实际应根据业务逻辑调整)
+        checkAndCompleteTask('ALARM');
       },
       onError: (error) => {
         // AI 对话错误

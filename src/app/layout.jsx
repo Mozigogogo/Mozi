@@ -14,6 +14,7 @@ import EnvironmentDetector from "@/components/EnvironmentDetector";
 import RouteChangeHandler from "@/components/RouteChangeHandler";
 import TelegramAutoLogin from "@/components/TelegramAutoLogin";
 import GoogleAuthProvider from "../context/GoogleAuthProvider";
+import GetPointsModal from "@/components/GetPointsModal";
 
 const geistSans = Inter({
   variable: "--font-geist-sans",
@@ -81,6 +82,7 @@ export default function RootLayout({ children }) {
               <TonConnectProvider>
                 <Web3Provider>
                   <WalletAccountSync />
+                  <GetPointsModal />
                   <Suspense fallback={<LogoLoading visible={true} fullscreen mask image="/images/community/loadding.png" size={72} />}>
                     {children}
                   </Suspense>
