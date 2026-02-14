@@ -12,14 +12,46 @@
     background: #fff;
     border-bottom: 1px solid #f0f0f0;
 
+    .titleRow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2px;
+    }
+
     .chatTitle {
-      font-size: 17px; // 34rpx→17px
+      font-size: 17px; // 34rpx->17px
       font-weight: 600;
       color: #111;
     }
 
+    .modelSelect {
+      min-width: 110px;
+      
+      :global {
+        .ant-select-selector {
+          background-color: #f5f6f7 !important;
+          border: none !important;
+          border-radius: 16px !important;
+          height: 30px !important;
+          padding: 0 12px !important;
+          
+          .ant-select-selection-item {
+            line-height: 30px !important;
+            font-size: 13px;
+            font-weight: 500;
+            color: #333;
+          }
+        }
+        
+        .ant-select-arrow {
+          color: #666;
+        }
+      }
+    }
+
     .chatSubtitle {
-      margin-top: 3px; // 6rpx→3px
+      margin-top: 0; // 6rpx→3px
       font-size: 12px; // 24rpx→12px
       color: #8a8a8a;
 
