@@ -23,6 +23,10 @@ module.exports = withLess({
   },
   async rewrites() {
     return [
+      // {
+      //   source: '/api/robot_proxy/:path*',
+      //   destination: 'https://mozibackend-production.up.railway.app/:path*',
+      // },
       {
         source: '/api/:path*',
         destination: `${API_BASE_URL}/:path*`,

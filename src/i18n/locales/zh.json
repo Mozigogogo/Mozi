@@ -772,6 +772,10 @@
     "wsNotConnected": "WebSocket 未连接，请刷新页面重试",
     "genericError": "抱歉，出现了一些问题，请稍后再试",
     "welcome": "你好，我是你的AI助手！我可以帮你分析币种行情、解答投资问题。有什么可以帮你？",
+    "model": {
+      "analyze": "分析模型",
+      "chat": "对话模型"
+    },
     "suggest": {
       "analyzeTrend": "帮我分析一下 {{symbol}} 的走势",
       "isGoodToBuy": "{{symbol}} 现在适合买入吗？",
