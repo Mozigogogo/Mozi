@@ -774,6 +774,10 @@
     "wsNotConnected": "WebSocket not connected, please refresh",
     "genericError": "Sorry, something went wrong. Please try later",
     "welcome": "Hello, I'm your AI assistant! I can help analyze crypto markets and answer investment questions. What can I help you?",
+    "model": {
+      "analyze": "Analysis Model",
+      "chat": "Chat Model"
+    },
     "suggest": {
       "analyzeTrend": "Help me analyze {{symbol}}'s trend",
       "isGoodToBuy": "Is now a good time to buy {{symbol}}?",
@@ -781,6 +785,10 @@
       "topGainer": "What's the top gainer today?",
       "fearGreedIndex": "What's the Fear & Greed Index?"
     }
+  },
+  "aiAssistant": {
+    "title": "AI Assistant Professional Edition",
+    "subtitle": "Smart Q&A · Quick Response"
   },
   "language": {
     "zh": "简体中文",

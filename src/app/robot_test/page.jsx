@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Select } from 'antd';
 import Image from 'next/image';
 import Markdown from 'markdown-to-jsx';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -12,7 +13,7 @@ import PopLogin from '../../components/PopLogin';
 import { trackEvent, trackPageView, AIEvents } from '@/utils/amplitude';
 import { INTERFACE_URL, Interface } from '@/utils/constants';
 import { request } from '@/utils/request';
-import { useSSEStream } from '@/hooks/useSSEStream';
+import { useRobotTestSSE } from '@/hooks/useRobotTestSSE';
 import { forceBlurAndResetViewport } from '@/utils/iosViewportFix';
 import styles from './page.module.less';
 
@@ -318,6 +319,9 @@ export default function RobotPage() {
     }
   ]);
   const [suggestedQuestions, setSuggestedQuestions] = useState([]);
+  // 模型选择状态
+  const [selectedModel, setSelectedModel] = useState('analyze'); // 'analyze' | 'chat'
+
   const [showPopLogin, setShowPopLogin] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true); // 历史记录加载状态
   
@@ -329,20 +333,6 @@ export default function RobotPage() {
   const historyLoadedRef = useRef(false); // 防止重复加载历史记录
   const abortControllerRef = useRef(null);
   // const [isStreaming, setIsStreaming] = useState(false); // 使用 hook 中的 isStreaming
-
-  // 检查并完成任务
-  const checkAndCompleteTask = async (taskCode = 'ALARM') => {
-    try {
-      // 只负责调用接口，成功后的弹窗由全局拦截器处理
-      await request({
-        url: Interface.TASK_COMPLETE,
-        method: 'POST',
-        data: { taskCode }
-      });
-    } catch (error) {
-      console.error('Task completion check failed:', error);
-    }
-  };
 
   // 设置欢迎消息
   useEffect(() => {
@@ -456,8 +446,10 @@ export default function RobotPage() {
   }, []);
 
   // 使用 SSE Stream Hook
-  const { sendMessage, isStreaming, abort } = useSSEStream(
-    `${INTERFACE_URL}${Interface.AI_ANALYZE}`,
+  const { sendMessage, isStreaming, abort } = useRobotTestSSE(
+    selectedModel === 'analyze' 
+      ? '/api/robot_proxy/api/v1/analyze/stream'
+      : '/api/robot_proxy/api/v1/chat/stream',
     {
       headers: () => {
         const lang = typeof window !== 'undefined' 
@@ -530,9 +522,6 @@ export default function RobotPage() {
           messageId: eventData?.messageId,
           tokens: eventData?.tokens
         });
-
-        // 尝试完成任务 (这里以 ALARM 为例，实际应根据业务逻辑调整)
-        checkAndCompleteTask('ALARM');
       },
       onError: (error) => {
         // AI 对话错误
@@ -633,12 +622,27 @@ export default function RobotPage() {
     }]);
 
     try {
+      const lang = typeof window !== 'undefined' 
+        ? (localStorage.getItem('i18nextLng') || 'zh') 
+        : 'zh';
+
+      // 构造请求 payload
+      let payload = {};
+      if (selectedModel === 'analyze') {
+        payload = {
+          symbol: "BTC",
+          question: message,
+          lang: lang
+        };
+      } else {
+        payload = {
+          message: message,
+          lang: lang
+        };
+      }
+
       // 使用 SSE Stream Hook 发送消息
-      await sendMessage({
-        symbol: "BTC",
-        question: message,
-        lang: "zh"
-      });
+      await sendMessage(payload);
     } catch (error) {
       // 发送消息失败
       console.error('Send message failed:', error);
@@ -711,10 +715,22 @@ export default function RobotPage() {
           title={t('robot.title')} 
           showBack={true}
           className={styles.navBarCustom}
+          rightContent={
+            <Select
+              value={selectedModel}
+              onChange={(value) => setSelectedModel(value)}
+              style={{ width: 140 }}
+              options={[
+                { value: 'analyze', label: t('robot.model.analyze') },
+                { value: 'chat', label: t('robot.model.chat') },
+              ]}
+            />
+          }
         />
         
         <div className={styles.chatHeader}>
           <div className={styles.chatTitle}>{t('robot.title')}</div>
+          
           <div className={styles.chatSubtitle}>
             {t('robot.subtitle')}
           </div>
