@@ -321,6 +321,7 @@ export default function RobotPage() {
   const [suggestedQuestions, setSuggestedQuestions] = useState([]);
   // 模型选择状态
   const [selectedModel, setSelectedModel] = useState('analyze'); // 'analyze' | 'chat'
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const [showPopLogin, setShowPopLogin] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true); // 历史记录加载状态
@@ -715,21 +716,27 @@ export default function RobotPage() {
           title={t('robot.title')} 
           showBack={true}
           className={styles.navBarCustom}
-          rightContent={
+        />
+        
+        <div className={styles.chatHeader}>
+          <div className={styles.titleRow}>
+            <div className={styles.chatTitle}>{t('robot.title')}</div>
             <Select
               value={selectedModel}
-              onChange={(value) => setSelectedModel(value)}
-              style={{ width: 140 }}
+              onChange={(value) => {
+                setSelectedModel(value);
+                setTimeout(() => setDropdownOpen(false), 0);
+              }}
+              onDropdownVisibleChange={setDropdownOpen}
+              open={dropdownOpen}
+              className={styles.modelSelect}
+              popupMatchSelectWidth={false}
               options={[
                 { value: 'analyze', label: t('robot.model.analyze') },
                 { value: 'chat', label: t('robot.model.chat') },
               ]}
             />
-          }
-        />
-        
-        <div className={styles.chatHeader}>
-          <div className={styles.chatTitle}>{t('robot.title')}</div>
+          </div>
           
           <div className={styles.chatSubtitle}>
             {t('robot.subtitle')}
