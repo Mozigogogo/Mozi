@@ -784,6 +784,10 @@
       "fearGreedIndex": "恐惧与贪婪指数是多少？"
     }
   },
+  "aiAssistant": {
+    "title": "AI 助手 专业版",
+    "subtitle": "智能答疑 · 快速响应"
+  },
   "language": {
     "zh": "简体中文",
     "en": "English"
