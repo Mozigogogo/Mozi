@@ -85,7 +85,6 @@
   max-width: 16px;
   max-height: 120px; /* 增加柱状图最大高度 */
   border-radius: 4px 4px 0 0;
-  margin-bottom: 3px;
   min-height: 4px;
   transition: all 0.3s ease;
 }
@@ -521,7 +520,7 @@
 .pcLeft {
   flex: 1;
   background: #fff;
-  border-radius: 8px;
+  border-radius: 40px;
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -558,7 +557,6 @@
   }
   
   .chartContainer {
-    margin: 0 0 24px 0;
     padding: 0 10px;
   }
   
@@ -567,9 +565,13 @@
     align-items: flex-end;
     gap: 8px;
     
-    // Grid lines
-    background-image: linear-gradient(to bottom, #f5f5f5 1px, transparent 1px);
-    background-size: 100% 36px; // 5 lines for 180px
+    // Grid lines - aligned to the bottom of the bars
+    // Label height (20px) + margin-top (8px) = 28px
+    // Using a darker color and slight offset to ensure overlap
+    background-image: linear-gradient(to top, #E0E0E0 1px, transparent 1px);
+    background-size: 100% 36px; 
+    background-position: left bottom 28px;
+    background-repeat: repeat;
     
     &::after {
       display: none; // Remove the old grid implementation if exists
@@ -606,6 +608,7 @@
   
   .barLabel {
     font-size: 12px;
+    line-height: 20px;
     color: #999;
     margin-top: 8px;
   }
@@ -615,8 +618,6 @@
     position: static;
     display: flex;
     justify-content: space-around;
-    padding-top: 24px;
-    border-top: 1px solid #f5f5f5;
     margin-top: auto;
     gap: 0;
     background: transparent;
