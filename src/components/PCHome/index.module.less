@@ -90,39 +90,75 @@
   background: #11B787;
 }
 
+/* 内容分栏布局 */
+.contentSplit {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  align-items: flex-start;
+}
+
+.leftColumn {
+  width: 55%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.rightColumn {
+  width: 45%;
+}
+
 /* 合约专区 */
 .derivativeRow {
-  margin-bottom: 20px;
+  margin-bottom: 0; /* Removed bottom margin as it's handled by gap in leftColumn */
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.derivativeCol {
+  flex: 1;
+  min-width: 0;
 }
 
 .derivativeCard {
-  border-radius: 12px;
+  border-radius: 40px !important;
   box-shadow: none !important;
-  height: 120px;
+  height: auto;
+  width: 100%;
+  background: #FFF;
 
   :global(.ant-card-body) {
-    padding: 16px 20px;
-    height: 100%;
     display: flex;
-    align-items: center;
+    width: 100%; 
+    padding: 25px; 
+    flex-direction: column; 
+    align-items: flex-start; 
+    gap: 24.919px; 
+    flex-shrink: 0; 
+    align-self: stretch; 
   }
 }
 
 .derivativeContent {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   width: 100%;
 }
 
 .derivativeIcon {
-  width: 90px;
-  height: 100px;
+  width: 40px;
+  height: 40px;
   object-fit: contain;
 }
 
 .derivativeText {
-  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .derivativeTitle {
@@ -131,17 +167,8 @@
   color: #333;
 }
 
-.derivativeSubtitle {
-  font-size: 12px !important;
-  color: #999;
-  text-transform: uppercase;
-}
 
-.derivativeArrow {
-  color: #ccc;
-  font-size: 14px;
-  margin-left: auto;
-}
+
 
 /* 涨跌分布区域 - PC端适配 */
 .marketDistributionWrapper {

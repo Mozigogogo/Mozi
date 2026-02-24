@@ -30,10 +30,10 @@ const HOME_BANNERS = [
 
 // 合约专区图标
 const derivativeIcons = {
-  bullBear: `${CDN_PREFIX}/icon/bull-bear-ratio.png`,
-  inventory: `${CDN_PREFIX}/icon/inventory.png`,
-  fundingRate: `${CDN_PREFIX}/icon/funding-rate.png`,
-  volume: `${CDN_PREFIX}/icon/volume-transaction.png`,
+  bullBear: '/images/new_home/bull_bear_ratio.png',
+  inventory: '/images/new_home/position_size.png',
+  fundingRate: '/images/new_home/funding_rate.png',
+  volume: '/images/new_home/trade_volume.png',
 };
 
 /**
@@ -265,35 +265,40 @@ export default function PCHome() {
 
       </div>
 
-      {/* 合约专区 - 4列 */}
-      <Row gutter={16} className={styles.derivativeRow}>
-        {derivativeItems.map((item) => (
-          <Col span={6} key={item.key}>
-            <Card 
-              className={styles.derivativeCard} 
-              hoverable
-              onClick={() => router.push(item.path)}
-            >
-              <div className={styles.derivativeContent}>
-                <img src={item.icon} alt={item.title} className={styles.derivativeIcon} />
-                <div className={styles.derivativeText}>
-                  <div className={styles.derivativeTitle}>{item.title}</div>
-                  <div className={styles.derivativeSubtitle}>{item.subtitle}</div>
-                </div>
-                <RightOutlined className={styles.derivativeArrow} />
+      {/* 内容区域：左侧60% 右侧40% */}
+      <div className={styles.contentSplit}>
+        <div className={styles.leftColumn}>
+          {/* 合约专区 */}
+          <div className={styles.derivativeRow}>
+            {derivativeItems.map((item) => (
+              <div key={item.key} className={styles.derivativeCol}>
+                <Card 
+                  className={styles.derivativeCard} 
+                  hoverable
+                  onClick={() => router.push(item.path)}
+                >
+                  <div className={styles.derivativeContent}>
+                    <img src={item.icon} alt={item.title} className={styles.derivativeIcon} />
+                    <div className={styles.derivativeText}>
+                      <div className={styles.derivativeTitle}>{item.title}</div>
+                    </div>
+                  </div>
+                </Card>
               </div>
-            </Card>
-          </Col>
-        ))}
-      </Row>
+            ))}
+          </div>
 
-      {/* 投资机会 / 话题热榜 - 使用共享组件 - 暂时隐藏 */}
-      {/* <TopicHotList isPC={true} /> */}
+          {/* 涨跌分布 */}
+          <div className={styles.marketDistributionWrapper}>
+            <MarketDistribution isPC={true} />
+          </div>
+        </div>
 
-      {/* 涨跌分布 - 使用移动端组件，PC端左右布局 - 暂时隐藏 */}
-      {/* <div className={styles.marketDistributionWrapper}>
-        <MarketDistribution isPC={true} />
-      </div> */}
+        <div className={styles.rightColumn}>
+          {/* 话题热榜 */}
+          <TopicHotList isPC={true} />
+        </div>
+      </div>
 
       {/* 实时榜单 */}
       <div className={styles.rankSection}>
