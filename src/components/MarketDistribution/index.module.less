@@ -516,70 +516,148 @@
   align-items: stretch;
 }
 
+.pcChart {}
+
 .pcLeft {
   flex: 1;
   background: #fff;
   border-radius: 8px;
-  padding:8px 16px;
-  min-width: 0;
-  position: relative; /* 为统计信息定位做准备 */
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+
+  .pcChartHeader {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 24px;
+    
+    .pcChartTitle {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 4px;
+    }
+    
+    .pcChartTime {
+      font-size: 12px;
+      color: #999;
+    }
+  }
+
+  // Override DistributionChart styles
+  .marketDistribution {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    box-shadow: none;
+    border-radius: 0;
+    backdrop-filter: none;
+    margin: 0;
+    background: transparent;
+  }
+  
+  .chartContainer {
+    margin: 0 0 24px 0;
+    padding: 0 10px;
+  }
   
   .chartBars {
-    justify-content: center;
-    gap: 16px; /* 增加条形图之间的间距 */
+    height: 180px;
+    align-items: flex-end;
+    gap: 8px;
     
-    /* PC端参考线层 - 只覆盖柱状图区域 */
+    // Grid lines
+    background-image: linear-gradient(to bottom, #f5f5f5 1px, transparent 1px);
+    background-size: 100% 36px; // 5 lines for 180px
+    
     &::after {
-      content: '';
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 18px; /* barLabel(约12px) + bar的margin-bottom(3px) + 微调(3px) */
-      height: 120px; /* 增加柱状图的最大高度 */
-      background-image: 
-        linear-gradient(to right, #F3F3F3 0%, #F3F3F3 100%),
-        linear-gradient(to right, #F3F3F3 0%,#F3F3F3 100%),
-        linear-gradient(to right, #F3F3F3 0%,#F3F3F3 100%),
-        linear-gradient(to right, #F3F3F3 0%,#F3F3F3 100%),
-        linear-gradient(to right, #F3F3F3 0%,#F3F3F3 100%);
-      background-size: 100% 1px;
-      background-position: 0 100%, 0 75%, 0 50%, 0 25%, 0 0%; /* 5根线均匀分布 */
-      background-repeat: no-repeat;
-      pointer-events: none;
-      z-index: 0;
+      display: none; // Remove the old grid implementation if exists
     }
   }
   
   .barItem {
-    flex: 0 0 auto;
+    width: auto;
+    flex: 1;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     max-width: none;
-    width: 50px; /* 增加条形图项的宽度 */
-    position: relative;
-    z-index: 1;
+    
+    // Colored values
+    &.up .barValue { color: #11B787; }
+    &.neutral .barValue { color: #999; }
+    &.down .barValue { color: #FA5F5F; }
   }
   
   .bar {
-    max-width: 40px; /* 增加条形图的宽度 */
-    width: 40px;
+    width: 20px;
+    max-width: 20px;
+    border-radius: 4px 4px 0 0;
   }
   
   .barValue {
-    font-size: 12px; /* 稍微增大字体 */
+    font-size: 12px;
+    margin-bottom: 4px;
+    font-weight: 500;
+    color: inherit; // Fallback
   }
   
   .barLabel {
-    font-size: 11px; /* 稍微增大字体 */
+    font-size: 12px;
+    color: #999;
+    margin-top: 8px;
   }
   
-  /* PC端统计信息移到左上角 */
+  // Statistics
   .statisticsRow {
-    position: absolute;
-    top: 16px;
-    left: 16px;
-    margin: 0;
-    padding: 0;
-    gap: 16px;
-    justify-content: flex-start;
+    position: static;
+    display: flex;
+    justify-content: space-around;
+    padding-top: 24px;
+    border-top: 1px solid #f5f5f5;
+    margin-top: auto;
+    gap: 0;
+    background: transparent;
+    width: 100%;
+  }
+  
+  .statItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    
+    .statIcon {
+      font-size: 12px;
+    }
+    
+    .statText {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #666;
+      font-weight: 400;
+    }
+    
+    .statValue {
+      font-size: 16px;
+      font-weight: 500;
+      margin-left: 4px;
+    }
+    
+    &.up {
+      .statIcon, .statValue { color: #11B787; }
+    }
+    
+    &.neutral {
+      .statValue { color: #999; }
+    }
+    
+    &.down {
+      .statIcon, .statValue { color: #FA5F5F; }
+    }
   }
 }
 

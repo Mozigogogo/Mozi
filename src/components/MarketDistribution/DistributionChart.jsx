@@ -6,7 +6,7 @@
 import styles from './index.module.less';
 import { useTranslation } from 'react-i18next';
 
-export default function DistributionChart({ chartData, statistics }) {
+export default function DistributionChart({ chartData, statistics, isPC = false }) {
   const { t } = useTranslation();
   // 获取最大值用于计算柱状图高度
   const maxValue = Math.max(...chartData.map(item => item.value));
@@ -28,12 +28,12 @@ export default function DistributionChart({ chartData, statistics }) {
   };
 
   return (
-    <div className={styles.marketDistribution}>
+    <div className={`${styles.marketDistribution} ${isPC ? styles.pcChart : ''}`}>
       {/* 柱状图区域 */}
       <div className={styles.chartContainer}>
         <div className={styles.chartBars}>
           {chartData.map((item, index) => (
-            <div key={index} className={styles.barItem}>
+            <div key={index} className={`${styles.barItem} ${styles[item.type]}`}>
               <div className={styles.barValue}>{item.value}</div>
               <div 
                 className={styles.bar}
@@ -52,14 +52,23 @@ export default function DistributionChart({ chartData, statistics }) {
       <div className={styles.statisticsRow}>
         <div className={`${styles.statItem} ${styles.up}`}>
           <div className={styles.statIcon}>▲</div>
-          <div className={styles.statText}>{t('market.up')} {statistics.up}</div>
+          <div className={styles.statText}>
+            <span>{t('market.up')}</span>
+            <span className={styles.statValue}>{statistics.up}</span>
+          </div>
         </div>
         <div className={`${styles.statItem} ${styles.neutral}`}>
-          <div className={styles.statText}>{t('market.neutral')} {statistics.neutral}</div>
+          <div className={styles.statText}>
+            <span>{t('market.neutral')}</span>
+            <span className={styles.statValue}>{statistics.neutral}</span>
+          </div>
         </div>
         <div className={`${styles.statItem} ${styles.down}`}>
           <div className={styles.statIcon}>▼</div>
-          <div className={styles.statText}>{t('market.down')} {statistics.down}</div>
+          <div className={styles.statText}>
+            <span>{t('market.down')}</span>
+            <span className={styles.statValue}>{statistics.down}</span>
+          </div>
         </div>
       </div>
     </div>

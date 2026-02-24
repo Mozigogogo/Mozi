@@ -16,7 +16,7 @@ import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import styles from './index.module.less';
 import MarketDistribution from '../MarketDistribution';
-import TopicHotList from '../TopicHotList';
+import PCHotTopics from '../PCHotTopics';
 
 // CDN 图片前缀
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
@@ -295,9 +295,9 @@ export default function PCHome() {
         </div>
 
         <div className={styles.rightColumn}>
-          {/* 话题热榜 */}
-          <TopicHotList isPC={true} />
-        </div>
+            {/* 话题热榜 */}
+            <PCHotTopics />
+          </div>
       </div>
 
       {/* 实时榜单 */}
