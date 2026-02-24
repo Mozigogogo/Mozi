@@ -6,6 +6,167 @@
   padding-bottom: env(safe-area-inset-bottom);
   overflow: hidden; /* 防止整个页面滚动 */
 
+  &.pcMode {
+    height: calc(100vh - 120PX); // Use PX to avoid scaling. 64px header + 24px padding + 32px bottom gap
+    background: #fff;
+    padding-bottom: 0;
+    border-radius: 12PX; // Use PX to avoid scaling
+    box-shadow: 0 2PX 12PX rgba(0, 0, 0, 0.05); // Use PX to avoid scaling
+    display: flex;
+    flex-direction: column;
+
+    // Use PX (uppercase) or media query to potentially bypass px-to-viewport/rem conversion
+    @media screen and (min-width: 1024px) {
+      .chatHeader {
+        flex-shrink: 0;
+        padding-top: 12PX; 
+        padding-left: 24PX;
+        padding-right: 24PX;
+        padding-bottom: 12PX;
+        max-width: 1000PX;
+        margin: 0 auto;
+        width: 100%;
+        box-sizing: border-box;
+        border-bottom: none;
+
+        .chatTitle {
+          font-size: 18PX; 
+        }
+
+        .chatSubtitle {
+          font-size: 12PX;
+          margin-top: 4PX;
+          
+          .conversationId {
+            font-size: 11PX;
+          }
+        }
+
+        .modelSelect {
+          min-width: 140PX;
+          :global {
+            .ant-select-selector {
+              height: 38PX !important;
+              border-radius: 19PX !important;
+              border: 1px solid #f0f0f0 !important;
+              box-shadow: 0 2PX 8PX rgba(0,0,0,0.04);
+              background-color: #fff !important;
+              transition: all 0.3s ease;
+              
+              &:hover {
+                border-color: #11B787 !important;
+                box-shadow: 0 4PX 12PX rgba(17, 183, 135, 0.15);
+              }
+
+              .ant-select-selection-item {
+                line-height: 36PX !important;
+                font-size: 14PX;
+                font-weight: 500;
+                color: #333;
+              }
+            }
+            .ant-select-arrow {
+                color: #11B787;
+            }
+          }
+        }
+      }
+
+      .chatScroll {
+        flex: 1;
+        min-height: 0; 
+        padding: 20PX 0;
+        
+        .messages {
+          max-width: 800PX;
+          margin: 0 auto;
+          padding: 0 20PX;
+          gap: 16PX;
+        }
+
+        .bubble {
+          font-size: 14PX;
+          padding: 10PX 14PX;
+          border-radius: 8PX;
+          
+          .text {
+            font-size: 14PX;
+          }
+        }
+
+        .avatar, .userAvatar {
+          width: 40PX;
+          height: 40PX;
+          font-size: 16PX;
+        }
+        
+        .timeUnder {
+          font-size: 12PX;
+          margin-top: 4PX;
+        }
+      }
+
+      .chatInputBar {
+        flex-shrink: 0;
+        padding: 24PX;
+        justify-content: center;
+        background: #fff;
+        border-top: none;
+
+        .inputBox {
+          max-width: 800PX;
+          border-radius: 28PX;
+          padding: 8PX 8PX 8PX 24PX;
+          
+          .input {
+            height: 40PX;
+            font-size: 15PX;
+            margin-right: 12PX;
+            
+            &::placeholder {
+              font-size: 15PX;
+            }
+          }
+        }
+
+        .sendBtn, .stopBtn {
+          width: 40PX;
+          height: 40PX;
+          border-radius: 50%;
+          padding: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          
+          svg {
+              width: 18PX;
+              height: 18PX;
+              margin: 0;
+          }
+        }
+        
+        .pauseIcon {
+            width: 16PX;
+            height: 16PX;
+        }
+      }
+
+      .suggestedQuestions {
+        max-width: 800PX;
+        margin: 0 auto 10PX;
+        
+        .suggestedTitle {
+          font-size: 12PX;
+        }
+        
+        .suggestedBtn {
+          font-size: 13PX;
+          padding: 8PX 12PX;
+        }
+      }
+    }
+  }
+
   .chatHeader {
     padding: 12px 8px 6px; // 24rpx→12px, 16rpx→8px, 12rpx→6px
     padding-top: 56px; // 为 NavBar 留出空间（44px NavBar + 12px 原有 padding）
@@ -239,9 +400,9 @@
 
   .chatInputBar {
     display: flex;
-    gap: 5px; // 10rpx→5px
-    padding: 5px 6px; // 10rpx→5px, 12rpx→6px
-    padding-bottom: calc(5px + env(safe-area-inset-bottom));
+    gap: 8px;
+    padding: 12px 16px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
     background: #fff;
     border-top: 1px solid #f0f0f0;
   }
@@ -249,24 +410,33 @@
   .inputBox {
     flex: 1;
     background: #f5f6f7;
-    border-radius: 6px; // 12rpx→6px
-    padding: 0 8px; // 16rpx→8px
+    border-radius: 24px;
+    padding: 6px 6px 6px 16px;
     display: flex;
     align-items: center;
+    position: relative;
+    border: 1px solid transparent;
+    transition: all 0.3s;
+    
+    &:focus-within {
+      background: #fff;
+      border-color: #11B787;
+      box-shadow: 0 0 0 2px rgba(17, 183, 135, 0.1);
+    }
   }
 
   .input {
-    height: 36px; // 72rpx→36px
-    font-size: 16px; // 改为 16px 防止 iOS 缩放
+    height: 36px;
+    font-size: 16px;
     width: 100%;
     border: none;
     background: transparent;
     outline: none;
     font-family: inherit;
-    
-    // 防止 iOS 自动缩放 - 关键设置
     -webkit-text-size-adjust: 100%;
     touch-action: manipulation;
+    flex: 1;
+    margin-right: 8px;
 
     &:disabled {
       color: #999;
@@ -274,7 +444,7 @@
 
     &::placeholder {
       color: #999;
-      font-size: 16px; // placeholder 也要 16px
+      font-size: 16px;
     }
   }
 
@@ -282,21 +452,31 @@
     background: #11B787;
     color: #fff;
     border: none;
-    height: 36px; // 72rpx→36px
-    line-height: 36px;
-    border-radius: 6px; // 12rpx→6px
-    padding: 0 11px; // 22rpx→11px
-    font-size: 16px; // 28rpx→14px
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    transition: opacity 0.3s;
+    transition: all 0.2s;
+    flex-shrink: 0;
 
     &:hover:not(:disabled) {
-      opacity: 0.9;
+      background: #0ea67a;
+      transform: scale(1.05);
     }
 
     &:disabled {
       background: #ccc;
       cursor: not-allowed;
+      transform: none;
+    }
+    
+    svg {
+      margin-left: -2px;
+      margin-top: 1px;
     }
   }
 
@@ -304,15 +484,16 @@
     background: #ff4d4f;
     color: #fff;
     border: none;
-    height: 36px; // 72rpx→36px
-    border-radius: 6px; // 12rpx→6px
-    padding: 0 11px; // 22rpx→11px
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    padding: 0;
     cursor: pointer;
     transition: opacity 0.3s;
-    min-width: 52px; // 与发送按钮宽度保持一致
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 
     &:hover {
       opacity: 0.9;
@@ -439,4 +620,35 @@
   font-size: 14px;
   color: #666;
   font-weight: 500;
+}
+
+.modelSelectDropdown {
+  border-radius: 16PX !important;
+  box-shadow: 0 6PX 24PX rgba(0,0,0,0.12) !important;
+  border: 1px solid #f0f0f0;
+  overflow: hidden;
+  
+  :global {
+    .ant-select-item {
+      border-radius: 10PX !important;
+      min-height: 40PX;
+      display: flex;
+      align-items: center;
+      transition: all 0.2s;
+      
+      &-option-selected {
+        background-color: rgba(17, 183, 135, 0.08) !important;
+        color: #11B787 !important;
+        font-weight: 600;
+      }
+      
+      &-option-active {
+        background-color: #f7f9fc !important;
+      }
+      
+      .ant-select-item-option-content {
+        font-size: 14PX;
+      }
+    }
+  }
 }

@@ -8,6 +8,7 @@ import Markdown from 'markdown-to-jsx';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import NavBar from '../../components/NavBar';
+import PCLayout from '../../components/PCLayout';
 import ThinkingAnimation from '../../components/ThinkingAnimation';
 import PopLogin from '../../components/PopLogin';
 import { trackEvent, trackPageView, AIEvents } from '@/utils/amplitude';
@@ -305,9 +306,24 @@ const StreamingMarkdown = ({ content, isStreaming }) => {
   );
 };
 
-export default function RobotPage() {
+export default function RobotPage({ isPC: propIsPC = false }) {
   const { t } = useTranslation();
   const BOT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/AI_Bot.png';
+
+  const [isPCState, setIsPCState] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+    const checkDevice = () => {
+      setIsPCState(window.innerWidth >= 1024);
+    };
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+    return () => window.removeEventListener('resize', checkDevice);
+  }, []);
+
+  const isPC = propIsPC || isPCState;
 
   const [inputValue, setInputValue] = useState('');
   const [messages, setMessages] = useState([
@@ -710,13 +726,15 @@ export default function RobotPage() {
     return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
   };
 
-  return (
-      <div className={styles.robotPage}>
-        <NavBar 
-          title={t('robot.title')} 
-          showBack={true}
-          className={styles.navBarCustom}
-        />
+  const content = (
+      <div className={`${styles.robotPage} ${isPC ? styles.pcMode : ''}`}>
+        {!isPC && (
+          <NavBar 
+            title={t('robot.title')} 
+            showBack={true}
+            className={styles.navBarCustom}
+          />
+        )}
         
         <div className={styles.chatHeader}>
           <div className={styles.titleRow}>
@@ -730,6 +748,7 @@ export default function RobotPage() {
               onDropdownVisibleChange={setDropdownOpen}
               open={dropdownOpen}
               className={styles.modelSelect}
+              popupClassName={styles.modelSelectDropdown}
               popupMatchSelectWidth={false}
               options={[
                 { value: 'analyze', label: t('robot.model.analyze') },
@@ -824,29 +843,32 @@ export default function RobotPage() {
               onFocus={() => trackEvent(AIEvents.INPUT_FOCUSED)}
               disabled={isStreaming}
             />
+            {isStreaming ? (
+              <button 
+                className={styles.stopBtn} 
+                onClick={handleStop}
+              >
+                <Image 
+                  src="/icons/pause.svg" 
+                  alt={t('robot.stopAlt')} 
+                  width={14} 
+                  height={14}
+                  className={styles.pauseIcon}
+                />
+              </button>
+            ) : (
+              <button 
+                className={styles.sendBtn} 
+                onClick={() => handleSend()}
+                disabled={!inputValue.trim()}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 19V5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M5 12L12 5L19 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            )}
           </div>
-          {isStreaming ? (
-            <button 
-              className={styles.stopBtn} 
-              onClick={handleStop}
-            >
-              <Image 
-                src="/icons/pause.svg" 
-                alt={t('robot.stopAlt')} 
-                width={18} 
-                height={18}
-                className={styles.pauseIcon}
-              />
-            </button>
-          ) : (
-            <button 
-              className={styles.sendBtn} 
-              onClick={() => handleSend()}
-              disabled={!inputValue.trim()}
-            >
-              {t('robot.send')}
-            </button>
-          )}
         </div>
         
         {/* 登录提示弹窗 */}
@@ -857,4 +879,16 @@ export default function RobotPage() {
         />
       </div>
   );
+
+  if (!mounted) return null;
+
+  if (isPC) {
+    return (
+      <PCLayout>
+        {content}
+      </PCLayout>
+    );
+  }
+
+  return content;
 }
