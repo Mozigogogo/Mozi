@@ -22,10 +22,10 @@ import TopicHotList from '../TopicHotList';
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
 
 // Banner 图片
-const HOME_BANNERS_ZH = [
-  `${CDN_PREFIX}/image/home/banner1.png`,
-  `${CDN_PREFIX}/image/home/banner2.png`,
-  `${CDN_PREFIX}/image/home/banner3.png`,
+const HOME_BANNERS = [
+  '/images/new_home/banner1_pc_en.png',
+  '/images/new_home/banner2_pc_en.png',
+  '/images/new_home/banner3_pc_en.png',
 ];
 
 // 合约专区图标
@@ -53,7 +53,7 @@ export default function PCHome() {
   // 自动轮播
   useEffect(() => {
     const timer = setInterval(() => {
-      setActiveBanner((prev) => (prev + 1) % HOME_BANNERS_ZH.length);
+      setActiveBanner((prev) => (prev + 1) % HOME_BANNERS.length);
     }, 4000);
     return () => clearInterval(timer);
   }, []);
@@ -247,12 +247,12 @@ export default function PCHome() {
       {/* Banner 3D轮播 */}
       <div className={styles.bannerWrapper}>
         <div className={styles.carousel3d}>
-          {HOME_BANNERS_ZH.map((url, idx) => {
-            const position = (idx - activeBanner + HOME_BANNERS_ZH.length) % HOME_BANNERS_ZH.length;
+          {HOME_BANNERS.map((url, idx) => {
+            const position = (idx - activeBanner + HOME_BANNERS.length) % HOME_BANNERS.length;
             let posClass = '';
             if (position === 0) posClass = styles.active;
             else if (position === 1) posClass = styles.next;
-            else if (position === HOME_BANNERS_ZH.length - 1) posClass = styles.prev;
+            else if (position === HOME_BANNERS.length - 1) posClass = styles.prev;
             else posClass = styles.hidden;
             
             return (
@@ -262,15 +262,7 @@ export default function PCHome() {
             );
           })}
         </div>
-        <div className={styles.carouselDots}>
-          {HOME_BANNERS_ZH.map((_, idx) => (
-            <span 
-              key={idx} 
-              className={`${styles.dot} ${idx === activeBanner ? styles.dotActive : ''}`}
-              onClick={() => setActiveBanner(idx)}
-            />
-          ))}
-        </div>
+
       </div>
 
       {/* 合约专区 - 4列 */}

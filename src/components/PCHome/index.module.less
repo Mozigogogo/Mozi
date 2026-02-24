@@ -21,13 +21,20 @@
 
 .carouselItem {
   position: absolute;
-  width: 65%;
-  max-width: 800px;
+  width: 60%;
+  max-width: 1000px;
   height: 100%;
   border-radius: 12px !important;
   overflow: hidden !important;
   transition: all 0.5s ease;
   cursor: pointer;
+  /* 修复 Safari/Chrome 下 3D 变换导致圆角失效的问题 */
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  /* 强制裁剪 */
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
 
   img {
     width: 100%;
@@ -44,12 +51,12 @@
 
 .prev {
   z-index: 2;
-  transform: translateX(-60%) scale(0.85);
+  transform: translateX(-40%) scale(0.85);
 }
 
 .next {
   z-index: 2;
-  transform: translateX(60%) scale(0.85);
+  transform: translateX(40%) scale(0.85);
 }
 
 .hidden {
