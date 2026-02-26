@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import * as d3 from 'd3';
-import { Spin } from 'antd';
 import styles from './index.module.less';
 
 const PCSectorTreeMap = ({ 
@@ -292,19 +291,10 @@ const PCSectorTreeMap = ({
         style={{ position: 'relative', width: '100%', height: '600px' }}
       >
         {loading && (
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 20,
-            background: 'rgba(255,255,255,0.8)'
-          }}>
-            <Spin size="large" />
+          <div className={styles.skeletonContainer}>
+            {Array.from({ length: 24 }).map((_, i) => (
+              <div key={i} className={styles.skeletonItem} />
+            ))}
           </div>
         )}
         

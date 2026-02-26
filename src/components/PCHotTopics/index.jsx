@@ -8,7 +8,8 @@ import styles from './index.module.less';
 
 const PCHotTopics = () => {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isZh = (i18n.language || '').startsWith('zh');
   const listRef = useRef(null);
   const isFetchingRef = useRef(false);
   const [topics, setTopics] = useState([]);
@@ -144,11 +145,17 @@ const PCHotTopics = () => {
       <div className={styles.container}>
         <div className={styles.header}>
           <div className={styles.title}>
-            <span className={styles.titleText}>
-              <span style={{ color: '#F43138' }}>热</span>
-              <span style={{ color: '#FF7E09' }}>聊</span>
-              <span style={{ color: '#000' }}>话题</span>
-            </span>
+            {isZh ? (
+              <span className={styles.titleText}>
+                <span style={{ color: '#F43138' }}>热</span>
+                <span style={{ color: '#FF7E09' }}>聊</span>
+                <span style={{ color: '#000' }}>话题</span>
+              </span>
+            ) : (
+              <span className={styles.titleText} style={{ color: '#000' }}>
+                {t('pcHome.hotTopics.title')}
+              </span>
+            )}
           </div>
         </div>
         <div className={styles.skeleton}>
@@ -164,11 +171,17 @@ const PCHotTopics = () => {
     <div className={styles.container}>
       <div className={styles.header}>
         <div className={styles.title}>
-          <span className={styles.titleText}>
-            <span style={{ color: '#F43138' }}>热</span>
-            <span style={{ color: '#FF7E09' }}>聊</span>
-            <span style={{ color: '#000' }}>话题</span>
-          </span>
+          {isZh ? (
+            <span className={styles.titleText}>
+              <span style={{ color: '#F43138' }}>热</span>
+              <span style={{ color: '#FF7E09' }}>聊</span>
+              <span style={{ color: '#000' }}>话题</span>
+            </span>
+          ) : (
+            <span className={styles.titleText} style={{ color: '#000' }}>
+              {t('pcHome.hotTopics.title')}
+            </span>
+          )}
         </div>
         <div className={styles.moreBtn} onClick={handleMoreClick}>
           <RightArrowBoldIcon width={10} height={17} color="#09244B" style={{ display: 'block' }} />

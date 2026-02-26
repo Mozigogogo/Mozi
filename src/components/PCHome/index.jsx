@@ -239,7 +239,14 @@ export default function PCHome() {
       title: t('pcHome.table.monitor'),
       key: 'addMonitor',
       align: 'center',
-      render: () => <BellOutlined className={styles.actionIcon} />,
+      render: () => (
+        <img 
+          src="/icons/new_home/monitor-bell.svg" 
+          className={styles.actionIcon} 
+          alt="monitor"
+          style={{ width: 18, height: 18 }} 
+        />
+      ),
     },
   ];
 
@@ -453,7 +460,7 @@ export default function PCHome() {
         <div className={styles.sectorHeader}>
           <h2 className={styles.sectorTitle}>{t('pcHome.sectorMap.title')}</h2>
           <div className={styles.headerViewMore} onClick={() => router.push('/hotsector')}>
-            {t('pcHome.sectorMap.viewMore')} <RightOutlined />
+            {t('pcHome.sectorMap.viewMore')}
           </div>
         </div>
         <div className={styles.sectorCard}>
@@ -471,7 +478,7 @@ export default function PCHome() {
         <div className={styles.rankHeader}>
           <h2 className={styles.rankTitle}>{t('pcHome.ranks.title')}</h2>
           <div className={styles.headerViewMore} onClick={() => router.push('/pricerank')}>
-            {t('pcHome.ranks.viewMore')} <RightOutlined />
+            {t('pcHome.ranks.viewMore')}
           </div>
         </div>
         
@@ -491,7 +498,6 @@ export default function PCHome() {
               ...pagination,
               onChange: handlePageChange,
               showSizeChanger: false,
-              showQuickJumper: true,
               position: ['bottomCenter']
             }}
             size="middle"

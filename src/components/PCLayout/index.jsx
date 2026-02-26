@@ -258,7 +258,6 @@ export default function PCLayout({ children }) {
       />, 
       label: t('pcLayout.menu.community') 
     },
-    { type: 'divider' },
     {
       key: 'mine',
       label: collapsed ? '' : t('pcLayout.menu.mine'), // 折叠时隐藏分组标签
@@ -306,7 +305,6 @@ export default function PCLayout({ children }) {
         },
       ],
     },
-    { type: 'divider' },
     {
       key: 'coinlist',
       label: collapsed ? '' : t('pcLayout.menu.createdLists'), // 折叠时隐藏分组标签
@@ -440,8 +438,8 @@ export default function PCLayout({ children }) {
                 Menu: {
                   itemSelectedColor: '#11B787',
                   itemSelectedBg: 'transparent',
-                  itemHoverColor: '#11B787',
-                  itemHoverBg: 'transparent',
+                  itemHoverColor: 'inherit',
+                  itemHoverBg: '#f5f5f5',
                   itemActiveBg: 'transparent',
                   iconMarginInlineEnd: 12,
                 },

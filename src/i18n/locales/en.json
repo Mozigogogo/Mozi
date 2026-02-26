@@ -1396,6 +1396,9 @@
     "commentFailed": "Failed to post, please try again"
   },
   "pcHome": {
+    "hotTopics": {
+      "title": "Hot Topics"
+    },
     "banner": {
       "topic": "Hot Topics in Community",
       "topicSub": "Capture Trending Topics",

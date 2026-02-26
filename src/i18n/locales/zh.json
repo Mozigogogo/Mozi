@@ -1393,6 +1393,9 @@
     "commentFailed": "发布失败，请重试"
   },
   "pcHome": {
+    "hotTopics": {
+      "title": "热聊话题"
+    },
     "banner": {
       "topic": "热议话题 尽在社区",
       "topicSub": "全网话题 即时捕捉",
