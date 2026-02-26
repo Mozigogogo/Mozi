@@ -35,6 +35,15 @@
   }
 }
 
+/* Classes for internal elements */
+.nameText {}
+.hideNameOnHover {}
+
+/* Hide name when hovered if the block is compact to avoid overlap with yellow tag */
+.hideNameOnHover:hover .nameText {
+  display: none;
+}
+
 .empty {
   display: flex;
   justify-content: center;

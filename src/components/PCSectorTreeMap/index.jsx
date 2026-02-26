@@ -128,7 +128,17 @@ const PCSectorTreeMap = ({
         .selectAll(`.${styles.treemapItem}`)
         .data(root.leaves())
         .join('div')
-        .attr('class', styles.treemapItem)
+        .attr('class', d => {
+          const w = d.x1 - d.x0;
+          const h = d.y1 - d.y0;
+          // If height is small enough that the top label (yellow tag) would overlap content, hide content name.
+          // Yellow tag is ~24px height.
+          // We use 80px as threshold.
+          // We only hide name if yellow tag IS shown (h > 24 && w > 30).
+          const hasYellowTag = h > 24 && w > 30;
+          const isCompact = h < 80;
+          return `${styles.treemapItem} ${hasYellowTag && isCompact ? styles.hideNameOnHover : ''}`;
+        })
         .style('position', 'absolute')
         .style('left', d => `${d.x0}px`)
         .style('top', d => `${d.y0}px`)
@@ -172,10 +182,15 @@ const PCSectorTreeMap = ({
            const nameFontSize = Math.max(12, Math.min(itemWidth / 6, itemHeight / 4, 18));
            const valFontSize = Math.max(12, Math.min(itemWidth / 5, itemHeight / 3, 20));
 
-           if (area > 1500 && itemWidth > 60) {
-             return `<div style="font-size:${nameFontSize}px;font-weight:600;margin-bottom:4px;">${d.data.name}</div><div style="font-size:${valFontSize}px;font-weight:700;">${changeStr}</div>`;
+           // Only show both name and percentage if there is enough space.
+           // Height check is crucial: need at least ~50px to stack name and percentage comfortably.
+           if (area > 1500 && itemWidth > 60 && itemHeight > 50) {
+             return `<div class="${styles.nameText}" style="font-size:${nameFontSize}px;font-weight:600;margin-bottom:4px;">${d.data.name}</div><div style="font-size:${valFontSize}px;font-weight:700;">${changeStr}</div>`;
            } else {
-             return `<div style="font-size:${Math.max(10, nameFontSize*0.8)}px;font-weight:500;">${d.data.name}</div>`;
+             // Priority: Show Name Only
+             // If the name is very long, it might still overflow, but CSS text-overflow should handle it if set,
+             // or it will wrap. Given the constraints, just showing name is safer.
+             return `<div class="${styles.nameText}" style="font-size:${Math.max(10, nameFontSize*0.8)}px;font-weight:500;">${d.data.name}</div>`;
            }
         });
         

@@ -124,7 +124,10 @@
     "linkCopied": "链接已复制",
     "loadFailed": "加载失败，请稍后重试",
     "noData": "暂无数据",
-    "noTasks": "暂无任务"
+    "noTasks": "暂无任务",
+    "addSuccess": "添加成功",
+    "cancelSuccess": "取消成功",
+    "operationFailed": "操作失败"
   },
   "exchangeRank": {
     "realTimeUpdate": "实时更新"
@@ -1422,7 +1425,7 @@
       "viewMore": "查看更多"
     },
     "ranks": {
-      "title": "热门排行",
+      "title": "实时榜单",
       "viewMore": "查看更多",
       "self": "自选榜",
       "gainers": "涨幅榜",

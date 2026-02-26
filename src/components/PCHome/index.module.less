@@ -19,6 +19,43 @@
   align-items: center;
 }
 
+.carouselSkeleton {
+  width: 100%;
+  height: 400px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden; /* 防止超出部分显示 */
+}
+
+.skeletonItem {
+  position: absolute;
+  width: 60%;
+  max-width: 1000px;
+  height: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff; /* Ensure opacity to cover underlying elements */
+  
+  :global {
+    .ant-skeleton,
+    .ant-skeleton-element,
+    .ant-skeleton-button {
+      width: 100% !important;
+      height: 100% !important;
+      border-radius: 12px !important;
+      display: block !important;
+    }
+  }
+
+  /* Increase z-index for active skeleton item */
+  &.active {
+    z-index: 10;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  }
+}
+
 .carouselItem {
   position: absolute;
   width: 60%;
@@ -483,6 +520,7 @@
 .rankHeader {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 16px;
 }
 
@@ -494,42 +532,56 @@
 }
 
 .rankTabs {
+  width: 100%;
+  margin-bottom: 8px;
+
   :global(.ant-tabs-nav) {
     margin-bottom: 0;
+    width: 100%;
+    
+    :global(.ant-tabs-nav-list) {
+      width: 100%;
+      justify-content: space-between;
+    }
 
     &::before {
-      display: none;
+      border-bottom: 1px solid #f0f0f0;
     }
   }
 
   :global(.ant-tabs-tab) {
-    padding: 8px 16px;
+    padding: 12px 0;
     margin: 0 !important;
-    border-radius: 8px;
-    background: #f5f5f5;
+    background: transparent;
     border: none;
+    font-size: 16px;
+    color: #666;
+    flex: 1;
+    justify-content: center;
 
     &:hover {
-      color: #333;
+      color: #11B787;
     }
   }
 
   :global(.ant-tabs-tab-active) {
-    background: #11B787;
-    border-radius: 20px;
-
+    background: transparent;
+    
     :global(.ant-tabs-tab-btn) {
-      color: #fff !important;
+      color: #11B787 !important;
+      font-weight: 600;
     }
   }
 
   :global(.ant-tabs-ink-bar) {
-    display: none;
+    background: #11B787;
+    height: 3px;
+    border-radius: 3px;
   }
 }
 
 .rankCard {
-  border-radius: 12px;
+  border-radius: 30px;
 
   :global(.ant-card-body) {
     padding: 20px;
@@ -542,6 +594,17 @@
   justify-content: center;
   gap: 8px;
   height: 100%;
+
+  span {
+    overflow: hidden;
+    color: var(--Color, #313030);
+    text-overflow: ellipsis;
+    font-family: "Roboto 2 DRAFT Condensed", sans-serif;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 15.628px;
+  }
 }
 
 .coinIcon {
@@ -558,7 +621,11 @@
   transition: color 0.2s;
 
   &:hover {
-    color: #11B787;
+    color: rgba(250, 95, 95, 1);
+  }
+  
+  &.active {
+    color: rgba(250, 95, 95, 1);
   }
 }
 
@@ -587,6 +654,22 @@
 /* 24h幅度 Tag 样式覆盖 */
 .rankCard {
   :global {
+    /* 表头样式定制 */
+    .ant-table-thead > tr > th {
+      background: transparent !important;
+      border-bottom: 1px solid #f0f0f0;
+      color: var(--Color, #999);
+      font-family: "PingFang SC";
+      font-size: 13px;
+      font-style: normal;
+      font-weight: 500;
+      line-height: normal;
+      
+      &::before {
+        display: none !important; /* 移除表头分割线 */
+      }
+    }
+
     /* 确保表格单元格居中 */
     .ant-table-cell {
       vertical-align: middle;
@@ -597,27 +680,120 @@
       text-align: center;
     }
 
+    /* 最新价列样式 */
+    .ant-table-tbody > tr > td:nth-child(2) {
+      overflow: hidden;
+      color: var(--Color, #313030);
+      text-overflow: ellipsis;
+      font-family: "Roboto 2 DRAFT Condensed", sans-serif;
+      font-size: 16px;
+      font-style: normal;
+      font-weight: 700;
+      line-height: 15.628px;
+    }
+
     .ant-tag {
       width: 100px;
       height: 36px;
-      border-radius: 10px;
+      border-radius: 5.581px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       border: none;
-      font-size: 14px;
-      font-weight: 500;
+      font-size: 16px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 15.628px;
       margin: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-family: "PingFang SC", sans-serif;
     }
 
     .ant-tag-success {
-      background: #11B787 !important;
-      color: #fff !important;
+      background: #C9F6E7 !important;
+      color: rgba(11, 117, 86, 1) !important;
     }
 
     .ant-tag-error {
-      background: #FF5858 !important;
-      color: #fff !important;
+      background: #F6C9CA !important;
+      color: #750B0D !important;
+    }
+
+    /* 分页器样式定制 */
+    .ant-pagination {
+      margin-top: 24px;
+      
+      .ant-pagination-item {
+        margin-right: 8px;
+        border-radius: 8px;
+        border: 1px solid #f0f0f0;
+        transition: all 0.3s;
+        
+        &:hover {
+          border-color: #11B787;
+          a {
+            color: #11B787;
+          }
+        }
+        
+        &-active {
+          border-color: #11B787;
+          background: #e6f7f3;
+          
+          a {
+            color: #11B787;
+          }
+
+          &:hover {
+            border-color: #11B787;
+            a {
+              color: #11B787;
+            }
+          }
+        }
+      }
+
+      .ant-pagination-prev,
+      .ant-pagination-next {
+        margin-right: 8px;
+        
+        .ant-pagination-item-link {
+          border-radius: 8px;
+          border: 1px solid #f0f0f0;
+          
+          &:hover {
+            border-color: #11B787;
+            color: #11B787;
+          }
+        }
+      }
+
+      .ant-pagination-jump-prev,
+      .ant-pagination-jump-next {
+        margin-right: 8px;
+
+        .ant-pagination-item-link-icon {
+          color: #11B787;
+        }
+
+        .ant-pagination-item-container {
+          .ant-pagination-item-link-icon {
+            color: #11B787;
+          }
+        }
+      }
+
+      .ant-pagination-options {
+        .ant-pagination-options-quick-jumper {
+          input {
+            border-radius: 8px;
+            &:hover, &:focus {
+              border-color: #11B787;
+            }
+          }
+        }
+      }
     }
   }
 }

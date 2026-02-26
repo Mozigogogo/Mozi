@@ -124,7 +124,10 @@
     "linkCopied": "Link copied",
     "loadFailed": "Failed to load, please try again",
     "noData": "No data",
-    "noTasks": "No tasks available"
+    "noTasks": "No tasks available",
+    "addSuccess": "Added successfully",
+    "cancelSuccess": "Cancelled successfully",
+    "operationFailed": "Operation failed"
   },
   "exchangeRank": {
     "realTimeUpdate": "Real-time update"

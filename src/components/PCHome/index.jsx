@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Row, Col, Card, Tabs, Table, Tag, Carousel } from 'antd';
+import { Row, Col, Card, Tabs, Table, Tag, Carousel, Skeleton, message } from 'antd';
 import { 
   RiseOutlined, 
-  FallOutlined,
+  FallOutlined, 
   HeartOutlined,
+  HeartFilled,
   BellOutlined,
-  RightOutlined 
+  RightOutlined
 } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -49,17 +50,21 @@ export default function PCHome() {
   const [rankData, setRankData] = useState([]);
   const [rankLoading, setRankLoading] = useState(false);
   const [activeRankTab, setActiveRankTab] = useState('zhangfu');
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 100 });
   const [activeBanner, setActiveBanner] = useState(0);
+  const [bannerLoading, setBannerLoading] = useState(true);
   const [treeMapData, setTreeMapData] = useState([]);
   const [treeMapLoading, setTreeMapLoading] = useState(true);
 
   // 自动轮播
   useEffect(() => {
+    if (bannerLoading) return;
+    
     const timer = setInterval(() => {
       setActiveBanner((prev) => (prev + 1) % HOME_BANNERS.length);
     }, 4000);
     return () => clearInterval(timer);
-  }, []);
+  }, [bannerLoading]);
 
   // 合约专区数据 - 使用 useMemo 优化
   const derivativeItems = useMemo(() => [
@@ -132,6 +137,48 @@ export default function PCHome() {
     },
   ], [t]);
 
+  const handleToggleFavorite = async (e, record) => {
+    e.stopPropagation();
+    
+    // 乐观更新：立即切换状态
+    const newIsFavorite = !record.isFavorite;
+    setRankData(prev => prev.map(item => 
+      item.symbol === record.symbol ? { ...item, isFavorite: newIsFavorite } : item
+    ));
+
+    try {
+      const url = newIsFavorite ? Interface.ADD_OWN : Interface.CANCEL_OWN;
+      
+      const res = await request({
+        url,
+        method: 'GET',
+        data: { coin: record.symbol }
+      });
+      
+      if (res?.code === 0) {
+        message.success(newIsFavorite ? t('common.addSuccess') : t('common.cancelSuccess'));
+        
+        // 如果在自选列表且移除了自选，刷新列表
+        if (activeRankTab === 'zixuan' && !newIsFavorite) {
+          fetchRankData('zixuan', pagination.current);
+        }
+      } else {
+        // 接口失败，回滚状态
+        setRankData(prev => prev.map(item => 
+          item.symbol === record.symbol ? { ...item, isFavorite: !newIsFavorite } : item
+        ));
+        message.error(res?.msg || t('common.operationFailed'));
+      }
+    } catch (error) {
+      console.error('操作失败:', error);
+      // 接口失败，回滚状态
+      setRankData(prev => prev.map(item => 
+        item.symbol === record.symbol ? { ...item, isFavorite: !newIsFavorite } : item
+      ));
+      message.error(t('common.operationFailed'));
+    }
+  };
+
   // 表格列配置
   const columns = [
     {
@@ -173,7 +220,20 @@ export default function PCHome() {
       title: t('pcHome.table.favorite'),
       key: 'addFavorite',
       align: 'center',
-      render: () => <HeartOutlined className={styles.actionIcon} />,
+      render: (_, record) => (
+        record.isFavorite ? (
+          <HeartFilled 
+            className={`${styles.actionIcon} ${styles.active}`} 
+            style={{ color: 'rgba(250, 95, 95, 1)' }} 
+            onClick={(e) => handleToggleFavorite(e, record)}
+          />
+        ) : (
+          <HeartOutlined 
+            className={styles.actionIcon} 
+            onClick={(e) => handleToggleFavorite(e, record)}
+          />
+        )
+      ),
     },
     {
       title: t('pcHome.table.monitor'),
@@ -184,23 +244,30 @@ export default function PCHome() {
   ];
 
   // 获取榜单数据
-  const fetchRankData = async (rankType = 'zhangfu') => {
+  const fetchRankData = async (rankType = 'zhangfu', page = 1) => {
     setRankLoading(true);
+    // 清空数据以防止显示上一个榜单的数据
+    setRankData([]);
+    
     try {
       // 从配置中查找对应的接口
       const tabConfig = rankTabs.find(tab => tab.key === rankType);
       const apiUrl = tabConfig?.interface || Interface.price_change;
       
       // 根据不同榜单类型设置不同的请求参数
-      let requestData = {};
+      let requestData = {
+        pageSize: 10,
+        pageNo: page
+      };
+
       if (rankType === 'chengjiaoe') {
-        requestData = { intervals: 0 };
+        requestData = { ...requestData, intervals: 0 };
       } else if (rankType === 'zixuan') {
-        requestData = { pageSize: 10, pageNo: 1 };
+        // 自选榜已经默认带了分页参数
       } else if (rankType === 'biaosheng') {
-        requestData = { intervals: '7_day' };  // 飙升榜使用7天数据
+        requestData = { ...requestData, intervals: '7_day' };  // 飙升榜使用7天数据
       } else {
-        requestData = { dim: 0 };
+        requestData = { ...requestData, dim: 0 };
       }
       
       const res = await request({
@@ -208,16 +275,22 @@ export default function PCHome() {
         data: requestData,
       });
       
-      // 自选榜的数据结构可能不同，需要特殊处理
       let list = [];
       if (rankType === 'zixuan') {
         // 自选榜返回的是数组，字段为 price24h 和 last
         list = res?.data || [];
       } else {
-        list = res?.data?.slice?.(0, 10) || [];
+        list = res?.data || [];
       }
       
-      setRankData(list.slice(0, 10).map((item) => ({
+      // 更新分页信息
+      const total = res?.total || list.length || 100;
+      setPagination(prev => ({ ...prev, current: page, total }));
+
+      // 如果返回的数据量大于pageSize，说明后端没有处理分页，前端手动截取
+      const displayList = list.length > 10 ? list.slice((page - 1) * 10, page * 10) : list;
+      
+      setRankData(displayList.map((item) => ({
         key: item.symbol,
         symbol: item.symbol,
         url: item.url || '/default-coin.svg',
@@ -228,6 +301,7 @@ export default function PCHome() {
           rankType === 'biaosheng' ? (item.price_24h || 0) :  // 飙升榜优先使用 price_24h
           (item.price24h || item.priceRange || item.priceChangePercentage24h || item.price_24h || 0)
         ),
+        isFavorite: rankType === 'zixuan' ? true : (item.favorite || item.isSelfSelected || item.isLiked || false),
       })));
     } catch (e) {
       console.error('获取榜单失败:', e);
@@ -240,67 +314,31 @@ export default function PCHome() {
   const fetchTreeMapData = async () => {
     setTreeMapLoading(true);
     try {
-      // 使用成交额榜单数据作为来源，更能反映市场热度
+      // 使用热门板块数据
       const res = await request({
-        url: Interface.coin_trade,
-        data: { intervals: 0, pageSize: 20 },
+        url: Interface.hot_industry,
+        data: { pageSize: 100 },
       });
       
       const list = res?.data || [];
       // 转换数据格式适配 TreeMap
       const processedData = list.map(item => {
-        let change = parseFloat(item.priceRange || item.priceChangePercentage24h || 0);
-        // SIMULATION: If change is 0, generate a random value between -8% and +8% to demonstrate colors
-        if (Math.abs(change) < 0.01) {
-          change = (Math.random() * 16) - 8;
-        }
+        // 处理涨跌幅字符串，移除%号
+        let changeStr = String(item.changes || '0').replace('%', '');
+        let change = parseFloat(changeStr);
+        
         return {
-          symbol: item.symbol,
-          marketCap: parseFloat(item.volume_24h || item.amount || 1000), 
+          symbol: item.section,
+          marketCap: Math.abs(change), // 使用涨跌幅绝对值作为面积大小
           priceChangePercent: change,
-          lastPrice: item.last || item.currentPrice || 0
+          lastPrice: item.close || item.index_value || '--' // 板块指数或收盘价
         };
-      }).filter(item => item.marketCap > 0);
+      });
 
-      // If API returns empty (e.g. 401), use mock data for demonstration
-      if (processedData.length === 0) {
-        const mockData = [
-          { symbol: 'BTC', marketCap: 1000000, priceChangePercent: -5.2, lastPrice: 65000 }, // <-4% (Red)
-          { symbol: 'ETH', marketCap: 500000, priceChangePercent: -3.5, lastPrice: 3500 }, // -2% to -4% (Med Red)
-          { symbol: 'SOL', marketCap: 200000, priceChangePercent: -1.5, lastPrice: 150 }, // -1% to -2% (Dark Red)
-          { symbol: 'BNB', marketCap: 150000, priceChangePercent: 0.05, lastPrice: 600 }, // 0 (Grey)
-          { symbol: 'XRP', marketCap: 100000, priceChangePercent: 1.2, lastPrice: 0.6 }, // +1% to +2% (Dark Green)
-          { symbol: 'ADA', marketCap: 80000, priceChangePercent: 2.5, lastPrice: 0.45 }, // +2% to +4% (Med Green)
-          { symbol: 'DOGE', marketCap: 70000, priceChangePercent: 8.2, lastPrice: 0.12 }, // >4% (Bright Green)
-          { symbol: 'DOT', marketCap: 60000, priceChangePercent: -8.5, lastPrice: 7.5 }, // <-4%
-          { symbol: 'AVAX', marketCap: 50000, priceChangePercent: 3.2, lastPrice: 35 }, // +2% to +4%
-          { symbol: 'LINK', marketCap: 40000, priceChangePercent: 1.5, lastPrice: 15 }, // +1% to +2%
-          { symbol: 'MATIC', marketCap: 35000, priceChangePercent: -0.5, lastPrice: 0.7 }, // 0
-          { symbol: 'SHIB', marketCap: 30000, priceChangePercent: 4.8, lastPrice: 0.00002 }, // >4%
-          { symbol: 'LTC', marketCap: 25000, priceChangePercent: -2.8, lastPrice: 85 }, // -2% to -4%
-          { symbol: 'UNI', marketCap: 20000, priceChangePercent: -1.8, lastPrice: 10 }, // -1% to -2%
-          { symbol: 'BCH', marketCap: 18000, priceChangePercent: 5.5, lastPrice: 450 }, // >4%
-          { symbol: 'ATOM', marketCap: 15000, priceChangePercent: -3.2, lastPrice: 9 }, // -2% to -4%
-          { symbol: 'XLM', marketCap: 12000, priceChangePercent: 0.8, lastPrice: 0.11 }, // 0
-          { symbol: 'ICP', marketCap: 10000, priceChangePercent: -4.5, lastPrice: 12 }, // <-4%
-          { symbol: 'FIL', marketCap: 8000, priceChangePercent: 2.1, lastPrice: 6 }, // +2% to +4%
-          { symbol: 'HBAR', marketCap: 6000, priceChangePercent: 0.3, lastPrice: 0.1 } // 0
-        ];
-        setTreeMapData(mockData);
-      } else {
-        setTreeMapData(processedData);
-      }
+      setTreeMapData(processedData);
     } catch (e) {
       console.error('获取板块数据失败:', e);
-      // Fallback mock data on error
-      const mockData = [
-        { symbol: 'BTC', marketCap: 1000000, priceChangePercent: 2.5, lastPrice: 65000 },
-        { symbol: 'ETH', marketCap: 500000, priceChangePercent: -1.2, lastPrice: 3500 },
-        { symbol: 'SOL', marketCap: 200000, priceChangePercent: 5.4, lastPrice: 150 },
-        { symbol: 'BNB', marketCap: 150000, priceChangePercent: 0.5, lastPrice: 600 },
-        { symbol: 'XRP', marketCap: 100000, priceChangePercent: -0.8, lastPrice: 0.6 }
-      ];
-      setTreeMapData(mockData);
+      setTreeMapData([]);
     } finally {
       setTreeMapLoading(false);
     }
@@ -313,14 +351,34 @@ export default function PCHome() {
 
   const handleRankTabChange = (key) => {
     setActiveRankTab(key);
-    fetchRankData(key);
+    fetchRankData(key, 1);
+  };
+
+  const handlePageChange = (page) => {
+    fetchRankData(activeRankTab, page);
   };
 
   return (
     <div className={styles.pcHome}>
       {/* Banner 3D轮播 */}
       <div className={styles.bannerWrapper}>
-        <div className={styles.carousel3d}>
+        {bannerLoading && (
+          <div className={styles.carouselSkeleton}>
+            {/* Left Skeleton */}
+            <div className={`${styles.skeletonItem} ${styles.prev}`}>
+              <Skeleton.Button active shape="round" block />
+            </div>
+            {/* Center Skeleton */}
+            <div className={`${styles.skeletonItem} ${styles.active}`}>
+              <Skeleton.Button active shape="round" block />
+            </div>
+            {/* Right Skeleton */}
+            <div className={`${styles.skeletonItem} ${styles.next}`}>
+              <Skeleton.Button active shape="round" block />
+            </div>
+          </div>
+        )}
+        <div className={styles.carousel3d} style={{ display: bannerLoading ? 'none' : 'flex' }}>
           {HOME_BANNERS.map((url, idx) => {
             const position = (idx - activeBanner + HOME_BANNERS.length) % HOME_BANNERS.length;
             let posClass = '';
@@ -331,7 +389,18 @@ export default function PCHome() {
             
             return (
               <div key={idx} className={`${styles.carouselItem} ${posClass}`} onClick={() => setActiveBanner(idx)}>
-                <img src={url} alt={`banner-${idx}`} />
+                <img 
+                  src={url} 
+                  alt={`banner-${idx}`} 
+                  onLoad={() => {
+                    // 当第一张图片加载完成时，取消loading状态
+                    if (idx === 0) setBannerLoading(false);
+                  }}
+                  onError={() => {
+                    // 如果加载失败，也取消loading，避免一直显示骨架屏
+                    if (idx === 0) setBannerLoading(false);
+                  }}
+                />
               </div>
             );
           })}
@@ -398,33 +467,39 @@ export default function PCHome() {
 
       {/* 实时榜单 */}
       <div className={styles.rankSection}>
-        {/* 标题和Tab在容器外面 */}
+        {/* 标题 */}
         <div className={styles.rankHeader}>
           <h2 className={styles.rankTitle}>{t('pcHome.ranks.title')}</h2>
+          <div className={styles.headerViewMore} onClick={() => router.push('/pricerank')}>
+            {t('pcHome.ranks.viewMore')} <RightOutlined />
+          </div>
+        </div>
+        
+        {/* 表格在白色卡片里 */}
+        <Card className={styles.rankCard}>
           <Tabs
             activeKey={activeRankTab}
             onChange={handleRankTabChange}
             items={rankTabs}
             className={styles.rankTabs}
           />
-        </div>
-        
-        {/* 表格在白色卡片里 */}
-        <Card className={styles.rankCard}>
           <Table
             columns={columns}
             dataSource={rankData}
             loading={rankLoading}
-            pagination={false}
+            pagination={{
+              ...pagination,
+              onChange: handlePageChange,
+              showSizeChanger: false,
+              showQuickJumper: true,
+              position: ['bottomCenter']
+            }}
             size="middle"
             onRow={(record) => ({
               onClick: () => router.push(`/detail?symbol=${record.symbol}`),
               style: { cursor: 'pointer' },
             })}
           />
-          <div className={styles.viewMore} onClick={() => router.push('/pricerank')}>
-            {t('pcHome.ranks.viewMore')} <RightOutlined />
-          </div>
         </Card>
       </div>
     </div>
