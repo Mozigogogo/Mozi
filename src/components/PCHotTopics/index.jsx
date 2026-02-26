@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import * as homeApi from '@/api/home';
-import RightArrowIcon from '@/components/Icons/RightArrowIcon';
+import { RightArrowBoldIcon, UpArrowIcon } from '@/components/Icons';
 import styles from './index.module.less';
 
 const PCHotTopics = () => {
@@ -144,11 +144,15 @@ const PCHotTopics = () => {
       <div className={styles.container}>
         <div className={styles.header}>
           <div className={styles.title}>
-            <span className={styles.titleText}>热聊话题</span>
+            <span className={styles.titleText}>
+              <span style={{ color: '#F43138' }}>热</span>
+              <span style={{ color: '#FF7E09' }}>聊</span>
+              <span style={{ color: '#000' }}>话题</span>
+            </span>
           </div>
         </div>
         <div className={styles.skeleton}>
-          {[1, 2, 3, 4, 5].map((i) => (
+          {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className={styles.skeletonItem} />
           ))}
         </div>
@@ -160,10 +164,14 @@ const PCHotTopics = () => {
     <div className={styles.container}>
       <div className={styles.header}>
         <div className={styles.title}>
-          <span className={styles.titleText}>热聊话题</span>
+          <span className={styles.titleText}>
+            <span style={{ color: '#F43138' }}>热</span>
+            <span style={{ color: '#FF7E09' }}>聊</span>
+            <span style={{ color: '#000' }}>话题</span>
+          </span>
         </div>
         <div className={styles.moreBtn} onClick={handleMoreClick}>
-          <RightArrowIcon size={14} color="#666" />
+          <RightArrowBoldIcon width={10} height={17} color="#09244B" style={{ display: 'block' }} />
         </div>
       </div>
 
@@ -183,21 +191,30 @@ const PCHotTopics = () => {
               className={`${styles.item} ${isTop3 ? styles.topItem : ''}`}
               onClick={() => handleTopicClick(topic)}
             >
-              <div className={`${styles.rank} ${isTop3 ? styles[`rank${rank}`] : ''}`}>
-                {rank}
+              <div className={styles.meta}>
+                <span className={styles.date}>{formatDate(topic.createdAt)}</span>
+                <span className={styles.tag}>资讯</span>
               </div>
               
-              <div className={styles.content}>
-                <div className={styles.meta}>
-                  <span className={styles.date}>{formatDate(topic.createdAt)}</span>
-                  <span className={styles.tag}>资讯</span>
-                </div>
+              <div className={styles.mainRow}>
+                {isTop3 ? (
+                  <img 
+                    src={`/images/new_home/hot_top${rank}.svg`} 
+                    alt={`Rank ${rank}`} 
+                    className={styles.rankIcon}
+                  />
+                ) : (
+                  <div className={styles.rank}>
+                    {rank}
+                  </div>
+                )}
+                
                 <h3 className={styles.itemTitle}>{topic.name || topic.title}</h3>
-              </div>
-              
-              <div className={styles.hotValue}>
-                {formatHotValue(topic.hot || topic.viewCount || topic.postCount * 1000 || Math.floor(Math.random() * 100000))}
-                <span className={styles.upIcon}>↑</span>
+                
+                <div className={styles.hotValue}>
+                  {formatHotValue(topic.hot || topic.viewCount || topic.postCount * 1000 || Math.floor(Math.random() * 100000))}
+                  <UpArrowIcon width={22} height={22} color="#D81F1F" />
+                </div>
               </div>
             </div>
           );

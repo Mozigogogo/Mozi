@@ -1417,6 +1417,9 @@
       "volume": "成交额",
       "volumeSub": "Trading Volume"
     },
+    "sectorMap": {
+      "title": "板块选币"
+    },
     "ranks": {
       "title": "热门排行",
       "viewMore": "查看更多",

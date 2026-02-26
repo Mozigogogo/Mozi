@@ -11,7 +11,7 @@
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
   margin-bottom: 16px;
   flex-shrink: 0;
 }
@@ -31,9 +31,6 @@
 .titleText {
   font-size: 20px;
   font-weight: bold;
-  background: linear-gradient(90deg, #FF4D4F 0%, #FF8F1F 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
 }
 
 .moreBtn {
@@ -46,6 +43,7 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s;
+  padding: 0; /* Ensure no padding affects centering */
 
   &:hover {
     background: #E0E0E0;
@@ -78,7 +76,7 @@
 
 .item {
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
   padding: 12px;
   border-radius: 12px;
   cursor: pointer;
@@ -90,58 +88,45 @@
   }
 }
 
+.mainRow {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
 /* Top 3 items have special background */
 .topItem {
-  background: linear-gradient(90deg, #FFF5F5 0%, #FFFFFF 100%);
+  background: linear-gradient(90deg, #FFF 0%, #FCF2F2 100%);
   
   &:hover {
-    background: linear-gradient(90deg, #FFEBEB 0%, #FFF5F5 100%);
+    background: linear-gradient(90deg, #FFF 0%, #F5E8E8 100%);
   }
 }
 
 .rank {
-  font-size: 16px;
-  font-weight: bold;
-  color: #999;
+  font-size: 20px;
+  font-weight: 900;
+  color: #747373;
+  font-family: Roboto, sans-serif;
+  font-style: normal;
+  line-height: 18.582px;
   margin-right: 12px;
   width: 24px;
   text-align: center;
-  margin-top: 2px;
-}
-
-/* Custom rank styles for top 3 */
-.rank1, .rank2, .rank3 {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-  color: #fff;
+  margin-top: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
-  font-weight: bold;
-  margin-right: 16px;
+  align-self: center;
+  flex-shrink: 0;
 }
 
-.rank1 {
-  background: #FF4D4F;
-  box-shadow: 0 2px 4px rgba(255, 77, 79, 0.3);
-}
-
-.rank2 {
-  background: #FF8F1F;
-  box-shadow: 0 2px 4px rgba(255, 143, 31, 0.3);
-}
-
-.rank3 {
-  background: #FFC53D;
-  box-shadow: 0 2px 4px rgba(255, 197, 61, 0.3);
-}
-
-.content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+.rankIcon {
+  width: 23px;
+  height: 23px;
+  margin-right: 12px;
+  flex-shrink: 0;
+  align-self: center;
 }
 
 .meta {
@@ -154,11 +139,17 @@
 
 .date {
   margin-right: 8px;
+  color: var(--Color, #666);
+  font-family: "PingFang SC";
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 22px; /* 157.143% */
 }
 
 .tag {
-  color: #1677FF;
-  background: #E6F4FF;
+  color: #1245FA;
+  background: var(--Blue-disabled, #ECF0FF);
   padding: 1px 6px;
   border-radius: 4px;
   font-size: 11px;
@@ -174,17 +165,23 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
   font-weight: 500;
+  flex: 1;
 }
 
 .hotValue {
   display: flex;
   align-items: center;
-  font-size: 12px;
-  color: #999;
   margin-left: 12px;
   white-space: nowrap;
-  align-self: center;
-
+  align-self: flex-end; /* Align to bottom as requested */
+  
+  color: var(--Color, #999);
+  font-family: "PingFang SC";
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 300;
+  line-height: 22px; /* 157.143% */
+  
   .upIcon {
     color: #FF4D4F;
     margin-left: 4px;
@@ -193,7 +190,9 @@
 }
 
 .skeleton {
-  padding: 20px;
+  flex: 1;
+  max-height: 620px;
+  overflow: hidden;
   
   .skeletonItem {
     height: 60px;
