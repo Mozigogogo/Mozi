@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import * as d3 from 'd3';
 import { Spin } from 'antd';
 import styles from './index.module.less';
@@ -16,6 +16,29 @@ const PCSectorTreeMap = ({
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [hoveredItem, setHoveredItem] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+
+  // Legend configuration
+  const LEGEND_ITEMS = useMemo(() => [
+    { label: '<-4%', color: '#EC3A3A', min: -Infinity, max: -4 },
+    { label: '-2%', color: '#C03F44', min: -4, max: -2 },
+    { label: '-1%', color: '#8A444F', min: -2, max: -1 },
+    { label: '0', color: '#424450', min: -1, max: 1 },
+    { label: '+1%', color: '#37544F', min: 1, max: 2 },
+    { label: '+2%', color: '#37764B', min: 2, max: 4 },
+    { label: '>4%', color: '#2BA250', min: 4, max: Infinity }
+  ], []);
+
+  const getColor = useCallback((change) => {
+    for (let i = 0; i < LEGEND_ITEMS.length; i++) {
+      const item = LEGEND_ITEMS[i];
+      if (change >= item.min && change < item.max) {
+        return item.color;
+      }
+    }
+    if (change <= -4) return LEGEND_ITEMS[0].color;
+    if (change >= 4) return LEGEND_ITEMS[LEGEND_ITEMS.length - 1].color;
+    return '#424450';
+  }, [LEGEND_ITEMS]);
 
   // Update dimensions on resize
   useEffect(() => {
@@ -88,23 +111,17 @@ const PCSectorTreeMap = ({
 
     // Layout configuration
     const totalItems = list.length;
-    const padding = 4;
+    const padding = 0;
     const tileRatio = 1.6;
 
     try {
       d3.treemap()
         .size([width, height])
-        .padding(padding)
+        .paddingOuter(0)
+        .paddingInner(0)
         .round(true)
         .tile(d3.treemapSquarify.ratio(tileRatio))
         (root);
-
-      // Color logic
-      const getColor = (change) => {
-        if (change > 0) return 'rgba(6, 194, 112, 1)'; // Green
-        if (change < 0) return 'rgba(255, 91, 91, 1)'; // Red
-        return 'rgba(179, 179, 179, 1)'; // Grey
-      };
 
       // Render nodes
       const nodes = container
@@ -118,7 +135,22 @@ const PCSectorTreeMap = ({
         .style('width', d => `${d.x1 - d.x0}px`)
         .style('height', d => `${d.y1 - d.y0}px`)
         .style('background-color', d => getColor(d.data.change))
-        .style('border-radius', '6px')
+        .style('border-radius', d => {
+          // Add border radius to the four corners of the treemap
+          const r = '8px';
+          const isLeft = d.x0 === 0;
+          const isTop = d.y0 === 0;
+          const isRight = Math.abs(d.x1 - width) < 1;
+          const isBottom = Math.abs(d.y1 - height) < 1;
+          
+          let tl = isLeft && isTop ? r : '0';
+          let tr = isRight && isTop ? r : '0';
+          let br = isRight && isBottom ? r : '0';
+          let bl = isLeft && isBottom ? r : '0';
+          
+          return `${tl} ${tr} ${br} ${bl}`;
+        })
+        .style('border', '1px solid rgba(35, 40, 49, 1)')
         .style('color', '#fff')
         .style('overflow', 'hidden')
         .style('cursor', 'pointer')
@@ -147,12 +179,24 @@ const PCSectorTreeMap = ({
            }
         });
         
-          // Add basic hover effect via JS since CSS might fail
-          nodes.on('mouseenter', function() {
-            d3.select(this).style('opacity', 0.9).style('z-index', 10).style('transform', 'scale(1.02)');
-          }).on('mouseleave', function() {
-            d3.select(this).style('opacity', 1).style('z-index', 1).style('transform', 'scale(1)');
-          }).on('click', (event, d) => {
+          // Add hover effect and tooltip logic
+          nodes.on('mouseenter', function(event, d) {
+            d3.select(this).style('opacity', 0.9).style('z-index', 10);
+            setHoveredItem({
+              name: d.data.name,
+              change: d.data.change,
+              price: d.data.price,
+              x: d.x0,
+              y: d.y0,
+              width: d.x1 - d.x0,
+              height: d.y1 - d.y0
+            });
+          })
+          .on('mouseleave', function() {
+            d3.select(this).style('opacity', 1).style('z-index', 1);
+            setHoveredItem(null);
+          })
+          .on('click', (event, d) => {
             if (onItemClick) onItemClick(d.data.original);
           });
 
@@ -160,10 +204,73 @@ const PCSectorTreeMap = ({
       console.error("TreeMap Render Error:", error);
     }
 
-  }, [list, dimensions, loading]);
+  }, [list, dimensions, loading, LEGEND_ITEMS, getColor]);
+
+  const getTooltipStyle = (item) => {
+    if (!item) return {};
+    
+    const containerWidth = dimensions.width;
+    const containerHeight = dimensions.height;
+    const TOOLTIP_WIDTH = 320;
+    const TOOLTIP_HEIGHT = 160; // Estimated height
+    
+    // Dynamic offsets based on item size
+    // Ensure the tooltip overlaps the item by a consistent amount, or half the item size if it's small
+    const overlapX = Math.min(30, item.width / 2); 
+    const overlapY = Math.min(40, item.height / 2);
+    
+    // Default: Top-Right Stagger (shifted right, slightly overlapping leftwards, and shifted down)
+    // left: Start at right edge of item, move left by overlapX
+    let left = item.x + item.width - overlapX;
+    // top: Start at top edge of item, move down by overlapY
+    let top = item.y + overlapY;
+
+    // Horizontal check
+    if (left + TOOLTIP_WIDTH > containerWidth) {
+      // Not enough space on the right, switch to Left Stagger
+      // left: Start at left edge of item, move left by TOOLTIP_WIDTH, then move right by overlapX
+      left = item.x - TOOLTIP_WIDTH + overlapX;
+      if (left < 0) left = 0;
+    }
+
+    // Vertical check
+    if (top + TOOLTIP_HEIGHT > containerHeight) {
+      // Not enough space at the bottom, switch to Bottom Stagger (align bottom with upward shift)
+      
+      // top: Start at bottom edge of item, move up by TOOLTIP_HEIGHT, then move up by overlapY (so bottom overlaps)
+      top = item.y + item.height - TOOLTIP_HEIGHT - overlapY;
+      
+      // If that pushes it off the top, just clamp to bottom edge of container
+      if (top + TOOLTIP_HEIGHT > containerHeight) {
+          top = containerHeight - TOOLTIP_HEIGHT - overlapY;
+      }
+    }
+    
+    // Top boundary check
+    if (top < 0) top = overlapY;
+
+    return {
+      left: `${left}px`,
+      top: `${top}px`
+    };
+  };
 
   return (
     <div className={styles.container} style={{ minHeight: '600px' }}>
+      
+      {/* Legend */}
+      <div className={styles.legendContainer}>
+        {LEGEND_ITEMS.map((item, index) => (
+          <div key={index} className={styles.legendItem}>
+            <div 
+              className={styles.legendDot} 
+              style={{ backgroundColor: item.color }}
+            />
+            <span>{item.label}</span>
+          </div>
+        ))}
+      </div>
+
       <div 
         className={styles.treemapContainer} 
         ref={containerRef}
@@ -200,28 +307,63 @@ const PCSectorTreeMap = ({
           </div>
         )}
 
+        {/* Highlight Overlay */}
+        {hoveredItem && hoveredItem.width && (
+          <div 
+            className={styles.hoverOverlay}
+            style={{ 
+              left: hoveredItem.x, 
+              top: hoveredItem.y,
+              width: hoveredItem.width,
+              height: hoveredItem.height
+            }}
+          >
+            {/* Dynamically scale tag based on item size */}
+            {hoveredItem.height > 24 && hoveredItem.width > 30 && (
+              <div 
+                className={styles.hoverTag}
+                style={{
+                  fontSize: hoveredItem.height < 60 ? '10px' : '14px',
+                  padding: hoveredItem.height < 60 ? '0 4px' : '2px 8px',
+                  lineHeight: hoveredItem.height < 60 ? '16px' : 'normal'
+                }}
+              >
+                <div style={{
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  width: '100%'
+                }}>
+                  {hoveredItem.name}
+                </div>
+                {hoveredItem.height > 50 && (
+                  <div className={styles.hoverTriangle} />
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Tooltip */}
         {hoveredItem && (
           <div 
-            className={styles.tooltip}
-            style={{ 
-              left: tooltipPos.x, 
-              top: tooltipPos.y,
-              transform: 'translate(-50%, -120%)' // Move above cursor
-            }}
+            className={styles.customTooltip}
+            style={getTooltipStyle(hoveredItem)}
           >
             <div className={styles.tooltipHeader}>
-              <span>{hoveredItem.name}</span>
-              <span style={{ 
-                color: hoveredItem.change > 0 ? '#00Eba3' : '#ff5b5b',
-                marginLeft: '8px'
-              }}>
-                {(hoveredItem.change > 0 ? '+' : '') + hoveredItem.change.toFixed(2)}%
-              </span>
+              {hoveredItem.name}
             </div>
-            <div className={styles.tooltipRow}>
-              <span className={styles.label}>最新价</span>
-              <span className={styles.value}>${hoveredItem.price}</span>
+            <div className={styles.tooltipContent} style={{ backgroundColor: getColor(hoveredItem.change) }}>
+               <div className={styles.tooltipMainRow}>
+                 <span>{hoveredItem.name}</span>
+                 <span>{hoveredItem.price}</span>
+                 <span>{(hoveredItem.change > 0 ? '+' : '') + hoveredItem.change.toFixed(2)}%</span>
+               </div>
+               <div className={styles.tooltipLabelRow}>
+                 <span></span>
+                 <span>最新价格</span>
+                 <span>24h涨跌</span>
+               </div>
             </div>
           </div>
         )}

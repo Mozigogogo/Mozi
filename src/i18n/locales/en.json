@@ -1421,7 +1421,8 @@
       "volumeSub": "Trading Volume"
     },
     "sectorMap": {
-      "title": "Sector Selection"
+      "title": "Sector Selection",
+      "viewMore": "View More"
     },
     "ranks": {
       "title": "Live Rankings",

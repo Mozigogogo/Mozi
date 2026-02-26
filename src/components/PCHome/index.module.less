@@ -113,6 +113,18 @@
 }
 
 /* 合约专区 */
+.derivativeHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.derivativeSectionTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
 .derivativeRow {
   margin-bottom: 0; /* Removed bottom margin as it's handled by gap in leftColumn */
   display: flex;
@@ -126,7 +138,7 @@
 }
 
 .derivativeCard {
-  border-radius: 40px !important;
+  border-radius: 30px !important;
   box-shadow: none !important;
   height: auto;
   width: 100%;
@@ -432,7 +444,22 @@
 .sectorHeader {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 16px;
+}
+
+.headerViewMore {
+  font-size: 14px;
+  color: #999;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #11B787;
+  }
 }
 
 .sectorTitle {
@@ -442,7 +469,7 @@
 }
 
 .sectorCard {
-  border-radius: 12px;
+  border-radius: 30px;
   overflow: hidden;
   background: #fff;
   padding: 20px;

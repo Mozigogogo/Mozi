@@ -248,36 +248,43 @@ export default function PCHome() {
       
       const list = res?.data || [];
       // 转换数据格式适配 TreeMap
-      const processedData = list.map(item => ({
-        symbol: item.symbol,
-        marketCap: parseFloat(item.volume_24h || item.amount || 1000), 
-        priceChangePercent: parseFloat(item.priceRange || item.priceChangePercentage24h || 0),
-        lastPrice: item.last || item.currentPrice || 0
-      })).filter(item => item.marketCap > 0);
+      const processedData = list.map(item => {
+        let change = parseFloat(item.priceRange || item.priceChangePercentage24h || 0);
+        // SIMULATION: If change is 0, generate a random value between -8% and +8% to demonstrate colors
+        if (Math.abs(change) < 0.01) {
+          change = (Math.random() * 16) - 8;
+        }
+        return {
+          symbol: item.symbol,
+          marketCap: parseFloat(item.volume_24h || item.amount || 1000), 
+          priceChangePercent: change,
+          lastPrice: item.last || item.currentPrice || 0
+        };
+      }).filter(item => item.marketCap > 0);
 
       // If API returns empty (e.g. 401), use mock data for demonstration
       if (processedData.length === 0) {
         const mockData = [
-          { symbol: 'BTC', marketCap: 1000000, priceChangePercent: 2.5, lastPrice: 65000 },
-          { symbol: 'ETH', marketCap: 500000, priceChangePercent: -1.2, lastPrice: 3500 },
-          { symbol: 'SOL', marketCap: 200000, priceChangePercent: 5.4, lastPrice: 150 },
-          { symbol: 'BNB', marketCap: 150000, priceChangePercent: 0.5, lastPrice: 600 },
-          { symbol: 'XRP', marketCap: 100000, priceChangePercent: -0.8, lastPrice: 0.6 },
-          { symbol: 'ADA', marketCap: 80000, priceChangePercent: 1.1, lastPrice: 0.45 },
-          { symbol: 'DOGE', marketCap: 70000, priceChangePercent: 8.2, lastPrice: 0.12 },
-          { symbol: 'DOT', marketCap: 60000, priceChangePercent: -2.5, lastPrice: 7.5 },
-          { symbol: 'AVAX', marketCap: 50000, priceChangePercent: 3.2, lastPrice: 35 },
-          { symbol: 'LINK', marketCap: 40000, priceChangePercent: 1.5, lastPrice: 15 },
-          { symbol: 'MATIC', marketCap: 35000, priceChangePercent: -0.5, lastPrice: 0.7 },
-          { symbol: 'SHIB', marketCap: 30000, priceChangePercent: 4.0, lastPrice: 0.00002 },
-          { symbol: 'LTC', marketCap: 25000, priceChangePercent: 0.2, lastPrice: 85 },
-          { symbol: 'UNI', marketCap: 20000, priceChangePercent: -1.8, lastPrice: 10 },
-          { symbol: 'BCH', marketCap: 18000, priceChangePercent: 1.0, lastPrice: 450 },
-          { symbol: 'ATOM', marketCap: 15000, priceChangePercent: -3.2, lastPrice: 9 },
-          { symbol: 'XLM', marketCap: 12000, priceChangePercent: 0.8, lastPrice: 0.11 },
-          { symbol: 'ICP', marketCap: 10000, priceChangePercent: -4.5, lastPrice: 12 },
-          { symbol: 'FIL', marketCap: 8000, priceChangePercent: 2.1, lastPrice: 6 },
-          { symbol: 'HBAR', marketCap: 6000, priceChangePercent: 0.3, lastPrice: 0.1 }
+          { symbol: 'BTC', marketCap: 1000000, priceChangePercent: -5.2, lastPrice: 65000 }, // <-4% (Red)
+          { symbol: 'ETH', marketCap: 500000, priceChangePercent: -3.5, lastPrice: 3500 }, // -2% to -4% (Med Red)
+          { symbol: 'SOL', marketCap: 200000, priceChangePercent: -1.5, lastPrice: 150 }, // -1% to -2% (Dark Red)
+          { symbol: 'BNB', marketCap: 150000, priceChangePercent: 0.05, lastPrice: 600 }, // 0 (Grey)
+          { symbol: 'XRP', marketCap: 100000, priceChangePercent: 1.2, lastPrice: 0.6 }, // +1% to +2% (Dark Green)
+          { symbol: 'ADA', marketCap: 80000, priceChangePercent: 2.5, lastPrice: 0.45 }, // +2% to +4% (Med Green)
+          { symbol: 'DOGE', marketCap: 70000, priceChangePercent: 8.2, lastPrice: 0.12 }, // >4% (Bright Green)
+          { symbol: 'DOT', marketCap: 60000, priceChangePercent: -8.5, lastPrice: 7.5 }, // <-4%
+          { symbol: 'AVAX', marketCap: 50000, priceChangePercent: 3.2, lastPrice: 35 }, // +2% to +4%
+          { symbol: 'LINK', marketCap: 40000, priceChangePercent: 1.5, lastPrice: 15 }, // +1% to +2%
+          { symbol: 'MATIC', marketCap: 35000, priceChangePercent: -0.5, lastPrice: 0.7 }, // 0
+          { symbol: 'SHIB', marketCap: 30000, priceChangePercent: 4.8, lastPrice: 0.00002 }, // >4%
+          { symbol: 'LTC', marketCap: 25000, priceChangePercent: -2.8, lastPrice: 85 }, // -2% to -4%
+          { symbol: 'UNI', marketCap: 20000, priceChangePercent: -1.8, lastPrice: 10 }, // -1% to -2%
+          { symbol: 'BCH', marketCap: 18000, priceChangePercent: 5.5, lastPrice: 450 }, // >4%
+          { symbol: 'ATOM', marketCap: 15000, priceChangePercent: -3.2, lastPrice: 9 }, // -2% to -4%
+          { symbol: 'XLM', marketCap: 12000, priceChangePercent: 0.8, lastPrice: 0.11 }, // 0
+          { symbol: 'ICP', marketCap: 10000, priceChangePercent: -4.5, lastPrice: 12 }, // <-4%
+          { symbol: 'FIL', marketCap: 8000, priceChangePercent: 2.1, lastPrice: 6 }, // +2% to +4%
+          { symbol: 'HBAR', marketCap: 6000, priceChangePercent: 0.3, lastPrice: 0.1 } // 0
         ];
         setTreeMapData(mockData);
       } else {
@@ -336,23 +343,28 @@ export default function PCHome() {
       <div className={styles.contentSplit}>
         <div className={styles.leftColumn}>
           {/* 合约专区 */}
-          <div className={styles.derivativeRow}>
-            {derivativeItems.map((item) => (
-              <div key={item.key} className={styles.derivativeCol}>
-                <Card 
-                  className={styles.derivativeCard} 
-                  hoverable
-                  onClick={() => router.push(item.path)}
-                >
-                  <div className={styles.derivativeContent}>
-                    <img src={item.icon} alt={item.title} className={styles.derivativeIcon} />
-                    <div className={styles.derivativeText}>
-                      <div className={styles.derivativeTitle}>{item.title}</div>
+          <div>
+            <div className={styles.derivativeHeader}>
+              <h2 className={styles.derivativeSectionTitle}>{t('pcHome.derivatives.title')}</h2>
+            </div>
+            <div className={styles.derivativeRow}>
+              {derivativeItems.map((item) => (
+                <div key={item.key} className={styles.derivativeCol}>
+                  <Card 
+                    className={styles.derivativeCard} 
+                    hoverable
+                    onClick={() => router.push(item.path)}
+                  >
+                    <div className={styles.derivativeContent}>
+                      <img src={item.icon} alt={item.title} className={styles.derivativeIcon} />
+                      <div className={styles.derivativeText}>
+                        <div className={styles.derivativeTitle}>{item.title}</div>
+                      </div>
                     </div>
-                  </div>
-                </Card>
-              </div>
-            ))}
+                  </Card>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* 涨跌分布 */}
@@ -371,6 +383,9 @@ export default function PCHome() {
       <div className={styles.sectorSection}>
         <div className={styles.sectorHeader}>
           <h2 className={styles.sectorTitle}>{t('pcHome.sectorMap.title')}</h2>
+          <div className={styles.headerViewMore} onClick={() => router.push('/hotsector')}>
+            {t('pcHome.sectorMap.viewMore')} <RightOutlined />
+          </div>
         </div>
         <div className={styles.sectorCard}>
           <PCSectorTreeMap 

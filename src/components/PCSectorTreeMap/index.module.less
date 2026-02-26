@@ -13,7 +13,7 @@
   height: 600px;
   background: #f8f9fa;
   position: relative;
-  border-radius: 12px;
+  border-radius: 8px;
   overflow: hidden;
 }
 
@@ -28,12 +28,10 @@
   justify-content: center;
   align-items: center;
   text-align: center;
+  text-shadow: 0 2px 0px rgba(0, 0, 0, 0.25); /* Add 3D text shadow effect */
   
   &:hover {
-    opacity: 0.9 !important;
-    transform: scale(1.02) !important;
     z-index: 10 !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 }
 
@@ -46,47 +44,102 @@
   font-size: 14px;
 }
 
-/* Tooltip styles can be removed or kept as fallback */
-.tooltip {
+.customTooltip {
   position: absolute;
-  background: rgba(0, 0, 0, 0.85);
-  border-radius: 8px;
-  padding: 12px;
-  color: #fff;
-  font-size: 12px;
+  z-index: 1000;
   pointer-events: none;
-  z-index: 100;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  min-width: 150px;
-  transform: translate(-50%, -100%);
-  margin-top: -10px;
+  background: #FCD535;
+  padding: 0; 
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  min-width: 320px;
 }
 
 .tooltipHeader {
+  background: #FCD535;
+  color: #333;
+  padding: 6px 12px;
+  font-weight: 700;
+  font-size: 18px;
+  text-align: left;
+}
+
+.tooltipContent {
+  padding: 16px 20px;
+  color: #fff;
+  margin: 0 2px 2px 2px; // Create spacing from the yellow background to mimic border
+}
+
+.tooltipMainRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
-  font-weight: 600;
-  font-size: 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding-bottom: 8px;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
 }
 
-.tooltipRow {
+.tooltipLabelRow {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 4px;
-  
-  &:last-child {
-    margin-bottom: 0;
-  }
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
 }
 
-.label {
-  color: rgba(255, 255, 255, 0.6);
+.legendContainer {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
-.value {
-  font-family: 'Roboto', sans-serif;
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.hoverOverlay {
+  position: absolute;
+  pointer-events: none;
+  z-index: 20;
+  border: 2px solid #FEDC34;
+  box-sizing: border-box;
+}
+
+.hoverTag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: #FEDC34;
+  color: #000;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 2px 8px;
+  line-height: 1.2;
+  box-sizing: border-box;
+}
+
+.hoverTriangle {
+  position: absolute;
+  top: 100%;
+  left: 12px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid #FEDC34;
+}
+
+.legendDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
