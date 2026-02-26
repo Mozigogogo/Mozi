@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Row, Col, Card, Tabs, Table, Tag, Carousel } from 'antd';
+import { Row, Col, Card, Tabs, Table, Tag, Carousel, Skeleton, message } from 'antd';
 import { 
   RiseOutlined, 
-  FallOutlined,
+  FallOutlined, 
   HeartOutlined,
+  HeartFilled,
   BellOutlined,
-  RightOutlined 
+  RightOutlined
 } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -16,24 +17,25 @@ import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import styles from './index.module.less';
 import MarketDistribution from '../MarketDistribution';
-import TopicHotList from '../TopicHotList';
+import PCHotTopics from '../PCHotTopics';
+import PCSectorTreeMap from '../PCSectorTreeMap';
 
 // CDN 图片前缀
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
 
 // Banner 图片
-const HOME_BANNERS_ZH = [
-  `${CDN_PREFIX}/image/home/banner1.png`,
-  `${CDN_PREFIX}/image/home/banner2.png`,
-  `${CDN_PREFIX}/image/home/banner3.png`,
+const HOME_BANNERS = [
+  '/images/new_home/banner1_pc_en.png',
+  '/images/new_home/banner2_pc_en.png',
+  '/images/new_home/banner3_pc_en.png',
 ];
 
 // 合约专区图标
 const derivativeIcons = {
-  bullBear: `${CDN_PREFIX}/icon/bull-bear-ratio.png`,
-  inventory: `${CDN_PREFIX}/icon/inventory.png`,
-  fundingRate: `${CDN_PREFIX}/icon/funding-rate.png`,
-  volume: `${CDN_PREFIX}/icon/volume-transaction.png`,
+  bullBear: '/images/new_home/bull_bear_ratio.png',
+  inventory: '/images/new_home/position_size.png',
+  fundingRate: '/images/new_home/funding_rate.png',
+  volume: '/images/new_home/trade_volume.png',
 };
 
 /**
@@ -48,15 +50,21 @@ export default function PCHome() {
   const [rankData, setRankData] = useState([]);
   const [rankLoading, setRankLoading] = useState(false);
   const [activeRankTab, setActiveRankTab] = useState('zhangfu');
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 100 });
   const [activeBanner, setActiveBanner] = useState(0);
+  const [bannerLoading, setBannerLoading] = useState(true);
+  const [treeMapData, setTreeMapData] = useState([]);
+  const [treeMapLoading, setTreeMapLoading] = useState(true);
 
   // 自动轮播
   useEffect(() => {
+    if (bannerLoading) return;
+    
     const timer = setInterval(() => {
-      setActiveBanner((prev) => (prev + 1) % HOME_BANNERS_ZH.length);
+      setActiveBanner((prev) => (prev + 1) % HOME_BANNERS.length);
     }, 4000);
     return () => clearInterval(timer);
-  }, []);
+  }, [bannerLoading]);
 
   // 合约专区数据 - 使用 useMemo 优化
   const derivativeItems = useMemo(() => [
@@ -129,6 +137,48 @@ export default function PCHome() {
     },
   ], [t]);
 
+  const handleToggleFavorite = async (e, record) => {
+    e.stopPropagation();
+    
+    // 乐观更新：立即切换状态
+    const newIsFavorite = !record.isFavorite;
+    setRankData(prev => prev.map(item => 
+      item.symbol === record.symbol ? { ...item, isFavorite: newIsFavorite } : item
+    ));
+
+    try {
+      const url = newIsFavorite ? Interface.ADD_OWN : Interface.CANCEL_OWN;
+      
+      const res = await request({
+        url,
+        method: 'GET',
+        data: { coin: record.symbol }
+      });
+      
+      if (res?.code === 0) {
+        message.success(newIsFavorite ? t('common.addSuccess') : t('common.cancelSuccess'));
+        
+        // 如果在自选列表且移除了自选，刷新列表
+        if (activeRankTab === 'zixuan' && !newIsFavorite) {
+          fetchRankData('zixuan', pagination.current);
+        }
+      } else {
+        // 接口失败，回滚状态
+        setRankData(prev => prev.map(item => 
+          item.symbol === record.symbol ? { ...item, isFavorite: !newIsFavorite } : item
+        ));
+        message.error(res?.msg || t('common.operationFailed'));
+      }
+    } catch (error) {
+      console.error('操作失败:', error);
+      // 接口失败，回滚状态
+      setRankData(prev => prev.map(item => 
+        item.symbol === record.symbol ? { ...item, isFavorite: !newIsFavorite } : item
+      ));
+      message.error(t('common.operationFailed'));
+    }
+  };
+
   // 表格列配置
   const columns = [
     {
@@ -170,7 +220,20 @@ export default function PCHome() {
       title: t('pcHome.table.favorite'),
       key: 'addFavorite',
       align: 'center',
-      render: () => <HeartOutlined className={styles.actionIcon} />,
+      render: (_, record) => (
+        record.isFavorite ? (
+          <HeartFilled 
+            className={`${styles.actionIcon} ${styles.active}`} 
+            style={{ color: 'rgba(250, 95, 95, 1)' }} 
+            onClick={(e) => handleToggleFavorite(e, record)}
+          />
+        ) : (
+          <HeartOutlined 
+            className={styles.actionIcon} 
+            onClick={(e) => handleToggleFavorite(e, record)}
+          />
+        )
+      ),
     },
     {
       title: t('pcHome.table.monitor'),
@@ -181,23 +244,30 @@ export default function PCHome() {
   ];
 
   // 获取榜单数据
-  const fetchRankData = async (rankType = 'zhangfu') => {
+  const fetchRankData = async (rankType = 'zhangfu', page = 1) => {
     setRankLoading(true);
+    // 清空数据以防止显示上一个榜单的数据
+    setRankData([]);
+    
     try {
       // 从配置中查找对应的接口
       const tabConfig = rankTabs.find(tab => tab.key === rankType);
       const apiUrl = tabConfig?.interface || Interface.price_change;
       
       // 根据不同榜单类型设置不同的请求参数
-      let requestData = {};
+      let requestData = {
+        pageSize: 10,
+        pageNo: page
+      };
+
       if (rankType === 'chengjiaoe') {
-        requestData = { intervals: 0 };
+        requestData = { ...requestData, intervals: 0 };
       } else if (rankType === 'zixuan') {
-        requestData = { pageSize: 10, pageNo: 1 };
+        // 自选榜已经默认带了分页参数
       } else if (rankType === 'biaosheng') {
-        requestData = { intervals: '7_day' };  // 飙升榜使用7天数据
+        requestData = { ...requestData, intervals: '7_day' };  // 飙升榜使用7天数据
       } else {
-        requestData = { dim: 0 };
+        requestData = { ...requestData, dim: 0 };
       }
       
       const res = await request({
@@ -205,16 +275,22 @@ export default function PCHome() {
         data: requestData,
       });
       
-      // 自选榜的数据结构可能不同，需要特殊处理
       let list = [];
       if (rankType === 'zixuan') {
         // 自选榜返回的是数组，字段为 price24h 和 last
         list = res?.data || [];
       } else {
-        list = res?.data?.slice?.(0, 10) || [];
+        list = res?.data || [];
       }
       
-      setRankData(list.slice(0, 10).map((item) => ({
+      // 更新分页信息
+      const total = res?.total || list.length || 100;
+      setPagination(prev => ({ ...prev, current: page, total }));
+
+      // 如果返回的数据量大于pageSize，说明后端没有处理分页，前端手动截取
+      const displayList = list.length > 10 ? list.slice((page - 1) * 10, page * 10) : list;
+      
+      setRankData(displayList.map((item) => ({
         key: item.symbol,
         symbol: item.symbol,
         url: item.url || '/default-coin.svg',
@@ -225,6 +301,7 @@ export default function PCHome() {
           rankType === 'biaosheng' ? (item.price_24h || 0) :  // 飙升榜优先使用 price_24h
           (item.price24h || item.priceRange || item.priceChangePercentage24h || item.price_24h || 0)
         ),
+        isFavorite: rankType === 'zixuan' ? true : (item.favorite || item.isSelfSelected || item.isLiked || false),
       })));
     } catch (e) {
       console.error('获取榜单失败:', e);
@@ -233,105 +310,196 @@ export default function PCHome() {
     }
   };
 
+  // 获取板块选币数据
+  const fetchTreeMapData = async () => {
+    setTreeMapLoading(true);
+    try {
+      // 使用热门板块数据
+      const res = await request({
+        url: Interface.hot_industry,
+        data: { pageSize: 100 },
+      });
+      
+      const list = res?.data || [];
+      // 转换数据格式适配 TreeMap
+      const processedData = list.map(item => {
+        // 处理涨跌幅字符串，移除%号
+        let changeStr = String(item.changes || '0').replace('%', '');
+        let change = parseFloat(changeStr);
+        
+        return {
+          symbol: item.section,
+          marketCap: Math.abs(change), // 使用涨跌幅绝对值作为面积大小
+          priceChangePercent: change,
+          lastPrice: item.close || item.index_value || '--' // 板块指数或收盘价
+        };
+      });
+
+      setTreeMapData(processedData);
+    } catch (e) {
+      console.error('获取板块数据失败:', e);
+      setTreeMapData([]);
+    } finally {
+      setTreeMapLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchRankData('zhangfu');
+    fetchTreeMapData();
   }, []);
 
   const handleRankTabChange = (key) => {
     setActiveRankTab(key);
-    fetchRankData(key);
+    fetchRankData(key, 1);
+  };
+
+  const handlePageChange = (page) => {
+    fetchRankData(activeRankTab, page);
   };
 
   return (
     <div className={styles.pcHome}>
       {/* Banner 3D轮播 */}
       <div className={styles.bannerWrapper}>
-        <div className={styles.carousel3d}>
-          {HOME_BANNERS_ZH.map((url, idx) => {
-            const position = (idx - activeBanner + HOME_BANNERS_ZH.length) % HOME_BANNERS_ZH.length;
+        {bannerLoading && (
+          <div className={styles.carouselSkeleton}>
+            {/* Left Skeleton */}
+            <div className={`${styles.skeletonItem} ${styles.prev}`}>
+              <Skeleton.Button active shape="round" block />
+            </div>
+            {/* Center Skeleton */}
+            <div className={`${styles.skeletonItem} ${styles.active}`}>
+              <Skeleton.Button active shape="round" block />
+            </div>
+            {/* Right Skeleton */}
+            <div className={`${styles.skeletonItem} ${styles.next}`}>
+              <Skeleton.Button active shape="round" block />
+            </div>
+          </div>
+        )}
+        <div className={styles.carousel3d} style={{ display: bannerLoading ? 'none' : 'flex' }}>
+          {HOME_BANNERS.map((url, idx) => {
+            const position = (idx - activeBanner + HOME_BANNERS.length) % HOME_BANNERS.length;
             let posClass = '';
             if (position === 0) posClass = styles.active;
             else if (position === 1) posClass = styles.next;
-            else if (position === HOME_BANNERS_ZH.length - 1) posClass = styles.prev;
+            else if (position === HOME_BANNERS.length - 1) posClass = styles.prev;
             else posClass = styles.hidden;
             
             return (
               <div key={idx} className={`${styles.carouselItem} ${posClass}`} onClick={() => setActiveBanner(idx)}>
-                <img src={url} alt={`banner-${idx}`} />
+                <img 
+                  src={url} 
+                  alt={`banner-${idx}`} 
+                  onLoad={() => {
+                    // 当第一张图片加载完成时，取消loading状态
+                    if (idx === 0) setBannerLoading(false);
+                  }}
+                  onError={() => {
+                    // 如果加载失败，也取消loading，避免一直显示骨架屏
+                    if (idx === 0) setBannerLoading(false);
+                  }}
+                />
               </div>
             );
           })}
         </div>
-        <div className={styles.carouselDots}>
-          {HOME_BANNERS_ZH.map((_, idx) => (
-            <span 
-              key={idx} 
-              className={`${styles.dot} ${idx === activeBanner ? styles.dotActive : ''}`}
-              onClick={() => setActiveBanner(idx)}
-            />
-          ))}
+
+      </div>
+
+      {/* 内容区域：左侧60% 右侧40% */}
+      <div className={styles.contentSplit}>
+        <div className={styles.leftColumn}>
+          {/* 合约专区 */}
+          <div>
+            <div className={styles.derivativeHeader}>
+              <h2 className={styles.derivativeSectionTitle}>{t('pcHome.derivatives.title')}</h2>
+            </div>
+            <div className={styles.derivativeRow}>
+              {derivativeItems.map((item) => (
+                <div key={item.key} className={styles.derivativeCol}>
+                  <Card 
+                    className={styles.derivativeCard} 
+                    hoverable
+                    onClick={() => router.push(item.path)}
+                  >
+                    <div className={styles.derivativeContent}>
+                      <img src={item.icon} alt={item.title} className={styles.derivativeIcon} />
+                      <div className={styles.derivativeText}>
+                        <div className={styles.derivativeTitle}>{item.title}</div>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 涨跌分布 */}
+          <div className={styles.marketDistributionWrapper}>
+            <MarketDistribution isPC={true} />
+          </div>
+        </div>
+
+        <div className={styles.rightColumn}>
+            {/* 话题热榜 */}
+            <PCHotTopics />
+          </div>
+      </div>
+
+      {/* 板块选币 TreeMap */}
+      <div className={styles.sectorSection}>
+        <div className={styles.sectorHeader}>
+          <h2 className={styles.sectorTitle}>{t('pcHome.sectorMap.title')}</h2>
+          <div className={styles.headerViewMore} onClick={() => router.push('/hotsector')}>
+            {t('pcHome.sectorMap.viewMore')} <RightOutlined />
+          </div>
+        </div>
+        <div className={styles.sectorCard}>
+          <PCSectorTreeMap 
+            list={treeMapData} 
+            loading={treeMapLoading}
+            onItemClick={(item) => router.push(`/detail?symbol=${item.symbol}`)}
+          />
         </div>
       </div>
 
-      {/* 合约专区 - 4列 */}
-      <Row gutter={16} className={styles.derivativeRow}>
-        {derivativeItems.map((item) => (
-          <Col span={6} key={item.key}>
-            <Card 
-              className={styles.derivativeCard} 
-              hoverable
-              onClick={() => router.push(item.path)}
-            >
-              <div className={styles.derivativeContent}>
-                <img src={item.icon} alt={item.title} className={styles.derivativeIcon} />
-                <div className={styles.derivativeText}>
-                  <div className={styles.derivativeTitle}>{item.title}</div>
-                  <div className={styles.derivativeSubtitle}>{item.subtitle}</div>
-                </div>
-                <RightOutlined className={styles.derivativeArrow} />
-              </div>
-            </Card>
-          </Col>
-        ))}
-      </Row>
-
-      {/* 投资机会 / 话题热榜 - 使用共享组件 - 暂时隐藏 */}
-      {/* <TopicHotList isPC={true} /> */}
-
-      {/* 涨跌分布 - 使用移动端组件，PC端左右布局 - 暂时隐藏 */}
-      {/* <div className={styles.marketDistributionWrapper}>
-        <MarketDistribution isPC={true} />
-      </div> */}
-
       {/* 实时榜单 */}
       <div className={styles.rankSection}>
-        {/* 标题和Tab在容器外面 */}
+        {/* 标题 */}
         <div className={styles.rankHeader}>
           <h2 className={styles.rankTitle}>{t('pcHome.ranks.title')}</h2>
+          <div className={styles.headerViewMore} onClick={() => router.push('/pricerank')}>
+            {t('pcHome.ranks.viewMore')} <RightOutlined />
+          </div>
+        </div>
+        
+        {/* 表格在白色卡片里 */}
+        <Card className={styles.rankCard}>
           <Tabs
             activeKey={activeRankTab}
             onChange={handleRankTabChange}
             items={rankTabs}
             className={styles.rankTabs}
           />
-        </div>
-        
-        {/* 表格在白色卡片里 */}
-        <Card className={styles.rankCard}>
           <Table
             columns={columns}
             dataSource={rankData}
             loading={rankLoading}
-            pagination={false}
+            pagination={{
+              ...pagination,
+              onChange: handlePageChange,
+              showSizeChanger: false,
+              showQuickJumper: true,
+              position: ['bottomCenter']
+            }}
             size="middle"
             onRow={(record) => ({
               onClick: () => router.push(`/detail?symbol=${record.symbol}`),
               style: { cursor: 'pointer' },
             })}
           />
-          <div className={styles.viewMore} onClick={() => router.push('/pricerank')}>
-            {t('pcHome.ranks.viewMore')} <RightOutlined />
-          </div>
         </Card>
       </div>
     </div>

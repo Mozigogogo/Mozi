@@ -1,8 +1,10 @@
 export { default as RightArrowIcon } from './RightArrowIcon';
+export { default as RightArrowBoldIcon } from './RightArrowBoldIcon';
 export { default as LeftArrowIcon } from './LeftArrowIcon';
 export { FavoriteIcon } from './FavoriteIcon';
 export { BellIcon } from './BellIcon';
 export { LandscapeIcon } from './LandscapeIcon';
 export { default as CaretUpIcon } from './CaretUpIcon';
+export { default as UpArrowIcon } from './UpArrowIcon';
 export { default as CaretDownIcon } from './CaretDownIcon';
 export { default as DailyFooterIcon } from './DailyFooterIcon';

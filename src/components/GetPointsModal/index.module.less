@@ -80,3 +80,27 @@
   from { transform: scale(0.5); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
+
+@media (min-width: 768px) {
+  .container {
+    transform-origin: center center;
+    max-width: 400px;
+  }
+
+  .mainImage {
+    width: 200px; /* PC端缩小图片尺寸 */
+  }
+
+  .pointsText {
+    bottom: 18px; /* 调整文字位置 */
+  }
+
+  .label {
+    font-size: 16px;
+    margin-right: 40px;
+  }
+
+  .pointsValue {
+    font-size: 24px;
+  }
+}
