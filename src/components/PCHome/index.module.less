@@ -95,7 +95,7 @@
   display: flex;
   gap: 20px;
   margin-bottom: 20px;
-  align-items: flex-start;
+  align-items: stretch;
   padding: 0 24px;
 }
 
@@ -108,6 +108,8 @@
 
 .rightColumn {
   width: 45%;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 合约专区 */
@@ -173,7 +175,6 @@
 
 /* 涨跌分布区域 - PC端适配 */
 .marketDistributionWrapper {
-  margin-bottom: 20px;
   background: transparent; /* 背景透明，让标题在外面 */
   padding: 0;
 }

@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import * as homeApi from '@/api/home';
@@ -9,23 +9,98 @@ import styles from './index.module.less';
 const PCHotTopics = () => {
   const router = useRouter();
   const { t } = useTranslation();
+  const listRef = useRef(null);
+  const isFetchingRef = useRef(false);
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
+  
+  // Use a ref to track scroll accumulation for smooth slow scrolling
+  const scrollAccumulatorRef = useRef(0);
+  const animationFrameRef = useRef(null);
 
   useEffect(() => {
-    fetchHotTopics();
+    fetchHotTopics(1);
   }, []);
 
-  const fetchHotTopics = async () => {
+  // Auto-scroll logic with requestAnimationFrame for better performance
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list || (loading && page === 1) || isHovered || topics.length === 0) {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      return;
+    }
+
+    const animateScroll = () => {
+      if (!list) return;
+
+      // Accumulate scroll delta
+      // 0.5px per frame at 60fps = 30px per second (similar to previous 1px per 50ms = 20px/s)
+      // Slightly faster but smoother
+      scrollAccumulatorRef.current += 0.5;
+
+      if (scrollAccumulatorRef.current >= 1) {
+        const pixelsToScroll = Math.floor(scrollAccumulatorRef.current);
+        list.scrollTop += pixelsToScroll;
+        scrollAccumulatorRef.current -= pixelsToScroll;
+        
+        // Pre-fetch check: load more when we are 150px away from bottom (approx 2-3 items)
+        // This prevents the pause at the end of the list while waiting for network
+        if (list.scrollTop + list.clientHeight >= list.scrollHeight - 150) {
+          if (hasMore && !isFetchingRef.current) {
+             fetchHotTopics(page + 1);
+          }
+        }
+      }
+
+      animationFrameRef.current = requestAnimationFrame(animateScroll);
+    };
+
+    animationFrameRef.current = requestAnimationFrame(animateScroll);
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [topics, loading, isHovered, hasMore, page]);
+
+  const fetchHotTopics = async (pageNum = 1) => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
+
     try {
-      setLoading(true);
-      const response = await homeApi.getHotTopics(10);
+      if (pageNum === 1) setLoading(true);
+      // Increased page size to 20 to reduce fetch frequency and stutter
+      const response = await homeApi.getHotTopics(20, pageNum);
       const data = response?.data?.data || response?.data || [];
-      setTopics(Array.isArray(data) ? data : []);
+      
+      if (pageNum === 1) {
+        setTopics(Array.isArray(data) ? data : []);
+      } else {
+        const newTopics = Array.isArray(data) ? data : [];
+        if (newTopics.length === 0) {
+            setHasMore(false);
+        } else {
+            // Filter duplicates
+            setTopics(prev => {
+              const existingIds = new Set(prev.map(t => t.id || JSON.stringify(t)));
+              const uniqueNew = newTopics.filter(t => !existingIds.has(t.id || JSON.stringify(t)));
+              return [...prev, ...uniqueNew];
+            });
+            setPage(pageNum);
+        }
+      }
     } catch (error) {
       console.error('Failed to fetch hot topics:', error);
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
   };
 
@@ -48,7 +123,7 @@ const PCHotTopics = () => {
     }
     return numVal;
   };
-  
+
   const formatDate = (dateStr) => {
     if (!dateStr) return '2026-07-11 15:23'; // Mock date as fallback
     try {
@@ -64,7 +139,7 @@ const PCHotTopics = () => {
     }
   };
 
-  if (loading) {
+  if (loading && page === 1) {
     return (
       <div className={styles.container}>
         <div className={styles.header}>
@@ -92,7 +167,12 @@ const PCHotTopics = () => {
         </div>
       </div>
 
-      <div className={styles.list}>
+      <div 
+        className={styles.list} 
+        ref={listRef}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
         {topics.map((topic, index) => {
           const rank = index + 1;
           const isTop3 = rank <= 3;
