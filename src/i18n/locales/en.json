@@ -98,6 +98,23 @@
   },
   "common": {
     "home": "Home",
+    "pcLayout": {
+      "notice": "Say goodbye to manual monitoring! Let AI analyze trends first, then set precise alerts!",
+      "menu": {
+        "home": "Home",
+        "market": "Market",
+        "discover": "Discover",
+        "indicator": "Indicator",
+        "more": "More",
+        "mine": "Mine",
+        "myAchievement": "My Achievement",
+        "myQA": "My Q&A",
+        "createdLists": "Created Lists",
+        "collectedLists": "Collected Lists",
+        "login": "Login / Register",
+        "logout": "Logout"
+      }
+    },
     "find": "Discover",
     "community": "Community",
     "profile": "Profile",

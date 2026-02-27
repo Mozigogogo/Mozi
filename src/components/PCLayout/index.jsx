@@ -41,11 +41,15 @@ export default function PCLayout({ children }) {
   const [showLoginModal, setShowLoginModal] = useState(false);
   
   // 公告栏数据
-  const [notices, setNotices] = useState([
-    '告别手动盯盘！先让AI分析走势，再设置精准报警！',
-    '告别手动盯盘！先让AI分析走势，再设置精准报警！',
-    '告别手动盯盘！先让AI分析走势，再设置精准报警！'
-  ]);
+  const [notices, setNotices] = useState([]);
+
+  useEffect(() => {
+    setNotices([
+      t('pcLayout.notice'),
+      t('pcLayout.notice'),
+      t('pcLayout.notice')
+    ]);
+  }, [t]);
   
   // 搜索框状态
   const [searchValue, setSearchValue] = useState('');

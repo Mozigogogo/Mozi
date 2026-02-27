@@ -12,13 +12,16 @@ import {
 } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import styles from './index.module.less';
-import MarketDistribution from '../MarketDistribution';
-import PCHotTopics from '../PCHotTopics';
-import PCSectorTreeMap from '../PCSectorTreeMap';
+
+// Lazy load heavy components
+const MarketDistribution = dynamic(() => import('../MarketDistribution'));
+const PCHotTopics = dynamic(() => import('../PCHotTopics'));
+const PCSectorTreeMap = dynamic(() => import('../PCSectorTreeMap'));
 
 // CDN 图片前缀
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
