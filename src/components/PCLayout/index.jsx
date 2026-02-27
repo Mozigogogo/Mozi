@@ -18,6 +18,7 @@ import PCCommunityContent from '../PCCommunityContent';
 import PCAuthModal from '../PCAuthModal';
 import PCUserPanel from '../PCUserPanel';
 import PCFooterNotice from '../PCFooterNotice';
+import BenefitCodeModal from '../BenefitCodeModal';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 import styles from './index.module.less';
@@ -39,6 +40,7 @@ export default function PCLayout({ children }) {
   const [collapsed, setCollapsed] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showBenefitModal, setShowBenefitModal] = useState(false);
   
   // 公告栏数据
   const [notices, setNotices] = useState([]);
@@ -406,6 +408,11 @@ export default function PCLayout({ children }) {
         <div className={styles.headerRight}>
           <Button 
             type="text" 
+            onClick={() => setShowBenefitModal(true)}
+            icon={<img src="/icons/new_user/bind.svg" alt="bind" style={{ width: 22, height: 22, objectFit: 'contain' }} />} 
+          />
+          <Button 
+            type="text" 
             icon={<img src="/icons/pc/setting@2x.png" alt="settings" style={{ width: 22, height: 22, objectFit: 'contain' }} />} 
           />
           <Button 
@@ -576,6 +583,12 @@ export default function PCLayout({ children }) {
           setShowUserPanel(false);
           setShowLoginModal(true);
         }}
+      />
+
+      {/* 权益码弹窗 */}
+      <BenefitCodeModal
+        open={showBenefitModal}
+        onClose={() => setShowBenefitModal(false)}
       />
     </Layout>
   );

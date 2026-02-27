@@ -37,6 +37,8 @@
   animation: slideUp 0.3s ease;
 }
 
+
+
 .container {
   padding: 28px 24px 28px;
   display: flex;
@@ -94,13 +96,10 @@
 
   &:hover {
     background: #0fa076;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(17, 183, 135, 0.3);
   }
 
   &:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(17, 183, 135, 0.2);
+    
   }
 
   &:disabled {
@@ -164,12 +163,10 @@
 
   &:hover {
     background: #19A67E;
-    box-shadow: 0 4px 12px rgba(29, 184, 142, 0.3);
   }
 
   &:active {
     background: #17956F;
-    box-shadow: 0 2px 8px rgba(29, 184, 142, 0.2);
   }
 
   &:disabled {
@@ -219,5 +216,46 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@media (min-width: 768px) {
+  .modalBody {
+    width: 404px;
+    max-width: 404px;
+    border-radius: 16px;
+  }
+
+  .container {
+    padding: 28px 24px 24px;
+    max-height: 457px;
+  }
+
+  .content {
+    margin-bottom: 24px;
+  }
+
+  .title {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+
+  .singleConfirmButton {
+    height: 48px;
+    border-radius: 26px;
+    font-size: 17px;
+  }
+
+  .cancelButton,
+  .confirmButton {
+    height: 48px;
+    border-radius: 26px;
+    font-size: 16px;
+  }
+
+  .loadingSpinner {
+    width: 16px;
+    height: 16px;
+    border-width: 2px;
   }
 }
