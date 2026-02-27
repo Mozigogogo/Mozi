@@ -182,13 +182,13 @@ export default function PCHome() {
   // 表格列配置
   const columns = [
     {
-      title: t('pcHome.table.coin'),
+      title: <span style={{ paddingLeft: '65px' }}>{t('pcHome.table.coin')}</span>,
       dataIndex: 'symbol',
       key: 'symbol',
-      align: 'center',
+      align: 'left',
       width: 250,
       render: (text, record) => (
-        <div className={styles.coinCell}>
+        <div className={styles.coinCell} style={{ justifyContent: 'flex-start', paddingLeft: '40px' }}>
           <img 
             src={record.url || '/default-coin.svg'} 
             alt={text} 

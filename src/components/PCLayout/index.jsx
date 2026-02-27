@@ -6,6 +6,8 @@ import {
   UserOutlined,
   CloseCircleFilled,
   MenuOutlined,
+  RightOutlined,
+  CaretRightOutlined,
 } from '@ant-design/icons';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -294,6 +296,16 @@ export default function PCLayout({ children }) {
           label: t('pcLayout.menu.mySubscription') 
         },
         { 
+          key: '/myqa', 
+          icon: <CustomIcon 
+            src="/icons/new_home/ai_chat.svg" 
+            activeSrc="/icons/new_home/ai_chat.svg"
+            itemKey="/myqa"
+            alt="myqa" 
+          />, 
+          label: t('pcLayout.menu.myQA') 
+        },
+        { 
           key: '/achievement', 
           icon: <CustomIcon 
             src="/icons/pc/Achievement.png" 
@@ -307,7 +319,12 @@ export default function PCLayout({ children }) {
     },
     {
       key: 'coinlist',
-      label: collapsed ? '' : t('pcLayout.menu.createdLists'), // 折叠时隐藏分组标签
+      label: collapsed ? '' : (
+        <span style={{ display: 'flex', alignItems: 'center' }}>
+          <CaretRightOutlined style={{ marginRight: 2, fontSize: 14, color: '#999' }} />
+          {t('pcLayout.menu.createdLists')}
+        </span>
+      ), // 折叠时隐藏分组标签
       type: 'group',
       children: [],
     },
@@ -420,7 +437,15 @@ export default function PCLayout({ children }) {
             style={{ cursor: 'pointer', position: 'relative' }}
             id="user-info-trigger"
           >
-            <Avatar size={40} src={userInfo?.avatar} icon={<UserOutlined />} />
+            {userInfo ? (
+              <Avatar size={40} src={userInfo.avatar} icon={<UserOutlined />} />
+            ) : (
+              <img 
+                src="/icons/new_home/not_login.svg" 
+                alt="Not Logged In" 
+                style={{ width: 40, height: 40, borderRadius: '50%' }} 
+              />
+            )}
             {!collapsed && (
               <Text strong className={styles.userName}>
                 {userInfo 
@@ -428,6 +453,9 @@ export default function PCLayout({ children }) {
                   : t('pcLayout.user.notLoggedIn')
                 }
               </Text>
+            )}
+            {!collapsed && !userInfo && (
+              <CaretRightOutlined style={{ marginLeft: 'auto', fontSize: 14, color: '#999' }} />
             )}
           </div>
 
