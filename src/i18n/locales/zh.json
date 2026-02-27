@@ -557,6 +557,24 @@
     "bindFailed": "绑定失败，请检查权益码是否正确",
     "bindError": "绑定失败，请重试"
   },
+  "pointsPool": {
+    "title": "本月积分池状态",
+    "total": "月度总量 {{amount}} 积分",
+    "remaining": "剩余积分",
+    "issued": "已发放",
+    "claimable": "剩余可领",
+    "resetDays": "距离重置",
+    "days": "天",
+    "status": {
+      "normal": "充足",
+      "scarce": "紧张",
+      "boost": "加倍"
+    },
+    "tip": {
+      "title": "积分获取小贴士",
+      "content": "越早参与，获得越多！会员用户获取效率更高，且不受池子紧张影响。"
+    }
+  },
   "auth": {
     "email": "邮箱",
     "emailPlaceholder": "请输入邮箱地址",

@@ -15,7 +15,15 @@ instance.interceptors.request.use(
   (config) => {
     // 从localStorage获取token
     const token = localStorage.getItem('token');
-    if (token) {
+    
+    // 检查请求中是否已经包含了 Authorization 头（忽略大小写）
+    // 如果已经有 Authorization 头（例如 getPoolStatus 接口），则不再添加 authentication 头
+    // Axios v1+ config.headers 可能是 AxiosHeaders 对象，支持 .has() 方法
+    const hasAuthorization = config.headers['Authorization'] || 
+                             config.headers['authorization'] || 
+                             (config.headers.has && config.headers.has('Authorization'));
+                             
+    if (token && !hasAuthorization) {
       config.headers.authentication = token;
     }
     
@@ -200,11 +208,12 @@ instance.interceptors.response.use(
 // 封装请求函数
 export const request = async (options) => {
   try {
-    const { url, method = 'GET', data, params } = options;
+    const { url, method = 'GET', data, params, headers } = options;
     
     const config = {
       url,
       method,
+      headers,
       ...(method.toUpperCase() === 'GET' ? { params: data || params } : { data }),
     };
     

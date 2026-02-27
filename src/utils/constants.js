@@ -304,6 +304,8 @@ export const Interface = {
   TASK_INVITATION_LIST: '/task/invitation/list',
   // 完成任务
   TASK_COMPLETE: '/task/complete',
+  // 获取积分公共池状态
+  POOL_STATUS: '/task/pool/status',
 
   // AI 对话
   // AI 技术分析

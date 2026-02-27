@@ -576,6 +576,24 @@
     "bindFailed": "Binding failed, please check if the code is correct",
     "bindError": "Binding failed, please try again"
   },
+  "pointsPool": {
+    "title": "Monthly Points Pool Status",
+    "total": "Monthly Total {{amount}} Points",
+    "remaining": "Remaining",
+    "issued": "Issued",
+    "claimable": "Claimable",
+    "resetDays": "Days to Reset",
+    "days": "Days",
+    "status": {
+      "normal": "Sufficient",
+      "scarce": "Scarce",
+      "boost": "Boost"
+    },
+    "tip": {
+      "title": "Points Tips",
+      "content": "Participate early, get more! VIP users get higher efficiency and are unaffected by pool scarcity."
+    }
+  },
   "auth": {
     "email": "Email",
     "emailPlaceholder": "Enter email",
