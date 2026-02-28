@@ -1,16 +1,19 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import NavBar from '@/components/NavBar';
 import { useTranslation } from 'react-i18next';
 import { Toast } from 'antd-mobile';
 import { isTelegramEnv, handleVipPurchase } from '@/utils/core';
+import { getSubscriptionBenefits, getSubscriptionPricing, getMySubscription } from '@/api/vip';
 import styles from './page.module.less';
 
 export default function VipRechargePage() {
   const { t } = useTranslation();
-
-  const plans = [
+  const fetchedRef = useRef(false);
+  
+  // Fallback plans if API fails or while loading
+  const defaultPlans = [
     { 
       title: t('vipRecharge.plans.yearly.title'), 
       price: t('vipRecharge.plans.yearly.price'), 
@@ -32,7 +35,60 @@ export default function VipRechargePage() {
     },
   ];
 
-  const [selectedPlanId, setSelectedPlanId] = React.useState(plans.find(p => p.recommend)?.id || plans[0].id);
+  const [plans, setPlans] = useState(defaultPlans);
+  const [benefits, setBenefits] = useState([]);
+  const [mySubscription, setMySubscription] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedPlanId, setSelectedPlanId] = useState(defaultPlans.find(p => p.recommend)?.id || defaultPlans[0].id);
+
+  useEffect(() => {
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [benefitsRes, pricingRes, mySubRes] = await Promise.all([
+          getSubscriptionBenefits(),
+          getSubscriptionPricing(),
+          getMySubscription()
+        ]);
+
+        if (benefitsRes.code === 0) {
+          setBenefits(benefitsRes.data || []);
+        }
+
+        if (pricingRes.code === 0) {
+          const apiPlans = pricingRes.data || [];
+          if (apiPlans.length > 0) {
+             const mappedPlans = apiPlans.map(p => ({
+               id: p.id,
+               title: p.name || p.title,
+               price: p.price,
+               unit: p.unit || '',
+               recommend: p.isRecommend
+             }));
+             setPlans(mappedPlans);
+             // Update selected plan only if not manually changed (or just reset to recommend)
+             // For simplicity, we can reset to recommended plan from API
+             const recommend = mappedPlans.find(p => p.recommend);
+             setSelectedPlanId(recommend ? recommend.id : mappedPlans[0]?.id);
+          }
+        }
+
+        if (mySubRes.code === 0) {
+          setMySubscription(mySubRes.data);
+        }
+
+      } catch (error) {
+        console.error('Failed to fetch VIP data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const basicFeatures = [
     { icon: <img src="/images/recharge/market_situation.svg" alt="market" />, text: t('vipRecharge.basic.features.market'), active: true },
