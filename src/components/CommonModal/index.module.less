@@ -35,6 +35,11 @@
   overflow: hidden;
   max-height: 90vh;
   animation: slideUp 0.3s ease;
+
+  @media (min-width: 768px) {
+    width: 480px;
+    animation: fadeIn 0.3s ease;
+  }
 }
 
 
@@ -140,7 +145,7 @@
 .cancelButton {
   background: white;
   color:rgba(153, 153, 153, 1);
-  border: 1.5px solid rgba(153, 153, 153, 1);
+  border: 1px solid rgba(153, 153, 153, 1);
 
   &:hover {
     background: #F5F5F5;

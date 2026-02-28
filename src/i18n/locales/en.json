@@ -1488,6 +1488,7 @@
     }
   },
   "pcLayout": {
+    "notice": "Say goodbye to manual monitoring! Let AI analyze trends, then set precise alerts!",
     "menu": {
       "home": "Home",
       "discover": "Discover",

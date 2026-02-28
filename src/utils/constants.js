@@ -298,6 +298,15 @@ export const Interface = {
   TASK_POINTS_HISTORY: '/task/v1/pointsHistory',
   // 获取任务列表
   TASK_LIST: '/task/list',
+
+  // 订阅/VIP
+  // 查询三档权益列表
+  SUBSCRIPTION_BENEFITS: '/subscription/benefits',
+  // 查询所有定价档位
+  SUBSCRIPTION_PRICING: '/subscription/pricing',
+  // 查询我的订阅状态
+  SUBSCRIPTION_MY: '/subscription/my',
+
   // 获取积分榜单
   TASK_RANKING: '/task/ranking',
   // 获取邀请列表
