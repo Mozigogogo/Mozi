@@ -1,12 +1,21 @@
 .container {
+  margin: -24px -24px -64px -24px;
+  width: calc(100% + 48px);
+  min-height: calc(100vh - 64px);
+  padding: 24px;
+  padding-bottom: 64px;
+  background: url('/images/new_home/full_screen_bg.svg') no-repeat center top;
+  background-size: cover;
+}
+
+.contentWrapper {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 24px;
 }
 
 .headerCard {
   background: #fff;
-  border-radius: 16px;
+  border-radius: 30px;
   padding: 40px;
   display: flex;
   gap: 32px;
@@ -16,8 +25,8 @@
 
 .avatarWrapper {
   position: relative;
-  width: 120px;
-  height: 120px;
+  width: 160px;
+  height: 160px;
   flex-shrink: 0;
 }
 
@@ -46,35 +55,51 @@
 
 .nameRow {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
 }
 
 .nickname {
-  font-size: 24px;
-  font-weight: 600;
-  color: #333;
+  font-family: Roboto;
+  font-size: 32px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 26.76px;
+  background: linear-gradient(180deg, #F8D5A9 4.06%, #E5B372 33.13%, #DE9E4C 54.37%, #663409 90%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .tagsRow {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 6px;
 }
 
 .tag {
-  padding: 4px 12px;
-  background: #F5F5F5;
-  border-radius: 14px;
-  font-size: 12px;
-  color: #666;
+  border-radius: 202.105px;
+  border: 1.011px solid #E9E9E9;
+  background: var(--Color, rgba(255, 255, 255, 0.32));
+  padding: 2px 8px;
+  color: rgba(49, 48, 48, 1);
+  font-family: Roboto;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 18px;
+  line-height: 17.95px;
+  letter-spacing: 0px;
+  vertical-align: middle;
+  text-transform: capitalize;
 }
 
 .bio {
   font-size: 14px;
   color: #666;
-  margin-bottom: 24px;
+  margin-bottom: 6px;
 }
 
 .statsRow {
@@ -109,8 +134,9 @@
 
 .tabCard {
   flex: 1;
-  background: #fff;
-  border-radius: 16px;
+  border-radius: 40px;
+  border: 1.115px solid #E9E9E9;
+  background: rgba(255, 255, 255, 0.32);
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -118,7 +144,6 @@
   justify-content: center;
   gap: 8px;
   cursor: pointer;
-  border: 1px solid #eee;
   transition: all 0.3s ease;
   
   &:hover {
@@ -150,7 +175,7 @@
 /* Table Section */
 .contentSection {
   background: #fff;
-  border-radius: 16px;
+  border-radius: 30px;
   padding: 24px;
   min-height: 400px;
 }
@@ -159,7 +184,6 @@
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
   padding: 16px 24px;
-  border-bottom: 1px solid #f0f0f0;
   color: #666;
   font-size: 14px;
 }
@@ -169,15 +193,10 @@
   grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
   padding: 20px 24px;
   align-items: center;
-  border-bottom: 1px solid #f5f5f5;
   transition: background 0.2s;
   
   &:hover {
     background: #fafafa;
-  }
-  
-  &:last-child {
-    border-bottom: none;
   }
 }
 
@@ -238,6 +257,13 @@
 .centerCol {
   display: flex;
   justify-content: center; /* Center icons horizontally */
+  align-items: center;
+}
+
+.paginationWrapper {
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
 }
 
 /* Align headers */

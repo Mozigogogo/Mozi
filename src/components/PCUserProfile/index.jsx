@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Pagination } from 'antd';
 import { FavoriteIcon } from '@/components/Icons/FavoriteIcon';
 import { BellIcon } from '@/components/Icons/BellIcon';
 import styles from './index.module.less';
@@ -21,14 +22,14 @@ const MOCK_USER = {
 };
 
 const MOCK_COINS = [
-  { id: 1, symbol: 'BTC', icon: 'https://cryptologos.cc/logos/bitcoin-btc-logo.png', price: '102.658.7', change: '+3.58%', isUp: true },
-  { id: 2, symbol: 'ETH', icon: 'https://cryptologos.cc/logos/ethereum-eth-logo.png', price: '102.658.7', change: '+3.58%', isUp: true },
-  { id: 3, symbol: 'SEI', icon: 'https://cryptologos.cc/logos/sei-sei-logo.png', price: '102.658.7', change: '+3.58%', isUp: true },
-  { id: 4, symbol: 'SEI', icon: 'https://cryptologos.cc/logos/sei-sei-logo.png', price: '102.658.7', change: '+3.58%', isUp: true },
-  { id: 5, symbol: 'SEI', icon: 'https://cryptologos.cc/logos/sei-sei-logo.png', price: '102.658.7', change: '+3.58%', isUp: true },
-  { id: 6, symbol: 'SEI', icon: 'https://cryptologos.cc/logos/sei-sei-logo.png', price: '102.658.7', change: '+3.58%', isUp: true },
-  { id: 7, symbol: 'SEI', icon: 'https://cryptologos.cc/logos/sei-sei-logo.png', price: '102.658.7', change: '+3.58%', isUp: true },
-  { id: 8, symbol: 'SEI', icon: 'https://cryptologos.cc/logos/sei-sei-logo.png', price: '102.658.7', change: '+3.58%', isUp: true },
+  { id: 1, symbol: 'BTC', icon: '/icons/new_user/btc.svg', price: '102.658.7', change: '+3.58%', isUp: true },
+  { id: 2, symbol: 'ETH', icon: 'https://ui-avatars.com/api/?name=ETH&background=627eea&color=fff&rounded=true', price: '102.658.7', change: '+3.58%', isUp: true },
+  { id: 3, symbol: 'SEI', icon: 'https://ui-avatars.com/api/?name=SEI&background=a00&color=fff&rounded=true', price: '102.658.7', change: '+3.58%', isUp: true },
+  { id: 4, symbol: 'SEI', icon: 'https://ui-avatars.com/api/?name=SEI&background=a00&color=fff&rounded=true', price: '102.658.7', change: '+3.58%', isUp: true },
+  { id: 5, symbol: 'SEI', icon: 'https://ui-avatars.com/api/?name=SEI&background=a00&color=fff&rounded=true', price: '102.658.7', change: '+3.58%', isUp: true },
+  { id: 6, symbol: 'SEI', icon: 'https://ui-avatars.com/api/?name=SEI&background=a00&color=fff&rounded=true', price: '102.658.7', change: '+3.58%', isUp: true },
+  { id: 7, symbol: 'SEI', icon: 'https://ui-avatars.com/api/?name=SEI&background=a00&color=fff&rounded=true', price: '102.658.7', change: '+3.58%', isUp: true },
+  { id: 8, symbol: 'SEI', icon: 'https://ui-avatars.com/api/?name=SEI&background=a00&color=fff&rounded=true', price: '102.658.7', change: '+3.58%', isUp: true },
 ];
 
 export default function PCUserProfile() {
@@ -43,6 +44,7 @@ export default function PCUserProfile() {
 
   return (
     <div className={styles.container}>
+      <div className={styles.contentWrapper}>
       {/* Header Section */}
       <div className={styles.headerCard}>
         <div className={styles.avatarWrapper}>
@@ -55,11 +57,12 @@ export default function PCUserProfile() {
         <div className={styles.userInfo}>
           <div className={styles.nameRow}>
             <span className={styles.nickname}>{MOCK_USER.nickname}</span>
-            <div className={styles.tagsRow}>
-              {MOCK_USER.tags.map((tag, index) => (
-                <span key={index} className={styles.tag}>{tag}</span>
-              ))}
-            </div>
+          </div>
+          
+          <div className={styles.tagsRow}>
+            {MOCK_USER.tags.map((tag, index) => (
+              <span key={index} className={styles.tag}>{tag}</span>
+            ))}
           </div>
           
           <div className={styles.bio}>{MOCK_USER.bio}</div>
@@ -123,14 +126,21 @@ export default function PCUserProfile() {
                     {coin.change}
                   </span>
                 </div>
-                <div className={`${styles.centerCol} ${styles.actionBtn}`}>
-                  <FavoriteIcon filled={true} size={24} color="#FF4D4F" />
+                <div className={styles.centerCol}>
+                  <div className={styles.actionBtn}>
+                    <FavoriteIcon filled={true} size={24} color="#FF4D4F" />
+                  </div>
                 </div>
-                <div className={`${styles.centerCol} ${styles.actionBtn}`}>
-                  <BellIcon size={24} color="#ccc" />
+                <div className={styles.centerCol}>
+                  <div className={styles.actionBtn}>
+                    <BellIcon size={24} color="#ccc" />
+                  </div>
                 </div>
               </div>
             ))}
+          </div>
+          <div className={styles.paginationWrapper}>
+            <Pagination defaultCurrent={1} total={50} align="center" />
           </div>
         </div>
       )}
@@ -141,6 +151,7 @@ export default function PCUserProfile() {
           {t('common.noData') || '暂无数据'}
         </div>
       )}
+      </div>
     </div>
   );
 }
