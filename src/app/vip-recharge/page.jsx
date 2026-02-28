@@ -48,9 +48,8 @@ export default function VipRechargePage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [benefitsRes, pricingRes, mySubRes] = await Promise.all([
+        const [benefitsRes, mySubRes] = await Promise.all([
           getSubscriptionBenefits(),
-          getSubscriptionPricing(),
           getMySubscription()
         ]);
 
@@ -58,23 +57,32 @@ export default function VipRechargePage() {
           setBenefits(benefitsRes.data || []);
         }
 
-        if (pricingRes.code === 0) {
-          const apiPlans = pricingRes.data || [];
-          if (apiPlans.length > 0) {
-             const mappedPlans = apiPlans.map(p => ({
-               id: p.id,
-               title: p.name || p.title,
-               price: p.price,
-               unit: p.unit || '',
-               recommend: p.isRecommend
-             }));
-             setPlans(mappedPlans);
-             // Update selected plan only if not manually changed (or just reset to recommend)
-             // For simplicity, we can reset to recommended plan from API
-             const recommend = mappedPlans.find(p => p.recommend);
-             setSelectedPlanId(recommend ? recommend.id : mappedPlans[0]?.id);
+        // Mock data for pricing plans
+        const mockPlans = [
+          { 
+            id: 'yearly',
+            title: t('vipRecharge.plans.yearly.title'), 
+            price: t('vipRecharge.plans.yearly.price'), 
+            unit: t('vipRecharge.plans.yearly.unit'), 
+            recommend: true 
+          },
+          { 
+            id: 'quarterly',
+            title: t('vipRecharge.plans.quarterly.title'), 
+            price: t('vipRecharge.plans.quarterly.price'), 
+            unit: t('vipRecharge.plans.quarterly.unit')
+          },
+          { 
+            id: 'monthly',
+            title: t('vipRecharge.plans.monthly.title'), 
+            price: t('vipRecharge.plans.monthly.price'), 
+            unit: t('vipRecharge.plans.monthly.unit')
           }
-        }
+        ];
+        
+        setPlans(mockPlans);
+        const recommend = mockPlans.find(p => p.recommend);
+        setSelectedPlanId(recommend ? recommend.id : mockPlans[0]?.id);
 
         if (mySubRes.code === 0) {
           setMySubscription(mySubRes.data);
