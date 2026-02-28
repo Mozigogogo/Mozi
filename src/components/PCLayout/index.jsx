@@ -1,11 +1,22 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Layout, Menu, Avatar, Badge, Button, Typography, ConfigProvider } from 'antd';
+import {
+  Layout,
+  Menu,
+  Avatar, 
+  Badge, 
+  Button, 
+  Typography, 
+  ConfigProvider,
+} from 'antd';
 import {
   UserOutlined,
   CloseCircleFilled,
   MenuOutlined,
+  RightOutlined,
+  CaretRightOutlined,
+  CaretDownOutlined,
 } from '@ant-design/icons';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -16,8 +27,11 @@ import PCCommunityContent from '../PCCommunityContent';
 import PCAuthModal from '../PCAuthModal';
 import PCUserPanel from '../PCUserPanel';
 import PCFooterNotice from '../PCFooterNotice';
+import BenefitCodeModal from '../BenefitCodeModal';
+import BindBenefitCodeModal from '../BindBenefitCodeModal';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
+import { getShareCount } from '@/api/home';
 import styles from './index.module.less';
 
 const searchIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/search.png';
@@ -37,14 +51,32 @@ export default function PCLayout({ children }) {
   const [collapsed, setCollapsed] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showBenefitModal, setShowBenefitModal] = useState(false);
+  const [showBindBenefitCodeModal, setShowBindBenefitCodeModal] = useState(false);
+  
+  // 首次登录引导弹窗 - 与移动端保持一致
+  useEffect(() => {
+    // 只有已登录用户才显示
+    if (userInfo) {
+      const hasShown = localStorage.getItem('hasShownBindGuide');
+      if (!hasShown) {
+        setShowBindBenefitCodeModal(true);
+        localStorage.setItem('hasShownBindGuide', 'true');
+      }
+    }
+  }, [userInfo]);
   
   // 公告栏数据
-  const [notices, setNotices] = useState([
-    '告别手动盯盘！先让AI分析走势，再设置精准报警！',
-    '告别手动盯盘！先让AI分析走势，再设置精准报警！',
-    '告别手动盯盘！先让AI分析走势，再设置精准报警！'
-  ]);
-  
+  const [notices, setNotices] = useState([]);
+
+  useEffect(() => {
+    setNotices([
+      t('pcLayout.notice'),
+      t('pcLayout.notice'),
+      t('pcLayout.notice')
+    ]);
+  }, [t]);
+
   // 搜索框状态
   const [searchValue, setSearchValue] = useState('');
   const searchRef = useRef('');
@@ -153,6 +185,7 @@ export default function PCLayout({ children }) {
 
   // 内容显示状态 - 用于PC端tab切换
   const [activeContent, setActiveContent] = useState(null);
+  const [isCreatedListExpanded, setIsCreatedListExpanded] = useState(false);
 
   // 预加载所有图标 - 优化：使用link标签预加载，更快
   useEffect(() => {
@@ -258,7 +291,6 @@ export default function PCLayout({ children }) {
       />, 
       label: t('pcLayout.menu.community') 
     },
-    { type: 'divider' },
     {
       key: 'mine',
       label: collapsed ? '' : t('pcLayout.menu.mine'), // 折叠时隐藏分组标签
@@ -295,6 +327,16 @@ export default function PCLayout({ children }) {
           label: t('pcLayout.menu.mySubscription') 
         },
         { 
+          key: '/myqa', 
+          icon: <CustomIcon 
+            src="/icons/new_home/ai_chat.svg" 
+            activeSrc="/icons/new_home/ai_chat.svg"
+            itemKey="/myqa"
+            alt="myqa" 
+          />, 
+          label: t('pcLayout.menu.myQA') 
+        },
+        { 
           key: '/achievement', 
           icon: <CustomIcon 
             src="/icons/pc/Achievement.png" 
@@ -306,14 +348,28 @@ export default function PCLayout({ children }) {
         },
       ],
     },
-    { type: 'divider' },
     {
       key: 'coinlist',
-      label: collapsed ? '' : t('pcLayout.menu.createdLists'), // 折叠时隐藏分组标签
+      label: collapsed ? '' : (
+        <div 
+          style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsCreatedListExpanded(!isCreatedListExpanded);
+          }}
+        >
+          {isCreatedListExpanded ? (
+            <CaretDownOutlined style={{ marginRight: 2, fontSize: 14, color: '#999' }} />
+          ) : (
+            <CaretRightOutlined style={{ marginRight: 2, fontSize: 14, color: '#999' }} />
+          )}
+          {t('pcLayout.menu.createdLists')}
+        </div>
+      ), // 折叠时隐藏分组标签
       type: 'group',
       children: [],
     },
-  ], [t, collapsed, activeContent, pathname]); // 添加 collapsed 作为依赖
+  ], [t, collapsed, activeContent, pathname, isCreatedListExpanded]); // 添加 collapsed 和 isCreatedListExpanded 作为依赖
 
   const handleMenuClick = ({ key }) => {
     // PC端：发现和社区页面在右侧显示内容，不跳转路由
@@ -387,6 +443,11 @@ export default function PCLayout({ children }) {
         <div className={styles.headerRight}>
           <Button 
             type="text" 
+            onClick={() => setShowBenefitModal(true)}
+            icon={<img src="/icons/new_user/bind.svg" alt="bind" style={{ width: 18, height: 18, objectFit: 'contain' }} />} 
+          />
+          <Button 
+            type="text" 
             icon={<img src="/icons/pc/setting@2x.png" alt="settings" style={{ width: 22, height: 22, objectFit: 'contain' }} />} 
           />
           <Button 
@@ -422,7 +483,15 @@ export default function PCLayout({ children }) {
             style={{ cursor: 'pointer', position: 'relative' }}
             id="user-info-trigger"
           >
-            <Avatar size={40} src={userInfo?.avatar} icon={<UserOutlined />} />
+            {userInfo ? (
+              <Avatar size={40} src={userInfo.avatar} icon={<UserOutlined />} />
+            ) : (
+              <img 
+                src="/icons/new_home/not_login.svg" 
+                alt="Not Logged In" 
+                style={{ width: 40, height: 40, borderRadius: '50%' }} 
+              />
+            )}
             {!collapsed && (
               <Text strong className={styles.userName}>
                 {userInfo 
@@ -430,6 +499,9 @@ export default function PCLayout({ children }) {
                   : t('pcLayout.user.notLoggedIn')
                 }
               </Text>
+            )}
+            {!collapsed && !userInfo && (
+              <CaretRightOutlined style={{ marginLeft: 'auto', fontSize: 14, color: '#999' }} />
             )}
           </div>
 
@@ -440,8 +512,8 @@ export default function PCLayout({ children }) {
                 Menu: {
                   itemSelectedColor: '#11B787',
                   itemSelectedBg: 'transparent',
-                  itemHoverColor: '#11B787',
-                  itemHoverBg: 'transparent',
+                  itemHoverColor: 'inherit',
+                  itemHoverBg: '#f5f5f5',
                   itemActiveBg: 'transparent',
                   iconMarginInlineEnd: 12,
                 },
@@ -482,7 +554,7 @@ export default function PCLayout({ children }) {
         </Sider>
 
         {/* 右侧 Content */}
-        <Content className={`${styles.content} ${collapsed ? styles.contentCollapsed : ''}`}>
+        <Content className={`${styles.content} ${pathname === '/' && !activeContent && !showSearchResults ? styles.homeContent : ''} ${collapsed ? styles.contentCollapsed : ''}`}>
           <div className={styles.contentWrapper}>
             <div className={styles.contentMain}>
               {(() => {
@@ -546,6 +618,18 @@ export default function PCLayout({ children }) {
           setShowUserPanel(false);
           setShowLoginModal(true);
         }}
+      />
+
+      {/* 权益码弹窗 */}
+      <BenefitCodeModal
+        open={showBenefitModal}
+        onClose={() => setShowBenefitModal(false)}
+      />
+
+      {/* 绑定权益码弹窗 - 首次登录引导 */}
+      <BindBenefitCodeModal
+        open={showBindBenefitCodeModal}
+        onClose={() => setShowBindBenefitCodeModal(false)}
       />
     </Layout>
   );

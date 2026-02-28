@@ -98,6 +98,23 @@
   },
   "common": {
     "home": "Home",
+    "pcLayout": {
+      "notice": "Say goodbye to manual monitoring! Let AI analyze trends first, then set precise alerts!",
+      "menu": {
+        "home": "Home",
+        "market": "Market",
+        "discover": "Discover",
+        "indicator": "Indicator",
+        "more": "More",
+        "mine": "Mine",
+        "myAchievement": "My Achievement",
+        "myQA": "My Q&A",
+        "createdLists": "Created Lists",
+        "collectedLists": "Collected Lists",
+        "login": "Login / Register",
+        "logout": "Logout"
+      }
+    },
     "find": "Discover",
     "community": "Community",
     "profile": "Profile",
@@ -558,6 +575,24 @@
     "bindSuccess": "Binding successful",
     "bindFailed": "Binding failed, please check if the code is correct",
     "bindError": "Binding failed, please try again"
+  },
+  "pointsPool": {
+    "title": "Monthly Points Pool Status",
+    "total": "Monthly Total {{amount}} Points",
+    "remaining": "Remaining",
+    "issued": "Issued",
+    "claimable": "Claimable",
+    "resetDays": "Days to Reset",
+    "days": "Days",
+    "status": {
+      "normal": "Sufficient",
+      "scarce": "Scarce",
+      "boost": "Boost"
+    },
+    "tip": {
+      "title": "Points Tips",
+      "content": "Participate early, get more! VIP users get higher efficiency and are unaffected by pool scarcity."
+    }
   },
   "auth": {
     "email": "Email",
@@ -1396,6 +1431,9 @@
     "commentFailed": "Failed to post, please try again"
   },
   "pcHome": {
+    "hotTopics": {
+      "title": "Hot Topics"
+    },
     "banner": {
       "topic": "Hot Topics in Community",
       "topicSub": "Capture Trending Topics",
@@ -1450,6 +1488,7 @@
     }
   },
   "pcLayout": {
+    "notice": "Say goodbye to manual monitoring! Let AI analyze trends, then set precise alerts!",
     "menu": {
       "home": "Home",
       "discover": "Discover",
@@ -1459,6 +1498,7 @@
       "myAlerts": "My Alerts",
       "mySubscription": "My Subscription",
       "myAchievements": "My Achievements",
+      "myQA": "My Q&A",
       "createdLists": "Created Lists"
     },
     "footer": {

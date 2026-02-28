@@ -188,12 +188,15 @@
   flex-direction: row;
   align-items: center;
   padding: 16px;
-  border-bottom: 1px solid #f0f0f0;
+  height: 72px; /* Fixed height to prevent layout shift */
+  box-sizing: border-box;
+  overflow: hidden; /* Hide overflow content during transition */
 }
 
 .userName {
   margin-left: 12px;
   white-space: nowrap;
+  transition: opacity 0.2s; /* Smooth opacity transition */
 }
 
 /* 侧边栏底部 */
@@ -258,6 +261,14 @@
   display: flex;
   flex-direction: column;
   position: relative;
+}
+
+.homeContent {
+  background: radial-gradient(circle at 10% 20%, rgba(255, 249, 219, 0.5) 0%, rgba(255, 255, 255, 0) 40%),
+              radial-gradient(circle at 90% 10%, rgba(206, 247, 255, 0.6) 0%, rgba(255, 255, 255, 0) 40%),
+              linear-gradient(180deg, #F0F9FF 0%, #F5F7FA 100%);
+  background-size: 100% 100%;
+  background-attachment: fixed;
 }
 
 .contentWrapper {

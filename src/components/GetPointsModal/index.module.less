@@ -84,23 +84,46 @@
 @media (min-width: 768px) {
   .container {
     transform-origin: center center;
-    max-width: 400px;
+    max-width: none;
+    width: auto;
+  }
+
+  .enContainer {
+    margin-bottom: 0;
+    
+    .pointsText {
+      bottom: auto;
+    }
   }
 
   .mainImage {
-    width: 200px; /* PC端缩小图片尺寸 */
+    width: 450px; /* PC端适配大小 */
+    height: auto;
+    margin-bottom: 10px;
   }
 
   .pointsText {
-    bottom: 18px; /* 调整文字位置 */
+    position: relative;
+    bottom: auto;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
   }
 
   .label {
-    font-size: 16px;
-    margin-right: 40px;
+    font-size: 24px;
+    margin-right: 15px;
+    color: #FFFFFF;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
   }
 
   .pointsValue {
-    font-size: 24px;
+    position: static;
+    transform: none;
+    font-size: 36px;
+    right: auto;
+    top: auto;
   }
 }

@@ -557,6 +557,24 @@
     "bindFailed": "绑定失败，请检查权益码是否正确",
     "bindError": "绑定失败，请重试"
   },
+  "pointsPool": {
+    "title": "本月积分池状态",
+    "total": "月度总量 {{amount}} 积分",
+    "remaining": "剩余积分",
+    "issued": "已发放",
+    "claimable": "剩余可领",
+    "resetDays": "距离重置",
+    "days": "天",
+    "status": {
+      "normal": "充足",
+      "scarce": "紧张",
+      "boost": "加倍"
+    },
+    "tip": {
+      "title": "积分获取小贴士",
+      "content": "越早参与，获得越多！会员用户获取效率更高，且不受池子紧张影响。"
+    }
+  },
   "auth": {
     "email": "邮箱",
     "emailPlaceholder": "请输入邮箱地址",
@@ -1393,6 +1411,9 @@
     "commentFailed": "发布失败，请重试"
   },
   "pcHome": {
+    "hotTopics": {
+      "title": "热聊话题"
+    },
     "banner": {
       "topic": "热议话题 尽在社区",
       "topicSub": "全网话题 即时捕捉",
@@ -1447,6 +1468,7 @@
     }
   },
   "pcLayout": {
+    "notice": "告别手动盯盘！先让AI分析走势，再设置精准报警！",
     "menu": {
       "home": "首页",
       "discover": "发现",
@@ -1456,6 +1478,7 @@
       "myAlerts": "我的报警",
       "mySubscription": "我的订阅",
       "myAchievements": "我的成就",
+      "myQA": "我的问答",
       "createdLists": "创建的币单"
     },
     "footer": {

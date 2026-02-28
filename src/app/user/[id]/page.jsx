@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { LeftOutline, MoreOutline } from 'antd-mobile-icons';
@@ -10,6 +11,13 @@ import MonitorContent from '@/components/MonitorContent';
 import { Skeleton } from '@/components/Skeleton';
 import UserPosts from '../components/UserPosts';
 import styles from './page.module.less';
+
+const PCUserProfile = dynamic(() => import('../../../components/PCUserProfile'), {
+  loading: () => null,
+});
+const PCLayout = dynamic(() => import('../../../components/PCLayout'), {
+  loading: () => null,
+});
 
 // Simple Icon Components for Demo
 const HeartIcon = () => (
@@ -51,14 +59,32 @@ export default function UserProfile({ params }) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('watchlist');
   const [watchlistLoading, setWatchlistLoading] = useState(true);
+  const [isPC, setIsPC] = useState(false);
+
+  useEffect(() => {
+    const checkDevice = () => {
+      setIsPC(window.innerWidth >= 1024);
+    };
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+    return () => window.removeEventListener('resize', checkDevice);
+  }, []);
 
   // Simulate loading for watchlist
-  React.useEffect(() => {
+  useEffect(() => {
     const timer = setTimeout(() => {
       setWatchlistLoading(false);
     }, 1000);
     return () => clearTimeout(timer);
   }, []);
+
+  if (isPC) {
+    return (
+      <PCLayout>
+        <PCUserProfile />
+      </PCLayout>
+    );
+  }
 
   return (
     <div className={styles.container}>

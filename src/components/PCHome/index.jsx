@@ -12,13 +12,16 @@ import {
 } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import styles from './index.module.less';
-import MarketDistribution from '../MarketDistribution';
-import PCHotTopics from '../PCHotTopics';
-import PCSectorTreeMap from '../PCSectorTreeMap';
+
+// Lazy load heavy components
+const MarketDistribution = dynamic(() => import('../MarketDistribution'));
+const PCHotTopics = dynamic(() => import('../PCHotTopics'));
+const PCSectorTreeMap = dynamic(() => import('../PCSectorTreeMap'));
 
 // CDN 图片前缀
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
@@ -182,13 +185,13 @@ export default function PCHome() {
   // 表格列配置
   const columns = [
     {
-      title: t('pcHome.table.coin'),
+      title: <span style={{ paddingLeft: '65px' }}>{t('pcHome.table.coin')}</span>,
       dataIndex: 'symbol',
       key: 'symbol',
-      align: 'center',
+      align: 'left',
       width: 250,
       render: (text, record) => (
-        <div className={styles.coinCell}>
+        <div className={styles.coinCell} style={{ justifyContent: 'flex-start', paddingLeft: '40px' }}>
           <img 
             src={record.url || '/default-coin.svg'} 
             alt={text} 
@@ -239,7 +242,14 @@ export default function PCHome() {
       title: t('pcHome.table.monitor'),
       key: 'addMonitor',
       align: 'center',
-      render: () => <BellOutlined className={styles.actionIcon} />,
+      render: () => (
+        <img 
+          src="/icons/new_home/monitor-bell.svg" 
+          className={styles.actionIcon} 
+          alt="monitor"
+          style={{ width: 18, height: 18 }} 
+        />
+      ),
     },
   ];
 
@@ -453,7 +463,7 @@ export default function PCHome() {
         <div className={styles.sectorHeader}>
           <h2 className={styles.sectorTitle}>{t('pcHome.sectorMap.title')}</h2>
           <div className={styles.headerViewMore} onClick={() => router.push('/hotsector')}>
-            {t('pcHome.sectorMap.viewMore')} <RightOutlined />
+            {t('pcHome.sectorMap.viewMore')}
           </div>
         </div>
         <div className={styles.sectorCard}>
@@ -471,7 +481,7 @@ export default function PCHome() {
         <div className={styles.rankHeader}>
           <h2 className={styles.rankTitle}>{t('pcHome.ranks.title')}</h2>
           <div className={styles.headerViewMore} onClick={() => router.push('/pricerank')}>
-            {t('pcHome.ranks.viewMore')} <RightOutlined />
+            {t('pcHome.ranks.viewMore')}
           </div>
         </div>
         
@@ -491,7 +501,6 @@ export default function PCHome() {
               ...pagination,
               onChange: handlePageChange,
               showSizeChanger: false,
-              showQuickJumper: true,
               position: ['bottomCenter']
             }}
             size="middle"
