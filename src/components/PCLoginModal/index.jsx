@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
-import { sendVerificationCode, loginByEmail, registerByEmail, loginByWallet } from '../../api/user';
+import { sendVerificationCode, loginByEmail, registerByEmail, loginByWallet, completeTask } from '../../api/user';
 import styles from './index.module.less';
 
 // 检测是否在 Telegram 环境中
@@ -239,13 +239,13 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
         });
         
         // 完成每日登录任务
-        request({
-          url: Interface.TASK_COMPLETE,
-          method: 'POST',
-          data: { taskCode: 'DAILY_LOGIN' }
-        }).catch((error) => {
-          console.error('每日登录任务上报失败:', error);
-        });
+        try {
+          completeTask('DAILY_LOGIN');
+          // 首次登录任务上报
+          completeTask('FIRST_LOGIN');
+        } catch (error) {
+          console.error('登录任务上报失败:', error);
+        }
         
         message.success(t('auth.loginSuccess'));
         setIsLoggedIn(true);
@@ -337,13 +337,14 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
           console.error('获取用户详细信息失败:', error);
         });
         
-        request({
-          url: Interface.TASK_COMPLETE,
-          method: 'POST',
-          data: { taskCode: 'DAILY_LOGIN' }
-        }).catch((error) => {
-          console.error('每日登录任务上报失败:', error);
-        });
+        // 完成每日登录任务
+        try {
+          completeTask('DAILY_LOGIN');
+          // 首次登录任务上报
+          completeTask('FIRST_LOGIN');
+        } catch (error) {
+          console.error('登录任务上报失败:', error);
+        }
         
         message.success(t('auth.loginSuccess'));
         setIsLoggedIn(true);
@@ -422,13 +423,14 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
           console.error('获取用户详细信息失败:', error);
         });
         
-        request({
-          url: Interface.TASK_COMPLETE,
-          method: 'POST',
-          data: { taskCode: 'DAILY_LOGIN' }
-        }).catch((error) => {
-          console.error('每日登录任务上报失败:', error);
-        });
+        // 完成每日登录任务
+        try {
+          completeTask('DAILY_LOGIN');
+          // 首次登录任务上报
+          completeTask('FIRST_LOGIN');
+        } catch (error) {
+          console.error('登录任务上报失败:', error);
+        }
         
         message.success(t('auth.loginSuccess'));
         setIsLoggedIn(true);

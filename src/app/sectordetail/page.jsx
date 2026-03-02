@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { NavBar, PullToRefresh, Toast } from 'antd-mobile';
 import { getSectorDetail, addOwnCoin, cancelOwnCoin } from '@/api/market';
+import { completeTask } from '@/api/user';
 import SortButton from '@/components/SortButton';
 import styles from './page.module.less';
 
@@ -218,6 +219,17 @@ export default function SectorDetailPage() {
 
   // 分享到 Telegram
   const handleShare = () => {
+    // 上报分享任务（SHARE）
+    try {
+      completeTask('SHARE').then(() => {
+        console.log('🔍 [DEBUG] 板块详情分享任务上报成功');
+      }).catch(err => {
+        console.error('板块详情分享任务上报失败:', err);
+      });
+    } catch (e) {
+      console.error('板块详情分享任务触发异常:', e);
+    }
+
     const shareUrl = encodeURIComponent(window.location.href);
     const shareText = encodeURIComponent(`${sectorInfo.name} ${t('sectorDetail.sector') || '板块'} - ${sectorInfo.change}`);
     const telegramUrl = `https://t.me/share/url?url=${shareUrl}&text=${shareText}`;

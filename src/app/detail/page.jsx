@@ -12,18 +12,19 @@ import HighlightArea from '../../components/HighlightArea';
 import AddCollect from '../../components/AddCollect';
 import KlineChart from '../../components/KlineChart';
 import OrderBook from '../../components/OrderBook';
-import OneClickAlarmModal from '../../components/OneClickAlarmModal';
-import { Loading } from '../../components/Loading';
-import { CaretUpIcon, CaretDownIcon, BellIcon } from '../../components/Icons';
-import FloatingRobot from '../../components/FloatingRobot';
+import OneClickAlarmModal from '@/components/OneClickAlarmModal';
+import { Loading } from '@/components/Loading';
+import { CaretUpIcon, CaretDownIcon, BellIcon } from '@/components/Icons';
+import FloatingRobot from '@/components/FloatingRobot';
 // import { SkeletonPage } from '../../components/Skeleton';
 // import { detailPageSkeletonConfig } from '../../components/Skeleton/configs/detailPageConfig';
-import { request } from '../../utils/request';
-import { Interface, LOOPTIME, WS_URL } from '../../utils/constants';
-import { formatNumber, formatPercent, jump2NoTab } from '../../utils/core';
-import { MoziWebSocket } from '../../utils/moziWebSocket';
+import { request } from '@/utils/request';
+import { Interface, LOOPTIME, WS_URL } from '@/utils/constants';
+import { formatNumber, formatPercent, jump2NoTab } from '@/utils/core';
+import { MoziWebSocket } from '@/utils/moziWebSocket';
 import { useTranslation } from 'react-i18next';
-import { useAlertConfig } from '../../hooks/useAlertConfig';
+import { useAlertConfig } from '@/hooks/useAlertConfig';
+import { completeTask } from '@/api/user';
 import {
   WS_EVENTS,
   PLATFORMS,
@@ -446,6 +447,15 @@ export default function DetailPage() {
       });
       
       if (response?.code === 0) {
+        // 如果是添加操作（当前不是 isFavorite），则上报任务
+        if (!isFavorite) {
+          try {
+            await completeTask('ADD_WATCHLIST');
+          } catch (e) {
+            console.error('上报 ADD_WATCHLIST 失败', e);
+          }
+        }
+
         setIsFavorite(!isFavorite);
         Toast.show({
           content: isFavorite ? '已移除自选' : '已添加自选',

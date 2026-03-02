@@ -8,7 +8,7 @@ import { message } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
-import { sendVerificationCode, loginByEmail, registerByEmail, loginByWallet, loginByGoogle } from '../../api/user';
+import { sendVerificationCode, loginByEmail, registerByEmail, loginByWallet, loginByGoogle, completeTask } from '../../api/user';
 import { useGoogleLogin } from '@react-oauth/google';
 import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
 import styles from './page.module.less';
@@ -161,13 +161,13 @@ export default function PCLoginPage() {
         });
         
         // 完成每日登录任务
-        request({
-          url: Interface.TASK_COMPLETE,
-          method: 'POST',
-          data: { taskCode: 'DAILY_LOGIN' }
-        }).catch((error) => {
-          console.error('每日登录任务上报失败:', error);
-        });
+        try {
+          completeTask('DAILY_LOGIN');
+          // 首次登录任务上报
+          completeTask('FIRST_LOGIN');
+        } catch (error) {
+          console.error('登录任务上报失败:', error);
+        }
         
         message.success(t('auth.loginSuccess'));
         router.push('/');
@@ -255,13 +255,14 @@ export default function PCLoginPage() {
           console.error('获取用户详细信息失败:', error);
         });
         
-        request({
-          url: Interface.TASK_COMPLETE,
-          method: 'POST',
-          data: { taskCode: 'DAILY_LOGIN' }
-        }).catch((error) => {
-          console.error('每日登录任务上报失败:', error);
-        });
+        // 完成每日登录任务
+        try {
+          completeTask('DAILY_LOGIN');
+          // 首次登录任务上报
+          completeTask('FIRST_LOGIN');
+        } catch (error) {
+          console.error('登录任务上报失败:', error);
+        }
         
         message.success(t('auth.loginSuccess'));
         router.push('/');
@@ -327,13 +328,13 @@ export default function PCLoginPage() {
         });
         
         // 完成每日登录任务
-        request({
-          url: Interface.TASK_COMPLETE,
-          method: 'POST',
-          data: { taskCode: 'DAILY_LOGIN' }
-        }).catch((error) => {
-          console.error('每日登录任务上报失败:', error);
-        });
+        try {
+          completeTask('DAILY_LOGIN');
+          // 首次登录任务上报
+          completeTask('FIRST_LOGIN');
+        } catch (error) {
+          console.error('登录任务上报失败:', error);
+        }
         
         message.success(t('auth.loginSuccess'));
         router.push('/');
@@ -435,13 +436,14 @@ export default function PCLoginPage() {
         });
         
         // 完成每日登录任务
-        request({
-          url: Interface.TASK_COMPLETE,
-          method: 'POST',
-          data: { taskCode: 'DAILY_LOGIN' }
-        }).catch((error) => {
-          console.error('每日登录任务上报失败:', error);
-        });
+        // 完成每日登录任务
+        try {
+          completeTask('DAILY_LOGIN');
+          // 首次登录任务上报
+          completeTask('FIRST_LOGIN');
+        } catch (error) {
+          console.error('登录任务上报失败:', error);
+        }
         
         message.success(t('auth.loginSuccess'));
         router.push('/');
@@ -506,13 +508,13 @@ export default function PCLoginPage() {
         });
         
         // 完成每日登录任务（与邮箱登录对齐）
-        request({
-          url: Interface.TASK_COMPLETE,
-          method: 'POST',
-          data: { taskCode: 'DAILY_LOGIN' }
-        }).catch((error) => {
-          console.error('❌ [TON钱包登录] 每日登录任务上报失败:', error);
-        });
+        try {
+          completeTask('DAILY_LOGIN');
+          // 首次登录任务上报
+          completeTask('FIRST_LOGIN');
+        } catch (error) {
+          console.error('❌ [TON钱包登录] 登录任务上报失败:', error);
+        }
         
         message.success(t('auth.loginSuccess'));
         router.push('/');

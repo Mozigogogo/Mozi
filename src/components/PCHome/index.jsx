@@ -16,6 +16,7 @@ import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
+import { completeTask } from '@/api/user';
 import styles from './index.module.less';
 
 // Lazy load heavy components
@@ -160,7 +161,16 @@ export default function PCHome() {
       
       if (res?.code === 0) {
         message.success(newIsFavorite ? t('common.addSuccess') : t('common.cancelSuccess'));
-        
+
+        // 如果是添加自选，上报任务
+        if (newIsFavorite) {
+          try {
+            await completeTask('ADD_WATCHLIST');
+          } catch (e) {
+            console.error('上报 ADD_WATCHLIST 失败', e);
+          }
+        }
+
         // 如果在自选列表且移除了自选，刷新列表
         if (activeRankTab === 'zixuan' && !newIsFavorite) {
           fetchRankData('zixuan', pagination.current);

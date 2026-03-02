@@ -487,8 +487,16 @@ export default function UserPage() {
           localStorage.setItem('userId', res.data.userId);
         }
         
-        // 钱包登录成功后，检查是否需要更新用户名
+        // 钱包登录后，检查是否需要更新用户名
         await updateWalletUserInfo(currentAddress);
+
+        // 上报登录任务
+        try {
+          completeTask('DAILY_LOGIN');
+          completeTask('FIRST_LOGIN');
+        } catch (e) {
+          console.error('登录任务上报失败:', e);
+        }
       } catch {}
 
       setUserInfo((prev) => ({ ...prev, isLogin: true }));
@@ -948,8 +956,10 @@ export default function UserPage() {
     // 登录成功后，调用每日登录任务完成接口
     try {
       await completeTask('DAILY_LOGIN');
+      // 首次登录任务上报
+      await completeTask('FIRST_LOGIN');
     } catch (taskError) {
-      console.error('每日登录任务上报失败:', taskError);
+      console.error('登录任务上报失败:', taskError);
     }
 
     // 如果是 Telegram 环境且不是钱包登录，才更新 Telegram 用户信息

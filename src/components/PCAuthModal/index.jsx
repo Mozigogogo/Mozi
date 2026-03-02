@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
-import { sendVerificationCode, loginByEmail, registerByEmail, loginByWallet, loginByGoogle, resetPassword } from '../../api/user';
+import { sendVerificationCode, loginByEmail, registerByEmail, loginByWallet, loginByGoogle, resetPassword, completeTask } from '../../api/user';
 import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
 import { encrypt, decrypt } from '../../utils/security';
 import styles from './index.module.less';
@@ -338,11 +338,10 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
       });
       
       // Daily login task
-      request({
-        url: Interface.TASK_COMPLETE,
-        method: 'POST',
-        data: { taskCode: 'DAILY_LOGIN' }
-      }).catch(console.error);
+      completeTask('DAILY_LOGIN');
+
+      // First login task
+      completeTask('FIRST_LOGIN');
       
       message.success(t('auth.loginSuccess') || 'Login successful');
       onSuccess?.();

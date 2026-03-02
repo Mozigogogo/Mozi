@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Popup, Button, Toast, Input } from 'antd-mobile';
 import styles from '@/app/user/page.module.less';
-import { updateUserInfo } from '@/api/user';
+import { updateUserInfo, completeTask } from '@/api/user';
 
 const DEFAULT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png';
 
@@ -137,6 +137,13 @@ const EditProfilePopup = ({ visible, onClose, t, userInfo, setUserInfo }) => {
           }
         } catch (e) {
           console.error('更新 userDataInfo 失败:', e);
+        }
+
+        // 完善个人信息任务上报
+        try {
+          await completeTask('COMPLETE_PROFILE');
+        } catch (taskError) {
+          console.error('完善个人信息任务上报失败:', taskError);
         }
 
         Toast.clear();
