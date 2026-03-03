@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Tabs, Toast, Button, TabBar } from 'antd-mobile';
+import { Tabs, Toast, Button, TabBar, Dialog } from 'antd-mobile';
 import { motion, AnimatePresence } from 'framer-motion';
 import Layout from '../../components/Layout';
 import NavBar from '../../components/NavBar';
@@ -25,6 +25,7 @@ import { MoziWebSocket } from '@/utils/moziWebSocket';
 import { useTranslation } from 'react-i18next';
 import { useAlertConfig } from '@/hooks/useAlertConfig';
 import { completeTask } from '@/api/user';
+import { executeConsume } from '@/api/points';
 import {
   WS_EVENTS,
   PLATFORMS,
@@ -92,6 +93,82 @@ export default function DetailPage() {
   
   // 控制大单侦测区域显示/隐藏
   const showOrderBook = true;
+  
+  // 大单侦测解锁状态
+  const [isBigOrderUnlocked, setIsBigOrderUnlocked] = useState(false);
+  const [unlockEndTime, setUnlockEndTime] = useState(null);
+
+  // 初始化检查解锁状态
+  useEffect(() => {
+    if (!symbol) return;
+    const unlockKey = `mozi_big_order_unlock_${symbol}`;
+    const savedEndTime = localStorage.getItem(unlockKey);
+    
+    if (savedEndTime) {
+      const endTime = parseInt(savedEndTime, 10);
+      if (Date.now() < endTime) {
+        setIsBigOrderUnlocked(true);
+        setUnlockEndTime(endTime);
+      } else {
+        // 已过期
+        localStorage.removeItem(unlockKey);
+        setIsBigOrderUnlocked(false);
+        setUnlockEndTime(null);
+      }
+    } else {
+      setIsBigOrderUnlocked(false);
+      setUnlockEndTime(null);
+    }
+  }, [symbol]);
+
+  // 倒计时检查过期
+  useEffect(() => {
+    if (!unlockEndTime) return;
+    
+    const timer = setInterval(() => {
+      if (Date.now() >= unlockEndTime) {
+        setIsBigOrderUnlocked(false);
+        setUnlockEndTime(null);
+        localStorage.removeItem(`mozi_big_order_unlock_${symbol}`);
+      }
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, [unlockEndTime, symbol]);
+
+  // 解锁处理函数
+  const handleUnlockOrderBook = async () => {
+    const result = await Dialog.confirm({
+      content: '确定要花费200积分来解锁查看大单侦测数据吗？（有效期24小时，仅限Top5数据）',
+    });
+    
+    if (result) {
+      try {
+        const res = await executeConsume({ actionCode: 'BIG_ORDER_VIEW' });
+        if (res.code === 0) {
+          const endTime = Date.now() + 24 * 60 * 60 * 1000;
+          setIsBigOrderUnlocked(true);
+          setUnlockEndTime(endTime);
+          localStorage.setItem(`mozi_big_order_unlock_${symbol}`, endTime.toString());
+          Toast.show({
+            icon: 'success',
+            content: '解锁成功',
+          });
+        } else {
+          Toast.show({
+            icon: 'fail',
+            content: res.msg || '解锁失败，积分不足',
+          });
+        }
+      } catch (error) {
+        console.error('Unlock error:', error);
+        Toast.show({
+          icon: 'fail',
+          content: '网络错误，请稍后重试',
+        });
+      }
+    }
+  };
   
   // WebSocket连接状态管理
   const wsConnectionStatusRef = useRef('connecting'); // connecting | connected | failed
@@ -1300,20 +1377,19 @@ ${coinInfo.name || symbol} (${symbol})
   };
 
   const renderOrderBook = () => {
-    const endTime = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30天后过期
-    const now = new Date();
-    const isExpired = now > endTime;
-    
     return (
       <OrderBook 
         bids={orderBook.bids} 
         asks={orderBook.asks}
-        endTime={endTime}
-        showMask={isExpired}
-        onSubscribe={() => {
-          console.log('订阅会员');
-          // 这里可以跳转到订阅页面
-        }}
+        endTime={unlockEndTime}
+        showMask={!isBigOrderUnlocked}
+        onSubscribe={handleUnlockOrderBook}
+        maxRows={5} // 解锁后也只显示Top 5
+        dropdownOptions={['Top 5']} // 限制下拉选项
+        maskTitle="大单侦测锁定"
+        maskDescription="解锁后可查看24小时内的Top 5大单流向数据"
+        maskButtonText="200积分解锁"
+        showVipElements={false}
       />
     );
   };
