@@ -14,6 +14,7 @@ import PopLogin from '../../components/PopLogin';
 import { trackEvent, trackPageView, AIEvents } from '@/utils/amplitude';
 import { INTERFACE_URL, Interface } from '@/utils/constants';
 import { request } from '@/utils/request';
+import { executeConsume } from '@/api/points';
 import { useRobotTestSSE } from '@/hooks/useRobotTestSSE';
 import { forceBlurAndResetViewport } from '@/utils/iosViewportFix';
 import styles from './page.module.less';
@@ -639,6 +640,33 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     }]);
 
     try {
+      // 扣除积分
+      const actionCode = selectedModel === 'analyze' ? 'AI_DEEP_ANALYZE' : 'AI_BASIC_CHAT';
+      try {
+        const consumeRes = await executeConsume({ actionCode });
+        console.log('Points consume result:', consumeRes);
+        
+        if (consumeRes.code !== 0) {
+          const errorMsg = consumeRes.errorMsg || '积分扣除失败';
+          setMessages(prev => prev.map(msg => 
+            msg.id === aiMsgId 
+              ? { ...msg, content: errorMsg, loading: false, error: true }
+              : msg
+          ));
+          currentAiMsgIdRef.current = null;
+          return;
+        }
+      } catch (consumeError) {
+        console.error('Points deduction error:', consumeError);
+        setMessages(prev => prev.map(msg => 
+          msg.id === aiMsgId 
+            ? { ...msg, content: '网络错误，请稍后重试', loading: false, error: true }
+            : msg
+        ));
+        currentAiMsgIdRef.current = null;
+        return;
+      }
+
       const lang = typeof window !== 'undefined' 
         ? (localStorage.getItem('i18nextLng') || 'zh') 
         : 'zh';

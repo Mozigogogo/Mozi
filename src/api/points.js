@@ -34,3 +34,46 @@ export const getPoolStatus = () => {
     }
   });
 };
+
+/**
+ * 查询消费配置
+ * 
+ * 响应结构:
+ * {
+ *   "code": 0,
+ *   "data": [
+ *     { "actionCode": "AI_DEEP_ANALYZE", "actionName": "AI深度分析",  "costPoints": 50,  "description": "综合行情+链上+新闻分析，按次扣除" },
+ *     ...
+ *   ]
+ * }
+ */
+export const getConsumeConfig = () => {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+  return request({
+    url: Interface.POINTS_CONSUME_CONFIG,
+    method: 'GET',
+    headers: {
+      'Authentication': `Bearer ${token}`
+    }
+  });
+};
+
+/**
+ * 执行积分消费
+ * 
+ * @param {Object} data { actionCode: "BIG_ORDER_VIEW" }
+ * 
+ * 响应结构:
+ * { "code": 0, "data": { "success": true, "remainingPoints": 800 } }
+ */
+export const executeConsume = (data) => {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+  return request({
+    url: Interface.POINTS_CONSUME,
+    method: 'POST',
+    data,
+    headers: {
+      'Authentication': `Bearer ${token}`
+    }
+  });
+};

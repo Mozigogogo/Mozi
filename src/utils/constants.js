@@ -325,6 +325,12 @@ export const Interface = {
   AI_CHAT_HISTORY: '/ai/chat/history',
   // AI 会话列表
   AI_CHAT_CONVERSATIONS: '/ai/chat/conversations',
+
+  // 积分消费
+  // 查询消费配置
+  POINTS_CONSUME_CONFIG: '/points/consume/config',
+  // 执行积分消费
+  POINTS_CONSUME: '/points/consume',
 };
 
 // 业务中使用到的联系邮箱和链上地址（打包报错缺失导出）
