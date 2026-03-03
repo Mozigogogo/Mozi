@@ -225,6 +225,177 @@
   }
 }
 
+/* TreeMap Legend Styles */
+.legendContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #666;
+  
+  .legendColor {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+  }
+}
+
+/* PC Layout Styles */
+@media screen and (min-width: 1024px) {
+  .pcrBox {
+    display: none !important;
+  }
+
+  .pc-container {
+    /* max-width: 1200px; */
+    /* margin: 0 auto; */
+    margin: -24px -24px -64px -24px;
+    padding: 48px 48px 84px 48px;
+    background: #FAFAFA;
+    min-height: calc(100vh - 64px);
+    box-sizing: border-box;
+  }
+
+  .pc-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .pc-back-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: #FFFFFF;
+    border: 1px solid #E5E5E5;
+    border-radius: 8px;
+    margin-right: 16px;
+    transition: all 0.2s;
+
+    &:hover {
+      border-color: #11B787;
+      color: #11B787;
+    }
+  }
+
+  .pc-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .pc-content-card {
+    background: #FFFFFF;
+    border-radius: 30px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .pc-tabs {
+    display: flex;
+    margin-bottom: 24px;
+    border-bottom: 1px solid #F0F0F0;
+  }
+
+  .pc-tab-item {
+    padding: 12px 24px;
+    font-size: 18px;
+    color: #666;
+    cursor: pointer;
+    position: relative;
+    font-weight: 500;
+    transition: all 0.3s;
+
+    &.pc-tab-active {
+      color: #11B787;
+      font-weight: 600;
+      
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: #11B787;
+      }
+    }
+  }
+
+  .pc-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .pc-exchange-tabs {
+    display: flex;
+    gap: 24px;
+    overflow-x: auto;
+  }
+
+  .pc-exchange-tab {
+    font-size: 16px;
+    color: #666;
+    cursor: pointer;
+    padding-bottom: 4px;
+    white-space: nowrap;
+    transition: all 0.2s;
+
+    &.pc-exchange-active {
+      color: #11B787;
+      font-weight: 600;
+      border-bottom: 2px solid #11B787;
+    }
+
+    &:hover {
+      color: #11B787;
+    }
+  }
+
+  .pc-coin-select {
+    width: 120px;
+    
+    :global {
+      .ant-select-selector {
+        border-radius: 8px !important;
+        height: 36px !important;
+        display: flex !important;
+        align-items: center !important;
+      }
+    }
+  }
+
+  .pc-chart-wrapper {
+            height: 650px;
+            position: relative;
+            width: 100%;
+          }
+  
+  .pc-chart-loading {
+     position: absolute;
+     top: 50%;
+     left: 50%;
+     transform: translate(-50%, -50%);
+     display: flex;
+     justify-content: center;
+     align-items: center;
+  }
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .pcrBox {
@@ -355,3 +526,5 @@
     }
   }
 }
+
+

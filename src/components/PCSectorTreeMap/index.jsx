@@ -5,10 +5,17 @@ import styles from './index.module.less';
 const PCSectorTreeMap = ({ 
   list = [], 
   nameKey = 'symbol', 
-  valueKey = 'marketCap', // Note: We will use changeKey for size as per mobile algorithm, but keep prop for compatibility
+  valueKey = 'marketCap', 
   changeKey = 'priceChangePercent',
   priceKey = 'lastPrice',
   loading = false,
+  sizeBy = 'change', // 'change' or 'value'
+  priceLabel = '最新价格',
+  changeLabel = '24h涨跌',
+  legendCustomItems,
+  customColorMethod,
+  showPercentage = true,
+  showPrice = true,
   onItemClick 
 }) => {
   const containerRef = useRef(null);
@@ -17,7 +24,7 @@ const PCSectorTreeMap = ({
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
   // Legend configuration
-  const LEGEND_ITEMS = useMemo(() => [
+  const LEGEND_ITEMS = useMemo(() => legendCustomItems || [
     { label: '<-4%', color: '#EC3A3A', min: -Infinity, max: -4 },
     { label: '-2%', color: '#C03F44', min: -4, max: -2 },
     { label: '-1%', color: '#8A444F', min: -2, max: -1 },
@@ -25,17 +32,23 @@ const PCSectorTreeMap = ({
     { label: '+1%', color: '#37544F', min: 1, max: 2 },
     { label: '+2%', color: '#37764B', min: 2, max: 4 },
     { label: '>4%', color: '#2BA250', min: 4, max: Infinity }
-  ], []);
+  ], [legendCustomItems]);
 
   const getColor = useCallback((change) => {
     for (let i = 0; i < LEGEND_ITEMS.length; i++) {
       const item = LEGEND_ITEMS[i];
-      if (change >= item.min && change < item.max) {
-        return item.color;
+      // Only apply min/max logic if they exist (standard legend items have them)
+      if (item.min !== undefined && item.max !== undefined) {
+        if (change >= item.min && change < item.max) {
+          return item.color;
+        }
       }
     }
-    if (change <= -4) return LEGEND_ITEMS[0].color;
-    if (change >= 4) return LEGEND_ITEMS[LEGEND_ITEMS.length - 1].color;
+    // Fallback for standard legend
+    if (LEGEND_ITEMS[0].min !== undefined) {
+        if (change <= LEGEND_ITEMS[0].max) return LEGEND_ITEMS[0].color;
+        if (change >= LEGEND_ITEMS[LEGEND_ITEMS.length - 1].min) return LEGEND_ITEMS[LEGEND_ITEMS.length - 1].color;
+    }
     return '#424450';
   }, [LEGEND_ITEMS]);
 
@@ -84,7 +97,7 @@ const PCSectorTreeMap = ({
     // Ensure container has dimensions
     d3.select(containerRef.current)
       .style('width', '100%')
-      .style('height', '600px')
+      .style('height', '100%')
       .style('position', 'relative');
 
     const container = d3.select(containerRef.current);
@@ -94,9 +107,10 @@ const PCSectorTreeMap = ({
       name: 'root',
       children: list.map(item => {
         const changeVal = parseFloat(item[changeKey] || 0);
+        const valueVal = parseFloat(item[valueKey] || 0);
         return {
           name: item[nameKey],
-          value: Math.abs(changeVal) || 0.1, 
+          value: sizeBy === 'value' ? valueVal : (Math.abs(changeVal) || 0.1), 
           change: changeVal,
           price: item[priceKey],
           original: item
@@ -143,7 +157,12 @@ const PCSectorTreeMap = ({
         .style('top', d => `${d.y0}px`)
         .style('width', d => `${d.x1 - d.x0}px`)
         .style('height', d => `${d.y1 - d.y0}px`)
-        .style('background-color', d => getColor(d.data.change))
+        .style('background-color', d => {
+            if (customColorMethod) {
+                return customColorMethod(d.data);
+            }
+            return getColor(d.data.change);
+        })
         .style('border-radius', d => {
           // Add border radius to the four corners of the treemap
           const r = '8px';
@@ -183,8 +202,16 @@ const PCSectorTreeMap = ({
 
            // Only show both name and percentage if there is enough space.
            // Height check is crucial: need at least ~50px to stack name and percentage comfortably.
-           if (area > 1500 && itemWidth > 60 && itemHeight > 50) {
-             return `<div class="${styles.nameText}" style="font-size:${nameFontSize}px;font-weight:600;margin-bottom:4px;">${d.data.name}</div><div style="font-size:${valFontSize}px;font-weight:700;">${changeStr}</div>`;
+           if ((showPercentage || showPrice) && area > 1500 && itemWidth > 60 && itemHeight > 50) {
+             let displayValue;
+             if (showPercentage) {
+               displayValue = (d.data.change > 0 ? '+' : '') + d.data.change.toFixed(2) + '%';
+             } else {
+               // If only showing price, use it.
+               displayValue = d.data.price;
+             }
+
+             return `<div class="${styles.nameText}" style="font-size:${nameFontSize}px;font-weight:600;margin-bottom:4px;">${d.data.name}</div><div style="font-size:${valFontSize}px;font-weight:700;">${displayValue}</div>`;
            } else {
              // Priority: Show Name Only
              // If the name is very long, it might still overflow, but CSS text-overflow should handle it if set,
@@ -361,14 +388,16 @@ const PCSectorTreeMap = ({
             <div className={styles.tooltipContent} style={{ backgroundColor: getColor(hoveredItem.change) }}>
                <div className={styles.tooltipMainRow}>
                  <span>{hoveredItem.name}</span>
-                 <span>{hoveredItem.price}</span>
-                 <span>{(hoveredItem.change > 0 ? '+' : '') + hoveredItem.change.toFixed(2)}%</span>
+                 {showPrice && <span>{hoveredItem.price}</span>}
+                 {showPercentage && <span>{(hoveredItem.change > 0 ? '+' : '') + hoveredItem.change.toFixed(2)}%</span>}
                </div>
-               <div className={styles.tooltipLabelRow}>
-                 <span></span>
-                 <span>最新价格</span>
-                 <span>24h涨跌</span>
-               </div>
+               {(showPrice || showPercentage) && (
+                 <div className={styles.tooltipLabelRow}>
+                   <span></span>
+                   {showPrice && <span>{priceLabel}</span>}
+                   {showPercentage && <span>{changeLabel}</span>}
+                 </div>
+               )}
             </div>
           </div>
         )}
