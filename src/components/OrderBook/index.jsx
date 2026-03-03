@@ -46,6 +46,10 @@ export default function OrderBook({
   dropdownOptions,
   showMask = false, // 是否显示遮罩
   onSubscribe, // 订阅回调
+  maskTitle, // 遮罩标题
+  maskDescription, // 遮罩描述
+  maskButtonText, // 遮罩按钮文字
+  showVipElements = true, // 是否显示VIP相关元素
 }) {
   const { t, i18n } = useTranslation();
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -245,23 +249,28 @@ export default function OrderBook({
                 </div>
               </div>
             </div>
-            <div 
-              className={styles.maskHeaderBadge}
-              style={{
-                backgroundImage: `url('/images/new_detail/experience_end_badge${i18n.language === 'en' ? '_en' : ''}.svg')`
-              }}
-            />
+            
+            {showVipElements && (
+              <div 
+                className={styles.maskHeaderBadge}
+                style={{
+                  backgroundImage: `url('/images/new_detail/experience_end_badge${i18n.language === 'en' ? '_en' : ''}.svg')`
+                }}
+              />
+            )}
 
             <div className={styles.maskContent}>
-              <h2 className={styles.maskTitle}>{t('orderBook.benefitEnded')}</h2>
+              <h2 className={styles.maskTitle}>{maskTitle || t('orderBook.benefitEnded')}</h2>
               
-              <div className={styles.maskSubtitleWrapper}>
-                <span className={styles.maskBullet}>•</span>
-                <span className={styles.maskSubtitle}>{t('orderBook.memberExclusive')}</span>
-              </div>
+              {showVipElements && (
+                <div className={styles.maskSubtitleWrapper}>
+                  <span className={styles.maskBullet}>•</span>
+                  <span className={styles.maskSubtitle}>{t('orderBook.memberExclusive')}</span>
+                </div>
+              )}
 
               <p className={styles.maskDescription}>
-                {t('orderBook.memberDescription')}
+                {maskDescription || t('orderBook.memberDescription')}
               </p>
 
               <button 
@@ -272,10 +281,12 @@ export default function OrderBook({
                   }
                 }}
               >
-                {t('orderBook.subscribeUnlock')}
+                {maskButtonText || t('orderBook.subscribeUnlock')}
               </button>
 
-              <img src="/images/new_detail/vip_right_mask.svg" alt="VIP" className={styles.maskVipIcon} />
+              {showVipElements && (
+                <img src="/images/new_detail/vip_right_mask.svg" alt="VIP" className={styles.maskVipIcon} />
+              )}
             </div>
 
             {/* 红绿柱状图 - 绝对定位覆盖在下方 */}
