@@ -444,6 +444,18 @@ export default function PointsDetail() {
           Toast.show({ content: t('pointsDetail.linkCopied'), position: 'bottom' });
         }
         break;
+      case 'COMPLETE_PROFILE':
+        router.push('/user/edit');
+        break;
+      case 'FIRST_POST':
+        router.push('/community');
+        break;
+      case 'ADD_WATCHLIST':
+        router.push('/');
+        break;
+      case 'FIRST_LOGIN':
+        verifyTask(task);
+        break;
       default:
         Toast.show({ content: t('pointsDetail.historyFeatureInDevelopment'), position: 'bottom' });
     }

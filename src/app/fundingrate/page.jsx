@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { Tabs, Picker, Image } from 'antd-mobile';
+import { Pagination, Select } from 'antd';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import Layout from '../../components/Layout';
@@ -11,9 +13,9 @@ import { useTranslation } from 'react-i18next';
 import { Loading } from '../../components/Loading';
 import { handleOptions } from '../../utils/chartUtils';
 import styles from './page.module.less';
-
-// 引入 echarts
 import * as echarts from 'echarts';
+
+const PCLayout = dynamic(() => import('../../components/PCLayout'), { ssr: false });
 
 // 将右轴单位从“千”转换为“万”，并控制小数位与去零
 function formatRightAxisToWan(value, slot, unitWan = '万') {
@@ -41,6 +43,7 @@ export default function FundingRate() {
   const router = useRouter();
   const { t } = useTranslation();
   const [activeKey, setActiveKey] = useState('currentRatio');
+  const [isPC, setIsPC] = useState(false);
   const [coinList, setCoinList] = useState([]);
   const [cexList, setCexList] = useState([]);
   const [coinSelected, setCoinSelected] = useState('');
@@ -48,6 +51,8 @@ export default function FundingRate() {
   const [showMore, setShowMore] = useState(false);
   const [showChart, setShowChart] = useState(true);
   const [hisLoading, setHisLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
   
   const [curFundData, setCurFundData] = useState({
     loading: true,
@@ -65,6 +70,7 @@ export default function FundingRate() {
   const handleTabChange = (key) => {
     if (key === activeKey) return;
     setActiveKey(key);
+    setCurrentPage(1); // Reset pagination when switching tabs
     
     // 滚动到历史费率区域
     if (key === 'historyRatio' && document.querySelector('.'+styles.hisFR)) {
@@ -75,16 +81,27 @@ export default function FundingRate() {
   // 币种选择变更
   const handleCoinChange = (val) => {
     setCoinSelected(val[0]);
+    setCurrentPage(1); // Reset pagination
     getData({ coin: val[0] });
   };
 
   // 交易所Tab点击
   const handleExchangeTabClick = (exchange) => {
     setCexSelected(exchange);
+    setCurrentPage(1); // Reset pagination
     getData({ exchange });
   };
 
   // 初始化数据
+  useEffect(() => {
+    const checkDevice = () => {
+      setIsPC(window.innerWidth >= 1024);
+    };
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+    return () => window.removeEventListener('resize', checkDevice);
+  }, []);
+
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
@@ -278,11 +295,11 @@ export default function FundingRate() {
         const options = handleOptions(frHisData.data, 'updownbarline');
         // 专用 grid 布局与轴格式
         options.grid = {
-          left: '10%',
+          left: '5%',
           right: '3%',  // 减少右侧边距，让图表占据更多空间
           top: '5%',
-          bottom: '25%',
-          containLabel: false
+          bottom: '10%',
+          containLabel: true
         };
           if (options.yAxis && options.yAxis[0]) {
             options.yAxis[0].axisLabel = options.yAxis[0].axisLabel || {};
@@ -327,6 +344,140 @@ export default function FundingRate() {
       console.error('跳转横屏图表失败:', error);
     }
   };
+
+  if (isPC) {
+    return (
+      <PCLayout>
+        <div className={styles['pc-container']}>
+          <div className={styles['pc-header']}>
+            <div className={styles['pc-back-container']} onClick={() => router.back()}>
+              <div className={styles['pc-back-btn']}>
+                <svg className={styles['pc-back-icon']} width="43" height="26" viewBox="0 0 43 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M24.6821 18.8008L18.4321 12.5508L24.6821 6.30078" stroke="#4A5565" strokeWidth="2.08333" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <span className={styles['pc-title']}>{t('fundingrate.title')}</span>
+            </div>
+          </div>
+
+          <div className={styles['pc-tabs']}>
+            <div 
+              className={`${styles['pc-tab-item']} ${activeKey === 'currentRatio' ? styles['pc-tab-active'] : ''}`}
+              onClick={() => setActiveKey('currentRatio')}
+            >
+              {t('fundingrate.tabs.current')}
+            </div>
+            <div 
+              className={`${styles['pc-tab-item']} ${activeKey === 'historyRatio' ? styles['pc-tab-active'] : ''}`}
+              onClick={() => {
+                setActiveKey('historyRatio');
+                // Ensure chart is resized when switching tabs
+                setTimeout(() => {
+                  if (chartInstance.current) {
+                    chartInstance.current.resize();
+                  }
+                }, 100);
+              }}
+            >
+              {t('fundingrate.tabs.history')}
+            </div>
+          </div>
+
+          <div className={styles['pc-content']}>
+            {activeKey === 'currentRatio' ? (
+              <>
+              <div className={styles['pc-table-wrapper']}>
+                <div className={styles['pc-table']}>
+                  <div className={styles['pc-table-header']}>
+                    <div className={styles['pc-th']}>{t('fundingrate.coin')}</div>
+                    {curFundData.data?.exchange.slice(1).map((ex, idx) => (
+                      <div key={idx} className={styles['pc-th']}>
+                        {ex.url && <img src={ex.url} alt={ex.name} className={styles['pc-exchange-icon']} />}
+                        {ex.name}
+                      </div>
+                    ))}
+                  </div>
+                  <div className={styles['pc-table-body']}>
+                    {curFundData.loading ? (
+                      <div className={styles['pc-loading']}>
+                        <Loading />
+                      </div>
+                    ) : (
+                      curFundData.data?.list.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((item, rowIdx) => (
+                        <div key={rowIdx} className={styles['pc-tr']}>
+                          <div className={styles['pc-td']}>
+                            <img src={item.data[0].url} alt={item.data[0].symbol} className={styles['pc-coin-icon']} />
+                            <span className={styles['pc-coin-symbol']}>{item.data[0].symbol}</span>
+                          </div>
+                          {item.data.slice(1).map((rate, colIdx) => (
+                            <div 
+                              key={colIdx} 
+                              className={`${styles['pc-td']} ${parseFloat(rate) > 0 ? styles['pc-text-green'] : parseFloat(rate) < 0 ? styles['pc-text-red'] : ''}`}
+                            >
+                              {parseFloat(rate) > 0 ? '+' : ''}{rate}
+                            </div>
+                          ))}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+              {!curFundData.loading && curFundData.data?.list?.length > 0 && (
+                <div className={styles['pc-pagination']}>
+                  <Pagination
+                    current={currentPage}
+                    pageSize={PAGE_SIZE}
+                    total={curFundData.data.list.length}
+                    onChange={(page) => setCurrentPage(page)}
+                    showSizeChanger={false}
+                    align="center"
+                  />
+                </div>
+              )}
+              </>
+            ) : (
+              <div className={styles['pc-history-container']}>
+                <div className={styles['pc-history-controls']}>
+                  {/* Exchange Tabs for PC */}
+                  <div className={styles['pc-exchange-tabs']}>
+                    {cexList.map((exchange, index) => (
+                      <div
+                        key={index}
+                        className={`${styles['pc-exchange-tab']} ${cexSelected === exchange ? styles['pc-tab-active'] : ''}`}
+                        onClick={() => handleExchangeTabClick(exchange)}
+                      >
+                        {exchange}
+                      </div>
+                    ))}
+                  </div>
+                  {/* Coin Picker for PC */}
+                  <div className={styles['pc-control-item']}>
+                    <span className={styles['pc-label']}>{t('fundingrate.coin')}</span>
+                    <Select
+                      className={styles['pc-select']}
+                      value={coinSelected}
+                      onChange={(value) => handleCoinChange([value])}
+                      options={coinList.map(c => ({ value: c.value, label: c.label }))}
+                      style={{ width: 120 }}
+                    />
+                  </div>
+                </div>
+                <div className={styles['pc-chart-wrapper']}>
+                  {hisLoading && (
+                    <div className={styles['pc-chart-loading']}>
+                      <div className={styles['pc-spinner']} />
+                    </div>
+                  )}
+                  <div ref={chartRef} className={styles['pc-chart']}></div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </PCLayout>
+    );
+  }
 
   return (
     <>

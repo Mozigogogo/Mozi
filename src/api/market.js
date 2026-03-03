@@ -5,6 +5,7 @@
 
 import { request } from '../utils/request';
 import { Interface } from '../utils/constants';
+import { completeTask } from './user';
 
 // ==================== 热门板块相关 ====================
 
@@ -71,12 +72,36 @@ export const getSectorDetail = (sectionName) => {
  * @param {string} symbol - 币种符号
  * @returns {Promise}
  */
-export const addOwnCoin = (symbol) => {
-  return request({
-    url: Interface.ADD_OWN,
-    method: 'POST',
-    data: { symbol },
-  });
+export const addOwnCoin = async (symbol) => {
+  try {
+    const res = await request({
+      url: Interface.ADD_OWN,
+      method: 'POST',
+      data: { symbol },
+    });
+    
+    // 如果添加成功，上报任务
+    if (res?.code === 0 || res?.success) {
+      try {
+        // 获取当前自选列表，检查数量是否达到3个
+        const listRes = await request({
+          url: Interface.COIN_SELF,
+        });
+        
+        const list = Array.isArray(listRes?.data) ? listRes.data : [];
+        // 只有当自选列表数量大于等于3时，才上报任务
+        if (list.length >= 3) {
+          completeTask('ADD_WATCHLIST');
+        }
+      } catch (e) {
+        console.error('上报 ADD_WATCHLIST 任务失败', e);
+      }
+    }
+    
+    return res;
+  } catch (error) {
+    throw error;
+  }
 };
 
 /**

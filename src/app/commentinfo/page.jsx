@@ -220,6 +220,21 @@ export default function CommentInfo() {
     const shareUrl = `${window.location.origin}/commentinfo?id=${detail.id}`;
     const shareText = detail.title || '来自 Mozi 社区的帖子';
     
+    // 上报分享任务（SHARE）
+    try {
+      request({
+        url: Interface.TASK_COMPLETE,
+        method: 'POST',
+        data: { taskCode: 'SHARE' }
+      }).then(() => {
+        console.log('🔍 [DEBUG] 详情页分享任务上报成功');
+      }).catch(err => {
+        console.error('详情页分享任务上报失败:', err);
+      });
+    } catch (e) {
+      console.error('详情页分享任务触发异常:', e);
+    }
+
     // 检查是否在Telegram环境中
     const isTelegram = localStorage.getItem('appChannel') === 'tg';
     

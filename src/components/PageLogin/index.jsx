@@ -5,6 +5,7 @@ import { Modal, Button, Toast } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
+import { completeTask } from '../../api/user';
 // import styles from './index.module.less';
 
 export const PageLogin = ({ show = false, hideCb, onLoginSuccess }) => {
@@ -23,14 +24,12 @@ export const PageLogin = ({ show = false, hideCb, onLoginSuccess }) => {
       
       // 登录成功后，调用每日登录任务完成接口
       try {
-        await request({
-          url: Interface.TASK_COMPLETE,
-          method: 'POST',
-          data: { taskCode: 'DAILY_LOGIN' }
-        });
-        console.log('🔍 [DEBUG] 每日登录任务上报成功');
+        await completeTask('DAILY_LOGIN');
+        // 首次登录任务上报
+        await completeTask('FIRST_LOGIN');
+        console.log('🔍 [DEBUG] 登录任务上报成功');
       } catch (taskError) {
-        console.error('每日登录任务上报失败:', taskError);
+        console.error('登录任务上报失败:', taskError);
       }
       
       Toast.show({

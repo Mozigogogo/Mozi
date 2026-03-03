@@ -54,9 +54,9 @@ export default function PinkContainer() {
     },
     {
       id: 'ranking',
-      icon: '/icons/new_detail/List_selected_coins.svg',
+      icon: '/icons/new_home/calendar.png',
       label: t('home.quickActions.rankingSelect'),
-      onClick: () => router.push('/find?tab=rank')
+      onClick: () => router.push('/daily')
     }
   ];
 

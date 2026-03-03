@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { NavBar, Toast, Button, Picker, Input } from 'antd-mobile';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { getUserDataInfo, updateUserInfo } from '@/api/user';
+import { getUserDataInfo, updateUserInfo, completeTask } from '@/api/user';
 import styles from './page.module.less';
 
 const DEFAULT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png';
@@ -78,7 +78,7 @@ export default function EditProfilePage() {
       } else {
         // 尝试从 API 获取
         const res = await getUserDataInfo();
-        if (res.code === 200) {
+        if (res.code === 200 || res.code === 0 || res.success) {
           const data = res.data;
           setUserInfo(prev => ({
             ...prev,
@@ -136,7 +136,7 @@ export default function EditProfilePage() {
 
       const res = await updateUserInfo(updateData);
       
-      if (res.code === 200) {
+      if (res.code === 200 || res.code === 0 || res.success) {
         Toast.show({
           icon: 'success',
           content: t('editProfile.saveSuccess'),
@@ -150,6 +150,13 @@ export default function EditProfilePage() {
           localStorage.setItem('userInfo', JSON.stringify(newData));
         }
         
+        // 完善个人信息任务上报
+        try {
+          await completeTask('COMPLETE_PROFILE');
+        } catch (taskError) {
+          console.error('完善个人信息任务上报失败:', taskError);
+        }
+
         setTimeout(() => {
           router.back();
         }, 1000);

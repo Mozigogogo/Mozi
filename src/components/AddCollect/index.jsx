@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Toast } from 'antd-mobile';
 import { request } from '../../utils/request';
+import { completeTask } from '@/api/user';
 import { Interface } from '../../utils/constants';
 import styles from './index.module.less';
 
@@ -54,6 +55,16 @@ const AddCollect = ({ isOwn: propIsOwn, symbol, loginCb, onSuccess }) => {
           content: curOwn ? '移除自选成功' : '加入自选成功',
           icon: 'success'
         });
+
+        // 上报 ADD_WATCHLIST 任务
+        if (!curOwn) {
+          try {
+            await completeTask('ADD_WATCHLIST');
+          } catch (e) {
+            console.error('上报 ADD_WATCHLIST 失败', e);
+          }
+        }
+
         setOwn(nextOwn);
         
         // 调用成功回调

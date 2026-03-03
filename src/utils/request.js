@@ -72,6 +72,10 @@ const TASK_POINTS_MAP = {
   'EARLY_BIRD': 50,
   'INVITE_USER': 500,
   'TWITTER': 10,
+  'COMPLETE_PROFILE': 20,
+  'FIRST_LOGIN': 50,
+  'FIRST_POST': 50,
+  'ADD_WATCHLIST': 30,
   
   // 重复性/日常任务
   'DAILY_LIKE': 4,
