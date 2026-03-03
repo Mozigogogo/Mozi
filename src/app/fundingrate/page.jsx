@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { Tabs, Picker, Image } from 'antd-mobile';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
@@ -11,9 +12,9 @@ import { useTranslation } from 'react-i18next';
 import { Loading } from '../../components/Loading';
 import { handleOptions } from '../../utils/chartUtils';
 import styles from './page.module.less';
-
-// 引入 echarts
 import * as echarts from 'echarts';
+
+const PCLayout = dynamic(() => import('../../components/PCLayout'), { ssr: false });
 
 // 将右轴单位从“千”转换为“万”，并控制小数位与去零
 function formatRightAxisToWan(value, slot, unitWan = '万') {
@@ -41,6 +42,7 @@ export default function FundingRate() {
   const router = useRouter();
   const { t } = useTranslation();
   const [activeKey, setActiveKey] = useState('currentRatio');
+  const [isPC, setIsPC] = useState(false);
   const [coinList, setCoinList] = useState([]);
   const [cexList, setCexList] = useState([]);
   const [coinSelected, setCoinSelected] = useState('');
@@ -85,6 +87,15 @@ export default function FundingRate() {
   };
 
   // 初始化数据
+  useEffect(() => {
+    const checkDevice = () => {
+      setIsPC(window.innerWidth >= 1024);
+    };
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+    return () => window.removeEventListener('resize', checkDevice);
+  }, []);
+
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
@@ -327,6 +338,127 @@ export default function FundingRate() {
       console.error('跳转横屏图表失败:', error);
     }
   };
+
+  if (isPC) {
+    return (
+      <PCLayout>
+        <div className={styles['pc-container']}>
+          <div className={styles['pc-header']}>
+            <div className={styles['pc-back-btn']} onClick={() => router.back()}>
+              <span className={styles['pc-back-icon']}>&lt;</span>
+              <span className={styles['pc-title']}>{t('fundingrate.title')}</span>
+            </div>
+          </div>
+
+          <div className={styles['pc-tabs']}>
+            <div 
+              className={`${styles['pc-tab-item']} ${activeKey === 'currentRatio' ? styles['pc-tab-active'] : ''}`}
+              onClick={() => setActiveKey('currentRatio')}
+            >
+              {t('fundingrate.tabs.current')}
+            </div>
+            <div 
+              className={`${styles['pc-tab-item']} ${activeKey === 'historyRatio' ? styles['pc-tab-active'] : ''}`}
+              onClick={() => {
+                setActiveKey('historyRatio');
+                // Ensure chart is resized when switching tabs
+                setTimeout(() => {
+                  if (chartInstance.current) {
+                    chartInstance.current.resize();
+                  }
+                }, 100);
+              }}
+            >
+              {t('fundingrate.tabs.history')}
+            </div>
+          </div>
+
+          <div className={styles['pc-content']}>
+            {activeKey === 'currentRatio' ? (
+              <div className={styles['pc-table-wrapper']}>
+                <div className={styles['pc-table']}>
+                  <div className={styles['pc-table-header']}>
+                    <div className={styles['pc-th']}>
+                      <img src="/icons/new_home/calendar.png" alt="icon" className={styles['pc-exchange-icon']} />
+                      {t('fundingrate.coin')}
+                    </div>
+                    {curFundData.data?.exchange.slice(1).map((ex, idx) => (
+                      <div key={idx} className={styles['pc-th']}>
+                        {ex.url && <img src={ex.url} alt={ex.name} className={styles['pc-exchange-icon']} />}
+                        {ex.name}
+                      </div>
+                    ))}
+                  </div>
+                  <div className={styles['pc-table-body']}>
+                    {curFundData.loading ? (
+                      <div className={styles['pc-loading']}>
+                        <Loading />
+                      </div>
+                    ) : (
+                      curFundData.data?.list.map((item, rowIdx) => (
+                        <div key={rowIdx} className={styles['pc-tr']}>
+                          <div className={styles['pc-td']}>
+                            <img src={item.data[0].url} alt={item.data[0].symbol} className={styles['pc-coin-icon']} />
+                            <span className={styles['pc-coin-symbol']}>{item.data[0].symbol}</span>
+                          </div>
+                          {item.data.slice(1).map((rate, colIdx) => (
+                            <div 
+                              key={colIdx} 
+                              className={`${styles['pc-td']} ${parseFloat(rate) > 0 ? styles['pc-text-red'] : parseFloat(rate) < 0 ? styles['pc-text-green'] : ''}`}
+                            >
+                              {parseFloat(rate) > 0 ? '+' : ''}{rate}
+                            </div>
+                          ))}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className={styles['pc-history-container']}>
+                <div className={styles['pc-history-controls']}>
+                  {/* Coin Picker for PC */}
+                  <div className={styles['pc-control-item']}>
+                    <span className={styles['pc-label']}>{t('fundingrate.coin')}:</span>
+                    <select 
+                      className={styles['pc-select']}
+                      value={coinSelected} 
+                      onChange={(e) => handleCoinChange([e.target.value])}
+                    >
+                      {coinList.map(c => (
+                        <option key={c.value} value={c.value}>{c.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {/* Exchange Tabs for PC */}
+                  <div className={styles['pc-exchange-tabs']}>
+                    {cexList.map((exchange, index) => (
+                      <div
+                        key={index}
+                        className={`${styles['pc-exchange-tab']} ${cexSelected === exchange ? styles.active : ''}`}
+                        onClick={() => handleExchangeTabClick(exchange)}
+                      >
+                        {exchange}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className={styles['pc-chart-wrapper']}>
+                  {hisLoading && (
+                    <div className={styles['pc-chart-loading']}>
+                      <div className={styles['pc-spinner']} />
+                    </div>
+                  )}
+                  <div ref={chartRef} className={styles['pc-chart']}></div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </PCLayout>
+    );
+  }
 
   return (
     <>
