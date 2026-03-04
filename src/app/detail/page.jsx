@@ -1460,7 +1460,6 @@ ${coinInfo.name || symbol} (${symbol})
         maskTitle="大单侦测锁定"
         maskDescription="解锁后可查看24小时内的Top 5大单流向数据"
         maskButtonText="200积分解锁"
-        membershipButtonText="开通会员解锁"
         showVipElements={false}
       />
     );
