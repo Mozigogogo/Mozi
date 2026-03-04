@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import BarChart from '@/components/BarChart';
 import styles from './index.module.less';
@@ -50,15 +51,18 @@ export default function OrderBook({
   maskDescription, // 遮罩描述
   maskButtonText, // 遮罩按钮文字
   showVipElements = true, // 是否显示VIP相关元素
+  onBuyMembership, // 会员购买回调
+  membershipButtonText, // 会员按钮文字
 }) {
   const { t, i18n } = useTranslation();
+  const router = useRouter();
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [selectedOption, setSelectedOption] = useState(dropdownOptions?.[0] || t('orderBook.top5'));
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   // 使用国际化配置作为默认值
   const displayTitle = title || t('orderBook.title');
-  const displayTag = tag || t('orderBook.limitedExperience');
+  const displayTag = tag !== undefined ? tag : t('orderBook.limitedExperience');
   const displayDropdownOptions = dropdownOptions || [t('orderBook.top5'), t('orderBook.top10')];
 
   const visibleRowsCount = useMemo(() => {
@@ -283,6 +287,21 @@ export default function OrderBook({
               >
                 {maskButtonText || t('orderBook.subscribeUnlock')}
               </button>
+
+              {onBuyMembership && (
+                <button 
+                  className={styles.maskButton}
+                  style={{ 
+                    marginTop: '12px', 
+                    background: 'transparent', 
+                    border: '1px solid #11B787', 
+                    color: '#11B787' 
+                  }}
+                  onClick={onBuyMembership}
+                >
+                  {membershipButtonText || t('orderBook.buyMembership') || '开通会员解锁'}
+                </button>
+              )}
 
               {showVipElements && (
                 <img src="/images/new_detail/vip_right_mask.svg" alt="VIP" className={styles.maskVipIcon} />
