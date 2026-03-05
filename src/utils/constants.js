@@ -98,6 +98,10 @@ export const Interface = {
   // 搜索页
   // 币种是否有效
   IS_COIN: '/search/iscoin',
+
+  // 支付相关
+  PAYMENT_CREATE_STARS: '/payment/create-stars-invoice',
+  PAYMENT_VERIFY_CRYPTO: '/payment/verify-crypto',
   // 币种信息
   COIN_INFO: '/search/lastpricechange',
   // 相关版块

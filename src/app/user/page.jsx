@@ -183,9 +183,10 @@ export default function UserPage() {
     }
   }, [searchParams]);
 
-  // 检查 URL 参数，自动打开反馈弹窗
+  // 检查 URL 参数，自动打开反馈弹窗或支付弹窗
   useEffect(() => {
     const openFeedback = searchParams.get('openFeedback');
+    const openVip = searchParams.get('openVip');
     
     if (openFeedback === 'true') {
       // 无论是否登录，都打开反馈弹窗
@@ -200,6 +201,19 @@ export default function UserPage() {
       // 清除 URL 中的 openFeedback 参数
       const url = new URL(window.location.href);
       url.searchParams.delete('openFeedback');
+      window.history.replaceState({}, '', url.pathname + url.search);
+    }
+
+    if (openVip === 'true') {
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          router.push('/vip-recharge');
+        }, 300);
+      });
+      
+      // 清除 URL 中的 openVip 参数
+      const url = new URL(window.location.href);
+      url.searchParams.delete('openVip');
       window.history.replaceState({}, '', url.pathname + url.search);
     }
   }, [searchParams]);

@@ -1573,7 +1573,12 @@
     "benefitEnded": "Limited Benefit Ended",
     "memberExclusive": "Member Exclusive Access",
     "memberDescription": "Member-only content during testing period.",
-    "subscribeUnlock": "Subscribe to Unlock"
+    "subscribeUnlock": "Subscribe to Unlock",
+    "unlocked": "Unlocked",
+    "maskTitle": "Big Order Detection Locked",
+    "maskDescription": "Unlock to view Top 5 big order flow data within 24h",
+    "maskButtonText": "Unlock with 200 Points",
+    "membershipButtonText": "Unlock with Membership"
   },
   "hotsector": {
     "title": "Hot Sectors",

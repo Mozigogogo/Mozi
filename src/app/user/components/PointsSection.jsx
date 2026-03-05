@@ -22,9 +22,11 @@ const PointsSection = ({ pointsData, t, router }) => {
             </div>
           </div>
         </div>
-        <button className={styles.earnPointsBtn} onClick={(e) => { e.stopPropagation(); router.push('/pointsdetail'); }}>
-          {t('user.earnPoints')}
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button className={styles.earnPointsBtn} onClick={(e) => { e.stopPropagation(); router.push('/pointsdetail'); }}>
+            {t('user.earnPoints')}
+          </button>
+        </div>
       </div>
 
       <div className={styles.pointsDivider} />

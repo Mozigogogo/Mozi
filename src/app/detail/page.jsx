@@ -97,29 +97,93 @@ export default function DetailPage() {
   // 大单侦测解锁状态
   const [isBigOrderUnlocked, setIsBigOrderUnlocked] = useState(false);
   const [unlockEndTime, setUnlockEndTime] = useState(null);
+  const [orderBookTag, setOrderBookTag] = useState(null);
 
   // 初始化检查解锁状态
   useEffect(() => {
-    if (!symbol) return;
-    const unlockKey = `mozi_big_order_unlock_${symbol}`;
-    const savedEndTime = localStorage.getItem(unlockKey);
-    
-    if (savedEndTime) {
-      const endTime = parseInt(savedEndTime, 10);
-      if (Date.now() < endTime) {
-        setIsBigOrderUnlocked(true);
-        setUnlockEndTime(endTime);
-      } else {
-        // 已过期
-        localStorage.removeItem(unlockKey);
-        setIsBigOrderUnlocked(false);
-        setUnlockEndTime(null);
+    const checkStatus = () => {
+      // 1. 优先检查 VIP 状态 (最高优先级)
+      try {
+        const userDataInfo = localStorage.getItem('userDataInfo');
+        if (userDataInfo) {
+          const user = JSON.parse(userDataInfo);
+          // 假设 membershipTier 存在且不为 'free'/'0' 或者是数字 > 0 即为 VIP
+          // 具体字段需根据实际后端返回调整，这里尝试通用判断
+          const isVip = user.isVip || (user.membershipTier && user.membershipTier !== 'free' && user.membershipTier !== '0');
+          
+          if (isVip) {
+             setIsBigOrderUnlocked(true);
+             setUnlockEndTime(null); // VIP 无倒计时
+             setOrderBookTag('VIP');
+             return;
+          }
+        }
+      } catch (e) {
+        console.error('Check VIP status failed:', e);
       }
-    } else {
+
+      // 2. 检查新用户试用 (7天)
+      try {
+        let createTimeStr = null;
+        
+        // 尝试从 userDataInfo 获取
+        const userDataInfo = localStorage.getItem('userDataInfo');
+        if (userDataInfo) {
+          const user = JSON.parse(userDataInfo);
+          createTimeStr = user.createTime || user.createdAt || user.registerTime;
+        }
+        
+        // 如果没有，尝试从 userInfo 获取
+        if (!createTimeStr) {
+          const userInfo = localStorage.getItem('userInfo');
+          if (userInfo) {
+            const user = JSON.parse(userInfo);
+            createTimeStr = user.createTime || user.createdAt || user.registerTime;
+          }
+        }
+        
+        if (createTimeStr) {
+          const created = new Date(createTimeStr).getTime();
+          const now = Date.now();
+          const trialDuration = 7 * 24 * 60 * 60 * 1000; // 7天
+          
+          if (now - created < trialDuration) {
+            setIsBigOrderUnlocked(true);
+            setUnlockEndTime(created + trialDuration);
+            setOrderBookTag(t('orderBook.limitedExperience')); // "限时体验"
+            return;
+          }
+        }
+      } catch (e) {
+        console.error('Check trial status failed:', e);
+      }
+
+      // 3. 检查积分解锁 (24小时)
+      if (!symbol) return;
+      const unlockKey = `mozi_big_order_unlock_${symbol}`;
+      const savedEndTime = localStorage.getItem(unlockKey);
+      
+      if (savedEndTime) {
+        const endTime = parseInt(savedEndTime, 10);
+        if (Date.now() < endTime) {
+          setIsBigOrderUnlocked(true);
+          setUnlockEndTime(endTime);
+          setOrderBookTag(t('orderBook.unlocked') || '已解锁'); 
+          return;
+        } else {
+          // 已过期
+          localStorage.removeItem(unlockKey);
+        }
+      }
+
+      // 4. 默认锁定状态
       setIsBigOrderUnlocked(false);
       setUnlockEndTime(null);
-    }
-  }, [symbol]);
+      setOrderBookTag(null);
+    };
+
+    checkStatus();
+  }, [symbol, t]);
 
   // 倒计时检查过期
   useEffect(() => {
@@ -1376,19 +1440,26 @@ ${coinInfo.name || symbol} (${symbol})
     );
   };
 
+  // 跳转到会员购买
+  const handleBuyMembership = () => {
+    router.push('/vip-recharge');
+  };
+
   const renderOrderBook = () => {
     return (
       <OrderBook 
         bids={orderBook.bids} 
         asks={orderBook.asks}
         endTime={unlockEndTime}
+        tag={orderBookTag}
         showMask={!isBigOrderUnlocked}
         onSubscribe={handleUnlockOrderBook}
+        onBuyMembership={handleBuyMembership}
         maxRows={5} // 解锁后也只显示Top 5
         dropdownOptions={['Top 5']} // 限制下拉选项
-        maskTitle="大单侦测锁定"
-        maskDescription="解锁后可查看24小时内的Top 5大单流向数据"
-        maskButtonText="200积分解锁"
+        maskTitle={t('orderBook.maskTitle')}
+        maskDescription={t('orderBook.maskDescription')}
+        maskButtonText={t('orderBook.maskButtonText')}
         showVipElements={false}
       />
     );
