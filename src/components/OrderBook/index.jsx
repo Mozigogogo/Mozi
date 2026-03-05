@@ -288,6 +288,20 @@ export default function OrderBook({
                 {maskButtonText || t('orderBook.subscribeUnlock')}
               </button>
 
+              {onBuyMembership && (
+                <button 
+                  className={styles.membershipButton}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onBuyMembership) {
+                      onBuyMembership();
+                    }
+                  }}
+                >
+                  {membershipButtonText || t('orderBook.membershipButtonText')}
+                </button>
+              )}
+
               {showVipElements && (
                 <img src="/images/new_detail/vip_right_mask.svg" alt="VIP" className={styles.maskVipIcon} />
               )}

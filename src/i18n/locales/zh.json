@@ -1553,7 +1553,12 @@
     "benefitEnded": "限时福利已结束",
     "memberExclusive": "会员专享查看权限",
     "memberDescription": "本部分内容属会员创测期限制查看，会员可支持国服最新资讯",
-    "subscribeUnlock": "点击订阅解锁"
+    "subscribeUnlock": "点击订阅解锁",
+    "unlocked": "已解锁",
+    "maskTitle": "大单侦测锁定",
+    "maskDescription": "解锁后可查看24小时内的Top 5大单流向数据",
+    "maskButtonText": "200积分解锁",
+    "membershipButtonText": "开通会员解锁"
   },
   "hotsector": {
     "title": "热门板块",

@@ -1457,9 +1457,9 @@ ${coinInfo.name || symbol} (${symbol})
         onBuyMembership={handleBuyMembership}
         maxRows={5} // 解锁后也只显示Top 5
         dropdownOptions={['Top 5']} // 限制下拉选项
-        maskTitle="大单侦测锁定"
-        maskDescription="解锁后可查看24小时内的Top 5大单流向数据"
-        maskButtonText="200积分解锁"
+        maskTitle={t('orderBook.maskTitle')}
+        maskDescription={t('orderBook.maskDescription')}
+        maskButtonText={t('orderBook.maskButtonText')}
         showVipElements={false}
       />
     );
