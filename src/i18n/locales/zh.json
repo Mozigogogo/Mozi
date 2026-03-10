@@ -388,15 +388,14 @@
     "feedback": "产品功能反馈",
     "feedbackDesc": "留言你想要的功能",
     "productFeedback": "产品功能反馈",
-    "feedbackFailed": "提交反馈失败，请重试",
+    "feedbackFailed": "反馈失败",
     "recommendFriend": "推荐朋友",
     "recommendDesc": "分享你的喜爱",
     "shareYourLove": "分享你的喜爱",
     "shareText": "Mozi行情助手 - 专业的加密数据分析智能平台",
     "myPoints": "我的积分",
-    "defaultNickname": "无为而治",
+    "defaultNickname": "用户",
     "defaultBio": "资金流动大师，金融NO.1",
-    "pleaseLogin": "请登录",
     "loginTip": "登录后查看更多精彩内容",
     "personalPage": "个人主页",
     "tags": {
@@ -469,7 +468,6 @@
     "connectWalletFirst": "请先连接钱包",
     "walletNotReady": "钱包组件尚未就绪",
     "feedbackSuccess": "反馈成功",
-    "feedbackFailed": "反馈失败",
     "copySuccess": "复制成功",
     "copyFailed": "复制失败",
     "linkCopied": "链接已复制到剪贴板",
@@ -488,7 +486,6 @@
     "loggingIn": "登录中...",
     "walletAddressError": "获取钱包地址失败",
     "walletConnectFailed": "钱包连接失败",
-    "defaultNickname": "用户",
     "vipBannerText": "免费试用14天，马上开启新体验!",
     "subscribeNow": "立即订阅",
     "wechatUser": "微信用户",
@@ -858,113 +855,125 @@
     "myRank": "我的排名"
   },
   "pointsDetail": {
+    "centerTitle": "积分中心",
     "myPoints": "我的积分",
-    "myInvites": "我的邀请",
-    "season": "赛季",
-    "seasonName": "S5赛季",
     "historyRecord": "历史记录",
-    "inviteRewardTitle": "每次推荐均可获得积分奖励！",
-    "inviteReward": "邀请有奖",
-    "perInvite": "每邀请一人",
+    "poolTitleText": "本月积分池状态",
+    "poolSufficient": "充足",
+    "poolRemaining": "剩余积分",
+    "poolDistributed": "已发放",
+    "poolMineable": "剩余可领",
+    "poolResetCountdown": "距离下月重置",
+    "poolDays": "天",
+    "poolHours": "时",
+    "poolMinutes": "分",
+    "poolEventTitle": "周末积分加倍活动!",
+    "poolEventDesc1_part1": "所有任务奖励",
+    "poolEventDesc1_highlight": "x1.5倍",
+    "poolEventDesc1_part2": " (发帖10积分→15积分)",
+    "poolEventDesc2_part1": "活动时间：本周末48小时(还剩 ",
+    "poolEventDesc2_highlight": "42小时",
+    "poolEventDesc2_part2": " )",
+    "poolEventDesc3": "积分充足，抓紧领取，机不可失!",
+    "poolUpgradeMember": "升级会员",
+    "inviteRewards": "邀请有奖",
+    "inviteRegister": "注册",
+    "invitePay": "付费",
     "inviteLink": "邀请链接",
     "inviteCode": "邀请码",
-    "totalInvites": "总邀请数",
-    "earnedPoints": "积分",
-    "activeInvites": "申请ETH",
-    "pendingRewards": "OWO之后可领取",
-    "linkCopied": "已复制",
-    "copyFailed": "复制失败",
-    "historyFeatureInDevelopment": "历史记录功能开发中",
-    "moziSlogan": "自由交易 不被定义",
-    "fanRewardsTitle": "每日奖励任务",
-    "earnMorePoints": "获得更多积分",
-    "dailyInvestmentTitle": "每日投资排行",
-    "taskCompleted": "任务已完成",
-    "joinAlarm": "加入警报通",
+    "shareCount": "总邀请数",
+    "totalEarned": "邀请积分",
+    "applyTH": "申请提现",
+    "lastVisit": "上次访问",
+    "inviteRules": {
+      "1": "1. 积分未来将用于生态权益",
+      "2": "2. 如果您的推荐人购买会员资格，您将获得积分和10%的费用回扣",
+      "3": "3. 推荐有效的前提是被邀请用户必须通过邀请链接注册或输入邀请码",
+      "4": "4. 发表高质量的内容更容易获得更多积分"
+    },
+    "banner": {
+      "title": "获得更多奖励",
+      "subtitle": "解锁更多功能与专属奖励"
+    },
+    "addAlarm": "加入报警器",
     "certification": "认证",
-    "note1": "每天前20个推荐均可获得积分。",
-    "note2": "如果您的推荐人购买会员资格，您将获得积分和20%的费用回扣。",
-    "note3": "推荐有效的前提是被邀请用户必须输入邀请码",
+    "newbieTasks": "新手任务",
+    "dailyTasks": "每日任务",
     "completed": "已完成",
-    "centerTitle": "积分中心",
-    "toSeparator": "至",
-    "verifying": "验证中",
+    "goFinish": "去完成",
+    "claimed": "已领取",
+    "sufficient": "积分充足",
+    "fetchFailed": "获取积分数据失败",
+    "linkCopied": "链接已复制",
+    "copyFailed": "复制失败",
+    "taskCompleted": "任务已完成",
     "pleaseRegister": "请先注册",
-    "joinAlarmSubtitle": "添加一个报警",
-    "certificationSubtitle": "身份认证",
-    "dailyRewardTasksTitle": "做任务得积分奖励",
+    "historyFeatureInDevelopment": "功能开发中",
+    "messages": {
+      "pointsEarned": "获得 {points} 积分",
+      "taskNotCompleted": "任务未完成",
+      "verifyFailed": "验证失败",
+      "videosRemaining": "还有 {count} 个视频未观看"
+    },
     "tasks": {
       "firstRegister": {
-        "title": "首次注册账号",
-        "button": "去注册"
+        "title": "首次注册",
+        "button": "去完成"
       },
       "followTwitter": {
-        "title": "关注我们的Twitter",
+        "title": "关注推特",
         "button": "去关注"
       },
       "joinCommunity": {
-        "title": "加入我们的社群",
+        "title": "加入社群",
         "button": "去加入"
       },
       "earlyBird": {
-        "title": "早鸟活动",
-        "button": "去参加"
+        "title": "早鸟奖励",
+        "button": "领取"
       },
       "setAlarm": {
-        "title": "设置报警功能",
+        "title": "设置提醒",
         "button": "去设置"
       },
       "videoLearn": {
-        "title": "完成视频学习",
+        "title": "视频学习",
         "button": "去学习"
       },
       "dailyLogin": {
         "title": "每日登录",
-        "button": "去登录"
+        "button": "签到"
       },
       "inviteUser": {
         "title": "邀请好友",
         "button": "去邀请"
       },
-      "verify": "验证",
-      "completed": "已完成"
-    },
-    "messages": {
-      "taskNotCompleted": "任务尚未完成，请先完成任务",
-      "verifyFailed": "验证失败，请稍后重试",
-      "pointsEarned": "+{{points}}积分",
-      "loadFailed": "加载积分历史失败:",
-      "videosRemaining": "还有 {{count}} 个视频未观看"
-    },
-    "dailyTasks": {
-      "like": {
+      "dailyLike": {
         "title": "每日点赞",
-        "label": "每个赞"
+        "button": "去点赞"
       },
       "post": {
-        "title": "发帖",
-        "label": "每条帖子"
+        "title": "发布观点",
+        "button": "去发布"
       },
-      "receivedLike": {
-        "title": "收到赞",
-        "label": "每次被赞"
+      "receiveLike": {
+        "title": "获得点赞",
+        "button": "去互动"
       },
       "reply": {
-        "title": "回复",
-        "label": "回复一次"
+        "title": "回复评论",
+        "button": "去回复"
       },
-      "postReplied": {
-        "title": "帖子收到回复",
-        "label": "收到回复"
+      "postReceiveReply": {
+        "title": "收到回复",
+        "button": "去查看"
       }
     }
-  }
-  ,
+  },
   "pointsHistory": {
     "title": "积分历史",
     "empty": "暂无积分记录"
-  }
-  ,
+  },
   "pcr": {
     "title": "多空比",
     "coin": "币种",
@@ -989,8 +998,7 @@
     "loadFailed": "数据加载失败",
     "fetchFailed": "数据获取失败",
     "noChartData": "暂无图表数据"
-  }
-  ,
+  },
   "positionsize": {
     "title": "持仓量",
     "coin": "币种",
@@ -1009,8 +1017,7 @@
     "loadFailed": "数据加载失败",
     "fetchFailed": "数据获取失败",
     "noChartData": "暂无图表数据"
-  }
-  ,
+  },
   "fundingrate": {
     "title": "资金费率",
     "tabs": {
@@ -1030,8 +1037,7 @@
       "b": "亿",
       "m": "万"
     }
-  }
-  ,
+  },
   "tradevol": {
     "title": "成交额",
     "coin": "币种",
@@ -1051,8 +1057,7 @@
     "loadFailed": "数据加载失败",
     "fetchFailed": "数据获取失败",
     "noChartData": "暂无图表数据"
-  }
-  ,
+  },
   "detail": {
     "title": "币种详情",
     "marketCap": "流通市值",
@@ -1130,7 +1135,7 @@
     ],
     "templates": {
       "normal": "普通",
-      "discovery": "发现好币", 
+      "discovery": "发现好币",
       "question": "不懂就问"
     },
     "buttons": {

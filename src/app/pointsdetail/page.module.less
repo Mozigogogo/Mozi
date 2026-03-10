@@ -1,1175 +1,984 @@
 .pointsDetailContainer {
   min-height: 100vh;
-  background: #000;
-  padding: 10px;
+  background: url('/point/point_bg.png') no-repeat top center;
+  background-size: 100% auto;
+  background-color: #F5F7FA;
+  padding: 16px;
+  padding-top: 60px;
   padding-bottom: 40px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
 
-  // Tab栏
-  .tabsContainer {
-    margin-bottom: 5px;
-    padding-left: 0;
-    
-    :global {
-      .adm-tabs {
-        background: transparent;
-        text-align: left;
-        
-        .adm-tabs-header {
-          border-bottom: none;
-          justify-content: flex-start !important;
-        }
-        
-        .adm-tabs-tab-list {
-          background: transparent;
-          gap: 10px;
-          justify-content: flex-start !important;
-          display: flex !important;
-          flex-wrap: nowrap !important;
-        }
-        
-        .adm-tabs-tab {
-          color: #fff;
-          font-size: 16px;
-          font-weight: 600;
-          padding: 8px 16px 8px 0;
-          background: transparent;
-          position: relative;
-          margin-left: 0 !important;
-          
-          &:first-child {
-            margin-left: 0 !important;
-            padding-left: 0 !important;
-          }
-        }
-        
-        .adm-tabs-tab-active {
-          color: #fff;
-          background-image: url('/point/tab_bg@2x.png');
-          background-size: auto 13px;
-          background-repeat: no-repeat;
-          background-position: center bottom 8px;
-        }
-        
-        .adm-tabs-tab-line {
-          display: none;
-        }
-      }
-    }
+.pageTitle {
+  font-family: "PingFang SC";
+  font-size: 16px;
+  font-weight: 900;
+  color: #2B2B2B;
+  margin-left: 4px;
+  position: relative;
+  display: inline-block;
+  z-index: 1;
+  padding: 8px 16px;
+  
+  background: url('/point/tab_bg_actived.png') no-repeat center center;
+  background-size: contain;
+  
+  /* Remove the previous underline style */
+  &::after {
+    display: none;
   }
+}
 
-  /* 顶部导航 */
-  .topNav {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    padding: 10px 6px 5px 6px;
-    margin-bottom: 0;
-    position: sticky;
-    top: 0;
-    z-index: 80;
-    background: #000; /* ensure it covers content when fixed */
-  }
+/* Hide original header */
+.header {
+  display: none;
+}
 
-  .backBtn {
-    position: absolute;
-    left: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: transparent;
-    border: none;
-    color: #fff;
+/* Season Card */
+.seasonCard {
+  background: url('/point/point_head_bg.png') no-repeat center center;
+  background-size: 100% 100%;
+  border-radius: 20px;
+  padding:65px 20px 0;
+  position: relative;
+  height: 200px; /* Adjust height as needed based on design */
+  margin-bottom: 10px;
+}
+
+.linkImage {
+  position: absolute;
+  bottom: -10%;
+  left: 20%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 36px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.linkImageRight {
+  position: absolute;
+  bottom: -10%;
+  right: 20%;
+  transform: translateX(50%);
+  width: 36px;
+  height: 36px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.seasonHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 25px;
+}
+
+.seasonInfo {
+  flex: 1;
+  z-index: 2;
+}
+
+.seasonTitleRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.seasonName {
+  font-size: 18px;
+  font-weight: 800;
+  color: #000;
+}
+
+.seasonDate {
+  font-size: 10px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.7;
+}
+
+.levelProgressContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.levelLabel {
+  font-size: 12px;
+  font-weight: bold;
+  color: #000;
+}
+
+.levelProgressBar {
+  width: 100px;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.levelProgressFill {
+  height: 100%;
+  background: #00CFA4;
+  border-radius: 3px;
+}
+
+.levelValue {
+  font-size: 10px;
+  color: #666;
+}
+
+.characterImg {
+  display: none;
+}
+
+.pointsRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+}
+
+.totalPoints {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 50px;
+  
+  span {
+    color: #333;
+    font-family: Roboto;
     font-size: 20px;
-    cursor: pointer;
-    padding: 6px 8px;
+    font-style: normal;
+    font-weight: 900;
+    line-height: normal;
   }
+}
 
-  .navTitle {
-    color: #fff;
-    font-weight: 700;
+.coinIcon {
+  width: 40px;
+  height: 40px;
+}
+
+.historyBtn {
+  border-radius: 100px;
+  border: 0.5px solid #E9E9E9;
+  background: var(--Color, rgba(255, 255, 255, 0.32));
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #333;
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* Pool Card */
+.poolCard {
+  background: #fff;
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.poolHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.poolTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1A1A1A;
+}
+
+.poolTagSufficient {
+  font-size: 12px;
+  color: #10B981;
+  background:#ECFDF5;
+  padding: 4px 12px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+  border: 1px solid rgba(209, 250, 229, 1);
+}
+
+.poolProgressSection {
+  margin-bottom: 20px;
+}
+
+.poolPercentRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end; /* Align bottom */
+  margin-bottom: 8px;
+}
+
+.poolPercentText {
+  font-size: 36px;
+  font-weight: 700;
+  color: #2FC362;
+  font-family: Inter;
+  font-style: normal;
+}
+
+.poolRemainingLabel {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 6px; /* Slightly adjust to align with text baseline visually */
+}
+
+.poolProgressBarContainer {
+  position: relative;
+  margin-bottom: 24px;
+}
+
+.poolProgressBar {
+  height: 10px;
+  background: #F0F0F0;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  position: relative;
+}
+
+/* Remove old separator */
+.poolProgressBar::after {
+  display: none;
+}
+
+.separators {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.separators::before {
+  content: '';
+  position: absolute;
+  left: 33.33%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #fff;
+  transform: translateX(-50%);
+  z-index: 3;
+}
+
+.separators::after {
+  display: none;
+}
+
+.poolProgressFill {
+  height: 100%;
+  border-radius: 5px;
+  position: relative;
+  z-index: 1;
+  transition: width 0.3s ease;
+}
+
+.fillNormal {
+  background: rgba(63, 207, 113, 1);
+}
+
+.fillAlert {
+  background: linear-gradient(90deg, #FD8D38 0%, #FC3B43 100%);
+}
+
+.poolProgressScales {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #999;
+  margin-top: 4px;
+}
+
+.poolStatsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.poolStatBox {
+  background: #F8F9FB; /* Slightly lighter gray */
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid #F1F5F9;
+  height: 80px;
+}
+
+.statLabel {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.statValue {
+  font-size: 24px;
+  font-weight: 900;
+  color: #1A1A1A;
+  font-family: DIN, -apple-system, sans-serif;
+}
+
+/* Countdown Section */
+.poolCountdownSection {
+  background: #F9FAFB;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 24px;
+  border: 1px solid #F1F5F9;
+}
+
+.countdownHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 16px;
+  
+  .clockIcon {
     font-size: 16px;
   }
-
-  // 积分卡片
-  .pointsCard {
-    border-radius: 15px; /* 保持圆角 */
-    margin-bottom: 15px;
-    position: relative;
-    overflow: hidden;
-    min-height: auto; /* 高度由内容决定 */
-    background-color: #222222;
-
-    .cardHeader {
-      display: flex;
-      align-items: center;
-      margin-bottom: 10px;
-      
-      .logo {
-        width: 100px;
-        height: auto;
-      }
-    }
-
-    .seasonInfo {
-      margin-bottom: 15px;
-      margin-left: 15px;
-      
-      .seasonTitle {
-        font-size: 32px;
-        font-weight: 700;
-        color: #000;
-        margin: 0 0 5px 0;
-      }
-      
-      .seasonDuration {
-        display: flex;
-        align-items: center;
-        font-size: 12px;
-        color:#0A0A0A;
-        gap: 5px;
-        
-        .clockIcon {
-          font-size: 14px;
-        }
-      }
-    }
-
-    .pointsDisplay {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin: 10px 15px;
-      
-      .coinIcon {
-        width: 24px;
-        height: 24px;
-        display: block;
-      }
-      
-      .pointsValue {
-        font-size: 22px;
-        font-weight: 500;
-        color: #FFFFFF;
-        flex: 1;
-      }
-      
-      .historyBtn {
-        background: #383838;
-        border: 1px solid rgba(255,255,255,0.2);
-        border-radius: 12px;
-        padding: 6px 12px;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 12px;
-        color: #FFFFFF;
-        cursor: pointer;
-
-        
-        .historyIcon {
-          width: 14px;
-          height: 14px;
-          display: block;
-        }
-        
-        &:active {
-          opacity: 0.8;
-        }
-      }
-    }
-
-    .characterImg {
-      position: absolute;
-      right: 10px;
-      bottom: 0;
-      width: 120px;
-      height: auto;
-      pointer-events: none;
-    }
-  }
-
-  // 新增的背景盒子样式
-  .seasonBackgroundCard {
-    background-image: url('/point/Season_bg@2x.png');
-    background-size: cover; /* 保持cover，但调整position */
-    background-position: right center; /* 调整为右侧居中 */
-    background-repeat: no-repeat;
-    border-radius: 15px; /* 保持圆角与外部pointsCard一致 */
-    // padding: 20px; /* 将padding移动到这里 */
-    position: relative;
-    overflow: hidden;
-    max-height: 160px; /* 适当调整高度以适应内容 */
-  }
-
-  // MOZI横幅
-  .moziBanner {
-    background-image: url('/point/define_bg@2x.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    border-radius: 15px;
-    padding: 15px 20px;
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: relative;
-    overflow: hidden;
-    height: 65px;
-
-    .bannerContent {
-      flex: 1;
-      
-      h3 {
-        font-size: 24px;
-        font-weight: 700;
-        color: #000;
-        margin: 0 0 5px 0;
-      }
-      
-      p {
-        font-size: 14px;
-        color: #333;
-        margin: 0;
-      }
-    }
-
-    .mascotImg {
-      width: 80px;
-      height: auto;
-      position: absolute;
-      right: 10px;
-      bottom: 0;
-    }
-  }
-
-  // 邀请推荐区域
-  .inviteSection {
-    background-color: #1a1a1a;
-    background-image: url('/point/transparent_bg@2x.png');
-    background-repeat: no-repeat;
-    background-position: right top;
-    background-size: 56% 20%;
-    border-radius: 8px;
-    padding: 20px;
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 15px;
-
-    .inviteHeader {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 15px;
-      
-      .emojiIcon {
-        width: 32px;
-        height: 32px;
-        display: block;
-      }
-      
-      .inviteTitle {
-        font-family: YouSheBiaoTiHei, YouSheBiaoTiHei, sans-serif;
-        font-weight: 700;
-        font-size: 16px;
-        color: #FFFFFF;
-        line-height: 16px;
-        text-align: left;
-        font-style: normal;
-        text-transform: none;
-        margin: 0;
-        display: inline-block;
-        background-image: url('/point/tab_bg@2x.png');
-        background-repeat: no-repeat;
-        background-position: bottom left;
-        background-size: auto 12px;
-        padding-bottom: 4px;
-      }
-    }
-
-    // 邀请有奖卡片
-    .rewardCard {
-      border-radius: 15px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 20px;
-
-      .rewardIcon {
-        width: 52px;
-        height: 52px;
-        display: block;
-        flex-shrink: 0;
-      }
-
-      .rewardInfo {
-        flex: 1;
-        
-        h4 {
-          font-size: 12px;
-          font-weight: 700;
-          color: #FFFFFF;
-          margin: 0 0 4px 0;
-        }
-        
-        p {
-          font-size: 10px;
-          color: #FFFFFF;
-          margin: 0;
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          
-          .bonusPoints {
-            font-weight: 700;
-            color: #FEBE64;
-            display: flex;
-            align-items: center;
-            gap: 2px;
-            
-            .bonusCoinIcon {
-              width: 16px;
-              height: 16px;
-              display: inline-block;
-              vertical-align: middle;
-            }
-          }
-        }
-      }
-    }
-
-    // 邀请输入框
-    .inviteInputBox {
-      background-color: #2E2E2E;
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 8px;
-      padding: 12px;
-      margin-bottom: 12px;
-      min-height: 44px;
-      display: flex;
-      align-items: flex-start;
-      box-sizing: border-box;
-
-      .inviteInputLabel {
-        font-size: 12px;
-        color: #FFFFFF;
-        margin-right: 10px;
-        white-space: nowrap;
-        line-height: 1.4;
-      }
-
-      .inviteInputContent {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-        flex: 1;
-        min-width: 0; // 允许 flex 子元素收缩
-        overflow: hidden;
-        
-        .inviteInputText {
-          font-size: 12px;
-          color: #fff;
-          font-family: monospace;
-          flex: 1;
-          min-width: 0;
-          word-break: break-all;
-          line-height: 1.4;
-          text-align: left;
-        }
-        
-        .copyIconBtn {
-          background: transparent;
-          border: none;
-          cursor: pointer;
-          padding: 0;
-          flex-shrink: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 18px;
-          height: 18px;
-          
-          .copyIcon {
-            width: 18px;
-            height: 18px;
-            display: block;
-          }
-          
-          &:active {
-            transform: scale(0.95);
-          }
-        }
-      }
-    }
-
-    // 统计数据网格
-    .statsGrid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      margin-top: 20px;
-      margin-bottom: 20px;
-
-      .statCard {
-        background:#2E2E2E;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 12px;
-        padding: 20px 15px;
-        text-align: center;
-        height: 69px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-
-        .statValue {
-          font-size: 25px;
-          font-weight: 500;
-          color: #82FB46;
-          margin-bottom: 8px;
-          line-height: 1;
-        }
-
-        .statLabel {
-          font-size: 12px;
-          color: #FFFFFF;
-          line-height: 1.3;
-        }
-        
-        &:last-child .statValue {
-          color: #82FB46;
-          font-size: 25px;
-
-          .infoIcon {
-            width: 24px;
-            height: 24px;
-            display: block;
-            margin: 0 auto;
-          }
-        }
-      }
-    }
-
-    // 说明文字
-    .inviteNotes {
-      
-      p {
-        font-size: 9px;
-        font-weight: 500;
-        color:#FFFFFF;
-        margin: 0 0 4px 0;
-        
-        &:last-child {
-          margin-bottom: 0;
-        }
-      }
-    }
-  }
-
-  // 任务区域
-  .tasksSection {
-    background: #1a1a1a;
-    border-radius: 15px;
-    padding: 20px;
-    margin-bottom: 15px;
-    position: relative;
-
-    &::before {
-      content: "";
-      position: absolute;
-      right: 0;
-      top: 0;
-      width: 210px;
-      height: 210px;
-      background-image: url('/point/transparent_bg@2x.png');
-      background-repeat: no-repeat;
-      background-position: right top;
-      background-size: contain;
-      pointer-events: none;
-      opacity: 0.9;
-    }
-
-    .tasksSectionHeader {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 15px;
-      position: relative;
-      z-index: 1;
-      
-      .headerIconImg {
-        width: 28px;
-        height: 28px;
-        object-fit: contain;
-      }
-      
-      .taskIcon {
-        font-size: 24px;
-      }
-      
-      h3 {
-        font-size: 16px;
-        font-weight: 700;
-        color: #fff;
-        margin: 0;
-        display: inline-block;
-        border-radius: 8px;
-        background-image: url('/point/tab_bg@2x.png');
-        background-repeat: no-repeat;
-        background-position: bottom left;
-        background-size: auto 12px;
-        padding-bottom: 4px;
-        line-height: 1;
-      }
-    }
-
-    .tasksList {
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      z-index: 1;
-
-      .loadingContainer {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 60px 20px;
-        gap: 20px;
-      }
-
-      .spinner {
-        position: relative;
-        width: 80px;
-        height: 80px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .spinnerRing {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        border: 3px solid transparent;
-        border-top-color: #6AFF41;
-        border-radius: 50%;
-        animation: spin 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
-
-        &:nth-child(1) {
-          width: 80px;
-          height: 80px;
-          border-top-color: #6AFF41;
-          animation-delay: 0s;
-        }
-
-        &:nth-child(2) {
-          width: 60px;
-          height: 60px;
-          border-top-color: #EDE75C;
-          animation-delay: -0.3s;
-          animation-direction: reverse;
-        }
-
-        &:nth-child(3) {
-          width: 40px;
-          height: 40px;
-          border-top-color: #FFB341;
-          animation-delay: -0.6s;
-        }
-      }
-
-      .spinnerCoin {
-        width: 24px;
-        height: 24px;
-        z-index: 10;
-        animation: pulse 1.5s ease-in-out infinite;
-      }
-
-      @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
-      }
-
-      @keyframes pulse {
-        0%, 100% {
-          transform: scale(1);
-          opacity: 1;
-        }
-        50% {
-          transform: scale(1.2);
-          opacity: 0.8;
-        }
-      }
-
-      .loadingText {
-        font-size: 14px;
-        color: #fff;
-        font-weight: 500;
-        animation: fadeInOut 1.5s ease-in-out infinite;
-      }
-
-      @keyframes fadeInOut {
-        0%, 100% {
-          opacity: 0.5;
-        }
-        50% {
-          opacity: 1;
-        }
-      }
-
-      .emptyState {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 60px 20px;
-        gap: 16px;
-      }
-
-      .emptyIcon {
-        width: 64px;
-        height: 64px;
-        opacity: 0.6;
-        animation: float 3s ease-in-out infinite;
-      }
-
-      @keyframes float {
-        0%, 100% {
-          transform: translateY(0px);
-        }
-        50% {
-          transform: translateY(-10px);
-        }
-      }
-
-      .emptyText {
-        font-size: 14px;
-        color: rgba(255, 255, 255, 0.6);
-        font-weight: 500;
-      }
-
-      .taskItem {
-        background: transparent;
-        border-radius: 16px;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        transition: all 0.3s ease;
-        min-height: 70px;
-
-        // &.completed {
-        //   opacity: 0.7;
-        // }
-
-        .taskIconWrapper {
-          width: 45px;
-          height: 45px;
-          background: transparent;
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          
-          .taskIconImg {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 8px;
-          }
-        }
-        
-        .taskIcon {
-          width: 45px;
-          height: 45px;
-          background: transparent;
-          border-radius: 10px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 20px;
-          flex-shrink: 0;
-        }
-
-        .taskInfo {
-          flex: 1;
-          
-          .taskTitle {
-            font-size: 12px;
-            font-weight: 600;
-            color: #fff;
-            margin-bottom: 4px;
-          }
-          
-          .taskPoints {
-            font-size: 11px;
-            color: #fff;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            
-            .taskCoinIcon {
-              width: 11px;
-              height: 11px;
-              object-fit: contain;
-            }
-          }
-        }
-
-        .taskBtn {
-          background: linear-gradient( 92deg, #6AFF41 0%, #EDE75C 100%);
-          border: none;
-          border-radius: 8px;
-          padding: 8px 12px;
-          font-size: 12px;
-          color: #222222;
-          font-weight: 600;
-          cursor: pointer;
-          flex-shrink: 0;
-          min-width: 60px;
-          
-          &:active {
-            transform: scale(0.95);
-          }
-          
-          &.completedBtn {
-            background: #333727;
-            color:#82FB46;
-          }
-          
-          &.verifyingBtn {
-            background: #666;
-            color: #fff;
-            cursor: not-allowed;
-          }
-          
-          &.verifyBtn {
-            background: linear-gradient( 92deg, #FFB341 0%, #FFED5C 100%);
-            color: #222222;
-          }
-        }
-      }
-    }
-  }
-
-  // 获得更多积分横幅
-  .earnMoreBanner {
-    background-image: url('/point/last_bg@2x.png');
-    background-repeat: no-repeat;
-    background-position: right center;
-    background-size: contain;
-    border-radius: 15px;
-    padding: 15px 20px;
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: relative;
-    overflow: hidden;
-    min-height: 55px;
-
-    // .bannerText {
-    //   font-size: 20px;
-    //   font-weight: 700;
-    //   color: #000;
-    // }
-
-    .bannerMascot {
-      width: 60px;
-      height: auto;
-      position: absolute;
-      right: 10px;
-      bottom: 0;
-    }
-  }
-
-  // 每日投资排行
-  .dailyInvestmentSection {
-    background: #1a1a1a;
-    border-radius: 15px;
-    padding: 20px;
-    margin-bottom: 15px;
-    position: relative;
-
-    &::before {
-      content: "";
-      position: absolute;
-      right: 0;
-      top: 0;
-      width: 210px;
-      height: 210px;
-      background-image: url('/point/transparent_bg@2x.png');
-      background-repeat: no-repeat;
-      background-position: right top;
-      background-size: contain;
-      pointer-events: none;
-      opacity: 0.9;
-    }
-
-    .sectionHeader {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 15px;
-      position: relative;
-      z-index: 1;
-      
-      .headerIcon {
-        font-size: 24px;
-      }
-
-      .headerIconImg {
-        width: 28px;
-        height: 28px;
-        display: block;
-        object-fit: contain;
-      }
-      
-      h3 {
-        font-size: 16px;
-        font-weight: 700;
-        color: #fff;
-        margin: 0;
-        display: inline-block;
-        background-image: url('/point/tab_bg@2x.png');
-        background-repeat: no-repeat;
-        background-position: bottom left;
-        background-size: auto 12px;
-        padding-bottom: 4px;
-        line-height: 1;
-      }
-    }
-
-    .investmentList {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      position: relative;
-      z-index: 1;
-
-      .loadingContainer {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 60px 20px;
-        gap: 20px;
-      }
-
-      .spinner {
-        position: relative;
-        width: 80px;
-        height: 80px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .spinnerRing {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        border: 3px solid transparent;
-        border-top-color: #6AFF41;
-        border-radius: 50%;
-        animation: spin 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
-
-        &:nth-child(1) {
-          width: 80px;
-          height: 80px;
-          border-top-color: #6AFF41;
-          animation-delay: 0s;
-        }
-
-        &:nth-child(2) {
-          width: 60px;
-          height: 60px;
-          border-top-color: #EDE75C;
-          animation-delay: -0.3s;
-          animation-direction: reverse;
-        }
-
-        &:nth-child(3) {
-          width: 40px;
-          height: 40px;
-          border-top-color: #FFB341;
-          animation-delay: -0.6s;
-        }
-      }
-
-      .spinnerCoin {
-        width: 24px;
-        height: 24px;
-        z-index: 10;
-        animation: pulse 1.5s ease-in-out infinite;
-      }
-
-      @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
-      }
-
-      @keyframes pulse {
-        0%, 100% {
-          transform: scale(1);
-          opacity: 1;
-        }
-        50% {
-          transform: scale(1.2);
-          opacity: 0.8;
-        }
-      }
-
-      .loadingText {
-        font-size: 14px;
-        color: #fff;
-        font-weight: 500;
-        animation: fadeInOut 1.5s ease-in-out infinite;
-      }
-
-      @keyframes fadeInOut {
-        0%, 100% {
-          opacity: 0.5;
-        }
-        50% {
-          opacity: 1;
-        }
-      }
-
-      .emptyState {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 60px 20px;
-        gap: 16px;
-      }
-
-      .emptyIcon {
-        width: 64px;
-        height: 64px;
-        opacity: 0.6;
-        animation: float 3s ease-in-out infinite;
-      }
-
-      @keyframes float {
-        0%, 100% {
-          transform: translateY(0px);
-        }
-        50% {
-          transform: translateY(-10px);
-        }
-      }
-
-      .emptyText {
-        font-size: 14px;
-        color: rgba(255, 255, 255, 0.6);
-        font-weight: 500;
-      }
-
-      .investmentItem {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-
-        .investmentIcon {
-          width: 45px;
-          height: 45px;
-          background: transparent;
-          border-radius: 10px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 20px;
-          flex-shrink: 0;
-
-          .investmentIconImg {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 8px;
-          }
-        }
-
-        .investmentSubtitle {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          color: #999;
-        }
-
-        .rewardValue {
-          color: #FEBE64;
-          font-weight: 700;
-        }
-
-        .investmentCoinIcon {
-          width: 14px;
-          height: 14px;
-          object-fit: contain;
-        }
-
-        .investmentInfo {
-          flex: 1;
-          
-          .investmentTitle {
-            font-size: 14px;
-            font-weight: 600;
-            color: #fff;
-            margin-bottom: 3px;
-          }
-          
-          .investmentSubtitle {
-            font-size: 11px;
-            color: #999;
-            margin-bottom: 6px;
-          }
-
-          .progressBar {
-            flex: 1;
-            height: 8px;
-            background: #444;
-            border-radius: 3px;
-            overflow: visible; /* allow handle to overflow */
-            position: relative; /* make handle positioned relative to bar */
-
-            .progressFill {
-              height: 100%;
-              background: linear-gradient( 92deg, #6AFF41 0%, #EDE75C 100%);
-              transition: width 0.3s ease;
-              border-radius: 12px 0 0 12px; /* 左侧圆角 */
-              max-width: 100%; /* 防止进度条溢出 */
-            }
-          }
-          .progressRow {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-          }
-
-          .progressHandle {
-            position: absolute;
-            left: 0; /* positioned via inline style left percent */
-            top: 50%;
-            transform: translate(-50%, -50%);
-            width: 15px;
-            height: 15px;
-            border-radius: 50%;
-            background: linear-gradient( 92deg, #6AFF41 0%, #EDE75C 100%);
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-weight:500;
-            color:#0A0A0A;
-            font-size: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.25);
-            z-index: 2;
-          }
-        }
-
-        .investmentProgress {
-          font-size: 12px;
-          color: #fff;
-          font-weight: 600;
-          flex-shrink: 0;
-          width: 65px;
-          text-align: right;
-
-          .completedLabel {
-            color: #FFFFFF;
-          }
-        }
-      }
-    }
-  }
-
-  // 底部按钮
-  .bottomButtons {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    margin-top: 20px;
-
-    .bottomBtn {
-        background: linear-gradient(180deg, #202211 0%, #222222 100%);
-        border: 1px solid rgba(255,255,255,0.06);
-        border-radius: 12px;
-        padding: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        font-size: 16px;
-        color: #fff;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.3s ease;
-      
-      span {
-        font-size: 14px;
-      }
-
-        .bottomIcon {
-          width: 50px;
-          height: 50px;
-          display: block;
-          margin-left: 12px;
-        }
-
-        .bottomBtnContent {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 4px;
-          text-align: left;
-        }
-
-        .bottomBtnTitle {
-          font-size: 12px;
-          font-weight: 800;
-          color: #fff;
-        }
-
-        .bottomBtnSubtitle {
-          font-size: 10px;
-          color: rgba(255,255,255,0.7);
-        }
-      
-      &:active {
-        transform: scale(0.98);
-        background: #333;
-      }
-    }
-  }
-
-  .topSection {
-    margin-bottom: 20px; /* 或者其他你想要的间距 */
-  }
-
-  .bottomSection {
-    /* 底部区域的样式，例如背景色 */
-    background: #000;
-    border-radius: 15px;
+}
+
+.countdownBoxes {
+  display: flex;
+  align-items: flex-start; /* 改为 flex-start 以便让分隔符通过 margin 对齐 */
+  justify-content: center;
+  gap: 8px;
+}
+
+.countdownItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.countdownBox {
+  width: 64px; 
+  height: 48px;
+  background: rgba(0, 0, 0); 
+  border-radius: 12px; 
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.10), 0 4px 6px -4px rgba(0, 0, 0, 0.10); 
+  color: #fff; /* 既然背景是透明的，颜色需要改回深色，否则看不到文字 */
+  font-size: 24px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: DIN;
+}
+
+.countdownLabel {
+  font-size: 12px;
+  color: #999;
+}
+
+.countdownSeparator {
+  font-size: 24px;
+  color: #CCD0D5;
+  font-weight: bold;
+  height: 40px; /* 与 countdownBox 高度一致 */
+  display: flex;
+  align-items: center; /* 垂直居中 */
+  justify-content: center;
+}
+
+/* Event Banner */
+.poolEventBanner {
+  background: #ECFDF5;
+  border: 1px solid #D1FAE5;
+  border-radius: 16px;
+  padding: 16px 0 16px 12px;
+  margin-bottom: 24px;
+}
+
+.eventHeader {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.eventIcon {
+  width: 28px;
+  height: 27px;
+}
+
+.eventTitle {
+  font-size: 15px;
+  font-weight: bold;
+  color: #00CFA4;
+}
+
+.eventTag {
+  background: #FF9F0A;
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: bold;
+  margin-left: 4px; /* 紧跟标题 */
+}
+
+.eventList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-left: 30px;
+}
+
+.eventItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #666;
+}
+
+.highlightText {
+  color: #FF9500;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.starIcon {
+  width: 9px;
+  height: 9px;
+}
+
+.upgradeBtn {
+  width: 100%;
+  height: 52px;
+  border-radius: 196px; 
+  background: linear-gradient(90deg, #FD8639 0%, #FCCB37 100%), linear-gradient(90deg, #23C55F 0%, #49DE7F 100%); 
+  box-shadow: 0 4px 4px 0 rgba(253, 138, 57, 0.20);
+  border: none;
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.crownIcon {
+  width: 28px;
+  height: 28px;
+}
+
+.tipsIcon {
+  font-size: 16px;
+}
+
+.tipsContent {
+  flex: 1;
+}
+
+.tipsTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: #00876B;
+  margin-bottom: 2px;
+}
+
+.tipsText {
+  font-size: 11px;
+  color: #558B7E;
+  line-height: 1.4;
+}
+
+/* Invite Card */
+.inviteCard {
+  background: url('/point/invite_bg.png') no-repeat center center;
+  background-size: 100% 100%;
+  border-radius: 20px;
+  padding: 20px 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  border: 1px solid #28C963;
+}
+
+.inviteCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.inviteIcon {
+  width: 40px;
+  height: 40px;
+}
+
+.inviteTitleContainer {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.inviteTitle {
+  font-size: 18px;
+  font-weight: 800;
+  color: #333;
+  z-index: 1;
+}
+
+.inviteTitleUnderline {
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  z-index: 0;
+  width: 100%;
+}
+
+.inviteRewardTypes {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  background: rgba(255, 255, 255, 0.60);
+  border: 1px solid #F1F5F9;
+  border-radius: 16px;
+}
+
+.inviteRewardType {
+  flex: 1;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rewardIconBg {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  img {
+    width: 40px;
+    height: 40px;
   }
 }
 
-@media (max-width: 768px) {
-  .pointsDetailContainer {
-    .pointsCard {
-      .characterImg {
-        width: 100px;
-      }
-    }
+.rewardText {
+  display: flex;
+  flex-direction: column;
+}
+
+.rewardTitle {
+  font-size: 14px;
+  color: #1E293B;
+  font-style: normal;
+  font-weight: 400;
+  margin-bottom: 2px;
+}
+
+.rewardValue {
+  font-size: 14px;
+  font-weight: 700;
+  color: #FF8F1F;
+}
+
+.inviteInputContainer {
+  margin-bottom: 20px;
+}
+
+.inviteInputLabel {
+  display: none;
+}
+
+.inviteInputWrapper {
+  background: #F8FAFC;
+  border: 1px solid #F1F5F9;
+  border-radius: 20px;
+  padding: 12px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.inviteLinkText {
+  font-size: 13px;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 10px;
+}
+
+.copyBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  
+  img {
+    width: 18px;
+    height: 18px;
+    opacity: 0.6;
   }
 }
 
+.inviteStatsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.inviteStatBox {
+  background: #fff;
+  border: 1px solid #F0F0F0;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 80px;
+}
+
+.inviteStatValue {
+  font-size: 24px;
+  font-weight: 700;
+  color: #00CFA4;
+  margin-bottom: 4px;
+  font-family: DIN;
+}
+.inviteStatValue2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #00CFA4;
+  margin-bottom: 4px;
+  font-family: DIN;
+}
+.inviteStatValue3 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #00CFA4;
+  margin-bottom: 4px;
+  font-family: DIN;
+}
+
+.inviteStatTime {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.inviteStatLabel {
+  font-size: 11px;
+  color: #999;
+}
+
+.inviteRules {
+  font-size: 10px;
+  color: #999;
+  line-height: 1.6;
+  padding: 0 4px;
+  
+  p {
+    margin: 0;
+  }
+}
+
+/* Task Lists */
+.taskListSection {
+  background: rgba(235, 255, 242, 1);
+  border-radius: 20px;
+  padding: 20px;
+  border: 1px solid #28C963;
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 800;
+  color: #333;
+  margin-bottom: 16px;
+  padding-left: 0;
+}
+
+.taskList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.taskItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid #F5F7FA;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+
+.taskIconWrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  
+  .taskIconImg {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+  }
+}
+
+.taskInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.taskName {
+  font-size: 15px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+
+.taskReward {
+  font-size: 12px;
+  color: #999;
+  line-height: 1;
+}
+
+.taskBtn {
+  background: #00CFA4;
+  color: #fff;
+  border: none;
+  border-radius: 18px;
+  padding: 0 16px;
+  height: 32px;
+  line-height: 32px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  min-width: 72px;
+  text-align: center;
+  white-space: nowrap;
+  
+  &.completed {
+    background: #F2F2F2;
+    color: #999;
+  }
+}
+
+/* Daily Task Item (Progress Bar Style) */
+.dailyTaskItem {
+  display: flex;
+  gap: 8px;
+  background: #fff;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid #F5F7FA;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+
+.dailyTaskIconWrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  align-self: flex-start; /* Align icon to the top if task content is taller */
+  margin-top: 2px; /* Slight visual adjustment if needed, or remove align-self to center vertically */
+  
+  img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+  }
+}
+
+.dailyTaskContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+.dailyTaskTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #333;
+}
+
+.dailyTaskReward {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #FD8D38; /* Orange color for reward */
+  
+  .rewardIcon {
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+  }
+}
+
+.progressBarContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.progressTrack {
+  flex: 1;
+  height: 6px;
+  background: #EBFBF2; /* Light green background */
+  border-radius: 3px;
+  position: relative;
+  overflow: visible; /* To allow knob to overflow */
+  margin: 0 6px; /* Compensate for knob protrusion */
+}
+
+.progressFill {
+  height: 100%;
+  background: #22C55E; /* Green fill */
+  border-radius: 3px;
+  position: relative;
+}
+
+.progressKnob {
+  position: absolute;
+  right: -6px; /* Half of knob width */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  background: #22C55E;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  color: #fff;
+  font-weight: bold;
+  box-sizing: border-box; /* Ensure total size is 12px */
+  line-height: 1;
+  z-index: 1;
+}
+
+.progressText {
+  font-size: 12px;
+  color: #999;
+  font-family: Roboto, sans-serif;
+  min-width: 32px;
+  text-align: right;
+}
+
+.treasuryTitle {
+  color: #065140;
+  leading-trim: both;
+  text-edge: cap;
+  font-family: Roboto;
+  font-size: 18.958px;
+  font-style: normal;
+  font-weight: 900;
+  line-height: normal;
+  letter-spacing: 0.948px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.treasurySubtitle {
+  color: #065140;
+  font-family: "PingFang SC";
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+}
+
+/* Bottom Action Buttons */
+.actionButtonsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.actionButton {
+  background: #fff;
+  border: 1px solid #F1F5F9;
+  border-radius: 20px; /* Fully rounded style */
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  cursor: pointer;
+  padding: 0 16px;
+  
+  img {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.actionButtonContent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.actionButtonTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.2;
+}
+
+.actionButtonSubtitle {
+  font-size: 10px;
+  color: #999;
+  line-height: 1.2;
+}

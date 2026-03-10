@@ -30,6 +30,7 @@ export default function NavBar({
   backgroundColor = '#ffffff',
   color,
   className = '',
+  style,
 }) {
   const router = useRouter();
 
@@ -58,7 +59,7 @@ export default function NavBar({
   return (
     <div 
       className={`${styles.navBar} ${!showBorder ? styles.noBorder : ''} ${!fixed ? styles.asStatic : ''} ${className}`}
-      style={{ backgroundColor }}
+      style={{ backgroundColor, ...style }}
     >
       {/* 左侧返回按钮 */}
       <div className={styles.left}>

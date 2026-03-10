@@ -405,15 +405,14 @@
     "feedback": "Feedback",
     "feedbackDesc": "Tell us what you want",
     "productFeedback": "Product Feedback",
-    "feedbackFailed": "Failed to submit feedback, please try again",
+    "feedbackFailed": "Feedback failed",
     "recommendFriend": "Recommend",
     "recommendDesc": "Share your favorites",
     "shareYourLove": "Share your love",
     "shareText": "Mozi - Professional Crypto Data Analysis Platform",
     "myPoints": "My Points",
-    "defaultNickname": "Default User",
+    "defaultNickname": "User",
     "defaultBio": "Master of financial flow, Finance NO.1",
-    "pleaseLogin": "Please Login",
     "loginTip": "Login to view more content",
     "personalPage": "Personal",
     "tags": {
@@ -467,7 +466,6 @@
     "feedbackInputTitle": "Please share your feedback!",
     "feedbackInputPlaceholder": "Thanks for your feedback!",
     "submitFeedback": "Submit Feedback",
-    "earnPoints": "Earn Points",
     "featureOptions": {
       "marketBoard": "Market",
       "alertFunction": "Alerts",
@@ -487,7 +485,6 @@
     "connectWalletFirst": "Please connect wallet first",
     "walletNotReady": "Wallet component is not ready",
     "feedbackSuccess": "Feedback submitted",
-    "feedbackFailed": "Feedback failed",
     "copySuccess": "Copied",
     "copyFailed": "Copy failed",
     "linkCopied": "Link copied to clipboard",
@@ -506,7 +503,6 @@
     "loggingIn": "Logging in...",
     "walletAddressError": "Failed to get wallet address",
     "walletConnectFailed": "Wallet connection failed",
-    "defaultNickname": "User",
     "vipBannerText": "Try now - 14 days free",
     "subscribeNow": "Subscribe",
     "wechatUser": "Telegram User",
@@ -521,7 +517,6 @@
       "values": "Values:",
       "valuesText": "Universal Love · Pragmatic · Focus · Innovation · Freedom"
     }
-    
   },
   "accountBind": {
     "title": "Account Binding",
@@ -877,113 +872,125 @@
     "myRank": "My Rank"
   },
   "pointsDetail": {
+    "centerTitle": "Points Center",
     "myPoints": "My Points",
-    "myInvites": "My Invites",
-    "season": "Season",
-    "seasonName": "S5 Season",
     "historyRecord": "History",
-    "inviteRewardTitle": "Earn points per referral!",
-    "inviteReward": "Invite Reward",
-    "perInvite": "Per invite",
+    "poolTitleText": "Monthly Pool Status",
+    "poolSufficient": "Sufficient",
+    "poolRemaining": "Remaining",
+    "poolDistributed": "Distributed",
+    "poolMineable": "Mineable",
+    "poolResetCountdown": "Reset Countdown",
+    "poolDays": "Days",
+    "poolHours": "Hrs",
+    "poolMinutes": "Mins",
+    "poolEventTitle": "Weekend Points Double!",
+    "poolEventDesc1_part1": "All task rewards ",
+    "poolEventDesc1_highlight": "x1.5",
+    "poolEventDesc1_part2": " (Post 10 -> 15 points)",
+    "poolEventDesc2_part1": "Event time: This weekend 48h (",
+    "poolEventDesc2_highlight": "42h left",
+    "poolEventDesc2_part2": ")",
+    "poolEventDesc3": "Sufficient points, grab them now!",
+    "poolUpgradeMember": "Upgrade Member",
+    "inviteRewards": "Invite Rewards",
+    "inviteRegister": "Register",
+    "invitePay": "Pay",
     "inviteLink": "Invite Link",
     "inviteCode": "Invite Code",
-    "totalInvites": "Total Invites",
-    "earnedPoints": "Points",
-    "activeInvites": "Apply ETH",
-    "pendingRewards": "After OWO, you can receive rewards",
-    "linkCopied": "Copied",
-    "copyFailed": "Copy Failed",
-    "historyFeatureInDevelopment": "History feature in development",
-    "moziSlogan": "Free Trading, Unlimited",
-    "fanRewardsTitle": "Daily Reward Tasks",
-    "earnMorePoints": "Earn More Points",
-    "dailyInvestmentTitle": "Daily Investment Ranking",
-    "taskCompleted": "Task Completed",
-    "joinAlarm": "Join Alarm",
+    "shareCount": "Total Invited",
+    "totalEarned": "Invite Points",
+    "applyTH": "Withdraw",
+    "lastVisit": "Last Visit",
+    "inviteRules": {
+      "1": "1. Points will be used for ecosystem benefits in the future",
+      "2": "2. If your referee purchases membership, you get points and 10% fee rebate",
+      "3": "3. Referral is valid only if invited user registers via link or enters invite code",
+      "4": "4. Publishing high-quality content makes it easier to get more points"
+    },
+    "banner": {
+      "title": "Get More Rewards",
+      "subtitle": "Unlock more features & exclusive rewards"
+    },
+    "addAlarm": "Add Alarm",
     "certification": "Certification",
-    "note1": "The first 20 referrals each day can earn points.",
-    "note2": "If your referral purchases membership, you will receive points and a 20% commission rebate.",
-    "note3": "The referral is valid only if the invited user enters the invitation code",
+    "newbieTasks": "Newbie Tasks",
+    "dailyTasks": "Daily Tasks",
     "completed": "Completed",
-    "centerTitle": "Points Center",
-    "toSeparator": "to",
-    "verifying": "Verifying",
+    "goFinish": "Go",
+    "claimed": "Claimed",
+    "sufficient": "Sufficient Points",
+    "fetchFailed": "Failed to fetch points data",
+    "linkCopied": "Link copied",
+    "copyFailed": "Copy failed",
+    "taskCompleted": "Task completed",
     "pleaseRegister": "Please register first",
-    "joinAlarmSubtitle": "Add an alarm",
-    "certificationSubtitle": "Identity verification",
-    "dailyRewardTasksTitle": "Earn Points by Tasks",
+    "historyFeatureInDevelopment": "Feature in development",
+    "messages": {
+      "pointsEarned": "Earned {points} points",
+      "taskNotCompleted": "Task not completed",
+      "verifyFailed": "Verification failed",
+      "videosRemaining": "{count} videos remaining"
+    },
     "tasks": {
       "firstRegister": {
-        "title": "First Registration",
-        "button": "Start"
+        "title": "First Register",
+        "button": "Go"
       },
       "followTwitter": {
-        "title": "Follow Our Twitter",
-        "button": "Start"
+        "title": "Follow Twitter",
+        "button": "Follow"
       },
       "joinCommunity": {
-        "title": "Join Our Community",
-        "button": "Start"
+        "title": "Join Community",
+        "button": "Join"
       },
       "earlyBird": {
-        "title": "Early Bird Activity",
-        "button": "Start"
+        "title": "Early Bird Reward",
+        "button": "Claim"
       },
       "setAlarm": {
-        "title": "Set Alarm Function",
-        "button": "Start"
+        "title": "Set Alarm",
+        "button": "Set"
       },
       "videoLearn": {
-        "title": "Complete Video Learning",
-        "button": "Start"
+        "title": "Video Learning",
+        "button": "Learn"
       },
       "dailyLogin": {
         "title": "Daily Login",
-        "button": "Login"
+        "button": "Check-in"
       },
       "inviteUser": {
         "title": "Invite Friends",
         "button": "Invite"
       },
-      "verify": "Verify",
-      "completed": "Completed"
-    },
-    "messages": {
-      "taskNotCompleted": "Task not completed, please complete the task first",
-      "verifyFailed": "Verification failed, please try again later",
-      "pointsEarned": "+{{points}} Points",
-      "loadFailed": "Failed to load points history:",
-      "videosRemaining": "{{count}} videos remaining"
-    },
-    "dailyTasks": {
-      "like": {
-        "title": "Daily Likes",
-        "label": "Per like"
+      "dailyLike": {
+        "title": "Daily Like",
+        "button": "Like"
       },
       "post": {
-        "title": "Posts",
-        "label": "Per post"
+        "title": "Post View",
+        "button": "Post"
       },
-      "receivedLike": {
-        "title": "Received Likes",
-        "label": "Per like received"
+      "receiveLike": {
+        "title": "Receive Likes",
+        "button": "Interact"
       },
       "reply": {
-        "title": "Replies",
-        "label": "Per reply"
+        "title": "Reply",
+        "button": "Reply"
       },
-      "postReplied": {
-        "title": "Post Replies",
-        "label": "Per reply received"
+      "postReceiveReply": {
+        "title": "Receive Reply",
+        "button": "View"
       }
     }
-  }
-  ,
+  },
   "pointsHistory": {
     "title": "Points History",
     "empty": "No points records yet"
-  }
-  ,
+  },
   "pcr": {
     "title": "Long/Short Ratio",
     "coin": "Coin",
@@ -1008,8 +1015,7 @@
     "loadFailed": "Data load failed",
     "fetchFailed": "Data fetch failed",
     "noChartData": "No chart data"
-  }
-  ,
+  },
   "positionsize": {
     "title": "Open Interest",
     "coin": "Coin",
@@ -1028,8 +1034,7 @@
     "loadFailed": "Data load failed",
     "fetchFailed": "Data fetch failed",
     "noChartData": "No chart data"
-  }
-  ,
+  },
   "fundingrate": {
     "title": "Funding Rate",
     "tabs": {
@@ -1049,8 +1054,7 @@
       "b": "B",
       "m": "M"
     }
-  }
-  ,
+  },
   "tradevol": {
     "title": "Trading Amount",
     "coin": "Coin",
@@ -1070,8 +1074,7 @@
     "loadFailed": "Data load failed",
     "fetchFailed": "Data fetch failed",
     "noChartData": "No chart data"
-  }
-  ,
+  },
   "detail": {
     "title": "Coin Detail",
     "marketCap": "Market Cap",
@@ -1150,7 +1153,7 @@
     ],
     "templates": {
       "normal": "Normal",
-      "discovery": "Discover Coins", 
+      "discovery": "Discover Coins",
       "question": "Q&A"
     },
     "buttons": {
