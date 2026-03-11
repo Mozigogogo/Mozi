@@ -12,6 +12,11 @@ const NewbieTasks = ({ tasksList, handleTaskClick, loading, verifyingTaskId }) =
       <SectionHeader iconSrc="/point/new_alert.svg" iconAlt="Task" title={t('pointsDetail.newbieTasks')} />
       {loading ? (
         <SectionSkeleton count={5} />
+      ) : tasksList.length === 0 ? (
+        <div className={styles.emptyState}>
+          <img src="/point/no_task.svg" alt="no task" className={styles.emptyIcon} onError={e => { e.target.style.display='none'; }} />
+          <p className={styles.emptyText}>{t('pointsDetail.noTasks')}</p>
+        </div>
       ) : (
       <div className={styles.taskList}>
         {tasksList.map(task => (
