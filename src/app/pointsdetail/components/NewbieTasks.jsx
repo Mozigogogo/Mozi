@@ -4,7 +4,7 @@ import styles from '../page.module.less';
 import SectionHeader from './SectionHeader';
 import SectionSkeleton from './SectionSkeleton';
 
-const NewbieTasks = ({ tasksList, handleTaskClick, loading }) => {
+const NewbieTasks = ({ tasksList, handleTaskClick, loading, verifyingTaskId }) => {
   const { t } = useTranslation();
 
   return (
@@ -39,10 +39,22 @@ const NewbieTasks = ({ tasksList, handleTaskClick, loading }) => {
               </div>
             </div>
             <button 
-              className={`${styles.taskBtn} ${task.status === 'completed' ? styles.completed : ''}`}
+              className={`${styles.taskBtn} ${task.status === 'completed' ? styles.completed : ''} ${verifyingTaskId === task.id ? styles.loading : (!task.needsAction && task.status !== 'completed') ? styles.highlight : ''}`}
               onClick={() => handleTaskClick(task)}
+              disabled={verifyingTaskId === task.id}
             >
-              {task.status === 'completed' ? t('pointsDetail.completed') : (t(task.btnTextKey) || t('pointsDetail.goFinish'))}
+              {verifyingTaskId === task.id
+                ? (
+                  <>
+                    <span className={styles.loadingSpinnerSmall} />
+                    {t('pointsDetail.verifying') || '验证中...'}
+                  </>
+                )
+                : (task.status === 'completed'
+                    ? t('pointsDetail.completed')
+                    : (!task.needsAction
+                        ? (t('pointsDetail.verify') || '验证')
+                        : (t(task.btnTextKey) || t('pointsDetail.goFinish'))))}
             </button>
           </div>
         ))}

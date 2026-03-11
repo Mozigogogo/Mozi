@@ -858,6 +858,8 @@
     "centerTitle": "积分中心",
     "myPoints": "我的积分",
     "historyRecord": "历史记录",
+    "verifying": "验证中...",
+    "verify": "验证",
     "seasonCard": {
       "treasuryTitle": "MOZI积分金库",
       "treasurySubtitle": "为您的Web3之旅注入动力"
