@@ -199,11 +199,7 @@ export default function PointsDetail() {
   const [tasksLoading, setTasksLoading] = useState(true);
   
   // 每日任务列表 state
-  const [dailyInvestments, setDailyInvestments] = useState([
-    { id: 1, title: '每日签到', titleKey: 'pointsDetail.dailySignIn', reward: 10, completed: true, icon: '/point/daily_login.svg', current: 1, target: 1, bgColor: 'rgba(248, 250, 252, 1)' },
-    { id: 2, title: '每日点赞', titleKey: 'pointsDetail.dailyLike', reward: 3, completed: false, icon: '/point/like.svg', current: 3, target: 10, bgColor: 'rgba(255, 241, 242, 1)' },
-    { id: 3, title: '发布观点', titleKey: 'pointsDetail.publishView', reward: 10, completed: false, icon: '/point/push_article.svg', current: 0, target: 5, bgColor: 'rgba(255, 247, 237, 1)' },
-  ]);
+  const [dailyInvestments, setDailyInvestments] = useState([]);
   const [dailyTasksLoading, setDailyTasksLoading] = useState(true);
 
   // 倒计时状态

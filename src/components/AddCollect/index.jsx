@@ -56,12 +56,16 @@ const AddCollect = ({ isOwn: propIsOwn, symbol, loginCb, onSuccess }) => {
           icon: 'success'
         });
 
-        // 上报 ADD_WATCHLIST 任务
+        // 上报 ADD_WATCHLIST 任务：仅在添加自选后且自选数量 >= 3 时上报
         if (!curOwn) {
           try {
-            await completeTask('ADD_WATCHLIST');
+            const ownListRes = await request({ url: Interface.COIN_SELF, method: 'GET' });
+            const ownCount = ownListRes?.data?.length ?? ownListRes?.data?.list?.length ?? 0;
+            if (ownCount >= 3) {
+              await completeTask('ADD_WATCHLIST');
+            }
           } catch (e) {
-            console.error('上报 ADD_WATCHLIST 失败', e);
+            console.error('上报 ADD_WATCHLIST 任务失败', e);
           }
         }
 
