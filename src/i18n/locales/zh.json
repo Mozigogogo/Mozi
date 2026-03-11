@@ -863,10 +863,21 @@
     "poolRemaining": "剩余积分",
     "poolDistributed": "已发放",
     "poolMineable": "剩余可领",
+    "poolScarce": "紧张",
     "poolResetCountdown": "距离下月重置",
     "poolDays": "天",
     "poolHours": "时",
     "poolMinutes": "分",
+    "poolScarceTitle": "积分池紧张！",
+    "poolScarceDesc1_part1": "任务奖励已降至 ",
+    "poolScarceDesc1_highlight": "70折",
+    "poolScarceDesc1_part2": " (基础10积分→现在7积分)",
+    "poolScarceDesc2_part1": "预计 ",
+    "poolScarceDesc2_highlight": "7天后",
+    "poolScarceDesc2_part2": " 积分池可能耗尽",
+    "poolScarceDesc3": "会员用户不受影响，效率保持1.5-2倍",
+    "poolNormalTitle": "积分小帖士",
+    "poolNormalDesc": "越早参与，获得越多！会员用户获取效率更高，且不受池子紧张影响。",
     "poolEventTitle": "周末积分加倍活动!",
     "poolEventDesc1_part1": "所有任务奖励",
     "poolEventDesc1_highlight": "x1.5倍",
@@ -877,8 +888,8 @@
     "poolEventDesc3": "积分充足，抓紧领取，机不可失!",
     "poolUpgradeMember": "升级会员",
     "inviteRewards": "邀请有奖",
-    "inviteRegister": "注册",
-    "invitePay": "付费",
+    "inviteRegister": "邀请注册",
+    "invitePay": "邀请付费",
     "inviteLink": "邀请链接",
     "inviteCode": "邀请码",
     "shareCount": "总邀请数",
@@ -917,11 +928,11 @@
     },
     "tasks": {
       "firstRegister": {
-        "title": "首次注册",
+        "title": "首次登录",
         "button": "去完成"
       },
       "followTwitter": {
-        "title": "关注推特",
+        "title": "关注X",
         "button": "去关注"
       },
       "joinCommunity": {
@@ -933,7 +944,7 @@
         "button": "领取"
       },
       "setAlarm": {
-        "title": "设置提醒",
+        "title": "设置报警",
         "button": "去设置"
       },
       "videoLearn": {
@@ -953,7 +964,7 @@
         "button": "去点赞"
       },
       "post": {
-        "title": "发布观点",
+        "title": "发布帖子",
         "button": "去发布"
       },
       "receiveLike": {
@@ -961,12 +972,30 @@
         "button": "去互动"
       },
       "reply": {
-        "title": "回复评论",
+        "title": "回复帖子",
         "button": "去回复"
       },
       "postReceiveReply": {
-        "title": "收到回复",
+        "title": "帖子收到回复",
         "button": "去查看"
+      },
+      "userInfo": {
+        "title": "完善个人信息",
+        "button": "去完善"
+      },
+      "push": {
+        "title": "发布首篇帖子",
+        "note": " 大于50字",
+        "button": "去发布"
+      },
+      "add": {
+        "title": "添加自选",
+        "note": " 3个及以上",
+        "button": "去添加"
+      },
+      "share": {
+        "title": "每日分享",
+        "button": "去分享"
       }
     }
   },

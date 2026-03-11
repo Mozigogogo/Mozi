@@ -879,11 +879,22 @@
     "poolSufficient": "Sufficient",
     "poolRemaining": "Remaining",
     "poolDistributed": "Distributed",
-    "poolMineable": "Mineable",
+    "poolMineable": "Remaining",
+    "poolScarce": "Scarce",
     "poolResetCountdown": "Reset Countdown",
     "poolDays": "Days",
     "poolHours": "Hrs",
     "poolMinutes": "Mins",
+    "poolScarceTitle": "Pool points low!",
+    "poolScarceDesc1_part1": "Task rewards dropped to ",
+    "poolScarceDesc1_highlight": "30% OFF",
+    "poolScarceDesc1_part2": " (Base 10 → Now 7 points)",
+    "poolScarceDesc2_part1": "Est. ",
+    "poolScarceDesc2_highlight": "7 days",
+    "poolScarceDesc2_part2": " until depleted",
+    "poolScarceDesc3": "VIP members are unaffected, efficiency 1.5-2x",
+    "poolNormalTitle": "Points Tips",
+    "poolNormalDesc": "The earlier you join, the more you get! VIP members earn more efficiently and are unaffected by pool scarcity.",
     "poolEventTitle": "Weekend Points Double!",
     "poolEventDesc1_part1": "All task rewards ",
     "poolEventDesc1_highlight": "x1.5",
@@ -894,8 +905,8 @@
     "poolEventDesc3": "Sufficient points, grab them now!",
     "poolUpgradeMember": "Upgrade Member",
     "inviteRewards": "Invite Rewards",
-    "inviteRegister": "Register",
-    "invitePay": "Pay",
+    "inviteRegister": "Invite Register",
+    "invitePay": "Invite Pay",
     "inviteLink": "Invite Link",
     "inviteCode": "Invite Code",
     "shareCount": "Total Invited",
@@ -934,11 +945,11 @@
     },
     "tasks": {
       "firstRegister": {
-        "title": "First Register",
+        "title": "First Login",
         "button": "Go"
       },
       "followTwitter": {
-        "title": "Follow Twitter",
+        "title": "Follow X",
         "button": "Follow"
       },
       "joinCommunity": {
@@ -950,7 +961,7 @@
         "button": "Claim"
       },
       "setAlarm": {
-        "title": "Set Alarm",
+        "title": "Set Alert",
         "button": "Set"
       },
       "videoLearn": {
@@ -970,7 +981,7 @@
         "button": "Like"
       },
       "post": {
-        "title": "Post View",
+        "title": "Post Article",
         "button": "Post"
       },
       "receiveLike": {
@@ -978,12 +989,30 @@
         "button": "Interact"
       },
       "reply": {
-        "title": "Reply",
+        "title": "Reply Post",
         "button": "Reply"
       },
       "postReceiveReply": {
-        "title": "Receive Reply",
+        "title": "Post Receive Reply",
         "button": "View"
+      },
+      "userInfo": {
+        "title": "Complete Profile",
+        "button": "Go"
+      },
+      "push": {
+        "title": "First Post",
+        "note": " >50 words",
+        "button": "Post"
+      },
+      "add": {
+        "title": "Add Watchlist",
+        "note": " 3 items or more",
+        "button": "Add"
+      },
+      "share": {
+        "title": "Daily Share",
+        "button": "Share"
       }
     }
   },

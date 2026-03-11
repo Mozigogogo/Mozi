@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Toast } from 'antd-mobile';
-import { ClockCircleOutline } from 'antd-mobile-icons';
+import { ClockCircleOutline, CheckCircleFill } from 'antd-mobile-icons';
 import { useTranslation } from 'react-i18next';
 import NavBar from '@/components/NavBar';
 import InviteBanner from '@/components/InviteBanner';
@@ -41,25 +41,50 @@ export default function PointsDetail() {
   });
 
   const [poolStatus, setPoolStatus] = useState({
-    remainingPoints: 0,
-    totalCapacity: 1000000,
-    totalPool: '4.23M', // Placeholder or from API
-    remainingMineable: '7.65M', // Placeholder or from API
-    estimatedDays: '12.8', // Placeholder or from API
-    percent: 60
+    remainingPoints: 2400000,
+    totalCapacity: 2400000,
+    totalPool: '0', // Placeholder or from API
+    remainingMineable: '2400000', // Placeholder or from API
+    estimatedDays: '30', // Placeholder or from API
+    percent: 100
   });
+
+  // 格式化数值显示
+  const formatPoints = (value) => {
+    if (value === undefined || value === null) return '0';
+    return Number(value).toLocaleString();
+  };
 
   // Fetch pool status
   const fetchPoolStatusData = useCallback(async () => {
     try {
       const res = await getPoolStatus();
       if (res?.code === 0 && res?.data) {
+        const data = res.data;
+        // 计算剩余百分比：使用 remainingPoints / totalCapacity 更加精准
+        const percent = data.remainingPoints && data.totalCapacity 
+          ? Math.round((data.remainingPoints / data.totalCapacity) * 100) 
+          : 0;
+
+        console.log('Pool Status:', {
+          total: data.totalCapacity,
+          remaining: data.remainingPoints,
+          issued: data.issuedPoints,
+          percent: percent,
+          mode: data.mode
+        });
+
+        // 直接使用接口返回的 mode，这里暂时手动切换到 SCARCE 模式用于展示
+        const mode = data.mode || 'NORMAL';
+
         setPoolStatus(prev => ({
           ...prev,
-          ...res.data,
-          percent: res.data.remainingPoints && res.data.totalCapacity 
-            ? Math.round((res.data.remainingPoints / res.data.totalCapacity) * 100) 
-            : 60
+          ...data,
+          percent: percent,
+          totalPool: formatPoints(data.issuedPoints || 0),
+          remainingMineable: formatPoints(data.remainingPoints),
+          estimatedDays: data.daysToReset || 0,
+          mode: mode
         }));
       }
     } catch (error) {
@@ -174,10 +199,82 @@ export default function PointsDetail() {
   ]);
   const [dailyTasksLoading, setDailyTasksLoading] = useState(true);
 
+  // 倒计时状态
+  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0 });
+  const [weekendRemainingHours, setWeekendRemainingHours] = useState(0);
+
+  // 计算周末剩余小时数
+  useEffect(() => {
+    const calculateWeekendHours = () => {
+      const now = new Date();
+      const dayOfWeek = now.getDay(); // 0 is Sunday, 6 is Saturday
+      
+      // 如果不是周末（周六或周日），返回0
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+        setWeekendRemainingHours(0);
+        return;
+      }
+
+      // 计算到下周一 00:00:00 的剩余时间
+      const nextMonday = new Date(now);
+      nextMonday.setDate(now.getDate() + (dayOfWeek === 0 ? 1 : 2));
+      nextMonday.setHours(0, 0, 0, 0);
+      
+      const diffMs = nextMonday.getTime() - now.getTime();
+      const hours = Math.ceil(diffMs / (1000 * 60 * 60));
+      
+      setWeekendRemainingHours(hours > 0 ? hours : 0);
+    };
+
+    calculateWeekendHours();
+    // 每小时更新一次，或者当 mode 为 BOOST 时更新
+    if (poolStatus.mode === 'BOOST') {
+      const timer = setInterval(calculateWeekendHours, 1000 * 60 * 60);
+      return () => clearInterval(timer);
+    }
+  }, [poolStatus.mode]);
+
+  // 计算倒计时 (使用 resetTimestamp + 30天)
+  useEffect(() => {
+    if (!poolStatus.resetTimestamp) return;
+
+    const calculateCountdown = () => {
+      let startTime = Number(poolStatus.resetTimestamp);
+      
+      // 如果是秒（10位），转换为毫秒
+      if (startTime.toString().length === 10) {
+        startTime = startTime * 1000;
+      }
+
+      const now = new Date().getTime();
+      // resetTimestamp 是开始时间，加上 30 天得到结束时间
+      const endTime = startTime + (30 * 24 * 60 * 60 * 1000);
+      const diff = endTime - now;
+
+      if (diff > 0) {
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        
+        setCountdown({ days, hours, minutes });
+      } else {
+        setCountdown({ days: 0, hours: 0, minutes: 0 });
+      }
+    };
+
+    calculateCountdown();
+    // 每分钟更新一次
+    const timer = setInterval(calculateCountdown, 1000 * 60);
+
+    return () => clearInterval(timer);
+  }, [poolStatus.resetTimestamp]);
+
   // 任务类型到图标的映射
   const taskIconMap = {
     'REGISTER': '/point/first_login.svg',
+    'FIRST_LOGIN': '/point/first_login.svg',
     'FOLLOW_TWITTER': '/point/X.svg',
+    'TWITTER': '/point/X.svg',
     'JOIN_COMMUNITY': '/point/group.svg',
     'COMMUNITY': '/point/group.svg',
     'EARLY_BIRD': '/point/eraly_bird.svg',
@@ -189,14 +286,19 @@ export default function PointsDetail() {
     'DAILY_LOGIN': '/point/daily_login.svg',
     'INVITE_USER': '/point/shared.svg',
     'USER_INFO': '/point/user_info.svg',
+    'COMPLETE_PROFILE': '/point/user_info.svg',
     'ADD': '/point/add.svg',
+    'ADD_WATCHLIST': '/point/add.svg',
     'PUSH': '/point/push.svg',
+    'FIRST_POST': '/point/push.svg',
   };
 
   // 任务类型到国际化 key 的映射（用于按钮文本）
   const taskKeyMap = {
     'REGISTER': 'firstRegister',
+    'FIRST_LOGIN': 'firstRegister',
     'FOLLOW_TWITTER': 'followTwitter',
+    'TWITTER': 'followTwitter',
     'JOIN_COMMUNITY': 'joinCommunity',
     'COMMUNITY': 'joinCommunity',
     'EARLY_BIRD': 'earlyBird',
@@ -208,8 +310,11 @@ export default function PointsDetail() {
     'DAILY_LOGIN': 'dailyLogin',
     'INVITE_USER': 'inviteUser',
     'USER_INFO': 'userInfo',
+    'COMPLETE_PROFILE': 'userInfo',
     'ADD': 'add',
+    'ADD_WATCHLIST': 'add',
     'PUSH': 'push',
+    'FIRST_POST': 'push',
   };
 
   // 每日任务图标映射
@@ -264,6 +369,7 @@ export default function PointsDetail() {
     'REPLY': 'reply',
     'POST_RECEIVE_REPLY': 'postReceiveReply',
     'DAILY_LOGIN': 'dailyLogin',
+    'SHARE': 'share',
   };
 
   // 获取任务列表（活动任务 + 每日任务，合并为一次接口调用）
@@ -633,24 +739,45 @@ export default function PointsDetail() {
       <div className={styles.poolCard}>
         <div className={styles.poolHeader}>
           <span className={styles.poolTitle}>{t('pointsDetail.poolTitleText') || '本月积分池状态'}</span>
-          <span className={styles.poolTagSufficient}>
-             <img src="/point/supply_volume.svg" alt="" />
-              {t('pointsDetail.poolSufficient') || '充足'}
-          </span>
+          {poolStatus.mode === 'SCARCE' ? (
+            <span className={styles.poolTagAlert}>
+               <img src="/point/warn.svg" alt="" />
+               {t('pointsDetail.poolScarce') || '紧张'}
+            </span>
+          ) : (
+            <span className={styles.poolTagSufficient}>
+               <img src="/point/supply_volume.svg" alt="" />
+               {t('pointsDetail.poolSufficient') || '充足'}
+            </span>
+          )}
         </div>
         
         <div className={styles.poolProgressSection}>
           <div className={styles.poolPercentRow}>
-            <span className={styles.poolPercentText}>{poolStatus.percent}%</span>
+            <span 
+              className={poolStatus.mode === 'SCARCE' ? styles.poolPercentTextAlert : styles.poolPercentText}
+              style={poolStatus.mode === 'SCARCE' ? {
+                background: 'linear-gradient(90deg, #FD8D38 0%, #FC3B43 100%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                color: 'transparent'
+              } : {}}
+            >
+              {poolStatus.percent}%
+            </span>
             <span className={styles.poolRemainingLabel}>{t('pointsDetail.poolRemaining') || '剩余积分'}</span>
           </div>
           <div className={styles.poolProgressBarContainer}>
             <div className={styles.poolProgressBar}>
               <div 
-                className={`${styles.poolProgressFill} ${poolStatus.percent > 30 ? styles.fillNormal : styles.fillAlert}`} 
-                style={{ width: `${poolStatus.percent}%` }}
+                className={`${styles.poolProgressFill} ${poolStatus.mode === 'SCARCE' ? styles.fillAlert : (poolStatus.percent > 30 ? styles.fillNormal : styles.fillAlert)}`} 
+                style={{ 
+                  width: `${poolStatus.percent}%`,
+                  background: poolStatus.mode === 'SCARCE' ? 'linear-gradient(90deg, #FD8D38 0%, #FC3B43 100%)' : undefined 
+                }}
               ></div>
-              {poolStatus.percent > 30 && <div className={styles.separators}></div>}
+              {poolStatus.mode !== 'SCARCE' && poolStatus.percent > 30 && <div className={styles.separators}></div>}
             </div>
             <div className={styles.poolProgressScales}>
               <span>0%</span>
@@ -662,11 +789,11 @@ export default function PointsDetail() {
         <div className={styles.poolStatsGrid}>
           <div className={styles.poolStatBox}>
             <div className={styles.statLabel}>{t('pointsDetail.poolDistributed') || '已发放'}</div>
-            <div className={styles.statValue}>{poolStatus.totalPool || '4.23M'}</div>
+            <div className={styles.statValue}>{poolStatus.totalPool }</div>
           </div>
           <div className={styles.poolStatBox}>
-            <div className={styles.statLabel}>{t('pointsDetail.poolMineable') || '剩余可领'}</div>
-            <div className={styles.statValue}>{poolStatus.remainingMineable || '7.65M'}</div>
+            <div className={styles.statLabel}>{t('pointsDetail.poolMineable') }</div>
+            <div className={styles.statValue}>{poolStatus.remainingMineable }</div>
           </div>
         </div>
 
@@ -677,53 +804,103 @@ export default function PointsDetail() {
           </div>
           <div className={styles.countdownBoxes}>
             <div className={styles.countdownItem}>
-              <div className={styles.countdownBox}>{Math.floor(Number(poolStatus.estimatedDays) || 0)}</div>
+              <div 
+                className={poolStatus.mode === 'SCARCE' ? styles.countdownBoxAlert : styles.countdownBox}
+                style={{ background: poolStatus.mode === 'SCARCE' ? 'linear-gradient(90deg, #FD8D38 0%, #FC3B43 100%)' : undefined }}
+              >{countdown.days}</div>
               <div className={styles.countdownLabel}>{t('pointsDetail.poolDays') || '天'}</div>
             </div>
             <div className={styles.countdownSeparator}>:</div>
             <div className={styles.countdownItem}>
-              <div className={styles.countdownBox}>{Math.floor(((Number(poolStatus.estimatedDays) || 0) % 1) * 24).toString().padStart(2, '0')}</div>
+              <div 
+                className={poolStatus.mode === 'SCARCE' ? styles.countdownBoxAlert : styles.countdownBox}
+                style={{ background: poolStatus.mode === 'SCARCE' ? 'linear-gradient(90deg, #FD8D38 0%, #FC3B43 100%)' : undefined }}
+              >{countdown.hours.toString().padStart(2, '0')}</div>
               <div className={styles.countdownLabel}>{t('pointsDetail.poolHours') || '时'}</div>
             </div>
             <div className={styles.countdownSeparator}>:</div>
             <div className={styles.countdownItem}>
-              <div className={styles.countdownBox}>{Math.floor(((((Number(poolStatus.estimatedDays) || 0) % 1) * 24) % 1) * 60).toString().padStart(2, '0')}</div>
+              <div 
+                className={poolStatus.mode === 'SCARCE' ? styles.countdownBoxAlert : styles.countdownBox}
+                style={{ background: poolStatus.mode === 'SCARCE' ? 'linear-gradient(90deg, #FD8D38 0%, #FC3B43 100%)' : undefined }}
+              >{countdown.minutes.toString().padStart(2, '0')}</div>
               <div className={styles.countdownLabel}>{t('pointsDetail.poolMinutes') || '分'}</div>
             </div>
           </div>
         </div>
 
-        <div className={styles.poolEventBanner}>
-          <div className={styles.eventHeader}>
-            <img src="/point/gift.svg" alt="Gift" className={styles.eventIcon} />
-            <span className={styles.eventTitle}>{t('pointsDetail.poolEventTitle') || '周末积分加倍活动!'}</span>
-            <span className={styles.eventTag}>HOT</span>
+        {poolStatus.mode === 'SCARCE' ? (
+          <div className={styles.poolEventBannerScarce}>
+            <div className={styles.eventHeader}>
+              <img src="/point/warn.svg" alt="Alert" className={styles.eventIcon} />
+              <span className={styles.eventTitleScarce}>{t('pointsDetail.poolScarceTitle') || '积分池紧张！'}</span>
+            </div>
+            <div className={styles.eventList}>
+              <div className={styles.eventItem}>
+                <img src="/point/dot.svg" alt="Dot" className={styles.dotIcon} />
+                <span>
+                  {t('pointsDetail.poolScarceDesc1_part1') || '任务奖励已降至 '}
+                  <span className={styles.highlightRed}>{t('pointsDetail.poolScarceDesc1_highlight') || '70折'}</span>
+                  {t('pointsDetail.poolScarceDesc1_part2') || ' (基础10积分→现在7积分)'}
+                </span>
+              </div>
+              <div className={styles.eventItem}>
+                <img src="/point/dot.svg" alt="Dot" className={styles.dotIcon} />
+                <span>
+                  {t('pointsDetail.poolScarceDesc2_part1') || '预计 '}
+                  <span className={styles.highlightRed}>{t('pointsDetail.poolScarceDesc2_highlight') || '7天后'}</span>
+                  {t('pointsDetail.poolScarceDesc2_part2') || ' 积分池可能耗尽'}
+                </span>
+              </div>
+              <div className={styles.eventItem}>
+                <img src="/point/bingo.svg" alt="Bingo" className={styles.starIcon} />
+                <span className={styles.highlightGreen} style={{ color: '#10B981' }}>{t('pointsDetail.poolScarceDesc3') || '会员用户不受影响，效率保持1.5-2倍'}</span>
+              </div>
+            </div>
           </div>
-          <div className={styles.eventList}>
-            <div className={styles.eventItem}>
-              <img src="/point/star.svg" alt="Star" className={styles.starIcon} />
-              <span>
-                {t('pointsDetail.poolEventDesc1_part1') || '所有任务奖励'}
-                <span className={styles.highlightText}>{t('pointsDetail.poolEventDesc1_highlight') || 'x1.5倍'}</span>
-                {t('pointsDetail.poolEventDesc1_part2') || ' (发帖10积分→15积分)'}
-              </span>
+        ) : poolStatus.mode === 'NORMAL' ? (
+          <div className={styles.poolEventBanner}>
+            <div className={styles.eventHeader}>
+              <img src="/point/gift.svg" alt="Gift" className={styles.eventIcon} />
+              <span className={styles.tipsTitle}>{t('pointsDetail.poolNormalTitle') || '积分小帖士'}</span>
             </div>
-            <div className={styles.eventItem}>
-              <img src="/point/star.svg" alt="Star" className={styles.starIcon} />
-              <span>
-                {t('pointsDetail.poolEventDesc2_part1') || '活动时间：本周末48小时(还剩 '}
-                <span className={styles.highlightText}>{t('pointsDetail.poolEventDesc2_highlight') || '42小时'}</span>
-                {t('pointsDetail.poolEventDesc2_part2') || ' )'}
-              </span>
-            </div>
-            <div className={styles.eventItem}>
-              <img src="/point/star.svg" alt="Star" className={styles.starIcon} />
-              <span>{t('pointsDetail.poolEventDesc3') || '积分充足，抓紧领取，机不可失!'}</span>
+            <div className={styles.tipsContent}>
+              <div className={styles.tipsText}>{t('pointsDetail.poolNormalDesc') || '越早参与，获得越多！会员用户获取效率更高，且不受池子紧张影响。'}</div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className={styles.poolEventBanner}>
+            <div className={styles.eventHeader}>
+              <img src="/point/gift.svg" alt="Gift" className={styles.eventIcon} />
+              <span className={styles.eventTitle}>{t('pointsDetail.poolEventTitle') || '周末积分加倍活动!'}</span>
+              <span className={styles.eventTag}>HOT</span>
+            </div>
+            <div className={styles.eventList}>
+              <div className={styles.eventItem}>
+                <img src="/point/star.svg" alt="Star" className={styles.starIcon} />
+                <span>
+                  {t('pointsDetail.poolEventDesc1_part1') || '所有任务奖励'}
+                  <span className={styles.highlightText}>{t('pointsDetail.poolEventDesc1_highlight') || 'x1.5倍'}</span>
+                  {t('pointsDetail.poolEventDesc1_part2') || ' (发帖10积分→15积分)'}
+                </span>
+              </div>
+              <div className={styles.eventItem}>
+                <img src="/point/star.svg" alt="Star" className={styles.starIcon} />
+                <span>
+                  {t('pointsDetail.poolEventDesc2_part1') || '活动时间：本周末48小时(还剩 '}
+                  <span className={styles.highlightText}>{weekendRemainingHours > 0 ? `${weekendRemainingHours}小时` : (t('pointsDetail.poolEventDesc2_highlight') || '42小时')}</span>
+                  {t('pointsDetail.poolEventDesc2_part2') || ' )'}
+                </span>
+              </div>
+              <div className={styles.eventItem}>
+                <img src="/point/star.svg" alt="Star" className={styles.starIcon} />
+                <span>{t('pointsDetail.poolEventDesc3') || '积分充足，抓紧领取，机不可失!'}</span>
+              </div>
+            </div>
+          </div>
+        )}
 
-        <button className={styles.upgradeBtn}>
+        <button className={styles.upgradeBtn} onClick={() => router.push('/vip-recharge')}>
           <img src="/point/vip.svg" alt="Crown" className={styles.crownIcon} />
           {t('pointsDetail.poolUpgradeMember') || '升级会员'}
         </button>
@@ -819,7 +996,19 @@ export default function PointsDetail() {
                 <img src={task.icon} alt={task.title} className={styles.taskIconImg} />
               </div>
               <div className={styles.taskInfo}>
-                <div className={styles.taskName}>{t(task.titleKey) || task.title}</div>
+                <div className={styles.taskName}>
+                  {t(task.titleKey) || task.title}
+                  {(task.taskCode === 'PUSH' || task.taskCode === 'FIRST_POST') && (
+                    <span style={{ color: 'rgba(142, 148, 157, 1)', fontSize: '12px', fontWeight: 'normal' }}>
+                      {t('pointsDetail.tasks.push.note') || ' (大于50字)'}
+                    </span>
+                  )}
+                  {(task.taskCode === 'ADD' || task.taskCode === 'ADD_WATCHLIST') && (
+                    <span style={{ color: 'rgba(142, 148, 157, 1)', fontSize: '12px', fontWeight: 'normal' }}>
+                      {t('pointsDetail.tasks.add.note') || ' (>=3个)'}
+                    </span>
+                  )}
+                </div>
                 <div className={styles.dailyTaskReward}>
                   <span>+{task.points}</span>
                   <img src="/point/coin_icon@2x.png" className={styles.rewardIcon} alt="point" />
@@ -882,14 +1071,14 @@ export default function PointsDetail() {
 
       {/* 底部功能按钮 */}
       <div className={styles.actionButtonsGrid}>
-        <button className={styles.actionButton}>
+        <button className={styles.actionButton} onClick={() => router.push('/addwarn?symbol=BTC')}>
           <img src="/point/alert_alarm.svg" alt="Alarm" />
           <div className={styles.actionButtonContent}>
             <span className={styles.actionButtonTitle}>{t('pointsDetail.addAlarm')}</span>
             <span className={styles.actionButtonSubtitle}>Add an alarm</span>
           </div>
         </button>
-        <button className={styles.actionButton}>
+        <button className={styles.actionButton} onClick={() => router.push('/kyc')}>
           <img src="/point/certification.png" alt="Cert" />
           <div className={styles.actionButtonContent}>
             <span className={styles.actionButtonTitle}>{t('pointsDetail.certification')}</span>

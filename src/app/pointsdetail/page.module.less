@@ -295,8 +295,72 @@
   background: rgba(63, 207, 113, 1);
 }
 
+/* Pool Tag - Alert Style */
+.poolTagAlert {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #FFF7E7;
+  border: 1px solid rgba(255, 138, 34, 0.30);
+  border-radius: 9999px;
+  padding: 4px 12px;
+  font-size: 14px;
+  color: rgba(253, 112, 60, 1);
+  font-weight: 600;
+  
+  img {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+/* Pool Percent Text - Alert Style */
+.poolPercentTextAlert {
+  font-size: 32px;
+  font-weight: 800;
+  color: transparent; /* Fallback for text fill color */
+  background: linear-gradient(90deg, #FD8D38 0%, #FC3B43 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1;
+  display: inline-block; /* Sometimes needed for gradients to work on text */
+}
+
+/* Pool Percent Text Container (Wrapper) Style - Apply gradient to text inside */
+.poolPercentRow {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.poolPercentText {
+  font-size: 32px;
+  font-weight: 800;
+  color: #333;
+  line-height: 1;
+}
+
+/* Progress Fill - Alert Style */
 .fillAlert {
   background: linear-gradient(90deg, #FD8D38 0%, #FC3B43 100%);
+}
+
+/* Countdown Box - Alert Style */
+.countdownBoxAlert {
+  width: 64px; 
+  height: 48px;
+  background: linear-gradient(90deg, #FD8D38 0%, #FC3B43 100%);
+  border-radius: 12px; 
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.10), 0 4px 6px -4px rgba(0, 0, 0, 0.10); 
+  color: #fff; /* 既然背景是透明的，颜色需要改回深色，否则看不到文字 */
+  font-size: 24px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: DIN;
 }
 
 .poolProgressScales {
@@ -413,22 +477,42 @@
   margin-bottom: 24px;
 }
 
+/* Pool Event Banner - Scarce Mode */
+.poolEventBannerScarce {
+  background: #FFF7E7;
+  border: 1px solid rgba(255, 138, 34, 0.30);
+  border-radius: 16px;
+  padding: 16px 0 16px 12px;
+  margin-bottom: 24px;
+}
+
 .eventHeader {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .eventIcon {
-  width: 28px;
-  height: 27px;
+  width: 26px;
+  height: 26px;
 }
 
 .eventTitle {
   font-size: 15px;
   font-weight: bold;
   color: #00CFA4;
+}
+
+.eventTitleScarce {
+  font-size: 15px;
+  font-weight: bold;
+  color: #FF3B41;
+}
+
+.dotIcon {
+  width: 6px;
+  height: 6px;
 }
 
 .eventTag {
@@ -444,20 +528,26 @@
 .eventList {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-left: 30px;
+  gap: 4px;
+  margin-left: 16px;
 }
 
 .eventItem {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   font-size: 12px;
   color: #666;
 }
 
 .highlightText {
   color: #FF9500;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.highlightRed {
+  color: #FF3B41;
   font-weight: bold;
   font-size: 14px;
 }
@@ -499,16 +589,16 @@
 }
 
 .tipsTitle {
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
-  color: #00876B;
-  margin-bottom: 2px;
+  color: #10B981;
 }
 
 .tipsText {
   font-size: 11px;
-  color: #558B7E;
-  line-height: 1.4;
+  color: rgba(0, 0, 0, 0.80);
+  line-height: 1.8;
+  margin-left: 24px;
 }
 
 /* Invite Card */
@@ -520,6 +610,7 @@
   margin-bottom: 20px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
   border: 1px solid #28C963;
+  position: relative;
 }
 
 .inviteCardHeader {
@@ -527,11 +618,15 @@
   align-items: center;
   gap: 8px;
   margin-bottom: 20px;
+  padding-left: 60px; /* Space for the absolute positioned icon */
 }
 
 .inviteIcon {
-  width: 40px;
-  height: 40px;
+  width: 60px;
+  height: 60px;
+  position: absolute;
+  top: -5px;
+  left: 12px;
 }
 
 .inviteTitleContainer {
@@ -719,14 +814,15 @@
   border-radius: 20px;
   padding: 20px;
   border: 1px solid #28C963;
+  position: relative;
 }
 
-.sectionTitle {
-  font-size: 18px;
-  font-weight: 800;
-  color: #333;
-  margin-bottom: 16px;
-  padding-left: 0;
+.inviteCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding-left: 60px; /* Space for the absolute positioned icon */
 }
 
 .taskList {
@@ -738,9 +834,9 @@
 .taskItem {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   background: #fff;
-  padding: 12px;
+  padding: 12px 8px 12px 12px;
   border-radius: 16px;
   border: 1px solid #F5F7FA;
   box-shadow: 0 2px 8px rgba(0,0,0,0.02);
@@ -799,14 +895,15 @@
   white-space: nowrap;
   
   &.completed {
-    background: #F2F2F2;
-    color: #999;
+    background: #F1F5F9;
+    color: #16A34A;
   }
 }
 
 /* Daily Task Item (Progress Bar Style) */
 .dailyTaskItem {
   display: flex;
+  align-items: center; /* Center align items vertically */
   gap: 8px;
   background: #fff;
   padding: 16px;
@@ -823,8 +920,6 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  align-self: flex-start; /* Align icon to the top if task content is taller */
-  margin-top: 2px; /* Slight visual adjustment if needed, or remove align-self to center vertically */
   
   img {
     width: 18px;
