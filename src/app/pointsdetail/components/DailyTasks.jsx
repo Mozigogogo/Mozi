@@ -2,13 +2,17 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from '../page.module.less';
 import SectionHeader from './SectionHeader';
+import SectionSkeleton from './SectionSkeleton';
 
-const DailyTasks = ({ dailyInvestments }) => {
+const DailyTasks = ({ dailyInvestments, loading }) => {
   const { t } = useTranslation();
 
   return (
     <div className={styles.taskListSection}>
       <SectionHeader iconSrc="/point/task_daily.svg" iconAlt="Task" title={t('pointsDetail.dailyTasks')} />
+      {loading ? (
+        <SectionSkeleton count={5} />
+      ) : (
       <div className={styles.taskList}>
         {dailyInvestments.map(task => (
           <div key={task.id} className={styles.dailyTaskItem}>
@@ -36,6 +40,7 @@ const DailyTasks = ({ dailyInvestments }) => {
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 };

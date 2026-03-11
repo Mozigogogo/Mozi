@@ -728,14 +728,14 @@ export default function PointsDetail() {
       <InviteCard pointsData={pointsData} copyToClipboard={copyToClipboard} />
 
       {/* 新手任务 */}
-      <NewbieTasks tasksList={tasksList} handleTaskClick={handleTaskClick} />
+      <NewbieTasks tasksList={tasksList} handleTaskClick={handleTaskClick} loading={tasksLoading} />
 
       <div>
         <InviteBanner style={{ width: '100%', height: 'auto' }} />
       </div>
 
       {/* 每日任务 */}
-      <DailyTasks dailyInvestments={dailyInvestments} />
+      <DailyTasks dailyInvestments={dailyInvestments} loading={dailyTasksLoading} />
 
       {/* 底部功能按钮 */}
       <ActionButtons />

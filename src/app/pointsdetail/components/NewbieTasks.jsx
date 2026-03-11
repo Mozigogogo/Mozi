@@ -2,13 +2,17 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from '../page.module.less';
 import SectionHeader from './SectionHeader';
+import SectionSkeleton from './SectionSkeleton';
 
-const NewbieTasks = ({ tasksList, handleTaskClick }) => {
+const NewbieTasks = ({ tasksList, handleTaskClick, loading }) => {
   const { t } = useTranslation();
 
   return (
     <div className={styles.taskListSection}>
       <SectionHeader iconSrc="/point/new_alert.svg" iconAlt="Task" title={t('pointsDetail.newbieTasks')} />
+      {loading ? (
+        <SectionSkeleton count={5} />
+      ) : (
       <div className={styles.taskList}>
         {tasksList.map(task => (
           <div key={task.id} className={styles.taskItem}>
@@ -43,6 +47,7 @@ const NewbieTasks = ({ tasksList, handleTaskClick }) => {
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 };
