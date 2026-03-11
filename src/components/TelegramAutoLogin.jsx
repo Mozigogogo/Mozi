@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Toast } from 'antd-mobile';
-import { loginByTelegram, getUserDataInfo, completeTask } from '@/api/user';
+import { loginByTelegram } from '@/api/user';
 import { LogoLoading } from '@/components/Loading';
+import { runPostLoginSideEffects } from '@/utils/postLogin';
 
 /**
  * Telegram 自动登录组件
@@ -205,35 +206,11 @@ export default function TelegramAutoLogin() {
             console.log('✅ [TG自动登录] 邀请码已使用并清除');
           }
 
-          // 同步调用 /user/datainfo 获取用户详细信息（仅用于积分等数据，不覆盖 nickName/avatar）
+          // 登录成功后的统一副作用（datainfo + 任务），带去重
           try {
-            console.log('🚀 [TG自动登录] 调用 getUserDataInfo...');
-            const dataInfoRes = await getUserDataInfo();
-
-            if (dataInfoRes?.data) {
-              console.log('✅ [TG自动登录] 获取用户详细信息成功');
-              // 保留本地已有的 nickName/avatar，不让 datainfo 覆盖
-              const nextDataInfo = {
-                ...dataInfoRes.data,
-                userInfo: {
-                  ...(dataInfoRes.data?.userInfo || {}),
-                  nickName: nickName,
-                  avatar: avatar
-                }
-              };
-              localStorage.setItem('userDataInfo', JSON.stringify(nextDataInfo));
-            }
-          } catch (dataInfoError) {
-            console.error('❌ [TG自动登录] 获取用户详细信息失败:', dataInfoError);
-          }
-
-          // 完成每日登录任务
-          try {
-            console.log('🚀 [TG自动登录] 调用 completeTask(DAILY_LOGIN)...');
-            await completeTask('DAILY_LOGIN');
-            console.log('✅ [TG自动登录] 每日登录任务上报成功');
-          } catch (taskError) {
-            console.error('❌ [TG自动登录] 每日登录任务上报失败:', taskError);
+            await runPostLoginSideEffects({ caller: 'TelegramAutoLogin', forceDataInfo: true });
+          } catch (e) {
+            console.error('❌ [TG自动登录] post-login side effects failed:', e);
           }
 
           console.log('✅ [TG自动登录] Telegram 自动登录成功');

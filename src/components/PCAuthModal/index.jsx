@@ -327,7 +327,8 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
       //   localStorage.removeItem('rememberedPassword'); // Clean up legacy key
       // }
 
-      // Fetch user detailed info
+      console.log('[DEBUG PCAuthModal] handleAuthResponse success, will call /user/datainfo & completeTask');
+      // 这里保持原有行为：获取 datainfo + 上报任务
       request({
         url: Interface.USER_DATA_INFO,
         method: 'GET'
@@ -337,10 +338,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
         }
       });
       
-      // Daily login task
       completeTask('DAILY_LOGIN');
-
-      // First login task
       completeTask('FIRST_LOGIN');
       
       message.success(t('auth.loginSuccess') || 'Login successful');

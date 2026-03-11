@@ -149,6 +149,7 @@ export default function PCLoginPage() {
         }
         
         // 获取用户详细信息
+        console.log('[DEBUG PC /auth] handleLogin success, will call /user/datainfo & completeTask, email =', email);
         request({
           url: Interface.USER_DATA_INFO,
           method: 'GET'
@@ -161,6 +162,7 @@ export default function PCLoginPage() {
         });
         
         // 完成每日登录任务
+        console.log('[DEBUG PC /auth] handleLogin success, completeTask DAILY_LOGIN & FIRST_LOGIN');
         try {
           completeTask('DAILY_LOGIN');
           // 首次登录任务上报
@@ -244,6 +246,7 @@ export default function PCLoginPage() {
           localStorage.setItem('userId', res.data.userId);
         }
         
+        console.log('[DEBUG PC /auth] autoLoginAfterRegister success, will call /user/datainfo & completeTask, email =', email);
         request({
           url: Interface.USER_DATA_INFO,
           method: 'GET'
@@ -256,6 +259,7 @@ export default function PCLoginPage() {
         });
         
         // 完成每日登录任务
+        console.log('[DEBUG PC /auth] autoLoginAfterRegister success, completeTask DAILY_LOGIN & FIRST_LOGIN');
         try {
           completeTask('DAILY_LOGIN');
           // 首次登录任务上报
@@ -316,6 +320,7 @@ export default function PCLoginPage() {
         }
         
         // 获取用户详细信息
+        console.log('[DEBUG PC /auth] handleGoogleLoginSuccess, will call /user/datainfo & completeTask, email =', email);
         request({
           url: Interface.USER_DATA_INFO,
           method: 'GET'
@@ -328,6 +333,7 @@ export default function PCLoginPage() {
         });
         
         // 完成每日登录任务
+        console.log('[DEBUG PC /auth] handleGoogleLoginSuccess, completeTask DAILY_LOGIN & FIRST_LOGIN');
         try {
           completeTask('DAILY_LOGIN');
           // 首次登录任务上报
@@ -424,6 +430,7 @@ export default function PCLoginPage() {
         }
         
         // 获取用户详细信息
+        console.log('[DEBUG PC /auth] triggerWeb3SignatureLogin success, will call /user/datainfo & completeTask, address =', currentAddress);
         request({
           url: Interface.USER_DATA_INFO,
           method: 'GET'
@@ -437,6 +444,7 @@ export default function PCLoginPage() {
         
         // 完成每日登录任务
         // 完成每日登录任务
+        console.log('[DEBUG PC /auth] triggerWeb3SignatureLogin success, completeTask DAILY_LOGIN & FIRST_LOGIN');
         try {
           completeTask('DAILY_LOGIN');
           // 首次登录任务上报
@@ -495,6 +503,7 @@ export default function PCLoginPage() {
         }
         
         // 获取用户详细信息（与邮箱登录对齐）
+        console.log('[DEBUG PC /auth] handleTonWalletLogin success, will call /user/datainfo & completeTask, tonAddress =', tonAddress);
         request({
           url: Interface.USER_DATA_INFO,
           method: 'GET'
@@ -508,6 +517,7 @@ export default function PCLoginPage() {
         });
         
         // 完成每日登录任务（与邮箱登录对齐）
+        console.log('[DEBUG PC /auth] handleTonWalletLogin success, completeTask DAILY_LOGIN & FIRST_LOGIN');
         try {
           completeTask('DAILY_LOGIN');
           // 首次登录任务上报
