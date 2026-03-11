@@ -23,6 +23,7 @@ import {
   completeTask, 
   updateUserInfo 
 } from '@/api/user';
+import { fetchUserDataInfoOnce } from '@/utils/postLogin';
 import UserInfo from '@/app/user/components/UserInfo';
 import StatsAndActions from '@/app/user/components/StatsAndActions';
 import UserActions from '@/app/user/components/UserActions';
@@ -218,18 +219,18 @@ export default function UserPage() {
     }
   }, [searchParams]);
 
-  // 获取用户积分数据
+  // 获取用户积分数据（基于统一的 datainfo 缓存）
   const fetchUserPointsData = async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const res = await getUserDataInfo();
+      const data = await fetchUserDataInfoOnce({ caller: 'UserPage_fetchUserPointsData' });
 
-      if (res?.data) {
+      if (data) {
         // 保存完整的 dataInfo 数据到 localStorage
         try {
-          let nextDataInfo = res.data;
+          let nextDataInfo = data;
           const rawUserInfo = localStorage.getItem('userInfo');
           if (rawUserInfo) {
             try {
@@ -238,9 +239,9 @@ export default function UserPage() {
               const avatar = parsedUserInfo?.avatar;
               if (nickName || avatar) {
                 nextDataInfo = {
-                  ...res.data,
+                  ...data,
                   userInfo: {
-                    ...(res.data?.userInfo || {}),
+                    ...(data?.userInfo || {}),
                     ...(nickName ? { nickName } : {}),
                     ...(avatar ? { avatar } : {})
                   }
@@ -254,9 +255,9 @@ export default function UserPage() {
         }
         
         setPointsData({
-          totalPoints: res.data.totalPoints || 0,
-          yesterdayPoints: res.data.yesterdayPoints || 0,
-          pointsRanking: res.data.pointsRanking || 0
+          totalPoints: data.totalPoints || 0,
+          yesterdayPoints: data.yesterdayPoints || 0,
+          pointsRanking: data.pointsRanking || 0
         });
       }
     } catch (error) {

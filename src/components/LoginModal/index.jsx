@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { sendVerificationCode, loginByTelegram, loginByEmail, registerByEmail, completeTask } from '../../api/user';
+import { runPostLoginSideEffects } from '../../utils/postLogin';
 import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
 import styles from './index.module.less';
 
@@ -233,25 +234,9 @@ const handleTelegramDirectLogin = async (onLoginSuccess, onClose, t) => {
         localStorage.removeItem('inviteCode');
       }
       
-      // 获取用户详细信息
-      request({
-        url: Interface.USER_DATA_INFO,
-        method: 'GET'
-      }).then((dataInfoRes) => {
-        if (dataInfoRes?.data) {
-          localStorage.setItem('userDataInfo', JSON.stringify(dataInfoRes.data));
-        }
-      }).catch((err) => {
-        console.error('❌ 获取用户详细信息失败:', err);
-      });
-      
-      // 完成每日登录任务和首次登录任务
-      try {
-        completeTask('DAILY_LOGIN').catch((err) => console.error('❌ 每日登录任务上报失败:', err));
-        completeTask('FIRST_LOGIN').catch((err) => console.error('❌ 首次登录任务上报失败:', err));
-      } catch (e) {
-        console.error('任务上报异常:', e);
-      }
+      // 登录成功后，统一触发登录后副作用（datainfo + 任务），带去重
+      runPostLoginSideEffects({ caller: 'LoginModal_handleTelegramDirectLogin', forceDataInfo: true })
+        .catch((e) => console.error('post-login side effects failed:', e));
       
       Toast.show({ content: t('auth.loginSuccess') || '登录成功', position: 'center', icon: 'success' });
       
@@ -408,27 +393,9 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
           localStorage.setItem('userId', res.data.userId);
         }
         
-        // 登录成功后，异步调用 datainfo 接口获取用户详细信息（不阻塞登录流程）
-        request({
-          url: Interface.USER_DATA_INFO,
-          method: 'GET'
-        }).then((dataInfoRes) => {
-          if (dataInfoRes?.data) {
-            console.log('✅ [LoginModal] 获取用户详细信息成功:', dataInfoRes.data);
-            localStorage.setItem('userDataInfo', JSON.stringify(dataInfoRes.data));
-          }
-        }).catch((dataInfoError) => {
-          console.error('❌ [LoginModal] 获取用户详细信息失败:', dataInfoError);
-        });
-        
-        // 登录成功后，异步调用每日登录任务完成接口（不阻塞登录流程）
-        try {
-          completeTask('DAILY_LOGIN').then(() => console.log('✅ [LoginModal] 每日登录任务上报成功'));
-          // 首次登录任务上报
-          completeTask('FIRST_LOGIN').then(() => console.log('✅ [LoginModal] 首次登录任务上报成功'));
-        } catch (taskError) {
-          console.error('❌ [LoginModal] 登录任务上报失败:', taskError);
-        }
+        // 登录成功后，统一触发登录后副作用（datainfo + 任务），带去重
+        runPostLoginSideEffects({ caller: 'LoginModal_handleLogin', forceDataInfo: true })
+          .catch((e) => console.error('post-login side effects failed:', e));
         
         Toast.show({ content: t('auth.loginSuccess'), position: 'center', icon: 'success' });
         
@@ -523,27 +490,9 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
           localStorage.setItem('userId', res.data.userId);
         }
         
-        // 登录成功后，异步调用 datainfo 接口获取用户详细信息（不阻塞登录流程）
-        request({
-          url: Interface.USER_DATA_INFO,
-          method: 'GET'
-        }).then((dataInfoRes) => {
-          if (dataInfoRes?.data) {
-            console.log('✅ [LoginModal] 获取用户详细信息成功:', dataInfoRes.data);
-            localStorage.setItem('userDataInfo', JSON.stringify(dataInfoRes.data));
-          }
-        }).catch((dataInfoError) => {
-          console.error('❌ [LoginModal] 获取用户详细信息失败:', dataInfoError);
-        });
-        
-        // 登录成功后，异步调用每日登录任务完成接口（不阻塞登录流程）
-        try {
-          completeTask('DAILY_LOGIN').then(() => console.log('✅ [LoginModal] 每日登录任务上报成功'));
-          // 首次登录任务上报
-          completeTask('FIRST_LOGIN').then(() => console.log('✅ [LoginModal] 首次登录任务上报成功'));
-        } catch (taskError) {
-          console.error('❌ [LoginModal] 登录任务上报失败:', taskError);
-        }
+        // 登录成功后，统一触发登录后副作用（datainfo + 任务），带去重
+        runPostLoginSideEffects({ caller: 'LoginModal_autoLoginAfterRegister', forceDataInfo: true })
+          .catch((e) => console.error('post-login side effects failed:', e));
         
         Toast.show({ content: t('auth.loginSuccess'), position: 'center', icon: 'success' });
         
