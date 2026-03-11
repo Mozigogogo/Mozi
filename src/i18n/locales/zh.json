@@ -858,6 +858,10 @@
     "centerTitle": "积分中心",
     "myPoints": "我的积分",
     "historyRecord": "历史记录",
+    "seasonCard": {
+      "treasuryTitle": "MOZI积分金库",
+      "treasurySubtitle": "为您的Web3之旅注入动力"
+    },
     "poolTitleText": "本月积分池状态",
     "poolSufficient": "充足",
     "poolRemaining": "剩余积分",
@@ -907,8 +911,10 @@
       "subtitle": "解锁更多功能与专属奖励"
     },
     "addAlarm": "加入报警器",
+    "addAlarmSubtitle": "Add an alarm",
     "certification": "认证",
-    "newbieTasks": "新手任务",
+    "certificationSubtitle": "Certification",
+    "newbieTasks": "新手任务得奖励",
     "dailyTasks": "每日任务",
     "completed": "已完成",
     "goFinish": "去完成",

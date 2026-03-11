@@ -3,14 +3,20 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Toast } from 'antd-mobile';
-import { ClockCircleOutline, CheckCircleFill } from 'antd-mobile-icons';
 import { useTranslation } from 'react-i18next';
 import NavBar from '@/components/NavBar';
 import InviteBanner from '@/components/InviteBanner';
-import { request } from '../../utils/request';
-import { Interface, getTgInviteLink } from '../../utils/constants';
 import { getPoolStatus, getTaskPoints, getInvitationList, getTaskList, completeTask } from '../../api/points';
+import { getTgInviteLink } from '../../utils/constants';
 import styles from './page.module.less';
+
+// Components
+import SeasonCard from './components/SeasonCard';
+import PoolStatusCard from './components/PoolStatusCard';
+import InviteCard from './components/InviteCard';
+import NewbieTasks from './components/NewbieTasks';
+import DailyTasks from './components/DailyTasks';
+import ActionButtons from './components/ActionButtons';
 
 export default function PointsDetail() {
   const router = useRouter();
@@ -19,7 +25,6 @@ export default function PointsDetail() {
   const isDataFetchedRef = useRef(false);
   const { t, i18n } = useTranslation();
   
-  const isEnglish = i18n.language === 'en';
   const [pointsLoading, setPointsLoading] = useState(false);
   
   // 积分数据 state，初始使用默认值
@@ -46,7 +51,9 @@ export default function PointsDetail() {
     totalPool: '0', // Placeholder or from API
     remainingMineable: '2400000', // Placeholder or from API
     estimatedDays: '30', // Placeholder or from API
-    percent: 100
+    percent: 100,
+    mode: 'NORMAL',
+    resetTimestamp: null
   });
 
   // 格式化数值显示
@@ -234,27 +241,22 @@ export default function PointsDetail() {
     }
   }, [poolStatus.mode]);
 
-  // 计算倒计时 (使用 resetTimestamp + 30天)
+  // 计算倒计时
   useEffect(() => {
     if (!poolStatus.resetTimestamp) return;
 
+    // 记录目标结束时间：当前时间 + 剩余时长
+    // 注意：这里假设 resetTimestamp 是接口返回的剩余毫秒数
+    const targetEndTime = Date.now() + Number(poolStatus.resetTimestamp);
+
     const calculateCountdown = () => {
-      let startTime = Number(poolStatus.resetTimestamp);
-      
-      // 如果是秒（10位），转换为毫秒
-      if (startTime.toString().length === 10) {
-        startTime = startTime * 1000;
-      }
+      const now = Date.now();
+      const remaining = targetEndTime - now;
 
-      const now = new Date().getTime();
-      // resetTimestamp 是开始时间，加上 30 天得到结束时间
-      const endTime = startTime + (30 * 24 * 60 * 60 * 1000);
-      const diff = endTime - now;
-
-      if (diff > 0) {
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      if (remaining > 0) {
+        const days = Math.floor(remaining / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
         
         setCountdown({ days, hours, minutes });
       } else {
@@ -263,8 +265,8 @@ export default function PointsDetail() {
     };
 
     calculateCountdown();
-    // 每分钟更新一次
-    const timer = setInterval(calculateCountdown, 1000 * 60);
+    // 每秒更新一次，确保倒计时流畅
+    const timer = setInterval(calculateCountdown, 1000);
 
     return () => clearInterval(timer);
   }, [poolStatus.resetTimestamp]);
@@ -713,381 +715,31 @@ export default function PointsDetail() {
       </div>
 
       {/* 赛季卡片 */}
-      <div className={styles.seasonCard}>
-        <div className={styles.seasonHeader}>
-          <div className={styles.seasonInfo}>
-            <div className={styles.treasuryTitle}>MOZI积分金库</div>
-            <div className={styles.treasurySubtitle}>为您的Web3之旅注入动力</div>
-          </div>
-        </div>
-        
-        <div className={styles.pointsRow}>
-          <div className={styles.totalPoints}>
-            <img src="/point/coin_icon@2x.png" alt="Coin" className={styles.coinIcon} />
-            <span>{pointsData.totalPoints}</span>
-          </div>
-          <button className={styles.historyBtn} onClick={() => router.push('/pointshistory')}>
-            {t('pointsDetail.historyRecord') || '历史记录'}
-          </button>
-        </div>
-        
-        <img src="/point/link.png" className={styles.linkImage} alt="Link" />
-        <img src="/point/link.png" className={styles.linkImageRight} alt="Link" />
-      </div>
+      <SeasonCard pointsData={pointsData} />
 
       {/* 本月积分池状态 */}
-      <div className={styles.poolCard}>
-        <div className={styles.poolHeader}>
-          <span className={styles.poolTitle}>{t('pointsDetail.poolTitleText') || '本月积分池状态'}</span>
-          {poolStatus.mode === 'SCARCE' ? (
-            <span className={styles.poolTagAlert}>
-               <img src="/point/warn.svg" alt="" />
-               {t('pointsDetail.poolScarce') || '紧张'}
-            </span>
-          ) : (
-            <span className={styles.poolTagSufficient}>
-               <img src="/point/supply_volume.svg" alt="" />
-               {t('pointsDetail.poolSufficient') || '充足'}
-            </span>
-          )}
-        </div>
-        
-        <div className={styles.poolProgressSection}>
-          <div className={styles.poolPercentRow}>
-            <span 
-              className={poolStatus.mode === 'SCARCE' ? styles.poolPercentTextAlert : styles.poolPercentText}
-              style={poolStatus.mode === 'SCARCE' ? {
-                background: 'linear-gradient(90deg, #FD8D38 0%, #FC3B43 100%)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                color: 'transparent'
-              } : {}}
-            >
-              {poolStatus.percent}%
-            </span>
-            <span className={styles.poolRemainingLabel}>{t('pointsDetail.poolRemaining') || '剩余积分'}</span>
-          </div>
-          <div className={styles.poolProgressBarContainer}>
-            <div className={styles.poolProgressBar}>
-              <div 
-                className={`${styles.poolProgressFill} ${poolStatus.mode === 'SCARCE' ? styles.fillAlert : (poolStatus.percent > 30 ? styles.fillNormal : styles.fillAlert)}`} 
-                style={{ 
-                  width: `${poolStatus.percent}%`,
-                  background: poolStatus.mode === 'SCARCE' ? 'linear-gradient(90deg, #FD8D38 0%, #FC3B43 100%)' : undefined 
-                }}
-              ></div>
-              {poolStatus.mode !== 'SCARCE' && poolStatus.percent > 30 && <div className={styles.separators}></div>}
-            </div>
-            <div className={styles.poolProgressScales}>
-              <span>0%</span>
-              <span>100%</span>
-            </div>
-          </div>
-        </div>
-
-        <div className={styles.poolStatsGrid}>
-          <div className={styles.poolStatBox}>
-            <div className={styles.statLabel}>{t('pointsDetail.poolDistributed') || '已发放'}</div>
-            <div className={styles.statValue}>{poolStatus.totalPool }</div>
-          </div>
-          <div className={styles.poolStatBox}>
-            <div className={styles.statLabel}>{t('pointsDetail.poolMineable') }</div>
-            <div className={styles.statValue}>{poolStatus.remainingMineable }</div>
-          </div>
-        </div>
-
-        <div className={styles.poolCountdownSection}>
-          <div className={styles.countdownHeader}>
-            <ClockCircleOutline className={styles.clockIcon} />
-            <span>{t('pointsDetail.poolResetCountdown') || '距离下月重置'}</span>
-          </div>
-          <div className={styles.countdownBoxes}>
-            <div className={styles.countdownItem}>
-              <div 
-                className={poolStatus.mode === 'SCARCE' ? styles.countdownBoxAlert : styles.countdownBox}
-                style={{ background: poolStatus.mode === 'SCARCE' ? 'linear-gradient(90deg, #FD8D38 0%, #FC3B43 100%)' : undefined }}
-              >{countdown.days}</div>
-              <div className={styles.countdownLabel}>{t('pointsDetail.poolDays') || '天'}</div>
-            </div>
-            <div className={styles.countdownSeparator}>:</div>
-            <div className={styles.countdownItem}>
-              <div 
-                className={poolStatus.mode === 'SCARCE' ? styles.countdownBoxAlert : styles.countdownBox}
-                style={{ background: poolStatus.mode === 'SCARCE' ? 'linear-gradient(90deg, #FD8D38 0%, #FC3B43 100%)' : undefined }}
-              >{countdown.hours.toString().padStart(2, '0')}</div>
-              <div className={styles.countdownLabel}>{t('pointsDetail.poolHours') || '时'}</div>
-            </div>
-            <div className={styles.countdownSeparator}>:</div>
-            <div className={styles.countdownItem}>
-              <div 
-                className={poolStatus.mode === 'SCARCE' ? styles.countdownBoxAlert : styles.countdownBox}
-                style={{ background: poolStatus.mode === 'SCARCE' ? 'linear-gradient(90deg, #FD8D38 0%, #FC3B43 100%)' : undefined }}
-              >{countdown.minutes.toString().padStart(2, '0')}</div>
-              <div className={styles.countdownLabel}>{t('pointsDetail.poolMinutes') || '分'}</div>
-            </div>
-          </div>
-        </div>
-
-        {poolStatus.mode === 'SCARCE' ? (
-          <div className={styles.poolEventBannerScarce}>
-            <div className={styles.eventHeader}>
-              <img src="/point/warn.svg" alt="Alert" className={styles.eventIcon} />
-              <span className={styles.eventTitleScarce}>{t('pointsDetail.poolScarceTitle') || '积分池紧张！'}</span>
-            </div>
-            <div className={styles.eventList}>
-              <div className={styles.eventItem}>
-                <img src="/point/dot.svg" alt="Dot" className={styles.dotIcon} />
-                <span>
-                  {t('pointsDetail.poolScarceDesc1_part1') || '任务奖励已降至 '}
-                  <span className={styles.highlightRed}>{t('pointsDetail.poolScarceDesc1_highlight') || '70折'}</span>
-                  {t('pointsDetail.poolScarceDesc1_part2') || ' (基础10积分→现在7积分)'}
-                </span>
-              </div>
-              <div className={styles.eventItem}>
-                <img src="/point/dot.svg" alt="Dot" className={styles.dotIcon} />
-                <span>
-                  {t('pointsDetail.poolScarceDesc2_part1') || '预计 '}
-                  <span className={styles.highlightRed}>{t('pointsDetail.poolScarceDesc2_highlight') || '7天后'}</span>
-                  {t('pointsDetail.poolScarceDesc2_part2') || ' 积分池可能耗尽'}
-                </span>
-              </div>
-              <div className={styles.eventItem}>
-                <img src="/point/bingo.svg" alt="Bingo" className={styles.starIcon} />
-                <span className={styles.highlightGreen} style={{ color: '#10B981' }}>{t('pointsDetail.poolScarceDesc3') || '会员用户不受影响，效率保持1.5-2倍'}</span>
-              </div>
-            </div>
-          </div>
-        ) : poolStatus.mode === 'NORMAL' ? (
-          <div className={styles.poolEventBanner}>
-            <div className={styles.eventHeader}>
-              <img src="/point/gift.svg" alt="Gift" className={styles.eventIcon} />
-              <span className={styles.tipsTitle}>{t('pointsDetail.poolNormalTitle') || '积分小帖士'}</span>
-            </div>
-            <div className={styles.tipsContent}>
-              <div className={styles.tipsText}>{t('pointsDetail.poolNormalDesc') || '越早参与，获得越多！会员用户获取效率更高，且不受池子紧张影响。'}</div>
-            </div>
-          </div>
-        ) : (
-          <div className={styles.poolEventBanner}>
-            <div className={styles.eventHeader}>
-              <img src="/point/gift.svg" alt="Gift" className={styles.eventIcon} />
-              <span className={styles.eventTitle}>{t('pointsDetail.poolEventTitle') || '周末积分加倍活动!'}</span>
-              <span className={styles.eventTag}>HOT</span>
-            </div>
-            <div className={styles.eventList}>
-              <div className={styles.eventItem}>
-                <img src="/point/star.svg" alt="Star" className={styles.starIcon} />
-                <span>
-                  {t('pointsDetail.poolEventDesc1_part1') || '所有任务奖励'}
-                  <span className={styles.highlightText}>{t('pointsDetail.poolEventDesc1_highlight') || 'x1.5倍'}</span>
-                  {t('pointsDetail.poolEventDesc1_part2') || ' (发帖10积分→15积分)'}
-                </span>
-              </div>
-              <div className={styles.eventItem}>
-                <img src="/point/star.svg" alt="Star" className={styles.starIcon} />
-                <span>
-                  {t('pointsDetail.poolEventDesc2_part1') || '活动时间：本周末48小时(还剩 '}
-                  <span className={styles.highlightText}>{weekendRemainingHours > 0 ? `${weekendRemainingHours}小时` : (t('pointsDetail.poolEventDesc2_highlight') || '42小时')}</span>
-                  {t('pointsDetail.poolEventDesc2_part2') || ' )'}
-                </span>
-              </div>
-              <div className={styles.eventItem}>
-                <img src="/point/star.svg" alt="Star" className={styles.starIcon} />
-                <span>{t('pointsDetail.poolEventDesc3') || '积分充足，抓紧领取，机不可失!'}</span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <button className={styles.upgradeBtn} onClick={() => router.push('/vip-recharge')}>
-          <img src="/point/vip.svg" alt="Crown" className={styles.crownIcon} />
-          {t('pointsDetail.poolUpgradeMember') || '升级会员'}
-        </button>
-      </div>
+      <PoolStatusCard 
+        poolStatus={poolStatus} 
+        countdown={countdown} 
+        weekendRemainingHours={weekendRemainingHours} 
+      />
 
       {/* 邀请有奖 */}
-      <div className={styles.inviteCard}>
-        <div className={styles.inviteCardHeader}>
-          <img src="/point/invite_icon.svg" className={styles.inviteIcon} alt="Invite" />
-          <div className={styles.inviteTitleContainer}>
-            <span className={styles.inviteTitle}>{t('pointsDetail.inviteRewards')}</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="70" height="5" viewBox="0 0 70 5" fill="none" className={styles.inviteTitleUnderline}>
-              <path d="M0 2.5C0 1.11929 1.11929 0 2.5 0H67.5C68.8807 0 70 1.11929 70 2.5C70 3.88071 68.8807 5 67.5 5H2.5C1.11929 5 0 3.88071 0 2.5Z" fill="#FCCB37"/>
-            </svg>
-          </div>
-        </div>
-        
-        <div className={styles.inviteRewardTypes}>
-          <div className={styles.inviteRewardType}>
-            <div className={styles.rewardIconBg}>
-              <img src="/point/invite_register.png" alt="Register" />
-            </div>
-            <div className={styles.rewardText}>
-              <div className={styles.rewardTitle}>{t('pointsDetail.inviteRegister')}</div>
-              <div className={styles.rewardValue}>+250</div>
-            </div>
-          </div>
-          <div className={styles.inviteRewardType}>
-            <div className={styles.rewardIconBg}>
-              <img src="/point/invite_pay.png" alt="Pay" />
-            </div>
-            <div className={styles.rewardText}>
-              <div className={styles.rewardTitle}>{t('pointsDetail.invitePay')}</div>
-              <div className={styles.rewardValue}>+500</div>
-            </div>
-          </div>
-        </div>
-
-        <div className={styles.inviteInputContainer}>
-          <span className={styles.inviteInputLabel}>{t('pointsDetail.inviteLink')}</span>
-          <div className={styles.inviteInputWrapper}>
-            <div className={styles.inviteLinkText}>{pointsData.inviteLink || `https://t.me/MoziBot?start=${pointsData.inviteCode}`}</div>
-            <button className={styles.copyBtn} onClick={() => copyToClipboard(pointsData.inviteLink || `https://t.me/MoziBot?start=${pointsData.inviteCode}`)}>
-              <img src="/point/copy.svg" alt="Copy" />
-            </button>
-          </div>
-        </div>
-
-        <div className={styles.inviteInputContainer}>
-          <span className={styles.inviteInputLabel}>{t('pointsDetail.inviteCode')}</span>
-          <div className={styles.inviteInputWrapper}>
-            <div className={styles.inviteLinkText}>{pointsData.inviteCode || 'MOZI888'}</div>
-            <button className={styles.copyBtn} onClick={() => copyToClipboard(pointsData.inviteCode || 'MOZI888')}>
-              <img src="/point/copy.svg" alt="Copy" />
-            </button>
-          </div>
-        </div>
-
-        <div className={styles.inviteStatsGrid}>
-          <div className={styles.inviteStatBox}>
-            <div className={styles.inviteStatValue}>{pointsData.totalInvites || 0}</div>
-            <div className={styles.inviteStatLabel}>{t('pointsDetail.shareCount')}</div>
-          </div>
-          <div className={styles.inviteStatBox}>
-            <div className={styles.inviteStatValue2}>{pointsData.earnedPoints || 0}</div>
-            <div className={styles.inviteStatLabel}>{t('pointsDetail.totalEarned')}</div>
-          </div>
-        </div>
-
-        <div className={styles.inviteRules}>
-          <p>{t('pointsDetail.inviteRules.1')}</p>
-          <p>{t('pointsDetail.inviteRules.2')}</p>
-          <p>{t('pointsDetail.inviteRules.3')}</p>
-          <p>{t('pointsDetail.inviteRules.4')}</p>
-        </div>
-      </div>
+      <InviteCard pointsData={pointsData} copyToClipboard={copyToClipboard} />
 
       {/* 新手任务 */}
-      <div className={styles.taskListSection}>
-        <div className={styles.inviteCardHeader}>
-          <img src="/point/new_alert.svg" className={styles.inviteIcon} alt="Task" />
-          <div className={styles.inviteTitleContainer}>
-            <span className={styles.inviteTitle}>{t('pointsDetail.newbieTasks')}</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="70" height="5" viewBox="0 0 70 5" fill="none" className={styles.inviteTitleUnderline}>
-              <path d="M0 2.5C0 1.11929 1.11929 0 2.5 0H67.5C68.8807 0 70 1.11929 70 2.5C70 3.88071 68.8807 5 67.5 5H2.5C1.11929 5 0 3.88071 0 2.5Z" fill="#FCCB37"/>
-            </svg>
-          </div>
-        </div>
-        <div className={styles.taskList}>
-          {tasksList.map(task => (
-            <div key={task.id} className={styles.taskItem}>
-              <div className={styles.taskIconWrapper} style={{ backgroundColor: task.bgColor }}>
-                <img src={task.icon} alt={task.title} className={styles.taskIconImg} />
-              </div>
-              <div className={styles.taskInfo}>
-                <div className={styles.taskName}>
-                  {t(task.titleKey) || task.title}
-                  {(task.taskCode === 'PUSH' || task.taskCode === 'FIRST_POST') && (
-                    <span style={{ color: 'rgba(142, 148, 157, 1)', fontSize: '12px', fontWeight: 'normal' }}>
-                      {t('pointsDetail.tasks.push.note') || ' (大于50字)'}
-                    </span>
-                  )}
-                  {(task.taskCode === 'ADD' || task.taskCode === 'ADD_WATCHLIST') && (
-                    <span style={{ color: 'rgba(142, 148, 157, 1)', fontSize: '12px', fontWeight: 'normal' }}>
-                      {t('pointsDetail.tasks.add.note') || ' (>=3个)'}
-                    </span>
-                  )}
-                </div>
-                <div className={styles.dailyTaskReward}>
-                  <span>+{task.points}</span>
-                  <img src="/point/coin_icon@2x.png" className={styles.rewardIcon} alt="point" />
-                </div>
-              </div>
-              <button 
-                className={`${styles.taskBtn} ${task.status === 'completed' ? styles.completed : ''}`}
-                onClick={() => handleTaskClick(task)}
-              >
-                {task.status === 'completed' ? t('pointsDetail.completed') : (t(task.btnTextKey) || t('pointsDetail.goFinish'))}
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
+      <NewbieTasks tasksList={tasksList} handleTaskClick={handleTaskClick} />
 
       <div>
         <InviteBanner style={{ width: '100%', height: 'auto' }} />
       </div>
 
       {/* 每日任务 */}
-      <div className={styles.taskListSection}>
-        <div className={styles.inviteCardHeader}>
-          <img src="/point/task_daily.svg" className={styles.inviteIcon} alt="Task" />
-          <div className={styles.inviteTitleContainer}>
-            <span className={styles.inviteTitle}>{t('pointsDetail.dailyTasks')}</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="70" height="5" viewBox="0 0 70 5" fill="none" className={styles.inviteTitleUnderline}>
-              <path d="M0 2.5C0 1.11929 1.11929 0 2.5 0H67.5C68.8807 0 70 1.11929 70 2.5C70 3.88071 68.8807 5 67.5 5H2.5C1.11929 5 0 3.88071 0 2.5Z" fill="#FCCB37"/>
-            </svg>
-          </div>
-        </div>
-        <div className={styles.taskList}>
-          {dailyInvestments.map(task => (
-            <div key={task.id} className={styles.dailyTaskItem}>
-              <div className={styles.dailyTaskIconWrapper} style={{ backgroundColor: task.bgColor }}>
-                <img src={task.icon} alt={task.title} />
-              </div>
-              <div className={styles.dailyTaskContent}>
-                <div className={styles.dailyTaskTitle}>{t(task.titleKey) || task.title}</div>
-                <div className={styles.dailyTaskReward}>
-                  <span>+{task.reward}</span>
-                  <img src="/point/coin_icon@2x.png" className={styles.rewardIcon} alt="point" />
-                </div>
-                <div className={styles.progressBarContainer}>
-                  <div className={styles.progressTrack}>
-                    <div 
-                      className={styles.progressFill} 
-                      style={{ width: `${Math.min((task.current / task.target) * 100, 100)}%` }}
-                    >
-                      <div className={styles.progressKnob}>{task.current}</div>
-                    </div>
-                  </div>
-                  <div className={styles.progressText}>{task.current}/{task.target}</div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <DailyTasks dailyInvestments={dailyInvestments} />
 
       {/* 底部功能按钮 */}
-      <div className={styles.actionButtonsGrid}>
-        <button className={styles.actionButton} onClick={() => router.push('/addwarn?symbol=BTC')}>
-          <img src="/point/alert_alarm.svg" alt="Alarm" />
-          <div className={styles.actionButtonContent}>
-            <span className={styles.actionButtonTitle}>{t('pointsDetail.addAlarm')}</span>
-            <span className={styles.actionButtonSubtitle}>Add an alarm</span>
-          </div>
-        </button>
-        <button className={styles.actionButton} onClick={() => router.push('/kyc')}>
-          <img src="/point/certification.png" alt="Cert" />
-          <div className={styles.actionButtonContent}>
-            <span className={styles.actionButtonTitle}>{t('pointsDetail.certification')}</span>
-            <span className={styles.actionButtonSubtitle}>Certification</span>
-          </div>
-        </button>
-      </div>
+      <ActionButtons />
       
     </div>
   );
 }
-

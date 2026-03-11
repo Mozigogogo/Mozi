@@ -875,6 +875,10 @@
     "centerTitle": "Points Center",
     "myPoints": "My Points",
     "historyRecord": "History",
+    "seasonCard": {
+      "treasuryTitle": "MOZI Alpha Engine",
+      "treasurySubtitle": "Play · Earn · Build the Signal"
+    },
     "poolTitleText": "Monthly Pool Status",
     "poolSufficient": "Sufficient",
     "poolRemaining": "Remaining",
@@ -905,8 +909,8 @@
     "poolEventDesc3": "Sufficient points, grab them now!",
     "poolUpgradeMember": "Upgrade Member",
     "inviteRewards": "Invite Rewards",
-    "inviteRegister": "Invite Register",
-    "invitePay": "Invite Pay",
+    "inviteRegister": "Register",
+    "invitePay": "Purchase",
     "inviteLink": "Invite Link",
     "inviteCode": "Invite Code",
     "shareCount": "Total Invited",
@@ -924,7 +928,9 @@
       "subtitle": "Unlock more features & exclusive rewards"
     },
     "addAlarm": "Add Alarm",
+    "addAlarmSubtitle": "Add an alarm",
     "certification": "Certification",
+    "certificationSubtitle": "Certification",
     "newbieTasks": "Newbie Tasks",
     "dailyTasks": "Daily Tasks",
     "completed": "Completed",
