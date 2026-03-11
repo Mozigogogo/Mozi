@@ -875,6 +875,8 @@
     "centerTitle": "Points Center",
     "myPoints": "My Points",
     "historyRecord": "History",
+    "verifying": "Verifying...",
+    "verify": "Verify",
     "seasonCard": {
       "treasuryTitle": "MOZI Alpha Engine",
       "treasurySubtitle": "Play · Earn · Build the Signal"

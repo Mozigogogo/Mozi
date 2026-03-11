@@ -518,8 +518,7 @@ export default function PointsDetail() {
         }
         
         // 显示成功提示，使用接口返回的消息或默认消息
-        const successMsg = res?.data?.message || t('pointsDetail.messages.pointsEarned', { points: task.points });
-        Toast.show({ content: successMsg, icon: 'success', position: 'center' });
+        // Toast.show({ content: successMsg, icon: 'success', position: 'center' });
         
         // 刷新积分数据
         fetchPointsData();
@@ -565,7 +564,6 @@ export default function PointsDetail() {
   const handleTaskClick = (task) => {
     // 如果任务已完成，不处理
     if (task.status === 'completed') {
-      Toast.show({ content: t('pointsDetail.taskCompleted'), position: 'bottom' });
       return;
     }
 
@@ -597,10 +595,6 @@ export default function PointsDetail() {
           return;
         } else {
           // 还有视频没看完，跳转到视频学习页面
-          Toast.show({ 
-            content: t('pointsDetail.messages.videosRemaining', { count: videoTotal - completedCount }), 
-            position: 'bottom' 
-          });
           router.push('/videolearn');
         }
         break;
@@ -616,7 +610,6 @@ export default function PointsDetail() {
         // 早鸟活动：检查是否注册，已登录则自动完成
         const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
         if (!token) {
-          Toast.show({ content: t('pointsDetail.pleaseRegister'), position: 'bottom' });
           router.push('/user?mode=register');
         } else {
           // 已登录，直接调用完成接口
@@ -629,7 +622,6 @@ export default function PointsDetail() {
         const tgLink = getTgInviteLink(pointsData.inviteCode);
         if (tgLink) {
           navigator.clipboard.writeText(tgLink);
-          Toast.show({ content: t('pointsDetail.linkCopied'), position: 'bottom' });
         }
         break;
       case 'COMPLETE_PROFILE':
@@ -645,16 +637,19 @@ export default function PointsDetail() {
         verifyTask(task);
         break;
       default:
-        Toast.show({ content: t('pointsDetail.historyFeatureInDevelopment'), position: 'bottom' });
+        break;
     }
 
-    // 标记为待验证状态
-    const updatedTasks = tasksList.map(t => 
-      t.id === task.id 
-        ? { ...t, needsAction: false }
-        : t
-    );
-    setTasksList(updatedTasks);
+    // 只有 TWITTER、COMMUNITY 需要中间验证状态
+    const needsVerifyTasks = ['TWITTER', 'COMMUNITY'];
+    if (needsVerifyTasks.includes(task.taskCode)) {
+      const updatedTasks = tasksList.map(t => 
+        t.id === task.id 
+          ? { ...t, needsAction: false }
+          : t
+      );
+      setTasksList(updatedTasks);
+    }
   };
 
   const copyToClipboard = (text, label) => {
@@ -728,7 +723,12 @@ export default function PointsDetail() {
       <InviteCard pointsData={pointsData} copyToClipboard={copyToClipboard} />
 
       {/* 新手任务 */}
-      <NewbieTasks tasksList={tasksList} handleTaskClick={handleTaskClick} loading={tasksLoading} />
+      <NewbieTasks
+        tasksList={tasksList}
+        handleTaskClick={handleTaskClick}
+        loading={tasksLoading}
+        verifyingTaskId={verifyingTaskId}
+      />
 
       <div>
         <InviteBanner style={{ width: '100%', height: 'auto' }} />
