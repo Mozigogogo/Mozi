@@ -9,6 +9,7 @@ const AddMonitor = ({ symbol, unselectedColor = '#C7C9CD' }) => {
 
   const changeOwn = async (e) => {
     e.stopPropagation();
+    console.log('🔍 [DEBUG] AddMonitor click, symbol:', symbol);
     router.push(`/addwarn?symbol=${symbol}`);
   };
 

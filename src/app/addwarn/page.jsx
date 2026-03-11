@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { Input, Button, Toast, Switch } from "antd-mobile";
 import PopLogin from "../../components/PopLogin";
@@ -11,20 +12,15 @@ import styles from "./page.module.less";
 
 export default function Addwarn() {
   const { t } = useTranslation();
+  const searchParams = useSearchParams();
   // 按钮状态（移除保存后的公众号弹窗）
   const [btnDisabled, setBtnDisabled] = useState(false);
   // 登录弹窗显示状态
   const [showLoginPopup, setShowLoginPopup] = useState(false);
 
   // URL参数中的 symbol，缺省用 BTC
-  const getSymbol = () => {
-    if (typeof window !== "undefined") {
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get("symbol") || "BTC";
-    }
-    return "BTC";
-  };
-  const symbol = getSymbol();
+  const symbol = searchParams.get("symbol") || "BTC";
+  console.log('🔍 [DEBUG] addwarn getSymbol:', symbol, '| window.location.href:', typeof window !== 'undefined' ? window.location.href : 'SSR');
 
   // 配置项状态管理（与原项目一致的四项）
   const [configs, setConfigs] = useState({
