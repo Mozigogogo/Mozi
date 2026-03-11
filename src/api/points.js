@@ -77,3 +77,49 @@ export const executeConsume = (data) => {
     }
   });
 };
+
+/**
+ * 获取用户积分数据
+ * @returns {Promise}
+ */
+export const getTaskPoints = () => {
+  return request({
+    url: Interface.TASK_POINTS,
+    method: 'GET'
+  });
+};
+
+/**
+ * 获取邀请列表数据
+ * @returns {Promise}
+ */
+export const getInvitationList = () => {
+  return request({
+    url: Interface.TASK_INVITATION_LIST,
+    method: 'GET'
+  });
+};
+
+/**
+ * 获取任务列表
+ * @returns {Promise}
+ */
+export const getTaskList = () => {
+  return request({
+    url: Interface.TASK_LIST,
+    method: 'GET'
+  });
+};
+
+/**
+ * 完成任务
+ * @param {Object} data { taskCode: "EARLY_BIRD" }
+ * @returns {Promise}
+ */
+export const completeTask = (data) => {
+  return request({
+    url: Interface.TASK_COMPLETE,
+    method: 'POST',
+    data
+  });
+};
