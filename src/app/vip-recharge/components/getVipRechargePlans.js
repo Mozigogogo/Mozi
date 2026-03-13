@@ -261,6 +261,12 @@ function mergeRemoteIntoPlans(plansByTab, benefitsRes, pricingRes) {
         const planCode = (p.title || '').toUpperCase(); // Free/Lite/Pro -> FREE/LITE/PRO
         const tiers = pricingV2Grouped?.[tabKey]?.[planCode] || [];
 
+        // Telegram 环境下，Free 也使用 Stars 作为展示单位（0 Stars）
+        if (p.title === 'Free' && isTgEnv) {
+          next.currency = '⭐';
+          next.period = tabKey === 'yearly' ? '/年' : '/月';
+        }
+
         if (p.title === 'Lite' && tiers[0]) {
           const liteTier = tiers[0];
           const useStars = isTgEnv && liteTier.tgStarsAmount != null;

@@ -71,6 +71,8 @@ const PlanCard = ({
     [tierOptions, tierSelectedId]
   );
 
+  const [loading, setLoading] = useState(false);
+
   const displayPrice = tierSelected?.price ?? price;
   const displayCurrency = tierSelected?.currency ?? currency;
   const displayPeriod = tierSelected?.period ?? period;
@@ -95,6 +97,28 @@ const PlanCard = ({
     tierSelect?.onChange?.(opt);
   };
 
+  const handleSubscribe = async () => {
+    if (disabled || loading) return;
+
+    const payload = {
+      title,
+      price: displayPrice,
+      currency: displayCurrency,
+      period: displayPeriod,
+      tier: tierSelected,
+    };
+
+    const maybePromise = onSubscribe(payload);
+    if (maybePromise && typeof maybePromise.then === 'function') {
+      try {
+        setLoading(true);
+        await maybePromise;
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   return (
     <div
       className={`${styles.planCard} ${isPopular ? styles.popular : ''} ${
@@ -116,7 +140,15 @@ const PlanCard = ({
         {/* 价格区域 */}
         <div className={styles.priceSection}>
           <div className={styles.price}>
-            <span className={styles.currency}>{displayCurrency}</span>
+            {displayCurrency === '⭐' ? (
+              <img
+                src="/point/star-solid.svg"
+                alt="Stars"
+                className={styles.currencyStarIcon}
+              />
+            ) : (
+              <span className={styles.currency}>{displayCurrency}</span>
+            )}
             <span className={styles.amount}>{displayPrice}</span>
             <span className={styles.period}>{displayPeriod}</span>
           </div>
@@ -264,19 +296,19 @@ const PlanCard = ({
 
         {/* 订阅按钮 */}
         <button
-          className={`${styles.button} ${disabled ? styles.disabled : ''}`}
-          onClick={() =>
-            onSubscribe({
-              title,
-              price: displayPrice,
-              currency: displayCurrency,
-              period: displayPeriod,
-              tier: tierSelected,
-            })
-          }
-          disabled={disabled}
+          className={`${styles.button} ${disabled ? styles.disabled : ''} ${
+            loading ? styles.loading : ''
+          }`}
+          onClick={handleSubscribe}
+          disabled={disabled || loading}
         >
-          {buttonText}
+          {loading ? (
+            <span className={styles.buttonLoadingInner}>
+              <span className={styles.spinner} />
+            </span>
+          ) : (
+            buttonText
+          )}
         </button>
       </div>
     </div>
