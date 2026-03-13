@@ -65,6 +65,10 @@ const PlanCard = ({
     [tierOptions, tierSelectedId]
   );
 
+  const displayPrice = tierSelected?.price ?? price;
+  const displayCurrency = tierSelected?.currency ?? currency;
+  const displayPeriod = tierSelected?.period ?? period;
+
   useEffect(() => {
     if (!tierOpen) return;
     const onDocDown = (e) => {
@@ -106,9 +110,9 @@ const PlanCard = ({
         {/* 价格区域 */}
         <div className={styles.priceSection}>
           <div className={styles.price}>
-            <span className={styles.currency}>{currency}</span>
-            <span className={styles.amount}>{price}</span>
-            <span className={styles.period}>{period}</span>
+            <span className={styles.currency}>{displayCurrency}</span>
+            <span className={styles.amount}>{displayPrice}</span>
+            <span className={styles.period}>{displayPeriod}</span>
           </div>
         </div>
 
