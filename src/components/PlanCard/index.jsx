@@ -23,7 +23,13 @@ import styles from './index.module.less';
  * @param {string} props.tierSelect.defaultId - 默认选项 id
  * @param {(option: {id: string, title: string, subtitle?: string}) => void} props.tierSelect.onChange - 选择回调
  * @param {string} props.buttonText - 按钮文本，默认 'Subscribe'
- * @param {Function} props.onSubscribe - 订阅按钮点击回调
+ * @param {(payload: {
+ *   title: string;
+ *   price: string;
+ *   currency: string;
+ *   period: string;
+ *   tier?: { id: string; title: string; subtitle?: string };
+ * }) => void} props.onSubscribe - 订阅按钮点击回调
  * @param {boolean} props.isPopular - 是否为热门方案，默认 false
  * @param {string} props.badge - 徽章文本，如 'Most Popular'
  * @param {string} props.description - 卡片描述
@@ -259,7 +265,15 @@ const PlanCard = ({
         {/* 订阅按钮 */}
         <button
           className={`${styles.button} ${disabled ? styles.disabled : ''}`}
-          onClick={onSubscribe}
+          onClick={() =>
+            onSubscribe({
+              title,
+              price: displayPrice,
+              currency: displayCurrency,
+              period: displayPeriod,
+              tier: tierSelected,
+            })
+          }
           disabled={disabled}
         >
           {buttonText}

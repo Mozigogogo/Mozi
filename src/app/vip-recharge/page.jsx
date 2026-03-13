@@ -7,6 +7,7 @@ import VipRechargeHeader from './components/VipRechargeHeader';
 import VipRechargeTabs from './components/VipRechargeTabs';
 import VipRechargePlanCards from './components/VipRechargePlanCards';
 import { getVipRechargePlans } from './components/getVipRechargePlans';
+import { startVipPurchase } from './utils/startVipPurchase';
 import { getSubscriptionBenefits, getSubscriptionPricing } from '@/api/vip';
 
 export default function VipRechargePage() {
@@ -47,6 +48,24 @@ export default function VipRechargePage() {
     [benefitsRes, pricingRes]
   );
 
+  // 为每个方案注入统一的购买回调（根据环境走 Stars 或 AppKit 支付）
+  // Free 版本无需购买，保持原始 onSubscribe（仅前端行为）
+  const planCardsWithHandlers = useMemo(() => {
+    const result = {};
+    Object.entries(planCardsData || {}).forEach(([tabKey, plans]) => {
+      result[tabKey] = (plans || []).map((plan) => {
+        if (plan.title === 'Free') {
+          return plan;
+        }
+        return {
+          ...plan,
+          onSubscribe: (payload) => startVipPurchase({ tabKey, plan, payload }),
+        };
+      });
+    });
+    return result;
+  }, [planCardsData]);
+
   return (
     <div className={styles.container}>
       {/* Navbar */}
@@ -59,7 +78,7 @@ export default function VipRechargePage() {
         {/* Plan Cards Container - outside tabs */}
         <div className={styles.planCardsContainer} key={activeTab}>
           {remoteError && !remoteLoading && <div>Failed to load subscription data.</div>}
-          <VipRechargePlanCards plans={planCardsData[activeTab] || []} />
+          <VipRechargePlanCards plans={planCardsWithHandlers[activeTab] || []} />
         </div>
       </div>
     </div>

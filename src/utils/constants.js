@@ -100,7 +100,8 @@ export const Interface = {
   IS_COIN: '/search/iscoin',
 
   // 支付相关
-  PAYMENT_CREATE_STARS: '/payment/create-stars-invoice',
+  PAYMENT_CREATE_STARS: '/payment/createStarsInvoice',
+  PAYMENT_ORDER_STATUS: '/payment/orderStatus',
   PAYMENT_VERIFY_CRYPTO: '/payment/verify-crypto',
   // 币种信息
   COIN_INFO: '/search/lastpricechange',
