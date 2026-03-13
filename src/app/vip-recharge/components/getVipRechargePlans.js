@@ -267,6 +267,8 @@ function mergeRemoteIntoPlans(plansByTab, benefitsRes, pricingRes) {
           next.price = String(useStars ? liteTier.tgStarsAmount : liteTier.price);
           next.currency = useStars ? '⭐' : '$';
           next.period = tabKey === 'yearly' ? '/年' : '/月';
+          // 为 Lite 方案挂上 pricingId，供 Telegram Stars 支付使用
+          next.pricingId = liteTier.pricingId || liteTier.id;
         }
 
         if (p.title === 'Pro' && tiers.length) {
