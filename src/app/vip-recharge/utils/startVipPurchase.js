@@ -15,6 +15,34 @@ export function isTelegramEnv() {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+async function pollStarsOrderStatus(orderNo, { maxAttempts = 5, interval = 1500, tabKey, planTitle } = {}) {
+  for (let i = 0; i < maxAttempts; i += 1) {
+    try {
+      const statusRes = await getStarsOrderStatus(orderNo);
+      const statusData = statusRes?.data ?? statusRes;
+      // eslint-disable-next-line no-console
+      console.log('[VipPurchase][Stars] 订单状态：', statusData);
+
+      if (statusData?.status === 'SUCCESS') {
+        try {
+          const event = new CustomEvent('mozi:starsOrderSuccess', {
+            detail: { orderNo, tabKey, planTitle },
+          });
+          window.dispatchEvent(event);
+        } catch (e) {
+          window.location.reload();
+        }
+        return;
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('[VipPurchase][Stars] 查询订单状态失败', err, { orderNo });
+    }
+
+    await sleep(interval);
+  }
+}
+
 /**
  * 统一的 VIP 购买入口：
  * - TG 环境：走 Stars 支付（createStarsInvoice + openInvoice + 查询订单状态）
@@ -80,30 +108,8 @@ export async function startVipPurchase({ tabKey, plan, payload }) {
         if (!cb) return;
         if (cb.status !== 'paid') return;
 
-        // 3. 等待后端 webhook 异步开通会员，再查一次订单状态
-        await sleep(1500);
-        try {
-          const statusRes = await getStarsOrderStatus(orderNo);
-          const statusData = statusRes?.data ?? statusRes;
-          // eslint-disable-next-line no-console
-          console.log('[VipPurchase][Stars] 订单状态：', statusData);
-
-          if (statusData?.status === 'SUCCESS') {
-            // 触发一个自定义事件，订阅页可以监听刷新会员信息
-            try {
-              const event = new CustomEvent('mozi:starsOrderSuccess', {
-                detail: { orderNo, tabKey, planTitle: plan?.title },
-              });
-              window.dispatchEvent(event);
-            } catch (e) {
-              // 如果没人监听，退化为刷新页面
-              window.location.reload();
-            }
-          }
-        } catch (err) {
-          // eslint-disable-next-line no-console
-          console.error('[VipPurchase][Stars] 查询订单状态失败', err, { orderNo });
-        }
+        // 3. 支付成功后轮询订单状态，等待后端 webhook 开通会员
+        pollStarsOrderStatus(orderNo, { tabKey, planTitle: plan?.title });
       });
     } catch (e) {
       // eslint-disable-next-line no-console

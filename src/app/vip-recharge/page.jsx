@@ -8,7 +8,7 @@ import VipRechargeTabs from './components/VipRechargeTabs';
 import VipRechargePlanCards from './components/VipRechargePlanCards';
 import { getVipRechargePlans } from './components/getVipRechargePlans';
 import { startVipPurchase } from './utils/startVipPurchase';
-import { getSubscriptionBenefits, getSubscriptionPricing } from '@/api/vip';
+import { getSubscriptionBenefits, getSubscriptionPricing, getMySubscription } from '@/api/vip';
 
 export default function VipRechargePage() {
   const { t } = useTranslation();
@@ -18,6 +18,7 @@ export default function VipRechargePage() {
   const [pricingRes, setPricingRes] = useState(null);
   const [remoteLoading, setRemoteLoading] = useState(false);
   const [remoteError, setRemoteError] = useState(null);
+  const [mySubscription, setMySubscription] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -37,6 +38,22 @@ export default function VipRechargePage() {
       .finally(() => {
         if (!alive) return;
         setRemoteLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // 首次进入时查询当前订阅/权益状态
+  useEffect(() => {
+    let alive = true;
+    getMySubscription()
+      .then((res) => {
+        if (!alive) return;
+        setMySubscription(res?.data ?? res);
+      })
+      .catch(() => {
+        // 静默失败，页面仍可正常使用
       });
     return () => {
       alive = false;
