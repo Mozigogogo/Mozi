@@ -1655,7 +1655,11 @@
       "year": "Annual",
       "quarter": "Quarterly",
       "month": "Monthly",
-      "currency": "$"
+      "currency": "$",
+      "starter": "Starter",
+      "professional": "Professional",
+      "enterprise": "Enterprise",
+      "lifetime": "Lifetime"
     },
     "recommend": "Recommend",
     "month": "Month",
@@ -1685,6 +1689,16 @@
       "multiTheme": "Multi-theme"
     },
     "confirmPurchase": "Confirm Purchase",
+    "planCard": {
+      "perfectFor": "Perfect for",
+      "getStarted": "Get Started",
+      "subscribeNow": "Subscribe Now",
+      "contactSales": "Contact Sales",
+      "bestValue": "Best Value",
+      "mostPopular": "Most Popular",
+      "master": "MASTER",
+      "savingBadge": "Save {{percent}}%"
+    },
     "result": {
       "success": {
         "title": "Recharge Successful",

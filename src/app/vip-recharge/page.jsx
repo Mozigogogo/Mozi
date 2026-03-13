@@ -1,205 +1,310 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useState } from 'react';
 import NavBar from '@/components/NavBar';
+import VipTabs from '@/components/VipTabs';
+import PlanCard from '@/components/PlanCard';
 import { useTranslation } from 'react-i18next';
-import { Toast } from 'antd-mobile';
-import { isTelegramEnv, handleVipPurchase } from '@/utils/core';
-import { getSubscriptionBenefits, getSubscriptionPricing, getMySubscription } from '@/api/vip';
 import styles from './page.module.less';
 
 export default function VipRechargePage() {
   const { t } = useTranslation();
-  const fetchedRef = useRef(false);
-  
-  // Fallback plans if API fails or while loading
-  const defaultPlans = [
-    { 
-      title: t('vipRecharge.plans.yearly.title'), 
-      price: t('vipRecharge.plans.yearly.price'), 
-      unit: t('vipRecharge.plans.yearly.unit'), 
-      recommend: true, 
-      id: 'yearly' 
-    },
-    { 
-      title: t('vipRecharge.plans.quarterly.title'), 
-      price: t('vipRecharge.plans.quarterly.price'), 
-      unit: t('vipRecharge.plans.quarterly.unit'), 
-      id: 'quarterly' 
-    },
-    { 
-      title: t('vipRecharge.plans.monthly.title'), 
-      price: t('vipRecharge.plans.monthly.price'), 
-      unit: t('vipRecharge.plans.monthly.unit'), 
-      id: 'monthly' 
-    },
-  ];
+  const [activeTab, setActiveTab] = useState('monthly');
 
-  const [plans, setPlans] = useState(defaultPlans);
-  const [benefits, setBenefits] = useState([]);
-  const [mySubscription, setMySubscription] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [selectedPlanId, setSelectedPlanId] = useState(defaultPlans.find(p => p.recommend)?.id || defaultPlans[0].id);
-
-  useEffect(() => {
-    if (fetchedRef.current) return;
-    fetchedRef.current = true;
-
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [benefitsRes, mySubRes] = await Promise.all([
-          getSubscriptionBenefits(),
-          getMySubscription()
-        ]);
-
-        if (benefitsRes.code === 0) {
-          setBenefits(benefitsRes.data || []);
-        }
-
-        // Mock data for pricing plans
-        const mockPlans = [
-          { 
-            id: 'yearly',
-            title: t('vipRecharge.plans.yearly.title'), 
-            price: t('vipRecharge.plans.yearly.price'), 
-            unit: t('vipRecharge.plans.yearly.unit'), 
-            recommend: true 
-          },
-          { 
-            id: 'quarterly',
-            title: t('vipRecharge.plans.quarterly.title'), 
-            price: t('vipRecharge.plans.quarterly.price'), 
-            unit: t('vipRecharge.plans.quarterly.unit')
-          },
-          { 
-            id: 'monthly',
-            title: t('vipRecharge.plans.monthly.title'), 
-            price: t('vipRecharge.plans.monthly.price'), 
-            unit: t('vipRecharge.plans.monthly.unit')
-          }
-        ];
-        
-        setPlans(mockPlans);
-        const recommend = mockPlans.find(p => p.recommend);
-        setSelectedPlanId(recommend ? recommend.id : mockPlans[0]?.id);
-
-        if (mySubRes.code === 0) {
-          setMySubscription(mySubRes.data);
-        }
-
-      } catch (error) {
-        console.error('Failed to fetch VIP data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  const basicFeatures = [
-    { icon: <img src="/images/recharge/market_situation.svg" alt="market" />, text: t('vipRecharge.basic.features.market'), active: true },
-    { icon: <img src="/images/recharge/push.svg" alt="push" />, text: t('vipRecharge.basic.features.push'), active: true },
-    { icon: <img src="/images/recharge/ai.svg" alt="ai" />, text: t('vipRecharge.basic.features.ai'), active: true },
-    { icon: <img src="/images/recharge/tags.svg" alt="tags" />, text: '', active: false, locked: true },
-    { icon: <img src="/images/recharge/advertisement.svg" alt="ad" />, text: t('vipRecharge.basic.features.ad'), active: true },
-    { icon: <img src="/images/recharge/group.svg" alt="group" />, text: '', active: false, locked: true },
-    { icon: <img src="/images/recharge/skin.svg" alt="skin" />, text: t('vipRecharge.basic.features.skin'), active: true },
-  ];
-
-  const vipFeatures = [
-    { icon: <img src="/images/recharge/market_situation.svg" alt="market" />, text: t('vipRecharge.vip.features.market') },
-    { icon: <img src="/images/recharge/push.svg" alt="push" />, text: t('vipRecharge.vip.features.push') },
-    { icon: <img src="/images/recharge/ai.svg" alt="ai" />, text: t('vipRecharge.vip.features.ai') },
-    { icon: <img src="/images/recharge/tags.svg" alt="tags" />, text: t('vipRecharge.vip.features.tags') },
-    { icon: <img src="/images/recharge/advertisement.svg" alt="ad" />, text: t('vipRecharge.vip.features.ad') },
-    { icon: <img src="/images/recharge/group.svg" alt="group" />, text: t('vipRecharge.vip.features.group') },
-    { icon: <img src="/images/recharge/skin.svg" alt="skin" />, text: t('vipRecharge.vip.features.skin') },
-  ];
-
-  const handlePurchase = async () => {
-    await handleVipPurchase(selectedPlanId, t);
+  // Plan cards data for different periods
+  const planCardsData = {
+    monthly: [
+      {
+        id: 1,
+        title: 'Free',
+        price: '0',
+        currency: '$',
+        period: '/月',
+        description: 'Save $100',
+        accentColor: '#C1C1C1',
+        highlightFeature: {
+          label: 'AI CALL / 月',
+          value: '120x',
+          subtitle: '升级到Lite/Pro可享受',
+          locked: true,
+        },
+        features: [
+          { label: '基础行情', icon: '/point/Basic_market .svg' },
+          { label: 'APP基础推送', icon: '/point/Information_push.svg' },
+          { label: '邮件告警', icon: '/point/Email_alert.svg' },
+          { label: '大单行情', icon: '/point/Order_situation.svg' },
+          { label: 'AI Call', icon: '/point/AI_call.svg' },
+          { label: '月度积分', icon: '/point/Monthly_points.svg' },
+          { label: '专属标志', icon: '/point/Exclusive_logo.svg' },
+          { label: '无广告', icon: '/point/No_advertisement.svg' },
+          { label: '多主题切换', icon: '/point/Topic_witching.svg' },
+          { label: '客服', icon: '/point/Customer_service.svg' },
+          { label: 'Alpha核心群', icon: '/point/Alpha_core_group.svg' },
+        ],
+        buttonText: '开始体验',
+        isPopular: false,
+        onSubscribe: () => console.log('Subscribe to Free'),
+      },
+      {
+        id: 2,
+        title: 'Lite',
+        price: '24.99',
+        currency: '$',
+        period: '/月',
+        description: 'Save $100',
+        accentColor: '#22C55E',
+        highlightFeature: {
+          label: 'AI CALL / 月',
+          value: '120x',
+          subtitle: 'Every 30-Day Cycle',
+          locked: false,
+        },
+        features: [
+          { label: '基础行情', icon: '/point/Basic_market .svg' },
+          { label: 'APP基础推送', icon: '/point/Information_push.svg' },
+          { label: '邮件告警', icon: '/point/Email_alert.svg' },
+          { label: '大单行情 20条（5s延迟）', icon: '/point/Order_situation.svg' },
+          { label: 'AI Call 20次/月', icon: '/point/AI_call.svg' },
+          { label: '月度积分 5000/月', icon: '/point/Monthly_points.svg' },
+          { label: '专属标志', icon: '/point/Exclusive_logo.svg' },
+          { label: '无广告', icon: '/point/No_advertisement.svg' },
+          { label: '多主题切换', icon: '/point/Topic_witching.svg' },
+          { label: '标准客服', icon: '/point/Customer_service.svg' },
+          { label: 'Alpha核心群', icon: '/point/Alpha_core_group.svg' },
+        ],
+        buttonText: '立即购买',
+        isPopular: true,
+        badge: 'MASTER',
+        onSubscribe: () => console.log('Subscribe to Lite'),
+      },
+      {
+        id: 3,
+        title: 'Pro',
+        price: '49.9',
+        currency: '$',
+        period: '/月',
+        description: 'Save $100',
+        accentColor: '#FACC15',
+        tierSelect: {
+          label: '选择等级',
+          defaultId: 'lv1',
+          options: [
+            { id: 'lv1', title: '10000积分/月', subtitle: 'AI Call 40次' },
+            { id: 'lv2', title: '30000积分/月', subtitle: 'AI Call 100次' },
+            { id: 'lv3', title: '50000积分/月', subtitle: 'AI Call 200次' },
+            { id: 'lv4', title: '100000积分/月', subtitle: 'AI Call 500次' },
+          ],
+          onChange: (opt) => console.log('Pro level:', opt),
+        },
+        features: [
+          { label: '基础行情', icon: '/point/Basic_market .svg' },
+          { label: 'APP基础推送', icon: '/point/Information_push.svg' },
+          { label: '邮件告警', icon: '/point/Email_alert.svg' },
+          { label: '大单行情 40条（0s延迟）', icon: '/point/Order_situation.svg' },
+          { label: 'AI Call 40~220次/月', icon: '/point/AI_call.svg' },
+          { label: '月度积分 10000~10,000/月', icon: '/point/Monthly_points.svg' },
+          { label: '专属黑金标志', icon: '/point/Exclusive_logo.svg' },
+          { label: '无广告', icon: '/point/No_advertisement.svg' },
+          { label: '多主题切换', icon: '/point/Topic_witching.svg' },
+          { label: '专属客服', icon: '/point/Customer_service.svg' },
+          { label: 'Alpha核心群', icon: '/point/Alpha_core_group.svg' },
+        ],
+        buttonText: '立即购买',
+        isPopular: false,
+        onSubscribe: () => console.log('Subscribe to Pro'),
+      },
+    ],
+    yearly: [
+      {
+        id: 1,
+        title: 'Free',
+        price: '0',
+        currency: '$',
+        period: '/年',
+        description: 'Save $100',
+        accentColor: '#C1C1C1',
+        highlightFeature: {
+          label: 'AI CALL / 月',
+          value: '120x',
+          subtitle: '升级到Lite/Pro可享受',
+          locked: true,
+        },
+        features: [
+          { label: '基础行情', icon: '/point/Basic_market .svg' },
+          { label: 'APP基础推送', icon: '/point/Information_push.svg' },
+          { label: '邮件告警', icon: '/point/Email_alert.svg' },
+          { label: '大单行情', icon: '/point/Order_situation.svg' },
+          { label: 'AI Call', icon: '/point/AI_call.svg' },
+          { label: '月度积分', icon: '/point/Monthly_points.svg' },
+          { label: '专属标志', icon: '/point/Exclusive_logo.svg' },
+          { label: '无广告', icon: '/point/No_advertisement.svg' },
+          { label: '多主题切换', icon: '/point/Topic_witching.svg' },
+          { label: '客服', icon: '/point/Customer_service.svg' },
+          { label: 'Alpha核心群', icon: '/point/Alpha_core_group.svg' },
+        ],
+        buttonText: '开始体验',
+        isPopular: false,
+        onSubscribe: () => console.log('Subscribe to Free Yearly'),
+      },
+      {
+        id: 2,
+        title: 'Lite',
+        price: '249.99',
+        currency: '$',
+        period: '/年',
+        description: 'Save $100',
+        accentColor: '#22C55E',
+        highlightFeature: {
+          label: 'AI CALL / 月',
+          value: '120x',
+          subtitle: 'Every 30-Day Cycle',
+          locked: false,
+        },
+        features: [
+          { label: '基础行情', icon: '/point/Basic_market .svg' },
+          { label: 'APP基础推送', icon: '/point/Information_push.svg' },
+          { label: '邮件告警', icon: '/point/Email_alert.svg' },
+          { label: '大单行情 20条（5s延迟）', icon: '/point/Order_situation.svg' },
+          { label: 'AI Call 20次/月', icon: '/point/AI_call.svg' },
+          { label: '月度积分 5000/月', icon: '/point/Monthly_points.svg' },
+          { label: '专属标志', icon: '/point/Exclusive_logo.svg' },
+          { label: '无广告', icon: '/point/No_advertisement.svg' },
+          { label: '多主题切换', icon: '/point/Topic_witching.svg' },
+          { label: '标准客服', icon: '/point/Customer_service.svg' },
+          { label: 'Alpha核心群', icon: '/point/Alpha_core_group.svg' },
+        ],
+        buttonText: '开始体验',
+        isPopular: true,
+        badge: 'MASTER',
+        onSubscribe: () => console.log('Subscribe to Lite Yearly'),
+      },
+      {
+        id: 3,
+        title: 'Pro',
+        price: '499.9',
+        currency: '$',
+        period: '/年',
+        description: 'Save $100',
+        accentColor: '#FACC15',
+        tierSelect: {
+          label: '选择等级',
+          defaultId: 'lv1',
+          options: [
+            { id: 'lv1', title: '10000积分/月', subtitle: 'AI Call 40次' },
+            { id: 'lv2', title: '30000积分/月', subtitle: 'AI Call 100次' },
+            { id: 'lv3', title: '50000积分/月', subtitle: 'AI Call 200次' },
+            { id: 'lv4', title: '100000积分/月', subtitle: 'AI Call 500次' },
+          ],
+          onChange: (opt) => console.log('Pro yearly level:', opt),
+        },
+        features: [
+          { label: '基础行情', icon: '/point/Basic_market .svg' },
+          { label: 'APP基础推送', icon: '/point/Information_push.svg' },
+          { label: '邮件告警', icon: '/point/Email_alert.svg' },
+          { label: '大单行情 40条（0s延迟）', icon: '/point/Order_situation.svg' },
+          { label: 'AI Call 40~220次/月', icon: '/point/AI_call.svg' },
+          { label: '月度积分 10000~10,000/月', icon: '/point/Monthly_points.svg' },
+          { label: '专属黑金标志', icon: '/point/Exclusive_logo.svg' },
+          { label: '无广告', icon: '/point/No_advertisement.svg' },
+          { label: '多主题切换', icon: '/point/Topic_witching.svg' },
+          { label: '专属客服', icon: '/point/Customer_service.svg' },
+          { label: 'Alpha核心群', icon: '/point/Alpha_core_group.svg' },
+        ],
+        buttonText: '立即购买',
+        isPopular: false,
+        onSubscribe: () => console.log('Subscribe to Pro Yearly'),
+      },
+    ],
+    lifetime: [
+      {
+        id: 1,
+        title: 'Pro',
+        price: '499.9',
+        currency: '$',
+        period: '/lifetime',
+        description: 'Save $100',
+        accentColor: '#FACC15',
+        tierSelect: {
+          label: '选择等级',
+          defaultId: 'lv1',
+          options: [
+            { id: 'lv1', title: '10000积分/月', subtitle: 'AI Call 40次' },
+            { id: 'lv2', title: '30000积分/月', subtitle: 'AI Call 100次' },
+            { id: 'lv3', title: '50000积分/月', subtitle: 'AI Call 200次' },
+            { id: 'lv4', title: '100000积分/月', subtitle: 'AI Call 500次' },
+          ],
+          onChange: (opt) => console.log('Pro lifetime level:', opt),
+        },
+        features: [
+          { label: '基础行情', icon: '/point/Basic_market.svg' },
+          { label: 'APP基础推送', icon: '/point/Information_push.svg' },
+          { label: '邮件告警', icon: '/point/Email_alert.svg' },
+          { label: '大单行情 40条（0s延迟）', icon: '/point/Order_situation.svg' },
+          { label: 'AI Call 40~220次/月', icon: '/point/AI_call.svg' },
+          { label: '月度积分 10000~10,000/月', icon: '/point/Monthly_points.svg' },
+          { label: '专属黑金标志', icon: '/point/Exclusive_logo.svg' },
+          { label: '无广告', icon: '/point/No_advertisement.svg' },
+          { label: '多主题切换', icon: '/point/Topic_witching.svg' },
+          { label: '专属客服', icon: '/point/Customer_service.svg' },
+          { label: 'Alpha核心群', icon: '/point/Alpha_core_group.svg' },
+        ],
+        buttonText: '立即购买',
+        isPopular: true,
+        badge: 'BEST VALUE',
+        onSubscribe: () => console.log('Subscribe to Pro Lifetime'),
+      },
+    ],
   };
+
+  // Tabs data - only for switching, no content
+  const tabs = [
+    { id: 'monthly', label: t('vip.plan.month') },
+    { id: 'yearly', label: t('vip.plan.year'), badge: t('vip.planCard.savingBadge', { percent: 17 }) },
+  ];
 
   return (
     <div className={styles.container}>
       {/* Navbar */}
       <NavBar
         title={t('vipRecharge.title')}
-        backgroundColor="rgba(58, 36, 14, 1)"
+        backgroundColor="#fff"
         showBorder={false}
         fixed={true}
-        color="white"
+        color="black"
       />
 
-      <div className={styles.lockBadge}>
-        {t('vipRecharge.lockBadge')}
-      </div>
-      
       <div className={styles.content}>
-        {/* Plan Selection */}
-        <div className={styles.plansRow}>
-          {plans.map((plan) => (
-            <div 
-              key={plan.id} 
-              className={`${styles.planCard} ${selectedPlanId === plan.id ? styles.active : ''}`}
-              onClick={() => setSelectedPlanId(plan.id)}
-            >
-              {plan.recommend && <div className={styles.recommendBadge}>{t('vipRecharge.recommend')}</div>}
-              <div className={styles.planTitle}>{plan.title}</div>
-              <div className={styles.planPrice}>{plan.price}</div>
-              <div className={styles.planUnit}>{plan.unit}</div>
-            </div>
+        {/* VipTabs Component - only for tab switching */}
+        <VipTabs
+          tabs={tabs}
+          defaultActiveId="monthly"
+          onChange={setActiveTab}
+          variant="highlight"
+          size="medium"
+          headerOnly={true}
+        />
+
+        {/* Plan Cards Container - outside tabs */}
+        <div className={styles.planCardsContainer} key={activeTab}>
+          {planCardsData[activeTab].map((plan) => (
+            <PlanCard
+              key={plan.id}
+              title={plan.title}
+              price={plan.price}
+              currency={plan.currency}
+              period={plan.period}
+              description={plan.description}
+              features={plan.features}
+              highlightFeature={plan.highlightFeature}
+              tierSelect={plan.tierSelect}
+              accentColor={plan.accentColor}
+              buttonText={plan.buttonText}
+              isPopular={plan.isPopular}
+              badge={plan.badge}
+              onSubscribe={plan.onSubscribe}
+            />
           ))}
         </div>
-
-        {/* Comparison Section */}
-        <div className={styles.comparisonSection}>
-          {/* Basic Column */}
-          <div className={styles.basicColumn}>
-            <div className={styles.colHeader}>
-              <div className={styles.colTitle}>{t('vipRecharge.basic.title')}</div>
-              <div className={styles.colSubtitle}>{t('vipRecharge.basic.subtitle')}</div>
-              <img src="/images/recharge/basic_divider.svg" alt="divider" className={styles.dividerLine} />
-            </div>
-            <div className={styles.featureList}>
-              {basicFeatures.map((feature, index) => (
-                <div key={index} className={`${styles.featureItem} ${feature.locked ? styles.locked : ''}`}>
-                  <span className={styles.icon}>{feature.icon}</span>
-                  {feature.text && <span className={styles.text}>{feature.text}</span>}
-                  {feature.locked && <img src="/images/recharge/lock.svg" alt="locked" className={styles.lockedIcon} />}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* VIP Column */}
-          <div className={styles.vipColumn}>
-             <div className={styles.colHeader}>
-              <div className={styles.colTitle}>{t('vipRecharge.vip.title')}</div>
-              <div className={styles.colSubtitle}>{t('vipRecharge.vip.subtitle')}</div>
-              {/* Tiny crown decoration could go here */}
-              <img src="/icons/new_user/vip_logo.png" alt="vip logo" className={styles.vipLogo} />
-              <img src="/images/recharge/vip_divider.svg" alt="divider" className={styles.dividerLine} />
-            </div>
-            <div className={styles.featureList}>
-              {vipFeatures.map((feature, index) => (
-                <div key={index} className={styles.featureItem}>
-                  <span className={styles.icon}>{feature.icon}</span>
-                  <span className={styles.text}>{feature.text}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Footer Button */}
-      <div className={styles.footer}>
-        <button className={styles.confirmButton} onClick={handlePurchase}>
-          {t('vipRecharge.confirmPurchase')}
-        </button>
       </div>
     </div>
   );

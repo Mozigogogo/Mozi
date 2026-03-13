@@ -1637,7 +1637,11 @@
       "year": "年卡",
       "quarter": "季卡",
       "month": "月卡",
-      "currency": "$"
+      "currency": "$",
+      "starter": "入门版",
+      "professional": "专业版",
+      "enterprise": "企业版",
+      "lifetime": "终身版"
     },
     "recommend": "推荐",
     "month": "月",
@@ -1667,6 +1671,16 @@
       "multiTheme": "多主题 自由切换"
     },
     "confirmPurchase": "确认购买",
+    "planCard": {
+      "perfectFor": "适合",
+      "getStarted": "开始使用",
+      "subscribeNow": "立即订阅",
+      "contactSales": "联系销售",
+      "bestValue": "最佳价值",
+      "mostPopular": "最受欢迎",
+      "master": "MASTER",
+      "savingBadge": "节省{{percent}}%"
+    },
     "result": {
       "success": {
         "title": "充值成功",

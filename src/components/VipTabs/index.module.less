@@ -1,0 +1,275 @@
+.vipTabs {
+  width: 100%;
+  background: #f8fafc;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+
+  &.default {
+    background: rgba(226, 232, 240, 0.5);
+  }
+
+  &.highlight {
+    background: linear-gradient(135deg, #f0f9ff 0%, #f8fafc 100%);
+  }
+}
+
+/* Tabs 头部 */
+.tabsHeader {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  background: rgba(236, 240, 244, 1);
+  border-radius: 12px;
+}
+
+.tabsList {
+  display: flex;
+  gap: 0;
+  width: 100%;
+  position: relative;
+  z-index: 2;
+}
+
+/* Tab 按钮 */
+.tabButton {
+  flex: 1;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(100, 116, 139, 1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+  position: relative;
+  z-index: 3;
+
+  &:hover:not(.disabled) {
+    color: #475569;
+    background: rgba(15, 23, 42, 0.04);
+  }
+
+  &.active {
+    color: #000000;
+    font-weight: 600;
+    background: #fff;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &.disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+.tabIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.tabLabel {
+  display: inline-block;
+}
+
+.tabBadge {
+  display: inline-block;
+  background: #FACC15;
+  color: #000;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 6px;
+}
+
+/* 活跃指示器 */
+.activeIndicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  border-radius: 2px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+/* Tabs 内容 */
+.tabsContent {
+  padding: 24px;
+  min-height: 200px;
+  animation: fadeIn 0.3s ease;
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+.contentWrapper {
+  color: #334155;
+  line-height: 1.6;
+
+  p {
+    margin: 0;
+  }
+
+  > * {
+    margin: 0;
+  }
+}
+
+/* 尺寸变体 */
+.vipTabs {
+  &.small {
+    .tabButton {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    .tabsContent {
+      padding: 16px;
+      min-height: 120px;
+    }
+  }
+
+  &.medium {
+    .tabButton {
+      padding: 10px 16px;
+      font-size: 14px;
+    }
+
+    .tabsContent {
+      padding: 24px;
+      min-height: 200px;
+    }
+  }
+
+  &.large {
+    .tabButton {
+      padding: 14px 20px;
+      font-size: 16px;
+    }
+
+    .tabsContent {
+      padding: 32px;
+      min-height: 280px;
+    }
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .tabsHeader {
+    padding: 3px;
+  }
+
+  .tabButton {
+    padding: 8px 12px;
+    font-size: 13px;
+    gap: 4px;
+  }
+
+  .tabsContent {
+    padding: 16px;
+    min-height: 150px;
+  }
+
+  .vipTabs {
+    &.small {
+      .tabButton {
+        padding: 5px 10px;
+        font-size: 11px;
+      }
+
+      .tabsContent {
+        padding: 12px;
+        min-height: 100px;
+      }
+    }
+
+    &.large {
+      .tabButton {
+        padding: 10px 14px;
+        font-size: 14px;
+      }
+
+      .tabsContent {
+        padding: 20px;
+        min-height: 200px;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .tabButton {
+    padding: 6px 8px;
+    font-size: 12px;
+    gap: 3px;
+  }
+
+  .tabIcon {
+    font-size: 14px;
+  }
+
+  .tabsContent {
+    padding: 12px;
+    min-height: 120px;
+  }
+}
+
+/* 禁用状态 */
+.vipTabs {
+  &.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+  .vipTabs {
+    background: rgba(30, 41, 59, 0.5);
+  }
+
+  .tabsHeader {
+    background: rgba(236, 240, 244, 1);
+  }
+
+  .tabButton {
+    color: #94a3b8;
+
+    &:hover:not(.disabled) {
+      color: #000;
+      background: #fff;
+    }
+
+    &.active {
+      color: #000;
+      background: #fff;
+    }
+  }
+
+  .tabsContent {
+    color: #cbd5e1;
+  }
+}
