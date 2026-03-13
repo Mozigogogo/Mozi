@@ -284,6 +284,7 @@ function mergeRemoteIntoPlans(plansByTab, benefitsRes, pricingRes) {
               id: String(t.tierCode),
               title: formatPoints(t.monthlyPoints, tabKey),
               subtitle: `AI Call ${t.aiCallQuota}次`,
+              pricingId: t.pricingId || t.id,
               price: String(
                 isTgEnv && t.tgStarsAmount != null ? t.tgStarsAmount : t.price
               ),
@@ -410,7 +411,7 @@ export function getVipRechargePlans({ benefitsRes = null, pricingRes = null } = 
           { label: '标准客服', icon: '/point/Customer_service.svg' },
           { label: 'Alpha核心群', icon: '/point/Alpha_core_group.svg' },
         ],
-        buttonText: '开始体验',
+        buttonText: '立即购买',
         isPopular: true,
         badge: 'MASTER',
         onSubscribe: () => console.log('Subscribe to Lite'),
@@ -511,7 +512,7 @@ export function getVipRechargePlans({ benefitsRes = null, pricingRes = null } = 
           { label: '标准客服', icon: '/point/Customer_service.svg' },
           { label: 'Alpha核心群', icon: '/point/Alpha_core_group.svg' },
         ],
-        buttonText: '开始体验',
+        buttonText: '立即购买',
         isPopular: true,
         badge: 'MASTER',
         onSubscribe: () => console.log('Subscribe to Lite Yearly'),
