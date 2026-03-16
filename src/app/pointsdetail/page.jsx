@@ -11,12 +11,12 @@ import { getTgInviteLink } from '../../utils/constants';
 import styles from './page.module.less';
 
 // Components
-import SeasonCard from './components/SeasonCard';
-import PoolStatusCard from './components/PoolStatusCard';
-import InviteCard from './components/InviteCard';
-import NewbieTasks from './components/NewbieTasks';
-import DailyTasks from './components/DailyTasks';
-import ActionButtons from './components/ActionButtons';
+import SeasonCard from '@/components/pointsdetail/SeasonCard';
+import PoolStatusCard from '@/components/pointsdetail/PoolStatusCard';
+import InviteCard from '@/components/pointsdetail/InviteCard';
+import NewbieTasks from '@/components/pointsdetail/NewbieTasks';
+import DailyTasks from '@/components/pointsdetail/DailyTasks';
+import ActionButtons from '@/components/pointsdetail/ActionButtons';
 
 export default function PointsDetail() {
   const router = useRouter();
