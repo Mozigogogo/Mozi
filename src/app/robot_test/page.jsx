@@ -310,6 +310,8 @@ const StreamingMarkdown = ({ content, isStreaming }) => {
 export default function RobotPage({ isPC: propIsPC = false }) {
   const { t } = useTranslation();
   const BOT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/AI_Bot.png';
+  // 是否根据积分余额限制对话（开关变量，暂时关闭方便测试）
+  const ENABLE_POINTS_LIMIT = false;
 
   const [isPCState, setIsPCState] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -342,6 +344,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
   const [showPopLogin, setShowPopLogin] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true); // 历史记录加载状态
+  const [hasEnoughPoints, setHasEnoughPoints] = useState(true);   // 当前是否还有可用积分
   
   const scrollRef = useRef(null);
   const currentRequestIdRef = useRef(null);
@@ -350,6 +353,8 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   const messageIdRef = useRef(null);
   const historyLoadedRef = useRef(false); // 防止重复加载历史记录
   const abortControllerRef = useRef(null);
+  const currentActionCodeRef = useRef(null); // 本轮对话对应的积分扣除动作
+  const hasConsumedRef = useRef(false); // 防止重复调用 /points/consume
   // const [isStreaming, setIsStreaming] = useState(false); // 使用 hook 中的 isStreaming
 
   // 设置欢迎消息
@@ -463,7 +468,25 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     loadChatHistory();
   }, []);
 
-  // 使用 SSE Stream Hook
+  const consumeOnce = async (reason = 'complete') => {
+    if (hasConsumedRef.current || !currentActionCodeRef.current) return;
+    hasConsumedRef.current = true;
+    const actionCode = currentActionCodeRef.current;
+    try {
+      const res = await executeConsume({ actionCode, reason });
+      console.log('[Robot] points consume result:', res);
+      // 根据后端返回的剩余积分更新本地状态，用于是否限制后续对话
+      if (res && res.code === 0 && res.data && typeof res.data.remainingPoints === 'number') {
+        if (res.data.remainingPoints <= 0) {
+          setHasEnoughPoints(false);
+        }
+      }
+    } catch (err) {
+      console.error('[Robot] points consume failed:', err, { actionCode, reason });
+    }
+  };
+
+  // 使用 SSE Stream Hook（对话结束或中断后再扣积分）
   const { sendMessage, isStreaming, abort } = useRobotTestSSE(
     selectedModel === 'analyze' 
       ? '/api/robot_proxy/api/v1/analyze/stream'
@@ -508,7 +531,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
           }
         }
       },
-      onComplete: (fullContent, eventData) => {
+      onComplete: async (fullContent, eventData) => {
         // AI 回复完成
         if (currentAiMsgIdRef.current) {
           const msgId = currentAiMsgIdRef.current;
@@ -540,6 +563,9 @@ export default function RobotPage({ isPC: propIsPC = false }) {
           messageId: eventData?.messageId,
           tokens: eventData?.tokens
         });
+
+        // 对话正常完成后再扣积分
+        await consumeOnce('complete');
       },
       onError: (error) => {
         // AI 对话错误
@@ -552,6 +578,9 @@ export default function RobotPage({ isPC: propIsPC = false }) {
           ));
         }
         currentAiMsgIdRef.current = null;
+
+        // 对话异常结束不再扣积分，仅记录错误
+        // 如需埋点可在此增加上报逻辑
       }
     }
   );
@@ -597,6 +626,21 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
   // 发送消息 - 使用 SSE Stream Hook
   const handleSend = async (text = null) => {
+    // 如果开启了积分限制，并且当前判定为积分不足，则不再发起对话
+    if (ENABLE_POINTS_LIMIT && !hasEnoughPoints) {
+      const warnMsg = t('robot.pointsNotEnough') || '积分不足，暂时无法继续对话，请先获取更多积分。';
+      setMessages(prev => [
+        ...prev,
+        {
+          id: `system-points-${Date.now()}`,
+          role: 'assistant',
+          content: warnMsg,
+          time: Date.now(),
+        },
+      ]);
+      return;
+    }
+
     // iOS 修复：强制失焦输入框，防止 viewport 缩放问题
     forceBlurAndResetViewport();
     
@@ -640,32 +684,10 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     }]);
 
     try {
-      // 扣除积分
+      // 记录本轮对话对应的 actionCode，待对话完成或中断后再调用 /points/consume
       const actionCode = selectedModel === 'analyze' ? 'AI_DEEP_ANALYZE' : 'AI_BASIC_CHAT';
-      try {
-        const consumeRes = await executeConsume({ actionCode });
-        console.log('Points consume result:', consumeRes);
-        
-        if (consumeRes.code !== 0) {
-          const errorMsg = consumeRes.errorMsg || '积分扣除失败';
-          setMessages(prev => prev.map(msg => 
-            msg.id === aiMsgId 
-              ? { ...msg, content: errorMsg, loading: false, error: true }
-              : msg
-          ));
-          currentAiMsgIdRef.current = null;
-          return;
-        }
-      } catch (consumeError) {
-        console.error('Points deduction error:', consumeError);
-        setMessages(prev => prev.map(msg => 
-          msg.id === aiMsgId 
-            ? { ...msg, content: '网络错误，请稍后重试', loading: false, error: true }
-            : msg
-        ));
-        currentAiMsgIdRef.current = null;
-        return;
-      }
+      currentActionCodeRef.current = actionCode;
+      hasConsumedRef.current = false;
 
       const lang = typeof window !== 'undefined' 
         ? (localStorage.getItem('i18nextLng') || 'zh') 
@@ -711,7 +733,8 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     }
     
     currentAiMsgIdRef.current = null;
-    // 停止生成
+    // 停止生成后视为一次对话尝试，进行积分扣除
+    consumeOnce('abort');
   };
 
   // 点击建议问题

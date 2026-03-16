@@ -572,7 +572,7 @@ export default function PCLoginPage() {
           <div className={styles.communityCard}>
             <div className={styles.communityLinks}>
               <a href="https://t.me/MoziInnovations" target="_blank" rel="noopener noreferrer" className={styles.communityLink}>{t('auth.joinCommunity')}</a>
-              <a href="https://x.com/Innovation56171" target="_blank" rel="noopener noreferrer" className={styles.communityLink}>{t('auth.followTwitter')}</a>
+              <a href="https://x.com/moziinnovation" target="_blank" rel="noopener noreferrer" className={styles.communityLink}>{t('auth.followTwitter')}</a>
             </div>
           </div>
         </div>
