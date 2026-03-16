@@ -21,6 +21,7 @@ export default function VipRechargePlanCards({ plans = [] }) {
           buttonText={plan.buttonText}
           isPopular={plan.isPopular}
           badge={plan.badge}
+          disabled={plan.disabled}
           onSubscribe={plan.onSubscribe}
         />
       ))}
