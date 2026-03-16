@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import styles from '../page.module.less';
+import styles from '@/app/pointsdetail/page.module.less';
 import SectionHeader from './SectionHeader';
 
 const InviteCard = ({ pointsData, copyToClipboard }) => {
@@ -9,7 +9,7 @@ const InviteCard = ({ pointsData, copyToClipboard }) => {
   return (
     <div className={styles.inviteCard}>
       <SectionHeader iconSrc="/point/invite_icon.svg" iconAlt="Invite" title={t('pointsDetail.inviteRewards')} />
-      
+
       <div className={styles.inviteRewardTypes}>
         <div className={styles.inviteRewardType}>
           <div className={styles.rewardIconBg}>
@@ -35,7 +35,10 @@ const InviteCard = ({ pointsData, copyToClipboard }) => {
         <span className={styles.inviteInputLabel}>{t('pointsDetail.inviteLink')}</span>
         <div className={styles.inviteInputWrapper}>
           <div className={styles.inviteLinkText}>{pointsData.inviteLink || `https://t.me/MoziBot?start=${pointsData.inviteCode}`}</div>
-          <button className={styles.copyBtn} onClick={() => copyToClipboard(pointsData.inviteLink || `https://t.me/MoziBot?start=${pointsData.inviteCode}`)}>
+          <button
+            className={styles.copyBtn}
+            onClick={() => copyToClipboard(pointsData.inviteLink || `https://t.me/MoziBot?start=${pointsData.inviteCode}`)}
+          >
             <img src="/point/copy.svg" alt="Copy" />
           </button>
         </div>
@@ -73,3 +76,4 @@ const InviteCard = ({ pointsData, copyToClipboard }) => {
 };
 
 export default InviteCard;
+

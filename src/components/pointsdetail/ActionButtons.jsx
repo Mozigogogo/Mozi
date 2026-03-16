@@ -1,7 +1,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import styles from '../page.module.less';
+import styles from '@/app/pointsdetail/page.module.less';
 
 const ActionButtons = () => {
   const router = useRouter();
@@ -28,3 +28,4 @@ const ActionButtons = () => {
 };
 
 export default ActionButtons;
+

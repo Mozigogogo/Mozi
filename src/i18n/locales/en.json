@@ -874,11 +874,11 @@
   "pointsDetail": {
     "centerTitle": "Points Center",
     "myPoints": "My Points",
-    "historyRecord": "History",
+    "historyRecord": "Record",
     "verifying": "Verifying...",
     "verify": "Verify",
     "seasonCard": {
-      "treasuryTitle": "MOZI Alpha Engine",
+      "treasuryTitle": "Alpha Engine",
       "treasurySubtitle": "Play · Earn · Build the Signal"
     },
     "poolTitleText": "Monthly Pool Status",

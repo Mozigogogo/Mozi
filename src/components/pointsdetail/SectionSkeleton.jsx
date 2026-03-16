@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from '../page.module.less';
+import styles from '@/app/pointsdetail/page.module.less';
 
 export default function SectionSkeleton({ count = 5 }) {
   const items = Array.from({ length: count });

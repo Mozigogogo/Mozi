@@ -1,6 +1,7 @@
 'use client';
 
-import { createStarsInvoice, getStarsOrderStatus } from '@/api/vip';
+import { createStarsInvoice } from '@/api/vip';
+import { getOrderStatus } from '@/api/payment';
 
 // 与其它地方保持一致：通过 localStorage.appChannel 判断是否在 Telegram 环境
 export function isTelegramEnv() {
@@ -15,10 +16,13 @@ export function isTelegramEnv() {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function pollStarsOrderStatus(orderNo, { maxAttempts = 5, interval = 1500, tabKey, planTitle } = {}) {
+async function pollOrderStatus(
+  orderNo,
+  { maxAttempts = 60, interval = 1500, tabKey, planTitle } = {}
+) {
   for (let i = 0; i < maxAttempts; i += 1) {
     try {
-      const statusRes = await getStarsOrderStatus(orderNo);
+      const statusRes = await getOrderStatus(orderNo);
       const statusData = statusRes?.data ?? statusRes;
       // eslint-disable-next-line no-console
       console.log('[VipPurchase][Stars] 订单状态：', statusData);
@@ -32,6 +36,10 @@ async function pollStarsOrderStatus(orderNo, { maxAttempts = 5, interval = 1500,
         } catch (e) {
           window.location.reload();
         }
+        return;
+      }
+
+      if (statusData?.status === 'FAILED' || statusData?.status === 'CANCELLED') {
         return;
       }
     } catch (err) {
@@ -109,8 +117,11 @@ export async function startVipPurchase({ tabKey, plan, payload }) {
         if (cb.status !== 'paid') return;
 
         // 3. 支付成功后轮询订单状态，等待后端 webhook 开通会员
-        pollStarsOrderStatus(orderNo, { tabKey, planTitle: plan?.title });
+        pollOrderStatus(orderNo, { tabKey, planTitle: plan?.title });
       });
+
+      // 兜底：即便 openInvoice callback 丢失，也持续轮询订单状态
+      pollOrderStatus(orderNo, { tabKey, planTitle: plan?.title });
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error('[VipPurchase][Stars] 整体流程失败：', e, meta);
