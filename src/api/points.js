@@ -67,14 +67,26 @@ export const getConsumeConfig = () => {
  * { "code": 0, "data": { "success": true, "remainingPoints": 800 } }
  */
 export const executeConsume = (data) => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
-  return request({
-    url: Interface.POINTS_CONSUME,
-    method: 'POST',
-    data,
-    headers: {
-      'Authentication': `Bearer ${token}`
-    }
+  // TODO: 临时关闭真实接口调用，方便联调/测试。
+  // 如需恢复，请取消下面这段注释：
+  //
+  // const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+  // return request({
+  //   url: Interface.POINTS_CONSUME,
+  //   method: 'POST',
+  //   data,
+  //   headers: {
+  //     'Authentication': `Bearer ${token}`
+  //   }
+  // });
+  //
+  // 当前返回一个模拟成功结果，不真正扣减积分。
+  return Promise.resolve({
+    code: 0,
+    data: {
+      success: true,
+      remainingPoints: Number.POSITIVE_INFINITY,
+    },
   });
 };
 
