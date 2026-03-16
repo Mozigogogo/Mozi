@@ -36,47 +36,66 @@
 
 /* Season Card */
 .seasonCard {
-  background: url('/point/point_head_bg.png') no-repeat center center;
-  background-size: 100% 100%;
+  display: flex;
+  flex-direction: column;
   border-radius: 20px;
-  padding:65px 20px 0;
   position: relative;
-  height: 200px; /* Adjust height as needed based on design */
   margin-bottom: 10px;
+  margin-top: 30px;
+  background: linear-gradient(90deg, #66E695 0.09%, rgba(167, 243, 208, 0.00) 99.92%);
+}
+
+.seasonCardTop {
+  padding: 0px 20px 0px;
+}
+
+.seasonCardBottom {
+  background: url('/point/point_content.png') no-repeat center center;
+  background-size: 100% 100%;
+  padding: 20px;
+  z-index: 3;
 }
 
 .linkImage {
   position: absolute;
-  bottom: -10%;
-  left: 20%;
-  transform: translateX(-50%);
-  width: 36px;
-  height: 36px;
+  bottom: -22px;
+  left: 20px;
+  width: 32px;
+  height: 32px;
   z-index: 10;
   pointer-events: none;
 }
 
 .linkImageRight {
   position: absolute;
-  bottom: -10%;
-  right: 20%;
-  transform: translateX(50%);
-  width: 36px;
-  height: 36px;
+  bottom: -22px;
+  right: 20px;
+  width: 32px;
+  height: 32px;
   z-index: 10;
   pointer-events: none;
 }
 
 .seasonHeader {
   display: flex;
+  position: relative;
+  padding: 12px 0px;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 25px;
+  align-items: center;
 }
 
 .seasonInfo {
   flex: 1;
   z-index: 2;
+}
+
+.seasonMascot {
+  position: absolute;
+  right: -20px;
+  top: -25px;
+  width: 200px;
+  height: auto;
+  pointer-events: none;
 }
 
 .seasonTitleRow {
@@ -167,15 +186,16 @@
 }
 
 .historyBtn {
-  border-radius: 100px;
+  border-radius: 999px;
   border: 0.5px solid #E9E9E9;
   background: var(--Color, rgba(255, 255, 255, 0.32));
-  padding: 6px 12px;
-  font-size: 12px;
+  padding: 8px 20px;
+  font-size: 14px;
   color: #333;
   cursor: pointer;
   white-space: nowrap;
   text-align: center;
+  font-weight: 500;
 }
 
 /* Pool Card */

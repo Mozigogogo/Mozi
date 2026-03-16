@@ -10,32 +10,41 @@ const SeasonCard = ({ pointsData }) => {
 
   return (
     <div className={styles.seasonCard}>
-      <div className={styles.seasonHeader}>
-        <div className={styles.seasonInfo}>
-          <div className={`${styles.treasuryTitle} ${isEnglish ? styles.treasuryTitleEn : ''}`}>
-            <span className={styles.treasuryTitleMozi}>MOZI</span>
-            <span className={styles.treasuryTitleAlpha}>
-              {t('pointsDetail.seasonCard.treasuryTitle') || 'Alpha Engine'}
-            </span>
+      <div className={styles.seasonCardTop}>
+        <div className={styles.seasonHeader}>
+          <div className={styles.seasonInfo}>
+            <div className={`${styles.treasuryTitle} ${isEnglish ? styles.treasuryTitleEn : ''}`}>
+              <span className={styles.treasuryTitleMozi}>MOZI</span>
+              <span className={styles.treasuryTitleAlpha}>
+                {t('pointsDetail.seasonCard.treasuryTitle') || 'Alpha Engine'}
+              </span>
+            </div>
+            <div className={styles.treasurySubtitle}>
+              {t('pointsDetail.seasonCard.treasurySubtitle') || 'Play · Earn · Build the Signal'}
+            </div>
           </div>
-          <div className={styles.treasurySubtitle}>
-            {t('pointsDetail.seasonCard.treasurySubtitle') || 'Play · Earn · Build the Signal'}
-          </div>
+          <img
+            src="/point/ip.png"
+            alt="Mozi mascot"
+            className={styles.seasonMascot}
+          />
         </div>
       </div>
 
-      <div className={styles.pointsRow}>
-        <div className={styles.totalPoints}>
-          <img src="/point/coin_icon@2x.png" alt="Coin" className={styles.coinIcon} />
-          <span>{pointsData.totalPoints}</span>
+      <div className={styles.seasonCardBottom}>
+        <div className={styles.pointsRow}>
+          <div className={styles.totalPoints}>
+            <img src="/icons/points.svg" alt="Points" className={styles.coinIcon} />
+            <span>{pointsData.totalPoints}</span>
+          </div>
+          <button className={styles.historyBtn} onClick={() => router.push('/pointshistory')}>
+            {t('pointsDetail.historyRecord') || 'Record'}
+          </button>
         </div>
-        <button className={styles.historyBtn} onClick={() => router.push('/pointshistory')}>
-          {t('pointsDetail.historyRecord') || '历史记录'}
-        </button>
-      </div>
 
-      <img src="/point/link.png" className={styles.linkImage} alt="Link" />
-      <img src="/point/link.png" className={styles.linkImageRight} alt="Link" />
+        <img src="/icons/link.svg" className={styles.linkImage} alt="Decoration left" />
+        <img src="/icons/link.svg" className={styles.linkImageRight} alt="Decoration right" />
+      </div>
     </div>
   );
 };
