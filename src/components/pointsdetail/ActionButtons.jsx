@@ -14,14 +14,12 @@ const ActionButtons = () => {
         <DeferredImg src="/point/alert_alarm.svg" alt="Alarm" width={24} height={24} />
         <div className={styles.actionButtonContent}>
           <span className={styles.actionButtonTitle}>{t('pointsDetail.addAlarm')}</span>
-          <span className={styles.actionButtonSubtitle}>{t('pointsDetail.addAlarmSubtitle') || 'Add an alarm'}</span>
         </div>
       </button>
       <button className={styles.actionButton} onClick={() => router.push('/kyc')}>
-        <DeferredImg src="/point/certification.png" alt="Cert" width={24} height={24} />
+        <DeferredImg src="/point/certification.svg" alt="Cert" width={24} height={24} />
         <div className={styles.actionButtonContent}>
           <span className={styles.actionButtonTitle}>{t('pointsDetail.certification')}</span>
-          <span className={styles.actionButtonSubtitle}>{t('pointsDetail.certificationSubtitle') || 'Certification'}</span>
         </div>
       </button>
     </div>

@@ -814,7 +814,7 @@
   border-radius: 20px;
   padding: 20px 12px;
   margin-bottom: 20px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1.06667vw 1.06667vw 0 rgba(144, 144, 144, 0.25);
   border: 1px solid #28C963;
   position: relative;
 }
@@ -1034,11 +1034,11 @@
 
 /* Task Lists */
 .taskListSection {
-  background: rgba(235, 255, 242, 1);
+  background: #fff;
   border-radius: 20px;
   padding: 20px;
-  border: 1px solid #28C963;
   position: relative;
+  box-shadow: 0 1.06667vw 1.06667vw 0 rgba(144, 144, 144, 0.25);
 }
 
 .inviteCardHeader {
@@ -1271,18 +1271,36 @@
   }
 }
 
+.dailyTaskIconWrapperLarge {
+  width: 52px;
+  height: 52px;
+
+  img {
+    width: 52px;
+    height: 52px;
+  }
+}
+
 .dailyTaskContent {
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 2px;
+  min-width: 0;
 }
 
 .dailyTaskTitle {
   font-size: 15px;
   font-weight: 700;
   color: #333;
+}
+
+.dailyTaskMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
 .dailyTaskReward {
@@ -1292,6 +1310,7 @@
   font-size: 12px;
   font-weight: 800;
   color: #FD8D38; /* Orange color for reward */
+  flex: 0 0 auto;
   
   .rewardIcon {
     width: 14px;
@@ -1321,6 +1340,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 1;
+  min-width: 0;
 }
 
 .progressTrack {
@@ -1361,11 +1382,20 @@
 }
 
 .progressText {
+  width: 78px;
+  height: 26px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: url('/point/progress_bg.svg') no-repeat center;
+  background-size: 100% 100%;
   font-size: 12px;
-  color: #999;
+  color: #fff;
   font-family: Roboto, sans-serif;
-  min-width: 32px;
-  text-align: right;
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.12);
 }
 
 .treasuryTitle {
