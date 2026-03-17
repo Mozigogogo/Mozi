@@ -2,6 +2,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import styles from '@/app/pointsdetail/page.module.less';
+import DeferredImg from './DeferredImg';
 
 const SeasonCard = ({ pointsData }) => {
   const router = useRouter();
@@ -23,10 +24,12 @@ const SeasonCard = ({ pointsData }) => {
               {t('pointsDetail.seasonCard.treasurySubtitle') || 'Play · Earn · Build the Signal'}
             </div>
           </div>
-          <img
+          <DeferredImg
             src="/point/ip.png"
             alt="Mozi mascot"
             className={styles.seasonMascot}
+            width={200}
+            height={200}
           />
         </div>
       </div>
@@ -34,7 +37,7 @@ const SeasonCard = ({ pointsData }) => {
       <div className={styles.seasonCardBottom}>
         <div className={styles.pointsRow}>
           <div className={styles.totalPoints}>
-            <img src="/icons/points.svg" alt="Points" className={styles.coinIcon} />
+            <DeferredImg src="/icons/points.svg" alt="Points" className={styles.coinIcon} width={40} height={40} />
             <span>{pointsData.totalPoints}</span>
           </div>
           <button className={styles.historyBtn} onClick={() => router.push('/pointshistory')}>
@@ -42,8 +45,8 @@ const SeasonCard = ({ pointsData }) => {
           </button>
         </div>
 
-        <img src="/icons/link.svg" className={styles.linkImage} alt="Decoration left" />
-        <img src="/icons/link.svg" className={styles.linkImageRight} alt="Decoration right" />
+        <DeferredImg src="/icons/link.svg" className={styles.linkImage} alt="Decoration left" width={32} height={32} />
+        <DeferredImg src="/icons/link.svg" className={styles.linkImageRight} alt="Decoration right" width={32} height={32} />
       </div>
     </div>
   );

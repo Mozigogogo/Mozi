@@ -214,10 +214,38 @@
   margin-bottom: 24px;
 }
 
+.poolTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.poolTitleIcon {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+}
+
+.poolTitleContainer {
+  display: inline-flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.poolTitleUnderline {
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  z-index: 0;
+  width: 100%;
+}
+
 .poolTitle {
   font-size: 18px;
   font-weight: 700;
   color: #1A1A1A;
+  z-index: 1;
 }
 
 .poolTagSufficient {
@@ -255,6 +283,7 @@
 .poolRemainingLabel {
   font-size: 12px;
   color: #999;
+  text-transform: uppercase;
   margin-bottom: 6px; /* Slightly adjust to align with text baseline visually */
 }
 
@@ -362,6 +391,13 @@
   line-height: 1;
 }
 
+.poolPercentTextFull {
+  font-size: 32px;
+  font-weight: 800;
+  color: #2FC362;
+  line-height: 1;
+}
+
 /* Progress Fill - Alert Style */
 .fillAlert {
   background: linear-gradient(90deg, #FD8D38 0%, #FC3B43 100%);
@@ -393,20 +429,24 @@
 
 .poolStatsGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
   margin-bottom: 24px;
 }
 
 .poolStatBox {
-  background: #F8F9FB; /* Slightly lighter gray */
   border-radius: 16px;
-  padding: 16px;
+  border: 1px solid #F1F5F9;
+  background: #F8FAFC;
+  box-shadow: 0 4px 4px 0 rgba(144, 144, 144, 0.25);
+  padding: 10px 8px 8px 10px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  border: 1px solid #F1F5F9;
   height: 80px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .statLabel {
@@ -416,19 +456,34 @@
 }
 
 .statValue {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 900;
   color: #1A1A1A;
   font-family: DIN, -apple-system, sans-serif;
 }
 
+.statValueRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.statIcon {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+}
+
 /* Countdown Section */
 .poolCountdownSection {
-  background: #F9FAFB;
+  background: #F8FAFC;
   border-radius: 16px;
   padding: 16px;
   margin-bottom: 24px;
   border: 1px solid #F1F5F9;
+  box-shadow: 0 4px 4px 0 rgba(144, 144, 144, 0.25);
 }
 
 .countdownHeader {
@@ -497,13 +552,90 @@
   margin-bottom: 24px;
 }
 
-/* Pool Event Banner - Scarce Mode */
-.poolEventBannerScarce {
-  background: #FFF7E7;
-  border: 1px solid rgba(255, 138, 34, 0.30);
+/* Pool Event Banner - Boost/Weekend Double Mode */
+.poolEventBannerBoost {
   border-radius: 16px;
+  background: #284D46;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 10px 18px -10px rgba(0, 0, 0, 0.35);
+  padding: 16px 16px 16px 12px;
+  margin-bottom: 24px;
+}
+
+.eventHeaderBoost {
+  display: flex;
+  align-items: center;
+}
+
+.eventIconBoost {
+  width: 30px;
+  height: 30px;
+}
+
+.eventTitleBoost {
+  color: #B0F2D7;
+  font-family: Inter;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.eventTagBoost {
+  background: #FF9F0A;
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: bold;
+  margin-left: 4px;
+}
+
+.eventListBoost {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-left: 16px;
+}
+
+.eventItemBoost {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #72D797;
+  line-height: 16px;
+}
+
+.starIconBoost {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+}
+
+.highlightTextBoost {
+  color: rgba(255, 229, 81, 1);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+/* Pool Event Banner - Normal Mode (Points Tips) */
+.poolEventBannerNormal {
+  border-radius: 16px;
+  background: #284D46;
+  box-shadow: 0 4px 4px 0 rgba(144, 144, 144, 0.25);
   padding: 16px 0 16px 12px;
   margin-bottom: 24px;
+}
+
+/* Pool Event Banner - Scarce Mode */
+.poolEventBannerScarce {
+  background: #FFF3E7;
+  border: 1px solid rgba(255, 59, 65, 0.22);
+  border-radius: 16px;
+  padding: 16px 16px 16px 12px;
+  margin-bottom: 24px;
+  box-shadow: 0 10px 18px -10px rgba(0, 0, 0, 0.18);
 }
 
 .eventHeader {
@@ -514,8 +646,8 @@
 }
 
 .eventIcon {
-  width: 26px;
-  height: 26px;
+  width: 32px;
+  height: 32px;
 }
 
 .eventTitle {
@@ -526,13 +658,15 @@
 
 .eventTitleScarce {
   font-size: 15px;
-  font-weight: bold;
+  font-weight: 700;
   color: #FF3B41;
 }
 
-.dotIcon {
-  width: 6px;
-  height: 6px;
+.scarceBulletIcon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  filter: brightness(0) saturate(100%) invert(54%) sepia(73%) saturate(2278%) hue-rotate(347deg) brightness(102%) contrast(101%);
 }
 
 .eventTag {
@@ -548,16 +682,17 @@
 .eventList {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-left: 16px;
+  gap: 10px;
+  margin-left: 0;
 }
 
 .eventItem {
   display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: #666;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 18px;
+  color: rgba(0, 0, 0, 0.72);
 }
 
 .highlightText {
@@ -572,6 +707,11 @@
   font-size: 14px;
 }
 
+.highlightGreen {
+  color: #10B981;
+  font-weight: 500;
+}
+
 .starIcon {
   width: 9px;
   height: 9px;
@@ -581,23 +721,50 @@
   width: 100%;
   height: 52px;
   border-radius: 196px; 
-  background: linear-gradient(90deg, #FD8639 0%, #FCCB37 100%), linear-gradient(90deg, #23C55F 0%, #49DE7F 100%); 
+  background: linear-gradient(90deg, #493827 0%, #694729 100%);
   box-shadow: 0 4px 4px 0 rgba(253, 138, 57, 0.20);
   border: none;
   color: #fff;
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 600;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 16px;
   cursor: pointer;
   margin-top: 10px;
+  padding: 0 20px;
 }
 
 .crownIcon {
   width: 28px;
   height: 28px;
+}
+
+.upgradeText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.2;
+}
+
+.upgradeTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #FCE9C9;
+}
+
+.upgradeSubtitle {
+  font-size: 12px;
+  font-weight: 400;
+  color: #D2BDA0;
+}
+
+.upgradeArrow {
+  margin-left: auto;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
 }
 
 .tipsIcon {
@@ -621,6 +788,25 @@
   margin-left: 24px;
 }
 
+.tipsTitleNormal {
+  color: #B0F2D7;
+  font-family: Inter;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 16px; /* 114.286% */
+}
+
+.tipsTextNormal {
+  color: #72D797;
+  font-family: Inter;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 12px; /* 120% */
+  margin-left: 24px;
+}
+
 /* Invite Card */
 .inviteCard {
   background: url('/point/invite_bg.png') no-repeat center center;
@@ -628,7 +814,7 @@
   border-radius: 20px;
   padding: 20px 12px;
   margin-bottom: 20px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1.06667vw 1.06667vw 0 rgba(144, 144, 144, 0.25);
   border: 1px solid #28C963;
   position: relative;
 }
@@ -642,11 +828,11 @@
 }
 
 .inviteIcon {
-  width: 60px;
-  height: 60px;
+  width: 52px;
+  height: 52px;
   position: absolute;
-  top: -5px;
-  left: 12px;
+  top: 5px;
+  left: 20px;
 }
 
 .inviteTitleContainer {
@@ -674,9 +860,10 @@
   display: flex;
   gap: 12px;
   margin-bottom: 20px;
-  background: rgba(255, 255, 255, 0.60);
+    border-radius: 16px;
   border: 1px solid #F1F5F9;
-  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.60);
+  box-shadow: 0 1.06667vw 1.06667vw 0 rgba(144, 144, 144, 0.25);
 }
 
 .inviteRewardType {
@@ -726,7 +913,21 @@
 }
 
 .inviteInputLabel {
-  display: none;
+  display: block;
+  font-size: 12px;
+  color: #94A3B8;
+  line-height: 16px;
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.inviteInputLeft {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
 }
 
 .inviteInputWrapper {
@@ -737,6 +938,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  box-shadow: 0 1.06667vw 1.06667vw 0 rgba(144, 144, 144, 0.25);
 }
 
 .inviteLinkText {
@@ -745,7 +947,8 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-right: 10px;
+  margin-right: 0;
+  min-width: 0;
 }
 
 .copyBtn {
@@ -771,6 +974,7 @@
 .inviteStatBox {
   background: #fff;
   border: 1px solid #F0F0F0;
+  box-shadow: 0 1.06667vw 1.06667vw 0 rgba(144, 144, 144, 0.25);
   border-radius: 12px;
   padding: 16px;
   text-align: center;
@@ -830,11 +1034,11 @@
 
 /* Task Lists */
 .taskListSection {
-  background: rgba(235, 255, 242, 1);
+  background: #fff;
   border-radius: 20px;
   padding: 20px;
-  border: 1px solid #28C963;
   position: relative;
+  box-shadow: 0 1.06667vw 1.06667vw 0 rgba(144, 144, 144, 0.25);
 }
 
 .inviteCardHeader {
@@ -854,12 +1058,12 @@
 .taskItem {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   background: #fff;
-  padding: 12px 8px 12px 12px;
+  padding: 12px 8px 12px 8px;
   border-radius: 16px;
   border: 1px solid #F5F7FA;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  box-shadow: 0 1.06667vw 1.06667vw 0 rgba(144, 144, 144, 0.25);
 }
 
 .taskIconWrapper {
@@ -870,11 +1074,17 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  background: transparent;
   
   .taskIconImg {
-    width: 18px;
-    height: 18px;
+    width: 36px;
+    height: 36px;
     object-fit: contain;
+  }
+
+  img[src*="setting_alert.svg"] {
+    width: 44px;
+    height: 44px;
   }
 }
 
@@ -883,13 +1093,13 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  margin-left: 2px;
 }
 
 .taskName {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
   color: #333;
-  margin-bottom: 4px;
   line-height: 1.2;
 }
 
@@ -897,6 +1107,20 @@
   font-size: 12px;
   color: #999;
   line-height: 1;
+}
+
+.taskSubText {
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(142, 148, 157, 1);
+  line-height: 1.2;
+}
+
+.taskMetaRow {
+  display: flex;
+  align-items: center;
+  margin-top: 2px;
+  min-width: 0;
 }
 
 .taskBtn {
@@ -914,6 +1138,55 @@
   text-align: center;
   white-space: nowrap;
   
+  &.setupBtn {
+    background: url('/point/setup_btn.svg') no-repeat center;
+    background-size: 100% 100%;
+    color: #fff;
+    box-shadow: none;
+  }
+
+  &.profileBtn {
+    background: url('/point/profile_btn.svg') no-repeat center;
+    background-size: 100% 100%;
+    color: #fff;
+    box-shadow: none;
+  }
+
+  &.postBtn {
+    background: url('/point/post_btn.svg') no-repeat center;
+    background-size: 100% 100%;
+    color: #fff;
+    box-shadow: none;
+  }
+
+  &.addBtn {
+    background: url('/point/add_btn.svg') no-repeat center;
+    background-size: 100% 100%;
+    color: #fff;
+    box-shadow: none;
+  }
+
+  &.loginBtn {
+    background: url('/point/login_btn.svg') no-repeat center;
+    background-size: 100% 100%;
+    color: #fff;
+    box-shadow: none;
+  }
+
+  &.followBtn {
+    background: url('/point/follow_btn.svg') no-repeat center;
+    background-size: 100% 100%;
+    color: #fff;
+    box-shadow: none;
+  }
+
+  &.joinBtn {
+    background: url('/point/join_btn.svg') no-repeat center;
+    background-size: 100% 100%;
+    color: #fff;
+    box-shadow: none;
+  }
+
   &.highlight {
     background: #FF8F1F;
     color: #fff;
@@ -937,6 +1210,38 @@
   }
 }
 
+.firstLoginCompletedBtn {
+  position: relative;
+  height: 26px;
+  width: 78px;
+  min-width: 78px;
+  padding: 0;
+  border-radius: 13px;
+  line-height: 26px;
+  color: #fff;
+  font-weight: 700;
+  border: none;
+  box-shadow: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+}
+
+.taskBtn.firstLoginCompletedBtn {
+  color: #fff;
+  background: url('/point/first_login_btn.svg') no-repeat center;
+  background-size: 100% 100%;
+}
+
+/* completed 状态下 .taskBtn.completed 的背景优先级更高，需要显式覆盖 */
+.taskBtn.completed.firstLoginCompletedBtn {
+  background: url('/point/first_login_btn.svg') no-repeat center;
+  background-size: 100% 100%;
+  color: #fff;
+}
+
+
 /* Daily Task Item (Progress Bar Style) */
 .dailyTaskItem {
   display: flex;
@@ -946,7 +1251,7 @@
   padding: 16px;
   border-radius: 16px;
   border: 1px solid #F5F7FA;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  box-shadow: 0 1px 6px -2px rgba(0, 0, 0, 0.20);
 }
 
 .dailyTaskIconWrapper {
@@ -957,11 +1262,22 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  background: transparent;
   
   img {
-    width: 18px;
-    height: 18px;
+    width: 36px;
+    height: 36px;
     object-fit: contain;
+  }
+}
+
+.dailyTaskIconWrapperLarge {
+  width: 52px;
+  height: 52px;
+
+  img {
+    width: 52px;
+    height: 52px;
   }
 }
 
@@ -971,6 +1287,7 @@
   flex-direction: column;
   justify-content: center;
   gap: 2px;
+  min-width: 0;
 }
 
 .dailyTaskTitle {
@@ -979,13 +1296,21 @@
   color: #333;
 }
 
+.dailyTaskMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .dailyTaskReward {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 13px;
+  gap: 2px;
+  font-size: 12px;
   font-weight: 800;
   color: #FD8D38; /* Orange color for reward */
+  flex: 0 0 auto;
   
   .rewardIcon {
     width: 14px;
@@ -994,10 +1319,29 @@
   }
 }
 
+.taskRewardPill {
+  display: flex;
+  height: 20px;
+  padding: 2px 9px 3px 9px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border-radius: 10px;
+  background: linear-gradient(262deg, rgba(150, 255, 152, 0.52) 12.87%, rgba(247, 255, 186, 0.52) 87.82%);
+  color: rgba(87, 143, 19, 1);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
 .progressBarContainer {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 1;
+  min-width: 0;
 }
 
 .progressTrack {
@@ -1038,11 +1382,20 @@
 }
 
 .progressText {
+  width: 78px;
+  height: 26px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: url('/point/progress_bg.svg') no-repeat center;
+  background-size: 100% 100%;
   font-size: 12px;
-  color: #999;
+  color: #fff;
   font-family: Roboto, sans-serif;
-  min-width: 32px;
-  text-align: right;
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.12);
 }
 
 .treasuryTitle {

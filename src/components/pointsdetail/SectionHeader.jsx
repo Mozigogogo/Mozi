@@ -1,10 +1,11 @@
 import React from 'react';
 import styles from '@/app/pointsdetail/page.module.less';
+import DeferredImg from './DeferredImg';
 
 export default function SectionHeader({ iconSrc, iconAlt = '', title }) {
   return (
     <div className={styles.inviteCardHeader}>
-      <img src={iconSrc} className={styles.inviteIcon} alt={iconAlt} />
+      <DeferredImg src={iconSrc} className={styles.inviteIcon} alt={iconAlt} width={52} height={52} />
       <div className={styles.inviteTitleContainer}>
         <span className={styles.inviteTitle}>{title}</span>
         <svg
