@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import styles from '@/app/pointsdetail/page.module.less';
 import SectionHeader from './SectionHeader';
 import SectionSkeleton from './SectionSkeleton';
+import DeferredImg from './DeferredImg';
 
 const DailyTasks = ({ dailyInvestments, loading }) => {
   const { t } = useTranslation();
@@ -28,14 +29,14 @@ const DailyTasks = ({ dailyInvestments, loading }) => {
         <div className={styles.taskList}>
           {dailyInvestments.map((task) => (
             <div key={task.id} className={styles.dailyTaskItem}>
-              <div className={styles.dailyTaskIconWrapper} style={{ backgroundColor: task.bgColor }}>
-                <img src={task.icon} alt={task.title} />
+              <div className={styles.dailyTaskIconWrapper}>
+                <DeferredImg src={task.icon} alt={task.title} width={36} height={36} />
               </div>
               <div className={styles.dailyTaskContent}>
                 <div className={styles.dailyTaskTitle}>{t(task.titleKey) || task.title}</div>
                 <div className={styles.dailyTaskReward}>
                   <span>+{task.reward}</span>
-                  <img src="/point/coin_icon@2x.png" className={styles.rewardIcon} alt="point" />
+                  <DeferredImg src="/point/new_coin.svg" className={styles.rewardIcon} alt="point" width={14} height={14} />
                 </div>
                 <div className={styles.progressBarContainer}>
                   <div className={styles.progressTrack}>

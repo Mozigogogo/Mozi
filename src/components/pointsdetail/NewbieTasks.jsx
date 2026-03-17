@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import styles from '@/app/pointsdetail/page.module.less';
 import SectionHeader from './SectionHeader';
 import SectionSkeleton from './SectionSkeleton';
+import DeferredImg from './DeferredImg';
 
 const NewbieTasks = ({ tasksList, handleTaskClick, loading, verifyingTaskId }) => {
   const { t } = useTranslation();
@@ -27,34 +28,62 @@ const NewbieTasks = ({ tasksList, handleTaskClick, loading, verifyingTaskId }) =
       ) : (
         <div className={styles.taskList}>
           {tasksList.map((task) => (
+            (() => {
+              const isCompleted = task?.isCompleted === true || task?.status === 'completed';
+              return (
             <div key={task.id} className={styles.taskItem}>
-              <div className={styles.taskIconWrapper} style={{ backgroundColor: task.bgColor }}>
-                <img src={task.icon} alt={task.title} className={styles.taskIconImg} />
+              <div className={styles.taskIconWrapper}>
+                <DeferredImg
+                  src={task.icon}
+                  alt={task.title}
+                  className={styles.taskIconImg}
+                  width={36}
+                  height={36}
+                />
               </div>
               <div className={styles.taskInfo}>
                 <div className={styles.taskName}>
                   {t(task.titleKey) || task.title}
+                </div>
+                <div className={styles.taskMetaRow}>
+                  <div className={styles.dailyTaskReward}>
+                    <span>+{task.points}</span>
+                    <DeferredImg src="/point/new_coin.svg" className={styles.rewardIcon} alt="point" width={14} height={14} />
+                  </div>
                   {(task.taskCode === 'PUSH' || task.taskCode === 'FIRST_POST') && (
-                    <span style={{ color: 'rgba(142, 148, 157, 1)', fontSize: '12px', fontWeight: 'normal' }}>
-                      {t('pointsDetail.tasks.push.note') || ' (大于50字)'}
-                    </span>
+                    <div className={styles.taskSubText}>{t('pointsDetail.tasks.push.note') || 'more than 50'}</div>
                   )}
                   {(task.taskCode === 'ADD' || task.taskCode === 'ADD_WATCHLIST') && (
-                    <span style={{ color: 'rgba(142, 148, 157, 1)', fontSize: '12px', fontWeight: 'normal' }}>
-                      {t('pointsDetail.tasks.add.note') || ' (>=3个)'}
-                    </span>
+                    <div className={styles.taskSubText}>{t('pointsDetail.tasks.add.note') || 'more than 3'}</div>
                   )}
                 </div>
-                <div className={styles.dailyTaskReward}>
-                  <span>+{task.points}</span>
-                  <img src="/point/coin_icon@2x.png" className={styles.rewardIcon} alt="point" />
-                </div>
+              </div>
+              <div className={styles.taskRewardPill}>
+                <span>+{task.points}</span>
               </div>
               <button
-                className={`${styles.taskBtn} ${task.status === 'completed' ? styles.completed : ''} ${
+                className={`${styles.taskBtn} ${isCompleted ? styles.completed : ''} ${
+                  isCompleted && (task.taskCode === 'REGISTER' || task.taskCode === 'FIRST_LOGIN')
+                    ? styles.firstLoginCompletedBtn
+                    : ''
+                } ${
+                  task.taskCode === 'ALARM' || task.taskCode === 'SET_ALARM' ? styles.setupBtn : ''
+                } ${
+                  task.taskCode === 'COMPLETE_PROFILE' || task.taskCode === 'USER_INFO' ? styles.profileBtn : ''
+                } ${
+                  task.taskCode === 'PUSH' || task.taskCode === 'FIRST_POST' ? styles.postBtn : ''
+                } ${
+                  task.taskCode === 'ADD' || task.taskCode === 'ADD_WATCHLIST' ? styles.addBtn : ''
+                } ${
+                  task.taskCode === 'EARLY_BIRD' ? styles.loginBtn : ''
+                } ${
+                  task.taskCode === 'FOLLOW_TWITTER' || task.taskCode === 'TWITTER' ? styles.followBtn : ''
+                } ${
+                  task.taskCode === 'COMMUNITY' || task.taskCode === 'JOIN_COMMUNITY' ? styles.joinBtn : ''
+                } ${
                   verifyingTaskId === task.id
                     ? styles.loading
-                    : !task.needsAction && task.status !== 'completed'
+                    : !task.needsAction && !isCompleted
                       ? styles.highlight
                       : ''
                 }`}
@@ -66,7 +95,7 @@ const NewbieTasks = ({ tasksList, handleTaskClick, loading, verifyingTaskId }) =
                     <span className={styles.loadingSpinnerSmall} />
                     {t('pointsDetail.verifying') || '验证中...'}
                   </>
-                ) : task.status === 'completed' ? (
+                ) : isCompleted ? (
                   t('pointsDetail.completed')
                 ) : !task.needsAction ? (
                   t('pointsDetail.verify') || '验证'
@@ -75,6 +104,8 @@ const NewbieTasks = ({ tasksList, handleTaskClick, loading, verifyingTaskId }) =
                 )}
               </button>
             </div>
+              );
+            })()
           ))}
         </div>
       )}

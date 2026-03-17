@@ -401,6 +401,7 @@ export default function PointsDetail() {
               titleKey: `pointsDetail.tasks.${taskKey}.title`,
               btnTextKey: `pointsDetail.tasks.${taskKey}.button`,
               points: task.rewardPoints || 0,
+              isCompleted: !!task.isCompleted,
               status: task.isCompleted ? 'completed' : 'pending',
               needsAction: !task.isCompleted
             };
@@ -503,7 +504,7 @@ export default function PointsDetail() {
         // 验证成功，更新为已完成
         const updatedTasks = tasksList.map(t => 
           t.id === task.id 
-            ? { ...t, status: 'completed', needsAction: false }
+            ? { ...t, isCompleted: true, status: 'completed', needsAction: false }
             : t
         );
         setTasksList(updatedTasks);

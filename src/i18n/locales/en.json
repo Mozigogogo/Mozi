@@ -881,38 +881,39 @@
       "treasuryTitle": "Alpha Engine",
       "treasurySubtitle": "Play · Earn · Build the Signal"
     },
-    "poolTitleText": "Monthly Pool Status",
-    "poolSufficient": "Sufficient",
-    "poolRemaining": "Remaining",
-    "poolDistributed": "Distributed",
-    "poolMineable": "Remaining",
+    "poolTitleText": "Points pool status",
+    "poolSufficient": "Full",
+    "poolRemaining": "Remaining Points",
+    "poolDistributed": "Points Rewarded",
+    "poolMineable": "Points Balance",
     "poolScarce": "Scarce",
-    "poolResetCountdown": "Reset Countdown",
+    "poolResetCountdown": "Reset until next month",
     "poolDays": "Days",
     "poolHours": "Hrs",
     "poolMinutes": "Mins",
-    "poolScarceTitle": "Pool points low!",
-    "poolScarceDesc1_part1": "Task rewards dropped to ",
-    "poolScarceDesc1_highlight": "30% OFF",
-    "poolScarceDesc1_part2": " (Base 10 → Now 7 points)",
-    "poolScarceDesc2_part1": "Est. ",
+    "poolScarceTitle": "Limited reward pool !",
+    "poolScarceDesc1_part1": "The task reward has been reduced to ",
+    "poolScarceDesc1_highlight": "70%",
+    "poolScarceDesc1_part2": " (base 10 points > now 7 points).",
+    "poolScarceDesc2_part1": "The points pool is expected to run out in ",
     "poolScarceDesc2_highlight": "7 days",
-    "poolScarceDesc2_part2": " until depleted",
-    "poolScarceDesc3": "VIP members are unaffected, efficiency 1.5-2x",
+    "poolScarceDesc2_part2": ".",
+    "poolScarceDesc3": "Membership users will not be affected, efficiency will remain at 1.5-2 times the normal level.",
     "poolNormalTitle": "Points Tips",
-    "poolNormalDesc": "The earlier you join, the more you get! VIP members earn more efficiently and are unaffected by pool scarcity.",
-    "poolEventTitle": "Weekend Points Double!",
-    "poolEventDesc1_part1": "All task rewards ",
-    "poolEventDesc1_highlight": "x1.5",
-    "poolEventDesc1_part2": " (Post 10 -> 15 points)",
-    "poolEventDesc2_part1": "Event time: This weekend 48h (",
-    "poolEventDesc2_highlight": "42h left",
+    "poolNormalDesc": "The earlier you participate, the more you gain! Membership acquisition is more efficient and unaffected by pool scarcity.",
+    "poolEventTitle": "Weekend points double event !",
+    "poolEventDesc1_part1": "All task rewards are multiplied by ",
+    "poolEventDesc1_highlight": "1.5",
+    "poolEventDesc1_part2": " (posting points: 10 points → 15 points)",
+    "poolEventDesc2_part1": "Event duration: 48 hours this weekend (",
+    "poolEventDesc2_highlight": "42 hours remaining",
     "poolEventDesc2_part2": ")",
-    "poolEventDesc3": "Sufficient points, grab them now!",
-    "poolUpgradeMember": "Upgrade Member",
-    "inviteRewards": "Invite Rewards",
+    "poolEventDesc3": "You have plenty of points, so grab them while you can! Don't miss out!",
+    "poolUpgradeMember": "Unlock pro",
+    "poolUpgradeMemberSubtitle": "no pool limits",
+    "inviteRewards": "Referral Rewards",
     "inviteRegister": "Register",
-    "invitePay": "Purchase",
+    "invitePay": "Subscribed",
     "inviteLink": "Invite Link",
     "inviteCode": "Invite Code",
     "shareCount": "Total Invited",
@@ -933,7 +934,7 @@
     "addAlarmSubtitle": "Add an alarm",
     "certification": "Certification",
     "certificationSubtitle": "Certification",
-    "newbieTasks": "Newbie Tasks",
+    "newbieTasks": "Starter Quest Reward",
     "noTasks": "No tasks available",
     "dailyTasks": "Daily Tasks",
     "completed": "Completed",
@@ -954,23 +955,23 @@
     },
     "tasks": {
       "firstRegister": {
-        "title": "First Login",
+        "title": "Initial Login",
         "button": "Go"
       },
       "followTwitter": {
-        "title": "Follow X",
+        "title": "Follow Twitter",
         "button": "Follow"
       },
       "joinCommunity": {
-        "title": "Join Community",
+        "title": "Join Telegram",
         "button": "Join"
       },
       "earlyBird": {
-        "title": "Early Bird Reward",
+        "title": "Early Bird",
         "button": "Claim"
       },
       "setAlarm": {
-        "title": "Set Alert",
+        "title": "Setup Alerts",
         "button": "Set"
       },
       "videoLearn": {
@@ -1010,13 +1011,13 @@
         "button": "Go"
       },
       "push": {
-        "title": "First Post",
-        "note": " >50 words",
+        "title": "Post First Topic",
+        "note": " more than 50",
         "button": "Post"
       },
       "add": {
-        "title": "Add Watchlist",
-        "note": " 3 items or more",
+        "title": "Add To Watchlist",
+        "note": " more than 3",
         "button": "Add"
       },
       "share": {
@@ -1546,7 +1547,7 @@
       "aboutUs": "About Us",
       "service": "Service",
       "affiliate": "Affiliate",
-      "inviteRewards": "Invite Rewards",
+      "inviteRewards": "Referral Rewards",
       "helpCenter": "Help Center",
       "videoGuides": "Video Guides"
     },
