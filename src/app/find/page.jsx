@@ -15,6 +15,7 @@ import AddMonitor from '../../components/AddMonitor';
 import FloatingRobot from '../../components/FloatingRobot';
 import { Loading } from '../../components/Loading';
 import { RankGrid } from '../../components/Find/RankGrid';
+import { SkeletonCircle, SkeletonElement } from '@/components/Skeleton';
 import { request } from '../../utils/request';
 import { Interface, LOOPTIME } from '../../utils/constants';
 import { jump2Detail, jump2List } from '../../utils/core';
@@ -828,6 +829,29 @@ const loadingTimerRef = useRef(null);
 
   // 渲染行情列表
   const renderMarketList = () => {
+    const renderMarketSkeleton = () => (
+      <div className={styles.marketSkeleton}>
+        {Array.from({ length: 10 }).map((_, idx) => (
+          <div key={idx} className={styles.marketSkeletonRow}>
+            <div className={styles.marketSkeletonLeft}>
+              <SkeletonCircle size={24} />
+              <div className={styles.marketSkeletonText}>
+                <SkeletonElement width={72} height={12} borderRadius={6} />
+                <SkeletonElement width={96} height={10} borderRadius={6} style={{ marginTop: 6 }} />
+              </div>
+            </div>
+            <div className={styles.marketSkeletonMid}>
+              <SkeletonElement width={78} height={12} borderRadius={6} />
+              <SkeletonElement width={54} height={10} borderRadius={6} style={{ marginTop: 6 }} />
+            </div>
+            <div className={styles.marketSkeletonRight}>
+              <SkeletonElement width={60} height={12} borderRadius={6} />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+
     return (
       <>
         {/* 市场概况横向滑动卡片 */}
@@ -835,7 +859,7 @@ const loadingTimerRef = useRef(null);
         
         <div className={styles.marketBox}>
           <PullToRefresh onRefresh={handleRefresh}>
-            <Layout isLoading={marketLoading} isError={isMarketError} loadingTop={120}>
+            <Layout isLoading={false} isError={isMarketError} loadingTop={120}>
               <div className={styles.gridTitle}>
                 {[
                   { name: t('discover.columns.symbolMarketCap'), width: '30%' },
@@ -851,19 +875,27 @@ const loadingTimerRef = useRef(null);
                   </div>
                 ))}
               </div>
-              <MoziGrid
-                length={3}
-                colName={[t('discover.columns.symbolMarketCap'), t('discover.columns.priceWithChange'), t('home.columns.change24h')]}
-                gridContent={marketData}
-                callback={(gridCon) => { jump2Detail(gridCon.key); }}
-                hideTitle={true}
-                enableLoadMore={true}
-                loadMore={loadMore}
-                hasMore={marketHasMore && isLoadingMore}
-                columnWidths={['30%', '38%', '32%']}
-              />
-              {!marketHasMore && marketData.length > 0 && !isLoadingMore && (
-                <div className={styles.loadFinish}>{t('discover.loadFinished')}</div>
+
+              {/* 初次加载：骨架屏脉冲加载（替代空白+Loading...） */}
+              {marketLoading && marketData.length === 0 ? (
+                renderMarketSkeleton()
+              ) : (
+                <>
+                  <MoziGrid
+                    length={3}
+                    colName={[t('discover.columns.symbolMarketCap'), t('discover.columns.priceWithChange'), t('home.columns.change24h')]}
+                    gridContent={marketData}
+                    callback={(gridCon) => { jump2Detail(gridCon.key); }}
+                    hideTitle={true}
+                    enableLoadMore={true}
+                    loadMore={loadMore}
+                    hasMore={marketHasMore && isLoadingMore}
+                    columnWidths={['30%', '38%', '32%']}
+                  />
+                  {!marketHasMore && marketData.length > 0 && !isLoadingMore && (
+                    <div className={styles.loadFinish}>{t('discover.loadFinished')}</div>
+                  )}
+                </>
               )}
             </Layout>
           </PullToRefresh>

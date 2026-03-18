@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import styles from './page.module.less';
+import { SkeletonElement } from '@/components/Skeleton';
 
 export default function PointsHistoryPage() {
   const router = useRouter();
@@ -148,6 +149,44 @@ export default function PointsHistoryPage() {
     return iconMap[taskCode] || '/point/daily_login.svg';
   };
 
+  // taskCode -> i18n key（复用 pointsDetail.tasks.*.title 配置）
+  const taskTitleKeyMap = {
+    REGISTER: 'firstRegister',
+    FIRST_LOGIN: 'firstRegister',
+    FOLLOW_TWITTER: 'followTwitter',
+    TWITTER: 'followTwitter',
+    JOIN_COMMUNITY: 'joinCommunity',
+    COMMUNITY: 'joinCommunity',
+    EARLY_BIRD: 'earlyBird',
+    SET_ALARM: 'setAlarm',
+    ALARM: 'setAlarm',
+    VIDEO_LEARN: 'videoLearn',
+    VIDEO: 'videoLearn',
+    WECHAT: 'followTwitter',
+    DAILY_LOGIN: 'dailyLogin',
+    INVITE_USER: 'inviteUser',
+    USER_INFO: 'userInfo',
+    COMPLETE_PROFILE: 'userInfo',
+    ADD: 'add',
+    ADD_WATCHLIST: 'add',
+    PUSH: 'push',
+    FIRST_POST: 'push',
+
+    // 每日任务
+    DAILY_LIKE: 'dailyLike',
+    POST: 'post',
+    RECEIVE_LIKE: 'receiveLike',
+    REPLY: 'reply',
+    POST_RECEIVE_REPLY: 'postReceiveReply',
+    SHARE: 'share',
+  };
+
+  const getTaskTitle = (item) => {
+    const key = taskTitleKeyMap[item?.taskCode];
+    if (!key) return item?.taskName || '';
+    return t(`pointsDetail.tasks.${key}.title`, item?.taskName || '');
+  };
+
   return (
       <div className={styles.pointsHistoryContainer}>
         {/* 顶部导航 */}
@@ -160,7 +199,23 @@ export default function PointsHistoryPage() {
 
         {/* 历史记录列表 */}
         <div className={styles.historyScroll} ref={scrollRef} onScroll={handleScroll}>
-          {historyList.length === 0 && !loading && (
+          {/* 骨架屏：首次加载且暂无数据时显示 */}
+          {loading && historyList.length === 0 && (
+            <div className={styles.skeletonList}>
+              {Array.from({ length: 4 }).map((_, idx) => (
+                <div key={idx} className={styles.skeletonItem}>
+                  <SkeletonElement width={40} height={40} borderRadius={12} />
+                  <div className={styles.skeletonText}>
+                    <SkeletonElement width="60%" height={14} />
+                    <SkeletonElement width="40%" height={12} />
+                  </div>
+                  <SkeletonElement width={48} height={18} borderRadius={999} />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!loading && historyList.length === 0 && (
             <div className={styles.emptyState}>
               <div className={styles.emptyText}>{t('pointsHistory.empty')}</div>
             </div>
@@ -169,22 +224,25 @@ export default function PointsHistoryPage() {
           {historyList.map(item => (
             <div key={item.id} className={styles.historyItem}>
               <div className={styles.itemIcon}>
-                <img src={getTypeIcon(item.taskCode)} className={styles.iconImg} alt={item.taskName} />
+                <img src={getTypeIcon(item.taskCode)} className={styles.iconImg} alt={getTaskTitle(item)} />
               </div>
               
               <div className={styles.itemContent}>
                 <div className={styles.itemHeader}>
-                  <div className={styles.itemTitle}>{item.taskName}</div>
-                  <div className={styles.itemPoints}>
-                    <span className={`${styles.pointsText} ${item.points >= 0 ? styles.add : styles.sub}`}>
-                      {item.points >= 0 ? '+' : ''}{item.points}
-                    </span>
-                    <img src="/point/coin_icon@2x.png" className={styles.coinIcon} alt="积分" />
-                  </div>
+                  <div className={styles.itemTitle}>{getTaskTitle(item)}</div>
                 </div>
                 
                 <div className={styles.itemFooter}>
                   <span className={styles.itemTime}>{formatTime(item.createdAt)}</span>
+                </div>
+              </div>
+
+              <div className={styles.itemRight}>
+                <div className={styles.itemPoints}>
+                  <span className={`${styles.pointsText} ${item.points >= 0 ? styles.add : styles.sub}`}>
+                    {item.points >= 0 ? '+' : ''}{item.points}
+                  </span>
+                  <img src="/point/new_coin.svg" className={styles.coinIcon} alt="积分" />
                 </div>
               </div>
             </div>

@@ -26,6 +26,7 @@ import { useTranslation } from 'react-i18next';
 import { useAlertConfig } from '@/hooks/useAlertConfig';
 import { completeTask } from '@/api/user';
 import { executeConsume } from '@/api/points';
+import { getMySubscription } from '@/api/vip';
 import {
   WS_EVENTS,
   PLATFORMS,
@@ -98,11 +99,85 @@ export default function DetailPage() {
   const [isBigOrderUnlocked, setIsBigOrderUnlocked] = useState(false);
   const [unlockEndTime, setUnlockEndTime] = useState(null);
   const [orderBookTag, setOrderBookTag] = useState(null);
+  const [mySubscription, setMySubscription] = useState(null);
+
+  const isVipBySubscription = (sub) => {
+    if (!sub) return false;
+    if (sub?.isVip === true) return true;
+    const planRaw = sub?.tierCode || sub?.planCode || sub?.plan_name || sub?.plan || sub?.tier || '';
+    const plan = String(planRaw || '').toUpperCase();
+    if (!plan) return false;
+    return plan !== 'FREE' && plan !== '0' && plan !== 'NONE';
+  };
+
+  const getSubscriptionTier = (sub) => {
+    const tierCode = String(sub?.tierCode || '').toUpperCase();
+    if (tierCode === 'PRO') return 'pro';
+    if (tierCode === 'LITE') return 'lite';
+    if (tierCode === 'FREE') return 'free';
+
+    const planRaw = sub?.planCode || sub?.plan_name || sub?.plan || sub?.tier || '';
+    const plan = String(planRaw || '').toUpperCase();
+    if (plan.includes('PRO')) return 'pro';
+    if (plan.includes('LITE')) return 'lite';
+    return 'free';
+  };
+
+  const getOrderBookMaxRows = (tier) => {
+    if (tier === 'pro') return 40;
+    if (tier === 'lite') return 20;
+    return 5;
+  };
+
+  // 查询当前用户订阅/权益（用于详情页解锁逻辑等）
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const CACHE_KEY = 'mozi_my_subscription_cache_v1';
+    const TTL = 5 * 60 * 1000; // 5min
+    let alive = true;
+
+    try {
+      const cachedStr = localStorage.getItem(CACHE_KEY);
+      if (cachedStr) {
+        const cached = JSON.parse(cachedStr);
+        if (cached?.ts && Date.now() - cached.ts < TTL && cached?.data) {
+          setMySubscription(cached.data);
+        }
+      }
+    } catch (_) {}
+
+    getMySubscription()
+      .then((res) => {
+        if (!alive) return;
+        const data = res?.data ?? res;
+        setMySubscription(data);
+        try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
+        } catch (_) {}
+      })
+      .catch(() => {
+        // 静默失败：继续走本地/试用/积分解锁逻辑
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   // 初始化检查解锁状态
   useEffect(() => {
     const checkStatus = () => {
       // 1. 优先检查 VIP 状态 (最高优先级)
+      if (isVipBySubscription(mySubscription)) {
+        setIsBigOrderUnlocked(true);
+        setUnlockEndTime(null); // VIP 无倒计时
+        setOrderBookTag('VIP');
+        return;
+      }
+
       try {
         const userDataInfo = localStorage.getItem('userDataInfo');
         if (userDataInfo) {
@@ -183,7 +258,7 @@ export default function DetailPage() {
     };
 
     checkStatus();
-  }, [symbol, t]);
+  }, [symbol, t, mySubscription]);
 
   // 倒计时检查过期
   useEffect(() => {
@@ -239,6 +314,8 @@ export default function DetailPage() {
   const wsConnectionTimeoutRef = useRef(null); // WebSocket连接超时定时器
   const useHttpFallbackRef = useRef(false); // 是否使用HTTP降级
   const pollingTimerRef = useRef(null); // HTTP轮询定时器
+  const hasBigDealDataRef = useRef(false); // 是否收到过大单数据（避免 mock 覆盖）
+  const bigDealChannelIdRef = useRef(null); // big_deal 订阅频道ID（若服务端返回）
   
   
   // 获取币种信息
@@ -311,7 +388,7 @@ export default function DetailPage() {
   const generateMockOrderBook = (iconUrl) => {
     const genSide = () => {
       const baseValue = 10e9 + Math.random() * 4e9;
-      return Array.from({ length: 10 }).map((_, idx) => {
+      return Array.from({ length: 40 }).map((_, idx) => {
         const decay = 1 - idx * 0.1;
         const value = baseValue * decay * (0.9 + Math.random() * 0.2);
         return {
@@ -816,6 +893,19 @@ ${coinInfo.name || symbol} (${symbol})
       }).catch(err => {
         console.error('订阅 K线失败:', err);
       });
+
+      // 订阅大单侦测数据（big_deal）
+      // 对齐协议示例：
+      // { event:"subscribe", data:{ channels:[{ type:"big_deal", symbols:["BTC"] }] } }
+      const bigDealChannel = { type: 'big_deal', symbols: [String(symbol || '').toUpperCase()] };
+      ws.subscribe([bigDealChannel])
+        .then((response) => {
+          const channelId = response?.data?.channels?.[0]?.channelId;
+          if (channelId) bigDealChannelIdRef.current = channelId;
+        })
+        .catch((err) => {
+          console.error('订阅 big_deal 失败:', err);
+        });
     });
     
     // 监听 Ticker 数据更新
@@ -1192,6 +1282,48 @@ ${coinInfo.name || symbol} (${symbol})
         setMarketData(processedData);
       }
     });
+
+    // 监听大单侦测数据（big_deal）
+    ws.on('big_deal', (msg) => {
+      // Debug：保留原始推送，方便排查
+      console.log('📈 [big_deal] message:', msg);
+
+      const data = msg?.data;
+      if (!data) return;
+
+      const toNumber = (v) => {
+        const n = Number(v);
+        return Number.isFinite(n) ? n : null;
+      };
+
+      // 服务端结构（示例）：
+      // { event:"big_deal", data:{ base:"DOGE", buy:[{deal_price, deal_quantity,...}], sell:[...] } }
+      const buy = Array.isArray(data?.buy) ? data.buy : [];
+      const sell = Array.isArray(data?.sell) ? data.sell : [];
+      if (!buy.length && !sell.length) return;
+
+      // 统一映射为 OrderBook 组件需要的格式：[{ value }]
+      // 默认 value 使用成交额：deal_price * deal_quantity
+      // 若字段缺失则回退为 deal_quantity
+      const mapSide = (arr) =>
+        arr.map((x) => {
+          const price = toNumber(x?.deal_price);
+          const qty = toNumber(x?.deal_quantity);
+          const notional = price !== null && qty !== null ? price * qty : null;
+          return {
+            value: notional ?? qty ?? 0,
+          };
+        });
+
+      const bids = mapSide(buy);
+      const asks = mapSide(sell);
+
+      hasBigDealDataRef.current = true;
+      setOrderBook({
+        bids: bids.slice(0, 40),
+        asks: asks.slice(0, 40),
+      });
+    });
     
     // 监听WebSocket错误
     ws.on('error', (error) => {
@@ -1245,6 +1377,8 @@ ${coinInfo.name || symbol} (${symbol})
       currentKlineChannelRef.current = null;
       currentKlinePeriodRef.current = 'hour';
       isFirstRenderRef.current = true;
+      hasBigDealDataRef.current = false;
+      bigDealChannelIdRef.current = null;
       
       // 断开 WebSocket
       if (wsRef.current) {
@@ -1255,6 +1389,9 @@ ${coinInfo.name || symbol} (${symbol})
   }, [symbol]);
 
   useEffect(() => {
+    // 仅在尚未收到真实大单数据时使用 mock，避免覆盖 WS 数据
+    if (hasBigDealDataRef.current) return;
+    if (orderBook?.bids?.length || orderBook?.asks?.length) return;
     setOrderBook(generateMockOrderBook(coinInfo?.url));
   }, [symbol, coinInfo?.url]);
   
@@ -1446,6 +1583,15 @@ ${coinInfo.name || symbol} (${symbol})
   };
 
   const renderOrderBook = () => {
+    const tier = getSubscriptionTier(mySubscription);
+    const maxRows = getOrderBookMaxRows(tier);
+    const dropdownOptions =
+      tier === 'pro'
+        ? ['Top 40', 'Top 20', 'Top 5']
+        : tier === 'lite'
+          ? ['Top 20', 'Top 5']
+          : ['Top 5'];
+
     return (
       <OrderBook 
         bids={orderBook.bids} 
@@ -1455,8 +1601,8 @@ ${coinInfo.name || symbol} (${symbol})
         showMask={!isBigOrderUnlocked}
         onSubscribe={handleUnlockOrderBook}
         onBuyMembership={handleBuyMembership}
-        maxRows={5} // 解锁后也只显示Top 5
-        dropdownOptions={['Top 5']} // 限制下拉选项
+        maxRows={maxRows}
+        dropdownOptions={dropdownOptions}
         maskTitle={t('orderBook.maskTitle')}
         maskDescription={t('orderBook.maskDescription')}
         maskButtonText={t('orderBook.maskButtonText')}

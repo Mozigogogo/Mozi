@@ -16,12 +16,21 @@
   color: #2B2B2B;
   margin-left: 4px;
   position: relative;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   z-index: 1;
   padding: 8px 16px;
   
   background: url('/point/tab_bg_actived.png') no-repeat center center;
-  background-size: contain;
+  /* 让背景随文案宽度自适应，避免英文溢出背景 */
+  background-size: 100% 100%;
+
+  /* 极端长文案保护（如后续语言更长） */
+  max-width: calc(100vw - 32px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   
   /* Remove the previous underline style */
   &::after {

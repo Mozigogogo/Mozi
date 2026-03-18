@@ -352,6 +352,20 @@
   font-weight: 500;
 }
 
+.valueFlash {
+  display: inline-block;
+  animation: valueFlash 0.18s ease-out;
+}
+
+@keyframes valueFlash {
+  from {
+    opacity: 0.25;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .bidValue {
   color: #094533;
   background: rgba(249, 251, 250, 0.74);
