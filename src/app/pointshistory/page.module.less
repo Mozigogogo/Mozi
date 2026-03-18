@@ -94,7 +94,6 @@
 
       .itemHeader {
         display: flex;
-        justify-content: space-between;
         align-items: center;
 
         .itemTitle {
@@ -106,32 +105,6 @@
           text-overflow: ellipsis;
           white-space: nowrap;
           margin-right: 8px;
-        }
-
-        .itemPoints {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          flex-shrink: 0;
-
-          .pointsText {
-            font-size: 16px;
-            font-weight: 700;
-            
-            &.add {
-              color: #FEBE64;
-            }
-            
-            &.sub {
-              color: #FF4D4F;
-            }
-          }
-
-          .coinIcon {
-            width: 16px;
-            height: 16px;
-            object-fit: contain;
-          }
         }
       }
 
@@ -157,6 +130,44 @@
           white-space: nowrap;
           flex-shrink: 0;
         }
+      }
+    }
+
+    /* 右侧积分区域：单独容器，内部垂直居中 */
+    .itemRight {
+      width: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .itemPoints {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      flex-shrink: 0;
+
+      .pointsText {
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 1;
+
+        &.add {
+          color: #FEBE64;
+        }
+
+        &.sub {
+          color: #FF4D4F;
+        }
+      }
+
+      .coinIcon {
+        width: 20px;
+        height: 20px;
+        display: block;
+        object-fit: contain;
       }
     }
   }

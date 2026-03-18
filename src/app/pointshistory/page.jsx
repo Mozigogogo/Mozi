@@ -175,16 +175,19 @@ export default function PointsHistoryPage() {
               <div className={styles.itemContent}>
                 <div className={styles.itemHeader}>
                   <div className={styles.itemTitle}>{item.taskName}</div>
-                  <div className={styles.itemPoints}>
-                    <span className={`${styles.pointsText} ${item.points >= 0 ? styles.add : styles.sub}`}>
-                      {item.points >= 0 ? '+' : ''}{item.points}
-                    </span>
-                    <img src="/point/coin_icon@2x.png" className={styles.coinIcon} alt="积分" />
-                  </div>
                 </div>
                 
                 <div className={styles.itemFooter}>
                   <span className={styles.itemTime}>{formatTime(item.createdAt)}</span>
+                </div>
+              </div>
+
+              <div className={styles.itemRight}>
+                <div className={styles.itemPoints}>
+                  <span className={`${styles.pointsText} ${item.points >= 0 ? styles.add : styles.sub}`}>
+                    {item.points >= 0 ? '+' : ''}{item.points}
+                  </span>
+                  <img src="/point/new_coin.svg" className={styles.coinIcon} alt="积分" />
                 </div>
               </div>
             </div>
