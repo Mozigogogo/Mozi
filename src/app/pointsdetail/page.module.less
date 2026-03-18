@@ -1256,8 +1256,9 @@
 }
 
 .dailyTaskIconWrapper {
-  width: 36px;
-  height: 36px;
+  /* 固定图标列宽，保证所有行左侧对齐 */
+  width: 52px;
+  height: 52px;
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -1273,9 +1274,7 @@
 }
 
 .dailyTaskIconWrapperLarge {
-  width: 52px;
-  height: 52px;
-
+  /* 仅放大图标本身，不改变列宽，避免错位 */
   img {
     width: 52px;
     height: 52px;

@@ -114,24 +114,38 @@ export default function PointsHistoryPage() {
 
   // 根据 taskCode 获取类型图标（与积分中心任务图标保持一致）
   const getTypeIcon = (taskCode) => {
-    const icons = {
-      // 每日任务图标
-      'DAILY_LIKE': '/point/glove_praise@2x.png',
-      'POST': '/point/paper_airplane@2x.png',
-      'RECEIVE_LIKE': '/point/%20no_glove_praise@2x.png',
-      'REPLY': '/point/notification_1@2x.png',
-      'POST_RECEIVE_REPLY': '/point/notification_2@2x.png',
-      'DAILY_LOGIN': '/point/contact_person@2x.png',
-      // 活动任务图标
-      'INVITE_USER': '/point/invite@2x.png',
-      'REGISTER': '/point/contact_person@2x.png',
-      'FOLLOW_TWITTER': '/point/like@2x.png',
-      'JOIN_COMMUNITY': '/point/social_group@2x.png',
-      'COMMUNITY': '/point/social_group@2x.png',
-      'SET_ALARM': '/point/set_alert@2x.png',
-      'VIDEO_LEARN': '/point/video@2x.png',
+    const iconMap = {
+      // 活动/新手任务图标（与积分中心一致）
+      REGISTER: '/point/first_login.svg',
+      FIRST_LOGIN: '/point/first_login.svg',
+      FOLLOW_TWITTER: '/point/X.svg',
+      TWITTER: '/point/X.svg',
+      JOIN_COMMUNITY: '/point/group.svg',
+      COMMUNITY: '/point/group.svg',
+      EARLY_BIRD: '/point/eraly_bird.svg',
+      SET_ALARM: '/point/setting_alert.svg',
+      ALARM: '/point/setting_alert.svg',
+      VIDEO_LEARN: '/point/video@2x.png',
+      VIDEO: '/point/video@2x.png',
+      WECHAT: '/point/like@2x.png',
+      INVITE_USER: '/point/shared.svg',
+      USER_INFO: '/point/user_info.svg',
+      COMPLETE_PROFILE: '/point/user_info.svg',
+      ADD: '/point/add.svg',
+      ADD_WATCHLIST: '/point/add.svg',
+      PUSH: '/point/push.svg',
+      FIRST_POST: '/point/push.svg',
+
+      // 每日任务图标（与积分中心 DailyTasks 匹配）
+      DAILY_LIKE: '/point/like.svg',
+      POST: '/point/push_article.svg',
+      RECEIVE_LIKE: '/point/received_like.svg',
+      REPLY: '/point/reply.svg',
+      POST_RECEIVE_REPLY: '/point/received.svg',
+      DAILY_LOGIN: '/point/daily_login.svg',
+      SHARE: '/point/shared.svg',
     };
-    return icons[taskCode] || '/point/glove_praise@2x.png';
+    return iconMap[taskCode] || '/point/daily_login.svg';
   };
 
   return (
