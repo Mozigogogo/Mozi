@@ -713,10 +713,34 @@ const loadingTimerRef = useRef(null);
   // 渲染自选列表
   const renderOwnList = () => {
     if (ownLoading) {
-      return (
-        <div className={styles.ownBox}>
-          <Loading color="#11B787" />
+      const renderOwnSkeleton = () => (
+        <div className={`${styles.ownBox} ${styles.ownBoxLoading}`}>
+          <div className={styles.ownSkeleton}>
+            {Array.from({ length: 10 }).map((_, idx) => (
+              <div key={idx} className={styles.ownSkeletonRow}>
+                <div className={styles.ownSkeletonColSymbol}>
+                  <SkeletonCircle size={16} />
+                  <SkeletonElement width={72} height={12} borderRadius={6} />
+                </div>
+                <div className={`${styles.ownSkeletonCol} ${styles.ownSkeletonColLast}`}>
+                  <SkeletonElement width={54} height={12} borderRadius={6} />
+                </div>
+                <div className={`${styles.ownSkeletonCol} ${styles.ownSkeletonColChange}`}>
+                  <SkeletonElement width={48} height={12} borderRadius={6} />
+                </div>
+                <div className={`${styles.ownSkeletonCol} ${styles.ownSkeletonColIcon}`}>
+                  <SkeletonCircle size={20} />
+                </div>
+                <div className={`${styles.ownSkeletonCol} ${styles.ownSkeletonColIcon}`}>
+                  <SkeletonCircle size={20} />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
+      );
+      return (
+        renderOwnSkeleton()
       );
     }
 
@@ -907,6 +931,42 @@ const loadingTimerRef = useRef(null);
     );
   };
   const renderRankList = () => {
+    const renderRankSkeleton = ({ variant = 'twoCol', rows = 3 } = {}) => {
+      // variant:
+      // - 'exchange': 左侧 icon+两行文字，右侧三列短条
+      // - 'twoCol': 左侧 icon+一行文字，右侧一列短条（适用于 RankGrid）
+      // - 'newCoin': 左侧 icon+一行文字，右侧一列短条（与 twoCol 类似，语义区分）
+      const isExchange = variant === 'exchange';
+      return (
+        <div className={styles.rankSkeleton}>
+          {Array.from({ length: rows }).map((_, idx) => (
+            <div key={idx} className={styles.rankSkeletonRow}>
+              <div className={styles.rankSkeletonLeft}>
+                <SkeletonCircle size={24} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+                  <SkeletonElement width={isExchange ? 90 : 72} height={12} borderRadius={6} />
+                  {isExchange ? (
+                    <SkeletonElement width={120} height={10} borderRadius={6} />
+                  ) : null}
+                </div>
+              </div>
+              <div className={styles.rankSkeletonRight}>
+                {isExchange ? (
+                  <>
+                    <SkeletonElement width={76} height={12} borderRadius={6} />
+                    <SkeletonElement width={46} height={12} borderRadius={6} />
+                    <SkeletonElement width={46} height={12} borderRadius={6} />
+                  </>
+                ) : (
+                  <SkeletonElement width={64} height={16} borderRadius={8} />
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    };
+
     return (
       <div className={styles.rankContainer}>
         <MoziCard
@@ -922,7 +982,7 @@ const loadingTimerRef = useRef(null);
         >
           <div onClick={() => router.push('/exchangerank')}>
             {isExchangeLoading ? (
-              <Loading tip={t('common.loading')} />
+              renderRankSkeleton({ variant: 'exchange', rows: 3 })
             ) : (
               <MoziGrid
                 length={4}
@@ -956,7 +1016,7 @@ const loadingTimerRef = useRef(null);
         >
           <div onClick={() => router.push('/pricerank')}>
             {isPriceLoading ? (
-              <Loading tip={t('common.loading')} />
+              renderRankSkeleton({ variant: 'twoCol', rows: 3 })
             ) : (
               <RankGrid
                 length={2}
@@ -982,7 +1042,7 @@ const loadingTimerRef = useRef(null);
         >
           <div onClick={() => router.push('/downrank')}>
             {isDownLoading ? (
-              <Loading tip={t('common.loading')} />
+              renderRankSkeleton({ variant: 'twoCol', rows: 3 })
             ) : (
               <RankGrid
                 length={2}
@@ -1008,7 +1068,7 @@ const loadingTimerRef = useRef(null);
         >
           <div onClick={() => router.push('/waverank')}>
             {isWaveLoading ? (
-              <Loading tip={t('common.loading')} />
+              renderRankSkeleton({ variant: 'twoCol', rows: 3 })
             ) : (
               <RankGrid
                 length={2}
@@ -1034,7 +1094,7 @@ const loadingTimerRef = useRef(null);
         >
           <div onClick={() => router.push('/traderank')}>
             {isTradeLoading ? (
-              <Loading tip={t('common.loading')} />
+              renderRankSkeleton({ variant: 'twoCol', rows: 3 })
             ) : (
               <RankGrid
                 length={2}
@@ -1056,7 +1116,7 @@ const loadingTimerRef = useRef(null);
         >
           <div onClick={() => router.push('/newcoinrank')}>
             {isXinbiLoading ? (
-              <Loading tip={t('common.loading')} />
+              renderRankSkeleton({ variant: 'newCoin', rows: 3 })
             ) : (
               <RankGrid
                 length={2}
@@ -1090,7 +1150,7 @@ const loadingTimerRef = useRef(null);
             router.push(`/uptraderank?intervals=${encodeURIComponent(raw)}`)
           }}>
             {isUpTradeLoading ? (
-              <Loading tip={t('common.loading')} />
+              renderRankSkeleton({ variant: 'twoCol', rows: 3 })
             ) : (
               <RankGrid
                 length={2}

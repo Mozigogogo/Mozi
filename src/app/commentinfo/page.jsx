@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Button, Input, Dialog, Toast, Divider } from 'antd-mobile';
+import { Button, Input, Toast, Divider } from 'antd-mobile';
 import { MoreOutline } from 'antd-mobile-icons';
 import { useTranslation } from 'react-i18next';
 import NavBar from '@/components/NavBar';
 import Layout from '@/components/Layout';
 import { Loading } from '@/components/Loading';
+import { confirm } from '@/components/Modal/confirm';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 import { forceBlurAndResetViewport } from '@/utils/iosViewportFix';
@@ -366,7 +367,7 @@ export default function CommentInfo() {
   // 处理删除评论
   const handleDeleteComment = async (commentId) => {
     try {
-      Dialog.confirm({
+      confirm({
         content: t('comment.messages.confirmDelete'),
         onConfirm: async () => {
           Toast.show({
@@ -405,7 +406,7 @@ export default function CommentInfo() {
   const handleDeletePost = async (e, postId) => {
     if (e) e.stopPropagation();
     
-    Dialog.confirm({
+    confirm({
       content: '确定要删除这条帖子吗？',
       onConfirm: async () => {
         try {
