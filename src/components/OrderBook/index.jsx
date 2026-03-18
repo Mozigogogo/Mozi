@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import { motion } from 'framer-motion';
 import BarChart from '@/components/BarChart';
 import styles from './index.module.less';
 
@@ -35,6 +36,27 @@ const defaultFormatValue = (val) => {
   return `$${num.toFixed(2)}`;
 };
 
+const FadingValue = ({ value, formatValue }) => {
+  const prevRef = useRef(value);
+  const [flash, setFlash] = useState(false);
+
+  useEffect(() => {
+    if (prevRef.current !== value) {
+      prevRef.current = value;
+      setFlash(true);
+      const t = setTimeout(() => setFlash(false), 180);
+      return () => clearTimeout(t);
+    }
+    return undefined;
+  }, [value]);
+
+  return (
+    <span className={flash ? styles.valueFlash : undefined}>
+      {formatValue(value)}
+    </span>
+  );
+};
+
 export default function OrderBook({
   bids = [],
   asks = [],
@@ -59,15 +81,41 @@ export default function OrderBook({
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [selectedOption, setSelectedOption] = useState(dropdownOptions?.[0] || t('orderBook.top5'));
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const userSelectedRef = useRef(false);
+  const prevOptionsKeyRef = useRef('');
 
   // 使用国际化配置作为默认值
   const displayTitle = title || t('orderBook.title');
   const displayTag = tag !== undefined ? tag : t('orderBook.limitedExperience');
   const displayDropdownOptions = dropdownOptions || [t('orderBook.top5'), t('orderBook.top10')];
 
+  // 当父组件异步更新 dropdownOptions（例如订阅信息回来）时，刷新默认选项
+  useEffect(() => {
+    const opts = displayDropdownOptions || [];
+    if (!opts.length) return;
+    const optionsKey = opts.join('|');
+    const prevKey = prevOptionsKeyRef.current;
+    prevOptionsKeyRef.current = optionsKey;
+
+    // 用户未手动选择时：只要 options 发生变化，默认选中第一个（用于 LITE/PRO 自动 Top20/Top40）
+    if (!userSelectedRef.current && prevKey && prevKey !== optionsKey) {
+      setSelectedOption(opts[0]);
+      return;
+    }
+
+    // 常规兜底：当前选项不在新列表里时，重置到第一个
+    if (!selectedOption || !opts.includes(selectedOption)) {
+      setSelectedOption(opts[0]);
+    }
+  }, [displayDropdownOptions, selectedOption]);
+
   const visibleRowsCount = useMemo(() => {
     const trimmed = String(selectedOption ?? '').trim();
-    const limit = (trimmed.includes('前五') || trimmed.includes('Top 5')) ? 5 : 10;
+    // 尽量从文案中提取数字（Top 20 / 前二十 等），提取失败再回退
+    const match = trimmed.match(/(\d+)/);
+    const parsed = match ? Number(match[1]) : NaN;
+    const fallback = (trimmed.includes('前五') || trimmed.includes('Top 5')) ? 5 : 10;
+    const limit = Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
     return Math.min(maxRows, limit);
   }, [maxRows, selectedOption]);
 
@@ -176,6 +224,7 @@ export default function OrderBook({
                     className={`${styles.dropdownOption} ${option === selectedOption ? styles.dropdownOptionActive : ''}`}
                     onClick={(e) => {
                       e.stopPropagation();
+                      userSelectedRef.current = true;
                       setSelectedOption(option);
                       setDropdownOpen(false);
                     }}
@@ -211,13 +260,25 @@ export default function OrderBook({
 
               <div className={styles.barCell}>
                 <div className={styles.barBg}>
-                  <div className={`${styles.value} ${styles.bidValue} ${styles.bidPrice}`}>{formatValue(row.bid?.value)}</div>
-                  <div className={`${styles.value} ${styles.askValue} ${styles.askPrice}`}>{formatValue(row.ask?.value)}</div>
+                  <div className={`${styles.value} ${styles.bidValue} ${styles.bidPrice}`}>
+                    <FadingValue value={row.bid?.value} formatValue={formatValue} />
+                  </div>
+                  <div className={`${styles.value} ${styles.askValue} ${styles.askPrice}`}>
+                    <FadingValue value={row.ask?.value} formatValue={formatValue} />
+                  </div>
 
                   <div className={styles.barTrack}>
                     <div className={styles.midLine} />
-                    <div className={styles.bidBar} style={{ width: `${bidPct}%`, opacity: bidOpacity }} />
-                    <div className={styles.askBar} style={{ width: `${askPct}%`, opacity: askOpacity }} />
+                    <motion.div
+                      className={styles.bidBar}
+                      animate={{ width: `${bidPct}%`, opacity: bidOpacity }}
+                      transition={{ duration: 0.25, ease: 'easeOut' }}
+                    />
+                    <motion.div
+                      className={styles.askBar}
+                      animate={{ width: `${askPct}%`, opacity: askOpacity }}
+                      transition={{ duration: 0.25, ease: 'easeOut' }}
+                    />
                   </div>
                 </div>
               </div>
