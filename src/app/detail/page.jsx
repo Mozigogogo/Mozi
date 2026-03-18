@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Tabs, Toast, Button, TabBar, Dialog } from 'antd-mobile';
+import { Tabs, Toast, Button, TabBar } from 'antd-mobile';
 import { motion, AnimatePresence } from 'framer-motion';
 import Layout from '../../components/Layout';
 import NavBar from '../../components/NavBar';
@@ -27,6 +27,7 @@ import { useAlertConfig } from '@/hooks/useAlertConfig';
 import { completeTask } from '@/api/user';
 import { executeConsume } from '@/api/points';
 import { getMySubscription } from '@/api/vip';
+import { confirm } from '@/components/Modal/confirm';
 import {
   WS_EVENTS,
   PLATFORMS,
@@ -277,8 +278,29 @@ export default function DetailPage() {
 
   // 解锁处理函数
   const handleUnlockOrderBook = async () => {
-    const result = await Dialog.confirm({
-      content: '确定要花费200积分来解锁查看大单侦测数据吗？（有效期24小时，仅限Top5数据）',
+    const result = await confirm({
+      className: styles.unlockDialog,
+      title: (
+        <div className={styles.unlockDialogTitle}>
+          解锁大单侦测
+        </div>
+      ),
+      content: (
+        <div className={styles.unlockDialogContent}>
+          <div className={styles.unlockDialogMain}>
+            确定要花费
+            <span className={styles.unlockDialogPoints}>200积分</span>
+            来解锁查看大单侦测数据吗？
+          </div>
+          <div className={styles.unlockDialogSub}>
+            有效期<span>24小时</span>，仅展示<span>Top 5</span> 大单数据
+          </div>
+        </div>
+      ),
+      cancelText: '取消',
+      confirmText: '确定',
+      closeOnAction: true,
+      bodyStyle: { borderRadius: '16px' },
     });
     
     if (result) {

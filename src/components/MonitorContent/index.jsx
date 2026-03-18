@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { SideBar, Switch, Input, Toast, Dialog } from 'antd-mobile';
+import { SideBar, Switch, Input, Toast } from 'antd-mobile';
 import { CheckOutline } from 'antd-mobile-icons';
 import { useTranslation } from 'react-i18next';
+import { confirm } from '@/components/Modal/confirm';
 import { Skeleton } from '../Skeleton';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
@@ -252,12 +253,12 @@ export default function MonitorContent({
     if (readOnly) return; // Disable delete in read-only mode
 
     const symbol = Object.keys(warnData.data)[activeKey];
-    const confirm = await Dialog.confirm({
+    const confirmResult = await confirm({
       content: t('alarm.confirmDelete', { symbol }) || `确定要删除 ${symbol} 的所有告警吗？`,
       cancelText: t('common.cancel') || '取消',
       confirmText: t('common.delete') || '删除'
     });
-    if (!confirm) return;
+    if (!confirmResult) return;
 
     try {
       // 获取 token

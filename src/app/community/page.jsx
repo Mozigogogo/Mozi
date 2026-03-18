@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Tabs, Button, Dialog, Toast, SpinLoading } from 'antd-mobile';
+import { Tabs, Button, Toast, SpinLoading } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import NavBar from '@/components/NavBar';
 import { AddOutline } from 'antd-mobile-icons';
