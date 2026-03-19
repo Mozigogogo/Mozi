@@ -15,6 +15,59 @@
     "lockBadge": "暂未解锁",
     "recommend": "推荐",
     "confirmPurchase": "确认购买",
+    "errors": {
+      "loadSubscriptionData": "订阅数据加载失败，请稍后重试。"
+    },
+    "planCard": {
+      "period": {
+        "month": "/月",
+        "year": "/年"
+      },
+      "tierSelect": {
+        "label": "选择等级"
+      },
+      "cta": {
+        "try": "开始体验",
+        "buyNow": "立即购买",
+        "current": "当前订阅",
+        "subscribe": "订阅"
+      },
+      "save": "省 ${{amount}}",
+      "aiCallLabel": "AI CALL {{period}}",
+      "highlight": {
+        "upgradeHint": "升级到Lite/Pro可享受",
+        "cycle30d": "每 30 天周期"
+      }
+    },
+    "features": {
+      "basicMarket": "基础行情",
+      "basicPush": "APP基础推送",
+      "emailAlert": "邮件告警",
+      "bigOrder": "大单行情",
+      "aiCall": "AI Call",
+      "monthlyPoints": "月度积分",
+      "exclusiveBadge": "专属标志",
+      "exclusiveBlackGoldBadge": "专属黑金标志",
+      "adFree": "无广告",
+      "multiTheme": "多主题切换",
+      "customerService": "客服",
+      "standardCustomerService": "标准客服",
+      "exclusiveCustomerService": "专属客服",
+      "alphaGroup": "Alpha核心群",
+      "bigOrderMeta": "{{count}}条（{{delay}}s延迟）",
+      "aiCallMeta": "{{count}}次{{period}}",
+      "pointsMeta": "{{points}}{{period}}",
+      "pointsWithUnit": "{{points}}积分{{period}}",
+      "aiCallPlain": "AI Call {{count}}次"
+    },
+    "switchConfirm": {
+      "title": "确认切换套餐",
+      "headline": "你当前已有正在生效的订阅。",
+      "currentPlan": "当前套餐：",
+      "nextPlan": "将切换到：",
+      "hint": "继续购买将视为切换套餐。",
+      "confirm": "确认切换"
+    },
     "plans": {
       "yearly": {
         "title": "年卡",

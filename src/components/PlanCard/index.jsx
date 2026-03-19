@@ -54,6 +54,147 @@ const PlanCard = ({
 }) => {
   const { t } = useTranslation();
 
+  const normalizePeriodKey = (p) => {
+    const s = String(p ?? '').toLowerCase();
+    if (s.includes('/年') || s.includes('year')) return 'year';
+    if (s.includes('/月') || s.includes('month')) return 'month';
+    return '';
+  };
+
+  const formatPeriod = (periodLike) => {
+    const key = normalizePeriodKey(periodLike);
+    if (key === 'year') return t('vipRecharge.planCard.period.year');
+    if (key === 'month') return t('vipRecharge.planCard.period.month');
+    return String(periodLike ?? '');
+  };
+
+  const localizeCta = (txt) => {
+    const s = String(txt ?? '');
+    if (!s) return s;
+    if (s === '开始体验') return t('vipRecharge.planCard.cta.try');
+    if (s === '立即购买') return t('vipRecharge.planCard.cta.buyNow');
+    if (s === '当前订阅') return t('vipRecharge.planCard.cta.current');
+    if (s.toLowerCase() === 'subscribe') return t('vipRecharge.planCard.cta.subscribe');
+    return s;
+  };
+
+  const localizeSave = (desc) => {
+    const s = String(desc ?? '').trim();
+    if (!s) return s;
+    const m = s.match(/save\s*\$?\s*([0-9]+(?:\.[0-9]+)?)/i);
+    if (m) return t('vipRecharge.planCard.save', { amount: m[1] });
+    return s;
+  };
+
+  const localizeHighlightLabel = (label) => {
+    const s = String(label ?? '').trim();
+    if (!s) return s;
+    if (/ai\s*call/i.test(s) && (s.includes('/月') || s.includes('/年') || s.includes('/ mo') || s.includes('/ yr'))) {
+      return t('vipRecharge.planCard.aiCallLabel', { period: formatPeriod(s) });
+    }
+    if (s === 'AI CALL / 月') return t('vipRecharge.planCard.aiCallLabel', { period: t('vipRecharge.planCard.period.month') });
+    return s;
+  };
+
+  const localizeHighlightSubtitle = (subtitle) => {
+    const s = String(subtitle ?? '').trim();
+    if (!s) return s;
+    if (s === '升级到Lite/Pro可享受') return t('vipRecharge.planCard.highlight.upgradeHint');
+    if (s === 'Every 30-Day Cycle') return t('vipRecharge.planCard.highlight.cycle30d');
+    return s;
+  };
+
+  const localizeFeatureMain = (main) => {
+    const s = String(main ?? '').trim();
+    if (!s) return s;
+    const map = {
+      基础行情: 'vipRecharge.features.basicMarket',
+      APP基础推送: 'vipRecharge.features.basicPush',
+      邮件告警: 'vipRecharge.features.emailAlert',
+      大单行情: 'vipRecharge.features.bigOrder',
+      'AI Call': 'vipRecharge.features.aiCall',
+      月度积分: 'vipRecharge.features.monthlyPoints',
+      专属标志: 'vipRecharge.features.exclusiveBadge',
+      专属黑金标志: 'vipRecharge.features.exclusiveBlackGoldBadge',
+      无广告: 'vipRecharge.features.adFree',
+      多主题切换: 'vipRecharge.features.multiTheme',
+      客服: 'vipRecharge.features.customerService',
+      标准客服: 'vipRecharge.features.standardCustomerService',
+      专属客服: 'vipRecharge.features.exclusiveCustomerService',
+      Alpha核心群: 'vipRecharge.features.alphaGroup',
+    };
+    const key = map[s];
+    return key ? t(key) : s;
+  };
+
+  const localizeFeatureMeta = (meta) => {
+    const s = String(meta ?? '').trim();
+    if (!s) return s;
+
+    // 20条（5s延迟）
+    const bigOrder = s.match(/^(\d+)\s*条.*?(\d+)\s*s.*?延迟/i);
+    if (bigOrder) return t('vipRecharge.features.bigOrderMeta', { count: bigOrder[1], delay: bigOrder[2] });
+
+    // 20次/月 或 20次/年
+    const aiCall = s.match(/^(\d+(?:\s*~\s*\d+)?)\s*次\s*\/\s*(月|年)$/);
+    if (aiCall) {
+      const periodKey = aiCall[2] === '年' ? 'year' : 'month';
+      return t('vipRecharge.features.aiCallMeta', { count: aiCall[1].replace(/\s*/g, ''), period: t(`vipRecharge.planCard.period.${periodKey}`) });
+    }
+
+    // 5000/月 或 10000~50000/月（积分）
+    const pts = s.match(/^([\d,]+(?:\s*~\s*[\d,]+)?)\s*\/\s*(月|年)$/);
+    if (pts) {
+      const periodKey = pts[2] === '年' ? 'year' : 'month';
+      return t('vipRecharge.features.pointsMeta', { points: pts[1].replace(/\s*/g, ''), period: t(`vipRecharge.planCard.period.${periodKey}`) });
+    }
+
+    // 10000积分/月
+    const ptsWithWord = s.match(/^([\d,]+)\s*积分\s*\/\s*(月|年)$/);
+    if (ptsWithWord) {
+      const periodKey = ptsWithWord[2] === '年' ? 'year' : 'month';
+      return t('vipRecharge.features.pointsWithUnit', { points: ptsWithWord[1], period: t(`vipRecharge.planCard.period.${periodKey}`) });
+    }
+
+    // AI Call 40次
+    const aiPlain = s.match(/^AI\s*Call\s*(\d+)\s*次$/i);
+    if (aiPlain) return t('vipRecharge.features.aiCallPlain', { count: aiPlain[1] });
+
+    return s;
+  };
+
+  const localizeTierLabel = (label) => {
+    const s = String(label ?? '').trim();
+    if (!s) return t('vipRecharge.planCard.tierSelect.label');
+    if (s === '选择等级') return t('vipRecharge.planCard.tierSelect.label');
+    return s;
+  };
+
+  const localizeTierTitle = (titleLike) => {
+    const s = String(titleLike ?? '').trim();
+    if (!s) return s;
+    // 10000积分/月
+    const ptsWithWord = s.match(/^([\d,]+)\s*积分\s*\/\s*(月|年)$/);
+    if (ptsWithWord) {
+      const periodKey = ptsWithWord[2] === '年' ? 'year' : 'month';
+      return t('vipRecharge.features.pointsWithUnit', {
+        points: ptsWithWord[1],
+        period: t(`vipRecharge.planCard.period.${periodKey}`),
+      });
+    }
+    // 10000 pts /mo (fallback: keep)
+    return s;
+  };
+
+  const localizeTierSubtitle = (subtitleLike) => {
+    const s = String(subtitleLike ?? '').trim();
+    if (!s) return s;
+    // AI Call 40次
+    const aiPlain = s.match(/^AI\s*Call\s*(\d+)\s*次$/i);
+    if (aiPlain) return t('vipRecharge.features.aiCallPlain', { count: aiPlain[1] });
+    return s;
+  };
+
   const tierOptions = useMemo(() => tierSelect?.options || [], [tierSelect]);
   const [tierOpen, setTierOpen] = useState(false);
   const [tierSelectedId, setTierSelectedId] = useState(
@@ -75,7 +216,7 @@ const PlanCard = ({
 
   const displayPrice = tierSelected?.price ?? price;
   const displayCurrency = tierSelected?.currency ?? currency;
-  const displayPeriod = tierSelected?.period ?? period;
+  const displayPeriod = formatPeriod(tierSelected?.period ?? period);
 
   useEffect(() => {
     if (!tierOpen) return;
@@ -155,7 +296,7 @@ const PlanCard = ({
         </div>
 
         {/* 描述 - 显示在价格区域下方 */}
-        {description && <p className={styles.description}>{description}</p>}
+        {description && <p className={styles.description}>{localizeSave(description)}</p>}
 
         {/* 分割线 */}
         <div className={styles.divider} />
@@ -163,7 +304,7 @@ const PlanCard = ({
         {/* Pro 下拉等级选择 */}
         {tierSelect && tierOptions.length > 0 && (
           <div className={styles.tierSelectWrap} ref={tierWrapRef}>
-            <p className={styles.tierSelectLabel}>{tierSelect.label || t('vip.planCard.level')}</p>
+            <p className={styles.tierSelectLabel}>{localizeTierLabel(tierSelect.label)}</p>
 
             <button
               type="button"
@@ -172,9 +313,9 @@ const PlanCard = ({
               aria-expanded={tierOpen}
             >
               <div className={styles.tierSelectTriggerText}>
-                <div className={styles.tierSelectTitle}>{tierSelected?.title}</div>
+                <div className={styles.tierSelectTitle}>{localizeTierTitle(tierSelected?.title)}</div>
                 {tierSelected?.subtitle && (
-                  <div className={styles.tierSelectSubtitle}>{tierSelected.subtitle}</div>
+                  <div className={styles.tierSelectSubtitle}>{localizeTierSubtitle(tierSelected.subtitle)}</div>
                 )}
               </div>
               <img
@@ -199,8 +340,8 @@ const PlanCard = ({
                     >
                       <div className={styles.tierOptionText}>
                         <div className={styles.tierOptionTitle}>
-                          {opt.title}
-                          {opt.subtitle ? `，${opt.subtitle}` : ''}
+                          {localizeTierTitle(opt.title)}
+                          {opt.subtitle ? `，${localizeTierSubtitle(opt.subtitle)}` : ''}
                         </div>
                       </div>
                       {active && (
@@ -226,7 +367,7 @@ const PlanCard = ({
           }`}
         >
           <div className={styles.highlightHeader}>
-            <span className={styles.highlightLabel}>{highlightFeature.label}</span>
+            <span className={styles.highlightLabel}>{localizeHighlightLabel(highlightFeature.label)}</span>
           </div>
           <div className={styles.highlightMain}>
             <span
@@ -245,7 +386,7 @@ const PlanCard = ({
             )}
           </div>
           {highlightFeature.subtitle && (
-            <p className={styles.highlightSubtitle}>{highlightFeature.subtitle}</p>
+            <p className={styles.highlightSubtitle}>{localizeHighlightSubtitle(highlightFeature.subtitle)}</p>
           )}
         </div>
       )}
@@ -279,8 +420,8 @@ const PlanCard = ({
                   <span className={styles.checkmark}>✓</span>
                 )}
                 <span className={`${styles.featureText} ${isLocked ? styles.featureTextLocked : ''}`}>
-                  <span className={styles.featureMainText}>{mainText}</span>
-                  {hasMeta && <span className={styles.featureMetaText}> {metaText}</span>}
+                  <span className={styles.featureMainText}>{localizeFeatureMain(mainText)}</span>
+                  {hasMeta && <span className={styles.featureMetaText}> {localizeFeatureMeta(metaText)}</span>}
                 </span>
                 {isLocked && (
                   <img
@@ -307,7 +448,7 @@ const PlanCard = ({
               <span className={styles.spinner} />
             </span>
           ) : (
-            buttonText
+            localizeCta(buttonText)
           )}
         </button>
       </div>

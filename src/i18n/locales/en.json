@@ -15,6 +15,59 @@
     "lockBadge": "Locked",
     "recommend": "Best",
     "confirmPurchase": "Purchase Now",
+    "errors": {
+      "loadSubscriptionData": "Failed to load subscription data."
+    },
+    "planCard": {
+      "period": {
+        "month": "/mo",
+        "year": "/yr"
+      },
+      "tierSelect": {
+        "label": "Select tier"
+      },
+      "cta": {
+        "try": "Start Trial",
+        "buyNow": "Purchase Now",
+        "current": "Current Plan",
+        "subscribe": "Subscribe"
+      },
+      "save": "Save ${{amount}}",
+      "aiCallLabel": "AI CALL {{period}}",
+      "highlight": {
+        "upgradeHint": "Upgrade to Lite/Pro to unlock",
+        "cycle30d": "Every 30-Day Cycle"
+      }
+    },
+    "features": {
+      "basicMarket": "Basic Market",
+      "basicPush": "App Basic Push",
+      "emailAlert": "Email Alerts",
+      "bigOrder": "Large Orders",
+      "aiCall": "AI Call",
+      "monthlyPoints": "Monthly Points",
+      "exclusiveBadge": "Exclusive Badge",
+      "exclusiveBlackGoldBadge": "Exclusive Black-Gold Badge",
+      "adFree": "Ad-free",
+      "multiTheme": "Multi-theme",
+      "customerService": "Customer Support",
+      "standardCustomerService": "Standard Support",
+      "exclusiveCustomerService": "Dedicated Support",
+      "alphaGroup": "Alpha Group",
+      "bigOrderMeta": "{{count}} rows ({{delay}}s delay)",
+      "aiCallMeta": "{{count}} {{period}}",
+      "pointsMeta": "{{points}} {{period}}",
+      "pointsWithUnit": "{{points}} pts {{period}}",
+      "aiCallPlain": "AI Call {{count}}"
+    },
+    "switchConfirm": {
+      "title": "Confirm plan switch",
+      "headline": "You already have an active subscription.",
+      "currentPlan": "Current plan:",
+      "nextPlan": "Switch to:",
+      "hint": "Proceed with the purchase to switch plans.",
+      "confirm": "Confirm switch"
+    },
     "plans": {
       "yearly": {
         "title": "Yearly",

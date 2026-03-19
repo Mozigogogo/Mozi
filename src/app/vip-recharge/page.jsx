@@ -9,6 +9,7 @@ import VipRechargePlanCards from './components/VipRechargePlanCards';
 import { getVipRechargePlans } from './components/getVipRechargePlans';
 import { startVipPurchase } from './utils/startVipPurchase';
 import { getSubscriptionBenefits, getSubscriptionPricing, getMySubscription } from '@/api/vip';
+import { confirm } from '@/components/Modal/confirm';
 
 export default function VipRechargePage() {
   const { t } = useTranslation();
@@ -106,6 +107,18 @@ export default function VipRechargePage() {
   // 为每个方案注入统一的购买回调（根据环境走 Stars 或 AppKit 支付）
   // Free 版本无需购买，保持原始 onSubscribe（仅前端行为）
   const planCardsWithHandlers = useMemo(() => {
+    const currentPlanName =
+      (mySubscription?.planCode || mySubscription?.plan_name || mySubscription?.plan || mySubscription?.tierCode || '')
+        ?.toString?.() || '';
+
+    const shouldAskSwitch = (targetPlanTitle) => {
+      const currentCode = (currentSubInfo?.planCode || '').toUpperCase();
+      if (!currentCode || currentCode === 'FREE' || currentCode === '0' || currentCode === 'NONE') return false;
+      const nextCode = (targetPlanTitle || '').toUpperCase();
+      if (!nextCode || nextCode === 'FREE') return false;
+      return currentCode !== nextCode;
+    };
+
     const result = {};
     Object.entries(planCardsData || {}).forEach(([tabKey, plans]) => {
       result[tabKey] = (plans || []).map((plan) => {
@@ -124,14 +137,44 @@ export default function VipRechargePage() {
         }
         const enhancedPlan = {
           ...plan,
-          onSubscribe: (payload) => startVipPurchase({ tabKey, plan, payload }),
+          onSubscribe: async (payload) => {
+            if (shouldAskSwitch(plan?.title)) {
+              const ok = await confirm({
+                title: t('vipRecharge.switchConfirm.title'),
+                content: (
+                  <div>
+                    <div style={{ fontWeight: 600, marginBottom: 6 }}>
+                      {t('vipRecharge.switchConfirm.headline')}
+                    </div>
+                    <div style={{ color: '#4b5563' }}>
+                      {t('vipRecharge.switchConfirm.currentPlan')}{' '}
+                      <span style={{ fontWeight: 600 }}>{currentPlanName || currentSubInfo?.planCode || '--'}</span>
+                    </div>
+                    <div style={{ color: '#4b5563' }}>
+                      {t('vipRecharge.switchConfirm.nextPlan')}{' '}
+                      <span style={{ fontWeight: 600 }}>{plan?.title || '--'}</span>
+                    </div>
+                    <div style={{ marginTop: 8, color: '#9ca3af', fontSize: 12 }}>
+                      {t('vipRecharge.switchConfirm.hint')}
+                    </div>
+                  </div>
+                ),
+                cancelText: t('common.cancel'),
+                confirmText: t('vipRecharge.switchConfirm.confirm'),
+                closeOnAction: true,
+                bodyStyle: { borderRadius: '16px' },
+              });
+              if (!ok) return;
+            }
+            startVipPurchase({ tabKey, plan, payload });
+          },
         };
 
         // 如果当前方案已通过 Stars 支付成功，则按钮展示为“当前订阅”并禁用再次点击
         if (isCurrentByOrder || isCurrentByMySub) {
           return {
             ...enhancedPlan,
-            buttonText: '当前订阅',
+            buttonText: t('vipRecharge.planCard.cta.current'),
             disabled: true,
           };
         }
@@ -140,7 +183,7 @@ export default function VipRechargePage() {
       });
     });
     return result;
-  }, [planCardsData, orderSuccessInfo, currentSubInfo]);
+  }, [planCardsData, orderSuccessInfo, currentSubInfo, mySubscription, t]);
 
   return (
     <div className={styles.container}>
@@ -153,7 +196,7 @@ export default function VipRechargePage() {
 
         {/* Plan Cards Container - outside tabs */}
         <div className={styles.planCardsContainer} key={activeTab}>
-          {remoteError && !remoteLoading && <div>Failed to load subscription data.</div>}
+          {remoteError && !remoteLoading && <div>{t('vipRecharge.errors.loadSubscriptionData')}</div>}
           <VipRechargePlanCards plans={planCardsWithHandlers[activeTab] || []} />
         </div>
       </div>
