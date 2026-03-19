@@ -415,7 +415,7 @@ export default function DetailPage() {
         const value = baseValue * decay * (0.9 + Math.random() * 0.2);
         return {
           value,
-          icon: iconUrl || null,
+          logo: iconUrl || null,
         };
       });
     };
@@ -1334,6 +1334,8 @@ ${coinInfo.name || symbol} (${symbol})
           const notional = price !== null && qty !== null ? price * qty : null;
           return {
             value: notional ?? qty ?? 0,
+            // 图标：优先使用 WS 下发的 logo
+            logo: x?.logo || null,
           };
         });
 
