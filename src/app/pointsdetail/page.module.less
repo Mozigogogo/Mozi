@@ -1106,7 +1106,7 @@
 }
 
 .taskName {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: #333;
   line-height: 1.2;
@@ -1119,7 +1119,7 @@
 }
 
 .taskSubText {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 400;
   color: rgba(142, 148, 157, 1);
   line-height: 1.2;
@@ -1220,14 +1220,33 @@
   }
 }
 
+.taskBtnEn {
+  /* 英文模式下按钮整体更小（高度/圆角/左右边距/最小宽度） */
+  height: 28px;
+  line-height: 28px;
+  border-radius: 16px;
+  padding: 0 12px;
+  min-width: 64px;
+  font-size: 11px;
+  letter-spacing: 0;
+}
+
+.taskBtnEn.firstLoginCompletedBtn {
+  height: 28px;
+  line-height: 28px;
+  border-radius: 16px;
+  padding: 0 12px;
+  min-width: 64px;
+}
+
 .firstLoginCompletedBtn {
   position: relative;
-  height: 26px;
-  width: 78px;
-  min-width: 78px;
-  padding: 0;
-  border-radius: 13px;
-  line-height: 26px;
+  /* 统一“已完成”按钮尺寸：与 .taskBtn 保持一致 */
+  height: 32px;
+  min-width: 72px;
+  padding: 0 16px;
+  border-radius: 18px;
+  line-height: 32px;
   color: #fff;
   font-weight: 700;
   border: none;

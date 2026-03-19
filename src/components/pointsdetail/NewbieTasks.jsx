@@ -6,7 +6,8 @@ import SectionSkeleton from './SectionSkeleton';
 import DeferredImg from './DeferredImg';
 
 const NewbieTasks = ({ tasksList, handleTaskClick, loading, verifyingTaskId }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isEn = String(i18n?.language || '').toLowerCase().startsWith('en');
 
   return (
     <div className={styles.taskListSection}>
@@ -62,7 +63,7 @@ const NewbieTasks = ({ tasksList, handleTaskClick, loading, verifyingTaskId }) =
                 <span>+{task.points}</span>
               </div>
               <button
-                className={`${styles.taskBtn} ${isCompleted ? styles.completed : ''} ${
+                className={`${styles.taskBtn} ${isEn ? styles.taskBtnEn : ''} ${isCompleted ? styles.completed : ''} ${
                   isCompleted && (task.taskCode === 'REGISTER' || task.taskCode === 'FIRST_LOGIN')
                     ? styles.firstLoginCompletedBtn
                     : ''
