@@ -1123,6 +1123,7 @@
   font-weight: 400;
   color: rgba(142, 148, 157, 1);
   line-height: 1.2;
+  margin-left: 2px;
 }
 
 .taskMetaRow {
@@ -1325,20 +1326,25 @@
 }
 
 .dailyTaskMetaRow {
-  display: flex;
+  /* 进度条不左对齐的原因：reward（+3/+10/+5...）宽度不固定，导致后面的进度条起点被挤动
+     这里改为固定 reward 列宽，保证每行进度条起点一致 */
+  display: grid;
+  grid-template-columns: 34px 1fr;
   align-items: center;
-  gap: 8px;
+  column-gap: 3px;
   min-width: 0;
 }
 
 .dailyTaskReward {
   display: flex;
   align-items: center;
-  gap: 2px;
   font-size: 12px;
   font-weight: 800;
   color: #FD8D38; /* Orange color for reward */
   flex: 0 0 auto;
+  width: 34px;
+  justify-content: flex-start;
+  white-space: nowrap;
   
   .rewardIcon {
     width: 14px;
