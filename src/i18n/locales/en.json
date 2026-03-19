@@ -15,10 +15,16 @@
     "lockBadge": "Locked",
     "recommend": "Best",
     "confirmPurchase": "Purchase Now",
+    "errors": {
+      "loadSubscriptionData": "Failed to load subscription data."
+    },
     "planCard": {
       "period": {
         "month": "/mo",
         "year": "/yr"
+      },
+      "tierSelect": {
+        "label": "Select tier"
       },
       "cta": {
         "try": "Start Trial",

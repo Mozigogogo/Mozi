@@ -196,7 +196,7 @@ export default function VipRechargePage() {
 
         {/* Plan Cards Container - outside tabs */}
         <div className={styles.planCardsContainer} key={activeTab}>
-          {remoteError && !remoteLoading && <div>Failed to load subscription data.</div>}
+          {remoteError && !remoteLoading && <div>{t('vipRecharge.errors.loadSubscriptionData')}</div>}
           <VipRechargePlanCards plans={planCardsWithHandlers[activeTab] || []} />
         </div>
       </div>

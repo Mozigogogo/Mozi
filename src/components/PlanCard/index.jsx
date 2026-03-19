@@ -163,6 +163,38 @@ const PlanCard = ({
     return s;
   };
 
+  const localizeTierLabel = (label) => {
+    const s = String(label ?? '').trim();
+    if (!s) return t('vipRecharge.planCard.tierSelect.label');
+    if (s === '选择等级') return t('vipRecharge.planCard.tierSelect.label');
+    return s;
+  };
+
+  const localizeTierTitle = (titleLike) => {
+    const s = String(titleLike ?? '').trim();
+    if (!s) return s;
+    // 10000积分/月
+    const ptsWithWord = s.match(/^([\d,]+)\s*积分\s*\/\s*(月|年)$/);
+    if (ptsWithWord) {
+      const periodKey = ptsWithWord[2] === '年' ? 'year' : 'month';
+      return t('vipRecharge.features.pointsWithUnit', {
+        points: ptsWithWord[1],
+        period: t(`vipRecharge.planCard.period.${periodKey}`),
+      });
+    }
+    // 10000 pts /mo (fallback: keep)
+    return s;
+  };
+
+  const localizeTierSubtitle = (subtitleLike) => {
+    const s = String(subtitleLike ?? '').trim();
+    if (!s) return s;
+    // AI Call 40次
+    const aiPlain = s.match(/^AI\s*Call\s*(\d+)\s*次$/i);
+    if (aiPlain) return t('vipRecharge.features.aiCallPlain', { count: aiPlain[1] });
+    return s;
+  };
+
   const tierOptions = useMemo(() => tierSelect?.options || [], [tierSelect]);
   const [tierOpen, setTierOpen] = useState(false);
   const [tierSelectedId, setTierSelectedId] = useState(
@@ -272,7 +304,7 @@ const PlanCard = ({
         {/* Pro 下拉等级选择 */}
         {tierSelect && tierOptions.length > 0 && (
           <div className={styles.tierSelectWrap} ref={tierWrapRef}>
-            <p className={styles.tierSelectLabel}>{tierSelect.label || t('vip.planCard.level')}</p>
+            <p className={styles.tierSelectLabel}>{localizeTierLabel(tierSelect.label)}</p>
 
             <button
               type="button"
@@ -281,9 +313,9 @@ const PlanCard = ({
               aria-expanded={tierOpen}
             >
               <div className={styles.tierSelectTriggerText}>
-                <div className={styles.tierSelectTitle}>{tierSelected?.title}</div>
+                <div className={styles.tierSelectTitle}>{localizeTierTitle(tierSelected?.title)}</div>
                 {tierSelected?.subtitle && (
-                  <div className={styles.tierSelectSubtitle}>{tierSelected.subtitle}</div>
+                  <div className={styles.tierSelectSubtitle}>{localizeTierSubtitle(tierSelected.subtitle)}</div>
                 )}
               </div>
               <img
@@ -308,8 +340,8 @@ const PlanCard = ({
                     >
                       <div className={styles.tierOptionText}>
                         <div className={styles.tierOptionTitle}>
-                          {opt.title}
-                          {opt.subtitle ? `，${opt.subtitle}` : ''}
+                          {localizeTierTitle(opt.title)}
+                          {opt.subtitle ? `，${localizeTierSubtitle(opt.subtitle)}` : ''}
                         </div>
                       </div>
                       {active && (

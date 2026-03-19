@@ -15,10 +15,16 @@
     "lockBadge": "暂未解锁",
     "recommend": "推荐",
     "confirmPurchase": "确认购买",
+    "errors": {
+      "loadSubscriptionData": "订阅数据加载失败，请稍后重试。"
+    },
     "planCard": {
       "period": {
         "month": "/月",
         "year": "/年"
+      },
+      "tierSelect": {
+        "label": "选择等级"
       },
       "cta": {
         "try": "开始体验",
