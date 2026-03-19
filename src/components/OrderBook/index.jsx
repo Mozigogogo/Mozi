@@ -25,6 +25,15 @@ const pickExchangeIcon = (seed) => {
   return exchangeIcons[idx];
 };
 
+const pickRowLogo = (rowItem, fallbackSeed) => {
+  const logo =
+    rowItem?.logo ||
+    rowItem?.icon ||
+    rowItem?.url ||
+    null;
+  return logo || pickExchangeIcon(fallbackSeed);
+};
+
 const defaultFormatValue = (val) => {
   if (val === null || val === undefined || val === '') return '--';
   const num = Number(val);
@@ -248,11 +257,14 @@ export default function OrderBook({
           const bidOpacity = Math.min(1, Math.max(0.6, 0.6 + (bidPct / 100) * 0.4));
           const askOpacity = Math.min(1, Math.max(0.6, 0.6 + (askPct / 100) * 0.4));
 
+          const leftLogo = pickRowLogo(row.bid, idx * 2);
+          const rightLogo = pickRowLogo(row.ask, idx * 2 + 1);
+
           return (
             <div key={idx} className={styles.row}>
               <div className={styles.iconCell}>
-                {pickExchangeIcon(idx * 2) ? (
-                  <img className={styles.icon} src={pickExchangeIcon(idx * 2)} alt="exchange" />
+                {leftLogo ? (
+                  <img className={styles.icon} src={leftLogo} alt="exchange" />
                 ) : (
                   <span className={styles.iconPlaceholder} />
                 )}
@@ -284,8 +296,8 @@ export default function OrderBook({
               </div>
 
               <div className={styles.iconCell}>
-                {pickExchangeIcon(idx * 2 + 1) ? (
-                  <img className={styles.icon} src={pickExchangeIcon(idx * 2 + 1)} alt="exchange" />
+                {rightLogo ? (
+                  <img className={styles.icon} src={rightLogo} alt="exchange" />
                 ) : (
                   <span className={styles.iconPlaceholder} />
                 )}
