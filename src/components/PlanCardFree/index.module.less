@@ -1,0 +1,133 @@
+.planCard {
+  border-radius: 18px;
+  padding: 14px 14px 12px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+.planCardFree {
+  /* 透明度要足够低，才能看到磨砂背景（外层仍由 benefits 页面做 backdrop-filter） */
+  background: #F3F3F3;
+  border: 1px solid #CCCCCC;
+  padding: 20px;
+}
+
+.planTop {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.planTitle {
+  font-size: 18px;
+  font-weight: 900;
+  color: #111827;
+  line-height: 1.1;
+}
+
+.planSub {
+  font-size: 11px;
+  color: rgba(17, 24, 39, 0.45);
+}
+
+.freeInnerBox {
+  margin-top: 12px;
+  padding: 14px 14px 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.43);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.freeHighlightRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  padding-top: 0;
+}
+
+.freeShield {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: block;
+  object-fit: contain;
+}
+
+.freeHighlightText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.freeHighlightStrong {
+  font-family: "PingFang SC";
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 100%;
+  letter-spacing: 0px;
+  vertical-align: middle;
+  color: rgba(15, 23, 42, 1);
+}
+
+.freeHighlightSub {
+  font-family: "PingFang SC";
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 13px;
+  letter-spacing: 0px;
+  vertical-align: middle;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 1);
+}
+
+.freeDivider {
+  height: 1px;
+  margin: 10px 6px 10px;
+  background: rgba(15, 23, 42, 0.12);
+}
+
+.planCta {
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 0.5px solid rgba(147, 65, 0, 0.64);
+  background: linear-gradient(0deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6)),
+    linear-gradient(111.41deg, #FFCC8C 33.36%, #FBE0BE 72.76%);
+  color: rgba(147, 65, 0, 1);
+  font-family: "PingFang SC";
+  font-weight: 400;
+  font-style: normal; /* 设计稿标注 Bold：实际通过 font-family+font-weight 渲染 */
+  font-size: 10px;
+  line-height: 8.04px;
+  letter-spacing: 0px;
+  text-align: center;
+  vertical-align: middle;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.planBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.planHint {
+  font-family: "PingFang SC";
+  font-weight: 400;
+  font-style: normal; /* Medium is typically a weight */
+  font-size: 12px;
+  line-height: 100%;
+  letter-spacing: 0px;
+  text-align: right;
+  vertical-align: middle;
+  text-transform: capitalize;
+  color: rgba(15, 23, 42, 1);
+}
+

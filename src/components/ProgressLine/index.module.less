@@ -1,0 +1,80 @@
+.tierRail {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: flex-start;
+  position: relative;
+  margin: 4px 6px 0;
+  padding: 0 4px;
+}
+
+.tierRailLine {
+  position: absolute;
+  /* 连线端点对齐 Free / Pro 两个点的中心（3 等分：1/6 到 5/6） */
+  left: 16.6667%;
+  right: 16.6667%;
+  /* 让 2px 线穿过 12px 圆点中心（圆点从容器顶部开始） */
+  top: 5px;
+  height: 2px;
+  background: rgba(15, 23, 42, 0.12);
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.tierStop {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  min-width: 0;
+}
+
+.tierDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  /* 未激活：实心浅灰 */
+  background: #E2E2E2;
+  border: 2px solid #E2E2E2;
+  box-sizing: border-box;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.tierStopActive .tierDot {
+  /* 激活：空心（中心透明），只保留边框 */
+  /* 使用接近底色的浅色填充来“挡住”连线，同时视觉仍是空心效果 */
+  background: rgba(255, 255, 255, 0.95);
+  transform: scale(1.15);
+  border-width: 3px;
+}
+
+.tierStop_free.tierStopActive .tierDot {
+  border-color: #374151;
+  box-shadow: none;
+}
+
+.tierStop_lite.tierStopActive .tierDot {
+  border-color: #059669;
+  box-shadow: none;
+}
+
+.tierStop_pro.tierStopActive .tierDot {
+  border-color: #ea580c;
+  box-shadow: none;
+}
+
+.tierStopLabel {
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(15, 23, 42, 0.42);
+}
+
+.tierStopActive .tierStopLabel {
+  color: rgba(15, 23, 42, 0.88);
+}
+

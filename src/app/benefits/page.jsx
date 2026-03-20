@@ -1,32 +1,21 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import NavBar from '@/components/NavBar';
 import styles from './page.module.less';
+import PlanCardFree from '@/components/PlanCardFree';
+import ProgressLine from '@/components/ProgressLine';
 
-const TIERS = ['free', 'lite', 'pro'];
-
-const getTierLabel = (k) => {
-  if (k === 'pro') return 'Pro';
-  if (k === 'lite') return 'Lite';
-  return 'Free';
-};
-
-function ProgressLine({ current, max, variant }) {
-  const pct = Math.min(100, Math.round((current / max) * 100));
-  return (
-    <div className={styles.progressTrack}>
-      <div className={`${styles.progressFill} ${styles[`pf_${variant}`]}`} style={{ width: `${pct}%` }} />
-    </div>
-  );
-}
+// This page now renders only the Free tier.
 
 export default function BenefitsPage() {
   const router = useRouter();
   const { t } = useTranslation();
-  const [tier, setTier] = useState('free');
+  const tier = 'free';
+  const tierLabel = 'Free';
+  const containerModeClass = tier === 'lite' ? styles.mode_lite : tier === 'pro' ? styles.mode_pro : '';
 
   const days = 259;
   const litePoints = { cur: 4518, max: 5000 };
@@ -37,8 +26,7 @@ export default function BenefitsPage() {
   const validDate = '2026-04-12';
   const daysLeft = 22;
 
-  const planSubKey =
-    tier === 'pro' ? 'benefitsPage.planSubPro' : tier === 'lite' ? 'benefitsPage.planSubLite' : 'benefitsPage.planSubFree';
+  const planSubKey = 'benefitsPage.planSubFree';
 
   const freeUnlocked = useMemo(
     () => [
@@ -122,7 +110,7 @@ export default function BenefitsPage() {
   const navColor = tier === 'pro' ? 'rgba(252, 230, 196, 0.92)' : undefined;
 
   return (
-    <div className={`${styles.container} ${styles[`mode_${tier}`]}`}>
+    <div className={`${styles.container} ${containerModeClass}`}>
       <NavBar
         title={t('benefitsPage.title')}
         backgroundColor={navBg}
@@ -139,149 +127,62 @@ export default function BenefitsPage() {
               <span className={styles.daysUnit}>{t('benefitsPage.daysUnit')}</span>
             </div>
           </div>
-          <img className={styles.heroMascot} src="/point/point_bg.png" alt="" />
-        </div>
-
-        <div className={styles.tierRail} role="tablist" aria-label={t('benefitsPage.title')}>
-          <div className={styles.tierRailLine} />
-          {TIERS.map((k) => (
-            <button
-              key={k}
-              type="button"
-              role="tab"
-              aria-selected={tier === k}
-              className={`${styles.tierStop} ${tier === k ? styles.tierStopActive : ''} ${styles[`tierStop_${k}`]}`}
-              onClick={() => setTier(k)}
-            >
-              <span className={styles.tierDot} />
-              <span className={styles.tierStopLabel}>{getTierLabel(k)}</span>
-            </button>
-          ))}
         </div>
 
         {tier === 'free' && (
-          <div className={`${styles.planCard} ${styles.planCardFree}`}>
-            <div className={styles.planMain}>
-              <div className={styles.planTitle}>{getTierLabel(tier)}</div>
-              <div className={styles.planSub}>{t(planSubKey)}</div>
-              <div className={styles.freeHighlight}>
-                <span className={styles.freeShield} aria-hidden />
-                <div>
-                  <div className={styles.freeHighlightStrong}>120x</div>
-                  <div className={styles.freeHighlightSub}>{t('benefitsPage.aiCallPerMonth')}</div>
+          <div className={styles.freeGlassWrap}>
+            <PlanCardFree
+              title={tierLabel}
+              subtitle={t(planSubKey)}
+              highlightSub={t('benefitsPage.aiCallPerMonth')}
+              hint={t('benefitsPage.upgradeToEnjoy')}
+              ctaText={t('benefitsPage.upgradeLitePro')}
+              onCtaClick={goRecharge}
+              activeTier="free"
+            />
+
+            <div className={styles.sectionsBigBox}>
+              <div className={styles.section}>
+                <div className={styles.sectionTitle}>{t('benefitsPage.tierBenefits', { tier: tierLabel })}</div>
+                <div className={styles.benefitList}>
+                  {freeUnlocked.map((x, idx) => (
+                    <div key={idx} className={styles.benefitItem}>
+                      <img className={styles.benefitIcon} src={x.icon} alt="" />
+                      <div className={styles.benefitLabel}>{x.label}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <div className={styles.planHint}>{t('benefitsPage.upgradeToEnjoy')}</div>
-            </div>
-            <button className={styles.planCta} type="button" onClick={goRecharge}>
-              {t('benefitsPage.upgradeLitePro')}
-            </button>
-          </div>
-        )}
 
-        {tier === 'lite' && (
-          <div className={`${styles.planCard} ${styles.planCardLite}`}>
-            <div className={styles.litePlanTop}>
-              <div>
-                <div className={styles.planTitle}>{getTierLabel(tier)}</div>
-                <div className={styles.planSub}>{t(planSubKey)}</div>
-              </div>
-              <span className={styles.liteHexBadge} aria-hidden>
-                <span>V</span>
-              </span>
-            </div>
-            <div className={styles.litePointsBlock}>
-              <div className={styles.litePointsLabel}>{t('benefitsPage.pointsThisMonth')}</div>
-              <div className={styles.litePointsNums}>
-                {litePoints.cur.toLocaleString()} / {litePoints.max.toLocaleString()}
-              </div>
-              <ProgressLine current={litePoints.cur} max={litePoints.max} variant="emerald" />
-            </div>
-            <div className={styles.liteValidity}>
-              <span>{t('benefitsPage.validUntil', { tier: 'Lite', date: validDate })}</span>
-              <span className={styles.liteValidityTag}>{t('benefitsPage.daysLeftTag', { n: daysLeft })}</span>
-            </div>
-          </div>
-        )}
-
-        {tier === 'pro' && (
-          <div className={`${styles.planCard} ${styles.planCardPro}`}>
-            <div className={styles.proPlanHead}>
-              <div>
-                <div className={styles.proLevelTitle}>{t('benefitsPage.proLevel', { n: 1 })}</div>
-                <div className={styles.planSubPro}>{t(planSubKey)}</div>
-              </div>
-              <span className={styles.proHexBadge} aria-hidden>
-                <span>V1</span>
-              </span>
-            </div>
-            <div className={styles.proPointsBlock}>
-              <div className={styles.litePointsLabel}>{t('benefitsPage.pointsThisMonth')}</div>
-              <div className={styles.litePointsNums}>
-                {proPoints.cur.toLocaleString()} / {proPoints.max.toLocaleString()}
-              </div>
-              <ProgressLine current={proPoints.cur} max={proPoints.max} variant="amber" />
-            </div>
-            <div className={styles.liteValidity}>
-              <span>{t('benefitsPage.validUntil', { tier: 'Pro', date: validDate })}</span>
-              <span className={styles.proValidityTag}>{t('benefitsPage.daysLeftTag', { n: daysLeft })}</span>
-            </div>
-            <div className={styles.proNextTier}>
-              <div className={styles.proNextTierTitle}>{t('benefitsPage.nextLevelCardTitle')}</div>
-              <div className={styles.proNextTierSub}>
-                {t('benefitsPage.nextLevelProgress', { current: pro2Exp.cur.toLocaleString(), max: pro2Exp.max.toLocaleString() })}
-              </div>
-              <ProgressLine current={pro2Exp.cur} max={pro2Exp.max} variant="amberDeep" />
-              <div className={styles.proNextRewards}>{t('benefitsPage.nextLevelRewards', { points: '120,000', ai: 60 })}</div>
-              <button type="button" className={styles.proQuickUp} onClick={goRecharge}>
-                {t('benefitsPage.quickUpgrade')}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {tier === 'free' && (
-          <>
-            <div className={styles.section}>
-              <div className={styles.sectionTitle}>{t('benefitsPage.tierBenefits', { tier: getTierLabel(tier) })}</div>
-              <div className={styles.benefitList}>
-                {freeUnlocked.map((x, idx) => (
-                  <div key={idx} className={styles.benefitItem}>
-                    <img className={styles.benefitIcon} src={x.icon} alt="" />
-                    <div className={styles.benefitLabel}>{x.label}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className={styles.section}>
-              <div className={styles.sectionTitle}>{t('benefitsPage.lockedSection')}</div>
-              <div className={styles.lockedGrid}>
-                {lockedGrid.map((x, idx) => (
-                  <div key={idx} className={`${styles.lockedCard} ${styles[`tone_${x.tone}`]}`}>
-                    <div className={styles.lockedCardTop}>
-                      <img className={styles.lockedIcon} src={x.icon} alt="" />
-                      <div className={styles.lockedTitle}>{x.title}</div>
+              <div className={styles.section}>
+                <div className={styles.sectionTitle}>{t('benefitsPage.lockedSection')}</div>
+                <div className={styles.lockedGrid}>
+                  {lockedGrid.map((x, idx) => (
+                    <div key={idx} className={`${styles.lockedCard} ${styles[`tone_${x.tone}`]}`}>
+                      <div className={styles.lockedCardTop}>
+                        <img className={styles.lockedIcon} src={x.icon} alt="" />
+                        <div className={styles.lockedTitle}>{x.title}</div>
+                      </div>
+                      {!!x.subtitle && <div className={styles.lockedSub}>{x.subtitle}</div>}
                     </div>
-                    {!!x.subtitle && <div className={styles.lockedSub}>{x.subtitle}</div>}
-                  </div>
-                ))}
-              </div>
-              <div className={styles.lockedList}>
-                {lockedProRows.map((x, idx) => (
-                  <div key={idx} className={styles.lockedRow}>
-                    <div className={styles.lockedRowLeft}>
-                      <span className={styles.lockedRowIcon} />
-                      <span className={styles.lockedRowLabel}>{x.label}</span>
+                  ))}
+                </div>
+                <div className={styles.lockedList}>
+                  {lockedProRows.map((x, idx) => (
+                    <div key={idx} className={styles.lockedRow}>
+                      <div className={styles.lockedRowLeft}>
+                        <span className={styles.lockedRowIcon} />
+                        <span className={styles.lockedRowLabel}>{x.label}</span>
+                      </div>
+                      <button className={styles.upgradePill} type="button" onClick={goRecharge}>
+                        {t('benefitsPage.upgradePro')}
+                      </button>
                     </div>
-                    <button className={styles.upgradePill} type="button" onClick={goRecharge}>
-                      {t('benefitsPage.upgradePro')}
-                    </button>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
-          </>
+          </div>
         )}
 
         {tier === 'lite' && (
@@ -296,7 +197,7 @@ export default function BenefitsPage() {
                     {litePoints.cur.toLocaleString()}/{litePoints.max.toLocaleString()}
                   </span>
                 </div>
-                <ProgressLine current={litePoints.cur} max={litePoints.max} variant="violet" />
+                <ProgressLine activeTier="lite" />
               </div>
               <div className={`${styles.liteFeatCard} ${styles.liteFeatBlue}`}>
                 <div className={styles.liteFeatHead}>
@@ -305,7 +206,7 @@ export default function BenefitsPage() {
                     {liteAi.cur}/{liteAi.max}
                   </span>
                 </div>
-                <ProgressLine current={liteAi.cur} max={liteAi.max} variant="cyan" />
+                <ProgressLine activeTier="lite" />
               </div>
               <div className={`${styles.liteFeatCard} ${styles.liteFeatPeach}`}>
                 <div className={styles.liteFeatHead}>
@@ -357,7 +258,7 @@ export default function BenefitsPage() {
                     {proPoints.cur.toLocaleString()}/{proPoints.max.toLocaleString()}
                   </span>
                 </div>
-                <ProgressLine current={proPoints.cur} max={proPoints.max} variant="violet" />
+                <ProgressLine activeTier="pro" />
               </div>
               <div className={styles.proFeatWhite}>
                 <div className={styles.liteFeatHead}>
@@ -366,7 +267,7 @@ export default function BenefitsPage() {
                     {proAi.cur}/{proAi.max}
                   </span>
                 </div>
-                <ProgressLine current={proAi.cur} max={proAi.max} variant="cyan" />
+                <ProgressLine activeTier="pro" />
               </div>
             </div>
 
