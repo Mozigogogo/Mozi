@@ -11,6 +11,13 @@
 
   &.highlight {
     background: linear-gradient(135deg, #f0f9ff 0%, #f8fafc 100%);
+    
+    /* 高亮变体下，激活的 tab 一定是白底 */
+    .tabButtonActive {
+      background: #ffffff !important;
+      color: #000000 !important;
+      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.08);
+    }
   }
 }
 
