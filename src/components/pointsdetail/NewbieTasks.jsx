@@ -94,7 +94,7 @@ const NewbieTasks = ({ tasksList, handleTaskClick, loading, verifyingTaskId }) =
                 {verifyingTaskId === task.id ? (
                   <>
                     <span className={styles.loadingSpinnerSmall} />
-                    {t('pointsDetail.verifying') || '验证中...'}
+                    <span className={styles.loadingText}>{t('pointsDetail.verifying') || '验证中'}</span>
                   </>
                 ) : isCompleted ? (
                   t('pointsDetail.completed')

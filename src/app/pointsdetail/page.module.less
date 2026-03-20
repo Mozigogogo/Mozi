@@ -1,7 +1,8 @@
 .pointsDetailContainer {
   min-height: 100vh;
   background: url('/point/point_bg.png') no-repeat top center;
-  background-size: 100% auto;
+  /* 让背景图铺满整个容器高度（必要时会有轻微拉伸） */
+  background-size: 100% 100%;
   background-color: #F5F7FA;
   padding: 16px;
   padding-top: 60px;
@@ -1062,6 +1063,76 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* 新手任务：未完成/已完成/验证中同宽（按 button fixed width 占位） */
+.taskList .taskBtn:not(.loading) {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 78px;
+  min-width: 78px;
+  max-width: 78px;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+.taskList .taskBtn.taskBtnEn:not(.loading) {
+  width: 82px;
+  min-width: 82px;
+  max-width: 82px;
+}
+
+.taskList .taskBtn.completed {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.taskList .taskBtn.taskBtnEn.completed {
+  font-size: 9px;
+  letter-spacing: -0.03em;
+}
+
+.taskList .taskBtn.loading {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 78px;
+  min-width: 78px;
+  max-width: 78px;
+  padding-left: 6px;
+  padding-right: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  overflow: hidden;
+}
+
+.taskList .taskBtn.taskBtnEn.loading {
+  width: 82px;
+  min-width: 82px;
+  max-width: 82px;
+  font-size: 9px;
+  letter-spacing: -0.03em;
+}
+
+/* 防止验证中按钮文字撑开：spinner + 文案两段，文字做省略 */
+.loadingText {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 50px; /* 78px 按钮下，给 spinner + padding 留出空间 */
+  vertical-align: middle;
+}
+
+.taskBtnEn .loadingText {
+  max-width: 54px; /* 82px 按钮下放宽一点 */
 }
 
 .taskItem {

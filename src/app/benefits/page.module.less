@@ -1,0 +1,870 @@
+.container {
+  min-height: 100vh;
+  background: linear-gradient(180deg, rgba(176, 243, 215, 0.65) 0%, #f5f7fa 220px);
+  font-family: "PingFang SC", Roboto, Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial,
+    sans-serif;
+  transition: background 0.35s ease;
+}
+
+.mode_lite {
+  background: linear-gradient(180deg, rgba(167, 243, 208, 0.85) 0%, #ecfdf5 200px, #f5f7fa 280px);
+}
+
+.mode_pro {
+  background: linear-gradient(180deg, #3d2f28 0%, #4a372e 180px, #f0f0f0 320px);
+}
+
+.content {
+  padding: 62px 16px 28px;
+}
+
+.hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 6px 4px 14px;
+}
+
+.heroText {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.heroSub {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
+  font-weight: 600;
+}
+
+.heroDays {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: #111827;
+}
+
+.mode_pro .heroSub {
+  color: rgba(252, 230, 196, 0.78);
+}
+
+.mode_pro .heroDays {
+  color: #fff8e8;
+}
+
+.daysNum {
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+}
+
+.daysUnit {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.heroMascot {
+  width: 92px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 16px;
+  opacity: 0.9;
+}
+
+/* —— Tier rail (Free / Lite / Pro) —— */
+.tierRail {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: relative;
+  margin: 4px 6px 16px;
+  padding: 0 4px;
+}
+
+.tierRailLine {
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  top: 9px;
+  height: 2px;
+  background: rgba(15, 23, 42, 0.12);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.mode_pro .tierRailLine {
+  background: rgba(252, 230, 196, 0.22);
+}
+
+.tierStop {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  max-width: 72px;
+}
+
+.tierDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid rgba(15, 23, 42, 0.2);
+  box-sizing: border-box;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.tierStopActive .tierDot {
+  transform: scale(1.15);
+  border-width: 3px;
+}
+
+.tierStop_free.tierStopActive .tierDot {
+  border-color: #374151;
+  background: #1f2937;
+  box-shadow: 0 0 0 2px #fff;
+}
+
+.tierStop_lite.tierStopActive .tierDot {
+  border-color: #059669;
+  background: #10b981;
+  box-shadow: 0 0 0 2px #fff;
+}
+
+.tierStop_pro.tierStopActive .tierDot {
+  border-color: #ea580c;
+  background: #f97316;
+  box-shadow: 0 0 0 2px rgba(62, 47, 40, 0.9);
+}
+
+.mode_pro .tierStop:not(.tierStopActive) .tierDot {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(252, 230, 196, 0.35);
+}
+
+.tierStopLabel {
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(15, 23, 42, 0.42);
+}
+
+.tierStopActive .tierStopLabel {
+  color: rgba(15, 23, 42, 0.88);
+}
+
+.mode_pro .tierStopLabel {
+  color: rgba(252, 230, 196, 0.45);
+}
+
+.mode_pro .tierStopActive .tierStopLabel {
+  color: #ffe7c2;
+}
+
+/* —— Plan cards —— */
+.planCard {
+  border-radius: 18px;
+  padding: 14px 14px 12px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 2px;
+}
+
+.planCardFree {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.06);
+}
+
+.planCardLite {
+  background: linear-gradient(145deg, #ffffff 0%, #ecfdf5 100%);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  box-shadow: 0 12px 28px rgba(16, 185, 129, 0.12);
+}
+
+.planCardPro {
+  background: linear-gradient(145deg, #fff7ed 0%, #ffedd5 45%, #fdba74 160%);
+  border: 1px solid rgba(251, 146, 60, 0.45);
+  box-shadow: 0 16px 36px rgba(180, 83, 9, 0.18);
+}
+
+.planMain {
+  padding-right: 108px;
+}
+
+.planTitle {
+  font-size: 18px;
+  font-weight: 900;
+  color: #111827;
+  line-height: 1.1;
+}
+
+.planSub {
+  font-size: 11px;
+  color: rgba(17, 24, 39, 0.45);
+  margin-top: 2px;
+}
+
+.planSubPro {
+  font-size: 11px;
+  color: rgba(120, 53, 15, 0.65);
+  margin-top: 2px;
+}
+
+.freeHighlight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(243, 244, 246, 0.95);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.freeShield {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.45));
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  flex-shrink: 0;
+}
+
+.freeHighlightStrong {
+  font-size: 16px;
+  font-weight: 900;
+  color: #059669;
+  line-height: 1.1;
+}
+
+.freeHighlightSub {
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(17, 24, 39, 0.55);
+  margin-top: 2px;
+}
+
+.planHint {
+  margin-top: 10px;
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.45);
+  font-weight: 600;
+}
+
+.planCta {
+  position: absolute;
+  right: 12px;
+  top: 18px;
+  height: 30px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 159, 10, 0.2);
+  color: #b45309;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.litePlanTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.liteHexBadge {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #34d399, #059669);
+  color: #fff;
+  font-weight: 900;
+  font-size: 16px;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  box-shadow: 0 6px 14px rgba(5, 150, 105, 0.35);
+}
+
+.litePointsBlock {
+  margin-top: 12px;
+}
+
+.litePointsLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(17, 24, 39, 0.5);
+}
+
+.litePointsNums {
+  margin-top: 4px;
+  font-size: 15px;
+  font-weight: 900;
+  color: #111827;
+}
+
+.planCardPro .litePointsLabel {
+  color: rgba(120, 53, 15, 0.55);
+}
+
+.planCardPro .litePointsNums {
+  color: #7c2d12;
+}
+
+.liteValidity {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(17, 24, 39, 0.48);
+}
+
+.liteValidityTag {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.15);
+  color: #047857;
+  font-weight: 800;
+}
+
+.proPlanHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.proLevelTitle {
+  font-size: 20px;
+  font-weight: 900;
+  color: #7c2d12;
+  line-height: 1.1;
+}
+
+.proHexBadge {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #fb923c, #ea580c);
+  color: #fff;
+  font-weight: 900;
+  font-size: 11px;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  box-shadow: 0 6px 16px rgba(234, 88, 12, 0.4);
+}
+
+.proPointsBlock {
+  margin-top: 12px;
+}
+
+.proValidityTag {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(251, 146, 60, 0.25);
+  color: #9a3412;
+  font-weight: 800;
+}
+
+.proNextTier {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(124, 45, 18, 0.12) 0%, rgba(67, 20, 7, 0.18) 100%);
+  border: 1px solid rgba(180, 83, 9, 0.25);
+}
+
+.proNextTierTitle {
+  font-size: 12px;
+  font-weight: 900;
+  color: #7c2d12;
+}
+
+.proNextTierSub {
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(120, 53, 15, 0.75);
+}
+
+.proNextRewards {
+  margin-top: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(120, 53, 15, 0.65);
+  line-height: 1.4;
+}
+
+.proQuickUp {
+  margin-top: 10px;
+  width: 100%;
+  height: 32px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #f97316, #ea580c);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+/* Progress */
+.progressTrack {
+  margin-top: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.pf_emerald {
+  background: linear-gradient(90deg, #34d399, #059669);
+}
+.pf_amber {
+  background: linear-gradient(90deg, #fb923c, #ea580c);
+}
+.pf_amberDeep {
+  background: linear-gradient(90deg, #fdba74, #c2410c);
+}
+.pf_violet {
+  background: linear-gradient(90deg, #a78bfa, #7c3aed);
+}
+.pf_cyan {
+  background: linear-gradient(90deg, #67e8f9, #0891b2);
+}
+
+/* Sections */
+.section {
+  margin-top: 14px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 18px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.05);
+}
+
+.sectionLite {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  box-shadow: 0 10px 24px rgba(16, 185, 129, 0.08);
+}
+
+.sectionPro {
+  background: linear-gradient(180deg, #5c4033 0%, #4a3428 100%);
+  border: 1px solid rgba(180, 140, 100, 0.35);
+  box-shadow: 0 16px 40px rgba(40, 28, 22, 0.35);
+}
+
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 900;
+  color: rgba(17, 24, 39, 0.9);
+  margin-bottom: 10px;
+}
+
+.sectionTitleLite {
+  font-size: 13px;
+  font-weight: 900;
+  color: rgba(6, 95, 70, 0.95);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sectionTitleLite::before {
+  content: "";
+  width: 4px;
+  height: 14px;
+  border-radius: 2px;
+  background: #10b981;
+}
+
+.sectionTitlePro {
+  font-size: 13px;
+  font-weight: 900;
+  color: #fde68a;
+  margin-bottom: 12px;
+}
+
+.benefitList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.benefitItem {
+  height: 44px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+}
+
+.benefitIcon {
+  width: 18px;
+  height: 18px;
+  opacity: 0.8;
+}
+
+.benefitLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(15, 23, 42, 0.86);
+}
+
+.lockedGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.lockedCard {
+  border-radius: 16px;
+  padding: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  min-height: 74px;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+}
+
+.lockedCardTop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lockedIcon {
+  width: 22px;
+  height: 22px;
+  opacity: 0.9;
+}
+
+.lockedTitle {
+  font-size: 13px;
+  font-weight: 900;
+  color: rgba(17, 24, 39, 0.9);
+}
+
+.lockedSub {
+  margin-top: 8px;
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.45);
+  font-weight: 700;
+}
+
+.tone_peach {
+  background: rgba(255, 237, 213, 0.65);
+}
+.tone_lavender {
+  background: rgba(237, 233, 254, 0.65);
+}
+.tone_sky {
+  background: rgba(224, 242, 254, 0.65);
+}
+.tone_sand {
+  background: rgba(254, 243, 199, 0.55);
+}
+
+.lockedList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lockedRow {
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(90deg, #7a5a3a 0%, #6a4b2f 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  box-shadow: 0 10px 16px rgba(122, 90, 58, 0.22);
+}
+
+.lockedRowLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.lockedRowIcon {
+  width: 22px;
+  height: 22px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  flex: 0 0 auto;
+}
+
+.lockedRowLabel {
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.92);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.upgradePill {
+  height: 26px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 224, 178, 0.95);
+  color: #6a3a12;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+/* Lite feature stack */
+.liteFeatureStack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.liteFeatCard {
+  border-radius: 14px;
+  padding: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.liteFeatPurple {
+  background: rgba(237, 233, 254, 0.85);
+}
+.liteFeatBlue {
+  background: rgba(224, 242, 254, 0.85);
+}
+.liteFeatPeach {
+  background: rgba(255, 237, 213, 0.75);
+}
+
+.liteFeatHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 900;
+  color: rgba(17, 24, 39, 0.88);
+}
+
+.liteFeatNums {
+  font-size: 12px;
+  font-weight: 900;
+  color: rgba(17, 24, 39, 0.65);
+}
+
+.liteFeatStatic {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(180, 83, 9, 0.85);
+}
+
+.iconGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px 8px;
+  margin-top: 16px;
+}
+
+.iconGridItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.iconGridCircle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #d1fae5, #6ee7b7);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.iconGridCircle img {
+  width: 20px;
+  height: 20px;
+  opacity: 0.85;
+}
+
+.iconGridLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(17, 24, 39, 0.72);
+  line-height: 1.25;
+  max-width: 100%;
+}
+
+/* Pro inner cards */
+.proFeatWhite {
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 14px;
+  padding: 12px;
+  border: 1px solid rgba(251, 191, 36, 0.25);
+}
+
+.proFeatNums {
+  font-size: 12px;
+  font-weight: 900;
+  color: rgba(67, 20, 7, 0.65);
+}
+
+.proCardRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.proInfoCard {
+  border-radius: 14px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(252, 230, 196, 0.2);
+}
+
+.proInfoCardBrown {
+  background: rgba(40, 28, 22, 0.55);
+  border-color: rgba(180, 140, 100, 0.35);
+}
+
+.proInfoTitle {
+  font-size: 12px;
+  font-weight: 900;
+  color: #fde68a;
+}
+
+.proInfoSub {
+  margin-top: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(252, 230, 196, 0.75);
+  line-height: 1.35;
+}
+
+.proSmallBtn {
+  margin-top: 10px;
+  width: 100%;
+  height: 28px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(251, 191, 36, 0.9);
+  color: #78350f;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.proAlphaCard {
+  margin-top: 12px;
+  border-radius: 14px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(252, 230, 196, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.proAlphaLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.proAlphaIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: rgba(251, 191, 36, 0.2);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  flex-shrink: 0;
+}
+
+.proAlphaText {
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(255, 248, 237, 0.95);
+}
+
+.proEnterBtn {
+  height: 30px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #fbbf24, #f59e0b);
+  color: #451a03;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.iconGridPro {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px 8px;
+  margin-top: 16px;
+}
+
+.iconGridCirclePro {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, rgba(251, 191, 36, 0.35), rgba(180, 83, 9, 0.45));
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.iconGridCirclePro img {
+  width: 20px;
+  height: 20px;
+  opacity: 0.92;
+}
+
+.iconGridLabelPro {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(252, 230, 196, 0.88);
+  line-height: 1.25;
+}

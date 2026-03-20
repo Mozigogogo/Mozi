@@ -911,7 +911,7 @@
     "centerTitle": "积分中心",
     "myPoints": "我的积分",
     "historyRecord": "历史记录",
-    "verifying": "验证中...",
+    "verifying": "验证中",
     "verify": "验证",
     "seasonCard": {
       "treasuryTitle": "MOZI积分金库",
@@ -1751,5 +1751,44 @@
         "desc": "正在查询您的支付结果，请稍候..."
       }
     }
+  },
+  "benefitsPage": {
+    "title": "我的权益",
+    "heroSub": "Mozi 已陪伴您",
+    "daysUnit": "天",
+    "planSubFree": "Free Trader",
+    "planSubLite": "Lite Trader",
+    "planSubPro": "Pro Trader",
+    "aiCallPerMonth": "AI CALL/月",
+    "tierBenefits": "{{tier}}权益",
+    "lockedSection": "未解锁权益",
+    "upgradeLitePro": "升级Lite/Pro",
+    "upgradePro": "升级Pro",
+    "depth40": "40档深度",
+    "monthlyPoints": "月度积分",
+    "monthlyPointsRange": "10000~10,000/月",
+    "aiCall": "AI Call",
+    "aiCallRange": "40~220次/月",
+    "exclusiveService": "专属客服",
+    "emailAlerts": "邮件告警",
+    "standardCS": "标准客服",
+    "identityTag": "身份标识",
+    "pointsThisMonth": "本月已获得积分",
+    "validUntil": "{{tier}}权益有效期至{{date}}",
+    "daysLeftTag": "{{n}}天",
+    "exclusiveMemberLine": "{{name}}会员专属权益",
+    "depth20": "20档深度",
+    "proLevel": "Pro-{{n}}",
+    "nextLevelCardTitle": "距离 Pro-2",
+    "nextLevelProgress": "{{current}} / {{max}} EXP",
+    "nextLevelRewards": "升级可得：{{points}} 积分/月 · {{ai}} AI Call/月",
+    "quickUpgrade": "快速升级",
+    "allowanceCardTitle": "本月额度",
+    "allowanceCardBody": "{{points}} 积分/月 · {{ai}} AI Call/月",
+    "upgradeMore": "升级更多",
+    "enterAlpha": "进入",
+    "bigOrderTitle": "大单行情",
+    "inUse": "使用中",
+    "upgradeToEnjoy": "升级到Lite/Pro可享受"
   }
 }
