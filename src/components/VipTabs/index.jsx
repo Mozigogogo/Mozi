@@ -42,7 +42,7 @@ const VipTabs = ({
             <button
               key={tab.id}
               className={`${styles.tabButton} ${
-                activeId === tab.id ? styles.active : ''
+                activeId === tab.id ? styles.tabButtonActive : ''
               } ${disabled ? styles.disabled : ''}`}
               onClick={() => handleTabClick(tab.id)}
               disabled={disabled}

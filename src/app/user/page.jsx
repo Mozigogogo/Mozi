@@ -1282,13 +1282,6 @@ export default function UserPage() {
 
   const footerList = [
     {
-      key: 'robot_test',
-      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/AI_Bot.png'} alt={t('robot.title')} style={{ width: 22, height: 22 }} />),
-      text: t('aiAssistant.title'),
-      extra: '',
-      callback: () => { router.push('/robot_test'); }
-    },
-    {
       key: 'language',
       icon: (<img src={'/icons/zh-en.svg'} alt={t('user.language')} style={{ width: 22, height: 22 }} />),
       text: t('user.language'),

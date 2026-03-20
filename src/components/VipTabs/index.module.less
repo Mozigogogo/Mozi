@@ -57,20 +57,21 @@
     background: rgba(15, 23, 42, 0.04);
   }
 
-  &.active {
-    color: #000000;
-    font-weight: 600;
-    background: #fff;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
   &.disabled {
     cursor: not-allowed;
     opacity: 0.5;
   }
+}
+
+/* Active tab button (单独类，避免 CSS Modules 嵌套选择器导出不一致导致激活样式不生效) */
+.tabButtonActive {
+  color: #000000;
+  font-weight: 600;
+  background: #fff;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .tabIcon {
