@@ -1,40 +1,48 @@
 .container {
   min-height: 100vh;
-  background: linear-gradient(180deg, rgba(176, 243, 215, 0.65) 0%, #f5f7fa 220px);
+  background-image: url('/benefits/free_bg.png'),
+    linear-gradient(180deg, rgba(176, 243, 215, 0.65) 0%, #f5f7fa 220px);
+  background-repeat: no-repeat;
+  /* 第一层是背景图，需要避开顶部 NavBar 覆盖区域 */
+  background-position: center 48px, top center;
+  /* 让背景图覆盖主要区域，底下用渐变补齐 */
+  background-size: 100% auto, 100% 100%;
   font-family: "PingFang SC", Roboto, Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial,
     sans-serif;
   transition: background 0.35s ease;
 }
 
 .mode_lite {
-  background: linear-gradient(180deg, rgba(167, 243, 208, 0.85) 0%, #ecfdf5 200px, #f5f7fa 280px);
+  background-image: url('/benefits/lite_bg.png'),
+    linear-gradient(180deg, rgba(167, 243, 208, 0.85) 0%, #ecfdf5 200px, #f5f7fa 280px);
 }
 
 .mode_pro {
-  background: linear-gradient(180deg, #3d2f28 0%, #4a372e 180px, #f0f0f0 320px);
+  background-image: url('/benefits/pro_bg.png'),
+    linear-gradient(180deg, #3d2f28 0%, #4a372e 180px, #f0f0f0 320px);
 }
 
 .content {
-  padding: 62px 16px 28px;
+  padding: 62px 0px 0px;
 }
 
 .hero {
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: space-between;
-  padding: 6px 4px 14px;
+  padding: 35px 25px 26px 25px;
 }
 
 .heroText {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .heroSub {
-  font-size: 12px;
-  color: rgba(0, 0, 0, 0.6);
-  font-weight: 600;
+  font-size: 18px;
+  color: rgba(15, 23, 42, 1);
+  font-weight: 500;
 }
 
 .heroDays {
@@ -64,8 +72,8 @@
 }
 
 .heroMascot {
-  width: 92px;
-  height: 64px;
+  width: 96px;
+  height: 70px;
   object-fit: cover;
   border-radius: 16px;
   opacity: 0.9;
@@ -168,109 +176,47 @@
 }
 
 /* —— Plan cards —— */
-.planCard {
-  border-radius: 18px;
-  padding: 14px 14px 12px;
+.freeGlassWrap {
   position: relative;
   overflow: hidden;
-  margin-bottom: 2px;
+  border-radius: 18px;
+  /* 玻璃磨砂效果：让下层背景透出来 */
+  backdrop-filter: blur(14.58px);
+  -webkit-backdrop-filter: blur(14.58px);
+  padding: 15px 15px;
 }
 
-.planCardFree {
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.95);
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.06);
-}
-
-.planCardLite {
-  background: linear-gradient(145deg, #ffffff 0%, #ecfdf5 100%);
-  border: 1px solid rgba(16, 185, 129, 0.28);
-  box-shadow: 0 12px 28px rgba(16, 185, 129, 0.12);
-}
-
-.planCardPro {
-  background: linear-gradient(145deg, #fff7ed 0%, #ffedd5 45%, #fdba74 160%);
-  border: 1px solid rgba(251, 146, 60, 0.45);
-  box-shadow: 0 16px 36px rgba(180, 83, 9, 0.18);
-}
-
-.planMain {
-  padding-right: 108px;
-}
-
-.planTitle {
-  font-size: 18px;
-  font-weight: 900;
-  color: #111827;
-  line-height: 1.1;
-}
-
-.planSub {
-  font-size: 11px;
-  color: rgba(17, 24, 39, 0.45);
-  margin-top: 2px;
-}
-
-.planSubPro {
-  font-size: 11px;
-  color: rgba(120, 53, 15, 0.65);
-  margin-top: 2px;
-}
-
-.freeHighlight {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 12px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: rgba(243, 244, 246, 0.95);
-  border: 1px solid rgba(15, 23, 42, 0.06);
-}
-
-.freeShield {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.45));
-  border: 1px solid rgba(16, 185, 129, 0.35);
-  flex-shrink: 0;
-}
-
-.freeHighlightStrong {
-  font-size: 16px;
-  font-weight: 900;
-  color: #059669;
-  line-height: 1.1;
-}
-
-.freeHighlightSub {
-  font-size: 11px;
-  font-weight: 800;
-  color: rgba(17, 24, 39, 0.55);
-  margin-top: 2px;
-}
-
-.planHint {
-  margin-top: 10px;
-  font-size: 11px;
-  color: rgba(0, 0, 0, 0.45);
-  font-weight: 600;
-}
-
-.planCta {
+.freeGlassWrap::before {
+  content: "";
   position: absolute;
-  right: 12px;
-  top: 18px;
-  height: 30px;
-  padding: 0 12px;
-  border: none;
-  border-radius: 999px;
-  background: rgba(255, 159, 10, 0.2);
-  color: #b45309;
-  font-size: 11px;
-  font-weight: 900;
-  cursor: pointer;
+  inset: 0;
+  /* 复用你提供的 glass.svg 的高光纹理 */
+  background-image: url("/benefits/glass.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.freeGlassWrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  /* 从上方“玻璃感”逐渐过渡到下方更白的铺底 */
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.22) 45%,
+    rgba(255, 255, 255, 0.92) 100%
+  );
+}
+
+.freeGlassWrap > * {
+  position: relative;
+  z-index: 1;
 }
 
 .litePlanTop {
@@ -461,6 +407,25 @@
   padding: 12px;
   border: 1px solid rgba(255, 255, 255, 0.95);
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.05);
+}
+
+/* Free 页面 “section 容器”外层大盒子 */
+.sectionsBigBox {
+  margin-top: 14px; /* 保持与原 section 的间距一致 */
+  padding: 12px; /* 给内部 section 留出边框内缩空间 */
+  /* 外层大盒子的 padding 区域需要与内层 section 同色，否则会透出玻璃层导致“断层” */
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 18px;
+  border: 1px solid rgba(193, 193, 193, 1);
+}
+
+.sectionsBigBox .section {
+  border: none; /* 边框由 sectionsBigBox 统一控制 */
+  box-shadow: none; /* 外层大盒子负责层次 */
+}
+
+.sectionsBigBox .section:first-child {
+  margin-top: 0; /* 避免第一个内层 section 与外层重复间距 */
 }
 
 .sectionLite {
