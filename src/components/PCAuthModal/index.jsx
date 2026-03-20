@@ -15,6 +15,7 @@ import { useRouter } from 'next/navigation';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { sendVerificationCode, loginByEmail, registerByEmail, loginByWallet, loginByGoogle, resetPassword, completeTask } from '../../api/user';
+import { ensureFirstLoginAt } from '../../utils/postLogin';
 import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
 import { encrypt, decrypt } from '../../utils/security';
 import styles from './index.module.less';
@@ -340,6 +341,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
       
       completeTask('DAILY_LOGIN');
       completeTask('FIRST_LOGIN');
+      ensureFirstLoginAt({ caller: 'PCAuthModal_handleAuthResponse' });
       
       message.success(t('auth.loginSuccess') || 'Login successful');
       onSuccess?.();

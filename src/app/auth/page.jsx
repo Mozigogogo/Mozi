@@ -8,6 +8,7 @@ import { message } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
+import { ensureFirstLoginAt } from '../../utils/postLogin';
 import { sendVerificationCode, loginByEmail, registerByEmail, loginByWallet, loginByGoogle, completeTask } from '../../api/user';
 import { useGoogleLogin } from '@react-oauth/google';
 import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
@@ -167,6 +168,7 @@ export default function PCLoginPage() {
           completeTask('DAILY_LOGIN');
           // 首次登录任务上报
           completeTask('FIRST_LOGIN');
+          ensureFirstLoginAt({ caller: 'PCLoginPage_handleLogin' });
         } catch (error) {
           console.error('登录任务上报失败:', error);
         }
@@ -264,6 +266,7 @@ export default function PCLoginPage() {
           completeTask('DAILY_LOGIN');
           // 首次登录任务上报
           completeTask('FIRST_LOGIN');
+          ensureFirstLoginAt({ caller: 'PCLoginPage_autoLoginAfterRegister' });
         } catch (error) {
           console.error('登录任务上报失败:', error);
         }
@@ -338,6 +341,7 @@ export default function PCLoginPage() {
           completeTask('DAILY_LOGIN');
           // 首次登录任务上报
           completeTask('FIRST_LOGIN');
+          ensureFirstLoginAt({ caller: 'PCLoginPage_handleGoogleLoginSuccess' });
         } catch (error) {
           console.error('登录任务上报失败:', error);
         }
@@ -449,6 +453,7 @@ export default function PCLoginPage() {
           completeTask('DAILY_LOGIN');
           // 首次登录任务上报
           completeTask('FIRST_LOGIN');
+          ensureFirstLoginAt({ caller: 'PCLoginPage_triggerWeb3SignatureLogin' });
         } catch (error) {
           console.error('登录任务上报失败:', error);
         }
@@ -522,6 +527,7 @@ export default function PCLoginPage() {
           completeTask('DAILY_LOGIN');
           // 首次登录任务上报
           completeTask('FIRST_LOGIN');
+          ensureFirstLoginAt({ caller: 'PCLoginPage_handleTonWalletLogin' });
         } catch (error) {
           console.error('❌ [TON钱包登录] 登录任务上报失败:', error);
         }

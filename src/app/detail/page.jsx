@@ -171,6 +171,10 @@ export default function DetailPage() {
   // 初始化检查解锁状态
   useEffect(() => {
     const checkStatus = () => {
+      // 200积分解锁：全局生效（不依赖 symbol）
+      const GLOBAL_UNLOCK_START_KEY = 'mozi_big_order_unlock_start_at_v1';
+      const UNLOCK_DURATION_MS = 24 * 60 * 60 * 1000; // 24小时
+
       // 1. 优先检查 VIP 状态 (最高优先级)
       if (isVipBySubscription(mySubscription)) {
         setIsBigOrderUnlocked(true);
@@ -200,16 +204,57 @@ export default function DetailPage() {
 
       // 2. 检查新用户试用 (7天)
       try {
+        const userId = localStorage.getItem('userId');
+        const FIRST_LOGIN_AT_KEY_PREFIX = 'mozi_first_login_at_user_v1:';
+
+        // 优先使用自定义字段：首次登录时间
+        let firstLoginAtMs = null;
+        if (userId) {
+          const key = `${FIRST_LOGIN_AT_KEY_PREFIX}${userId}`;
+          const saved = localStorage.getItem(key);
+          if (saved) {
+            const savedMs = Number(saved);
+            if (Number.isFinite(savedMs) && savedMs > 0) {
+              firstLoginAtMs = savedMs;
+            }
+          }
+        }
+
+        // 兜底：读取 userDataInfo 内的 firstLoginAt
+        if (!firstLoginAtMs) {
+          const userDataInfoStr = localStorage.getItem('userDataInfo');
+          if (userDataInfoStr) {
+            try {
+              const userData = JSON.parse(userDataInfoStr);
+              const v = userData?.firstLoginAtMs || userData?.firstLoginAt;
+              if (typeof v === 'number' && Number.isFinite(v) && v > 0) {
+                firstLoginAtMs = v;
+              } else if (typeof v === 'string' && v) {
+                const parsed = new Date(v).getTime();
+                if (Number.isFinite(parsed) && parsed > 0) firstLoginAtMs = parsed;
+              }
+            } catch (_) {}
+          }
+        }
+
+        if (firstLoginAtMs) {
+          const now = Date.now();
+          const trialDuration = 7 * 24 * 60 * 60 * 1000; // 7天
+          if (now - firstLoginAtMs < trialDuration) {
+            setIsBigOrderUnlocked(true);
+            setUnlockEndTime(firstLoginAtMs + trialDuration);
+            setOrderBookTag(t('orderBook.limitedExperience')); // "限时体验"
+            return;
+          }
+        }
+
+        // 再兜底：兼容旧逻辑（可能是注册/创建时间）
         let createTimeStr = null;
-        
-        // 尝试从 userDataInfo 获取
         const userDataInfo = localStorage.getItem('userDataInfo');
         if (userDataInfo) {
           const user = JSON.parse(userDataInfo);
           createTimeStr = user.createTime || user.createdAt || user.registerTime;
         }
-        
-        // 如果没有，尝试从 userInfo 获取
         if (!createTimeStr) {
           const userInfo = localStorage.getItem('userInfo');
           if (userInfo) {
@@ -217,12 +262,11 @@ export default function DetailPage() {
             createTimeStr = user.createTime || user.createdAt || user.registerTime;
           }
         }
-        
+
         if (createTimeStr) {
           const created = new Date(createTimeStr).getTime();
           const now = Date.now();
           const trialDuration = 7 * 24 * 60 * 60 * 1000; // 7天
-          
           if (now - created < trialDuration) {
             setIsBigOrderUnlocked(true);
             setUnlockEndTime(created + trialDuration);
@@ -235,20 +279,21 @@ export default function DetailPage() {
       }
 
       // 3. 检查积分解锁 (24小时)
-      if (!symbol) return;
-      const unlockKey = `mozi_big_order_unlock_${symbol}`;
-      const savedEndTime = localStorage.getItem(unlockKey);
-      
-      if (savedEndTime) {
-        const endTime = parseInt(savedEndTime, 10);
-        if (Date.now() < endTime) {
-          setIsBigOrderUnlocked(true);
-          setUnlockEndTime(endTime);
-          setOrderBookTag(t('orderBook.unlocked') || '已解锁'); 
-          return;
-        } else {
+      const savedStartAt = localStorage.getItem(GLOBAL_UNLOCK_START_KEY);
+      if (savedStartAt) {
+        const startAt = parseInt(savedStartAt, 10);
+        if (Number.isFinite(startAt)) {
+          const endTime = startAt + UNLOCK_DURATION_MS;
+          if (Date.now() < endTime) {
+            setIsBigOrderUnlocked(true);
+            setUnlockEndTime(endTime);
+            setOrderBookTag(t('orderBook.unlocked') || '已解锁');
+            return;
+          }
           // 已过期
-          localStorage.removeItem(unlockKey);
+          localStorage.removeItem(GLOBAL_UNLOCK_START_KEY);
+        } else {
+          localStorage.removeItem(GLOBAL_UNLOCK_START_KEY);
         }
       }
 
@@ -264,17 +309,19 @@ export default function DetailPage() {
   // 倒计时检查过期
   useEffect(() => {
     if (!unlockEndTime) return;
+
+    const GLOBAL_UNLOCK_START_KEY = 'mozi_big_order_unlock_start_at_v1';
     
     const timer = setInterval(() => {
       if (Date.now() >= unlockEndTime) {
         setIsBigOrderUnlocked(false);
         setUnlockEndTime(null);
-        localStorage.removeItem(`mozi_big_order_unlock_${symbol}`);
+        localStorage.removeItem(GLOBAL_UNLOCK_START_KEY);
       }
     }, 1000);
     
     return () => clearInterval(timer);
-  }, [unlockEndTime, symbol]);
+  }, [unlockEndTime]);
 
   // 解锁处理函数
   const handleUnlockOrderBook = async () => {
@@ -307,10 +354,17 @@ export default function DetailPage() {
       try {
         const res = await executeConsume({ actionCode: 'BIG_ORDER_VIEW' });
         if (res.code === 0) {
-          const endTime = Date.now() + 24 * 60 * 60 * 1000;
+          const GLOBAL_UNLOCK_START_KEY = 'mozi_big_order_unlock_start_at_v1';
+          const UNLOCK_DURATION_MS = 24 * 60 * 60 * 1000; // 24小时
+
+          const startAt = Date.now();
+          const endTime = startAt + UNLOCK_DURATION_MS;
+
           setIsBigOrderUnlocked(true);
           setUnlockEndTime(endTime);
-          localStorage.setItem(`mozi_big_order_unlock_${symbol}`, endTime.toString());
+          // 记录“点击解锁成功时”的当前时间戳（全局生效）
+          localStorage.setItem(GLOBAL_UNLOCK_START_KEY, startAt.toString());
+          setOrderBookTag(t('orderBook.unlocked') || '已解锁');
           Toast.show({
             icon: 'success',
             content: '解锁成功',
@@ -338,6 +392,48 @@ export default function DetailPage() {
   const pollingTimerRef = useRef(null); // HTTP轮询定时器
   const hasBigDealDataRef = useRef(false); // 是否收到过大单数据（避免 mock 覆盖）
   const bigDealChannelIdRef = useRef(null); // big_deal 订阅频道ID（若服务端返回）
+  const didResubscribeBigDealRef = useRef(false); // 防止重复订阅导致请求过多
+  const bigDealMsgCountRef = useRef(0);
+  const lastOrderBookLogAtRef = useRef(0);
+  const lastUnlockChangeLogAtRef = useRef(0);
+
+  // 积分/会员解锁后，部分服务端不会在“已订阅但未授权”状态下自动推送数据，
+  // 因此需要在 unlock 状态变为 true 时重新订阅 big_deal。
+  useEffect(() => {
+    if (!isBigOrderUnlocked) {
+      didResubscribeBigDealRef.current = false;
+      return;
+    }
+
+    const ws = wsRef.current;
+    if (!ws) return;
+    if (wsConnectionStatusRef.current !== 'connected') return;
+    if (!isWsAuthenticatedRef.current) return;
+    if (didResubscribeBigDealRef.current) return;
+
+    didResubscribeBigDealRef.current = true;
+
+    const run = async () => {
+      try {
+        // 如果服务端返回过 channelId，先取消再订阅，确保鉴权状态生效
+        if (bigDealChannelIdRef.current) {
+          await ws.unsubscribe([bigDealChannelIdRef.current]);
+          bigDealChannelIdRef.current = null;
+        }
+
+        const bigDealChannel = { type: 'big_deal', symbols: [String(symbol || '').toUpperCase()] };
+        const response = await ws.subscribe([bigDealChannel]);
+        const channelId = response?.data?.channels?.[0]?.channelId;
+        if (channelId) bigDealChannelIdRef.current = channelId;
+      } catch (e) {
+        console.error('[big_deal] resubscribe after unlock failed:', e);
+      }
+    };
+
+    run();
+  }, [isBigOrderUnlocked, symbol]);
+
+  // 这里不再打印解锁状态/订单簿更新日志，避免刷屏；big_deal 只保留最关键字段日志
   
   
   // 获取币种信息
@@ -495,11 +591,9 @@ export default function DetailPage() {
     
     // 只有在允许使用HTTP降级时才执行
     if (!useHttpFallbackRef.current) {
-      console.log('WebSocket正在使用中，不执行HTTP请求');
       return;
     }
     
-    console.log('使用HTTP降级模式获取K线数据');
     setKlineLoading(true);
     
     try {
@@ -795,7 +889,6 @@ ${coinInfo.name || symbol} (${symbol})
 
   // 启动HTTP降级模式
   const startHttpFallback = () => {
-    console.log('启动HTTP降级模式');
     useHttpFallbackRef.current = true;
     
     // 立即获取一次数据
@@ -820,7 +913,6 @@ ${coinInfo.name || symbol} (${symbol})
   
   // 停止HTTP降级模式
   const stopHttpFallback = () => {
-    console.log('停止HTTP降级模式');
     useHttpFallbackRef.current = false;
     
     // 清除轮询定时器
@@ -843,7 +935,6 @@ ${coinInfo.name || symbol} (${symbol})
     // 设置首次加载超时（1分钟）
     initialLoadTimeoutRef.current = setTimeout(() => {
       if (isInitialLoad) {
-        console.warn('首次加载超时，强制结束骨架屏显示');
         setIsInitialLoad(false);
         setKlineLoading(false);
         setLoading(false);
@@ -862,7 +953,6 @@ ${coinInfo.name || symbol} (${symbol})
     // 如果10秒内WebSocket未连接成功，则启用HTTP降级
     wsConnectionTimeoutRef.current = setTimeout(() => {
       if (wsConnectionStatusRef.current !== 'connected') {
-        console.warn('WebSocket连接超时，启用HTTP降级模式');
         wsConnectionStatusRef.current = 'failed';
         startHttpFallback();
       }
@@ -877,7 +967,7 @@ ${coinInfo.name || symbol} (${symbol})
       platform: PLATFORMS.H5,
       version: '1.0.0',
       autoHandshake: true,
-      debug: true,
+      debug: false,
       token: token,  // 通过 Sec-WebSocket-Protocol 子协议传递 token
     });
     
@@ -885,7 +975,6 @@ ${coinInfo.name || symbol} (${symbol})
     
     // 监听认证成功后订阅数据
     ws.on('authenticated', (data) => {
-      console.log('✅ WebSocket认证成功');
       isWsAuthenticatedRef.current = true; // 标记已认证
       wsConnectionStatusRef.current = 'connected'; // 标记连接成功
       
@@ -1307,14 +1396,16 @@ ${coinInfo.name || symbol} (${symbol})
 
     // 监听大单侦测数据（big_deal）
     ws.on('big_deal', (msg) => {
-      // Debug：保留原始推送，方便排查
-      console.log('📈 [big_deal] message:', msg);
-
+      bigDealMsgCountRef.current += 1;
+      const cnt = bigDealMsgCountRef.current;
       const data = msg?.data;
+
       if (!data) return;
 
       const toNumber = (v) => {
-        const n = Number(v);
+        if (v === null || v === undefined) return null;
+        const s = String(v).replace(/,/g, '').trim();
+        const n = Number(s);
         return Number.isFinite(n) ? n : null;
       };
 
@@ -1332,8 +1423,10 @@ ${coinInfo.name || symbol} (${symbol})
           const price = toNumber(x?.deal_price);
           const qty = toNumber(x?.deal_quantity);
           const notional = price !== null && qty !== null ? price * qty : null;
+          // 后端字段可能不止 deal_price*deal_quantity，这里做多字段兜底
+          const fallbackDealValue = toNumber(x?.deal_value ?? x?.deal_amount ?? x?.notional ?? x?.amount);
           return {
-            value: notional ?? qty ?? 0,
+            value: notional ?? fallbackDealValue ?? qty ?? 0,
             // 图标：优先使用 WS 下发的 logo
             logo: x?.logo || null,
           };
@@ -1343,6 +1436,7 @@ ${coinInfo.name || symbol} (${symbol})
       const asks = mapSide(sell);
 
       hasBigDealDataRef.current = true;
+
       setOrderBook({
         bids: bids.slice(0, 40),
         asks: asks.slice(0, 40),
@@ -1361,19 +1455,16 @@ ${coinInfo.name || symbol} (${symbol})
     
     // 监听WebSocket断开连接
     ws.on('close', () => {
-      console.log('🔌 WebSocket连接关闭');
       const wasConnected = wsConnectionStatusRef.current === 'connected';
       wsConnectionStatusRef.current = 'failed';
       
       // 如果之前是连接状态，现在断开了，启动HTTP降级
       if (wasConnected) {
-        console.log('WebSocket断开，切换到HTTP降级模式');
         startHttpFallback();
       }
     });
     
     // 连接 WebSocket
-    console.log('🔄 开始连接WebSocket...');
     ws.connect();
     
     return () => {
@@ -1431,13 +1522,11 @@ ${coinInfo.name || symbol} (${symbol})
     
     // 如果正在使用HTTP降级模式，暂时不需要切换订阅（数据会通过HTTP轮询获取）
     if (useHttpFallbackRef.current) {
-      console.log('HTTP降级模式：切换周期时无需WebSocket订阅');
       return;
     }
     
     // 检查WebSocket连接状态
     if (!wsRef.current || !isWsAuthenticatedRef.current || wsConnectionStatusRef.current !== 'connected') {
-      console.log('WebSocket未连接，跳过周期切换');
       return;
     }
     
@@ -1470,8 +1559,6 @@ ${coinInfo.name || symbol} (${symbol})
       if (!ws) return;
       
       try {
-        console.log(`🔄 切换K线周期到: ${label}`);
-        
         // 1. 如果有旧的订阅，先取消
         if (currentKlineChannelRef.current) {
           await ws.unsubscribe([currentKlineChannelRef.current]);
@@ -1486,7 +1573,6 @@ ${coinInfo.name || symbol} (${symbol})
         if (response?.data?.channels?.[0]?.channelId) {
           currentKlineChannelRef.current = response.data.channels[0].channelId;
           currentKlinePeriodRef.current = activeKlineTab;
-          console.log(`✅ K线周期切换成功: ${label}`);
         }
       } catch (err) {
         console.error('切换K线订阅失败:', err);

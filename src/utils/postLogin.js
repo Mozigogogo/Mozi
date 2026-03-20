@@ -11,6 +11,50 @@ const STORAGE_KEYS = {
   TASK_FIRST_LOGIN_DONE: 'task_first_login_done_v1',
 };
 
+// 自定义字段：首次登录时间（按用户维度持久化）
+// 用于替代“注册时间/创建时间”这种可能不等于“首次登录时间”的字段。
+const USER_FIRST_LOGIN_AT_KEY_PREFIX = 'mozi_first_login_at_user_v1:';
+const getUserFirstLoginAtKey = (userId) => {
+  if (!userId) return null;
+  return `${USER_FIRST_LOGIN_AT_KEY_PREFIX}${userId}`;
+};
+
+export const ensureFirstLoginAt = ({ caller = 'unknown' } = {}) => {
+  if (typeof window === 'undefined') return null;
+
+  const userId = localStorage.getItem('userId');
+  const key = getUserFirstLoginAtKey(userId);
+  if (!key) return null;
+
+  try {
+    const existing = localStorage.getItem(key);
+    const existingMs = existing ? Number(existing) : NaN;
+    if (Number.isFinite(existingMs) && existingMs > 0) return existingMs;
+
+    const tsMs = Date.now();
+    localStorage.setItem(key, String(tsMs));
+
+    // 尽量把字段同步到 userDataInfo，方便其它页面直接读取。
+    try {
+      const raw = localStorage.getItem('userDataInfo');
+      if (!raw) return tsMs;
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.firstLoginAt === undefined) {
+        parsed.firstLoginAt = new Date(tsMs).toISOString();
+        parsed.firstLoginAtMs = tsMs;
+        localStorage.setItem('userDataInfo', JSON.stringify(parsed));
+      }
+    } catch (_) {
+      // 同步 userDataInfo 失败不影响首次登录时间关键字段的写入
+    }
+
+    return tsMs;
+  } catch (e) {
+    console.warn('[postLogin] ensureFirstLoginAt failed:', e, { caller });
+    return null;
+  }
+};
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DATAINFO_TTL_MS = 30 * 1000; // 30s 内只拉一次 datainfo
 
@@ -156,6 +200,9 @@ export async function runPostLoginSideEffects(options = {}) {
         completeDailyLoginOnce(),
         completeFirstLoginOnce(),
       ]);
+
+      // 首次登录时间字段（自定义 firstLoginAt）
+      ensureFirstLoginAt({ caller });
       safeSet(STORAGE_KEYS.POST_LOGIN_DONE, 'true');
     } finally {
       safeRemove(STORAGE_KEYS.POST_LOGIN_IN_FLIGHT);

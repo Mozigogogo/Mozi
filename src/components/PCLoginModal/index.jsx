@@ -8,6 +8,7 @@ import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import { sendVerificationCode, loginByEmail, registerByEmail, loginByWallet, completeTask } from '../../api/user';
+import { ensureFirstLoginAt } from '../../utils/postLogin';
 import styles from './index.module.less';
 
 // 检测是否在 Telegram 环境中
@@ -228,6 +229,7 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
         try {
           completeTask('DAILY_LOGIN');
           completeTask('FIRST_LOGIN');
+          ensureFirstLoginAt({ caller: 'PCLoginModal_handleLogin' });
         } catch (error) {
           console.error('登录任务上报失败:', error);
         }
@@ -327,6 +329,7 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
           completeTask('DAILY_LOGIN');
           // 首次登录任务上报
           completeTask('FIRST_LOGIN');
+          ensureFirstLoginAt({ caller: 'PCLoginModal_autoLoginAfterRegister' });
         } catch (error) {
           console.error('登录任务上报失败:', error);
         }
@@ -413,6 +416,7 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
           completeTask('DAILY_LOGIN');
           // 首次登录任务上报
           completeTask('FIRST_LOGIN');
+          ensureFirstLoginAt({ caller: 'PCLoginModal_triggerWeb3SignatureLogin' });
         } catch (error) {
           console.error('登录任务上报失败:', error);
         }

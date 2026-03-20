@@ -23,7 +23,7 @@ import {
   completeTask, 
   updateUserInfo 
 } from '@/api/user';
-import { fetchUserDataInfoOnce } from '@/utils/postLogin';
+import { ensureFirstLoginAt, fetchUserDataInfoOnce } from '@/utils/postLogin';
 import UserInfo from '@/app/user/components/UserInfo';
 import StatsAndActions from '@/app/user/components/StatsAndActions';
 import UserActions from '@/app/user/components/UserActions';
@@ -509,6 +509,7 @@ export default function UserPage() {
         try {
           completeTask('DAILY_LOGIN');
           completeTask('FIRST_LOGIN');
+          ensureFirstLoginAt({ caller: 'UserPage_triggerSignatureLogin' });
         } catch (e) {
           console.error('登录任务上报失败:', e);
         }
@@ -973,6 +974,7 @@ export default function UserPage() {
       await completeTask('DAILY_LOGIN');
       // 首次登录任务上报
       await completeTask('FIRST_LOGIN');
+      ensureFirstLoginAt({ caller: 'UserPage_handleLoginSuccess' });
     } catch (taskError) {
       console.error('登录任务上报失败:', taskError);
     }
