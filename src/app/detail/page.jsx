@@ -1840,7 +1840,7 @@ ${coinInfo.name || symbol} (${symbol})
         {/* 悬浮机器人按钮 - 使用新的FloatingRobot组件 */}
         <FloatingRobot 
           message={t('detail.robotMessage', { symbol: symbol.toUpperCase() })}
-          targetPath="/robot"
+          targetPath="/robot_test"
           autoPlay={true}
           startDelay={2000}
         />
