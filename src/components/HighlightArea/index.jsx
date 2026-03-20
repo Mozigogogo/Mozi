@@ -1,9 +1,13 @@
 'use client';
 
 import React from 'react';
+import { useFormatNumber } from '@/hooks/useFormatNumber';
 import styles from './index.module.less';
 
 const HighlightArea = ({ title = '', value, variant = 'default' }) => {
+  const { formatValue } = useFormatNumber();
+  
+  const formattedValue = formatValue(value);
   const isNegative = String(value).includes('-');
   const colorClass = isNegative ? styles.red : styles.green;
   
@@ -16,7 +20,7 @@ const HighlightArea = ({ title = '', value, variant = 'default' }) => {
     return (
       <div className={`${styles.areaBox} ${variant === 'section' ? variantClass : colorClass}`}>
         <div className={styles.areaBoxTitle}>{title}</div>
-        <div>{value}</div>
+        <div>{formattedValue}</div>
       </div>
     );
   }
@@ -24,7 +28,7 @@ const HighlightArea = ({ title = '', value, variant = 'default' }) => {
   return (
     <div className={`${styles.areaBoxSimple} ${colorClass}`}>
       {title && <div>{title}</div>}
-      <div>{value}</div>
+      <div>{formattedValue}</div>
     </div>
   );
 };

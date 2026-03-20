@@ -1,4 +1,154 @@
 {
+  "daily": {
+    "title": "MOZI Daily",
+    "weekDay": "星期四",
+    "table": {
+      "time": "时间",
+      "country": "国家",
+      "event": "事件",
+      "values": "实际/预测值/前值"
+    },
+    "note": "今日宏观波动完全系于美东时间13:30（北京时间次日凌晨）公布的美国CPI数据。在数据公布前，市场处于“数据真空期”，波动可能收窄。建议投资者关注存量逻辑，即当前市场对“通胀粘性”与“经济韧性”的定价是否充分，并为数据可能引发的方向性突破做好准备。"
+  },
+  "vipRecharge": {
+    "title": "会员充值",
+    "lockBadge": "暂未解锁",
+    "recommend": "推荐",
+    "confirmPurchase": "确认购买",
+    "errors": {
+      "loadSubscriptionData": "订阅数据加载失败，请稍后重试。"
+    },
+    "planCard": {
+      "period": {
+        "month": "/月",
+        "year": "/年"
+      },
+      "tierSelect": {
+        "label": "选择等级"
+      },
+      "cta": {
+        "try": "开始体验",
+        "buyNow": "立即购买",
+        "current": "当前订阅",
+        "subscribe": "订阅"
+      },
+      "save": "省 ${{amount}}",
+      "aiCallLabel": "AI CALL {{period}}",
+      "highlight": {
+        "upgradeHint": "升级到Lite/Pro可享受",
+        "cycle30d": "每 30 天周期"
+      }
+    },
+    "features": {
+      "basicMarket": "基础行情",
+      "basicPush": "APP基础推送",
+      "emailAlert": "邮件告警",
+      "bigOrder": "大单行情",
+      "aiCall": "AI Call",
+      "monthlyPoints": "月度积分",
+      "exclusiveBadge": "专属标志",
+      "exclusiveBlackGoldBadge": "专属黑金标志",
+      "adFree": "无广告",
+      "multiTheme": "多主题切换",
+      "customerService": "客服",
+      "standardCustomerService": "标准客服",
+      "exclusiveCustomerService": "专属客服",
+      "alphaGroup": "Alpha核心群",
+      "bigOrderMeta": "{{count}}条（{{delay}}s延迟）",
+      "aiCallMeta": "{{count}}次{{period}}",
+      "pointsMeta": "{{points}}{{period}}",
+      "pointsWithUnit": "{{points}}积分{{period}}",
+      "aiCallPlain": "AI Call {{count}}次"
+    },
+    "switchConfirm": {
+      "title": "确认切换套餐",
+      "headline": "你当前已有正在生效的订阅。",
+      "currentPlan": "当前套餐：",
+      "nextPlan": "将切换到：",
+      "hint": "继续购买将视为切换套餐。",
+      "confirm": "确认切换"
+    },
+    "plans": {
+      "yearly": {
+        "title": "年卡",
+        "price": "$ 269.99",
+        "unit": "$ 22.49/月"
+      },
+      "quarterly": {
+        "title": "季卡",
+        "price": "$ 69.99",
+        "unit": "$ 23.33/月"
+      },
+      "monthly": {
+        "title": "月卡",
+        "price": "$ 24.99",
+        "unit": "$ 24.99/月"
+      }
+    },
+    "basic": {
+      "title": "基础版",
+      "subtitle": "BASIC",
+      "features": {
+        "market": "基础行情",
+        "push": "APP基础推送",
+        "ai": "每日1次体验",
+        "ad": "含广告",
+        "skin": "默认主题"
+      }
+    },
+    "vip": {
+      "title": "会员权益",
+      "subtitle": "VIP/PRO",
+      "features": {
+        "market": "主流交易所实时大单",
+        "push": "电话+邮件强触达",
+        "ai": "无限次 智能分析",
+        "tags": "黑金专属OG标识",
+        "ad": "纯净无广沉浸式",
+        "group": "专属Alpha核心群",
+        "skin": "多主题 自由切换"
+      }
+    }
+  },
+  "editProfile": {
+    "title": "编辑资料",
+    "identity": {
+      "label": "身份标签",
+      "placeholder": "请选择您的身份标签",
+      "options": {
+        "compliance": "合规从业者",
+        "trader": "专职交易员",
+        "quant": "量化研究员",
+        "creator": "内容创作者",
+        "community_builder": "社区运营",
+        "institution": "机构从业者",
+        "project_member": "项目方成员",
+        "researcher": "投研分析师",
+        "educator": "教育型博主",
+        "retail": "普通投资者"
+      }
+    },
+    "bio": {
+      "label": "个人简介",
+      "placeholder": "请输入您的个人简介，不超过20个字"
+    },
+    "email": {
+      "label": "告警邮件",
+      "placeholder": "请输入电子邮件地址以便于接受告警"
+    },
+    "phone": {
+      "label": "告警电话",
+      "placeholder": "请输入电话号码以便于接受告警"
+    },
+    "commission": {
+      "label": "获取分佣",
+      "placeholder": "请输入:TronUSDT地址以获取分佣"
+    },
+    "imageSizeLimit": "图片大小不能超过 5MB",
+    "saveSuccess": "保存成功",
+    "saveFailed": "保存失败",
+    "saveFailedRetry": "保存失败，请重试"
+  },
   "common": {
     "home": "首页",
     "find": "发现",
@@ -19,12 +169,18 @@
     "delete": "删除",
     "share": "分享",
     "more": "更多",
+    "viewMore": "查看更多",
     "updated": "更新",
     "copy": "复制",
+    "copySuccess": "复制成功",
+    "copyFailed": "复制失败",
     "linkCopied": "链接已复制",
     "loadFailed": "加载失败，请稍后重试",
     "noData": "暂无数据",
-    "noTasks": "暂无任务"
+    "noTasks": "暂无任务",
+    "addSuccess": "添加成功",
+    "cancelSuccess": "取消成功",
+    "operationFailed": "操作失败"
   },
   "exchangeRank": {
     "realTimeUpdate": "实时更新"
@@ -42,10 +198,10 @@
     "hotCoins": "热门币种",
     "hotSectors": "热门板块",
     "hotContracts": "热门合约",
-    "derivatives": "衍生品专区",
+    "derivatives": "合约专区",
     "rankList": "实时榜单",
-    "opportunities": "投资机会",
-    "investmentOpportunity": "投资机会",
+    "opportunities": "热门板块",
+    "hotMarkets": "热门板块",
     "topicHot": "话题热榜",
     "notice": "欢迎使用墨子数字货币行情社区",
     "aiNotice": "告别手动盯盘！先让AI分析走势，再设置精准报警！",
@@ -77,7 +233,17 @@
       "addMonitor": "加监控"
     },
     "noFavorites": "暂无收藏自选",
-    "robotBubble": "欢迎来到Mozi,需要什么帮助？"
+    "robotBubble": "欢迎来到Mozi,需要什么帮助？",
+    "quickActions": {
+      "ai": "AI问答",
+      "priceMonitor": "价格监控",
+      "noticeMonitor": "公告监控",
+      "sectorSelect": "板块选币",
+      "news": "快讯",
+      "discoverCoins": "发现好币",
+      "askQuestion": "不懂就问",
+      "rankingSelect": "财经日历"
+    }
   },
   "market": {
     "price": "价格",
@@ -92,7 +258,7 @@
     "tradeVolume": "成交额",
     "marketDistribution": "涨跌分布",
     "up": "上涨",
-    "neutral": "平",
+    "neutral": "持平",
     "down": "下跌",
     "fearGreed": {
       "title": "恐慌贪婪指数",
@@ -149,6 +315,18 @@
       "dark": {
         "name": "暗黑模式",
         "description": "护眼舒适，夜间专属"
+      },
+      "pink": {
+        "name": "少女粉",
+        "description": "温柔浪漫，甜美配色"
+      },
+      "yellow": {
+        "name": "辉煌金",
+        "description": "明亮耀眼，尊贵配色"
+      },
+      "black": {
+        "name": "极夜黑",
+        "description": "深邃神秘，极致配色"
       }
     }
   },
@@ -211,6 +389,22 @@
   },
   "user": {
     "login": "登录",
+    "tabs": {
+      "watchlist": "自选",
+      "watchlistDesc": "他选购的商品",
+      "monitor": "监控",
+      "monitorDesc": "他监控的商品",
+      "content": "内容",
+      "contentDesc": "他发布的内容"
+    },
+    "list": {
+      "coin": "币种",
+      "price": "最新价格",
+      "change24h": "24h幅度",
+      "actionHeader": "加自选 加监控",
+      "actionHeaderWatchlist": "加自选",
+      "actionHeaderMonitor": "加监控"
+    },
     "logout": "退出登录",
     "loginRegister": "登录/注册",
     "pleaseLogin": "请登录",
@@ -242,6 +436,8 @@
     "contactSupport": "联系客服",
     "welcomeContact": "欢迎联系我们",
     "socialMedia": "到社交媒体找我们",
+    "socialMediaAlt": "社交媒体",
+    "officialAccountQRCodeAlt": "公众号二维码",
     "findUsOnSocial": "到社交媒体找我们",
     "about": "关于",
     "donate": "捐赠",
@@ -251,18 +447,47 @@
     "feedback": "产品功能反馈",
     "feedbackDesc": "留言你想要的功能",
     "productFeedback": "产品功能反馈",
+    "feedbackFailed": "反馈失败",
     "recommendFriend": "推荐朋友",
     "recommendDesc": "分享你的喜爱",
     "shareYourLove": "分享你的喜爱",
     "shareText": "Mozi行情助手 - 专业的加密数据分析智能平台",
     "myPoints": "我的积分",
+    "defaultNickname": "用户",
+    "defaultBio": "资金流动大师，金融NO.1",
+    "loginTip": "登录后查看更多精彩内容",
+    "personalPage": "个人主页",
+    "tags": {
+      "compliance": "合规从业者",
+      "creator": "内容创作者",
+      "trader": "专职交易员",
+      "community": "社群运营"
+    },
+    "stats": {
+      "following": "关注",
+      "followers": "粉丝",
+      "likes": "获赞",
+      "points": "积分"
+    },
+    "toast": {
+      "avatarTooLarge": "头像文件太大，请选择小于2MB的图片",
+      "nicknameRequired": "请输入昵称",
+      "nicknameTooLong": "昵称不能超过50个字符",
+      "saving": "保存中..."
+    },
     "yesterdayPoints": "昨日积分：+{{points}}",
+    "yesterdayPointsText": "昨日积分",
     "todayPoints": "昨日积分",
     "currentRank": "当前排名：总榜第 {{rank}} 名",
+    "currentRankLabel": "当前排名：",
     "rankTop": "总榜第",
-    "rankSuffix": "名",
+    "rankPrefix": "总榜第 ",
+    "rankSuffix": " 名",
     "pointsRanking": "积分榜单",
+    "earnPoints": "赚积分",
     "pointsDetail": "积分榜单",
+    "officialAccountQRCode": "公众号二维码",
+    "feedbackShort": "反馈",
     "newCoinListing": "新币上线",
     "viewMore": "查看更多",
     "noNewListings": "暂无新币上线",
@@ -302,7 +527,6 @@
     "connectWalletFirst": "请先连接钱包",
     "walletNotReady": "钱包组件尚未就绪",
     "feedbackSuccess": "反馈成功",
-    "feedbackFailed": "反馈失败",
     "copySuccess": "复制成功",
     "copyFailed": "复制失败",
     "linkCopied": "链接已复制到剪贴板",
@@ -321,8 +545,10 @@
     "loggingIn": "登录中...",
     "walletAddressError": "获取钱包地址失败",
     "walletConnectFailed": "钱包连接失败",
-    "defaultNickname": "用户",
+    "vipBannerText": "免费试用14天，马上开启新体验!",
+    "subscribeNow": "立即订阅",
     "wechatUser": "微信用户",
+    "accountBindLabel": "账号绑定",
     "aboutMozi": {
       "intro": "Mozi 是一家专业的加密数据分析智能平台，致力于为全球用户提供精准，实时的加密货币市场数据和分析服务，简化交易，降低交易的门槛，帮助用户在加密货币市场中做出明智的投资决策，降低风险，获得更高的收益。",
       "description": "作为一家专业的加密数据分析平台，为解决用户去哪里买，买什么，怎么买的痛点，Mozi通过整合多种数据，提供详尽的搜索和丰富的各类排行榜让用户探索，包括但不限于交易所排行榜，热门币种排行榜，价格涨跌幅榜，目前覆盖主流交易所的数据。为了保证数据的准确性和实时性，Mozi 团队由经验丰富的专业人士组成，涵盖交易、数据开发、数据分析,人工智能，和平台架构，他们的专业知识和技能为平台数据的准确性和可靠性提供了强大支持。作为初创公司，Mozi 秉持墨子兼爱非攻的理念，致力于在全球传播这一理念。同时也诚邀感兴趣的技术，运营，产品以及投资机构联系我们。",
@@ -332,6 +558,77 @@
       "visionText": "让交易更简单，更智能，更安全",
       "values": "Mozi价值观：",
       "valuesText": "兼爱 务实 专注 创新 自由"
+    }
+  },
+  "accountBind": {
+    "title": "账号绑定",
+    "generateTab": "生成验证码",
+    "bindTab": "绑定账号",
+    "generateDesc": "生成验证码供其他账号绑定到您的账号",
+    "bindDesc": "输入目标用户的ID和验证码进行绑定",
+    "generateButton": "生成验证码",
+    "userId": "用户ID",
+    "code": "验证码",
+    "expiresIn": "有效期",
+    "regenerate": "重新生成",
+    "targetUserId": "目标用户ID",
+    "verificationCode": "验证码",
+    "enterUserId": "请输入用户ID",
+    "enterCode": "请输入验证码",
+    "confirmBind": "确认绑定",
+    "generateSuccess": "验证码生成成功",
+    "generateFailed": "生成失败",
+    "generateError": "生成验证码失败，请重试",
+    "bindSuccess": "绑定成功",
+    "bindFailed": "绑定失败",
+    "bindError": "绑定失败，请重试",
+    "linkCodeModal": {
+      "title": "关联您的权益",
+      "copyCode": "复制权益码",
+      "validFor": "有效期：",
+      "tipText": "在我们的 <strong>Telegram Bot</strong> 中输入此链接代码以关联您的账户",
+      "noteText": "*注意：为确保安全，每个账户只能关联一个<keyword>邮箱</keyword>、一个 <keyword>Telegram ID</keyword> 和一个<keyword>钱包地址</keyword>。",
+      "codeGenerateSuccess": "权益码生成成功",
+      "codeGenerateFailed": "生成权益码失败",
+      "codeGenerateError": "生成权益码失败，请重试",
+      "codeExpired": "验证码已过期，正在重新获取...",
+      "copySuccess": "复制成功",
+      "copyFailed": "复制失败"
+    }
+  },
+  "telegramBind": {
+    "title": "重要提示",
+    "mainText": "如果您曾在 Telegram/PC 使用过Mozi，可以通过绑定账号来同步您的<strong>订阅权益与历史数据</strong>",
+    "warningText": "绑定成功后，您<strong>当前的账号配置将被覆盖且失效</strong>，请在操作前确认",
+    "cancelButton": "暂不绑定",
+    "confirmButton": "立即关联",
+    "step2Title": "关联账户并获取福利",
+    "step2InputPlaceholder": "输入6位数字代码",
+    "step2Description": "请访问我们的<strong>PC网站</strong>，点击<strong>按钮</strong><icon/>，以复制您的 <strong>6 位链接代码</strong>",
+    "step2CancelButton": "暂不绑定",
+    "step2ConfirmButton": "立即关联",
+    "enterCode": "请输入权益码",
+    "codeLength": "权益码必须是6位",
+    "bindSuccess": "绑定成功",
+    "bindFailed": "绑定失败，请检查权益码是否正确",
+    "bindError": "绑定失败，请重试"
+  },
+  "pointsPool": {
+    "title": "本月积分池状态",
+    "total": "月度总量 {{amount}} 积分",
+    "remaining": "剩余积分",
+    "issued": "已发放",
+    "claimable": "剩余可领",
+    "resetDays": "距离重置",
+    "days": "天",
+    "status": {
+      "normal": "充足",
+      "scarce": "紧张",
+      "boost": "加倍"
+    },
+    "tip": {
+      "title": "积分获取小贴士",
+      "content": "越早参与，获得越多！会员用户获取效率更高，且不受池子紧张影响。"
     }
   },
   "auth": {
@@ -345,7 +642,7 @@
     "verificationPlaceholder": "请输入验证码",
     "getCode": "获取验证码",
     "noAccount": "还没有账号？",
-    "hasAccount": "已有账号？",
+    "hasAccount": "已有账户？",
     "registerNow": "立即注册",
     "loginNow": "立即登录",
     "or": "或",
@@ -371,6 +668,7 @@
     "followTwitter": "关注我们的Twitter",
     "otherMethods": "或使用其他方式",
     "walletLoginBtn": "钱包登录",
+    "googleLoginBtn": "使用 Google 登录",
     "emailLoginBtn": "邮箱登录",
     "back": "返回",
     "recaptchaNotice": "本网站受 Google reCAPTCHA 保护，以确保您不是机器人。",
@@ -379,7 +677,26 @@
     "walletConnecting": "钱包连接功能初始化中，请稍后重试",
     "walletConnectFailed": "钱包连接失败",
     "signatureCancelled": "签名已取消",
-    "connectWalletFirst": "请先连接钱包"
+    "connectWalletFirst": "请先连接钱包",
+    "registerMozi": "注册mozi账号",
+    "continueWithGoogle": "使用谷歌继续",
+    "continueWithWallet": "使用钱包继续",
+    "continueWithEmail": "使用邮箱继续",
+    "goToLogin": "去登录",
+    "rememberPassword": "记住密码",
+    "forgetPassword": "忘记密码？",
+    "goToRegister": "去注册",
+    "loginMozi": "登录mozi账号",
+    "emailInputPlaceholder": "请输入邮箱",
+    "passwordInputPlaceholder": "请输入密码 (至少6位)",
+    "codePlaceholder": "验证码",
+    "inviteCodePlaceholder": "请输入邀请码 (可选)",
+    "resetPassword": "重置密码",
+    "newPasswordPlaceholder": "请输入新密码 (至少6位)",
+    "confirmReset": "确认重置",
+    "rememberedPassword": "想起来了？",
+    "resetSuccess": "重置密码成功",
+    "resetFailed": "重置失败"
   },
   "community": {
     "title": "社区",
@@ -390,6 +707,8 @@
     "topic": "话题",
     "hotTopics": "热门话题",
     "trending": "热门动态",
+    "views": "浏览",
+    "posts": "帖子",
     "tabs": {
       "recommend": "精选推荐",
       "hot": "热门榜单",
@@ -530,6 +849,10 @@
     "wsNotConnected": "WebSocket 未连接，请刷新页面重试",
     "genericError": "抱歉，出现了一些问题，请稍后再试",
     "welcome": "你好，我是你的AI助手！我可以帮你分析币种行情、解答投资问题。有什么可以帮你？",
+    "model": {
+      "analyze": "分析模型",
+      "chat": "对话模型"
+    },
     "suggest": {
       "analyzeTrend": "帮我分析一下 {{symbol}} 的走势",
       "isGoodToBuy": "{{symbol}} 现在适合买入吗？",
@@ -537,6 +860,10 @@
       "topGainer": "今天涨幅最大的币种是什么？",
       "fearGreedIndex": "恐惧与贪婪指数是多少？"
     }
+  },
+  "aiAssistant": {
+    "title": "AI 助手 专业版",
+    "subtitle": "智能答疑 · 快速响应"
   },
   "language": {
     "zh": "简体中文",
@@ -587,115 +914,163 @@
     "myRank": "我的排名"
   },
   "pointsDetail": {
+    "centerTitle": "积分中心",
     "myPoints": "我的积分",
-    "myInvites": "我的邀请",
-    "season": "赛季",
-    "seasonName": "S5赛季",
     "historyRecord": "历史记录",
-    "inviteRewardTitle": "每次推荐均可获得积分奖励！",
-    "inviteReward": "邀请有奖",
-    "perInvite": "每邀请一人",
+    "verifying": "验证中",
+    "verify": "验证",
+    "seasonCard": {
+      "treasuryTitle": "MOZI积分金库",
+      "treasurySubtitle": "为您的Web3之旅注入动力"
+    },
+    "poolTitleText": "本月积分池状态",
+    "poolSufficient": "充足",
+    "poolRemaining": "剩余积分",
+    "poolDistributed": "已发放",
+    "poolMineable": "剩余可领",
+    "poolScarce": "紧张",
+    "poolResetCountdown": "距离下月重置",
+    "poolDays": "天",
+    "poolHours": "时",
+    "poolMinutes": "分",
+    "poolScarceTitle": "积分池紧张！",
+    "poolScarceDesc1_part1": "任务奖励已降至 ",
+    "poolScarceDesc1_highlight": "70折",
+    "poolScarceDesc1_part2": " (基础10积分→现在7积分)",
+    "poolScarceDesc2_part1": "预计 ",
+    "poolScarceDesc2_highlight": "7天后",
+    "poolScarceDesc2_part2": " 积分池可能耗尽",
+    "poolScarceDesc3": "会员用户不受影响，效率保持1.5-2倍",
+    "poolNormalTitle": "积分小帖士",
+    "poolNormalDesc": "越早参与，获得越多！会员用户获取效率更高，且不受池子紧张影响。",
+    "poolEventTitle": "周末积分加倍活动!",
+    "poolEventDesc1_part1": "所有任务奖励",
+    "poolEventDesc1_highlight": "x1.5倍",
+    "poolEventDesc1_part2": " (发帖10积分→15积分)",
+    "poolEventDesc2_part1": "活动时间：本周末48小时(还剩 ",
+    "poolEventDesc2_highlight": "42小时",
+    "poolEventDesc2_part2": " )",
+    "poolEventDesc3": "积分充足，抓紧领取，机不可失!",
+    "poolUpgradeMember": "升级会员",
+    "inviteRewards": "邀请有奖",
+    "inviteRegister": "邀请注册",
+    "invitePay": "邀请付费",
     "inviteLink": "邀请链接",
     "inviteCode": "邀请码",
-    "totalInvites": "总邀请数",
-    "earnedPoints": "积分",
-    "activeInvites": "申请ETH",
-    "pendingRewards": "OWO之后可领取",
-    "linkCopied": "已复制",
-    "copyFailed": "复制失败",
-    "historyFeatureInDevelopment": "历史记录功能开发中",
-    "moziSlogan": "自由交易 不被定义",
-    "fanRewardsTitle": "每日奖励任务",
-    "earnMorePoints": "获得更多积分",
-    "dailyInvestmentTitle": "每日投资排行",
-    "taskCompleted": "任务已完成",
-    "taskCompletedSuccess": "任务完成",
-    "fetchFailed": "获取积分数据失败",
-    "joinAlarm": "加入警报通",
+    "shareCount": "总邀请数",
+    "totalEarned": "邀请积分",
+    "applyTH": "申请提现",
+    "lastVisit": "上次访问",
+    "inviteRules": {
+      "1": "1. 积分未来将用于生态权益",
+      "2": "2. 如果您的推荐人购买会员资格，您将获得积分和10%的费用回扣",
+      "3": "3. 推荐有效的前提是被邀请用户必须通过邀请链接注册或输入邀请码",
+      "4": "4. 发表高质量的内容更容易获得更多积分"
+    },
+    "banner": {
+      "title": "获得更多奖励",
+      "subtitle": "解锁更多功能与专属奖励"
+    },
+    "addAlarm": "加入报警器",
+    "addAlarmSubtitle": "Add an alarm",
     "certification": "认证",
-    "note1": "每天前20个推荐均可获得积分。",
-    "note2": "如果您的推荐人购买会员资格，您将获得积分和20%的费用回扣。",
-    "note3": "推荐有效的前提是被邀请用户必须输入邀请码",
+    "certificationSubtitle": "Certification",
+    "newbieTasks": "新手任务得奖励",
+    "noTasks": "暂无任务",
+    "dailyTasks": "每日任务",
     "completed": "已完成",
-    "centerTitle": "积分中心",
-    "toSeparator": "至",
-    "verifying": "验证中",
+    "goFinish": "去完成",
+    "claimed": "已领取",
+    "sufficient": "积分充足",
+    "fetchFailed": "获取积分数据失败",
+    "linkCopied": "链接已复制",
+    "copyFailed": "复制失败",
+    "taskCompleted": "任务已完成",
     "pleaseRegister": "请先注册",
-    "joinAlarmSubtitle": "添加一个报警",
-    "certificationSubtitle": "身份认证",
-    "dailyRewardTasksTitle": "做任务得积分奖励",
+    "historyFeatureInDevelopment": "功能开发中",
+    "messages": {
+      "pointsEarned": "获得 {points} 积分",
+      "taskNotCompleted": "任务未完成",
+      "verifyFailed": "验证失败",
+      "videosRemaining": "还有 {count} 个视频未观看"
+    },
     "tasks": {
       "firstRegister": {
-        "title": "首次注册账号",
-        "button": "去注册"
+        "title": "首次登录",
+        "button": "去完成"
       },
       "followTwitter": {
-        "title": "关注我们的Twitter",
+        "title": "关注X",
         "button": "去关注"
       },
       "joinCommunity": {
-        "title": "加入我们的社群",
+        "title": "加入社群",
         "button": "去加入"
       },
       "earlyBird": {
-        "title": "早鸟活动",
-        "button": "去参加"
+        "title": "早鸟奖励",
+        "button": "领取"
       },
       "setAlarm": {
-        "title": "设置报警功能",
+        "title": "设置报警",
         "button": "去设置"
       },
       "videoLearn": {
-        "title": "完成视频学习",
+        "title": "视频学习",
         "button": "去学习"
       },
       "dailyLogin": {
         "title": "每日登录",
-        "button": "去登录"
+        "button": "签到"
       },
       "inviteUser": {
         "title": "邀请好友",
         "button": "去邀请"
       },
-      "verify": "验证",
-      "completed": "已完成"
-    },
-    "messages": {
-      "taskNotCompleted": "任务尚未完成，请先完成任务",
-      "verifyFailed": "验证失败，请稍后重试",
-      "pointsEarned": "+{{points}}积分",
-      "loadFailed": "加载积分历史失败:",
-      "videosRemaining": "还有 {{count}} 个视频未观看"
-    },
-    "dailyTasks": {
-      "like": {
+      "dailyLike": {
         "title": "每日点赞",
-        "label": "每个赞"
+        "button": "去点赞"
       },
       "post": {
-        "title": "发帖",
-        "label": "每条帖子"
+        "title": "发布帖子",
+        "button": "去发布"
       },
-      "receivedLike": {
-        "title": "收到赞",
-        "label": "每次被赞"
+      "receiveLike": {
+        "title": "获得点赞",
+        "button": "去互动"
       },
       "reply": {
-        "title": "回复",
-        "label": "回复一次"
+        "title": "回复帖子",
+        "button": "去回复"
       },
-      "postReplied": {
+      "postReceiveReply": {
         "title": "帖子收到回复",
-        "label": "收到回复"
+        "button": "去查看"
+      },
+      "userInfo": {
+        "title": "完善个人信息",
+        "button": "去完善"
+      },
+      "push": {
+        "title": "发布首篇帖子",
+        "note": " 大于50字",
+        "button": "去发布"
+      },
+      "add": {
+        "title": "添加自选",
+        "note": " 3个及以上",
+        "button": "去添加"
+      },
+      "share": {
+        "title": "每日分享",
+        "button": "去分享"
       }
     }
-  }
-  ,
+  },
   "pointsHistory": {
     "title": "积分历史",
     "empty": "暂无积分记录"
-  }
-  ,
+  },
   "pcr": {
     "title": "多空比",
     "coin": "币种",
@@ -720,8 +1095,7 @@
     "loadFailed": "数据加载失败",
     "fetchFailed": "数据获取失败",
     "noChartData": "暂无图表数据"
-  }
-  ,
+  },
   "positionsize": {
     "title": "持仓量",
     "coin": "币种",
@@ -740,8 +1114,7 @@
     "loadFailed": "数据加载失败",
     "fetchFailed": "数据获取失败",
     "noChartData": "暂无图表数据"
-  }
-  ,
+  },
   "fundingrate": {
     "title": "资金费率",
     "tabs": {
@@ -761,8 +1134,7 @@
       "b": "亿",
       "m": "万"
     }
-  }
-  ,
+  },
   "tradevol": {
     "title": "成交额",
     "coin": "币种",
@@ -782,8 +1154,7 @@
     "loadFailed": "数据加载失败",
     "fetchFailed": "数据获取失败",
     "noChartData": "暂无图表数据"
-  }
-  ,
+  },
   "detail": {
     "title": "币种详情",
     "marketCap": "流通市值",
@@ -835,6 +1206,11 @@
     },
     "robotMessage": "想听听我对{{symbol}}的看法吗？"
   },
+  "countryPicker": {
+    "back": "返回",
+    "title": "选择国家/地区",
+    "searchPlaceholder": "搜索国家/区号"
+  },
   "post": {
     "title": "发帖",
     "editPost": "编辑帖子",
@@ -856,7 +1232,7 @@
     ],
     "templates": {
       "normal": "普通",
-      "discovery": "发现好币", 
+      "discovery": "发现好币",
       "question": "不懂就问"
     },
     "buttons": {
@@ -928,6 +1304,11 @@
     "priceFall": "价格跌至",
     "risePercent": "日涨幅超",
     "fallPercent": "日跌幅超",
+    "bigOrderDetect": "大单侦测",
+    "exchangeSpreadMonitor": "交易所差价监控",
+    "noteTitle": "请注意：",
+    "note1": "1. 具有实时行情会员权限才可使用大单侦测",
+    "note2": "2. 若多个大单连续触发，两次推送的间隔将不低于1分钟",
     "saveAlarm": "保存告警",
     "viewAlarms": "查看已配置告警",
     "loading": "加载中...",
@@ -1132,6 +1513,9 @@
     "commentFailed": "发布失败，请重试"
   },
   "pcHome": {
+    "hotTopics": {
+      "title": "热聊话题"
+    },
     "banner": {
       "topic": "热议话题 尽在社区",
       "topicSub": "全网话题 即时捕捉",
@@ -1149,7 +1533,7 @@
       "highValueSub": "TRADING VALUE"
     },
     "derivatives": {
-      "title": "衍生品专区",
+      "title": "合约专区",
       "longShort": "多空比",
       "longShortSub": "Long/Short Ratio",
       "openInterest": "持仓量",
@@ -1159,8 +1543,12 @@
       "volume": "成交额",
       "volumeSub": "Trading Volume"
     },
+    "sectorMap": {
+      "title": "板块选币",
+      "viewMore": "查看更多"
+    },
     "ranks": {
-      "title": "热门排行",
+      "title": "实时榜单",
       "viewMore": "查看更多",
       "self": "自选榜",
       "gainers": "涨幅榜",
@@ -1182,6 +1570,7 @@
     }
   },
   "pcLayout": {
+    "notice": "告别手动盯盘！先让AI分析走势，再设置精准报警！",
     "menu": {
       "home": "首页",
       "discover": "发现",
@@ -1191,6 +1580,7 @@
       "myAlerts": "我的报警",
       "mySubscription": "我的订阅",
       "myAchievements": "我的成就",
+      "myQA": "我的问答",
       "createdLists": "创建的币单"
     },
     "footer": {
@@ -1228,5 +1618,183 @@
     "submit": "去提交",
     "experience": "去体验",
     "startExperience": "开始体验"
+  },
+  "oneClickAlarm": {
+    "title": "一键告警",
+    "subtitle": "实时监控 即时提醒",
+    "phoneAlarm": "电话告警",
+    "emailAlarm": "邮件告警",
+    "pushAlarm": "推送",
+    "phonePlaceholder": "请输入手机号",
+    "emailPlaceholder": "请输入邮箱",
+    "confirmButton": "开启告警",
+    "skipButton": "暂不开启",
+    "loading": "加载中...",
+    "enableSuccess": "开启成功",
+    "enableFailed": "开启失败",
+    "pleaseLogin": "请先登录",
+    "networkError": "网络错误，请重试",
+    "phoneRequired": "请输入手机号",
+    "emailRequired": "请输入邮箱",
+    "emailInvalid": "邮箱格式不正确",
+    "atLeastOneMethod": "请至少开启一种告警方式"
+  },
+  "orderBook": {
+    "title": "大单成交检测",
+    "limitedExperience": "限时体验",
+    "buy": "买入",
+    "sell": "卖出",
+    "top5": "今日榜单前五",
+    "top10": "今日榜单前十",
+    "noData": "暂无订单薄数据",
+    "endIn": "距结束",
+    "days": "天",
+    "hours": "时",
+    "minutes": "分",
+    "seconds": "秒",
+    "benefitEnded": "限时福利已结束",
+    "memberExclusive": "会员专享查看权限",
+    "memberDescription": "本部分内容属会员创测期限制查看，会员可支持国服最新资讯",
+    "subscribeUnlock": "点击订阅解锁",
+    "unlocked": "已解锁",
+    "maskTitle": "大单侦测锁定",
+    "maskDescription": "解锁后可查看24小时内的Top 5大单流向数据",
+    "maskButtonText": "200积分解锁",
+    "membershipButtonText": "开通会员解锁"
+  },
+  "hotsector": {
+    "title": "热门板块",
+    "shareText": "查看热门板块涨跌幅热力图",
+    "filter": {
+      "range": "涨跌幅",
+      "marketCap": "市值",
+      "volume": "成交额",
+      "increase": "按涨跌幅",
+      "decrease": "按跌幅",
+      "amplitude": "按振幅",
+      "allMarketCap": "按总市值",
+      "largeMarketCap": "大市值",
+      "midMarketCap": "中市值",
+      "smallMarketCap": "小市值",
+      "allVolume": "按成交额",
+      "highVolume": "高成交",
+      "midVolume": "中成交",
+      "lowVolume": "低成交"
+    }
+  },
+  "vip": {
+    "title": "会员充值",
+    "card": {
+      "title": "Mozi Pro",
+      "subtitle": "解锁高级功能",
+      "badge": "PRO"
+    },
+    "status": {
+      "locked": "暂未解锁"
+    },
+    "plan": {
+      "year": "年卡",
+      "quarter": "季卡",
+      "month": "月卡",
+      "currency": "$",
+      "starter": "入门版",
+      "professional": "专业版",
+      "enterprise": "企业版",
+      "lifetime": "终身版"
+    },
+    "recommend": "推荐",
+    "month": "月",
+    "basic": "基础版",
+    "privilege": "会员权益",
+    "purchaseSuccess": "购买功能开发中...",
+    "section": {
+      "benefits": "会员权益"
+    },
+    "table": {
+      "benefit": "权益",
+      "basic": "基础版",
+      "vip": "VIP版"
+    },
+    "benefit": {
+      "basicChart": "基础行情",
+      "basicPush": "APP基础推送",
+      "dailyTrial": "每日1次体验",
+      "withAds": "含广告",
+      "defaultTheme": "默认主题",
+      "vipChart": "主流交易所实时大单",
+      "vipPush": "电话+邮件强触达",
+      "unlimitedAnalysis": "无限次智能分析",
+      "ogBadge": "黑金专属OG标识",
+      "noAds": "纯净无广沉浸式",
+      "alphaGroup": "专属Alpha核心群",
+      "multiTheme": "多主题 自由切换"
+    },
+    "confirmPurchase": "确认购买",
+    "planCard": {
+      "perfectFor": "适合",
+      "getStarted": "开始使用",
+      "subscribeNow": "立即订阅",
+      "contactSales": "联系销售",
+      "bestValue": "最佳价值",
+      "mostPopular": "最受欢迎",
+      "master": "MASTER",
+      "savingBadge": "节省{{percent}}%"
+    },
+    "result": {
+      "success": {
+        "title": "充值成功",
+        "desc": "恭喜您成为尊贵的VIP会员",
+        "validity": "有效期至",
+        "btn": "立即体验权益"
+      },
+      "fail": {
+        "title": "充值失败",
+        "desc": "支付过程似乎遇到了一些问题",
+        "btn": "重新支付"
+      },
+      "processing": {
+        "title": "支付确认中",
+        "desc": "正在查询您的支付结果，请稍候..."
+      }
+    }
+  },
+  "benefitsPage": {
+    "title": "我的权益",
+    "heroSub": "Mozi 已陪伴您",
+    "daysUnit": "天",
+    "planSubFree": "Free Trader",
+    "planSubLite": "Lite Trader",
+    "planSubPro": "Pro Trader",
+    "aiCallPerMonth": "AI CALL/月",
+    "tierBenefits": "{{tier}}权益",
+    "lockedSection": "未解锁权益",
+    "upgradeLitePro": "升级Lite/Pro",
+    "upgradePro": "升级Pro",
+    "depth40": "40档深度",
+    "monthlyPoints": "月度积分",
+    "monthlyPointsRange": "10000~10,000/月",
+    "aiCall": "AI Call",
+    "aiCallRange": "40~220次/月",
+    "exclusiveService": "专属客服",
+    "emailAlerts": "邮件告警",
+    "standardCS": "标准客服",
+    "identityTag": "身份标识",
+    "pointsThisMonth": "本月已获得积分",
+    "validUntil": "{{tier}}权益有效期至{{date}}",
+    "daysLeftTag": "{{n}}天",
+    "exclusiveMemberLine": "{{name}}会员专属权益",
+    "depth20": "20档深度",
+    "proLevel": "Pro-{{n}}",
+    "nextLevelCardTitle": "距离 Pro-2",
+    "nextLevelProgress": "{{current}} / {{max}} EXP",
+    "nextLevelRewards": "升级可得：{{points}} 积分/月 · {{ai}} AI Call/月",
+    "quickUpgrade": "快速升级",
+    "allowanceCardTitle": "本月额度",
+    "allowanceCardBody": "{{points}} 积分/月 · {{ai}} AI Call/月",
+    "upgradeMore": "升级更多",
+    "enterAlpha": "进入",
+    "bigOrderTitle": "大单行情",
+    "inUse": "使用中",
+    "upgradeToEnjoy": "升级到Lite/Pro可享受"
   }
 }

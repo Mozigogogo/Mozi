@@ -15,6 +15,7 @@ import AddMonitor from '../../components/AddMonitor';
 import FloatingRobot from '../../components/FloatingRobot';
 import { Loading } from '../../components/Loading';
 import { RankGrid } from '../../components/Find/RankGrid';
+import { SkeletonCircle, SkeletonElement } from '@/components/Skeleton';
 import { request } from '../../utils/request';
 import { Interface, LOOPTIME } from '../../utils/constants';
 import { jump2Detail, jump2List } from '../../utils/core';
@@ -712,10 +713,34 @@ const loadingTimerRef = useRef(null);
   // 渲染自选列表
   const renderOwnList = () => {
     if (ownLoading) {
-      return (
-        <div className={styles.ownBox}>
-          <Loading color="#11B787" />
+      const renderOwnSkeleton = () => (
+        <div className={`${styles.ownBox} ${styles.ownBoxLoading}`}>
+          <div className={styles.ownSkeleton}>
+            {Array.from({ length: 10 }).map((_, idx) => (
+              <div key={idx} className={styles.ownSkeletonRow}>
+                <div className={styles.ownSkeletonColSymbol}>
+                  <SkeletonCircle size={16} />
+                  <SkeletonElement width={72} height={12} borderRadius={6} />
+                </div>
+                <div className={`${styles.ownSkeletonCol} ${styles.ownSkeletonColLast}`}>
+                  <SkeletonElement width={54} height={12} borderRadius={6} />
+                </div>
+                <div className={`${styles.ownSkeletonCol} ${styles.ownSkeletonColChange}`}>
+                  <SkeletonElement width={48} height={12} borderRadius={6} />
+                </div>
+                <div className={`${styles.ownSkeletonCol} ${styles.ownSkeletonColIcon}`}>
+                  <SkeletonCircle size={20} />
+                </div>
+                <div className={`${styles.ownSkeletonCol} ${styles.ownSkeletonColIcon}`}>
+                  <SkeletonCircle size={20} />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
+      );
+      return (
+        renderOwnSkeleton()
       );
     }
 
@@ -828,20 +853,37 @@ const loadingTimerRef = useRef(null);
 
   // 渲染行情列表
   const renderMarketList = () => {
+    const renderMarketSkeleton = () => (
+      <div className={styles.marketSkeleton}>
+        {Array.from({ length: 10 }).map((_, idx) => (
+          <div key={idx} className={styles.marketSkeletonRow}>
+            <div className={styles.marketSkeletonLeft}>
+              <SkeletonCircle size={24} />
+              <div className={styles.marketSkeletonText}>
+                <SkeletonElement width={72} height={12} borderRadius={6} />
+                <SkeletonElement width={96} height={10} borderRadius={6} style={{ marginTop: 6 }} />
+              </div>
+            </div>
+            <div className={styles.marketSkeletonMid}>
+              <SkeletonElement width={78} height={12} borderRadius={6} />
+              <SkeletonElement width={54} height={10} borderRadius={6} style={{ marginTop: 6 }} />
+            </div>
+            <div className={styles.marketSkeletonRight}>
+              <SkeletonElement width={60} height={12} borderRadius={6} />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+
     return (
       <>
         {/* 市场概况横向滑动卡片 */}
         <MarketOverview />
         
         <div className={styles.marketBox}>
-          <PullToRefresh 
-            onRefresh={handleRefresh}
-            pullingText={t('discover.pullToRefresh.pulling')}
-            canReleaseText={t('discover.pullToRefresh.canRelease')}
-            refreshingText={t('discover.pullToRefresh.refreshing')}
-            completeText={t('discover.pullToRefresh.complete')}
-          >
-            <Layout isLoading={marketLoading} isError={isMarketError} loadingTop={120}>
+          <PullToRefresh onRefresh={handleRefresh}>
+            <Layout isLoading={false} isError={isMarketError} loadingTop={120}>
               <div className={styles.gridTitle}>
                 {[
                   { name: t('discover.columns.symbolMarketCap'), width: '30%' },
@@ -857,19 +899,27 @@ const loadingTimerRef = useRef(null);
                   </div>
                 ))}
               </div>
-              <MoziGrid
-                length={3}
-                colName={[t('discover.columns.symbolMarketCap'), t('discover.columns.priceWithChange'), t('home.columns.change24h')]}
-                gridContent={marketData}
-                callback={(gridCon) => { jump2Detail(gridCon.key); }}
-                hideTitle={true}
-                enableLoadMore={true}
-                loadMore={loadMore}
-                hasMore={marketHasMore && isLoadingMore}
-                columnWidths={['30%', '38%', '32%']}
-              />
-              {!marketHasMore && marketData.length > 0 && !isLoadingMore && (
-                <div className={styles.loadFinish}>{t('discover.loadFinished')}</div>
+
+              {/* 初次加载：骨架屏脉冲加载（替代空白+Loading...） */}
+              {marketLoading && marketData.length === 0 ? (
+                renderMarketSkeleton()
+              ) : (
+                <>
+                  <MoziGrid
+                    length={3}
+                    colName={[t('discover.columns.symbolMarketCap'), t('discover.columns.priceWithChange'), t('home.columns.change24h')]}
+                    gridContent={marketData}
+                    callback={(gridCon) => { jump2Detail(gridCon.key); }}
+                    hideTitle={true}
+                    enableLoadMore={true}
+                    loadMore={loadMore}
+                    hasMore={marketHasMore && isLoadingMore}
+                    columnWidths={['30%', '38%', '32%']}
+                  />
+                  {!marketHasMore && marketData.length > 0 && !isLoadingMore && (
+                    <div className={styles.loadFinish}>{t('discover.loadFinished')}</div>
+                  )}
+                </>
               )}
             </Layout>
           </PullToRefresh>
@@ -881,6 +931,42 @@ const loadingTimerRef = useRef(null);
     );
   };
   const renderRankList = () => {
+    const renderRankSkeleton = ({ variant = 'twoCol', rows = 3 } = {}) => {
+      // variant:
+      // - 'exchange': 左侧 icon+两行文字，右侧三列短条
+      // - 'twoCol': 左侧 icon+一行文字，右侧一列短条（适用于 RankGrid）
+      // - 'newCoin': 左侧 icon+一行文字，右侧一列短条（与 twoCol 类似，语义区分）
+      const isExchange = variant === 'exchange';
+      return (
+        <div className={styles.rankSkeleton}>
+          {Array.from({ length: rows }).map((_, idx) => (
+            <div key={idx} className={styles.rankSkeletonRow}>
+              <div className={styles.rankSkeletonLeft}>
+                <SkeletonCircle size={24} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+                  <SkeletonElement width={isExchange ? 90 : 72} height={12} borderRadius={6} />
+                  {isExchange ? (
+                    <SkeletonElement width={120} height={10} borderRadius={6} />
+                  ) : null}
+                </div>
+              </div>
+              <div className={styles.rankSkeletonRight}>
+                {isExchange ? (
+                  <>
+                    <SkeletonElement width={76} height={12} borderRadius={6} />
+                    <SkeletonElement width={46} height={12} borderRadius={6} />
+                    <SkeletonElement width={46} height={12} borderRadius={6} />
+                  </>
+                ) : (
+                  <SkeletonElement width={64} height={16} borderRadius={8} />
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    };
+
     return (
       <div className={styles.rankContainer}>
         <MoziCard
@@ -896,7 +982,7 @@ const loadingTimerRef = useRef(null);
         >
           <div onClick={() => router.push('/exchangerank')}>
             {isExchangeLoading ? (
-              <Loading tip={t('common.loading')} />
+              renderRankSkeleton({ variant: 'exchange', rows: 3 })
             ) : (
               <MoziGrid
                 length={4}
@@ -930,7 +1016,7 @@ const loadingTimerRef = useRef(null);
         >
           <div onClick={() => router.push('/pricerank')}>
             {isPriceLoading ? (
-              <Loading tip={t('common.loading')} />
+              renderRankSkeleton({ variant: 'twoCol', rows: 3 })
             ) : (
               <RankGrid
                 length={2}
@@ -956,7 +1042,7 @@ const loadingTimerRef = useRef(null);
         >
           <div onClick={() => router.push('/downrank')}>
             {isDownLoading ? (
-              <Loading tip={t('common.loading')} />
+              renderRankSkeleton({ variant: 'twoCol', rows: 3 })
             ) : (
               <RankGrid
                 length={2}
@@ -982,7 +1068,7 @@ const loadingTimerRef = useRef(null);
         >
           <div onClick={() => router.push('/waverank')}>
             {isWaveLoading ? (
-              <Loading tip={t('common.loading')} />
+              renderRankSkeleton({ variant: 'twoCol', rows: 3 })
             ) : (
               <RankGrid
                 length={2}
@@ -1008,7 +1094,7 @@ const loadingTimerRef = useRef(null);
         >
           <div onClick={() => router.push('/traderank')}>
             {isTradeLoading ? (
-              <Loading tip={t('common.loading')} />
+              renderRankSkeleton({ variant: 'twoCol', rows: 3 })
             ) : (
               <RankGrid
                 length={2}
@@ -1030,7 +1116,7 @@ const loadingTimerRef = useRef(null);
         >
           <div onClick={() => router.push('/newcoinrank')}>
             {isXinbiLoading ? (
-              <Loading tip={t('common.loading')} />
+              renderRankSkeleton({ variant: 'newCoin', rows: 3 })
             ) : (
               <RankGrid
                 length={2}
@@ -1064,7 +1150,7 @@ const loadingTimerRef = useRef(null);
             router.push(`/uptraderank?intervals=${encodeURIComponent(raw)}`)
           }}>
             {isUpTradeLoading ? (
-              <Loading tip={t('common.loading')} />
+              renderRankSkeleton({ variant: 'twoCol', rows: 3 })
             ) : (
               <RankGrid
                 length={2}

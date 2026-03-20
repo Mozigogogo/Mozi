@@ -1,40 +1,217 @@
 .container {
   width: 100%;
-  padding: 0 16px 24px 16px;
   box-sizing: border-box;
-  background: #EEF0F3 url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/me-bg.png') no-repeat top center;
-  background-size: 100% 300px;
+  background: #FFFFFF;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
+.topBannerWrapper {
+  width: 100%;
+  background: url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/me-bg.png') no-repeat center;
+  background-size: cover;
+  padding: 50px 12px 0px 12px;
+  box-sizing: border-box;
+}
+
+.headerContentTop {
+  display: flex;
+  flex-direction: column;
+  cursor: default;
+}
+
+.statsAndActionsWrapper {
+  background: #FFFFFF;
+  padding: 0 12px 12px 12px;
+}
+
+.contentWrapper {
+  width: 100%;
+  /* 统一控制内容区域与 Banner 之间的间距和左右留白 */
+  background: rgba(238, 240, 243, 1);
+  box-sizing: border-box;
+  border-radius: 20px 20px 0 0;
+}
+
+.contentSection {
+  width: 100%;
+  margin-top: 12px;
+  padding: 0 12px 12px 12px;
+}
+
 .headerBox {
   background: transparent;
-  padding: 0px 0 10px;
 }
 
 .headerUser {
   display: flex;
-  padding: 10px 14px;
+  flex-direction: column;
+}
+
+.userInfoRow {
+  display: flex;
   align-items: center;
-  margin-top: 60px;
-  cursor: pointer;
+}
+
+.avatarWrapper {
+  position: relative;
+  margin-right: 16px;
 }
 
 .headerAvatar {
-  width: 60px;
-  height: 60px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
-  margin-right: 12px;
   object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.editIcon {
-  width: 16px;
-  height: 16px;
-  margin-left: 10px;
+.verifyIcon {
+  position: absolute;
+  bottom: 0;
+  right: -5px;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.nicknameWrapper {
+  display: flex;
+  align-items: center;
+}
+
+.nickname {
+  font-size: 24px;
+  font-weight: 700;
+  background: linear-gradient(180deg, #F8D5A9 4.06%, #E5B372 33.13%, #DE9E4C 54.37%, #663409 90%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-all;
+}
+
+.tagsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  margin-bottom: 4px;
+}
+
+.userTag {
+  background: rgba(255, 255, 255, 0.32);
+  border: 0.62px solid rgba(233, 233, 233, 1);
+  padding: 0px 4px;
+  font-size: 12px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+}
+
+.bioRow {
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 13px;
+  line-height: 22px;
+  letter-spacing: 0px;
   vertical-align: middle;
+  margin-bottom: 8px;
+}
+
+.statsActionRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.statsGroup {
+  display: flex;
+  gap: 12px;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.statValue {
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 16px;
+  letter-spacing: 0px;
+  vertical-align: middle;
+  text-transform: uppercase;
+
+}
+
+.statLabel {
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0px;
+  margin-top: 4px;
+  color: rgba(158, 157, 163, 1);
+}
+
+.actionGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profileBtn {
+  background: rgba(255, 255, 255, 0.32);
+  border: 0.5px solid rgba(233, 233, 233, 1);
+  border-radius: 20px;
+  padding: 0 12px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(49, 48, 48, 1);
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  
+  &:active {
+    background: #f5f5f5;
+  }
+}
+
+.iconBtn {
+  width: 45px;
+  height: 30px;
+  opacity: 1;
+  border-radius: 100px;
+  gap: 10px;
+  border-width: 0.5px;
+  padding: 4px 12px 4px 12px;
+  border: 0.5px solid rgba(233, 233, 233, 1);
+  background:  rgba(255, 255, 255, 0.32);
+  font-family: 'PingFang SC', Roboto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+  }
+  
+  &:active {
+    background: #f5f5f5;
+  }
 }
 
 .loginBox {
@@ -44,8 +221,9 @@
 /* 第一排功能按钮 */
 .actionButtons {
   background: #fff;
-  border-radius: 16px;
-  margin: 10px 0 0;
+  border-radius: 20px;
+  /* 现在已经有 contentSection 的间距了，这里不再额外顶开 */
+  margin: 0;
   padding: 16px 16px;
   display: flex;
   justify-content: space-around;
@@ -86,8 +264,9 @@
 /* 第二排功能按钮 */
 .secondaryActions {
   background: #fff;
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 16px 16px;
+  margin-top: 12px;
   // box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
@@ -122,7 +301,7 @@
 .horizontalBtn {
   flex: 1;
   background: #fff;
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 14px 12px;
   display: flex;
   flex-direction: column;
@@ -198,84 +377,153 @@
 
 /* 积分模块 */
 .pointsSection {
-  background: url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/integral.png') no-repeat center center;
-  background-size: 100% 100%;
-  margin: 0px 0 12px 0;
-  border-radius: 16px;
-  padding: 16px 16px;
+  background: #fff;
+  margin: 0 0 12px 0;
+  border-radius: 20px;
+  padding: 16px 16px 12px 16px;
+  display: flex;
+  flex-direction: column;
+  min-height: 120px;
+  position: relative;
+  overflow: hidden;
+  justify-content: space-between;
+}
+
+.pointsTop {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  min-height: 110px;
-  max-height: 130px;
-  position: relative;
+  margin-bottom: 12px;
+  z-index: 2;
 }
 
 .pointsInfo {
-  flex: 1;
-  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.pointsBottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 2;
 }
 
 .pointsTitle {
-  color: #333;
+  color:rgba(49, 48, 48, 1);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 400;
   margin-bottom: 4px;
-  display: block;
+  margin-left: 24px;
 }
 
 .pointsValueRow {
   display: flex;
-  align-items: baseline;
-  margin-bottom: 4px;
+  align-items: center;
+}
+
+.coinIcon {
+  width: 20px;
+  height: 20px;
+  margin-right: 6px;
 }
 
 .pointsValue {
-  color: #11B787;
-  font-size: 28px;
+  color: rgba(11, 117, 86, 1);
+  font-size: 26px;
   font-weight: 700;
-  margin-bottom: 4px;
-  display: block;
+  margin-right: 8px;
+  line-height: 1;
 }
 
-.pointsDaily {
-  color: #707070;
-  font-size: 11px;
-  margin-left: 10px;
-  display: block;
-}
-
-.pointsRank {
-  color: #707070;
-  font-size: 11px;
-  margin-bottom: 3px;
-  display: block;
-}
-
-.pointsAction {
-  position: absolute;
-  top: 10px;
-  right: 10px;
+.dailyWrapper {
   display: flex;
   align-items: center;
 }
 
-.pointsButton {
-  color: #fff;
-  border-radius: 14px;
-  padding: 4px 0px 6px 12px;
-  font-size: 11px;
-  cursor: pointer;
-  font-weight: 600;
-  line-height: 16px;
+.pointsDailyText {
+  color: rgba(102, 102, 102, 1);
+  font-size: 12px;
+  font-weight: 400;
+  margin-left: 2px;
+  margin-right: 4px;
 }
 
-.pointsCoin {
+.pointsDailyValue {
+  color: rgba(49, 48, 48, 1);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.pointsDivider {
+  height: 1px;
+  background: #F5F5F5;
+  width: 100%;
+}
+
+.pointsRank {
+  color: #999;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.rankInfo {
+  display: flex;
+  align-items: center;
+}
+
+.pointsRankLabel {
+  color: rgba(153, 153, 153, 1);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.pointsRankValue {
+  color: rgba(102, 102, 102, 1);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.rankNumber {
+  color: rgba(49, 48, 48, 1);
+  font-size: 12px;
+  font-weight: 600;
+  margin: 0 2px;
+}
+
+.earnPointsBtn {
+  background: linear-gradient(180deg, #FFD92F 0%, #FFB612 49.04%, #FF9A0B 100%);
+  border: none;
+  border-radius: 20px;
+  padding: 8px 16px;
+  color: rgba(56, 37, 23, 1);
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+
+  box-shadow: 0 2px 4px rgba(255, 153, 0, 0.2);
+}
+
+.bgDecoration {
   position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 50px;
-  height: 65px;
+  top: -8px;
+  right: -20px;
+  width: 200px;
+  height: auto;
+  z-index: 0;
+  clip-path: polygon(30% 0, 100% 0, 100% 70%, 70% 100%, 0 100%, 0 30%);
+}
+
+.rankLink {
+  font-size: 12px;
+  color: rgba(49, 48, 48, 1);
+  display: flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 10px;
+  z-index: 2;
+  gap: 4px;
 }
 
 /* 日历模块占位 */
@@ -285,7 +533,7 @@
 
 .calendarPlaceholder {
   background: #fff;
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 16px;
   // box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
@@ -330,6 +578,8 @@
 // .newCoinSection {
 // }
 
+
+
 /* 弹性占位，推底退出按钮 */
 .flexSpacer {
   flex: 1 1 auto;
@@ -339,7 +589,7 @@
 .footer {
   margin: 0px 0px 16px 0px;
   background: #fff;
-  border-radius: 16px;
+  border-radius: 20px;
   overflow: hidden;
   // box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
@@ -454,7 +704,7 @@
   margin: 12px auto 20px auto !important;
   background: #dc3545 !important;
   background-color: #dc3545 !important;
-  border-radius: 16px !important;
+  border-radius: 20px !important;
   height: 44px !important;
   color: #fff !important;
   font-size: 18px !important;

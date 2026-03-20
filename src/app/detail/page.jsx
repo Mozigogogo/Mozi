@@ -12,16 +12,22 @@ import HighlightArea from '../../components/HighlightArea';
 import AddCollect from '../../components/AddCollect';
 import KlineChart from '../../components/KlineChart';
 import OrderBook from '../../components/OrderBook';
-import { Loading } from '../../components/Loading';
-import { CaretUpIcon, CaretDownIcon, BellIcon } from '../../components/Icons';
-import FloatingRobot from '../../components/FloatingRobot';
+import OneClickAlarmModal from '@/components/OneClickAlarmModal';
+import { Loading } from '@/components/Loading';
+import { CaretUpIcon, CaretDownIcon, BellIcon } from '@/components/Icons';
+import FloatingRobot from '@/components/FloatingRobot';
 // import { SkeletonPage } from '../../components/Skeleton';
 // import { detailPageSkeletonConfig } from '../../components/Skeleton/configs/detailPageConfig';
-import { request } from '../../utils/request';
-import { Interface, LOOPTIME, WS_URL } from '../../utils/constants';
-import { formatNumber, formatPercent, jump2NoTab } from '../../utils/core';
-import { MoziWebSocket } from '../../utils/moziWebSocket';
+import { request } from '@/utils/request';
+import { Interface, LOOPTIME, WS_URL } from '@/utils/constants';
+import { formatNumber, formatPercent, jump2NoTab } from '@/utils/core';
+import { MoziWebSocket } from '@/utils/moziWebSocket';
 import { useTranslation } from 'react-i18next';
+import { useAlertConfig } from '@/hooks/useAlertConfig';
+import { completeTask } from '@/api/user';
+import { executeConsume } from '@/api/points';
+import { getMySubscription } from '@/api/vip';
+import { confirm } from '@/components/Modal/confirm';
 import {
   WS_EVENTS,
   PLATFORMS,
@@ -37,6 +43,9 @@ export default function DetailPage() {
   const symbol = searchParams.get('symbol') || '';
   const fromFavorite = searchParams.get('fromFavorite') === '1'; // 是否从自选榜进入
   const { t } = useTranslation();
+  
+  // 使用告警配置 Hook（自动获取）
+  const { fetchConfig: fetchAlertConfig } = useAlertConfig({ autoFetch: false });
   
   // 状态定义
   const [coinInfo, setCoinInfo] = useState(null);
@@ -61,6 +70,8 @@ export default function DetailPage() {
   const [infoExpanded, setInfoExpanded] = useState(false);
   const [coinInfoLeft, setCoinInfoLeft] = useState([]);
   const [coinInfoRight, setCoinInfoRight] = useState([]);
+  const [oneClickAlarmOpen, setOneClickAlarmOpen] = useState(false);
+  const [oneClickAlarmMode, setOneClickAlarmMode] = useState('oneClick');
   const needLoop = useRef(true);
   const chartRef = useRef(null);
   const marketRef = useRef(null);
@@ -83,13 +94,250 @@ export default function DetailPage() {
   });
   
   // 控制大单侦测区域显示/隐藏
-  const showOrderBook = false;
+  const showOrderBook = true;
+  
+  // 大单侦测解锁状态
+  const [isBigOrderUnlocked, setIsBigOrderUnlocked] = useState(false);
+  const [unlockEndTime, setUnlockEndTime] = useState(null);
+  const [orderBookTag, setOrderBookTag] = useState(null);
+  const [mySubscription, setMySubscription] = useState(null);
+
+  const isVipBySubscription = (sub) => {
+    if (!sub) return false;
+    if (sub?.isVip === true) return true;
+    const planRaw = sub?.tierCode || sub?.planCode || sub?.plan_name || sub?.plan || sub?.tier || '';
+    const plan = String(planRaw || '').toUpperCase();
+    if (!plan) return false;
+    return plan !== 'FREE' && plan !== '0' && plan !== 'NONE';
+  };
+
+  const getSubscriptionTier = (sub) => {
+    const tierCode = String(sub?.tierCode || '').toUpperCase();
+    if (tierCode === 'PRO') return 'pro';
+    if (tierCode === 'LITE') return 'lite';
+    if (tierCode === 'FREE') return 'free';
+
+    const planRaw = sub?.planCode || sub?.plan_name || sub?.plan || sub?.tier || '';
+    const plan = String(planRaw || '').toUpperCase();
+    if (plan.includes('PRO')) return 'pro';
+    if (plan.includes('LITE')) return 'lite';
+    return 'free';
+  };
+
+  const getOrderBookMaxRows = (tier) => {
+    if (tier === 'pro') return 40;
+    if (tier === 'lite') return 20;
+    return 5;
+  };
+
+  // 查询当前用户订阅/权益（用于详情页解锁逻辑等）
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const CACHE_KEY = 'mozi_my_subscription_cache_v1';
+    const TTL = 5 * 60 * 1000; // 5min
+    let alive = true;
+
+    try {
+      const cachedStr = localStorage.getItem(CACHE_KEY);
+      if (cachedStr) {
+        const cached = JSON.parse(cachedStr);
+        if (cached?.ts && Date.now() - cached.ts < TTL && cached?.data) {
+          setMySubscription(cached.data);
+        }
+      }
+    } catch (_) {}
+
+    getMySubscription()
+      .then((res) => {
+        if (!alive) return;
+        const data = res?.data ?? res;
+        setMySubscription(data);
+        try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
+        } catch (_) {}
+      })
+      .catch(() => {
+        // 静默失败：继续走本地/试用/积分解锁逻辑
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // 初始化检查解锁状态
+  useEffect(() => {
+    const checkStatus = () => {
+      // 1. 优先检查 VIP 状态 (最高优先级)
+      if (isVipBySubscription(mySubscription)) {
+        setIsBigOrderUnlocked(true);
+        setUnlockEndTime(null); // VIP 无倒计时
+        setOrderBookTag('VIP');
+        return;
+      }
+
+      try {
+        const userDataInfo = localStorage.getItem('userDataInfo');
+        if (userDataInfo) {
+          const user = JSON.parse(userDataInfo);
+          // 假设 membershipTier 存在且不为 'free'/'0' 或者是数字 > 0 即为 VIP
+          // 具体字段需根据实际后端返回调整，这里尝试通用判断
+          const isVip = user.isVip || (user.membershipTier && user.membershipTier !== 'free' && user.membershipTier !== '0');
+          
+          if (isVip) {
+             setIsBigOrderUnlocked(true);
+             setUnlockEndTime(null); // VIP 无倒计时
+             setOrderBookTag('VIP');
+             return;
+          }
+        }
+      } catch (e) {
+        console.error('Check VIP status failed:', e);
+      }
+
+      // 2. 检查新用户试用 (7天)
+      try {
+        let createTimeStr = null;
+        
+        // 尝试从 userDataInfo 获取
+        const userDataInfo = localStorage.getItem('userDataInfo');
+        if (userDataInfo) {
+          const user = JSON.parse(userDataInfo);
+          createTimeStr = user.createTime || user.createdAt || user.registerTime;
+        }
+        
+        // 如果没有，尝试从 userInfo 获取
+        if (!createTimeStr) {
+          const userInfo = localStorage.getItem('userInfo');
+          if (userInfo) {
+            const user = JSON.parse(userInfo);
+            createTimeStr = user.createTime || user.createdAt || user.registerTime;
+          }
+        }
+        
+        if (createTimeStr) {
+          const created = new Date(createTimeStr).getTime();
+          const now = Date.now();
+          const trialDuration = 7 * 24 * 60 * 60 * 1000; // 7天
+          
+          if (now - created < trialDuration) {
+            setIsBigOrderUnlocked(true);
+            setUnlockEndTime(created + trialDuration);
+            setOrderBookTag(t('orderBook.limitedExperience')); // "限时体验"
+            return;
+          }
+        }
+      } catch (e) {
+        console.error('Check trial status failed:', e);
+      }
+
+      // 3. 检查积分解锁 (24小时)
+      if (!symbol) return;
+      const unlockKey = `mozi_big_order_unlock_${symbol}`;
+      const savedEndTime = localStorage.getItem(unlockKey);
+      
+      if (savedEndTime) {
+        const endTime = parseInt(savedEndTime, 10);
+        if (Date.now() < endTime) {
+          setIsBigOrderUnlocked(true);
+          setUnlockEndTime(endTime);
+          setOrderBookTag(t('orderBook.unlocked') || '已解锁'); 
+          return;
+        } else {
+          // 已过期
+          localStorage.removeItem(unlockKey);
+        }
+      }
+
+      // 4. 默认锁定状态
+      setIsBigOrderUnlocked(false);
+      setUnlockEndTime(null);
+      setOrderBookTag(null);
+    };
+
+    checkStatus();
+  }, [symbol, t, mySubscription]);
+
+  // 倒计时检查过期
+  useEffect(() => {
+    if (!unlockEndTime) return;
+    
+    const timer = setInterval(() => {
+      if (Date.now() >= unlockEndTime) {
+        setIsBigOrderUnlocked(false);
+        setUnlockEndTime(null);
+        localStorage.removeItem(`mozi_big_order_unlock_${symbol}`);
+      }
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, [unlockEndTime, symbol]);
+
+  // 解锁处理函数
+  const handleUnlockOrderBook = async () => {
+    const result = await confirm({
+      className: styles.unlockDialog,
+      title: (
+        <div className={styles.unlockDialogTitle}>
+          解锁大单侦测
+        </div>
+      ),
+      content: (
+        <div className={styles.unlockDialogContent}>
+          <div className={styles.unlockDialogMain}>
+            确定要花费
+            <span className={styles.unlockDialogPoints}>200积分</span>
+            来解锁查看大单侦测数据吗？
+          </div>
+          <div className={styles.unlockDialogSub}>
+            有效期<span>24小时</span>，仅展示<span>Top 5</span> 大单数据
+          </div>
+        </div>
+      ),
+      cancelText: '取消',
+      confirmText: '确定',
+      closeOnAction: true,
+      bodyStyle: { borderRadius: '16px' },
+    });
+    
+    if (result) {
+      try {
+        const res = await executeConsume({ actionCode: 'BIG_ORDER_VIEW' });
+        if (res.code === 0) {
+          const endTime = Date.now() + 24 * 60 * 60 * 1000;
+          setIsBigOrderUnlocked(true);
+          setUnlockEndTime(endTime);
+          localStorage.setItem(`mozi_big_order_unlock_${symbol}`, endTime.toString());
+          Toast.show({
+            icon: 'success',
+            content: '解锁成功',
+          });
+        } else {
+          Toast.show({
+            icon: 'fail',
+            content: res.msg || '解锁失败，积分不足',
+          });
+        }
+      } catch (error) {
+        console.error('Unlock error:', error);
+        Toast.show({
+          icon: 'fail',
+          content: '网络错误，请稍后重试',
+        });
+      }
+    }
+  };
   
   // WebSocket连接状态管理
   const wsConnectionStatusRef = useRef('connecting'); // connecting | connected | failed
   const wsConnectionTimeoutRef = useRef(null); // WebSocket连接超时定时器
   const useHttpFallbackRef = useRef(false); // 是否使用HTTP降级
   const pollingTimerRef = useRef(null); // HTTP轮询定时器
+  const hasBigDealDataRef = useRef(false); // 是否收到过大单数据（避免 mock 覆盖）
+  const bigDealChannelIdRef = useRef(null); // big_deal 订阅频道ID（若服务端返回）
   
   
   // 获取币种信息
@@ -139,15 +387,35 @@ export default function DetailPage() {
     }
   };
 
+  // 获取用户告警配置（使用 Hook 的 fetchConfig 方法）
+  const fetchUserAlertConfig = async () => {
+    try {
+      const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+      
+      // 如果用户未登录，清空配置并返回
+      if (!userId) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('alertConfig');
+        }
+        return;
+      }
+      
+      // 使用 Hook 提供的方法获取配置（自动处理缓存和防重复）
+      await fetchAlertConfig();
+    } catch (error) {
+      console.error('❌ 获取告警配置失败:', error);
+    }
+  };
+
   const generateMockOrderBook = (iconUrl) => {
     const genSide = () => {
       const baseValue = 10e9 + Math.random() * 4e9;
-      return Array.from({ length: 10 }).map((_, idx) => {
+      return Array.from({ length: 40 }).map((_, idx) => {
         const decay = 1 - idx * 0.1;
         const value = baseValue * decay * (0.9 + Math.random() * 0.2);
         return {
           value,
-          icon: iconUrl || null,
+          logo: iconUrl || null,
         };
       });
     };
@@ -419,6 +687,15 @@ export default function DetailPage() {
       });
       
       if (response?.code === 0) {
+        // 如果是添加操作（当前不是 isFavorite），则上报任务
+        if (!isFavorite) {
+          try {
+            await completeTask('ADD_WATCHLIST');
+          } catch (e) {
+            console.error('上报 ADD_WATCHLIST 失败', e);
+          }
+        }
+
         setIsFavorite(!isFavorite);
         Toast.show({
           content: isFavorite ? '已移除自选' : '已添加自选',
@@ -438,12 +715,8 @@ export default function DetailPage() {
 
   // 跳转到告警页面
   const jump2Alert = () => {
-    if (symbol) {
-      const href = `/addwarn?symbol=${encodeURIComponent(symbol)}`;
-      window.location.href = href;
-    } else {
-      window.location.href = '/addwarn';
-    }
+    setOneClickAlarmMode('config');
+    setOneClickAlarmOpen(true);
   };
 
   // 跳转到社区页面
@@ -582,6 +855,9 @@ ${coinInfo.name || symbol} (${symbol})
     fetchMarketData();
     fetchROIData();
     
+    // 获取用户告警配置
+    fetchUserAlertConfig();
+    
     // 设置WebSocket连接超时（10秒）
     // 如果10秒内WebSocket未连接成功，则启用HTTP降级
     wsConnectionTimeoutRef.current = setTimeout(() => {
@@ -639,6 +915,19 @@ ${coinInfo.name || symbol} (${symbol})
       }).catch(err => {
         console.error('订阅 K线失败:', err);
       });
+
+      // 订阅大单侦测数据（big_deal）
+      // 对齐协议示例：
+      // { event:"subscribe", data:{ channels:[{ type:"big_deal", symbols:["BTC"] }] } }
+      const bigDealChannel = { type: 'big_deal', symbols: [String(symbol || '').toUpperCase()] };
+      ws.subscribe([bigDealChannel])
+        .then((response) => {
+          const channelId = response?.data?.channels?.[0]?.channelId;
+          if (channelId) bigDealChannelIdRef.current = channelId;
+        })
+        .catch((err) => {
+          console.error('订阅 big_deal 失败:', err);
+        });
     });
     
     // 监听 Ticker 数据更新
@@ -1015,6 +1304,50 @@ ${coinInfo.name || symbol} (${symbol})
         setMarketData(processedData);
       }
     });
+
+    // 监听大单侦测数据（big_deal）
+    ws.on('big_deal', (msg) => {
+      // Debug：保留原始推送，方便排查
+      console.log('📈 [big_deal] message:', msg);
+
+      const data = msg?.data;
+      if (!data) return;
+
+      const toNumber = (v) => {
+        const n = Number(v);
+        return Number.isFinite(n) ? n : null;
+      };
+
+      // 服务端结构（示例）：
+      // { event:"big_deal", data:{ base:"DOGE", buy:[{deal_price, deal_quantity,...}], sell:[...] } }
+      const buy = Array.isArray(data?.buy) ? data.buy : [];
+      const sell = Array.isArray(data?.sell) ? data.sell : [];
+      if (!buy.length && !sell.length) return;
+
+      // 统一映射为 OrderBook 组件需要的格式：[{ value }]
+      // 默认 value 使用成交额：deal_price * deal_quantity
+      // 若字段缺失则回退为 deal_quantity
+      const mapSide = (arr) =>
+        arr.map((x) => {
+          const price = toNumber(x?.deal_price);
+          const qty = toNumber(x?.deal_quantity);
+          const notional = price !== null && qty !== null ? price * qty : null;
+          return {
+            value: notional ?? qty ?? 0,
+            // 图标：优先使用 WS 下发的 logo
+            logo: x?.logo || null,
+          };
+        });
+
+      const bids = mapSide(buy);
+      const asks = mapSide(sell);
+
+      hasBigDealDataRef.current = true;
+      setOrderBook({
+        bids: bids.slice(0, 40),
+        asks: asks.slice(0, 40),
+      });
+    });
     
     // 监听WebSocket错误
     ws.on('error', (error) => {
@@ -1068,6 +1401,8 @@ ${coinInfo.name || symbol} (${symbol})
       currentKlineChannelRef.current = null;
       currentKlinePeriodRef.current = 'hour';
       isFirstRenderRef.current = true;
+      hasBigDealDataRef.current = false;
+      bigDealChannelIdRef.current = null;
       
       // 断开 WebSocket
       if (wsRef.current) {
@@ -1078,6 +1413,9 @@ ${coinInfo.name || symbol} (${symbol})
   }, [symbol]);
 
   useEffect(() => {
+    // 仅在尚未收到真实大单数据时使用 mock，避免覆盖 WS 数据
+    if (hasBigDealDataRef.current) return;
+    if (orderBook?.bids?.length || orderBook?.asks?.length) return;
     setOrderBook(generateMockOrderBook(coinInfo?.url));
   }, [symbol, coinInfo?.url]);
   
@@ -1263,13 +1601,36 @@ ${coinInfo.name || symbol} (${symbol})
     );
   };
 
+  // 跳转到会员购买
+  const handleBuyMembership = () => {
+    router.push('/vip-recharge');
+  };
+
   const renderOrderBook = () => {
-    const endTime = new Date(Date.now() + 13 * 24 * 60 * 60 * 1000 + 12 * 60 * 60 * 1000 + 41 * 60 * 1000 + 8 * 1000);
+    const tier = getSubscriptionTier(mySubscription);
+    const maxRows = getOrderBookMaxRows(tier);
+    const dropdownOptions =
+      tier === 'pro'
+        ? ['Top 40', 'Top 20', 'Top 5']
+        : tier === 'lite'
+          ? ['Top 20', 'Top 5']
+          : ['Top 5'];
+
     return (
       <OrderBook 
         bids={orderBook.bids} 
         asks={orderBook.asks}
-        endTime={endTime}
+        endTime={unlockEndTime}
+        tag={orderBookTag}
+        showMask={!isBigOrderUnlocked}
+        onSubscribe={handleUnlockOrderBook}
+        onBuyMembership={handleBuyMembership}
+        maxRows={maxRows}
+        dropdownOptions={dropdownOptions}
+        maskTitle={t('orderBook.maskTitle')}
+        maskDescription={t('orderBook.maskDescription')}
+        maskButtonText={t('orderBook.maskButtonText')}
+        showVipElements={false}
       />
     );
   };
@@ -1462,7 +1823,14 @@ ${coinInfo.name || symbol} (${symbol})
               <button type="button" className={styles.alarmConfig} onClick={jump2Alert}>
                 {t('detail.actions.configAlarm')}
               </button>
-              <button type="button" className={styles.alarmStart} onClick={() => Toast.show({ content: t('detail.actions.comingSoon'), position: 'bottom' })}>
+              <button
+                type="button"
+                className={styles.alarmStart}
+                onClick={() => {
+                  setOneClickAlarmMode('oneClick');
+                  setOneClickAlarmOpen(true);
+                }}
+              >
                 {t('detail.actions.startNow')}
               </button>
             </div>
@@ -1477,6 +1845,17 @@ ${coinInfo.name || symbol} (${symbol})
           startDelay={2000}
         />
       </div>
+
+      <OneClickAlarmModal
+        open={oneClickAlarmOpen}
+        mode={oneClickAlarmMode}
+        symbol={symbol || 'BTC'}
+        onClose={() => setOneClickAlarmOpen(false)}
+        onConfirm={() => {
+          setOneClickAlarmOpen(false);
+        }}
+        onSkip={() => setOneClickAlarmOpen(false)}
+      />
     </>
   );
 }

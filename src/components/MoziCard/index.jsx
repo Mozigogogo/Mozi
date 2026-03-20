@@ -37,7 +37,9 @@ const MoziCard = ({
   hideExtraWhenEmpty = false,
   hasData = true,
   // 新增：PC端标识，用于定制PC端样式
-  isPC = false
+  isPC = false,
+  // 新增：是否隐藏 cardHeader
+  hideHeader = false
 }) => {
   // 合并默认样式和自定义样式（customStyle 优先级最高）
   const cardStyle = {
@@ -164,17 +166,19 @@ const MoziCard = ({
   if (title && (title.includes('榜') || title.includes('排行')) && !children && (selectData?.length > 0 || onItemClick || (Array.isArray(data) && data.length > 0))) {
     return (
       <div className={`${styles.card} ${className}`} style={cardStyle}>
-        <div className={styles.cardHeader}>
-          {renderTitle()}
-          <CardExtra 
-            type={selectData && selectData.length > 0 ? 'select' : 'more'}
-            callback={onMoreClick} 
-            selectArr={selectData?.map(item => item.name) || []} 
-            selectIndex={selectIndex}
-            moreDesc={moreDesc} 
-            pickChange={onSelectChange} 
-          />
-        </div>
+        {!hideHeader && (
+          <div className={styles.cardHeader}>
+            {renderTitle()}
+            <CardExtra 
+              type={selectData && selectData.length > 0 ? 'select' : 'more'}
+              callback={onMoreClick} 
+              selectArr={selectData?.map(item => item.name) || []} 
+              selectIndex={selectIndex}
+              moreDesc={moreDesc} 
+              pickChange={onSelectChange} 
+            />
+          </div>
+        )}
         <div className={styles.cardBody}>
           {renderRankContent()}
         </div>
@@ -185,19 +189,21 @@ const MoziCard = ({
   // 通用渲染逻辑
   return (
     <div className={`${styles.card} ${isPC ? styles.pcCard : ''} ${className}`} style={cardStyle}>
-      <div className={`${styles.cardHeader} ${isPC ? styles.pcCardHeader : ''}`}>
-        {renderTitle()}
-        {!customTitle && (!hideExtraWhenEmpty || hasData) && (
-          <CardExtra 
-            type={type} 
-            callback={callback} 
-            selectArr={selectArr} 
-            moreDesc={moreDesc} 
-            pickChange={pickChange}
-            isPC={isPC}
-          />
-        )}
-      </div>
+      {!hideHeader && (
+        <div className={`${styles.cardHeader} ${isPC ? styles.pcCardHeader : ''}`}>
+          {renderTitle()}
+          {!customTitle && (!hideExtraWhenEmpty || hasData) && (
+            <CardExtra 
+              type={type} 
+              callback={callback} 
+              selectArr={selectArr} 
+              moreDesc={moreDesc} 
+              pickChange={pickChange}
+              isPC={isPC}
+            />
+          )}
+        </div>
+      )}
       <div className={`${styles.cardBody} ${isPC ? styles.pcCardBody : ''}`}>
         {children}
       </div>

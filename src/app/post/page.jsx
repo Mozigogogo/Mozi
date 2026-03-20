@@ -6,6 +6,7 @@ import { SearchOutline, CloseOutline } from 'antd-mobile-icons';
 import { useTranslation } from 'react-i18next';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
+import { completeTask } from '@/api/user';
 import NavBar from '../../components/NavBar';
 import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './page.module.less';
@@ -312,12 +313,16 @@ export default function PostPage() {
         // 发帖成功后，调用发帖任务完成接口（仅新帖子，不是更新）
         if (!isUpdate) {
           try {
-            await request({
-              url: Interface.TASK_COMPLETE,
-              method: 'POST',
-              data: { taskCode: 'POST' }
-            });
+            await completeTask('POST');
             console.log('🔍 [DEBUG] 发帖任务上报成功');
+
+            // 检查内容长度是否超过50字，如果是，则上报首贴任务
+            // 简单处理，去除 HTML 标签（如果有）计算长度
+            const plainContent = content ? content.replace(/<[^>]+>/g, '').trim() : '';
+            if (plainContent.length > 50) {
+              await completeTask('FIRST_POST');
+              console.log('🔍 [DEBUG] 首贴任务上报成功');
+            }
           } catch (taskError) {
             console.error('发帖任务上报失败:', taskError);
           }

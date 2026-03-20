@@ -1,59 +1,22 @@
 .treemapContainer {
+  position: relative;
+  width: 100%;
+  min-height: 600px;
   border-radius: 8px;
   overflow: hidden;
-  width: 100%;
-  height: 100%;
-  grid-auto-rows: 1fr !important; /* 关键：让每行高度平均分配填满容器 */
-  
-  :global {
-    .adm-grid-item {
-      padding: 0;
-    }
-  }
 }
 
 .treemapItem {
   color: #fff;
-  text-align: center;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  padding: 12px 8px;
-  flex-wrap: wrap;
-  border-radius: 8px;
-  width: 100%;
-  height: 100%;
-  min-height: 60px;
   box-sizing: border-box;
   cursor: pointer;
   transition: all 0.2s ease;
   
   &:hover {
-    opacity: 0.9;
-    transform: scale(1.02);
+    opacity: 0.9 !important;
+    transform: scale(1.02) !important;
+    z-index: 10 !important;
   }
-}
-
-.green {
-  background-color: #11B787;
-}
-
-.red {
-  background-color: #FA5F5F;
-}
-
-.itemName {
-  font-size: 10px;
-  font-weight: 600;
-  margin-bottom: 8px;
-  word-break: break-all;
-}
-
-.itemValue {
-  font-size: 10px;
-  font-weight: 500;
-  opacity: 0.95;
 }
 
 .emptyContainer {
@@ -70,45 +33,17 @@
   font-size: 14px;
 }
 
-/* PC 端适配 - 使用大写 PX 阻止转换 */
+/* PC 端适配 */
 @media (min-width: 769px) {
   .treemapContainer {
-    grid-auto-rows: minmax(50PX, 1fr) !important; /* PC 端自动填充容器高度 */
-    border-radius: 4PX; /* PC 端容器圆角 */
-  }
-  
-  .treemapItem {
-    padding: 6PX 4PX;
-    height: 100%; /* 自动填充 grid 单元格高度 */
-    min-height: 50PX;
-    border-radius: 4PX; /* PC 端每个块的圆角 */
-  }
-  
-  .itemName {
-    font-size: 13PX; /* 增加字体大小 */
-    margin-bottom: 4PX;
-    line-height: 1.3;
-  }
-  
-  .itemValue {
-    font-size: 12PX; /* 增加字体大小 */
-    line-height: 1.3;
+    min-height: 700px;
+    border-radius: 4px;
   }
 }
 
 /* 移动端响应式调整 */
 @media (max-width: 768px) {
-  .treemapItem {
-    padding: 10px 6px;
-    min-height: 50px;
-  }
-  
-  .itemName {
-    font-size: 10px;
-    margin-bottom: 4px;
-  }
-  
-  .itemValue {
-    font-size: 10px;
+  .treemapContainer {
+    min-height: 500px;
   }
 }

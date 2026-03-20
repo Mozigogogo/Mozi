@@ -1,31 +1,26 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import { Input, Button, Dialog, Toast, Switch } from "antd-mobile";
+import { Input, Button, Toast, Switch } from "antd-mobile";
 import PopLogin from "../../components/PopLogin";
-import { request } from "@/utils/request";
-import { Interface } from "@/utils/constants";
+import { getCoinInfo, completeAlarmTask, addAlarm } from "@/api/alarm";
 import { jump2NoTab } from "@/utils/core";
 import { LeftArrowIcon } from "@/components/Icons";
 import styles from "./page.module.less";
 
 export default function Addwarn() {
   const { t } = useTranslation();
+  const searchParams = useSearchParams();
   // 按钮状态（移除保存后的公众号弹窗）
   const [btnDisabled, setBtnDisabled] = useState(false);
   // 登录弹窗显示状态
   const [showLoginPopup, setShowLoginPopup] = useState(false);
 
   // URL参数中的 symbol，缺省用 BTC
-  const getSymbol = () => {
-    if (typeof window !== "undefined") {
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get("symbol") || "BTC";
-    }
-    return "BTC";
-  };
-  const symbol = getSymbol();
+  const symbol = searchParams.get("symbol") || "BTC";
+  console.log('🔍 [DEBUG] addwarn getSymbol:', symbol, '| window.location.href:', typeof window !== 'undefined' ? window.location.href : 'SSR');
 
   // 配置项状态管理（与原项目一致的四项）
   const [configs, setConfigs] = useState({
@@ -34,6 +29,10 @@ export default function Addwarn() {
     risePercent: { value: "10", enabled: true, unit: "%", labelKey: "addAlarm.risePercent" },
     fallPercent: { value: "10", enabled: false, unit: "%", labelKey: "addAlarm.fallPercent" },
   });
+
+  // 新增功能状态
+  const [bigOrderDetection, setBigOrderDetection] = useState(true);
+  const [spreadMonitor, setSpreadMonitor] = useState(false);
 
   // 币价数据状态（顶部价格信息）
   const [coinData, setCoinData] = useState({
@@ -46,11 +45,8 @@ export default function Addwarn() {
   // 获取币种价格信息并预填默认值
   const fetchCoinData = async () => {
     try {
-      const res = await request({
-        url: Interface.coin_info,
-        data: {
-          symbol,
-        },
+      const res = await getCoinInfo({
+        symbol,
       });
 
       if (res?.data) {
@@ -133,12 +129,8 @@ export default function Addwarn() {
     }
     
     try {
-      const res = await request({
-        url: Interface.TASK_COMPLETE,
-        method: 'POST',
-        data: {
-          taskCode: 'ALARM'  // 告警任务编码
-        }
+      const res = await completeAlarmTask({
+        taskCode: 'ALARM'  // 告警任务编码
       });
       
       console.log('[AddWarn] 完成告警任务接口返回:', res);
@@ -246,16 +238,11 @@ export default function Addwarn() {
 
       // 调试日志：打印本次请求的完整参数
       console.log('[AddWarn] 即将发起保存告警请求', {
-        url: Interface.ADD_ALARM || '/alarm/add',
         method: 'POST',
         data: requestData,
       });
       
-      const addRes = await request({
-        url: Interface.ADD_ALARM || '/alarm/add',
-        method: "POST",
-        data: requestData,
-      });
+      const addRes = await addAlarm(requestData);
 
       // 调试日志：打印接口返回结果
       console.log('[AddWarn] 保存告警接口返回', addRes);
@@ -309,56 +296,86 @@ export default function Addwarn() {
             <div className={styles.loadingText}>{t('addAlarm.loading')}</div>
           </div>
         ) : (
-          <>
-            {/* 顶部价格信息 */}
-            <div className={styles.priceInfo}>
-              <div className={styles.coinSymbol}>{coinData.symbol}</div>
-              <div className={styles.priceDetails}>
-                <div className={styles.priceLabel}>{t('addAlarm.latestPrice')}</div>
-                <div
-                  className={`${styles.priceValue} ${
-                    coinData.change && String(coinData.change).includes("-")
-                      ? styles.negative
-                      : styles.positive
-                  }`}
-                >
-                  {coinData.price}
+          <div className={styles.contentContainer}>
+            {/* 主卡片：价格 + 表单 */}
+            <div className={styles.mainCard}>
+                {/* 价格头部 */}
+                <div className={styles.priceHeader}>
+                  <div className={styles.coinSymbol}>{coinData.symbol}</div>
+                  <div className={styles.priceDetails}>
+                    <div className={styles.priceLabel}>{t('addAlarm.latestPrice')}</div>
+                    <div className={`${styles.priceValue} ${
+                        coinData.change && String(coinData.change).includes("-")
+                          ? styles.negative
+                          : styles.positive
+                      }`}>
+                      {coinData.price}
+                    </div>
+                    <div className={`${styles.priceChange} ${
+                        coinData.change && String(coinData.change).includes("-")
+                          ? styles.negative
+                          : styles.positive
+                      }`}>
+                      {coinData.change}
+                    </div>
+                  </div>
                 </div>
-                <div
-                  className={`${styles.priceChange} ${
-                    coinData.change && String(coinData.change).includes("-")
-                      ? styles.negative
-                      : styles.positive
-                  }`}
-                >
-                  {coinData.change}
+
+                {/* 配置项列表 */}
+                <div className={styles.configList}>
+                  {Object.entries(configs).map(([key, config]) => (
+                    <div key={key} className={styles.configItem}>
+                      <div className={styles.configLabel}>{t(config.labelKey)}</div>
+                      <div className={styles.configInputContainer}>
+                        <div className={styles.configInputWrapper}>
+                          <Input
+                            className={styles.configInput}
+                            type="number"
+                            value={config.value}
+                            placeholder={config.value || t('addAlarm.placeholder')}
+                            onChange={(val) => handleInputChange(key, val)}
+                          />
+                        </div>
+                        <div className={styles.configUnit}>{config.unit}</div>
+                      </div>
+                      <Switch
+                        className={styles.configSwitch}
+                        checked={config.enabled}
+                        onChange={(checked) => handleSwitchChange(key, checked)}
+                        style={{"--checked-color":"#11B787"}}
+                      />
+                    </div>
+                  ))}
                 </div>
-              </div>
             </div>
 
-            {/* 配置项卡片 */}
-            <div className={styles.configCard}>
-              {Object.entries(configs).map(([key, config]) => (
-                <div key={key} className={styles.configItem}>
-                  <div className={styles.configLabel}>{t(config.labelKey)}</div>
-                  <div className={styles.configInputContainer}>
-                    <Input
-                      className={styles.configInput}
-                      type="number"
-                      value={config.value}
-                      placeholder={config.value || t('addAlarm.placeholder')}
-                      onChange={(val) => handleInputChange(key, val)}
-                    />
-                    <div className={styles.configUnit}>{config.unit}</div>
-                  </div>
-                  <Switch
+            {/* 大单侦测 */}
+            <div className={styles.optionCard}>
+                <span>{t('addAlarm.bigOrderDetect')}</span>
+                <Switch
                     className={styles.configSwitch}
-                    checked={config.enabled}
-                    onChange={(checked) => handleSwitchChange(key, checked)}
+                    checked={bigOrderDetection}
+                    onChange={setBigOrderDetection}
                     style={{"--checked-color":"#11B787"}}
-                  />
-                </div>
-              ))}
+                />
+            </div>
+
+            {/* 交易所差价监控 */}
+            <div className={styles.optionCard}>
+                <span>{t('addAlarm.exchangeSpreadMonitor')}</span>
+                <Switch
+                    className={styles.configSwitch}
+                    checked={spreadMonitor}
+                    onChange={setSpreadMonitor}
+                    style={{"--checked-color":"#11B787"}}
+                />
+            </div>
+
+            {/* 底部说明 */}
+            <div className={styles.notesSection}>
+                <p>{t('addAlarm.noteTitle')}</p>
+                <p>{t('addAlarm.note1')}</p>
+                <p>{t('addAlarm.note2')}</p>
             </div>
 
             {/* 底部按钮 */}
@@ -367,7 +384,6 @@ export default function Addwarn() {
                 className={styles.saveButton}
                 disabled={btnDisabled}
                 onClick={saveWarnings}
-                color="primary"
               >
                 {t('addAlarm.saveAlarm')}
               </Button>
@@ -379,8 +395,7 @@ export default function Addwarn() {
               </Button>
             </div>
 
-            {/* 保存成功后不显示公众号弹窗（TG 项目不需要） */}
-            {/* 登录弹窗：原 Dialog.confirm 改为统一 PopLogin */}
+            {/* 登录弹窗 */}
             <PopLogin
               visible={showLoginPopup}
               onClose={() => setShowLoginPopup(false)}
@@ -389,7 +404,7 @@ export default function Addwarn() {
                 // 登录成功后可继续保存或刷新数据，如需可在此触发
               }}
             />
-          </>
+          </div>
         )}
     </div>
   );

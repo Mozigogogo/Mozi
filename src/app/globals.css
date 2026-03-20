@@ -65,7 +65,7 @@ body {
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family: 'PingFang SC', 'Roboto', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: var(--font-size-base);
@@ -82,6 +82,10 @@ body {
   margin: 0;
 }
 
+input, button, textarea, select {
+  font-family: inherit;
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -92,6 +96,16 @@ a {
   max-width: 100%;
   margin: 0 auto;
   padding: 0 12px;
+}
+
+/* 隐藏滚动条但保留滚动功能 */
+::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+html {
+  -ms-overflow-style: none;  /* IE, Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 
 /* 通用卡片样式 */

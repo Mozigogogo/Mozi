@@ -1,9 +1,123 @@
 /**
  * 市场数据相关 API
- * 统一管理涨跌分布、恐慌贪婪指数等接口
+ * 统一管理热门板块、涨跌分布、恐慌贪婪指数等接口
  */
 
 import { request } from '../utils/request';
+import { Interface } from '../utils/constants';
+import { completeTask } from './user';
+
+// ==================== 热门板块相关 ====================
+
+/**
+ * 获取热门板块数据（分页）
+ * @param {Object} params - 请求参数
+ * @param {number} params.pageSize - 每页数量，默认100
+ * @param {number} params.pageNo - 页码，默认1
+ * @returns {Promise}
+ */
+export const getHotSections = ({ pageSize = 100, pageNo = 1 } = {}) => {
+  return request({
+    url: Interface.hot_sections_paginated,
+    data: {
+      pageSize,
+      pageNo,
+    },
+  });
+};
+
+/**
+ * 获取热门板块数据（简化版，直接返回格式化数据）
+ * @param {Object} params - 请求参数
+ * @param {number} params.pageSize - 每页数量，默认100
+ * @param {number} params.pageNo - 页码，默认1
+ * @returns {Promise<Array>} 返回格式化后的板块数据数组
+ */
+export const fetchHotSectionsData = async ({ pageSize = 100, pageNo = 1 } = {}) => {
+  try {
+    const result = await getHotSections({ pageSize, pageNo });
+    
+    if (result?.success && result?.data) {
+      // 转换API数据格式为组件需要的格式
+      return result.data.map(item => ({
+        sectorName: item.section,
+        changePercent: item.changes
+      }));
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('获取热门板块数据失败:', error);
+    return [];
+  }
+};
+
+/**
+ * 获取板块详情
+ * @param {string} sectionName - 板块名称
+ * @returns {Promise}
+ */
+export const getSectorDetail = (sectionName) => {
+  return request({
+    url: Interface.SECTOR_DETAIL,
+    method: 'GET',
+    params: { sectionName },
+  });
+};
+
+// ==================== 自选币种相关 ====================
+
+/**
+ * 添加自选币种
+ * @param {string} symbol - 币种符号
+ * @returns {Promise}
+ */
+export const addOwnCoin = async (symbol) => {
+  try {
+    const res = await request({
+      url: Interface.ADD_OWN,
+      method: 'POST',
+      data: { symbol },
+    });
+    
+    // 如果添加成功，上报任务
+    if (res?.code === 0 || res?.success) {
+      try {
+        // 获取当前自选列表，检查数量是否达到3个
+        const listRes = await request({
+          url: Interface.COIN_SELF,
+        });
+        
+        const list = Array.isArray(listRes?.data) ? listRes.data : [];
+        // 只有当自选列表数量大于等于3时，才上报任务
+        if (list.length >= 3) {
+          completeTask('ADD_WATCHLIST');
+        }
+      } catch (e) {
+        console.error('上报 ADD_WATCHLIST 任务失败', e);
+      }
+    }
+    
+    return res;
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * 取消自选币种
+ * @param {string} symbol - 币种符号
+ * @returns {Promise}
+ */
+export const cancelOwnCoin = (symbol) => {
+  return request({
+    url: Interface.CANCEL_OWN,
+    method: 'POST',
+    data: { symbol },
+  });
+};
+
+// ==================== 市场数据相关 ====================
 
 /**
  * 获取涨跌分布数据

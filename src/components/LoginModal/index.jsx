@@ -5,7 +5,8 @@ import { Popup, Input, Button, Toast } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
-import { sendVerificationCode, loginByTelegram } from '../../api/user';
+import { sendVerificationCode, loginByTelegram, loginByEmail, registerByEmail, completeTask } from '../../api/user';
+import { runPostLoginSideEffects } from '../../utils/postLogin';
 import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
 import styles from './index.module.less';
 
@@ -233,26 +234,9 @@ const handleTelegramDirectLogin = async (onLoginSuccess, onClose, t) => {
         localStorage.removeItem('inviteCode');
       }
       
-      // 获取用户详细信息
-      request({
-        url: Interface.USER_DATA_INFO,
-        method: 'GET'
-      }).then((dataInfoRes) => {
-        if (dataInfoRes?.data) {
-          localStorage.setItem('userDataInfo', JSON.stringify(dataInfoRes.data));
-        }
-      }).catch((err) => {
-        console.error('❌ 获取用户详细信息失败:', err);
-      });
-      
-      // 完成每日登录任务
-      request({
-        url: Interface.TASK_COMPLETE,
-        method: 'POST',
-        data: { taskCode: 'DAILY_LOGIN' }
-      }).catch((err) => {
-        console.error('❌ 每日登录任务上报失败:', err);
-      });
+      // 登录成功后，统一触发登录后副作用（datainfo + 任务），带去重
+      runPostLoginSideEffects({ caller: 'LoginModal_handleTelegramDirectLogin', forceDataInfo: true })
+        .catch((e) => console.error('post-login side effects failed:', e));
       
       Toast.show({ content: t('auth.loginSuccess') || '登录成功', position: 'center', icon: 'success' });
       
@@ -392,17 +376,8 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
 
     setLoading(true);
     try {
-      const res = await request({
-        url: Interface.MOZI_LOGIN,
-        method: 'POST',
-        data: { 
-          chanel: 2,  // 2-邮箱登录
-          type: 'login',  // login-登录
-          email, 
-          password,
-          channel: isTelegramEnv() ? 'tg' : 'pc'  // 添加渠道参数
-        }
-      });
+      const channel = isTelegramEnv() ? 'tg' : 'pc';
+      const res = await loginByEmail(email, password, '', channel);
 
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
@@ -418,29 +393,9 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
           localStorage.setItem('userId', res.data.userId);
         }
         
-        // 登录成功后，异步调用 datainfo 接口获取用户详细信息（不阻塞登录流程）
-        request({
-          url: Interface.USER_DATA_INFO,
-          method: 'GET'
-        }).then((dataInfoRes) => {
-          if (dataInfoRes?.data) {
-            console.log('✅ [LoginModal] 获取用户详细信息成功:', dataInfoRes.data);
-            localStorage.setItem('userDataInfo', JSON.stringify(dataInfoRes.data));
-          }
-        }).catch((dataInfoError) => {
-          console.error('❌ [LoginModal] 获取用户详细信息失败:', dataInfoError);
-        });
-        
-        // 登录成功后，异步调用每日登录任务完成接口（不阻塞登录流程）
-        request({
-          url: Interface.TASK_COMPLETE,
-          method: 'POST',
-          data: { taskCode: 'DAILY_LOGIN' }
-        }).then(() => {
-          console.log('✅ [LoginModal] 每日登录任务上报成功');
-        }).catch((taskError) => {
-          console.error('❌ [LoginModal] 每日登录任务上报失败:', taskError);
-        });
+        // 登录成功后，统一触发登录后副作用（datainfo + 任务），带去重
+        runPostLoginSideEffects({ caller: 'LoginModal_handleLogin', forceDataInfo: true })
+          .catch((e) => console.error('post-login side effects failed:', e));
         
         Toast.show({ content: t('auth.loginSuccess'), position: 'center', icon: 'success' });
         
@@ -490,19 +445,8 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
 
     setLoading(true);
     try {
-      const res = await request({
-        url: Interface.MOZI_LOGIN,
-        method: 'POST',
-        data: { 
-          chanel: 2,  // 2-邮箱注册
-          type: 'register',  // register-注册
-          email, 
-          password, 
-          verifyCode: verificationCode,  // 验证码（注册时必填）
-          ...(inviteCode && { invitedCode: inviteCode }), // 邀请码（可选）
-          channel: isTelegramEnv() ? 'tg' : 'pc'  // 添加渠道参数
-        }
-      });
+      const channel = isTelegramEnv() ? 'tg' : 'pc';
+      const res = await registerByEmail(email, password, verificationCode, inviteCode, channel);
 
       if (res?.data?.success || res?.code === 0) {
         Toast.show({ content: t('auth.registerSuccess'), position: 'center', icon: 'success' });
@@ -530,17 +474,8 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
   // 注册成功后自动登录
   const autoLoginAfterRegister = async () => {
     try {
-      const res = await request({
-        url: Interface.MOZI_LOGIN,
-        method: 'POST',
-        data: { 
-          chanel: 2,
-          type: 'login',
-          email, 
-          password,
-          channel: isTelegramEnv() ? 'tg' : 'pc'  // 添加渠道参数
-        }
-      });
+      const channel = isTelegramEnv() ? 'tg' : 'pc';
+      const res = await loginByEmail(email, password, '', channel);
 
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
@@ -555,29 +490,9 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
           localStorage.setItem('userId', res.data.userId);
         }
         
-        // 登录成功后，异步调用 datainfo 接口获取用户详细信息（不阻塞登录流程）
-        request({
-          url: Interface.USER_DATA_INFO,
-          method: 'GET'
-        }).then((dataInfoRes) => {
-          if (dataInfoRes?.data) {
-            console.log('✅ [LoginModal] 获取用户详细信息成功:', dataInfoRes.data);
-            localStorage.setItem('userDataInfo', JSON.stringify(dataInfoRes.data));
-          }
-        }).catch((dataInfoError) => {
-          console.error('❌ [LoginModal] 获取用户详细信息失败:', dataInfoError);
-        });
-        
-        // 登录成功后，异步调用每日登录任务完成接口（不阻塞登录流程）
-        request({
-          url: Interface.TASK_COMPLETE,
-          method: 'POST',
-          data: { taskCode: 'DAILY_LOGIN' }
-        }).then(() => {
-          console.log('✅ [LoginModal] 每日登录任务上报成功');
-        }).catch((taskError) => {
-          console.error('❌ [LoginModal] 每日登录任务上报失败:', taskError);
-        });
+        // 登录成功后，统一触发登录后副作用（datainfo + 任务），带去重
+        runPostLoginSideEffects({ caller: 'LoginModal_autoLoginAfterRegister', forceDataInfo: true })
+          .catch((e) => console.error('post-login side effects failed:', e));
         
         Toast.show({ content: t('auth.loginSuccess'), position: 'center', icon: 'success' });
         

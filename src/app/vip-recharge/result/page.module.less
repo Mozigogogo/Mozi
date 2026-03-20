@@ -1,0 +1,105 @@
+.container {
+  min-height: 100vh;
+  background-color: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #fff;
+  text-align: center;
+}
+
+.iconWrapper {
+  margin-bottom: 24px;
+  
+  svg {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+.successIcon {
+  color: #00b578;
+}
+
+.failIcon {
+  color: #ff3141;
+}
+
+.processingIcon {
+  color: #f7b500;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.desc {
+  font-size: 14px;
+  color: #999;
+  line-height: 1.5;
+  margin-bottom: 32px;
+  max-width: 280px;
+}
+
+.infoCard {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 20px;
+  width: 100%;
+  margin-bottom: 40px;
+  text-align: left;
+}
+
+.infoItem {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 14px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  .label {
+    color: #999;
+  }
+
+  .value {
+    color: #fff;
+    font-weight: 500;
+  }
+}
+
+.actionBtn {
+  width: 100%;
+  height: 48px;
+  line-height: 48px;
+  background: linear-gradient(90deg, #f7b500 0%, #ff8f00 100%);
+  border-radius: 24px;
+  color: #000;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: opacity 0.2s;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.secondaryBtn {
+  margin-top: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}

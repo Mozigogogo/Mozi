@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Tabs, Button, Dialog, Toast, SpinLoading } from 'antd-mobile';
+import { Tabs, Button, Toast, SpinLoading } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import NavBar from '@/components/NavBar';
 import { AddOutline } from 'antd-mobile-icons';
@@ -21,8 +21,8 @@ import CoinTabBar from '../../components/CoinTabBar';
 import HotTopicSearchBar from '../../components/HotTopicSearchBar';
 import HotTopicList from '../../components/HotTopicList';
 import FloatingPostButton from '../../components/FloatingPostButton';
-import { request } from '../../utils/request';
-import { Interface } from '../../utils/constants';
+import { request } from '@/utils/request';
+import { Interface } from '@/utils/constants';
 import { useAmplitude } from '../../hooks/useAmplitude';
 import { CommunityEvents } from '../../utils/amplitude';
 import styles from './page.module.less';
@@ -482,6 +482,35 @@ export default function CommunityPage() {
       tab: mainTab,
       subTab
     });
+
+    // 1. 震动反馈 (仅点赞时震动)
+    if (!isLiked) {
+      // 仅 Telegram 环境震动
+      if (typeof window !== 'undefined' && window.Telegram?.WebApp?.HapticFeedback) {
+        try {
+          window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+        } catch (e) {
+          console.warn('TG Haptic feedback failed:', e);
+        }
+      }
+    }
+    
+    // 2. 乐观更新 (Optimistic UI Update)
+    setLikedPosts(prev => ({
+      ...prev,
+      [postId]: !isLiked
+    }));
+    
+    setPosts(prevPosts => prevPosts.map(post => {
+      if (post.id === postId) {
+        return {
+          ...post,
+          likeCount: isLiked ? post.likeCount - 1 : post.likeCount + 1,
+          isLiked: !isLiked
+        };
+      }
+      return post;
+    }));
     
     try {
       await request({
@@ -489,22 +518,6 @@ export default function CommunityPage() {
         method: 'GET'
       });
       
-      setLikedPosts(prev => ({
-        ...prev,
-        [postId]: !isLiked
-      }));
-      
-      setPosts(prevPosts => prevPosts.map(post => {
-        if (post.id === postId) {
-          return {
-            ...post,
-            likeCount: isLiked ? post.likeCount - 1 : post.likeCount + 1,
-            isLiked: !isLiked
-          };
-        }
-        return post;
-      }));
-
       // 点赞成功后，调用每日点赞任务完成接口
       if (!isLiked) {
         try {
@@ -520,6 +533,24 @@ export default function CommunityPage() {
       }
     } catch (error) {
       console.error(`${isLiked ? '取消点赞' : '点赞'}失败:`, error);
+      
+      // 3. 失败回滚 (Revert State)
+      setLikedPosts(prev => ({
+        ...prev,
+        [postId]: isLiked
+      }));
+      
+      setPosts(prevPosts => prevPosts.map(post => {
+        if (post.id === postId) {
+          return {
+            ...post,
+            likeCount: isLiked ? post.likeCount + 1 : post.likeCount - 1,
+            isLiked: isLiked
+          };
+        }
+        return post;
+      }));
+
       Toast.show({
         content: `${isLiked ? '取消点赞' : '点赞'}失败，请稍后再试`,
         position: 'bottom',
@@ -846,17 +877,38 @@ export default function CommunityPage() {
     }
   }, [mainTab]);
 
-  // 处理从URL参数跳转到特定币种
+  // 处理从URL参数跳转到特定币种或标签
   useEffect(() => {
     const tab = searchParams.get('tab');
     const coin = searchParams.get('coin');
     const symbol = searchParams.get('symbol');
     
-    // 优先处理 tab + coin 参数（从详情页跳转）
-    if (tab === 'currency' && coin) {
-      setMainTab('recommend');
-      setSubTab('currency');
-      handleCoinSelect(coin);
+    // 处理 tab 参数
+    if (tab) {
+      // 根据 tab 参数设置主标签和子标签
+      if (tab === 'news') {
+        setMainTab('news');
+      } else if (tab === 'hot') {
+        setMainTab('hot');
+      } else {
+        // 其他情况设置为 recommend 主标签
+        setMainTab('recommend');
+        
+        if (tab === 'question') {
+          setSubTab('question');
+        } else if (tab === 'discovery') {
+          setSubTab('discovery');
+        } else if (tab === 'currency') {
+          setSubTab('currency');
+          // 如果有 coin 参数，选择对应的币种
+          if (coin) {
+            handleCoinSelect(coin);
+          }
+        } else if (tab === 'all') {
+          setSubTab('all');
+        }
+      }
+      
       // 清除URL参数
       window.history.replaceState({}, '', '/community');
     } else if (symbol) {

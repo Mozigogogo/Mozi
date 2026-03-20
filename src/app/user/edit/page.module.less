@@ -1,0 +1,221 @@
+.container {
+  height: 100vh;
+  background-color: #F5F6FA;
+  display: flex;
+  flex-direction: column;
+  font-family: 'PingFang SC', Roboto, sans-serif;
+}
+
+.navBar {
+  background-color: #F5F6FA;
+  --height: 44px;
+  flex-shrink: 0;
+  
+  :global {
+    .adm-nav-bar-title {
+      font-weight: 600;
+      font-size: 17px;
+    }
+  }
+}
+
+.scrollableContent {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 20px;
+}
+
+.headerSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0 8px;
+}
+
+.avatarWrapper {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.uploadIcon {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 25px;
+  height: 25px;
+}
+
+
+.nicknameWrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nickname {
+  font-size: 20px;
+  font-weight: 700;
+  color: #000;
+}
+
+.nicknameInput {
+  &:focus-visible {
+    outline: 1px solid #11B787;
+    border-radius: 8px !important;
+  }
+}
+
+.editNameIcon {
+  width: 13px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.formCard {
+  background: #fff;
+  margin: 0 16px;
+  border-radius: 24px;
+  padding: 8px 16px;
+}
+
+.formItem {
+  display: flex;
+  align-items: flex-start;
+  padding: 10px 0;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.iconWrapper {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  
+  img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+  }
+}
+
+.itemContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-size: 14px;
+  color: rgba(137, 145, 164, 1);
+  margin-bottom: 8px;
+  line-height: 1;
+}
+
+.valueWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.value {
+  font-size: 16px;
+  color: rgba(1, 4, 13, 1);
+  font-weight: 400;
+  flex: 1;
+  line-height: 1.4;
+  
+  &.placeholder {
+    color: rgba(1, 4, 13, 1);
+  }
+}
+
+.input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 16px;
+  color: #333;
+  font-weight: 500;
+  padding: 0;
+  background: transparent;
+  
+  :global {
+    .adm-input-element {
+      &::placeholder {
+        font-size: 14px;
+        color: rgba(153, 153, 153, 1) !important;
+        font-weight: 500 !important;
+        line-height: 1.4;
+      }
+    }
+  }
+}
+
+.textarea {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 16px;
+  color: #333;
+  font-weight: 500;
+  padding: 0;
+  background: transparent;
+  resize: none;
+  min-height: 24px;
+  font-family: inherit;
+
+  :global {
+    .adm-input-element, .adm-text-area-element {
+      &::placeholder {
+        font-size: 14px;
+        color: rgba(153, 153, 153, 1) !important;
+        font-weight: 500 !important;
+        line-height: 1.4;
+      }
+    }
+  }
+}
+
+.arrow {
+  width: 8px;
+  height: 12px;
+  margin-left: 8px;
+  align-self: center;
+}
+
+.saveButtonWrapper {
+  padding: 0px 16px 30px;
+  flex-shrink: 0;
+  background-color: #F5F6FA;
+}
+
+.saveButton {
+  width: 100%;
+  height: 50px;
+  border-radius: 25px;
+  background: #11B787;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  border: none;
+  
+  &:active {
+    opacity: 0.9;
+  }
+}

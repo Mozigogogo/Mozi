@@ -1,0 +1,232 @@
+
+.container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.treemapContainer {
+  flex: 1;
+  width: 100%;
+  height: 600px;
+  background: #f8f9fa;
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.treemapItem {
+  color: #fff;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  text-shadow: 0 2px 0px rgba(0, 0, 0, 0.25); /* Add 3D text shadow effect */
+  
+  &:hover {
+    z-index: 10 !important;
+  }
+}
+
+/* Classes for internal elements */
+.nameText {}
+.hideNameOnHover {}
+
+/* Hide name when hovered if the block is compact to avoid overlap with yellow tag */
+.hideNameOnHover:hover .nameText {
+  display: none;
+}
+
+.empty {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  color: #999;
+  font-size: 14px;
+}
+
+.customTooltip {
+  position: absolute;
+  z-index: 1000;
+  pointer-events: none;
+  background: #FCD535;
+  padding: 0; 
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  min-width: 320px;
+}
+
+.tooltipHeader {
+  background: #FCD535;
+  color: #333;
+  padding: 6px 12px;
+  font-weight: 700;
+  font-size: 18px;
+  text-align: left;
+}
+
+.tooltipContent {
+  padding: 16px 20px;
+  color: #fff;
+  margin: 0 2px 2px 2px; // Create spacing from the yellow background to mimic border
+}
+
+.tooltipMainRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+}
+
+.tooltipLabelRow {
+  display: flex;
+  justify-content: space-between;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+}
+
+.legendContainer {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.hoverOverlay {
+  position: absolute;
+  pointer-events: none;
+  z-index: 20;
+  border: 2px solid #FEDC34;
+  box-sizing: border-box;
+}
+
+.hoverTag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: #FEDC34;
+  color: #000;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 2px 8px;
+  line-height: 1.2;
+  box-sizing: border-box;
+}
+
+.hoverTriangle {
+  position: absolute;
+  top: 100%;
+  left: 12px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid #FEDC34;
+}
+
+.legendDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.skeletonContainer {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(6, 1fr);
+  gap: 4px;
+  padding: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 20;
+  background: #fff;
+  grid-auto-flow: dense;
+}
+
+.skeletonItem {
+  background: #f5f5f5;
+  border-radius: 4px;
+  width: 100%;
+  height: 100%;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+/* Large block top-left (3x3) */
+.skeletonItem:nth-child(1) {
+  grid-column: span 3;
+  grid-row: span 3;
+  background: #e0e0e0;
+}
+
+/* Large block top-center (3x3) */
+.skeletonItem:nth-child(2) {
+  grid-column: span 3;
+  grid-row: span 3;
+}
+
+/* Medium block right (2x2) */
+.skeletonItem:nth-child(3) {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+/* Row 2 right side fillers */
+.skeletonItem:nth-child(4) { grid-column: span 1; grid-row: span 1; }
+.skeletonItem:nth-child(5) { grid-column: span 1; grid-row: span 1; }
+
+/* Middle band large blocks */
+.skeletonItem:nth-child(6) {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+.skeletonItem:nth-child(7) {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+/* Random sizes for the rest */
+.skeletonItem:nth-child(8) { grid-column: span 2; grid-row: span 1; }
+.skeletonItem:nth-child(9) { grid-column: span 1; grid-row: span 2; }
+.skeletonItem:nth-child(10) { grid-column: span 1; grid-row: span 1; }
+.skeletonItem:nth-child(11) { grid-column: span 2; grid-row: span 2; }
+.skeletonItem:nth-child(12) { grid-column: span 1; grid-row: span 1; }
+.skeletonItem:nth-child(13) { grid-column: span 1; grid-row: span 1; }
+.skeletonItem:nth-child(14) { grid-column: span 2; grid-row: span 1; }
+.skeletonItem:nth-child(15) { grid-column: span 1; grid-row: span 2; }
+.skeletonItem:nth-child(16) { grid-column: span 1; grid-row: span 1; }
+.skeletonItem:nth-child(17) { grid-column: span 2; grid-row: span 1; }
+
+/* Remaining items will be 1x1 auto-placed by default */
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}

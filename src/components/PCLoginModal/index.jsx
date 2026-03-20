@@ -7,9 +7,7 @@ import { useAccount, useSignMessage, useDisconnect } from 'wagmi';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
-import { request } from '../../utils/request';
-import { Interface } from '../../utils/constants';
-import { sendVerificationCode } from '../../api/user';
+import { sendVerificationCode, loginByEmail, registerByEmail, loginByWallet, completeTask } from '../../api/user';
 import styles from './index.module.less';
 
 // 检测是否在 Telegram 环境中
@@ -207,17 +205,7 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
 
     setLoading(true);
     try {
-      const res = await request({
-        url: Interface.MOZI_LOGIN,
-        method: 'POST',
-        data: { 
-          chanel: 2,
-          type: 'login',
-          email, 
-          password,
-          channel: 'pc'
-        }
-      });
+      const res = await loginByEmail(email, password, '', 'pc');
 
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
@@ -235,27 +223,14 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
           localStorage.setItem('userId', res.data.userId);
         }
         
-        // 获取用户详细信息
-        request({
-          url: Interface.USER_DATA_INFO,
-          method: 'GET'
-        }).then((dataInfoRes) => {
-          if (dataInfoRes?.data) {
-            localStorage.setItem('userDataInfo', JSON.stringify(dataInfoRes.data));
-            setUserDataInfo(dataInfoRes.data);
-          }
-        }).catch((error) => {
-          console.error('获取用户详细信息失败:', error);
-        });
-        
-        // 完成每日登录任务
-        request({
-          url: Interface.TASK_COMPLETE,
-          method: 'POST',
-          data: { taskCode: 'DAILY_LOGIN' }
-        }).catch((error) => {
-          console.error('每日登录任务上报失败:', error);
-        });
+        console.log('[DEBUG PCLoginModal] handleLogin success, will call /user/datainfo & completeTask, email =', email);
+        // 注意：PC 弹窗本身不再直接请求 datainfo，这里只标记调试和任务上报
+        try {
+          completeTask('DAILY_LOGIN');
+          completeTask('FIRST_LOGIN');
+        } catch (error) {
+          console.error('登录任务上报失败:', error);
+        }
         
         message.success(t('auth.loginSuccess'));
         setIsLoggedIn(true);
@@ -292,19 +267,7 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
 
     setLoading(true);
     try {
-      const res = await request({
-        url: Interface.MOZI_LOGIN,
-        method: 'POST',
-        data: { 
-          chanel: 2,
-          type: 'register',
-          email, 
-          password, 
-          verifyCode: verificationCode,
-          ...(inviteCode && { invitedCode: inviteCode }),
-          channel: 'pc'
-        }
-      });
+      const res = await registerByEmail(email, password, verificationCode, inviteCode, 'pc');
 
       if (res?.data?.success || res?.code === 0) {
         message.success(t('auth.registerSuccess'));
@@ -329,17 +292,7 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
   // 注册成功后自动登录
   const autoLoginAfterRegister = async () => {
     try {
-      const res = await request({
-        url: Interface.MOZI_LOGIN,
-        method: 'POST',
-        data: { 
-          chanel: 2,
-          type: 'login',
-          email, 
-          password,
-          channel: 'pc'
-        }
-      });
+      const res = await loginByEmail(email, password, '', 'pc');
 
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
@@ -369,13 +322,14 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
           console.error('获取用户详细信息失败:', error);
         });
         
-        request({
-          url: Interface.TASK_COMPLETE,
-          method: 'POST',
-          data: { taskCode: 'DAILY_LOGIN' }
-        }).catch((error) => {
-          console.error('每日登录任务上报失败:', error);
-        });
+        // 完成每日登录任务
+        try {
+          completeTask('DAILY_LOGIN');
+          // 首次登录任务上报
+          completeTask('FIRST_LOGIN');
+        } catch (error) {
+          console.error('登录任务上报失败:', error);
+        }
         
         message.success(t('auth.loginSuccess'));
         setIsLoggedIn(true);
@@ -424,17 +378,7 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
       
       const signature = await signMessageAsync({ message: messageToSign });
 
-      const res = await request({
-        url: Interface.MOZI_LOGIN,
-        method: 'POST',
-        data: {
-          type: 'login',
-          chanel: 3,
-          address: currentAddress,
-          signatrue: signature,
-          channel: 'pc'
-        },
-      });
+      const res = await loginByWallet(currentAddress, signature, 'pc');
 
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
@@ -464,13 +408,14 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
           console.error('获取用户详细信息失败:', error);
         });
         
-        request({
-          url: Interface.TASK_COMPLETE,
-          method: 'POST',
-          data: { taskCode: 'DAILY_LOGIN' }
-        }).catch((error) => {
-          console.error('每日登录任务上报失败:', error);
-        });
+        // 完成每日登录任务
+        try {
+          completeTask('DAILY_LOGIN');
+          // 首次登录任务上报
+          completeTask('FIRST_LOGIN');
+        } catch (error) {
+          console.error('登录任务上报失败:', error);
+        }
         
         message.success(t('auth.loginSuccess'));
         setIsLoggedIn(true);

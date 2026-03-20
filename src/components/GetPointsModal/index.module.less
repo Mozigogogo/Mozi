@@ -1,0 +1,129 @@
+.mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: popIn 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+.enContainer {
+  margin-bottom: 160px;
+
+  .pointsText {
+    bottom: 15px;
+  }
+}
+
+.mainImage {
+  width: 280px;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.pointsText {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  bottom: 25px;
+  /* Ensure container has enough width if needed, or rely on content */
+}
+
+.label {
+  color: #FF8000;
+  font-family: "PingFang SC";
+  font-size: 19.464px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  margin-right: 52px; /* Space for the absolute positioned value */
+}
+
+.pointsValue {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  
+  color: #FCD589;
+  font-family: Roboto;
+  font-size: 28px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+  
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes popIn {
+  from { transform: scale(0.5); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@media (min-width: 768px) {
+  .container {
+    transform-origin: center center;
+    max-width: none;
+    width: auto;
+  }
+
+  .enContainer {
+    margin-bottom: 0;
+    
+    .pointsText {
+      bottom: auto;
+    }
+  }
+
+  .mainImage {
+    width: 450px; /* PC端适配大小 */
+    height: auto;
+    margin-bottom: 10px;
+  }
+
+  .pointsText {
+    position: relative;
+    bottom: auto;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+  }
+
+  .label {
+    font-size: 24px;
+    margin-right: 15px;
+    color: #FFFFFF;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  }
+
+  .pointsValue {
+    position: static;
+    transform: none;
+    font-size: 36px;
+    right: auto;
+    top: auto;
+  }
+}

@@ -85,7 +85,7 @@ export default function MarketDistribution({ showUpdateTime = true, isPC = false
         
         // 获取当前时间
         const now = new Date();
-        const updateTime = `${now.getMonth() + 1}.${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} ${t('common.updated')}`;
+        const updateTime = `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}${t('common.updated')}`;
         
         setDistributionData(prev => ({
           updateTime,
@@ -205,23 +205,20 @@ export default function MarketDistribution({ showUpdateTime = true, isPC = false
   if (isPC) {
     return (
       <div className={`${styles.marketDistributionWrapper} ${styles.pcMode}`}>
-        {/* 标题区域 */}
-        <div className={styles.distributionHeader}>
-          <div className={styles.distributionTitle}>{title}</div>
-          {showUpdateTime && (
-            <div className={styles.distributionUpdateTime}>
-              {loading ? t('common.loading') : distributionData.updateTime}
-            </div>
-          )}
-        </div>
-
         {/* PC端左右布局 */}
         <div className={styles.pcContent}>
           {/* 左侧：涨跌分布柱状图 */}
           <div className={styles.pcLeft}>
+            <div className={styles.pcChartHeader}>
+              <div className={styles.pcChartTitle}>{title}</div>
+              <div className={styles.pcChartTime}>
+                {loading ? t('common.loading') : distributionData.updateTime}
+              </div>
+            </div>
             <DistributionChart 
               chartData={distributionData.chartData}
               statistics={distributionData.statistics}
+              isPC={true}
             />
           </div>
 

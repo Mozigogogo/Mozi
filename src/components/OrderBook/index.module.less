@@ -4,7 +4,13 @@
   border-radius:0px 0px 12px 12px;
   padding: 12px;
   position: relative;
-  z-index: 20;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.containerMasked {
+  max-height: 300px;
+  overflow: hidden;
 }
 
 .header {
@@ -346,6 +352,20 @@
   font-weight: 500;
 }
 
+.valueFlash {
+  display: inline-block;
+  animation: valueFlash 0.18s ease-out;
+}
+
+@keyframes valueFlash {
+  from {
+    opacity: 0.25;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .bidValue {
   color: #094533;
   background: rgba(249, 251, 250, 0.74);
@@ -443,15 +463,244 @@
   color: #999;
 }
 
-.alarmButton {
+/* 遮罩层样式 */
+.maskOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.95);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease-out;
+  border-radius: 26px;
+  backdrop-filter: blur(2px);
+  pointer-events: auto;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.maskCard {
   width: 100%;
-  margin-top: 10px;
-  border: none;
-  border-radius: 100px;
-  background: rgba(17, 183, 135, 1);
-  opacity: 1;
-  color: #fff;
-  padding: 10px 12px;
-  font-size: 14px;
+  height: 100%;
+  background-image: url('/images/new_detail/vip_mask.svg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 26px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  z-index: 10000;
+}
+
+.maskHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 10px 20px 8px 20px;
+  flex-shrink: 0;
+}
+
+.maskTitleSection {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.maskHeaderTitle {
+  font-size: 16px;
   font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.maskHeaderBadge {
+  position: absolute;
+  top: -2px;
+  right: 0px;
+  width: 91px;
+  height: 37px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.maskLegend {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.maskLegendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.maskDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.maskBidDot {
+  background: #11B787;
+}
+
+.maskAskDot {
+  background: #F04A4A;
+}
+
+.maskLegendText {
+  font-size: 10px;
+  color: #333;
+}
+
+.maskContent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  flex: 1;
+  padding:30px;
+  background: rgba(255, 255, 255, 0.48);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  min-height: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.maskTitle {
+  font-family: PingFang SC;
+  font-weight: 400;
+  font-style: Medium;
+  font-size: 16px;
+  line-height: 100%;
+  letter-spacing: 0px;
+  color: rgba(49, 31, 0, 1);
+  margin-bottom: 5px;
+}
+
+.maskSubtitleWrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.maskBullet {
+  font-size: 16px;
+  color: #333;
+}
+
+.maskSubtitle {
+  font-family: PingFang SC;
+  font-weight: 300;
+  font-style: Light;
+  font-size: 12px;
+  line-height: 100%;
+  letter-spacing: 0px;
+  color: rgba(49, 31, 0, 1);
+
+}
+
+.maskVipIcon {
+  position: absolute;
+  right: 5px;
+  top: 0;
+  width: auto;
+  height: 106px;
+}
+
+.maskDescription {
+  font-family: PingFang SC;
+  font-weight: 300;
+  font-style: Light;
+  font-size: 9px;
+  line-height: 100%;
+  letter-spacing: 0px;
+  color:rgba(102, 102, 102, 1);
+}
+
+.maskButton {
+  width: min(240px, 100%);
+  height: auto;
+  min-height: 27px;
+  border-radius: 75px;
+  background: rgba(102, 64, 19, 1);
+  border: none;
+  border-radius: 24px;
+  color: #FFF;
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(139, 111, 71, 0.3);
+  margin: 40px auto 0;
+  display: block;
+  padding: 6px 16px;
+}
+
+.maskButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(139, 111, 71, 0.4);
+}
+
+.maskButton:active {
+  transform: translateY(0);
+}
+
+.membershipButton {
+  width: min(240px, 100%);
+  height: auto;
+  min-height: 27px;
+  border-radius: 75px;
+  background: #E5C384; /* A lighter gold/beige color to distinguish */
+  border: none;
+  border-radius: 24px;
+  color: #58390A; /* Darker text for contrast */
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(229, 195, 132, 0.3);
+  margin: 12px auto 0;
+  display: block;
+  padding: 6px 16px;
+}
+
+.membershipButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(229, 195, 132, 0.4);
+  background: #ebd2a3;
+}
+
+.membershipButton:active {
+  transform: translateY(0);
+}
+
+.chartOverlay {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  padding: 20px;
+  pointer-events: none;
+  max-height: 180px;
+  overflow: hidden;
+  z-index: 1;
 }

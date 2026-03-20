@@ -52,6 +52,10 @@ export const Interface = {
   hot_coin: '/showhot/coinprice',
   // 热门版块
   hot_industry: '/showhot/sections',
+  // 热门版块（分页）
+  hot_sections_paginated: '/showhot/sections',
+  // 板块详情
+  SECTOR_DETAIL: '/showhot/sectiondetail',
   // 热门合约
   hot_contract: '/showhot/contractprice',
   
@@ -94,6 +98,11 @@ export const Interface = {
   // 搜索页
   // 币种是否有效
   IS_COIN: '/search/iscoin',
+
+  // 支付相关
+  PAYMENT_CREATE_STARS: '/payment/createStarsInvoice',
+  PAYMENT_ORDER_STATUS: '/payment/orderStatus',
+  PAYMENT_VERIFY_CRYPTO: '/payment/verify-crypto',
   // 币种信息
   COIN_INFO: '/search/lastpricechange',
   // 相关版块
@@ -136,8 +145,12 @@ export const Interface = {
   EMAIL_LOGIN: '/user/email/login',
   // 邮箱注册
   EMAIL_REGISTER: '/user/email/register',
+  // 重置密码
+  RESET_PASSWORD: '/user/resetPassword',
   // 发送邮箱验证码
   SEND_EMAIL_CODE: '/user/email/code',
+  // 发送验证码(通用)
+  SEND_VERIFICATION_CODE: '/email/sendVerificationCode',
   // 用户信息
   USER_INFO: '/user/info',
   // 用户详细数据（含邀请码）
@@ -168,6 +181,10 @@ export const Interface = {
   LIKE_COIN_VOTE: '/likeCoin/downOrUp',
   // 查询看涨看跌数量
   LIKE_COIN_COUNT: '/likeCoin/downOrUpCount',
+  // 生成账号绑定验证码
+  GENERATE_BIND_CODE: '/api/user/bind/generateBindCode',
+  // 确认账号绑定
+  CONFIRM_BIND: '/api/user/bind/confirmBind',
 
   // 告警
   // 添加告警
@@ -268,6 +285,17 @@ export const Interface = {
   // 删除告警
   DELETE_ALARM: '/alarm/delete',
 
+  // 绑定邮箱和手机号（一键告警设置）
+  SAVE_ALARM_SETTINGS: '/alarm/settings/save',
+
+  // 告警配置
+  // 查询告警配置
+  GET_ALERT_CONFIG: '/user/alert/config',
+  // 新增告警配置
+  ADD_ALERT_CONFIG: '/user/alert/config/add',
+  // 修改告警配置
+  UPDATE_ALERT_CONFIG: '/user/alert/config/update',
+
   // 积分
   // 获取用户积分
   TASK_POINTS: '/task/points',
@@ -275,20 +303,39 @@ export const Interface = {
   TASK_POINTS_HISTORY: '/task/v1/pointsHistory',
   // 获取任务列表
   TASK_LIST: '/task/list',
+
+  // 订阅/VIP
+  // 查询三档权益列表
+  SUBSCRIPTION_BENEFITS: '/subscription/benefits',
+  // 查询所有定价档位
+  SUBSCRIPTION_PRICING: '/subscription/pricing',
+  // 查询我的订阅状态
+  SUBSCRIPTION_MY: '/subscription/my',
+
   // 获取积分榜单
   TASK_RANKING: '/task/ranking',
   // 获取邀请列表
   TASK_INVITATION_LIST: '/task/invitation/list',
   // 完成任务
   TASK_COMPLETE: '/task/complete',
+  // 获取积分公共池状态
+  POOL_STATUS: '/task/pool/status',
 
   // AI 对话
+  // AI 技术分析
+  AI_ANALYZE: '/v1/analyze',
   // AI 流式对话
   AI_CHAT_STREAM: '/ai/chat/stream',
   // AI 聊天历史记录
   AI_CHAT_HISTORY: '/ai/chat/history',
   // AI 会话列表
   AI_CHAT_CONVERSATIONS: '/ai/chat/conversations',
+
+  // 积分消费
+  // 查询消费配置
+  POINTS_CONSUME_CONFIG: '/points/consume/config',
+  // 执行积分消费
+  POINTS_CONSUME: '/points/consume',
 };
 
 // 业务中使用到的联系邮箱和链上地址（打包报错缺失导出）

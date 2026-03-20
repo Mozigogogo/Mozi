@@ -1,0 +1,182 @@
+.container {
+  width: 100%;
+  padding: 20px;
+  background: #ffffff;
+  min-height: 50vh;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.closeBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #f5f5f5;
+  font-size: 24px;
+  line-height: 1;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  &:active {
+    background: #e0e0e0;
+  }
+}
+
+.tabs {
+  :global(.adm-tabs-header) {
+    border-bottom: 1px solid #f0f0f0;
+  }
+  
+  :global(.adm-tabs-tab) {
+    font-size: 15px;
+    padding: 12px 0;
+  }
+  
+  :global(.adm-tabs-tab-active) {
+    color: #06C270;
+  }
+  
+  :global(.adm-tabs-tab-line) {
+    background: #06C270;
+  }
+}
+
+.tabContent {
+  padding: 20px 0;
+  min-height: 300px;
+}
+
+.description {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.button {
+  margin-top: 20px;
+  height: 44px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  
+  &:global(.adm-button-primary) {
+    background: linear-gradient(135deg, #06C270 0%, #04A85E 100%);
+    border: none;
+  }
+  
+  &:global(.adm-button-disabled) {
+    background: #f5f5f5;
+    color: #999;
+  }
+}
+
+.codeDisplay {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.infoRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+  
+  &:last-of-type {
+    margin-bottom: 0;
+  }
+}
+
+.label {
+  font-size: 13px;
+  color: #666;
+  font-weight: 500;
+}
+
+.valueBox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+}
+
+.value {
+  font-size: 14px;
+  color: #333;
+  word-break: break-all;
+  flex: 1;
+}
+
+.codeValue {
+  font-size: 24px;
+  font-weight: 600;
+  color: #06C270;
+  letter-spacing: 4px;
+  flex: 1;
+}
+
+.copyBtn {
+  font-size: 13px;
+  color: #06C270;
+  padding: 4px 12px;
+  
+  &:global(.adm-button) {
+    height: auto;
+    min-height: auto;
+  }
+}
+
+.countdown {
+  text-align: center;
+  font-size: 14px;
+  color: #ff6b6b;
+  margin-top: 12px;
+  font-weight: 500;
+}
+
+.formGroup {
+  margin-bottom: 20px;
+}
+
+.formLabel {
+  display: block;
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.input {
+  :global(.adm-input) {
+    font-size: 15px;
+    padding: 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fff;
+    
+    &:focus {
+      border-color: #06C270;
+    }
+  }
+}

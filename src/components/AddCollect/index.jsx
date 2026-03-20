@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Toast } from 'antd-mobile';
 import { request } from '../../utils/request';
+import { completeTask } from '@/api/user';
 import { Interface } from '../../utils/constants';
 import styles from './index.module.less';
 
@@ -54,6 +55,20 @@ const AddCollect = ({ isOwn: propIsOwn, symbol, loginCb, onSuccess }) => {
           content: curOwn ? '移除自选成功' : '加入自选成功',
           icon: 'success'
         });
+
+        // 上报 ADD_WATCHLIST 任务：仅在添加自选后且自选数量 >= 3 时上报
+        if (!curOwn) {
+          try {
+            const ownListRes = await request({ url: Interface.COIN_SELF, method: 'GET' });
+            const ownCount = ownListRes?.data?.length ?? ownListRes?.data?.list?.length ?? 0;
+            if (ownCount >= 3) {
+              await completeTask('ADD_WATCHLIST');
+            }
+          } catch (e) {
+            console.error('上报 ADD_WATCHLIST 任务失败', e);
+          }
+        }
+
         setOwn(nextOwn);
         
         // 调用成功回调

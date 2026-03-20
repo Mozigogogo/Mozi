@@ -1,0 +1,150 @@
+.container {
+  min-height: 100vh;
+  background: url('/icons/new_home/home_bg.svg') no-repeat top center;
+  background-size: cover;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 粘性头部容器（包含 header 和 filterBar） */
+.stickyHeader {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  
+  /* 半透明背景 + 毛玻璃效果 */
+  background: rgba(200, 244, 232, 0.8);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  height: 56px;
+
+  .backButton,
+  .shareButton {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #1a1a1a;
+    
+    &:active {
+      opacity: 0.6;
+    }
+  }
+
+  .title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+}
+
+.filterBar {
+  padding: 0 16px 0px;
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
+}
+
+.content {
+  flex: 1;
+  padding: 0 12px 80px;
+  overflow: auto;
+}
+
+/* 骨架屏网格布局 */
+.skeletonGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: 80px;
+  gap: 8px;
+  padding: 12px 0;
+}
+
+.skeletonItem {
+  background: linear-gradient(
+    90deg,
+    rgba(200, 244, 232, 0.3) 0%,
+    rgba(255, 255, 255, 0.8) 50%,
+    rgba(200, 244, 232, 0.3) 100%
+  );
+  background-size: 200% 100%;
+  border-radius: 12px;
+  animation: shimmer 1.5s ease-in-out infinite;
+  
+  /* 添加阴影增强立体感 */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  font-size: 14px;
+  color: #999;
+}
+
+.legend {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.95) 20%, rgba(255, 255, 255, 1) 100%);
+  backdrop-filter: blur(10px);
+}
+
+.legendBar {
+  margin-bottom: 8px;
+}
+
+.legendColorBar {
+  display: flex;
+  gap: 2px;
+  height: 5px;
+  border-radius: 2.5px;
+  overflow: hidden;
+}
+
+.colorSegment {
+  flex: 1;
+  border-radius: 2.5px;
+}
+
+.legendLabels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  span {
+    font-size: 10px;
+    color: #5E5E5E;
+    white-space: nowrap;
+  }
+}
+
+/* 响应式适配 */
+@media (min-width: 768px) {
+  .container {
+    max-width: 768px;
+    margin: 0 auto;
+  }
+}

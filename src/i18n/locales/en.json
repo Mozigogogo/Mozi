@@ -1,6 +1,173 @@
 {
+  "daily": {
+    "title": "MOZI Daily",
+    "weekDay": "Thursday",
+    "table": {
+      "time": "Time",
+      "country": "Country",
+      "event": "Event",
+      "values": "Actual/Forecast/Prev"
+    },
+    "note": "Today's macro volatility depends entirely on the US CPI data released at 13:30 EST (early morning Beijing time). Before the data release, the market is in a 'data vacuum' period, and volatility may narrow. Investors are advised to focus on stock logic, that is, whether the current market pricing for 'inflation stickiness' and 'economic resilience' is sufficient, and prepare for directional breakthroughs that the data may trigger."
+  },
+  "vipRecharge": {
+    "title": "VIP Recharge",
+    "lockBadge": "Locked",
+    "recommend": "Best",
+    "confirmPurchase": "Purchase Now",
+    "errors": {
+      "loadSubscriptionData": "Failed to load subscription data."
+    },
+    "planCard": {
+      "period": {
+        "month": "/mo",
+        "year": "/yr"
+      },
+      "tierSelect": {
+        "label": "Select tier"
+      },
+      "cta": {
+        "try": "Start Trial",
+        "buyNow": "Purchase Now",
+        "current": "Current Plan",
+        "subscribe": "Subscribe"
+      },
+      "save": "Save ${{amount}}",
+      "aiCallLabel": "AI CALL {{period}}",
+      "highlight": {
+        "upgradeHint": "Upgrade to Lite/Pro to unlock",
+        "cycle30d": "Every 30-Day Cycle"
+      }
+    },
+    "features": {
+      "basicMarket": "Basic Market",
+      "basicPush": "App Basic Push",
+      "emailAlert": "Email Alerts",
+      "bigOrder": "Large Orders",
+      "aiCall": "AI Call",
+      "monthlyPoints": "Monthly Points",
+      "exclusiveBadge": "Exclusive Badge",
+      "exclusiveBlackGoldBadge": "Exclusive Black-Gold Badge",
+      "adFree": "Ad-free",
+      "multiTheme": "Multi-theme",
+      "customerService": "Customer Support",
+      "standardCustomerService": "Standard Support",
+      "exclusiveCustomerService": "Dedicated Support",
+      "alphaGroup": "Alpha Group",
+      "bigOrderMeta": "{{count}} rows ({{delay}}s delay)",
+      "aiCallMeta": "{{count}} {{period}}",
+      "pointsMeta": "{{points}} {{period}}",
+      "pointsWithUnit": "{{points}} pts {{period}}",
+      "aiCallPlain": "AI Call {{count}}"
+    },
+    "switchConfirm": {
+      "title": "Confirm plan switch",
+      "headline": "You already have an active subscription.",
+      "currentPlan": "Current plan:",
+      "nextPlan": "Switch to:",
+      "hint": "Proceed with the purchase to switch plans.",
+      "confirm": "Confirm switch"
+    },
+    "plans": {
+      "yearly": {
+        "title": "Yearly",
+        "price": "$ 269.99",
+        "unit": "$ 22.49/mo"
+      },
+      "quarterly": {
+        "title": "Quarterly",
+        "price": "$ 69.99",
+        "unit": "$ 23.33/mo"
+      },
+      "monthly": {
+        "title": "Monthly",
+        "price": "$ 24.99",
+        "unit": "$ 24.99/mo"
+      }
+    },
+    "basic": {
+      "title": "Basic",
+      "subtitle": "BASIC",
+      "features": {
+        "market": "Basic Data",
+        "push": "Basic Push",
+        "ai": "1 AI Trial/Day",
+        "ad": "Contains Ads",
+        "skin": "Default Theme"
+      }
+    },
+    "vip": {
+      "title": "VIP",
+      "subtitle": "VIP/PRO",
+      "features": {
+        "market": "Live Large Orders",
+        "push": "Phone & Email",
+        "ai": "Unlimited AI",
+        "tags": "OG Tag",
+        "ad": "No Ads",
+        "group": "Alpha Group",
+        "skin": "Multi-theme"
+      }
+    }
+  },
+  "editProfile": {
+    "title": "Edit Profile",
+    "identity": {
+      "label": "Identity Tag",
+      "placeholder": "Please select your identity tag",
+      "options": {
+        "compliance": "Compliance Practitioner",
+        "trader": "Professional Trader",
+        "quant": "Quant Researcher",
+        "creator": "Content Creator",
+        "community_builder": "Community Operator",
+        "institution": "Institutional Practitioner",
+        "project_member": "Project Member",
+        "researcher": "Research Analyst",
+        "educator": "Educational Blogger",
+        "retail": "Retail Investor"
+      }
+    },
+    "bio": {
+      "label": "Bio",
+      "placeholder": "Enter your bio, max 20 characters"
+    },
+    "email": {
+      "label": "Alert Email",
+      "placeholder": "Enter email for alerts"
+    },
+    "phone": {
+      "label": "Alert Phone",
+      "placeholder": "Enter phone number for alerts"
+    },
+    "commission": {
+      "label": "Get Commission",
+      "placeholder": "Enter TronUSDT address for commission"
+    },
+    "imageSizeLimit": "Image size cannot exceed 5MB",
+    "saveSuccess": "Saved successfully",
+    "saveFailed": "Save failed",
+    "saveFailedRetry": "Save failed, please try again"
+  },
   "common": {
     "home": "Home",
+    "pcLayout": {
+      "notice": "Say goodbye to manual monitoring! Let AI analyze trends first, then set precise alerts!",
+      "menu": {
+        "home": "Home",
+        "market": "Market",
+        "discover": "Discover",
+        "indicator": "Indicator",
+        "more": "More",
+        "mine": "Mine",
+        "myAchievement": "My Achievement",
+        "myQA": "My Q&A",
+        "createdLists": "Created Lists",
+        "collectedLists": "Collected Lists",
+        "login": "Login / Register",
+        "logout": "Logout"
+      }
+    },
     "find": "Discover",
     "community": "Community",
     "profile": "Profile",
@@ -19,12 +186,18 @@
     "delete": "Delete",
     "share": "Share",
     "more": "More",
+    "viewMore": "View More",
     "updated": "Updated",
     "copy": "Copy",
+    "copySuccess": "Copied successfully",
+    "copyFailed": "Copy failed",
     "linkCopied": "Link copied",
     "loadFailed": "Failed to load, please try again",
     "noData": "No data",
-    "noTasks": "No tasks available"
+    "noTasks": "No tasks available",
+    "addSuccess": "Added successfully",
+    "cancelSuccess": "Cancelled successfully",
+    "operationFailed": "Operation failed"
   },
   "exchangeRank": {
     "realTimeUpdate": "Real-time update"
@@ -45,7 +218,7 @@
     "derivatives": "Derivatives",
     "rankList": "Rank List",
     "opportunities": "Opportunities",
-    "investmentOpportunity": "Investment Opportunity",
+    "hotMarkets": "Hot Markets",
     "topicHot": "Hot Topics",
     "notice": "Welcome to Mozi Crypto Market Community",
     "aiNotice": "AI analyzes trends—set precise alerts.",
@@ -77,7 +250,17 @@
       "addMonitor": "Monitor"
     },
     "noFavorites": "No Favorites",
-    "robotBubble": "Welcome to Mozi, what can I help you?"
+    "robotBubble": "Welcome to Mozi, what can I help you?",
+    "quickActions": {
+      "ai": "AI Q&A",
+      "priceMonitor": "Price Alert",
+      "noticeMonitor": "News Alert",
+      "sectorSelect": "Sectors",
+      "news": "News",
+      "discoverCoins": "Discover",
+      "askQuestion": "Q&A",
+      "rankingSelect": "Financial Calendar"
+    }
   },
   "market": {
     "price": "Price",
@@ -149,6 +332,18 @@
       "dark": {
         "name": "Dark Mode",
         "description": "Eye-friendly, night mode"
+      },
+      "pink": {
+        "name": "Girlish Pink",
+        "description": "Gentle, romantic, sweet palette"
+      },
+      "yellow": {
+        "name": "Glorious Gold",
+        "description": "Bright, dazzling, noble palette"
+      },
+      "black": {
+        "name": "Midnight Black",
+        "description": "Deep, mysterious, ultimate palette"
       }
     }
   },
@@ -211,6 +406,22 @@
   },
   "user": {
     "login": "Login",
+    "tabs": {
+      "watchlist": "Watchlist",
+      "watchlistDesc": "His watchlist",
+      "monitor": "Monitor",
+      "monitorDesc": "His monitored items",
+      "content": "Content",
+      "contentDesc": "His published content"
+    },
+    "list": {
+      "coin": "Coin",
+      "price": "Price",
+      "change24h": "24h Change",
+      "actionHeader": "Fav/Monitor",
+      "actionHeaderWatchlist": "Fav",
+      "actionHeaderMonitor": "Monitor"
+    },
     "logout": "Logout",
     "loginRegister": "Login/Register",
     "pleaseLogin": "Please Login",
@@ -242,6 +453,8 @@
     "contactSupport": "Contact Support",
     "welcomeContact": "Welcome to contact us",
     "socialMedia": "Find us on social media",
+    "socialMediaAlt": "Social Media",
+    "officialAccountQRCodeAlt": "Official Account QR Code",
     "findUsOnSocial": "Find us on social media",
     "about": "About",
     "donate": "Donate",
@@ -251,18 +464,47 @@
     "feedback": "Feedback",
     "feedbackDesc": "Tell us what you want",
     "productFeedback": "Product Feedback",
+    "feedbackFailed": "Feedback failed",
     "recommendFriend": "Recommend",
     "recommendDesc": "Share your favorites",
     "shareYourLove": "Share your love",
     "shareText": "Mozi - Professional Crypto Data Analysis Platform",
     "myPoints": "My Points",
+    "defaultNickname": "User",
+    "defaultBio": "Master of financial flow, Finance NO.1",
+    "loginTip": "Login to view more content",
+    "personalPage": "Personal",
+    "tags": {
+      "compliance": "Compliance",
+      "creator": "Creator",
+      "trader": "Trader",
+      "community": "Community"
+    },
+    "stats": {
+      "following": "Following",
+      "followers": "Followers",
+      "likes": "Likes",
+      "points": "Points"
+    },
+    "toast": {
+      "avatarTooLarge": "Avatar file too large, please select image under 2MB",
+      "nicknameRequired": "Please enter nickname",
+      "nicknameTooLong": "Nickname cannot exceed 50 characters",
+      "saving": "Saving..."
+    },
     "yesterdayPoints": "Yesterday: +{{points}}",
+    "yesterdayPointsText": "Yesterday ",
     "todayPoints": "Yesterday Points",
     "currentRank": "Current Rank: #{{rank}}",
+    "currentRankLabel": "Current Rank: ",
     "rankTop": "Overall Rank #",
+    "rankPrefix": "Overall Rank # ",
     "rankSuffix": "",
     "pointsRanking": "Rankings",
+    "earnPoints": "Earn Points",
     "pointsDetail": "Points Rank",
+    "officialAccountQRCode": "Official Account QR Code",
+    "feedbackShort": "Feedback",
     "newCoinListing": "New Listings",
     "viewMore": "View More",
     "noNewListings": "No New Listings",
@@ -302,7 +544,6 @@
     "connectWalletFirst": "Please connect wallet first",
     "walletNotReady": "Wallet component is not ready",
     "feedbackSuccess": "Feedback submitted",
-    "feedbackFailed": "Feedback failed",
     "copySuccess": "Copied",
     "copyFailed": "Copy failed",
     "linkCopied": "Link copied to clipboard",
@@ -321,8 +562,10 @@
     "loggingIn": "Logging in...",
     "walletAddressError": "Failed to get wallet address",
     "walletConnectFailed": "Wallet connection failed",
-    "defaultNickname": "User",
+    "vipBannerText": "Try now - 14 days free",
+    "subscribeNow": "Subscribe",
     "wechatUser": "Telegram User",
+    "accountBindLabel": "Account Binding",
     "aboutMozi": {
       "intro": "Mozi is a professional crypto data analysis platform dedicated to providing global users with accurate, real-time cryptocurrency market data and analysis services. We simplify trading, lower barriers, help users make informed investment decisions, reduce risks, and achieve higher returns.",
       "description": "As a professional crypto data analysis platform, Mozi solves users' pain points of where to buy, what to buy, and how to buy by integrating multiple data sources, providing comprehensive search and rich rankings for users to explore, including but not limited to exchange rankings, popular coin rankings, and price change rankings, currently covering data from mainstream exchanges. To ensure data accuracy and timeliness, the Mozi team consists of experienced professionals covering trading, data development, data analysis, AI, and platform architecture. Their expertise provides strong support for platform data accuracy and reliability. As a startup, Mozi upholds the philosophy of Mozi's universal love and non-aggression, committed to spreading this philosophy globally. We also sincerely invite interested technical, operational, product teams and investment institutions to contact us.",
@@ -332,6 +575,77 @@
       "visionText": "Make Trading Simpler, Smarter, and Safer",
       "values": "Values:",
       "valuesText": "Universal Love · Pragmatic · Focus · Innovation · Freedom"
+    }
+  },
+  "accountBind": {
+    "title": "Account Binding",
+    "generateTab": "Generate Code",
+    "bindTab": "Bind Account",
+    "generateDesc": "Generate a verification code for other accounts to bind to your account",
+    "bindDesc": "Enter the target user's ID and verification code to bind",
+    "generateButton": "Generate Code",
+    "userId": "User ID",
+    "code": "Verification Code",
+    "expiresIn": "Expires In",
+    "regenerate": "Regenerate",
+    "targetUserId": "Target User ID",
+    "verificationCode": "Verification Code",
+    "enterUserId": "Please enter user ID",
+    "enterCode": "Please enter verification code",
+    "confirmBind": "Confirm Binding",
+    "generateSuccess": "Verification code generated successfully",
+    "generateFailed": "Generation failed",
+    "generateError": "Failed to generate verification code, please try again",
+    "bindSuccess": "Binding successful",
+    "bindFailed": "Binding failed",
+    "bindError": "Binding failed, please try again",
+    "linkCodeModal": {
+      "title": "Share Your Benefits",
+      "copyCode": "Copy Code",
+      "validFor": "Valid for: ",
+      "tipText": "Enter this linking code in our <strong>Telegram Bot</strong> to link your account",
+      "noteText": "*Note: To ensure security, each account can only be linked to one <keyword>Email</keyword>, one <keyword>Telegram ID</keyword>, and one <keyword>Wallet Address</keyword>.",
+      "codeGenerateSuccess": "Benefit code generated successfully",
+      "codeGenerateFailed": "Failed to generate benefit code",
+      "codeGenerateError": "Failed to generate benefit code, please try again",
+      "codeExpired": "Code expired, regenerating...",
+      "copySuccess": "Copied successfully",
+      "copyFailed": "Copy failed"
+    }
+  },
+  "telegramBind": {
+    "title": "IMPORTANT NOTICE",
+    "mainText": "You may have used Mozi on Telegram/ PC before. Linking your account will sync your <strong>subscription and historical data</strong>.",
+    "warningText": "After linking: <strong>Your current settings will be overwritten and invalidated</strong>.Please confirm before proceeding.",
+    "cancelButton": "Not Now",
+    "confirmButton": "Link Account",
+    "step2Title": "Link Account & Get Benefits",
+    "step2InputPlaceholder": "Enter 6-digit code",
+    "step2Description": "Please go to our <strong>PC Website</strong> and click the <strong>button</strong> <icon/>, to copy your <strong>6-digit linking code</strong>",
+    "step2CancelButton": "Not Now",
+    "step2ConfirmButton": "Link Now",
+    "enterCode": "Please enter benefit code",
+    "codeLength": "Benefit code must be 6 digits",
+    "bindSuccess": "Binding successful",
+    "bindFailed": "Binding failed, please check if the code is correct",
+    "bindError": "Binding failed, please try again"
+  },
+  "pointsPool": {
+    "title": "Monthly Points Pool Status",
+    "total": "Monthly Total {{amount}} Points",
+    "remaining": "Remaining",
+    "issued": "Issued",
+    "claimable": "Claimable",
+    "resetDays": "Days to Reset",
+    "days": "Days",
+    "status": {
+      "normal": "Sufficient",
+      "scarce": "Scarce",
+      "boost": "Boost"
+    },
+    "tip": {
+      "title": "Points Tips",
+      "content": "Participate early, get more! VIP users get higher efficiency and are unaffected by pool scarcity."
     }
   },
   "auth": {
@@ -371,6 +685,7 @@
     "followTwitter": "Follow Us on Twitter",
     "otherMethods": "or use other methods",
     "walletLoginBtn": "Wallet Login",
+    "googleLoginBtn": "Sign in with Google",
     "emailLoginBtn": "Email Login",
     "back": "Back",
     "recaptchaNotice": "This site is protected by Google reCAPTCHA to ensure you are not a robot.",
@@ -379,7 +694,26 @@
     "walletConnecting": "Wallet connection initializing, please try again later",
     "walletConnectFailed": "Wallet connection failed",
     "signatureCancelled": "Signature cancelled",
-    "connectWalletFirst": "Please connect wallet first"
+    "connectWalletFirst": "Please connect wallet first",
+    "registerMozi": "Sign up for Mozi",
+    "continueWithGoogle": "Continue with Google",
+    "continueWithWallet": "Continue with Wallet",
+    "continueWithEmail": "Continue with Email",
+    "goToLogin": "Log in",
+    "rememberPassword": "Remember password",
+    "forgetPassword": "Forgot password?",
+    "goToRegister": "Sign up",
+    "loginMozi": "Log in to Mozi",
+    "emailInputPlaceholder": "Enter email",
+    "passwordInputPlaceholder": "Enter password (min 6 chars)",
+    "codePlaceholder": "Verification Code",
+    "inviteCodePlaceholder": "Invite Code (Optional)",
+    "resetPassword": "Reset Password",
+    "newPasswordPlaceholder": "Enter new password (min 6 chars)",
+    "confirmReset": "Confirm Reset",
+    "rememberedPassword": "Remembered?",
+    "resetSuccess": "Password reset successful",
+    "resetFailed": "Reset failed"
   },
   "community": {
     "title": "Community",
@@ -390,6 +724,8 @@
     "topic": "Topic",
     "hotTopics": "Hot Topics",
     "trending": "Trending",
+    "views": "views",
+    "posts": "posts",
     "tabs": {
       "recommend": "Recommended",
       "hot": "Hot Topics",
@@ -530,6 +866,10 @@
     "wsNotConnected": "WebSocket not connected, please refresh",
     "genericError": "Sorry, something went wrong. Please try later",
     "welcome": "Hello, I'm your AI assistant! I can help analyze crypto markets and answer investment questions. What can I help you?",
+    "model": {
+      "analyze": "Analysis Model",
+      "chat": "Chat Model"
+    },
     "suggest": {
       "analyzeTrend": "Help me analyze {{symbol}}'s trend",
       "isGoodToBuy": "Is now a good time to buy {{symbol}}?",
@@ -537,6 +877,10 @@
       "topGainer": "What's the top gainer today?",
       "fearGreedIndex": "What's the Fear & Greed Index?"
     }
+  },
+  "aiAssistant": {
+    "title": "AI Assistant Professional Edition",
+    "subtitle": "Smart Q&A · Quick Response"
   },
   "language": {
     "zh": "简体中文",
@@ -587,115 +931,164 @@
     "myRank": "My Rank"
   },
   "pointsDetail": {
+    "centerTitle": "Points Center",
     "myPoints": "My Points",
-    "myInvites": "My Invites",
-    "season": "Season",
-    "seasonName": "S5 Season",
-    "historyRecord": "History",
-    "inviteRewardTitle": "Earn points per referral!",
-    "inviteReward": "Invite Reward",
-    "perInvite": "Per invite",
+    "historyRecord": "Record",
+    "verifying": "Verifying...",
+    "verify": "Verify",
+    "seasonCard": {
+      "treasuryTitle": "Alpha Engine",
+      "treasurySubtitle": "Play · Earn · Build the Signal"
+    },
+    "poolTitleText": "Points pool status",
+    "poolSufficient": "Full",
+    "poolRemaining": "Remaining Points",
+    "poolDistributed": "Points Rewarded",
+    "poolMineable": "Points Balance",
+    "poolScarce": "Scarce",
+    "poolResetCountdown": "Reset until next month",
+    "poolDays": "Days",
+    "poolHours": "Hrs",
+    "poolMinutes": "Mins",
+    "poolScarceTitle": "Limited reward pool !",
+    "poolScarceDesc1_part1": "The task reward has been reduced to ",
+    "poolScarceDesc1_highlight": "70%",
+    "poolScarceDesc1_part2": " (base 10 points > now 7 points).",
+    "poolScarceDesc2_part1": "The points pool is expected to run out in ",
+    "poolScarceDesc2_highlight": "7 days",
+    "poolScarceDesc2_part2": ".",
+    "poolScarceDesc3": "Membership users will not be affected, efficiency will remain at 1.5-2 times the normal level.",
+    "poolNormalTitle": "Points Tips",
+    "poolNormalDesc": "The earlier you participate, the more you gain! Membership acquisition is more efficient and unaffected by pool scarcity.",
+    "poolEventTitle": "Weekend points double event !",
+    "poolEventDesc1_part1": "All task rewards are multiplied by ",
+    "poolEventDesc1_highlight": "1.5",
+    "poolEventDesc1_part2": " (posting points: 10 points → 15 points)",
+    "poolEventDesc2_part1": "Event duration: 48 hours this weekend (",
+    "poolEventDesc2_highlight": "42 hours remaining",
+    "poolEventDesc2_part2": ")",
+    "poolEventDesc3": "You have plenty of points, so grab them while you can! Don't miss out!",
+    "poolUpgradeMember": "Unlock pro",
+    "poolUpgradeMemberSubtitle": "no pool limits",
+    "inviteRewards": "Referral Rewards",
+    "inviteRegister": "Register",
+    "invitePay": "Subscribed",
     "inviteLink": "Invite Link",
     "inviteCode": "Invite Code",
-    "totalInvites": "Total Invites",
-    "earnedPoints": "Points",
-    "activeInvites": "Apply ETH",
-    "pendingRewards": "After OWO, you can receive rewards",
-    "linkCopied": "Copied",
-    "copyFailed": "Copy Failed",
-    "historyFeatureInDevelopment": "History feature in development",
-    "moziSlogan": "Free Trading, Unlimited",
-    "fanRewardsTitle": "Daily Reward Tasks",
-    "earnMorePoints": "Earn More Points",
-    "dailyInvestmentTitle": "Daily Investment Ranking",
-    "taskCompleted": "Task Completed",
-    "taskCompletedSuccess": "Task Completed",
-    "fetchFailed": "Failed to fetch points data",
-    "joinAlarm": "Join Alarm",
+    "shareCount": "Total Invited",
+    "totalEarned": "Invite Points",
+    "applyTH": "Withdraw",
+    "lastVisit": "Last Visit",
+    "inviteRules": {
+      "1": "1. Points will be used for ecosystem benefits in the future",
+      "2": "2. If your referee purchases membership, you get points and 10% fee rebate",
+      "3": "3. Referral is valid only if invited user registers via link or enters invite code",
+      "4": "4. Publishing high-quality content makes it easier to get more points"
+    },
+    "banner": {
+      "title": "Get More Rewards",
+      "subtitle": "Unlock more features & exclusive rewards"
+    },
+    "addAlarm": "Add Alarm",
+    "addAlarmSubtitle": "Add an alarm",
     "certification": "Certification",
-    "note1": "The first 20 referrals each day can earn points.",
-    "note2": "If your referral purchases membership, you will receive points and a 20% commission rebate.",
-    "note3": "The referral is valid only if the invited user enters the invitation code",
+    "certificationSubtitle": "Certification",
+    "newbieTasks": "Starter Quest Reward",
+    "noTasks": "No tasks available",
+    "dailyTasks": "Daily Quest Reward",
     "completed": "Completed",
-    "centerTitle": "Points Center",
-    "toSeparator": "to",
-    "verifying": "Verifying",
+    "goFinish": "Go",
+    "claimed": "Claimed",
+    "sufficient": "Sufficient Points",
+    "fetchFailed": "Failed to fetch points data",
+    "linkCopied": "Link copied",
+    "copyFailed": "Copy failed",
+    "taskCompleted": "Task completed",
     "pleaseRegister": "Please register first",
-    "joinAlarmSubtitle": "Add an alarm",
-    "certificationSubtitle": "Identity verification",
-    "dailyRewardTasksTitle": "Earn Points by Tasks",
+    "historyFeatureInDevelopment": "Feature in development",
+    "messages": {
+      "pointsEarned": "Earned {points} points",
+      "taskNotCompleted": "Task not completed",
+      "verifyFailed": "Verification failed",
+      "videosRemaining": "{count} videos remaining"
+    },
     "tasks": {
       "firstRegister": {
-        "title": "First Registration",
-        "button": "Start"
+        "title": "Initial Login",
+        "button": "Go"
       },
       "followTwitter": {
-        "title": "Follow Our Twitter",
-        "button": "Start"
+        "title": "Follow Twitter",
+        "button": "Follow"
       },
       "joinCommunity": {
-        "title": "Join Our Community",
-        "button": "Start"
+        "title": "Join Telegram",
+        "button": "Join"
       },
       "earlyBird": {
-        "title": "Early Bird Activity",
-        "button": "Start"
+        "title": "Early Bird",
+        "button": "Claim"
       },
       "setAlarm": {
-        "title": "Set Alarm Function",
-        "button": "Start"
+        "title": "Setup Alerts",
+        "button": "Set"
       },
       "videoLearn": {
-        "title": "Complete Video Learning",
-        "button": "Start"
+        "title": "Video Learning",
+        "button": "Learn"
       },
       "dailyLogin": {
         "title": "Daily Login",
-        "button": "Login"
+        "button": "Check-in"
       },
       "inviteUser": {
         "title": "Invite Friends",
         "button": "Invite"
       },
-      "verify": "Verify",
-      "completed": "Completed"
-    },
-    "messages": {
-      "taskNotCompleted": "Task not completed, please complete the task first",
-      "verifyFailed": "Verification failed, please try again later",
-      "pointsEarned": "+{{points}} Points",
-      "loadFailed": "Failed to load points history:",
-      "videosRemaining": "{{count}} videos remaining"
-    },
-    "dailyTasks": {
-      "like": {
-        "title": "Daily Likes",
-        "label": "Per like"
+      "dailyLike": {
+        "title": "Daily Like",
+        "button": "Like"
       },
       "post": {
-        "title": "Posts",
-        "label": "Per post"
+        "title": "Post Article",
+        "button": "Post"
       },
-      "receivedLike": {
-        "title": "Received Likes",
-        "label": "Per like received"
+      "receiveLike": {
+        "title": "Receive Likes",
+        "button": "Interact"
       },
       "reply": {
-        "title": "Replies",
-        "label": "Per reply"
+        "title": "Reply Post",
+        "button": "Reply"
       },
-      "postReplied": {
-        "title": "Post Replies",
-        "label": "Per reply received"
+      "postReceiveReply": {
+        "title": "Post Receive Reply",
+        "button": "View"
+      },
+      "userInfo": {
+        "title": "Complete Profile",
+        "button": "Go"
+      },
+      "push": {
+        "title": "Post First Topic",
+        "note": " more than 50",
+        "button": "Post"
+      },
+      "add": {
+        "title": "Add To Watchlist",
+        "note": " more than 3",
+        "button": "Add"
+      },
+      "share": {
+        "title": "Daily Share",
+        "button": "Share"
       }
     }
-  }
-  ,
+  },
   "pointsHistory": {
     "title": "Points History",
     "empty": "No points records yet"
-  }
-  ,
+  },
   "pcr": {
     "title": "Long/Short Ratio",
     "coin": "Coin",
@@ -720,8 +1113,7 @@
     "loadFailed": "Data load failed",
     "fetchFailed": "Data fetch failed",
     "noChartData": "No chart data"
-  }
-  ,
+  },
   "positionsize": {
     "title": "Open Interest",
     "coin": "Coin",
@@ -740,8 +1132,7 @@
     "loadFailed": "Data load failed",
     "fetchFailed": "Data fetch failed",
     "noChartData": "No chart data"
-  }
-  ,
+  },
   "fundingrate": {
     "title": "Funding Rate",
     "tabs": {
@@ -761,8 +1152,7 @@
       "b": "B",
       "m": "M"
     }
-  }
-  ,
+  },
   "tradevol": {
     "title": "Trading Amount",
     "coin": "Coin",
@@ -782,8 +1172,7 @@
     "loadFailed": "Data load failed",
     "fetchFailed": "Data fetch failed",
     "noChartData": "No chart data"
-  }
-  ,
+  },
   "detail": {
     "title": "Coin Detail",
     "marketCap": "Market Cap",
@@ -836,6 +1225,11 @@
     "robotBubble": "Welcome to Mozi, what can I help you?",
     "robotMessage": "Want to hear my thoughts on {{symbol}}?"
   },
+  "countryPicker": {
+    "back": "Back",
+    "title": "Select Country/Region",
+    "searchPlaceholder": "Search country/dial code"
+  },
   "post": {
     "title": "Post",
     "editPost": "Edit Post",
@@ -857,7 +1251,7 @@
     ],
     "templates": {
       "normal": "Normal",
-      "discovery": "Discover Coins", 
+      "discovery": "Discover Coins",
       "question": "Q&A"
     },
     "buttons": {
@@ -927,8 +1321,13 @@
     "latestPrice": "Latest Price",
     "priceRise": "Rise To",
     "priceFall": "Fall To",
-    "risePercent": "Daily Rise Over",
-    "fallPercent": "Daily Fall Over",
+    "risePercent": "Rise Over",
+    "fallPercent": "Fall Over",
+    "bigOrderDetect": "Large Order Detection",
+    "exchangeSpreadMonitor": "Exchange Spread Monitoring",
+    "noteTitle": "Please note:",
+    "note1": "1. Only members with real-time market data permission can use big order detection",
+    "note2": "2. If multiple big orders are triggered continuously, the interval between two notifications will not be less than 1 minute",
     "saveAlarm": "Save Alert",
     "viewAlarms": "View Configured Alerts",
     "loading": "Loading...",
@@ -1133,6 +1532,9 @@
     "commentFailed": "Failed to post, please try again"
   },
   "pcHome": {
+    "hotTopics": {
+      "title": "Hot Topics"
+    },
     "banner": {
       "topic": "Hot Topics in Community",
       "topicSub": "Capture Trending Topics",
@@ -1160,6 +1562,10 @@
       "volume": "Trading Volume",
       "volumeSub": "Trading Volume"
     },
+    "sectorMap": {
+      "title": "Sector Selection",
+      "viewMore": "View More"
+    },
     "ranks": {
       "title": "Live Rankings",
       "viewMore": "View More",
@@ -1183,6 +1589,7 @@
     }
   },
   "pcLayout": {
+    "notice": "Say goodbye to manual monitoring! Let AI analyze trends, then set precise alerts!",
     "menu": {
       "home": "Home",
       "discover": "Discover",
@@ -1192,13 +1599,14 @@
       "myAlerts": "My Alerts",
       "mySubscription": "My Subscription",
       "myAchievements": "My Achievements",
+      "myQA": "My Q&A",
       "createdLists": "Created Lists"
     },
     "footer": {
       "aboutUs": "About Us",
       "service": "Service",
       "affiliate": "Affiliate",
-      "inviteRewards": "Invite Rewards",
+      "inviteRewards": "Referral Rewards",
       "helpCenter": "Help Center",
       "videoGuides": "Video Guides"
     },
@@ -1229,5 +1637,183 @@
     "submit": "Submit",
     "experience": "Try Now",
     "startExperience": "Start Experience"
+  },
+  "oneClickAlarm": {
+    "title": "One-Click Alerts",
+    "subtitle": "Real-time Monitoring · Instant Alerts",
+    "phoneAlarm": "Phone Alert",
+    "emailAlarm": "Email Alert",
+    "pushAlarm": "Push",
+    "phonePlaceholder": "Enter phone number",
+    "emailPlaceholder": "Enter email",
+    "confirmButton": "Enable Alerts",
+    "skipButton": "Skip",
+    "loading": "Loading...",
+    "enableSuccess": "Enabled successfully",
+    "enableFailed": "Enable failed",
+    "pleaseLogin": "Please login first",
+    "networkError": "Network error, please retry",
+    "phoneRequired": "Please enter phone number",
+    "emailRequired": "Please enter email",
+    "emailInvalid": "Invalid email format",
+    "atLeastOneMethod": "Please enable at least one alert method"
+  },
+  "orderBook": {
+    "title": "Large Order Detection",
+    "limitedExperience": "Limited Experience",
+    "buy": "Buy",
+    "sell": "Sell",
+    "top5": "Top 5 Today",
+    "top10": "Top 10 Today",
+    "noData": "No order book data",
+    "endIn": "Ends in",
+    "days": "d",
+    "hours": "h",
+    "minutes": "m",
+    "seconds": "s",
+    "benefitEnded": "Limited Benefit Ended",
+    "memberExclusive": "Member Exclusive Access",
+    "memberDescription": "Member-only content during testing period.",
+    "subscribeUnlock": "Subscribe to Unlock",
+    "unlocked": "Unlocked",
+    "maskTitle": "Big Order Detection Locked",
+    "maskDescription": "Unlock to view Top 5 big order flow data within 24h",
+    "maskButtonText": "Unlock with 200 Points",
+    "membershipButtonText": "Unlock with Membership"
+  },
+  "hotsector": {
+    "title": "Hot Sectors",
+    "shareText": "Check out the Hot Sectors Heatmap",
+    "filter": {
+      "range": "Change",
+      "marketCap": "Market Cap",
+      "volume": "Volume",
+      "increase": "By Change",
+      "decrease": "By Decline",
+      "amplitude": "By Amplitude",
+      "allMarketCap": "By Total Market Cap",
+      "largeMarketCap": "Large Cap",
+      "midMarketCap": "Mid Cap",
+      "smallMarketCap": "Small Cap",
+      "allVolume": "By Volume",
+      "highVolume": "High Volume",
+      "midVolume": "Mid Volume",
+      "lowVolume": "Low Volume"
+    }
+  },
+  "vip": {
+    "title": "VIP Center",
+    "card": {
+      "title": "Mozi Pro",
+      "subtitle": "Unlock Advanced Features",
+      "badge": "PRO"
+    },
+    "status": {
+      "locked": "Locked"
+    },
+    "plan": {
+      "year": "Annual",
+      "quarter": "Quarterly",
+      "month": "Monthly",
+      "currency": "$",
+      "starter": "Starter",
+      "professional": "Professional",
+      "enterprise": "Enterprise",
+      "lifetime": "Lifetime"
+    },
+    "recommend": "Recommend",
+    "month": "Month",
+    "basic": "Basic",
+    "privilege": "VIP Privilege",
+    "purchaseSuccess": "Purchase feature in development...",
+    "section": {
+      "benefits": "Member Benefits"
+    },
+    "table": {
+      "benefit": "Benefit",
+      "basic": "Basic",
+      "vip": "VIP"
+    },
+    "benefit": {
+      "basicChart": "Basic Chart",
+      "basicPush": "Basic Push",
+      "dailyTrial": "1 Daily Trial",
+      "withAds": "With Ads",
+      "defaultTheme": "Default Theme",
+      "vipChart": "Real-time Large Orders",
+      "vipPush": "Phone + Email Push",
+      "unlimitedAnalysis": "Unlimited AI Analysis",
+      "ogBadge": "OG Badge",
+      "noAds": "No Ads",
+      "alphaGroup": "Alpha Group",
+      "multiTheme": "Multi-theme"
+    },
+    "confirmPurchase": "Confirm Purchase",
+    "planCard": {
+      "perfectFor": "Perfect for",
+      "getStarted": "Get Started",
+      "subscribeNow": "Subscribe Now",
+      "contactSales": "Contact Sales",
+      "bestValue": "Best Value",
+      "mostPopular": "Most Popular",
+      "master": "MASTER",
+      "savingBadge": "Save {{percent}}%"
+    },
+    "result": {
+      "success": {
+        "title": "Recharge Successful",
+        "desc": "Congratulations on becoming a VIP member",
+        "validity": "Valid until",
+        "btn": "Enjoy Benefits"
+      },
+      "fail": {
+        "title": "Recharge Failed",
+        "desc": "There was a problem with the payment",
+        "btn": "Retry Payment"
+      },
+      "processing": {
+        "title": "Processing Payment",
+        "desc": "Checking your payment result, please wait..."
+      }
+    }
+  },
+  "benefitsPage": {
+    "title": "My Benefits",
+    "heroSub": "Mozi has been with you for",
+    "daysUnit": "days",
+    "planSubFree": "Free Trader",
+    "planSubLite": "Lite Trader",
+    "planSubPro": "Pro Trader",
+    "aiCallPerMonth": "AI CALL / mo",
+    "tierBenefits": "{{tier}} benefits",
+    "lockedSection": "Locked benefits",
+    "upgradeLitePro": "Upgrade Lite/Pro",
+    "upgradePro": "Upgrade Pro",
+    "depth40": "40 levels depth",
+    "monthlyPoints": "Monthly points",
+    "monthlyPointsRange": "10,000~10,000/mo",
+    "aiCall": "AI Call",
+    "aiCallRange": "40~220/mo",
+    "exclusiveService": "Dedicated support",
+    "emailAlerts": "Email alerts",
+    "standardCS": "Standard support",
+    "identityTag": "Identity tag",
+    "pointsThisMonth": "Points earned this month",
+    "validUntil": "{{tier}} valid until {{date}}",
+    "daysLeftTag": "{{n}}d left",
+    "exclusiveMemberLine": "{{name}} member exclusive",
+    "depth20": "20 levels depth",
+    "proLevel": "Pro-{{n}}",
+    "nextLevelCardTitle": "Toward Pro-2",
+    "nextLevelProgress": "{{current}} / {{max}} EXP",
+    "nextLevelRewards": "Next tier: {{points}} pts/mo · {{ai}} AI calls/mo",
+    "quickUpgrade": "Quick upgrade",
+    "allowanceCardTitle": "Monthly allowance",
+    "allowanceCardBody": "{{points}} pts/mo · {{ai}} AI calls/mo",
+    "upgradeMore": "Upgrade more",
+    "enterAlpha": "Enter",
+    "bigOrderTitle": "Large order feed",
+    "inUse": "Active",
+    "upgradeToEnjoy": "Upgrade to Lite/Pro to unlock"
   }
 }

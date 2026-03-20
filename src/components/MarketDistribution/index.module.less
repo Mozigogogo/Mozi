@@ -18,10 +18,11 @@
 // 内容容器 - 白色背景
 .marketDistributionContainer {
   background-color: #fff;
-  border-radius: 8px;
+  border-radius: 20px;
   padding: 10px;
-  box-shadow: none;
+  box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.05);
   margin: 0 10px;
+  backdrop-filter: blur(30px);
 }
 
 .marketDistribution {
@@ -29,17 +30,21 @@
 }
 
 .distributionTitle {
-  font-size: clamp(16px, 4vw, 22px);
-  font-weight: 500;
-  color: #333;
-  line-height: 1.2;
+  font-family: PingFang SC;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 16px;
+  line-height: 100%;
+  letter-spacing: 0px;
+  color: rgba(49, 48, 48, 1);
 }
 
 .distributionUpdateTime {
   font-size: clamp(14px, 3vw, 16px);
-  color: #999;
+  color: rgba(153, 153, 153, 1);
   white-space: nowrap;
   flex-shrink: 0;
+  font-family:PingFang SC;
 }
 
 // 柱状图区域
@@ -80,7 +85,6 @@
   max-width: 16px;
   max-height: 120px; /* 增加柱状图最大高度 */
   border-radius: 4px 4px 0 0;
-  margin-bottom: 3px;
   min-height: 4px;
   transition: all 0.3s ease;
 }
@@ -97,11 +101,11 @@
 // 统计信息行
 .statisticsRow {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   gap: 20px;
-  margin: 10px 0 5px 0;
-  padding: 8px;
+  margin: 0 0 5px 0;
+  padding: 8px 12px;
   border-radius: 4px;
 }
 
@@ -158,10 +162,12 @@
   flex: 1;
   text-align: center;
   background-color: #fff;
-  border-radius: 8px;
-  padding: 10px 10px 20px 10px;
+  border-radius: 20px;
+  padding: 10px 10px 10px 10px;
   // border: 1px solid #e5e5e5;
   box-shadow: none;
+  backdrop-filter: blur(30px);
+  box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.05);
 }
 
 .indicatorHeader {
@@ -281,14 +287,15 @@
   align-items: center;
   justify-content: space-between;
   min-height: 52px;
-  padding-top: 5px;
 }
 
 .btcPercentage {
-  font-size: 26px;
-  font-weight: bold;
+  font-size: 28px;
+  font-weight: 700;
   color: #333;
   line-height: 1;
+  font-family: Roboto 2 DRAFT Condensed;
+  margin-left: 17px;
 }
 
 .btcChange {
@@ -334,7 +341,7 @@
   }
   
   .barLabel {
-    font-size: 8px;
+    font-size: 11px;
   }
   
   .bar {
@@ -379,7 +386,7 @@
   }
   
   .btcPercentage {
-    font-size: 22px;
+    font-size: 28px;
   }
   
   .changeText {
@@ -503,74 +510,157 @@
 
 .pcContent {
   display: flex;
+  flex-direction: column;
   gap: 20px;
   align-items: stretch;
 }
 
+.pcChart {}
+
 .pcLeft {
   flex: 1;
   background: #fff;
-  border-radius: 8px;
-  padding:8px 16px;
-  min-width: 0;
-  position: relative; /* 为统计信息定位做准备 */
+  border-radius: 30px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+
+  .pcChartHeader {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 24px;
+    
+    .pcChartTitle {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 4px;
+    }
+    
+    .pcChartTime {
+      font-size: 12px;
+      color: #999;
+    }
+  }
+
+  // Override DistributionChart styles
+  .marketDistribution {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    box-shadow: none;
+    border-radius: 0;
+    backdrop-filter: none;
+    margin: 0;
+    background: transparent;
+  }
+  
+  .chartContainer {
+    padding: 0 10px;
+  }
   
   .chartBars {
-    justify-content: center;
-    gap: 16px; /* 增加条形图之间的间距 */
+    height: 180px;
+    align-items: flex-end;
+    gap: 8px;
+    background-color: rgb(251, 251, 251);
+    padding: 0 16px; // Add padding to give some space inside the colored box
     
-    /* PC端参考线层 - 只覆盖柱状图区域 */
+    // Grid lines - aligned to the bottom of the bars
+    // Label height (20px) + margin-top (8px) = 28px
+    // Using a lighter color #F0F0F0 instead of #E0E0E0
+    background-image: linear-gradient(to top, #f0f0f0 1px, transparent 1px);
+    background-size: 100% 36px; 
+    background-position: left bottom 28px;
+    background-repeat: repeat;
+    
     &::after {
-      content: '';
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 18px; /* barLabel(约12px) + bar的margin-bottom(3px) + 微调(3px) */
-      height: 120px; /* 增加柱状图的最大高度 */
-      background-image: 
-        linear-gradient(to right, #F3F3F3 0%, #F3F3F3 100%),
-        linear-gradient(to right, #F3F3F3 0%,#F3F3F3 100%),
-        linear-gradient(to right, #F3F3F3 0%,#F3F3F3 100%),
-        linear-gradient(to right, #F3F3F3 0%,#F3F3F3 100%),
-        linear-gradient(to right, #F3F3F3 0%,#F3F3F3 100%);
-      background-size: 100% 1px;
-      background-position: 0 100%, 0 75%, 0 50%, 0 25%, 0 0%; /* 5根线均匀分布 */
-      background-repeat: no-repeat;
-      pointer-events: none;
-      z-index: 0;
+      display: none; // Remove the old grid implementation if exists
     }
   }
   
   .barItem {
-    flex: 0 0 auto;
+    width: auto;
+    flex: 1;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     max-width: none;
-    width: 50px; /* 增加条形图项的宽度 */
-    position: relative;
-    z-index: 1;
+    
+    // Colored values
+    &.up .barValue { color: #11B787; }
+    &.neutral .barValue { color: #999; }
+    &.down .barValue { color: #FA5F5F; }
   }
   
   .bar {
-    max-width: 40px; /* 增加条形图的宽度 */
-    width: 40px;
+    width: 20px;
+    max-width: 20px;
+    border-radius: 4px 4px 0 0;
   }
   
   .barValue {
-    font-size: 12px; /* 稍微增大字体 */
+    font-size: 12px;
+    margin-bottom: 4px;
+    font-weight: 500;
+    color: inherit; // Fallback
   }
   
   .barLabel {
-    font-size: 11px; /* 稍微增大字体 */
+    font-size: 12px;
+    line-height: 20px;
+    color: #999;
+    margin-top: 8px;
   }
   
-  /* PC端统计信息移到左上角 */
+  // Statistics
   .statisticsRow {
-    position: absolute;
-    top: 16px;
-    left: 16px;
-    margin: 0;
-    padding: 0;
-    gap: 16px;
-    justify-content: flex-start;
+    position: static;
+    display: flex;
+    justify-content: space-around;
+    margin-top: auto;
+    gap: 0;
+    background: transparent;
+    width: 100%;
+  }
+  
+  .statItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    
+    .statIcon {
+      font-size: 12px;
+    }
+    
+    .statText {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #666;
+      font-weight: 400;
+    }
+    
+    .statValue {
+      font-size: 16px;
+      font-weight: 500;
+      margin-left: 4px;
+    }
+    
+    &.up {
+      .statIcon, .statValue { color: #11B787; }
+    }
+    
+    &.neutral {
+      .statValue { color: #999; }
+    }
+    
+    &.down {
+      .statIcon, .statValue { color: #FA5F5F; }
+    }
   }
 }
 
@@ -584,14 +674,15 @@
     flex: 1;
     margin: 0;
     // border: 1px solid #e5e5e5;
-    border-radius: 8px;
+    border-radius: 30px;
     background: #fff;
-    padding: 16px;
+    padding: 32px 16px; // Increase top/bottom padding to increase height
     position: relative;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    min-height: 220px; // Set a minimum height to ensure they are taller
   }
   
   .indicatorHeader {

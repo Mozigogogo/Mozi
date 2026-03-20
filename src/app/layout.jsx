@@ -13,6 +13,8 @@ import InviteCodeHandler from "@/components/InviteCodeHandler";
 import EnvironmentDetector from "@/components/EnvironmentDetector";
 import RouteChangeHandler from "@/components/RouteChangeHandler";
 import TelegramAutoLogin from "@/components/TelegramAutoLogin";
+import GoogleAuthProvider from "../context/GoogleAuthProvider";
+import GetPointsModal from "@/components/GetPointsModal";
 
 const geistSans = Inter({
   variable: "--font-geist-sans",
@@ -48,6 +50,18 @@ export default function RootLayout({ children }) {
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#1677ff" />
+        {/* Preload critical images */}
+        <link rel="preload" href="/images/new_login/modal_bg.png" as="image" />
+        <link rel="preload" href="/images/new_login/logo.svg" as="image" />
+        <link rel="preload" href="/images/new_login/google.svg" as="image" />
+        <link rel="preload" href="/images/new_login/wallet.svg" as="image" />
+        <link rel="preload" href="/images/new_login/email_default.svg" as="image" />
+        <link rel="preload" href="/images/new_login/email_active.svg" as="image" />
+        <link rel="preload" href="/images/new_login/password.svg" as="image" />
+        <link rel="preload" href="/images/new_login/password_active.svg" as="image" />
+        <link rel="preload" href="/images/new_login/open_eyes.png" as="image" />
+        <link rel="preload" href="/images/new_login/close_eyes.svg" as="image" />
+        <link rel="preload" href="/images/new_login/close.svg" as="image" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} ${chakraPetch.variable}`} suppressHydrationWarning>
         {/* Telegram WebApp 官方脚本 - 必须最先加载 */}
@@ -64,14 +78,17 @@ export default function RootLayout({ children }) {
         <TelegramAutoLogin />
         <ThemeProvider>
           <I18nProvider>
-            <TonConnectProvider>
-              <Web3Provider>
-                <WalletAccountSync />
-                <Suspense fallback={<LogoLoading visible={true} fullscreen mask image="/images/community/loadding.png" size={72} />}>
-                  {children}
-                </Suspense>
-              </Web3Provider>
-            </TonConnectProvider>
+            <GoogleAuthProvider>
+              <TonConnectProvider>
+                <Web3Provider>
+                  <WalletAccountSync />
+                  <GetPointsModal />
+                  <Suspense fallback={<LogoLoading visible={true} fullscreen mask image="/images/community/loadding.png" size={72} />}>
+                    {children}
+                  </Suspense>
+                </Web3Provider>
+              </TonConnectProvider>
+            </GoogleAuthProvider>
           </I18nProvider>
         </ThemeProvider>
       </body>

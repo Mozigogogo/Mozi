@@ -8,7 +8,8 @@ import { message } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
-import { sendVerificationCode } from '../../api/user';
+import { sendVerificationCode, loginByEmail, registerByEmail, loginByWallet, loginByGoogle, completeTask } from '../../api/user';
+import { useGoogleLogin } from '@react-oauth/google';
 import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
 import styles from './page.module.less';
 
@@ -132,17 +133,7 @@ export default function PCLoginPage() {
 
     setLoading(true);
     try {
-      const res = await request({
-        url: Interface.MOZI_LOGIN,
-        method: 'POST',
-        data: { 
-          chanel: 2,
-          type: 'login',
-          email, 
-          password,
-          channel: 'pc'
-        }
-      });
+      const res = await loginByEmail(email, password, '', 'pc');
 
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
@@ -158,6 +149,7 @@ export default function PCLoginPage() {
         }
         
         // 获取用户详细信息
+        console.log('[DEBUG PC /auth] handleLogin success, will call /user/datainfo & completeTask, email =', email);
         request({
           url: Interface.USER_DATA_INFO,
           method: 'GET'
@@ -170,13 +162,14 @@ export default function PCLoginPage() {
         });
         
         // 完成每日登录任务
-        request({
-          url: Interface.TASK_COMPLETE,
-          method: 'POST',
-          data: { taskCode: 'DAILY_LOGIN' }
-        }).catch((error) => {
-          console.error('每日登录任务上报失败:', error);
-        });
+        console.log('[DEBUG PC /auth] handleLogin success, completeTask DAILY_LOGIN & FIRST_LOGIN');
+        try {
+          completeTask('DAILY_LOGIN');
+          // 首次登录任务上报
+          completeTask('FIRST_LOGIN');
+        } catch (error) {
+          console.error('登录任务上报失败:', error);
+        }
         
         message.success(t('auth.loginSuccess'));
         router.push('/');
@@ -215,19 +208,7 @@ export default function PCLoginPage() {
 
     setLoading(true);
     try {
-      const res = await request({
-        url: Interface.MOZI_LOGIN,
-        method: 'POST',
-        data: { 
-          chanel: 2,
-          type: 'register',
-          email, 
-          password, 
-          verifyCode: verificationCode,
-          ...(inviteCode && { invitedCode: inviteCode }),
-          channel: 'pc'
-        }
-      });
+      const res = await registerByEmail(email, password, verificationCode, inviteCode, 'pc');
 
       if (res?.data?.success || res?.code === 0) {
         message.success(t('auth.registerSuccess'));
@@ -250,17 +231,7 @@ export default function PCLoginPage() {
   // 注册成功后自动登录
   const autoLoginAfterRegister = async () => {
     try {
-      const res = await request({
-        url: Interface.MOZI_LOGIN,
-        method: 'POST',
-        data: { 
-          chanel: 2,
-          type: 'login',
-          email, 
-          password,
-          channel: 'pc'
-        }
-      });
+      const res = await loginByEmail(email, password, '', 'pc');
 
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
@@ -275,6 +246,7 @@ export default function PCLoginPage() {
           localStorage.setItem('userId', res.data.userId);
         }
         
+        console.log('[DEBUG PC /auth] autoLoginAfterRegister success, will call /user/datainfo & completeTask, email =', email);
         request({
           url: Interface.USER_DATA_INFO,
           method: 'GET'
@@ -286,13 +258,15 @@ export default function PCLoginPage() {
           console.error('获取用户详细信息失败:', error);
         });
         
-        request({
-          url: Interface.TASK_COMPLETE,
-          method: 'POST',
-          data: { taskCode: 'DAILY_LOGIN' }
-        }).catch((error) => {
-          console.error('每日登录任务上报失败:', error);
-        });
+        // 完成每日登录任务
+        console.log('[DEBUG PC /auth] autoLoginAfterRegister success, completeTask DAILY_LOGIN & FIRST_LOGIN');
+        try {
+          completeTask('DAILY_LOGIN');
+          // 首次登录任务上报
+          completeTask('FIRST_LOGIN');
+        } catch (error) {
+          console.error('登录任务上报失败:', error);
+        }
         
         message.success(t('auth.loginSuccess'));
         router.push('/');
@@ -320,6 +294,73 @@ export default function PCLoginPage() {
       handleLogin();
     }
   };
+
+  // Google 登录成功处理
+  const handleGoogleLoginSuccess = async (tokenResponse) => {
+    // iOS 修复
+    forceBlurAndResetViewport();
+    
+    setLoading(true);
+    try {
+      console.log('Google login success:', tokenResponse);
+      // 使用 access_token 调用后端接口
+      const res = await loginByGoogle(tokenResponse.access_token, inviteCode, 'pc');
+
+      if (res?.data?.token) {
+        localStorage.setItem('token', res.data.token);
+        if (res?.data?.userInfo) {
+          const userInfoWithSubscribe = {
+            ...res.data.userInfo,
+            subscribeAnnouncement: res.data.subscribeAnnouncement
+          };
+          localStorage.setItem('userInfo', JSON.stringify(userInfoWithSubscribe));
+        }
+        if (res?.data?.userId) {
+          localStorage.setItem('userId', res.data.userId);
+        }
+        
+        // 获取用户详细信息
+        console.log('[DEBUG PC /auth] handleGoogleLoginSuccess, will call /user/datainfo & completeTask, email =', email);
+        request({
+          url: Interface.USER_DATA_INFO,
+          method: 'GET'
+        }).then((dataInfoRes) => {
+          if (dataInfoRes?.data) {
+            localStorage.setItem('userDataInfo', JSON.stringify(dataInfoRes.data));
+          }
+        }).catch((error) => {
+          console.error('获取用户详细信息失败:', error);
+        });
+        
+        // 完成每日登录任务
+        console.log('[DEBUG PC /auth] handleGoogleLoginSuccess, completeTask DAILY_LOGIN & FIRST_LOGIN');
+        try {
+          completeTask('DAILY_LOGIN');
+          // 首次登录任务上报
+          completeTask('FIRST_LOGIN');
+        } catch (error) {
+          console.error('登录任务上报失败:', error);
+        }
+        
+        message.success(t('auth.loginSuccess'));
+        router.push('/');
+      } else {
+        const errorMessage = res?.errorMsg || res?.message || t('auth.loginFailed');
+        message.error(errorMessage);
+      }
+    } catch (error) {
+      console.error('Google登录失败:', error);
+      const errorMessage = error?.errorMsg || error?.message || t('auth.loginFailedRetry');
+      message.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: handleGoogleLoginSuccess,
+    onError: () => message.error(t('auth.loginFailed')),
+  });
 
   // 处理钱包登录
   const handleWeb3Login = async () => {
@@ -373,17 +414,7 @@ export default function PCLoginPage() {
       
       const signature = await signMessageAsync({ message: messageToSign });
 
-      const res = await request({
-        url: Interface.MOZI_LOGIN,
-        method: 'POST',
-        data: {
-          type: 'login',
-          chanel: 3,  // 3-钱包登录
-          address: currentAddress,
-          signatrue: signature,  // 注意：后端字段名为 signatrue
-          channel: 'pc'
-        },
-      });
+      const res = await loginByWallet(currentAddress, signature, 'pc');
 
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
@@ -399,6 +430,7 @@ export default function PCLoginPage() {
         }
         
         // 获取用户详细信息
+        console.log('[DEBUG PC /auth] triggerWeb3SignatureLogin success, will call /user/datainfo & completeTask, address =', currentAddress);
         request({
           url: Interface.USER_DATA_INFO,
           method: 'GET'
@@ -411,13 +443,15 @@ export default function PCLoginPage() {
         });
         
         // 完成每日登录任务
-        request({
-          url: Interface.TASK_COMPLETE,
-          method: 'POST',
-          data: { taskCode: 'DAILY_LOGIN' }
-        }).catch((error) => {
-          console.error('每日登录任务上报失败:', error);
-        });
+        // 完成每日登录任务
+        console.log('[DEBUG PC /auth] triggerWeb3SignatureLogin success, completeTask DAILY_LOGIN & FIRST_LOGIN');
+        try {
+          completeTask('DAILY_LOGIN');
+          // 首次登录任务上报
+          completeTask('FIRST_LOGIN');
+        } catch (error) {
+          console.error('登录任务上报失败:', error);
+        }
         
         message.success(t('auth.loginSuccess'));
         router.push('/');
@@ -450,17 +484,8 @@ export default function PCLoginPage() {
       
       console.log('TON 钱包登录:', tonAddress);
       
-      const res = await request({
-        url: Interface.MOZI_LOGIN,
-        method: 'POST',
-        data: {
-          type: 'login',
-          chanel: 3,  // 3-钱包登录
-          channel: 'tg',
-          address: tonAddress,
-          signatrue: tonWallet.account?.publicKey,
-        }
-      });
+      const inviteCode = localStorage.getItem('inviteCode');
+      const res = await loginByWallet(tonAddress, tonWallet.account?.publicKey, 'tg', inviteCode);
       
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
@@ -478,6 +503,7 @@ export default function PCLoginPage() {
         }
         
         // 获取用户详细信息（与邮箱登录对齐）
+        console.log('[DEBUG PC /auth] handleTonWalletLogin success, will call /user/datainfo & completeTask, tonAddress =', tonAddress);
         request({
           url: Interface.USER_DATA_INFO,
           method: 'GET'
@@ -491,13 +517,14 @@ export default function PCLoginPage() {
         });
         
         // 完成每日登录任务（与邮箱登录对齐）
-        request({
-          url: Interface.TASK_COMPLETE,
-          method: 'POST',
-          data: { taskCode: 'DAILY_LOGIN' }
-        }).catch((error) => {
-          console.error('❌ [TON钱包登录] 每日登录任务上报失败:', error);
-        });
+        console.log('[DEBUG PC /auth] handleTonWalletLogin success, completeTask DAILY_LOGIN & FIRST_LOGIN');
+        try {
+          completeTask('DAILY_LOGIN');
+          // 首次登录任务上报
+          completeTask('FIRST_LOGIN');
+        } catch (error) {
+          console.error('❌ [TON钱包登录] 登录任务上报失败:', error);
+        }
         
         message.success(t('auth.loginSuccess'));
         router.push('/');
@@ -644,6 +671,10 @@ export default function PCLoginPage() {
 
           {/* 第三方登录按钮 */}
           <div className={styles.socialLogins}>
+            <button className={styles.googleBtn} onClick={() => googleLogin()}>
+              <img src="/icons/google.svg" alt="google" className={styles.googleIcon} />
+              <span>{t('auth.googleLoginBtn')}</span>
+            </button>
             <button className={styles.walletBtn} onClick={handleWeb3Login}>
               <img src="/icons/wallet.svg" alt="wallet" className={styles.walletIcon} />
               <span>{t('auth.walletLoginBtn')}</span>

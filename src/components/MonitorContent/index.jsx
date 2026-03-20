@@ -1,0 +1,466 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { SideBar, Switch, Input, Toast } from 'antd-mobile';
+import { CheckOutline } from 'antd-mobile-icons';
+import { useTranslation } from 'react-i18next';
+import { confirm } from '@/components/Modal/confirm';
+import { Skeleton } from '../Skeleton';
+import { request } from '../../utils/request';
+import { Interface } from '../../utils/constants';
+import NavBar from '../NavBar';
+import PopLogin from '../PopLogin';
+import Error from '../Error';
+import { isEmpty } from 'lodash';
+import styles from './index.module.less';
+
+export default function MonitorContent({ 
+  showNavBar = false, 
+  showBackOnEmpty = true,
+  onBack = () => window.history.back(),
+  className = '',
+  readOnly = false // New prop to control read-only mode
+}) {
+  const { t } = useTranslation();
+  const [activeKey, setActiveKey] = useState('0');
+  const [warnData, setWarnData] = useState({
+    loading: true,
+    error: false,
+    needLogin: false,
+    data: {},
+    sideData: null,
+  });
+  const [editingIndex, setEditingIndex] = useState(-1);
+  const [editValue, setEditValue] = useState('');
+  
+  const code2Content = {
+    priceRise: t('myAlarm.priceRiseTo'),
+    priceFall: t('myAlarm.priceFallTo'),
+    priceRiseChange24HPercent: t('myAlarm.riseOver'),
+    priceFallChange24HPercent: t('myAlarm.fallOver'),
+  };
+
+  // 固定的四个报警条件配置（按顺序显示），与原项目一致
+  const fixedWarningCodes = [
+    { code: 'priceRise', defaultContent: '--', unit: '$' },
+    { code: 'priceFall', defaultContent: '--', unit: '$' },
+    { code: 'priceRiseChange24HPercent', defaultContent: '10%', unit: '%' },
+    { code: 'priceFallChange24HPercent', defaultContent: '10%', unit: '%' }
+  ];
+
+  // 标准化告警列表：始终返回四个条件（如后端缺失则使用默认）
+  const getStandardizedWarnContent = () => {
+    const backendContent = warnData.sideData?.warnContent || [];
+    return fixedWarningCodes.map(fixed => {
+      const backendItem = backendContent.find(item => item.code === fixed.code);
+      return backendItem ? backendItem : { code: fixed.code, content: fixed.defaultContent, active: false };
+    });
+  };
+  
+  useEffect(() => {
+    init();
+  }, []);
+  
+  const init = async () => {
+    try {
+      // 从统一的工具函数获取当前环境
+      const { getAppChannel } = await import('../../utils/core');
+      const channel = getAppChannel();
+      
+      console.log('[MonitorContent] 当前环境:', channel);
+      
+      const { data } = await request({
+        url: Interface.MY_WARN,
+        data: {
+          channel: channel
+        }
+      });
+      
+      if (isEmpty(data)) {
+        setWarnData({
+          ...warnData,
+          error: true,
+          loading: false,
+        });
+        return;
+      }
+      
+      if (data.isLogin === false) {
+        setWarnData({
+          ...warnData,
+          loading: false,
+          needLogin: true
+        });
+        return;
+      }
+      
+      setWarnData({
+        ...warnData,
+        loading: false,
+        needLogin: false,
+        data,
+        sideData: data[Object.keys(data)[activeKey]]
+      });
+    } catch (error) {
+      console.error('获取告警数据失败:', error);
+      setWarnData({
+        ...warnData,
+        error: true,
+        loading: false,
+      });
+    }
+  };
+  
+  const changeSide = (value) => {
+    setActiveKey(value);
+    setWarnData({
+      ...warnData,
+      sideData: warnData.data[Object.keys(warnData.data)[value]]
+    });
+  };
+  
+  const startEdit = (item, index) => {
+    if (readOnly) return; // Disable editing in read-only mode
+    
+    // 提取数字部分，如果是默认值 '--' 则设为空
+    let numericValue = item.content.replace(/[%$]/g, '').trim();
+    if (numericValue === '--') {
+      numericValue = '';
+    }
+    setEditValue(numericValue);
+    setEditingIndex(index);
+  };
+  
+  const confirmEdit = async (code, index) => {
+    if (readOnly) return;
+    
+    setEditingIndex(-1);
+    
+    if (!/^[0-9]+(\.[0-9]+)?$/.test(editValue)) {
+      Toast.show(t('myAlarm.enterNumber'));
+      return;
+    }
+    
+    const symbol = Object.keys(warnData.data)[activeKey];
+    const sideKey = ['priceRise', 'priceFall', 'priceRiseChange24HPercent', 'priceFallChange24HPercent'];
+    const codeIndex = sideKey.indexOf(code);
+    const formattedValue = (codeIndex === 0 || codeIndex === 1) ? editValue : `${editValue}%`;
+    
+    try {
+      const addRes = await request({
+        url: Interface.ADD_WARN,
+        method: 'POST',
+        data: {
+          symbol,
+          content: {
+            [code]: formattedValue
+          }
+        }
+      });
+      
+      if (addRes.data === true) {
+        // 更新本地数据：如不存在则追加
+        const backendContent = warnData.sideData.warnContent || [];
+        const existingIndex = backendContent.findIndex(item => item.code === code);
+        let newWarnContent;
+        if (existingIndex >= 0) {
+          newWarnContent = backendContent.map((item, idx) => (
+            idx === existingIndex ? { ...item, content: formattedValue } : item
+          ));
+        } else {
+          // 默认未存在：新增条目，保持当前 active（默认 false）
+          const standardizedContent = getStandardizedWarnContent();
+          const currentItem = standardizedContent[index];
+          newWarnContent = [
+            ...backendContent,
+            { code: currentItem.code, content: formattedValue, active: currentItem.active }
+          ];
+        }
+        
+        setWarnData({
+          ...warnData,
+          sideData: {
+            ...warnData.sideData,
+            warnContent: newWarnContent
+          }
+        });
+        
+        setEditValue('');
+        Toast.show(t('myAlarm.editSuccess'));
+      } else {
+        Toast.show(addRes.errorMsg || t('myAlarm.editFailed'));
+      }
+    } catch (error) {
+      console.error('修改告警失败:', error);
+      Toast.show(t('myAlarm.editFailed'));
+    }
+  };
+  
+  const switchChange = async (code, active, index) => {
+    if (readOnly) return; // Disable switch toggling in read-only mode
+
+    const standardizedContent = getStandardizedWarnContent();
+    const currentItem = standardizedContent[index];
+    const backendContent = warnData.sideData.warnContent || [];
+    const backendItem = backendContent.find(item => item.code === currentItem.code);
+
+    // 后端未存在该条目且尝试开启，先提示设置值
+    if (!backendItem && !active) {
+      Toast.show(t('myAlarm.setValueFirst'));
+      return;
+    }
+
+    let interfaceurl = Interface.CLOSE_WARN;
+    if (!active) {
+      interfaceurl = Interface.OPEN_WARN;
+    }
+    
+    try {
+      const { data } = await request({
+        url: interfaceurl,
+        data: {
+          code,
+          symbol: Object.keys(warnData.data)[activeKey]
+        }
+      });
+      
+      if (data) {
+        // 更新后端数据中对应的 active 状态（按 code 匹配）
+        const newWarnContent = backendContent.map((warnItem) => (
+          warnItem.code === code ? { ...warnItem, active: !active } : warnItem
+        ));
+        
+        setWarnData({
+          ...warnData,
+          sideData: {
+            ...warnData.sideData,
+            warnContent: newWarnContent
+          }
+        });
+        
+        Toast.show(active ? t('myAlarm.disableSuccess') : t('myAlarm.enableSuccess'));
+      } else {
+        Toast.show(active ? t('myAlarm.disableFailed') : t('myAlarm.enableFailed'));
+      }
+    } catch (error) {
+      console.error('切换告警状态失败:', error);
+      Toast.show(active ? t('myAlarm.disableFailed') : t('myAlarm.enableFailed'));
+    }
+  };
+
+  // 删除当前币种的所有告警
+  const deleteCoinAllWarns = async () => {
+    if (readOnly) return; // Disable delete in read-only mode
+
+    const symbol = Object.keys(warnData.data)[activeKey];
+    const confirmResult = await confirm({
+      content: t('alarm.confirmDelete', { symbol }) || `确定要删除 ${symbol} 的所有告警吗？`,
+      cancelText: t('common.cancel') || '取消',
+      confirmText: t('common.delete') || '删除'
+    });
+    if (!confirmResult) return;
+
+    try {
+      // 获取 token
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      
+      // 从统一的工具函数获取当前环境
+      const { getAppChannel } = await import('../../utils/core');
+      const channel = getAppChannel();
+      
+      console.log('[MonitorContent] 删除告警 - 当前环境:', channel);
+      
+      const res = await request({
+        url: `${Interface.DELETE_ALARM}?symbol=${symbol}&channel=${channel}`,
+        method: 'DELETE',
+        headers: {
+          authentication: token
+        }
+      });
+      
+      console.log('删除告警响应:', res);
+      
+      if ((res.code === 200 || res.code === 0) && res.data === true) {
+        const newData = { ...warnData.data };
+        delete newData[symbol];
+        const symbols = Object.keys(newData);
+        let newActiveKey = '0';
+        let newSideData = null;
+        if (symbols.length > 0) {
+          if (parseInt(activeKey) > 0) {
+            newActiveKey = (parseInt(activeKey) - 1).toString();
+          }
+          if (parseInt(newActiveKey) >= symbols.length) {
+            newActiveKey = (symbols.length - 1).toString();
+          }
+          newSideData = newData[symbols[newActiveKey]];
+        }
+        setWarnData({ ...warnData, data: newData, sideData: newSideData });
+        setActiveKey(newActiveKey);
+        Toast.show(t('alarm.deleteSuccess') || '删除成功');
+      } else {
+        Toast.show(res.message || t('alarm.deleteFailed') || '删除失败');
+      }
+    } catch (error) {
+      console.error('删除币种告警失败:', error);
+      Toast.show(t('alarm.deleteFailed') || '删除失败');
+    }
+  };
+  
+  if (warnData.needLogin) {
+    return (
+      <div 
+        className={`${styles.box} ${className}`}
+        style={{ paddingTop: showNavBar ? '50px' : 0 }}
+      >
+        {showNavBar && <NavBar title={t('myAlarm.title')} showMenu={false} showBorder={false} />}
+        {/* 与原项目一致的登录弹窗（居中卡片 + 遮罩） */}
+        <PopLogin 
+          visible={true}
+          onLoginSuccess={init}
+          onClose={onBack}
+        />
+      </div>
+    );
+  }
+  
+  return (
+      <div 
+        className={`${styles.box} ${className}`}
+        style={{ paddingTop: showNavBar ? '50px' : 0 }}
+      >
+        {showNavBar && <NavBar title={t('myAlarm.title')} showBorder={false} />}
+        
+        {warnData.loading && (
+          <div className={styles.sideBox} style={{ background: '#fff', height: '100%', display: 'flex' }}>
+            {/* Sidebar Skeleton */}
+            <div style={{ width: '85px', padding: '12px 0', background: '#f5f5f5', display: 'flex', flexDirection: 'column', gap: '20px', alignItems: 'center' }}>
+               {Array(6).fill(0).map((_, i) => (
+                 <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                   <Skeleton config={{ type: 'circle', size: 24 }} />
+                   <Skeleton config={{ type: 'element', width: 30, height: 12 }} />
+                 </div>
+               ))}
+            </div>
+            {/* Content Skeleton */}
+            <div style={{ flex: 1, padding: '16px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+               {Array(4).fill(0).map((_, i) => (
+                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                     <Skeleton config={{ type: 'element', width: 120, height: 16 }} />
+                     <Skeleton config={{ type: 'element', width: 80, height: 20 }} />
+                   </div>
+                   <Skeleton config={{ type: 'element', width: 40, height: 24, borderRadius: 12 }} />
+                 </div>
+               ))}
+               <Skeleton config={{ type: 'element', width: '100%', height: 44, borderRadius: 22, style: { marginTop: '20px' } }} />
+            </div>
+          </div>
+        )}
+
+        {Object.keys(warnData.data).length === 0 && !warnData.loading && (
+          <div className={styles.emptyContainer}>
+            {/* 与原项目一致：使用 Error 组件 + 文案“您暂未设置告警” */}
+            <Error errMsg={t('myAlarm.noAlerts')} />
+            {showBackOnEmpty && (
+              <div 
+                className={styles.emptyButton}
+                onClick={onBack}
+              >
+                {t('myAlarm.goBack')}
+              </div>
+            )}
+          </div>
+        )}
+        
+        {Object.keys(warnData.data).length > 0 && (
+          <div className={styles.sideBox}>
+            <div className={styles.side}>
+              <SideBar 
+                className={styles.sidebar} 
+                activeKey={activeKey} 
+                onChange={changeSide}
+              >
+                {Object.keys(warnData?.data || {}).map((dataItem, dataIndex) => (
+                  <SideBar.Item 
+                    key={dataIndex} 
+                    title={
+                      <div className={styles.sidebarItem}>
+                        <img 
+                          className={styles.sidebarIcon} 
+                          src={warnData?.data[dataItem].url} 
+                          alt={dataItem}
+                        />
+                        <div>{dataItem}</div>
+                      </div>
+                    } 
+                  />
+                ))}
+              </SideBar>
+            </div>
+            
+            <div className={styles.main}>
+              {warnData.sideData && 
+                getStandardizedWarnContent().map((item, index) => (
+                  <div className={styles.mainItem} key={index}>
+                    {editingIndex === index ? (
+                      <div className={styles.editContainer}>
+                        <span className={styles.contentLabel}>
+                          {code2Content[item.code]}
+                        </span>
+                        <Input 
+                          className={styles.editInput}
+                          value={editValue}
+                          onChange={setEditValue}
+                          placeholder={t('myAlarm.enterNumber')}
+                          type='number'
+                        />
+                        <div 
+                          className={styles.confirmBtn} 
+                          onClick={() => confirmEdit(item.code, index)}
+                        >
+                          <CheckOutline color='#02c076' />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className={styles.contentWrapper}>
+                        <span className={styles.contentLabel}>
+                          {code2Content[item.code]}
+                        </span>
+                        <span 
+                          className={styles.contentText}
+                          onClick={() => startEdit(item, index)}
+                        >
+                          {item.content}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* Always show switch, but disable it in read-only mode */}
+                    <div className={styles.switchWrapper}>
+                      <Switch 
+                        checked={item.active} 
+                        onChange={() => !readOnly && switchChange(item.code, item.active, index)} 
+                        style={{ 
+                          '--checked-color': '#11B787', 
+                          transform: 'scale(0.75)',
+                          opacity: readOnly ? 0.6 : 1,
+                          pointerEvents: readOnly ? 'none' : 'auto'
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))
+              }
+              {/* 删除整个币种的按钮 - Hide in readOnly mode */}
+              {warnData.sideData && !readOnly && (
+                <div className={styles.deleteCoinBtn} onClick={deleteCoinAllWarns}>
+                  <div className={styles.deleteCoinText}>{t('alarm.deleteButton', { symbol: Object.keys(warnData.data)[activeKey] }) || `删除 ${Object.keys(warnData.data)[activeKey]}`}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+  );
+}

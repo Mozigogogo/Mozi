@@ -2,13 +2,21 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Toast, Tabs } from 'antd-mobile';
-import { ClockCircleOutline, LeftOutline } from 'antd-mobile-icons';
+import { Toast } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
-import Layout from '../../components/Layout';
-import { request } from '../../utils/request';
-import { Interface, getTgInviteLink } from '../../utils/constants';
+import NavBar from '@/components/NavBar';
+import InviteBanner from '@/components/InviteBanner';
+import { getPoolStatus, getTaskPoints, getInvitationList, getTaskList, completeTask } from '../../api/points';
+import { getTgInviteLink } from '../../utils/constants';
 import styles from './page.module.less';
+
+// Components
+import SeasonCard from '@/components/pointsdetail/SeasonCard';
+import PoolStatusCard from '@/components/pointsdetail/PoolStatusCard';
+import InviteCard from '@/components/pointsdetail/InviteCard';
+import NewbieTasks from '@/components/pointsdetail/NewbieTasks';
+import DailyTasks from '@/components/pointsdetail/DailyTasks';
+import ActionButtons from '@/components/pointsdetail/ActionButtons';
 
 export default function PointsDetail() {
   const router = useRouter();
@@ -16,32 +24,87 @@ export default function PointsDetail() {
   // 防止重复调用的标记
   const isDataFetchedRef = useRef(false);
   const { t, i18n } = useTranslation();
-  const isEnglish = i18n.language === 'en';
-  const [activeTab, setActiveTab] = useState('myPoints');
+  
   const [pointsLoading, setPointsLoading] = useState(false);
   
   // 积分数据 state，初始使用默认值
   const [pointsData, setPointsData] = useState({
     totalPoints: 0,
-    season: t('pointsDetail.seasonName'),
-    seasonStart: '2025-09-25',
-    seasonEnd: '2025-10-25',
+    season: 'S6赛季', // Updated default
+    seasonStart: '2026-02-27',
+    seasonEnd: '2026-06-27',
     inviteLink: '',
     inviteCode: '',
     totalInvites: 0,
     earnedPoints: 0,
     activeInvites: 0,
-    pendingRewards: 0
+    pendingRewards: 0,
+    level: 1,
+    maxLevel: 10,
+    currentLevelPoints: 200,
+    nextLevelPoints: 1000
   });
+
+  const [poolStatus, setPoolStatus] = useState({
+    remainingPoints: 2400000,
+    totalCapacity: 2400000,
+    totalPool: '0', // Placeholder or from API
+    remainingMineable: '2400000', // Placeholder or from API
+    estimatedDays: '30', // Placeholder or from API
+    percent: 100,
+    mode: 'NORMAL',
+    resetTimestamp: null
+  });
+
+  // 格式化数值显示
+  const formatPoints = (value) => {
+    if (value === undefined || value === null) return '0';
+    return Number(value).toLocaleString();
+  };
+
+  // Fetch pool status
+  const fetchPoolStatusData = useCallback(async () => {
+    try {
+      const res = await getPoolStatus();
+      if (res?.code === 0 && res?.data) {
+        const data = res.data;
+        // 计算剩余百分比：使用 remainingPoints / totalCapacity 更加精准
+        const percent = data.remainingPoints && data.totalCapacity 
+          ? Math.round((data.remainingPoints / data.totalCapacity) * 100) 
+          : 0;
+
+        console.log('Pool Status:', {
+          total: data.totalCapacity,
+          remaining: data.remainingPoints,
+          issued: data.issuedPoints,
+          percent: percent,
+          mode: data.mode
+        });
+
+        // 直接使用接口返回的 mode，这里暂时手动切换到 SCARCE 模式用于展示
+        const mode = data.mode || 'NORMAL';
+
+        setPoolStatus(prev => ({
+          ...prev,
+          ...data,
+          percent: percent,
+          totalPool: formatPoints(data.issuedPoints || 0),
+          remainingMineable: formatPoints(data.remainingPoints),
+          estimatedDays: data.daysToReset || 0,
+          mode: mode
+        }));
+      }
+    } catch (error) {
+      console.error('获取奖池状态失败:', error);
+    }
+  }, []);
+
 
   // 获取用户积分数据
   const fetchPointsData = useCallback(async () => {
     try {
       setPointsLoading(true);
-      const res = await request({
-        url: Interface.TASK_POINTS,
-        method: 'GET'
-      });
+      const res = await getTaskPoints();
       
       if (res?.code === 0 && res?.data) {
         const data = res.data;
@@ -96,10 +159,7 @@ export default function PointsDetail() {
   // 获取邀请列表数据
   const fetchInvitationList = useCallback(async () => {
     try {
-      const res = await request({
-        url: Interface.TASK_INVITATION_LIST,
-        method: 'GET'
-      });
+      const res = await getInvitationList();
       
       if (res?.code === 0 && res?.data) {
         const data = res.data;
@@ -130,6 +190,7 @@ export default function PointsDetail() {
     fetchUserDataInfo();
     fetchInvitationList();
     fetchAllTasks();
+    fetchPoolStatusData();
   }, []);
 
   // 任务列表初始为空数组，等待接口返回数据
@@ -144,26 +205,101 @@ export default function PointsDetail() {
   // 用于控制是否显示 loading（只在首次加载时显示）
   const isFirstTaskLoadRef = useRef(true);
 
+  // 倒计时状态
+  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0 });
+  const [weekendRemainingHours, setWeekendRemainingHours] = useState(0);
+
+  // 计算周末剩余小时数
+  useEffect(() => {
+    const calculateWeekendHours = () => {
+      const now = new Date();
+      const dayOfWeek = now.getDay(); // 0 is Sunday, 6 is Saturday
+      
+      // 如果不是周末（周六或周日），返回0
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+        setWeekendRemainingHours(0);
+        return;
+      }
+
+      // 计算到下周一 00:00:00 的剩余时间
+      const nextMonday = new Date(now);
+      nextMonday.setDate(now.getDate() + (dayOfWeek === 0 ? 1 : 2));
+      nextMonday.setHours(0, 0, 0, 0);
+      
+      const diffMs = nextMonday.getTime() - now.getTime();
+      const hours = Math.ceil(diffMs / (1000 * 60 * 60));
+      
+      setWeekendRemainingHours(hours > 0 ? hours : 0);
+    };
+
+    calculateWeekendHours();
+    // 每小时更新一次，或者当 mode 为 BOOST 时更新
+    if (poolStatus.mode === 'BOOST') {
+      const timer = setInterval(calculateWeekendHours, 1000 * 60 * 60);
+      return () => clearInterval(timer);
+    }
+  }, [poolStatus.mode]);
+
+  // 计算倒计时
+  useEffect(() => {
+    if (!poolStatus.resetTimestamp) return;
+
+    // 记录目标结束时间：当前时间 + 剩余时长
+    // 注意：这里假设 resetTimestamp 是接口返回的剩余毫秒数
+    const targetEndTime = Date.now() + Number(poolStatus.resetTimestamp);
+
+    const calculateCountdown = () => {
+      const now = Date.now();
+      const remaining = targetEndTime - now;
+
+      if (remaining > 0) {
+        const days = Math.floor(remaining / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+        
+        setCountdown({ days, hours, minutes });
+      } else {
+        setCountdown({ days: 0, hours: 0, minutes: 0 });
+      }
+    };
+
+    calculateCountdown();
+    // 每秒更新一次，确保倒计时流畅
+    const timer = setInterval(calculateCountdown, 1000);
+
+    return () => clearInterval(timer);
+  }, [poolStatus.resetTimestamp]);
+
   // 任务类型到图标的映射
   const taskIconMap = {
-    'REGISTER': '/point/contact_person@2x.png',
-    'FOLLOW_TWITTER': '/point/like@2x.png',
-    'JOIN_COMMUNITY': '/point/social_group@2x.png',
-    'COMMUNITY': '/point/social_group@2x.png',
-    'EARLY_BIRD': '/point/twitter@2x.png',
-    'SET_ALARM': '/point/set_alert@2x.png',
-    'ALARM': '/point/set_alert@2x.png',
+    'REGISTER': '/point/first_login.svg',
+    'FIRST_LOGIN': '/point/first_login.svg',
+    'FOLLOW_TWITTER': '/point/X.svg',
+    'TWITTER': '/point/X.svg',
+    'JOIN_COMMUNITY': '/point/group.svg',
+    'COMMUNITY': '/point/group.svg',
+    'EARLY_BIRD': '/point/eraly_bird.svg',
+    'SET_ALARM': '/point/setting_alert.svg',
+    'ALARM': '/point/setting_alert.svg',
     'VIDEO_LEARN': '/point/video@2x.png',
     'VIDEO': '/point/video@2x.png',
     'WECHAT': '/point/like@2x.png',
-    'DAILY_LOGIN': '/point/contact_person@2x.png',
-    'INVITE_USER': '/point/invite@2x.png',
+    'DAILY_LOGIN': '/point/daily_login.svg',
+    'INVITE_USER': '/point/shared.svg',
+    'USER_INFO': '/point/user_info.svg',
+    'COMPLETE_PROFILE': '/point/user_info.svg',
+    'ADD': '/point/add.svg',
+    'ADD_WATCHLIST': '/point/add.svg',
+    'PUSH': '/point/push.svg',
+    'FIRST_POST': '/point/push.svg',
   };
 
   // 任务类型到国际化 key 的映射（用于按钮文本）
   const taskKeyMap = {
     'REGISTER': 'firstRegister',
+    'FIRST_LOGIN': 'firstRegister',
     'FOLLOW_TWITTER': 'followTwitter',
+    'TWITTER': 'followTwitter',
     'JOIN_COMMUNITY': 'joinCommunity',
     'COMMUNITY': 'joinCommunity',
     'EARLY_BIRD': 'earlyBird',
@@ -174,21 +310,75 @@ export default function PointsDetail() {
     'WECHAT': 'followTwitter',
     'DAILY_LOGIN': 'dailyLogin',
     'INVITE_USER': 'inviteUser',
+    'USER_INFO': 'userInfo',
+    'COMPLETE_PROFILE': 'userInfo',
+    'ADD': 'add',
+    'ADD_WATCHLIST': 'add',
+    'PUSH': 'push',
+    'FIRST_POST': 'push',
+  };
+
+  // 每日任务图标映射
+  const dailyTaskIconMap = {
+    'DAILY_LIKE': '/point/like.svg',
+    'POST': '/point/push_article.svg',
+    'RECEIVE_LIKE': '/point/received_like.svg',
+    'REPLY': '/point/reply.svg',
+    'POST_RECEIVE_REPLY': '/point/received.svg',
+    'DAILY_LOGIN': '/point/daily_login.svg',
+    'SHARE': '/point/shared.svg',
+  };
+
+  // 任务图标背景色映射
+  const taskBgColorMap = {
+    // 新手任务
+    'REGISTER': 'rgba(239, 246, 255, 1)', // 首次登录 #EFF6FF
+    'FIRST_LOGIN': 'rgba(239, 246, 255, 1)', // 首次登录备用
+    'USER_INFO': 'rgba(236, 253, 245, 1)', // 完善个人信息
+    'PUSH': 'rgba(255, 247, 237, 1)', // 发布首篇帖子 (对应 PUSH?) - 或者是 POST? 假设 PUSH 是新手任务中的发布
+    'FIRST_POST': 'rgba(255, 247, 237, 1)', // 发布首篇帖子备用
+    'ADD': 'rgba(238, 242, 255, 1)', // 添加自选
+    'ADD_WATCHLIST': 'rgba(238, 242, 255, 1)', // 添加自选备用
+    'SET_ALARM': 'rgba(254, 242, 242, 1)', // 设置报警
+    'ALARM': 'rgba(254, 242, 242, 1)',
+    'JOIN_COMMUNITY': 'rgba(240, 253, 250, 1)', // 加入社群
+    'COMMUNITY': 'rgba(240, 253, 250, 1)',
+    'EARLY_BIRD': 'rgba(254, 252, 232, 1)', // 早鸟用户
+    'FOLLOW_TWITTER': 'rgba(240, 240, 240, 1)', // 关注推特
+    'WECHAT': 'rgba(240, 240, 240, 1)', // 关注推特备用
+    
+    // 每日任务
+    'DAILY_LOGIN': 'rgba(248, 250, 252, 1)', // 每日登录
+    'DAILY_LIKE': 'rgba(255, 241, 242, 1)', // 每日点赞
+    'POST': 'rgba(255, 247, 237, 1)', // 发布帖子
+    'REPLY': 'rgba(236, 254, 255, 1)', // 回复帖子
+    'POST_RECEIVE_REPLY': 'rgba(245, 243, 255, 1)', // 帖子收到回复
+    'SHARE': 'rgba(238, 242, 255, 1)', // 每日分享
+    'RECEIVE_LIKE': 'rgba(255, 251, 235, 1)', // 帖子收到赞
+    
+    // 其他备用
+    'VIDEO_LEARN': '#FFF0F6',
+    'VIDEO': '#FFF0F6',
+    'INVITE_USER': '#F9F0FF',
+  };
+
+  // 每日任务 Key 映射
+  const dailyTaskKeyMap = {
+    'DAILY_LIKE': 'dailyLike',
+    'POST': 'post',
+    'RECEIVE_LIKE': 'receiveLike',
+    'REPLY': 'reply',
+    'POST_RECEIVE_REPLY': 'postReceiveReply',
+    'DAILY_LOGIN': 'dailyLogin',
+    'SHARE': 'share',
   };
 
   // 获取任务列表（活动任务 + 每日任务，合并为一次接口调用）
   const fetchAllTasks = useCallback(async () => {
     try {
-      // 只在首次加载时显示 loading
-      if (isFirstTaskLoadRef.current) {
-        setTasksLoading(true);
-        setDailyTasksLoading(true);
-      }
-      
-      const res = await request({
-        url: Interface.TASK_LIST,
-        method: 'GET'
-      });
+      setTasksLoading(true);
+      setDailyTasksLoading(true);
+      const res = await getTaskList();
       
       console.log('🔍 [DEBUG] TASK_LIST 接口返回:', res);
       
@@ -209,10 +399,12 @@ export default function PointsDetail() {
               id: task.id || index + 1,
               taskCode: task.taskCode,
               icon: taskIconMap[task.taskCode] || '/point/set_alert@2x.png',
+              bgColor: taskBgColorMap[task.taskCode] || '#F5F7FA',
               title: task.taskName,
               titleKey: `pointsDetail.tasks.${taskKey}.title`,
               btnTextKey: `pointsDetail.tasks.${taskKey}.button`,
               points: task.rewardPoints || 0,
+              isCompleted: !!task.isCompleted,
               status: task.isCompleted ? 'completed' : 'pending',
               needsAction: !task.isCompleted
             };
@@ -225,16 +417,21 @@ export default function PointsDetail() {
         const dailyTasks = res.data.dailyTaskList || [];
         const mappedDailyTasks = dailyTasks
           .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
-          .map((task, index) => ({
-            id: task.taskCode || index + 1,
-            icon: dailyTaskIconMap[task.taskCode] || '/point/glove_praise@2x.png',
-            title: task.taskName,
-            rewardLabel: task.taskDesc,
-            reward: task.rewardPoints || 0,
-            current: task.currentProgress || 0,
-            total: task.targetProgress || 1,
-            completed: task.isCompleted || false,
-          }));
+          .map((task, index) => {
+            const taskKey = dailyTaskKeyMap[task.taskCode] || 'dailyLogin';
+            return {
+              id: task.taskCode || index + 1,
+              icon: dailyTaskIconMap[task.taskCode] || '/point/glove_praise@2x.png',
+              bgColor: taskBgColorMap[task.taskCode] || '#F5F7FA',
+              title: task.taskName,
+              titleKey: `pointsDetail.tasks.${taskKey}.title`,
+              rewardLabel: task.taskDesc,
+              reward: task.rewardPoints || 0,
+              current: task.currentProgress || 0,
+              target: task.targetProgress || 1,
+              completed: task.isCompleted || false,
+            };
+          });
         
         // 无论是否有数据都设置，空数组也设置
         setDailyInvestments(mappedDailyTasks);
@@ -268,11 +465,7 @@ export default function PointsDetail() {
       if (token && now <= deadline) {
         console.log('🔍 [DEBUG] 早鸟用户检查：已登录且在截止日期前，自动完成任务');
         try {
-          const res = await request({
-            url: Interface.TASK_COMPLETE,
-            method: 'POST',
-            data: { taskCode: 'EARLY_BIRD' }
-          });
+          const res = await completeTask({ taskCode: 'EARLY_BIRD' });
           console.log('🔍 [DEBUG] 早鸟任务自动完成结果:', res);
           
           if (res?.code === 0) {
@@ -291,15 +484,7 @@ export default function PointsDetail() {
     return () => clearTimeout(timer);
   }, []);
 
-  // 每日任务图标映射
-  const dailyTaskIconMap = {
-    'DAILY_LIKE': '/point/glove_praise@2x.png',
-    'POST': '/point/paper_airplane@2x.png',
-    'RECEIVE_LIKE': '/point/%20no_glove_praise@2x.png',
-    'REPLY': '/point/notification_1@2x.png',
-    'POST_RECEIVE_REPLY': '/point/notification_2@2x.png',
-    'DAILY_LOGIN': '/point/contact_person@2x.png',
-  };
+
 
   // 获取任务的原始按钮文本
   const getOriginalBtnText = (titleKey) => {
@@ -316,12 +501,8 @@ export default function PointsDetail() {
       console.log('🔍 [DEBUG] 调用任务完成接口, taskCode:', task.taskCode);
       
       // 调用后端接口完成任务
-      const res = await request({
-        url: Interface.TASK_COMPLETE,
-        method: 'POST',
-        data: {
-          taskCode: task.taskCode
-        }
+      const res = await completeTask({
+        taskCode: task.taskCode
       });
       
       console.log('🔍 [DEBUG] 任务完成接口返回:', res);
@@ -330,7 +511,7 @@ export default function PointsDetail() {
         // 验证成功，更新为已完成
         const updatedTasks = tasksList.map(t => 
           t.id === task.id 
-            ? { ...t, status: 'completed', needsAction: false }
+            ? { ...t, isCompleted: true, status: 'completed', needsAction: false }
             : t
         );
         setTasksList(updatedTasks);
@@ -341,8 +522,7 @@ export default function PointsDetail() {
         }
         
         // 显示成功提示，使用接口返回的消息或默认消息
-        const successMsg = res?.data?.message || t('pointsDetail.messages.pointsEarned', { points: task.points });
-        Toast.show({ content: successMsg, icon: 'success', position: 'center' });
+        // Toast.show({ content: successMsg, icon: 'success', position: 'center' });
         
         // 刷新积分数据
         fetchPointsData();
@@ -388,7 +568,6 @@ export default function PointsDetail() {
   const handleTaskClick = (task) => {
     // 如果任务已完成，不处理
     if (task.status === 'completed') {
-      Toast.show({ content: t('pointsDetail.taskCompleted'), position: 'bottom' });
       return;
     }
 
@@ -420,10 +599,6 @@ export default function PointsDetail() {
           return;
         } else {
           // 还有视频没看完，跳转到视频学习页面
-          Toast.show({ 
-            content: t('pointsDetail.messages.videosRemaining', { count: videoTotal - completedCount }), 
-            position: 'bottom' 
-          });
           router.push('/videolearn');
         }
         break;
@@ -439,7 +614,6 @@ export default function PointsDetail() {
         // 早鸟活动：检查是否注册，已登录则自动完成
         const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
         if (!token) {
-          Toast.show({ content: t('pointsDetail.pleaseRegister'), position: 'bottom' });
           router.push('/user?mode=register');
         } else {
           // 已登录，直接调用完成接口
@@ -452,20 +626,34 @@ export default function PointsDetail() {
         const tgLink = getTgInviteLink(pointsData.inviteCode);
         if (tgLink) {
           navigator.clipboard.writeText(tgLink);
-          Toast.show({ content: t('pointsDetail.linkCopied'), position: 'bottom' });
         }
         break;
+      case 'COMPLETE_PROFILE':
+        router.push('/user/edit');
+        break;
+      case 'FIRST_POST':
+        router.push('/community');
+        break;
+      case 'ADD_WATCHLIST':
+        router.push('/');
+        break;
+      case 'FIRST_LOGIN':
+        verifyTask(task);
+        break;
       default:
-        Toast.show({ content: t('pointsDetail.historyFeatureInDevelopment'), position: 'bottom' });
+        break;
     }
 
-    // 标记为待验证状态
-    const updatedTasks = tasksList.map(t => 
-      t.id === task.id 
-        ? { ...t, needsAction: false }
-        : t
-    );
-    setTasksList(updatedTasks);
+    // 只有 TWITTER、COMMUNITY 需要中间验证状态
+    const needsVerifyTasks = ['TWITTER', 'COMMUNITY'];
+    if (needsVerifyTasks.includes(task.taskCode)) {
+      const updatedTasks = tasksList.map(t => 
+        t.id === task.id 
+          ? { ...t, needsAction: false }
+          : t
+      );
+      setTasksList(updatedTasks);
+    }
   };
 
   const copyToClipboard = (text, label) => {
@@ -506,310 +694,56 @@ export default function PointsDetail() {
     }
   };
 
-  const tabs = [
-    { key: 'myPoints', title: t('pointsDetail.myPoints') }
-  ];
-
   return (
-
-      <div className={styles.pointsDetailContainer}>
-        {/* 顶部导航 */}
-        <div className={styles.topNav}>
-          <button className={styles.backBtn} onClick={() => router.back()}>
-            <LeftOutline />
-          </button>
-          <div className={styles.navTitle}>{t('pointsDetail.centerTitle')}</div>
-        </div>
-        {/* 顶部Tab */}
-        <div className={styles.tabsContainer}>
-          <Tabs
-            activeKey={activeTab}
-            onChange={setActiveTab}
-            className={styles.tabs}
-          >
-            {tabs.map(tab => (
-              <Tabs.Tab title={tab.title} key={tab.key} />
-            ))}
-          </Tabs>
-        </div>
-
-        <div className={styles.topSection}>
-          {/* 积分卡片 */}
-          <div className={styles.pointsCard}>
-            <div className={styles.seasonBackgroundCard}>
-              <div className={styles.cardHeader}>
-                <img src="/point/moz_logo@2x.png" alt="Logo" className={styles.logo} />
-              </div>
-              <div className={styles.seasonInfo}>
-                <h2 className={styles.seasonTitle}>{pointsData.season}</h2>
-                <div className={styles.seasonDuration}>
-                  <ClockCircleOutline className={styles.clockIcon} />
-                  {pointsData.seasonStart} {t('pointsDetail.toSeparator')} {pointsData.seasonEnd}
-                </div>
-              </div>
-            </div>
-            <div className={styles.pointsDisplay}>
-              <img src="/point/coin_icon@2x.png" alt="Coin" className={styles.coinIcon} />
-              <div className={styles.pointsValue}>{pointsData.totalPoints}</div>
-              <button className={styles.historyBtn} onClick={() => router.push('/pointshistory')}>
-                <ClockCircleOutline className={styles.historyIcon} />
-                {t('pointsDetail.historyRecord')}
-              </button>
-            </div>
-            <img 
-              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/points-character.png" 
-              alt="Character" 
-              className={styles.characterImg}
-              onError={(e) => { e.target.style.display = 'none'; }}
-            />
-          </div>
-
-          {/* MOZI横幅 */}
-          <div 
-            className={styles.moziBanner}
-            style={{ 
-              backgroundImage: `url('${isEnglish ? '/point/piont_banner1.png' : '/point/define_bg@2x.png'}')` 
-            }}
-          >
-            {/* 背景图片自带文字，无需额外内容 */}
-          </div>
-        </div>
-
-        <div className={styles.bottomSection}>
-          {/* 邀请推荐区域 */}
-          <div className={styles.inviteSection}>
-            {/* 标题区域 */}
-            <div className={styles.inviteHeader}>
-              <img src="/point/Emoji_1@2x.png" alt="Emoji" className={styles.emojiIcon} />
-              <div className={styles.inviteTitle}>{t('pointsDetail.inviteRewardTitle')}</div>
-            </div>
-
-            {/* 邀请有奖卡片 */}
-            <div className={styles.rewardCard}>
-              <img src="/point/invite@2x.png" alt="Invite" className={styles.rewardIcon} />
-              <div className={styles.rewardInfo}>
-                <h4>{t('pointsDetail.inviteReward')}</h4>
-                <p>
-                  {t('pointsDetail.perInvite')} 
-                  <span className={styles.bonusPoints}>
-                    +500<img src="/point/coin_icon@2x.png" alt="Coin" className={styles.bonusCoinIcon} />
-                  </span>
-                </p>
-              </div>
-            </div>
-
-            {/* 邀请链接 */}
-            <div className={styles.inviteInputBox}>
-              <div className={styles.inviteInputLabel}>{t('pointsDetail.inviteLink')}</div>
-              <div className={styles.inviteInputContent}>
-                <span className={styles.inviteInputText}>{getTgInviteLink(pointsData.inviteCode)}</span>
-                <button 
-                  onClick={() => copyToClipboard(getTgInviteLink(pointsData.inviteCode), t('pointsDetail.inviteLink'))} 
-                  className={styles.copyIconBtn}>
-                  <img src="/point/copy@2x.png" alt="Copy" className={styles.copyIcon} />
-                </button>
-              </div>
-            </div>
-
-            {/* 邀请码 */}
-            <div className={styles.inviteInputBox}>
-              <div className={styles.inviteInputLabel}>{t('pointsDetail.inviteCode')}</div>
-              <div className={styles.inviteInputContent}>
-                <span className={styles.inviteInputText}>{pointsData.inviteCode}</span>
-                <button 
-                  onClick={() => copyToClipboard(pointsData.inviteCode, t('pointsDetail.inviteCode'))} 
-                  className={styles.copyIconBtn}>
-                  <img src="/point/copy@2x.png" alt="Copy" className={styles.copyIcon} />
-                </button>
-              </div>
-            </div>
-
-            {/* 统计数据网格 */}
-            <div className={styles.statsGrid}>
-              <div className={styles.statCard}>
-                <div className={styles.statValue}>{pointsData.totalInvites}</div>
-                <div className={styles.statLabel}>{t('pointsDetail.totalInvites')}</div>
-              </div>
-              <div className={styles.statCard}>
-                <div className={styles.statValue}>{pointsData.earnedPoints}</div>
-                <div className={styles.statLabel}>{t('pointsDetail.earnedPoints')}</div>
-              </div>
-            </div>
-
-            {/* 说明文字 */}
-            <div className={styles.inviteNotes}>
-              <p>1. {t('pointsDetail.note1')}</p>
-              <p>2. {t('pointsDetail.note2')}</p>
-              <p>3. {t('pointsDetail.note3')}</p>
-            </div>
-          </div>
-
-          {/* 疯狂爱好者积分奖励 */}
-          <div className={styles.tasksSection}>
-            <div className={styles.tasksSectionHeader}>
-              <img src="/point/Emoji_2@2x.png" alt="Praise" className={styles.headerIconImg} />
-              <h3>{t('pointsDetail.dailyRewardTasksTitle')}</h3>
-            </div>
-            
-            <div className={styles.tasksList}>
-              {tasksLoading ? (
-                <div className={styles.loadingContainer}>
-                  <div className={styles.spinner}>
-                    <div className={styles.spinnerRing}></div>
-                    <div className={styles.spinnerRing}></div>
-                    <div className={styles.spinnerRing}></div>
-                    <img src="/point/coin_icon@2x.png" alt="Loading" className={styles.spinnerCoin} />
-                  </div>
-                </div>
-              ) : tasksList.length === 0 ? (
-                <div className={styles.emptyState}>
-                  <img src="/point/Emoji_2@2x.png" alt="Empty" className={styles.emptyIcon} />
-                  <div className={styles.emptyText}>{t('common.noTasks')}</div>
-                </div>
-              ) : (
-                tasksList.map(task => {
-                  // 判断按钮状态
-                  const isVerifying = verifyingTaskId === task.id;
-                  const isCompleted = task.status === 'completed';
-                  const isWaitingVerify = !task.needsAction && task.status === 'pending'; // 待验证状态
-                  
-                  // 按钮文本
-                  let btnText;
-                  if (isCompleted) {
-                    btnText = t('pointsDetail.tasks.completed');
-                  } else if (isVerifying) {
-                    btnText = t('pointsDetail.verifying');
-                  } else if (isWaitingVerify) {
-                    btnText = t('pointsDetail.tasks.verify');
-                  } else {
-                    btnText = t(task.btnTextKey);
-                  }
-                  
-                  // 按钮样式
-                  let btnClassName = styles.taskBtn;
-                  if (isCompleted) btnClassName += ` ${styles.completedBtn}`;
-                  else if (isVerifying) btnClassName += ` ${styles.verifyingBtn}`;
-                  else if (isWaitingVerify) btnClassName += ` ${styles.verifyBtn}`;
-                  
-                  return (
-                    <div key={task.id} className={`${styles.taskItem} ${isCompleted ? styles.completed : ''}`}>
-                      <div className={styles.taskIconWrapper}>
-                        <img src={task.icon} alt={t(task.titleKey)} className={styles.taskIconImg} />
-                      </div>
-                      <div className={styles.taskInfo}>
-                        <div className={styles.taskTitle}>{task.title || t(task.titleKey)}</div>
-                        <div className={styles.taskPoints}>
-                          +{task.points}
-                          <img src="/point/coin_icon@2x.png" alt="Coin" className={styles.taskCoinIcon} />
-                        </div>
-                      </div>
-                      <button 
-                        className={btnClassName}
-                        onClick={() => handleTaskClick(task)}
-                        disabled={isVerifying}
-                      >
-                        {btnText}
-                      </button>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-
-          {/* 获得更多积分横幅 */}
-          <div 
-            className={styles.earnMoreBanner}
-            style={{ 
-              backgroundImage: `url('${isEnglish ? '/point/point_banner2.png' : '/point/last_bg@2x.png'}')` 
-            }}
-          >
-            
-          </div>
-
-          {/* 每日奖励任务 */}
-          <div className={styles.dailyInvestmentSection}>
-            <div className={styles.sectionHeader}>
-              <img src="/point/Emoji_3@2x.png" alt="Daily" className={styles.headerIconImg} />
-              <h3>{t('pointsDetail.fanRewardsTitle')}</h3>
-            </div>
-
-            <div className={styles.investmentList}>
-              {dailyTasksLoading ? (
-                <div className={styles.loadingContainer}>
-                  <div className={styles.spinner}>
-                    <div className={styles.spinnerRing}></div>
-                    <div className={styles.spinnerRing}></div>
-                    <div className={styles.spinnerRing}></div>
-                    <img src="/point/coin_icon@2x.png" alt="Loading" className={styles.spinnerCoin} />
-                  </div>
-                </div>
-              ) : dailyInvestments.length === 0 ? (
-                <div className={styles.emptyState}>
-                  <img src="/point/Emoji_3@2x.png" alt="Empty" className={styles.emptyIcon} />
-                  <div className={styles.emptyText}>{t('common.noTasks')}</div>
-                </div>
-              ) : (
-                dailyInvestments.map(item => (
-                  <div key={item.id} className={styles.investmentItem}>
-                    <div className={styles.investmentIcon}>
-                      <img src={item.icon} alt={item.title} className={styles.investmentIconImg} />
-                    </div>
-                    <div className={styles.investmentInfo}>
-                      <div className={styles.investmentTitle}>{item.title}</div>
-                      <div className={styles.investmentSubtitle}>
-                        <span>{item.rewardLabel?.replace(/\+?\d+/g, '').trim()}</span>
-                        <span className={styles.rewardValue}>+{item.reward}</span>
-                        <img src="/point/coin_icon@2x.png" alt="coin" className={styles.investmentCoinIcon} />
-                      </div>
-                      <div className={styles.progressRow}>
-                        <div className={styles.progressBar}>
-                          <div 
-                            className={styles.progressFill} 
-                            style={{ width: `${Math.min(item.total > 0 ? (item.current / item.total * 100) : 100, 100)}%` }}
-                          />
-                          <div
-                            className={styles.progressHandle}
-                            style={{ left: `${Math.min(item.total > 0 ? (item.current / item.total * 100) : 100, 100)}%` }}
-                          >
-                            <span>{item.current}</span>
-                          </div>
-                        </div>
-                        <div className={styles.investmentProgress}>
-                          {item.completed ? (
-                            <span className={styles.completedLabel}>{t('pointsDetail.completed')}</span>
-                          ) : (
-                            <span>{item.current}/{item.total}</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* 底部按钮 */}
-          <div className={styles.bottomButtons}>
-            <button className={styles.bottomBtn} onClick={() => router.push('/addwarn?symbol=BTC')}>
-              <div className={styles.bottomBtnContent}>
-                <div className={styles.bottomBtnTitle}>{t('pointsDetail.joinAlarm')}</div>
-                <div className={styles.bottomBtnSubtitle}>{t('pointsDetail.joinAlarmSubtitle')}</div>
-              </div>
-              <img src="/point/point_alert@2x.png" alt="Alert" className={styles.bottomIcon} />
-            </button>
-
-            <button className={styles.bottomBtn} onClick={() => router.push('/kyc')}>
-              <div className={styles.bottomBtnContent}>
-                <div className={styles.bottomBtnTitle}>{t('pointsDetail.certification')}</div>
-                <div className={styles.bottomBtnSubtitle}>{t('pointsDetail.certificationSubtitle')}</div>
-              </div>
-              <img src="/point/Certification@2x.png" alt="Certification" className={styles.bottomIcon} />
-            </button>
-          </div>
-        </div>
+    <div className={styles.pointsDetailContainer}>
+      {/* NavBar 导航 */}
+      <NavBar 
+        title={t('pointsDetail.centerTitle') || '积分中心'} 
+        backgroundColor="transparent"
+        style={{ 
+          background: "url('/point/point_bg.png') no-repeat top center",
+          backgroundSize: "100% auto"
+        }}
+        showBorder={false}
+        onBack={() => router.back()}
+      />
+      
+      {/* 页面标题 */}
+      <div className={styles.pageTitle}>
+        {t('pointsDetail.myPoints') || '我的积分'}
       </div>
+
+      {/* 赛季卡片 */}
+      <SeasonCard pointsData={pointsData} />
+
+      {/* 本月积分池状态 */}
+      <PoolStatusCard 
+        poolStatus={poolStatus} 
+        countdown={countdown} 
+        weekendRemainingHours={weekendRemainingHours} 
+      />
+
+      {/* 邀请有奖 */}
+      <InviteCard pointsData={pointsData} copyToClipboard={copyToClipboard} />
+
+      {/* 新手任务 */}
+      <NewbieTasks
+        tasksList={tasksList}
+        handleTaskClick={handleTaskClick}
+        loading={tasksLoading}
+        verifyingTaskId={verifyingTaskId}
+      />
+
+      <div>
+        <InviteBanner style={{ width: '100%', height: 'auto' }} />
+      </div>
+
+      {/* 每日任务 */}
+      <DailyTasks dailyInvestments={dailyInvestments} loading={dailyTasksLoading} />
+
+      {/* 底部功能按钮 */}
+      <ActionButtons />
+      
+    </div>
   );
 }
-

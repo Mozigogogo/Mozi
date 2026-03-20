@@ -28,9 +28,13 @@ export default function NavBar({
   showBorder = true,
   fixed = true,
   backgroundColor = '#ffffff',
+  color,
   className = '',
+  style,
 }) {
   const router = useRouter();
+
+  const textStyle = color ? { color } : {};
 
   const handleBack = () => {
     if (onBack) {
@@ -55,15 +59,15 @@ export default function NavBar({
   return (
     <div 
       className={`${styles.navBar} ${!showBorder ? styles.noBorder : ''} ${!fixed ? styles.asStatic : ''} ${className}`}
-      style={{ backgroundColor }}
+      style={{ backgroundColor, ...style }}
     >
       {/* 左侧返回按钮 */}
       <div className={styles.left}>
         {showBack && (
-          <div className={styles.backBtn} onClick={handleBack}>
+          <div className={styles.backBtn} onClick={handleBack} style={textStyle}>
             <svg
-              width="20"
-              height="20"
+              width="26"
+              height="26"
               viewBox="0 0 24 24"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -82,7 +86,7 @@ export default function NavBar({
 
       {/* 中间标题 */}
       <div className={styles.center}>
-        <div className={styles.title}>{title}</div>
+        <div className={styles.title} style={textStyle}>{title}</div>
       </div>
 
       {/* 右侧操作按钮 */}
@@ -92,7 +96,7 @@ export default function NavBar({
         ) : (
           <>
             {showMenu && (
-              <div className={styles.iconBtn} onClick={handleMenuClick}>
+              <div className={styles.iconBtn} onClick={handleMenuClick} style={textStyle}>
                 <svg
                   width="20"
                   height="20"
@@ -107,7 +111,7 @@ export default function NavBar({
               </div>
             )}
             {showSearch && (
-              <div className={styles.iconBtn} onClick={handleSearchClick}>
+              <div className={styles.iconBtn} onClick={handleSearchClick} style={textStyle}>
                 <svg
                   width="20"
                   height="20"

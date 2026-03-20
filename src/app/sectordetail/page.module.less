@@ -1,0 +1,361 @@
+.container {
+  min-height: 100vh;
+  background-image: url('/images/new_sector/sector_bg.png');
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  padding-bottom: 20px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.navbar {
+  background: transparent;
+  color: #000;
+  height: 56px;
+  
+  :global {
+    .adm-nav-bar {
+      height: 56px;
+      padding: 0 16px;
+    }
+    
+    .adm-nav-bar-back-arrow {
+      color: #000;
+      font-size: 22px;
+    }
+    
+    .adm-nav-bar-title {
+      font-family: 'PingFang SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-weight: 500;
+      font-size: 16px;
+      line-height: 51.22px;
+      letter-spacing: 0;
+      text-align: center;
+      text-transform: capitalize;
+      color: rgba(0, 0, 0, 1);
+    }
+    
+    .adm-nav-bar-left,
+    .adm-nav-bar-right {
+      padding: 0;
+    }
+  }
+}
+
+.navRight {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: flex-end;
+  margin-right: 8px;
+  
+  .iconBtn {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    
+    &:active {
+      opacity: 0.6;
+    }
+  }
+}
+
+.content {
+  padding: 0 16px;
+}
+
+.sectorCard {
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-radius: 20px;
+  padding: 10px 20px;
+  margin-top: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  
+  .cardHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    
+    .sectorName {
+      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      font-size: 16px;
+      line-height: 100%;
+      letter-spacing: 0;
+      text-transform: capitalize;
+      color: rgba(49, 48, 48, 1);
+    }
+    
+    .sectorChange {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-weight: 500;
+      font-size: 12px;
+      line-height: 100%;
+      padding: 4px 10px;
+      border-radius: 3px;
+      background: #C9F6E7;
+      position: relative;
+      
+      &.positive {
+        color: #0B7556;
+        background: #C9F6E7;
+        
+        &::before {
+          content: '';
+          position: absolute;
+          left: 6px;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 0;
+          height: 0;
+          border-left: 3px solid transparent;
+          border-right: 3px solid transparent;
+          border-bottom: 4px solid #00BE87;
+        }
+        
+        // 为箭头留出空间
+        padding-left: 16px;
+      }
+      
+      &.negative {
+        color: #FF6B6B;
+        background: rgba(255, 107, 107, 0.1);
+        
+        &::before {
+          content: '';
+          position: absolute;
+          left: 6px;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 0;
+          height: 0;
+          border-left: 3px solid transparent;
+          border-right: 3px solid transparent;
+          border-top: 4px solid #FF6B6B;
+        }
+        
+        // 为箭头留出空间
+        padding-left: 16px;
+      }
+    }
+  }
+  
+  .cardStats {
+    display: flex;
+    gap: 40px;
+    
+    .statItem {
+      flex: 1;
+      
+      .statLabel {
+        font-family: 'PingFang SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-weight: 300;
+        font-size: 12px;
+        line-height: 100%;
+        letter-spacing: 0;
+        vertical-align: bottom;
+        color: rgba(102, 102, 102, 1);
+        margin-bottom: 8px;
+      }
+      
+      .statValue {
+        font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-weight: 700;
+        font-size: 20px;
+        line-height: 100%;
+        letter-spacing: 0;
+        text-transform: capitalize;
+        color: rgba(11, 117, 86, 1);
+        
+        .currency {
+          font-size: 14px;
+          font-weight: 500;
+          margin-right: 2px;
+        }
+      }
+    }
+  }
+}
+
+.sortBar {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr 0.8fr 0.8fr;
+  align-items: center;
+  background: transparent;
+  border-radius: 12px;
+  padding: 12px 0 0 0;
+  gap: 8px;
+  
+  // SortButton 组件的容器
+  :global {
+    .sortButton {
+      justify-content: center;
+      
+      &:first-child {
+        justify-content: flex-start;
+        padding-left: 0;
+      }
+    }
+  }
+  
+  .sortItem {
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+    white-space: nowrap;
+    font-family: 'PingFang SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 400;
+    line-height: 100%;
+  }
+}
+
+.coinList {
+  background: transparent;
+  border-radius: 12px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 65vh;
+  
+  // 默认隐藏滚动条
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 2px;
+    transition: background 0.3s ease;
+  }
+  
+  // 显示滚动条时的样式
+  &.showScrollbar {
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.2);
+      
+      &:hover {
+        background: rgba(0, 0, 0, 0.3);
+      }
+    }
+  }
+  
+  .empty {
+    padding: 60px 20px;
+    text-align: center;
+    color: #999;
+    font-size: 14px;
+  }
+}
+
+.coinItem {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr 0.8fr 0.8fr;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: none;
+  gap: 8px;
+  
+  .coinInfo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    justify-content: flex-start;
+    padding-left: 0;
+    
+    .coinIcon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+    
+    .coinIconPlaceholder {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 600;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      flex-shrink: 0;
+    }
+    
+    .coinSymbol {
+      font-size: 14px;
+      font-weight: 600;
+      color: #000;
+    }
+  }
+  
+  .coinPrice {
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: #000;
+  }
+  
+  .coinChange {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 4px 6px;
+    border-radius: 6px;
+    margin: 0 auto;
+    
+    &.positive {
+      color: #00C087;
+      background: rgba(0, 192, 135, 0.1);
+    }
+    
+    &.negative {
+      color: #FF6B6B;
+      background: rgba(255, 107, 107, 0.1);
+    }
+  }
+  
+  .likeBtn,
+  .monitorBtn {
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    &:active {
+      transform: scale(1.2);
+    }
+    
+    .iconImg {
+      width: 18px;
+      height: 18px;
+      object-fit: contain;
+    }
+  }
+}
+
+// 响应式适配
+@media (min-width: 768px) {
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+}
