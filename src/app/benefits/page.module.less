@@ -195,6 +195,7 @@
   background-repeat: no-repeat;
   background-position: center;
   background-size: 100% 100%;
+  opacity: 0.25;
   pointer-events: none;
   z-index: 0;
 }
@@ -404,7 +405,7 @@
   margin-top: 14px;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 18px;
-  padding: 12px;
+  padding: 4px;
   border: 1px solid rgba(255, 255, 255, 0.95);
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.05);
 }
@@ -441,9 +442,9 @@
 }
 
 .sectionTitle {
-  font-size: 13px;
-  font-weight: 900;
-  color: rgba(17, 24, 39, 0.9);
+  font-size: 16px;
+  font-weight: 500;
+  color: rgba(51, 65, 85, 1);
   margin-bottom: 10px;
 }
 
@@ -479,27 +480,30 @@
 }
 
 .benefitItem {
-  height: 44px;
-  border-radius: 14px;
-  background: #fff;
-  border: 1px solid rgba(15, 23, 42, 0.06);
-  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
+  height: 65px;
+  padding-top: 16px;
+  padding-right: 20.4px;
+  padding-bottom: 16px;
+  padding-left: 20.4px;
+  gap: 8px;
+  opacity: 1;
+  border-radius: 13.6px;
+  background: rgba(246, 246, 246, 1);
+  border: 0.5px solid rgba(156, 163, 175, 0.3);
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 12px;
 }
 
 .benefitIcon {
-  width: 18px;
-  height: 18px;
+  width: 32px;
+  height: 32px;
   opacity: 0.8;
 }
 
 .benefitLabel {
-  font-size: 13px;
-  font-weight: 700;
-  color: rgba(15, 23, 42, 0.86);
+  font-size: 16px;
+  font-weight: 500;
+  color: rgba(51, 65, 85, 1);
 }
 
 .lockedGrid {
@@ -511,48 +515,97 @@
 
 .lockedCard {
   border-radius: 16px;
-  padding: 12px;
-  border: 1px solid rgba(15, 23, 42, 0.06);
-  min-height: 74px;
+  padding: 20.4px;
+  height: 130px;
+  gap: 3.4px;
+  opacity: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  border: none;
+  --locked-card-border: rgba(15, 23, 42, 0.06);
   box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+}
+
+.lockedCard::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 0.85px;
+  border-radius: inherit;
+  background: var(--locked-card-border);
+  pointer-events: none;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
 }
 
 .lockedCardTop {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
 }
 
 .lockedIcon {
-  width: 22px;
-  height: 22px;
+  width: 32px;
+  height: 32px;
   opacity: 0.9;
 }
 
 .lockedTitle {
-  font-size: 13px;
-  font-weight: 900;
-  color: rgba(17, 24, 39, 0.9);
+  font-family: "PingFang SC", sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: 0;
+  font-weight: 700;
+  color: rgba(51, 65, 85, 1);
 }
 
 .lockedSub {
-  margin-top: 8px;
-  font-size: 11px;
+  font-family: "PingFang SC", sans-serif;
+  font-size: 13px;
+  line-height: 24px;
+  letter-spacing: 0;
+  font-weight: 500;
   color: rgba(0, 0, 0, 0.45);
-  font-weight: 700;
 }
 
 .tone_peach {
-  background: rgba(255, 237, 213, 0.65);
+  background: rgba(255, 243, 235, 1);
+  --locked-card-border: rgba(254, 216, 191, 1);
+}
+.tone_peach .lockedSub {
+  color: rgba(245, 124, 86, 1);
 }
 .tone_lavender {
-  background: rgba(237, 233, 254, 0.65);
+  background: rgba(242, 240, 254, 1);
+  --locked-card-border: rgba(219, 211, 255, 1);
+}
+.tone_lavender .lockedSub {
+  color: rgba(167, 151, 255, 1);
 }
 .tone_sky {
-  background: rgba(224, 242, 254, 0.65);
+  background: rgba(34, 170, 197, 0.2);
+  --locked-card-border: rgba(34, 170, 197, 0.2);
+}
+.tone_sky .lockedSub {
+  color: rgba(42, 187, 220, 1);
 }
 .tone_sand {
-  background: rgba(254, 243, 199, 0.55);
+  background: rgba(255, 243, 225, 1);
+  --locked-card-border: linear-gradient(325.09deg, rgba(255, 111, 0, 0.68) 15.7%, rgba(231, 82, 129, 0.68) 51.44%, rgba(255, 111, 0, 0.68) 93.97%);
+}
+
+.tone_sand .lockedTitle {
+  font-size: 14px;
+  background: linear-gradient(177.03deg, #ff6201 21.27%, #ffc266 97.53%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
 }
 
 .lockedList {
@@ -562,9 +615,11 @@
 }
 
 .lockedRow {
-  height: 44px;
+  height: 67px;
+  opacity: 1;
   border-radius: 14px;
-  background: linear-gradient(90deg, #7a5a3a 0%, #6a4b2f 100%);
+  background: linear-gradient(124.92deg, #603D21 2.71%, #8D501F 80.69%);
+  border: 1px solid rgba(255, 220, 175, 1);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -580,12 +635,13 @@
 }
 
 .lockedRowIcon {
-  width: 22px;
-  height: 22px;
-  border-radius: 11px;
-  background: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+}
+
+.lockedRowIconImg {
+  width: 32px;
+  height: 32px;
 }
 
 .lockedRowLabel {
@@ -598,14 +654,23 @@
 }
 
 .upgradePill {
-  height: 26px;
-  padding: 0 12px;
-  border: none;
-  border-radius: 999px;
-  background: rgba(255, 224, 178, 0.95);
-  color: #6a3a12;
-  font-size: 12px;
-  font-weight: 900;
+  width: 82px;
+  height: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.41);
+  border-radius: 29.82px;
+  background: linear-gradient(
+    93.9deg,
+    rgba(255, 204, 140, 1) 33.02%,
+    rgba(251, 224, 190, 1) 75.81%
+  );
+  color: rgba(147, 65, 0, 1);
+  font-family: "PingFang SC";
+  font-weight: 500;
+  font-style: normal;
+  font-size: 14px;
+  line-height: 17.89px;
+  letter-spacing: 0px;
+  vertical-align: middle;
   cursor: pointer;
   flex: 0 0 auto;
 }

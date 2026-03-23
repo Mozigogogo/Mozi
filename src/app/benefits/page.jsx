@@ -30,9 +30,9 @@ export default function BenefitsPage() {
 
   const freeUnlocked = useMemo(
     () => [
-      { icon: '/point/first_login.svg', label: t('vip.benefit.basicChart') },
-      { icon: '/icons/new_detail/community.svg', label: t('vip.benefit.basicPush') },
-      { icon: '/point/new_coin.svg', label: t('benefitsPage.emailAlerts') },
+      { icon: '/benefits/market.svg', label: t('vip.benefit.basicChart') },
+      { icon: '/benefits/push.svg', label: t('vip.benefit.basicPush') },
+      { icon: '/benefits/email_alert.svg', label: t('benefitsPage.emailAlerts') },
     ],
     [t]
   );
@@ -43,25 +43,25 @@ export default function BenefitsPage() {
         title: t('vipRecharge.features.bigOrder'),
         subtitle: t('benefitsPage.depth40'),
         tone: 'peach',
-        icon: '/icons/new_detail/bell.svg',
+        icon: '/benefits/big_deal.svg',
       },
       {
         title: t('vipRecharge.features.monthlyPoints'),
         subtitle: t('benefitsPage.monthlyPointsRange'),
         tone: 'lavender',
-        icon: '/point/new_coin.svg',
+        icon: '/benefits/monthly_points.svg',
       },
       {
         title: t('benefitsPage.aiCall'),
         subtitle: t('benefitsPage.aiCallRange'),
         tone: 'sky',
-        icon: '/icons/new_detail/ai.svg',
+        icon: '/benefits/ai_call.svg',
       },
       {
         title: t('vip.benefit.ogBadge'),
         subtitle: '',
         tone: 'sand',
-        icon: '/icons/new_detail/vip.svg',
+        icon: '/benefits/gold_vip.svg',
       },
     ],
     [t]
@@ -69,10 +69,10 @@ export default function BenefitsPage() {
 
   const lockedProRows = useMemo(
     () => [
-      { icon: '/icons/new_detail/vip.svg', label: t('vip.benefit.alphaGroup') },
-      { icon: '/icons/new_detail/vip.svg', label: t('benefitsPage.exclusiveService') },
-      { icon: '/icons/new_detail/vip.svg', label: t('vip.benefit.noAds') },
-      { icon: '/icons/new_detail/vip.svg', label: t('vip.benefit.multiTheme') },
+      { icon: '/benefits/group.svg', label: t('vip.benefit.alphaGroup') },
+      { icon: '/benefits/helper.svg', label: t('benefitsPage.exclusiveService') },
+      { icon: '/benefits/no_advertise.svg', label: t('vip.benefit.noAds') },
+      { icon: '/benefits/multi_skin.svg', label: t('vip.benefit.multiTheme') },
     ],
     [t]
   );
@@ -171,7 +171,12 @@ export default function BenefitsPage() {
                   {lockedProRows.map((x, idx) => (
                     <div key={idx} className={styles.lockedRow}>
                       <div className={styles.lockedRowLeft}>
-                        <span className={styles.lockedRowIcon} />
+                        <img
+                          className={styles.lockedRowIconImg}
+                          src={x.icon}
+                          alt=""
+                          aria-hidden="true"
+                        />
                         <span className={styles.lockedRowLabel}>{x.label}</span>
                       </div>
                       <button className={styles.upgradePill} type="button" onClick={goRecharge}>
@@ -234,7 +239,12 @@ export default function BenefitsPage() {
               {lockedProRows.map((x, idx) => (
                 <div key={idx} className={styles.lockedRow}>
                   <div className={styles.lockedRowLeft}>
-                    <span className={styles.lockedRowIcon} />
+                    <img
+                      className={styles.lockedRowIconImg}
+                      src={x.icon}
+                      alt=""
+                      aria-hidden="true"
+                    />
                     <span className={styles.lockedRowLabel}>{x.label}</span>
                   </div>
                   <button className={styles.upgradePill} type="button" onClick={goRecharge}>
