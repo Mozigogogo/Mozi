@@ -141,8 +141,8 @@
 }
 
 .tierStop_lite.tierStopActive .tierDot {
-  border-color: #059669;
-  background: #10b981;
+  border-color: rgba(48, 206, 132, 1);
+  background: rgba(48, 206, 132, 1);
   box-shadow: 0 0 0 2px #fff;
 }
 
@@ -420,9 +420,18 @@
   border: 1px solid rgba(193, 193, 193, 1);
 }
 
+.mode_lite .sectionsBigBox {
+  border: 1px solid rgba(34, 197, 94, 1);
+  background: linear-gradient(180deg, rgba(179, 251, 198, 0.67) 0%, rgba(255, 255, 255, 0.67) 100%);
+}
+
 .sectionsBigBox .section {
   border: none; /* 边框由 sectionsBigBox 统一控制 */
   box-shadow: none; /* 外层大盒子负责层次 */
+}
+
+.mode_lite .section {
+  background: transparent;
 }
 
 .sectionsBigBox .section:first-child {
@@ -449,21 +458,25 @@
 }
 
 .sectionTitleLite {
-  font-size: 13px;
-  font-weight: 900;
-  color: rgba(6, 95, 70, 0.95);
+  font-family: PingFang SC;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 14px;
+  line-height: 24px;
+  letter-spacing: 0px;
+  color: rgba(22, 163, 74, 1);
+  vertical-align: middle;
   margin-bottom: 10px;
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.sectionTitleLite::before {
-  content: "";
-  width: 4px;
-  height: 14px;
-  border-radius: 2px;
-  background: #10b981;
+.sectionTitleLiteIcon {
+  width: 32px;
+  height: 32px;
+  display: block;
+  flex: 0 0 auto;
 }
 
 .sectionTitlePro {
@@ -494,16 +507,139 @@
   align-items: center;
 }
 
+.mode_lite .benefitList {
+  gap: 12px;
+}
+
+.mode_lite .benefitItem {
+  height: auto;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.03);
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px; /* 顶部一行 + 底部进度条一行 */
+}
+
+.mode_lite .benefitItem:nth-child(1) {
+  background: rgba(242, 240, 254, 1); /* lavender */
+  border-color: rgba(219, 211, 255, 1);
+}
+
+.mode_lite .benefitItem:nth-child(2) {
+  background: rgba(229, 248, 255, 1); /* sky */
+  border-color: rgba(186, 230, 253, 1);
+}
+
+.mode_lite .benefitItem:nth-child(3) {
+  background: rgba(255, 243, 235, 1); /* peach */
+  border-color: rgba(254, 216, 191, 1);
+}
+
+.mode_lite .benefitItemDeal {
+  min-height: 72px; /* 保持与有进度条的两项卡片等高 */
+  align-items: stretch;
+}
+
 .benefitIcon {
   width: 32px;
   height: 32px;
   opacity: 0.8;
 }
 
+.mode_lite .benefitIcon {
+  opacity: 1;
+  width: 44px;
+  height: 44px;
+}
+
 .benefitLabel {
   font-size: 16px;
   font-weight: 500;
   color: rgba(51, 65, 85, 1);
+}
+
+.benefitLiteContent {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 10px; /* 标题/数字一行，进度条下一行 */
+}
+
+.benefitLiteTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.benefitLiteTopLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.benefitLabelLite {
+  font-family: "PingFang SC", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  font-style: normal;
+  line-height: 24px;
+  letter-spacing: 0px;
+  color: rgba(17, 24, 39, 1);
+}
+
+.benefitValueLite {
+  font-family: "PingFang SC", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  font-style: normal;
+  line-height: 24px;
+  letter-spacing: 0px;
+  white-space: nowrap;
+}
+
+.benefitValueLite_chart {
+  color: rgba(136, 118, 244, 1);
+}
+
+.benefitValueLite_ai {
+  color: rgba(56, 198, 233, 1);
+}
+
+.benefitValueLite_deal {
+  color: rgba(235, 97, 53, 1);
+}
+
+.benefitProgressTrackLite {
+  margin-top: 0;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.06);
+  overflow: hidden;
+  width: 100%;
+}
+
+.benefitProgressFillLite {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.benefitProgressFillLite_chart {
+  background: linear-gradient(90deg, #8876f4 0%, #d3c0ff 100%);
+}
+
+.benefitProgressFillLite_ai {
+  background: linear-gradient(90deg, #38c6e9 0%, #8ff9f7 100%);
+}
+
+.benefitProgressFillLite_deal {
+  background: linear-gradient(90deg, #eb6135 0%, #ffd2c6 100%);
 }
 
 .lockedGrid {
@@ -642,6 +778,7 @@
 .lockedRowIconImg {
   width: 32px;
   height: 32px;
+  display: block; /* 避免 inline/baseline 导致的子像素对齐发虚 */
 }
 
 .lockedRowLabel {
@@ -736,9 +873,9 @@
 }
 
 .iconGridCircle {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  border-radius: 12px;
   background: linear-gradient(145deg, #d1fae5, #6ee7b7);
   border: 1px solid rgba(16, 185, 129, 0.35);
   display: flex;
@@ -748,15 +885,62 @@
 }
 
 .iconGridCircle img {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   opacity: 0.85;
+  object-fit: contain;
+  display: block;
 }
 
 .iconGridLabel {
   font-size: 10px;
   font-weight: 700;
   color: rgba(17, 24, 39, 0.72);
+  line-height: 1.25;
+  max-width: 100%;
+}
+
+/* Lite quick icon grid (基础功能展示) */
+.liteQuickIconGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px 8px;
+  margin-top: 16px;
+}
+
+.liteQuickIconItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.liteQuickIconCircle {
+  width: 32px;
+  height: 32px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #22C55E 0%, #A8FF88 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.liteQuickIconCircle img {
+  width: 18px;
+  height: 18px;
+  /* 把灰色描边图标转成白色，适配绿色圆形背景 */
+  /* SVG 本身是 fill-opacity=0.5，缩小后容易发虚；这里把整体不透明度拉满 */
+  filter: brightness(0) invert(1) opacity(2);
+  object-fit: contain;
+  display: block;
+}
+
+.liteQuickIconLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color:rgba(51, 65, 85, 1);
   line-height: 1.25;
   max-width: 100%;
 }
@@ -876,9 +1060,9 @@
 }
 
 .iconGridCirclePro {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  border-radius: 12px;
   background: linear-gradient(145deg, rgba(251, 191, 36, 0.35), rgba(180, 83, 9, 0.45));
   border: 1px solid rgba(251, 191, 36, 0.45);
   display: flex;
@@ -887,9 +1071,11 @@
 }
 
 .iconGridCirclePro img {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   opacity: 0.92;
+  object-fit: contain;
+  display: block;
 }
 
 .iconGridLabelPro {
