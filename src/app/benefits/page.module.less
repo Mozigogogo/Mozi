@@ -415,7 +415,13 @@
   margin-top: 14px; /* 保持与原 section 的间距一致 */
   padding: 12px; /* 给内部 section 留出边框内缩空间 */
   /* 外层大盒子的 padding 区域需要与内层 section 同色，否则会透出玻璃层导致“断层” */
-  background: rgba(255, 255, 255, 0.95);
+  background: linear-gradient(
+      180deg,
+      rgba(255, 197, 117, 0.38) 0%,
+      rgba(255, 255, 255, 0.38) 100%
+    ),
+    linear-gradient(124.92deg, #603D21 2.71%, #8D501F 80.69%),
+    linear-gradient(124.92deg, #411D00 2.71%, #7E4314 80.69%);
   border-radius: 18px;
   border: 1px solid rgba(193, 193, 193, 1);
 }
@@ -431,6 +437,16 @@
 }
 
 .mode_lite .section {
+  background: transparent;
+}
+
+.mode_pro .sectionsBigBox {
+  border: 1px solid #D29648;
+  background:  linear-gradient(124.92deg, #411D00 2.71%, #7E4314 80.69%);
+
+}
+
+.mode_pro .section {
   background: transparent;
 }
 
@@ -453,8 +469,11 @@
 .sectionTitle {
   font-size: 16px;
   font-weight: 500;
-  color: rgba(51, 65, 85, 1);
+  color: rgba(255, 236, 208, 1);
   margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .sectionTitleLite {
@@ -473,6 +492,13 @@
 }
 
 .sectionTitleLiteIcon {
+  width: 32px;
+  height: 32px;
+  display: block;
+  flex: 0 0 auto;
+}
+
+.sectionTitleProIcon {
   width: 32px;
   height: 32px;
   display: block;
@@ -540,6 +566,47 @@
 .mode_lite .benefitItemDeal {
   min-height: 72px; /* 保持与有进度条的两项卡片等高 */
   align-items: stretch;
+}
+
+.mode_pro .benefitList {
+  gap: 12px;
+}
+
+.mode_pro .benefitItem {
+  height: auto;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.03);
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.mode_pro .benefitItem:nth-child(1) {
+  background: rgba(242, 240, 254, 1); /* lavender */
+  border-color: rgba(219, 211, 255, 1);
+}
+
+.mode_pro .benefitItem:nth-child(2) {
+  background: rgba(229, 248, 255, 1); /* sky */
+  border-color: rgba(186, 230, 253, 1);
+}
+
+.mode_pro .benefitItem:nth-child(3) {
+  background: rgba(255, 243, 235, 1); /* peach */
+  border-color: rgba(254, 216, 191, 1);
+}
+
+.mode_pro .benefitItemDeal {
+  min-height: 72px; /* 保持与有进度条的两项卡片等高 */
+  align-items: stretch;
+}
+
+.mode_pro .benefitIcon {
+  opacity: 1;
+  width: 44px;
+  height: 44px;
 }
 
 .benefitIcon {
@@ -750,6 +817,44 @@
   gap: 10px;
 }
 
+/* Pro 顶部额度卡：10000积分/月 + AI Call 40次/月 */
+.proAllowanceTopCard {
+  height: 84px;
+  padding: 0 18px;
+  margin-bottom: 10px;
+  border-radius: 18px;
+  background: linear-gradient(124.92deg, #603D21 2.71%, #8D501F 80.69%);
+  border: 1px solid rgba(255, 220, 175, 1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 10px 16px rgba(122, 90, 58, 0.22);
+}
+
+.proAllowanceTopLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.proAllowanceTopMain {
+  font-size: 26px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.92);
+  line-height: 1;
+}
+
+.proAllowanceTopSub {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255, 248, 237, 0.55);
+  line-height: 1.2;
+}
+
+.upgradePillWide {
+  width: 120px;
+}
+
 .lockedRow {
   height: 67px;
   opacity: 1;
@@ -761,6 +866,11 @@
   justify-content: space-between;
   padding: 0 12px;
   box-shadow: 0 10px 16px rgba(122, 90, 58, 0.22);
+}
+
+.lockedRowPro {
+  /* Pro 模式也需要右侧按钮，占满 space-between 布局 */
+  justify-content: space-between;
 }
 
 .lockedRowLeft {
@@ -796,10 +906,11 @@
   border: 1px solid rgba(255, 255, 255, 0.41);
   border-radius: 29.82px;
   background: linear-gradient(
-    93.9deg,
-    rgba(255, 204, 140, 1) 33.02%,
-    rgba(251, 224, 190, 1) 75.81%
-  );
+      0deg,
+      rgba(255, 255, 255, 0.6),
+      rgba(255, 255, 255, 0.6)
+    ),
+    linear-gradient(93.9deg, #FFCC8C 33.02%, #FBE0BE 75.81%);
   color: rgba(147, 65, 0, 1);
   font-family: "PingFang SC";
   font-weight: 500;

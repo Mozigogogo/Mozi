@@ -13,47 +13,127 @@ export default function PlanCardLite({
   validUntil,
   daysLeft,
   activeTier = 'lite',
+  onPro2Upgrade,
 }) {
   const { t } = useTranslation();
+  const isPro = activeTier === 'pro';
+  const tierIconSrc = isPro ? '/benefits/vip_pro1.svg' : '/benefits/flag.svg';
   const curNum = typeof pointsCur === 'number' ? pointsCur : Number(pointsCur);
   const maxNum = typeof pointsMax === 'number' ? pointsMax : Number(pointsMax);
   const percent = maxNum > 0 ? Math.max(0, Math.min(100, (curNum / maxNum) * 100)) : 0;
 
+  // Next-tier (Pro-2) demo values to match the design mock.
+  const pro2ExpCur = 7800;
+  const pro2ExpMax = 10000;
+  const pro2ExpRemaining = pro2ExpMax - pro2ExpCur;
+  const pro2ProgressPercent = pro2ExpMax > 0 ? Math.max(0, Math.min(100, (pro2ExpCur / pro2ExpMax) * 100)) : 0;
+  const pro2PointsPerMonth = 120000;
+  const pro2AiCallsPerMonth = 60;
+
   return (
     <>
-      <div className={`${styles.planCard} ${styles.planCardLite}`}>
+      <div className={`${styles.planCard} ${isPro ? styles.planCardPro : styles.planCardLite}`}>
         <div className={styles.headerRow}>
           <div className={styles.planTop}>
             <div className={styles.planTitle}>{title}</div>
             <div className={styles.planSub}>{subtitle}</div>
           </div>
 
-          <img className={styles.tierIcon} src="/benefits/flag.svg" alt="" aria-hidden />
+          <img className={styles.tierIcon} src={tierIconSrc} alt="" aria-hidden />
         </div>
 
-        <div className={styles.pointsSection}>
+        <div className={isPro ? styles.proPointsSection : styles.pointsSection}>
           <div className={styles.pointsLabel}>{t('benefitsPage.pointsThisMonth')}</div>
 
-          <div className={styles.pointsRow}>
-            <span className={styles.pointsCur}>{curNum.toLocaleString()}</span>
-            <span className={styles.pointsSlash}>/</span>
-            <span className={styles.pointsMax}>{maxNum.toLocaleString()}</span>
-          </div>
+          {isPro ? (
+            <>
+              <div className={styles.pointsRow}>
+                <span className={styles.pointsCur}>{curNum.toLocaleString()}</span>
+                <span className={styles.pointsSlash}>/</span>
+                <span className={styles.pointsMax}>{maxNum.toLocaleString()}</span>
+              </div>
 
-          <div className={styles.progressTrack} aria-hidden>
-            <div className={styles.progressFill} style={{ width: `${percent}%` }} />
-          </div>
-        </div>
+              <div className={styles.progressTrack} aria-hidden>
+                <div
+                  className={`${styles.progressFill} ${styles.progressFillPro}`}
+                  style={{ width: `${percent}%` }}
+                />
+              </div>
 
-        <div className={styles.validRow}>
-          <div className={styles.validText}>
-            {validUntil ? t('benefitsPage.validUntil', { tier: title, date: validUntil }) : null}
-          </div>
+              <div className={styles.proProgressSpacer} aria-hidden />
 
-          {!!daysLeft && (
-            <div className={styles.daysTag}>{t('benefitsPage.daysLeftTag', { n: daysLeft })}</div>
+              <div className={styles.proValidityRow}>
+                <div className={styles.validText}>
+                  {validUntil ? t('benefitsPage.validUntil', { tier: 'Pro', date: validUntil }) : null}
+                </div>
+                {!!daysLeft && <div className={styles.daysTag}>{t('benefitsPage.daysLeftTag', { n: daysLeft })}</div>}
+              </div>
+
+              <div className={styles.proValidityDivider} aria-hidden />
+
+              <div className={styles.proNextTierCard}>
+                <div className={styles.proNextTierHeader}>
+                  <img
+                    className={styles.proNextTierHexBadge}
+                    src="/benefits/vip_pro2.svg"
+                    alt=""
+                    aria-hidden="true"
+                  />
+                  <div className={styles.proNextTierHeaderContent}>
+                    <div className={styles.proNextTierTitleRow}>
+                      <div className={styles.proNextTierTitle}>升级到Pro-2</div>
+                      <div className={styles.proNextTierExpText}>
+                        {pro2ExpCur.toLocaleString()}/{pro2ExpMax.toLocaleString()}EXP
+                      </div>
+                    </div>
+                    <div className={styles.proNextTierProgressTrack} aria-hidden>
+                      <div
+                        className={styles.proNextTierProgressFill}
+                        style={{ width: `${pro2ProgressPercent}%` }}
+                      />
+                    </div>
+                    <div className={styles.proNextTierSub}>还需{pro2ExpRemaining.toLocaleString()} EXP</div>
+                  </div>
+                </div>
+
+                <div className={styles.proNextTierBottomRow}>
+                  <div className={styles.proNextTierRewards}>
+                    Pro2发放：{pro2PointsPerMonth.toLocaleString()}积分、{pro2AiCallsPerMonth}次/月 AI Call
+                  </div>
+                  <button
+                    className={styles.proNextTierQuickUp}
+                    type="button"
+                    onClick={onPro2Upgrade}
+                  >
+                    {t('benefitsPage.quickUpgrade')}
+                  </button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className={styles.pointsRow}>
+                <span className={styles.pointsCur}>{curNum.toLocaleString()}</span>
+                <span className={styles.pointsSlash}>/</span>
+                <span className={styles.pointsMax}>{maxNum.toLocaleString()}</span>
+              </div>
+
+              <div className={styles.progressTrack} aria-hidden>
+                <div className={styles.progressFill} style={{ width: `${percent}%` }} />
+              </div>
+            </>
           )}
         </div>
+
+        {!isPro && (
+          <div className={styles.validRow}>
+            <div className={styles.validText}>
+              {validUntil ? t('benefitsPage.validUntil', { tier: title, date: validUntil }) : null}
+            </div>
+
+            {!!daysLeft && <div className={styles.daysTag}>{t('benefitsPage.daysLeftTag', { n: daysLeft })}</div>}
+          </div>
+        )}
       </div>
 
       <ProgressLine activeTier={activeTier} />

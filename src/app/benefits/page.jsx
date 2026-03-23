@@ -13,8 +13,8 @@ export default function BenefitsPage() {
   const router = useRouter();
   const { t } = useTranslation();
   // 临时切换展示模式（Free / Lite / Pro）
-  const tier = 'free';
-  const tierLabel = tier === 'lite' ? 'Lite' : tier === 'pro' ? 'Pro' : 'Free';
+  const tier = 'pro';
+  const tierLabel = tier === 'lite' ? 'Lite' : tier === 'pro' ? 'Pro-1' : 'Free';
   const containerModeClass = tier === 'lite' ? styles.mode_lite : tier === 'pro' ? styles.mode_pro : '';
 
   const days = 259;
@@ -23,10 +23,13 @@ export default function BenefitsPage() {
   const liteDepth = { cur: 20, max: 40 };
   const liteValidUntil = '2026-04-12';
   const liteDaysLeft = 22;
+  const proValidUntil = '2026-04-12';
+  const proDaysLeft = 22;
   const proPoints = { cur: 9518, max: 10000 };
   const proAi = { cur: 12, max: 200 };
 
-  const planSubKey = tier === 'lite' ? 'benefitsPage.planSubLite' : 'benefitsPage.planSubFree';
+  const planSubKey =
+    tier === 'lite' ? 'benefitsPage.planSubLite' : tier === 'pro' ? 'benefitsPage.planSubPro' : 'benefitsPage.planSubFree';
 
   const freeUnlocked = useMemo(
     () => [
@@ -63,6 +66,36 @@ export default function BenefitsPage() {
     ],
     [t, litePoints.cur, litePoints.max, liteAi.cur, liteAi.max, liteDepth.cur, liteDepth.max]
   );
+
+  const proUnlocked = useMemo(
+    () => [
+      {
+        tone: 'chart',
+        icon: '/benefits/monthly_points.svg',
+        title: t('benefitsPage.monthlyPoints'),
+        value: `${proPoints.cur.toLocaleString()}/${proPoints.max.toLocaleString()}`,
+        percent: (proPoints.cur / proPoints.max) * 100
+      },
+      {
+        tone: 'ai',
+        icon: '/benefits/ai_call.svg',
+        title: t('benefitsPage.aiCall'),
+        value: `${proAi.cur}/${proAi.max}`,
+        percent: (proAi.cur / proAi.max) * 100
+      },
+      {
+        tone: 'deal',
+        icon: '/benefits/big_deal.svg',
+        title: t('vipRecharge.features.bigOrder'),
+        value: t('benefitsPage.depth40'),
+        percent: 100
+      }
+    ],
+    [t, proPoints.cur, proPoints.max, proAi.cur, proAi.max]
+  );
+
+  // 使用与 lite 相同的“进度卡片”布局：Pro/ Lite 都复用这套结构
+  const progressUnlocked = tier === 'pro' ? proUnlocked : liteUnlocked;
 
   const lockedGrid = useMemo(
     () => [
@@ -104,6 +137,12 @@ export default function BenefitsPage() {
     [t]
   );
 
+  // Pro 模式：隐藏“专属客服 / 纯净无广告沉浸式 / 多主题自由切换”
+  //（只保留“专属Alpha核心群组”这一行，匹配设计稿红框消失的效果）
+  const hiddenInProIcons = useMemo(() => {
+    return ['/benefits/helper.svg', '/benefits/no_advertise.svg', '/benefits/multi_skin.svg'];
+  }, []);
+
   const proIconGrid = useMemo(
     () => [
       { icon: '/point/first_login.svg', label: t('vip.benefit.basicChart') },
@@ -131,10 +170,24 @@ export default function BenefitsPage() {
     [t]
   );
 
+  const quickIconGridNode = (
+    <div className={styles.liteQuickIconGrid} aria-hidden="true">
+      {liteQuickIcons.map((x, idx) => (
+        <div key={idx} className={styles.liteQuickIconItem}>
+          <div className={styles.liteQuickIconCircle}>
+            <img src={x.icon} alt="" />
+          </div>
+          <div className={styles.liteQuickIconLabel}>{x.label}</div>
+        </div>
+      ))}
+    </div>
+  );
+
   const goRecharge = () => router.push('/vip-recharge');
 
-  const navBg = tier === 'pro' ? 'transparent' : '#fff';
-  const navColor = tier === 'pro' ? 'rgba(252, 230, 196, 0.92)' : undefined;
+  // NavBar 需要白色底，否则“pro”模式下会传入 transparent 导致背景不符合设计
+  const navBg = '#ffffff';
+  const navColor = undefined;
 
   return (
     <div className={`${styles.container} ${containerModeClass}`}>
@@ -156,17 +209,18 @@ export default function BenefitsPage() {
           </div>
         </div>
 
-        {(tier === 'free' || tier === 'lite') && (
+        {(tier === 'free' || tier === 'lite' || tier === 'pro') && (
           <div className={styles.freeGlassWrap}>
-            {tier === 'lite' ? (
+            {tier === 'lite' || tier === 'pro' ? (
               <PlanCardLite
                 title={tierLabel}
                 subtitle={t(planSubKey)}
-                pointsCur={litePoints.cur}
-                pointsMax={litePoints.max}
-                validUntil={liteValidUntil}
-                daysLeft={liteDaysLeft}
+                pointsCur={tier === 'lite' ? litePoints.cur : proPoints.cur}
+                pointsMax={tier === 'lite' ? litePoints.max : proPoints.max}
+                validUntil={tier === 'lite' ? liteValidUntil : tier === 'pro' ? proValidUntil : undefined}
+                daysLeft={tier === 'lite' ? liteDaysLeft : tier === 'pro' ? proDaysLeft : undefined}
                 activeTier={tier}
+                onPro2Upgrade={tier === 'pro' ? goRecharge : undefined}
               />
             ) : (
               <PlanCardFree
@@ -193,11 +247,14 @@ export default function BenefitsPage() {
                     Lite会员专属权益
                   </div>
                 ) : (
-                  <div className={styles.sectionTitle}>{t('benefitsPage.tierBenefits', { tier: tierLabel })}</div>
+                  <div className={styles.sectionTitle}>
+                    <img className={styles.sectionTitleProIcon} src="/benefits/vip_pro.svg" alt="" aria-hidden="true" />
+                    Pro1会员专属权益
+                  </div>
                 )}
                 <div className={styles.benefitList}>
-                  {tier === 'lite'
-                    ? liteUnlocked.map((x, idx) => (
+                  {tier === 'lite' || tier === 'pro'
+                    ? progressUnlocked.map((x, idx) => (
                         <div
                           key={idx}
                           className={`${styles.benefitItem} ${x.tone === 'deal' ? styles.benefitItemDeal : ''}`}
@@ -228,23 +285,12 @@ export default function BenefitsPage() {
                       ))}
                 </div>
 
-                {tier === 'lite' && (
-                  <div className={styles.liteQuickIconGrid} aria-hidden="true">
-                    {liteQuickIcons.map((x, idx) => (
-                      <div key={idx} className={styles.liteQuickIconItem}>
-                        <div className={styles.liteQuickIconCircle}>
-                          <img src={x.icon} alt="" />
-                        </div>
-                        <div className={styles.liteQuickIconLabel}>{x.label}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                {tier === 'lite' && quickIconGridNode}
               </div>
 
               <div className={styles.section}>
-                <div className={styles.sectionTitle}>{t('benefitsPage.lockedSection')}</div>
-                {tier !== 'lite' && (
+                {tier !== 'pro' && <div className={styles.sectionTitle}>{t('benefitsPage.lockedSection')}</div>}
+                {tier !== 'lite' && tier !== 'pro' && (
                   <div className={styles.lockedGrid}>
                     {lockedGrid.map((x, idx) => (
                       <div key={idx} className={`${styles.lockedCard} ${styles[`tone_${x.tone}`]}`}>
@@ -257,6 +303,21 @@ export default function BenefitsPage() {
                     ))}
                   </div>
                 )}
+                {tier === 'pro' && (
+                  <div className={styles.proAllowanceTopCard}>
+                    <div className={styles.proAllowanceTopLeft}>
+                      <div className={styles.proAllowanceTopMain}>{proPoints.max}积分/月</div>
+                      <div className={styles.proAllowanceTopSub}>AI Call {liteAi.max}次/月</div>
+                    </div>
+                    <button
+                      type="button"
+                      className={`${styles.upgradePill} ${styles.upgradePillWide}`}
+                      onClick={goRecharge}
+                    >
+                      {t('benefitsPage.upgradeMore')}
+                    </button>
+                  </div>
+                )}
                 <div className={styles.lockedList}>
                   {lockedProRows
                     .filter(
@@ -265,10 +326,14 @@ export default function BenefitsPage() {
                           tier === 'lite' &&
                           (x.icon === '/benefits/no_advertise.svg' ||
                             x.icon === '/benefits/multi_skin.svg')
-                        )
+                        ) &&
+                        !(tier === 'pro' && hiddenInProIcons.includes(x.icon))
                     )
                     .map((x, idx) => (
-                    <div key={idx} className={styles.lockedRow}>
+                    <div
+                      key={idx}
+                      className={`${styles.lockedRow} ${tier === 'pro' ? styles.lockedRowPro : ''}`}
+                    >
                       <div className={styles.lockedRowLeft}>
                         <img
                           className={styles.lockedRowIconImg}
@@ -278,8 +343,14 @@ export default function BenefitsPage() {
                         />
                         <span className={styles.lockedRowLabel}>{x.label}</span>
                       </div>
-                      <button className={styles.upgradePill} type="button" onClick={goRecharge}>
-                        {t('benefitsPage.upgradePro')}
+                      <button
+                        className={styles.upgradePill}
+                        type="button"
+                        onClick={goRecharge}
+                      >
+                        {tier === 'pro' && x.icon === '/benefits/group.svg'
+                          ? t('benefitsPage.enterAlpha')
+                          : t('benefitsPage.upgradePro')}
                       </button>
                     </div>
                   ))}
@@ -301,11 +372,13 @@ export default function BenefitsPage() {
                   )}
                 </div>
               </div>
+
+              {tier === 'pro' && quickIconGridNode}
             </div>
           </div>
         )}
 
-        {tier === 'pro' && (
+        {tier === 'pro' && false && (
           <div className={`${styles.section} ${styles.sectionPro}`}>
             <div className={styles.sectionTitlePro}>{t('benefitsPage.exclusiveMemberLine', { name: t('benefitsPage.proLevel', { n: 1 }) })}</div>
 
