@@ -177,7 +177,7 @@ export default function BenefitsPage() {
           <div className={styles.liteQuickIconCircle}>
             <img src={x.icon} alt="" />
           </div>
-          <div className={styles.liteQuickIconLabel}>{x.label}</div>
+          <div className={tier === 'pro' ? styles.proQuickIconLabel : styles.liteQuickIconLabel}>{x.label}</div>
         </div>
       ))}
     </div>
