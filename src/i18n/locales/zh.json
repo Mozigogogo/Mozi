@@ -1791,10 +1791,14 @@
     "quickUpgrade": "快速升级",
     "allowanceCardTitle": "本月额度",
     "allowanceCardBody": "{{points}} 积分/月 · {{ai}} AI Call/月",
+    "allowancePointsMonthly": "{{points}}积分/月",
+    "allowanceAiMonthly": "AI Call {{ai}}次/月",
+    "upgrade": "升级",
     "upgradeMore": "升级更多",
     "enterAlpha": "进入",
     "bigOrderTitle": "大单行情",
     "inUse": "使用中",
-    "upgradeToEnjoy": "升级到Lite/Pro可享受"
+    "upgradeToEnjoy": "升级到Lite/Pro可享受",
+    "nextLevelRemaining": "还需{{remaining}} EXP"
   }
 }

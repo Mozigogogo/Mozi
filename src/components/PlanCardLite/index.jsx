@@ -81,9 +81,12 @@ export default function PlanCardLite({
                   />
                   <div className={styles.proNextTierHeaderContent}>
                     <div className={styles.proNextTierTitleRow}>
-                      <div className={styles.proNextTierTitle}>升级到Pro-2</div>
+                      <div className={styles.proNextTierTitle}>{t('benefitsPage.nextLevelCardTitle')}</div>
                       <div className={styles.proNextTierExpText}>
-                        {pro2ExpCur.toLocaleString()}/{pro2ExpMax.toLocaleString()}EXP
+                        {t('benefitsPage.nextLevelProgress', {
+                          current: pro2ExpCur.toLocaleString(),
+                          max: pro2ExpMax.toLocaleString()
+                        })}
                       </div>
                     </div>
                     <div className={styles.proNextTierProgressTrack} aria-hidden>
@@ -92,13 +95,18 @@ export default function PlanCardLite({
                         style={{ width: `${pro2ProgressPercent}%` }}
                       />
                     </div>
-                    <div className={styles.proNextTierSub}>还需{pro2ExpRemaining.toLocaleString()} EXP</div>
+                    <div className={styles.proNextTierSub}>
+                      {t('benefitsPage.nextLevelRemaining', { remaining: pro2ExpRemaining.toLocaleString() })}
+                    </div>
                   </div>
                 </div>
 
                 <div className={styles.proNextTierBottomRow}>
                   <div className={styles.proNextTierRewards}>
-                    Pro2发放：{pro2PointsPerMonth.toLocaleString()}积分、{pro2AiCallsPerMonth}次/月 AI Call
+                    {t('benefitsPage.nextLevelRewards', {
+                      points: pro2PointsPerMonth.toLocaleString(),
+                      ai: pro2AiCallsPerMonth
+                    })}
                   </div>
                   <button
                     className={styles.proNextTierQuickUp}

@@ -11,9 +11,10 @@ import PlanCardLite from '@/components/PlanCardLite';
 
 export default function BenefitsPage() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isEnglish = (i18n.language || '').startsWith('en');
   // 临时切换展示模式（Free / Lite / Pro）
-  const tier = 'pro';
+  const tier = 'free';
   const tierLabel = tier === 'lite' ? 'Lite' : tier === 'pro' ? 'Pro-1' : 'Free';
   const containerModeClass = tier === 'lite' ? styles.mode_lite : tier === 'pro' ? styles.mode_pro : '';
 
@@ -106,8 +107,8 @@ export default function BenefitsPage() {
         icon: '/benefits/big_deal.svg',
       },
       {
-        title: t('vipRecharge.features.monthlyPoints'),
-        subtitle: t('benefitsPage.monthlyPointsRange'),
+        title: 'Points',
+        subtitle: '10k/mo',
         tone: 'lavender',
         icon: '/benefits/monthly_points.svg',
       },
@@ -160,24 +161,46 @@ export default function BenefitsPage() {
   const liteQuickIcons = useMemo(
     () => [
       { icon: '/point/Basic_market .svg', label: t('vip.benefit.basicChart') },
-      { icon: '/point/Information_push.svg', label: '基础推送' },
+      { icon: '/point/Information_push.svg', label: t('vip.benefit.basicPush') },
       { icon: '/point/Email_alert.svg', label: t('benefitsPage.emailAlerts') },
-      { icon: '/point/Topic_witching.svg', label: '主题切换' },
-      { icon: '/point/Customer_service.svg', label: t('benefitsPage.standardCS') },
-      { icon: '/point/No_advertisement.svg', label: '无广告' },
+      { icon: '/point/Topic_witching.svg', label: t('vip.benefit.multiTheme') },
+      { icon: '/point/Customer_service.svg', label: t('benefitsPage.supportShort') },
+      { icon: '/point/No_advertisement.svg', label: t('vip.benefit.noAds') },
       { icon: '/point/Exclusive_logo.svg', label: t('benefitsPage.identityTag') },
     ],
     [t]
   );
 
+  const proQuickIcons = useMemo(
+    () => [
+      { icon: '/benefits/market_gold.svg', label: t('vip.benefit.basicChart') },
+      { icon: '/benefits/push_gold.svg', label: t('vip.benefit.basicPush') },
+      { icon: '/benefits/email_gold.svg', label: t('benefitsPage.emailAlerts') },
+      { icon: '/benefits/multi_skin.svg', label: t('vip.benefit.multiTheme') },
+      { icon: '/benefits/helper.svg', label: t('benefitsPage.supportShort') },
+      { icon: '/benefits/no_advertise.svg', label: t('vip.benefit.noAds') },
+      { icon: '/benefits/high_flag.svg', label: t('benefitsPage.identityTag') },
+      { icon: '/benefits/group.svg', label: t('vip.benefit.alphaGroup') },
+    ],
+    [t]
+  );
+
+  const quickIcons = tier === 'pro' ? proQuickIcons : liteQuickIcons;
+
   const quickIconGridNode = (
     <div className={styles.liteQuickIconGrid} aria-hidden="true">
-      {liteQuickIcons.map((x, idx) => (
+      {quickIcons.map((x, idx) => (
         <div key={idx} className={styles.liteQuickIconItem}>
-          <div className={styles.liteQuickIconCircle}>
-            <img src={x.icon} alt="" />
+          <div className={`${styles.liteQuickIconCircle} ${tier === 'pro' ? styles.proQuickIconCircle : ''}`}>
+            <img className={tier === 'pro' ? styles.proQuickIconImg : ''} src={x.icon} alt="" />
           </div>
-          <div className={tier === 'pro' ? styles.proQuickIconLabel : styles.liteQuickIconLabel}>{x.label}</div>
+          <div
+            className={`${tier === 'pro' ? styles.proQuickIconLabel : styles.liteQuickIconLabel} ${
+              isEnglish ? styles.quickIconLabelEn : ''
+            }`}
+          >
+            {x.label}
+          </div>
         </div>
       ))}
     </div>
@@ -201,7 +224,7 @@ export default function BenefitsPage() {
       <div className={styles.content}>
         <div className={styles.hero}>
           <div className={styles.heroText}>
-            <div className={styles.heroSub}>{t('benefitsPage.heroSub')}</div>
+            <div className={styles.heroSub}>With Mozi for</div>
             <div className={styles.heroDays}>
               <span className={styles.daysNum}>{days}</span>
               <span className={styles.daysUnit}>{t('benefitsPage.daysUnit')}</span>
@@ -227,8 +250,8 @@ export default function BenefitsPage() {
                 title={tierLabel}
                 subtitle={t(planSubKey)}
                 highlightSub={t('benefitsPage.aiCallPerMonth')}
-                hint={t('benefitsPage.upgradeToEnjoy')}
-                ctaText={t('benefitsPage.upgradeLitePro')}
+                hint="Unlock more"
+                ctaText="Upgrade"
                 onCtaClick={goRecharge}
                 activeTier={tier}
               />
@@ -244,13 +267,15 @@ export default function BenefitsPage() {
                       alt=""
                       aria-hidden="true"
                     />
-                    Lite会员专属权益
+                    {t('benefitsPage.exclusiveMemberLine', { name: 'Lite' })}
                   </div>
-                ) : (
+                ) : tier === 'pro' ? (
                   <div className={styles.sectionTitle}>
                     <img className={styles.sectionTitleProIcon} src="/benefits/vip_pro.svg" alt="" aria-hidden="true" />
-                    Pro1会员专属权益
+                    {t('benefitsPage.exclusiveMemberLine', { name: 'Pro1' })}
                   </div>
+                ) : (
+                  <div className={styles.sectionTitle}>Free权益</div>
                 )}
                 <div className={styles.benefitList}>
                   {tier === 'lite' || tier === 'pro'
@@ -306,15 +331,19 @@ export default function BenefitsPage() {
                 {tier === 'pro' && (
                   <div className={styles.proAllowanceTopCard}>
                     <div className={styles.proAllowanceTopLeft}>
-                      <div className={styles.proAllowanceTopMain}>{proPoints.max}积分/月</div>
-                      <div className={styles.proAllowanceTopSub}>AI Call {liteAi.max}次/月</div>
+                      <div className={styles.proAllowanceTopMain}>
+                        {t('benefitsPage.allowancePointsMonthly', { points: proPoints.max.toLocaleString() })}
+                      </div>
+                      <div className={styles.proAllowanceTopSub}>
+                        {t('benefitsPage.allowanceAiMonthly', { ai: liteAi.max })}
+                      </div>
                     </div>
                     <button
                       type="button"
                       className={`${styles.upgradePill} ${styles.upgradePillWide}`}
                       onClick={goRecharge}
                     >
-                      {t('benefitsPage.upgradeMore')}
+                      {t('benefitsPage.upgrade')}
                     </button>
                   </div>
                 )}
@@ -350,7 +379,7 @@ export default function BenefitsPage() {
                       >
                         {tier === 'pro' && x.icon === '/benefits/group.svg'
                           ? t('benefitsPage.enterAlpha')
-                          : t('benefitsPage.upgradePro')}
+                          : t('benefitsPage.upgrade')}
                       </button>
                     </div>
                   ))}
@@ -363,10 +392,10 @@ export default function BenefitsPage() {
                           alt=""
                           aria-hidden="true"
                         />
-                        <span className={styles.lockedRowLabel}>高级标识</span>
+                        <span className={styles.lockedRowLabel}>{t('benefitsPage.identityTag')}</span>
                       </div>
                       <button className={styles.upgradePill} type="button" onClick={goRecharge}>
-                        {t('benefitsPage.upgradePro')}
+                        {t('benefitsPage.upgrade')}
                       </button>
                     </div>
                   )}

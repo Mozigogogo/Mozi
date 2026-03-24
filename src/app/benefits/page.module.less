@@ -414,14 +414,7 @@
 .sectionsBigBox {
   margin-top: 14px; /* 保持与原 section 的间距一致 */
   padding: 12px; /* 给内部 section 留出边框内缩空间 */
-  /* 外层大盒子的 padding 区域需要与内层 section 同色，否则会透出玻璃层导致“断层” */
-  background: linear-gradient(
-      180deg,
-      rgba(255, 197, 117, 0.38) 0%,
-      rgba(255, 255, 255, 0.38) 100%
-    ),
-    linear-gradient(124.92deg, #603D21 2.71%, #8D501F 80.69%),
-    linear-gradient(124.92deg, #411D00 2.71%, #7E4314 80.69%);
+  background: #fff;
   border-radius: 18px;
   border: 1px solid rgba(193, 193, 193, 1);
 }
@@ -429,6 +422,11 @@
 .mode_lite .sectionsBigBox {
   border: 1px solid rgba(34, 197, 94, 1);
   background: linear-gradient(180deg, rgba(179, 251, 198, 0.67) 0%, rgba(255, 255, 255, 0.67) 100%);
+}
+
+/* Lite 模式下标题改为黑色 */
+.mode_lite .sectionTitle {
+  color: #111827;
 }
 
 .sectionsBigBox .section {
@@ -474,6 +472,11 @@
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+/* Free 模式下标题改为黑色 */
+.container:not(.mode_lite):not(.mode_pro) .sectionTitle {
+  color: #111827;
 }
 
 .sectionTitleLite {
@@ -820,7 +823,7 @@
 /* Pro 顶部额度卡：10000积分/月 + AI Call 40次/月 */
 .proAllowanceTopCard {
   height: 84px;
-  padding: 0 18px;
+  padding: 0 12px;
   margin-bottom: 10px;
   border-radius: 18px;
   background: linear-gradient(124.92deg, #603D21 2.71%, #8D501F 80.69%);
@@ -838,21 +841,21 @@
 }
 
 .proAllowanceTopMain {
-  font-size: 26px;
+  font-size: 18px;
   font-weight: 900;
   color: rgba(255, 255, 255, 0.92);
   line-height: 1;
 }
 
 .proAllowanceTopSub {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: rgba(255, 248, 237, 0.55);
   line-height: 1.2;
 }
 
 .upgradePillWide {
-  width: 120px;
+  width: 82px;
 }
 
 .lockedRow {
@@ -905,12 +908,7 @@
   height: 32px;
   border: 1px solid rgba(255, 255, 255, 0.41);
   border-radius: 29.82px;
-  background: linear-gradient(
-      0deg,
-      rgba(255, 255, 255, 0.6),
-      rgba(255, 255, 255, 0.6)
-    ),
-    linear-gradient(93.9deg, #FFCC8C 33.02%, #FBE0BE 75.81%);
+  background: linear-gradient(90deg, rgba(255, 204, 140, 1) 0%, rgba(251, 224, 190, 1) 100%);
   color: rgba(147, 65, 0, 1);
   font-family: "PingFang SC";
   font-weight: 500;
@@ -1038,12 +1036,27 @@
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
 }
 
+/* Pro 模式：去掉绿色染色底 */
+.proQuickIconCircle {
+  background: transparent;
+  box-shadow: none;
+}
+
 .liteQuickIconCircle img {
   width: 18px;
   height: 18px;
   /* 把灰色描边图标转成白色，适配绿色圆形背景 */
   /* SVG 本身是 fill-opacity=0.5，缩小后容易发虚；这里把整体不透明度拉满 */
   filter: brightness(0) invert(1) opacity(2);
+  object-fit: contain;
+  display: block;
+}
+
+/* Pro 模式使用彩色权益图标，不做白色滤镜转换 */
+.liteQuickIconCircle img.proQuickIconImg {
+  width: 32px;
+  height: 32px;
+  filter: none;
   object-fit: contain;
   display: block;
 }
@@ -1061,13 +1074,19 @@
   font-family: PingFang SC;
   font-weight: 400;
   font-style: normal;
-  font-size: 14px;
+  font-size: 12px;
   /* Figma/设计稿字段：leading-trim NONE（该属性在 Less 中不一定受支持） */
   line-height: 24px;
   letter-spacing: 0px;
   vertical-align: middle;
   color: rgba(255, 236, 208, 1);
   max-width: 100%;
+}
+
+/* 英文文案更长，降低字号避免挤压换行 */
+.quickIconLabelEn {
+  font-size: 11px;
+  line-height: 16px;
 }
 
 /* Pro inner cards */
