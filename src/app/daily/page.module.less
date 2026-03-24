@@ -1,5 +1,6 @@
 .container {
   min-height: 100vh;
+  min-height: 100svh;
   /* Stack calendar on top of daily background */
   background-image: url('/images/daily/daily_bg.png');
   background-repeat: no-repeat;
@@ -10,8 +11,38 @@
   color: white;
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Roboto', 'Segoe UI', Helvetica, Arial, sans-serif;
   overflow-x: hidden;
+  overflow-y: hidden;
   align-items: center;
   background-color: rgba(15, 23, 42, 1);
+  box-sizing: border-box;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.topNav {
+  width: 100%;
+  position: absolute;
+  top: 34px;
+  left: 10px;
+  z-index: 10;
+}
+
+.backButton {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(7, 20, 48, 0.35);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+}
+
+.backIcon {
+  width: 28px;
+  height: 28px;
+  color: #fff;
 }
 
 /* Header Styles (Date) - Removed */
@@ -227,8 +258,22 @@
   display: flex;
   align-items: center;
   justify-content: space-between; /* Align to right */
-  padding: 0 20px 20px 20px; /* Padding bottom for visual balance */
+  padding: 0 20px 0px 20px; /* Padding bottom for visual balance */
   box-sizing: border-box;
+}
+
+.shareButton {
+  width: calc(100% - 24px);
+  height: 44px;
+  margin: 2px 12px calc(10px + env(safe-area-inset-bottom)) 12px;
+  border: none;
+  border-radius: 22px;
+  background: #11B787;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
 }
 
 .logoContainer {

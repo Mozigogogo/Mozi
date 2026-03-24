@@ -563,7 +563,10 @@
     "walletAddressError": "Failed to get wallet address",
     "walletConnectFailed": "Wallet connection failed",
     "vipBannerText": "Try now - 14 days free",
+    "vipBannerTextFreePlan": "Unlock 7-Day Whale Signals · Free Trial",
+    "vipBannerMemberCenter": "Membership Center",
     "subscribeNow": "Subscribe",
+    "enter": "Enter",
     "wechatUser": "Telegram User",
     "accountBindLabel": "Account Binding",
     "aboutMozi": {
