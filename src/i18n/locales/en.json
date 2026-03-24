@@ -1324,7 +1324,7 @@
     "risePercent": "Rise Over",
     "fallPercent": "Fall Over",
     "bigOrderDetect": "Large Order Detection",
-    "exchangeSpreadMonitor": "Exchange Spread Monitoring",
+    "exchangeSpreadMonitor": "Spread Monitor",
     "noteTitle": "Please note:",
     "note1": "1. Only members with real-time market data permission can use big order detection",
     "note2": "2. If multiple big orders are triggered continuously, the interval between two notifications will not be less than 1 minute",

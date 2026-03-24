@@ -234,7 +234,11 @@ export default function OneClickAlarmModal({
   const handleInputChange = (key, value) => {
     setConfigs((prev) => ({
       ...prev,
-      [key]: { ...prev[key], value },
+      [key]: {
+        ...prev[key],
+        value,
+        enabled: value === '' ? prev[key].enabled : true,
+      },
     }));
   };
 
@@ -442,9 +446,12 @@ export default function OneClickAlarmModal({
       let fieldName = key;
       if (key === 'risePercent') fieldName = 'priceRiseChange24HPercent';
       if (key === 'fallPercent') fieldName = 'priceFallChange24HPercent';
+      if (key === 'bigOrderDetect') fieldName = 'bigDeal';
+      if (key === 'exchangeSpreadMonitor') fieldName = 'exchangeSpread';
 
       if (config.type === 'switchOnly') {
-        acc[fieldName] = true;
+        // Backend expects bigDeal as empty string when enabled.
+        acc[fieldName] = '';
         return acc;
       }
 
@@ -625,6 +632,7 @@ export default function OneClickAlarmModal({
                   <Button
                     className={configStyles.saveButton}
                     disabled={btnDisabled}
+                    loading={btnDisabled}
                     onClick={saveWarnings}
                     color="primary"
                   >
