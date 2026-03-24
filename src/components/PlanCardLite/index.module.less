@@ -1,0 +1,306 @@
+.planCard {
+  border-radius: 26px;
+  padding: 18px 18px 16px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+.planCardLite {
+  background: rgba(181, 255, 199, 1);
+  padding: 20px;
+  box-shadow: 0px 8px 22.3px 0px rgba(163, 167, 172, 0.24);
+  border: 1px solid #DFFFB7;
+}
+
+.planCardPro {
+  background: linear-gradient(
+      90deg,
+      rgba(255, 249, 223, 1) 0%,
+      rgba(255, 158, 48, 0.65) 100%
+    ),
+    rgba(255, 249, 223, 1);
+  padding: 20px;
+  /* Pro 卡片渐变描边 */
+  border: 1.5px solid rgba(255, 218, 137, 1);
+}
+
+.planTop {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.headerRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.planTitle {
+  font-size: 24px;
+  font-weight: 900;
+  color: #111827;
+  line-height: 1.1;
+}
+
+.planSub {
+  font-size: 14px;
+  color: rgba(22, 163, 74, 1);
+}
+
+.planCardPro .planSub {
+  color:rgba(255, 109, 12, 1);
+}
+
+.tierIcon {
+  width: 58px;
+  height: 58px;
+  flex-shrink: 0;
+  display: block;
+  object-fit: contain;
+  margin-top: 6px;
+}
+
+.pointsSection {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.proPointsSection {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pointsLabel {
+  font-size: 12px;
+  color: rgba(22, 163, 74, 1);
+}
+
+.planCardPro .pointsLabel {
+  color: rgba(255, 109, 12, 1);
+}
+
+.pointsRow {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.pointsCur {
+  font-size: 30px;
+  font-weight: 900;
+  color: rgba(11, 23, 42, 1);
+  line-height: 1;
+}
+
+.pointsSlash {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(22, 163, 74, 1);
+  line-height: 1;
+}
+
+.planCardPro .pointsSlash {
+  color: rgba(255, 109, 12, 1);
+}
+
+.pointsMax {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(22, 163, 74, 1);
+  line-height: 1;
+}
+
+.planCardPro .pointsMax {
+  color: rgba(255, 109, 12, 1);
+}
+
+.progressTrack {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #80F1AA 0%, #22C55E 100%);
+}
+
+.progressFillPro {
+  background: linear-gradient(90deg, #fbbf24 0%, #ea580c 100%);
+}
+
+.proProgressDivider {
+  width: 100%;
+  height: 0;
+  border-top: 0.5px solid rgba(255, 136, 0, 0.42);
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.proProgressSpacer {
+  width: 100%;
+  height: 0;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.proValidityDivider {
+  width: 100%;
+  height: 0;
+  border-top: 0.5px solid rgba(255, 136, 0, 0.42);
+  margin-top: 12px;
+  margin-bottom: 12px;
+}
+
+.proValidityRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.proNextTierCard {
+  padding: 12px;
+  border-radius: 14px;
+  background: #FEE3B7;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.proNextTierHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.proNextTierHexBadge {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}
+
+.proNextTierHeaderContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.proNextTierTitleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.proNextTierTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255, 109, 12, 1);
+  line-height: 1.2;
+}
+
+.proNextTierExpText {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255, 109, 12, 1);
+  line-height: 1.2;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.proNextTierSub {
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(100, 116, 139, 1);
+}
+
+.proNextTierProgressTrack {
+  margin-top: 8px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+}
+
+.proNextTierProgressFill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #fb923c 0%, #ea580c 100%);
+}
+
+.proNextTierBottomRow {
+  margin-top: 10px;
+  padding-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+  border-top: 0.5px solid rgba(255, 136, 0, 0.21);
+}
+
+.proNextTierRewards {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(120, 53, 15, 0.65);
+  line-height: 1.4;
+}
+
+.proNextTierQuickUp {
+  border: 1px solid rgba(180, 83, 9, 0.25);
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.35);
+  color: rgba(120, 53, 15, 1);
+  font-size: 12px;
+  font-weight: 900;
+  height: 28px;
+  padding: 0 8px;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.validRow {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.validText {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(22, 163, 74, 1);
+}
+
+.planCardPro .validText {
+  color: #9a3412;
+}
+
+.daysTag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(22, 163, 74, 0.35);
+  background: rgba(255, 255, 255, 0.45);
+  color: rgba(22, 163, 74, 1);
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.planCardPro .daysTag {
+  border-color: rgba(180, 83, 9, 0.25);
+  background: rgba(251, 146, 60, 0.25);
+  color: #9a3412;
+}
+

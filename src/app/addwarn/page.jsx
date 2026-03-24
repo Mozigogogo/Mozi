@@ -86,7 +86,11 @@ export default function Addwarn() {
   const handleInputChange = (key, value) => {
     setConfigs((prev) => ({
       ...prev,
-      [key]: { ...prev[key], value },
+      [key]: {
+        ...prev[key],
+        value,
+        enabled: value === '' ? prev[key].enabled : true,
+      },
     }));
   };
 
@@ -219,6 +223,15 @@ export default function Addwarn() {
       acc[fieldName] = config.unit === "%" ? `${config.value}%` : config.value;
       return acc;
     }, {});
+
+    if (bigOrderDetection) {
+      // Backend expects bigDeal as empty string when enabled.
+      content.bigDeal = "";
+    }
+    if (spreadMonitor) {
+      // addwarn page has no threshold input for exchange spread yet.
+      content.exchangeSpread = "";
+    }
 
     try {
       // 构建请求数据
@@ -383,6 +396,7 @@ export default function Addwarn() {
               <Button
                 className={styles.saveButton}
                 disabled={btnDisabled}
+                loading={btnDisabled}
                 onClick={saveWarnings}
               >
                 {t('addAlarm.saveAlarm')}
