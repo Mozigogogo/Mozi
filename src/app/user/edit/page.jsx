@@ -23,9 +23,10 @@ const ICONS = {
   right: '/icons/new_user/right.svg'
 };
 
+const PENDING_IDENTITY_KEY = 'mozi_pending_profile_identity';
+
 export default function EditProfilePage() {
   const router = useRouter();
-  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
   const { t } = useTranslation();
   const fileInputRef = useRef(null);
   
@@ -61,18 +62,18 @@ export default function EditProfilePage() {
     fetchUserInfo();
   }, []);
 
-  useEffect(() => {
+  /** 从身份选择页返回时 URL 带 ?identity=xxx；必须在 fetchUserInfo 合并后再写入，否则会被 localStorage/API 覆盖导致无法回显 */
+  const stripIdentityQuery = () => {
     if (typeof window === 'undefined') return;
-    const identityFromUrl = new URLSearchParams(window.location.search).get('identity');
-    if (!identityFromUrl) return;
-    setUserInfo((prev) => ({ ...prev, identity: identityFromUrl }));
-    // 清掉参数，避免返回/刷新重复触发
     try {
       const url = new URL(window.location.href);
+      if (!url.searchParams.has('identity')) return;
       url.searchParams.delete('identity');
-      window.history.replaceState({}, '', url.pathname + url.search);
-    } catch {}
-  }, []);
+      window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+    } catch {
+      /* ignore */
+    }
+  };
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -94,7 +95,34 @@ export default function EditProfilePage() {
     };
   }, []);
 
+  const clearPendingIdentityStorage = () => {
+    try {
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.removeItem(PENDING_IDENTITY_KEY);
+      }
+    } catch {
+      /* ignore */
+    }
+  };
+
   const fetchUserInfo = async () => {
+    let identityPending = null;
+    try {
+      if (typeof sessionStorage !== 'undefined') {
+        identityPending = sessionStorage.getItem(PENDING_IDENTITY_KEY);
+      }
+    } catch {
+      /* ignore */
+    }
+
+    const identityFromUrl =
+      typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('identity')
+        : null;
+
+    /** 来自身份页的选择（session 或 URL），需优先于缓存；合并 prev.identity 避免 React Strict Mode / 重复拉取覆盖 */
+    const identityIncoming = identityPending || identityFromUrl;
+
     try {
       const storedUserInfo = localStorage.getItem('userInfo');
       if (storedUserInfo) {
@@ -106,12 +134,16 @@ export default function EditProfilePage() {
           avatar: parsed.avatar || DEFAULT_AVATAR,
           nickName: parsed.nickName || parsed.nickname || 'MOZI',
           // 以下字段可能需要后端支持，这里先用模拟数据或空值
-          identity: parsed.identity || '',
+          identity: identityIncoming || parsed.identity || prev.identity || '',
           description: parsed.description || '',
           email: parsed.email || '',
           phone: parsed.phone || '',
           commissionId: parsed.commissionId || ''
         }));
+        if (identityIncoming) {
+          clearPendingIdentityStorage();
+          stripIdentityQuery();
+        }
       } else {
         // 尝试从 API 获取
         const res = await getUserDataInfo();
@@ -121,12 +153,26 @@ export default function EditProfilePage() {
             ...prev,
             avatar: data.avatar || DEFAULT_AVATAR,
             nickName: data.nickName || 'MOZI',
+            identity: identityIncoming || data.identity || prev.identity || '',
             // ...其他字段映射
           }));
+          if (identityIncoming) {
+            clearPendingIdentityStorage();
+            stripIdentityQuery();
+          }
+        } else if (identityIncoming) {
+          setUserInfo(prev => ({ ...prev, identity: identityIncoming || prev.identity }));
+          clearPendingIdentityStorage();
+          stripIdentityQuery();
         }
       }
     } catch (error) {
       console.error('Fetch user info failed:', error);
+      if (identityIncoming) {
+        setUserInfo(prev => ({ ...prev, identity: identityIncoming || prev.identity }));
+        clearPendingIdentityStorage();
+        stripIdentityQuery();
+      }
     }
   };
 
@@ -388,8 +434,9 @@ export default function EditProfilePage() {
       </div>
 
       <div className={styles.saveButtonWrapper}>
-        <Button 
-          className={styles.saveButton} 
+        <Button
+          block
+          className={styles.saveButton}
           loading={loading}
           onClick={handleSave}
         >

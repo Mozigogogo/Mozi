@@ -9,10 +9,11 @@ import styles from './page.module.less';
 export default function UserIdentityPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const initialValue = searchParams.get('value') || '';
   const [selected, setSelected] = useState(initialValue);
+  const isEnglish = i18n.language?.toLowerCase().startsWith('en');
 
   useEffect(() => {
     setSelected(initialValue);
@@ -39,6 +40,14 @@ export default function UserIdentityPage() {
     if (!selected) {
       Toast.show({ content: t('editProfile.identity.placeholder') || '请选择身份标签' });
       return;
+    }
+    // 与 URL 双通道传递，避免 Next 客户端导航 / Strict Mode 下 query 读取时机导致编辑页拿不到身份
+    try {
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem('mozi_pending_profile_identity', selected);
+      }
+    } catch {
+      /* ignore */
     }
     router.push(`/user/edit?identity=${encodeURIComponent(selected)}`);
   };
@@ -69,8 +78,8 @@ export default function UserIdentityPage() {
                   />
                 </div>
                 <div className={styles.cardText}>
-                  <div className={styles.cardTitle}>{opt.label}</div>
-                  <div className={styles.cardSub}>{opt.sub}</div>
+                  <div className={`${styles.cardTitle} ${isEnglish ? styles.cardTitleEn : ''}`}>{opt.label}</div>
+                  <div className={`${styles.cardSub} ${isEnglish ? styles.cardSubEn : ''}`}>{opt.sub}</div>
                 </div>
                 {isActive ? <div className={`${styles.check} ${styles.checkActive}`} /> : null}
               </button>
