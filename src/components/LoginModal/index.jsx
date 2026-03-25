@@ -9,6 +9,7 @@ import { sendVerificationCode, loginByTelegram, loginByEmail, registerByEmail, c
 import { runPostLoginSideEffects } from '../../utils/postLogin';
 import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
 import styles from './index.module.less';
+import { syncI18nextLngFromLoginResponse } from '../../utils/syncLoginLanguage';
 
 // 检测是否在 Telegram 环境中
 const isTelegramEnv = () => {
@@ -128,7 +129,7 @@ const updateTelegramUserInfo = async () => {
 };
 
 // Telegram 直接登录处理函数
-const handleTelegramDirectLogin = async (onLoginSuccess, onClose, t) => {
+const handleTelegramDirectLogin = async (onLoginSuccess, onClose, t, i18nInstance) => {
   if (typeof window === 'undefined' || !window.Telegram?.WebApp) {
     Toast.show({ content: '非 Telegram 环境', position: 'bottom' });
     return;
@@ -215,6 +216,9 @@ const handleTelegramDirectLogin = async (onLoginSuccess, onClose, t) => {
     
     if (res?.data?.token) {
       localStorage.setItem('token', res.data.token);
+
+      // 根据后端返回 language 更新缓存语言
+      syncI18nextLngFromLoginResponse(res, i18nInstance);
       
       const userData = res?.data?.userInfo || res?.data?.user;
       if (userData) {
@@ -253,7 +257,7 @@ const handleTelegramDirectLogin = async (onLoginSuccess, onClose, t) => {
 };
 
 export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletLogin, initialMode = 'login' }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   // 表单状态
   const [mode, setMode] = useState(initialMode); // 'login' or 'register'
   const [showEmailForm, setShowEmailForm] = useState(false); // 控制是否显示邮箱表单
@@ -381,6 +385,10 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
 
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
+
+        // 根据后端返回 language 更新缓存语言（并同步 i18n）
+        syncI18nextLngFromLoginResponse(res, i18n);
+        
         if (res?.data?.userInfo) {
           // 将 subscribeAnnouncement 一起存入 userInfo
           const userInfoWithSubscribe = {
@@ -479,6 +487,10 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
 
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
+
+        // 根据后端返回 language 更新缓存语言（并同步 i18n）
+        syncI18nextLngFromLoginResponse(res, i18n);
+        
         if (res?.data?.userInfo) {
           const userInfoWithSubscribe = {
             ...res.data.userInfo,
@@ -602,7 +614,7 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
                   /* TG 环境：只显示 Telegram 登录按钮 */
                   <div 
                     className={styles.walletBtn} 
-                    onClick={() => handleTelegramDirectLogin(onLoginSuccess, handleClose, t)}
+                    onClick={() => handleTelegramDirectLogin(onLoginSuccess, handleClose, t, i18n)}
                     style={{ background: '#0088cc' }}
                   >
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="white" style={{ marginRight: '8px' }}>
