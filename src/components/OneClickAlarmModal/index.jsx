@@ -599,7 +599,8 @@ export default function OneClickAlarmModal({
                     })}
                   </div>
 
-                  {/* 第三组：交易所价差 */}
+                  {/* 第三组：交易所价差（已注释隐藏：保留原始实现） */}
+                  {/*
                   <div className={configStyles.configCard}>
                     {['exchangeSpreadMonitor'].map((key) => {
                       const config = configs[key];
@@ -626,6 +627,7 @@ export default function OneClickAlarmModal({
                       );
                     })}
                   </div>
+                  */}
                 </div>
 
                 <div className={`${configStyles.bottomButtons} ${configStyles.configBottomButtons}`}>

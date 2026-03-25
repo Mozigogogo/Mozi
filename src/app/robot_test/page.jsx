@@ -624,6 +624,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     });
   }, [messages]);
 
+
   // 发送消息 - 使用 SSE Stream Hook
   const handleSend = async (text = null) => {
     // 如果开启了积分限制，并且当前判定为积分不足，则不再发起对话
@@ -894,31 +895,105 @@ export default function RobotPage({ isPC: propIsPC = false }) {
               onFocus={() => trackEvent(AIEvents.INPUT_FOCUSED)}
               disabled={isStreaming}
             />
-            {isStreaming ? (
-              <button 
-                className={styles.stopBtn} 
-                onClick={handleStop}
-              >
-                <Image 
-                  src="/icons/pause.svg" 
-                  alt={t('robot.stopAlt')} 
-                  width={14} 
-                  height={14}
-                  className={styles.pauseIcon}
-                />
-              </button>
-            ) : (
-              <button 
-                className={styles.sendBtn} 
-                onClick={() => handleSend()}
-                disabled={!inputValue.trim()}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 19V5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M5 12L12 5L19 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-            )}
+            <div className={styles.inputActions}>
+              <div className={styles.actionModes}>
+                <div
+                  className={`${styles.modeItem} ${selectedModel === 'analyze' ? styles.activeMode : ''}`}
+                  onClick={() => setSelectedModel('analyze')}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedModel('analyze');
+                    }
+                  }}
+                >
+                  <span className={styles.modeIconWrap}>
+                    <Image
+                      src="/images/ai_robot/deep.svg"
+                      alt=""
+                      width={11}
+                      height={18}
+                      className={`${styles.modeIcon} ${styles.modeIconDeep}`}
+                      aria-hidden
+                    />
+                  </span>
+                  <span className={styles.modeLabel}>深度思考</span>
+                </div>
+                <div
+                  className={`${styles.modeItem} ${selectedModel === 'chat' ? styles.activeMode : ''}`}
+                  onClick={() => setSelectedModel('chat')}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedModel('chat');
+                    }
+                  }}
+                >
+                  <span className={styles.modeIconWrap}>
+                    <Image
+                      src="/images/ai_robot/chat.svg"
+                      alt=""
+                      width={10}
+                      height={10}
+                      className={styles.modeIcon}
+                      aria-hidden
+                    />
+                  </span>
+                  <span className={styles.modeLabel}>聊天</span>
+                </div>
+              </div>
+              <div className={styles.actionTools}>
+                <span className={styles.pointsTag}>
+                  <Image
+                    src="/images/ai_robot/point.svg"
+                    alt=""
+                    width={12}
+                    height={12}
+                    className={styles.pointsIcon}
+                    aria-hidden
+                  />
+                  10 积分
+                </span>
+                <button type="button" className={styles.micBtn} aria-label="microphone">
+                  <Image
+                    src="/images/ai_robot/micro_phone.svg"
+                    alt=""
+                    width={14}
+                    height={14}
+                    className={styles.micIcon}
+                    aria-hidden
+                  />
+                </button>
+                {isStreaming ? (
+                  <button
+                    className={styles.stopBtn}
+                    onClick={handleStop}
+                  >
+                    <Image
+                      src="/icons/pause.svg"
+                      alt={t('robot.stopAlt')}
+                      width={14}
+                      height={14}
+                      className={styles.pauseIcon}
+                    />
+                  </button>
+                ) : (
+                  <button
+                    className={styles.sendBtn}
+                    onClick={() => handleSend()}
+                    disabled={!inputValue.trim()}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3 11.5L21 3L12.5 21L10.5 13.5L3 11.5Z" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
         
