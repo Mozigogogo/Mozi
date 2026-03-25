@@ -126,6 +126,18 @@
         "researcher": "Research Analyst",
         "educator": "Educational Blogger",
         "retail": "Retail Investor"
+      },
+      "subOptions": {
+        "compliance": "Compliance",
+        "trader": "Trader",
+        "quant": "Quant",
+        "creator": "Content Creator",
+        "community_builder": "Community Builder",
+        "institution": "Fund/VC/Market Maker",
+        "project_member": "Builder/Core Team",
+        "researcher": "Researcher",
+        "educator": "Educator",
+        "retail": "Retail"
       }
     },
     "bio": {

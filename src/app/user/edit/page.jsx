@@ -5,6 +5,8 @@ import { NavBar, Toast, Button, Picker, Input } from 'antd-mobile';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { getUserDataInfo, updateUserInfo, completeTask } from '@/api/user';
+import { getMySubscription } from '@/api/vip';
+import VipBanner from '@/components/VipBanner';
 import styles from './page.module.less';
 
 const DEFAULT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png';
@@ -23,11 +25,13 @@ const ICONS = {
 
 export default function EditProfilePage() {
   const router = useRouter();
+  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
   const { t } = useTranslation();
   const fileInputRef = useRef(null);
   
   const [loading, setLoading] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
+  const [mySubscription, setMySubscription] = useState(null);
   const [userInfo, setUserInfo] = useState({
     avatar: DEFAULT_AVATAR,
     nickName: '',
@@ -55,6 +59,39 @@ export default function EditProfilePage() {
 
   useEffect(() => {
     fetchUserInfo();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const identityFromUrl = new URLSearchParams(window.location.search).get('identity');
+    if (!identityFromUrl) return;
+    setUserInfo((prev) => ({ ...prev, identity: identityFromUrl }));
+    // 清掉参数，避免返回/刷新重复触发
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('identity');
+      window.history.replaceState({}, '', url.pathname + url.search);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    let alive = true;
+    getMySubscription()
+      .then((res) => {
+        if (!alive) return;
+        const data = res?.data ?? res;
+        setMySubscription(data);
+      })
+      .catch(() => {
+        // 静默失败：不影响编辑资料
+      });
+    return () => {
+      alive = false;
+    };
   }, []);
 
   const fetchUserInfo = async () => {
@@ -244,11 +281,18 @@ export default function EditProfilePage() {
             onClick={() => setIsEditingName(true)}
           />
         </div>
+
+        <div className={styles.vipBannerWrapper}>
+          <VipBanner onClick={() => router.push('/vip-recharge')} planCode={mySubscription?.planCode} />
+        </div>
       </div>
 
       <div className={styles.formCard}>
         {/* 身份标签 */}
-        <div className={styles.formItem} onClick={() => setIdentityPickerVisible(true)}>
+        <div
+          className={styles.formItem}
+          onClick={() => router.push(`/user/identity?value=${encodeURIComponent(userInfo.identity || '')}`)}
+        >
           <div className={styles.iconWrapper}>
             {/* 使用 CSS 绘制盾牌或者使用图片 */}
             <img src={ICONS.identity} alt="identity" />

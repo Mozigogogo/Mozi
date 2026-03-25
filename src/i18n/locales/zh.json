@@ -126,6 +126,18 @@
         "researcher": "投研分析师",
         "educator": "教育型博主",
         "retail": "普通投资者"
+      },
+      "subOptions": {
+        "compliance": "Compliance",
+        "trader": "Trader",
+        "quant": "Quant",
+        "creator": "Content Creator",
+        "community_builder": "Community Builder",
+        "institution": "Fund/VC/Market Maker",
+        "project_member": "Builder/Core Team",
+        "researcher": "Researcher",
+        "educator": "Educator",
+        "retail": "Retail"
       }
     },
     "bio": {
@@ -161,7 +173,7 @@
     "noMore": "没有更多了",
     "error": "出错了",
     "retry": "重试",
-    "confirm": "确认",
+    "confirm": "确定",
     "cancel": "取消",
     "submit": "提交",
     "save": "保存",

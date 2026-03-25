@@ -1,0 +1,161 @@
+.container {
+  height: 100vh;
+  background-color: #F5F6FA;
+  display: flex;
+  flex-direction: column;
+  font-family: 'PingFang SC', Roboto, sans-serif;
+}
+
+.navBar {
+  background-color: #F5F6FA;
+  --height: 44px;
+  flex-shrink: 0;
+
+  :global {
+    .adm-nav-bar-title {
+      font-weight: 600;
+      font-size: 17px;
+    }
+  }
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 6px;
+  min-height: 86px;
+  background: #fff;
+  border-radius: 16px;
+  border: 1.5px solid rgba(0, 0, 0, 0.06);
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.cardActive {
+  border-color: #11B787;
+  box-shadow: 0 0 0 2px rgba(17, 183, 135, 0.12) inset;
+}
+
+/* 所有卡片：头像绝对定位在左下角，不占文档流；文字用 padding 让出区域，避免叠字 */
+.iconWrap {
+  position: absolute;
+  left: 0px;
+  bottom: 0px;
+  height: 58px;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.icon {
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  opacity: 0.95;
+  pointer-events: none;
+  object-fit: contain;
+  object-position: left bottom;
+  display: block;
+}
+
+.cardText {
+  flex: 1;
+  min-width: 0;
+  padding-left: 54px;
+  position: relative;
+  z-index: 1;
+}
+
+.cardTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111;
+  line-height: 1.35;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.cardSub {
+  margin-top: 4px;
+  font-size: 12px;
+  color: rgba(137, 145, 164, 1);
+  line-height: 1.35;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 2px solid rgba(0, 0, 0, 0.12);
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.checkActive {
+  border-color: #11B787;
+  background: #11B787;
+}
+
+.checkActive::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5px;
+  height: 9px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: translate(-50%, -60%) rotate(45deg);
+}
+
+.footer {
+  padding: 0 16px 30px;
+  flex-shrink: 0;
+  background-color: #F5F6FA;
+}
+
+.confirmBtn {
+  width: 100%;
+  height: 50px;
+  border-radius: 25px;
+  background: #11B787;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  border: none;
+
+  &:active {
+    opacity: 0.9;
+  }
+}
+
