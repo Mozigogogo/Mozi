@@ -23,6 +23,7 @@ import {
   completeTask, 
   updateUserInfo 
 } from '@/api/user';
+import { getMySubscription } from '@/api/vip';
 import { ensureFirstLoginAt, fetchUserDataInfoOnce } from '@/utils/postLogin';
 import UserInfo from '@/app/user/components/UserInfo';
 import StatsAndActions from '@/app/user/components/StatsAndActions';
@@ -82,6 +83,7 @@ export default function UserPage() {
     isVip: false,
     isLogin: false
   });
+  const [mySubscription, setMySubscription] = useState(null);
   const DEFAULT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png';
   const [popVis, setPopVis] = useState(false);
   const [popType, setPopType] = useState('');
@@ -114,6 +116,55 @@ export default function UserPage() {
   
   // 用于记录当前组件生命周期内是否已经为邀请码弹出过登录弹窗
   const hasShownInviteModalRef = useRef(false);
+
+  const isVipBySubscription = (sub) => {
+    if (!sub) return false;
+    if (sub?.isVip === true) return true;
+    const planRaw = sub?.tierCode || sub?.planCode || sub?.plan_name || sub?.plan || sub?.tier || '';
+    const plan = String(planRaw || '').toUpperCase();
+    if (!plan) return false;
+    return plan !== 'FREE' && plan !== '0' && plan !== 'NONE';
+  };
+
+  // 进入 /user 时拉取订阅信息（登录态存在才请求）
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const CACHE_KEY = 'mozi_my_subscription_cache_v1';
+    const TTL = 5 * 60 * 1000; // 5min
+    let alive = true;
+
+    try {
+      const cachedStr = localStorage.getItem(CACHE_KEY);
+      if (cachedStr) {
+        const cached = JSON.parse(cachedStr);
+        if (cached?.ts && Date.now() - cached.ts < TTL && cached?.data) {
+          setMySubscription(cached.data);
+          setUserInfo((prev) => ({ ...prev, isVip: isVipBySubscription(cached.data) }));
+        }
+      }
+    } catch (_) {}
+
+    getMySubscription()
+      .then((res) => {
+        if (!alive) return;
+        const data = res?.data ?? res;
+        setMySubscription(data);
+        setUserInfo((prev) => ({ ...prev, isVip: isVipBySubscription(data) }));
+        try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
+        } catch (_) {}
+      })
+      .catch(() => {
+        // 静默失败：不影响 /user 页面正常使用
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   // 首次登录引导弹窗
   useEffect(() => {
@@ -1354,7 +1405,7 @@ export default function UserPage() {
         {/* 内容区域 */}
         <div className={styles.contentWrapper}>
           <div className={styles.contentSection}>
-            <VipBanner onClick={() => router.push('/vip-recharge')} />
+            <VipBanner onClick={() => router.push('/vip-recharge')} planCode={mySubscription?.planCode} />
             
             <PointsSection 
               pointsData={pointsData} 

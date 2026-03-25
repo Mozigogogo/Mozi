@@ -126,6 +126,18 @@
         "researcher": "投研分析师",
         "educator": "教育型博主",
         "retail": "普通投资者"
+      },
+      "subOptions": {
+        "compliance": "Compliance",
+        "trader": "Trader",
+        "quant": "Quant",
+        "creator": "Content Creator",
+        "community_builder": "Community Builder",
+        "institution": "Fund/VC/Market Maker",
+        "project_member": "Builder/Core Team",
+        "researcher": "Researcher",
+        "educator": "Educator",
+        "retail": "Retail"
       }
     },
     "bio": {
@@ -161,7 +173,7 @@
     "noMore": "没有更多了",
     "error": "出错了",
     "retry": "重试",
-    "confirm": "确认",
+    "confirm": "确定",
     "cancel": "取消",
     "submit": "提交",
     "save": "保存",
@@ -546,7 +558,10 @@
     "walletAddressError": "获取钱包地址失败",
     "walletConnectFailed": "钱包连接失败",
     "vipBannerText": "免费试用14天，马上开启新体验!",
+    "vipBannerTextFreePlan": "解锁大单订单流 · 7天免费体验",
+    "vipBannerMemberCenter": "会员中心",
     "subscribeNow": "立即订阅",
+    "enter": "进入",
     "wechatUser": "微信用户",
     "accountBindLabel": "账号绑定",
     "aboutMozi": {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import NavBar from '@/components/NavBar';
@@ -9,14 +9,60 @@ import PlanCardFree from '@/components/PlanCardFree';
 import ProgressLine from '@/components/ProgressLine';
 import PlanCardLite from '@/components/PlanCardLite';
 
+const MY_SUBSCRIPTION_PLAN_CODE_KEY = 'mozi_my_subscription_plan_code_v1';
+
+const planCodeToTier = (planCode) => {
+  const raw = String(planCode || '').trim();
+  if (!raw) return 'free';
+  const up = raw.toUpperCase();
+  if (up === 'FREE' || up === '0' || up === 'NONE') return 'free';
+  if (up.includes('PRO')) return 'pro';
+  if (up.includes('LITE')) return 'lite';
+  // 兜底：只要不是 free，就按 pro/lite 以外归为 lite 更保守（也可按业务改为 pro）
+  return 'lite';
+};
+
 export default function BenefitsPage() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const isEnglish = (i18n.language || '').startsWith('en');
   // 临时切换展示模式（Free / Lite / Pro）
-  const tier = 'free';
+  const [tier, setTier] = useState('free');
   const tierLabel = tier === 'lite' ? 'Lite' : tier === 'pro' ? 'Pro-1' : 'Free';
   const containerModeClass = tier === 'lite' ? styles.mode_lite : tier === 'pro' ? styles.mode_pro : '';
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const readAndSetTier = (planCode) => {
+      setTier(planCodeToTier(planCode));
+    };
+
+    // 1) 初次进入：读取本地缓存
+    try {
+      const saved = localStorage.getItem(MY_SUBSCRIPTION_PLAN_CODE_KEY);
+      readAndSetTier(saved);
+    } catch (_) {}
+
+    // 2) 同 Tab 内：接口调用后会触发自定义事件
+    const onPlanCodeUpdated = (e) => {
+      const nextPlanCode = e?.detail?.planCode;
+      readAndSetTier(nextPlanCode);
+    };
+    window.addEventListener('mozi:subscriptionPlanCodeUpdated', onPlanCodeUpdated);
+
+    // 3) 跨 Tab：监听 storage
+    const onStorage = (e) => {
+      if (e?.key !== MY_SUBSCRIPTION_PLAN_CODE_KEY) return;
+      readAndSetTier(e?.newValue);
+    };
+    window.addEventListener('storage', onStorage);
+
+    return () => {
+      window.removeEventListener('mozi:subscriptionPlanCodeUpdated', onPlanCodeUpdated);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
 
   const days = 259;
   const litePoints = { cur: 4518, max: 5000 };

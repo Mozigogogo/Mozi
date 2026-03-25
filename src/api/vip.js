@@ -1,6 +1,8 @@
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 
+const MY_SUBSCRIPTION_PLAN_CODE_KEY = 'mozi_my_subscription_plan_code_v1';
+
 /**
  * 查询三档权益列表
  * @returns {Promise}
@@ -57,5 +59,23 @@ export const getMySubscription = () => {
   return request({
     url: Interface.SUBSCRIPTION_MY,
     method: 'GET',
+  }).then((res) => {
+    if (typeof window !== 'undefined') {
+      try {
+        const data = res?.data ?? res;
+        const planCode = data?.planCode;
+        if (planCode !== undefined) {
+          const next = String(planCode);
+          localStorage.setItem(MY_SUBSCRIPTION_PLAN_CODE_KEY, next);
+          // 同 Tab 内通知：便于页面即时刷新订阅展示
+          window.dispatchEvent(
+            new CustomEvent('mozi:subscriptionPlanCodeUpdated', {
+              detail: { planCode: next },
+            })
+          );
+        }
+      } catch (_) {}
+    }
+    return res;
   });
 };

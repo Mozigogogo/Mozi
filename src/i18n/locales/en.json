@@ -116,16 +116,28 @@
       "label": "Identity Tag",
       "placeholder": "Please select your identity tag",
       "options": {
-        "compliance": "Compliance Practitioner",
-        "trader": "Professional Trader",
-        "quant": "Quant Researcher",
+        "compliance": "Compliance Pro",
+        "trader": "Pro Trader",
+        "quant": "Quant Analyst",
         "creator": "Content Creator",
-        "community_builder": "Community Operator",
-        "institution": "Institutional Practitioner",
+        "community_builder": "Community Lead",
+        "institution": "Institutional Pro",
         "project_member": "Project Member",
         "researcher": "Research Analyst",
-        "educator": "Educational Blogger",
+        "educator": "Education Blogger",
         "retail": "Retail Investor"
+      },
+      "subOptions": {
+        "compliance": "Compliance",
+        "trader": "Trader",
+        "quant": "Quant",
+        "creator": "Content Creator",
+        "community_builder": "Community Builder",
+        "institution": "Fund/VC/Market Maker",
+        "project_member": "Builder/Core Team",
+        "researcher": "Researcher",
+        "educator": "Educator",
+        "retail": "Retail"
       }
     },
     "bio": {
@@ -563,7 +575,10 @@
     "walletAddressError": "Failed to get wallet address",
     "walletConnectFailed": "Wallet connection failed",
     "vipBannerText": "Try now - 14 days free",
+    "vipBannerTextFreePlan": "Unlock 7-Day Whale Signals · Free Trial",
+    "vipBannerMemberCenter": "Membership Center",
     "subscribeNow": "Subscribe",
+    "enter": "Enter",
     "wechatUser": "Telegram User",
     "accountBindLabel": "Account Binding",
     "aboutMozi": {
