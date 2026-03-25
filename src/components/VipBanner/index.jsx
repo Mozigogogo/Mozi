@@ -29,7 +29,9 @@ export default function VipBanner({ onClick, planCode }) {
           {/* 使用本地 VIP 图标，如果需要更复杂的图形可以替换图片源 */}
           <img src={VIP_ICON} className={styles.icon} alt="VIP" />
         </div>
-        <div className={`${styles.text} ${isEnglish ? styles.textEn : ''}`}>
+        <div
+          className={`${styles.text} ${isEnglish ? styles.textEn : ''} ${isEnglish && !isFreePlan ? styles.textMemberCenterEn : ''}`}
+        >
           {isFreePlan
             ? (t('user.vipBannerTextFreePlan') || 'Unlock 7-Day Whale Signals · Free Trial')
             : (t('user.vipBannerMemberCenter') || '会员中心')}
