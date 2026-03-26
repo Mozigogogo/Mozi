@@ -884,6 +884,13 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
       resetTranscript();
 
+      // 先显式请求麦克风权限，避免部分内置 WebView 在 startListening 时反复弹权限窗
+      if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // 立即停止，只用于触发权限授权与降低后续权限弹窗循环
+        stream.getTracks().forEach((t) => t.stop());
+      }
+
       // iOS: 录音开始前强制失焦，避免 viewport 缩放导致布局抖动
       forceBlurAndResetViewport();
 
