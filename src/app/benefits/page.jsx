@@ -384,13 +384,20 @@ export default function BenefitsPage() {
                         {t('benefitsPage.allowanceAiMonthly', { ai: liteAi.max })}
                       </div>
                     </div>
-                    <button
-                      type="button"
+                    <div
+                      role="button"
+                      tabIndex={0}
                       className={`${styles.upgradePill} ${styles.upgradePillWide}`}
                       onClick={goRecharge}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          goRecharge();
+                        }
+                      }}
                     >
                       {t('benefitsPage.upgrade')}
-                    </button>
+                    </div>
                   </div>
                 )}
                 <div className={styles.lockedList}>
@@ -418,15 +425,22 @@ export default function BenefitsPage() {
                         />
                         <span className={styles.lockedRowLabel}>{x.label}</span>
                       </div>
-                      <button
+                      <div
+                        role="button"
+                        tabIndex={0}
                         className={styles.upgradePill}
-                        type="button"
                         onClick={goRecharge}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            goRecharge();
+                          }
+                        }}
                       >
                         {tier === 'pro' && x.icon === '/benefits/group.svg'
                           ? t('benefitsPage.enterAlpha')
                           : t('benefitsPage.upgrade')}
-                      </button>
+                      </div>
                     </div>
                   ))}
                   {tier === 'lite' && (
@@ -440,9 +454,20 @@ export default function BenefitsPage() {
                         />
                         <span className={styles.lockedRowLabel}>{t('benefitsPage.identityTag')}</span>
                       </div>
-                      <button className={styles.upgradePill} type="button" onClick={goRecharge}>
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        className={styles.upgradePill}
+                        onClick={goRecharge}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            goRecharge();
+                          }
+                        }}
+                      >
                         {t('benefitsPage.upgrade')}
-                      </button>
+                      </div>
                     </div>
                   )}
                 </div>
