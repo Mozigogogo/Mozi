@@ -245,7 +245,7 @@
       "addMonitor": "加监控"
     },
     "noFavorites": "暂无收藏自选",
-    "robotBubble": "欢迎来到Mozi,需要什么帮助？",
+    "robotBubble": "今天我能为你做些什么？",
     "quickActions": {
       "ai": "AI问答",
       "priceMonitor": "价格监控",
@@ -854,7 +854,7 @@
     "regenerate": "重新生成",
     "regenerateAlt": "重新生成",
     "me": "我",
-    "suggestedTitle": "你可能还想问：",
+    "suggestedTitle": "你可以问我加密货币行情、投资策略、DeFi 知识等。",
     "inputPlaceholder": "输入你的问题...",
     "send": "发送",
     "stopAlt": "停止生成",
@@ -868,6 +868,12 @@
     "model": {
       "analyze": "分析模型",
       "chat": "对话模型"
+    },
+    "quickAsk": {
+      "btcTrend": "BTC后市如何",
+      "ethTechnical": "ETH技术面怎么样",
+      "solDaily": "SOL今日行情分析",
+      "bnbProspect": "BNB发展前景怎么样"
     },
     "pointsUnit": "积分",
     "suggest": {
