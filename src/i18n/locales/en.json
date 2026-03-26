@@ -886,6 +886,12 @@
       "analyze": "Analyze",
       "chat": "Chat"
     },
+    "quickAsk": {
+      "btcTrend": "BTC outlook",
+      "ethTechnical": "ETH technical view",
+      "solDaily": "SOL daily analysis",
+      "bnbProspect": "BNB growth outlook"
+    },
     "pointsUnit": "Points",
     "suggest": {
       "analyzeTrend": "Analyze {{symbol}}'s trend",

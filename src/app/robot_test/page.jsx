@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Select } from 'antd';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import Markdown from 'markdown-to-jsx';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -19,6 +20,7 @@ import { useRobotTestSSE } from '@/hooks/useRobotTestSSE';
 import { forceBlurAndResetViewport } from '@/utils/iosViewportFix';
 import styles from './page.module.less';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
+import AiRobotUpgradePillButton from '@/components/AiRobotUpgradePillButton';
 
 // 代码块组件 - 带复制按钮
 const CodeBlock = ({ language, children, ...props }) => {
@@ -309,8 +311,9 @@ const StreamingMarkdown = ({ content, isStreaming }) => {
 };
 
 export default function RobotPage({ isPC: propIsPC = false }) {
-  const { t } = useTranslation();
-  const BOT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/AI_Bot.png';
+  const { t, i18n } = useTranslation();
+  const router = useRouter();
+  const BOT_AVATAR = '/images/ai_robot/robot_logo.svg';
   // 是否根据积分余额限制对话（开关变量，暂时关闭方便测试）
   const ENABLE_POINTS_LIMIT = false;
 
@@ -328,6 +331,12 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   }, []);
 
   const isPC = propIsPC || isPCState;
+  const fixedSuggestedQuestions = [
+    t('robot.quickAsk.btcTrend'),
+    t('robot.quickAsk.ethTechnical'),
+    t('robot.quickAsk.solDaily'),
+    t('robot.quickAsk.bnbProspect'),
+  ];
 
   const [inputValue, setInputValue] = useState('');
   // 消息列表：只有加载到历史记录或用户开始对话时才会出现内容
@@ -367,12 +376,23 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   const [showPopLogin, setShowPopLogin] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true); // 历史记录加载状态
   const [hasEnoughPoints, setHasEnoughPoints] = useState(true);   // 当前是否还有可用积分
+
+  const handleCopyMessage = async (text) => {
+    try {
+      if (!text) return;
+      await navigator.clipboard.writeText(String(text));
+    } catch (e) {
+      // Clipboard 权限可能受限，忽略即可
+      console.warn('[Robot] copy message failed:', e);
+    }
+  };
   
   const scrollRef = useRef(null);
   const currentRequestIdRef = useRef(null);
   const currentAiMsgIdRef = useRef(null);
   const conversationIdRef = useRef(null);
   const messageIdRef = useRef(null);
+  const lastUserMessageRef = useRef(null); // 用于“重新生成”
   const historyLoadedRef = useRef(false); // 防止重复加载历史记录
   const abortControllerRef = useRef(null);
   const currentActionCodeRef = useRef(null); // 本轮对话对应的积分扣除动作
@@ -449,7 +469,6 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
           console.log('✅ 加载了', historyMessages.length, '条历史消息');
 
-          // 如果有历史记录，替换欢迎消息
           if (historyMessages.length > 0) {
             setMessages(historyMessages);
             
@@ -460,24 +479,28 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                 localStorage.setItem('ai_conversation_id', data.data.conversationId);
               }
             }
-            
-            // 保存建议问题
-            if (data.data.suggestedQuestions && Array.isArray(data.data.suggestedQuestions)) {
-              setSuggestedQuestions(data.data.suggestedQuestions);
-              console.log('✅ 加载了', data.data.suggestedQuestions.length, '个建议问题');
-            }
           } else {
             // 没有历史记录时，不展示欢迎气泡/默认消息
             setMessages([]);
           }
+
+          // 保存建议问题：即使没有历史消息，也可能由后端下发默认 suggestedQuestions
+          if (data.data.suggestedQuestions && Array.isArray(data.data.suggestedQuestions)) {
+            setSuggestedQuestions(data.data.suggestedQuestions);
+            console.log('✅ 加载了', data.data.suggestedQuestions.length, '个建议问题');
+          } else {
+            setSuggestedQuestions([]);
+          }
         } else {
           console.log('⚠️ 数据格式不符合预期或无历史记录:', data);
           setMessages([]);
+          setSuggestedQuestions([]);
         }
       } catch (error) {
         console.error('❌ 加载聊天历史失败:', error);
         // 加载失败时，不展示默认欢迎消息
         setMessages([]);
+        setSuggestedQuestions([]);
       } finally {
         setIsLoadingHistory(false); // 加载完成
       }
@@ -602,6 +625,10 @@ export default function RobotPage({ isPC: propIsPC = false }) {
       }
     }
   );
+
+  // 右上角 “AI Assistant Pro” 升级胶囊：只在空状态展示，开始对话后隐藏
+  // 放在这里是为了确保 `isLoadingHistory` / `isStreaming` 已初始化
+  const showUpgradePill = messages.length === 0 && !isLoadingHistory && !isStreaming;
   
   // 检查登录状态
   useEffect(() => {
@@ -681,6 +708,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
       content: message,
       time: Date.now(),
     };
+    lastUserMessageRef.current = message;
     setMessages(prev => [...prev, userMsg]);
     setInputValue('');
     setSuggestedQuestions([]);
@@ -732,6 +760,106 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     } catch (error) {
       // 发送消息失败
       console.error('Send message failed:', error);
+    }
+  };
+
+  // 重新生成：基于上一条用户输入再请求一次
+  const handleRegenerate = async () => {
+    if (isStreaming) return;
+    const lastMessage = lastUserMessageRef.current;
+    if (!lastMessage) return;
+
+    // 积分不足同 handleSend
+    if (ENABLE_POINTS_LIMIT && !hasEnoughPoints) {
+      const warnMsg = t('robot.pointsNotEnough');
+      setMessages(prev => [
+        ...prev,
+        {
+          id: `system-points-${Date.now()}`,
+          role: 'assistant',
+          content: warnMsg,
+          time: Date.now(),
+        },
+      ]);
+      return;
+    }
+
+    forceBlurAndResetViewport();
+
+    // 生成请求 ID
+    const requestId = `req_${Date.now()}`;
+    currentRequestIdRef.current = requestId;
+
+    // 添加 AI 加载消息（重新生成会新增一条 assistant 消息）
+    const aiMsgId = `ai-loading-${Date.now()}`;
+    currentAiMsgIdRef.current = aiMsgId;
+
+    setSuggestedQuestions([]);
+    setMessages(prev => [
+      ...prev,
+      {
+        id: aiMsgId,
+        role: 'assistant',
+        content: '',
+        time: Date.now(),
+        loading: true,
+        requestId: requestId,
+      },
+    ]);
+
+    try {
+      const actionCode = selectedModel === 'analyze' ? 'AI_DEEP_ANALYZE' : 'AI_BASIC_CHAT';
+      currentActionCodeRef.current = actionCode;
+      hasConsumedRef.current = false;
+
+      const lang = typeof window !== 'undefined'
+        ? (localStorage.getItem('i18nextLng') || 'zh')
+        : 'zh';
+
+      let payload = {};
+      if (selectedModel === 'analyze') {
+        payload = {
+          symbol: "BTC",
+          question: lastMessage,
+          lang: lang,
+        };
+      } else {
+        payload = {
+          message: lastMessage,
+          lang: lang,
+        };
+      }
+
+      await sendMessage(payload);
+    } catch (error) {
+      console.error('Regenerate failed:', error);
+      if (currentAiMsgIdRef.current) {
+        setMessages(prev =>
+          prev.map(msg =>
+            msg.id === currentAiMsgIdRef.current
+              ? { ...msg, loading: false, content: t('robot.sendFailed') }
+              : msg
+          )
+        );
+      }
+    }
+  };
+
+  const handleShareMessage = async (text) => {
+    if (!text) return;
+    try {
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        await navigator.share({ text: String(text) });
+        return;
+      }
+    } catch (e) {
+      // 失败后回退到复制
+    }
+
+    try {
+      await navigator.clipboard.writeText(String(text));
+    } catch (e) {
+      console.warn('[Robot] share fallback (clipboard) failed:', e);
     }
   };
 
@@ -840,44 +968,173 @@ export default function RobotPage({ isPC: propIsPC = false }) {
         )}
         
         {/* 顶部标题/副标题/下拉模型选择（AI Assistant 区域）已移除 */}
+        
 
         <div className={styles.chatScroll} ref={scrollRef}>
+          {showUpgradePill && (
+            <div className={styles.upgradePillInChatScrollWrapper}>
+              <AiRobotUpgradePillButton
+                onClick={() => router.push('/vip-recharge')}
+                ariaLabel={t('aiAssistant.title')}
+                label={t('aiAssistant.title')}
+                className={styles.upgradePillNavBtn}
+              />
+            </div>
+          )}
+
+          {messages.length === 0 && !isLoadingHistory && !isStreaming && (
+            <div className={styles.emptyState}>
+              <div className={styles.emptyTextBlock}>
+                <div
+                  className={`${styles.emptyTitle} ${
+                    i18n?.language?.startsWith('en') ? styles.emptyTitleEn : ''
+                  }`}
+                >
+                  {t('home.robotBubble')}
+                </div>
+                <div className={styles.emptySubtitle}>{t('robot.suggestedTitle')}</div>
+              </div>
+
+              {(() => {
+                // 固定展示这四个建议入口（不再依赖后端返回的 suggestedQuestions）
+                const gridList = fixedSuggestedQuestions.slice(0, 4);
+
+                // 用 svg 图标替换原本的彩色圆点
+                const iconSvgs = [
+                  '/images/ai_robot/chat1.svg',
+                  '/images/ai_robot/chat2.svg',
+                  '/images/ai_robot/chat3.svg',
+                  '/images/ai_robot/chat4.svg',
+                ];
+                const getBtnLabel = (q) => getSuggestedQuestionDisplay(q) || q;
+
+                return (
+                  <>
+                    <div className={styles.emptyGrid}>
+                      {gridList.map((q, idx) => (
+                        <div
+                          key={`${q}-${idx}`}
+                          className={styles.emptyGridBtn}
+                          onClick={() => handleSuggestedQuestion(q)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              handleSuggestedQuestion(q);
+                            }
+                          }}
+                        >
+                          <span
+                            className={styles.emptyBtnIcon}
+                          >
+                            <img
+                              className={styles.emptyBtnSvg}
+                              src={iconSvgs[idx % iconSvgs.length]}
+                              alt=""
+                            />
+                          </span>
+                          <span className={styles.emptyBtnText}>{getBtnLabel(q)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          )}
+
           <div className={styles.messages}>
             {messages.map((msg) => (
               <div key={msg.id} className={`${styles.msgRow} ${msg.role === 'user' ? styles.right : styles.left}`}>
                 {msg.role === 'assistant' && (
                   <div className={styles.avatarCol}>
                     <img className={styles.avatar} src={BOT_AVATAR} alt={t('robot.aiAlt')} />
-                    <span className={styles.timeUnder}>{formatTime(msg.time)}</span>
                   </div>
                 )}
 
                 <div className={styles.msgContent}>
-                  {msg.loading && !msg.content ? (
-                    <ThinkingAnimation />
-                  ) : (
-                    <div className={`${styles.bubble} ${styles[msg.role]} ${msg.error ? styles.error : ''}`}>
-                      <div className={styles.text}>
-                        {msg.role === 'assistant' && msg.content ? (
-                          <>
-                            <StreamingMarkdown 
-                              content={msg.content} 
-                              isStreaming={msg.loading} 
-                            />
-                            {msg.loading && <span className={styles.loadingDots}>...</span>}
-                          </>
-                        ) : (
-                          msg.content || ''
-                        )}
-                      </div>
+                  <div
+                    className={`${styles.bubble} ${styles[msg.role]} ${msg.error ? styles.error : ''}`}
+                  >
+                    <div className={styles.text}>
+                      {msg.loading && !msg.content ? (
+                        <ThinkingAnimation />
+                      ) : msg.role === 'assistant' && msg.content ? (
+                        <>
+                          <StreamingMarkdown
+                            content={msg.content}
+                            isStreaming={msg.loading}
+                          />
+                          {msg.loading && (
+                            <span className={styles.loadingDots}>...</span>
+                          )}
+                        </>
+                      ) : (
+                        msg.content || ''
+                      )}
                     </div>
-                  )}
+                  </div>
+
+                  <div className={styles.bubbleFooter}>
+                    <span
+                      className={`${styles.bubbleTime} ${
+                        msg.role === 'user' ? styles.bubbleTimeRight : styles.bubbleTimeLeft
+                      }`}
+                    >
+                      {formatTime(msg.time)}
+                    </span>
+
+                    {msg.role === 'assistant' && msg.content && (
+                      <div className={styles.msgActions} aria-label="message actions">
+                        <button
+                          type="button"
+                          className={styles.actionBtn}
+                          onClick={() => {}}
+                          aria-label="like"
+                        >
+                          <img src="/images/ai_robot/like.svg" alt="" aria-hidden />
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.actionBtn}
+                          onClick={() => {}}
+                          aria-label="dislike"
+                        >
+                          <img src="/images/ai_robot/dislike.svg" alt="" aria-hidden />
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.actionBtn}
+                          onClick={() => handleCopyMessage(msg.content)}
+                          aria-label="copy"
+                        >
+                          <img src="/images/ai_robot/copy.svg" alt="" aria-hidden />
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.actionBtn}
+                          onClick={handleRegenerate}
+                          aria-label="regenerate"
+                        >
+                          <img src="/images/ai_robot/reload.svg" alt="" aria-hidden />
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.actionBtn}
+                          onClick={() => handleShareMessage(msg.content)}
+                          aria-label="share"
+                        >
+                          <img src="/images/ai_robot/share.svg" alt="" aria-hidden />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {msg.role === 'user' && (
                   <div className={styles.avatarCol}>
                     <div className={styles.userAvatar}>{t('robot.me')}</div>
-                    <span className={styles.timeUnder}>{formatTime(msg.time)}</span>
                   </div>
                 )}
               </div>
@@ -894,22 +1151,6 @@ export default function RobotPage({ isPC: propIsPC = false }) {
             </div>
           )}
         </div>
-
-        {/* 建议问题 - 固定在输入框上方 */}
-        {suggestedQuestions.length > 0 && !isStreaming && (
-          <div className={styles.suggestedQuestions}>
-            <div className={styles.suggestedTitle}>{t('robot.suggestedTitle')}</div>
-            {suggestedQuestions.map((q, idx) => (
-              <button
-                key={idx}
-                className={styles.suggestedBtn}
-                onClick={() => handleSuggestedQuestion(q)}
-              >
-                {getSuggestedQuestionDisplay(q)}
-              </button>
-            ))}
-          </div>
-        )}
 
         <div className={styles.chatInputBar}>
           <div className={styles.inputBox}>

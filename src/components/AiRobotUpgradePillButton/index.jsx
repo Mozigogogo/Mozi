@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './index.module.less';
 import AiRobotButtonSvg from '@/components/AiRobotButtonSvg';
 
@@ -23,6 +24,15 @@ export default function AiRobotUpgradePillButton({
   iconHeight: _iconHeight,
 }) {
   const text = children ?? label ?? '';
+  const { i18n } = useTranslation();
+  const isEnglish =
+    i18n?.language?.toLowerCase().startsWith('en') ||
+    (typeof window !== 'undefined' &&
+      (localStorage.getItem('i18nextLng') || '').toLowerCase().startsWith('en'));
+
+  const backgroundSrc = isEnglish
+    ? '/images/ai_robot/button_en.svg'
+    : '/images/ai_robot/button.svg';
 
   return (
     <button
@@ -32,7 +42,7 @@ export default function AiRobotUpgradePillButton({
       disabled={disabled}
       aria-label={ariaLabel || (typeof text === 'string' ? text : 'upgrade')}
     >
-      <AiRobotButtonSvg className={styles.background} />
+      <AiRobotButtonSvg className={styles.background} src={backgroundSrc} />
       <span className={styles.srOnly}>{text}</span>
     </button>
   );

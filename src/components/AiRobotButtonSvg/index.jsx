@@ -9,6 +9,7 @@ export default function AiRobotButtonSvg({
   className,
   width = 188,
   height = 67,
+  src = '/images/ai_robot/button.svg',
   alt = '',
   ariaLabel,
 }) {
@@ -17,7 +18,7 @@ export default function AiRobotButtonSvg({
 
   return (
     <img
-      src="/images/ai_robot/button.svg"
+      src={src}
       width={width}
       height={height}
       className={className}

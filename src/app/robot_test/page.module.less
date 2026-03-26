@@ -9,6 +9,7 @@
   flex-direction: column;
   padding-bottom: env(safe-area-inset-bottom);
   overflow: hidden; /* 防止整个页面滚动 */
+  position: relative;
 
   &.pcMode {
     height: calc(100vh - 120PX); // Use PX to avoid scaling. 64px header + 24px padding + 32px bottom gap
@@ -79,6 +80,8 @@
 
       .chatScroll {
         flex: 1;
+        display: flex;
+        flex-direction: column;
         min-height: 0; 
         padding: 20PX 0;
         
@@ -242,6 +245,9 @@
 
   .chatScroll {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
     overflow-y: auto;
     padding: 66px 6px 0; // 30rpx→15px, 12rpx→6px
     box-sizing: border-box;
@@ -324,7 +330,7 @@
     width: 32px; // 64rpx→32px
     height: 32px;
     border-radius: 50%;
-    background: #fff;
+    background: transparent;
     flex-shrink: 0;
   }
 
@@ -351,7 +357,7 @@
 
   .bubble {
     padding: 8px 9px; // 16rpx→8px, 18rpx→9px
-    border-radius: 8px; // 16rpx→8px
+    border-radius: 20px; // 统一圆角基准：除特定“顶部尖角”外，其它角都为 20px
     font-size: 14px; // 28rpx→14px
     line-height: 1.6;
     word-break: break-word;
@@ -360,14 +366,14 @@
     &.user {
       background: #11B787;
       color: #fff;
-      border-top-right-radius: 3px; // 6rpx→3px
+      border-top-right-radius: 6px; // 右上角小一点
     }
 
     &.assistant {
       background: #fff;
       color: #111;
       border: 1px solid #ececec;
-      border-top-left-radius: 3px; // 6rpx→3px
+      border-top-left-radius: 6px; // 左上角小一点
     }
 
     &.error {
@@ -411,6 +417,42 @@
     color: #a2a2a2;
     line-height: 1;
   }
+
+// 气泡内时间（放在消息内容下方，而不是头像下方）
+.bubbleTime {
+  font-size: 10px;
+  color: #a2a2a2;
+  line-height: 1;
+}
+
+.bubbleFooter {
+  width: 100%;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.bubbleTimeLeft {
+  text-align: left;
+}
+
+.bubbleTimeRight {
+  text-align: right;
+  /* 用户消息：只有一个时间戳元素时，用 auto margin 把它推到右侧 */
+  margin-left: auto;
+}
+
+.msgRow.right .bubbleFooter {
+  justify-content: flex-end;
+  align-items: flex-end;
+}
+
+.msgRow.right .bubbleTimeRight {
+  width: auto;
+  margin-left: auto;
+}
 
   .chatInputBar {
     display: flex;
@@ -483,8 +525,10 @@
     height: 100%;
     display: inline-flex;
     align-items: center;
+    flex-shrink: 0;
     gap: 2px;
     line-height: 1;
+    white-space: nowrap;
     /* 左右 padding 需要区分：按钮内容左侧更靠左，便于与上方 placeholder 文本对齐 */
     padding: 3px 8px 3px 4px;
     border-radius: 12px;
@@ -527,6 +571,7 @@
 
   .modeLabel {
     line-height: 1;
+    white-space: nowrap;
   }
 
   .actionTools {
@@ -617,8 +662,8 @@
     background: #ff4d4f;
     color: #fff;
     border: none;
-    width: 54px;
-    height: 54px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     padding: 0;
     cursor: pointer;
@@ -651,8 +696,7 @@
 
   .msgActions {
     display: flex;
-    gap: 4px; // 8rpx→4px
-    padding-left: 2px; // 4rpx→2px
+    gap: 2px; // 8rpx→4px
   }
 
   .actionBtn {
@@ -661,13 +705,18 @@
     border: none !important;
     color: #666;
     font-size: 11px; // 22rpx→11px
-    padding: 2px 5px; // 4rpx→2px, 10rpx→5px
     border-radius: 3px; // 6rpx→3px
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
     align-items: center;
     gap: 3px; // 图标和文字之间的间距
+
+    img {
+      width: 22px;
+      height: 22px;
+      display: block;
+    }
 
     &:hover:not(:disabled) {
       background: #f5f6f7;
@@ -753,6 +802,191 @@
   z-index: 100; // 降低z-index，只需要在聊天区域内最高即可
   backdrop-filter: none;
 }
+
+.upgradePillInChatScrollWrapper {
+  /* 以 chatScroll 作为定位基准，右上角悬浮 */
+  position: sticky;
+  top: 0px;
+  z-index: 2000; // 高于 chatScroll 等区域
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  box-sizing: border-box;
+  padding-right: 12px;
+
+  /* 抵消 chatScroll 自身 padding-top，避免吸顶时产生跳动 */
+  margin-top: -54px; // mobile: chatScroll padding-top = 66px
+}
+
+.upgradePillNavBtn {
+  transform: scale(0.85);
+  transform-origin: right center;
+  pointer-events: auto;
+}
+
+.emptyState {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+.emptyTextBlock {
+  width: 100%;
+  text-align: center;
+  max-width: 360px;
+}
+
+.emptyTitle {
+  font-family: Inter, sans-serif;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.8px;
+  color: #111;
+  line-height: 48px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.emptyTitleEn {
+  font-size: 18px;
+  line-height: 28px;
+  letter-spacing: -0.5px;
+}
+
+.emptySubtitle {
+  font-size: 13px;
+  color: #8a8a8a;
+  line-height: 1.4;
+  margin-bottom: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.emptyGrid {
+  width: 100%;
+  display: grid;
+  /* 始终最多两列，避免一行超过两个入口 */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.emptyGridBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 37.5px;
+  padding: 0 12px;
+  border-radius: 33554400px;
+  border-width: 1px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(243, 244, 246, 1);
+  border-top: 1px solid rgba(243, 244, 246, 1);
+  box-shadow: 0px 1px 2px -1px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.emptyGridBtn:hover {
+  border-color: #11B787;
+  box-shadow: 0 6px 20px rgba(17, 183, 135, 0.12);
+}
+
+.emptyBtnIcon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.emptyBtnSvg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.emptyBtnText {
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #111;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+.emptyMoreRow {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+  margin-bottom: 6px;
+}
+
+.emptyMoreBtn {
+  background: transparent;
+  border: none;
+  padding: 6px 8px;
+  cursor: pointer;
+  color: #11B787;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.emptyAllList {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.emptyAllItemBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #ededed;
+  background: rgba(255, 255, 255, 0.95);
+  cursor: pointer;
+}
+
+.emptyAllItemBtn:hover {
+  border-color: #11B787;
+}
+
+// @media screen and (min-width: 1024px) {
+//   .upgradePillInChatScrollWrapper {
+//     margin-top: -8px; // pc: chatScroll padding-top = 20px
+//   }
+// }
+
+// .upgradePillPc {
+//   position: absolute;
+//   top: 12px;
+//   right: 12px;
+//   z-index: 2000; // 高于 chatScroll 等区域
+// }
+
+// .upgradePillNavBtn {
+//   transform: scale(0.85);
+//   transform-origin: right center;
+//   pointer-events: auto;
+// }
 
 .loadingContent {
   display: flex;
