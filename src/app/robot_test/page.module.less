@@ -148,6 +148,13 @@
               height: 18PX;
               margin: 0;
           }
+
+          img {
+              width: 18PX;
+              height: 18PX;
+              margin: 0;
+              display: block;
+          }
         }
         
         .pauseIcon {
@@ -169,6 +176,7 @@
           padding: 8PX 12PX;
         }
       }
+
     }
   }
 
@@ -235,7 +243,7 @@
   .chatScroll {
     flex: 1;
     overflow-y: auto;
-    padding: 15px 6px 0; // 30rpx→15px, 12rpx→6px
+    padding: 66px 6px 0; // 30rpx→15px, 12rpx→6px
     box-sizing: border-box;
     position: relative; // 添加相对定位，让遮罩层相对于它定位
     background: transparent;
@@ -416,7 +424,7 @@
     flex: 1;
     background: rgba(255, 255, 255, 0.9);
     border-radius: 32px;
-    padding: 14px 14px 10px;
+    padding: 14px 12px 10px;
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -464,30 +472,36 @@
   .actionModes {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 6px;
+    height: 26px;
   }
 
   .modeItem {
     color: rgba(106, 114, 130, 1);
     font-size: 12px;
     font-weight: 600;
+    height: 100%;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
     line-height: 1;
-    padding: 2px 4px;
-    border-radius: 8px;
+    /* 左右 padding 需要区分：按钮内容左侧更靠左，便于与上方 placeholder 文本对齐 */
+    padding: 3px 8px 3px 4px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    box-shadow: none;
     cursor: pointer;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 
-    &:hover {
+    &:hover:not(.activeMode) {
       background: rgba(106, 114, 130, 0.08);
     }
   }
 
   .activeMode {
-    color: rgba(106, 114, 130, 1);
-    background: rgba(236, 253, 245, 1);
+    color: #0b7c54;
+    background: #bfe9d7;
+    /* 让选中态更“吃光”，同时不影响整体布局 */
   }
 
   .modeIconWrap {
@@ -526,7 +540,7 @@
     align-items: center;
     justify-content: center;
     gap: 4px;
-    height: 34px;
+    height: 26px;
     padding: 0 14px;
     border-radius: 20px;
     background: #dff4ec;
@@ -546,14 +560,20 @@
     border: none;
     background: transparent;
     color: #8c94a3;
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     padding: 0;
     font-size: 22px;
     line-height: 1;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+  }
+
+  .micBtnActive {
+    /* 让正在识别的麦克风更显眼 */
+    background: rgba(17, 183, 135, 0.12);
+    border-radius: 50%;
   }
 
   .micIcon {
@@ -575,6 +595,12 @@
     cursor: pointer;
     transition: all 0.2s;
     flex-shrink: 0;
+
+    img {
+      width: 18px;
+      height: 18px;
+      display: block;
+    }
 
     &:hover:not(:disabled) {
       background: #84d3c8;
@@ -602,9 +628,21 @@
     justify-content: center;
     flex-shrink: 0;
 
+    img {
+      width: 18px;
+      height: 18px;
+      display: block;
+    }
+
     &:hover {
       opacity: 0.9;
     }
+  }
+
+  .sendIcon {
+    width: 18px;
+    height: 18px;
+    display: block;
   }
 
   .pauseIcon {
