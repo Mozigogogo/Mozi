@@ -877,20 +877,22 @@
     "stopAlt": "Stop generating",
     "copy": "Copy",
     "copied": "Copied",
-    "sendFailed": "Send failed, please retry",
+    "sendFailed": "Send failed. Please retry",
+    "pointsNotEnough": "Not enough points. Please get more to continue.",
     "wsNotConnected": "WebSocket not connected, please refresh",
-    "genericError": "Sorry, something went wrong. Please try later",
-    "welcome": "Hello, I'm your AI assistant! I can help analyze crypto markets and answer investment questions. What can I help you?",
+    "genericError": "Something went wrong. Please try later",
+    "welcome": "Hi! I'm your AI assistant. I can analyze crypto and answer your questions.",
     "model": {
-      "analyze": "Analysis Model",
-      "chat": "Chat Model"
+      "analyze": "Analyze",
+      "chat": "Chat"
     },
+    "pointsUnit": "Points",
     "suggest": {
-      "analyzeTrend": "Help me analyze {{symbol}}'s trend",
-      "isGoodToBuy": "Is now a good time to buy {{symbol}}?",
-      "technicalView": "How does {{symbol}} look technically?",
-      "topGainer": "What's the top gainer today?",
-      "fearGreedIndex": "What's the Fear & Greed Index?"
+      "analyzeTrend": "Analyze {{symbol}}'s trend",
+      "isGoodToBuy": "Good time to buy {{symbol}}?",
+      "technicalView": "{{symbol}} technical view",
+      "topGainer": "Top gainer today?",
+      "fearGreedIndex": "Fear & Greed Index?"
     }
   },
   "aiAssistant": {

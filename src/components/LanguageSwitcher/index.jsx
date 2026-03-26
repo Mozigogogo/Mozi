@@ -2,12 +2,24 @@
 
 import { useTranslation } from 'react-i18next';
 import styles from './index.module.less';
+import { editLanguage } from '@/api/user';
 
 export default function LanguageSwitcher() {
   const { i18n, t } = useTranslation();
 
-  const changeLanguage = (lng) => {
+  const changeLanguage = async (lng) => {
     i18n.changeLanguage(lng);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('i18nextLng', lng);
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          await editLanguage(lng);
+        } catch (e) {
+          console.error('[LanguageSwitcher] editLanguage failed:', e);
+        }
+      }
+    }
   };
 
   return (

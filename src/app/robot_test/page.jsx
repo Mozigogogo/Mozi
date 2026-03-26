@@ -18,6 +18,7 @@ import { executeConsume } from '@/api/points';
 import { useRobotTestSSE } from '@/hooks/useRobotTestSSE';
 import { forceBlurAndResetViewport } from '@/utils/iosViewportFix';
 import styles from './page.module.less';
+import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 
 // 代码块组件 - 带复制按钮
 const CodeBlock = ({ language, children, ...props }) => {
@@ -329,18 +330,39 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   const isPC = propIsPC || isPCState;
 
   const [inputValue, setInputValue] = useState('');
-  const [messages, setMessages] = useState([
-    { 
-      id: 'welcome-1', 
-      role: 'assistant', 
-      content: '', 
-      time: Date.now() 
-    }
-  ]);
+  // 消息列表：只有加载到历史记录或用户开始对话时才会出现内容
+  const [messages, setMessages] = useState([]);
   const [suggestedQuestions, setSuggestedQuestions] = useState([]);
   // 模型选择状态
   const [selectedModel, setSelectedModel] = useState('analyze'); // 'analyze' | 'chat'
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  // 积分展示：深度思考( analyze )消耗更高
+  const pointsTagValue = selectedModel === 'analyze' ? 50 : 10;
+
+  // 语音转文字（Web Speech API）
+  const {
+    transcript,
+    finalTranscript,
+    listening,
+    resetTranscript,
+    browserSupportsSpeechRecognition,
+    isMicrophoneAvailable
+  } = useSpeechRecognition();
+
+  // 识别结束后，把结果填回输入框
+  useEffect(() => {
+    if (!listening && finalTranscript) {
+      setInputValue(finalTranscript);
+    }
+  }, [listening, finalTranscript]);
+
+  // 识别过程中，实时把转写内容写到输入框（更像“边说边转文字”）
+  useEffect(() => {
+    if (listening && transcript) {
+      setInputValue(transcript);
+    }
+  }, [listening, transcript]);
 
   const [showPopLogin, setShowPopLogin] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true); // 历史记录加载状态
@@ -356,15 +378,6 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   const currentActionCodeRef = useRef(null); // 本轮对话对应的积分扣除动作
   const hasConsumedRef = useRef(false); // 防止重复调用 /points/consume
   // const [isStreaming, setIsStreaming] = useState(false); // 使用 hook 中的 isStreaming
-
-  // 设置欢迎消息
-  useEffect(() => {
-    setMessages(prev => prev.map(msg => 
-      msg.id === 'welcome-1' && !msg.content
-        ? { ...msg, content: t('robot.welcome') }
-        : msg
-    ));
-  }, [t]);
 
   // 加载聊天历史记录
   useEffect(() => {
@@ -453,13 +466,18 @@ export default function RobotPage({ isPC: propIsPC = false }) {
               setSuggestedQuestions(data.data.suggestedQuestions);
               console.log('✅ 加载了', data.data.suggestedQuestions.length, '个建议问题');
             }
+          } else {
+            // 没有历史记录时，不展示欢迎气泡/默认消息
+            setMessages([]);
           }
         } else {
           console.log('⚠️ 数据格式不符合预期或无历史记录:', data);
+          setMessages([]);
         }
       } catch (error) {
         console.error('❌ 加载聊天历史失败:', error);
-        // 加载失败时保持欢迎消息
+        // 加载失败时，不展示默认欢迎消息
+        setMessages([]);
       } finally {
         setIsLoadingHistory(false); // 加载完成
       }
@@ -573,7 +591,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
         if (currentAiMsgIdRef.current) {
           setMessages(prev => prev.map(msg => 
             msg.id === currentAiMsgIdRef.current
-              ? { ...msg, content: t('robot.sendFailed') || '发送失败，请重试', loading: false, error: true }
+              ? { ...msg, content: t('robot.sendFailed'), loading: false, error: true }
               : msg
           ));
         }
@@ -624,11 +642,12 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     });
   }, [messages]);
 
+
   // 发送消息 - 使用 SSE Stream Hook
   const handleSend = async (text = null) => {
     // 如果开启了积分限制，并且当前判定为积分不足，则不再发起对话
     if (ENABLE_POINTS_LIMIT && !hasEnoughPoints) {
-      const warnMsg = t('robot.pointsNotEnough') || '积分不足，暂时无法继续对话，请先获取更多积分。';
+      const warnMsg = t('robot.pointsNotEnough');
       setMessages(prev => [
         ...prev,
         {
@@ -716,6 +735,39 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     }
   };
 
+  const handleToggleMic = async () => {
+    if (isStreaming) return;
+
+    if (!browserSupportsSpeechRecognition) {
+      console.warn('[Robot] SpeechRecognition not supported by this browser');
+      return;
+    }
+
+    if (!isMicrophoneAvailable) {
+      console.warn('[Robot] microphone not available');
+      return;
+    }
+
+    try {
+      if (listening) {
+        await SpeechRecognition.stopListening();
+        return;
+      }
+
+      resetTranscript();
+
+      // iOS: 录音开始前强制失焦，避免 viewport 缩放导致布局抖动
+      forceBlurAndResetViewport();
+
+      await SpeechRecognition.startListening({
+        language: 'zh-CN',
+        continuous: false
+      });
+    } catch (e) {
+      console.error('[Robot] speech recognition failed', e);
+    }
+  };
+
   // 停止生成
   const handleStop = () => {
     if (!isStreaming) return;
@@ -781,37 +833,13 @@ export default function RobotPage({ isPC: propIsPC = false }) {
       <div className={`${styles.robotPage} ${isPC ? styles.pcMode : ''}`}>
         {!isPC && (
           <NavBar 
-            title={t('robot.title')} 
+            title={t('robot.title')}
             showBack={true}
             className={styles.navBarCustom}
           />
         )}
         
-        <div className={styles.chatHeader}>
-          <div className={styles.titleRow}>
-            <div className={styles.chatTitle}>{t('robot.title')}</div>
-            <Select
-              value={selectedModel}
-              onChange={(value) => {
-                setSelectedModel(value);
-                setTimeout(() => setDropdownOpen(false), 0);
-              }}
-              onDropdownVisibleChange={setDropdownOpen}
-              open={dropdownOpen}
-              className={styles.modelSelect}
-              popupClassName={styles.modelSelectDropdown}
-              popupMatchSelectWidth={false}
-              options={[
-                { value: 'analyze', label: t('robot.model.analyze') },
-                { value: 'chat', label: t('robot.model.chat') },
-              ]}
-            />
-          </div>
-          
-          <div className={styles.chatSubtitle}>
-            {t('robot.subtitle')}
-          </div>
-        </div>
+        {/* 顶部标题/副标题/下拉模型选择（AI Assistant 区域）已移除 */}
 
         <div className={styles.chatScroll} ref={scrollRef}>
           <div className={styles.messages}>
@@ -894,31 +922,115 @@ export default function RobotPage({ isPC: propIsPC = false }) {
               onFocus={() => trackEvent(AIEvents.INPUT_FOCUSED)}
               disabled={isStreaming}
             />
-            {isStreaming ? (
-              <button 
-                className={styles.stopBtn} 
-                onClick={handleStop}
-              >
-                <Image 
-                  src="/icons/pause.svg" 
-                  alt={t('robot.stopAlt')} 
-                  width={14} 
-                  height={14}
-                  className={styles.pauseIcon}
-                />
-              </button>
-            ) : (
-              <button 
-                className={styles.sendBtn} 
-                onClick={() => handleSend()}
-                disabled={!inputValue.trim()}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 19V5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M5 12L12 5L19 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-            )}
+            <div className={styles.inputActions}>
+              <div className={styles.actionModes}>
+                <div
+                  className={`${styles.modeItem} ${selectedModel === 'analyze' ? styles.activeMode : ''}`}
+                  onClick={() => setSelectedModel('analyze')}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedModel('analyze');
+                    }
+                  }}
+                >
+                  <span className={styles.modeIconWrap}>
+                    <Image
+                      src="/images/ai_robot/deep.svg"
+                      alt=""
+                      width={11}
+                      height={18}
+                      className={`${styles.modeIcon} ${styles.modeIconDeep}`}
+                      aria-hidden
+                    />
+                  </span>
+                  <span className={styles.modeLabel}>{t('robot.model.analyze')}</span>
+                </div>
+                <div
+                  className={`${styles.modeItem} ${selectedModel === 'chat' ? styles.activeMode : ''}`}
+                  onClick={() => setSelectedModel('chat')}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedModel('chat');
+                    }
+                  }}
+                >
+                  <span className={styles.modeIconWrap}>
+                    <Image
+                      src="/images/ai_robot/chat.svg"
+                      alt=""
+                      width={10}
+                      height={10}
+                      className={styles.modeIcon}
+                      aria-hidden
+                    />
+                  </span>
+                  <span className={styles.modeLabel}>{t('robot.model.chat')}</span>
+                </div>
+              </div>
+              <div className={styles.actionTools}>
+                <span className={styles.pointsTag}>
+                  <Image
+                    src="/images/ai_robot/point.svg"
+                    alt=""
+                    width={12}
+                    height={12}
+                    className={styles.pointsIcon}
+                    aria-hidden
+                  />
+                  {pointsTagValue} {t('robot.pointsUnit')}
+                </span>
+                <button
+                  type="button"
+                  className={`${styles.micBtn} ${listening ? styles.micBtnActive : ''}`}
+                  aria-label="microphone"
+                  onClick={handleToggleMic}
+                >
+                  <Image
+                    src="/images/ai_robot/micro_phone.svg"
+                    alt=""
+                    width={16}
+                    height={16}
+                    className={styles.micIcon}
+                    aria-hidden
+                  />
+                </button>
+                {isStreaming ? (
+                  <button
+                    className={styles.stopBtn}
+                    onClick={handleStop}
+                  >
+                    <Image
+                      src="/icons/pause.svg"
+                      alt={t('robot.stopAlt')}
+                      width={14}
+                      height={14}
+                      className={styles.pauseIcon}
+                    />
+                  </button>
+                ) : (
+                  <button
+                    className={styles.sendBtn}
+                    onClick={() => handleSend()}
+                    disabled={!inputValue.trim()}
+                  >
+                    <Image
+                      src="/images/ai_robot/send.svg"
+                      alt=""
+                      width={18}
+                      height={18}
+                      className={styles.sendIcon}
+                      aria-hidden
+                    />
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
         

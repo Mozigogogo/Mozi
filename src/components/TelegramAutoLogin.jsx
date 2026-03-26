@@ -5,6 +5,8 @@ import { Toast } from 'antd-mobile';
 import { loginByTelegram } from '@/api/user';
 import { LogoLoading } from '@/components/Loading';
 import { runPostLoginSideEffects } from '@/utils/postLogin';
+import { syncI18nextLngFromLoginResponse } from '@/utils/syncLoginLanguage';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Telegram 自动登录组件
@@ -13,6 +15,7 @@ import { runPostLoginSideEffects } from '@/utils/postLogin';
 export default function TelegramAutoLogin() {
   const loginAttemptedRef = useRef(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { i18n } = useTranslation();
 
   useEffect(() => {
     const handleTelegramAutoLogin = async () => {
@@ -160,6 +163,9 @@ export default function TelegramAutoLogin() {
           console.log('✅ [TG自动登录] 获取到 token:', token.substring(0, 10) + '...');
           // 保存 token
           localStorage.setItem('token', token);
+
+          // 根据后端返回 language 更新缓存语言，并同步 i18next
+          syncI18nextLngFromLoginResponse(res, i18n);
           // Toast.show({ content: '登录成功', icon: 'success' });
 
           // 保存用户信息

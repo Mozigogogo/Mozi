@@ -646,3 +646,20 @@ export const saveAlertConfig = async (config) => {
     return { success: false, error: error.message || '保存失败' };
   }
 };
+
+/**
+ * 编辑用户语言
+ * @param {'zh'|'en'} language - 语言（zh: 中文，en: 英文）
+ * @returns {Promise}
+ */
+export const editLanguage = (language) => {
+  const lang = language === 'zh' || language === 'en' ? language : 'zh';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+  return request({
+    url: '/user/editLanguage',
+    method: 'POST',
+    headers: token ? { authentication: token } : undefined,
+    data: { language: lang },
+  });
+};

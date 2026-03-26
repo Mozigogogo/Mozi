@@ -13,6 +13,7 @@ import { sendVerificationCode, loginByEmail, registerByEmail, loginByWallet, log
 import { useGoogleLogin } from '@react-oauth/google';
 import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
 import styles from './page.module.less';
+import { syncI18nextLngFromLoginResponse } from '../../utils/syncLoginLanguage';
 
 // 检测是否在 Telegram 环境中
 const isTelegramEnv = () => {
@@ -23,7 +24,7 @@ const isTelegramEnv = () => {
 
 export default function PCLoginPage() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   
   // Web3 钱包 hooks
   const { address: web3Address, isConnected: web3Connected } = useAccount();
@@ -149,6 +150,9 @@ export default function PCLoginPage() {
           localStorage.setItem('userId', res.data.userId);
         }
         
+        // 根据后端返回 language 更新缓存语言（并同步 i18n）
+        syncI18nextLngFromLoginResponse(res, i18n);
+        
         // 获取用户详细信息
         console.log('[DEBUG PC /auth] handleLogin success, will call /user/datainfo & completeTask, email =', email);
         request({
@@ -248,6 +252,9 @@ export default function PCLoginPage() {
           localStorage.setItem('userId', res.data.userId);
         }
         
+        // 根据后端返回 language 更新缓存语言（并同步 i18n）
+        syncI18nextLngFromLoginResponse(res, i18n);
+        
         console.log('[DEBUG PC /auth] autoLoginAfterRegister success, will call /user/datainfo & completeTask, email =', email);
         request({
           url: Interface.USER_DATA_INFO,
@@ -321,6 +328,9 @@ export default function PCLoginPage() {
         if (res?.data?.userId) {
           localStorage.setItem('userId', res.data.userId);
         }
+        
+        // 根据后端返回 language 更新缓存语言（并同步 i18n）
+        syncI18nextLngFromLoginResponse(res, i18n);
         
         // 获取用户详细信息
         console.log('[DEBUG PC /auth] handleGoogleLoginSuccess, will call /user/datainfo & completeTask, email =', email);
@@ -433,6 +443,9 @@ export default function PCLoginPage() {
           localStorage.setItem('userId', res.data.userId);
         }
         
+        // 根据后端返回 language 更新缓存语言（并同步 i18n）
+        syncI18nextLngFromLoginResponse(res, i18n);
+        
         // 获取用户详细信息
         console.log('[DEBUG PC /auth] triggerWeb3SignatureLogin success, will call /user/datainfo & completeTask, address =', currentAddress);
         request({
@@ -506,6 +519,9 @@ export default function PCLoginPage() {
         if (res?.data?.userId) {
           localStorage.setItem('userId', res.data.userId);
         }
+        
+        // 根据后端返回 language 更新缓存语言（并同步 i18n）
+        syncI18nextLngFromLoginResponse(res, i18n);
         
         // 获取用户详细信息（与邮箱登录对齐）
         console.log('[DEBUG PC /auth] handleTonWalletLogin success, will call /user/datainfo & completeTask, tonAddress =', tonAddress);
