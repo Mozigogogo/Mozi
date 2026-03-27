@@ -1034,7 +1034,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
       <div className={`${styles.robotPage} ${isPC ? styles.pcMode : ''}`}>
         {!isPC && (
           <NavBar 
-            title={t('robot.title')}
+            title={isStreaming ? t('robot.chattingTitle') : t('pcLayout.menu.myQA')}
             showBack={true}
             className={styles.navBarCustom}
           />
