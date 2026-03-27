@@ -326,6 +326,12 @@
     max-width: 80%; // 限制消息最大宽度为屏幕的 80%，留出空隙
   }
 
+  .cardBubbleWrap {
+    padding: 0;
+    background: transparent;
+    border: none;
+  }
+
   .avatar {
     width: 32px; // 64rpx→32px
     height: 32px;
@@ -596,9 +602,19 @@
     white-space: nowrap;
   }
 
+  .pointsTagWarning {
+    background: rgba(254, 242, 242, 1);
+    color: rgba(255, 100, 103, 1);
+  }
+
   .pointsIcon {
     display: block;
     flex-shrink: 0;
+  }
+
+  .pointsIconWarning {
+    /* 将默认绿色积分图标映射为告警红色 */
+    filter: brightness(0) saturate(100%) invert(66%) sepia(42%) saturate(3086%) hue-rotate(313deg) brightness(101%) contrast(101%);
   }
 
   .micBtn {

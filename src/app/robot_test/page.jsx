@@ -18,9 +18,11 @@ import { request } from '@/utils/request';
 import { executeConsume } from '@/api/points';
 import { useRobotTestSSE } from '@/hooks/useRobotTestSSE';
 import { forceBlurAndResetViewport } from '@/utils/iosViewportFix';
+import { fetchUserDataInfoOnce } from '@/utils/postLogin';
 import styles from './page.module.less';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import AiRobotUpgradePillButton from '@/components/AiRobotUpgradePillButton';
+import PointsInsufficientBubble from '@/components/PointsInsufficientBubble';
 
 // 代码块组件 - 带复制按钮
 const CodeBlock = ({ language, children, ...props }) => {
@@ -314,8 +316,8 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const BOT_AVATAR = '/images/ai_robot/robot_logo.svg';
-  // 是否根据积分余额限制对话（开关变量，暂时关闭方便测试）
-  const ENABLE_POINTS_LIMIT = false;
+  // 是否根据积分余额限制对话（积分不足时展示气泡并阻止继续对话）
+  const ENABLE_POINTS_LIMIT = true;
 
   const [isPCState, setIsPCState] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -346,8 +348,8 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   const [selectedModel, setSelectedModel] = useState('analyze'); // 'analyze' | 'chat'
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // 积分展示：深度思考( analyze )消耗更高
-  const pointsTagValue = selectedModel === 'analyze' ? 50 : 10;
+  // 当前模型单次对话所需积分
+  const requiredPointsPerAsk = selectedModel === 'analyze' ? 50 : 10;
 
   // 语音转文字（Web Speech API）
   const {
@@ -376,6 +378,42 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   const [showPopLogin, setShowPopLogin] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true); // 历史记录加载状态
   const [hasEnoughPoints, setHasEnoughPoints] = useState(true);   // 当前是否还有可用积分
+  const [remainingPoints, setRemainingPoints] = useState(null);
+  const [totalPoints, setTotalPoints] = useState(0);
+  const [showPointsLock, setShowPointsLock] = useState(false);
+  // 与 /user 页面保持一致：展示用户总积分（读取并刷新 userDataInfo）
+  useEffect(() => {
+    const syncTotalPoints = async () => {
+      if (typeof window === 'undefined') return;
+
+      try {
+        const cached = localStorage.getItem('userDataInfo');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (typeof parsed?.totalPoints === 'number') {
+            setTotalPoints(parsed.totalPoints);
+          }
+        }
+      } catch (err) {
+        console.warn('[Robot] parse cached userDataInfo failed:', err);
+      }
+
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      try {
+        const latest = await fetchUserDataInfoOnce({ caller: 'RobotPage_syncTotalPoints' });
+        if (latest && typeof latest.totalPoints === 'number') {
+          setTotalPoints(latest.totalPoints);
+        }
+      } catch (err) {
+        console.warn('[Robot] fetch userDataInfo failed:', err);
+      }
+    };
+
+    syncTotalPoints();
+  }, []);
+
 
   const handleCopyMessage = async (text) => {
     try {
@@ -518,8 +556,11 @@ export default function RobotPage({ isPC: propIsPC = false }) {
       console.log('[Robot] points consume result:', res);
       // 根据后端返回的剩余积分更新本地状态，用于是否限制后续对话
       if (res && res.code === 0 && res.data && typeof res.data.remainingPoints === 'number') {
+        setRemainingPoints(res.data.remainingPoints);
+        setTotalPoints(res.data.remainingPoints);
         if (res.data.remainingPoints <= 0) {
           setHasEnoughPoints(false);
+          setShowPointsLock(true);
         }
       }
     } catch (err) {
@@ -674,13 +715,15 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   const handleSend = async (text = null) => {
     // 如果开启了积分限制，并且当前判定为积分不足，则不再发起对话
     if (ENABLE_POINTS_LIMIT && !hasEnoughPoints) {
-      const warnMsg = t('robot.pointsNotEnough');
+      setShowPointsLock(true);
       setMessages(prev => [
         ...prev,
         {
-          id: `system-points-${Date.now()}`,
+          id: `system-points-lock-${Date.now()}`,
           role: 'assistant',
-          content: warnMsg,
+          type: 'pointsLock',
+          currentPoints: typeof remainingPoints === 'number' ? remainingPoints : 0,
+          requiredPoints: requiredPointsPerAsk,
           time: Date.now(),
         },
       ]);
@@ -771,13 +814,15 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
     // 积分不足同 handleSend
     if (ENABLE_POINTS_LIMIT && !hasEnoughPoints) {
-      const warnMsg = t('robot.pointsNotEnough');
+      setShowPointsLock(true);
       setMessages(prev => [
         ...prev,
         {
-          id: `system-points-${Date.now()}`,
+          id: `system-points-lock-${Date.now()}`,
           role: 'assistant',
-          content: warnMsg,
+          type: 'pointsLock',
+          currentPoints: typeof remainingPoints === 'number' ? remainingPoints : 0,
+          requiredPoints: requiredPointsPerAsk,
           time: Date.now(),
         },
       ]);
@@ -884,16 +929,10 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
       resetTranscript();
 
-      // 先显式请求麦克风权限，避免部分内置 WebView 在 startListening 时反复弹权限窗
-      if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        // 立即停止，只用于触发权限授权与降低后续权限弹窗循环
-        stream.getTracks().forEach((t) => t.stop());
-      }
-
       // iOS: 录音开始前强制失焦，避免 viewport 缩放导致布局抖动
       forceBlurAndResetViewport();
 
+      // 只通过 Web Speech API 拉起一次权限链路，避免 TG WebView 中重复弹权限窗
       await SpeechRecognition.startListening({
         language: 'zh-CN',
         continuous: false
@@ -1062,10 +1101,19 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
                 <div className={styles.msgContent}>
                   <div
-                    className={`${styles.bubble} ${styles[msg.role]} ${msg.error ? styles.error : ''}`}
+                    className={`${styles.bubble} ${
+                      msg.type === 'pointsLock' ? styles.cardBubbleWrap : styles[msg.role]
+                    } ${msg.error ? styles.error : ''}`}
                   >
                     <div className={styles.text}>
-                      {msg.loading && !msg.content ? (
+                      {msg.type === 'pointsLock' ? (
+                        <PointsInsufficientBubble
+                          currentPoints={msg.currentPoints}
+                          requiredPoints={msg.requiredPoints}
+                          onEarnPoints={() => router.push('/pointsdetail')}
+                          onUpgrade={() => router.push('/vip-recharge')}
+                        />
+                      ) : msg.loading && !msg.content ? (
                         <ThinkingAnimation />
                       ) : msg.role === 'assistant' && msg.content ? (
                         <>
@@ -1222,16 +1270,16 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                 </div>
               </div>
               <div className={styles.actionTools}>
-                <span className={styles.pointsTag}>
+                <span className={`${styles.pointsTag} ${totalPoints === 0 ? styles.pointsTagWarning : ''}`}>
                   <Image
                     src="/images/ai_robot/point.svg"
                     alt=""
                     width={12}
                     height={12}
-                    className={styles.pointsIcon}
+                    className={`${styles.pointsIcon} ${totalPoints === 0 ? styles.pointsIconWarning : ''}`}
                     aria-hidden
                   />
-                  {pointsTagValue} {t('robot.pointsUnit')}
+                  {totalPoints} {t('robot.pointsUnit')}
                 </span>
                 <button
                   type="button"

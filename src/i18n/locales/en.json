@@ -879,6 +879,15 @@
     "copied": "Copied",
     "sendFailed": "Send failed. Please retry",
     "pointsNotEnough": "Not enough points. Please get more to continue.",
+    "pointsLock": {
+      "title": "Mozi Locked",
+      "currentPoints": "Current points: {{points}}",
+      "requiredPoints": "Required points: {{points}}",
+      "descLine1": "Complete tasks or upgrade",
+      "descLine2": "keep Mozi unlocked.",
+      "earnPoints": "Earn points",
+      "upgrade": "Upgrade"
+    },
     "wsNotConnected": "WebSocket not connected, please refresh",
     "genericError": "Something went wrong. Please try later",
     "welcome": "Hi! I'm your AI assistant. I can analyze crypto and answer your questions.",
