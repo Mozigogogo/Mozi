@@ -844,6 +844,7 @@
   },
   "robot": {
     "title": "AI 助手",
+    "chattingTitle": "正在对话...",
     "subtitle": "智能答疑 · 快速响应",
     "connecting": "连接中...",
     "conversationId": "会话ID",
