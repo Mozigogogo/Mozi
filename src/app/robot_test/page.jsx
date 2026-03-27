@@ -380,6 +380,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   const [hasEnoughPoints, setHasEnoughPoints] = useState(true);   // 当前是否还有可用积分
   const [remainingPoints, setRemainingPoints] = useState(null);
   const [totalPoints, setTotalPoints] = useState(0);
+  const [isTelegramEnv, setIsTelegramEnv] = useState(false);
   const [showPointsLock, setShowPointsLock] = useState(false);
   // 与 /user 页面保持一致：展示用户总积分（读取并刷新 userDataInfo）
   useEffect(() => {
@@ -563,6 +564,26 @@ export default function RobotPage({ isPC: propIsPC = false }) {
           setShowPointsLock(true);
         }
       }
+
+      // 每次对话完成/中断后，强制拉取最新用户总积分，保证展示值与 /user 一致
+      try {
+        const latest = await fetchUserDataInfoOnce({
+          force: true,
+          caller: 'RobotPage_consumeOnce_afterConversation',
+        });
+        if (latest && typeof latest.totalPoints === 'number') {
+          setTotalPoints(latest.totalPoints);
+          setRemainingPoints(latest.totalPoints);
+          if (latest.totalPoints <= 0) {
+            setHasEnoughPoints(false);
+            setShowPointsLock(true);
+          } else {
+            setHasEnoughPoints(true);
+          }
+        }
+      } catch (syncErr) {
+        console.warn('[Robot] sync latest totalPoints failed:', syncErr);
+      }
     } catch (err) {
       console.error('[Robot] points consume failed:', err, { actionCode, reason });
     }
@@ -677,6 +698,12 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     if (!token) {
       setShowPopLogin(true);
     }
+  }, []);
+
+  // Telegram 环境检测：TG 端隐藏语音按钮，避免权限弹窗体验问题
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setIsTelegramEnv(localStorage.getItem('appChannel') === 'tg');
   }, []);
   
   // 埋点：页面浏览
@@ -1281,21 +1308,23 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                   />
                   {totalPoints} {t('robot.pointsUnit')}
                 </span>
-                <button
-                  type="button"
-                  className={`${styles.micBtn} ${listening ? styles.micBtnActive : ''}`}
-                  aria-label="microphone"
-                  onClick={handleToggleMic}
-                >
-                  <Image
-                    src="/images/ai_robot/micro_phone.svg"
-                    alt=""
-                    width={16}
-                    height={16}
-                    className={styles.micIcon}
-                    aria-hidden
-                  />
-                </button>
+                {!isTelegramEnv && (
+                  <button
+                    type="button"
+                    className={`${styles.micBtn} ${listening ? styles.micBtnActive : ''}`}
+                    aria-label="microphone"
+                    onClick={handleToggleMic}
+                  >
+                    <Image
+                      src="/images/ai_robot/micro_phone.svg"
+                      alt=""
+                      width={16}
+                      height={16}
+                      className={styles.micIcon}
+                      aria-hidden
+                    />
+                  </button>
+                )}
                 {isStreaming ? (
                   <button
                     className={styles.stopBtn}
