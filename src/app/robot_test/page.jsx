@@ -1172,22 +1172,6 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                         <button
                           type="button"
                           className={styles.actionBtn}
-                          onClick={() => {}}
-                          aria-label="like"
-                        >
-                          <img src="/images/ai_robot/like.svg" alt="" aria-hidden />
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.actionBtn}
-                          onClick={() => {}}
-                          aria-label="dislike"
-                        >
-                          <img src="/images/ai_robot/dislike.svg" alt="" aria-hidden />
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.actionBtn}
                           onClick={() => handleCopyMessage(msg.content)}
                           aria-label="copy"
                         >

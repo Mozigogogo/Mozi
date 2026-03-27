@@ -26,6 +26,7 @@ export default function BenefitsPage() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const isEnglish = (i18n.language || '').startsWith('en');
+  const ALPHA_CORE_GROUP_URL = 'https://t.me/+vWtmYRx42d8yMWFl';
   // 临时切换展示模式（Free / Lite / Pro）
   const [tier, setTier] = useState('free');
   const tierLabel = tier === 'lite' ? 'Lite' : tier === 'pro' ? 'Pro-1' : 'Free';
@@ -253,6 +254,10 @@ export default function BenefitsPage() {
   );
 
   const goRecharge = () => router.push('/vip-recharge');
+  const goAlphaGroup = () => {
+    if (typeof window === 'undefined') return;
+    window.open(ALPHA_CORE_GROUP_URL, '_blank', 'noopener,noreferrer');
+  };
 
   // NavBar 需要白色底，否则“pro”模式下会传入 transparent 导致背景不符合设计
   const navBg = '#ffffff';
@@ -429,11 +434,13 @@ export default function BenefitsPage() {
                         role="button"
                         tabIndex={0}
                         className={styles.upgradePill}
-                        onClick={goRecharge}
+                        onClick={() =>
+                          tier === 'pro' && x.icon === '/benefits/group.svg' ? goAlphaGroup() : goRecharge()
+                        }
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
-                            goRecharge();
+                            tier === 'pro' && x.icon === '/benefits/group.svg' ? goAlphaGroup() : goRecharge();
                           }
                         }}
                       >
