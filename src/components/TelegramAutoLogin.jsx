@@ -18,6 +18,24 @@ export default function TelegramAutoLogin() {
   const [isLoading, setIsLoading] = useState(false);
   const { i18n } = useTranslation();
 
+  // 尽量从 JWT 里读取 exp（不校验签名），用于判断是否需要重新走登录接口
+  const getJwtExpMs = (token) => {
+    try {
+      if (typeof token !== 'string') return null;
+      const raw = token.startsWith('Bearer ') ? token.slice(7) : token;
+      const parts = raw.split('.');
+      if (parts.length < 2) return null;
+      const payloadB64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const pad = payloadB64.length % 4 ? '='.repeat(4 - (payloadB64.length % 4)) : '';
+      const jsonStr = atob(payloadB64 + pad);
+      const payload = JSON.parse(jsonStr);
+      if (typeof payload?.exp === 'number' && Number.isFinite(payload.exp)) {
+        return payload.exp * 1000;
+      }
+    } catch (_) {}
+    return null;
+  };
+
   useEffect(() => {
     const handleTelegramAutoLogin = async () => {
       console.log('🔄 [TG自动登录] 准备执行自动登录流程...', new Date().toISOString());
@@ -43,6 +61,28 @@ export default function TelegramAutoLogin() {
       if (!isWindowDefined || !hasWebApp) {
         console.log('❌ [TG自动登录] 环境检查失败: 非 Telegram WebApp 环境');
         return;
+      }
+
+      // 如果本地已有未过期 token，则跳过 loginByTelegram，避免每次进入详情都重复请求登录接口
+      try {
+        const existingToken = localStorage.getItem('token');
+        if (existingToken) {
+          const expMs = getJwtExpMs(existingToken);
+          const isValid = expMs && expMs - Date.now() > 60 * 1000; // 预留 1 分钟
+          if (isValid) {
+            console.log('✅ [TG自动登录] 本地 token 未过期，跳过登录接口');
+            loginAttemptedRef.current = true;
+
+            // 尽量保持页面状态一致：触发副作用/同步事件，但不再请求登录
+            await runPostLoginSideEffects({ caller: 'TelegramAutoLogin_skipLogin', forceDataInfo: false });
+            window.dispatchEvent(new CustomEvent('tg-login-success'));
+            setIsLoading(false);
+            return;
+          }
+        }
+      } catch (e) {
+        // guard 失败不影响后续正常登录
+        console.warn('⚠️ [TG自动登录] token exp 校验失败，继续走登录流程:', e);
       }
       
       // 在 Telegram 环境下，显示加载中遮罩
