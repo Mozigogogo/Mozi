@@ -6,13 +6,17 @@ export default function VConsoleLoader() {
   useEffect(() => {
     // 判断是否需要启用 VConsole
     const shouldEnableVConsole = () => {
-      // 暂时禁用 VConsole
-      return false;
-      
       // PC端不显示 vConsole
       if (typeof window !== 'undefined' && window.innerWidth >= 768) {
         return false;
       }
+
+      const telegramWebApp = typeof window !== 'undefined' ? window.Telegram?.WebApp : null;
+      const hasInitData = telegramWebApp?.initData && telegramWebApp.initData.length > 0;
+      const hasInitDataUnsafe =
+        telegramWebApp?.initDataUnsafe && Object.keys(telegramWebApp.initDataUnsafe).length > 0;
+      const hasPlatform = telegramWebApp?.platform && telegramWebApp.platform !== 'unknown';
+      const isTelegram = !!(hasInitData || hasInitDataUnsafe || hasPlatform);
 
       // 本地开发环境
       if (process.env.NODE_ENV === 'development') {
@@ -29,6 +33,11 @@ export default function VConsoleLoader() {
       if (typeof window !== 'undefined') {
         const urlParams = new URLSearchParams(window.location.search);
         return urlParams.get('vconsole') === '1';
+      }
+
+      // Telegram 环境：允许展示 vConsole 调试按钮
+      if (isTelegram) {
+        return true;
       }
       
       return false;
