@@ -13,6 +13,7 @@ import InviteCodeHandler from "@/components/InviteCodeHandler";
 import EnvironmentDetector from "@/components/EnvironmentDetector";
 import RouteChangeHandler from "@/components/RouteChangeHandler";
 import TelegramAutoLogin from "@/components/TelegramAutoLogin";
+import TokenDebugMonitor from "@/components/TokenDebugMonitor";
 import GoogleAuthProvider from "../context/GoogleAuthProvider";
 import GetPointsModal from "@/components/GetPointsModal";
 
@@ -71,6 +72,7 @@ export default function RootLayout({ children }) {
         />
         <EnvironmentDetector />
         <RouteChangeHandler />
+        <TokenDebugMonitor />
         <VConsoleLoader />
         <Suspense fallback={null}>
           <InviteCodeHandler />
