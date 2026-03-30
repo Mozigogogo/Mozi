@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Toast } from 'antd-mobile';
 import { loginByTelegram } from '@/api/user';
+import { getMySubscription } from '@/api/vip';
 import { LogoLoading } from '@/components/Loading';
 import { runPostLoginSideEffects } from '@/utils/postLogin';
 import { syncI18nextLngFromLoginResponse } from '@/utils/syncLoginLanguage';
@@ -217,6 +218,54 @@ export default function TelegramAutoLogin() {
             await runPostLoginSideEffects({ caller: 'TelegramAutoLogin', forceDataInfo: true });
           } catch (e) {
             console.error('❌ [TG自动登录] post-login side effects failed:', e);
+          }
+
+          // 登录成功后：立刻拉取订阅状态/权益与会员标识
+          // getMySubscription 内部会同步 planCode 到 localStorage，并派发 mozi:subscriptionPlanCodeUpdated 事件
+          try {
+            const subRes = await getMySubscription();
+            const data = subRes?.data ?? subRes;
+
+            // 兼容不同后端字段命名：尽最大可能把“会员标识”落到统一 key
+            const membershipId =
+              data?.memberId ??
+              data?.membershipId ??
+              data?.subscriberId ??
+              data?.subscriptionId ??
+              data?.subId ??
+              data?.vipId ??
+              data?.id ??
+              null;
+
+            // 供其它页面/埋点使用
+            try {
+              localStorage.setItem('mozi_my_subscription_last_v1', JSON.stringify(data));
+              const CACHE_KEY = 'mozi_my_subscription_cache_v1';
+              localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
+              const PLAN_CODE_KEY = 'mozi_my_subscription_plan_code_v1';
+              const nextPlanCode = data?.planCode;
+              if (nextPlanCode !== undefined && nextPlanCode !== null) {
+                const next = String(nextPlanCode);
+                const prev = localStorage.getItem(PLAN_CODE_KEY);
+                if (prev === null || String(prev) !== next) {
+                  localStorage.setItem(PLAN_CODE_KEY, next);
+                }
+              }
+              if (membershipId !== null && membershipId !== undefined) {
+                localStorage.setItem('mozi_my_subscription_member_id_v1', String(membershipId));
+              }
+            } catch (e) {
+              console.error('❌ [TG自动登录] 写入订阅缓存失败:', e);
+            }
+
+            window.dispatchEvent(
+              new CustomEvent('mozi:subscriptionUpdated', {
+                detail: { subscription: data, membershipId },
+              })
+            );
+          } catch (e) {
+            // 不阻断登录主流程
+            console.error('❌ [TG自动登录] getMySubscription 失败:', e);
           }
 
           console.log('✅ [TG自动登录] Telegram 自动登录成功');

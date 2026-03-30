@@ -66,13 +66,18 @@ export const getMySubscription = () => {
         const planCode = data?.planCode;
         if (planCode !== undefined) {
           const next = String(planCode);
-          localStorage.setItem(MY_SUBSCRIPTION_PLAN_CODE_KEY, next);
-          // 同 Tab 内通知：便于页面即时刷新订阅展示
-          window.dispatchEvent(
-            new CustomEvent('mozi:subscriptionPlanCodeUpdated', {
-              detail: { planCode: next },
-            })
-          );
+          const prev = localStorage.getItem(MY_SUBSCRIPTION_PLAN_CODE_KEY);
+          // 仅当值不存在或不一致时才覆盖，避免重复触发刷新
+          const shouldUpdate = prev === null || prev === undefined || String(prev) !== next;
+          if (shouldUpdate) {
+            localStorage.setItem(MY_SUBSCRIPTION_PLAN_CODE_KEY, next);
+            // 同 Tab 内通知：便于页面即时刷新订阅展示
+            window.dispatchEvent(
+              new CustomEvent('mozi:subscriptionPlanCodeUpdated', {
+                detail: { planCode: next },
+              })
+            );
+          }
         }
       } catch (_) {}
     }
