@@ -148,6 +148,14 @@ export default function TelegramAutoLogin() {
         if (token) {
           // 保存 token
           localStorage.setItem('token', token);
+          // 通知已建立的 WebSocket 使用新 token 重新鉴权
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(
+              new CustomEvent('mozi:tokenUpdated', {
+                detail: { token },
+              })
+            );
+          }
 
           // 根据后端返回 language 更新缓存语言，并同步 i18next
           syncI18nextLngFromLoginResponse(res, i18n);

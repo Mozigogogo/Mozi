@@ -540,7 +540,17 @@ export default function UserPage() {
       try {
         const res = await loginByWallet(currentAddress, signature);
         
-        if (res?.data?.token) localStorage.setItem('token', res.data.token);
+        if (res?.data?.token) {
+          localStorage.setItem('token', res.data.token);
+          // 通知已建立的 WebSocket 使用新 token 重新鉴权
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(
+              new CustomEvent('mozi:tokenUpdated', {
+                detail: { token: res.data.token },
+              })
+            );
+          }
+        }
         if (res?.data?.user) {
           // 将 subscribeAnnouncement 一起存入 userInfo
           const userInfoWithSubscribe = {
@@ -1261,6 +1271,14 @@ export default function UserPage() {
       
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
+        // 通知已建立的 WebSocket 使用新 token 重新鉴权
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(
+            new CustomEvent('mozi:tokenUpdated', {
+              detail: { token: res.data.token },
+            })
+          );
+        }
         
         const userData = res?.data?.userInfo || res?.data?.user;
         if (userData) {
