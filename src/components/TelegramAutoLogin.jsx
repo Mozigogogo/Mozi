@@ -17,10 +17,6 @@ export default function TelegramAutoLogin() {
   const loginAttemptedRef = useRef(false);
   const [isLoading, setIsLoading] = useState(false);
   const { i18n } = useTranslation();
-
-  const DEBUG_KEY = 'debug_tg_login';
-  const isDebugEnabled = () =>
-    typeof window !== 'undefined' && localStorage.getItem(DEBUG_KEY) === '1';
   const previewToken = (token) => {
     if (typeof token !== 'string' || !token) return null;
     const head = token.slice(0, 10);
@@ -31,7 +27,6 @@ export default function TelegramAutoLogin() {
   // 调试：监听 token 写入/清除，定位 token 何时变为空
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (!isDebugEnabled()) return;
 
     const originalSetItem = localStorage.setItem.bind(localStorage);
     const originalRemoveItem = localStorage.removeItem.bind(localStorage);
@@ -106,7 +101,7 @@ export default function TelegramAutoLogin() {
 
   useEffect(() => {
     const handleTelegramAutoLogin = async () => {
-      if (isDebugEnabled()) {
+      if (process.env.NODE_ENV !== 'production') {
         const currentToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
         console.log('[TG auto login] enter handler', {
           path: typeof window !== 'undefined' ? window.location.pathname : null,
@@ -161,7 +156,7 @@ export default function TelegramAutoLogin() {
       } catch (_) {}
 
       if (navigationType && navigationType !== 'navigate') {
-        if (isDebugEnabled()) {
+        if (process.env.NODE_ENV !== 'production') {
           console.log('[TG auto login] navigation guard: skip loginByTelegram', {
             navigationType,
           });
@@ -192,7 +187,7 @@ export default function TelegramAutoLogin() {
         if (initHash) {
           const handledLaunchHash = localStorage.getItem(TG_AUTO_LOGIN_HANDLED_LAUNCH_HASH_KEY);
           if (handledLaunchHash && handledLaunchHash === initHash) {
-            if (isDebugEnabled()) {
+            if (process.env.NODE_ENV !== 'production') {
               console.log('[TG auto login] launch already handled, skip loginByTelegram', {
                 initHash: `${initHash.slice(0, 8)}...`,
               });
@@ -217,7 +212,7 @@ export default function TelegramAutoLogin() {
         const recentlySucceeded =
           Number.isFinite(lastSuccessTs) && Date.now() - lastSuccessTs <= TG_AUTO_LOGIN_COOLDOWN_MS;
 
-        if (isDebugEnabled()) {
+        if (process.env.NODE_ENV !== 'production') {
           console.log('[TG auto login] env & throttle', {
             inFlight,
             recentlySucceeded,
@@ -235,7 +230,7 @@ export default function TelegramAutoLogin() {
       try {
         const existingToken = localStorage.getItem('token');
         if (existingToken) {
-          if (isDebugEnabled()) {
+          if (process.env.NODE_ENV !== 'production') {
             console.log('[TG auto login] existing token present, skip loginByTelegram', {
               token: previewToken(existingToken),
               now: Date.now(),
@@ -255,7 +250,7 @@ export default function TelegramAutoLogin() {
         // guard 失败不影响后续正常登录
       }
 
-      if (isDebugEnabled()) {
+      if (process.env.NODE_ENV !== 'production') {
         console.warn('[TG auto login] token missing -> may call loginByTelegram', {
           now: Date.now(),
         });
@@ -298,7 +293,7 @@ export default function TelegramAutoLogin() {
         console.error('❌ [TG自动登录] 检查本地用户信息失败:', e);
       }
 
-      if (isDebugEnabled()) {
+      if (process.env.NODE_ENV !== 'production') {
         console.log('[TG auto login] start decision', {
           hasLocalProfile,
           appChannel: localStorage.getItem('appChannel'),
@@ -349,7 +344,7 @@ export default function TelegramAutoLogin() {
           // 保存 token
           localStorage.setItem('token', token);
 
-          if (isDebugEnabled()) {
+          if (process.env.NODE_ENV !== 'production') {
             console.log('[TG auto login] loginByTelegram success, token saved', {
               token: previewToken(token),
             });

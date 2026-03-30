@@ -2,8 +2,6 @@
 
 import { useEffect } from 'react';
 
-const DEBUG_KEY = 'debug_tg_login';
-
 const previewToken = (token) => {
   if (typeof token !== 'string' || !token) return null;
   return `${token.slice(0, 10)}...${token.slice(-6)}`;
@@ -22,7 +20,6 @@ const classifyChange = ({ prev, next }) => {
 export default function TokenDebugMonitor() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (localStorage.getItem(DEBUG_KEY) !== '1') return;
 
     const originalSetItem = localStorage.setItem.bind(localStorage);
     const originalRemoveItem = localStorage.removeItem.bind(localStorage);

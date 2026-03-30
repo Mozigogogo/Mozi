@@ -182,8 +182,8 @@ instance.interceptors.response.use(
       }
 
       // 清除token
-      const debugEnabled = typeof window !== 'undefined' && localStorage.getItem('debug_tg_login') === '1';
-      if (debugEnabled) {
+      const debugEnabled = process.env.NODE_ENV !== 'production';
+      if (debugEnabled && typeof window !== 'undefined') {
         const previewToken = (token) => {
           if (typeof token !== 'string' || !token) return null;
           return `${token.slice(0, 10)}...${token.slice(-6)}`;
@@ -202,7 +202,7 @@ instance.interceptors.response.use(
       }
       clearToken();
       
-      if (debugEnabled) {
+      if (debugEnabled && typeof window !== 'undefined') {
         const tokenAfter = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
         console.log('[Request] 401: token after clear', { tokenAfter: tokenAfter ? tokenAfter.slice(0, 10) + '...' : null });
       }
@@ -293,9 +293,9 @@ export const setToken = (token) => {
 
 // 清除token
 export const clearToken = () => {
-  // 调试：定位是谁清除了 token（只在 debug_tg_login=1 时输出）
+  // 调试：定位是谁清除了 token（仅在非生产环境输出）
   try {
-    if (typeof window !== 'undefined' && localStorage.getItem('debug_tg_login') === '1') {
+    if (process.env.NODE_ENV !== 'production' && typeof window !== 'undefined') {
       const currentToken = localStorage.getItem('token');
       const preview = (t) => {
         if (typeof t !== 'string' || !t) return null;
