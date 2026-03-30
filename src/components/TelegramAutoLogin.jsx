@@ -33,6 +33,10 @@ export default function TelegramAutoLogin() {
   const TG_AUTO_LOGIN_LAST_SUCCESS_TS_KEY = 'tg_auto_login_last_success_ts_v1';
   const TG_AUTO_LOGIN_COOLDOWN_MS = 30 * 1000; // 30s 内不再重复触发
 
+  // 兜底：tg WebView 重建后，sessionStorage 可能丢失冷却状态。
+  // 当用户从详情页点击返回箭头导致“回到非首页”时，我们写入本地标记来跳过下一次自动登录。
+  const TG_AUTO_LOGIN_SKIP_ONCE_KEY = 'tg_auto_login_skip_once_v1';
+
   // 尽量从 JWT 里读取 exp（不校验签名），用于判断是否需要重新走登录接口
   const getJwtExpMs = (token) => {
     try {
@@ -53,6 +57,18 @@ export default function TelegramAutoLogin() {
 
   useEffect(() => {
     const handleTelegramAutoLogin = async () => {
+      // 若上一跳明确要求跳过自动登录，则直接退出
+      try {
+        if (typeof window !== 'undefined') {
+          const skipUntilRaw = localStorage.getItem(TG_AUTO_LOGIN_SKIP_ONCE_KEY);
+          const skipUntil = skipUntilRaw ? Number(skipUntilRaw) : NaN;
+          if (Number.isFinite(skipUntil) && Date.now() < skipUntil) {
+            localStorage.removeItem(TG_AUTO_LOGIN_SKIP_ONCE_KEY);
+            return;
+          }
+        }
+      } catch (_) {}
+
       // 限制：只允许在首页 `/` 自动登录
       // 目的：tg 环境下返回/重建可能导致该组件重复挂载，但不应在非首页触发 loginByTelegram
       if (typeof window !== 'undefined') {
