@@ -1848,6 +1848,14 @@ ${coinInfo.name || symbol} (${symbol})
       <NavBar 
         title={coinInfo?.name || symbol || t('detail.title')} 
         showBack={true}
+        onBack={() => {
+          // 从详情页返回到其它路由时，tg WebView 可能触发重建，导致自动登录再次执行。
+          // 写入一个“下一次自动登录跳过”标记，确保返回后不会再走 loginByTelegram。
+          try {
+            localStorage.setItem('tg_auto_login_skip_once_v1', String(Date.now() + 15 * 1000));
+          } catch (_) {}
+          router.back();
+        }}
         showBorder={false}
       />
       
