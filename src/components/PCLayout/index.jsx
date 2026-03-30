@@ -33,6 +33,7 @@ import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 import { getShareCount } from '@/api/home';
 import styles from './index.module.less';
+import AISearchBadge from './AISearchBadge';
 
 const searchIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/search.png';
 
@@ -420,24 +421,35 @@ export default function PCLayout({ children }) {
         {/* 搜索框 - 水平居中 */}
         <div className={styles.searchWrapper}>
           <div className={styles.searchBox}>
-            <input
-              type="text"
-              className={styles.searchInput}
-              placeholder={t('home.searchPlaceholder')}
-              value={searchValue}
-              onChange={handleSearchChange}
-              onKeyDown={handleSearchKeyDown}
-            />
-            {searchValue && (
-              <div className={styles.searchClear} onClick={clearSearch}>
-                <CloseCircleFilled style={{ color: '#b2b2b2', fontSize: 15 }} />
-              </div>
-            )}
+            <div className={styles.searchInputArea}>
+              <input
+                type="text"
+                className={styles.searchInput}
+                placeholder={t('home.searchPlaceholder')}
+                value={searchValue}
+                onChange={handleSearchChange}
+                onKeyDown={handleSearchKeyDown}
+              />
+              {searchValue && (
+                <div className={styles.searchClear} onClick={clearSearch}>
+                  <CloseCircleFilled style={{ color: '#b2b2b2', fontSize: 15 }} />
+                </div>
+              )}
+            </div>
             <div className={styles.searchButton} onClick={handleSearch}>
-              <img src={searchIcon} className={styles.searchIconImg} alt="search" />
+              <span
+                className={styles.searchIconImg}
+                style={{
+                  WebkitMaskImage: `url(${searchIcon})`,
+                  maskImage: `url(${searchIcon})`,
+                }}
+                role="img"
+                aria-label="search"
+              />
               <span className={styles.searchText}>{t('common.search')}</span>
             </div>
           </div>
+          <AISearchBadge />
         </div>
 
         <div className={styles.headerRight}>
