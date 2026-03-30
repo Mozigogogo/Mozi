@@ -958,17 +958,13 @@ ${coinInfo.name || symbol} (${symbol})
       }
     }, 10000); // 10秒
     
-    // WebSocket 连接和订阅
-    const token = typeof window !== 'undefined' 
-      ? localStorage.getItem('token') 
-      : null;
-    
     const ws = new MoziWebSocket(WS_URL, {
       platform: PLATFORMS.H5,
       version: '1.0.0',
       autoHandshake: true,
       debug: false,
-      token: token,  // 通过 Sec-WebSocket-Protocol 子协议传递 token
+      // 每次 connect()/重连都实时读取 localStorage.token
+      getToken: () => (typeof window !== 'undefined' ? localStorage.getItem('token') : null),
     });
     
     wsRef.current = ws;

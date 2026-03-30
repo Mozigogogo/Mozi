@@ -355,16 +355,13 @@ const LandscapeChart = () => {
 
     console.log(`🔄 横屏页面 - 币种: ${symbol}, 周期: ${period}, 图表类型: ${chartType}`);
 
-    const token = typeof window !== 'undefined' 
-      ? localStorage.getItem('token') 
-      : null;
-    
     const ws = new MoziWebSocket(WS_URL, {
       platform: PLATFORMS.H5,
       version: '1.0.0',
       autoHandshake: true,
       debug: true,
-      token: token,
+      // 每次 connect()/重连都实时读取 localStorage.token
+      getToken: () => (typeof window !== 'undefined' ? localStorage.getItem('token') : null),
     });
     
     wsRef.current = ws;
