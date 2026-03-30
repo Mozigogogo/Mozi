@@ -171,49 +171,26 @@ export default function TelegramAutoLogin() {
         }
       }
 
-      // 如果本地已经有 token：
-      // - 一般不应重复调用 loginByTelegram（路由重挂载时会重复）
-      // - 只有当我们能解出 exp 且明确接近/已过期时，才走登录接口刷新 token
+      // 规则（按你的需求）：只要本地已经有 token，就绝不再调用登录接口。
+      // Telegram 自动登录只允许在“没有 token 的首次启动”场景触发。
       try {
         const existingToken = localStorage.getItem('token');
         if (existingToken) {
-          const expMs = getJwtExpMs(existingToken);
-          // expMs 解码失败时，默认认为 token 仍可用，避免重复登录
-          const isExpired =
-            typeof expMs === 'number' ? expMs - Date.now() <= 60 * 1000 : false;
-
           if (isDebugEnabled()) {
-            console.log('[TG auto login] existing token check', {
+            console.log('[TG auto login] existing token present, skip loginByTelegram', {
               token: previewToken(existingToken),
-              expMs: typeof expMs === 'number' ? expMs : null,
-              isExpired,
               now: Date.now(),
             });
           }
 
-          if (!isExpired) {
-            loginAttemptedRef.current = true;
-
-            // 尽量保持页面状态一致：触发副作用/同步事件，但不再请求登录
-            if (isDebugEnabled()) {
-              console.log('[TG auto login] skip login (token valid/near valid)', {
-                token: previewToken(existingToken),
-              });
-            }
-
-            // 标记：这个启动 hash 已处理，避免返回详情页再次走 /api/user/login
-            try {
-              if (initHash) {
-                localStorage.setItem(TG_AUTO_LOGIN_HANDLED_LAUNCH_HASH_KEY, initHash);
-              }
-            } catch (_) {}
-
-            await runPostLoginSideEffects({ caller: 'TelegramAutoLogin_skipLogin', forceDataInfo: false });
-            window.dispatchEvent(new CustomEvent('tg-login-success'));
-            setIsLoading(false);
-            return;
-          }
-
+          loginAttemptedRef.current = true;
+          await runPostLoginSideEffects({
+            caller: 'TelegramAutoLogin_skipLogin_tokenPresent',
+            forceDataInfo: false,
+          });
+          window.dispatchEvent(new CustomEvent('tg-login-success'));
+          setIsLoading(false);
+          return;
         }
       } catch (e) {
         // guard 失败不影响后续正常登录
