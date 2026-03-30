@@ -28,6 +28,55 @@ export default function TelegramAutoLogin() {
     return `${head}...${tail}`;
   };
 
+  // 调试：监听 token 写入/清除，定位 token 何时变为空
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!isDebugEnabled()) return;
+
+    const originalSetItem = localStorage.setItem.bind(localStorage);
+    const originalRemoveItem = localStorage.removeItem.bind(localStorage);
+
+    localStorage.setItem = (key, value) => {
+      const prev = key === 'token' ? localStorage.getItem('token') : null;
+      const ret = originalSetItem(key, value);
+      if (key === 'token') {
+        console.warn('[TokenMonitor] token setItem', {
+          prev: previewToken(prev),
+          next: previewToken(String(value)),
+          stack: new Error().stack,
+        });
+      }
+      return ret;
+    };
+
+    localStorage.removeItem = (key) => {
+      const prev = key === 'token' ? localStorage.getItem('token') : null;
+      const ret = originalRemoveItem(key);
+      if (key === 'token') {
+        console.warn('[TokenMonitor] token removeItem', {
+          prev: previewToken(prev),
+          stack: new Error().stack,
+        });
+      }
+      return ret;
+    };
+
+    const onStorage = (e) => {
+      if (e?.key !== 'token') return;
+      console.warn('[TokenMonitor] storage event token changed', {
+        oldValue: previewToken(e.oldValue),
+        newValue: previewToken(e.newValue),
+      });
+    };
+    window.addEventListener('storage', onStorage);
+
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      localStorage.setItem = originalSetItem;
+      localStorage.removeItem = originalRemoveItem;
+    };
+  }, []);
+
   // sessionStorage 级别的去抖，防止组件反复挂载导致并发/重复调用 loginByTelegram
   const TG_AUTO_LOGIN_IN_FLIGHT_KEY = 'tg_auto_login_in_flight_v1';
   const TG_AUTO_LOGIN_LAST_SUCCESS_TS_KEY = 'tg_auto_login_last_success_ts_v1';
@@ -57,6 +106,16 @@ export default function TelegramAutoLogin() {
 
   useEffect(() => {
     const handleTelegramAutoLogin = async () => {
+      if (isDebugEnabled()) {
+        const currentToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        console.log('[TG auto login] enter handler', {
+          path: typeof window !== 'undefined' ? window.location.pathname : null,
+          hasToken: !!currentToken,
+          token: previewToken(currentToken),
+          now: Date.now(),
+        });
+      }
+
       // 若上一跳明确要求跳过自动登录，则直接退出
       try {
         if (typeof window !== 'undefined') {
@@ -194,6 +253,12 @@ export default function TelegramAutoLogin() {
         }
       } catch (e) {
         // guard 失败不影响后续正常登录
+      }
+
+      if (isDebugEnabled()) {
+        console.warn('[TG auto login] token missing -> may call loginByTelegram', {
+          now: Date.now(),
+        });
       }
       
       // 在 Telegram 环境下，显示加载中遮罩

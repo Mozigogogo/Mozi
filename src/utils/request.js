@@ -293,5 +293,19 @@ export const setToken = (token) => {
 
 // 清除token
 export const clearToken = () => {
+  // 调试：定位是谁清除了 token（只在 debug_tg_login=1 时输出）
+  try {
+    if (typeof window !== 'undefined' && localStorage.getItem('debug_tg_login') === '1') {
+      const currentToken = localStorage.getItem('token');
+      const preview = (t) => {
+        if (typeof t !== 'string' || !t) return null;
+        return `${t.slice(0, 10)}...${t.slice(-6)}`;
+      };
+      console.warn('[Request] clearToken() called', {
+        tokenBeforeClear: preview(currentToken),
+        stack: new Error().stack,
+      });
+    }
+  } catch (_) {}
   localStorage.removeItem('token');
 };
