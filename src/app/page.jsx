@@ -34,30 +34,58 @@ export default function HomePage() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (window.location.pathname !== '/') return;
     if (tgLoginAttemptedRef.current) return;
 
-    const timer = setTimeout(async () => {
-      if (tgLoginAttemptedRef.current) return;
+    let cancelled = false;
+    let attempts = 0;
+    const maxAttempts = 60; // 60 * 200ms ~= 12 秒
+    const tickMs = 200;
+
+    const loop = async () => {
+      if (cancelled) return;
+
+      attempts += 1;
 
       const hasToken = !!localStorage.getItem('token');
       if (hasToken) {
+        // 满足“首页没 token 才自动登录”的要求：有 token 直接停
         tgLoginAttemptedRef.current = true;
         return;
       }
 
       const tgWebApp = window?.Telegram?.WebApp;
-      if (!tgWebApp) return;
+      const initData = tgWebApp?.initData;
+      const tgUser = tgWebApp?.initDataUnsafe?.user;
 
-      const initData = tgWebApp.initData;
-      const initDataUnsafe = tgWebApp.initDataUnsafe;
-      if (!initData || !initDataUnsafe?.user) return;
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('[首页 TG 自动登录] tick', {
+          attempts,
+          hasToken,
+          hasTelegramWebApp: !!tgWebApp,
+          hasInitData: !!initData,
+          hasUser: !!tgUser,
+        });
+      }
 
-      const tgUser = initDataUnsafe.user;
+      // Telegram SDK 未就绪，不触发登录
+      if (!tgWebApp || !initData || !tgUser) {
+        if (attempts < maxAttempts) {
+          setTimeout(loop, tickMs);
+        }
+        return;
+      }
+
+      // 读取 hash
       const urlParams = new URLSearchParams(initData);
       const hash = urlParams.get('hash');
-      if (!hash) return;
+      if (!hash) {
+        if (attempts < maxAttempts) {
+          setTimeout(loop, tickMs);
+        }
+        return;
+      }
 
+      // 到这里：token 不存在 + tg 环境就绪 + hash 已存在 => 调用登录接口
       tgLoginAttemptedRef.current = true;
 
       const inviteCode =
@@ -95,12 +123,9 @@ export default function HomePage() {
         );
 
         const userId = res?.data?.userId || res?.userId;
-        if (userId) {
-          localStorage.setItem('userId', userId);
-        }
-        if (inviteCode) {
-          localStorage.removeItem('inviteCode');
-        }
+        if (userId) localStorage.setItem('userId', userId);
+
+        if (inviteCode) localStorage.removeItem('inviteCode');
 
         window.dispatchEvent(
           new CustomEvent('mozi:tokenUpdated', {
@@ -110,12 +135,20 @@ export default function HomePage() {
         await runPostLoginSideEffects({ caller: 'HomePageTgAutoLogin', forceDataInfo: true });
         window.dispatchEvent(new CustomEvent('tg-login-success'));
       } catch (e) {
+        // 登录失败：由于此时 token 仍然不存在，允许在轮询窗口内再次触发
         tgLoginAttemptedRef.current = false;
         console.error('❌ [首页 TG 自动登录] 登录失败:', e);
+        if (!cancelled && attempts < maxAttempts) {
+          setTimeout(loop, tickMs);
+        }
       }
-    }, 100);
+    };
 
-    return () => clearTimeout(timer);
+    setTimeout(loop, 0);
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Avoid hydration mismatch by not rendering until mounted
