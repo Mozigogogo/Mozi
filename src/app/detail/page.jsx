@@ -423,6 +423,8 @@ export default function DetailPage() {
 
         const bigDealChannel = { type: 'big_deal', symbols: [String(symbol || '').toUpperCase()] };
         const response = await ws.subscribe([bigDealChannel]);
+        // 调试：打印 big_deal 的订阅回包（用于鉴权/未授权定位）
+        console.log('[WS][detail][big_deal][resubscribe] subscribe_response:', response);
         const channelId = response?.data?.channels?.[0]?.channelId;
         if (channelId) bigDealChannelIdRef.current = channelId;
       } catch (e) {
@@ -1007,6 +1009,8 @@ ${coinInfo.name || symbol} (${symbol})
       const bigDealChannel = { type: 'big_deal', symbols: [String(symbol || '').toUpperCase()] };
       ws.subscribe([bigDealChannel])
         .then((response) => {
+          // 调试：打印 big_deal 的订阅回包，定位 code=206 的原因（多半是未授权/token 不匹配）
+          console.log('[WS][detail][big_deal] subscribe_response:', response);
           const channelId = response?.data?.channels?.[0]?.channelId;
           if (channelId) bigDealChannelIdRef.current = channelId;
         })
