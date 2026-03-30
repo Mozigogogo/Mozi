@@ -92,6 +92,31 @@ export default function TelegramAutoLogin() {
         return;
       }
 
+      // 仅允许在“首次进入（navigate）”时自动调用登录接口。
+      // Telegram WebView 上从详情页返回可能触发 back_forward/reload 的整页重载，
+      // 这种场景不应再次请求 /user/login。
+      let navigationType = null;
+      try {
+        const nav = performance?.getEntriesByType?.('navigation')?.[0];
+        navigationType = nav?.type || null; // 'navigate' | 'reload' | 'back_forward' | 'prerender'
+      } catch (_) {}
+
+      if (navigationType && navigationType !== 'navigate') {
+        if (isDebugEnabled()) {
+          console.log('[TG auto login] navigation guard: skip loginByTelegram', {
+            navigationType,
+          });
+        }
+        loginAttemptedRef.current = true;
+        await runPostLoginSideEffects({
+          caller: 'TelegramAutoLogin_navigationGuardSkip',
+          forceDataInfo: false,
+        });
+        window.dispatchEvent(new CustomEvent('tg-login-success'));
+        setIsLoading(false);
+        return;
+      }
+
       // 以 Telegram WebApp 的 initData hash 作为“启动标识”
       // 需求：只在“启动 Telegram 小程序”时允许调用 /api/user/login
       // 返回详情页导致组件重建时，hash 通常不变，因此会跳过 loginByTelegram
