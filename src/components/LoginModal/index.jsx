@@ -27,17 +27,7 @@ const getTelegramUserInfo = () => {
   
   const tg = window.Telegram.WebApp;
   const tgUser = tg.initDataUnsafe.user;
-  
-  // 打印完整的 Telegram 数据用于调试
-  console.log('=== LoginModal - Telegram 完整数据 ===');
-  console.log('用户信息:', tgUser);
-  console.log('initData (原始字符串):', tg.initData);
-  console.log('initDataUnsafe (完整对象):', tg.initDataUnsafe);
-  console.log('Hash (签名):', tg.initDataUnsafe?.hash);
-  console.log('Auth Date:', tg.initDataUnsafe?.auth_date);
-  console.log('Platform:', tg.platform);
-  console.log('Version:', tg.version);
-  
+
   return {
     username: tgUser.username || tgUser.first_name || tgUser.last_name || 'Telegram User',
     firstName: tgUser.first_name || '',
@@ -76,7 +66,6 @@ const updateTelegramUserInfo = async () => {
       ];
       
       if (currentNickname && !defaultNicknames.includes(currentNickname)) {
-        console.log('⏭️ LoginModal - 用户已有自定义昵称，跳过自动更新', { currentNickname });
         return;
       }
     } catch (e) {
@@ -90,11 +79,6 @@ const updateTelegramUserInfo = async () => {
     if (!nickname && (tgUserInfo.firstName || tgUserInfo.lastName)) {
       nickname = `${tgUserInfo.firstName} ${tgUserInfo.lastName}`.trim();
     }
-    
-    console.log('=== LoginModal - 首次更新 Telegram 用户信息 ===', {
-      nickname,
-      avatar: tgUserInfo.photoUrl
-    });
 
     const DEFAULT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png';
     
@@ -108,8 +92,6 @@ const updateTelegramUserInfo = async () => {
     });
 
     if (res?.data) {
-      console.log('✅ LoginModal - Telegram 用户信息更新成功');
-      
       // 同步更新 localStorage
       try {
         const storedUserInfo = localStorage.getItem('userInfo');
@@ -136,20 +118,7 @@ const handleTelegramDirectLogin = async (onLoginSuccess, onClose, t, i18nInstanc
   }
   
   const tgWebApp = window.Telegram.WebApp;
-  
-  // 打印 TG 环境原始参数数据
-  console.log('========== TG 原始数据 ==========');
-  console.log('window.Telegram.WebApp:', tgWebApp);
-  console.log('initData (原始字符串):', tgWebApp.initData);
-  console.log('initDataUnsafe (完整对象):', tgWebApp.initDataUnsafe);
-  console.log('initDataUnsafe.hash:', tgWebApp.initDataUnsafe?.hash);
-  console.log('initDataUnsafe.auth_date:', tgWebApp.initDataUnsafe?.auth_date);
-  console.log('initDataUnsafe.query_id:', tgWebApp.initDataUnsafe?.query_id);
-  console.log('platform:', tgWebApp.platform);
-  console.log('version:', tgWebApp.version);
-  console.log('colorScheme:', tgWebApp.colorScheme);
-  console.log('================================');
-  
+
   const initData = tgWebApp.initData;
   const initDataUnsafe = tgWebApp.initDataUnsafe;
   
@@ -159,18 +128,6 @@ const handleTelegramDirectLogin = async (onLoginSuccess, onClose, t, i18nInstanc
   }
   
   const tgUser = initDataUnsafe.user;
-  
-  // 打印用户原始数据
-  console.log('========== TG 用户原始数据 ==========');
-  console.log('user 对象:', tgUser);
-  console.log('user.id:', tgUser.id);
-  console.log('user.first_name:', tgUser.first_name);
-  console.log('user.last_name:', tgUser.last_name);
-  console.log('user.username:', tgUser.username);
-  console.log('user.language_code:', tgUser.language_code);
-  console.log('user.photo_url:', tgUser.photo_url);
-  console.log('user.is_premium:', tgUser.is_premium);
-  console.log('====================================');
   
   // 从 initData 解析 hash
   const urlParams = new URLSearchParams(initData);
@@ -186,19 +143,6 @@ const handleTelegramDirectLogin = async (onLoginSuccess, onClose, t, i18nInstanc
   
   // 判断环境（直接使用 Railway 的 NEXT_PUBLIC_APP_ENV 环境变量）
   const env = process.env.NEXT_PUBLIC_APP_ENV || 'test';
-  
-  console.log('🚀 [LoginModal] Telegram 直接登录');
-  console.log('========== TG 登录参数 ==========');
-  console.log('type:', 'login');
-  console.log('telegramId:', String(tgUser.id));
-  console.log('username:', tgUser.username || tgUser.first_name || '');
-  console.log('photoUrl:', tgUser.photo_url || '');
-  console.log('hash:', hash);
-  console.log('inviteCode:', inviteCode);
-  console.log('channel:', 'tg');
-  console.log('env:', env);
-  console.log('完整 initData:', initData);
-  console.log('================================');
   
   try {
     Toast.show({ icon: 'loading', content: t('user.loggingIn') || '登录中...', duration: 0 });
@@ -283,7 +227,6 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
       const storedInviteCode = localStorage.getItem('inviteCode');
       if (storedInviteCode) {
         setInviteCode(storedInviteCode);
-        console.log('🔍 [LoginModal] 自动填充邀请码:', storedInviteCode);
       }
     }
   }, [visible]);
