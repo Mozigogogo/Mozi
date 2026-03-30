@@ -1468,7 +1468,7 @@ ${coinInfo.name || symbol} (${symbol})
     ws.connect();
     
     return () => {
-      if (typeof window !== 'undefined' && localStorage.getItem('debug_tg_login') === '1') {
+      if (process.env.NODE_ENV !== 'production') {
         const token = localStorage.getItem('token');
         const preview = (t) => {
           if (typeof t !== 'string' || !t) return null;
