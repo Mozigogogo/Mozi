@@ -160,6 +160,14 @@ const handleTelegramDirectLogin = async (onLoginSuccess, onClose, t, i18nInstanc
     
     if (res?.data?.token) {
       localStorage.setItem('token', res.data.token);
+      // 通知已建立的 WebSocket 使用新 token 重新鉴权
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('mozi:tokenUpdated', {
+            detail: { token: res.data.token },
+          })
+        );
+      }
 
       // 根据后端返回 language 更新缓存语言
       syncI18nextLngFromLoginResponse(res, i18nInstance);
@@ -328,6 +336,14 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
 
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
+        // 通知已建立的 WebSocket 使用新 token 重新鉴权
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(
+            new CustomEvent('mozi:tokenUpdated', {
+              detail: { token: res.data.token },
+            })
+          );
+        }
 
         // 根据后端返回 language 更新缓存语言（并同步 i18n）
         syncI18nextLngFromLoginResponse(res, i18n);
@@ -430,6 +446,14 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
 
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
+        // 通知已建立的 WebSocket 使用新 token 重新鉴权
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(
+            new CustomEvent('mozi:tokenUpdated', {
+              detail: { token: res.data.token },
+            })
+          );
+        }
 
         // 根据后端返回 language 更新缓存语言（并同步 i18n）
         syncI18nextLngFromLoginResponse(res, i18n);

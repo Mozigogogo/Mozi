@@ -26,6 +26,9 @@ export class MoziWebSocket {
     this.missedPongCount = 0;
     this.sessionId = null;
     this.subscribedChannels = new Map(); // 存储已订阅的频道
+    this._lastTokenUsed = null;
+    this._tokenReconnectInFlight = false;
+    this._tokenUpdatedHandler = null;
     
     // 配置选项
     this.options = {
@@ -38,6 +41,9 @@ export class MoziWebSocket {
       debug: true,                  // 调试模式
       token: null,                  // 用户 token，用于身份验证（静态快照）
       getToken: null,               // 获取 token 的函数，用于重连时取最新（可选）
+      // 当 localStorage.token 在登录后更新时，强制断开并重连，以确保 Sec-WebSocket-Protocol 使用最新 token
+      listenTokenUpdates: true,
+      tokenUpdatedEventName: 'mozi:tokenUpdated',
       ...options
     };
     
@@ -48,6 +54,33 @@ export class MoziWebSocket {
     this.on(WS_EVENTS.WELCOME, this._handleWelcome.bind(this));
     this.on(WS_EVENTS.PONG, this._handlePong.bind(this));
     this.on(WS_EVENTS.ERROR, this._handleError.bind(this));
+
+    // 监听 token 更新，确保已经建立的 WS 连接可以使用新 token 重新鉴权
+    if (typeof window !== 'undefined' && this.options.listenTokenUpdates) {
+      this._tokenUpdatedHandler = (e) => {
+        const newToken =
+          e?.detail?.token ??
+          (typeof this.options.getToken === 'function' ? this.options.getToken() : this.options.token);
+
+        // 避免重复重连
+        if (this._tokenReconnectInFlight) return;
+        if (newToken === this._lastTokenUsed) return;
+
+        this._tokenReconnectInFlight = true;
+        try {
+          // 先断开再 connect()，保证 connect 时通过 getToken() 取到最新 token
+          this.disconnect({ suppressTokenListenerRemoval: true });
+          this.connect();
+        } finally {
+          // 给 connect 一点时间完成实例状态切换
+          setTimeout(() => {
+            this._tokenReconnectInFlight = false;
+          }, 50);
+        }
+      };
+
+      window.addEventListener(this.options.tokenUpdatedEventName, this._tokenUpdatedHandler);
+    }
   }
   
   /**
@@ -94,9 +127,11 @@ export class MoziWebSocket {
       if (token) {
         // 直接透传 token 作为子协议，避免对 token 内容做任何二次加工
         this._log('使用 token 认证');
+        this._lastTokenUsed = token;
         this.ws = new WebSocket(this.url, token);
       } else {
         this._log('无 token，匿名连接');
+        this._lastTokenUsed = null;
         this.ws = new WebSocket(this.url);
       }
       this._setupEventListeners();
@@ -109,9 +144,15 @@ export class MoziWebSocket {
   /**
    * 断开连接
    */
-  disconnect() {
+  disconnect(options = {}) {
+    const { suppressTokenListenerRemoval = false } = options || {};
     this.isManualClose = true;
     this._clearTimers();
+
+    if (!suppressTokenListenerRemoval && this._tokenUpdatedHandler && typeof window !== 'undefined') {
+      window.removeEventListener(this.options.tokenUpdatedEventName, this._tokenUpdatedHandler);
+      this._tokenUpdatedHandler = null;
+    }
     
     if (this.ws) {
       this.ws.close(CLOSE_CODES.NORMAL, '正常关闭');
