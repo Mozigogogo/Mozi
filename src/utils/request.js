@@ -86,6 +86,27 @@ const TASK_POINTS_MAP = {
   'DAILY_LOGIN': 5
 };
 
+// 尽量从 JWT 的 exp 字段判断 token 是否已过期（不校验签名）
+const getJwtExpMs = (token) => {
+  try {
+    if (typeof token !== 'string') return null;
+    const raw = token.startsWith('Bearer ') ? token.slice(7) : token;
+    const parts = raw.split('.');
+    if (parts.length < 2) return null;
+    const payloadB64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const pad = payloadB64.length % 4 ? '='.repeat(4 - (payloadB64.length % 4)) : '';
+    if (typeof atob !== 'function') return null;
+    const jsonStr = atob(payloadB64 + pad);
+    const payload = JSON.parse(jsonStr);
+    const exp = payload?.exp;
+    const expNum = typeof exp === 'number' ? exp : typeof exp === 'string' ? Number(exp) : null;
+    if (typeof expNum === 'number' && Number.isFinite(expNum)) {
+      return expNum * 1000;
+    }
+  } catch (_) {}
+  return null;
+};
+
 // 响应拦截器
 instance.interceptors.response.use(
   (response) => {
@@ -149,10 +170,42 @@ instance.interceptors.response.use(
            console.warn('⚠️ [Request] 忽略非当前 Token 的 401 响应', { requestToken: requestToken ? 'Exist' : 'None' });
            return data;
         }
+
+        // 只有在 JWT 真正已过期时才清空 token，避免 token 未过期但因接口/权限返回 401
+        // 导致触发 TelegramAutoLogin 的重复登录循环
+        if (currentToken) {
+          const expMs = getJwtExpMs(currentToken);
+          if (typeof expMs === 'number' && expMs - Date.now() > 0) {
+            return Promise.reject(new Error('Unauthorized'));
+          }
+        }
       }
 
       // 清除token
+      const debugEnabled = typeof window !== 'undefined' && localStorage.getItem('debug_tg_login') === '1';
+      if (debugEnabled) {
+        const previewToken = (token) => {
+          if (typeof token !== 'string' || !token) return null;
+          return `${token.slice(0, 10)}...${token.slice(-6)}`;
+        };
+        const currentToken = localStorage.getItem('token');
+        const requestToken = response.config?.headers?.authentication ||
+          response.config?.headers?.Authentication ||
+          response.config?.headers?.['authentication'];
+        const expMs = currentToken ? getJwtExpMs(currentToken) : null;
+        console.log('[Request] 401: clear token about to happen', {
+          currentToken: previewToken(currentToken),
+          requestToken: previewToken(requestToken),
+          expMs,
+          now: Date.now(),
+        });
+      }
       clearToken();
+      
+      if (debugEnabled) {
+        const tokenAfter = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        console.log('[Request] 401: token after clear', { tokenAfter: tokenAfter ? tokenAfter.slice(0, 10) + '...' : null });
+      }
       
       // 只在浏览器环境中执行，且本次会话未提示过
       if (typeof window !== 'undefined' && !hasShownSessionExpired()) {

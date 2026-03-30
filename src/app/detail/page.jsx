@@ -1468,6 +1468,20 @@ ${coinInfo.name || symbol} (${symbol})
     ws.connect();
     
     return () => {
+      if (typeof window !== 'undefined' && localStorage.getItem('debug_tg_login') === '1') {
+        const token = localStorage.getItem('token');
+        const preview = (t) => {
+          if (typeof t !== 'string' || !t) return null;
+          return `${t.slice(0, 10)}...${t.slice(-6)}`;
+        };
+        console.log('[DetailPage] unmount/leave detail page', {
+          symbol,
+          token: preview(token),
+          hasToken: !!token,
+          now: Date.now(),
+        });
+      }
+
       // 清除HTTP轮询定时器
       if (pollingTimerRef.current) {
         clearInterval(pollingTimerRef.current);

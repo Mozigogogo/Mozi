@@ -18,6 +18,21 @@ export default function TelegramAutoLogin() {
   const [isLoading, setIsLoading] = useState(false);
   const { i18n } = useTranslation();
 
+  const DEBUG_KEY = 'debug_tg_login';
+  const isDebugEnabled = () =>
+    typeof window !== 'undefined' && localStorage.getItem(DEBUG_KEY) === '1';
+  const previewToken = (token) => {
+    if (typeof token !== 'string' || !token) return null;
+    const head = token.slice(0, 10);
+    const tail = token.slice(-6);
+    return `${head}...${tail}`;
+  };
+
+  // sessionStorage 级别的去抖，防止组件反复挂载导致并发/重复调用 loginByTelegram
+  const TG_AUTO_LOGIN_IN_FLIGHT_KEY = 'tg_auto_login_in_flight_v1';
+  const TG_AUTO_LOGIN_LAST_SUCCESS_TS_KEY = 'tg_auto_login_last_success_ts_v1';
+  const TG_AUTO_LOGIN_COOLDOWN_MS = 30 * 1000; // 30s 内不再重复触发
+
   // 尽量从 JWT 里读取 exp（不校验签名），用于判断是否需要重新走登录接口
   const getJwtExpMs = (token) => {
     try {
@@ -52,6 +67,27 @@ export default function TelegramAutoLogin() {
         return;
       }
 
+      // 全局 in-flight / 冷却：避免重复挂载造成多次 loginByTelegram
+      if (typeof window !== 'undefined') {
+        const inFlight = sessionStorage.getItem(TG_AUTO_LOGIN_IN_FLIGHT_KEY) === 'true';
+        const lastSuccessTsRaw = sessionStorage.getItem(TG_AUTO_LOGIN_LAST_SUCCESS_TS_KEY);
+        const lastSuccessTs = lastSuccessTsRaw ? Number(lastSuccessTsRaw) : NaN;
+        const recentlySucceeded =
+          Number.isFinite(lastSuccessTs) && Date.now() - lastSuccessTs <= TG_AUTO_LOGIN_COOLDOWN_MS;
+
+        if (isDebugEnabled()) {
+          console.log('[TG auto login] env & throttle', {
+            inFlight,
+            recentlySucceeded,
+            lastSuccessTs: Number.isFinite(lastSuccessTs) ? lastSuccessTs : null,
+          });
+        }
+
+        if (inFlight || recentlySucceeded) {
+          return;
+        }
+      }
+
       // 如果本地已经有 token：
       // - 一般不应重复调用 loginByTelegram（路由重挂载时会重复）
       // - 只有当我们能解出 exp 且明确接近/已过期时，才走登录接口刷新 token
@@ -63,10 +99,24 @@ export default function TelegramAutoLogin() {
           const isExpired =
             typeof expMs === 'number' ? expMs - Date.now() <= 60 * 1000 : false;
 
+          if (isDebugEnabled()) {
+            console.log('[TG auto login] existing token check', {
+              token: previewToken(existingToken),
+              expMs: typeof expMs === 'number' ? expMs : null,
+              isExpired,
+              now: Date.now(),
+            });
+          }
+
           if (!isExpired) {
             loginAttemptedRef.current = true;
 
             // 尽量保持页面状态一致：触发副作用/同步事件，但不再请求登录
+            if (isDebugEnabled()) {
+              console.log('[TG auto login] skip login (token valid/near valid)', {
+                token: previewToken(existingToken),
+              });
+            }
             await runPostLoginSideEffects({ caller: 'TelegramAutoLogin_skipLogin', forceDataInfo: false });
             window.dispatchEvent(new CustomEvent('tg-login-success'));
             setIsLoading(false);
@@ -80,6 +130,11 @@ export default function TelegramAutoLogin() {
       
       // 在 Telegram 环境下，显示加载中遮罩
       setIsLoading(true);
+
+      // 标记为登录进行中
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(TG_AUTO_LOGIN_IN_FLIGHT_KEY, 'true');
+      }
 
       loginAttemptedRef.current = true;
 
@@ -108,6 +163,13 @@ export default function TelegramAutoLogin() {
         }
       } catch (e) {
         console.error('❌ [TG自动登录] 检查本地用户信息失败:', e);
+      }
+
+      if (isDebugEnabled()) {
+        console.log('[TG auto login] start decision', {
+          hasLocalProfile,
+          appChannel: localStorage.getItem('appChannel'),
+        });
       }
 
       // 从 initData 解析 hash
@@ -148,6 +210,19 @@ export default function TelegramAutoLogin() {
         if (token) {
           // 保存 token
           localStorage.setItem('token', token);
+
+          if (isDebugEnabled()) {
+            console.log('[TG auto login] loginByTelegram success, token saved', {
+              token: previewToken(token),
+            });
+          }
+
+          // 记录成功时间，作为跨组件挂载的冷却依据
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem(TG_AUTO_LOGIN_LAST_SUCCESS_TS_KEY, String(Date.now()));
+            sessionStorage.removeItem(TG_AUTO_LOGIN_IN_FLIGHT_KEY);
+          }
+
           // 通知已建立的 WebSocket 使用新 token 重新鉴权
           if (typeof window !== 'undefined') {
             window.dispatchEvent(
@@ -267,6 +342,9 @@ export default function TelegramAutoLogin() {
       } catch (error) {
         console.error('❌ [TG自动登录] 登录异常:', error);
       } finally {
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem(TG_AUTO_LOGIN_IN_FLIGHT_KEY);
+        }
         setIsLoading(false);
       }
     };
