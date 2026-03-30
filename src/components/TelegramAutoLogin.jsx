@@ -53,6 +53,15 @@ export default function TelegramAutoLogin() {
 
   useEffect(() => {
     const handleTelegramAutoLogin = async () => {
+      // 限制：只允许在首页 `/` 自动登录
+      // 目的：tg 环境下返回/重建可能导致该组件重复挂载，但不应在非首页触发 loginByTelegram
+      if (typeof window !== 'undefined') {
+        const path = window.location.pathname;
+        if (path !== '/') {
+          return;
+        }
+      }
+
       // 防止重复执行
       if (loginAttemptedRef.current) {
         return;
