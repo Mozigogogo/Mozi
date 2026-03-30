@@ -92,13 +92,9 @@ export class MoziWebSocket {
           : this.options.token;
 
       if (token) {
-        const tokenStr = String(token);
-        // 如果 token 丢失/为空，走匿名连接
-        const exp = this._debugGetJwtExp(tokenStr);
-        const expAt = exp ? new Date(exp * 1000).toISOString() : 'unknown';
-        this._log(`使用 token 认证: ${tokenStr.substring(0, 20)}... exp=${expAt}`);
-        // 直接传递 token 作为子协议，后端可以从 Sec-WebSocket-Protocol 头中读取
-        this.ws = new WebSocket(this.url, tokenStr);
+        // 直接透传 token 作为子协议，避免对 token 内容做任何二次加工
+        this._log('使用 token 认证');
+        this.ws = new WebSocket(this.url, token);
       } else {
         this._log('无 token，匿名连接');
         this.ws = new WebSocket(this.url);
