@@ -148,27 +148,21 @@ export const loginByGoogle = (token, inviteCode = '', channel = 'pc') => {
  * @returns {Promise}
  */
 export const loginByTelegram = (params) => {
-  // Telegram 自动登录/Telegram 登录入口暂时禁用。
-  // 目的：避免“返回箭头后仍触发 /api/user/login”的异常链路。
-  //
-  // 注意：按你的要求，这里是“注释掉”原始 request 逻辑，而不是删除。
-  //
-  // return request({
-  //   url: Interface.MOZI_LOGIN,
-  //   method: 'POST',
-  //   data: {
-  //     chanel: 3,  // 3-Telegram
-  //     type: 'login',
-  //     telegramId: params.telegramId,
-  //     username: params.username,
-  //     photoUrl: params.photoUrl,
-  //     hash: params.hash,
-  //     inviteCode: params.inviteCode || '',
-  //     channel: 'tg',
-  //     env: params.env || 'test',
-  //   },
-  // });
-  return Promise.reject(new Error('loginByTelegram disabled'));
+  return request({
+    url: Interface.MOZI_LOGIN,
+    method: 'POST',
+    data: {
+      chanel: 3,  // 3-Telegram
+      type: 'login',
+      telegramId: params.telegramId,
+      username: params.username,
+      photoUrl: params.photoUrl,
+      hash: params.hash,
+      inviteCode: params.inviteCode || '',
+      channel: 'tg',
+      env: params.env || 'test',
+    },
+  });
 };
 
 /**

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import TelegramAutoLogin from '@/components/TelegramAutoLogin';
 
 // Dynamic imports to optimize bundle size and performance
 const PCHome = dynamic(() => import('../components/PCHome'), {
@@ -38,11 +39,19 @@ export default function HomePage() {
   
   if (isPC) {
     return (
-      <PCLayout>
-        <PCHome />
-      </PCLayout>
+      <>
+        <TelegramAutoLogin />
+        <PCLayout>
+          <PCHome />
+        </PCLayout>
+      </>
     );
   }
 
-  return <MobileHome />;
+  return (
+    <>
+      <TelegramAutoLogin />
+      <MobileHome />
+    </>
+  );
 }
