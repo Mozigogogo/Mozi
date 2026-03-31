@@ -54,8 +54,6 @@ export default function DailyPage() {
   const [calendarRaw, setCalendarRaw] = React.useState(null);
   const [noteSummary, setNoteSummary] = React.useState('');
   const [hasCalendarData, setHasCalendarData] = React.useState(false);
-  // 临时强制走“暂无数据”分支，方便查看样式；测试完成后可删除或改为 false
-  const forceNoEventsDebug = true;
   const [utcNow, setUtcNow] = React.useState(() => new Date());
 
   // 定时刷新，确保跨日后展示的日期仍然正确
@@ -272,13 +270,13 @@ export default function DailyPage() {
         
         <div
           className={`${styles.tableBody} ${
-            loadingCalendar || !hasCalendarData || forceNoEventsDebug ? styles.tableBodyLoading : ''
+            loadingCalendar || !hasCalendarData ? styles.tableBodyLoading : ''
           }`}
           ref={tableBodyRef}
         >
           {loadingCalendar ? (
             <div className={styles.loadingPlaceholder}>{t('common.loading') || '加载中...'}</div>
-          ) : !hasCalendarData || forceNoEventsDebug ? (
+          ) : !hasCalendarData ? (
             <div className={styles.loadingPlaceholder}>{t('daily.noEvents')}</div>
           ) : (
             <>
@@ -313,8 +311,8 @@ export default function DailyPage() {
         <img src="/images/daily/split.png" className={styles.splitImage} alt="" />
         <img src="/images/daily/verctor.png" className={styles.vectorImage} alt="" />
 
-        {/* Note Card：仅在有有效日历数据且当前不是“暂无数据”调试态时展示 */}
-        {hasCalendarData && !forceNoEventsDebug && (
+        {/* Note Card：仅在有有效日历数据时展示 */}
+        {hasCalendarData && (
           <div className={styles.noteCard} ref={noteCardRef}>
             {noteSummary || t('daily.note')}
           </div>
