@@ -4,7 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { DailyFooterIcon, LeftArrowIcon } from '@/components/Icons';
+import { LeftArrowIcon } from '@/components/Icons';
 import styles from './page.module.less';
 import { getFinanceCalendar } from '@/api/financeCalendar';
 
@@ -325,7 +325,6 @@ export default function DailyPage() {
            <div className={styles.logoIcon}></div>
            <span className={styles.logoText}>MoziInnovations</span>
          </div>
-         <DailyFooterIcon className={styles.footerIcon} />
        </div>
 
       <button className={styles.shareButton} onClick={handleShare}>
