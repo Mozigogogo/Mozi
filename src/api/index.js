@@ -6,6 +6,9 @@
 // 市场数据相关
 export * from './market';
 
+// 财经日历相关
+export * from './financeCalendar';
+
 // 用户相关
 export * from './user';
 

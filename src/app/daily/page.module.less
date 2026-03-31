@@ -133,8 +133,9 @@
   transform: translateX(-50%);
   width: 100%; /* Further increased width to fully cover gaps */
   display: grid;
-  grid-template-columns: 1.3fr 0.8fr 2.4fr 3.0fr;
-  column-gap: 10px; /* Added gap between columns */
+  /* 加宽“事件”列，略收窄数值列 */
+  grid-template-columns: 1.2fr 1fr 4fr 3.5fr;
+  column-gap: 4px; /* Added gap between columns */
   padding: 8px 7.5%; /* Match width of tableBody (85%) */
   box-sizing: border-box;
   font-size: 14px;
@@ -144,6 +145,19 @@
   border-bottom: none;
   z-index: 2;
   box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Added shadow for depth */
+}
+
+.tableHeaderEn {
+  /* 英文模式下：国家列稍微变宽，整体字号略小 */
+  /* 再进一步加宽第二列（国家列），略压缩后两列 */
+  grid-template-columns: 1.1fr 1.8fr 3.5fr 2.6fr;
+  font-size: 12px;
+}
+
+.tableHeader > div {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tableBody {
@@ -178,6 +192,23 @@
     background: rgba(0, 0, 0, 0.2);
   }
   z-index: 2;
+}
+
+.tableBodyLoading {
+  /* Fix height so the placeholder can vertically center. */
+  height: 40%;
+  max-height: 40%;
+  overflow-y: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loadingPlaceholder {
+  width: 100%;
+  padding: 12px;
+  color: #999;
+  text-align: center;
 }
 
 .noteCard {
@@ -228,8 +259,8 @@
 
 .tableRow {
   display: grid;
-  grid-template-columns: 1.3fr 0.8fr 2.4fr 3.0fr;
-  column-gap: 10px; /* Added gap between columns */
+  grid-template-columns: 1.2fr 1fr 4fr 3.5fr;
+  column-gap: 4px; /* Added gap between columns */
   padding: 8px 0;
   font-size: 12px;
   border-bottom: 1px solid #eee;

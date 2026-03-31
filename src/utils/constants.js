@@ -276,6 +276,9 @@ export const Interface = {
   // 涨跌分布
   MARKET_DISTRIBUTION: '/easy/getGainAndLossDistDa',
   
+  // 财经日历
+  GET_FINANCE_CALENDAR: '/easy/getFinanceCalendar',
+  
   // 榜单分享次数
   GET_SHARE_COUNT: '/discovery/getShareCount',
   

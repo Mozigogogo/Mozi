@@ -6,9 +6,11 @@
       "time": "Time",
       "country": "Country",
       "event": "Event",
-      "values": "Actual/Forecast/Prev"
+      "values": "Act./Fcst./Prev."
     },
-    "note": "Today's macro volatility depends entirely on the US CPI data released at 13:30 EST (early morning Beijing time). Before the data release, the market is in a 'data vacuum' period, and volatility may narrow. Investors are advised to focus on stock logic, that is, whether the current market pricing for 'inflation stickiness' and 'economic resilience' is sufficient, and prepare for directional breakthroughs that the data may trigger."
+    "noEvents": "No events for today",
+    "note": "Today's macro volatility depends entirely on the US CPI data released at 13:30 EST (early morning Beijing time). Before the data release, the market is in a 'data vacuum' period, and volatility may narrow. Investors are advised to focus on stock logic, that is, whether the current market pricing for 'inflation stickiness' and 'economic resilience' is sufficient, and prepare for directional breakthroughs that the data may trigger.",
+    "share": "Share Now"
   },
   "vipRecharge": {
     "title": "VIP Recharge",

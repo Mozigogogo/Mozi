@@ -5,8 +5,13 @@ import CopyIcon from '@/components/Icons/CopyIcon';
 import SocialMediaPopup from '@/components/SocialMediaPopup';
 import { EMAIL } from '@/utils/constants';
 import { editLanguage } from '@/api/user';
+import { usePathname } from 'next/navigation';
 
 const GeneralPopup = ({ visible, popType, onClose, t, i18n }) => {
+  const pathname = usePathname();
+  const isDailyRoute =
+    pathname?.startsWith('/daily') ||
+    (typeof window !== 'undefined' && window.location?.pathname?.startsWith('/daily'));
   
   const copyToClipboard = (value) => {
     navigator.clipboard.writeText(value).then(() => {
@@ -23,7 +28,7 @@ const GeneralPopup = ({ visible, popType, onClose, t, i18n }) => {
     }
 
     // 已登录态时，同步语言到后端
-    if (typeof window !== 'undefined' && localStorage.getItem('token')) {
+    if (typeof window !== 'undefined' && localStorage.getItem('token') && !isDailyRoute) {
       try {
         await editLanguage(lng);
       } catch (e) {
