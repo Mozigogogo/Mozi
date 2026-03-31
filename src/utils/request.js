@@ -86,6 +86,10 @@ const TASK_POINTS_MAP = {
   'DAILY_LOGIN': 5
 };
 
+// 调试开关：控制 request 链路的控制台输出（仅用于定位问题）
+// 设为 true 后可恢复相关日志。
+const ENABLE_REQUEST_DEBUG = false;
+
 // 尽量从 JWT 的 exp 字段判断 token 是否已过期（不校验签名）
 const getJwtExpMs = (token) => {
   try {
@@ -182,7 +186,7 @@ instance.interceptors.response.use(
       }
 
       // 清除token
-      const debugEnabled = process.env.NODE_ENV !== 'production';
+      const debugEnabled = ENABLE_REQUEST_DEBUG;
       if (debugEnabled && typeof window !== 'undefined') {
         const previewToken = (token) => {
           if (typeof token !== 'string' || !token) return null;
@@ -293,9 +297,9 @@ export const setToken = (token) => {
 
 // 清除token
 export const clearToken = () => {
-  // 调试：定位是谁清除了 token（仅在非生产环境输出）
+  // 调试：定位是谁清除了 token
   try {
-    if (process.env.NODE_ENV !== 'production' && typeof window !== 'undefined') {
+    if (ENABLE_REQUEST_DEBUG && typeof window !== 'undefined') {
       const currentToken = localStorage.getItem('token');
       const preview = (t) => {
         if (typeof t !== 'string' || !t) return null;

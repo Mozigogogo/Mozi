@@ -11,6 +11,10 @@ const STORAGE_KEYS = {
   TASK_FIRST_LOGIN_DONE: 'task_first_login_done_v1',
 };
 
+// 调试开关：用于控制 post-login 链路的控制台输出
+// 设为 true 后可以恢复日志，定位链路执行顺序/跳过原因。
+const ENABLE_POST_LOGIN_DEBUG = false;
+
 // 自定义字段：首次登录时间（按用户维度持久化）
 // 用于替代“注册时间/创建时间”这种可能不等于“首次登录时间”的字段。
 const USER_FIRST_LOGIN_AT_KEY_PREFIX = 'mozi_first_login_at_user_v1:';
@@ -103,7 +107,14 @@ export async function fetchUserDataInfoOnce({ force = false, caller = 'unknown' 
   const shouldSkipByTtl = !force && lastTs && now() - lastTs < DATAINFO_TTL_MS;
 
   if (shouldSkipByTtl) {
-    console.log('[postLogin] skip /user/datainfo by TTL, caller =', caller, 'lastTs =', new Date(lastTs).toISOString());
+    if (ENABLE_POST_LOGIN_DEBUG) {
+      console.log(
+        '[postLogin] skip /user/datainfo by TTL, caller =',
+        caller,
+        'lastTs =',
+        new Date(lastTs).toISOString()
+      );
+    }
     try {
       const stored = localStorage.getItem('userDataInfo');
       return stored ? JSON.parse(stored) : null;
@@ -112,7 +123,9 @@ export async function fetchUserDataInfoOnce({ force = false, caller = 'unknown' 
     }
   }
 
-  console.log('[postLogin] request /user/datainfo, caller =', caller);
+  if (ENABLE_POST_LOGIN_DEBUG) {
+    console.log('[postLogin] request /user/datainfo, caller =', caller);
+  }
   const res = await request({
     url: Interface.USER_DATA_INFO,
     method: 'GET',
@@ -137,11 +150,15 @@ async function completeDailyLoginOnce() {
   const lastDateStr = safeGet(STORAGE_KEYS.TASK_DAILY_LOGIN_DATE);
   const lastMs = lastDateStr ? Number(lastDateStr) : 0;
   if (lastMs && isSameDay(lastMs, now())) {
-    console.log('[postLogin] skip DAILY_LOGIN (already done today)');
+    if (ENABLE_POST_LOGIN_DEBUG) {
+      console.log('[postLogin] skip DAILY_LOGIN (already done today)');
+    }
     return;
   }
 
-  console.log('[postLogin] completeTask DAILY_LOGIN');
+  if (ENABLE_POST_LOGIN_DEBUG) {
+    console.log('[postLogin] completeTask DAILY_LOGIN');
+  }
   await completeTask('DAILY_LOGIN');
   safeSet(STORAGE_KEYS.TASK_DAILY_LOGIN_DATE, String(now()));
 }
@@ -151,11 +168,15 @@ async function completeFirstLoginOnce() {
 
   const done = safeGet(STORAGE_KEYS.TASK_FIRST_LOGIN_DONE) === 'true';
   if (done) {
-    console.log('[postLogin] skip FIRST_LOGIN (already done)');
+    if (ENABLE_POST_LOGIN_DEBUG) {
+      console.log('[postLogin] skip FIRST_LOGIN (already done)');
+    }
     return;
   }
 
-  console.log('[postLogin] completeTask FIRST_LOGIN');
+  if (ENABLE_POST_LOGIN_DEBUG) {
+    console.log('[postLogin] completeTask FIRST_LOGIN');
+  }
   await completeTask('FIRST_LOGIN');
   safeSet(STORAGE_KEYS.TASK_FIRST_LOGIN_DONE, 'true');
 }
@@ -172,7 +193,9 @@ export async function runPostLoginSideEffects(options = {}) {
   if (typeof window === 'undefined') return;
 
   const caller = options?.caller || 'unknown';
-  console.log('[postLogin] runPostLoginSideEffects called, caller =', caller, 'options =', options);
+  if (ENABLE_POST_LOGIN_DEBUG) {
+    console.log('[postLogin] runPostLoginSideEffects called, caller =', caller, 'options =', options);
+  }
 
   const token = localStorage.getItem('token');
   if (!token) return;
@@ -180,17 +203,23 @@ export async function runPostLoginSideEffects(options = {}) {
   if (!options?.force) {
     // 如果同一会话已经执行过，直接返回
     if (safeGet(STORAGE_KEYS.POST_LOGIN_DONE) === 'true') {
-      console.log('[postLogin] skip because POST_LOGIN_DONE already true, caller =', caller);
+      if (ENABLE_POST_LOGIN_DEBUG) {
+        console.log('[postLogin] skip because POST_LOGIN_DONE already true, caller =', caller);
+      }
       return;
     }
     // 如果正在执行中，复用同一个 Promise
     if (safeGet(STORAGE_KEYS.POST_LOGIN_IN_FLIGHT) === 'true' && inFlightPromise) {
-      console.log('[postLogin] join in-flight promise, caller =', caller);
+      if (ENABLE_POST_LOGIN_DEBUG) {
+        console.log('[postLogin] join in-flight promise, caller =', caller);
+      }
       return inFlightPromise;
     }
   }
 
-  console.log('[postLogin] start new post-login flow, caller =', caller);
+  if (ENABLE_POST_LOGIN_DEBUG) {
+    console.log('[postLogin] start new post-login flow, caller =', caller);
+  }
   safeSet(STORAGE_KEYS.POST_LOGIN_IN_FLIGHT, 'true');
 
   inFlightPromise = (async () => {

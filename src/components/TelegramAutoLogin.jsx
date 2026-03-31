@@ -24,9 +24,14 @@ export default function TelegramAutoLogin() {
     return `${head}...${tail}`;
   };
 
+  // 调试开关：控制该组件内部的控制台输出与 token 监听行为
+  // 设为 true 可恢复日志，定位自动登录链路。
+  const ENABLE_TG_AUTO_LOGIN_DEBUG = false;
+
   // 调试：监听 token 写入/清除，定位 token 何时变为空
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (!ENABLE_TG_AUTO_LOGIN_DEBUG) return;
 
     const originalSetItem = localStorage.setItem.bind(localStorage);
     const originalRemoveItem = localStorage.removeItem.bind(localStorage);
@@ -101,7 +106,7 @@ export default function TelegramAutoLogin() {
 
   useEffect(() => {
     const handleTelegramAutoLogin = async () => {
-      if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== 'production' && ENABLE_TG_AUTO_LOGIN_DEBUG) {
         const currentToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
         console.log('[TG auto login] enter handler', {
           path: typeof window !== 'undefined' ? window.location.pathname : null,
@@ -156,7 +161,7 @@ export default function TelegramAutoLogin() {
       } catch (_) {}
 
       if (navigationType && navigationType !== 'navigate') {
-        if (process.env.NODE_ENV !== 'production') {
+        if (process.env.NODE_ENV !== 'production' && ENABLE_TG_AUTO_LOGIN_DEBUG) {
           console.log('[TG auto login] navigation guard: skip loginByTelegram', {
             navigationType,
           });
@@ -187,7 +192,7 @@ export default function TelegramAutoLogin() {
         if (initHash) {
           const handledLaunchHash = localStorage.getItem(TG_AUTO_LOGIN_HANDLED_LAUNCH_HASH_KEY);
           if (handledLaunchHash && handledLaunchHash === initHash) {
-            if (process.env.NODE_ENV !== 'production') {
+            if (process.env.NODE_ENV !== 'production' && ENABLE_TG_AUTO_LOGIN_DEBUG) {
               console.log('[TG auto login] launch already handled, skip loginByTelegram', {
                 initHash: `${initHash.slice(0, 8)}...`,
               });
@@ -212,7 +217,7 @@ export default function TelegramAutoLogin() {
         const recentlySucceeded =
           Number.isFinite(lastSuccessTs) && Date.now() - lastSuccessTs <= TG_AUTO_LOGIN_COOLDOWN_MS;
 
-        if (process.env.NODE_ENV !== 'production') {
+        if (process.env.NODE_ENV !== 'production' && ENABLE_TG_AUTO_LOGIN_DEBUG) {
           console.log('[TG auto login] env & throttle', {
             inFlight,
             recentlySucceeded,
@@ -230,7 +235,7 @@ export default function TelegramAutoLogin() {
       try {
         const existingToken = localStorage.getItem('token');
         if (existingToken) {
-          if (process.env.NODE_ENV !== 'production') {
+          if (process.env.NODE_ENV !== 'production' && ENABLE_TG_AUTO_LOGIN_DEBUG) {
             console.log('[TG auto login] existing token present, skip loginByTelegram', {
               token: previewToken(existingToken),
               now: Date.now(),
@@ -250,7 +255,7 @@ export default function TelegramAutoLogin() {
         // guard 失败不影响后续正常登录
       }
 
-      if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== 'production' && ENABLE_TG_AUTO_LOGIN_DEBUG) {
         console.warn('[TG auto login] token missing -> may call loginByTelegram', {
           now: Date.now(),
         });
@@ -293,7 +298,7 @@ export default function TelegramAutoLogin() {
         console.error('❌ [TG自动登录] 检查本地用户信息失败:', e);
       }
 
-      if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== 'production' && ENABLE_TG_AUTO_LOGIN_DEBUG) {
         console.log('[TG auto login] start decision', {
           hasLocalProfile,
           appChannel: localStorage.getItem('appChannel'),
@@ -344,7 +349,7 @@ export default function TelegramAutoLogin() {
           // 保存 token
           localStorage.setItem('token', token);
 
-          if (process.env.NODE_ENV !== 'production') {
+          if (process.env.NODE_ENV !== 'production' && ENABLE_TG_AUTO_LOGIN_DEBUG) {
             console.log('[TG auto login] loginByTelegram success, token saved', {
               token: previewToken(token),
             });
