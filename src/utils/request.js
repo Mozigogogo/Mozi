@@ -174,42 +174,50 @@ instance.interceptors.response.use(
            console.warn('⚠️ [Request] 忽略非当前 Token 的 401 响应', { requestToken: requestToken ? 'Exist' : 'None' });
            return data;
         }
-
-        // 只有在 JWT 真正已过期时才清空 token，避免 token 未过期但因接口/权限返回 401
-        // 导致触发 TelegramAutoLogin 的重复登录循环
-        if (currentToken) {
-          const expMs = getJwtExpMs(currentToken);
-          if (typeof expMs === 'number' && expMs - Date.now() > 0) {
-            return Promise.reject(new Error('Unauthorized'));
-          }
-        }
       }
 
-      // 清除token
-      const debugEnabled = ENABLE_REQUEST_DEBUG;
-      if (debugEnabled && typeof window !== 'undefined') {
-        const previewToken = (token) => {
-          if (typeof token !== 'string' || !token) return null;
-          return `${token.slice(0, 10)}...${token.slice(-6)}`;
-        };
-        const currentToken = localStorage.getItem('token');
-        const requestToken = response.config?.headers?.authentication ||
-          response.config?.headers?.Authentication ||
-          response.config?.headers?.['authentication'];
-        const expMs = currentToken ? getJwtExpMs(currentToken) : null;
-        console.log('[Request] 401: clear token about to happen', {
-          currentToken: previewToken(currentToken),
-          requestToken: previewToken(requestToken),
-          expMs,
-          now: Date.now(),
-        });
-      }
-      clearToken();
-      
-      if (debugEnabled && typeof window !== 'undefined') {
-        const tokenAfter = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-        console.log('[Request] 401: token after clear', { tokenAfter: tokenAfter ? tokenAfter.slice(0, 10) + '...' : null });
-      }
+      // NOTE: 按当前产品策略，401 不清除 token（仅提示 + 抛错），避免误删导致反复登录/循环。
+      // 以下是历史逻辑（保留注释，便于将来回滚/排查）：
+      //
+      // // 只有在 JWT 真正已过期时才清空 token，避免 token 未过期但因接口/权限返回 401
+      // // 导致触发 TelegramAutoLogin 的重复登录循环
+      // if (typeof window !== 'undefined') {
+      //   const currentToken = localStorage.getItem('token');
+      //   if (currentToken) {
+      //     const expMs = getJwtExpMs(currentToken);
+      //     if (typeof expMs === 'number' && expMs - Date.now() > 0) {
+      //       return Promise.reject(new Error('Unauthorized'));
+      //     }
+      //   }
+      // }
+      //
+      // // 清除 token（已禁用）
+      // const debugEnabled = ENABLE_REQUEST_DEBUG;
+      // if (debugEnabled && typeof window !== 'undefined') {
+      //   const previewToken = (token) => {
+      //     if (typeof token !== 'string' || !token) return null;
+      //     return `${token.slice(0, 10)}...${token.slice(-6)}`;
+      //   };
+      //   const currentToken = localStorage.getItem('token');
+      //   const requestToken =
+      //     response.config?.headers?.authentication ||
+      //     response.config?.headers?.Authentication ||
+      //     response.config?.headers?.['authentication'];
+      //   const expMs = currentToken ? getJwtExpMs(currentToken) : null;
+      //   console.log('[Request] 401: clear token about to happen', {
+      //     currentToken: previewToken(currentToken),
+      //     requestToken: previewToken(requestToken),
+      //     expMs,
+      //     now: Date.now(),
+      //   });
+      // }
+      // clearToken();
+      // if (debugEnabled && typeof window !== 'undefined') {
+      //   const tokenAfter = localStorage.getItem('token');
+      //   console.log('[Request] 401: token after clear', {
+      //     tokenAfter: tokenAfter ? tokenAfter.slice(0, 10) + '...' : null,
+      //   });
+      // }
       
       // 只在浏览器环境中执行，且本次会话未提示过
       if (typeof window !== 'undefined' && !hasShownSessionExpired()) {

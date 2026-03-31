@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { loginByTelegram } from '@/api/user';
 import { runPostLoginSideEffects } from '@/utils/postLogin';
 import { syncI18nextLngFromLoginResponse } from '@/utils/syncLoginLanguage';
 
@@ -40,6 +39,56 @@ export default function HomePage() {
     let attempts = 0;
     const maxAttempts = 60; // 60 * 200ms ~= 12 秒
     const tickMs = 200;
+
+    const loginByTelegramDirect = async ({
+      telegramId,
+      username,
+      photoUrl,
+      hash,
+      inviteCode,
+      env,
+    }) => {
+      const language = localStorage.getItem('i18nextLng') || 'en';
+
+      const resp = await fetch('/api/user/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept-Language': language,
+        },
+        body: JSON.stringify({
+          chanel: 3, // 3-Telegram
+          type: 'login',
+          telegramId,
+          username,
+          photoUrl,
+          hash,
+          inviteCode: inviteCode || '',
+          channel: 'tg',
+          env: env || 'test',
+        }),
+      });
+
+      let data = null;
+      try {
+        data = await resp.json();
+      } catch (_) {
+        // ignore json parse failure
+      }
+
+      if (!resp.ok) {
+        const msg = data?.message || data?.errorMsg || `HTTP ${resp.status}`;
+        throw new Error(msg);
+      }
+
+      // 兼容后端常见约定：code===0 表示成功
+      if (data && typeof data === 'object' && 'code' in data && data.code !== 0) {
+        const msg = data?.message || data?.errorMsg || '登录失败';
+        throw new Error(msg);
+      }
+
+      return data;
+    };
 
     const loop = async () => {
       if (cancelled) return;
@@ -86,7 +135,7 @@ export default function HomePage() {
       const env = process.env.NEXT_PUBLIC_APP_ENV || 'test';
 
       try {
-        const res = await loginByTelegram({
+        const res = await loginByTelegramDirect({
           telegramId: String(tgUser.id),
           username: tgUser.username || tgUser.first_name || '',
           photoUrl: tgUser.photo_url || '',
