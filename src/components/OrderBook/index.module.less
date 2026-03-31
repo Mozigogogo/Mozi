@@ -295,6 +295,10 @@
   z-index: 0;
 }
 
+.listEmpty::before {
+  display: none;
+}
+
 .row {
   position: relative;
   display: grid;
@@ -458,9 +462,17 @@
 }
 
 .empty {
+  width: 100%;
   padding: 12px;
   font-size: 12px;
   color: #999;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 给空状态留出高度，确保文案显示在订单薄区域中间 */
+  min-height: 160px;
+  box-sizing: border-box;
 }
 
 /* 遮罩层样式 */

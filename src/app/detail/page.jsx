@@ -1413,7 +1413,16 @@ ${coinInfo.name || symbol} (${symbol})
       // { event:"big_deal", data:{ base:"DOGE", buy:[{deal_price, deal_quantity,...}], sell:[...] } }
       const buy = Array.isArray(data?.buy) ? data.buy : [];
       const sell = Array.isArray(data?.sell) ? data.sell : [];
-      if (!buy.length && !sell.length) return;
+
+      // 若 buy/sell 都为空，视为“暂无市场深度数据”：清空订单簿并标记已收到大单数据
+      if (!buy.length && !sell.length) {
+        hasBigDealDataRef.current = true;
+        setOrderBook({
+          bids: [],
+          asks: [],
+        });
+        return;
+      }
 
       // 统一映射为 OrderBook 组件需要的格式：[{ value }]
       // 默认 value 使用成交额：deal_price * deal_quantity
