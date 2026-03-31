@@ -109,7 +109,7 @@ export async function fetchUserDataInfoOnce({ force = false, caller = 'unknown' 
   if (shouldSkipByTtl) {
     if (ENABLE_POST_LOGIN_DEBUG) {
       console.log(
-        '[postLogin] skip /user/datainfo by TTL, caller =',
+        // '[postLogin] skip /user/datainfo by TTL, caller =',
         caller,
         'lastTs =',
         new Date(lastTs).toISOString()
@@ -124,7 +124,7 @@ export async function fetchUserDataInfoOnce({ force = false, caller = 'unknown' 
   }
 
   if (ENABLE_POST_LOGIN_DEBUG) {
-    console.log('[postLogin] request /user/datainfo, caller =', caller);
+    // console.log('[postLogin] request /user/datainfo, caller =', caller);
   }
   const res = await request({
     url: Interface.USER_DATA_INFO,
@@ -151,14 +151,11 @@ async function completeDailyLoginOnce() {
   const lastMs = lastDateStr ? Number(lastDateStr) : 0;
   if (lastMs && isSameDay(lastMs, now())) {
     if (ENABLE_POST_LOGIN_DEBUG) {
-      console.log('[postLogin] skip DAILY_LOGIN (already done today)');
+      // console.log('[postLogin] skip DAILY_LOGIN (already done today)');
     }
     return;
   }
 
-  if (ENABLE_POST_LOGIN_DEBUG) {
-    console.log('[postLogin] completeTask DAILY_LOGIN');
-  }
   await completeTask('DAILY_LOGIN');
   safeSet(STORAGE_KEYS.TASK_DAILY_LOGIN_DATE, String(now()));
 }
@@ -169,13 +166,11 @@ async function completeFirstLoginOnce() {
   const done = safeGet(STORAGE_KEYS.TASK_FIRST_LOGIN_DONE) === 'true';
   if (done) {
     if (ENABLE_POST_LOGIN_DEBUG) {
-      console.log('[postLogin] skip FIRST_LOGIN (already done)');
     }
     return;
   }
 
   if (ENABLE_POST_LOGIN_DEBUG) {
-    console.log('[postLogin] completeTask FIRST_LOGIN');
   }
   await completeTask('FIRST_LOGIN');
   safeSet(STORAGE_KEYS.TASK_FIRST_LOGIN_DONE, 'true');
@@ -193,9 +188,6 @@ export async function runPostLoginSideEffects(options = {}) {
   if (typeof window === 'undefined') return;
 
   const caller = options?.caller || 'unknown';
-  if (ENABLE_POST_LOGIN_DEBUG) {
-    console.log('[postLogin] runPostLoginSideEffects called, caller =', caller, 'options =', options);
-  }
 
   const token = localStorage.getItem('token');
   if (!token) return;
@@ -204,21 +196,18 @@ export async function runPostLoginSideEffects(options = {}) {
     // 如果同一会话已经执行过，直接返回
     if (safeGet(STORAGE_KEYS.POST_LOGIN_DONE) === 'true') {
       if (ENABLE_POST_LOGIN_DEBUG) {
-        console.log('[postLogin] skip because POST_LOGIN_DONE already true, caller =', caller);
       }
       return;
     }
     // 如果正在执行中，复用同一个 Promise
     if (safeGet(STORAGE_KEYS.POST_LOGIN_IN_FLIGHT) === 'true' && inFlightPromise) {
       if (ENABLE_POST_LOGIN_DEBUG) {
-        console.log('[postLogin] join in-flight promise, caller =', caller);
       }
       return inFlightPromise;
     }
   }
 
   if (ENABLE_POST_LOGIN_DEBUG) {
-    console.log('[postLogin] start new post-login flow, caller =', caller);
   }
   safeSet(STORAGE_KEYS.POST_LOGIN_IN_FLIGHT, 'true');
 
