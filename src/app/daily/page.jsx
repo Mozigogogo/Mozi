@@ -285,7 +285,7 @@ export default function DailyPage() {
                   <div className={styles.time}>{item.time}</div>
                   <div className={styles.country}>{item.country}</div>
                   <div className={styles.event}>{item.event}</div>
-                  <div className={styles.value}>{item.value}</div>
+                  <div className={`${styles.value} ${isEnglish ? styles.valueEn : ''}`}>{item.value}</div>
                 </div>
               ))}
               {calendarRaw && (
