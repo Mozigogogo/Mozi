@@ -57,16 +57,6 @@ export default function HomePage() {
       const initData = tgWebApp?.initData;
       const tgUser = tgWebApp?.initDataUnsafe?.user;
 
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('[首页 TG 自动登录] tick', {
-          attempts,
-          hasToken,
-          hasTelegramWebApp: !!tgWebApp,
-          hasInitData: !!initData,
-          hasUser: !!tgUser,
-        });
-      }
-
       // Telegram SDK 未就绪，不触发登录
       if (!tgWebApp || !initData || !tgUser) {
         if (attempts < maxAttempts) {
