@@ -37,7 +37,7 @@ export default function VConsoleLoader() {
           onReady() {
             console.log('[VConsole] 已启动');
             
-            // 调整按钮位置到左下角，tab 栏上方
+          
             setTimeout(() => {
               const vcSwitch = document.querySelector('.vc-switch');
               if (vcSwitch) {
