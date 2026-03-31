@@ -28,6 +28,16 @@ export default function TelegramAutoLogin() {
   // 设为 true 可恢复日志，定位自动登录链路。
   const ENABLE_TG_AUTO_LOGIN_DEBUG = false;
 
+  // 总开关：默认禁用 TG 自动登录（避免任意路由返回/重建时误触发 /user/login）
+  // 如需临时开启，可在控制台执行：localStorage.setItem('tg_auto_login_enable', '1'); location.reload();
+  const isAutoLoginEnabled = () => {
+    try {
+      return typeof window !== 'undefined' && localStorage.getItem('tg_auto_login_enable') === '1';
+    } catch (_) {
+      return false;
+    }
+  };
+
   // 调试：定位是谁渲染了该组件（线上排查用）
   // 用法：URL 加 `?tgautologin_debug=1`，仅打印一次调用栈
   useEffect(() => {
@@ -119,6 +129,9 @@ export default function TelegramAutoLogin() {
 
   useEffect(() => {
     const handleTelegramAutoLogin = async () => {
+      // 默认禁用：除非显式开启，否则不执行任何自动登录逻辑
+      if (!isAutoLoginEnabled()) return;
+
       if (process.env.NODE_ENV !== 'production' && ENABLE_TG_AUTO_LOGIN_DEBUG) {
         const currentToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
         console.log('[TG auto login] enter handler', {
