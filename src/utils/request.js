@@ -163,16 +163,23 @@ instance.interceptors.response.use(
       // 防止并发请求或旧请求的 401 误删新登录的 token
       if (typeof window !== 'undefined') {
         const currentToken = localStorage.getItem('token');
+        const appChannel = localStorage.getItem('appChannel');
+        const isTG = appChannel === 'tg';
+
         // 获取请求头中的 token，兼容不同写法
-        const requestToken = response.config?.headers?.authentication || 
-                             response.config?.headers?.Authentication || 
-                             response.config?.headers?.['authentication'];
-        
-        // 如果当前有 token，但请求没有带 token，或者请求带的 token 与当前不一致
-        // 则认为该 401 不应该影响当前的登录态
-        if (currentToken && requestToken !== currentToken) {
-           console.warn('⚠️ [Request] 忽略非当前 Token 的 401 响应', { requestToken: requestToken ? 'Exist' : 'None' });
-           return data;
+        const requestToken =
+          response.config?.headers?.authentication ||
+          response.config?.headers?.Authentication ||
+          response.config?.headers?.['authentication'];
+
+        // 非 TG 环境下：如果当前有 token，但请求没有带 token，或者请求带的 token 与当前不一致，
+        // 则认为该 401 不应该影响当前的登录态（保留原有保护逻辑）。
+        // TG 环境下：无论是否有 token、是否匹配，都按 401 触发重新登录流程。
+        if (!isTG && currentToken && requestToken !== currentToken) {
+          console.warn('⚠️ [Request] 忽略非当前 Token 的 401 响应', {
+            requestToken: requestToken ? 'Exist' : 'None',
+          });
+          return data;
         }
       }
 
@@ -229,7 +236,7 @@ instance.interceptors.response.use(
           ? '登录已失效，请重新登录' 
           : 'Session expired, please login again';
         
-        // 检测是否为PC端
+        // 检测是否为PC端 / TG 环境
         const appChannel = localStorage.getItem('appChannel');
         const isPC = appChannel === 'pc';
         const isTG = appChannel === 'tg';
