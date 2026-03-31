@@ -28,6 +28,19 @@ export default function TelegramAutoLogin() {
   // 设为 true 可恢复日志，定位自动登录链路。
   const ENABLE_TG_AUTO_LOGIN_DEBUG = false;
 
+  // 调试：定位是谁渲染了该组件（线上排查用）
+  // 用法：URL 加 `?tgautologin_debug=1`，仅打印一次调用栈
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const enabled = urlParams.get('tgautologin_debug') === '1';
+      if (!enabled) return;
+      // eslint-disable-next-line no-console
+      console.warn('[TG auto login][stack] TelegramAutoLogin mounted', new Error().stack);
+    } catch (_) {}
+  }, []);
+
   // 调试：监听 token 写入/清除，定位 token 何时变为空
   useEffect(() => {
     if (typeof window === 'undefined') return;
