@@ -263,7 +263,41 @@ instance.interceptors.response.use(
           console.warn('提示显示失败:', e);
         }
       }
-      
+
+      // tg 环境自动重新登录：401 通常意味着 token 失效，但现有逻辑不会清 token，
+      // 导致 TelegramAutoLogin（tg 下仅 token 缺失时触发）无法重新登录。
+      if (typeof window !== 'undefined' && isTG) {
+        try {
+          const TG_401_RELOGIN_LAST_TS_KEY = 'tg_401_auto_relogin_last_ts_v1';
+          const TG_401_RELOGIN_COOLDOWN_MS = 60 * 1000; // 避免死循环：60s 内最多触发一次
+
+          const lastTsRaw = sessionStorage.getItem(TG_401_RELOGIN_LAST_TS_KEY);
+          const lastTs = lastTsRaw ? Number(lastTsRaw) : NaN;
+          const shouldRelogin = !Number.isFinite(lastTs) || Date.now() - lastTs > TG_401_RELOGIN_COOLDOWN_MS;
+
+          if (shouldRelogin) {
+            sessionStorage.setItem(TG_401_RELOGIN_LAST_TS_KEY, String(Date.now()));
+
+            // 清 token + 清 TelegramAutoLogin 的“已处理 hash/冷却”标记，确保它会重新调用 loginByTelegram
+            localStorage.removeItem('token');
+            localStorage.removeItem('tg_auto_login_handled_launch_hash_v1');
+            sessionStorage.removeItem('tg_auto_login_in_flight_v1');
+            sessionStorage.removeItem('tg_auto_login_last_success_ts_v1');
+            localStorage.removeItem('tg_auto_login_skip_once_v1');
+
+            // 跳转到首页触发 TelegramAutoLogin（其内部只在 path === '/' 时发起登录接口）
+            if (window.location.pathname !== '/') {
+              window.location.replace('/');
+            } else {
+              // 若已经在首页，则刷新以触发组件流程
+              window.location.reload();
+            }
+          }
+        } catch (e) {
+          console.warn('[Request] tg relogin on 401 failed:', e);
+        }
+      }
+
       return Promise.reject(new Error('Session expired'));
     }
     
