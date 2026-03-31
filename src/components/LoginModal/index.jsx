@@ -5,7 +5,7 @@ import { Popup, Input, Button, Toast } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
-import { sendVerificationCode, loginByTelegram, loginByEmail, registerByEmail, completeTask } from '../../api/user';
+import { sendVerificationCode, loginByEmail, registerByEmail, completeTask } from '../../api/user';
 import { runPostLoginSideEffects } from '../../utils/postLogin';
 import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
 import styles from './index.module.less';
@@ -112,6 +112,10 @@ const updateTelegramUserInfo = async () => {
 
 // Telegram 直接登录处理函数
 const handleTelegramDirectLogin = async (onLoginSuccess, onClose, t, i18nInstance) => {
+  // 已禁用：当前 LoginModal 不再提供 Telegram 登录入口
+  Toast.show({ content: 'Telegram 登录已禁用', position: 'bottom' });
+  return;
+
   if (typeof window === 'undefined' || !window.Telegram?.WebApp) {
     Toast.show({ content: '非 Telegram 环境', position: 'bottom' });
     return;
@@ -147,14 +151,14 @@ const handleTelegramDirectLogin = async (onLoginSuccess, onClose, t, i18nInstanc
   try {
     Toast.show({ icon: 'loading', content: t('user.loggingIn') || '登录中...', duration: 0 });
     
-    const res = await loginByTelegram({
-      telegramId: String(tgUser.id),
-      username: tgUser.username || tgUser.first_name || '',
-      photoUrl: tgUser.photo_url || '',
-      hash: hash,
-      inviteCode: inviteCode,
-      env: env
-    });
+    // const res = await loginByTelegram({
+    //   telegramId: String(tgUser.id),
+    //   username: tgUser.username || tgUser.first_name || '',
+    //   photoUrl: tgUser.photo_url || '',
+    //   hash: hash,
+    //   inviteCode: inviteCode,
+    //   env: env
+    // });
     
     Toast.clear();
     
