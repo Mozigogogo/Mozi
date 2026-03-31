@@ -18,8 +18,13 @@ const classifyChange = ({ prev, next }) => {
 };
 
 export default function TokenDebugMonitor() {
+  // 调试开关：控制是否在控制台输出 token 变化
+  // 设为 true 后可以恢复 [TokenDebug] 日志。
+  const ENABLE_TOKEN_DEBUG = false;
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (!ENABLE_TOKEN_DEBUG) return;
 
     const originalSetItem = localStorage.setItem.bind(localStorage);
     const originalRemoveItem = localStorage.removeItem.bind(localStorage);
