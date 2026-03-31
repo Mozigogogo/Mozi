@@ -11,10 +11,6 @@ const STORAGE_KEYS = {
   TASK_FIRST_LOGIN_DONE: 'task_first_login_done_v1',
 };
 
-// 调试开关：用于控制 post-login 链路的控制台输出
-// 设为 true 后可以恢复日志，定位链路执行顺序/跳过原因。
-const ENABLE_POST_LOGIN_DEBUG = false;
-
 // 自定义字段：首次登录时间（按用户维度持久化）
 // 用于替代“注册时间/创建时间”这种可能不等于“首次登录时间”的字段。
 const USER_FIRST_LOGIN_AT_KEY_PREFIX = 'mozi_first_login_at_user_v1:';
@@ -54,7 +50,6 @@ export const ensureFirstLoginAt = ({ caller = 'unknown' } = {}) => {
 
     return tsMs;
   } catch (e) {
-    console.warn('[postLogin] ensureFirstLoginAt failed:', e, { caller });
     return null;
   }
 };
@@ -107,14 +102,6 @@ export async function fetchUserDataInfoOnce({ force = false, caller = 'unknown' 
   const shouldSkipByTtl = !force && lastTs && now() - lastTs < DATAINFO_TTL_MS;
 
   if (shouldSkipByTtl) {
-    if (ENABLE_POST_LOGIN_DEBUG) {
-      console.log(
-        // '[postLogin] skip /user/datainfo by TTL, caller =',
-        caller,
-        'lastTs =',
-        new Date(lastTs).toISOString()
-      );
-    }
     try {
       const stored = localStorage.getItem('userDataInfo');
       return stored ? JSON.parse(stored) : null;
@@ -123,9 +110,6 @@ export async function fetchUserDataInfoOnce({ force = false, caller = 'unknown' 
     }
   }
 
-  if (ENABLE_POST_LOGIN_DEBUG) {
-    // console.log('[postLogin] request /user/datainfo, caller =', caller);
-  }
   const res = await request({
     url: Interface.USER_DATA_INFO,
     method: 'GET',
@@ -150,9 +134,6 @@ async function completeDailyLoginOnce() {
   const lastDateStr = safeGet(STORAGE_KEYS.TASK_DAILY_LOGIN_DATE);
   const lastMs = lastDateStr ? Number(lastDateStr) : 0;
   if (lastMs && isSameDay(lastMs, now())) {
-    if (ENABLE_POST_LOGIN_DEBUG) {
-      // console.log('[postLogin] skip DAILY_LOGIN (already done today)');
-    }
     return;
   }
 
@@ -165,13 +146,9 @@ async function completeFirstLoginOnce() {
 
   const done = safeGet(STORAGE_KEYS.TASK_FIRST_LOGIN_DONE) === 'true';
   if (done) {
-    if (ENABLE_POST_LOGIN_DEBUG) {
-    }
     return;
   }
 
-  if (ENABLE_POST_LOGIN_DEBUG) {
-  }
   await completeTask('FIRST_LOGIN');
   safeSet(STORAGE_KEYS.TASK_FIRST_LOGIN_DONE, 'true');
 }
@@ -195,20 +172,14 @@ export async function runPostLoginSideEffects(options = {}) {
   if (!options?.force) {
     // 如果同一会话已经执行过，直接返回
     if (safeGet(STORAGE_KEYS.POST_LOGIN_DONE) === 'true') {
-      if (ENABLE_POST_LOGIN_DEBUG) {
-      }
       return;
     }
     // 如果正在执行中，复用同一个 Promise
     if (safeGet(STORAGE_KEYS.POST_LOGIN_IN_FLIGHT) === 'true' && inFlightPromise) {
-      if (ENABLE_POST_LOGIN_DEBUG) {
-      }
       return inFlightPromise;
     }
   }
 
-  if (ENABLE_POST_LOGIN_DEBUG) {
-  }
   safeSet(STORAGE_KEYS.POST_LOGIN_IN_FLIGHT, 'true');
 
   inFlightPromise = (async () => {
