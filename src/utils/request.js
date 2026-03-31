@@ -161,10 +161,13 @@ instance.interceptors.response.use(
     if (data && data.code === 401) {
       // 检查请求使用的 token 是否与当前存储的 token 一致
       // 防止并发请求或旧请求的 401 误删新登录的 token
+      let isTGEnv = false;
       if (typeof window !== 'undefined') {
         const currentToken = localStorage.getItem('token');
         const appChannel = localStorage.getItem('appChannel');
         const isTG = appChannel === 'tg';
+        const isPC = appChannel === 'pc';
+        isTGEnv = isTG;
 
         // 获取请求头中的 token，兼容不同写法
         const requestToken =
@@ -236,11 +239,6 @@ instance.interceptors.response.use(
           ? '登录已失效，请重新登录' 
           : 'Session expired, please login again';
         
-        // 检测是否为PC端 / TG 环境
-        const appChannel = localStorage.getItem('appChannel');
-        const isPC = appChannel === 'pc';
-        const isTG = appChannel === 'tg';
-        
         // 显示提示，不自动跳转
         try {
           if (isPC) {
@@ -273,7 +271,7 @@ instance.interceptors.response.use(
 
       // tg 环境自动重新登录：401 通常意味着 token 失效，但现有逻辑不会清 token，
       // 导致 TelegramAutoLogin（tg 下仅 token 缺失时触发）无法重新登录。
-      if (typeof window !== 'undefined' && isTG) {
+      if (typeof window !== 'undefined' && isTGEnv) {
         try {
           const TG_401_RELOGIN_LAST_TS_KEY = 'tg_401_auto_relogin_last_ts_v1';
           const TG_401_RELOGIN_COOLDOWN_MS = 60 * 1000; // 避免死循环：60s 内最多触发一次
