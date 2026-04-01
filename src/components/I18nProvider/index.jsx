@@ -5,15 +5,17 @@ import { I18nextProvider } from 'react-i18next';
 import { usePathname } from 'next/navigation';
 import i18n from '@/i18n/config';
 import { LogoLoading } from '@/components/Loading';
-import { editLanguage } from '@/api/user';
+import { editLanguage, isEditLanguageAllowedPath } from '@/api/user';
 
 export default function I18nProvider({ children }) {
   // 初始值设为 false，避免 hydration 不匹配
   const [isInitialized, setIsInitialized] = useState(false);
   const pathname = usePathname();
-  const isDailyRoute =
-    pathname?.startsWith('/daily') ||
-    (typeof window !== 'undefined' && window.location?.pathname?.startsWith('/daily'));
+  const pathForPolicy =
+    pathname ||
+    (typeof window !== 'undefined' ? window.location?.pathname : '') ||
+    '';
+  const isEditLanguageRoute = isEditLanguageAllowedPath(pathForPolicy);
 
   useEffect(() => {
     // 客户端检查 i18n 是否已初始化
@@ -33,8 +35,8 @@ export default function I18nProvider({ children }) {
   // 首次进入项目时：把本地缓存语言同步到后端（仅在已登录态下）
   useEffect(() => {
     if (!isInitialized) return;
-    // daily 页面明确不允许调用后端语言同步接口
-    if (isDailyRoute) return;
+    // 仅首页与 /user 下允许调用后端语言同步接口
+    if (!isEditLanguageRoute) return;
 
     let stopped = false;
     let didSync = false;
@@ -76,7 +78,7 @@ export default function I18nProvider({ children }) {
       stopped = true;
       window.clearInterval(timerId);
     };
-  }, [isInitialized, isDailyRoute]);
+  }, [isInitialized, isEditLanguageRoute]);
 
   // 始终用 I18nextProvider 包裹，确保子组件能访问 i18n 实例
   return (

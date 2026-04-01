@@ -851,6 +851,7 @@
     "connecting": "连接中...",
     "conversationId": "会话ID",
     "loadingHistory": "正在加载历史消息...",
+    "loadingUserData": "正在同步账户信息...",
     "aiAlt": "AI",
     "tokens": "消耗 {{tokens}} tokens",
     "thinking": "正在思考中",

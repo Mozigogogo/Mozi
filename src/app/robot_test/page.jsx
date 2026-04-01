@@ -318,6 +318,8 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   const BOT_AVATAR = '/images/ai_robot/robot_logo.svg';
   // 是否根据积分余额限制对话（积分不足时展示气泡并阻止继续对话）
   const ENABLE_POINTS_LIMIT = true;
+  /** 临时：不请求 /api/ai/chat/history，测完请改回 false */
+  const DEBUG_SKIP_CHAT_HISTORY_LOAD = false;
 
   const [isPCState, setIsPCState] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -376,16 +378,25 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   }, [listening, transcript]);
 
   const [showPopLogin, setShowPopLogin] = useState(false);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(true); // 历史记录加载状态
+  /** 已登录：进入页先等 /user/datainfo 返回再展示主界面，保证积分等与后端一致；未登录不等待 */
+  const [isBootstrappingUserData, setIsBootstrappingUserData] = useState(true);
   const [hasEnoughPoints, setHasEnoughPoints] = useState(true);   // 当前是否还有可用积分
   const [remainingPoints, setRemainingPoints] = useState(null);
   const [totalPoints, setTotalPoints] = useState(0);
   const [isTelegramEnv, setIsTelegramEnv] = useState(false);
   const [showPointsLock, setShowPointsLock] = useState(false);
-  // 与 /user 页面保持一致：展示用户总积分（读取并刷新 userDataInfo）
+  /** 同页复用一次 datainfo Promise，避免 effect 重入时重复 await 新请求（全局 fetchUserDataInfoOnce 另有并发去重） */
+  const robotDataInfoSyncRef = useRef(null);
+
   useEffect(() => {
-    const syncTotalPoints = async () => {
+    const bootstrapUserData = async () => {
       if (typeof window === 'undefined') return;
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setIsBootstrappingUserData(false);
+        return;
+      }
 
       try {
         const cached = localStorage.getItem('userDataInfo');
@@ -399,20 +410,22 @@ export default function RobotPage({ isPC: propIsPC = false }) {
         console.warn('[Robot] parse cached userDataInfo failed:', err);
       }
 
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
       try {
-        const latest = await fetchUserDataInfoOnce({ caller: 'RobotPage_syncTotalPoints' });
+        // force 勿开：与 postLogin 内 in-flight/短窗口去重配合，避免同屏重复打 datainfo；仍走真实 GET
+        const latest = await fetchUserDataInfoOnce({
+          caller: 'RobotPage_bootstrap',
+        });
         if (latest && typeof latest.totalPoints === 'number') {
           setTotalPoints(latest.totalPoints);
         }
       } catch (err) {
         console.warn('[Robot] fetch userDataInfo failed:', err);
+      } finally {
+        setIsBootstrappingUserData(false);
       }
     };
 
-    syncTotalPoints();
+    bootstrapUserData();
   }, []);
 
 
@@ -448,6 +461,10 @@ export default function RobotPage({ isPC: propIsPC = false }) {
       }
       
       historyLoadedRef.current = true;
+
+      if (DEBUG_SKIP_CHAT_HISTORY_LOAD) {
+        return;
+      }
 
       try {
         // 从 localStorage 获取 conversationId
@@ -540,8 +557,6 @@ export default function RobotPage({ isPC: propIsPC = false }) {
         // 加载失败时，不展示默认欢迎消息
         setMessages([]);
         setSuggestedQuestions([]);
-      } finally {
-        setIsLoadingHistory(false); // 加载完成
       }
     };
 
@@ -689,8 +704,8 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   );
 
   // 右上角 “AI Assistant Pro” 升级胶囊：只在空状态展示，开始对话后隐藏
-  // 放在这里是为了确保 `isLoadingHistory` / `isStreaming` 已初始化
-  const showUpgradePill = messages.length === 0 && !isLoadingHistory && !isStreaming;
+  // 放在这里是为了确保 `isBootstrappingUserData` / `isStreaming` 已初始化
+  const showUpgradePill = messages.length === 0 && !isBootstrappingUserData && !isStreaming;
   
   // 检查登录状态
   useEffect(() => {
@@ -1062,7 +1077,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
             </div>
           )}
 
-          {messages.length === 0 && !isLoadingHistory && !isStreaming && (
+          {messages.length === 0 && !isBootstrappingUserData && !isStreaming && (
             <div className={styles.emptyState}>
               <div className={styles.emptyTextBlock}>
                 <div
@@ -1215,11 +1230,11 @@ export default function RobotPage({ isPC: propIsPC = false }) {
           </div>
           
           {/* 历史记录加载遮罩层 - 只遮罩聊天区域 */}
-          {isLoadingHistory && (
+          {isBootstrappingUserData && (
             <div className={styles.loadingOverlay}>
               <div className={styles.loadingContent}>
                 <ThinkingAnimation />
-                <div className={styles.loadingText}>{t('robot.loadingHistory')}</div>
+                <div className={styles.loadingText}>{t('robot.loadingUserData')}</div>
               </div>
             </div>
           )}

@@ -868,6 +868,7 @@
     "connecting": "Connecting...",
     "conversationId": "Conversation ID",
     "loadingHistory": "Loading chat history...",
+    "loadingUserData": "Syncing account...",
     "aiAlt": "AI",
     "tokens": "Consumed {{tokens}} tokens",
     "thinking": "Thinking",

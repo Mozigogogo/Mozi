@@ -3,22 +3,24 @@
 import { useTranslation } from 'react-i18next';
 import { usePathname } from 'next/navigation';
 import styles from './index.module.less';
-import { editLanguage } from '@/api/user';
+import { editLanguage, isEditLanguageAllowedPath } from '@/api/user';
 
 export default function LanguageSwitcher() {
   const { i18n, t } = useTranslation();
   const pathname = usePathname();
-  const isDailyRoute =
-    pathname?.startsWith('/daily') ||
-    (typeof window !== 'undefined' && window.location?.pathname?.startsWith('/daily'));
+  const pathForPolicy =
+    pathname ||
+    (typeof window !== 'undefined' ? window.location?.pathname : '') ||
+    '';
+  const canSyncLanguage = isEditLanguageAllowedPath(pathForPolicy);
 
   const changeLanguage = async (lng) => {
     i18n.changeLanguage(lng);
     if (typeof window !== 'undefined') {
       localStorage.setItem('i18nextLng', lng);
       const token = localStorage.getItem('token');
-      // daily 页面明确不允许调用后端语言同步接口
-      if (token && !isDailyRoute) {
+      // 仅首页与 /user 下允许调用后端语言同步接口
+      if (token && canSyncLanguage) {
         try {
           await editLanguage(lng);
         } catch (e) {
