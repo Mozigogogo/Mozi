@@ -262,55 +262,201 @@
   transition: opacity 0.2s; /* Smooth opacity transition */
 }
 
-/* 侧边栏底部 */
-.siderFooter {
-  margin-top: auto;
-  padding: 16px;
-  // border-top: 1px solid #f0f0f0;
+/* 「我的」分组标题（与 antd Menu 分组标题视觉一致，置于自选之上） */
+.mineGroupTitle {
+  padding: 8px 16px 4px;
+  margin-top: 4px;
+  border-top: 1px solid #f0f0f0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(0, 0, 0, 0.45);
 }
 
-.footerLinks {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  margin-bottom: 12px;
+/* 展开态下「我的告警」等同组项上方已有「我的」标题，隐藏空的 ItemGroup 标题行 */
+.mineMenuLower {
+  /* 与上方「我的自选」紧贴：去掉第二个 Menu 默认顶 padding、分组列表顶距 */
+  :global {
+    .ant-menu {
+      padding-top: 0;
+    }
 
-  a {
-    color: #666;
-    font-size: 12px;
-    text-decoration: none;
+    .ant-menu-item-group:first-child .ant-menu-item-group-title {
+      display: none;
+    }
 
-    &:hover {
-      color: #11B787;
+    .ant-menu-item-group:first-child .ant-menu-item-group-list {
+      margin-top: 0;
     }
   }
 }
 
-.socialIcons {
-  display: flex;
-  gap: 12px;
-  margin-top: 16px;
+/* PC 侧栏「我的自选」：行样式与 antd Menu 子项一致 */
+.pcWatchlist {
+  padding: 0;
+  margin-top: 0;
 }
 
-.socialIcon {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #666;
+.pcWatchlistHeader {
   display: flex;
   align-items: center;
-  justify-content: center;
-  transition: background 0.2s;
-
-  img {
-    width: 16px;
-    height: 16px;
-    filter: brightness(0) invert(1);
-  }
+  justify-content: space-between;
+  width: 100%;
+  min-height: 40px;
+  /* 仅上与左右 margin，与下方子项或下一 Menu 项的间距交给 antd item 的 margin-block */
+  margin: 4px 8px 0;
+  padding: 0 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 8px;
+  font: inherit;
+  text-align: left;
+  color: rgba(0, 0, 0, 0.88);
 
   &:hover {
-    background: #11B787;
+    background: #f5f5f5;
   }
+}
+
+.pcWatchlistHeaderSelected {
+  color: #11b787;
+
+  .pcWatchlistTitle {
+    color: #11b787;
+  }
+
+  .pcWatchlistChevron {
+    color: #11b787;
+  }
+}
+
+.pcWatchlistHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+  flex: 1;
+
+  /* 与 antd Menu item 图标右侧间距一致（ConfigProvider iconMarginInlineEnd: 12） */
+  :global(.ant-menu-item-icon) {
+    margin-inline-end: 12px;
+  }
+}
+
+.pcWatchlistTitle {
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.88);
+  flex: 1;
+  min-width: 0;
+}
+
+.pcWatchlistChevron {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: #999;
+}
+
+/* 与标题「我的自选」文字左缘对齐：与 .pcWatchlistHeader 内图标区同宽缩进（8+16+16+12），行内另有 10px padding */
+@pcWatchlist-text-align-inset: 16px;
+
+.pcWatchlistBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 4px 4px @pcWatchlist-text-align-inset;
+}
+
+.pcWatchlistHint {
+  /* 与 .pcWatchlistRow 正文同起点：body 已缩进 42px，此处再 10px 与行内 padding 一致 */
+  padding: 10px 8px;
+  font-size: 12px;
+  color: #999;
+  line-height: 1.4;
+}
+
+.pcWatchlistRow {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 10px;
+  margin: 0;
+  border: none;
+  background: transparent;
+  border-radius: 16px;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: #f7f8f9;
+  }
+}
+
+.pcWatchlistRowActive {
+  background: #f2f4f5;
+
+  &:hover {
+    background: #f2f4f5;
+  }
+}
+
+.pcWatchlistRowLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.pcWatchlistSymbol {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a2e;
+  line-height: 1.2;
+}
+
+.pcWatchlistName {
+  font-size: 12px;
+  color: #8c8c8c;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pcWatchlistRowRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.pcWatchlistPrice {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a2e;
+  line-height: 1.2;
+}
+
+.pcWatchlistChangeUp,
+.pcWatchlistChangeDown {
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 500;
+}
+
+.pcWatchlistChangeUp {
+  color: #11b787;
+}
+
+.pcWatchlistChangeDown {
+  color: #fa5f5f;
 }
 
 /* Content */
