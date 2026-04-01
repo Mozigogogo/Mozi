@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { NavBar, PullToRefresh, Toast } from 'antd-mobile';
-import { getSectorDetail, addOwnCoin, cancelOwnCoin } from '@/api/market';
+import { getSectionSymbols, addOwnCoin, cancelOwnCoin } from '@/api/market';
 import { completeTask } from '@/api/user';
 import SortButton from '@/components/SortButton';
 import styles from './page.module.less';
@@ -13,6 +13,7 @@ export default function SectorDetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useTranslation();
+  const showCoinLogo = false;
   
   const sectorName = searchParams.get('name') || 'Meme';
   
@@ -75,58 +76,59 @@ export default function SectorDetailPage() {
     { id: '49', symbol: 'OP', name: 'Optimism', icon: '/icons/new_sector/btc.svg', price: 1.98, change24h: 6.78, volume24h: 267000000, marketCap: 1900000000, isLiked: true, isMonitored: false },
     { id: '50', symbol: 'IMX', name: 'Immutable X', icon: '/icons/new_sector/btc.svg', price: 1.34, change24h: -3.56, volume24h: 98000000, marketCap: 2100000000, isLiked: false, isMonitored: false }
   ]);
-  const [sortBy, setSortBy] = useState('marketCap'); // marketCap, price, change24h, volume
-  const [sortOrder, setSortOrder] = useState('desc'); // asc, desc
+  const [symbolOrder, setSymbolOrder] = useState('desc');
+  const [priceOrder, setPriceOrder] = useState('desc');
+  const [change24hOrder, setChange24hOrder] = useState('desc');
   const [loading, setLoading] = useState(false);
   const [showScrollbar, setShowScrollbar] = useState(true);
   const scrollTimeoutRef = useRef(null);
 
   // 排序处理
   const handleSortChange = (field, order) => {
-    setSortBy(field);
-    setSortOrder(order);
-    
-    // 执行排序
-    const sorted = [...coinList].sort((a, b) => {
-      const aVal = a[field] || 0;
-      const bVal = b[field] || 0;
-      return order === 'asc' ? aVal - bVal : bVal - aVal;
-    });
-    
-    setCoinList(sorted);
+    if (field === 'symbol') {
+      setSymbolOrder(order);
+    } else if (field === 'price') {
+      setPriceOrder(order);
+    } else if (field === 'change24h') {
+      setChange24hOrder(order);
+    }
   };
   // 获取板块详情数据
   const fetchSectorDetail = async () => {
     setLoading(true);
     try {
-      const result = await getSectorDetail(sectorName);
+      const result = await getSectionSymbols({
+        category: sectorName,
+        symbolOrder,
+        priceOrder,
+        change24hOrder,
+      });
       
       if (result?.code === 0 && result?.data) {
-        const data = result.data;
-        
-        // 更新板块信息
+        const list = Array.isArray(result.data) ? result.data : [];
+
+        // 更新板块信息（当前接口仅返回成分股列表）
+        const totalMarketCap = list.reduce((sum, item) => sum + (parseFloat(item?.marketCap) || 0), 0);
         setSectorInfo({
-          name: data.sectionName || sectorName,
-          change: data.change24h ? `${data.change24h.toFixed(2)}%` : '0.00%',
-          marketCap: data.totalMarketCap || '$0',
-          volume: data.totalVolume || '$0'
+          name: sectorName,
+          change: '0.00%',
+          marketCap: totalMarketCap || 0,
+          volume: '--'
         });
-        
+
         // 更新币种列表
-        if (data.coins && Array.isArray(data.coins)) {
-          setCoinList(data.coins.map(coin => ({
-            id: coin.id || coin.symbol,
-            symbol: coin.symbol,
-            name: coin.name,
-            icon: coin.icon || coin.logo,
-            price: coin.price || 0,
-            change24h: coin.change24h || 0,
-            volume24h: coin.volume24h || 0,
-            marketCap: coin.marketCap || 0,
-            isLiked: coin.isSelfSelected || false,
-            isMonitored: coin.isMonitored || false
-          })));
-        }
+        setCoinList(list.map((coin) => ({
+          id: coin.id || coin.symbol,
+          symbol: coin.symbol,
+          name: coin.name || coin.symbol,
+          icon: coin.icon || coin.logo,
+          price: parseFloat(coin.currentPrice) || 0,
+          change24h: parseFloat(coin.priceChange24h) || 0,
+          volume24h: parseFloat(coin.totalVolume || coin.volume24h) || 0,
+          marketCap: parseFloat(coin.marketCap) || 0,
+          isLiked: !!coin.isSelfSelected,
+          isMonitored: coin.isMonitored || false
+        })));
       }
     } catch (error) {
       console.error('获取板块详情失败:', error);
@@ -141,7 +143,7 @@ export default function SectorDetailPage() {
 
   useEffect(() => {
     fetchSectorDetail();
-  }, [sectorName]);
+  }, [sectorName, symbolOrder, priceOrder, change24hOrder]);
 
   // 页面加载时显示滚动条3秒
   useEffect(() => {
@@ -293,7 +295,7 @@ export default function SectorDetailPage() {
           <div className={styles.sortBar}>
             <SortButton
               label="成分币种"
-              value="marketCap"
+              value="symbol"
               onChange={handleSortChange}
             />
             <SortButton
@@ -325,12 +327,14 @@ export default function SectorDetailPage() {
                   onClick={() => goToCoinDetail(coin.symbol)}
                 >
                   <div className={styles.coinInfo}>
-                    {coin.icon ? (
-                      <img src={coin.icon} alt={coin.symbol} className={styles.coinIcon} />
-                    ) : (
-                      <div className={styles.coinIconPlaceholder}>
-                        {coin.symbol?.charAt(0) || '?'}
-                      </div>
+                    {showCoinLogo && (
+                      coin.icon ? (
+                        <img src={coin.icon} alt={coin.symbol} className={styles.coinIcon} />
+                      ) : (
+                        <div className={styles.coinIconPlaceholder}>
+                          {coin.symbol?.charAt(0) || '?'}
+                        </div>
+                      )
                     )}
                     <span className={styles.coinSymbol}>{coin.symbol}</span>
                   </div>

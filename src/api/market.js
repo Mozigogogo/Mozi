@@ -174,6 +174,21 @@ export const getSectionList = (params = {}) => {
 };
 
 /**
+ * 获取板块成分股列表
+ * GET /section/symbols
+ * @param {Object} params - 查询参数
+ * @param {string} params.category - 板块名称（必传）
+ * @param {'asc'|'desc'} [params.priceOrder='desc'] - 价格排序方向
+ */
+export const getSectionSymbols = (params = {}) => {
+  return request({
+    url: Interface.SECTION_SYMBOLS,
+    method: 'GET',
+    params,
+  });
+};
+
+/**
  * 批量获取市场数据（涨跌分布 + 恐慌贪婪指数）
  * @returns {Promise<{distribution: any, fearGreed: any}>}
  */

@@ -53,6 +53,8 @@ export const Interface = {
   // 热门版块
   // 板块列表
   SECTION_LIST: '/section/list',
+  // 板块成分股列表
+  SECTION_SYMBOLS: '/section/symbols',
   // 热门版块（分页）
   // 板块详情
   SECTOR_DETAIL: '/showhot/sectiondetail',

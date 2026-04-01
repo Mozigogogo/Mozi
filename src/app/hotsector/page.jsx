@@ -15,9 +15,8 @@ export default function HotSectorPage() {
   const MAX_ITEMS = 50;
   const [activeSortField, setActiveSortField] = useState('range');
   const [change24hOrder, setChange24hOrder] = useState('desc');
-  // UI 向上箭头目前对应 SortButton 的 'desc'，但接口要求向上=asc、向下=desc
-  const [marketCapOrder, setMarketCapOrder] = useState('asc');
-  const [volumeOrder, setVolumeOrder] = useState('asc');
+  const [marketCapOrder, setMarketCapOrder] = useState('desc');
+  const [volumeOrder, setVolumeOrder] = useState('desc');
   const [sectorData, setSectorData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -47,11 +46,9 @@ export default function HotSectorPage() {
   const handleSortChange = (field, order) => {
     setActiveSortField(field);
     if (field === 'marketCap') {
-      // 反转：UI 上=desc -> 接口 asc；UI 下=asc -> 接口 desc
-      setMarketCapOrder(order === 'desc' ? 'asc' : 'desc');
+      setMarketCapOrder(order);
     } else if (field === 'volume') {
-      // 反转：UI 上=desc -> 接口 asc；UI 下=asc -> 接口 desc
-      setVolumeOrder(order === 'desc' ? 'asc' : 'desc');
+      setVolumeOrder(order);
     } else {
       setChange24hOrder(order);
     }
