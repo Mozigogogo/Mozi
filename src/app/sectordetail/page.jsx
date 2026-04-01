@@ -9,6 +9,9 @@ import { completeTask } from '@/api/user';
 import SortButton from '@/components/SortButton';
 import styles from './page.module.less';
 
+const INITIAL_FETCH_DEDUPE_MS = 1200;
+const lastInitialFetchAtBySector = new Map();
+
 export default function SectorDetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -76,41 +79,62 @@ export default function SectorDetailPage() {
     { id: '49', symbol: 'OP', name: 'Optimism', icon: '/icons/new_sector/btc.svg', price: 1.98, change24h: 6.78, volume24h: 267000000, marketCap: 1900000000, isLiked: true, isMonitored: false },
     { id: '50', symbol: 'IMX', name: 'Immutable X', icon: '/icons/new_sector/btc.svg', price: 1.34, change24h: -3.56, volume24h: 98000000, marketCap: 2100000000, isLiked: false, isMonitored: false }
   ]);
-  const [symbolOrder, setSymbolOrder] = useState('desc');
-  const [priceOrder, setPriceOrder] = useState('desc');
-  const [change24hOrder, setChange24hOrder] = useState('desc');
-  const [loading, setLoading] = useState(false);
+  const [symbolOrder, setSymbolOrder] = useState('asc');
+  const [priceOrder, setPriceOrder] = useState('asc');
+  const [change24hOrder, setChange24hOrder] = useState('asc');
+  const [loading, setLoading] = useState(true);
   const [showScrollbar, setShowScrollbar] = useState(true);
   const scrollTimeoutRef = useRef(null);
+  const latestRequestIdRef = useRef(0);
+  const pendingRequestCountRef = useRef(0);
 
   // 排序处理
   const handleSortChange = (field, order) => {
+    const nextParams = {
+      sectorName,
+      symbolOrder,
+      priceOrder,
+      change24hOrder,
+    };
+
     if (field === 'symbol') {
       setSymbolOrder(order);
+      nextParams.symbolOrder = order;
     } else if (field === 'price') {
       setPriceOrder(order);
+      nextParams.priceOrder = order;
     } else if (field === 'change24h') {
       setChange24hOrder(order);
+      nextParams.change24hOrder = order;
     }
+
+    console.log('[SectorDetail][SortClick] trigger fetch with params:', nextParams);
+    fetchSectorDetail(nextParams);
   };
   // 获取板块详情数据
-  const fetchSectorDetail = async () => {
+  const fetchSectorDetail = async (overrideParams = {}) => {
+    const params = {
+      category: overrideParams.sectorName ?? sectorName,
+      symbolOrder: overrideParams.symbolOrder ?? symbolOrder,
+      priceOrder: overrideParams.priceOrder ?? priceOrder,
+      change24hOrder: overrideParams.change24hOrder ?? change24hOrder,
+    };
+    const requestId = ++latestRequestIdRef.current;
+    pendingRequestCountRef.current += 1;
     setLoading(true);
+    console.log('[SectorDetail][FetchStart]', { requestId, params, pending: pendingRequestCountRef.current });
+
     try {
-      const result = await getSectionSymbols({
-        category: sectorName,
-        symbolOrder,
-        priceOrder,
-        change24hOrder,
-      });
+      const result = await getSectionSymbols(params);
       
-      if (result?.code === 0 && result?.data) {
+      // 只让最后一次请求更新页面，避免快速切换时旧响应覆盖新响应
+      if (requestId === latestRequestIdRef.current && result?.code === 0 && result?.data) {
         const list = Array.isArray(result.data) ? result.data : [];
 
         // 更新板块信息（当前接口仅返回成分股列表）
         const totalMarketCap = list.reduce((sum, item) => sum + (parseFloat(item?.marketCap) || 0), 0);
         setSectorInfo({
-          name: sectorName,
+          name: params.category,
           change: '0.00%',
           marketCap: totalMarketCap || 0,
           volume: '--'
@@ -129,21 +153,41 @@ export default function SectorDetailPage() {
           isLiked: !!coin.isSelfSelected,
           isMonitored: coin.isMonitored || false
         })));
+        console.log('[SectorDetail][FetchApplied]', { requestId, items: list.length });
+      } else {
+        console.log('[SectorDetail][FetchIgnored]', {
+          requestId,
+          latestRequestId: latestRequestIdRef.current,
+          code: result?.code,
+        });
       }
     } catch (error) {
-      console.error('获取板块详情失败:', error);
+      console.error('[SectorDetail][FetchError]', { requestId, error });
       Toast.show({
         content: t('common.loadFailed') || '加载失败',
         position: 'top'
       });
     } finally {
-      setLoading(false);
+      pendingRequestCountRef.current = Math.max(0, pendingRequestCountRef.current - 1);
+      console.log('[SectorDetail][FetchEnd]', { requestId, pending: pendingRequestCountRef.current });
+      if (pendingRequestCountRef.current === 0) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    fetchSectorDetail();
-  }, [sectorName, symbolOrder, priceOrder, change24hOrder]);
+    const now = Date.now();
+    const lastAt = lastInitialFetchAtBySector.get(sectorName) || 0;
+    if (now - lastAt < INITIAL_FETCH_DEDUPE_MS) {
+      console.log('[SectorDetail][InitEffect] skipped duplicated init fetch', { sectorName, now, lastAt });
+      return;
+    }
+
+    lastInitialFetchAtBySector.set(sectorName, now);
+    console.log('[SectorDetail][InitEffect] trigger init fetch', { sectorName });
+    fetchSectorDetail({ sectorName });
+  }, [sectorName]);
 
   // 页面加载时显示滚动条3秒
   useEffect(() => {
@@ -265,122 +309,160 @@ export default function SectorDetailPage() {
 
       <PullToRefresh onRefresh={fetchSectorDetail}>
         <div className={styles.content}>
-          {/* 板块信息卡片 */}
-          <div className={styles.sectorCard}>
-            <div className={styles.cardHeader}>
-              <span className={styles.sectorName}>{sectorInfo.name}</span>
-              <span className={`${styles.sectorChange} ${parseFloat(sectorInfo.change) >= 0 ? styles.positive : styles.negative}`}>
-                {sectorInfo.change}
-              </span>
-            </div>
-            <div className={styles.cardStats}>
-              <div className={styles.statItem}>
-                <div className={styles.statLabel}>总价值</div>
-                <div className={styles.statValue}>
-                  <span className={styles.currency}>$</span>
-                  {sectorInfo.marketCap}
+          {loading ? (
+            <div className={styles.skeletonWrap}>
+              <div className={`${styles.sectorCard} ${styles.skeletonPulse}`}>
+                <div className={styles.skeletonCardHeader}>
+                  <div className={styles.skeletonBlock}></div>
+                  <div className={styles.skeletonTag}></div>
+                </div>
+                <div className={styles.skeletonCardStats}>
+                  <div className={styles.skeletonStat}></div>
+                  <div className={styles.skeletonStat}></div>
                 </div>
               </div>
-              <div className={styles.statItem}>
-                <div className={styles.statLabel}>市 值</div>
-                <div className={styles.statValue}>
-                  <span className={styles.currency}>$</span>
-                  {sectorInfo.volume}
-                </div>
+
+              <div className={`${styles.skeletonSortBar} ${styles.skeletonPulse}`}>
+                {Array.from({ length: 5 }).map((_, idx) => (
+                  <div key={`skeleton-head-${idx}`} className={styles.skeletonHeadItem}></div>
+                ))}
+              </div>
+
+              <div className={styles.skeletonList}>
+                {Array.from({ length: 10 }).map((_, idx) => (
+                  <div key={`skeleton-row-${idx}`} className={`${styles.skeletonRow} ${styles.skeletonPulse}`}>
+                    <div className={styles.skeletonCell}></div>
+                    <div className={styles.skeletonCell}></div>
+                    <div className={styles.skeletonPill}></div>
+                    <div className={styles.skeletonIcon}></div>
+                    <div className={styles.skeletonIcon}></div>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
-
-          {/* 排序栏 */}
-          <div className={styles.sortBar}>
-            <SortButton
-              label="成分币种"
-              value="symbol"
-              onChange={handleSortChange}
-            />
-            <SortButton
-              label="最新价"
-              value="price"
-              onChange={handleSortChange}
-            />
-            <SortButton
-              label="24h涨跌"
-              value="change24h"
-              onChange={handleSortChange}
-            />
-            <div className={styles.sortItem}>自加选</div>
-            <div className={styles.sortItem}>加监控</div>
-          </div>
-
-          {/* 币种列表 */}
-          <div 
-            className={`${styles.coinList} ${showScrollbar ? styles.showScrollbar : ''}`}
-            onScroll={handleScroll}
-          >
-            {coinList.length === 0 && !loading ? (
-              <div className={styles.empty}>暂无数据</div>
-            ) : (
-              coinList.map(coin => (
-                <div 
-                  key={coin.id} 
-                  className={styles.coinItem}
-                  onClick={() => goToCoinDetail(coin.symbol)}
-                >
-                  <div className={styles.coinInfo}>
-                    {showCoinLogo && (
-                      coin.icon ? (
-                        <img src={coin.icon} alt={coin.symbol} className={styles.coinIcon} />
-                      ) : (
-                        <div className={styles.coinIconPlaceholder}>
-                          {coin.symbol?.charAt(0) || '?'}
-                        </div>
-                      )
-                    )}
-                    <span className={styles.coinSymbol}>{coin.symbol}</span>
+          ) : (
+            <>
+              {/* 板块信息卡片 */}
+              <div className={styles.sectorCard}>
+                <div className={styles.cardHeader}>
+                  <span className={styles.sectorName}>{sectorInfo.name}</span>
+                  <span className={`${styles.sectorChange} ${parseFloat(sectorInfo.change) >= 0 ? styles.positive : styles.negative}`}>
+                    {sectorInfo.change}
+                  </span>
+                </div>
+                <div className={styles.cardStats}>
+                  <div className={styles.statItem}>
+                    <div className={styles.statLabel}>总价值</div>
+                    <div className={styles.statValue}>
+                      <span className={styles.currency}>$</span>
+                      {sectorInfo.marketCap}
+                    </div>
                   </div>
-                  
-                  <div className={styles.coinPrice}>
-                    {coin.price >= 1 
-                      ? coin.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                      : coin.price.toFixed(6)
-                    }
-                  </div>
-                  
-                  <div className={`${styles.coinChange} ${coin.change24h >= 0 ? styles.positive : styles.negative}`}>
-                    {coin.change24h >= 0 ? '+' : ''}{coin.change24h.toFixed(2)}%
-                  </div>
-                  
-                  <div 
-                    className={styles.likeBtn}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleLike(coin);
-                    }}
-                  >
-                    <img 
-                      src={coin.isLiked ? '/icons/new_detail/like_actived.svg' : '/icons/new_detail/like_no_actived.svg'}
-                      alt="like"
-                      className={styles.iconImg}
-                    />
-                  </div>
-                  
-                  <div 
-                    className={styles.monitorBtn}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleMonitor(coin);
-                    }}
-                  >
-                    <img 
-                      src="/icons/new_home/monitor-bell.svg"
-                      alt="monitor"
-                      className={styles.iconImg}
-                    />
+                  <div className={styles.statItem}>
+                    <div className={styles.statLabel}>市 值</div>
+                    <div className={styles.statValue}>
+                      <span className={styles.currency}>$</span>
+                      {sectorInfo.volume}
+                    </div>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
+              </div>
+
+              {/* 排序栏 */}
+              <div className={styles.sortBar}>
+                <SortButton
+                  label="成分币种"
+                  value="symbol"
+                  order={symbolOrder}
+                  onChange={handleSortChange}
+                />
+                <SortButton
+                  label="最新价"
+                  value="price"
+                  order={priceOrder}
+                  onChange={handleSortChange}
+                />
+                <SortButton
+                  label="24h涨跌"
+                  value="change24h"
+                  order={change24hOrder}
+                  onChange={handleSortChange}
+                />
+                <div className={styles.sortItem}>自加选</div>
+                <div className={styles.sortItem}>加监控</div>
+              </div>
+
+              {/* 币种列表 */}
+              <div
+                className={`${styles.coinList} ${showScrollbar ? styles.showScrollbar : ''}`}
+                onScroll={handleScroll}
+              >
+                {coinList.length === 0 ? (
+                  <div className={styles.empty}>暂无数据</div>
+                ) : (
+                  coinList.map(coin => (
+                    <div
+                      key={coin.id}
+                      className={styles.coinItem}
+                      onClick={() => goToCoinDetail(coin.symbol)}
+                    >
+                      <div className={styles.coinInfo}>
+                        {showCoinLogo && (
+                          coin.icon ? (
+                            <img src={coin.icon} alt={coin.symbol} className={styles.coinIcon} />
+                          ) : (
+                            <div className={styles.coinIconPlaceholder}>
+                              {coin.symbol?.charAt(0) || '?'}
+                            </div>
+                          )
+                        )}
+                        <span className={styles.coinSymbol}>{coin.symbol}</span>
+                      </div>
+
+                      <div className={styles.coinPrice}>
+                        {coin.price >= 1
+                          ? coin.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                          : coin.price.toFixed(6)
+                        }
+                      </div>
+
+                      <div className={`${styles.coinChange} ${coin.change24h >= 0 ? styles.positive : styles.negative}`}>
+                        {coin.change24h >= 0 ? '+' : ''}{coin.change24h.toFixed(2)}%
+                      </div>
+
+                      <div
+                        className={styles.likeBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleLike(coin);
+                        }}
+                      >
+                        <img
+                          src={coin.isLiked ? '/icons/new_detail/like_actived.svg' : '/icons/new_detail/like_no_actived.svg'}
+                          alt="like"
+                          className={styles.iconImg}
+                        />
+                      </div>
+
+                      <div
+                        className={styles.monitorBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMonitor(coin);
+                        }}
+                      >
+                        <img
+                          src="/icons/new_home/monitor-bell.svg"
+                          alt="monitor"
+                          className={styles.iconImg}
+                        />
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
+          )}
         </div>
       </PullToRefresh>
     </div>
