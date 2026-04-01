@@ -22,14 +22,13 @@ export const getHotCoins = (pageSize = 10) => {
 
 /**
  * 获取热门板块
- * @param {number} pageSize - 每页数量，默认10
  * @returns {Promise}
  */
-export const getHotIndustries = (pageSize = 10) => {
+export const getHotIndustries = () => {
   return request({
-    url: Interface.hot_industry,
+    url: Interface.SECTION_LIST,
     data: {
-      pageSize,
+      change24hOrder: 'desc',
     },
   });
 };
@@ -175,7 +174,7 @@ export const getInvestmentOpportunities = async (pageSize = 10) => {
   try {
     const [coins, industries, contracts] = await Promise.all([
       getHotCoins(pageSize),
-      getHotIndustries(pageSize),
+      getHotIndustries(),
       getHotContracts(pageSize),
     ]);
     

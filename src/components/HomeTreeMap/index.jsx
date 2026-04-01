@@ -10,6 +10,30 @@ const HomeTreeMap = ({ list = [], name, desc }) => {
   const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
+  const normalizeChange = useCallback((raw) => {
+    if (raw == null) return { change: 0, changeStr: '--' };
+
+    // string like "5.3%" / "-2.1"
+    if (typeof raw === 'string') {
+      const n = parseFloat(raw.replace('%', ''));
+      if (!Number.isFinite(n)) return { change: 0, changeStr: '--' };
+      const hasPercent = raw.includes('%');
+      return { change: n, changeStr: hasPercent ? raw : `${n}%` };
+    }
+
+    // number: prefer treating small decimals as ratio (0.05321 => 5.321%)
+    if (typeof raw === 'number') {
+      if (!Number.isFinite(raw)) return { change: 0, changeStr: '--' };
+      const n = Math.abs(raw) <= 1 ? raw * 100 : raw;
+      const rounded = Number.isFinite(n) ? n.toFixed(2) : '0.00';
+      return { change: n, changeStr: `${rounded}%` };
+    }
+
+    const fallback = parseFloat(String(raw).replace('%', ''));
+    if (!Number.isFinite(fallback)) return { change: 0, changeStr: '--' };
+    return { change: fallback, changeStr: `${fallback}%` };
+  }, []);
+
   // 动态获取容器尺寸
   const updateDimensions = useCallback(() => {
     if (!containerRef.current) return;
@@ -61,9 +85,9 @@ const HomeTreeMap = ({ list = [], name, desc }) => {
       name: 'root',
       children: list.map(item => ({
         name: item[name],
-        value: Math.abs(parseFloat(String(item[desc]).replace('%', ''))),
-        change: parseFloat(String(item[desc]).replace('%', '')),
-        changeStr: item[desc]
+        value: Math.abs(normalizeChange(item[desc]).change),
+        change: normalizeChange(item[desc]).change,
+        changeStr: normalizeChange(item[desc]).changeStr
       }))
     };
 
@@ -254,7 +278,7 @@ const HomeTreeMap = ({ list = [], name, desc }) => {
         router.push(`/sectordetail?name=${encodeURIComponent(d.data.name)}`);
       });
 
-  }, [list, name, desc, dimensions, router]);
+  }, [list, name, desc, dimensions, router, normalizeChange]);
 
   if (!list || list.length === 0) {
     return (

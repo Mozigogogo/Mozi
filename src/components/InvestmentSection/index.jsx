@@ -124,8 +124,8 @@ export default function InvestmentSection({
                   <div style={{ width: '100%', height: '100%', flex: 1 }}>
                     <HomeTreeMap
                       list={firstPageIndustry}
-                      name='section'
-                      desc='changes'
+                      name="category"
+                      desc="priceChange24h"
                     />
                   </div>
                 )}
@@ -141,8 +141,8 @@ export default function InvestmentSection({
                   <div style={{ width: '100%', height: '100%', flex: 1 }}>
                     <HomeTreeMap
                       list={secondPageIndustry}
-                      name='section'
-                      desc='changes'
+                      name="category"
+                      desc="priceChange24h"
                     />
                   </div>
                 </div>

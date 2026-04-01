@@ -16,6 +16,7 @@ import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
+import { getSectionList } from '@/api/market';
 import { completeTask } from '@/api/user';
 import styles from './index.module.less';
 
@@ -334,24 +335,19 @@ export default function PCHome() {
   const fetchTreeMapData = async () => {
     setTreeMapLoading(true);
     try {
-      // 使用热门板块数据
-      const res = await request({
-        url: Interface.hot_industry,
-        data: { pageSize: 100 },
-      });
+      const res = await getSectionList({ change24hOrder: 'desc' });
       
       const list = res?.data || [];
       // 转换数据格式适配 TreeMap
       const processedData = list.map(item => {
-        // 处理涨跌幅字符串，移除%号
-        let changeStr = String(item.changes || '0').replace('%', '');
-        let change = parseFloat(changeStr);
+        const raw = item.priceChange24h ?? 0;
+        const change = Math.abs(raw) <= 1 ? raw * 100 : raw;
         
         return {
-          symbol: item.section,
+          symbol: item.category,
           marketCap: Math.abs(change), // 使用涨跌幅绝对值作为面积大小
           priceChangePercent: change,
-          lastPrice: item.close || item.index_value || '--' // 板块指数或收盘价
+          lastPrice: item.marketCap || '--'
         };
       });
 

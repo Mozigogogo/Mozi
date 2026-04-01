@@ -91,7 +91,7 @@ export default function TopicHotList({ isPC = false }) {
   const fetchHotIndustry = async () => {
     try {
       const response = await request({
-        url: Interface.hot_industry,
+        url: Interface.SECTION_LIST,
         data: { pageSize: 10 }
       });
       if (response?.data) {

@@ -51,9 +51,9 @@ export const Interface = {
   // 热门币种
   hot_coin: '/showhot/coinprice',
   // 热门版块
-  hot_industry: '/showhot/sections',
+  // 板块列表
+  SECTION_LIST: '/section/list',
   // 热门版块（分页）
-  hot_sections_paginated: '/showhot/sections',
   // 板块详情
   SECTOR_DETAIL: '/showhot/sectiondetail',
   // 热门合约

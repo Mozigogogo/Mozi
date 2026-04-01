@@ -12,30 +12,31 @@ import styles from './page.module.less';
 export default function HotSectorPage() {
   const { t } = useTranslation();
   const router = useRouter();
-  const [activeSort, setActiveSort] = useState({
-    field: 'range', // 当前排序字段
-    order: 'desc' // 排序方向: 'desc' 降序, 'asc' 升序
-  });
+  const MAX_ITEMS = 50;
+  const [activeSortField, setActiveSortField] = useState('range');
+  const [change24hOrder, setChange24hOrder] = useState('desc');
+  // UI 向上箭头目前对应 SortButton 的 'desc'，但接口要求向上=asc、向下=desc
+  const [marketCapOrder, setMarketCapOrder] = useState('asc');
+  const [volumeOrder, setVolumeOrder] = useState('asc');
   const [sectorData, setSectorData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 获取板块数据
+  // 三个排序状态任意变化后，重新请求接口
   useEffect(() => {
     fetchSectorData();
-  }, [activeSort]);
+  }, [change24hOrder, marketCapOrder, volumeOrder]);
 
   const fetchSectorData = async () => {
     setLoading(true);
     try {
-      // 使用封装的 API 方法获取数据
-      const formattedData = await fetchHotSectionsData({ 
-        pageSize: 100, 
-        pageNo: 1 
-      });
-      
-      // 根据排序设置排序数据
-      const sortedData = sortData(formattedData);
-      setSectorData(sortedData);
+      const sortParams = {
+        change24hOrder,
+        marketCapOrder,
+        volumeOrder,
+      };
+
+      const formattedData = await fetchHotSectionsData(sortParams);
+      setSectorData(Array.isArray(formattedData) ? formattedData.slice(0, MAX_ITEMS) : []);
     } catch (error) {
       console.error('Failed to fetch sector data:', error);
     } finally {
@@ -43,26 +44,22 @@ export default function HotSectorPage() {
     }
   };
 
-  const sortData = (data) => {
-    return data.sort((a, b) => {
-      const aValue = parseFloat(a.changePercent.replace('%', ''));
-      const bValue = parseFloat(b.changePercent.replace('%', ''));
-      
-      if (activeSort.order === 'desc') {
-        return bValue - aValue; // 降序：从大到小
-      } else {
-        return aValue - bValue; // 升序：从小到大
-      }
-    });
-  };
-
   const handleSortChange = (field, order) => {
-    setActiveSort({ field, order });
+    setActiveSortField(field);
+    if (field === 'marketCap') {
+      // 反转：UI 上=desc -> 接口 asc；UI 下=asc -> 接口 desc
+      setMarketCapOrder(order === 'desc' ? 'asc' : 'desc');
+    } else if (field === 'volume') {
+      // 反转：UI 上=desc -> 接口 asc；UI 下=asc -> 接口 desc
+      setVolumeOrder(order === 'desc' ? 'asc' : 'desc');
+    } else {
+      setChange24hOrder(order);
+    }
   };
 
   const handleSectorClick = (sectorData) => {
     // 跳转到板块详情页面
-    router.push(`/sectordetail?name=${encodeURIComponent(sectorData.name)}`);
+    router.push(`/sectordetail?name=${encodeURIComponent(sectorData.category || sectorData.name || '')}`);
   };
 
   const handleBack = () => {
@@ -168,8 +165,8 @@ export default function HotSectorPage() {
         ) : (
           <MoziTreeMap
             list={sectorData}
-            name="sectorName"
-            desc="changePercent"
+            name="category"
+            desc="priceChange24h"
             onItemClick={handleSectorClick}
           />
         )}
