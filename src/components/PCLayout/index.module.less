@@ -84,7 +84,6 @@
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 8px;
   box-sizing: border-box;
   /* 必须给宽度：仅 max-width 时绝对定位下 shrink-to-fit 会按 min-content 算，灰条会被压得很窄 */
   width: min(712px, calc(100vw - 360px));
@@ -146,52 +145,22 @@
 }
 
 .aiSearchBadge {
-  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
   width: fit-content;
   max-width: 100%;
-  height: 38px;
+  height: 44px;
   padding: 0;
   line-height: 0;
   flex-shrink: 0;
   border-radius: 33554400px;
   overflow: hidden;
-  isolation: isolate;
-
-  /* 2px 渐变描边：双层与容器外缘、圆角完全一致（比 mask 更贴边） */
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    border-radius: inherit;
-    background: linear-gradient(
-      180deg,
-      rgba(83, 246, 196, 0.24) 0%,
-      rgba(148, 220, 248, 0.24) 100%
-    );
-    pointer-events: none;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 2px;
-    z-index: 0;
-    border-radius: inherit;
-    /* 与顶栏背景一致，避免描边内侧露异色 */
-    background: #fff;
-    pointer-events: none;
-  }
 
   :global(svg) {
-    position: relative;
-    z-index: 1;
     display: block;
-    height: 34px;
+    height: 40px;
     width: auto;
     flex-shrink: 0;
   }

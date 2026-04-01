@@ -3,7 +3,8 @@
 import { useId, useMemo } from 'react';
 import styles from './index.module.less';
 
-const RAW_SVG = `<svg width="88" height="42" viewBox="0 0 88 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+/* 顶栏装饰；展示尺寸由 index.module.less 中 .aiSearchBadge 控制 */
+const RAW_SVG = `<svg width="112" height="36" viewBox="0 0 88 42" preserveAspectRatio="xMidYMid meet" fill="none" xmlns="http://www.w3.org/2000/svg">
 <rect x="2" y="2" width="83.5996" height="38" rx="19" fill="white"/>
 <rect x="2" y="2" width="83.5996" height="38" rx="19" fill="#ECFEFF"/>
 <rect x="2" y="2" width="83.5996" height="38" rx="19" fill="url(#paint0_radial_305_4147)"/>

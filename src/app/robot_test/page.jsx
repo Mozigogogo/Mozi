@@ -737,23 +737,42 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     });
   }, [messages]);
 
+  /** 与底部积分展示一致：优先用扣减后的 remainingPoints，否则用 userData 的 totalPoints */
+  const getEffectivePoints = () => {
+    if (typeof remainingPoints === 'number') return remainingPoints;
+    if (typeof totalPoints === 'number') return totalPoints;
+    return null;
+  };
+
+  /** 输入框发送 / 快捷提示词 / 重新生成 共用：积分不足以支付当前模式单次消耗时拦截 */
+  const shouldShowPointsLockBeforeSend = () => {
+    if (!ENABLE_POINTS_LIMIT) return false;
+    if (!hasEnoughPoints) return true;
+    const eff = getEffectivePoints();
+    if (typeof eff !== 'number') return false;
+    return eff < requiredPointsPerAsk;
+  };
+
+  const appendPointsLockMessage = () => {
+    const eff = getEffectivePoints();
+    setShowPointsLock(true);
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `system-points-lock-${Date.now()}`,
+        role: 'assistant',
+        type: 'pointsLock',
+        currentPoints: typeof eff === 'number' ? eff : 0,
+        requiredPoints: requiredPointsPerAsk,
+        time: Date.now(),
+      },
+    ]);
+  };
 
   // 发送消息 - 使用 SSE Stream Hook
   const handleSend = async (text = null) => {
-    // 如果开启了积分限制，并且当前判定为积分不足，则不再发起对话
-    if (ENABLE_POINTS_LIMIT && !hasEnoughPoints) {
-      setShowPointsLock(true);
-      setMessages(prev => [
-        ...prev,
-        {
-          id: `system-points-lock-${Date.now()}`,
-          role: 'assistant',
-          type: 'pointsLock',
-          currentPoints: typeof remainingPoints === 'number' ? remainingPoints : 0,
-          requiredPoints: requiredPointsPerAsk,
-          time: Date.now(),
-        },
-      ]);
+    if (shouldShowPointsLockBeforeSend()) {
+      appendPointsLockMessage();
       return;
     }
 
@@ -839,20 +858,8 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     const lastMessage = lastUserMessageRef.current;
     if (!lastMessage) return;
 
-    // 积分不足同 handleSend
-    if (ENABLE_POINTS_LIMIT && !hasEnoughPoints) {
-      setShowPointsLock(true);
-      setMessages(prev => [
-        ...prev,
-        {
-          id: `system-points-lock-${Date.now()}`,
-          role: 'assistant',
-          type: 'pointsLock',
-          currentPoints: typeof remainingPoints === 'number' ? remainingPoints : 0,
-          requiredPoints: requiredPointsPerAsk,
-          time: Date.now(),
-        },
-      ]);
+    if (shouldShowPointsLockBeforeSend()) {
+      appendPointsLockMessage();
       return;
     }
 
