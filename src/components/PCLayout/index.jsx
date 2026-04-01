@@ -18,6 +18,7 @@ import {
   CaretRightOutlined,
   CaretDownOutlined,
 } from '@ant-design/icons';
+import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
@@ -449,7 +450,13 @@ export default function PCLayout({ children }) {
               <span className={styles.searchText}>{t('common.search')}</span>
             </div>
           </div>
-          <AISearchBadge />
+          <Link
+            href="/robot_test"
+            className={styles.aiSearchBadgeLink}
+            aria-label={t('home.quickActions.ai')}
+          >
+            <AISearchBadge />
+          </Link>
         </div>
 
         <div className={styles.headerRight}>

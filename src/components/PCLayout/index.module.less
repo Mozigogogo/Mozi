@@ -144,6 +144,15 @@
   }
 }
 
+/* 顶栏「问 AI」入口，跳转 /robot_test */
+.aiSearchBadgeLink {
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
 .aiSearchBadge {
   display: inline-flex;
   align-items: center;
@@ -157,6 +166,7 @@
   flex-shrink: 0;
   border-radius: 33554400px;
   overflow: hidden;
+  cursor: pointer;
 
   :global(svg) {
     display: block;
