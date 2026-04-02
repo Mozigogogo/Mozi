@@ -713,7 +713,12 @@
     "confirmReset": "确认重置",
     "rememberedPassword": "想起来了？",
     "resetSuccess": "重置密码成功",
-    "resetFailed": "重置失败"
+    "resetFailed": "重置失败",
+    "telegramReloginTitle": "Telegram 登录确认",
+    "telegramReloginPrompt": "是否使用以下 TG 用户重新登录？",
+    "telegramReloginUsername": "用户名：{{username}}",
+    "telegramReloginUserId": "用户ID：{{userId}}",
+    "telegramReloginConfirm": "确定"
   },
   "community": {
     "title": "社区",

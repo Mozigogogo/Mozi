@@ -560,16 +560,18 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
     }
 
     const ok = await confirm({
-      title: 'Telegram 登录确认',
+      title: t('auth.telegramReloginTitle'),
       content: (
         <div style={{ lineHeight: 1.6 }}>
-          <div style={{ fontWeight: 600, marginBottom: 8 }}>是否使用以下 TG 用户重新登录？</div>
-          <div>用户名：{tgUserInfo.username}</div>
-          <div>用户ID：{tgUserInfo.userId}</div>
+          <div style={{ fontWeight: 600, marginBottom: 8 }}>
+            {t('auth.telegramReloginPrompt')}
+          </div>
+          <div>{t('auth.telegramReloginUsername', { username: tgUserInfo.username })}</div>
+          <div>{t('auth.telegramReloginUserId', { userId: tgUserInfo.userId })}</div>
         </div>
       ),
       cancelText: t('common.cancel'),
-      confirmText: '确定',
+      confirmText: t('auth.telegramReloginConfirm'),
       closeOnAction: true,
       bodyStyle: { borderRadius: '16px' },
       maskClosable: true,
@@ -606,6 +608,10 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
       });
     });
   }, [visible, showEmailForm]);
+
+  // TG 环境下：不展示底部 LoginModal，只展示 confirm 浮层（由上面的 useEffect 触发）
+  const shouldHideBottomPopupInTg = isTelegramEnv() && visible && !showEmailForm;
+  if (shouldHideBottomPopupInTg) return null;
 
   return (
     <Popup

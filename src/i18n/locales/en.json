@@ -730,7 +730,12 @@
     "confirmReset": "Confirm Reset",
     "rememberedPassword": "Remembered?",
     "resetSuccess": "Password reset successful",
-    "resetFailed": "Reset failed"
+    "resetFailed": "Reset failed",
+    "telegramReloginTitle": "Telegram Login Confirmation",
+    "telegramReloginPrompt": "Would you like to re-login with the following TG user?",
+    "telegramReloginUsername": "Username: {{username}}",
+    "telegramReloginUserId": "User ID: {{userId}}",
+    "telegramReloginConfirm": "Confirm"
   },
   "community": {
     "title": "Community",
