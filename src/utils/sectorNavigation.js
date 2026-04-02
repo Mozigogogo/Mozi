@@ -62,7 +62,9 @@ export function formatHotSectorChangePct(raw) {
   if (raw == null || !Number.isFinite(raw)) {
     return { text: '0.00%', value: 0 };
   }
-  const pct = Math.abs(raw) <= 1 ? raw * 100 : raw;
+  // 接口返回的 priceChange24h 单位需要换算为“百分比”：raw * 100
+  // 例如 raw=14.4359 -> 1443.59%
+  const pct = raw * 100;
   return {
     text: `${pct.toFixed(2)}%`,
     value: pct,

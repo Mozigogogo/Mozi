@@ -503,8 +503,11 @@ export default function SectorDetailPage() {
                         }
                       </div>
 
-                      <div className={`${styles.coinChange} ${coin.change24h >= 0 ? styles.positive : styles.negative}`}>
-                        {coin.change24h >= 0 ? '+' : ''}{coin.change24h.toFixed(2)}%
+                      <div
+                        className={`${styles.coinChange} ${coin.change24h >= 0 ? styles.positive : styles.negative}`}
+                      >
+                        {coin.change24h >= 0 ? '+' : ''}
+                        {coin.change24h.toFixed(2)}%
                       </div>
 
                       <div
