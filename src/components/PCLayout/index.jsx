@@ -646,24 +646,57 @@ export default function PCLayout({ children }) {
                   onClick={() => setIsMineExpanded((v) => !v)}
                 >
                   <span className={styles.pcWatchlistHeaderLeft}>
-                    <CustomIcon
-                      src="/icons/pc/Collection@2x.png"
-                      activeSrc="/icons/pc/Collection_actived@2x.png"
-                      itemKey="/selfrank"
-                      alt="favorites"
-                    />
-                    <span className={styles.pcWatchlistTitle}>{t('pcLayout.menu.myFavorites')}</span>
+                    {isMineExpanded ? (
+                      <span className={styles.pcWatchlistHeaderIconSvg} aria-hidden>
+                        <img
+                          src="/icons/new_home/collect_actived.svg"
+                          alt=""
+                          width={16}
+                          height={16}
+                        />
+                      </span>
+                    ) : (
+                      <CustomIcon
+                        src="/icons/pc/Collection@2x.png"
+                        activeSrc="/icons/pc/Collection_actived@2x.png"
+                        itemKey="/selfrank"
+                        alt="favorites"
+                      />
+                    )}
+                    <span
+                      className={`${styles.pcWatchlistTitle} ${
+                        isMineExpanded ? styles.pcWatchlistTitleExpanded : ''
+                      }`}
+                    >
+                      {t('pcLayout.menu.myFavorites')}
+                    </span>
                   </span>
                   {isMineExpanded ? (
-                    <CaretDownOutlined className={styles.pcWatchlistChevron} />
+                    <img
+                      src="/icons/new_home/down_arrow.svg"
+                      alt=""
+                      className={styles.pcWatchlistChevron}
+                      width={16}
+                      height={16}
+                      aria-hidden
+                    />
                   ) : (
-                    <CaretRightOutlined className={styles.pcWatchlistChevron} />
+                    <img
+                      src="/icons/new_home/right_arrow_45556C.svg"
+                      alt=""
+                      className={styles.pcWatchlistChevron}
+                      width={16}
+                      height={16}
+                      aria-hidden
+                    />
                   )}
                 </button>
                 {isMineExpanded && (
                   <div className={styles.pcWatchlistBody}>
                     {watchlistLoading && watchlist.length === 0 ? (
-                      <div className={styles.pcWatchlistHint}>{t('common.loading')}</div>
+                      <div className={`${styles.pcWatchlistHint} ${styles.pcWatchlistHintCenter}`}>
+                        {t('common.loading')}
+                      </div>
                     ) : watchlist.length === 0 ? (
                       <div className={styles.pcWatchlistHint}>{t('discover.noFavorites')}</div>
                     ) : (
