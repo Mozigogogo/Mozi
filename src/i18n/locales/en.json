@@ -1261,6 +1261,11 @@
     "robotBubble": "Welcome to Mozi, what can I help you?",
     "robotMessage": "Want to hear my thoughts on {{symbol}}?"
   },
+  "pcCoinDetail": {
+    "tradingRadar": "Trade radar",
+    "barragePlaceholder": "Spot a move? Drop a quick comment...",
+    "send": "Send"
+  },
   "countryPicker": {
     "back": "Back",
     "title": "Select Country/Region",

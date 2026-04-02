@@ -1242,6 +1242,11 @@
     },
     "robotMessage": "想听听我对{{symbol}}的看法吗？"
   },
+  "pcCoinDetail": {
+    "tradingRadar": "交易雷达",
+    "barragePlaceholder": "发现好行情，发条弹幕交流吧...",
+    "send": "发送"
+  },
   "countryPicker": {
     "back": "返回",
     "title": "选择国家/地区",
