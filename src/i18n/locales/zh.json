@@ -1723,6 +1723,22 @@
       "lowVolume": "低成交"
     }
   },
+  "sectorDetail": {
+    "sector": "板块",
+    "volume": "成交量",
+    "marketCap": "市值",
+    "sort": {
+      "constituent": "成分币种",
+      "latestPrice": "最新价",
+      "change24h": "24h涨跌"
+    },
+    "watchlist": "自加选",
+    "addMonitor": "加监控",
+    "altCommunity": "社区",
+    "altShare": "分享",
+    "altLike": "自选",
+    "altMonitor": "价格提醒"
+  },
   "vip": {
     "title": "会员充值",
     "card": {

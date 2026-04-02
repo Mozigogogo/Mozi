@@ -7,6 +7,7 @@ import Image from 'next/image';
 import SortButton from '@/components/SortButton';
 import MoziTreeMap from '@/components/MoziTreeMap';
 import { fetchHotSectionsData } from '@/api/market';
+import { buildSectorDetailHref } from '@/utils/sectorNavigation';
 import styles from './page.module.less';
 
 export default function HotSectorPage() {
@@ -54,9 +55,8 @@ export default function HotSectorPage() {
     }
   };
 
-  const handleSectorClick = (sectorData) => {
-    // 跳转到板块详情页面
-    router.push(`/sectordetail?name=${encodeURIComponent(sectorData.category || sectorData.name || '')}`);
+  const handleSectorClick = (row) => {
+    router.push(buildSectorDetailHref(row));
   };
 
   const handleBack = () => {

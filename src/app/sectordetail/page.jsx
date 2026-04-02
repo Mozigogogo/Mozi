@@ -7,25 +7,51 @@ import { NavBar, PullToRefresh, Toast } from 'antd-mobile';
 import { getSectionSymbols, addOwnCoin, cancelOwnCoin } from '@/api/market';
 import { completeTask } from '@/api/user';
 import SortButton from '@/components/SortButton';
+import {
+  readHotSectorSnapshotFromSearchParams,
+  formatHotSectorChangePct,
+} from '@/utils/sectorNavigation';
 import styles from './page.module.less';
 
 const INITIAL_FETCH_DEDUPE_MS = 1200;
 const lastInitialFetchAtBySector = new Map();
 
+function buildSectorInfoFromSearchParams(sp) {
+  const snap = readHotSectorSnapshotFromSearchParams(sp);
+  const name = sp.get('name') || 'Meme';
+  if (snap) {
+    const { text, value } = formatHotSectorChangePct(snap.priceChange24h);
+    return {
+      name,
+      change: text,
+      changeValue: value,
+      marketCap: snap.marketCap,
+      volume: snap.totalVolume,
+      dt: snap.dt,
+    };
+  }
+  return {
+    name,
+    change: '0.00%',
+    changeValue: 0,
+    marketCap: 0,
+    volume: 0,
+    dt: '',
+  };
+}
+
 export default function SectorDetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const searchParamsRef = useRef(searchParams);
+  searchParamsRef.current = searchParams;
   const { t } = useTranslation();
   const showCoinLogo = false;
   
   const sectorName = searchParams.get('name') || 'Meme';
+  const searchKey = searchParams.toString();
   
-  const [sectorInfo, setSectorInfo] = useState({
-    name: sectorName,
-    change: '2.25%',
-    marketCap: '1.2亿',
-    volume: '1.5亿'
-  });
+  const [sectorInfo, setSectorInfo] = useState(() => buildSectorInfoFromSearchParams(searchParams));
   
   const [coinList, setCoinList] = useState([
     { id: '1', symbol: 'BTC', name: 'Bitcoin', icon: '/icons/new_sector/btc.svg', price: 102658.7, change24h: 3.58, volume24h: 50000000000, marketCap: 2000000000000, isLiked: false, isMonitored: false },
@@ -88,6 +114,10 @@ export default function SectorDetailPage() {
   const latestRequestIdRef = useRef(0);
   const pendingRequestCountRef = useRef(0);
 
+  useEffect(() => {
+    setSectorInfo(buildSectorInfoFromSearchParams(searchParams));
+  }, [searchKey]);
+
   // 排序处理
   const handleSortChange = (field, order) => {
     const nextParams = {
@@ -133,11 +163,32 @@ export default function SectorDetailPage() {
 
         // 更新板块信息（当前接口仅返回成分股列表）
         const totalMarketCap = list.reduce((sum, item) => sum + (parseFloat(item?.marketCap) || 0), 0);
-        setSectorInfo({
-          name: params.category,
-          change: '0.00%',
-          marketCap: totalMarketCap || 0,
-          volume: '--'
+        const totalVolume = list.reduce(
+          (sum, item) => sum + (parseFloat(item?.totalVolume || item?.volume24h) || 0),
+          0
+        );
+        const hotSnap = readHotSectorSnapshotFromSearchParams(searchParamsRef.current);
+        setSectorInfo((prev) => {
+          const baseName = params.category;
+          if (hotSnap) {
+            const { text, value } = formatHotSectorChangePct(hotSnap.priceChange24h);
+            return {
+              name: baseName,
+              change: text,
+              changeValue: value,
+              marketCap: hotSnap.marketCap,
+              volume: hotSnap.totalVolume,
+              dt: hotSnap.dt,
+            };
+          }
+          return {
+            name: baseName,
+            change: '0.00%',
+            changeValue: 0,
+            marketCap: totalMarketCap || 0,
+            volume: totalVolume || 0,
+            dt: prev.dt ?? '',
+          };
         });
 
         // 更新币种列表
@@ -277,7 +328,7 @@ export default function SectorDetailPage() {
     }
 
     const shareUrl = encodeURIComponent(window.location.href);
-    const shareText = encodeURIComponent(`${sectorInfo.name} ${t('sectorDetail.sector') || '板块'} - ${sectorInfo.change}`);
+    const shareText = encodeURIComponent(`${sectorInfo.name} ${t('sectorDetail.sector')} - ${sectorInfo.change}`);
     const telegramUrl = `https://t.me/share/url?url=${shareUrl}&text=${shareText}`;
     window.open(telegramUrl, '_blank');
   };
@@ -290,13 +341,13 @@ export default function SectorDetailPage() {
           <div className={styles.navRight}>
             <img 
               src="/icons/new_sector/group.svg" 
-              alt="group" 
+              alt={t('sectorDetail.altCommunity')} 
               className={styles.iconBtn}
               onClick={handleGoToCommunity}
             />
             <img 
               src="/icons/new_sector/share.svg" 
-              alt="share" 
+              alt={t('sectorDetail.altShare')} 
               className={styles.iconBtn}
               onClick={handleShare}
             />
@@ -346,23 +397,23 @@ export default function SectorDetailPage() {
               <div className={styles.sectorCard}>
                 <div className={styles.cardHeader}>
                   <span className={styles.sectorName}>{sectorInfo.name}</span>
-                  <span className={`${styles.sectorChange} ${parseFloat(sectorInfo.change) >= 0 ? styles.positive : styles.negative}`}>
+                  <span className={`${styles.sectorChange} ${(sectorInfo.changeValue ?? 0) >= 0 ? styles.positive : styles.negative}`}>
                     {sectorInfo.change}
                   </span>
                 </div>
                 <div className={styles.cardStats}>
                   <div className={styles.statItem}>
-                    <div className={styles.statLabel}>总价值</div>
-                    <div className={styles.statValue}>
-                      <span className={styles.currency}>$</span>
-                      {sectorInfo.marketCap}
-                    </div>
-                  </div>
-                  <div className={styles.statItem}>
-                    <div className={styles.statLabel}>市 值</div>
+                    <div className={styles.statLabel}>{t('sectorDetail.volume')}</div>
                     <div className={styles.statValue}>
                       <span className={styles.currency}>$</span>
                       {sectorInfo.volume}
+                    </div>
+                  </div>
+                  <div className={styles.statItem}>
+                    <div className={styles.statLabel}>{t('sectorDetail.marketCap')}</div>
+                    <div className={styles.statValue}>
+                      <span className={styles.currency}>$</span>
+                      {sectorInfo.marketCap}
                     </div>
                   </div>
                 </div>
@@ -371,25 +422,25 @@ export default function SectorDetailPage() {
               {/* 排序栏 */}
               <div className={styles.sortBar}>
                 <SortButton
-                  label="成分币种"
+                  label={t('sectorDetail.sort.constituent')}
                   value="symbol"
                   order={symbolOrder}
                   onChange={handleSortChange}
                 />
                 <SortButton
-                  label="最新价"
+                  label={t('sectorDetail.sort.latestPrice')}
                   value="price"
                   order={priceOrder}
                   onChange={handleSortChange}
                 />
                 <SortButton
-                  label="24h涨跌"
+                  label={t('sectorDetail.sort.change24h')}
                   value="change24h"
                   order={change24hOrder}
                   onChange={handleSortChange}
                 />
-                <div className={styles.sortItem}>自加选</div>
-                <div className={styles.sortItem}>加监控</div>
+                <div className={styles.sortItem}>{t('sectorDetail.watchlist')}</div>
+                <div className={styles.sortItem}>{t('sectorDetail.addMonitor')}</div>
               </div>
 
               {/* 币种列表 */}
@@ -398,7 +449,7 @@ export default function SectorDetailPage() {
                 onScroll={handleScroll}
               >
                 {coinList.length === 0 ? (
-                  <div className={styles.empty}>暂无数据</div>
+                  <div className={styles.empty}>{t('common.noData')}</div>
                 ) : (
                   coinList.map(coin => (
                     <div
@@ -439,7 +490,7 @@ export default function SectorDetailPage() {
                       >
                         <img
                           src={coin.isLiked ? '/icons/new_detail/like_actived.svg' : '/icons/new_detail/like_no_actived.svg'}
-                          alt="like"
+                          alt={t('sectorDetail.altLike')}
                           className={styles.iconImg}
                         />
                       </div>
@@ -453,7 +504,7 @@ export default function SectorDetailPage() {
                       >
                         <img
                           src="/icons/new_home/monitor-bell.svg"
-                          alt="monitor"
+                          alt={t('sectorDetail.altMonitor')}
                           className={styles.iconImg}
                         />
                       </div>

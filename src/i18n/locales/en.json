@@ -1742,6 +1742,22 @@
       "lowVolume": "Low Volume"
     }
   },
+  "sectorDetail": {
+    "sector": "Sector",
+    "volume": "Volume",
+    "marketCap": "Market Cap",
+    "sort": {
+      "constituent": "Assets",
+      "latestPrice": "Price",
+      "change24h": "24h %"
+    },
+    "watchlist": "Watchlist",
+    "addMonitor": "Alerts",
+    "altCommunity": "Community",
+    "altShare": "Share",
+    "altLike": "Watchlist",
+    "altMonitor": "Price alert"
+  },
   "vip": {
     "title": "VIP Center",
     "card": {

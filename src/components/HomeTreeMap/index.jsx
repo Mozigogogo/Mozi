@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import * as d3 from 'd3';
+import { buildSectorDetailHref } from '@/utils/sectorNavigation';
 import styles from './index.module.less';
 
 const HomeTreeMap = ({ list = [], name, desc }) => {
@@ -87,7 +88,8 @@ const HomeTreeMap = ({ list = [], name, desc }) => {
         name: item[name],
         value: Math.abs(normalizeChange(item[desc]).change),
         change: normalizeChange(item[desc]).change,
-        changeStr: normalizeChange(item[desc]).changeStr
+        changeStr: normalizeChange(item[desc]).changeStr,
+        raw: item,
       }))
     };
 
@@ -274,8 +276,12 @@ const HomeTreeMap = ({ list = [], name, desc }) => {
           .style('z-index', '1');
       })
       .on('click', function(event, d) {
-        // 跳转到板块详情页，传递板块名称
-        router.push(`/sectordetail?name=${encodeURIComponent(d.data.name)}`);
+        const row = d.data.raw ?? {
+          category: d.data.name,
+          name: d.data.name,
+          priceChange24h: d.data.change,
+        };
+        router.push(buildSectorDetailHref(row));
       });
 
   }, [list, name, desc, dimensions, router, normalizeChange]);
