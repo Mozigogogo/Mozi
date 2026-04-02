@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Tabs, Toast, Button, TabBar } from 'antd-mobile';
 import { motion, AnimatePresence } from 'framer-motion';
+import PCLayout from '@/components/PCLayout';
 import Layout from '../../components/Layout';
 import NavBar from '../../components/NavBar';
 import MoziCard from '../../components/MoziCard';
@@ -43,6 +44,16 @@ export default function DetailPage() {
   const symbol = searchParams.get('symbol') || '';
   const fromFavorite = searchParams.get('fromFavorite') === '1'; // 是否从自选榜进入
   const { t } = useTranslation();
+  const [isPC, setIsPC] = useState(false);
+
+  useEffect(() => {
+    const checkDevice = () => {
+      setIsPC(window.innerWidth >= 1024);
+    };
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+    return () => window.removeEventListener('resize', checkDevice);
+  }, []);
   
   // 使用告警配置 Hook（自动获取）
   const { fetchConfig: fetchAlertConfig } = useAlertConfig({ autoFetch: false });
@@ -1851,24 +1862,25 @@ ${coinInfo.name || symbol} (${symbol})
   //   );
   // }
   
-  return (
+  const pageContent = (
     <>
-      {/* 顶部导航栏 */}
-      <NavBar 
-        title={coinInfo?.name || symbol || t('detail.title')} 
-        showBack={true}
-        onBack={() => {
-          // 从详情页返回到其它路由时，tg WebView 可能触发重建，导致自动登录再次执行。
-          // 写入一个“下一次自动登录跳过”标记，确保返回后不会再走 loginByTelegram。
-          try {
-            localStorage.setItem('tg_auto_login_skip_once_v1', String(Date.now() + 15 * 1000));
-          } catch (_) {}
-          router.back();
-        }}
-        showBorder={false}
-      />
+      {!isPC && (
+        <NavBar
+          title={coinInfo?.name || symbol || t('detail.title')}
+          showBack={true}
+          onBack={() => {
+            // 从详情页返回到其它路由时，tg WebView 可能触发重建，导致自动登录再次执行。
+            // 写入一个“下一次自动登录跳过”标记，确保返回后不会再走 loginByTelegram。
+            try {
+              localStorage.setItem('tg_auto_login_skip_once_v1', String(Date.now() + 15 * 1000));
+            } catch (_) {}
+            router.back();
+          }}
+          showBorder={false}
+        />
+      )}
       
-      <div className={styles.container}>
+      <div className={`${styles.container} ${isPC ? styles.pcContainer : ''}`}>
         {/* 头部币种信息 */}
         {renderCoinInfo()}
         
@@ -1907,52 +1919,53 @@ ${coinInfo.name || symbol} (${symbol})
           {renderROI()}
         </div>
         
-        {/* 底部操作栏 */}
-        <div className={styles.footerList}>
-          <div className={styles.footerLeft}>
-            <div className={styles.footerItem}>
-              <AddCollect 
-                isOwn={fromFavorite ? true : (coinInfo?.isSelfSelected || false)} 
-                symbol={symbol} 
-              />
-              <div className={styles.footerText}>{t('detail.actions.favorite')}</div>
+        {!isPC && (
+          <div className={styles.footerList}>
+            <div className={styles.footerLeft}>
+              <div className={styles.footerItem}>
+                <AddCollect
+                  isOwn={fromFavorite ? true : (coinInfo?.isSelfSelected || false)}
+                  symbol={symbol}
+                />
+                <div className={styles.footerText}>{t('detail.actions.favorite')}</div>
+              </div>
+              <div className={styles.footerItem} onClick={jump2Community}>
+                <img
+                  className={styles.footerIcon}
+                  src="/icons/new_detail/community.svg"
+                  alt={t('detail.actions.community')}
+                />
+                <div className={styles.footerText}>{t('detail.actions.community')}</div>
+              </div>
+              <div className={styles.footerItem} onClick={shareToTelegram}>
+                <img
+                  className={styles.footerIcon}
+                  src="/icons/new_detail/share.svg"
+                  alt={t('detail.actions.share')}
+                />
+                <div className={styles.footerText}>{t('detail.actions.share')}</div>
+              </div>
             </div>
-            <div className={styles.footerItem} onClick={jump2Community}>
-              <img 
-                className={styles.footerIcon} 
-                src="/icons/new_detail/community.svg" 
-                alt={t('detail.actions.community')}
-              />
-              <div className={styles.footerText}>{t('detail.actions.community')}</div>
-            </div>
-            <div className={styles.footerItem} onClick={shareToTelegram}>
-              <img 
-                className={styles.footerIcon} 
-                src="/icons/new_detail/share.svg" 
-                alt={t('detail.actions.share')}
-              />
-              <div className={styles.footerText}>{t('detail.actions.share')}</div>
-            </div>
-          </div>
 
-          <div className={styles.footerRight}>
-            <div className={styles.alarmPill}>
-              <button type="button" className={styles.alarmConfig} onClick={jump2Alert}>
-                {t('detail.actions.configAlarm')}
-              </button>
-              <button
-                type="button"
-                className={styles.alarmStart}
-                onClick={() => {
-                  setOneClickAlarmMode('oneClick');
-                  setOneClickAlarmOpen(true);
-                }}
-              >
-                {t('detail.actions.startNow')}
-              </button>
+            <div className={styles.footerRight}>
+              <div className={styles.alarmPill}>
+                <button type="button" className={styles.alarmConfig} onClick={jump2Alert}>
+                  {t('detail.actions.configAlarm')}
+                </button>
+                <button
+                  type="button"
+                  className={styles.alarmStart}
+                  onClick={() => {
+                    setOneClickAlarmMode('oneClick');
+                    setOneClickAlarmOpen(true);
+                  }}
+                >
+                  {t('detail.actions.startNow')}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* 悬浮机器人按钮 - 使用新的FloatingRobot组件 */}
         <FloatingRobot 
@@ -1975,4 +1988,10 @@ ${coinInfo.name || symbol} (${symbol})
       />
     </>
   );
+
+  if (isPC) {
+    return <PCLayout>{pageContent}</PCLayout>;
+  }
+
+  return pageContent;
 }
