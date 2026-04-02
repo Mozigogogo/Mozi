@@ -82,11 +82,15 @@ export const getSectorDetail = (sectionName) => {
  * @returns {Promise}
  */
 export const addOwnCoin = async (symbol) => {
+  const coin = String(symbol ?? '').trim();
+  if (!coin) {
+    throw new Error('coin is required');
+  }
   try {
     const res = await request({
       url: Interface.ADD_OWN,
-      method: 'POST',
-      data: { symbol },
+      method: 'GET',
+      data: { coin },
     });
     
     // 如果添加成功，上报任务
@@ -119,10 +123,14 @@ export const addOwnCoin = async (symbol) => {
  * @returns {Promise}
  */
 export const cancelOwnCoin = (symbol) => {
+  const coin = String(symbol ?? '').trim();
+  if (!coin) {
+    return Promise.reject(new Error('coin is required'));
+  }
   return request({
     url: Interface.CANCEL_OWN,
-    method: 'POST',
-    data: { symbol },
+    method: 'GET',
+    data: { coin },
   });
 };
 

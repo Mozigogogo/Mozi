@@ -44,7 +44,9 @@ export default function DetailPage() {
   const symbol = searchParams.get('symbol') || '';
   const fromFavorite = searchParams.get('fromFavorite') === '1'; // 是否从自选榜进入
   const { t } = useTranslation();
-  const [isPC, setIsPC] = useState(false);
+  const [isPC, setIsPC] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth >= 1024 : false
+  );
 
   useEffect(() => {
     const checkDevice = () => {
@@ -803,7 +805,9 @@ export default function DetailPage() {
           }
         }
 
-        setIsFavorite(!isFavorite);
+        const next = !isFavorite;
+        setIsFavorite(next);
+        setCoinInfo((prev) => (prev ? { ...prev, isSelfSelected: next } : prev));
         Toast.show({
           content: isFavorite ? '已移除自选' : '已添加自选',
           position: 'bottom',
@@ -1847,151 +1851,126 @@ ${coinInfo.name || symbol} (${symbol})
       </MoziCard>
     );
   };
-  
-  // 【禁用骨架屏】首次加载时不再显示整页骨架屏，仅注释保留
-  // if (isInitialLoad && (loading || klineLoading)) {
-  //   return (
-  //     <Layout>
-  //       <NavBar 
-  //         title={symbol || '币种详情'} 
-  //         showBack={true}
-  //         showBorder={false}
-  //       />
-  //       <SkeletonPage config={detailPageSkeletonConfig} />
-  //     </Layout>
-  //   );
-  // }
-  
-  const pageContent = (
+
+  const handleDetailBack = () => {
+    try {
+      localStorage.setItem('tg_auto_login_skip_once_v1', String(Date.now() + 15 * 1000));
+    } catch (_) {}
+    router.back();
+  };
+
+  const oneClickAlarmModalEl = (
+    <OneClickAlarmModal
+      open={oneClickAlarmOpen}
+      mode={oneClickAlarmMode}
+      symbol={symbol || 'BTC'}
+      onClose={() => setOneClickAlarmOpen(false)}
+      onConfirm={() => {
+        setOneClickAlarmOpen(false);
+      }}
+      onSkip={() => setOneClickAlarmOpen(false)}
+    />
+  );
+
+  if (isPC) {
+    return (
+      <PCLayout>
+        <div className={styles.pcContentLayout}>
+          <aside className={styles.pcContentColLeft} />
+          <section className={styles.pcContentColRight} />
+        </div>
+        {oneClickAlarmModalEl}
+      </PCLayout>
+    );
+  }
+
+  return (
     <>
-      {!isPC && (
-        <NavBar
-          title={coinInfo?.name || symbol || t('detail.title')}
-          showBack={true}
-          onBack={() => {
-            // 从详情页返回到其它路由时，tg WebView 可能触发重建，导致自动登录再次执行。
-            // 写入一个“下一次自动登录跳过”标记，确保返回后不会再走 loginByTelegram。
-            try {
-              localStorage.setItem('tg_auto_login_skip_once_v1', String(Date.now() + 15 * 1000));
-            } catch (_) {}
-            router.back();
-          }}
-          showBorder={false}
-        />
-      )}
-      
-      <div className={`${styles.container} ${isPC ? styles.pcContainer : ''}`}>
-        {/* 头部币种信息 */}
+      <NavBar
+        title={coinInfo?.name || symbol || t('detail.title')}
+        showBack={true}
+        onBack={handleDetailBack}
+        showBorder={false}
+      />
+
+      <div className={styles.container}>
         {renderCoinInfo()}
-        
-        {/* Tab导航 */}
-        <TabBar 
-          className={styles.tabContainer} 
-          activeKey={activeTab} 
-          onChange={handleTabChange}
-        >
+
+        <TabBar className={styles.tabContainer} activeKey={activeTab} onChange={handleTabChange}>
           <TabBar.Item key="chart" title={t('detail.tabs.chart')} />
           <TabBar.Item key="market" title={t('detail.tabs.market')} />
           <TabBar.Item key="roi" title={t('detail.tabs.roi')} />
         </TabBar>
-        
-        {/* K线图表区域 */}
+
         <div ref={chartRef} className={styles.chartSection}>
-          <div className={styles.box}>
-            {renderKline()}
-          </div>
+          <div className={styles.box}>{renderKline()}</div>
           {showOrderBook && (
-            <div className={styles.orderBookSection}>
-              {renderOrderBook()}
-            </div>
+            <div className={styles.orderBookSection}>{renderOrderBook()}</div>
           )}
         </div>
-        
-        {/* 市场行情区域 */}
+
         <div ref={marketRef} className={styles.marketSection}>
-          <div className={styles.marketBox}>
-            {renderMarket()}
-          </div>
+          <div className={styles.marketBox}>{renderMarket()}</div>
         </div>
 
-        {/* 投资回报率区域 */}
         <div ref={roiRef} className={styles.roiSection}>
           {renderROI()}
         </div>
-        
-        {!isPC && (
-          <div className={styles.footerList}>
-            <div className={styles.footerLeft}>
-              <div className={styles.footerItem}>
-                <AddCollect
-                  isOwn={fromFavorite ? true : (coinInfo?.isSelfSelected || false)}
-                  symbol={symbol}
-                />
-                <div className={styles.footerText}>{t('detail.actions.favorite')}</div>
-              </div>
-              <div className={styles.footerItem} onClick={jump2Community}>
-                <img
-                  className={styles.footerIcon}
-                  src="/icons/new_detail/community.svg"
-                  alt={t('detail.actions.community')}
-                />
-                <div className={styles.footerText}>{t('detail.actions.community')}</div>
-              </div>
-              <div className={styles.footerItem} onClick={shareToTelegram}>
-                <img
-                  className={styles.footerIcon}
-                  src="/icons/new_detail/share.svg"
-                  alt={t('detail.actions.share')}
-                />
-                <div className={styles.footerText}>{t('detail.actions.share')}</div>
-              </div>
-            </div>
 
-            <div className={styles.footerRight}>
-              <div className={styles.alarmPill}>
-                <button type="button" className={styles.alarmConfig} onClick={jump2Alert}>
-                  {t('detail.actions.configAlarm')}
-                </button>
-                <button
-                  type="button"
-                  className={styles.alarmStart}
-                  onClick={() => {
-                    setOneClickAlarmMode('oneClick');
-                    setOneClickAlarmOpen(true);
-                  }}
-                >
-                  {t('detail.actions.startNow')}
-                </button>
-              </div>
+        <div className={styles.footerList}>
+          <div className={styles.footerLeft}>
+            <div className={styles.footerItem}>
+              <AddCollect
+                isOwn={fromFavorite ? true : (coinInfo?.isSelfSelected || false)}
+                symbol={symbol}
+              />
+              <div className={styles.footerText}>{t('detail.actions.favorite')}</div>
+            </div>
+            <div className={styles.footerItem} onClick={jump2Community}>
+              <img
+                className={styles.footerIcon}
+                src="/icons/new_detail/community.svg"
+                alt={t('detail.actions.community')}
+              />
+              <div className={styles.footerText}>{t('detail.actions.community')}</div>
+            </div>
+            <div className={styles.footerItem} onClick={shareToTelegram}>
+              <img
+                className={styles.footerIcon}
+                src="/icons/new_detail/share.svg"
+                alt={t('detail.actions.share')}
+              />
+              <div className={styles.footerText}>{t('detail.actions.share')}</div>
             </div>
           </div>
-        )}
 
-        {/* 悬浮机器人按钮 - 使用新的FloatingRobot组件 */}
-        <FloatingRobot 
-          message={t('detail.robotMessage', { symbol: symbol.toUpperCase() })}
-          targetPath="/robot_test"
-          autoPlay={true}
-          startDelay={2000}
-        />
+          <div className={styles.footerRight}>
+            <div className={styles.alarmPill}>
+              <button type="button" className={styles.alarmConfig} onClick={jump2Alert}>
+                {t('detail.actions.configAlarm')}
+              </button>
+              <button
+                type="button"
+                className={styles.alarmStart}
+                onClick={() => {
+                  setOneClickAlarmMode('oneClick');
+                  setOneClickAlarmOpen(true);
+                }}
+              >
+                {t('detail.actions.startNow')}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <OneClickAlarmModal
-        open={oneClickAlarmOpen}
-        mode={oneClickAlarmMode}
-        symbol={symbol || 'BTC'}
-        onClose={() => setOneClickAlarmOpen(false)}
-        onConfirm={() => {
-          setOneClickAlarmOpen(false);
-        }}
-        onSkip={() => setOneClickAlarmOpen(false)}
+      {oneClickAlarmModalEl}
+      <FloatingRobot
+        message={t('detail.robotMessage', { symbol: symbol.toUpperCase() })}
+        targetPath="/robot_test"
+        autoPlay={true}
+        startDelay={2000}
       />
     </>
   );
-
-  if (isPC) {
-    return <PCLayout>{pageContent}</PCLayout>;
-  }
-
-  return pageContent;
 }

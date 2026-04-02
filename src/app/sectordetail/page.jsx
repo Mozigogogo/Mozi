@@ -270,31 +270,57 @@ export default function SectorDetailPage() {
     }, 3000);
   };
 
-  // 收藏/取消收藏
+  // 收藏/取消收藏：先乐观更新点赞态，再根据接口结果确认或回滚
   const handleLike = async (coin) => {
+    const wasLiked = coin.isLiked;
+    const nextLiked = !wasLiked;
+
+    setCoinList((prev) =>
+      prev.map((c) => (c.id === coin.id ? { ...c, isLiked: nextLiked } : c))
+    );
+
     try {
-      if (coin.isLiked) {
-        await cancelOwnCoin(coin.symbol);
+      const res = wasLiked
+        ? await cancelOwnCoin(coin.symbol)
+        : await addOwnCoin(coin.symbol);
+
+      if (res?.data?.isLogin === false) {
+        setCoinList((prev) =>
+          prev.map((c) => (c.id === coin.id ? { ...c, isLiked: wasLiked } : c))
+        );
         Toast.show({
-          content: t('common.cancelSuccess') || '取消成功',
-          position: 'top'
+          content: t('common.pleaseLogin') || '请先登录',
+          icon: 'fail',
+          position: 'top',
         });
-      } else {
-        await addOwnCoin(coin.symbol);
-        Toast.show({
-          content: t('common.addSuccess') || '添加成功',
-          position: 'top'
-        });
+        return;
       }
-      
-      setCoinList(prev => prev.map(c => 
-        c.id === coin.id ? { ...c, isLiked: !c.isLiked } : c
-      ));
+
+      if (res?.code === 0 || res?.success) {
+        Toast.show({
+          content: wasLiked
+            ? t('common.cancelSuccess') || '取消成功'
+            : t('common.addSuccess') || '添加成功',
+          position: 'top',
+        });
+        return;
+      }
+
+      setCoinList((prev) =>
+        prev.map((c) => (c.id === coin.id ? { ...c, isLiked: wasLiked } : c))
+      );
+      Toast.show({
+        content: res?.msg || t('common.operationFailed') || '操作失败',
+        position: 'top',
+      });
     } catch (error) {
       console.error('操作失败:', error);
+      setCoinList((prev) =>
+        prev.map((c) => (c.id === coin.id ? { ...c, isLiked: wasLiked } : c))
+      );
       Toast.show({
         content: t('common.operationFailed') || '操作失败',
-        position: 'top'
+        position: 'top',
       });
     }
   };
