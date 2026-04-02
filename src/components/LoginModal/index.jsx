@@ -5,17 +5,19 @@ import { Popup, Input, Button, Toast } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
-import { sendVerificationCode, loginByEmail, registerByEmail, completeTask } from '../../api/user';
+import { sendVerificationCode, loginByEmail, registerByEmail, completeTask, loginByTelegram } from '../../api/user';
 import { runPostLoginSideEffects } from '../../utils/postLogin';
 import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
 import styles from './index.module.less';
 import { syncI18nextLngFromLoginResponse } from '../../utils/syncLoginLanguage';
+import { confirm } from '../Modal/confirm';
 
 // 检测是否在 Telegram 环境中
 const isTelegramEnv = () => {
   if (typeof window === 'undefined') return false;
   // 优先从 localStorage 读取
   const channel = localStorage.getItem('appChannel');
+  // 只在明确设置了 tg 渠道时才走 TG 逻辑
   return channel === 'tg';
 };
 
@@ -112,10 +114,6 @@ const updateTelegramUserInfo = async () => {
 
 // Telegram 直接登录处理函数
 const handleTelegramDirectLogin = async (onLoginSuccess, onClose, t, i18nInstance) => {
-  // 已禁用：当前 LoginModal 不再提供 Telegram 登录入口
-  Toast.show({ content: 'Telegram 登录已禁用', position: 'bottom' });
-  return;
-
   if (typeof window === 'undefined' || !window.Telegram?.WebApp) {
     Toast.show({ content: '非 Telegram 环境', position: 'bottom' });
     return;
@@ -151,14 +149,14 @@ const handleTelegramDirectLogin = async (onLoginSuccess, onClose, t, i18nInstanc
   try {
     Toast.show({ icon: 'loading', content: t('user.loggingIn') || '登录中...', duration: 0 });
     
-    // const res = await loginByTelegram({
-    //   telegramId: String(tgUser.id),
-    //   username: tgUser.username || tgUser.first_name || '',
-    //   photoUrl: tgUser.photo_url || '',
-    //   hash: hash,
-    //   inviteCode: inviteCode,
-    //   env: env
-    // });
+    const res = await loginByTelegram({
+      telegramId: String(tgUser.id),
+      username: tgUser.username || tgUser.first_name || '',
+      photoUrl: tgUser.photo_url || '',
+      hash: hash,
+      inviteCode: inviteCode,
+      env: env,
+    });
     
     Toast.clear();
     
@@ -547,6 +545,68 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
     onWalletLogin?.();
   };
 
+  // TG 环境：确认当前 TG 用户信息后，调用后端 TG 登录接口
+  const tgReloginInFlightRef = useRef(false);
+  const tgAutoConfirmOnceRef = useRef(false);
+
+  const handleTelegramConfirmAndLogin = async () => {
+    if (tgReloginInFlightRef.current) return;
+
+    const tgUserInfo = getTelegramUserInfo();
+    if (!tgUserInfo) {
+      Toast.show({ content: '无法获取 Telegram 用户信息', position: 'bottom' });
+      handleClose();
+      return;
+    }
+
+    const ok = await confirm({
+      title: 'Telegram 登录确认',
+      content: (
+        <div style={{ lineHeight: 1.6 }}>
+          <div style={{ fontWeight: 600, marginBottom: 8 }}>是否使用以下 TG 用户重新登录？</div>
+          <div>用户名：{tgUserInfo.username}</div>
+          <div>用户ID：{tgUserInfo.userId}</div>
+        </div>
+      ),
+      cancelText: t('common.cancel'),
+      confirmText: '确定',
+      closeOnAction: true,
+      bodyStyle: { borderRadius: '16px' },
+      maskClosable: true,
+    });
+
+    if (!ok) {
+      handleClose();
+      return;
+    }
+
+    tgReloginInFlightRef.current = true;
+    try {
+      await handleTelegramDirectLogin(onLoginSuccess, handleClose, t, i18n);
+    } finally {
+      tgReloginInFlightRef.current = false;
+    }
+  };
+
+  // TG 环境下，当弹窗打开且未进入邮箱表单时，自动弹确认窗
+  useEffect(() => {
+    if (!visible) {
+      tgAutoConfirmOnceRef.current = false;
+      return;
+    }
+    if (!isTelegramEnv()) return;
+    if (showEmailForm) return;
+    if (tgAutoConfirmOnceRef.current) return;
+
+    tgAutoConfirmOnceRef.current = true;
+    // 延迟到下一帧，确保 Popup 已渲染
+    requestAnimationFrame(() => {
+      handleTelegramConfirmAndLogin().catch((e) => {
+        console.error('TG relogin confirm failed:', e);
+      });
+    });
+  }, [visible, showEmailForm]);
+
   return (
     <Popup
       visible={visible}
@@ -585,7 +645,7 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
                   /* TG 环境：只显示 Telegram 登录按钮 */
                   <div 
                     className={styles.walletBtn} 
-                    onClick={() => handleTelegramDirectLogin(onLoginSuccess, handleClose, t, i18n)}
+                    onClick={handleTelegramConfirmAndLogin}
                     style={{ background: '#0088cc' }}
                   >
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="white" style={{ marginRight: '8px' }}>

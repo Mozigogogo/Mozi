@@ -117,14 +117,25 @@ export default function UserPage() {
   // 用于记录当前组件生命周期内是否已经为邀请码弹出过登录弹窗
   const hasShownInviteModalRef = useRef(false);
 
-  const isVipBySubscription = (sub) => {
-    if (!sub) return false;
-    if (sub?.isVip === true) return true;
-    const planRaw = sub?.tierCode || sub?.planCode || sub?.plan_name || sub?.plan || sub?.tier || '';
+  // 这里的“显示 Pro 图标/渐变昵称”只应在 PRO 档位时为 true
+  // LITE 应该保持 Free 样式（不显示 verifyIcon、昵称为黑色）
+  const getSubscriptionTier = (sub) => {
+    if (!sub) return 'free';
+    const tierCode = String(sub?.tierCode || '').toUpperCase();
+    if (tierCode === 'PRO') return 'pro';
+    if (tierCode === 'LITE') return 'lite';
+    if (tierCode === 'FREE') return 'free';
+
+    const planRaw = sub?.planCode || sub?.plan_name || sub?.plan || sub?.tier || '';
     const plan = String(planRaw || '').toUpperCase();
-    if (!plan) return false;
-    return plan !== 'FREE' && plan !== '0' && plan !== 'NONE';
+    if (!plan) return 'free';
+    if (plan.includes('PRO')) return 'pro';
+    if (plan.includes('LITE')) return 'lite';
+    if (plan.includes('FREE') || plan === '0' || plan === 'NONE') return 'free';
+    return 'free';
   };
+
+  const isVipBySubscription = (sub) => getSubscriptionTier(sub) === 'pro';
 
   // 进入 /user 时拉取订阅信息（登录态存在才请求）
   useEffect(() => {
@@ -1026,6 +1037,18 @@ export default function UserPage() {
       }
     };
     syncLogin();
+
+    // 仅 Telegram 环境下刷新订阅/会员状态，避免 VIP banner/会员标识不更新
+    if (isTelegramEnv()) {
+      try {
+        const subRes = await getMySubscription();
+        const data = subRes?.data ?? subRes;
+        setMySubscription(data);
+        setUserInfo((prev) => ({ ...prev, isVip: isVipBySubscription(data) }));
+      } catch (e) {
+        console.error('❌ [UserPage] 获取订阅信息失败:', e);
+      }
+    }
 
     // 登录成功后，获取积分数据
     await fetchUserPointsData();
