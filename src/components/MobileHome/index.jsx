@@ -510,7 +510,7 @@ export default function MobileHome() {
     }
   };
 
-  // 初始化数据加载
+  // 初始化数据加载（只执行一次，不再轮询）
   useEffect(() => {
     if (!activityImagesLoaded) return;
 
@@ -519,17 +519,6 @@ export default function MobileHome() {
     fetchHotContract();
     fetchOwnList();
     fetchRankingData(true);
-
-    const interval = setInterval(() => {
-      console.log('[MobileHome] 30s 轮询触发');
-      fetchHotCoin();
-      fetchHotIndustry();
-      fetchHotContract();
-      fetchOwnList();
-      fetchRankingData(false);
-    }, 30000);
-
-    return () => clearInterval(interval);
   }, [activityImagesLoaded]);
 
   // 榜单切换处理
