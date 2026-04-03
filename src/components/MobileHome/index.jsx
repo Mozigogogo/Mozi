@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, memo, useCallback } from 'react';
 import { Swiper } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
@@ -45,9 +45,6 @@ export default function MobileHome() {
   const { t, i18n } = useTranslation();
   const { track } = useAmplitude('Home');
   const isEN = (i18n?.language || '').startsWith('en');
-  const renderCountRef = useRef(0);
-  renderCountRef.current += 1;
-  
   // 活动弹窗状态
   const [showActivityModal, setShowActivityModal] = useState(false);
   
@@ -63,6 +60,27 @@ export default function MobileHome() {
     initDataLen: 0,
     colorScheme: '',
   });
+
+  if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+    window.__moziDebug = window.__moziDebug || { mobileHomeRender: 0, mobileHomeMount: 0 };
+    window.__moziDebug.mobileHomeRender += 1;
+    console.log('[MobileHome][debug] render', {
+      renderCount: window.__moziDebug.mobileHomeRender,
+      showActivityModal,
+      activityImagesLoaded,
+    });
+  }
+  const localRenderCountRef = useRef(0);
+  localRenderCountRef.current += 1;
+
+  if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+    window.__mobileHomeDebug = window.__mobileHomeDebug || { mountSeq: 0, renderSeq: 0 };
+    window.__mobileHomeDebug.renderSeq += 1;
+    console.log('[MobileHome][debug] render', {
+      localRenderCount: localRenderCountRef.current,
+      globalRenderSeq: window.__mobileHomeDebug.renderSeq,
+    });
+  }
 
   const initTelegram = () => {
     const tg = window?.Telegram?.WebApp;
@@ -104,6 +122,7 @@ export default function MobileHome() {
   // 每次进入页面都显示活动弹窗
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    console.log('[MobileHome][debug] activity modal effect run');
 
     try {
       const hasShownActivity = sessionStorage.getItem(ACTIVITY_LAST_SHOWN_KEY);
@@ -120,6 +139,18 @@ export default function MobileHome() {
       console.warn('检测活动弹窗状态失败:', e);
     }
   }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+      window.__mobileHomeDebug = window.__mobileHomeDebug || { mountSeq: 0, renderSeq: 0 };
+      window.__mobileHomeDebug.mountSeq += 1;
+      const mountId = window.__mobileHomeDebug.mountSeq;
+      console.log('[MobileHome][debug] mount', { mountId });
+      return () => {
+        console.log('[MobileHome][debug] unmount', { mountId });
+      };
+    }
+  }, []);
   
   // 处理活动弹窗确认
   const handleActivityConfirm = () => {
@@ -128,6 +159,7 @@ export default function MobileHome() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    console.log('[MobileHome][debug] telegram init effect run');
     if (window?.Telegram?.WebApp) {
       initTelegram();
       return;
@@ -170,6 +202,7 @@ export default function MobileHome() {
   // 首页公告栏显示控制
   const [showNotice, setShowNotice] = useState(true);
   useEffect(() => {
+    console.log('[MobileHome][debug] notice effect run');
     try {
       setShowNotice(localStorage.getItem(NOTICE_HIDE_KEY) !== '1');
     } catch {}
@@ -313,8 +346,17 @@ export default function MobileHome() {
   };
 
   // 获取自选列表
-  const fetchOwnList = async () => {
-    setMyOwnLoading(true);
+  const fetchOwnList = async (showLoading = false) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) {
+      setOwn([]);
+      setMyOwnLoading(false);
+      return;
+    }
+
+    if (showLoading) {
+      setMyOwnLoading(true);
+    }
     try {
       const response = await homeApi.getSelfSelectRank();
       if (response?.data) {
@@ -381,7 +423,15 @@ export default function MobileHome() {
         try {
           let itemListData;
           switch (i) {
-            case 0: itemListData = await homeApi.getSelfSelectRank(10, 1); break;
+            case 0: {
+              const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+              if (!token) {
+                itemListData = { data: [] };
+              } else {
+                itemListData = await homeApi.getSelfSelectRank(10, 1);
+              }
+              break;
+            }
             case 1: itemListData = await homeApi.getPriceChangeRank(0); break;
             case 2: itemListData = await homeApi.getPriceDownChangeRank(0); break;
             case 3: itemListData = await homeApi.getPriceWaveRank(0); break;
@@ -510,15 +560,29 @@ export default function MobileHome() {
     }
   };
 
-  // 初始化数据加载（只执行一次，不再轮询）
+  // 初始化数据加载 + 轮询（仅更新数据区域）
   useEffect(() => {
+    console.log('[MobileHome][debug] data effect run', { activityImagesLoaded });
     if (!activityImagesLoaded) return;
 
+    // 首次初始化：允许展示加载态
     fetchHotCoin();
     fetchHotIndustry();
     fetchHotContract();
-    fetchOwnList();
+    fetchOwnList(true);
     fetchRankingData(true);
+
+    // 后续轮询：静默更新数据，不再触发加载动画
+    const interval = setInterval(() => {
+      console.log('[MobileHome][debug] polling tick 30s');
+      fetchHotCoin();
+      fetchHotIndustry();
+      fetchHotContract();
+      fetchOwnList(false);
+      fetchRankingData(false);
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, [activityImagesLoaded]);
 
   // 榜单切换处理
@@ -528,6 +592,27 @@ export default function MobileHome() {
       refreshSelfSelectRank();
     }
   };
+
+  const handleActivityClose = useCallback(() => {
+    console.log('[MobileHome][debug] activity modal close');
+    setShowActivityModal(false);
+  }, []);
+
+  const handleActivityImagesLoaded = useCallback(() => {
+    console.log('[MobileHome][debug] activity images loaded');
+    setActivityImagesLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.__moziDebug = window.__moziDebug || { mobileHomeRender: 0, mobileHomeMount: 0 };
+    window.__moziDebug.mobileHomeMount += 1;
+    const mountId = window.__moziDebug.mobileHomeMount;
+    console.log('[MobileHome][debug] mount', { mountId });
+    return () => {
+      console.log('[MobileHome][debug] unmount', { mountId });
+    };
+  }, []);
 
   // 跳转到榜单详情页
   const go2List = () => {
@@ -587,10 +672,7 @@ export default function MobileHome() {
           </div>
         </div>
 
-        <PinkContainer />
-        <DerivativeArea />
-        <MarketDistribution />
-        <HotTopics limit={30} showViewMore={true} />
+        <HomeStaticSections />
         
         <InvestmentSection
           hotCoin={hotCoin}
@@ -615,15 +697,34 @@ export default function MobileHome() {
           onGo2List={go2List}
         />
 
-        <FloatingRobot />
+        <FloatingRobotMemo />
         
-        <ActivityModal
+        <ActivityModalMemo
           visible={showActivityModal}
-          onClose={() => setShowActivityModal(false)}
+          onClose={handleActivityClose}
           onConfirm={handleActivityConfirm}
-          onImagesLoaded={() => setActivityImagesLoaded(true)}
+          onImagesLoaded={handleActivityImagesLoaded}
         />
       </div>
     </Layout>
   );
 }
+
+const HomeStaticSections = memo(function HomeStaticSections() {
+  return (
+    <>
+      <PinkContainer />
+      <DerivativeArea />
+      <MarketDistribution />
+      <HotTopics limit={30} showViewMore={true} />
+    </>
+  );
+});
+
+const FloatingRobotMemo = memo(function FloatingRobotMemo() {
+  return <FloatingRobot />;
+});
+
+const ActivityModalMemo = memo(function ActivityModalMemo(props) {
+  return <ActivityModal {...props} />;
+});
