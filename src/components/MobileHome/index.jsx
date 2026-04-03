@@ -45,6 +45,8 @@ export default function MobileHome() {
   const { t, i18n } = useTranslation();
   const { track } = useAmplitude('Home');
   const isEN = (i18n?.language || '').startsWith('en');
+  const renderCountRef = useRef(0);
+  renderCountRef.current += 1;
   
   // 活动弹窗状态
   const [showActivityModal, setShowActivityModal] = useState(false);
@@ -102,10 +104,10 @@ export default function MobileHome() {
   // 每次进入页面都显示活动弹窗
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    
+
     try {
       const hasShownActivity = sessionStorage.getItem(ACTIVITY_LAST_SHOWN_KEY);
-      
+
       if (!hasShownActivity) {
         const timer = setTimeout(() => {
           setShowActivityModal(true);
@@ -519,6 +521,7 @@ export default function MobileHome() {
     fetchRankingData(true);
 
     const interval = setInterval(() => {
+      console.log('[MobileHome] 30s 轮询触发');
       fetchHotCoin();
       fetchHotIndustry();
       fetchHotContract();
