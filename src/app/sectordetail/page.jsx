@@ -4,24 +4,54 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { NavBar, PullToRefresh, Toast } from 'antd-mobile';
-import { getSectorDetail, addOwnCoin, cancelOwnCoin } from '@/api/market';
+import { getSectionSymbols, addOwnCoin, cancelOwnCoin } from '@/api/market';
 import { completeTask } from '@/api/user';
 import SortButton from '@/components/SortButton';
+import {
+  readHotSectorSnapshotFromSearchParams,
+  formatHotSectorChangePct,
+} from '@/utils/sectorNavigation';
 import styles from './page.module.less';
+
+const INITIAL_FETCH_DEDUPE_MS = 1200;
+const lastInitialFetchAtBySector = new Map();
+
+function buildSectorInfoFromSearchParams(sp) {
+  const snap = readHotSectorSnapshotFromSearchParams(sp);
+  const name = sp.get('name') || 'Meme';
+  if (snap) {
+    const { text, value } = formatHotSectorChangePct(snap.priceChange24h);
+    return {
+      name,
+      change: text,
+      changeValue: value,
+      marketCap: snap.marketCap,
+      volume: snap.totalVolume,
+      dt: snap.dt,
+    };
+  }
+  return {
+    name,
+    change: '0.00%',
+    changeValue: 0,
+    marketCap: 0,
+    volume: 0,
+    dt: '',
+  };
+}
 
 export default function SectorDetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const searchParamsRef = useRef(searchParams);
+  searchParamsRef.current = searchParams;
   const { t } = useTranslation();
+  const showCoinLogo = false;
   
   const sectorName = searchParams.get('name') || 'Meme';
+  const searchKey = searchParams.toString();
   
-  const [sectorInfo, setSectorInfo] = useState({
-    name: sectorName,
-    change: '2.25%',
-    marketCap: '1.2亿',
-    volume: '1.5亿'
-  });
+  const [sectorInfo, setSectorInfo] = useState(() => buildSectorInfoFromSearchParams(searchParams));
   
   const [coinList, setCoinList] = useState([
     { id: '1', symbol: 'BTC', name: 'Bitcoin', icon: '/icons/new_sector/btc.svg', price: 102658.7, change24h: 3.58, volume24h: 50000000000, marketCap: 2000000000000, isLiked: false, isMonitored: false },
@@ -75,72 +105,139 @@ export default function SectorDetailPage() {
     { id: '49', symbol: 'OP', name: 'Optimism', icon: '/icons/new_sector/btc.svg', price: 1.98, change24h: 6.78, volume24h: 267000000, marketCap: 1900000000, isLiked: true, isMonitored: false },
     { id: '50', symbol: 'IMX', name: 'Immutable X', icon: '/icons/new_sector/btc.svg', price: 1.34, change24h: -3.56, volume24h: 98000000, marketCap: 2100000000, isLiked: false, isMonitored: false }
   ]);
-  const [sortBy, setSortBy] = useState('marketCap'); // marketCap, price, change24h, volume
-  const [sortOrder, setSortOrder] = useState('desc'); // asc, desc
-  const [loading, setLoading] = useState(false);
+  const [symbolOrder, setSymbolOrder] = useState('asc');
+  const [priceOrder, setPriceOrder] = useState('asc');
+  const [change24hOrder, setChange24hOrder] = useState('asc');
+  const [loading, setLoading] = useState(true);
   const [showScrollbar, setShowScrollbar] = useState(true);
   const scrollTimeoutRef = useRef(null);
+  const latestRequestIdRef = useRef(0);
+  const pendingRequestCountRef = useRef(0);
+
+  useEffect(() => {
+    setSectorInfo(buildSectorInfoFromSearchParams(searchParams));
+  }, [searchKey]);
 
   // 排序处理
   const handleSortChange = (field, order) => {
-    setSortBy(field);
-    setSortOrder(order);
-    
-    // 执行排序
-    const sorted = [...coinList].sort((a, b) => {
-      const aVal = a[field] || 0;
-      const bVal = b[field] || 0;
-      return order === 'asc' ? aVal - bVal : bVal - aVal;
-    });
-    
-    setCoinList(sorted);
+    const nextParams = {
+      sectorName,
+      symbolOrder,
+      priceOrder,
+      change24hOrder,
+    };
+
+    if (field === 'symbol') {
+      setSymbolOrder(order);
+      nextParams.symbolOrder = order;
+    } else if (field === 'price') {
+      setPriceOrder(order);
+      nextParams.priceOrder = order;
+    } else if (field === 'change24h') {
+      setChange24hOrder(order);
+      nextParams.change24hOrder = order;
+    }
+
+    console.log('[SectorDetail][SortClick] trigger fetch with params:', nextParams);
+    fetchSectorDetail(nextParams);
   };
   // 获取板块详情数据
-  const fetchSectorDetail = async () => {
+  const fetchSectorDetail = async (overrideParams = {}) => {
+    const params = {
+      category: overrideParams.sectorName ?? sectorName,
+      symbolOrder: overrideParams.symbolOrder ?? symbolOrder,
+      priceOrder: overrideParams.priceOrder ?? priceOrder,
+      change24hOrder: overrideParams.change24hOrder ?? change24hOrder,
+    };
+    const requestId = ++latestRequestIdRef.current;
+    pendingRequestCountRef.current += 1;
     setLoading(true);
+    console.log('[SectorDetail][FetchStart]', { requestId, params, pending: pendingRequestCountRef.current });
+
     try {
-      const result = await getSectorDetail(sectorName);
+      const result = await getSectionSymbols(params);
       
-      if (result?.code === 0 && result?.data) {
-        const data = result.data;
-        
-        // 更新板块信息
-        setSectorInfo({
-          name: data.sectionName || sectorName,
-          change: data.change24h ? `${data.change24h.toFixed(2)}%` : '0.00%',
-          marketCap: data.totalMarketCap || '$0',
-          volume: data.totalVolume || '$0'
+      // 只让最后一次请求更新页面，避免快速切换时旧响应覆盖新响应
+      if (requestId === latestRequestIdRef.current && result?.code === 0 && result?.data) {
+        const list = Array.isArray(result.data) ? result.data : [];
+
+        // 更新板块信息（当前接口仅返回成分股列表）
+        const totalMarketCap = list.reduce((sum, item) => sum + (parseFloat(item?.marketCap) || 0), 0);
+        const totalVolume = list.reduce(
+          (sum, item) => sum + (parseFloat(item?.totalVolume || item?.volume24h) || 0),
+          0
+        );
+        const hotSnap = readHotSectorSnapshotFromSearchParams(searchParamsRef.current);
+        setSectorInfo((prev) => {
+          const baseName = params.category;
+          if (hotSnap) {
+            const { text, value } = formatHotSectorChangePct(hotSnap.priceChange24h);
+            return {
+              name: baseName,
+              change: text,
+              changeValue: value,
+              marketCap: hotSnap.marketCap,
+              volume: hotSnap.totalVolume,
+              dt: hotSnap.dt,
+            };
+          }
+          return {
+            name: baseName,
+            change: '0.00%',
+            changeValue: 0,
+            marketCap: totalMarketCap || 0,
+            volume: totalVolume || 0,
+            dt: prev.dt ?? '',
+          };
         });
-        
+
         // 更新币种列表
-        if (data.coins && Array.isArray(data.coins)) {
-          setCoinList(data.coins.map(coin => ({
-            id: coin.id || coin.symbol,
-            symbol: coin.symbol,
-            name: coin.name,
-            icon: coin.icon || coin.logo,
-            price: coin.price || 0,
-            change24h: coin.change24h || 0,
-            volume24h: coin.volume24h || 0,
-            marketCap: coin.marketCap || 0,
-            isLiked: coin.isSelfSelected || false,
-            isMonitored: coin.isMonitored || false
-          })));
-        }
+        setCoinList(list.map((coin) => ({
+          id: coin.id || coin.symbol,
+          symbol: coin.symbol,
+          name: coin.name || coin.symbol,
+          icon: coin.icon || coin.logo,
+          price: parseFloat(coin.currentPrice) || 0,
+          change24h: parseFloat(coin.priceChange24h) || 0,
+          volume24h: parseFloat(coin.totalVolume || coin.volume24h) || 0,
+          marketCap: parseFloat(coin.marketCap) || 0,
+          isLiked: !!coin.isSelfSelected,
+          isMonitored: coin.isMonitored || false
+        })));
+        console.log('[SectorDetail][FetchApplied]', { requestId, items: list.length });
+      } else {
+        console.log('[SectorDetail][FetchIgnored]', {
+          requestId,
+          latestRequestId: latestRequestIdRef.current,
+          code: result?.code,
+        });
       }
     } catch (error) {
-      console.error('获取板块详情失败:', error);
+      console.error('[SectorDetail][FetchError]', { requestId, error });
       Toast.show({
         content: t('common.loadFailed') || '加载失败',
         position: 'top'
       });
     } finally {
-      setLoading(false);
+      pendingRequestCountRef.current = Math.max(0, pendingRequestCountRef.current - 1);
+      console.log('[SectorDetail][FetchEnd]', { requestId, pending: pendingRequestCountRef.current });
+      if (pendingRequestCountRef.current === 0) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    fetchSectorDetail();
+    const now = Date.now();
+    const lastAt = lastInitialFetchAtBySector.get(sectorName) || 0;
+    if (now - lastAt < INITIAL_FETCH_DEDUPE_MS) {
+      console.log('[SectorDetail][InitEffect] skipped duplicated init fetch', { sectorName, now, lastAt });
+      return;
+    }
+
+    lastInitialFetchAtBySector.set(sectorName, now);
+    console.log('[SectorDetail][InitEffect] trigger init fetch', { sectorName });
+    fetchSectorDetail({ sectorName });
   }, [sectorName]);
 
   // 页面加载时显示滚动条3秒
@@ -173,31 +270,57 @@ export default function SectorDetailPage() {
     }, 3000);
   };
 
-  // 收藏/取消收藏
+  // 收藏/取消收藏：先乐观更新点赞态，再根据接口结果确认或回滚
   const handleLike = async (coin) => {
+    const wasLiked = coin.isLiked;
+    const nextLiked = !wasLiked;
+
+    setCoinList((prev) =>
+      prev.map((c) => (c.id === coin.id ? { ...c, isLiked: nextLiked } : c))
+    );
+
     try {
-      if (coin.isLiked) {
-        await cancelOwnCoin(coin.symbol);
+      const res = wasLiked
+        ? await cancelOwnCoin(coin.symbol)
+        : await addOwnCoin(coin.symbol);
+
+      if (res?.data?.isLogin === false) {
+        setCoinList((prev) =>
+          prev.map((c) => (c.id === coin.id ? { ...c, isLiked: wasLiked } : c))
+        );
         Toast.show({
-          content: t('common.cancelSuccess') || '取消成功',
-          position: 'top'
+          content: t('common.pleaseLogin') || '请先登录',
+          icon: 'fail',
+          position: 'top',
         });
-      } else {
-        await addOwnCoin(coin.symbol);
-        Toast.show({
-          content: t('common.addSuccess') || '添加成功',
-          position: 'top'
-        });
+        return;
       }
-      
-      setCoinList(prev => prev.map(c => 
-        c.id === coin.id ? { ...c, isLiked: !c.isLiked } : c
-      ));
+
+      if (res?.code === 0 || res?.success) {
+        Toast.show({
+          content: wasLiked
+            ? t('common.cancelSuccess') || '取消成功'
+            : t('common.addSuccess') || '添加成功',
+          position: 'top',
+        });
+        return;
+      }
+
+      setCoinList((prev) =>
+        prev.map((c) => (c.id === coin.id ? { ...c, isLiked: wasLiked } : c))
+      );
+      Toast.show({
+        content: res?.msg || t('common.operationFailed') || '操作失败',
+        position: 'top',
+      });
     } catch (error) {
       console.error('操作失败:', error);
+      setCoinList((prev) =>
+        prev.map((c) => (c.id === coin.id ? { ...c, isLiked: wasLiked } : c))
+      );
       Toast.show({
         content: t('common.operationFailed') || '操作失败',
-        position: 'top'
+        position: 'top',
       });
     }
   };
@@ -231,7 +354,7 @@ export default function SectorDetailPage() {
     }
 
     const shareUrl = encodeURIComponent(window.location.href);
-    const shareText = encodeURIComponent(`${sectorInfo.name} ${t('sectorDetail.sector') || '板块'} - ${sectorInfo.change}`);
+    const shareText = encodeURIComponent(`${sectorInfo.name} ${t('sectorDetail.sector')} - ${sectorInfo.change}`);
     const telegramUrl = `https://t.me/share/url?url=${shareUrl}&text=${shareText}`;
     window.open(telegramUrl, '_blank');
   };
@@ -244,13 +367,13 @@ export default function SectorDetailPage() {
           <div className={styles.navRight}>
             <img 
               src="/icons/new_sector/group.svg" 
-              alt="group" 
+              alt={t('sectorDetail.altCommunity')} 
               className={styles.iconBtn}
               onClick={handleGoToCommunity}
             />
             <img 
               src="/icons/new_sector/share.svg" 
-              alt="share" 
+              alt={t('sectorDetail.altShare')} 
               className={styles.iconBtn}
               onClick={handleShare}
             />
@@ -263,120 +386,163 @@ export default function SectorDetailPage() {
 
       <PullToRefresh onRefresh={fetchSectorDetail}>
         <div className={styles.content}>
-          {/* 板块信息卡片 */}
-          <div className={styles.sectorCard}>
-            <div className={styles.cardHeader}>
-              <span className={styles.sectorName}>{sectorInfo.name}</span>
-              <span className={`${styles.sectorChange} ${parseFloat(sectorInfo.change) >= 0 ? styles.positive : styles.negative}`}>
-                {sectorInfo.change}
-              </span>
-            </div>
-            <div className={styles.cardStats}>
-              <div className={styles.statItem}>
-                <div className={styles.statLabel}>总价值</div>
-                <div className={styles.statValue}>
-                  <span className={styles.currency}>$</span>
-                  {sectorInfo.marketCap}
+          {loading ? (
+            <div className={styles.skeletonWrap}>
+              <div className={`${styles.sectorCard} ${styles.skeletonPulse}`}>
+                <div className={styles.skeletonCardHeader}>
+                  <div className={styles.skeletonBlock}></div>
+                  <div className={styles.skeletonTag}></div>
+                </div>
+                <div className={styles.skeletonCardStats}>
+                  <div className={styles.skeletonStat}></div>
+                  <div className={styles.skeletonStat}></div>
                 </div>
               </div>
-              <div className={styles.statItem}>
-                <div className={styles.statLabel}>市 值</div>
-                <div className={styles.statValue}>
-                  <span className={styles.currency}>$</span>
-                  {sectorInfo.volume}
-                </div>
+
+              <div className={`${styles.skeletonSortBar} ${styles.skeletonPulse}`}>
+                {Array.from({ length: 5 }).map((_, idx) => (
+                  <div key={`skeleton-head-${idx}`} className={styles.skeletonHeadItem}></div>
+                ))}
+              </div>
+
+              <div className={styles.skeletonList}>
+                {Array.from({ length: 10 }).map((_, idx) => (
+                  <div key={`skeleton-row-${idx}`} className={`${styles.skeletonRow} ${styles.skeletonPulse}`}>
+                    <div className={styles.skeletonCell}></div>
+                    <div className={styles.skeletonCell}></div>
+                    <div className={styles.skeletonPill}></div>
+                    <div className={styles.skeletonIcon}></div>
+                    <div className={styles.skeletonIcon}></div>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
+          ) : (
+            <>
+              {/* 板块信息卡片 */}
+              <div className={styles.sectorCard}>
+                <div className={styles.cardHeader}>
+                  <span className={styles.sectorName}>{sectorInfo.name}</span>
+                  <span className={`${styles.sectorChange} ${(sectorInfo.changeValue ?? 0) >= 0 ? styles.positive : styles.negative}`}>
+                    {sectorInfo.change}
+                  </span>
+                </div>
+                <div className={styles.cardStats}>
+                  <div className={styles.statItem}>
+                    <div className={styles.statLabel}>{t('sectorDetail.volume')}</div>
+                    <div className={styles.statValue}>
+                      <span className={styles.currency}>$</span>
+                      {sectorInfo.volume}
+                    </div>
+                  </div>
+                  <div className={styles.statItem}>
+                    <div className={styles.statLabel}>{t('sectorDetail.marketCap')}</div>
+                    <div className={styles.statValue}>
+                      <span className={styles.currency}>$</span>
+                      {sectorInfo.marketCap}
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-          {/* 排序栏 */}
-          <div className={styles.sortBar}>
-            <SortButton
-              label="成分币种"
-              value="marketCap"
-              onChange={handleSortChange}
-            />
-            <SortButton
-              label="最新价"
-              value="price"
-              onChange={handleSortChange}
-            />
-            <SortButton
-              label="24h涨跌"
-              value="change24h"
-              onChange={handleSortChange}
-            />
-            <div className={styles.sortItem}>自加选</div>
-            <div className={styles.sortItem}>加监控</div>
-          </div>
+              {/* 排序栏 */}
+              <div className={styles.sortBar}>
+                <SortButton
+                  label={t('sectorDetail.sort.constituent')}
+                  value="symbol"
+                  order={symbolOrder}
+                  onChange={handleSortChange}
+                />
+                <SortButton
+                  label={t('sectorDetail.sort.latestPrice')}
+                  value="price"
+                  order={priceOrder}
+                  onChange={handleSortChange}
+                />
+                <SortButton
+                  label={t('sectorDetail.sort.change24h')}
+                  value="change24h"
+                  order={change24hOrder}
+                  onChange={handleSortChange}
+                />
+                <div className={styles.sortItem}>{t('sectorDetail.watchlist')}</div>
+                <div className={styles.sortItem}>{t('sectorDetail.addMonitor')}</div>
+              </div>
 
-          {/* 币种列表 */}
-          <div 
-            className={`${styles.coinList} ${showScrollbar ? styles.showScrollbar : ''}`}
-            onScroll={handleScroll}
-          >
-            {coinList.length === 0 && !loading ? (
-              <div className={styles.empty}>暂无数据</div>
-            ) : (
-              coinList.map(coin => (
-                <div 
-                  key={coin.id} 
-                  className={styles.coinItem}
-                  onClick={() => goToCoinDetail(coin.symbol)}
-                >
-                  <div className={styles.coinInfo}>
-                    {coin.icon ? (
-                      <img src={coin.icon} alt={coin.symbol} className={styles.coinIcon} />
-                    ) : (
-                      <div className={styles.coinIconPlaceholder}>
-                        {coin.symbol?.charAt(0) || '?'}
+              {/* 币种列表 */}
+              <div
+                className={`${styles.coinList} ${showScrollbar ? styles.showScrollbar : ''}`}
+                onScroll={handleScroll}
+              >
+                {coinList.length === 0 ? (
+                  <div className={styles.empty}>{t('common.noData')}</div>
+                ) : (
+                  coinList.map(coin => (
+                    <div
+                      key={coin.id}
+                      className={styles.coinItem}
+                      onClick={() => goToCoinDetail(coin.symbol)}
+                    >
+                      <div className={styles.coinInfo}>
+                        {showCoinLogo && (
+                          coin.icon ? (
+                            <img src={coin.icon} alt={coin.symbol} className={styles.coinIcon} />
+                          ) : (
+                            <div className={styles.coinIconPlaceholder}>
+                              {coin.symbol?.charAt(0) || '?'}
+                            </div>
+                          )
+                        )}
+                        <span className={styles.coinSymbol}>{coin.symbol}</span>
                       </div>
-                    )}
-                    <span className={styles.coinSymbol}>{coin.symbol}</span>
-                  </div>
-                  
-                  <div className={styles.coinPrice}>
-                    {coin.price >= 1 
-                      ? coin.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                      : coin.price.toFixed(6)
-                    }
-                  </div>
-                  
-                  <div className={`${styles.coinChange} ${coin.change24h >= 0 ? styles.positive : styles.negative}`}>
-                    {coin.change24h >= 0 ? '+' : ''}{coin.change24h.toFixed(2)}%
-                  </div>
-                  
-                  <div 
-                    className={styles.likeBtn}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleLike(coin);
-                    }}
-                  >
-                    <img 
-                      src={coin.isLiked ? '/icons/new_detail/like_actived.svg' : '/icons/new_detail/like_no_actived.svg'}
-                      alt="like"
-                      className={styles.iconImg}
-                    />
-                  </div>
-                  
-                  <div 
-                    className={styles.monitorBtn}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleMonitor(coin);
-                    }}
-                  >
-                    <img 
-                      src="/icons/new_home/monitor-bell.svg"
-                      alt="monitor"
-                      className={styles.iconImg}
-                    />
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+
+                      <div className={styles.coinPrice}>
+                        {coin.price >= 1
+                          ? coin.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                          : coin.price.toFixed(6)
+                        }
+                      </div>
+
+                      <div
+                        className={`${styles.coinChange} ${coin.change24h >= 0 ? styles.positive : styles.negative}`}
+                      >
+                        {coin.change24h >= 0 ? '+' : ''}
+                        {coin.change24h.toFixed(2)}%
+                      </div>
+
+                      <div
+                        className={styles.likeBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleLike(coin);
+                        }}
+                      >
+                        <img
+                          src={coin.isLiked ? '/icons/new_detail/like_actived.svg' : '/icons/new_detail/like_no_actived.svg'}
+                          alt={t('sectorDetail.altLike')}
+                          className={styles.iconImg}
+                        />
+                      </div>
+
+                      <div
+                        className={styles.monitorBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMonitor(coin);
+                        }}
+                      >
+                        <img
+                          src="/icons/new_home/monitor-bell.svg"
+                          alt={t('sectorDetail.altMonitor')}
+                          className={styles.iconImg}
+                        />
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
+          )}
         </div>
       </PullToRefresh>
     </div>

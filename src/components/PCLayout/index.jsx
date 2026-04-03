@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   Layout,
   Menu,
@@ -14,11 +14,11 @@ import {
   UserOutlined,
   CloseCircleFilled,
   MenuOutlined,
-  RightOutlined,
   CaretRightOutlined,
   CaretDownOutlined,
 } from '@ant-design/icons';
-import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
 import PCSearchResults from '../PCSearchResults';
@@ -31,8 +31,10 @@ import BenefitCodeModal from '../BenefitCodeModal';
 import BindBenefitCodeModal from '../BindBenefitCodeModal';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
+import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { getShareCount } from '@/api/home';
 import styles from './index.module.less';
+import AISearchBadge from './AISearchBadge';
 
 const searchIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/search.png';
 
@@ -46,6 +48,8 @@ const { Text } = Typography;
 export default function PCLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const { formatValue, formatPrice } = useFormatNumber();
   const { t } = useTranslation();
   const [userInfo, setUserInfo] = useState(null);
   const [collapsed, setCollapsed] = useState(false);
@@ -186,6 +190,34 @@ export default function PCLayout({ children }) {
   // 内容显示状态 - 用于PC端tab切换
   const [activeContent, setActiveContent] = useState(null);
   const [isCreatedListExpanded, setIsCreatedListExpanded] = useState(false);
+  const [isMineExpanded, setIsMineExpanded] = useState(true);
+  const [watchlist, setWatchlist] = useState([]);
+  const [watchlistLoading, setWatchlistLoading] = useState(false);
+
+  const fetchWatchlist = useCallback(async () => {
+    setWatchlistLoading(true);
+    try {
+      const res = await request({ url: Interface.COIN_SELF });
+      if (res?.data?.isLogin === false) {
+        setWatchlist([]);
+        return;
+      }
+      const data = Array.isArray(res?.data) ? res.data : [];
+      setWatchlist(data);
+    } catch (e) {
+      console.error('PC sidebar watchlist:', e);
+      setWatchlist([]);
+    } finally {
+      setWatchlistLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (collapsed || !isMineExpanded) return undefined;
+    fetchWatchlist();
+    const timer = setInterval(fetchWatchlist, 30000);
+    return () => clearInterval(timer);
+  }, [collapsed, isMineExpanded, fetchWatchlist]);
 
   // 预加载所有图标 - 优化：使用link标签预加载，更快
   useEffect(() => {
@@ -259,99 +291,126 @@ export default function PCLayout({ children }) {
     );
   };
 
-  // 菜单项配置 - 使用 useMemo 根据折叠状态动态生成
-  const menuItems = useMemo(() => [
-    { 
-      key: '/', 
-      icon: <CustomIcon 
-        src="/icons/pc/home@2x.png" 
-        activeSrc="/icons/pc/home_actived@2x.png"
-        itemKey="/"
-        alt="home" 
-      />, 
-      label: t('pcLayout.menu.home') 
-    },
-    { 
-      key: '/find', 
-      icon: <CustomIcon 
-        src="/icons/pc/find.png" 
-        activeSrc="/icons/pc/find_actived@2x.png"
-        itemKey="/find"
-        alt="discover" 
-      />, 
-      label: t('pcLayout.menu.discover') 
-    },
-    { 
-      key: '/community', 
-      icon: <CustomIcon 
-        src="/icons/pc/social.png" 
-        activeSrc="/icons/pc/social_actived.png"
-        itemKey="/community"
-        alt="community" 
-      />, 
-      label: t('pcLayout.menu.community') 
-    },
-    {
-      key: 'mine',
-      label: collapsed ? '' : t('pcLayout.menu.mine'), // 折叠时隐藏分组标签
-      type: 'group',
-      children: [
-        { 
-          key: '/selfrank', 
-          icon: <CustomIcon 
-            src="/icons/pc/Collection@2x.png" 
-            activeSrc="/icons/pc/Collection_actived@2x.png"
-            itemKey="/selfrank"
-            alt="favorites" 
-          />, 
-          label: t('pcLayout.menu.myFavorites') 
-        },
-        { 
-          key: '/mywarn', 
-          icon: <CustomIcon 
-            src="/icons/pc/alert@2x.png" 
+  const mineRestMenuItems = useMemo(
+    () => [
+      {
+        key: '/mywarn',
+        icon: (
+          <CustomIcon
+            src="/icons/pc/alert@2x.png"
             activeSrc="/icons/pc/alert_actived@2x.png"
             itemKey="/mywarn"
-            alt="alerts" 
-          />, 
-          label: t('pcLayout.menu.myAlerts') 
-        },
-        { 
-          key: '/subscribe', 
-          icon: <CustomIcon 
-            src="/icons/pc/Subscribe.png" 
+            alt="alerts"
+          />
+        ),
+        label: t('pcLayout.menu.myAlerts'),
+      },
+      {
+        key: '/subscribe',
+        icon: (
+          <CustomIcon
+            src="/icons/pc/Subscribe.png"
             activeSrc="/icons/pc/Subscribe_actived.png"
             itemKey="/subscribe"
-            alt="subscription" 
-          />, 
-          label: t('pcLayout.menu.mySubscription') 
-        },
-        { 
-          key: '/myqa', 
-          icon: <CustomIcon 
-            src="/icons/new_home/ai_chat.svg" 
+            alt="subscription"
+          />
+        ),
+        label: t('pcLayout.menu.mySubscription'),
+      },
+      {
+        key: '/myqa',
+        icon: (
+          <CustomIcon
+            src="/icons/new_home/ai_chat.svg"
             activeSrc="/icons/new_home/ai_chat.svg"
             itemKey="/myqa"
-            alt="myqa" 
-          />, 
-          label: t('pcLayout.menu.myQA') 
-        },
-        { 
-          key: '/achievement', 
-          icon: <CustomIcon 
-            src="/icons/pc/Achievement.png" 
+            alt="myqa"
+          />
+        ),
+        label: t('pcLayout.menu.myQA'),
+      },
+      {
+        key: '/achievement',
+        icon: (
+          <CustomIcon
+            src="/icons/pc/Achievement.png"
             activeSrc="/icons/pc/Achievement_actived.png"
             itemKey="/achievement"
-            alt="achievements" 
-          />, 
-          label: t('pcLayout.menu.myAchievements') 
-        },
-      ],
-    },
-    {
+            alt="achievements"
+          />
+        ),
+        label: t('pcLayout.menu.myAchievements'),
+      },
+    ],
+    [t, activeContent, pathname]
+  );
+
+  const favoritesMenuItemCollapsed = useMemo(
+    () => ({
+      key: '/selfrank',
+      icon: (
+        <CustomIcon
+          src="/icons/pc/Collection@2x.png"
+          activeSrc="/icons/pc/Collection_actived@2x.png"
+          itemKey="/selfrank"
+          alt="favorites"
+        />
+      ),
+      label: t('pcLayout.menu.myFavorites'),
+    }),
+    [t, activeContent, pathname]
+  );
+
+  // 主导航：首页 / 发现 / 社区
+  const topMenuItems = useMemo(
+    () => [
+      {
+        key: '/',
+        icon: (
+          <CustomIcon
+            src="/icons/pc/home@2x.png"
+            activeSrc="/icons/pc/home_actived@2x.png"
+            itemKey="/"
+            alt="home"
+          />
+        ),
+        label: t('pcLayout.menu.home'),
+      },
+      {
+        key: '/find',
+        icon: (
+          <CustomIcon
+            src="/icons/pc/find.png"
+            activeSrc="/icons/pc/find_actived@2x.png"
+            itemKey="/find"
+            alt="discover"
+          />
+        ),
+        label: t('pcLayout.menu.discover'),
+      },
+      {
+        key: '/community',
+        icon: (
+          <CustomIcon
+            src="/icons/pc/social.png"
+            activeSrc="/icons/pc/social_actived.png"
+            itemKey="/community"
+            alt="community"
+          />
+        ),
+        label: t('pcLayout.menu.community'),
+      },
+    ],
+    [t, activeContent, pathname]
+  );
+
+  const coinlistGroup = useMemo(
+    () => ({
       key: 'coinlist',
-      label: collapsed ? '' : (
-        <div 
+      label: collapsed ? (
+        ''
+      ) : (
+        <div
           style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
           onClick={(e) => {
             e.stopPropagation();
@@ -365,11 +424,36 @@ export default function PCLayout({ children }) {
           )}
           {t('pcLayout.menu.createdLists')}
         </div>
-      ), // 折叠时隐藏分组标签
+      ),
       type: 'group',
       children: [],
-    },
-  ], [t, collapsed, activeContent, pathname, isCreatedListExpanded]); // 添加 collapsed 和 isCreatedListExpanded 作为依赖
+    }),
+    [t, collapsed, isCreatedListExpanded]
+  );
+
+  // 展开时「我的」标题在自选区块上方单独渲染；折叠时组内保留「我的自选」图标入口 + 其余项
+  const mineMenuItems = useMemo(() => {
+    if (collapsed) {
+      return [
+        {
+          key: 'mine',
+          label: '',
+          type: 'group',
+          children: [favoritesMenuItemCollapsed, ...mineRestMenuItems],
+        },
+        coinlistGroup,
+      ];
+    }
+    return [
+      {
+        key: 'mine-rest',
+        type: 'group',
+        label: '',
+        children: mineRestMenuItems,
+      },
+      coinlistGroup,
+    ];
+  }, [collapsed, favoritesMenuItemCollapsed, mineRestMenuItems, coinlistGroup]);
 
   const handleMenuClick = ({ key }) => {
     // PC端：发现和社区页面在右侧显示内容，不跳转路由
@@ -384,12 +468,16 @@ export default function PCLayout({ children }) {
   };
 
   const getSelectedKey = () => {
-    // 如果有activeContent，优先使用它
     if (activeContent) {
       return [activeContent];
     }
-    const allItems = menuItems.flatMap(item => item.children || [item]);
-    const matched = allItems.find(item => pathname === item.key || pathname.startsWith(item.key + '/'));
+    if (pathname === '/selfrank') {
+      return ['/selfrank'];
+    }
+    const flat = [...topMenuItems, ...mineRestMenuItems, favoritesMenuItemCollapsed];
+    const matched = flat.find(
+      (item) => pathname === item.key || pathname.startsWith(`${item.key}/`)
+    );
     return matched ? [matched.key] : ['/'];
   };
 
@@ -420,24 +508,41 @@ export default function PCLayout({ children }) {
         {/* 搜索框 - 水平居中 */}
         <div className={styles.searchWrapper}>
           <div className={styles.searchBox}>
-            <input
-              type="text"
-              className={styles.searchInput}
-              placeholder={t('home.searchPlaceholder')}
-              value={searchValue}
-              onChange={handleSearchChange}
-              onKeyDown={handleSearchKeyDown}
-            />
-            {searchValue && (
-              <div className={styles.searchClear} onClick={clearSearch}>
-                <CloseCircleFilled style={{ color: '#b2b2b2', fontSize: 15 }} />
-              </div>
-            )}
+            <div className={styles.searchInputArea}>
+              <input
+                type="text"
+                className={styles.searchInput}
+                placeholder={t('home.searchPlaceholder')}
+                value={searchValue}
+                onChange={handleSearchChange}
+                onKeyDown={handleSearchKeyDown}
+              />
+              {searchValue && (
+                <div className={styles.searchClear} onClick={clearSearch}>
+                  <CloseCircleFilled style={{ color: '#b2b2b2', fontSize: 15 }} />
+                </div>
+              )}
+            </div>
             <div className={styles.searchButton} onClick={handleSearch}>
-              <img src={searchIcon} className={styles.searchIconImg} alt="search" />
+              <span
+                className={styles.searchIconImg}
+                style={{
+                  WebkitMaskImage: `url(${searchIcon})`,
+                  maskImage: `url(${searchIcon})`,
+                }}
+                role="img"
+                aria-label="search"
+              />
               <span className={styles.searchText}>{t('common.search')}</span>
             </div>
           </div>
+          <Link
+            href="/robot_test"
+            className={styles.aiSearchBadgeLink}
+            aria-label={t('home.quickActions.ai')}
+          >
+            <AISearchBadge />
+          </Link>
         </div>
 
         <div className={styles.headerRight}>
@@ -523,34 +628,138 @@ export default function PCLayout({ children }) {
             <Menu
               mode="inline"
               selectedKeys={getSelectedKey()}
-              items={menuItems}
+              items={topMenuItems}
               onClick={handleMenuClick}
               style={{ borderRight: 0 }}
               inlineCollapsed={collapsed}
             />
+
+            {!collapsed && (
+              <div className={styles.mineGroupTitle}>{t('pcLayout.menu.mine')}</div>
+            )}
+
+            {!collapsed && (
+              <div className={styles.pcWatchlist}>
+                <button
+                  type="button"
+                  className={`${styles.pcWatchlistHeader} ${pathname === '/selfrank' ? styles.pcWatchlistHeaderSelected : ''}`}
+                  onClick={() => setIsMineExpanded((v) => !v)}
+                >
+                  <span className={styles.pcWatchlistHeaderLeft}>
+                    {isMineExpanded ? (
+                      <span className={styles.pcWatchlistHeaderIconSvg} aria-hidden>
+                        <img
+                          src="/icons/new_home/collect_actived.svg"
+                          alt=""
+                          width={16}
+                          height={16}
+                        />
+                      </span>
+                    ) : (
+                      <CustomIcon
+                        src="/icons/pc/Collection@2x.png"
+                        activeSrc="/icons/pc/Collection_actived@2x.png"
+                        itemKey="/selfrank"
+                        alt="favorites"
+                      />
+                    )}
+                    <span
+                      className={`${styles.pcWatchlistTitle} ${
+                        isMineExpanded ? styles.pcWatchlistTitleExpanded : ''
+                      }`}
+                    >
+                      {t('pcLayout.menu.myFavorites')}
+                    </span>
+                  </span>
+                  {isMineExpanded ? (
+                    <img
+                      src="/icons/new_home/down_arrow.svg"
+                      alt=""
+                      className={styles.pcWatchlistChevron}
+                      width={16}
+                      height={16}
+                      aria-hidden
+                    />
+                  ) : (
+                    <img
+                      src="/icons/new_home/right_arrow_45556C.svg"
+                      alt=""
+                      className={styles.pcWatchlistChevron}
+                      width={16}
+                      height={16}
+                      aria-hidden
+                    />
+                  )}
+                </button>
+                {isMineExpanded && (
+                  <div className={styles.pcWatchlistBody}>
+                    {watchlistLoading && watchlist.length === 0 ? (
+                      <div className={`${styles.pcWatchlistHint} ${styles.pcWatchlistHintCenter}`}>
+                        {t('common.loading')}
+                      </div>
+                    ) : watchlist.length === 0 ? (
+                      <div className={styles.pcWatchlistHint}>{t('discover.noFavorites')}</div>
+                    ) : (
+                      watchlist.map((item) => {
+                        const sym = item.symbol;
+                        const activeSymbol = searchParams.get('symbol') || '';
+                        const isRowActive = pathname === '/detail' && activeSymbol === sym;
+                        const rawChange = item.price24h;
+                        const isNeg = String(rawChange ?? '').includes('-');
+                        const priceStr =
+                          item.last !== undefined && item.last !== null && item.last !== ''
+                            ? `$${formatPrice(item.last)}`
+                            : '—';
+                        const changeDisplay = rawChange != null && rawChange !== '' ? formatValue(rawChange) : '—';
+                        const displaySub =
+                          item.name || item.coinName || item.fullName || '';
+                        return (
+                          <button
+                            key={sym}
+                            type="button"
+                            className={`${styles.pcWatchlistRow} ${isRowActive ? styles.pcWatchlistRowActive : ''}`}
+                            onClick={() => {
+                              setActiveContent(null);
+                              router.push(`/detail?symbol=${encodeURIComponent(sym)}`);
+                            }}
+                          >
+                            <span className={styles.pcWatchlistRowLeft}>
+                              <span className={styles.pcWatchlistSymbol}>{sym}</span>
+                              {displaySub ? (
+                                <span className={styles.pcWatchlistName}>{displaySub}</span>
+                              ) : null}
+                            </span>
+                            <span className={styles.pcWatchlistRowRight}>
+                              <span className={styles.pcWatchlistPrice}>{priceStr}</span>
+                              <span
+                                className={
+                                  isNeg ? styles.pcWatchlistChangeDown : styles.pcWatchlistChangeUp
+                                }
+                              >
+                                {isNeg ? '↓' : '↑'} {changeDisplay}
+                              </span>
+                            </span>
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className={styles.mineMenuLower}>
+              <Menu
+                mode="inline"
+                selectedKeys={getSelectedKey()}
+                items={mineMenuItems}
+                onClick={handleMenuClick}
+                style={{ borderRight: 0, flex: 1 }}
+                inlineCollapsed={collapsed}
+              />
+            </div>
           </ConfigProvider>
 
-          {/* 底部链接和社交图标 */}
-          {!collapsed && (
-            <div className={styles.siderFooter}>
-              <div className={styles.footerLinks}>
-                <a href="#">{t('pcLayout.footer.aboutUs')}</a>
-                <a href="#">{t('pcLayout.footer.service')}</a>
-                <a href="#">{t('pcLayout.footer.affiliate')}</a>
-              </div>
-              <div className={styles.footerLinks}>
-                <a href="#">{t('pcLayout.footer.inviteRewards')}</a>
-                <a href="#">{t('pcLayout.footer.helpCenter')}</a>
-                <a href="#">{t('pcLayout.footer.videoGuides')}</a>
-              </div>
-              <div className={styles.socialIcons}>
-                <a href="#" className={styles.socialIcon}><img src="/icons/telegram-group.svg" alt="Telegram" /></a>
-                <a href="#" className={styles.socialIcon}><img src="/icons/x-logo.svg" alt="X" /></a>
-                <a href="#" className={styles.socialIcon}><img src="/icons/discord.svg" alt="Discord" /></a>
-                <a href="#" className={styles.socialIcon}><img src="/icons/xiaohongshu.svg" alt="小红书" /></a>
-              </div>
-            </div>
-          )}
         </Sider>
 
         {/* 右侧 Content */}

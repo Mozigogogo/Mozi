@@ -1,5 +1,6 @@
 .container {
   min-height: 100vh;
+  min-height: 100svh;
   /* Stack calendar on top of daily background */
   background-image: url('/images/daily/daily_bg.png');
   background-repeat: no-repeat;
@@ -10,8 +11,38 @@
   color: white;
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Roboto', 'Segoe UI', Helvetica, Arial, sans-serif;
   overflow-x: hidden;
+  overflow-y: hidden;
   align-items: center;
   background-color: rgba(15, 23, 42, 1);
+  box-sizing: border-box;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.topNav {
+  width: 100%;
+  position: absolute;
+  top: 34px;
+  left: 10px;
+  z-index: 10;
+}
+
+.backButton {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(7, 20, 48, 0.35);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+}
+
+.backIcon {
+  width: 28px;
+  height: 28px;
+  color: #fff;
 }
 
 /* Header Styles (Date) - Removed */
@@ -102,8 +133,9 @@
   transform: translateX(-50%);
   width: 100%; /* Further increased width to fully cover gaps */
   display: grid;
-  grid-template-columns: 1.3fr 0.8fr 2.4fr 3.0fr;
-  column-gap: 10px; /* Added gap between columns */
+  /* 加宽“事件”列，略收窄数值列 */
+  grid-template-columns: 1.2fr 1fr 4fr 3.5fr;
+  column-gap: 4px; /* Added gap between columns */
   padding: 8px 7.5%; /* Match width of tableBody (85%) */
   box-sizing: border-box;
   font-size: 14px;
@@ -113,6 +145,19 @@
   border-bottom: none;
   z-index: 2;
   box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Added shadow for depth */
+}
+
+.tableHeaderEn {
+  /* 英文模式下：国家列稍微变宽，整体字号略小 */
+  /* 再进一步加宽第二列（国家列），略压缩后两列 */
+  grid-template-columns: 1.1fr 1.8fr 3.5fr 2.6fr;
+  font-size: 12px;
+}
+
+.tableHeader > div {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tableBody {
@@ -147,6 +192,23 @@
     background: rgba(0, 0, 0, 0.2);
   }
   z-index: 2;
+}
+
+.tableBodyLoading {
+  /* Fix height so the placeholder can vertically center. */
+  height: 40%;
+  max-height: 40%;
+  overflow-y: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loadingPlaceholder {
+  width: 100%;
+  padding: 12px;
+  color: #999;
+  text-align: center;
 }
 
 .noteCard {
@@ -197,8 +259,8 @@
 
 .tableRow {
   display: grid;
-  grid-template-columns: 1.3fr 0.8fr 2.4fr 3.0fr;
-  column-gap: 10px; /* Added gap between columns */
+  grid-template-columns: 1.2fr 1fr 4fr 3.5fr;
+  column-gap: 4px; /* Added gap between columns */
   padding: 8px 0;
   font-size: 12px;
   border-bottom: 1px solid #eee;
@@ -220,6 +282,7 @@
   text-overflow: ellipsis;
 }
 .value { font-weight: 600; text-align: right; }
+.valueEn { font-size: 11px; }
 
 .footerArea {
   width: 100%;
@@ -227,8 +290,22 @@
   display: flex;
   align-items: center;
   justify-content: space-between; /* Align to right */
-  padding: 0 20px 20px 20px; /* Padding bottom for visual balance */
+  padding: 0 20px 0px 20px; /* Padding bottom for visual balance */
   box-sizing: border-box;
+}
+
+.shareButton {
+  width: calc(100% - 24px);
+  height: 44px;
+  margin: 2px 12px calc(10px + env(safe-area-inset-bottom)) 12px;
+  border: none;
+  border-radius: 22px;
+  background: #11B787;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
 }
 
 .logoContainer {

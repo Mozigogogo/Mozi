@@ -33,7 +33,6 @@ export default function FeedbackSuccessModal({ visible, onClose }) {
     };
   }, [visible]);
 
-  console.log('🟢 [FeedbackSuccessModal] 组件渲染，visible:', visible);
 
   if (!visible) return null;
 

@@ -12,7 +12,8 @@ import VConsoleLoader from "@/components/VConsole";
 import InviteCodeHandler from "@/components/InviteCodeHandler";
 import EnvironmentDetector from "@/components/EnvironmentDetector";
 import RouteChangeHandler from "@/components/RouteChangeHandler";
-import TelegramAutoLogin from "@/components/TelegramAutoLogin";
+import TokenDebugMonitor from "@/components/TokenDebugMonitor";
+import BuildFingerprint from "@/components/BuildFingerprint";
 import GoogleAuthProvider from "../context/GoogleAuthProvider";
 import GetPointsModal from "@/components/GetPointsModal";
 
@@ -70,12 +71,13 @@ export default function RootLayout({ children }) {
           strategy="beforeInteractive"
         />
         <EnvironmentDetector />
+        <BuildFingerprint />
         <RouteChangeHandler />
+        <TokenDebugMonitor />
         <VConsoleLoader />
         <Suspense fallback={null}>
           <InviteCodeHandler />
         </Suspense>
-        <TelegramAutoLogin />
         <ThemeProvider>
           <I18nProvider>
             <GoogleAuthProvider>

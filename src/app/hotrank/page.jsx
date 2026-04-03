@@ -41,7 +41,7 @@ export default function HotRankPage() {
     setError(false);
     try {
       let url = Interface.hot_coin;
-      if (type === "industry") url = Interface.hot_industry;
+      if (type === "industry") url = Interface.SECTION_LIST;
       else if (type === "contract") url = Interface.hot_contract;
 
       const res = await request({ url, data: { pageSize: 100, pageNo: 1 } });
@@ -49,11 +49,14 @@ export default function HotRankPage() {
 
       const mapped = data.map((item) => {
         if (type === "industry") {
+          const raw = item.priceChange24h ?? 0;
+          const change = Math.abs(raw) <= 1 ? raw * 100 : raw;
+          const changeStr = `${change.toFixed(2)}%`;
           return {
-            col1: item.section,
-            col2: <HighlightArea value={item.changes} />,
+            col1: item.category,
+            col2: <HighlightArea value={changeStr} />,
             img: item.url,
-            key: item.section || item.url || Math.random()
+            key: item.category || item.url || Math.random()
           };
         }
         return {

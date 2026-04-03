@@ -8,7 +8,9 @@
       "event": "事件",
       "values": "实际/预测值/前值"
     },
-    "note": "今日宏观波动完全系于美东时间13:30（北京时间次日凌晨）公布的美国CPI数据。在数据公布前，市场处于“数据真空期”，波动可能收窄。建议投资者关注存量逻辑，即当前市场对“通胀粘性”与“经济韧性”的定价是否充分，并为数据可能引发的方向性突破做好准备。"
+    "noEvents": "暂无事件",
+    "note": "今日宏观波动完全系于美东时间13:30（北京时间次日凌晨）公布的美国CPI数据。在数据公布前，市场处于“数据真空期”，波动可能收窄。建议投资者关注存量逻辑，即当前市场对“通胀粘性”与“经济韧性”的定价是否充分，并为数据可能引发的方向性突破做好准备。",
+    "share": "立即分享"
   },
   "vipRecharge": {
     "title": "会员充值",
@@ -126,6 +128,18 @@
         "researcher": "投研分析师",
         "educator": "教育型博主",
         "retail": "普通投资者"
+      },
+      "subOptions": {
+        "compliance": "Compliance",
+        "trader": "Trader",
+        "quant": "Quant",
+        "creator": "Content Creator",
+        "community_builder": "Community Builder",
+        "institution": "Fund/VC/Market Maker",
+        "project_member": "Builder/Core Team",
+        "researcher": "Researcher",
+        "educator": "Educator",
+        "retail": "Retail"
       }
     },
     "bio": {
@@ -161,7 +175,7 @@
     "noMore": "没有更多了",
     "error": "出错了",
     "retry": "重试",
-    "confirm": "确认",
+    "confirm": "确定",
     "cancel": "取消",
     "submit": "提交",
     "save": "保存",
@@ -233,7 +247,7 @@
       "addMonitor": "加监控"
     },
     "noFavorites": "暂无收藏自选",
-    "robotBubble": "欢迎来到Mozi,需要什么帮助？",
+    "robotBubble": "今天我能为你做些什么？",
     "quickActions": {
       "ai": "AI问答",
       "priceMonitor": "价格监控",
@@ -546,7 +560,10 @@
     "walletAddressError": "获取钱包地址失败",
     "walletConnectFailed": "钱包连接失败",
     "vipBannerText": "免费试用14天，马上开启新体验!",
+    "vipBannerTextFreePlan": "解锁大单订单流 · 7天免费体验",
+    "vipBannerMemberCenter": "会员中心",
     "subscribeNow": "立即订阅",
+    "enter": "进入",
     "wechatUser": "微信用户",
     "accountBindLabel": "账号绑定",
     "aboutMozi": {
@@ -696,7 +713,12 @@
     "confirmReset": "确认重置",
     "rememberedPassword": "想起来了？",
     "resetSuccess": "重置密码成功",
-    "resetFailed": "重置失败"
+    "resetFailed": "重置失败",
+    "telegramReloginTitle": "Telegram 登录确认",
+    "telegramReloginPrompt": "是否使用以下 TG 用户重新登录？",
+    "telegramReloginUsername": "用户名：{{username}}",
+    "telegramReloginUserId": "用户ID：{{userId}}",
+    "telegramReloginConfirm": "确定"
   },
   "community": {
     "title": "社区",
@@ -829,23 +851,35 @@
   },
   "robot": {
     "title": "AI 助手",
+    "chattingTitle": "正在对话...",
     "subtitle": "智能答疑 · 快速响应",
     "connecting": "连接中...",
     "conversationId": "会话ID",
     "loadingHistory": "正在加载历史消息...",
+    "loadingUserData": "正在同步账户信息...",
     "aiAlt": "AI",
     "tokens": "消耗 {{tokens}} tokens",
     "thinking": "正在思考中",
     "regenerate": "重新生成",
     "regenerateAlt": "重新生成",
     "me": "我",
-    "suggestedTitle": "你可能还想问：",
+    "suggestedTitle": "你可以问我加密货币行情、投资策略、DeFi 知识等。",
     "inputPlaceholder": "输入你的问题...",
     "send": "发送",
     "stopAlt": "停止生成",
     "copy": "复制",
     "copied": "已复制",
     "sendFailed": "发送失败，请重试",
+    "pointsNotEnough": "积分不足，暂时无法继续对话，请先获取更多积分。",
+    "pointsLock": {
+      "title": "Mozi 已锁定",
+      "currentPoints": "当前积分:{{points}}",
+      "requiredPoints": "需要积分:{{points}}",
+      "descLine1": "完成任务或升级会员",
+      "descLine2": "继续解锁 Mozi。",
+      "earnPoints": "去赚积分",
+      "upgrade": "开通会员"
+    },
     "wsNotConnected": "WebSocket 未连接，请刷新页面重试",
     "genericError": "抱歉，出现了一些问题，请稍后再试",
     "welcome": "你好，我是你的AI助手！我可以帮你分析币种行情、解答投资问题。有什么可以帮你？",
@@ -853,6 +887,13 @@
       "analyze": "分析模型",
       "chat": "对话模型"
     },
+    "quickAsk": {
+      "btcTrend": "BTC后市如何",
+      "ethTechnical": "ETH技术面怎么样",
+      "solDaily": "SOL今日行情分析",
+      "bnbProspect": "BNB发展前景怎么样"
+    },
+    "pointsUnit": "积分",
     "suggest": {
       "analyzeTrend": "帮我分析一下 {{symbol}} 的走势",
       "isGoodToBuy": "{{symbol}} 现在适合买入吗？",
@@ -1205,6 +1246,11 @@
       "atlChangePercent": "历史最低价百分比"
     },
     "robotMessage": "想听听我对{{symbol}}的看法吗？"
+  },
+  "pcCoinDetail": {
+    "tradingRadar": "交易雷达",
+    "barragePlaceholder": "发现好行情，发条弹幕交流吧...",
+    "send": "发送"
   },
   "countryPicker": {
     "back": "返回",
@@ -1682,6 +1728,22 @@
       "lowVolume": "低成交"
     }
   },
+  "sectorDetail": {
+    "sector": "板块",
+    "volume": "成交量",
+    "marketCap": "市值",
+    "sort": {
+      "constituent": "成分币种",
+      "latestPrice": "最新价",
+      "change24h": "24h涨跌"
+    },
+    "watchlist": "自加选",
+    "addMonitor": "加监控",
+    "altCommunity": "社区",
+    "altShare": "分享",
+    "altLike": "自选",
+    "altMonitor": "价格提醒"
+  },
   "vip": {
     "title": "会员充值",
     "card": {
@@ -1791,10 +1853,14 @@
     "quickUpgrade": "快速升级",
     "allowanceCardTitle": "本月额度",
     "allowanceCardBody": "{{points}} 积分/月 · {{ai}} AI Call/月",
+    "allowancePointsMonthly": "{{points}}积分/月",
+    "allowanceAiMonthly": "AI Call {{ai}}次/月",
+    "upgrade": "升级",
     "upgradeMore": "升级更多",
     "enterAlpha": "进入",
     "bigOrderTitle": "大单行情",
     "inUse": "使用中",
-    "upgradeToEnjoy": "升级到Lite/Pro可享受"
+    "upgradeToEnjoy": "升级到Lite/Pro可享受",
+    "nextLevelRemaining": "还需{{remaining}} EXP"
   }
 }

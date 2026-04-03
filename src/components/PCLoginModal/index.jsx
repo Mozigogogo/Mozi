@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { sendVerificationCode, loginByEmail, registerByEmail, loginByWallet, completeTask } from '../../api/user';
 import { ensureFirstLoginAt } from '../../utils/postLogin';
 import styles from './index.module.less';
+import { syncI18nextLngFromLoginResponse } from '../../utils/syncLoginLanguage';
 
 // 检测是否在 Telegram 环境中
 const isTelegramEnv = () => {
@@ -20,7 +21,7 @@ const isTelegramEnv = () => {
 
 export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   
   // Web3 钱包 hooks
   const { address: web3Address, isConnected: web3Connected } = useAccount();
@@ -210,6 +211,9 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
 
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
+
+        // 根据后端返回 language 更新缓存语言（并同步 i18n）
+        syncI18nextLngFromLoginResponse(res, i18n);
         
         const userData = res?.data?.userInfo || res?.data?.user;
         if (userData) {
@@ -298,6 +302,9 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
 
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
+
+        // 根据后端返回 language 更新缓存语言（并同步 i18n）
+        syncI18nextLngFromLoginResponse(res, i18n);
         
         const userData = res?.data?.userInfo || res?.data?.user;
         if (userData) {
@@ -385,6 +392,9 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
 
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
+
+        // 根据后端返回 language 更新缓存语言（并同步 i18n）
+        syncI18nextLngFromLoginResponse(res, i18n);
         
         const userData = res?.data?.userInfo || res?.data?.user;
         if (userData) {

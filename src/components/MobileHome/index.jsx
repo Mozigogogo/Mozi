@@ -240,7 +240,7 @@ export default function MobileHome() {
   // 获取热门板块数据
   const fetchHotIndustry = async () => {
     try {
-      const response = await homeApi.getHotIndustries(20);
+      const response = await homeApi.getHotIndustries();
       if (response?.data) {
         setHotIndustry(response.data);
       }

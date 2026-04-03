@@ -4,8 +4,16 @@ import styles from '@/app/user/page.module.less';
 import CopyIcon from '@/components/Icons/CopyIcon';
 import SocialMediaPopup from '@/components/SocialMediaPopup';
 import { EMAIL } from '@/utils/constants';
+import { editLanguage, isEditLanguageAllowedPath } from '@/api/user';
+import { usePathname } from 'next/navigation';
 
 const GeneralPopup = ({ visible, popType, onClose, t, i18n }) => {
+  const pathname = usePathname();
+  const pathForPolicy =
+    pathname ||
+    (typeof window !== 'undefined' ? window.location?.pathname : '') ||
+    '';
+  const canSyncLanguage = isEditLanguageAllowedPath(pathForPolicy);
   
   const copyToClipboard = (value) => {
     navigator.clipboard.writeText(value).then(() => {
@@ -15,11 +23,27 @@ const GeneralPopup = ({ visible, popType, onClose, t, i18n }) => {
     });
   };
 
-  const selectLanguage = (lng) => {
+  const selectLanguage = async (lng) => {
     i18n.changeLanguage(lng);
     if (typeof window !== 'undefined') {
       localStorage.setItem('i18nextLng', lng);
     }
+
+    // 已登录态时，同步语言到后端
+    if (typeof window !== 'undefined' && localStorage.getItem('token') && canSyncLanguage) {
+      try {
+        await editLanguage(lng);
+      } catch (e) {
+        // 前端已切换语言，这里只提示同步失败，不阻塞用户继续使用
+        console.error('[GeneralPopup] editLanguage failed:', e);
+        Toast.show({
+          content: lng === 'zh' ? '语言同步失败' : 'Language sync failed',
+          duration: 1200,
+          position: 'bottom',
+        });
+      }
+    }
+
     Toast.show({
       content: lng === 'zh' ? '已切换到中文' : 'Switched to English',
       duration: 1000,

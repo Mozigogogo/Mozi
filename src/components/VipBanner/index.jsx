@@ -2,13 +2,25 @@
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'next/navigation';
 import styles from './index.module.less';
 
 // 使用项目中已有的 VIP 图标，如果没有则需要替换
 const VIP_ICON = '/icons/new_user/vip_logo.png';
 
-export default function VipBanner({ onClick }) {
-  const { t } = useTranslation();
+export default function VipBanner({ onClick, planCode }) {
+  const router = useRouter();
+  const { t, i18n } = useTranslation();
+  const isFreePlan = String(planCode || '').toLowerCase() === 'free';
+  const isEnglish = String(i18n?.language || '').toLowerCase().startsWith('en');
+
+  const handleBtnClick = () => {
+    if (isFreePlan) {
+      onClick?.();
+      return;
+    }
+    router.push('/benefits');
+  };
 
   return (
     <div className={styles.container}>
@@ -17,12 +29,16 @@ export default function VipBanner({ onClick }) {
           {/* 使用本地 VIP 图标，如果需要更复杂的图形可以替换图片源 */}
           <img src={VIP_ICON} className={styles.icon} alt="VIP" />
         </div>
-        <div className={styles.text}>
-          {t('user.vipBannerText') || '免费试用14天，马上开启新体验!'}
+        <div
+          className={`${styles.text} ${isEnglish ? styles.textEn : ''} ${isEnglish && !isFreePlan ? styles.textMemberCenterEn : ''}`}
+        >
+          {isFreePlan
+            ? (t('user.vipBannerTextFreePlan') || 'Unlock 7-Day Whale Signals · Free Trial')
+            : (t('user.vipBannerMemberCenter') || '会员中心')}
         </div>
       </div>
-      <div className={styles.subscribeBtn} onClick={onClick}>
-        {t('user.subscribeNow') || '立即订阅'}
+      <div className={styles.subscribeBtn} onClick={handleBtnClick}>
+        {isFreePlan ? (t('user.subscribeNow') || '立即订阅') : (t('user.enter') || '进入')}
       </div>
     </div>
   );

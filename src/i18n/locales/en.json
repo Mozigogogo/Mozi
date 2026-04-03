@@ -6,9 +6,11 @@
       "time": "Time",
       "country": "Country",
       "event": "Event",
-      "values": "Actual/Forecast/Prev"
+      "values": "Act./Fcst./Prev."
     },
-    "note": "Today's macro volatility depends entirely on the US CPI data released at 13:30 EST (early morning Beijing time). Before the data release, the market is in a 'data vacuum' period, and volatility may narrow. Investors are advised to focus on stock logic, that is, whether the current market pricing for 'inflation stickiness' and 'economic resilience' is sufficient, and prepare for directional breakthroughs that the data may trigger."
+    "noEvents": "No events for today",
+    "note": "Today's macro volatility depends entirely on the US CPI data released at 13:30 EST (early morning Beijing time). Before the data release, the market is in a 'data vacuum' period, and volatility may narrow. Investors are advised to focus on stock logic, that is, whether the current market pricing for 'inflation stickiness' and 'economic resilience' is sufficient, and prepare for directional breakthroughs that the data may trigger.",
+    "share": "Share Now"
   },
   "vipRecharge": {
     "title": "VIP Recharge",
@@ -116,16 +118,28 @@
       "label": "Identity Tag",
       "placeholder": "Please select your identity tag",
       "options": {
-        "compliance": "Compliance Practitioner",
-        "trader": "Professional Trader",
-        "quant": "Quant Researcher",
+        "compliance": "Compliance Pro",
+        "trader": "Pro Trader",
+        "quant": "Quant Analyst",
         "creator": "Content Creator",
-        "community_builder": "Community Operator",
-        "institution": "Institutional Practitioner",
+        "community_builder": "Community Lead",
+        "institution": "Institutional Pro",
         "project_member": "Project Member",
         "researcher": "Research Analyst",
-        "educator": "Educational Blogger",
+        "educator": "Education Blogger",
         "retail": "Retail Investor"
+      },
+      "subOptions": {
+        "compliance": "Compliance",
+        "trader": "Trader",
+        "quant": "Quant",
+        "creator": "Content Creator",
+        "community_builder": "Community Builder",
+        "institution": "Fund/VC/Market Maker",
+        "project_member": "Builder/Core Team",
+        "researcher": "Researcher",
+        "educator": "Educator",
+        "retail": "Retail"
       }
     },
     "bio": {
@@ -563,7 +577,10 @@
     "walletAddressError": "Failed to get wallet address",
     "walletConnectFailed": "Wallet connection failed",
     "vipBannerText": "Try now - 14 days free",
+    "vipBannerTextFreePlan": "Unlock 7-Day Whale Signals · Free Trial",
+    "vipBannerMemberCenter": "Membership Center",
     "subscribeNow": "Subscribe",
+    "enter": "Enter",
     "wechatUser": "Telegram User",
     "accountBindLabel": "Account Binding",
     "aboutMozi": {
@@ -713,7 +730,12 @@
     "confirmReset": "Confirm Reset",
     "rememberedPassword": "Remembered?",
     "resetSuccess": "Password reset successful",
-    "resetFailed": "Reset failed"
+    "resetFailed": "Reset failed",
+    "telegramReloginTitle": "Telegram Login Confirmation",
+    "telegramReloginPrompt": "Would you like to re-login with the following TG user?",
+    "telegramReloginUsername": "Username: {{username}}",
+    "telegramReloginUserId": "User ID: {{userId}}",
+    "telegramReloginConfirm": "Confirm"
   },
   "community": {
     "title": "Community",
@@ -846,10 +868,12 @@
   },
   "robot": {
     "title": "AI Assistant",
+    "chattingTitle": "In conversation...",
     "subtitle": "Smart Q&A · Quick Response",
     "connecting": "Connecting...",
     "conversationId": "Conversation ID",
     "loadingHistory": "Loading chat history...",
+    "loadingUserData": "Syncing account...",
     "aiAlt": "AI",
     "tokens": "Consumed {{tokens}} tokens",
     "thinking": "Thinking",
@@ -862,20 +886,37 @@
     "stopAlt": "Stop generating",
     "copy": "Copy",
     "copied": "Copied",
-    "sendFailed": "Send failed, please retry",
-    "wsNotConnected": "WebSocket not connected, please refresh",
-    "genericError": "Sorry, something went wrong. Please try later",
-    "welcome": "Hello, I'm your AI assistant! I can help analyze crypto markets and answer investment questions. What can I help you?",
-    "model": {
-      "analyze": "Analysis Model",
-      "chat": "Chat Model"
+    "sendFailed": "Send failed. Please retry",
+    "pointsNotEnough": "Not enough points. Please get more to continue.",
+    "pointsLock": {
+      "title": "Mozi Locked",
+      "currentPoints": "Current points: {{points}}",
+      "requiredPoints": "Required points: {{points}}",
+      "descLine1": "Complete tasks or upgrade",
+      "descLine2": "keep Mozi unlocked.",
+      "earnPoints": "Earn points",
+      "upgrade": "Upgrade"
     },
+    "wsNotConnected": "WebSocket not connected, please refresh",
+    "genericError": "Something went wrong. Please try later",
+    "welcome": "Hi! I'm your AI assistant. I can analyze crypto and answer your questions.",
+    "model": {
+      "analyze": "Analyze",
+      "chat": "Chat"
+    },
+    "quickAsk": {
+      "btcTrend": "BTC outlook",
+      "ethTechnical": "ETH technical view",
+      "solDaily": "SOL daily analysis",
+      "bnbProspect": "BNB growth outlook"
+    },
+    "pointsUnit": "Points",
     "suggest": {
-      "analyzeTrend": "Help me analyze {{symbol}}'s trend",
-      "isGoodToBuy": "Is now a good time to buy {{symbol}}?",
-      "technicalView": "How does {{symbol}} look technically?",
-      "topGainer": "What's the top gainer today?",
-      "fearGreedIndex": "What's the Fear & Greed Index?"
+      "analyzeTrend": "Analyze {{symbol}}'s trend",
+      "isGoodToBuy": "Good time to buy {{symbol}}?",
+      "technicalView": "{{symbol}} technical view",
+      "topGainer": "Top gainer today?",
+      "fearGreedIndex": "Fear & Greed Index?"
     }
   },
   "aiAssistant": {
@@ -1225,6 +1266,11 @@
     "robotBubble": "Welcome to Mozi, what can I help you?",
     "robotMessage": "Want to hear my thoughts on {{symbol}}?"
   },
+  "pcCoinDetail": {
+    "tradingRadar": "Trade radar",
+    "barragePlaceholder": "Spot a move? Drop a quick comment...",
+    "send": "Send"
+  },
   "countryPicker": {
     "back": "Back",
     "title": "Select Country/Region",
@@ -1324,7 +1370,7 @@
     "risePercent": "Rise Over",
     "fallPercent": "Fall Over",
     "bigOrderDetect": "Large Order Detection",
-    "exchangeSpreadMonitor": "Exchange Spread Monitoring",
+    "exchangeSpreadMonitor": "Spread Monitor",
     "noteTitle": "Please note:",
     "note1": "1. Only members with real-time market data permission can use big order detection",
     "note2": "2. If multiple big orders are triggered continuously, the interval between two notifications will not be less than 1 minute",
@@ -1701,6 +1747,22 @@
       "lowVolume": "Low Volume"
     }
   },
+  "sectorDetail": {
+    "sector": "Sector",
+    "volume": "Volume",
+    "marketCap": "Market Cap",
+    "sort": {
+      "constituent": "Assets",
+      "latestPrice": "Price",
+      "change24h": "24h %"
+    },
+    "watchlist": "Watchlist",
+    "addMonitor": "Alerts",
+    "altCommunity": "Community",
+    "altShare": "Share",
+    "altLike": "Watchlist",
+    "altMonitor": "Price alert"
+  },
   "vip": {
     "title": "VIP Center",
     "card": {
@@ -1789,7 +1851,7 @@
     "lockedSection": "Locked benefits",
     "upgradeLitePro": "Upgrade Lite/Pro",
     "upgradePro": "Upgrade Pro",
-    "depth40": "40 levels depth",
+    "depth40": "Depth 40",
     "monthlyPoints": "Monthly points",
     "monthlyPointsRange": "10,000~10,000/mo",
     "aiCall": "AI Call",
@@ -1797,12 +1859,13 @@
     "exclusiveService": "Dedicated support",
     "emailAlerts": "Email alerts",
     "standardCS": "Standard support",
+    "supportShort": "Support",
     "identityTag": "Identity tag",
     "pointsThisMonth": "Points earned this month",
     "validUntil": "{{tier}} valid until {{date}}",
     "daysLeftTag": "{{n}}d left",
     "exclusiveMemberLine": "{{name}} member exclusive",
-    "depth20": "20 levels depth",
+    "depth20": "Depth 20",
     "proLevel": "Pro-{{n}}",
     "nextLevelCardTitle": "Toward Pro-2",
     "nextLevelProgress": "{{current}} / {{max}} EXP",
@@ -1810,10 +1873,14 @@
     "quickUpgrade": "Quick upgrade",
     "allowanceCardTitle": "Monthly allowance",
     "allowanceCardBody": "{{points}} pts/mo · {{ai}} AI calls/mo",
+    "allowancePointsMonthly": "{{points}} pts/mo",
+    "allowanceAiMonthly": "AI Call {{ai}}/mo",
+    "upgrade": "Upgrade",
     "upgradeMore": "Upgrade more",
     "enterAlpha": "Enter",
     "bigOrderTitle": "Large order feed",
     "inUse": "Active",
-    "upgradeToEnjoy": "Upgrade to Lite/Pro to unlock"
+    "upgradeToEnjoy": "Upgrade to Lite/Pro to unlock",
+    "nextLevelRemaining": "Need {{remaining}} EXP"
   }
 }

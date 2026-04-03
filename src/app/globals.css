@@ -299,6 +299,12 @@ body.adm-overflow-hidden {
   overflow-y: scroll !important;
 }
 
+html.daily-page,
+body.daily-page {
+  background: rgba(15, 23, 42, 1) !important;
+  overscroll-behavior-y: none;
+}
+
 /* antd Message 组件样式优化 - 防止被 px-to-vw 转换 */
 .ant-message {
   font-size: 16px !important;

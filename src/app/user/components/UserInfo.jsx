@@ -7,6 +7,7 @@ const VIP_ICON = '/icons/new_user/vip.svg';
 
 const UserInfo = ({ userInfo, handleLogin, isTelegramEnv }) => {
   const { t } = useTranslation();
+  const isVip = !!userInfo?.isVip;
 
   return (
     <div className={styles.topBannerWrapper}>
@@ -18,11 +19,18 @@ const UserInfo = ({ userInfo, handleLogin, isTelegramEnv }) => {
               <div className={styles.avatarWrapper}>
                 <img className={styles.headerAvatar} src={userInfo.avatar || DEFAULT_AVATAR} alt="头像" />
                 {/* 验证图标 */}
-                <img className={styles.verifyIcon} src={VIP_ICON} alt="verify" onError={(e) => e.target.style.display = 'none'} />
+                {isVip && (
+                  <img
+                    className={styles.verifyIcon}
+                    src={VIP_ICON}
+                    alt="verify"
+                    onError={(e) => (e.target.style.display = 'none')}
+                  />
+                )}
               </div>
               <div className={styles.infoContent}>
                 <div className={styles.nicknameWrapper}>
-                  <span className={styles.nickname}>
+                  <span className={isVip ? styles.nicknameVip : styles.nickname}>
                     {userInfo.nickname || t('user.defaultNickname')}
                   </span>
                 </div>
@@ -44,7 +52,7 @@ const UserInfo = ({ userInfo, handleLogin, isTelegramEnv }) => {
           </div>
         ) : (
           <div className={styles.loginBox}>
-            <div className={styles.headerContentTop} onClick={isTelegramEnv ? undefined : handleLogin}>
+            <div className={styles.headerContentTop} onClick={handleLogin}>
               <div className={styles.userInfoRow}>
                 <div className={styles.avatarWrapper}>
                   <img className={styles.headerAvatar} src={DEFAULT_AVATAR} alt="头像" />

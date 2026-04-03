@@ -19,6 +19,7 @@ import { ensureFirstLoginAt } from '../../utils/postLogin';
 import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
 import { encrypt, decrypt } from '../../utils/security';
 import styles from './index.module.less';
+import { syncI18nextLngFromLoginResponse } from '../../utils/syncLoginLanguage';
 
 // Detect Telegram environment
 const isTelegramEnv = () => {
@@ -29,7 +30,7 @@ const isTelegramEnv = () => {
 
 export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 'select' }) {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   
   // Mode state: 'select' | 'email_login' | 'email_register'
   const [mode, setMode] = useState(initialMode);
@@ -307,6 +308,9 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
   const handleAuthResponse = (res) => {
     if (res?.data?.token) {
       localStorage.setItem('token', res.data.token);
+
+      // 根据后端返回 language 更新缓存语言（并同步 i18n）
+      syncI18nextLngFromLoginResponse(res, i18n);
       
       const userData = res?.data?.userInfo || res?.data?.user;
       if (userData) {

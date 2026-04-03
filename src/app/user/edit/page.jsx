@@ -5,6 +5,8 @@ import { NavBar, Toast, Button, Picker, Input } from 'antd-mobile';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { getUserDataInfo, updateUserInfo, completeTask } from '@/api/user';
+import { getMySubscription } from '@/api/vip';
+import VipBanner from '@/components/VipBanner';
 import styles from './page.module.less';
 
 const DEFAULT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png';
@@ -21,6 +23,8 @@ const ICONS = {
   right: '/icons/new_user/right.svg'
 };
 
+const PENDING_IDENTITY_KEY = 'mozi_pending_profile_identity';
+
 export default function EditProfilePage() {
   const router = useRouter();
   const { t } = useTranslation();
@@ -28,6 +32,7 @@ export default function EditProfilePage() {
   
   const [loading, setLoading] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
+  const [mySubscription, setMySubscription] = useState(null);
   const [userInfo, setUserInfo] = useState({
     avatar: DEFAULT_AVATAR,
     nickName: '',
@@ -57,7 +62,67 @@ export default function EditProfilePage() {
     fetchUserInfo();
   }, []);
 
+  /** 从身份选择页返回时 URL 带 ?identity=xxx；必须在 fetchUserInfo 合并后再写入，否则会被 localStorage/API 覆盖导致无法回显 */
+  const stripIdentityQuery = () => {
+    if (typeof window === 'undefined') return;
+    try {
+      const url = new URL(window.location.href);
+      if (!url.searchParams.has('identity')) return;
+      url.searchParams.delete('identity');
+      window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+    } catch {
+      /* ignore */
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    let alive = true;
+    getMySubscription()
+      .then((res) => {
+        if (!alive) return;
+        const data = res?.data ?? res;
+        setMySubscription(data);
+      })
+      .catch(() => {
+        // 静默失败：不影响编辑资料
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const clearPendingIdentityStorage = () => {
+    try {
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.removeItem(PENDING_IDENTITY_KEY);
+      }
+    } catch {
+      /* ignore */
+    }
+  };
+
   const fetchUserInfo = async () => {
+    let identityPending = null;
+    try {
+      if (typeof sessionStorage !== 'undefined') {
+        identityPending = sessionStorage.getItem(PENDING_IDENTITY_KEY);
+      }
+    } catch {
+      /* ignore */
+    }
+
+    const identityFromUrl =
+      typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('identity')
+        : null;
+
+    /** 来自身份页的选择（session 或 URL），需优先于缓存；合并 prev.identity 避免 React Strict Mode / 重复拉取覆盖 */
+    const identityIncoming = identityPending || identityFromUrl;
+
     try {
       const storedUserInfo = localStorage.getItem('userInfo');
       if (storedUserInfo) {
@@ -69,12 +134,16 @@ export default function EditProfilePage() {
           avatar: parsed.avatar || DEFAULT_AVATAR,
           nickName: parsed.nickName || parsed.nickname || 'MOZI',
           // 以下字段可能需要后端支持，这里先用模拟数据或空值
-          identity: parsed.identity || '',
+          identity: identityIncoming || parsed.identity || prev.identity || '',
           description: parsed.description || '',
           email: parsed.email || '',
           phone: parsed.phone || '',
           commissionId: parsed.commissionId || ''
         }));
+        if (identityIncoming) {
+          clearPendingIdentityStorage();
+          stripIdentityQuery();
+        }
       } else {
         // 尝试从 API 获取
         const res = await getUserDataInfo();
@@ -84,12 +153,26 @@ export default function EditProfilePage() {
             ...prev,
             avatar: data.avatar || DEFAULT_AVATAR,
             nickName: data.nickName || 'MOZI',
+            identity: identityIncoming || data.identity || prev.identity || '',
             // ...其他字段映射
           }));
+          if (identityIncoming) {
+            clearPendingIdentityStorage();
+            stripIdentityQuery();
+          }
+        } else if (identityIncoming) {
+          setUserInfo(prev => ({ ...prev, identity: identityIncoming || prev.identity }));
+          clearPendingIdentityStorage();
+          stripIdentityQuery();
         }
       }
     } catch (error) {
       console.error('Fetch user info failed:', error);
+      if (identityIncoming) {
+        setUserInfo(prev => ({ ...prev, identity: identityIncoming || prev.identity }));
+        clearPendingIdentityStorage();
+        stripIdentityQuery();
+      }
     }
   };
 
@@ -244,11 +327,18 @@ export default function EditProfilePage() {
             onClick={() => setIsEditingName(true)}
           />
         </div>
+
+        <div className={styles.vipBannerWrapper}>
+          <VipBanner onClick={() => router.push('/vip-recharge')} planCode={mySubscription?.planCode} />
+        </div>
       </div>
 
       <div className={styles.formCard}>
         {/* 身份标签 */}
-        <div className={styles.formItem} onClick={() => setIdentityPickerVisible(true)}>
+        <div
+          className={styles.formItem}
+          onClick={() => router.push(`/user/identity?value=${encodeURIComponent(userInfo.identity || '')}`)}
+        >
           <div className={styles.iconWrapper}>
             {/* 使用 CSS 绘制盾牌或者使用图片 */}
             <img src={ICONS.identity} alt="identity" />
@@ -344,8 +434,9 @@ export default function EditProfilePage() {
       </div>
 
       <div className={styles.saveButtonWrapper}>
-        <Button 
-          className={styles.saveButton} 
+        <Button
+          block
+          className={styles.saveButton}
           loading={loading}
           onClick={handleSave}
         >

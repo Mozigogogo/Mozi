@@ -6,7 +6,6 @@ const STORAGE_KEYS = {
   // 防止 StrictMode 双挂载、以及多个入口同时触发
   POST_LOGIN_DONE: 'post_login_done_v1',
   POST_LOGIN_IN_FLIGHT: 'post_login_in_flight_v1',
-  USER_DATAINFO_TS: 'user_datainfo_ts_v1',
   TASK_DAILY_LOGIN_DATE: 'task_daily_login_date_v1',
   TASK_FIRST_LOGIN_DONE: 'task_first_login_done_v1',
 };
@@ -50,15 +49,18 @@ export const ensureFirstLoginAt = ({ caller = 'unknown' } = {}) => {
 
     return tsMs;
   } catch (e) {
-    console.warn('[postLogin] ensureFirstLoginAt failed:', e, { caller });
     return null;
   }
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const DATAINFO_TTL_MS = 30 * 1000; // 30s 内只拉一次 datainfo
 
 let inFlightPromise = null;
+/** 并发去重：多入口同时触发（如 StrictMode 双 effect）只发一次 HTTP */
+let userDataInfoInFlightPromise = null;
+/** 最近一次 datainfo 成功时间，用于极短时间内的顺序重复调用走本地缓存（缓解 dev StrictMode 二次 effect） */
+let lastDatainfoSuccessAt = 0;
+const DATINFO_SHORT_DEDUP_MS = 400;
 
 const now = () => Date.now();
 
@@ -98,37 +100,55 @@ const isSameDay = (aMs, bMs) => {
 export async function fetchUserDataInfoOnce({ force = false, caller = 'unknown' } = {}) {
   if (typeof window === 'undefined') return null;
 
-  const lastTsStr = safeGet(STORAGE_KEYS.USER_DATAINFO_TS);
-  const lastTs = lastTsStr ? Number(lastTsStr) : 0;
-  const shouldSkipByTtl = !force && lastTs && now() - lastTs < DATAINFO_TTL_MS;
+  // 任意并发（含 force:true）共用同一 in-flight，避免先前 force 分支未挂 Promise 导致重复请求
+  if (userDataInfoInFlightPromise) {
+    return userDataInfoInFlightPromise;
+  }
 
-  if (shouldSkipByTtl) {
-    console.log('[postLogin] skip /user/datainfo by TTL, caller =', caller, 'lastTs =', new Date(lastTs).toISOString());
+  // 非强制刷新：刚成功极短时间内再调，直接读本地（常见于 React StrictMode 顺序执行两次 effect）
+  if (
+    !force &&
+    lastDatainfoSuccessAt > 0 &&
+    Date.now() - lastDatainfoSuccessAt < DATINFO_SHORT_DEDUP_MS
+  ) {
     try {
-      const stored = localStorage.getItem('userDataInfo');
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
+      const raw = localStorage.getItem('userDataInfo');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          return parsed;
+        }
+      }
+    } catch (_) {
+      // fall through to network
     }
   }
 
-  console.log('[postLogin] request /user/datainfo, caller =', caller);
-  const res = await request({
-    url: Interface.USER_DATA_INFO,
-    method: 'GET',
+  const executeFetch = async () => {
+    const res = await request({
+      url: Interface.USER_DATA_INFO,
+      method: 'GET',
+    });
+
+    if (res?.data) {
+      try {
+        localStorage.setItem('userDataInfo', JSON.stringify(res.data));
+      } catch {
+        // ignore
+      }
+      lastDatainfoSuccessAt = Date.now();
+      return res.data;
+    }
+
+    return null;
+  };
+
+  const p = executeFetch().finally(() => {
+    userDataInfoInFlightPromise = null;
   });
 
-  if (res?.data) {
-    try {
-      localStorage.setItem('userDataInfo', JSON.stringify(res.data));
-    } catch {
-      // ignore
-    }
-    safeSet(STORAGE_KEYS.USER_DATAINFO_TS, String(now()));
-    return res.data;
-  }
-
-  return null;
+  userDataInfoInFlightPromise = p;
+  return p;
 }
 
 async function completeDailyLoginOnce() {
@@ -137,11 +157,9 @@ async function completeDailyLoginOnce() {
   const lastDateStr = safeGet(STORAGE_KEYS.TASK_DAILY_LOGIN_DATE);
   const lastMs = lastDateStr ? Number(lastDateStr) : 0;
   if (lastMs && isSameDay(lastMs, now())) {
-    console.log('[postLogin] skip DAILY_LOGIN (already done today)');
     return;
   }
 
-  console.log('[postLogin] completeTask DAILY_LOGIN');
   await completeTask('DAILY_LOGIN');
   safeSet(STORAGE_KEYS.TASK_DAILY_LOGIN_DATE, String(now()));
 }
@@ -151,18 +169,16 @@ async function completeFirstLoginOnce() {
 
   const done = safeGet(STORAGE_KEYS.TASK_FIRST_LOGIN_DONE) === 'true';
   if (done) {
-    console.log('[postLogin] skip FIRST_LOGIN (already done)');
     return;
   }
 
-  console.log('[postLogin] completeTask FIRST_LOGIN');
   await completeTask('FIRST_LOGIN');
   safeSet(STORAGE_KEYS.TASK_FIRST_LOGIN_DONE, 'true');
 }
 
 /**
  * 登录成功后的统一副作用（去重）
- * - 拉取 /user/datainfo（带 TTL）
+ * - 拉取 /user/datainfo（fetchUserDataInfoOnce 内并发去重）
  * - 上报任务 DAILY_LOGIN（按天去重）
  * - 上报任务 FIRST_LOGIN（按会话/设备去重）
  *
@@ -172,7 +188,6 @@ export async function runPostLoginSideEffects(options = {}) {
   if (typeof window === 'undefined') return;
 
   const caller = options?.caller || 'unknown';
-  console.log('[postLogin] runPostLoginSideEffects called, caller =', caller, 'options =', options);
 
   const token = localStorage.getItem('token');
   if (!token) return;
@@ -180,17 +195,14 @@ export async function runPostLoginSideEffects(options = {}) {
   if (!options?.force) {
     // 如果同一会话已经执行过，直接返回
     if (safeGet(STORAGE_KEYS.POST_LOGIN_DONE) === 'true') {
-      console.log('[postLogin] skip because POST_LOGIN_DONE already true, caller =', caller);
       return;
     }
     // 如果正在执行中，复用同一个 Promise
     if (safeGet(STORAGE_KEYS.POST_LOGIN_IN_FLIGHT) === 'true' && inFlightPromise) {
-      console.log('[postLogin] join in-flight promise, caller =', caller);
       return inFlightPromise;
     }
   }
 
-  console.log('[postLogin] start new post-login flow, caller =', caller);
   safeSet(STORAGE_KEYS.POST_LOGIN_IN_FLIGHT, 'true');
 
   inFlightPromise = (async () => {

@@ -10,42 +10,51 @@ import { completeTask } from './user';
 // ==================== 热门板块相关 ====================
 
 /**
- * 获取热门板块数据（分页）
- * @param {Object} params - 请求参数
- * @param {number} params.pageSize - 每页数量，默认100
- * @param {number} params.pageNo - 页码，默认1
+ * 获取热门板块数据
+ * @param {Object} params - 查询参数（如 change24hOrder/marketCapOrder/volumeOrder）
  * @returns {Promise}
  */
-export const getHotSections = ({ pageSize = 100, pageNo = 1 } = {}) => {
+export const getHotSections = (params = {}) => {
   return request({
-    url: Interface.hot_sections_paginated,
-    data: {
-      pageSize,
-      pageNo,
-    },
+    url: Interface.SECTION_LIST,
+    method: 'GET',
+    params,
   });
 };
 
 /**
  * 获取热门板块数据（简化版，直接返回格式化数据）
- * @param {Object} params - 请求参数
- * @param {number} params.pageSize - 每页数量，默认100
- * @param {number} params.pageNo - 页码，默认1
+ * @param {Object} params - 查询参数（如 change24hOrder/marketCapOrder/volumeOrder）
  * @returns {Promise<Array>} 返回格式化后的板块数据数组
  */
-export const fetchHotSectionsData = async ({ pageSize = 100, pageNo = 1 } = {}) => {
+export const fetchHotSectionsData = async (params = {}) => {
   try {
-    const result = await getHotSections({ pageSize, pageNo });
+    const result = await getHotSections(params);
     
-    if (result?.success && result?.data) {
-      // 转换API数据格式为组件需要的格式
-      return result.data.map(item => ({
-        sectorName: item.section,
-        changePercent: item.changes
-      }));
-    }
-    
-    return [];
+    // 兼容不同后端返回结构：
+    // - { code: 0, data: Array }
+    // - { code: 0, data: { list: Array } }
+    // - { success: true, data: Array }
+    const ok = result?.code === 0 || result?.success === true;
+    if (!ok) return [];
+
+    const rawList = Array.isArray(result?.data)
+      ? result.data
+      : Array.isArray(result?.data?.list)
+        ? result.data.list
+        : [];
+
+    // 统一字段为：category / dt / marketCap / priceChange24h / totalVolume
+    return rawList
+      .filter(Boolean)
+      .map((item) => ({
+        category: item.category ?? item.sectorName ?? item.name ?? '',
+        dt: item.dt ?? item.date ?? item.time ?? '',
+        marketCap: item.marketCap ?? item.market_cap ?? item.cap ?? 0,
+        priceChange24h: item.priceChange24h ?? item.changePercent ?? item.change ?? 0,
+        totalVolume: item.totalVolume ?? item.volume ?? item.tradeVolume ?? 0,
+      }))
+      .filter((x) => x.category);
   } catch (error) {
     console.error('获取热门板块数据失败:', error);
     return [];
@@ -73,11 +82,15 @@ export const getSectorDetail = (sectionName) => {
  * @returns {Promise}
  */
 export const addOwnCoin = async (symbol) => {
+  const coin = String(symbol ?? '').trim();
+  if (!coin) {
+    throw new Error('coin is required');
+  }
   try {
     const res = await request({
       url: Interface.ADD_OWN,
-      method: 'POST',
-      data: { symbol },
+      method: 'GET',
+      data: { coin },
     });
     
     // 如果添加成功，上报任务
@@ -110,10 +123,14 @@ export const addOwnCoin = async (symbol) => {
  * @returns {Promise}
  */
 export const cancelOwnCoin = (symbol) => {
+  const coin = String(symbol ?? '').trim();
+  if (!coin) {
+    return Promise.reject(new Error('coin is required'));
+  }
   return request({
     url: Interface.CANCEL_OWN,
-    method: 'POST',
-    data: { symbol },
+    method: 'GET',
+    data: { coin },
   });
 };
 
@@ -146,6 +163,36 @@ export const getFearGreedIndex = async () => {
 export const getAggregationDetail = async () => {
   return await request({
     url: '/easy/getAggregationDetail'
+  });
+};
+
+// ==================== 板块相关 ====================
+
+/**
+ * 获取板块列表
+ * GET /section/list
+ * @param {Object} params - 查询参数（按后端定义透传）
+ */
+export const getSectionList = (params = {}) => {
+  return request({
+    url: Interface.SECTION_LIST,
+    method: 'GET',
+    params,
+  });
+};
+
+/**
+ * 获取板块成分股列表
+ * GET /section/symbols
+ * @param {Object} params - 查询参数
+ * @param {string} params.category - 板块名称（必传）
+ * @param {'asc'|'desc'} [params.priceOrder='desc'] - 价格排序方向
+ */
+export const getSectionSymbols = (params = {}) => {
+  return request({
+    url: Interface.SECTION_SYMBOLS,
+    method: 'GET',
+    params,
   });
 };
 

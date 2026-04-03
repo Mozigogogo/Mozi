@@ -86,6 +86,31 @@ const TASK_POINTS_MAP = {
   'DAILY_LOGIN': 5
 };
 
+// 调试开关：控制 request 链路的控制台输出（仅用于定位问题）
+// 设为 true 后可恢复相关日志。
+const ENABLE_REQUEST_DEBUG = false;
+
+// 尽量从 JWT 的 exp 字段判断 token 是否已过期（不校验签名）
+const getJwtExpMs = (token) => {
+  try {
+    if (typeof token !== 'string') return null;
+    const raw = token.startsWith('Bearer ') ? token.slice(7) : token;
+    const parts = raw.split('.');
+    if (parts.length < 2) return null;
+    const payloadB64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const pad = payloadB64.length % 4 ? '='.repeat(4 - (payloadB64.length % 4)) : '';
+    if (typeof atob !== 'function') return null;
+    const jsonStr = atob(payloadB64 + pad);
+    const payload = JSON.parse(jsonStr);
+    const exp = payload?.exp;
+    const expNum = typeof exp === 'number' ? exp : typeof exp === 'string' ? Number(exp) : null;
+    if (typeof expNum === 'number' && Number.isFinite(expNum)) {
+      return expNum * 1000;
+    }
+  } catch (_) {}
+  return null;
+};
+
 // 响应拦截器
 instance.interceptors.response.use(
   (response) => {
@@ -136,23 +161,73 @@ instance.interceptors.response.use(
     if (data && data.code === 401) {
       // 检查请求使用的 token 是否与当前存储的 token 一致
       // 防止并发请求或旧请求的 401 误删新登录的 token
+      let isTGEnv = false;
       if (typeof window !== 'undefined') {
         const currentToken = localStorage.getItem('token');
+        const appChannel = localStorage.getItem('appChannel');
+        const isTG = appChannel === 'tg';
+        const isPC = appChannel === 'pc';
+        isTGEnv = isTG;
+
         // 获取请求头中的 token，兼容不同写法
-        const requestToken = response.config?.headers?.authentication || 
-                             response.config?.headers?.Authentication || 
-                             response.config?.headers?.['authentication'];
-        
-        // 如果当前有 token，但请求没有带 token，或者请求带的 token 与当前不一致
-        // 则认为该 401 不应该影响当前的登录态
-        if (currentToken && requestToken !== currentToken) {
-           console.warn('⚠️ [Request] 忽略非当前 Token 的 401 响应', { requestToken: requestToken ? 'Exist' : 'None' });
-           return data;
+        const requestToken =
+          response.config?.headers?.authentication ||
+          response.config?.headers?.Authentication ||
+          response.config?.headers?.['authentication'];
+
+        // 非 TG 环境下：如果当前有 token，但请求没有带 token，或者请求带的 token 与当前不一致，
+        // 则认为该 401 不应该影响当前的登录态（保留原有保护逻辑）。
+        // TG 环境下：无论是否有 token、是否匹配，都按 401 触发重新登录流程。
+        if (!isTG && currentToken && requestToken !== currentToken) {
+          console.warn('⚠️ [Request] 忽略非当前 Token 的 401 响应', {
+            requestToken: requestToken ? 'Exist' : 'None',
+          });
+          return data;
         }
       }
 
-      // 清除token
-      clearToken();
+      // NOTE: 按当前产品策略，401 不清除 token（仅提示 + 抛错），避免误删导致反复登录/循环。
+      // 以下是历史逻辑（保留注释，便于将来回滚/排查）：
+      //
+      // // 只有在 JWT 真正已过期时才清空 token，避免 token 未过期但因接口/权限返回 401
+      // // 导致触发 TelegramAutoLogin 的重复登录循环
+      // if (typeof window !== 'undefined') {
+      //   const currentToken = localStorage.getItem('token');
+      //   if (currentToken) {
+      //     const expMs = getJwtExpMs(currentToken);
+      //     if (typeof expMs === 'number' && expMs - Date.now() > 0) {
+      //       return Promise.reject(new Error('Unauthorized'));
+      //     }
+      //   }
+      // }
+      //
+      // // 清除 token（已禁用）
+      // const debugEnabled = ENABLE_REQUEST_DEBUG;
+      // if (debugEnabled && typeof window !== 'undefined') {
+      //   const previewToken = (token) => {
+      //     if (typeof token !== 'string' || !token) return null;
+      //     return `${token.slice(0, 10)}...${token.slice(-6)}`;
+      //   };
+      //   const currentToken = localStorage.getItem('token');
+      //   const requestToken =
+      //     response.config?.headers?.authentication ||
+      //     response.config?.headers?.Authentication ||
+      //     response.config?.headers?.['authentication'];
+      //   const expMs = currentToken ? getJwtExpMs(currentToken) : null;
+      //   console.log('[Request] 401: clear token about to happen', {
+      //     currentToken: previewToken(currentToken),
+      //     requestToken: previewToken(requestToken),
+      //     expMs,
+      //     now: Date.now(),
+      //   });
+      // }
+      // clearToken();
+      // if (debugEnabled && typeof window !== 'undefined') {
+      //   const tokenAfter = localStorage.getItem('token');
+      //   console.log('[Request] 401: token after clear', {
+      //     tokenAfter: tokenAfter ? tokenAfter.slice(0, 10) + '...' : null,
+      //   });
+      // }
       
       // 只在浏览器环境中执行，且本次会话未提示过
       if (typeof window !== 'undefined' && !hasShownSessionExpired()) {
@@ -163,11 +238,6 @@ instance.interceptors.response.use(
         const message = language === 'zh' 
           ? '登录已失效，请重新登录' 
           : 'Session expired, please login again';
-        
-        // 检测是否为PC端
-        const appChannel = localStorage.getItem('appChannel');
-        const isPC = appChannel === 'pc';
-        const isTG = appChannel === 'tg';
         
         // 显示提示，不自动跳转
         try {
@@ -198,7 +268,41 @@ instance.interceptors.response.use(
           console.warn('提示显示失败:', e);
         }
       }
-      
+
+      // tg 环境自动重新登录：401 通常意味着 token 失效，但现有逻辑不会清 token，
+      // 导致 TelegramAutoLogin（tg 下仅 token 缺失时触发）无法重新登录。
+      if (typeof window !== 'undefined' && isTGEnv) {
+        try {
+          const TG_401_RELOGIN_LAST_TS_KEY = 'tg_401_auto_relogin_last_ts_v1';
+          const TG_401_RELOGIN_COOLDOWN_MS = 60 * 1000; // 避免死循环：60s 内最多触发一次
+
+          const lastTsRaw = sessionStorage.getItem(TG_401_RELOGIN_LAST_TS_KEY);
+          const lastTs = lastTsRaw ? Number(lastTsRaw) : NaN;
+          const shouldRelogin = !Number.isFinite(lastTs) || Date.now() - lastTs > TG_401_RELOGIN_COOLDOWN_MS;
+
+          if (shouldRelogin) {
+            sessionStorage.setItem(TG_401_RELOGIN_LAST_TS_KEY, String(Date.now()));
+
+            // 清 token + 清 TelegramAutoLogin 的“已处理 hash/冷却”标记，确保它会重新调用 loginByTelegram
+            localStorage.removeItem('token');
+            localStorage.removeItem('tg_auto_login_handled_launch_hash_v1');
+            sessionStorage.removeItem('tg_auto_login_in_flight_v1');
+            sessionStorage.removeItem('tg_auto_login_last_success_ts_v1');
+            localStorage.removeItem('tg_auto_login_skip_once_v1');
+
+            // 跳转到首页触发 TelegramAutoLogin（其内部只在 path === '/' 时发起登录接口）
+            if (window.location.pathname !== '/') {
+              window.location.replace('/');
+            } else {
+              // 若已经在首页，则刷新以触发组件流程
+              window.location.reload();
+            }
+          }
+        } catch (e) {
+          console.warn('[Request] tg relogin on 401 failed:', e);
+        }
+      }
+
       return Promise.reject(new Error('Session expired'));
     }
     
@@ -240,5 +344,19 @@ export const setToken = (token) => {
 
 // 清除token
 export const clearToken = () => {
+  // 调试：定位是谁清除了 token
+  try {
+    if (ENABLE_REQUEST_DEBUG && typeof window !== 'undefined') {
+      const currentToken = localStorage.getItem('token');
+      const preview = (t) => {
+        if (typeof t !== 'string' || !t) return null;
+        return `${t.slice(0, 10)}...${t.slice(-6)}`;
+      };
+      console.warn('[Request] clearToken() called', {
+        tokenBeforeClear: preview(currentToken),
+        stack: new Error().stack,
+      });
+    }
+  } catch (_) {}
   localStorage.removeItem('token');
 };

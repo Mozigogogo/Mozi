@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Tabs, Toast, Button, TabBar } from 'antd-mobile';
 import { motion, AnimatePresence } from 'framer-motion';
+import PCLayout from '@/components/PCLayout';
+import PCCoinDetail from '@/components/PCCoinDetail';
 import Layout from '../../components/Layout';
 import NavBar from '../../components/NavBar';
 import MoziCard from '../../components/MoziCard';
@@ -43,6 +45,20 @@ export default function DetailPage() {
   const symbol = searchParams.get('symbol') || '';
   const fromFavorite = searchParams.get('fromFavorite') === '1'; // 是否从自选榜进入
   const { t } = useTranslation();
+  // 高度调试：在 URL 加 ?debugHeight=1 时启用，避免污染日志
+  const debugHeight = searchParams.get('debugHeight') === '1';
+  const [isPC, setIsPC] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth >= 1024 : false
+  );
+
+  useEffect(() => {
+    const checkDevice = () => {
+      setIsPC(window.innerWidth >= 1024);
+    };
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+    return () => window.removeEventListener('resize', checkDevice);
+  }, []);
   
   // 使用告警配置 Hook（自动获取）
   const { fetchConfig: fetchAlertConfig } = useAlertConfig({ autoFetch: false });
@@ -76,6 +92,8 @@ export default function DetailPage() {
   const chartRef = useRef(null);
   const marketRef = useRef(null);
   const roiRef = useRef(null);
+  const mobileRootRef = useRef(null);
+  const pcContentLayoutRef = useRef(null);
   const wsRef = useRef(null);
   const currentKlineChannelRef = useRef(null); // 当前K线订阅频道ID
   const isWsAuthenticatedRef = useRef(false); // WebSocket认证状态
@@ -306,6 +324,72 @@ export default function DetailPage() {
     checkStatus();
   }, [symbol, t, mySubscription]);
 
+  // 高度调试打印：观察 height/min-height 是否真正生效
+  useEffect(() => {
+    if (!debugHeight) return;
+
+    const dumpEl = (name, el) => {
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const cs = window.getComputedStyle(el);
+      // scrollHeight/offsetHeight 有助于判断内容是否溢出导致高度“看起来不对”
+      console.log('[DetailPage][heightDebug]', name, {
+        rectHeight: rect.height,
+        rectWidth: rect.width,
+        offsetHeight: el.offsetHeight,
+        clientHeight: el.clientHeight,
+        scrollHeight: el.scrollHeight,
+        computedHeight: cs.height,
+        computedMinHeight: cs.minHeight,
+        display: cs.display,
+        flex: cs.flex,
+        position: cs.position,
+        overflow: cs.overflow,
+      });
+    };
+
+    const logOnce = (phase) => {
+      console.log('[DetailPage][heightDebug] ----', phase, '----', {
+        isPC,
+        innerWidth: window.innerWidth,
+        innerHeight: window.innerHeight,
+        devicePixelRatio: window.devicePixelRatio,
+      });
+
+      if (pcContentLayoutRef.current) {
+        dumpEl('pcContentLayout', pcContentLayoutRef.current);
+        const p1 = pcContentLayoutRef.current.parentElement;
+        const p2 = p1?.parentElement;
+        dumpEl('pcContentLayout_parent(p1)', p1);
+        dumpEl('pcContentLayout_grandparent(p2)', p2);
+        dumpEl('pcColLeft', pcContentLayoutRef.current.querySelector(`.${styles.pcContentColLeft}`));
+        dumpEl('pcColRight', pcContentLayoutRef.current.querySelector(`.${styles.pcContentColRight}`));
+      }
+
+      if (mobileRootRef.current) {
+        dumpEl('mobileRoot(.container)', mobileRootRef.current);
+      }
+
+      dumpEl('chartSection', chartRef.current);
+      dumpEl('marketSection', marketRef.current);
+      dumpEl('roiSection', roiRef.current);
+    };
+
+    // 首次渲染后先打印一次，再在布局稳定后打印一次
+    logOnce('mount');
+    const t1 = window.setTimeout(() => logOnce('after-layout-300ms'), 300);
+    const t2 = window.setTimeout(() => logOnce('after-layout-900ms'), 900);
+
+    const onResize = () => logOnce('resize');
+    window.addEventListener('resize', onResize);
+
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.removeEventListener('resize', onResize);
+    };
+  }, [debugHeight, isPC, chartRef, marketRef, roiRef]);
+
   // 倒计时检查过期
   useEffect(() => {
     if (!unlockEndTime) return;
@@ -423,6 +507,8 @@ export default function DetailPage() {
 
         const bigDealChannel = { type: 'big_deal', symbols: [String(symbol || '').toUpperCase()] };
         const response = await ws.subscribe([bigDealChannel]);
+        // 调试：打印 big_deal 的订阅回包（用于鉴权/未授权定位）
+        console.log('[WS][detail][big_deal][resubscribe] subscribe_response:', response);
         const channelId = response?.data?.channels?.[0]?.channelId;
         if (channelId) bigDealChannelIdRef.current = channelId;
       } catch (e) {
@@ -790,7 +876,9 @@ export default function DetailPage() {
           }
         }
 
-        setIsFavorite(!isFavorite);
+        const next = !isFavorite;
+        setIsFavorite(next);
+        setCoinInfo((prev) => (prev ? { ...prev, isSelfSelected: next } : prev));
         Toast.show({
           content: isFavorite ? '已移除自选' : '已添加自选',
           position: 'bottom',
@@ -958,17 +1046,13 @@ ${coinInfo.name || symbol} (${symbol})
       }
     }, 10000); // 10秒
     
-    // WebSocket 连接和订阅
-    const token = typeof window !== 'undefined' 
-      ? localStorage.getItem('token') 
-      : null;
-    
     const ws = new MoziWebSocket(WS_URL, {
       platform: PLATFORMS.H5,
       version: '1.0.0',
       autoHandshake: true,
       debug: false,
-      token: token,  // 通过 Sec-WebSocket-Protocol 子协议传递 token
+      // 每次 connect()/重连都实时读取 localStorage.token
+      getToken: () => (typeof window !== 'undefined' ? localStorage.getItem('token') : null),
     });
     
     wsRef.current = ws;
@@ -1011,6 +1095,8 @@ ${coinInfo.name || symbol} (${symbol})
       const bigDealChannel = { type: 'big_deal', symbols: [String(symbol || '').toUpperCase()] };
       ws.subscribe([bigDealChannel])
         .then((response) => {
+          // 调试：打印 big_deal 的订阅回包，定位 code=206 的原因（多半是未授权/token 不匹配）
+          console.log('[WS][detail][big_deal] subscribe_response:', response);
           const channelId = response?.data?.channels?.[0]?.channelId;
           if (channelId) bigDealChannelIdRef.current = channelId;
         })
@@ -1413,7 +1499,16 @@ ${coinInfo.name || symbol} (${symbol})
       // { event:"big_deal", data:{ base:"DOGE", buy:[{deal_price, deal_quantity,...}], sell:[...] } }
       const buy = Array.isArray(data?.buy) ? data.buy : [];
       const sell = Array.isArray(data?.sell) ? data.sell : [];
-      if (!buy.length && !sell.length) return;
+
+      // 若 buy/sell 都为空，视为“暂无市场深度数据”：清空订单簿并标记已收到大单数据
+      if (!buy.length && !sell.length) {
+        hasBigDealDataRef.current = true;
+        setOrderBook({
+          bids: [],
+          asks: [],
+        });
+        return;
+      }
 
       // 统一映射为 OrderBook 组件需要的格式：[{ value }]
       // 默认 value 使用成交额：deal_price * deal_quantity
@@ -1468,6 +1563,20 @@ ${coinInfo.name || symbol} (${symbol})
     ws.connect();
     
     return () => {
+      if (process.env.NODE_ENV !== 'production') {
+        const token = localStorage.getItem('token');
+        const preview = (t) => {
+          if (typeof t !== 'string' || !t) return null;
+          return `${t.slice(0, 10)}...${t.slice(-6)}`;
+        };
+        console.log('[DetailPage] unmount/leave detail page', {
+          symbol,
+          token: preview(token),
+          hasToken: !!token,
+          now: Date.now(),
+        });
+      }
+
       // 清除HTTP轮询定时器
       if (pollingTimerRef.current) {
         clearInterval(pollingTimerRef.current);
@@ -1813,91 +1922,121 @@ ${coinInfo.name || symbol} (${symbol})
       </MoziCard>
     );
   };
-  
-  // 【禁用骨架屏】首次加载时不再显示整页骨架屏，仅注释保留
-  // if (isInitialLoad && (loading || klineLoading)) {
-  //   return (
-  //     <Layout>
-  //       <NavBar 
-  //         title={symbol || '币种详情'} 
-  //         showBack={true}
-  //         showBorder={false}
-  //       />
-  //       <SkeletonPage config={detailPageSkeletonConfig} />
-  //     </Layout>
-  //   );
-  // }
-  
+
+  const handleDetailBack = () => {
+    try {
+      localStorage.setItem('tg_auto_login_skip_once_v1', String(Date.now() + 15 * 1000));
+    } catch (_) {}
+    router.back();
+  };
+
+  const oneClickAlarmModalEl = (
+    <OneClickAlarmModal
+      open={oneClickAlarmOpen}
+      mode={oneClickAlarmMode}
+      symbol={symbol || 'BTC'}
+      onClose={() => setOneClickAlarmOpen(false)}
+      onConfirm={() => {
+        setOneClickAlarmOpen(false);
+      }}
+      onSkip={() => setOneClickAlarmOpen(false)}
+    />
+  );
+
+  if (isPC) {
+    return (
+      <PCLayout>
+        <div ref={pcContentLayoutRef} className={styles.pcContentLayout}>
+          <aside className={styles.pcContentColLeft}>
+            <PCCoinDetail
+              headerTitle={coinInfo?.name || symbol}
+              onBack={handleDetailBack}
+              showBack={false}
+              coinIcon={coinInfo?.url}
+              symbol={symbol}
+              currentPrice={coinInfo?.currentPrice}
+              priceChangeAbs={coinInfo?.priceChange_24h}
+              priceChangePercent={coinInfo?.priceChangePercentage_24h}
+              isUp={!String(coinInfo?.priceChange_24h ?? '').includes('-')}
+              isFavorite={isFavorite}
+              onToggleFavorite={toggleFavorite}
+              onAlert={jump2Alert}
+              onShare={shareToTelegram}
+              statColumns={[
+                // 头部概览只展示前 2 条（与移动端默认折叠态一致）
+                coinInfoLeft.slice(0, 2).map((x) => ({ label: x.name, value: x.value })),
+                coinInfoRight.slice(0, 2).map((x) => ({ label: x.name, value: x.value })),
+                [],
+              ]}
+              loading={loading}
+            >
+              {renderKline()}
+              {showOrderBook && (
+                <div className={styles.orderBookSection}>{renderOrderBook()}</div>
+              )}
+            </PCCoinDetail>
+          </aside>
+          <section className={styles.pcContentColRight} />
+        </div>
+        {oneClickAlarmModalEl}
+      </PCLayout>
+    );
+  }
+
   return (
     <>
-      {/* 顶部导航栏 */}
-      <NavBar 
-        title={coinInfo?.name || symbol || t('detail.title')} 
+      <NavBar
+        title={coinInfo?.name || symbol || t('detail.title')}
         showBack={true}
+        onBack={handleDetailBack}
         showBorder={false}
       />
-      
-      <div className={styles.container}>
-        {/* 头部币种信息 */}
+
+      <div ref={mobileRootRef} className={styles.container}>
         {renderCoinInfo()}
-        
-        {/* Tab导航 */}
-        <TabBar 
-          className={styles.tabContainer} 
-          activeKey={activeTab} 
-          onChange={handleTabChange}
-        >
+
+        <TabBar className={styles.tabContainer} activeKey={activeTab} onChange={handleTabChange}>
           <TabBar.Item key="chart" title={t('detail.tabs.chart')} />
           <TabBar.Item key="market" title={t('detail.tabs.market')} />
           <TabBar.Item key="roi" title={t('detail.tabs.roi')} />
         </TabBar>
-        
-        {/* K线图表区域 */}
+
         <div ref={chartRef} className={styles.chartSection}>
-          <div className={styles.box}>
-            {renderKline()}
-          </div>
+          <div className={styles.box}>{renderKline()}</div>
           {showOrderBook && (
-            <div className={styles.orderBookSection}>
-              {renderOrderBook()}
-            </div>
+            <div className={styles.orderBookSection}>{renderOrderBook()}</div>
           )}
         </div>
-        
-        {/* 市场行情区域 */}
+
         <div ref={marketRef} className={styles.marketSection}>
-          <div className={styles.marketBox}>
-            {renderMarket()}
-          </div>
+          <div className={styles.marketBox}>{renderMarket()}</div>
         </div>
 
-        {/* 投资回报率区域 */}
         <div ref={roiRef} className={styles.roiSection}>
           {renderROI()}
         </div>
-        
-        {/* 底部操作栏 */}
+
         <div className={styles.footerList}>
           <div className={styles.footerLeft}>
             <div className={styles.footerItem}>
-              <AddCollect 
-                isOwn={fromFavorite ? true : (coinInfo?.isSelfSelected || false)} 
-                symbol={symbol} 
+              <AddCollect
+                isOwn={fromFavorite ? true : (coinInfo?.isSelfSelected || false)}
+                symbol={symbol}
               />
               <div className={styles.footerText}>{t('detail.actions.favorite')}</div>
             </div>
             <div className={styles.footerItem} onClick={jump2Community}>
-              <img 
-                className={styles.footerIcon} 
-                src="/icons/new_detail/community.svg" 
+              <img
+                className={styles.footerIcon}
+                src="/icons/new_detail/community.svg"
                 alt={t('detail.actions.community')}
               />
               <div className={styles.footerText}>{t('detail.actions.community')}</div>
             </div>
             <div className={styles.footerItem} onClick={shareToTelegram}>
-              <img 
-                className={styles.footerIcon} 
-                src="/icons/new_detail/share.svg" 
+              <img
+                className={styles.footerIcon}
+                src="/icons/new_detail/share.svg"
                 alt={t('detail.actions.share')}
               />
               <div className={styles.footerText}>{t('detail.actions.share')}</div>
@@ -1922,25 +2061,14 @@ ${coinInfo.name || symbol} (${symbol})
             </div>
           </div>
         </div>
-
-        {/* 悬浮机器人按钮 - 使用新的FloatingRobot组件 */}
-        <FloatingRobot 
-          message={t('detail.robotMessage', { symbol: symbol.toUpperCase() })}
-          targetPath="/robot_test"
-          autoPlay={true}
-          startDelay={2000}
-        />
       </div>
 
-      <OneClickAlarmModal
-        open={oneClickAlarmOpen}
-        mode={oneClickAlarmMode}
-        symbol={symbol || 'BTC'}
-        onClose={() => setOneClickAlarmOpen(false)}
-        onConfirm={() => {
-          setOneClickAlarmOpen(false);
-        }}
-        onSkip={() => setOneClickAlarmOpen(false)}
+      {oneClickAlarmModalEl}
+      <FloatingRobot
+        message={t('detail.robotMessage', { symbol: symbol.toUpperCase() })}
+        targetPath="/robot_test"
+        autoPlay={true}
+        startDelay={2000}
       />
     </>
   );

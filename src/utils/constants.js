@@ -51,9 +51,11 @@ export const Interface = {
   // 热门币种
   hot_coin: '/showhot/coinprice',
   // 热门版块
-  hot_industry: '/showhot/sections',
+  // 板块列表
+  SECTION_LIST: '/section/list',
+  // 板块成分股列表
+  SECTION_SYMBOLS: '/section/symbols',
   // 热门版块（分页）
-  hot_sections_paginated: '/showhot/sections',
   // 板块详情
   SECTOR_DETAIL: '/showhot/sectiondetail',
   // 热门合约
@@ -275,6 +277,9 @@ export const Interface = {
   
   // 涨跌分布
   MARKET_DISTRIBUTION: '/easy/getGainAndLossDistDa',
+  
+  // 财经日历
+  GET_FINANCE_CALENDAR: '/easy/getFinanceCalendar',
   
   // 榜单分享次数
   GET_SHARE_COUNT: '/discovery/getShareCount',

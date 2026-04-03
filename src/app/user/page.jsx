@@ -23,6 +23,7 @@ import {
   completeTask, 
   updateUserInfo 
 } from '@/api/user';
+import { getMySubscription } from '@/api/vip';
 import { ensureFirstLoginAt, fetchUserDataInfoOnce } from '@/utils/postLogin';
 import UserInfo from '@/app/user/components/UserInfo';
 import StatsAndActions from '@/app/user/components/StatsAndActions';
@@ -82,6 +83,7 @@ export default function UserPage() {
     isVip: false,
     isLogin: false
   });
+  const [mySubscription, setMySubscription] = useState(null);
   const DEFAULT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png';
   const [popVis, setPopVis] = useState(false);
   const [popType, setPopType] = useState('');
@@ -114,6 +116,66 @@ export default function UserPage() {
   
   // 用于记录当前组件生命周期内是否已经为邀请码弹出过登录弹窗
   const hasShownInviteModalRef = useRef(false);
+
+  // 这里的“显示 Pro 图标/渐变昵称”只应在 PRO 档位时为 true
+  // LITE 应该保持 Free 样式（不显示 verifyIcon、昵称为黑色）
+  const getSubscriptionTier = (sub) => {
+    if (!sub) return 'free';
+    const tierCode = String(sub?.tierCode || '').toUpperCase();
+    if (tierCode === 'PRO') return 'pro';
+    if (tierCode === 'LITE') return 'lite';
+    if (tierCode === 'FREE') return 'free';
+
+    const planRaw = sub?.planCode || sub?.plan_name || sub?.plan || sub?.tier || '';
+    const plan = String(planRaw || '').toUpperCase();
+    if (!plan) return 'free';
+    if (plan.includes('PRO')) return 'pro';
+    if (plan.includes('LITE')) return 'lite';
+    if (plan.includes('FREE') || plan === '0' || plan === 'NONE') return 'free';
+    return 'free';
+  };
+
+  const isVipBySubscription = (sub) => getSubscriptionTier(sub) === 'pro';
+
+  // 进入 /user 时拉取订阅信息（登录态存在才请求）
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const CACHE_KEY = 'mozi_my_subscription_cache_v1';
+    const TTL = 5 * 60 * 1000; // 5min
+    let alive = true;
+
+    try {
+      const cachedStr = localStorage.getItem(CACHE_KEY);
+      if (cachedStr) {
+        const cached = JSON.parse(cachedStr);
+        if (cached?.ts && Date.now() - cached.ts < TTL && cached?.data) {
+          setMySubscription(cached.data);
+          setUserInfo((prev) => ({ ...prev, isVip: isVipBySubscription(cached.data) }));
+        }
+      }
+    } catch (_) {}
+
+    getMySubscription()
+      .then((res) => {
+        if (!alive) return;
+        const data = res?.data ?? res;
+        setMySubscription(data);
+        setUserInfo((prev) => ({ ...prev, isVip: isVipBySubscription(data) }));
+        try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
+        } catch (_) {}
+      })
+      .catch(() => {
+        // 静默失败：不影响 /user 页面正常使用
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   // 首次登录引导弹窗
   useEffect(() => {
@@ -489,7 +551,17 @@ export default function UserPage() {
       try {
         const res = await loginByWallet(currentAddress, signature);
         
-        if (res?.data?.token) localStorage.setItem('token', res.data.token);
+        if (res?.data?.token) {
+          localStorage.setItem('token', res.data.token);
+          // 通知已建立的 WebSocket 使用新 token 重新鉴权
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(
+              new CustomEvent('mozi:tokenUpdated', {
+                detail: { token: res.data.token },
+              })
+            );
+          }
+        }
         if (res?.data?.user) {
           // 将 subscribeAnnouncement 一起存入 userInfo
           const userInfoWithSubscribe = {
@@ -966,6 +1038,18 @@ export default function UserPage() {
     };
     syncLogin();
 
+    // 仅 Telegram 环境下刷新订阅/会员状态，避免 VIP banner/会员标识不更新
+    if (isTelegramEnv()) {
+      try {
+        const subRes = await getMySubscription();
+        const data = subRes?.data ?? subRes;
+        setMySubscription(data);
+        setUserInfo((prev) => ({ ...prev, isVip: isVipBySubscription(data) }));
+      } catch (e) {
+        console.error('❌ [UserPage] 获取订阅信息失败:', e);
+      }
+    }
+
     // 登录成功后，获取积分数据
     await fetchUserPointsData();
 
@@ -1210,6 +1294,14 @@ export default function UserPage() {
       
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
+        // 通知已建立的 WebSocket 使用新 token 重新鉴权
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(
+            new CustomEvent('mozi:tokenUpdated', {
+              detail: { token: res.data.token },
+            })
+          );
+        }
         
         const userData = res?.data?.userInfo || res?.data?.user;
         if (userData) {
@@ -1354,7 +1446,7 @@ export default function UserPage() {
         {/* 内容区域 */}
         <div className={styles.contentWrapper}>
           <div className={styles.contentSection}>
-            <VipBanner onClick={() => router.push('/vip-recharge')} />
+            <VipBanner onClick={() => router.push('/vip-recharge')} planCode={mySubscription?.planCode} />
             
             <PointsSection 
               pointsData={pointsData} 

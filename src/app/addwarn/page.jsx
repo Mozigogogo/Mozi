@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import { Input, Button, Toast, Switch } from "antd-mobile";
+import { Input, Toast, Switch } from "antd-mobile";
 import PopLogin from "../../components/PopLogin";
 import { getCoinInfo, completeAlarmTask, addAlarm } from "@/api/alarm";
 import { jump2NoTab } from "@/utils/core";
@@ -32,7 +32,9 @@ export default function Addwarn() {
 
   // 新增功能状态
   const [bigOrderDetection, setBigOrderDetection] = useState(true);
-  const [spreadMonitor, setSpreadMonitor] = useState(false);
+  // 交易所差价监控（已注释隐藏：保留原始实现，方便后续恢复）
+  // const [spreadMonitor, setSpreadMonitor] = useState(false);
+  const [spreadMonitor] = useState(false);
 
   // 币价数据状态（顶部价格信息）
   const [coinData, setCoinData] = useState({
@@ -86,7 +88,11 @@ export default function Addwarn() {
   const handleInputChange = (key, value) => {
     setConfigs((prev) => ({
       ...prev,
-      [key]: { ...prev[key], value },
+      [key]: {
+        ...prev[key],
+        value,
+        enabled: value === '' ? prev[key].enabled : true,
+      },
     }));
   };
 
@@ -219,6 +225,15 @@ export default function Addwarn() {
       acc[fieldName] = config.unit === "%" ? `${config.value}%` : config.value;
       return acc;
     }, {});
+
+    if (bigOrderDetection) {
+      // Backend expects bigDeal as empty string when enabled.
+      content.bigDeal = "";
+    }
+    if (spreadMonitor) {
+      // addwarn page has no threshold input for exchange spread yet.
+      content.exchangeSpread = "";
+    }
 
     try {
       // 构建请求数据
@@ -360,7 +375,8 @@ export default function Addwarn() {
                 />
             </div>
 
-            {/* 交易所差价监控 */}
+            {/* 交易所差价监控（已注释隐藏） */}
+            {/* 
             <div className={styles.optionCard}>
                 <span>{t('addAlarm.exchangeSpreadMonitor')}</span>
                 <Switch
@@ -370,6 +386,7 @@ export default function Addwarn() {
                     style={{"--checked-color":"#11B787"}}
                 />
             </div>
+            */}
 
             {/* 底部说明 */}
             <div className={styles.notesSection}>
@@ -380,19 +397,36 @@ export default function Addwarn() {
 
             {/* 底部按钮 */}
             <div className={styles.bottomButtons}>
-              <Button
-                className={styles.saveButton}
-                disabled={btnDisabled}
-                onClick={saveWarnings}
+              <div
+                className={`${styles.saveButton} ${btnDisabled ? styles.saveButtonDisabled : ""}`}
+                role="button"
+                tabIndex={0}
+                aria-disabled={btnDisabled}
+                onClick={btnDisabled ? undefined : saveWarnings}
+                onKeyDown={(e) => {
+                  if (btnDisabled) return;
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    saveWarnings();
+                  }
+                }}
               >
-                {t('addAlarm.saveAlarm')}
-              </Button>
-              <Button
+                {btnDisabled ? <div className={styles.saveButtonSpinner} /> : t('addAlarm.saveAlarm')}
+              </div>
+              <div
                 className={styles.viewButton}
+                role="button"
+                tabIndex={0}
                 onClick={() => jump2NoTab("mywarn")}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    jump2NoTab("mywarn");
+                  }
+                }}
               >
                 {t('addAlarm.viewAlarms')}
-              </Button>
+              </div>
             </div>
 
             {/* 登录弹窗 */}

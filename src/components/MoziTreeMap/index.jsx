@@ -7,6 +7,30 @@ import styles from './index.module.less';
 const MoziTreeMap = ({ list = [], name, desc, onItemClick }) => {
   const containerRef = useRef(null);
 
+  const normalizeChange = (raw) => {
+    if (raw == null) return { change: 0, changeStr: '--' };
+
+    // string like "5.3%" / "-2.1"
+    if (typeof raw === 'string') {
+      const n = parseFloat(raw.replace('%', ''));
+      if (!Number.isFinite(n)) return { change: 0, changeStr: '--' };
+      const hasPercent = raw.includes('%');
+      return { change: n, changeStr: hasPercent ? raw : `${n}%` };
+    }
+
+    // number: prefer treating small decimals as ratio (0.05321 => 5.321%)
+    if (typeof raw === 'number') {
+      if (!Number.isFinite(raw)) return { change: 0, changeStr: '--' };
+      const n = Math.abs(raw) <= 1 ? raw * 100 : raw;
+      const rounded = Number.isFinite(n) ? n.toFixed(2) : '0.00';
+      return { change: n, changeStr: `${rounded}%` };
+    }
+
+    const fallback = parseFloat(String(raw).replace('%', ''));
+    if (!Number.isFinite(fallback)) return { change: 0, changeStr: '--' };
+    return { change: fallback, changeStr: `${fallback}%` };
+  };
+
   useEffect(() => {
     if (!list || list.length === 0 || !containerRef.current) return;
 
@@ -23,9 +47,10 @@ const MoziTreeMap = ({ list = [], name, desc, onItemClick }) => {
       name: 'root',
       children: list.map(item => ({
         name: item[name],
-        value: Math.abs(parseFloat(String(item[desc]).replace('%', ''))),
-        change: parseFloat(String(item[desc]).replace('%', '')),
-        changeStr: item[desc]
+        value: Math.abs(normalizeChange(item[desc]).change),
+        change: normalizeChange(item[desc]).change,
+        changeStr: normalizeChange(item[desc]).changeStr,
+        raw: item
       }))
     };
 
@@ -201,7 +226,7 @@ const MoziTreeMap = ({ list = [], name, desc, onItemClick }) => {
       })
       .on('click', function(event, d) {
         if (onItemClick) {
-          onItemClick(d.data);
+          onItemClick(d.data.raw ?? d.data);
         }
       });
 

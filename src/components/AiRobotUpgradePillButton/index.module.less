@@ -1,0 +1,49 @@
+.button {
+  width: 155px;
+  height: 28px;
+  box-sizing: border-box;
+  position: relative;
+  display: inline-block;
+  padding: 0;
+
+  border: none;
+  border-radius: 45px;
+  opacity: 1;
+  cursor: pointer;
+
+  background: transparent;
+  overflow: hidden; /* 裁剪 svg 内部胶囊区域，避免 svg 整体缩放导致不可见 */
+
+  /* iOS 上防止按钮被点击时产生多余的默认样式跳动 */
+  -webkit-tap-highlight-color: transparent;
+}
+
+.disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.background {
+  position: absolute;
+  /* svg 画布为 188x67，其中胶囊矩形位于 (x=19.4, y=11.4, w=155, h=28) */
+  left: -19.4px;
+  top: -11.4px;
+  width: 188px;
+  height: 67px;
+  transform: none;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+

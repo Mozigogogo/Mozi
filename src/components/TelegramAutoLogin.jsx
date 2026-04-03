@@ -3,8 +3,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Toast } from 'antd-mobile';
 import { loginByTelegram } from '@/api/user';
+import { getMySubscription } from '@/api/vip';
 import { LogoLoading } from '@/components/Loading';
 import { runPostLoginSideEffects } from '@/utils/postLogin';
+import { syncI18nextLngFromLoginResponse } from '@/utils/syncLoginLanguage';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Telegram 自动登录组件
@@ -13,14 +16,142 @@ import { runPostLoginSideEffects } from '@/utils/postLogin';
 export default function TelegramAutoLogin() {
   const loginAttemptedRef = useRef(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { i18n } = useTranslation();
+  const previewToken = (token) => {
+    if (typeof token !== 'string' || !token) return null;
+    const head = token.slice(0, 10);
+    const tail = token.slice(-6);
+    return `${head}...${tail}`;
+  };
+
+  // 调试开关：控制该组件内部的控制台输出与 token 监听行为
+  // 设为 true 可恢复日志，定位自动登录链路。
+  const ENABLE_TG_AUTO_LOGIN_DEBUG = false;
+
+  // 调试：定位是谁渲染了该组件（线上排查用）
+  // 用法：URL 加 `?tgautologin_debug=1`，仅打印一次调用栈
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const enabled = urlParams.get('tgautologin_debug') === '1';
+      if (!enabled) return;
+      // eslint-disable-next-line no-console
+      console.warn('[TG auto login][stack] TelegramAutoLogin mounted', new Error().stack);
+    } catch (_) {}
+  }, []);
+
+  // 调试：监听 token 写入/清除，定位 token 何时变为空
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!ENABLE_TG_AUTO_LOGIN_DEBUG) return;
+
+    const originalSetItem = localStorage.setItem.bind(localStorage);
+    const originalRemoveItem = localStorage.removeItem.bind(localStorage);
+
+    localStorage.setItem = (key, value) => {
+      const prev = key === 'token' ? localStorage.getItem('token') : null;
+      const ret = originalSetItem(key, value);
+      if (key === 'token') {
+        console.warn('[TokenMonitor] token setItem', {
+          prev: previewToken(prev),
+          next: previewToken(String(value)),
+          stack: new Error().stack,
+        });
+      }
+      return ret;
+    };
+
+    localStorage.removeItem = (key) => {
+      const prev = key === 'token' ? localStorage.getItem('token') : null;
+      const ret = originalRemoveItem(key);
+      if (key === 'token') {
+        console.warn('[TokenMonitor] token removeItem', {
+          prev: previewToken(prev),
+          stack: new Error().stack,
+        });
+      }
+      return ret;
+    };
+
+    const onStorage = (e) => {
+      if (e?.key !== 'token') return;
+      console.warn('[TokenMonitor] storage event token changed', {
+        oldValue: previewToken(e.oldValue),
+        newValue: previewToken(e.newValue),
+      });
+    };
+    window.addEventListener('storage', onStorage);
+
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      localStorage.setItem = originalSetItem;
+      localStorage.removeItem = originalRemoveItem;
+    };
+  }, []);
+
+  // sessionStorage 级别的去抖，防止组件反复挂载导致并发/重复调用 loginByTelegram
+  const TG_AUTO_LOGIN_IN_FLIGHT_KEY = 'tg_auto_login_in_flight_v1';
+  const TG_AUTO_LOGIN_LAST_SUCCESS_TS_KEY = 'tg_auto_login_last_success_ts_v1';
+  const TG_AUTO_LOGIN_COOLDOWN_MS = 30 * 1000; // 30s 内不再重复触发
+
+  // 兜底：tg WebView 重建后，sessionStorage 可能丢失冷却状态。
+  // 当用户从详情页点击返回箭头导致“回到非首页”时，我们写入本地标记来跳过下一次自动登录。
+  const TG_AUTO_LOGIN_SKIP_ONCE_KEY = 'tg_auto_login_skip_once_v1';
+
+  // 尽量从 JWT 里读取 exp（不校验签名），用于判断是否需要重新走登录接口
+  const getJwtExpMs = (token) => {
+    try {
+      if (typeof token !== 'string') return null;
+      const raw = token.startsWith('Bearer ') ? token.slice(7) : token;
+      const parts = raw.split('.');
+      if (parts.length < 2) return null;
+      const payloadB64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const pad = payloadB64.length % 4 ? '='.repeat(4 - (payloadB64.length % 4)) : '';
+      const jsonStr = atob(payloadB64 + pad);
+      const payload = JSON.parse(jsonStr);
+      if (typeof payload?.exp === 'number' && Number.isFinite(payload.exp)) {
+        return payload.exp * 1000;
+      }
+    } catch (_) {}
+    return null;
+  };
 
   useEffect(() => {
     const handleTelegramAutoLogin = async () => {
-      console.log('🔄 [TG自动登录] 准备执行自动登录流程...', new Date().toISOString());
-      
+      if (process.env.NODE_ENV !== 'production' && ENABLE_TG_AUTO_LOGIN_DEBUG) {
+        const currentToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        console.log('[TG auto login] enter handler', {
+          path: typeof window !== 'undefined' ? window.location.pathname : null,
+          hasToken: !!currentToken,
+          token: previewToken(currentToken),
+          now: Date.now(),
+        });
+      }
+
+      // 若上一跳明确要求跳过自动登录，则直接退出
+      try {
+        if (typeof window !== 'undefined') {
+          const skipUntilRaw = localStorage.getItem(TG_AUTO_LOGIN_SKIP_ONCE_KEY);
+          const skipUntil = skipUntilRaw ? Number(skipUntilRaw) : NaN;
+          if (Number.isFinite(skipUntil) && Date.now() < skipUntil) {
+            localStorage.removeItem(TG_AUTO_LOGIN_SKIP_ONCE_KEY);
+            return;
+          }
+        }
+      } catch (_) {}
+
+      // 限制：只允许在首页 `/` 自动登录
+      // 目的：tg 环境下返回/重建可能导致该组件重复挂载，但不应在非首页触发 loginByTelegram
+      if (typeof window !== 'undefined') {
+        const path = window.location.pathname;
+        if (path !== '/') {
+          return;
+        }
+      }
+
       // 防止重复执行
       if (loginAttemptedRef.current) {
-        console.log('⚠️ [TG自动登录] 检测到已执行过登录，跳过本次执行');
         return;
       }
 
@@ -29,43 +160,136 @@ export default function TelegramAutoLogin() {
       const hasTelegram = isWindowDefined && !!window.Telegram;
       const hasWebApp = hasTelegram && !!window.Telegram.WebApp;
       
-      console.log('🔍 [TG自动登录] 环境检查详情:', {
-        isWindowDefined,
-        hasTelegram,
-        hasWebApp,
-        userAgent: isWindowDefined ? window.navigator.userAgent : 'N/A'
-      });
-
       if (!isWindowDefined || !hasWebApp) {
-        console.log('❌ [TG自动登录] 环境检查失败: 非 Telegram WebApp 环境');
         return;
+      }
+
+      // 仅允许在“首次进入（navigate）”时自动调用登录接口。
+      // Telegram WebView 上从详情页返回可能触发 back_forward/reload 的整页重载，
+      // 这种场景不应再次请求 /user/login。
+      let navigationType = null;
+      try {
+        const nav = performance?.getEntriesByType?.('navigation')?.[0];
+        navigationType = nav?.type || null; // 'navigate' | 'reload' | 'back_forward' | 'prerender'
+      } catch (_) {}
+
+      if (navigationType && navigationType !== 'navigate') {
+        if (process.env.NODE_ENV !== 'production' && ENABLE_TG_AUTO_LOGIN_DEBUG) {
+          console.log('[TG auto login] navigation guard: skip loginByTelegram', {
+            navigationType,
+          });
+        }
+        loginAttemptedRef.current = true;
+        await runPostLoginSideEffects({
+          caller: 'TelegramAutoLogin_navigationGuardSkip',
+          forceDataInfo: false,
+        });
+        window.dispatchEvent(new CustomEvent('tg-login-success'));
+        setIsLoading(false);
+        return;
+      }
+
+      // 以 Telegram WebApp 的 initData hash 作为“启动标识”
+      // 需求：只在“启动 Telegram 小程序”时允许调用 /api/user/login
+      // 返回详情页导致组件重建时，hash 通常不变，因此会跳过 loginByTelegram
+      let initHash = null;
+      try {
+        const tgWebAppForHash = window.Telegram.WebApp;
+        const initDataForHash = tgWebAppForHash?.initData;
+        const urlParamsForInit = new URLSearchParams(initDataForHash || '');
+        initHash = urlParamsForInit.get('hash');
+      } catch (_) {}
+
+      const TG_AUTO_LOGIN_HANDLED_LAUNCH_HASH_KEY = 'tg_auto_login_handled_launch_hash_v1';
+      try {
+        if (initHash) {
+          const handledLaunchHash = localStorage.getItem(TG_AUTO_LOGIN_HANDLED_LAUNCH_HASH_KEY);
+          if (handledLaunchHash && handledLaunchHash === initHash) {
+            if (process.env.NODE_ENV !== 'production' && ENABLE_TG_AUTO_LOGIN_DEBUG) {
+              console.log('[TG auto login] launch already handled, skip loginByTelegram', {
+                initHash: `${initHash.slice(0, 8)}...`,
+              });
+            }
+            loginAttemptedRef.current = true;
+            await runPostLoginSideEffects({
+              caller: 'TelegramAutoLogin_launchAlreadyHandled',
+              forceDataInfo: false,
+            });
+            window.dispatchEvent(new CustomEvent('tg-login-success'));
+            setIsLoading(false);
+            return;
+          }
+        }
+      } catch (_) {}
+
+      // 全局 in-flight / 冷却：避免重复挂载造成多次 loginByTelegram
+      if (typeof window !== 'undefined') {
+        const inFlight = sessionStorage.getItem(TG_AUTO_LOGIN_IN_FLIGHT_KEY) === 'true';
+        const lastSuccessTsRaw = sessionStorage.getItem(TG_AUTO_LOGIN_LAST_SUCCESS_TS_KEY);
+        const lastSuccessTs = lastSuccessTsRaw ? Number(lastSuccessTsRaw) : NaN;
+        const recentlySucceeded =
+          Number.isFinite(lastSuccessTs) && Date.now() - lastSuccessTs <= TG_AUTO_LOGIN_COOLDOWN_MS;
+
+        if (process.env.NODE_ENV !== 'production' && ENABLE_TG_AUTO_LOGIN_DEBUG) {
+          console.log('[TG auto login] env & throttle', {
+            inFlight,
+            recentlySucceeded,
+            lastSuccessTs: Number.isFinite(lastSuccessTs) ? lastSuccessTs : null,
+          });
+        }
+
+        if (inFlight || recentlySucceeded) {
+          return;
+        }
+      }
+
+      // 规则（按你的需求）：只要本地已经有 token，就绝不再调用登录接口。
+      // Telegram 自动登录只允许在“没有 token 的首次启动”场景触发。
+      try {
+        const existingToken = localStorage.getItem('token');
+        if (existingToken) {
+          if (process.env.NODE_ENV !== 'production' && ENABLE_TG_AUTO_LOGIN_DEBUG) {
+            console.log('[TG auto login] existing token present, skip loginByTelegram', {
+              token: previewToken(existingToken),
+              now: Date.now(),
+            });
+          }
+
+          loginAttemptedRef.current = true;
+          await runPostLoginSideEffects({
+            caller: 'TelegramAutoLogin_skipLogin_tokenPresent',
+            forceDataInfo: false,
+          });
+          window.dispatchEvent(new CustomEvent('tg-login-success'));
+          setIsLoading(false);
+          return;
+        }
+      } catch (e) {
+        // guard 失败不影响后续正常登录
+      }
+
+      if (process.env.NODE_ENV !== 'production' && ENABLE_TG_AUTO_LOGIN_DEBUG) {
+        console.warn('[TG auto login] token missing -> may call loginByTelegram', {
+          now: Date.now(),
+        });
       }
       
       // 在 Telegram 环境下，显示加载中遮罩
       setIsLoading(true);
 
+      // 标记为登录进行中
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(TG_AUTO_LOGIN_IN_FLIGHT_KEY, 'true');
+      }
+
       loginAttemptedRef.current = true;
 
       const tgWebApp = window.Telegram.WebApp;
-
-      // 打印 TG 环境原始参数数据
-      console.log('========== TG 原始数据 ==========');
-      console.log('window.Telegram.WebApp:', tgWebApp);
-      console.log('initData (原始字符串):', tgWebApp.initData);
-      console.log('initDataUnsafe (完整对象):', tgWebApp.initDataUnsafe);
-      console.log('initDataUnsafe.hash:', tgWebApp.initDataUnsafe?.hash);
-      console.log('initDataUnsafe.auth_date:', tgWebApp.initDataUnsafe?.auth_date);
-      console.log('initDataUnsafe.query_id:', tgWebApp.initDataUnsafe?.query_id);
-      console.log('platform:', tgWebApp.platform);
-      console.log('version:', tgWebApp.version);
-      console.log('colorScheme:', tgWebApp.colorScheme);
-      console.log('================================');
 
       const initData = tgWebApp.initData;
       const initDataUnsafe = tgWebApp.initDataUnsafe;
 
       if (!initData || !initDataUnsafe?.user) {
-        console.log('❌ [TG自动登录] 无法获取 Telegram initData');
         setIsLoading(false);
         return;
       }
@@ -81,34 +305,32 @@ export default function TelegramAutoLogin() {
           // 如果本地有昵称且不为空，则认为已有本地配置
           if (storedUserInfo.nickName && storedUserInfo.nickName.trim()) {
             hasLocalProfile = true;
-            console.log('✅ [TG自动登录] 检测到本地已有用户信息，将在登录时不传递 TG 昵称和头像');
           }
         }
       } catch (e) {
         console.error('❌ [TG自动登录] 检查本地用户信息失败:', e);
       }
 
-      // 打印用户原始数据
-      console.log('========== TG 用户原始数据 ==========');
-      console.log('user 对象:', tgUser);
-      console.log('user.id:', tgUser.id);
-      console.log('user.first_name:', tgUser.first_name);
-      console.log('user.last_name:', tgUser.last_name);
-      console.log('user.username:', tgUser.username);
-      console.log('user.language_code:', tgUser.language_code);
-      console.log('user.photo_url:', tgUser.photo_url);
-      console.log('user.is_premium:', tgUser.is_premium);
-      console.log('====================================');
+      if (process.env.NODE_ENV !== 'production' && ENABLE_TG_AUTO_LOGIN_DEBUG) {
+        console.log('[TG auto login] start decision', {
+          hasLocalProfile,
+          appChannel: localStorage.getItem('appChannel'),
+        });
+      }
 
       // 从 initData 解析 hash
       const urlParams = new URLSearchParams(initData);
       const hash = urlParams.get('hash');
 
       if (!hash) {
-        console.log('❌ [TG自动登录] 无法获取 hash');
         setIsLoading(false);
         return;
       }
+
+      // 准备走登录接口前：先标记启动 hash，避免返回/重建时重复触发 /api/user/login
+      try {
+        localStorage.setItem(TG_AUTO_LOGIN_HANDLED_LAUNCH_HASH_KEY, hash);
+      } catch (_) {}
 
       // 获取邀请码（从 URL 参数或 localStorage）
       const searchParams = new URLSearchParams(window.location.search);
@@ -117,31 +339,13 @@ export default function TelegramAutoLogin() {
       // 判断环境
       const env = process.env.NEXT_PUBLIC_APP_ENV || 'test';
 
-      console.log('🚀 [TG自动登录] 开始 Telegram 自动登录');
       // Toast.show({ content: '正在自动登录...', icon: 'loading' });
-
-      console.log('========== TG 登录参数 ==========');
-      console.log('type:', 'login');
-      console.log('telegramId:', String(tgUser.id));
-      console.log('username:', hasLocalProfile ? '[Local Profile Exists - Omitted]' : (tgUser.username || tgUser.first_name || ''));
-      console.log('photoUrl:', hasLocalProfile ? '[Local Profile Exists - Omitted]' : (tgUser.photo_url || ''));
-      console.log('hash:', hash);
-      console.log('inviteCode:', inviteCode);
-      console.log('channel:', 'tg');
-      console.log('env:', env);
-      try {
-        console.log('完整 initData:', initData);
-      } catch (e) {
-        console.log('完整 initData 打印失败');
-      }
-      console.log('================================');
 
       try {
         // 如果本地已有用户信息，则不传递 TG 的用户名和头像，避免覆盖
         const username = hasLocalProfile ? '' : (tgUser.username || tgUser.first_name || '');
         const photoUrl = hasLocalProfile ? '' : (tgUser.photo_url || '');
 
-        console.log('🚀 [TG自动登录] 调用 loginByTelegram 接口...');
         const res = await loginByTelegram({
           telegramId: String(tgUser.id),
           username: username,
@@ -150,16 +354,37 @@ export default function TelegramAutoLogin() {
           inviteCode: inviteCode,
           env: env
         });
-        
-        console.log('🚀 [TG自动登录] 登录接口返回:', JSON.stringify(res, null, 2));
 
         // 尝试从多个位置获取 token
         const token = res?.data?.token || res?.token || res?.data?.accessToken;
 
         if (token) {
-          console.log('✅ [TG自动登录] 获取到 token:', token.substring(0, 10) + '...');
           // 保存 token
           localStorage.setItem('token', token);
+
+          if (process.env.NODE_ENV !== 'production' && ENABLE_TG_AUTO_LOGIN_DEBUG) {
+            console.log('[TG auto login] loginByTelegram success, token saved', {
+              token: previewToken(token),
+            });
+          }
+
+          // 记录成功时间，作为跨组件挂载的冷却依据
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem(TG_AUTO_LOGIN_LAST_SUCCESS_TS_KEY, String(Date.now()));
+            sessionStorage.removeItem(TG_AUTO_LOGIN_IN_FLIGHT_KEY);
+          }
+
+          // 通知已建立的 WebSocket 使用新 token 重新鉴权
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(
+              new CustomEvent('mozi:tokenUpdated', {
+                detail: { token },
+              })
+            );
+          }
+
+          // 根据后端返回 language 更新缓存语言，并同步 i18next
+          syncI18nextLngFromLoginResponse(res, i18n);
           // Toast.show({ content: '登录成功', icon: 'success' });
 
           // 保存用户信息
@@ -193,7 +418,6 @@ export default function TelegramAutoLogin() {
             subscribeAnnouncement: res.data?.subscribeAnnouncement || res.subscribeAnnouncement
           };
           localStorage.setItem('userInfo', JSON.stringify(userInfoWithSubscribe));
-          console.log('✅ [TG自动登录] 用户信息已保存:', { nickName, avatar });
 
           const userId = res?.data?.userId || res?.userId;
           if (userId) {
@@ -203,7 +427,6 @@ export default function TelegramAutoLogin() {
           // 登录成功后清除邀请码
           if (inviteCode) {
             localStorage.removeItem('inviteCode');
-            console.log('✅ [TG自动登录] 邀请码已使用并清除');
           }
 
           // 登录成功后的统一副作用（datainfo + 任务），带去重
@@ -213,8 +436,54 @@ export default function TelegramAutoLogin() {
             console.error('❌ [TG自动登录] post-login side effects failed:', e);
           }
 
-          console.log('✅ [TG自动登录] Telegram 自动登录成功');
-          
+          // 登录成功后：立刻拉取订阅状态/权益与会员标识
+          // getMySubscription 内部会同步 planCode 到 localStorage，并派发 mozi:subscriptionPlanCodeUpdated 事件
+          try {
+            const subRes = await getMySubscription();
+            const data = subRes?.data ?? subRes;
+
+            // 兼容不同后端字段命名：尽最大可能把“会员标识”落到统一 key
+            const membershipId =
+              data?.memberId ??
+              data?.membershipId ??
+              data?.subscriberId ??
+              data?.subscriptionId ??
+              data?.subId ??
+              data?.vipId ??
+              data?.id ??
+              null;
+
+            // 供其它页面/埋点使用
+            try {
+              localStorage.setItem('mozi_my_subscription_last_v1', JSON.stringify(data));
+              const CACHE_KEY = 'mozi_my_subscription_cache_v1';
+              localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
+              const PLAN_CODE_KEY = 'mozi_my_subscription_plan_code_v1';
+              const nextPlanCode = data?.planCode;
+              if (nextPlanCode !== undefined && nextPlanCode !== null) {
+                const next = String(nextPlanCode);
+                const prev = localStorage.getItem(PLAN_CODE_KEY);
+                if (prev === null || String(prev) !== next) {
+                  localStorage.setItem(PLAN_CODE_KEY, next);
+                }
+              }
+              if (membershipId !== null && membershipId !== undefined) {
+                localStorage.setItem('mozi_my_subscription_member_id_v1', String(membershipId));
+              }
+            } catch (e) {
+              console.error('❌ [TG自动登录] 写入订阅缓存失败:', e);
+            }
+
+            window.dispatchEvent(
+              new CustomEvent('mozi:subscriptionUpdated', {
+                detail: { subscription: data, membershipId },
+              })
+            );
+          } catch (e) {
+            // 不阻断登录主流程
+            console.error('❌ [TG自动登录] getMySubscription 失败:', e);
+          }
+
           // 触发页面刷新以更新状态
           window.dispatchEvent(new CustomEvent('tg-login-success'));
         } else {
@@ -223,7 +492,15 @@ export default function TelegramAutoLogin() {
         }
       } catch (error) {
         console.error('❌ [TG自动登录] 登录异常:', error);
+
+        // 登录失败时允许下次再尝试（同一启动 hash 可能仍有效）
+        try {
+          localStorage.removeItem(TG_AUTO_LOGIN_HANDLED_LAUNCH_HASH_KEY);
+        } catch (_) {}
       } finally {
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem(TG_AUTO_LOGIN_IN_FLIGHT_KEY);
+        }
         setIsLoading(false);
       }
     };

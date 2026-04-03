@@ -6,31 +6,25 @@ export default function VConsoleLoader() {
   useEffect(() => {
     // 判断是否需要启用 VConsole
     const shouldEnableVConsole = () => {
-      // 暂时禁用 VConsole
+      // 默认隐藏：仅在显式指定 ?vconsole=1 时启用
+      if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get('vconsole') === '1';
+      }
       return false;
-      
+
       // PC端不显示 vConsole
       if (typeof window !== 'undefined' && window.innerWidth >= 768) {
         return false;
       }
 
-      // 本地开发环境
-      if (process.env.NODE_ENV === 'development') {
-        return true;
-      }
-      
-      // 测试环境自动启用（通过 NEXT_PUBLIC_APP_ENV 环境变量控制）
-      if (process.env.NEXT_PUBLIC_APP_ENV === 'staging' || 
-          process.env.NEXT_PUBLIC_APP_ENV === 'test') {
-        return true;
-      }
-      
-      // 生产环境下，通过 URL 参数控制 vconsole=1
-      if (typeof window !== 'undefined') {
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get('vconsole') === '1';
-      }
-      
+      const telegramWebApp = typeof window !== 'undefined' ? window.Telegram?.WebApp : null;
+      const hasInitData = telegramWebApp?.initData && telegramWebApp.initData.length > 0;
+      const hasInitDataUnsafe =
+        telegramWebApp?.initDataUnsafe && Object.keys(telegramWebApp.initDataUnsafe).length > 0;
+      const hasPlatform = telegramWebApp?.platform && telegramWebApp.platform !== 'unknown';
+      const isTelegram = !!(hasInitData || hasInitDataUnsafe || hasPlatform);
+
       return false;
     };
 
@@ -43,7 +37,7 @@ export default function VConsoleLoader() {
           onReady() {
             console.log('[VConsole] 已启动');
             
-            // 调整按钮位置到左下角，tab 栏上方
+          
             setTimeout(() => {
               const vcSwitch = document.querySelector('.vc-switch');
               if (vcSwitch) {
@@ -60,8 +54,6 @@ export default function VConsoleLoader() {
           window.vConsole = vConsole;
         }
       });
-    } else {
-      console.log('[VConsole] 未启用。如需启用，请在 URL 中添加 ?vconsole=1 参数');
     }
   }, []);
 

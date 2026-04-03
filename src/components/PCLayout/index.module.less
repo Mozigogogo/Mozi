@@ -77,28 +77,47 @@
   }
 }
 
+/* 灰条固定 600px + gap + 徽章（约 88px 宽），与原先单独 600px 灰条同宽 */
 .searchWrapper {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  width: 480px;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  /* 必须给宽度：仅 max-width 时绝对定位下 shrink-to-fit 会按 min-content 算，灰条会被压得很窄 */
+  width: min(712px, calc(100vw - 360px));
+  max-width: min(712px, calc(100vw - 360px));
 }
 
-/* 搜索框 - 与移动端一致的样式 */
+/* 搜索框 - 与移动端一致的样式（AI 徽章在 .searchWrapper 内、本容器外） */
 .searchBox {
-  width: 100%;
+  flex: 1 1 auto;
+  width: 600px;
+  max-width: 600px;
+  min-width: 0;
   height: 40px;
   border-radius: 20px;
   display: flex;
-  background-color: #f5f5f5;
-  justify-content: space-between;
   align-items: center;
+  gap: 8px;
+  background-color: #f5f5f5;
   padding: 0 0 0 20px;
   box-sizing: border-box;
 }
 
+/* 左侧输入区 → 搜索 */
+.searchInputArea {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
 .searchInput {
   flex: 1;
+  min-width: 0;
   border: none;
   background: transparent;
   font-size: 14px;
@@ -114,6 +133,7 @@
 .searchClear {
   height: 100%;
   width: 30px;
+  flex-shrink: 0;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -124,40 +144,83 @@
   }
 }
 
+/* 顶栏「问 AI」入口，跳转 /robot_test */
+.aiSearchBadgeLink {
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.aiSearchBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: 100%;
+  height: 44px;
+  padding: 0;
+  line-height: 0;
+  flex-shrink: 0;
+  border-radius: 33554400px;
+  overflow: hidden;
+  cursor: pointer;
+
+  :global(svg) {
+    display: block;
+    height: 40px;
+    width: auto;
+    flex-shrink: 0;
+  }
+}
+
 .searchButton {
-  height: 90%;
-  min-width: 78px;
-  padding: 0 16px;
-  background-color: #11B787;
-  border-radius: 20px;
+  height: 36px;
+  padding: 8px 24px;
+  border-radius: 33554400px;
+  gap: 4px;
+  background: linear-gradient(90deg, #ecfdf5 0%, #f0fdfa 100%);
+  border: 2px solid rgba(81, 179, 130, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 0 3px;
+  margin: 0 2px 0 0;
   cursor: pointer;
   box-sizing: border-box;
   transition: opacity 0.2s;
+  flex-shrink: 0;
 
   &:hover {
-    opacity: 0.9;
+    opacity: 0.92;
   }
 
   &:active {
-    opacity: 0.8;
+    opacity: 0.85;
   }
 }
 
 .searchIconImg {
   width: 14px;
   height: 14px;
-  filter: brightness(0) invert(1);
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+  background-color: rgba(0, 153, 102, 1);
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
 }
 
 .searchText {
-  color: #fff;
+  color: rgba(0, 153, 102, 1);
   font-size: 14px;
-  margin-left: 8px;
   font-weight: 500;
+  line-height: 1;
 }
 
 .headerRight {
@@ -199,55 +262,254 @@
   transition: opacity 0.2s; /* Smooth opacity transition */
 }
 
-/* 侧边栏底部 */
-.siderFooter {
-  margin-top: auto;
-  padding: 16px;
-  // border-top: 1px solid #f0f0f0;
+/* 「我的」分组标题（与 antd Menu 分组标题视觉一致，置于自选之上） */
+.mineGroupTitle {
+  padding: 8px 16px 4px;
+  margin-top: 4px;
+  border-top: 1px solid #f0f0f0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(0, 0, 0, 0.45);
 }
 
-.footerLinks {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  margin-bottom: 12px;
+/* 展开态下「我的告警」等同组项上方已有「我的」标题，隐藏空的 ItemGroup 标题行 */
+.mineMenuLower {
+  /* 与上方「我的自选」紧贴：去掉第二个 Menu 默认顶 padding、分组列表顶距 */
+  :global {
+    .ant-menu {
+      padding-top: 0;
+    }
 
-  a {
-    color: #666;
-    font-size: 12px;
-    text-decoration: none;
+    .ant-menu-item-group:first-child .ant-menu-item-group-title {
+      display: none;
+    }
 
-    &:hover {
-      color: #11B787;
+    .ant-menu-item-group:first-child .ant-menu-item-group-list {
+      margin-top: 0;
+    }
+
+    /*
+     * antd 对分组内 .ant-menu-item 使用 padding-inline: (2×字号) / padding，
+     * 与上方「我的自选」自定义按钮（左右各 16px）不一致，左侧图标会对不齐。
+     * 本节菜单与顶栏 Home / Discover 同样是一级入口，统一为 16px 与 itemPaddingInline 一致。
+     */
+    .ant-menu-item-group .ant-menu-item-group-list .ant-menu-item,
+    .ant-menu-item-group .ant-menu-item-group-list .ant-menu-submenu-title {
+      padding-inline: 16px !important;
     }
   }
 }
 
-.socialIcons {
-  display: flex;
-  gap: 12px;
-  margin-top: 16px;
+/* PC 侧栏「我的自选」：行样式与 antd Menu 子项一致 */
+.pcWatchlist {
+  padding: 0;
+  margin-top: 0;
 }
 
-.socialIcon {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #666;
+.pcWatchlistHeader {
   display: flex;
   align-items: center;
-  justify-content: center;
-  transition: background 0.2s;
-
-  img {
-    width: 16px;
-    height: 16px;
-    filter: brightness(0) invert(1);
-  }
+  justify-content: space-between;
+  width: 100%;
+  min-height: 40px;
+  box-sizing: border-box;
+  /* 与 antd Menu 项一致：itemMarginInline = marginXXS(4px)，勿用 8px 否则整行（含左侧图标）会比下方 Menu 偏右 */
+  margin: 4px 4px 0;
+  /* 水平 padding 须与 mineMenuLower 内 .ant-menu-item 的 padding-inline（16px）一致 */
+  padding: 0 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 8px;
+  font: inherit;
+  text-align: left;
+  color: rgba(0, 0, 0, 0.88);
+  /* 清除 user agent 对 button 的默认 padding，避免叠加后视觉上比 Menu 更「缩进」 */
+  appearance: none;
+  -webkit-appearance: none;
 
   &:hover {
-    background: #11B787;
+    background: #f5f5f5;
   }
+}
+
+.pcWatchlistHeaderSelected {
+  color: #11b787;
+
+  .pcWatchlistTitle {
+    color: #11b787;
+
+    &.pcWatchlistTitleExpanded {
+      color: #00ac72;
+    }
+  }
+}
+
+/* 与 CustomIcon（16×16）占位一致，避免和菜单项图标列错位 */
+.pcWatchlistHeaderIconSvg {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-inline-end: 12px;
+
+  img {
+    display: block;
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+  }
+}
+
+.pcWatchlistHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+  flex: 1;
+
+  /* 与 antd Menu item 图标右侧间距一致（ConfigProvider iconMarginInlineEnd: 12） */
+  :global(.ant-menu-item-icon) {
+    margin-inline-end: 12px;
+  }
+}
+
+.pcWatchlistTitle {
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.88);
+  flex: 1;
+  min-width: 0;
+
+  &.pcWatchlistTitleExpanded {
+    color: #00ac72;
+  }
+}
+
+.pcWatchlistChevron {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  display: block;
+  object-fit: contain;
+}
+
+/* 与标题「我的自选」文字左缘对齐（.pcWatchlistHeader margin 须与 antd Menu item 一致，否则此处需连带微调） */
+@pcWatchlist-text-align-inset: 16px;
+/* 单行约高（padding + 双行字号）；与 .pcWatchlistRow gap 一致，用于「最多展示 5 条，其余内部滚动」 */
+@pc-watchlist-row-approx: 56px;
+@pc-watchlist-row-gap: 2px;
+
+.pcWatchlistBody {
+  display: flex;
+  flex-direction: column;
+  gap: @pc-watchlist-row-gap;
+  padding: 0 4px 4px @pcWatchlist-text-align-inset;
+  max-height: calc(5 * @pc-watchlist-row-approx + 4 * @pc-watchlist-row-gap);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  min-height: 0;
+}
+
+.pcWatchlistHint {
+  /* 与 .pcWatchlistRow 正文同起点：body 已缩进 42px，此处再 10px 与行内 padding 一致 */
+  padding: 10px 8px;
+  font-size: 12px;
+  color: #999;
+  line-height: 1.4;
+}
+
+.pcWatchlistHintCenter {
+  align-self: stretch;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.pcWatchlistRow {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 10px;
+  margin: 0;
+  border: none;
+  background: transparent;
+  border-radius: 16px;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: #f7f8f9;
+  }
+}
+
+.pcWatchlistRowActive {
+  background: #f2f4f5;
+
+  &:hover {
+    background: #f2f4f5;
+  }
+}
+
+.pcWatchlistRowLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.pcWatchlistSymbol {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a2e;
+  line-height: 1.2;
+}
+
+.pcWatchlistName {
+  font-size: 12px;
+  color: #8c8c8c;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pcWatchlistRowRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.pcWatchlistPrice {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a2e;
+  line-height: 1.2;
+}
+
+.pcWatchlistChangeUp,
+.pcWatchlistChangeDown {
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 500;
+}
+
+.pcWatchlistChangeUp {
+  color: #00bc7d;
+}
+
+.pcWatchlistChangeDown {
+  color: #fb2c36;
 }
 
 /* Content */

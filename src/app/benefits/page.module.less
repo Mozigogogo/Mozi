@@ -141,8 +141,8 @@
 }
 
 .tierStop_lite.tierStopActive .tierDot {
-  border-color: #059669;
-  background: #10b981;
+  border-color: rgba(48, 206, 132, 1);
+  background: rgba(48, 206, 132, 1);
   box-shadow: 0 0 0 2px #fff;
 }
 
@@ -195,6 +195,7 @@
   background-repeat: no-repeat;
   background-position: center;
   background-size: 100% 100%;
+  opacity: 0.25;
   pointer-events: none;
   z-index: 0;
 }
@@ -404,7 +405,7 @@
   margin-top: 14px;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 18px;
-  padding: 12px;
+  padding: 4px;
   border: 1px solid rgba(255, 255, 255, 0.95);
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.05);
 }
@@ -413,15 +414,38 @@
 .sectionsBigBox {
   margin-top: 14px; /* 保持与原 section 的间距一致 */
   padding: 12px; /* 给内部 section 留出边框内缩空间 */
-  /* 外层大盒子的 padding 区域需要与内层 section 同色，否则会透出玻璃层导致“断层” */
-  background: rgba(255, 255, 255, 0.95);
+  background: #fff;
   border-radius: 18px;
   border: 1px solid rgba(193, 193, 193, 1);
+}
+
+.mode_lite .sectionsBigBox {
+  border: 1px solid rgba(34, 197, 94, 1);
+  background: linear-gradient(180deg, rgba(179, 251, 198, 0.67) 0%, rgba(255, 255, 255, 0.67) 100%);
+}
+
+/* Lite 模式下标题改为黑色 */
+.mode_lite .sectionTitle {
+  color: #111827;
 }
 
 .sectionsBigBox .section {
   border: none; /* 边框由 sectionsBigBox 统一控制 */
   box-shadow: none; /* 外层大盒子负责层次 */
+}
+
+.mode_lite .section {
+  background: transparent;
+}
+
+.mode_pro .sectionsBigBox {
+  border: 1px solid #D29648;
+  background:  linear-gradient(124.92deg, #411D00 2.71%, #7E4314 80.69%);
+
+}
+
+.mode_pro .section {
+  background: transparent;
 }
 
 .sectionsBigBox .section:first-child {
@@ -441,28 +465,47 @@
 }
 
 .sectionTitle {
-  font-size: 13px;
-  font-weight: 900;
-  color: rgba(17, 24, 39, 0.9);
+  font-size: 16px;
+  font-weight: 500;
+  color: rgba(255, 236, 208, 1);
   margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Free 模式下标题改为黑色 */
+.container:not(.mode_lite):not(.mode_pro) .sectionTitle {
+  color: #111827;
 }
 
 .sectionTitleLite {
-  font-size: 13px;
-  font-weight: 900;
-  color: rgba(6, 95, 70, 0.95);
+  font-family: PingFang SC;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 14px;
+  line-height: 24px;
+  letter-spacing: 0px;
+  color: rgba(22, 163, 74, 1);
+  vertical-align: middle;
   margin-bottom: 10px;
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.sectionTitleLite::before {
-  content: "";
-  width: 4px;
-  height: 14px;
-  border-radius: 2px;
-  background: #10b981;
+.sectionTitleLiteIcon {
+  width: 32px;
+  height: 32px;
+  display: block;
+  flex: 0 0 auto;
+}
+
+.sectionTitleProIcon {
+  width: 32px;
+  height: 32px;
+  display: block;
+  flex: 0 0 auto;
 }
 
 .sectionTitlePro {
@@ -479,27 +522,194 @@
 }
 
 .benefitItem {
-  height: 44px;
-  border-radius: 14px;
-  background: #fff;
-  border: 1px solid rgba(15, 23, 42, 0.06);
-  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
+  height: 65px;
+  padding-top: 16px;
+  padding-right: 20.4px;
+  padding-bottom: 16px;
+  padding-left: 20.4px;
+  gap: 8px;
+  opacity: 1;
+  border-radius: 13.6px;
+  background: rgba(246, 246, 246, 1);
+  border: 0.5px solid rgba(156, 163, 175, 0.3);
   display: flex;
   align-items: center;
+}
+
+.mode_lite .benefitList {
+  gap: 12px;
+}
+
+.mode_lite .benefitItem {
+  height: auto;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.03);
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px; /* 顶部一行 + 底部进度条一行 */
+}
+
+.mode_lite .benefitItem:nth-child(1) {
+  background: rgba(242, 240, 254, 1); /* lavender */
+  border-color: rgba(219, 211, 255, 1);
+}
+
+.mode_lite .benefitItem:nth-child(2) {
+  background: rgba(229, 248, 255, 1); /* sky */
+  border-color: rgba(186, 230, 253, 1);
+}
+
+.mode_lite .benefitItem:nth-child(3) {
+  background: rgba(255, 243, 235, 1); /* peach */
+  border-color: rgba(254, 216, 191, 1);
+}
+
+.mode_lite .benefitItemDeal {
+  min-height: 72px; /* 保持与有进度条的两项卡片等高 */
+  align-items: stretch;
+}
+
+.mode_pro .benefitList {
+  gap: 12px;
+}
+
+.mode_pro .benefitItem {
+  height: auto;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.03);
+  flex-direction: column;
+  align-items: stretch;
   gap: 10px;
-  padding: 0 12px;
+}
+
+.mode_pro .benefitItem:nth-child(1) {
+  background: rgba(242, 240, 254, 1); /* lavender */
+  border-color: rgba(219, 211, 255, 1);
+}
+
+.mode_pro .benefitItem:nth-child(2) {
+  background: rgba(229, 248, 255, 1); /* sky */
+  border-color: rgba(186, 230, 253, 1);
+}
+
+.mode_pro .benefitItem:nth-child(3) {
+  background: rgba(255, 243, 235, 1); /* peach */
+  border-color: rgba(254, 216, 191, 1);
+}
+
+.mode_pro .benefitItemDeal {
+  min-height: 72px; /* 保持与有进度条的两项卡片等高 */
+  align-items: stretch;
+}
+
+.mode_pro .benefitIcon {
+  opacity: 1;
+  width: 44px;
+  height: 44px;
 }
 
 .benefitIcon {
-  width: 18px;
-  height: 18px;
+  width: 32px;
+  height: 32px;
   opacity: 0.8;
 }
 
+.mode_lite .benefitIcon {
+  opacity: 1;
+  width: 44px;
+  height: 44px;
+}
+
 .benefitLabel {
-  font-size: 13px;
+  font-size: 16px;
+  font-weight: 500;
+  color: rgba(51, 65, 85, 1);
+}
+
+.benefitLiteContent {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 10px; /* 标题/数字一行，进度条下一行 */
+}
+
+.benefitLiteTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.benefitLiteTopLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.benefitLabelLite {
+  font-family: "PingFang SC", sans-serif;
+  font-size: 16px;
   font-weight: 700;
-  color: rgba(15, 23, 42, 0.86);
+  font-style: normal;
+  line-height: 24px;
+  letter-spacing: 0px;
+  color: rgba(17, 24, 39, 1);
+}
+
+.benefitValueLite {
+  font-family: "PingFang SC", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  font-style: normal;
+  line-height: 24px;
+  letter-spacing: 0px;
+  white-space: nowrap;
+}
+
+.benefitValueLite_chart {
+  color: rgba(136, 118, 244, 1);
+}
+
+.benefitValueLite_ai {
+  color: rgba(56, 198, 233, 1);
+}
+
+.benefitValueLite_deal {
+  color: rgba(235, 97, 53, 1);
+}
+
+.benefitProgressTrackLite {
+  margin-top: 0;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.06);
+  overflow: hidden;
+  width: 100%;
+}
+
+.benefitProgressFillLite {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.benefitProgressFillLite_chart {
+  background: linear-gradient(90deg, #8876f4 0%, #d3c0ff 100%);
+}
+
+.benefitProgressFillLite_ai {
+  background: linear-gradient(90deg, #38c6e9 0%, #8ff9f7 100%);
+}
+
+.benefitProgressFillLite_deal {
+  background: linear-gradient(90deg, #eb6135 0%, #ffd2c6 100%);
 }
 
 .lockedGrid {
@@ -511,48 +721,97 @@
 
 .lockedCard {
   border-radius: 16px;
-  padding: 12px;
-  border: 1px solid rgba(15, 23, 42, 0.06);
-  min-height: 74px;
+  padding: 20.4px;
+  height: 130px;
+  gap: 3.4px;
+  opacity: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  border: none;
+  --locked-card-border: rgba(15, 23, 42, 0.06);
   box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+}
+
+.lockedCard::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 0.85px;
+  border-radius: inherit;
+  background: var(--locked-card-border);
+  pointer-events: none;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
 }
 
 .lockedCardTop {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
 }
 
 .lockedIcon {
-  width: 22px;
-  height: 22px;
+  width: 32px;
+  height: 32px;
   opacity: 0.9;
 }
 
 .lockedTitle {
-  font-size: 13px;
-  font-weight: 900;
-  color: rgba(17, 24, 39, 0.9);
+  font-family: "PingFang SC", sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: 0;
+  font-weight: 700;
+  color: rgba(51, 65, 85, 1);
 }
 
 .lockedSub {
-  margin-top: 8px;
-  font-size: 11px;
+  font-family: "PingFang SC", sans-serif;
+  font-size: 13px;
+  line-height: 24px;
+  letter-spacing: 0;
+  font-weight: 500;
   color: rgba(0, 0, 0, 0.45);
-  font-weight: 700;
 }
 
 .tone_peach {
-  background: rgba(255, 237, 213, 0.65);
+  background: rgba(255, 243, 235, 1);
+  --locked-card-border: rgba(254, 216, 191, 1);
+}
+.tone_peach .lockedSub {
+  color: rgba(245, 124, 86, 1);
 }
 .tone_lavender {
-  background: rgba(237, 233, 254, 0.65);
+  background: rgba(242, 240, 254, 1);
+  --locked-card-border: rgba(219, 211, 255, 1);
+}
+.tone_lavender .lockedSub {
+  color: rgba(167, 151, 255, 1);
 }
 .tone_sky {
-  background: rgba(224, 242, 254, 0.65);
+  background: rgba(34, 170, 197, 0.2);
+  --locked-card-border: rgba(34, 170, 197, 0.2);
+}
+.tone_sky .lockedSub {
+  color: rgba(42, 187, 220, 1);
 }
 .tone_sand {
-  background: rgba(254, 243, 199, 0.55);
+  background: rgba(255, 243, 225, 1);
+  --locked-card-border: linear-gradient(325.09deg, rgba(255, 111, 0, 0.68) 15.7%, rgba(231, 82, 129, 0.68) 51.44%, rgba(255, 111, 0, 0.68) 93.97%);
+}
+
+.tone_sand .lockedTitle {
+  font-size: 14px;
+  background: linear-gradient(177.03deg, #ff6201 21.27%, #ffc266 97.53%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
 }
 
 .lockedList {
@@ -561,15 +820,60 @@
   gap: 10px;
 }
 
+/* Pro 顶部额度卡：10000积分/月 + AI Call 40次/月 */
+.proAllowanceTopCard {
+  height: 84px;
+  padding: 0 12px;
+  margin-bottom: 10px;
+  border-radius: 18px;
+  background: linear-gradient(124.92deg, #603D21 2.71%, #8D501F 80.69%);
+  border: 1px solid rgba(255, 220, 175, 1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 10px 16px rgba(122, 90, 58, 0.22);
+}
+
+.proAllowanceTopLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.proAllowanceTopMain {
+  font-size: 18px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.92);
+  line-height: 1;
+}
+
+.proAllowanceTopSub {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 248, 237, 0.55);
+  line-height: 1.2;
+}
+
+.upgradePillWide {
+  width: 82px;
+}
+
 .lockedRow {
-  height: 44px;
+  height: 67px;
+  opacity: 1;
   border-radius: 14px;
-  background: linear-gradient(90deg, #7a5a3a 0%, #6a4b2f 100%);
+  background: linear-gradient(124.92deg, #603D21 2.71%, #8D501F 80.69%);
+  border: 1px solid rgba(255, 220, 175, 1);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 12px;
   box-shadow: 0 10px 16px rgba(122, 90, 58, 0.22);
+}
+
+.lockedRowPro {
+  /* Pro 模式也需要右侧按钮，占满 space-between 布局 */
+  justify-content: space-between;
 }
 
 .lockedRowLeft {
@@ -580,12 +884,14 @@
 }
 
 .lockedRowIcon {
-  width: 22px;
-  height: 22px;
-  border-radius: 11px;
-  background: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+}
+
+.lockedRowIconImg {
+  width: 32px;
+  height: 32px;
+  display: block; /* 避免 inline/baseline 导致的子像素对齐发虚 */
 }
 
 .lockedRowLabel {
@@ -598,14 +904,26 @@
 }
 
 .upgradePill {
-  height: 26px;
-  padding: 0 12px;
-  border: none;
-  border-radius: 999px;
-  background: rgba(255, 224, 178, 0.95);
-  color: #6a3a12;
-  font-size: 12px;
-  font-weight: 900;
+  width: 82px;
+  height: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.41);
+  border-radius: 29.82px;
+  /* Telegram iOS WebView 对 button 渐变渲染偶发丢失，这里加底色兜底 */
+  -webkit-appearance: none;
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 204, 140, 1);
+  background-image: linear-gradient(90deg, rgba(255, 204, 140, 1) 0%, rgba(251, 224, 190, 1) 100%);
+  color: rgba(147, 65, 0, 1);
+  font-family: "PingFang SC";
+  font-weight: 500;
+  font-style: normal;
+  font-size: 14px;
+  line-height: 17.89px;
+  letter-spacing: 0px;
+  vertical-align: middle;
   cursor: pointer;
   flex: 0 0 auto;
 }
@@ -671,9 +989,9 @@
 }
 
 .iconGridCircle {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  border-radius: 12px;
   background: linear-gradient(145deg, #d1fae5, #6ee7b7);
   border: 1px solid rgba(16, 185, 129, 0.35);
   display: flex;
@@ -683,9 +1001,11 @@
 }
 
 .iconGridCircle img {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   opacity: 0.85;
+  object-fit: contain;
+  display: block;
 }
 
 .iconGridLabel {
@@ -694,6 +1014,86 @@
   color: rgba(17, 24, 39, 0.72);
   line-height: 1.25;
   max-width: 100%;
+}
+
+/* Lite quick icon grid (基础功能展示) */
+.liteQuickIconGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px 8px;
+  margin-top: 16px;
+}
+
+.liteQuickIconItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.liteQuickIconCircle {
+  width: 32px;
+  height: 32px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #22C55E 0%, #A8FF88 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+/* Pro 模式：去掉绿色染色底 */
+.proQuickIconCircle {
+  background: transparent;
+  box-shadow: none;
+}
+
+.liteQuickIconCircle img {
+  width: 18px;
+  height: 18px;
+  /* 把灰色描边图标转成白色，适配绿色圆形背景 */
+  /* SVG 本身是 fill-opacity=0.5，缩小后容易发虚；这里把整体不透明度拉满 */
+  filter: brightness(0) invert(1) opacity(2);
+  object-fit: contain;
+  display: block;
+}
+
+/* Pro 模式使用彩色权益图标，不做白色滤镜转换 */
+.liteQuickIconCircle img.proQuickIconImg {
+  width: 32px;
+  height: 32px;
+  filter: none;
+  object-fit: contain;
+  display: block;
+}
+
+.liteQuickIconLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color:rgba(51, 65, 85, 1);
+  line-height: 1.25;
+  max-width: 100%;
+}
+
+/* Pro quick icon label（底色/字色按设计稿） */
+.proQuickIconLabel {
+  font-family: PingFang SC;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 12px;
+  /* Figma/设计稿字段：leading-trim NONE（该属性在 Less 中不一定受支持） */
+  line-height: 24px;
+  letter-spacing: 0px;
+  vertical-align: middle;
+  color: rgba(255, 236, 208, 1);
+  max-width: 100%;
+}
+
+/* 英文文案更长，降低字号避免挤压换行 */
+.quickIconLabelEn {
+  font-size: 11px;
+  line-height: 16px;
 }
 
 /* Pro inner cards */
@@ -811,9 +1211,9 @@
 }
 
 .iconGridCirclePro {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  border-radius: 12px;
   background: linear-gradient(145deg, rgba(251, 191, 36, 0.35), rgba(180, 83, 9, 0.45));
   border: 1px solid rgba(251, 191, 36, 0.45);
   display: flex;
@@ -822,9 +1222,11 @@
 }
 
 .iconGridCirclePro img {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   opacity: 0.92;
+  object-fit: contain;
+  display: block;
 }
 
 .iconGridLabelPro {

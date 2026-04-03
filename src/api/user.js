@@ -646,3 +646,38 @@ export const saveAlertConfig = async (config) => {
     return { success: false, error: error.message || '保存失败' };
   }
 };
+
+/**
+ * 是否允许在当前前端路径调用语言同步接口（仅首页与 /user 下）
+ * @param {string} pathname - 如 usePathname() 或 location.pathname
+ */
+export function isEditLanguageAllowedPath(pathname) {
+  if (typeof pathname !== 'string') return false;
+  const p = pathname === '' ? '/' : pathname;
+  if (p === '/') return true;
+  if (p.startsWith('/user')) return true;
+  return false;
+}
+
+/**
+ * 编辑用户语言
+ * @param {'zh'|'en'} language - 语言（zh: 中文，en: 英文）
+ * @returns {Promise}
+ */
+export const editLanguage = (language) => {
+  if (typeof window !== 'undefined') {
+    if (!isEditLanguageAllowedPath(window.location.pathname)) {
+      return Promise.resolve({ code: 0, data: null });
+    }
+  }
+
+  const lang = language === 'zh' || language === 'en' ? language : 'zh';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+  return request({
+    url: '/user/editLanguage',
+    method: 'POST',
+    headers: token ? { authentication: token } : undefined,
+    data: { language: lang },
+  });
+};

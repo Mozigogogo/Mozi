@@ -3,6 +3,9 @@ const { API_BASE_URL, PROJECT_ID } = require('./config');
 
 module.exports = withLess({
   reactStrictMode: true,
+  // 仅用于线上排查：开启浏览器 sourcemap，便于从 chunk 调用栈映射回 src/ 源码。
+  // 排查完成后建议关闭，避免暴露源码细节。
+  productionBrowserSourceMaps: true,
   images: {
     domains: ['localhost', 'moziinnovations.com'],
     unoptimized: true,
@@ -44,6 +47,17 @@ module.exports = withLess({
   },
   async headers() {
     return [
+      // Telegram WebView（以及部分移动端 WebView）对静态资源缓存较激进。
+      // 这里对 Next 的构建产物资源禁用长缓存，确保线上更新能尽快生效。
+      {
+        source: '/_next/static/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=0, must-revalidate',
+          },
+        ],
+      },
       {
         source: '/tg/:path*',
         headers: [

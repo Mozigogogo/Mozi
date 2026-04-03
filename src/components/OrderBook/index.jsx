@@ -170,10 +170,6 @@ export default function OrderBook({
     return { maxBid: maxBidVal, maxAsk: maxAskVal };
   }, [asks, bids, visibleRowsCount]);
 
-  if (!rows.length) {
-    return <div className={styles.empty}>{t('orderBook.noData')}</div>;
-  }
-
   return (
     <div className={`${styles.container} ${showMask ? styles.containerMasked : ''}`}>
       {showHeader && (
@@ -247,8 +243,15 @@ export default function OrderBook({
         </div>
       </div>
 
-      <div className={`${styles.list} ${(selectedOption.includes('前五') || selectedOption.includes('Top 5')) ? styles.listTop5 : ''} ${(selectedOption.includes('前十') || selectedOption.includes('Top 10')) ? styles.listTop10 : ''}`}>
-        {rows.map((row, idx) => {
+      <div
+        className={`${styles.list} ${
+          (selectedOption.includes('前五') || selectedOption.includes('Top 5')) ? styles.listTop5 : ''
+        } ${(
+          selectedOption.includes('前十') || selectedOption.includes('Top 10')
+        ) ? styles.listTop10 : ''} ${!rows.length ? styles.listEmpty : ''}`}
+      >
+        {rows.length ? (
+          rows.map((row, idx) => {
           const bidValue = row.bid ? Number(row.bid.value ?? 0) : 0;
           const askValue = row.ask ? Number(row.ask.value ?? 0) : 0;
           const bidPct = Math.max(0, Math.min(100, (bidValue / maxBid) * 100));
@@ -304,7 +307,10 @@ export default function OrderBook({
               </div>
             </div>
           );
-        })}
+        })
+        ) : (
+          <div className={styles.empty}>{t('orderBook.noData')}</div>
+        )}
       </div>
 
       {/* 遮罩层 */}

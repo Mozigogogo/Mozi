@@ -5,16 +5,19 @@ import { Popup, Input, Button, Toast } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
-import { sendVerificationCode, loginByTelegram, loginByEmail, registerByEmail, completeTask } from '../../api/user';
+import { sendVerificationCode, loginByEmail, registerByEmail, completeTask, loginByTelegram } from '../../api/user';
 import { runPostLoginSideEffects } from '../../utils/postLogin';
 import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
 import styles from './index.module.less';
+import { syncI18nextLngFromLoginResponse } from '../../utils/syncLoginLanguage';
+import { confirm } from '../Modal/confirm';
 
 // 检测是否在 Telegram 环境中
 const isTelegramEnv = () => {
   if (typeof window === 'undefined') return false;
   // 优先从 localStorage 读取
   const channel = localStorage.getItem('appChannel');
+  // 只在明确设置了 tg 渠道时才走 TG 逻辑
   return channel === 'tg';
 };
 
@@ -26,17 +29,7 @@ const getTelegramUserInfo = () => {
   
   const tg = window.Telegram.WebApp;
   const tgUser = tg.initDataUnsafe.user;
-  
-  // 打印完整的 Telegram 数据用于调试
-  console.log('=== LoginModal - Telegram 完整数据 ===');
-  console.log('用户信息:', tgUser);
-  console.log('initData (原始字符串):', tg.initData);
-  console.log('initDataUnsafe (完整对象):', tg.initDataUnsafe);
-  console.log('Hash (签名):', tg.initDataUnsafe?.hash);
-  console.log('Auth Date:', tg.initDataUnsafe?.auth_date);
-  console.log('Platform:', tg.platform);
-  console.log('Version:', tg.version);
-  
+
   return {
     username: tgUser.username || tgUser.first_name || tgUser.last_name || 'Telegram User',
     firstName: tgUser.first_name || '',
@@ -75,7 +68,6 @@ const updateTelegramUserInfo = async () => {
       ];
       
       if (currentNickname && !defaultNicknames.includes(currentNickname)) {
-        console.log('⏭️ LoginModal - 用户已有自定义昵称，跳过自动更新', { currentNickname });
         return;
       }
     } catch (e) {
@@ -89,11 +81,6 @@ const updateTelegramUserInfo = async () => {
     if (!nickname && (tgUserInfo.firstName || tgUserInfo.lastName)) {
       nickname = `${tgUserInfo.firstName} ${tgUserInfo.lastName}`.trim();
     }
-    
-    console.log('=== LoginModal - 首次更新 Telegram 用户信息 ===', {
-      nickname,
-      avatar: tgUserInfo.photoUrl
-    });
 
     const DEFAULT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png';
     
@@ -107,8 +94,6 @@ const updateTelegramUserInfo = async () => {
     });
 
     if (res?.data) {
-      console.log('✅ LoginModal - Telegram 用户信息更新成功');
-      
       // 同步更新 localStorage
       try {
         const storedUserInfo = localStorage.getItem('userInfo');
@@ -128,27 +113,14 @@ const updateTelegramUserInfo = async () => {
 };
 
 // Telegram 直接登录处理函数
-const handleTelegramDirectLogin = async (onLoginSuccess, onClose, t) => {
+const handleTelegramDirectLogin = async (onLoginSuccess, onClose, t, i18nInstance) => {
   if (typeof window === 'undefined' || !window.Telegram?.WebApp) {
     Toast.show({ content: '非 Telegram 环境', position: 'bottom' });
     return;
   }
   
   const tgWebApp = window.Telegram.WebApp;
-  
-  // 打印 TG 环境原始参数数据
-  console.log('========== TG 原始数据 ==========');
-  console.log('window.Telegram.WebApp:', tgWebApp);
-  console.log('initData (原始字符串):', tgWebApp.initData);
-  console.log('initDataUnsafe (完整对象):', tgWebApp.initDataUnsafe);
-  console.log('initDataUnsafe.hash:', tgWebApp.initDataUnsafe?.hash);
-  console.log('initDataUnsafe.auth_date:', tgWebApp.initDataUnsafe?.auth_date);
-  console.log('initDataUnsafe.query_id:', tgWebApp.initDataUnsafe?.query_id);
-  console.log('platform:', tgWebApp.platform);
-  console.log('version:', tgWebApp.version);
-  console.log('colorScheme:', tgWebApp.colorScheme);
-  console.log('================================');
-  
+
   const initData = tgWebApp.initData;
   const initDataUnsafe = tgWebApp.initDataUnsafe;
   
@@ -158,18 +130,6 @@ const handleTelegramDirectLogin = async (onLoginSuccess, onClose, t) => {
   }
   
   const tgUser = initDataUnsafe.user;
-  
-  // 打印用户原始数据
-  console.log('========== TG 用户原始数据 ==========');
-  console.log('user 对象:', tgUser);
-  console.log('user.id:', tgUser.id);
-  console.log('user.first_name:', tgUser.first_name);
-  console.log('user.last_name:', tgUser.last_name);
-  console.log('user.username:', tgUser.username);
-  console.log('user.language_code:', tgUser.language_code);
-  console.log('user.photo_url:', tgUser.photo_url);
-  console.log('user.is_premium:', tgUser.is_premium);
-  console.log('====================================');
   
   // 从 initData 解析 hash
   const urlParams = new URLSearchParams(initData);
@@ -186,19 +146,6 @@ const handleTelegramDirectLogin = async (onLoginSuccess, onClose, t) => {
   // 判断环境（直接使用 Railway 的 NEXT_PUBLIC_APP_ENV 环境变量）
   const env = process.env.NEXT_PUBLIC_APP_ENV || 'test';
   
-  console.log('🚀 [LoginModal] Telegram 直接登录');
-  console.log('========== TG 登录参数 ==========');
-  console.log('type:', 'login');
-  console.log('telegramId:', String(tgUser.id));
-  console.log('username:', tgUser.username || tgUser.first_name || '');
-  console.log('photoUrl:', tgUser.photo_url || '');
-  console.log('hash:', hash);
-  console.log('inviteCode:', inviteCode);
-  console.log('channel:', 'tg');
-  console.log('env:', env);
-  console.log('完整 initData:', initData);
-  console.log('================================');
-  
   try {
     Toast.show({ icon: 'loading', content: t('user.loggingIn') || '登录中...', duration: 0 });
     
@@ -208,13 +155,24 @@ const handleTelegramDirectLogin = async (onLoginSuccess, onClose, t) => {
       photoUrl: tgUser.photo_url || '',
       hash: hash,
       inviteCode: inviteCode,
-      env: env
+      env: env,
     });
     
     Toast.clear();
     
     if (res?.data?.token) {
       localStorage.setItem('token', res.data.token);
+      // 通知已建立的 WebSocket 使用新 token 重新鉴权
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('mozi:tokenUpdated', {
+            detail: { token: res.data.token },
+          })
+        );
+      }
+
+      // 根据后端返回 language 更新缓存语言
+      syncI18nextLngFromLoginResponse(res, i18nInstance);
       
       const userData = res?.data?.userInfo || res?.data?.user;
       if (userData) {
@@ -253,7 +211,7 @@ const handleTelegramDirectLogin = async (onLoginSuccess, onClose, t) => {
 };
 
 export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletLogin, initialMode = 'login' }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   // 表单状态
   const [mode, setMode] = useState(initialMode); // 'login' or 'register'
   const [showEmailForm, setShowEmailForm] = useState(false); // 控制是否显示邮箱表单
@@ -279,7 +237,6 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
       const storedInviteCode = localStorage.getItem('inviteCode');
       if (storedInviteCode) {
         setInviteCode(storedInviteCode);
-        console.log('🔍 [LoginModal] 自动填充邀请码:', storedInviteCode);
       }
     }
   }, [visible]);
@@ -381,6 +338,18 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
 
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
+        // 通知已建立的 WebSocket 使用新 token 重新鉴权
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(
+            new CustomEvent('mozi:tokenUpdated', {
+              detail: { token: res.data.token },
+            })
+          );
+        }
+
+        // 根据后端返回 language 更新缓存语言（并同步 i18n）
+        syncI18nextLngFromLoginResponse(res, i18n);
+        
         if (res?.data?.userInfo) {
           // 将 subscribeAnnouncement 一起存入 userInfo
           const userInfoWithSubscribe = {
@@ -479,6 +448,18 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
 
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
+        // 通知已建立的 WebSocket 使用新 token 重新鉴权
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(
+            new CustomEvent('mozi:tokenUpdated', {
+              detail: { token: res.data.token },
+            })
+          );
+        }
+
+        // 根据后端返回 language 更新缓存语言（并同步 i18n）
+        syncI18nextLngFromLoginResponse(res, i18n);
+        
         if (res?.data?.userInfo) {
           const userInfoWithSubscribe = {
             ...res.data.userInfo,
@@ -564,6 +545,74 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
     onWalletLogin?.();
   };
 
+  // TG 环境：确认当前 TG 用户信息后，调用后端 TG 登录接口
+  const tgReloginInFlightRef = useRef(false);
+  const tgAutoConfirmOnceRef = useRef(false);
+
+  const handleTelegramConfirmAndLogin = async () => {
+    if (tgReloginInFlightRef.current) return;
+
+    const tgUserInfo = getTelegramUserInfo();
+    if (!tgUserInfo) {
+      Toast.show({ content: '无法获取 Telegram 用户信息', position: 'bottom' });
+      handleClose();
+      return;
+    }
+
+    const ok = await confirm({
+      title: t('auth.telegramReloginTitle'),
+      content: (
+        <div style={{ lineHeight: 1.6 }}>
+          <div style={{ fontWeight: 600, marginBottom: 8 }}>
+            {t('auth.telegramReloginPrompt')}
+          </div>
+          <div>{t('auth.telegramReloginUsername', { username: tgUserInfo.username })}</div>
+          <div>{t('auth.telegramReloginUserId', { userId: tgUserInfo.userId })}</div>
+        </div>
+      ),
+      cancelText: t('common.cancel'),
+      confirmText: t('auth.telegramReloginConfirm'),
+      closeOnAction: true,
+      bodyStyle: { borderRadius: '16px' },
+      maskClosable: true,
+    });
+
+    if (!ok) {
+      handleClose();
+      return;
+    }
+
+    tgReloginInFlightRef.current = true;
+    try {
+      await handleTelegramDirectLogin(onLoginSuccess, handleClose, t, i18n);
+    } finally {
+      tgReloginInFlightRef.current = false;
+    }
+  };
+
+  // TG 环境下，当弹窗打开且未进入邮箱表单时，自动弹确认窗
+  useEffect(() => {
+    if (!visible) {
+      tgAutoConfirmOnceRef.current = false;
+      return;
+    }
+    if (!isTelegramEnv()) return;
+    if (showEmailForm) return;
+    if (tgAutoConfirmOnceRef.current) return;
+
+    tgAutoConfirmOnceRef.current = true;
+    // 延迟到下一帧，确保 Popup 已渲染
+    requestAnimationFrame(() => {
+      handleTelegramConfirmAndLogin().catch((e) => {
+        console.error('TG relogin confirm failed:', e);
+      });
+    });
+  }, [visible, showEmailForm]);
+
+  // TG 环境下：不展示底部 LoginModal，只展示 confirm 浮层（由上面的 useEffect 触发）
+  const shouldHideBottomPopupInTg = isTelegramEnv() && visible && !showEmailForm;
+  if (shouldHideBottomPopupInTg) return null;
+
   return (
     <Popup
       visible={visible}
@@ -602,7 +651,7 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
                   /* TG 环境：只显示 Telegram 登录按钮 */
                   <div 
                     className={styles.walletBtn} 
-                    onClick={() => handleTelegramDirectLogin(onLoginSuccess, handleClose, t)}
+                    onClick={handleTelegramConfirmAndLogin}
                     style={{ background: '#0088cc' }}
                   >
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="white" style={{ marginRight: '8px' }}>
