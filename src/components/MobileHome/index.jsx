@@ -60,6 +60,17 @@ export default function MobileHome() {
     initDataLen: 0,
     colorScheme: '',
   });
+  const localRenderCountRef = useRef(0);
+  localRenderCountRef.current += 1;
+
+  if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+    window.__mobileHomeDebug = window.__mobileHomeDebug || { mountSeq: 0, renderSeq: 0 };
+    window.__mobileHomeDebug.renderSeq += 1;
+    console.log('[MobileHome][debug] render', {
+      localRenderCount: localRenderCountRef.current,
+      globalRenderSeq: window.__mobileHomeDebug.renderSeq,
+    });
+  }
 
   const initTelegram = () => {
     const tg = window?.Telegram?.WebApp;
@@ -115,6 +126,18 @@ export default function MobileHome() {
       }
     } catch (e) {
       console.warn('检测活动弹窗状态失败:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+      window.__mobileHomeDebug = window.__mobileHomeDebug || { mountSeq: 0, renderSeq: 0 };
+      window.__mobileHomeDebug.mountSeq += 1;
+      const mountId = window.__mobileHomeDebug.mountSeq;
+      console.log('[MobileHome][debug] mount', { mountId });
+      return () => {
+        console.log('[MobileHome][debug] unmount', { mountId });
+      };
     }
   }, []);
   
