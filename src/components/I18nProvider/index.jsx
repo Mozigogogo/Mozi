@@ -15,6 +15,7 @@ export default function I18nProvider({ children }) {
     pathname ||
     (typeof window !== 'undefined' ? window.location?.pathname : '') ||
     '';
+  const isHomeRoute = pathForPolicy === '/';
   const isEditLanguageRoute = isEditLanguageAllowedPath(pathForPolicy);
 
   useEffect(() => {
@@ -83,7 +84,7 @@ export default function I18nProvider({ children }) {
   // 始终用 I18nextProvider 包裹，确保子组件能访问 i18n 实例
   return (
     <I18nextProvider i18n={i18n}>
-      {!isInitialized ? (
+      {!isInitialized && !isHomeRoute ? (
         <LogoLoading visible={true} fullscreen mask image="/images/community/loadding.png" size={72} />
       ) : (
         children
