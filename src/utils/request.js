@@ -161,12 +161,14 @@ instance.interceptors.response.use(
     if (data && data.code === 401) {
       // 检查请求使用的 token 是否与当前存储的 token 一致
       // 防止并发请求或旧请求的 401 误删新登录的 token
+      let isTG = false;
+      let isPC = false;
       let isTGEnv = false;
       if (typeof window !== 'undefined') {
         const currentToken = localStorage.getItem('token');
         const appChannel = localStorage.getItem('appChannel');
-        const isTG = appChannel === 'tg';
-        const isPC = appChannel === 'pc';
+        isTG = appChannel === 'tg';
+        isPC = appChannel === 'pc';
         isTGEnv = isTG;
 
         // 获取请求头中的 token，兼容不同写法
@@ -294,8 +296,8 @@ instance.interceptors.response.use(
             if (window.location.pathname !== '/') {
               window.location.replace('/');
             } else {
-              // 若已经在首页，则刷新以触发组件流程
-              window.location.reload();
+              // 若已经在首页，避免整页 reload；直接通知 TelegramAutoLogin 重试登录
+              window.dispatchEvent(new CustomEvent('tg-force-relogin'));
             }
           }
         } catch (e) {

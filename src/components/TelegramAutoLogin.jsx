@@ -490,7 +490,17 @@ export default function TelegramAutoLogin() {
       handleTelegramAutoLogin();
     }, 100);
 
-    return () => clearTimeout(timer);
+    // 支持在首页收到 401 后原地重登，避免整页刷新
+    const onForceRelogin = () => {
+      loginAttemptedRef.current = false;
+      handleTelegramAutoLogin();
+    };
+    window.addEventListener('tg-force-relogin', onForceRelogin);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('tg-force-relogin', onForceRelogin);
+    };
   }, []);
 
   // return <LogoLoading visible={isLoading} fullscreen mask image="/images/community/loadding.png" />;

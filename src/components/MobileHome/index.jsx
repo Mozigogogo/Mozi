@@ -347,6 +347,13 @@ export default function MobileHome() {
 
   // 获取自选列表
   const fetchOwnList = async (showLoading = false) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) {
+      setOwn([]);
+      setMyOwnLoading(false);
+      return;
+    }
+
     if (showLoading) {
       setMyOwnLoading(true);
     }
@@ -416,7 +423,15 @@ export default function MobileHome() {
         try {
           let itemListData;
           switch (i) {
-            case 0: itemListData = await homeApi.getSelfSelectRank(10, 1); break;
+            case 0: {
+              const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+              if (!token) {
+                itemListData = { data: [] };
+              } else {
+                itemListData = await homeApi.getSelfSelectRank(10, 1);
+              }
+              break;
+            }
             case 1: itemListData = await homeApi.getPriceChangeRank(0); break;
             case 2: itemListData = await homeApi.getPriceDownChangeRank(0); break;
             case 3: itemListData = await homeApi.getPriceWaveRank(0); break;
