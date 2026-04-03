@@ -60,6 +60,16 @@ export default function MobileHome() {
     initDataLen: 0,
     colorScheme: '',
   });
+
+  if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+    window.__moziDebug = window.__moziDebug || { mobileHomeRender: 0, mobileHomeMount: 0 };
+    window.__moziDebug.mobileHomeRender += 1;
+    console.log('[MobileHome][debug] render', {
+      renderCount: window.__moziDebug.mobileHomeRender,
+      showActivityModal,
+      activityImagesLoaded,
+    });
+  }
   const localRenderCountRef = useRef(0);
   localRenderCountRef.current += 1;
 
@@ -112,6 +122,7 @@ export default function MobileHome() {
   // 每次进入页面都显示活动弹窗
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    console.log('[MobileHome][debug] activity modal effect run');
 
     try {
       const hasShownActivity = sessionStorage.getItem(ACTIVITY_LAST_SHOWN_KEY);
@@ -148,6 +159,7 @@ export default function MobileHome() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    console.log('[MobileHome][debug] telegram init effect run');
     if (window?.Telegram?.WebApp) {
       initTelegram();
       return;
@@ -190,6 +202,7 @@ export default function MobileHome() {
   // 首页公告栏显示控制
   const [showNotice, setShowNotice] = useState(true);
   useEffect(() => {
+    console.log('[MobileHome][debug] notice effect run');
     try {
       setShowNotice(localStorage.getItem(NOTICE_HIDE_KEY) !== '1');
     } catch {}
@@ -534,6 +547,7 @@ export default function MobileHome() {
 
   // 初始化数据加载 + 轮询（仅更新数据区域）
   useEffect(() => {
+    console.log('[MobileHome][debug] data effect run', { activityImagesLoaded });
     if (!activityImagesLoaded) return;
 
     // 首次初始化：允许展示加载态
@@ -545,6 +559,7 @@ export default function MobileHome() {
 
     // 后续轮询：静默更新数据，不再触发加载动画
     const interval = setInterval(() => {
+      console.log('[MobileHome][debug] polling tick 30s');
       fetchHotCoin();
       fetchHotIndustry();
       fetchHotContract();
@@ -564,11 +579,24 @@ export default function MobileHome() {
   };
 
   const handleActivityClose = useCallback(() => {
+    console.log('[MobileHome][debug] activity modal close');
     setShowActivityModal(false);
   }, []);
 
   const handleActivityImagesLoaded = useCallback(() => {
+    console.log('[MobileHome][debug] activity images loaded');
     setActivityImagesLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.__moziDebug = window.__moziDebug || { mobileHomeRender: 0, mobileHomeMount: 0 };
+    window.__moziDebug.mobileHomeMount += 1;
+    const mountId = window.__moziDebug.mobileHomeMount;
+    console.log('[MobileHome][debug] mount', { mountId });
+    return () => {
+      console.log('[MobileHome][debug] unmount', { mountId });
+    };
   }, []);
 
   // 跳转到榜单详情页
