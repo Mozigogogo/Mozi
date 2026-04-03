@@ -4,10 +4,17 @@ import styles from '@/app/user/page.module.less';
 
 const DEFAULT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png';
 const VIP_ICON = '/icons/new_user/vip.svg';
+const LITE_ICON = '/icons/vip/lite.svg';
 
 const UserInfo = ({ userInfo, handleLogin, isTelegramEnv }) => {
   const { t } = useTranslation();
   const isVip = !!userInfo?.isVip;
+  const isLite = !!userInfo?.isLite;
+  const nicknameClass = isVip
+    ? styles.nicknameVip
+    : isLite
+      ? styles.nicknameLite
+      : styles.nickname;
 
   return (
     <div className={styles.topBannerWrapper}>
@@ -19,18 +26,18 @@ const UserInfo = ({ userInfo, handleLogin, isTelegramEnv }) => {
               <div className={styles.avatarWrapper}>
                 <img className={styles.headerAvatar} src={userInfo.avatar || DEFAULT_AVATAR} alt="头像" />
                 {/* 验证图标 */}
-                {isVip && (
+                {(isVip || isLite) && (
                   <img
                     className={styles.verifyIcon}
-                    src={VIP_ICON}
-                    alt="verify"
+                    src={isVip ? VIP_ICON : LITE_ICON}
+                    alt={isVip ? 'verify' : 'lite-verify'}
                     onError={(e) => (e.target.style.display = 'none')}
                   />
                 )}
               </div>
               <div className={styles.infoContent}>
                 <div className={styles.nicknameWrapper}>
-                  <span className={isVip ? styles.nicknameVip : styles.nickname}>
+                  <span className={nicknameClass}>
                     {userInfo.nickname || t('user.defaultNickname')}
                   </span>
                 </div>

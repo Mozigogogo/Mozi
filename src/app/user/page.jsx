@@ -81,6 +81,7 @@ export default function UserPage() {
     nickname: t('user.defaultNickname'),
     level: 1,
     isVip: false,
+    isLite: false,
     isLogin: false
   });
   const [mySubscription, setMySubscription] = useState(null);
@@ -117,8 +118,7 @@ export default function UserPage() {
   // 用于记录当前组件生命周期内是否已经为邀请码弹出过登录弹窗
   const hasShownInviteModalRef = useRef(false);
 
-  // 这里的“显示 Pro 图标/渐变昵称”只应在 PRO 档位时为 true
-  // LITE 应该保持 Free 样式（不显示 verifyIcon、昵称为黑色）
+  // 这里会从订阅信息推导档位：PRO / LITE / FREE
   const getSubscriptionTier = (sub) => {
     if (!sub) return 'free';
     const tierCode = String(sub?.tierCode || '').toUpperCase();
@@ -136,6 +136,7 @@ export default function UserPage() {
   };
 
   const isVipBySubscription = (sub) => getSubscriptionTier(sub) === 'pro';
+  const isLiteBySubscription = (sub) => getSubscriptionTier(sub) === 'lite';
 
   // 进入 /user 时拉取订阅信息（登录态存在才请求）
   useEffect(() => {
@@ -153,7 +154,11 @@ export default function UserPage() {
         const cached = JSON.parse(cachedStr);
         if (cached?.ts && Date.now() - cached.ts < TTL && cached?.data) {
           setMySubscription(cached.data);
-          setUserInfo((prev) => ({ ...prev, isVip: isVipBySubscription(cached.data) }));
+          setUserInfo((prev) => ({
+            ...prev,
+            isVip: isVipBySubscription(cached.data),
+            isLite: isLiteBySubscription(cached.data),
+          }));
         }
       }
     } catch (_) {}
@@ -163,7 +168,11 @@ export default function UserPage() {
         if (!alive) return;
         const data = res?.data ?? res;
         setMySubscription(data);
-        setUserInfo((prev) => ({ ...prev, isVip: isVipBySubscription(data) }));
+        setUserInfo((prev) => ({
+          ...prev,
+          isVip: isVipBySubscription(data),
+          isLite: isLiteBySubscription(data),
+        }));
         try {
           localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
         } catch (_) {}
@@ -710,6 +719,7 @@ export default function UserPage() {
       nickname: t('user.defaultNickname'),
       level: 1,
       isVip: false,
+      isLite: false,
       isLogin: false
     });
     
@@ -1044,7 +1054,11 @@ export default function UserPage() {
         const subRes = await getMySubscription();
         const data = subRes?.data ?? subRes;
         setMySubscription(data);
-        setUserInfo((prev) => ({ ...prev, isVip: isVipBySubscription(data) }));
+        setUserInfo((prev) => ({
+          ...prev,
+          isVip: isVipBySubscription(data),
+          isLite: isLiteBySubscription(data),
+        }));
       } catch (e) {
         console.error('❌ [UserPage] 获取订阅信息失败:', e);
       }

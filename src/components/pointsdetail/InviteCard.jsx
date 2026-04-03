@@ -29,7 +29,7 @@ const InviteCard = ({ pointsData, copyToClipboard }) => {
           </div>
           <div className={styles.rewardText}>
             <div className={styles.rewardTitle}>{t('pointsDetail.invitePay')}</div>
-            <div className={styles.rewardValue}>+500</div>
+            <div className={styles.rewardValue}>+3000</div>
           </div>
         </div>
       </div>

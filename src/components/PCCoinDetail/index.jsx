@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, Children } from 'react';
 import { LeftOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { Loading } from '@/components/Loading';
@@ -58,6 +58,39 @@ export default function PCCoinDetail({
 
   const changeCls = isUp ? styles.changeUp : styles.changeDown;
 
+  const childrenArr = Children.toArray(children);
+  const topChild = childrenArr[0];
+  const restChildren = childrenArr.slice(1);
+
+  const barrageBarEl =
+    showBarrage ? (
+      <div className={styles.barrageBar}>
+        <img
+          src="/icons/new_home/comment.svg"
+          alt=""
+          className={styles.barrageIcon}
+        />
+        <input
+          type="text"
+          className={styles.barrageInput}
+          placeholder={t('pcCoinDetail.barragePlaceholder')}
+          value={barrageValue}
+          onChange={(e) => setBarrage(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleSend();
+          }}
+        />
+        <button
+          type="button"
+          className={styles.barrageSend}
+          onClick={handleSend}
+          disabled={!onBarrageSend || !(barrageValue || '').trim()}
+        >
+          {t('pcCoinDetail.send')}
+        </button>
+      </div>
+    ) : null;
+
   return (
     <div className={`${styles.root} ${className || ''}`}>
       <header className={styles.topBar}>
@@ -77,14 +110,7 @@ export default function PCCoinDetail({
         <div className={styles.actions}>
           {onToggleFavorite ? (
             <button type="button" className={styles.actionBtn} onClick={onToggleFavorite}>
-              <img
-                src={
-                  isFavorite
-                    ? '/icons/new_home/collect_actived.svg'
-                    : '/icons/pc/Collection@2x.png'
-                }
-                alt=""
-              />
+              <img src="/icons/new_home/like.svg" alt="" />
               <span className={isFavorite ? styles.actionLabelInFavorites : undefined}>
                 {t('detail.actions.favorite')}
               </span>
@@ -92,19 +118,19 @@ export default function PCCoinDetail({
           ) : null}
           {onAlert ? (
             <button type="button" className={styles.actionBtn} onClick={onAlert}>
-              <img src="/icons/pc/alert@2x.png" alt="" />
+              <img src="/icons/new_home/belling.svg" alt="" />
               <span>{t('detail.actions.alert')}</span>
             </button>
           ) : null}
           {onShare ? (
             <button type="button" className={styles.actionBtn} onClick={onShare}>
-              <img src="/icons/new_detail/share.svg" alt="" />
+              <img src="/icons/new_home/share.svg" alt="" />
               <span>{t('detail.actions.share')}</span>
             </button>
           ) : null}
           {onTradingRadar ? (
             <button type="button" className={styles.actionBtn} onClick={onTradingRadar}>
-              <img src="/icons/new_home/monitor-bell.svg" alt="" />
+              <img src="/icons/new_home/trading_radar.svg" alt="" />
               <span>{t('pcCoinDetail.tradingRadar')}</span>
             </button>
           ) : null}
@@ -127,8 +153,10 @@ export default function PCCoinDetail({
                 )}
                 <span className={styles.coinSymbol}>{symbol || '—'}</span>
               </div>
+            </div>
+            <div className={styles.overviewRight}>
               <div className={styles.priceBlock}>
-                <div className={styles.priceMain}>{currentPrice ?? '—'}</div>
+                <div className={`${styles.priceMain} ${changeCls}`}>{currentPrice ?? '—'}</div>
                 <div className={`${styles.changeRow} ${changeCls}`}>
                   <span>{isUp ? '▲' : '▼'}</span>
                   {priceChangeAbs != null && priceChangeAbs !== '' ? (
@@ -139,54 +167,31 @@ export default function PCCoinDetail({
                   ) : null}
                 </div>
               </div>
+              {statColumns.length > 0 ? (
+                <div className={styles.statGrid}>
+                  {statColumns.slice(0, 3).map((col, ci) => (
+                    <div key={ci} className={styles.statCol}>
+                      {(col || []).map((cell, i) => (
+                        <div key={i} className={styles.statItem}>
+                          <span className={styles.statLabel}>{cell.label}</span>
+                          <span className={styles.statValue}>{cell.value ?? '—'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
             </div>
-            {statColumns.length > 0 ? (
-              <div className={styles.statGrid}>
-                {statColumns.slice(0, 3).map((col, ci) => (
-                  <div key={ci} className={styles.statCol}>
-                    {(col || []).map((cell, i) => (
-                      <div key={i} className={styles.statItem}>
-                        <span className={styles.statLabel}>{cell.label}</span>
-                        <span className={styles.statValue}>{cell.value ?? '—'}</span>
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            ) : null}
           </div>
         )}
       </section>
 
       <div className={styles.mainCard}>
-        <div className={styles.mainCardBody}>{children}</div>
-        {showBarrage ? (
-          <div className={styles.barrageBar}>
-            <img
-              src="/icons/new_home/ai_chat.svg"
-              alt=""
-              className={styles.barrageIcon}
-            />
-            <input
-              type="text"
-              className={styles.barrageInput}
-              placeholder={t('pcCoinDetail.barragePlaceholder')}
-              value={barrageValue}
-              onChange={(e) => setBarrage(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleSend();
-              }}
-            />
-            <button
-              type="button"
-              className={styles.barrageSend}
-              onClick={handleSend}
-              disabled={!onBarrageSend || !(barrageValue || '').trim()}
-            >
-              {t('pcCoinDetail.send')}
-            </button>
-          </div>
-        ) : null}
+        <div className={styles.mainCardBody}>
+          {topChild}
+          {barrageBarEl}
+          {restChildren}
+        </div>
       </div>
     </div>
   );
