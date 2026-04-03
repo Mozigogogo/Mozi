@@ -3,9 +3,11 @@ import { useTranslation } from 'react-i18next';
 import styles from '@/app/pointsdetail/page.module.less';
 import SectionHeader from './SectionHeader';
 import DeferredImg from './DeferredImg';
+import { getTgInviteLink } from '@/utils/constants';
 
 const InviteCard = ({ pointsData, copyToClipboard }) => {
   const { t } = useTranslation();
+  const inviteLinkFallback = pointsData.inviteLink || getTgInviteLink(pointsData.inviteCode);
 
   return (
     <div className={styles.inviteCard}>
@@ -36,11 +38,11 @@ const InviteCard = ({ pointsData, copyToClipboard }) => {
         <div className={styles.inviteInputWrapper}>
           <div className={styles.inviteInputLeft}>
             <span className={styles.inviteInputLabel}>{t('pointsDetail.inviteLink')}</span>
-            <div className={styles.inviteLinkText}>{pointsData.inviteLink || `https://t.me/MoziBot?start=${pointsData.inviteCode}`}</div>
+            <div className={styles.inviteLinkText}>{inviteLinkFallback}</div>
           </div>
           <button
             className={styles.copyBtn}
-            onClick={() => copyToClipboard(pointsData.inviteLink || `https://t.me/MoziBot?start=${pointsData.inviteCode}`)}
+            onClick={() => copyToClipboard(inviteLinkFallback)}
           >
             <DeferredImg src="/point/copy.svg" alt="Copy" width={18} height={18} />
           </button>

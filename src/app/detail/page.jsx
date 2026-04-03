@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Tabs, Toast, Button, TabBar } from 'antd-mobile';
 import { motion, AnimatePresence } from 'framer-motion';
 import PCLayout from '@/components/PCLayout';
+import PCCoinDetail from '@/components/PCCoinDetail';
 import Layout from '../../components/Layout';
 import NavBar from '../../components/NavBar';
 import MoziCard from '../../components/MoziCard';
@@ -44,6 +45,8 @@ export default function DetailPage() {
   const symbol = searchParams.get('symbol') || '';
   const fromFavorite = searchParams.get('fromFavorite') === '1'; // 是否从自选榜进入
   const { t } = useTranslation();
+  // 高度调试：在 URL 加 ?debugHeight=1 时启用，避免污染日志
+  const debugHeight = searchParams.get('debugHeight') === '1';
   const [isPC, setIsPC] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth >= 1024 : false
   );
@@ -89,6 +92,8 @@ export default function DetailPage() {
   const chartRef = useRef(null);
   const marketRef = useRef(null);
   const roiRef = useRef(null);
+  const mobileRootRef = useRef(null);
+  const pcContentLayoutRef = useRef(null);
   const wsRef = useRef(null);
   const currentKlineChannelRef = useRef(null); // 当前K线订阅频道ID
   const isWsAuthenticatedRef = useRef(false); // WebSocket认证状态
@@ -318,6 +323,72 @@ export default function DetailPage() {
 
     checkStatus();
   }, [symbol, t, mySubscription]);
+
+  // 高度调试打印：观察 height/min-height 是否真正生效
+  useEffect(() => {
+    if (!debugHeight) return;
+
+    const dumpEl = (name, el) => {
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const cs = window.getComputedStyle(el);
+      // scrollHeight/offsetHeight 有助于判断内容是否溢出导致高度“看起来不对”
+      console.log('[DetailPage][heightDebug]', name, {
+        rectHeight: rect.height,
+        rectWidth: rect.width,
+        offsetHeight: el.offsetHeight,
+        clientHeight: el.clientHeight,
+        scrollHeight: el.scrollHeight,
+        computedHeight: cs.height,
+        computedMinHeight: cs.minHeight,
+        display: cs.display,
+        flex: cs.flex,
+        position: cs.position,
+        overflow: cs.overflow,
+      });
+    };
+
+    const logOnce = (phase) => {
+      console.log('[DetailPage][heightDebug] ----', phase, '----', {
+        isPC,
+        innerWidth: window.innerWidth,
+        innerHeight: window.innerHeight,
+        devicePixelRatio: window.devicePixelRatio,
+      });
+
+      if (pcContentLayoutRef.current) {
+        dumpEl('pcContentLayout', pcContentLayoutRef.current);
+        const p1 = pcContentLayoutRef.current.parentElement;
+        const p2 = p1?.parentElement;
+        dumpEl('pcContentLayout_parent(p1)', p1);
+        dumpEl('pcContentLayout_grandparent(p2)', p2);
+        dumpEl('pcColLeft', pcContentLayoutRef.current.querySelector(`.${styles.pcContentColLeft}`));
+        dumpEl('pcColRight', pcContentLayoutRef.current.querySelector(`.${styles.pcContentColRight}`));
+      }
+
+      if (mobileRootRef.current) {
+        dumpEl('mobileRoot(.container)', mobileRootRef.current);
+      }
+
+      dumpEl('chartSection', chartRef.current);
+      dumpEl('marketSection', marketRef.current);
+      dumpEl('roiSection', roiRef.current);
+    };
+
+    // 首次渲染后先打印一次，再在布局稳定后打印一次
+    logOnce('mount');
+    const t1 = window.setTimeout(() => logOnce('after-layout-300ms'), 300);
+    const t2 = window.setTimeout(() => logOnce('after-layout-900ms'), 900);
+
+    const onResize = () => logOnce('resize');
+    window.addEventListener('resize', onResize);
+
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.removeEventListener('resize', onResize);
+    };
+  }, [debugHeight, isPC, chartRef, marketRef, roiRef]);
 
   // 倒计时检查过期
   useEffect(() => {
@@ -1875,8 +1946,36 @@ ${coinInfo.name || symbol} (${symbol})
   if (isPC) {
     return (
       <PCLayout>
-        <div className={styles.pcContentLayout}>
-          <aside className={styles.pcContentColLeft} />
+        <div ref={pcContentLayoutRef} className={styles.pcContentLayout}>
+          <aside className={styles.pcContentColLeft}>
+            <PCCoinDetail
+              headerTitle={coinInfo?.name || symbol}
+              onBack={handleDetailBack}
+              showBack={false}
+              coinIcon={coinInfo?.url}
+              symbol={symbol}
+              currentPrice={coinInfo?.currentPrice}
+              priceChangeAbs={coinInfo?.priceChange_24h}
+              priceChangePercent={coinInfo?.priceChangePercentage_24h}
+              isUp={!String(coinInfo?.priceChange_24h ?? '').includes('-')}
+              isFavorite={isFavorite}
+              onToggleFavorite={toggleFavorite}
+              onAlert={jump2Alert}
+              onShare={shareToTelegram}
+              statColumns={[
+                // 头部概览只展示前 2 条（与移动端默认折叠态一致）
+                coinInfoLeft.slice(0, 2).map((x) => ({ label: x.name, value: x.value })),
+                coinInfoRight.slice(0, 2).map((x) => ({ label: x.name, value: x.value })),
+                [],
+              ]}
+              loading={loading}
+            >
+              {renderKline()}
+              {showOrderBook && (
+                <div className={styles.orderBookSection}>{renderOrderBook()}</div>
+              )}
+            </PCCoinDetail>
+          </aside>
           <section className={styles.pcContentColRight} />
         </div>
         {oneClickAlarmModalEl}
@@ -1893,7 +1992,7 @@ ${coinInfo.name || symbol} (${symbol})
         showBorder={false}
       />
 
-      <div className={styles.container}>
+      <div ref={mobileRootRef} className={styles.container}>
         {renderCoinInfo()}
 
         <TabBar className={styles.tabContainer} activeKey={activeTab} onChange={handleTabChange}>

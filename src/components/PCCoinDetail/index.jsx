@@ -13,6 +13,7 @@ import styles from './index.module.less';
 export default function PCCoinDetail({
   headerTitle,
   onBack,
+  showBack = true,
   coinIcon,
   symbol,
   currentPrice,
@@ -61,14 +62,16 @@ export default function PCCoinDetail({
     <div className={`${styles.root} ${className || ''}`}>
       <header className={styles.topBar}>
         <div className={styles.topBarLeft}>
-          <button
-            type="button"
-            className={styles.backBtn}
-            onClick={onBack}
-            aria-label={t('countryPicker.back')}
-          >
-            <LeftOutlined />
-          </button>
+          {showBack ? (
+            <button
+              type="button"
+              className={styles.backBtn}
+              onClick={onBack}
+              aria-label={t('countryPicker.back')}
+            >
+              <LeftOutlined />
+            </button>
+          ) : null}
           <span className={styles.headerTitle}>{headerTitle || symbol || '—'}</span>
         </div>
         <div className={styles.actions}>
