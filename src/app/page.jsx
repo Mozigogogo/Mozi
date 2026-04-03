@@ -19,6 +19,7 @@ const MobileHome = dynamic(() => import('../components/MobileHome'), {
 export default function HomePage() {
   const [isPC, setIsPC] = useState(false);
   const [didKickoffSubscription, setDidKickoffSubscription] = useState(false);
+  const [tgLoginSuccessReceived, setTgLoginSuccessReceived] = useState(false);
   
   useEffect(() => {
     const checkDevice = () => {
@@ -29,10 +30,37 @@ export default function HomePage() {
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
 
+  // TG 环境下：优先等 TelegramAutoLogin 完成（触发 tg-login-success）
+  // 再去拉订阅，避免旧 token 抢跑导致 planCode 同步慢/不一致。
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const isTgEnv = localStorage.getItem('appChannel') === 'tg';
+
+    // 非 TG 环境不需要等待
+    if (!isTgEnv) {
+      setTgLoginSuccessReceived(true);
+      return;
+    }
+
+    const onTgLoginSuccess = () => setTgLoginSuccessReceived(true);
+    window.addEventListener('tg-login-success', onTgLoginSuccess);
+
+    // 保底：防止某些场景下事件没触发而导致首页订阅永不更新
+    const timer = setTimeout(() => {
+      setTgLoginSuccessReceived(true);
+    }, 1500);
+
+    return () => {
+      window.removeEventListener('tg-login-success', onTgLoginSuccess);
+      clearTimeout(timer);
+    };
+  }, []);
+
   // 首页优先拉取订阅状态（/api/subscription/my），用于尽快同步 planCode
   useEffect(() => {
     if (didKickoffSubscription) return;
     if (typeof window === 'undefined') return;
+    if (!tgLoginSuccessReceived) return;
     const token = localStorage.getItem('token');
     if (!token) return;
 
@@ -64,7 +92,7 @@ export default function HomePage() {
           sessionStorage.removeItem(IN_FLIGHT_KEY);
         } catch (_) {}
       });
-  }, [didKickoffSubscription]);
+  }, [didKickoffSubscription, tgLoginSuccessReceived]);
 
   // Avoid hydration mismatch by not rendering until mounted
   // However, this might affect SEO if not handled carefully.

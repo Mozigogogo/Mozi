@@ -243,37 +243,17 @@ export default function TelegramAutoLogin() {
         }
       }
 
-      // 规则（按你的需求）：只要本地已经有 token，就绝不再调用登录接口。
-      // Telegram 自动登录只允许在“没有 token 的首次启动”场景触发。
-      try {
-        const existingToken = localStorage.getItem('token');
-        if (existingToken) {
-          if (process.env.NODE_ENV !== 'production' && ENABLE_TG_AUTO_LOGIN_DEBUG) {
-            console.log('[TG auto login] existing token present, skip loginByTelegram', {
-              token: previewToken(existingToken),
-              now: Date.now(),
-            });
-          }
-
-          loginAttemptedRef.current = true;
-          await runPostLoginSideEffects({
-            caller: 'TelegramAutoLogin_skipLogin_tokenPresent',
-            forceDataInfo: false,
-          });
-          window.dispatchEvent(new CustomEvent('tg-login-success'));
-          setIsLoading(false);
-          return;
-        }
-      } catch (e) {
-        // guard 失败不影响后续正常登录
-      }
-
+      // 在 Telegram 环境下：只要“启动 TG 小程序”就调用登录接口，
+      // 成功后用返回的 token 覆盖本地 token（有则更新，无则创建）。
+      // （重复触发仍由上面的 in-flight / cooldown / hash guard 控制）
       if (process.env.NODE_ENV !== 'production' && ENABLE_TG_AUTO_LOGIN_DEBUG) {
-        console.warn('[TG auto login] token missing -> may call loginByTelegram', {
+        const existingToken = localStorage.getItem('token');
+        console.log('[TG auto login] will call loginByTelegram (token present -> refresh)', {
+          token: previewToken(existingToken),
           now: Date.now(),
         });
       }
-      
+
       // 在 Telegram 环境下，显示加载中遮罩
       setIsLoading(true);
 
