@@ -333,8 +333,10 @@ export default function MobileHome() {
   };
 
   // 获取自选列表
-  const fetchOwnList = async () => {
-    setMyOwnLoading(true);
+  const fetchOwnList = async (showLoading = false) => {
+    if (showLoading) {
+      setMyOwnLoading(true);
+    }
     try {
       const response = await homeApi.getSelfSelectRank();
       if (response?.data) {
@@ -534,17 +536,19 @@ export default function MobileHome() {
   useEffect(() => {
     if (!activityImagesLoaded) return;
 
+    // 首次初始化：允许展示加载态
     fetchHotCoin();
     fetchHotIndustry();
     fetchHotContract();
-    fetchOwnList();
+    fetchOwnList(true);
     fetchRankingData(true);
 
+    // 后续轮询：静默更新数据，不再触发加载动画
     const interval = setInterval(() => {
       fetchHotCoin();
       fetchHotIndustry();
       fetchHotContract();
-      fetchOwnList();
+      fetchOwnList(false);
       fetchRankingData(false);
     }, 30000);
 
