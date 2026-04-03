@@ -26,7 +26,7 @@
 /* PC 端主内容区：左窄右宽双栏，顶对齐、撑满可用高度 */
 .pcContentLayout {
   display: grid;
-  grid-template-columns: minmax(0, 35%) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 40%) minmax(0, 1fr);
   grid-template-rows: 1fr;
   gap: 4px;
   align-items: stretch;
@@ -287,11 +287,33 @@
 }
 
 .orderBookSection {
-  margin-top: 10px;
+  margin-top: 10PX;
+  border: 1px solid rgba(243, 244, 246, 1);
+  border-radius: 12PX;
 }
 
 .klineContainer {
   padding: 8px 0;
+}
+
+/* PC 详情左栏：图表区随卡片高度伸展，避免「移动端控件放大」的观感 */
+.klineContainerPc {
+  /* 不要在左侧 flex-column 中把图表容器撑满，
+   * 否则容易与下方订单簿区域发生裁切/覆盖，导致底部圆角边框不显示。 */
+  flex: 0 0 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 8PX;
+  padding: 0;
+  /* 桌面端图表区域外框 */
+  border: 1px solid rgba(243, 244, 246, 1);
+  border-radius: 24PX;
+  overflow: hidden;
+  position: relative;
+  z-index: 2;
+  box-sizing: border-box;
+  padding: 10PX;
 }
 
 /* 市场行情区域 */
@@ -652,5 +674,13 @@
     border-left: 10px solid #E4FBF4;
     border-top: 8px solid transparent;
     border-bottom: 8px solid transparent;
+  }
+}
+
+/* PC 端：消除左/右栏整体投影，避免在订单薄边框下方产生“阴影残影” */
+@media (min-width: 1024px) {
+  .pcContentColLeft,
+  .pcContentColRight {
+    box-shadow: none;
   }
 }

@@ -128,6 +128,173 @@
   z-index: 10;
 }
 
+/* 桌面端：标题行 + 单行灰色工具栏（周期 + 图表类型），与设计稿一致 */
+/* 使用大写 PX，避免 postcss 将 px 转为 vw 导致 PC 端字号被放大 */
+.containerPc {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding-top: 0; /* 覆盖 .container 的 padding-top，标题顶对齐 */
+
+  .chartContainer {
+    flex: 1;
+    height: 420PX;
+    min-height: 420PX;
+    padding: 0;
+  }
+
+  .landscapeBtn {
+    width: 22PX;
+    height: 22PX;
+    right: 4PX;
+    bottom: 12PX;
+    padding: 2PX;
+  }
+}
+
+.pcHeaderRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 18PX;
+  margin-bottom: 10PX;
+  flex-shrink: 0;
+}
+
+.pcChartTitle {
+  font-size: 18PX;
+  font-weight: 600;
+  color: #1a1a2e;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.pcBigOrderBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2PX;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 17PX;
+  font-weight: 500;
+  color: #11b787;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+
+  &:hover {
+    opacity: 0.88;
+  }
+}
+
+.pcBigOrderBadgeStatic {
+  cursor: default;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.pcPulseIcon {
+  width: 18PX;
+  height: 18PX;
+  flex-shrink: 0;
+  color: #11b787;
+}
+
+.pcToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12PX;
+  width: 100%;
+  padding: 5PX 10PX;
+  min-height: 36PX;
+  box-sizing: border-box;
+  border-radius: 12PX;
+  margin-bottom: 10PX;
+  flex-shrink: 0;
+}
+
+.pcPeriodRow {
+  display: flex;
+  align-items: center;
+  gap: 2PX;
+  flex-wrap: wrap;
+  min-width: 0;
+  background: rgba(244, 244, 245, 1);
+  padding: 4PX;
+  border-radius: 20PX;
+}
+
+.pcPeriodBtn {
+  border: none;
+  background: transparent;
+  color: #8c8c8c;
+  font-size: 12PX;
+  font-weight: 500;
+  padding: 5PX 15PX;
+  border-radius: 12PX;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  line-height: 1.2;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pcPeriodBtnActive {
+  background: #fff;
+  color: #11b787;
+  font-weight: 600;
+  box-shadow:
+    0 1PX 2PX rgba(0, 0, 0, 0.06),
+    0 1PX 3PX rgba(0, 0, 0, 0.04);
+}
+
+.pcChartTypeRow {
+  display: flex;
+  align-items: center;
+  gap: 8PX;
+  flex-shrink: 0;
+  background: rgba(244, 244, 245, 1);
+  padding: 4PX;
+  border-radius: 20PX;
+}
+
+.pcChartTypeBtn {
+  width: 35PX;
+  height: 28PX;
+  border-radius: 45%;
+  border: none;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+
+  .chartTypeIcon {
+    width: 14PX;
+    height: 14PX;
+    object-fit: contain;
+  }
+}
+
+.pcChartTypeBtnActive {
+  background: #11b787;
+  box-shadow: 0 2PX 6PX rgba(17, 183, 135, 0.35);
+  padding: 5PX 10PX;
+}
+
+.pcChartTypeBtn:not(.pcChartTypeBtnActive) .chartTypeIcon {
+  opacity: 0.55;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .chartContainer {

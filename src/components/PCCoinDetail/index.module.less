@@ -5,7 +5,7 @@
   flex-direction: column;
   min-height: 0;
   flex: 1;
-  background: #f5f7fa;
+  background: transparent;
   border-radius: 32px;
   overflow: hidden;
 }
@@ -13,11 +13,11 @@
 .topBar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 16px;
   padding: 14px 20px;
   background: #fff;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #f9fafb;
   flex-shrink: 0;
 }
 
@@ -97,25 +97,31 @@
 }
 
 .overview {
-  padding: 20px 20px 16px;
+  padding: 12px 40px 16px;
   background: #fff;
   flex-shrink: 0;
 }
 
 .overviewInner {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 220px;
+  flex-direction: column;
+  gap:4px;
   flex-wrap: wrap;
 }
 
 .overviewLeft {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-direction: row;
+  gap: 10px;
   align-items: flex-start;
   min-width: 0;
+}
+
+.overviewRight {
+  display: flex;
+  flex: 1;
+  justify-content: space-between;
+  align-items: flex-start;
 }
 
 .coinBlock {
@@ -177,7 +183,7 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(100px, 1fr));
   gap: 16px 28px;
-  flex: 1;
+  flex: 0 0 auto;
   min-width: 200px;
   max-width: 520px;
 }
@@ -209,10 +215,11 @@
 }
 
 .mainCard {
-  margin: 0 20px 20px;
+  /* 减少左右留白，让图表在所在容器里铺满更多 */
+  margin: 0 0px 20px;
   background: #fff;
   border-radius: 32px;
-  border: 1px solid #eef0f3;
+  border: none;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   flex: 1;
   min-height: 280px;
@@ -229,13 +236,29 @@
   padding: 0 16px 16px;
 }
 
+/* 桌面：与上方行情区留白对齐；大写 PX 避免 px→vw 放大内边距 */
+@media (min-width: 1024px) {
+  .mainCardBody {
+    /* desktop 下保留少量左右 padding：有呼吸感且让图表更满宽 */
+    padding: 16PX 12PX 20PX;
+  }
+
+  .barrageBar {
+    /* 让 barrageBar 也遵循 mainCardBody 的左右 padding */
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
+    border-radius: 12PX;
+  }
+}
+
 .barrageBar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-top: 1px solid #f0f0f0;
-  background: #fafbfc;
+  padding: 8px 16px;
+  border: 1px solid #f0f0f0;
+  box-sizing: border-box;
+
 }
 
 .barrageIcon {
@@ -248,10 +271,10 @@
 .barrageInput {
   flex: 1;
   min-width: 0;
-  height: 40px;
+  height: 36px;
   padding: 0 14px;
-  border: 1px solid #e8e8e8;
-  border-radius: 20px;
+  border: none;
+  border-radius: 18px;
   font-size: 14px;
   color: #333;
   background: #fff;
@@ -262,16 +285,16 @@
   }
 
   &:focus {
-    border-color: rgba(0, 188, 125, 0.45);
+    border-color: transparent;
   }
 }
 
 .barrageSend {
   flex-shrink: 0;
-  height: 40px;
+  height: 36px;
   padding: 0 22px;
   border: none;
-  border-radius: 20px;
+  border-radius: 18px;
   background: #00bc7d;
   color: #fff;
   font-size: 14px;

@@ -94,6 +94,7 @@ export default function DetailPage() {
   const roiRef = useRef(null);
   const mobileRootRef = useRef(null);
   const pcContentLayoutRef = useRef(null);
+  const pcOrderBookSectionRef = useRef(null);
   const wsRef = useRef(null);
   const currentKlineChannelRef = useRef(null); // 当前K线订阅频道ID
   const isWsAuthenticatedRef = useRef(false); // WebSocket认证状态
@@ -540,8 +541,8 @@ export default function DetailPage() {
         
         // 设置详细信息
         const headerInfoLeft = [
-          { name: t('detail.header.high24h'), value: coinData.high_24h },
-          { name: t('detail.header.low24h'), value: coinData.low_24h },
+          { name: t('detail.header.high24h'), value: coinData.high_24h != null ? `$${coinData.high_24h}` : coinData.high_24h },
+          { name: t('detail.header.low24h'), value: coinData.low_24h != null ? `$${coinData.low_24h}` : coinData.low_24h },
           { name: t('detail.header.fdv'), value: coinData.fullyDilutedValuation },
           { name: t('detail.header.marketCapChange24h'), value: coinData.marketCapChange_24h },
           { name: t('detail.header.marketCapChangePercent24h'), value: coinData.marketCapChangePercentage_24h },
@@ -550,8 +551,9 @@ export default function DetailPage() {
         ];
         
         const headerInfoRight = [
-          { name: t('detail.header.totalVolume24h'), value: coinData.totalVolume },
           { name: t('detail.header.totalSupply'), value: coinData.totalSupply },
+          { name: t('detail.marketCap'), value: coinData.marketCap },
+          { name: t('detail.header.totalVolume24h'), value: coinData.totalVolume },
           { name: t('detail.header.circulatingSupply'), value: coinData.circulatingSupply },
           { name: t('detail.header.ath'), value: coinData.ath },
           { name: t('detail.header.athChangePercent'), value: coinData.athChangePercentage },
@@ -909,6 +911,11 @@ export default function DetailPage() {
     }
   };
 
+  // 交易雷达（占位行为，可后续接入具体功能）
+  const handleTradingRadar = () => {
+    if (!symbol) return;
+    console.log('[TradingRadar] click for symbol:', symbol);
+  };
   // 分享到Telegram
   const shareToTelegram = () => {
     if (!coinInfo) return;
@@ -1881,16 +1888,28 @@ ${coinInfo.name || symbol} (${symbol})
     const currentKlineData = klineData[activeKlineTab];
     
     return (
-      <div className={`${styles.box} ${styles.klineContainer}`}>
+      <div
+        className={`${styles.box} ${styles.klineContainer} ${isPC ? styles.klineContainerPc : ''}`}
+      >
         <KlineChart 
           data={currentKlineData}
           activeKey={activeKlineTab}
           onActiveChange={setActiveKlineTab}
           chartType={chartType}
           onChartTypeChange={handleChartTypeChange}
-          showLandscapeBtn={true}
-          onLandscapeClick={handleLandscapeClick}
+          showLandscapeBtn={!isPC}
+          onLandscapeClick={isPC ? undefined : handleLandscapeClick}
           loading={klineLoading}
+          isPC={isPC}
+          onBigOrderDetectClick={
+            isPC
+              ? () =>
+                  pcOrderBookSectionRef.current?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start',
+                  })
+              : undefined
+          }
         />
       </div>
     );
@@ -1962,17 +1981,33 @@ ${coinInfo.name || symbol} (${symbol})
               onToggleFavorite={toggleFavorite}
               onAlert={jump2Alert}
               onShare={shareToTelegram}
+              onTradingRadar={handleTradingRadar}
               statColumns={[
-                // 头部概览只展示前 2 条（与移动端默认折叠态一致）
+                // 左侧列：24H 最高价 / 24H 最低价
                 coinInfoLeft.slice(0, 2).map((x) => ({ label: x.name, value: x.value })),
-                coinInfoRight.slice(0, 2).map((x) => ({ label: x.name, value: x.value })),
-                [],
+                // 中间列：上方流通市值，下方 24H 成交额
+                [
+                  coinInfoRight[1] && {
+                    label: coinInfoRight[1].name,
+                    value: coinInfoRight[1].value,
+                  },
+                  coinInfoRight[2] && {
+                    label: coinInfoRight[2].name,
+                    value: coinInfoRight[2].value,
+                  },
+                ].filter(Boolean),
+                // 右侧列：总供应量
+                coinInfoRight[0]
+                  ? [{ label: coinInfoRight[0].name, value: coinInfoRight[0].value }]
+                  : [],
               ]}
               loading={loading}
             >
               {renderKline()}
               {showOrderBook && (
-                <div className={styles.orderBookSection}>{renderOrderBook()}</div>
+                <div ref={pcOrderBookSectionRef} className={styles.orderBookSection}>
+                  {renderOrderBook()}
+                </div>
               )}
             </PCCoinDetail>
           </aside>

@@ -16,11 +16,17 @@ const KlineChart = ({
   onChartTypeChange,
   showLandscapeBtn = false,
   onLandscapeClick,
-  loading = false
+  loading = false,
+  /** 桌面端：标题行 + 单行工具栏布局 */
+  isPC = false,
+  /** 点击「大单侦测」时回调（如滚动至订单簿区域） */
+  onBigOrderDetectClick,
 }) => {
   const { t } = useTranslation();
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
+
+  const periodKeys = ['hour', 'day', 'week', 'month'];
 
   // 处理k线数据格式
   const processKlineData = (rawData) => {
@@ -75,7 +81,7 @@ const KlineChart = ({
   };
 
   // 获取图表配置
-  const getChartOptions = (processedData, type = 'kline') => {
+  const getChartOptions = (processedData, type = 'kline', isDesktop = false) => {
     // 国际市场习惯：绿涨红跌
     const upColor = '#11B787';  // 阳线颜色（绿色-涨）
     const upBorderColor = '#11B787'; // 阳线边框颜色
@@ -102,6 +108,30 @@ const KlineChart = ({
     // 折线图配置
     if (type === 'line') {
       const lineDs = buildLineDataset(processedData);
+      const dataZoom = isDesktop
+        ? []
+        : [
+            {
+              type: 'inside',
+              start: 50,
+              end: 100,
+            },
+            {
+              show: true,
+              type: 'slider',
+              start: 70,
+              end: 100,
+              top: '87%',
+              height: 20,
+              left: '15%',
+              right: 40,
+            },
+          ];
+
+      const lineGrid = isDesktop
+        ? { top: '5%', left: '10%', right: '5%', bottom: '15%' }
+        : { top: '5%', left: '15%', right: '5%', bottom: '25%' };
+
       return {
         animation: false,
         animationDurationUpdate: 0,
@@ -110,19 +140,13 @@ const KlineChart = ({
           trigger: 'axis',
           axisPointer: { type: 'line' }
         },
-        grid: {
-          top: '5%',
-          left: '15%',
-          right: '5%',
-          bottom: '25%'
-        },
+        grid: lineGrid,
         xAxis: {
           type: 'category',
           data: lineDs.categoryData,
           boundaryGap: false,
-          axisLine: {
-            lineStyle: { color: '#D8D8D8' }
-          },
+          // PC 端隐藏 x 轴底部下划线
+          axisLine: isDesktop ? { show: false } : { lineStyle: { color: '#D8D8D8' } },
           splitLine: { show: false },
           axisTick: { show: false },
           min: 'dataMin',
@@ -136,23 +160,7 @@ const KlineChart = ({
           splitArea: { show: false },
           axisLabel: { color: '#8E8E8E' }
         },
-        dataZoom: [
-          { 
-            type: 'inside', 
-            start: 50, 
-            end: 100 
-          },
-          { 
-            show: true, 
-            type: 'slider', 
-            start: 70, 
-            end: 100, 
-            top: '87%', 
-            height: 20,
-            left: '15%',
-            right: 40
-          }
-        ],
+        dataZoom,
         series: [
           {
             name: '价格',
@@ -183,6 +191,31 @@ const KlineChart = ({
     }
 
     // K线图配置
+    const dataZoom = isDesktop
+      ? []
+      : [
+          {
+            type: 'inside',
+            start: startPercent,
+            end: endPercent,
+            minValueSpan: 5, // 最少显示5个数据点
+          },
+          {
+            show: true,
+            type: 'slider',
+            start: startPercent,
+            end: endPercent,
+            bottom: '5%',
+            height: 20,
+            left: '7%',
+            right: 40,
+            backgroundColor: '#f5f5f5',
+            fillerColor: 'rgba(2, 192, 118, 0.2)',
+            borderColor: '#ddd',
+            minValueSpan: 5, // 最少显示5个数据点
+          },
+        ];
+
     return {
       backgroundColor: 'transparent',
       legend: {
@@ -215,8 +248,8 @@ const KlineChart = ({
       grid: {
         left: '3%',
         right: '4%',
-        bottom: '15%',
-        top: '10%',
+        bottom: isDesktop ? '10%' : '15%',
+        top: isDesktop ? '7%' : '10%',
         containLabel: true,
         backgroundColor: 'transparent',
         borderColor: 'transparent'
@@ -225,10 +258,8 @@ const KlineChart = ({
         type: 'category',
         data: processedData.categoryData,
         boundaryGap: true,  // 改为 true，让每根K线两侧有间距
-        axisLine: { 
-          onZero: false,
-          lineStyle: { color: '#ddd' }
-        },
+        // PC 端隐藏 x 轴底部下划线
+        axisLine: isDesktop ? { show: false } : { onZero: false, lineStyle: { color: '#ddd' } },
         splitLine: { show: false },
         axisLabel: {
           color: '#666',
@@ -256,28 +287,7 @@ const KlineChart = ({
           color: '#666'
         }
       },
-      dataZoom: [
-        {
-          type: 'inside',
-          start: startPercent,
-          end: endPercent,
-          minValueSpan: 5  // 最少显示5个数据点
-        },
-        {
-          show: true,
-          type: 'slider',
-          start: startPercent,
-          end: endPercent,
-          bottom: '5%',
-          height: 20,
-          left: '7%',
-          right: 40,
-          backgroundColor: '#f5f5f5',
-          fillerColor: 'rgba(2, 192, 118, 0.2)',
-          borderColor: '#ddd',
-          minValueSpan: 5  // 最少显示5个数据点
-        }
-      ],
+      dataZoom,
       series: [
         {
           name: 'K线',
@@ -355,9 +365,18 @@ const KlineChart = ({
       };
       
       window.addEventListener('resize', handleResize);
-      
+
+      const parentEl = chartRef.current?.parentElement;
+      const ro =
+        parentEl &&
+        new ResizeObserver(() => {
+          chartInstance.current?.resize();
+        });
+      if (parentEl && ro) ro.observe(parentEl);
+
       return () => {
         window.removeEventListener('resize', handleResize);
+        ro?.disconnect();
         if (chartInstance.current) {
           chartInstance.current.dispose();
           chartInstance.current = null;
@@ -370,54 +389,168 @@ const KlineChart = ({
   useEffect(() => {
     if (chartInstance.current && data) {
       console.log('📊 ECharts 接收数据:', data);
-      const options = getChartOptions(data, chartType);
+      const options = getChartOptions(data, chartType, isPC);
       console.log('📊 K线数量:', data.values?.length, '图表类型:', chartType);
       chartInstance.current.setOption(options, true);
     }
   }, [data, chartType]);
 
+  const chartTypeLineBtn = onChartTypeChange ? (
+    <button
+      type="button"
+      className={`${styles.pcChartTypeBtn} ${chartType === 'line' ? styles.pcChartTypeBtnActive : ''}`}
+      onClick={() => onChartTypeChange('line')}
+      aria-label="line"
+    >
+      <img
+        src={
+          chartType === 'line'
+            ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/graph/line-actived.png'
+            : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/graph/line-no-actived.png'
+        }
+        className={styles.chartTypeIcon}
+        alt=""
+      />
+    </button>
+  ) : null;
+
+  const chartTypeKlineBtn = onChartTypeChange ? (
+    <button
+      type="button"
+      className={`${styles.pcChartTypeBtn} ${chartType === 'kline' ? styles.pcChartTypeBtnActive : ''}`}
+      onClick={() => onChartTypeChange('kline')}
+      aria-label="kline"
+    >
+      <img
+        src={
+          chartType === 'kline'
+            ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/graph/kline-actived.png'
+            : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/graph/kline-no-actived.png'
+        }
+        className={styles.chartTypeIcon}
+        alt=""
+      />
+    </button>
+  ) : null;
+
   return (
-    <div className={styles.container}>
-      {/* 图表类型切换按钮（右上角） */}
-      {onChartTypeChange && (
-        <div className={styles.chartTypeTabs}>
-          <div 
-            className={`${styles.chartTypeBtn} ${chartType === 'line' ? styles.active : ''}`}
-            onClick={() => onChartTypeChange('line')}
-          >
-            <img 
-              src={chartType === 'line' 
-                ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/graph/line-actived.png'
-                : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/graph/line-no-actived.png'
-              } 
-              className={styles.chartTypeIcon} 
-              alt="折线图"
-            />
+    <div className={`${styles.container} ${isPC ? styles.containerPc : ''}`}>
+      {isPC ? (
+        <>
+          <div className={styles.pcHeaderRow}>
+            <span className={styles.pcChartTitle}>{t('detail.tabs.chart')}</span>
+            {onBigOrderDetectClick ? (
+              <button
+                type="button"
+                className={styles.pcBigOrderBadge}
+                onClick={onBigOrderDetectClick}
+              >
+                <svg
+                  className={styles.pcPulseIcon}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden
+                >
+                  <path
+                    d="M3 12h3l2-5 3 10 2-8 3 6h4"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span>{t('addAlarm.bigOrderDetect')}</span>
+              </button>
+            ) : (
+              <span
+                className={`${styles.pcBigOrderBadge} ${styles.pcBigOrderBadgeStatic}`}
+              >
+                <svg
+                  className={styles.pcPulseIcon}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden
+                >
+                  <path
+                    d="M3 12h3l2-5 3 10 2-8 3 6h4"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span>{t('addAlarm.bigOrderDetect')}</span>
+              </span>
+            )}
           </div>
-          <div 
-            className={`${styles.chartTypeBtn} ${chartType === 'kline' ? styles.active : ''}`}
-            onClick={() => onChartTypeChange('kline')}
-          >
-            <img 
-              src={chartType === 'kline' 
-                ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/graph/kline-actived.png'
-                : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/graph/kline-no-actived.png'
-              } 
-              className={styles.chartTypeIcon} 
-              alt="K线图"
-            />
+          <div className={styles.pcToolbar}>
+            <div className={styles.pcPeriodRow} role="tablist">
+              {periodKeys.map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeKey === key}
+                  className={`${styles.pcPeriodBtn} ${activeKey === key ? styles.pcPeriodBtnActive : ''}`}
+                  onClick={() => onActiveChange(key)}
+                >
+                  {t(`chart.period.${key}`)}
+                </button>
+              ))}
+            </div>
+            {onChartTypeChange ? (
+              <div className={styles.pcChartTypeRow}>
+                {chartTypeLineBtn}
+                {chartTypeKlineBtn}
+              </div>
+            ) : null}
           </div>
-        </div>
+        </>
+      ) : (
+        <>
+          {onChartTypeChange && (
+            <div className={styles.chartTypeTabs}>
+              <div
+                className={`${styles.chartTypeBtn} ${chartType === 'line' ? styles.active : ''}`}
+                onClick={() => onChartTypeChange('line')}
+              >
+                <img
+                  src={
+                    chartType === 'line'
+                      ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/graph/line-actived.png'
+                      : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/graph/line-no-actived.png'
+                  }
+                  className={styles.chartTypeIcon}
+                  alt="折线图"
+                />
+              </div>
+              <div
+                className={`${styles.chartTypeBtn} ${chartType === 'kline' ? styles.active : ''}`}
+                onClick={() => onChartTypeChange('kline')}
+              >
+                <img
+                  src={
+                    chartType === 'kline'
+                      ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/graph/kline-actived.png'
+                      : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/graph/kline-no-actived.png'
+                  }
+                  className={styles.chartTypeIcon}
+                  alt="K线图"
+                />
+              </div>
+            </div>
+          )}
+          <TabBar className={styles.chartTab} activeKey={activeKey} onChange={onActiveChange}>
+            <TabBar.Item key="hour" title={t('chart.period.hour')} />
+            <TabBar.Item key="day" title={t('chart.period.day')} />
+            <TabBar.Item key="week" title={t('chart.period.week')} />
+            <TabBar.Item key="month" title={t('chart.period.month')} />
+          </TabBar>
+        </>
       )}
-      
-      {/* 时间周期选择 - 使用TabBar */}
-      <TabBar className={styles.chartTab} activeKey={activeKey} onChange={onActiveChange}>
-        <TabBar.Item key="hour" title={t('chart.period.hour')} />
-        <TabBar.Item key="day" title={t('chart.period.day')} />
-        <TabBar.Item key="week" title={t('chart.period.week')} />
-        <TabBar.Item key="month" title={t('chart.period.month')} />
-      </TabBar>
-      
+
       {/* 图表容器 */}
       <div className={styles.chartContainer}>
         {/* 横屏按钮 */}
