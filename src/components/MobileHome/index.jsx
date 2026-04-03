@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, memo, useCallback } from 'react';
 import { Swiper } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
@@ -45,9 +45,6 @@ export default function MobileHome() {
   const { t, i18n } = useTranslation();
   const { track } = useAmplitude('Home');
   const isEN = (i18n?.language || '').startsWith('en');
-  const renderCountRef = useRef(0);
-  renderCountRef.current += 1;
-  
   // 活动弹窗状态
   const [showActivityModal, setShowActivityModal] = useState(false);
   
@@ -510,7 +507,7 @@ export default function MobileHome() {
     }
   };
 
-  // 初始化数据加载（只执行一次，不再轮询）
+  // 初始化数据加载 + 轮询（仅更新数据区域）
   useEffect(() => {
     if (!activityImagesLoaded) return;
 
@@ -519,6 +516,16 @@ export default function MobileHome() {
     fetchHotContract();
     fetchOwnList();
     fetchRankingData(true);
+
+    const interval = setInterval(() => {
+      fetchHotCoin();
+      fetchHotIndustry();
+      fetchHotContract();
+      fetchOwnList();
+      fetchRankingData(false);
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, [activityImagesLoaded]);
 
   // 榜单切换处理
@@ -528,6 +535,14 @@ export default function MobileHome() {
       refreshSelfSelectRank();
     }
   };
+
+  const handleActivityClose = useCallback(() => {
+    setShowActivityModal(false);
+  }, []);
+
+  const handleActivityImagesLoaded = useCallback(() => {
+    setActivityImagesLoaded(true);
+  }, []);
 
   // 跳转到榜单详情页
   const go2List = () => {
@@ -587,10 +602,7 @@ export default function MobileHome() {
           </div>
         </div>
 
-        <PinkContainer />
-        <DerivativeArea />
-        <MarketDistribution />
-        <HotTopics limit={30} showViewMore={true} />
+        <HomeStaticSections />
         
         <InvestmentSection
           hotCoin={hotCoin}
@@ -615,15 +627,34 @@ export default function MobileHome() {
           onGo2List={go2List}
         />
 
-        <FloatingRobot />
+        <FloatingRobotMemo />
         
-        <ActivityModal
+        <ActivityModalMemo
           visible={showActivityModal}
-          onClose={() => setShowActivityModal(false)}
+          onClose={handleActivityClose}
           onConfirm={handleActivityConfirm}
-          onImagesLoaded={() => setActivityImagesLoaded(true)}
+          onImagesLoaded={handleActivityImagesLoaded}
         />
       </div>
     </Layout>
   );
 }
+
+const HomeStaticSections = memo(function HomeStaticSections() {
+  return (
+    <>
+      <PinkContainer />
+      <DerivativeArea />
+      <MarketDistribution />
+      <HotTopics limit={30} showViewMore={true} />
+    </>
+  );
+});
+
+const FloatingRobotMemo = memo(function FloatingRobotMemo() {
+  return <FloatingRobot />;
+});
+
+const ActivityModalMemo = memo(function ActivityModalMemo(props) {
+  return <ActivityModal {...props} />;
+});
