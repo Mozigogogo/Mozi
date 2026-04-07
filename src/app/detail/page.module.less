@@ -66,6 +66,235 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
+.pcRightTopMarqueeWrap {
+  margin-bottom: 10PX;
+}
+
+.pcContentColRight {
+  background: transparent;
+  border: none;
+}
+
+.pcRightPanelContainer {
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+}
+
+.pcRightPanelGrid {
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 58%) minmax(0, 42%);
+  gap: 12PX;
+  padding: 0;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+}
+
+.pcRightPanelLeft,
+.pcRightPanelRight {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12PX;
+}
+
+.pcRightPanelCard {
+  background: #fff;
+  border-radius: 32PX !important;
+  padding: 10PX 12PX;
+  min-height: 0;
+  /* 覆盖 MoziCard 默认 margin-bottom，避免网格内产生额外空隙 */
+  margin-bottom: 0 !important;
+}
+
+/* PC：投资回报率标题左侧圆点 */
+.pcRoiTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8PX;
+  min-width: 0;
+}
+
+.pcMarketTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-width: 0;
+}
+
+.pcMarketTitleLeft {
+  display: flex;
+  align-items: center;
+  gap: 8PX;
+  min-width: 0;
+}
+
+.pcRoiTitleDot {
+  width: 8PX;
+  height: 8PX;
+  border-radius: 50%;
+  background: rgba(0, 188, 125, 1);
+  flex-shrink: 0;
+}
+
+.pcRoiTitleText {
+  font-family: 'Microsoft YaHei', sans-serif;
+  font-weight: bold;
+  font-size: 18PX;
+  color: #333333;
+  line-height: 22PX;
+}
+
+/* PC：标题后 (数量)，与 MoziCard .titleNum 视觉对齐 */
+.pcRoiTitleNum {
+  margin-left: 3PX;
+  font-size: 12PX;
+  font-weight: 500;
+  color: #898989;
+  line-height: 22PX;
+}
+
+.pcRoiTitleNumRight {
+  margin-left: 0;
+  font-size: 12PX;
+  font-weight: 500;
+  color: #898989;
+  line-height: 22PX;
+}
+
+/* PC：投资回报率卡片标题区底部分割线（覆盖 MoziCard pcCardHeader 的 border-bottom: none） */
+.pcRightRoiCard :global([class*='cardHeader']) {
+  border-bottom: 1px solid rgba(243, 244, 246, 1) !important;
+  /* 覆盖 MoziCard .pcCardHeader 的 16PX 20PX，缩小标题区上下留白 */
+  padding: 10PX 20PX !important;
+}
+
+/* PC：市场卡片标题区与 ROI 一致（圆点标题 + 底部分割线） */
+.pcRightMarketCard :global([class*='cardHeader']) {
+  border-bottom: none !important;
+  padding: 18PX 20PX !important;
+}
+
+.pcRightPanelLeft .pcRightPanelCard:last-child {
+  flex: 1;
+  overflow: auto;
+}
+
+.pcRightPanelRight .pcRightPanelCard {
+  flex: 1;
+  overflow: auto;
+}
+
+.pcCommunityHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8PX;
+  font-size: 16PX;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.pcCommunityMore {
+  border: none;
+  background: transparent;
+  color: #5b6b81;
+  font-size: 12PX;
+  cursor: pointer;
+}
+
+.pcCommunityList {
+  display: flex;
+  flex-direction: column;
+  gap: 10PX;
+}
+
+.pcCommunityItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 8PX;
+  padding-bottom: 10PX;
+  border-bottom: 1PX solid #f1f5f9;
+}
+
+.pcCommunityItem:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.pcCommunityAvatar {
+  width: 24PX;
+  height: 24PX;
+  border-radius: 50%;
+  background: #ffeccf;
+  flex-shrink: 0;
+}
+
+.pcCommunityText {
+  flex: 1;
+  font-size: 13PX;
+  line-height: 1.5;
+  color: #374151;
+}
+
+.pcRightMarketGrid {
+  :global([class*='titleNum']) {
+    font-size: 12PX !important;
+    line-height: 1 !important;
+    margin-left: 3PX !important;
+  }
+
+  :global([class*='gridTitle']) {
+    margin-bottom: 2PX;
+    font-size: 12PX !important;
+  }
+
+  :global([class*='gridTitleItem']) {
+    padding: 2PX 6PX !important;
+    white-space: nowrap;
+  }
+
+  :global([class*='gridContent']) {
+    font-size: 13PX !important;
+  }
+
+  :global([class*='gridListItem']) {
+    padding: 12PX 0 !important;
+    border-bottom: 1px solid rgba(249, 250, 251, 1);
+  }
+
+  :global([class*='gridListItem']:first-child) {
+    border-top: 1px solid rgba(249, 250, 251, 1);
+  }
+
+  :global([class*='gridConItem']) {
+    padding: 0 6PX !important;
+    word-break: keep-all !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  :global([class*='gridTitleItem']:first-child),
+  :global([class*='gridConItem']:first-child) {
+    justify-content: flex-start !important;
+    text-align: left !important;
+  }
+}
+
+.pcRightMarketCard {
+  :global([class*='titleNum']) {
+    font-size: 12PX !important;
+    line-height: 12PX !important;
+    margin-left: 3PX !important;
+    transform: none !important;
+  }
+}
+
 .box {
   width: 100%;
   background: #fff;
@@ -682,5 +911,63 @@
   .pcContentColLeft,
   .pcContentColRight {
     box-shadow: none;
+  }
+
+  /* PC 端：ROI 使用大写 PX，避免 px 被体系换算成 vw */
+  .roiGrid {
+    gap: 12PX;
+    padding: 10PX 0PX;
+  }
+
+  .roiCard {
+    padding: 12PX 10PX;
+    min-height: 64PX;
+    /* 比默认 10px 更克制，避免子卡片视觉上像「胶囊」过圆 */
+    border-radius: 8PX;
+  }
+
+  .roiValue {
+    font-size: 16PX;
+    margin-bottom: 4PX;
+  }
+
+  .roiLabel {
+    font-size: 12PX;
+  }
+
+  /* PC：投资回报率涨跌色（与设计稿一致） */
+  .positive {
+    background: rgba(246, 254, 251, 1);
+    .roiValue {
+      color: rgba(0, 188, 125, 1);
+    }
+  }
+
+  .negative {
+    background: rgba(254, 246, 246, 1);
+    .roiValue {
+      color: rgba(255, 32, 86, 1);
+    }
+  }
+
+  .pcRightMarketGrid {
+    :global([class*='titleNum']) {
+      font-size: 12PX !important;
+    }
+
+    :global([class*='gridTitle']) {
+      font-size: 12PX !important;
+    }
+
+    :global([class*='gridContent']) {
+      font-size: 13PX !important;
+    }
+  }
+
+  .pcRightMarketCard {
+    :global([class*='titleNum']) {
+      font-size: 12PX !important;
+      line-height: 12PX !important;
+    }
   }
 }

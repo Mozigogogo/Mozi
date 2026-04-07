@@ -49,11 +49,15 @@ export default function PCCoinDetail({
     [onBarrageChange, barrageValueControlled]
   );
 
-  const handleSend = useCallback(() => {
+  const handleSend = useCallback(async () => {
     const text = (barrageValue || '').trim();
-    if (!text) return;
-    onBarrageSend?.(text);
-    if (barrageValueControlled === undefined && onBarrageSend) setBarrageInner('');
+    if (!text || !onBarrageSend) return;
+    try {
+      await Promise.resolve(onBarrageSend(text));
+      if (barrageValueControlled === undefined) setBarrageInner('');
+    } catch {
+      /* 失败时保留输入，由调用方提示 */
+    }
   }, [barrageValue, onBarrageSend, barrageValueControlled]);
 
   const changeCls = isUp ? styles.changeUp : styles.changeDown;

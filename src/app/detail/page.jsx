@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Tabs, Toast, Button, TabBar } from 'antd-mobile';
 import { motion, AnimatePresence } from 'framer-motion';
 import PCLayout from '@/components/PCLayout';
 import PCCoinDetail from '@/components/PCCoinDetail';
+import PCRightTopMarquee from '@/components/PCRightTopMarquee';
 import Layout from '../../components/Layout';
 import NavBar from '../../components/NavBar';
 import MoziCard from '../../components/MoziCard';
@@ -88,6 +89,7 @@ export default function DetailPage() {
   const [coinInfoRight, setCoinInfoRight] = useState([]);
   const [oneClickAlarmOpen, setOneClickAlarmOpen] = useState(false);
   const [oneClickAlarmMode, setOneClickAlarmMode] = useState('oneClick');
+  const [rightHotTicker, setRightHotTicker] = useState([]);
   const needLoop = useRef(true);
   const chartRef = useRef(null);
   const marketRef = useRef(null);
@@ -768,7 +770,7 @@ export default function DetailPage() {
             </div>
           ),
           last: item.last,
-          price24h: <HighlightArea value={item.price24h} />,
+          price24h: <HighlightArea value={item.price24h} variant={isPC ? 'pcMarket' : 'default'} />,
           vol: item.vol,
           usd: item.usd
         }));
@@ -783,6 +785,64 @@ export default function DetailPage() {
       setMarketLoading(false);
     }
   };
+
+  // 右侧顶部走马灯：热门榜单币种
+  useEffect(() => {
+    let alive = true;
+    const toPercent = (v) => {
+      if (v === null || v === undefined || v === '') return '--';
+      const n = Number(String(v).replace('%', '').trim());
+      return Number.isFinite(n) ? `${Math.abs(n).toFixed(2)}%` : String(v);
+    };
+    const loadHotCoins = async () => {
+      try {
+        const res = await request({ url: Interface.hot_coin, data: {} });
+        const list = Array.isArray(res?.data) ? res.data : [];
+        const mapped = list
+          .map((item) => {
+            const symbol = String(
+              item?.symbol || item?.coin || item?.base || item?.name || ''
+            ).toUpperCase();
+            const priceRaw =
+              item?.currentPrice ?? item?.last ?? item?.price ?? item?.close ?? '--';
+            const changeRaw =
+              item?.price24h ??
+              item?.priceRange ??
+              item?.priceChangePercentage24h ??
+              item?.priceChangePercentage_24h ??
+              item?.changePercent ??
+              item?.change ??
+              '--';
+            const price =
+              typeof priceRaw === 'number'
+                ? `$${priceRaw.toLocaleString()}`
+                : String(priceRaw).startsWith('$')
+                  ? String(priceRaw)
+                  : `$${priceRaw}`;
+            const changeNum = Number(String(changeRaw).replace('%', '').trim());
+            return {
+              symbol,
+              price,
+              changePercent: toPercent(changeRaw),
+              isUp: Number.isFinite(changeNum) ? changeNum >= 0 : null,
+            };
+          })
+          .filter((x) => x.symbol)
+          .slice(0, 8);
+        if (!alive) return;
+        setRightHotTicker(mapped);
+      } catch (_) {
+        if (!alive) return;
+        setRightHotTicker([]);
+      }
+    };
+    loadHotCoins();
+    const timer = setInterval(loadHotCoins, 30000);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, []);
 
   // 获取投资回报率（ROI）数据
   const fetchROIData = async () => {
@@ -1479,7 +1539,7 @@ ${coinInfo.name || symbol} (${symbol})
             </div>
           ),
           last: item.last,
-          price24h: <HighlightArea value={item.price24h} />,
+          price24h: <HighlightArea value={item.price24h} variant={isPC ? 'pcMarket' : 'default'} />,
           vol: item.vol,
           usd: item.usd
         }));
@@ -1837,11 +1897,25 @@ ${coinInfo.name || symbol} (${symbol})
     );
   };
 
+  const roiTitleEl =
+    isPC ? (
+      <div className={styles.pcRoiTitleRow}>
+        <span className={styles.pcRoiTitleDot} aria-hidden />
+        <span className={styles.pcRoiTitleText}>{t('detail.tabs.roi')}</span>
+      </div>
+    ) : null;
+
   // 渲染投资回报率（ROI）
   const renderROI = () => {
     if (roiLoading) {
       return (
-        <MoziCard title={t('detail.tabs.roi')}>
+        <MoziCard
+          title={isPC ? undefined : t('detail.tabs.roi')}
+          customTitle={isPC ? roiTitleEl : undefined}
+          isPC={isPC}
+          className={isPC ? `${styles.pcRightPanelCard} ${styles.pcRightRoiCard}` : ''}
+          marginBottom={isPC ? '0' : undefined}
+        >
           <div className={`${styles.box} ${styles.headerLoading}`} style={{ display: 'flex' }}>
             <Loading tip={t('common.loading')} size={24} />
           </div>
@@ -1863,11 +1937,22 @@ ${coinInfo.name || symbol} (${symbol})
     ];
 
     return (
-      <MoziCard title={t('detail.tabs.roi')}>
+      <MoziCard
+        title={isPC ? undefined : t('detail.tabs.roi')}
+        customTitle={isPC ? roiTitleEl : undefined}
+        isPC={isPC}
+        className={isPC ? `${styles.pcRightPanelCard} ${styles.pcRightRoiCard}` : ''}
+        marginBottom={isPC ? '0' : undefined}
+      >
         <div className={styles.roiBox}>
           <div className={styles.roiGrid}>
             {cards.map((item, idx) => (
-              <div key={idx} className={`${styles.roiCard} ${isNegative(item.value) ? styles.negative : styles.positive}`}>
+              <div
+                key={idx}
+                className={`${styles.roiCard} ${
+                  isNegative(item.value) ? styles.negative : styles.positive
+                }`}
+              >
                 <div className={styles.roiValue}>{item.value}</div>
                 <div className={styles.roiLabel}>{item.label}</div>
               </div>
@@ -1917,26 +2002,61 @@ ${coinInfo.name || symbol} (${symbol})
   
   // 渲染市场数据
   const renderMarket = () => {
+    const marketTitlePc =
+      isPC ? (
+        <div className={styles.pcMarketTitleRow}>
+          <div className={styles.pcMarketTitleLeft}>
+            <span className={styles.pcRoiTitleDot} aria-hidden />
+            <span className={styles.pcRoiTitleText}>{t('detail.tabs.market')}</span>
+          </div>
+
+          {Array.isArray(marketData) && marketData.length > 0 ? (
+            <span className={styles.pcRoiTitleNumRight}>
+              ({marketData.length})
+            </span>
+          ) : null}
+        </div>
+      ) : null;
+
     if (marketLoading) {
       return <Loading tip={t('common.loading')} />;
     }
-    
+
     if (!marketData || marketData.length === 0) {
       return (
-        <MoziCard title={t('detail.tabs.market')} sumNum={0}>
+        <MoziCard
+          title={isPC ? undefined : t('detail.tabs.market')}
+          customTitle={marketTitlePc}
+          sumNum={0}
+          isPC={isPC}
+          className={isPC ? `${styles.pcRightPanelCard} ${styles.pcRightMarketCard}` : ''}
+          marginBottom={isPC ? '0' : undefined}
+        >
           <div className={styles.emptyInfo}>{t('detail.empty.market')}</div>
         </MoziCard>
       );
     }
-    
+
     return (
-      <MoziCard title={t('detail.tabs.market')} sumNum={marketData.length}>
+      <MoziCard
+        title={isPC ? undefined : t('detail.tabs.market')}
+        customTitle={marketTitlePc}
+        sumNum={marketData.length}
+        isPC={isPC}
+        className={isPC ? `${styles.pcRightPanelCard} ${styles.pcRightMarketCard}` : ''}
+        marginBottom={isPC ? '0' : undefined}
+      >
         <MoziGrid
           length={5}
           colName={[t('detail.market.exchange'), t('detail.market.lastPrice'), t('detail.market.change24h'), t('detail.market.volume24h'), t('detail.market.amount24h')]}
           gridContent={marketData}
           gridTitleBgColor="transparent"
-          columnWidths={['25%', '22%', '20%', '20%', '22%']}
+          columnWidths={isPC ? ['28%', '16%', '16%', '20%', '20%'] : ['25%', '22%', '20%', '20%', '22%']}
+          isPC={isPC}
+          titleFontSize={isPC ? '12PX' : null}
+          contentFontSize={isPC ? '13PX' : null}
+          rowPadding={isPC ? '12PX 0' : null}
+          className={isPC ? styles.pcRightMarketGrid : ''}
         />
       </MoziCard>
     );
@@ -1948,6 +2068,55 @@ ${coinInfo.name || symbol} (${symbol})
     } catch (_) {}
     router.back();
   };
+
+  /** PC 行情页弹幕条：发帖到社区（与 PC 社区币种讨论一致） */
+  const handleBarrageSend = useCallback(
+    async (content) => {
+      const trimmed = (content || '').trim();
+      if (!trimmed) return;
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      if (!token) {
+        Toast.show({ content: t('post.messages.pleaseLogin') });
+        throw new Error('NO_TOKEN');
+      }
+      const sym = String(symbol || '').toUpperCase() || 'BTC';
+      Toast.show({ icon: 'loading', content: t('common.loading'), duration: 0 });
+      try {
+        const response = await request({
+          url: Interface.POST_NEW,
+          method: 'POST',
+          data: {
+            title: `关于 ${sym} 的讨论`,
+            content: trimmed,
+            category: '不懂就问',
+            tags: [sym],
+          },
+        });
+        Toast.clear();
+        if (response?.code === 0) {
+          try {
+            await completeTask('POST');
+          } catch (taskError) {
+            console.error('发帖任务上报失败:', taskError);
+          }
+          Toast.show({ icon: 'success', content: t('post.messages.publishSuccess') });
+        } else {
+          Toast.show({
+            icon: 'fail',
+            content: response?.message || response?.msg || t('post.messages.publishFailed'),
+          });
+          throw new Error('POST_FAILED');
+        }
+      } catch (e) {
+        Toast.clear();
+        if (e?.message === 'NO_TOKEN' || e?.message === 'POST_FAILED') throw e;
+        console.error('Barrage send failed:', e);
+        Toast.show({ icon: 'fail', content: t('post.messages.publishFailed') });
+        throw e;
+      }
+    },
+    [symbol, t]
+  );
 
   const oneClickAlarmModalEl = (
     <OneClickAlarmModal
@@ -1961,6 +2130,23 @@ ${coinInfo.name || symbol} (${symbol})
       onSkip={() => setOneClickAlarmOpen(false)}
     />
   );
+
+  const rightTopMarqueeItems =
+    rightHotTicker.length > 0
+      ? rightHotTicker
+      : [
+          { symbol: 'BTC', price: '$103,904.20', changePercent: '0.87%' },
+          { symbol: 'ETH', price: '$3,450.10', changePercent: '-1.20%' },
+          { symbol: 'BNB', price: '$600.50', changePercent: '0.50%' },
+          { symbol: 'SOL', price: '$145.20', changePercent: '2.10%' },
+        ];
+
+  const rightCommunityItems = [
+    `${String(symbol || 'BTC').toUpperCase()} 行情分析：短线波动加剧，关注关键支撑位。`,
+    `${String(symbol || 'BTC').toUpperCase()} 观点：量价结构仍偏强，等待回踩确认。`,
+    `${String(symbol || 'BTC').toUpperCase()} 讨论：24H 资金流向改善，留意放量突破。`,
+    `${String(symbol || 'BTC').toUpperCase()} 快讯：主流币分化，风险偏好回升。`,
+  ];
 
   if (isPC) {
     return (
@@ -1982,6 +2168,7 @@ ${coinInfo.name || symbol} (${symbol})
               onAlert={jump2Alert}
               onShare={shareToTelegram}
               onTradingRadar={handleTradingRadar}
+              onBarrageSend={handleBarrageSend}
               statColumns={[
                 // 左侧列：24H 最高价 / 24H 最低价
                 coinInfoLeft.slice(0, 2).map((x) => ({ label: x.name, value: x.value })),
@@ -2011,7 +2198,41 @@ ${coinInfo.name || symbol} (${symbol})
               )}
             </PCCoinDetail>
           </aside>
-          <section className={styles.pcContentColRight} />
+          <section className={styles.pcContentColRight}>
+            <div className={styles.pcRightTopMarqueeWrap}>
+              <PCRightTopMarquee items={rightTopMarqueeItems} />
+            </div>
+            <div className={styles.pcRightPanelContainer}>
+              <div className={styles.pcRightPanelGrid}>
+                <div className={styles.pcRightPanelLeft}>
+                  {renderROI()}
+                  {renderMarket()}
+                </div>
+                <div className={styles.pcRightPanelRight}>
+                  <div className={styles.pcRightPanelCard}>
+                    <div className={styles.pcCommunityHeader}>
+                      <span>{t('detail.actions.community')}</span>
+                      <button
+                        type="button"
+                        className={styles.pcCommunityMore}
+                        onClick={jump2Community}
+                      >
+                        {t('common.more') || '查看更多'}
+                      </button>
+                    </div>
+                    <div className={styles.pcCommunityList}>
+                      {rightCommunityItems.map((item, idx) => (
+                        <div key={idx} className={styles.pcCommunityItem}>
+                          <div className={styles.pcCommunityAvatar} />
+                          <div className={styles.pcCommunityText}>{item}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
         {oneClickAlarmModalEl}
       </PCLayout>
