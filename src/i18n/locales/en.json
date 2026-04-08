@@ -1223,7 +1223,8 @@
       "roi": "ROI"
     },
     "empty": {
-      "market": "No market data"
+      "market": "No market data",
+      "community": "No community posts yet"
     },
     "market": {
       "exchange": "Exchange",

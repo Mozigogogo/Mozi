@@ -1205,7 +1205,8 @@
       "roi": "投资回报率"
     },
     "empty": {
-      "market": "暂无市场数据"
+      "market": "暂无市场数据",
+      "community": "暂无社区动态"
     },
     "market": {
       "exchange": "交易所",

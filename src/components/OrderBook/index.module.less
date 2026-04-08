@@ -9,7 +9,7 @@
 }
 
 .containerMasked {
-  max-height: 300px;
+  max-height: 360px;
   overflow: hidden;
 }
 
@@ -667,12 +667,11 @@
 }
 
 .maskButton:hover {
-  transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(139, 111, 71, 0.4);
 }
 
 .maskButton:active {
-  transform: translateY(0);
+  transform: none;
 }
 
 .membershipButton {
@@ -695,13 +694,12 @@
 }
 
 .membershipButton:hover {
-  transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(229, 195, 132, 0.4);
   background: #ebd2a3;
 }
 
 .membershipButton:active {
-  transform: translateY(0);
+  transform: none;
 }
 
 .chartOverlay {
@@ -821,5 +819,155 @@
       width: 22PX;
       height: 22PX;
     }
+  }
+
+  /* 锁定态遮罩：全局小写 px 会被转成 vw，PC 宽屏会异常放大；在此处用固定 PX 覆盖 */
+  .containerMasked {
+    max-height: 730PX;
+  }
+
+  .maskOverlay {
+    border-radius: 12PX;
+    align-items: stretch;
+    justify-content: stretch;
+  }
+
+  .maskCard {
+    border-radius: 12PX;
+    min-height: 260PX;
+    /* PC：避免背景图自带渐变 + 头部渐变叠加产生色差 */
+    background-image: none;
+    background-color: rgba(245, 235, 214, 1);
+  }
+
+  .maskHeader {
+    gap: 4PX;
+    /* PC：头部只保留一层渐变，并铺满整个头部区域 */
+    padding: 10PX 14PX 8PX;
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+    border-top-left-radius: 12PX;
+    border-top-right-radius: 12PX;
+    background: linear-gradient(
+      90deg,
+      rgba(241, 210, 156, 0.95) 0%,
+      rgba(241, 210, 156, 0.55) 55%,
+      rgba(241, 210, 156, 0.25) 100%
+    );
+  }
+
+  .maskHeader::before {
+    display: none;
+  }
+
+  .maskHeaderTitle {
+    font-size: 16PX;
+    line-height: 1.25;
+  }
+
+  .maskHeaderBadge {
+    top: 4PX;
+    right: 0;
+    width: 72PX;
+    height: 28PX;
+  }
+
+  /* header 自己已带 padding，无需再给子元素额外 padding */
+  .maskTitleSection {
+    position: relative;
+    z-index: 1;
+  }
+
+  .maskLegend {
+    position: relative;
+    z-index: 1;
+  }
+
+  .maskCard::before {
+    display: none;
+  }
+
+  .maskLegend {
+    gap: 3PX;
+  }
+
+  .maskLegendItem {
+    gap: 6PX;
+  }
+
+  .maskDot {
+    width: 6PX;
+    height: 6PX;
+  }
+
+  .maskLegendText {
+    font-size: 12PX;
+    line-height: 1.2;
+  }
+
+  .maskContent {
+    padding: 30PX 16PX 16PX;
+    align-items: stretch;
+  }
+
+  .maskTitle {
+    font-size: 15PX;
+    line-height: 1.35;
+    margin-bottom: 8PX;
+  }
+
+  .maskBullet {
+    font-size: 14PX;
+  }
+
+  .maskSubtitleWrapper {
+    gap: 6PX;
+    margin-bottom: 8PX;
+  }
+
+  .maskSubtitle {
+    font-size: 12PX;
+    line-height: 1.35;
+  }
+
+  .maskDescription {
+    font-size: 12PX;
+    line-height: 1.45;
+    margin: 0;
+    max-width: 100%;
+  }
+
+  .maskVipIcon {
+    right: 8PX;
+    top: 8PX;
+    height: 56PX;
+    width: auto;
+  }
+
+  .maskButton {
+    width: 100%;
+    max-width: 220PX;
+    margin: 30PX auto 0;
+    padding: 8PX 16PX;
+    min-height: 36PX;
+    font-size: 13PX;
+    border-radius: 20PX;
+  }
+
+  .membershipButton {
+    width: 100%;
+    max-width: 220PX;
+    margin: 10PX auto 0;
+    padding: 8PX 16PX;
+    min-height: 36PX;
+    font-size: 13PX;
+    border-radius: 20PX;
+  }
+
+  .chartOverlay {
+    top: 56%;
+    padding: 10PX 12PX;
+    max-height: 108PX;
   }
 }
