@@ -31,6 +31,7 @@ const getStableColorBySymbol = (symbol) => {
 export default function PCRightTopMarquee({
   items = [],
   speed = 22,
+  loading = false,
   className = '',
 }) {
   const normalizedItems = useMemo(
@@ -49,6 +50,17 @@ export default function PCRightTopMarquee({
         .filter((item) => item && item.symbol),
     [items]
   );
+
+  if (loading) {
+    return (
+      <div className={`${styles.root} ${className}`.trim()}>
+        <div className={styles.loadingWrap}>
+          <span className={styles.loadingDot} aria-hidden />
+          <span className={styles.loadingText}>Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
   if (!normalizedItems.length) return null;
 

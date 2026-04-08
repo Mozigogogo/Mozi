@@ -55,10 +55,11 @@
 
 .pcContentColLeft,
 .pcContentColRight {
-  height: 100%;
+  height: auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  align-self: stretch;
   /* 与站内白卡片一致，便于后续填入模块 */
   background: #fff;
   border-radius: 10px;
@@ -77,16 +78,17 @@
 
 .pcRightPanelContainer {
   flex: 1;
+  height: 100%;
   min-height: 0;
   padding: 0;
 }
 
 .pcRightPanelGrid {
-  height: auto;
+  height: 100%;
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 58%) minmax(0, 42%);
-  align-items: start;
+  align-items: stretch;
   gap: 12PX;
   padding: 0;
   border-radius: 0;
@@ -180,10 +182,11 @@
   padding: 18PX 20PX !important;
 }
 
-/* 市场卡片随内容增高，避免 flex:1 撑满后与社区高度互相牵制 */
+/* 中间列最后一张卡片填满剩余高度，确保三栏底部齐平 */
 .pcRightPanelLeft .pcRightPanelCard:last-child {
-  flex: 0 0 auto;
-  overflow: visible;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .pcRightPanelRight .pcRightPanelCard {

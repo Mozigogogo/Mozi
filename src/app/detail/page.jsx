@@ -92,6 +92,7 @@ export default function DetailPage() {
   const [oneClickAlarmOpen, setOneClickAlarmOpen] = useState(false);
   const [oneClickAlarmMode, setOneClickAlarmMode] = useState('oneClick');
   const [rightHotTicker, setRightHotTicker] = useState([]);
+  const [rightHotTickerLoading, setRightHotTickerLoading] = useState(true);
   const [rightCommunityPosts, setRightCommunityPosts] = useState([]);
   const [rightCommunityLoading, setRightCommunityLoading] = useState(false);
   const [rightCommunityPage, setRightCommunityPage] = useState(1);
@@ -808,6 +809,7 @@ export default function DetailPage() {
       return Number.isFinite(n) ? `${Math.abs(n).toFixed(2)}%` : String(v);
     };
     const loadHotCoins = async () => {
+      if (alive) setRightHotTickerLoading(true);
       try {
         const res = await request({ url: Interface.coin_trade, data: { intervals: 0 } });
         const listRaw = res?.data;
@@ -857,6 +859,9 @@ export default function DetailPage() {
       } catch (_) {
         if (!alive) return;
         setRightHotTicker([]);
+      } finally {
+        if (!alive) return;
+        setRightHotTickerLoading(false);
       }
     };
     loadHotCoins();
@@ -2370,7 +2375,7 @@ ${coinInfo.name || symbol} (${symbol})
           </aside>
           <section className={styles.pcContentColRight}>
             <div className={styles.pcRightTopMarqueeWrap}>
-              <PCRightTopMarquee items={rightTopMarqueeItems} />
+              <PCRightTopMarquee items={rightTopMarqueeItems} loading={rightHotTickerLoading} />
             </div>
             <div className={styles.pcRightPanelContainer}>
               <div className={styles.pcRightPanelGrid}>

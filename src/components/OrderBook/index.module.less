@@ -763,6 +763,21 @@
     gap: 5PX;
   }
 
+  /* PC: 下拉菜单使用固定 PX，避免被全局 px->vw 放大 */
+  .dropdownMenu {
+    top: calc(100% + 4PX);
+    right: 0;
+    min-width: 160PX;
+    border: 1PX solid #e0e0e0;
+    border-radius: 6PX;
+    box-shadow: 0 2PX 12PX rgba(0, 0, 0, 0.1);
+  }
+
+  .dropdownOption {
+    padding: 8PX 12PX;
+    font-size: 12PX;
+  }
+
   .dot {
     width: 6PX;
     height: 6PX;
@@ -798,8 +813,15 @@
 
   /* 兼容 Top 5 / Top 10 布局里对 icon 尺寸的专用覆盖 */
   .listTop5 {
+    gap: 30PX;
+
     .row {
+      min-height: 28PX;
       grid-template-columns: 22PX 1fr 22PX;
+    }
+
+    .barTrack {
+      height: 12PX;
     }
 
     .icon,
