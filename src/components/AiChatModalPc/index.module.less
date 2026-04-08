@@ -1,0 +1,387 @@
+.root {
+  position: fixed;
+  right: 24PX;
+  /* = 机器人按钮 bottom(100) + 机器人按钮高度(64) + 间距(12) */
+  bottom: 176PX;
+  z-index: 12000;
+  pointer-events: auto;
+
+  /* 机器人中心点相对弹窗右边距 */
+  --robot-center-offset-right: 32PX;
+}
+
+@media (max-width: 1024px) {
+  .root {
+    right: 16PX;
+    /* = 机器人按钮 bottom(70) + 机器人按钮高度(50) + 间距(12) */
+    bottom: 132PX;
+    --robot-center-offset-right: 25PX;
+  }
+}
+
+.wrapper {
+  width: 370PX;
+  max-width: calc(100vw - 40PX);
+  background: #ffffff;
+  border-radius: 26PX;
+  box-shadow: 0 24PX 60PX rgba(15, 23, 42, 0.24);
+  border: 1PX solid rgba(164, 244, 207, 1);
+  position: relative;
+  overflow: visible;
+  padding: 0;
+}
+
+/* 让弹窗从机器人图标“上方”落下一个小三角提示 */
+.wrapper::before,
+.wrapper::after {
+  content: '';
+  position: absolute;
+  right: calc(var(--robot-center-offset-right) - 11PX);
+  bottom: -11PX;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* 外框绿色边 */
+.wrapper::before {
+  border-left: 11PX solid transparent;
+  border-right: 11PX solid transparent;
+  border-top: 11PX solid rgba(164, 244, 207, 1);
+  z-index: 0;
+}
+
+/* 内部白色填充 */
+.wrapper::after {
+  bottom: -10PX;
+  border-left: 10PX solid transparent;
+  border-right: 10PX solid transparent;
+  border-top: 10PX solid #ffffff;
+  z-index: 1;
+}
+
+.wrapperInner {
+  height: 444PX;
+  max-height: calc(100vh - 220PX);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 26PX;
+  position: relative;
+  z-index: 2;
+}
+
+.header {
+  padding: 16PX 20PX 10PX;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  font-size: 16PX;
+  font-weight: 600;
+  color: #111827;
+}
+
+.headerIcons {
+  display: flex;
+  align-items: center;
+  gap: 8PX;
+}
+
+.iconButton {
+  width: 24PX;
+  height: 24PX;
+  border-radius: 999PX;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16PX;
+  line-height: 1;
+}
+
+.iconButton:hover {
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.topBorder {
+  height: 1PX;
+  background: rgba(164, 244, 207, 1);
+}
+
+.contentOuter {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  box-sizing: border-box;
+}
+
+.contentInner {
+  flex: 1;
+  background: #FFFFFF;
+  border-radius: 24PX;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* 让 messageList 能在 flex 下正确滚动 */
+  overflow: hidden;
+}
+
+.messageList {
+  flex: 1;
+  box-sizing: border-box;
+  min-height: 0;
+  padding: 12PX 12PX 18PX;
+  overflow-y: auto;
+  padding-right: 4PX;
+  display: flex;
+  flex-direction: column;
+  gap: 10PX;
+}
+
+.footer {
+  flex-shrink: 0;
+  margin-top: 12PX; /* 替代 inputBar 之前的 margin-top */
+  padding: 10PX 8PX 10PX;
+  border-top: none;
+  position: relative;
+}
+
+.footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2PX;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 212, 146, 0.4) 50%,
+    rgba(0, 0, 0, 0) 100%
+  );
+}
+
+.bubbleRowAssistant {
+  display: flex;
+  justify-content: flex-start;
+  padding-left: 6PX;
+  padding-right: 20PX;
+}
+
+.bubbleRowUser {
+  display: flex;
+  justify-content: flex-end;
+  padding-left: 20PX;
+  padding-right: 6PX;
+}
+
+.bubbleAssistant {
+  max-width: 90%;
+  background: #FFFFFF;
+  border-radius: 16PX;
+  border: 1PX solid #D0FAE5;
+  position: relative;
+  padding: 12PX 16PX;
+  font-size: 13PX;
+  line-height: 1.6;
+  color: #111827;
+  box-shadow: 0 1PX 3PX rgba(15, 23, 42, 0.08);
+}
+
+.bubbleAssistant::after {
+  content: '';
+  position: absolute;
+  left: -6PX;
+  bottom: 10PX;
+  width: 10PX;
+  height: 10PX;
+  background: #FFFFFF;
+  border-left: 1PX solid #D0FAE5;
+  border-bottom: 1PX solid #D0FAE5;
+  transform: rotate(45deg);
+}
+
+.bubbleUser {
+  max-width: 80%;
+  background: #DCFCE7;
+  border-radius: 16PX;
+  border: 1PX solid rgba(22, 163, 74, 0.5);
+  position: relative;
+  padding: 10PX 14PX;
+  font-size: 13PX;
+  line-height: 1.6;
+  color: #065f46;
+  box-shadow: 0 1PX 3PX rgba(15, 23, 42, 0.12);
+}
+
+.bubbleUser::after {
+  content: '';
+  position: absolute;
+  right: -6PX;
+  bottom: 10PX;
+  width: 10PX;
+  height: 10PX;
+  background: #DCFCE7;
+  border-top: 1PX solid rgba(22, 163, 74, 0.5);
+  border-right: 1PX solid rgba(22, 163, 74, 0.5);
+  transform: rotate(45deg);
+}
+
+.markdownContent {
+  word-break: break-word;
+}
+
+.markdownContent :global(p) {
+  margin: 0;
+}
+
+.markdownContent :global(p + p) {
+  margin-top: 6PX;
+}
+
+.markdownContent :global(ul),
+.markdownContent :global(ol) {
+  margin: 6PX 0 0;
+  padding-left: 18PX;
+}
+
+.markdownContent :global(li + li) {
+  margin-top: 4PX;
+}
+
+.markdownContent :global(pre) {
+  margin: 8PX 0 0;
+  padding: 8PX 10PX;
+  border-radius: 8PX;
+  background: rgba(15, 23, 42, 0.06);
+  overflow-x: auto;
+}
+
+.markdownContent :global(code) {
+  font-family: Menlo, Consolas, Monaco, monospace;
+  font-size: 12PX;
+}
+
+.thinkingDots {
+  display: inline-flex;
+  align-items: center;
+  gap: 5PX;
+  min-height: 18PX;
+}
+
+.thinkingDots span {
+  width: 6PX;
+  height: 6PX;
+  border-radius: 50%;
+  background: rgba(17, 24, 39, 0.45);
+  animation: aiDotPulse 1s ease-in-out infinite;
+}
+
+.thinkingDots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.thinkingDots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.streamingText {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@keyframes aiDotPulse {
+  0%,
+  80%,
+  100% {
+    transform: scale(0.7);
+    opacity: 0.45;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.inputBar {
+  display: flex;
+  align-items: flex-end;
+  gap: 10PX;
+  padding: 5PX 8PX;
+  background: #FFFFFF;
+  border-radius: 999PX;
+  border: 1PX solid rgba(4, 213, 148, 1);
+}
+
+.input {
+  flex: 1;
+  border: none;
+  resize: none;
+  outline: none;
+  font-size: 13PX;
+  height: 28PX;
+  line-height: 28PX; /* 让占位文字在单行高度内垂直居中 */
+  padding: 0 6PX;
+  color: #111827;
+  max-height: 40PX;
+}
+
+.input::placeholder {
+  color: #9ca3af;
+}
+
+.sendButton {
+  width: 28PX;
+  height: 28PX;
+  border-radius: 50%;
+  border: none;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 13PX;
+}
+
+.sendIcon {
+  width: 16PX;
+  height: 16PX;
+  display: block;
+}
+
+.pauseIcon {
+  width: 12PX;
+  height: 12PX;
+  display: block;
+  background: linear-gradient(
+    to right,
+    rgba(6, 95, 70, 1) 0 4PX,
+    transparent 4PX 8PX,
+    rgba(6, 95, 70, 1) 8PX 12PX
+  );
+}
+
+// .sendButton:disabled {
+//   background: #d1d5db;
+//   cursor: default;
+// }
+
+// .sendButton:not(:disabled):hover {
+//   background: #15803d;
+// }
+
+@media (max-width: 768px) {
+  .wrapper {
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+  }
+}
+

@@ -19,6 +19,8 @@ import OneClickAlarmModal from '@/components/OneClickAlarmModal';
 import { Loading } from '@/components/Loading';
 import { CaretUpIcon, CaretDownIcon, BellIcon } from '@/components/Icons';
 import FloatingRobot from '@/components/FloatingRobot';
+import FloatingRobotPc from '@/components/FloatingRobotPc';
+import AiChatModalPc from '@/components/AiChatModalPc';
 // import { SkeletonPage } from '../../components/Skeleton';
 // import { detailPageSkeletonConfig } from '../../components/Skeleton/configs/detailPageConfig';
 import { request } from '@/utils/request';
@@ -96,6 +98,8 @@ export default function DetailPage() {
   const [rightCommunityHasMore, setRightCommunityHasMore] = useState(true);
   const [rightCommunityLoadingMore, setRightCommunityLoadingMore] = useState(false);
   const rightCommunityMountedRef = useRef(false);
+  const [pcAiChatOpen, setPcAiChatOpen] = useState(false);
+  const [pcAiAutoSend, setPcAiAutoSend] = useState({ text: '', token: '' });
   /** PC：社区卡片总高度 = 左侧栏（ROI + 市场 + 间距）高度，底边与市场列对齐（ResizeObserver） */
   const [pcCommunityCardHeightPx, setPcCommunityCardHeightPx] = useState(null);
   const needLoop = useRef(true);
@@ -1131,7 +1135,13 @@ export default function DetailPage() {
   // 交易雷达（占位行为，可后续接入具体功能）
   const handleTradingRadar = () => {
     if (!symbol) return;
-    console.log('[TradingRadar] click for symbol:', symbol);
+    const normalizedSymbol = String(symbol || '').toUpperCase();
+    const autoText = `帮我分析一下目前的${normalizedSymbol}行情趋势，以及是否有大单异动。`;
+    setPcAiAutoSend({
+      text: autoText,
+      token: `${Date.now()}-${normalizedSymbol}`,
+    });
+    setPcAiChatOpen(true);
   };
   // 分享到Telegram
   const shareToTelegram = () => {
@@ -2522,6 +2532,17 @@ ${coinInfo.name || symbol} (${symbol})
           </section>
         </div>
         {oneClickAlarmModalEl}
+        <FloatingRobotPc
+          message={t('detail.robotMessage', { symbol: symbol.toUpperCase() })}
+          onClick={() => setPcAiChatOpen(true)}
+        />
+        <AiChatModalPc
+          open={pcAiChatOpen}
+          onClose={() => setPcAiChatOpen(false)}
+          autoSendText={pcAiAutoSend.text}
+          autoSendToken={pcAiAutoSend.token}
+          symbol={symbol}
+        />
       </PCLayout>
     );
   }
