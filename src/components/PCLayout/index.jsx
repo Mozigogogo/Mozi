@@ -51,7 +51,10 @@ export default function PCLayout({ children }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { formatValue, formatPrice } = useFormatNumber();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const noFavoritesText = t('discover.noFavorites', {
+    defaultValue: (i18n?.language || '').startsWith('en') ? 'No Favorites' : '暂无收藏自选',
+  });
   const [userInfo, setUserInfo] = useState(null);
   const [collapsed, setCollapsed] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
@@ -701,7 +704,7 @@ export default function PCLayout({ children }) {
                         {t('common.loading')}
                       </div>
                     ) : watchlist.length === 0 ? (
-                      <div className={styles.pcWatchlistHint}>{t('discover.noFavorites')}</div>
+                      <div className={styles.pcWatchlistHint}>{noFavoritesText}</div>
                     ) : (
                       watchlist.map((item) => {
                         const sym = item.symbol;

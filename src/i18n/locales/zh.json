@@ -427,6 +427,16 @@
     "settings": "设置",
     "language": "语言设置",
     "selectLanguage": "选择语言",
+    "profilePanel": {
+      "viewChannel": "查看你的频道",
+      "telegram": "Telegram",
+      "wallet": "钱包",
+      "bind": "绑定",
+      "bound": "已绑定",
+      "logout": "退出账号",
+      "subscriptionAndMembership": "订阅内容和会员",
+      "defaultAccount": "账号账号账号号"
+    },
     "subscriptionEnabled": "订阅成功",
     "subscriptionDisabled": "取消订阅",
     "theme": "主题",
