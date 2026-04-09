@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import TelegramAutoLogin from '@/components/TelegramAutoLogin';
 import { getMySubscription } from '@/api/vip';
+import { LogoLoading } from '@/components/Loading';
 
 // Dynamic imports to optimize bundle size and performance
 const PCHome = dynamic(() => import('../components/PCHome'), {
@@ -17,36 +18,31 @@ const MobileHome = dynamic(() => import('../components/MobileHome'), {
 });
 
 export default function HomePage() {
-  const [isPC, setIsPC] = useState(false);
+  const [isPC, setIsPC] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(min-width: 1024px)').matches;
+  });
   const [didKickoffSubscription, setDidKickoffSubscription] = useState(false);
   const [tgLoginSuccessReceived, setTgLoginSuccessReceived] = useState(false);
-
-  if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
-    window.__moziDebug = window.__moziDebug || { homePageRender: 0 };
-    window.__moziDebug.homePageRender += 1;
-    console.log('[HomePage][debug] render', {
-      renderCount: window.__moziDebug.homePageRender,
-      isPC,
-      didKickoffSubscription,
-      tgLoginSuccessReceived,
-    });
-  }
+  const [homeBootMaskVisible, setHomeBootMaskVisible] = useState(true);
   
   useEffect(() => {
-    console.log('[HomePage][debug] device effect run');
-    const checkDevice = () => {
-      setIsPC(window.innerWidth >= 1024);
+    if (typeof window === 'undefined') return;
+
+    const mediaQuery = window.matchMedia('(min-width: 1024px)');
+    const update = (event) => {
+      setIsPC(event.matches);
     };
-    checkDevice();
-    window.addEventListener('resize', checkDevice);
-    return () => window.removeEventListener('resize', checkDevice);
+
+    setIsPC(mediaQuery.matches);
+    mediaQuery.addEventListener('change', update);
+    return () => mediaQuery.removeEventListener('change', update);
   }, []);
 
   // TG 环境下：优先等 TelegramAutoLogin 完成（触发 tg-login-success）
   // 再去拉订阅，避免旧 token 抢跑导致 planCode 同步慢/不一致。
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    console.log('[HomePage][debug] tg wait effect run');
     const isTgEnv = localStorage.getItem('appChannel') === 'tg';
 
     // 非 TG 环境不需要等待
@@ -71,10 +67,6 @@ export default function HomePage() {
 
   // 首页优先拉取订阅状态（/api/subscription/my），用于尽快同步 planCode
   useEffect(() => {
-    console.log('[HomePage][debug] subscription effect run', {
-      didKickoffSubscription,
-      tgLoginSuccessReceived,
-    });
     if (didKickoffSubscription) return;
     if (typeof window === 'undefined') return;
     if (!tgLoginSuccessReceived) return;
@@ -102,7 +94,9 @@ export default function HomePage() {
       .then(() => getMySubscription())
       .catch((e) => {
         // 401 会在 request.js 里触发重登逻辑，这里避免重复提示
-        console.warn('[HomePage] getMySubscription failed:', e);
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('[HomePage] getMySubscription failed:', e);
+        }
       })
       .finally(() => {
         try {
@@ -113,13 +107,23 @@ export default function HomePage() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    window.__moziDebug = window.__moziDebug || { homePageMount: 0 };
-    window.__moziDebug.homePageMount = (window.__moziDebug.homePageMount || 0) + 1;
-    const mountId = window.__moziDebug.homePageMount;
-    console.log('[HomePage][debug] mount', { mountId });
-    return () => {
-      console.log('[HomePage][debug] unmount', { mountId });
+
+    const MIN_MASK_MS = 700;
+    const startTs = Date.now();
+
+    const hideMask = () => {
+      const elapsed = Date.now() - startTs;
+      const remain = Math.max(0, MIN_MASK_MS - elapsed);
+      window.setTimeout(() => setHomeBootMaskVisible(false), remain);
     };
+
+    if (document.readyState === 'complete') {
+      hideMask();
+      return;
+    }
+
+    window.addEventListener('load', hideMask, { once: true });
+    return () => window.removeEventListener('load', hideMask);
   }, []);
 
   // Avoid hydration mismatch by not rendering until mounted
@@ -139,6 +143,13 @@ export default function HomePage() {
         <PCLayout>
           <PCHome />
         </PCLayout>
+        <LogoLoading
+          visible={homeBootMaskVisible}
+          fullscreen
+          mask
+          image="/images/community/loadding.png"
+          size={72}
+        />
       </>
     );
   }
@@ -147,6 +158,13 @@ export default function HomePage() {
     <>
       <TelegramAutoLogin />
       <MobileHome />
+      <LogoLoading
+        visible={homeBootMaskVisible}
+        fullscreen
+        mask
+        image="/images/community/loadding.png"
+        size={72}
+      />
     </>
   );
 }

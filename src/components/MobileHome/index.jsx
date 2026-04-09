@@ -48,8 +48,8 @@ export default function MobileHome() {
   // 活动弹窗状态
   const [showActivityModal, setShowActivityModal] = useState(false);
   
-  // 活动弹窗图片加载状态
-  const [activityImagesLoaded, setActivityImagesLoaded] = useState(false);
+  // 活动弹窗图片预加载只影响弹窗本身，不阻塞首页主数据请求
+  const [activityImagesLoaded, setActivityImagesLoaded] = useState(true);
   
   // Telegram WebApp 检测状态
   const [tgInfo, setTgInfo] = useState({
@@ -562,9 +562,6 @@ export default function MobileHome() {
 
   // 初始化数据加载 + 轮询（仅更新数据区域）
   useEffect(() => {
-    console.log('[MobileHome][debug] data effect run', { activityImagesLoaded });
-    if (!activityImagesLoaded) return;
-
     // 首次初始化：允许展示加载态
     fetchHotCoin();
     fetchHotIndustry();
@@ -583,7 +580,7 @@ export default function MobileHome() {
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [activityImagesLoaded]);
+  }, []);
 
   // 榜单切换处理
   const rankActiveClick = (value) => {
