@@ -29,6 +29,7 @@ import PCUserPanel from '../PCUserPanel';
 import PCFooterNotice from '../PCFooterNotice';
 import BenefitCodeModal from '../BenefitCodeModal';
 import BindBenefitCodeModal from '../BindBenefitCodeModal';
+import UserProfilePanelPopup from '../UserProfilePanelPopup';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
@@ -87,6 +88,7 @@ export default function PCLayout({ children }) {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [showUserPanel, setShowUserPanel] = useState(false);
+  const [showUserProfilePopup, setShowUserProfilePopup] = useState(false);
 
   useEffect(() => {
     const syncUserInfo = () => {
@@ -553,6 +555,7 @@ export default function PCLayout({ children }) {
           />
           <Button 
             type="text" 
+            onClick={() => setShowUserProfilePopup(true)}
             icon={<img src="/icons/pc/setting@2x.png" alt="settings" style={{ width: 22, height: 22, objectFit: 'contain' }} />} 
           />
           <Button 
@@ -839,6 +842,23 @@ export default function PCLayout({ children }) {
       <BindBenefitCodeModal
         open={showBindBenefitCodeModal}
         onClose={() => setShowBindBenefitCodeModal(false)}
+      />
+
+      <UserProfilePanelPopup
+        open={showUserProfilePopup}
+        onClose={() => setShowUserProfilePopup(false)}
+        onLogout={() => {
+          setShowUserProfilePopup(false);
+          router.push('/user');
+        }}
+        onSave={() => setShowUserProfilePopup(false)}
+        initialData={{
+          name: userInfo?.nickName || userInfo?.nickname || '用户名',
+          account: '账号账号账号号',
+          avatar:
+            userInfo?.avatar ||
+            'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png',
+        }}
       />
     </Layout>
   );
