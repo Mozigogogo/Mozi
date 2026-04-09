@@ -69,6 +69,27 @@ export default function CommunityPage() {
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [likedPosts, setLikedPosts] = useState({});
+
+  // 获取当前登录用户ID（用于区分自己/他人主页跳转）
+  useEffect(() => {
+    try {
+      const userInfoRaw = localStorage.getItem('userInfo');
+      if (userInfoRaw) {
+        const parsed = JSON.parse(userInfoRaw);
+        if (parsed?.userId !== undefined && parsed?.userId !== null && parsed?.userId !== '') {
+          setCurrentUserId(String(parsed.userId));
+          return;
+        }
+      }
+
+      const userIdRaw = localStorage.getItem('userId');
+      if (userIdRaw) {
+        setCurrentUserId(String(userIdRaw));
+      }
+    } catch (error) {
+      console.error('获取当前用户ID失败:', error);
+    }
+  }, []);
   
   // 滚动容器ref
   const scrollContainerRef = useRef(null);
@@ -765,7 +786,18 @@ export default function CommunityPage() {
 
   // 跳转到用户主页
   const goToUserPage = (userId) => {
-    window.location.href = `/user?userId=${userId}`;
+    const targetUserId = String(userId ?? '');
+    const me = String(currentUserId ?? '');
+
+    if (!targetUserId) return;
+
+    // 自己发的帖子跳转个人中心，他人帖子跳转用户详情页
+    if (me && targetUserId === me) {
+      window.location.href = '/user';
+      return;
+    }
+
+    window.location.href = `/user/${targetUserId}`;
   };
 
   // 初始化加载

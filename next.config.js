@@ -54,7 +54,17 @@ module.exports = withLess({
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=0, must-revalidate',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      // HTML 文档禁止强缓存，避免旧 HTML 引用新版本已不存在的 chunk
+      {
+        source: '/((?!_next/static|_next/image|api/|favicon.ico|manifest.json).*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'private, no-cache, no-store, must-revalidate',
           },
         ],
       },

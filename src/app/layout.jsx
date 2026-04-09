@@ -14,6 +14,7 @@ import EnvironmentDetector from "@/components/EnvironmentDetector";
 import RouteChangeHandler from "@/components/RouteChangeHandler";
 import TokenDebugMonitor from "@/components/TokenDebugMonitor";
 import BuildFingerprint from "@/components/BuildFingerprint";
+import ChunkErrorRecovery from "@/components/ChunkErrorRecovery";
 import GoogleAuthProvider from "../context/GoogleAuthProvider";
 import GetPointsModal from "@/components/GetPointsModal";
 
@@ -62,6 +63,7 @@ export default function RootLayout({ children }) {
         />
         <EnvironmentDetector />
         <BuildFingerprint />
+        <ChunkErrorRecovery />
         <RouteChangeHandler />
         {process.env.NODE_ENV !== 'production' ? <TokenDebugMonitor /> : null}
         <VConsoleLoader />
