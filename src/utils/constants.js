@@ -159,8 +159,20 @@ export const Interface = {
   UPDATE_USER_INFO: '/user/info',
   // 编辑用户主题
   EDIT_USER_THEME: '/user/editUserTheme',
+  // 编辑身份标签
+  EDIT_IDENTITY_TAG: '/user/editIdentityTag',
   // 用户帖子列表
   USER_POSTS: '/user/posts',
+  // 用户关注列表（可查自己或他人）
+  USER_FOLLOW_LIST: '/user/followList',
+  // 用户粉丝列表（可查自己或他人）
+  USER_FAN_LIST: '/user/fanList',
+  // 关注用户
+  USER_FOLLOW: '/user/follow',
+  // 取消关注用户
+  USER_UNFOLLOW: '/user/unfollow',
+  // 是否已关注目标用户
+  USER_FOLLOW_STATUS: '/user/followStatus',
   // 评论
   MOZI_COMMENT: '/feedback/add',
   // 我的评论列表

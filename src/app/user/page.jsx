@@ -82,7 +82,14 @@ export default function UserPage() {
     level: 1,
     isVip: false,
     isLite: false,
-    isLogin: false
+    isLogin: false,
+    /** 来自 /user/datainfo 的 identityTag；null 表示未设置，我的页不展示标签行 */
+    identityTag: null,
+    /** 来自 /user/datainfo 的统计数据 */
+    followingCount: 0,
+    fansCount: 0,
+    totalLikeCount: 0,
+    totalPoints: 0,
   });
   const [mySubscription, setMySubscription] = useState(null);
   const DEFAULT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png';
@@ -330,6 +337,23 @@ export default function UserPage() {
           yesterdayPoints: data.yesterdayPoints || 0,
           pointsRanking: data.pointsRanking || 0
         });
+
+        // 同步“我的页”顶部统计数据（关注/粉丝/获赞/积分）
+        setUserInfo((prev) => ({
+          ...prev,
+          followingCount: data.followingCount ?? prev.followingCount ?? 0,
+          fansCount: data.fansCount ?? prev.fansCount ?? 0,
+          totalLikeCount: data.totalLikeCount ?? prev.totalLikeCount ?? 0,
+          totalPoints: data.totalPoints ?? prev.totalPoints ?? 0,
+        }));
+
+        const rawIdentity =
+          data?.identityTag ?? data?.userInfo?.identityTag ?? null;
+        const identityTagNormalized =
+          rawIdentity == null || String(rawIdentity).trim() === ''
+            ? null
+            : String(rawIdentity).trim();
+        setUserInfo((prev) => ({ ...prev, identityTag: identityTagNormalized }));
       }
     } catch (error) {
       console.error('❌ 获取用户积分数据失败:', error);
@@ -375,6 +399,7 @@ export default function UserPage() {
       
       let displayNick = t('user.defaultNickname');
       let displayAvatar = DEFAULT_AVATAR;
+      let identityTagFromDataInfo = null;
 
       // 昵称/头像：优先从 userInfo 读取（登录接口写入）
       if (ui) {
@@ -397,12 +422,19 @@ export default function UserPage() {
       }
 
       // 兜底：如果 userInfo 没有 nickName，再从 userDataInfo.userInfo.nickName 读取
-      if (displayNick === t('user.defaultNickname') && dataInfo) {
+      if (dataInfo) {
         try {
           const dataInfoParsed = JSON.parse(dataInfo);
-          const nickFromDataInfo = (dataInfoParsed.userInfo?.nickName || '').trim();
-          if (nickFromDataInfo) {
-            displayNick = nickFromDataInfo;
+          const rawIdTag =
+            dataInfoParsed?.identityTag ?? dataInfoParsed?.userInfo?.identityTag ?? null;
+          if (rawIdTag != null && String(rawIdTag).trim() !== '') {
+            identityTagFromDataInfo = String(rawIdTag).trim();
+          }
+          if (displayNick === t('user.defaultNickname')) {
+            const nickFromDataInfo = (dataInfoParsed.userInfo?.nickName || '').trim();
+            if (nickFromDataInfo) {
+              displayNick = nickFromDataInfo;
+            }
           }
         } catch (e) {
           console.error('解析 userDataInfo 失败:', e);
@@ -411,9 +443,19 @@ export default function UserPage() {
       
       // 只在数据真正改变时才更新，避免不必要的重渲染
       setUserInfo((prev) => {
-        const needUpdate = prev.nickname !== displayNick || prev.avatar !== displayAvatar;
+        const prevTag = prev.identityTag ?? null;
+        const nextTag = identityTagFromDataInfo;
+        const needUpdate =
+          prev.nickname !== displayNick ||
+          prev.avatar !== displayAvatar ||
+          prevTag !== nextTag;
         if (needUpdate) {
-          return { ...prev, nickname: displayNick, avatar: displayAvatar };
+          return {
+            ...prev,
+            nickname: displayNick,
+            avatar: displayAvatar,
+            identityTag: nextTag,
+          };
         }
         return prev;
       });
@@ -720,7 +762,8 @@ export default function UserPage() {
       level: 1,
       isVip: false,
       isLite: false,
-      isLogin: false
+      isLogin: false,
+      identityTag: null,
     });
     
     Toast.show({ content: t('user.logoutSuccess'), position: 'bottom' });

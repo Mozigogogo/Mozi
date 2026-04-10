@@ -12,6 +12,9 @@ export * from './financeCalendar';
 // 用户相关
 export * from './user';
 
+// 社区相关
+export * from './community';
+
 // 告警相关
 export * from './alarm';
 
@@ -19,6 +22,5 @@ export * from './alarm';
 export * from './vip';
 
 // 未来可以添加更多 API 模块
-// export * from './community';
 // export * from './trading';
 

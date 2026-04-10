@@ -167,12 +167,18 @@ export const loginByTelegram = (params) => {
 
 /**
  * 获取用户详细数据（含邀请码等）
+ * 新增字段：
+ * - followingCount: 我关注的人数
+ * - fansCount: 关注我的人数
+ * @param {string} [userId] - 可选，传入则查询指定用户（/user/datainfo?user_id=xxx）
  * @returns {Promise}
  */
-export const getUserDataInfo = () => {
+export const getUserDataInfo = (userId) => {
+  const targetUserId = String(userId ?? '').trim();
   return request({
-    url: '/user/datainfo',
+    url: Interface.USER_DATA_INFO,
     method: 'GET',
+    ...(targetUserId ? { data: { user_id: targetUserId } } : {}),
   });
 };
 
@@ -300,6 +306,20 @@ export const updateUserInfo = (params) => {
     url: Interface.UPDATE_USER_INFO,
     method: 'POST',
     data: params,
+  });
+};
+
+/**
+ * 编辑身份标签
+ * POST /user/editIdentityTag
+ * @param {string} identityTag - 如「加密货币研究员」
+ * @returns {Promise}
+ */
+export const editIdentityTag = (identityTag) => {
+  return request({
+    url: Interface.EDIT_IDENTITY_TAG,
+    method: 'POST',
+    data: { identityTag },
   });
 };
 

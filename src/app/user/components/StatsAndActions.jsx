@@ -11,24 +11,31 @@ const StatsAndActions = ({ userInfo, openEditProfile, setShowBenefitCodeModal })
 
   if (!userInfo.isLogin) return null;
 
+  const formatStat = (v) => {
+    if (v == null) return '0';
+    const n = Number(v);
+    if (Number.isFinite(n)) return new Intl.NumberFormat().format(n);
+    return String(v);
+  };
+
   return (
     <div className={styles.statsAndActionsWrapper}>
         <div className={styles.statsActionRow}>
             <div className={styles.statsGroup}>
                 <div className={styles.statItem}>
-                    <span className={styles.statValue}>123</span>
+                    <span className={styles.statValue}>{formatStat(userInfo.followingCount)}</span>
                     <span className={styles.statLabel}>{t('user.stats.following')}</span>
                 </div>
                 <div className={styles.statItem}>
-                        <span className={styles.statValue}>123</span>
+                        <span className={styles.statValue}>{formatStat(userInfo.fansCount)}</span>
                         <span className={styles.statLabel}>{t('user.stats.followers')}</span>
                 </div>
                     <div className={styles.statItem}>
-                        <span className={styles.statValue}>123</span>
+                        <span className={styles.statValue}>{formatStat(userInfo.totalLikeCount)}</span>
                         <span className={styles.statLabel}>{t('user.stats.likes')}</span>
                 </div>
                 <div className={styles.statItem}>
-                        <span className={styles.statValue}>123W</span>
+                        <span className={styles.statValue}>{formatStat(userInfo.totalPoints)}</span>
                         <span className={styles.statLabel}>{t('user.stats.points')}</span>
                 </div>
             </div>

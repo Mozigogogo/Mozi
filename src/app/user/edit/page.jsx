@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { NavBar, Toast, Button, Picker, Input } from 'antd-mobile';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { getUserDataInfo, updateUserInfo, completeTask } from '@/api/user';
+import { getUserDataInfo, updateUserInfo, completeTask, editIdentityTag } from '@/api/user';
 import { getMySubscription } from '@/api/vip';
 import VipBanner from '@/components/VipBanner';
 import styles from './page.module.less';
@@ -218,19 +218,57 @@ export default function EditProfilePage() {
       };
 
       const res = await updateUserInfo(updateData);
-      
+
       if (res.code === 200 || res.code === 0 || res.success) {
+        const identityTagText = userInfo.identity
+          ? getIdentityLabel(userInfo.identity)
+          : '';
+
+        if (identityTagText) {
+          const tagRes = await editIdentityTag(identityTagText);
+          const tagOk =
+            tagRes?.code === 200 || tagRes?.code === 0 || tagRes?.success === true;
+          if (!tagOk) {
+            Toast.show({
+              icon: 'fail',
+              content: tagRes?.msg || tagRes?.errorMsg || t('editProfile.saveFailed'),
+            });
+            return;
+          }
+        }
+
         Toast.show({
           icon: 'success',
           content: t('editProfile.saveSuccess'),
         });
-        
+
         // 更新本地存储
         const storedData = localStorage.getItem('userInfo');
         if (storedData) {
           const parsed = JSON.parse(storedData);
-          const newData = { ...parsed, ...updateData };
+          const newData = {
+            ...parsed,
+            ...updateData,
+            ...(userInfo.identity ? { identity: userInfo.identity } : {}),
+          };
           localStorage.setItem('userInfo', JSON.stringify(newData));
+        }
+
+        if (identityTagText) {
+          try {
+            const rawDataInfo = localStorage.getItem('userDataInfo');
+            const dataInfoObj = rawDataInfo ? JSON.parse(rawDataInfo) : {};
+            const nextDataInfo = {
+              ...dataInfoObj,
+              identityTag: identityTagText,
+              userInfo: {
+                ...(dataInfoObj.userInfo || {}),
+              },
+            };
+            localStorage.setItem('userDataInfo', JSON.stringify(nextDataInfo));
+          } catch (e) {
+            console.error('同步 userDataInfo.identityTag 失败:', e);
+          }
         }
         
         // 完善个人信息任务上报

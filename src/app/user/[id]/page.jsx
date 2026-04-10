@@ -9,6 +9,7 @@ import { FavoriteIcon } from '@/components/Icons/FavoriteIcon';
 import { BellIcon } from '@/components/Icons/BellIcon';
 import MonitorContent from '@/components/MonitorContent';
 import { Skeleton } from '@/components/Skeleton';
+import { getUserDataInfo } from '@/api/user';
 import UserPosts from '../components/UserPosts';
 import styles from './page.module.less';
 
@@ -28,18 +29,18 @@ const MonitorIcon = () => (
   <BellIcon size={20} />
 );
 
-// Mock Data
-const MOCK_USER = {
-  nickname: '无为而治',
+// 初始占位数据（避免接口返回前 UI 抖动；不要写死业务数字）
+const EMPTY_PROFILE = {
+  nickname: '',
   avatar: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png',
-  isVip: true,
-  tags: ['合规从业者'],
-  bio: '资金流动大师，金融NO.1',
+  isVip: false,
+  tags: [],
+  bio: '',
   stats: {
-    following: 123,
-    followers: 123,
-    likes: 123,
-    points: '123W'
+    following: 0,
+    followers: 0,
+    likes: 0,
+    points: 0
   }
 };
 
@@ -60,6 +61,7 @@ export default function UserProfile({ params }) {
   const [activeTab, setActiveTab] = useState('watchlist');
   const [watchlistLoading, setWatchlistLoading] = useState(true);
   const [isPC, setIsPC] = useState(false);
+  const [profile, setProfile] = useState(EMPTY_PROFILE);
 
   useEffect(() => {
     const checkDevice = () => {
@@ -69,6 +71,36 @@ export default function UserProfile({ params }) {
     window.addEventListener('resize', checkDevice);
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
+
+  useEffect(() => {
+    const targetUserId = String(params?.id ?? '').trim();
+    if (!targetUserId) return;
+
+    const fetchUserProfile = async () => {
+      try {
+        const res = await getUserDataInfo(targetUserId);
+        const user = res?.data || {};
+
+        setProfile({
+          nickname: user.nickName || user.nickname || '',
+          avatar: user.avatar || EMPTY_PROFILE.avatar,
+          isVip: user.isVip === 1 || user.isVip === true,
+          tags: Array.isArray(user.tags) ? user.tags : [],
+          bio: user.personalProfile || user.bio || '',
+          stats: {
+            following: user.followingCount ?? 0,
+            followers: user.fansCount ?? 0,
+            likes: user.totalLikeCount ?? 0,
+            points: user.totalPoints ?? 0
+          }
+        });
+      } catch (error) {
+        console.error('获取用户资料失败:', error);
+      }
+    };
+
+    fetchUserProfile();
+  }, [params?.id]);
 
   // Simulate loading for watchlist
   useEffect(() => {
@@ -99,20 +131,20 @@ export default function UserProfile({ params }) {
           <div className={styles.userHeader}>
             <div className={styles.leftColumn}>
               <div className={styles.avatarWrapper}>
-                <img src={MOCK_USER.avatar} alt="avatar" className={styles.avatar} />
-                {MOCK_USER.isVip && (
+                <img src={profile.avatar} alt="avatar" className={styles.avatar} />
+                {profile.isVip && (
                   <img src="/icons/new_user/vip.svg" alt="vip" className={styles.verifyIcon} />
                 )}
               </div>
               <div className={styles.tagRow}>
-                {MOCK_USER.tags.map((tag, index) => (
+                {profile.tags.map((tag, index) => (
                   <span key={index} className={styles.tag}>{tag}</span>
                 ))}
               </div>
             </div>
             <div className={styles.userInfoRight}>
               <div className={styles.nameRow}>
-                <span className={styles.nickname}>{MOCK_USER.nickname}</span>
+                <span className={styles.nickname}>{profile.nickname}</span>
                 <div className={styles.followBtn}>
                   <img src="/icons/new_user/plus.svg" alt="" /> {t('user.stats.following') || '关注'}
                 </div>
@@ -120,23 +152,23 @@ export default function UserProfile({ params }) {
             </div>
           </div>
 
-          <div className={styles.bio}>{MOCK_USER.bio}</div>
+          <div className={styles.bio}>{profile.bio}</div>
 
           <div className={styles.statsRow}>
             <div className={styles.statItem}>
-              <span className={styles.statValue}>{MOCK_USER.stats.following}</span>
+              <span className={styles.statValue}>{profile.stats.following}</span>
               <span className={styles.statLabel}>{t('user.stats.following') || '关注'}</span>
             </div>
             <div className={styles.statItem}>
-              <span className={styles.statValue}>{MOCK_USER.stats.followers}</span>
+              <span className={styles.statValue}>{profile.stats.followers}</span>
               <span className={styles.statLabel}>{t('user.stats.followers') || '粉丝'}</span>
             </div>
             <div className={styles.statItem}>
-              <span className={styles.statValue}>{MOCK_USER.stats.likes}</span>
+              <span className={styles.statValue}>{profile.stats.likes}</span>
               <span className={styles.statLabel}>{t('user.stats.likes') || '获赞'}</span>
             </div>
             <div className={styles.statItem}>
-              <span className={styles.statValue}>{MOCK_USER.stats.points}</span>
+              <span className={styles.statValue}>{profile.stats.points}</span>
               <span className={styles.statLabel}>{t('user.stats.points') || '积分'}</span>
             </div>
           </div>
