@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { NavBar, Toast, Button, Picker, Input } from 'antd-mobile';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { getUserDataInfo, updateUserInfo, completeTask, editIdentityTag } from '@/api/user';
+import { getUserDataInfo, updateUserInfo, completeTask } from '@/api/user';
 import { getMySubscription } from '@/api/vip';
 import VipBanner from '@/components/VipBanner';
 import styles from './page.module.less';
@@ -27,7 +27,7 @@ const PENDING_IDENTITY_KEY = 'mozi_pending_profile_identity';
 
 export default function EditProfilePage() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const fileInputRef = useRef(null);
   
   const [loading, setLoading] = useState(false);
@@ -42,6 +42,27 @@ export default function EditProfilePage() {
     phone: '',
     commissionId: ''
   });
+
+  const parsePhoneParts = (rawPhone) => {
+    const phoneText = String(rawPhone || '').trim();
+    if (!phoneText) {
+      return { alertPhone: '', alertPhoneCountryCode: '' };
+    }
+
+    // 支持 "+86 13800138000" / "+8613800138000" / "13800138000"
+    const match = phoneText.match(/^(\+\d{1,4})[\s-]*(\d+)$/);
+    if (match) {
+      return {
+        alertPhoneCountryCode: match[1],
+        alertPhone: match[2],
+      };
+    }
+
+    return {
+      alertPhoneCountryCode: '+86',
+      alertPhone: phoneText.replace(/\s+/g, ''),
+    };
+  };
 
   // 身份标签选项
   const identityOptions = [[
@@ -134,11 +155,11 @@ export default function EditProfilePage() {
           avatar: parsed.avatar || DEFAULT_AVATAR,
           nickName: parsed.nickName || parsed.nickname || 'MOZI',
           // 以下字段可能需要后端支持，这里先用模拟数据或空值
-          identity: identityIncoming || parsed.identity || prev.identity || '',
-          description: parsed.description || '',
-          email: parsed.email || '',
-          phone: parsed.phone || '',
-          commissionId: parsed.commissionId || ''
+          identity: identityIncoming || parsed.identityTag || parsed.identity || prev.identity || '',
+          description: parsed.introduction || parsed.description || '',
+          email: parsed.alertEmail || parsed.email || '',
+          phone: parsed.alertPhone || parsed.phone || '',
+          commissionId: parsed.tronUsdtAddress || parsed.commissionId || ''
         }));
         if (identityIncoming) {
           clearPendingIdentityStorage();
@@ -153,8 +174,11 @@ export default function EditProfilePage() {
             ...prev,
             avatar: data.avatar || DEFAULT_AVATAR,
             nickName: data.nickName || 'MOZI',
-            identity: identityIncoming || data.identity || prev.identity || '',
-            // ...其他字段映射
+            identity: identityIncoming || data.identityTag || data.identity || prev.identity || '',
+            description: data.introduction || data.description || '',
+            email: data.alertEmail || data.email || '',
+            phone: data.alertPhone || data.phone || '',
+            commissionId: data.tronUsdtAddress || data.commissionId || '',
           }));
           if (identityIncoming) {
             clearPendingIdentityStorage();
@@ -207,36 +231,30 @@ export default function EditProfilePage() {
   const handleSave = async () => {
     setLoading(true);
     try {
-      // 构建提交数据
+      const { alertPhone, alertPhoneCountryCode } = parsePhoneParts(userInfo.phone);
+      const normalizedLanguage = (i18n?.language || 'zh').startsWith('en') ? 'en' : 'zh';
+      const storedThemeColor =
+        typeof window !== 'undefined'
+          ? Number(localStorage.getItem('themeColor') || 0)
+          : 0;
+
+      // 构建提交数据（/user/info）
       const updateData = {
-        nickName: userInfo.nickName,
-        avatar: userInfo.avatar,
-        // 其他字段根据 API 要求添加
-        // identity: userInfo.identity,
-        // description: userInfo.description,
-        // ...
+        nickName: (userInfo.nickName || '').trim(),
+        avatar: userInfo.avatar || '',
+        identityTag: getIdentityLabel(userInfo.identity || ''),
+        introduction: (userInfo.description || '').trim(),
+        tronUsdtAddress: (userInfo.commissionId || '').trim(),
+        language: normalizedLanguage,
+        themeColor: Number.isFinite(storedThemeColor) ? storedThemeColor : 0,
+        alertPhone: alertPhone,
+        alertPhoneCountryCode: alertPhone ? alertPhoneCountryCode : '',
+        alertEmail: (userInfo.email || '').trim(),
       };
 
       const res = await updateUserInfo(updateData);
 
       if (res.code === 200 || res.code === 0 || res.success) {
-        const identityTagText = userInfo.identity
-          ? getIdentityLabel(userInfo.identity)
-          : '';
-
-        if (identityTagText) {
-          const tagRes = await editIdentityTag(identityTagText);
-          const tagOk =
-            tagRes?.code === 200 || tagRes?.code === 0 || tagRes?.success === true;
-          if (!tagOk) {
-            Toast.show({
-              icon: 'fail',
-              content: tagRes?.msg || tagRes?.errorMsg || t('editProfile.saveFailed'),
-            });
-            return;
-          }
-        }
-
         Toast.show({
           icon: 'success',
           content: t('editProfile.saveSuccess'),
@@ -254,21 +272,28 @@ export default function EditProfilePage() {
           localStorage.setItem('userInfo', JSON.stringify(newData));
         }
 
-        if (identityTagText) {
-          try {
-            const rawDataInfo = localStorage.getItem('userDataInfo');
-            const dataInfoObj = rawDataInfo ? JSON.parse(rawDataInfo) : {};
-            const nextDataInfo = {
-              ...dataInfoObj,
-              identityTag: identityTagText,
-              userInfo: {
-                ...(dataInfoObj.userInfo || {}),
-              },
-            };
-            localStorage.setItem('userDataInfo', JSON.stringify(nextDataInfo));
-          } catch (e) {
-            console.error('同步 userDataInfo.identityTag 失败:', e);
-          }
+        try {
+          const rawDataInfo = localStorage.getItem('userDataInfo');
+          const dataInfoObj = rawDataInfo ? JSON.parse(rawDataInfo) : {};
+          const nextDataInfo = {
+            ...dataInfoObj,
+            identityTag: updateData.identityTag,
+            introduction: updateData.introduction,
+            tronUsdtAddress: updateData.tronUsdtAddress,
+            alertEmail: updateData.alertEmail,
+            alertPhone: updateData.alertPhone,
+            alertPhoneCountryCode: updateData.alertPhoneCountryCode,
+            language: updateData.language,
+            themeColor: updateData.themeColor,
+            userInfo: {
+              ...(dataInfoObj.userInfo || {}),
+              nickName: updateData.nickName,
+              avatar: updateData.avatar,
+            },
+          };
+          localStorage.setItem('userDataInfo', JSON.stringify(nextDataInfo));
+        } catch (e) {
+          console.error('同步 userDataInfo 失败:', e);
         }
         
         // 完善个人信息任务上报
@@ -278,9 +303,7 @@ export default function EditProfilePage() {
           console.error('完善个人信息任务上报失败:', taskError);
         }
 
-        setTimeout(() => {
-          router.back();
-        }, 1000);
+        // 保存成功后停留在当前页，避免因历史栈回退到身份选择页
       } else {
         Toast.show({
           icon: 'fail',

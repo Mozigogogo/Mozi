@@ -183,6 +183,81 @@ export const getUserDataInfo = (userId) => {
 };
 
 /**
+ * 查看他人主页（需登录）
+ * GET /user/profile/{userId}
+ * 返回字段：
+ * - userId: 用户 ID
+ * - avatar: 头像
+ * - nickName: 昵称
+ * - identityTag: 身份标签
+ * - introduction: 个人简介
+ * - followingCount: 关注数
+ * - fansCount: 粉丝数
+ * - totalLikeCount: 累计获赞数
+ * - planCode: 会员等级
+ * - planLevel: 会员等级数值
+ * - memberTier: 会员档位
+ * - isFollowing: 当前登录用户是否已关注该用户
+ * @param {string} userId - 目标用户 ID
+ * @returns {Promise}
+ */
+export const getUserProfile = (userId, options = {}) => {
+  const targetUserId = String(userId ?? '').trim();
+  if (!targetUserId) {
+    return Promise.reject(new Error('userId is required'));
+  }
+  const { noCache = false } = options || {};
+  return request({
+    url: `${Interface.USER_PROFILE}/${encodeURIComponent(targetUserId)}`,
+    method: 'GET',
+    ...(noCache
+      ? {
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            Pragma: 'no-cache',
+            Expires: '0',
+          },
+        }
+      : {}),
+    ...(noCache ? { data: { _t: Date.now() } } : {}),
+  });
+};
+
+/**
+ * 关注用户（需登录）
+ * GET /user/follow/{userId}
+ * @param {string} userId - 要关注的目标用户 ID
+ * @returns {Promise}
+ */
+export const followUser = (userId) => {
+  const targetUserId = String(userId ?? '').trim();
+  if (!targetUserId) {
+    return Promise.reject(new Error('userId is required'));
+  }
+  return request({
+    url: `${Interface.USER_FOLLOW}/${encodeURIComponent(targetUserId)}`,
+    method: 'GET',
+  });
+};
+
+/**
+ * 取关用户（需登录）
+ * GET /user/unfollow/{userId}
+ * @param {string} userId - 要取关的目标用户 ID
+ * @returns {Promise}
+ */
+export const unfollowUser = (userId) => {
+  const targetUserId = String(userId ?? '').trim();
+  if (!targetUserId) {
+    return Promise.reject(new Error('userId is required'));
+  }
+  return request({
+    url: `${Interface.USER_UNFOLLOW}/${encodeURIComponent(targetUserId)}`,
+    method: 'GET',
+  });
+};
+
+/**
  * 保存告警设置（绑定邮箱和手机号）
  * @param {Object} params - 告警设置参数
  * @param {boolean} params.phoneEnabled - 是否启用电话告警

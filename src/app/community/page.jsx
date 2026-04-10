@@ -142,6 +142,28 @@ export default function CommunityPage() {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
   };
 
+  // 统一解析帖子作者 userId（兼容不同接口字段命名）
+  const extractPostUserId = (item) => {
+    if (!item || typeof item !== 'object') return '';
+    const candidates = [
+      item.userId,
+      item.uid,
+      item.authorId,
+      item.publisherId,
+      item.creatorId,
+      item.createBy,
+      item.user?.userId,
+      item.user?.id,
+      item.author?.userId,
+      item.author?.id,
+      item.userInfo?.userId,
+      item.userInfo?.id,
+    ];
+
+    const hit = candidates.find((v) => v !== undefined && v !== null && String(v).trim() !== '');
+    return hit == null ? '' : String(hit).trim();
+  };
+
   // 主导航tab图片配置
   const tabImages = {
     recommendActive,
@@ -404,7 +426,7 @@ export default function CommunityPage() {
           sector: item.sector, // 所属板块字段
           commentCount: item.commentCnt || 0,
           likeCount: item.likeCnt || 0,
-          userId: item.userId,
+          userId: extractPostUserId(item),
           tags: item.tags || [],
           topics: item.topics || [],
           isLiked: item.isLikedByCurrentUser || false,
@@ -786,10 +808,16 @@ export default function CommunityPage() {
 
   // 跳转到用户主页
   const goToUserPage = (userId) => {
-    const targetUserId = String(userId ?? '');
+    const targetUserId = String(userId ?? '').trim();
     const me = String(currentUserId ?? '');
 
-    if (!targetUserId) return;
+    if (!targetUserId) {
+      Toast.show({
+        content: '未获取到用户ID',
+        position: 'bottom',
+      });
+      return;
+    }
 
     // 自己发的帖子跳转个人中心，他人帖子跳转用户详情页
     if (me && targetUserId === me) {

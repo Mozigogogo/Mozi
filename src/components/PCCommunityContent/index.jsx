@@ -135,6 +135,27 @@ export default function PCCommunityContent() {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
   };
 
+  // 统一解析帖子作者 userId（兼容不同接口字段命名）
+  const extractPostUserId = (item) => {
+    if (!item || typeof item !== 'object') return '';
+    const candidates = [
+      item.userId,
+      item.uid,
+      item.authorId,
+      item.publisherId,
+      item.creatorId,
+      item.createBy,
+      item.user?.userId,
+      item.user?.id,
+      item.author?.userId,
+      item.author?.id,
+      item.userInfo?.userId,
+      item.userInfo?.id,
+    ];
+    const hit = candidates.find((v) => v !== undefined && v !== null && String(v).trim() !== '');
+    return hit == null ? '' : String(hit).trim();
+  };
+
   // 获取币种相关帖子
   const fetchCoinPosts = async (coin) => {
     setCoinLoading(true);
@@ -159,7 +180,7 @@ export default function PCCommunityContent() {
           categoryLabel: item.category,
           commentCount: item.commentCnt || 0,
           likeCount: item.likeCnt || 0,
-          userId: item.userId,
+          userId: extractPostUserId(item),
           tags: item.tags || [],
           topics: item.topics || [],
           isLiked: item.isLikedByCurrentUser || false,
@@ -393,7 +414,12 @@ export default function PCCommunityContent() {
 
   // 跳转到用户页面
   const goToUserPage = (userId) => {
-    router.push(`/user?id=${userId}`);
+    const targetUserId = String(userId ?? '').trim();
+    if (!targetUserId) {
+      message.warning('未获取到用户ID');
+      return;
+    }
+    router.push(`/user/${encodeURIComponent(targetUserId)}`);
   };
 
   // 分享处理

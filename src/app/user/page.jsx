@@ -46,6 +46,16 @@ const isTelegramEnv = () => {
   return channel === 'tg';
 };
 
+const normalizeIntroduction = (value, t) => {
+  if (value === undefined || value === null) return null;
+  const text = String(value).trim();
+  if (!text) return '';
+  const defaultBio = String(t('user.defaultBio') || '').trim();
+  // 历史默认文案视为“空简介”，避免刷新后再次回填
+  if (text === defaultBio || text === '资金流动大师，金融NO.1') return '';
+  return text;
+};
+
 export default function UserPage() {
   // 状态定义
   const router = useRouter();
@@ -85,6 +95,8 @@ export default function UserPage() {
     isLogin: false,
     /** 来自 /user/datainfo 的 identityTag；null 表示未设置，我的页不展示标签行 */
     identityTag: null,
+    /** 来自 /user/datainfo 的简介 */
+    introduction: '',
     /** 来自 /user/datainfo 的统计数据 */
     followingCount: 0,
     fansCount: 0,
@@ -353,7 +365,13 @@ export default function UserPage() {
           rawIdentity == null || String(rawIdentity).trim() === ''
             ? null
             : String(rawIdentity).trim();
-        setUserInfo((prev) => ({ ...prev, identityTag: identityTagNormalized }));
+        const rawIntroduction = data?.introduction ?? data?.userInfo?.introduction ?? '';
+        const introductionNormalized = String(rawIntroduction || '').trim();
+        setUserInfo((prev) => ({
+          ...prev,
+          identityTag: identityTagNormalized,
+          introduction: introductionNormalized,
+        }));
       }
     } catch (error) {
       console.error('❌ 获取用户积分数据失败:', error);
@@ -400,6 +418,9 @@ export default function UserPage() {
       let displayNick = t('user.defaultNickname');
       let displayAvatar = DEFAULT_AVATAR;
       let identityTagFromDataInfo = null;
+      // 优先使用 localStorage.userInfo.introduction；null 表示“本次未读取到该字段”
+      let introductionFromUserInfo = null;
+      let introductionFromDataInfo = null;
 
       // 昵称/头像：优先从 userInfo 读取（登录接口写入）
       if (ui) {
@@ -410,6 +431,11 @@ export default function UserPage() {
           }
           if (parsed.avatar) {
             displayAvatar = parsed.avatar;
+          }
+          const rawIntroductionFromUserInfo = parsed?.introduction ?? parsed?.description;
+          const normalizedIntroFromUserInfo = normalizeIntroduction(rawIntroductionFromUserInfo, t);
+          if (normalizedIntroFromUserInfo !== null) {
+            introductionFromUserInfo = normalizedIntroFromUserInfo;
           }
 
           // 根据登录返回的 subscribeAnnouncement 字段初始化开关状态
@@ -430,6 +456,12 @@ export default function UserPage() {
           if (rawIdTag != null && String(rawIdTag).trim() !== '') {
             identityTagFromDataInfo = String(rawIdTag).trim();
           }
+          const rawIntroduction =
+            dataInfoParsed?.introduction ?? dataInfoParsed?.userInfo?.introduction;
+          const normalizedIntroFromDataInfo = normalizeIntroduction(rawIntroduction, t);
+          if (normalizedIntroFromDataInfo !== null) {
+            introductionFromDataInfo = normalizedIntroFromDataInfo;
+          }
           if (displayNick === t('user.defaultNickname')) {
             const nickFromDataInfo = (dataInfoParsed.userInfo?.nickName || '').trim();
             if (nickFromDataInfo) {
@@ -445,16 +477,23 @@ export default function UserPage() {
       setUserInfo((prev) => {
         const prevTag = prev.identityTag ?? null;
         const nextTag = identityTagFromDataInfo;
+        const prevIntro = prev.introduction || '';
+        const nextIntro =
+          introductionFromUserInfo !== null
+            ? introductionFromUserInfo
+            : introductionFromDataInfo;
         const needUpdate =
           prev.nickname !== displayNick ||
           prev.avatar !== displayAvatar ||
-          prevTag !== nextTag;
+          prevTag !== nextTag ||
+          (nextIntro !== null && prevIntro !== nextIntro);
         if (needUpdate) {
           return {
             ...prev,
             nickname: displayNick,
             avatar: displayAvatar,
             identityTag: nextTag,
+            introduction: nextIntro === null ? prev.introduction : nextIntro,
           };
         }
         return prev;
@@ -764,6 +803,7 @@ export default function UserPage() {
       isLite: false,
       isLogin: false,
       identityTag: null,
+      introduction: '',
     });
     
     Toast.show({ content: t('user.logoutSuccess'), position: 'bottom' });

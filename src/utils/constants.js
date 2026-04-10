@@ -155,6 +155,8 @@ export const Interface = {
   USER_INFO: '/user/info',
   // 用户详细数据（含邀请码）
   USER_DATA_INFO: '/user/datainfo',
+  // 查看他人主页
+  USER_PROFILE: '/user/profile',
   // 更新用户信息
   UPDATE_USER_INFO: '/user/info',
   // 编辑用户主题

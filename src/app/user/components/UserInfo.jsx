@@ -64,9 +64,9 @@ const UserInfo = ({ userInfo, handleLogin, isTelegramEnv }) => {
               </div>
             )}
 
-            {/* 第三行：简介 */}
+            {/* 第三行：简介（优先使用 /user/datainfo 的 introduction） */}
             <div className={styles.bioRow}>
-              {userInfo.bio || t('user.defaultBio')}
+              {userInfo.introduction || ''}
             </div>
           </div>
         ) : (
