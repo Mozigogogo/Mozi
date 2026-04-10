@@ -769,7 +769,7 @@ export default function PCLayout({ children }) {
         </Sider>
 
         {/* 右侧 Content */}
-        <Content className={`${styles.content} ${pathname === '/' && !activeContent && !showSearchResults ? styles.homeContent : ''} ${collapsed ? styles.contentCollapsed : ''}`}>
+        <Content className={`${styles.content} ${styles.homeContent} ${collapsed ? styles.contentCollapsed : ''}`}>
           <div className={styles.contentWrapper}>
             <div className={styles.contentMain}>
               {(() => {
