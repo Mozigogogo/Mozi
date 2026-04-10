@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 import SectionTitle from '@/components/SectionTitle';
-import DiscoveryPostCard from '@/components/DiscoveryPostCard';
 import PostCard from '@/components/PostCard';
 import SplitLayout from '@/components/SplitLayout';
 import CoinTabBar from '@/components/CoinTabBar';
@@ -14,9 +13,11 @@ import BullBearIndicator from '@/components/BullBearIndicator';
 import HotTopicSearchBar from '@/components/HotTopicSearchBar';
 import HotTopicList from '@/components/HotTopicList';
 import CommentInput from '@/components/CommentInput';
-import CoinInfoCard from '@/components/CoinInfoCard';
 import PCTopicSearchModal from '@/components/PCTopicSearchModal';
 import FloatingPostButton from '@/components/FloatingPostButton';
+import PCCapsuleTabs from '@/components/PCCapsuleTabs';
+import PCPublishComposer from '@/components/PCPublishComposer';
+import PCFlashNewsCard from '@/components/PCFlashNewsCard';
 import styles from './index.module.less';
 
 /**
@@ -24,13 +25,49 @@ import styles from './index.module.less';
  */
 export default function PCCommunityContent() {
   const router = useRouter();
+  const capsuleTabItems = [
+    { key: 'coin', label: '币种' },
+    { key: 'discover', label: '发现好币' },
+    { key: 'qa', label: '不懂就问' }
+  ];
+  const flashNewsItems = [
+    {
+      id: 1,
+      account: '快讯账户',
+      tag: '资讯',
+      time: '50 分钟前',
+      title: 'Hyperliquid上RWA交易量近期创新高，未平仓合约量突破13亿美元',
+      desc: 'Hyperliquid上RWA交易量近期创新高，未平仓合约量突破13亿美元...',
+      likeCount: 7,
+      commentCount: 2,
+      shareCount: 2
+    },
+    {
+      id: 2,
+      account: '快讯账户',
+      tag: '资讯',
+      time: '50 分钟前',
+      title: 'Hyperliquid上RWA交易量近期创新高，未平仓合约量突破13亿美元',
+      desc: 'Hyperliquid上RWA交易量近期创新高，未平仓合约量突破13亿美元...',
+      likeCount: 7,
+      commentCount: 2,
+      shareCount: 2
+    },
+    {
+      id: 3,
+      account: '快讯账户',
+      tag: '资讯',
+      time: '50 分钟前',
+      title: 'Hyperliquid上RWA交易量近期创新高，未平仓合约量突破13亿美元',
+      desc: 'Hyperliquid上RWA交易量近期创新高，未平仓合约量突破13亿美元...',
+      likeCount: 7,
+      commentCount: 2,
+      shareCount: 2
+    }
+  ];
   
-  const [discoveryPosts, setDiscoveryPosts] = useState([]); // 发现好币帖子
-  const [questionPosts, setQuestionPosts] = useState([]); // 不懂就问帖子
   const [coinPosts, setCoinPosts] = useState([]); // 币种帖子
   const [likedPosts, setLikedPosts] = useState({});
-  const [loading, setLoading] = useState(false); // 加载状态
-  const [questionLoading, setQuestionLoading] = useState(false); // 不懂就问加载状态
   const [coinLoading, setCoinLoading] = useState(false); // 币种帖子加载状态
   const [selectedCoin, setSelectedCoin] = useState('BTC'); // 当前选中的币种
   const [voteChoice, setVoteChoice] = useState(null); // 投票选择状态
@@ -39,11 +76,11 @@ export default function PCCommunityContent() {
   const [hotTopicsLoading, setHotTopicsLoading] = useState(false); // 热门话题加载状态
   const [hotTopicsPage, setHotTopicsPage] = useState(1); // 热门话题当前页码
   const [hotTopicsAllLoaded, setHotTopicsAllLoaded] = useState(false); // 热门话题是否全部加载完
-  const [coinInfoData, setCoinInfoData] = useState({}); // 币种信息数据
   const [searchKeyword, setSearchKeyword] = useState(''); // 搜索关键词
   const [searchResults, setSearchResults] = useState([]); // 搜索结果
   const [searchLoading, setSearchLoading] = useState(false); // 搜索加载状态
   const [showSearchPanel, setShowSearchPanel] = useState(false); // 是否显示搜索下拉面板
+  const [activeCapsuleTab, setActiveCapsuleTab] = useState('coin'); // 顶部胶囊tab
   
   // 用于引用右侧热门榜单容器
   const hotTopicsContainerRef = useRef(null);
@@ -96,91 +133,6 @@ export default function PCCommunityContent() {
     const date = new Date(ts);
     const pad = (n) => (n < 10 ? '0' + n : '' + n);
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-  };
-
-  // 获取发现好币帖子
-  const fetchDiscoveryPosts = async () => {
-    setLoading(true);
-    try {
-      const response = await request({
-        url: Interface.POSTS_API,
-        data: {
-          page: 1,
-          size: 4,
-          category: '发现好币'
-        }
-      });
-      
-      if (response?.data?.data?.length > 0) {
-        const formattedData = response.data.data.map(item => ({
-          id: item.id,
-          avatar: item.avatar || '/default-avatar.png',
-          username: item.nickName || '匿名用户',
-          title: item.title,
-          content: item.content,
-          category: item.category,
-          commentCount: item.commentCnt || 0,
-          likeCount: item.likeCnt || 0,
-          userId: item.userId,
-          tags: item.tags || [],
-          topics: item.topics || [],
-          isLiked: item.isLikedByCurrentUser || false,
-          createTime: item.updatedAt?.replace('T', ' ') || '',
-          createdAt: item.createdAt,
-          images: item.images || [],
-          sector: item.sector || 'DeFi'
-        }));
-        
-        setDiscoveryPosts(formattedData);
-      }
-    } catch (error) {
-      console.error('获取发现好币帖子失败:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 获取不懂就问帖子
-  const fetchQuestionPosts = async () => {
-    setQuestionLoading(true);
-    try {
-      const response = await request({
-        url: Interface.POSTS_API,
-        data: {
-          page: 1,
-          size: 10,
-          category: '不懂就问'
-        }
-      });
-      
-      if (response?.data?.data?.length > 0) {
-        const formattedData = response.data.data.map(item => ({
-          id: item.id,
-          avatar: item.avatar || '/default-avatar.png',
-          username: item.nickName || '匿名用户',
-          title: item.title,
-          content: item.content,
-          category: item.category,
-          categoryLabel: item.category,
-          commentCount: item.commentCnt || 0,
-          likeCount: item.likeCnt || 0,
-          userId: item.userId,
-          tags: item.tags || [],
-          topics: item.topics || [],
-          isLiked: item.isLikedByCurrentUser || false,
-          createTime: item.updatedAt?.replace('T', ' ') || '',
-          createdAt: item.createdAt,
-          updatedAt: item.updatedAt,
-          images: item.images || []
-        }));
-        
-        setQuestionPosts(formattedData);
-      }
-    } catch (error) {
-      console.error('获取不懂就问帖子失败:', error);
-    } finally {
-      setQuestionLoading(false);
-    }
   };
 
   // 获取币种相关帖子
@@ -324,55 +276,6 @@ export default function PCCommunityContent() {
   // 关闭搜索面板
   const handleCloseSearchPanel = () => {
     setShowSearchPanel(false);
-  };
-
-  // 获取币种信息
-  const fetchCoinInfo = async (coins) => {
-    try {
-      // 并行请求所有币种信息
-      const requests = coins.map(coin => 
-        request({
-          url: Interface.COIN_INFO,
-          data: { coin: coin.key }
-        })
-      );
-      
-      const responses = await Promise.all(requests);
-      const coinData = {};
-      
-      responses.forEach((response, index) => {
-        const coin = coins[index];
-        if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
-          const data = response.data[0];
-          
-          // 解析价格和涨跌幅
-          const price = parseFloat(data.last) || 0;
-          // price24h 可能是 "3.58%" 或 3.58，需要处理
-          let changePercent = 0;
-          if (typeof data.price24h === 'string') {
-            changePercent = parseFloat(data.price24h.replace('%', '')) || 0;
-          } else {
-            changePercent = parseFloat(data.price24h) || 0;
-          }
-          
-          // 计算24小时价格变化值
-          const change24h = price * (changePercent / 100);
-          
-          coinData[coin.key] = {
-            icon: data.url,
-            price: price,
-            changePercent: changePercent,
-            change24h: change24h,
-            // 市值数据（如果API返回的话）
-            marketCap: data.marketCap || data.market_cap || null
-          };
-        }
-      });
-      
-      setCoinInfoData(coinData);
-    } catch (error) {
-      console.error('获取币种信息失败:', error);
-    }
   };
 
   // 获取看涨看跌统计数据
@@ -557,11 +460,8 @@ export default function PCCommunityContent() {
 
   // 初始加载
   useEffect(() => {
-    fetchDiscoveryPosts(); // 加载发现好币帖子
-    fetchQuestionPosts(); // 加载不懂就问帖子
     fetchCoinPosts(selectedCoin); // 加载币种帖子
     fetchHotTopics(true); // 加载热门话题（重置）
-    fetchCoinInfo(coinTabs); // 加载币种信息
   }, []);
   
   // 监听热门榜单滚动加载更多
@@ -615,184 +515,99 @@ export default function PCCommunityContent() {
 
   return (
     <div className={styles.pcCommunityContent}>
-      {/* 发现好币模块 */}
-      <SectionTitle 
-        title="发现好币" 
-        onMoreClick={() => router.push('/list?category=发现好币')}
-      />
-
-      {/* 发现好币帖子列表 */}
-      <div className={styles.discoverySection}>
-        <div className={styles.discoveryGrid}>
-          {loading ? (
-            <div className={styles.loadingContainer}>
-              <Spin tip="加载中..." />
-            </div>
-          ) : discoveryPosts.length > 0 ? (
-            <>
-              {discoveryPosts.map(post => (
-                <DiscoveryPostCard
-                  key={post.id}
-                  post={post}
-                  onPostClick={goToPostDetail}
-                  onUserClick={goToUserPage}
-                  onLikeClick={toggleLike}
-                  onShareClick={handleShare}
-                  isLiked={post.isLiked || likedPosts[post.id]}
-                  formatTimeAgo={formatTimeAgo}
-                  isPC={true}
-                />
-              ))}
-            </>
-          ) : (
-            <Empty description="暂无发现好币帖子" />
-          )}
-        </div>
+      <div className={styles.topCapsuleTabs}>
+        <PCCapsuleTabs
+          items={capsuleTabItems}
+          activeKey={activeCapsuleTab}
+          onChange={setActiveCapsuleTab}
+        />
       </div>
 
-      {/* 不懂就问模块 */}
-      <SectionTitle 
-        title="不懂就问" 
-        onMoreClick={() => router.push('/list?category=不懂就问')}
-      />
-
-      {/* 不懂就问帖子列表 */}
-      <div className={styles.questionSection}>
-        <div className={styles.questionList}>
-          {questionLoading ? (
-            <div className={styles.loadingContainer}>
-              <Spin tip="加载中..." />
-            </div>
-          ) : questionPosts.length > 0 ? (
-            <>
-              {questionPosts.map(post => (
-                <PostCard
-                  key={post.id}
-                  post={post}
-                  onPostClick={goToPostDetail}
-                  onUserClick={goToUserPage}
-                  onLikeClick={(postId) => toggleLike(null, postId)}
-                  onShareClick={handleShare}
-                  onTagClick={(tagName) => router.push(`/detail?symbol=${tagName}`)}
-                  onTopicClick={(topicId, topicName) => router.push(`/topicinfo?id=${topicId}&title=${topicName}`)}
-                  isLiked={post.isLiked || likedPosts[post.id]}
-                  formatTimeAgo={formatTimeAgo}
-                  isPC={true}
-                />
-              ))}
-            </>
-          ) : (
-            <Empty description="暂无不懂就问帖子" />
-          )}
-        </div>
-      </div>
-      
       {/* 币种、热门榜单 */}
       {/* 70/30 分栏容器 */}
       <SplitLayout
         className={styles.coinHotTopicSection}
         leftContent={
           <div className={styles.leftContentWrapper}>
-            {/* 不懂就问模块标题 + 币种标签栏 - 固定在顶部 */}
-            <div className={styles.leftContentHeader}>
-              <SectionTitle 
-                title="币种" 
-                onMoreClick={() => router.push('/list?category=不懂就问')}
-                extra={
-                  <CoinTabBar
-                    coinTabs={coinTabs}
-                    selectedCoin={selectedCoin}
-                    onCoinSelect={setSelectedCoin}
-                    onMoreClick={() => console.log('点击更多币种')}
-                    moreText="更多"
-                    isPC={true}
-                  />
-                }
-              />
-              
-              {/* 看涨看跌投票组件 - 固定在顶部 */}
-              <BullBearIndicator
-                upCount={voteData.upCount}
-                downCount={voteData.downCount}
-                participants={voteData.totalCount}
-                selected={voteChoice}
-                onSelect={(type) => submitVote(type)}
-                showParticipants={true}
-                showPercentage={true}
-                isPC={true}
-                coinSymbol={selectedCoin}
-              />
+            <div className={styles.leftTopComposer}>
+              <PCPublishComposer onPublish={goToPostPage} />
             </div>
-            
-            {/* 币种相关帖子列表 - 可滚动区域 */}
-            <div className={styles.leftContentMain}>
-              {coinLoading ? (
-                <div className={styles.loadingContainer}>
-                  <Spin tip="加载中..." />
-                </div>
-              ) : coinPosts.length > 0 ? (
-                <div className={styles.coinPostsList}>
-                  {coinPosts.map(post => (
-                    <PostCard
-                      key={post.id}
-                      post={post}
-                      onPostClick={goToPostDetail}
-                      onUserClick={goToUserPage}
-                      onLikeClick={(postId) => toggleLike(null, postId)}
-                      onShareClick={handleShare}
-                      onTagClick={(tagName) => router.push(`/detail?symbol=${tagName}`)}
-                      onTopicClick={(topicId, topicName) => router.push(`/topicinfo?id=${topicId}&title=${topicName}`)}
-                      isLiked={post.isLiked || likedPosts[post.id]}
-                      formatTimeAgo={formatTimeAgo}
+            <div className={styles.leftPanelContainer}>
+              {/* 不懂就问模块标题 + 币种标签栏 - 固定在顶部 */}
+              <div className={styles.leftContentHeader}>
+                <SectionTitle 
+                  title="" 
+                  onMoreClick={() => router.push('/list?category=不懂就问')}
+                  extra={
+                    <CoinTabBar
+                      coinTabs={coinTabs}
+                      selectedCoin={selectedCoin}
+                      onCoinSelect={setSelectedCoin}
+                      onMoreClick={() => console.log('点击更多币种')}
+                      moreText="更多"
                       isPC={true}
                     />
-                  ))}
-                </div>
-              ) : (
-                <Empty description={`暂无${selectedCoin}相关帖子`} />
-              )}
-            </div>
-            
-            {/* 评论输入框 - 固定在底部 */}
-            <div className={styles.commentInputWrapper}>
-              <CommentInput
-                placeholder={`发表关于 ${selectedCoin} 的看法`}
-                onSubmit={handleCommentSubmit}
-                isPC={true}
-              />
+                  }
+                />
+                
+                {/* 看涨看跌投票组件 - 固定在顶部 */}
+                <BullBearIndicator
+                  upCount={voteData.upCount}
+                  downCount={voteData.downCount}
+                  participants={voteData.totalCount}
+                  selected={voteChoice}
+                  onSelect={(type) => submitVote(type)}
+                  showParticipants={true}
+                  showPercentage={true}
+                  isPC={true}
+                  coinSymbol={selectedCoin}
+                />
+              </div>
+              
+              {/* 币种相关帖子列表 - 可滚动区域 */}
+              <div className={styles.leftContentMain}>
+                {coinLoading ? (
+                  <div className={styles.loadingContainer}>
+                    <Spin tip="加载中..." />
+                  </div>
+                ) : coinPosts.length > 0 ? (
+                  <div className={styles.coinPostsList}>
+                    {coinPosts.map(post => (
+                      <PostCard
+                        key={post.id}
+                        post={post}
+                        onPostClick={goToPostDetail}
+                        onUserClick={goToUserPage}
+                        onLikeClick={(postId) => toggleLike(null, postId)}
+                        onShareClick={handleShare}
+                        onTagClick={(tagName) => router.push(`/detail?symbol=${tagName}`)}
+                        onTopicClick={(topicId, topicName) => router.push(`/topicinfo?id=${topicId}&title=${topicName}`)}
+                        isLiked={post.isLiked || likedPosts[post.id]}
+                        formatTimeAgo={formatTimeAgo}
+                        isPC={true}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <Empty description={`暂无${selectedCoin}相关帖子`} />
+                )}
+              </div>
+              
+              {/* 评论输入框 - 固定在底部 */}
+              <div className={styles.commentInputWrapper}>
+                <CommentInput
+                  placeholder={`发表关于 ${selectedCoin} 的看法`}
+                  onSubmit={handleCommentSubmit}
+                  isPC={true}
+                />
+              </div>
             </div>
           </div>
         }
         rightContent={
           <div className={styles.rightContentWrapper}>
-            {/* 热门榜单标题和搜索框 */}
-            <div className={styles.hotTopicHeader}>
-              <SectionTitle 
-                title="热门榜单"
-                rightContent={
-                  <HotTopicSearchBar
-                    onSearchClick={() => router.push('/topicsearch')}
-                    onSearch={handleSearch}
-                    onCreateClick={() => console.log('创建话题')}
-                    searchPlaceholder="搜索话题"
-                    createButtonText="创建话题"
-                    isPC={true}
-                  />
-                }
-              />
-              {/* 搜索下拉面板 */}
-              <PCTopicSearchModal
-                visible={showSearchPanel}
-                onClose={handleCloseSearchPanel}
-                results={searchResults}
-                loading={searchLoading}
-                onTopicClick={goToTopicDetail}
-                searchKeyword={searchKeyword}
-                nov1Icon={nov1Icon}
-                nov2Icon={nov2Icon}
-                nov3Icon={nov3Icon}
-                hotIcon={hotIcon}
-              />
+            <div className={styles.flashNewsWrapper}>
+              <PCFlashNewsCard items={flashNewsItems} />
             </div>
             <div 
               ref={hotTopicsContainerRef}
@@ -827,26 +642,6 @@ export default function PCCommunityContent() {
         right={80}
         bottom={80}
       />
-      
-      {/* 币种信息卡片列表 */}
-      <div className={styles.coinCardsGrid}>
-        {coinTabs.map(coin => {
-          const coinData = coinInfoData[coin.key] || {};
-          return (
-            <CoinInfoCard
-              key={coin.key}
-              symbol={coin.key}
-              icon={coinData.icon}
-              price={coinData.price}
-              change24h={coinData.change24h}
-              changePercent={coinData.changePercent}
-              marketCap={coinData.marketCap}
-              isPC={true}
-              onClick={() => router.push(`/detail?symbol=${coin.key}`)}
-            />
-          );
-        })}
-      </div>
     </div>
   );
 }

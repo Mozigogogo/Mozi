@@ -1,6 +1,16 @@
 .pcCommunityContent {
   padding: 0;
+}
 
+.topCapsuleTabs {
+  margin-bottom: 16PX;
+}
+
+.leftTopComposer {
+  margin-bottom: 16PX;
+}
+
+.pcCommunityContent {
   .discoverySection {
     margin-bottom: 20PX;
   }
@@ -323,6 +333,20 @@
   height: 100%;
 }
 
+.leftPanelContainer {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 1);
+  border-radius: 32PX;
+  border-top: 1PX solid rgba(243, 244, 246, 1);
+  box-shadow:
+    0PX 1PX 2PX -1PX rgba(0, 0, 0, 0.1),
+    0PX 1PX 3PX 0PX rgba(0, 0, 0, 0.1);
+  padding: 12PX 12PX 10PX;
+}
+
 .leftContentHeader {
   flex-shrink: 0; /* 固定在顶部，不参与滚动 */
 }
@@ -370,6 +394,11 @@
 
 .hotTopicHeader {
   position: relative;
+  flex-shrink: 0;
+}
+
+.flashNewsWrapper {
+  margin-bottom: 12PX;
   flex-shrink: 0;
 }
 

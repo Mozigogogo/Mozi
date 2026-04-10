@@ -9,6 +9,16 @@ const nextConfig = withLess({
     domains: ['localhost', 'example.com'],
     unoptimized: true,
   },
+  webpack: (webpackConfig) => {
+    webpackConfig.externals = webpackConfig.externals || [];
+    webpackConfig.externals.push('pino-pretty', 'lokijs', 'encoding');
+    webpackConfig.resolve = webpackConfig.resolve || {};
+    webpackConfig.resolve.alias = {
+      ...(webpackConfig.resolve.alias || {}),
+      '@react-native-async-storage/async-storage': false,
+    };
+    return webpackConfig;
+  },
   env: {
     API_BASE_URL,
     NEXT_PUBLIC_PROJECT_ID: PROJECT_ID,

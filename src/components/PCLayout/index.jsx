@@ -195,9 +195,13 @@ export default function PCLayout({ children }) {
   // 内容显示状态 - 用于PC端tab切换
   const [activeContent, setActiveContent] = useState(null);
   const [isCreatedListExpanded, setIsCreatedListExpanded] = useState(false);
-  const [isMineExpanded, setIsMineExpanded] = useState(true);
+  const [isMineExpanded, setIsMineExpanded] = useState(false);
   const [watchlist, setWatchlist] = useState([]);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
+
+  useEffect(() => {
+    setIsMineExpanded(false);
+  }, []);
 
   const fetchWatchlist = useCallback(async () => {
     setWatchlistLoading(true);
@@ -382,24 +386,24 @@ export default function PCLayout({ children }) {
         label: t('pcLayout.menu.home'),
       },
       {
-        key: '/find',
+        key: '/pc/find',
         icon: (
           <CustomIcon
             src="/icons/pc/find.png"
             activeSrc="/icons/pc/find_actived@2x.png"
-            itemKey="/find"
+            itemKey="/pc/find"
             alt="discover"
           />
         ),
         label: t('pcLayout.menu.discover'),
       },
       {
-        key: '/community',
+        key: '/pc/community',
         icon: (
           <CustomIcon
             src="/icons/pc/social.png"
             activeSrc="/icons/pc/social_actived.png"
-            itemKey="/community"
+            itemKey="/pc/community"
             alt="community"
           />
         ),
@@ -461,15 +465,31 @@ export default function PCLayout({ children }) {
   }, [collapsed, favoritesMenuItemCollapsed, mineRestMenuItems, coinlistGroup]);
 
   const handleMenuClick = ({ key }) => {
-    // PC端：发现和社区页面在右侧显示内容，不跳转路由
-    if (key === '/find' || key === '/community') {
-      setActiveContent(key);
-      setShowSearchResults(false);
-    } else {
-      // 其他页面正常跳转
+    // PC 端：发现/社区使用独立路由
+    if (key === '/pc/find' || key === '/pc/community') {
       setActiveContent(null);
+      setShowSearchResults(false);
       router.push(key);
+      return;
     }
+
+    // 兼容旧逻辑：如果还有地方用 /find、/community，统一跳转到 PC 路由
+    if (key === '/find') {
+      setActiveContent(null);
+      setShowSearchResults(false);
+      router.push('/pc/find');
+      return;
+    }
+    if (key === '/community') {
+      setActiveContent(null);
+      setShowSearchResults(false);
+      router.push('/pc/community');
+      return;
+    }
+
+    // 其他页面正常跳转
+    setActiveContent(null);
+    router.push(key);
   };
 
   const getSelectedKey = () => {
@@ -488,7 +508,12 @@ export default function PCLayout({ children }) {
 
   // 当路由变化时，清除activeContent
   useEffect(() => {
-    if (pathname !== '/find' && pathname !== '/community') {
+    if (
+      pathname !== '/find' &&
+      pathname !== '/community' &&
+      pathname !== '/pc/find' &&
+      pathname !== '/pc/community'
+    ) {
       setActiveContent(null);
     }
   }, [pathname]);
@@ -778,6 +803,10 @@ export default function PCLayout({ children }) {
                 } else if (activeContent === '/find') {
                   return <PCFindContent />;
                 } else if (activeContent === '/community') {
+                  return <PCCommunityContent />;
+                } else if (pathname === '/pc/find') {
+                  return <PCFindContent />;
+                } else if (pathname === '/pc/community') {
                   return <PCCommunityContent />;
                 } else {
                   return children;
