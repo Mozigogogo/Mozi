@@ -211,7 +211,9 @@
     "noTasks": "No tasks available",
     "addSuccess": "Added successfully",
     "cancelSuccess": "Cancelled successfully",
-    "operationFailed": "Operation failed"
+    "operationFailed": "Operation failed",
+    "followed": "Following",
+    "unfollowed": "Unfollowed"
   },
   "exchangeRank": {
     "realTimeUpdate": "Real-time update"

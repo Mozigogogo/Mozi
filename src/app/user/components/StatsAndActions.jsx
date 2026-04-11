@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import styles from '@/app/user/page.module.less';
 
-const StatsAndActions = ({ userInfo, openEditProfile, setShowBenefitCodeModal }) => {
+const StatsAndActions = ({ userInfo, openEditProfile, setShowBenefitCodeModal, pointsTotal }) => {
   const router = useRouter();
   const { t } = useTranslation();
   const EDIT_ICON = '/icons/new_user/edit.svg';
@@ -35,7 +35,9 @@ const StatsAndActions = ({ userInfo, openEditProfile, setShowBenefitCodeModal })
                         <span className={styles.statLabel}>{t('user.stats.likes')}</span>
                 </div>
                 <div className={styles.statItem}>
-                        <span className={styles.statValue}>{formatStat(userInfo.totalPoints)}</span>
+                        <span className={styles.statValue}>
+                          {formatStat(pointsTotal != null ? pointsTotal : userInfo.totalPoints)}
+                        </span>
                         <span className={styles.statLabel}>{t('user.stats.points')}</span>
                 </div>
             </div>

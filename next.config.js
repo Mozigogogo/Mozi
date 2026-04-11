@@ -46,28 +46,53 @@ module.exports = withLess({
     ];
   },
   async headers() {
+    const dev = process.env.NODE_ENV === 'development';
+
+    const noStoreDocument = [
+      {
+        key: 'Cache-Control',
+        value: 'private, no-cache, no-store, must-revalidate',
+      },
+      { key: 'Pragma', value: 'no-cache' },
+      { key: 'Expires', value: '0' },
+    ];
+
+    const cacheHeaders = dev
+      ? [
+          // 本地 dev：禁用整个 /_next（含 webpack-hmr、chunks），避免浏览器沿用旧脚本
+          {
+            source: '/_next/:path*',
+            headers: [
+              {
+                key: 'Cache-Control',
+                value: 'no-store, must-revalidate',
+              },
+            ],
+          },
+          {
+            source: '/((?!_next/|api/|favicon.ico|manifest.json).*)',
+            headers: noStoreDocument,
+          },
+        ]
+      : [
+          // 生产：带 hash 的静态资源可长期缓存；HTML/RSC 路由禁止强缓存
+          {
+            source: '/_next/static/:path*',
+            headers: [
+              {
+                key: 'Cache-Control',
+                value: 'public, max-age=31536000, immutable',
+              },
+            ],
+          },
+          {
+            source: '/((?!_next/static|_next/image|api/|favicon.ico|manifest.json).*)',
+            headers: noStoreDocument,
+          },
+        ];
+
     return [
-      // Telegram WebView（以及部分移动端 WebView）对静态资源缓存较激进。
-      // 这里对 Next 的构建产物资源禁用长缓存，确保线上更新能尽快生效。
-      {
-        source: '/_next/static/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-      // HTML 文档禁止强缓存，避免旧 HTML 引用新版本已不存在的 chunk
-      {
-        source: '/((?!_next/static|_next/image|api/|favicon.ico|manifest.json).*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'private, no-cache, no-store, must-revalidate',
-          },
-        ],
-      },
+      ...cacheHeaders,
       {
         source: '/tg/:path*',
         headers: [

@@ -139,11 +139,17 @@ export default function UserProfile({ params }) {
       if (profile.isFollowing) {
         await unfollowUser(targetUserId);
         setProfile((prev) => ({ ...prev, isFollowing: false }));
-        Toast.show({ content: t('common.unfollowed') || '已取消关注', position: 'bottom' });
+        Toast.show({
+          content: t('common.unfollowed', { defaultValue: '已取消关注' }),
+          position: 'bottom',
+        });
       } else {
         await followUser(targetUserId);
         setProfile((prev) => ({ ...prev, isFollowing: true }));
-        Toast.show({ content: t('common.followed') || '已关注', position: 'bottom' });
+        Toast.show({
+          content: t('common.followed', { defaultValue: '已关注' }),
+          position: 'bottom',
+        });
       }
       // 关注状态切换后，主动拉一次服务端最新数据，避免本地状态与后端不一致
       fetchUserProfileData(targetUserId);
@@ -224,7 +230,9 @@ export default function UserProfile({ params }) {
                   style={{ opacity: followLoading ? 0.7 : 1, pointerEvents: followLoading ? 'none' : 'auto' }}
                 >
                   {!profile.isFollowing && <img src="/icons/new_user/plus.svg" alt="" />}
-                  {profile.isFollowing ? (t('common.followed') || '已关注') : (t('user.stats.following') || '关注')}
+                  {profile.isFollowing
+                    ? t('common.followed', { defaultValue: '已关注' })
+                    : t('user.stats.following', { defaultValue: '关注' })}
                 </div>
               </div>
             </div>

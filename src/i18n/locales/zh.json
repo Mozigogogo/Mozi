@@ -194,7 +194,9 @@
     "noTasks": "暂无任务",
     "addSuccess": "添加成功",
     "cancelSuccess": "取消成功",
-    "operationFailed": "操作失败"
+    "operationFailed": "操作失败",
+    "followed": "已关注",
+    "unfollowed": "已取消关注"
   },
   "exchangeRank": {
     "realTimeUpdate": "实时更新"

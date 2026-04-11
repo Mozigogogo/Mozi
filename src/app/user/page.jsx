@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAccount, useDisconnect, useSignMessage } from 'wagmi';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
@@ -24,7 +24,7 @@ import {
   updateUserInfo 
 } from '@/api/user';
 import { getMySubscription } from '@/api/vip';
-import { ensureFirstLoginAt, fetchUserDataInfoOnce } from '@/utils/postLogin';
+import { ensureFirstLoginAt } from '@/utils/postLogin';
 import UserInfo from '@/app/user/components/UserInfo';
 import StatsAndActions from '@/app/user/components/StatsAndActions';
 import UserActions from '@/app/user/components/UserActions';
@@ -54,6 +54,28 @@ const normalizeIntroduction = (value, t) => {
   // 历史默认文案视为“空简介”，避免刷新后再次回填
   if (text === defaultBio || text === '资金流动大师，金融NO.1') return '';
   return text;
+};
+
+/** 解析 GET /user/datainfo 的响应体（兼容 { code, data }、双层 data、或扁平结构） */
+const normalizeDatainfoPayload = (res) => {
+  if (res == null || typeof res !== 'object') return null;
+  let p = res.data;
+  if (p && typeof p === 'object' && p.data && typeof p.data === 'object' && !Array.isArray(p.data)) {
+    p = p.data;
+  }
+  if (p && typeof p === 'object' && !Array.isArray(p)) {
+    return p;
+  }
+  if (res.userId != null || res.totalPoints != null || res.followingCount != null) {
+    return res;
+  }
+  return null;
+};
+
+const toFiniteNumber = (v, fallback = 0) => {
+  if (v === undefined || v === null || v === '') return fallback;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
 };
 
 export default function UserPage() {
@@ -309,74 +331,86 @@ export default function UserPage() {
     }
   }, [searchParams]);
 
-  // 获取用户积分数据（基于统一的 datainfo 缓存）
-  const fetchUserPointsData = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
-      const data = await fetchUserDataInfoOnce({ caller: 'UserPage_fetchUserPointsData' });
-
-      if (data) {
-        // 保存完整的 dataInfo 数据到 localStorage
-        try {
-          let nextDataInfo = data;
-          const rawUserInfo = localStorage.getItem('userInfo');
-          if (rawUserInfo) {
-            try {
-              const parsedUserInfo = JSON.parse(rawUserInfo);
-              const nickName = parsedUserInfo?.nickName;
-              const avatar = parsedUserInfo?.avatar;
-              if (nickName || avatar) {
-                nextDataInfo = {
-                  ...data,
-                  userInfo: {
-                    ...(data?.userInfo || {}),
-                    ...(nickName ? { nickName } : {}),
-                    ...(avatar ? { avatar } : {})
-                  }
-                };
-              }
-            } catch {}
-          }
-          localStorage.setItem('userDataInfo', JSON.stringify(nextDataInfo));
-        } catch (e) {
-          console.error('❌ 保存 dataInfo 到 localStorage 失败:', e);
-        }
-        
-        setPointsData({
-          totalPoints: data.totalPoints || 0,
-          yesterdayPoints: data.yesterdayPoints || 0,
-          pointsRanking: data.pointsRanking || 0
-        });
-
-        // 同步“我的页”顶部统计数据（关注/粉丝/获赞/积分）
-        setUserInfo((prev) => ({
-          ...prev,
-          followingCount: data.followingCount ?? prev.followingCount ?? 0,
-          fansCount: data.fansCount ?? prev.fansCount ?? 0,
-          totalLikeCount: data.totalLikeCount ?? prev.totalLikeCount ?? 0,
-          totalPoints: data.totalPoints ?? prev.totalPoints ?? 0,
-        }));
-
-        const rawIdentity =
-          data?.identityTag ?? data?.userInfo?.identityTag ?? null;
-        const identityTagNormalized =
-          rawIdentity == null || String(rawIdentity).trim() === ''
-            ? null
-            : String(rawIdentity).trim();
-        const rawIntroduction = data?.introduction ?? data?.userInfo?.introduction ?? '';
-        const introductionNormalized = String(rawIntroduction || '').trim();
-        setUserInfo((prev) => ({
-          ...prev,
-          identityTag: identityTagNormalized,
-          introduction: introductionNormalized,
-        }));
-      }
-    } catch (error) {
-      console.error('❌ 获取用户积分数据失败:', error);
+  // 「我的」页顶部与积分区：仅使用 GET /user/datainfo 返回（await），不依赖 localStorage 预填展示
+  const loadUserDataFromDatainfo = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return;
     }
-  };
+    try {
+      const res = await getUserDataInfo();
+      const data = normalizeDatainfoPayload(res);
+
+      if (!data) {
+        console.warn('❌ /user/datainfo 无有效数据', res);
+        return;
+      }
+
+      try {
+        localStorage.setItem('userDataInfo', JSON.stringify(data));
+      } catch (e) {
+        console.error('❌ 保存 dataInfo 到 localStorage 失败:', e);
+      }
+
+      const totalPts = toFiniteNumber(
+        data.totalPoints ?? data.userInfo?.totalPoints,
+        0
+      );
+      const yesterdayPts = toFiniteNumber(data.yesterdayPoints, 0);
+      const rankPts = toFiniteNumber(data.pointsRanking, 0);
+
+      setPointsData({
+        totalPoints: totalPts,
+        yesterdayPoints: yesterdayPts,
+        pointsRanking: rankPts,
+      });
+
+      const nick = String(
+        data.userInfo?.nickName || data.nickName || data.nickname || ''
+      ).trim();
+      const avatar = data.userInfo?.avatar || data.avatar || DEFAULT_AVATAR;
+
+      const rawIdentity =
+        data?.identityTag ?? data?.userInfo?.identityTag ?? null;
+      const identityTagNormalized =
+        rawIdentity == null || String(rawIdentity).trim() === ''
+          ? null
+          : String(rawIdentity).trim();
+
+      const rawIntroduction =
+        data?.introduction ?? data?.userInfo?.introduction ?? '';
+      const introNorm = normalizeIntroduction(rawIntroduction, t);
+      const introduction = introNorm === null ? '' : introNorm;
+
+      const followingCount = toFiniteNumber(
+        data.followingCount ?? data.userInfo?.followingCount,
+        0
+      );
+      const fansCount = toFiniteNumber(
+        data.fansCount ?? data.userInfo?.fansCount,
+        0
+      );
+      const totalLikeCount = toFiniteNumber(
+        data.totalLikeCount ?? data.userInfo?.totalLikeCount,
+        0
+      );
+
+      setUserInfo((prev) => ({
+        ...prev,
+        isLogin: true,
+        nickname: nick || t('user.defaultNickname'),
+        avatar: avatar || DEFAULT_AVATAR,
+        followingCount,
+        fansCount,
+        totalLikeCount,
+        totalPoints: totalPts,
+        identityTag: identityTagNormalized,
+        introduction,
+      }));
+    } catch (error) {
+      console.error('❌ 获取 /user/datainfo 失败:', error);
+    }
+  }, [t]);
 
   // 获取用户告警配置（使用 Hook）
   const fetchAlertConfig = async () => {
@@ -395,50 +429,24 @@ export default function UserPage() {
     }
   };
 
-  // 首次与聚焦时同步登录态（来自 token 或钱包地址 Cookie）
-  const hasCalledPointsDataRef = useRef(false);
-  
+  // 同步登录标记 + 公告订阅开关；头像/昵称/统计仅由 loadUserDataFromDatainfo（/user/datainfo）写入
   useEffect(() => {
-    const syncLogin = () => {
+    const syncLoginMinimal = () => {
       const hasToken = !!localStorage.getItem('token');
       const walletAddr = getCookie('wallet_address');
       const loggedIn = hasToken || !!walletAddr;
-      
-      // 只在登录状态真正改变时才更新 state，避免不必要的重渲染
+
       setUserInfo((prev) => {
         if (prev.isLogin !== loggedIn) {
           return { ...prev, isLogin: loggedIn };
         }
         return prev;
       });
-      
-      const ui = localStorage.getItem('userInfo');
-      const dataInfo = localStorage.getItem('userDataInfo');
-      
-      let displayNick = t('user.defaultNickname');
-      let displayAvatar = DEFAULT_AVATAR;
-      let identityTagFromDataInfo = null;
-      // 优先使用 localStorage.userInfo.introduction；null 表示“本次未读取到该字段”
-      let introductionFromUserInfo = null;
-      let introductionFromDataInfo = null;
 
-      // 昵称/头像：优先从 userInfo 读取（登录接口写入）
+      const ui = localStorage.getItem('userInfo');
       if (ui) {
         try {
           const parsed = JSON.parse(ui);
-          if (parsed.nickName) {
-            displayNick = parsed.nickName;
-          }
-          if (parsed.avatar) {
-            displayAvatar = parsed.avatar;
-          }
-          const rawIntroductionFromUserInfo = parsed?.introduction ?? parsed?.description;
-          const normalizedIntroFromUserInfo = normalizeIntroduction(rawIntroductionFromUserInfo, t);
-          if (normalizedIntroFromUserInfo !== null) {
-            introductionFromUserInfo = normalizedIntroFromUserInfo;
-          }
-
-          // 根据登录返回的 subscribeAnnouncement 字段初始化开关状态
           if (parsed.subscribeAnnouncement !== undefined) {
             setIsAnnouncementOn(parsed.subscribeAnnouncement === 1);
           }
@@ -446,97 +454,47 @@ export default function UserPage() {
           console.error('解析 userInfo 失败:', e);
         }
       }
-
-      // 兜底：如果 userInfo 没有 nickName，再从 userDataInfo.userInfo.nickName 读取
-      if (dataInfo) {
-        try {
-          const dataInfoParsed = JSON.parse(dataInfo);
-          const rawIdTag =
-            dataInfoParsed?.identityTag ?? dataInfoParsed?.userInfo?.identityTag ?? null;
-          if (rawIdTag != null && String(rawIdTag).trim() !== '') {
-            identityTagFromDataInfo = String(rawIdTag).trim();
-          }
-          const rawIntroduction =
-            dataInfoParsed?.introduction ?? dataInfoParsed?.userInfo?.introduction;
-          const normalizedIntroFromDataInfo = normalizeIntroduction(rawIntroduction, t);
-          if (normalizedIntroFromDataInfo !== null) {
-            introductionFromDataInfo = normalizedIntroFromDataInfo;
-          }
-          if (displayNick === t('user.defaultNickname')) {
-            const nickFromDataInfo = (dataInfoParsed.userInfo?.nickName || '').trim();
-            if (nickFromDataInfo) {
-              displayNick = nickFromDataInfo;
-            }
-          }
-        } catch (e) {
-          console.error('解析 userDataInfo 失败:', e);
-        }
-      }
-      
-      // 只在数据真正改变时才更新，避免不必要的重渲染
-      setUserInfo((prev) => {
-        const prevTag = prev.identityTag ?? null;
-        const nextTag = identityTagFromDataInfo;
-        const prevIntro = prev.introduction || '';
-        const nextIntro =
-          introductionFromUserInfo !== null
-            ? introductionFromUserInfo
-            : introductionFromDataInfo;
-        const needUpdate =
-          prev.nickname !== displayNick ||
-          prev.avatar !== displayAvatar ||
-          prevTag !== nextTag ||
-          (nextIntro !== null && prevIntro !== nextIntro);
-        if (needUpdate) {
-          return {
-            ...prev,
-            nickname: displayNick,
-            avatar: displayAvatar,
-            identityTag: nextTag,
-            introduction: nextIntro === null ? prev.introduction : nextIntro,
-          };
-        }
-        return prev;
-      });
     };
-    
-    // 首次加载时同步登录态
-    syncLogin();
-    
-    // 首次加载时获取积分数据和告警配置（只调用一次）
-    const hasToken = !!localStorage.getItem('token');
-    const walletAddr = getCookie('wallet_address');
-    if ((hasToken || !!walletAddr) && !hasCalledPointsDataRef.current) {
-      hasCalledPointsDataRef.current = true;
-      fetchUserPointsData();
+
+    syncLoginMinimal();
+
+    const token = localStorage.getItem('token');
+    if (token) {
+      void loadUserDataFromDatainfo();
+    }
+
+    if (token) {
       fetchAlertConfig();
     }
-    
-    const onFocus = () => syncLogin();
-    
-    // 监听 TG 自动登录成功事件
+
+    const onFocus = () => {
+      syncLoginMinimal();
+      if (localStorage.getItem('token')) {
+        void loadUserDataFromDatainfo();
+      }
+    };
+
     const onTgLoginSuccess = () => {
       console.log('🚀 [User Page] 收到 tg-login-success 事件，立即同步状态');
-      // 打印当前的 localStorage 状态
       console.log('🔍 [User Page] localStorage 状态检查:', {
         token: localStorage.getItem('token') ? '存在' : '缺失',
         userInfo: localStorage.getItem('userInfo'),
         userId: localStorage.getItem('userId')
       });
-      syncLogin();
-      fetchUserPointsData();
+      syncLoginMinimal();
+      void loadUserDataFromDatainfo();
       fetchAlertConfig();
     };
 
     window.addEventListener('focus', onFocus);
     window.addEventListener('tg-login-success', onTgLoginSuccess);
-    const timer = setInterval(syncLogin, 2000);
+    const timer = setInterval(syncLoginMinimal, 2000);
     return () => {
       window.removeEventListener('focus', onFocus);
       window.removeEventListener('tg-login-success', onTgLoginSuccess);
       clearInterval(timer);
     };
-  }, []);
+  }, [loadUserDataFromDatainfo]);
 
   // 预加载反馈成功弹窗的图片资源
   useEffect(() => {
@@ -753,7 +711,7 @@ export default function UserPage() {
     if (isTelegramEnv() && tonConnectUI) {
       try { await tonConnectUI.disconnect(); } catch {}
     }
-    
+
     // 清除所有用户相关的本地缓存数据
     try {
       // 清除认证相关
@@ -1097,7 +1055,7 @@ export default function UserPage() {
   // 处理登录成功
   // isWalletLogin: 是否为钱包登录（钱包登录不使用 Telegram 用户名）
   const handleLoginSuccess = async (isWalletLogin = false) => {
-    const syncLogin = () => {
+    const syncLoginMinimal = () => {
       const hasToken = !!localStorage.getItem('token');
       const walletAddr = getCookie('wallet_address');
       const loggedIn = hasToken || !!walletAddr;
@@ -1106,30 +1064,13 @@ export default function UserPage() {
       if (ui) {
         try {
           const parsed = JSON.parse(ui);
-          setUserInfo((prev) => ({ ...prev, nickname: parsed.nickName || prev.nickname, avatar: parsed.avatar || prev.avatar }));
-          if (parsed?.nickName || parsed?.avatar) {
-            try {
-              const rawDataInfo = localStorage.getItem('userDataInfo');
-              const dataInfo = rawDataInfo ? JSON.parse(rawDataInfo) : {};
-              const next = {
-                ...dataInfo,
-                userInfo: {
-                  ...(dataInfo?.userInfo || {}),
-                  ...(parsed?.nickName ? { nickName: parsed.nickName } : {}),
-                  ...(parsed?.avatar ? { avatar: parsed.avatar } : {}),
-                },
-              };
-              localStorage.setItem('userDataInfo', JSON.stringify(next));
-            } catch {}
-          }
-          // 根据登录返回的 subscribeAnnouncement 字段初始化开关状态
           if (parsed.subscribeAnnouncement !== undefined) {
             setIsAnnouncementOn(parsed.subscribeAnnouncement === 1);
           }
         } catch {}
       }
     };
-    syncLogin();
+    syncLoginMinimal();
 
     // 仅 Telegram 环境下刷新订阅/会员状态，避免 VIP banner/会员标识不更新
     if (isTelegramEnv()) {
@@ -1147,8 +1088,8 @@ export default function UserPage() {
       }
     }
 
-    // 登录成功后，获取积分数据
-    await fetchUserPointsData();
+    // 登录成功后：await /user/datainfo，再展示顶部资料与积分区
+    await loadUserDataFromDatainfo();
 
     // 登录成功后，调用每日登录任务完成接口
     try {
@@ -1526,18 +1467,16 @@ export default function UserPage() {
   return (
     <Layout>
       <div className={styles.container}>
-        {/* Banner 区域 - 仅包含头部信息 */}
-        <UserInfo 
-          userInfo={userInfo} 
-          handleLogin={handleLogin} 
-          isTelegramEnv={isTelegramEnv()} 
+        <UserInfo
+          userInfo={userInfo}
+          handleLogin={handleLogin}
+          isTelegramEnv={isTelegramEnv()}
         />
-
-        {/* 统计数据和操作按钮区域 - 白色背景 */}
-        <StatsAndActions 
-          userInfo={userInfo} 
-          openEditProfile={openEditProfile} 
-          setShowBenefitCodeModal={setShowBenefitCodeModal} 
+        <StatsAndActions
+          userInfo={userInfo}
+          pointsTotal={pointsData.totalPoints}
+          openEditProfile={openEditProfile}
+          setShowBenefitCodeModal={setShowBenefitCodeModal}
         />
 
         {/* 内容区域 */}

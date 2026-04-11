@@ -46,7 +46,51 @@ const nextConfig = withLess({
     ];
   },
   async headers() {
+    const dev = process.env.NODE_ENV === 'development';
+
+    const noStoreDocument = [
+      {
+        key: 'Cache-Control',
+        value: 'private, no-cache, no-store, must-revalidate',
+      },
+      { key: 'Pragma', value: 'no-cache' },
+      { key: 'Expires', value: '0' },
+    ];
+
+    const cacheHeaders = dev
+      ? [
+          {
+            source: '/_next/:path*',
+            headers: [
+              {
+                key: 'Cache-Control',
+                value: 'no-store, must-revalidate',
+              },
+            ],
+          },
+          {
+            source: '/((?!_next/|api/|favicon.ico|manifest.json).*)',
+            headers: noStoreDocument,
+          },
+        ]
+      : [
+          {
+            source: '/_next/static/:path*',
+            headers: [
+              {
+                key: 'Cache-Control',
+                value: 'public, max-age=31536000, immutable',
+              },
+            ],
+          },
+          {
+            source: '/((?!_next/static|_next/image|api/|favicon.ico|manifest.json).*)',
+            headers: noStoreDocument,
+          },
+        ];
+
     return [
+      ...cacheHeaders,
       {
         source: '/(.*)',
         headers: [
