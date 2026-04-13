@@ -6,15 +6,32 @@ import TelegramAutoLogin from '@/components/TelegramAutoLogin';
 import { getMySubscription } from '@/api/vip';
 import { LogoLoading } from '@/components/Loading';
 
+/** 动态分包加载中占位，避免 router.back 回首页时出现整块空白 */
+function HomeChunkFallback() {
+  return (
+    <div
+      style={{
+        minHeight: '70vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--background, #f5f5f5)',
+      }}
+    >
+      <LogoLoading visible image="/images/community/loadding.png" size={72} />
+    </div>
+  );
+}
+
 // Dynamic imports to optimize bundle size and performance
 const PCHome = dynamic(() => import('../components/PCHome'), {
-  loading: () => null,
+  loading: HomeChunkFallback,
 });
 const PCLayout = dynamic(() => import('../components/PCLayout'), {
-  loading: () => null,
+  loading: HomeChunkFallback,
 });
 const MobileHome = dynamic(() => import('../components/MobileHome'), {
-  loading: () => null,
+  loading: HomeChunkFallback,
 });
 
 export default function HomePage() {
@@ -109,12 +126,23 @@ export default function HomePage() {
     if (typeof window === 'undefined') return;
 
     const MIN_MASK_MS = 700;
+    const SPLASH_SEEN_KEY = 'mozi_home_splash_seen_v1';
     const startTs = Date.now();
 
     const hideMask = () => {
+      let seen = false;
+      try {
+        seen = sessionStorage.getItem(SPLASH_SEEN_KEY) === '1';
+      } catch (_) {}
       const elapsed = Date.now() - startTs;
-      const remain = Math.max(0, MIN_MASK_MS - elapsed);
-      window.setTimeout(() => setHomeBootMaskVisible(false), remain);
+      // 同会话内再次进入首页（如返回）：不再强制 700ms，避免遮罩已关但子 chunk 未到时出现长时间白屏
+      const remain = seen ? 0 : Math.max(0, MIN_MASK_MS - elapsed);
+      window.setTimeout(() => {
+        setHomeBootMaskVisible(false);
+        try {
+          sessionStorage.setItem(SPLASH_SEEN_KEY, '1');
+        } catch (_) {}
+      }, remain);
     };
 
     if (document.readyState === 'complete') {
