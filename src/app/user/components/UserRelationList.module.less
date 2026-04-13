@@ -23,6 +23,16 @@
   border-top: none;
 }
 
+.list :global(.adm-list-body::before),
+.list :global(.adm-list-body::after),
+.list :global(.adm-list-item::before),
+.list :global(.adm-list-item::after),
+.list :global(.adm-list::before),
+.list :global(.adm-list::after) {
+  display: none !important;
+  content: none !important;
+}
+
 .avatar {
   width: 40px;
   height: 40px;
