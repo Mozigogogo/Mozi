@@ -11,7 +11,10 @@ import { completeTask } from './user';
 
 /**
  * 获取热门板块数据
- * @param {Object} params - 查询参数（如 change24hOrder/marketCapOrder/volumeOrder）
+ * GET /section/list
+ * @param {Object} params - 查询参数
+ * @param {'price_change_24h'|'market_cap'|'total_volume'} [params.sortField] - 排序字段，默认 price_change_24h
+ * @param {'asc'|'desc'} [params.sortOrder] - 排序方向，默认 desc
  * @returns {Promise}
  */
 export const getHotSections = (params = {}) => {
@@ -24,7 +27,7 @@ export const getHotSections = (params = {}) => {
 
 /**
  * 获取热门板块数据（简化版，直接返回格式化数据）
- * @param {Object} params - 查询参数（如 change24hOrder/marketCapOrder/volumeOrder）
+ * @param {Object} params - 同 getHotSections（sortField / sortOrder）
  * @returns {Promise<Array>} 返回格式化后的板块数据数组
  */
 export const fetchHotSectionsData = async (params = {}) => {
@@ -171,7 +174,7 @@ export const getAggregationDetail = async () => {
 /**
  * 获取板块列表
  * GET /section/list
- * @param {Object} params - 查询参数（按后端定义透传）
+ * @param {Object} params - 查询参数（sortField / sortOrder 等同 getHotSections）
  */
 export const getSectionList = (params = {}) => {
   return request({
@@ -186,7 +189,8 @@ export const getSectionList = (params = {}) => {
  * GET /section/symbols
  * @param {Object} params - 查询参数
  * @param {string} params.category - 板块名称（必传）
- * @param {'asc'|'desc'} [params.priceOrder='desc'] - 价格排序方向
+ * @param {'symbol'|'current_price'|'price_change_24h'} [params.sortField='symbol'] - 排序字段
+ * @param {'asc'|'desc'} [params.sortOrder='asc'] - 排序方向
  */
 export const getSectionSymbols = (params = {}) => {
   return request({

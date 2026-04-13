@@ -10,32 +10,30 @@ import { fetchHotSectionsData } from '@/api/market';
 import { buildSectorDetailHref } from '@/utils/sectorNavigation';
 import styles from './page.module.less';
 
+/** 热力图筛选 SortButton 的 value -> GET /section/list 的 sortField */
+function hotsectorUiToSortField(ui) {
+  if (ui === 'marketCap') return 'market_cap';
+  if (ui === 'volume') return 'total_volume';
+  return 'price_change_24h';
+}
+
 export default function HotSectorPage() {
   const { t } = useTranslation();
   const router = useRouter();
   const MAX_ITEMS = 50;
-  const [activeSortField, setActiveSortField] = useState('range');
-  const [change24hOrder, setChange24hOrder] = useState('desc');
-  const [marketCapOrder, setMarketCapOrder] = useState('desc');
-  const [volumeOrder, setVolumeOrder] = useState('desc');
+  const [sortField, setSortField] = useState('price_change_24h');
+  const [sortOrder, setSortOrder] = useState('desc');
   const [sectorData, setSectorData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 三个排序状态任意变化后，重新请求接口
   useEffect(() => {
     fetchSectorData();
-  }, [change24hOrder, marketCapOrder, volumeOrder]);
+  }, [sortField, sortOrder]);
 
   const fetchSectorData = async () => {
     setLoading(true);
     try {
-      const sortParams = {
-        change24hOrder,
-        marketCapOrder,
-        volumeOrder,
-      };
-
-      const formattedData = await fetchHotSectionsData(sortParams);
+      const formattedData = await fetchHotSectionsData({ sortField, sortOrder });
       setSectorData(Array.isArray(formattedData) ? formattedData.slice(0, MAX_ITEMS) : []);
     } catch (error) {
       console.error('Failed to fetch sector data:', error);
@@ -45,14 +43,8 @@ export default function HotSectorPage() {
   };
 
   const handleSortChange = (field, order) => {
-    setActiveSortField(field);
-    if (field === 'marketCap') {
-      setMarketCapOrder(order);
-    } else if (field === 'volume') {
-      setVolumeOrder(order);
-    } else {
-      setChange24hOrder(order);
-    }
+    setSortField(hotsectorUiToSortField(field));
+    setSortOrder(order);
   };
 
   const handleSectorClick = (row) => {
@@ -109,16 +101,22 @@ export default function HotSectorPage() {
           <SortButton
             label={t('hotsector.filter.range')}
             value="range"
+            order={sortField === 'price_change_24h' ? sortOrder : 'asc'}
+            isActive={sortField === 'price_change_24h'}
             onChange={handleSortChange}
           />
           <SortButton
             label={t('hotsector.filter.marketCap')}
             value="marketCap"
+            order={sortField === 'market_cap' ? sortOrder : 'asc'}
+            isActive={sortField === 'market_cap'}
             onChange={handleSortChange}
           />
           <SortButton
             label={t('hotsector.filter.volume')}
             value="volume"
+            order={sortField === 'total_volume' ? sortOrder : 'asc'}
+            isActive={sortField === 'total_volume'}
             onChange={handleSortChange}
           />
         </div>

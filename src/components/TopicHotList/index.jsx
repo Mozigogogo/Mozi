@@ -92,7 +92,11 @@ export default function TopicHotList({ isPC = false }) {
     try {
       const response = await request({
         url: Interface.SECTION_LIST,
-        data: { pageSize: 10 }
+        data: {
+          pageSize: 10,
+          sortField: 'price_change_24h',
+          sortOrder: 'desc',
+        },
       });
       if (response?.data) {
         setHotIndustry(response.data);

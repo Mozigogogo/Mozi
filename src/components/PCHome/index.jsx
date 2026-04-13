@@ -17,6 +17,7 @@ import Image from 'next/image';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { getSectionList } from '@/api/market';
+import { buildSectorDetailHref } from '@/utils/sectorNavigation';
 import { completeTask } from '@/api/user';
 import styles from './index.module.less';
 
@@ -335,19 +336,32 @@ export default function PCHome() {
   const fetchTreeMapData = async () => {
     setTreeMapLoading(true);
     try {
-      const res = await getSectionList({ change24hOrder: 'desc' });
+      const res = await getSectionList({
+        sortField: 'price_change_24h',
+        sortOrder: 'desc',
+      });
       
       const list = res?.data || [];
-      // 转换数据格式适配 TreeMap
-      const processedData = list.map(item => {
-        const raw = item.priceChange24h ?? 0;
-        const change = Math.abs(raw) <= 1 ? raw * 100 : raw;
-        
+      const parseChangePercent = (raw) => {
+        if (raw == null || raw === '') return 0;
+        if (typeof raw === 'number' && Number.isFinite(raw)) {
+          return Math.abs(raw) <= 1 ? raw * 100 : raw;
+        }
+        const n = parseFloat(String(raw).replace(/%/g, '').replace(/,/g, ''));
+        return Number.isFinite(n) ? n : 0;
+      };
+      // 保留板块原始字段供跳转 /sectordetail；TreeMap 面积用涨跌幅绝对值
+      const processedData = list.map((item) => {
+        const change = parseChangePercent(item.priceChange24h);
         return {
+          category: item.category,
           symbol: item.category,
-          marketCap: Math.abs(change), // 使用涨跌幅绝对值作为面积大小
+          totalVolume: item.totalVolume,
+          priceChange24h: item.priceChange24h,
+          sectorMarketCap: item.marketCap,
+          marketCap: Math.abs(change) || 0.1,
           priceChangePercent: change,
-          lastPrice: item.marketCap || '--'
+          lastPrice: item.marketCap || '--',
         };
       });
 
@@ -476,7 +490,7 @@ export default function PCHome() {
           <PCSectorTreeMap 
             list={treeMapData} 
             loading={treeMapLoading}
-            onItemClick={(item) => router.push(`/detail?symbol=${item.symbol}`)}
+            onItemClick={(item) => router.push(buildSectorDetailHref(item))}
           />
         </div>
       </div>
