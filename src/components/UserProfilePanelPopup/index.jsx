@@ -1,10 +1,9 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import RightArrowIcon from '../Icons/RightArrowIcon';
-import { editLanguage, isEditLanguageAllowedPath } from '@/api/user';
+import { updateUserInfo } from '@/api/user';
 import styles from './index.module.less';
 
 const TAG_OPTIONS = [
@@ -39,12 +38,6 @@ export default function UserProfilePanelPopup({
   initialData,
 }) {
   const { i18n, t } = useTranslation();
-  const pathname = usePathname();
-  const pathForPolicy =
-    pathname ||
-    (typeof window !== 'undefined' ? window.location?.pathname : '') ||
-    '';
-  const canSyncLanguage = isEditLanguageAllowedPath(pathForPolicy);
 
   const data = useMemo(
     () => ({
@@ -76,7 +69,7 @@ export default function UserProfilePanelPopup({
   const [commission, setCommission] = useState(data.commission);
   const selectedTagLabel = t(`editProfile.identity.options.${selectedTagId}`);
 
-  const selectLanguage = (lng) => {
+  const selectLanguage = async (lng) => {
     const normalizedLng = lng === 'en' ? 'en' : 'zh';
 
     // 先本地即时生效，避免被接口耗时阻塞
@@ -85,10 +78,12 @@ export default function UserProfilePanelPopup({
 
     if (typeof window !== 'undefined') {
       localStorage.setItem('i18nextLng', normalizedLng);
-      if (localStorage.getItem('token') && canSyncLanguage) {
-        editLanguage(normalizedLng).catch((e) => {
-          console.error('[UserProfilePanelPopup] editLanguage failed:', e);
-        });
+      if (localStorage.getItem('token')) {
+        try {
+          await updateUserInfo({ language: normalizedLng });
+        } catch (e) {
+          console.error('[UserProfilePanelPopup] update language failed:', e);
+        }
       }
     }
   };

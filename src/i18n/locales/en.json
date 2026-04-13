@@ -212,7 +212,7 @@
     "addSuccess": "Added successfully",
     "cancelSuccess": "Cancelled successfully",
     "operationFailed": "Operation failed",
-    "followed": "Following",
+    "followed": "Followed",
     "unfollowed": "Unfollowed"
   },
   "exchangeRank": {
@@ -426,9 +426,9 @@
       "watchlist": "Watchlist",
       "watchlistDesc": "His watchlist",
       "monitor": "Monitor",
-      "monitorDesc": "His monitored items",
+      "monitorDesc": "Monitored",
       "content": "Content",
-      "contentDesc": "His published content"
+      "contentDesc": "Posts"
     },
     "list": {
       "coin": "Coin",

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { List, InfiniteScroll, SpinLoading } from 'antd-mobile';
 import NavBar from '@/components/NavBar';
 import { getUserFanList, getUserFollowList } from '@/api/community';
@@ -37,13 +37,16 @@ function normalizeListPayload(res) {
 
 export default function UserRelationList({ mode }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const isFans = mode === 'fans';
   const title = isFans ? '粉丝' : '关注';
 
+  const routeUserId = String(searchParams?.get('userId') || '').trim();
   const userId = useMemo(() => {
+    if (routeUserId) return routeUserId;
     if (typeof window === 'undefined') return '';
     return String(localStorage.getItem('userId') || '').trim();
-  }, []);
+  }, [routeUserId]);
 
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);

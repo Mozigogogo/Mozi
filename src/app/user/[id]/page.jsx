@@ -314,7 +314,16 @@ export default function UserProfile({ params }) {
           <div className={styles.bio}>{profile.bio}</div>
 
           <div className={styles.statsRow}>
-            <div className={styles.statItem}>
+            <div
+              className={`${styles.statItem} ${styles.statItemClickable}`}
+              onClick={() =>
+                router.push(
+                  targetUserId
+                    ? `/user/following?userId=${encodeURIComponent(targetUserId)}`
+                    : '/user/following'
+                )
+              }
+            >
               <span className={styles.statValue}>{profile.stats.following}</span>
               <span className={styles.statLabel}>{t('user.stats.following') || '关注'}</span>
             </div>
