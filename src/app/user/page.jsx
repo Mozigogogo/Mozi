@@ -38,6 +38,13 @@ import { useAlertConfig } from '@/hooks/useAlertConfig';
 import VipBanner from '@/components/VipBanner';
 import styles from '@/app/user/page.module.less';
 
+/** 默认头像 URL（与历史逻辑一致） */
+const DEFAULT_USER_AVATAR_URL =
+  'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png';
+
+/** localStorage 中 datainfo 缓存键（与 postLogin、编辑页等共用） */
+const USER_DATA_INFO_STORAGE_KEY = 'userDataInfo';
+
 // 检测是否在 Telegram 环境中
 const isTelegramEnv = () => {
   if (typeof window === 'undefined') return false;
@@ -78,6 +85,106 @@ const toFiniteNumber = (v, fallback = 0) => {
   return Number.isFinite(n) ? n : fallback;
 };
 
+/**
+ * 判断本地缓存的 datainfo 是否属于当前登录用户（避免换号后误展示旧数据）
+ * @param {object|null|undefined} data - normalizeDatainfoPayload 结果
+ * @returns {boolean}
+ */
+function isUserDataInfoForCurrentUser(data) {
+  if (!data) return false;
+  if (typeof window === 'undefined') return true;
+  try {
+    const storedUserId = localStorage.getItem('userId');
+    if (!storedUserId) return true;
+    const cacheUserId = data.userId ?? data.userInfo?.userId ?? data.userInfo?.id;
+    if (cacheUserId == null || String(cacheUserId).trim() === '') return true;
+    return String(cacheUserId) === String(storedUserId);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 从 localStorage 原始字符串解析可用的 datainfo
+ * @param {string|null|undefined} rawJson
+ * @returns {object|null}
+ */
+function parseStoredUserDataInfo(rawJson) {
+  if (!rawJson) return null;
+  try {
+    const parsed = JSON.parse(rawJson);
+    const data =
+      normalizeDatainfoPayload(parsed) ??
+      (parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null);
+    if (!data || !isUserDataInfoForCurrentUser(data)) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 将 datainfo 转为「我的」页顶部与积分区 state
+ * @param {object} data - normalizeDatainfoPayload 结果
+ * @param {(key: string) => string} t - i18n translate
+ * @param {string} defaultAvatar
+ * @returns {{ pointsData: { totalPoints: number, yesterdayPoints: number, pointsRanking: number }, userInfoPatch: { isLogin: boolean, nickname: string, avatar: string, followingCount: number, fansCount: number, totalLikeCount: number, totalPoints: number, identityTag: string|null, introduction: string } }}
+ */
+function deriveUserPageStateFromDatainfo(data, t, defaultAvatar) {
+  const totalPts = toFiniteNumber(data.totalPoints ?? data.userInfo?.totalPoints, 0);
+  const yesterdayPts = toFiniteNumber(data.yesterdayPoints, 0);
+  const rankPts = toFiniteNumber(data.pointsRanking, 0);
+
+  const nick = String(data.userInfo?.nickName || data.nickName || data.nickname || '').trim();
+  const avatar = data.userInfo?.avatar || data.avatar || defaultAvatar;
+
+  const rawIdentity = data?.identityTag ?? data?.userInfo?.identityTag ?? null;
+  const identityTagNormalized =
+    rawIdentity == null || String(rawIdentity).trim() === ''
+      ? null
+      : String(rawIdentity).trim();
+
+  const rawIntroduction = data?.introduction ?? data?.userInfo?.introduction ?? '';
+  const introNorm = normalizeIntroduction(rawIntroduction, t);
+  const introduction = introNorm === null ? '' : introNorm;
+
+  const followingCount = toFiniteNumber(data.followingCount ?? data.userInfo?.followingCount, 0);
+  const fansCount = toFiniteNumber(data.fansCount ?? data.userInfo?.fansCount, 0);
+  const totalLikeCount = toFiniteNumber(data.totalLikeCount ?? data.userInfo?.totalLikeCount, 0);
+
+  return {
+    pointsData: {
+      totalPoints: totalPts,
+      yesterdayPoints: yesterdayPts,
+      pointsRanking: rankPts,
+    },
+    userInfoPatch: {
+      isLogin: true,
+      nickname: nick || t('user.defaultNickname'),
+      avatar: avatar || defaultAvatar,
+      followingCount,
+      fansCount,
+      totalLikeCount,
+      totalPoints: totalPts,
+      identityTag: identityTagNormalized,
+      introduction,
+    },
+  };
+}
+
+/**
+ * 生成用于对比「展示是否变化」的签名（与 derive 结果一致）
+ * @param {object|null|undefined} data
+ * @param {(key: string) => string} t
+ * @param {string} defaultAvatar
+ * @returns {string}
+ */
+function buildDatainfoViewSignature(data, t, defaultAvatar) {
+  if (!data) return '';
+  const { pointsData, userInfoPatch } = deriveUserPageStateFromDatainfo(data, t, defaultAvatar);
+  return JSON.stringify({ ...pointsData, ...userInfoPatch });
+}
+
 export default function UserPage() {
   // 状态定义
   const router = useRouter();
@@ -109,7 +216,7 @@ export default function UserPage() {
   const [tonConnectUI] = useTonConnectUI();
   const tonWallet = useTonWallet();
   const [userInfo, setUserInfo] = useState({
-    avatar: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png',
+    avatar: DEFAULT_USER_AVATAR_URL,
     nickname: t('user.defaultNickname'),
     level: 1,
     isVip: false,
@@ -126,7 +233,7 @@ export default function UserPage() {
     totalPoints: 0,
   });
   const [mySubscription, setMySubscription] = useState(null);
-  const DEFAULT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png';
+  const DEFAULT_AVATAR = DEFAULT_USER_AVATAR_URL;
   const [popVis, setPopVis] = useState(false);
   const [popType, setPopType] = useState('');
   const [rewardPopVis, setRewardPopVis] = useState(false); // 单独的打赏弹窗状态
@@ -331,12 +438,46 @@ export default function UserPage() {
     }
   }, [searchParams]);
 
-  // 「我的」页顶部与积分区：仅使用 GET /user/datainfo 返回（await），不依赖 localStorage 预填展示
+  /**
+   * 缓存优先：有 token 时立刻用 localStorage 的 userDataInfo 填充顶部资料与积分区，再等接口刷新
+   */
+  const hydrateUserDataFromLocalStorage = useCallback(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const data = parseStoredUserDataInfo(localStorage.getItem(USER_DATA_INFO_STORAGE_KEY));
+      if (!data) return;
+      const { pointsData: nextPoints, userInfoPatch } = deriveUserPageStateFromDatainfo(
+        data,
+        t,
+        DEFAULT_AVATAR
+      );
+      setPointsData(nextPoints);
+      setUserInfo((prev) => ({
+        ...prev,
+        ...userInfoPatch,
+      }));
+    } catch (e) {
+      console.error('读取本地 userDataInfo 失败:', e);
+    }
+  }, [t, DEFAULT_AVATAR]);
+
+  /**
+   * GET /user/datainfo：成功后写回 localStorage；仅当与进入请求前缓存的展示签名不一致时再 setState，减少无谓重渲染
+   */
   const loadUserDataFromDatainfo = useCallback(async () => {
     const token = localStorage.getItem('token');
     if (!token) {
       return;
     }
+    let cachedSig = '';
+    try {
+      const cachedData = parseStoredUserDataInfo(localStorage.getItem(USER_DATA_INFO_STORAGE_KEY));
+      if (cachedData) {
+        cachedSig = buildDatainfoViewSignature(cachedData, t, DEFAULT_AVATAR);
+      }
+    } catch (_) {}
+
     try {
       const res = await getUserDataInfo();
       const data = normalizeDatainfoPayload(res);
@@ -347,70 +488,31 @@ export default function UserPage() {
       }
 
       try {
-        localStorage.setItem('userDataInfo', JSON.stringify(data));
+        localStorage.setItem(USER_DATA_INFO_STORAGE_KEY, JSON.stringify(data));
       } catch (e) {
         console.error('❌ 保存 dataInfo 到 localStorage 失败:', e);
       }
 
-      const totalPts = toFiniteNumber(
-        data.totalPoints ?? data.userInfo?.totalPoints,
-        0
-      );
-      const yesterdayPts = toFiniteNumber(data.yesterdayPoints, 0);
-      const rankPts = toFiniteNumber(data.pointsRanking, 0);
+      const freshSig = buildDatainfoViewSignature(data, t, DEFAULT_AVATAR);
+      if (freshSig === cachedSig) {
+        return;
+      }
 
-      setPointsData({
-        totalPoints: totalPts,
-        yesterdayPoints: yesterdayPts,
-        pointsRanking: rankPts,
-      });
-
-      const nick = String(
-        data.userInfo?.nickName || data.nickName || data.nickname || ''
-      ).trim();
-      const avatar = data.userInfo?.avatar || data.avatar || DEFAULT_AVATAR;
-
-      const rawIdentity =
-        data?.identityTag ?? data?.userInfo?.identityTag ?? null;
-      const identityTagNormalized =
-        rawIdentity == null || String(rawIdentity).trim() === ''
-          ? null
-          : String(rawIdentity).trim();
-
-      const rawIntroduction =
-        data?.introduction ?? data?.userInfo?.introduction ?? '';
-      const introNorm = normalizeIntroduction(rawIntroduction, t);
-      const introduction = introNorm === null ? '' : introNorm;
-
-      const followingCount = toFiniteNumber(
-        data.followingCount ?? data.userInfo?.followingCount,
-        0
-      );
-      const fansCount = toFiniteNumber(
-        data.fansCount ?? data.userInfo?.fansCount,
-        0
-      );
-      const totalLikeCount = toFiniteNumber(
-        data.totalLikeCount ?? data.userInfo?.totalLikeCount,
-        0
+      const { pointsData: nextPoints, userInfoPatch } = deriveUserPageStateFromDatainfo(
+        data,
+        t,
+        DEFAULT_AVATAR
       );
 
+      setPointsData(nextPoints);
       setUserInfo((prev) => ({
         ...prev,
-        isLogin: true,
-        nickname: nick || t('user.defaultNickname'),
-        avatar: avatar || DEFAULT_AVATAR,
-        followingCount,
-        fansCount,
-        totalLikeCount,
-        totalPoints: totalPts,
-        identityTag: identityTagNormalized,
-        introduction,
+        ...userInfoPatch,
       }));
     } catch (error) {
       console.error('❌ 获取 /user/datainfo 失败:', error);
     }
-  }, [t]);
+  }, [t, DEFAULT_AVATAR]);
 
   // 获取用户告警配置（使用 Hook）
   const fetchAlertConfig = async () => {
@@ -429,7 +531,7 @@ export default function UserPage() {
     }
   };
 
-  // 同步登录标记 + 公告订阅开关；头像/昵称/统计仅由 loadUserDataFromDatainfo（/user/datainfo）写入
+  // 同步登录标记 + 公告订阅开关；头像/昵称/统计：先 hydrate 本地 datainfo，再由 loadUserDataFromDatainfo 对齐服务端
   useEffect(() => {
     const syncLoginMinimal = () => {
       const hasToken = !!localStorage.getItem('token');
@@ -460,6 +562,7 @@ export default function UserPage() {
 
     const token = localStorage.getItem('token');
     if (token) {
+      hydrateUserDataFromLocalStorage();
       void loadUserDataFromDatainfo();
     }
 
@@ -482,6 +585,7 @@ export default function UserPage() {
         userId: localStorage.getItem('userId')
       });
       syncLoginMinimal();
+      hydrateUserDataFromLocalStorage();
       void loadUserDataFromDatainfo();
       fetchAlertConfig();
     };
@@ -494,7 +598,7 @@ export default function UserPage() {
       window.removeEventListener('tg-login-success', onTgLoginSuccess);
       clearInterval(timer);
     };
-  }, [loadUserDataFromDatainfo]);
+  }, [hydrateUserDataFromLocalStorage, loadUserDataFromDatainfo]);
 
   // 预加载反馈成功弹窗的图片资源
   useEffect(() => {
@@ -718,7 +822,7 @@ export default function UserPage() {
       localStorage.removeItem('token');
       localStorage.removeItem('userInfo');
       localStorage.removeItem('userId');
-      localStorage.removeItem('userDataInfo'); // 清除 dataInfo 数据
+      localStorage.removeItem(USER_DATA_INFO_STORAGE_KEY); // 清除 dataInfo 数据
       
       // 清除邀请码
       localStorage.removeItem('inviteCode');
@@ -1088,7 +1192,8 @@ export default function UserPage() {
       }
     }
 
-    // 登录成功后：await /user/datainfo，再展示顶部资料与积分区
+    // 登录成功后：若 postLogin 等已写入 userDataInfo，先本地 hydrate；再请求 datainfo 对齐服务端
+    hydrateUserDataFromLocalStorage();
     await loadUserDataFromDatainfo();
 
     // 登录成功后，调用每日登录任务完成接口
@@ -1362,11 +1467,11 @@ export default function UserPage() {
             console.log('  - dataInfo.userInfo.nickName:', res.data.userInfo?.nickName);
             console.log('  - dataInfo.userInfo.avatar:', res.data.userInfo?.avatar);
             
-            localStorage.setItem('userDataInfo', JSON.stringify(res.data));
+            localStorage.setItem(USER_DATA_INFO_STORAGE_KEY, JSON.stringify(res.data));
             
             console.log('📝 [TON钱包登录] localStorage 最终状态:');
             console.log('  - userInfo:', localStorage.getItem('userInfo'));
-            console.log('  - userDataInfo:', localStorage.getItem('userDataInfo'));
+            console.log('  - userDataInfo:', localStorage.getItem(USER_DATA_INFO_STORAGE_KEY));
           }
         }).catch((dataInfoError) => {
           console.error('❌ [TON钱包登录] 获取用户详细信息失败:', dataInfoError);
