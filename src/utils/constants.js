@@ -78,6 +78,8 @@ export const Interface = {
   NEW_COIN: '/discovery/newsymbolrank',
   // 自选
   COIN_SELF: '/selfselect/all',
+  // 根据用户查询自选情况
+  SELFSELECT_USER: '/selfselect/user',
   // 添加自选
   ADD_OWN: '/selfselect/add',
   // 取消自选

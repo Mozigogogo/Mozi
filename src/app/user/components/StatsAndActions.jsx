@@ -22,11 +22,17 @@ const StatsAndActions = ({ userInfo, openEditProfile, setShowBenefitCodeModal, p
     <div className={styles.statsAndActionsWrapper}>
         <div className={styles.statsActionRow}>
             <div className={styles.statsGroup}>
-                <div className={styles.statItem}>
+                <div
+                  className={`${styles.statItem} ${styles.statItemClickable}`}
+                  onClick={() => router.push('/user/following')}
+                >
                     <span className={styles.statValue}>{formatStat(userInfo.followingCount)}</span>
                     <span className={styles.statLabel}>{t('user.stats.following')}</span>
                 </div>
-                <div className={styles.statItem}>
+                <div
+                  className={`${styles.statItem} ${styles.statItemClickable}`}
+                  onClick={() => router.push('/user/fans')}
+                >
                         <span className={styles.statValue}>{formatStat(userInfo.fansCount)}</span>
                         <span className={styles.statLabel}>{t('user.stats.followers')}</span>
                 </div>

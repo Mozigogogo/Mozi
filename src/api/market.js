@@ -80,6 +80,25 @@ export const getSectorDetail = (sectionName) => {
 // ==================== 自选币种相关 ====================
 
 /**
+ * 根据用户查询自选情况
+ * GET /selfselect/user/{userId}
+ * @param {string} userId - 用户 ID
+ * @param {Object} [params] - 可选查询参数（若后端支持分页/筛选等）
+ * @returns {Promise}
+ */
+export const getSelfselectByUserId = (userId, params = undefined) => {
+  const uid = String(userId ?? '').trim();
+  if (!uid) {
+    return Promise.reject(new Error('userId is required'));
+  }
+  return request({
+    url: `${Interface.SELFSELECT_USER}/${encodeURIComponent(uid)}`,
+    method: 'GET',
+    ...(params ? { params } : {}),
+  });
+};
+
+/**
  * 添加自选币种
  * @param {string} symbol - 币种符号
  * @returns {Promise}

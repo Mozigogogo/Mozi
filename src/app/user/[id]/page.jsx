@@ -10,9 +10,11 @@ import { FavoriteIcon } from '@/components/Icons/FavoriteIcon';
 import { BellIcon } from '@/components/Icons/BellIcon';
 import MonitorContent from '@/components/MonitorContent';
 import { Skeleton } from '@/components/Skeleton';
+import { getSelfselectByUserId } from '@/api/market';
 import { getUserProfile, followUser, unfollowUser } from '@/api/user';
 import UserPosts from '../components/UserPosts';
 import styles from './page.module.less';
+import userMeStyles from '@/app/user/page.module.less';
 
 const PCUserProfile = dynamic(() => import('../../../components/PCUserProfile'), {
   loading: () => null,
@@ -31,11 +33,33 @@ const MonitorIcon = () => (
 );
 
 // 初始占位数据（避免接口返回前 UI 抖动；不要写死业务数字）
+/** 与「我的」页一致：依据 profile 接口字段推导 pro / lite / free，用于昵称渐变与角标 */
+function getProfileSubscriptionTier(user) {
+  if (!user || typeof user !== 'object') return 'free';
+  const tierCode = String(user.tierCode || '').toUpperCase();
+  if (tierCode === 'PRO') return 'pro';
+  if (tierCode === 'LITE') return 'lite';
+
+  const planRaw = user.planCode || user.memberTier || user.plan_name || user.plan || user.tier || '';
+  const plan = String(planRaw || '').toUpperCase();
+  if (plan) {
+    if (plan.includes('PRO')) return 'pro';
+    if (plan.includes('LITE')) return 'lite';
+    if (plan.includes('FREE') || plan === '0' || plan === 'NONE') return 'free';
+  }
+
+  if (user.isVip === 1 || user.isVip === true) return 'pro';
+  const planLevelNumber = Number(user.planLevel);
+  if (Number.isFinite(planLevelNumber) && planLevelNumber > 0) return 'pro';
+  return 'free';
+}
+
 const EMPTY_PROFILE = {
   userId: '',
   nickname: '',
   avatar: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png',
   isVip: false,
+  isLite: false,
   planCode: '',
   planLevel: 0,
   memberTier: '',
@@ -50,23 +74,14 @@ const EMPTY_PROFILE = {
   }
 };
 
-const MOCK_COINS = [
-  { id: 1, symbol: 'BTC', icon: 'https://cryptologos.cc/logos/bitcoin-btc-logo.png', price: '102.658.7', change: '+3.58%' },
-  { id: 2, symbol: 'ETH', icon: 'https://cryptologos.cc/logos/ethereum-eth-logo.png', price: '102.658.7', change: '+3.58%' },
-  { id: 3, symbol: 'SEI', icon: 'https://cryptologos.cc/logos/sei-sei-logo.png', price: '102.658.7', change: '+3.58%' },
-  { id: 4, symbol: 'SEI', icon: 'https://cryptologos.cc/logos/sei-sei-logo.png', price: '102.658.7', change: '+3.58%' },
-  { id: 5, symbol: 'SEI', icon: 'https://cryptologos.cc/logos/sei-sei-logo.png', price: '102.658.7', change: '+3.58%' },
-  { id: 6, symbol: 'SEI', icon: 'https://cryptologos.cc/logos/sei-sei-logo.png', price: '102.658.7', change: '+3.58%' },
-  { id: 7, symbol: 'SEI', icon: 'https://cryptologos.cc/logos/sei-sei-logo.png', price: '102.658.7', change: '+3.58%' },
-  { id: 8, symbol: 'SEI', icon: 'https://cryptologos.cc/logos/sei-sei-logo.png', price: '102.658.7', change: '+3.58%' },
-];
-
 export default function UserProfile({ params }) {
   const router = useRouter();
   const pathname = usePathname();
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('watchlist');
   const [watchlistLoading, setWatchlistLoading] = useState(true);
+  const [watchlist, setWatchlist] = useState([]);
+  const [watchlistError, setWatchlistError] = useState(false);
   const [isPC, setIsPC] = useState(false);
   const [profile, setProfile] = useState(EMPTY_PROFILE);
   const [followLoading, setFollowLoading] = useState(false);
@@ -95,7 +110,7 @@ export default function UserProfile({ params }) {
           ? []
           : String(rawIdentityTag).split(/[,，]/).map((x) => x.trim()).filter(Boolean);
       const planLevelNumber = Number(user.planLevel);
-      const isVipByPlan = Number.isFinite(planLevelNumber) && planLevelNumber > 0;
+      const tier = getProfileSubscriptionTier(user);
       const followingRaw = user.isFollowing;
       const isFollowingNormalized =
         followingRaw === true ||
@@ -107,7 +122,8 @@ export default function UserProfile({ params }) {
         userId: user.userId || resolvedUserId,
         nickname: user.nickName || user.nickname || '',
         avatar: user.avatar || EMPTY_PROFILE.avatar,
-        isVip: user.isVip === 1 || user.isVip === true || isVipByPlan,
+        isVip: tier === 'pro',
+        isLite: tier === 'lite',
         planCode: user.planCode || '',
         planLevel: Number.isFinite(planLevelNumber) ? planLevelNumber : 0,
         memberTier: user.memberTier || '',
@@ -181,13 +197,57 @@ export default function UserProfile({ params }) {
     };
   }, [targetUserId, fetchUserProfileData]);
 
-  // Simulate loading for watchlist
+  // 拉取他人的自选列表
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setWatchlistLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
+    if (!targetUserId || activeTab !== 'watchlist') return;
+
+    let cancelled = false;
+    const fetchWatchlist = async () => {
+      setWatchlistLoading(true);
+      setWatchlistError(false);
+      try {
+        const res = await getSelfselectByUserId(targetUserId);
+
+        if (cancelled) return;
+
+        // 兼容多种返回结构：{ data: [...] } 或直接数组
+        if (res?.data?.isLogin === false) {
+          setWatchlist([]);
+          setWatchlistError(false);
+          setWatchlistLoading(false);
+          return;
+        }
+
+        let list = [];
+        const raw = res?.data ?? res;
+        if (Array.isArray(raw)) {
+          list = raw;
+        } else if (Array.isArray(raw?.list)) {
+          list = raw.list;
+        } else if (Array.isArray(raw?.data)) {
+          list = raw.data;
+        }
+
+        setWatchlist(list.filter(Boolean));
+        setWatchlistError(false);
+      } catch (error) {
+        console.error('获取用户自选列表失败:', error);
+        if (!cancelled) {
+          setWatchlistError(true);
+        }
+      } finally {
+        if (!cancelled) {
+          setWatchlistLoading(false);
+        }
+      }
+    };
+
+    fetchWatchlist();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [targetUserId, activeTab]);
 
   if (isPC) {
     return (
@@ -196,6 +256,12 @@ export default function UserProfile({ params }) {
       </PCLayout>
     );
   }
+
+  const nicknameClass = profile.isVip
+    ? userMeStyles.nicknameVip
+    : profile.isLite
+      ? userMeStyles.nicknameLite
+      : userMeStyles.nickname;
 
   return (
     <div className={styles.container}>
@@ -208,22 +274,24 @@ export default function UserProfile({ params }) {
         {/* User Info Section */}
         <div className={styles.userInfoSection}>
           <div className={styles.userHeader}>
-            <div className={styles.leftColumn}>
-              <div className={styles.avatarWrapper}>
-                <img src={profile.avatar} alt="avatar" className={styles.avatar} />
-                {profile.isVip && (
-                  <img src="/icons/new_user/vip.svg" alt="vip" className={styles.verifyIcon} />
-                )}
-              </div>
-              <div className={styles.tagRow}>
-                {profile.tags.map((tag, index) => (
-                  <span key={index} className={styles.tag}>{tag}</span>
-                ))}
-              </div>
+            <div className={styles.avatarWrapper}>
+              <img src={profile.avatar} alt="avatar" className={styles.avatar} />
+              {(profile.isVip || profile.isLite) && (
+                <img
+                  src={profile.isVip ? '/icons/new_user/vip.svg' : '/icons/vip/lite.svg'}
+                  alt={profile.isVip ? 'vip' : 'lite'}
+                  className={styles.verifyIcon}
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
+                />
+              )}
             </div>
             <div className={styles.userInfoRight}>
               <div className={styles.nameRow}>
-                <span className={styles.nickname}>{profile.nickname}</span>
+                <div className={`${userMeStyles.nicknameWrapper} ${styles.nicknameSlot}`}>
+                  <span className={nicknameClass}>{profile.nickname}</span>
+                </div>
                 <div
                   className={styles.followBtn}
                   onClick={handleFollowToggle}
@@ -235,6 +303,11 @@ export default function UserProfile({ params }) {
                     : t('user.stats.following', { defaultValue: '关注' })}
                 </div>
               </div>
+            </div>
+            <div className={styles.tagRow}>
+              {profile.tags.map((tag, index) => (
+                <span key={index} className={styles.tag}>{tag}</span>
+              ))}
             </div>
           </div>
 
@@ -324,33 +397,57 @@ export default function UserProfile({ params }) {
                   </div>
                 ))}
               </div>
+            ) : watchlistError ? (
+              <div className={styles.coinList} style={{ padding: '16px', textAlign: 'center', color: '#999' }}>
+                {t('common.loadFailed') || '加载自选数据失败，请稍后重试'}
+              </div>
+            ) : watchlist.length === 0 ? (
+              <div className={styles.coinList} style={{ padding: '16px', textAlign: 'center', color: '#999' }}>
+                {t('user.watchlist.empty') || '该用户暂无自选'}
+              </div>
             ) : (
-              <div className={styles.coinList}>
-                {MOCK_COINS.map((coin, index) => (
-                  <div key={index} className={styles.listItem}>
-                    <div className={`${styles.colCoin} ${styles.coinInfo}`}>
-                      <img src={coin.icon} alt={coin.symbol} className={styles.coinIcon} />
-                      <span className={styles.coinSymbol}>{coin.symbol}</span>
-                    </div>
-                    <div className={`${styles.colPrice} ${styles.price}`}>{coin.price}</div>
-                    <div className={`${styles.colChange} ${styles.changeBox}`}>
-                      <div className={`${styles.changeTag} ${styles.changeUp}`}>
-                        {coin.change}
-                      </div>
-                    </div>
-                    <div className={`${styles.colAction} ${styles.actionIcons}`}>
-                      <div className={styles.actionCell}><HeartIcon /></div>
-                      <div className={styles.actionCell}><MonitorIcon /></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+              <>
+                <div className={styles.coinList}>
+                  {watchlist.map((item, index) => {
+                    const symbol = item.symbol || item.base || '--';
+                    const icon = item.url || '/default-coin.svg';
+                    const price = item.last ?? item.currentPrice ?? item.price ?? '--';
+                    const changeRaw = item.price24h ?? item.priceChangePercent ?? item.change ?? '';
+                    const changeStr = typeof changeRaw === 'number' ? `${changeRaw.toFixed(2)}%` : String(changeRaw || '');
+                    const isUp = changeStr.startsWith('+') || (!changeStr.startsWith('-') && Number(changeRaw) >= 0);
 
-            {!watchlistLoading && (
-              <div className={styles.viewMore}>
-                {t('common.viewMore') || '查看更多'} &gt;
-              </div>
+                    return (
+                      <div key={symbol || index} className={styles.listItem}>
+                        <div className={`${styles.colCoin} ${styles.coinInfo}`}>
+                          <img
+                            src={icon}
+                            alt={symbol}
+                            className={styles.coinIcon}
+                            onError={(e) => {
+                              e.target.src = '/default-coin.svg';
+                            }}
+                          />
+                          <span className={styles.coinSymbol}>{symbol}</span>
+                        </div>
+                        <div className={`${styles.colPrice} ${styles.price}`}>{price}</div>
+                        <div className={`${styles.colChange} ${styles.changeBox}`}>
+                          <div className={`${styles.changeTag} ${isUp ? styles.changeUp : styles.changeDown}`}>
+                            {changeStr || '--'}
+                          </div>
+                        </div>
+                        <div className={`${styles.colAction} ${styles.actionIcons}`}>
+                          <div className={styles.actionCell}><HeartIcon /></div>
+                          <div className={styles.actionCell}><MonitorIcon /></div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className={styles.viewMore}>
+                  {t('common.viewMore') || '查看更多'} &gt;
+                </div>
+              </>
             )}
           </div>
         )}
