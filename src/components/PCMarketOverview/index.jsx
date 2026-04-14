@@ -66,12 +66,8 @@ const PCMarketOverview = memo(() => {
           return;
         }
 
-        const { getAppChannel } = await import('../../utils/core');
-        const channel = getAppChannel();
-        
-        const myWarnRes = await request({ 
-          url: Interface.MY_WARN,
-          data: { channel: channel }
+                const myWarnRes = await request({ 
+          url: Interface.MY_WARN
         });
         const groups = myWarnRes?.data || {};
         const symbolKeys = Object.keys(groups || {}).filter((k) => {

@@ -58,16 +58,8 @@ export default function Mywarn() {
   const init = async () => {
     try {
       // 从统一的工具函数获取当前环境
-      const { getAppChannel } = await import('../../utils/core');
-      const channel = getAppChannel();
-      
-      console.log('[MyWarn] 当前环境:', channel);
-      
-      const { data } = await request({
-        url: Interface.MY_WARN,
-        data: {
-          channel: channel
-        }
+                  const { data } = await request({
+        url: Interface.MY_WARN
       });
       
       if (isEmpty(data)) {
@@ -250,14 +242,8 @@ export default function Mywarn() {
       // 获取 token
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
       
-      // 从统一的工具函数获取当前环境
-      const { getAppChannel } = await import('../../utils/core');
-      const channel = getAppChannel();
-      
-      console.log('[MyWarn] 删除告警 - 当前环境:', channel);
-      
       const res = await request({
-        url: `${Interface.DELETE_ALARM}?symbol=${symbol}&channel=${channel}`,
+        url: `${Interface.DELETE_ALARM}?symbol=${symbol}`,
         method: 'DELETE',
         headers: {
           authentication: token
