@@ -8,7 +8,6 @@ import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 import NavBar from '@/components/NavBar';
 import { handleOptions } from '@/utils/chartUtils';
-import * as echarts from 'echarts';
 import styles from './page.module.less';
 
 export default function Positionsize() {
@@ -25,6 +24,7 @@ export default function Positionsize() {
   const chartRef1 = useRef(null);
   const chartContainerRef = useRef(null);
   const chartContainerRef1 = useRef(null);
+  const echartsRef = useRef(null);
 
   const chartData = useRef({
     cur: null,
@@ -33,20 +33,29 @@ export default function Positionsize() {
 
   useEffect(() => {
     // 初始化图表 - 强制指定高度避免默认200px
-    if (chartContainerRef.current && !chartRef.current) {
-      chartRef.current = echarts.init(chartContainerRef.current, null, {
-        width: chartContainerRef.current.offsetWidth,
-        height: 300
-      });
-      console.log('当前持仓量图表初始化成功');
-    }
-    if (chartContainerRef1.current && !chartRef1.current) {
-      chartRef1.current = echarts.init(chartContainerRef1.current, null, {
-        width: chartContainerRef1.current.offsetWidth,
-        height: 300
-      });
-      console.log('历史持仓量图表初始化成功');
-    }
+    let disposed = false;
+    const ensureEcharts = async () => {
+      if (echartsRef.current) return echartsRef.current;
+      const mod = await import('echarts');
+      echartsRef.current = mod;
+      return mod;
+    };
+
+    ensureEcharts().then((echarts) => {
+      if (disposed) return;
+      if (chartContainerRef.current && !chartRef.current) {
+        chartRef.current = echarts.init(chartContainerRef.current, null, {
+          width: chartContainerRef.current.offsetWidth,
+          height: 300,
+        });
+      }
+      if (chartContainerRef1.current && !chartRef1.current) {
+        chartRef1.current = echarts.init(chartContainerRef1.current, null, {
+          width: chartContainerRef1.current.offsetWidth,
+          height: 300,
+        });
+      }
+    });
 
     // 监听窗口大小变化
     const handleResize = () => {
@@ -63,6 +72,7 @@ export default function Positionsize() {
     initData();
 
     return () => {
+      disposed = true;
       window.removeEventListener('resize', handleResize);
       if (chartRef.current) {
         chartRef.current.dispose();
@@ -133,11 +143,13 @@ export default function Positionsize() {
       
       // 确保图表已初始化，如果没有则初始化
       if (!chartRef.current && chartContainerRef.current) {
-        chartRef.current = echarts.init(chartContainerRef.current, null, {
-          width: chartContainerRef.current.offsetWidth,
-          height: 300
-        });
-        console.log('延迟初始化当前持仓量图表');
+        const echarts = echartsRef.current;
+        if (echarts) {
+          chartRef.current = echarts.init(chartContainerRef.current, null, {
+            width: chartContainerRef.current.offsetWidth,
+            height: 300,
+          });
+        }
       }
       
       if (chartRef.current && psTmpData && psTmpData.length > 0) {
@@ -192,11 +204,13 @@ export default function Positionsize() {
       
       // 确保图表已初始化，如果没有则初始化
       if (!chartRef1.current && chartContainerRef1.current) {
-        chartRef1.current = echarts.init(chartContainerRef1.current, null, {
-          width: chartContainerRef1.current.offsetWidth,
-          height: 300
-        });
-        console.log('🔧 延迟初始化历史持仓量图表');
+        const echarts = echartsRef.current;
+        if (echarts) {
+          chartRef1.current = echarts.init(chartContainerRef1.current, null, {
+            width: chartContainerRef1.current.offsetWidth,
+            height: 300,
+          });
+        }
       }
       
       if (chartRef1.current) {

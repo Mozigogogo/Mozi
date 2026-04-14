@@ -30,7 +30,9 @@ const getAdaptiveWebSocketURL = () => {
     // 如果页面使用 HTTPS，WebSocket 也必须使用 WSS（加密）
     if (isSecure && wsUrl.startsWith('ws://')) {
       wsUrl = wsUrl.replace('ws://', 'wss://');
-      console.log('🔒 检测到 HTTPS 环境，自动切换到加密 WebSocket:', wsUrl);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🔒 检测到 HTTPS 环境，自动切换到加密 WebSocket:', wsUrl);
+      }
     }
   }
   
@@ -241,6 +243,8 @@ export const Interface = {
   ADD_WARN: '/alarm/add',
   // 我的告警
   MY_WARN: '/alarm/info',
+  // 用户告警（按 userId 查询）
+  USER_WARN_INFO: '/alarm/info/user',
   // 打开告警
   OPEN_WARN: '/alarm/on',
   // 关闭告警

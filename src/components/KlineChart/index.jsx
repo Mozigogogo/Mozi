@@ -93,6 +93,10 @@ const KlineChart = ({
   const userInteractedRef = useRef(false);
   const programmaticRangeUpdateRef = useRef(false);
   const debugTag = '[KlineChartDebug]';
+  const debugEnabled =
+    process.env.NODE_ENV !== 'production' &&
+    typeof window !== 'undefined' &&
+    window.localStorage?.getItem('klineDebug') === '1';
 
   const periodKeys = ['hour', 'day', 'week', 'month'];
 
@@ -351,11 +355,13 @@ const KlineChart = ({
         userInteractedRef.current = true;
       }
       syncNavigatorRange(range);
-      console.log(debugTag, 'visible-range-change', {
-        from: Number(range.from?.toFixed?.(2) ?? range.from),
-        to: Number(range.to?.toFixed?.(2) ?? range.to),
-        byUser: !programmaticRangeUpdateRef.current,
-      });
+      if (debugEnabled) {
+        console.log(debugTag, 'visible-range-change', {
+          from: Number(range.from?.toFixed?.(2) ?? range.from),
+          to: Number(range.to?.toFixed?.(2) ?? range.to),
+          byUser: !programmaticRangeUpdateRef.current,
+        });
+      }
     });
 
     const handleResize = () => {
@@ -458,24 +464,26 @@ const KlineChart = ({
     const shouldFollowLatest =
       isInitialOrPeriodReset ||
       (!userInteractedRef.current && (!visibleRange || visibleRange.to >= prevDataLen - 2));
-    console.log(debugTag, 'before-update', {
-      chartType,
-      activeKey,
-      prevDataLen,
-      nextDataLen: chartType === 'line' ? lineData.length : candleData.length,
-      periodChanged,
-      shouldFollowLatest,
-      userInteracted: userInteractedRef.current,
-      visibleRange: visibleRange
-        ? {
-            from: Number(visibleRange.from?.toFixed?.(2) ?? visibleRange.from),
-            to: Number(visibleRange.to?.toFixed?.(2) ?? visibleRange.to),
-          }
-        : null,
-      seriesType: mainSeriesTypeRef.current,
-      needRebuildMainSeries:
-        !seriesInstance.current || mainSeriesTypeRef.current !== chartType,
-    });
+    if (debugEnabled) {
+      console.log(debugTag, 'before-update', {
+        chartType,
+        activeKey,
+        prevDataLen,
+        nextDataLen: chartType === 'line' ? lineData.length : candleData.length,
+        periodChanged,
+        shouldFollowLatest,
+        userInteracted: userInteractedRef.current,
+        visibleRange: visibleRange
+          ? {
+              from: Number(visibleRange.from?.toFixed?.(2) ?? visibleRange.from),
+              to: Number(visibleRange.to?.toFixed?.(2) ?? visibleRange.to),
+            }
+          : null,
+        seriesType: mainSeriesTypeRef.current,
+        needRebuildMainSeries:
+          !seriesInstance.current || mainSeriesTypeRef.current !== chartType,
+      });
+    }
 
     chart.applyOptions({
       layout: {
@@ -591,7 +599,7 @@ const KlineChart = ({
       if (shouldFollowLatest) {
         const to = dataLen - 1;
         const from = isInitialOrPeriodReset ? 0 : Math.max(0, to - 35);
-        console.log(debugTag, 'apply-follow-latest', { from, to });
+        if (debugEnabled) console.log(debugTag, 'apply-follow-latest', { from, to });
         programmaticRangeUpdateRef.current = true;
         chart.timeScale().setVisibleLogicalRange({ from, to });
         syncNavigatorRange({ from, to });
@@ -604,12 +612,14 @@ const KlineChart = ({
         const span = Math.max(1, visibleRange.to - visibleRange.from);
         const clampedTo = Math.min(visibleRange.to, maxTo);
         const clampedFrom = Math.max(0, clampedTo - span);
-        console.log(debugTag, 'restore-visible-range', {
-          from: Number(clampedFrom.toFixed(2)),
-          to: Number(clampedTo.toFixed(2)),
-          span: Number(span.toFixed(2)),
-          maxTo,
-        });
+        if (debugEnabled) {
+          console.log(debugTag, 'restore-visible-range', {
+            from: Number(clampedFrom.toFixed(2)),
+            to: Number(clampedTo.toFixed(2)),
+            span: Number(span.toFixed(2)),
+            maxTo,
+          });
+        }
         programmaticRangeUpdateRef.current = true;
         chart.timeScale().setVisibleLogicalRange({ from: clampedFrom, to: clampedTo });
         syncNavigatorRange({ from: clampedFrom, to: clampedTo });
@@ -619,16 +629,18 @@ const KlineChart = ({
       }
     }
     const afterRange = chart.timeScale().getVisibleLogicalRange();
-    console.log(debugTag, 'after-update', {
-      prevDataLen,
-      dataLen,
-      afterRange: afterRange
-        ? {
-            from: Number(afterRange.from?.toFixed?.(2) ?? afterRange.from),
-            to: Number(afterRange.to?.toFixed?.(2) ?? afterRange.to),
-          }
-        : null,
-    });
+    if (debugEnabled) {
+      console.log(debugTag, 'after-update', {
+        prevDataLen,
+        dataLen,
+        afterRange: afterRange
+          ? {
+              from: Number(afterRange.from?.toFixed?.(2) ?? afterRange.from),
+              to: Number(afterRange.to?.toFixed?.(2) ?? afterRange.to),
+            }
+          : null,
+      });
+    }
     prevDataLenRef.current = dataLen;
     prevActiveKeyRef.current = activeKey;
   }, [data, chartType, isPC, activeKey]);

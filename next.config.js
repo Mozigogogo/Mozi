@@ -5,7 +5,7 @@ module.exports = withLess({
   reactStrictMode: true,
   // 仅用于线上排查：开启浏览器 sourcemap，便于从 chunk 调用栈映射回 src/ 源码。
   // 排查完成后建议关闭，避免暴露源码细节。
-  productionBrowserSourceMaps: true,
+  productionBrowserSourceMaps: false,
   images: {
     domains: ['localhost', 'moziinnovations.com'],
     unoptimized: true,

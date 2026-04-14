@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import * as echarts from 'echarts';
 import { MoziWebSocket } from '@/utils/moziWebSocket';
 import { WS_URL } from '@/utils/constants';
 import {
@@ -21,6 +20,14 @@ const LandscapeChart = () => {
   const chartRef = useRef(null);
   const wsRef = useRef(null);
   const currentChannelIdRef = useRef(null);
+  const echartsRef = useRef(null);
+  const ensureEcharts = async () => {
+    if (echartsRef.current) return echartsRef.current;
+    const mod = await import('echarts');
+    echartsRef.current = mod;
+    return mod;
+  };
+
   
   const [klineData, setKlineData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -323,22 +330,28 @@ const LandscapeChart = () => {
   useEffect(() => {
     if (!urlChartData || !chartContainerRef.current) return;
     
-    // 确保图表已初始化
-    if (!chartRef.current) {
-      chartRef.current = echarts.init(chartContainerRef.current);
-    }
-    
-    const { data, type, msg } = urlChartData;
-    console.log('📊 渲染图表 - 类型:', type);
-    const options = handleOptions(data, type, msg);
-    // 横屏优化配置
-    if (options.grid) {
-      options.grid.left = '8%';
-      options.grid.right = '5%';
-      options.grid.top = '12%';
-      options.grid.bottom = '18%';
-    }
-    chartRef.current.setOption(options, true);
+    let disposed = false;
+    ensureEcharts().then((echarts) => {
+      if (disposed) return;
+      // 确保图表已初始化
+      if (!chartRef.current) {
+        chartRef.current = echarts.init(chartContainerRef.current);
+      }
+
+      const { data, type, msg } = urlChartData;
+      const options = handleOptions(data, type, msg);
+      if (options.grid) {
+        options.grid.left = '8%';
+        options.grid.right = '5%';
+        options.grid.top = '12%';
+        options.grid.bottom = '18%';
+      }
+      chartRef.current?.setOption(options, true);
+    });
+
+    return () => {
+      disposed = true;
+    };
   }, [urlChartData]);
 
   // WebSocket 连接和数据订阅
@@ -506,7 +519,13 @@ const LandscapeChart = () => {
 
     // 初始化图表
     if (!chartRef.current) {
-      chartRef.current = echarts.init(chartContainerRef.current);
+      let disposed = false;
+      ensureEcharts().then((echarts) => {
+        if (disposed) return;
+        if (!chartRef.current) {
+          chartRef.current = echarts.init(chartContainerRef.current);
+        }
+      });
       
       // 监听窗口大小变化
       const handleResize = () => {
@@ -528,6 +547,7 @@ const LandscapeChart = () => {
       }
 
       return () => {
+        disposed = true;
         window.removeEventListener('resize', handleResize);
       };
     }

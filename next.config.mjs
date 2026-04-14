@@ -5,6 +5,7 @@ const { API_BASE_URL, PROJECT_ID } = config;
 
 const nextConfig = withLess({
   reactStrictMode: true,
+  productionBrowserSourceMaps: false,
   images: {
     domains: ['localhost', 'example.com'],
     unoptimized: true,

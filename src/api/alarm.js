@@ -41,3 +41,15 @@ export const addAlarm = (data) => {
     data,
   });
 };
+
+/**
+ * 获取指定用户的告警信息
+ * @param {string|number} userId - 用户ID
+ * @returns {Promise}
+ */
+export const getAlarmInfoByUserId = (userId) => {
+  return request({
+    url: `${Interface.USER_WARN_INFO || '/alarm/info/user'}/${encodeURIComponent(String(userId))}`,
+    method: 'GET',
+  });
+};

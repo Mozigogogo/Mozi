@@ -5,7 +5,6 @@ import { Suspense } from "react";
 import Web3Provider from "../context/Web3Provider.jsx";
 import ThemeProvider from "../context/ThemeProvider.jsx";
 import TonConnectProvider from "../context/TonConnectProvider.jsx";
-import WalletAccountSync from "@/components/WalletAccountSync";
 import I18nProvider from "@/components/I18nProvider";
 import { LogoLoading } from "@/components/Loading";
 import VConsoleLoader from "@/components/VConsole";
@@ -16,7 +15,7 @@ import TokenDebugMonitor from "@/components/TokenDebugMonitor";
 import BuildFingerprint from "@/components/BuildFingerprint";
 import ChunkErrorRecovery from "@/components/ChunkErrorRecovery";
 import GoogleAuthProvider from "../context/GoogleAuthProvider";
-import GetPointsModal from "@/components/GetPointsModal";
+import GlobalClientEffects from "@/components/GlobalClientEffects";
 
 const geistSans = Inter({
   variable: "--font-geist-sans",
@@ -75,8 +74,7 @@ export default function RootLayout({ children }) {
             <GoogleAuthProvider>
               <TonConnectProvider>
                 <Web3Provider>
-                  <WalletAccountSync />
-                  <GetPointsModal />
+                  <GlobalClientEffects />
                   <Suspense fallback={<LogoLoading visible={true} fullscreen mask image="/images/community/loadding.png" size={72} />}>
                     {children}
                   </Suspense>
