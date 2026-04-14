@@ -25,6 +25,41 @@ const formatAxisPrice = (price, compact) => {
   return `${sign}${abs.toFixed(2)}`;
 };
 
+const LineTypeIcon = ({ className }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden
+  >
+    <path
+      d="M3 16L8 12L12 14L18 7L21 9"
+      stroke="currentColor"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const KlineTypeIcon = ({ className }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden
+  >
+    <line x1="6" y1="5" x2="6" y2="19" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    <rect x="4.8" y="9" width="2.4" height="5.5" rx="0.8" fill="currentColor" />
+    <line x1="12" y1="4" x2="12" y2="20" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    <rect x="10.8" y="7.2" width="2.4" height="8.4" rx="0.8" fill="currentColor" />
+    <line x1="18" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    <rect x="16.8" y="10" width="2.4" height="4.8" rx="0.8" fill="currentColor" />
+  </svg>
+);
+
 const KlineChart = ({ 
   data, 
   activeKey = 'hour', 
@@ -605,7 +640,7 @@ const KlineChart = ({
       onClick={() => onChartTypeChange('line')}
       aria-label="line"
     >
-      <span className={styles.chartTypeText}>Line</span>
+      <LineTypeIcon className={styles.chartTypeIcon} />
     </button>
   ) : null;
 
@@ -616,7 +651,7 @@ const KlineChart = ({
       onClick={() => onChartTypeChange('kline')}
       aria-label="kline"
     >
-      <span className={styles.chartTypeText}>K</span>
+      <KlineTypeIcon className={styles.chartTypeIcon} />
     </button>
   ) : null;
 
@@ -703,13 +738,13 @@ const KlineChart = ({
                 className={`${styles.chartTypeBtn} ${chartType === 'line' ? styles.active : ''}`}
                 onClick={() => onChartTypeChange('line')}
               >
-                <span className={styles.chartTypeText}>Line</span>
+                <LineTypeIcon className={styles.chartTypeIcon} />
               </div>
               <div
                 className={`${styles.chartTypeBtn} ${chartType === 'kline' ? styles.active : ''}`}
                 onClick={() => onChartTypeChange('kline')}
               >
-                <span className={styles.chartTypeText}>K</span>
+                <KlineTypeIcon className={styles.chartTypeIcon} />
               </div>
             </div>
           )}
