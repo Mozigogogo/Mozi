@@ -23,7 +23,10 @@ export default function SortButton({ label, value, onChange, order, isActive = t
   const downFill = !isActive ? INACTIVE_ARROW : currentOrder === 'desc' ? '#029650' : '#BFBFBF';
 
   return (
-    <div className={styles.sortButton} onClick={handleClick}>
+    <div
+      className={`${styles.sortButton} ${isActive ? styles.active : ''}`}
+      onClick={handleClick}
+    >
       <span>{t(label)}</span>
       <div className={styles.arrows}>
         <svg width="7" height="4" viewBox="0 0 7 4" fill="none">
