@@ -1,12 +1,29 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { createChart } from 'lightweight-charts';
 import { TabBar } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import { Loading } from '../Loading';
 import { LandscapeIcon } from '../Icons';
 import styles from './index.module.less';
+
+const formatAxisPrice = (price, compact) => {
+  if (!Number.isFinite(price)) return '--';
+  const abs = Math.abs(price);
+  const sign = price < 0 ? '-' : '';
+
+  if (compact) {
+    if (abs >= 1_000_000) return `${sign}${(abs / 1_000_000).toFixed(2)}M`;
+    if (abs >= 1000) return `${sign}${(abs / 1000).toFixed(2)}k`;
+  }
+
+  if (abs >= 1000) {
+    return price.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  }
+
+  return `${sign}${abs.toFixed(2)}`;
+};
 
 const KlineChart = ({ 
   data, 
@@ -236,6 +253,7 @@ const KlineChart = ({
         background: { color: 'transparent' },
         textColor: '#8E8E8E',
         fontFamily: 'inherit',
+        fontSize: isPC ? 12 : 10,
       },
       grid: {
         vertLines: {
@@ -256,7 +274,7 @@ const KlineChart = ({
       leftPriceScale: {
         visible: true,
         borderVisible: false,
-        minimumWidth: 40,
+        minimumWidth: isPC ? 48 : 20,
         scaleMargins: {
           top: 0.08,
           bottom: 0.02,
@@ -286,11 +304,7 @@ const KlineChart = ({
         },
       },
       localization: {
-        priceFormatter: (price) => {
-          if (!Number.isFinite(price)) return '--';
-          if (Math.abs(price) >= 1000) return price.toLocaleString(undefined, { maximumFractionDigits: 2 });
-          return Number(price).toFixed(2);
-        },
+        priceFormatter: (price) => formatAxisPrice(price, !isPC),
       },
     });
 
@@ -429,6 +443,12 @@ const KlineChart = ({
     });
 
     chart.applyOptions({
+      layout: {
+        fontSize: isPC ? 12 : 10,
+      },
+      localization: {
+        priceFormatter: (price) => formatAxisPrice(price, !isPC),
+      },
       grid: {
         vertLines: {
           visible: chartType === 'kline',
@@ -448,7 +468,7 @@ const KlineChart = ({
         tickMarkFormatter: (time) => formatShortDateLabel(tickLabelMap.get(Number(time)), activeKey),
       },
       leftPriceScale: {
-        minimumWidth: isPC ? 48 : 36,
+        minimumWidth: isPC ? 48 : 20,
         scaleMargins: {
           top: 0.08,
           bottom: 0.02,
