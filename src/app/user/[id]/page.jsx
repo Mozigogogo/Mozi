@@ -463,7 +463,13 @@ export default function UserProfile({ params }) {
 
         {activeTab === 'monitor' && (
           <div style={{ height: 'calc(100vh - 280px)', background: '#fff' }}>
-            <MonitorContent showNavBar={false} showBackOnEmpty={false} readOnly={true} className={styles.monitorContainer} />
+            <MonitorContent
+              showNavBar={false}
+              showBackOnEmpty={false}
+              readOnly={true}
+              className={styles.monitorContainer}
+              userId={targetUserId}
+            />
           </div>
         )}
 
