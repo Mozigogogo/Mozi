@@ -40,11 +40,21 @@ const NOTICE_HIDE_KEY = 'hideHomeNotice';
 // 活动弹窗显示状态（每个UTC日期显示一次）
 const ACTIVITY_LAST_SHOWN_KEY = 'activityModalLastShownDate';
 
+function isHomeDebugEnabled() {
+  if (process.env.NODE_ENV === 'production') return false;
+  try {
+    return new URLSearchParams(window.location.search).get('homeDebug') === '1';
+  } catch {
+    return false;
+  }
+}
+
 export default function MobileHome() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const { track } = useAmplitude('Home');
   const isEN = (i18n?.language || '').startsWith('en');
+  const debugEnabled = typeof window !== 'undefined' ? isHomeDebugEnabled() : false;
   // 活动弹窗状态
   const [showActivityModal, setShowActivityModal] = useState(false);
   
@@ -61,7 +71,7 @@ export default function MobileHome() {
     colorScheme: '',
   });
 
-  if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+  if (debugEnabled) {
     window.__moziDebug = window.__moziDebug || { mobileHomeRender: 0, mobileHomeMount: 0 };
     window.__moziDebug.mobileHomeRender += 1;
     console.log('[MobileHome][debug] render', {
@@ -73,7 +83,7 @@ export default function MobileHome() {
   const localRenderCountRef = useRef(0);
   localRenderCountRef.current += 1;
 
-  if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+  if (debugEnabled) {
     window.__mobileHomeDebug = window.__mobileHomeDebug || { mountSeq: 0, renderSeq: 0 };
     window.__mobileHomeDebug.renderSeq += 1;
     console.log('[MobileHome][debug] render', {
@@ -122,7 +132,7 @@ export default function MobileHome() {
   // 每次进入页面都显示活动弹窗
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    console.log('[MobileHome][debug] activity modal effect run');
+    if (debugEnabled) console.log('[MobileHome][debug] activity modal effect run');
 
     try {
       const hasShownActivity = sessionStorage.getItem(ACTIVITY_LAST_SHOWN_KEY);
@@ -141,7 +151,7 @@ export default function MobileHome() {
   }, []);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+    if (debugEnabled) {
       window.__mobileHomeDebug = window.__mobileHomeDebug || { mountSeq: 0, renderSeq: 0 };
       window.__mobileHomeDebug.mountSeq += 1;
       const mountId = window.__mobileHomeDebug.mountSeq;
@@ -159,7 +169,13 @@ export default function MobileHome() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    console.log('[MobileHome][debug] telegram init effect run');
+    if (debugEnabled) console.log('[MobileHome][debug] telegram init effect run');
+    // 只在 Telegram 内置浏览器中才需要加载 Telegram WebApp SDK
+    // 否则会因为外网超时拖慢 window.load（你日志里就是这里导致首屏 75s 才 load）
+    const ua = String(window?.navigator?.userAgent || '');
+    const isTelegramUA = /Telegram/i.test(ua);
+    if (!isTelegramUA) return;
+
     if (window?.Telegram?.WebApp) {
       initTelegram();
       return;
@@ -167,13 +183,20 @@ export default function MobileHome() {
     const script = document.createElement('script');
     script.src = 'https://telegram.org/js/telegram-web-app.js';
     script.async = true;
+    // 避免影响首屏 load：放到 load 事件之后再插入（即使外网超时也不阻塞页面完成加载）
+    const append = () => document.head.appendChild(script);
     script.onload = () => initTelegram();
     script.onerror = () => {
       console.warn('[Telegram] SDK 加载失败：请检查网络或脚本地址');
       setTgInfo((d) => ({ ...d, available: false }));
     };
-    document.head.appendChild(script);
+    if (document.readyState === 'complete') {
+      append();
+    } else {
+      window.addEventListener('load', append, { once: true });
+    }
     return () => {
+      try { window.removeEventListener('load', append); } catch {}
       try { document.head.removeChild(script); } catch {}
     };
   }, []);
@@ -202,7 +225,7 @@ export default function MobileHome() {
   // 首页公告栏显示控制
   const [showNotice, setShowNotice] = useState(true);
   useEffect(() => {
-    console.log('[MobileHome][debug] notice effect run');
+    if (debugEnabled) console.log('[MobileHome][debug] notice effect run');
     try {
       setShowNotice(localStorage.getItem(NOTICE_HIDE_KEY) !== '1');
     } catch {}
@@ -571,7 +594,7 @@ export default function MobileHome() {
 
     // 后续轮询：静默更新数据，不再触发加载动画
     const interval = setInterval(() => {
-      console.log('[MobileHome][debug] polling tick 30s');
+      if (debugEnabled) console.log('[MobileHome][debug] polling tick 30s');
       fetchHotCoin();
       fetchHotIndustry();
       fetchHotContract();
@@ -591,17 +614,18 @@ export default function MobileHome() {
   };
 
   const handleActivityClose = useCallback(() => {
-    console.log('[MobileHome][debug] activity modal close');
+    if (debugEnabled) console.log('[MobileHome][debug] activity modal close');
     setShowActivityModal(false);
-  }, []);
+  }, [debugEnabled]);
 
   const handleActivityImagesLoaded = useCallback(() => {
-    console.log('[MobileHome][debug] activity images loaded');
+    if (debugEnabled) console.log('[MobileHome][debug] activity images loaded');
     setActivityImagesLoaded(true);
-  }, []);
+  }, [debugEnabled]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (!debugEnabled) return;
     window.__moziDebug = window.__moziDebug || { mobileHomeRender: 0, mobileHomeMount: 0 };
     window.__moziDebug.mobileHomeMount += 1;
     const mountId = window.__moziDebug.mobileHomeMount;

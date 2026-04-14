@@ -75,7 +75,11 @@ export const LogoLoading = ({
   if (!visible) return null;
   
   return (
-    <div className={`${styles.logoLoading} ${fullscreen ? styles.logoLoadingFullscreen : ''} ${mask ? styles.logoLoadingMask : ''}`}>
+    <div
+      data-perf="logo-loading"
+      data-fullscreen={fullscreen ? '1' : '0'}
+      className={`${styles.logoLoading} ${fullscreen ? styles.logoLoadingFullscreen : ''} ${mask ? styles.logoLoadingMask : ''}`}
+    >
       <div className={styles.logoLoadingContent}>
         {image && (
           <img 

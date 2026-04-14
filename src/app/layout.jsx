@@ -1,5 +1,4 @@
 import { Inter, Roboto_Mono, Chakra_Petch } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
 import { Suspense } from "react";
 import Web3Provider from "../context/Web3Provider.jsx";
@@ -16,6 +15,7 @@ import BuildFingerprint from "@/components/BuildFingerprint";
 import ChunkErrorRecovery from "@/components/ChunkErrorRecovery";
 import GoogleAuthProvider from "../context/GoogleAuthProvider";
 import GlobalClientEffects from "@/components/GlobalClientEffects";
+import PerfDebug from "@/components/PerfDebug";
 
 const geistSans = Inter({
   variable: "--font-geist-sans",
@@ -48,6 +48,7 @@ export default function RootLayout({ children }) {
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="mobile-web-app-capable" content="yes" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#1677ff" />
@@ -55,12 +56,8 @@ export default function RootLayout({ children }) {
         <link rel="preload" href="/images/community/loadding.png" as="image" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} ${chakraPetch.variable}`} suppressHydrationWarning>
-        {/* Telegram WebApp 官方脚本 - 必须最先加载 */}
-        <Script 
-          src="https://telegram.org/js/telegram-web-app.js" 
-          strategy="beforeInteractive"
-        />
         <EnvironmentDetector />
+        <PerfDebug />
         <BuildFingerprint />
         <ChunkErrorRecovery />
         <RouteChangeHandler />

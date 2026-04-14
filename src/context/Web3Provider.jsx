@@ -1,11 +1,10 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
-import { createAppKit } from '@reown/appkit/react'
-import { mainnet, arbitrum } from '@reown/appkit/networks'
 import { WagmiProvider } from 'wagmi'
+import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
+import { mainnet, arbitrum } from '@reown/appkit/networks'
 
 // 读取项目ID（在构建时注入 NEXT_PUBLIC_PROJECT_ID 更稳妥）
 const projectId = process.env.NEXT_PUBLIC_PROJECT_ID
@@ -25,52 +24,69 @@ const wagmiAdapter = new WagmiAdapter({
   projectId,
 })
 
-// 创建全局 Modal（只需创建一次）
-const modal = createAppKit({
-  adapters: [wagmiAdapter],
-  projectId,
-  networks: [mainnet, arbitrum],
-  defaultNetwork: mainnet,
-  metadata: {
-    name: 'Mozi H5',
-    description: 'Mozi H5 Web3 Connect',
-    url: 'https://moziinnovations.com',
-    icons: ['https://avatars.githubusercontent.com/u/179229932']
-  },
-  themeVariables: {
-    '--apkt-z-index': 9999,
-    '--apkt-accent': '#11B787',
-  },
-  featuredWalletIds: [],
-  enableAnalytics: false,
-})
+// 关键优化：
+// - createAppKit() 会在初始化时触发 WalletConnect / Coinbase 等外网请求
+// - 在网络不通/被墙的环境下，会把首屏 window.load 拖到几十秒（你日志里 75s）
+// 所以我们把 createAppKit 延迟到“用户真正点击连接钱包”再执行。
 
 export default function Web3Provider({ children }) {
-  // 暴露一个全局函数，供页面点击时打开钱包连接弹窗
-  if (typeof window !== 'undefined') {
-    // eslint-disable-next-line no-console
-    window.__openAppKit = () => {
+  const modalRef = useRef(null)
+
+  const ensureModal = useCallback(async () => {
+    if (modalRef.current) return modalRef.current
+    const { createAppKit } = await import('@reown/appkit/react')
+    modalRef.current = createAppKit({
+      adapters: [wagmiAdapter],
+      projectId,
+      networks: [mainnet, arbitrum],
+      defaultNetwork: mainnet,
+      metadata: {
+        name: 'Mozi H5',
+        description: 'Mozi H5 Web3 Connect',
+        // 本地开发用当前 origin，避免 metadata.url 警告 & 潜在异常
+        url: typeof window !== 'undefined' ? window.location.origin : 'https://moziinnovations.com',
+        icons: ['https://avatars.githubusercontent.com/u/179229932'],
+      },
+      themeVariables: {
+        '--apkt-z-index': 9999,
+        '--apkt-accent': '#11B787',
+      },
+      featuredWalletIds: [],
+      enableAnalytics: false,
+    })
+    return modalRef.current
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.__openAppKit = async () => {
       try {
+        const modal = await ensureModal()
         modal.open?.()
       } catch (e) {
+        // eslint-disable-next-line no-console
         console.warn('[Web3Provider] open modal failed', e)
       }
     }
-    // 打开钱包信息（已连接情况下显示账户信息视图）
-    window.__openWalletInfo = () => {
+    window.__openWalletInfo = async () => {
       try {
-        // 部分版本支持通过 view 指定账户视图
+        const modal = await ensureModal()
         modal.open?.({ view: 'Account' })
       } catch (e) {
         try {
-          // 回退：直接打开 modal，已连接时会显示账户信息
+          const modal = await ensureModal()
           modal.open?.()
         } catch (err) {
+          // eslint-disable-next-line no-console
           console.warn('[Web3Provider] open wallet info failed', err)
         }
       }
     }
-  }
+    return () => {
+      try { delete window.__openAppKit } catch {}
+      try { delete window.__openWalletInfo } catch {}
+    }
+  }, [ensureModal])
 
   // 动态调整 AppKit 弹窗尺寸（穿透 Shadow DOM）
   useEffect(() => {
