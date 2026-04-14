@@ -107,7 +107,7 @@ export function ConfirmModal({
       panelStyle={bodyStyle}
     >
       {title ? <div className={styles.header}>{title}</div> : null}
-      <div className={styles.content}>{content}</div>
+      <div className={`${styles.content} ${title ? '' : styles.contentNoHeader}`}>{content}</div>
       <div className={styles.footer}>
         <button type="button" className={`${styles.btn} ${styles.cancel}`} onClick={onCancel}>
           {cancelText}

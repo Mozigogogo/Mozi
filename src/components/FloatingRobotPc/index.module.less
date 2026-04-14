@@ -1,0 +1,63 @@
+.floatRobotBtn {
+  position: fixed; /* 脱离文档流，定位到视口角落（具体数值在 PC 媒体查询里用 PX 固定） */
+  right: 24px;
+  left: auto;
+  bottom: 100px;
+  width: 64px;
+  height: 64px;
+  cursor: pointer;
+  z-index: 10000;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.robotIcon {
+  width: 64px;
+  height: 64px;
+  display: block;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.15));
+  transition: transform 0.15s ease;
+}
+
+.floatRobotBtn:hover .robotIcon {
+  transform: scale(1.05);
+}
+
+/* 移动端：继续用 px，自适应即可 */
+@media (max-width: 1024px) {
+  .floatRobotBtn {
+    right: 16px;
+    left: auto;
+    bottom: 70px;
+    width: 50px;
+    height: 50px;
+  }
+
+  .robotIcon {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+/* PC 端：用大写 PX 固定物理尺寸，避免 px→vw 导致放大 */
+@media (min-width: 1024px) {
+  .floatRobotBtn {
+    right: 24PX;
+    left: auto;
+    bottom: 100PX;
+    width: 64PX;
+    height: 64PX;
+  }
+
+  .robotIcon {
+    width: 64PX;
+    height: 64PX;
+  }
+}
+
+

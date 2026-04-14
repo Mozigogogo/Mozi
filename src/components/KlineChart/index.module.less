@@ -41,6 +41,14 @@
 .chartTypeIcon {
   width: 16px;
   height: 16px;
+  display: block;
+  color: currentColor;
+}
+
+.chartTypeText {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .chartTypeBtn.active {
@@ -91,14 +99,60 @@
 .chartContainer {
   position: relative;
   width: 100%;
-  height: 320px;
-  padding: 0 10px;
+  height: 360px;
+  padding: 0 6px;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .chart {
   width: 100%;
-  height: 100%;
+  max-width: 360px;
+  height: calc(100% - 34px);
+}
+
+.navigatorRow {
+  width: 100%;
+  max-width: 360px;
+  height: 28px;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+}
+
+.navigatorChart {
+  width: 92%;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(238, 243, 250, 0.7);
+}
+
+.navigatorAction {
+  width: 8%;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navigatorZoomBtn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(210, 214, 220, 0.9);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.75;
+  }
 }
 
 /* 横屏按钮 */
@@ -139,9 +193,29 @@
 
   .chartContainer {
     flex: 1;
-    height: 420PX;
-    min-height: 420PX;
+    height: 400PX;
+    min-height: 400PX;
     padding: 0;
+    align-items: stretch;
+  }
+
+  .chart {
+    max-width: none;
+    height: calc(100% - 48PX);
+  }
+
+  .navigatorChart {
+    height: 38PX;
+  }
+
+  .navigatorRow {
+    max-width: none;
+    height: 38PX;
+    margin-top: 10PX;
+  }
+
+  .navigatorAction {
+    height: 38PX;
   }
 
   .landscapeBtn {
@@ -281,7 +355,8 @@
   .chartTypeIcon {
     width: 14PX;
     height: 14PX;
-    object-fit: contain;
+    display: block;
+    color: currentColor;
   }
 }
 
@@ -298,8 +373,8 @@
 /* 响应式设计 */
 @media (max-width: 768px) {
   .chartContainer {
-    height: 380px;
-    padding: 12px;
+    height: 360px;
+    padding: 12px 6px;
   }
   
   .timeButton {
@@ -315,8 +390,8 @@
 
 @media (max-width: 480px) {
   .chartContainer {
-    height: 320px;
-    padding: 8px;
+    height: 360px;
+    padding: 8px 4px;
   }
   
   .timeButton {

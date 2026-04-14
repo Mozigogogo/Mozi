@@ -11,6 +11,155 @@ import styles from './page.module.less';
 
 const DEFAULT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png';
 
+/**与「我的」页、postLogin 共用的 datainfo 本地缓存键 */
+const USER_DATA_INFO_STORAGE_KEY = 'userDataInfo';
+
+/**
+ * 解析 GET /user/datainfo 体（兼容 { code, data }、双层 data、扁平结构）
+ * @param {unknown} res
+ * @returns {object|null}
+ */
+function normalizeDatainfoPayload(res) {
+  if (res == null || typeof res !== 'object') return null;
+  let p = res.data;
+  if (p && typeof p === 'object' && p.data && typeof p.data === 'object' && !Array.isArray(p.data)) {
+    p = p.data;
+  }
+  if (p && typeof p === 'object' && !Array.isArray(p)) {
+    return p;
+  }
+  if (res.userId != null || res.totalPoints != null || res.followingCount != null) {
+    return res;
+  }
+  return null;
+}
+
+/**
+ * 判断本地 datainfo 是否属于当前登录用户
+ * @param {object|null|undefined} data
+ * @returns {boolean}
+ */
+function isUserDataInfoForCurrentUser(data) {
+  if (!data) return false;
+  if (typeof window === 'undefined') return true;
+  try {
+    const storedUserId = localStorage.getItem('userId');
+    if (!storedUserId) return true;
+    const cacheUserId = data.userId ?? data.userInfo?.userId ?? data.userInfo?.id;
+    if (cacheUserId == null || String(cacheUserId).trim() === '') return true;
+    return String(cacheUserId) === String(storedUserId);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 从 localStorage 读取并校验后的 datainfo
+ * @param {string|null|undefined} rawJson
+ * @returns {object|null}
+ */
+function parseStoredUserDataInfo(rawJson) {
+  if (!rawJson) return null;
+  try {
+    const parsed = JSON.parse(rawJson);
+    const data =
+      normalizeDatainfoPayload(parsed) ??
+      (parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null);
+    if (!data || !isUserDataInfoForCurrentUser(data)) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 依次取第一个非空字符串（避免 `alertPhone: ""` 挡住后面的 `phoneNumber`）
+ * @param {...unknown} vals
+ * @returns {string}
+ */
+function pickFirstNonEmptyString(...vals) {
+  for (const v of vals) {
+    if (v == null) continue;
+    const s = String(v).trim();
+    if (s !== '') return s;
+  }
+  return '';
+}
+
+/**
+ * 将 datainfo 映射为编辑资料表单 state
+ * @param {object} data
+ * @returns {{ avatar: string, nickName: string, identity: string, description: string, email: string, phone: string, commissionId: string }}
+ */
+function mapDatainfoToEditForm(data) {
+  const u = data?.userInfo && typeof data.userInfo === 'object' ? data.userInfo : {};
+  const nickName = String(u.nickName || data.nickName || data.nickname || '').trim();
+  const avatar = u.avatar || data.avatar || DEFAULT_AVATAR;
+  let identity = String(data.identityTag ?? u.identityTag ?? '').trim();
+  if (identity.includes(',') || identity.includes('，')) {
+    identity = identity.split(/[,，]/)[0].trim();
+  }
+  const description = String(data.introduction ?? u.introduction ?? '').trim();
+  const email = pickFirstNonEmptyString(
+    data.alertEmail,
+    u.alertEmail,
+    data.email,
+    u.email
+  );
+  const ap = pickFirstNonEmptyString(
+    data.alertPhone,
+    u.alertPhone,
+    data.phoneNumber,
+    u.phoneNumber,
+    data.phone,
+    u.phone
+  );
+  const apc = pickFirstNonEmptyString(data.alertPhoneCountryCode, u.alertPhoneCountryCode);
+  let phone = '';
+  if (ap) {
+    if (/^\+\d/.test(ap)) {
+      phone = ap;
+    } else {
+      phone = apc ? `${apc} ${ap}`.trim() : ap;
+    }
+  }
+  const commissionId = pickFirstNonEmptyString(
+    data.tronUsdtAddress,
+    u.tronUsdtAddress,
+    data.commissionId,
+    u.commissionId
+  );
+
+  return {
+    avatar: avatar || DEFAULT_AVATAR,
+    nickName: nickName || 'MOZI',
+    identity,
+    description,
+    email,
+    phone,
+    commissionId,
+  };
+}
+
+/**
+ * 用于对比缓存与接口是否需要刷新表单
+ * @param {ReturnType<typeof mapDatainfoToEditForm>} patch
+ * @param {string|null} identityOverride - URL / session 待写入的身份，优先参与签名
+ * @returns {string}
+ */
+function buildEditFormSignature(patch, identityOverride) {
+  const id = (identityOverride || patch.identity || '').trim();
+  return JSON.stringify({
+    avatar: patch.avatar,
+    nickName: patch.nickName,
+    identity: id,
+    description: patch.description,
+    email: patch.email,
+    phone: patch.phone,
+    commissionId: patch.commissionId,
+  });
+}
+
 // 模拟图标，实际项目中请替换为真实资源
 const ICONS = {
   identity: '/icons/new_user/user_tag.svg',
@@ -27,7 +176,7 @@ const PENDING_IDENTITY_KEY = 'mozi_pending_profile_identity';
 
 export default function EditProfilePage() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const fileInputRef = useRef(null);
   
   const [loading, setLoading] = useState(false);
@@ -42,6 +191,27 @@ export default function EditProfilePage() {
     phone: '',
     commissionId: ''
   });
+
+  const parsePhoneParts = (rawPhone) => {
+    const phoneText = String(rawPhone || '').trim();
+    if (!phoneText) {
+      return { alertPhone: '', alertPhoneCountryCode: '' };
+    }
+
+    // 支持 "+86 13800138000" / "+8613800138000" / "13800138000"
+    const match = phoneText.match(/^(\+\d{1,4})[\s-]*(\d+)$/);
+    if (match) {
+      return {
+        alertPhoneCountryCode: match[1],
+        alertPhone: match[2],
+      };
+    }
+
+    return {
+      alertPhoneCountryCode: '+86',
+      alertPhone: phoneText.replace(/\s+/g, ''),
+    };
+  };
 
   // 身份标签选项
   const identityOptions = [[
@@ -120,58 +290,134 @@ export default function EditProfilePage() {
         ? new URLSearchParams(window.location.search).get('identity')
         : null;
 
-    /** 来自身份页的选择（session 或 URL），需优先于缓存；合并 prev.identity 避免 React Strict Mode / 重复拉取覆盖 */
+    /** 来自身份页的选择（session 或 URL），需优先于缓存与接口 */
     const identityIncoming = identityPending || identityFromUrl;
 
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+    const applyIdentityIncomingCleanup = () => {
+      if (!identityIncoming) return;
+      clearPendingIdentityStorage();
+      stripIdentityQuery();
+    };
+
+    /**
+     * 无 userDataInfo 时用 userInfo 兜底（旧逻辑兼容）
+     * @param {object} parsed
+     * @returns {void}
+     */
+    const mergeFromParsedUserInfo = (parsed) => {
+      const pPhone = pickFirstNonEmptyString(
+        parsed.alertPhone,
+        parsed.phone,
+        parsed.phoneNumber
+      );
+      const pApc = pickFirstNonEmptyString(parsed.alertPhoneCountryCode);
+      let phoneDisplay = '';
+      if (pPhone) {
+        phoneDisplay = /^\+\d/.test(pPhone)
+          ? pPhone
+          : pApc
+            ? `${pApc} ${pPhone}`.trim()
+            : pPhone;
+      }
+      setUserInfo((prev) => ({
+        ...prev,
+        avatar: parsed.avatar || prev.avatar || DEFAULT_AVATAR,
+        nickName: parsed.nickName || parsed.nickname || prev.nickName || 'MOZI',
+        identity: identityIncoming || parsed.identityTag || parsed.identity || prev.identity || '',
+        description: parsed.introduction || parsed.description || prev.description || '',
+        email:
+          pickFirstNonEmptyString(parsed.alertEmail, parsed.email, prev.email) ||
+          '',
+        phone: phoneDisplay || prev.phone || '',
+        commissionId: pickFirstNonEmptyString(
+          parsed.tronUsdtAddress,
+          parsed.commissionId,
+          prev.commissionId
+        ),
+      }));
+    };
+
+    let cachedSig = '';
+
     try {
-      const storedUserInfo = localStorage.getItem('userInfo');
-      if (storedUserInfo) {
-        const parsed = JSON.parse(storedUserInfo);
-        // 这里只是模拟，实际应该从API获取完整信息
-        // 假设 API 返回的字段结构需要映射到当前 state
-        setUserInfo(prev => ({
-          ...prev,
-          avatar: parsed.avatar || DEFAULT_AVATAR,
-          nickName: parsed.nickName || parsed.nickname || 'MOZI',
-          // 以下字段可能需要后端支持，这里先用模拟数据或空值
-          identity: identityIncoming || parsed.identity || prev.identity || '',
-          description: parsed.description || '',
-          email: parsed.email || '',
-          phone: parsed.phone || '',
-          commissionId: parsed.commissionId || ''
-        }));
-        if (identityIncoming) {
-          clearPendingIdentityStorage();
-          stripIdentityQuery();
-        }
-      } else {
-        // 尝试从 API 获取
-        const res = await getUserDataInfo();
-        if (res.code === 200 || res.code === 0 || res.success) {
-          const data = res.data;
-          setUserInfo(prev => ({
+      // 1) userDataInfo 缓存优先回显（与 /user 一致）
+      if (token) {
+        const cachedData = parseStoredUserDataInfo(localStorage.getItem(USER_DATA_INFO_STORAGE_KEY));
+        if (cachedData) {
+          const patch = mapDatainfoToEditForm(cachedData);
+          cachedSig = buildEditFormSignature(patch, identityIncoming);
+          setUserInfo((prev) => ({
             ...prev,
-            avatar: data.avatar || DEFAULT_AVATAR,
-            nickName: data.nickName || 'MOZI',
-            identity: identityIncoming || data.identity || prev.identity || '',
-            // ...其他字段映射
+            ...patch,
+            identity: identityIncoming || patch.identity || prev.identity || '',
           }));
-          if (identityIncoming) {
-            clearPendingIdentityStorage();
-            stripIdentityQuery();
-          }
-        } else if (identityIncoming) {
-          setUserInfo(prev => ({ ...prev, identity: identityIncoming || prev.identity }));
-          clearPendingIdentityStorage();
-          stripIdentityQuery();
+          applyIdentityIncomingCleanup();
         }
       }
+
+      // 2) 尚无 datainfo 缓存时用 userInfo 兜底
+      if (token) {
+        const hasDatainfo = !!parseStoredUserDataInfo(localStorage.getItem(USER_DATA_INFO_STORAGE_KEY));
+        if (!hasDatainfo) {
+          const storedUserInfo = localStorage.getItem('userInfo');
+          if (storedUserInfo) {
+            const parsed = JSON.parse(storedUserInfo);
+            mergeFromParsedUserInfo(parsed);
+            applyIdentityIncomingCleanup();
+          }
+        }
+      }
+
+      // 3) 已登录则始终拉取最新 datainfo，与缓存比较后再更新表单与 localStorage
+      if (!token) {
+        if (identityIncoming) {
+          setUserInfo((prev) => ({ ...prev, identity: identityIncoming || prev.identity }));
+          applyIdentityIncomingCleanup();
+        }
+        return;
+      }
+
+      const res = await getUserDataInfo();
+      if (!(res.code === 200 || res.code === 0 || res.success)) {
+        if (identityIncoming) {
+          setUserInfo((prev) => ({ ...prev, identity: identityIncoming || prev.identity }));
+          applyIdentityIncomingCleanup();
+        }
+        return;
+      }
+
+      const data = normalizeDatainfoPayload(res) ?? res.data;
+      if (!data || typeof data !== 'object') {
+        if (identityIncoming) {
+          setUserInfo((prev) => ({ ...prev, identity: identityIncoming || prev.identity }));
+          applyIdentityIncomingCleanup();
+        }
+        return;
+      }
+
+      try {
+        localStorage.setItem(USER_DATA_INFO_STORAGE_KEY, JSON.stringify(data));
+      } catch (e) {
+        console.error('同步 userDataInfo 失败:', e);
+      }
+
+      const patch = mapDatainfoToEditForm(data);
+      const freshSig = buildEditFormSignature(patch, identityIncoming);
+      if (freshSig !== cachedSig) {
+        setUserInfo((prev) => ({
+          ...prev,
+          ...patch,
+          identity: identityIncoming || patch.identity || prev.identity || '',
+        }));
+      }
+      applyIdentityIncomingCleanup();
     } catch (error) {
       console.error('Fetch user info failed:', error);
       if (identityIncoming) {
-        setUserInfo(prev => ({ ...prev, identity: identityIncoming || prev.identity }));
-        clearPendingIdentityStorage();
-        stripIdentityQuery();
+        setUserInfo((prev) => ({ ...prev, identity: identityIncoming || prev.identity }));
+        applyIdentityIncomingCleanup();
       }
     }
   };
@@ -207,30 +453,69 @@ export default function EditProfilePage() {
   const handleSave = async () => {
     setLoading(true);
     try {
-      // 构建提交数据
+      const { alertPhone, alertPhoneCountryCode } = parsePhoneParts(userInfo.phone);
+      const normalizedLanguage = (i18n?.language || 'zh').startsWith('en') ? 'en' : 'zh';
+      const storedThemeColor =
+        typeof window !== 'undefined'
+          ? Number(localStorage.getItem('themeColor') || 0)
+          : 0;
+
+      // 构建提交数据（/user/info）
       const updateData = {
-        nickName: userInfo.nickName,
-        avatar: userInfo.avatar,
-        // 其他字段根据 API 要求添加
-        // identity: userInfo.identity,
-        // description: userInfo.description,
-        // ...
+        nickName: (userInfo.nickName || '').trim(),
+        avatar: userInfo.avatar || '',
+        identityTag: getIdentityLabel(userInfo.identity || ''),
+        introduction: (userInfo.description || '').trim(),
+        tronUsdtAddress: (userInfo.commissionId || '').trim(),
+        language: normalizedLanguage,
+        themeColor: Number.isFinite(storedThemeColor) ? storedThemeColor : 0,
+        alertPhone: alertPhone,
+        alertPhoneCountryCode: alertPhone ? alertPhoneCountryCode : '',
+        alertEmail: (userInfo.email || '').trim(),
       };
 
       const res = await updateUserInfo(updateData);
-      
+
       if (res.code === 200 || res.code === 0 || res.success) {
         Toast.show({
           icon: 'success',
           content: t('editProfile.saveSuccess'),
         });
-        
+
         // 更新本地存储
         const storedData = localStorage.getItem('userInfo');
         if (storedData) {
           const parsed = JSON.parse(storedData);
-          const newData = { ...parsed, ...updateData };
+          const newData = {
+            ...parsed,
+            ...updateData,
+            ...(userInfo.identity ? { identity: userInfo.identity } : {}),
+          };
           localStorage.setItem('userInfo', JSON.stringify(newData));
+        }
+
+        try {
+          const rawDataInfo = localStorage.getItem(USER_DATA_INFO_STORAGE_KEY);
+          const dataInfoObj = rawDataInfo ? JSON.parse(rawDataInfo) : {};
+          const nextDataInfo = {
+            ...dataInfoObj,
+            identityTag: updateData.identityTag,
+            introduction: updateData.introduction,
+            tronUsdtAddress: updateData.tronUsdtAddress,
+            alertEmail: updateData.alertEmail,
+            alertPhone: updateData.alertPhone,
+            alertPhoneCountryCode: updateData.alertPhoneCountryCode,
+            language: updateData.language,
+            themeColor: updateData.themeColor,
+            userInfo: {
+              ...(dataInfoObj.userInfo || {}),
+              nickName: updateData.nickName,
+              avatar: updateData.avatar,
+            },
+          };
+          localStorage.setItem(USER_DATA_INFO_STORAGE_KEY, JSON.stringify(nextDataInfo));
+        } catch (e) {
+          console.error('同步 userDataInfo 失败:', e);
         }
         
         // 完善个人信息任务上报
@@ -240,9 +525,7 @@ export default function EditProfilePage() {
           console.error('完善个人信息任务上报失败:', taskError);
         }
 
-        setTimeout(() => {
-          router.back();
-        }, 1000);
+        // 保存成功后停留在当前页，避免因历史栈回退到身份选择页
       } else {
         Toast.show({
           icon: 'fail',

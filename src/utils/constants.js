@@ -30,7 +30,9 @@ const getAdaptiveWebSocketURL = () => {
     // 如果页面使用 HTTPS，WebSocket 也必须使用 WSS（加密）
     if (isSecure && wsUrl.startsWith('ws://')) {
       wsUrl = wsUrl.replace('ws://', 'wss://');
-      console.log('🔒 检测到 HTTPS 环境，自动切换到加密 WebSocket:', wsUrl);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🔒 检测到 HTTPS 环境，自动切换到加密 WebSocket:', wsUrl);
+      }
     }
   }
   
@@ -78,6 +80,8 @@ export const Interface = {
   NEW_COIN: '/discovery/newsymbolrank',
   // 自选
   COIN_SELF: '/selfselect/all',
+  // 根据用户查询自选情况
+  SELFSELECT_USER: '/selfselect/user',
   // 添加自选
   ADD_OWN: '/selfselect/add',
   // 取消自选
@@ -155,12 +159,26 @@ export const Interface = {
   USER_INFO: '/user/info',
   // 用户详细数据（含邀请码）
   USER_DATA_INFO: '/user/datainfo',
+  // 查看他人主页
+  USER_PROFILE: '/user/profile',
   // 更新用户信息
   UPDATE_USER_INFO: '/user/info',
   // 编辑用户主题
   EDIT_USER_THEME: '/user/editUserTheme',
+  // 编辑身份标签
+  EDIT_IDENTITY_TAG: '/user/editIdentityTag',
   // 用户帖子列表
   USER_POSTS: '/user/posts',
+  // 用户关注列表（可查自己或他人）
+  USER_FOLLOW_LIST: '/user/followList',
+  // 用户粉丝列表（可查自己或他人）
+  USER_FAN_LIST: '/user/fanList',
+  // 关注用户
+  USER_FOLLOW: '/user/follow',
+  // 取消关注用户
+  USER_UNFOLLOW: '/user/unfollow',
+  // 是否已关注目标用户
+  USER_FOLLOW_STATUS: '/user/followStatus',
   // 评论
   MOZI_COMMENT: '/feedback/add',
   // 我的评论列表
@@ -225,6 +243,8 @@ export const Interface = {
   ADD_WARN: '/alarm/add',
   // 我的告警
   MY_WARN: '/alarm/info',
+  // 用户告警（按 userId 查询）
+  USER_WARN_INFO: '/alarm/info/user',
   // 打开告警
   OPEN_WARN: '/alarm/on',
   // 关闭告警

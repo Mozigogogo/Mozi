@@ -44,7 +44,11 @@ export default function HotRankPage() {
       if (type === "industry") url = Interface.SECTION_LIST;
       else if (type === "contract") url = Interface.hot_contract;
 
-      const res = await request({ url, data: { pageSize: 100, pageNo: 1 } });
+      const listParams =
+        type === 'industry'
+          ? { pageSize: 100, pageNo: 1, sortField: 'price_change_24h', sortOrder: 'desc' }
+          : { pageSize: 100, pageNo: 1 };
+      const res = await request({ url, data: listParams });
       const data = Array.isArray(res?.data) ? res.data : [];
 
       const mapped = data.map((item) => {

@@ -194,7 +194,9 @@
     "noTasks": "暂无任务",
     "addSuccess": "添加成功",
     "cancelSuccess": "取消成功",
-    "operationFailed": "操作失败"
+    "operationFailed": "操作失败",
+    "followed": "已关注",
+    "unfollowed": "已取消关注"
   },
   "exchangeRank": {
     "realTimeUpdate": "实时更新"
@@ -427,6 +429,16 @@
     "settings": "设置",
     "language": "语言设置",
     "selectLanguage": "选择语言",
+    "profilePanel": {
+      "viewChannel": "查看你的频道",
+      "telegram": "Telegram",
+      "wallet": "钱包",
+      "bind": "绑定",
+      "bound": "已绑定",
+      "logout": "退出账号",
+      "subscriptionAndMembership": "订阅内容和会员",
+      "defaultAccount": "账号账号账号号"
+    },
     "subscriptionEnabled": "订阅成功",
     "subscriptionDisabled": "取消订阅",
     "theme": "主题",
@@ -1205,7 +1217,8 @@
       "roi": "投资回报率"
     },
     "empty": {
-      "market": "暂无市场数据"
+      "market": "暂无市场数据",
+      "community": "暂无社区动态"
     },
     "market": {
       "exchange": "交易所",

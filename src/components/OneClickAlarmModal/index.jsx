@@ -404,10 +404,9 @@ export default function OneClickAlarmModal({
       return;
     }
 
+    let chatId = null;
     const { getAppChannel } = await import('../../utils/core');
     const channel = getAppChannel();
-
-    let chatId = null;
     if (channel === 'tg') {
       chatId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString();
 
@@ -462,7 +461,6 @@ export default function OneClickAlarmModal({
     try {
       const requestData = {
         symbol,
-        channel: channel,
         content: content,
       };
 

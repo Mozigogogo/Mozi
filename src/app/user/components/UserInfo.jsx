@@ -6,10 +6,19 @@ const DEFAULT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/as
 const VIP_ICON = '/icons/new_user/vip.svg';
 const LITE_ICON = '/icons/vip/lite.svg';
 
+/** datainfo.identityTag：单字符串或逗号/中文逗号分隔的多标签 */
+const parseIdentityTags = (raw) => {
+  if (raw == null) return [];
+  const s = String(raw).trim();
+  if (!s) return [];
+  return s.split(/[,，]/).map((x) => x.trim()).filter(Boolean);
+};
+
 const UserInfo = ({ userInfo, handleLogin, isTelegramEnv }) => {
   const { t } = useTranslation();
   const isVip = !!userInfo?.isVip;
   const isLite = !!userInfo?.isLite;
+  const identityTags = parseIdentityTags(userInfo?.identityTag);
   const nicknameClass = isVip
     ? styles.nicknameVip
     : isLite
@@ -44,17 +53,20 @@ const UserInfo = ({ userInfo, handleLogin, isTelegramEnv }) => {
               </div>
             </div>
 
-            {/* 第二行：标签 */}
-            <div className={styles.tagsRow}>
-              <span className={styles.userTag}>{t('user.tags.compliance')}</span>
-              <span className={styles.userTag}>{t('user.tags.creator')}</span>
-              <span className={styles.userTag}>{t('user.tags.trader')}</span>
-              <span className={styles.userTag}>{t('user.tags.community')}</span>
-            </div>
+            {/* 第二行：身份标签（来自 /user/datainfo 的 identityTag，null/空则不展示） */}
+            {identityTags.length > 0 && (
+              <div className={styles.tagsRow}>
+                {identityTags.map((tag, index) => (
+                  <span key={`${tag}-${index}`} className={styles.userTag}>
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
 
-            {/* 第三行：简介 */}
+            {/* 第三行：简介（优先使用 /user/datainfo 的 introduction） */}
             <div className={styles.bioRow}>
-              {userInfo.bio || t('user.defaultBio')}
+              {userInfo.introduction || ''}
             </div>
           </div>
         ) : (

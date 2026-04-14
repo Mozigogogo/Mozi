@@ -12,9 +12,10 @@ const HighlightArea = ({ title = '', value, variant = 'default' }) => {
   const colorClass = isNegative ? styles.red : styles.green;
   
   // 相关板块特殊样式
-  const variantClass = variant === 'section' 
+  const variantClass = variant === 'section'
     ? (isNegative ? styles.sectionRed : styles.sectionGreen)
     : colorClass;
+  const isPcMarket = variant === 'pcMarket';
 
   if (title) {
     return (
@@ -26,7 +27,7 @@ const HighlightArea = ({ title = '', value, variant = 'default' }) => {
   }
   
   return (
-    <div className={`${styles.areaBoxSimple} ${colorClass}`}>
+    <div className={`${styles.areaBoxSimple} ${colorClass} ${isPcMarket ? styles.pcMarketBadge : ''}`}>
       {title && <div>{title}</div>}
       <div>{formattedValue}</div>
     </div>

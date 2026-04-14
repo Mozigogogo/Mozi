@@ -28,7 +28,8 @@ export const getHotIndustries = () => {
   return request({
     url: Interface.SECTION_LIST,
     data: {
-      change24hOrder: 'desc',
+      sortField: 'price_change_24h',
+      sortOrder: 'desc',
     },
   });
 };

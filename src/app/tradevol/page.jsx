@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { Picker, Toast } from 'antd-mobile';
 import { Select } from 'antd';
-import * as echarts from 'echarts';
 import Layout from '@/components/Layout';
 import NavBar from '@/components/NavBar';
 import { request } from '@/utils/request';
@@ -77,10 +76,18 @@ const TradeVol = () => {
   const chartRef1 = useRef(null);
   const chartContainerRef = useRef(null);
   const chartContainerRef1 = useRef(null);
+  const echartsRef = useRef(null);
   const chartData = useRef({
     cur: null,
     his: null
   });
+
+  const ensureEcharts = async () => {
+    if (echartsRef.current) return echartsRef.current;
+    const mod = await import('echarts');
+    echartsRef.current = mod;
+    return mod;
+  };
 
   // 初始化当前成交额图表
   const initChart = () => {
@@ -92,21 +99,26 @@ const TradeVol = () => {
     }
 
     // 强制指定容器高度，避免 ECharts 使用默认的 200px
-    const chart = echarts.init(chartContainerRef.current, null, {
-      width: 'auto',
-      height: 'auto'
+    let disposed = false;
+    ensureEcharts().then((echarts) => {
+      if (disposed) return;
+      const chart = echarts.init(chartContainerRef.current, null, {
+        width: 'auto',
+        height: 'auto',
+      });
+      chartRef.current = chart;
     });
-    chartRef.current = chart;
     
     // 监听窗口大小变化
     const handleResize = () => {
-      chart.resize();
+      chartRef.current?.resize();
     };
     window.addEventListener('resize', handleResize);
     
     return () => {
+      disposed = true;
       window.removeEventListener('resize', handleResize);
-      chart.dispose();
+      chartRef.current?.dispose();
       chartRef.current = null;
     };
   };
@@ -120,26 +132,27 @@ const TradeVol = () => {
     }
     
     // 强制指定容器高度，避免 ECharts 使用默认的 200px
-    const chart = echarts.init(chartContainerRef1.current, null, {
-      width: 'auto',
-      height: 'auto'
-    });
+    let disposed = false;
+    ensureEcharts().then((echarts) => {
+      if (disposed) return;
+      const chart = echarts.init(chartContainerRef1.current, null, {
+        width: 'auto',
+        height: 'auto',
+      });
 
-    // const chart = echarts.init(chartContainerRef1.current, null, {
-    //   width: chartContainerRef1.current.offsetWidth,
-    //   height: 300 // 与 CSS 中设置的高度一致
-    // });
-    chartRef1.current = chart;
+      chartRef1.current = chart;
+    });
     
     // 监听窗口大小变化
     const handleResize = () => {
-      chart.resize();
+      chartRef1.current?.resize();
     };
     window.addEventListener('resize', handleResize);
     
     return () => {
+      disposed = true;
       window.removeEventListener('resize', handleResize);
-      chart.dispose();
+      chartRef1.current?.dispose();
       chartRef1.current = null;
     };
   };

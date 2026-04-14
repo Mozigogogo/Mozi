@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Tabs, Toast, Button, TabBar } from 'antd-mobile';
 import { motion, AnimatePresence } from 'framer-motion';
 import PCLayout from '@/components/PCLayout';
 import PCCoinDetail from '@/components/PCCoinDetail';
+import PCRightTopMarquee from '@/components/PCRightTopMarquee';
 import Layout from '../../components/Layout';
 import NavBar from '../../components/NavBar';
 import MoziCard from '../../components/MoziCard';
@@ -18,6 +19,8 @@ import OneClickAlarmModal from '@/components/OneClickAlarmModal';
 import { Loading } from '@/components/Loading';
 import { CaretUpIcon, CaretDownIcon, BellIcon } from '@/components/Icons';
 import FloatingRobot from '@/components/FloatingRobot';
+import FloatingRobotPc from '@/components/FloatingRobotPc';
+import AiChatModalPc from '@/components/AiChatModalPc';
 // import { SkeletonPage } from '../../components/Skeleton';
 // import { detailPageSkeletonConfig } from '../../components/Skeleton/configs/detailPageConfig';
 import { request } from '@/utils/request';
@@ -88,12 +91,25 @@ export default function DetailPage() {
   const [coinInfoRight, setCoinInfoRight] = useState([]);
   const [oneClickAlarmOpen, setOneClickAlarmOpen] = useState(false);
   const [oneClickAlarmMode, setOneClickAlarmMode] = useState('oneClick');
+  const [rightHotTicker, setRightHotTicker] = useState([]);
+  const [rightHotTickerLoading, setRightHotTickerLoading] = useState(true);
+  const [rightCommunityPosts, setRightCommunityPosts] = useState([]);
+  const [rightCommunityLoading, setRightCommunityLoading] = useState(false);
+  const [rightCommunityPage, setRightCommunityPage] = useState(1);
+  const [rightCommunityHasMore, setRightCommunityHasMore] = useState(true);
+  const [rightCommunityLoadingMore, setRightCommunityLoadingMore] = useState(false);
+  const rightCommunityMountedRef = useRef(false);
+  const [pcAiChatOpen, setPcAiChatOpen] = useState(false);
+  const [pcAiAutoSend, setPcAiAutoSend] = useState({ text: '', token: '' });
+  /** PC：社区卡片总高度 = 左侧栏（ROI + 市场 + 间距）高度，底边与市场列对齐（ResizeObserver） */
+  const [pcCommunityCardHeightPx, setPcCommunityCardHeightPx] = useState(null);
   const needLoop = useRef(true);
   const chartRef = useRef(null);
   const marketRef = useRef(null);
   const roiRef = useRef(null);
   const mobileRootRef = useRef(null);
   const pcContentLayoutRef = useRef(null);
+  const pcRightPanelLeftRef = useRef(null);
   const pcOrderBookSectionRef = useRef(null);
   const wsRef = useRef(null);
   const currentKlineChannelRef = useRef(null); // 当前K线订阅频道ID
@@ -768,7 +784,7 @@ export default function DetailPage() {
             </div>
           ),
           last: item.last,
-          price24h: <HighlightArea value={item.price24h} />,
+          price24h: <HighlightArea value={item.price24h} variant={isPC ? 'pcMarket' : 'default'} />,
           vol: item.vol,
           usd: item.usd
         }));
@@ -783,6 +799,216 @@ export default function DetailPage() {
       setMarketLoading(false);
     }
   };
+
+  // 右侧顶部走马灯：使用成交额榜（/discovery/traderank?intervals=0）
+  useEffect(() => {
+    let alive = true;
+    const toPercent = (v) => {
+      if (v === null || v === undefined || v === '') return '--';
+      const n = Number(String(v).replace('%', '').trim());
+      return Number.isFinite(n) ? `${Math.abs(n).toFixed(2)}%` : String(v);
+    };
+    const loadHotCoins = async () => {
+      if (alive) setRightHotTickerLoading(true);
+      try {
+        const res = await request({ url: Interface.coin_trade, data: { intervals: 0 } });
+        const listRaw = res?.data;
+        const list = Array.isArray(listRaw)
+          ? listRaw
+          : Array.isArray(listRaw?.data)
+            ? listRaw.data
+          : Array.isArray(listRaw?.list)
+            ? listRaw.list
+            : Array.isArray(listRaw?.items)
+              ? listRaw.items
+              : [];
+        const mapped = list
+          .map((item) => {
+            const symbol = String(
+              item?.symbol || item?.coin || item?.base || item?.name || ''
+            ).toUpperCase();
+            const priceRaw =
+              item?.currentPrice ?? item?.last ?? item?.price ?? item?.close ?? '--';
+            const changeRaw =
+              item?.price_24h ??
+              item?.price24h ??
+              item?.priceRange ??
+              item?.priceChangePercentage24h ??
+              item?.priceChangePercentage_24h ??
+              item?.changePercent ??
+              item?.change ??
+              '--';
+            const price =
+              typeof priceRaw === 'number'
+                ? `$${priceRaw.toLocaleString()}`
+                : String(priceRaw).startsWith('$')
+                  ? String(priceRaw)
+                  : `$${priceRaw}`;
+            const changeNum = Number(String(changeRaw).replace('%', '').trim());
+            return {
+              symbol,
+              price,
+              changePercent: toPercent(changeRaw),
+              isUp: Number.isFinite(changeNum) ? changeNum >= 0 : null,
+            };
+          })
+          .filter((x) => x.symbol)
+          .slice(0, 8);
+        if (!alive) return;
+        setRightHotTicker(mapped);
+      } catch (_) {
+        if (!alive) return;
+        setRightHotTicker([]);
+      } finally {
+        if (!alive) return;
+        setRightHotTickerLoading(false);
+      }
+    };
+    loadHotCoins();
+    const timer = setInterval(loadHotCoins, 30000);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, []);
+
+  // PC 右侧社区：按当前路由 symbol 拉取 /posts?page=1&size=10&symbol=xxx
+  useEffect(() => {
+    let alive = true;
+    rightCommunityMountedRef.current = true;
+    // 切换币种/进入页面时重置分页
+    setRightCommunityPosts([]);
+    setRightCommunityPage(1);
+    setRightCommunityHasMore(true);
+    const PAGE_SIZE = 10;
+
+    const normalizeList = (res) => {
+      const listRaw = res?.data;
+      const list = Array.isArray(listRaw)
+        ? listRaw
+        : Array.isArray(listRaw?.data)
+          ? listRaw.data
+        : Array.isArray(listRaw?.list)
+          ? listRaw.list
+          : Array.isArray(listRaw?.items)
+            ? listRaw.items
+            : [];
+      return Array.isArray(list) ? list : [];
+    };
+
+    const loadCommunityPosts = async (pageToLoad = 1) => {
+      if (!isPC) return;
+      // 首屏 loading 与加载更多分开
+      if (pageToLoad === 1) setRightCommunityLoading(true);
+      else setRightCommunityLoadingMore(true);
+      try {
+        const res = await request({
+          url: Interface.POSTS_API,
+          data: {
+            page: pageToLoad,
+            size: PAGE_SIZE,
+            symbol: String(symbol || 'BTC').toUpperCase(),
+          },
+        });
+        if (!alive) return;
+        const list = normalizeList(res);
+        setRightCommunityPosts((prev) => (pageToLoad === 1 ? list : [...prev, ...list]));
+        setRightCommunityPage(pageToLoad);
+        // 返回数量不足一页则认为没有更多
+        setRightCommunityHasMore(list.length >= PAGE_SIZE);
+      } catch (_) {
+        if (!alive) return;
+        if (pageToLoad === 1) setRightCommunityPosts([]);
+        setRightCommunityHasMore(false);
+      } finally {
+        if (!alive) return;
+        if (pageToLoad === 1) setRightCommunityLoading(false);
+        else setRightCommunityLoadingMore(false);
+      }
+    };
+
+    loadCommunityPosts(1);
+
+    return () => {
+      alive = false;
+      rightCommunityMountedRef.current = false;
+    };
+  }, [symbol, isPC]);
+
+  const handlePcCommunityScroll = useCallback(
+    (e) => {
+      if (!rightCommunityHasMore) return;
+      if (rightCommunityLoading || rightCommunityLoadingMore) return;
+      const el = e?.currentTarget;
+      if (!el) return;
+      const threshold = 80; // 距底部 80px 触发
+      const reachedBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - threshold;
+      if (!reachedBottom) return;
+
+      const PAGE_SIZE = 10;
+      const nextPage = rightCommunityPage + 1;
+      setRightCommunityLoadingMore(true);
+      request({
+        url: Interface.POSTS_API,
+        data: {
+          page: nextPage,
+          size: PAGE_SIZE,
+          symbol: String(symbol || 'BTC').toUpperCase(),
+        },
+      })
+        .then((res) => {
+          if (!rightCommunityMountedRef.current) return;
+          const listRaw = res?.data;
+          const list = Array.isArray(listRaw)
+            ? listRaw
+            : Array.isArray(listRaw?.data)
+              ? listRaw.data
+            : Array.isArray(listRaw?.list)
+              ? listRaw.list
+              : Array.isArray(listRaw?.items)
+                ? listRaw.items
+                : [];
+          const items = Array.isArray(list) ? list : [];
+          setRightCommunityPosts((prev) => [...prev, ...items]);
+          setRightCommunityPage(nextPage);
+          setRightCommunityHasMore(items.length >= PAGE_SIZE);
+        })
+        .catch(() => {
+          if (!rightCommunityMountedRef.current) return;
+          setRightCommunityHasMore(false);
+        })
+        .finally(() => {
+          if (!rightCommunityMountedRef.current) return;
+          setRightCommunityLoadingMore(false);
+        });
+    },
+    [
+      rightCommunityHasMore,
+      rightCommunityLoading,
+      rightCommunityLoadingMore,
+      rightCommunityPage,
+      symbol,
+    ]
+  );
+
+  useLayoutEffect(() => {
+    if (!isPC) {
+      setPcCommunityCardHeightPx(null);
+      return;
+    }
+    const el = pcRightPanelLeftRef.current;
+    if (!el) return;
+
+    const update = () => {
+      const h = el.getBoundingClientRect().height;
+      if (h > 0) setPcCommunityCardHeightPx(Math.round(h));
+    };
+
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [isPC, marketLoading, roiLoading, symbol, Array.isArray(marketData) ? marketData.length : 0]);
 
   // 获取投资回报率（ROI）数据
   const fetchROIData = async () => {
@@ -914,7 +1140,13 @@ export default function DetailPage() {
   // 交易雷达（占位行为，可后续接入具体功能）
   const handleTradingRadar = () => {
     if (!symbol) return;
-    console.log('[TradingRadar] click for symbol:', symbol);
+    const normalizedSymbol = String(symbol || '').toUpperCase();
+    const autoText = `帮我分析一下目前的${normalizedSymbol}行情趋势，以及是否有大单异动。`;
+    setPcAiAutoSend({
+      text: autoText,
+      token: `${Date.now()}-${normalizedSymbol}`,
+    });
+    setPcAiChatOpen(true);
   };
   // 分享到Telegram
   const shareToTelegram = () => {
@@ -1479,7 +1711,7 @@ ${coinInfo.name || symbol} (${symbol})
             </div>
           ),
           last: item.last,
-          price24h: <HighlightArea value={item.price24h} />,
+          price24h: <HighlightArea value={item.price24h} variant={isPC ? 'pcMarket' : 'default'} />,
           vol: item.vol,
           usd: item.usd
         }));
@@ -1837,11 +2069,25 @@ ${coinInfo.name || symbol} (${symbol})
     );
   };
 
+  const roiTitleEl =
+    isPC ? (
+      <div className={styles.pcRoiTitleRow}>
+        <span className={styles.pcRoiTitleDot} aria-hidden />
+        <span className={styles.pcRoiTitleText}>{t('detail.tabs.roi')}</span>
+      </div>
+    ) : null;
+
   // 渲染投资回报率（ROI）
   const renderROI = () => {
     if (roiLoading) {
       return (
-        <MoziCard title={t('detail.tabs.roi')}>
+        <MoziCard
+          title={isPC ? undefined : t('detail.tabs.roi')}
+          customTitle={isPC ? roiTitleEl : undefined}
+          isPC={isPC}
+          className={isPC ? `${styles.pcRightPanelCard} ${styles.pcRightRoiCard}` : ''}
+          marginBottom={isPC ? '0' : undefined}
+        >
           <div className={`${styles.box} ${styles.headerLoading}`} style={{ display: 'flex' }}>
             <Loading tip={t('common.loading')} size={24} />
           </div>
@@ -1863,11 +2109,22 @@ ${coinInfo.name || symbol} (${symbol})
     ];
 
     return (
-      <MoziCard title={t('detail.tabs.roi')}>
+      <MoziCard
+        title={isPC ? undefined : t('detail.tabs.roi')}
+        customTitle={isPC ? roiTitleEl : undefined}
+        isPC={isPC}
+        className={isPC ? `${styles.pcRightPanelCard} ${styles.pcRightRoiCard}` : ''}
+        marginBottom={isPC ? '0' : undefined}
+      >
         <div className={styles.roiBox}>
           <div className={styles.roiGrid}>
             {cards.map((item, idx) => (
-              <div key={idx} className={`${styles.roiCard} ${isNegative(item.value) ? styles.negative : styles.positive}`}>
+              <div
+                key={idx}
+                className={`${styles.roiCard} ${
+                  isNegative(item.value) ? styles.negative : styles.positive
+                }`}
+              >
                 <div className={styles.roiValue}>{item.value}</div>
                 <div className={styles.roiLabel}>{item.label}</div>
               </div>
@@ -1917,26 +2174,73 @@ ${coinInfo.name || symbol} (${symbol})
   
   // 渲染市场数据
   const renderMarket = () => {
+    const marketTitlePc =
+      isPC ? (
+        <div className={styles.pcMarketTitleRow}>
+          <div className={styles.pcMarketTitleLeft}>
+            <span className={styles.pcRoiTitleDot} aria-hidden />
+            <span className={styles.pcRoiTitleText}>{t('detail.tabs.market')}</span>
+          </div>
+
+          {Array.isArray(marketData) && marketData.length > 0 ? (
+            <span className={styles.pcRoiTitleNumRight}>
+              ({marketData.length})
+            </span>
+          ) : null}
+        </div>
+      ) : null;
+
     if (marketLoading) {
-      return <Loading tip={t('common.loading')} />;
+      return (
+        <MoziCard
+          title={isPC ? undefined : t('detail.tabs.market')}
+          customTitle={marketTitlePc}
+          isPC={isPC}
+          className={isPC ? `${styles.pcRightPanelCard} ${styles.pcRightMarketCard}` : ''}
+          marginBottom={isPC ? '0' : undefined}
+        >
+          <div className={`${styles.box} ${styles.headerLoading}`} style={{ display: 'flex' }}>
+            <Loading tip={t('common.loading')} size={24} />
+          </div>
+        </MoziCard>
+      );
     }
-    
+
     if (!marketData || marketData.length === 0) {
       return (
-        <MoziCard title={t('detail.tabs.market')} sumNum={0}>
+        <MoziCard
+          title={isPC ? undefined : t('detail.tabs.market')}
+          customTitle={marketTitlePc}
+          sumNum={0}
+          isPC={isPC}
+          className={isPC ? `${styles.pcRightPanelCard} ${styles.pcRightMarketCard}` : ''}
+          marginBottom={isPC ? '0' : undefined}
+        >
           <div className={styles.emptyInfo}>{t('detail.empty.market')}</div>
         </MoziCard>
       );
     }
-    
+
     return (
-      <MoziCard title={t('detail.tabs.market')} sumNum={marketData.length}>
+      <MoziCard
+        title={isPC ? undefined : t('detail.tabs.market')}
+        customTitle={marketTitlePc}
+        sumNum={marketData.length}
+        isPC={isPC}
+        className={isPC ? `${styles.pcRightPanelCard} ${styles.pcRightMarketCard}` : ''}
+        marginBottom={isPC ? '0' : undefined}
+      >
         <MoziGrid
           length={5}
           colName={[t('detail.market.exchange'), t('detail.market.lastPrice'), t('detail.market.change24h'), t('detail.market.volume24h'), t('detail.market.amount24h')]}
           gridContent={marketData}
           gridTitleBgColor="transparent"
-          columnWidths={['25%', '22%', '20%', '20%', '22%']}
+          columnWidths={isPC ? ['28%', '16%', '16%', '20%', '20%'] : ['25%', '22%', '20%', '20%', '22%']}
+          isPC={isPC}
+          titleFontSize={isPC ? '12PX' : null}
+          contentFontSize={isPC ? '13PX' : null}
+          rowPadding={isPC ? '12PX 0' : null}
+          className={isPC ? styles.pcRightMarketGrid : ''}
         />
       </MoziCard>
     );
@@ -1948,6 +2252,55 @@ ${coinInfo.name || symbol} (${symbol})
     } catch (_) {}
     router.back();
   };
+
+  /** PC 行情页弹幕条：发帖到社区（与 PC 社区币种讨论一致） */
+  const handleBarrageSend = useCallback(
+    async (content) => {
+      const trimmed = (content || '').trim();
+      if (!trimmed) return;
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      if (!token) {
+        Toast.show({ content: t('post.messages.pleaseLogin') });
+        throw new Error('NO_TOKEN');
+      }
+      const sym = String(symbol || '').toUpperCase() || 'BTC';
+      Toast.show({ icon: 'loading', content: t('common.loading'), duration: 0 });
+      try {
+        const response = await request({
+          url: Interface.POST_NEW,
+          method: 'POST',
+          data: {
+            title: `关于 ${sym} 的讨论`,
+            content: trimmed,
+            category: '不懂就问',
+            tags: [sym],
+          },
+        });
+        Toast.clear();
+        if (response?.code === 0) {
+          try {
+            await completeTask('POST');
+          } catch (taskError) {
+            console.error('发帖任务上报失败:', taskError);
+          }
+          Toast.show({ icon: 'success', content: t('post.messages.publishSuccess') });
+        } else {
+          Toast.show({
+            icon: 'fail',
+            content: response?.message || response?.msg || t('post.messages.publishFailed'),
+          });
+          throw new Error('POST_FAILED');
+        }
+      } catch (e) {
+        Toast.clear();
+        if (e?.message === 'NO_TOKEN' || e?.message === 'POST_FAILED') throw e;
+        console.error('Barrage send failed:', e);
+        Toast.show({ icon: 'fail', content: t('post.messages.publishFailed') });
+        throw e;
+      }
+    },
+    [symbol, t]
+  );
 
   const oneClickAlarmModalEl = (
     <OneClickAlarmModal
@@ -1961,6 +2314,14 @@ ${coinInfo.name || symbol} (${symbol})
       onSkip={() => setOneClickAlarmOpen(false)}
     />
   );
+
+  const rightTopMarqueeItems = rightHotTicker;
+
+  const communitySymbol = String(symbol || 'BTC').toUpperCase();
+  const likeNoActiveIcon = `https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/like-no-active.png`;
+  const shareIcon = '/icons/new_home/share.svg';
+
+  const communityFeedItems = rightCommunityPosts;
 
   if (isPC) {
     return (
@@ -1982,6 +2343,7 @@ ${coinInfo.name || symbol} (${symbol})
               onAlert={jump2Alert}
               onShare={shareToTelegram}
               onTradingRadar={handleTradingRadar}
+              onBarrageSend={handleBarrageSend}
               statColumns={[
                 // 左侧列：24H 最高价 / 24H 最低价
                 coinInfoLeft.slice(0, 2).map((x) => ({ label: x.name, value: x.value })),
@@ -2011,9 +2373,181 @@ ${coinInfo.name || symbol} (${symbol})
               )}
             </PCCoinDetail>
           </aside>
-          <section className={styles.pcContentColRight} />
+          <section className={styles.pcContentColRight}>
+            <div className={styles.pcRightTopMarqueeWrap}>
+              <PCRightTopMarquee items={rightTopMarqueeItems} loading={rightHotTickerLoading} />
+            </div>
+            <div className={styles.pcRightPanelContainer}>
+              <div className={styles.pcRightPanelGrid}>
+                <div ref={pcRightPanelLeftRef} className={styles.pcRightPanelLeft}>
+                  {renderROI()}
+                  {renderMarket()}
+                </div>
+                <div className={styles.pcRightPanelRight}>
+                  <div
+                    className={`${styles.pcRightPanelCard} ${styles.pcCommunityFeedCard}`}
+                    style={
+                      isPC && pcCommunityCardHeightPx != null && pcCommunityCardHeightPx > 0
+                        ? {
+                            height: `${pcCommunityCardHeightPx}px`,
+                            minHeight: `${pcCommunityCardHeightPx}px`,
+                          }
+                        : undefined
+                    }
+                  >
+                    <div className={styles.pcCommunityHeader}>
+                      <div className={styles.pcCommunityTitleLeft}>
+                        <span className={styles.pcRoiTitleDot} aria-hidden />
+                        <span>{t('detail.actions.community')}</span>
+                      </div>
+                      <button
+                        type="button"
+                        className={styles.pcCommunityMore}
+                        onClick={jump2Community}
+                      >
+                        查看更多 {'→'}
+                      </button>
+                    </div>
+                    <div className={styles.pcCommunityList} onScroll={handlePcCommunityScroll}>
+                      {rightCommunityLoading ? (
+                        <div className={`${styles.pcCommunityEmpty} ${styles.pcCommunityEmptyLoading}`}>
+                          <Loading tip={t('common.loading')} size={20} />
+                        </div>
+                      ) : communityFeedItems.length === 0 ? (
+                        <div className={styles.pcCommunityEmpty}>
+                          {t('detail.empty.community', { defaultValue: '暂无社区动态' })}
+                        </div>
+                      ) : (
+                        <>
+                          {communityFeedItems.map((item, idx) => {
+                        const text = String(item?.content || item?.text || item?.title || '');
+                        const firstTag = Array.isArray(item?.tags) && item.tags.length > 0
+                          ? item.tags[0]?.name
+                          : '';
+                        const fromSymbol = String(
+                          item?.symbol || item?.coin || firstTag || communitySymbol
+                        ).toUpperCase();
+                        const topic = item?.category || '行情分析';
+                        const content = String(item?.content || item?.title || text);
+                        const userName =
+                          item?.nickName || item?.nickname || item?.userName || item?.username || '墨子交易员';
+                        const likes = Number(item?.likeCnt ?? item?.likeCount ?? item?.likes ?? 0);
+                        const createdAt = item?.createdAt || item?.createTime || item?.created_at || '';
+                        const avatarUrl = item?.avatar || '';
+                        const timeText = createdAt
+                          ? (() => {
+                              const d = new Date(createdAt);
+                              if (Number.isNaN(d.getTime())) return '12:54:11';
+                              const hh = String(d.getHours()).padStart(2, '0');
+                              const mm = String(d.getMinutes()).padStart(2, '0');
+                              const ss = String(d.getSeconds()).padStart(2, '0');
+                              return `${hh}:${mm}:${ss}`;
+                            })()
+                          : '12:54:11';
+
+                        return (
+                          <div key={idx} className={styles.pcCommunityItem}>
+                            {avatarUrl ? (
+                              <img src={avatarUrl} alt={userName} className={styles.pcCommunityAvatar} />
+                            ) : (
+                              <div className={styles.pcCommunityAvatar} />
+                            )}
+                            <div className={styles.pcCommunityBody}>
+                              <div className={styles.pcCommunityTop}>
+                                <div className={styles.pcCommunityHeaderRow}>
+                                  <div className={styles.pcCommunityUserBlock}>
+                                    <div className={styles.pcCommunityUserRow}>
+                                      <span className={styles.pcCommunityUserName}>
+                                        {userName}
+                                      </span>
+                                      <span className={styles.pcCommunityBadge}>发现好币</span>
+                                    </div>
+                                    <div className={styles.pcCommunitySubTitle}>
+                                      @{fromSymbol}-{topic}
+                                    </div>
+                                  </div>
+                                  <span className={styles.pcCommunityEllipsis} aria-hidden>
+                                    ...
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className={styles.pcCommunityContent}>
+                                <div className={styles.pcCommunityMainText}>{content}</div>
+
+                                <div className={styles.pcCommunityTagRow}>
+                                  <button
+                                    type="button"
+                                    className={`${styles.pcCommunityTag} ${styles.pcCommunityTagOrange}`}
+                                  >
+                                    #行情论
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className={`${styles.pcCommunityTag} ${styles.pcCommunityTagBlue}`}
+                                  >
+                                    @{fromSymbol}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className={`${styles.pcCommunityTag} ${styles.pcCommunityTagUsdt}`}
+                                  >
+                                    @USDT
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div className={styles.pcCommunityBottom}>
+                                <div className={styles.pcCommunityFooterLeft}>
+                                  <div className={styles.pcCommunityAction}>
+                                    <img
+                                      src={likeNoActiveIcon}
+                                      className={styles.pcCommunityActionIcon}
+                                      alt="like"
+                                    />
+                                    <span>{Number.isFinite(likes) ? likes : 0}</span>
+                                  </div>
+                                  <div className={styles.pcCommunityAction}>
+                                    <img
+                                      src={shareIcon}
+                                      className={`${styles.pcCommunityActionIcon} ${styles.pcCommunityShareIcon}`}
+                                      alt="share"
+                                    />
+                                    <span>分享</span>
+                                  </div>
+                                </div>
+                                <div className={styles.pcCommunityTime}>{timeText}</div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                          {rightCommunityLoadingMore ? (
+                            <div className={`${styles.pcCommunityEmpty} ${styles.pcCommunityEmptyLoading}`}>
+                              <Loading tip={t('common.loading')} size={20} />
+                            </div>
+                          ) : null}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
         {oneClickAlarmModalEl}
+        <FloatingRobotPc
+          message={t('detail.robotMessage', { symbol: symbol.toUpperCase() })}
+          onClick={() => setPcAiChatOpen(true)}
+        />
+        <AiChatModalPc
+          open={pcAiChatOpen}
+          onClose={() => setPcAiChatOpen(false)}
+          autoSendText={pcAiAutoSend.text}
+          autoSendToken={pcAiAutoSend.token}
+          symbol={symbol}
+        />
       </PCLayout>
     );
   }

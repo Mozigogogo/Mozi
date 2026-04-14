@@ -38,21 +38,18 @@
 }
 
 .userHeader {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 7px;
-}
-
-.leftColumn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-right: 12px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 12px;
+  row-gap: 7px;
 }
 
 .avatarWrapper {
   position: relative;
-  margin-bottom: 7px; /* 增加头像和标签之间的间距 */
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
 }
 
 .avatar {
@@ -71,11 +68,13 @@
 }
 
 .userInfoRight {
-  flex: 1;
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding-top: 4px;
 }
 
 .nameRow {
@@ -84,18 +83,19 @@
   justify-content: flex-start;
   margin-bottom: 4px;
   gap: 11px;
+  min-width: 0;
 }
 
-.nickname {
-  font-size: 20px;
-  font-weight: 600;
-  color: #333;
-  background: linear-gradient(180deg, #F8D5A9 4.06%, #E5B372 33.13%, #DE9E4C 54.37%, #663409 90%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+/* 与「我的」页共用 userMeStyles.nickname*；不占满整行，按钮紧跟昵称；过长时在此容器内省略 */
+.nicknameSlot {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: calc(100% - 11px - 96px); /* gap + 关注按钮大致宽度，避免顶开按钮 */
+  overflow: hidden;
 }
 
 .followBtn {
+  flex-shrink: 0;
   background: rgba(17, 183, 135, 1);
   border-radius: 14px;
   padding: 4px 12px;
@@ -109,6 +109,9 @@
 }
 
 .tagRow {
+  grid-column: 1;
+  grid-row: 2;
+  justify-self: center;
   display: flex;
 }
 
@@ -140,6 +143,14 @@
   align-items: center;
 }
 
+.statItemClickable {
+  cursor: pointer;
+}
+
+.statItemClickable:active {
+  opacity: 0.75;
+}
+
 .statValue {
   font-size: 16px;
   font-weight: 400;
@@ -156,7 +167,7 @@
 .contentBody {
   background: #fff;
   border-radius: 20px 20px 0 0;
-  margin-top: -20px;
+  margin-top: -10px;
   flex: 1;
 }
 

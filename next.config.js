@@ -5,7 +5,7 @@ module.exports = withLess({
   reactStrictMode: true,
   // 仅用于线上排查：开启浏览器 sourcemap，便于从 chunk 调用栈映射回 src/ 源码。
   // 排查完成后建议关闭，避免暴露源码细节。
-  productionBrowserSourceMaps: true,
+  productionBrowserSourceMaps: false,
   images: {
     domains: ['localhost', 'moziinnovations.com'],
     unoptimized: true,
@@ -46,18 +46,53 @@ module.exports = withLess({
     ];
   },
   async headers() {
-    return [
-      // Telegram WebView（以及部分移动端 WebView）对静态资源缓存较激进。
-      // 这里对 Next 的构建产物资源禁用长缓存，确保线上更新能尽快生效。
+    const dev = process.env.NODE_ENV === 'development';
+
+    const noStoreDocument = [
       {
-        source: '/_next/static/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=0, must-revalidate',
-          },
-        ],
+        key: 'Cache-Control',
+        value: 'private, no-cache, no-store, must-revalidate',
       },
+      { key: 'Pragma', value: 'no-cache' },
+      { key: 'Expires', value: '0' },
+    ];
+
+    const cacheHeaders = dev
+      ? [
+          // 本地 dev：禁用整个 /_next（含 webpack-hmr、chunks），避免浏览器沿用旧脚本
+          {
+            source: '/_next/:path*',
+            headers: [
+              {
+                key: 'Cache-Control',
+                value: 'no-store, must-revalidate',
+              },
+            ],
+          },
+          {
+            source: '/((?!_next/|api/|favicon.ico|manifest.json).*)',
+            headers: noStoreDocument,
+          },
+        ]
+      : [
+          // 生产：带 hash 的静态资源可长期缓存；HTML/RSC 路由禁止强缓存
+          {
+            source: '/_next/static/:path*',
+            headers: [
+              {
+                key: 'Cache-Control',
+                value: 'public, max-age=31536000, immutable',
+              },
+            ],
+          },
+          {
+            source: '/((?!_next/static|_next/image|api/|favicon.ico|manifest.json).*)',
+            headers: noStoreDocument,
+          },
+        ];
+
+    return [
+      ...cacheHeaders,
       {
         source: '/tg/:path*',
         headers: [

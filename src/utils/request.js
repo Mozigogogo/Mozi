@@ -13,6 +13,17 @@ const instance = axios.create({
 // 请求拦截器
 instance.interceptors.request.use(
   (config) => {
+    // perfDebug: record start time per request (only when enabled)
+    try {
+      if (typeof window !== 'undefined') {
+        const enabled = new URLSearchParams(window.location.search).get('perfDebug') === '1';
+        if (enabled) {
+          config.metadata = config.metadata || {};
+          config.metadata.startTime = performance.now();
+        }
+      }
+    } catch (_) {}
+
     // 从localStorage获取token
     const token = localStorage.getItem('token');
     
@@ -115,6 +126,26 @@ const getJwtExpMs = (token) => {
 instance.interceptors.response.use(
   (response) => {
     const data = response.data;
+
+    // perfDebug: log slow API requests
+    try {
+      const enabled =
+        typeof window !== 'undefined' &&
+        new URLSearchParams(window.location.search).get('perfDebug') === '1';
+      if (enabled) {
+        const start = response.config?.metadata?.startTime;
+        const dur = typeof start === 'number' ? performance.now() - start : null;
+        if (typeof dur === 'number' && dur > 1200) {
+          // eslint-disable-next-line no-console
+          console.warn('[perfDebug][api slow]', {
+            url: response.config?.url,
+            method: response.config?.method,
+            ms: Math.round(dur),
+            status: response.status,
+          });
+        }
+      }
+    } catch (_) {}
     
     // 全局任务完成监听：只要是任务完成接口且返回成功，就触发积分弹窗
     if (data && data.code === 0 && data.data && data.data.success) {
@@ -311,6 +342,23 @@ instance.interceptors.response.use(
     return data;
   },
   (error) => {
+    // perfDebug: log slow/failed API requests
+    try {
+      const enabled =
+        typeof window !== 'undefined' &&
+        new URLSearchParams(window.location.search).get('perfDebug') === '1';
+      if (enabled) {
+        const start = error?.config?.metadata?.startTime;
+        const dur = typeof start === 'number' ? performance.now() - start : null;
+        // eslint-disable-next-line no-console
+        console.warn('[perfDebug][api error]', {
+          url: error?.config?.url,
+          method: error?.config?.method,
+          ms: typeof dur === 'number' ? Math.round(dur) : null,
+          message: error?.message,
+        });
+      }
+    } catch (_) {}
     return Promise.reject(error);
   }
 );

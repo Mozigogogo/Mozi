@@ -171,12 +171,12 @@
 /* 与侧栏自选涨跌色一致 */
 .changeUp,
 .pcWatchlistChangeUp {
-  color: #00bc7d;
+  color: rgba(0, 188, 125, 1);
 }
 
 .changeDown,
 .pcWatchlistChangeDown {
-  color: #fb2c36;
+  color: rgba(255, 32, 86, 1);
 }
 
 .statGrid {
@@ -238,6 +238,11 @@
 
 /* 桌面：与上方行情区留白对齐；大写 PX 避免 px→vw 放大内边距 */
 @media (min-width: 1024px) {
+  .mainCard {
+    /* PC 端：去掉卡片阴影，避免底部出现“阴影边框残影” */
+    box-shadow: none;
+  }
+
   .mainCardBody {
     /* desktop 下保留少量左右 padding：有呼吸感且让图表更满宽 */
     padding: 16PX 12PX 20PX;
@@ -294,7 +299,7 @@
   height: 36px;
   padding: 0 22px;
   border: none;
-  border-radius: 18px;
+  border-radius: 10px;
   background: #00bc7d;
   color: #fff;
   font-size: 14px;

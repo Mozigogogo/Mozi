@@ -1,12 +1,64 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import * as echarts from 'echarts';
+import { useEffect, useRef } from 'react';
+import { createChart } from 'lightweight-charts';
 import { TabBar } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import { Loading } from '../Loading';
 import { LandscapeIcon } from '../Icons';
 import styles from './index.module.less';
+
+const formatAxisPrice = (price, compact) => {
+  if (!Number.isFinite(price)) return '--';
+  const abs = Math.abs(price);
+  const sign = price < 0 ? '-' : '';
+
+  if (compact) {
+    if (abs >= 1_000_000) return `${sign}${(abs / 1_000_000).toFixed(2)}M`;
+    if (abs >= 1000) return `${sign}${(abs / 1000).toFixed(2)}k`;
+  }
+
+  if (abs >= 1000) {
+    return price.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  }
+
+  return `${sign}${abs.toFixed(2)}`;
+};
+
+const LineTypeIcon = ({ className }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden
+  >
+    <path
+      d="M3 16L8 12L12 14L18 7L21 9"
+      stroke="currentColor"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const KlineTypeIcon = ({ className }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden
+  >
+    <line x1="6" y1="5" x2="6" y2="19" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    <rect x="4.8" y="9" width="2.4" height="5.5" rx="0.8" fill="currentColor" />
+    <line x1="12" y1="4" x2="12" y2="20" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    <rect x="10.8" y="7.2" width="2.4" height="8.4" rx="0.8" fill="currentColor" />
+    <line x1="18" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    <rect x="16.8" y="10" width="2.4" height="4.8" rx="0.8" fill="currentColor" />
+  </svg>
+);
 
 const KlineChart = ({ 
   data, 
@@ -24,376 +76,574 @@ const KlineChart = ({
 }) => {
   const { t } = useTranslation();
   const chartRef = useRef(null);
+  const navigatorRef = useRef(null);
   const chartInstance = useRef(null);
+  const navigatorChartInstance = useRef(null);
+  const seriesInstance = useRef(null);
+  const navigatorMacdSeries = useRef({
+    histogram: null,
+    dif: null,
+    dea: null,
+  });
+  const mainSeriesTypeRef = useRef(null);
+  const maSeriesInstances = useRef([]);
+  const attributionObservers = useRef([]);
+  const prevDataLenRef = useRef(0);
+  const prevActiveKeyRef = useRef(activeKey);
+  const userInteractedRef = useRef(false);
+  const programmaticRangeUpdateRef = useRef(false);
+  const debugTag = '[KlineChartDebug]';
+  const debugEnabled =
+    process.env.NODE_ENV !== 'production' &&
+    typeof window !== 'undefined' &&
+    window.localStorage?.getItem('klineDebug') === '1';
 
   const periodKeys = ['hour', 'day', 'week', 'month'];
 
-  // 处理k线数据格式
-  const processKlineData = (rawData) => {
-    if (!rawData || !Array.isArray(rawData)) {
-      return { categoryData: [], values: [] };
+  // 将 categoryData 标签尽量解析为时间戳（秒）
+  const parseLabelToTimestamp = (label, index, prevTs) => {
+    if (label == null || label === '') {
+      return prevTs ? prevTs + 60 : Math.floor(Date.now() / 1000) + index * 60;
+    }
+    const text = String(label).trim();
+
+    // 兼容 YYYY/MM/DD HH:mm、YYYY-MM-DD HH:mm、ISO
+    const normalized = text.replace(/\//g, '-');
+    const parsed = Date.parse(normalized);
+    if (Number.isFinite(parsed)) {
+      const ts = Math.floor(parsed / 1000);
+      return prevTs && ts <= prevTs ? prevTs + 60 : ts;
     }
 
-    const categoryData = [];
-    const values = [];
-    
-    rawData.forEach((item) => {
-      categoryData.push(item.dt || item.time);
-      values.push([item.Open || item.open, item.Close || item.close, item.Low || item.low, item.High || item.high]);
-    });
-    
-    return { categoryData, values };
+    // 兜底：保证严格递增
+    return prevTs ? prevTs + 60 : Math.floor(Date.now() / 1000) + index * 60;
   };
 
-  // 计算MA线数据
-  const calculateMA = (dayCount, data) => {
+  const buildSeriesData = (inputData) => {
+    if (!inputData || !Array.isArray(inputData.values)) {
+      return { candleData: [], lineData: [], tickLabelMap: new Map() };
+    }
+
+    const values = inputData.values;
+    const labels = Array.isArray(inputData.categoryData) ? inputData.categoryData : [];
+    const candleData = [];
+    const lineData = [];
+    const tickLabelMap = new Map();
+
+    let prevTs = 0;
+    for (let i = 0; i < values.length; i += 1) {
+      const item = values[i];
+      const open = Number(item?.[0] ?? item?.open ?? item?.Open ?? 0);
+      const close = Number(item?.[1] ?? item?.close ?? item?.Close ?? 0);
+      const low = Number(item?.[2] ?? item?.low ?? item?.Low ?? 0);
+      const high = Number(item?.[3] ?? item?.high ?? item?.High ?? 0);
+
+      const ts = parseLabelToTimestamp(labels[i], i, prevTs);
+      prevTs = ts;
+
+      candleData.push({
+        time: ts,
+        open,
+        high,
+        low,
+        close,
+      });
+      lineData.push({
+        time: ts,
+        value: close,
+      });
+
+      if (labels[i]) {
+        tickLabelMap.set(ts, String(labels[i]));
+      }
+    }
+
+    return { candleData, lineData, tickLabelMap };
+  };
+
+  const calcMA = (points, period) => {
     const result = [];
-    for (let i = 0, len = data.values.length; i < len; i++) {
-      if (i < dayCount) {
-        result.push('-');
-        continue;
-      }
+    for (let i = 0; i < points.length; i += 1) {
+      if (i < period - 1) continue;
       let sum = 0;
-      for (let j = 0; j < dayCount; j++) {
-        sum += +data.values[i - j][1];
+      for (let j = i - period + 1; j <= i; j += 1) {
+        sum += Number(points[j]?.close ?? 0);
       }
-      result.push(sum / dayCount);
+      result.push({
+        time: points[i].time,
+        value: sum / period,
+      });
     }
     return result;
   };
 
-  // 将K线数据转换为折线数据
-  const buildLineDataset = (klineData) => {
-    if (!klineData || !klineData.values) {
-      return { categoryData: [], lineData: [] };
+  const calcEMA = (values, period) => {
+    const k = 2 / (period + 1);
+    const result = [];
+    let prevEma = values.length > 0 ? values[0] : 0;
+
+    for (let i = 0; i < values.length; i += 1) {
+      const current = values[i];
+      if (i === 0) {
+        prevEma = current;
+      } else {
+        prevEma = current * k + prevEma * (1 - k);
+      }
+      result.push(prevEma);
     }
-    // 如果已经是折线格式，直接返回
-    if (Array.isArray(klineData.lineData)) {
-      return klineData;
-    }
-    const categoryData = klineData.categoryData || [];
-    const values = klineData.values || [];
-    // 取收盘价作为折线数据 (values格式为 [open, close, low, high])
-    const lineData = values.map((v) => {
-      return Array.isArray(v) ? v[1] : (v?.Close ?? v?.close ?? 0);
-    });
-    return { categoryData, lineData };
+    return result;
   };
 
-  // 获取图表配置
-  const getChartOptions = (processedData, type = 'kline', isDesktop = false) => {
-    // 国际市场习惯：绿涨红跌
-    const upColor = '#11B787';  // 阳线颜色（绿色-涨）
-    const upBorderColor = '#11B787'; // 阳线边框颜色
-    const downColor = '#FA5F5F'; // 阴线颜色（红色-跌）
-    const downBorderColor = '#FA5F5F'; // 阴线边框颜色
-
-    const dataLength = processedData.values?.length || processedData.lineData?.length || 0;
-    
-    // 根据数据量动态调整显示范围
-    let startPercent = 0;
-    let endPercent = 100;
-    
-    if (dataLength > 50) {
-      // 数据多时，默认显示最后30%的数据
-      startPercent = 70;
-      endPercent = 100;
-    } else if (dataLength > 20) {
-      // 中等数据量，显示最后50%
-      startPercent = 50;
-      endPercent = 100;
-    }
-    // 数据少时（<20条），显示全部
-
-    // 折线图配置
-    if (type === 'line') {
-      const lineDs = buildLineDataset(processedData);
-      const dataZoom = isDesktop
-        ? []
-        : [
-            {
-              type: 'inside',
-              start: 50,
-              end: 100,
-            },
-            {
-              show: true,
-              type: 'slider',
-              start: 70,
-              end: 100,
-              top: '87%',
-              height: 20,
-              left: '15%',
-              right: 40,
-            },
-          ];
-
-      const lineGrid = isDesktop
-        ? { top: '5%', left: '10%', right: '5%', bottom: '15%' }
-        : { top: '5%', left: '15%', right: '5%', bottom: '25%' };
-
-      return {
-        animation: false,
-        animationDurationUpdate: 0,
-        backgroundColor: 'transparent',
-        tooltip: {
-          trigger: 'axis',
-          axisPointer: { type: 'line' }
-        },
-        grid: lineGrid,
-        xAxis: {
-          type: 'category',
-          data: lineDs.categoryData,
-          boundaryGap: false,
-          // PC 端隐藏 x 轴底部下划线
-          axisLine: isDesktop ? { show: false } : { lineStyle: { color: '#D8D8D8' } },
-          splitLine: { show: false },
-          axisTick: { show: false },
-          min: 'dataMin',
-          max: 'dataMax',
-          axisLabel: { color: '#8E8E8E' }
-        },
-        yAxis: {
-          type: 'value',
-          scale: true,
-          splitLine: { show: false },
-          splitArea: { show: false },
-          axisLabel: { color: '#8E8E8E' }
-        },
-        dataZoom,
-        series: [
-          {
-            name: '价格',
-            type: 'line',
-            data: lineDs.lineData,
-            smooth: false,
-            symbol: 'none',
-            lineStyle: {
-              color: '#11B787',
-              width: 2
-            },
-            areaStyle: {
-              color: {
-                type: 'linear',
-                x: 0,
-                y: 0,
-                x2: 0,
-                y2: 1,
-                colorStops: [
-                  { offset: 0, color: 'rgba(17, 183, 135, 0.35)' },
-                  { offset: 1, color: 'rgba(17, 183, 135, 0.0)' }
-                ]
-              }
-            }
-          }
-        ]
-      };
+  const calcMACD = (points, shortPeriod = 12, longPeriod = 26, signalPeriod = 9) => {
+    if (!Array.isArray(points) || points.length === 0) {
+      return { difData: [], deaData: [], histogramData: [] };
     }
 
-    // K线图配置
-    const dataZoom = isDesktop
-      ? []
-      : [
-          {
-            type: 'inside',
-            start: startPercent,
-            end: endPercent,
-            minValueSpan: 5, // 最少显示5个数据点
-          },
-          {
-            show: true,
-            type: 'slider',
-            start: startPercent,
-            end: endPercent,
-            bottom: '5%',
-            height: 20,
-            left: '7%',
-            right: 40,
-            backgroundColor: '#f5f5f5',
-            fillerColor: 'rgba(2, 192, 118, 0.2)',
-            borderColor: '#ddd',
-            minValueSpan: 5, // 最少显示5个数据点
-          },
-        ];
+    const closes = points.map((p) => Number(p?.close ?? 0));
+    const emaShort = calcEMA(closes, shortPeriod);
+    const emaLong = calcEMA(closes, longPeriod);
+    const dif = emaShort.map((v, i) => v - emaLong[i]);
+    const dea = calcEMA(dif, signalPeriod);
 
-    return {
-      backgroundColor: 'transparent',
-      legend: {
-        show: false,
-        type: 'scroll',
-        data: ['K线', 'MA5', 'MA10', 'MA20', 'MA30'],
-        selected: {
-          'K线': true,
-          'MA5': false,
-          'MA10': false,
-          'MA20': false,
-          'MA30': false,
-        },
-        textStyle: {
-          color: '#666'
-        }
-      },
-      tooltip: {
-        trigger: 'axis',
-        axisPointer: {
-          type: 'cross'
-        },
-        backgroundColor: 'rgba(245, 245, 245, 0.95)',
-        borderColor: '#ddd',
-        textStyle: {
-          color: '#333'
-        }
-      },
-      animation: false,
-      grid: {
-        left: '3%',
-        right: '4%',
-        bottom: isDesktop ? '10%' : '15%',
-        top: isDesktop ? '7%' : '10%',
-        containLabel: true,
-        backgroundColor: 'transparent',
-        borderColor: 'transparent'
-      },
-      xAxis: {
-        type: 'category',
-        data: processedData.categoryData,
-        boundaryGap: true,  // 改为 true，让每根K线两侧有间距
-        // PC 端隐藏 x 轴底部下划线
-        axisLine: isDesktop ? { show: false } : { onZero: false, lineStyle: { color: '#ddd' } },
-        splitLine: { show: false },
-        axisLabel: {
-          color: '#666',
-          rotate: 0,
-          interval: 'auto'
-        }
-      },
-      yAxis: {
-        scale: true,
-        splitArea: {
-          show: false
-        },
-        splitLine: {
-          show: true,  // K线图显示横向网格线
-          lineStyle: {
-            color: '#e6e6e6',
-            type: 'solid',
-            opacity: 0.5
-          }
-        },
-        axisLine: {
-          lineStyle: { color: '#ddd' }
-        },
-        axisLabel: {
-          color: '#666'
-        }
-      },
-      dataZoom,
-      series: [
-        {
-          name: 'K线',
-          type: 'candlestick',
-          data: processedData.values,
-          barWidth: '60%',  // K线宽度占60%
-          itemStyle: {
-            color: upColor,
-            color0: downColor,
-            borderColor: upBorderColor,
-            borderColor0: downBorderColor
-          }
-        },
-        {
-          name: 'MA5',
-          type: 'line',
-          data: calculateMA(5, processedData),
-          smooth: true,
-          lineStyle: {
-            opacity: 0.5,
-            width: 1
-          },
-          symbol: 'none'
-        },
-        {
-          name: 'MA10',
-          type: 'line',
-          data: calculateMA(10, processedData),
-          smooth: true,
-          lineStyle: {
-            opacity: 0.5,
-            width: 1
-          },
-          symbol: 'none'
-        },
-        {
-          name: 'MA20',
-          type: 'line',
-          data: calculateMA(20, processedData),
-          smooth: true,
-          lineStyle: {
-            opacity: 0.5,
-            width: 1
-          },
-          symbol: 'none'
-        },
-        {
-          name: 'MA30',
-          type: 'line',
-          data: calculateMA(30, processedData),
-          smooth: true,
-          lineStyle: {
-            opacity: 0.5,
-            width: 1
-          },
-          symbol: 'none'
-        }
-      ]
-    };
+    const difData = [];
+    const deaData = [];
+    const histogramData = [];
+
+    for (let i = 0; i < points.length; i += 1) {
+      const time = points[i].time;
+      const difVal = dif[i];
+      const deaVal = dea[i];
+      const macdVal = (difVal - deaVal) * 2;
+
+      difData.push({ time, value: difVal });
+      deaData.push({ time, value: deaVal });
+      histogramData.push({
+        time,
+        value: macdVal,
+        color: macdVal >= 0 ? 'rgba(17, 183, 135, 0.75)' : 'rgba(250, 95, 95, 0.75)',
+      });
+    }
+
+    return { difData, deaData, histogramData };
+  };
+
+  const formatShortDateLabel = (label, periodKey) => {
+    if (!label) return '';
+    const text = String(label).trim();
+    const [datePart, timePart = ''] = text.split(' ');
+    if (!datePart) return text;
+
+    const sep = datePart.includes('/') ? '/' : (datePart.includes('-') ? '-' : '');
+    if (!sep) return text;
+
+    const parts = datePart.split(sep);
+    if (parts.length < 3) return text;
+
+    // 1H 周期展示月/日 + 小时，不展示年份
+    if (periodKey === 'hour') {
+      const hhmmMatch = timePart.match(/^(\d{1,2}):(\d{2})/);
+      const hhmm = hhmmMatch ? `${hhmmMatch[1].padStart(2, '0')}:${hhmmMatch[2]}` : '';
+      return hhmm ? `${parts[1]}/${parts[2]} ${hhmm}` : `${parts[1]}/${parts[2]}`;
+    }
+
+    if (!/^\d{4}$/.test(parts[0])) return text;
+
+    return `${parts[0].slice(-2)}/${parts[1]}/${parts[2]}`;
+  };
+
+  const clearMainSeries = (chart) => {
+    if (seriesInstance.current) {
+      chart.removeSeries(seriesInstance.current);
+      seriesInstance.current = null;
+    }
+    if (maSeriesInstances.current.length > 0) {
+      maSeriesInstances.current.forEach((s) => chart.removeSeries(s));
+      maSeriesInstances.current = [];
+    }
+    mainSeriesTypeRef.current = null;
+  };
+
+  const syncNavigatorRange = (range) => {
+    if (!range || !navigatorChartInstance.current) return;
+    navigatorChartInstance.current.timeScale().setVisibleLogicalRange({
+      from: range.from,
+      to: range.to,
+    });
+  };
+
+  const removeAttribution = (container) => {
+    if (!container) return;
+    const selectors = [
+      'a[href*="tradingview"]',
+      'a[title*="TradingView"]',
+      'a[aria-label*="TradingView"]',
+    ];
+    container.querySelectorAll(selectors.join(',')).forEach((el) => el.remove());
   };
 
   // 初始化图表
   useEffect(() => {
-    if (chartRef.current && !chartInstance.current) {
-      chartInstance.current = echarts.init(chartRef.current, null, {
-        renderer: 'canvas',
-        useDirtyRect: false
-      });
-      
-      // 监听窗口大小变化
-      const handleResize = () => {
-        if (chartInstance.current) {
-          chartInstance.current.resize();
-        }
-      };
-      
-      window.addEventListener('resize', handleResize);
+    if (!chartRef.current || chartInstance.current) return;
 
-      const parentEl = chartRef.current?.parentElement;
-      const ro =
-        parentEl &&
-        new ResizeObserver(() => {
-          chartInstance.current?.resize();
+    const chart = createChart(chartRef.current, {
+      autoSize: true,
+      attributionLogo: false,
+      layout: {
+        background: { color: 'transparent' },
+        textColor: '#8E8E8E',
+        fontFamily: 'inherit',
+        fontSize: isPC ? 12 : 10,
+      },
+      grid: {
+        vertLines: {
+          visible: true,
+          color: 'rgba(17, 183, 135, 0.06)',
+          style: 2,
+        },
+        horzLines: {
+          visible: true,
+          color: 'rgba(17, 183, 135, 0.08)',
+          style: 2,
+        },
+      },
+      rightPriceScale: {
+        visible: false,
+        borderVisible: false,
+      },
+      leftPriceScale: {
+        visible: true,
+        borderVisible: false,
+        minimumWidth: isPC ? 48 : 20,
+        scaleMargins: {
+          top: 0.08,
+          bottom: 0.02,
+        },
+      },
+      timeScale: {
+        borderVisible: false,
+        timeVisible: true,
+        fixLeftEdge: true,
+        fixRightEdge: true,
+        shiftVisibleRangeOnNewBar: false,
+        minimumHeight: 14,
+        barSpacing: isPC ? 7 : 5.2,
+        minBarSpacing: isPC ? 4 : 2.8,
+      },
+      crosshair: {
+        mode: 1,
+        vertLine: {
+          color: 'rgba(142, 142, 142, 0.4)',
+          width: 1,
+          style: 3,
+        },
+        horzLine: {
+          color: 'rgba(142, 142, 142, 0.4)',
+          width: 1,
+          style: 3,
+        },
+      },
+      localization: {
+        priceFormatter: (price) => formatAxisPrice(price, !isPC),
+      },
+    });
+
+    chartInstance.current = chart;
+    removeAttribution(chartRef.current);
+    chart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+      if (!range) return;
+      if (!programmaticRangeUpdateRef.current) {
+        userInteractedRef.current = true;
+      }
+      syncNavigatorRange(range);
+      if (debugEnabled) {
+        console.log(debugTag, 'visible-range-change', {
+          from: Number(range.from?.toFixed?.(2) ?? range.from),
+          to: Number(range.to?.toFixed?.(2) ?? range.to),
+          byUser: !programmaticRangeUpdateRef.current,
         });
-      if (parentEl && ro) ro.observe(parentEl);
+      }
+    });
 
-      return () => {
-        window.removeEventListener('resize', handleResize);
-        ro?.disconnect();
-        if (chartInstance.current) {
-          chartInstance.current.dispose();
-          chartInstance.current = null;
-        }
-      };
+    const handleResize = () => {
+      chartInstance.current?.resize();
+    };
+    window.addEventListener('resize', handleResize);
+
+    if (navigatorRef.current && !navigatorChartInstance.current) {
+      const navChart = createChart(navigatorRef.current, {
+        autoSize: true,
+        attributionLogo: false,
+        layout: {
+          background: { color: 'transparent' },
+          textColor: '#A0A0A0',
+          fontFamily: 'inherit',
+        },
+        grid: { vertLines: { visible: false }, horzLines: { visible: false } },
+        rightPriceScale: { visible: false, borderVisible: false },
+        leftPriceScale: { visible: false, borderVisible: false },
+        timeScale: { visible: false, borderVisible: false },
+        crosshair: {
+          vertLine: { visible: false },
+          horzLine: { visible: false },
+        },
+        handleScroll: false,
+        handleScale: false,
+      });
+      navigatorChartInstance.current = navChart;
+      navigatorMacdSeries.current.histogram = navChart.addHistogramSeries({
+        priceLineVisible: false,
+        lastValueVisible: false,
+      });
+      navigatorMacdSeries.current.dif = navChart.addLineSeries({
+        color: '#F5A623',
+        lineWidth: 1,
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: false,
+      });
+      navigatorMacdSeries.current.dea = navChart.addLineSeries({
+        color: '#4A90E2',
+        lineWidth: 1,
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: false,
+      });
+      removeAttribution(navigatorRef.current);
     }
+
+    const watchAttribution = (container) => {
+      if (!container) return;
+      const observer = new MutationObserver(() => removeAttribution(container));
+      observer.observe(container, { childList: true, subtree: true });
+      attributionObservers.current.push(observer);
+    };
+    watchAttribution(chartRef.current);
+    watchAttribution(navigatorRef.current);
+
+    const parentEl = chartRef.current?.parentElement;
+    const ro =
+      parentEl &&
+      new ResizeObserver(() => {
+        chartInstance.current?.resize();
+      });
+    if (parentEl && ro) ro.observe(parentEl);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      ro?.disconnect();
+      if (chartInstance.current) {
+        chartInstance.current.remove();
+        chartInstance.current = null;
+      }
+      if (navigatorChartInstance.current) {
+        navigatorChartInstance.current.remove();
+        navigatorChartInstance.current = null;
+      }
+      seriesInstance.current = null;
+      navigatorMacdSeries.current = { histogram: null, dif: null, dea: null };
+      maSeriesInstances.current = [];
+      attributionObservers.current.forEach((observer) => observer.disconnect());
+      attributionObservers.current = [];
+    };
   }, []);
 
   // 更新图表数据
   useEffect(() => {
-    if (chartInstance.current && data) {
-      console.log('📊 ECharts 接收数据:', data);
-      const options = getChartOptions(data, chartType, isPC);
-      console.log('📊 K线数量:', data.values?.length, '图表类型:', chartType);
-      chartInstance.current.setOption(options, true);
+    if (!chartInstance.current || !data) return;
+
+    const chart = chartInstance.current;
+    const { candleData, lineData, tickLabelMap } = buildSeriesData(data);
+    const prevDataLen = prevDataLenRef.current;
+    const visibleRange = chart.timeScale().getVisibleLogicalRange();
+    const periodChanged = prevActiveKeyRef.current !== activeKey;
+    if (periodChanged) {
+      userInteractedRef.current = false;
     }
-  }, [data, chartType]);
+    const isInitialOrPeriodReset = periodChanged || prevDataLen === 0;
+
+    const shouldFollowLatest =
+      isInitialOrPeriodReset ||
+      (!userInteractedRef.current && (!visibleRange || visibleRange.to >= prevDataLen - 2));
+    if (debugEnabled) {
+      console.log(debugTag, 'before-update', {
+        chartType,
+        activeKey,
+        prevDataLen,
+        nextDataLen: chartType === 'line' ? lineData.length : candleData.length,
+        periodChanged,
+        shouldFollowLatest,
+        userInteracted: userInteractedRef.current,
+        visibleRange: visibleRange
+          ? {
+              from: Number(visibleRange.from?.toFixed?.(2) ?? visibleRange.from),
+              to: Number(visibleRange.to?.toFixed?.(2) ?? visibleRange.to),
+            }
+          : null,
+        seriesType: mainSeriesTypeRef.current,
+        needRebuildMainSeries:
+          !seriesInstance.current || mainSeriesTypeRef.current !== chartType,
+      });
+    }
+
+    chart.applyOptions({
+      layout: {
+        fontSize: isPC ? 12 : 10,
+      },
+      localization: {
+        priceFormatter: (price) => formatAxisPrice(price, !isPC),
+      },
+      grid: {
+        vertLines: {
+          visible: chartType === 'kline',
+          color: 'rgba(17, 183, 135, 0.06)',
+          style: 2,
+        },
+        horzLines: {
+          visible: chartType === 'kline',
+          color: 'rgba(17, 183, 135, 0.08)',
+          style: 2,
+        },
+      },
+      timeScale: {
+        secondsVisible: false,
+        shiftVisibleRangeOnNewBar: false,
+        minimumHeight: isPC ? 16 : 12,
+        tickMarkFormatter: (time) => formatShortDateLabel(tickLabelMap.get(Number(time)), activeKey),
+      },
+      leftPriceScale: {
+        minimumWidth: isPC ? 48 : 20,
+        scaleMargins: {
+          top: 0.08,
+          bottom: 0.02,
+        },
+      },
+      rightPriceScale: {
+        scaleMargins: {
+          top: 0.08,
+          bottom: 0.02,
+        },
+      },
+    });
+
+    const needRebuildMainSeries =
+      !seriesInstance.current || mainSeriesTypeRef.current !== chartType;
+
+    if (needRebuildMainSeries) {
+      clearMainSeries(chart);
+      if (chartType === 'line') {
+        const lineSeries = chart.addAreaSeries({
+          lineColor: '#11B787',
+          lineWidth: 2,
+          topColor: 'rgba(17, 183, 135, 0.35)',
+          bottomColor: 'rgba(17, 183, 135, 0)',
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+        seriesInstance.current = lineSeries;
+      } else {
+        const candleSeries = chart.addCandlestickSeries({
+          upColor: '#11B787',
+          downColor: '#FA5F5F',
+          borderUpColor: '#11B787',
+          borderDownColor: '#FA5F5F',
+          wickUpColor: '#11B787',
+          wickDownColor: '#FA5F5F',
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+        seriesInstance.current = candleSeries;
+
+        const maConfigs = [
+          { period: 5, color: '#F5A623' },
+          { period: 10, color: '#FA5F5F' },
+          { period: 20, color: '#11B787' },
+          { period: 30, color: '#4FC3F7' },
+        ];
+        maSeriesInstances.current = maConfigs.map((cfg) =>
+          chart.addLineSeries({
+            color: cfg.color,
+            lineWidth: 1,
+            lineStyle: 0,
+            priceLineVisible: false,
+            lastValueVisible: false,
+            crosshairMarkerVisible: false,
+          })
+        );
+      }
+      mainSeriesTypeRef.current = chartType;
+    }
+
+    if (chartType === 'line') {
+      seriesInstance.current?.setData(lineData);
+    } else {
+      seriesInstance.current?.setData(candleData);
+      const maPeriods = [5, 10, 20, 30];
+      maSeriesInstances.current.forEach((maSeries, idx) => {
+        maSeries.setData(calcMA(candleData, maPeriods[idx]));
+      });
+    }
+
+    if (
+      navigatorMacdSeries.current.histogram &&
+      navigatorMacdSeries.current.dif &&
+      navigatorMacdSeries.current.dea
+    ) {
+      const { difData, deaData, histogramData } = calcMACD(candleData);
+      navigatorMacdSeries.current.histogram.setData(histogramData);
+      navigatorMacdSeries.current.dif.setData(difData);
+      navigatorMacdSeries.current.dea.setData(deaData);
+    }
+
+    const dataLen = chartType === 'line' ? lineData.length : candleData.length;
+    if (dataLen > 0) {
+      if (shouldFollowLatest) {
+        const to = dataLen - 1;
+        const from = isInitialOrPeriodReset ? 0 : Math.max(0, to - 35);
+        if (debugEnabled) console.log(debugTag, 'apply-follow-latest', { from, to });
+        programmaticRangeUpdateRef.current = true;
+        chart.timeScale().setVisibleLogicalRange({ from, to });
+        syncNavigatorRange({ from, to });
+        queueMicrotask(() => {
+          programmaticRangeUpdateRef.current = false;
+        });
+      } else if (visibleRange) {
+        // WebSocket 刷新时重建 series 可能触发时间轴回到最新，手动恢复用户当前视窗
+        const maxTo = dataLen - 1;
+        const span = Math.max(1, visibleRange.to - visibleRange.from);
+        const clampedTo = Math.min(visibleRange.to, maxTo);
+        const clampedFrom = Math.max(0, clampedTo - span);
+        if (debugEnabled) {
+          console.log(debugTag, 'restore-visible-range', {
+            from: Number(clampedFrom.toFixed(2)),
+            to: Number(clampedTo.toFixed(2)),
+            span: Number(span.toFixed(2)),
+            maxTo,
+          });
+        }
+        programmaticRangeUpdateRef.current = true;
+        chart.timeScale().setVisibleLogicalRange({ from: clampedFrom, to: clampedTo });
+        syncNavigatorRange({ from: clampedFrom, to: clampedTo });
+        queueMicrotask(() => {
+          programmaticRangeUpdateRef.current = false;
+        });
+      }
+    }
+    const afterRange = chart.timeScale().getVisibleLogicalRange();
+    if (debugEnabled) {
+      console.log(debugTag, 'after-update', {
+        prevDataLen,
+        dataLen,
+        afterRange: afterRange
+          ? {
+              from: Number(afterRange.from?.toFixed?.(2) ?? afterRange.from),
+              to: Number(afterRange.to?.toFixed?.(2) ?? afterRange.to),
+            }
+          : null,
+      });
+    }
+    prevDataLenRef.current = dataLen;
+    prevActiveKeyRef.current = activeKey;
+  }, [data, chartType, isPC, activeKey]);
 
   const chartTypeLineBtn = onChartTypeChange ? (
     <button
@@ -402,15 +652,7 @@ const KlineChart = ({
       onClick={() => onChartTypeChange('line')}
       aria-label="line"
     >
-      <img
-        src={
-          chartType === 'line'
-            ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/graph/line-actived.png'
-            : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/graph/line-no-actived.png'
-        }
-        className={styles.chartTypeIcon}
-        alt=""
-      />
+      <LineTypeIcon className={styles.chartTypeIcon} />
     </button>
   ) : null;
 
@@ -421,15 +663,7 @@ const KlineChart = ({
       onClick={() => onChartTypeChange('kline')}
       aria-label="kline"
     >
-      <img
-        src={
-          chartType === 'kline'
-            ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/graph/kline-actived.png'
-            : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/graph/kline-no-actived.png'
-        }
-        className={styles.chartTypeIcon}
-        alt=""
-      />
+      <KlineTypeIcon className={styles.chartTypeIcon} />
     </button>
   ) : null;
 
@@ -516,29 +750,13 @@ const KlineChart = ({
                 className={`${styles.chartTypeBtn} ${chartType === 'line' ? styles.active : ''}`}
                 onClick={() => onChartTypeChange('line')}
               >
-                <img
-                  src={
-                    chartType === 'line'
-                      ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/graph/line-actived.png'
-                      : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/graph/line-no-actived.png'
-                  }
-                  className={styles.chartTypeIcon}
-                  alt="折线图"
-                />
+                <LineTypeIcon className={styles.chartTypeIcon} />
               </div>
               <div
                 className={`${styles.chartTypeBtn} ${chartType === 'kline' ? styles.active : ''}`}
                 onClick={() => onChartTypeChange('kline')}
               >
-                <img
-                  src={
-                    chartType === 'kline'
-                      ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/graph/kline-actived.png'
-                      : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/graph/kline-no-actived.png'
-                  }
-                  className={styles.chartTypeIcon}
-                  alt="K线图"
-                />
+                <KlineTypeIcon className={styles.chartTypeIcon} />
               </div>
             </div>
           )}
@@ -553,19 +771,27 @@ const KlineChart = ({
 
       {/* 图表容器 */}
       <div className={styles.chartContainer}>
-        {/* 横屏按钮 */}
-        {showLandscapeBtn && onLandscapeClick && (
-          <div className={styles.landscapeBtn} onClick={onLandscapeClick}>
-            <LandscapeIcon size={16} color="#fff" />
-          </div>
-        )}
-        
           {(loading || !data) && (
             <div className={styles.loadingWrapper}>
               <Loading color="#11B787" tip="" />
             </div>
           )}
         <div ref={chartRef} className={styles.chart} style={{ opacity: (loading || !data) ? 0 : 1 }}></div>
+        <div className={styles.navigatorRow} style={{ opacity: (loading || !data) ? 0 : 1 }}>
+          <div className={styles.navigatorAction}>
+            {showLandscapeBtn && onLandscapeClick ? (
+              <button
+                type="button"
+                className={styles.navigatorZoomBtn}
+                onClick={onLandscapeClick}
+                aria-label="expand chart"
+              >
+                <LandscapeIcon size={14} color="#8E8E8E" />
+              </button>
+            ) : null}
+          </div>
+          <div ref={navigatorRef} className={styles.navigatorChart} />
+        </div>
       </div>
     </div>
   );

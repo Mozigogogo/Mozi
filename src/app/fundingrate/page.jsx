@@ -13,7 +13,6 @@ import { useTranslation } from 'react-i18next';
 import { Loading } from '../../components/Loading';
 import { handleOptions } from '../../utils/chartUtils';
 import styles from './page.module.less';
-import * as echarts from 'echarts';
 
 const PCLayout = dynamic(() => import('../../components/PCLayout'), { ssr: false });
 
@@ -63,6 +62,14 @@ export default function FundingRate() {
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
   const chartDataRef = useRef(null);
+  const echartsRef = useRef(null);
+
+  const ensureEcharts = async () => {
+    if (echartsRef.current) return echartsRef.current;
+    const mod = await import('echarts');
+    echartsRef.current = mod;
+    return mod;
+  };
 
 
 
@@ -183,33 +190,35 @@ export default function FundingRate() {
   // 初始化图表
   useEffect(() => {
     if (chartRef.current && !chartInstance.current) {
-      chartInstance.current = echarts.init(chartRef.current);
-      // 如果已有数据，立即设置
-      if (chartDataRef.current) {
-        const options = handleOptions(chartDataRef.current.data, chartDataRef.current.type);
-        if (chartDataRef.current.type === 'updownbarline') {
-          options.grid = {
-            left: '10%',
-            right: '3%',  // 减少右侧边距，让图表占据更多空间
-            top: '5%',
-            bottom: '25%',
-            containLabel: false
-          };
-          if (options.yAxis && options.yAxis[0]) {
-            options.yAxis[0].axisLabel = options.yAxis[0].axisLabel || {};
-            options.yAxis[0].axisLabel.formatter = (value) => {
-              // 左侧显示百分比，最多保留5位小数
-              const percentage = (value * 100).toFixed(5);
-              // 去除末尾多余的0
-              return `${parseFloat(percentage)}%`;
+      let disposed = false;
+      ensureEcharts().then((echarts) => {
+        if (disposed) return;
+        chartInstance.current = echarts.init(chartRef.current);
+        // 如果已有数据，立即设置
+        if (chartDataRef.current) {
+          const options = handleOptions(chartDataRef.current.data, chartDataRef.current.type);
+          if (chartDataRef.current.type === 'updownbarline') {
+            options.grid = {
+              left: '10%',
+              right: '3%',
+              top: '5%',
+              bottom: '25%',
+              containLabel: false,
             };
+            if (options.yAxis && options.yAxis[0]) {
+              options.yAxis[0].axisLabel = options.yAxis[0].axisLabel || {};
+              options.yAxis[0].axisLabel.formatter = (value) => {
+                const percentage = (value * 100).toFixed(5);
+                return `${parseFloat(percentage)}%`;
+              };
+            }
+            if (options.yAxis && options.yAxis[1]) {
+              options.yAxis[1].show = false;
+            }
           }
-          if (options.yAxis && options.yAxis[1]) {
-            options.yAxis[1].show = false;  // 隐藏右侧Y轴
-          }
+          chartInstance.current?.setOption(options);
         }
-        chartInstance.current.setOption(options);
-      }
+      });
 
       // 窗口大小变化时重新调整图表大小
       const handleResize = () => {
@@ -221,6 +230,7 @@ export default function FundingRate() {
       window.addEventListener('resize', handleResize);
       
       return () => {
+        disposed = true;
         window.removeEventListener('resize', handleResize);
         if (chartInstance.current) {
           chartInstance.current.dispose();

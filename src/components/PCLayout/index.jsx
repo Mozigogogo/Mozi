@@ -29,6 +29,7 @@ import PCUserPanel from '../PCUserPanel';
 import PCFooterNotice from '../PCFooterNotice';
 import BenefitCodeModal from '../BenefitCodeModal';
 import BindBenefitCodeModal from '../BindBenefitCodeModal';
+import UserProfilePanelPopup from '../UserProfilePanelPopup';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
@@ -50,7 +51,10 @@ export default function PCLayout({ children }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { formatValue, formatPrice } = useFormatNumber();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const noFavoritesText = t('discover.noFavorites', {
+    defaultValue: (i18n?.language || '').startsWith('en') ? 'No Favorites' : '暂无收藏自选',
+  });
   const [userInfo, setUserInfo] = useState(null);
   const [collapsed, setCollapsed] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
@@ -87,6 +91,7 @@ export default function PCLayout({ children }) {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [showUserPanel, setShowUserPanel] = useState(false);
+  const [showUserProfilePopup, setShowUserProfilePopup] = useState(false);
 
   useEffect(() => {
     const syncUserInfo = () => {
@@ -190,9 +195,13 @@ export default function PCLayout({ children }) {
   // 内容显示状态 - 用于PC端tab切换
   const [activeContent, setActiveContent] = useState(null);
   const [isCreatedListExpanded, setIsCreatedListExpanded] = useState(false);
-  const [isMineExpanded, setIsMineExpanded] = useState(true);
+  const [isMineExpanded, setIsMineExpanded] = useState(false);
   const [watchlist, setWatchlist] = useState([]);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
+
+  useEffect(() => {
+    setIsMineExpanded(false);
+  }, []);
 
   const fetchWatchlist = useCallback(async () => {
     setWatchlistLoading(true);
@@ -377,24 +386,24 @@ export default function PCLayout({ children }) {
         label: t('pcLayout.menu.home'),
       },
       {
-        key: '/find',
+        key: '/pc/find',
         icon: (
           <CustomIcon
             src="/icons/pc/find.png"
             activeSrc="/icons/pc/find_actived@2x.png"
-            itemKey="/find"
+            itemKey="/pc/find"
             alt="discover"
           />
         ),
         label: t('pcLayout.menu.discover'),
       },
       {
-        key: '/community',
+        key: '/pc/community',
         icon: (
           <CustomIcon
             src="/icons/pc/social.png"
             activeSrc="/icons/pc/social_actived.png"
-            itemKey="/community"
+            itemKey="/pc/community"
             alt="community"
           />
         ),
@@ -456,15 +465,31 @@ export default function PCLayout({ children }) {
   }, [collapsed, favoritesMenuItemCollapsed, mineRestMenuItems, coinlistGroup]);
 
   const handleMenuClick = ({ key }) => {
-    // PC端：发现和社区页面在右侧显示内容，不跳转路由
-    if (key === '/find' || key === '/community') {
-      setActiveContent(key);
-      setShowSearchResults(false);
-    } else {
-      // 其他页面正常跳转
+    // PC 端：发现/社区使用独立路由
+    if (key === '/pc/find' || key === '/pc/community') {
       setActiveContent(null);
+      setShowSearchResults(false);
       router.push(key);
+      return;
     }
+
+    // 兼容旧逻辑：如果还有地方用 /find、/community，统一跳转到 PC 路由
+    if (key === '/find') {
+      setActiveContent(null);
+      setShowSearchResults(false);
+      router.push('/pc/find');
+      return;
+    }
+    if (key === '/community') {
+      setActiveContent(null);
+      setShowSearchResults(false);
+      router.push('/pc/community');
+      return;
+    }
+
+    // 其他页面正常跳转
+    setActiveContent(null);
+    router.push(key);
   };
 
   const getSelectedKey = () => {
@@ -483,7 +508,12 @@ export default function PCLayout({ children }) {
 
   // 当路由变化时，清除activeContent
   useEffect(() => {
-    if (pathname !== '/find' && pathname !== '/community') {
+    if (
+      pathname !== '/find' &&
+      pathname !== '/community' &&
+      pathname !== '/pc/find' &&
+      pathname !== '/pc/community'
+    ) {
       setActiveContent(null);
     }
   }, [pathname]);
@@ -553,6 +583,7 @@ export default function PCLayout({ children }) {
           />
           <Button 
             type="text" 
+            onClick={() => setShowUserProfilePopup(true)}
             icon={<img src="/icons/pc/setting@2x.png" alt="settings" style={{ width: 22, height: 22, objectFit: 'contain' }} />} 
           />
           <Button 
@@ -698,7 +729,7 @@ export default function PCLayout({ children }) {
                         {t('common.loading')}
                       </div>
                     ) : watchlist.length === 0 ? (
-                      <div className={styles.pcWatchlistHint}>{t('discover.noFavorites')}</div>
+                      <div className={styles.pcWatchlistHint}>{noFavoritesText}</div>
                     ) : (
                       watchlist.map((item) => {
                         const sym = item.symbol;
@@ -763,7 +794,7 @@ export default function PCLayout({ children }) {
         </Sider>
 
         {/* 右侧 Content */}
-        <Content className={`${styles.content} ${pathname === '/' && !activeContent && !showSearchResults ? styles.homeContent : ''} ${collapsed ? styles.contentCollapsed : ''}`}>
+        <Content className={`${styles.content} ${styles.homeContent} ${collapsed ? styles.contentCollapsed : ''}`}>
           <div className={styles.contentWrapper}>
             <div className={styles.contentMain}>
               {(() => {
@@ -772,6 +803,10 @@ export default function PCLayout({ children }) {
                 } else if (activeContent === '/find') {
                   return <PCFindContent />;
                 } else if (activeContent === '/community') {
+                  return <PCCommunityContent />;
+                } else if (pathname === '/pc/find') {
+                  return <PCFindContent />;
+                } else if (pathname === '/pc/community') {
                   return <PCCommunityContent />;
                 } else {
                   return children;
@@ -839,6 +874,23 @@ export default function PCLayout({ children }) {
       <BindBenefitCodeModal
         open={showBindBenefitCodeModal}
         onClose={() => setShowBindBenefitCodeModal(false)}
+      />
+
+      <UserProfilePanelPopup
+        open={showUserProfilePopup}
+        onClose={() => setShowUserProfilePopup(false)}
+        onLogout={() => {
+          setShowUserProfilePopup(false);
+          router.push('/user');
+        }}
+        onSave={() => setShowUserProfilePopup(false)}
+        initialData={{
+          name: userInfo?.nickName || userInfo?.nickname || '用户名',
+          account: '账号账号账号号',
+          avatar:
+            userInfo?.avatar ||
+            'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png',
+        }}
       />
     </Layout>
   );

@@ -174,7 +174,7 @@ export default function Addwarn() {
       return;
     }
 
-    // 从统一的工具函数获取当前环境
+    // 从统一的工具函数获取当前环境（仅用于 TG 环境补充 userId/chatId）
     const { getAppChannel } = await import('@/utils/core');
     const channel = getAppChannel();
     
@@ -239,7 +239,6 @@ export default function Addwarn() {
       // 构建请求数据
       const requestData = {
         symbol,
-        channel: channel,             // 根据环境动态设置：tg 或 pc
         content: content              // 告警配置内容
       };
       

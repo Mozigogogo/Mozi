@@ -55,15 +55,470 @@
 
 .pcContentColLeft,
 .pcContentColRight {
-  height: 100%;
+  height: auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  align-self: stretch;
   /* 与站内白卡片一致，便于后续填入模块 */
   background: #fff;
   border-radius: 10px;
   border: 1px solid #f0f0f0;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.pcRightTopMarqueeWrap {
+  margin-bottom: 10PX;
+}
+
+.pcContentColRight {
+  background: transparent;
+  border: none;
+}
+
+.pcRightPanelContainer {
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+}
+
+.pcRightPanelGrid {
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 58%) minmax(0, 42%);
+  align-items: stretch;
+  gap: 12PX;
+  padding: 0;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+}
+
+.pcRightPanelLeft,
+.pcRightPanelRight {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12PX;
+}
+
+.pcRightPanelCard {
+  background: #fff;
+  border-radius: 32PX !important;
+  padding: 10PX 12PX;
+  min-height: 0;
+  /* 覆盖 MoziCard 默认 margin-bottom，避免网格内产生额外空隙 */
+  margin-bottom: 0 !important;
+}
+
+/* PC：投资回报率标题左侧圆点 */
+.pcRoiTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8PX;
+  min-width: 0;
+}
+
+.pcMarketTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-width: 0;
+}
+
+.pcMarketTitleLeft {
+  display: flex;
+  align-items: center;
+  gap: 8PX;
+  min-width: 0;
+}
+
+.pcRoiTitleDot {
+  width: 8PX;
+  height: 8PX;
+  border-radius: 50%;
+  background: rgba(0, 188, 125, 1);
+  flex-shrink: 0;
+}
+
+.pcRoiTitleText {
+  font-family: 'Microsoft YaHei', sans-serif;
+  font-weight: bold;
+  font-size: 18PX;
+  color: #333333;
+  line-height: 22PX;
+}
+
+/* PC：标题后 (数量)，与 MoziCard .titleNum 视觉对齐 */
+.pcRoiTitleNum {
+  margin-left: 3PX;
+  font-size: 12PX;
+  font-weight: 500;
+  color: #898989;
+  line-height: 22PX;
+}
+
+.pcRoiTitleNumRight {
+  margin-left: 0;
+  font-size: 12PX;
+  font-weight: 500;
+  color: #898989;
+  line-height: 22PX;
+}
+
+/* PC：投资回报率卡片标题区底部分割线（覆盖 MoziCard pcCardHeader 的 border-bottom: none） */
+.pcRightRoiCard :global([class*='cardHeader']) {
+  border-bottom: 1px solid rgba(243, 244, 246, 1) !important;
+  /* 覆盖 MoziCard .pcCardHeader 的 16PX 20PX，缩小标题区上下留白 */
+  padding: 10PX 20PX !important;
+}
+
+/* PC：市场卡片标题区与 ROI 一致（圆点标题 + 底部分割线） */
+.pcRightMarketCard :global([class*='cardHeader']) {
+  border-bottom: none !important;
+  padding: 18PX 20PX !important;
+}
+
+/* 中间列最后一张卡片填满剩余高度，确保三栏底部齐平 */
+.pcRightPanelLeft .pcRightPanelCard:last-child {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pcRightPanelRight .pcRightPanelCard {
+  flex: 0 0 auto;
+  width: 100%;
+  min-height: 0;
+}
+
+/* PC 社区feed：总高度由 JS 与左侧栏对齐；内部仅列表滚动 */
+.pcCommunityFeedCard {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.pcCommunityHeader {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0;
+  padding-top: 6PX;
+  padding-right: 6PX;
+  padding-bottom: 14PX;
+  padding-left: 6PX;
+  border-bottom: 1PX solid rgba(249, 250, 251, 1);
+  font-size: 16PX;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.pcCommunityTitleLeft {
+  display: flex;
+  align-items: center;
+  gap: 8PX;
+  min-width: 0;
+}
+
+.pcCommunityMore {
+  border: none;
+  background: transparent;
+  color: #5b6b81;
+  font-size: 12PX;
+  cursor: pointer;
+}
+
+.pcCommunityList {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* PC 社区列表空状态：占满可滚动区、换行与字号与卡片一致 */
+.pcCommunityEmpty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 120PX;
+  padding: 24PX 20PX;
+  box-sizing: border-box;
+  color: rgba(140, 140, 140, 1);
+  font-size: 14PX;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: center;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* PC 社区 loading：比完全居中略偏上 */
+.pcCommunityEmptyLoading {
+  align-items: flex-start;
+  padding-top: 56PX;
+}
+
+.pcCommunityItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12PX;
+  padding: 16PX 0;
+  border-bottom: 1PX solid #f1f5f9;
+}
+
+.pcCommunityItem:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.pcCommunityAvatar {
+  width: 40PX;
+  height: 40PX;
+  border-radius: 50%;
+  background: #ffeccf;
+  flex-shrink: 0;
+}
+
+.pcCommunityBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  gap: 10PX;
+}
+
+.pcCommunityTop,
+.pcCommunityContent,
+.pcCommunityBottom {
+  width: 100%;
+}
+
+/* 内容区与底部区左边缘对齐到头像左侧 */
+.pcCommunityContent,
+.pcCommunityBottom {
+  margin-left: -52PX; /* 40PX avatar + 12PX gap */
+  width: calc(100% + 52PX);
+}
+
+.pcCommunityUserBlock {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1PX;
+}
+
+.pcCommunityHeaderRow {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.pcCommunityUserRow {
+  display: flex;
+  align-items: center;
+  gap: 10PX;
+  min-width: 0;
+}
+
+.pcCommunityUserName {
+  font-size: 14PX;
+  font-weight: 700;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pcCommunityBadge {
+  padding: 3PX 6PX;
+  background: rgba(236, 253, 245, 1);
+  color: rgba(0, 153, 102, 1);
+  border-radius: 999PX;
+  font-size: 10PX;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pcCommunityEllipsis {
+  color: #9ca3af;
+  font-size: 18PX;
+  line-height: 1;
+  align-self: flex-start;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.pcCommunitySubTitle {
+  margin-top: 0;
+  font-size: 13PX;
+  color: #6b7280;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pcCommunityMainText {
+  width: 100%;
+  font-size: 14PX;
+  line-height: 1.6;
+  color: #374151;
+  text-align: left;
+  word-break: break-word;
+}
+
+.pcCommunityTagRow {
+  width: 100%;
+  margin-top: 12PX;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 10PX;
+}
+
+.pcCommunityTag {
+  border-radius: 8PX;
+  /* 按视觉稿缩小标签尺寸 */
+  height: 22PX;
+  border-radius: 4PX;
+  padding-top: 2PX;
+  padding-right: 8PX;
+  padding-bottom: 2PX;
+  padding-left: 8PX;
+  font-size: 13PX;
+  line-height: 1;
+  font-weight: 600;
+  border: 1PX solid transparent;
+  background: transparent;
+  cursor: default;
+}
+
+.pcCommunityTagOrange {
+  color: rgba(250, 140, 22, 1);
+  background: rgba(255, 240, 228, 1);
+  border-color: rgba(255, 195, 130, 1);
+}
+
+.pcCommunityTagBlue {
+  color: rgba(59, 130, 246, 1);
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+.pcCommunityTagUsdt {
+  background: rgba(249, 250, 251, 1);
+  border: 1PX solid rgba(229, 231, 235, 1);
+  color: rgba(106, 114, 130, 1);
+}
+
+.pcCommunityBottom {
+  width: calc(100% + 52PX);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pcCommunityFooterLeft {
+  display: flex;
+  align-items: center;
+  gap: 18PX;
+  margin-right: auto;
+}
+
+.pcCommunityAction {
+  display: flex;
+  align-items: center;
+  gap: 6PX;
+  color: #6b7280;
+  font-size: 12PX;
+}
+
+.pcCommunityActionIcon {
+  width: 18PX;
+  height: 18PX;
+}
+
+.pcCommunityShareIcon {
+  width: 14PX;
+  height: 14PX;
+}
+
+.pcCommunityTime {
+  color: #9ca3af;
+  font-size: 12PX;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.pcRightMarketGrid {
+  :global([class*='titleNum']) {
+    font-size: 12PX !important;
+    line-height: 1 !important;
+    margin-left: 3PX !important;
+  }
+
+  :global([class*='gridTitle']) {
+    margin-bottom: 2PX;
+    font-size: 12PX !important;
+  }
+
+  :global([class*='gridTitleItem']) {
+    padding: 2PX 6PX !important;
+    white-space: nowrap;
+  }
+
+  :global([class*='gridContent']) {
+    font-size: 13PX !important;
+  }
+
+  :global([class*='gridListItem']) {
+    padding: 12PX 0 !important;
+    border-bottom: 1px solid rgba(249, 250, 251, 1);
+  }
+
+  :global([class*='gridListItem']:first-child) {
+    border-top: 1px solid rgba(249, 250, 251, 1);
+  }
+
+  :global([class*='gridConItem']) {
+    padding: 0 6PX !important;
+    word-break: keep-all !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  :global([class*='gridTitleItem']:first-child),
+  :global([class*='gridConItem']:first-child) {
+    justify-content: flex-start !important;
+    text-align: left !important;
+  }
+}
+
+.pcRightMarketCard {
+  :global([class*='titleNum']) {
+    font-size: 12PX !important;
+    line-height: 12PX !important;
+    margin-left: 3PX !important;
+    transform: none !important;
+  }
 }
 
 .box {
@@ -293,7 +748,8 @@
 }
 
 .klineContainer {
-  padding: 8px 0;
+  padding: 8px 4px;
+  box-sizing: border-box;
 }
 
 /* PC 详情左栏：图表区随卡片高度伸展，避免「移动端控件放大」的观感 */
@@ -682,5 +1138,63 @@
   .pcContentColLeft,
   .pcContentColRight {
     box-shadow: none;
+  }
+
+  /* PC 端：ROI 使用大写 PX，避免 px 被体系换算成 vw */
+  .roiGrid {
+    gap: 12PX;
+    padding: 10PX 0PX;
+  }
+
+  .roiCard {
+    padding: 12PX 10PX;
+    min-height: 64PX;
+    /* 比默认 10px 更克制，避免子卡片视觉上像「胶囊」过圆 */
+    border-radius: 8PX;
+  }
+
+  .roiValue {
+    font-size: 16PX;
+    margin-bottom: 4PX;
+  }
+
+  .roiLabel {
+    font-size: 12PX;
+  }
+
+  /* PC：投资回报率涨跌色（与设计稿一致） */
+  .positive {
+    background: rgba(246, 254, 251, 1);
+    .roiValue {
+      color: rgba(0, 188, 125, 1);
+    }
+  }
+
+  .negative {
+    background: rgba(254, 246, 246, 1);
+    .roiValue {
+      color: rgba(255, 32, 86, 1);
+    }
+  }
+
+  .pcRightMarketGrid {
+    :global([class*='titleNum']) {
+      font-size: 12PX !important;
+    }
+
+    :global([class*='gridTitle']) {
+      font-size: 12PX !important;
+    }
+
+    :global([class*='gridContent']) {
+      font-size: 13PX !important;
+    }
+  }
+
+  .pcRightMarketCard {
+    :global([class*='titleNum']) {
+      font-size: 12PX !important;
+      line-height: 12PX !important;
+    }
   }
 }

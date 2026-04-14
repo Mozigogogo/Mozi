@@ -73,16 +73,8 @@ const MarketOverview = memo(() => {
         }
 
         // 从统一的工具函数获取当前环境
-        const { getAppChannel } = await import('../../utils/core');
-        const channel = getAppChannel();
-        
-        console.log('[MarketOverview] 当前环境:', channel, 'Telegram WebApp:', window.Telegram?.WebApp);
-        
-        const myWarnRes = await request({ 
-          url: Interface.MY_WARN,
-          data: {
-            channel: channel
-          }
+                        const myWarnRes = await request({ 
+          url: Interface.MY_WARN
         });
         const groups = myWarnRes?.data || {};
         const symbolKeys = Object.keys(groups || {}).filter((k) => {

@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { Picker, Toast } from 'antd-mobile';
-import * as echarts from 'echarts';
 import NavBar from '@/components/NavBar';
 import MoziPCRColChart from '@/components/MoziPCRColChart';
 import { request } from '@/utils/request';

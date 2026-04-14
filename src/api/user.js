@@ -167,11 +167,92 @@ export const loginByTelegram = (params) => {
 
 /**
  * 获取用户详细数据（含邀请码等）
+ * 新增字段：
+ * - followingCount: 我关注的人数
+ * - fansCount: 关注我的人数
+ * @param {string} [userId] - 可选，传入则查询指定用户（/user/datainfo?user_id=xxx）
  * @returns {Promise}
  */
-export const getUserDataInfo = () => {
+export const getUserDataInfo = (userId) => {
+  const targetUserId = String(userId ?? '').trim();
   return request({
-    url: '/user/datainfo',
+    url: Interface.USER_DATA_INFO,
+    method: 'GET',
+    ...(targetUserId ? { data: { user_id: targetUserId } } : {}),
+  });
+};
+
+/**
+ * 查看他人主页（需登录）
+ * GET /user/profile/{userId}
+ * 返回字段：
+ * - userId: 用户 ID
+ * - avatar: 头像
+ * - nickName: 昵称
+ * - identityTag: 身份标签
+ * - introduction: 个人简介
+ * - followingCount: 关注数
+ * - fansCount: 粉丝数
+ * - totalLikeCount: 累计获赞数
+ * - planCode: 会员等级
+ * - planLevel: 会员等级数值
+ * - memberTier: 会员档位
+ * - isFollowing: 当前登录用户是否已关注该用户
+ * @param {string} userId - 目标用户 ID
+ * @returns {Promise}
+ */
+export const getUserProfile = (userId, options = {}) => {
+  const targetUserId = String(userId ?? '').trim();
+  if (!targetUserId) {
+    return Promise.reject(new Error('userId is required'));
+  }
+  const { noCache = false } = options || {};
+  return request({
+    url: `${Interface.USER_PROFILE}/${encodeURIComponent(targetUserId)}`,
+    method: 'GET',
+    ...(noCache
+      ? {
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            Pragma: 'no-cache',
+            Expires: '0',
+          },
+        }
+      : {}),
+    ...(noCache ? { data: { _t: Date.now() } } : {}),
+  });
+};
+
+/**
+ * 关注用户（需登录）
+ * GET /user/follow/{userId}
+ * @param {string} userId - 要关注的目标用户 ID
+ * @returns {Promise}
+ */
+export const followUser = (userId) => {
+  const targetUserId = String(userId ?? '').trim();
+  if (!targetUserId) {
+    return Promise.reject(new Error('userId is required'));
+  }
+  return request({
+    url: `${Interface.USER_FOLLOW}/${encodeURIComponent(targetUserId)}`,
+    method: 'GET',
+  });
+};
+
+/**
+ * 取关用户（需登录）
+ * GET /user/unfollow/{userId}
+ * @param {string} userId - 要取关的目标用户 ID
+ * @returns {Promise}
+ */
+export const unfollowUser = (userId) => {
+  const targetUserId = String(userId ?? '').trim();
+  if (!targetUserId) {
+    return Promise.reject(new Error('userId is required'));
+  }
+  return request({
+    url: `${Interface.USER_UNFOLLOW}/${encodeURIComponent(targetUserId)}`,
     method: 'GET',
   });
 };
@@ -300,6 +381,20 @@ export const updateUserInfo = (params) => {
     url: Interface.UPDATE_USER_INFO,
     method: 'POST',
     data: params,
+  });
+};
+
+/**
+ * 编辑身份标签
+ * POST /user/editIdentityTag
+ * @param {string} identityTag - 如「加密货币研究员」
+ * @returns {Promise}
+ */
+export const editIdentityTag = (identityTag) => {
+  return request({
+    url: Interface.EDIT_IDENTITY_TAG,
+    method: 'POST',
+    data: { identityTag },
   });
 };
 
@@ -647,37 +742,3 @@ export const saveAlertConfig = async (config) => {
   }
 };
 
-/**
- * 是否允许在当前前端路径调用语言同步接口（仅首页与 /user 下）
- * @param {string} pathname - 如 usePathname() 或 location.pathname
- */
-export function isEditLanguageAllowedPath(pathname) {
-  if (typeof pathname !== 'string') return false;
-  const p = pathname === '' ? '/' : pathname;
-  if (p === '/') return true;
-  if (p.startsWith('/user')) return true;
-  return false;
-}
-
-/**
- * 编辑用户语言
- * @param {'zh'|'en'} language - 语言（zh: 中文，en: 英文）
- * @returns {Promise}
- */
-export const editLanguage = (language) => {
-  if (typeof window !== 'undefined') {
-    if (!isEditLanguageAllowedPath(window.location.pathname)) {
-      return Promise.resolve({ code: 0, data: null });
-    }
-  }
-
-  const lang = language === 'zh' || language === 'en' ? language : 'zh';
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-
-  return request({
-    url: '/user/editLanguage',
-    method: 'POST',
-    headers: token ? { authentication: token } : undefined,
-    data: { language: lang },
-  });
-};

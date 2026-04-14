@@ -1,11 +1,9 @@
 import { Inter, Roboto_Mono, Chakra_Petch } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
 import { Suspense } from "react";
 import Web3Provider from "../context/Web3Provider.jsx";
 import ThemeProvider from "../context/ThemeProvider.jsx";
 import TonConnectProvider from "../context/TonConnectProvider.jsx";
-import WalletAccountSync from "@/components/WalletAccountSync";
 import I18nProvider from "@/components/I18nProvider";
 import { LogoLoading } from "@/components/Loading";
 import VConsoleLoader from "@/components/VConsole";
@@ -14,8 +12,10 @@ import EnvironmentDetector from "@/components/EnvironmentDetector";
 import RouteChangeHandler from "@/components/RouteChangeHandler";
 import TokenDebugMonitor from "@/components/TokenDebugMonitor";
 import BuildFingerprint from "@/components/BuildFingerprint";
+import ChunkErrorRecovery from "@/components/ChunkErrorRecovery";
 import GoogleAuthProvider from "../context/GoogleAuthProvider";
-import GetPointsModal from "@/components/GetPointsModal";
+import GlobalClientEffects from "@/components/GlobalClientEffects";
+import PerfDebug from "@/components/PerfDebug";
 
 const geistSans = Inter({
   variable: "--font-geist-sans",
@@ -48,32 +48,20 @@ export default function RootLayout({ children }) {
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="mobile-web-app-capable" content="yes" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#1677ff" />
-        {/* Preload critical images */}
-        <link rel="preload" href="/images/new_login/modal_bg.png" as="image" />
-        <link rel="preload" href="/images/new_login/logo.svg" as="image" />
-        <link rel="preload" href="/images/new_login/google.svg" as="image" />
-        <link rel="preload" href="/images/new_login/wallet.svg" as="image" />
-        <link rel="preload" href="/images/new_login/email_default.svg" as="image" />
-        <link rel="preload" href="/images/new_login/email_active.svg" as="image" />
-        <link rel="preload" href="/images/new_login/password.svg" as="image" />
-        <link rel="preload" href="/images/new_login/password_active.svg" as="image" />
-        <link rel="preload" href="/images/new_login/open_eyes.png" as="image" />
-        <link rel="preload" href="/images/new_login/close_eyes.svg" as="image" />
-        <link rel="preload" href="/images/new_login/close.svg" as="image" />
+        {/* Keep only truly global/critical preload asset to avoid stealing bandwidth from home first paint */}
+        <link rel="preload" href="/images/community/loadding.png" as="image" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} ${chakraPetch.variable}`} suppressHydrationWarning>
-        {/* Telegram WebApp 官方脚本 - 必须最先加载 */}
-        <Script 
-          src="https://telegram.org/js/telegram-web-app.js" 
-          strategy="beforeInteractive"
-        />
         <EnvironmentDetector />
+        <PerfDebug />
         <BuildFingerprint />
+        <ChunkErrorRecovery />
         <RouteChangeHandler />
-        <TokenDebugMonitor />
+        {process.env.NODE_ENV !== 'production' ? <TokenDebugMonitor /> : null}
         <VConsoleLoader />
         <Suspense fallback={null}>
           <InviteCodeHandler />
@@ -83,8 +71,7 @@ export default function RootLayout({ children }) {
             <GoogleAuthProvider>
               <TonConnectProvider>
                 <Web3Provider>
-                  <WalletAccountSync />
-                  <GetPointsModal />
+                  <GlobalClientEffects />
                   <Suspense fallback={<LogoLoading visible={true} fullscreen mask image="/images/community/loadding.png" size={72} />}>
                     {children}
                   </Suspense>

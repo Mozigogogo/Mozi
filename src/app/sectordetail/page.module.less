@@ -297,6 +297,12 @@
     .sortButton {
       justify-content: center;
     }
+
+    /** 首列「成分币种」表头与列表首列保持左对齐 */
+    .sortButton:first-child {
+      justify-content: flex-start;
+      padding-left: 2px;
+    }
   }
   
   .sortItem {
@@ -363,8 +369,8 @@
     align-items: center;
     gap: 8px;
     cursor: pointer;
-    justify-content: center;
-    padding-left: 0;
+    justify-content: flex-start;
+    padding-left: 2px;
     
     .coinIcon {
       width: 20px;
