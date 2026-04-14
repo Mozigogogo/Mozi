@@ -1,9 +1,22 @@
+.treemapWrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
 .treemapContainer {
   position: relative;
   width: 100%;
   height: 100%;
   border-radius: 8px;
   overflow: hidden;
+}
+
+.skeletonOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
 }
 
 .treemapItem {

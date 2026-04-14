@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { buildSectorDetailHref } from '@/utils/sectorNavigation';
+import { Skeleton } from '@/components/Skeleton';
 import styles from './index.module.less';
 
 const HomeTreeMap = ({ list = [], name, desc }) => {
@@ -10,6 +11,8 @@ const HomeTreeMap = ({ list = [], name, desc }) => {
   const containerRef = useRef(null);
   const d3Ref = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [hasDrawn, setHasDrawn] = useState(false);
+  const [d3Loaded, setD3Loaded] = useState(false);
 
   const normalizeChange = useCallback((raw) => {
     if (raw == null) return { change: 0, changeStr: '--' };
@@ -80,10 +83,13 @@ const HomeTreeMap = ({ list = [], name, desc }) => {
       // Dynamic import: avoid bundling d3 into the initial shared chunk
       const mod = await import('d3');
       d3Ref.current = mod;
+      if (!cancelled) setD3Loaded(true);
       return mod;
     };
 
     const run = async () => {
+      // 首次绘制前展示骨架屏（避免内容区域短暂无内容）
+      if (!cancelled) setHasDrawn(false);
       const d3 = await ensureD3();
       if (cancelled) return;
 
@@ -288,6 +294,8 @@ const HomeTreeMap = ({ list = [], name, desc }) => {
             };
           router.push(buildSectorDetailHref(row));
         });
+
+      if (!cancelled) setHasDrawn(true);
     };
 
     run();
@@ -305,12 +313,40 @@ const HomeTreeMap = ({ list = [], name, desc }) => {
     );
   }
 
+  const shouldShowSkeleton = !d3Loaded || !hasDrawn || dimensions.width === 0 || dimensions.height === 0;
+
   return (
-    <div 
-      ref={containerRef} 
-      className={styles.treemapContainer}
-      style={{ position: 'relative', width: '100%', height: '100%' }}
-    />
+    <div className={styles.treemapWrap}>
+      {shouldShowSkeleton ? (
+        <div className={styles.skeletonOverlay}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: '4px',
+              width: '100%',
+              height: '100%',
+              gridAutoRows: '1fr',
+            }}
+          >
+            <Skeleton config={{ type: 'element', width: '100%', height: '100%', borderRadius: '10px', style: { gridColumn: 'span 2' } }} />
+            <Skeleton config={{ type: 'element', width: '100%', height: '100%', borderRadius: '10px' }} />
+            <Skeleton config={{ type: 'element', width: '100%', height: '100%', borderRadius: '10px' }} />
+            <Skeleton config={{ type: 'element', width: '100%', height: '100%', borderRadius: '10px' }} />
+            <Skeleton config={{ type: 'element', width: '100%', height: '100%', borderRadius: '10px' }} />
+            <Skeleton config={{ type: 'element', width: '100%', height: '100%', borderRadius: '10px' }} />
+            <Skeleton config={{ type: 'element', width: '100%', height: '100%', borderRadius: '10px' }} />
+            <Skeleton config={{ type: 'element', width: '100%', height: '100%', borderRadius: '10px', style: { gridColumn: 'span 2' } }} />
+            <Skeleton config={{ type: 'element', width: '100%', height: '100%', borderRadius: '10px', style: { gridColumn: 'span 2' } }} />
+          </div>
+        </div>
+      ) : null}
+      <div
+        ref={containerRef}
+        className={styles.treemapContainer}
+        style={{ position: 'relative', width: '100%', height: '100%' }}
+      />
+    </div>
   );
 };
 

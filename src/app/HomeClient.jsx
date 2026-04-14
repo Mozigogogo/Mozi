@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import TelegramAutoLogin from '@/components/TelegramAutoLogin';
 import { getMySubscription } from '@/api/vip';
@@ -23,15 +23,51 @@ function HomeChunkFallback() {
   );
 }
 
-/** PC 端占位：保持布局高度，但不显示 LogoLoading（避免 content 区域出现 loadding 图） */
+const skeletonPulse = {
+  animation: 'mozi-skeleton-pulse 1.2s ease-in-out infinite',
+  background:
+    'linear-gradient(90deg, rgba(0,0,0,0.04) 25%, rgba(0,0,0,0.08) 37%, rgba(0,0,0,0.04) 63%)',
+  backgroundSize: '400% 100%',
+};
+
+/** PC 端占位：骨架屏（不显示 LogoLoading，避免 content 区域出现 loadding 图） */
 function HomeChunkFallbackPC() {
   return (
     <div
       style={{
         minHeight: '70vh',
         background: 'var(--background, #f5f5f5)',
+        padding: '20px',
       }}
-    />
+    >
+      <style>{`
+        @keyframes mozi-skeleton-pulse {
+          0% { background-position: 100% 0; }
+          100% { background-position: 0 0; }
+        }
+      `}</style>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1.2fr 1fr',
+          gap: '16px',
+          alignItems: 'start',
+        }}
+      >
+        <div style={{ borderRadius: 16, height: 220, ...skeletonPulse }} />
+        <div style={{ display: 'grid', gap: 12 }}>
+          <div style={{ borderRadius: 16, height: 80, ...skeletonPulse }} />
+          <div style={{ borderRadius: 16, height: 80, ...skeletonPulse }} />
+          <div style={{ borderRadius: 16, height: 80, ...skeletonPulse }} />
+        </div>
+      </div>
+      <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} style={{ borderRadius: 14, height: 64, ...skeletonPulse }} />
+        ))}
+      </div>
+      <div style={{ marginTop: 16, borderRadius: 16, height: 260, ...skeletonPulse }} />
+    </div>
   );
 }
 
@@ -47,12 +83,21 @@ const MobileHome = dynamic(() => import('../components/MobileHome'), {
 });
 
 export default function HomeClient({ initialIsPC = false }) {
-  const [isPC, setIsPC] = useState(initialIsPC);
+  // 关键：避免“服务端先猜成 PC → 客户端再纠正成 Mobile”的闪烁/空白
+  // 客户端首帧优先用 matchMedia 计算，减少错误分支渲染时间窗口
+  const [isPC, setIsPC] = useState(() => {
+    if (typeof window === 'undefined') return initialIsPC;
+    try {
+      return window.matchMedia('(min-width: 1024px)').matches;
+    } catch (_) {
+      return initialIsPC;
+    }
+  });
   const [didKickoffSubscription, setDidKickoffSubscription] = useState(false);
   const [tgLoginSuccessReceived, setTgLoginSuccessReceived] = useState(false);
   const [homeBootMaskVisible, setHomeBootMaskVisible] = useState(true);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (typeof window === 'undefined') return;
 
     const mediaQuery = window.matchMedia('(min-width: 1024px)');
