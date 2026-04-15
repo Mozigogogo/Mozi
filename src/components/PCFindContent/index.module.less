@@ -237,3 +237,77 @@
     padding: 40PX 20PX;
   }
 }
+
+@media (max-width: 1280PX) {
+  .pcFindContent {
+    .mainTabs {
+      padding: 12px 16px 0;
+      margin-bottom: 12px;
+
+      :global {
+        .ant-tabs-tab {
+          .ant-tabs-tab-btn {
+            font-size: 18px;
+            line-height: 30px;
+          }
+
+          &.ant-tabs-tab-active {
+            .ant-tabs-tab-btn {
+              font-size: 21px;
+              line-height: 32px;
+            }
+          }
+        }
+      }
+    }
+
+    .tableHeader {
+      padding: 0 16px;
+      font-size: 13px;
+    }
+  }
+}
+
+@media (max-width: 1024PX) {
+  .pcFindContent {
+    .mainTabs {
+      padding: 10px 12px 0;
+      margin-bottom: 8px;
+
+      :global {
+        .ant-tabs-tab {
+          margin-right: 12px;
+
+          .ant-tabs-tab-btn {
+            font-size: 16px;
+            line-height: 26px;
+          }
+
+          &.ant-tabs-tab-active {
+            .ant-tabs-tab-btn {
+              font-size: 18px;
+              line-height: 28px;
+            }
+          }
+        }
+      }
+    }
+
+    .tableHeader {
+      padding: 0 12px;
+      font-size: 12px;
+
+      .headerCell {
+        padding: 10px 8px;
+      }
+    }
+
+    .contentCard {
+      :global {
+        .ant-table .ant-table-tbody > tr > td {
+          padding: 12px 8px;
+        }
+      }
+    }
+  }
+}

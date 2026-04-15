@@ -433,3 +433,45 @@
   overflow: hidden;
   min-height: 0; /* 关键：允许flex子元素缩小到内容以下 */
 }
+
+@media (max-width: 1280PX) {
+  .topCapsuleTabs,
+  .leftTopComposer {
+    margin-bottom: 12PX;
+  }
+
+  .leftPanelContainer {
+    border-radius: 24PX;
+    padding: 10PX 10PX 8PX;
+  }
+
+  .flashNewsWrapper {
+    margin-bottom: 10PX;
+  }
+}
+
+@media (max-width: 1024PX) {
+  .topCapsuleTabs,
+  .leftTopComposer {
+    margin-bottom: 8PX;
+  }
+
+  .leftPanelContainer {
+    border-radius: 18PX;
+    padding: 8PX 8PX 6PX;
+  }
+
+  .coinPostsList,
+  .discoveryPostsGrid {
+    gap: 8PX;
+  }
+
+  .leftPagination {
+    margin-top: 8PX;
+    padding-top: 8PX;
+  }
+
+  .flashNewsWrapper {
+    margin-bottom: 8PX;
+  }
+}

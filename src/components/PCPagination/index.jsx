@@ -1,5 +1,6 @@
 'use client';
 
+import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import styles from './index.module.less';
 
 function clamp(value, min, max) {
@@ -53,18 +54,34 @@ export default function PCPagination({
   if (totalPages <= 1 && !alwaysShow) return null;
 
   const wrapperClassName = className ? `${styles.wrap} ${className}` : styles.wrap;
+  const prevDisabled = loading || currentPage <= 1 || totalPages <= 1;
+  const nextDisabled = loading || currentPage >= totalPages || totalPages <= 1;
+  const onKeyActivate = (e, cb, disabled) => {
+    if (disabled) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      cb?.();
+    }
+  };
 
   return (
     <div className={wrapperClassName}>
       <div className={styles.pager} role="navigation" aria-label="pagination">
-        <button
-          type="button"
-          className={styles.pagerBtn}
-          onClick={() => onChange?.(Math.max(1, currentPage - 1))}
-          disabled={loading || currentPage <= 1 || totalPages <= 1}
+        <div
+          role="button"
+          tabIndex={prevDisabled ? -1 : 0}
+          aria-disabled={prevDisabled}
+          aria-label="上一页"
+          className={`${styles.pagerBtn} ${prevDisabled ? styles.disabled : ''}`}
+          onClick={() => {
+            if (!prevDisabled) onChange?.(Math.max(1, currentPage - 1));
+          }}
+          onKeyDown={(e) =>
+            onKeyActivate(e, () => onChange?.(Math.max(1, currentPage - 1)), prevDisabled)
+          }
         >
-          上一页
-        </button>
+          <LeftOutlined className={styles.arrowIcon} aria-hidden />
+        </div>
 
         <div className={styles.pages}>
           {pageItems.map((it, idx) =>
@@ -73,28 +90,41 @@ export default function PCPagination({
                 ...
               </span>
             ) : (
-              <button
+              <div
                 key={it}
-                type="button"
-                className={`${styles.pageBtn} ${it === currentPage ? styles.activePage : ''}`}
-                onClick={() => onChange?.(it)}
-                disabled={loading || it === currentPage}
+                role="button"
+                tabIndex={loading || it === currentPage ? -1 : 0}
+                aria-disabled={loading || it === currentPage}
+                className={`${styles.pageBtn} ${it === currentPage ? styles.activePage : ''} ${
+                  loading || it === currentPage ? styles.disabled : ''
+                }`}
+                onClick={() => {
+                  if (!loading && it !== currentPage) onChange?.(it);
+                }}
+                onKeyDown={(e) => onKeyActivate(e, () => onChange?.(it), loading || it === currentPage)}
                 aria-current={it === currentPage ? 'page' : undefined}
               >
                 {it}
-              </button>
+              </div>
             )
           )}
         </div>
 
-        <button
-          type="button"
-          className={styles.pagerBtn}
-          onClick={() => onChange?.(Math.min(totalPages, currentPage + 1))}
-          disabled={loading || currentPage >= totalPages || totalPages <= 1}
+        <div
+          role="button"
+          tabIndex={nextDisabled ? -1 : 0}
+          aria-disabled={nextDisabled}
+          aria-label="下一页"
+          className={`${styles.pagerBtn} ${nextDisabled ? styles.disabled : ''}`}
+          onClick={() => {
+            if (!nextDisabled) onChange?.(Math.min(totalPages, currentPage + 1));
+          }}
+          onKeyDown={(e) =>
+            onKeyActivate(e, () => onChange?.(Math.min(totalPages, currentPage + 1)), nextDisabled)
+          }
         >
-          下一页
-        </button>
+          <RightOutlined className={styles.arrowIcon} aria-hidden />
+        </div>
 
         {showTotalPages ? <span className={styles.totalPages}>{totalPages}</span> : null}
       </div>

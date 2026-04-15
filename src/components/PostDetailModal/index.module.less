@@ -304,3 +304,248 @@
     color: #FFFFFF;
   }
 }
+
+/* 中屏（<=1280） */
+@media (max-width: 1280PX) {
+  .overlay {
+    padding: 12PX;
+  }
+
+  .modal {
+    width: min(800PX, 90vw);
+    height: min(520PX, 78vh);
+    border-radius: 20PX;
+    grid-template-columns: 53% 47%;
+  }
+
+  .rightPane {
+    padding: 10PX 10PX 8PX;
+  }
+
+  .postHeader {
+    padding-top: 10PX;
+    padding-right: 28PX;
+  }
+
+  .title {
+    font-size: 15PX;
+    line-height: 22PX;
+  }
+
+  .desc {
+    margin-top: 5PX;
+    font-size: 12PX;
+    line-height: 18PX;
+  }
+
+  .tag {
+    height: 20PX;
+    padding: 0 7PX;
+    font-size: 12PX;
+  }
+
+  .commentTitle {
+    margin-top: 6PX;
+    font-size: 15PX;
+    line-height: 20PX;
+  }
+
+  .commentUser {
+    font-size: 12PX;
+  }
+
+  .commentText {
+    margin-top: 3PX;
+    font-size: 12PX;
+    line-height: 17PX;
+  }
+
+  .actionBtn {
+    font-size: 13PX;
+  }
+
+  .actionIconImg {
+    width: 16PX;
+    height: 16PX;
+  }
+
+  .inputAvatar {
+    width: 28PX;
+    height: 28PX;
+  }
+
+  .input {
+    height: 32PX;
+    font-size: 12PX;
+    padding: 0 58PX 0 10PX;
+  }
+
+  .sendBtn {
+    min-width: 44PX;
+    height: 24PX;
+    font-size: 11PX;
+    padding: 0 8PX;
+  }
+}
+
+/* 小屏（<=1024） */
+@media (max-width: 1024PX) {
+  .overlay {
+    padding: 8PX;
+  }
+
+  .modal {
+    width: min(700PX, 94vw);
+    height: min(470PX, 76vh);
+    border-radius: 14PX;
+    grid-template-columns: 50% 50%;
+  }
+
+  .leftFooter {
+    padding: 8PX 10PX;
+  }
+
+  .avatar {
+    width: 32PX;
+    height: 32PX;
+  }
+
+  .authorName {
+    font-size: 13PX;
+    line-height: 18PX;
+  }
+
+  .authorTime {
+    font-size: 10PX;
+    line-height: 14PX;
+  }
+
+  .followBtn {
+    height: 24PX;
+    font-size: 12PX;
+    padding: 0 8PX;
+  }
+
+  .rightPane {
+    padding: 8PX 8PX 6PX;
+  }
+
+  .closeBtn {
+    top: 8PX;
+    right: 8PX;
+    width: 22PX;
+    height: 22PX;
+    font-size: 14PX;
+  }
+
+  .postHeader {
+    padding-top: 6PX;
+    padding-right: 24PX;
+  }
+
+  .title {
+    font-size: 14PX;
+    line-height: 20PX;
+  }
+
+  .desc {
+    margin-top: 4PX;
+    font-size: 11PX;
+    line-height: 16PX;
+  }
+
+  .tagRow {
+    margin-top: 5PX;
+    gap: 5PX;
+  }
+
+  .tag {
+    height: 18PX;
+    border-radius: 6PX;
+    padding: 0 6PX;
+    font-size: 11PX;
+  }
+
+  .commentTitle {
+    margin-top: 4PX;
+    font-size: 14PX;
+    line-height: 18PX;
+  }
+
+  .commentItem {
+    gap: 5PX;
+    padding: 5PX 0;
+  }
+
+  .commentAvatar {
+    width: 24PX;
+    height: 24PX;
+  }
+
+  .commentMeta {
+    gap: 4PX;
+  }
+
+  .commentUser {
+    font-size: 11PX;
+  }
+
+  .commentTime {
+    font-size: 10PX;
+  }
+
+  .commentText {
+    margin-top: 2PX;
+    font-size: 11PX;
+    line-height: 15PX;
+  }
+
+  .actionBar {
+    margin-top: 3PX;
+    padding-top: 5PX;
+    gap: 8PX;
+  }
+
+  .actionBtn {
+    font-size: 12PX;
+  }
+
+  .actionIconImg {
+    width: 15PX;
+    height: 15PX;
+  }
+
+  .inputBar {
+    margin-top: 5PX;
+    gap: 5PX;
+  }
+
+  .inputAvatar {
+    width: 24PX;
+    height: 24PX;
+  }
+
+  .input {
+    height: 30PX;
+    font-size: 11PX;
+    padding: 0 52PX 0 8PX;
+  }
+
+  .sendBtn {
+    min-width: 40PX;
+    height: 22PX;
+    font-size: 10PX;
+    padding: 0 7PX;
+  }
+}
+
+/* 低高度屏幕适配 */
+@media (max-height: 760PX) {
+  .modal {
+    height: min(460PX, 74vh);
+  }
+
+  .commentList {
+    margin-top: 4PX;
+  }
+}

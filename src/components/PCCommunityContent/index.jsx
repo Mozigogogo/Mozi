@@ -552,6 +552,42 @@ export default function PCCommunityContent() {
     }
   };
 
+  // 查询帖子详情（点击弹窗后用接口最新数据覆盖）
+  const fetchPostDetail = async (postId) => {
+    const targetPostId = String(postId || '').trim();
+    if (!targetPostId) return;
+    try {
+      const response = await request({
+        url: Interface.POST_DETAIL_API.replace('{id}', targetPostId),
+      });
+      const detail = response?.data;
+      if (!detail) return;
+
+      setDetailModalPost((prev) => {
+        if (!prev || String(prev.id) !== targetPostId) return prev;
+        return {
+          ...prev,
+          id: detail?.id ?? prev.id,
+          coverImage: detail?.images?.[0] || prev.coverImage,
+          authorName: detail?.nickName || prev.authorName,
+          authorAvatar: detail?.avatar || prev.authorAvatar,
+          timeText: formatTimeAgo(detail?.updatedAt || detail?.createdAt) || prev.timeText,
+          title: detail?.title || prev.title,
+          description: detail?.content || prev.description,
+          tags:
+            Array.isArray(detail?.tags) && detail.tags.length > 0
+              ? detail.tags.map((tag) => String(tag?.name || '').trim()).filter(Boolean)
+              : prev.tags,
+          likeCount: detail?.likeCnt ?? detail?.likeCount ?? prev.likeCount ?? 0,
+          commentCount: detail?.commentCnt ?? detail?.commentCount ?? prev.commentCount ?? 0,
+          shareCount: detail?.shareCnt ?? detail?.shareCount ?? prev.shareCount ?? 0,
+        };
+      });
+    } catch (error) {
+      console.error('获取帖子详情失败:', error);
+    }
+  };
+
   // 弹窗内提交评论（与移动端一致调用 /comments/new）
   const handleDetailSubmitComment = async (content) => {
     const postId = detailModalPost?.id;
@@ -655,8 +691,9 @@ export default function PCCommunityContent() {
     };
 
     setDetailModalPost(mapped);
-    fetchDetailComments(target.id);
     setDetailModalOpen(true);
+    fetchPostDetail(target.id);
+    fetchDetailComments(target.id);
   };
 
   // 跳转到话题详情页

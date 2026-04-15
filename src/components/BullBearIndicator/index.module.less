@@ -203,3 +203,100 @@
   font-size: 13PX;
   margin-bottom: 8PX;
 }
+
+/* 中屏适配 */
+@media (max-width: 1280PX) {
+  .pcContainer {
+    margin-bottom: 12PX;
+    padding: 10PX 12PX;
+    border-radius: 12PX;
+  }
+
+  .pcLeftContent {
+    margin-right: 10PX;
+  }
+
+  .pcQuestion {
+    font-size: 14PX;
+  }
+
+  .pcIndicatorWrapper {
+    gap: 8PX;
+  }
+
+  .pcParticipants {
+    font-size: 12PX;
+  }
+
+  .pcIndicator {
+    height: 32PX;
+    flex: 0 0 380PX;
+    width: 380PX;
+  }
+
+  .pcBullSide,
+  .pcBearSide {
+    min-width: 64PX;
+
+    .label {
+      font-size: 14PX;
+      font-weight: 600;
+    }
+  }
+}
+
+/* 小屏适配 */
+@media (max-width: 1024PX) {
+  .pcContainer {
+    margin-bottom: 8PX;
+    padding: 8PX 10PX;
+    border-radius: 10PX;
+  }
+
+  .pcLeftContent {
+    margin-right: 8PX;
+  }
+
+  .pcQuestion {
+    font-size: 12PX;
+  }
+
+  .pcIndicatorWrapper {
+    gap: 6PX;
+  }
+
+  .pcParticipants {
+    font-size: 11PX;
+  }
+
+  .pcIndicator {
+    height: 28PX;
+    flex: 0 0 300PX;
+    width: 300PX;
+    border-radius: 6PX;
+  }
+
+  .pcBullSide {
+    min-width: 52PX;
+    border-radius: 6PX 0 0 6PX;
+    clip-path: polygon(0 0, 100% 0, calc(100% - 8PX) 100%, 0 100%);
+
+    .label {
+      font-size: 12PX;
+      font-weight: 600;
+      margin-right: 2PX;
+    }
+  }
+
+  .pcBearSide {
+    min-width: 52PX;
+    border-radius: 0 6PX 6PX 0;
+    clip-path: polygon(8PX 0, 100% 0, 100% 100%, 0 100%);
+
+    .label {
+      font-size: 12PX;
+      font-weight: 600;
+      margin-left: 2PX;
+    }
+  }
+}

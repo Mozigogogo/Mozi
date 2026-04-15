@@ -24,14 +24,24 @@
   color: #2F3B52;
   cursor: pointer;
   transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
 }
 
-.pagerBtn:hover:enabled {
+.arrowIcon {
+  font-size: 16PX;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.pagerBtn:not(.disabled):hover {
   border-color: #11B787;
   color: #11B787;
 }
 
-.pagerBtn:disabled {
+.disabled {
   cursor: not-allowed;
   opacity: 0.5;
 }
@@ -46,9 +56,13 @@
   color: #2F3B52;
   cursor: pointer;
   transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
 }
 
-.pageBtn:hover:enabled {
+.pageBtn:not(.disabled):hover {
   background: rgba(17, 183, 135, 0.08);
   color: #11B787;
 }
@@ -58,7 +72,7 @@
   color: #FFFFFF;
 }
 
-.activePage:hover:enabled {
+.activePage:not(.disabled):hover {
   background: #11B787;
   color: #FFFFFF;
 }
@@ -73,4 +87,73 @@
   line-height: 18PX;
   color: #94A3B8;
   margin-left: 2PX;
+}
+
+@media (max-width: 1280PX) {
+  .pager {
+    gap: 8PX;
+  }
+
+  .pages {
+    gap: 4PX;
+  }
+
+  .pagerBtn {
+    height: 24PX;
+    padding: 0 8PX;
+    border-radius: 7PX;
+    font-size: 12PX;
+    line-height: 1;
+  }
+
+  .pageBtn {
+    min-width: 24PX;
+    height: 24PX;
+    padding: 0 6PX;
+    font-size: 12PX;
+    line-height: 1;
+  }
+
+  .arrowIcon {
+    font-size: 14PX;
+  }
+}
+
+@media (max-width: 1024PX) {
+  .pager {
+    gap: 6PX;
+  }
+
+  .pages {
+    gap: 3PX;
+  }
+
+  .pagerBtn {
+    height: 22PX;
+    min-width: 24PX;
+    padding: 0 4PX;
+    border-radius: 6PX;
+    font-size: 11PX;
+  }
+
+  .pageBtn {
+    min-width: 22PX;
+    height: 22PX;
+    padding: 0 5PX;
+    font-size: 11PX;
+  }
+
+  .ellipsis {
+    font-size: 11PX;
+    padding: 0 1PX;
+  }
+
+  .totalPages {
+    font-size: 11PX;
+    margin-left: 0;
+  }
+
+  .arrowIcon {
+    font-size: 12PX;
+  }
 }
