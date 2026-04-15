@@ -153,7 +153,8 @@
   margin: 0;
   padding: 18PX 0 0;
   flex: 1; /* 占据父容器的全部空间 */
-  min-height: 100%; /* 最小高度100%，内容多时可以超出 */
+  min-height: 0;
+  height: 100%;
   display: flex !important; /* 强制使用flex布局 */
   flex-direction: column !important;
   background: #FFFFFF;
@@ -225,6 +226,30 @@
       background-color: #F8FAFC;
     }
   }
+
+  .pcScrollArea {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    &::-webkit-scrollbar {
+      width: 6PX;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #d9d9d9;
+      border-radius: 3PX;
+
+      &:hover {
+        background: #bfbfbf;
+      }
+    }
+  }
   
   .topicRank {
     width: 28PX;
@@ -270,7 +295,11 @@
     gap: 4PX;
   }
   
-  .pcCurrency,
+  .heatIcon {
+    width: 14PX;
+    height: 14PX;
+  }
+
   .heatValue {
     font-size: 14PX;
     line-height: 20PX;
@@ -306,5 +335,11 @@
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+  }
+
+  .pcPagination {
+    flex-shrink: 0;
+    padding: 10PX 16PX 14PX;
+    border-top: 1PX solid #F1F5F9;
   }
 }

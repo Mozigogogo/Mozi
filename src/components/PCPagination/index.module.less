@@ -1,0 +1,76 @@
+.wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.pager {
+  display: inline-flex;
+  align-items: center;
+  gap: 10PX;
+}
+
+.pages {
+  display: inline-flex;
+  align-items: center;
+  gap: 6PX;
+}
+
+.pagerBtn {
+  height: 28PX;
+  padding: 0 10PX;
+  border-radius: 8PX;
+  border: 1PX solid #E9EEF5;
+  background: #FFFFFF;
+  color: #2F3B52;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pagerBtn:hover:enabled {
+  border-color: #11B787;
+  color: #11B787;
+}
+
+.pagerBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.pageBtn {
+  min-width: 28PX;
+  height: 28PX;
+  padding: 0 8PX;
+  border-radius: 999PX;
+  border: 1PX solid transparent;
+  background: transparent;
+  color: #2F3B52;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pageBtn:hover:enabled {
+  background: rgba(17, 183, 135, 0.08);
+  color: #11B787;
+}
+
+.activePage {
+  background: #11B787;
+  color: #FFFFFF;
+}
+
+.activePage:hover:enabled {
+  background: #11B787;
+  color: #FFFFFF;
+}
+
+.ellipsis {
+  color: #9AA6B5;
+  padding: 0 2PX;
+}
+
+.totalPages {
+  font-size: 12PX;
+  line-height: 18PX;
+  color: #94A3B8;
+  margin-left: 2PX;
+}

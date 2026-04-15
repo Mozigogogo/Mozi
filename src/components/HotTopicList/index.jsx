@@ -1,6 +1,7 @@
 'use client';
 import { SpinLoading } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
+import PCPagination from '@/components/PCPagination';
 import styles from './index.module.less';
 
 /**
@@ -27,36 +28,19 @@ export default function HotTopicList({
   nov2Icon,
   nov3Icon,
   hotIcon,
-  isPC = false
+  isPC = false,
+  page = 1,
+  pageSize = 20,
+  total = 0,
+  onPageChange,
 }) {
   const { t } = useTranslation();
   const getTopicTitle = (topic) => topic?.name || topic?.title || '';
   const getTopicDesc = (topic) => topic?.description || t('community.actions.noDescription');
   const getTopicTime = (topic) => (topic?.createdAt || topic?.createTime || '').replace('T', ' ');
   const getTopicHeat = (topic) => topic?.score || topic?.postCount || 0;
-
-  return (
-    <div className={`${styles.hotTopics} ${isPC ? styles.pcMode : ''}`}>
-      {isPC && (
-        <div className={styles.pcHeader}>
-          <div className={styles.pcHeaderTitle}>
-            <span className={styles.pcHeaderDot} />
-            <span className={styles.pcHeaderText}>热门榜单</span>
-            <span className={styles.pcHeaderBadge}>HOT</span>
-          </div>
-          <button
-            type="button"
-            className={styles.pcCreateButton}
-            onClick={(e) => {
-              e.stopPropagation();
-              onCreateTopic?.();
-            }}
-          >
-            创建话题
-          </button>
-        </div>
-      )}
-
+  const listContent = (
+    <>
       {topics.length > 0 && topics.map((topic, index) => (
         <div 
           key={topic.id} 
@@ -65,14 +49,14 @@ export default function HotTopicList({
         >
           {/* 排名 */}
           <div className={`${styles.topicRank} ${index < 3 ? styles.medalRank : ''}`}>
-            {index === 0 ? (
+            {(page - 1) * pageSize + index === 0 ? (
               <img className={styles.rankMedal} src={nov1Icon} alt="第1名" />
-            ) : index === 1 ? (
+            ) : (page - 1) * pageSize + index === 1 ? (
               <img className={styles.rankMedal} src={nov2Icon} alt="第2名" />
-            ) : index === 2 ? (
+            ) : (page - 1) * pageSize + index === 2 ? (
               <img className={styles.rankMedal} src={nov3Icon} alt="第3名" />
             ) : (
-              index + 1
+              (page - 1) * pageSize + index + 1
             )}
           </div>
 
@@ -87,8 +71,7 @@ export default function HotTopicList({
           {/* 右侧信息 */}
           <div className={styles.topicRightInfo}>
             <div className={styles.heatText}>
-              {!isPC && <img className={styles.heatIcon} src={hotIcon} alt="热度" />}
-              {isPC && <span className={styles.pcCurrency}>$</span>}
+              <img className={styles.heatIcon} src={hotIcon} alt="热度" />
               <span className={styles.heatValue}>{getTopicHeat(topic)}</span>
             </div>
             <span className={styles.timeText}>
@@ -129,6 +112,43 @@ export default function HotTopicList({
           <span>{t('community.actions.noMoreContent')}</span>
         </div>
       )}
+    </>
+  );
+
+  return (
+    <div className={`${styles.hotTopics} ${isPC ? styles.pcMode : ''}`}>
+      {isPC && (
+        <div className={styles.pcHeader}>
+          <div className={styles.pcHeaderTitle}>
+            <span className={styles.pcHeaderDot} />
+            <span className={styles.pcHeaderText}>热门榜单</span>
+            <span className={styles.pcHeaderBadge}>HOT</span>
+          </div>
+          <button
+            type="button"
+            className={styles.pcCreateButton}
+            onClick={(e) => {
+              e.stopPropagation();
+              onCreateTopic?.();
+            }}
+          >
+            创建话题
+          </button>
+        </div>
+      )}
+
+      {isPC ? <div className={styles.pcScrollArea}>{listContent}</div> : listContent}
+
+      {isPC ? (
+        <PCPagination
+          className={styles.pcPagination}
+          current={page}
+          total={total}
+          pageSize={pageSize}
+          loading={loading}
+          onChange={onPageChange}
+        />
+      ) : null}
     </div>
   );
 }

@@ -375,6 +375,12 @@
   }
 }
 
+.leftPagination {
+  flex-shrink: 0;
+  margin-top: 10PX;
+  padding-top: 10PX;
+}
+
 .commentInputWrapper {
   margin-top: 12PX;
   flex-shrink: 0; /* 固定在底部，不参与滚动 */
@@ -404,25 +410,6 @@
 
 .hotTopicsScrollContainer {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   min-height: 0; /* 关键：允许flex子元素缩小到内容以下 */
-  
-  /* 自定义滚动条样式 */
-  &::-webkit-scrollbar {
-    width: 6PX;
-  }
-  
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: #d9d9d9;
-    border-radius: 3PX;
-    
-    &:hover {
-      background: #bfbfbf;
-    }
-  }
 }

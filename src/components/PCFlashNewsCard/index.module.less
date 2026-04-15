@@ -21,7 +21,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #2f80ff;
+  background: #11B787;
 }
 
 .headerTitle {
@@ -66,8 +66,62 @@
 }
 
 .list {
+  position: relative;
   display: flex;
   flex-direction: column;
+}
+
+.skeletonItem {
+  pointer-events: none;
+}
+
+.skeletonBlock,
+.skeletonLine,
+.skeletonPill {
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.04) 25%, rgba(0, 0, 0, 0.08) 37%, rgba(0, 0, 0, 0.04) 63%);
+  background-size: 400% 100%;
+  animation: pcFlashNewsSkeleton 1.2s ease-in-out infinite;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.skeletonPill {
+  border-radius: 999px;
+  height: 16px;
+  width: 44px;
+}
+
+.skeletonLineXs {
+  height: 10px;
+  width: 64px;
+  border-radius: 6px;
+}
+
+.skeletonLineSm {
+  height: 12px;
+  width: 72px;
+  border-radius: 6px;
+}
+
+.skeletonLineMd {
+  height: 12px;
+  width: 85%;
+  border-radius: 6px;
+}
+
+.skeletonLineLg {
+  height: 12px;
+  width: 70%;
+  border-radius: 6px;
+}
+
+@keyframes pcFlashNewsSkeleton {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
 }
 
 .item {
@@ -175,3 +229,60 @@
 .actionLike {
   color: #11b787;
 }
+
+.paginationWrap {
+  display: flex;
+  justify-content: center;
+  padding-top: 8px;
+}
+
+.loadingWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  color: #8c98ab;
+  font-size: 13px;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(17, 183, 135, 0.25);
+  border-top-color: #11B787;
+  animation: pcFlashNewsSpin 0.8s linear infinite;
+}
+
+@keyframes pcFlashNewsSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loadingText {
+  color: #8c98ab;
+}
+
+.loadingOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.68);
+  backdrop-filter: blur(0.5px);
+}
+
+.emptyWrap {
+  padding: 16px;
+  text-align: center;
+  color: #9aa6b5;
+  font-size: 13px;
+}
+

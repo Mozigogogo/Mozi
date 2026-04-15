@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Empty, message, Spin } from 'antd';
 import { useRouter } from 'next/navigation';
 import { request } from '@/utils/request';
@@ -17,6 +17,7 @@ import PCTopicSearchModal from '@/components/PCTopicSearchModal';
 import PCCapsuleTabs from '@/components/PCCapsuleTabs';
 import PCPublishComposer from '@/components/PCPublishComposer';
 import PCFlashNewsCard from '@/components/PCFlashNewsCard';
+import PCPagination from '@/components/PCPagination';
 import { dislikePost, undislikePost } from '@/api/community';
 import styles from './index.module.less';
 
@@ -25,48 +26,21 @@ import styles from './index.module.less';
  */
 export default function PCCommunityContent() {
   const router = useRouter();
+  const COIN_POST_PAGE_SIZE = 5;
   const capsuleTabItems = [
     { key: 'coin', label: '币种' },
     { key: 'discover', label: '发现好币' },
     { key: 'qa', label: '不懂就问' }
   ];
-  const flashNewsItems = [
-    {
-      id: 1,
-      account: '快讯账户',
-      tag: '资讯',
-      time: '50 分钟前',
-      title: 'Hyperliquid上RWA交易量近期创新高，未平仓合约量突破13亿美元',
-      desc: 'Hyperliquid上RWA交易量近期创新高，未平仓合约量突破13亿美元...',
-      likeCount: 7,
-      commentCount: 2,
-      shareCount: 2
-    },
-    {
-      id: 2,
-      account: '快讯账户',
-      tag: '资讯',
-      time: '50 分钟前',
-      title: 'Hyperliquid上RWA交易量近期创新高，未平仓合约量突破13亿美元',
-      desc: 'Hyperliquid上RWA交易量近期创新高，未平仓合约量突破13亿美元...',
-      likeCount: 7,
-      commentCount: 2,
-      shareCount: 2
-    },
-    {
-      id: 3,
-      account: '快讯账户',
-      tag: '资讯',
-      time: '50 分钟前',
-      title: 'Hyperliquid上RWA交易量近期创新高，未平仓合约量突破13亿美元',
-      desc: 'Hyperliquid上RWA交易量近期创新高，未平仓合约量突破13亿美元...',
-      likeCount: 7,
-      commentCount: 2,
-      shareCount: 2
-    }
-  ];
+  const [flashNewsItems, setFlashNewsItems] = useState([]);
+  const [flashNewsLoading, setFlashNewsLoading] = useState(false);
+  const [flashNewsPage, setFlashNewsPage] = useState(1);
+  const [flashNewsTotal, setFlashNewsTotal] = useState(0);
+  const FLASH_NEWS_PAGE_SIZE = 3;
   
   const [coinPosts, setCoinPosts] = useState([]); // 币种帖子
+  const [coinPostsPage, setCoinPostsPage] = useState(1);
+  const [coinPostsTotal, setCoinPostsTotal] = useState(0);
   const [likedPosts, setLikedPosts] = useState({});
   const [dislikedPosts, setDislikedPosts] = useState({});
   const [coinLoading, setCoinLoading] = useState(false); // 币种帖子加载状态
@@ -76,15 +50,13 @@ export default function PCCommunityContent() {
   const [hotTopics, setHotTopics] = useState([]); // 热门话题列表
   const [hotTopicsLoading, setHotTopicsLoading] = useState(false); // 热门话题加载状态
   const [hotTopicsPage, setHotTopicsPage] = useState(1); // 热门话题当前页码
-  const [hotTopicsAllLoaded, setHotTopicsAllLoaded] = useState(false); // 热门话题是否全部加载完
+  const [hotTopicsTotal, setHotTopicsTotal] = useState(0);
+  const HOT_TOPICS_PAGE_SIZE = 10;
   const [searchKeyword, setSearchKeyword] = useState(''); // 搜索关键词
   const [searchResults, setSearchResults] = useState([]); // 搜索结果
   const [searchLoading, setSearchLoading] = useState(false); // 搜索加载状态
   const [showSearchPanel, setShowSearchPanel] = useState(false); // 是否显示搜索下拉面板
   const [activeCapsuleTab, setActiveCapsuleTab] = useState('coin'); // 顶部胶囊tab
-  
-  // 用于引用右侧热门榜单容器
-  const hotTopicsContainerRef = useRef(null);
   
   // 固定币种配置
   const coinTabs = [
@@ -136,6 +108,49 @@ export default function PCCommunityContent() {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
   };
 
+  // 获取快讯（与移动端一致：/posts?userType=virtual）
+  const fetchFlashNews = async (nextPage = flashNewsPage) => {
+    if (flashNewsLoading) return;
+    setFlashNewsLoading(true);
+    try {
+      const res = await request({
+        url: Interface.POSTS_API,
+        data: { page: nextPage, size: FLASH_NEWS_PAGE_SIZE, userType: 'virtual' },
+      });
+      const list = res?.data?.data || [];
+      const total = res?.data?.total ?? 0;
+      setFlashNewsTotal(Number.isFinite(Number(total)) ? Number(total) : 0);
+      setFlashNewsPage(nextPage);
+
+      const mapped = list.slice(0, FLASH_NEWS_PAGE_SIZE).map((item) => {
+        const title = String(item?.title || '').trim();
+        const content = String(item?.content || '').trim();
+        const nickName = String(item?.nickName || item?.username || '快讯').trim();
+        const category = String(item?.category || '资讯').trim();
+        const timeSource = item?.updatedAt || item?.createdAt || '';
+        return {
+          id: item?.id,
+          account: nickName || '快讯',
+          tag: category || '资讯',
+          time: formatTimeAgo(timeSource),
+          title: title || content.slice(0, 40) || '快讯',
+          desc: content || title,
+          likeCount: item?.likeCnt ?? item?.likeCount ?? 0,
+          commentCount: item?.commentCnt ?? item?.commentCount ?? 0,
+          shareCount: item?.shareCnt ?? item?.shareCount ?? 0,
+        };
+      });
+      setFlashNewsItems(mapped);
+    } catch (e) {
+      console.error('获取快讯失败:', e);
+      message.error('获取快讯失败');
+      setFlashNewsItems([]);
+      setFlashNewsTotal(0);
+    } finally {
+      setFlashNewsLoading(false);
+    }
+  };
+
   // 统一解析帖子作者 userId（兼容不同接口字段命名）
   const extractPostUserId = (item) => {
     if (!item || typeof item !== 'object') return '';
@@ -158,19 +173,24 @@ export default function PCCommunityContent() {
   };
 
   // 获取币种相关帖子
-  const fetchCoinPosts = async (coin) => {
+  const fetchCoinPosts = async (coin, nextPage = 1) => {
     setCoinLoading(true);
     try {
       const response = await request({
         url: Interface.POSTS_API,
         data: {
-          page: 1,
-          size: 5, // 最多显示5个帖子
+          page: nextPage,
+          size: COIN_POST_PAGE_SIZE,
           tag: coin // 根据币种标签筛选
         }
       });
       
       if (response?.data?.data?.length > 0) {
+        const totalRaw = response?.data?.total;
+        const total = Number.isFinite(Number(totalRaw)) ? Number(totalRaw) : response?.data?.data?.length || 0;
+        setCoinPostsTotal(total);
+        setCoinPostsPage(nextPage);
+
         const formattedData = response.data.data.map(item => ({
           id: item.id,
           avatar: item.avatar || '/default-avatar.png',
@@ -196,27 +216,28 @@ export default function PCCommunityContent() {
         setCoinPosts(formattedData);
       } else {
         setCoinPosts([]);
+        setCoinPostsTotal(0);
+        setCoinPostsPage(nextPage);
       }
     } catch (error) {
       console.error('获取币种帖子失败:', error);
       setCoinPosts([]);
+      setCoinPostsTotal(0);
     } finally {
       setCoinLoading(false);
     }
   };
 
-  // 获取热门话题（支持分页和搜索）
-  const fetchHotTopics = async (reset = false, keyword = '') => {
-    if (hotTopicsLoading && !reset) return;
-    
+  // 获取热门话题（分页）
+  const fetchHotTopics = async (nextPage = 1, keyword = '') => {
+    if (hotTopicsLoading) return;
+
     setHotTopicsLoading(true);
-    
-    const currentPage = reset ? 1 : hotTopicsPage;
-    
+
     try {
       const requestData = {
-        page: currentPage,
-        size: 20 // 每页20条
+        page: nextPage,
+        size: HOT_TOPICS_PAGE_SIZE
       };
       
       // 如果有搜索关键词，添加到请求中
@@ -231,29 +252,20 @@ export default function PCCommunityContent() {
         url: apiUrl,
         data: requestData
       });
-      
-      if (response?.data?.data?.length > 0) {
-        const { data, totalPages } = response.data;
-        
-        if (reset || currentPage === 1) {
-          setHotTopics(data);
-        } else {
-          setHotTopics(prev => [...prev, ...data]);
-        }
-        
-        setHotTopicsPage(currentPage + 1);
-        setHotTopicsAllLoaded(currentPage >= totalPages);
-      } else {
-        if (reset || currentPage === 1) {
-          setHotTopics([]);
-        }
-        setHotTopicsAllLoaded(true);
-      }
+
+      const data = Array.isArray(response?.data?.data) ? response.data.data : [];
+      const totalRaw = response?.data?.total;
+      const total = Number.isFinite(Number(totalRaw))
+        ? Number(totalRaw)
+        : Math.max(0, (Number(response?.data?.totalPages) || 0) * HOT_TOPICS_PAGE_SIZE);
+
+      setHotTopics(data);
+      setHotTopicsPage(nextPage);
+      setHotTopicsTotal(total);
     } catch (error) {
       console.error('获取热门话题失败:', error);
-      if (reset || currentPage === 1) {
-        setHotTopics([]);
-      }
+      setHotTopics([]);
+      setHotTopicsTotal(0);
     } finally {
       setHotTopicsLoading(false);
     }
@@ -524,57 +536,22 @@ export default function PCCommunityContent() {
   // 初始加载
   useEffect(() => {
     fetchCoinPosts(selectedCoin); // 加载币种帖子
-    fetchHotTopics(true); // 加载热门话题（重置）
+    fetchHotTopics(1); // 加载热门话题（第1页）
+    fetchFlashNews(1); // 加载快讯（第1页）
   }, []);
-  
-  // 监听热门榜单滚动加载更多
-  useEffect(() => {
-    const container = hotTopicsContainerRef.current;
-    if (!container) return;
-    
-    let scrollTimer = null;
-    let isLoadingMore = false;
-    
-    const handleScroll = () => {
-      if (isLoadingMore) return;
-      
-      if (scrollTimer) {
-        clearTimeout(scrollTimer);
-      }
-      
-      scrollTimer = setTimeout(() => {
-        const scrollHeight = container.scrollHeight;
-        const scrollTop = container.scrollTop;
-        const clientHeight = container.clientHeight;
-        const distanceToBottom = scrollHeight - scrollTop - clientHeight;
-        
-        // 距离底部100px时触发加载
-        if (distanceToBottom < 100 && !hotTopicsAllLoaded && !hotTopicsLoading) {
-          isLoadingMore = true;
-          fetchHotTopics(false, searchKeyword).finally(() => {
-            setTimeout(() => {
-              isLoadingMore = false;
-            }, 100);
-          });
-        }
-      }, 300);
-    };
-    
-    container.addEventListener('scroll', handleScroll, { passive: true });
-    
-    return () => {
-      container.removeEventListener('scroll', handleScroll);
-      if (scrollTimer) {
-        clearTimeout(scrollTimer);
-      }
-    };
-  }, [hotTopicsAllLoaded, hotTopicsLoading, searchKeyword]);
 
   // 币种切换时重新加载
   useEffect(() => {
-    fetchCoinPosts(selectedCoin);
+    fetchCoinPosts(selectedCoin, 1);
     fetchVoteData(selectedCoin);
   }, [selectedCoin]);
+
+  const coinPostsTotalPages = Math.max(1, Math.ceil((coinPostsTotal || 0) / COIN_POST_PAGE_SIZE));
+  const handleCoinPostsPageChange = (targetPage) => {
+    const safePage = Math.max(1, Math.min(targetPage, coinPostsTotalPages));
+    if (safePage === coinPostsPage || coinLoading) return;
+    fetchCoinPosts(selectedCoin, safePage);
+  };
 
   return (
     <div className={styles.pcCommunityContent}>
@@ -672,6 +649,16 @@ export default function PCCommunityContent() {
                   <Empty description={`暂无${selectedCoin}相关帖子`} />
                 )}
               </div>
+              {coinPostsTotalPages > 1 && (
+                <PCPagination
+                  className={styles.leftPagination}
+                  current={coinPostsPage}
+                  total={coinPostsTotal}
+                  pageSize={COIN_POST_PAGE_SIZE}
+                  loading={coinLoading}
+                  onChange={handleCoinPostsPageChange}
+                />
+              )}
               
             </div>
           </div>
@@ -679,16 +666,23 @@ export default function PCCommunityContent() {
         rightContent={
           <div className={styles.rightContentWrapper}>
             <div className={styles.flashNewsWrapper}>
-              <PCFlashNewsCard items={flashNewsItems} />
+              <PCFlashNewsCard
+                items={flashNewsItems}
+                loading={flashNewsLoading}
+                onRefresh={() => fetchFlashNews(1)}
+                page={flashNewsPage}
+                pageSize={FLASH_NEWS_PAGE_SIZE}
+                total={flashNewsTotal}
+                onPageChange={(p) => fetchFlashNews(p)}
+              />
             </div>
             <div 
-              ref={hotTopicsContainerRef}
               className={styles.hotTopicsScrollContainer}
             >
               <HotTopicList
                 topics={hotTopics}
                 loading={hotTopicsLoading}
-                allLoaded={hotTopicsAllLoaded}
+                allLoaded={false}
                 pullRefresh={false}
                 onTopicClick={goToTopicDetail}
                 onCreateTopic={goToPostPage}
@@ -697,6 +691,10 @@ export default function PCCommunityContent() {
                 nov3Icon={nov3Icon}
                 hotIcon={hotIcon}
                 isPC={true}
+                page={hotTopicsPage}
+                pageSize={HOT_TOPICS_PAGE_SIZE}
+                total={hotTopicsTotal}
+                onPageChange={(p) => fetchHotTopics(p, searchKeyword)}
               />
             </div>
           </div>
