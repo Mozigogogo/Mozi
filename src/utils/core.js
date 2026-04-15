@@ -9,7 +9,14 @@ export const isTelegramEnv = () => {
   if (typeof window === 'undefined') return false;
   
   const telegramWebApp = window.Telegram?.WebApp;
-  if (!telegramWebApp) return false;
+  if (!telegramWebApp) {
+    // 兜底：某些 Telegram WebView 场景下 SDK 未及时注入，
+    // 但 URL hash 仍携带 tgWebAppData / tgWebAppPlatform。
+    const hash = window.location?.hash || '';
+    const raw = hash.startsWith('#') ? hash.slice(1) : hash;
+    const hashParams = new URLSearchParams(raw);
+    return hashParams.has('tgWebAppData') || hashParams.has('tgWebAppPlatform');
+  }
   
   // 检查是否有真实的 Telegram 数据
   const hasInitData = telegramWebApp.initData && telegramWebApp.initData.length > 0;
@@ -45,12 +52,22 @@ export const getAppChannel = () => {
   // 如果 localStorage 中没有，则实时检测（兜底逻辑）
   const telegramWebApp = window.Telegram?.WebApp;
   if (!telegramWebApp) {
-    localStorage.setItem('appChannel', 'pc');
-    debugLog('fallback write appChannel=pc (WebApp missing)', {
+    const hash = window.location?.hash || '';
+    const raw = hash.startsWith('#') ? hash.slice(1) : hash;
+    const hashParams = new URLSearchParams(raw);
+    const hasTgWebAppData = hashParams.has('tgWebAppData');
+    const hasTgWebAppPlatform = hashParams.has('tgWebAppPlatform');
+    const fallbackIsTelegram = hasTgWebAppData || hasTgWebAppPlatform;
+    const fallbackChannel = fallbackIsTelegram ? 'tg' : 'pc';
+    localStorage.setItem('appChannel', fallbackChannel);
+    debugLog('fallback write appChannel via URL hash', {
       hasTelegramObject: !!window.Telegram,
       hasWebApp: false,
+      hasTgWebAppData,
+      hasTgWebAppPlatform,
+      fallbackChannel,
     });
-    return 'pc';
+    return fallbackChannel;
   }
   
   // 检查是否有真实的 Telegram 数据

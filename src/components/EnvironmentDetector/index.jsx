@@ -17,6 +17,11 @@ export default function EnvironmentDetector() {
 
     const detectEnvironment = () => {
       const telegramWebApp = window.Telegram?.WebApp;
+      const hash = window.location?.hash || '';
+      const rawHash = hash.startsWith('#') ? hash.slice(1) : hash;
+      const hashParams = new URLSearchParams(rawHash);
+      const hasTgWebAppDataInHash = hashParams.has('tgWebAppData');
+      const hasTgWebAppPlatformInHash = hashParams.has('tgWebAppPlatform');
       
       // 关键：即使脚本加载了，也要检查是否真的在 Telegram 环境中
       // 真正的 Telegram 环境会有以下特征之一：
@@ -28,7 +33,12 @@ export default function EnvironmentDetector() {
       const hasPlatform = telegramWebApp?.platform && telegramWebApp.platform !== 'unknown';
       
       // 只有满足以上任一条件，才认为是真正的 Telegram 环境
-      const isTelegram = hasInitData || hasInitDataUnsafe || hasPlatform;
+      const isTelegram =
+        hasInitData ||
+        hasInitDataUnsafe ||
+        hasPlatform ||
+        hasTgWebAppDataInHash ||
+        hasTgWebAppPlatformInHash;
       const channel = isTelegram ? 'tg' : 'pc';
 
       const prevChannel = localStorage.getItem('appChannel');
@@ -38,6 +48,8 @@ export default function EnvironmentDetector() {
         hasInitData,
         hasInitDataUnsafe,
         hasPlatform,
+        hasTgWebAppDataInHash,
+        hasTgWebAppPlatformInHash,
         platform: telegramWebApp?.platform || null,
         initDataLength: telegramWebApp?.initData?.length || 0,
         channel,
