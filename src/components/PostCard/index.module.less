@@ -31,6 +31,7 @@
   
   .postHeader {
     margin-bottom: 8PX;
+    align-items: flex-start;
   }
   
   .avatar {
@@ -125,6 +126,24 @@
       font-size: 16PX;
     }
   }
+
+  .moreButton {
+    width: 32PX;
+    height: 32PX;
+    margin-top: 0;
+    border-radius: 8PX;
+    font-size: 20PX;
+
+    :global {
+      .anticon {
+        line-height: 1;
+        display: inline-flex;
+      }
+      svg {
+        display: block;
+      }
+    }
+  }
 }
 
 .postWatermark {
@@ -146,6 +165,55 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
+}
+
+.moreButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 8px;
+  flex-shrink: 0;
+  margin-left: 12px;
+  color: #9ca3af;
+  font-size: 18px;
+
+  &:hover {
+    background: rgba(243, 244, 246, 1);
+  }
+}
+
+.postMoreDropdown {
+  :global {
+    .ant-dropdown-menu {
+      padding: 6PX;
+      border-radius: 12PX;
+      min-width: 140PX;
+    }
+    .ant-dropdown-menu-item {
+      border-radius: 10PX;
+    }
+  }
+}
+
+.reportMenuItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8PX;
+  color: rgba(17, 24, 39, 1);
+  font-size: 14PX;
+
+  :global {
+    .anticon {
+      color: rgba(239, 68, 68, 1);
+      font-size: 16PX;
+    }
+  }
 }
 
 .userInfo { 
@@ -281,6 +349,10 @@
   margin-left: 52px; 
   padding-right: 12px; 
   justify-content: space-between; /* 两端对齐，右侧留小距离 */ 
+}
+
+.postFooterNoDivider {
+  border-top: none !important;
 }
 
 .postAction { 

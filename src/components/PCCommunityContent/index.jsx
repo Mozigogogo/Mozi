@@ -12,9 +12,7 @@ import CoinTabBar from '@/components/CoinTabBar';
 import BullBearIndicator from '@/components/BullBearIndicator';
 import HotTopicSearchBar from '@/components/HotTopicSearchBar';
 import HotTopicList from '@/components/HotTopicList';
-import CommentInput from '@/components/CommentInput';
 import PCTopicSearchModal from '@/components/PCTopicSearchModal';
-import FloatingPostButton from '@/components/FloatingPostButton';
 import PCCapsuleTabs from '@/components/PCCapsuleTabs';
 import PCPublishComposer from '@/components/PCPublishComposer';
 import PCFlashNewsCard from '@/components/PCFlashNewsCard';
@@ -444,44 +442,8 @@ export default function PCCommunityContent() {
     router.push('/post');
   };
 
-  // 处理评论提交
-  const handleCommentSubmit = async (content) => {
-    // 由于这是币种讨论区，我们需要创建一个新帖子而不是评论
-    // 如果需要评论特定帖子，应该在帖子详情页进行
-    try {
-      const response = await request({
-        url: Interface.POST_NEW,
-        method: 'POST',
-        data: {
-          title: `关于 ${selectedCoin} 的讨论`,
-          content: content,
-          category: '不懂就问',
-          tags: [selectedCoin]
-        }
-      });
-
-      if (response?.data || response?.success) {
-        message.success('发表成功');
-        // 刷新币种帖子列表
-        fetchCoinPosts(selectedCoin);
-        
-        // 尝试完成发帖任务
-        try {
-          await request({
-            url: Interface.TASK_COMPLETE,
-            method: 'POST',
-            data: { taskCode: 'POST' }
-          });
-        } catch (taskError) {
-          console.error('发帖任务上报失败:', taskError);
-        }
-      } else {
-        message.error(response?.message || response?.errorMsg || '发表失败');
-      }
-    } catch (error) {
-      console.error('发表失败:', error);
-      message.error('发表失败，请稍后重试');
-    }
+  const goToCoinDiscussionList = () => {
+    router.push('/list?category=不懂就问');
   };
 
   // 初始加载
@@ -563,13 +525,13 @@ export default function PCCommunityContent() {
               <div className={styles.leftContentHeader}>
                 <SectionTitle 
                   title="" 
-                  onMoreClick={() => router.push('/list?category=不懂就问')}
+                  showMore={false}
                   extra={
                     <CoinTabBar
                       coinTabs={coinTabs}
                       selectedCoin={selectedCoin}
                       onCoinSelect={setSelectedCoin}
-                      onMoreClick={() => console.log('点击更多币种')}
+                      onMoreClick={goToCoinDiscussionList}
                       moreText="更多"
                       isPC={true}
                     />
@@ -611,6 +573,7 @@ export default function PCCommunityContent() {
                         isLiked={post.isLiked || likedPosts[post.id]}
                         formatTimeAgo={formatTimeAgo}
                         isPC={true}
+                        showFooterDivider={false}
                       />
                     ))}
                   </div>
@@ -619,14 +582,6 @@ export default function PCCommunityContent() {
                 )}
               </div>
               
-              {/* 评论输入框 - 固定在底部 */}
-              <div className={styles.commentInputWrapper}>
-                <CommentInput
-                  placeholder={`发表关于 ${selectedCoin} 的看法`}
-                  onSubmit={handleCommentSubmit}
-                  isPC={true}
-                />
-              </div>
             </div>
           </div>
         }
@@ -645,6 +600,7 @@ export default function PCCommunityContent() {
                 allLoaded={hotTopicsAllLoaded}
                 pullRefresh={false}
                 onTopicClick={goToTopicDetail}
+                onCreateTopic={goToPostPage}
                 nov1Icon={nov1Icon}
                 nov2Icon={nov2Icon}
                 nov3Icon={nov3Icon}
@@ -656,17 +612,6 @@ export default function PCCommunityContent() {
         }
         leftWidth={70}
         gap={20}
-      />
-      
-      {/* 发帖按钮 - 固定在屏幕右下角 */}
-      <FloatingPostButton 
-        onClick={goToPostPage}
-        iconSrc={publishIcon}
-        ariaLabel="发帖"
-        altText="发帖"
-        size={70}
-        right={80}
-        bottom={80}
       />
     </div>
   );

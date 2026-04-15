@@ -1,5 +1,7 @@
 'use client';
 
+import { Dropdown } from 'antd';
+import { EllipsisOutlined, WarningOutlined } from '@ant-design/icons';
 import styles from './index.module.less';
 
 const CDN_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community';
@@ -31,8 +33,21 @@ export default function PostCard({
   onTopicClick,
   isLiked = false,
   formatTimeAgo,
-  isPC = false
+  isPC = false,
+  showFooterDivider = true,
 }) {
+  const menuItems = [
+    {
+      key: 'report',
+      label: (
+        <span className={styles.reportMenuItem}>
+          <WarningOutlined />
+          <span>举报内容</span>
+        </span>
+      ),
+    },
+  ];
+
   return (
     <div 
       className={`${styles.postItem} ${isPC ? styles.pcPostItem : ''}`} 
@@ -65,6 +80,29 @@ export default function PostCard({
             </span>
           </div>
         </div>
+
+        {isPC && (
+          <Dropdown
+            trigger={['click']}
+            placement="bottomRight"
+            menu={{
+              items: menuItems,
+              onClick: (info) => {
+                info?.domEvent?.stopPropagation?.();
+              },
+            }}
+            overlayClassName={styles.postMoreDropdown}
+          >
+            <button
+              type="button"
+              className={styles.moreButton}
+              aria-label="more actions"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <EllipsisOutlined />
+            </button>
+          </Dropdown>
+        )}
       </div>
       
       <div className={styles.postContent}>
@@ -109,7 +147,7 @@ export default function PostCard({
         </div>
       )}
       
-      <div className={styles.postFooter}>
+      <div className={`${styles.postFooter} ${showFooterDivider ? '' : styles.postFooterNoDivider}`}>
         <div 
           className={styles.postAction} 
           onClick={(e) => {
