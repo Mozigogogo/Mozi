@@ -2,6 +2,7 @@
 
 import { Dropdown } from 'antd';
 import { EllipsisOutlined, WarningOutlined } from '@ant-design/icons';
+import { useRouter } from 'next/navigation';
 import styles from './index.module.less';
 
 const CDN_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community';
@@ -22,6 +23,7 @@ const shareIcon = `${CDN_ICON}/share.png`;
  * @param {boolean} isLiked - 是否已点赞
  * @param {Function} formatTimeAgo - 时间格式化函数
  * @param {boolean} isPC - 是否为PC端
+ * @param {boolean} enableReportMenu - 是否显示右上角举报菜单（移动端默认false）
  */
 export default function PostCard({
   post,
@@ -35,7 +37,20 @@ export default function PostCard({
   formatTimeAgo,
   isPC = false,
   showFooterDivider = true,
+  enableReportMenu = false,
 }) {
+  const router = useRouter();
+
+  const handleReportNavigate = () => {
+    const postId = String(post?.id ?? '').trim();
+    const authorId = String(post?.userId ?? '').trim();
+    const params = new URLSearchParams();
+    if (postId) params.set('postId', postId);
+    if (authorId) params.set('authorId', authorId);
+    const query = params.toString();
+    router.push(query ? `/report/comment?${query}` : '/report/comment');
+  };
+
   const menuItems = [
     {
       key: 'report',
@@ -81,7 +96,7 @@ export default function PostCard({
           </div>
         </div>
 
-        {isPC && (
+        {(isPC || enableReportMenu) && (
           <Dropdown
             trigger={['click']}
             placement="bottomRight"
@@ -89,6 +104,9 @@ export default function PostCard({
               items: menuItems,
               onClick: (info) => {
                 info?.domEvent?.stopPropagation?.();
+                if (info?.key === 'report') {
+                  handleReportNavigate();
+                }
               },
             }}
             overlayClassName={styles.postMoreDropdown}

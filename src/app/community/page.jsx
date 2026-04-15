@@ -1027,6 +1027,7 @@ export default function CommunityPage() {
               onTopicClick={(topicId, topicName) => window.location.href = `/topicinfo?id=${topicId}&title=${topicName}`}
               isLiked={post.isLiked || likedPosts[post.id]}
               formatTimeAgo={formatTimeAgo}
+              enableReportMenu={true}
             />
           )
         ))}
