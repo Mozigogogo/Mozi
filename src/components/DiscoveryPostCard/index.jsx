@@ -19,8 +19,10 @@ const messagesCommentIcon = `${CDN_ICON}/messages-comment.png`;
  * @param {Function} onPostClick - 点击帖子回调
  * @param {Function} onUserClick - 点击用户回调
  * @param {Function} onLikeClick - 点击点赞回调
+ * @param {Function} onDislikeClick - 点击点踩回调
  * @param {Function} onShareClick - 点击分享回调
  * @param {boolean} isLiked - 是否已点赞
+ * @param {boolean} isDisliked - 是否已点踩
  * @param {Function} formatTimeAgo - 时间格式化函数
  * @param {boolean} isPC - 是否为PC端，默认false
  */
@@ -29,8 +31,10 @@ export default function DiscoveryPostCard({
   onPostClick,
   onUserClick,
   onLikeClick,
+  onDislikeClick,
   onShareClick,
   isLiked = false,
+  isDisliked = false,
   formatTimeAgo,
   isPC = false
 }) {
@@ -101,6 +105,21 @@ export default function DiscoveryPostCard({
             alt="like"
           />
           <span className={styles.actionCount}>{post.likeCount || 0}</span>
+        </button>
+
+        <button
+          className={`${styles.discoveryActionBtn} ${styles.dislikeBtn} ${isDisliked ? styles.disliked : ''}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDislikeClick?.(post.id);
+          }}
+        >
+          <img
+            className={`${styles.discoveryActionIcon} ${styles.dislikeIcon} ${isPC ? styles.pcIcon : ''}`}
+            src={isDisliked ? messagesLikeActiveIcon : messagesLikeNoActivedIcon}
+            alt="dislike"
+          />
+          <span className={styles.actionCount}>{post.dislikeCount || 0}</span>
         </button>
         
         <button 

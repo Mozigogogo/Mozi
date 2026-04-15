@@ -22,6 +22,7 @@ import HotTopicSearchBar from '../../components/HotTopicSearchBar';
 import HotTopicList from '../../components/HotTopicList';
 import FloatingPostButton from '../../components/FloatingPostButton';
 import { request } from '@/utils/request';
+import { dislikePost, undislikePost } from '@/api/community';
 import { Interface } from '@/utils/constants';
 import { useAmplitude } from '../../hooks/useAmplitude';
 import { CommunityEvents } from '../../utils/amplitude';
@@ -69,6 +70,7 @@ export default function CommunityPage() {
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [likedPosts, setLikedPosts] = useState({});
+  const [dislikedPosts, setDislikedPosts] = useState({});
 
   // 获取当前登录用户ID（用于区分自己/他人主页跳转）
   useEffect(() => {
@@ -426,10 +428,12 @@ export default function CommunityPage() {
           sector: item.sector, // 所属板块字段
           commentCount: item.commentCnt || 0,
           likeCount: item.likeCnt || 0,
+          dislikeCount: item.dislikeCnt ?? item.unlikeCnt ?? item.dislikeCount ?? 0,
           userId: extractPostUserId(item),
           tags: item.tags || [],
           topics: item.topics || [],
           isLiked: item.isLikedByCurrentUser || false,
+          isDisliked: item.isDislikedByCurrentUser || item.isUnlikedByCurrentUser || false,
           createTime: item.updatedAt?.replace('T', ' ') || '',
           createdAt: item.createdAt,
           updatedAt: item.updatedAt,
@@ -596,6 +600,85 @@ export default function CommunityPage() {
 
       Toast.show({
         content: `${isLiked ? '取消点赞' : '点赞'}失败，请稍后再试`,
+        position: 'bottom',
+      });
+    }
+  };
+
+  // 点踩/取消点踩帖子（点踩时自动取消点赞）
+  const toggleDislike = async (postId) => {
+    const targetPost = posts.find((post) => post.id === postId);
+    const isDisliked = dislikedPosts[postId] ?? targetPost?.isDisliked ?? false;
+    const isLiked = likedPosts[postId] ?? targetPost?.isLiked ?? false;
+
+    // 乐观更新
+    setDislikedPosts((prev) => ({
+      ...prev,
+      [postId]: !isDisliked,
+    }));
+
+    if (!isDisliked && isLiked) {
+      setLikedPosts((prev) => ({
+        ...prev,
+        [postId]: false,
+      }));
+    }
+
+    setPosts((prevPosts) =>
+      prevPosts.map((post) => {
+        if (post.id !== postId) return post;
+        const nextDisliked = !isDisliked;
+        const nextLiked = !isDisliked && isLiked ? false : (likedPosts[postId] ?? post.isLiked ?? false);
+        return {
+          ...post,
+          isDisliked: nextDisliked,
+          isLiked: nextLiked,
+          dislikeCount: nextDisliked ? (post.dislikeCount || 0) + 1 : Math.max((post.dislikeCount || 0) - 1, 0),
+          likeCount:
+            !isDisliked && isLiked ? Math.max((post.likeCount || 0) - 1, 0) : (post.likeCount || 0),
+        };
+      })
+    );
+
+    try {
+      if (isDisliked) {
+        await undislikePost(postId);
+      } else {
+        await dislikePost(postId);
+      }
+    } catch (error) {
+      console.error(`${isDisliked ? '取消点踩' : '点踩'}失败:`, error);
+
+      // 回滚
+      setDislikedPosts((prev) => ({
+        ...prev,
+        [postId]: isDisliked,
+      }));
+
+      if (!isDisliked && isLiked) {
+        setLikedPosts((prev) => ({
+          ...prev,
+          [postId]: true,
+        }));
+      }
+
+      setPosts((prevPosts) =>
+        prevPosts.map((post) => {
+          if (post.id !== postId) return post;
+          return {
+            ...post,
+            isDisliked: isDisliked,
+            isLiked: isLiked,
+            dislikeCount: isDisliked
+              ? (post.dislikeCount || 0) + 1
+              : Math.max((post.dislikeCount || 0) - 1, 0),
+            likeCount: !isDisliked && isLiked ? (post.likeCount || 0) + 1 : (post.likeCount || 0),
+          };
+        })
+      );
+
+      Toast.show({
+        content: `${isDisliked ? '取消点踩' : '点踩'}失败，请稍后再试`,
         position: 'bottom',
       });
     }
@@ -1009,8 +1092,10 @@ export default function CommunityPage() {
               onPostClick={goToPostDetail}
               onUserClick={goToUserPage}
               onLikeClick={(postId) => toggleLike(postId)}
+              onDislikeClick={(postId) => toggleDislike(postId)}
               onShareClick={handleShare}
               isLiked={post.isLiked || likedPosts[post.id]}
+              isDisliked={post.isDisliked || dislikedPosts[post.id]}
               formatTimeAgo={formatTimeAgo}
               isPC={false}
             />

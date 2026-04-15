@@ -7,6 +7,7 @@ import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 import SectionTitle from '@/components/SectionTitle';
 import PostCard from '@/components/PostCard';
+import DiscoveryPostCard from '@/components/DiscoveryPostCard';
 import SplitLayout from '@/components/SplitLayout';
 import CoinTabBar from '@/components/CoinTabBar';
 import BullBearIndicator from '@/components/BullBearIndicator';
@@ -16,6 +17,7 @@ import PCTopicSearchModal from '@/components/PCTopicSearchModal';
 import PCCapsuleTabs from '@/components/PCCapsuleTabs';
 import PCPublishComposer from '@/components/PCPublishComposer';
 import PCFlashNewsCard from '@/components/PCFlashNewsCard';
+import { dislikePost, undislikePost } from '@/api/community';
 import styles from './index.module.less';
 
 /**
@@ -66,6 +68,7 @@ export default function PCCommunityContent() {
   
   const [coinPosts, setCoinPosts] = useState([]); // 币种帖子
   const [likedPosts, setLikedPosts] = useState({});
+  const [dislikedPosts, setDislikedPosts] = useState({});
   const [coinLoading, setCoinLoading] = useState(false); // 币种帖子加载状态
   const [selectedCoin, setSelectedCoin] = useState('BTC'); // 当前选中的币种
   const [voteChoice, setVoteChoice] = useState(null); // 投票选择状态
@@ -178,10 +181,12 @@ export default function PCCommunityContent() {
           categoryLabel: item.category,
           commentCount: item.commentCnt || 0,
           likeCount: item.likeCnt || 0,
+          dislikeCount: item.dislikeCnt ?? item.unlikeCnt ?? item.dislikeCount ?? 0,
           userId: extractPostUserId(item),
           tags: item.tags || [],
           topics: item.topics || [],
           isLiked: item.isLikedByCurrentUser || false,
+          isDisliked: item.isDislikedByCurrentUser || item.isUnlikedByCurrentUser || false,
           createTime: item.updatedAt?.replace('T', ' ') || '',
           createdAt: item.createdAt,
           updatedAt: item.updatedAt,
@@ -370,7 +375,7 @@ export default function PCCommunityContent() {
 
   // 点赞/取消点赞
   const toggleLike = async (e, postId) => {
-    e.stopPropagation();
+    e?.stopPropagation?.();
     const isLiked = likedPosts[postId];
     const url = isLiked ? `${Interface.POSTS_UNLIKE}/${postId}` : `${Interface.POSTS_LIKE}/${postId}`;
     
@@ -407,6 +412,76 @@ export default function PCCommunityContent() {
     } catch (error) {
       console.error('点赞失败:', error);
       message.error('操作失败');
+    }
+  };
+
+  // 点踩/取消点踩（点踩时自动取消点赞）
+  const toggleDislike = async (e, postId) => {
+    e?.stopPropagation?.();
+    const targetPost = coinPosts.find((post) => post.id === postId);
+    const isDisliked = dislikedPosts[postId] ?? targetPost?.isDisliked ?? false;
+    const isLiked = likedPosts[postId] ?? targetPost?.isLiked ?? false;
+
+    setDislikedPosts((prev) => ({
+      ...prev,
+      [postId]: !isDisliked,
+    }));
+    if (!isDisliked && isLiked) {
+      setLikedPosts((prev) => ({
+        ...prev,
+        [postId]: false,
+      }));
+    }
+
+    setCoinPosts((prevPosts) =>
+      prevPosts.map((post) => {
+        if (post.id !== postId) return post;
+        const nextDisliked = !isDisliked;
+        const nextLiked = !isDisliked && isLiked ? false : (likedPosts[postId] ?? post.isLiked ?? false);
+        return {
+          ...post,
+          isDisliked: nextDisliked,
+          isLiked: nextLiked,
+          dislikeCount: nextDisliked ? (post.dislikeCount || 0) + 1 : Math.max((post.dislikeCount || 0) - 1, 0),
+          likeCount: !isDisliked && isLiked ? Math.max((post.likeCount || 0) - 1, 0) : (post.likeCount || 0),
+        };
+      })
+    );
+
+    try {
+      if (isDisliked) {
+        await undislikePost(postId);
+      } else {
+        await dislikePost(postId);
+      }
+    } catch (error) {
+      console.error(`${isDisliked ? '取消点踩' : '点踩'}失败:`, error);
+      message.error('操作失败');
+
+      setDislikedPosts((prev) => ({
+        ...prev,
+        [postId]: isDisliked,
+      }));
+      if (!isDisliked && isLiked) {
+        setLikedPosts((prev) => ({
+          ...prev,
+          [postId]: true,
+        }));
+      }
+      setCoinPosts((prevPosts) =>
+        prevPosts.map((post) => {
+          if (post.id !== postId) return post;
+          return {
+            ...post,
+            isDisliked: isDisliked,
+            isLiked: isLiked,
+            dislikeCount: isDisliked
+              ? (post.dislikeCount || 0) + 1
+              : Math.max((post.dislikeCount || 0) - 1, 0),
+            likeCount: !isDisliked && isLiked ? (post.likeCount || 0) + 1 : (post.likeCount || 0),
+          };
+        })
+      );
     }
   };
 
@@ -561,20 +636,36 @@ export default function PCCommunityContent() {
                 ) : coinPosts.length > 0 ? (
                   <div className={styles.coinPostsList}>
                     {coinPosts.map(post => (
-                      <PostCard
-                        key={post.id}
-                        post={post}
-                        onPostClick={goToPostDetail}
-                        onUserClick={goToUserPage}
-                        onLikeClick={(postId) => toggleLike(null, postId)}
-                        onShareClick={handleShare}
-                        onTagClick={(tagName) => router.push(`/detail?symbol=${tagName}`)}
-                        onTopicClick={(topicId, topicName) => router.push(`/topicinfo?id=${topicId}&title=${topicName}`)}
-                        isLiked={post.isLiked || likedPosts[post.id]}
-                        formatTimeAgo={formatTimeAgo}
-                        isPC={true}
-                        showFooterDivider={false}
-                      />
+                      activeCapsuleTab === 'discover' ? (
+                        <DiscoveryPostCard
+                          key={post.id}
+                          post={post}
+                          onPostClick={goToPostDetail}
+                          onUserClick={goToUserPage}
+                          onLikeClick={(postId) => toggleLike(null, postId)}
+                          onDislikeClick={(postId) => toggleDislike(null, postId)}
+                          onShareClick={handleShare}
+                          isLiked={post.isLiked || likedPosts[post.id]}
+                          isDisliked={post.isDisliked || dislikedPosts[post.id]}
+                          formatTimeAgo={formatTimeAgo}
+                          isPC={true}
+                        />
+                      ) : (
+                        <PostCard
+                          key={post.id}
+                          post={post}
+                          onPostClick={goToPostDetail}
+                          onUserClick={goToUserPage}
+                          onLikeClick={(postId) => toggleLike(null, postId)}
+                          onShareClick={handleShare}
+                          onTagClick={(tagName) => router.push(`/detail?symbol=${tagName}`)}
+                          onTopicClick={(topicId, topicName) => router.push(`/topicinfo?id=${topicId}&title=${topicName}`)}
+                          isLiked={post.isLiked || likedPosts[post.id]}
+                          formatTimeAgo={formatTimeAgo}
+                          isPC={true}
+                          showFooterDivider={false}
+                        />
+                      )
                     ))}
                   </div>
                 ) : (

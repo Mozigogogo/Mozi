@@ -127,6 +127,10 @@ export const Interface = {
   POSTS_LIKE: '/posts/like',
   // 帖子取消点赞
   POSTS_UNLIKE: '/posts/unlike',
+  // 帖子点踩
+  POSTS_DISLIKE: '/posts/dislike',
+  // 帖子取消点踩
+  POSTS_UNDISLIKE: '/posts/undislike',
   // 帖子评论
   POSTS_COMMENT: '/posts/comment',
   // 帖子删除
@@ -266,9 +270,13 @@ export const Interface = {
   // 发帖
   POST_NEW: '/posts/new',
   // 点踩
-  POSTS_UNLIKE: '/posts/unlike',
+  POSTS_DISLIKE: '/posts/dislike',
+  // 取消点踩
+  POSTS_UNDISLIKE: '/posts/undislike',
   // 点赞
   POSTS_LIKE: '/posts/like',
+  // 取消点赞
+  POSTS_UNLIKE: '/posts/unlike',
   // 创建评论
   COMMENTS_NEW: '/comments/new',
   // 评论点赞

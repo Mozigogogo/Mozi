@@ -274,6 +274,14 @@
       }
     }
   }
+
+  &.dislikeBtn {
+    &.disliked {
+      .actionCount {
+        color: #ff4d4f;
+      }
+    }
+  }
 }
 
 .pcCard .discoveryActionBtn {
@@ -320,6 +328,10 @@
 .pcIcon {
   width: 24PX !important;
   height: 24PX !important;
+}
+
+.dislikeIcon {
+  transform: rotate(180deg);
 }
 
 /* 暗黑模式 */

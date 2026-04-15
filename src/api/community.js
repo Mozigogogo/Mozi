@@ -144,3 +144,50 @@ export const getUserFollowStatus = (userId) => {
     method: 'GET',
   });
 };
+
+/**
+ * 点踩帖子（若已点赞，先自动取消点赞）
+ * GET /posts/dislike/{postId}
+ * @param {string|number} postId - 帖子 ID
+ * @returns {Promise}
+ */
+export const dislikePost = async (postId) => {
+  const targetPostId = String(postId ?? '').trim();
+  if (!targetPostId) {
+    return Promise.reject(new Error('postId is required'));
+  }
+
+  const encodedPostId = encodeURIComponent(targetPostId);
+
+  // 按产品逻辑：点踩时若已点赞应自动取消点赞。
+  // 后端若已实现该逻辑，这里是幂等兜底；若未实现，则前端先尝试一次取消点赞。
+  try {
+    await request({
+      url: `${Interface.POSTS_UNLIKE}/${encodedPostId}`,
+      method: 'GET',
+    });
+  } catch (_) {}
+
+  return request({
+    url: `${Interface.POSTS_DISLIKE}/${encodedPostId}`,
+    method: 'GET',
+  });
+};
+
+/**
+ * 取消点踩
+ * GET /posts/undislike/{postId}
+ * @param {string|number} postId - 帖子 ID
+ * @returns {Promise}
+ */
+export const undislikePost = (postId) => {
+  const targetPostId = String(postId ?? '').trim();
+  if (!targetPostId) {
+    return Promise.reject(new Error('postId is required'));
+  }
+
+  return request({
+    url: `${Interface.POSTS_UNDISLIKE}/${encodeURIComponent(targetPostId)}`,
+    method: 'GET',
+  });
+};
