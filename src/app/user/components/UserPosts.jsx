@@ -1,22 +1,24 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SpinLoading, InfiniteScroll } from 'antd-mobile';
 import { useRouter } from 'next/navigation';
 import PostCard from '@/components/PostCard';
 import { Skeleton } from '@/components/Skeleton';
-import { request } from '@/utils/request';
-import { Interface } from '@/utils/constants';
+import { getPostsByUserId } from '@/api/community';
 
 export default function UserPosts({ userId }) {
   const { t } = useTranslation();
   const router = useRouter();
   const [posts, setPosts] = useState([]);
   const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(1);
   const [initialLoading, setInitialLoading] = useState(true);
   const size = 10;
+  const pageRef = useRef(1);
+  const loadingRef = useRef(false);
+
+  const normalizedUserId = useMemo(() => String(userId ?? '').trim(), [userId]);
   
   const formatTimeAgo = (time) => {
     if (!time) return '';
@@ -36,19 +38,16 @@ export default function UserPosts({ userId }) {
   };
 
   const loadMore = async () => {
+    if (!normalizedUserId) return;
+    if (!hasMore) return;
+    if (loadingRef.current) return;
+    loadingRef.current = true;
     try {
-      const res = await request({
-        url: Interface.USER_POSTS,
-        method: 'GET',
-        data: {
-          userId,
-          page,
-          size
-        }
-      });
+      const currentPage = pageRef.current;
+      const res = await getPostsByUserId(normalizedUserId, currentPage, size);
 
       if (res?.code === 0 || res?.success) {
-        const data = res.data?.list || res.data?.data || [];
+        const data = res.data?.list || res.data?.data || res.data || [];
         
         const formattedData = data.map(item => ({
           id: item.id,
@@ -74,9 +73,9 @@ export default function UserPosts({ userId }) {
         setPosts(prev => [...prev, ...formattedData]);
         
         if (data.length < size) {
-            setHasMore(false);
+          setHasMore(false);
         } else {
-            setPage(prev => prev + 1);
+          pageRef.current = currentPage + 1;
         }
       } else {
         setHasMore(false);
@@ -86,12 +85,23 @@ export default function UserPosts({ userId }) {
       setHasMore(false);
     } finally {
       setInitialLoading(false);
+      loadingRef.current = false;
     }
   };
 
   useEffect(() => {
+    // userId 变化时重置分页与列表
+    setPosts([]);
+    setHasMore(true);
+    pageRef.current = 1;
+    setInitialLoading(true);
+  }, [normalizedUserId]);
+
+  useEffect(() => {
+    if (!normalizedUserId) return;
     loadMore();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [normalizedUserId]);
 
   const handlePostClick = (postId) => {
     router.push(`/post/${postId}`);
@@ -141,7 +151,7 @@ export default function UserPosts({ userId }) {
               <span style={{ marginLeft: '8px', color: '#999' }}>{t('common.loading') || '加载中...'}</span>
             </div>
         ) : (
-            <div style={{ textAlign: 'center', padding: '10px', color: '#999' }}>
+            <div style={{ textAlign: 'center', padding: '16px 10px', color: '#999' }}>
               <span>{t('common.noMore') || '没有更多了'}</span>
             </div>
         )}

@@ -1,0 +1,93 @@
+'use client';
+
+import { useMemo, useState } from 'react';
+import { Toast } from 'antd-mobile';
+import { useRouter, useSearchParams } from 'next/navigation';
+import NavBar from '@/components/NavBar';
+import styles from './page.module.less';
+
+const REPORT_TYPES = [
+  '攻击谩骂',
+  '色情低俗',
+  '违法信息',
+  '政治敏感',
+  '营销广告',
+  '无意义内容',
+  '虚假谣言',
+  '其他',
+];
+
+export default function CommentReportPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [selectedType, setSelectedType] = useState(REPORT_TYPES[0]);
+  const [submitting, setSubmitting] = useState(false);
+
+  const payloadPreview = useMemo(
+    () => ({
+      postId: searchParams.get('postId') || '',
+      authorId: searchParams.get('authorId') || '',
+      reportType: selectedType,
+    }),
+    [searchParams, selectedType]
+  );
+
+  const handleSubmit = async () => {
+    if (!selectedType) {
+      Toast.show({ content: '请选择举报类型', position: 'bottom' });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      // 预留：后续接入真实举报接口
+      console.log('[report][comment] submit payload:', payloadPreview);
+      Toast.show({ content: '举报提交成功', position: 'bottom' });
+      router.back();
+    } catch (error) {
+      console.error('[report][comment] submit failed:', error);
+      Toast.show({ content: '提交失败，请稍后重试', position: 'bottom' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className={styles.page}>
+      <NavBar
+        title="评论举报"
+        showBorder={false}
+        fixed={false}
+      />
+
+      <div className={styles.content}>
+        <section className={styles.card}>
+          <div className={styles.sectionTitle}>选择举报的类型</div>
+          <div className={styles.typeGrid}>
+            {REPORT_TYPES.map((type) => (
+              <button
+                key={type}
+                type="button"
+                className={`${styles.typeBtn} ${selectedType === type ? styles.typeBtnActive : ''}`}
+                onClick={() => setSelectedType(type)}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
+        </section>
+
+      </div>
+
+      <div className={styles.footer}>
+        <button
+          type="button"
+          className={styles.submitBtn}
+          disabled={submitting}
+          onClick={handleSubmit}
+        >
+          {submitting ? '提交中...' : '我要举报'}
+        </button>
+      </div>
+    </div>
+  );
+}

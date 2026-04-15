@@ -149,64 +149,140 @@
 
 /* PC端样式 */
 .pcMode {
-  border-radius: 16PX 16PX 0 0;
+  border-radius: 28PX;
   margin: 0;
-  padding-bottom: 0;
+  padding: 18PX 0 0;
   flex: 1; /* 占据父容器的全部空间 */
   min-height: 100%; /* 最小高度100%，内容多时可以超出 */
   display: flex !important; /* 强制使用flex布局 */
   flex-direction: column !important;
   background: #FFFFFF;
+  box-shadow:
+    0PX 1PX 2PX -1PX rgba(0, 0, 0, 0.08),
+    0PX 8PX 24PX rgba(15, 23, 42, 0.04);
+
+  .pcHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18PX 14PX;
+    flex-shrink: 0;
+  }
+
+  .pcHeaderTitle {
+    display: flex;
+    align-items: center;
+    gap: 8PX;
+  }
+
+  .pcHeaderDot {
+    width: 8PX;
+    height: 8PX;
+    border-radius: 50%;
+    background: #11B787;
+  }
+
+  .pcHeaderText {
+    font-size: 20PX;
+    line-height: 28PX;
+    font-weight: 700;
+    color: #111827;
+  }
+
+  .pcHeaderBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 20PX;
+    padding: 0 8PX;
+    border-radius: 999PX;
+    background: #FFD65A;
+    color: #F97316;
+    font-size: 12PX;
+    font-weight: 700;
+  }
+
+  .pcCreateButton {
+    border: none;
+    background: #11B787;
+    color: #FFFFFF;
+    height: 36PX;
+    padding: 0 14PX;
+    border-radius: 999PX;
+    font-size: 14PX;
+    font-weight: 600;
+    cursor: pointer;
+  }
   
   .hotTopicItem {
-    padding: 12PX 16PX;
-    border-bottom: 1PX solid #F0F0F0;
-    min-height: 72PX;
-    height: 72PX;
+    padding: 14PX 18PX;
+    border-bottom: none;
+    min-height: 76PX;
+    height: 76PX;
     flex-shrink: 0;
     
     &:hover {
-      background-color: #F9F9F9;
+      background-color: #F8FAFC;
     }
   }
   
   .topicRank {
-    width: 24PX;
-    height: 24PX;
-    line-height: 24PX;
+    width: 28PX;
+    height: 28PX;
+    line-height: 28PX;
     font-size: 14PX;
+    font-weight: 700;
     margin-right: 12PX;
+    border-radius: 8PX;
+    color: #10B981;
+    background: #ECFDF5;
+  }
+
+  .topicRank.medalRank {
+    background: transparent;
   }
   
   .rankMedal {
-    width: 24PX;
-    height: 24PX;
+    width: 28PX;
+    height: 28PX;
   }
   
   .topicTitle {
-    font-size: 14PX;
+    font-size: 15PX;
+    line-height: 22PX;
+    font-weight: 700;
+    color: #111827;
     margin-bottom: 4PX;
   }
   
   .topicDesc {
     font-size: 12PX;
+    line-height: 18PX;
+    color: #9CA3AF;
   }
   
   .topicRightInfo {
     margin-left: 12PX;
+    min-width: 132PX;
   }
   
-  .heatIcon {
-    width: 14PX;
-    height: 14PX;
+  .heatText {
+    gap: 4PX;
   }
   
+  .pcCurrency,
   .heatValue {
-    font-size: 12PX;
+    font-size: 14PX;
+    line-height: 20PX;
+    font-weight: 700;
+    color: #FF5A5F;
   }
   
   .timeText {
-    display: none;
+    display: block;
+    font-size: 12PX;
+    line-height: 18PX;
+    color: #D1D5DB;
   }
   
   .loadingMore {

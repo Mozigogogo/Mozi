@@ -22,6 +22,7 @@ export default function HotTopicList({
   allLoaded = false,
   pullRefresh = false,
   onTopicClick,
+  onCreateTopic,
   nov1Icon,
   nov2Icon,
   nov3Icon,
@@ -29,14 +30,38 @@ export default function HotTopicList({
   isPC = false
 }) {
   const { t } = useTranslation();
+  const getTopicTitle = (topic) => topic?.name || topic?.title || '';
+  const getTopicDesc = (topic) => topic?.description || t('community.actions.noDescription');
+  const getTopicTime = (topic) => (topic?.createdAt || topic?.createTime || '').replace('T', ' ');
+  const getTopicHeat = (topic) => topic?.score || topic?.postCount || 0;
 
   return (
     <div className={`${styles.hotTopics} ${isPC ? styles.pcMode : ''}`}>
+      {isPC && (
+        <div className={styles.pcHeader}>
+          <div className={styles.pcHeaderTitle}>
+            <span className={styles.pcHeaderDot} />
+            <span className={styles.pcHeaderText}>热门榜单</span>
+            <span className={styles.pcHeaderBadge}>HOT</span>
+          </div>
+          <button
+            type="button"
+            className={styles.pcCreateButton}
+            onClick={(e) => {
+              e.stopPropagation();
+              onCreateTopic?.();
+            }}
+          >
+            创建话题
+          </button>
+        </div>
+      )}
+
       {topics.length > 0 && topics.map((topic, index) => (
         <div 
           key={topic.id} 
           className={styles.hotTopicItem} 
-          onClick={() => onTopicClick?.(topic.id, topic.name, topic.description)}
+          onClick={() => onTopicClick?.(topic.id, getTopicTitle(topic), topic.description)}
         >
           {/* 排名 */}
           <div className={`${styles.topicRank} ${index < 3 ? styles.medalRank : ''}`}>
@@ -53,20 +78,21 @@ export default function HotTopicList({
 
           {/* 话题信息 */}
           <div className={styles.topicInfo}>
-            <span className={styles.topicTitle}>{topic.name}</span>
+            <span className={styles.topicTitle}>{getTopicTitle(topic)}</span>
             <span className={styles.topicDesc}>
-              {topic.description || t('community.actions.noDescription')}
+              {getTopicDesc(topic)}
             </span>
           </div>
 
           {/* 右侧信息 */}
           <div className={styles.topicRightInfo}>
             <div className={styles.heatText}>
-              <img className={styles.heatIcon} src={hotIcon} alt="热度" />
-              <span className={styles.heatValue}>{topic.score || 0}</span>
+              {!isPC && <img className={styles.heatIcon} src={hotIcon} alt="热度" />}
+              {isPC && <span className={styles.pcCurrency}>$</span>}
+              <span className={styles.heatValue}>{getTopicHeat(topic)}</span>
             </div>
             <span className={styles.timeText}>
-              {topic.createdAt?.replace('T', '    ')}
+              {getTopicTime(topic)}
             </span>
           </div>
         </div>

@@ -8,9 +8,10 @@ import { confirm } from '@/components/Modal/confirm';
 import { Skeleton } from '../Skeleton';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
+import { getAlarmInfoByUserId } from '@/api/alarm';
 import NavBar from '../NavBar';
 import PopLogin from '../PopLogin';
-import Error from '../Error';
+import ErrorView from '../Error';
 import { isEmpty } from 'lodash';
 import styles from './index.module.less';
 
@@ -19,7 +20,8 @@ export default function MonitorContent({
   showBackOnEmpty = true,
   onBack = () => window.history.back(),
   className = '',
-  readOnly = false // New prop to control read-only mode
+  readOnly = false, // New prop to control read-only mode
+  userId = null
 }) {
   const { t } = useTranslation();
   const [activeKey, setActiveKey] = useState('0');
@@ -48,11 +50,16 @@ export default function MonitorContent({
     { code: 'priceFallChange24HPercent', defaultContent: '10%', unit: '%' }
   ];
 
-  // 标准化告警列表：始终返回四个条件（如后端缺失则使用默认）
-  const getStandardizedWarnContent = () => {
+  // 告警条目展示策略：
+  // - 当前用户（可编辑）：保持原逻辑，始终渲染固定 4 条（缺失则用默认值）
+  // - 他人主页只读（传了 userId 且 readOnly）：严格按后端 warnContent 数组展示，返回几个就展示几个，并保持顺序
+  const getDisplayWarnContent = () => {
     const backendContent = warnData.sideData?.warnContent || [];
-    return fixedWarningCodes.map(fixed => {
-      const backendItem = backendContent.find(item => item.code === fixed.code);
+    if (readOnly && userId) {
+      return Array.isArray(backendContent) ? backendContent.filter(Boolean) : [];
+    }
+    return fixedWarningCodes.map((fixed) => {
+      const backendItem = backendContent.find((item) => item.code === fixed.code);
       return backendItem ? backendItem : { code: fixed.code, content: fixed.defaultContent, active: false };
     });
   };
@@ -63,9 +70,52 @@ export default function MonitorContent({
   
   const init = async () => {
     try {
-      // 从统一的工具函数获取当前环境
-                  const { data } = await request({
-        url: Interface.MY_WARN
+      // 传了 userId：按需求调用 getAlarmInfoByUserId
+      if (userId) {
+        setWarnData((prev) => ({ ...prev, loading: true, error: false, needLogin: false }));
+
+        const res = await Promise.race([
+          getAlarmInfoByUserId(userId),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('getAlarmInfoByUserId timeout (12s)')), 12000)),
+        ]);
+
+        const payload = res?.data?.data ?? res?.data ?? null;
+        let normalized = {};
+        if (Array.isArray(payload)) {
+          normalized = payload.reduce((acc, item) => {
+            const sym = item?.symbol || item?.coin || item?.base;
+            if (!sym) return acc;
+            acc[String(sym)] = item;
+            return acc;
+          }, {});
+        } else if (payload && typeof payload === 'object') {
+          if (Array.isArray(payload.data)) {
+            normalized = payload.data.reduce((acc, item) => {
+              const sym = item?.symbol || item?.coin || item?.base;
+              if (!sym) return acc;
+              acc[String(sym)] = item;
+              return acc;
+            }, {});
+          } else {
+            normalized = payload;
+          }
+        }
+
+        setWarnData((prev) => ({
+          ...prev,
+          loading: false,
+          error: false,
+          needLogin: false,
+          data: normalized || {},
+          sideData: normalized && Object.keys(normalized).length ? normalized[Object.keys(normalized)[0]] : null,
+        }));
+        setActiveKey('0');
+        return;
+      }
+
+      // 未传 userId：保持原逻辑（当前登录用户告警）
+      const { data } = await request({
+        url: Interface.MY_WARN,
       });
       
       if (isEmpty(data)) {
@@ -161,8 +211,8 @@ export default function MonitorContent({
           ));
         } else {
           // 默认未存在：新增条目，保持当前 active（默认 false）
-          const standardizedContent = getStandardizedWarnContent();
-          const currentItem = standardizedContent[index];
+          const displayContent = getDisplayWarnContent();
+          const currentItem = displayContent[index];
           newWarnContent = [
             ...backendContent,
             { code: currentItem.code, content: formattedValue, active: currentItem.active }
@@ -191,8 +241,8 @@ export default function MonitorContent({
   const switchChange = async (code, active, index) => {
     if (readOnly) return; // Disable switch toggling in read-only mode
 
-    const standardizedContent = getStandardizedWarnContent();
-    const currentItem = standardizedContent[index];
+    const displayContent = getDisplayWarnContent();
+    const currentItem = displayContent[index];
     const backendContent = warnData.sideData.warnContent || [];
     const backendItem = backendContent.find(item => item.code === currentItem.code);
 
@@ -347,7 +397,7 @@ export default function MonitorContent({
         {Object.keys(warnData.data).length === 0 && !warnData.loading && (
           <div className={styles.emptyContainer}>
             {/* 与原项目一致：使用 Error 组件 + 文案“您暂未设置告警” */}
-            <Error errMsg={t('myAlarm.noAlerts')} />
+            <ErrorView errMsg={t('myAlarm.noAlerts')} />
             {showBackOnEmpty && (
               <div 
                 className={styles.emptyButton}
@@ -387,12 +437,12 @@ export default function MonitorContent({
             
             <div className={styles.main}>
               {warnData.sideData && 
-                getStandardizedWarnContent().map((item, index) => (
+                getDisplayWarnContent().map((item, index) => (
                   <div className={styles.mainItem} key={index}>
                     {editingIndex === index ? (
                       <div className={styles.editContainer}>
                         <span className={styles.contentLabel}>
-                          {code2Content[item.code]}
+                          {code2Content[item.code] || item.code}
                         </span>
                         <Input 
                           className={styles.editInput}
@@ -411,7 +461,7 @@ export default function MonitorContent({
                     ) : (
                       <div className={styles.contentWrapper}>
                         <span className={styles.contentLabel}>
-                          {code2Content[item.code]}
+                          {code2Content[item.code] || item.code}
                         </span>
                         <span 
                           className={styles.contentText}

@@ -42,16 +42,27 @@
 }
 
 .iconBtn {
-  width: 24px;
-  height: 24px;
+  width: 30PX;
+  height: 30PX;
   border: none;
-  border-radius: 12px;
+  border-radius: 999PX;
   background: transparent;
   color: #8c98ab;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+
+  :global {
+    .anticon {
+      font-size: 18PX;
+      line-height: 1;
+      display: inline-flex;
+    }
+    svg {
+      display: block;
+    }
+  }
 }
 
 .list {
@@ -138,16 +149,27 @@
   margin-top: 6px;
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 22PX;
   color: #8c98ab;
-  font-size: 13px;
+  font-size: 14PX;
+
+  :global {
+    .anticon {
+      font-size: 16PX;
+      line-height: 1;
+      display: inline-flex;
+    }
+    svg {
+      display: block;
+    }
+  }
 }
 
 .action,
 .actionLike {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 8PX;
 }
 
 .actionLike {
