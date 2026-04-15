@@ -347,6 +347,13 @@
   padding: 12PX 12PX 10PX;
 }
 
+.leftPanelPlain {
+  background: transparent;
+  border-top: none;
+  box-shadow: none;
+  padding: 0;
+}
+
 .leftContentHeader {
   flex-shrink: 0; /* 固定在顶部，不参与滚动 */
 }
@@ -379,6 +386,19 @@
   flex-shrink: 0;
   margin-top: 10PX;
   padding-top: 10PX;
+}
+
+.coinPostsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12PX;
+}
+
+.discoveryPostsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12PX;
+  align-items: start;
 }
 
 .commentInputWrapper {

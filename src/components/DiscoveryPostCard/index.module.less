@@ -11,14 +11,10 @@
 /* PC端样式 */
 .pcCard {
   padding: 12PX;
-  border-radius: 12PX;
+  border-radius: 32PX;
   box-shadow: 0 2PX 8PX rgba(0, 0, 0, 0.06);
   min-height: 200PX;
-  
-  &:hover {
-    box-shadow: 0 4PX 12PX rgba(0, 0, 0, 0.1);
-    transform: translateY(-2PX);
-  }
+  overflow: hidden;
 }
 
 /* 移动端样式 */
@@ -63,6 +59,62 @@
   align-items: center;
   position: relative;
   z-index: 2;
+}
+
+.discoveryHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: relative;
+  z-index: 3;
+}
+
+.moreButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28PX;
+  height: 28PX;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 8PX;
+  color: #9CA3AF;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:hover {
+    background: rgba(243, 244, 246, 1);
+  }
+}
+
+.postMoreDropdown {
+  :global {
+    .ant-dropdown-menu {
+      padding: 6PX;
+      border-radius: 12PX;
+      min-width: 140PX;
+    }
+
+    .ant-dropdown-menu-item {
+      border-radius: 10PX;
+    }
+  }
+}
+
+.reportMenuItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8PX;
+  color: rgba(17, 24, 39, 1);
+  font-size: 14PX;
+
+  :global {
+    .anticon {
+      color: rgba(239, 68, 68, 1);
+      font-size: 16PX;
+    }
+  }
 }
 
 .pcCard .discoveryUserInfo {
@@ -243,7 +295,6 @@
 
 .pcCard .discoveryActionButtons {
   padding-top: 12PX;
-  border-top: 1PX solid #f0f0f0;
 }
 
 .mobileCard .discoveryActionButtons {

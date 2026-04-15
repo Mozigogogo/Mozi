@@ -1,5 +1,8 @@
 'use client';
 
+import { Dropdown } from 'antd';
+import { EllipsisOutlined, WarningOutlined } from '@ant-design/icons';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import styles from './index.module.less';
 
@@ -38,7 +41,29 @@ export default function DiscoveryPostCard({
   formatTimeAgo,
   isPC = false
 }) {
+  const router = useRouter();
   const { t } = useTranslation();
+  const menuItems = [
+    {
+      key: 'report',
+      label: (
+        <span className={styles.reportMenuItem}>
+          <WarningOutlined />
+          <span>举报内容</span>
+        </span>
+      ),
+    },
+  ];
+
+  const handleReportNavigate = () => {
+    const postId = String(post?.id ?? '').trim();
+    const authorId = String(post?.userId ?? '').trim();
+    const params = new URLSearchParams();
+    if (postId) params.set('postId', postId);
+    if (authorId) params.set('authorId', authorId);
+    const query = params.toString();
+    router.push(query ? `/report/comment?${query}` : '/report/comment');
+  };
 
   return (
     <div 
@@ -49,22 +74,50 @@ export default function DiscoveryPostCard({
       <img src={findBestCoinIcon} className={styles.findBestCoinBg} alt="" />
       
       {/* 用户信息 */}
-      <div className={styles.discoveryUserInfo}>
-        <img 
-          src={post.avatar || '/default-avatar.png'} 
-          alt="avatar" 
-          className={styles.discoveryAvatar}
-          onClick={(e) => {
-            e.stopPropagation();
-            onUserClick?.(post.userId);
-          }}
-        />
-        <div className={styles.discoveryUserContent}>
-          <span className={styles.discoveryNickname}>{post.username}</span>
-          <span className={styles.discoveryTime}>
-            {formatTimeAgo ? formatTimeAgo(post.createTime || post.updatedAt) : post.createTime}
-          </span>
+      <div className={styles.discoveryHeader}>
+        <div className={styles.discoveryUserInfo}>
+          <img 
+            src={post.avatar || '/default-avatar.png'} 
+            alt="avatar" 
+            className={styles.discoveryAvatar}
+            onClick={(e) => {
+              e.stopPropagation();
+              onUserClick?.(post.userId);
+            }}
+          />
+          <div className={styles.discoveryUserContent}>
+            <span className={styles.discoveryNickname}>{post.username}</span>
+            <span className={styles.discoveryTime}>
+              {formatTimeAgo ? formatTimeAgo(post.createTime || post.updatedAt) : post.createTime}
+            </span>
+          </div>
         </div>
+
+        {isPC ? (
+          <Dropdown
+            trigger={['click']}
+            placement="bottomRight"
+            menu={{
+              items: menuItems,
+              onClick: (info) => {
+                info?.domEvent?.stopPropagation?.();
+                if (info?.key === 'report') {
+                  handleReportNavigate();
+                }
+              },
+            }}
+            overlayClassName={styles.postMoreDropdown}
+          >
+            <button
+              type="button"
+              className={styles.moreButton}
+              aria-label="more actions"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <EllipsisOutlined />
+            </button>
+          </Dropdown>
+        ) : null}
       </div>
 
       {/* 币种信息区域 */}

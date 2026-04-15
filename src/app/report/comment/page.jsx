@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Toast } from 'antd-mobile';
 import { useRouter, useSearchParams } from 'next/navigation';
 import NavBar from '@/components/NavBar';
+import PCLayout from '@/components/PCLayout';
 import styles from './page.module.less';
 
 const REPORT_TYPES = [
@@ -14,7 +15,6 @@ const REPORT_TYPES = [
   '营销广告',
   '无意义内容',
   '虚假谣言',
-  '其他',
 ];
 
 export default function CommentReportPage() {
@@ -22,6 +22,16 @@ export default function CommentReportPage() {
   const searchParams = useSearchParams();
   const [selectedType, setSelectedType] = useState(REPORT_TYPES[0]);
   const [submitting, setSubmitting] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const mediaQuery = window.matchMedia('(min-width: 1024px)');
+    const updateIsDesktop = () => setIsDesktop(mediaQuery.matches);
+    updateIsDesktop();
+    mediaQuery.addEventListener('change', updateIsDesktop);
+    return () => mediaQuery.removeEventListener('change', updateIsDesktop);
+  }, []);
 
   const payloadPreview = useMemo(
     () => ({
@@ -51,17 +61,38 @@ export default function CommentReportPage() {
     }
   };
 
-  return (
+  const pageContent = (
     <div className={styles.page}>
-      <NavBar
-        title="评论举报"
-        showBorder={false}
-        fixed={false}
-      />
+      {!isDesktop ? (
+        <NavBar
+          title="评论举报"
+          showBorder={false}
+          fixed={false}
+        />
+      ) : null}
 
       <div className={styles.content}>
         <section className={styles.card}>
-          <div className={styles.sectionTitle}>选择举报的类型</div>
+          <div className={styles.sectionHeader}>
+            {isDesktop ? (
+              <div
+                className={styles.backButton}
+                onClick={() => router.back()}
+                role="button"
+                tabIndex={0}
+                aria-label="返回上一页"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    router.back();
+                  }
+                }}
+              >
+                <span aria-hidden>←</span>
+              </div>
+            ) : null}
+            <div className={styles.sectionTitle}>选择举报的类型</div>
+          </div>
           <div className={styles.typeGrid}>
             {REPORT_TYPES.map((type) => (
               <button
@@ -90,4 +121,14 @@ export default function CommentReportPage() {
       </div>
     </div>
   );
+
+  if (isDesktop) {
+    return (
+      <PCLayout>
+        <div className={styles.pcContentArea}>{pageContent}</div>
+      </PCLayout>
+    );
+  }
+
+  return pageContent;
 }

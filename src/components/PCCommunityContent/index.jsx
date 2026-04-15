@@ -572,36 +572,42 @@ export default function PCCommunityContent() {
             <div className={styles.leftTopComposer}>
               <PCPublishComposer onPublish={goToPostPage} />
             </div>
-            <div className={styles.leftPanelContainer}>
+            <div
+              className={`${styles.leftPanelContainer} ${activeCapsuleTab === 'discover' ? styles.leftPanelPlain : ''}`}
+            >
               {/* 不懂就问模块标题 + 币种标签栏 - 固定在顶部 */}
               <div className={styles.leftContentHeader}>
-                <SectionTitle 
-                  title="" 
-                  showMore={false}
-                  extra={
-                    <CoinTabBar
-                      coinTabs={coinTabs}
-                      selectedCoin={selectedCoin}
-                      onCoinSelect={setSelectedCoin}
-                      onMoreClick={goToCoinDiscussionList}
-                      moreText="更多"
-                      isPC={true}
+                {activeCapsuleTab !== 'discover' ? (
+                  <>
+                    <SectionTitle 
+                      title="" 
+                      showMore={false}
+                      extra={
+                        <CoinTabBar
+                          coinTabs={coinTabs}
+                          selectedCoin={selectedCoin}
+                          onCoinSelect={setSelectedCoin}
+                          onMoreClick={goToCoinDiscussionList}
+                          moreText="更多"
+                          isPC={true}
+                        />
+                      }
                     />
-                  }
-                />
-                
-                {/* 看涨看跌投票组件 - 固定在顶部 */}
-                <BullBearIndicator
-                  upCount={voteData.upCount}
-                  downCount={voteData.downCount}
-                  participants={voteData.totalCount}
-                  selected={voteChoice}
-                  onSelect={(type) => submitVote(type)}
-                  showParticipants={true}
-                  showPercentage={true}
-                  isPC={true}
-                  coinSymbol={selectedCoin}
-                />
+                    
+                    {/* 看涨看跌投票组件 - 固定在顶部 */}
+                    <BullBearIndicator
+                      upCount={voteData.upCount}
+                      downCount={voteData.downCount}
+                      participants={voteData.totalCount}
+                      selected={voteChoice}
+                      onSelect={(type) => submitVote(type)}
+                      showParticipants={true}
+                      showPercentage={true}
+                      isPC={true}
+                      coinSymbol={selectedCoin}
+                    />
+                  </>
+                ) : null}
               </div>
               
               {/* 币种相关帖子列表 - 可滚动区域 */}
@@ -611,7 +617,9 @@ export default function PCCommunityContent() {
                     <Spin tip="加载中..." />
                   </div>
                 ) : coinPosts.length > 0 ? (
-                  <div className={styles.coinPostsList}>
+                  <div
+                    className={`${styles.coinPostsList} ${activeCapsuleTab === 'discover' ? styles.discoveryPostsGrid : ''}`}
+                  >
                     {coinPosts.map(post => (
                       activeCapsuleTab === 'discover' ? (
                         <DiscoveryPostCard
