@@ -174,6 +174,13 @@
   overflow: hidden;
 }
 
+.nicknameRow {
+  display: flex;
+  align-items: center;
+  gap: 6PX;
+  min-width: 0;
+}
+
 .discoveryNickname {
   font-weight: 600;
   color: #333;
@@ -182,6 +189,17 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 100%;
+}
+
+.qaTagBadge {
+  flex-shrink: 0;
+  padding: 2PX 8PX;
+  border-radius: 999PX;
+  background: rgba(255, 141, 66, 0.16);
+  color: #FF8D42;
+  font-size: 12PX;
+  line-height: 18PX;
+  font-weight: 700;
 }
 
 .pcCard .discoveryNickname {

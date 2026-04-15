@@ -42,6 +42,7 @@ export default function DiscoveryPostCard({
   isPC = false,
   showDislike = true,
   contentTemplate = 'coinInfo',
+  badgeLabel = '',
 }) {
   const router = useRouter();
   const { t } = useTranslation();
@@ -88,7 +89,10 @@ export default function DiscoveryPostCard({
             }}
           />
           <div className={styles.discoveryUserContent}>
-            <span className={styles.discoveryNickname}>{post.username}</span>
+            <div className={styles.nicknameRow}>
+              <span className={styles.discoveryNickname}>{post.username}</span>
+              {badgeLabel ? <span className={styles.qaTagBadge}>{badgeLabel}</span> : null}
+            </div>
             <span className={styles.discoveryTime}>
               {formatTimeAgo ? formatTimeAgo(post.createTime || post.updatedAt) : post.createTime}
             </span>

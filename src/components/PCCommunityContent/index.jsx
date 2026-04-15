@@ -660,6 +660,7 @@ export default function PCCommunityContent() {
                           isPC={true}
                           showDislike={activeCapsuleTab === 'discover'}
                           contentTemplate={activeCapsuleTab === 'qa' ? 'titleDesc' : 'coinInfo'}
+                          badgeLabel={activeCapsuleTab === 'qa' ? '不懂就问' : ''}
                         />
                       )
                     ))}
