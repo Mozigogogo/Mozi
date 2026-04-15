@@ -9,7 +9,14 @@ export const isTelegramEnv = () => {
   if (typeof window === 'undefined') return false;
   
   const telegramWebApp = window.Telegram?.WebApp;
-  if (!telegramWebApp) return false;
+  if (!telegramWebApp) {
+    // 兜底：某些 Telegram WebView 场景下 SDK 未及时注入，
+    // 但 URL hash 仍携带 tgWebAppData / tgWebAppPlatform。
+    const hash = window.location?.hash || '';
+    const raw = hash.startsWith('#') ? hash.slice(1) : hash;
+    const hashParams = new URLSearchParams(raw);
+    return hashParams.has('tgWebAppData') || hashParams.has('tgWebAppPlatform');
+  }
   
   // 检查是否有真实的 Telegram 数据
   const hasInitData = telegramWebApp.initData && telegramWebApp.initData.length > 0;
@@ -25,9 +32,19 @@ export const isTelegramEnv = () => {
  */
 export const getAppChannel = () => {
   if (typeof window === 'undefined') return 'pc';
+
+  const debugLog = (message, payload = {}) => {
+    // eslint-disable-next-line no-console
+    console.warn(`[AppChannel][getAppChannel] ${message}`, {
+      ts: Date.now(),
+      href: window.location.href,
+      ...payload,
+    });
+  };
   
   // 优先从 localStorage 读取（由 EnvironmentDetector 组件在应用启动时设置）
   const savedChannel = localStorage.getItem('appChannel');
+  debugLog('read saved appChannel', { savedChannel });
   if (savedChannel) {
     return savedChannel;
   }
@@ -35,8 +52,22 @@ export const getAppChannel = () => {
   // 如果 localStorage 中没有，则实时检测（兜底逻辑）
   const telegramWebApp = window.Telegram?.WebApp;
   if (!telegramWebApp) {
-    localStorage.setItem('appChannel', 'pc');
-    return 'pc';
+    const hash = window.location?.hash || '';
+    const raw = hash.startsWith('#') ? hash.slice(1) : hash;
+    const hashParams = new URLSearchParams(raw);
+    const hasTgWebAppData = hashParams.has('tgWebAppData');
+    const hasTgWebAppPlatform = hashParams.has('tgWebAppPlatform');
+    const fallbackIsTelegram = hasTgWebAppData || hasTgWebAppPlatform;
+    const fallbackChannel = fallbackIsTelegram ? 'tg' : 'pc';
+    localStorage.setItem('appChannel', fallbackChannel);
+    debugLog('fallback write appChannel via URL hash', {
+      hasTelegramObject: !!window.Telegram,
+      hasWebApp: false,
+      hasTgWebAppData,
+      hasTgWebAppPlatform,
+      fallbackChannel,
+    });
+    return fallbackChannel;
   }
   
   // 检查是否有真实的 Telegram 数据
@@ -49,6 +80,14 @@ export const getAppChannel = () => {
   
   // 保存到 localStorage 供下次使用
   localStorage.setItem('appChannel', channel);
+  debugLog('realtime detect and write appChannel', {
+    channel,
+    hasInitData,
+    hasInitDataUnsafe,
+    hasPlatform,
+    platform: telegramWebApp.platform || null,
+    initDataLength: telegramWebApp.initData?.length || 0,
+  });
   
   console.log('[getAppChannel] 实时检测环境:', { 
     channel, 

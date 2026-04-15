@@ -170,35 +170,29 @@ export default function MobileHome() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (debugEnabled) console.log('[MobileHome][debug] telegram init effect run');
-    // 只在 Telegram 内置浏览器中才需要加载 Telegram WebApp SDK
-    // 否则会因为外网超时拖慢 window.load（你日志里就是这里导致首屏 75s 才 load）
-    const ua = String(window?.navigator?.userAgent || '');
-    const isTelegramUA = /Telegram/i.test(ua);
-    if (!isTelegramUA) return;
-
     if (window?.Telegram?.WebApp) {
       initTelegram();
       return;
     }
-    const script = document.createElement('script');
-    script.src = 'https://telegram.org/js/telegram-web-app.js';
-    script.async = true;
-    // 避免影响首屏 load：放到 load 事件之后再插入（即使外网超时也不阻塞页面完成加载）
-    const append = () => document.head.appendChild(script);
-    script.onload = () => initTelegram();
-    script.onerror = () => {
-      console.warn('[Telegram] SDK 加载失败：请检查网络或脚本地址');
-      setTgInfo((d) => ({ ...d, available: false }));
-    };
-    if (document.readyState === 'complete') {
-      append();
-    } else {
-      window.addEventListener('load', append, { once: true });
-    }
-    return () => {
-      try { window.removeEventListener('load', append); } catch {}
-      try { document.head.removeChild(script); } catch {}
-    };
+
+    // SDK 由全局 TelegramSdkLoader 注入，这里仅做短轮询等待，避免页面时序差导致漏初始化
+    let attempts = 0;
+    const maxAttempts = 20; // 约 10 秒
+    const timer = setInterval(() => {
+      attempts += 1;
+      if (window?.Telegram?.WebApp) {
+        clearInterval(timer);
+        initTelegram();
+        return;
+      }
+      if (attempts >= maxAttempts) {
+        clearInterval(timer);
+        console.warn('[Telegram] WebApp not available after waiting');
+        setTgInfo((d) => ({ ...d, available: false }));
+      }
+    }, 500);
+
+    return () => clearInterval(timer);
   }, []);
   
   // 状态定义
