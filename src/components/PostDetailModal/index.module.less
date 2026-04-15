@@ -92,14 +92,15 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  min-height: 0;
   background: #FFFFFF;
   padding: 14PX 14PX 12PX;
 }
 
 .closeBtn {
   position: absolute;
-  top: 8PX;
-  right: 8PX;
+  top: 12PX;
+  right: 18PX;
   width: 26PX;
   height: 26PX;
   border: none;
@@ -115,6 +116,7 @@
 .postHeader {
   padding-top: 12PX;
   padding-right: 34PX;
+  flex-shrink: 0;
 }
 
 .title {
@@ -156,6 +158,7 @@
   font-size: 18PX;
   line-height: 24PX;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
 .commentList {
@@ -215,6 +218,7 @@
   padding-top: 8PX;
   display: flex;
   gap: 12PX;
+  flex-shrink: 0;
 }
 
 .actionBtn {
@@ -244,6 +248,7 @@
   display: flex;
   align-items: center;
   gap: 8PX;
+  flex-shrink: 0;
 }
 
 .inputAvatar {

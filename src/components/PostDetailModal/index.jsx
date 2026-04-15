@@ -80,11 +80,13 @@ export default function PostDetailModal({
   const handleSubmitComment = async () => {
     const next = String(commentValue || '').trim();
     if (!next || submitting) return;
+    const previousValue = commentValue;
+    setCommentValue('');
     setSubmitting(true);
     try {
       const result = await onSubmitComment?.(next);
-      if (result !== false) {
-        setCommentValue('');
+      if (result === false) {
+        setCommentValue(previousValue);
       }
     } finally {
       setSubmitting(false);
@@ -206,7 +208,7 @@ export default function PostDetailModal({
                 aria-label="send comment"
                 disabled={submitting || !String(commentValue || '').trim()}
               >
-                {submitting ? '发送中' : '发送'}
+                发送
               </button>
             </div>
           </div>
