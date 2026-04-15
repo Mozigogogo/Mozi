@@ -1121,7 +1121,11 @@ export default function CommunityPage() {
             <GardenLoading t={t} />
           </div>
         )}
-        {loading && posts.length > 0 && <GardenLoading t={t} />}
+        {loading && posts.length > 0 && (
+          <div className={`${styles.inlineLoading} ${isDiscovery ? styles.fullRowLoading : ''}`}>
+            <GardenLoading t={t} />
+          </div>
+        )}
         {!hasMore && posts.length > 0 && (
           <div className={styles.noMore}>{t('community.actions.noMorePosts')}</div>
         )}
