@@ -89,6 +89,19 @@ export default function UserProfile({ params }) {
     String(pathname || '').match(/^\/user\/([^/?#]+)/)?.[1] || String(params?.id ?? '')
   ).trim();
 
+  // 仅允许内部内容区滚动：进入本页时锁住 body 滚动，离开恢复
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const prevOverflow = document.body.style.overflow;
+    const prevOverscroll = document.body.style.overscrollBehavior;
+    document.body.style.overflow = 'hidden';
+    document.body.style.overscrollBehavior = 'none';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.body.style.overscrollBehavior = prevOverscroll;
+    };
+  }, []);
+
   useEffect(() => {
     const checkDevice = () => {
       setIsPC(window.innerWidth >= 1024);
@@ -370,112 +383,114 @@ export default function UserProfile({ params }) {
           </div>
         </div>
 
-        {/* Content Area */}
-        {activeTab === 'watchlist' && (
-          <div className={styles.listContainer}>
-            {/* List Header */}
-            <div className={styles.listHeader}>
-              <span className={styles.colCoin}>{t('user.list.coin') || '币种'}</span>
-              <span className={styles.colPrice}>{t('user.list.price') || '最新价格'}</span>
-              <span className={styles.colChange}>{t('user.list.change24h') || '24h幅度'}</span>
-              <div className={styles.colAction}>
-                <span className={styles.actionCell}>{t('user.list.actionHeaderWatchlist') || '自加选'}</span>
-                <span className={styles.actionCell}>{t('user.list.actionHeaderMonitor') || '加监控'}</span>
+        <div className={styles.tabContent}>
+          {/* Content Area */}
+          {activeTab === 'watchlist' && (
+            <div className={styles.listContainer}>
+              {/* List Header */}
+              <div className={styles.listHeader}>
+                <span className={styles.colCoin}>{t('user.list.coin') || '币种'}</span>
+                <span className={styles.colPrice}>{t('user.list.price') || '最新价格'}</span>
+                <span className={styles.colChange}>{t('user.list.change24h') || '24h幅度'}</span>
+                <div className={styles.colAction}>
+                  <span className={styles.actionCell}>{t('user.list.actionHeaderWatchlist') || '自加选'}</span>
+                  <span className={styles.actionCell}>{t('user.list.actionHeaderMonitor') || '加监控'}</span>
+                </div>
               </div>
-            </div>
 
-            {/* Coin List */}
-            {watchlistLoading ? (
-              <div className={styles.coinList}>
-                {Array(8).fill(0).map((_, i) => (
-                  <div key={i} className={styles.listItem} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div className={`${styles.colCoin} ${styles.coinInfo}`} style={{ gap: '12px' }}>
-                      <Skeleton config={{ type: 'circle', size: 32 }} />
-                      <Skeleton config={{ type: 'element', width: 60, height: 16 }} />
-                    </div>
-                    <div className={styles.colPrice}>
-                      <Skeleton config={{ type: 'element', width: 80, height: 16 }} />
-                    </div>
-                    <div className={styles.colChange}>
-                      <Skeleton config={{ type: 'element', width: 60, height: 28, borderRadius: 4 }} />
-                    </div>
-                    <div className={styles.colAction} style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end' }}>
-                      <Skeleton config={{ type: 'circle', size: 20 }} />
-                      <Skeleton config={{ type: 'circle', size: 20 }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : watchlistError ? (
-              <div className={styles.coinList} style={{ padding: '16px', textAlign: 'center', color: '#999' }}>
-                {t('common.loadFailed') || '加载自选数据失败，请稍后重试'}
-              </div>
-            ) : watchlist.length === 0 ? (
-              <div className={styles.coinList} style={{ padding: '16px', textAlign: 'center', color: '#999' }}>
-                {t('user.watchlist.empty') || '该用户暂无自选'}
-              </div>
-            ) : (
-              <>
+              {/* Coin List */}
+              {watchlistLoading ? (
                 <div className={styles.coinList}>
-                  {watchlist.map((item, index) => {
-                    const symbol = item.symbol || item.base || '--';
-                    const icon = item.url || '/default-coin.svg';
-                    const price = item.last ?? item.currentPrice ?? item.price ?? '--';
-                    const changeRaw = item.price24h ?? item.priceChangePercent ?? item.change ?? '';
-                    const changeStr = typeof changeRaw === 'number' ? `${changeRaw.toFixed(2)}%` : String(changeRaw || '');
-                    const isUp = changeStr.startsWith('+') || (!changeStr.startsWith('-') && Number(changeRaw) >= 0);
+                  {Array(8).fill(0).map((_, i) => (
+                    <div key={i} className={styles.listItem} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div className={`${styles.colCoin} ${styles.coinInfo}`} style={{ gap: '12px' }}>
+                        <Skeleton config={{ type: 'circle', size: 32 }} />
+                        <Skeleton config={{ type: 'element', width: 60, height: 16 }} />
+                      </div>
+                      <div className={styles.colPrice}>
+                        <Skeleton config={{ type: 'element', width: 80, height: 16 }} />
+                      </div>
+                      <div className={styles.colChange}>
+                        <Skeleton config={{ type: 'element', width: 60, height: 28, borderRadius: 4 }} />
+                      </div>
+                      <div className={styles.colAction} style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end' }}>
+                        <Skeleton config={{ type: 'circle', size: 20 }} />
+                        <Skeleton config={{ type: 'circle', size: 20 }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : watchlistError ? (
+                <div className={styles.coinList} style={{ padding: '16px', textAlign: 'center', color: '#999' }}>
+                  {t('common.loadFailed') || '加载自选数据失败，请稍后重试'}
+                </div>
+              ) : watchlist.length === 0 ? (
+                <div className={styles.coinList} style={{ padding: '16px', textAlign: 'center', color: '#999' }}>
+                  {t('user.watchlist.empty') || '该用户暂无自选'}
+                </div>
+              ) : (
+                <>
+                  <div className={styles.coinList}>
+                    {watchlist.map((item, index) => {
+                      const symbol = item.symbol || item.base || '--';
+                      const icon = item.url || '/default-coin.svg';
+                      const price = item.last ?? item.currentPrice ?? item.price ?? '--';
+                      const changeRaw = item.price24h ?? item.priceChangePercent ?? item.change ?? '';
+                      const changeStr = typeof changeRaw === 'number' ? `${changeRaw.toFixed(2)}%` : String(changeRaw || '');
+                      const isUp = changeStr.startsWith('+') || (!changeStr.startsWith('-') && Number(changeRaw) >= 0);
 
-                    return (
-                      <div key={symbol || index} className={styles.listItem}>
-                        <div className={`${styles.colCoin} ${styles.coinInfo}`}>
-                          <img
-                            src={icon}
-                            alt={symbol}
-                            className={styles.coinIcon}
-                            onError={(e) => {
-                              e.target.src = '/default-coin.svg';
-                            }}
-                          />
-                          <span className={styles.coinSymbol}>{symbol}</span>
-                        </div>
-                        <div className={`${styles.colPrice} ${styles.price}`}>{price}</div>
-                        <div className={`${styles.colChange} ${styles.changeBox}`}>
-                          <div className={`${styles.changeTag} ${isUp ? styles.changeUp : styles.changeDown}`}>
-                            {changeStr || '--'}
+                      return (
+                        <div key={symbol || index} className={styles.listItem}>
+                          <div className={`${styles.colCoin} ${styles.coinInfo}`}>
+                            <img
+                              src={icon}
+                              alt={symbol}
+                              className={styles.coinIcon}
+                              onError={(e) => {
+                                e.target.src = '/default-coin.svg';
+                              }}
+                            />
+                            <span className={styles.coinSymbol}>{symbol}</span>
+                          </div>
+                          <div className={`${styles.colPrice} ${styles.price}`}>{price}</div>
+                          <div className={`${styles.colChange} ${styles.changeBox}`}>
+                            <div className={`${styles.changeTag} ${isUp ? styles.changeUp : styles.changeDown}`}>
+                              {changeStr || '--'}
+                            </div>
+                          </div>
+                          <div className={`${styles.colAction} ${styles.actionIcons}`}>
+                            <div className={styles.actionCell}><HeartIcon /></div>
+                            <div className={styles.actionCell}><MonitorIcon /></div>
                           </div>
                         </div>
-                        <div className={`${styles.colAction} ${styles.actionIcons}`}>
-                          <div className={styles.actionCell}><HeartIcon /></div>
-                          <div className={styles.actionCell}><MonitorIcon /></div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
 
-                <div className={styles.viewMore}>
-                  {t('common.viewMore') || '查看更多'} &gt;
-                </div>
-              </>
-            )}
-          </div>
-        )}
+                  <div className={styles.viewMore}>
+                    {t('common.viewMore') || '查看更多'} &gt;
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
-        {activeTab === 'monitor' && (
-          <div style={{ height: 'calc(100vh - 280px)', background: '#fff' }}>
-            <MonitorContent
-              showNavBar={false}
-              showBackOnEmpty={false}
-              readOnly={true}
-              className={styles.monitorContainer}
-              userId={targetUserId}
-            />
-          </div>
-        )}
+          {activeTab === 'monitor' && (
+            <div style={{ background: '#fff' }}>
+              <MonitorContent
+                showNavBar={false}
+                showBackOnEmpty={false}
+                readOnly={true}
+                className={styles.monitorContainer}
+                userId={targetUserId}
+              />
+            </div>
+          )}
 
-        {activeTab === 'content' && (
-          <UserPosts userId={targetUserId} />
-        )}
+          {activeTab === 'content' && (
+            <UserPosts userId={targetUserId} />
+          )}
+        </div>
       </div>
     </div>
   );

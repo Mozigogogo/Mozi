@@ -133,6 +133,8 @@ export const Interface = {
   POSTS_DELETE: '/posts/delete',
   // 帖子更新
   POSTS_UPDATE: '/posts/update',
+  // 按用户查询帖子
+  POSTS_BY_USER: '/posts/user',
   // 创建话题
   CREATE_TOPIC: '/topic/new',
   // 热门话题
