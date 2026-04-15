@@ -16,6 +16,7 @@ import ChunkErrorRecovery from "@/components/ChunkErrorRecovery";
 import GoogleAuthProvider from "../context/GoogleAuthProvider";
 import GlobalClientEffects from "@/components/GlobalClientEffects";
 import PerfDebug from "@/components/PerfDebug";
+import TelegramSdkLoader from "@/components/TelegramSdkLoader";
 
 const geistSans = Inter({
   variable: "--font-geist-sans",
@@ -56,6 +57,7 @@ export default function RootLayout({ children }) {
         <link rel="preload" href="/images/community/loadding.png" as="image" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} ${chakraPetch.variable}`} suppressHydrationWarning>
+        <TelegramSdkLoader />
         <EnvironmentDetector />
         <PerfDebug />
         <BuildFingerprint />
