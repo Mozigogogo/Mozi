@@ -496,10 +496,29 @@ export default function TelegramAutoLogin() {
       }
     };
 
-    // 延迟执行，确保 Telegram WebApp SDK 已加载
-    const timer = setTimeout(() => {
-      handleTelegramAutoLogin();
-    }, 100);
+    // 延迟 + 轮询执行，兼容 SDK 异步注入晚于组件挂载的场景
+    let attempts = 0;
+    const maxAttempts = 40; // 最多等待约 20s
+    const intervalMs = 500;
+    const timer = setInterval(() => {
+      if (loginAttemptedRef.current) {
+        clearInterval(timer);
+        return;
+      }
+
+      attempts += 1;
+      const hasWebApp = typeof window !== 'undefined' && !!window.Telegram?.WebApp;
+      if (hasWebApp) {
+        clearInterval(timer);
+        handleTelegramAutoLogin();
+        return;
+      }
+
+      if (attempts >= maxAttempts) {
+        clearInterval(timer);
+        console.warn('[TG auto login] timeout waiting Telegram WebApp SDK');
+      }
+    }, intervalMs);
 
     // 支持在首页收到 401 后原地重登，避免整页刷新
     const onForceRelogin = () => {
@@ -509,7 +528,7 @@ export default function TelegramAutoLogin() {
     window.addEventListener('tg-force-relogin', onForceRelogin);
 
     return () => {
-      clearTimeout(timer);
+      clearInterval(timer);
       window.removeEventListener('tg-force-relogin', onForceRelogin);
     };
   }, []);
