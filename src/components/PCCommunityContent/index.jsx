@@ -18,6 +18,7 @@ import PCCapsuleTabs from '@/components/PCCapsuleTabs';
 import PCPublishComposer from '@/components/PCPublishComposer';
 import PCFlashNewsCard from '@/components/PCFlashNewsCard';
 import PCPagination from '@/components/PCPagination';
+import PostDetailModal from '@/components/PostDetailModal';
 import { dislikePost, undislikePost } from '@/api/community';
 import styles from './index.module.less';
 
@@ -58,6 +59,9 @@ export default function PCCommunityContent() {
   const [showSearchPanel, setShowSearchPanel] = useState(false); // 是否显示搜索下拉面板
   const [activeCapsuleTab, setActiveCapsuleTab] = useState('coin'); // 顶部胶囊tab
   const isDiscoveryLikeTab = activeCapsuleTab !== 'coin';
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [detailModalPost, setDetailModalPost] = useState(null);
+  const [detailModalComments, setDetailModalComments] = useState([]);
   
   // 固定币种配置
   const coinTabs = [
@@ -520,9 +524,139 @@ export default function PCCommunityContent() {
     console.log('分享帖子:', post);
   };
 
+  // 查询帖子最新评论（与移动端评论查询接口一致）
+  const fetchDetailComments = async (postId) => {
+    const targetPostId = String(postId || '').trim();
+    if (!targetPostId) return;
+
+    try {
+      const response = await request({
+        url: Interface.COMMENTS_API.replace('{postId}', targetPostId),
+        data: {
+          page: 1,
+          size: 50,
+        },
+      });
+      const rawList = Array.isArray(response?.data?.data) ? response.data.data : [];
+      const mappedComments = rawList.map((item) => ({
+        id: item?.id || item?.commentId || `${targetPostId}-${item?.createdAt || item?.content || 'comment'}`,
+        avatar: item?.user?.avatar || item?.avatar || '/default-avatar.png',
+        username: item?.user?.nickname || item?.nickname || item?.username || '匿名用户',
+        time: formatTimeAgo(item?.createdAt || item?.updatedAt),
+        content: item?.content || '',
+      }));
+      setDetailModalComments(mappedComments);
+    } catch (error) {
+      console.error('获取帖子评论失败:', error);
+      setDetailModalComments([]);
+    }
+  };
+
+  // 弹窗内提交评论（与移动端一致调用 /comments/new）
+  const handleDetailSubmitComment = async (content) => {
+    const postId = detailModalPost?.id;
+    const nextContent = String(content || '').trim();
+    if (!postId || !nextContent) return false;
+
+    let currentUser = {};
+    try {
+      const raw = localStorage.getItem('userInfo');
+      currentUser = raw ? JSON.parse(raw) : {};
+    } catch (_) {
+      currentUser = {};
+    }
+
+    const tempId = `temp-${Date.now()}`;
+    const optimisticComment = {
+      id: tempId,
+      avatar: currentUser?.avatar || currentUser?.photoUrl || '/default-avatar.png',
+      username: currentUser?.nickName || currentUser?.nickname || currentUser?.username || '我',
+      time: '刚刚',
+      content: nextContent,
+    };
+
+    setDetailModalComments((prev) => [optimisticComment, ...prev]);
+    setDetailModalPost((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        commentCount: (prev.commentCount || 0) + 1,
+      };
+    });
+    setCoinPosts((prev) =>
+      prev.map((item) => {
+        if (String(item.id) !== String(postId)) return item;
+        return {
+          ...item,
+          commentCount: (item.commentCount || 0) + 1,
+        };
+      })
+    );
+
+    try {
+      await request({
+        url: Interface.COMMENTS_NEW,
+        method: 'POST',
+        data: {
+          postId,
+          content: nextContent,
+        },
+      });
+
+      await fetchDetailComments(postId);
+      message.success('评论发送成功');
+      return true;
+    } catch (error) {
+      console.error('提交评论失败:', error);
+      setDetailModalComments((prev) => prev.filter((item) => item.id !== tempId));
+      setDetailModalPost((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          commentCount: Math.max((prev.commentCount || 0) - 1, 0),
+        };
+      });
+      setCoinPosts((prev) =>
+        prev.map((item) => {
+          if (String(item.id) !== String(postId)) return item;
+          return {
+            ...item,
+            commentCount: Math.max((item.commentCount || 0) - 1, 0),
+          };
+        })
+      );
+      message.error('评论发送失败，请稍后重试');
+      return false;
+    }
+  };
+
   // 跳转到帖子详情
   const goToPostDetail = (postId) => {
-    router.push(`/commentinfo?id=${postId}`);
+    const target = coinPosts.find((post) => String(post.id) === String(postId));
+    if (!target) {
+      router.push(`/commentinfo?id=${postId}`);
+      return;
+    }
+
+    const mapped = {
+      id: target.id,
+      coverImage: target.images?.[0] || undefined,
+      authorName: target.username || '匿名用户',
+      authorAvatar: target.avatar || '/default-avatar.png',
+      timeText: formatTimeAgo(target.createTime || target.updatedAt || target.createdAt),
+      title: target.title || '帖子详情',
+      description: target.content || '',
+      tags: Array.isArray(target.tags) && target.tags.length > 0
+        ? target.tags.map((tag) => String(tag?.name || '').trim()).filter(Boolean)
+        : [selectedCoin || 'Mozi'],
+      likeCount: target.likeCount || 0,
+      commentCount: target.commentCount || 0,
+      shareCount: target.shareCount || 0,
+    };
+
+    setDetailModalPost(mapped);
+    fetchDetailComments(target.id);
+    setDetailModalOpen(true);
   };
 
   // 跳转到话题详情页
@@ -722,6 +856,20 @@ export default function PCCommunityContent() {
         }
         leftWidth={70}
         gap={20}
+      />
+      <PostDetailModal
+        open={detailModalOpen}
+        onClose={() => {
+          setDetailModalOpen(false);
+          setDetailModalComments([]);
+        }}
+        post={detailModalPost || {}}
+        comments={detailModalComments}
+        onFollow={() => message.info('关注功能开发中')}
+        onLike={() => message.info('请在卡片中进行点赞操作')}
+        onComment={() => message.info('评论功能开发中')}
+        onShare={() => message.info('分享功能开发中')}
+        onSubmitComment={handleDetailSubmitComment}
       />
     </div>
   );
