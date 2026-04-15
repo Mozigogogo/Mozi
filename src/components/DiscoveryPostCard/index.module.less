@@ -17,6 +17,12 @@
   overflow: hidden;
 }
 
+.pcCard.qaCardTemplate {
+  padding-left: 30PX;
+  padding-top: 20PX;
+  padding-right: 20PX;
+}
+
 /* 移动端样式 */
 .mobileCard {
   flex: 0 0 calc(50% - 4px);
@@ -73,8 +79,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28PX;
-  height: 28PX;
+  width: 32PX;
+  height: 32PX;
   padding: 0;
   border: none;
   background: transparent;
@@ -85,6 +91,17 @@
 
   &:hover {
     background: rgba(243, 244, 246, 1);
+  }
+
+  :global {
+    .anticon {
+      font-size: 20PX;
+      line-height: 1;
+      display: inline-flex;
+    }
+    svg {
+      display: block;
+    }
   }
 }
 
@@ -197,13 +214,66 @@
   flex: 1;
 }
 
+.qaContentSection {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.qaTitle {
+  color: #1f2937;
+  font-weight: 700;
+}
+
+.qaDesc {
+  color: #6b7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
 .pcCard .coinInfoSection {
 //   margin-bottom: 12PX;
     padding-top: 6PX;
 }
 
+.pcCard .qaContentSection {
+  padding-top: 6PX;
+}
+
+.pcCard .qaTitle {
+  font-size: 20PX;
+  line-height: 30PX;
+  margin-bottom: 8PX;
+}
+
+.pcCard .qaDesc {
+  font-size: 14PX;
+  line-height: 22PX;
+}
+
 .mobileCard .coinInfoSection {
   margin-bottom: 10px;
+}
+
+.mobileCard .qaContentSection {
+  margin-bottom: 10px;
+}
+
+.mobileCard .qaTitle {
+  font-size: 16px;
+  line-height: 24px;
+  margin-bottom: 6px;
+}
+
+.mobileCard .qaDesc {
+  font-size: 12px;
+  line-height: 18px;
 }
 
 .coinInfoRow {

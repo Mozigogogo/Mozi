@@ -57,6 +57,7 @@ export default function PCCommunityContent() {
   const [searchLoading, setSearchLoading] = useState(false); // 搜索加载状态
   const [showSearchPanel, setShowSearchPanel] = useState(false); // 是否显示搜索下拉面板
   const [activeCapsuleTab, setActiveCapsuleTab] = useState('coin'); // 顶部胶囊tab
+  const isDiscoveryLikeTab = activeCapsuleTab !== 'coin';
   
   // 固定币种配置
   const coinTabs = [
@@ -172,17 +173,23 @@ export default function PCCommunityContent() {
     return hit == null ? '' : String(hit).trim();
   };
 
-  // 获取币种相关帖子
-  const fetchCoinPosts = async (coin, nextPage = 1) => {
+  // 获取左侧帖子（币种 / 发现好币 / 不懂就问）
+  const fetchCoinPosts = async (coin, nextPage = 1, tabKey = activeCapsuleTab) => {
     setCoinLoading(true);
     try {
+      const requestData = {
+        page: nextPage,
+        size: COIN_POST_PAGE_SIZE,
+      };
+      if (tabKey === 'qa') {
+        requestData.category = '不懂就问';
+      } else {
+        requestData.tag = coin; // 币种 / 发现好币沿用币种标签筛选
+      }
+
       const response = await request({
         url: Interface.POSTS_API,
-        data: {
-          page: nextPage,
-          size: COIN_POST_PAGE_SIZE,
-          tag: coin // 根据币种标签筛选
-        }
+        data: requestData
       });
       
       if (response?.data?.data?.length > 0) {
@@ -535,16 +542,18 @@ export default function PCCommunityContent() {
 
   // 初始加载
   useEffect(() => {
-    fetchCoinPosts(selectedCoin); // 加载币种帖子
+    fetchCoinPosts(selectedCoin, 1, activeCapsuleTab); // 加载左侧帖子
     fetchHotTopics(1); // 加载热门话题（第1页）
     fetchFlashNews(1); // 加载快讯（第1页）
   }, []);
 
-  // 币种切换时重新加载
+  // 币种或顶部tab切换时重新加载
   useEffect(() => {
-    fetchCoinPosts(selectedCoin, 1);
-    fetchVoteData(selectedCoin);
-  }, [selectedCoin]);
+    fetchCoinPosts(selectedCoin, 1, activeCapsuleTab);
+    if (activeCapsuleTab === 'coin') {
+      fetchVoteData(selectedCoin);
+    }
+  }, [selectedCoin, activeCapsuleTab]);
 
   const coinPostsTotalPages = Math.max(1, Math.ceil((coinPostsTotal || 0) / COIN_POST_PAGE_SIZE));
   const handleCoinPostsPageChange = (targetPage) => {
@@ -573,11 +582,11 @@ export default function PCCommunityContent() {
               <PCPublishComposer onPublish={goToPostPage} />
             </div>
             <div
-              className={`${styles.leftPanelContainer} ${activeCapsuleTab === 'discover' ? styles.leftPanelPlain : ''}`}
+              className={`${styles.leftPanelContainer} ${isDiscoveryLikeTab ? styles.leftPanelPlain : ''}`}
             >
               {/* 不懂就问模块标题 + 币种标签栏 - 固定在顶部 */}
               <div className={styles.leftContentHeader}>
-                {activeCapsuleTab !== 'discover' ? (
+                {activeCapsuleTab === 'coin' ? (
                   <>
                     <SectionTitle 
                       title="" 
@@ -618,24 +627,10 @@ export default function PCCommunityContent() {
                   </div>
                 ) : coinPosts.length > 0 ? (
                   <div
-                    className={`${styles.coinPostsList} ${activeCapsuleTab === 'discover' ? styles.discoveryPostsGrid : ''}`}
+                    className={`${styles.coinPostsList} ${isDiscoveryLikeTab ? styles.discoveryPostsGrid : ''}`}
                   >
                     {coinPosts.map(post => (
-                      activeCapsuleTab === 'discover' ? (
-                        <DiscoveryPostCard
-                          key={post.id}
-                          post={post}
-                          onPostClick={goToPostDetail}
-                          onUserClick={goToUserPage}
-                          onLikeClick={(postId) => toggleLike(null, postId)}
-                          onDislikeClick={(postId) => toggleDislike(null, postId)}
-                          onShareClick={handleShare}
-                          isLiked={post.isLiked || likedPosts[post.id]}
-                          isDisliked={post.isDisliked || dislikedPosts[post.id]}
-                          formatTimeAgo={formatTimeAgo}
-                          isPC={true}
-                        />
-                      ) : (
+                      activeCapsuleTab === 'coin' ? (
                         <PostCard
                           key={post.id}
                           post={post}
@@ -650,14 +645,30 @@ export default function PCCommunityContent() {
                           isPC={true}
                           showFooterDivider={false}
                         />
+                      ) : (
+                        <DiscoveryPostCard
+                          key={post.id}
+                          post={post}
+                          onPostClick={goToPostDetail}
+                          onUserClick={goToUserPage}
+                          onLikeClick={(postId) => toggleLike(null, postId)}
+                          onDislikeClick={(postId) => toggleDislike(null, postId)}
+                          onShareClick={handleShare}
+                          isLiked={post.isLiked || likedPosts[post.id]}
+                          isDisliked={post.isDisliked || dislikedPosts[post.id]}
+                          formatTimeAgo={formatTimeAgo}
+                          isPC={true}
+                          showDislike={activeCapsuleTab === 'discover'}
+                          contentTemplate={activeCapsuleTab === 'qa' ? 'titleDesc' : 'coinInfo'}
+                        />
                       )
                     ))}
                   </div>
                 ) : (
-                  <Empty description={`暂无${selectedCoin}相关帖子`} />
+                  <Empty description={activeCapsuleTab === 'qa' ? '暂无不懂就问相关帖子' : `暂无${selectedCoin}相关帖子`} />
                 )}
               </div>
-              {coinPostsTotalPages > 1 && (
+              {(activeCapsuleTab === 'qa' || coinPostsTotalPages > 1) && (
                 <PCPagination
                   className={styles.leftPagination}
                   current={coinPostsPage}
@@ -665,6 +676,7 @@ export default function PCCommunityContent() {
                   pageSize={COIN_POST_PAGE_SIZE}
                   loading={coinLoading}
                   onChange={handleCoinPostsPageChange}
+                  alwaysShow={activeCapsuleTab === 'qa'}
                 />
               )}
               

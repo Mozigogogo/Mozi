@@ -39,7 +39,9 @@ export default function DiscoveryPostCard({
   isLiked = false,
   isDisliked = false,
   formatTimeAgo,
-  isPC = false
+  isPC = false,
+  showDislike = true,
+  contentTemplate = 'coinInfo',
 }) {
   const router = useRouter();
   const { t } = useTranslation();
@@ -67,7 +69,7 @@ export default function DiscoveryPostCard({
 
   return (
     <div 
-      className={`${styles.discoveryCard} ${isPC ? styles.pcCard : styles.mobileCard}`} 
+      className={`${styles.discoveryCard} ${isPC ? styles.pcCard : styles.mobileCard} ${contentTemplate === 'titleDesc' ? styles.qaCardTemplate : ''}`} 
       onClick={() => onPostClick?.(post.id)}
     >
       {/* 右上角装饰图标 */}
@@ -120,28 +122,35 @@ export default function DiscoveryPostCard({
         ) : null}
       </div>
 
-      {/* 币种信息区域 */}
-      <div className={styles.coinInfoSection}>
-        <div className={styles.coinInfoRow}>
-          <img className={styles.coinInfoIconImg} src={integralIcon} alt="" />
-          <span className={styles.coinInfoLabel}>{t('community.coinInfo.coinName')}</span>
-          <span className={styles.coinInfoValue}>
-            {post.tags && post.tags.length > 0 ? post.tags[0].name : 'N/A'}
-          </span>
+      {/* 内容区域：发现好币=币种信息，不懂就问=标题+描述 */}
+      {contentTemplate === 'titleDesc' ? (
+        <div className={styles.qaContentSection}>
+          <div className={styles.qaTitle}>{post.title || '暂无标题'}</div>
+          <div className={styles.qaDesc}>{post.content || '暂无内容'}</div>
         </div>
-        
-        <div className={styles.coinInfoRow}>
-          <img className={styles.coinInfoIconImg} src={plateIcon} alt="" />
-          <span className={styles.coinInfoLabel}>{t('community.coinInfo.sector')}</span>
-          <span className={styles.coinInfoValue}>{post.sector || 'DeFi'}</span>
+      ) : (
+        <div className={styles.coinInfoSection}>
+          <div className={styles.coinInfoRow}>
+            <img className={styles.coinInfoIconImg} src={integralIcon} alt="" />
+            <span className={styles.coinInfoLabel}>{t('community.coinInfo.coinName')}</span>
+            <span className={styles.coinInfoValue}>
+              {post.tags && post.tags.length > 0 ? post.tags[0].name : 'N/A'}
+            </span>
+          </div>
+          
+          <div className={styles.coinInfoRow}>
+            <img className={styles.coinInfoIconImg} src={plateIcon} alt="" />
+            <span className={styles.coinInfoLabel}>{t('community.coinInfo.sector')}</span>
+            <span className={styles.coinInfoValue}>{post.sector || 'DeFi'}</span>
+          </div>
+          
+          <div className={styles.coinInfoRow}>
+            <img className={styles.coinInfoIconImg} src={reasonIcon} alt="" />
+            <span className={styles.coinInfoLabel}>{t('post.recommendReason')}：</span>
+            <span className={styles.coinInfoValue}>{post.content || ''}</span>
+          </div>
         </div>
-        
-        <div className={styles.coinInfoRow}>
-          <img className={styles.coinInfoIconImg} src={reasonIcon} alt="" />
-          <span className={styles.coinInfoLabel}>{t('post.recommendReason')}：</span>
-          <span className={styles.coinInfoValue}>{post.content || ''}</span>
-        </div>
-      </div>
+      )}
 
       {/* 操作按钮 */}
       <div className={styles.discoveryActionButtons}>
@@ -160,20 +169,22 @@ export default function DiscoveryPostCard({
           <span className={styles.actionCount}>{post.likeCount || 0}</span>
         </button>
 
-        <button
-          className={`${styles.discoveryActionBtn} ${styles.dislikeBtn} ${isDisliked ? styles.disliked : ''}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            onDislikeClick?.(post.id);
-          }}
-        >
-          <img
-            className={`${styles.discoveryActionIcon} ${styles.dislikeIcon} ${isPC ? styles.pcIcon : ''}`}
-            src={isDisliked ? messagesLikeActiveIcon : messagesLikeNoActivedIcon}
-            alt="dislike"
-          />
-          <span className={styles.actionCount}>{post.dislikeCount || 0}</span>
-        </button>
+        {showDislike ? (
+          <button
+            className={`${styles.discoveryActionBtn} ${styles.dislikeBtn} ${isDisliked ? styles.disliked : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDislikeClick?.(post.id);
+            }}
+          >
+            <img
+              className={`${styles.discoveryActionIcon} ${styles.dislikeIcon} ${isPC ? styles.pcIcon : ''}`}
+              src={isDisliked ? messagesLikeActiveIcon : messagesLikeNoActivedIcon}
+              alt="dislike"
+            />
+            <span className={styles.actionCount}>{post.dislikeCount || 0}</span>
+          </button>
+        ) : null}
         
         <button 
           className={`${styles.discoveryActionBtn} ${styles.shareBtn}`}

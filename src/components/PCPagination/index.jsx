@@ -44,12 +44,13 @@ export default function PCPagination({
   maxButtons = 5,
   className = '',
   showTotalPages = false,
+  alwaysShow = false,
 }) {
   const totalPages = Math.max(1, Math.ceil((Number(total) || 0) / Math.max(1, Number(pageSize) || 1)));
   const currentPage = clamp(Number(current) || 1, 1, totalPages);
   const pageItems = getPageItems(currentPage, totalPages, maxButtons);
 
-  if (totalPages <= 1) return null;
+  if (totalPages <= 1 && !alwaysShow) return null;
 
   const wrapperClassName = className ? `${styles.wrap} ${className}` : styles.wrap;
 
@@ -60,7 +61,7 @@ export default function PCPagination({
           type="button"
           className={styles.pagerBtn}
           onClick={() => onChange?.(Math.max(1, currentPage - 1))}
-          disabled={loading || currentPage <= 1}
+          disabled={loading || currentPage <= 1 || totalPages <= 1}
         >
           上一页
         </button>
@@ -90,7 +91,7 @@ export default function PCPagination({
           type="button"
           className={styles.pagerBtn}
           onClick={() => onChange?.(Math.min(totalPages, currentPage + 1))}
-          disabled={loading || currentPage >= totalPages}
+          disabled={loading || currentPage >= totalPages || totalPages <= 1}
         >
           下一页
         </button>
