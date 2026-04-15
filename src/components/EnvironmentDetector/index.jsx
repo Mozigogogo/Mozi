@@ -6,6 +6,15 @@ export default function EnvironmentDetector() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    const debugLog = (message, payload = {}) => {
+      // eslint-disable-next-line no-console
+      console.warn(`[AppChannel][EnvironmentDetector] ${message}`, {
+        ts: Date.now(),
+        href: window.location.href,
+        ...payload,
+      });
+    };
+
     const detectEnvironment = () => {
       const telegramWebApp = window.Telegram?.WebApp;
       
@@ -23,13 +32,27 @@ export default function EnvironmentDetector() {
       const channel = isTelegram ? 'tg' : 'pc';
 
       const prevChannel = localStorage.getItem('appChannel');
+      debugLog('detectEnvironment result', {
+        hasTelegramObject: !!window.Telegram,
+        hasWebApp: !!telegramWebApp,
+        hasInitData,
+        hasInitDataUnsafe,
+        hasPlatform,
+        platform: telegramWebApp?.platform || null,
+        initDataLength: telegramWebApp?.initData?.length || 0,
+        channel,
+        prevChannel,
+      });
+
       // 仅在值变化时写入，避免无意义覆盖。
       // 在 TG 中一旦识别到 tg，后续不应被早期/偶发检测回写为 pc。
       if (prevChannel !== channel) {
         if (prevChannel === 'tg' && channel === 'pc') {
           // 保持 tg，不回退
+          debugLog('skip downgrade tg -> pc', { prevChannel, nextChannel: channel });
         } else {
           localStorage.setItem('appChannel', channel);
+          debugLog('write appChannel', { prevChannel, nextChannel: channel, source: 'EnvironmentDetector' });
         }
       }
 
@@ -57,6 +80,7 @@ export default function EnvironmentDetector() {
     // 页面恢复可见时再兜底检测一次（从后台切回前台时常见）
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
+        debugLog('visibilitychange -> re-detect');
         detectEnvironment();
       }
     };

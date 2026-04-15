@@ -25,9 +25,19 @@ export const isTelegramEnv = () => {
  */
 export const getAppChannel = () => {
   if (typeof window === 'undefined') return 'pc';
+
+  const debugLog = (message, payload = {}) => {
+    // eslint-disable-next-line no-console
+    console.warn(`[AppChannel][getAppChannel] ${message}`, {
+      ts: Date.now(),
+      href: window.location.href,
+      ...payload,
+    });
+  };
   
   // 优先从 localStorage 读取（由 EnvironmentDetector 组件在应用启动时设置）
   const savedChannel = localStorage.getItem('appChannel');
+  debugLog('read saved appChannel', { savedChannel });
   if (savedChannel) {
     return savedChannel;
   }
@@ -36,6 +46,10 @@ export const getAppChannel = () => {
   const telegramWebApp = window.Telegram?.WebApp;
   if (!telegramWebApp) {
     localStorage.setItem('appChannel', 'pc');
+    debugLog('fallback write appChannel=pc (WebApp missing)', {
+      hasTelegramObject: !!window.Telegram,
+      hasWebApp: false,
+    });
     return 'pc';
   }
   
@@ -49,6 +63,14 @@ export const getAppChannel = () => {
   
   // 保存到 localStorage 供下次使用
   localStorage.setItem('appChannel', channel);
+  debugLog('realtime detect and write appChannel', {
+    channel,
+    hasInitData,
+    hasInitDataUnsafe,
+    hasPlatform,
+    platform: telegramWebApp.platform || null,
+    initDataLength: telegramWebApp.initData?.length || 0,
+  });
   
   console.log('[getAppChannel] 实时检测环境:', { 
     channel, 

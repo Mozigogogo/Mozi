@@ -24,9 +24,8 @@ export default function TelegramAutoLogin() {
     return `${head}...${tail}`;
   };
 
-  // 调试开关：控制该组件内部的控制台输出与 token 监听行为
-  // 设为 true 可恢复日志，定位自动登录链路。
-  const ENABLE_TG_AUTO_LOGIN_DEBUG = false;
+  // 调试开关：当前默认开启，便于定位 TG 环境识别问题
+  const ENABLE_TG_AUTO_LOGIN_DEBUG = true;
 
   // 调试：定位是谁渲染了该组件（线上排查用）
   // 用法：URL 加 `?tgautologin_debug=1`，仅打印一次调用栈
@@ -159,6 +158,18 @@ export default function TelegramAutoLogin() {
       const isWindowDefined = typeof window !== 'undefined';
       const hasTelegram = isWindowDefined && !!window.Telegram;
       const hasWebApp = hasTelegram && !!window.Telegram.WebApp;
+
+      if (ENABLE_TG_AUTO_LOGIN_DEBUG && isWindowDefined) {
+        const tgWebApp = window.Telegram?.WebApp;
+        console.warn('[AppChannel][TelegramAutoLogin] env probe', {
+          hasTelegram,
+          hasWebApp,
+          platform: tgWebApp?.platform || null,
+          initDataLength: tgWebApp?.initData?.length || 0,
+          hasInitDataUnsafe: !!(tgWebApp?.initDataUnsafe && Object.keys(tgWebApp.initDataUnsafe).length > 0),
+          appChannel: localStorage.getItem('appChannel'),
+        });
+      }
       
       if (!isWindowDefined || !hasWebApp) {
         return;
