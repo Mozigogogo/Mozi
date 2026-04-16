@@ -1,8 +1,10 @@
 'use client';
 
 import { Dropdown } from 'antd';
-import { EllipsisOutlined, WarningOutlined } from '@ant-design/icons';
+import { EllipsisOutlined, WarningOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Toast } from 'antd-mobile';
 import { useRouter } from 'next/navigation';
+import { removePost } from '@/api/community';
 import styles from './index.module.less';
 
 const CDN_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community';
@@ -38,6 +40,7 @@ export default function PostCard({
   isPC = false,
   showFooterDivider = true,
   enableReportMenu = false,
+  onDeletePost,
 }) {
   const router = useRouter();
 
@@ -51,6 +54,28 @@ export default function PostCard({
     router.push(query ? `/report/comment?${query}` : '/report/comment');
   };
 
+  const handleDeletePost = async () => {
+    const postId = String(post?.id ?? '').trim();
+    if (!postId) {
+      Toast.show({ content: '帖子ID无效', position: 'bottom' });
+      return;
+    }
+    const confirmed = window.confirm('确认删除该帖子吗？删除后不可恢复。');
+    if (!confirmed) return;
+
+    try {
+      const response = await removePost(postId);
+      if (response?.code === 0) {
+        Toast.show({ content: '删除成功', position: 'bottom' });
+        onDeletePost?.(post.id);
+        return;
+      }
+      Toast.show({ content: response?.errorMsg || '删除失败', position: 'bottom' });
+    } catch (error) {
+      Toast.show({ content: error?.errorMsg || error?.message || '删除失败', position: 'bottom' });
+    }
+  };
+
   const menuItems = [
     {
       key: 'report',
@@ -58,6 +83,15 @@ export default function PostCard({
         <span className={styles.reportMenuItem}>
           <WarningOutlined />
           <span>举报内容</span>
+        </span>
+      ),
+    },
+    {
+      key: 'delete',
+      label: (
+        <span className={styles.deleteMenuItem}>
+          <DeleteOutlined />
+          <span>删除</span>
         </span>
       ),
     },
@@ -106,6 +140,9 @@ export default function PostCard({
                 info?.domEvent?.stopPropagation?.();
                 if (info?.key === 'report') {
                   handleReportNavigate();
+                }
+                if (info?.key === 'delete') {
+                  handleDeletePost();
                 }
               },
             }}

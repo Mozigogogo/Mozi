@@ -283,8 +283,14 @@ export const Interface = {
   COMMENTS_LIKE: '/comments/like/{id}',
   // 评论取消点赞
   COMMENTS_UNLIKE: '/comments/unlike/{id}',
+  // 举报帖子
+  POSTS_REPORT: '/posts/{id}/report',
+  // 物理删除帖子（仅本人）
+  POSTS_REMOVE: '/posts/remove/{id}',
   // 删除评论
   COMMENTS_DELETE: '/comments/delete/{id}',
+  // 物理删除评论（仅本人）
+  COMMENTS_REMOVE: '/comments/remove/{id}',
   // 回复评论
   COMMENTS_REPLIES: '/comments/replies',
   // 更新帖子

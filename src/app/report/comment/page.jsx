@@ -5,6 +5,7 @@ import { Toast } from 'antd-mobile';
 import { useRouter, useSearchParams } from 'next/navigation';
 import NavBar from '@/components/NavBar';
 import PCLayout from '@/components/PCLayout';
+import { reportPost } from '@/api/community';
 import styles from './page.module.less';
 
 const REPORT_TYPES = [
@@ -47,15 +48,20 @@ export default function CommentReportPage() {
       Toast.show({ content: '请选择举报类型', position: 'bottom' });
       return;
     }
+    const postId = searchParams.get('postId') || '';
+    if (!postId) {
+      Toast.show({ content: '缺少帖子ID，无法举报', position: 'bottom' });
+      return;
+    }
+
     setSubmitting(true);
     try {
-      // 预留：后续接入真实举报接口
-      console.log('[report][comment] submit payload:', payloadPreview);
+      await reportPost(postId, selectedType);
       Toast.show({ content: '举报提交成功', position: 'bottom' });
       router.back();
     } catch (error) {
       console.error('[report][comment] submit failed:', error);
-      Toast.show({ content: '提交失败，请稍后重试', position: 'bottom' });
+      Toast.show({ content: error?.errorMsg || error?.message || '提交失败，请稍后重试', position: 'bottom' });
     } finally {
       setSubmitting(false);
     }

@@ -1,9 +1,11 @@
 'use client';
 
 import { Dropdown } from 'antd';
-import { EllipsisOutlined, WarningOutlined } from '@ant-design/icons';
+import { EllipsisOutlined, WarningOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Toast } from 'antd-mobile';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import { removePost } from '@/api/community';
 import styles from './index.module.less';
 
 const CDN_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community';
@@ -43,9 +45,42 @@ export default function DiscoveryPostCard({
   showDislike = true,
   contentTemplate = 'coinInfo',
   badgeLabel = '',
+  onDeletePost,
 }) {
   const router = useRouter();
   const { t } = useTranslation();
+  const handleReportNavigate = () => {
+    const postId = String(post?.id ?? '').trim();
+    const authorId = String(post?.userId ?? '').trim();
+    const params = new URLSearchParams();
+    if (postId) params.set('postId', postId);
+    if (authorId) params.set('authorId', authorId);
+    const query = params.toString();
+    router.push(query ? `/report/comment?${query}` : '/report/comment');
+  };
+
+  const handleDeletePost = async () => {
+    const postId = String(post?.id ?? '').trim();
+    if (!postId) {
+      Toast.show({ content: '帖子ID无效', position: 'bottom' });
+      return;
+    }
+    const confirmed = window.confirm('确认删除该帖子吗？删除后不可恢复。');
+    if (!confirmed) return;
+
+    try {
+      const response = await removePost(postId);
+      if (response?.code === 0) {
+        Toast.show({ content: '删除成功', position: 'bottom' });
+        onDeletePost?.(post.id);
+        return;
+      }
+      Toast.show({ content: response?.errorMsg || '删除失败', position: 'bottom' });
+    } catch (error) {
+      Toast.show({ content: error?.errorMsg || error?.message || '删除失败', position: 'bottom' });
+    }
+  };
+
   const menuItems = [
     {
       key: 'report',
@@ -56,17 +91,16 @@ export default function DiscoveryPostCard({
         </span>
       ),
     },
+    {
+      key: 'delete',
+      label: (
+        <span className={styles.deleteMenuItem}>
+          <DeleteOutlined />
+          <span>删除</span>
+        </span>
+      ),
+    },
   ];
-
-  const handleReportNavigate = () => {
-    const postId = String(post?.id ?? '').trim();
-    const authorId = String(post?.userId ?? '').trim();
-    const params = new URLSearchParams();
-    if (postId) params.set('postId', postId);
-    if (authorId) params.set('authorId', authorId);
-    const query = params.toString();
-    router.push(query ? `/report/comment?${query}` : '/report/comment');
-  };
 
   return (
     <div 
@@ -109,6 +143,9 @@ export default function DiscoveryPostCard({
                 info?.domEvent?.stopPropagation?.();
                 if (info?.key === 'report') {
                   handleReportNavigate();
+                }
+                if (info?.key === 'delete') {
+                  handleDeletePost();
                 }
               },
             }}

@@ -191,3 +191,67 @@ export const undislikePost = (postId) => {
     method: 'GET',
   });
 };
+
+/**
+ * 举报帖子（同一用户同一帖子仅可举报一次）
+ * POST /posts/{id}/report
+ * @param {string|number} postId - 帖子 ID
+ * @param {string} reason - 举报原因（必填，最多 200 字）
+ * @returns {Promise}
+ */
+export const reportPost = (postId, reason) => {
+  const targetPostId = String(postId ?? '').trim();
+  if (!targetPostId) {
+    return Promise.reject(new Error('postId is required'));
+  }
+
+  const reasonText = String(reason ?? '').trim();
+  if (!reasonText) {
+    return Promise.reject(new Error('reason is required'));
+  }
+  if (reasonText.length > 200) {
+    return Promise.reject(new Error('reason must be <= 200 characters'));
+  }
+
+  return request({
+    url: Interface.POSTS_REPORT.replace('{id}', encodeURIComponent(targetPostId)),
+    method: 'POST',
+    data: { reason: reasonText },
+  });
+};
+
+/**
+ * 删除帖子（仅作者可删除）
+ * GET /posts/remove/{id}
+ * @param {string|number} postId - 帖子 ID
+ * @returns {Promise}
+ */
+export const removePost = (postId) => {
+  const targetPostId = String(postId ?? '').trim();
+  if (!targetPostId) {
+    return Promise.reject(new Error('postId is required'));
+  }
+
+  return request({
+    url: Interface.POSTS_REMOVE.replace('{id}', encodeURIComponent(targetPostId)),
+    method: 'GET',
+  });
+};
+
+/**
+ * 删除评论（仅作者可删除）
+ * GET /comments/remove/{id}
+ * @param {string|number} commentId - 评论 ID
+ * @returns {Promise}
+ */
+export const removeComment = (commentId) => {
+  const targetCommentId = String(commentId ?? '').trim();
+  if (!targetCommentId) {
+    return Promise.reject(new Error('commentId is required'));
+  }
+
+  return request({
+    url: Interface.COMMENTS_REMOVE.replace('{id}', encodeURIComponent(targetCommentId)),
+    method: 'GET',
+  });
+};
