@@ -340,6 +340,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     t('robot.quickAsk.ethTechnical'),
     t('robot.quickAsk.solDaily'),
     t('robot.quickAsk.bnbProspect'),
+    'Ton后续发展',
   ];
 
   const [inputValue, setInputValue] = useState('');
@@ -1092,7 +1093,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
               {(() => {
                 // 固定展示这四个建议入口（不再依赖后端返回的 suggestedQuestions）
-                const gridList = fixedSuggestedQuestions.slice(0, 4);
+                const gridList = fixedSuggestedQuestions.slice(0, 5);
 
                 // 用 svg 图标替换原本的彩色圆点
                 const iconSvgs = [
@@ -1234,7 +1235,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
             <div className={styles.loadingOverlay}>
               <div className={styles.loadingContent}>
                 <ThinkingAnimation />
-                <div className={styles.loadingText}>{t('robot.loadingUserData')}</div>
+                <div className={styles.loadingText}>{t('common.loading')}</div>
               </div>
             </div>
           )}
@@ -1275,7 +1276,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                       aria-hidden
                     />
                   </span>
-                  <span className={styles.modeLabel}>{t('robot.model.analyze')}</span>
+                  <span className={styles.modeLabel}>深度思考</span>
                 </div>
                 <div
                   className={`${styles.modeItem} ${selectedModel === 'chat' ? styles.activeMode : ''}`}
@@ -1299,7 +1300,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                       aria-hidden
                     />
                   </span>
-                  <span className={styles.modeLabel}>{t('robot.model.chat')}</span>
+                  <span className={styles.modeLabel}>聊天</span>
                 </div>
               </div>
               <div className={styles.actionTools}>
