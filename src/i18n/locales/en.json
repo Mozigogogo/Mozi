@@ -879,6 +879,15 @@
     "sessionExpired": "Session expired, please login again",
     "cannotGetUserInfoRelogin": "Session expired, please login again."
   },
+  "shareChat": {
+    "title": "Share conversation",
+    "close": "Close",
+    "copyLink": "Copy link",
+    "copied": "Copied",
+    "twitter": "Twitter",
+    "tg": "TG",
+    "more": "More"
+  },
   "robot": {
     "title": "AI Assistant",
     "chattingTitle": "In conversation...",

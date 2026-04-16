@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import Markdown from 'markdown-to-jsx';
+import { useTranslation } from 'react-i18next';
 import styles from './index.module.less';
 
 function buildShareText({ question, answer }) {
@@ -20,6 +21,7 @@ export default function ShareAiChatModal({
   shareUrl,
 }) {
   const [copied, setCopied] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!open) return undefined;
@@ -97,18 +99,23 @@ export default function ShareAiChatModal({
       className={styles.overlay}
       role="dialog"
       aria-modal="true"
-      aria-label="分享对话"
+      aria-label={t('shareChat.title')}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose?.();
       }}
     >
       <div className={styles.modal}>
-        <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="close">
+        <button
+          type="button"
+          className={styles.closeBtn}
+          onClick={onClose}
+          aria-label={t('shareChat.close')}
+        >
           ×
         </button>
 
         <div className={styles.header}>
-          <div className={styles.title}>分享对话</div>
+          <div className={styles.title}>{t('shareChat.title')}</div>
         </div>
 
         <div className={styles.previewOuter}>
@@ -155,21 +162,23 @@ export default function ShareAiChatModal({
             <span className={styles.actionIconCircle}>
               <img className={styles.actionIconImg} src="/icons/pc/link.svg" alt="" aria-hidden />
             </span>
-            <span className={styles.actionLabel}>{copied ? '已复制' : '复制链接'}</span>
+            <span className={styles.actionLabel}>
+              {copied ? t('shareChat.copied') : t('shareChat.copyLink')}
+            </span>
           </button>
 
           <button type="button" className={styles.actionItem} onClick={shareToTwitter}>
             <span className={styles.actionIconCircle}>
-              <img className={styles.actionIconImg} src="/icons/twitter.svg" alt="" aria-hidden />
+              <img className={styles.actionIconImg} src="/icons/x-logo-45556c.svg" alt="" aria-hidden />
             </span>
-            <span className={styles.actionLabel}>Twitter</span>
+            <span className={styles.actionLabel}>{t('shareChat.twitter')}</span>
           </button>
 
           <button type="button" className={styles.actionItem} onClick={shareToTelegram}>
             <span className={styles.actionIconCircle}>
               <img className={styles.actionIconImg} src="/icons/pc/tg.svg" alt="" aria-hidden />
             </span>
-            <span className={styles.actionLabel}>TG</span>
+            <span className={styles.actionLabel}>{t('shareChat.tg')}</span>
           </button>
 
           <button type="button" className={styles.actionItem} onClick={shareMore}>
@@ -180,7 +189,7 @@ export default function ShareAiChatModal({
                 <span className={styles.moreDot} />
               </span>
             </span>
-            <span className={styles.actionLabel}>更多</span>
+            <span className={styles.actionLabel}>{t('shareChat.more')}</span>
           </button>
         </div>
       </div>

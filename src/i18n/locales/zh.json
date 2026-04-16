@@ -862,6 +862,15 @@
     "sessionExpired": "登录已失效，请重新登录",
     "cannotGetUserInfoRelogin": "登录已失效，请重新登录"
   },
+  "shareChat": {
+    "title": "分享对话",
+    "close": "关闭",
+    "copyLink": "复制链接",
+    "copied": "已复制",
+    "twitter": "Twitter",
+    "tg": "TG",
+    "more": "更多"
+  },
   "robot": {
     "title": "AI 助手",
     "chattingTitle": "正在对话...",
