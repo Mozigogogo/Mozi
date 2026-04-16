@@ -6,6 +6,7 @@ import { Toast } from 'antd-mobile';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { removePost } from '@/api/community';
+import { confirm } from '@/components/Modal/confirm';
 import styles from './index.module.less';
 
 const CDN_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community';
@@ -49,6 +50,27 @@ export default function DiscoveryPostCard({
 }) {
   const router = useRouter();
   const { t } = useTranslation();
+  const normalizeId = (value) => String(value ?? '').trim();
+  const localStorageUserId = (() => {
+    if (typeof window === 'undefined') return '';
+    const directUserId = localStorage.getItem('userId');
+    if (directUserId) return normalizeId(directUserId);
+    try {
+      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+      return normalizeId(
+        userInfo?.userId ||
+          userInfo?.id ||
+          userInfo?.userInfo?.userId ||
+          userInfo?.userInfo?.id ||
+          userInfo?.data?.userId ||
+          userInfo?.data?.id
+      );
+    } catch (error) {
+      return '';
+    }
+  })();
+  const postOwnerId = normalizeId(post?.userId || post?.authorId || post?.user?.id || post?.user?.userId);
+  const isPostOwner = !!localStorageUserId && !!postOwnerId && localStorageUserId === postOwnerId;
   const handleReportNavigate = () => {
     const postId = String(post?.id ?? '').trim();
     const authorId = String(post?.userId ?? '').trim();
@@ -62,45 +84,52 @@ export default function DiscoveryPostCard({
   const handleDeletePost = async () => {
     const postId = String(post?.id ?? '').trim();
     if (!postId) {
-      Toast.show({ content: '帖子ID无效', position: 'bottom' });
+      Toast.show({ content: t('community.messages.invalidPostId'), position: 'bottom' });
       return;
     }
-    const confirmed = window.confirm('确认删除该帖子吗？删除后不可恢复。');
+    const confirmed = await confirm({
+      content: t('common.confirmDelete'),
+      confirmText: t('common.confirm'),
+      cancelText: t('common.cancel'),
+    });
     if (!confirmed) return;
 
     try {
       const response = await removePost(postId);
       if (response?.code === 0) {
-        Toast.show({ content: '删除成功', position: 'bottom' });
+        Toast.show({ content: t('common.deleteSuccess'), position: 'bottom' });
         onDeletePost?.(post.id);
         return;
       }
-      Toast.show({ content: response?.errorMsg || '删除失败', position: 'bottom' });
+      Toast.show({ content: response?.errorMsg || t('common.deleteFailed'), position: 'bottom' });
     } catch (error) {
-      Toast.show({ content: error?.errorMsg || error?.message || '删除失败', position: 'bottom' });
+      Toast.show({ content: error?.errorMsg || error?.message || t('common.deleteFailed'), position: 'bottom' });
     }
   };
 
-  const menuItems = [
-    {
-      key: 'report',
-      label: (
-        <span className={styles.reportMenuItem}>
-          <WarningOutlined />
-          <span>举报内容</span>
-        </span>
-      ),
-    },
-    {
-      key: 'delete',
-      label: (
-        <span className={styles.deleteMenuItem}>
-          <DeleteOutlined />
-          <span>删除</span>
-        </span>
-      ),
-    },
-  ];
+  const menuItems = isPostOwner
+    ? [
+      {
+        key: 'delete',
+        label: (
+          <span className={styles.deleteMenuItem}>
+            <DeleteOutlined />
+            <span>{t('common.delete')}</span>
+          </span>
+        ),
+      },
+    ]
+    : [
+      {
+        key: 'report',
+        label: (
+          <span className={styles.reportMenuItem}>
+            <WarningOutlined />
+            <span>{t('community.reportContent')}</span>
+          </span>
+        ),
+      },
+    ];
 
   return (
     <div 

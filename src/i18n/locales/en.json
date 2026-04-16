@@ -213,7 +213,10 @@
     "cancelSuccess": "Cancelled successfully",
     "operationFailed": "Operation failed",
     "followed": "Followed",
-    "unfollowed": "Unfollowed"
+    "unfollowed": "Unfollowed",
+    "confirmDelete": "Are you sure you want to delete?",
+    "deleteSuccess": "Deleted successfully",
+    "deleteFailed": "Delete failed"
   },
   "exchangeRank": {
     "realTimeUpdate": "Real-time update"
@@ -750,6 +753,7 @@
     "telegramReloginConfirm": "Confirm"
   },
   "community": {
+    "reportContent": "Report content",
     "title": "Community",
     "post": "Post",
     "comment": "Comment",
@@ -1348,7 +1352,8 @@
       "uploading": "Uploading...",
       "uploadSuccess": "Successfully uploaded {{count}} image(s)",
       "uploadFailed": "Image upload failed",
-      "reasonRequired": "Please enter recommendation reason"
+      "reasonRequired": "Please enter recommendation reason",
+      "invalidPostId": "Invalid post ID"
     },
     "vote": {
       "createVote": "Create Vote",

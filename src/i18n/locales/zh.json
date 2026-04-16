@@ -196,7 +196,10 @@
     "cancelSuccess": "取消成功",
     "operationFailed": "操作失败",
     "followed": "已关注",
-    "unfollowed": "已取消关注"
+    "unfollowed": "已取消关注",
+    "confirmDelete": "确定要删除吗？",
+    "deleteSuccess": "删除成功",
+    "deleteFailed": "删除失败"
   },
   "exchangeRank": {
     "realTimeUpdate": "实时更新"
@@ -733,6 +736,7 @@
     "telegramReloginConfirm": "确定"
   },
   "community": {
+    "reportContent": "举报内容",
     "title": "社区",
     "post": "发帖",
     "comment": "评论",
@@ -1329,7 +1333,8 @@
       "uploading": "上传中...",
       "uploadSuccess": "成功上传{{count}}张图片",
       "uploadFailed": "图片上传失败",
-      "reasonRequired": "请填写推荐理由"
+      "reasonRequired": "请填写推荐理由",
+      "invalidPostId": "帖子ID无效"
     },
     "vote": {
       "createVote": "创建投票",
