@@ -23,6 +23,7 @@ import styles from './page.module.less';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import AiRobotUpgradePillButton from '@/components/AiRobotUpgradePillButton';
 import PointsInsufficientBubble from '@/components/PointsInsufficientBubble';
+import ShareAiChatModal from '@/components/ShareAiChatModal';
 
 // 代码块组件 - 带复制按钮
 const CodeBlock = ({ language, children, ...props }) => {
@@ -350,6 +351,9 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   // 模型选择状态
   const [selectedModel, setSelectedModel] = useState('analyze'); // 'analyze' | 'chat'
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareQuestion, setShareQuestion] = useState('');
+  const [shareAnswer, setShareAnswer] = useState('');
 
   // 当前模型单次对话所需积分
   const requiredPointsPerAsk = selectedModel === 'analyze' ? 50 : 10;
@@ -958,6 +962,24 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     }
   };
 
+  const openShareModalForMessage = (assistantMsgId) => {
+    const idx = messages.findIndex((m) => m.id === assistantMsgId);
+    if (idx < 0) return;
+
+    // find nearest previous user message
+    let q = '';
+    for (let i = idx - 1; i >= 0; i -= 1) {
+      if (messages[i]?.role === 'user') {
+        q = messages[i]?.content || '';
+        break;
+      }
+    }
+    const a = messages[idx]?.content || '';
+    setShareQuestion(q);
+    setShareAnswer(a);
+    setShareOpen(true);
+  };
+
   const handleToggleMic = async () => {
     if (isStreaming) return;
 
@@ -1211,7 +1233,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                         <button
                           type="button"
                           className={styles.actionBtn}
-                          onClick={() => handleShareMessage(msg.content)}
+                          onClick={() => openShareModalForMessage(msg.id)}
                           aria-label="share"
                         >
                           <img src="/images/ai_robot/share.svg" alt="" aria-hidden />
@@ -1371,6 +1393,13 @@ export default function RobotPage({ isPC: propIsPC = false }) {
           visible={showPopLogin}
           onClose={() => setShowPopLogin(false)}
           onLoginSuccess={handleLoginSuccess}
+        />
+
+        <ShareAiChatModal
+          open={shareOpen}
+          onClose={() => setShareOpen(false)}
+          question={shareQuestion}
+          answer={shareAnswer}
         />
       </div>
   );
