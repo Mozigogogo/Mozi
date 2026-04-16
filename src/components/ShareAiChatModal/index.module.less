@@ -29,13 +29,18 @@
   border-radius: 0;
   border: none;
   background: transparent;
-  color: rgba(107, 114, 128, 1);
-  font-size: 22PX;
-  line-height: 28PX;
+  color: rgba(55, 65, 81, 1);
+  font-size: 26PX;
+  line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  z-index: 5;
+}
+
+.closeBtn:hover {
+  opacity: 0.75;
 }
 
 .header {
@@ -52,7 +57,7 @@
   right: 18PX;
   bottom: 0;
   height: 1PX;
-  background: rgba(0, 0, 0, 0.06);
+  background: rgba(229, 231, 235, 0.6);
 }
 
 .title {
@@ -75,34 +80,79 @@
   border: 1PX solid rgba(0, 0, 0, 0.06);
   box-shadow: 0PX 1PX 2PX rgba(0, 0, 0, 0.06);
   max-height: 420PX;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  overflow: hidden;
 }
 
-.userBubble {
-  width: fit-content;
-  max-width: 90%;
-  margin: 0 auto 16PX;
-  padding: 12PX 18PX;
-  border-radius: 999999PX;
+.previewInner::after {
+  content: '';
+  position: absolute;
+  left: 22PX;
+  right: 22PX;
+  bottom: 42PX;
+  height: 1PX;
+  background: rgba(229, 231, 235, 0.6);
+}
+
+.previewScroll {
+  max-height: calc(420PX - 26PX - 50PX);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 6PX; /* 给滚动条留一点空间 */
+}
+
+.previewMsgRow {
+  width: 100%;
+  display: flex;
+  margin-bottom: 14PX;
+}
+
+.previewMsgLeft {
+  justify-content: flex-start;
+}
+
+.previewMsgRight {
+  justify-content: flex-end;
+}
+
+.previewBubble {
+  max-width: 86%;
+  word-break: break-word;
+  white-space: pre-wrap;
+  line-height: 1.6;
+  font-size: 15PX;
+  padding: 14PX 16PX;
+  border-radius: 20PX;
+}
+
+.previewBubbleUser {
   background: rgba(17, 183, 135, 1);
   color: #fff;
-  font-size: 16PX;
-  line-height: 1.4;
-  text-align: center;
+  border-top-right-radius: 8PX;
   box-shadow: 0PX 2PX 8PX rgba(0, 0, 0, 0.08);
 }
 
-.aiBubble {
-  max-width: 100%;
+.previewBubbleAssistant {
   background: rgba(255, 255, 255, 1);
+  color: rgba(17, 24, 39, 1);
   border: 1PX solid rgba(0, 0, 0, 0.08);
-  border-radius: 36PX;
-  padding: 16PX 18PX;
-  color: rgba(55, 65, 81, 1);
-  font-size: 15PX;
-  line-height: 1.6;
-  white-space: pre-wrap;
+  border-top-left-radius: 8PX;
+}
+
+.mdParagraph {
+  margin: 0 0 10PX;
+}
+
+.mdParagraph:last-child {
+  margin-bottom: 0;
+}
+
+.mdList {
+  margin: 0 0 10PX;
+  padding-left: 1.2em;
+}
+
+.mdListItem {
+  margin: 0 0 4PX;
 }
 
 .brand {
@@ -110,17 +160,17 @@
   right: 18PX;
   bottom: 14PX;
   color: rgba(17, 183, 135, 1);
-  font-size: 18PX;
+  font-size: 16PX;
   font-weight: 700;
   user-select: none;
 }
 
 .actions {
-  padding: 18PX 28PX 26PX;
+  padding: 0PX 24PX 18PX;
   background: #fff;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14PX;
+  gap: 0PX;
 }
 
 .actionItem {
@@ -135,8 +185,8 @@
 }
 
 .actionIconCircle {
-  width: 64PX;
-  height: 64PX;
+  width: 44PX;
+  height: 44PX;
   border-radius: 50%;
   background: rgba(255, 255, 255, 1);
   border: 1PX solid rgba(0, 0, 0, 0.08);
@@ -147,23 +197,31 @@
 }
 
 .actionIconImg {
-  width: 26PX;
-  height: 26PX;
+  width: 18PX;
+  height: 18PX;
   object-fit: contain;
   display: block;
 }
 
 .moreDots {
-  font-size: 26PX;
-  font-weight: 700;
-  line-height: 1;
-  color: rgba(55, 65, 81, 1);
-  transform: translateY(-2PX);
+  width: 18PX;
+  height: 18PX;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2PX;
+}
+
+.moreDot {
+  width: 3PX;
+  height: 3PX;
+  border-radius: 50%;
+  background: rgba(55, 65, 81, 1);
 }
 
 .actionLabel {
-  margin-top: 10PX;
-  font-size: 14PX;
+  margin-top: 8PX;
+  font-size: 12PX;
   color: rgba(107, 114, 128, 1);
   line-height: 1.2;
   white-space: nowrap;
@@ -172,6 +230,10 @@
 @media (max-width: 768px) {
   .previewInner {
     max-height: 46vh;
+  }
+
+  .previewScroll {
+    max-height: calc(46vh - 26PX - 50PX);
   }
 }
 

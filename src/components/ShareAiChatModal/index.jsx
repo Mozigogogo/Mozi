@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import Markdown from 'markdown-to-jsx';
 import styles from './index.module.less';
 
 function buildShareText({ question, answer }) {
@@ -112,8 +113,39 @@ export default function ShareAiChatModal({
 
         <div className={styles.previewOuter}>
           <div className={styles.previewInner}>
-            {question ? <div className={styles.userBubble}>{question}</div> : null}
-            {answer ? <div className={styles.aiBubble}>{answer}</div> : null}
+            <div className={styles.previewScroll}>
+              {question ? (
+                <div className={`${styles.previewMsgRow} ${styles.previewMsgRight}`}>
+                  <div className={`${styles.previewBubble} ${styles.previewBubbleUser}`}>{question}</div>
+                </div>
+              ) : null}
+              {answer ? (
+                <div className={`${styles.previewMsgRow} ${styles.previewMsgLeft}`}>
+                  <div className={`${styles.previewBubble} ${styles.previewBubbleAssistant}`}>
+                    <Markdown
+                      options={{
+                        overrides: {
+                          p: {
+                            props: { className: styles.mdParagraph },
+                          },
+                          ul: {
+                            props: { className: styles.mdList },
+                          },
+                          ol: {
+                            props: { className: styles.mdList },
+                          },
+                          li: {
+                            props: { className: styles.mdListItem },
+                          },
+                        },
+                      }}
+                    >
+                      {answer}
+                    </Markdown>
+                  </div>
+                </div>
+              ) : null}
+            </div>
             <div className={styles.brand}>{brandLabel}</div>
           </div>
         </div>
@@ -121,7 +153,7 @@ export default function ShareAiChatModal({
         <div className={styles.actions}>
           <button type="button" className={styles.actionItem} onClick={copyLink}>
             <span className={styles.actionIconCircle}>
-              <img className={styles.actionIconImg} src="/icons/link.svg" alt="" aria-hidden />
+              <img className={styles.actionIconImg} src="/icons/pc/link.svg" alt="" aria-hidden />
             </span>
             <span className={styles.actionLabel}>{copied ? '已复制' : '复制链接'}</span>
           </button>
@@ -135,7 +167,7 @@ export default function ShareAiChatModal({
 
           <button type="button" className={styles.actionItem} onClick={shareToTelegram}>
             <span className={styles.actionIconCircle}>
-              <img className={styles.actionIconImg} src="/icons/telegram-group.svg" alt="" aria-hidden />
+              <img className={styles.actionIconImg} src="/icons/pc/tg.svg" alt="" aria-hidden />
             </span>
             <span className={styles.actionLabel}>TG</span>
           </button>
@@ -143,7 +175,9 @@ export default function ShareAiChatModal({
           <button type="button" className={styles.actionItem} onClick={shareMore}>
             <span className={styles.actionIconCircle}>
               <span className={styles.moreDots} aria-hidden>
-                …
+                <span className={styles.moreDot} />
+                <span className={styles.moreDot} />
+                <span className={styles.moreDot} />
               </span>
             </span>
             <span className={styles.actionLabel}>更多</span>
