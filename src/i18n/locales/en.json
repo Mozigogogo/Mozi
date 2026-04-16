@@ -876,7 +876,8 @@
     "unauthorized": "Unauthorized, please login first",
     "forbidden": "Access forbidden",
     "unknown": "Unknown error",
-    "sessionExpired": "Session expired, please login again"
+    "sessionExpired": "Session expired, please login again",
+    "cannotGetUserInfoRelogin": "Session expired, please login again."
   },
   "robot": {
     "title": "AI Assistant",

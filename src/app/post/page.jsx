@@ -309,6 +309,14 @@ export default function PostPage() {
         data: postData
       });
 
+      const rawErrorMsg =
+        response?.errorMsg || response?.errormsg || response?.msg || response?.message || '';
+      const normalizedErrorMsg = String(rawErrorMsg).replace(/\s+/g, '');
+      const isCannotGetUserInfo =
+        normalizedErrorMsg.includes('创建内容失败:无法获取用户信息') ||
+        normalizedErrorMsg.includes('创建内容失败：无法获取用户信息') ||
+        normalizedErrorMsg.includes('无法获取用户信息');
+
       if (response?.code === 0) {
         // 发帖成功后，调用发帖任务完成接口（仅新帖子，不是更新）
         if (!isUpdate) {
@@ -343,13 +351,23 @@ export default function PostPage() {
         });
       } else {
         Toast.show({
-          content: isUpdate ? t('post.messages.updateFailed') : t('post.messages.publishFailed')
+          content: isCannotGetUserInfo
+            ? t('error.cannotGetUserInfoRelogin')
+            : (isUpdate ? t('post.messages.updateFailed') : t('post.messages.publishFailed'))
         });
       }
     } catch (error) {
       console.error(isUpdate ? '更新失败:' : '发布失败:', error);
+      const errMsg = String(error?.errorMsg || error?.errormsg || error?.message || '');
+      const norm = errMsg.replace(/\s+/g, '');
+      const isCannotGetUserInfo =
+        norm.includes('创建内容失败:无法获取用户信息') ||
+        norm.includes('创建内容失败：无法获取用户信息') ||
+        norm.includes('无法获取用户信息');
       Toast.show({
-        content: isUpdate ? t('post.messages.updateFailed') : t('post.messages.publishFailed')
+        content: isCannotGetUserInfo
+          ? t('error.cannotGetUserInfoRelogin')
+          : (isUpdate ? t('post.messages.updateFailed') : t('post.messages.publishFailed'))
       });
     } finally {
       setPublishing(false);
