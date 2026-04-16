@@ -31,6 +31,7 @@ export default function PostPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [title, setTitle] = useState('');
+  const [showTitleInput, setShowTitleInput] = useState(false);
   const [content, setContent] = useState('');
   const [isUpdate, setIsUpdate] = useState(false);
   const [postId, setPostId] = useState(null);
@@ -110,7 +111,10 @@ export default function PostPage() {
     if (id && updateFlag === 'true') {
       setIsUpdate(true);
       setPostId(Number(id));
-      if (postTitle) setTitle(decodeURIComponent(postTitle));
+      if (postTitle) {
+        setTitle(decodeURIComponent(postTitle));
+        setShowTitleInput(true);
+      }
       if (postContent) setContent(decodeURIComponent(postContent));
     }
     
@@ -134,6 +138,10 @@ export default function PostPage() {
       setSelectedCoins([{ symbol: symbol, name: symbol }]);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (title && title.trim()) setShowTitleInput(true);
+  }, [title]);
 
   // 监听币种选择弹出层状态变化
   useEffect(() => {
@@ -711,19 +719,29 @@ export default function PostPage() {
                 </svg>
               </div>
             )}
+
+            <button
+              type="button"
+              className={`${styles.titleToggleTag} ${showTitleInput ? styles.titleToggleTagActive : ''}`}
+              onClick={() => setShowTitleInput((v) => !v)}
+            >
+              {showTitleInput ? '隐藏标题' : '标题'}
+            </button>
           </div>
 
         {/* 标题输入区 */}
-        <div className={styles.titleSection}>
-          <Input
-            className={styles.titleInput}
-            value={title}
-            onChange={(value) => value.length <= 20 && setTitle(value)}
-            placeholder={selectedTemplate === '不懂就问' ? t('post.questionPlaceholder') : t('post.titlePlaceholder')}
-            maxLength={20}
-          />
-          <span className={styles.wordCount}>{title.length}/20</span>
-        </div>
+        {showTitleInput && (
+          <div className={styles.titleSection}>
+            <Input
+              className={styles.titleInput}
+              value={title}
+              onChange={(value) => value.length <= 20 && setTitle(value)}
+              placeholder={selectedTemplate === '不懂就问' ? t('post.questionPlaceholder') : t('post.titlePlaceholder')}
+              maxLength={20}
+            />
+            <span className={styles.wordCount}>{title.length}/20</span>
+          </div>
+        )}
 
         {/* 内容区域 */}
         <div className={styles.contentSection}>
