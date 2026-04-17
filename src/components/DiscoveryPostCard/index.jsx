@@ -95,14 +95,24 @@ export default function DiscoveryPostCard({
     if (!confirmed) return;
 
     try {
+      Toast.show({
+        icon: 'loading',
+        content: t('common.deleting'),
+        duration: 0,
+        position: 'center',
+      });
       const response = await removePost(postId);
+      Toast.clear();
       if (response?.code === 0) {
         Toast.show({ content: t('common.deleteSuccess'), position: 'bottom' });
-        onDeletePost?.(post.id);
+        if (onDeletePost) {
+          await Promise.resolve(onDeletePost(post.id));
+        }
         return;
       }
       Toast.show({ content: response?.errorMsg || t('common.deleteFailed'), position: 'bottom' });
     } catch (error) {
+      Toast.clear();
       Toast.show({ content: error?.errorMsg || error?.message || t('common.deleteFailed'), position: 'bottom' });
     }
   };

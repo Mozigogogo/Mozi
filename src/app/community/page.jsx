@@ -1064,6 +1064,10 @@ export default function CommunityPage() {
   }, [searchParams]);
 
   // 渲染帖子列表
+  const handlePostDeleted = async () => {
+    await fetchPosts(true);
+  };
+
   const renderPosts = () => {
     // 快讯tab只显示userType为virtual的帖子
     const filteredPosts = mainTab === 'news' 
@@ -1098,6 +1102,7 @@ export default function CommunityPage() {
               isDisliked={post.isDisliked || dislikedPosts[post.id]}
               formatTimeAgo={formatTimeAgo}
               isPC={false}
+              onDeletePost={handlePostDeleted}
             />
           ) : (
             // 普通帖子使用PostCard组件
@@ -1113,6 +1118,7 @@ export default function CommunityPage() {
               isLiked={post.isLiked || likedPosts[post.id]}
               formatTimeAgo={formatTimeAgo}
               enableReportMenu={true}
+              onDeletePost={handlePostDeleted}
             />
           )
         ))}

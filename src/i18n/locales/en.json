@@ -215,6 +215,7 @@
     "followed": "Followed",
     "unfollowed": "Unfollowed",
     "confirmDelete": "Are you sure you want to delete?",
+    "deleting": "Deleting...",
     "deleteSuccess": "Deleted successfully",
     "deleteFailed": "Delete failed"
   },

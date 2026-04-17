@@ -198,6 +198,7 @@
     "followed": "已关注",
     "unfollowed": "已取消关注",
     "confirmDelete": "确定要删除吗？",
+    "deleting": "删除中...",
     "deleteSuccess": "删除成功",
     "deleteFailed": "删除失败"
   },

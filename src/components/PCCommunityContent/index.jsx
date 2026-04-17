@@ -733,6 +733,10 @@ export default function PCCommunityContent() {
     fetchCoinPosts(selectedCoin, safePage);
   };
 
+  const handlePostDeleted = async () => {
+    await fetchCoinPosts(selectedCoin, 1, activeCapsuleTab);
+  };
+
   return (
     <div className={styles.pcCommunityContent}>
       <div className={styles.topCapsuleTabs}>
@@ -815,6 +819,7 @@ export default function PCCommunityContent() {
                           formatTimeAgo={formatTimeAgo}
                           isPC={true}
                           showFooterDivider={false}
+                          onDeletePost={handlePostDeleted}
                         />
                       ) : (
                         <DiscoveryPostCard
@@ -832,6 +837,7 @@ export default function PCCommunityContent() {
                           showDislike={activeCapsuleTab === 'discover'}
                           contentTemplate={activeCapsuleTab === 'qa' ? 'titleDesc' : 'coinInfo'}
                           badgeLabel={activeCapsuleTab === 'qa' ? '不懂就问' : ''}
+                          onDeletePost={handlePostDeleted}
                         />
                       )
                     ))}
