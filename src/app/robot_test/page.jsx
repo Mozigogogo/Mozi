@@ -1077,6 +1077,42 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
   const content = (
       <div className={`${styles.robotPage} ${isPC ? styles.pcMode : ''}`}>
+        {isPC && (isStreaming || messages.length > 0) && (
+          <div
+            className={styles.pcBackBar}
+            role="button"
+            tabIndex={0}
+            onClick={() => router.back()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                router.back();
+              }
+            }}
+            aria-label={t('common.back')}
+          >
+            <span className={styles.pcBackIcon} aria-hidden="true">
+              <svg
+                width="26"
+                height="26"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M15 18L9 12L15 6"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
+            <span className={styles.pcBackText}>
+              {isStreaming ? t('robot.chattingTitle') : t('pcLayout.menu.myQA')}
+            </span>
+          </div>
+        )}
         {!isPC && (
           <NavBar 
             title={isStreaming ? t('robot.chattingTitle') : t('pcLayout.menu.myQA')}
