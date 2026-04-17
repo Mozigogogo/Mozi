@@ -392,8 +392,23 @@
   flex-shrink: 0;
   width: 16px;
   height: 16px;
-  display: block;
-  object-fit: contain;
+  display: inline-block;
+  background-color: #45556c;
+  mask-image: url('/icons/new_home/right_arrow_45556C.svg');
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-image: url('/icons/new_home/right_arrow_45556C.svg');
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  transform-origin: center;
+  transition: transform 0.18s ease, background-color 0.18s ease;
+}
+
+.pcWatchlistChevronExpanded {
+  transform: rotate(90deg);
+  background-color: #00ac72;
 }
 
 /* 与标题「我的自选」文字左缘对齐（.pcWatchlistHeader margin 须与 antd Menu item 一致，否则此处需连带微调） */
@@ -411,6 +426,72 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   min-height: 0;
+}
+
+.pcAlertBody {
+  padding: 0 4px 4px @pcWatchlist-text-align-inset;
+  display: flex;
+  flex-direction: column;
+  gap: @pc-watchlist-row-gap;
+  max-height: calc(5 * @pc-watchlist-row-approx + 4 * @pc-watchlist-row-gap);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  min-height: 0;
+}
+
+.pcAlertEntry {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 50px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: rgba(0, 0, 0, 0.72);
+  font-size: 13px;
+  text-align: left;
+  padding: 8px 10px;
+  cursor: pointer;
+  font: inherit;
+
+  &:hover {
+    background: #f7f8f9;
+  }
+}
+
+.pcAlertEntryLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.pcAlertEntryRight {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+.pcAlertPrice {
+  font-size: 14px;
+  line-height: 1.2;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.pcAlertEntryActive {
+  color: #11b787;
+  background: #f2f4f5;
+
+  &:hover {
+    background: #f2f4f5;
+  }
 }
 
 .pcWatchlistHint {
