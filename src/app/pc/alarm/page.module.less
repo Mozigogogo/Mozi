@@ -8,6 +8,11 @@
   align-items: stretch;
 }
 
+.pageHistory {
+  grid-template-columns: 1fr;
+  padding: 0 140PX;
+}
+
 .mainPanel {
   min-width: 0;
   display: flex;
@@ -37,6 +42,12 @@
   font-size: 13PX;
 }
 
+.tabBtn {
+  border: none;
+  cursor: pointer;
+  background: transparent;
+}
+
 .tabActive {
   color: #fff;
   background: linear-gradient(90deg, #2cd9a2 0%, #11b787 100%);
@@ -45,6 +56,220 @@
 .tabGhost {
   color: #45556c;
   background: #ffffff;
+}
+
+.historyCard {
+  background: #fff;
+  border-radius: 32PX;
+  border: 1px solid #e7f0ea;
+  box-shadow: 0 4PX 20PX rgba(17, 183, 135, 0.08);
+  height: 80vh;
+  overflow: hidden;
+}
+
+.historyInner {
+  height: 100%;
+  display: grid;
+  grid-template-columns: 280PX 1fr;
+}
+
+.historyLeft {
+  border-right: 1PX solid rgba(226, 232, 240, 1);
+  padding: 18PX 16PX;
+  background: rgba(248, 250, 252, 0.5);
+}
+
+.historyLeftTitle {
+  font-size: 14PX;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 12PX;
+}
+
+.historyCoinList {
+  display: flex;
+  flex-direction: column;
+  gap: 10PX;
+  overflow: auto;
+  height: calc(100% - 30PX);
+  padding-right: 6PX;
+}
+
+.historyCoinItem {
+  width: 100%;
+  border: 1PX solid rgba(226, 232, 240, 1);
+  background: #fff;
+  border-radius: 14PX;
+  padding: 10PX 12PX;
+  display: grid;
+  grid-template-columns: 34PX 1fr 10PX;
+  align-items: center;
+  gap: 10PX;
+  cursor: pointer;
+  text-align: left;
+}
+
+.historyCoinItemActive {
+  border-color: rgba(17, 183, 135, 0.5);
+  box-shadow: 0 6PX 18PX rgba(17, 183, 135, 0.12);
+}
+
+.historyCoinAvatar {
+  width: 28PX;
+  height: 28PX;
+  border-radius: 999PX;
+  background: rgba(236, 253, 245, 1);
+  color: #11b787;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12PX;
+}
+
+.historyCoinSymbol {
+  font-size: 13PX;
+  font-weight: 600;
+  color: #111827;
+}
+
+.historyCoinDot {
+  width: 8PX;
+  height: 8PX;
+  border-radius: 999PX;
+}
+
+.historyCoinDotOn {
+  background: #11b787;
+}
+
+.historyCoinDotOff {
+  background: rgba(148, 163, 184, 1);
+}
+
+.historyRight {
+  padding: 18PX 22PX;
+  overflow: auto;
+}
+
+.historyHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16PX;
+  padding-bottom: 14PX;
+  border-bottom: 1PX solid rgba(226, 232, 240, 1);
+}
+
+.historyTitle {
+  font-size: 18PX;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 4PX;
+}
+
+.historyDesc {
+  font-size: 12PX;
+  color: rgba(100, 116, 139, 1);
+}
+
+.historyMetaLabel {
+  font-size: 12PX;
+  color: rgba(100, 116, 139, 1);
+  text-align: right;
+}
+
+.historyMetaValue {
+  font-size: 13PX;
+  color: #111827;
+  font-weight: 600;
+  margin-top: 4PX;
+  text-align: right;
+}
+
+.historyForm {
+  margin-top: 16PX;
+  display: flex;
+  flex-direction: column;
+  gap: 14PX;
+}
+
+.historyRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12PX;
+  padding: 14PX 14PX;
+  border: 1PX solid rgba(241, 245, 249, 1);
+  background: rgba(248, 250, 252, 0.6);
+  border-radius: 14PX;
+}
+
+.historyRowLabel {
+  font-size: 13PX;
+  font-weight: 600;
+  color: #111827;
+}
+
+.historyRowRight {
+  display: inline-flex;
+  align-items: center;
+  gap: 14PX;
+}
+
+.historyRowInputWrap {
+  height: 34PX;
+  min-width: 150PX;
+  border-radius: 10PX;
+  border: 1PX solid rgba(226, 232, 240, 1);
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10PX;
+  gap: 0;
+}
+
+.historyRowPrefix,
+.historyRowUnit {
+  font-size: 12PX;
+  color: rgba(100, 116, 139, 1);
+}
+
+.historyRowPrefix {
+  margin-right: 8PX;
+}
+
+.historyRowInput {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: 13PX;
+  color: #111827;
+}
+
+.historyRowUnit {
+  margin-left: auto;
+}
+
+.historyDeleteBtn {
+  margin-top: 18PX;
+  border: 1PX solid rgba(239, 68, 68, 0.35);
+  background: rgba(254, 242, 242, 1);
+  color: rgba(220, 38, 38, 1);
+  border-radius: 12PX;
+  padding: 12PX 16PX;
+  font-weight: 700;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.historyEmpty {
+  padding: 20PX 0;
+  color: rgba(100, 116, 139, 1);
+  font-size: 13PX;
 }
 
 .card {
