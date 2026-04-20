@@ -113,10 +113,19 @@ function openRainbowKit(meta) {
   }
 }
 
-async function startArbitrumPayment({ pricingId, tabKey, plan, meta }) {
+async function startArbitrumPayment({ pricingId, tabKey, plan, meta, preferConnectModal = false }) {
   if (!pricingId) {
     // eslint-disable-next-line no-console
     console.error('[VipPurchase][Arbitrum] 缺少 pricingId，无法创建钱包订单', meta);
+    return;
+  }
+
+  const connectedAddress = getCookieValue('wallet_address');
+
+  // 在 TG 端优先走 RainbowKit 连接弹窗（用户先选择钱包），
+  // 连上后再执行一次购买进入链路。
+  if (preferConnectModal && !connectedAddress) {
+    openRainbowKit(meta);
     return;
   }
 
@@ -129,7 +138,7 @@ async function startArbitrumPayment({ pricingId, tabKey, plan, meta }) {
   try {
     // 1) 获取钱包地址（若未连接会拉起授权）
     const accounts = await provider.request({ method: 'eth_requestAccounts' });
-    const fromAddress = accounts?.[0] || getCookieValue('wallet_address');
+    const fromAddress = accounts?.[0] || connectedAddress || getCookieValue('wallet_address');
     if (!fromAddress) {
       // eslint-disable-next-line no-console
       console.error('[VipPurchase][Arbitrum] 未获取到钱包地址', meta);
@@ -342,11 +351,12 @@ export async function startVipPurchase({ tabKey, plan, payload }) {
   };
 
   if (inTelegram) {
-    const method = await chooseTelegramPaymentMethod();
-    if (!method) return;
+    // TG 端当前策略：直接走 Arbitrum，优先打开 RainbowKit 钱包选择弹窗。
+    // Stars/TON 分支保留但不在当前流程触发。
+    const method = TELEGRAM_PAYMENT_CONFIG.defaultMethod;
 
     if (method === TG_PAYMENT_METHODS.ARBITRUM) {
-      await startArbitrumPayment({ pricingId, tabKey, plan, meta });
+      await startArbitrumPayment({ pricingId, tabKey, plan, meta, preferConnectModal: true });
       return;
     }
     if (method === TG_PAYMENT_METHODS.STARS) {
