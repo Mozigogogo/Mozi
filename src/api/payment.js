@@ -37,6 +37,32 @@ export const getOrderStatus = (orderNo) => {
 };
 
 /**
+ * 创建链上钱包支付订单
+ * POST /payment/createWalletOrder
+ * @param {{ pricingId: string|number, fromAddress: string }} data
+ */
+export const createWalletOrder = (data) => {
+  return request({
+    url: Interface.PAYMENT_CREATE_WALLET_ORDER,
+    method: 'POST',
+    data,
+  });
+};
+
+/**
+ * 提交链上交易哈希
+ * POST /payment/submitWalletTx
+ * @param {{ orderNo: string, txHash: string }} data
+ */
+export const submitWalletTx = (data) => {
+  return request({
+    url: Interface.PAYMENT_SUBMIT_WALLET_TX,
+    method: 'POST',
+    data,
+  });
+};
+
+/**
  * 验证加密货币支付
  * @param {Object} data
  * @param {string} data.txHash - 交易哈希

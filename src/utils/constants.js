@@ -105,6 +105,8 @@ export const Interface = {
 
   // 支付相关
   PAYMENT_CREATE_STARS: '/payment/createStarsInvoice',
+  PAYMENT_CREATE_WALLET_ORDER: '/payment/createWalletOrder',
+  PAYMENT_SUBMIT_WALLET_TX: '/payment/submitWalletTx',
   PAYMENT_ORDER_STATUS: '/payment/orderStatus',
   PAYMENT_VERIFY_CRYPTO: '/payment/verify-crypto',
   // 币种信息
