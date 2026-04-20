@@ -113,6 +113,61 @@ function openRainbowKit(meta) {
   }
 }
 
+function openCurrentPageInExternalBrowser() {
+  if (typeof window === 'undefined') return;
+  const url = window.location.href;
+  const tg = window.Telegram?.WebApp;
+  try {
+    if (tg?.openLink) {
+      tg.openLink(url);
+      return;
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn('[VipPurchase][TG] 外部浏览器打开失败', e);
+  }
+}
+
+async function promptTelegramWalletFallback() {
+  if (typeof window === 'undefined') return;
+  const url = window.location.href;
+  await confirm({
+    title: '未检测到钱包跳转',
+    content: (
+      <div style={{ lineHeight: 1.6 }}>
+        <div style={{ color: '#4b5563', marginBottom: 8 }}>
+          Telegram 内置浏览器可能拦截钱包唤起，建议在外部浏览器继续支付。
+        </div>
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={async () => {
+            try {
+              await navigator.clipboard?.writeText(url);
+            } catch (e) {}
+          }}
+          onKeyDown={async (e) => {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            try {
+              await navigator.clipboard?.writeText(url);
+            } catch (err) {}
+          }}
+          style={{ color: '#10b981', fontWeight: 600, cursor: 'pointer' }}
+        >
+          复制当前链接
+        </div>
+      </div>
+    ),
+    cancelText: '继续重试',
+    confirmText: '浏览器打开',
+    onConfirm: () => {
+      openCurrentPageInExternalBrowser();
+    },
+    closeOnAction: true,
+  });
+}
+
 async function startArbitrumPayment({ pricingId, tabKey, plan, meta, preferConnectModal = false }) {
   if (!pricingId) {
     // eslint-disable-next-line no-console
@@ -125,7 +180,16 @@ async function startArbitrumPayment({ pricingId, tabKey, plan, meta, preferConne
   // 在 TG 端优先走 RainbowKit 连接弹窗（用户先选择钱包），
   // 连上后再执行一次购买进入链路。
   if (preferConnectModal && !connectedAddress) {
-    openRainbowKit(meta);
+    const opened = openRainbowKit(meta);
+    if (opened) {
+      // 给钱包 deeplink 一些时间；若仍未连接，给 TG 用户兜底方案
+      window.setTimeout(() => {
+        const latestAddress = getCookieValue('wallet_address');
+        if (!latestAddress) {
+          promptTelegramWalletFallback();
+        }
+      }, 4000);
+    }
     return;
   }
 
