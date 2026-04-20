@@ -54,7 +54,7 @@ async function pollOrderStatus(
 /**
  * 统一的 VIP 购买入口：
  * - TG 环境：走 Stars 支付（createStarsInvoice + openInvoice + 查询订单状态）
- * - 非 TG 环境：走 Reown / AppKit 支付
+ * - 非 TG 环境：走 RainbowKit 钱包支付
  */
 export async function startVipPurchase({ tabKey, plan, payload }) {
   const inTelegram = isTelegramEnv();
@@ -129,17 +129,17 @@ export async function startVipPurchase({ tabKey, plan, payload }) {
     return;
   }
 
-  // 非 Telegram 环境：通过 Reown / AppKit 打开钱包支付
+  // 非 Telegram 环境：通过 RainbowKit 打开钱包支付
   try {
-    if (typeof window !== 'undefined' && typeof window.__openAppKit === 'function') {
-      window.__openAppKit();
+    if (typeof window !== 'undefined' && typeof window.__openRainbowKit === 'function') {
+      window.__openRainbowKit();
     } else {
       // eslint-disable-next-line no-console
-      console.warn('[VipPurchase][AppKit] window.__openAppKit 不存在，无法打开钱包弹窗', meta);
+      console.warn('[VipPurchase][RainbowKit] window.__openRainbowKit 不存在，无法打开钱包弹窗', meta);
     }
   } catch (e) {
     // eslint-disable-next-line no-console
-    console.error('[VipPurchase][AppKit] 打开钱包失败：', e, meta);
+    console.error('[VipPurchase][RainbowKit] 打开钱包失败：', e, meta);
   }
 }
 

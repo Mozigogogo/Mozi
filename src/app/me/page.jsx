@@ -222,7 +222,16 @@ export default function Me() {
                 <span>请登录</span>
               </div>
               <div style={{ marginTop: 12 }}>
-                <appkit-button></appkit-button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (typeof window !== 'undefined' && typeof window.__openRainbowKit === 'function') {
+                      window.__openRainbowKit();
+                    }
+                  }}
+                >
+                  连接钱包
+                </button>
               </div>
             </div>
           )}

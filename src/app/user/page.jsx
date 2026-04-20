@@ -1246,8 +1246,8 @@ export default function UserPage() {
     // 非 Telegram 环境使用原有的 wagmi 钱包
     if (!isConnected) {
       pendingSignRef.current = true;
-      if (window.__openAppKit) {
-        window.__openAppKit();
+      if (window.__openRainbowKit) {
+        window.__openRainbowKit();
       } else {
         Toast.show({ content: t('user.walletNotReady'), position: 'bottom' });
       }
