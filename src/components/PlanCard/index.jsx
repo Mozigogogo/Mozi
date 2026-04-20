@@ -296,7 +296,11 @@ const PlanCard = ({
         </div>
 
         {/* 描述 - 显示在价格区域下方 */}
-        {description && <p className={styles.description}>{localizeSave(description)}</p>}
+        {description && (
+          <p className={`${styles.description} ${title !== 'Free' ? styles.descriptionBadge : ''}`}>
+            {localizeSave(description)}
+          </p>
+        )}
 
         {/* 分割线 */}
         <div className={styles.divider} />
