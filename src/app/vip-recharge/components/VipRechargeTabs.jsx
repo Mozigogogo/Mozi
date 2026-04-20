@@ -20,6 +20,7 @@ export default function VipRechargeTabs({ t, onChange }) {
       variant="highlight"
       size="medium"
       headerOnly={true}
+      rootClassName="vipRechargeTabs"
     />
   );
 }

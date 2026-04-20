@@ -1,7 +1,7 @@
 .vipTabs {
   width: 100%;
   background: #f8fafc;
-  border-radius: 12px;
+  border-radius: 12PX;
   overflow: hidden;
   transition: all 0.3s ease;
 
@@ -16,7 +16,7 @@
     .tabButtonActive {
       background: #ffffff !important;
       color: #000000 !important;
-      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.08);
+      box-shadow: 0 2PX 4PX rgba(15, 23, 42, 0.08);
     }
   }
 }
@@ -26,9 +26,9 @@
   position: relative;
   display: flex;
   align-items: center;
-  padding: 4px;
+  padding: 4PX;
   background: rgba(236, 240, 244, 1);
-  border-radius: 12px;
+  border-radius: 12PX;
 }
 
 .tabsList {
@@ -42,11 +42,11 @@
 /* Tab 按钮 */
 .tabButton {
   flex: 1;
-  padding: 10px 16px;
+  padding: 10PX 16PX;
   background: transparent;
   border: none;
-  border-radius: 8px;
-  font-size: 14px;
+  border-radius: 8PX;
+  font-size: 14PX;
   font-weight: 500;
   color: rgba(100, 116, 139, 1);
   cursor: pointer;
@@ -54,7 +54,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 6PX;
   white-space: nowrap;
   position: relative;
   z-index: 3;
@@ -75,7 +75,7 @@
   color: #000000;
   font-weight: 600;
   background: #fff;
-  height: 40px;
+  height: 40PX;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -85,7 +85,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 16PX;
 }
 
 .tabLabel {
@@ -96,11 +96,11 @@
   display: inline-block;
   background: #FACC15;
   color: #000;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
+  padding: 4PX 8PX;
+  border-radius: 12PX;
+  font-size: 12PX;
   font-weight: 600;
-  margin-left: 6px;
+  margin-left: 6PX;
 }
 
 /* 活跃指示器 */
@@ -108,22 +108,22 @@
   position: absolute;
   bottom: 0;
   left: 0;
-  height: 3px;
-  border-radius: 2px;
+  height: 3PX;
+  border-radius: 2PX;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1;
 }
 
 /* Tabs 内容 */
 .tabsContent {
-  padding: 24px;
-  min-height: 200px;
+  padding: 24PX;
+  min-height: 200PX;
   animation: fadeIn 0.3s ease;
 
   @keyframes fadeIn {
     from {
       opacity: 0;
-      transform: translateY(4px);
+      transform: translateY(4PX);
     }
     to {
       opacity: 1;
@@ -149,37 +149,37 @@
 .vipTabs {
   &.small {
     .tabButton {
-      padding: 6px 12px;
-      font-size: 12px;
+      padding: 6PX 12PX;
+      font-size: 12PX;
     }
 
     .tabsContent {
-      padding: 16px;
-      min-height: 120px;
+      padding: 16PX;
+      min-height: 120PX;
     }
   }
 
   &.medium {
     .tabButton {
-      padding: 10px 16px;
-      font-size: 14px;
+      padding: 10PX 16PX;
+      font-size: 14PX;
     }
 
     .tabsContent {
-      padding: 24px;
-      min-height: 200px;
+      padding: 24PX;
+      min-height: 200PX;
     }
   }
 
   &.large {
     .tabButton {
-      padding: 14px 20px;
-      font-size: 16px;
+      padding: 14PX 20PX;
+      font-size: 16PX;
     }
 
     .tabsContent {
-      padding: 32px;
-      min-height: 280px;
+      padding: 32PX;
+      min-height: 280PX;
     }
   }
 }
@@ -187,42 +187,42 @@
 /* 响应式设计 */
 @media (max-width: 768px) {
   .tabsHeader {
-    padding: 3px;
+    padding: 3PX;
   }
 
   .tabButton {
-    padding: 8px 12px;
-    font-size: 13px;
-    gap: 4px;
+    padding: 8PX 12PX;
+    font-size: 13PX;
+    gap: 4PX;
   }
 
   .tabsContent {
-    padding: 16px;
-    min-height: 150px;
+    padding: 16PX;
+    min-height: 150PX;
   }
 
   .vipTabs {
     &.small {
       .tabButton {
-        padding: 5px 10px;
-        font-size: 11px;
+        padding: 5PX 10PX;
+        font-size: 11PX;
       }
 
       .tabsContent {
-        padding: 12px;
-        min-height: 100px;
+        padding: 12PX;
+        min-height: 100PX;
       }
     }
 
     &.large {
       .tabButton {
-        padding: 10px 14px;
-        font-size: 14px;
+        padding: 10PX 14PX;
+        font-size: 14PX;
       }
 
       .tabsContent {
-        padding: 20px;
-        min-height: 200px;
+        padding: 20PX;
+        min-height: 200PX;
       }
     }
   }
@@ -230,18 +230,18 @@
 
 @media (max-width: 480px) {
   .tabButton {
-    padding: 6px 8px;
-    font-size: 12px;
-    gap: 3px;
+    padding: 6PX 8PX;
+    font-size: 12PX;
+    gap: 3PX;
   }
 
   .tabIcon {
-    font-size: 14px;
+    font-size: 14PX;
   }
 
   .tabsContent {
-    padding: 12px;
-    min-height: 120px;
+    padding: 12PX;
+    min-height: 120PX;
   }
 }
 

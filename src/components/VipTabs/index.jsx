@@ -20,6 +20,7 @@ const VipTabs = ({
   disabled = false,
   size = 'medium',
   headerOnly = false,
+  rootClassName = '',
 }) => {
   const { t } = useTranslation();
   const [activeId, setActiveId] = useState(defaultActiveId || tabs[0]?.id);
@@ -34,27 +35,31 @@ const VipTabs = ({
   const activeTab = tabs.find((tab) => tab.id === activeId);
 
   return (
-    <div className={`${styles.vipTabs} ${styles[variant]} ${styles[size]}`}>
+    <div
+      className={`vipTabsRoot ${rootClassName} ${styles.vipTabs} ${styles[variant]} ${styles[size]}`}
+    >
       {/* Tabs 头部 */}
-      <div className={styles.tabsHeader}>
-        <div className={styles.tabsList}>
+      <div className={`vipTabsHeader ${styles.tabsHeader}`}>
+        <div className={`vipTabsList ${styles.tabsList}`}>
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              className={`${styles.tabButton} ${
-                activeId === tab.id ? styles.tabButtonActive : ''
+              className={`vipTabButton ${styles.tabButton} ${
+                activeId === tab.id ? `vipTabButtonActive ${styles.tabButtonActive}` : ''
               } ${disabled ? styles.disabled : ''}`}
               onClick={() => handleTabClick(tab.id)}
               disabled={disabled}
             >
-              <span className={styles.tabLabel}>{tab.label}</span>
-              {tab.badge && activeId === tab.id && <span className={styles.tabBadge}>{tab.badge}</span>}
+              <span className={`vipTabLabel ${styles.tabLabel}`}>{tab.label}</span>
+              {tab.badge && activeId === tab.id && (
+                <span className={`vipTabBadge ${styles.tabBadge}`}>{tab.badge}</span>
+              )}
             </button>
           ))}
         </div>
 
         {/* 活跃指示器 */}
-        <div className={styles.activeIndicator} />
+        <div className={`vipTabsActiveIndicator ${styles.activeIndicator}`} />
       </div>
 
       {/* Tabs 内容 - 仅在 headerOnly 为 false 时显示 */}
