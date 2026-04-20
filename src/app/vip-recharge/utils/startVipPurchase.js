@@ -356,10 +356,19 @@ async function ensureTonConnected(meta, { timeoutMs = 60_000, pollMs = 500 } = {
   if (typeof window === 'undefined') return null;
   const getAddr = window.__getTonWalletAddress;
   const openModal = window.__openTonConnectModal;
+  const getCached = () => {
+    try {
+      return window.localStorage?.getItem('ton_address') || null;
+    } catch (_) {
+      return null;
+    }
+  };
   if (typeof getAddr === 'function') {
     const addr = getAddr();
     if (addr) return addr;
   }
+  const cachedNow = getCached();
+  if (cachedNow) return cachedNow;
   if (typeof openModal === 'function') {
     try {
       await openModal();
@@ -369,15 +378,31 @@ async function ensureTonConnected(meta, { timeoutMs = 60_000, pollMs = 500 } = {
     }
   }
 
-  const deadline = Date.now() + Math.max(0, Number(timeoutMs) || 0);
-  while (Date.now() < deadline) {
-    await sleep(pollMs);
-    try {
-      const addr = typeof getAddr === 'function' ? getAddr() : null;
-      if (addr) return addr;
-    } catch (_) {}
+  let eventResolvedAddress = null;
+  const onReady = (e) => {
+    const addr = e?.detail?.address || null;
+    if (!addr) return;
+    eventResolvedAddress = addr;
+  };
+  window.addEventListener('mozi:ton-address-ready', onReady);
+  try {
+    const deadline = Date.now() + Math.max(0, Number(timeoutMs) || 0);
+    while (Date.now() < deadline) {
+      await sleep(pollMs);
+      try {
+        const addr =
+          eventResolvedAddress ||
+          (typeof getAddr === 'function' ? getAddr() : null) ||
+          getCached();
+        if (addr) return addr;
+      } catch (_) {}
+    }
+    // eslint-disable-next-line no-console
+    console.warn('[VipPurchase][TON] connect timeout', { timeoutMs, meta });
+    return null;
+  } finally {
+    window.removeEventListener('mozi:ton-address-ready', onReady);
   }
-  return null;
 }
 
 async function startTonPayment({ pricingId, tabKey, plan, meta }) {

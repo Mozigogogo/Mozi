@@ -18,9 +18,11 @@ function TonBridge() {
     window.__disconnectTon = async () => tonConnectUI?.disconnect?.();
     window.__tonSendTransaction = async (tx) => tonConnectUI?.sendTransaction?.(tx);
     window.__getTonWalletAddress = () =>
+      tonWallet?.account?.address ||
       tonConnectUI?.wallet?.account?.address ||
       tonConnectUI?.account?.address ||
       tonConnectUI?.walletInfo?.account?.address ||
+      window.localStorage?.getItem('ton_address') ||
       null;
 
     return () => {
@@ -29,7 +31,7 @@ function TonBridge() {
       try { delete window.__tonSendTransaction; } catch {}
       try { delete window.__getTonWalletAddress; } catch {}
     };
-  }, [tonConnectUI]);
+  }, [tonConnectUI, tonWallet]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -45,6 +47,9 @@ function TonBridge() {
       window.localStorage?.setItem('ton_address', addr);
       // eslint-disable-next-line no-console
       console.log('[TonConnect][cache] ton_address saved', { ton_address: addr });
+      try {
+        window.dispatchEvent(new CustomEvent('mozi:ton-address-ready', { detail: { address: addr } }));
+      } catch (_) {}
     } catch (e) {
       // eslint-disable-next-line no-console
       console.warn('[TonConnect][cache] save ton_address failed', e);
@@ -67,6 +72,9 @@ function TonBridge() {
         window.localStorage?.setItem('ton_address', addr);
         // eslint-disable-next-line no-console
         console.log('[TonConnect][cache][interval] ton_address saved', { ton_address: addr });
+        try {
+          window.dispatchEvent(new CustomEvent('mozi:ton-address-ready', { detail: { address: addr } }));
+        } catch (_) {}
       } catch (_) {}
     }, 1200);
     return () => window.clearInterval(timer);
