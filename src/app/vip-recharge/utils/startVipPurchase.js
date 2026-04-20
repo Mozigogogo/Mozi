@@ -352,7 +352,7 @@ function tonToNano(amountTon) {
   return intPart * 1000000000n + BigInt(frac);
 }
 
-async function ensureTonConnected(meta) {
+async function ensureTonConnected(meta, { timeoutMs = 60_000, pollMs = 500 } = {}) {
   if (typeof window === 'undefined') return null;
   const getAddr = window.__getTonWalletAddress;
   const openModal = window.__openTonConnectModal;
@@ -368,9 +368,15 @@ async function ensureTonConnected(meta) {
       console.warn('[VipPurchase][TON] openModal failed', e, meta);
     }
   }
-  // 等一小会让钱包连接状态落地
-  await sleep(400);
-  if (typeof getAddr === 'function') return getAddr();
+
+  const deadline = Date.now() + Math.max(0, Number(timeoutMs) || 0);
+  while (Date.now() < deadline) {
+    await sleep(pollMs);
+    try {
+      const addr = typeof getAddr === 'function' ? getAddr() : null;
+      if (addr) return addr;
+    } catch (_) {}
+  }
   return null;
 }
 
@@ -394,23 +400,9 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
   });
 
   // 先用缓存地址创建订单（即便尚未连接钱包），但真正发起转账仍需要连接
-  const orderFromAddress = cachedTonAddress || (await ensureTonConnected(meta));
+  const orderFromAddress = cachedTonAddress || (await ensureTonConnected(meta, { timeoutMs: 60_000, pollMs: 500 }));
 
-  if (!orderFromAddress) {
-    await confirm({
-      title: '请先连接 TON 钱包',
-      content: <div style={{ color: '#4b5563' }}>Telegram 内请使用 TON 官方钱包完成支付（如 Tonkeeper）。</div>,
-      cancelText: '取消',
-      confirmText: '连接钱包',
-      onConfirm: async () => {
-        try {
-          await window.__openTonConnectModal?.();
-        } catch (_) {}
-      },
-      closeOnAction: true,
-    });
-    return;
-  }
+  if (!orderFromAddress) return;
 
   // 1) 创建订单，拿收款信息（后端可按 TON 返回字段）
   let orderData = {};
@@ -451,24 +443,10 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
   }
 
   // 2) 真正发起交易前，确保已连接 TON 钱包（TG WebView 里这是必须的）
-  const connectedTonAddress = await ensureTonConnected(meta);
+  const connectedTonAddress = await ensureTonConnected(meta, { timeoutMs: 60_000, pollMs: 500 });
   // eslint-disable-next-line no-console
   console.log('[VipPurchase][TON] connected address', { connectedTonAddress, cachedTonAddress, orderFromAddress });
-  if (!connectedTonAddress) {
-    await confirm({
-      title: '未连接 TON 钱包',
-      content: <div style={{ color: '#4b5563' }}>已创建订单，请先连接 TON 钱包再完成支付。</div>,
-      cancelText: '取消',
-      confirmText: '连接钱包',
-      onConfirm: async () => {
-        try {
-          await window.__openTonConnectModal?.();
-        } catch (_) {}
-      },
-      closeOnAction: true,
-    });
-    return;
-  }
+  if (!connectedTonAddress) return;
 
   // 2) 拉起 TonConnect 官方钱包发起转账
   if (typeof window.__tonSendTransaction !== 'function') {
