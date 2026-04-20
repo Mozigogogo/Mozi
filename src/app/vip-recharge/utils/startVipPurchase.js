@@ -13,11 +13,11 @@ const TG_PAYMENT_METHODS = {
 
 // TG 端支付策略：
 // - 三种方式都保留在代码里（STARS / TON / ARBITRUM）
-// - 当前默认优先走 ARBITRUM
-// - STARS / TON 在弹窗中隐藏（不删除代码，后续可随时打开）
+// - 当前默认优先走 TON（TonConnect 官方钱包）
+// - STARS / ARBITRUM 分支保留（后续可随时打开）
 const TELEGRAM_PAYMENT_CONFIG = {
-  defaultMethod: TG_PAYMENT_METHODS.ARBITRUM,
-  hiddenMethods: [TG_PAYMENT_METHODS.STARS, TG_PAYMENT_METHODS.TON],
+  defaultMethod: TG_PAYMENT_METHODS.TON,
+  hiddenMethods: [TG_PAYMENT_METHODS.STARS, TG_PAYMENT_METHODS.ARBITRUM],
 };
 const ARBITRUM_CHAIN_ID = 42161;
 
@@ -341,11 +341,130 @@ async function startStarsPayment({ pricingId, tabKey, plan, meta }) {
   }
 }
 
-function startTonPayment(meta) {
-  // 预留：后续可接入 TG + TON 的下单与校验流程
-  // 当前产品策略隐藏 TON 支付入口，但保留代码分支
-  // eslint-disable-next-line no-console
-  console.warn('[VipPurchase][TON] 当前未启用 TON 支付流程', meta);
+function tonToNano(amountTon) {
+  const s = String(amountTon ?? '').trim();
+  if (!s) return null;
+  if (/^\d+$/.test(s)) return BigInt(s) * 1000000000n;
+  const [intPartRaw, fracRaw = ''] = s.split('.');
+  const intPart = intPartRaw ? BigInt(intPartRaw) : 0n;
+  const frac = (fracRaw + '000000000').slice(0, 9);
+  if (!/^\d{9}$/.test(frac)) return null;
+  return intPart * 1000000000n + BigInt(frac);
+}
+
+async function ensureTonConnected(meta) {
+  if (typeof window === 'undefined') return null;
+  const getAddr = window.__getTonWalletAddress;
+  const openModal = window.__openTonConnectModal;
+  if (typeof getAddr === 'function') {
+    const addr = getAddr();
+    if (addr) return addr;
+  }
+  if (typeof openModal === 'function') {
+    try {
+      await openModal();
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn('[VipPurchase][TON] openModal failed', e, meta);
+    }
+  }
+  // 等一小会让钱包连接状态落地
+  await sleep(400);
+  if (typeof getAddr === 'function') return getAddr();
+  return null;
+}
+
+async function startTonPayment({ pricingId, tabKey, plan, meta }) {
+  if (!pricingId) {
+    // eslint-disable-next-line no-console
+    console.error('[VipPurchase][TON] 缺少 pricingId，无法创建 TON 订单', meta);
+    return;
+  }
+  if (typeof window === 'undefined') return;
+
+  const tonAddress = await ensureTonConnected(meta);
+  if (!tonAddress) {
+    await confirm({
+      title: '请先连接 TON 钱包',
+      content: <div style={{ color: '#4b5563' }}>Telegram 内请使用 TON 官方钱包完成支付（如 Tonkeeper）。</div>,
+      cancelText: '取消',
+      confirmText: '连接钱包',
+      onConfirm: async () => {
+        try {
+          await window.__openTonConnectModal?.();
+        } catch (_) {}
+      },
+      closeOnAction: true,
+    });
+    return;
+  }
+
+  // 1) 创建订单，拿收款信息（后端可按 TON 返回字段）
+  let orderData = {};
+  try {
+    const orderRes = await createWalletOrder({ pricingId, fromAddress: tonAddress, chain: 'TON' });
+    orderData = orderRes?.data ?? orderRes ?? {};
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[VipPurchase][TON] createWalletOrder failed', e, meta);
+    return;
+  }
+
+  const orderNo = orderData.orderNo;
+  const receiveAddress = orderData.receiveAddress || orderData.toAddress || orderData.to;
+  const amountNanoRaw =
+    orderData.amountNano ??
+    orderData.amountTonNano ??
+    orderData.amountTONNano ??
+    orderData.payAmountNano;
+  const amountTonRaw = orderData.amountTon ?? orderData.amountTON ?? orderData.amount ?? orderData.payAmount;
+  const payload =
+    orderData.payloadBase64 ||
+    orderData.payload ||
+    orderData.bocPayload ||
+    null;
+
+  const amountNano =
+    amountNanoRaw != null
+      ? BigInt(String(amountNanoRaw))
+      : tonToNano(amountTonRaw);
+
+  if (!orderNo || !receiveAddress || !amountNano) {
+    // eslint-disable-next-line no-console
+    console.error('[VipPurchase][TON] 订单字段不完整（需要 orderNo/receiveAddress/amount）', orderData, meta);
+    return;
+  }
+
+  // 2) 拉起 TonConnect 官方钱包发起转账
+  if (typeof window.__tonSendTransaction !== 'function') {
+    // eslint-disable-next-line no-console
+    console.warn('[VipPurchase][TON] TonConnect bridge 不存在，尝试打开连接弹窗', meta);
+    await window.__openTonConnectModal?.();
+    return;
+  }
+
+  try {
+    const tx = {
+      validUntil: Math.floor(Date.now() / 1000) + 5 * 60,
+      messages: [
+        {
+          address: receiveAddress,
+          amount: amountNano.toString(),
+          ...(payload ? { payload } : {}),
+        },
+      ],
+    };
+    const res = await window.__tonSendTransaction(tx);
+    const boc = res?.boc || res?.result || null;
+    if (boc) {
+      await submitWalletTx({ orderNo, txHash: String(boc) });
+    }
+
+    await pollOrderStatus(orderNo, { tabKey, planTitle: plan?.title });
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[VipPurchase][TON] sendTransaction failed', e, { orderNo, meta });
+  }
 }
 
 async function chooseTelegramPaymentMethod() {
@@ -415,8 +534,6 @@ export async function startVipPurchase({ tabKey, plan, payload }) {
   };
 
   if (inTelegram) {
-    // TG 端当前策略：直接走 Arbitrum，优先打开 RainbowKit 钱包选择弹窗。
-    // Stars/TON 分支保留但不在当前流程触发。
     const method = TELEGRAM_PAYMENT_CONFIG.defaultMethod;
 
     if (method === TG_PAYMENT_METHODS.ARBITRUM) {
@@ -428,7 +545,7 @@ export async function startVipPurchase({ tabKey, plan, payload }) {
       return;
     }
     if (method === TG_PAYMENT_METHODS.TON) {
-      startTonPayment(meta);
+      await startTonPayment({ pricingId, tabKey, plan, meta });
       return;
     }
     return;
