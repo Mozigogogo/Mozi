@@ -382,8 +382,21 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
   }
   if (typeof window === 'undefined') return;
 
-  const tonAddress = await ensureTonConnected(meta);
-  if (!tonAddress) {
+  let cachedTonAddress = null;
+  try {
+    cachedTonAddress = window.localStorage?.getItem('ton_address') || null;
+  } catch (_) {}
+  // eslint-disable-next-line no-console
+  console.log('[VipPurchase][TON] start', {
+    pricingId,
+    cachedTonAddress,
+    href: window.location.href,
+  });
+
+  // 先用缓存地址创建订单（即便尚未连接钱包），但真正发起转账仍需要连接
+  const orderFromAddress = cachedTonAddress || (await ensureTonConnected(meta));
+
+  if (!orderFromAddress) {
     await confirm({
       title: '请先连接 TON 钱包',
       content: <div style={{ color: '#4b5563' }}>Telegram 内请使用 TON 官方钱包完成支付（如 Tonkeeper）。</div>,
@@ -402,8 +415,10 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
   // 1) 创建订单，拿收款信息（后端可按 TON 返回字段）
   let orderData = {};
   try {
-    const orderRes = await createWalletOrder({ pricingId, fromAddress: tonAddress, chain: 'TON' });
+    const orderRes = await createWalletOrder({ pricingId, fromAddress: orderFromAddress, chain: 'TON' });
     orderData = orderRes?.data ?? orderRes ?? {};
+    // eslint-disable-next-line no-console
+    console.log('[VipPurchase][TON] createWalletOrder ok', { fromAddress: orderFromAddress, orderData });
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('[VipPurchase][TON] createWalletOrder failed', e, meta);
@@ -435,6 +450,26 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
     return;
   }
 
+  // 2) 真正发起交易前，确保已连接 TON 钱包（TG WebView 里这是必须的）
+  const connectedTonAddress = await ensureTonConnected(meta);
+  // eslint-disable-next-line no-console
+  console.log('[VipPurchase][TON] connected address', { connectedTonAddress, cachedTonAddress, orderFromAddress });
+  if (!connectedTonAddress) {
+    await confirm({
+      title: '未连接 TON 钱包',
+      content: <div style={{ color: '#4b5563' }}>已创建订单，请先连接 TON 钱包再完成支付。</div>,
+      cancelText: '取消',
+      confirmText: '连接钱包',
+      onConfirm: async () => {
+        try {
+          await window.__openTonConnectModal?.();
+        } catch (_) {}
+      },
+      closeOnAction: true,
+    });
+    return;
+  }
+
   // 2) 拉起 TonConnect 官方钱包发起转账
   if (typeof window.__tonSendTransaction !== 'function') {
     // eslint-disable-next-line no-console
@@ -454,8 +489,12 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
         },
       ],
     };
+    // eslint-disable-next-line no-console
+    console.log('[VipPurchase][TON] sendTransaction', { orderNo, to: receiveAddress, amountNano: amountNano.toString(), hasPayload: !!payload });
     const res = await window.__tonSendTransaction(tx);
     const boc = res?.boc || res?.result || null;
+    // eslint-disable-next-line no-console
+    console.log('[VipPurchase][TON] sendTransaction result', { orderNo, hasBoc: !!boc, res });
     if (boc) {
       await submitWalletTx({ orderNo, txHash: String(boc) });
     }
