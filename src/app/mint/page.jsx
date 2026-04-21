@@ -3,12 +3,13 @@
 import React, { useMemo, useState } from 'react'
 import { Button, Input, Toast } from 'antd-mobile'
 import { encodeFunctionData, getAddress, parseUnits } from 'viem'
+import { useAccount, useChainId, useSwitchChain, useWalletClient } from 'wagmi'
 
 const USE_ARBITRUM_SEPOLIA = process.env.NEXT_PUBLIC_USE_ARBITRUM_SEPOLIA === 'true'
 const TARGET_CHAIN_ID = USE_ARBITRUM_SEPOLIA ? 421614 : 42161
 const DEFAULT_TOKEN_ADDRESS = USE_ARBITRUM_SEPOLIA
-  ? (process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_USDT_ADDRESS || '')
-  : (process.env.NEXT_PUBLIC_ARBITRUM_USDT_ADDRESS || '')
+  ? '0x30fa2fbe15c1eadfbef28c188b7b8dbd3c1ff2eb'
+  : '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9'
 
 function shortAddr(addr = '') {
   const s = String(addr || '')
@@ -23,17 +24,12 @@ export default function MintPage() {
   const [txHash, setTxHash] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  const connectedAddress = useMemo(() => {
-    if (typeof window === 'undefined') return ''
-    try {
-      if (typeof window.__getConnectedEvmAddress === 'function') return window.__getConnectedEvmAddress() || ''
-      return ''
-    } catch (_) {
-      return ''
-    }
-  }, [])
+  const { address: connectedAddress } = useAccount()
+  const chainId = useChainId()
+  const { switchChainAsync } = useSwitchChain()
+  const { data: walletClient } = useWalletClient()
 
-  const resolvedToAddress = toAddress || connectedAddress
+  const resolvedToAddress = toAddress || connectedAddress || ''
 
   const openConnect = () => {
     if (typeof window === 'undefined') return
@@ -46,8 +42,7 @@ export default function MintPage() {
   }
 
   const mint = async () => {
-    if (typeof window === 'undefined') return
-    if (typeof window.__sendEvmTransaction !== 'function') {
+    if (!walletClient?.sendTransaction) {
       Toast.show({ content: '未检测到可用的钱包发送能力，请先连接钱包' })
       openConnect()
       return
@@ -68,16 +63,18 @@ export default function MintPage() {
 
     setSubmitting(true)
     try {
-      // 1) 切链（如果可用）
-      if (typeof window.__switchEvmChain === 'function') {
-        try {
-          await window.__switchEvmChain(TARGET_CHAIN_ID)
-        } catch (_) {}
+      // 1) 切链
+      if (chainId !== TARGET_CHAIN_ID && typeof switchChainAsync === 'function') {
+        await switchChainAsync({ chainId: TARGET_CHAIN_ID })
       }
 
       // 2) 参数校验/格式化
       const token = getAddress(String(tokenAddress))
       const to = getAddress(String(resolvedToAddress))
+      if (connectedAddress && token.toLowerCase() === connectedAddress.toLowerCase()) {
+        Toast.show({ content: '你把“合约地址”填成了钱包地址，请换成 MockUSDT 部署出来的 0x... 合约地址' })
+        return
+      }
       const amountRaw = parseUnits(String(amountUsdt), 6) // MockUSDT decimals = 6
 
       // 3) 调用 mint(to, amount)
@@ -98,7 +95,11 @@ export default function MintPage() {
         args: [to, amountRaw],
       })
 
-      const hash = await window.__sendEvmTransaction({ to: token, data })
+      const hash = await walletClient.sendTransaction({
+        account: walletClient.account,
+        to: token,
+        data,
+      })
       if (!hash) {
         Toast.show({ content: '未获取到交易哈希，可能已取消' })
         return
@@ -119,6 +120,8 @@ export default function MintPage() {
       <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 6 }}>Mint MockUSDT</div>
       <div style={{ color: '#6b7280', fontSize: 13, lineHeight: 1.6, marginBottom: 14 }}>
         当前网络：{USE_ARBITRUM_SEPOLIA ? 'Arbitrum Sepolia' : 'Arbitrum One'}
+        <br />
+        当前链 ID：{chainId || '-'}
         <br />
         仅合约 owner 可 mint；如果你用的不是部署该 MockUSDT 的钱包，交易会失败。
       </div>

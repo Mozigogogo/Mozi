@@ -9,8 +9,10 @@ function parseArgs(argv) {
     const next = argv[i + 1];
     if (!next || next.startsWith('--')) {
       out[key] = true;
+      out[key.toLowerCase()] = true;
     } else {
       out[key] = next;
+      out[key.toLowerCase()] = next;
       i += 1;
     }
   }
@@ -19,8 +21,19 @@ function parseArgs(argv) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const mintTo = args.mintTo || args.to || '';
-  const mintUsdt = args.mintUsdt || args.amountUsdt || '1000';
+  const mintTo =
+    process.env.MINT_TO ||
+    args.mintTo ||
+    args.mintto ||
+    args.to ||
+    '';
+  const mintUsdt =
+    process.env.MINT_USDT ||
+    args.mintUsdt ||
+    args.mintusdt ||
+    args.amountUsdt ||
+    args.amountusdt ||
+    '1000';
 
   const [deployer] = await hre.ethers.getSigners();
   if (!deployer) {
