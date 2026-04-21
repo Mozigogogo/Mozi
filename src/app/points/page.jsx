@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import Layout from '../../components/Layout';
 import { request } from '../../utils/request';
 import { Interface, getTgInviteLink } from '../../utils/constants';
+import { safeBack } from '@/utils/navigation';
 import styles from './page.module.less';
 
 export default function PointsRank() {
@@ -60,38 +61,29 @@ export default function PointsRank() {
     }
   }, []);
 
-  // 加载所有类型的排行榜数据
-  const loadRankData = useCallback(async () => {
+  // 只加载当前 tab 的排行榜数据，并做缓存（避免 TG 端一次拉 3 份 + 重复请求）
+  const loadRankData = useCallback(async (type, { force = false } = {}) => {
+    if (!type) return;
+    if (!force && Array.isArray(rankData?.[type]) && rankData[type].length > 0) return;
+
     setLoading(true);
     try {
-      const [dailyData, monthlyData, totalData] = await Promise.all([
-        fetchRankData('daily'),
-        fetchRankData('monthly'),
-        fetchRankData('total')
-      ]);
-      
-      setRankData({
-        daily: dailyData.list,
-        monthly: monthlyData.list,
-        total: totalData.list
-      });
-      
-      // 保存当前用户的排名数据
-      setCurrentUserData({
-        daily: { rank: dailyData.currentUserRank, points: dailyData.currentUserPoints },
-        monthly: { rank: monthlyData.currentUserRank, points: monthlyData.currentUserPoints },
-        total: { rank: totalData.currentUserRank, points: totalData.currentUserPoints }
-      });
+      const data = await fetchRankData(type);
+      setRankData((prev) => ({ ...prev, [type]: data.list }));
+      setCurrentUserData((prev) => ({
+        ...prev,
+        [type]: { rank: data.currentUserRank, points: data.currentUserPoints },
+      }));
     } catch (error) {
       console.error('加载排行榜数据失败:', error);
       Toast.show({
         content: t('points.loadFailed'),
-        icon: 'fail'
+        icon: 'fail',
       });
     } finally {
       setLoading(false);
     }
-  }, [fetchRankData, t]);
+  }, [fetchRankData, rankData, t]);
 
   // 获取用户信息（包括邀请码、头像、昵称）
   const fetchUserInfo = useCallback(async () => {
@@ -115,9 +107,12 @@ export default function PointsRank() {
   }, []);
 
   useEffect(() => {
-    loadRankData();
     fetchUserInfo();
-  }, [loadRankData, fetchUserInfo]);
+  }, [fetchUserInfo]);
+
+  useEffect(() => {
+    loadRankData(activeTab);
+  }, [activeTab, loadRankData]);
 
   // 分享到 Telegram
   const handleShareToTelegram = () => {
@@ -138,7 +133,6 @@ export default function PointsRank() {
 
   const handleTabChange = (key) => {
     setActiveTab(key);
-    setTimeout(() => loadRankData(), 100);
   };
 
   const listData = rankData[activeTab] || [];
@@ -162,7 +156,7 @@ export default function PointsRank() {
         <div className={styles.headerBg}>
           <div className={styles.headerContent}>
             <div className={styles.topRow}>
-              <div className={styles.backArrow} onClick={() => router.back()}>
+              <div className={styles.backArrow} onClick={() => safeBack(router, { fallback: '/me' })}>
                 <img 
                   className={styles.backArrowIcon}
                   src='https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/left-arrow.png'

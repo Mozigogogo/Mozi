@@ -7,6 +7,7 @@ import { Toast } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
+import { safeBack } from '@/utils/navigation';
 import styles from './page.module.less';
 import { SkeletonElement } from '@/components/Skeleton';
 
@@ -191,7 +192,7 @@ export default function PointsHistoryPage() {
       <div className={styles.pointsHistoryContainer}>
         {/* 顶部导航 */}
         <div className={styles.topNav}>
-          <button className={styles.backBtn} onClick={() => router.back()}>
+          <button className={styles.backBtn} onClick={() => safeBack(router, { fallback: '/points' })}>
             <LeftOutline />
           </button>
           <div className={styles.navTitle}>{t('pointsHistory.title', '积分历史')}</div>

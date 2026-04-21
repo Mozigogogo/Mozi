@@ -8,6 +8,7 @@ import NavBar from '@/components/NavBar';
 import InviteBanner from '@/components/InviteBanner';
 import { getPoolStatus, getTaskPoints, getInvitationList, getTaskList, completeTask } from '../../api/points';
 import { getTgInviteLink } from '../../utils/constants';
+import { safeBack } from '@/utils/navigation';
 import styles from './page.module.less';
 
 // Components
@@ -24,6 +25,31 @@ export default function PointsDetail() {
   // 防止重复调用的标记
   const isDataFetchedRef = useRef(false);
   const { t, i18n } = useTranslation();
+
+  const enableDebugLog = (() => {
+    try {
+      if (process.env.NODE_ENV !== 'production') return true;
+      return new URLSearchParams(window.location.search).get('pointsDebug') === '1';
+    } catch (_) {
+      return false;
+    }
+  })();
+
+  const debugLog = (...args) => {
+    if (!enableDebugLog) return;
+    // eslint-disable-next-line no-console
+    console.log(...args);
+  };
+
+  const scheduleLowPriority = (fn) => {
+    try {
+      if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(() => fn(), { timeout: 1500 });
+        return;
+      }
+    } catch (_) {}
+    setTimeout(() => fn(), 0);
+  };
   
   const [pointsLoading, setPointsLoading] = useState(false);
   
@@ -73,7 +99,7 @@ export default function PointsDetail() {
           ? Math.round((data.remainingPoints / data.totalCapacity) * 100) 
           : 0;
 
-        console.log('Pool Status:', {
+        debugLog('Pool Status:', {
           total: data.totalCapacity,
           remaining: data.remainingPoints,
           issued: data.issuedPoints,
@@ -142,14 +168,14 @@ export default function PointsDetail() {
       
       if (storedData) {
         const data = JSON.parse(storedData);
-        console.log('🔍 [DEBUG] 从本地读取用户数据:', data);
+        debugLog('🔍 [DEBUG] 从本地读取用户数据:', data);
         
         setPointsData(prev => ({
           ...prev,
           inviteCode: data.inviteCode || data.invitationCode || prev.inviteCode,
         }));
       } else {
-        console.log('⚠️ [DEBUG] 本地未找到 userDataInfo 数据');
+        debugLog('⚠️ [DEBUG] 本地未找到 userDataInfo 数据');
       }
     } catch (error) {
       console.error('读取本地用户数据失败:', error);
@@ -174,7 +200,7 @@ export default function PointsDetail() {
           earnedPoints: data.totalInvitePoints ?? data.earnedPoints ?? prev.earnedPoints,
           pendingRewards: data.pendingRewards ?? prev.pendingRewards
         }));
-        console.log('邀请列表数据:', data);
+        debugLog('邀请列表数据:', data);
       }
     } catch (error) {
       console.error('获取邀请列表失败:', error);
@@ -186,11 +212,14 @@ export default function PointsDetail() {
     if (isDataFetchedRef.current) return;
     isDataFetchedRef.current = true;
     
+    // 首屏优先：先拿到用户积分总览，尽快可交互
     fetchPointsData();
     fetchUserDataInfo();
-    fetchInvitationList();
-    fetchAllTasks();
-    fetchPoolStatusData();
+
+    // 次要信息延后：TG WebView 主线程紧张时先让 UI 跑起来
+    scheduleLowPriority(() => fetchInvitationList());
+    scheduleLowPriority(() => fetchAllTasks());
+    scheduleLowPriority(() => fetchPoolStatusData());
   }, []);
 
   // 任务列表初始为空数组，等待接口返回数据
@@ -705,7 +734,7 @@ export default function PointsDetail() {
           backgroundSize: "100% auto"
         }}
         showBorder={false}
-        onBack={() => router.back()}
+        onBack={() => safeBack(router, { fallback: '/me' })}
       />
       
       {/* 页面标题 */}

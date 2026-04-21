@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { safeBack } from '@/utils/navigation';
 import styles from './index.less';
 
 /**
@@ -40,7 +41,7 @@ export default function NavBar({
     if (onBack) {
       onBack();
     } else {
-      router.back();
+      safeBack(router, { fallback: '/' });
     }
   };
 

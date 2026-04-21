@@ -6,7 +6,17 @@ export default function EnvironmentDetector() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    const isDebugEnabled = (() => {
+      try {
+        if (process.env.NODE_ENV !== 'production') return true;
+        return new URLSearchParams(window.location.search).get('envDebug') === '1';
+      } catch (_) {
+        return false;
+      }
+    })();
+
     const debugLog = (message, payload = {}) => {
+      if (!isDebugEnabled) return;
       // eslint-disable-next-line no-console
       console.warn(`[AppChannel][EnvironmentDetector] ${message}`, {
         ts: Date.now(),
