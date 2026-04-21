@@ -393,6 +393,21 @@ async function startArbitrumPayment({
       console.error('[VipPurchase][Arbitrum] createWalletOrder 返回字段不完整', orderData, meta);
       return;
     }
+    if (!usdtContractAddress) {
+      // eslint-disable-next-line no-console
+      console.error(
+        '[VipPurchase][Arbitrum] 缺少 USDT 合约地址：请在后端订单返回 tokenAddress，或配置环境变量',
+        {
+          useArbitrumSepolia: USE_ARBITRUM_SEPOLIA,
+          expectedEnvKey: USE_ARBITRUM_SEPOLIA
+            ? 'NEXT_PUBLIC_ARBITRUM_SEPOLIA_USDT_ADDRESS'
+            : 'NEXT_PUBLIC_ARBITRUM_USDT_ADDRESS',
+          orderData,
+          meta,
+        }
+      );
+      return;
+    }
     let receiveAddress = '';
     let usdtToAddress = '';
     try {
@@ -415,6 +430,7 @@ async function startArbitrumPayment({
       receiveAddress,
       amountUsdtRaw,
       usdtContractAddress: usdtToAddress,
+      useNativeEthTransfer: false,
     });
 
     // 3) 切链到 Arbitrum
@@ -422,7 +438,8 @@ async function startArbitrumPayment({
       await switchToArbitrumIfNeeded(provider);
     }
 
-    // 4) 发起 USDT transfer
+    let txHash = null;
+    // 统一：发起 USDT transfer（包括开发者模式/测试网）
     const amount = parseUnits(String(amountUsdtRaw), 6); // USDT 6 decimals
     const data = encodeFunctionData({
       abi: [
@@ -440,8 +457,6 @@ async function startArbitrumPayment({
       functionName: 'transfer',
       args: [receiveAddress, amount],
     });
-
-    let txHash = null;
     if (hasWagmiSender) {
       // eslint-disable-next-line no-console
       console.log('[VipPurchase][Arbitrum] sending tx via wagmi bridge');
