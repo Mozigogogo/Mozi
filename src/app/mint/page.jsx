@@ -8,7 +8,7 @@ import { useAccount, useChainId, useSwitchChain, useWalletClient } from 'wagmi'
 const USE_ARBITRUM_SEPOLIA = process.env.NEXT_PUBLIC_USE_ARBITRUM_SEPOLIA === 'true'
 const TARGET_CHAIN_ID = USE_ARBITRUM_SEPOLIA ? 421614 : 42161
 const DEFAULT_TOKEN_ADDRESS = USE_ARBITRUM_SEPOLIA
-  ? '0x30fa2fbe15c1eadfbef28c188b7b8dbd3c1ff2eb'
+  ? '0xD58345bEf43eE705312777dDA76dD630486Df10C'
   : '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9'
 
 function shortAddr(addr = '') {

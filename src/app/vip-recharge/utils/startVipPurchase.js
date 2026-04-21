@@ -22,9 +22,10 @@ const TELEGRAM_PAYMENT_CONFIG = {
 const USE_ARBITRUM_SEPOLIA = process.env.NEXT_PUBLIC_USE_ARBITRUM_SEPOLIA === 'true';
 const ARBITRUM_CHAIN_ID = USE_ARBITRUM_SEPOLIA ? 421614 : 42161;
 const ARBITRUM_ORDER_CHAIN = USE_ARBITRUM_SEPOLIA ? 'ARBITRUM_SEPOLIA' : 'ARBITRUM';
+// 暂时写死：测试网用 MockUSDT，主网用 Arbitrum USDT
 const ARBITRUM_USDT_CONTRACT = USE_ARBITRUM_SEPOLIA
-  ? (process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_USDT_ADDRESS || '')
-  : '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9';
+  ? '0xD58345bEf43eE705312777dDA76dD630486Df10C'
+  : '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9';
 
 // 与其它地方保持一致：通过 localStorage.appChannel 判断是否在 Telegram 环境
 export function isTelegramEnv() {
@@ -383,9 +384,6 @@ async function startArbitrumPayment({
       orderData.tokenAddress ||
       orderData.usdtAddress ||
       orderData.contractAddress ||
-      (USE_ARBITRUM_SEPOLIA
-        ? process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_USDT_ADDRESS
-        : process.env.NEXT_PUBLIC_ARBITRUM_USDT_ADDRESS) ||
       ARBITRUM_USDT_CONTRACT;
 
     if (!orderNo || !receiveAddressRaw || !amountUsdtRaw) {
@@ -396,12 +394,9 @@ async function startArbitrumPayment({
     if (!usdtContractAddress) {
       // eslint-disable-next-line no-console
       console.error(
-        '[VipPurchase][Arbitrum] 缺少 USDT 合约地址：请在后端订单返回 tokenAddress，或配置环境变量',
+        '[VipPurchase][Arbitrum] 缺少 USDT 合约地址：请在后端订单返回 tokenAddress',
         {
           useArbitrumSepolia: USE_ARBITRUM_SEPOLIA,
-          expectedEnvKey: USE_ARBITRUM_SEPOLIA
-            ? 'NEXT_PUBLIC_ARBITRUM_SEPOLIA_USDT_ADDRESS'
-            : 'NEXT_PUBLIC_ARBITRUM_USDT_ADDRESS',
           orderData,
           meta,
         }
