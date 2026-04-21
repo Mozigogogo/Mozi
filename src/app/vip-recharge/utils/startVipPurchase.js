@@ -19,8 +19,12 @@ const TELEGRAM_PAYMENT_CONFIG = {
   defaultMethod: TG_PAYMENT_METHODS.TON,
   hiddenMethods: [TG_PAYMENT_METHODS.STARS, TG_PAYMENT_METHODS.ARBITRUM],
 };
-const ARBITRUM_CHAIN_ID = 42161;
-const ARBITRUM_USDT_CONTRACT = '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9';
+const USE_ARBITRUM_SEPOLIA = process.env.NEXT_PUBLIC_USE_ARBITRUM_SEPOLIA === 'true';
+const ARBITRUM_CHAIN_ID = USE_ARBITRUM_SEPOLIA ? 421614 : 42161;
+const ARBITRUM_ORDER_CHAIN = USE_ARBITRUM_SEPOLIA ? 'ARBITRUM_SEPOLIA' : 'ARBITRUM';
+const ARBITRUM_USDT_CONTRACT = USE_ARBITRUM_SEPOLIA
+  ? (process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_USDT_ADDRESS || '')
+  : '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9';
 
 // 与其它地方保持一致：通过 localStorage.appChannel 判断是否在 Telegram 环境
 export function isTelegramEnv() {
@@ -370,7 +374,7 @@ async function startArbitrumPayment({
     console.log('[VipPurchase][Arbitrum] resolved fromAddress', { fromAddress });
 
     // 2) 创建订单，拿收款信息
-    const orderRes = await createWalletOrder({ pricingId, fromAddress });
+    const orderRes = await createWalletOrder({ pricingId, fromAddress, chain: ARBITRUM_ORDER_CHAIN });
     const orderData = orderRes?.data ?? orderRes ?? {};
     const orderNo = orderData.orderNo;
     const receiveAddressRaw = orderData.receiveAddress || orderData.toAddress || orderData.to;
@@ -379,7 +383,9 @@ async function startArbitrumPayment({
       orderData.tokenAddress ||
       orderData.usdtAddress ||
       orderData.contractAddress ||
-      process.env.NEXT_PUBLIC_ARBITRUM_USDT_ADDRESS ||
+      (USE_ARBITRUM_SEPOLIA
+        ? process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_USDT_ADDRESS
+        : process.env.NEXT_PUBLIC_ARBITRUM_USDT_ADDRESS) ||
       ARBITRUM_USDT_CONTRACT;
 
     if (!orderNo || !receiveAddressRaw || !amountUsdtRaw) {
