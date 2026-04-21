@@ -21,6 +21,7 @@ import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import PCSearchResults from '../PCSearchResults';
 import PCFindContent from '../PCFindContent';
 import PCCommunityContent from '../PCCommunityContent';
@@ -643,6 +644,44 @@ export default function PCLayout({ children }) {
         </div>
 
         <div className={styles.headerRight}>
+          <ConnectButton.Custom>
+            {({
+              account,
+              chain,
+              mounted,
+              openAccountModal,
+              openChainModal,
+              openConnectModal,
+            }) => {
+              const ready = mounted;
+              const connected = ready && account && chain;
+              const walletText = connected
+                ? `钱包: ${account.displayName || account.address}`
+                : '连接钱包';
+              const handleWalletClick = () => {
+                if (!ready) return;
+                if (!connected) {
+                  openConnectModal?.();
+                  return;
+                }
+                openAccountModal?.();
+              };
+              return (
+                <button type="button" className={styles.walletEntry} onClick={handleWalletClick}>
+                  <span className={styles.walletDot} aria-hidden />
+                  <span className={styles.walletText}>{walletText}</span>
+                  {connected && chain?.unsupported ? (
+                    <span className={styles.walletTag} onClick={(e) => {
+                      e.stopPropagation();
+                      openChainModal?.();
+                    }}>
+                      切换网络
+                    </span>
+                  ) : null}
+                </button>
+              );
+            }}
+          </ConnectButton.Custom>
           <Button 
             type="text" 
             onClick={() => setShowBenefitModal(true)}

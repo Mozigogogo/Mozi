@@ -3,7 +3,7 @@
 import { createStarsInvoice } from '@/api/vip';
 import { createWalletOrder, getOrderStatus, submitWalletTx } from '@/api/payment';
 import { confirm } from '@/components/Modal/confirm';
-import { encodeFunctionData, parseUnits } from 'viem';
+import { encodeFunctionData, getAddress, parseUnits } from 'viem';
 
 const TG_PAYMENT_METHODS = {
   STARS: 'STARS',
@@ -20,6 +20,7 @@ const TELEGRAM_PAYMENT_CONFIG = {
   hiddenMethods: [TG_PAYMENT_METHODS.STARS, TG_PAYMENT_METHODS.ARBITRUM],
 };
 const ARBITRUM_CHAIN_ID = 42161;
+const ARBITRUM_USDT_CONTRACT = '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9';
 
 // 与其它地方保持一致：通过 localStorage.appChannel 判断是否在 Telegram 环境
 export function isTelegramEnv() {
@@ -43,11 +44,11 @@ async function pollOrderStatus(
       const statusRes = await getOrderStatus(orderNo);
       const statusData = statusRes?.data ?? statusRes;
       // eslint-disable-next-line no-console
-      console.log('[VipPurchase][Stars] 订单状态：', statusData);
+      console.log('[VipPurchase][OrderStatus] 订单状态：', statusData);
 
       if (statusData?.status === 'SUCCESS') {
         try {
-          const event = new CustomEvent('mozi:starsOrderSuccess', {
+          const event = new CustomEvent('mozi:vipOrderSuccess', {
             detail: { orderNo, tabKey, planTitle },
           });
           window.dispatchEvent(event);
@@ -62,7 +63,7 @@ async function pollOrderStatus(
       }
     } catch (err) {
       // eslint-disable-next-line no-console
-      console.error('[VipPurchase][Stars] 查询订单状态失败', err, { orderNo });
+      console.error('[VipPurchase][OrderStatus] 查询订单状态失败', err, { orderNo });
     }
 
     await sleep(interval);
@@ -76,13 +77,35 @@ function getCookieValue(name) {
 }
 
 async function switchToArbitrumIfNeeded(provider) {
+  // eslint-disable-next-line no-console
+  console.log('[VipPurchase][Arbitrum] switchToArbitrumIfNeeded:start', {
+    hasInjectedProvider: !!(provider && typeof provider.request === 'function'),
+    hasBridgeSwitch: typeof window !== 'undefined' && typeof window.__switchEvmChain === 'function',
+  });
+  if (!provider || typeof provider.request !== 'function') {
+    if (typeof window !== 'undefined' && typeof window.__switchEvmChain === 'function') {
+      try {
+        await window.__switchEvmChain(ARBITRUM_CHAIN_ID);
+        // eslint-disable-next-line no-console
+        console.log('[VipPurchase][Arbitrum] switch chain via bridge:success', { chainId: ARBITRUM_CHAIN_ID });
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('[VipPurchase][Arbitrum] 通过钱包桥接切链失败', e);
+      }
+    }
+    return;
+  }
   const hexChainId = `0x${ARBITRUM_CHAIN_ID.toString(16)}`;
   const current = await provider.request({ method: 'eth_chainId' });
+  // eslint-disable-next-line no-console
+  console.log('[VipPurchase][Arbitrum] current chain id', { current, target: hexChainId });
   if (current?.toLowerCase?.() === hexChainId) return;
   await provider.request({
     method: 'wallet_switchEthereumChain',
     params: [{ chainId: hexChainId }],
   });
+  // eslint-disable-next-line no-console
+  console.log('[VipPurchase][Arbitrum] switch chain via injected provider:success', { chainId: ARBITRUM_CHAIN_ID });
 }
 
 async function waitForReceipt(provider, txHash, { maxAttempts = 120, interval = 1500 } = {}) {
@@ -100,7 +123,12 @@ async function waitForReceipt(provider, txHash, { maxAttempts = 120, interval = 
 function openRainbowKit(meta) {
   try {
     if (typeof window !== 'undefined' && typeof window.__openRainbowKit === 'function') {
-      window.__openRainbowKit();
+      const opened = window.__openRainbowKit();
+      if (opened === false) {
+        // eslint-disable-next-line no-console
+        console.warn('[VipPurchase][RainbowKit] 钱包弹窗方法未就绪', meta);
+        return false;
+      }
       return true;
     }
     // eslint-disable-next-line no-console
@@ -111,6 +139,76 @@ function openRainbowKit(meta) {
     console.error('[VipPurchase][RainbowKit] 打开钱包失败：', e, meta);
     return false;
   }
+}
+
+async function waitForEvmWalletAddress({ timeoutMs = 60_000, pollMs = 500 } = {}) {
+  if (typeof window === 'undefined') return '';
+  const provider = window.ethereum;
+  const readAddress = async () => {
+    if (!provider || typeof provider.request !== 'function') return '';
+    try {
+      const accounts = await provider.request({ method: 'eth_accounts' });
+      return accounts?.[0] || '';
+    } catch (_) {
+      return '';
+    }
+  };
+
+  const existing = await readAddress();
+  if (existing) return existing;
+  // eslint-disable-next-line no-console
+  console.log('[VipPurchase][Arbitrum] waitForEvmWalletAddress:start', { timeoutMs, pollMs });
+
+  return new Promise((resolve) => {
+    let settled = false;
+    let timer = null;
+    let deadlineTimer = null;
+
+    const finish = (address = '') => {
+      if (settled) return;
+      settled = true;
+      try {
+        if (timer) window.clearInterval(timer);
+      } catch (_) {}
+      try {
+        if (deadlineTimer) window.clearTimeout(deadlineTimer);
+      } catch (_) {}
+      try {
+        if (provider?.removeListener && typeof onAccountsChanged === 'function') {
+          provider.removeListener('accountsChanged', onAccountsChanged);
+        }
+      } catch (_) {}
+      resolve(address || '');
+    };
+
+    const onAccountsChanged = (accounts) => {
+      const address = accounts?.[0] || '';
+      if (!address) return;
+      // eslint-disable-next-line no-console
+      console.log('[VipPurchase][Arbitrum] waitForEvmWalletAddress:accountsChanged', { address });
+      finish(address);
+    };
+
+    try {
+      if (provider?.on) {
+        provider.on('accountsChanged', onAccountsChanged);
+      }
+    } catch (_) {}
+
+    timer = window.setInterval(async () => {
+      const address = await readAddress();
+      if (!address && typeof window.__getConnectedEvmAddress === 'function') {
+        const bridgedAddress = window.__getConnectedEvmAddress();
+        if (bridgedAddress) {
+          finish(bridgedAddress);
+          return;
+        }
+      }
+      if (address) finish(address);
+    }, Math.max(200, Number(pollMs) || 500));
+
+    deadlineTimer = window.setTimeout(() => finish(''), Math.max(0, Number(timeoutMs) || 0));
+  });
 }
 
 function openCurrentPageInExternalBrowser() {
@@ -168,20 +266,59 @@ async function promptTelegramWalletFallback() {
   });
 }
 
-async function startArbitrumPayment({ pricingId, tabKey, plan, meta, preferConnectModal = false }) {
+async function startArbitrumPayment({
+  pricingId,
+  tabKey,
+  plan,
+  meta,
+  preferConnectModal = false,
+  forceConnectModalFirst = false,
+}) {
+  // eslint-disable-next-line no-console
+  console.log('[VipPurchase][Arbitrum] startArbitrumPayment:start', {
+    pricingId,
+    tabKey,
+    planTitle: plan?.title,
+    preferConnectModal,
+    forceConnectModalFirst,
+  });
   if (!pricingId) {
     // eslint-disable-next-line no-console
     console.error('[VipPurchase][Arbitrum] 缺少 pricingId，无法创建钱包订单', meta);
     return;
   }
 
-  const connectedAddress = getCookieValue('wallet_address');
+  let connectedAddress = '';
+  if (typeof window !== 'undefined' && typeof window.__getConnectedEvmAddress === 'function') {
+    connectedAddress = window.__getConnectedEvmAddress() || '';
+  }
+  // eslint-disable-next-line no-console
+  console.log('[VipPurchase][Arbitrum] connected address before flow', { connectedAddress });
 
   // 在 TG 端优先走 RainbowKit 连接弹窗（用户先选择钱包），
   // 连上后再执行一次购买进入链路。
+  if (forceConnectModalFirst) {
+    if (!connectedAddress) {
+      const opened = openRainbowKit(meta);
+      // eslint-disable-next-line no-console
+      console.log('[VipPurchase][Arbitrum] forceConnectModalFirst:openRainbowKit', { opened });
+      if (!opened) return;
+      connectedAddress = await waitForEvmWalletAddress({ timeoutMs: 60_000, pollMs: 500 });
+      // eslint-disable-next-line no-console
+      console.log('[VipPurchase][Arbitrum] forceConnectModalFirst:wait wallet result', { connectedAddress });
+      if (!connectedAddress) {
+        // eslint-disable-next-line no-console
+        console.warn('[VipPurchase][Arbitrum] 钱包连接超时或已取消', meta);
+        return;
+      }
+    }
+  }
+
   if (preferConnectModal && !connectedAddress) {
     const opened = openRainbowKit(meta);
-    if (opened) {
+    // eslint-disable-next-line no-console
+    console.log('[VipPurchase][Arbitrum] preferConnectModal:openRainbowKit', { opened });
+    if (opened && isTelegramEnv()) {
       // 给钱包 deeplink 一些时间；若仍未连接，给 TG 用户兜底方案
       window.setTimeout(() => {
         const latestAddress = getCookieValue('wallet_address');
@@ -194,41 +331,90 @@ async function startArbitrumPayment({ pricingId, tabKey, plan, meta, preferConne
   }
 
   const provider = typeof window !== 'undefined' ? window.ethereum : null;
-  if (!provider || typeof provider.request !== 'function') {
+  const hasInjectedProvider = !!(provider && typeof provider.request === 'function');
+  const hasWagmiSender = typeof window !== 'undefined' && typeof window.__sendEvmTransaction === 'function';
+  // eslint-disable-next-line no-console
+  console.log('[VipPurchase][Arbitrum] provider readiness', {
+    hasInjectedProvider,
+    hasWagmiSender,
+    hasBridgeAddressGetter: typeof window !== 'undefined' && typeof window.__getConnectedEvmAddress === 'function',
+    hasBridgeChainSwitcher: typeof window !== 'undefined' && typeof window.__switchEvmChain === 'function',
+  });
+  if (!hasInjectedProvider && !hasWagmiSender) {
     openRainbowKit(meta);
     return;
   }
 
   try {
     // 1) 获取钱包地址（若未连接会拉起授权）
-    const accounts = await provider.request({ method: 'eth_requestAccounts' });
-    const fromAddress = accounts?.[0] || connectedAddress || getCookieValue('wallet_address');
+    let accounts = [];
+    if (!hasWagmiSender && hasInjectedProvider) {
+      accounts = await provider.request({ method: 'eth_requestAccounts' });
+      // eslint-disable-next-line no-console
+      console.log('[VipPurchase][Arbitrum] eth_requestAccounts result', { accounts });
+    }
+    const bridgeAddress =
+      typeof window !== 'undefined' && typeof window.__getConnectedEvmAddress === 'function'
+        ? window.__getConnectedEvmAddress()
+        : '';
+    const fromAddress =
+      connectedAddress ||
+      bridgeAddress ||
+      accounts?.[0];
     if (!fromAddress) {
       // eslint-disable-next-line no-console
       console.error('[VipPurchase][Arbitrum] 未获取到钱包地址', meta);
       return;
     }
+    // eslint-disable-next-line no-console
+    console.log('[VipPurchase][Arbitrum] resolved fromAddress', { fromAddress });
 
     // 2) 创建订单，拿收款信息
     const orderRes = await createWalletOrder({ pricingId, fromAddress });
     const orderData = orderRes?.data ?? orderRes ?? {};
     const orderNo = orderData.orderNo;
-    const receiveAddress = orderData.receiveAddress || orderData.toAddress || orderData.to;
+    const receiveAddressRaw = orderData.receiveAddress || orderData.toAddress || orderData.to;
     const amountUsdtRaw = orderData.amountUsdt ?? orderData.amount ?? orderData.payAmount;
     const usdtContractAddress =
       orderData.tokenAddress ||
       orderData.usdtAddress ||
       orderData.contractAddress ||
-      process.env.NEXT_PUBLIC_ARBITRUM_USDT_ADDRESS;
+      process.env.NEXT_PUBLIC_ARBITRUM_USDT_ADDRESS ||
+      ARBITRUM_USDT_CONTRACT;
 
-    if (!orderNo || !receiveAddress || !amountUsdtRaw || !usdtContractAddress) {
+    if (!orderNo || !receiveAddressRaw || !amountUsdtRaw) {
       // eslint-disable-next-line no-console
       console.error('[VipPurchase][Arbitrum] createWalletOrder 返回字段不完整', orderData, meta);
       return;
     }
+    let receiveAddress = '';
+    let usdtToAddress = '';
+    try {
+      receiveAddress = getAddress(String(receiveAddressRaw));
+      usdtToAddress = getAddress(String(usdtContractAddress));
+      getAddress(String(fromAddress));
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('[VipPurchase][Arbitrum] 地址格式非法', e, {
+        fromAddress,
+        receiveAddressRaw,
+        usdtContractAddress,
+        meta,
+      });
+      return;
+    }
+    // eslint-disable-next-line no-console
+    console.log('[VipPurchase][Arbitrum] order created', {
+      orderNo,
+      receiveAddress,
+      amountUsdtRaw,
+      usdtContractAddress: usdtToAddress,
+    });
 
     // 3) 切链到 Arbitrum
-    await switchToArbitrumIfNeeded(provider);
+    if (hasInjectedProvider || typeof window.__switchEvmChain === 'function') {
+      await switchToArbitrumIfNeeded(provider);
+    }
 
     // 4) 发起 USDT transfer
     const amount = parseUnits(String(amountUsdtRaw), 6); // USDT 6 decimals
@@ -249,25 +435,56 @@ async function startArbitrumPayment({ pricingId, tabKey, plan, meta, preferConne
       args: [receiveAddress, amount],
     });
 
-    const txHash = await provider.request({
-      method: 'eth_sendTransaction',
-      params: [
-        {
-          from: fromAddress,
-          to: usdtContractAddress,
-          data,
-        },
-      ],
-    });
+    let txHash = null;
+    if (hasWagmiSender) {
+      // eslint-disable-next-line no-console
+      console.log('[VipPurchase][Arbitrum] sending tx via wagmi bridge');
+      txHash = await window.__sendEvmTransaction({
+        to: usdtToAddress,
+        data,
+      });
+      // eslint-disable-next-line no-console
+      console.log('[VipPurchase][Arbitrum] wagmi bridge tx result', { txHash });
+    }
+    if (!txHash && hasInjectedProvider) {
+      // eslint-disable-next-line no-console
+      console.log('[VipPurchase][Arbitrum] sending tx via injected provider');
+      txHash = await provider.request({
+        method: 'eth_sendTransaction',
+        params: [
+          {
+            from: fromAddress,
+            to: usdtToAddress,
+            data,
+          },
+        ],
+      });
+      // eslint-disable-next-line no-console
+      console.log('[VipPurchase][Arbitrum] injected provider tx result', { txHash });
+    }
 
     if (!txHash) {
       // eslint-disable-next-line no-console
       console.error('[VipPurchase][Arbitrum] 未获取到 txHash', { orderNo, meta });
       return;
     }
+    // eslint-disable-next-line no-console
+    console.log('[VipPurchase][Arbitrum] txHash acquired', {
+      orderNo,
+      txHash: String(txHash),
+    });
 
     // 5) 提交 txHash 给后端
-    await submitWalletTx({ orderNo, txHash });
+    try {
+      await submitWalletTx({ orderNo, txHash });
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn('[VipPurchase][Arbitrum] submitWalletTx failed, fallback to pollOrderStatus', e, {
+        orderNo,
+        txHash,
+        meta,
+      });
+    }
 
     // 6) 可选：前端等待 receipt，便于调试和用户感知
     try {
@@ -558,7 +775,7 @@ async function chooseTelegramPaymentMethod() {
  * - TG 环境：走 Stars 支付（createStarsInvoice + openInvoice + 查询订单状态）
  * - 非 TG 环境：走 RainbowKit 钱包支付
  */
-export async function startVipPurchase({ tabKey, plan, payload }) {
+export async function startVipPurchase({ tabKey, plan, payload, preferredMethod }) {
   const inTelegram = isTelegramEnv();
   const amount = payload?.price ?? plan?.price;
   const currency = payload?.currency ?? plan?.currency;
@@ -576,7 +793,7 @@ export async function startVipPurchase({ tabKey, plan, payload }) {
   };
 
   if (inTelegram) {
-    const method = TELEGRAM_PAYMENT_CONFIG.defaultMethod;
+    const method = preferredMethod || TELEGRAM_PAYMENT_CONFIG.defaultMethod;
 
     if (method === TG_PAYMENT_METHODS.ARBITRUM) {
       await startArbitrumPayment({ pricingId, tabKey, plan, meta, preferConnectModal: true });
@@ -593,7 +810,14 @@ export async function startVipPurchase({ tabKey, plan, payload }) {
     return;
   }
 
-  // 非 Telegram 环境：通过 RainbowKit 打开钱包支付
-  await startArbitrumPayment({ pricingId, tabKey, plan, meta });
+  // 非 Telegram 环境：优先弹出 RainbowKit 让用户选择钱包
+  await startArbitrumPayment({
+    pricingId,
+    tabKey,
+    plan,
+    meta,
+    preferConnectModal: true,
+    forceConnectModalFirst: true,
+  });
 }
 

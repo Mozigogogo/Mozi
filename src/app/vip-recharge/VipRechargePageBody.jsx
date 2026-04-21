@@ -2,10 +2,11 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { message } from 'antd';
 import VipRechargeTabs from './components/VipRechargeTabs';
 import VipRechargePlanCards from './components/VipRechargePlanCards';
 import { getVipRechargePlans } from './components/getVipRechargePlans';
-import { startVipPurchase } from './utils/startVipPurchase';
+import { isTelegramEnv, startVipPurchase } from './utils/startVipPurchase';
 import { getSubscriptionBenefits, getSubscriptionPricing, getMySubscription } from '@/api/vip';
 import { confirm } from '@/components/Modal/confirm';
 
@@ -18,6 +19,7 @@ export default function VipRechargePageBody({
   tabsWrapClassName,
   renderTabs = true,
   onTabsNode,
+  preferredPurchaseMethod,
 }) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('monthly');
@@ -80,8 +82,10 @@ export default function VipRechargePageBody({
         })
         .catch(() => {});
     };
+    window.addEventListener('mozi:vipOrderSuccess', handler);
     window.addEventListener('mozi:starsOrderSuccess', handler);
     return () => {
+      window.removeEventListener('mozi:vipOrderSuccess', handler);
       window.removeEventListener('mozi:starsOrderSuccess', handler);
     };
   }, []);
@@ -137,6 +141,30 @@ export default function VipRechargePageBody({
         const enhancedPlan = {
           ...plan,
           onSubscribe: async (payload) => {
+            // PC 端 Arbitrum 购买前置：未连接钱包时先提示并引导连接
+            if (!isTelegramEnv() && preferredPurchaseMethod === 'ARBITRUM') {
+              let walletAddress = '';
+              try {
+                if (typeof window !== 'undefined' && typeof window.__getConnectedEvmAddress === 'function') {
+                  walletAddress = window.__getConnectedEvmAddress() || '';
+                }
+                if (!walletAddress && typeof window !== 'undefined' && window.ethereum?.request) {
+                  const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                  walletAddress = accounts?.[0] || '';
+                }
+              } catch (_) {}
+
+              if (!walletAddress) {
+                message.warning(t('auth.connectWalletFirst') || '请先连接钱包后再购买');
+                try {
+                  if (typeof window !== 'undefined' && typeof window.__openRainbowKit === 'function') {
+                    window.__openRainbowKit();
+                  }
+                } catch (_) {}
+                return;
+              }
+            }
+
             if (shouldAskSwitch(plan?.title)) {
               const ok = await confirm({
                 title: t('vipRecharge.switchConfirm.title'),
@@ -165,7 +193,7 @@ export default function VipRechargePageBody({
               });
               if (!ok) return;
             }
-            startVipPurchase({ tabKey, plan, payload });
+            startVipPurchase({ tabKey, plan, payload, preferredMethod: preferredPurchaseMethod });
           },
         };
 
