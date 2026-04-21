@@ -1,13 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Select } from 'antd';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import Markdown from 'markdown-to-jsx';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import NavBar from '../../components/NavBar';
 import PCLayout from '../../components/PCLayout';
 import ThinkingAnimation from '../../components/ThinkingAnimation';
@@ -25,9 +23,50 @@ import AiRobotUpgradePillButton from '@/components/AiRobotUpgradePillButton';
 import PointsInsufficientBubble from '@/components/PointsInsufficientBubble';
 import ShareAiChatModal from '@/components/ShareAiChatModal';
 
+// 大依赖按需加载：避免首屏把 syntax-highlighter 整包打进来
+const LazySyntaxHighlighter = dynamic(
+  () => import('react-syntax-highlighter').then((m) => m.Prism),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
+
+// 尝试在需要时再加载高亮主题（失败则退回无主题）
+async function loadVscDarkPlusStyle() {
+  try {
+    const mod = await import('react-syntax-highlighter/dist/esm/styles/prism');
+    return mod?.vscDarkPlus || null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function runWhenIdle(fn) {
+  if (typeof window === 'undefined') return;
+  // requestIdleCallback 在部分 WebView 里可能不存在
+  if (typeof window.requestIdleCallback === 'function') {
+    window.requestIdleCallback(
+      () => {
+        try {
+          fn();
+        } catch (_) {}
+      },
+      { timeout: 1200 }
+    );
+    return;
+  }
+  window.setTimeout(() => {
+    try {
+      fn();
+    } catch (_) {}
+  }, 0);
+}
+
 // 代码块组件 - 带复制按钮
 const CodeBlock = ({ language, children, ...props }) => {
   const [copied, setCopied] = useState(false);
+  const [theme, setTheme] = useState(null);
   const { t } = useTranslation();
   
   const handleCopy = () => {
@@ -37,6 +76,17 @@ const CodeBlock = ({ language, children, ...props }) => {
       setTimeout(() => setCopied(false), 2000);
     });
   };
+
+  useEffect(() => {
+    let alive = true;
+    loadVscDarkPlusStyle().then((style) => {
+      if (!alive) return;
+      setTheme(style);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
   
   return (
     <div style={{ position: 'relative' }}>
@@ -70,15 +120,33 @@ const CodeBlock = ({ language, children, ...props }) => {
       >
         {copied ? t('robot.copied') : t('robot.copy')}
       </button>
-      <SyntaxHighlighter
-        style={vscDarkPlus}
-        language={language}
-        PreTag="div"
-        customStyle={{ margin: '0.5em 0', borderRadius: '4px', paddingTop: '40px' }}
-        {...props}
-      >
-        {String(children).replace(/\n$/, '')}
-      </SyntaxHighlighter>
+      {/* 高亮组件懒加载：加载前先降级为普通 pre，避免首屏卡顿 */}
+      {LazySyntaxHighlighter ? (
+        <LazySyntaxHighlighter
+          style={theme || undefined}
+          language={language}
+          PreTag="div"
+          customStyle={{ margin: '0.5em 0', borderRadius: '4px', paddingTop: '40px' }}
+          {...props}
+        >
+          {String(children).replace(/\n$/, '')}
+        </LazySyntaxHighlighter>
+      ) : (
+        <pre
+          style={{
+            margin: '0.5em 0',
+            borderRadius: '4px',
+            padding: '40px 12px 12px',
+            overflowX: 'auto',
+            background: '#1e1e1e',
+            color: '#fff',
+            fontSize: '12px',
+            lineHeight: 1.6,
+          }}
+        >
+          {String(children).replace(/\n$/, '')}
+        </pre>
+      )}
     </div>
   );
 };
@@ -86,230 +154,178 @@ const CodeBlock = ({ language, children, ...props }) => {
 // 流式 Markdown 渲染组件 - 逐行渲染
 const StreamingMarkdown = ({ content, isStreaming }) => {
   if (!content) return null;
-  
-  // 按换行符分割内容
-  const lines = content.split('\n');
-  
-  if (!isStreaming) {
-    // 完成后，整体渲染
+
+  const lines = useMemo(() => String(content).split('\n'), [content]);
+
+  const completedLines = useMemo(() => {
+    if (!isStreaming) return content;
+    if (lines.length <= 1) return '';
+    return lines.slice(0, -1).join('\n');
+  }, [content, isStreaming, lines]);
+
+  const currentLine = useMemo(() => {
+    if (!isStreaming) return '';
+    return lines.length > 0 ? lines[lines.length - 1] : '';
+  }, [isStreaming, lines]);
+
+  const baseMarkdownOverrides = {
+    p: {
+      props: {
+        style: { margin: '0.3em 0', lineHeight: '1.6' },
+      },
+    },
+    ul: {
+      props: {
+        style: { margin: '0.3em 0', paddingLeft: '1.5em' },
+      },
+    },
+    ol: {
+      props: {
+        style: { margin: '0.3em 0', paddingLeft: '1.5em' },
+      },
+    },
+    li: {
+      props: {
+        style: { margin: '0.2em 0' },
+      },
+    },
+    blockquote: {
+      props: {
+        style: {
+          margin: '0.3em 0',
+          paddingLeft: '1em',
+          borderLeft: '3px solid #ccc',
+          color: '#666',
+        },
+      },
+    },
+    h1: {
+      props: {
+        style: { margin: '0.6em 0 0.3em', fontSize: '1.5em', fontWeight: 600 },
+      },
+    },
+    h2: {
+      props: {
+        style: { margin: '0.6em 0 0.3em', fontSize: '1.3em', fontWeight: 600 },
+      },
+    },
+    h3: {
+      props: {
+        style: { margin: '0.6em 0 0.3em', fontSize: '1.1em', fontWeight: 600 },
+      },
+    },
+    table: {
+      props: {
+        style: { borderCollapse: 'collapse', margin: '0.5em 0', width: '100%' },
+      },
+    },
+    th: {
+      props: {
+        style: {
+          border: '1px solid #ddd',
+          padding: '0.4em 0.6em',
+          backgroundColor: '#f5f5f5',
+          fontWeight: 600,
+        },
+      },
+    },
+    td: {
+      props: {
+        style: { border: '1px solid #ddd', padding: '0.4em 0.6em' },
+      },
+    },
+  };
+
+  const inlineCodeEl = (children, props) => (
+    <code
+      style={{
+        backgroundColor: '#f5f5f5',
+        padding: '2px 6px',
+        borderRadius: '3px',
+        fontFamily: 'Consolas, Monaco, monospace',
+        fontSize: '0.9em',
+      }}
+      {...props}
+    >
+      {children}
+    </code>
+  );
+
+  // 流式阶段：依旧渲染 Markdown（恢复体验），但代码块不做高亮，避免大幅卡顿
+  if (isStreaming) {
+    if (lines.length === 1) {
+      return <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{content}</div>;
+    }
+
     return (
-      <Markdown
-        options={{
-          overrides: {
-            p: {
-              props: {
-                style: { margin: '0.3em 0', lineHeight: '1.6' }
-              }
-            },
-            code: {
-              component: ({ className, children, ...props }) => {
-                const match = /lang-(\w+)/.exec(className || '');
-                const isBlock = className?.includes('lang-');
-                
-                return isBlock && match ? (
-                  <CodeBlock language={match[1]} {...props}>
-                    {children}
-                  </CodeBlock>
-                ) : (
-                  <code style={{ 
-                    backgroundColor: '#f5f5f5', 
-                    padding: '2px 6px', 
-                    borderRadius: '3px',
-                    fontFamily: 'Consolas, Monaco, monospace',
-                    fontSize: '0.9em'
-                  }} {...props}>
-                    {children}
-                  </code>
-                );
-              }
-            },
-            ul: {
-              props: {
-                style: { margin: '0.3em 0', paddingLeft: '1.5em' }
-              }
-            },
-            ol: {
-              props: {
-                style: { margin: '0.3em 0', paddingLeft: '1.5em' }
-              }
-            },
-            li: {
-              props: {
-                style: { margin: '0.2em 0' }
-              }
-            },
-            blockquote: {
-              props: {
-                style: { 
-                  margin: '0.3em 0', 
-                  paddingLeft: '1em', 
-                  borderLeft: '3px solid #ccc',
-                  color: '#666'
-                }
-              }
-            },
-            h1: {
-              props: {
-                style: { margin: '0.6em 0 0.3em', fontSize: '1.5em', fontWeight: 600 }
-              }
-            },
-            h2: {
-              props: {
-                style: { margin: '0.6em 0 0.3em', fontSize: '1.3em', fontWeight: 600 }
-              }
-            },
-            h3: {
-              props: {
-                style: { margin: '0.6em 0 0.3em', fontSize: '1.1em', fontWeight: 600 }
-              }
-            },
-            table: {
-              props: {
-                style: { borderCollapse: 'collapse', margin: '0.5em 0', width: '100%' }
-              }
-            },
-            th: {
-              props: {
-                style: { 
-                  border: '1px solid #ddd', 
-                  padding: '0.4em 0.6em',
-                  backgroundColor: '#f5f5f5',
-                  fontWeight: 600
-                }
-              }
-            },
-            td: {
-              props: {
-                style: { border: '1px solid #ddd', padding: '0.4em 0.6em' }
-              }
-            }
-          }
-        }}
-      >
-        {content}
-      </Markdown>
-    );
-  }
-  
-  // 流式输出时，逐行渲染
-  if (lines.length === 1) {
-    // 只有一行且还在输入中，显示纯文本
-    return (
-      <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
-        {content}
+      <div>
+        {completedLines ? (
+          <Markdown
+            options={{
+              overrides: {
+                ...baseMarkdownOverrides,
+                code: {
+                  component: ({ className, children, ...props }) => {
+                    const isBlock = className?.includes('lang-');
+                    if (isBlock) {
+                      return (
+                        <pre
+                          style={{
+                            margin: '0.5em 0',
+                            borderRadius: '4px',
+                            padding: '12px',
+                            overflowX: 'auto',
+                            background: '#1e1e1e',
+                            color: '#fff',
+                            fontSize: '12px',
+                            lineHeight: 1.6,
+                          }}
+                          {...props}
+                        >
+                          {String(children).replace(/\n$/, '')}
+                        </pre>
+                      );
+                    }
+                    return inlineCodeEl(children, props);
+                  },
+                },
+              },
+            }}
+          >
+            {completedLines}
+          </Markdown>
+        ) : null}
+        {currentLine ? (
+          <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{currentLine}</div>
+        ) : null}
       </div>
     );
   }
-  
-  // 多行内容：前面完整的行用 markdown 渲染，最后一行用纯文本
-  const completedLines = lines.slice(0, -1).join('\n');
-  const currentLine = lines[lines.length - 1];
-  
+
+  // 完成后：整体渲染（含代码高亮）
   return (
-    <div>
-      {completedLines && (
-        <Markdown
-          options={{
-            overrides: {
-              p: {
-                props: {
-                  style: { margin: '0.3em 0', lineHeight: '1.6' }
-                }
-              },
-              code: {
-                component: ({ className, children, ...props }) => {
-                  const match = /lang-(\w+)/.exec(className || '');
-                  const isBlock = className?.includes('lang-');
-                  
-                  return isBlock && match ? (
-                    <CodeBlock language={match[1]} {...props}>
-                      {children}
-                    </CodeBlock>
-                  ) : (
-                    <code style={{ 
-                      backgroundColor: '#f5f5f5', 
-                      padding: '2px 6px', 
-                      borderRadius: '3px',
-                      fontFamily: 'Consolas, Monaco, monospace',
-                      fontSize: '0.9em'
-                    }} {...props}>
-                      {children}
-                    </code>
-                  );
-                }
-              },
-              ul: {
-                props: {
-                  style: { margin: '0.3em 0', paddingLeft: '1.5em' }
-                }
-              },
-              ol: {
-                props: {
-                  style: { margin: '0.3em 0', paddingLeft: '1.5em' }
-                }
-              },
-              li: {
-                props: {
-                  style: { margin: '0.2em 0' }
-                }
-              },
-              blockquote: {
-                props: {
-                  style: { 
-                    margin: '0.3em 0', 
-                    paddingLeft: '1em', 
-                    borderLeft: '3px solid #ccc',
-                    color: '#666'
-                  }
-                }
-              },
-              h1: {
-                props: {
-                  style: { margin: '0.6em 0 0.3em', fontSize: '1.5em', fontWeight: 600 }
-                }
-              },
-              h2: {
-                props: {
-                  style: { margin: '0.6em 0 0.3em', fontSize: '1.3em', fontWeight: 600 }
-                }
-              },
-              h3: {
-                props: {
-                  style: { margin: '0.6em 0 0.3em', fontSize: '1.1em', fontWeight: 600 }
-                }
-              },
-              table: {
-                props: {
-                  style: { borderCollapse: 'collapse', margin: '0.5em 0', width: '100%' }
-                }
-              },
-              th: {
-                props: {
-                  style: { 
-                    border: '1px solid #ddd', 
-                    padding: '0.4em 0.6em',
-                    backgroundColor: '#f5f5f5',
-                    fontWeight: 600
-                  }
-                }
-              },
-              td: {
-                props: {
-                  style: { border: '1px solid #ddd', padding: '0.4em 0.6em' }
-                }
-              }
-            }
-          }}
-        >
-          {completedLines}
-        </Markdown>
-      )}
-      {currentLine && (
-        <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
-          {currentLine}
-        </div>
-      )}
-    </div>
+    <Markdown
+      options={{
+        overrides: {
+          ...baseMarkdownOverrides,
+          code: {
+            component: ({ className, children, ...props }) => {
+              const match = /lang-(\w+)/.exec(className || '');
+              const isBlock = className?.includes('lang-');
+              return isBlock && match ? (
+                <CodeBlock language={match[1]} {...props}>
+                  {children}
+                </CodeBlock>
+              ) : (
+                inlineCodeEl(children, props)
+              );
+            },
+          },
+        },
+      }}
+    >
+      {content}
+    </Markdown>
   );
 };
 
@@ -430,7 +446,8 @@ export default function RobotPage({ isPC: propIsPC = false }) {
       }
     };
 
-    bootstrapUserData();
+    // 进入页优先保证动画/首屏渲染顺滑：用户数据同步放到空闲时段
+    runWhenIdle(bootstrapUserData);
   }, []);
 
 
@@ -565,7 +582,8 @@ export default function RobotPage({ isPC: propIsPC = false }) {
       }
     };
 
-    loadChatHistory();
+    // 历史记录请求 + JSON 解析也会占用主线程，延后到空闲时段再做
+    runWhenIdle(loadChatHistory);
   }, []);
 
   const consumeOnce = async (reason = 'complete') => {

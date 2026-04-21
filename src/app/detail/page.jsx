@@ -2635,7 +2635,7 @@ ${coinInfo.name || symbol} (${symbol})
       {oneClickAlarmModalEl}
       <FloatingRobot
         message={t('detail.robotMessage', { symbol: symbol.toUpperCase() })}
-        targetPath="/robot_test"
+        targetPath="/ai"
         autoPlay={true}
         startDelay={2000}
       />

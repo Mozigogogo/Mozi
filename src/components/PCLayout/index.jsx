@@ -635,7 +635,7 @@ export default function PCLayout({ children }) {
             </div>
           </div>
           <Link
-            href="/robot_test"
+            href="/ai"
             className={styles.aiSearchBadgeLink}
             aria-label={t('home.quickActions.ai')}
           >

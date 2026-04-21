@@ -14,7 +14,7 @@ export default function PinkContainer() {
       id: 'ai',
       icon: '/icons/new_detail/ai_chat.svg',
       label: t('home.quickActions.ai'),
-      onClick: () => router.push('/robot_test')
+      onClick: () => router.push('/ai')
     },
     {
       id: 'price',
