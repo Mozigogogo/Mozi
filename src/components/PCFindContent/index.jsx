@@ -623,7 +623,9 @@ export default function PCFindContent() {
         </div>
       )}
 
-      <Card className={styles.contentCard}>
+      <Card
+        className={`${styles.contentCard} ${activeTab === 'market' ? styles.marketContentCard : ''}`}
+      >
         {/* 排行榜tab不需要外层loading，每个卡片有独立loading状态 */}
         {activeTab === 'rank' ? (
           <>
