@@ -242,7 +242,11 @@ export default function CommentInfo() {
   // 处理分享到Telegram
   const handleShare = (e) => {
     if (e) e.stopPropagation();
-    const shareUrl = `${window.location.origin}/commentinfo?id=${detail.id}`;
+    // 仅 PC/非 TG 环境：分享固定新域名；TG WebView 内保持当前域名
+    const isTelegram = localStorage.getItem('appChannel') === 'tg';
+    const shareUrl = isTelegram
+      ? `${window.location.origin}/commentinfo?id=${detail.id}`
+      : buildSiteUrl(`/commentinfo?id=${detail.id}`);
     const shareText = detail.title || '来自 Mozi 社区的帖子';
     
     // 上报分享任务（SHARE）
@@ -260,9 +264,6 @@ export default function CommentInfo() {
       console.error('详情页分享任务触发异常:', e);
     }
 
-    // 检查是否在Telegram环境中
-    const isTelegram = localStorage.getItem('appChannel') === 'tg';
-    
     if (isTelegram && window.Telegram?.WebApp) {
       // 使用Telegram Web App API分享
       try {

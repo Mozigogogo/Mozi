@@ -1153,7 +1153,9 @@ export default function DetailPage() {
     if (!coinInfo) return;
     
     // 获取当前页面URL
-    const currentUrl = window.location.href;
+    // TG WebView 内保持当前域名；仅 PC/非 TG 环境使用固定新域名
+    const isTelegram = typeof window !== 'undefined' && localStorage.getItem('appChannel') === 'tg';
+    const currentUrl = isTelegram ? window.location.href : buildSiteUrlFromLocation();
     
     // 构建分享文本
     const priceChange = coinInfo.priceChange_24h || '0';

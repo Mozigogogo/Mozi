@@ -849,7 +849,11 @@ export default function CommunityPage() {
       post = eOrPost;
     }
     
-    const shareUrl = `${window.location.origin}/commentinfo?id=${post.id}`;
+    // 仅 PC/非 TG 环境：分享固定新域名；TG WebView 内保持当前域名
+    const isTelegram = localStorage.getItem('appChannel') === 'tg';
+    const shareUrl = isTelegram
+      ? `${window.location.origin}/commentinfo?id=${post.id}`
+      : buildSiteUrl(`/commentinfo?id=${post.id}`);
     const shareText = post.title || '来自 Mozi 社区的帖子';
     
     // Amplitude 埋点
@@ -859,9 +863,6 @@ export default function CommunityPage() {
       tab: mainTab,
       subTab
     });
-    
-    // 检查是否在Telegram环境中
-    const isTelegram = localStorage.getItem('appChannel') === 'tg';
     
     if (isTelegram && window.Telegram?.WebApp) {
       // 使用Telegram Web App API分享
