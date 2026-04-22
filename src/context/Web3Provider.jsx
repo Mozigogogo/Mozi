@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { WagmiProvider, http, useAccount, useSwitchChain, useWalletClient } from 'wagmi'
-import { mainnet, arbitrum, arbitrumSepolia } from 'wagmi/chains'
+import { mainnet, arbitrum } from 'wagmi/chains'
 import {
   RainbowKitProvider,
   getDefaultConfig,
@@ -16,7 +16,6 @@ import '@rainbow-me/rainbowkit/styles.css'
 
 // WalletConnect Cloud projectId（RainbowKit 通过它连接 WC 协议）
 const projectId = process.env.NEXT_PUBLIC_PROJECT_ID
-const useArbitrumSepolia = process.env.NEXT_PUBLIC_USE_ARBITRUM_SEPOLIA === 'true'
 
 if (!projectId) {
   // eslint-disable-next-line no-console
@@ -28,21 +27,16 @@ const MAINNET_RPC_URL =
   process.env.NEXT_PUBLIC_MAINNET_RPC_URL || 'https://ethereum-rpc.publicnode.com'
 const ARBITRUM_RPC_URL =
   process.env.NEXT_PUBLIC_ARBITRUM_RPC_URL || 'https://arbitrum-one-rpc.publicnode.com'
-const ARBITRUM_SEPOLIA_RPC_URL =
-  process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC_URL || 'https://arbitrum-sepolia-rpc.publicnode.com'
-
-const selectedArbitrumChain = useArbitrumSepolia ? arbitrumSepolia : arbitrum
 
 const queryClient = new QueryClient()
 
 const wagmiConfig = getDefaultConfig({
   appName: 'Mozi H5',
   projectId: projectId || 'missing-project-id',
-  chains: [mainnet, selectedArbitrumChain],
+  chains: [mainnet, arbitrum],
   transports: {
     [mainnet.id]: http(MAINNET_RPC_URL),
     [arbitrum.id]: http(ARBITRUM_RPC_URL),
-    [arbitrumSepolia.id]: http(ARBITRUM_SEPOLIA_RPC_URL),
   },
   ssr: true,
 })
