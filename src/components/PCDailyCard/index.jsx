@@ -112,14 +112,18 @@ export default function PCDailyCard({
           <img src="/images/daily/right.svg" className={styles.cardArrow} alt=">" />
         </div>
 
-        <div className={`${styles.tableHeader} ${isEnglish ? styles.tableHeaderEn : ''}`}>
+        <div
+          className={`${styles.tableHeader} ${isEnglish ? styles.tableHeaderEn : ''} ${
+            loading ? styles.tableHeaderLoading : ''
+          }`}
+        >
           <div>{t('daily.table.time')}</div>
           <div>{t('daily.table.country')}</div>
           <div>{t('daily.table.event')}</div>
           <div className={styles.headerValues}>{t('daily.table.values')}</div>
         </div>
 
-        <div className={styles.tableBody}>
+        <div className={`${styles.tableBody} ${loading ? styles.tableBodyLoading : ''}`}>
           {loading ? (
             <div className={styles.loadingPlaceholder}>{t('common.loading') || '加载中...'}</div>
           ) : events.length === 0 ? (
