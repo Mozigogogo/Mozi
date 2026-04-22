@@ -20,7 +20,7 @@ const CalendarIcon = `${CDN_PREFIX}/icon/find_slices/find-calendar%402x.png`;
 /**
  * PC端市场概况组件 - 4个统计卡片
  */
-const PCMarketOverview = memo(() => {
+const PCMarketOverview = memo(({ onCalendarClick }) => {
   const { t } = useTranslation();
   const [smartValue, setSmartValue] = useState(t('overview.noConfig'));
   const [smartAction, setSmartAction] = useState(t('overview.configAlarm'));
@@ -252,9 +252,11 @@ const PCMarketOverview = memo(() => {
       value: t('overview.todayUpdated'),
       desc: t('overview.subscribe'),
       onClick: () => {
-        if (typeof window !== 'undefined') {
-          window.location.href = '/user';
+        if (typeof onCalendarClick === 'function') {
+          onCalendarClick();
+          return;
         }
+        if (typeof window !== 'undefined') window.location.href = '/daily';
       }
     }
   ];

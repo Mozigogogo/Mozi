@@ -1,0 +1,164 @@
+.card {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 26px;
+  padding: 18px 22px 20px;
+  min-height: 430px;
+  box-sizing: border-box;
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.leftInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: 10px;
+}
+
+.icon {
+  width: 48px;
+  height: 48px;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #2a2a2a;
+  line-height: 1.08;
+}
+
+.subtitle {
+  font-size: 20px;
+  color: #989898;
+}
+
+.switch {
+  width: 56px;
+  height: 32px;
+  border-radius: 16px;
+  background: #d8d8d8;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fff;
+  position: absolute;
+  top: 50%;
+  left: 4px;
+  transform: translateY(-50%);
+  transition: all 0.2s ease;
+}
+
+.checked {
+  background: #1fbd8f;
+}
+
+.checked .dot {
+  left: 26px;
+}
+
+.monthRow {
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+
+.monthText {
+  font-size: 24px;
+  font-weight: 600;
+  color: #111;
+}
+
+.navBtn {
+  border: none;
+  background: transparent;
+  color: #666;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.weekHeader {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-top: 22px;
+}
+
+.weekItem {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 700;
+  color: #121212;
+  padding: 8px 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  row-gap: 14px;
+  margin-top: 8px;
+}
+
+.dayCell {
+  height: 54px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  cursor: pointer;
+}
+
+.dayNum {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #222;
+}
+
+.today {
+  background: #c8f5e8;
+  color: #14a57d;
+}
+
+.selected {
+  background: #12bf90;
+  color: #fff;
+}
+
+.other .dayNum {
+  color: #bfc0c2;
+}
+
+.dots {
+  height: 7px;
+  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.dots i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: block;
+}
+
+.red { background: #ff6b6b; }
+.yellow { background: #ffc233; }
+.blue { background: #4f7cff; }
+
