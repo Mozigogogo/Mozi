@@ -7,13 +7,14 @@ import { useTranslation } from 'react-i18next';
 import { HeartOutlined, BellOutlined } from '@ant-design/icons';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
-import { getFinanceCalendar } from '@/api/financeCalendar';
+import { getMyInterface } from '@/api/user';
 import PCMarketOverview from '../PCMarketOverview';
 import MoziCard from '../MoziCard';
 import MoziGrid from '../MoziGrid';
 import { RankGrid } from '../Find/RankGrid';
 import PCCalendarCard from '../PCCalendarCard';
 import NewCoinListing from '../NewCoinListing';
+import PCDailyCard from '../PCDailyCard';
 import { isEmpty } from 'lodash';
 import styles from './index.module.less';
 
@@ -30,10 +31,11 @@ export default function PCFindContent() {
   const [marketData, setMarketData] = useState([]);
   const [selfData, setSelfData] = useState([]);
   const [calendarEventDates, setCalendarEventDates] = useState([]);
-  const [calendarEvents, setCalendarEvents] = useState([]);
   const [calendarLoading, setCalendarLoading] = useState(false);
   const [newListings, setNewListings] = useState([]);
   const [newListingsLoading, setNewListingsLoading] = useState(false);
+  const [calendarCurrentMonth, setCalendarCurrentMonth] = useState(new Date());
+  const [calendarSelectedDate, setCalendarSelectedDate] = useState(new Date());
   
   // 排行榜数据状态
   const [exchangeData, setExchangeData] = useState({ exchangeArr: [], exchangeSelect: [], topName: '' });
@@ -568,70 +570,78 @@ export default function PCFindContent() {
     if (activeTab !== 'market' || marketViewMode !== 'calendar') return;
     let alive = true;
 
-    const parseEventDate = (item) => {
-      const raw = item?.time || item?.datetime || item?.eventTime || item?.date || item?.ctime || '';
-      if (!raw) return null;
-      const parsed = new Date(raw);
-      if (!Number.isNaN(parsed.getTime())) return parsed;
-      const matched = String(raw).match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
-      if (!matched) return null;
-      const [, y, m, d] = matched;
-      return new Date(Number(y), Number(m) - 1, Number(d));
+    const formatMonth = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      return `${year}-${month}`;
+    };
+
+    const formatDate = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    const getListingArray = (res) => {
+      if (Array.isArray(res?.data)) return res.data;
+      if (Array.isArray(res?.data?.newCoinListings)) return res.data.newCoinListings;
+      if (Array.isArray(res?.data?.listings)) return res.data.listings;
+      return [];
+    };
+
+    const extractEventDays = (list, monthDate) => {
+      const targetMonth = monthDate.getMonth() + 1;
+      const days = list
+        .map((item) => {
+          const raw = item?.ctime || item?.listingTime || item?.time || '';
+          if (!raw) return null;
+          const matched = String(raw).match(/^\d{4}-(\d{2})-(\d{2})/);
+          if (!matched) return null;
+          const month = Number(matched[1]);
+          const day = Number(matched[2]);
+          if (month !== targetMonth || Number.isNaN(day)) return null;
+          return day;
+        })
+        .filter((day) => day !== null);
+      return Array.from(new Set(days));
     };
 
     const loadCalendarViewData = async () => {
       setCalendarLoading(true);
       setNewListingsLoading(true);
+
       try {
-        const [calendarRes, listingRes] = await Promise.all([
-          getFinanceCalendar(),
-          request({
-            url: Interface.GET_MY_INTERFACE,
-            method: 'POST',
-            data: { limit: 8 },
+        const token =
+          typeof window !== 'undefined' ? window.localStorage.getItem('token') : null;
+        if (!token) {
+          if (!alive) return;
+          setCalendarEventDates([]);
+          setNewListings([]);
+          return;
+        }
+
+        const [monthRes, dayRes] = await Promise.all([
+          getMyInterface({
+            limit: 200,
+            time: formatMonth(calendarCurrentMonth),
+          }),
+          getMyInterface({
+            limit: 50,
+            time: formatDate(calendarSelectedDate),
           }),
         ]);
 
-        const payload = calendarRes?.data ?? calendarRes;
-        const list =
-          (Array.isArray(payload?.data) && payload.data) ||
-          (Array.isArray(payload?.list) && payload.list) ||
-          (Array.isArray(payload?.events) && payload.events) ||
-          (Array.isArray(payload?.items) && payload.items) ||
-          (Array.isArray(payload) && payload) ||
-          [];
-
-        const normalizedEvents = list
-          .map((item) => ({
-            time: item?.time || item?.datetime || '--',
-            country: item?.country || item?.countryName || item?.currency || '--',
-            event: item?.event || item?.eventName || item?.title || '--',
-            value: item?.actual || item?.value || item?.forecast || '--',
-            dateObj: parseEventDate(item),
-          }))
-          .filter((x) => x.time || x.country || x.event);
-
-        const eventDaySet = new Set();
-        normalizedEvents.forEach((item) => {
-          if (item.dateObj) eventDaySet.add(item.dateObj.getDate());
-        });
-
-        const listingData = Array.isArray(listingRes?.data)
-          ? listingRes.data
-          : Array.isArray(listingRes?.data?.newCoinListings)
-            ? listingRes.data.newCoinListings
-            : Array.isArray(listingRes?.data?.listings)
-              ? listingRes.data.listings
-              : [];
+        const monthList = monthRes?.success === true ? getListingArray(monthRes) : [];
+        const dayList = dayRes?.success === true ? getListingArray(dayRes) : [];
+        const eventDays = extractEventDays(monthList, calendarCurrentMonth);
 
         if (!alive) return;
-        setCalendarEvents(normalizedEvents.slice(0, 5));
-        setCalendarEventDates(Array.from(eventDaySet));
-        setNewListings(listingData.slice(0, 6));
+        setCalendarEventDates(eventDays);
+        setNewListings(dayList.slice(0, 6));
       } catch (error) {
         if (!alive) return;
         console.error('加载PC日历视图数据失败:', error);
-        setCalendarEvents([]);
         setCalendarEventDates([]);
         setNewListings([]);
       } finally {
@@ -645,7 +655,7 @@ export default function PCFindContent() {
     return () => {
       alive = false;
     };
-  }, [activeTab, marketViewMode]);
+  }, [activeTab, marketViewMode, calendarCurrentMonth, calendarSelectedDate]);
 
   // 筛选项变化时重新加载数据
   useEffect(() => {
@@ -979,50 +989,21 @@ export default function PCFindContent() {
             {activeTab === 'market' && marketViewMode === 'calendar' && (
               <div className={styles.pcCalendarView}>
                 <div className={styles.pcCalendarMain}>
-                  <div className={styles.calendarBlock}>
-                    <PCCalendarCard eventDates={calendarEventDates} />
+                  <div className={styles.leftColumn}>
+                    <div className={styles.calendarBlock}>
+                      <PCCalendarCard
+                        eventDates={calendarEventDates}
+                        onDateChange={setCalendarSelectedDate}
+                        onMonthChange={setCalendarCurrentMonth}
+                      />
+                    </div>
+                    <div className={styles.listingBlock}>
+                      <NewCoinListing isPC data={newListings} loading={newListingsLoading} />
+                    </div>
                   </div>
-                  <div className={styles.dailyBlock}>
-                    <div className={styles.dailyTopDate}>
-                      <div className={styles.dailyDateNum}>{new Date().getDate()}</div>
-                      <div className={styles.dailyDateText}>
-                        {new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' }).toUpperCase()}
-                      </div>
-                    </div>
-                    <div className={styles.dailyTitle}>Mozi Daily</div>
-                    <div className={styles.dailyTableHeader}>
-                      <span>{t('daily.table.time')}</span>
-                      <span>{t('daily.table.country')}</span>
-                      <span>{t('daily.table.event')}</span>
-                      <span>{t('daily.table.values')}</span>
-                    </div>
-                    <div className={styles.dailyTableBody}>
-                      {calendarLoading ? (
-                        <div className={styles.dailyEmpty}>{t('common.loading')}</div>
-                      ) : calendarEvents.length === 0 ? (
-                        <div className={styles.dailyEmpty}>{t('daily.noEvents')}</div>
-                      ) : (
-                        calendarEvents.map((item, idx) => (
-                          <div className={styles.dailyRow} key={`${item.time}-${idx}`}>
-                            <span>{item.time}</span>
-                            <span>{item.country}</span>
-                            <span title={item.event}>{item.event}</span>
-                            <span>{item.value}</span>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      className={styles.dailyShareBtn}
-                      onClick={() => window.open('/daily', '_blank')}
-                    >
-                      {t('daily.share')}
-                    </button>
+                  <div className={styles.dailyEmbedBlock}>
+                    <PCDailyCard />
                   </div>
-                </div>
-                <div className={styles.pcCalendarBottom}>
-                  <NewCoinListing isPC data={newListings} loading={newListingsLoading} />
                 </div>
               </div>
             )}

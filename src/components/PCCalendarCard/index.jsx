@@ -5,7 +5,12 @@ import { useTranslation } from 'react-i18next';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import styles from './index.module.less';
 
-export default function PCCalendarCard({ eventDates = [], defaultToggle = true }) {
+export default function PCCalendarCard({
+  eventDates = [],
+  defaultToggle = true,
+  onDateChange,
+  onMonthChange,
+}) {
   const { t, i18n } = useTranslation();
   const [isToggleOn, setIsToggleOn] = useState(defaultToggle);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -62,6 +67,7 @@ export default function PCCalendarCard({ eventDates = [], defaultToggle = true }
     const next = new Date(currentMonth);
     next.setMonth(next.getMonth() + step);
     setCurrentMonth(next);
+    if (onMonthChange) onMonthChange(next);
   };
 
   return (
@@ -109,7 +115,11 @@ export default function PCCalendarCard({ eventDates = [], defaultToggle = true }
           <div
             key={`${d.day}-${idx}`}
             className={`${styles.dayCell} ${!d.isCurrentMonth ? styles.other : ''}`}
-            onClick={() => d.isCurrentMonth && setSelectedDate(d.date)}
+            onClick={() => {
+              if (!d.isCurrentMonth) return;
+              setSelectedDate(d.date);
+              if (onDateChange) onDateChange(d.date);
+            }}
           >
             <div
               className={`${styles.dayNum} ${d.isToday ? styles.today : ''} ${

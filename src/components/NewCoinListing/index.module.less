@@ -182,7 +182,7 @@
   }
 
   .headerTitle {
-    font-size: 30PX;
+    font-size: 24PX;
     font-weight: 700;
     line-height: 1.2;
     color: #202020;
@@ -203,8 +203,8 @@
 
   .coinItem {
     min-height: 112PX;
-    background: #f4f4f6;
-    border: 1px solid #e5e5e8;
+    background: rgba(255, 255, 255, 1);
+    border: 1px solid rgba(229, 231, 235, 1);
     border-radius: 14PX;
     padding: 12PX 14PX;
     margin-right: 0;
@@ -212,6 +212,10 @@
     width: auto;
     box-shadow: none;
     justify-content: center;
+  }
+
+  .loadingCoinItem {
+    align-items: center;
   }
 
   .itemTop {
@@ -234,7 +238,7 @@
 
   .coinTitle {
     margin: 0;
-    font-size: 22PX;
+    font-size: 14PX;
     line-height: 1.35;
     color: #1f1f1f;
     white-space: nowrap;
@@ -251,7 +255,7 @@
 
   .coinName {
     margin: 2PX 0 0;
-    font-size: 22PX;
+    font-size: 14PX;
     line-height: 1.35;
     color: #2a2a2a;
     white-space: nowrap;
@@ -261,6 +265,8 @@
 
   .coinDesc {
     margin-top: 8PX;
+    margin-left: 44PX;
+    width: calc(100% - 44PX);
     font-size: 13PX;
     line-height: 1.35;
     color: #8e8e93;
@@ -272,11 +278,18 @@
   }
 
   .emptyState {
-    background: #f4f4f6;
+    background: rgba(255, 255, 255, 1);
     border: 1px solid #e5e5e8;
     border-radius: 14PX;
     padding: 32PX 20PX;
     box-shadow: none;
+  }
+
+  .emptyText {
+    font-size: 14PX;
+    line-height: 1.4;
+    font-weight: 400;
+    color: #9ca3af;
   }
 
   .loadingState {
@@ -298,12 +311,15 @@
 @media (max-width: 1366px) {
   .pcWrapper {
     .headerTitle {
-      font-size: 26PX;
+      font-size: 22PX;
     }
 
-    .coinTitle,
+    .coinTitle {
+      font-size: 14PX;
+    }
+
     .coinName {
-      font-size: 19PX;
+      font-size: 14PX;
     }
   }
 }

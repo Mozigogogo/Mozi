@@ -30,9 +30,19 @@ const NewCoinListing = ({ showMore = false, data = [], onMoreClick, loading = fa
       
       <div className={styles.container}>
         {loading ? (
-          <div className={styles.loadingState}>
-            <div className={styles.loadingSpinner}></div>
-          </div>
+          isPC ? (
+            <div className={styles.grid}>
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div className={`${styles.coinItem} ${styles.loadingCoinItem}`} key={`loading-${index}`}>
+                  {index === 1 ? <div className={styles.loadingSpinner}></div> : null}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className={styles.loadingState}>
+              <div className={styles.loadingSpinner}></div>
+            </div>
+          )
         ) : coinListings.length === 0 ? (
           <div className={styles.emptyState}>
             <p className={styles.emptyText}>{t('user.noNewListings') || '暂无新币上线'}</p>

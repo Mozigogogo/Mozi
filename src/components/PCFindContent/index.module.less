@@ -199,6 +199,13 @@
     align-items: stretch;
   }
 
+  .leftColumn {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+  }
+
   .calendarBlock {
     background: transparent;
     border-radius: 0;
@@ -293,12 +300,18 @@
     cursor: pointer;
   }
 
-  .pcCalendarBottom {
-    margin-top: 12PX;
+  .listingBlock {
     padding: 16PX 18PX 18PX;
     border-radius: 24PX;
     background: rgba(255, 255, 255, 0.8);
     box-shadow: 0PX 4PX 6PX -4PX rgba(0, 0, 0, 0.1), 0PX 10PX 15PX -3PX rgba(0, 0, 0, 0.1);
+  }
+
+  .dailyEmbedBlock {
+    border-radius: 16px;
+    overflow: hidden;
+    height: 100%;
+    min-height: 0;
   }
 
   .rankTypeSelector {
