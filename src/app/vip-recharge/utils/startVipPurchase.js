@@ -1,7 +1,7 @@
 'use client';
 
 import { createStarsInvoice } from '@/api/vip';
-import { createWalletOrder, getOrderStatus, getWalletPaymentInfo, submitWalletTx, walletPay } from '@/api/payment';
+import { getOrderStatus, getWalletPaymentInfo, walletPay } from '@/api/payment';
 import { confirm } from '@/components/Modal/confirm';
 import { encodeFunctionData, getAddress, parseUnits } from 'viem';
 
@@ -11,12 +11,24 @@ const TG_PAYMENT_METHODS = {
   ARBITRUM: 'ARBITRUM',
 };
 
+const TG_PAYMENT_METHOD_ENV_KEY = 'NEXT_PUBLIC_TG_PAYMENT_METHOD';
+
+function resolveTelegramDefaultMethod() {
+  const fromEnv = String(process.env[TG_PAYMENT_METHOD_ENV_KEY] || '')
+    .trim()
+    .toUpperCase();
+  if (fromEnv === TG_PAYMENT_METHODS.STARS || fromEnv === TG_PAYMENT_METHODS.TON) {
+    return fromEnv;
+  }
+  return TG_PAYMENT_METHODS.TON;
+}
+
 // TG 端支付策略：
 // - 三种方式都保留在代码里（STARS / TON / ARBITRUM）
-// - 当前默认优先走 TON（TonConnect 官方钱包）
+// - TG 环境默认支付方式由 NEXT_PUBLIC_TG_PAYMENT_METHOD 控制（STARS / TON）
 // - STARS / ARBITRUM 分支保留（后续可随时打开）
 const TELEGRAM_PAYMENT_CONFIG = {
-  defaultMethod: TG_PAYMENT_METHODS.TON,
+  defaultMethod: resolveTelegramDefaultMethod(),
   hiddenMethods: [TG_PAYMENT_METHODS.STARS, TG_PAYMENT_METHODS.ARBITRUM],
 };
 const ARBITRUM_CHAIN_ID = 42161;
@@ -738,59 +750,62 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
   }
   if (typeof window === 'undefined') return;
 
-  let cachedTonAddress = null;
-  try {
-    cachedTonAddress = window.localStorage?.getItem('ton_address') || null;
-  } catch (_) {}
+  // 1) 真正发起交易前，先确保已连接 TON 钱包（TG WebView 里这是必须的）
+  const connectedTonAddress = await ensureTonConnected(meta, { timeoutMs: 60_000, pollMs: 500 });
   // eslint-disable-next-line no-console
-  console.log('[VipPurchase][TON] start', {
-    pricingId,
-    cachedTonAddress,
-    href: window.location.href,
-  });
+  console.log('[VipPurchase][TON][USDT] connected address', { connectedTonAddress, pricingId });
+  if (!connectedTonAddress) return;
 
-  // 先用缓存地址创建订单（即便尚未连接钱包），但真正发起转账仍需要连接
-  const orderFromAddress = cachedTonAddress || (await ensureTonConnected(meta, { timeoutMs: 60_000, pollMs: 500 }));
-
-  if (!orderFromAddress) return;
-
-  // 1) 创建订单，拿收款信息（USDT-TON）
-  let orderData = {};
+  // 2) 查询 TON 支付参数（不预创建订单）
+  let paymentInfo = null;
   try {
-    const orderRes = await createWalletOrder({
-      pricingId,
-      fromAddress: orderFromAddress,
-      chain: 'TON',
-      token: 'USDT_TON',
-    });
-    orderData = orderRes?.data ?? orderRes ?? {};
-    // eslint-disable-next-line no-console
-    console.log('[VipPurchase][TON][USDT] createWalletOrder ok', { fromAddress: orderFromAddress, orderData });
+    const paymentInfoRes = await getWalletPaymentInfo();
+    const paymentInfoList = paymentInfoRes?.data ?? paymentInfoRes ?? [];
+    paymentInfo = Array.isArray(paymentInfoList)
+      ? paymentInfoList.find((x) => String(x?.chain || x?.chainType || '').toUpperCase() === 'TON')
+      : null;
   } catch (e) {
     // eslint-disable-next-line no-console
-    console.error('[VipPurchase][TON][USDT] createWalletOrder failed', e, meta);
+    console.error('[VipPurchase][TON][USDT] getWalletPaymentInfo failed', e, meta);
     return;
   }
 
-  const orderNo = orderData.orderNo;
-  const merchantAddress = orderData.merchantTonAddress || orderData.receiveAddress || orderData.toAddress || orderData.to;
+  const merchantAddress =
+    paymentInfo?.merchantTonAddress ||
+    paymentInfo?.receiveAddress ||
+    paymentInfo?.toAddress ||
+    paymentInfo?.to;
   const jettonWalletAddress =
-    orderData.fromJettonWallet ||
-    orderData.senderJettonWallet ||
-    orderData.userJettonWallet ||
-    orderData.jettonWalletAddress;
-  const payloadBase64FromOrder =
-    orderData.payloadBase64 ||
-    orderData.jettonPayloadBase64 ||
-    orderData.jettonTransferPayload ||
-    orderData.payload ||
-    orderData.bocPayload ||
+    paymentInfo?.merchantUsdtJettonWallet ||
+    paymentInfo?.jettonWalletAddress ||
+    paymentInfo?.fromJettonWallet ||
+    paymentInfo?.senderJettonWallet ||
+    paymentInfo?.userJettonWallet;
+  const payloadBase64FromConfig =
+    paymentInfo?.payloadBase64 ||
+    paymentInfo?.jettonPayloadBase64 ||
+    paymentInfo?.jettonTransferPayload ||
+    paymentInfo?.payload ||
+    paymentInfo?.bocPayload ||
     null;
+  const amountUsdt =
+    paymentInfo?.usdtAmount ??
+    paymentInfo?.amountUsdt ??
+    paymentInfo?.amount ??
+    paymentInfo?.payAmount ??
+    plan?.price ??
+    meta?.amount;
+  const decimals = paymentInfo?.usdtDecimals ?? paymentInfo?.decimals ?? 6;
+  const forwardTonAmountNano =
+    paymentInfo?.forwardTonAmountNano ??
+    paymentInfo?.forwardAmountNano ??
+    '1';
   const gasAmountNanoRaw =
-    orderData.gasAmountNano ??
-    orderData.forwardTonAmountNano ??
-    orderData.amountNano ??
+    paymentInfo?.gasAmountNano ??
+    paymentInfo?.amountNano ??
     50_000_000;
+  const memoPrefix = paymentInfo?.memoPrefix || 'VIP';
+  const memo = paymentInfo?.memo || `${memoPrefix}_${pricingId}_${Date.now()}`;
 
   let gasAmountNano = null;
   try {
@@ -799,55 +814,39 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
     gasAmountNano = 50_000_000n;
   }
 
-  if (!orderNo || !jettonWalletAddress || !gasAmountNano) {
+  if (!merchantAddress || !jettonWalletAddress || amountUsdt == null || amountUsdt === '') {
     // eslint-disable-next-line no-console
-    console.error(
-      '[VipPurchase][TON][USDT] 订单字段不完整（需要 orderNo/jettonWalletAddress/gasAmountNano）',
-      orderData,
-      meta
-    );
+    console.error('[VipPurchase][TON][USDT] walletPaymentInfo 字段不完整', {
+      paymentInfo,
+      amountUsdt,
+      meta,
+    });
     return;
   }
 
-  // 2) 真正发起交易前，确保已连接 TON 钱包（TG WebView 里这是必须的）
-  const connectedTonAddress = await ensureTonConnected(meta, { timeoutMs: 60_000, pollMs: 500 });
-  // eslint-disable-next-line no-console
-  console.log('[VipPurchase][TON][USDT] connected address', { connectedTonAddress, cachedTonAddress, orderFromAddress });
-  if (!connectedTonAddress) return;
-
-  let payloadBase64 = payloadBase64FromOrder;
+  let payloadBase64 = payloadBase64FromConfig;
   if (!payloadBase64) {
-    const amountUsdt =
-      orderData.usdtAmount ??
-      orderData.amountUsdt ??
-      orderData.amount ??
-      orderData.payAmount;
-    const decimals = orderData.usdtDecimals ?? orderData.decimals ?? 6;
-    const forwardTonAmountNano =
-      orderData.forwardTonAmountNano ??
-      orderData.forwardAmountNano ??
-      '1';
-    const comment = orderData.memo || orderNo;
     payloadBase64 = await buildJettonTransferPayloadBase64({
       amountUsdt,
       decimals,
       destinationAddress: merchantAddress,
       responseAddress: connectedTonAddress,
       forwardTonAmountNano,
-      comment,
+      comment: memo,
     });
   }
 
   if (!payloadBase64) {
     // eslint-disable-next-line no-console
-    console.error(
-      '[VipPurchase][TON][USDT] 缺少可用 payload：后端未返回且前端构造失败',
-      { orderNo, orderData, meta }
-    );
+    console.error('[VipPurchase][TON][USDT] payload 构造失败', {
+      paymentInfo,
+      amountUsdt,
+      meta,
+    });
     return;
   }
 
-  // 2) 拉起 TonConnect 官方钱包发起转账
+  // 3) 拉起 TonConnect 官方钱包发起转账
   if (typeof window.__tonSendTransaction !== 'function') {
     // eslint-disable-next-line no-console
     console.warn('[VipPurchase][TON][USDT] TonConnect bridge 不存在，尝试打开连接弹窗', meta);
@@ -869,11 +868,11 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
     };
     // eslint-disable-next-line no-console
     console.log('[VipPurchase][TON][USDT] sendTransaction', {
-      orderNo,
       jettonWalletAddress,
       gasAmountNano: gasAmountNano.toString(),
       hasPayload: true,
-      payloadSource: payloadBase64FromOrder ? 'backend' : 'frontend',
+      payloadSource: payloadBase64FromConfig ? 'backend' : 'frontend',
+      amountUsdt,
     });
     // eslint-disable-next-line no-console
     console.log('[VipPurchase][TON][USDT] payment route', {
@@ -881,20 +880,39 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
       merchantAddress,
       jettonWalletAddress,
       gasAmountNano: gasAmountNano.toString(),
-      orderNo,
+      pricingId,
     });
     const res = await window.__tonSendTransaction(tx);
-    const boc = res?.boc || res?.result || null;
+    const txHash = res?.boc || res?.result || res?.transactionHash || null;
     // eslint-disable-next-line no-console
-    console.log('[VipPurchase][TON][USDT] sendTransaction result', { orderNo, hasBoc: !!boc, res });
-    if (boc) {
-      await submitWalletTx({ orderNo, txHash: String(boc) });
+    console.log('[VipPurchase][TON][USDT] sendTransaction result', { hasTxHash: !!txHash, res });
+    if (!txHash) {
+      // eslint-disable-next-line no-console
+      console.error('[VipPurchase][TON][USDT] 未获取到 txHash/boc，无法上报 walletPay', { res, meta });
+      return;
     }
 
+    // 4) 上报链上交易并由后端创建/关联订单
+    const payRes = await walletPay({
+      pricingId,
+      fromAddress: connectedTonAddress,
+      chain: 'TON',
+      txHash: String(txHash),
+      token: 'USDT_TON',
+    });
+    const payData = payRes?.data ?? payRes ?? {};
+    const orderNo = payData.orderNo;
+    if (!orderNo) {
+      // eslint-disable-next-line no-console
+      console.error('[VipPurchase][TON][USDT] walletPay 未返回 orderNo', { payData, meta });
+      return;
+    }
+
+    // 5) 轮询订单状态，等待后端链上核验完成
     await pollOrderStatus(orderNo, { tabKey, planTitle: plan?.title });
   } catch (e) {
     // eslint-disable-next-line no-console
-    console.error('[VipPurchase][TON][USDT] sendTransaction failed', e, { orderNo, meta });
+    console.error('[VipPurchase][TON][USDT] sendTransaction/walletPay failed', e, { pricingId, meta });
   }
 }
 
