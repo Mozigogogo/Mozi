@@ -21,6 +21,7 @@ import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import PCSearchResults from '../PCSearchResults';
 import PCFindContent from '../PCFindContent';
 import PCCommunityContent from '../PCCommunityContent';
@@ -196,8 +197,11 @@ export default function PCLayout({ children }) {
   const [activeContent, setActiveContent] = useState(null);
   const [isCreatedListExpanded, setIsCreatedListExpanded] = useState(false);
   const [isMineExpanded, setIsMineExpanded] = useState(false);
+  const [isAlertsExpanded, setIsAlertsExpanded] = useState(false);
   const [watchlist, setWatchlist] = useState([]);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
+  const [alertsList, setAlertsList] = useState([]);
+  const [alertsLoading, setAlertsLoading] = useState(false);
 
   useEffect(() => {
     setIsMineExpanded(false);
@@ -221,12 +225,72 @@ export default function PCLayout({ children }) {
     }
   }, []);
 
+  const fetchAlertsList = useCallback(async () => {
+    setAlertsLoading(true);
+    try {
+      const res = await request({ url: Interface.MY_WARN });
+      const data = res?.data;
+      if (!data || data?.isLogin === false || typeof data !== 'object') {
+        setAlertsList([]);
+        return;
+      }
+      const symbols = Object.keys(data);
+      const baseList = symbols.map((symbol) => {
+        const warnContent = Array.isArray(data?.[symbol]?.warnContent) ? data[symbol].warnContent : [];
+        const total = warnContent.length;
+        const active = warnContent.filter((item) => item?.active).length;
+        return { symbol, total, active };
+      });
+
+      const quoteResults = await Promise.all(
+        baseList.map(async (item) => {
+          try {
+            const quoteRes = await request({
+              url: Interface.COIN_INFO,
+              data: { coin: item.symbol },
+            });
+            const quoteList = Array.isArray(quoteRes?.data)
+              ? quoteRes.data
+              : quoteRes?.data
+                ? [quoteRes.data]
+                : [];
+            const quote = quoteList[0] || {};
+            const rawPrice = quote?.last ?? quote?.price ?? quote?.close;
+            const rawChange =
+              quote?.price24h ??
+              quote?.priceChangePercent ??
+              quote?.priceChangePercentage24h ??
+              quote?.priceChangePercentage_24h ??
+              quote?.['price24h_%'] ??
+              quote?.priceChange_24h;
+            return { ...item, currentPrice: rawPrice, priceChange: rawChange };
+          } catch (error) {
+            return { ...item, currentPrice: null, priceChange: null };
+          }
+        })
+      );
+      setAlertsList(quoteResults);
+    } catch (e) {
+      console.error('PC sidebar alerts:', e);
+      setAlertsList([]);
+    } finally {
+      setAlertsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (collapsed || !isMineExpanded) return undefined;
     fetchWatchlist();
     const timer = setInterval(fetchWatchlist, 30000);
     return () => clearInterval(timer);
   }, [collapsed, isMineExpanded, fetchWatchlist]);
+
+  useEffect(() => {
+    if (collapsed || !isAlertsExpanded) return undefined;
+    fetchAlertsList();
+    const timer = setInterval(fetchAlertsList, 30000);
+    return () => clearInterval(timer);
+  }, [collapsed, isAlertsExpanded, fetchAlertsList]);
 
   // 预加载所有图标 - 优化：使用link标签预加载，更快
   useEffect(() => {
@@ -303,18 +367,6 @@ export default function PCLayout({ children }) {
   const mineRestMenuItems = useMemo(
     () => [
       {
-        key: '/mywarn',
-        icon: (
-          <CustomIcon
-            src="/icons/pc/alert@2x.png"
-            activeSrc="/icons/pc/alert_actived@2x.png"
-            itemKey="/mywarn"
-            alt="alerts"
-          />
-        ),
-        label: t('pcLayout.menu.myAlerts'),
-      },
-      {
         key: '/subscribe',
         icon: (
           <CustomIcon
@@ -351,6 +403,22 @@ export default function PCLayout({ children }) {
         label: t('pcLayout.menu.myAchievements'),
       },
     ],
+    [t, activeContent, pathname]
+  );
+
+  const myAlertsMenuItem = useMemo(
+    () => ({
+      key: '/pc/alarm',
+      icon: (
+        <CustomIcon
+          src="/icons/pc/alert@2x.png"
+          activeSrc="/icons/pc/alert_actived@2x.png"
+          itemKey="/pc/alarm"
+          alt="alerts"
+        />
+      ),
+      label: t('pcLayout.menu.myAlerts'),
+    }),
     [t, activeContent, pathname]
   );
 
@@ -499,11 +567,11 @@ export default function PCLayout({ children }) {
     if (pathname === '/selfrank') {
       return ['/selfrank'];
     }
-    const flat = [...topMenuItems, ...mineRestMenuItems, favoritesMenuItemCollapsed];
+    const flat = [...topMenuItems, myAlertsMenuItem, ...mineRestMenuItems, favoritesMenuItemCollapsed];
     const matched = flat.find(
       (item) => pathname === item.key || pathname.startsWith(`${item.key}/`)
     );
-    return matched ? [matched.key] : ['/'];
+    return matched ? [matched.key] : [];
   };
 
   // 当路由变化时，清除activeContent
@@ -567,7 +635,7 @@ export default function PCLayout({ children }) {
             </div>
           </div>
           <Link
-            href="/robot_test"
+            href="/ai"
             className={styles.aiSearchBadgeLink}
             aria-label={t('home.quickActions.ai')}
           >
@@ -576,6 +644,44 @@ export default function PCLayout({ children }) {
         </div>
 
         <div className={styles.headerRight}>
+          <ConnectButton.Custom>
+            {({
+              account,
+              chain,
+              mounted,
+              openAccountModal,
+              openChainModal,
+              openConnectModal,
+            }) => {
+              const ready = mounted;
+              const connected = ready && account && chain;
+              const walletText = connected
+                ? `钱包: ${account.displayName || account.address}`
+                : '连接钱包';
+              const handleWalletClick = () => {
+                if (!ready) return;
+                if (!connected) {
+                  openConnectModal?.();
+                  return;
+                }
+                openAccountModal?.();
+              };
+              return (
+                <button type="button" className={styles.walletEntry} onClick={handleWalletClick}>
+                  <span className={styles.walletDot} aria-hidden />
+                  <span className={styles.walletText}>{walletText}</span>
+                  {connected && chain?.unsupported ? (
+                    <span className={styles.walletTag} onClick={(e) => {
+                      e.stopPropagation();
+                      openChainModal?.();
+                    }}>
+                      切换网络
+                    </span>
+                  ) : null}
+                </button>
+              );
+            }}
+          </ConnectButton.Custom>
           <Button 
             type="text" 
             onClick={() => setShowBenefitModal(true)}
@@ -677,23 +783,16 @@ export default function PCLayout({ children }) {
                   onClick={() => setIsMineExpanded((v) => !v)}
                 >
                   <span className={styles.pcWatchlistHeaderLeft}>
-                    {isMineExpanded ? (
-                      <span className={styles.pcWatchlistHeaderIconSvg} aria-hidden>
-                        <img
-                          src="/icons/new_home/collect_actived.svg"
-                          alt=""
-                          width={16}
-                          height={16}
-                        />
-                      </span>
-                    ) : (
-                      <CustomIcon
-                        src="/icons/pc/Collection@2x.png"
-                        activeSrc="/icons/pc/Collection_actived@2x.png"
-                        itemKey="/selfrank"
-                        alt="favorites"
+                    <span className={styles.pcWatchlistHeaderIconSvg} aria-hidden>
+                      <img
+                        src={isMineExpanded || pathname === '/selfrank'
+                          ? '/icons/new_home/collect_actived.svg'
+                          : '/icons/pc/Collection@2x.png'}
+                        alt=""
+                        width={16}
+                        height={16}
                       />
-                    )}
+                    </span>
                     <span
                       className={`${styles.pcWatchlistTitle} ${
                         isMineExpanded ? styles.pcWatchlistTitleExpanded : ''
@@ -702,25 +801,10 @@ export default function PCLayout({ children }) {
                       {t('pcLayout.menu.myFavorites')}
                     </span>
                   </span>
-                  {isMineExpanded ? (
-                    <img
-                      src="/icons/new_home/down_arrow.svg"
-                      alt=""
-                      className={styles.pcWatchlistChevron}
-                      width={16}
-                      height={16}
-                      aria-hidden
-                    />
-                  ) : (
-                    <img
-                      src="/icons/new_home/right_arrow_45556C.svg"
-                      alt=""
-                      className={styles.pcWatchlistChevron}
-                      width={16}
-                      height={16}
-                      aria-hidden
-                    />
-                  )}
+                  <span
+                    className={`${styles.pcWatchlistChevron} ${isMineExpanded ? styles.pcWatchlistChevronExpanded : ''}`}
+                    aria-hidden
+                  />
                 </button>
                 {isMineExpanded && (
                   <div className={styles.pcWatchlistBody}>
@@ -773,6 +857,99 @@ export default function PCLayout({ children }) {
                           </button>
                         );
                       })
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!collapsed && (
+              <div className={styles.pcWatchlist}>
+                <button
+                  type="button"
+                  className={`${styles.pcWatchlistHeader} ${
+                    pathname === '/pc/alarm' ? styles.pcWatchlistHeaderSelected : ''
+                  }`}
+                  onClick={() => setIsAlertsExpanded((v) => !v)}
+                >
+                  <span className={styles.pcWatchlistHeaderLeft}>
+                    <span className={styles.pcWatchlistHeaderIconSvg} aria-hidden>
+                      <img
+                        src={isAlertsExpanded || pathname === '/pc/alarm'
+                          ? '/icons/pc/alert_actived@2x.png'
+                          : '/icons/pc/alert@2x.png'}
+                        alt=""
+                        width={16}
+                        height={16}
+                      />
+                    </span>
+                    <span
+                      className={`${styles.pcWatchlistTitle} ${
+                        isAlertsExpanded ? styles.pcWatchlistTitleExpanded : ''
+                      }`}
+                    >
+                      {t('pcLayout.menu.myAlerts')}
+                    </span>
+                  </span>
+                  <span
+                    className={`${styles.pcWatchlistChevron} ${isAlertsExpanded ? styles.pcWatchlistChevronExpanded : ''}`}
+                    aria-hidden
+                  />
+                </button>
+                {isAlertsExpanded && (
+                  <div className={styles.pcAlertBody}>
+                    {alertsLoading && alertsList.length === 0 ? (
+                      <div className={`${styles.pcWatchlistHint} ${styles.pcWatchlistHintCenter}`}>
+                        {t('common.loading')}
+                      </div>
+                    ) : alertsList.length === 0 ? (
+                      <div className={styles.pcWatchlistHint}>
+                        {t('myAlarm.noAlerts', {
+                          defaultValue: (i18n?.language || '').startsWith('en')
+                            ? 'No alerts configured'
+                            : '暂无告警配置',
+                        })}
+                      </div>
+                    ) : (
+                      alertsList.map((item) => (
+                        <button
+                          key={item.symbol}
+                          type="button"
+                          className={`${styles.pcAlertEntry} ${
+                            pathname === '/pc/alarm' ? styles.pcAlertEntryActive : ''
+                          }`}
+                          onClick={() => {
+                            setActiveContent(null);
+                            router.push(`/pc/alarm?symbol=${encodeURIComponent(item.symbol)}`);
+                          }}
+                        >
+                          <span className={styles.pcAlertEntryLeft}>
+                            <span className={styles.pcWatchlistSymbol}>{item.symbol}</span>
+                          </span>
+                          <span className={styles.pcAlertEntryRight}>
+                            <span className={styles.pcAlertPrice}>
+                              {item.currentPrice !== undefined &&
+                              item.currentPrice !== null &&
+                              item.currentPrice !== ''
+                                ? `$${formatPrice(item.currentPrice)}`
+                                : '--'}
+                            </span>
+                            <span
+                              className={
+                                String(item.priceChange ?? '').includes('-')
+                                  ? styles.pcWatchlistChangeDown
+                                  : styles.pcWatchlistChangeUp
+                              }
+                            >
+                              {item.priceChange !== undefined &&
+                              item.priceChange !== null &&
+                              item.priceChange !== ''
+                                ? `${String(item.priceChange).includes('-') ? '↓' : '↑'} ${formatValue(item.priceChange)}`
+                                : '--'}
+                            </span>
+                          </span>
+                        </button>
+                      ))
                     )}
                   </div>
                 )}

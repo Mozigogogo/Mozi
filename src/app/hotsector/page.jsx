@@ -8,6 +8,7 @@ import SortButton from '@/components/SortButton';
 import MoziTreeMap from '@/components/MoziTreeMap';
 import { fetchHotSectionsData } from '@/api/market';
 import { buildSectorDetailHref } from '@/utils/sectorNavigation';
+import { safeBack } from '@/utils/navigation';
 import styles from './page.module.less';
 
 /** 热力图筛选 SortButton 的 value -> GET /section/list 的 sortField */
@@ -52,7 +53,7 @@ export default function HotSectorPage() {
   };
 
   const handleBack = () => {
-    router.back();
+    safeBack(router, { fallback: '/' });
   };
 
   const handleShare = () => {

@@ -196,7 +196,11 @@
     "cancelSuccess": "取消成功",
     "operationFailed": "操作失败",
     "followed": "已关注",
-    "unfollowed": "已取消关注"
+    "unfollowed": "已取消关注",
+    "confirmDelete": "确定要删除吗？",
+    "deleting": "删除中...",
+    "deleteSuccess": "删除成功",
+    "deleteFailed": "删除失败"
   },
   "exchangeRank": {
     "realTimeUpdate": "实时更新"
@@ -733,6 +737,7 @@
     "telegramReloginConfirm": "确定"
   },
   "community": {
+    "reportContent": "举报内容",
     "title": "社区",
     "post": "发帖",
     "comment": "评论",
@@ -859,7 +864,17 @@
     "unauthorized": "未授权，请先登录",
     "forbidden": "没有权限访问",
     "unknown": "未知错误",
-    "sessionExpired": "登录已失效，请重新登录"
+    "sessionExpired": "登录已失效，请重新登录",
+    "cannotGetUserInfoRelogin": "登录已失效，请重新登录"
+  },
+  "shareChat": {
+    "title": "分享对话",
+    "close": "关闭",
+    "copyLink": "复制链接",
+    "copied": "已复制",
+    "twitter": "Twitter",
+    "tg": "TG",
+    "more": "更多"
   },
   "robot": {
     "title": "AI 助手",
@@ -1319,7 +1334,8 @@
       "uploading": "上传中...",
       "uploadSuccess": "成功上传{{count}}张图片",
       "uploadFailed": "图片上传失败",
-      "reasonRequired": "请填写推荐理由"
+      "reasonRequired": "请填写推荐理由",
+      "invalidPostId": "帖子ID无效"
     },
     "vote": {
       "createVote": "创建投票",

@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Empty, message, Spin } from 'antd';
 import { useRouter } from 'next/navigation';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 import SectionTitle from '@/components/SectionTitle';
 import PostCard from '@/components/PostCard';
+import DiscoveryPostCard from '@/components/DiscoveryPostCard';
 import SplitLayout from '@/components/SplitLayout';
 import CoinTabBar from '@/components/CoinTabBar';
 import BullBearIndicator from '@/components/BullBearIndicator';
@@ -16,6 +17,9 @@ import PCTopicSearchModal from '@/components/PCTopicSearchModal';
 import PCCapsuleTabs from '@/components/PCCapsuleTabs';
 import PCPublishComposer from '@/components/PCPublishComposer';
 import PCFlashNewsCard from '@/components/PCFlashNewsCard';
+import PCPagination from '@/components/PCPagination';
+import PostDetailModal from '@/components/PostDetailModal';
+import { dislikePost, undislikePost } from '@/api/community';
 import styles from './index.module.less';
 
 /**
@@ -23,49 +27,23 @@ import styles from './index.module.less';
  */
 export default function PCCommunityContent() {
   const router = useRouter();
+  const COIN_POST_PAGE_SIZE = 5;
   const capsuleTabItems = [
     { key: 'coin', label: '币种' },
     { key: 'discover', label: '发现好币' },
     { key: 'qa', label: '不懂就问' }
   ];
-  const flashNewsItems = [
-    {
-      id: 1,
-      account: '快讯账户',
-      tag: '资讯',
-      time: '50 分钟前',
-      title: 'Hyperliquid上RWA交易量近期创新高，未平仓合约量突破13亿美元',
-      desc: 'Hyperliquid上RWA交易量近期创新高，未平仓合约量突破13亿美元...',
-      likeCount: 7,
-      commentCount: 2,
-      shareCount: 2
-    },
-    {
-      id: 2,
-      account: '快讯账户',
-      tag: '资讯',
-      time: '50 分钟前',
-      title: 'Hyperliquid上RWA交易量近期创新高，未平仓合约量突破13亿美元',
-      desc: 'Hyperliquid上RWA交易量近期创新高，未平仓合约量突破13亿美元...',
-      likeCount: 7,
-      commentCount: 2,
-      shareCount: 2
-    },
-    {
-      id: 3,
-      account: '快讯账户',
-      tag: '资讯',
-      time: '50 分钟前',
-      title: 'Hyperliquid上RWA交易量近期创新高，未平仓合约量突破13亿美元',
-      desc: 'Hyperliquid上RWA交易量近期创新高，未平仓合约量突破13亿美元...',
-      likeCount: 7,
-      commentCount: 2,
-      shareCount: 2
-    }
-  ];
+  const [flashNewsItems, setFlashNewsItems] = useState([]);
+  const [flashNewsLoading, setFlashNewsLoading] = useState(false);
+  const [flashNewsPage, setFlashNewsPage] = useState(1);
+  const [flashNewsTotal, setFlashNewsTotal] = useState(0);
+  const FLASH_NEWS_PAGE_SIZE = 3;
   
   const [coinPosts, setCoinPosts] = useState([]); // 币种帖子
+  const [coinPostsPage, setCoinPostsPage] = useState(1);
+  const [coinPostsTotal, setCoinPostsTotal] = useState(0);
   const [likedPosts, setLikedPosts] = useState({});
+  const [dislikedPosts, setDislikedPosts] = useState({});
   const [coinLoading, setCoinLoading] = useState(false); // 币种帖子加载状态
   const [selectedCoin, setSelectedCoin] = useState('BTC'); // 当前选中的币种
   const [voteChoice, setVoteChoice] = useState(null); // 投票选择状态
@@ -73,15 +51,17 @@ export default function PCCommunityContent() {
   const [hotTopics, setHotTopics] = useState([]); // 热门话题列表
   const [hotTopicsLoading, setHotTopicsLoading] = useState(false); // 热门话题加载状态
   const [hotTopicsPage, setHotTopicsPage] = useState(1); // 热门话题当前页码
-  const [hotTopicsAllLoaded, setHotTopicsAllLoaded] = useState(false); // 热门话题是否全部加载完
+  const [hotTopicsTotal, setHotTopicsTotal] = useState(0);
+  const HOT_TOPICS_PAGE_SIZE = 10;
   const [searchKeyword, setSearchKeyword] = useState(''); // 搜索关键词
   const [searchResults, setSearchResults] = useState([]); // 搜索结果
   const [searchLoading, setSearchLoading] = useState(false); // 搜索加载状态
   const [showSearchPanel, setShowSearchPanel] = useState(false); // 是否显示搜索下拉面板
   const [activeCapsuleTab, setActiveCapsuleTab] = useState('coin'); // 顶部胶囊tab
-  
-  // 用于引用右侧热门榜单容器
-  const hotTopicsContainerRef = useRef(null);
+  const isDiscoveryLikeTab = activeCapsuleTab !== 'coin';
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [detailModalPost, setDetailModalPost] = useState(null);
+  const [detailModalComments, setDetailModalComments] = useState([]);
   
   // 固定币种配置
   const coinTabs = [
@@ -133,6 +113,49 @@ export default function PCCommunityContent() {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
   };
 
+  // 获取快讯（与移动端一致：/posts?userType=virtual）
+  const fetchFlashNews = async (nextPage = flashNewsPage) => {
+    if (flashNewsLoading) return;
+    setFlashNewsLoading(true);
+    try {
+      const res = await request({
+        url: Interface.POSTS_API,
+        data: { page: nextPage, size: FLASH_NEWS_PAGE_SIZE, userType: 'virtual' },
+      });
+      const list = res?.data?.data || [];
+      const total = res?.data?.total ?? 0;
+      setFlashNewsTotal(Number.isFinite(Number(total)) ? Number(total) : 0);
+      setFlashNewsPage(nextPage);
+
+      const mapped = list.slice(0, FLASH_NEWS_PAGE_SIZE).map((item) => {
+        const title = String(item?.title || '').trim();
+        const content = String(item?.content || '').trim();
+        const nickName = String(item?.nickName || item?.username || '快讯').trim();
+        const category = String(item?.category || '资讯').trim();
+        const timeSource = item?.updatedAt || item?.createdAt || '';
+        return {
+          id: item?.id,
+          account: nickName || '快讯',
+          tag: category || '资讯',
+          time: formatTimeAgo(timeSource),
+          title: title || content.slice(0, 40) || '快讯',
+          desc: content || title,
+          likeCount: item?.likeCnt ?? item?.likeCount ?? 0,
+          commentCount: item?.commentCnt ?? item?.commentCount ?? 0,
+          shareCount: item?.shareCnt ?? item?.shareCount ?? 0,
+        };
+      });
+      setFlashNewsItems(mapped);
+    } catch (e) {
+      console.error('获取快讯失败:', e);
+      message.error('获取快讯失败');
+      setFlashNewsItems([]);
+      setFlashNewsTotal(0);
+    } finally {
+      setFlashNewsLoading(false);
+    }
+  };
+
   // 统一解析帖子作者 userId（兼容不同接口字段命名）
   const extractPostUserId = (item) => {
     if (!item || typeof item !== 'object') return '';
@@ -154,20 +177,31 @@ export default function PCCommunityContent() {
     return hit == null ? '' : String(hit).trim();
   };
 
-  // 获取币种相关帖子
-  const fetchCoinPosts = async (coin) => {
+  // 获取左侧帖子（币种 / 发现好币 / 不懂就问）
+  const fetchCoinPosts = async (coin, nextPage = 1, tabKey = activeCapsuleTab) => {
     setCoinLoading(true);
     try {
+      const requestData = {
+        page: nextPage,
+        size: COIN_POST_PAGE_SIZE,
+      };
+      if (tabKey === 'qa') {
+        requestData.category = '不懂就问';
+      } else {
+        requestData.tag = coin; // 币种 / 发现好币沿用币种标签筛选
+      }
+
       const response = await request({
         url: Interface.POSTS_API,
-        data: {
-          page: 1,
-          size: 5, // 最多显示5个帖子
-          tag: coin // 根据币种标签筛选
-        }
+        data: requestData
       });
       
       if (response?.data?.data?.length > 0) {
+        const totalRaw = response?.data?.total;
+        const total = Number.isFinite(Number(totalRaw)) ? Number(totalRaw) : response?.data?.data?.length || 0;
+        setCoinPostsTotal(total);
+        setCoinPostsPage(nextPage);
+
         const formattedData = response.data.data.map(item => ({
           id: item.id,
           avatar: item.avatar || '/default-avatar.png',
@@ -178,10 +212,12 @@ export default function PCCommunityContent() {
           categoryLabel: item.category,
           commentCount: item.commentCnt || 0,
           likeCount: item.likeCnt || 0,
+          dislikeCount: item.dislikeCnt ?? item.unlikeCnt ?? item.dislikeCount ?? 0,
           userId: extractPostUserId(item),
           tags: item.tags || [],
           topics: item.topics || [],
           isLiked: item.isLikedByCurrentUser || false,
+          isDisliked: item.isDislikedByCurrentUser || item.isUnlikedByCurrentUser || false,
           createTime: item.updatedAt?.replace('T', ' ') || '',
           createdAt: item.createdAt,
           updatedAt: item.updatedAt,
@@ -191,27 +227,28 @@ export default function PCCommunityContent() {
         setCoinPosts(formattedData);
       } else {
         setCoinPosts([]);
+        setCoinPostsTotal(0);
+        setCoinPostsPage(nextPage);
       }
     } catch (error) {
       console.error('获取币种帖子失败:', error);
       setCoinPosts([]);
+      setCoinPostsTotal(0);
     } finally {
       setCoinLoading(false);
     }
   };
 
-  // 获取热门话题（支持分页和搜索）
-  const fetchHotTopics = async (reset = false, keyword = '') => {
-    if (hotTopicsLoading && !reset) return;
-    
+  // 获取热门话题（分页）
+  const fetchHotTopics = async (nextPage = 1, keyword = '') => {
+    if (hotTopicsLoading) return;
+
     setHotTopicsLoading(true);
-    
-    const currentPage = reset ? 1 : hotTopicsPage;
-    
+
     try {
       const requestData = {
-        page: currentPage,
-        size: 20 // 每页20条
+        page: nextPage,
+        size: HOT_TOPICS_PAGE_SIZE
       };
       
       // 如果有搜索关键词，添加到请求中
@@ -226,29 +263,20 @@ export default function PCCommunityContent() {
         url: apiUrl,
         data: requestData
       });
-      
-      if (response?.data?.data?.length > 0) {
-        const { data, totalPages } = response.data;
-        
-        if (reset || currentPage === 1) {
-          setHotTopics(data);
-        } else {
-          setHotTopics(prev => [...prev, ...data]);
-        }
-        
-        setHotTopicsPage(currentPage + 1);
-        setHotTopicsAllLoaded(currentPage >= totalPages);
-      } else {
-        if (reset || currentPage === 1) {
-          setHotTopics([]);
-        }
-        setHotTopicsAllLoaded(true);
-      }
+
+      const data = Array.isArray(response?.data?.data) ? response.data.data : [];
+      const totalRaw = response?.data?.total;
+      const total = Number.isFinite(Number(totalRaw))
+        ? Number(totalRaw)
+        : Math.max(0, (Number(response?.data?.totalPages) || 0) * HOT_TOPICS_PAGE_SIZE);
+
+      setHotTopics(data);
+      setHotTopicsPage(nextPage);
+      setHotTopicsTotal(total);
     } catch (error) {
       console.error('获取热门话题失败:', error);
-      if (reset || currentPage === 1) {
-        setHotTopics([]);
-      }
+      setHotTopics([]);
+      setHotTopicsTotal(0);
     } finally {
       setHotTopicsLoading(false);
     }
@@ -370,7 +398,7 @@ export default function PCCommunityContent() {
 
   // 点赞/取消点赞
   const toggleLike = async (e, postId) => {
-    e.stopPropagation();
+    e?.stopPropagation?.();
     const isLiked = likedPosts[postId];
     const url = isLiked ? `${Interface.POSTS_UNLIKE}/${postId}` : `${Interface.POSTS_LIKE}/${postId}`;
     
@@ -410,6 +438,76 @@ export default function PCCommunityContent() {
     }
   };
 
+  // 点踩/取消点踩（点踩时自动取消点赞）
+  const toggleDislike = async (e, postId) => {
+    e?.stopPropagation?.();
+    const targetPost = coinPosts.find((post) => post.id === postId);
+    const isDisliked = dislikedPosts[postId] ?? targetPost?.isDisliked ?? false;
+    const isLiked = likedPosts[postId] ?? targetPost?.isLiked ?? false;
+
+    setDislikedPosts((prev) => ({
+      ...prev,
+      [postId]: !isDisliked,
+    }));
+    if (!isDisliked && isLiked) {
+      setLikedPosts((prev) => ({
+        ...prev,
+        [postId]: false,
+      }));
+    }
+
+    setCoinPosts((prevPosts) =>
+      prevPosts.map((post) => {
+        if (post.id !== postId) return post;
+        const nextDisliked = !isDisliked;
+        const nextLiked = !isDisliked && isLiked ? false : (likedPosts[postId] ?? post.isLiked ?? false);
+        return {
+          ...post,
+          isDisliked: nextDisliked,
+          isLiked: nextLiked,
+          dislikeCount: nextDisliked ? (post.dislikeCount || 0) + 1 : Math.max((post.dislikeCount || 0) - 1, 0),
+          likeCount: !isDisliked && isLiked ? Math.max((post.likeCount || 0) - 1, 0) : (post.likeCount || 0),
+        };
+      })
+    );
+
+    try {
+      if (isDisliked) {
+        await undislikePost(postId);
+      } else {
+        await dislikePost(postId);
+      }
+    } catch (error) {
+      console.error(`${isDisliked ? '取消点踩' : '点踩'}失败:`, error);
+      message.error('操作失败');
+
+      setDislikedPosts((prev) => ({
+        ...prev,
+        [postId]: isDisliked,
+      }));
+      if (!isDisliked && isLiked) {
+        setLikedPosts((prev) => ({
+          ...prev,
+          [postId]: true,
+        }));
+      }
+      setCoinPosts((prevPosts) =>
+        prevPosts.map((post) => {
+          if (post.id !== postId) return post;
+          return {
+            ...post,
+            isDisliked: isDisliked,
+            isLiked: isLiked,
+            dislikeCount: isDisliked
+              ? (post.dislikeCount || 0) + 1
+              : Math.max((post.dislikeCount || 0) - 1, 0),
+            likeCount: !isDisliked && isLiked ? (post.likeCount || 0) + 1 : (post.likeCount || 0),
+          };
+        })
+      );
+    }
+  };
+
   // 跳转到用户页面
   const goToUserPage = (userId) => {
     const targetUserId = String(userId ?? '').trim();
@@ -426,9 +524,176 @@ export default function PCCommunityContent() {
     console.log('分享帖子:', post);
   };
 
+  // 查询帖子最新评论（与移动端评论查询接口一致）
+  const fetchDetailComments = async (postId) => {
+    const targetPostId = String(postId || '').trim();
+    if (!targetPostId) return;
+
+    try {
+      const response = await request({
+        url: Interface.COMMENTS_API.replace('{postId}', targetPostId),
+        data: {
+          page: 1,
+          size: 50,
+        },
+      });
+      const rawList = Array.isArray(response?.data?.data) ? response.data.data : [];
+      const mappedComments = rawList.map((item) => ({
+        id: item?.id || item?.commentId || `${targetPostId}-${item?.createdAt || item?.content || 'comment'}`,
+        avatar: item?.user?.avatar || item?.avatar || '/default-avatar.png',
+        username: item?.user?.nickname || item?.nickname || item?.username || '匿名用户',
+        time: formatTimeAgo(item?.createdAt || item?.updatedAt),
+        content: item?.content || '',
+      }));
+      setDetailModalComments(mappedComments);
+    } catch (error) {
+      console.error('获取帖子评论失败:', error);
+      setDetailModalComments([]);
+    }
+  };
+
+  // 查询帖子详情（点击弹窗后用接口最新数据覆盖）
+  const fetchPostDetail = async (postId) => {
+    const targetPostId = String(postId || '').trim();
+    if (!targetPostId) return;
+    try {
+      const response = await request({
+        url: Interface.POST_DETAIL_API.replace('{id}', targetPostId),
+      });
+      const detail = response?.data;
+      if (!detail) return;
+
+      setDetailModalPost((prev) => {
+        if (!prev || String(prev.id) !== targetPostId) return prev;
+        return {
+          ...prev,
+          id: detail?.id ?? prev.id,
+          coverImage: detail?.images?.[0] || prev.coverImage,
+          authorName: detail?.nickName || prev.authorName,
+          authorAvatar: detail?.avatar || prev.authorAvatar,
+          timeText: formatTimeAgo(detail?.updatedAt || detail?.createdAt) || prev.timeText,
+          title: detail?.title || prev.title,
+          description: detail?.content || prev.description,
+          tags:
+            Array.isArray(detail?.tags) && detail.tags.length > 0
+              ? detail.tags.map((tag) => String(tag?.name || '').trim()).filter(Boolean)
+              : prev.tags,
+          likeCount: detail?.likeCnt ?? detail?.likeCount ?? prev.likeCount ?? 0,
+          commentCount: detail?.commentCnt ?? detail?.commentCount ?? prev.commentCount ?? 0,
+          shareCount: detail?.shareCnt ?? detail?.shareCount ?? prev.shareCount ?? 0,
+        };
+      });
+    } catch (error) {
+      console.error('获取帖子详情失败:', error);
+    }
+  };
+
+  // 弹窗内提交评论（与移动端一致调用 /comments/new）
+  const handleDetailSubmitComment = async (content) => {
+    const postId = detailModalPost?.id;
+    const nextContent = String(content || '').trim();
+    if (!postId || !nextContent) return false;
+
+    let currentUser = {};
+    try {
+      const raw = localStorage.getItem('userInfo');
+      currentUser = raw ? JSON.parse(raw) : {};
+    } catch (_) {
+      currentUser = {};
+    }
+
+    const tempId = `temp-${Date.now()}`;
+    const optimisticComment = {
+      id: tempId,
+      avatar: currentUser?.avatar || currentUser?.photoUrl || '/default-avatar.png',
+      username: currentUser?.nickName || currentUser?.nickname || currentUser?.username || '我',
+      time: '刚刚',
+      content: nextContent,
+    };
+
+    setDetailModalComments((prev) => [optimisticComment, ...prev]);
+    setDetailModalPost((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        commentCount: (prev.commentCount || 0) + 1,
+      };
+    });
+    setCoinPosts((prev) =>
+      prev.map((item) => {
+        if (String(item.id) !== String(postId)) return item;
+        return {
+          ...item,
+          commentCount: (item.commentCount || 0) + 1,
+        };
+      })
+    );
+
+    try {
+      await request({
+        url: Interface.COMMENTS_NEW,
+        method: 'POST',
+        data: {
+          postId,
+          content: nextContent,
+        },
+      });
+
+      await fetchDetailComments(postId);
+      message.success('评论发送成功');
+      return true;
+    } catch (error) {
+      console.error('提交评论失败:', error);
+      setDetailModalComments((prev) => prev.filter((item) => item.id !== tempId));
+      setDetailModalPost((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          commentCount: Math.max((prev.commentCount || 0) - 1, 0),
+        };
+      });
+      setCoinPosts((prev) =>
+        prev.map((item) => {
+          if (String(item.id) !== String(postId)) return item;
+          return {
+            ...item,
+            commentCount: Math.max((item.commentCount || 0) - 1, 0),
+          };
+        })
+      );
+      message.error('评论发送失败，请稍后重试');
+      return false;
+    }
+  };
+
   // 跳转到帖子详情
   const goToPostDetail = (postId) => {
-    router.push(`/commentinfo?id=${postId}`);
+    const target = coinPosts.find((post) => String(post.id) === String(postId));
+    if (!target) {
+      router.push(`/commentinfo?id=${postId}`);
+      return;
+    }
+
+    const mapped = {
+      id: target.id,
+      coverImage: target.images?.[0] || undefined,
+      authorName: target.username || '匿名用户',
+      authorAvatar: target.avatar || '/default-avatar.png',
+      timeText: formatTimeAgo(target.createTime || target.updatedAt || target.createdAt),
+      title: target.title || '帖子详情',
+      description: target.content || '',
+      tags: Array.isArray(target.tags) && target.tags.length > 0
+        ? target.tags.map((tag) => String(tag?.name || '').trim()).filter(Boolean)
+        : [selectedCoin || 'Mozi'],
+      likeCount: target.likeCount || 0,
+      commentCount: target.commentCount || 0,
+      shareCount: target.shareCount || 0,
+    };
+
+    setDetailModalPost(mapped);
+    setDetailModalOpen(true);
+    fetchPostDetail(target.id);
+    fetchDetailComments(target.id);
   };
 
   // 跳转到话题详情页
@@ -448,58 +713,29 @@ export default function PCCommunityContent() {
 
   // 初始加载
   useEffect(() => {
-    fetchCoinPosts(selectedCoin); // 加载币种帖子
-    fetchHotTopics(true); // 加载热门话题（重置）
+    fetchCoinPosts(selectedCoin, 1, activeCapsuleTab); // 加载左侧帖子
+    fetchHotTopics(1); // 加载热门话题（第1页）
+    fetchFlashNews(1); // 加载快讯（第1页）
   }, []);
-  
-  // 监听热门榜单滚动加载更多
-  useEffect(() => {
-    const container = hotTopicsContainerRef.current;
-    if (!container) return;
-    
-    let scrollTimer = null;
-    let isLoadingMore = false;
-    
-    const handleScroll = () => {
-      if (isLoadingMore) return;
-      
-      if (scrollTimer) {
-        clearTimeout(scrollTimer);
-      }
-      
-      scrollTimer = setTimeout(() => {
-        const scrollHeight = container.scrollHeight;
-        const scrollTop = container.scrollTop;
-        const clientHeight = container.clientHeight;
-        const distanceToBottom = scrollHeight - scrollTop - clientHeight;
-        
-        // 距离底部100px时触发加载
-        if (distanceToBottom < 100 && !hotTopicsAllLoaded && !hotTopicsLoading) {
-          isLoadingMore = true;
-          fetchHotTopics(false, searchKeyword).finally(() => {
-            setTimeout(() => {
-              isLoadingMore = false;
-            }, 100);
-          });
-        }
-      }, 300);
-    };
-    
-    container.addEventListener('scroll', handleScroll, { passive: true });
-    
-    return () => {
-      container.removeEventListener('scroll', handleScroll);
-      if (scrollTimer) {
-        clearTimeout(scrollTimer);
-      }
-    };
-  }, [hotTopicsAllLoaded, hotTopicsLoading, searchKeyword]);
 
-  // 币种切换时重新加载
+  // 币种或顶部tab切换时重新加载
   useEffect(() => {
-    fetchCoinPosts(selectedCoin);
-    fetchVoteData(selectedCoin);
-  }, [selectedCoin]);
+    fetchCoinPosts(selectedCoin, 1, activeCapsuleTab);
+    if (activeCapsuleTab === 'coin') {
+      fetchVoteData(selectedCoin);
+    }
+  }, [selectedCoin, activeCapsuleTab]);
+
+  const coinPostsTotalPages = Math.max(1, Math.ceil((coinPostsTotal || 0) / COIN_POST_PAGE_SIZE));
+  const handleCoinPostsPageChange = (targetPage) => {
+    const safePage = Math.max(1, Math.min(targetPage, coinPostsTotalPages));
+    if (safePage === coinPostsPage || coinLoading) return;
+    fetchCoinPosts(selectedCoin, safePage);
+  };
+
+  const handlePostDeleted = async () => {
+    await fetchCoinPosts(selectedCoin, 1, activeCapsuleTab);
+  };
 
   return (
     <div className={styles.pcCommunityContent}>
@@ -520,36 +756,42 @@ export default function PCCommunityContent() {
             <div className={styles.leftTopComposer}>
               <PCPublishComposer onPublish={goToPostPage} />
             </div>
-            <div className={styles.leftPanelContainer}>
+            <div
+              className={`${styles.leftPanelContainer} ${isDiscoveryLikeTab ? styles.leftPanelPlain : ''}`}
+            >
               {/* 不懂就问模块标题 + 币种标签栏 - 固定在顶部 */}
               <div className={styles.leftContentHeader}>
-                <SectionTitle 
-                  title="" 
-                  showMore={false}
-                  extra={
-                    <CoinTabBar
-                      coinTabs={coinTabs}
-                      selectedCoin={selectedCoin}
-                      onCoinSelect={setSelectedCoin}
-                      onMoreClick={goToCoinDiscussionList}
-                      moreText="更多"
-                      isPC={true}
+                {activeCapsuleTab === 'coin' ? (
+                  <>
+                    <SectionTitle 
+                      title="" 
+                      showMore={false}
+                      extra={
+                        <CoinTabBar
+                          coinTabs={coinTabs}
+                          selectedCoin={selectedCoin}
+                          onCoinSelect={setSelectedCoin}
+                          onMoreClick={goToCoinDiscussionList}
+                          moreText="更多"
+                          isPC={true}
+                        />
+                      }
                     />
-                  }
-                />
-                
-                {/* 看涨看跌投票组件 - 固定在顶部 */}
-                <BullBearIndicator
-                  upCount={voteData.upCount}
-                  downCount={voteData.downCount}
-                  participants={voteData.totalCount}
-                  selected={voteChoice}
-                  onSelect={(type) => submitVote(type)}
-                  showParticipants={true}
-                  showPercentage={true}
-                  isPC={true}
-                  coinSymbol={selectedCoin}
-                />
+                    
+                    {/* 看涨看跌投票组件 - 固定在顶部 */}
+                    <BullBearIndicator
+                      upCount={voteData.upCount}
+                      downCount={voteData.downCount}
+                      participants={voteData.totalCount}
+                      selected={voteChoice}
+                      onSelect={(type) => submitVote(type)}
+                      showParticipants={true}
+                      showPercentage={true}
+                      isPC={true}
+                      coinSymbol={selectedCoin}
+                    />
+                  </>
+                ) : null}
               </div>
               
               {/* 币种相关帖子列表 - 可滚动区域 */}
@@ -559,28 +801,62 @@ export default function PCCommunityContent() {
                     <Spin tip="加载中..." />
                   </div>
                 ) : coinPosts.length > 0 ? (
-                  <div className={styles.coinPostsList}>
+                  <div
+                    className={`${styles.coinPostsList} ${isDiscoveryLikeTab ? styles.discoveryPostsGrid : ''}`}
+                  >
                     {coinPosts.map(post => (
-                      <PostCard
-                        key={post.id}
-                        post={post}
-                        onPostClick={goToPostDetail}
-                        onUserClick={goToUserPage}
-                        onLikeClick={(postId) => toggleLike(null, postId)}
-                        onShareClick={handleShare}
-                        onTagClick={(tagName) => router.push(`/detail?symbol=${tagName}`)}
-                        onTopicClick={(topicId, topicName) => router.push(`/topicinfo?id=${topicId}&title=${topicName}`)}
-                        isLiked={post.isLiked || likedPosts[post.id]}
-                        formatTimeAgo={formatTimeAgo}
-                        isPC={true}
-                        showFooterDivider={false}
-                      />
+                      activeCapsuleTab === 'coin' ? (
+                        <PostCard
+                          key={post.id}
+                          post={post}
+                          onPostClick={goToPostDetail}
+                          onUserClick={goToUserPage}
+                          onLikeClick={(postId) => toggleLike(null, postId)}
+                          onShareClick={handleShare}
+                          onTagClick={(tagName) => router.push(`/detail?symbol=${tagName}`)}
+                          onTopicClick={(topicId, topicName) => router.push(`/topicinfo?id=${topicId}&title=${topicName}`)}
+                          isLiked={post.isLiked || likedPosts[post.id]}
+                          formatTimeAgo={formatTimeAgo}
+                          isPC={true}
+                          showFooterDivider={false}
+                          onDeletePost={handlePostDeleted}
+                        />
+                      ) : (
+                        <DiscoveryPostCard
+                          key={post.id}
+                          post={post}
+                          onPostClick={goToPostDetail}
+                          onUserClick={goToUserPage}
+                          onLikeClick={(postId) => toggleLike(null, postId)}
+                          onDislikeClick={(postId) => toggleDislike(null, postId)}
+                          onShareClick={handleShare}
+                          isLiked={post.isLiked || likedPosts[post.id]}
+                          isDisliked={post.isDisliked || dislikedPosts[post.id]}
+                          formatTimeAgo={formatTimeAgo}
+                          isPC={true}
+                          showDislike={activeCapsuleTab === 'discover'}
+                          contentTemplate={activeCapsuleTab === 'qa' ? 'titleDesc' : 'coinInfo'}
+                          badgeLabel={activeCapsuleTab === 'qa' ? '不懂就问' : ''}
+                          onDeletePost={handlePostDeleted}
+                        />
+                      )
                     ))}
                   </div>
                 ) : (
-                  <Empty description={`暂无${selectedCoin}相关帖子`} />
+                  <Empty description={activeCapsuleTab === 'qa' ? '暂无不懂就问相关帖子' : `暂无${selectedCoin}相关帖子`} />
                 )}
               </div>
+              {(activeCapsuleTab === 'qa' || coinPostsTotalPages > 1) && (
+                <PCPagination
+                  className={styles.leftPagination}
+                  current={coinPostsPage}
+                  total={coinPostsTotal}
+                  pageSize={COIN_POST_PAGE_SIZE}
+                  loading={coinLoading}
+                  onChange={handleCoinPostsPageChange}
+                  alwaysShow={activeCapsuleTab === 'qa'}
+                />
+              )}
               
             </div>
           </div>
@@ -588,16 +864,23 @@ export default function PCCommunityContent() {
         rightContent={
           <div className={styles.rightContentWrapper}>
             <div className={styles.flashNewsWrapper}>
-              <PCFlashNewsCard items={flashNewsItems} />
+              <PCFlashNewsCard
+                items={flashNewsItems}
+                loading={flashNewsLoading}
+                onRefresh={() => fetchFlashNews(1)}
+                page={flashNewsPage}
+                pageSize={FLASH_NEWS_PAGE_SIZE}
+                total={flashNewsTotal}
+                onPageChange={(p) => fetchFlashNews(p)}
+              />
             </div>
             <div 
-              ref={hotTopicsContainerRef}
               className={styles.hotTopicsScrollContainer}
             >
               <HotTopicList
                 topics={hotTopics}
                 loading={hotTopicsLoading}
-                allLoaded={hotTopicsAllLoaded}
+                allLoaded={false}
                 pullRefresh={false}
                 onTopicClick={goToTopicDetail}
                 onCreateTopic={goToPostPage}
@@ -606,12 +889,30 @@ export default function PCCommunityContent() {
                 nov3Icon={nov3Icon}
                 hotIcon={hotIcon}
                 isPC={true}
+                page={hotTopicsPage}
+                pageSize={HOT_TOPICS_PAGE_SIZE}
+                total={hotTopicsTotal}
+                onPageChange={(p) => fetchHotTopics(p, searchKeyword)}
               />
             </div>
           </div>
         }
         leftWidth={70}
         gap={20}
+      />
+      <PostDetailModal
+        open={detailModalOpen}
+        onClose={() => {
+          setDetailModalOpen(false);
+          setDetailModalComments([]);
+        }}
+        post={detailModalPost || {}}
+        comments={detailModalComments}
+        onFollow={() => message.info('关注功能开发中')}
+        onLike={() => message.info('请在卡片中进行点赞操作')}
+        onComment={() => message.info('评论功能开发中')}
+        onShare={() => message.info('分享功能开发中')}
+        onSubmitComment={handleDetailSubmitComment}
       />
     </div>
   );

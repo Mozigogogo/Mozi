@@ -9,6 +9,7 @@ import { request } from "@/utils/request";
 import { Interface } from "@/utils/constants";
 import { useRouter } from "next/navigation";
 import { useShareCount } from "@/hooks/useShareCount";
+import { safeBack } from "@/utils/navigation";
 
 const COMMENT_ICON = "https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/comment.png";
 const SHARE_ICON = "https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/share.png";
@@ -67,7 +68,7 @@ export default function DownRankPage() {
 
   const onBack = () => {
     if (typeof window !== 'undefined' && window.history.length > 1) {
-      router.back();
+      safeBack(router, { fallback: '/' });
     } else {
       router.push('/find?tab=rank');
     }

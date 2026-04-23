@@ -464,8 +464,8 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
       } else {
         if (!web3Connected) {
           pendingSignRef.current = true;
-          if (typeof window.__openAppKit === 'function') {
-            window.__openAppKit();
+          if (typeof window.__openRainbowKit === 'function') {
+            window.__openRainbowKit();
           } else {
             message.warning(t('auth.walletConnecting'));
           }

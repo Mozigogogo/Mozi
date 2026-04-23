@@ -9,6 +9,7 @@ import { Interface } from '../../utils/constants';
 import { completeTask } from '@/api/user';
 import NavBar from '../../components/NavBar';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { safeBack } from '@/utils/navigation';
 import styles from './page.module.less';
 
 // 确保接口定义存在
@@ -31,6 +32,7 @@ export default function PostPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [title, setTitle] = useState('');
+  const [showTitleInput, setShowTitleInput] = useState(false);
   const [content, setContent] = useState('');
   const [isUpdate, setIsUpdate] = useState(false);
   const [postId, setPostId] = useState(null);
@@ -110,7 +112,10 @@ export default function PostPage() {
     if (id && updateFlag === 'true') {
       setIsUpdate(true);
       setPostId(Number(id));
-      if (postTitle) setTitle(decodeURIComponent(postTitle));
+      if (postTitle) {
+        setTitle(decodeURIComponent(postTitle));
+        setShowTitleInput(true);
+      }
       if (postContent) setContent(decodeURIComponent(postContent));
     }
     
@@ -134,6 +139,10 @@ export default function PostPage() {
       setSelectedCoins([{ symbol: symbol, name: symbol }]);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (title && title.trim()) setShowTitleInput(true);
+  }, [title]);
 
   // 监听币种选择弹出层状态变化
   useEffect(() => {
@@ -309,6 +318,14 @@ export default function PostPage() {
         data: postData
       });
 
+      const rawErrorMsg =
+        response?.errorMsg || response?.errormsg || response?.msg || response?.message || '';
+      const normalizedErrorMsg = String(rawErrorMsg).replace(/\s+/g, '');
+      const isCannotGetUserInfo =
+        normalizedErrorMsg.includes('创建内容失败:无法获取用户信息') ||
+        normalizedErrorMsg.includes('创建内容失败：无法获取用户信息') ||
+        normalizedErrorMsg.includes('无法获取用户信息');
+
       if (response?.code === 0) {
         // 发帖成功后，调用发帖任务完成接口（仅新帖子，不是更新）
         if (!isUpdate) {
@@ -337,19 +354,29 @@ export default function PostPage() {
               localStorage.setItem('needRefreshCommunity', 'true');
               router.push('/community');
             } else {
-              router.back();
+              safeBack(router, { fallback: '/' });
             }
           }
         });
       } else {
         Toast.show({
-          content: isUpdate ? t('post.messages.updateFailed') : t('post.messages.publishFailed')
+          content: isCannotGetUserInfo
+            ? t('error.cannotGetUserInfoRelogin')
+            : (isUpdate ? t('post.messages.updateFailed') : t('post.messages.publishFailed'))
         });
       }
     } catch (error) {
       console.error(isUpdate ? '更新失败:' : '发布失败:', error);
+      const errMsg = String(error?.errorMsg || error?.errormsg || error?.message || '');
+      const norm = errMsg.replace(/\s+/g, '');
+      const isCannotGetUserInfo =
+        norm.includes('创建内容失败:无法获取用户信息') ||
+        norm.includes('创建内容失败：无法获取用户信息') ||
+        norm.includes('无法获取用户信息');
       Toast.show({
-        content: isUpdate ? t('post.messages.updateFailed') : t('post.messages.publishFailed')
+        content: isCannotGetUserInfo
+          ? t('error.cannotGetUserInfoRelogin')
+          : (isUpdate ? t('post.messages.updateFailed') : t('post.messages.publishFailed'))
       });
     } finally {
       setPublishing(false);
@@ -674,7 +701,7 @@ export default function PostPage() {
     <>
       <NavBar 
         title={isUpdate ? t('post.editPost') : t('post.title')}
-        onBack={() => router.back()}
+        onBack={() => safeBack(router, { fallback: '/' })}
       />
       <div className={styles.postContainer}>
         <div className={styles.contentWrapper}>
@@ -693,19 +720,29 @@ export default function PostPage() {
                 </svg>
               </div>
             )}
+
+            <button
+              type="button"
+              className={`${styles.titleToggleTag} ${showTitleInput ? styles.titleToggleTagActive : ''}`}
+              onClick={() => setShowTitleInput((v) => !v)}
+            >
+              {showTitleInput ? '隐藏标题' : '标题'}
+            </button>
           </div>
 
         {/* 标题输入区 */}
-        <div className={styles.titleSection}>
-          <Input
-            className={styles.titleInput}
-            value={title}
-            onChange={(value) => value.length <= 20 && setTitle(value)}
-            placeholder={selectedTemplate === '不懂就问' ? t('post.questionPlaceholder') : t('post.titlePlaceholder')}
-            maxLength={20}
-          />
-          <span className={styles.wordCount}>{title.length}/20</span>
-        </div>
+        {showTitleInput && (
+          <div className={styles.titleSection}>
+            <Input
+              className={styles.titleInput}
+              value={title}
+              onChange={(value) => value.length <= 20 && setTitle(value)}
+              placeholder={selectedTemplate === '不懂就问' ? t('post.questionPlaceholder') : t('post.titlePlaceholder')}
+              maxLength={20}
+            />
+            <span className={styles.wordCount}>{title.length}/20</span>
+          </div>
+        )}
 
         {/* 内容区域 */}
         <div className={styles.contentSection}>

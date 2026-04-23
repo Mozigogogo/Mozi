@@ -2,7 +2,7 @@
 
 import React, { memo, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, Row, Col } from 'antd';
+import { Row, Col } from 'antd';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { jump2Detail } from '../../utils/core';
@@ -12,16 +12,17 @@ import styles from './index.module.less';
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
 const UpIcon = `${CDN_PREFIX}/icon/find/up.png`;
 const DownIcon = `${CDN_PREFIX}/icon/find/down.png`;
-const CoinIcon = `${CDN_PREFIX}/icon/find_slices/find-coin%402x.png`;
-const TurnoverIcon = `${CDN_PREFIX}/icon/find_slices/find-vol%402x.png`;
-const MarketMonitoringIcon = `${CDN_PREFIX}/icon/find_slices/find-watch%402x.png`;
-const CalendarIcon = `${CDN_PREFIX}/icon/find_slices/find-calendar%402x.png`;
+const CoinIcon = '/icons/pc/total.svg';
+const TurnoverIcon = '/icons/pc/vol.svg';
+const MarketMonitoringIcon = '/icons/pc/watch.svg';
+const CalendarIcon = '/icons/pc/find_calendar.svg';
 
 /**
  * PC端市场概况组件 - 4个统计卡片
  */
-const PCMarketOverview = memo(() => {
+const PCMarketOverview = memo(({ onCalendarClick }) => {
   const { t } = useTranslation();
+  const [selectedCardId, setSelectedCardId] = useState('');
   const [smartValue, setSmartValue] = useState(t('overview.noConfig'));
   const [smartAction, setSmartAction] = useState(t('overview.configAlarm'));
   const [smartOnClick, setSmartOnClick] = useState(() => () => {
@@ -250,11 +251,12 @@ const PCMarketOverview = memo(() => {
       icon: CalendarIcon,
       title: t('overview.calendar'),
       value: t('overview.todayUpdated'),
-      desc: t('overview.subscribe'),
       onClick: () => {
-        if (typeof window !== 'undefined') {
-          window.location.href = '/user';
+        if (typeof onCalendarClick === 'function') {
+          onCalendarClick();
+          return;
         }
+        if (typeof window !== 'undefined') window.location.href = '/daily';
       }
     }
   ];
@@ -263,77 +265,112 @@ const PCMarketOverview = memo(() => {
     <Row gutter={16} className={styles.pcMarketOverview}>
       {cards.map((card) => (
         <Col span={6} key={card.id}>
-          <Card 
-            className={styles.statCard}
-            hoverable
-            onClick={card.onClick}
-          >
-            <div className={styles.cardHeader}>
-              <span className={styles.cardTitle}>{card.title}</span>
-              <div className={styles.cardIcon}>
-                <img src={card.icon} alt={card.title} />
-              </div>
-            </div>
-            
-            <div className={styles.cardContent}>
-              <div className={styles.cardValue}>
-                {card.id !== 'smart-order' ? (
-                  <>
-                    {card.value?.startsWith('$') ? (
-                      <>
-                        <span className={styles.currencySymbol}>$</span>
-                        <span className={`${styles.valueText} ${card.id === 'today' ? styles.todayText : ''}`}>
-                          {card.value.substring(1)}
-                        </span>
-                      </>
-                    ) : (
-                      <span className={`${styles.valueText} ${card.id === 'today' ? styles.todayText : ''}`}>
-                        {card.value}
-                      </span>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <span className={`${styles.valueText} ${!card.smartSymbol ? styles.placeholderText : ''}`}>
-                      {card.smartSymbol || card.value}
-                    </span>
-                    {card.smartPercentText && (
-                      <span
-                        className={`${styles.percentText} ${
-                          card.smartIsUp === true
-                            ? styles.positive
-                            : card.smartIsUp === false
-                              ? styles.negative
-                              : ''
-                        }`}
-                      >
-                        {card.smartPercentText}
-                      </span>
-                    )}
-                  </>
-                )}
-              </div>
+          <div
+            className={`${styles.statCard} ${
+              card.id === 'today' && selectedCardId === 'today' ? styles.statCardTodaySelected : ''
+            }`}
+            onClick={() => {
+              const nextSelected = selectedCardId === card.id ? '' : card.id;
+              setSelectedCardId(nextSelected);
 
-              {card.change && (
+              // “公告日历”需要支持二次点击取消选中，并同步收起下方日历视图
+              if (card.id === 'today' && typeof onCalendarClick === 'function') {
+                onCalendarClick(nextSelected === 'today');
+                return;
+              }
+
+              if (typeof card.onClick === 'function') card.onClick();
+            }}
+          >
+            {card.change ? (
+              <>
+                <div className={styles.metricBlock}>
+                  <div className={styles.cardHeader}>
+                    <div className={styles.cardTitleGroup}>
+                      <div className={styles.cardIcon}>
+                        <img src={card.icon} alt={card.title} />
+                      </div>
+                      <span className={styles.cardTitle}>{card.title}</span>
+                    </div>
+                  </div>
+                  <div className={styles.cardValueRow}>
+                    <div className={styles.cardValue}>
+                      {card.value?.startsWith('$') ? (
+                        <>
+                          <span className={styles.currencySymbol}>$</span>
+                          <span className={styles.valueText}>{card.value.substring(1)}</span>
+                        </>
+                      ) : (
+                        <span className={styles.valueText}>{card.value}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
                 <div className={`${styles.cardChange} ${card.change.isPositive ? styles.positive : styles.negative}`}>
-                  <img 
-                    src={card.change.isPositive ? UpIcon : DownIcon} 
+                  <img
+                    src={card.change.isPositive ? UpIcon : DownIcon}
                     alt="trend"
                     className={styles.changeIcon}
                   />
                   <span>{card.change.value}</span>
                 </div>
-              )}
+              </>
+            ) : (
+              <>
+                <div className={styles.cardHeader}>
+                  <div className={styles.cardTitleGroup}>
+                    <div className={styles.cardIcon}>
+                      <img src={card.icon} alt={card.title} />
+                    </div>
+                    <span className={styles.cardTitle}>{card.title}</span>
+                  </div>
+                </div>
 
-              {card.action && (
-                <div className={styles.cardAction}>{card.action}</div>
-              )}
+                <div
+                  className={`${styles.cardContent} ${styles.cardContentWithChange} ${
+                    card.id === 'smart-order' ? styles.cardContentSmartGap : ''
+                  } ${card.id === 'today' ? styles.cardContentCalendarFixed : ''}`}
+                >
+                  <div className={styles.cardValue}>
+                    {card.id !== 'smart-order' ? (
+                      <span className={`${styles.valueText} ${card.id === 'today' ? styles.todayText : ''}`}>
+                        {card.value}
+                      </span>
+                    ) : (
+                      <>
+                        <span
+                          className={`${styles.smartValueText} ${!card.smartSymbol ? styles.placeholderText : ''}`}
+                        >
+                          {card.smartSymbol || card.value}
+                        </span>
+                        {card.smartPercentText && (
+                          <span
+                            className={`${styles.smartPercentText} ${
+                              card.smartIsUp === true
+                                ? styles.positive
+                                : card.smartIsUp === false
+                                  ? styles.negative
+                                  : ''
+                            }`}
+                          >
+                            {card.smartPercentText}
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </div>
 
-              {card.desc && (
-                <div className={styles.cardDesc}>{card.desc}</div>
-              )}
-            </div>
-          </Card>
+                  {card.action && (
+                    <div className={styles.cardAction}>{card.action}</div>
+                  )}
+
+                  {card.desc && (
+                    <div className={styles.cardDesc}>{card.desc}</div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         </Col>
       ))}
     </Row>

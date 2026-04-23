@@ -5,7 +5,7 @@ import SectionHeader from './SectionHeader';
 import SectionSkeleton from './SectionSkeleton';
 import DeferredImg from './DeferredImg';
 
-const DailyTasks = ({ dailyInvestments, loading }) => {
+const DailyTasks = ({ dailyInvestments, loading, onTaskClick }) => {
   const { t } = useTranslation();
 
   return (
@@ -28,7 +28,20 @@ const DailyTasks = ({ dailyInvestments, loading }) => {
       ) : (
         <div className={styles.taskList}>
           {dailyInvestments.map((task) => (
-            <div key={task.id} className={styles.dailyTaskItem}>
+            <div
+              key={task.id}
+              className={styles.dailyTaskItem}
+              role={onTaskClick ? 'button' : undefined}
+              tabIndex={onTaskClick ? 0 : undefined}
+              onClick={onTaskClick ? () => onTaskClick(task) : undefined}
+              onKeyDown={
+                onTaskClick
+                  ? (e) => {
+                      if (e.key === 'Enter' || e.key === ' ') onTaskClick(task);
+                    }
+                  : undefined
+              }
+            >
               {(() => {
                 const isPushArticleIcon = !!task?.icon?.includes('push_article.svg');
                 const iconSize = isPushArticleIcon ? 52 : 36;

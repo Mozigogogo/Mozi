@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { safeBack } from '@/utils/navigation';
 import { MoziWebSocket } from '@/utils/moziWebSocket';
 import { WS_URL } from '@/utils/constants';
 import {
@@ -563,7 +564,7 @@ const LandscapeChart = () => {
   }, [klineData, chartType]);
 
   const handleClose = () => {
-    router.back();
+    safeBack(router, { fallback: '/' });
   };
 
   return (

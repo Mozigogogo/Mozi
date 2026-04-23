@@ -11,14 +11,14 @@ import styles from './index.module.less';
  * @param {Function} onMoreClick - 点击"查看更多"的回调
  * @param {boolean} loading - 是否正在加载
  */
-const NewCoinListing = ({ showMore = false, data = [], onMoreClick, loading = false }) => {
+const NewCoinListing = ({ showMore = false, data = [], onMoreClick, loading = false, isPC = false }) => {
   const { t } = useTranslation();
   
   const coinListings = data || [];
+  const displayList = showMore ? coinListings : coinListings.slice(0, 3);
 
   return (
-    <div className={styles.wrapper}>
-      {/* 标题头部 */}
+    <div className={`${styles.wrapper} ${isPC ? styles.pcWrapper : ''}`}>
       <div className={styles.header}>
         <span className={styles.headerTitle}>{t('user.newCoinListing')}</span>
         {showMore && (
@@ -28,28 +28,62 @@ const NewCoinListing = ({ showMore = false, data = [], onMoreClick, loading = fa
         )}
       </div>
       
-      {/* 新币上线内容容器：横向滑动列表 */}
       <div className={styles.container}>
         {loading ? (
-          <div className={styles.loadingState}>
-            <div className={styles.loadingSpinner}></div>
-          </div>
+          isPC ? (
+            <div className={styles.grid}>
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div className={`${styles.coinItem} ${styles.loadingCoinItem}`} key={`loading-${index}`}>
+                  {index === 1 ? <div className={styles.loadingSpinner}></div> : null}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className={styles.loadingState}>
+              <div className={styles.loadingSpinner}></div>
+            </div>
+          )
         ) : coinListings.length === 0 ? (
           <div className={styles.emptyState}>
             <p className={styles.emptyText}>{t('user.noNewListings') || '暂无新币上线'}</p>
+          </div>
+        ) : isPC ? (
+          <div className={styles.grid}>
+            {displayList.map((coin, index) => {
+              const listingTime = coin.ctime || coin.listingTime || coin.time;
+              const details = coin.deteil || coin.details || coin.description;
+              const title = coin.title;
+              const coinName = coin.symbol || coin.coin || coin.currency || coin.name || '';
+              const iconUrl = coin.logoUrl || coin.exchangeIcon || coin.icon || '/icons/pc/calendar.svg';
+              
+              return (
+                <div className={styles.coinItem} key={coin.id || index}>
+                  <div className={styles.itemTop}>
+                    <img className={styles.itemIcon} src={iconUrl} alt={title || 'listing icon'} />
+                    <div className={styles.itemMain}>
+                      <p className={styles.coinTitle} title={title}>{title || '--'}</p>
+                      <p className={styles.listingTime}>{`详情 ${listingTime || '--'}`}</p>
+                      <p className={styles.coinName}>{`上线 ${coinName || 'ADA'}`}</p>
+                    </div>
+                  </div>
+                  {details ? (
+                    <div className={styles.coinDesc} title={details}>
+                      {details}
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
         ) : (
           <div className={styles.scroll}>
             {coinListings.map((coin, index) => {
               const isLast = index === coinListings.length - 1;
-              // 适配多种字段格式
               const exchangeName = coin.exchanges || coin.exchange || coin.name;
               const exchangeIcon = coin.logoUrl || coin.exchangeIcon || coin.icon;
               const listingTime = coin.ctime || coin.listingTime || coin.time;
               const details = coin.deteil || coin.details || coin.description;
               const title = coin.title;
-              const link = coin.link;
-              
               return (
                 <div className={`${styles.coinItem} ${isLast ? styles.last : ''}`} key={coin.id || index}>
                   <div className={styles.coinInfo}>

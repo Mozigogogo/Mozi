@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { safeBack } from '@/utils/navigation';
 import { useTranslation } from 'react-i18next';
 import { NavBar, PullToRefresh, Toast } from 'antd-mobile';
 import { getSectionSymbols, addOwnCoin, cancelOwnCoin } from '@/api/market';
@@ -307,7 +308,7 @@ export default function SectorDetailPage() {
   return (
     <div className={styles.container}>
       <NavBar
-        onBack={() => router.back()}
+        onBack={() => safeBack(router, { fallback: '/' })}
         right={
           <div className={styles.navRight}>
             <img 

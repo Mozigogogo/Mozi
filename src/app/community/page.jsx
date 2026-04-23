@@ -22,6 +22,7 @@ import HotTopicSearchBar from '../../components/HotTopicSearchBar';
 import HotTopicList from '../../components/HotTopicList';
 import FloatingPostButton from '../../components/FloatingPostButton';
 import { request } from '@/utils/request';
+import { dislikePost, undislikePost } from '@/api/community';
 import { Interface } from '@/utils/constants';
 import { useAmplitude } from '../../hooks/useAmplitude';
 import { CommunityEvents } from '../../utils/amplitude';
@@ -69,6 +70,7 @@ export default function CommunityPage() {
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [likedPosts, setLikedPosts] = useState({});
+  const [dislikedPosts, setDislikedPosts] = useState({});
 
   // 获取当前登录用户ID（用于区分自己/他人主页跳转）
   useEffect(() => {
@@ -426,10 +428,12 @@ export default function CommunityPage() {
           sector: item.sector, // 所属板块字段
           commentCount: item.commentCnt || 0,
           likeCount: item.likeCnt || 0,
+          dislikeCount: item.dislikeCnt ?? item.unlikeCnt ?? item.dislikeCount ?? 0,
           userId: extractPostUserId(item),
           tags: item.tags || [],
           topics: item.topics || [],
           isLiked: item.isLikedByCurrentUser || false,
+          isDisliked: item.isDislikedByCurrentUser || item.isUnlikedByCurrentUser || false,
           createTime: item.updatedAt?.replace('T', ' ') || '',
           createdAt: item.createdAt,
           updatedAt: item.updatedAt,
@@ -601,6 +605,85 @@ export default function CommunityPage() {
     }
   };
 
+  // 点踩/取消点踩帖子（点踩时自动取消点赞）
+  const toggleDislike = async (postId) => {
+    const targetPost = posts.find((post) => post.id === postId);
+    const isDisliked = dislikedPosts[postId] ?? targetPost?.isDisliked ?? false;
+    const isLiked = likedPosts[postId] ?? targetPost?.isLiked ?? false;
+
+    // 乐观更新
+    setDislikedPosts((prev) => ({
+      ...prev,
+      [postId]: !isDisliked,
+    }));
+
+    if (!isDisliked && isLiked) {
+      setLikedPosts((prev) => ({
+        ...prev,
+        [postId]: false,
+      }));
+    }
+
+    setPosts((prevPosts) =>
+      prevPosts.map((post) => {
+        if (post.id !== postId) return post;
+        const nextDisliked = !isDisliked;
+        const nextLiked = !isDisliked && isLiked ? false : (likedPosts[postId] ?? post.isLiked ?? false);
+        return {
+          ...post,
+          isDisliked: nextDisliked,
+          isLiked: nextLiked,
+          dislikeCount: nextDisliked ? (post.dislikeCount || 0) + 1 : Math.max((post.dislikeCount || 0) - 1, 0),
+          likeCount:
+            !isDisliked && isLiked ? Math.max((post.likeCount || 0) - 1, 0) : (post.likeCount || 0),
+        };
+      })
+    );
+
+    try {
+      if (isDisliked) {
+        await undislikePost(postId);
+      } else {
+        await dislikePost(postId);
+      }
+    } catch (error) {
+      console.error(`${isDisliked ? '取消点踩' : '点踩'}失败:`, error);
+
+      // 回滚
+      setDislikedPosts((prev) => ({
+        ...prev,
+        [postId]: isDisliked,
+      }));
+
+      if (!isDisliked && isLiked) {
+        setLikedPosts((prev) => ({
+          ...prev,
+          [postId]: true,
+        }));
+      }
+
+      setPosts((prevPosts) =>
+        prevPosts.map((post) => {
+          if (post.id !== postId) return post;
+          return {
+            ...post,
+            isDisliked: isDisliked,
+            isLiked: isLiked,
+            dislikeCount: isDisliked
+              ? (post.dislikeCount || 0) + 1
+              : Math.max((post.dislikeCount || 0) - 1, 0),
+            likeCount: !isDisliked && isLiked ? (post.likeCount || 0) + 1 : (post.likeCount || 0),
+          };
+        })
+      );
+
+      Toast.show({
+        content: `${isDisliked ? '取消点踩' : '点踩'}失败，请稍后再试`,
+        position: 'bottom',
+      });
+    }
+  };
+
   // 创建话题
   const createTopic = async () => {
     if (!topicTitle.trim()) {
@@ -766,7 +849,9 @@ export default function CommunityPage() {
       post = eOrPost;
     }
     
-    const shareUrl = `${window.location.origin}/commentinfo?id=${post.id}`;
+    // 社区分享统一使用线上正式域名
+    const isTelegram = localStorage.getItem('appChannel') === 'tg';
+    const shareUrl = `https://www.moziai.xyz/commentinfo?id=${post.id}`;
     const shareText = post.title || '来自 Mozi 社区的帖子';
     
     // Amplitude 埋点
@@ -776,9 +861,6 @@ export default function CommunityPage() {
       tab: mainTab,
       subTab
     });
-    
-    // 检查是否在Telegram环境中
-    const isTelegram = localStorage.getItem('appChannel') === 'tg';
     
     if (isTelegram && window.Telegram?.WebApp) {
       // 使用Telegram Web App API分享
@@ -981,6 +1063,10 @@ export default function CommunityPage() {
   }, [searchParams]);
 
   // 渲染帖子列表
+  const handlePostDeleted = async () => {
+    await fetchPosts(true);
+  };
+
   const renderPosts = () => {
     // 快讯tab只显示userType为virtual的帖子
     const filteredPosts = mainTab === 'news' 
@@ -1009,10 +1095,13 @@ export default function CommunityPage() {
               onPostClick={goToPostDetail}
               onUserClick={goToUserPage}
               onLikeClick={(postId) => toggleLike(postId)}
+              onDislikeClick={(postId) => toggleDislike(postId)}
               onShareClick={handleShare}
               isLiked={post.isLiked || likedPosts[post.id]}
+              isDisliked={post.isDisliked || dislikedPosts[post.id]}
               formatTimeAgo={formatTimeAgo}
               isPC={false}
+              onDeletePost={handlePostDeleted}
             />
           ) : (
             // 普通帖子使用PostCard组件
@@ -1028,6 +1117,7 @@ export default function CommunityPage() {
               isLiked={post.isLiked || likedPosts[post.id]}
               formatTimeAgo={formatTimeAgo}
               enableReportMenu={true}
+              onDeletePost={handlePostDeleted}
             />
           )
         ))}
@@ -1036,7 +1126,11 @@ export default function CommunityPage() {
             <GardenLoading t={t} />
           </div>
         )}
-        {loading && posts.length > 0 && <GardenLoading t={t} />}
+        {loading && posts.length > 0 && (
+          <div className={`${styles.inlineLoading} ${isDiscovery ? styles.fullRowLoading : ''}`}>
+            <GardenLoading t={t} />
+          </div>
+        )}
         {!hasMore && posts.length > 0 && (
           <div className={styles.noMore}>{t('community.actions.noMorePosts')}</div>
         )}

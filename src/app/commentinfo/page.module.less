@@ -21,6 +21,61 @@
   z-index: 10;
 }
 
+.moreButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #666;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.postMoreDropdown {
+  :global {
+    .ant-dropdown-menu {
+      padding: 6px;
+      border-radius: 12px;
+      min-width: 130px;
+    }
+
+    .ant-dropdown-menu-item {
+      border-radius: 10px;
+    }
+  }
+}
+
+.reportMenuItem,
+.deleteMenuItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #111827;
+}
+
+.reportMenuItem {
+  :global {
+    .anticon {
+      color: #ef4444;
+      font-size: 16px;
+    }
+  }
+}
+
+.deleteMenuItem {
+  :global {
+    .anticon {
+      color: #ef4444;
+      font-size: 16px;
+    }
+  }
+}
+
 .actionSheetMask {
   position: fixed;
   top: 0;
@@ -479,7 +534,6 @@
   color: #999;
   display: flex;
   align-items: center;
-  justify-content: space-between;
 }
 
 .secondComment .commentHeader .likeBtn {

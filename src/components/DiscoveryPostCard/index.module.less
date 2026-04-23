@@ -11,14 +11,16 @@
 /* PC端样式 */
 .pcCard {
   padding: 12PX;
-  border-radius: 12PX;
+  border-radius: 32PX;
   box-shadow: 0 2PX 8PX rgba(0, 0, 0, 0.06);
   min-height: 200PX;
-  
-  &:hover {
-    box-shadow: 0 4PX 12PX rgba(0, 0, 0, 0.1);
-    transform: translateY(-2PX);
-  }
+  overflow: hidden;
+}
+
+.pcCard.qaCardTemplate {
+  padding-left: 30PX;
+  padding-top: 20PX;
+  padding-right: 20PX;
 }
 
 /* 移动端样式 */
@@ -65,6 +67,88 @@
   z-index: 2;
 }
 
+.discoveryHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: relative;
+  z-index: 3;
+}
+
+.moreButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32PX;
+  height: 32PX;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 8PX;
+  color: #9CA3AF;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:hover {
+    background: rgba(243, 244, 246, 1);
+  }
+
+  :global {
+    .anticon {
+      font-size: 20PX;
+      line-height: 1;
+      display: inline-flex;
+    }
+    svg {
+      display: block;
+    }
+  }
+}
+
+.postMoreDropdown {
+  :global {
+    .ant-dropdown-menu {
+      padding: 6PX;
+      border-radius: 12PX;
+      min-width: 140PX;
+    }
+
+    .ant-dropdown-menu-item {
+      border-radius: 10PX;
+    }
+  }
+}
+
+.reportMenuItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8PX;
+  color: rgba(17, 24, 39, 1);
+  font-size: 14PX;
+
+  :global {
+    .anticon {
+      color: rgba(239, 68, 68, 1);
+      font-size: 16PX;
+    }
+  }
+}
+
+.deleteMenuItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8PX;
+  color: rgba(17, 24, 39, 1);
+  font-size: 14PX;
+
+  :global {
+    .anticon {
+      color: rgba(239, 68, 68, 1);
+      font-size: 16PX;
+    }
+  }
+}
+
 .pcCard .discoveryUserInfo {
   margin-bottom: 8PX;
 }
@@ -105,6 +189,13 @@
   overflow: hidden;
 }
 
+.nicknameRow {
+  display: flex;
+  align-items: center;
+  gap: 6PX;
+  min-width: 0;
+}
+
 .discoveryNickname {
   font-weight: 600;
   color: #333;
@@ -113,6 +204,17 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 100%;
+}
+
+.qaTagBadge {
+  flex-shrink: 0;
+  padding: 2PX 8PX;
+  border-radius: 999PX;
+  background: rgba(255, 141, 66, 0.16);
+  color: #FF8D42;
+  font-size: 12PX;
+  line-height: 18PX;
+  font-weight: 700;
 }
 
 .pcCard .discoveryNickname {
@@ -145,13 +247,66 @@
   flex: 1;
 }
 
+.qaContentSection {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.qaTitle {
+  color: #1f2937;
+  font-weight: 700;
+}
+
+.qaDesc {
+  color: #6b7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
 .pcCard .coinInfoSection {
 //   margin-bottom: 12PX;
     padding-top: 6PX;
 }
 
+.pcCard .qaContentSection {
+  padding-top: 6PX;
+}
+
+.pcCard .qaTitle {
+  font-size: 20PX;
+  line-height: 30PX;
+  margin-bottom: 8PX;
+}
+
+.pcCard .qaDesc {
+  font-size: 14PX;
+  line-height: 22PX;
+}
+
 .mobileCard .coinInfoSection {
   margin-bottom: 10px;
+}
+
+.mobileCard .qaContentSection {
+  margin-bottom: 10px;
+}
+
+.mobileCard .qaTitle {
+  font-size: 16px;
+  line-height: 24px;
+  margin-bottom: 6px;
+}
+
+.mobileCard .qaDesc {
+  font-size: 12px;
+  line-height: 18px;
 }
 
 .coinInfoRow {
@@ -243,7 +398,6 @@
 
 .pcCard .discoveryActionButtons {
   padding-top: 12PX;
-  border-top: 1PX solid #f0f0f0;
 }
 
 .mobileCard .discoveryActionButtons {
@@ -271,6 +425,14 @@
     &.liked {
       .actionCount {
         color: #11B787;
+      }
+    }
+  }
+
+  &.dislikeBtn {
+    &.disliked {
+      .actionCount {
+        color: #ff4d4f;
       }
     }
   }
@@ -320,6 +482,10 @@
 .pcIcon {
   width: 24PX !important;
   height: 24PX !important;
+}
+
+.dislikeIcon {
+  transform: rotate(180deg);
 }
 
 /* 暗黑模式 */

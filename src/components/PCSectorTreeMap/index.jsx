@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import * as d3 from 'd3';
+import { getSectionSymbols } from '@/api/market';
 import styles from './index.module.less';
 
 const PCSectorTreeMap = ({ 
@@ -21,7 +22,36 @@ const PCSectorTreeMap = ({
   const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [hoveredItem, setHoveredItem] = useState(null);
-  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const [isTooltipHovered, setIsTooltipHovered] = useState(false);
+  const [sectorCoins, setSectorCoins] = useState([]);
+  const [coinsLoading, setCoinsLoading] = useState(false);
+  const [coinSortField, setCoinSortField] = useState('symbol'); // 'symbol' | 'price' | 'change24h'
+  const [coinSortOrder, setCoinSortOrder] = useState('asc'); // 'asc' | 'desc'
+  const sectorCoinsCacheRef = useRef(new Map());
+  const latestCoinsRequestIdRef = useRef(0);
+
+  const normalizeMoneyDisplay = useCallback((raw) => {
+    if (raw == null || raw === '') return '--';
+    const text = String(raw).trim();
+    if (!text) return '--';
+    return text.startsWith('$') ? text.slice(1).trim() : text;
+  }, []);
+
+  const formatChangeDisplay = useCallback((raw) => {
+    if (raw == null || raw === '') return { text: '0.00%', value: 0 };
+    const text = String(raw).trim();
+    const n = parseFloat(text.replace(/%/g, '').replace(/,/g, ''));
+    if (Number.isFinite(n)) {
+      return {
+        text: `${n > 0 ? '+' : ''}${n.toFixed(2)}%`,
+        value: n,
+      };
+    }
+    return {
+      text: text.includes('%') ? text : `${text}%`,
+      value: 0,
+    };
+  }, []);
 
   // Legend configuration
   const LEGEND_ITEMS = useMemo(() => legendCustomItems || [
@@ -227,6 +257,10 @@ const PCSectorTreeMap = ({
               name: d.data.name,
               change: d.data.change,
               price: d.data.price,
+              changeRaw: d.data.original?.priceChange24h ?? d.data.change,
+              marketCap: d.data.original?.sectorMarketCap ?? d.data.price,
+              totalVolume: d.data.original?.totalVolume ?? d.data.original?.volume ?? d.data.original?.volume24h,
+              category: d.data.original?.category ?? d.data.name,
               x: d.x0,
               y: d.y0,
               width: d.x1 - d.x0,
@@ -235,7 +269,9 @@ const PCSectorTreeMap = ({
           })
           .on('mouseleave', function() {
             d3.select(this).style('opacity', 1).style('z-index', 1);
-            setHoveredItem(null);
+            if (!isTooltipHovered) {
+              setHoveredItem(null);
+            }
           })
           .on('click', (event, d) => {
             if (onItemClick) onItemClick(d.data.original);
@@ -245,15 +281,15 @@ const PCSectorTreeMap = ({
       console.error("TreeMap Render Error:", error);
     }
 
-  }, [list, dimensions, loading, LEGEND_ITEMS, getColor]);
+  }, [list, dimensions, loading, LEGEND_ITEMS, getColor, isTooltipHovered]);
 
   const getTooltipStyle = (item) => {
     if (!item) return {};
     
     const containerWidth = dimensions.width;
     const containerHeight = dimensions.height;
-    const TOOLTIP_WIDTH = 320;
-    const TOOLTIP_HEIGHT = 160; // Estimated height
+    const TOOLTIP_WIDTH = 540;
+    const TOOLTIP_HEIGHT = 520;
     
     // Dynamic offsets based on item size
     // Ensure the tooltip overlaps the item by a consistent amount, or half the item size if it's small
@@ -292,9 +328,105 @@ const PCSectorTreeMap = ({
 
     return {
       left: `${left}px`,
-      top: `${top}px`
+      top: `${top}px`,
+      '--tooltip-glass-tint': getColor(item.change),
     };
   };
+
+  const tooltipChange = hoveredItem ? formatChangeDisplay(hoveredItem.changeRaw) : null;
+
+  const parseNumericDisplay = useCallback((val) => {
+    if (val == null || val === '') return 0;
+    if (typeof val === 'number' && Number.isFinite(val)) return val;
+    const n = parseFloat(String(val).replace(/[^0-9.-]/g, ''));
+    return Number.isFinite(n) ? n : 0;
+  }, []);
+
+  const formatPriceDisplay = useCallback((val) => {
+    const n = parseNumericDisplay(val);
+    if (!Number.isFinite(n)) return '--';
+    if (n >= 1) {
+      return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    return n.toFixed(6);
+  }, [parseNumericDisplay]);
+
+  const sortedSectorCoins = useMemo(() => {
+    const list = Array.isArray(sectorCoins) ? sectorCoins.slice() : [];
+    const dir = coinSortOrder === 'asc' ? 1 : -1;
+    const cmpText = (a, b) => String(a ?? '').localeCompare(String(b ?? ''), undefined, { numeric: true, sensitivity: 'base' });
+    const cmpNum = (a, b) => {
+      const na = Number.isFinite(a) ? a : parseNumericDisplay(a);
+      const nb = Number.isFinite(b) ? b : parseNumericDisplay(b);
+      return (na - nb);
+    };
+
+    list.sort((a, b) => {
+      if (coinSortField === 'symbol') return dir * cmpText(a.symbol, b.symbol);
+      if (coinSortField === 'price') return dir * cmpNum(a.price, b.price);
+      return dir * cmpNum(a.change24h, b.change24h);
+    });
+    return list;
+  }, [sectorCoins, coinSortField, coinSortOrder, parseNumericDisplay]);
+
+  const toggleCoinSort = useCallback((field) => {
+    const displayOrder = coinSortField === field ? coinSortOrder : 'desc';
+    const nextOrder = displayOrder === 'desc' ? 'asc' : 'desc';
+    setCoinSortField(field);
+    setCoinSortOrder(nextOrder);
+  }, [coinSortField, coinSortOrder]);
+
+  useEffect(() => {
+    const category = hoveredItem?.category;
+    if (!category) {
+      setSectorCoins([]);
+      setCoinsLoading(false);
+      return;
+    }
+
+    const cached = sectorCoinsCacheRef.current.get(category);
+    if (cached) {
+      setSectorCoins(cached);
+      setCoinsLoading(false);
+      return;
+    }
+
+    const requestId = ++latestCoinsRequestIdRef.current;
+    setCoinsLoading(true);
+    setSectorCoins([]);
+
+    getSectionSymbols({
+      category,
+      sortField: 'price_change_24h',
+      sortOrder: 'desc',
+    })
+      .then((result) => {
+        if (requestId !== latestCoinsRequestIdRef.current) return;
+        if (result?.code !== 0 || !Array.isArray(result?.data)) {
+          setSectorCoins([]);
+          return;
+        }
+
+        const nextCoins = result.data.slice(0, 7).map((coin) => ({
+          id: coin.id || coin.symbol,
+          symbol: coin.symbol || '--',
+          icon: coin.logoUrl || coin.icon || coin.logo || '',
+          price: coin.currentPrice,
+          change24h: parseNumericDisplay(coin.priceChange24h),
+          isLiked: !!coin.isSelfSelected,
+        }));
+        sectorCoinsCacheRef.current.set(category, nextCoins);
+        setSectorCoins(nextCoins);
+      })
+      .catch(() => {
+        if (requestId !== latestCoinsRequestIdRef.current) return;
+        setSectorCoins([]);
+      })
+      .finally(() => {
+        if (requestId !== latestCoinsRequestIdRef.current) return;
+        setCoinsLoading(false);
+      });
+  }, [hoveredItem?.category, parseNumericDisplay]);
 
   return (
     <div className={styles.container} style={{ minHeight: '600px' }}>
@@ -381,23 +513,122 @@ const PCSectorTreeMap = ({
           <div 
             className={styles.customTooltip}
             style={getTooltipStyle(hoveredItem)}
+            onMouseEnter={() => setIsTooltipHovered(true)}
+            onMouseLeave={() => {
+              setIsTooltipHovered(false);
+              setHoveredItem(null);
+            }}
           >
-            <div className={styles.tooltipHeader}>
-              {hoveredItem.name}
+            <div className={styles.tooltipContent}>
+              <div className={styles.tooltipTopRow}>
+                <div className={styles.tooltipSectorHeader}>
+                  <span className={styles.tooltipSectorName}>{hoveredItem.name}</span>
+                  <span className={`${styles.tooltipSectorChange} ${tooltipChange?.value >= 0 ? styles.positive : styles.negative}`}>
+                    {tooltipChange?.text}
+                  </span>
+                </div>
+                <div className={styles.tooltipTopActions}>
+                  <img src="/icons/new_sector/group.svg" alt="" />
+                  <img src="/icons/new_sector/share.svg" alt="" />
+                </div>
+              </div>
+              <div className={styles.tooltipSectorStats}>
+                <div className={styles.tooltipStatItem}>
+                  <div className={styles.tooltipStatLabel}>总价值</div>
+                  <div className={styles.tooltipStatValue}>
+                    <span className={styles.tooltipCurrency}>$</span>
+                    {normalizeMoneyDisplay(hoveredItem.totalVolume)}
+                  </div>
+                </div>
+                <div className={styles.tooltipStatItem}>
+                  <div className={styles.tooltipStatLabel}>市值</div>
+                  <div className={styles.tooltipStatValue}>
+                    <span className={styles.tooltipCurrency}>$</span>
+                    {normalizeMoneyDisplay(hoveredItem.marketCap)}
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className={styles.tooltipContent} style={{ backgroundColor: getColor(hoveredItem.change) }}>
-               <div className={styles.tooltipMainRow}>
-                 <span>{hoveredItem.name}</span>
-                 {showPrice && <span>{hoveredItem.price}</span>}
-                 {showPercentage && <span>{(hoveredItem.change > 0 ? '+' : '') + hoveredItem.change.toFixed(2)}%</span>}
-               </div>
-               {(showPrice || showPercentage) && (
-                 <div className={styles.tooltipLabelRow}>
-                   <span></span>
-                   {showPrice && <span>{priceLabel}</span>}
-                   {showPercentage && <span>{changeLabel}</span>}
-                 </div>
-               )}
+            <div className={styles.tooltipCoinSection}>
+              <div className={styles.tooltipCoinHead}>
+                {(() => {
+                  const symbolActive = coinSortField === 'symbol';
+                  const priceActive = coinSortField === 'price';
+                  const changeActive = coinSortField === 'change24h';
+                  const symbolOrder = symbolActive ? coinSortOrder : 'desc';
+                  const priceOrder = priceActive ? coinSortOrder : 'desc';
+                  const changeOrder = changeActive ? coinSortOrder : 'desc';
+
+                  return (
+                    <>
+                <button
+                  type="button"
+                    className={`${styles.tooltipCoinHeadSort} ${symbolActive ? styles.tooltipCoinHeadSortActive : ''}`}
+                  onClick={() => toggleCoinSort('symbol')}
+                >
+                  <span>成分币种</span>
+                    <i className={`${styles.sortArrows} ${symbolActive ? styles.sortArrowsActive : ''} ${symbolOrder === 'asc' ? styles.sortAsc : styles.sortDesc}`} />
+                </button>
+                <button
+                  type="button"
+                    className={`${styles.tooltipCoinHeadSort} ${priceActive ? styles.tooltipCoinHeadSortActive : ''}`}
+                  onClick={() => toggleCoinSort('price')}
+                >
+                  <span>最新价</span>
+                    <i className={`${styles.sortArrows} ${priceActive ? styles.sortArrowsActive : ''} ${priceOrder === 'asc' ? styles.sortAsc : styles.sortDesc}`} />
+                </button>
+                <button
+                  type="button"
+                    className={`${styles.tooltipCoinHeadSort} ${changeActive ? styles.tooltipCoinHeadSortActive : ''}`}
+                  onClick={() => toggleCoinSort('change24h')}
+                >
+                  <span>24h幅度</span>
+                    <i className={`${styles.sortArrows} ${changeActive ? styles.sortArrowsActive : ''} ${changeOrder === 'asc' ? styles.sortAsc : styles.sortDesc}`} />
+                </button>
+                <span>自加选</span>
+                <span>加监控</span>
+                    </>
+                  );
+                })()}
+              </div>
+              {coinsLoading ? (
+                <div className={styles.tooltipCoinState}>加载中...</div>
+              ) : sectorCoins.length === 0 ? (
+                <div className={styles.tooltipCoinState}>暂无数据</div>
+              ) : (
+                <div className={styles.tooltipCoinList}>
+                  {sortedSectorCoins.map((coin) => (
+                    <div key={coin.id} className={styles.tooltipCoinRow}>
+                      <div className={styles.tooltipCoinInfo}>
+                        {coin.icon ? (
+                          <img src={coin.icon} alt={coin.symbol} className={styles.tooltipCoinIcon} />
+                        ) : (
+                          <div className={styles.tooltipCoinIconFallback}>{coin.symbol?.charAt(0) || '?'}</div>
+                        )}
+                        <span className={styles.tooltipCoinSymbol}>{coin.symbol}</span>
+                      </div>
+                      <span className={styles.tooltipCoinPrice}>{formatPriceDisplay(coin.price)}</span>
+                      <span className={`${styles.tooltipCoinPct} ${coin.change24h >= 0 ? styles.coinPctPositive : styles.coinPctNegative}`}>
+                        {coin.change24h >= 0 ? '+' : ''}{coin.change24h.toFixed(2)}%
+                      </span>
+                      <span className={styles.tooltipCoinAction}>
+                        <img
+                          src={coin.isLiked ? '/icons/new_detail/like_actived.svg' : '/icons/new_detail/like_no_actived.svg'}
+                          alt=""
+                          className={styles.tooltipActionIcon}
+                        />
+                      </span>
+                      <span className={styles.tooltipCoinAction}>
+                        <img
+                          src="/icons/new_home/monitor-bell.svg"
+                          alt=""
+                          className={styles.tooltipActionIconBell}
+                        />
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

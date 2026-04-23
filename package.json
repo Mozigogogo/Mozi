@@ -6,15 +6,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "chain:compile": "hardhat compile",
+    "chain:deploy:mock-usdt": "hardhat run scripts/deploy-mock-usdt.js --network arbitrumSepolia"
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
     "@microsoft/fetch-event-source": "^2.0.1",
+    "@rainbow-me/rainbowkit": "^2.2.10",
     "@react-oauth/google": "^0.13.4",
-    "@reown/appkit": "1.8.7",
-    "@reown/appkit-adapter-wagmi": "1.8.7",
     "@tanstack/react-query": "^5.90.5",
+    "@ton/ton": "^16.2.4",
     "@tonconnect/ui-react": "^2.3.1",
     "antd": "^6.0.0",
     "antd-mobile": "^5.39.0",
@@ -46,8 +48,12 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@nomicfoundation/hardhat-ethers": "^3.1.0",
+    "dotenv": "^17.2.2",
     "eslint": "8.57.0",
     "eslint-config-next": "14.2.15",
+    "ethers": "^6.15.0",
+    "hardhat": "^2.22.3",
     "less": "^4.2.0",
     "next-plugin-less": "^1.0.2",
     "next-with-less": "^3.0.1"

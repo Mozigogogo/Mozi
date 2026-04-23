@@ -1,0 +1,163 @@
+.pcWrap {
+  min-height: calc(100vh - 64PX);
+  box-sizing: border-box;
+  padding: 20PX 0 40PX;
+  background: transparent;
+  font-family: 'PingFang SC', 'Roboto', sans-serif;
+}
+
+.pcHeader {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16PX;
+  margin-bottom: 24PX;
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 12PX;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.headerTabs {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 285PX;
+  min-width: 0;
+
+  /* PC 端订阅 tabs：胶囊分段样式（不依赖 vw） */
+  :global(.vipTabsRoot.vipRechargeTabs) {
+    max-width: 285PX;
+    width: 100%;
+    background: rgba(236, 240, 244, 1);
+    border-radius: 14PX;
+    padding: 4PX;
+  }
+
+  :global(.vipTabsRoot.vipRechargeTabs .vipTabsHeader) {
+    background: transparent;
+    padding: 0;
+    border-radius: 14PX;
+  }
+
+  :global(.vipTabsRoot.vipRechargeTabs .vipTabsList) {
+    gap: 0;
+  }
+
+  :global(.vipTabsRoot.vipRechargeTabs .vipTabButton) {
+    border-radius: 14PX;
+    height: 36PX;
+    padding: 0 14PX;
+    font-size: 14PX;
+    font-weight: 600;
+    color: rgba(148, 163, 184, 1);
+    background: transparent;
+  }
+
+  :global(.vipTabsRoot.vipRechargeTabs .vipTabButton:hover) {
+    background: rgba(15, 23, 42, 0.04);
+  }
+
+  :global(.vipTabsRoot.vipRechargeTabs .vipTabButtonActive) {
+    background: #fff;
+    color: #0f172a;
+    box-shadow: 0 2PX 6PX rgba(15, 23, 42, 0.08);
+  }
+
+  :global(.vipTabsRoot.vipRechargeTabs .vipTabBadge) {
+    background: rgba(34, 197, 94, 1);
+    color: #fff;
+    padding: 2PX 8PX;
+    border-radius: 999PX;
+    font-size: 12PX;
+    font-weight: 700;
+    margin-left: 8PX;
+  }
+
+  /* 隐藏底部指示条（该风格不需要） */
+  :global(.vipTabsRoot.vipRechargeTabs .vipTabsActiveIndicator) {
+    display: none;
+  }
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36PX;
+  height: 36PX;
+  padding: 0;
+  border: none;
+  border-radius: 12PX;
+  background: rgba(255, 255, 255, 0.85);
+  color: #0f172a;
+  cursor: pointer;
+  box-shadow: 0 1PX 3PX rgba(15, 23, 42, 0.08);
+  font-size: 14PX;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: #fff;
+  }
+}
+
+.pcTitle {
+  margin: 0;
+  font-size: 22PX;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.3;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 20PX;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  min-height: 0;
+}
+
+.planCardsContainer {
+  display: block;
+  background: rgba(255, 255, 255, 1);
+  border-radius: 16PX;
+  padding: 20PX;
+  padding-bottom: 16PX;
+
+  /* VipRechargePlanCards 内部用了 antd Spin，会包两层容器。
+     这里把网格布局应用到 Spin 的容器上，避免只剩一个 grid item。 */
+  :global(.ant-spin-container) {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20PX;
+    align-items: stretch;
+  }
+
+  @media (max-width: 1024PX) {
+    max-width: 420PX;
+    margin: 0 auto;
+
+    :global(.ant-spin-container) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  :global(.ant-spin-container) > * {
+    max-width: none !important;
+    width: 100%;
+    min-width: 0;
+  }
+}

@@ -1,5 +1,6 @@
 'use client';
 
+import { useLayoutEffect, useRef, useState } from 'react';
 import {
   EllipsisOutlined,
   HeartFilled,
@@ -7,6 +8,7 @@ import {
   ReloadOutlined,
   ShareAltOutlined,
 } from '@ant-design/icons';
+import PCPagination from '@/components/PCPagination';
 import styles from './index.module.less';
 
 function NewsItem({ item }) {
@@ -41,7 +43,43 @@ function NewsItem({ item }) {
   );
 }
 
-export default function PCFlashNewsCard({ items = [] }) {
+function SkeletonItem() {
+  return (
+    <div className={`${styles.item} ${styles.skeletonItem}`} aria-hidden>
+      <div className={`${styles.avatar} ${styles.skeletonBlock}`} />
+      <div className={styles.body}>
+        <div className={styles.meta}>
+          <span className={`${styles.skeletonLine} ${styles.skeletonLineSm}`} />
+          <span className={`${styles.skeletonPill} ${styles.skeletonLineSm}`} />
+        </div>
+        <div className={`${styles.skeletonLine} ${styles.skeletonLineXs}`} style={{ marginTop: 6 }} />
+        <div className={`${styles.skeletonLine} ${styles.skeletonLineMd}`} style={{ marginTop: 8 }} />
+        <div className={`${styles.skeletonLine} ${styles.skeletonLineLg}`} style={{ marginTop: 8 }} />
+        <div className={`${styles.skeletonLine} ${styles.skeletonLineSm}`} style={{ marginTop: 10 }} />
+      </div>
+    </div>
+  );
+}
+
+export default function PCFlashNewsCard({
+  items = [],
+  loading = false,
+  onRefresh,
+  page = 1,
+  pageSize = 3,
+  total = 0,
+  onPageChange,
+}) {
+  const listRef = useRef(null);
+  const [lockedListHeight, setLockedListHeight] = useState(null);
+  const hasItems = items.length > 0;
+
+  useLayoutEffect(() => {
+    if (!loading && listRef.current) {
+      setLockedListHeight(listRef.current.offsetHeight);
+    }
+  }, [loading, items, pageSize, page]);
+
   return (
     <div className={styles.card}>
       <div className={styles.header}>
@@ -51,7 +89,14 @@ export default function PCFlashNewsCard({ items = [] }) {
         </div>
 
         <div className={styles.tools}>
-          <button type="button" className={styles.iconBtn} aria-label="refresh">
+          <button
+            type="button"
+            className={styles.iconBtn}
+            aria-label="refresh"
+            onClick={onRefresh}
+            disabled={loading}
+            title={loading ? 'loading...' : 'refresh'}
+          >
             <ReloadOutlined />
           </button>
           <button type="button" className={styles.iconBtn} aria-label="more">
@@ -60,11 +105,39 @@ export default function PCFlashNewsCard({ items = [] }) {
         </div>
       </div>
 
-      <div className={styles.list}>
-        {items.map((item) => (
-          <NewsItem key={item.id} item={item} />
-        ))}
+      <div
+        ref={listRef}
+        className={styles.list}
+        style={loading && lockedListHeight ? { minHeight: `${lockedListHeight}px` } : undefined}
+      >
+        {hasItems ? (
+          items.map((item) => <NewsItem key={item.id} item={item} />)
+        ) : loading ? (
+          <>
+            {Array.from({ length: pageSize }).map((_, idx) => (
+              <SkeletonItem key={idx} />
+            ))}
+          </>
+        ) : (
+          <div className={styles.emptyWrap}>暂无快讯</div>
+        )}
+
+        {loading && hasItems ? (
+          <div className={styles.loadingOverlay}>
+            <span className={styles.spinner} aria-hidden />
+            <span className={styles.loadingText}>加载中…</span>
+          </div>
+        ) : null}
       </div>
+
+      <PCPagination
+        className={styles.paginationWrap}
+        current={page}
+        total={total}
+        pageSize={pageSize}
+        loading={loading}
+        onChange={onPageChange}
+      />
     </div>
   );
 }

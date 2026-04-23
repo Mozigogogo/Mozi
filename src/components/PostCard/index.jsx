@@ -1,8 +1,12 @@
 'use client';
 
 import { Dropdown } from 'antd';
-import { EllipsisOutlined, WarningOutlined } from '@ant-design/icons';
+import { EllipsisOutlined, WarningOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Toast } from 'antd-mobile';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
+import { removePost } from '@/api/community';
+import { confirm } from '@/components/Modal/confirm';
 import styles from './index.module.less';
 
 const CDN_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community';
@@ -38,8 +42,31 @@ export default function PostCard({
   isPC = false,
   showFooterDivider = true,
   enableReportMenu = false,
+  onDeletePost,
 }) {
   const router = useRouter();
+  const { t } = useTranslation();
+  const normalizeId = (value) => String(value ?? '').trim();
+  const localStorageUserId = (() => {
+    if (typeof window === 'undefined') return '';
+    const directUserId = localStorage.getItem('userId');
+    if (directUserId) return normalizeId(directUserId);
+    try {
+      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+      return normalizeId(
+        userInfo?.userId ||
+          userInfo?.id ||
+          userInfo?.userInfo?.userId ||
+          userInfo?.userInfo?.id ||
+          userInfo?.data?.userId ||
+          userInfo?.data?.id
+      );
+    } catch (error) {
+      return '';
+    }
+  })();
+  const postOwnerId = normalizeId(post?.userId || post?.authorId || post?.user?.id || post?.user?.userId);
+  const isPostOwner = !!localStorageUserId && !!postOwnerId && localStorageUserId === postOwnerId;
 
   const handleReportNavigate = () => {
     const postId = String(post?.id ?? '').trim();
@@ -51,17 +78,65 @@ export default function PostCard({
     router.push(query ? `/report/comment?${query}` : '/report/comment');
   };
 
-  const menuItems = [
-    {
-      key: 'report',
-      label: (
-        <span className={styles.reportMenuItem}>
-          <WarningOutlined />
-          <span>举报内容</span>
-        </span>
-      ),
-    },
-  ];
+  const handleDeletePost = async () => {
+    const postId = String(post?.id ?? '').trim();
+    if (!postId) {
+      Toast.show({ content: t('community.messages.invalidPostId'), position: 'bottom' });
+      return;
+    }
+    const confirmed = await confirm({
+      content: t('common.confirmDelete'),
+      confirmText: t('common.confirm'),
+      cancelText: t('common.cancel'),
+    });
+    if (!confirmed) return;
+
+    try {
+      Toast.show({
+        icon: 'loading',
+        content: t('common.deleting'),
+        duration: 0,
+        position: 'center',
+      });
+      const response = await removePost(postId);
+      Toast.clear();
+      if (response?.code === 0) {
+        Toast.show({ content: t('common.deleteSuccess'), position: 'bottom' });
+        if (onDeletePost) {
+          await Promise.resolve(onDeletePost(post.id));
+        }
+        return;
+      }
+      Toast.show({ content: response?.errorMsg || t('common.deleteFailed'), position: 'bottom' });
+    } catch (error) {
+      Toast.clear();
+      Toast.show({ content: error?.errorMsg || error?.message || t('common.deleteFailed'), position: 'bottom' });
+    }
+  };
+
+  const menuItems = isPostOwner
+    ? [
+      {
+        key: 'delete',
+        label: (
+          <span className={styles.deleteMenuItem}>
+            <DeleteOutlined />
+            <span>{t('common.delete')}</span>
+          </span>
+        ),
+      },
+    ]
+    : [
+      {
+        key: 'report',
+        label: (
+          <span className={styles.reportMenuItem}>
+            <WarningOutlined />
+            <span>{t('community.reportContent')}</span>
+          </span>
+        ),
+      },
+    ];
 
   return (
     <div 
@@ -106,6 +181,9 @@ export default function PostCard({
                 info?.domEvent?.stopPropagation?.();
                 if (info?.key === 'report') {
                   handleReportNavigate();
+                }
+                if (info?.key === 'delete') {
+                  handleDeletePost();
                 }
               },
             }}

@@ -347,6 +347,13 @@
   padding: 12PX 12PX 10PX;
 }
 
+.leftPanelPlain {
+  background: transparent;
+  border-top: none;
+  box-shadow: none;
+  padding: 0;
+}
+
 .leftContentHeader {
   flex-shrink: 0; /* 固定在顶部，不参与滚动 */
 }
@@ -373,6 +380,25 @@
       background: #bfbfbf;
     }
   }
+}
+
+.leftPagination {
+  flex-shrink: 0;
+  margin-top: 10PX;
+  padding-top: 10PX;
+}
+
+.coinPostsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12PX;
+}
+
+.discoveryPostsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12PX;
+  align-items: start;
 }
 
 .commentInputWrapper {
@@ -404,25 +430,48 @@
 
 .hotTopicsScrollContainer {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   min-height: 0; /* 关键：允许flex子元素缩小到内容以下 */
-  
-  /* 自定义滚动条样式 */
-  &::-webkit-scrollbar {
-    width: 6PX;
+}
+
+@media (max-width: 1280PX) {
+  .topCapsuleTabs,
+  .leftTopComposer {
+    margin-bottom: 12PX;
   }
-  
-  &::-webkit-scrollbar-track {
-    background: transparent;
+
+  .leftPanelContainer {
+    border-radius: 24PX;
+    padding: 10PX 10PX 8PX;
   }
-  
-  &::-webkit-scrollbar-thumb {
-    background: #d9d9d9;
-    border-radius: 3PX;
-    
-    &:hover {
-      background: #bfbfbf;
-    }
+
+  .flashNewsWrapper {
+    margin-bottom: 10PX;
+  }
+}
+
+@media (max-width: 1024PX) {
+  .topCapsuleTabs,
+  .leftTopComposer {
+    margin-bottom: 8PX;
+  }
+
+  .leftPanelContainer {
+    border-radius: 18PX;
+    padding: 8PX 8PX 6PX;
+  }
+
+  .coinPostsList,
+  .discoveryPostsGrid {
+    gap: 8PX;
+  }
+
+  .leftPagination {
+    margin-top: 8PX;
+    padding-top: 8PX;
+  }
+
+  .flashNewsWrapper {
+    margin-bottom: 8PX;
   }
 }

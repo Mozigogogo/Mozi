@@ -2,6 +2,32 @@ import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 
 /**
+ * 查询链支付参数（钱包收款信息）
+ * GET /payment/walletPaymentInfo
+ * @returns {Promise<Array<{chain:string, chainType:string, receiveAddress:string, usdtContract:string, usdtDecimals:number}>>}
+ */
+export const getWalletPaymentInfo = () => {
+  return request({
+    url: Interface.PAYMENT_WALLET_PAYMENT_INFO,
+    method: 'GET',
+  });
+};
+
+/**
+ * 提交钱包支付（上报 txHash 并生成订单号）
+ * POST /payment/walletPay
+ * @param {{ pricingId: number|string, fromAddress: string, chain: string, txHash: string }} data
+ * @returns {Promise<{ orderNo: string, message?: string }>}
+ */
+export const walletPay = (data) => {
+  return request({
+    url: Interface.PAYMENT_WALLET_PAY,
+    method: 'POST',
+    data,
+  });
+};
+
+/**
  * 创建 Telegram Stars 支付订单
  * @param {Object} data
  * @param {number} data.amount - 金额
@@ -33,6 +59,32 @@ export const getOrderStatus = (orderNo) => {
     url: Interface.PAYMENT_ORDER_STATUS,
     method: 'GET',
     params: { orderNo },
+  });
+};
+
+/**
+ * 创建链上钱包支付订单
+ * POST /payment/createWalletOrder
+ * @param {{ pricingId: string|number, fromAddress: string }} data
+ */
+export const createWalletOrder = (data) => {
+  return request({
+    url: Interface.PAYMENT_CREATE_WALLET_ORDER,
+    method: 'POST',
+    data,
+  });
+};
+
+/**
+ * 提交链上交易哈希
+ * POST /payment/submitWalletTx
+ * @param {{ orderNo: string, txHash: string }} data
+ */
+export const submitWalletTx = (data) => {
+  return request({
+    url: Interface.PAYMENT_SUBMIT_WALLET_TX,
+    method: 'POST',
+    data,
   });
 };
 

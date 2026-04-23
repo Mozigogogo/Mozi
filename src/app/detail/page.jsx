@@ -26,6 +26,7 @@ import AiChatModalPc from '@/components/AiChatModalPc';
 import { request } from '@/utils/request';
 import { Interface, LOOPTIME, WS_URL } from '@/utils/constants';
 import { formatNumber, formatPercent, jump2NoTab } from '@/utils/core';
+import { safeBack } from '@/utils/navigation';
 import { MoziWebSocket } from '@/utils/moziWebSocket';
 import { useTranslation } from 'react-i18next';
 import { useAlertConfig } from '@/hooks/useAlertConfig';
@@ -1125,6 +1126,10 @@ export default function DetailPage() {
 
   // 跳转到告警页面
   const jump2Alert = () => {
+    if (isPC) {
+      router.push(`/pc/alarm?symbol=${encodeURIComponent(symbol)}`);
+      return;
+    }
     setOneClickAlarmMode('config');
     setOneClickAlarmOpen(true);
   };
@@ -1152,8 +1157,8 @@ export default function DetailPage() {
   const shareToTelegram = () => {
     if (!coinInfo) return;
     
-    // 获取当前页面URL
-    const currentUrl = window.location.href;
+    // 分享链接统一使用线上正式域名
+    const currentUrl = `https://www.moziai.xyz/detail?symbol=${encodeURIComponent(symbol || '')}`;
     
     // 构建分享文本
     const priceChange = coinInfo.priceChange_24h || '0';
@@ -2249,9 +2254,16 @@ ${coinInfo.name || symbol} (${symbol})
   const handleDetailBack = () => {
     try {
       localStorage.setItem('tg_auto_login_skip_once_v1', String(Date.now() + 15 * 1000));
+      sessionStorage.setItem('mozi_home_fast_return_once_v1', '1');
     } catch (_) {}
-    router.back();
+    safeBack(router, { fallback: '/' });
   };
+
+  // 预取首页路由资源，减少从详情返回首页的等待时间
+  useEffect(() => {
+    if (!router?.prefetch) return;
+    router.prefetch('/');
+  }, [router]);
 
   /** PC 行情页弹幕条：发帖到社区（与 PC 社区币种讨论一致） */
   const handleBarrageSend = useCallback(
@@ -2635,7 +2647,7 @@ ${coinInfo.name || symbol} (${symbol})
       {oneClickAlarmModalEl}
       <FloatingRobot
         message={t('detail.robotMessage', { symbol: symbol.toUpperCase() })}
-        targetPath="/robot_test"
+        targetPath="/ai"
         autoPlay={true}
         startDelay={2000}
       />

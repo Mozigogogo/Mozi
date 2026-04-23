@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { NavBar, Toast, Button, Picker, Input } from 'antd-mobile';
 import { useRouter } from 'next/navigation';
+import { safeBack } from '@/utils/navigation';
 import { useTranslation } from 'react-i18next';
 import { getUserDataInfo, updateUserInfo, completeTask } from '@/api/user';
 import { getMySubscription } from '@/api/vip';
@@ -551,7 +552,7 @@ export default function EditProfilePage() {
   return (
     <div className={styles.container}>
       <NavBar 
-        onBack={() => router.back()}
+        onBack={() => safeBack(router, { fallback: '/' })}
         className={styles.navBar}
       >
         {t('editProfile.title')}

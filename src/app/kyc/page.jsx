@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { safeBack } from '@/utils/navigation';
 import { Toast, Button, Input, Picker, Image as AntdImage } from 'antd-mobile';
 import { LeftOutline } from 'antd-mobile-icons';
 import { useTranslation } from 'react-i18next';
@@ -104,7 +105,7 @@ export default function KycPage() {
         position: 'center',
         duration: 3000,
         afterClose: () => {
-          router.back();
+          safeBack(router, { fallback: '/' });
         }
       });
     }, 2000);
@@ -114,7 +115,7 @@ export default function KycPage() {
     <div className={styles.kycContainer}>
       {/* 顶部导航 */}
       <div className={styles.topNav}>
-        <button className={styles.backBtn} onClick={() => router.back()}>
+        <button className={styles.backBtn} onClick={() => safeBack(router, { fallback: '/' })}>
           <LeftOutline />
         </button>
         <div className={styles.navTitle}>{t('kyc.title')}</div>

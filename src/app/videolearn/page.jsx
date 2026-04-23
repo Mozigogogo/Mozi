@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { safeBack } from '@/utils/navigation';
 import { Toast } from 'antd-mobile';
 import { LeftOutline } from 'antd-mobile-icons';
 import { useTranslation } from 'react-i18next';
@@ -136,7 +137,7 @@ export default function VideoLearnPage() {
     <div className={styles.videolearnContainer}>
       {/* 顶部导航 */}
       <div className={styles.topNav}>
-        <button className={styles.backBtn} onClick={() => router.back()}>
+        <button className={styles.backBtn} onClick={() => safeBack(router, { fallback: '/' })}>
           <LeftOutline />
         </button>
         <div className={styles.navTitle}>{t('videoLearn.title')}</div>

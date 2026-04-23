@@ -18,7 +18,7 @@ function BubbleText({ text }) {
 
 export default function FloatingRobot({
   message,
-  targetPath = '/robot_test',
+  targetPath = '/ai',
   startDelay = 500,
   showDuration = 5000,
   autoPlay = true,

@@ -1,12 +1,12 @@
 .planCard {
   position: relative;
   width: 100%;
-  max-width: 260px;
+  max-width: 260PX;
   background: white;
-  border-radius: 27.2px;
-  border: 1.7px solid var(--accent-color, #c1c1c1);
-  padding: 32px 24px;
-  box-shadow: 0 12.75px 25.5px rgba(106, 106, 106, 0.1);
+  border-radius: 27.2PX;
+  border: 1.7PX solid var(--accent-color, #c1c1c1);
+  padding: 32PX 24PX;
+  box-shadow: 0 12.75PX 25.5PX rgba(106, 106, 106, 0.1);
   transition: all 0.3s ease;
   overflow: hidden;
   display: flex;
@@ -19,7 +19,7 @@
 
   &.popular {
     background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    transform: scale(1.02);
+    transform: none;
 
     .badge {
       display: block;
@@ -40,13 +40,13 @@
 .badge {
   display: none;
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 16PX;
+  right: 16PX;
   background: #0f172a;
   color: white;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 12px;
+  padding: 6PX 12PX;
+  border-radius: 20PX;
+  font-size: 12PX;
   font-weight: 600;
   z-index: 10;
 }
@@ -61,25 +61,39 @@
 }
 
 .title {
-  margin: 0 0 8px 0;
-  font-size: 20px;
+  margin: 0 0 8PX 0;
+  font-size: 20PX;
   font-weight: 700;
   color: #0f172a;
   line-height: 1.4;
 }
 
 .description {
-  margin: 0 0 8px 0;
-  font-size: 12px;
+  margin: 0 0 8PX 0;
+  font-size: 12PX;
   color: var(--accent-color, #868686);
   line-height: 1.5;
   font-weight: 600;
   text-transform: uppercase;
 }
 
+.descriptionBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  width: fit-content;
+  max-width: max-content;
+  padding: 2PX 8PX;
+  border-radius: 999PX;
+  background: rgba(52, 211, 153, 0.18);
+  color: rgba(16, 185, 129, 1);
+  line-height: 1.2;
+}
+
 .topLabel {
-  margin: 0 0 8px 0;
-  font-size: 12px;
+  margin: 0 0 8PX 0;
+  font-size: 12PX;
   color: var(--accent-color, #868686);
   line-height: 1.5;
   font-weight: 600;
@@ -87,68 +101,68 @@
 }
 
 .priceSection {
-  margin-bottom: 6px;
+  margin-bottom: 6PX;
 }
 
 .price {
   display: flex;
   align-items: baseline;
-  gap: 4px;
+  gap: 4PX;
 
   .currency {
-    font-size: 18px;
+    font-size: 18PX;
     font-weight: 600;
     color: #0f172a;
   }
 
   .currencyStarIcon {
-    width: 18px;
-    height: 18px;
+    width: 18PX;
+    height: 18PX;
     flex-shrink: 0;
   }
 
   .amount {
-    font-size: 36px;
+    font-size: 36PX;
     font-weight: 700;
     color: #0f172a;
   }
 
   .period {
-    font-size: 14px;
+    font-size: 14PX;
     color: #64748b;
-    margin-left: 4px;
+    margin-left: 4PX;
   }
 }
 
 .divider {
-  height: 1px;
+  height: 1PX;
   background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%);
-  margin: 12px 0;
+  margin: 12PX 0;
 }
 
 /* Pro 下拉等级选择 */
 .tierSelectWrap {
   position: relative;
-  margin-bottom: 12px;
+  margin-bottom: 12PX;
 }
 
 .tierSelectLabel {
-  margin: 0 0 8px 0;
-  font-size: 12px;
+  margin: 0 0 8PX 0;
+  font-size: 12PX;
   color: #64748b;
   font-weight: 600;
 }
 
 .tierSelectTrigger {
   width: 100%;
-  border: 1px solid var(--accent-color, #facc15);
+  border: 1PX solid var(--accent-color, #facc15);
   background: color-mix(in srgb, var(--accent-color, #facc15) 12%, transparent);
-  border-radius: 12px;
-  padding: 10px 12px;
+  border-radius: 12PX;
+  padding: 10PX 12PX;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 10PX;
   cursor: pointer;
 }
 
@@ -156,12 +170,12 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 2px;
+  gap: 2PX;
   min-width: 0;
 }
 
 .tierSelectTitle {
-  font-size: 14px;
+  font-size: 14PX;
   font-weight: 700;
   color: #0f172a;
   line-height: 1.2;
@@ -171,7 +185,7 @@
 }
 
 .tierSelectSubtitle {
-  font-size: 12px;
+  font-size: 12PX;
   color: rgba(100, 116, 139, 1);
   line-height: 1.2;
   white-space: nowrap;
@@ -180,8 +194,8 @@
 }
 
 .tierChevron {
-  width: 10px;
-  height: 5px;
+  width: 10PX;
+  height: 5PX;
   transition: transform 0.2s ease;
   flex-shrink: 0;
 }
@@ -194,18 +208,18 @@
   position: absolute;
   left: 0;
   right: 0;
-  top: calc(100% + 6px);
+  top: calc(100% + 6PX);
   background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.25);
+  border-radius: 18PX;
+  box-shadow: 0 22PX 60PX rgba(0, 0, 0, 0.25);
   padding: 0;
   z-index: 50;
-  max-height: 260px;
+  max-height: 260PX;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 
   &::-webkit-scrollbar {
-    width: 4px;
+    width: 4PX;
   }
 
   &::-webkit-scrollbar-track {
@@ -214,7 +228,7 @@
 
   &::-webkit-scrollbar-thumb {
     background: rgba(148, 163, 184, 0.5);
-    border-radius: 999px;
+    border-radius: 999PX;
   }
 }
 
@@ -222,12 +236,12 @@
   width: 100%;
   border: none;
   background: transparent;
-  padding: 14px 16px;
+  padding: 14PX 16PX;
   border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 8PX;
   cursor: pointer;
   text-align: left;
 }
@@ -245,7 +259,7 @@
 }
 
 .tierOptionTitle {
-  font-size: 13px;
+  font-size: 13PX;
   font-weight: 500;
   color: rgba(100, 116, 139, 1);
   line-height: 1.25;
@@ -262,31 +276,31 @@
 }
 
 .tierOptionSelectIcon {
-  width: 14px;
-  height: 10px;
+  width: 14PX;
+  height: 10PX;
   flex-shrink: 0;
 }
 
 /* 顶部高亮能力块（AI CALL 卡片） */
 .highlightCard {
-  padding: 18px;
-  margin-bottom: 12px;
+  padding: 18PX;
+  margin-bottom: 12PX;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
-  gap: 3.4px;
-  border-radius: 13.6px;
+  gap: 3.4PX;
+  border-radius: 13.6PX;
 }
 
 .highlightLocked {
-  border: 0.85px solid rgba(193, 193, 193, 0.8);
+  border: 0.85PX solid rgba(193, 193, 193, 0.8);
   background: rgba(193, 193, 193, 0.15);
   color: #9ca3af;
 }
 
 .highlightActive {
-  border: 0.85px solid rgba(34, 197, 94, 0.5);
+  border: 0.85PX solid rgba(34, 197, 94, 0.5);
   background: rgba(34, 197, 94, 0.15);
   color: #16a34a;
 }
@@ -295,7 +309,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 12px;
+  font-size: 12PX;
 }
 
 .highlightLabel {
@@ -303,16 +317,16 @@
 }
 
 .highlightLock {
-  width: 18px;
-  height: 18px;
+  width: 18PX;
+  height: 18PX;
   flex-shrink: 0;
 }
 
 .highlightMain {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 24px;
+  gap: 8PX;
+  font-size: 24PX;
   font-weight: 700;
 }
 
@@ -322,19 +336,19 @@
 
 .highlightValueLocked {
   text-decoration: line-through;
-  text-decoration-thickness: 2px;
+  text-decoration-thickness: 2PX;
   text-decoration-color: rgba(156, 163, 175, 0.9);
 }
 
 .highlightSubtitle {
   margin: 0;
-  font-size: 12px;
+  font-size: 12PX;
   opacity: 0.8;
 }
 
 .features {
   list-style: none;
-  margin: 0 0 12px 0;
+  margin: 0 0 12PX 0;
   padding: 0;
   flex: 1;
   min-height: 0; // 关键：避免被内容撑开导致无法滚动
@@ -343,7 +357,7 @@
 
   /* 内部滚动条样式（可选，尽量简洁） */
   &::-webkit-scrollbar {
-    width: 4px;
+    width: 4PX;
   }
 
   &::-webkit-scrollbar-track {
@@ -352,14 +366,14 @@
 
   &::-webkit-scrollbar-thumb {
     background: rgba(148, 163, 184, 0.6);
-    border-radius: 999px;
+    border-radius: 999PX;
   }
 
   .featureItem {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 0;
+    gap: 12PX;
+    padding: 10PX 0;
     line-height: 1.5;
 
     .checkmark,
@@ -367,26 +381,26 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 20px;
-      height: 20px;
+      width: 20PX;
+      height: 20PX;
       background: rgba(15, 23, 42, 0.08);
       border-radius: 50%;
       color: #0f172a;
-      font-size: 12px;
+      font-size: 12PX;
       font-weight: 700;
       flex-shrink: 0;
     }
 
     .featureIcon {
-      width: 32px;
-      height: 32px;
+      width: 32PX;
+      height: 32PX;
       border-radius: 50%;
       background: rgba(15, 23, 42, 0.04);
     }
 
     .featureIconImg {
-      width: 14px;
-      height: 14px;
+      width: 14PX;
+      height: 14PX;
       object-fit: contain;
     }
 
@@ -394,10 +408,10 @@
       flex: 1;
       color: #334155;
       font-family: "PingFang SC", "Roboto", sans-serif;
-      font-size: 16px;
+      font-size: 16PX;
       font-style: normal;
       font-weight: 500;
-      line-height: 24px; /* 150% */
+      line-height: 24PX; /* 150% */
     }
 
     .featureMainText,
@@ -411,8 +425,8 @@
     }
 
     .featureLockIcon {
-      width: 16px;
-      height: 16px;
+      width: 16PX;
+      height: 16PX;
       flex-shrink: 0;
     }
   }
@@ -422,11 +436,12 @@
 .planCardFree {
   .button {
     display: flex;
-    padding: 10px 0;
+    height: 44PX;
+    padding: 0 12PX;
     justify-content: center;
     align-items: center;
     align-self: stretch;
-    border-radius: 10.2px;
+    border-radius: 10.2PX;
     background: #4B5563;
   }
 
@@ -447,11 +462,12 @@
 .planCardLite {
   .button {
     display: flex;
-    padding: 10px 0;
+    height: 44PX;
+    padding: 0 12PX;
     justify-content: center;
     align-items: center;
     align-self: stretch;
-    border-radius: 10.2px;
+    border-radius: 10.2PX;
     background: #22C55E;
 
     &.disabled {
@@ -485,8 +501,8 @@
   .features {
     .featureMetaText {
       color: rgba(148, 163, 184, 1);
-      font-size: 14px;
-      line-height: 24px;
+      font-size: 14PX;
+      line-height: 24PX;
     }
   }
 }
@@ -494,11 +510,12 @@
 .planCardPro {
   .button {
     display: flex;
-    padding: 10px 0;
+    height: 44PX;
+    padding: 0 12PX;
     justify-content: center;
     align-items: center;
     align-self: stretch;
-    border-radius: 10.2px;
+    border-radius: 10.2PX;
     background: rgba(255, 215, 1, 1);
     color: #000;
 
@@ -523,16 +540,16 @@
     /* Pro 版：权益文本里的“数值/补充信息”更浅且更小 */
     .featureMetaText {
       color: rgba(148, 163, 184, 1);
-      font-size: 14px;
-      line-height: 24px;
+      font-size: 14PX;
+      line-height: 24PX;
     }
   }
 
   /* Pro 版：等级选择输入框样式 */
   .tierSelectTrigger {
-    height: 70px;
-    border-radius: 12px;
-    border: 0.85px solid rgba(255, 215, 1, 0.7);
+    height: 70PX;
+    border-radius: 12PX;
+    border: 0.85PX solid rgba(255, 215, 1, 0.7);
     background: #fff9d9;
   }
 }
@@ -540,15 +557,16 @@
 .button {
   width: 100%;
   display: flex;
-  padding: 13.6px 0;
+  height: 44PX;
+  padding: 0 12PX;
   justify-content: center;
   align-items: center;
   align-self: stretch;
-  border-radius: 10.2px;
+  border-radius: 10.2PX;
   background: #4B5563;
   color: white;
   border: none;
-  font-size: 14px;
+  font-size: 14PX;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -576,10 +594,10 @@
 }
 
 .spinner {
-  width: 18px;
-  height: 18px;
+  width: 18PX;
+  height: 18PX;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.4);
+  border: 2PX solid rgba(255, 255, 255, 0.4);
   border-top-color: #ffffff;
   animation: spin 0.8s linear infinite;
 }
@@ -596,7 +614,7 @@
 /* 响应式设计 */
 @media (max-width: 768px) {
   .planCard {
-    padding: 24px 16px;
+    padding: 24PX 16PX;
 
     &.popular {
       transform: scale(1);
@@ -604,19 +622,19 @@
   }
 
   .title {
-    font-size: 18px;
+    font-size: 18PX;
   }
 
   .price {
     .amount {
-      font-size: 28px;
+      font-size: 28PX;
     }
   }
 
   .features {
     .featureItem {
-      font-size: 13px;
-      padding: 8px 0;
+      font-size: 13PX;
+      padding: 8PX 0;
     }
   }
 }

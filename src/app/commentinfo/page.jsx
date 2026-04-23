@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button, Input, Toast, Divider } from 'antd-mobile';
+import { Dropdown } from 'antd';
+import { WarningOutlined, DeleteOutlined } from '@ant-design/icons';
 import { MoreOutline } from 'antd-mobile-icons';
 import { useTranslation } from 'react-i18next';
 import NavBar from '@/components/NavBar';
@@ -59,8 +61,30 @@ export default function CommentInfo() {
   const [likedPosts, setLikedPosts] = useState({});
   const [likedComments, setLikedComments] = useState({});
   const [expandedComments, setExpandedComments] = useState({});
-  const [showActionSheet, setShowActionSheet] = useState(false);
-  const [selectedPost, setSelectedPost] = useState(null);
+
+  const normalizeId = (value) => String(value ?? '').trim();
+  const localStorageUserId =
+    typeof window !== 'undefined' ? normalizeId(localStorage.getItem('userId')) : '';
+  const currentUserId = normalizeId(
+    currentUser?.userId ||
+      currentUser?.id ||
+      currentUser?.userInfo?.userId ||
+      currentUser?.userInfo?.id ||
+      currentUser?.data?.userId ||
+      currentUser?.data?.id ||
+      localStorageUserId
+  );
+  const isPostOwner =
+    !!currentUserId && currentUserId === normalizeId(detail?.userId || detail?.id);
+  const isCommentOwner = (comment) => {
+    const commentUserId = normalizeId(
+      comment?.userId ||
+        comment?.authorId ||
+        comment?.user?.userId ||
+        comment?.user?.id
+    );
+    return !!currentUserId && !!commentUserId && currentUserId === commentUserId;
+  };
 
   // 获取当前用户信息
   const getCurrentUser = async () => {
@@ -218,7 +242,11 @@ export default function CommentInfo() {
   // 处理分享到Telegram
   const handleShare = (e) => {
     if (e) e.stopPropagation();
-    const shareUrl = `${window.location.origin}/commentinfo?id=${detail.id}`;
+    // 仅 PC/非 TG 环境：分享固定新域名；TG WebView 内保持当前域名
+    const isTelegram = localStorage.getItem('appChannel') === 'tg';
+    const shareUrl = isTelegram
+      ? `${window.location.origin}/commentinfo?id=${detail.id}`
+      : buildSiteUrl(`/commentinfo?id=${detail.id}`);
     const shareText = detail.title || '来自 Mozi 社区的帖子';
     
     // 上报分享任务（SHARE）
@@ -236,9 +264,6 @@ export default function CommentInfo() {
       console.error('详情页分享任务触发异常:', e);
     }
 
-    // 检查是否在Telegram环境中
-    const isTelegram = localStorage.getItem('appChannel') === 'tg';
-    
     if (isTelegram && window.Telegram?.WebApp) {
       // 使用Telegram Web App API分享
       try {
@@ -448,6 +473,23 @@ export default function CommentInfo() {
     });
   };
 
+  // 处理举报（帖子/评论）
+  const handleReport = (target) => {
+    const postId = normalizeId(target?.id || detail?.id);
+    const authorId = normalizeId(
+      target?.userId ||
+        target?.authorId ||
+        target?.user?.userId ||
+        target?.user?.id ||
+        detail?.userId
+    );
+    const params = new URLSearchParams();
+    if (postId) params.set('postId', postId);
+    if (authorId) params.set('authorId', authorId);
+    const query = params.toString();
+    window.location.href = query ? `/report/comment?${query}` : '/report/comment';
+  };
+
   // 处理更新帖子
   const handleUpdatePost = (e, post) => {
     if (e) e.stopPropagation();
@@ -575,21 +617,71 @@ export default function CommentInfo() {
     }
   };
 
-  // 处理操作菜单选择
-  const handleActionClick = (type) => {
-    if (!selectedPost) return;
-    
-    if (type === 'edit') {
-      handleUpdatePost(null, selectedPost);
-    } else if (type === 'delete') {
-      // 判断是否为评论（有user属性）或帖子
-      if (selectedPost.user) {
-        handleDeleteComment(selectedPost.id);
+  // 处理右上角菜单
+  const handleMenuAction = (target, type) => {
+    const isComment = !!target?.user;
+    const isOwner = isComment
+      ? isCommentOwner(target)
+      : (currentUserId === normalizeId(target?.userId || target?.id));
+
+    if (type === 'report') {
+      handleReport(target);
+      return;
+    }
+    if (type === 'delete' && isOwner) {
+      if (isComment) {
+        handleDeleteComment(target.id);
       } else {
-        handleDeletePost(null, selectedPost.id);
+        handleDeletePost(null, target.id);
       }
     }
-    setShowActionSheet(false);
+  };
+
+  const getMenuItems = (target) => {
+    const isComment = !!target?.user;
+    const isOwner = isComment
+      ? isCommentOwner(target)
+      : (currentUserId === normalizeId(target?.userId || target?.id));
+
+    if (!isOwner) {
+      return [
+        {
+          key: 'report',
+          label: (
+            <span className={styles.reportMenuItem}>
+              <WarningOutlined />
+              <span>举报内容</span>
+            </span>
+          ),
+        },
+      ];
+    }
+
+    if (isComment) {
+      return [
+        {
+          key: 'delete',
+          label: (
+            <span className={styles.deleteMenuItem}>
+              <DeleteOutlined />
+              <span>删除</span>
+            </span>
+          ),
+        },
+      ];
+    }
+
+    return [
+      {
+        key: 'delete',
+        label: (
+          <span className={styles.deleteMenuItem}>
+            <DeleteOutlined />
+            <span>删除</span>
+          </span>
+        ),
+      },
+    ];
   };
 
   // 处理投票提交
@@ -684,23 +776,6 @@ export default function CommentInfo() {
     <Layout>
       <NavBar title={t('comment.title')} showBack={true} backgroundColor="#EEF0F3" showBorder={false} />
       <div className={styles.commentDetail} onClick={handlePageClick}>
-        {/* 操作菜单 */}
-        {showActionSheet && (
-          <div className={styles.actionSheetMask} onClick={() => setShowActionSheet(false)}>
-            <div className={styles.actionSheet} onClick={(e) => e.stopPropagation()}>
-              <div className={styles.actionSheetTitle}>请选择操作</div>
-              {!selectedPost?.user && (
-                <div className={styles.actionSheetItem} onClick={() => handleActionClick('edit')}>
-                  编辑
-                </div>
-              )}
-              <div className={styles.actionSheetItem} onClick={() => handleActionClick('delete')}>
-                删除
-              </div>
-            </div>
-          </div>
-        )}
-        
         {loading ? (
           <div className={styles.loadingContainer}>
             <Loading />
@@ -713,17 +788,29 @@ export default function CommentInfo() {
                 <img className={styles.avatar} src={detail.avatar || 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0'} alt="avatar" />
                 <span className={styles.nickname}>{detail.nickName || '匿名用户'}</span>
                 <span className={styles.category}>{detail.category || '普通'}</span>
-                {currentUser && currentUser.userId === detail.userId && (
-                  <div className={styles.editActions}>
-                    <div onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedPost(detail);
-                      setShowActionSheet(true);
-                    }}>
+                <div className={styles.editActions}>
+                  <Dropdown
+                    trigger={['click']}
+                    placement="bottomRight"
+                    menu={{
+                      items: getMenuItems(detail),
+                      onClick: ({ key, domEvent }) => {
+                        domEvent?.stopPropagation?.();
+                        handleMenuAction(detail, key);
+                      },
+                    }}
+                    overlayClassName={styles.postMoreDropdown}
+                  >
+                    <button
+                      type="button"
+                      className={styles.moreButton}
+                      aria-label="more actions"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <MoreOutline fontSize={24} />
-                    </div>
-                  </div>
-                )}
+                    </button>
+                  </Dropdown>
+                </div>
               </div>
               <div className={styles.postInfo}>
                 <div className={styles.title}>{detail.title}</div>
@@ -829,14 +916,28 @@ export default function CommentInfo() {
                           {item.likeCount || 0}
                         </span>
                       </div>
-                      {currentUser && currentUser.userId === item.user.id && (
-                        <div className={styles.commentHandle} onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedPost(item);
-                          setShowActionSheet(true);
-                        }}>
-                          <MoreOutline fontSize={20} />
-                        </div>
+                      {isCommentOwner(item) && (
+                        <Dropdown
+                          trigger={['click']}
+                          placement="bottomRight"
+                          menu={{
+                            items: getMenuItems(item),
+                            onClick: ({ key, domEvent }) => {
+                              domEvent?.stopPropagation?.();
+                              handleMenuAction(item, key);
+                            },
+                          }}
+                          overlayClassName={styles.postMoreDropdown}
+                        >
+                          <button
+                            type="button"
+                            className={styles.moreButton}
+                            aria-label="more actions"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreOutline fontSize={20} />
+                          </button>
+                        </Dropdown>
                       )}
                     </div>
                   </div>

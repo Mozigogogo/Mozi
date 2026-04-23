@@ -17,6 +17,7 @@ import GoogleAuthProvider from "../context/GoogleAuthProvider";
 import GlobalClientEffects from "@/components/GlobalClientEffects";
 import PerfDebug from "@/components/PerfDebug";
 import TelegramSdkLoader from "@/components/TelegramSdkLoader";
+import TgWcWebviewCheck from "@/components/TgWcWebviewCheck";
 
 const geistSans = Inter({
   variable: "--font-geist-sans",
@@ -60,6 +61,7 @@ export default function RootLayout({ children }) {
         <TelegramSdkLoader />
         <EnvironmentDetector />
         <PerfDebug />
+        <TgWcWebviewCheck />
         <BuildFingerprint />
         <ChunkErrorRecovery />
         <RouteChangeHandler />

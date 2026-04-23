@@ -392,10 +392,10 @@ export default function PCLoginPage() {
         // PC 环境：直接打开钱包连接弹窗
         if (!web3Connected) {
           pendingSignRef.current = true;
-          if (typeof window.__openAppKit === 'function') {
-            window.__openAppKit();
+          if (typeof window.__openRainbowKit === 'function') {
+            window.__openRainbowKit();
           } else {
-            console.error('AppKit 未初始化');
+            console.error('RainbowKit 未初始化');
             message.warning(t('auth.walletConnecting'));
           }
         } else {

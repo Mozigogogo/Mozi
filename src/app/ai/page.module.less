@@ -13,16 +13,65 @@
 
   &.pcMode {
     height: calc(100vh - 120PX); // Use PX to avoid scaling. 64px header + 24px padding + 32px bottom gap
-    background: #fff;
+    background: transparent;
     background-image: none;
     padding-bottom: 0;
-    border-radius: 12PX; // Use PX to avoid scaling
-    box-shadow: 0 2PX 12PX rgba(0, 0, 0, 0.05); // Use PX to avoid scaling
+    border-radius: 0;
+    box-shadow: none;
     display: flex;
     flex-direction: column;
 
     // Use PX (uppercase) or media query to potentially bypass px-to-viewport/rem conversion
     @media screen and (min-width: 1024px) {
+      .pcBackBar {
+        position: absolute;
+        top: 16PX;
+        left: 16PX;
+        z-index: 5;
+        display: inline-flex;
+        align-items: center;
+        gap: 10PX;
+        padding: 0;
+        color: #1d2129;
+        cursor: pointer;
+        user-select: none;
+
+        &:hover {
+          .pcBackIcon {
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 10PX 28PX rgba(0, 0, 0, 0.1);
+          }
+        }
+
+        &:active {
+          .pcBackIcon {
+            transform: translateY(1PX);
+          }
+        }
+      }
+
+      .pcBackIcon {
+        width: 40PX;
+        height: 40PX;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        border-radius: 10PX;
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow: 0 8PX 24PX rgba(0, 0, 0, 0.08);
+        backdrop-filter: blur(8PX);
+        -webkit-backdrop-filter: blur(8PX);
+        transition: all 0.2s ease;
+      }
+
+      .pcBackText {
+        font-size: 15PX;
+        line-height: 24PX;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+
       .chatHeader {
         flex-shrink: 0;
         padding-top: 12PX; 
@@ -90,6 +139,18 @@
           margin: 0 auto;
           padding: 0 20PX;
           gap: 16PX;
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        .msgRow {
+          width: 100%;
+          gap: 10PX;
+        }
+
+        .msgContent {
+          max-width: 72%;
+          gap: 6PX;
         }
 
         .bubble {
@@ -107,6 +168,35 @@
           height: 40PX;
           font-size: 16PX;
         }
+
+        .bubbleFooter {
+          margin-top: 0PX;
+          gap: 10PX;
+        }
+
+        .bubbleTime {
+          font-size: 12PX;
+          line-height: 1.2;
+        }
+
+        .msgActions {
+          gap: 0 !important;
+        }
+
+        .actionBtn {
+          width: 36PX;
+          height: 36PX;
+          padding: 0;
+          border-radius: 6PX;
+          justify-content: center;
+          gap: 0 !important;
+          margin: 0;
+        }
+
+        .actionBtn img {
+          width: 22PX;
+          height: 22PX;
+        }
         
         .timeUnder {
           font-size: 12PX;
@@ -114,17 +204,83 @@
         }
       }
 
+      .upgradePillInChatScrollWrapper {
+        padding-right: 20PX;
+        margin-top: -8PX;
+      }
+
+      .upgradePillNavBtn {
+        transform: scale(1);
+        width: 155PX !important;
+        height: 28PX !important;
+      }
+
+      .emptyState {
+        width: 100%;
+        max-width: 760PX;
+        margin: 0 auto;
+        padding: 0 16PX;
+      }
+
+      .emptyTextBlock {
+        max-width: 720PX;
+      }
+
+      .emptyTitle {
+        font-size: 24PX;
+        line-height: 1.2;
+        letter-spacing: -0.6PX;
+      }
+
+      .emptyTitleEn {
+        font-size: 20PX;
+        line-height: 1.2;
+        letter-spacing: -0.4PX;
+      }
+
+      .emptySubtitle {
+        font-size: 13PX;
+        margin-bottom: 18PX;
+      }
+
+      .emptyGrid {
+        max-width: 620PX;
+        gap: 10PX 12PX;
+        justify-content: center;
+      }
+
+      .emptyGridBtn {
+        width: auto;
+        min-width: 0;
+        max-width: none;
+        height: 44PX;
+        border-radius: 22PX;
+        padding: 0 16PX;
+      }
+
+      .emptyBtnIcon,
+      .emptyBtnSvg {
+        width: 20PX;
+        height: 20PX;
+      }
+
+      .emptyBtnText {
+        margin-left: 8PX;
+        font-size: 14PX;
+        max-width: 180PX;
+      }
+
       .chatInputBar {
         flex-shrink: 0;
         padding: 24PX;
         justify-content: center;
-        background: #fff;
+        background: transparent;
         border-top: none;
 
         .inputBox {
           max-width: 800PX;
           border-radius: 28PX;
-          padding: 8PX 8PX 8PX 24PX;
+          padding: 8PX 16PX;
           
           .input {
             height: 40PX;
@@ -137,9 +293,66 @@
           }
         }
 
+        .inputActions {
+          gap: 12PX;
+        }
+
+        .actionModes {
+          gap: 8PX;
+          height: 30PX;
+        }
+
+        .modeItem {
+          font-size: 12PX;
+          gap: 4PX;
+          padding: 4PX 10PX 4PX 6PX;
+          border-radius: 14PX;
+        }
+
+        .modeIconWrap {
+          width: 16PX;
+          height: 16PX;
+        }
+
+        .modeIcon {
+          width: 14PX !important;
+          height: 14PX !important;
+        }
+
+        .modeIconDeep {
+          width: 13PX !important;
+          height: 16PX !important;
+        }
+
+        .modeLabel {
+          font-size: 12PX;
+        }
+
+        .actionTools {
+          gap: 12PX;
+        }
+
+        .pointsTag {
+          height: 30PX;
+          padding: 0 14PX;
+          border-radius: 16PX;
+          font-size: 12PX;
+          gap: 6PX;
+        }
+
+        .pointsIcon {
+          width: 14PX !important;
+          height: 14PX !important;
+        }
+
+        .micBtn {
+          width: 30PX;
+          height: 30PX;
+        }
+
         .sendBtn, .stopBtn {
-          width: 40PX;
-          height: 40PX;
+          width: 36PX;
+          height: 36PX;
           border-radius: 50%;
           padding: 0;
           display: flex;
@@ -147,22 +360,22 @@
           justify-content: center;
           
           svg {
-              width: 18PX;
-              height: 18PX;
+              width: 16PX;
+              height: 16PX;
               margin: 0;
           }
 
           img {
-              width: 18PX;
-              height: 18PX;
+              width: 16PX;
+              height: 16PX;
               margin: 0;
               display: block;
           }
         }
         
         .pauseIcon {
-            width: 16PX;
-            height: 16PX;
+            width: 14PX;
+            height: 14PX;
         }
       }
 
@@ -178,6 +391,17 @@
           font-size: 13PX;
           padding: 8PX 12PX;
         }
+      }
+
+      .loadingContent {
+        gap: 12PX;
+      }
+
+      .loadingText {
+        font-size: 16PX;
+        line-height: 1.4;
+        color: #666;
+        text-align: center;
       }
 
     }
@@ -887,19 +1111,22 @@
 
 .emptyGrid {
   width: 100%;
-  display: grid;
-  /* 始终最多两列，避免一行超过两个入口 */
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  max-width: 560px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 12px;
 }
 
 .emptyGridBtn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
+  width: auto;
+  min-width: 0;
+  max-width: none;
   height: 37.5px;
-  padding: 0 12px;
+  padding: 0 14px;
   border-radius: 33554400px;
   border-width: 1px;
   background: rgba(255, 255, 255, 0.8);
@@ -912,7 +1139,7 @@
 
 .emptyGridBtn:hover {
   border-color: #11B787;
-  box-shadow: 0 6px 20px rgba(17, 183, 135, 0.12);
+  box-shadow: none;
 }
 
 .emptyBtnIcon {
@@ -1045,5 +1272,11 @@
         font-size: 14PX;
       }
     }
+  }
+}
+
+@media screen and (min-width: 1024px) {
+  .robotPage.pcMode .actionBtn {
+    gap: 0 !important;
   }
 }

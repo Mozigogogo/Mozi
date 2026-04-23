@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import Layout from '@/components/Layout';
+import { safeBack } from '@/utils/navigation';
 import styles from './page.module.less';
 
 export default function ExperiencerPage() {
@@ -52,7 +53,7 @@ export default function ExperiencerPage() {
   const handleBack = () => {
     // 检查是否有历史记录
     if (typeof window !== 'undefined' && window.history.length > 1) {
-      router.back();
+      safeBack(router, { fallback: '/' });
     } else {
       // 没有历史记录，返回首页
       router.push('/');

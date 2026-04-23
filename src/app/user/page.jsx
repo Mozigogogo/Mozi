@@ -35,6 +35,7 @@ import EditProfilePopup from '@/app/user/components/EditProfilePopup';
 import FeedbackPopup from '@/app/user/components/FeedbackPopup';
 import GeneralPopup from '@/app/user/components/GeneralPopup';
 import { useAlertConfig } from '@/hooks/useAlertConfig';
+import { getTgInviteLink } from '@/utils/constants';
 import VipBanner from '@/components/VipBanner';
 import styles from '@/app/user/page.module.less';
 
@@ -872,8 +873,16 @@ export default function UserPage() {
   };
 
   const handleShare = () => {
-    const shareUrl = window.location.origin;
-    const shareText = t('user.shareText');
+    const storedData = parseStoredUserDataInfo(localStorage.getItem(USER_DATA_INFO_STORAGE_KEY));
+    const inviteCode =
+      storedData?.inviteCode ||
+      storedData?.invitationCode ||
+      storedData?.userInfo?.inviteCode ||
+      '';
+    const inviteLink = getTgInviteLink(inviteCode);
+    // 与积分页邀请逻辑保持一致：优先分享 TG 邀请链接，无邀请码时回退到站点首页
+    const shareUrl = inviteLink || window.location.origin;
+    const shareText = t('points.shareText') || t('user.shareText');
     
     // 检查是否在Telegram环境中
     const isTelegram = localStorage.getItem('appChannel') === 'tg';
@@ -1237,8 +1246,8 @@ export default function UserPage() {
     // 非 Telegram 环境使用原有的 wagmi 钱包
     if (!isConnected) {
       pendingSignRef.current = true;
-      if (window.__openAppKit) {
-        window.__openAppKit();
+      if (window.__openRainbowKit) {
+        window.__openRainbowKit();
       } else {
         Toast.show({ content: t('user.walletNotReady'), position: 'bottom' });
       }

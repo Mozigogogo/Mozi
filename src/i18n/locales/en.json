@@ -213,7 +213,11 @@
     "cancelSuccess": "Cancelled successfully",
     "operationFailed": "Operation failed",
     "followed": "Followed",
-    "unfollowed": "Unfollowed"
+    "unfollowed": "Unfollowed",
+    "confirmDelete": "Are you sure you want to delete?",
+    "deleting": "Deleting...",
+    "deleteSuccess": "Deleted successfully",
+    "deleteFailed": "Delete failed"
   },
   "exchangeRank": {
     "realTimeUpdate": "Real-time update"
@@ -750,6 +754,7 @@
     "telegramReloginConfirm": "Confirm"
   },
   "community": {
+    "reportContent": "Report content",
     "title": "Community",
     "post": "Post",
     "comment": "Comment",
@@ -876,7 +881,17 @@
     "unauthorized": "Unauthorized, please login first",
     "forbidden": "Access forbidden",
     "unknown": "Unknown error",
-    "sessionExpired": "Session expired, please login again"
+    "sessionExpired": "Session expired, please login again",
+    "cannotGetUserInfoRelogin": "Session expired, please login again."
+  },
+  "shareChat": {
+    "title": "Share conversation",
+    "close": "Close",
+    "copyLink": "Copy link",
+    "copied": "Copied",
+    "twitter": "Twitter",
+    "tg": "TG",
+    "more": "More"
   },
   "robot": {
     "title": "AI Assistant",
@@ -1338,7 +1353,8 @@
       "uploading": "Uploading...",
       "uploadSuccess": "Successfully uploaded {{count}} image(s)",
       "uploadFailed": "Image upload failed",
-      "reasonRequired": "Please enter recommendation reason"
+      "reasonRequired": "Please enter recommendation reason",
+      "invalidPostId": "Invalid post ID"
     },
     "vote": {
       "createVote": "Create Vote",

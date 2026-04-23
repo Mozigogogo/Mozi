@@ -331,7 +331,7 @@ const MarketOverview = memo(() => {
       hasTodayUpdate: hasTodayUpdate, // 传递状态用于样式判断
       onClick: () => {
         if (typeof window !== 'undefined') {
-          window.location.href = '/user';
+          window.location.href = '/daily';
         }
       }
     }

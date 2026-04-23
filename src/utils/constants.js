@@ -105,7 +105,11 @@ export const Interface = {
 
   // 支付相关
   PAYMENT_CREATE_STARS: '/payment/createStarsInvoice',
+  PAYMENT_CREATE_WALLET_ORDER: '/payment/createWalletOrder',
+  PAYMENT_SUBMIT_WALLET_TX: '/payment/submitWalletTx',
   PAYMENT_ORDER_STATUS: '/payment/orderStatus',
+  PAYMENT_WALLET_PAYMENT_INFO: '/payment/walletPaymentInfo',
+  PAYMENT_WALLET_PAY: '/payment/walletPay',
   PAYMENT_VERIFY_CRYPTO: '/payment/verify-crypto',
   // 币种信息
   COIN_INFO: '/search/lastpricechange',
@@ -127,6 +131,10 @@ export const Interface = {
   POSTS_LIKE: '/posts/like',
   // 帖子取消点赞
   POSTS_UNLIKE: '/posts/unlike',
+  // 帖子点踩
+  POSTS_DISLIKE: '/posts/dislike',
+  // 帖子取消点踩
+  POSTS_UNDISLIKE: '/posts/undislike',
   // 帖子评论
   POSTS_COMMENT: '/posts/comment',
   // 帖子删除
@@ -266,17 +274,27 @@ export const Interface = {
   // 发帖
   POST_NEW: '/posts/new',
   // 点踩
-  POSTS_UNLIKE: '/posts/unlike',
+  POSTS_DISLIKE: '/posts/dislike',
+  // 取消点踩
+  POSTS_UNDISLIKE: '/posts/undislike',
   // 点赞
   POSTS_LIKE: '/posts/like',
+  // 取消点赞
+  POSTS_UNLIKE: '/posts/unlike',
   // 创建评论
   COMMENTS_NEW: '/comments/new',
   // 评论点赞
   COMMENTS_LIKE: '/comments/like/{id}',
   // 评论取消点赞
   COMMENTS_UNLIKE: '/comments/unlike/{id}',
+  // 举报帖子
+  POSTS_REPORT: '/posts/{id}/report',
+  // 物理删除帖子（仅本人）
+  POSTS_REMOVE: '/posts/remove/{id}',
   // 删除评论
   COMMENTS_DELETE: '/comments/delete/{id}',
+  // 物理删除评论（仅本人）
+  COMMENTS_REMOVE: '/comments/remove/{id}',
   // 回复评论
   COMMENTS_REPLIES: '/comments/replies',
   // 更新帖子

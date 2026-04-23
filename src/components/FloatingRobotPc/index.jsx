@@ -10,7 +10,7 @@ import styles from './index.module.less';
  * - 如果传入 onClick，则优先执行 onClick（适配本页弹窗）
  * - 否则回退为跳转到 targetPath
  */
-export default function FloatingRobotPc({ message, targetPath = '/robot_test', onClick }) {
+export default function FloatingRobotPc({ message, targetPath = '/ai', onClick }) {
   const router = useRouter();
   const { t } = useTranslation();
 
