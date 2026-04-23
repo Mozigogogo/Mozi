@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, usePathname } from 'next/navigation';
+import { safeBack } from '@/utils/navigation';
 import { useTranslation } from 'react-i18next';
 import { Toast } from 'antd-mobile';
 import { LeftOutline, MoreOutline } from 'antd-mobile-icons';
@@ -281,7 +282,7 @@ export default function UserProfile({ params }) {
       <div className={styles.topBanner}>
         {/* Navigation Bar */}
         <div className={styles.navBar}>
-          <LeftOutline className={styles.navIcon} onClick={() => router.back()} />
+          <LeftOutline className={styles.navIcon} onClick={() => safeBack(router, { fallback: '/' })} />
         </div>
 
         {/* User Info Section */}

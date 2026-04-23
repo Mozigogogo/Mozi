@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { safeBack } from '@/utils/navigation';
 import dynamic from 'next/dynamic';
 import { Picker, Toast } from 'antd-mobile';
 import { Select } from 'antd';
@@ -490,7 +491,7 @@ const TradeVol = () => {
       <PCLayout>
         <div className={styles['pc-container']}>
            <div className={styles['pc-header']}>
-              <div className={styles['pc-back-btn']} onClick={() => router.back()}>
+              <div className={styles['pc-back-btn']} onClick={() => safeBack(router, { fallback: '/' })}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>

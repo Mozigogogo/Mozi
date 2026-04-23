@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Grid, InfiniteScroll } from 'antd-mobile';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { safeBack } from '@/utils/navigation';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { jump2Detail } from '../../utils/core';
@@ -388,7 +389,7 @@ export default function List() {
   
   // 返回按钮
   const goBack = () => {
-    router.back();
+    safeBack(router, { fallback: '/' });
   };
   
   const loadMore = async () => {

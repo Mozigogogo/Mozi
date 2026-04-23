@@ -1,6 +1,8 @@
-export function safeBack(router, { fallback = '/' } = {}) {
+export function safeBack(router, { fallback = '/', fallbackDelayMs = 250 } = {}) {
   try {
-    // Next router.back() 在 TG WebView 里可能无效（history 栈为空/被拦截）
+    // WebView / 嵌入场景中，Next router.back() 可能无效；
+    // 优先用浏览器 history.back，并在无跳转时自动兜底到 fallback。
+    const currentHref = typeof window !== 'undefined' ? window.location.href : '';
     const canGoBack =
       typeof window !== 'undefined' &&
       typeof window.history !== 'undefined' &&
@@ -8,7 +10,21 @@ export function safeBack(router, { fallback = '/' } = {}) {
       window.history.length > 1;
 
     if (canGoBack) {
-      router?.back?.();
+      window.history.back();
+      if (typeof window !== 'undefined') {
+        window.setTimeout(() => {
+          try {
+            if (window.location.href !== currentHref) return;
+            if (router?.replace) {
+              router.replace(fallback);
+              return;
+            }
+            if (router?.push) {
+              router.push(fallback);
+            }
+          } catch (_) {}
+        }, Math.max(0, Number(fallbackDelayMs) || 0));
+      }
       return;
     }
   } catch (_) {}

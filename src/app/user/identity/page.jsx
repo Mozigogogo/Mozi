@@ -3,6 +3,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { NavBar, Button, Toast } from 'antd-mobile';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { safeBack } from '@/utils/navigation';
 import { useTranslation } from 'react-i18next';
 import styles from './page.module.less';
 
@@ -54,7 +55,7 @@ export default function UserIdentityPage() {
 
   return (
     <div className={styles.container}>
-      <NavBar onBack={() => router.back()} className={styles.navBar}>
+      <NavBar onBack={() => safeBack(router, { fallback: '/' })} className={styles.navBar}>
         {t('editProfile.identity.label') || '身份标签'}
       </NavBar>
 

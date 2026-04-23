@@ -9,6 +9,7 @@ import { Interface } from '../../utils/constants';
 import { completeTask } from '@/api/user';
 import NavBar from '../../components/NavBar';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { safeBack } from '@/utils/navigation';
 import styles from './page.module.less';
 
 // 确保接口定义存在
@@ -353,7 +354,7 @@ export default function PostPage() {
               localStorage.setItem('needRefreshCommunity', 'true');
               router.push('/community');
             } else {
-              router.back();
+              safeBack(router, { fallback: '/' });
             }
           }
         });
@@ -700,7 +701,7 @@ export default function PostPage() {
     <>
       <NavBar 
         title={isUpdate ? t('post.editPost') : t('post.title')}
-        onBack={() => router.back()}
+        onBack={() => safeBack(router, { fallback: '/' })}
       />
       <div className={styles.postContainer}>
         <div className={styles.contentWrapper}>

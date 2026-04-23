@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import NavBar from '@/components/NavBar';
 import PCLayout from '@/components/PCLayout';
 import { reportPost } from '@/api/community';
+import { safeBack } from '@/utils/navigation';
 import styles from './page.module.less';
 
 const REPORT_TYPES = [
@@ -58,7 +59,7 @@ export default function CommentReportPage() {
     try {
       await reportPost(postId, selectedType);
       Toast.show({ content: '举报提交成功', position: 'bottom' });
-      router.back();
+      safeBack(router, { fallback: '/' });
     } catch (error) {
       console.error('[report][comment] submit failed:', error);
       Toast.show({ content: error?.errorMsg || error?.message || '提交失败，请稍后重试', position: 'bottom' });
@@ -83,14 +84,14 @@ export default function CommentReportPage() {
             {isDesktop ? (
               <div
                 className={styles.backButton}
-                onClick={() => router.back()}
+                onClick={() => safeBack(router, { fallback: '/' })}
                 role="button"
                 tabIndex={0}
                 aria-label="返回上一页"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    router.back();
+                    safeBack(router, { fallback: '/' });
                   }
                 }}
               >

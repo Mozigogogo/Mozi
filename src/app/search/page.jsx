@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { safeBack } from '@/utils/navigation';
 import { LeftOutline } from 'antd-mobile-icons';
 import { SearchInput } from '../../components/SearchInput';
 import MoziCard from '../../components/MoziCard';
@@ -224,7 +225,7 @@ export default function SearchPage() {
       <div className={styles.topArea}>
         {/* 自定义导航栏 */}
         <div className={styles.customNavbar}>
-          <div className={styles.navbarLeft} onClick={() => router.back()}>
+          <div className={styles.navbarLeft} onClick={() => safeBack(router, { fallback: '/' })}>
             <LeftOutline fontSize={24} color="#ffffff" />
           </div>
           <div className={styles.navbarTitle}>{t('common.search')}</div>

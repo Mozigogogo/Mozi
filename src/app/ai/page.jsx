@@ -16,6 +16,7 @@ import { request } from '@/utils/request';
 import { executeConsume } from '@/api/points';
 import { useRobotTestSSE } from '@/hooks/useRobotTestSSE';
 import { forceBlurAndResetViewport } from '@/utils/iosViewportFix';
+import { safeBack } from '@/utils/navigation';
 import { fetchUserDataInfoOnce } from '@/utils/postLogin';
 import styles from './page.module.less';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
@@ -1100,11 +1101,11 @@ export default function RobotPage({ isPC: propIsPC = false }) {
             className={styles.pcBackBar}
             role="button"
             tabIndex={0}
-            onClick={() => router.back()}
+            onClick={() => safeBack(router, { fallback: '/' })}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                router.back();
+                safeBack(router, { fallback: '/' });
               }
             }}
             aria-label={t('common.back')}

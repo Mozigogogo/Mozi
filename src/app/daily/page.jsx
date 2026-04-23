@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { safeBack } from '@/utils/navigation';
 import { LeftArrowIcon } from '@/components/Icons';
 import styles from './page.module.less';
 import { getFinanceCalendar } from '@/api/financeCalendar';
@@ -238,7 +239,7 @@ export default function DailyPage() {
   return (
     <div className={styles.container} ref={containerRef}>
       <nav className={styles.topNav}>
-        <button className={styles.backButton} onClick={() => router.back()} aria-label="返回上一页">
+        <button className={styles.backButton} onClick={() => safeBack(router, { fallback: '/' })} aria-label="返回上一页">
           <LeftArrowIcon size={28} color="#fff" className={styles.backIcon} aria-hidden="true" />
         </button>
       </nav>

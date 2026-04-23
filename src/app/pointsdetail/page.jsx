@@ -450,6 +450,7 @@ export default function PointsDetail() {
             const taskKey = dailyTaskKeyMap[task.taskCode] || 'dailyLogin';
             return {
               id: task.taskCode || index + 1,
+              taskCode: task.taskCode,
               icon: dailyTaskIconMap[task.taskCode] || '/point/glove_praise@2x.png',
               bgColor: taskBgColorMap[task.taskCode] || '#F5F7FA',
               title: task.taskName,
@@ -723,6 +724,20 @@ export default function PointsDetail() {
     }
   };
 
+  const handleDailyTaskClick = (task) => {
+    const taskCode = String(task?.taskCode || '').toUpperCase();
+    const communityTaskCodes = new Set([
+      'DAILY_LIKE',
+      'POST',
+      'REPLY',
+      'RECEIVE_LIKE',
+      'POST_RECEIVE_REPLY',
+    ]);
+    if (communityTaskCodes.has(taskCode)) {
+      router.push('/community');
+    }
+  };
+
   return (
     <div className={styles.pointsDetailContainer}>
       {/* NavBar 导航 */}
@@ -768,7 +783,11 @@ export default function PointsDetail() {
       </div>
 
       {/* 每日任务 */}
-      <DailyTasks dailyInvestments={dailyInvestments} loading={dailyTasksLoading} />
+      <DailyTasks
+        dailyInvestments={dailyInvestments}
+        loading={dailyTasksLoading}
+        onTaskClick={handleDailyTaskClick}
+      />
 
       {/* 底部功能按钮 */}
       <ActionButtons />

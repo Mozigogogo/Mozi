@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { safeBack } from '@/utils/navigation';
 import { InfiniteScroll, Toast, SpinLoading } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import { SearchInput } from '../../components/SearchInput';
@@ -89,7 +90,7 @@ export default function TopicSearch() {
 
   // 返回上一页
   const goBack = () => {
-    router.back();
+    safeBack(router, { fallback: '/' });
   };
 
   // 高亮显示搜索关键词

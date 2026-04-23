@@ -26,6 +26,7 @@ import AiChatModalPc from '@/components/AiChatModalPc';
 import { request } from '@/utils/request';
 import { Interface, LOOPTIME, WS_URL } from '@/utils/constants';
 import { formatNumber, formatPercent, jump2NoTab } from '@/utils/core';
+import { safeBack } from '@/utils/navigation';
 import { MoziWebSocket } from '@/utils/moziWebSocket';
 import { useTranslation } from 'react-i18next';
 import { useAlertConfig } from '@/hooks/useAlertConfig';
@@ -1156,10 +1157,8 @@ export default function DetailPage() {
   const shareToTelegram = () => {
     if (!coinInfo) return;
     
-    // 获取当前页面URL
-    // TG WebView 内保持当前域名；仅 PC/非 TG 环境使用固定新域名
-    const isTelegram = typeof window !== 'undefined' && localStorage.getItem('appChannel') === 'tg';
-    const currentUrl = isTelegram ? window.location.href : buildSiteUrlFromLocation();
+    // 分享链接统一使用线上正式域名
+    const currentUrl = `https://www.moziai.xyz/detail?symbol=${encodeURIComponent(symbol || '')}`;
     
     // 构建分享文本
     const priceChange = coinInfo.priceChange_24h || '0';
@@ -2256,7 +2255,7 @@ ${coinInfo.name || symbol} (${symbol})
     try {
       localStorage.setItem('tg_auto_login_skip_once_v1', String(Date.now() + 15 * 1000));
     } catch (_) {}
-    router.back();
+    safeBack(router, { fallback: '/' });
   };
 
   /** PC 行情页弹幕条：发帖到社区（与 PC 社区币种讨论一致） */

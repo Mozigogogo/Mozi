@@ -849,11 +849,9 @@ export default function CommunityPage() {
       post = eOrPost;
     }
     
-    // 仅 PC/非 TG 环境：分享固定新域名；TG WebView 内保持当前域名
+    // 社区分享统一使用线上正式域名
     const isTelegram = localStorage.getItem('appChannel') === 'tg';
-    const shareUrl = isTelegram
-      ? `${window.location.origin}/commentinfo?id=${post.id}`
-      : buildSiteUrl(`/commentinfo?id=${post.id}`);
+    const shareUrl = `https://www.moziai.xyz/commentinfo?id=${post.id}`;
     const shareText = post.title || '来自 Mozi 社区的帖子';
     
     // Amplitude 埋点

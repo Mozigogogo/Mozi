@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { safeBack } from '@/utils/navigation';
 import dynamic from 'next/dynamic';
 import { Tabs, Picker, Image } from 'antd-mobile';
 import { Pagination, Select } from 'antd';
@@ -360,7 +361,7 @@ export default function FundingRate() {
       <PCLayout>
         <div className={styles['pc-container']}>
           <div className={styles['pc-header']}>
-            <div className={styles['pc-back-container']} onClick={() => router.back()}>
+            <div className={styles['pc-back-container']} onClick={() => safeBack(router, { fallback: '/' })}>
               <div className={styles['pc-back-btn']}>
                 <svg className={styles['pc-back-icon']} width="43" height="26" viewBox="0 0 43 26" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M24.6821 18.8008L18.4321 12.5508L24.6821 6.30078" stroke="#4A5565" strokeWidth="2.08333" strokeLinecap="round" strokeLinejoin="round"/>

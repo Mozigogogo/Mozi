@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter, useSearchParams } from "next/navigation";
+import { safeBack } from "@/utils/navigation";
 import styles from "./page.module.less";
 
 export default function RankDiscussPage() {
@@ -19,11 +20,7 @@ export default function RankDiscussPage() {
   const [loading, setLoading] = useState(false);
 
   const onBack = () => {
-    if (typeof window !== 'undefined' && window.history.length > 1) {
-      router.back();
-    } else {
-      router.push('/find?tab=rank');
-    }
+    safeBack(router, { fallback: '/' });
   };
 
   const handleSubmit = async () => {
