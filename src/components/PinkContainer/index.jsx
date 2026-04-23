@@ -1,9 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import styles from './index.module.less';
 
 export default function PinkContainer() {
@@ -11,7 +10,7 @@ export default function PinkContainer() {
   const router = useRouter();
   const [loadedIcons, setLoadedIcons] = useState({});
 
-  const buttons = [
+  const buttons = useMemo(() => [
     {
       id: 'ai',
       icon: '/icons/new_detail/ai_chat.svg',
@@ -60,7 +59,15 @@ export default function PinkContainer() {
       label: t('home.quickActions.rankingSelect'),
       onClick: () => router.push('/daily')
     }
-  ];
+  ], [router, t]);
+
+  // 进入首页即预热图标到浏览器缓存，减少首屏等待
+  useEffect(() => {
+    buttons.forEach((button) => {
+      const img = new window.Image();
+      img.src = button.icon;
+    });
+  }, [buttons]);
 
   return (
     <div className={styles.quickActionsContainer}>
@@ -74,13 +81,13 @@ export default function PinkContainer() {
             <div
               className={`${styles.iconWrapper} ${loadedIcons[button.id] ? '' : styles.iconPulse}`}
             >
-              <Image 
+              <img
                 src={button.icon} 
                 alt={button.label}
-                width={40}
-                height={40}
                 className={styles.iconImage}
-                onLoadingComplete={() => {
+                loading="eager"
+                decoding="async"
+                onLoad={() => {
                   setLoadedIcons((prev) => ({ ...prev, [button.id]: true }));
                 }}
                 onError={() => {
