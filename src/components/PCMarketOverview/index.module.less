@@ -2,43 +2,47 @@
   margin-bottom: 16px;
 
   .statCard {
-    border-radius: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border-radius: 32px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.4134) 0%, rgba(255, 255, 255, 0.78) 100%);
+    border: 1px solid rgba(243, 244, 246, 0.8);
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow:
+      0px 1px 2px -1px rgba(0, 0, 0, 0.1),
+      0px 1px 3px 0px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(48px);
     transition: all 0.3s ease;
     cursor: pointer;
     height: 100%;
     min-height: 160px;
 
     &:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      transform: translateY(-2px);
-    }
-
-    :global {
-      .ant-card-body {
-        padding: 20px;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        border-radius: 16px;
-      }
+      box-shadow:
+        0px 1px 2px -1px rgba(0, 0, 0, 0.1),
+        0px 1px 3px 0px rgba(0, 0, 0, 0.1);
     }
 
     .cardHeader {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
+      justify-content: flex-start;
+
+      .cardTitleGroup {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
 
       .cardTitle {
-        width: 92px;
-        height: 18px;
-        font-family: 'Microsoft YaHei', sans-serif;
-        font-weight: 400;
-        font-size: 17px;
-        color: #333333;
-        line-height: 25px;
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        font-size: 20px;
+        line-height: 27px;
+        letter-spacing: 0;
+        color: rgba(74, 85, 101, 1);
       }
 
       .cardIcon {
@@ -57,6 +61,79 @@
       }
     }
 
+    .metricBlock {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .cardValueRow {
+      display: flex;
+      align-items: center;
+    }
+
+    .cardValue {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+    }
+
+    .currencySymbol {
+      font-family: 'DIN', sans-serif;
+      font-weight: bold;
+      font-size: 16px;
+      color: #333333;
+      line-height: 1;
+      padding-bottom: 2px;
+    }
+
+    .valueText {
+      font-family: 'DIN', sans-serif;
+      font-weight: bold;
+      font-size: 24px;
+      color: #333333;
+      line-height: 1;
+
+      &.todayText {
+        width: 92px;
+        height: 18px;
+        font-family: 'Microsoft YaHei', sans-serif;
+        font-weight: 400;
+        font-size: 17px;
+        color: #41C19A;
+        line-height: 25px;
+        margin-bottom: 8px;
+      }
+
+      &.placeholderText {
+        font-size: 18px;
+        font-weight: normal;
+        color: #999999;
+      }
+    }
+
+    .cardChange {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 18px;
+      font-weight: 500;
+
+      &.positive {
+        color: #11B787;
+      }
+
+      &.negative {
+        color: #FA5F5F;
+      }
+    }
+
+    .changeIcon {
+      width: 14px;
+      height: 14px;
+      object-fit: contain;
+    }
+
     .cardContent {
       display: flex;
       justify-content: space-between;
@@ -64,44 +141,6 @@
       flex-wrap: wrap;
 
       .cardValue {
-        display: flex;
-        align-items: flex-end;
-        gap: 4px;
-
-        .currencySymbol {
-          font-family: 'DIN', sans-serif;
-          font-weight: bold;
-          font-size: 18px;
-          color: #333333;
-          line-height: 1;
-          padding-bottom: 2px;
-        }
-
-        .valueText {
-          font-family: 'DIN', sans-serif;
-          font-weight: bold;
-          font-size: 32px;
-          color: #333333;
-          line-height: 1;
-
-          &.todayText {
-            width: 92px;
-            height: 18px;
-            font-family: 'Microsoft YaHei', sans-serif;
-            font-weight: 400;
-            font-size: 17px;
-            color: #41C19A;
-            line-height: 25px;
-            margin-bottom: 8px;
-          }
-
-          &.placeholderText {
-            font-size: 18px;
-            font-weight: normal;
-            color: #999999;
-          }
-        }
-
         .percentText {
           font-size: 16px;
           font-weight: 500;
@@ -113,28 +152,6 @@
           &.negative {
             color: #ff4d4f;
           }
-        }
-      }
-
-      .cardChange {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 18px;
-        font-weight: 500;
-
-        &.positive {
-          color: #11B787;
-        }
-
-        &.negative {
-          color: #FA5F5F;
-        }
-
-        .changeIcon {
-          width: 14px;
-          height: 14px;
-          object-fit: contain;
         }
       }
 
@@ -180,6 +197,16 @@
           border-color: #11B787;
           color: #11B787;
         }
+      }
+    }
+
+    .cardContentWithChange {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+
+      .cardChange {
+        align-self: flex-start;
       }
     }
   }

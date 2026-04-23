@@ -1125,6 +1125,10 @@ export default function DetailPage() {
 
   // 跳转到告警页面
   const jump2Alert = () => {
+    if (isPC) {
+      router.push(`/pc/alarm?symbol=${encodeURIComponent(symbol)}`);
+      return;
+    }
     setOneClickAlarmMode('config');
     setOneClickAlarmOpen(true);
   };

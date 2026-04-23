@@ -652,6 +652,7 @@
 }
 
 .sideInputRow {
+  position: relative;
   height: 36PX;
   border: 1PX solid rgba(226, 232, 240, 1);
   border-radius: 10PX;
@@ -662,12 +663,29 @@
   margin: 0 0 10PX;
 }
 
+.sideInputPrefixBtn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0 10PX 0 0;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  border-right: 1PX solid rgba(226, 232, 240, 1);
+  padding-right: 10PX;
+}
+
 .sideInputPrefix {
   font-size: 13PX;
   color: #7f8aa0;
-  margin-right: 10PX;
-  padding-right: 10PX;
-  border-right: 1PX solid rgba(226, 232, 240, 1);
+}
+
+.sideInputPrefixArrow {
+  font-size: 14PX;
+  font-weight: 600;
+  line-height: 1;
+  color: #94a3b8;
+  margin-left: 6PX;
 }
 
 .sideInput {
@@ -682,6 +700,51 @@
 
 .sideInput::placeholder {
   color: #b6bfcc;
+}
+
+.countryDropdownPanel {
+  position: absolute;
+  top: calc(100% + 6PX);
+  left: 0;
+  width: 220PX;
+  max-height: 240PX;
+  overflow: auto;
+  border: 1PX solid rgba(226, 232, 240, 1);
+  border-radius: 10PX;
+  background: #fff;
+  box-shadow: 0 8PX 24PX rgba(15, 23, 42, 0.12);
+  z-index: 30;
+}
+
+.countryDropdownItem {
+  width: 100%;
+  border: none;
+  background: #fff;
+  padding: 8PX 10PX;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10PX;
+  cursor: pointer;
+  text-align: left;
+}
+
+.countryDropdownItem:hover {
+  background: rgba(17, 183, 135, 0.08);
+}
+
+.countryDropdownName {
+  font-size: 12PX;
+  color: #334155;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.countryDropdownCode {
+  font-size: 12PX;
+  color: #0f766e;
+  flex: 0 0 auto;
 }
 
 .sideFooter {

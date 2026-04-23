@@ -1,13 +1,15 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Input, Switch, Toast } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import PCLayout from '@/components/PCLayout';
-import { addAlarm, getAlarmInfoByUserId, getCoinInfo } from '@/api/alarm';
+import { addAlarm, completeAlarmTask, getAlarmInfoByUserId, getCoinInfo } from '@/api/alarm';
+import { createAlertConfig, modifyAlertConfig } from '@/api/user';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
+import { allCountries } from 'country-telephone-data';
 import styles from './page.module.less';
 
 function PCAlarmContent() {
@@ -33,6 +35,12 @@ function PCAlarmContent() {
   const [phoneEnabled, setPhoneEnabled] = useState(true);
   const [emailEnabled, setEmailEnabled] = useState(true);
   const [inAppEnabled, setInAppEnabled] = useState(false);
+  const [countryCode, setCountryCode] = useState('+86');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [sideSubmitting, setSideSubmitting] = useState(false);
+  const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
+  const countryDropdownRef = useRef(null);
 
   const [historyState, setHistoryState] = useState({
     loading: false,
@@ -138,6 +146,34 @@ function PCAlarmContent() {
     [t],
   );
 
+  const countryOptions = useMemo(() => {
+    const dedup = new Map();
+    allCountries.forEach((c) => {
+      const country = Array.isArray(c)
+        ? { name: c[0], dialCode: c[2] ? `+${c[2]}` : '' }
+        : { name: c?.name || '', dialCode: c?.dialCode ? `+${c.dialCode}` : '' };
+      if (!country.name || !country.dialCode) return;
+      if (!dedup.has(country.dialCode)) dedup.set(country.dialCode, country);
+    });
+    return Array.from(dedup.values()).sort((a, b) => {
+      const aNum = Number(String(a.dialCode).replace('+', ''));
+      const bNum = Number(String(b.dialCode).replace('+', ''));
+      if (Number.isNaN(aNum) || Number.isNaN(bNum)) return a.dialCode.localeCompare(b.dialCode);
+      return aNum - bNum;
+    });
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!countryDropdownOpen) return;
+      if (countryDropdownRef.current && !countryDropdownRef.current.contains(event.target)) {
+        setCountryDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [countryDropdownOpen]);
+
   const getHistoryWarnRows = (item) => {
     const backend = Array.isArray(item?.warnContent) ? item.warnContent : [];
     return historyFixedCodes.map((fixed) => {
@@ -224,6 +260,32 @@ function PCAlarmContent() {
     }));
   };
 
+  const canCompleteDailyTask = () => {
+    if (typeof window === 'undefined') return false;
+    const lastCompleteTime = localStorage.getItem('dailyAlarmTaskCompleteTime');
+    if (!lastCompleteTime) return true;
+    const lastTime = new Date(parseInt(lastCompleteTime, 10));
+    const now = new Date();
+    const today9am = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 0, 0);
+    const resetTime =
+      now.getHours() < 9
+        ? new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 9, 0, 0)
+        : today9am;
+    return lastTime < resetTime;
+  };
+
+  const completeDailyAlarmTask = async () => {
+    if (!canCompleteDailyTask()) return;
+    try {
+      const res = await completeAlarmTask({ taskCode: 'ALARM' });
+      if (res?.code === 0 && res?.data?.success && typeof window !== 'undefined') {
+        localStorage.setItem('dailyAlarmTaskCompleteTime', Date.now().toString());
+      }
+    } catch (error) {
+      // ignore task report errors
+    }
+  };
+
   const saveWarnings = async () => {
     setBtnDisabled(true);
     const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
@@ -258,9 +320,31 @@ function PCAlarmContent() {
     if (emailEnabled) content.emailOn = true;
     if (inAppEnabled) content.appOn = true;
     try {
-      const addRes = await addAlarm({ symbol, content });
+      const { getAppChannel } = await import('@/utils/core');
+      const channel = getAppChannel();
+      let chatId = null;
+      if (channel === 'tg') {
+        chatId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString();
+        if (!chatId && typeof window !== 'undefined') {
+          chatId = localStorage.getItem('tgChatId');
+        }
+        if (!chatId) {
+          Toast.show({ content: t('addAlarm.cannotGetChatId') });
+          setBtnDisabled(false);
+          return;
+        }
+      }
+
+      const requestData = { symbol, content };
+      if (channel === 'tg') {
+        requestData.userId = userId;
+        if (chatId) requestData.id = chatId;
+      }
+
+      const addRes = await addAlarm(requestData);
       if (addRes?.code === 0 && addRes?.data === true) {
         Toast.show({ content: t('addAlarm.saveSuccess') });
+        await completeDailyAlarmTask();
       } else {
         Toast.show({ content: addRes?.errorMsg || t('addAlarm.saveFailed') });
       }
@@ -268,6 +352,75 @@ function PCAlarmContent() {
       Toast.show({ content: t('addAlarm.networkError') });
     } finally {
       setBtnDisabled(false);
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const stored = localStorage.getItem('alertConfig');
+      if (!stored || stored === 'null') return;
+      const cfg = JSON.parse(stored);
+      if (cfg?.alertPhoneCountryCode) setCountryCode(cfg.alertPhoneCountryCode);
+      if (cfg?.alertPhone) setPhone(String(cfg.alertPhone));
+      if (cfg?.alertEmail) setEmail(String(cfg.alertEmail));
+      if (cfg?.phoneEnabled !== undefined) setPhoneEnabled(Number(cfg.phoneEnabled) === 1);
+      if (cfg?.emailEnabled !== undefined) setEmailEnabled(Number(cfg.emailEnabled) === 1);
+      if (cfg?.defaultEnabled !== undefined) setInAppEnabled(Number(cfg.defaultEnabled) === 1);
+    } catch (e) {
+      // ignore invalid local data
+    }
+  }, []);
+
+  const handleEnableAlarm = async () => {
+    if (sideSubmitting) return;
+    const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+    if (!userId) {
+      Toast.show({ content: t('oneClickAlarm.pleaseLogin') });
+      return;
+    }
+
+    if (emailEnabled && email && email.trim() !== '') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        Toast.show({ content: t('oneClickAlarm.emailInvalid') });
+        return;
+      }
+    }
+
+    setSideSubmitting(true);
+    try {
+      const alertConfig = {
+        phoneEnabled: phoneEnabled ? 1 : 0,
+        emailEnabled: emailEnabled ? 1 : 0,
+        defaultEnabled: inAppEnabled ? 1 : 0,
+      };
+      if (phoneEnabled && phone) {
+        alertConfig.alertPhone = phone;
+        alertConfig.alertPhoneCountryCode = countryCode;
+      }
+      if (emailEnabled && email) {
+        alertConfig.alertEmail = email;
+      }
+
+      const existing = typeof window !== 'undefined' ? localStorage.getItem('alertConfig') : null;
+      const hasExisting = existing && existing !== 'null';
+      const result = hasExisting
+        ? await modifyAlertConfig(alertConfig)
+        : await createAlertConfig(alertConfig);
+
+      if (result?.success) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('alertConfig', JSON.stringify(result.data));
+        }
+        Toast.show({ content: t('oneClickAlarm.enabled') || '已开启告警' });
+      } else {
+        Toast.show({ content: result?.error || t('oneClickAlarm.enableFailed') });
+      }
+    } catch (error) {
+      Toast.show({ content: t('oneClickAlarm.networkError') });
+    } finally {
+      setSideSubmitting(false);
     }
   };
 
@@ -508,12 +661,39 @@ function PCAlarmContent() {
             </div>
 
             {phoneEnabled && (
-              <div className={styles.sideInputRow}>
-                <span className={styles.sideInputPrefix}>+86</span>
+              <div className={styles.sideInputRow} ref={countryDropdownRef}>
+                <button
+                  type="button"
+                  className={styles.sideInputPrefixBtn}
+                  onClick={() => setCountryDropdownOpen((v) => !v)}
+                >
+                  <span className={styles.sideInputPrefix}>{countryCode}</span>
+                  <span className={styles.sideInputPrefixArrow}>▾</span>
+                </button>
                 <input
                   className={styles.sideInput}
                   placeholder={t('oneClickAlarm.phonePlaceholder', { defaultValue: '请输入手机号' })}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
                 />
+                {countryDropdownOpen && (
+                  <div className={styles.countryDropdownPanel}>
+                    {countryOptions.map((item) => (
+                      <button
+                        key={`${item.dialCode}-${item.name}`}
+                        type="button"
+                        className={styles.countryDropdownItem}
+                        onClick={() => {
+                          setCountryCode(item.dialCode);
+                          setCountryDropdownOpen(false);
+                        }}
+                      >
+                        <span className={styles.countryDropdownName}>{item.name}</span>
+                        <span className={styles.countryDropdownCode}>{item.dialCode}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -534,6 +714,8 @@ function PCAlarmContent() {
                 <input
                   className={styles.sideInput}
                   placeholder={t('oneClickAlarm.emailPlaceholder', { defaultValue: '输入邮箱' })}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
             )}
@@ -553,7 +735,12 @@ function PCAlarmContent() {
           </div>
 
           <div className={styles.sideFooter}>
-            <button type="button" className={styles.sideConfirmBtn}>
+            <button
+              type="button"
+              className={styles.sideConfirmBtn}
+              onClick={handleEnableAlarm}
+              disabled={sideSubmitting}
+            >
               <img
                 src="/images/pc/confirm_open.svg"
                 alt={t('common.confirm', { defaultValue: '确认开启' })}
