@@ -54,11 +54,12 @@ const NewCoinListing = ({ showMore = false, data = [], onMoreClick, loading = fa
               const details = coin.deteil || coin.details || coin.description;
               const title = coin.title;
               const coinName = coin.symbol || coin.coin || coin.currency || coin.name || '';
+              const iconUrl = coin.logoUrl || coin.exchangeIcon || coin.icon || '/icons/pc/calendar.svg';
               
               return (
                 <div className={styles.coinItem} key={coin.id || index}>
                   <div className={styles.itemTop}>
-                    <img className={styles.itemIcon} src="/icons/pc/calendar.svg" alt="listing icon" />
+                    <img className={styles.itemIcon} src={iconUrl} alt={title || 'listing icon'} />
                     <div className={styles.itemMain}>
                       <p className={styles.coinTitle} title={title}>{title || '--'}</p>
                       <p className={styles.listingTime}>{`详情 ${listingTime || '--'}`}</p>

@@ -98,6 +98,8 @@ export default function PCDailyCard({
     }
   };
 
+  const isShortList = loading ? false : events.length > 0 && events.length < 4;
+
   return (
     <div className={[styles.container, className].filter(Boolean).join(' ')}>
       <div className={styles.headerArea}>
@@ -146,7 +148,9 @@ export default function PCDailyCard({
         <img src="/images/daily/verctor.png" className={styles.vectorImage} alt="" />
 
         {showNoteCard ? (
-          <div className={styles.noteCard}>{noteSummary || t('daily.note')}</div>
+          <div className={`${styles.noteCard} ${isShortList ? styles.noteCardShort : ''}`}>
+            {noteSummary || t('daily.note')}
+          </div>
         ) : null}
       </div>
 

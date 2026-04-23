@@ -22,6 +22,7 @@ const CalendarIcon = '/icons/pc/find_calendar.svg';
  */
 const PCMarketOverview = memo(({ onCalendarClick }) => {
   const { t } = useTranslation();
+  const [selectedCardId, setSelectedCardId] = useState('');
   const [smartValue, setSmartValue] = useState(t('overview.noConfig'));
   const [smartAction, setSmartAction] = useState(t('overview.configAlarm'));
   const [smartOnClick, setSmartOnClick] = useState(() => () => {
@@ -250,7 +251,6 @@ const PCMarketOverview = memo(({ onCalendarClick }) => {
       icon: CalendarIcon,
       title: t('overview.calendar'),
       value: t('overview.todayUpdated'),
-      desc: t('overview.subscribe'),
       onClick: () => {
         if (typeof onCalendarClick === 'function') {
           onCalendarClick();
@@ -265,7 +265,23 @@ const PCMarketOverview = memo(({ onCalendarClick }) => {
     <Row gutter={16} className={styles.pcMarketOverview}>
       {cards.map((card) => (
         <Col span={6} key={card.id}>
-          <div className={styles.statCard} onClick={card.onClick}>
+          <div
+            className={`${styles.statCard} ${
+              card.id === 'today' && selectedCardId === 'today' ? styles.statCardTodaySelected : ''
+            }`}
+            onClick={() => {
+              const nextSelected = selectedCardId === card.id ? '' : card.id;
+              setSelectedCardId(nextSelected);
+
+              // “公告日历”需要支持二次点击取消选中，并同步收起下方日历视图
+              if (card.id === 'today' && typeof onCalendarClick === 'function') {
+                onCalendarClick(nextSelected === 'today');
+                return;
+              }
+
+              if (typeof card.onClick === 'function') card.onClick();
+            }}
+          >
             {card.change ? (
               <>
                 <div className={styles.metricBlock}>
@@ -310,7 +326,11 @@ const PCMarketOverview = memo(({ onCalendarClick }) => {
                   </div>
                 </div>
 
-                <div className={`${styles.cardContent} ${styles.cardContentWithChange}`}>
+                <div
+                  className={`${styles.cardContent} ${styles.cardContentWithChange} ${
+                    card.id === 'smart-order' ? styles.cardContentSmartGap : ''
+                  } ${card.id === 'today' ? styles.cardContentCalendarFixed : ''}`}
+                >
                   <div className={styles.cardValue}>
                     {card.id !== 'smart-order' ? (
                       <span className={`${styles.valueText} ${card.id === 'today' ? styles.todayText : ''}`}>
@@ -318,12 +338,14 @@ const PCMarketOverview = memo(({ onCalendarClick }) => {
                       </span>
                     ) : (
                       <>
-                        <span className={`${styles.valueText} ${!card.smartSymbol ? styles.placeholderText : ''}`}>
+                        <span
+                          className={`${styles.smartValueText} ${!card.smartSymbol ? styles.placeholderText : ''}`}
+                        >
                           {card.smartSymbol || card.value}
                         </span>
                         {card.smartPercentText && (
                           <span
-                            className={`${styles.percentText} ${
+                            className={`${styles.smartPercentText} ${
                               card.smartIsUp === true
                                 ? styles.positive
                                 : card.smartIsUp === false

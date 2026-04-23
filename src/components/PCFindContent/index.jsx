@@ -712,7 +712,9 @@ export default function PCFindContent() {
       {activeTab === 'market' && (
         <>
           {/* 市场统计卡片 - 使用PC专用组件 */}
-          <PCMarketOverview onCalendarClick={() => setMarketViewMode('calendar')} />
+          <PCMarketOverview
+            onCalendarClick={(open) => setMarketViewMode(open === false ? 'table' : 'calendar')}
+          />
         </>
       )}
 
