@@ -131,22 +131,31 @@
 }
 
 .planCardsContainer {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20PX;
-  align-items: stretch;
+  display: block;
   background: rgba(255, 255, 255, 1);
   border-radius: 16PX;
   padding: 20PX;
   padding-bottom: 16PX;
 
-  @media (max-width: 1024PX) {
-    grid-template-columns: 1fr;
-    max-width: 420PX;
-    margin: 0 auto;
+  /* VipRechargePlanCards 内部用了 antd Spin，会包两层容器。
+     这里把网格布局应用到 Spin 的容器上，避免只剩一个 grid item。 */
+  :global(.ant-spin-container) {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20PX;
+    align-items: stretch;
   }
 
-  > * {
+  @media (max-width: 1024PX) {
+    max-width: 420PX;
+    margin: 0 auto;
+
+    :global(.ant-spin-container) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  :global(.ant-spin-container) > * {
     max-width: none !important;
     width: 100%;
     min-width: 0;

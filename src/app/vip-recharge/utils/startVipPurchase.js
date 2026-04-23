@@ -1,7 +1,7 @@
 'use client';
 
 import { createStarsInvoice } from '@/api/vip';
-import { createWalletOrder, getOrderStatus, submitWalletTx } from '@/api/payment';
+import { createWalletOrder, getOrderStatus, getWalletPaymentInfo, submitWalletTx, walletPay } from '@/api/payment';
 import { confirm } from '@/components/Modal/confirm';
 import { encodeFunctionData, getAddress, parseUnits } from 'viem';
 
@@ -92,6 +92,11 @@ async function pollOrderStatus(
   orderNo,
   { maxAttempts = 60, interval = 1500, tabKey, planTitle } = {}
 ) {
+  if (typeof window !== 'undefined') {
+    try {
+      window.dispatchEvent(new CustomEvent('mozi:vipOrderPolling', { detail: { orderNo } }));
+    } catch (_) {}
+  }
   for (let i = 0; i < maxAttempts; i += 1) {
     try {
       const statusRes = await getOrderStatus(orderNo);
@@ -99,7 +104,16 @@ async function pollOrderStatus(
       // eslint-disable-next-line no-console
       console.log('[VipPurchase][OrderStatus] 订单状态：', statusData);
 
-      if (statusData?.status === 'SUCCESS') {
+      const status = String(statusData?.status || '').toUpperCase();
+
+      if (status === 'SUCCESS') {
+        if (typeof window !== 'undefined') {
+          try {
+            window.dispatchEvent(
+              new CustomEvent('mozi:vipOrderPollingDone', { detail: { orderNo, status: 'SUCCESS' } })
+            );
+          } catch (_) {}
+        }
         try {
           const event = new CustomEvent('mozi:vipOrderSuccess', {
             detail: { orderNo, tabKey, planTitle },
@@ -111,8 +125,19 @@ async function pollOrderStatus(
         return;
       }
 
-      if (statusData?.status === 'FAILED' || statusData?.status === 'CANCELLED') {
+      if (status === 'FAILED' || status === 'CANCELLED') {
+        if (typeof window !== 'undefined') {
+          try {
+            window.dispatchEvent(new CustomEvent('mozi:vipOrderPollingDone', { detail: { orderNo, status: statusData?.status } }));
+          } catch (_) {}
+        }
         return;
+      }
+
+      // 只有 PENDING / PROCESSING（以及空状态）才继续轮询；其余未知状态也继续等待直到超时兜底
+      if (status && status !== 'PENDING' && status !== 'PROCESSING') {
+        // eslint-disable-next-line no-console
+        console.warn('[VipPurchase][OrderStatus] 未识别的订单状态，继续轮询等待:', statusData);
       }
     } catch (err) {
       // eslint-disable-next-line no-console
@@ -120,6 +145,11 @@ async function pollOrderStatus(
     }
 
     await sleep(interval);
+  }
+  if (typeof window !== 'undefined') {
+    try {
+      window.dispatchEvent(new CustomEvent('mozi:vipOrderPollingDone', { detail: { orderNo, status: 'TIMEOUT' } }));
+    } catch (_) {}
   }
 }
 
@@ -422,33 +452,33 @@ async function startArbitrumPayment({
     // eslint-disable-next-line no-console
     console.log('[VipPurchase][Arbitrum] resolved fromAddress', { fromAddress });
 
-    // 2) 创建订单，拿收款信息
-    const orderRes = await createWalletOrder({ pricingId, fromAddress, chain: ARBITRUM_ORDER_CHAIN });
-    const orderData = orderRes?.data ?? orderRes ?? {};
-    const orderNo = orderData.orderNo;
-    const receiveAddressRaw = orderData.receiveAddress || orderData.toAddress || orderData.to;
-    const amountUsdtRaw = orderData.amountUsdt ?? orderData.amount ?? orderData.payAmount;
-    const usdtContractAddress =
-      orderData.usdtContract ||
-      orderData.tokenAddress ||
-      orderData.usdtAddress ||
-      orderData.contractAddress;
+    // 2) 查询链支付参数（收款地址、USDT 合约、精度）
+    const paymentInfoRes = await getWalletPaymentInfo();
+    const paymentInfoList = paymentInfoRes?.data ?? paymentInfoRes ?? [];
+    const paymentInfo = Array.isArray(paymentInfoList)
+      ? paymentInfoList.find((x) => String(x?.chain || '').toUpperCase() === ARBITRUM_ORDER_CHAIN)
+      : null;
+    const receiveAddressRaw = paymentInfo?.receiveAddress || paymentInfo?.toAddress || paymentInfo?.to;
+    const usdtContractAddress = paymentInfo?.usdtContract || paymentInfo?.tokenAddress || paymentInfo?.contractAddress;
+    const usdtDecimalsRaw = paymentInfo?.usdtDecimals ?? paymentInfo?.decimals ?? 6;
 
-    if (!orderNo || !receiveAddressRaw || !amountUsdtRaw) {
+    // 前端用 plan.price 作为 USDT 转账金额（后端以 pricingId 校验最终金额）
+    const amountUsdtRaw = plan?.price ?? meta?.amount;
+
+    if (!receiveAddressRaw || !usdtContractAddress || amountUsdtRaw == null || amountUsdtRaw === '') {
       // eslint-disable-next-line no-console
-      console.error('[VipPurchase][Arbitrum] createWalletOrder 返回字段不完整', orderData, meta);
+      console.error('[VipPurchase][Arbitrum] walletPaymentInfo 返回字段不完整或缺少金额', {
+        paymentInfo,
+        amountUsdtRaw,
+        meta,
+      });
       return;
     }
-    if (!usdtContractAddress) {
+
+    const usdtDecimals = Number(usdtDecimalsRaw);
+    if (!Number.isFinite(usdtDecimals) || usdtDecimals < 0) {
       // eslint-disable-next-line no-console
-      console.error(
-        '[VipPurchase][Arbitrum] 缺少 USDT 合约地址：请在后端订单返回 tokenAddress',
-        {
-          useArbitrumSepolia: false,
-          orderData,
-          meta,
-        }
-      );
+      console.error('[VipPurchase][Arbitrum] usdtDecimals 非法', { usdtDecimalsRaw, meta, paymentInfo });
       return;
     }
     let receiveAddress = '';
@@ -468,12 +498,11 @@ async function startArbitrumPayment({
       return;
     }
     // eslint-disable-next-line no-console
-    console.log('[VipPurchase][Arbitrum] order created', {
-      orderNo,
+    console.log('[VipPurchase][Arbitrum] payment params resolved', {
       receiveAddress,
       amountUsdtRaw,
       usdtContractAddress: usdtToAddress,
-      useNativeEthTransfer: false,
+      usdtDecimals,
     });
     // eslint-disable-next-line no-console
     console.log('[VipPurchase][Arbitrum] payment route', {
@@ -481,7 +510,7 @@ async function startArbitrumPayment({
       toAddress: receiveAddress,
       tokenContract: usdtToAddress,
       amountUsdtRaw,
-      orderNo,
+      chain: ARBITRUM_ORDER_CHAIN,
     });
 
     // 3) 切链到 Arbitrum
@@ -491,7 +520,7 @@ async function startArbitrumPayment({
 
     let txHash = null;
     // 统一：发起 USDT transfer（包括开发者模式/测试网）
-    const amount = parseUnits(String(amountUsdtRaw), 6); // USDT 6 decimals
+    const amount = parseUnits(String(amountUsdtRaw), usdtDecimals);
     const data = encodeFunctionData({
       abi: [
         {
@@ -537,25 +566,27 @@ async function startArbitrumPayment({
 
     if (!txHash) {
       // eslint-disable-next-line no-console
-      console.error('[VipPurchase][Arbitrum] 未获取到 txHash', { orderNo, meta });
+      console.error('[VipPurchase][Arbitrum] 未获取到 txHash', { meta });
       return;
     }
     // eslint-disable-next-line no-console
     console.log('[VipPurchase][Arbitrum] txHash acquired', {
-      orderNo,
       txHash: String(txHash),
     });
 
-    // 5) 提交 txHash 给后端
-    try {
-      await submitWalletTx({ orderNo, txHash });
-    } catch (e) {
+    // 5) 提交钱包支付（后端生成 orderNo 并进入链上确认）
+    const payRes = await walletPay({
+      pricingId,
+      fromAddress,
+      chain: ARBITRUM_ORDER_CHAIN,
+      txHash: String(txHash),
+    });
+    const payData = payRes?.data ?? payRes ?? {};
+    const orderNo = payData.orderNo;
+    if (!orderNo) {
       // eslint-disable-next-line no-console
-      console.warn('[VipPurchase][Arbitrum] submitWalletTx failed, fallback to pollOrderStatus', e, {
-        orderNo,
-        txHash,
-        meta,
-      });
+      console.error('[VipPurchase][Arbitrum] walletPay 未返回 orderNo', { payData, meta });
+      return;
     }
 
     // 6) 可选：前端等待 receipt，便于调试和用户感知

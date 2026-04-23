@@ -23,6 +23,7 @@ export default function VipRechargePageBody({
 }) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('monthly');
+  const [purchaseSubmitting, setPurchaseSubmitting] = useState(false);
 
   const [benefitsRes, setBenefitsRes] = useState(null);
   const [pricingRes, setPricingRes] = useState(null);
@@ -69,6 +70,8 @@ export default function VipRechargePageBody({
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
+    const pollingStart = () => setPurchaseSubmitting(true);
+    const pollingDone = () => setPurchaseSubmitting(false);
     const handler = (e) => {
       const detail = e?.detail || {};
       if (!detail.tabKey || !detail.planTitle) return;
@@ -84,9 +87,13 @@ export default function VipRechargePageBody({
     };
     window.addEventListener('mozi:vipOrderSuccess', handler);
     window.addEventListener('mozi:starsOrderSuccess', handler);
+    window.addEventListener('mozi:vipOrderPolling', pollingStart);
+    window.addEventListener('mozi:vipOrderPollingDone', pollingDone);
     return () => {
       window.removeEventListener('mozi:vipOrderSuccess', handler);
       window.removeEventListener('mozi:starsOrderSuccess', handler);
+      window.removeEventListener('mozi:vipOrderPolling', pollingStart);
+      window.removeEventListener('mozi:vipOrderPollingDone', pollingDone);
     };
   }, []);
 
@@ -223,7 +230,7 @@ export default function VipRechargePageBody({
         (tabsWrapClassName ? <div className={tabsWrapClassName}>{tabsNode}</div> : tabsNode)}
       <div className={planCardsClassName} key={activeTab}>
         {remoteError && !remoteLoading && <div>{t('vipRecharge.errors.loadSubscriptionData')}</div>}
-        <VipRechargePlanCards plans={planCardsWithHandlers[activeTab] || []} />
+        <VipRechargePlanCards plans={planCardsWithHandlers[activeTab] || []} loading={purchaseSubmitting} />
       </div>
     </div>
   );

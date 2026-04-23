@@ -108,6 +108,8 @@ export const Interface = {
   PAYMENT_CREATE_WALLET_ORDER: '/payment/createWalletOrder',
   PAYMENT_SUBMIT_WALLET_TX: '/payment/submitWalletTx',
   PAYMENT_ORDER_STATUS: '/payment/orderStatus',
+  PAYMENT_WALLET_PAYMENT_INFO: '/payment/walletPaymentInfo',
+  PAYMENT_WALLET_PAY: '/payment/walletPay',
   PAYMENT_VERIFY_CRYPTO: '/payment/verify-crypto',
   // 币种信息
   COIN_INFO: '/search/lastpricechange',

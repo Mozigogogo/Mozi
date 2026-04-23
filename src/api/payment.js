@@ -2,6 +2,32 @@ import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 
 /**
+ * 查询链支付参数（钱包收款信息）
+ * GET /payment/walletPaymentInfo
+ * @returns {Promise<Array<{chain:string, chainType:string, receiveAddress:string, usdtContract:string, usdtDecimals:number}>>}
+ */
+export const getWalletPaymentInfo = () => {
+  return request({
+    url: Interface.PAYMENT_WALLET_PAYMENT_INFO,
+    method: 'GET',
+  });
+};
+
+/**
+ * 提交钱包支付（上报 txHash 并生成订单号）
+ * POST /payment/walletPay
+ * @param {{ pricingId: number|string, fromAddress: string, chain: string, txHash: string }} data
+ * @returns {Promise<{ orderNo: string, message?: string }>}
+ */
+export const walletPay = (data) => {
+  return request({
+    url: Interface.PAYMENT_WALLET_PAY,
+    method: 'POST',
+    data,
+  });
+};
+
+/**
  * 创建 Telegram Stars 支付订单
  * @param {Object} data
  * @param {number} data.amount - 金额
