@@ -4,13 +4,12 @@ import { useState, useEffect, useRef } from 'react';
 import { Tabs, Card, Table, Tag, Spin } from 'antd';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { HeartOutlined, BellOutlined } from '@ant-design/icons';
+import { HeartOutlined, BellOutlined, ReloadOutlined, ShareAltOutlined } from '@ant-design/icons';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 import { getMyInterface } from '@/api/user';
 import PCMarketOverview from '../PCMarketOverview';
 import MoziCard from '../MoziCard';
-import MoziGrid from '../MoziGrid';
 import { RankGrid } from '../Find/RankGrid';
 import PCCalendarCard from '../PCCalendarCard';
 import NewCoinListing from '../NewCoinListing';
@@ -76,6 +75,8 @@ export default function PCFindContent() {
   const upTradeIntervalsArr = ['7_day', '1_month', '2_month'];
   const [isUpTradeLoading, setUpTradeLoading] = useState(true);
   const [upTradePickIndex, setUpTradePickIndex] = useState(0);
+
+  const [rankActiveType, setRankActiveType] = useState('up'); // exchange | up | down | wave | volume | new | surge
   // 表格列配置 - 行情
   const marketColumns = [
     {
@@ -86,10 +87,13 @@ export default function PCFindContent() {
       render: (text, record) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <img 
-            src={record.url || '/default-coin.svg'} 
+            src={record.url || record.img || '/default-coin.svg'} 
             alt={text}
             style={{ width: 24, height: 24, borderRadius: '50%' }}
-            onError={(e) => { e.target.src = '/default-coin.svg'; }}
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = '/default-coin.svg';
+            }}
           />
           <span style={{ fontWeight: 500 }}>{text}</span>
         </div>
@@ -168,10 +172,13 @@ export default function PCFindContent() {
       render: (text, record) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <img 
-            src={record.url || '/default-coin.svg'} 
+            src={record.url || record.img || '/default-coin.svg'} 
             alt={text}
             style={{ width: 24, height: 24, borderRadius: '50%' }}
-            onError={(e) => { e.target.src = '/default-coin.svg'; }}
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = '/default-coin.svg';
+            }}
           />
           <span style={{ fontWeight: 500 }}>{text}</span>
         </div>
@@ -353,9 +360,10 @@ export default function PCFindContent() {
         data: { dim }
       });
       if (!isEmpty(response?.data)) {
-        const formattedData = response.data.slice(0, 3).map(item => ({
+        const formattedData = response.data.slice(0, 50).map(item => ({
           symbol: item.symbol,
           priceRange: item.priceRange,
+          last: item.last ?? item.price ?? item.currentPrice ?? item.close ?? item.value,
           url: item.url,
           key: item.symbol,
           img: item.url
@@ -381,9 +389,10 @@ export default function PCFindContent() {
         data: { dim }
       });
       if (!isEmpty(response?.data)) {
-        const formattedData = response.data.slice(0, 3).map(item => ({
+        const formattedData = response.data.slice(0, 50).map(item => ({
           symbol: item.symbol,
           priceRange: item.priceRange,
+          last: item.last ?? item.price ?? item.currentPrice ?? item.close ?? item.value,
           url: item.url,
           key: item.symbol,
           img: item.url
@@ -409,9 +418,10 @@ export default function PCFindContent() {
         data: { dim }
       });
       if (!isEmpty(response?.data)) {
-        const formattedData = response.data.slice(0, 3).map(item => ({
+        const formattedData = response.data.slice(0, 50).map(item => ({
           symbol: item.symbol,
           priceRange: item.priceRange,
+          last: item.last ?? item.price ?? item.currentPrice ?? item.close ?? item.value,
           url: item.url,
           key: item.symbol,
           img: item.url
@@ -437,9 +447,10 @@ export default function PCFindContent() {
         data: { intervals }
       });
       if (!isEmpty(response?.data)) {
-        const formattedData = response.data.slice(0, 3).map(item => ({
+        const formattedData = response.data.slice(0, 50).map(item => ({
           symbol: item.symbol,
           usd: item.usd,
+          last: item.last ?? item.price ?? item.currentPrice ?? item.close ?? item.value,
           url: item.url,
           key: item.symbol,
           img: item.url
@@ -464,9 +475,10 @@ export default function PCFindContent() {
         data: {}
       });
       if (response?.data) {
-        const formattedData = response.data.slice(0, 3).map(item => ({
+        const formattedData = response.data.slice(0, 50).map(item => ({
           symbol: item.symbol,
           volume_24h: item.last,
+          last: item.last ?? item.price ?? item.currentPrice ?? item.close ?? item.value,
           url: item.url,
           key: item.symbol,
           img: item.url
@@ -489,9 +501,10 @@ export default function PCFindContent() {
         data: { intervals }
       });
       if (!isEmpty(response?.data)) {
-        const formattedData = response.data.slice(0, 3).map(item => ({
+        const formattedData = response.data.slice(0, 50).map(item => ({
           symbol: item.symbol,
           movers: item.movers,
+          last: item.last ?? item.price ?? item.currentPrice ?? item.close ?? item.value,
           url: item.url,
           key: item.symbol,
           img: item.url
@@ -731,237 +744,385 @@ export default function PCFindContent() {
       )}
 
       <Card
-        className={`${styles.contentCard} ${activeTab === 'market' ? styles.marketContentCard : ''}`}
+        className={`${styles.contentCard} ${activeTab === 'market' ? styles.marketContentCard : ''} ${
+          activeTab === 'market' && marketViewMode === 'calendar' ? styles.marketContentCardCalendar : ''
+        }`}
       >
         {/* 排行榜tab不需要外层loading，每个卡片有独立loading状态 */}
         {activeTab === 'rank' ? (
           <>
-            {activeTab === 'market' && (
-              <Table
-                columns={marketColumns}
-                dataSource={marketData}
-                pagination={{ pageSize: 20 }}
-                onRow={(record) => ({
-                  onClick: () => router.push(`/detail?symbol=${record.symbol}`),
-                  style: { cursor: 'pointer' },
-                })}
-              />
-            )}
+            <div className={styles.rankPanel}>
+              <div className={styles.rankPanelTabs}>
+                <button
+                  type="button"
+                  className={`${styles.rankPanelTab} ${rankActiveType === 'exchange' ? styles.rankPanelTabActive : ''}`}
+                  onClick={() => setRankActiveType('exchange')}
+                >
+                  {t('discover.exchangeRank')}
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.rankPanelTab} ${rankActiveType === 'up' ? styles.rankPanelTabActive : ''}`}
+                  onClick={() => setRankActiveType('up')}
+                >
+                  {t('home.rank.up')}
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.rankPanelTab} ${rankActiveType === 'down' ? styles.rankPanelTabActive : ''}`}
+                  onClick={() => setRankActiveType('down')}
+                >
+                  {t('home.rank.down')}
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.rankPanelTab} ${rankActiveType === 'wave' ? styles.rankPanelTabActive : ''}`}
+                  onClick={() => setRankActiveType('wave')}
+                >
+                  {t('home.rank.wave')}
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.rankPanelTab} ${rankActiveType === 'volume' ? styles.rankPanelTabActive : ''}`}
+                  onClick={() => setRankActiveType('volume')}
+                >
+                  {t('home.rank.volume')}
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.rankPanelTab} ${rankActiveType === 'new' ? styles.rankPanelTabActive : ''}`}
+                  onClick={() => setRankActiveType('new')}
+                >
+                  {t('home.rank.new')}
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.rankPanelTab} ${rankActiveType === 'surge' ? styles.rankPanelTabActive : ''}`}
+                  onClick={() => setRankActiveType('surge')}
+                >
+                  {t('home.rank.surge')}
+                </button>
+              </div>
 
-            {activeTab === 'self' && (
-              <Table
-                columns={selfColumns}
-                dataSource={selfData}
-                pagination={false}
-                onRow={(record) => ({
-                  onClick: () => router.push(`/detail?symbol=${record.symbol}`),
-                  style: { cursor: 'pointer' },
-                })}
-              />
-            )}
+              <div className={styles.rankPanelBody}>
+                {(() => {
+                  const isRankLoading =
+                    rankActiveType === 'exchange'
+                      ? isExchangeLoading
+                      : rankActiveType === 'up'
+                        ? isPriceLoading
+                        : rankActiveType === 'down'
+                          ? isDownLoading
+                          : rankActiveType === 'wave'
+                            ? isWaveLoading
+                            : rankActiveType === 'volume'
+                              ? isTradeLoading
+                              : rankActiveType === 'new'
+                                ? isXinbiLoading
+                                : isUpTradeLoading;
+                  const currentRankList = rankActiveType === 'exchange'
+                    ? (exchangeData.exchangeArr || []).map((item) => ({
+                      ...item,
+                      symbol: item.exchange,
+                      last: item.usd,
+                      metric: `${item.markets ?? '--'}/${item.coins ?? '--'}`,
+                    }))
+                    : rankActiveType === 'up'
+                      ? priceData.priceArr
+                      : rankActiveType === 'down'
+                        ? downData.downArr
+                        : rankActiveType === 'wave'
+                          ? waveData.waveArr
+                          : rankActiveType === 'volume'
+                            ? tradeData.tradeArr
+                            : rankActiveType === 'new'
+                              ? xinbiData.xinbiArr
+                              : upTradeData.upTradeArr;
 
-            {activeTab === 'rank' && (
-            <div className={styles.rankContainer}>
-              <MoziCard
-                title={t('discover.exchangeRank')}
-                type='tabs'
-                customStyle={{ '--tabs-width': '160px' }}
-                selectArr={exchangeData.exchangeSelect || []}
-                pickChange={exchangePickChange}
-                showArrow
-                hideExtraWhenEmpty
-                hasData={(exchangeData.exchangeArr && exchangeData.exchangeArr.length > 0)}
-                callback={() => router.push('/exchangerank')}
-                isPC={true}
-              >
-                <div onClick={() => router.push('/exchangerank')}>
-                  {isExchangeLoading ? (
-                    <div className={styles.spinContainer}><Spin /></div>
-                  ) : (
-                    <MoziGrid
-                      length={4}
-                      colName={[t('discover.exchange.columns.exchange'), t('discover.exchange.columns.volume24h'), t('discover.exchange.columns.markets'), t('discover.exchange.columns.coins')]}
-                      gridContent={exchangeData.exchangeArr}
-                      columnWidths={['30%', '30%', '20%', '20%']}
-                      showRanking={true}
-                      gridTitleBgColor="transparent"
-                      extraTopName={exchangeData.topName}
-                      rankingLogoOffsetTop={12}
-                      topNameOffsetTop={6}
-                      minRows={3}
-                      stackTopName={true}
-                      callback={(gridCon) => { console.log('点击交易所:', gridCon); }}
-                      isPC={true}
-                    />
-                  )}
-                </div>
-              </MoziCard>
+                  return (
+                    <Spin spinning={isRankLoading}>
+                      <>
+                      <div className={styles.rankTopContainer}>
+                      <div className={styles.rankTopHeader}>
+                        <div className={styles.rankTopInfo}>
+                          <img
+                            src="/icons/pc/top.svg"
+                            alt="top rank"
+                            className={styles.rankTopInfoIcon}
+                          />
+                          <div className={styles.rankTopInfoText}>
+                            <div className={styles.rankTopInfoTitle}>
+                              TOP 3 <span>{t('discover.tabs.rank')}</span>
+                            </div>
+                            <div className={styles.rankTopInfoSub}>
+                              {t('common.realTime', { defaultValue: '实时更新' })}
+                            </div>
+                          </div>
+                          <span className={styles.rankTopInfoTag}>Top100</span>
+                        </div>
+                        {(rankActiveType === 'up' ||
+                          rankActiveType === 'down' ||
+                          rankActiveType === 'wave' ||
+                          rankActiveType === 'volume' ||
+                          rankActiveType === 'surge') && (
+                          <div className={styles.rankToolbar}>
+                            <div className={styles.rankRangePills}>
+                              {(rankActiveType === 'up'
+                                ? pricePickArr
+                                : rankActiveType === 'down'
+                                  ? downPickArr
+                                  : rankActiveType === 'wave'
+                                    ? wavePickArr
+                                    : rankActiveType === 'volume'
+                                      ? tradePickArr
+                                      : upTradePickArr
+                              ).map((label, idx) => {
+                                const active =
+                                  rankActiveType === 'up'
+                                    ? idx === pricePickIndex
+                                    : rankActiveType === 'down'
+                                      ? idx === downPickIndex
+                                      : rankActiveType === 'wave'
+                                        ? idx === wavePickIndex
+                                        : rankActiveType === 'volume'
+                                          ? idx === tradePickIndex
+                                          : idx === upTradePickIndex;
+                                return (
+                                  <button
+                                    type="button"
+                                    key={`${rankActiveType}-${label}`}
+                                    className={`${styles.rankRangePill} ${active ? styles.rankRangePillActive : ''}`}
+                                    onClick={() => {
+                                      if (rankActiveType === 'up') pricePickChange(idx);
+                                      else if (rankActiveType === 'down') downPickChange(idx);
+                                      else if (rankActiveType === 'wave') wavePickChange(idx);
+                                      else if (rankActiveType === 'volume') tradePickChange(idx);
+                                      else upTradePickChange(idx);
+                                    }}
+                                  >
+                                    {label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            <div className={styles.rankToolbarActions}>
+                              <button
+                                type="button"
+                                className={styles.rankIconBtn}
+                                aria-label={t('common.refresh', { defaultValue: '刷新' })}
+                                onClick={() => {
+                                  if (rankActiveType === 'up') loadPriceData(true);
+                                  else if (rankActiveType === 'down') loadDownData(true);
+                                  else if (rankActiveType === 'wave') loadWaveData(true);
+                                  else if (rankActiveType === 'volume') loadTradeData(true);
+                                  else loadUpTradeData(true);
+                                }}
+                              >
+                                <ReloadOutlined />
+                              </button>
+                              <button
+                                type="button"
+                                className={styles.rankIconBtn}
+                                aria-label={t('common.share', { defaultValue: '分享' })}
+                                onClick={() => {
+                                  if (rankActiveType === 'up') router.push('/pricerank');
+                                  else if (rankActiveType === 'down') router.push('/downrank');
+                                  else if (rankActiveType === 'wave') router.push('/waverank');
+                                  else if (rankActiveType === 'volume') router.push('/traderank');
+                                  else router.push(`/uptraderank?intervals=${encodeURIComponent(upTradeIntervalsArr[upTradePickIndex])}`);
+                                }}
+                              >
+                                <ShareAltOutlined />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
 
-              <MoziCard
-                title={t('home.rank.up')}
-                type='tabs'
-                customStyle={{ '--tabs-width': '320px' }}
-                selectArr={priceData.priceSelect || []}
-                pickChange={pricePickChange}
-                showArrow
-                hideExtraWhenEmpty
-                hasData={(priceData.priceArr && priceData.priceArr.length > 0)}
-                callback={() => router.push('/pricerank')}
-                isPC={true}
-              >
-                <div onClick={() => router.push('/pricerank')}>
-                  {isPriceLoading ? (
-                    <div className={styles.spinContainer}><Spin /></div>
-                  ) : (
-                    <RankGrid
-                      length={2}
-                      colName={[t('home.columns.symbol'), t('discover.columns.gain')]}
-                      gridContent={priceData.priceArr}
-                      minRows={3}
-                      isPC={true}
-                    />
-                  )}
-                </div>
-              </MoziCard>
+                      <div className={styles.rankTop3}>
+                        {(() => {
+                          const topThree = currentRankList.slice(0, 3).map((item, index) => ({
+                            ...item,
+                            rankNo: index + 1,
+                          }));
 
-              <MoziCard
-                title={t('home.rank.down')}
-                type='tabs'
-                customStyle={{ '--tabs-width': '320px' }}
-                selectArr={downData.downSelect || []}
-                pickChange={downPickChange}
-                showArrow
-                hideExtraWhenEmpty
-                hasData={(downData.downArr && downData.downArr.length > 0)}
-                callback={() => router.push('/downrank')}
-                isPC={true}
-              >
-                <div onClick={() => router.push('/downrank')}>
-                  {isDownLoading ? (
-                    <div className={styles.spinContainer}><Spin /></div>
-                  ) : (
-                    <RankGrid
-                      length={2}
-                      colName={[t('home.columns.symbol'), t('discover.columns.loss')]}
-                      gridContent={downData.downArr}
-                      minRows={3}
-                      isPC={true}
-                    />
-                  )}
-                </div>
-              </MoziCard>
+                          const displayOrder = [1, 0, 2]
+                            .map((i) => topThree[i])
+                            .filter(Boolean);
 
-              <MoziCard
-                title={t('home.rank.wave')}
-                type='tabs'
-                customStyle={{ '--tabs-width': '320px' }}
-                selectArr={waveData.waveSelect || []}
-                pickChange={wavePickChange}
-                showArrow
-                hideExtraWhenEmpty
-                hasData={(waveData.waveArr && waveData.waveArr.length > 0)}
-                callback={() => router.push('/waverank')}
-                isPC={true}
-              >
-                <div onClick={() => router.push('/waverank')}>
-                  {isWaveLoading ? (
-                    <div className={styles.spinContainer}><Spin /></div>
-                  ) : (
-                    <RankGrid
-                      length={2}
-                      colName={[t('home.columns.symbol'), t('discover.columns.volatility')]}
-                      gridContent={waveData.waveArr}
-                      minRows={3}
-                      isPC={true}
-                    />
-                  )}
-                </div>
-              </MoziCard>
+                          return displayOrder.map((item, idx) => (
+                          <div
+                            key={`${rankActiveType}-${item.symbol}-${idx}`}
+                            className={`${styles.rankTopCard} ${styles[`rankTopCard${idx + 1}`] || ''}`}
+                            onClick={() => {
+                              if (rankActiveType === 'exchange') router.push('/exchangerank');
+                              else router.push(`/detail?symbol=${encodeURIComponent(item.symbol)}`);
+                            }}
+                          >
+                            <div className={styles.rankTopCardHeader}>
+                              <img
+                                src={item.url || item.img || '/default-coin.svg'}
+                                alt={item.symbol}
+                                className={styles.rankTopCardIcon}
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null;
+                                  e.currentTarget.src = '/default-coin.svg';
+                                }}
+                              />
+                              <div className={styles.rankTopCardSymbol}>{item.symbol}</div>
+                              <div className={styles.rankTopCardRank}>
+                                <img
+                                  src={`/icons/pc/top${item.rankNo}.svg`}
+                                  alt={`top ${item.rankNo}`}
+                                  className={styles.rankTopCardRankIcon}
+                                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                />
+                              </div>
+                            </div>
+                            <div className={styles.rankTopCardMetrics}>
+                              <div className={styles.rankTopCardMetricRow}>
+                                <span className={styles.rankTopCardMetricLabel}>
+                                  {rankActiveType === 'exchange'
+                                    ? t('discover.exchange.columns.volume24h')
+                                    : t('home.columns.lastPrice', { defaultValue: '最新价' })}
+                                </span>
+                                <span className={styles.rankTopCardValue}>{item.last ?? '--'}</span>
+                              </div>
+                              <div className={styles.rankTopCardMetricRow}>
+                                <span className={styles.rankTopCardMetricLabel}>
+                                  {rankActiveType === 'exchange'
+                                    ? `${t('discover.exchange.columns.markets')}/${t('discover.exchange.columns.coins')}`
+                                    : t('home.columns.change24h', { defaultValue: '涨幅' })}
+                                </span>
+                                <div
+                                  className={`${styles.rankTopCardChange} ${
+                                    rankActiveType === 'exchange'
+                                      ? styles.positive
+                                      : String(item.priceRange || '').includes('-')
+                                        ? styles.negative
+                                        : styles.positive
+                                  }`}
+                                >
+                                  {rankActiveType === 'exchange'
+                                    ? item.metric
+                                    : item.priceRange ?? item.usd ?? item.volume_24h ?? item.movers ?? '--'}
+                                </div>
+                              </div>
+                            </div>
+                            <div className={styles.rankTopCardActions}>
+                              <button type="button" className={styles.rankMiniBtn}>
+                                <HeartOutlined />
+                                <span>{t('home.columns.addFavorites')}</span>
+                              </button>
+                              <button type="button" className={styles.rankMiniBtn}>
+                                <BellOutlined />
+                                <span>{t('home.columns.addMonitor')}</span>
+                              </button>
+                            </div>
+                          </div>
+                          ));
+                        })()}
+                      </div>
+                    </div>
 
-              <MoziCard
-                title={t('home.rank.volume')}
-                type='tabs'
-                customStyle={{ '--tabs-width': '320px' }}
-                selectArr={tradeData.tradeSelect || []}
-                pickChange={tradePickChange}
-                showArrow
-                hideExtraWhenEmpty
-                hasData={(tradeData.tradeArr && tradeData.tradeArr.length > 0)}
-                callback={() => router.push('/traderank')}
-                isPC={true}
-              >
-                <div onClick={() => router.push('/traderank')}>
-                  {isTradeLoading ? (
-                    <div className={styles.spinContainer}><Spin /></div>
-                  ) : (
-                    <RankGrid
-                      length={2}
-                      colName={[t('home.columns.symbol'), t('discover.columns.turnover')]}
-                      gridContent={tradeData.tradeArr}
-                      minRows={3}
-                      isPC={true}
-                    />
-                  )}
-                </div>
-              </MoziCard>
+                    <div className={`${styles.rankTable} ${rankActiveType === 'exchange' ? styles.rankTableExchange : ''}`}>
+                      <div className={`${styles.rankTableHeader} ${rankActiveType === 'exchange' ? styles.rankTableHeaderExchange : ''}`}>
+                        <div>{t('home.columns.symbol')}</div>
+                        <div className={styles.rankColRight}>
+                          {rankActiveType === 'exchange'
+                            ? t('discover.exchange.columns.volume24h')
+                            : t('home.columns.lastPrice')}
+                        </div>
+                        <div className={styles.rankColCenter}>
+                          {rankActiveType === 'exchange'
+                            ? `${t('discover.exchange.columns.markets')}/${t('discover.exchange.columns.coins')}`
+                            : rankActiveType === 'volume'
+                            ? t('discover.columns.turnover')
+                            : rankActiveType === 'new'
+                              ? t('home.columns.lastPrice')
+                              : '24H涨跌幅'}
+                        </div>
+                        {rankActiveType !== 'exchange' && (
+                          <>
+                            <div className={styles.rankColCenter}>{t('home.columns.addFavorites')}</div>
+                            <div className={styles.rankColCenter}>{t('home.columns.addMonitor')}</div>
+                          </>
+                        )}
+                      </div>
+                      <div className={styles.rankTableBody}>
+                        {currentRankList.slice(0, 20).map((row, ridx) => (
+                          <div
+                            key={`${rankActiveType}-row-${row.symbol}-${ridx}`}
+                            className={`${styles.rankTableRow} ${rankActiveType === 'exchange' ? styles.rankTableRowExchange : ''}`}
+                            onClick={() => {
+                              if (rankActiveType === 'exchange') router.push('/exchangerank');
+                              else router.push(`/detail?symbol=${encodeURIComponent(row.symbol)}`);
+                            }}
+                          >
+                            <div className={styles.rankCoinCell}>
+                              <span className={styles.rankNo}>{ridx + 1}</span>
+                              <img
+                                src={row.url || row.img || '/default-coin.svg'}
+                                alt={row.symbol}
+                                className={styles.rankCoinIcon}
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null;
+                                  e.currentTarget.src = '/default-coin.svg';
+                                }}
+                              />
+                              <span className={styles.rankCoinSymbol}>{row.symbol}</span>
+                            </div>
+                            <div className={`${styles.rankColRight} ${styles.rankPrice}`}>{row.last ?? '--'}</div>
+                            <div className={styles.rankColCenter}>
+                              {(() => {
+                                const pillValue =
+                                  rankActiveType === 'exchange'
+                                    ? row.metric
+                                    : row.priceRange ?? row.usd ?? row.volume_24h ?? row.movers ?? '--';
+                                const displayPillValue =
+                                  rankActiveType === 'surge' &&
+                                  pillValue !== '--' &&
+                                  pillValue !== null &&
+                                  pillValue !== undefined &&
+                                  !String(pillValue).includes('%')
+                                    ? `${pillValue}%`
+                                    : pillValue;
+                                const digitCount = String(pillValue ?? '')
+                                  .replace(/[^0-9]/g, '')
+                                  .length;
+                                const isLong = digitCount > 7;
 
-              <MoziCard
-                title={t('home.rank.new')}
-                showArrow
-                hideExtraWhenEmpty
-                hasData={(xinbiData.xinbiArr && xinbiData.xinbiArr.length > 0)}
-                callback={() => router.push('/newcoinrank')}
-                isPC={true}
-              >
-                <div onClick={() => router.push('/newcoinrank')}>
-                  {isXinbiLoading ? (
-                    <div className={styles.spinContainer}><Spin /></div>
-                  ) : (
-                    <RankGrid
-                      length={2}
-                      colName={[t('home.columns.symbol'), t('home.columns.lastPrice')]}
-                      gridContent={xinbiData.xinbiArr}
-                      minRows={3}
-                      isPC={true}
-                    />
-                  )}
-                </div>
-              </MoziCard>
-
-              <MoziCard
-                title={t('home.rank.surge')}
-                type='tabs'
-                customStyle={{ '--tabs-width': '320px' }}
-                selectArr={upTradeData.upTradeSelect || []}
-                pickChange={upTradePickChange}
-                showArrow
-                hideExtraWhenEmpty
-                hasData={(upTradeData.upTradeArr && upTradeData.upTradeArr.length > 0)}
-                callback={() => {
-                  const raw = upTradeIntervalsArr[upTradePickIndex];
-                  router.push(`/uptraderank?intervals=${encodeURIComponent(raw)}`)
-                }}
-                isPC={true}
-              >
-                <div onClick={() => {
-                  const raw = upTradeIntervalsArr[upTradePickIndex];
-                  router.push(`/uptraderank?intervals=${encodeURIComponent(raw)}`)
-                }}>
-                  {isUpTradeLoading ? (
-                    <div className={styles.spinContainer}><Spin /></div>
-                  ) : (
-                    <RankGrid
-                      length={2}
-                      colName={[t('home.columns.symbol'), t('discover.columns.turnover')]}
-                      gridContent={upTradeData.upTradeArr}
-                      minRows={3}
-                      isPC={true}
-                    />
-                  )}
-                </div>
-              </MoziCard>
+                                return (
+                              <span
+                                className={`${styles.rankChangePill} ${
+                                  rankActiveType === 'exchange'
+                                    ? styles.positive
+                                    : String(row.priceRange || '').includes('-')
+                                      ? styles.negative
+                                      : styles.positive
+                                } ${isLong ? styles.rankChangePillSmall : ''}`}
+                              >
+                                {displayPillValue}
+                              </span>
+                                );
+                              })()}
+                            </div>
+                            {rankActiveType !== 'exchange' && (
+                              <>
+                                <div className={styles.rankColCenter}><HeartOutlined /></div>
+                                <div className={styles.rankColCenter}><BellOutlined /></div>
+                              </>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    </>
+                    </Spin>
+                  );
+                })()}
+              </div>
             </div>
-          )}
           </>
         ) : (
           <Spin spinning={loading}>
