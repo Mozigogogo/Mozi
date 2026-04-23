@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -8,6 +9,7 @@ import styles from './index.module.less';
 export default function PinkContainer() {
   const { t } = useTranslation();
   const router = useRouter();
+  const [loadedIcons, setLoadedIcons] = useState({});
 
   const buttons = [
     {
@@ -69,13 +71,21 @@ export default function PinkContainer() {
             className={styles.gridItem}
             onClick={button.onClick}
           >
-            <div className={styles.iconWrapper}>
+            <div
+              className={`${styles.iconWrapper} ${loadedIcons[button.id] ? '' : styles.iconPulse}`}
+            >
               <Image 
                 src={button.icon} 
                 alt={button.label}
                 width={40}
                 height={40}
                 className={styles.iconImage}
+                onLoadingComplete={() => {
+                  setLoadedIcons((prev) => ({ ...prev, [button.id]: true }));
+                }}
+                onError={() => {
+                  setLoadedIcons((prev) => ({ ...prev, [button.id]: true }));
+                }}
               />
             </div>
             <div className={styles.label}>{button.label}</div>

@@ -2254,9 +2254,16 @@ ${coinInfo.name || symbol} (${symbol})
   const handleDetailBack = () => {
     try {
       localStorage.setItem('tg_auto_login_skip_once_v1', String(Date.now() + 15 * 1000));
+      sessionStorage.setItem('mozi_home_fast_return_once_v1', '1');
     } catch (_) {}
     safeBack(router, { fallback: '/' });
   };
+
+  // 预取首页路由资源，减少从详情返回首页的等待时间
+  useEffect(() => {
+    if (!router?.prefetch) return;
+    router.prefetch('/');
+  }, [router]);
 
   /** PC 行情页弹幕条：发帖到社区（与 PC 社区币种讨论一致） */
   const handleBarrageSend = useCallback(

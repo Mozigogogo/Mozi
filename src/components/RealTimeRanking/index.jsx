@@ -17,8 +17,8 @@ const preloadImages = [
   '/icons/new_home/monitor-bell.svg'
 ];
 
-// 控制是否显示骨架屏（临时开关）
-const SHOW_SKELETON = false;
+// 控制是否显示骨架屏
+const SHOW_SKELETON = true;
 
 export default function RealTimeRanking({
   activeArr = [],
@@ -156,7 +156,31 @@ export default function RealTimeRanking({
             <div style={{ padding: '40px 0', textAlign: 'center', color: '#999' }}>
               {rankActiveKey === 'zixuan' ? t('home.noFavorites') : t('common.noData')}
             </div>
-          ) : null}
+          ) : (
+            <div style={{ padding: '12px 16px' }}>
+              {Array.from({ length: 10 }).map((_, index) => (
+                <div key={index} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: index < 9 ? '12px' : '0'
+                }}>
+                  <Skeleton config={{ type: 'circle', size: 24 }} />
+                  <Skeleton config={{ type: 'element', width: '60px', height: '16px', borderRadius: '4px' }} />
+                  <Skeleton config={{
+                    type: 'element',
+                    width: '70px',
+                    height: '16px',
+                    borderRadius: '4px',
+                    style: { marginLeft: 'auto' }
+                  }} />
+                  <Skeleton config={{ type: 'element', width: '50px', height: '20px', borderRadius: '4px' }} />
+                  <Skeleton config={{ type: 'circle', size: 20 }} />
+                  <Skeleton config={{ type: 'circle', size: 20 }} />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </MoziCard>
     </div>

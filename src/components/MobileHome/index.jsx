@@ -39,6 +39,22 @@ const NOTICE_HIDE_KEY = 'hideHomeNotice';
 
 // 活动弹窗显示状态（每个UTC日期显示一次）
 const ACTIVITY_LAST_SHOWN_KEY = 'activityModalLastShownDate';
+const MOBILE_HOME_CACHE_KEY = 'mozi_mobile_home_cache_v1';
+const MOBILE_HOME_SCROLL_KEY = 'mozi_mobile_home_scroll_y_v1';
+const MOBILE_HOME_CACHE_TTL = 2 * 60 * 1000;
+
+function readMobileHomeCache() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = sessionStorage.getItem(MOBILE_HOME_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed?.ts || Date.now() - parsed.ts > MOBILE_HOME_CACHE_TTL) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
 
 function isHomeDebugEnabled() {
   if (process.env.NODE_ENV === 'production') return false;
@@ -55,6 +71,9 @@ export default function MobileHome() {
   const { track } = useAmplitude('Home');
   const isEN = (i18n?.language || '').startsWith('en');
   const debugEnabled = typeof window !== 'undefined' ? isHomeDebugEnabled() : false;
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const initialCache = readMobileHomeCache();
+  const hasWarmCache = !!initialCache;
   // 活动弹窗状态
   const [showActivityModal, setShowActivityModal] = useState(false);
   
@@ -196,18 +215,18 @@ export default function MobileHome() {
   }, []);
   
   // 状态定义
-  const [hotCoin, setHotCoin] = useState([]);
-  const [hotIndustry, setHotIndustry] = useState([]);
-  const [hotContract, setHotContract] = useState([]);
-  const [coinLoading, setCoinLoading] = useState(true);
-  const [industryLoading, setIndustryLoading] = useState(true);
-  const [contractLoading, setContractLoading] = useState(true);
-  const [myOwn, setOwn] = useState(null);
-  const [myOwnLoading, setMyOwnLoading] = useState(true);
-  const [rankActiveKey, setRankActive] = useState('zhangfu');
-  const [footerArr, setFooterArr] = useState([]);
-  const [footerLoading, setFooterLoading] = useState(true);
-  const [rankLoadingStates, setRankLoadingStates] = useState(Array(7).fill(true));
+  const [hotCoin, setHotCoin] = useState(() => initialCache?.hotCoin || []);
+  const [hotIndustry, setHotIndustry] = useState(() => initialCache?.hotIndustry || []);
+  const [hotContract, setHotContract] = useState(() => initialCache?.hotContract || []);
+  const [coinLoading, setCoinLoading] = useState(() => !hasWarmCache);
+  const [industryLoading, setIndustryLoading] = useState(() => !hasWarmCache);
+  const [contractLoading, setContractLoading] = useState(() => !hasWarmCache);
+  const [myOwn, setOwn] = useState(() => initialCache?.myOwn ?? null);
+  const [myOwnLoading, setMyOwnLoading] = useState(() => !hasWarmCache);
+  const [rankActiveKey, setRankActive] = useState(() => initialCache?.rankActiveKey || 'zhangfu');
+  const [footerArr, setFooterArr] = useState(() => initialCache?.footerArr || []);
+  const [footerLoading, setFooterLoading] = useState(() => !hasWarmCache);
+  const [rankLoadingStates, setRankLoadingStates] = useState(() => Array(7).fill(!hasWarmCache));
   const [rankLoadedStates, setRankLoadedStates] = useState(Array(7).fill(false));
   const [hotTopics, setHotTopics] = useState([]);
   const [topicsLoading, setTopicsLoading] = useState(false);
@@ -215,6 +234,51 @@ export default function MobileHome() {
   const topicsCacheTimer = useRef(null);
   
   const rankRequestIds = useRef(Array(7).fill(0));
+
+  // 进入首页时恢复滚动位置；离开时保存滚动位置
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const savedY = Number(sessionStorage.getItem(MOBILE_HOME_SCROLL_KEY) || '0');
+      if (Number.isFinite(savedY) && savedY > 0) {
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => {
+            window.scrollTo(0, savedY);
+          });
+        });
+      }
+    } catch (_) {}
+
+    const saveScroll = () => {
+      try {
+        sessionStorage.setItem(MOBILE_HOME_SCROLL_KEY, String(window.scrollY || 0));
+      } catch (_) {}
+    };
+
+    window.addEventListener('scroll', saveScroll, { passive: true });
+    return () => {
+      saveScroll();
+      window.removeEventListener('scroll', saveScroll);
+    };
+  }, []);
+
+  // 持久化首页关键数据，返回时优先用缓存渲染
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      sessionStorage.setItem(
+        MOBILE_HOME_CACHE_KEY,
+        JSON.stringify({
+          ts: Date.now(),
+          hotCoin,
+          hotIndustry,
+          hotContract,
+          myOwn,
+          rankActiveKey,
+        })
+      );
+    } catch (_) {}
+  }, [hotCoin, hotIndustry, hotContract, myOwn, rankActiveKey]);
 
   // 首页公告栏显示控制
   const [showNotice, setShowNotice] = useState(true);
@@ -520,6 +584,15 @@ export default function MobileHome() {
               return newArr;
             });
           }
+
+          // 静默刷新场景（有缓存）也要结束当前榜单 loading，避免一直转圈
+          if (!isInitial) {
+            setRankLoadingStates(prev => {
+              const newStates = [...prev];
+              newStates[i] = false;
+              return newStates;
+            });
+          }
           
           setRankLoadedStates(prev => {
             const newStates = [...prev];
@@ -564,6 +637,13 @@ export default function MobileHome() {
               return newStates;
             });
           }
+          if (!isInitial) {
+            setRankLoadingStates(prev => {
+              const newStates = [...prev];
+              newStates[i] = false;
+              return newStates;
+            });
+          }
         }
       });
 
@@ -583,8 +663,8 @@ export default function MobileHome() {
     fetchHotCoin();
     fetchHotIndustry();
     fetchHotContract();
-    fetchOwnList(true);
-    fetchRankingData(true);
+    fetchOwnList(!hasWarmCache);
+    fetchRankingData(!hasWarmCache);
 
     // 后续轮询：静默更新数据，不再触发加载动画
     const interval = setInterval(() => {
@@ -647,6 +727,15 @@ export default function MobileHome() {
     }
   };
 
+  const submitSearch = () => {
+    const keyword = String(searchKeyword || '').trim();
+    if (!keyword) {
+      router.push('/search');
+      return;
+    }
+    router.push(`/search?keyword=${encodeURIComponent(keyword)}`);
+  };
+
   return (
     <Layout>
       <div className={styles.indexBox}>
@@ -675,13 +764,26 @@ export default function MobileHome() {
               ))}
             </Swiper>
 
-            <div className={styles.header} style={{ bottom: showNotice ? 10 : 10 }} onClick={() => router.push('/search')}>
+            <div className={styles.header} style={{ bottom: showNotice ? 10 : 10 }}>
               <div className={styles.searchBox}>
-                <div className={styles.searchInput}>{t('home.searchPlaceholder')}</div>
-                <div className={styles.searchCancel} style={isEN ? { minWidth: 44, padding: '0 14px' } : undefined}>
+                <input
+                  className={styles.searchInput}
+                  value={searchKeyword}
+                  onChange={(e) => setSearchKeyword(e.target.value)}
+                  placeholder={t('home.searchPlaceholder')}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') submitSearch();
+                  }}
+                />
+                <button
+                  type="button"
+                  className={styles.searchCancel}
+                  style={isEN ? { minWidth: 44, padding: '0 14px' } : undefined}
+                  onClick={submitSearch}
+                >
                   <img src={SearchIcon} alt={t('common.search')} className={styles.searchIcon} />
                   {!isEN && t('common.search')}
-                </div>
+                </button>
               </div>
             </div>
           </div>

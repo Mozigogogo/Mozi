@@ -180,17 +180,23 @@ export default function HomeClient({ initialIsPC = false }) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const MIN_MASK_MS = 700;
+    const MIN_MASK_MS = 250;
     const SPLASH_SEEN_KEY = 'mozi_home_splash_seen_v1';
+    const FAST_RETURN_KEY = 'mozi_home_fast_return_once_v1';
     const startTs = Date.now();
 
     const hideMask = () => {
       let seen = false;
+      let fastReturn = false;
       try {
         seen = sessionStorage.getItem(SPLASH_SEEN_KEY) === '1';
+        fastReturn = sessionStorage.getItem(FAST_RETURN_KEY) === '1';
+        if (fastReturn) {
+          sessionStorage.removeItem(FAST_RETURN_KEY);
+        }
       } catch (_) {}
       const elapsed = Date.now() - startTs;
-      const remain = seen ? 0 : Math.max(0, MIN_MASK_MS - elapsed);
+      const remain = seen || fastReturn ? 0 : Math.max(0, MIN_MASK_MS - elapsed);
       window.setTimeout(() => {
         setHomeBootMaskVisible(false);
         try {
@@ -199,13 +205,9 @@ export default function HomeClient({ initialIsPC = false }) {
       }, remain);
     };
 
-    if (document.readyState === 'complete') {
-      hideMask();
-      return;
-    }
-
-    window.addEventListener('load', hideMask, { once: true });
-    return () => window.removeEventListener('load', hideMask);
+    // 不等待 window load（图片/三方资源），首屏结构优先展示
+    const rafId = window.requestAnimationFrame(hideMask);
+    return () => window.cancelAnimationFrame(rafId);
   }, []);
 
   if (isPC) {
