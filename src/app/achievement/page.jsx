@@ -10,6 +10,9 @@ import AchievementInviteCard from './AchievementInviteCard';
 import AchievementOneTimeTasks from './AchievementOneTimeTasks';
 import AchievementMoreRewardsBanner from './AchievementMoreRewardsBanner';
 import AchievementDailyTasks from './AchievementDailyTasks';
+import AchievementPoolStatusCard from './AchievementPoolStatusCard';
+import AchievementPoolEventCard from './AchievementPoolEventCard';
+import AchievementRankingCard from './AchievementRankingCard';
 import { safeBack } from '@/utils/navigation';
 import styles from './page.module.less';
 
@@ -89,14 +92,9 @@ function AchievementContent() {
           </div>
 
           <div className={styles.rightColumn}>
-            <div className={styles.placeholderCard}>
-              <h2 className={styles.placeholderTitle}>
-                {t('pointsDetail.dailyTasks', { defaultValue: '每日任务' })}
-              </h2>
-              <p className={styles.placeholderDesc}>
-                {t('common.comingSoon', { defaultValue: '模块内容即将上线。' })}
-              </p>
-            </div>
+            <AchievementPoolStatusCard />
+            <AchievementPoolEventCard />
+                        <AchievementRankingCard />
           </div>
         </div>
       </div>
