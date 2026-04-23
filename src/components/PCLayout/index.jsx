@@ -379,12 +379,12 @@ export default function PCLayout({ children }) {
         label: t('pcLayout.menu.mySubscription'),
       },
       {
-        key: '/myqa',
+        key: '/ai',
         icon: (
           <CustomIcon
             src="/icons/new_home/ai_chat.svg"
             activeSrc="/icons/new_home/ai_chat.svg"
-            itemKey="/myqa"
+            itemKey="/ai"
             alt="myqa"
           />
         ),
