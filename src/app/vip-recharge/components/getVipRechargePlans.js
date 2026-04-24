@@ -72,6 +72,24 @@ function coerceFeatureList(rawList, iconMap) {
     .filter(Boolean);
 }
 
+function resolveTelegramStarsDisplay(tier) {
+  if (!tier || typeof tier !== 'object') return null;
+  const starsPrice =
+    tier.starsPrice ??
+    tier.starPrice ??
+    tier.tgStarsPrice ??
+    tier.telegramStarsPrice ??
+    tier.starsAmount ??
+    tier.starAmount ??
+    tier.telegramStars ??
+    tier.tgStars;
+  if (starsPrice == null || starsPrice === '') return null;
+  return {
+    price: String(starsPrice),
+    currency: '⭐',
+  };
+}
+
 function mergeRemoteIntoPlans(plansByTab, benefitsRes, pricingRes) {
   const benefits = normalizeBenefits(benefitsRes);
   const pricing = normalizePricing(pricingRes);
@@ -261,16 +279,19 @@ function mergeRemoteIntoPlans(plansByTab, benefitsRes, pricingRes) {
         const planCode = (p.title || '').toUpperCase(); // Free/Lite/Pro -> FREE/LITE/PRO
         const tiers = pricingV2Grouped?.[tabKey]?.[planCode] || [];
 
-        // Telegram 环境下，临时统一展示为 $（用于 TON 支付测试）
+        const tgStarsDisplayForTier = (tier) => (isTgEnv ? resolveTelegramStarsDisplay(tier) : null);
+
+        // Telegram 环境下优先展示星星字段（无星星字段时再回退美元）
         if (p.title === 'Free' && isTgEnv) {
-          next.currency = '$';
+          next.currency = '⭐';
           next.period = tabKey === 'yearly' ? '/年' : '/月';
         }
 
         if (p.title === 'Lite' && tiers[0]) {
           const liteTier = tiers[0];
-          next.price = String(liteTier.price);
-          next.currency = '$';
+          const starsDisplay = tgStarsDisplayForTier(liteTier);
+          next.price = starsDisplay?.price || String(liteTier.price);
+          next.currency = starsDisplay?.currency || '$';
           next.period = tabKey === 'yearly' ? '/年' : '/月';
           // 为 Lite 方案挂上 pricingId，供 Telegram Stars 支付使用
           next.pricingId = liteTier.pricingId || liteTier.id;
@@ -279,20 +300,22 @@ function mergeRemoteIntoPlans(plansByTab, benefitsRes, pricingRes) {
         if (p.title === 'Pro' && tiers.length) {
           // card 顶部展示用最低档价格
           const lowest = tiers[0];
-          next.price = String(lowest.price);
-          next.currency = '$';
+          const starsDisplay = tgStarsDisplayForTier(lowest);
+          next.price = starsDisplay?.price || String(lowest.price);
+          next.currency = starsDisplay?.currency || '$';
           next.period = tabKey === 'yearly' ? '/年' : '/月';
 
           next.tierSelect = {
             ...(next.tierSelect || { label: '选择等级' }),
             defaultId: String(tiers[0].tierCode),
             options: tiers.map((t) => ({
+              ...(tgStarsDisplayForTier(t) || {}),
               id: String(t.tierCode),
               title: formatPoints(t.monthlyPoints, tabKey),
               subtitle: `AI Call ${t.aiCallQuota}次`,
               pricingId: t.pricingId || t.id,
-              price: String(t.price),
-              currency: '$',
+              price: tgStarsDisplayForTier(t)?.price || String(t.price),
+              currency: tgStarsDisplayForTier(t)?.currency || '$',
               period: tabKey === 'yearly' ? '/年' : '/月',
             })),
             onChange: (opt) => console.log('Pro level:', opt),

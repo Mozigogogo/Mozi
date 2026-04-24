@@ -20,7 +20,7 @@ function resolveTelegramDefaultMethod() {
   if (fromEnv === TG_PAYMENT_METHODS.STARS || fromEnv === TG_PAYMENT_METHODS.TON) {
     return fromEnv;
   }
-  return TG_PAYMENT_METHODS.TON;
+  return TG_PAYMENT_METHODS.STARS;
 }
 
 // TG 端支付策略：
@@ -29,7 +29,7 @@ function resolveTelegramDefaultMethod() {
 // - STARS / ARBITRUM 分支保留（后续可随时打开）
 const TELEGRAM_PAYMENT_CONFIG = {
   defaultMethod: resolveTelegramDefaultMethod(),
-  hiddenMethods: [TG_PAYMENT_METHODS.STARS, TG_PAYMENT_METHODS.ARBITRUM],
+  hiddenMethods: [TG_PAYMENT_METHODS.TON, TG_PAYMENT_METHODS.ARBITRUM],
 };
 const ARBITRUM_CHAIN_ID = 42161;
 const ARBITRUM_ORDER_CHAIN = 'ARBITRUM';
