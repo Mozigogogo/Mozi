@@ -261,17 +261,16 @@ function mergeRemoteIntoPlans(plansByTab, benefitsRes, pricingRes) {
         const planCode = (p.title || '').toUpperCase(); // Free/Lite/Pro -> FREE/LITE/PRO
         const tiers = pricingV2Grouped?.[tabKey]?.[planCode] || [];
 
-        // Telegram 环境下，Free 也使用 Stars 作为展示单位（0 Stars）
+        // Telegram 环境下，临时统一展示为 $（用于 TON 支付测试）
         if (p.title === 'Free' && isTgEnv) {
-          next.currency = '⭐';
+          next.currency = '$';
           next.period = tabKey === 'yearly' ? '/年' : '/月';
         }
 
         if (p.title === 'Lite' && tiers[0]) {
           const liteTier = tiers[0];
-          const useStars = isTgEnv && liteTier.tgStarsAmount != null;
-          next.price = String(useStars ? liteTier.tgStarsAmount : liteTier.price);
-          next.currency = useStars ? '⭐' : '$';
+          next.price = String(liteTier.price);
+          next.currency = '$';
           next.period = tabKey === 'yearly' ? '/年' : '/月';
           // 为 Lite 方案挂上 pricingId，供 Telegram Stars 支付使用
           next.pricingId = liteTier.pricingId || liteTier.id;
@@ -280,9 +279,8 @@ function mergeRemoteIntoPlans(plansByTab, benefitsRes, pricingRes) {
         if (p.title === 'Pro' && tiers.length) {
           // card 顶部展示用最低档价格
           const lowest = tiers[0];
-          const useStars = isTgEnv && lowest.tgStarsAmount != null;
-          next.price = String(useStars ? lowest.tgStarsAmount : lowest.price);
-          next.currency = useStars ? '⭐' : '$';
+          next.price = String(lowest.price);
+          next.currency = '$';
           next.period = tabKey === 'yearly' ? '/年' : '/月';
 
           next.tierSelect = {
@@ -293,10 +291,8 @@ function mergeRemoteIntoPlans(plansByTab, benefitsRes, pricingRes) {
               title: formatPoints(t.monthlyPoints, tabKey),
               subtitle: `AI Call ${t.aiCallQuota}次`,
               pricingId: t.pricingId || t.id,
-              price: String(
-                isTgEnv && t.tgStarsAmount != null ? t.tgStarsAmount : t.price
-              ),
-              currency: isTgEnv && t.tgStarsAmount != null ? '⭐' : '$',
+              price: String(t.price),
+              currency: '$',
               period: tabKey === 'yearly' ? '/年' : '/月',
             })),
             onChange: (opt) => console.log('Pro level:', opt),
