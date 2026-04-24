@@ -17,7 +17,10 @@ function isTelegramEnv() {
   if (typeof window === 'undefined') return false;
   try {
     const channel = window.localStorage?.getItem('appChannel');
-    return channel === 'tg';
+    // 仅当渠道为 tg 且当前运行在 Telegram WebApp 容器内，才视为 TG 端
+    // 避免本地残留 appChannel=tg 导致 PC/H5 误用 Stars 价格
+    const inTelegramWebApp = Boolean(window.Telegram?.WebApp);
+    return channel === 'tg' && inTelegramWebApp;
   } catch (e) {
     return false;
   }

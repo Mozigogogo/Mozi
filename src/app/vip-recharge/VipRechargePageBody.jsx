@@ -20,6 +20,7 @@ export default function VipRechargePageBody({
   renderTabs = true,
   onTabsNode,
   preferredPurchaseMethod,
+  fullWidthCards = false,
 }) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('monthly');
@@ -236,7 +237,11 @@ export default function VipRechargePageBody({
         (tabsWrapClassName ? <div className={tabsWrapClassName}>{tabsNode}</div> : tabsNode)}
       <div className={planCardsClassName} key={activeTab}>
         {remoteError && !remoteLoading && <div>{t('vipRecharge.errors.loadSubscriptionData')}</div>}
-        <VipRechargePlanCards plans={planCardsWithHandlers[activeTab] || []} loading={purchaseSubmitting} />
+        <VipRechargePlanCards
+          plans={planCardsWithHandlers[activeTab] || []}
+          loading={purchaseSubmitting}
+          fullWidth={fullWidthCards}
+        />
       </div>
     </div>
   );

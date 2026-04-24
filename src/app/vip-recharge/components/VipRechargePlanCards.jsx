@@ -4,17 +4,25 @@ import React from 'react';
 import { Spin } from 'antd';
 import PlanCard from '@/components/PlanCard';
 
-export default function VipRechargePlanCards({ plans = [], loading = false }) {
+export default function VipRechargePlanCards({ plans = [], loading = false, fullWidth = false }) {
+  const wrapperStyle = fullWidth
+    ? {
+        display: 'grid',
+        width: '100%',
+        gridTemplateColumns: `repeat(${Math.max(plans.length, 1)}, minmax(0, 1fr))`,
+        gap: '16px',
+        alignItems: 'stretch',
+      }
+    : {
+        display: 'inline-flex',
+        gap: '16px',
+        minWidth: 'max-content',
+        alignItems: 'stretch',
+      };
+
   return (
     <Spin spinning={loading}>
-      <div
-        style={{
-          display: 'inline-flex',
-          gap: '16px',
-          minWidth: 'max-content',
-          alignItems: 'stretch',
-        }}
-      >
+      <div style={wrapperStyle}>
         {plans.map((plan) => (
           <PlanCard
             key={plan.id}
@@ -32,6 +40,7 @@ export default function VipRechargePlanCards({ plans = [], loading = false }) {
             badge={plan.badge}
             disabled={plan.disabled}
             onSubscribe={plan.onSubscribe}
+            fullWidth={fullWidth}
           />
         ))}
       </div>

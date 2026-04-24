@@ -51,6 +51,7 @@ const PlanCard = ({
   badge = '',
   description = '',
   disabled = false,
+  fullWidth = false,
 }) => {
   const { t } = useTranslation();
 
@@ -265,7 +266,10 @@ const PlanCard = ({
       className={`${styles.planCard} ${isPopular ? styles.popular : ''} ${
         styles[`planCard${title}`] || ''
       }`}
-      style={{ '--accent-color': accentColor }}
+      style={{
+        '--accent-color': accentColor,
+        ...(fullWidth ? { maxWidth: 'none' } : {}),
+      }}
     >
       {/* 背景装饰 */}
       <div className={styles.background} />
