@@ -2,7 +2,9 @@
   margin-top: 12px;
   border-radius: 16px;
   border: 1px solid #d8efe7;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.82) 0%, rgba(238, 255, 239, 0.72) 100%);
+  background:
+    radial-gradient(51.45% 28.46% at 100% 30%, rgba(105, 255, 61, 0.28) 0%, rgba(255, 255, 255, 0) 100%),
+    linear-gradient(0deg, #ffffff, #ffffff);
   padding: 12px;
   box-sizing: border-box;
   display: flex;
@@ -213,7 +215,10 @@
   gap: 10px;
   flex: 1 1 auto;
   min-height: 0;
+  max-height: calc(16 * 48px + 15 * 10px);
   padding-bottom: 46px;
+  position: relative;
+ 
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -287,7 +292,7 @@
 
 .inviteBtn {
   position: absolute;
-  right: -20px;
+  right: -1px;
   bottom: 40px;
   display: inline-flex;
   align-items: center;
