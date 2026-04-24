@@ -49,10 +49,19 @@
   padding: 0 14px;
   display: inline-flex;
   align-items: center;
-  color: #10b981;
   font-size: 13px;
+}
+
+.tagOk {
+  color: #10b981;
   background: rgba(16, 185, 129, 0.08);
   border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.tagAlert {
+  color: #fc3b43;
+  background: rgba(252, 59, 67, 0.08);
+  border: 1px solid rgba(252, 59, 67, 0.2);
 }
 
 .percentRow {
@@ -66,6 +75,14 @@
   line-height: 1;
   font-weight: 800;
   color: #2eb869;
+}
+
+.percentAlert {
+  background: linear-gradient(90deg, #fd8d38 0%, #fc3b43 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 .percentLabel {
@@ -88,6 +105,10 @@
 .progressFill {
   height: 100%;
   background: linear-gradient(90deg, #36cf90 0%, #4fd0bd 100%);
+}
+
+.progressFillAlert {
+  background: linear-gradient(90deg, #fd8d38 0%, #fc3b43 100%);
 }
 
 .scale {
@@ -128,6 +149,17 @@
   color: #1f2937;
   font-size: 32px;
   font-weight: 800;
+}
+
+@media (min-width: 1024px) {
+  .statValue {
+    font-family: 'Suez One', serif;
+    font-style: normal;
+    font-size: 28px;
+    line-height: 38px;
+    font-weight: 800;
+    letter-spacing: 0;
+  }
 }
 
 .statIcon {
@@ -190,6 +222,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.timerBoxAlert {
+  background: linear-gradient(90deg, #fd8d38 0%, #fc3b43 100%);
 }
 
 .timerLabel {

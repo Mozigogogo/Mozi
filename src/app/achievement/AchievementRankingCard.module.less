@@ -8,6 +8,9 @@
   display: flex;
   flex-direction: column;
   flex: 1;
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .header {
@@ -25,8 +28,8 @@
 }
 
 .titleIcon {
-  width: 24px;
-  height: 24px;
+  width: 36px;
+  height: 36px;
 }
 
 .title {
@@ -38,7 +41,7 @@
 
 .titleUnderline {
   position: absolute;
-  left: 32px;
+  left: 40px;
   right: 0;
   bottom: -3px;
   height: 4px;
@@ -50,47 +53,89 @@
   display: inline-flex;
   gap: 6px;
   background: #f1f5f9;
-  border-radius: 10px;
-  padding: 3px;
+  border-radius: 12px;
+  padding: 4px;
 }
 
 .tab {
   border: none;
-  height: 24px;
-  padding: 0 10px;
-  border-radius: 8px;
-  font-size: 12px;
+  height: 30px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-size: 14px;
   color: #74859f;
-  background: transparent;
+  background: rgba(241, 245, 249, 1);
   cursor: pointer;
 }
 
 .tabActive {
-  background: #fff;
+  background: rgba(255, 255, 255, 1);
+  border-radius: 9px;
+  box-shadow:
+    0px 1px 2px -1px rgba(0, 0, 0, 0.1),
+    0px 1px 3px 0px rgba(0, 0, 0, 0.1);
   color: #111827;
-  font-weight: 700;
 }
 
 .top3Row {
   margin-top: 12px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 16px;
   padding-bottom: 10px;
   border-bottom: 1px solid #e7eef3;
 }
 
+.stateBox {
+  margin-top: 12px;
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8ca0ba;
+  font-size: 14px;
+  border-top: 1px solid #e7eef3;
+}
+
 .top3Item {
+  width: 76px;
   text-align: center;
 }
 
+.top1Item {
+  width: 90px;
+}
+
 .crown {
-  font-size: 18px;
-  line-height: 1;
+  position: absolute;
+  top: -18px;
+  left: 65%;
+  transform: translateX(-50%);
+  width: 48px;
+  height: 32px;
+  object-fit: contain;
+  z-index: 2;
+}
+
+.avatarWrap {
+  position: relative;
+  width: 44px;
+  margin: 4px auto 0;
+}
+
+.top1AvatarWrap {
+  width: 54px;
+}
+
+.top1AvatarWrap .crown {
+  top: -17px;
+  width: 56px;
+  height: 36px;
 }
 
 .avatar {
-  margin: 4px auto 0;
+  margin: 0 auto;
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -101,30 +146,82 @@
   font-weight: 800;
 }
 
+.top1Avatar {
+  width: 54px;
+  height: 54px;
+  font-size: 28px;
+}
+
 .name {
   margin-top: 6px;
   font-size: 12px;
   color: #1f2937;
 }
 
+.top1Name {
+  color: #111827;
+  font-size: 16px;
+  font-weight: 800;
+}
+
 .score {
   margin-top: 2px;
-  font-size: 12px;
-  color: #9a8b57;
+  display: inline-flex;
+  align-items: center;
+}
+
+.score > span {
+  font-family: Inter, sans-serif;
+  font-weight: 500;
+  font-style: normal;
+  font-size: 11px;
+  line-height: 16.5px;
+  letter-spacing: 0;
+  color: rgba(148, 163, 184, 1);
+}
+
+.top1Score > span {
+  font-family: Inter, sans-serif;
+  font-weight: 500;
+  font-style: normal;
+  font-size: 18px;
+  line-height: 20px;
+  letter-spacing: 0;
+  color: rgba(100, 116, 139, 1);
+}
+
+.topSideScore > span {
+  font-family: Inter, sans-serif;
+  font-weight: 500;
+  font-style: normal;
+  font-size: 16px;
+  line-height: 18px;
+  letter-spacing: 0;
+  color: rgba(100, 116, 139, 1);
+}
+
+.scoreCoinIcon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
 }
 
 .list {
   margin-top: 8px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  flex: 1;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding-bottom: 46px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .row {
-  min-height: 36px;
+  min-height: 48px;
   border-radius: 10px;
-  padding: 0 10px;
+  padding: 0 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -149,37 +246,56 @@
 }
 
 .miniAvatar {
-  width: 22px;
-  height: 22px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
 }
 
 .rowName {
   color: #1f2937;
-  font-size: 13px;
+  font-size: 15px;
+  font-weight: 500;
 }
 
 .rowScore {
-  color: #8f7d4c;
-  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.rowScore > span {
+  font-family: Inter, sans-serif;
+  font-weight: 500;
+  font-style: normal;
+  font-size: 13px;
+  line-height: 18px;
+  letter-spacing: 0;
+  color: rgba(148, 163, 184, 1);
+}
+
+.rowScoreCoinIcon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
 }
 
 .inviteBtn {
-  margin-top: auto;
-  margin-left: auto;
+  position: absolute;
+  right: -20px;
+  bottom: 40px;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   height: 34px;
-  border-radius: 17px;
+  border-radius: 17px 0px 0px 17px;
   border: none;
-  padding: 0 12px;
+  padding: 0 10px 0 6px;
   background: rgba(201, 255, 236, 0.75);
   color: #0ea97d;
   font-size: 12px;
@@ -188,13 +304,10 @@
 }
 
 .inviteIcon {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #16c286;
-  color: #fff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  width: 24px;
+  height: 24px;
+  display: block;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 

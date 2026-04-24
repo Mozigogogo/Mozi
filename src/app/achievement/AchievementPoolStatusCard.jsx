@@ -7,12 +7,17 @@ export default function AchievementPoolStatusCard({
   percent = 60,
   totalAwarded = '4.23M',
   pointsBalance = '7.65M',
-  statusLabel,
+  mode = 'BOOST',
   countdown = { day: 12, hour: 8, second: 45 },
 }) {
   const { t } = useTranslation();
   const safePercent = Math.max(0, Math.min(100, Number(percent) || 0));
-  const tagLabel = statusLabel || t('pointsDetail.poolSufficient', { defaultValue: 'Full' });
+  const currentMode = String(mode || 'BOOST').toUpperCase();
+  const isScarce = currentMode === 'SCARCE';
+  const isNormal = currentMode === 'NORMAL';
+  const tagLabel = isScarce
+    ? t('pointsDetail.poolScarce', { defaultValue: '紧张' })
+    : t('pointsDetail.poolSufficient', { defaultValue: '充足' });
 
   return (
     <section className={styles.card}>
@@ -22,11 +27,11 @@ export default function AchievementPoolStatusCard({
           <h3 className={styles.title}>{t('pointsDetail.poolTitleText', { defaultValue: 'Points pool status' })}</h3>
           <span className={styles.titleUnderline} />
         </div>
-        <span className={styles.tag}>● {tagLabel}</span>
+        <span className={`${styles.tag} ${isScarce ? styles.tagAlert : styles.tagOk}`}>● {tagLabel}</span>
       </div>
 
       <div className={styles.percentRow}>
-        <span className={styles.percent}>{safePercent}%</span>
+        <span className={`${styles.percent} ${isScarce ? styles.percentAlert : ''}`}>{safePercent}%</span>
         <span className={styles.percentLabel}>
           {t('pointsDetail.poolRemaining', { defaultValue: 'REMAINING POINTS' })}
         </span>
@@ -34,7 +39,10 @@ export default function AchievementPoolStatusCard({
 
       <div className={styles.progressBlock}>
         <div className={styles.progressTrack}>
-          <div className={styles.progressFill} style={{ width: `${safePercent}%` }} />
+          <div
+            className={`${styles.progressFill} ${isScarce ? styles.progressFillAlert : ''}`}
+            style={{ width: `${safePercent}%` }}
+          />
         </div>
         <div className={styles.scale}>
           <span>0%</span>
@@ -67,17 +75,23 @@ export default function AchievementPoolStatusCard({
         </div>
         <div className={styles.timerRow}>
           <div className={styles.timerItem}>
-            <div className={styles.timerBox}>{String(countdown.day).padStart(2, '0')}</div>
+            <div className={`${styles.timerBox} ${isScarce ? styles.timerBoxAlert : ''}`}>
+              {String(countdown.day).padStart(2, '0')}
+            </div>
             <div className={styles.timerLabel}>{t('pointsDetail.poolDays', { defaultValue: 'Day' })}</div>
           </div>
           <span className={styles.colon}>:</span>
           <div className={styles.timerItem}>
-            <div className={styles.timerBox}>{String(countdown.hour).padStart(2, '0')}</div>
+            <div className={`${styles.timerBox} ${isScarce ? styles.timerBoxAlert : ''}`}>
+              {String(countdown.hour).padStart(2, '0')}
+            </div>
             <div className={styles.timerLabel}>{t('pointsDetail.poolHours', { defaultValue: 'Time' })}</div>
           </div>
           <span className={styles.colon}>:</span>
           <div className={styles.timerItem}>
-            <div className={styles.timerBox}>{String(countdown.second).padStart(2, '0')}</div>
+            <div className={`${styles.timerBox} ${isScarce ? styles.timerBoxAlert : ''}`}>
+              {String(countdown.second).padStart(2, '0')}
+            </div>
             <div className={styles.timerLabel}>{t('pointsDetail.poolMinutes', { defaultValue: 'Second' })}</div>
           </div>
         </div>

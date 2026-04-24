@@ -1,52 +1,96 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getTaskRanking } from '@/api/points';
 import styles from './AchievementRankingCard.module.less';
 
 const tabs = ['day', 'month', 'total'];
-
-const rankMock = {
-  day: [
-    { rank: 1, name: '李四', score: 1980, color: '#8db8ff' },
-    { rank: 2, name: '张三', score: 2000, color: '#f7c748' },
-    { rank: 3, name: '王五', score: 1950, color: '#ff8a8a' },
-    { rank: 4, name: '赵六', score: 1900, color: '#8fe2ff' },
-    { rank: 5, name: '陈七', score: 1860, color: '#b395ff' },
-    { rank: 6, name: '林八', score: 1800, color: '#89e9b8' },
-    { rank: 7, name: '吴九', score: 1740, color: '#ffae6b' },
-    { rank: 8, name: '郑十', score: 1680, color: '#ff8bc9' },
-    { rank: 9, name: '我', score: 2000, color: '#2bcf9c', isMe: true },
-  ],
-  month: [
-    { rank: 1, name: '张三', score: 6200, color: '#f7c748' },
-    { rank: 2, name: '王五', score: 5980, color: '#8db8ff' },
-    { rank: 3, name: '李四', score: 5800, color: '#ff8a8a' },
-    { rank: 4, name: '赵六', score: 5500, color: '#8fe2ff' },
-    { rank: 5, name: '我', score: 5260, color: '#2bcf9c', isMe: true },
-  ],
-  total: [
-    { rank: 1, name: '张三', score: 15200, color: '#f7c748' },
-    { rank: 2, name: '李四', score: 14980, color: '#8db8ff' },
-    { rank: 3, name: '王五', score: 14550, color: '#ff8a8a' },
-    { rank: 4, name: '赵六', score: 13200, color: '#8fe2ff' },
-    { rank: 9, name: '我', score: 10200, color: '#2bcf9c', isMe: true },
-  ],
-};
+const rankTypeByTab = { day: 'daily', month: 'monthly', total: 'total' };
+const avatarColorPalette = ['#8db8ff', '#f7c748', '#ff8a8a', '#8fe2ff', '#b395ff', '#89e9b8', '#ffae6b', '#ff8bc9'];
 
 const crownByRank = {
-  1: '👑',
-  2: '♕',
-  3: '♛',
+  1: '/icons/pc/top1_header.svg',
+  2: '/icons/pc/top2_header.svg',
+  3: '/icons/pc/top3_header.svg',
 };
 
-export default function AchievementRankingCard() {
+export default function AchievementRankingCard({ onInviteClick, style }) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('total');
+  const [rankData, setRankData] = useState({});
+  const [currentUserData, setCurrentUserData] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
 
-  const list = useMemo(() => rankMock[activeTab] || [], [activeTab]);
-  const top3 = list.filter((x) => x.rank <= 3).sort((a, b) => a.rank - b.rank);
-  const tail = list.filter((x) => x.rank > 3).sort((a, b) => a.rank - b.rank);
+  useEffect(() => {
+    let cancelled = false;
+    const loadRankData = async () => {
+      const apiType = rankTypeByTab[activeTab] || 'total';
+      setIsLoading(true);
+      try {
+        const res = await getTaskRanking(apiType, 50);
+        if (cancelled) return;
+        if (res?.code !== 0 || !res?.data) {
+          setRankData((prev) => ({ ...prev, [activeTab]: [] }));
+          setCurrentUserData((prev) => ({ ...prev, [activeTab]: { rank: null, points: 0 } }));
+          return;
+        }
+        const rankings = Array.isArray(res.data.rankings)
+          ? res.data.rankings
+          : (Array.isArray(res.data) ? res.data : []);
+        const mappedList = rankings.map((item, index) => ({
+          id: item.userId || index + 1,
+          rank: index + 1,
+          name: item.nickName || item.nickname || item.userName || t('points.me', { defaultValue: '我' }),
+          score: Number(item.points || item.totalPoints || item.dailyPoints || item.monthlyPoints || 0),
+          color: avatarColorPalette[index % avatarColorPalette.length],
+          isMe: Boolean(item.isCurrentUser),
+        }));
+        setRankData((prev) => ({ ...prev, [activeTab]: mappedList }));
+        setCurrentUserData((prev) => ({
+          ...prev,
+          [activeTab]: {
+            rank: Number(res.data.currentUserRank) || null,
+            points: Number(res.data.currentUserPoints) || 0,
+          },
+        }));
+      } catch (error) {
+        console.error('Failed to fetch achievement ranking:', error);
+        if (!cancelled) {
+          setRankData((prev) => ({ ...prev, [activeTab]: [] }));
+          setCurrentUserData((prev) => ({ ...prev, [activeTab]: { rank: null, points: 0 } }));
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+    loadRankData();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, t]);
+
+  const list = useMemo(() => {
+    const source = Array.isArray(rankData[activeTab]) ? [...rankData[activeTab]] : [];
+    const current = currentUserData[activeTab];
+    const hasMe = source.some((item) => item.isMe);
+    if (!hasMe && current?.rank) {
+      source.push({
+        id: `me-${activeTab}`,
+        rank: current.rank,
+        name: t('points.me', { defaultValue: '我' }),
+        score: current.points || 0,
+        color: '#2bcf9c',
+        isMe: true,
+      });
+    }
+    return source;
+  }, [activeTab, currentUserData, rankData, t]);
+  const top3 = list.slice(0, 3);
+  const tail = list.slice(3);
+  const top3Display = [2, 1, 3]
+    .map((rank) => top3.find((item) => item.rank === rank))
+    .filter(Boolean);
 
   const tabLabel = (key) => {
     if (key === 'day') return t('pointsDetail.rankDay', { defaultValue: '日榜' });
@@ -55,7 +99,7 @@ export default function AchievementRankingCard() {
   };
 
   return (
-    <section className={styles.card}>
+    <section className={styles.card} style={style}>
       <div className={styles.header}>
         <div className={styles.titleWrap}>
           <img src="/icons/pool_status_logo.svg" alt="" className={styles.titleIcon} />
@@ -76,36 +120,51 @@ export default function AchievementRankingCard() {
         </div>
       </div>
 
-      <div className={styles.top3Row}>
-        {top3.map((item) => (
-          <div key={item.rank} className={styles.top3Item}>
-            <div className={styles.crown}>{crownByRank[item.rank]}</div>
-            <div className={styles.avatar} style={{ background: item.color }}>
-              {item.name.slice(0, 1)}
-            </div>
-            <div className={styles.name}>{item.name}</div>
-            <div className={styles.score}>🪙 {item.score}</div>
+      {isLoading ? (
+        <div className={styles.stateBox}>{t('common.loading', { defaultValue: 'Loading...' })}</div>
+      ) : list.length === 0 ? (
+        <div className={styles.stateBox}>{t('common.noData', { defaultValue: '暂无数据' })}</div>
+      ) : (
+        <>
+          <div className={styles.top3Row}>
+            {top3Display.map((item) => (
+              <div key={item.id || item.rank} className={`${styles.top3Item} ${item.rank === 1 ? styles.top1Item : ''}`}>
+                <div className={`${styles.avatarWrap} ${item.rank === 1 ? styles.top1AvatarWrap : ''}`}>
+                  <img src={crownByRank[item.rank]} alt="" className={styles.crown} />
+                  <div className={`${styles.avatar} ${item.rank === 1 ? styles.top1Avatar : ''}`} style={{ background: item.color }}>
+                    {item.name.slice(0, 1)}
+                  </div>
+                </div>
+                <div className={`${styles.name} ${item.rank === 1 ? styles.top1Name : ''}`}>{item.name}</div>
+                <div className={`${styles.score} ${item.rank === 1 ? styles.top1Score : styles.topSideScore}`}>
+                  <img src="/point/new_coin.svg" alt="" className={styles.scoreCoinIcon} />
+                  <span>{item.score}</span>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-
-      <div className={styles.list}>
-        {tail.map((item) => (
-          <div key={`${item.rank}-${item.name}`} className={`${styles.row} ${item.isMe ? styles.meRow : ''}`}>
-            <div className={styles.left}>
-              <span className={styles.rankNo}>{item.rank}</span>
-              <span className={styles.miniAvatar} style={{ background: item.color }}>
-                {item.name.slice(0, 1)}
-              </span>
-              <span className={styles.rowName}>{item.name}</span>
-            </div>
-            <span className={styles.rowScore}>🪙 {item.score}</span>
+          <div className={styles.list}>
+            {tail.map((item) => (
+              <div key={item.id || `${item.rank}-${item.name}`} className={`${styles.row} ${item.isMe ? styles.meRow : ''}`}>
+                <div className={styles.left}>
+                  <span className={styles.rankNo}>{item.rank}</span>
+                  <span className={styles.miniAvatar} style={{ background: item.color }}>
+                    {item.name.slice(0, 1)}
+                  </span>
+                  <span className={styles.rowName}>{item.name}</span>
+                </div>
+                <span className={styles.rowScore}>
+                  <img src="/point/new_coin.svg" alt="" className={styles.rowScoreCoinIcon} />
+                  <span>{item.score}</span>
+                </span>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </>
+      )}
 
-      <button type="button" className={styles.inviteBtn}>
-        <span className={styles.inviteIcon}>↻</span>
+      <button type="button" className={styles.inviteBtn} onClick={onInviteClick}>
+        <img src="/icons/pc/share.svg" alt="" className={styles.inviteIcon} />
         {t('pointsDetail.inviteFriendsNow', { defaultValue: '邀请朋友来挑战吧' })}
       </button>
     </section>

@@ -140,6 +140,7 @@
   display: grid;
   grid-template-columns: 65% 35%;
   gap: 12px;
+  align-items: start;
 }
 
 .leftColumn,
@@ -150,6 +151,12 @@
 .rightColumn {
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.rightTopSection {
+  flex-shrink: 0;
 }
 
 @media (max-width: 768px) {

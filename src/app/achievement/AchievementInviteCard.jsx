@@ -6,7 +6,12 @@ import styles from './AchievementInviteCard.module.less';
 
 export default function AchievementInviteCard({ pointsData, copyToClipboard }) {
   const { t } = useTranslation();
-  const inviteLinkFallback = pointsData.inviteLink || getTgInviteLink(pointsData.inviteCode);
+  const inviteCode = String(pointsData.inviteCode || '').trim();
+  const inviteLinkFallback =
+    pointsData.inviteLink ||
+    (typeof window !== 'undefined' && inviteCode
+      ? `${window.location.origin}/?inviteCode=${encodeURIComponent(inviteCode)}`
+      : getTgInviteLink(inviteCode));
 
   return (
     <section className={styles.card}>

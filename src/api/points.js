@@ -132,3 +132,20 @@ export const completeTask = (data) => {
     data
   });
 };
+
+/**
+ * 获取积分榜单
+ * @param {'daily'|'monthly'|'total'} type
+ * @param {number} limit
+ * @returns {Promise}
+ */
+export const getTaskRanking = (type = 'total', limit = 50) => {
+  return request({
+    url: Interface.TASK_RANKING,
+    method: 'GET',
+    params: {
+      type,
+      limit,
+    },
+  });
+};
