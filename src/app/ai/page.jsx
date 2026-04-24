@@ -358,7 +358,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     t('robot.quickAsk.ethTechnical'),
     t('robot.quickAsk.solDaily'),
     t('robot.quickAsk.bnbProspect'),
-    'Ton后续发展',
+    t('robot.quickAsk.tonOutlook'),
   ];
 
   const [inputValue, setInputValue] = useState('');
@@ -1353,7 +1353,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                       aria-hidden
                     />
                   </span>
-                  <span className={styles.modeLabel}>深度思考</span>
+                  <span className={styles.modeLabel}>{t('robot.model.analyze')}</span>
                 </div>
                 <div
                   className={`${styles.modeItem} ${selectedModel === 'chat' ? styles.activeMode : ''}`}
@@ -1377,7 +1377,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                       aria-hidden
                     />
                   </span>
-                  <span className={styles.modeLabel}>聊天</span>
+                  <span className={styles.modeLabel}>{t('robot.model.chat')}</span>
                 </div>
               </div>
               <div className={styles.actionTools}>

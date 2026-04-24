@@ -359,6 +359,8 @@
     "columns": {
       "symbolMarketCap": "币种/市值",
       "priceWithChange": "最新价格/24H价格变化",
+      "change24hValue": "24H价格变化",
+      "change24hPercent": "24H价格变化%",
       "gain": "涨幅",
       "loss": "跌幅",
       "volatility": "波幅",
@@ -918,7 +920,8 @@
       "btcTrend": "BTC后市如何",
       "ethTechnical": "ETH技术面怎么样",
       "solDaily": "SOL今日行情分析",
-      "bnbProspect": "BNB发展前景怎么样"
+      "bnbProspect": "BNB发展前景怎么样",
+      "tonOutlook": "Ton后续发展"
     },
     "pointsUnit": "积分",
     "suggest": {
@@ -1046,6 +1049,9 @@
     "newbieTasks": "新手任务得奖励",
     "noTasks": "暂无任务",
     "dailyTasks": "每日任务",
+    "rankDay": "日榜",
+    "rankMonth": "月榜",
+    "rankTotal": "总榜",
     "completed": "已完成",
     "goFinish": "去完成",
     "claimed": "已领取",
@@ -1670,6 +1676,11 @@
       "notLoggedIn": "未登录",
       "pcUser": "PC用户"
     },
+    "wallet": {
+      "connected": "钱包: {{account}}",
+      "connect": "连接钱包",
+      "switchNetwork": "切换网络"
+    },
     "activity": {
       "title": "MOZI",
       "subtitle": "限量体验官招募中",
@@ -1758,6 +1769,7 @@
     }
   },
   "sectorDetail": {
+    "totalValue": "总价值",
     "sector": "板块",
     "volume": "成交量",
     "marketCap": "市值",
@@ -1847,6 +1859,31 @@
         "title": "支付确认中",
         "desc": "正在查询您的支付结果，请稍候..."
       }
+    }
+  },
+  "pcCommunity": {
+    "flashNewsTitle": "24H快讯",
+    "refresh": "刷新",
+    "noFlashNews": "暂无快讯",
+    "hotRankingTitle": "热门榜单",
+    "hotBadge": "HOT",
+    "newsTag": "资讯",
+    "publishPlaceholder": "发布内容..",
+    "votingQuestionMarket": "您对今天的行情有何看法?",
+    "userIdMissing": "未获取到用户ID",
+    "postDetailTitle": "帖子详情",
+    "commentSendSuccess": "评论发送成功",
+    "commentSendFailed": "评论发送失败，请稍后重试",
+    "emptyQaPosts": "暂无不懂就问相关帖子",
+    "emptyCoinPosts": "暂无{{coin}}相关帖子",
+    "errors": {
+      "fetchFlashNewsFailed": "获取快讯失败"
+    },
+    "featureInProgress": {
+      "follow": "关注功能开发中",
+      "like": "请在卡片中进行点赞操作",
+      "comment": "评论功能开发中",
+      "share": "分享功能开发中"
     }
   },
   "benefitsPage": {

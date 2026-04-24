@@ -53,9 +53,9 @@ const BullBearIndicator = ({
   // PC端问题文本
   const questionText = useMemo(() => {
     if (question) return question;
-    if (coinSymbol) return `您对今天的${coinSymbol}有何看法?`;
-    return '您对今天的行情有何看法?';
-  }, [question, coinSymbol]);
+    if (coinSymbol) return t('community.coinInfo.votingQuestion', { coin: coinSymbol });
+    return t('pcCommunity.votingQuestionMarket');
+  }, [question, coinSymbol, t]);
 
   // 处理点击
   const handleSelect = (type) => {
@@ -82,7 +82,7 @@ const BullBearIndicator = ({
       <div className={isPC ? styles.pcIndicatorWrapper : ''}>
         {/* PC端参与人数（在投票条左侧） */}
         {isPC && (
-          <span className={styles.pcParticipants}>{participants}人参与</span>
+          <span className={styles.pcParticipants}>{displayCount}</span>
         )}
         
         {/* 指示器 */}

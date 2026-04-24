@@ -695,8 +695,8 @@ export default function PCLayout({ children }) {
               const ready = mounted;
               const connected = ready && account && chain;
               const walletText = connected
-                ? `钱包: ${account.displayName || account.address}`
-                : '连接钱包';
+                ? t('pcLayout.wallet.connected', { account: account.displayName || account.address })
+                : t('pcLayout.wallet.connect');
               const handleWalletClick = () => {
                 if (!ready) return;
                 if (!connected) {
@@ -714,7 +714,7 @@ export default function PCLayout({ children }) {
                       e.stopPropagation();
                       openChainModal?.();
                     }}>
-                      切换网络
+                      {t('pcLayout.wallet.switchNetwork')}
                     </span>
                   ) : null}
                 </button>

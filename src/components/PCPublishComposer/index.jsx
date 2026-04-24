@@ -2,15 +2,18 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { CameraOutlined, NumberOutlined, PictureOutlined, PlusOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import styles from './index.module.less';
 
 const DEFAULT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png';
 
 export default function PCPublishComposer({
-  placeholder = '发布内容..',
+  placeholder,
   onPublish,
 }) {
+  const { t } = useTranslation();
   const [avatarUrl, setAvatarUrl] = useState(DEFAULT_AVATAR);
+  const composerPlaceholder = placeholder || t('pcCommunity.publishPlaceholder');
 
   const resolvedAvatar = useMemo(() => {
     const u = String(avatarUrl || '').trim();
@@ -49,7 +52,7 @@ export default function PCPublishComposer({
       />
 
       <div className={styles.main}>
-        <div className={styles.placeholder}>{placeholder}</div>
+        <div className={styles.placeholder}>{composerPlaceholder}</div>
 
         <div className={styles.toolbar}>
           <button type="button" className={styles.toolBtn} aria-label="camera">
@@ -66,7 +69,7 @@ export default function PCPublishComposer({
 
       <button type="button" className={styles.publishBtn} onClick={onPublish}>
         <PlusOutlined />
-        <span>发布</span>
+        <span>{t('post.buttons.publish')}</span>
       </button>
     </div>
   );

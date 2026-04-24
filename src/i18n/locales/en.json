@@ -376,6 +376,8 @@
     "columns": {
       "symbolMarketCap": "Symbol / Mkt Cap",
       "priceWithChange": "Price / 24h ",
+      "change24hValue": "24H Price Change",
+      "change24hPercent": "24H Price Change %",
       "gain": "Gainers",
       "loss": "Losers",
       "volatility": "Volatility",
@@ -935,7 +937,8 @@
       "btcTrend": "BTC outlook",
       "ethTechnical": "ETH technical view",
       "solDaily": "SOL daily analysis",
-      "bnbProspect": "BNB growth outlook"
+      "bnbProspect": "BNB growth outlook",
+      "tonOutlook": "TON outlook"
     },
     "pointsUnit": "Points",
     "suggest": {
@@ -1064,6 +1067,9 @@
     "newbieTasks": "Starter Quest Reward",
     "noTasks": "No tasks available",
     "dailyTasks": "Daily Quest Reward",
+    "rankDay": "Daily",
+    "rankMonth": "Monthly",
+    "rankTotal": "Total",
     "completed": "Completed",
     "goFinish": "Go",
     "claimed": "Claimed",
@@ -1689,6 +1695,11 @@
       "notLoggedIn": "Not Logged In",
       "pcUser": "PC User"
     },
+    "wallet": {
+      "connected": "Wallet: {{account}}",
+      "connect": "Connect Wallet",
+      "switchNetwork": "Switch Network"
+    },
     "activity": {
       "title": "MOZI",
       "subtitle": "Limited Beta Tester Recruitment",
@@ -1777,6 +1788,7 @@
     }
   },
   "sectorDetail": {
+    "totalValue": "Total Value",
     "sector": "Sector",
     "volume": "Volume",
     "marketCap": "Market Cap",
@@ -1866,6 +1878,31 @@
         "title": "Processing Payment",
         "desc": "Checking your payment result, please wait..."
       }
+    }
+  },
+  "pcCommunity": {
+    "flashNewsTitle": "24H News",
+    "refresh": "Refresh",
+    "noFlashNews": "No news yet",
+    "hotRankingTitle": "Hot Ranking",
+    "hotBadge": "HOT",
+    "newsTag": "News",
+    "publishPlaceholder": "Share your thoughts...",
+    "votingQuestionMarket": "What's your view on today's market?",
+    "userIdMissing": "User ID is unavailable",
+    "postDetailTitle": "Post detail",
+    "commentSendSuccess": "Comment sent successfully",
+    "commentSendFailed": "Failed to send comment, please try again later",
+    "emptyQaPosts": "No Q&A posts yet",
+    "emptyCoinPosts": "No posts about {{coin}} yet",
+    "errors": {
+      "fetchFlashNewsFailed": "Failed to fetch flash news"
+    },
+    "featureInProgress": {
+      "follow": "Follow feature is under development",
+      "like": "Please like from the post card",
+      "comment": "Comment feature is under development",
+      "share": "Share feature is under development"
     }
   },
   "benefitsPage": {

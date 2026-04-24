@@ -114,7 +114,7 @@ export default function PCFindContent() {
       width: 150,
     },
     {
-      title: '24H价格变化',
+      title: t('discover.columns.change24hValue'),
       dataIndex: 'priceChangePercentage24h',
       key: 'priceChangePercentage24h',
       align: 'right',
@@ -135,7 +135,7 @@ export default function PCFindContent() {
       },
     },
     {
-      title: '24H价格变化%',
+      title: t('discover.columns.change24hPercent'),
       dataIndex: 'priceChange24h',
       key: 'priceChange24h',
       align: 'right',
@@ -738,8 +738,8 @@ export default function PCFindContent() {
           <div className={styles.headerCell}>{t('home.columns.symbol')}</div>
           <div className={styles.headerCell}>{t('home.columns.lastPrice')}</div>
           <div className={styles.headerCell}>{t('discover.columns.symbolMarketCap')}</div>
-          <div className={styles.headerCell}>24H价格变化</div>
-          <div className={styles.headerCell}>24H价格变化%</div>
+          <div className={styles.headerCell}>{t('discover.columns.change24hValue')}</div>
+          <div className={styles.headerCell}>{t('discover.columns.change24hPercent')}</div>
         </div>
       )}
 
@@ -1040,7 +1040,7 @@ export default function PCFindContent() {
                             ? t('discover.columns.turnover')
                             : rankActiveType === 'new'
                               ? t('home.columns.lastPrice')
-                              : '24H涨跌幅'}
+                              : t('home.columns.change24h')}
                         </div>
                         {rankActiveType !== 'exchange' && (
                           <>

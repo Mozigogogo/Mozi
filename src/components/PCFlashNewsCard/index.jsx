@@ -9,6 +9,7 @@ import {
   ShareAltOutlined,
 } from '@ant-design/icons';
 import PCPagination from '@/components/PCPagination';
+import { useTranslation } from 'react-i18next';
 import styles from './index.module.less';
 
 function NewsItem({ item }) {
@@ -70,6 +71,7 @@ export default function PCFlashNewsCard({
   total = 0,
   onPageChange,
 }) {
+  const { t } = useTranslation();
   const listRef = useRef(null);
   const [lockedListHeight, setLockedListHeight] = useState(null);
   const hasItems = items.length > 0;
@@ -85,7 +87,7 @@ export default function PCFlashNewsCard({
       <div className={styles.header}>
         <div className={styles.titleWrap}>
           <span className={styles.dot} />
-          <span className={styles.headerTitle}>24H快讯</span>
+          <span className={styles.headerTitle}>{t('pcCommunity.flashNewsTitle')}</span>
         </div>
 
         <div className={styles.tools}>
@@ -95,7 +97,7 @@ export default function PCFlashNewsCard({
             aria-label="refresh"
             onClick={onRefresh}
             disabled={loading}
-            title={loading ? 'loading...' : 'refresh'}
+            title={loading ? t('common.loading') : t('pcCommunity.refresh')}
           >
             <ReloadOutlined />
           </button>
@@ -119,13 +121,13 @@ export default function PCFlashNewsCard({
             ))}
           </>
         ) : (
-          <div className={styles.emptyWrap}>暂无快讯</div>
+          <div className={styles.emptyWrap}>{t('pcCommunity.noFlashNews')}</div>
         )}
 
         {loading && hasItems ? (
           <div className={styles.loadingOverlay}>
             <span className={styles.spinner} aria-hidden />
-            <span className={styles.loadingText}>加载中…</span>
+            <span className={styles.loadingText}>{t('common.loading')}</span>
           </div>
         ) : null}
       </div>
