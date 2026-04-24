@@ -7,7 +7,14 @@ import PlanCard from '@/components/PlanCard';
 export default function VipRechargePlanCards({ plans = [], loading = false }) {
   return (
     <Spin spinning={loading}>
-      <>
+      <div
+        style={{
+          display: 'inline-flex',
+          gap: '16px',
+          minWidth: 'max-content',
+          alignItems: 'stretch',
+        }}
+      >
         {plans.map((plan) => (
           <PlanCard
             key={plan.id}
@@ -27,7 +34,7 @@ export default function VipRechargePlanCards({ plans = [], loading = false }) {
             onSubscribe={plan.onSubscribe}
           />
         ))}
-      </>
+      </div>
     </Spin>
   );
 }
