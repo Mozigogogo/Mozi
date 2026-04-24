@@ -75,6 +75,7 @@ function coerceFeatureList(rawList, iconMap) {
 function resolveTelegramStarsDisplay(tier) {
   if (!tier || typeof tier !== 'object') return null;
   const starsPrice =
+    tier.tgStarsAmount ??
     tier.starsPrice ??
     tier.starPrice ??
     tier.tgStarsPrice ??
