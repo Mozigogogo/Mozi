@@ -100,6 +100,54 @@ async function buildJettonTransferPayloadBase64({
   }
 }
 
+async function buildUserJettonWalletAddressFromMaster({
+  masterAddress,
+  ownerAddress,
+  endpoints = [],
+}) {
+  const rpcEndpoints = [
+    ...endpoints,
+    process.env.NEXT_PUBLIC_TON_RPC_ENDPOINT,
+    'https://toncenter.com/api/v2/jsonRPC',
+    'https://toncenter.com/api/v2/jsonRPC/',
+  ].filter(Boolean);
+
+  try {
+    const ton = await import('@ton/ton');
+    const { TonClient, Address } = ton || {};
+    if (!TonClient || !Address) return null;
+
+    const parsedMaster = Address.parse(String(masterAddress || '').trim());
+    const parsedOwner = Address.parse(String(ownerAddress || '').trim());
+
+    for (const endpoint of rpcEndpoints) {
+      try {
+        const client = new TonClient({ endpoint });
+        const JettonMaster = ton?.JettonMaster;
+        if (!JettonMaster || typeof JettonMaster.create !== 'function') {
+          continue;
+        }
+        const master = client.open(JettonMaster.create(parsedMaster));
+        const walletAddress = await master.getWalletAddress(parsedOwner);
+        if (walletAddress) {
+          return walletAddress.toString();
+        }
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('[VipPurchase][TON][USDT] build wallet from master failed on endpoint', {
+          endpoint,
+          error: e?.message || e,
+        });
+      }
+    }
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn('[VipPurchase][TON][USDT] dynamic import @ton/ton failed while building wallet', e);
+  }
+
+  return null;
+}
+
 async function pollOrderStatus(
   orderNo,
   { maxAttempts = 60, interval = 1500, tabKey, planTitle } = {}
@@ -319,6 +367,29 @@ function openCurrentPageInExternalBrowser() {
   } catch (e) {
     // eslint-disable-next-line no-console
     console.warn('[VipPurchase][TG] 外部浏览器打开失败', e);
+  }
+}
+
+function openTelegramOfficialWallet() {
+  if (typeof window === 'undefined') return false;
+  const tg = window.Telegram?.WebApp;
+  try {
+    // Telegram 官方 Wallet（@wallet）deeplink
+    const walletUrl = 'https://t.me/wallet?startapp=tonconnect';
+    if (typeof tg?.openTelegramLink === 'function') {
+      tg.openTelegramLink(walletUrl);
+      return true;
+    }
+    if (typeof tg?.openLink === 'function') {
+      tg.openLink(walletUrl);
+      return true;
+    }
+    window.open(walletUrl, '_blank', 'noopener,noreferrer');
+    return true;
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn('[VipPurchase][TON] 打开 Telegram 官方钱包失败', e);
+    return false;
   }
 }
 
@@ -708,6 +779,9 @@ async function ensureTonConnected(meta, { timeoutMs = 60_000, pollMs = 500 } = {
       // eslint-disable-next-line no-console
       console.warn('[VipPurchase][TON] openModal failed', e, meta);
     }
+  } else if (isTelegramEnv()) {
+    // TonConnect bridge 尚未就绪时，兜底直接拉起 TG 官方钱包绑定
+    openTelegramOfficialWallet();
   }
 
   let eventResolvedAddress = null;
@@ -728,6 +802,21 @@ async function ensureTonConnected(meta, { timeoutMs = 60_000, pollMs = 500 } = {
           getCached();
         if (addr) return addr;
       } catch (_) {}
+    }
+    if (isTelegramEnv()) {
+      // 首次等待超时后，再触发一次 TG 官方钱包 deeplink，给 WebView 场景一个补救机会
+      openTelegramOfficialWallet();
+      const secondDeadline = Date.now() + 15_000;
+      while (Date.now() < secondDeadline) {
+        await sleep(pollMs);
+        try {
+          const addr =
+            eventResolvedAddress ||
+            (typeof getAddr === 'function' ? getAddr() : null) ||
+            getCached();
+          if (addr) return addr;
+        } catch (_) {}
+      }
     }
     // eslint-disable-next-line no-console
     console.warn('[VipPurchase][TON] connect timeout', { timeoutMs, meta });
@@ -754,7 +843,11 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
   const connectedTonAddress = await ensureTonConnected(meta, { timeoutMs: 60_000, pollMs: 500 });
   // eslint-disable-next-line no-console
   console.log('[VipPurchase][TON][USDT] connected address', { connectedTonAddress, pricingId });
-  if (!connectedTonAddress) return;
+  if (!connectedTonAddress) {
+    // eslint-disable-next-line no-console
+    console.warn('[VipPurchase][TON][USDT] 未绑定 TON 钱包，支付流程中止');
+    return;
+  }
 
   // 2) 查询 TON 支付参数（不预创建订单）
   let paymentInfo = null;
@@ -775,12 +868,13 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
     paymentInfo?.receiveAddress ||
     paymentInfo?.toAddress ||
     paymentInfo?.to;
-  const jettonWalletAddress =
+  const providedJettonWalletAddress =
     paymentInfo?.merchantUsdtJettonWallet ||
     paymentInfo?.jettonWalletAddress ||
     paymentInfo?.fromJettonWallet ||
     paymentInfo?.senderJettonWallet ||
     paymentInfo?.userJettonWallet;
+  const usdtMasterAddress = paymentInfo?.usdtContract || paymentInfo?.tokenAddress || paymentInfo?.contractAddress;
   const payloadBase64FromConfig =
     paymentInfo?.payloadBase64 ||
     paymentInfo?.jettonPayloadBase64 ||
@@ -814,10 +908,25 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
     gasAmountNano = 50_000_000n;
   }
 
+  let jettonWalletAddress = providedJettonWalletAddress;
+  if (!jettonWalletAddress && usdtMasterAddress && connectedTonAddress) {
+    jettonWalletAddress = await buildUserJettonWalletAddressFromMaster({
+      masterAddress: usdtMasterAddress,
+      ownerAddress: connectedTonAddress,
+    });
+    // eslint-disable-next-line no-console
+    console.log('[VipPurchase][TON][USDT] jettonWalletAddress resolved on frontend', {
+      hasProvided: !!providedJettonWalletAddress,
+      hasResolved: !!jettonWalletAddress,
+    });
+  }
+
   if (!merchantAddress || !jettonWalletAddress || amountUsdt == null || amountUsdt === '') {
     // eslint-disable-next-line no-console
     console.error('[VipPurchase][TON][USDT] walletPaymentInfo 字段不完整', {
       paymentInfo,
+      providedJettonWalletAddress,
+      usdtMasterAddress,
       amountUsdt,
       meta,
     });
