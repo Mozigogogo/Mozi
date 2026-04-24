@@ -72,6 +72,10 @@ export default function VipRechargePageBody({
     if (typeof window === 'undefined') return undefined;
     const pollingStart = () => setPurchaseSubmitting(true);
     const pollingDone = () => setPurchaseSubmitting(false);
+    const purchaseLoading = (e) => {
+      const isLoading = !!e?.detail?.loading;
+      setPurchaseSubmitting(isLoading);
+    };
     const handler = (e) => {
       const detail = e?.detail || {};
       if (!detail.tabKey || !detail.planTitle) return;
@@ -89,11 +93,13 @@ export default function VipRechargePageBody({
     window.addEventListener('mozi:starsOrderSuccess', handler);
     window.addEventListener('mozi:vipOrderPolling', pollingStart);
     window.addEventListener('mozi:vipOrderPollingDone', pollingDone);
+    window.addEventListener('mozi:vipPurchaseLoading', purchaseLoading);
     return () => {
       window.removeEventListener('mozi:vipOrderSuccess', handler);
       window.removeEventListener('mozi:starsOrderSuccess', handler);
       window.removeEventListener('mozi:vipOrderPolling', pollingStart);
       window.removeEventListener('mozi:vipOrderPollingDone', pollingDone);
+      window.removeEventListener('mozi:vipPurchaseLoading', purchaseLoading);
     };
   }, []);
 

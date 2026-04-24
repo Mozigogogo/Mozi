@@ -47,6 +47,20 @@ export function isTelegramEnv() {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+function emitVipPurchaseLoading(loading, detail = {}) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.dispatchEvent(
+      new CustomEvent('mozi:vipPurchaseLoading', {
+        detail: {
+          loading: !!loading,
+          ...detail,
+        },
+      })
+    );
+  } catch (_) {}
+}
+
 function parseTokenAmountToUnits(amountRaw, decimals = 6) {
   const raw = String(amountRaw ?? '').trim();
   if (!raw) return null;
@@ -910,15 +924,24 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
 
   let jettonWalletAddress = providedJettonWalletAddress;
   if (!jettonWalletAddress && usdtMasterAddress && connectedTonAddress) {
-    jettonWalletAddress = await buildUserJettonWalletAddressFromMaster({
-      masterAddress: usdtMasterAddress,
-      ownerAddress: connectedTonAddress,
+    emitVipPurchaseLoading(true, {
+      stage: 'resolveTonJettonWallet',
     });
-    // eslint-disable-next-line no-console
-    console.log('[VipPurchase][TON][USDT] jettonWalletAddress resolved on frontend', {
-      hasProvided: !!providedJettonWalletAddress,
-      hasResolved: !!jettonWalletAddress,
-    });
+    try {
+      jettonWalletAddress = await buildUserJettonWalletAddressFromMaster({
+        masterAddress: usdtMasterAddress,
+        ownerAddress: connectedTonAddress,
+      });
+      // eslint-disable-next-line no-console
+      console.log('[VipPurchase][TON][USDT] jettonWalletAddress resolved on frontend', {
+        hasProvided: !!providedJettonWalletAddress,
+        hasResolved: !!jettonWalletAddress,
+      });
+    } finally {
+      emitVipPurchaseLoading(false, {
+        stage: 'resolveTonJettonWallet',
+      });
+    }
   }
 
   if (!merchantAddress || !jettonWalletAddress || amountUsdt == null || amountUsdt === '') {
