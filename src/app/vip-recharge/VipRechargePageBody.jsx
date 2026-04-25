@@ -20,6 +20,7 @@ export default function VipRechargePageBody({
   renderTabs = true,
   onTabsNode,
   preferredPurchaseMethod,
+  fullWidthCards = false,
 }) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('monthly');
@@ -72,6 +73,10 @@ export default function VipRechargePageBody({
     if (typeof window === 'undefined') return undefined;
     const pollingStart = () => setPurchaseSubmitting(true);
     const pollingDone = () => setPurchaseSubmitting(false);
+    const purchaseLoading = (e) => {
+      const isLoading = !!e?.detail?.loading;
+      setPurchaseSubmitting(isLoading);
+    };
     const handler = (e) => {
       const detail = e?.detail || {};
       if (!detail.tabKey || !detail.planTitle) return;
@@ -89,11 +94,13 @@ export default function VipRechargePageBody({
     window.addEventListener('mozi:starsOrderSuccess', handler);
     window.addEventListener('mozi:vipOrderPolling', pollingStart);
     window.addEventListener('mozi:vipOrderPollingDone', pollingDone);
+    window.addEventListener('mozi:vipPurchaseLoading', purchaseLoading);
     return () => {
       window.removeEventListener('mozi:vipOrderSuccess', handler);
       window.removeEventListener('mozi:starsOrderSuccess', handler);
       window.removeEventListener('mozi:vipOrderPolling', pollingStart);
       window.removeEventListener('mozi:vipOrderPollingDone', pollingDone);
+      window.removeEventListener('mozi:vipPurchaseLoading', purchaseLoading);
     };
   }, []);
 
@@ -230,7 +237,11 @@ export default function VipRechargePageBody({
         (tabsWrapClassName ? <div className={tabsWrapClassName}>{tabsNode}</div> : tabsNode)}
       <div className={planCardsClassName} key={activeTab}>
         {remoteError && !remoteLoading && <div>{t('vipRecharge.errors.loadSubscriptionData')}</div>}
-        <VipRechargePlanCards plans={planCardsWithHandlers[activeTab] || []} loading={purchaseSubmitting} />
+        <VipRechargePlanCards
+          plans={planCardsWithHandlers[activeTab] || []}
+          loading={purchaseSubmitting}
+          fullWidth={fullWidthCards}
+        />
       </div>
     </div>
   );

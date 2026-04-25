@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { SpinLoading } from 'antd-mobile';
@@ -24,6 +24,18 @@ const Layout = ({ children, title, isLoading, isError, errMsg, needLogin, loginC
 
   // 判断当前路径是否为主页面之一
   const isMainPage = tabBarList.some(item => item.path === pathname);
+
+  // 预热底部导航图标到浏览器缓存，减少首次切页图标延迟
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const iconNames = Object.values(iconMap);
+    iconNames.forEach((name) => {
+      const activeImg = new window.Image();
+      activeImg.src = `/icons/${name}-actived.png`;
+      const normalImg = new window.Image();
+      normalImg.src = `/icons/${name}-no-actived.png`;
+    });
+  }, []);
 
   if (isError) {
     return (

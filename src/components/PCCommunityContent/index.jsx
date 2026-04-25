@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Empty, message, Spin } from 'antd';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 import SectionTitle from '@/components/SectionTitle';
@@ -27,11 +28,13 @@ import styles from './index.module.less';
  */
 export default function PCCommunityContent() {
   const router = useRouter();
+  const { t } = useTranslation();
+  const QA_CATEGORY_KEY = '不懂就问';
   const COIN_POST_PAGE_SIZE = 5;
   const capsuleTabItems = [
-    { key: 'coin', label: '币种' },
-    { key: 'discover', label: '发现好币' },
-    { key: 'qa', label: '不懂就问' }
+    { key: 'coin', label: t('community.tabs.currency') },
+    { key: 'discover', label: t('community.tabs.discovery') },
+    { key: 'qa', label: t('community.tabs.question') }
   ];
   const [flashNewsItems, setFlashNewsItems] = useState([]);
   const [flashNewsLoading, setFlashNewsLoading] = useState(false);
@@ -102,10 +105,10 @@ export default function PCCommunityContent() {
     const h = 60 * m;
     const d = 24 * h;
     
-    if (diff < m) return '刚刚';
-    if (diff < h) return `${Math.floor(diff / m)}分钟前`;
-    if (diff < d) return `${Math.floor(diff / h)}小时前`;
-    if (diff < 30 * d) return `${Math.floor(diff / d)}天前`;
+    if (diff < m) return t('time.justNow');
+    if (diff < h) return t('time.minutesAgo', { count: Math.floor(diff / m) });
+    if (diff < d) return t('time.hoursAgo', { count: Math.floor(diff / h) });
+    if (diff < 30 * d) return t('time.daysAgo', { count: Math.floor(diff / d) });
     
     // 超过30天显示具体日期
     const date = new Date(ts);
@@ -130,15 +133,15 @@ export default function PCCommunityContent() {
       const mapped = list.slice(0, FLASH_NEWS_PAGE_SIZE).map((item) => {
         const title = String(item?.title || '').trim();
         const content = String(item?.content || '').trim();
-        const nickName = String(item?.nickName || item?.username || '快讯').trim();
-        const category = String(item?.category || '资讯').trim();
+        const nickName = String(item?.nickName || item?.username || t('community.tabs.news')).trim();
+        const category = String(item?.category || t('pcCommunity.newsTag')).trim();
         const timeSource = item?.updatedAt || item?.createdAt || '';
         return {
           id: item?.id,
-          account: nickName || '快讯',
-          tag: category || '资讯',
+          account: nickName || t('community.tabs.news'),
+          tag: category || t('pcCommunity.newsTag'),
           time: formatTimeAgo(timeSource),
-          title: title || content.slice(0, 40) || '快讯',
+          title: title || content.slice(0, 40) || t('community.tabs.news'),
           desc: content || title,
           likeCount: item?.likeCnt ?? item?.likeCount ?? 0,
           commentCount: item?.commentCnt ?? item?.commentCount ?? 0,
@@ -148,7 +151,7 @@ export default function PCCommunityContent() {
       setFlashNewsItems(mapped);
     } catch (e) {
       console.error('获取快讯失败:', e);
-      message.error('获取快讯失败');
+      message.error(t('pcCommunity.errors.fetchFlashNewsFailed'));
       setFlashNewsItems([]);
       setFlashNewsTotal(0);
     } finally {
@@ -186,7 +189,7 @@ export default function PCCommunityContent() {
         size: COIN_POST_PAGE_SIZE,
       };
       if (tabKey === 'qa') {
-        requestData.category = '不懂就问';
+        requestData.category = QA_CATEGORY_KEY;
       } else {
         requestData.tag = coin; // 币种 / 发现好币沿用币种标签筛选
       }
@@ -205,7 +208,7 @@ export default function PCCommunityContent() {
         const formattedData = response.data.data.map(item => ({
           id: item.id,
           avatar: item.avatar || '/default-avatar.png',
-          username: item.nickName || '匿名用户',
+          username: item.nickName || t('myNotices.anonymousUser'),
           title: item.title,
           content: item.content,
           category: item.category,
@@ -386,13 +389,13 @@ export default function PCCommunityContent() {
           });
         }
         
-        message.success('投票成功');
+        message.success(t('community.voting.voteSuccess'));
       } else {
-        message.error(res?.errorMsg || res?.message || '投票失败');
+        message.error(res?.errorMsg || res?.message || t('community.voting.voteFailed'));
       }
     } catch (error) {
       console.error('投票失败:', error);
-      message.error('投票失败');
+      message.error(t('community.voting.voteFailed'));
     }
   };
 
@@ -434,7 +437,7 @@ export default function PCCommunityContent() {
       }
     } catch (error) {
       console.error('点赞失败:', error);
-      message.error('操作失败');
+      message.error(t('common.operationFailed'));
     }
   };
 
@@ -479,7 +482,7 @@ export default function PCCommunityContent() {
       }
     } catch (error) {
       console.error(`${isDisliked ? '取消点踩' : '点踩'}失败:`, error);
-      message.error('操作失败');
+      message.error(t('common.operationFailed'));
 
       setDislikedPosts((prev) => ({
         ...prev,
@@ -512,7 +515,7 @@ export default function PCCommunityContent() {
   const goToUserPage = (userId) => {
     const targetUserId = String(userId ?? '').trim();
     if (!targetUserId) {
-      message.warning('未获取到用户ID');
+      message.warning(t('pcCommunity.userIdMissing'));
       return;
     }
     router.push(`/user/${encodeURIComponent(targetUserId)}`);
@@ -541,7 +544,7 @@ export default function PCCommunityContent() {
       const mappedComments = rawList.map((item) => ({
         id: item?.id || item?.commentId || `${targetPostId}-${item?.createdAt || item?.content || 'comment'}`,
         avatar: item?.user?.avatar || item?.avatar || '/default-avatar.png',
-        username: item?.user?.nickname || item?.nickname || item?.username || '匿名用户',
+        username: item?.user?.nickname || item?.nickname || item?.username || t('myNotices.anonymousUser'),
         time: formatTimeAgo(item?.createdAt || item?.updatedAt),
         content: item?.content || '',
       }));
@@ -606,8 +609,8 @@ export default function PCCommunityContent() {
     const optimisticComment = {
       id: tempId,
       avatar: currentUser?.avatar || currentUser?.photoUrl || '/default-avatar.png',
-      username: currentUser?.nickName || currentUser?.nickname || currentUser?.username || '我',
-      time: '刚刚',
+      username: currentUser?.nickName || currentUser?.nickname || currentUser?.username || t('points.me'),
+      time: t('time.justNow'),
       content: nextContent,
     };
 
@@ -640,7 +643,7 @@ export default function PCCommunityContent() {
       });
 
       await fetchDetailComments(postId);
-      message.success('评论发送成功');
+      message.success(t('pcCommunity.commentSendSuccess'));
       return true;
     } catch (error) {
       console.error('提交评论失败:', error);
@@ -661,7 +664,7 @@ export default function PCCommunityContent() {
           };
         })
       );
-      message.error('评论发送失败，请稍后重试');
+      message.error(t('pcCommunity.commentSendFailed'));
       return false;
     }
   };
@@ -677,10 +680,10 @@ export default function PCCommunityContent() {
     const mapped = {
       id: target.id,
       coverImage: target.images?.[0] || undefined,
-      authorName: target.username || '匿名用户',
+      authorName: target.username || t('myNotices.anonymousUser'),
       authorAvatar: target.avatar || '/default-avatar.png',
       timeText: formatTimeAgo(target.createTime || target.updatedAt || target.createdAt),
-      title: target.title || '帖子详情',
+      title: target.title || t('pcCommunity.postDetailTitle'),
       description: target.content || '',
       tags: Array.isArray(target.tags) && target.tags.length > 0
         ? target.tags.map((tag) => String(tag?.name || '').trim()).filter(Boolean)
@@ -698,7 +701,7 @@ export default function PCCommunityContent() {
 
   // 跳转到话题详情页
   const goToTopicDetail = (topicId, name, description = null) => {
-    const defaultDesc = description || '暂无简介';
+    const defaultDesc = description || t('community.actions.noDescription');
     router.push(`/topicinfo?id=${topicId}&title=${name}&description=${defaultDesc}`);
   };
 
@@ -708,7 +711,7 @@ export default function PCCommunityContent() {
   };
 
   const goToCoinDiscussionList = () => {
-    router.push('/list?category=不懂就问');
+    router.push(`/list?category=${encodeURIComponent(QA_CATEGORY_KEY)}`);
   };
 
   // 初始加载
@@ -772,7 +775,7 @@ export default function PCCommunityContent() {
                           selectedCoin={selectedCoin}
                           onCoinSelect={setSelectedCoin}
                           onMoreClick={goToCoinDiscussionList}
-                          moreText="更多"
+                          moreText={t('common.more')}
                           isPC={true}
                         />
                       }
@@ -798,7 +801,7 @@ export default function PCCommunityContent() {
               <div className={styles.leftContentMain}>
                 {coinLoading ? (
                   <div className={styles.loadingContainer}>
-                    <Spin tip="加载中..." />
+                    <Spin tip={t('common.loading')} />
                   </div>
                 ) : coinPosts.length > 0 ? (
                   <div
@@ -836,14 +839,20 @@ export default function PCCommunityContent() {
                           isPC={true}
                           showDislike={activeCapsuleTab === 'discover'}
                           contentTemplate={activeCapsuleTab === 'qa' ? 'titleDesc' : 'coinInfo'}
-                          badgeLabel={activeCapsuleTab === 'qa' ? '不懂就问' : ''}
+                          badgeLabel={activeCapsuleTab === 'qa' ? t('community.tabs.question') : ''}
                           onDeletePost={handlePostDeleted}
                         />
                       )
                     ))}
                   </div>
                 ) : (
-                  <Empty description={activeCapsuleTab === 'qa' ? '暂无不懂就问相关帖子' : `暂无${selectedCoin}相关帖子`} />
+                  <Empty
+                    description={
+                      activeCapsuleTab === 'qa'
+                        ? t('pcCommunity.emptyQaPosts')
+                        : t('pcCommunity.emptyCoinPosts', { coin: selectedCoin })
+                    }
+                  />
                 )}
               </div>
               {(activeCapsuleTab === 'qa' || coinPostsTotalPages > 1) && (
@@ -908,10 +917,10 @@ export default function PCCommunityContent() {
         }}
         post={detailModalPost || {}}
         comments={detailModalComments}
-        onFollow={() => message.info('关注功能开发中')}
-        onLike={() => message.info('请在卡片中进行点赞操作')}
-        onComment={() => message.info('评论功能开发中')}
-        onShare={() => message.info('分享功能开发中')}
+        onFollow={() => message.info(t('pcCommunity.featureInProgress.follow'))}
+        onLike={() => message.info(t('pcCommunity.featureInProgress.like'))}
+        onComment={() => message.info(t('pcCommunity.featureInProgress.comment'))}
+        onShare={() => message.info(t('pcCommunity.featureInProgress.share'))}
         onSubmitComment={handleDetailSubmitComment}
       />
     </div>

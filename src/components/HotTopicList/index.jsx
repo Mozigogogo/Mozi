@@ -121,8 +121,8 @@ export default function HotTopicList({
         <div className={styles.pcHeader}>
           <div className={styles.pcHeaderTitle}>
             <span className={styles.pcHeaderDot} />
-            <span className={styles.pcHeaderText}>热门榜单</span>
-            <span className={styles.pcHeaderBadge}>HOT</span>
+            <span className={styles.pcHeaderText}>{t('pcCommunity.hotRankingTitle')}</span>
+            <span className={styles.pcHeaderBadge}>{t('pcCommunity.hotBadge')}</span>
           </div>
           <button
             type="button"
@@ -132,7 +132,7 @@ export default function HotTopicList({
               onCreateTopic?.();
             }}
           >
-            创建话题
+            {t('community.actions.createTopic')}
           </button>
         </div>
       )}

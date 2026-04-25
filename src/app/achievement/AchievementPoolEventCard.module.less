@@ -1,0 +1,135 @@
+.card {
+  margin-top: 12px;
+  border-radius: 18px;
+  padding: 18px;
+  background: radial-gradient(85% 120% at 100% 0%, #005e39 0%, #063f33 42%, #04362e 100%);
+  color: #7fe6b0;
+  box-shadow: 0 10px 24px rgba(2, 32, 25, 0.26);
+}
+
+.cardNormal {
+  background: radial-gradient(85% 120% at 100% 0%, #005e39 0%, #063f33 42%, #04362e 100%);
+  color: #7fe6b0;
+  box-shadow: 0 10px 24px rgba(2, 32, 25, 0.26);
+}
+
+.cardScarce {
+  background: radial-gradient(85% 120% at 100% 0%, #7b191f 0%, #571018 42%, #440d14 100%);
+  color: #ffc8c8;
+  box-shadow: 0 10px 24px rgba(70, 13, 20, 0.3);
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.dot {
+  color: #f7a41b;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #99f2ba;
+}
+
+.list {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  li {
+    position: relative;
+    padding-left: 14px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #76d9a8;
+  }
+
+  li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: #f7a41b;
+    font-size: 18px;
+    line-height: 1;
+  }
+}
+
+.highlight {
+  color: #ffe45d;
+  font-weight: 700;
+}
+
+.normalDesc {
+  color: #72d797;
+  font-family: Inter, sans-serif;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 12px;
+  margin-top: 2px;
+}
+
+.upgradeBtn {
+  margin-top: 14px;
+  width: 100%;
+  height: 64px;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(90deg, #7b5133 0%, #885233 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  cursor: pointer;
+}
+
+.upgradeLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.upgradeLeft > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.crown {
+  width: 28px;
+  height: 28px;
+}
+
+.upgradeTitle {
+  color: #fce9c9;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.upgradeSub {
+  margin-top: 2px;
+  color: #d6c2a9;
+  font-size: 14px;
+  line-height: 1.1;
+}
+
+.arrow {
+  color: #f9d9b5;
+  font-size: 24px;
+  line-height: 1;
+}
+

@@ -39,6 +39,14 @@ import styles from './index.module.less';
 import AISearchBadge from './AISearchBadge';
 
 const searchIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/search.png';
+const MY_SUBSCRIPTION_PLAN_CODE_KEY = 'mozi_my_subscription_plan_code_v1';
+
+const isNonFreePlanCode = (planCode) => {
+  const raw = String(planCode || '').trim();
+  if (!raw) return false;
+  const up = raw.toUpperCase();
+  return up !== 'FREE' && up !== '0' && up !== 'NONE';
+};
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
@@ -327,10 +335,18 @@ export default function PCLayout({ children }) {
     // 1. 如果有activeContent，只有当itemKey等于activeContent时才激活
     // 2. 如果没有activeContent，根据pathname判断
     let isActive = false;
+    const isSubscriptionEntry = itemKey === '/subscribe';
     if (activeContent) {
       isActive = activeContent === itemKey;
     } else {
-      isActive = pathname === itemKey || pathname.startsWith(itemKey + '/');
+      isActive =
+        pathname === itemKey ||
+        pathname.startsWith(itemKey + '/') ||
+        (isSubscriptionEntry &&
+          (pathname === '/pc/subscribe' ||
+            pathname.startsWith('/pc/subscribe/') ||
+            pathname === '/pc/benefitsPage' ||
+            pathname.startsWith('/pc/benefitsPage/')));
     }
     
     return (
@@ -379,12 +395,12 @@ export default function PCLayout({ children }) {
         label: t('pcLayout.menu.mySubscription'),
       },
       {
-        key: '/myqa',
+        key: '/ai',
         icon: (
           <CustomIcon
             src="/icons/new_home/ai_chat.svg"
             activeSrc="/icons/new_home/ai_chat.svg"
-            itemKey="/myqa"
+            itemKey="/ai"
             alt="myqa"
           />
         ),
@@ -555,6 +571,21 @@ export default function PCLayout({ children }) {
       return;
     }
 
+    // 我的订阅：非 free 进入 /pc/benefitsPage，free 进入 /pc/subscribe
+    if (key === '/subscribe') {
+      setActiveContent(null);
+      setShowSearchResults(false);
+      let nextRoute = '/pc/subscribe';
+      try {
+        const planCode = localStorage.getItem(MY_SUBSCRIPTION_PLAN_CODE_KEY);
+        if (isNonFreePlanCode(planCode)) {
+          nextRoute = '/pc/benefitsPage';
+        }
+      } catch (_) {}
+      router.push(nextRoute);
+      return;
+    }
+
     // 其他页面正常跳转
     setActiveContent(null);
     router.push(key);
@@ -566,6 +597,14 @@ export default function PCLayout({ children }) {
     }
     if (pathname === '/selfrank') {
       return ['/selfrank'];
+    }
+    if (
+      pathname === '/pc/subscribe' ||
+      pathname.startsWith('/pc/subscribe/') ||
+      pathname === '/pc/benefitsPage' ||
+      pathname.startsWith('/pc/benefitsPage/')
+    ) {
+      return ['/subscribe'];
     }
     const flat = [...topMenuItems, myAlertsMenuItem, ...mineRestMenuItems, favoritesMenuItemCollapsed];
     const matched = flat.find(
@@ -656,8 +695,8 @@ export default function PCLayout({ children }) {
               const ready = mounted;
               const connected = ready && account && chain;
               const walletText = connected
-                ? `钱包: ${account.displayName || account.address}`
-                : '连接钱包';
+                ? t('pcLayout.wallet.connected', { account: account.displayName || account.address })
+                : t('pcLayout.wallet.connect');
               const handleWalletClick = () => {
                 if (!ready) return;
                 if (!connected) {
@@ -675,7 +714,7 @@ export default function PCLayout({ children }) {
                       e.stopPropagation();
                       openChainModal?.();
                     }}>
-                      切换网络
+                      {t('pcLayout.wallet.switchNetwork')}
                     </span>
                   ) : null}
                 </button>

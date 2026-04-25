@@ -1,0 +1,140 @@
+.card {
+  margin-top: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid #d8efe7;
+  border-radius: 14px;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.headerIcon {
+  width: 22px;
+  height: 22px;
+}
+
+.title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #1f2937;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.row {
+  min-height: 56px;
+  border: 1px solid #edf2f6;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 8px 10px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.iconWrap {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #f7f9fc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.taskIcon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.taskInfo {
+  min-width: 0;
+}
+
+.taskTitle {
+  font-size: 14px;
+  color: #1f2937;
+  line-height: 1.1;
+}
+
+.taskMetaRow {
+  margin-top: 3px;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 8px;
+}
+
+.taskReward {
+  font-size: 12px;
+  color: #ff9f1a;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.progressArea {
+  min-width: 0;
+}
+
+.progressTrack {
+  position: relative;
+  height: 4px;
+  border-radius: 2px;
+  background: #e6f4f3;
+  overflow: visible;
+  margin-right: 4px;
+}
+
+.progressFill {
+  position: relative;
+  height: 100%;
+  border-radius: 2px;
+  background: #50cf50;
+}
+
+.progressDot {
+  position: absolute;
+  right: -7px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #33c65f;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.counter {
+  width: 78px;
+  height: 26px;
+  border-radius: 13px;
+  background: url('/point/progress_bg.svg') no-repeat center;
+  background-size: 100% 100%;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.12);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+

@@ -36,6 +36,7 @@ function PCSubscribeContent() {
         onTabsNode={setTabsNode}
         planCardsClassName={styles.planCardsContainer}
         preferredPurchaseMethod="ARBITRUM"
+        fullWidthCards
       />
     </div>
   );

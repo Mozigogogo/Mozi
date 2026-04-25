@@ -17,7 +17,10 @@ function isTelegramEnv() {
   if (typeof window === 'undefined') return false;
   try {
     const channel = window.localStorage?.getItem('appChannel');
-    return channel === 'tg';
+    // 仅当渠道为 tg 且当前运行在 Telegram WebApp 容器内，才视为 TG 端
+    // 避免本地残留 appChannel=tg 导致 PC/H5 误用 Stars 价格
+    const inTelegramWebApp = Boolean(window.Telegram?.WebApp);
+    return channel === 'tg' && inTelegramWebApp;
   } catch (e) {
     return false;
   }
@@ -70,6 +73,25 @@ function coerceFeatureList(rawList, iconMap) {
       return null;
     })
     .filter(Boolean);
+}
+
+function resolveTelegramStarsDisplay(tier) {
+  if (!tier || typeof tier !== 'object') return null;
+  const starsPrice =
+    tier.tgStarsAmount ??
+    tier.starsPrice ??
+    tier.starPrice ??
+    tier.tgStarsPrice ??
+    tier.telegramStarsPrice ??
+    tier.starsAmount ??
+    tier.starAmount ??
+    tier.telegramStars ??
+    tier.tgStars;
+  if (starsPrice == null || starsPrice === '') return null;
+  return {
+    price: String(starsPrice),
+    currency: '⭐',
+  };
 }
 
 function mergeRemoteIntoPlans(plansByTab, benefitsRes, pricingRes) {
@@ -261,7 +283,9 @@ function mergeRemoteIntoPlans(plansByTab, benefitsRes, pricingRes) {
         const planCode = (p.title || '').toUpperCase(); // Free/Lite/Pro -> FREE/LITE/PRO
         const tiers = pricingV2Grouped?.[tabKey]?.[planCode] || [];
 
-        // Telegram 环境下，Free 也使用 Stars 作为展示单位（0 Stars）
+        const tgStarsDisplayForTier = (tier) => (isTgEnv ? resolveTelegramStarsDisplay(tier) : null);
+
+        // Telegram 环境下优先展示星星字段（无星星字段时再回退美元）
         if (p.title === 'Free' && isTgEnv) {
           next.currency = '⭐';
           next.period = tabKey === 'yearly' ? '/年' : '/月';
@@ -269,9 +293,9 @@ function mergeRemoteIntoPlans(plansByTab, benefitsRes, pricingRes) {
 
         if (p.title === 'Lite' && tiers[0]) {
           const liteTier = tiers[0];
-          const useStars = isTgEnv && liteTier.tgStarsAmount != null;
-          next.price = String(useStars ? liteTier.tgStarsAmount : liteTier.price);
-          next.currency = useStars ? '⭐' : '$';
+          const starsDisplay = tgStarsDisplayForTier(liteTier);
+          next.price = starsDisplay?.price || String(liteTier.price);
+          next.currency = starsDisplay?.currency || '$';
           next.period = tabKey === 'yearly' ? '/年' : '/月';
           // 为 Lite 方案挂上 pricingId，供 Telegram Stars 支付使用
           next.pricingId = liteTier.pricingId || liteTier.id;
@@ -280,23 +304,22 @@ function mergeRemoteIntoPlans(plansByTab, benefitsRes, pricingRes) {
         if (p.title === 'Pro' && tiers.length) {
           // card 顶部展示用最低档价格
           const lowest = tiers[0];
-          const useStars = isTgEnv && lowest.tgStarsAmount != null;
-          next.price = String(useStars ? lowest.tgStarsAmount : lowest.price);
-          next.currency = useStars ? '⭐' : '$';
+          const starsDisplay = tgStarsDisplayForTier(lowest);
+          next.price = starsDisplay?.price || String(lowest.price);
+          next.currency = starsDisplay?.currency || '$';
           next.period = tabKey === 'yearly' ? '/年' : '/月';
 
           next.tierSelect = {
             ...(next.tierSelect || { label: '选择等级' }),
             defaultId: String(tiers[0].tierCode),
             options: tiers.map((t) => ({
+              ...(tgStarsDisplayForTier(t) || {}),
               id: String(t.tierCode),
               title: formatPoints(t.monthlyPoints, tabKey),
               subtitle: `AI Call ${t.aiCallQuota}次`,
               pricingId: t.pricingId || t.id,
-              price: String(
-                isTgEnv && t.tgStarsAmount != null ? t.tgStarsAmount : t.price
-              ),
-              currency: isTgEnv && t.tgStarsAmount != null ? '⭐' : '$',
+              price: tgStarsDisplayForTier(t)?.price || String(t.price),
+              currency: tgStarsDisplayForTier(t)?.currency || '$',
               period: tabKey === 'yearly' ? '/年' : '/月',
             })),
             onChange: (opt) => console.log('Pro level:', opt),

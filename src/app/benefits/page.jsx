@@ -22,7 +22,7 @@ const planCodeToTier = (planCode) => {
   return 'lite';
 };
 
-export default function BenefitsPage() {
+export function BenefitsPageContent({ showNavBar = true, className = '' } = {}) {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const isEnglish = (i18n.language || '').startsWith('en');
@@ -263,14 +263,18 @@ export default function BenefitsPage() {
   const navBg = '#ffffff';
   const navColor = undefined;
 
+  const containerClassName = [styles.container, containerModeClass, className].filter(Boolean).join(' ');
+
   return (
-    <div className={`${styles.container} ${containerModeClass}`}>
-      <NavBar
-        title={t('benefitsPage.title')}
-        backgroundColor={navBg}
-        showBorder={false}
-        color={navColor}
-      />
+    <div className={containerClassName}>
+      {showNavBar && (
+        <NavBar
+          title={t('benefitsPage.title')}
+          backgroundColor={navBg}
+          showBorder={false}
+          color={navColor}
+        />
+      )}
 
       <div className={styles.content}>
         <div className={styles.hero}>
@@ -549,4 +553,8 @@ export default function BenefitsPage() {
       </div>
     </div>
   );
+}
+
+export default function BenefitsPage() {
+  return <BenefitsPageContent />;
 }

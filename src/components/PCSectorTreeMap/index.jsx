@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import * as d3 from 'd3';
+import { useTranslation } from 'react-i18next';
 import { getSectionSymbols } from '@/api/market';
 import styles from './index.module.less';
 
@@ -19,6 +20,7 @@ const PCSectorTreeMap = ({
   showPrice = true,
   onItemClick 
 }) => {
+  const { t } = useTranslation();
   const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [hoveredItem, setHoveredItem] = useState(null);
@@ -534,14 +536,14 @@ const PCSectorTreeMap = ({
               </div>
               <div className={styles.tooltipSectorStats}>
                 <div className={styles.tooltipStatItem}>
-                  <div className={styles.tooltipStatLabel}>总价值</div>
+                  <div className={styles.tooltipStatLabel}>{t('sectorDetail.totalValue')}</div>
                   <div className={styles.tooltipStatValue}>
                     <span className={styles.tooltipCurrency}>$</span>
                     {normalizeMoneyDisplay(hoveredItem.totalVolume)}
                   </div>
                 </div>
                 <div className={styles.tooltipStatItem}>
-                  <div className={styles.tooltipStatLabel}>市值</div>
+                  <div className={styles.tooltipStatLabel}>{t('sectorDetail.marketCap')}</div>
                   <div className={styles.tooltipStatValue}>
                     <span className={styles.tooltipCurrency}>$</span>
                     {normalizeMoneyDisplay(hoveredItem.marketCap)}
@@ -566,7 +568,7 @@ const PCSectorTreeMap = ({
                     className={`${styles.tooltipCoinHeadSort} ${symbolActive ? styles.tooltipCoinHeadSortActive : ''}`}
                   onClick={() => toggleCoinSort('symbol')}
                 >
-                  <span>成分币种</span>
+                  <span>{t('sectorDetail.sort.constituent')}</span>
                     <i className={`${styles.sortArrows} ${symbolActive ? styles.sortArrowsActive : ''} ${symbolOrder === 'asc' ? styles.sortAsc : styles.sortDesc}`} />
                 </button>
                 <button
@@ -574,7 +576,7 @@ const PCSectorTreeMap = ({
                     className={`${styles.tooltipCoinHeadSort} ${priceActive ? styles.tooltipCoinHeadSortActive : ''}`}
                   onClick={() => toggleCoinSort('price')}
                 >
-                  <span>最新价</span>
+                  <span>{t('sectorDetail.sort.latestPrice')}</span>
                     <i className={`${styles.sortArrows} ${priceActive ? styles.sortArrowsActive : ''} ${priceOrder === 'asc' ? styles.sortAsc : styles.sortDesc}`} />
                 </button>
                 <button
@@ -582,19 +584,19 @@ const PCSectorTreeMap = ({
                     className={`${styles.tooltipCoinHeadSort} ${changeActive ? styles.tooltipCoinHeadSortActive : ''}`}
                   onClick={() => toggleCoinSort('change24h')}
                 >
-                  <span>24h幅度</span>
+                  <span>{t('sectorDetail.sort.change24h')}</span>
                     <i className={`${styles.sortArrows} ${changeActive ? styles.sortArrowsActive : ''} ${changeOrder === 'asc' ? styles.sortAsc : styles.sortDesc}`} />
                 </button>
-                <span>自加选</span>
-                <span>加监控</span>
+                <span>{t('sectorDetail.watchlist')}</span>
+                <span>{t('sectorDetail.addMonitor')}</span>
                     </>
                   );
                 })()}
               </div>
               {coinsLoading ? (
-                <div className={styles.tooltipCoinState}>加载中...</div>
+                <div className={styles.tooltipCoinState}>{t('common.loading')}</div>
               ) : sectorCoins.length === 0 ? (
-                <div className={styles.tooltipCoinState}>暂无数据</div>
+                <div className={styles.tooltipCoinState}>{t('common.noData')}</div>
               ) : (
                 <div className={styles.tooltipCoinList}>
                   {sortedSectorCoins.map((coin) => (
