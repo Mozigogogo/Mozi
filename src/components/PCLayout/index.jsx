@@ -343,8 +343,8 @@ export default function PCLayout({ children }) {
         pathname === itemKey ||
         pathname.startsWith(itemKey + '/') ||
         (isSubscriptionEntry &&
-          (pathname === '/pc/subscribe' ||
-            pathname.startsWith('/pc/subscribe/') ||
+          (pathname === '/subscribe' ||
+            pathname.startsWith('/subscribe/') ||
             pathname === '/pc/benefitsPage' ||
             pathname.startsWith('/pc/benefitsPage/')));
     }
@@ -571,11 +571,11 @@ export default function PCLayout({ children }) {
       return;
     }
 
-    // 我的订阅：非 free 进入 /pc/benefitsPage，free 进入 /pc/subscribe
+    // 我的订阅：非 free 进入 /pc/benefitsPage，free 进入 /subscribe
     if (key === '/subscribe') {
       setActiveContent(null);
       setShowSearchResults(false);
-      let nextRoute = '/pc/subscribe';
+      let nextRoute = '/subscribe';
       try {
         const planCode = localStorage.getItem(MY_SUBSCRIPTION_PLAN_CODE_KEY);
         if (isNonFreePlanCode(planCode)) {
@@ -599,8 +599,8 @@ export default function PCLayout({ children }) {
       return ['/selfrank'];
     }
     if (
-      pathname === '/pc/subscribe' ||
-      pathname.startsWith('/pc/subscribe/') ||
+      pathname === '/subscribe' ||
+      pathname.startsWith('/subscribe/') ||
       pathname === '/pc/benefitsPage' ||
       pathname.startsWith('/pc/benefitsPage/')
     ) {
