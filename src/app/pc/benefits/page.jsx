@@ -16,20 +16,35 @@ export default function PCBenefitsPage() {
     <PCLayout>
       <div className={styles.pcWrap}>
         <header className={styles.pcHeader}>
-          <div className={styles.headerLeft}>
+          <div className={styles.pcHeaderLeft}>
             <button
               type="button"
-              className={styles.backBtn}
+              className={styles.pcBackBtn}
               onClick={() => safeBack(router, { fallback: '/' })}
               aria-label={t('common.back', { defaultValue: '返回' })}
+              style={{
+                width: '43px',
+                height: '43px',
+                maxWidth: '43px',
+                maxHeight: '43px',
+                fontSize: '14px'
+              }}
             >
               <LeftOutlined />
             </button>
-            <h1 className={styles.pcTitle}>{t('benefitsPage.title', { defaultValue: '我的权益' })}</h1>
+            <h1
+              className={styles.pcTitle}
+              style={{
+                fontSize: '24px',
+                lineHeight: '31px'
+              }}
+            >
+              {t('benefitsPage.title', { defaultValue: '我的权益' })}
+            </h1>
           </div>
         </header>
 
-        <BenefitsPageContent showNavBar={false} className={styles.pcBenefitsContainer} />
+        <BenefitsPageContent showNavBar={false} className={styles.pcBenefitsContainer} isPc />
       </div>
     </PCLayout>
   );

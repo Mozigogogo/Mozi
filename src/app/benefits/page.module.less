@@ -1235,3 +1235,207 @@
   color: rgba(252, 230, 196, 0.88);
   line-height: 1.25;
 }
+
+/* PC mode: use desktop spacing/sizing in px */
+.pcMode {
+  min-height: auto;
+  border-radius: 24px;
+  overflow: hidden;
+  /* PC 端固定首屏背景高度，避免人物随容器变高被“压到下方” */
+  background-position: center top, top center;
+  background-size: 100% 320px, 100% 100%;
+}
+
+.pcMode .content {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 48PX 32PX 24PX;
+}
+
+.pcMode .hero {
+  padding: 28PX 28PX 20PX;
+}
+
+.pcMode .heroText {
+  gap: 10PX;
+}
+
+.pcMode .heroDays {
+  gap: 10PX;
+}
+
+.pcMode .heroSub {
+  font-size: 20PX;
+  line-height: 28PX;
+  font-weight: 500;
+}
+
+.pcMode .daysNum {
+  font-size: 64PX;
+  line-height: 1;
+}
+
+.pcMode .daysUnit {
+  font-size: 20PX;
+  line-height: 1.2;
+}
+
+.pcMode .freeGlassWrap {
+  border-radius: 22PX;
+  padding: 24PX;
+}
+
+.pcMode .sectionsBigBox {
+  margin-top: 18PX;
+  padding: 20PX;
+  border-radius: 20PX;
+}
+
+.pcMode .section {
+  margin-top: 18PX;
+  border-radius: 18PX;
+  padding: 8PX;
+}
+
+.pcMode .sectionTitle,
+.pcMode .sectionTitleLite {
+  font-size: 20PX;
+  line-height: 30PX;
+  margin-bottom: 14PX;
+}
+
+.pcMode .sectionTitleLiteIcon,
+.pcMode .sectionTitleProIcon {
+  width: 28PX;
+  height: 28PX;
+}
+
+.pcMode .benefitList,
+.pcMode .lockedList {
+  gap: 14PX;
+}
+
+.pcMode .benefitItem {
+  min-height: 84PX;
+  border-radius: 16PX;
+  padding: 18PX 22PX;
+  gap: 14PX;
+}
+
+.pcMode .mode_lite .benefitItem,
+.pcMode .mode_pro .benefitItem {
+  min-height: 96PX;
+  padding: 18PX 22PX;
+  gap: 12PX;
+}
+
+.pcMode .mode_lite .benefitItemDeal,
+.pcMode .mode_pro .benefitItemDeal {
+  min-height: 96PX;
+}
+
+.pcMode .benefitLabel,
+.pcMode .benefitLabelLite,
+.pcMode .lockedTitle {
+  font-size: 18PX;
+  line-height: 28PX;
+}
+
+.pcMode .benefitValueLite,
+.pcMode .lockedSub {
+  font-size: 16PX;
+  line-height: 24PX;
+}
+
+.pcMode .benefitLiteTopRow {
+  gap: 18PX;
+}
+
+.pcMode .benefitLiteTopLeft {
+  gap: 14PX;
+}
+
+.pcMode .benefitProgressTrackLite {
+  height: 10PX;
+}
+
+.pcMode .benefitIcon,
+.pcMode .mode_lite .benefitIcon,
+.pcMode .mode_pro .benefitIcon {
+  width: 40PX;
+  height: 40PX;
+}
+
+.pcMode .lockedRow {
+  height: 76PX;
+  min-height: 76PX;
+  border-radius: 16PX;
+  padding: 0 18PX;
+}
+
+.pcMode .lockedRowLeft {
+  gap: 12PX;
+}
+
+.pcMode .lockedRowIconImg {
+  width: 36PX;
+  height: 36PX;
+}
+
+.pcMode .lockedRowLabel {
+  font-size: 16PX;
+  line-height: 24PX;
+}
+
+.pcMode .upgradePill {
+  width: 96PX;
+  height: 36PX;
+  border-radius: 20PX;
+  font-size: 15PX;
+  line-height: 20PX;
+}
+
+.pcMode .lockedRow .upgradePill {
+  width: 92PX;
+  height: 34PX;
+  border-radius: 18PX;
+  font-size: 14PX;
+  line-height: 18PX;
+}
+
+.pcMode .proAllowanceTopCard {
+  height: 92PX;
+  padding: 0 18PX;
+  border-radius: 16PX;
+}
+
+.pcMode .proAllowanceTopMain {
+  font-size: 24PX;
+}
+
+.pcMode .proAllowanceTopSub {
+  font-size: 14PX;
+}
+
+.pcMode .liteQuickIconGrid {
+  margin-top: 20PX;
+  gap: 16PX 12PX;
+}
+
+.pcMode .liteQuickIconCircle {
+  width: 40PX;
+  height: 40PX;
+  border-radius: 14PX;
+}
+
+.pcMode .liteQuickIconCircle img {
+  width: 24PX;
+  height: 24PX;
+  filter: none;
+}
+
+.pcMode .liteQuickIconLabel,
+.pcMode .proQuickIconLabel {
+  font-size: 14PX;
+  line-height: 20PX;
+}
