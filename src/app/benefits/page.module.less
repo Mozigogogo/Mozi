@@ -1239,15 +1239,17 @@
 /* PC mode: use desktop spacing/sizing in px */
 .pcMode {
   min-height: auto;
-  border-radius: 24px;
+  width: 65%;
+  margin: 0 auto;
+  border-radius: 24PX;
   overflow: hidden;
-  /* PC 端固定首屏背景高度，避免人物随容器变高被“压到下方” */
-  background-position: center top, top center;
-  background-size: 100% 320px, 100% 100%;
+  /* PC 端：背景图缩小并上移，避免机器人压到卡片内容区 */
+  background-position: center -18PX, top center;
+  background-size: 100% 260PX, 100% 100%;
 }
 
 .pcMode .content {
-  max-width: 1160px;
+  max-width: 1160PX;
   margin: 0 auto;
   padding: 48PX 32PX 24PX;
 }
@@ -1302,12 +1304,17 @@
   font-size: 20PX;
   line-height: 30PX;
   margin-bottom: 14PX;
+  gap: 4PX;
 }
 
 .pcMode .sectionTitleLiteIcon,
 .pcMode .sectionTitleProIcon {
   width: 28PX;
   height: 28PX;
+}
+
+.pcMode .sectionTitleLiteIcon {
+  margin-right: 0PX;
 }
 
 .pcMode .benefitList,
@@ -1422,6 +1429,10 @@
   gap: 16PX 12PX;
 }
 
+.pcMode .liteQuickIconItem {
+  gap: 4PX;
+}
+
 .pcMode .liteQuickIconCircle {
   width: 40PX;
   height: 40PX;
@@ -1437,5 +1448,5 @@
 .pcMode .liteQuickIconLabel,
 .pcMode .proQuickIconLabel {
   font-size: 14PX;
-  line-height: 20PX;
+  line-height: 16PX;
 }

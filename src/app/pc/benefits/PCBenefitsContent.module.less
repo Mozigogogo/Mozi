@@ -1,0 +1,351 @@
+.pcBenefits {
+  width: min(1100PX, 100%);
+  margin: 0 auto;
+  padding: 0 4PX 12PX;
+}
+
+.heroBanner {
+  width: calc(100% - 72PX);
+  margin: 0 auto;
+  border-radius: 18PX 18PX 0 0;
+  padding: 18PX 28PX;
+  padding-right: 260PX;
+  background: linear-gradient(90deg, rgba(181, 255, 199, 1) 0%, rgba(167, 243, 208, 0.85) 70%, rgba(181, 255, 199, 1) 100%);
+  min-height: 135PX;
+  position: relative;
+  overflow: visible;
+}
+
+.heroBanner::after {
+  content: '';
+  position: absolute;
+  right: 50PX;
+  top: -50PX;
+  width: 300PX;
+  height: 250PX;
+  background-image: url('/images/pc/lite_hero.png');
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.heroText {
+  display: flex;
+  flex-direction: column;
+  gap: 8PX;
+  position: relative;
+  z-index: 2;
+}
+
+.heroSub {
+  font-size: 20PX;
+  color: rgba(17, 24, 39, 0.9);
+}
+
+.heroDays {
+  display: flex;
+  align-items: baseline;
+  gap: 8PX;
+}
+
+.daysNum {
+  font-size: 44PX;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.daysUnit {
+  font-size: 26PX;
+  font-weight: 600;
+}
+
+.mainShell {
+  width: calc(100% - 24PX);
+  margin: -18PX auto 0;
+  border-radius: 20PX;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(14PX);
+  -webkit-backdrop-filter: blur(14PX);
+  padding: 16PX;
+  border: 1PX solid rgba(255, 255, 255, 1);
+  position: relative;
+  z-index: 3;
+}
+
+.topGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  gap: 10PX;
+  align-items: stretch;
+}
+
+.leftColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 10PX;
+}
+
+.planCard {
+  border-radius: 16PX;
+  padding: 18PX;
+  background: linear-gradient(to top right, #E6FFCE 0%, #BEFED1 52%, #B0FBE4 70%, #B5FFC8 100%);
+  border: 1PX solid rgba(118, 224, 169, 0.9);
+}
+
+.planHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.planTitle {
+  font-size: 28PX;
+  font-weight: 800;
+}
+
+.planSub {
+  font-size: 16PX;
+  color: rgba(34, 197, 94, 1);
+}
+
+.tierBadge {
+  width: 52PX;
+  height: 52PX;
+}
+
+.pointsLabel {
+  margin-top: 14PX;
+  font-size: 16PX;
+  color: rgba(22, 163, 74, 1);
+}
+
+.pointsRow {
+  margin-top: 6PX;
+}
+
+.pointsCur {
+  font-size: 36PX;
+  font-weight: 800;
+}
+
+.pointsMax {
+  font-size: 16PX;
+  color: rgba(22, 163, 74, 1);
+}
+
+.progressTrack {
+  margin-top: 10PX;
+  height: 8PX;
+  border-radius: 999PX;
+  background: rgba(17, 24, 39, 0.08);
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 999PX;
+  background: linear-gradient(90deg, #80f1aa 0%, #22c55e 100%);
+}
+
+.validityRow {
+  margin-top: 10PX;
+  font-size: 14PX;
+  color: rgba(22, 163, 74, 1);
+}
+
+.dayTag {
+  margin-left: 8PX;
+  padding: 0PX 8PX;
+  border-radius: 14PX;
+  background: rgba(255, 255, 255, 0.45);
+  color: rgba(22, 163, 74, 1);
+  font-size: 12PX;
+  font-weight: 600;
+}
+
+.lockedPanel {
+  border-radius: 16PX;
+  padding: 12PX;
+  background: linear-gradient(180deg, rgba(179, 251, 198, 0.67) 0%, rgba(255, 255, 255, 0.67) 100%);
+  border: 1PX solid rgba(34, 197, 94, 1);
+  align-self: stretch;
+}
+
+.lockedTitle {
+  font-size: 18PX;
+  color: rgba(51, 65, 85, 1);
+  margin-bottom: 8PX;
+}
+
+.lockedRow {
+  height: 54PX;
+  border-radius: 12PX;
+  border: 1PX solid rgba(255, 220, 175, 1);
+  background: linear-gradient(124.92deg, rgba(96, 61, 33, 1) 2.71%, rgba(141, 80, 31, 1) 80.69%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10PX;
+  margin-top: 8PX;
+}
+
+.lockedRowLeft {
+  display: flex;
+  align-items: center;
+  gap: 8PX;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 14PX;
+}
+
+.lockedRowLeft img {
+  width: 20PX;
+  height: 20PX;
+}
+
+.lockedRow button {
+  height: 30PX;
+  border-radius: 999PX;
+  border: 0;
+  background: linear-gradient(90deg, rgba(255, 204, 140, 1), rgba(251, 224, 190, 1));
+  color: rgba(147, 65, 0, 1);
+  font-size: 13PX;
+  padding: 0 14PX;
+}
+
+.benefitsPanel {
+  border-radius: 16PX;
+  background: linear-gradient(180deg, rgba(179, 251, 198, 0.67) 0%, rgba(255, 255, 255, 0.67) 100%);
+  border: 1PX solid rgba(74, 222, 128, 0.8);
+  padding: 12PX;
+}
+
+.benefitsHeader {
+  display: flex;
+  align-items: center;
+  gap: 6PX;
+  font-size: 16PX;
+  color: rgba(22, 163, 74, 1);
+}
+
+.benefitsHeader img {
+  width: 24PX;
+  height: 24PX;
+}
+
+.metricCard {
+  margin-top: 10PX;
+  border-radius: 14PX;
+  padding: 10PX 14PX;
+  background: rgba(245, 245, 245, 0.85);
+}
+
+.metricCardFirst {
+  background: rgba(242, 240, 254, 1);
+  border: 0.85PX solid rgba(219, 211, 255, 1);
+}
+.metricCardFirst .metricTop span:last-child {
+  color: rgba(136, 118, 244, 1);
+}
+
+.metricCardSecond {
+  background: rgba(229, 252, 255, 1);
+  border: 0.85PX solid rgba(34, 170, 197, 0.2);
+}
+.metricCardSecond .metricTop span:last-child {
+  color: rgba(56, 198, 233, 1);
+}
+
+.metricCardThird {
+  background: rgba(255, 243, 235, 1);
+  border: 0.5PX solid rgba(254, 216, 191, 1);
+}
+.metricCardThird .metricTop span:last-child {
+  color: rgba(235, 97, 53, 1);
+}
+
+.metricTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14PX;
+}
+
+.metricTop span:first-child {
+  color: rgba(51, 65, 85, 1);
+}
+
+.metricLabelWithIcon {
+  display: inline-flex;
+  align-items: center;
+  gap: 8PX;
+}
+
+.metricLabelWithIcon img {
+  width: 24PX;
+  height: 24PX;
+  display: block;
+}
+
+.metricTrack {
+  margin-top: 8PX;
+  height: 6PX;
+  border-radius: 999PX;
+  background: rgba(17, 24, 39, 0.08);
+}
+
+.metricFillPurple,
+.metricFillBlue {
+  height: 100%;
+  border-radius: 999PX;
+}
+
+.metricFillPurple {
+  background: linear-gradient(90deg, #8876f4 0%, #d3c0ff 100%);
+}
+
+.metricFillBlue {
+  background: linear-gradient(90deg, #38c6e9 0%, #8ff9f7 100%);
+}
+
+.iconRow {
+  margin-top: 12PX;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10PX;
+}
+
+.iconItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6PX;
+  text-align: center;
+}
+
+.iconItem img {
+  width: 32PX;
+  height: 32PX;
+  display: block;
+}
+
+.iconItem span {
+  font-size: 12PX;
+  color: rgba(51, 65, 85, 1);
+}
+
+.isPro .heroBanner {
+  background: linear-gradient(124.92deg, #603D21 2.71%, #8D501F 80.69%);
+}
+
+.isPro .lockedPanel {
+  background:
+    linear-gradient(180deg, rgba(255, 197, 117, 0.38) 0%, rgba(255, 255, 255, 0.38) 100%),
+    linear-gradient(124.92deg, #603D21 2.71%, #8D501F 80.69%),
+    linear-gradient(124.92deg, #401C00 2.71%, #7E4314 80.69%);
+  border: 1PX solid rgba(210, 150, 72, 1);
+}
+
+.isPro .heroBanner::after {
+  background-image: url('/benefits/pro_bg.png');
+}

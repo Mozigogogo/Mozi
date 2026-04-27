@@ -4,8 +4,8 @@ import { LeftOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import PCLayout from '@/components/PCLayout';
-import { BenefitsPageContent } from '@/app/benefits/page';
 import { safeBack } from '@/utils/navigation';
+import PCBenefitsContent from './PCBenefitsContent';
 import styles from './page.module.less';
 
 export default function PCBenefitsPage() {
@@ -44,7 +44,9 @@ export default function PCBenefitsPage() {
           </div>
         </header>
 
-        <BenefitsPageContent showNavBar={false} className={styles.pcBenefitsContainer} isPc />
+        <div className={styles.pcBenefitsContainer}>
+          <PCBenefitsContent />
+        </div>
       </div>
     </PCLayout>
   );

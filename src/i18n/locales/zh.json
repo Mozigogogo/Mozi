@@ -1906,6 +1906,7 @@
     "exclusiveService": "专属客服",
     "emailAlerts": "邮件告警",
     "standardCS": "标准客服",
+    "supportShort": "客服",
     "identityTag": "身份标识",
     "pointsThisMonth": "本月已获得积分",
     "validUntil": "{{tier}}权益有效期至{{date}}",
