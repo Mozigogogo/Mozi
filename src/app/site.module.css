@@ -24,7 +24,7 @@
 .stage {
   position: relative;
   width: 100%;
-  min-height: 100vh;
+  height: 100vh;
   aspect-ratio: auto;
   flex: 0 0 auto;
   background:
@@ -36,7 +36,7 @@
 .alertsSection {
   position: relative;
   width: 100%;
-  min-height: 100vh;
+  height: 100vh;
   aspect-ratio: auto;
   flex: 0 0 auto;
   margin: 0;
@@ -278,6 +278,407 @@
   background: #b83f3f;
 }
 
+.sectorSection {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  flex: 0 0 auto;
+  overflow: hidden;
+  background:
+    radial-gradient(840px 360px at 20% 10%, rgba(110, 231, 183, 0.18), transparent 60%),
+    linear-gradient(120deg, #16a37a 0%, #2ecf86 46%, #23c781 100%);
+}
+
+.sectorContent {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.sectorLeft {
+  position: absolute;
+  left: 8%;
+  top: 24%;
+  z-index: 2;
+}
+
+.sectorTitle {
+  margin: 0;
+  font-size: clamp(68px, 6.2vw, 132px);
+  line-height: 0.92;
+  letter-spacing: -1.6px;
+  font-weight: 800;
+}
+
+.sectorSubtitle {
+  margin-top: 20px;
+  max-width: 420px;
+  font-size: clamp(24px, 1.8vw, 36px);
+  line-height: 1.2;
+}
+
+.sectorCta {
+  margin-top: 24px;
+  width: fit-content;
+  height: 56px;
+  padding: 0 28px;
+  border-radius: 999px;
+  background: #fff;
+  color: #111827;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.sectorPreview {
+  position: absolute;
+  right: -4%;
+  bottom: 0;
+  width: min(1040px, 72vw);
+  aspect-ratio: 1473 / 1024;
+}
+
+.sectorPreviewImage {
+  object-fit: contain;
+  object-position: right bottom;
+}
+
+.flashSection {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  flex: 0 0 auto;
+  overflow: hidden;
+  background:
+    radial-gradient(700px 340px at 20% 80%, rgba(124, 58, 237, 0.28), transparent 60%),
+    radial-gradient(620px 280px at 82% 78%, rgba(236, 72, 153, 0.24), transparent 62%),
+    linear-gradient(180deg, #1a1234 0%, #2a124a 54%, #4a145f 100%);
+}
+
+.flashTitle {
+  margin: 62px 0 0;
+  text-align: center;
+  font-size: clamp(64px, 6vw, 116px);
+  line-height: 1;
+  font-weight: 800;
+}
+
+.flashSubtitle {
+  margin-top: 14px;
+  text-align: center;
+  font-size: clamp(22px, 1.7vw, 32px);
+}
+
+.flashCta {
+  margin: 16px auto 0;
+  width: fit-content;
+  height: 48px;
+  border-radius: 999px;
+  padding: 0 22px;
+  background: #fff;
+  color: #111827;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.flashPhones {
+  position: absolute;
+  left: 50%;
+  bottom: -4%;
+  transform: translateX(-50%);
+  width: min(1100px, 84vw);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: min(8vw, 120px);
+}
+
+.flashPhone {
+  position: relative;
+  width: min(360px, 28vw);
+  aspect-ratio: 551 / 741;
+  border-radius: 34px 34px 0 0;
+  overflow: hidden;
+  border: 3px solid rgba(255, 255, 255, 0.24);
+  background: rgba(2, 6, 23, 0.38);
+}
+
+.flashPhoneImage {
+  object-fit: cover;
+  object-position: top center;
+}
+
+.flashOverlayCardLeft,
+.flashOverlayCardRight {
+  position: absolute;
+  bottom: 22%;
+  width: min(360px, 28vw);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: linear-gradient(130deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.78));
+  color: #334155;
+  padding: 12px 14px;
+  font-size: 12px;
+  line-height: 1.32;
+}
+
+.flashOverlayCardLeft {
+  left: 28%;
+}
+
+.flashOverlayCardRight {
+  right: 9%;
+}
+
+.flashOverlayHead {
+  font-size: 11px;
+  font-weight: 700;
+  color: #2563eb;
+  margin-bottom: 6px;
+}
+
+.alphaSection {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  flex: 0 0 auto;
+  overflow: hidden;
+  background:
+    radial-gradient(640px 280px at 50% 0%, rgba(251, 191, 36, 0.28), transparent 60%),
+    linear-gradient(180deg, #995300 0%, #cf7400 44%, #ff9900 100%);
+}
+
+.alphaTitle {
+  margin: 64px 0 0;
+  text-align: center;
+  font-size: clamp(64px, 6vw, 114px);
+  line-height: 1;
+  font-weight: 800;
+}
+
+.alphaSubtitle {
+  margin-top: 14px;
+  text-align: center;
+  font-size: clamp(22px, 1.7vw, 32px);
+}
+
+.alphaCta {
+  margin: 16px auto 0;
+  width: fit-content;
+  height: 48px;
+  border-radius: 999px;
+  padding: 0 24px;
+  background: #fff;
+  color: #111827;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.alphaPhoneWrap {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+}
+
+.alphaPhone {
+  position: relative;
+  width: min(360px, 28vw);
+  aspect-ratio: 551 / 741;
+  border-radius: 34px 34px 0 0;
+  overflow: hidden;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  background: rgba(2, 6, 23, 0.24);
+}
+
+.alphaPhoneImage {
+  object-fit: cover;
+  object-position: top center;
+}
+
+.alphaScoreCard {
+  position: absolute;
+  width: min(230px, 17vw);
+  min-width: 170px;
+  border-radius: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.36);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.2));
+  padding: 14px 16px 12px;
+}
+
+.alphaScoreLeft { left: 13%; top: 40%; }
+.alphaScoreRight { right: 13%; top: 48%; }
+.alphaScoreBottom { left: 27%; top: 70%; }
+
+.alphaScoreHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: clamp(18px, 1.4vw, 32px);
+  font-weight: 700;
+}
+
+.alphaGauge {
+  margin-top: 12px;
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  border-radius: 999px 999px 0 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.alphaGauge::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: conic-gradient(from 180deg, #34d399 0deg, #f59e0b 90deg, #f97316 160deg, #ef4444 180deg, transparent 180deg);
+}
+
+.alphaGauge::after {
+  content: '';
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 0;
+  top: 26%;
+  border-radius: 999px 999px 0 0;
+  background: rgba(248, 250, 252, 0.86);
+}
+
+.alphaGauge span {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  transform: translateX(-50%);
+  z-index: 2;
+  font-size: clamp(36px, 2.7vw, 52px);
+  font-weight: 800;
+  color: #fff;
+}
+
+.knowledgeSection {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  flex: 0 0 auto;
+  overflow: hidden;
+  background:
+    radial-gradient(760px 320px at 45% 85%, rgba(234, 88, 12, 0.3), transparent 62%),
+    radial-gradient(540px 240px at 20% 35%, rgba(245, 158, 11, 0.18), transparent 70%),
+    linear-gradient(180deg, #2b0f18 0%, #351123 55%, #4a1725 100%);
+}
+
+.knowledgeLeft {
+  position: absolute;
+  left: 8%;
+  top: 19%;
+  z-index: 2;
+}
+
+.knowledgeTitle {
+  margin: 0;
+  font-size: clamp(70px, 6.2vw, 130px);
+  line-height: 0.92;
+  font-weight: 800;
+}
+
+.knowledgeSubtitle {
+  margin-top: 24px;
+  font-size: clamp(26px, 1.9vw, 38px);
+  line-height: 1.25;
+}
+
+.knowledgeCta {
+  margin-top: 24px;
+  width: fit-content;
+  height: 56px;
+  padding: 0 28px;
+  border-radius: 999px;
+  background: #fff;
+  color: #111827;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.knowledgePhone {
+  position: absolute;
+  right: 10%;
+  bottom: 8%;
+  width: min(470px, 34vw);
+  aspect-ratio: 551 / 741;
+  border-radius: 36px;
+  overflow: hidden;
+  border: 3px solid rgba(255, 255, 255, 0.26);
+}
+
+.knowledgePhoneImage {
+  object-fit: cover;
+  object-position: top center;
+}
+
+.knowledgeCards {
+  position: absolute;
+  left: 50%;
+  bottom: 4%;
+  transform: translateX(-50%);
+  width: min(1480px, 96vw);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  z-index: 3;
+}
+
+.knowledgeCard {
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  background: linear-gradient(140deg, rgba(244, 244, 245, 0.64), rgba(228, 228, 231, 0.4));
+  backdrop-filter: blur(8px);
+  padding: 14px 14px 12px;
+  color: #f8fafc;
+}
+
+.knowledgeCardUser {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.knowledgeCard p {
+  margin: 10px 0 0;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.knowledgeCardMeta {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #6ee7b7;
+}
+
 .heroLeft {
   position: absolute;
   left: 20%;
@@ -426,6 +827,110 @@
     width: 100%;
     aspect-ratio: auto;
     min-height: 100vh;
+  }
+
+  .sectorContent {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding: 70px 14px 0;
+  }
+
+  .sectorLeft,
+  .sectorPreview {
+    position: relative;
+    left: auto;
+    right: auto;
+    top: auto;
+    bottom: auto;
+  }
+
+  .sectorLeft {
+    width: 100%;
+  }
+
+  .sectorPreview {
+    margin-top: 24px;
+    width: 100%;
+  }
+
+  .flashSection {
+    padding: 20px 14px 0;
+  }
+
+  .flashPhones {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    transform: none;
+    width: 100%;
+    margin-top: 26px;
+    gap: 16px;
+  }
+
+  .flashPhone {
+    width: 48%;
+  }
+
+  .flashOverlayCardLeft,
+  .flashOverlayCardRight {
+    display: none;
+  }
+
+  .alphaSection {
+    padding: 22px 14px 0;
+  }
+
+  .alphaPhoneWrap,
+  .alphaScoreCard {
+    position: relative;
+    left: auto;
+    right: auto;
+    top: auto;
+    bottom: auto;
+    transform: none;
+  }
+
+  .alphaPhoneWrap {
+    margin-top: 24px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .alphaPhone {
+    width: min(340px, 88vw);
+  }
+
+  .alphaScoreCard {
+    width: min(240px, 48vw);
+    margin: 14px auto 0;
+  }
+
+  .knowledgeSection {
+    padding: 24px 14px 0;
+  }
+
+  .knowledgeLeft,
+  .knowledgePhone,
+  .knowledgeCards {
+    position: relative;
+    left: auto;
+    right: auto;
+    top: auto;
+    bottom: auto;
+    transform: none;
+  }
+
+  .knowledgePhone {
+    width: min(340px, 88vw);
+    margin: 18px auto 0;
+  }
+
+  .knowledgeCards {
+    width: 100%;
+    margin-top: 16px;
+    grid-template-columns: 1fr;
   }
 
   .heroLeft,

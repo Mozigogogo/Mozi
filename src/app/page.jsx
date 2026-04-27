@@ -103,6 +103,150 @@ export default function SiteHomePage() {
             </div>
           </div>
         </section>
+
+        <section className={styles.sectorSection}>
+          <div className={styles.sectorContent}>
+            <div className={styles.sectorLeft}>
+              <h2 className={styles.sectorTitle}>
+                Sector
+                <br />
+                Rotation
+              </h2>
+              <p className={styles.sectorSubtitle}>Ride the trend. One-click to find the sector leaders</p>
+              <Link className={styles.sectorCta} href="/pc/find">
+                <span>Enter Mozi</span>
+                <GetStartedArrow />
+              </Link>
+            </div>
+
+            <div className={styles.sectorPreview} aria-hidden="true">
+              <Image
+                src="/images/pc/lite_hero.png"
+                alt=""
+                fill
+                className={styles.sectorPreviewImage}
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className={styles.flashSection}>
+          <h2 className={styles.flashTitle}>Flash News</h2>
+          <p className={styles.flashSubtitle}>Zero noise. Real-time global crypto signal.</p>
+          <Link className={styles.flashCta} href="/pc/news">
+            <span>Read News</span>
+            <GetStartedArrow />
+          </Link>
+
+          <div className={styles.flashPhones}>
+            <div className={styles.flashPhone}>
+              <Image src="/images/pc/introduction2.svg" alt="flash news left preview" fill className={styles.flashPhoneImage} />
+            </div>
+            <div className={styles.flashPhone}>
+              <Image src="/images/pc/introduction2.svg" alt="flash news right preview" fill className={styles.flashPhoneImage} />
+            </div>
+          </div>
+
+          <div className={styles.flashOverlayCardLeft}>
+            <div className={styles.flashOverlayHead}>Flash</div>
+            <p>Fed will speak tomorrow; risk assets may stay range-bound before macro clarity.</p>
+          </div>
+          <div className={styles.flashOverlayCardRight}>
+            <div className={styles.flashOverlayHead}>Brief</div>
+            <p>BTC options IV cools while spot ETF inflows stay stable; watch NY open liquidity.</p>
+          </div>
+        </section>
+
+        <section className={styles.alphaSection}>
+          <h2 className={styles.alphaTitle}>Alpha Scanner</h2>
+          <p className={styles.alphaSubtitle}>Hunt the next 100x gem before the pump.</p>
+          <Link className={styles.alphaCta} href="/pc/find">
+            <span>Get Started</span>
+            <GetStartedArrow />
+          </Link>
+
+          <div className={styles.alphaPhoneWrap}>
+            <div className={styles.alphaPhone}>
+              <Image src="/images/pc/introduction2.svg" alt="alpha scanner preview" fill className={styles.alphaPhoneImage} />
+            </div>
+          </div>
+
+          <div className={`${styles.alphaScoreCard} ${styles.alphaScoreLeft}`}>
+            <div className={styles.alphaScoreHead}>
+              <Image src="/images/pc/phone_alarm.svg" alt="btc" width={24} height={24} />
+              <span>BTC</span>
+            </div>
+            <div className={`${styles.alphaGauge} ${styles.alphaGaugeStrong}`}>
+              <span>76</span>
+            </div>
+          </div>
+
+          <div className={`${styles.alphaScoreCard} ${styles.alphaScoreRight}`}>
+            <div className={styles.alphaScoreHead}>
+              <Image src="/images/pc/push.svg" alt="eth" width={24} height={24} />
+              <span>ETH</span>
+            </div>
+            <div className={`${styles.alphaGauge} ${styles.alphaGaugeMid}`}>
+              <span>55</span>
+            </div>
+          </div>
+
+          <div className={`${styles.alphaScoreCard} ${styles.alphaScoreBottom}`}>
+            <div className={styles.alphaScoreHead}>
+              <Image src="/images/pc/helper.svg" alt="usdt" width={24} height={24} />
+              <span>USDT</span>
+            </div>
+            <div className={`${styles.alphaGauge} ${styles.alphaGaugeLow}`}>
+              <span>16</span>
+            </div>
+          </div>
+        </section>
+
+        <section className={styles.knowledgeSection}>
+          <div className={styles.knowledgeLeft}>
+            <h2 className={styles.knowledgeTitle}>
+              Knowledge
+              <br />
+              Hub
+            </h2>
+            <p className={styles.knowledgeSubtitle}>
+              No more confusion.
+              <br />
+              Ask anything, get clarity.
+            </p>
+            <Link className={styles.knowledgeCta} href="/pc/find">
+              <span>Learn more</span>
+              <GetStartedArrow />
+            </Link>
+          </div>
+
+          <div className={styles.knowledgePhone} aria-hidden="true">
+            <Image src="/images/pc/introduction2.svg" alt="" fill className={styles.knowledgePhoneImage} />
+          </div>
+
+          <div className={styles.knowledgeCards}>
+            <article className={styles.knowledgeCard}>
+              <div className={styles.knowledgeCardUser}>Joestar</div>
+              <p>BTC just pumped 8% in an hour - is it too late to buy now?</p>
+              <div className={styles.knowledgeCardMeta}>221 · 133</div>
+            </article>
+            <article className={styles.knowledgeCard}>
+              <div className={styles.knowledgeCardUser}>Lauren</div>
+              <p>How do people actually spot whale accumulation early?</p>
+              <div className={styles.knowledgeCardMeta}>156 · 89</div>
+            </article>
+            <article className={styles.knowledgeCard}>
+              <div className={styles.knowledgeCardUser}>Mr.Mon</div>
+              <p>Open interest is rising but the price isn&apos;t moving much - what does that usually mean?</p>
+              <div className={styles.knowledgeCardMeta}>170 · 103</div>
+            </article>
+            <article className={styles.knowledgeCard}>
+              <div className={styles.knowledgeCardUser}>Arthur</div>
+              <p>When a coin pumps fast, how do we tell whether to chase or wait?</p>
+              <div className={styles.knowledgeCardMeta}>98 · 61</div>
+            </article>
+          </div>
+        </section>
       </section>
     </main>
   );
