@@ -1,29 +1,279 @@
 .page {
-  min-height: 100vh;
-  background:
-    radial-gradient(900px 420px at 10% 18%, rgba(45, 212, 191, 0.22), transparent 60%),
-    radial-gradient(980px 520px at 92% 78%, rgba(99, 102, 241, 0.3), transparent 58%),
-    linear-gradient(120deg, #1398da 0%, #2458b2 50%, #243a94 100%);
+  height: 100vh;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: stretch;
   overflow: hidden;
   color: #f8fafc;
 }
 
 .heroWrap {
   width: 100%;
-  min-height: 100vh;
+  height: 100%;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px 0 20px 20px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .stage {
   position: relative;
   width: 100%;
-  aspect-ratio: 1680 / 860;
+  min-height: 100vh;
+  aspect-ratio: auto;
+  flex: 0 0 auto;
+  background:
+    radial-gradient(900px 420px at 10% 18%, rgba(45, 212, 191, 0.22), transparent 60%),
+    radial-gradient(980px 520px at 92% 78%, rgba(99, 102, 241, 0.3), transparent 58%),
+    linear-gradient(120deg, #1398da 0%, #2458b2 50%, #243a94 100%);
+}
+
+.alertsSection {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  aspect-ratio: auto;
+  flex: 0 0 auto;
+  margin: 0;
+  border-radius: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(900px 420px at 30% 100%, rgba(255, 110, 0, 0.3), transparent 55%),
+    linear-gradient(180deg, #8c1d00 0%, #d54400 38%, #f66a00 100%);
+}
+
+.alertsSection::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 2px;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(30, 64, 175, 0.3) 0%,
+      rgba(30, 64, 175, 0.42) 18%,
+      rgba(15, 23, 42, 0.5) 50%,
+      rgba(30, 64, 175, 0.42) 82%,
+      rgba(30, 64, 175, 0.3) 100%
+    );
+  box-shadow:
+    0 1px 0 rgba(2, 6, 23, 0.42) inset,
+    0 -1px 0 rgba(148, 163, 184, 0.16) inset;
+  z-index: 4;
+}
+
+.alertsTitle {
+  margin: 64px 0 0;
+  text-align: center;
+  font-size: clamp(56px, 5vw, 96px);
+  line-height: 1;
+  letter-spacing: -1.2px;
+  font-weight: 800;
+}
+
+.alertsSubtitle {
+  margin-top: 14px;
+  text-align: center;
+  font-size: clamp(20px, 1.7vw, 32px);
+}
+
+.alertsCta {
+  margin: 18px auto 0;
+  width: fit-content;
+  height: 48px;
+  border-radius: 999px;
+  padding: 0 18px;
+  background: #fff;
+  color: #111827;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.alertsCta svg {
+  width: 16px;
+  height: 12px;
+}
+
+.alertBottomPreview {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: min(470px, 32vw);
+  aspect-ratio: 551 / 741;
+  max-height: 82%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.alertBottomPreviewImage {
+  object-fit: contain;
+  object-position: center bottom;
+}
+
+.alertPhone {
+  position: absolute;
+  left: 50%;
+  bottom: -2%;
+  transform: translateX(-50%);
+  width: 34%;
+  aspect-ratio: 330 / 620;
+  border-radius: 34px 34px 0 0;
+  background: #0f172a;
+  padding: 14px 12px 0;
+}
+
+.alertPhoneNotch {
+  width: 30%;
+  height: 18px;
+  border-radius: 999px;
+  margin: 0 auto;
+  background: #020617;
+}
+
+.alertPhoneScreen {
+  margin-top: 8px;
+  height: calc(100% - 26px);
+  border-radius: 22px 22px 0 0;
+  background: linear-gradient(180deg, #eff6ff, #ffffff 40%, #f8fafc);
+}
+
+.alertSideGroup {
+  position: absolute;
+  top: 75%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  z-index: 2;
+}
+
+.alertSideGroupLeft {
+  left: 20%;
+}
+
+.alertSideGroupRight {
+  right: 20%;
+}
+
+.alertSideCard {
+  position: relative;
+  width: clamp(96px, 10vw, 140px);
+  max-width: 272px;
+  aspect-ratio: 1 / 1;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.3));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  z-index: 2;
+}
+
+.alertSideCard span {
+  font-size: clamp(13px, 0.95vw, 20px);
+  font-weight: 500;
+}
+
+.alertTickerGroup {
+  position: absolute;
+  left: 50%;
+  bottom: 10%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  z-index: 3;
+}
+
+.alertTicker {
+  --ticker-width: min(680px, 46vw);
+  position: relative;
+  width: var(--ticker-width);
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.58));
+  backdrop-filter: blur(6px);
+  padding: 18px 16px;
+  z-index: 2;
+}
+
+.alertTickerSecondary {
+  margin-top: -18px;
+  margin-left: 0;
+  align-self: center;
+  width: calc(var(--ticker-width) * 0.9);
+  opacity: 1;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  padding: 14px 14px;
+  z-index: 1;
+}
+
+.alertTickerSecondary .alertTickerCoinMuted {
+  font-size: clamp(15px, 1.1vw, 24px);
+}
+
+.alertTickerSecondary .alertTickerDown {
+  min-width: 96px;
+  height: 42px;
+  font-size: clamp(14px, 1vw, 20px);
+}
+
+.alertTickerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.alertTickerRow + .alertTickerRow {
+  margin-top: 10px;
+}
+
+.alertTickerCoin {
+  font-size: clamp(18px, 1.4vw, 30px);
+  font-weight: 600;
+}
+
+.alertTickerCoinMuted {
+  font-size: clamp(18px, 1.4vw, 30px);
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.alertTickerUp,
+.alertTickerDown {
+  min-width: 112px;
+  height: 54px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(16px, 1.2vw, 24px);
+  font-weight: 700;
+}
+
+.alertTickerUp {
+  background: #10b981;
+}
+
+.alertTickerDown {
+  background: #b83f3f;
 }
 
 .heroLeft {
@@ -166,9 +416,14 @@
   }
 
   .stage {
-    width: min(820px, 100%);
+    width: 100%;
+    min-height: 100vh;
+  }
+
+  .alertsSection {
+    width: 100%;
     aspect-ratio: auto;
-    min-height: 640px;
+    min-height: 100vh;
   }
 
   .heroLeft,
