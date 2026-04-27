@@ -334,18 +334,266 @@
   color: rgba(51, 65, 85, 1);
 }
 
-.isPro .heroBanner {
+.proAllowanceRow {
+  margin-top: 12PX;
+  min-height: 62PX;
+  border-radius: 14PX;
+  border: 1PX solid rgba(255, 245, 228, 0.85);
   background: linear-gradient(124.92deg, #603D21 2.71%, #8D501F 80.69%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12PX 0 16PX;
+  gap: 10PX;
 }
 
-.isPro .lockedPanel {
+.proAllowanceText {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 10PX;
+  color: rgba(255, 236, 208, 0.95);
+  font-size: 16PX;
+}
+
+.proAllowanceText span:last-child {
+  font-size: 14PX;
+  color: rgba(255, 236, 208, 0.65);
+}
+
+.proAllowanceBtn {
+  border: 0;
+  height: 36PX;
+  border-radius: 999PX;
+  padding: 0 16PX;
+  background: linear-gradient(90deg, rgba(255, 223, 181, 1), rgba(255, 245, 228, 1));
+  color: rgba(121, 63, 18, 1);
+  font-size: 14PX;
+  font-weight: 600;
+  flex: 0 0 auto;
+}
+
+.proUpgradeCard {
+  border: 1PX solid rgba(255, 224, 186, 0.85);
+  border-radius: 16PX;
+  padding: 12PX;
+  background: linear-gradient(124.92deg, rgba(96, 61, 33, 0.92) 2.71%, rgba(141, 80, 31, 0.92) 80.69%);
+}
+
+.proUpgradeTop {
+  display: flex;
+  gap: 10PX;
+}
+
+.proUpgradeBadge {
+  width: 44PX;
+  height: 44PX;
+  flex: 0 0 auto;
+}
+
+.proUpgradeMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.proUpgradeTitleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8PX;
+  font-size: 14PX;
+  color: rgba(255, 236, 208, 0.95);
+}
+
+.proUpgradeTrack {
+  margin-top: 8PX;
+  height: 6PX;
+  border-radius: 999PX;
+  background: rgba(255, 236, 208, 0.35);
+}
+
+.proUpgradeFill {
+  height: 100%;
+  border-radius: 999PX;
+  background: linear-gradient(90deg, #ff8e2b 0%, #ffb25a 100%);
+}
+
+.proUpgradeRemain {
+  margin-top: 6PX;
+  color: rgba(255, 236, 208, 0.72);
+  font-size: 12PX;
+}
+
+.proUpgradeBottom {
+  margin-top: 10PX;
+  padding-top: 10PX;
+  border-top: 1PX solid rgba(255, 236, 208, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10PX;
+  color: rgba(255, 236, 208, 0.9);
+  font-size: 13PX;
+}
+
+.proUpgradeBottom button {
+  height: 30PX;
+  border-radius: 999PX;
+  border: 0;
+  padding: 0 14PX;
+  background: linear-gradient(90deg, rgba(255, 223, 181, 1), rgba(255, 245, 228, 1));
+  color: rgba(121, 63, 18, 1);
+  font-size: 13PX;
+  white-space: nowrap;
+}
+
+.proQuickGrid {
+  margin-top: 14PX;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14PX 10PX;
+}
+
+.proQuickItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8PX;
+}
+
+.proQuickIconWrap {
+  width: 32PX;
+  height: 32PX;
+  border-radius: 12PX;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.proQuickIconWrap img {
+  width: 100%;
+  height: 100%;
+}
+
+.proQuickItem span:last-child {
+  color: rgba(255, 236, 208, 0.95);
+  font-size: 12PX;
+  line-height: 1.2;
+}
+
+.proAlphaCard {
+  margin-top: 16PX;
+  border: 1PX solid rgba(255, 224, 186, 0.85);
+  border-radius: 16PX;
+  min-height: 64PX;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12PX;
+}
+
+.proAlphaLeft {
+  display: flex;
+  align-items: center;
+  gap: 10PX;
+  color: rgba(255, 236, 208, 1);
+  font-size: 16PX;
+}
+
+.proAlphaIconWrap {
+  width: 32PX;
+  height: 32PX;
+  border-radius: 12PX;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 236, 208, 0.2);
+}
+
+.proAlphaIconWrap img {
+  width: 100%;
+  height: 100%;
+}
+
+.proAlphaCard button {
+  border: 0;
+  height: 36PX;
+  min-width: 96PX;
+  border-radius: 999PX;
+  padding: 0 18PX;
+  background: linear-gradient(90deg, rgba(255, 223, 181, 1), rgba(255, 245, 228, 1));
+  color: rgba(121, 63, 18, 1);
+  font-size: 14PX;
+  font-weight: 600;
+}
+
+.isPro .heroBanner {
   background:
-    linear-gradient(180deg, rgba(255, 197, 117, 0.38) 0%, rgba(255, 255, 255, 0.38) 100%),
-    linear-gradient(124.92deg, #603D21 2.71%, #8D501F 80.69%),
-    linear-gradient(124.92deg, #401C00 2.71%, #7E4314 80.69%);
+    linear-gradient(104.17deg, #401C00 2.03%, #7E4314 69.07%);
+}
+
+.isPro .heroSub,
+.isPro .daysNum,
+.isPro .daysUnit {
+  background: linear-gradient(93.9deg, #FFCC8C 33.02%, #FBE0BE 75.81%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.isPro .mainShell {
+  background: rgba(255, 255, 255, 0.52);
+  border: 1PX solid rgba(255, 255, 255, 0.7);
+}
+
+.isPro .planCard {
+  background: linear-gradient(to top right, #f7ebc7 0%,#FFF7D7 30%, #f7c87c 100%);
+  border: 1PX solid rgba(240, 167, 79, 0.85);
+}
+
+.isPro .planSub,
+.isPro .pointsLabel,
+.isPro .pointsMax,
+.isPro .validityRow,
+.isPro .dayTag {
+  color: rgba(241, 101, 34, 1);
+}
+
+.isPro .progressFill {
+  background: linear-gradient(90deg, #f8ad3e 0%, #f97316 100%);
+}
+
+.isPro .benefitsPanel {
+  background: linear-gradient(124.92deg, #411D00 2.71%, #7E4314 80.69%);
   border: 1PX solid rgba(210, 150, 72, 1);
 }
 
+.isPro .benefitsHeader {
+  color: rgba(255, 236, 208, 1);
+}
+
+.isPro .iconItem span {
+  color: rgba(255, 236, 208, 0.9);
+}
+
+.isPro .lockedPanel {
+  background: linear-gradient(124.92deg, #411D00 2.71%, #7E4314 80.69%);
+  border: 1PX solid rgba(210, 150, 72, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.isPro .lockedTitle {
+  color: rgba(255, 236, 208, 1);
+}
+
+.isPro .lockedRow button {
+  background: linear-gradient(90deg, rgba(255, 223, 181, 1), rgba(255, 245, 228, 1));
+  color: rgba(121, 63, 18, 1);
+}
+
 .isPro .heroBanner::after {
-  background-image: url('/benefits/pro_bg.png');
+  background-image: url('/images/pc/lite_hero.png');
 }

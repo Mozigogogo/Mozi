@@ -42,6 +42,7 @@ export default function PCBenefitsContent() {
   const pointsMax = isPro ? 10000 : 5000;
   const aiCur = 12;
   const aiMax = isPro ? 200 : 40;
+  const allowanceAi = 40;
   const depthText = isPro ? t('benefitsPage.depth40') : t('benefitsPage.depth20');
 
   const quickIcons = useMemo(
@@ -62,6 +63,20 @@ export default function PCBenefitsContent() {
       { icon: '/benefits/group.svg', label: t('vip.benefit.alphaGroup') },
       { icon: '/benefits/helper.svg', label: t('benefitsPage.exclusiveService') },
       { icon: '/benefits/high_flag.svg', label: t('benefitsPage.identityTag') },
+    ],
+    [t]
+  );
+
+  const proRightIcons = useMemo(
+    () => [
+      { icon: '/benefits/market_gold.svg', label: t('vip.benefit.basicChart') },
+      { icon: '/benefits/push_gold.svg', label: t('vip.benefit.basicPush') },
+      { icon: '/benefits/email_gold.svg', label: t('benefitsPage.emailAlerts') },
+      { icon: '/benefits/multi_skin.svg', label: t('vip.benefit.multiTheme') },
+      { icon: '/benefits/helper.svg', label: t('benefitsPage.exclusiveService') },
+      { icon: '/benefits/no_advertise.svg', label: t('vip.benefit.noAds') },
+      { icon: '/benefits/high_flag.svg', label: t('benefitsPage.identityTag') },
+      { icon: '/benefits/group.svg', label: t('vip.benefit.alphaGroup') },
     ],
     [t]
   );
@@ -140,28 +155,86 @@ export default function PCBenefitsContent() {
                 </div>
               </div>
 
-              <div className={styles.iconRow}>
-                {quickIcons.map((item) => (
-                  <div key={item.label} className={styles.iconItem}>
-                    <img src={item.icon} alt="" />
-                    <span>{item.label}</span>
+              {isPro ? (
+                <div className={styles.proAllowanceRow}>
+                  <div className={styles.proAllowanceText}>
+                    <span>{t('benefitsPage.allowancePointsMonthly', { points: pointsMax.toLocaleString() })}</span>
+                    <span>{t('benefitsPage.allowanceAiMonthly', { ai: allowanceAi })}</span>
                   </div>
-                ))}
-              </div>
+                  <button type="button" className={styles.proAllowanceBtn}>
+                    {t('benefitsPage.upgradeMore')}
+                  </button>
+                </div>
+              ) : (
+                <div className={styles.iconRow}>
+                  {quickIcons.map((item) => (
+                    <div key={item.label} className={styles.iconItem}>
+                      <img src={item.icon} alt="" />
+                      <span>{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
           <div className={styles.lockedPanel}>
-            <div className={styles.lockedTitle}>{t('benefitsPage.lockedSection', { defaultValue: '未解锁权益' })}</div>
-            {lockedItems.map((item) => (
-              <div key={item.label} className={styles.lockedRow}>
-                <div className={styles.lockedRowLeft}>
-                  <img src={item.icon} alt="" />
-                  <span>{item.label}</span>
+            {isPro ? (
+              <>
+                <div className={styles.proUpgradeCard}>
+                  <div className={styles.proUpgradeTop}>
+                    <img className={styles.proUpgradeBadge} src="/benefits/vip_pro2.svg" alt="" />
+                    <div className={styles.proUpgradeMain}>
+                      <div className={styles.proUpgradeTitleRow}>
+                        <span>{t('benefitsPage.nextLevelCardTitle')}</span>
+                        <span>{t('benefitsPage.nextLevelProgress', { current: '7800', max: '10000' })}</span>
+                      </div>
+                      <div className={styles.proUpgradeTrack}>
+                        <div className={styles.proUpgradeFill} style={{ width: '78%' }} />
+                      </div>
+                      <div className={styles.proUpgradeRemain}>{t('benefitsPage.nextLevelRemaining', { remaining: 2200 })}</div>
+                    </div>
+                  </div>
+                  <div className={styles.proUpgradeBottom}>
+                    <span>{t('benefitsPage.nextLevelRewards', { points: '12000', ai: 60 })}</span>
+                    <button type="button">{t('benefitsPage.quickUpgrade')}</button>
+                  </div>
                 </div>
-                <button type="button">{t('benefitsPage.upgrade')}</button>
-              </div>
-            ))}
+
+                <div className={styles.proQuickGrid}>
+                  {proRightIcons.map((item) => (
+                    <div key={item.label} className={styles.proQuickItem}>
+                      <span className={styles.proQuickIconWrap}>
+                        <img src={item.icon} alt="" />
+                      </span>
+                      <span>{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className={styles.proAlphaCard}>
+                  <div className={styles.proAlphaLeft}>
+                    <span className={styles.proAlphaIconWrap}>
+                      <img src="/benefits/group.svg" alt="" />
+                    </span>
+                    <span>{t('vip.benefit.alphaGroup')}</span>
+                  </div>
+                  <button type="button">{t('benefitsPage.enterAlpha')}</button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className={styles.lockedTitle}>{t('benefitsPage.lockedSection', { defaultValue: '未解锁权益' })}</div>
+                {lockedItems.map((item) => (
+                  <div key={item.label} className={styles.lockedRow}>
+                    <div className={styles.lockedRowLeft}>
+                      <img src={item.icon} alt="" />
+                      <span>{item.label}</span>
+                    </div>
+                    <button type="button">{t('benefitsPage.upgrade')}</button>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         </div>
       </section>
