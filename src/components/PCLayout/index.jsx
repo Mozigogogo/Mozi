@@ -458,12 +458,12 @@ export default function PCLayout({ children }) {
   const topMenuItems = useMemo(
     () => [
       {
-        key: '/',
+        key: '/home',
         icon: (
           <CustomIcon
             src="/icons/pc/home@2x.png"
             activeSrc="/icons/pc/home_actived@2x.png"
-            itemKey="/"
+            itemKey="/home"
             alt="home"
           />
         ),
@@ -634,7 +634,7 @@ export default function PCLayout({ children }) {
           <div className={styles.menuBtn} onClick={() => setCollapsed(!collapsed)}>
             <MenuOutlined />
           </div>
-          <div className={styles.logo} onClick={() => router.push('/')}>
+          <div className={styles.logo} onClick={() => router.push('/home')}>
             <div className={styles.logoIcon}>
               <Image src="/images/community/loadding.png" alt="Mozi" width={37} height={37} />
             </div>
