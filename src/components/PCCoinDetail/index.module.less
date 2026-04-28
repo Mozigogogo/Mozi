@@ -13,7 +13,7 @@
 .topBar {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   gap: 16px;
   padding: 14px 20px;
   background: #fff;
@@ -25,6 +25,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 1 1 auto;
   min-width: 0;
 }
 
@@ -49,6 +50,8 @@
 }
 
 .headerTitle {
+  flex: 1 1 auto;
+  min-width: 0;
   font-size: 17px;
   font-weight: 600;
   color: #1a1a2e;
@@ -61,14 +64,16 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  flex-shrink: 0;
-  flex-wrap: wrap;
+  flex: 0 1 auto;
+  min-width: 0;
+  flex-wrap: nowrap;
   justify-content: flex-end;
 }
 
 .actionBtn {
   display: inline-flex;
   align-items: center;
+  flex: 0 1 auto;
   gap: 6px;
   padding: 6px 10px;
   margin: 0;
@@ -79,12 +84,19 @@
   color: #45556c;
   cursor: pointer;
   white-space: nowrap;
+  min-width: 0;
 
   img {
     width: 18px;
     height: 18px;
     object-fit: contain;
     flex-shrink: 0;
+  }
+
+  span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   &:hover {
@@ -120,8 +132,10 @@
 .overviewRight {
   display: flex;
   flex: 1;
+  gap: 24px;
   justify-content: space-between;
   align-items: flex-start;
+  min-width: 0;
 }
 
 .coinBlock {
@@ -148,6 +162,7 @@
 .priceBlock {
   display: flex;
   flex-direction: column;
+  flex: 0 1 auto;
   gap: 8px;
   min-width: 0;
 }
@@ -183,7 +198,7 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(100px, 1fr));
   gap: 16px 28px;
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   min-width: 200px;
   max-width: 520px;
 }
@@ -238,6 +253,18 @@
 
 /* 桌面：与上方行情区留白对齐；大写 PX 避免 px→vw 放大内边距 */
 @media (min-width: 1024px) {
+  .actions {
+    flex-wrap: nowrap;
+  }
+
+  .actionBtn {
+    overflow: hidden;
+  }
+
+  .actionBtn span {
+    white-space: nowrap;
+  }
+
   .mainCard {
     /* PC 端：去掉卡片阴影，避免底部出现“阴影边框残影” */
     box-shadow: none;
@@ -332,5 +359,318 @@
 
   .overviewInner {
     flex-direction: column;
+  }
+}
+
+@media (max-width: 1440px) and (min-width: 1024px) {
+  .actions {
+    flex-wrap: nowrap;
+  }
+
+  .topBar {
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .topBarLeft {
+    flex-basis: 90px;
+  }
+
+  .headerTitle {
+    font-size: 16px;
+  }
+
+  .actions {
+    gap: 2px;
+    flex-basis: auto;
+  }
+
+  .actionBtn {
+    gap: 5px;
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+
+  .actionBtn img {
+    width: 16px;
+    height: 16px;
+  }
+
+  .overview {
+    padding: 10px 28px 14px;
+  }
+
+  .overviewRight {
+    gap: 18px;
+  }
+
+  .coinIcon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .coinSymbol {
+    font-size: 18px;
+  }
+
+  .priceMain {
+    font-size: 28px;
+  }
+
+  .changeRow {
+    font-size: 13px;
+  }
+
+  .statGrid {
+    grid-template-columns: repeat(3, minmax(88px, 1fr));
+    gap: 12px 18px;
+    min-width: 180px;
+    max-width: 460px;
+  }
+
+  .statCol {
+    gap: 12px;
+  }
+
+  .statLabel {
+    font-size: 11px;
+  }
+
+  .statValue {
+    font-size: 13px;
+  }
+
+  .mainCard {
+    border-radius: 26px;
+  }
+
+  .barrageBar {
+    padding: 7px 14px;
+    border-radius: 10PX;
+  }
+
+  .barrageIcon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .barrageInput {
+    height: 34px;
+    padding: 0 12px;
+    border-radius: 17px;
+    font-size: 13px;
+  }
+
+  .barrageSend {
+    height: 34px;
+    padding: 0 18px;
+    border-radius: 9px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 1280px) and (min-width: 1024px) {
+  .actions {
+    flex-wrap: nowrap;
+  }
+
+  .topBar {
+    gap: 10px;
+    padding: 10px 14px;
+  }
+
+  .topBarLeft {
+    flex-basis: 84px;
+  }
+
+  .headerTitle {
+    font-size: 15px;
+  }
+
+  .actions {
+    max-width: 72%;
+  }
+
+  .actionBtn {
+    gap: 4px;
+    padding: 5px 7px;
+    font-size: 11px;
+  }
+
+  .actionBtn img {
+    width: 15px;
+    height: 15px;
+  }
+
+  .overview {
+    padding: 10px 20px 12px;
+  }
+
+  .overviewRight {
+    gap: 14px;
+  }
+
+  .coinIcon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .coinSymbol {
+    font-size: 17px;
+  }
+
+  .priceMain {
+    font-size: 24px;
+  }
+
+  .changeRow {
+    gap: 4px;
+    font-size: 12px;
+  }
+
+  .statGrid {
+    grid-template-columns: repeat(3, minmax(76px, 1fr));
+    gap: 10px 14px;
+    min-width: 0;
+    max-width: 400px;
+  }
+
+  .statCol {
+    gap: 10px;
+  }
+
+  .statLabel {
+    font-size: 10px;
+  }
+
+  .statValue {
+    font-size: 12px;
+  }
+
+  .mainCard {
+    border-radius: 22px;
+  }
+
+  .barrageBar {
+    padding: 6px 12px;
+    border-radius: 9PX;
+  }
+
+  .barrageIcon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .barrageInput {
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 16px;
+    font-size: 12px;
+  }
+
+  .barrageSend {
+    height: 32px;
+    padding: 0 16px;
+    border-radius: 8px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 1160px) and (min-width: 1024px) {
+  .actions {
+    flex-wrap: nowrap;
+  }
+
+  .topBar {
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .topBarLeft {
+    flex-basis: 76px;
+  }
+
+  .headerTitle {
+    font-size: 14px;
+  }
+
+  .actions {
+    gap: 0;
+    max-width: 76%;
+  }
+
+  .actionBtn {
+    gap: 3px;
+    padding: 4px 6px;
+    font-size: 10px;
+  }
+
+  .actionBtn img {
+    width: 14px;
+    height: 14px;
+  }
+
+  .overview {
+    padding: 8px 16px 10px;
+  }
+
+  .overviewRight {
+    gap: 10px;
+  }
+
+  .coinIcon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .coinSymbol {
+    font-size: 16px;
+  }
+
+  .priceMain {
+    font-size: 22px;
+  }
+
+  .changeRow {
+    font-size: 11px;
+  }
+
+  .statGrid {
+    grid-template-columns: repeat(3, minmax(68px, 1fr));
+    gap: 8px 12px;
+    min-width: 0;
+    max-width: 340px;
+  }
+
+  .statCol {
+    gap: 8px;
+  }
+
+  .mainCard {
+    border-radius: 18px;
+  }
+
+  .barrageBar {
+    padding: 5px 10px;
+    border-radius: 8PX;
+  }
+
+  .barrageIcon {
+    width: 15px;
+    height: 15px;
+  }
+
+  .barrageInput {
+    height: 30px;
+    padding: 0 9px;
+    border-radius: 15px;
+    font-size: 11px;
+  }
+
+  .barrageSend {
+    height: 30px;
+    padding: 0 14px;
+    border-radius: 7px;
+    font-size: 11px;
   }
 }

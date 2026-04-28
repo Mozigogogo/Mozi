@@ -60,6 +60,70 @@ const KlineTypeIcon = ({ className }) => (
   </svg>
 );
 
+const formatShortDateLabel = (label, periodKey, language) => {
+  if (!label) return '';
+  const text = String(label).trim();
+  const [datePart, timePart = ''] = text.split(' ');
+  if (!datePart) return text;
+
+  const sep = datePart.includes('/') ? '/' : datePart.includes('-') ? '-' : '';
+  if (!sep) return text;
+
+  const parts = datePart.split(sep);
+  if (parts.length < 3) return text;
+
+  const [yearRaw, monthRaw, dayRaw] = parts;
+  if (!/^\d{4}$/.test(yearRaw)) return text;
+
+  const year = Number(yearRaw);
+  const month = Number(monthRaw);
+  const day = Number(dayRaw);
+  if (!year || !month || !day) return text;
+
+  const isEnglish = String(language || '').toLowerCase().startsWith('en');
+  const hhmmMatch = timePart.match(/^(\d{1,2}):(\d{2})/);
+  const hhmm = hhmmMatch ? `${hhmmMatch[1].padStart(2, '0')}:${hhmmMatch[2]}` : '';
+
+  if (periodKey === 'hour') {
+    return isEnglish
+      ? `${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')}${hhmm ? ` ${hhmm}` : ''}`
+      : `${month}月${day}日${hhmm ? ` ${hhmm}` : ''}`;
+  }
+
+  return isEnglish
+    ? `${String(year).slice(-2)}/${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')}`
+    : `${String(year).slice(-2)}年${month}月${day}日`;
+};
+
+const formatCrosshairTimeLabel = (time, tickLabelMap, periodKey, language) => {
+  const mappedLabel = tickLabelMap?.get?.(Number(time));
+  if (mappedLabel) {
+    return formatShortDateLabel(mappedLabel, periodKey, language);
+  }
+
+  const ts = Number(time);
+  if (!Number.isFinite(ts)) return '';
+
+  const date = new Date(ts * 1000);
+  if (Number.isNaN(date.getTime())) return '';
+
+  const isEnglish = String(language || '').toLowerCase().startsWith('en');
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const hhmm = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+
+  if (periodKey === 'hour') {
+    return isEnglish
+      ? `${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')} ${hhmm}`
+      : `${month}月${day}日 ${hhmm}`;
+  }
+
+  return isEnglish
+    ? `${String(year).slice(-2)}/${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')}`
+    : `${String(year).slice(-2)}年${month}月${day}日`;
+};
+
 const KlineChart = ({ 
   data, 
   activeKey = 'hour', 
@@ -74,7 +138,7 @@ const KlineChart = ({
   /** 点击「大单侦测」时回调（如滚动至订单簿区域） */
   onBigOrderDetectClick,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const chartRef = useRef(null);
   const navigatorRef = useRef(null);
   const chartInstance = useRef(null);
@@ -227,30 +291,6 @@ const KlineChart = ({
     return { difData, deaData, histogramData };
   };
 
-  const formatShortDateLabel = (label, periodKey) => {
-    if (!label) return '';
-    const text = String(label).trim();
-    const [datePart, timePart = ''] = text.split(' ');
-    if (!datePart) return text;
-
-    const sep = datePart.includes('/') ? '/' : (datePart.includes('-') ? '-' : '');
-    if (!sep) return text;
-
-    const parts = datePart.split(sep);
-    if (parts.length < 3) return text;
-
-    // 1H 周期展示月/日 + 小时，不展示年份
-    if (periodKey === 'hour') {
-      const hhmmMatch = timePart.match(/^(\d{1,2}):(\d{2})/);
-      const hhmm = hhmmMatch ? `${hhmmMatch[1].padStart(2, '0')}:${hhmmMatch[2]}` : '';
-      return hhmm ? `${parts[1]}/${parts[2]} ${hhmm}` : `${parts[1]}/${parts[2]}`;
-    }
-
-    if (!/^\d{4}$/.test(parts[0])) return text;
-
-    return `${parts[0].slice(-2)}/${parts[1]}/${parts[2]}`;
-  };
-
   const clearMainSeries = (chart) => {
     if (seriesInstance.current) {
       chart.removeSeries(seriesInstance.current);
@@ -344,6 +384,8 @@ const KlineChart = ({
       },
       localization: {
         priceFormatter: (price) => formatAxisPrice(price, !isPC),
+        timeFormatter: (time) =>
+          formatCrosshairTimeLabel(time, new Map(), activeKey, i18n.language),
       },
     });
 
@@ -491,6 +533,8 @@ const KlineChart = ({
       },
       localization: {
         priceFormatter: (price) => formatAxisPrice(price, !isPC),
+        timeFormatter: (time) =>
+          formatCrosshairTimeLabel(time, tickLabelMap, activeKey, i18n.language),
       },
       grid: {
         vertLines: {
@@ -508,7 +552,8 @@ const KlineChart = ({
         secondsVisible: false,
         shiftVisibleRangeOnNewBar: false,
         minimumHeight: isPC ? 16 : 12,
-        tickMarkFormatter: (time) => formatShortDateLabel(tickLabelMap.get(Number(time)), activeKey),
+        tickMarkFormatter: (time) =>
+          formatShortDateLabel(tickLabelMap.get(Number(time)), activeKey, i18n.language),
       },
       leftPriceScale: {
         minimumWidth: isPC ? 48 : 20,
@@ -643,7 +688,7 @@ const KlineChart = ({
     }
     prevDataLenRef.current = dataLen;
     prevActiveKeyRef.current = activeKey;
-  }, [data, chartType, isPC, activeKey]);
+  }, [data, chartType, isPC, activeKey, i18n.language]);
 
   const chartTypeLineBtn = onChartTypeChange ? (
     <button
