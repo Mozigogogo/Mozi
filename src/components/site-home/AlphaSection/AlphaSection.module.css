@@ -1,0 +1,10 @@
+.alphaSection { composes: alphaSection from '../../../app/site.module.css'; }
+.alphaCopy { composes: alphaCopy from '../../../app/site.module.css'; }
+.alphaPhoneWrap { composes: alphaPhoneWrap from '../../../app/site.module.css'; }
+.alphaPhone { composes: alphaPhone from '../../../app/site.module.css'; }
+.alphaPhoneImage { composes: alphaPhoneImage from '../../../app/site.module.css'; }
+.alphaAsset { composes: alphaAsset from '../../../app/site.module.css'; }
+.alphaScoreLeft { composes: alphaScoreLeft from '../../../app/site.module.css'; }
+.alphaScoreRight { composes: alphaScoreRight from '../../../app/site.module.css'; }
+.alphaScoreBottom { composes: alphaScoreBottom from '../../../app/site.module.css'; }
+.alphaAssetImage { composes: alphaAssetImage from '../../../app/site.module.css'; }

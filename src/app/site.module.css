@@ -96,32 +96,6 @@
   object-position: center bottom;
 }
 
-.alertPhone {
-  position: absolute;
-  left: 50%;
-  bottom: -2%;
-  transform: translateX(-50%);
-  width: 34%;
-  aspect-ratio: 330 / 620;
-  border-radius: 34px 34px 0 0;
-  background: #0f172a;
-  padding: 14px 12px 0;
-}
-
-.alertPhoneNotch {
-  width: 30%;
-  height: 18px;
-  border-radius: 999px;
-  margin: 0 auto;
-  background: #020617;
-}
-
-.alertPhoneScreen {
-  margin-top: 8px;
-  height: calc(100% - 26px);
-  border-radius: 22px 22px 0 0;
-  background: linear-gradient(180deg, #eff6ff, #ffffff 40%, #f8fafc);
-}
 
 .alertSideGroup {
   position: absolute;
@@ -445,34 +419,6 @@
   object-fit: contain;
 }
 
-.flashOverlayCardLeft,
-.flashOverlayCardRight {
-  position: absolute;
-  bottom: 22%;
-  width: min(360px, 28vw);
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: linear-gradient(130deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.78));
-  color: #334155;
-  padding: 12px 14px;
-  font-size: 12px;
-  line-height: 1.32;
-}
-
-.flashOverlayCardLeft {
-  left: 28%;
-}
-
-.flashOverlayCardRight {
-  right: 9%;
-}
-
-.flashOverlayHead {
-  font-size: 11px;
-  font-weight: 700;
-  color: #2563eb;
-  margin-bottom: 6px;
-}
 
 .alphaSection {
   position: relative;
@@ -604,43 +550,6 @@
   object-position: right bottom;
 }
 
-.knowledgeCards {
-  position: absolute;
-  left: 50%;
-  bottom: 4%;
-  transform: translateX(-50%);
-  width: min(1480px, 96vw);
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  z-index: 3;
-}
-
-.knowledgeCard {
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.34);
-  background: linear-gradient(140deg, rgba(244, 244, 245, 0.64), rgba(228, 228, 231, 0.4));
-  backdrop-filter: blur(8px);
-  padding: 14px 14px 12px;
-  color: #f8fafc;
-}
-
-.knowledgeCardUser {
-  font-size: 22px;
-  font-weight: 700;
-}
-
-.knowledgeCard p {
-  margin: 10px 0 0;
-  font-size: 14px;
-  line-height: 1.35;
-}
-
-.knowledgeCardMeta {
-  margin-top: 10px;
-  font-size: 13px;
-  color: #6ee7b7;
-}
 
 .promoCopy {
   z-index: 2;
@@ -848,17 +757,12 @@
     width: 48%;
   }
 
-  .flashOverlayCardLeft,
-  .flashOverlayCardRight {
-    display: none;
-  }
-
   .alphaSection {
     padding: 22px 14px 0;
   }
 
   .alphaPhoneWrap,
-  .alphaScoreCard {
+  .alphaAsset {
     position: relative;
     left: auto;
     right: auto;
@@ -877,10 +781,7 @@
     width: min(340px, 88vw);
   }
 
-  .alphaScoreCard {
-    width: min(240px, 48vw);
-    margin: 14px auto 0;
-  }
+  .alphaAsset { width: min(240px, 48vw); margin: 14px auto 0; }
 
   .knowledgeSection {
     padding: 24px 14px 0;
@@ -888,7 +789,7 @@
 
   .knowledgeLeft,
   .knowledgePhone,
-  .knowledgeCards {
+  .knowledgeOverlay {
     position: relative;
     left: auto;
     right: auto;
@@ -902,11 +803,7 @@
     margin: 18px auto 0;
   }
 
-  .knowledgeCards {
-    width: 100%;
-    margin-top: 16px;
-    grid-template-columns: 1fr;
-  }
+  .knowledgeOverlay { width: 100%; margin-top: 16px; }
 
   .heroLeft,
   .screenFrame,

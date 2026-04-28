@@ -1,0 +1,5 @@
+.sectorSection { composes: sectorSection from '../../../app/site.module.css'; }
+.sectorContent { composes: sectorContent from '../../../app/site.module.css'; }
+.sectorLeft { composes: sectorLeft from '../../../app/site.module.css'; }
+.sectorPreview { composes: sectorPreview from '../../../app/site.module.css'; }
+.sectorPreviewImage { composes: sectorPreviewImage from '../../../app/site.module.css'; }

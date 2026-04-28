@@ -1,0 +1,10 @@
+.knowledgeSection { composes: knowledgeSection from '../../../app/site.module.css'; }
+.knowledgeLeft { composes: knowledgeLeft from '../../../app/site.module.css'; }
+.knowledgeTitle { composes: knowledgeTitle from '../../../app/site.module.css'; }
+.knowledgeSubtitle { composes: knowledgeSubtitle from '../../../app/site.module.css'; }
+.knowledgeCta { composes: knowledgeCta from '../../../app/site.module.css'; }
+.primaryCta { composes: primaryCta from '../../../app/site.module.css'; }
+.knowledgePhone { composes: knowledgePhone from '../../../app/site.module.css'; }
+.knowledgePhoneImage { composes: knowledgePhoneImage from '../../../app/site.module.css'; }
+.knowledgeOverlay { composes: knowledgeOverlay from '../../../app/site.module.css'; }
+.knowledgeOverlayImage { composes: knowledgeOverlayImage from '../../../app/site.module.css'; }

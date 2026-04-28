@@ -1,0 +1,5 @@
+.promoCopy { composes: promoCopy from '../../../app/site.module.css'; }
+.promoTitle { composes: promoTitle from '../../../app/site.module.css'; }
+.promoSubtitle { composes: promoSubtitle from '../../../app/site.module.css'; }
+.ctaRow { composes: ctaRow from '../../../app/site.module.css'; }
+.primaryCta { composes: primaryCta from '../../../app/site.module.css'; }

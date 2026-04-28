@@ -1,0 +1,10 @@
+.flashSection { composes: flashSection from '../../../app/site.module.css'; }
+.flashCopy { composes: flashCopy from '../../../app/site.module.css'; }
+.flashPhones { composes: flashPhones from '../../../app/site.module.css'; }
+.flashPhone { composes: flashPhone from '../../../app/site.module.css'; }
+.flashPhoneCluster { composes: flashPhoneCluster from '../../../app/site.module.css'; }
+.flashPhoneImage { composes: flashPhoneImage from '../../../app/site.module.css'; }
+.flashClusterAsset { composes: flashClusterAsset from '../../../app/site.module.css'; }
+.flashClusterAssetLeft { composes: flashClusterAssetLeft from '../../../app/site.module.css'; }
+.flashClusterAssetRight { composes: flashClusterAssetRight from '../../../app/site.module.css'; }
+.flashClusterAssetImage { composes: flashClusterAssetImage from '../../../app/site.module.css'; }

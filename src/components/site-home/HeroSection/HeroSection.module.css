@@ -1,0 +1,10 @@
+.stage { composes: stage from '../../../app/site.module.css'; }
+.heroLeft { composes: heroLeft from '../../../app/site.module.css'; }
+.screenFrame { composes: screenFrame from '../../../app/site.module.css'; }
+.screenImage { composes: screenImage from '../../../app/site.module.css'; }
+.floatCard { composes: floatCard from '../../../app/site.module.css'; }
+.floatTopPanel { composes: floatTopPanel from '../../../app/site.module.css'; }
+.floatAsk { composes: floatAsk from '../../../app/site.module.css'; }
+.floatDesc { composes: floatDesc from '../../../app/site.module.css'; }
+.floatTitle { composes: floatTitle from '../../../app/site.module.css'; }
+.floatSub { composes: floatSub from '../../../app/site.module.css'; }
