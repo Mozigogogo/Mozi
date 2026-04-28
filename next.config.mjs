@@ -39,11 +39,7 @@ const nextConfig = withLess({
   },
   async redirects() {
     return [
-      {
-        source: '/home',
-        destination: '/',
-        permanent: true,
-      },
+      // NOTE: keep /home as a real app page (see src/app/home/page.jsx)
     ];
   },
   async headers() {
