@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import GetStartedArrow from '@/components/icons/GetStartedArrow';
+import GetStartedArrow from '@/components/Icons/GetStartedArrow';
 import styles from './site.module.css';
 
 export default function SiteHomePage() {
