@@ -759,18 +759,14 @@ async function startStarsPayment({ pricingId, tabKey, plan, meta }) {
 
   try {
     const tg = typeof window !== 'undefined' ? window.Telegram?.WebApp : null;
+    const canUseTelegramOpenInvoice = !!tg && typeof tg.openInvoice === 'function';
     logStarsFlow('telegram:webapp:check', {
       traceTag,
       hasTelegramWebApp: !!tg,
-      hasOpenInvoice: typeof tg?.openInvoice === 'function',
+      hasOpenInvoice: canUseTelegramOpenInvoice,
       tgVersion: tg?.version || '',
       tgPlatform: tg?.platform || '',
     });
-    if (!tg || typeof tg.openInvoice !== 'function') {
-      // eslint-disable-next-line no-console
-      console.error('[VipPurchase][Stars] Telegram WebApp 或 openInvoice 不可用', meta);
-      return;
-    }
 
     // 1. 调后端创建 Stars 订单
     logStarsFlow('backend:request:starsInvoiceLink', {
@@ -801,7 +797,7 @@ async function startStarsPayment({ pricingId, tabKey, plan, meta }) {
       // ignore
     }
 
-    // 2. 打开 Telegram Stars 支付弹窗
+    // 2. 打开 Telegram Stars 支付弹窗（若 Telegram WebApp 不可用则降级为打开 invoiceLink）
     const invoiceLinkHasOrderNo = typeof invoiceLink === 'string' && /(?:\?|&)orderNo=/.test(invoiceLink);
     const tgOrderNoPassMode = invoiceLinkHasOrderNo ? 'INVOICE_LINK_QUERY' : 'NOT_PASSED';
     logStarsFlow('telegramApi:orderNo:pass-check', {
@@ -817,27 +813,49 @@ async function startStarsPayment({ pricingId, tabKey, plan, meta }) {
       tgApi: 'Telegram.WebApp.openInvoice',
       tgCallParamsSnapshot: { invoiceLink },
     });
-    logStarsFlow('telegramApi:openInvoice:request', {
-      traceTag,
-      tgApi: 'Telegram.WebApp.openInvoice',
-      tgParams: { invoiceLink },
-      relatedOrderNo: orderNo,
-    });
-    tg.openInvoice(invoiceLink, async (cb) => {
-      // cb.status: 'paid' | 'cancelled' | 'failed' ...
-      logStarsFlow('telegramApi:openInvoice:callback', {
+    if (canUseTelegramOpenInvoice) {
+      logStarsFlow('telegramApi:openInvoice:request', {
         traceTag,
-        tgApi: 'Telegram.WebApp.openInvoice(callback)',
-        callbackPayload: cb,
+        tgApi: 'Telegram.WebApp.openInvoice',
+        tgParams: { invoiceLink },
         relatedOrderNo: orderNo,
       });
+      tg.openInvoice(invoiceLink, async (cb) => {
+        // cb.status: 'paid' | 'cancelled' | 'failed' ...
+        logStarsFlow('telegramApi:openInvoice:callback', {
+          traceTag,
+          tgApi: 'Telegram.WebApp.openInvoice(callback)',
+          callbackPayload: cb,
+          relatedOrderNo: orderNo,
+        });
 
-      if (!cb) return;
-      if (cb.status !== 'paid') return;
+        if (!cb) return;
+        if (cb.status !== 'paid') return;
 
-      // 3. 支付成功后轮询订单状态，等待后端 webhook 开通会员
-      pollOrderStatus(orderNo, { tabKey, planTitle: plan?.title, traceTag });
-    });
+        // 3. 支付成功后轮询订单状态，等待后端 webhook 开通会员
+        pollOrderStatus(orderNo, { tabKey, planTitle: plan?.title, traceTag });
+      });
+    } else {
+      logStarsFlow('telegramApi:openInvoice:unavailable:fallback', {
+        traceTag,
+        reason: 'Telegram WebApp or openInvoice unavailable',
+        fallbackAction: 'open invoiceLink by browser/openLink',
+        invoiceLink,
+      });
+      try {
+        if (typeof tg?.openLink === 'function') {
+          tg.openLink(invoiceLink);
+        } else if (typeof window !== 'undefined') {
+          window.open(invoiceLink, '_blank', 'noopener,noreferrer');
+        }
+      } catch (openErr) {
+        // eslint-disable-next-line no-console
+        console.error('[VipPurchase][Stars] fallback open invoiceLink failed', openErr, {
+          invoiceLink,
+          meta,
+        });
+      }
+    }
 
     // 兜底：即便 openInvoice callback 丢失，也持续轮询订单状态
     logStarsFlow('pollOrderStatus:fallback:start', {
