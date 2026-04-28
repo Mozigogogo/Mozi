@@ -67,6 +67,15 @@ function emitVipPurchaseLoading(loading, detail = {}) {
   } catch (_) {}
 }
 
+function createOnceRunner(fn) {
+  let called = false;
+  return (...args) => {
+    if (called) return;
+    called = true;
+    return fn(...args);
+  };
+}
+
 function parseTokenAmountToUnits(amountRaw, decimals = 6) {
   const raw = String(amountRaw ?? '').trim();
   if (!raw) return null;
@@ -759,6 +768,12 @@ async function startStarsPayment({ pricingId, tabKey, plan, meta }) {
   }
 
   try {
+    emitVipPurchaseLoading(true, {
+      stage: 'createStarsInvoice',
+      method: TG_PAYMENT_METHODS.STARS,
+      pricingId,
+    });
+
     const tg = await waitForTelegramWebAppReady({ timeoutMs: 2000, pollMs: 100 });
     const canUseTelegramOpenInvoice = !!tg && typeof tg.openInvoice === 'function';
     logStarsFlow('telegram:webapp:check', {
@@ -814,6 +829,10 @@ async function startStarsPayment({ pricingId, tabKey, plan, meta }) {
       tgApi: 'Telegram.WebApp.openInvoice',
       tgCallParamsSnapshot: { invoiceLink },
     });
+    const startPollingOnce = createOnceRunner(() =>
+      pollOrderStatus(orderNo, { tabKey, planTitle: plan?.title, traceTag })
+    );
+
     if (canUseTelegramOpenInvoice) {
       logStarsFlow('telegramApi:openInvoice:request', {
         traceTag,
@@ -831,10 +850,24 @@ async function startStarsPayment({ pricingId, tabKey, plan, meta }) {
         });
 
         if (!cb) return;
+        if (cb.status === 'cancelled' || cb.status === 'failed') {
+          emitVipPurchaseLoading(false, {
+            stage: 'openInvoiceCallback',
+            method: TG_PAYMENT_METHODS.STARS,
+            status: cb.status,
+            orderNo,
+          });
+          return;
+        }
         if (cb.status !== 'paid') return;
 
         // 3. 支付成功后轮询订单状态，等待后端 webhook 开通会员
-        pollOrderStatus(orderNo, { tabKey, planTitle: plan?.title, traceTag });
+        emitVipPurchaseLoading(true, {
+          stage: 'pollOrderStatus',
+          method: TG_PAYMENT_METHODS.STARS,
+          orderNo,
+        });
+        startPollingOnce();
       });
     } else {
       logStarsFlow('telegramApi:openInvoice:unavailable:fallback', {
@@ -855,6 +888,11 @@ async function startStarsPayment({ pricingId, tabKey, plan, meta }) {
           invoiceLink,
           meta,
         });
+        emitVipPurchaseLoading(false, {
+          stage: 'fallbackOpenInvoiceFailed',
+          method: TG_PAYMENT_METHODS.STARS,
+          orderNo,
+        });
       }
     }
 
@@ -865,10 +903,15 @@ async function startStarsPayment({ pricingId, tabKey, plan, meta }) {
       backendApi: '/payment/orderStatus',
       requestParams: { orderNo },
     });
-    pollOrderStatus(orderNo, { tabKey, planTitle: plan?.title, traceTag });
+    startPollingOnce();
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('[VipPurchase][Stars] 整体流程失败：', e, meta);
+    emitVipPurchaseLoading(false, {
+      stage: 'startStarsPaymentCatch',
+      method: TG_PAYMENT_METHODS.STARS,
+      pricingId,
+    });
   }
 }
 
