@@ -70,35 +70,65 @@ export default function SiteHomePage() {
           <div className={`${styles.alertSideGroup} ${styles.alertSideGroupLeft}`}>
             <div className={styles.alertSideCard}>
               <span>Telephone</span>
-              <Image src="/images/pc/phone_alarm.svg" alt="telephone alert" width={80} height={80} />
+              <div className={`${styles.alertSideIconWrap} ${styles.alertSideIconWrapLarge}`}>
+                <Image src="/icons/pc/telephone.svg" alt="telephone alert" width={92} height={92} className={`${styles.alertSideIcon} ${styles.alertSideIconLarge}`} />
+              </div>
             </div>
             <div className={styles.alertSideCard}>
               <span>WeChat</span>
-              <Image src="/images/pc/helper.svg" alt="wechat alert" width={44} height={44} />
+              <div className={styles.alertSideIconWrap}>
+                <Image src="/icons/pc/wechat.svg" alt="wechat alert" width={80} height={80} className={styles.alertSideIcon} />
+              </div>
             </div>
           </div>
           <div className={`${styles.alertSideGroup} ${styles.alertSideGroupRight}`}>
             <div className={styles.alertSideCard}>
               <span>Telegram</span>
-              <Image src="/images/pc/push.svg" alt="telegram alert" width={44} height={44} />
+              <div className={`${styles.alertSideIconWrap} ${styles.alertSideIconWrapXL}`}>
+                <Image src="/icons/pc/telegram.svg" alt="telegram alert" width={110} height={110} className={`${styles.alertSideIcon} ${styles.alertSideIconXL}`} />
+              </div>
             </div>
             <div className={styles.alertSideCard}>
               <span>Mail</span>
-              <Image src="/images/pc/email.svg" alt="mail alert" width={44} height={44} />
+              <div className={styles.alertSideIconWrap}>
+                <Image src="/icons/pc/mail.svg" alt="mail alert" width={80} height={80} className={styles.alertSideIcon} />
+              </div>
             </div>
           </div>
 
           <div className={styles.alertTickerGroup}>
             <div className={styles.alertTicker}>
               <div className={styles.alertTickerRow}>
-                <span className={styles.alertTickerCoin}>BTC</span>
-                <span className={styles.alertTickerUp}>+3.25%</span>
+                <div className={styles.alertTickerCoinWrap}>
+                  <Image src="/icons/pc/btc.svg" alt="BTC" width={34} height={34} className={styles.alertTickerCoinIcon} />
+                  <span className={styles.alertTickerCoin}>BTC</span>
+                </div>
+                <div className={styles.alertTickerChartWrap}>
+                  <Image src="/icons/pc/line_up.svg" alt="" width={145} height={98} className={styles.alertTickerChart} />
+                </div>
+                <span className={styles.alertTickerUp}>
+                  <span>+3.25%</span>
+                </span>
               </div>
             </div>
             <div className={`${styles.alertTicker} ${styles.alertTickerSecondary}`}>
               <div className={styles.alertTickerRow}>
-                <span className={styles.alertTickerCoinMuted}>ETH</span>
-                <span className={styles.alertTickerDown}>-0.65%</span>
+                <div className={styles.alertTickerCoinWrap}>
+                  <Image src="/icons/pc/eth.svg" alt="ETH" width={34} height={34} className={styles.alertTickerCoinIcon} />
+                  <span className={styles.alertTickerCoinMuted}>ETH</span>
+                </div>
+                <div className={styles.alertTickerChartWrap}>
+                  <Image
+                    src="/icons/pc/line_down.svg"
+                    alt=""
+                    width={132}
+                    height={73}
+                    className={`${styles.alertTickerChart} ${styles.alertTickerChartDown}`}
+                  />
+                </div>
+                <span className={styles.alertTickerDown}>
+                  <span>-0.65%</span>
+                </span>
               </div>
             </div>
           </div>

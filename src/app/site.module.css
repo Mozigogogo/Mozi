@@ -181,16 +181,59 @@
   border: 1px solid rgba(255, 255, 255, 0.5);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.3));
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
   z-index: 2;
 }
 
 .alertSideCard span {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
   font-size: clamp(13px, 0.95vw, 20px);
   font-weight: 500;
+  line-height: 1;
+  min-height: 1em;
+  white-space: nowrap;
+}
+
+.alertSideIconWrap {
+  position: absolute;
+  left: 50%;
+  top: 57%;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.alertSideIconWrapLarge {
+  width: 110px;
+  height: 110px;
+}
+
+.alertSideIconWrapXL {
+  width: 110px;
+  height: 110px;
+}
+
+.alertSideIcon {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+}
+
+.alertSideIconLarge {
+  width: 110px;
+  height: 110px;
+}
+
+.alertSideIconXL {
+  width: 110px;
+  height: 110px;
 }
 
 .alertTickerGroup {
@@ -209,23 +252,48 @@
   position: relative;
   width: var(--ticker-width);
   border-radius: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.58));
+  border: 2.8px solid rgba(255, 255, 255, 0.42);
+  background: linear-gradient(156.42deg, rgba(224, 224, 224, 0.59) 20.13%, rgba(255, 255, 255, 0.59) 96.09%);
   backdrop-filter: blur(6px);
-  padding: 18px 16px;
+  padding: 24px 18px;
   z-index: 2;
 }
 
 .alertTickerSecondary {
-  margin-top: -18px;
+  margin-top: -22px;
   margin-left: 0;
   align-self: center;
   width: calc(var(--ticker-width) * 0.9);
   opacity: 1;
   border-top-left-radius: 0;
   border-top-right-radius: 0;
-  padding: 14px 14px;
+  padding: 18px 18px;
   z-index: 1;
+}
+
+.alertTickerCoinWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.alertTickerCoinIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.alertTickerChart {
+  height: 58px;
+  width: auto;
+  flex: 0 0 auto;
+  opacity: 0.95;
+}
+
+.alertTickerChartDown {
+  transform: translateY(6px);
 }
 
 .alertTickerSecondary .alertTickerCoinMuted {
@@ -241,7 +309,16 @@
 .alertTickerRow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 14px;
+}
+
+.alertTickerChartWrap {
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 40px;
+  min-width: 0;
 }
 
 .alertTickerRow + .alertTickerRow {
