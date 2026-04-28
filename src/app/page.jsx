@@ -1,11 +1,13 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import GetStartedArrow from '@/components/Icons/GetStartedArrow';
+import RootTelegramRedirect from './RootTelegramRedirect';
 import styles from './site.module.css';
 
 export default function SiteHomePage() {
   return (
     <main className={styles.page}>
+      <RootTelegramRedirect />
       <section className={styles.heroWrap}>
         <div className={styles.stage}>
           <div className={styles.heroLeft}>

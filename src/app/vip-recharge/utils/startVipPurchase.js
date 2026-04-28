@@ -3,6 +3,7 @@
 import { createStarsInvoice } from '@/api/vip';
 import { getOrderStatus, getWalletPaymentInfo, walletPay } from '@/api/payment';
 import { confirm } from '@/components/Modal/confirm';
+import { waitForTelegramWebAppReady } from '@/hooks/useTelegramWebApp';
 import { encodeFunctionData, getAddress, parseUnits } from 'viem';
 
 const TG_PAYMENT_METHODS = {
@@ -758,7 +759,7 @@ async function startStarsPayment({ pricingId, tabKey, plan, meta }) {
   }
 
   try {
-    const tg = typeof window !== 'undefined' ? window.Telegram?.WebApp : null;
+    const tg = await waitForTelegramWebAppReady({ timeoutMs: 2000, pollMs: 100 });
     const canUseTelegramOpenInvoice = !!tg && typeof tg.openInvoice === 'function';
     logStarsFlow('telegram:webapp:check', {
       traceTag,
