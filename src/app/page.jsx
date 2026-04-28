@@ -1,5 +1,5 @@
-import Link from 'next/link';
 import Image from 'next/image';
+import AppLink from '@/components/AppLink';
 import GetStartedArrow from '@/components/Icons/GetStartedArrow';
 import RootTelegramRedirect from './RootTelegramRedirect';
 import styles from './site.module.css';
@@ -22,10 +22,10 @@ export default function SiteHomePage() {
               AI-calculated Win Rate.
             </p>
             <div className={styles.ctaRow}>
-              <Link className={styles.primaryCta} href="/pc/find">
+              <AppLink className={styles.primaryCta} href="/pc/find">
                 <span>Get Started</span>
                 <GetStartedArrow />
-              </Link>
+              </AppLink>
             </div>
           </div>
 
@@ -55,10 +55,10 @@ export default function SiteHomePage() {
         <section className={styles.alertsSection}>
           <h2 className={styles.alertsTitle}>Smart Alerts</h2>
           <p className={styles.alertsSubtitle}>Phone & Email alerts. Catch whales&apos; moves instantly.</p>
-          <Link className={styles.alertsCta} href="/pc/alarm">
+          <AppLink className={styles.alertsCta} href="/pc/alarm">
             <span>See what&apos;s Moving</span>
             <GetStartedArrow />
-          </Link>
+          </AppLink>
 
           <div className={styles.alertBottomPreview} aria-hidden="true">
             <Image
@@ -145,10 +145,10 @@ export default function SiteHomePage() {
                 Rotation
               </h2>
               <p className={styles.sectorSubtitle}>Ride the trend. One-click to find the sector leaders</p>
-              <Link className={styles.sectorCta} href="/pc/find">
+              <AppLink className={styles.sectorCta} href="/pc/find">
                 <span>Enter Mozi</span>
                 <GetStartedArrow />
-              </Link>
+              </AppLink>
             </div>
 
             <div className={styles.sectorPreview} aria-hidden="true">
@@ -165,10 +165,10 @@ export default function SiteHomePage() {
         <section className={styles.flashSection}>
           <h2 className={styles.flashTitle}>Flash News</h2>
           <p className={styles.flashSubtitle}>Zero noise. Real-time global crypto signal.</p>
-          <Link className={styles.flashCta} href="/pc/news">
+          <AppLink className={styles.flashCta} href="/pc/news">
             <span>Read News</span>
             <GetStartedArrow />
-          </Link>
+          </AppLink>
 
           <div className={styles.flashPhones}>
             <div className={styles.flashPhone}>
@@ -192,10 +192,10 @@ export default function SiteHomePage() {
         <section className={styles.alphaSection}>
           <h2 className={styles.alphaTitle}>Alpha Scanner</h2>
           <p className={styles.alphaSubtitle}>Hunt the next 100x gem before the pump.</p>
-          <Link className={styles.alphaCta} href="/pc/find">
+          <AppLink className={styles.alphaCta} href="/pc/find">
             <span>Get Started</span>
             <GetStartedArrow />
-          </Link>
+          </AppLink>
 
           <div className={styles.alphaPhoneWrap}>
             <div className={styles.alphaPhone}>
@@ -246,10 +246,10 @@ export default function SiteHomePage() {
               <br />
               Ask anything, get clarity.
             </p>
-            <Link className={styles.knowledgeCta} href="/pc/find">
+            <AppLink className={styles.knowledgeCta} href="/pc/find">
               <span>Learn more</span>
               <GetStartedArrow />
-            </Link>
+            </AppLink>
           </div>
 
           <div className={styles.knowledgePhone} aria-hidden="true">
