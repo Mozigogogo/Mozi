@@ -104,7 +104,8 @@ export const Interface = {
   IS_COIN: '/search/iscoin',
 
   // 支付相关
-  PAYMENT_CREATE_STARS: '/payment/createStarsInvoice',
+  // Telegram Stars: generate invoice link (no pre-created order on client)
+  PAYMENT_CREATE_STARS: '/payment/starsInvoiceLink',
   PAYMENT_CREATE_WALLET_ORDER: '/payment/createWalletOrder',
   PAYMENT_SUBMIT_WALLET_TX: '/payment/submitWalletTx',
   PAYMENT_ORDER_STATUS: '/payment/orderStatus',

@@ -28,12 +28,17 @@ export const walletPay = (data) => {
 };
 
 /**
- * 创建 Telegram Stars 支付订单
- * @param {Object} data
- * @param {number} data.amount - 金额
- * @param {string} data.productId - 商品ID
+ * 获取 Telegram Stars 支付链接
+ * POST /payment/starsInvoiceLink
+ *
+ * @param {number|{pricingId:number}} dataOrPricingId - pricingId 或 { pricingId }
+ * @returns {Promise<{ invoiceLink: string; orderNo: string }>}
  */
-export const createStarsInvoice = (data) => {
+export const createStarsInvoice = (dataOrPricingId) => {
+  const data =
+    typeof dataOrPricingId === 'number'
+      ? { pricingId: dataOrPricingId }
+      : dataOrPricingId;
   return request({
     url: Interface.PAYMENT_CREATE_STARS,
     method: 'POST',

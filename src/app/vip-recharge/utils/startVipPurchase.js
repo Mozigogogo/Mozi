@@ -773,18 +773,18 @@ async function startStarsPayment({ pricingId, tabKey, plan, meta }) {
     }
 
     // 1. 调后端创建 Stars 订单
-    logStarsFlow('backend:request:createStarsInvoice', {
+    logStarsFlow('backend:request:starsInvoiceLink', {
       traceTag,
-      backendApi: '/payment/createStarsInvoice',
+      backendApi: '/payment/starsInvoiceLink',
       requestBody: { pricingId },
     });
     const res = await createStarsInvoice(pricingId);
     const data = res?.data ?? res;
     const invoiceLink = data?.invoiceLink;
     const orderNo = data?.orderNo;
-    logStarsFlow('backend:response:createStarsInvoice', {
+    logStarsFlow('backend:response:starsInvoiceLink', {
       traceTag,
-      backendApi: '/payment/createStarsInvoice',
+      backendApi: '/payment/starsInvoiceLink',
       responseData: data,
       parsed: { invoiceLink, orderNo },
     });
