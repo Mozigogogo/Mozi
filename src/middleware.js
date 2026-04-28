@@ -15,8 +15,17 @@ function shouldSkipProdCacheHeaders(pathname) {
 }
 
 export function middleware(request) {
-  const response = NextResponse.next();
   const pathname = request.nextUrl.pathname;
+  const userAgent = request.headers.get('user-agent') || '';
+  const isTelegramUA = /Telegram/i.test(userAgent);
+
+  if (pathname === '/' && isTelegramUA) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/home';
+    return NextResponse.redirect(url);
+  }
+
+  const response = NextResponse.next();
   const isDev = process.env.NODE_ENV === 'development';
 
   // 删除 X-Frame-Options，允许 iframe 嵌入

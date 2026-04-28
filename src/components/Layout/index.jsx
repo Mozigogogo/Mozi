@@ -10,6 +10,10 @@ import { Loading } from '../Loading';
 import { tabBarList } from '../../app/app.config';
 import styles from './index.module.less';
 
+function isHomePath(pathname) {
+  return pathname === '/' || pathname === '/home';
+}
+
 const Layout = ({ children, title, isLoading, isError, errMsg, needLogin, loginCallback, bottomPadding = 50, containerMaxHeight, containerHeight, loadingTop }) => {
   const pathname = usePathname();
   const { t } = useTranslation();
@@ -22,8 +26,11 @@ const Layout = ({ children, title, isLoading, isError, errMsg, needLogin, loginC
     'user': 'me'              // 我的
   };
 
-  // 判断当前路径是否为主页面之一
-  const isMainPage = tabBarList.some(item => item.path === pathname);
+  // `/home` 是 TG 首页别名，底部 TabBar 需要把它视为首页。
+  const isMainPage = tabBarList.some((item) => {
+    if (item.path === '/') return isHomePath(pathname);
+    return item.path === pathname;
+  });
 
   // 预热底部导航图标到浏览器缓存，减少首次切页图标延迟
   useEffect(() => {
@@ -93,12 +100,16 @@ const Layout = ({ children, title, isLoading, isError, errMsg, needLogin, loginC
       {isMainPage && (
         <div className={styles.tabBar}>
           {tabBarList.map(item => {
-            const isActive = pathname === item.path;
+            const isActive = item.path === '/' ? isHomePath(pathname) : pathname === item.path;
             const iconName = iconMap[item.icon] || 'home';
             const iconSrc = `/icons/${iconName}-${isActive ? 'actived' : 'no-actived'}.png`;
+            const href =
+              item.path === '/' && isHomePath(pathname)
+                ? '/home'
+                : item.path;
             
             return (
-              <Link href={item.path} key={item.path} className={styles.tabItem}>
+              <Link href={href} key={item.path} className={styles.tabItem}>
                 <div className={`${styles.tabLink} ${isActive ? styles.active : ''}`}>
                   <div className={styles.tabIcon}>
                     <Image 
