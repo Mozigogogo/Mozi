@@ -4,30 +4,48 @@ import GetStartedArrow from '@/components/Icons/GetStartedArrow';
 import RootTelegramRedirect from './RootTelegramRedirect';
 import styles from './site.module.css';
 
+function PromoCopy({ title, subtitle, href, ctaText, className = '' }) {
+  return (
+    <div className={`${styles.promoCopy} ${className}`.trim()}>
+      <h2 className={styles.promoTitle}>
+        {title.map((line, index) => (
+          <span key={line}>
+            {index > 0 && <br />}
+            {line}
+          </span>
+        ))}
+      </h2>
+      <p className={styles.promoSubtitle}>
+        {subtitle.map((line, index) => (
+          <span key={line}>
+            {index > 0 && <br />}
+            {line}
+          </span>
+        ))}
+      </p>
+      <div className={styles.ctaRow}>
+        <AppLink className={styles.primaryCta} href={href}>
+          <span>{ctaText}</span>
+          <GetStartedArrow />
+        </AppLink>
+      </div>
+    </div>
+  );
+}
+
 export default function SiteHomePage() {
   return (
     <main className={styles.page}>
       <RootTelegramRedirect />
       <section className={styles.heroWrap}>
         <div className={styles.stage}>
-          <div className={styles.heroLeft}>
-            <h1 className={styles.title}>
-              AI Trade
-              <br />
-              Radar
-            </h1>
-            <p className={styles.subtitle}>
-              News, OI & Long/Short depth.
-              <br />
-              AI-calculated Win Rate.
-            </p>
-            <div className={styles.ctaRow}>
-              <AppLink className={styles.primaryCta} href="/pc/find">
-                <span>Get Started</span>
-                <GetStartedArrow />
-              </AppLink>
-            </div>
-          </div>
+          <PromoCopy
+            className={styles.heroLeft}
+            title={['AI Trade', 'Radar']}
+            subtitle={['News, OI & Long/Short depth.', 'AI-calculated Win Rate.']}
+            href="/pc/find"
+            ctaText="Get Started"
+          />
 
           <div className={styles.screenFrame} aria-hidden="true">
             <Image
@@ -53,12 +71,13 @@ export default function SiteHomePage() {
         </div>
 
         <section className={styles.alertsSection}>
-          <h2 className={styles.alertsTitle}>Smart Alerts</h2>
-          <p className={styles.alertsSubtitle}>Phone & Email alerts. Catch whales&apos; moves instantly.</p>
-          <AppLink className={styles.alertsCta} href="/pc/alarm">
-            <span>See what&apos;s Moving</span>
-            <GetStartedArrow />
-          </AppLink>
+          <PromoCopy
+            className={styles.alertsCopy}
+            title={['Smart Alerts']}
+            subtitle={["Phone & Email alerts. Catch whales' moves instantly."]}
+            href="/pc/alarm"
+            ctaText="See what&apos;s Moving"
+          />
 
           <div className={styles.alertBottomPreview} aria-hidden="true">
             <Image
@@ -138,22 +157,17 @@ export default function SiteHomePage() {
 
         <section className={styles.sectorSection}>
           <div className={styles.sectorContent}>
-            <div className={styles.sectorLeft}>
-              <h2 className={styles.sectorTitle}>
-                Sector
-                <br />
-                Rotation
-              </h2>
-              <p className={styles.sectorSubtitle}>Ride the trend. One-click to find the sector leaders</p>
-              <AppLink className={styles.sectorCta} href="/pc/find">
-                <span>Enter Mozi</span>
-                <GetStartedArrow />
-              </AppLink>
-            </div>
+            <PromoCopy
+              className={styles.sectorLeft}
+              title={['Sector', 'Rotation']}
+              subtitle={['Ride the trend. One-click', 'to find the sector leaders']}
+              href="/pc/find"
+              ctaText="Enter Mozi"
+            />
 
             <div className={styles.sectorPreview} aria-hidden="true">
               <Image
-                src="/images/pc/lite_hero.png"
+                src="/images/pc/introduction3.svg"
                 alt=""
                 fill
                 className={styles.sectorPreviewImage}
@@ -163,74 +177,57 @@ export default function SiteHomePage() {
         </section>
 
         <section className={styles.flashSection}>
-          <h2 className={styles.flashTitle}>Flash News</h2>
-          <p className={styles.flashSubtitle}>Zero noise. Real-time global crypto signal.</p>
-          <AppLink className={styles.flashCta} href="/pc/news">
-            <span>Read News</span>
-            <GetStartedArrow />
-          </AppLink>
+          <PromoCopy
+            className={styles.flashCopy}
+            title={['Flash News']}
+            subtitle={['Zero noise. Real-time global crypto signal.']}
+            href="/pc/news"
+            ctaText="Read News"
+          />
 
           <div className={styles.flashPhones}>
             <div className={styles.flashPhone}>
-              <Image src="/images/pc/introduction2.svg" alt="flash news left preview" fill className={styles.flashPhoneImage} />
+              <Image src="/images/pc/introduction4_1.svg" alt="flash news left preview" fill className={styles.flashPhoneImage} />
             </div>
-            <div className={styles.flashPhone}>
-              <Image src="/images/pc/introduction2.svg" alt="flash news right preview" fill className={styles.flashPhoneImage} />
+            <div className={styles.flashPhoneCluster}>
+              <div className={`${styles.flashClusterAsset} ${styles.flashClusterAssetLeft}`}>
+                <Image src="/images/pc/introduction4_3.svg" alt="" fill className={styles.flashClusterAssetImage} />
+              </div>
+              <div className={styles.flashPhone}>
+                <Image src="/images/pc/introduction4_2.svg" alt="flash news right preview" fill className={styles.flashPhoneImage} />
+              </div>
+              <div className={`${styles.flashClusterAsset} ${styles.flashClusterAssetRight}`}>
+                <Image src="/images/pc/introduction4_4.svg" alt="" fill className={styles.flashClusterAssetImage} />
+              </div>
             </div>
-          </div>
-
-          <div className={styles.flashOverlayCardLeft}>
-            <div className={styles.flashOverlayHead}>Flash</div>
-            <p>Fed will speak tomorrow; risk assets may stay range-bound before macro clarity.</p>
-          </div>
-          <div className={styles.flashOverlayCardRight}>
-            <div className={styles.flashOverlayHead}>Brief</div>
-            <p>BTC options IV cools while spot ETF inflows stay stable; watch NY open liquidity.</p>
           </div>
         </section>
 
         <section className={styles.alphaSection}>
-          <h2 className={styles.alphaTitle}>Alpha Scanner</h2>
-          <p className={styles.alphaSubtitle}>Hunt the next 100x gem before the pump.</p>
-          <AppLink className={styles.alphaCta} href="/pc/find">
-            <span>Get Started</span>
-            <GetStartedArrow />
-          </AppLink>
+          <PromoCopy
+            className={styles.alphaCopy}
+            title={['Alpha Scanner']}
+            subtitle={['Hunt the next 100x gem before the pump.']}
+            href="/pc/find"
+            ctaText="Get Started"
+          />
 
           <div className={styles.alphaPhoneWrap}>
             <div className={styles.alphaPhone}>
-              <Image src="/images/pc/introduction2.svg" alt="alpha scanner preview" fill className={styles.alphaPhoneImage} />
+              <Image src="/images/pc/introduction5_1.svg" alt="alpha scanner preview" fill className={styles.alphaPhoneImage} />
             </div>
           </div>
 
-          <div className={`${styles.alphaScoreCard} ${styles.alphaScoreLeft}`}>
-            <div className={styles.alphaScoreHead}>
-              <Image src="/images/pc/phone_alarm.svg" alt="btc" width={24} height={24} />
-              <span>BTC</span>
-            </div>
-            <div className={`${styles.alphaGauge} ${styles.alphaGaugeStrong}`}>
-              <span>76</span>
-            </div>
+          <div className={`${styles.alphaAsset} ${styles.alphaScoreLeft}`}>
+            <Image src="/images/pc/introduction5_2.svg" alt="" fill className={styles.alphaAssetImage} />
           </div>
 
-          <div className={`${styles.alphaScoreCard} ${styles.alphaScoreRight}`}>
-            <div className={styles.alphaScoreHead}>
-              <Image src="/images/pc/push.svg" alt="eth" width={24} height={24} />
-              <span>ETH</span>
-            </div>
-            <div className={`${styles.alphaGauge} ${styles.alphaGaugeMid}`}>
-              <span>55</span>
-            </div>
+          <div className={`${styles.alphaAsset} ${styles.alphaScoreRight}`}>
+            <Image src="/images/pc/introduction5_3.svg" alt="" fill className={styles.alphaAssetImage} />
           </div>
 
-          <div className={`${styles.alphaScoreCard} ${styles.alphaScoreBottom}`}>
-            <div className={styles.alphaScoreHead}>
-              <Image src="/images/pc/helper.svg" alt="usdt" width={24} height={24} />
-              <span>USDT</span>
-            </div>
-            <div className={`${styles.alphaGauge} ${styles.alphaGaugeLow}`}>
-              <span>16</span>
-            </div>
+          <div className={`${styles.alphaAsset} ${styles.alphaScoreBottom}`}>
+            <Image src="/images/pc/introduction5_4.svg" alt="" fill className={styles.alphaAssetImage} />
           </div>
         </section>
 
@@ -246,38 +243,20 @@ export default function SiteHomePage() {
               <br />
               Ask anything, get clarity.
             </p>
-            <AppLink className={styles.knowledgeCta} href="/pc/find">
+            <AppLink className={`${styles.primaryCta} ${styles.knowledgeCta}`} href="/pc/find">
               <span>Learn more</span>
               <GetStartedArrow />
             </AppLink>
           </div>
 
           <div className={styles.knowledgePhone} aria-hidden="true">
-            <Image src="/images/pc/introduction2.svg" alt="" fill className={styles.knowledgePhoneImage} />
+            <Image src="/images/pc/introduction6_2.svg" alt="" fill className={styles.knowledgePhoneImage} />
           </div>
 
-          <div className={styles.knowledgeCards}>
-            <article className={styles.knowledgeCard}>
-              <div className={styles.knowledgeCardUser}>Joestar</div>
-              <p>BTC just pumped 8% in an hour - is it too late to buy now?</p>
-              <div className={styles.knowledgeCardMeta}>221 · 133</div>
-            </article>
-            <article className={styles.knowledgeCard}>
-              <div className={styles.knowledgeCardUser}>Lauren</div>
-              <p>How do people actually spot whale accumulation early?</p>
-              <div className={styles.knowledgeCardMeta}>156 · 89</div>
-            </article>
-            <article className={styles.knowledgeCard}>
-              <div className={styles.knowledgeCardUser}>Mr.Mon</div>
-              <p>Open interest is rising but the price isn&apos;t moving much - what does that usually mean?</p>
-              <div className={styles.knowledgeCardMeta}>170 · 103</div>
-            </article>
-            <article className={styles.knowledgeCard}>
-              <div className={styles.knowledgeCardUser}>Arthur</div>
-              <p>When a coin pumps fast, how do we tell whether to chase or wait?</p>
-              <div className={styles.knowledgeCardMeta}>98 · 61</div>
-            </article>
+          <div className={styles.knowledgeOverlay} aria-hidden="true">
+            <Image src="/images/pc/introduction6_3.png" alt="" fill className={styles.knowledgeOverlayImage} />
           </div>
+
         </section>
       </section>
     </main>
