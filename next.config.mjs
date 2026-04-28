@@ -1,7 +1,9 @@
+import { withSentryConfig } from '@sentry/nextjs';
 import withLess from 'next-plugin-less';
 import config from './config/index.js';
 
 const { API_BASE_URL, PROJECT_ID } = config;
+const isSentryEnabled = String(process.env.NEXT_PUBLIC_ENABLE_SENTRY || '').toLowerCase() === 'true';
 
 const nextConfig = withLess({
   reactStrictMode: true,
@@ -119,4 +121,13 @@ const nextConfig = withLess({
   },
 });
 
-export default nextConfig;
+export default isSentryEnabled
+  ? withSentryConfig(nextConfig, {
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      silent: true,
+      widenClientFileUpload: false,
+      disableLogger: true,
+      tunnelRoute: '/monitoring',
+    })
+  : nextConfig;

@@ -1,19 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAccount, useDisconnect, useSignMessage } from 'wagmi';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { Button, Toast } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import Layout from '@/components/Layout';
-import CalendarCard from '@/components/CalendarCard';
-import NewCoinListing from '@/components/NewCoinListing';
-import LoginModal from '@/components/LoginModal';
-import FeedbackSuccessModal from '@/components/FeedbackSuccessModal';
-import AccountBindModal from '@/components/AccountBindModal';
-import BindBenefitCodeModal from '@/components/BindBenefitCodeModal';
-import BenefitCodeModal from '@/components/BenefitCodeModal';
 import { 
   loginByWallet, 
   getUserDataInfo, 
@@ -30,14 +24,30 @@ import StatsAndActions from '@/app/user/components/StatsAndActions';
 import UserActions from '@/app/user/components/UserActions';
 import PointsSection from '@/app/user/components/PointsSection';
 import UserMenu from '@/app/user/components/UserMenu';
-import RewardPopup from '@/app/user/components/RewardPopup';
-import EditProfilePopup from '@/app/user/components/EditProfilePopup';
-import FeedbackPopup from '@/app/user/components/FeedbackPopup';
-import GeneralPopup from '@/app/user/components/GeneralPopup';
 import { useAlertConfig } from '@/hooks/useAlertConfig';
 import { getTgInviteLink } from '@/utils/constants';
 import VipBanner from '@/components/VipBanner';
 import styles from '@/app/user/page.module.less';
+
+function UserBlockSkeleton({ height = 120 }) {
+  return <div className={styles.sectionSkeleton} style={{ minHeight: `${height}px` }} aria-hidden="true" />;
+}
+
+const CalendarCard = dynamic(() => import('@/components/CalendarCard'), {
+  loading: () => <UserBlockSkeleton height={188} />,
+});
+const NewCoinListing = dynamic(() => import('@/components/NewCoinListing'), {
+  loading: () => <UserBlockSkeleton height={156} />,
+});
+const LoginModal = dynamic(() => import('@/components/LoginModal'));
+const FeedbackSuccessModal = dynamic(() => import('@/components/FeedbackSuccessModal'));
+const AccountBindModal = dynamic(() => import('@/components/AccountBindModal'));
+const BindBenefitCodeModal = dynamic(() => import('@/components/BindBenefitCodeModal'));
+const BenefitCodeModal = dynamic(() => import('@/components/BenefitCodeModal'));
+const RewardPopup = dynamic(() => import('@/app/user/components/RewardPopup'));
+const EditProfilePopup = dynamic(() => import('@/app/user/components/EditProfilePopup'));
+const FeedbackPopup = dynamic(() => import('@/app/user/components/FeedbackPopup'));
+const GeneralPopup = dynamic(() => import('@/app/user/components/GeneralPopup'));
 
 /** 默认头像 URL（与历史逻辑一致） */
 const DEFAULT_USER_AVATAR_URL =
@@ -45,6 +55,8 @@ const DEFAULT_USER_AVATAR_URL =
 
 /** localStorage 中 datainfo 缓存键（与 postLogin、编辑页等共用） */
 const USER_DATA_INFO_STORAGE_KEY = 'userDataInfo';
+const USER_INTERFACE_CACHE_KEY = 'mozi_user_interface_cache_v1';
+const USER_INTERFACE_CACHE_TTL = 5 * 60 * 1000;
 
 // 检测是否在 Telegram 环境中
 const isTelegramEnv = () => {
@@ -184,6 +196,30 @@ function buildDatainfoViewSignature(data, t, defaultAvatar) {
   if (!data) return '';
   const { pointsData, userInfoPatch } = deriveUserPageStateFromDatainfo(data, t, defaultAvatar);
   return JSON.stringify({ ...pointsData, ...userInfoPatch });
+}
+
+function readUserInterfaceCache(cacheKey) {
+  if (typeof window === 'undefined' || !cacheKey) return null;
+  try {
+    const raw = sessionStorage.getItem(USER_INTERFACE_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const entry = parsed?.[cacheKey];
+    if (!entry?.ts || Date.now() - entry.ts > USER_INTERFACE_CACHE_TTL) return null;
+    return entry.data ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function writeUserInterfaceCache(cacheKey, data) {
+  if (typeof window === 'undefined' || !cacheKey) return;
+  try {
+    const raw = sessionStorage.getItem(USER_INTERFACE_CACHE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    parsed[cacheKey] = { ts: Date.now(), data };
+    sessionStorage.setItem(USER_INTERFACE_CACHE_KEY, JSON.stringify(parsed));
+  } catch (_) {}
 }
 
 export default function UserPage() {
@@ -635,12 +671,17 @@ export default function UserPage() {
 
       const now = new Date();
       const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const cacheKey = `month:${timeStr}`;
 
       try {
-        const res = await getMyInterface({
-        limit: 200,
-        time: timeStr
-      });
+        const cached = readUserInterfaceCache(cacheKey);
+        const res = cached || await getMyInterface({
+          limit: 200,
+          time: timeStr
+        });
+        if (!cached) {
+          writeUserInterfaceCache(cacheKey, res);
+        }
 
         if (res?.success === true && res.data) {
           // 初始加载只用于获取日历小点，不显示新币上线列表
@@ -1027,14 +1068,19 @@ export default function UserPage() {
       }
 
       const timeStr = formatDate(date);
+      const cacheKey = `day:${timeStr}`;
 
       // 开始加载，显示加载状态
       setIsLoadingNewCoins(true);
 
-      const res = await getMyInterface({
+      const cached = readUserInterfaceCache(cacheKey);
+      const res = cached || await getMyInterface({
         limit: 50,
         time: timeStr
       });
+      if (!cached) {
+        writeUserInterfaceCache(cacheKey, res);
+      }
 
       // 基于 success 字段判断接口是否成功
       if (res?.success === true) {
@@ -1087,12 +1133,17 @@ export default function UserPage() {
     const year = newMonth.getFullYear();
     const month = String(newMonth.getMonth() + 1).padStart(2, '0');
     const timeStr = `${year}-${month}`;
+    const cacheKey = `month:${timeStr}`;
 
     try {
-      const res = await getMyInterface({
+      const cached = readUserInterfaceCache(cacheKey);
+      const res = cached || await getMyInterface({
         limit: 50,
         time: timeStr
       });
+      if (!cached) {
+        writeUserInterfaceCache(cacheKey, res);
+      }
 
       if (res?.success === true && res.data) {
         const rawData = Array.isArray(res.data) ? res.data : (res.data?.newCoinListings || res.data?.listings || []);
@@ -1529,7 +1580,7 @@ export default function UserPage() {
   const footerList = [
     {
       key: 'language',
-      icon: (<img src={'/icons/zh-en.svg'} alt={t('user.language')} style={{ width: 22, height: 22 }} />),
+      icon: (<img src={'/icons/zh-en.svg'} alt={t('user.language')} style={{ width: 22, height: 22 }} loading="lazy" decoding="async" />),
       text: t('user.language'),
       extra: i18n.language === 'zh' ? '中文' : 'English',
       callback: () => {
@@ -1539,7 +1590,7 @@ export default function UserPage() {
     },
     {
       key: 'theme',
-      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/skin%402x.png'} alt={t('user.skinCenter')} style={{ width: 22, height: 22 }} />),
+      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/skin%402x.png'} alt={t('user.skinCenter')} style={{ width: 22, height: 22 }} loading="lazy" decoding="async" />),
       text: t('user.skinCenter'),
       extra: '',
       callback: () => { window.location.href = '/theme'; }
@@ -1547,14 +1598,14 @@ export default function UserPage() {
 
     {
       key: 'contact',
-      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/me-contact%402x.png'} alt={t('user.contactUs')} style={{ width: 22, height: 22 }} />),
+      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/me-contact%402x.png'} alt={t('user.contactUs')} style={{ width: 22, height: 22 }} loading="lazy" decoding="async" />),
       text: t('user.contactUs'),
       extra: '',
       callback: () => contact()
     },
     {
       key: 'social',
-      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/social%402x.png'} alt={t('user.socialMediaAlt')} style={{ width: 22, height: 22 }} />),
+      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/social%402x.png'} alt={t('user.socialMediaAlt')} style={{ width: 22, height: 22 }} loading="lazy" decoding="async" />),
       text: t('user.socialMedia'),
       extra: '',
       callback: () => {
@@ -1564,14 +1615,14 @@ export default function UserPage() {
     },
     {
       key: 'about',
-      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/about%402x.png'} alt={t('user.about')} style={{ width: 22, height: 22 }} />),
+      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/about%402x.png'} alt={t('user.about')} style={{ width: 22, height: 22 }} loading="lazy" decoding="async" />),
       text: t('user.about'),
       extra: '',
       callback: () => about()
     },
     {
       key: 'donate',
-      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/donate%402x.png'} alt={t('user.donate')} style={{ width: 22, height: 22 }} />),
+      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/donate%402x.png'} alt={t('user.donate')} style={{ width: 22, height: 22 }} loading="lazy" decoding="async" />),
       text: t('user.donate'),
       extra: '',
       callback: () => reward()

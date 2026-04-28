@@ -13,7 +13,7 @@ const PointsSection = ({ pointsData, t, router }) => {
         <div className={styles.pointsInfo}>
           <span className={styles.pointsTitle}>{t('user.myPoints')}</span>
           <div className={styles.pointsValueRow}>
-            <img className={styles.coinIcon} src="/icons/new_user/btc.svg" alt="coin" />
+            <img className={styles.coinIcon} src="/icons/new_user/btc.svg" alt="coin" loading="lazy" decoding="async" />
             <span className={styles.pointsValue}>{formatNumber(pointsData.totalPoints)}</span>
             <div className={styles.dailyWrapper}>
               <RightArrowIcon size={14} color="rgba(15, 23, 42, 1)" />
@@ -45,7 +45,7 @@ const PointsSection = ({ pointsData, t, router }) => {
         </div>
       </div>
       
-      <img className={styles.bgDecoration} src="/images/new_user/ip.svg" alt="vip" />
+      <img className={styles.bgDecoration} src="/images/new_user/ip.svg" alt="vip" loading="lazy" decoding="async" />
     </div>
   );
 };

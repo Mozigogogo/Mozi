@@ -1,7 +1,9 @@
+const { withSentryConfig } = require('@sentry/nextjs');
 const withLess = require('next-plugin-less');
 const { API_BASE_URL, PROJECT_ID } = require('./config');
+const isSentryEnabled = String(process.env.NEXT_PUBLIC_ENABLE_SENTRY || '').toLowerCase() === 'true';
 
-module.exports = withLess({
+const nextConfig = withLess({
   reactStrictMode: true,
   // 仅用于线上排查：开启浏览器 sourcemap，便于从 chunk 调用栈映射回 src/ 源码。
   // 排查完成后建议关闭，避免暴露源码细节。
@@ -117,3 +119,14 @@ module.exports = withLess({
     },
   },
 });
+
+module.exports = isSentryEnabled
+  ? withSentryConfig(nextConfig, {
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      silent: true,
+      widenClientFileUpload: false,
+      disableLogger: true,
+      tunnelRoute: '/monitoring',
+    })
+  : nextConfig;

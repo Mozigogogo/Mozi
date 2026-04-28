@@ -33,13 +33,22 @@ const UserInfo = ({ userInfo, handleLogin, isTelegramEnv }) => {
             {/* 第一行：头像、昵称 */}
             <div className={styles.userInfoRow}>
               <div className={styles.avatarWrapper}>
-                <img className={styles.headerAvatar} src={userInfo.avatar || DEFAULT_AVATAR} alt="头像" />
+                <img
+                  className={styles.headerAvatar}
+                  src={userInfo.avatar || DEFAULT_AVATAR}
+                  alt="头像"
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
+                />
                 {/* 验证图标 */}
                 {(isVip || isLite) && (
                   <img
                     className={styles.verifyIcon}
                     src={isVip ? VIP_ICON : LITE_ICON}
                     alt={isVip ? 'verify' : 'lite-verify'}
+                    loading="eager"
+                    decoding="async"
                     onError={(e) => (e.target.style.display = 'none')}
                   />
                 )}
@@ -74,7 +83,7 @@ const UserInfo = ({ userInfo, handleLogin, isTelegramEnv }) => {
             <div className={styles.headerContentTop} onClick={handleLogin}>
               <div className={styles.userInfoRow}>
                 <div className={styles.avatarWrapper}>
-                  <img className={styles.headerAvatar} src={DEFAULT_AVATAR} alt="头像" />
+                  <img className={styles.headerAvatar} src={DEFAULT_AVATAR} alt="头像" loading="eager" fetchPriority="high" decoding="async" />
                 </div>
                 <div className={styles.infoContent}>
                   <div className={styles.nicknameWrapper}>

@@ -15,18 +15,40 @@ import PinkContainer from '../PinkContainer';
 import { WS_URL } from '../../utils/constants';
 
 // Lazy load heavy components
-const MarketDistribution = dynamic(() => import('../MarketDistribution'));
+const MarketDistribution = dynamic(() => import('../MarketDistribution'), {
+  loading: () => <HomeSectionSkeleton height={220} card />,
+});
 const FloatingRobot = dynamic(() => import('../FloatingRobot'), { ssr: false });
 const ActivityModal = dynamic(() => import('../ActivityModal'), { ssr: false });
-const DerivativeArea = dynamic(() => import('../DerivativeArea'));
-const InvestmentSection = dynamic(() => import('../InvestmentSection'));
-const RealTimeRanking = dynamic(() => import('../RealTimeRanking'));
-const HotTopics = dynamic(() => import('../HotTopics'));
+const DerivativeArea = dynamic(() => import('../DerivativeArea'), {
+  loading: () => <HomeSectionSkeleton height={128} />,
+});
+const InvestmentSection = dynamic(() => import('../InvestmentSection'), {
+  loading: () => <HomeSectionSkeleton height={220} card />,
+});
+const RealTimeRanking = dynamic(() => import('../RealTimeRanking'), {
+  loading: () => <HomeSectionSkeleton height={300} card />,
+});
+const HotTopics = dynamic(() => import('../HotTopics'), {
+  loading: () => <HomeSectionSkeleton height={180} card />,
+});
 import { jump2Detail } from '../../utils/core';
 import * as homeApi from '../../api/home';
 import { useWebSocket } from '../../utils/useWebSocket';
 import { useAmplitude } from '../../hooks/useAmplitude';
 import styles from './index.module.less';
+
+function HomeSectionSkeleton({ height = 160, card = false }) {
+  return (
+    <div
+      className={`${styles.homeSectionSkeleton} ${card ? styles.homeSectionSkeletonCard : ''}`}
+      style={{ minHeight: `${height}px` }}
+      aria-hidden="true"
+    >
+      <div className={styles.homeSectionSkeletonShimmer} />
+    </div>
+  );
+}
 
 // CDN 图片前缀
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
