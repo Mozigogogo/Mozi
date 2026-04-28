@@ -545,7 +545,9 @@
   background:
     radial-gradient(760px 320px at 45% 85%, rgba(234, 88, 12, 0.3), transparent 62%),
     radial-gradient(540px 240px at 20% 35%, rgba(245, 158, 11, 0.18), transparent 70%),
+    url('/images/pc/introduction6_1.svg') 44% 70% / 42% auto no-repeat,
     linear-gradient(180deg, #2b0f18 0%, #351123 55%, #4a1725 100%);
+  background-blend-mode: normal, normal, lighten, normal;
 }
 
 .knowledgeLeft {
@@ -590,7 +592,7 @@
 .knowledgeOverlay {
   position: absolute;
   right: 0%;
-  bottom: 0%;
+  bottom: -2%;
   width: 95%;
   height: clamp(380px, 40vh, 280px);
   overflow: hidden;
