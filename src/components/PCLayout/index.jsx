@@ -497,33 +497,6 @@ export default function PCLayout({ children }) {
     [t, activeContent, pathname]
   );
 
-  const coinlistGroup = useMemo(
-    () => ({
-      key: 'coinlist',
-      label: collapsed ? (
-        ''
-      ) : (
-        <div
-          style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsCreatedListExpanded(!isCreatedListExpanded);
-          }}
-        >
-          {isCreatedListExpanded ? (
-            <CaretDownOutlined style={{ marginRight: 2, fontSize: 14, color: '#999' }} />
-          ) : (
-            <CaretRightOutlined style={{ marginRight: 2, fontSize: 14, color: '#999' }} />
-          )}
-          {t('pcLayout.menu.createdLists')}
-        </div>
-      ),
-      type: 'group',
-      children: [],
-    }),
-    [t, collapsed, isCreatedListExpanded]
-  );
-
   // 展开时「我的」标题在自选区块上方单独渲染；折叠时组内保留「我的自选」图标入口 + 其余项
   const mineMenuItems = useMemo(() => {
     if (collapsed) {
@@ -534,7 +507,6 @@ export default function PCLayout({ children }) {
           type: 'group',
           children: [favoritesMenuItemCollapsed, ...mineRestMenuItems],
         },
-        coinlistGroup,
       ];
     }
     return [
@@ -544,9 +516,8 @@ export default function PCLayout({ children }) {
         label: '',
         children: mineRestMenuItems,
       },
-      coinlistGroup,
     ];
-  }, [collapsed, favoritesMenuItemCollapsed, mineRestMenuItems, coinlistGroup]);
+  }, [collapsed, favoritesMenuItemCollapsed, mineRestMenuItems]);
 
   const handleMenuClick = ({ key }) => {
     // PC 端：发现/社区使用独立路由

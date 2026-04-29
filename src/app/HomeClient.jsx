@@ -6,80 +6,15 @@ import TelegramAutoLogin from '@/components/TelegramAutoLogin';
 import { getMySubscription } from '@/api/vip';
 import { LogoLoading } from '@/components/Loading';
 
-/** 动态分包加载中占位，避免 router.back 回首页时出现整块空白 */
-function HomeChunkFallback() {
-  return (
-    <div
-      style={{
-        minHeight: '70vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'var(--background, #f5f5f5)',
-      }}
-    >
-      <LogoLoading visible image="/images/community/loadding.png" size={72} />
-    </div>
-  );
-}
-
-const skeletonPulse = {
-  animation: 'mozi-skeleton-pulse 1.2s ease-in-out infinite',
-  background:
-    'linear-gradient(90deg, rgba(0,0,0,0.04) 25%, rgba(0,0,0,0.08) 37%, rgba(0,0,0,0.04) 63%)',
-  backgroundSize: '400% 100%',
-};
-
-/** PC 端占位：骨架屏（不显示 LogoLoading，避免 content 区域出现 loadding 图） */
-function HomeChunkFallbackPC() {
-  return (
-    <div
-      style={{
-        minHeight: '70vh',
-        background: 'var(--background, #f5f5f5)',
-        padding: '20px',
-      }}
-    >
-      <style>{`
-        @keyframes mozi-skeleton-pulse {
-          0% { background-position: 100% 0; }
-          100% { background-position: 0 0; }
-        }
-      `}</style>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1.2fr 1fr',
-          gap: '16px',
-          alignItems: 'start',
-        }}
-      >
-        <div style={{ borderRadius: 16, height: 220, ...skeletonPulse }} />
-        <div style={{ display: 'grid', gap: 12 }}>
-          <div style={{ borderRadius: 16, height: 80, ...skeletonPulse }} />
-          <div style={{ borderRadius: 16, height: 80, ...skeletonPulse }} />
-          <div style={{ borderRadius: 16, height: 80, ...skeletonPulse }} />
-        </div>
-      </div>
-      <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} style={{ borderRadius: 14, height: 64, ...skeletonPulse }} />
-        ))}
-      </div>
-      <div style={{ marginTop: 16, borderRadius: 16, height: 260, ...skeletonPulse }} />
-    </div>
-  );
-}
-
 // Dynamic imports to optimize bundle size and performance
 const PCHome = dynamic(() => import('../components/PCHome'), {
-  loading: HomeChunkFallbackPC,
+  loading: () => null,
 });
 const PCLayout = dynamic(() => import('../components/PCLayout'), {
-  loading: HomeChunkFallbackPC,
+  loading: () => null,
 });
 const MobileHome = dynamic(() => import('../components/MobileHome'), {
-  loading: HomeChunkFallback,
+  loading: () => null,
 });
 
 export default function HomeClient({ initialIsPC = false }) {
