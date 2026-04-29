@@ -12,11 +12,34 @@
   background-blend-mode: normal, normal, lighten, normal;
 }
 
+.knowledgeCols {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+.knowledgeLeftPane {
+  flex: 0 0 65%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-left: clamp(14px, 5vw, 80px);
+}
+
+.knowledgeRightPane {
+  flex: 0 0 35%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+
 .knowledgeLeft {
-  position: absolute;
-  left: 20%;
-  top: 22%;
   z-index: 2;
+  /* Nudge the left title block upward to match the intended composition */
+  transform: translateY(-28%);
 }
 
 .knowledgeTitle {
@@ -66,11 +89,9 @@
   box-shadow: 0 16px 28px rgba(2, 6, 23, 0.3);
 }
 
-.knowledgePhone {
-  position: absolute;
-  right: 10%;
-  bottom: 0%;
-  width: min(560px, 40vw);
+.knowledgePhoneWrap {
+  position: relative;
+  width: min(560px, 40vw, 58vh);
   aspect-ratio: 634 / 1074;
   overflow: hidden;
   z-index: 3;
@@ -83,11 +104,11 @@
 
 .knowledgeOverlay {
   position: absolute;
-  right: 0%;
-  bottom: -2%;
-  width: 95%;
-  height: clamp(380px, 40vh, 280px);
-  overflow: hidden;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 40%;
+  overflow: visible;
   z-index: 4;
 }
 
@@ -101,24 +122,37 @@
     padding: 24px 14px 0;
   }
 
-  .knowledgeLeft,
-  .knowledgePhone,
-  .knowledgeOverlay {
-    position: relative;
-    left: auto;
-    right: auto;
-    top: auto;
-    bottom: auto;
+  .knowledgeCols {
+    flex-direction: column;
+  }
+
+  .knowledgeLeftPane,
+  .knowledgeRightPane {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
+  .knowledgeLeftPane {
+    padding-left: 0;
+    justify-content: flex-start;
+    align-items: flex-start;
+    margin-top: 20px;
+  }
+
+  .knowledgeLeft {
     transform: none;
   }
 
-  .knowledgePhone {
-    width: min(340px, 88vw);
+  .knowledgePhoneWrap {
+    width: min(340px, 88vw, 50vh);
     margin: 18px auto 0;
   }
 
   .knowledgeOverlay {
     width: 100%;
+    left: 0%;
+    transform: none;
+    height: 52%;
     margin-top: 16px;
   }
 
