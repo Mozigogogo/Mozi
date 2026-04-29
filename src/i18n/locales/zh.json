@@ -1251,11 +1251,24 @@
     "actions": {
       "favorite": "加自选",
       "alert": "告警",
+      "addAlert": "加告警",
+      "goTrade": "去交易",
       "share": "分享",
       "community": "社区",
       "configAlarm": "配置告警",
       "startNow": "立即开启",
       "comingSoon": "敬请期待"
+    },
+    "tradePicker": {
+      "title": "选择交易所开始交易{{symbol}}",
+      "hint": "点击跳转注册/交易，支持返佣",
+      "cancel": "取消",
+      "exchanges": {
+        "binance": "推荐: 流动性最强",
+        "okx": "合约交易首选",
+        "bitget": "跟单交易平台",
+        "gate": "山寨币种丰富"
+      }
     },
     "roi": {
       "daily": "日回报率",

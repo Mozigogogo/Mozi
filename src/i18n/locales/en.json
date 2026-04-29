@@ -1269,11 +1269,24 @@
     "actions": {
       "favorite": "Favorite",
       "alert": "Alert",
+      "addAlert": "Add Alert",
+      "goTrade": "Trade",
       "share": "Share",
       "community": "Community",
       "configAlarm": "Config",
       "startNow": "Start",
       "comingSoon": "Coming Soon"
+    },
+    "tradePicker": {
+      "title": "Choose an exchange to trade {{symbol}}",
+      "hint": "Tap to register/trade and get rebates",
+      "cancel": "Cancel",
+      "exchanges": {
+        "binance": "Recommended: best liquidity",
+        "okx": "Best for futures trading",
+        "bitget": "Copy-trading platform",
+        "gate": "Rich altcoin listings"
+      }
     },
     "roi": {
       "daily": "Daily Return",

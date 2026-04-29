@@ -23,6 +23,7 @@ export default function PCCoinDetail({
   isFavorite = false,
   onToggleFavorite,
   onAlert,
+  onGoTrade,
   onShare,
   onTradingRadar,
   /** 三列统计数据：statColumns[0] 为左列、以此类推，每列内为自上而下多条 { label, value } */
@@ -120,12 +121,6 @@ export default function PCCoinDetail({
               </span>
             </button>
           ) : null}
-          {onAlert ? (
-            <button type="button" className={styles.actionBtn} onClick={onAlert}>
-              <img src="/icons/new_home/belling.svg" alt="" />
-              <span>{t('detail.actions.alert')}</span>
-            </button>
-          ) : null}
           {onShare ? (
             <button type="button" className={styles.actionBtn} onClick={onShare}>
               <img src="/icons/new_home/share.svg" alt="" />
@@ -136,6 +131,30 @@ export default function PCCoinDetail({
             <button type="button" className={styles.actionBtn} onClick={onTradingRadar}>
               <img src="/icons/new_home/trading_radar.svg" alt="" />
               <span>{t('pcCoinDetail.tradingRadar')}</span>
+            </button>
+          ) : null}
+          {onAlert ? (
+            <button
+              type="button"
+              className={`${styles.actionBtn} ${styles.alertCta}`}
+              onClick={onAlert}
+            >
+              <img src="/icons/new_home/belling.svg" alt="" />
+              <span>{t('detail.actions.addAlert')}</span>
+            </button>
+          ) : null}
+          {onGoTrade ? (
+            <button
+              type="button"
+              className={`${styles.actionBtn} ${styles.tradeCta}`}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onGoTrade?.();
+              }}
+            >
+              <span>{t('detail.actions.goTrade')}</span>
+              <span className={styles.tradeArrow} aria-hidden>›</span>
             </button>
           ) : null}
         </div>

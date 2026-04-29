@@ -16,6 +16,7 @@ import AddCollect from '../../components/AddCollect';
 import KlineChart from '../../components/KlineChart';
 import OrderBook from '../../components/OrderBook';
 import OneClickAlarmModal from '@/components/OneClickAlarmModal';
+import ExchangePickerModal from '@/components/ExchangePickerModal';
 import { Loading } from '@/components/Loading';
 import { CaretUpIcon, CaretDownIcon, BellIcon } from '@/components/Icons';
 import FloatingRobot from '@/components/FloatingRobot';
@@ -92,6 +93,7 @@ export default function DetailPage() {
   const [coinInfoRight, setCoinInfoRight] = useState([]);
   const [oneClickAlarmOpen, setOneClickAlarmOpen] = useState(false);
   const [oneClickAlarmMode, setOneClickAlarmMode] = useState('oneClick');
+  const [exchangePickerOpen, setExchangePickerOpen] = useState(false);
   const [rightHotTicker, setRightHotTicker] = useState([]);
   const [rightHotTickerLoading, setRightHotTickerLoading] = useState(true);
   const [rightCommunityPosts, setRightCommunityPosts] = useState([]);
@@ -1152,6 +1154,23 @@ export default function DetailPage() {
       token: `${Date.now()}-${normalizedSymbol}`,
     });
     setPcAiChatOpen(true);
+  };
+
+  const handleGoTrade = () => {
+    setExchangePickerOpen(true);
+  };
+
+  const handleSelectExchange = (exchangeId) => {
+    const map = {
+      binance: 'https://www.bsmkweb.cc/register?ref=195208591&utm_medium=web_share_copy',
+      okx: 'https://www.growthhivex.com/join/12214659',
+      bitget:
+        'https://www.nlviwq.cn/zh-CN/referral/register?clacCode=0YL9JUZB&from=%2Fzh-CN%2Fevents%2Freferral-all-program&source=events&utmSource=PremierInviter',
+      gate: 'https://www.gateport.biz/zh/signup/BQNCA1pf?ref_type=103',
+    };
+    const target = map[exchangeId];
+    if (!target) return;
+    window.open(target, '_blank', 'noopener,noreferrer');
   };
   // 分享到Telegram
   const shareToTelegram = () => {
@@ -2353,6 +2372,7 @@ ${coinInfo.name || symbol} (${symbol})
               isFavorite={isFavorite}
               onToggleFavorite={toggleFavorite}
               onAlert={jump2Alert}
+              onGoTrade={handleGoTrade}
               onShare={shareToTelegram}
               onTradingRadar={handleTradingRadar}
               onBarrageSend={handleBarrageSend}
@@ -2560,6 +2580,12 @@ ${coinInfo.name || symbol} (${symbol})
           autoSendToken={pcAiAutoSend.token}
           symbol={symbol}
         />
+        <ExchangePickerModal
+          open={exchangePickerOpen}
+          symbol={symbol}
+          onClose={() => setExchangePickerOpen(false)}
+          onSelect={handleSelectExchange}
+        />
       </PCLayout>
     );
   }
@@ -2650,6 +2676,12 @@ ${coinInfo.name || symbol} (${symbol})
         targetPath="/ai"
         autoPlay={true}
         startDelay={2000}
+      />
+      <ExchangePickerModal
+        open={exchangePickerOpen}
+        symbol={symbol}
+        onClose={() => setExchangePickerOpen(false)}
+        onSelect={handleSelectExchange}
       />
     </>
   );

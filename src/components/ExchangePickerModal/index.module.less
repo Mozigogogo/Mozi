@@ -1,0 +1,153 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.74);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.panel {
+  width: 100%;
+  max-width: 520PX;
+  background: #fff;
+  border-radius: 18PX 18PX 0 0;
+  padding: 22PX 14PX 16PX;
+}
+
+.handle {
+  width: 60PX;
+  height: 5PX;
+  border-radius: 999px;
+  background: #ddd;
+  margin: 0 auto 10PX;
+}
+
+.title {
+  text-align: center;
+  font-size: 22PX;
+  font-weight: 500;
+  color: #11b787;
+  margin-bottom: 14PX;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10PX;
+}
+
+.exchangeCard {
+  border: 1px solid #e6e6e6;
+  border-radius: 14PX;
+  background: #fff;
+  padding: 14PX 8PX 12PX;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5PX;
+}
+
+.exchangeCardActive {
+  border: 1.36PX solid rgba(0, 188, 125, 1);
+}
+
+.logo {
+  width: 34PX;
+  height: 34PX;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.logoImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.exchangeName {
+  font-size: 14PX;
+  font-weight: 700;
+  color: #222;
+}
+
+.exchangeDesc {
+  font-size: 11PX;
+  color: #999;
+}
+
+.hint {
+  text-align: center;
+  margin: 14PX 0 12PX;
+  color: #9a9a9a;
+  font-size: 12PX;
+}
+
+.cancelBtn {
+  width: 100%;
+  height: 42PX;
+  border-radius: 999px;
+  border: 1px solid #d5d5d5;
+  background: #fff;
+  color: #9a9a9a;
+  font-size: 16PX;
+  font-weight: 500;
+}
+
+@media (min-width: 1024px) {
+  .overlay {
+    align-items: center;
+  }
+
+  .panel {
+    width: 460PX;
+    border-radius: 18PX;
+    padding: 28PX 18PX 18PX;
+  }
+
+  .handle {
+    display: none;
+  }
+
+  .title {
+    font-size: 24PX;
+    margin-bottom: 18PX;
+  }
+
+  .grid {
+    gap: 12PX;
+  }
+
+  .exchangeCard {
+    border-radius: 18PX;
+    padding: 20PX 10PX 18PX;
+    gap: 8PX;
+  }
+
+  .logo {
+    width: 54PX;
+    height: 54PX;
+  }
+
+  .exchangeName {
+    font-size: 18PX;
+  }
+
+  .exchangeDesc {
+    font-size: 14PX;
+  }
+
+  .hint {
+    margin: 16PX 0 14PX;
+    font-size: 16PX;
+  }
+
+  .cancelBtn {
+    height: 58PX;
+    font-size: 24PX;
+  }
+}
