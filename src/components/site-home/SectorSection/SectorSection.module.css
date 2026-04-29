@@ -1,5 +1,66 @@
-.sectorSection { composes: sectorSection from '../../../app/site.module.css'; }
-.sectorContent { composes: sectorContent from '../../../app/site.module.css'; }
-.sectorLeft { composes: sectorLeft from '../../../app/site.module.css'; }
-.sectorPreview { composes: sectorPreview from '../../../app/site.module.css'; }
-.sectorPreviewImage { composes: sectorPreviewImage from '../../../app/site.module.css'; }
+.sectorSection {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  flex: 0 0 auto;
+  overflow: hidden;
+  background:
+    radial-gradient(840px 360px at 20% 10%, rgba(110, 231, 183, 0.18), transparent 60%),
+    linear-gradient(120deg, #16a37a 0%, #2ecf86 46%, #23c781 100%);
+}
+
+.sectorContent {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.sectorLeft {
+  position: absolute;
+  left: 20%;
+  top: 28%;
+  z-index: 2;
+}
+
+.sectorPreview {
+  position: absolute;
+  right: 0;
+  top: 8%;
+  width: 52%;
+  aspect-ratio: 715 / 533;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.sectorPreviewImage {
+  object-fit: cover;
+  object-position: right center;
+}
+
+@media (max-width: 1100px) {
+  .sectorContent {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding: 70px 14px 0;
+  }
+
+  .sectorLeft,
+  .sectorPreview {
+    position: relative;
+    left: auto;
+    right: auto;
+    top: auto;
+    bottom: auto;
+  }
+
+  .sectorLeft {
+    width: 100%;
+  }
+
+  .sectorPreview {
+    margin-top: 24px;
+    width: 100%;
+  }
+}

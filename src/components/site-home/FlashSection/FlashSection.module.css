@@ -1,10 +1,97 @@
-.flashSection { composes: flashSection from '../../../app/site.module.css'; }
-.flashCopy { composes: flashCopy from '../../../app/site.module.css'; }
-.flashPhones { composes: flashPhones from '../../../app/site.module.css'; }
-.flashPhone { composes: flashPhone from '../../../app/site.module.css'; }
-.flashPhoneCluster { composes: flashPhoneCluster from '../../../app/site.module.css'; }
-.flashPhoneImage { composes: flashPhoneImage from '../../../app/site.module.css'; }
-.flashClusterAsset { composes: flashClusterAsset from '../../../app/site.module.css'; }
-.flashClusterAssetLeft { composes: flashClusterAssetLeft from '../../../app/site.module.css'; }
-.flashClusterAssetRight { composes: flashClusterAssetRight from '../../../app/site.module.css'; }
-.flashClusterAssetImage { composes: flashClusterAssetImage from '../../../app/site.module.css'; }
+.flashSection {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  flex: 0 0 auto;
+  overflow: hidden;
+  background:
+    radial-gradient(700px 340px at 20% 80%, rgba(124, 58, 237, 0.28), transparent 60%),
+    radial-gradient(620px 280px at 82% 78%, rgba(236, 72, 153, 0.24), transparent 62%),
+    linear-gradient(180deg, #1a1234 0%, #2a124a 54%, #4a145f 100%);
+}
+
+.flashCopy {
+  position: relative;
+  z-index: 2;
+  margin-top: 62px;
+  text-align: center;
+
+  /* PromoCopy: 用变量控制对齐/宽度，避免依赖 site.module.css 的后代选择器匹配 */
+  --promo-cta-justify: center;
+  --promo-subtitle-max-width: none;
+}
+
+.flashPhones {
+  position: absolute;
+  left: 50%;
+  bottom: -4%;
+  transform: translateX(-50%);
+  width: min(1360px, 94vw);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: min(8vw, 120px);
+}
+
+.flashPhone {
+  position: relative;
+  width: min(470px, 35vw);
+  aspect-ratio: 551 / 741;
+  border-radius: 34px 34px 0 0;
+  overflow: hidden;
+}
+
+.flashPhoneCluster {
+  position: relative;
+  width: min(470px, 35vw);
+  flex: 0 0 auto;
+}
+
+.flashPhoneImage {
+  object-fit: cover;
+  object-position: top center;
+}
+
+.flashClusterAsset {
+  position: absolute;
+  z-index: 3;
+  overflow: hidden;
+}
+
+.flashClusterAssetLeft {
+  left: -40%;
+  top: 13%;
+  width: min(520px, 32vw);
+  aspect-ratio: 651 / 653;
+}
+
+.flashClusterAssetRight {
+  right: -52%;
+  top: 32%;
+  width: min(485px, 34vw);
+  aspect-ratio: 633 / 478;
+}
+
+.flashClusterAssetImage {
+  object-fit: contain;
+}
+
+@media (max-width: 1100px) {
+  .flashSection {
+    padding: 20px 14px 0;
+  }
+
+  .flashPhones {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    transform: none;
+    width: 100%;
+    margin-top: 26px;
+    gap: 16px;
+  }
+
+  .flashPhone {
+    width: 48%;
+  }
+}

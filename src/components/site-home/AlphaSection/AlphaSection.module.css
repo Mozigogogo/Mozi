@@ -1,10 +1,99 @@
-.alphaSection { composes: alphaSection from '../../../app/site.module.css'; }
-.alphaCopy { composes: alphaCopy from '../../../app/site.module.css'; }
-.alphaPhoneWrap { composes: alphaPhoneWrap from '../../../app/site.module.css'; }
-.alphaPhone { composes: alphaPhone from '../../../app/site.module.css'; }
-.alphaPhoneImage { composes: alphaPhoneImage from '../../../app/site.module.css'; }
-.alphaAsset { composes: alphaAsset from '../../../app/site.module.css'; }
-.alphaScoreLeft { composes: alphaScoreLeft from '../../../app/site.module.css'; }
-.alphaScoreRight { composes: alphaScoreRight from '../../../app/site.module.css'; }
-.alphaScoreBottom { composes: alphaScoreBottom from '../../../app/site.module.css'; }
-.alphaAssetImage { composes: alphaAssetImage from '../../../app/site.module.css'; }
+.alphaSection {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  flex: 0 0 auto;
+  overflow: hidden;
+  background:
+    radial-gradient(640px 280px at 50% 0%, rgba(251, 191, 36, 0.28), transparent 60%),
+    linear-gradient(180deg, #995300 0%, #cf7400 44%, #ff9900 100%);
+}
+
+.alphaCopy {
+  position: relative;
+  z-index: 2;
+  margin-top: 64px;
+  text-align: center;
+
+  /* PromoCopy: 用变量控制对齐/宽度，避免依赖 site.module.css 的后代选择器匹配 */
+  --promo-cta-justify: center;
+  --promo-subtitle-max-width: none;
+}
+
+.alphaPhoneWrap {
+  position: absolute;
+  left: 60%;
+  bottom: 0%;
+  transform: translateX(-50%);
+}
+
+.alphaPhone {
+  position: relative;
+  width: min(780px, 58vw);
+  aspect-ratio: 938 / 756;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.alphaPhoneImage {
+  object-fit: contain;
+  object-position: center center;
+}
+
+.alphaAsset {
+  position: absolute;
+  width: min(300px, 22vw);
+  min-width: 220px;
+  aspect-ratio: 284 / 192;
+  z-index: 3;
+}
+
+.alphaScoreLeft {
+  left: 24%;
+  top: 37%;
+}
+
+.alphaScoreRight {
+  right: 20%;
+  top: 40%;
+}
+
+.alphaScoreBottom {
+  left: 32%;
+  top: 67%;
+}
+
+.alphaAssetImage {
+  object-fit: contain;
+}
+
+@media (max-width: 1100px) {
+  .alphaSection {
+    padding: 22px 14px 0;
+  }
+
+  .alphaPhoneWrap,
+  .alphaAsset {
+    position: relative;
+    left: auto;
+    right: auto;
+    top: auto;
+    bottom: auto;
+    transform: none;
+  }
+
+  .alphaPhoneWrap {
+    margin-top: 24px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .alphaPhone {
+    width: min(340px, 88vw);
+  }
+
+  .alphaAsset {
+    width: min(240px, 48vw);
+    margin: 14px auto 0;
+  }
+}

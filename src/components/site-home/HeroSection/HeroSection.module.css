@@ -1,10 +1,123 @@
-.stage { composes: stage from '../../../app/site.module.css'; }
-.heroLeft { composes: heroLeft from '../../../app/site.module.css'; }
-.screenFrame { composes: screenFrame from '../../../app/site.module.css'; }
-.screenImage { composes: screenImage from '../../../app/site.module.css'; }
-.floatCard { composes: floatCard from '../../../app/site.module.css'; }
-.floatTopPanel { composes: floatTopPanel from '../../../app/site.module.css'; }
-.floatAsk { composes: floatAsk from '../../../app/site.module.css'; }
-.floatDesc { composes: floatDesc from '../../../app/site.module.css'; }
-.floatTitle { composes: floatTitle from '../../../app/site.module.css'; }
-.floatSub { composes: floatSub from '../../../app/site.module.css'; }
+.stage {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  aspect-ratio: auto;
+  flex: 0 0 auto;
+  background:
+    radial-gradient(900px 420px at 10% 18%, rgba(45, 212, 191, 0.22), transparent 60%),
+    radial-gradient(980px 520px at 92% 78%, rgba(99, 102, 241, 0.3), transparent 58%),
+    linear-gradient(120deg, #1398da 0%, #2458b2 50%, #243a94 100%);
+}
+
+.heroLeft {
+  position: absolute;
+  left: 20%;
+  top: 28%;
+  width: 30%;
+}
+
+.screenFrame {
+  position: absolute;
+  right: 0;
+  top: 8%;
+  width: 52%;
+  aspect-ratio: 715 / 533;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.screenImage {
+  object-fit: cover;
+  object-position: right center;
+}
+
+.floatCard {
+  position: absolute;
+  left: 45%;
+  top: 56%;
+  width: clamp(320px, 32vw, 560px);
+  max-width: min(560px, 42vw);
+  border-radius: clamp(28px, 3.2vw, 54px);
+  border: clamp(1px, 0.18vw, 3px) solid rgba(255, 255, 255, 0.22);
+  background: linear-gradient(140deg, rgba(164, 185, 209, 0.88), rgba(137, 152, 179, 0.74));
+  backdrop-filter: blur(9px);
+  padding: clamp(10px, 1vw, 16px) clamp(12px, 1.2vw, 18px) clamp(10px, 1vw, 16px);
+  z-index: 3;
+}
+
+.floatTopPanel {
+  border-radius: clamp(20px, 2.5vw, 42px);
+  border: 1px solid rgba(248, 250, 252, 0.55);
+  background: linear-gradient(150deg, rgba(203, 213, 225, 0.26), rgba(226, 232, 240, 0.12));
+  padding: clamp(10px, 0.9vw, 14px) clamp(12px, 1vw, 16px) clamp(10px, 0.9vw, 14px);
+}
+
+.floatAsk {
+  width: fit-content;
+  max-width: 96%;
+  margin: 0 0 0 auto;
+  border-radius: 12px;
+  background: #16bb90;
+  color: #ecfeff;
+  font-size: clamp(9px, 0.65vw, 13px);
+  line-height: 1.1;
+  font-weight: 500;
+  padding: 8px 12px;
+}
+
+.floatDesc {
+  margin-top: 10px;
+  color: rgba(248, 250, 252, 0.93);
+  font-size: clamp(10px, 0.8vw, 15px);
+  line-height: 1.45;
+  letter-spacing: 0.1px;
+}
+
+.floatTitle {
+  margin-top: clamp(8px, 0.8vw, 12px);
+  margin-left: clamp(10px, 1vw, 16px);
+  font-size: clamp(11px, 0.9vw, 16px);
+  font-weight: 700;
+  line-height: 1.2;
+  color: #f1f5f9;
+}
+
+.floatSub {
+  margin-top: clamp(4px, 0.5vw, 6px);
+  margin-left: clamp(10px, 1vw, 16px);
+  max-width: calc(100% - clamp(10px, 1vw, 16px));
+  font-size: clamp(9px, 0.7vw, 12px);
+  line-height: 1.38;
+  color: rgba(241, 245, 249, 0.92);
+}
+
+@media (max-width: 1100px) {
+  .stage {
+    width: 100%;
+    min-height: 100vh;
+  }
+
+  .heroLeft,
+  .screenFrame,
+  .floatCard {
+    position: relative;
+    left: auto;
+    right: auto;
+    top: auto;
+  }
+
+  .heroLeft {
+    width: 100%;
+  }
+
+  .screenFrame {
+    margin-top: 20px;
+    width: 100%;
+  }
+
+  .floatCard {
+    margin-top: -36px;
+    width: 100%;
+  }
+}
