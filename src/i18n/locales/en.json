@@ -1278,7 +1278,7 @@
       "comingSoon": "Coming Soon"
     },
     "tradePicker": {
-      "title": "Choose an exchange to trade {{symbol}}",
+      "title": "Choose exchange to trade {{symbol}}",
       "hint": "Tap to register/trade and get rebates",
       "cancel": "Cancel",
       "exchanges": {

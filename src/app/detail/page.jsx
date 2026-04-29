@@ -18,7 +18,7 @@ import OrderBook from '../../components/OrderBook';
 import OneClickAlarmModal from '@/components/OneClickAlarmModal';
 import ExchangePickerModal from '@/components/ExchangePickerModal';
 import { Loading } from '@/components/Loading';
-import { CaretUpIcon, CaretDownIcon, BellIcon } from '@/components/Icons';
+import { CaretUpIcon, CaretDownIcon, BellIcon, ShareIcon } from '@/components/Icons';
 import FloatingRobot from '@/components/FloatingRobot';
 import FloatingRobotPc from '@/components/FloatingRobotPc';
 import AiChatModalPc from '@/components/AiChatModalPc';
@@ -2596,6 +2596,16 @@ ${coinInfo.name || symbol} (${symbol})
         title={coinInfo?.name || symbol || t('detail.title')}
         showBack={true}
         onBack={handleDetailBack}
+        rightContent={(
+          <button
+            type="button"
+            className={styles.navShareBtn}
+            onClick={shareToTelegram}
+            aria-label={t('detail.actions.share')}
+          >
+            <ShareIcon size={18} />
+          </button>
+        )}
         showBorder={false}
       />
 
@@ -2626,27 +2636,23 @@ ${coinInfo.name || symbol} (${symbol})
         <div className={styles.footerList}>
           <div className={styles.footerLeft}>
             <div className={styles.footerItem}>
-              <AddCollect
-                isOwn={fromFavorite ? true : (coinInfo?.isSelfSelected || false)}
-                symbol={symbol}
-              />
+              <div className={styles.footerIconSlot}>
+                <AddCollect
+                  isOwn={fromFavorite ? true : (coinInfo?.isSelfSelected || false)}
+                  symbol={symbol}
+                />
+              </div>
               <div className={styles.footerText}>{t('detail.actions.favorite')}</div>
             </div>
             <div className={styles.footerItem} onClick={jump2Community}>
-              <img
-                className={styles.footerIcon}
-                src="/icons/new_detail/community.svg"
-                alt={t('detail.actions.community')}
-              />
+              <div className={styles.footerIconSlot}>
+                <img
+                  className={styles.footerIcon}
+                  src="/icons/new_detail/community.svg"
+                  alt={t('detail.actions.community')}
+                />
+              </div>
               <div className={styles.footerText}>{t('detail.actions.community')}</div>
-            </div>
-            <div className={styles.footerItem} onClick={shareToTelegram}>
-              <img
-                className={styles.footerIcon}
-                src="/icons/new_detail/share.svg"
-                alt={t('detail.actions.share')}
-              />
-              <div className={styles.footerText}>{t('detail.actions.share')}</div>
             </div>
           </div>
 
@@ -2666,6 +2672,9 @@ ${coinInfo.name || symbol} (${symbol})
                 {t('detail.actions.startNow')}
               </button>
             </div>
+            <button type="button" className={styles.tradeBtnMobile} onClick={handleGoTrade}>
+              {t('detail.actions.goTrade')}
+            </button>
           </div>
         </div>
       </div>
