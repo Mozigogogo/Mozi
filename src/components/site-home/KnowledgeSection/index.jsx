@@ -17,7 +17,7 @@ export default function KnowledgeSection() {
           <br />
           Ask anything, get clarity.
         </p>
-        <AppLink className={`${styles.primaryCta} ${styles.knowledgeCta}`} href="/pc/find">
+        <AppLink className={`${styles.primaryCta} ${styles.knowledgeCta}`} href="/home">
           <span>Learn more</span>
           <GetStartedArrow />
         </AppLink>
