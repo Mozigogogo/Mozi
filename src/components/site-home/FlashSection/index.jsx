@@ -13,7 +13,7 @@ export default function FlashSection() {
         ctaText="Read News"
       />
       <div className={styles.flashPhones}>
-        <div className={styles.flashPhone}>
+        <div className={styles.flashPhoneLeft}>
           <Image src="/images/pc/introduction4_1.svg" alt="flash news left preview" fill className={styles.flashPhoneImage} />
         </div>
         <div className={styles.flashPhoneCluster}>

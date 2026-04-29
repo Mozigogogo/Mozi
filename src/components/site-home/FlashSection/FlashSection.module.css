@@ -27,15 +27,29 @@
   bottom: -4%;
   transform: translateX(-50%);
   width: min(1360px, 94vw);
-  display: flex;
-  align-items: flex-end;
+  /* 下方内容左右两栏：以右侧 cluster 的右边缘为参考来摆放左侧手机 */
+  /* 高度变小时也同步缩放：用 vh 兜底，避免只跟 vw 导致撑满 */
+  --flash-phone-w: min(470px, 35vw, 42vh);
+  --flash-gap: min(8vw, 120px);
+  display: grid;
+  /* 使用 auto/auto + 居中，让整体“两张手机”质心不偏右 */
+  grid-template-columns: auto auto;
   justify-content: center;
-  gap: min(8vw, 120px);
+  align-items: end;
+  column-gap: var(--flash-gap);
 }
 
 .flashPhone {
   position: relative;
-  width: min(470px, 35vw);
+  width: var(--flash-phone-w);
+  aspect-ratio: 551 / 741;
+  border-radius: 34px 34px 0 0;
+  overflow: hidden;
+}
+
+.flashPhoneLeft {
+  position: relative;
+  width: var(--flash-phone-w);
   aspect-ratio: 551 / 741;
   border-radius: 34px 34px 0 0;
   overflow: hidden;
@@ -43,8 +57,7 @@
 
 .flashPhoneCluster {
   position: relative;
-  width: min(470px, 35vw);
-  flex: 0 0 auto;
+  width: var(--flash-phone-w);
 }
 
 .flashPhoneImage {
@@ -61,14 +74,14 @@
 .flashClusterAssetLeft {
   left: -40%;
   top: 13%;
-  width: min(520px, 32vw);
+  width: min(520px, 32vw, 46vh);
   aspect-ratio: 651 / 653;
 }
 
 .flashClusterAssetRight {
   right: -52%;
   top: 32%;
-  width: min(485px, 34vw);
+  width: min(485px, 34vw, 44vh);
   aspect-ratio: 633 / 478;
 }
 
@@ -88,10 +101,17 @@
     transform: none;
     width: 100%;
     margin-top: 26px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
     gap: 16px;
   }
 
   .flashPhone {
+    width: 48%;
+  }
+
+  .flashPhoneLeft {
     width: 48%;
   }
 }

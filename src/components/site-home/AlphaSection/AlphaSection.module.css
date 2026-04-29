@@ -4,15 +4,37 @@
   height: 100vh;
   flex: 0 0 auto;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  /* 使用变量统一控制宽度随高度/宽度动态缩放（同 Flash 的方案） */
+  /* vh 上限调大：避免在常规桌面高度下被 vh 过早限制导致“变太小” */
+  /* vh 上限放宽：避免在常见高度下过度缩小 */
+  --alpha-phone-w: min(780px, 58vw, 76vh);
+  /* 让资产宽度跟随手机宽度同比例缩放，避免“手机变小了但资产还是太大” */
+  --alpha-asset-w: min(300px, calc(var(--alpha-phone-w) * 0.38), 64vh);
   background:
     radial-gradient(640px 280px at 50% 0%, rgba(251, 191, 36, 0.28), transparent 60%),
     linear-gradient(180deg, #995300 0%, #cf7400 44%, #ff9900 100%);
 }
 
+.alphaTop {
+  position: relative;
+  z-index: 4;
+  flex: 0 0 auto;
+}
+
+.alphaBottom {
+  /* 让底部所有绝对定位元素都基于“整屏坐标系”计算（避免拆分后参考系高度变化导致错位） */
+  position: absolute;
+  inset: 0;
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
 .alphaCopy {
   position: relative;
   z-index: 2;
-  margin-top: 64px;
+  margin-top: clamp(28px, 5vh, 64px);
   text-align: center;
 
   /* PromoCopy: 用变量控制对齐/宽度，避免依赖 site.module.css 的后代选择器匹配 */
@@ -29,7 +51,7 @@
 
 .alphaPhone {
   position: relative;
-  width: min(780px, 58vw);
+  width: var(--alpha-phone-w);
   aspect-ratio: 938 / 756;
   overflow: hidden;
   z-index: 1;
@@ -42,25 +64,31 @@
 
 .alphaAsset {
   position: absolute;
-  width: min(300px, 22vw);
-  min-width: 220px;
+  width: var(--alpha-asset-w);
   aspect-ratio: 284 / 192;
   z-index: 3;
 }
 
 .alphaScoreLeft {
-  left: 24%;
-  top: 37%;
+  /* 以 alphaPhoneWrap(手机区域) 为参考系：让 BTC 卡更贴近手机左侧 */
+  left: -12%;
+  top: 30%;
+  /* 把定位点改为“中心点”而不是“左上角”，避免尺寸变化后看起来偏移 */
+  transform: translate(-50%, -50%);
 }
 
 .alphaScoreRight {
-  right: 20%;
-  top: 40%;
+  /* USDT 卡：以手机为参考系保持相对位置 */
+  left: 64%;
+  top: 45%;
+  transform: translate(-50%, -50%);
 }
 
 .alphaScoreBottom {
-  left: 32%;
-  top: 67%;
+  /* ETH 卡：以手机为参考系 */
+  left: 2%;
+  bottom: 2%;
+  transform: translate(-50%, -50%);
 }
 
 .alphaAssetImage {
@@ -70,6 +98,24 @@
 @media (max-width: 1100px) {
   .alphaSection {
     padding: 22px 14px 0;
+    /* 移动端用更小的上限，且同样受高度约束 */
+    --alpha-phone-w: min(340px, 88vw, 70vh);
+    --alpha-asset-w: min(240px, calc(var(--alpha-phone-w) * 0.55), 58vh);
+  }
+
+  .alphaTop,
+  .alphaBottom {
+    width: 100%;
+  }
+
+  .alphaTop {
+    flex: 0 0 auto;
+  }
+
+  .alphaBottom {
+    position: relative;
+    inset: auto;
+    flex: 1 1 auto;
   }
 
   .alphaPhoneWrap,
@@ -84,16 +130,17 @@
 
   .alphaPhoneWrap {
     margin-top: 24px;
-    display: flex;
-    justify-content: center;
+    /* 移动端下让 phone + 资产纵向堆叠，避免 display:flex 导致横向排列 */
+    display: block;
   }
 
   .alphaPhone {
-    width: min(340px, 88vw);
+    width: var(--alpha-phone-w);
+    margin: 0 auto;
   }
 
   .alphaAsset {
-    width: min(240px, 48vw);
+    width: var(--alpha-asset-w);
     margin: 14px auto 0;
   }
 }

@@ -10,18 +10,39 @@
     linear-gradient(120deg, #1398da 0%, #2458b2 50%, #243a94 100%);
 }
 
+.heroCols {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+.leftPane {
+  position: relative;
+  flex: 0 0 48%;
+  height: 100%;
+}
+
+.rightPane {
+  position: relative;
+  flex: 0 0 52%;
+  height: 100%;
+}
+
 .heroLeft {
+  /* 在左侧分区中按“旧版全局坐标”换算：left:20% -> left:41.667% of leftPane, width:30% -> 62.5% of leftPane */
   position: absolute;
-  left: 20%;
+  left: 41.667%;
   top: 28%;
-  width: 30%;
+  width: 62.5%;
 }
 
 .screenFrame {
   position: absolute;
+  left: 0;
   right: 0;
   top: 8%;
-  width: 52%;
+  width: 100%;
   aspect-ratio: 715 / 533;
   border-radius: 16px;
   overflow: hidden;
@@ -34,7 +55,8 @@
 
 .floatCard {
   position: absolute;
-  left: 45%;
+  /* 在右侧分区中按“旧版全局坐标”换算：float left:45% (stage) 相对 rightPane 左边 48% => -5.77% */
+  left: -5.77%;
   top: 56%;
   width: clamp(320px, 32vw, 560px);
   max-width: min(560px, 42vw);
@@ -93,31 +115,47 @@
 }
 
 @media (max-width: 1100px) {
-  .stage {
-    width: 100%;
-    min-height: 100vh;
+  .heroCols {
+    flex-direction: column;
+    height: auto;
   }
 
-  .heroLeft,
-  .screenFrame,
-  .floatCard {
-    position: relative;
-    left: auto;
-    right: auto;
-    top: auto;
+  .stage {
+    height: auto;
+    min-height: 100vh;
+    /* 避免溢出覆盖到下一个 section */
+    overflow: hidden;
+  }
+
+  .leftPane,
+  .rightPane {
+    flex: 0 0 auto;
+    width: 100%;
+    height: auto;
   }
 
   .heroLeft {
+    position: relative;
+    left: auto;
+    top: auto;
     width: 100%;
   }
 
   .screenFrame {
-    margin-top: 20px;
+    position: relative;
+    left: auto;
+    right: auto;
+    top: auto;
     width: 100%;
+    margin-top: 20px;
   }
 
   .floatCard {
-    margin-top: -36px;
+    position: relative;
+    left: auto;
+    top: auto;
     width: 100%;
+    max-width: none;
+    margin-top: -36px;
   }
 }

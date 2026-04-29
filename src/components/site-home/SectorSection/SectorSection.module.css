@@ -9,24 +9,37 @@
     linear-gradient(120deg, #16a37a 0%, #2ecf86 46%, #23c781 100%);
 }
 
-.sectorContent {
+.sectorCols {
   width: 100%;
   height: 100%;
+  display: flex;
+}
+
+.sectorLeftPane {
   position: relative;
+  flex: 0 0 48%;
+  height: 100%;
+}
+
+.sectorRightPane {
+  position: relative;
+  flex: 0 0 52%;
+  height: 100%;
 }
 
 .sectorLeft {
   position: absolute;
-  left: 20%;
+  /* 20%（stage） -> 41.667%（leftPane，48%宽） */
+  left: 41.667%;
   top: 28%;
   z-index: 2;
 }
 
 .sectorPreview {
   position: absolute;
-  right: 0;
+  left: 0;
   top: 8%;
-  width: 52%;
+  width: 100%;
   aspect-ratio: 715 / 533;
   border-radius: 16px;
   overflow: hidden;
@@ -38,7 +51,7 @@
 }
 
 @media (max-width: 1100px) {
-  .sectorContent {
+  .sectorCols {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -46,20 +59,28 @@
     padding: 70px 14px 0;
   }
 
-  .sectorLeft,
-  .sectorPreview {
+  .sectorLeftPane,
+  .sectorRightPane {
     position: relative;
     left: auto;
     right: auto;
     top: auto;
     bottom: auto;
+    flex: 0 0 auto;
+    width: 100%;
   }
 
   .sectorLeft {
     width: 100%;
+    left: auto;
+    top: auto;
   }
 
   .sectorPreview {
+    position: relative;
+    left: auto;
+    right: auto;
+    top: auto;
     margin-top: 24px;
     width: 100%;
   }
