@@ -3,7 +3,7 @@
 import { useTranslation } from 'react-i18next';
 import styles from './index.module.less';
 
-export default function SocialMediaPopup() {
+export default function SocialMediaPopup({ isPC = false }) {
   const { t } = useTranslation();
 
   const socialLinks = [
@@ -35,7 +35,7 @@ export default function SocialMediaPopup() {
   };
 
   return (
-    <div className={styles.container}>
+    <div className={`${styles.container} ${isPC ? styles.pcMode : ''}`}>
       <div className={styles.title}>{t('socialMedia.title')}</div>
       <div className={styles.socialGrid}>
         {socialLinks.map((social) => (
