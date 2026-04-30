@@ -83,7 +83,10 @@ export default function UserProfile({ params }) {
   const [watchlistLoading, setWatchlistLoading] = useState(true);
   const [watchlist, setWatchlist] = useState([]);
   const [watchlistError, setWatchlistError] = useState(false);
-  const [isPC, setIsPC] = useState(false);
+  const [isPC, setIsPC] = useState(() => {
+    if (typeof window === 'undefined') return null;
+    return window.innerWidth >= 1024;
+  });
   const [profile, setProfile] = useState(EMPTY_PROFILE);
   const [followLoading, setFollowLoading] = useState(false);
   const targetUserId = decodeURIComponent(
@@ -104,6 +107,7 @@ export default function UserProfile({ params }) {
   }, []);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
     const checkDevice = () => {
       setIsPC(window.innerWidth >= 1024);
     };
@@ -262,6 +266,10 @@ export default function UserProfile({ params }) {
       cancelled = true;
     };
   }, [targetUserId, activeTab]);
+
+  if (isPC === null) {
+    return null;
+  }
 
   if (isPC) {
     return (
