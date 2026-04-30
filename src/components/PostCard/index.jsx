@@ -1,5 +1,6 @@
 'use client';
 
+import { memo, useCallback, useMemo } from 'react';
 import { Dropdown } from 'antd';
 import { EllipsisOutlined, WarningOutlined, DeleteOutlined } from '@ant-design/icons';
 import { Toast } from 'antd-mobile';
@@ -29,7 +30,7 @@ const shareIcon = `${CDN_ICON}/share.png`;
  * @param {boolean} isPC - 是否为PC端
  * @param {boolean} enableReportMenu - 是否显示右上角举报菜单（移动端默认false）
  */
-export default function PostCard({
+function PostCard({
   post,
   onPostClick,
   onUserClick,
@@ -46,8 +47,8 @@ export default function PostCard({
 }) {
   const router = useRouter();
   const { t } = useTranslation();
-  const normalizeId = (value) => String(value ?? '').trim();
-  const localStorageUserId = (() => {
+  const normalizeId = useCallback((value) => String(value ?? '').trim(), []);
+  const localStorageUserId = useMemo(() => {
     if (typeof window === 'undefined') return '';
     const directUserId = localStorage.getItem('userId');
     if (directUserId) return normalizeId(directUserId);
@@ -64,8 +65,11 @@ export default function PostCard({
     } catch (error) {
       return '';
     }
-  })();
-  const postOwnerId = normalizeId(post?.userId || post?.authorId || post?.user?.id || post?.user?.userId);
+  }, [normalizeId]);
+  const postOwnerId = useMemo(
+    () => normalizeId(post?.userId || post?.authorId || post?.user?.id || post?.user?.userId),
+    [post?.authorId, post?.user?.id, post?.user?.userId, post?.userId, normalizeId]
+  );
   const isPostOwner = !!localStorageUserId && !!postOwnerId && localStorageUserId === postOwnerId;
 
   const handleReportNavigate = () => {
@@ -275,3 +279,14 @@ export default function PostCard({
     </div>
   );
 }
+
+const areEqual = (prevProps, nextProps) => {
+  if (prevProps.isPC !== nextProps.isPC) return false;
+  if (prevProps.isLiked !== nextProps.isLiked) return false;
+  if (prevProps.showFooterDivider !== nextProps.showFooterDivider) return false;
+  if (prevProps.enableReportMenu !== nextProps.enableReportMenu) return false;
+  if (prevProps.post !== nextProps.post) return false;
+  return true;
+};
+
+export default memo(PostCard, areEqual);

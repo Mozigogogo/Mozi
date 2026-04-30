@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { SpinLoading } from 'antd-mobile';
 import styles from './index.module.less';
 
 const CDN_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community';
 const likeIcon = `${CDN_ICON}/like-no-active.png`;
+const likeActiveIcon = `${CDN_ICON}/like-active.png`;
 const commentIcon = `${CDN_ICON}/comment.png`;
 const shareIcon = `${CDN_ICON}/share.png`;
 const DEFAULT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png';
@@ -19,6 +21,8 @@ export default function PostDetailModal({
   onClose,
   post = {},
   comments = [],
+  variant = 'post', // 'post' | 'topic'
+  loading = false,
   onFollow,
   onLike,
   onComment,
@@ -106,25 +110,32 @@ export default function PostDetailModal({
     likeCount = 356,
     commentCount = 211,
     shareCount = 2,
+    isFollowing = false,
+    isLiked = false,
   } = post;
+
+  const isTopic = variant === 'topic';
+  const listTitle = isTopic ? `共 ${comments.length || commentCount} 条帖子` : `共 ${comments.length || commentCount} 条评论`;
 
   return (
     <div className={styles.overlay} role="dialog" aria-modal="true">
       <div className={styles.modal}>
         <div className={styles.leftPane}>
           <img className={styles.cover} src={coverImage} alt="post cover" />
-          <div className={styles.leftFooter}>
-            <div className={styles.authorInfo}>
-              <img className={styles.avatar} src={authorAvatar} alt="avatar" />
-              <div>
-                <div className={styles.authorName}>{authorName}</div>
-                <div className={styles.authorTime}>{formatTime(timeText)}</div>
+          {!isTopic && (
+            <div className={styles.leftFooter}>
+              <div className={styles.authorInfo}>
+                <img className={styles.avatar} src={authorAvatar} alt="avatar" />
+                <div>
+                  <div className={styles.authorName}>{authorName}</div>
+                  <div className={styles.authorTime}>{formatTime(timeText)}</div>
+                </div>
               </div>
+              <button type="button" className={styles.followBtn} onClick={() => onFollow?.(post)}>
+                {isFollowing ? '已关注' : '+关注'}
+              </button>
             </div>
-            <button type="button" className={styles.followBtn} onClick={() => onFollow?.(post)}>
-              +关注
-            </button>
-          </div>
+          )}
         </div>
 
         <div className={styles.rightPane}>
@@ -144,74 +155,110 @@ export default function PostDetailModal({
             </div>
           </div>
 
-          <div className={styles.commentTitle}>共 {comments.length || commentCount} 条评论</div>
+          <div className={styles.commentTitle}>{listTitle}</div>
           <div className={styles.commentList}>
-            {comments.map((item) => (
-              <div key={item.id} className={styles.commentItem}>
-                <img className={styles.commentAvatar} src={item.avatar || '/default-avatar.png'} alt="avatar" />
-                <div className={styles.commentBody}>
-                  <div className={styles.commentMeta}>
-                    <span className={styles.commentUser}>{item.username || '示例用户'}</span>
-                    <span className={styles.commentTime}>{formatTime(item.time || '45分钟前')}</span>
-                  </div>
-                  <div className={styles.commentText}>{item.content || ''}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className={styles.actionBar}>
-            <button type="button" className={styles.actionBtn} onClick={() => onLike?.(post)}>
-              <img className={styles.actionIconImg} src={likeIcon} alt="like" />
-              <span>{likeCount}</span>
-            </button>
-            <button type="button" className={styles.actionBtn} onClick={() => onComment?.(post)}>
-              <img className={styles.actionIconImg} src={commentIcon} alt="comment" />
-              <span>{commentCount}</span>
-            </button>
-            <button
-              type="button"
-              className={`${styles.actionBtn} ${styles.shareBtn}`}
-              onClick={() => onShare?.(post)}
-            >
-              <img className={styles.actionIconImg} src={shareIcon} alt="share" />
-              <span>{shareCount}</span>
-            </button>
-          </div>
-
-          <div className={styles.inputBar}>
-            <img
-              className={styles.inputAvatar}
-              src={resolvedCurrentUserAvatar}
-              alt="current user avatar"
-              onError={(e) => {
-                e.currentTarget.src = DEFAULT_AVATAR;
-              }}
-            />
-            <div className={styles.inputWrap}>
-              <input
-                className={styles.input}
-                placeholder="说点什么..."
-                value={commentValue}
-                onChange={(e) => setCommentValue(e.currentTarget.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleSubmitComment();
-                  }
+            {loading ? (
+              <div
+                style={{
+                  height: '220PX',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'column',
+                  gap: '8PX',
+                  color: '#9CA3AF',
+                  fontSize: '14PX',
                 }}
-              />
+              >
+                <SpinLoading color="#00b578" style={{ '--size': '24PX' }} />
+                <span>Loading...</span>
+              </div>
+            ) : (
+              comments.map((item) => (
+                <div key={item.id} className={styles.commentItem}>
+                  <img className={styles.commentAvatar} src={item.avatar || '/default-avatar.png'} alt="avatar" />
+                  <div className={styles.commentBody}>
+                    <div className={styles.commentMeta}>
+                      <span className={styles.commentUser}>{item.username || '示例用户'}</span>
+                      <span className={styles.commentTime}>{formatTime(item.time || '45分钟前')}</span>
+                    </div>
+                    <div className={styles.commentText}>{item.content || ''}</div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {!isTopic && (
+            <div className={styles.actionBar}>
               <button
                 type="button"
-                className={styles.sendBtn}
-                onClick={handleSubmitComment}
-                aria-label="send comment"
-                disabled={submitting || !String(commentValue || '').trim()}
+                className={`${styles.actionBtn} ${isLiked ? styles.actionBtnActive : ''}`}
+                onClick={() => onLike?.(post)}
               >
-                发送
+                <img
+                  className={`${styles.actionIconImg} ${isLiked ? styles.actionIconActive : ''}`}
+                  src={isLiked ? likeActiveIcon : likeIcon}
+                  alt="like"
+                  onError={(e) => {
+                    // CDN 里若没有 active 图标，则回退到默认图标 + 颜色高亮
+                    if (e.currentTarget.src.includes('like-active')) {
+                      e.currentTarget.src = likeIcon;
+                    }
+                  }}
+                />
+                <span>{likeCount}</span>
+              </button>
+              <button type="button" className={styles.actionBtn} onClick={() => onComment?.(post)}>
+                <img className={styles.actionIconImg} src={commentIcon} alt="comment" />
+                <span>{commentCount}</span>
+              </button>
+              <button
+                type="button"
+                className={`${styles.actionBtn} ${styles.shareBtn}`}
+                onClick={() => onShare?.(post)}
+              >
+                <img className={styles.actionIconImg} src={shareIcon} alt="share" />
+                <span>{shareCount}</span>
               </button>
             </div>
-          </div>
+          )}
+
+          {!isTopic && (
+            <div className={styles.inputBar}>
+              <img
+                className={styles.inputAvatar}
+                src={resolvedCurrentUserAvatar}
+                alt="current user avatar"
+                onError={(e) => {
+                  e.currentTarget.src = DEFAULT_AVATAR;
+                }}
+              />
+              <div className={styles.inputWrap}>
+                <input
+                  className={styles.input}
+                  placeholder="说点什么..."
+                  value={commentValue}
+                  onChange={(e) => setCommentValue(e.currentTarget.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleSubmitComment();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  className={styles.sendBtn}
+                  onClick={handleSubmitComment}
+                  aria-label="send comment"
+                  disabled={submitting || !String(commentValue || '').trim()}
+                >
+                  发送
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

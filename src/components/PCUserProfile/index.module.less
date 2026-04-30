@@ -55,10 +55,21 @@
 
 .nameRow {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: flex-start;
   gap: 12px;
   margin-bottom: 6px;
+}
+
+.followBtn {
+  border: none;
+  height: 32PX;
+  padding: 0 14PX;
+  border-radius: 16PX;
+  background: #11B787;
+  color: #fff;
+  font-size: 14PX;
+  cursor: pointer;
 }
 
 .nickname {
@@ -180,6 +191,11 @@
   min-height: 400px;
 }
 
+.watchlistSection {
+  display: flex;
+  flex-direction: column;
+}
+
 .tableHeader {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
@@ -261,9 +277,17 @@
 }
 
 .paginationWrapper {
-  margin-top: 24px;
+  margin-top: auto;
+  padding-top: 24px;
   display: flex;
   justify-content: center;
+}
+
+.noData {
+  padding: 28PX 0;
+  text-align: center;
+  color: #999;
+  font-size: 14PX;
 }
 
 /* Align headers */

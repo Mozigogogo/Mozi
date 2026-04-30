@@ -6,6 +6,75 @@
   flex-direction: column;
 }
 
+.pcMode {
+  background: #fff;
+  border-radius: 24PX;
+  min-height: 560PX;
+  overflow: hidden;
+}
+
+.pcMode .sideBox {
+  height: 100%;
+}
+
+.pcMode .side {
+  background: #F8FAFC;
+}
+
+.pcMode .sidebar {
+  width: 170PX;
+}
+
+.pcMode .sidebarItem {
+  padding: 0 8PX;
+  font-size: 14PX;
+  color: #374151;
+  min-height: 58PX;
+  display: flex;
+  align-items: center;
+}
+
+.pcMode .sidebarIcon {
+  width: 22PX;
+  height: 22PX;
+  margin-right: 10PX;
+}
+
+.pcMode .main {
+  padding: 0 20PX;
+}
+
+.pcMode .mainItem {
+  min-height: 58PX;
+  padding: 10PX 8PX;
+  border-bottom: 1PX solid #F1F5F9;
+}
+
+.pcMode .contentLabel {
+  width: 160PX;
+  font-size: 14PX;
+}
+
+.pcMode .contentText {
+  max-width: 210PX;
+  min-width: 120PX;
+  min-height: 28PX;
+  font-size: 14PX;
+  padding: 4PX 10PX;
+}
+
+.pcMode .switchWrapper {
+  min-width: 58PX;
+}
+
+.pcMode .deleteCoinBtn {
+  margin: 24PX 0 0;
+}
+
+.pcMode .deleteCoinText {
+  font-size: 14PX;
+}
+
 .errorBox {
   display: flex;
   justify-content: center;
@@ -87,11 +156,13 @@
 .contentText {
   cursor: pointer;
   padding: 4px 6px;
+  min-height: 28px;
   border-radius: 4px;
   transition: all 0.2s;
   border: 1px solid #ddd;
   background-color: #fff;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   flex: 1;
   max-width: 120px;
   min-width: 80px; /* 设置最小宽度 */
@@ -364,10 +435,12 @@
   display: none !important; /* 去掉蓝色竖线 */
 }
 
-/* 缩小每个侧边栏项的高度 */
-.sidebar :global(.adm-side-bar-item) {
-  padding: 8px 8px !important;
-  min-height: 36px;
+/* 缩小每个侧边栏项的高度（仅 PC 模式） */
+.pcMode .sidebar :global(.adm-side-bar-item) {
+  padding: 8PX 8PX !important;
+  min-height: 58PX;
+  display: flex;
+  align-items: center;
 }
 
 /* 激活项样式：保持绿色文字，移除左侧竖线/阴影 */

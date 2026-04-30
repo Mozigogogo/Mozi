@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Empty, message, Spin } from 'antd';
+import { useState, useEffect, useRef } from 'react';
+import { Empty, message } from 'antd';
+import { SpinLoading } from 'antd-mobile';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { request } from '@/utils/request';
@@ -20,7 +21,7 @@ import PCPublishComposer from '@/components/PCPublishComposer';
 import PCFlashNewsCard from '@/components/PCFlashNewsCard';
 import PCPagination from '@/components/PCPagination';
 import PostDetailModal from '@/components/PostDetailModal';
-import { dislikePost, undislikePost } from '@/api/community';
+import { dislikePost, undislikePost, followUser, getUserFollowStatus, unfollowUser } from '@/api/community';
 import styles from './index.module.less';
 
 /**
@@ -65,6 +66,31 @@ export default function PCCommunityContent() {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [detailModalPost, setDetailModalPost] = useState(null);
   const [detailModalComments, setDetailModalComments] = useState([]);
+  const [detailModalVariant, setDetailModalVariant] = useState('post'); // 'post' | 'topic'
+  const [detailModalLoading, setDetailModalLoading] = useState(false);
+  const [detailFollowSubmitting, setDetailFollowSubmitting] = useState(false);
+  // 解决 coin/discover/qa 三个 tab 快速切换导致的请求竞态
+  const coinPostsRequestIdRef = useRef(0);
+
+  const getBackendErrorMsg = (err) => {
+    if (!err) return '';
+    const candidates = [
+      err?.errorMsg,
+      err?.errormsg,
+      err?.msg,
+      err?.message,
+      err?.data?.errorMsg,
+      err?.data?.errormsg,
+      err?.data?.msg,
+      err?.data?.message,
+      err?.response?.data?.errorMsg,
+      err?.response?.data?.errormsg,
+      err?.response?.data?.msg,
+      err?.response?.data?.message,
+    ];
+    const hit = candidates.find((v) => typeof v === 'string' && v.trim());
+    return hit ? hit.trim() : '';
+  };
   
   // 固定币种配置
   const coinTabs = [
@@ -117,13 +143,18 @@ export default function PCCommunityContent() {
   };
 
   // 获取快讯（与移动端一致：/posts?userType=virtual）
-  const fetchFlashNews = async (nextPage = flashNewsPage) => {
-    if (flashNewsLoading) return;
+  const fetchFlashNews = async (nextPage = flashNewsPage, force = false) => {
+    if (flashNewsLoading && !force) return;
     setFlashNewsLoading(true);
     try {
       const res = await request({
         url: Interface.POSTS_API,
-        data: { page: nextPage, size: FLASH_NEWS_PAGE_SIZE, userType: 'virtual' },
+        data: {
+          page: nextPage,
+          size: FLASH_NEWS_PAGE_SIZE,
+          userType: 'virtual',
+          _t: Date.now(), // 避免缓存导致看起来未刷新
+        },
       });
       const list = res?.data?.data || [];
       const total = res?.data?.total ?? 0;
@@ -139,6 +170,7 @@ export default function PCCommunityContent() {
         return {
           id: item?.id,
           account: nickName || t('community.tabs.news'),
+          avatar: item?.avatar || item?.userAvatar || item?.headImg || '',
           tag: category || t('pcCommunity.newsTag'),
           time: formatTimeAgo(timeSource),
           title: title || content.slice(0, 40) || t('community.tabs.news'),
@@ -182,6 +214,7 @@ export default function PCCommunityContent() {
 
   // 获取左侧帖子（币种 / 发现好币 / 不懂就问）
   const fetchCoinPosts = async (coin, nextPage = 1, tabKey = activeCapsuleTab) => {
+    const requestId = ++coinPostsRequestIdRef.current;
     setCoinLoading(true);
     try {
       const requestData = {
@@ -198,6 +231,9 @@ export default function PCCommunityContent() {
         url: Interface.POSTS_API,
         data: requestData
       });
+
+      // 仅允许最后一次请求回写，旧请求结果直接丢弃
+      if (requestId !== coinPostsRequestIdRef.current) return;
       
       if (response?.data?.data?.length > 0) {
         const totalRaw = response?.data?.total;
@@ -235,9 +271,11 @@ export default function PCCommunityContent() {
       }
     } catch (error) {
       console.error('获取币种帖子失败:', error);
+      if (requestId !== coinPostsRequestIdRef.current) return;
       setCoinPosts([]);
       setCoinPostsTotal(0);
     } finally {
+      if (requestId !== coinPostsRequestIdRef.current) return;
       setCoinLoading(false);
     }
   };
@@ -406,7 +444,11 @@ export default function PCCommunityContent() {
     const url = isLiked ? `${Interface.POSTS_UNLIKE}/${postId}` : `${Interface.POSTS_LIKE}/${postId}`;
     
     try {
-      await request({ url, method: 'GET' });
+      const res = await request({ url, method: 'GET' });
+      const ok = res?.success === true || res?.code === 0;
+      if (!ok) {
+        throw res;
+      }
       
       setLikedPosts(prev => ({
         ...prev,
@@ -437,7 +479,7 @@ export default function PCCommunityContent() {
       }
     } catch (error) {
       console.error('点赞失败:', error);
-      message.error(t('common.operationFailed'));
+      message.error(getBackendErrorMsg(error) || t('common.operationFailed'));
     }
   };
 
@@ -482,7 +524,7 @@ export default function PCCommunityContent() {
       }
     } catch (error) {
       console.error(`${isDisliked ? '取消点踩' : '点踩'}失败:`, error);
-      message.error(t('common.operationFailed'));
+      message.error(getBackendErrorMsg(error) || t('common.operationFailed'));
 
       setDislikedPosts((prev) => ({
         ...prev,
@@ -525,6 +567,153 @@ export default function PCCommunityContent() {
   const handleShare = (post) => {
     // 实现分享逻辑
     console.log('分享帖子:', post);
+  };
+
+  // 弹窗内点赞（同步更新弹窗计数）
+  const handleDetailLike = async (post) => {
+    if (detailModalVariant !== 'post') return;
+    const postId = post?.id ?? detailModalPost?.id;
+    if (!postId) return;
+    const currentLiked = detailModalPost?.isLiked ?? likedPosts[postId] ?? false;
+    const url = currentLiked ? `${Interface.POSTS_UNLIKE}/${postId}` : `${Interface.POSTS_LIKE}/${postId}`;
+
+    // optimistic: icon + count
+    setLikedPosts((prev) => ({ ...prev, [postId]: !currentLiked }));
+    setDetailModalPost((prev) => {
+      if (!prev || String(prev.id) !== String(postId)) return prev;
+      return {
+        ...prev,
+        isLiked: !currentLiked,
+        likeCount: currentLiked ? Math.max((prev.likeCount || 0) - 1, 0) : (prev.likeCount || 0) + 1,
+      };
+    });
+
+    try {
+      const res = await request({ url, method: 'GET' });
+      const ok = res?.success === true || res?.code === 0;
+      if (!ok) {
+        throw res;
+      }
+
+      if (!currentLiked) {
+        try {
+          await request({
+            url: Interface.TASK_COMPLETE,
+            method: 'POST',
+            data: { taskCode: 'DAILY_LIKE' },
+          });
+        } catch (taskError) {
+          console.error('每日点赞任务上报失败:', taskError);
+        }
+      }
+    } catch (error) {
+      console.error('点赞失败:', error);
+      // rollback
+      setLikedPosts((prev) => ({ ...prev, [postId]: currentLiked }));
+      setDetailModalPost((prev) => {
+        if (!prev || String(prev.id) !== String(postId)) return prev;
+        return {
+          ...prev,
+          isLiked: currentLiked,
+          likeCount: currentLiked ? (prev.likeCount || 0) + 1 : Math.max((prev.likeCount || 0) - 1, 0),
+        };
+      });
+      message.error(getBackendErrorMsg(error) || t('common.operationFailed'));
+    }
+  };
+
+  // 弹窗内分享（PC：复制链接 / 支持则系统分享）
+  const handleDetailShare = async (post) => {
+    if (detailModalVariant !== 'post') return;
+    const postId = post?.id ?? detailModalPost?.id;
+    if (!postId) return;
+    const link =
+      typeof window !== 'undefined'
+        ? `${window.location.origin}/commentinfo?id=${encodeURIComponent(String(postId))}`
+        : '';
+
+    try {
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        await navigator.share({ url: link });
+      } else if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(link);
+        message.success(t('pcCommunity.linkCopied', { defaultValue: '链接已复制' }));
+      } else {
+        message.info(link);
+      }
+      setDetailModalPost((prev) => {
+        if (!prev || String(prev.id) !== String(postId)) return prev;
+        return {
+          ...prev,
+          shareCount: (prev.shareCount || 0) + 1,
+        };
+      });
+    } catch (e) {
+      console.error('分享失败:', e);
+      message.error(getBackendErrorMsg(e) || t('common.operationFailed'));
+    }
+  };
+
+  const handleDetailFollow = async (post) => {
+    if (detailModalVariant !== 'post') return;
+    const authorId = post?.authorId ?? detailModalPost?.authorId;
+    const id = String(authorId || '').trim();
+    if (!id) {
+      message.error(t('pcCommunity.userIdMissing'));
+      return;
+    }
+    const token = localStorage.getItem('token');
+    if (!token) {
+      message.warning(t('post.messages.pleaseLogin'));
+      return;
+    }
+    // 不能关注自己
+    try {
+      const raw = localStorage.getItem('userInfo');
+      const me = raw ? JSON.parse(raw) : {};
+      const myId = String(me?.userId ?? me?.uid ?? me?.id ?? me?.user?.userId ?? '').trim();
+      if (myId && myId === id) {
+        message.warning(t('pcCommunity.cannotFollowSelf', { defaultValue: '不能关注自己' }));
+        return;
+      }
+    } catch (_) {}
+    if (detailFollowSubmitting) return;
+
+    const nextIsFollowing = !(detailModalPost?.isFollowing ?? false);
+    setDetailFollowSubmitting(true);
+    setDetailModalPost((prev) => {
+      if (!prev) return prev;
+      if (String(prev.authorId || '') !== id) return prev;
+      return { ...prev, isFollowing: nextIsFollowing };
+    });
+
+    try {
+      if (nextIsFollowing) {
+        const res = await followUser(id);
+        const ok = res?.success === true || res?.code === 0;
+        if (!ok) {
+          throw res;
+        }
+        message.success(t('pcCommunity.followSuccess', { defaultValue: '已关注' }));
+      } else {
+        const res = await unfollowUser(id);
+        const ok = res?.success === true || res?.code === 0;
+        if (!ok) {
+          throw res;
+        }
+        message.success(t('pcCommunity.unfollowSuccess', { defaultValue: '已取消关注' }));
+      }
+    } catch (e) {
+      console.error('关注操作失败:', e);
+      setDetailModalPost((prev) => {
+        if (!prev) return prev;
+        if (String(prev.authorId || '') !== id) return prev;
+        return { ...prev, isFollowing: !nextIsFollowing };
+      });
+      message.error(getBackendErrorMsg(e) || t('common.operationFailed'));
+    } finally {
+      setDetailFollowSubmitting(false);
+    }
   };
 
   // 查询帖子最新评论（与移动端评论查询接口一致）
@@ -574,6 +763,7 @@ export default function PCCommunityContent() {
           coverImage: detail?.images?.[0] || prev.coverImage,
           authorName: detail?.nickName || prev.authorName,
           authorAvatar: detail?.avatar || prev.authorAvatar,
+          authorId: detail?.userId ?? detail?.uid ?? prev.authorId,
           timeText: formatTimeAgo(detail?.updatedAt || detail?.createdAt) || prev.timeText,
           title: detail?.title || prev.title,
           description: detail?.content || prev.description,
@@ -582,6 +772,12 @@ export default function PCCommunityContent() {
               ? detail.tags.map((tag) => String(tag?.name || '').trim()).filter(Boolean)
               : prev.tags,
           likeCount: detail?.likeCnt ?? detail?.likeCount ?? prev.likeCount ?? 0,
+          isLiked:
+            (detail?.isLikedByCurrentUser ??
+              detail?.isLiked ??
+              detail?.liked ??
+              prev.isLiked) ||
+            false,
           commentCount: detail?.commentCnt ?? detail?.commentCount ?? prev.commentCount ?? 0,
           shareCount: detail?.shareCnt ?? detail?.shareCount ?? prev.shareCount ?? 0,
         };
@@ -589,6 +785,35 @@ export default function PCCommunityContent() {
     } catch (error) {
       console.error('获取帖子详情失败:', error);
     }
+  };
+
+  const resolveFollowStatus = (res) => {
+    const direct = res?.data ?? res;
+    if (typeof direct === 'boolean') return direct;
+    if (typeof direct === 'number') return direct === 1;
+    if (typeof direct === 'string') return direct === 'true' || direct === '1';
+    if (typeof direct === 'object' && direct) {
+      if (typeof direct.isFollowing === 'boolean') return direct.isFollowing;
+      if (typeof direct.following === 'boolean') return direct.following;
+      if (typeof direct.status === 'boolean') return direct.status;
+    }
+    return false;
+  };
+
+  const syncDetailFollowStatus = async (authorId) => {
+    const id = String(authorId || '').trim();
+    if (!id) return;
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const res = await getUserFollowStatus(id);
+      const isFollowing = resolveFollowStatus(res);
+      setDetailModalPost((prev) => {
+        if (!prev) return prev;
+        if (String(prev.authorId || '') !== id) return prev;
+        return { ...prev, isFollowing };
+      });
+    } catch (_) {}
   };
 
   // 弹窗内提交评论（与移动端一致调用 /comments/new）
@@ -673,7 +898,30 @@ export default function PCCommunityContent() {
   const goToPostDetail = (postId) => {
     const target = coinPosts.find((post) => String(post.id) === String(postId));
     if (!target) {
-      router.push(`/commentinfo?id=${postId}`);
+      // 允许从右侧快讯/其他来源打开弹窗：先用最小数据占位，再用详情接口覆盖
+      const targetPostId = String(postId || '').trim();
+      if (!targetPostId) return;
+
+      setDetailModalPost({
+        id: targetPostId,
+        coverImage: undefined,
+        authorName: t('myNotices.anonymousUser'),
+        authorAvatar: '/default-avatar.png',
+        authorId: '',
+        isFollowing: false,
+        isLiked: likedPosts[targetPostId] ?? false,
+        timeText: '',
+        title: t('pcCommunity.postDetailTitle'),
+        description: '',
+        tags: [selectedCoin || 'Mozi'],
+        likeCount: 0,
+        commentCount: 0,
+        shareCount: 0,
+      });
+      setDetailModalOpen(true);
+      setDetailModalVariant('post');
+      fetchPostDetail(targetPostId);
+      fetchDetailComments(targetPostId);
       return;
     }
 
@@ -682,6 +930,9 @@ export default function PCCommunityContent() {
       coverImage: target.images?.[0] || undefined,
       authorName: target.username || t('myNotices.anonymousUser'),
       authorAvatar: target.avatar || '/default-avatar.png',
+      authorId: target.userId || '',
+      isFollowing: false,
+      isLiked: likedPosts[target.id] ?? target.isLiked ?? false,
       timeText: formatTimeAgo(target.createTime || target.updatedAt || target.createdAt),
       title: target.title || t('pcCommunity.postDetailTitle'),
       description: target.content || '',
@@ -695,17 +946,86 @@ export default function PCCommunityContent() {
 
     setDetailModalPost(mapped);
     setDetailModalOpen(true);
+    setDetailModalVariant('post');
     fetchPostDetail(target.id);
     fetchDetailComments(target.id);
+    syncDetailFollowStatus(mapped.authorId);
   };
 
-  // 跳转到话题详情页
-  const goToTopicDetail = (topicId, name, description = null) => {
-    const defaultDesc = description || t('community.actions.noDescription');
-    router.push(`/topicinfo?id=${topicId}&title=${name}&description=${defaultDesc}`);
+  // PC: 话题榜单点击也复用同一套详情弹窗（PostDetailModal），只替换数据源
+  const openTopicInDetailModal = async (topicId, name, description = null) => {
+    const id = String(topicId || '').trim();
+    if (!id) return;
+    setDetailModalVariant('topic');
+    setDetailModalComments([]);
+    setDetailModalLoading(true);
+    setDetailModalPost({
+      id: `topic-${id}`,
+      coverImage: '/images/community/post_detail.png',
+      authorName: t('pcCommunity.hotRankingTitle'),
+      authorAvatar: '/default-avatar.png',
+      timeText: '',
+      title: name || '',
+      description: description || t('community.actions.noDescription'),
+      tags: [String(name || '').replace(/^#/, '')].filter(Boolean),
+      likeCount: 0,
+      commentCount: 0,
+      shareCount: 0,
+    });
+    setDetailModalOpen(true);
+
+    try {
+      // 拉取话题详情（补全 description）
+      const detailRes = await request({
+        url: Interface.TOPIC_DETAIL,
+        data: { id },
+      });
+      const detail = detailRes?.data;
+      if (detail) {
+        setDetailModalPost((prev) => {
+          if (!prev || prev.id !== `topic-${id}`) return prev;
+          return {
+            ...prev,
+            title: detail?.name || prev.title,
+            description: detail?.description || prev.description,
+            tags: [String(detail?.name || prev.title || '').replace(/^#/, '')].filter(Boolean),
+          };
+        });
+      }
+    } catch (e) {
+      // ignore topic detail failure
+    }
+
+    try {
+      // 拉取话题下帖子列表，用 comments 区域展示
+      const postsRes = await request({
+        url: `${Interface.TOPIC_POSTS}/${id}`,
+        data: { page: 1, size: 20 },
+      });
+      const list = Array.isArray(postsRes?.data?.data) ? postsRes.data.data : [];
+      const mapped = list.map((item) => ({
+        id: item?.id,
+        avatar: item?.avatar || '/default-avatar.png',
+        username: item?.nickName || item?.nickname || t('myNotices.anonymousUser'),
+        time: formatTimeAgo(item?.updatedAt || item?.createdAt),
+        content: item?.title || item?.content || '',
+      }));
+      setDetailModalComments(mapped);
+      setDetailModalPost((prev) => {
+        if (!prev || prev.id !== `topic-${id}`) return prev;
+        return {
+          ...prev,
+          commentCount: mapped.length,
+        };
+      });
+    } catch (e) {
+      setDetailModalComments([]);
+    } finally {
+      setDetailModalLoading(false);
+    }
   };
 
-  // 跳转到发帖页面
+  // 热门榜单的「Create Topic」入口（保持原行为：跳转到发帖页创建）
   const goToPostPage = () => {
     router.push('/post');
   };
@@ -757,7 +1077,7 @@ export default function PCCommunityContent() {
         leftContent={
           <div className={styles.leftContentWrapper}>
             <div className={styles.leftTopComposer}>
-              <PCPublishComposer onPublish={goToPostPage} />
+              <PCPublishComposer onPublish={() => fetchCoinPosts(selectedCoin, 1, activeCapsuleTab)} />
             </div>
             <div
               className={`${styles.leftPanelContainer} ${isDiscoveryLikeTab ? styles.leftPanelPlain : ''}`}
@@ -801,7 +1121,20 @@ export default function PCCommunityContent() {
               <div className={styles.leftContentMain}>
                 {coinLoading ? (
                   <div className={styles.loadingContainer}>
-                    <Spin tip={t('common.loading')} />
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        gap: '8PX',
+                      }}
+                    >
+                      <SpinLoading color="#00b578" style={{ '--size': '24PX' }} />
+                      <span style={{ fontSize: '14PX', color: '#999' }}>
+                        {t('community.actions.loading')}
+                      </span>
+                    </div>
                   </div>
                 ) : coinPosts.length > 0 ? (
                   <div
@@ -876,7 +1209,8 @@ export default function PCCommunityContent() {
               <PCFlashNewsCard
                 items={flashNewsItems}
                 loading={flashNewsLoading}
-                onRefresh={() => fetchFlashNews(1)}
+                onRefresh={() => fetchFlashNews(1, true)}
+                onItemClick={(item) => goToPostDetail(item?.id)}
                 page={flashNewsPage}
                 pageSize={FLASH_NEWS_PAGE_SIZE}
                 total={flashNewsTotal}
@@ -891,7 +1225,7 @@ export default function PCCommunityContent() {
                 loading={hotTopicsLoading}
                 allLoaded={false}
                 pullRefresh={false}
-                onTopicClick={goToTopicDetail}
+                onTopicClick={openTopicInDetailModal}
                 onCreateTopic={goToPostPage}
                 nov1Icon={nov1Icon}
                 nov2Icon={nov2Icon}
@@ -914,13 +1248,18 @@ export default function PCCommunityContent() {
         onClose={() => {
           setDetailModalOpen(false);
           setDetailModalComments([]);
+          setDetailModalVariant('post');
+          setDetailModalLoading(false);
+          setDetailFollowSubmitting(false);
         }}
         post={detailModalPost || {}}
         comments={detailModalComments}
-        onFollow={() => message.info(t('pcCommunity.featureInProgress.follow'))}
-        onLike={() => message.info(t('pcCommunity.featureInProgress.like'))}
+        variant={detailModalVariant}
+        loading={detailModalLoading}
+        onFollow={handleDetailFollow}
+        onLike={handleDetailLike}
         onComment={() => message.info(t('pcCommunity.featureInProgress.comment'))}
-        onShare={() => message.info(t('pcCommunity.featureInProgress.share'))}
+        onShare={handleDetailShare}
         onSubmitComment={handleDetailSubmitComment}
       />
     </div>

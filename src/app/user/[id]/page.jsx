@@ -266,7 +266,17 @@ export default function UserProfile({ params }) {
   if (isPC) {
     return (
       <PCLayout>
-        <PCUserProfile />
+        <PCUserProfile
+          profile={profile}
+          targetUserId={targetUserId}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          watchlist={watchlist}
+          watchlistLoading={watchlistLoading}
+          watchlistError={watchlistError}
+          onFollowToggle={handleFollowToggle}
+          followLoading={followLoading}
+        />
       </PCLayout>
     );
   }

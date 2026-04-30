@@ -25,14 +25,14 @@ export default function AchievementInviteCard({ pointsData, copyToClipboard }) {
           <img src="/point/invite_register.png" alt="register" className={styles.rewardIcon} />
           <div className={styles.rewardText}>
             <div className={styles.rewardName}>{t('pointsDetail.inviteRegister')}</div>
-            <div className={styles.rewardValue}>+250</div>
+            <div className={styles.rewardValue}>{t('pointsDetail.inviteRegisterReward', { defaultValue: '+250' })}</div>
           </div>
         </div>
         <div className={styles.rewardItem}>
           <img src="/point/invite_pay.png" alt="pay" className={styles.rewardIcon} />
           <div className={styles.rewardText}>
             <div className={styles.rewardName}>{t('pointsDetail.invitePay')}</div>
-            <div className={styles.rewardValue}>+3000</div>
+            <div className={styles.rewardValue}>{t('pointsDetail.invitePayReward', { defaultValue: '+3000' })}</div>
           </div>
         </div>
       </div>
