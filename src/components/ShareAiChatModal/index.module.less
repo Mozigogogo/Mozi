@@ -83,6 +83,17 @@
   overflow: hidden;
 }
 
+.previewInnerCard {
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.previewInnerCard::after {
+  display: none;
+}
+
 .previewInner::after {
   content: '';
   position: absolute;
@@ -98,6 +109,12 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-right: 6PX; /* 给滚动条留一点空间 */
+}
+
+.previewScrollCard {
+  max-height: none;
+  overflow: visible;
+  padding-right: 0;
 }
 
 .previewMsgRow {
@@ -352,6 +369,10 @@
 
   .previewScroll {
     max-height: calc(46vh - 26PX - 50PX);
+  }
+
+  .previewScrollCard {
+    max-height: none;
   }
 }
 

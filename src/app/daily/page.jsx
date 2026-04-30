@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -8,6 +8,8 @@ import { safeBack } from '@/utils/navigation';
 import { LeftArrowIcon } from '@/components/Icons';
 import styles from './page.module.less';
 import { getFinanceCalendar } from '@/api/financeCalendar';
+import ShareAiChatModal from '@/components/ShareAiChatModal';
+import DailyShareCard from '@/components/DailyShareCard';
 
 const useAutoHideScrollbar = (className, timeout = 3000) => {
   const ref = useRef(null);
@@ -41,6 +43,7 @@ export default function DailyPage() {
   const containerRef = useRef(null);
   const tableBodyRef = useAutoHideScrollbar(styles.scrolling);
   const noteCardRef = useAutoHideScrollbar(styles.scrolling);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const placeholderEvents = [
     { time: '12.12', country: 'UDS', event: '美国cpi月率 (xxx)', value: '456%' },
@@ -193,48 +196,40 @@ export default function DailyPage() {
     };
   }, []);
 
-  const handleShare = async () => {
-    const shareText = 'Mozi Daily';
-    const shareUrl = window.location.href;
-    const telegramLink = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
-    const isTelegram = localStorage.getItem('appChannel') === 'tg' || !!window.Telegram?.WebApp;
+  const shareQuestion = useMemo(() => {
+    // Keep it short so the preview bubble doesn't overflow.
+    return `${t('daily.title')} · ${monthYearText} · ${weekdayText}`;
+  }, [monthYearText, t, weekdayText]);
 
-    if (isTelegram) {
-      try {
-        if (navigator.clipboard?.writeText) {
-          await navigator.clipboard.writeText(telegramLink);
-          window.Telegram?.WebApp?.showAlert?.('Telegram 分享链接已复制');
-          return;
-        }
-      } catch (error) {
-        // ignore and fallback below
-      }
+  const shareAnswer = useMemo(() => {
+    const topEvents = (events || []).slice(0, 4);
+    const lines = topEvents
+      .map((e) => `- **${e.time || '--'} ${e.country || '--'}** ${e.event || '--'}  \n  ${e.value || '--'}`)
+      .join('\n');
 
-      // 剪贴板不可用时，直接打开 TG 分享链接
-      if (window.Telegram?.WebApp?.openTelegramLink) {
-        window.Telegram.WebApp.openTelegramLink(telegramLink);
-        return;
-      }
+    const summary = (noteSummary || t('daily.note') || '').trim();
+    return [lines, summary].filter(Boolean).join('\n\n');
+  }, [events, noteSummary, t]);
 
-      window.open(telegramLink, '_blank');
-      return;
-    }
-
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: shareText,
-          text: shareText,
-          url: shareUrl
-        });
-        return;
-      }
-    } catch (error) {
-      // 用户取消分享时无需额外处理，直接走回退逻辑
-    }
-
-    window.open(telegramLink, '_blank');
-  };
+  const sharePreview = useMemo(() => {
+    const topEvents = (events || []).slice(0, 4);
+    return (
+      <DailyShareCard
+        title=""
+        columns={{
+          time: t('daily.table.time'),
+          country: t('daily.table.country'),
+          event: t('daily.table.event'),
+          values: t('daily.table.values'),
+        }}
+        events={topEvents}
+        loading={loadingCalendar}
+        emptyText={{ loading: t('common.loading'), noEvents: t('daily.noEvents') }}
+        note={(noteSummary || t('daily.note') || '').trim()}
+        showArrow={false}
+      />
+    );
+  }, [events, loadingCalendar, noteSummary, t]);
 
   return (
     <div className={styles.container} ref={containerRef}>
@@ -328,9 +323,19 @@ export default function DailyPage() {
          </div>
        </div>
 
-      <button className={styles.shareButton} onClick={handleShare}>
+      <button className={styles.shareButton} onClick={() => setShareOpen(true)}>
         {t('daily.share')}
       </button>
+
+      <ShareAiChatModal
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        title={`${t('daily.title')} ${t('daily.share')}`}
+        question={shareQuestion}
+        answer={shareAnswer}
+        preview={sharePreview}
+        brandLabel=""
+      />
     </div>
   );
 }
