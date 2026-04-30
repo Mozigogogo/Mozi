@@ -433,23 +433,25 @@ export default function DetailPage() {
       className: styles.unlockDialog,
       title: (
         <div className={styles.unlockDialogTitle}>
-          解锁大单侦测
+          {t('orderBook.unlockDialog.title')}
         </div>
       ),
       content: (
         <div className={styles.unlockDialogContent}>
           <div className={styles.unlockDialogMain}>
-            确定要花费
+            {t('orderBook.unlockDialog.prefix')}
             <span className={styles.unlockDialogPoints}>200积分</span>
-            来解锁查看大单侦测数据吗？
+            {t('orderBook.unlockDialog.suffix')}
           </div>
           <div className={styles.unlockDialogSub}>
-            有效期<span>24小时</span>，仅展示<span>Top 5</span> 大单数据
+            {t('orderBook.unlockDialog.validityPrefix')}
+            <span>{t('orderBook.unlockDialog.validityValue')}</span>
+            ，{t('orderBook.unlockDialog.limitText')}
           </div>
         </div>
       ),
-      cancelText: '取消',
-      confirmText: '确定',
+      cancelText: t('common.cancel'),
+      confirmText: t('common.confirm'),
       closeOnAction: true,
       bodyStyle: { borderRadius: '16px' },
     });
@@ -468,22 +470,22 @@ export default function DetailPage() {
           setUnlockEndTime(endTime);
           // 记录“点击解锁成功时”的当前时间戳（全局生效）
           localStorage.setItem(GLOBAL_UNLOCK_START_KEY, startAt.toString());
-          setOrderBookTag(t('orderBook.unlocked') || '已解锁');
+          setOrderBookTag(t('orderBook.unlocked'));
           Toast.show({
             icon: 'success',
-            content: '解锁成功',
+            content: t('orderBook.unlockDialog.unlockSuccess'),
           });
         } else {
           Toast.show({
             icon: 'fail',
-            content: res.msg || '解锁失败，积分不足',
+            content: res.msg || t('orderBook.unlockDialog.unlockFailedDefault'),
           });
         }
       } catch (error) {
         console.error('Unlock error:', error);
         Toast.show({
           icon: 'fail',
-          content: '网络错误，请稍后重试',
+          content: t('orderBook.unlockDialog.networkError'),
         });
       }
     }

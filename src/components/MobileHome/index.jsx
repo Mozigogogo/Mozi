@@ -117,7 +117,6 @@ export default function MobileHome() {
   const { track } = useAmplitude('Home');
   const isEN = (i18n?.language || '').startsWith('en');
   const debugEnabled = typeof window !== 'undefined' ? isHomeDebugEnabled() : false;
-  const [searchKeyword, setSearchKeyword] = useState('');
   const initialCache = readMobileHomeCache();
   const hasWarmCache = !!initialCache;
 
@@ -723,6 +722,11 @@ export default function MobileHome() {
     };
   }, []);
 
+  // Prefetch search page to make tap-to-search transition smoother.
+  useEffect(() => {
+    router.prefetch('/search');
+  }, [router]);
+
   // 跳转到榜单详情页
   const go2List = () => {
     switch (rankActiveKey) {
@@ -741,13 +745,8 @@ export default function MobileHome() {
     }
   };
 
-  const submitSearch = () => {
-    const keyword = String(searchKeyword || '').trim();
-    if (!keyword) {
-      router.push('/search');
-      return;
-    }
-    router.push(`/search?keyword=${encodeURIComponent(keyword)}`);
+  const enterSearchPage = () => {
+    router.push('/search');
   };
 
   return (
@@ -779,21 +778,27 @@ export default function MobileHome() {
             </Swiper>
 
             <div className={styles.header} style={{ bottom: showNotice ? 10 : 10 }}>
-              <div className={styles.searchBox}>
+              <div
+                className={styles.searchBox}
+                onClick={enterSearchPage}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') enterSearchPage();
+                }}
+                role="button"
+                tabIndex={0}
+              >
                 <input
                   className={styles.searchInput}
-                  value={searchKeyword}
-                  onChange={(e) => setSearchKeyword(e.target.value)}
+                  value=""
+                  readOnly
                   placeholder={t('home.searchPlaceholder')}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') submitSearch();
-                  }}
+                  onFocus={enterSearchPage}
                 />
                 <button
                   type="button"
                   className={styles.searchCancel}
                   style={isEN ? { minWidth: 44, padding: '0 14px' } : undefined}
-                  onClick={submitSearch}
+                  onClick={enterSearchPage}
                 >
                   <img src={SearchIcon} alt={t('common.search')} className={styles.searchIcon} />
                   {!isEN && t('common.search')}

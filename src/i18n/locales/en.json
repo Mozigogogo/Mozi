@@ -1778,7 +1778,18 @@
     "maskTitle": "Big Order Detection Locked",
     "maskDescription": "Unlock to view Top 5 big order flow data within 24h",
     "maskButtonText": "Unlock with 200 Points",
-    "membershipButtonText": "Unlock with Membership"
+    "membershipButtonText": "Unlock with Membership",
+    "unlockDialog": {
+      "title": "Unlock Big Order Detection",
+      "prefix": "Are you sure you want to spend",
+      "suffix": "to unlock big order detection data?",
+      "validityPrefix": "Valid for",
+      "validityValue": "24 hours",
+      "limitText": "Only 5 levels of depth are displayed",
+      "unlockSuccess": "Unlocked successfully",
+      "unlockFailedDefault": "Unlock failed, insufficient points",
+      "networkError": "Network error, please try again later"
+    }
   },
   "hotsector": {
     "title": "Hot Sectors",

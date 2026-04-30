@@ -1759,7 +1759,18 @@
     "maskTitle": "大单侦测锁定",
     "maskDescription": "解锁后可查看24小时内的Top 5大单流向数据",
     "maskButtonText": "200积分解锁",
-    "membershipButtonText": "开通会员解锁"
+    "membershipButtonText": "开通会员解锁",
+    "unlockDialog": {
+      "title": "解锁大单侦测",
+      "prefix": "确定要花费",
+      "suffix": "来解锁查看大单侦测数据吗？",
+      "validityPrefix": "有效期",
+      "validityValue": "24小时",
+      "limitText": "仅展示5档深度",
+      "unlockSuccess": "解锁成功",
+      "unlockFailedDefault": "解锁失败，积分不足",
+      "networkError": "网络错误，请稍后重试"
+    }
   },
   "hotsector": {
     "title": "热门板块",
