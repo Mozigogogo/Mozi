@@ -477,8 +477,12 @@ function AchievementContent() {
               <img src="/point/new_coin.svg" alt="coin" className={styles.coinIcon} />
               <span>{formatPoints(inviteData.totalPoints || 0)}</span>
             </div>
-            <button type="button" className={styles.recordBtn}>
-              Record
+            <button
+              type="button"
+              className={styles.recordBtn}
+              onClick={() => router.push('/pointshistory')}
+            >
+              {t('pointsHistory.title', { defaultValue: 'Record' })}
             </button>
           </div>
 
