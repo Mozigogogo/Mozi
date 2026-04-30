@@ -1164,7 +1164,7 @@ export default function DetailPage() {
 
   const handleSelectExchange = (exchangeId) => {
     const map = {
-      binance: 'https://www.bsmkweb.cc/register?ref=195208591&utm_medium=web_share_copy',
+      binance: 'https://www.bsmkweb.cc/register?ref=195208591',
       okx: 'https://www.growthhivex.com/join/12214659',
       bitget:
         'https://www.nlviwq.cn/zh-CN/referral/register?clacCode=0YL9JUZB&from=%2Fzh-CN%2Fevents%2Freferral-all-program&source=events&utmSource=PremierInviter',
