@@ -167,7 +167,8 @@
   transform: translateX(-50%);
   width: 85%;
   height: auto;
-  max-height: 40%; /* Max height adjusted to avoid overlap with note card */
+  /* Show at most 4 rows; overflow scroll inside */
+  max-height: calc(44px * 4);
   overflow-y: auto;
   
   /* Custom Scrollbar */
@@ -196,8 +197,8 @@
 
 .tableBodyLoading {
   /* Fix height so the placeholder can vertically center. */
-  height: 40%;
-  max-height: 40%;
+  height: calc(44px * 4);
+  max-height: calc(44px * 4);
   overflow-y: hidden;
   display: flex;
   align-items: center;
@@ -266,6 +267,7 @@
   border-bottom: 1px solid #eee;
   align-items: center;
   color: #000;
+  min-height: 44px;
 }
 
 .tableRow:last-child {
