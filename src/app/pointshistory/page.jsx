@@ -10,23 +10,47 @@ import { Interface } from '../../utils/constants';
 import { safeBack } from '@/utils/navigation';
 import styles from './page.module.less';
 import { SkeletonElement } from '@/components/Skeleton';
+import PCPagination from '@/components/PCPagination';
+import PCLayout from '@/components/PCLayout';
 
 export default function PointsHistoryPage() {
   const router = useRouter();
   const { t } = useTranslation();
+  const [isPC, setIsPC] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth >= 1024;
+  });
   const [historyList, setHistoryList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const scrollRef = useRef(null);
   const isDataFetchedRef = useRef(false);
-  const PAGE_SIZE = 20;
+  const pageSize = isPC ? 8 : 20;
+
+  const buildPageSignature = useCallback((list) => {
+    if (!Array.isArray(list) || list.length === 0) return '';
+    return list
+      .map((item) => `${item?.id ?? ''}-${item?.taskCode ?? ''}-${item?.createdAt ?? ''}-${item?.points ?? ''}`)
+      .join('|');
+  }, []);
+
+  useEffect(() => {
+    const checkDevice = () => {
+      if (typeof window === 'undefined') return;
+      setIsPC(window.innerWidth >= 1024);
+    };
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+    return () => window.removeEventListener('resize', checkDevice);
+  }, []);
 
   // 加载历史数据
   const loadHistoryData = useCallback(async (pageNum = 1, isLoadMore = false) => {
     try {
-      if (isLoadMore) {
+      if (isLoadMore && !isPC) {
         setLoadingMore(true);
       } else {
         setLoading(true);
@@ -37,28 +61,39 @@ export default function PointsHistoryPage() {
         method: 'GET',
         params: {
           page: pageNum,
-          limit: PAGE_SIZE
+          limit: pageSize
         }
       });
       
       if (res?.code === 0 && res?.data) {
         const newList = res.data.list || res.data || [];
+        const nextTotal = Number(res?.data?.total || 0);
+        const incomingSig = buildPageSignature(newList);
+        const currentSig = buildPageSignature(historyList);
+        setTotal(nextTotal);
+
+        // PC 端兜底：当接口未返回 total 且翻页返回与当前页完全相同的数据，判定已到末页
+        if (isPC && pageNum > 1 && nextTotal <= 0 && incomingSig && incomingSig === currentSig) {
+          setHasMore(false);
+          setTotal(Math.max((page - 1) * pageSize + historyList.length, historyList.length));
+          return;
+        }
         
-        if (isLoadMore) {
+        if (isLoadMore && !isPC) {
           setHistoryList(prev => [...prev, ...newList]);
         } else {
           setHistoryList(newList);
         }
         
         // 判断是否还有更多数据
-        const total = res.data.total || 0;
-        const currentTotal = isLoadMore ? historyList.length + newList.length : newList.length;
-        setHasMore(currentTotal < total || newList.length >= PAGE_SIZE);
+        const currentTotal = isLoadMore && !isPC ? historyList.length + newList.length : newList.length;
+        setHasMore(currentTotal < nextTotal || (!nextTotal && newList.length >= pageSize));
         setPage(pageNum);
       } else {
         if (!isLoadMore) {
           setHistoryList([]);
         }
+        setTotal(0);
         setHasMore(false);
       }
     } catch (error) {
@@ -71,13 +106,13 @@ export default function PointsHistoryPage() {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [t, historyList.length]);
+  }, [buildPageSignature, historyList, isPC, page, pageSize, t]);
 
   useEffect(() => {
     if (isDataFetchedRef.current) return;
     isDataFetchedRef.current = true;
     loadHistoryData(1, false);
-  }, []);
+  }, [loadHistoryData]);
 
   // 加载更多
   const handleLoadMore = () => {
@@ -89,6 +124,7 @@ export default function PointsHistoryPage() {
   // 滚动加载更多
   const handleScroll = (e) => {
     const { scrollTop, scrollHeight, clientHeight } = e.target;
+    if (isPC) return;
     if (scrollHeight - scrollTop - clientHeight < 100 && hasMore && !loadingMore) {
       handleLoadMore();
     }
@@ -188,11 +224,14 @@ export default function PointsHistoryPage() {
     return t(`pointsDetail.tasks.${key}.title`, item?.taskName || '');
   };
 
-  return (
-      <div className={styles.pointsHistoryContainer}>
+  const fallbackTotal = (page - 1) * pageSize + historyList.length + (hasMore ? 1 : 0);
+  const totalForPagination = total > 0 ? total : fallbackTotal;
+
+  const content = (
+    <div className={`${styles.pointsHistoryContainer} ${isPC ? styles.pcMode : ''}`}>
         {/* 顶部导航 */}
         <div className={styles.topNav}>
-          <button className={styles.backBtn} onClick={() => safeBack(router, { fallback: '/points' })}>
+          <button className={styles.backBtn} onClick={() => safeBack(router, { fallback: '/achievement' })}>
             <LeftOutline />
           </button>
           <div className={styles.navTitle}>{t('pointsHistory.title', '积分历史')}</div>
@@ -249,19 +288,43 @@ export default function PointsHistoryPage() {
             </div>
           ))}
 
-          {(loading || loadingMore) && (
+          {!isPC && (loading || loadingMore) && (
             <div className={styles.loadingMore}>
               <span>{t('common.loading')}</span>
             </div>
           )}
 
-          {!loading && !loadingMore && historyList.length > 0 && !hasMore && (
+          {!isPC && !loading && !loadingMore && historyList.length > 0 && !hasMore && (
             <div className={styles.noMore}>
               <span>{t('common.noMore')}</span>
             </div>
           )}
         </div>
+
+        {isPC && (
+          <div className={styles.paginationWrap}>
+            <PCPagination
+              current={page}
+              total={totalForPagination}
+              pageSize={pageSize}
+              loading={loading}
+              alwaysShow={historyList.length > 0}
+              onChange={(nextPage) => {
+                if (nextPage === page || loading) return;
+                loadHistoryData(nextPage, false);
+                if (scrollRef.current) {
+                  scrollRef.current.scrollTop = 0;
+                }
+              }}
+            />
+          </div>
+        )}
       </div>
   );
+
+  if (isPC) {
+    return <PCLayout>{content}</PCLayout>;
+  }
+  return content;
 }
 

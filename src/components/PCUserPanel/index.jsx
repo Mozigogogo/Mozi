@@ -11,11 +11,13 @@ import { Interface } from '../../utils/constants';
 import InviteShareModal from '../InviteShareModal';
 import FeedbackPopup from '../../app/user/components/FeedbackPopup';
 import FeedbackSuccessModal from '../FeedbackSuccessModal';
+import GeneralPopup from '../../app/user/components/GeneralPopup';
+import RewardPopup from '../../app/user/components/RewardPopup';
 import styles from './index.module.less';
 
 export default function PCUserPanel({ open, onClose, collapsed, onLogin }) {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   
   // Web3 钱包 hooks
   const { isConnected: web3Connected } = useAccount();
@@ -28,6 +30,26 @@ export default function PCUserPanel({ open, onClose, collapsed, onLogin }) {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [feedbackPopupOpen, setFeedbackPopupOpen] = useState(false);
   const [feedbackSuccessOpen, setFeedbackSuccessOpen] = useState(false);
+  const [generalPopupOpen, setGeneralPopupOpen] = useState(false);
+  const [generalPopupType, setGeneralPopupType] = useState('');
+  const [rewardPopupOpen, setRewardPopupOpen] = useState(false);
+
+  useEffect(() => {
+    // 每次用户面板打开时，先清空一次状态，避免历史残留导致自动弹窗
+    if (open) {
+      setGeneralPopupOpen(false);
+      setGeneralPopupType('');
+      setRewardPopupOpen(false);
+    } else {
+      // 面板关闭时也统一重置
+      setGeneralPopupOpen(false);
+      setGeneralPopupType('');
+      setRewardPopupOpen(false);
+      setShareModalOpen(false);
+      setFeedbackPopupOpen(false);
+      setFeedbackSuccessOpen(false);
+    }
+  }, [open]);
   
   // 检查登录状态
   useEffect(() => {
@@ -162,7 +184,8 @@ export default function PCUserPanel({ open, onClose, collapsed, onLogin }) {
       label: 'user.findUsOnSocial',
       alt: '社交媒体',
       onClick: () => {
-        router.push('/social');
+        setGeneralPopupType('social');
+        setGeneralPopupOpen(true);
       }
     },
     {
@@ -171,7 +194,7 @@ export default function PCUserPanel({ open, onClose, collapsed, onLogin }) {
       label: 'user.donate',
       alt: '捐赠',
       onClick: () => {
-        router.push('/donate');
+        setRewardPopupOpen(true);
       }
     },
     {
@@ -356,6 +379,20 @@ export default function PCUserPanel({ open, onClose, collapsed, onLogin }) {
       <FeedbackSuccessModal
         visible={feedbackSuccessOpen}
         onClose={() => setFeedbackSuccessOpen(false)}
+      />
+      <GeneralPopup
+        visible={open && generalPopupOpen && generalPopupType === 'social'}
+        popType={generalPopupType}
+        onClose={() => setGeneralPopupOpen(false)}
+        t={t}
+        i18n={i18n}
+        isPC
+      />
+      <RewardPopup
+        visible={open && rewardPopupOpen}
+        onClose={() => setRewardPopupOpen(false)}
+        t={t}
+        isPC
       />
     </div>
   );

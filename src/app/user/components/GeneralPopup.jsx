@@ -6,7 +6,7 @@ import SocialMediaPopup from '@/components/SocialMediaPopup';
 import { EMAIL } from '@/utils/constants';
 import { updateUserInfo } from '@/api/user';
 
-const GeneralPopup = ({ visible, popType, onClose, t, i18n }) => {
+const GeneralPopup = ({ visible, popType, onClose, t, i18n, isPC = false }) => {
   const copyToClipboard = (value) => {
     navigator.clipboard.writeText(value).then(() => {
       Toast.show({ content: t('user.copySuccess'), position: 'bottom' });
@@ -40,6 +40,9 @@ const GeneralPopup = ({ visible, popType, onClose, t, i18n }) => {
 
   const getBodyStyle = () => {
     if (popType === 'social') {
+      if (isPC) {
+        return { background: 'transparent', padding: 0, width: '100%', boxShadow: 'none' };
+      }
       return { background: 'transparent', padding: 0 };
     }
     return {
@@ -58,7 +61,7 @@ const GeneralPopup = ({ visible, popType, onClose, t, i18n }) => {
       position='bottom'
       bodyStyle={getBodyStyle()}
     >
-      {popType === 'social' && <SocialMediaPopup />}
+      {popType === 'social' && <SocialMediaPopup isPC={isPC} />}
 
       {popType === 'about' && (
         <div className={`${styles.popContainer} ${styles.aboutContainer}`}>

@@ -1156,6 +1156,161 @@
   animation: slideUp 0.3s ease;
 }
 
+.rewardMaskPc {
+  align-items: center;
+  justify-content: center;
+}
+
+.rewardPopupPc {
+  width: 520PX;
+  max-width: calc(100vw - 48PX);
+  border-radius: 20PX;
+  padding: 12PX 12PX 10PX;
+  height: auto;
+  max-height: 50vh;
+  min-height: 0;
+  overflow-y: auto;
+  box-shadow: 0 10PX 40PX rgba(0, 0, 0, 0.16);
+  animation: none;
+}
+
+.contactTitlePc {
+  font-size: 20PX;
+  line-height: 26PX;
+  margin-bottom: 8PX;
+  padding-bottom: 6PX;
+  border-bottom: 1PX solid #f2f2f2;
+}
+
+.rewardScrollBoxPc {
+  scroll-snap-type: x mandatory;
+}
+
+.rewardPagePc {
+  padding: 6PX 4PX;
+}
+
+.rewardPopupPc .rewardPage {
+  padding: 6PX 4PX;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+.addressListPc {
+  gap: 12PX;
+}
+
+.addressItemPc {
+  border-radius: 14PX;
+  padding: 12PX 14PX;
+}
+
+.addressLabelPc {
+  font-size: 20PX;
+  line-height: 28PX;
+  margin-bottom: 8PX;
+}
+
+.addressContentPc {
+  gap: 8PX;
+}
+
+.addressTextPc {
+  font-size: 18PX;
+  line-height: 24PX;
+  white-space: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  word-break: normal;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.swipeHintPc {
+  margin-top: 10PX;
+  margin-bottom: 0;
+  font-size: 10PX;
+  line-height: 12PX;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.qrcodeBoxPc {
+  width: 100%;
+  justify-content: center;
+}
+
+.qrcodeImgPc {
+  width: 220PX;
+  height: 220PX;
+  max-width: calc(100% - 12PX);
+  max-height: 52vh;
+  border-radius: 10PX;
+}
+
+.qrcodeLabelPc {
+  margin-top: 10PX;
+  font-size: 12PX;
+  line-height: 14PX;
+}
+
+.rewardPagerPc {
+  margin-top: 8PX;
+  display: flex;
+  justify-content: center;
+  gap: 10PX;
+}
+
+.rewardPagerBtnPc {
+  width: 28PX;
+  height: 28PX;
+  border-radius: 999PX;
+  border: 1PX solid rgba(148, 163, 184, 0.45);
+  background: #fff;
+  color: #334155;
+  font-size: 14PX;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.rewardPagerBtnPc:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* PC 专用覆盖（放在后面提升优先级，避免被移动端基础样式覆盖） */
+.rewardPopupPc .addressListPc {
+  width: 100%;
+  gap: 12PX;
+}
+
+.rewardPopupPc .addressItemPc {
+  border-radius: 14PX;
+  padding: 12PX 14PX;
+}
+
+.rewardPopupPc .addressLabelPc {
+  font-size: 20PX;
+  line-height: 28PX;
+  margin-bottom: 8PX;
+}
+
+.rewardPopupPc .addressContentPc {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8PX;
+}
+
+.rewardPopupPc .addressTextPc {
+  font-size: 14PX;
+  line-height: 20PX;
+  color: #666;
+  white-space: normal;
+  word-break: break-all;
+  overflow: visible;
+}
+
 @keyframes slideUp {
   from {
     transform: translateY(100%);
@@ -1232,6 +1387,15 @@
   font-size: 12px;
   color: #999;
   text-align: center;
+}
+
+/* PC 端适配：仅在打赏弹窗 PC 容器内生效 */
+.rewardPopupPc .swipeHint {
+  margin-top: 15PX;
+  margin-bottom: 0;
+  font-size: 16PX;
+  line-height: 12PX;
+  color: #9ca3af;
 }
 
 /* 二维码页样式 */
