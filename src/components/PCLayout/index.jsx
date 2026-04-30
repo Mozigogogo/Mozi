@@ -1070,7 +1070,17 @@ export default function PCLayout({ children }) {
           setShowUserProfilePopup(false);
           router.push('/user');
         }}
-        onSave={() => setShowUserProfilePopup(false)}
+        onSave={() => {
+          setShowUserProfilePopup(false);
+          let nextRoute = '/subscribe';
+          try {
+            const planCode = localStorage.getItem(MY_SUBSCRIPTION_PLAN_CODE_KEY);
+            if (isNonFreePlanCode(planCode)) {
+              nextRoute = '/pc/benefitsPage';
+            }
+          } catch (_) {}
+          router.push(nextRoute);
+        }}
         initialData={{
           name: userInfo?.nickName || userInfo?.nickname || '用户名',
           account: '账号账号账号号',

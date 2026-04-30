@@ -1,9 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import RightArrowIcon from '../Icons/RightArrowIcon';
-import { updateUserInfo } from '@/api/user';
+import { getUserDataInfo, updateUserInfo } from '@/api/user';
 import styles from './index.module.less';
 
 const TAG_OPTIONS = [
@@ -30,6 +30,52 @@ const LEGACY_TAG_TO_ID = {
   'Fund/VC/Market Maker': 'institution',
 };
 
+const pickFirstNonEmptyString = (...vals) => {
+  for (const v of vals) {
+    if (v == null) continue;
+    const s = String(v).trim();
+    if (s !== '') return s;
+  }
+  return '';
+};
+
+const formatPhone = (data, user) => {
+  const ap = pickFirstNonEmptyString(
+    data?.alertPhone,
+    user?.alertPhone,
+    data?.phoneNumber,
+    user?.phoneNumber,
+    data?.phone,
+    user?.phone
+  );
+  const apc = pickFirstNonEmptyString(data?.alertPhoneCountryCode, user?.alertPhoneCountryCode);
+  if (!ap) return '';
+  if (/^\+\d/.test(ap)) return ap;
+  return apc ? `${apc} ${ap}`.trim() : ap;
+};
+
+const mapDatainfoToPopupData = (rawData, fallbackData) => {
+  const data = rawData && typeof rawData === 'object' ? rawData : {};
+  const user = data?.userInfo && typeof data.userInfo === 'object' ? data.userInfo : {};
+  const identityRaw = pickFirstNonEmptyString(data?.identityTag, user?.identityTag);
+  const selectedTagId = LEGACY_TAG_TO_ID[identityRaw] || identityRaw || fallbackData.selectedTagId;
+
+  const next = {
+    ...fallbackData,
+    name: pickFirstNonEmptyString(user?.nickName, user?.nickname, data?.nickName, data?.nickname, fallbackData.name),
+    bio: pickFirstNonEmptyString(data?.introduction, user?.introduction, fallbackData.bio),
+    email: pickFirstNonEmptyString(data?.alertEmail, user?.alertEmail, data?.email, user?.email, fallbackData.email),
+    phone: formatPhone(data, user) || fallbackData.phone,
+    commission: pickFirstNonEmptyString(data?.tronUsdtAddress, user?.tronUsdtAddress, data?.commissionId, user?.commissionId, fallbackData.commission),
+    avatar: pickFirstNonEmptyString(user?.avatar, data?.avatar, fallbackData.avatar),
+    selectedTagId,
+    boundWallet: !!pickFirstNonEmptyString(user?.walletAddress, data?.walletAddress, user?.address, data?.address),
+  };
+  next.account = next.bio || fallbackData.account;
+
+  return next;
+};
+
 export default function UserProfilePanelPopup({
   open,
   onClose,
@@ -42,7 +88,7 @@ export default function UserProfilePanelPopup({
   const data = useMemo(
     () => ({
       name: initialData?.name || '用户名',
-      account: initialData?.account || t('user.profilePanel.defaultAccount'),
+      account: initialData?.bio || initialData?.account || t('user.defaultBio'),
       bio: initialData?.bio || t('user.defaultBio'),
       email: initialData?.email || 'carlakorsgaard@gmail.com',
       phone: initialData?.phone || '+8234567900',
@@ -67,7 +113,67 @@ export default function UserProfilePanelPopup({
   const [email, setEmail] = useState(data.email);
   const [phone, setPhone] = useState(data.phone);
   const [commission, setCommission] = useState(data.commission);
+  const [profileData, setProfileData] = useState(data);
   const selectedTagLabel = t(`editProfile.identity.options.${selectedTagId}`);
+
+  useEffect(() => {
+    setProfileData(data);
+    setSelectedTagId(data.selectedTagId);
+    setSelectedLanguage(data.language);
+    setBio(data.bio);
+    setEmail(data.email);
+    setPhone(data.phone);
+    setCommission(data.commission);
+  }, [data]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    let cancelled = false;
+
+    const hydrateFromLocal = () => {
+      try {
+        const raw = localStorage.getItem('userDataInfo');
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        const normalized = parsed?.data && typeof parsed.data === 'object' ? parsed.data : parsed;
+        const mapped = mapDatainfoToPopupData(normalized, data);
+        if (cancelled) return;
+        setProfileData(mapped);
+        setSelectedTagId(mapped.selectedTagId);
+        setBio(mapped.bio);
+        setEmail(mapped.email);
+        setPhone(mapped.phone);
+        setCommission(mapped.commission);
+      } catch (error) {
+        console.error('[UserProfilePanelPopup] parse local userDataInfo failed:', error);
+      }
+    };
+
+    const fetchDatainfo = async () => {
+      try {
+        const res = await getUserDataInfo();
+        if (cancelled || !res?.data) return;
+        const mapped = mapDatainfoToPopupData(res.data, data);
+        setProfileData(mapped);
+        setSelectedTagId(mapped.selectedTagId);
+        setBio(mapped.bio);
+        setEmail(mapped.email);
+        setPhone(mapped.phone);
+        setCommission(mapped.commission);
+        localStorage.setItem('userDataInfo', JSON.stringify(res.data));
+      } catch (error) {
+        console.error('[UserProfilePanelPopup] fetch user datainfo failed:', error);
+      }
+    };
+
+    hydrateFromLocal();
+    fetchDatainfo();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, data]);
 
   const selectLanguage = async (lng) => {
     const normalizedLng = lng === 'en' ? 'en' : 'zh';
@@ -95,10 +201,10 @@ export default function UserProfilePanelPopup({
       <div className={styles.floatingPanel} onClick={(e) => e.stopPropagation()}>
       <div className={styles.panel}>
         <div className={styles.headerCard}>
-          <img src={data.avatar} alt={data.name} className={styles.avatar} />
+          <img src={profileData.avatar} alt={profileData.name} className={styles.avatar} />
           <div className={styles.headerRight}>
-            <div className={styles.name}>{data.name}</div>
-            <div className={styles.account}>{data.account}</div>
+            <div className={styles.name}>{profileData.name}</div>
+            <div className={styles.account}>{profileData.account}</div>
             <div className={styles.channelBtn}>{t('user.profilePanel.viewChannel')}</div>
           </div>
         </div>
@@ -110,7 +216,7 @@ export default function UserProfilePanelPopup({
               <span>{t('user.profilePanel.telegram')}</span>
             </div>
             <div className={styles.boundBtn}>
-              {data.boundTelegram ? t('user.profilePanel.bound') : t('user.profilePanel.bind')}
+              {profileData.boundTelegram ? t('user.profilePanel.bound') : t('user.profilePanel.bind')}
             </div>
           </div>
           <div className={styles.bindRow}>
@@ -120,7 +226,7 @@ export default function UserProfilePanelPopup({
             </div>
             <div className={styles.unboundBtn}>
               <img src="/icons/pc/plus.svg" alt="" />
-              <span>{data.boundWallet ? t('user.profilePanel.bound') : t('user.profilePanel.bind')}</span>
+              <span>{profileData.boundWallet ? t('user.profilePanel.bound') : t('user.profilePanel.bind')}</span>
             </div>
           </div>
         </div>

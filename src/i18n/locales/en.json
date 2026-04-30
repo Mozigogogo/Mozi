@@ -1071,6 +1071,7 @@
     "rankDay": "Daily",
     "rankMonth": "Monthly",
     "rankTotal": "Total",
+    "rankingListTitle": "Ranking List",
     "completed": "Completed",
     "goFinish": "Go",
     "claimed": "Claimed",
@@ -1648,14 +1649,14 @@
     },
     "derivatives": {
       "title": "Derivatives Zone",
-      "longShort": "Long/Short Ratio",
-      "longShortSub": "Long/Short Ratio",
+      "longShort": "Long/Short",
+      "longShortSub": "Long/Short",
       "openInterest": "Open Interest",
       "openInterestSub": "Open Interest",
       "fundingRate": "Funding Rate",
       "fundingRateSub": "Funding Rate",
-      "volume": "Trading Volume",
-      "volumeSub": "Trading Volume"
+      "volume": "Volume",
+      "volumeSub": "Volume"
     },
     "sectorMap": {
       "title": "Sector Selection",

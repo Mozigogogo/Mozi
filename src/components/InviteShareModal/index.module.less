@@ -1,0 +1,69 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  background: rgba(0, 0, 0, 0.36);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sheet {
+  position: relative;
+  width: 560PX;
+  background: #fff;
+  border-radius: 16PX;
+  padding: 16PX 16PX 20PX;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14PX;
+}
+
+.actionItem {
+  border: none;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10PX;
+  color: #475569;
+  cursor: pointer;
+}
+
+.iconCircle {
+  width: 68PX;
+  height: 68PX;
+  border-radius: 999PX;
+  border: 1PX solid #e5e7eb;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.iconImg {
+  width: 30PX;
+  height: 30PX;
+  object-fit: contain;
+}
+
+.actionLabel {
+  font-size: 16PX;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.moreDots {
+  display: inline-flex;
+  gap: 4PX;
+}
+
+.dot {
+  width: 5PX;
+  height: 5PX;
+  border-radius: 999PX;
+  background: #64748b;
+}
+

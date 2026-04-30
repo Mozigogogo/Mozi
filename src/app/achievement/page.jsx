@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Toast } from 'antd-mobile';
 import NavBar from '@/components/NavBar';
 import PCLayout from '@/components/PCLayout';
-import { getPoolStatus } from '@/api/points';
+import { getPoolStatus, getTaskPoints, getInvitationList } from '@/api/points';
 import AchievementInviteCard from './AchievementInviteCard';
 import AchievementOneTimeTasks from './AchievementOneTimeTasks';
 import AchievementMoreRewardsBanner from './AchievementMoreRewardsBanner';
@@ -32,11 +32,12 @@ function AchievementContent() {
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
 
-  const [inviteData] = useState({
+  const [inviteData, setInviteData] = useState({
     inviteLink: '',
-    inviteCode: 'MOZI888',
+    inviteCode: '',
     totalInvites: 0,
     earnedPoints: 0,
+    totalPoints: 0,
   });
   const [poolStatus, setPoolStatus] = useState({
     percent: 60,
@@ -80,9 +81,67 @@ function AchievementContent() {
     }
   }, [formatPoints]);
 
+  const fetchAchievementPoints = useCallback(async () => {
+    try {
+      const res = await getTaskPoints();
+      if (res?.code === 0 && res?.data) {
+        const data = res.data;
+        setInviteData((prev) => ({
+          ...prev,
+          totalPoints: data.totalPoints ?? prev.totalPoints,
+          inviteLink: data.inviteLink ?? prev.inviteLink,
+          inviteCode: data.inviteCode ?? prev.inviteCode,
+          totalInvites: data.totalInvites ?? prev.totalInvites,
+          earnedPoints: data.earnedPoints ?? prev.earnedPoints,
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to fetch achievement points:', error);
+    }
+  }, []);
+
+  const fetchAchievementInvites = useCallback(async () => {
+    try {
+      const res = await getInvitationList();
+      if (res?.code === 0 && res?.data) {
+        const data = res.data;
+        const invitations = data.invitations || data || [];
+        setInviteData((prev) => ({
+          ...prev,
+          inviteCode: data.invitationCode || prev.inviteCode,
+          inviteLink: data.inviteLink || prev.inviteLink,
+          totalInvites: data.totalInvites ?? invitations.length ?? prev.totalInvites,
+          earnedPoints: data.totalInvitePoints ?? data.earnedPoints ?? prev.earnedPoints,
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to fetch achievement invite list:', error);
+    }
+  }, []);
+
+  const hydrateInviteCodeFromStorage = useCallback(() => {
+    try {
+      const stored = localStorage.getItem('userDataInfo');
+      if (!stored) return;
+      const data = JSON.parse(stored);
+      setInviteData((prev) => ({
+        ...prev,
+        inviteCode: data.inviteCode || data.invitationCode || prev.inviteCode,
+      }));
+    } catch (error) {
+      console.error('Failed to read userDataInfo:', error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchPoolStatusData();
   }, [fetchPoolStatusData]);
+
+  useEffect(() => {
+    hydrateInviteCodeFromStorage();
+    fetchAchievementPoints();
+    fetchAchievementInvites();
+  }, [fetchAchievementInvites, fetchAchievementPoints, hydrateInviteCodeFromStorage]);
 
   useEffect(() => {
     if (!poolStatus.resetTimestamp) return;
@@ -191,7 +250,7 @@ function AchievementContent() {
           <div className={styles.scoreCard}>
             <div className={styles.scoreValue}>
               <img src="/point/new_coin.svg" alt="coin" className={styles.coinIcon} />
-              <span>578223</span>
+              <span>{formatPoints(inviteData.totalPoints || 0)}</span>
             </div>
             <button type="button" className={styles.recordBtn}>
               Record
