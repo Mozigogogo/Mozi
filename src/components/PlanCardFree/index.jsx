@@ -7,7 +7,7 @@ import ProgressLine from '@/components/ProgressLine';
 export default function PlanCardFree({
   title,
   subtitle,
-  highlightNum = '120x',
+  highlightNum = '20x',
   highlightSub,
   hint,
   ctaText,

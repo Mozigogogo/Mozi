@@ -51,7 +51,7 @@ const VipTabs = ({
               disabled={disabled}
             >
               <span className={`vipTabLabel ${styles.tabLabel}`}>{tab.label}</span>
-              {tab.badge && activeId === tab.id && (
+              {tab.badge && (
                 <span className={`vipTabBadge ${styles.tabBadge}`}>{tab.badge}</span>
               )}
             </button>
