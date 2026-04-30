@@ -14,7 +14,7 @@
   position: relative;
   z-index: 2;
   color: #fff;
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.15;
   font-weight: 700;
 }
@@ -24,26 +24,22 @@
   z-index: 2;
   margin-top: 4px;
   color: rgba(245, 255, 247, 0.92);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.2;
 }
 
 .starBg {
   position: absolute;
-  right: -12px;
-  top: -10px;
+  right: 10px;
+  top: 0px;
   width: 88px;
   height: 88px;
-  border-radius: 50%;
-  background: rgba(209, 255, 192, 0.24);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.starBg::before {
-  content: '';
-  position: absolute;
-  inset: 18px;
-  background: url('/point/star-solid.svg') no-repeat center center;
-  background-size: contain;
-  opacity: 0.35;
+.starIcon {
+  opacity: 0.8;
 }
 

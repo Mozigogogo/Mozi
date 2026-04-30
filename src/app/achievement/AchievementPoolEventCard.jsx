@@ -10,6 +10,7 @@ export default function AchievementPoolEventCard({ mode = 'BOOST', remainingHour
   const currentMode = String(mode || 'BOOST').toUpperCase();
   const isScarce = currentMode === 'SCARCE';
   const isNormal = currentMode === 'NORMAL';
+  const isPC = typeof window !== 'undefined' && window.innerWidth >= 1024;
 
   return (
     <section className={`${styles.card} ${isScarce ? styles.cardScarce : isNormal ? styles.cardNormal : ''}`}>
@@ -73,7 +74,11 @@ export default function AchievementPoolEventCard({ mode = 'BOOST', remainingHour
         </>
       )}
 
-      <button className={styles.upgradeBtn} type="button" onClick={() => router.push('/vip-recharge')}>
+      <button
+        className={styles.upgradeBtn}
+        type="button"
+        onClick={() => router.push(isPC ? '/subscribe' : '/vip-recharge')}
+      >
         <div className={styles.upgradeLeft}>
           <img src="/point/vip.svg" alt="vip" className={styles.crown} />
           <div>

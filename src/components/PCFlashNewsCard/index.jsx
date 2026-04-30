@@ -12,10 +12,41 @@ import PCPagination from '@/components/PCPagination';
 import { useTranslation } from 'react-i18next';
 import styles from './index.module.less';
 
-function NewsItem({ item }) {
+function NewsItem({ item, onClick }) {
+  const avatarText = String(item?.account || '').trim().slice(0, 1).toUpperCase();
+
   return (
-    <div className={styles.item}>
-      <div className={styles.avatar} aria-hidden />
+    <div
+      className={styles.item}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onClick={onClick ? () => onClick(item) : undefined}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onClick(item);
+              }
+            }
+          : undefined
+      }
+      style={onClick ? { cursor: 'pointer' } : undefined}
+    >
+      {item?.avatar ? (
+        <img
+          src={item.avatar}
+          alt={item.account || 'avatar'}
+          className={styles.avatar}
+          onError={(e) => {
+            e.currentTarget.src = '/default-avatar.png';
+          }}
+        />
+      ) : (
+        <div className={styles.avatarFallback} aria-hidden>
+          {avatarText || 'N'}
+        </div>
+      )}
 
       <div className={styles.body}>
         <div className={styles.meta}>
@@ -66,6 +97,7 @@ export default function PCFlashNewsCard({
   items = [],
   loading = false,
   onRefresh,
+  onItemClick,
   page = 1,
   pageSize = 3,
   total = 0,
@@ -113,7 +145,7 @@ export default function PCFlashNewsCard({
         style={loading && lockedListHeight ? { minHeight: `${lockedListHeight}px` } : undefined}
       >
         {hasItems ? (
-          items.map((item) => <NewsItem key={item.id} item={item} />)
+          items.map((item) => <NewsItem key={item.id} item={item} onClick={onItemClick} />)
         ) : loading ? (
           <>
             {Array.from({ length: pageSize }).map((_, idx) => (

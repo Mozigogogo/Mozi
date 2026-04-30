@@ -8,6 +8,9 @@ import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
+import InviteShareModal from '../InviteShareModal';
+import FeedbackPopup from '../../app/user/components/FeedbackPopup';
+import FeedbackSuccessModal from '../FeedbackSuccessModal';
 import styles from './index.module.less';
 
 export default function PCUserPanel({ open, onClose, collapsed, onLogin }) {
@@ -22,6 +25,9 @@ export default function PCUserPanel({ open, onClose, collapsed, onLogin }) {
   const [userInfo, setUserInfo] = useState(null);
   const [userDataInfo, setUserDataInfo] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [feedbackPopupOpen, setFeedbackPopupOpen] = useState(false);
+  const [feedbackSuccessOpen, setFeedbackSuccessOpen] = useState(false);
   
   // 检查登录状态
   useEffect(() => {
@@ -110,6 +116,16 @@ export default function PCUserPanel({ open, onClose, collapsed, onLogin }) {
     }
   ];
 
+  const totalPoints = isLoggedIn
+    ? Number(userDataInfo?.totalPoints ?? userDataInfo?.points ?? userDataInfo?.userInfo?.totalPoints ?? 0)
+    : 0;
+  const yesterdayPoints = isLoggedIn
+    ? Number(userDataInfo?.yesterdayPoints ?? userDataInfo?.todayPoints ?? 0)
+    : 0;
+  const pointsRanking = isLoggedIn
+    ? Number(userDataInfo?.pointsRanking ?? userDataInfo?.rank ?? 0)
+    : 0;
+
   // 操作卡片配置
   const actionCardItems = [
     {
@@ -121,7 +137,7 @@ export default function PCUserPanel({ open, onClose, collapsed, onLogin }) {
       descFallback: '留言你想要的功能',
       alt: '产品功能反馈',
       onClick: () => {
-        router.push('/feedback');
+        setFeedbackPopupOpen(true);
       }
     },
     {
@@ -133,35 +149,13 @@ export default function PCUserPanel({ open, onClose, collapsed, onLogin }) {
       descFallback: '分享你的喜爱',
       alt: '推荐朋友',
       onClick: () => {
-        const inviteCode = userInfo?.inviteCode || userDataInfo?.inviteCode || '';
-        const shareUrl = `${window.location.origin}?invite=${inviteCode}`;
-        const shareText = `加入 MoziInnovations，使用我的邀请码：${inviteCode}`;
-        
-        if (navigator.share) {
-          navigator.share({
-            title: 'MoziInnovations',
-            text: shareText,
-            url: shareUrl
-          }).catch(err => console.log('分享取消', err));
-        } else {
-          navigator.clipboard.writeText(shareUrl);
-          message.success(t('common.copySuccess') || '链接已复制到剪贴板');
-        }
+        setShareModalOpen(true);
       }
     }
   ];
 
   // 底部菜单配置
   const footerMenuItems = [
-    {
-      key: 'contact',
-      icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/me-contact%402x.png',
-      label: 'user.contactSupport',
-      alt: '联系客服',
-      onClick: () => {
-        window.open('https://t.me/your_support_channel', '_blank');
-      }
-    },
     {
       key: 'social',
       icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/social%402x.png',
@@ -247,39 +241,41 @@ export default function PCUserPanel({ open, onClose, collapsed, onLogin }) {
               {t('common.copy') || '复制'}
             </Button>
           </div>
-          <Button 
-            type="default" 
-            className={`${styles.signInButton} ${!isLoggedIn ? styles.loginButton : ''}`}
-            onClick={isLoggedIn ? () => router.push('/points') : () => {
-              if (onLogin) {
-                onLogin();
-              } else {
-                router.push('/auth');
-              }
-            }}
-          >
-            {isLoggedIn ? (t('user.signIn') || '签到') : (t('auth.login') || '登录')}
-          </Button>
+          {!isLoggedIn && (
+            <Button
+              type="default"
+              className={`${styles.signInButton} ${styles.loginButton}`}
+              onClick={() => {
+                if (onLogin) {
+                  onLogin();
+                } else {
+                  router.push('/auth');
+                }
+              }}
+            >
+              {t('auth.login') || '登录'}
+            </Button>
+          )}
         </div>
 
         {/* 积分卡片 */}
         <div className={styles.pointsCard}>
           <div className={styles.pointsHeader}>
             <span className={styles.pointsTitle}>{t('user.myPoints') || '我的积分'}</span>
-            <span className={styles.pointsDetail}>
+            <span className={styles.pointsDetail} onClick={() => router.push('/achievement')}>
               {t('user.pointsDetail') || '积分榜单'} <RightOutlined />
             </span>
           </div>
           <div className={styles.pointsValueRow}>
-            <div className={styles.pointsValue}>{isLoggedIn ? (userDataInfo?.points || 0) : 0}</div>
+            <div className={styles.pointsValue}>{totalPoints}</div>
             <div className={styles.pointsInfo}>
-              <span>{t('user.todayPoints') || '昨日积分'}: +{isLoggedIn ? (userDataInfo?.todayPoints || 0) : 0}</span>
+              <span>{t('user.todayPoints') || '昨日积分'}: +{yesterdayPoints}</span>
             </div>
           </div>
           <div className={styles.pointsRank}>
             {isLoggedIn ? (
               <>
-                当前排名：{t('user.rankTop') || '总榜第'} {userDataInfo?.rank || '--'} {userDataInfo?.rank && (t('user.rankSuffix') || '名')}
+                当前排名：{t('user.rankTop') || '总榜第'} {pointsRanking > 0 ? pointsRanking : '--'} {pointsRanking > 0 && (t('user.rankSuffix') || '名')}
               </>
             ) : (
               <>
@@ -337,6 +333,30 @@ export default function PCUserPanel({ open, onClose, collapsed, onLogin }) {
           }
         </div>
       </div>
+      <InviteShareModal
+        open={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        inviteCode={userInfo?.inviteCode || userDataInfo?.inviteCode || ''}
+        inviteLink={userDataInfo?.inviteLink || ''}
+      />
+      <FeedbackPopup
+        visible={feedbackPopupOpen}
+        onClose={() => setFeedbackPopupOpen(false)}
+        t={t}
+        setShowLoginModal={(visible) => {
+          if (!visible) return;
+          if (onLogin) {
+            onLogin();
+          } else {
+            router.push('/auth');
+          }
+        }}
+        setShowSuccessModal={setFeedbackSuccessOpen}
+      />
+      <FeedbackSuccessModal
+        visible={feedbackSuccessOpen}
+        onClose={() => setFeedbackSuccessOpen(false)}
+      />
     </div>
   );
 }

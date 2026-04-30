@@ -3,9 +3,12 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './index.module.less';
+import pcStyles from './pc.module.less';
 
 export default function FeedbackSuccessModal({ visible, onClose }) {
   const { t } = useTranslation();
+  const isPC = typeof window !== 'undefined' && window.innerWidth >= 1024;
+  const s = isPC ? pcStyles : styles;
 
   const handleJoinCommunity = () => {
     console.log('🔵 [FeedbackSuccessModal] 点击加入社区按钮');
@@ -37,32 +40,32 @@ export default function FeedbackSuccessModal({ visible, onClose }) {
   if (!visible) return null;
 
   return (
-    <div className={styles.modalOverlay} onClick={handleOverlayClick}>
-      <div className={styles.modalContent}>
-        <div className={styles.imageContainer}>
+    <div className={s.modalOverlay} onClick={handleOverlayClick}>
+      <div className={s.modalContent}>
+        <div className={s.imageContainer}>
           <img 
             src="/images/activity/toast_modal.png" 
             alt="Success"
-            className={styles.successImage}
+            className={s.successImage}
           />
           
-          <div className={styles.mainWrapper}>
-            <div className={styles.titleWrapper}>
-              <div className={styles.mainTitle}>
+          <div className={s.mainWrapper}>
+            <div className={s.titleWrapper}>
+              <div className={s.mainTitle}>
                 {t('feedbackSuccess.title')}
               </div>
             </div>
             
-            <div className={styles.contentWrapper}>
-              <div className={styles.subText}>
+            <div className={s.contentWrapper}>
+              <div className={s.subText}>
                 {t('feedbackSuccess.successMessage')}
               </div>
-              <div className={styles.subText2}>
+              <div className={s.subText2}>
                 {t('feedbackSuccess.joinPrompt')}
               </div>
               
               <button 
-                className={styles.joinButton}
+                className={s.joinButton}
                 onClick={handleJoinCommunity}
               >
                 {t('feedbackSuccess.joinButton')}

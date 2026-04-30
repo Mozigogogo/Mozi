@@ -9,6 +9,15 @@
   padding: 24PX;
 }
 
+@keyframes pcSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .modal {
   width: min(920PX, 88vw);
   height: min(600PX, 80vh);
@@ -233,6 +242,10 @@
   padding: 0;
 }
 
+.actionBtnActive {
+  color: #11B787;
+}
+
 .shareBtn {
   margin-left: auto;
 }
@@ -241,6 +254,10 @@
   width: 18PX;
   height: 18PX;
   object-fit: contain;
+}
+
+.actionIconActive {
+  filter: brightness(0) saturate(100%) invert(49%) sepia(92%) saturate(384%) hue-rotate(116deg) brightness(96%) contrast(92%);
 }
 
 .inputBar {

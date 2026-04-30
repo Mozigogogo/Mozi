@@ -16,6 +16,675 @@
   padding-bottom: 16px;
 }
 
+.pcPageWrap {
+  padding: 16PX;
+  box-sizing: border-box;
+}
+
+.pcHeader {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16PX;
+  width: 100%;
+  margin-bottom: 20PX;
+}
+
+.pcHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 12PX;
+  min-width: 0;
+}
+
+.pcBackBtn {
+  width: 43PX;
+  height: 43PX;
+  max-width: 43PX;
+  max-height: 43PX;
+  padding: 0;
+  border: none;
+  border-radius: 12PX;
+  background: rgba(255, 255, 255, 0.85);
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 1PX 3PX rgba(15, 23, 42, 0.08);
+  font-size: 14PX;
+}
+
+.pcTitle {
+  margin: 0;
+  font-size: 24PX;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #0f172a;
+}
+
+.pcPostContainer {
+  margin-top: 0;
+  min-height: auto;
+  border-radius: 16PX;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  padding: 20PX;
+}
+
+.pcPostContainer .userInfo {
+  margin-bottom: 18PX;
+  gap: 12PX;
+}
+
+.pcPostContainer .userAvatar,
+.pcPostContainer .avatarPlaceholder {
+  width: 44PX;
+  height: 44PX;
+}
+
+.pcPostContainer .titleToggleTag {
+  height: 34PX;
+  padding: 0 14PX;
+  border-radius: 17PX;
+  font-size: 14PX;
+}
+
+.pcPostContainer .titleSection {
+  margin-bottom: 18PX;
+}
+
+.pcPostContainer .titleInput {
+  height: 48PX;
+  font-size: 16PX;
+  padding: 0 52PX 0 12PX;
+}
+
+.pcPostContainer .wordCount {
+  right: 12PX;
+  font-size: 13PX;
+}
+
+.pcPostContainer .contentSection .contentTextarea {
+  height: 240PX;
+  padding: 12PX;
+  font-size: 14PX;
+}
+
+.pcPostContainer .contentSection .imageUploader {
+  margin-top: 10PX;
+  gap: 8PX;
+}
+
+.pcPostContainer .contentSection .uploadTile,
+.pcPostContainer .contentSection .imageWrapper {
+  width: 84PX;
+  height: 84PX;
+}
+
+.pcPostContainer .contentSection .uploadTile {
+  border-radius: 10PX;
+}
+
+.pcPostContainer .contentSection .uploadTile span {
+  font-size: 34PX;
+  line-height: 1;
+}
+
+.pcPostContainer .contentSection .imageWrapper .deleteIcon {
+  top: -8PX;
+  right: -8PX;
+  width: 34PX;
+  height: 34PX;
+  font-size: 24PX;
+  font-weight: 500;
+  line-height: 1;
+  box-shadow: 0 4PX 10PX rgba(0, 0, 0, 0.2);
+}
+
+.pcPostContainer .bottomToolbar {
+  justify-content: flex-start;
+  gap: 10PX;
+  margin-top: 12PX;
+}
+
+.pcPostContainer .bottomToolbar .templateBtn {
+  margin: 0;
+  padding: 0;
+  background: none !important;
+  border: none;
+}
+
+.pcPostContainer .bottomToolbar .templateBtn .templateBox {
+  min-width: 132PX;
+  height: 42PX;
+  padding: 0 16PX;
+  border-radius: 21PX;
+  gap: 8PX;
+  font-size: 15PX;
+  white-space: nowrap;
+}
+
+.pcPostContainer .bottomToolbar .templateBtn .templateBox .buttonIcon {
+  width: 20PX;
+  height: 20PX;
+}
+
+.pcPostContainer .publishBtnWrapper {
+  padding-top: 12PX;
+}
+
+.pcPostContainer .publishButton {
+  height: 44PX;
+  border-radius: 22PX;
+  font-size: 16PX;
+}
+
+/* 发现好币主内容区（PC） */
+.pcPostContainer .discoveryForm {
+  margin-top: 14PX;
+}
+
+.pcPostContainer .discoveryInfoBox {
+  border: 1PX solid #E6E9EE;
+  border-radius: 14PX;
+  padding: 12PX 18PX;
+  margin-bottom: 14PX;
+  background: #fff;
+}
+
+.pcPostContainer .coinInfoRow {
+  min-height: 68PX;
+  margin-bottom: 0;
+  padding: 0 6PX;
+  border-bottom: 1PX solid #F1F3F6;
+  box-sizing: border-box;
+}
+
+.pcPostContainer .coinInfoRow:last-child {
+  border-bottom: none;
+  align-items: center;
+}
+
+.pcPostContainer .coinInfoIconImg {
+  width: 24PX;
+  height: 24PX;
+  margin-right: 10PX;
+}
+
+.pcPostContainer .coinInfoLabel {
+  min-width: 220PX;
+  margin-right: 14PX;
+  font-size: 18PX;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.pcPostContainer .required {
+  margin-left: 6PX;
+  font-size: 18PX;
+}
+
+.pcPostContainer .coinInfoValue,
+.pcPostContainer .coinInfoPlaceholder {
+  font-size: 18PX;
+  line-height: 1.3;
+}
+
+.pcPostContainer .coinInfoPlaceholder {
+  color: #B4BAC3;
+}
+
+.pcPostContainer .iconArrow {
+  font-size: 30PX;
+  margin-left: 10PX;
+  color: #9CA3AF;
+}
+
+.pcPostContainer .sectorInputInline {
+  height: 48PX;
+  font-size: 16PX;
+}
+
+.pcPostContainer .reasonTextareaInline {
+  min-height: 90PX !important;
+  font-size: 16PX !important;
+  line-height: 1.6;
+  padding-top: 8PX !important;
+  padding-bottom: 8PX !important;
+}
+
+.pcPostContainer .reasonTextareaInline :global textarea {
+  font-size: 16PX !important;
+  line-height: 1.6 !important;
+}
+
+.pcPostContainer .selectedTags {
+  margin-top: 14PX;
+  margin-bottom: 4PX;
+  gap: 10PX;
+}
+
+.pcPostContainer .selectedTags .coinTag {
+  padding: 6PX 14PX;
+  border-radius: 16PX;
+  font-size: 14PX;
+  line-height: 1.2;
+  background: #FFF7E8;
+  color: #E89C18;
+}
+
+.pcPostContainer .selectedTags .topicTag {
+  padding: 6PX 12PX;
+  border-radius: 14PX;
+  font-size: 12PX;
+}
+
+/* PC端弹层适配（模板/投票/币种/话题/创建话题/提示） */
+.pcPostContainer .templatePopup,
+.pcPostContainer .votePopup,
+.pcPostContainer .coinPopup,
+.pcPostContainer .topicPopup,
+.pcPostContainer .topicCreatorMask {
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24PX;
+  box-sizing: border-box;
+}
+
+.pcPostContainer .templatePopup .popupMask,
+.pcPostContainer .votePopup .popupMask,
+.pcPostContainer .coinPopup .popupMask,
+.pcPostContainer .topicPopup .popupMask,
+.pcPostContainer .topicCreatorMask {
+  background: rgba(0, 0, 0, 0.42);
+}
+
+.pcPostContainer .templatePopup .popupContent {
+  position: relative;
+  width: 920PX;
+  max-width: calc(100vw - 80PX);
+  max-height: calc(100vh - 120PX);
+  border-radius: 20PX;
+  padding: 22PX;
+  animation: pcModalIn 0.24s ease-out;
+}
+
+.pcPostContainer .votePopup .popupContent {
+  position: relative;
+  width: 760PX;
+  max-width: calc(100vw - 80PX);
+  max-height: calc(100vh - 220PX);
+  border-radius: 20PX;
+  padding: 10PX 12PX 12PX;
+  animation: pcModalIn 0.24s ease-out;
+}
+
+.pcPostContainer .coinPopup .popupContent {
+  position: relative;
+  width: 760PX;
+  max-width: calc(100vw - 80PX);
+  height: 640PX;
+  max-height: calc(100vh - 120PX);
+  top: auto;
+  border-radius: 20PX;
+  animation: pcModalIn 0.24s ease-out;
+}
+
+.pcPostContainer .topicPopup .popupContent {
+  position: relative;
+  width: 820PX;
+  max-width: calc(100vw - 80PX);
+  height: 680PX;
+  max-height: calc(100vh - 120PX);
+  border-radius: 20PX;
+  padding: 22PX;
+  animation: pcModalIn 0.24s ease-out;
+}
+
+.pcPostContainer .topicCreatorMask {
+  z-index: 1100;
+}
+
+.pcPostContainer .topicCreatorMask .topicCreator {
+  width: 760PX;
+  max-width: calc(100vw - 80PX);
+  border-radius: 20PX;
+  padding: 22PX;
+  animation: pcModalIn 0.24s ease-out;
+}
+
+.pcPostContainer .askTipsContainer {
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24PX;
+  background: rgba(0, 0, 0, 0.42);
+}
+
+.pcPostContainer .askTipsBox {
+  width: 560PX;
+  max-width: calc(100vw - 80PX);
+  border-radius: 16PX;
+  box-shadow: 0 8PX 28PX rgba(0, 0, 0, 0.12);
+}
+
+.pcPostContainer .communityRulesMask {
+  padding: 24PX;
+  background: rgba(0, 0, 0, 0.42);
+}
+
+.pcPostContainer .communityRulesPopup {
+  max-width: 760PX;
+  width: min(760PX, calc(100vw - 80PX));
+  max-height: calc(100vh - 120PX);
+  border-radius: 20PX;
+}
+
+/* Template 弹窗内容（PC） */
+.pcPostContainer .templatePopup .popupHeader {
+  margin-bottom: 18PX;
+}
+
+.pcPostContainer .templatePopup .popupHeader > span:first-child {
+  font-size: 36PX;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.pcPostContainer .templatePopup .popupHeader .closeBtn {
+  font-size: 72PX;
+  color: #a6a8ad;
+  line-height: 1;
+  padding: 0 10PX;
+}
+
+.pcPostContainer .templatePopup .templateList {
+  gap: 16PX;
+  padding-bottom: 4PX;
+}
+
+.pcPostContainer .templatePopup .templateList .templateItem {
+  flex-basis: 280PX;
+  height: 360PX;
+  padding: 16PX;
+  border-radius: 12PX;
+  font-size: 22PX;
+}
+
+.pcPostContainer .templatePopup .templateList .templateItem .demoArea {
+  height: 270PX;
+  margin-top: 12PX;
+  border-radius: 10PX;
+}
+
+/* Vote 弹窗内容（PC） */
+.pcPostContainer .votePopup .popupHeader {
+  margin-bottom: 6PX;
+  min-height: 34PX;
+}
+
+.pcPostContainer .votePopup .popupHeader > span {
+  font-size: 18PX;
+  line-height: 1.2;
+}
+
+.pcPostContainer .votePopup .headerBtns {
+  gap: 6PX;
+}
+
+.pcPostContainer .votePopup .headerBtns button {
+  height: 30PX;
+  padding: 0 12PX;
+  border-radius: 15PX;
+  font-size: 12PX;
+}
+
+.pcPostContainer .votePopup .voteForm .voteTitleInput,
+.pcPostContainer .votePopup .voteOptionsList .optionItem .optionInput,
+.pcPostContainer .votePopup .addOptionBtn {
+  border-radius: 10PX !important;
+}
+
+.pcPostContainer .votePopup .voteForm .voteTitleInput input,
+.pcPostContainer .votePopup .voteOptionsList .optionItem .optionInput {
+  font-size: 14PX;
+}
+
+.pcPostContainer .votePopup .voteForm {
+  overflow-y: auto;
+}
+
+.pcPostContainer .votePopup .voteForm .voteTitleInput {
+  height: 72PX;
+  padding: 8PX 14PX;
+  margin-bottom: 8PX;
+  display: flex;
+  align-items: center;
+}
+
+.pcPostContainer .votePopup .voteForm .voteTitleInput :global(.adm-input) {
+  width: 100%;
+}
+
+.pcPostContainer .votePopup .voteForm .voteTitleInput :global(.adm-input-element) {
+  height: 56PX;
+  font-size: 14PX;
+  line-height: 56PX;
+  padding-right: 88PX;
+}
+
+.pcPostContainer .votePopup .voteForm .voteTitleInput :global(.adm-input-element::placeholder) {
+  color: #C1C6CE;
+}
+
+.pcPostContainer .votePopup .voteForm .voteTitleInput .wordCount {
+  right: 14PX;
+  font-size: 18PX;
+  font-weight: 500;
+  color: #9EA3AA;
+  line-height: 1;
+}
+
+.pcPostContainer .votePopup .voteOptionsList .optionItem {
+  margin-bottom: 8PX;
+}
+
+.pcPostContainer .votePopup .voteOptionsList .optionItem .optionInput {
+  height: auto;
+  padding: 0;
+  background: transparent;
+}
+
+.pcPostContainer .votePopup .voteOptionsList .optionItem .optionInput :global(.adm-input) {
+  width: 100%;
+}
+
+.pcPostContainer .votePopup .voteOptionsList .optionItem .optionInput :global(.adm-input-element) {
+  height: 56PX;
+  font-size: 14PX;
+  line-height: 56PX;
+  padding: 0 14PX;
+}
+
+.pcPostContainer .votePopup .voteOptionsList .optionItem .optionInput :global(.adm-input-element::placeholder) {
+  color: #B8BDC4;
+}
+
+.pcPostContainer .votePopup .voteOptionsList .optionItem .deleteBtn {
+  right: 16PX;
+  width: 30PX;
+  height: 30PX;
+  line-height: 30PX;
+  font-size: 22PX;
+}
+
+.pcPostContainer .votePopup .addOptionBtn {
+  height: 36PX !important;
+  margin-top: 4PX;
+  font-size: 13PX !important;
+}
+
+/* Coin / Topic 弹窗内容（PC） */
+.pcPostContainer .coinPopup .coinHeader,
+.pcPostContainer .topicPopup .popupHeader {
+  padding: 10PX 12PX;
+}
+
+.pcPostContainer .topicPopup .popupHeader {
+  margin-bottom: 4PX;
+  padding-bottom: 6PX;
+}
+
+.pcPostContainer .coinPopup .searchBox,
+.pcPostContainer .topicPopup .popupHeader .searchWrapper {
+  border-radius: 20PX;
+  padding: 0 14PX;
+}
+
+.pcPostContainer .coinPopup .searchInput,
+.pcPostContainer .topicPopup .popupHeader .searchWrapper .searchInput {
+  height: 40PX;
+  font-size: 14PX;
+}
+
+.pcPostContainer .coinPopup .cancelBtn,
+.pcPostContainer .topicPopup .popupHeader .cancelBtn,
+.pcPostContainer .topicPopup .popupHeader .createTopicBtn {
+  height: 40PX;
+  padding: 0 16PX;
+  border-radius: 20PX;
+  font-size: 14PX;
+  line-height: 40PX;
+}
+
+.pcPostContainer .coinPopup .searchResults,
+.pcPostContainer .topicPopup .searchResults {
+  padding: 16PX 18PX 18PX;
+}
+
+.pcPostContainer .coinPopup .resultsTitle,
+.pcPostContainer .topicPopup .searchResults .resultsTitle {
+  font-size: 15PX;
+  margin-bottom: 10PX;
+}
+
+.pcPostContainer .coinPopup .resultItem {
+  padding: 12PX 0;
+}
+
+.pcPostContainer .coinPopup .coinIcon {
+  width: 28PX;
+  height: 28PX;
+  margin-right: 10PX;
+}
+
+.pcPostContainer .topicPopup .searchResults .resultsList .topicItem {
+  padding: 14PX 10PX;
+}
+
+.pcPostContainer .topicPopup .searchResults .resultsList .topicItem .topicName {
+  font-size: 15PX;
+}
+
+.pcPostContainer .topicPopup .searchResults .resultsList .topicItem .topicDescription {
+  font-size: 13PX;
+  margin-top: 4PX;
+}
+
+/* 创建话题弹窗内容（PC） */
+.pcPostContainer .topicCreatorMask .topicCreator .creatorHeader span {
+  font-size: 22PX;
+}
+
+.pcPostContainer .topicCreatorMask .topicCreator .creatorHeader .closeIcon {
+  font-size: 30PX;
+}
+
+.pcPostContainer .topicCreatorMask .topicCreator .creatorContent .inputGroup .label {
+  font-size: 14PX;
+}
+
+.pcPostContainer .topicCreatorMask .topicCreator .creatorContent .inputGroup .titleInput {
+  height: 44PX;
+  border-radius: 10PX;
+  font-size: 14PX;
+}
+
+.pcPostContainer .topicCreatorMask .topicCreator .creatorContent .inputGroup .descInput {
+  min-height: 120PX;
+  border-radius: 10PX;
+  font-size: 14PX;
+}
+
+.pcPostContainer .topicCreatorMask .topicCreator .createBtn {
+  height: 44PX;
+  border-radius: 22PX;
+  font-size: 15PX;
+}
+
+/* Ask tips / 社区公约内容（PC） */
+.pcPostContainer .askTipsHeader {
+  padding: 14PX 16PX;
+  font-size: 16PX;
+}
+
+.pcPostContainer .askTipsHeader .closeIcon {
+  font-size: 24PX;
+}
+
+.pcPostContainer .askTipsContent {
+  padding: 14PX 16PX 16PX;
+}
+
+.pcPostContainer .askTipsContent .tipItem .tipText {
+  font-size: 14PX;
+}
+
+.pcPostContainer .rulesHeader {
+  padding: 18PX 18PX 12PX;
+}
+
+.pcPostContainer .rulesHeader .rulesTitle {
+  font-size: 22PX;
+}
+
+.pcPostContainer .rulesContent {
+  padding: 16PX 18PX;
+}
+
+.pcPostContainer .rulesContent .rulesText {
+  font-size: 14PX;
+  line-height: 1.7;
+}
+
+.pcPostContainer .rulesFooter {
+  padding: 10PX 18PX 18PX;
+}
+
+.pcPostContainer .rulesFooter .confirmBtn {
+  height: 44PX;
+  border-radius: 22PX;
+  font-size: 15PX;
+}
+
+@keyframes pcModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(16PX) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 // 内容包裹层
 .contentWrapper {
   flex: 1; /* 占据剩余空间 */

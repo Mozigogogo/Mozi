@@ -3,11 +3,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Input, TextArea, Button, Popup, Picker, Toast } from 'antd-mobile';
 import { SearchOutline, CloseOutline } from 'antd-mobile-icons';
+import { LeftOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { completeTask } from '@/api/user';
 import NavBar from '../../components/NavBar';
+import PCLayout from '@/components/PCLayout';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { safeBack } from '@/utils/navigation';
 import styles from './page.module.less';
@@ -26,11 +28,13 @@ const topicIcon = `${CDN_ICON}/topic.png`;
 const integralIcon = `${CDN_ICON}/integral.png`;
 const plateIcon = `${CDN_ICON}/plate.png`;
 const reasonIcon = `${CDN_ICON}/reason.png`;
+const POST_PREFILL_IMAGES_KEY = 'mozi_post_prefill_images_v1';
 
 export default function PostPage() {
   const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [isPC, setIsPC] = useState(false);
   const [title, setTitle] = useState('');
   const [showTitleInput, setShowTitleInput] = useState(false);
   const [content, setContent] = useState('');
@@ -141,8 +145,37 @@ export default function PostPage() {
   }, [searchParams]);
 
   useEffect(() => {
+    const checkIsPC = () => {
+      if (typeof window === 'undefined') return;
+      setIsPC(window.innerWidth >= 1024);
+    };
+    checkIsPC();
+    window.addEventListener('resize', checkIsPC);
+    return () => window.removeEventListener('resize', checkIsPC);
+  }, []);
+
+  useEffect(() => {
     if (title && title.trim()) setShowTitleInput(true);
   }, [title]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const raw = window.sessionStorage.getItem(POST_PREFILL_IMAGES_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      const nextImages = Array.isArray(parsed) ? parsed.filter((item) => typeof item === 'string' && item.trim()) : [];
+      if (nextImages.length > 0) {
+        setImages((prev) => {
+          const merged = [...nextImages, ...prev];
+          return merged.slice(0, 9);
+        });
+      }
+      window.sessionStorage.removeItem(POST_PREFILL_IMAGES_KEY);
+    } catch (_) {
+      // ignore invalid cache
+    }
+  }, []);
 
   // 监听币种选择弹出层状态变化
   useEffect(() => {
@@ -697,13 +730,15 @@ export default function PostPage() {
     }
   };
 
-  return (
+  const pageContent = (
     <>
-      <NavBar 
-        title={isUpdate ? t('post.editPost') : t('post.title')}
-        onBack={() => safeBack(router, { fallback: '/' })}
-      />
-      <div className={styles.postContainer}>
+      {!isPC && (
+        <NavBar
+          title={isUpdate ? t('post.editPost') : t('post.title')}
+          onBack={() => safeBack(router, { fallback: '/' })}
+        />
+      )}
+      <div className={`${styles.postContainer} ${isPC ? styles.pcPostContainer : ''}`}>
         <div className={styles.contentWrapper}>
           {/* 顶部用户头像 */}
           <div className={styles.userInfo}>
@@ -1319,4 +1354,31 @@ export default function PostPage() {
       </div>
     </>
   );
+
+  if (isPC) {
+    return (
+      <PCLayout>
+        <div className={styles.pcPageWrap}>
+          <header className={styles.pcHeader}>
+            <div className={styles.pcHeaderLeft}>
+              <button
+                type="button"
+                className={styles.pcBackBtn}
+                onClick={() => safeBack(router, { fallback: '/community' })}
+                aria-label={t('common.back', { defaultValue: '返回' })}
+              >
+                <LeftOutlined />
+              </button>
+              <h1 className={styles.pcTitle}>
+                {isUpdate ? t('post.editPost') : t('post.title')}
+              </h1>
+            </div>
+          </header>
+          {pageContent}
+        </div>
+      </PCLayout>
+    );
+  }
+
+  return pageContent;
 }

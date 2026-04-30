@@ -24,17 +24,68 @@
   padding: 14px 16px 12px;
 }
 
-.placeholder {
+.textarea {
+  width: 100%;
   min-height: 52px;
-  color: #8f9bb1;
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: #1f2329;
   font-size: 14px;
   line-height: 1.5;
+  font-family: inherit;
+}
+
+.textarea::placeholder {
+  color: #8f9bb1;
 }
 
 .toolbar {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.imageList {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.imageItem {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.imageThumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.removeImageBtn {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  font-size: 12px;
+  cursor: pointer;
 }
 
 .toolBtn {
@@ -65,4 +116,9 @@
   gap: 6px;
   cursor: pointer;
   flex-shrink: 0;
+}
+
+.publishBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }

@@ -21,7 +21,8 @@ export default function MonitorContent({
   onBack = () => window.history.back(),
   className = '',
   readOnly = false, // New prop to control read-only mode
-  userId = null
+  userId = null,
+  pcMode = false,
 }) {
   const { t } = useTranslation();
   const [activeKey, setActiveKey] = useState('0');
@@ -42,6 +43,12 @@ export default function MonitorContent({
     priceFallChange24HPercent: t('myAlarm.fallOver'),
   };
 
+  const getDisplayContent = (value) => {
+    if (value === undefined || value === null) return '0';
+    const text = String(value).trim();
+    return text === '' ? '0' : text;
+  };
+
   // 固定的四个报警条件配置（按顺序显示），与原项目一致
   const fixedWarningCodes = [
     { code: 'priceRise', defaultContent: '--', unit: '$' },
@@ -56,7 +63,10 @@ export default function MonitorContent({
   const getDisplayWarnContent = () => {
     const backendContent = warnData.sideData?.warnContent || [];
     if (readOnly && userId) {
-      return Array.isArray(backendContent) ? backendContent.filter(Boolean) : [];
+      const hiddenCodes = new Set(['bigDeal', 'emailOn', 'phoneOn']);
+      return Array.isArray(backendContent)
+        ? backendContent.filter((item) => item && !hiddenCodes.has(String(item.code || '').trim()))
+        : [];
     }
     return fixedWarningCodes.map((fixed) => {
       const backendItem = backendContent.find((item) => item.code === fixed.code);
@@ -346,7 +356,7 @@ export default function MonitorContent({
   if (warnData.needLogin) {
     return (
       <div 
-        className={`${styles.box} ${className}`}
+        className={`${styles.box} ${pcMode ? styles.pcMode : ''} ${className}`}
         style={{ paddingTop: showNavBar ? '50px' : 0 }}
       >
         {showNavBar && <NavBar title={t('myAlarm.title')} showMenu={false} showBorder={false} />}
@@ -362,7 +372,7 @@ export default function MonitorContent({
   
   return (
       <div 
-        className={`${styles.box} ${className}`}
+        className={`${styles.box} ${pcMode ? styles.pcMode : ''} ${className}`}
         style={{ paddingTop: showNavBar ? '50px' : 0 }}
       >
         {showNavBar && <NavBar title={t('myAlarm.title')} showBorder={false} />}
@@ -467,7 +477,7 @@ export default function MonitorContent({
                           className={styles.contentText}
                           onClick={() => startEdit(item, index)}
                         >
-                          {item.content}
+                          {getDisplayContent(item.content)}
                         </span>
                       </div>
                     )}

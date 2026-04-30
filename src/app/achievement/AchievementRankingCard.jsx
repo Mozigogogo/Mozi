@@ -15,9 +15,9 @@ const crownByRank = {
   3: '/icons/pc/top3_header.svg',
 };
 
-export default function AchievementRankingCard({ onInviteClick, style }) {
+export default function AchievementRankingCard({ onInviteClick, style, noTopMargin = false }) {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState('total');
+  const [activeTab, setActiveTab] = useState('day');
   const [rankData, setRankData] = useState({});
   const [currentUserData, setCurrentUserData] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -99,11 +99,11 @@ export default function AchievementRankingCard({ onInviteClick, style }) {
   };
 
   return (
-    <section className={styles.card} style={style}>
+    <section className={`${styles.card} ${noTopMargin ? styles.noTopMargin : ''}`} style={style}>
       <div className={styles.header}>
         <div className={styles.titleWrap}>
           <img src="/icons/pool_status_logo.svg" alt="" className={styles.titleIcon} />
-          <h3 className={styles.title}>Ranking List</h3>
+          <h3 className={styles.title}>{t('pointsDetail.rankingListTitle', { defaultValue: 'Ranking List' })}</h3>
           <span className={styles.titleUnderline} />
         </div>
         <div className={styles.tabs}>
@@ -165,7 +165,7 @@ export default function AchievementRankingCard({ onInviteClick, style }) {
 
       <button type="button" className={styles.inviteBtn} onClick={onInviteClick}>
         <img src="/icons/pc/share.svg" alt="" className={styles.inviteIcon} />
-        {t('pointsDetail.inviteFriendsNow', { defaultValue: '邀请朋友来挑战吧' })}
+        {t('pointsDetail.inviteChallenge', { defaultValue: 'Invite friends to challenge' })}
       </button>
     </section>
   );

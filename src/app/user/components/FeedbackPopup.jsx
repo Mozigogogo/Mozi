@@ -1,16 +1,30 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Popup, Grid, Button, Toast } from 'antd-mobile';
 import styles from '@/app/user/page.module.less';
+import pcStyles from './FeedbackPopupPc.module.less';
 import { submitFeedback } from '@/api/user';
 import { forceBlurAndResetViewport } from '@/utils/iosViewportFix';
 
 const FeedbackPopup = ({ visible, onClose, t, setShowLoginModal, setShowSuccessModal }) => {
+  const isPC = typeof window !== 'undefined' && window.innerWidth >= 1024;
+  const s = isPC ? pcStyles : styles;
+  const scoreGap = isPC ? 10 : 5;
   const [reportScore, setReportScore] = useState(null);
   const [scoreDisable, setScoreDisable] = useState(true);
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
   const [selectedGoodFeatures, setSelectedGoodFeatures] = useState([]);
   const [selectedBadFeatures, setSelectedBadFeatures] = useState([]);
   const scoreInputRef = useRef('');
+
+  useEffect(() => {
+    if (!isPC) return undefined;
+    if (!visible) return undefined;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [isPC, visible]);
 
   // 切换"您觉得好的功能"选项
   const toggleGoodFeature = (feature) => {
@@ -71,7 +85,8 @@ const FeedbackPopup = ({ visible, onClose, t, setShowLoginModal, setShowSuccessM
           goodFeatures: selectedGoodFeatures,
           badFeatures: selectedBadFeatures
         });
-      if (res?.data?.isSuccess) {
+      const isSubmitSuccess = res?.data?.isSuccess === true || res?.code === 0 || res?.success === true;
+      if (isSubmitSuccess) {
         // 关闭反馈弹窗
         onClose();
         // 显示成功弹窗
@@ -83,40 +98,41 @@ const FeedbackPopup = ({ visible, onClose, t, setShowLoginModal, setShowSuccessM
         setSelectedGoodFeatures([]);
         setSelectedBadFeatures([]);
       } else {
-        Toast.show({ content: t('user.feedbackFailed'), position: 'bottom' });
+        const failReason =
+          res?.errorMsg ||
+          res?.message ||
+          res?.data?.errorMsg ||
+          res?.data?.message ||
+          t('user.feedbackFailed');
+        Toast.show({
+          content: isPC ? failReason : t('user.feedbackFailed'),
+          position: 'bottom',
+        });
       }
     } catch (e) {
-      Toast.show({ content: t('user.feedbackFailed'), position: 'bottom' });
+      const failReason = e?.errorMsg || e?.message || t('user.feedbackFailed');
+      Toast.show({
+        content: isPC ? failReason : t('user.feedbackFailed'),
+        position: 'bottom',
+      });
     } finally {
       setSubmittingFeedback(false);
     }
   };
 
-  return (
-    <Popup
-      visible={visible}
-      onMaskClick={onClose}
-      onClose={onClose}
-      position='bottom'
-      bodyStyle={{
-        borderTopLeftRadius: '24px',
-        borderTopRightRadius: '24px',
-        minHeight: '40vh',
-        maxHeight: '90vh',
-      }}
-    >
-      <div className={styles.scorePopContainer}>
-        <div className={styles.feedbackTitle}>
+  const content = (
+      <div className={s.scorePopContainer}>
+        <div className={s.feedbackTitle}>
           <div>{t('user.feedbackTitle')}</div>
           <div>{t('user.feedbackSubtitle')}</div>
         </div>
-        <div className={styles.feedbackContent}>
+        <div className={s.feedbackContent}>
           {/* 功能选择区域 */}
-          <div className={styles.feedbackSelectSection}>
+          <div className={s.feedbackSelectSection}>
             {/* 您觉得好的功能 */}
-            <div className={styles.feedbackSection}>
-            <div className={styles.feedbackSectionTitle}>{t('user.goodFeatures')}</div>
-            <Grid className={styles.featureGrid} columns={3} gap={10}>
+            <div className={s.feedbackSection}>
+            <div className={s.feedbackSectionTitle}>{t('user.goodFeatures')}</div>
+            <Grid className={s.featureGrid} columns={3} gap={10}>
               {[
                 t('user.featureOptions.marketBoard'),
                 t('user.featureOptions.alertFunction'),
@@ -127,7 +143,7 @@ const FeedbackPopup = ({ visible, onClose, t, setShowLoginModal, setShowSuccessM
               ].map((feature) => (
                 <Grid.Item key={feature}>
                   <div 
-                    className={`${styles.featureTag} ${selectedGoodFeatures.includes(feature) ? styles.featureTagSelected : ''}`}
+                    className={`${s.featureTag} ${selectedGoodFeatures.includes(feature) ? s.featureTagSelected : ''}`}
                     onClick={() => toggleGoodFeature(feature)}
                   >
                     {feature}
@@ -138,9 +154,9 @@ const FeedbackPopup = ({ visible, onClose, t, setShowLoginModal, setShowSuccessM
           </div>
 
           {/* 建议调整的功能 */}
-          <div className={styles.feedbackSection}>
-            <div className={styles.feedbackSectionTitle}>{t('user.badFeatures')}</div>
-            <Grid className={styles.featureGrid} columns={3} gap={10}>
+          <div className={s.feedbackSection}>
+            <div className={s.feedbackSectionTitle}>{t('user.badFeatures')}</div>
+            <Grid className={s.featureGrid} columns={3} gap={10}>
               {[
                 t('user.featureOptions.marketBoard'),
                 t('user.featureOptions.alertFunction'),
@@ -151,7 +167,7 @@ const FeedbackPopup = ({ visible, onClose, t, setShowLoginModal, setShowSuccessM
               ].map((feature) => (
                 <Grid.Item key={feature}>
                   <div 
-                    className={`${styles.featureTag} ${selectedBadFeatures.includes(feature) ? styles.featureTagSelected : ''}`}
+                    className={`${s.featureTag} ${selectedBadFeatures.includes(feature) ? s.featureTagSelected : ''}`}
                     onClick={() => toggleBadFeature(feature)}
                   >
                     {feature}
@@ -163,27 +179,27 @@ const FeedbackPopup = ({ visible, onClose, t, setShowLoginModal, setShowSuccessM
           </div>
 
           {/* 积分活动容器 */}
-          <div className={styles.scoreContainer}>
-            <div className={styles.scoreRecommendText}>{t('user.recommendQuestion')}</div>
-            <div className={styles.scoreDesc}>
+          <div className={s.scoreContainer}>
+            <div className={s.scoreRecommendText}>{t('user.recommendQuestion')}</div>
+            <div className={s.scoreDesc}>
               <span>{t('user.veryUnwilling')}</span>
               <span>{t('user.veryWilling')}</span>
             </div>
-            <Grid className={styles.scoreList} columns={10} gap={5}>
+            <Grid className={s.scoreList} columns={10} gap={scoreGap}>
               {[1,2,3,4,5,6,7,8,9,10].map((item) => (
-                <Grid.Item key={item} className={`${styles.scoreItem} ${item === reportScore ? styles.scoreActive : ''}`} onClick={() => onScoreSelect(item)}>
+                <Grid.Item key={item} className={`${s.scoreItem} ${item === reportScore ? s.scoreActive : ''}`} onClick={() => onScoreSelect(item)}>
                   {item}
                 </Grid.Item>
               ))}
             </Grid>
           </div>
         </div>
-        <div className={styles.scoreCon}>
+        <div className={s.scoreCon}>
           <div>
             <span>{t('user.feedbackInputTitle')}</span>
           </div>
           <textarea 
-            className={styles.scoreTextArea} 
+            className={s.scoreTextArea} 
             placeholder={t('user.feedbackInputPlaceholder')} 
             maxLength={200} 
             onChange={(e) => onScoreTextChange(e.target.value)} 
@@ -191,18 +207,69 @@ const FeedbackPopup = ({ visible, onClose, t, setShowLoginModal, setShowSuccessM
           />
         </div>
         <Button 
-          className={`${styles.scoreBtn} ${scoreDisable ? styles.scoreBtnDisable : ''} ${submittingFeedback ? styles.loading : ''}`} 
+          className={`${s.scoreBtn} ${scoreDisable ? s.scoreBtnDisable : ''} ${submittingFeedback ? s.loading : ''}`} 
           onClick={submittingFeedback ? undefined : submitScore} 
           disabled={scoreDisable || submittingFeedback} 
           block
         >
           {submittingFeedback ? (
-            <span className={styles.loadingSpinner}></span>
+            <span className={s.loadingSpinner}></span>
           ) : (
             t('user.submitFeedback')
           )}
         </Button>
       </div>
+  );
+
+  if (isPC) {
+    if (!visible) return null;
+    return (
+      <div
+        role="dialog"
+        aria-modal="true"
+        onMouseDown={(e) => {
+          if (e.target === e.currentTarget) onClose?.();
+        }}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 1300,
+          background: 'rgba(0,0,0,0.36)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <div
+          style={{
+            width: '760px',
+            maxWidth: 'calc(100vw - 48px)',
+            maxHeight: 'calc(100vh - 120px)',
+            overflow: 'hidden',
+            borderRadius: '40PX',
+            background: '#fff',
+          }}
+        >
+          {content}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Popup
+      visible={visible}
+      onMaskClick={onClose}
+      onClose={onClose}
+      position="bottom"
+      bodyStyle={{
+        borderTopLeftRadius: '24px',
+        borderTopRightRadius: '24px',
+        minHeight: '40vh',
+        maxHeight: '90vh',
+      }}
+    >
+      {content}
     </Popup>
   );
 };
