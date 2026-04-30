@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Toast } from 'antd-mobile';
 import NavBar from '@/components/NavBar';
 import PCLayout from '@/components/PCLayout';
-import { getPoolStatus, getTaskPoints, getInvitationList } from '@/api/points';
+import { getPoolStatus, getTaskPoints, getInvitationList, getTaskList, completeTask } from '@/api/points';
 import AchievementInviteCard from './AchievementInviteCard';
 import AchievementOneTimeTasks from './AchievementOneTimeTasks';
 import AchievementMoreRewardsBanner from './AchievementMoreRewardsBanner';
@@ -14,6 +14,7 @@ import AchievementDailyTasks from './AchievementDailyTasks';
 import AchievementPoolStatusCard from './AchievementPoolStatusCard';
 import AchievementPoolEventCard from './AchievementPoolEventCard';
 import AchievementRankingCard from './AchievementRankingCard';
+import EditProfilePopup from '@/app/user/components/EditProfilePopup';
 import { safeBack } from '@/utils/navigation';
 import styles from './page.module.less';
 
@@ -49,8 +50,34 @@ function AchievementContent() {
   const [countdown, setCountdown] = useState({ days: 12, hours: 8, minutes: 45 });
   const [weekendRemainingHours, setWeekendRemainingHours] = useState(42);
   const [rankingHeight, setRankingHeight] = useState(null);
+  const [starterTasks, setStarterTasks] = useState([]);
+  const [dailyTasks, setDailyTasks] = useState([]);
+  const [verifyingTaskId, setVerifyingTaskId] = useState(null);
+  const [tasksLoading, setTasksLoading] = useState(false);
+  const [dailyTasksLoading, setDailyTasksLoading] = useState(false);
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [editProfileUserInfo, setEditProfileUserInfo] = useState({ isLogin: false, nickname: '', avatar: '' });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const token = localStorage.getItem('token');
+      const raw = localStorage.getItem('userInfo');
+      const parsed = raw ? JSON.parse(raw) : null;
+      setEditProfileUserInfo({
+        isLogin: Boolean(token),
+        nickname: parsed?.nickName || parsed?.nickname || '',
+        avatar: parsed?.avatar || '',
+      });
+    } catch {
+      // ignore
+    }
+  }, []);
   const dailyTasksRef = useRef(null);
   const rankingWrapRef = useRef(null);
+  const leftColumnRef = useRef(null);
+  const rightColumnRef = useRef(null);
+  const mainGridRef = useRef(null);
 
   const formatPoints = useCallback((value) => {
     if (value === undefined || value === null) return '0';
@@ -138,12 +165,6 @@ function AchievementContent() {
   }, [fetchPoolStatusData]);
 
   useEffect(() => {
-    hydrateInviteCodeFromStorage();
-    fetchAchievementPoints();
-    fetchAchievementInvites();
-  }, [fetchAchievementInvites, fetchAchievementPoints, hydrateInviteCodeFromStorage]);
-
-  useEffect(() => {
     if (!poolStatus.resetTimestamp) return;
     const targetEndTime = Date.now() + Number(poolStatus.resetTimestamp);
     const updateCountdown = () => {
@@ -196,6 +217,199 @@ function AchievementContent() {
     }
   };
 
+  const starterTaskIconMap = {
+    FIRST_LOGIN: '/point/first_login.svg',
+    COMPLETE_PROFILE: '/point/user_info.svg',
+    USER_INFO: '/point/user_info.svg',
+    FIRST_POST: '/point/push.svg',
+    PUSH: '/point/push.svg',
+    ADD_WATCHLIST: '/point/add.svg',
+    ADD: '/point/add.svg',
+    SET_ALARM: '/point/setting_alert.svg',
+    ALARM: '/point/setting_alert.svg',
+    JOIN_COMMUNITY: '/point/group.svg',
+    COMMUNITY: '/point/group.svg',
+    EARLY_BIRD: '/point/eraly_bird.svg',
+    FOLLOW_TWITTER: '/point/X.svg',
+    TWITTER: '/point/X.svg',
+  };
+
+  const dailyTaskIconMap = {
+    DAILY_LOGIN: '/point/daily_login.svg',
+    DAILY_LIKE: '/point/like.svg',
+    POST: '/point/push_article.svg',
+    REPLY: '/point/reply.svg',
+    POST_RECEIVE_REPLY: '/point/received.svg',
+    SHARE: '/point/shared.svg',
+    RECEIVE_LIKE: '/point/received_like.svg',
+  };
+
+  const mapStarterBtnType = (taskCode) => {
+    const code = String(taskCode || '').toUpperCase();
+    if (code === 'FIRST_LOGIN') return 'firstLoginCompleted';
+    if (code === 'COMPLETE_PROFILE' || code === 'USER_INFO') return 'profile';
+    if (code === 'FIRST_POST' || code === 'PUSH') return 'post';
+    if (code === 'ADD_WATCHLIST' || code === 'ADD') return 'add';
+    if (code === 'SET_ALARM' || code === 'ALARM') return 'setup';
+    if (code === 'JOIN_COMMUNITY' || code === 'COMMUNITY') return 'join';
+    if (code === 'EARLY_BIRD') return 'login';
+    if (code === 'FOLLOW_TWITTER' || code === 'TWITTER') return 'follow';
+    return 'post';
+  };
+
+  const mapStarterActionLabel = (taskCode, completed) => {
+    if (completed) return t('pointsDetail.completed', { defaultValue: 'Completed' });
+    const code = String(taskCode || '').toUpperCase();
+    if (code === 'FIRST_POST' || code === 'PUSH') return t('pointsDetail.tasks.push.button', { defaultValue: 'Post' });
+    if (code === 'ADD_WATCHLIST' || code === 'ADD') return t('pointsDetail.tasks.add.button', { defaultValue: 'Add' });
+    if (code === 'SET_ALARM' || code === 'ALARM') return t('pointsDetail.tasks.setAlarm.button', { defaultValue: 'Set' });
+    if (code === 'JOIN_COMMUNITY' || code === 'COMMUNITY') return t('pointsDetail.tasks.joinCommunity.button', { defaultValue: 'Join' });
+    if (code === 'EARLY_BIRD') return t('pointsDetail.tasks.earlyBird.button', { defaultValue: 'Claim' });
+    if (code === 'FOLLOW_TWITTER' || code === 'TWITTER') return t('pointsDetail.tasks.followTwitter.button', { defaultValue: 'Follow' });
+    return t('pointsDetail.check', { defaultValue: 'Check' });
+  };
+
+  const fetchAllTasks = useCallback(async () => {
+    setTasksLoading(true);
+    setDailyTasksLoading(true);
+    try {
+      const res = await getTaskList();
+      if (res?.code !== 0 || !res?.data) {
+        setStarterTasks([]);
+        setDailyTasks([]);
+        return;
+      }
+
+      const activityTasks = (res.data.activityTaskList || [])
+        .filter((task) => !['WECHAT', 'INVITE_USER', 'VIDEO_LEARN', 'VIDEO'].includes(String(task?.taskCode || '').toUpperCase()))
+        .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+        .map((task, idx) => {
+          const code = String(task.taskCode || '').toUpperCase();
+          const completed = !!task.isCompleted;
+          return {
+            id: task.id || `${code}-${idx}`,
+            taskCode: code,
+            title: task.taskName || '',
+            points: Number(task.rewardPoints || 0),
+            completed,
+            needsAction: !completed,
+            action: mapStarterActionLabel(code, completed),
+            btnType: mapStarterBtnType(code),
+            icon: starterTaskIconMap[code] || '/point/first_login.svg',
+          };
+        });
+
+      const dTasks = (res.data.dailyTaskList || [])
+        .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+        .map((task, idx) => {
+          const code = String(task.taskCode || '').toUpperCase();
+          return {
+            id: task.taskCode || idx + 1,
+            taskCode: task.taskCode,
+            title: task.taskName || '',
+            rewardLabel: task.taskDesc,
+            reward: task.rewardPoints || 0,
+            current: task.currentProgress || 0,
+            target: task.targetProgress || 1,
+            completed: task.isCompleted || false,
+            icon: dailyTaskIconMap[code] || '/point/glove_praise@2x.png',
+          };
+        });
+
+      setStarterTasks(activityTasks);
+      setDailyTasks(dTasks);
+    } catch (error) {
+      console.error('Failed to fetch achievement tasks:', error);
+      setStarterTasks([]);
+      setDailyTasks([]);
+    } finally {
+      setTasksLoading(false);
+      setDailyTasksLoading(false);
+    }
+  }, [t]);
+
+  useEffect(() => {
+    hydrateInviteCodeFromStorage();
+    fetchAchievementPoints();
+    fetchAchievementInvites();
+    fetchAllTasks();
+  }, [fetchAchievementInvites, fetchAchievementPoints, hydrateInviteCodeFromStorage, fetchAllTasks]);
+
+  const verifyStarterTask = useCallback(async (task) => {
+    const code = String(task?.taskCode || '').toUpperCase();
+    if (!code) return;
+    try {
+      setVerifyingTaskId(task.id);
+      const res = await completeTask({ taskCode: code });
+      if (res?.code === 0 && res?.data?.success) {
+        fetchAllTasks();
+        fetchAchievementPoints();
+      } else {
+        Toast.show({ content: res?.message || res?.msg || t('common.operationFailed') });
+      }
+    } catch (error) {
+      console.error('Verify starter task failed:', error);
+      Toast.show({ content: t('common.operationFailed') });
+    } finally {
+      setVerifyingTaskId(null);
+    }
+  }, [fetchAchievementPoints, fetchAllTasks, t]);
+
+  const handleStarterTaskClick = useCallback((task) => {
+    if (!task || task.completed || verifyingTaskId === task.id) return;
+    if (!task.needsAction) {
+      verifyStarterTask(task);
+      return;
+    }
+    const code = String(task.taskCode || '').toUpperCase();
+    switch (code) {
+      case 'SET_ALARM':
+      case 'ALARM':
+        router.push(isPC ? '/pc/alarm?symbol=BTC' : '/addwarn?symbol=BTC');
+        return;
+      case 'FOLLOW_TWITTER':
+      case 'TWITTER':
+        window.open('https://x.com/moziinnovation', '_blank');
+        setStarterTasks((prev) =>
+          prev.map((item) =>
+            item.id === task.id
+              ? { ...item, needsAction: false, action: t('pointsDetail.check', { defaultValue: 'Check' }) }
+              : item
+          )
+        );
+        return;
+      case 'JOIN_COMMUNITY':
+      case 'COMMUNITY':
+        window.open('https://t.me/MoziInnovations', '_blank');
+        setStarterTasks((prev) =>
+          prev.map((item) =>
+            item.id === task.id
+              ? { ...item, needsAction: false, action: t('pointsDetail.check', { defaultValue: 'Check' }) }
+              : item
+          )
+        );
+        return;
+      case 'COMPLETE_PROFILE':
+      case 'USER_INFO':
+        if (isPC) {
+          setEditProfileOpen(true);
+          return;
+        }
+        router.push('/user/edit');
+        return;
+      case 'FIRST_POST':
+      case 'PUSH':
+        router.push(isPC ? '/pc/community' : '/community');
+        return;
+      case 'ADD_WATCHLIST':
+      case 'ADD':
+        router.push(isPC ? '/pc/find' : '/');
+        return;
+      default:
+        verifyStarterTask(task);
+    }
+  }, [isPC, router, t, verifyStarterTask, verifyingTaskId]);
+
   const handleRankingInviteClick = async () => {
     const inviteCode = String(inviteData.inviteCode || '').trim();
     if (!inviteCode || typeof window === 'undefined') return;
@@ -203,6 +417,17 @@ function AchievementContent() {
     shareUrl.searchParams.set('inviteCode', inviteCode);
     await copyToClipboard(shareUrl.toString());
   };
+
+  const handleDailyTaskClick = useCallback((task) => {
+    const code = String(task?.taskCode || '').toUpperCase();
+    if (['DAILY_LIKE', 'POST', 'REPLY', 'RECEIVE_LIKE', 'POST_RECEIVE_REPLY'].includes(code)) {
+      router.push(isPC ? '/pc/community' : '/community');
+      return;
+    }
+    if (code === 'SHARE') {
+      handleRankingInviteClick();
+    }
+  }, [isPC, router]);
 
   useEffect(() => {
     if (!isPC) return;
@@ -262,17 +487,22 @@ function AchievementContent() {
           </div>
         </div>
 
-        <div className={styles.mainGrid}>
-          <div className={styles.leftColumn}>
+        <div className={styles.mainGrid} ref={mainGridRef}>
+          <div className={styles.leftColumn} ref={leftColumnRef}>
             <AchievementInviteCard pointsData={inviteData} copyToClipboard={copyToClipboard} />
-            <AchievementOneTimeTasks />
+            <AchievementOneTimeTasks
+              tasks={starterTasks}
+              onTaskClick={handleStarterTaskClick}
+              verifyingTaskId={verifyingTaskId}
+              loading={tasksLoading}
+            />
             <AchievementMoreRewardsBanner />
             <div ref={dailyTasksRef}>
-              <AchievementDailyTasks />
+              <AchievementDailyTasks tasks={dailyTasks} onTaskClick={handleDailyTaskClick} loading={dailyTasksLoading} />
             </div>
           </div>
 
-          <div className={styles.rightColumn}>
+          <div className={styles.rightColumn} ref={rightColumnRef}>
             <div className={styles.rightTopSection}>
               <AchievementPoolStatusCard
                 mode={poolStatus.mode}
@@ -283,15 +513,24 @@ function AchievementContent() {
               />
               <AchievementPoolEventCard mode={poolStatus.mode} remainingHours={weekendRemainingHours} />
             </div>
-            <div ref={rankingWrapRef}>
+            <div ref={rankingWrapRef} className={styles.rankingWrap}>
               <AchievementRankingCard
                 onInviteClick={handleRankingInviteClick}
                 style={isPC && rankingHeight ? { height: `${rankingHeight}px` } : undefined}
+                noTopMargin={isPC}
               />
             </div>
           </div>
         </div>
       </div>
+
+      <EditProfilePopup
+        visible={editProfileOpen}
+        onClose={() => setEditProfileOpen(false)}
+        t={t}
+        userInfo={editProfileUserInfo}
+        setUserInfo={setEditProfileUserInfo}
+      />
     </div>
   );
 }

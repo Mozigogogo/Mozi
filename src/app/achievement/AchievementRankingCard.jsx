@@ -15,7 +15,7 @@ const crownByRank = {
   3: '/icons/pc/top3_header.svg',
 };
 
-export default function AchievementRankingCard({ onInviteClick, style }) {
+export default function AchievementRankingCard({ onInviteClick, style, noTopMargin = false }) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('day');
   const [rankData, setRankData] = useState({});
@@ -99,7 +99,7 @@ export default function AchievementRankingCard({ onInviteClick, style }) {
   };
 
   return (
-    <section className={styles.card} style={style}>
+    <section className={`${styles.card} ${noTopMargin ? styles.noTopMargin : ''}`} style={style}>
       <div className={styles.header}>
         <div className={styles.titleWrap}>
           <img src="/icons/pool_status_logo.svg" alt="" className={styles.titleIcon} />

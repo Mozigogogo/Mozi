@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import styles from './PCBenefitsContent.module.less';
 
@@ -15,6 +16,7 @@ const planCodeToTier = (planCode) => {
 };
 
 export default function PCBenefitsContent() {
+  const router = useRouter();
   const { t } = useTranslation();
   const [tier, setTier] = useState('lite');
 
@@ -161,7 +163,7 @@ export default function PCBenefitsContent() {
                     <span>{t('benefitsPage.allowancePointsMonthly', { points: pointsMax.toLocaleString() })}</span>
                     <span>{t('benefitsPage.allowanceAiMonthly', { ai: allowanceAi })}</span>
                   </div>
-                  <button type="button" className={styles.proAllowanceBtn}>
+                  <button type="button" className={styles.proAllowanceBtn} onClick={() => router.push('/subscribe')}>
                     {t('benefitsPage.upgradeMore')}
                   </button>
                 </div>
@@ -197,7 +199,7 @@ export default function PCBenefitsContent() {
                   </div>
                   <div className={styles.proUpgradeBottom}>
                     <span>{t('benefitsPage.nextLevelRewards', { points: '12000', ai: 60 })}</span>
-                    <button type="button">{t('benefitsPage.quickUpgrade')}</button>
+                    <button type="button" onClick={() => router.push('/subscribe')}>{t('benefitsPage.quickUpgrade')}</button>
                   </div>
                 </div>
 
@@ -218,7 +220,7 @@ export default function PCBenefitsContent() {
                     </span>
                     <span>{t('vip.benefit.alphaGroup')}</span>
                   </div>
-                  <button type="button">{t('benefitsPage.enterAlpha')}</button>
+                  <button type="button" onClick={() => router.push('/subscribe')}>{t('benefitsPage.enterAlpha')}</button>
                 </div>
               </>
             ) : (
@@ -230,7 +232,7 @@ export default function PCBenefitsContent() {
                       <img src={item.icon} alt="" />
                       <span>{item.label}</span>
                     </div>
-                    <button type="button">{t('benefitsPage.upgrade')}</button>
+                    <button type="button" onClick={() => router.push('/subscribe')}>{t('benefitsPage.upgrade')}</button>
                   </div>
                 ))}
               </>

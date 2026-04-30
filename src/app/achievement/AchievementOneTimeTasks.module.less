@@ -32,6 +32,17 @@
   gap: 8px;
 }
 
+.stateBox {
+  margin-top: 12px;
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8ca0ba;
+  font-size: 14px;
+  border-top: 1px solid #e7eef3;
+}
+
 .row {
   height: 58px;
   border: 1px solid #edf2f6;
@@ -88,6 +99,7 @@
   align-items: center;
   gap: 8px;
   flex: 0 0 auto;
+  justify-content: flex-end;
 }
 
 .pointPill {
@@ -106,8 +118,9 @@
 .actionBtn {
   -webkit-appearance: none;
   appearance: none;
-  height: 24px;
-  min-width: 74px;
+  height: 24PX;
+  width: 74PX; /* 固定宽度：Completed 与其他按钮左边缘对齐 */
+  min-width: 74PX;
   border: none;
   border-radius: 12px;
   padding: 0 12px;
@@ -119,6 +132,11 @@
   background-size: 100% 100%;
   background-repeat: no-repeat;
   background-position: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 24PX;
+  text-align: center;
 }
 
 .completed {
