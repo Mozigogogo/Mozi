@@ -213,7 +213,7 @@ const TradeVol = () => {
        setTimeout(() => {
          chartRef.current && chartRef.current.resize();
          if (chartRef.current) {
-             let options = getTreeMapOption(chartData.current.cur.data, chartData.current.cur.msg);
+             let options = handleOptions(chartData.current.cur.data, 'treemap', chartData.current.cur.msg);
              if (isPC) {
                  options.grid = {
                     left: '5%',
@@ -252,79 +252,6 @@ const TradeVol = () => {
     };
   }, [isPC, activeTab]);
 
-  const getTreeMapOption = (data, msg) => {
-    return {
-      tooltip: {
-        formatter: function (info) {
-          let value = info.value;
-          let valueDisplay = info.data.valueDisplay || value;
-          let name = info.name;
-          let change = info.data.change;
-          let changeStr = (change !== undefined && change !== null && !isNaN(change)) ? `<br/>涨跌幅: ${change > 0 ? '+' : ''}${change}%` : '';
-          
-          return `
-              ${name}
-              <br/>${msg.tooltipTitle || ''}: ${valueDisplay}${changeStr}
-          `;
-        },
-        backgroundColor: 'rgba(0,0,0,0.9)',
-        borderWidth: 0,
-        textStyle: {
-          color: '#fff'
-        },
-        confine: true
-      },
-      series: [
-        {
-          type: 'treemap',
-          roam: false,
-          width: '100%',
-          height: '100%',
-          left: 0,
-          top: 0,
-          right: 0,
-          bottom: 0,
-          label: {
-            show: true,
-            position: 'inside',
-            formatter: (info) => {
-               let name = info.name;
-               let change = info.data.change;
-               if (change !== undefined && change !== null && !isNaN(change)) {
-                   return `{name|${name}}\n{change|${change > 0 ? '+' : ''}${change}%}`;
-               }
-               return `{name|${name}}`;
-            },
-            rich: {
-              name: {
-                fontSize: isPC ? 14 : 12,
-                fontWeight: 'bold',
-                color: '#fff',
-                lineHeight: 20,
-                align: 'center'
-              },
-              change: {
-                fontSize: isPC ? 12 : 10,
-                color: '#fff',
-                lineHeight: 16,
-                align: 'center'
-              }
-            }
-          },
-          itemStyle: {
-            borderColor: '#fff',
-            borderWidth: 1,
-            gapWidth: 1
-          },
-          breadcrumb: {
-            show: false
-          },
-          data: data
-        }
-      ]
-    };
-  };
-
   // 获取数据
   const getData = async ({ coin = coinSelected, exchange = cexSelected }) => {
     setCurLoading(true);
@@ -345,16 +272,9 @@ const TradeVol = () => {
         if (typeof changeVal === 'string' && changeVal.includes('%')) {
           changeVal = parseFloat(changeVal.replace('%', ''));
         }
-        
-        // Determine color based on change or fallback to state
-        let color = '#424450';
-        if (changeVal !== undefined && changeVal !== null && !isNaN(changeVal)) {
-           color = getColor(changeVal);
-        } else {
-           // Fallback based on state
-           if (item.state === 1) color = '#2BA250'; // Green
-           if (item.state === 0) color = '#EC3A3A'; // Red
-        }
+
+        // Use one solid red tone to match the expected style
+        const color = '#FA5F5F';
 
         return {
           name: item.name || item.symbol || 'Unknown',
@@ -382,7 +302,7 @@ const TradeVol = () => {
 
       // 更新当前成交额图表
       if (chartRef.current && traTmpData && traTmpData.length > 0) {
-        let options = getTreeMapOption(traTmpData, curMsg);
+        let options = handleOptions(traTmpData, 'treemap', curMsg);
         // Ensure data is properly formatted for ECharts treemap
         // ECharts treemap expects data to be in 'data' property of series, which is set in getTreeMapOption
         // but we need to make sure the structure matches what ECharts expects (name, value, itemStyle, etc.)

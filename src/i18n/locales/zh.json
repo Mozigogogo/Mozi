@@ -48,6 +48,7 @@
       "bigOrder": "大单行情",
       "aiCall": "AI Call",
       "monthlyPoints": "月度积分",
+      "yearlyPoints": "年度积分",
       "exclusiveBadge": "专属标志",
       "exclusiveBlackGoldBadge": "专属黑金标志",
       "adFree": "无广告",
@@ -56,7 +57,7 @@
       "standardCustomerService": "标准客服",
       "exclusiveCustomerService": "专属客服",
       "alphaGroup": "Alpha核心群",
-      "bigOrderMeta": "{{count}}条（{{delay}}s延迟）",
+      "bigOrderMeta": "{{count}}档深度（{{delay}}s延迟）",
       "aiCallMeta": "{{count}}次{{period}}",
       "pointsMeta": "{{points}}{{period}}",
       "pointsWithUnit": "{{points}}积分{{period}}",
@@ -1251,11 +1252,24 @@
     "actions": {
       "favorite": "加自选",
       "alert": "告警",
+      "addAlert": "加告警",
+      "goTrade": "去交易",
       "share": "分享",
       "community": "社区",
       "configAlarm": "配置告警",
       "startNow": "立即开启",
       "comingSoon": "敬请期待"
+    },
+    "tradePicker": {
+      "title": "选择交易所开始交易{{symbol}}",
+      "hint": "点击跳转注册/交易，支持返佣",
+      "cancel": "取消",
+      "exchanges": {
+        "binance": "推荐: 流动性最强",
+        "okx": "合约交易首选",
+        "bitget": "跟单交易平台",
+        "gate": "山寨币种丰富"
+      }
     },
     "roi": {
       "daily": "日回报率",
@@ -1746,7 +1760,18 @@
     "maskTitle": "大单侦测锁定",
     "maskDescription": "解锁后可查看24小时内的Top 5大单流向数据",
     "maskButtonText": "200积分解锁",
-    "membershipButtonText": "开通会员解锁"
+    "membershipButtonText": "开通会员解锁",
+    "unlockDialog": {
+      "title": "解锁大单侦测",
+      "prefix": "确定要花费",
+      "suffix": "来解锁查看大单侦测数据吗？",
+      "validityPrefix": "有效期",
+      "validityValue": "24小时",
+      "limitText": "仅展示5档深度",
+      "unlockSuccess": "解锁成功",
+      "unlockFailedDefault": "解锁失败，积分不足",
+      "networkError": "网络错误，请稍后重试"
+    }
   },
   "hotsector": {
     "title": "热门板块",
@@ -1906,6 +1931,7 @@
     "exclusiveService": "专属客服",
     "emailAlerts": "邮件告警",
     "standardCS": "标准客服",
+    "supportShort": "客服",
     "identityTag": "身份标识",
     "pointsThisMonth": "本月已获得积分",
     "validUntil": "{{tier}}权益有效期至{{date}}",

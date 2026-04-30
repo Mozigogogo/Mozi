@@ -26,7 +26,7 @@ export const getSubscriptionPricing = () => {
 };
 
 /**
- * 创建 Telegram Stars 订单
+ * 获取 Telegram Stars 支付链接
  * @param {number} pricingId - 定价档位 ID（来自 /subscription/pricing）
  * @returns {Promise<{ invoiceLink: string; orderNo: string }>}
  */

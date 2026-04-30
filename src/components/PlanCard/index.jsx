@@ -105,16 +105,20 @@ const PlanCard = ({
     return s;
   };
 
-  const localizeFeatureMain = (main) => {
+  const localizeFeatureMain = (main, periodLike) => {
     const s = String(main ?? '').trim();
     if (!s) return s;
+    if (s === '月度积分' || s === '年度积分') {
+      return normalizePeriodKey(periodLike) === 'year'
+        ? t('vipRecharge.features.yearlyPoints')
+        : t('vipRecharge.features.monthlyPoints');
+    }
     const map = {
       基础行情: 'vipRecharge.features.basicMarket',
       APP基础推送: 'vipRecharge.features.basicPush',
       邮件告警: 'vipRecharge.features.emailAlert',
       大单行情: 'vipRecharge.features.bigOrder',
       'AI Call': 'vipRecharge.features.aiCall',
-      月度积分: 'vipRecharge.features.monthlyPoints',
       专属标志: 'vipRecharge.features.exclusiveBadge',
       专属黑金标志: 'vipRecharge.features.exclusiveBlackGoldBadge',
       无广告: 'vipRecharge.features.adFree',
@@ -132,8 +136,8 @@ const PlanCard = ({
     const s = String(meta ?? '').trim();
     if (!s) return s;
 
-    // 20条（5s延迟）
-    const bigOrder = s.match(/^(\d+)\s*条.*?(\d+)\s*s.*?延迟/i);
+    // 20条（5s延迟） / 20档深度（5s延迟）
+    const bigOrder = s.match(/^(\d+)\s*(?:条|档深度).*?(\d+)\s*s.*?延迟/i);
     if (bigOrder) return t('vipRecharge.features.bigOrderMeta', { count: bigOrder[1], delay: bigOrder[2] });
 
     // 20次/月 或 20次/年
@@ -418,6 +422,7 @@ const PlanCard = ({
             const hasMeta = lastSpaceIdx > -1 && lastSpaceIdx < labelText.length - 1;
             const mainText = hasMeta ? labelText.slice(0, lastSpaceIdx) : labelText;
             const metaText = hasMeta ? labelText.slice(lastSpaceIdx + 1) : '';
+            const featurePeriodLike = tierSelected?.period ?? period;
             return (
               <li key={index} className={styles.featureItem}>
                 {icon ? (
@@ -428,7 +433,7 @@ const PlanCard = ({
                   <span className={styles.checkmark}>✓</span>
                 )}
                 <span className={`${styles.featureText} ${isLocked ? styles.featureTextLocked : ''}`}>
-                  <span className={styles.featureMainText}>{localizeFeatureMain(mainText)}</span>
+                  <span className={styles.featureMainText}>{localizeFeatureMain(mainText, featurePeriodLike)}</span>
                   {hasMeta && <span className={styles.featureMetaText}> {localizeFeatureMeta(metaText)}</span>}
                 </span>
                 {isLocked && (

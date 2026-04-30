@@ -343,8 +343,8 @@ export default function PCLayout({ children }) {
         pathname === itemKey ||
         pathname.startsWith(itemKey + '/') ||
         (isSubscriptionEntry &&
-          (pathname === '/pc/subscribe' ||
-            pathname.startsWith('/pc/subscribe/') ||
+          (pathname === '/subscribe' ||
+            pathname.startsWith('/subscribe/') ||
             pathname === '/pc/benefitsPage' ||
             pathname.startsWith('/pc/benefitsPage/')));
     }
@@ -458,12 +458,12 @@ export default function PCLayout({ children }) {
   const topMenuItems = useMemo(
     () => [
       {
-        key: '/',
+        key: '/home',
         icon: (
           <CustomIcon
             src="/icons/pc/home@2x.png"
             activeSrc="/icons/pc/home_actived@2x.png"
-            itemKey="/"
+            itemKey="/home"
             alt="home"
           />
         ),
@@ -497,33 +497,6 @@ export default function PCLayout({ children }) {
     [t, activeContent, pathname]
   );
 
-  const coinlistGroup = useMemo(
-    () => ({
-      key: 'coinlist',
-      label: collapsed ? (
-        ''
-      ) : (
-        <div
-          style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsCreatedListExpanded(!isCreatedListExpanded);
-          }}
-        >
-          {isCreatedListExpanded ? (
-            <CaretDownOutlined style={{ marginRight: 2, fontSize: 14, color: '#999' }} />
-          ) : (
-            <CaretRightOutlined style={{ marginRight: 2, fontSize: 14, color: '#999' }} />
-          )}
-          {t('pcLayout.menu.createdLists')}
-        </div>
-      ),
-      type: 'group',
-      children: [],
-    }),
-    [t, collapsed, isCreatedListExpanded]
-  );
-
   // 展开时「我的」标题在自选区块上方单独渲染；折叠时组内保留「我的自选」图标入口 + 其余项
   const mineMenuItems = useMemo(() => {
     if (collapsed) {
@@ -534,7 +507,6 @@ export default function PCLayout({ children }) {
           type: 'group',
           children: [favoritesMenuItemCollapsed, ...mineRestMenuItems],
         },
-        coinlistGroup,
       ];
     }
     return [
@@ -544,9 +516,8 @@ export default function PCLayout({ children }) {
         label: '',
         children: mineRestMenuItems,
       },
-      coinlistGroup,
     ];
-  }, [collapsed, favoritesMenuItemCollapsed, mineRestMenuItems, coinlistGroup]);
+  }, [collapsed, favoritesMenuItemCollapsed, mineRestMenuItems]);
 
   const handleMenuClick = ({ key }) => {
     // PC 端：发现/社区使用独立路由
@@ -571,11 +542,11 @@ export default function PCLayout({ children }) {
       return;
     }
 
-    // 我的订阅：非 free 进入 /pc/benefitsPage，free 进入 /pc/subscribe
+    // 我的订阅：非 free 进入 /pc/benefitsPage，free 进入 /subscribe
     if (key === '/subscribe') {
       setActiveContent(null);
       setShowSearchResults(false);
-      let nextRoute = '/pc/subscribe';
+      let nextRoute = '/subscribe';
       try {
         const planCode = localStorage.getItem(MY_SUBSCRIPTION_PLAN_CODE_KEY);
         if (isNonFreePlanCode(planCode)) {
@@ -599,8 +570,8 @@ export default function PCLayout({ children }) {
       return ['/selfrank'];
     }
     if (
-      pathname === '/pc/subscribe' ||
-      pathname.startsWith('/pc/subscribe/') ||
+      pathname === '/subscribe' ||
+      pathname.startsWith('/subscribe/') ||
       pathname === '/pc/benefitsPage' ||
       pathname.startsWith('/pc/benefitsPage/')
     ) {
@@ -634,7 +605,7 @@ export default function PCLayout({ children }) {
           <div className={styles.menuBtn} onClick={() => setCollapsed(!collapsed)}>
             <MenuOutlined />
           </div>
-          <div className={styles.logo} onClick={() => router.push('/')}>
+          <div className={styles.logo} onClick={() => router.push('/home')}>
             <div className={styles.logoIcon}>
               <Image src="/images/community/loadding.png" alt="Mozi" width={37} height={37} />
             </div>

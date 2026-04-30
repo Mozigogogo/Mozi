@@ -90,8 +90,56 @@ export default function OrderBook({
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [selectedOption, setSelectedOption] = useState(dropdownOptions?.[0] || t('orderBook.top5'));
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [isPcLayout, setIsPcLayout] = useState(false);
   const userSelectedRef = useRef(false);
   const prevOptionsKeyRef = useRef('');
+  const pcCountdownStyles = isPcLayout
+    ? {
+        wrapper: {
+          gap: 6,
+          flexWrap: 'nowrap',
+          alignItems: 'center',
+          whiteSpace: 'nowrap',
+          overflow: 'visible',
+        },
+        label: {
+          fontSize: 12,
+          lineHeight: 1.15,
+          letterSpacing: '0.02em',
+          textAlign: 'left',
+          whiteSpace: 'nowrap',
+          flex: '0 0 auto',
+        },
+        numbers: {
+          gap: 4,
+          alignItems: 'center',
+          flexWrap: 'nowrap',
+          whiteSpace: 'nowrap',
+        },
+        circle: {
+          width: 44,
+          height: 44,
+          minWidth: 44,
+          minHeight: 44,
+          fontSize: 20,
+          lineHeight: 1,
+          flex: '0 0 auto',
+        },
+        value: {
+          transform: 'translate(-0.5px, 0.5px)',
+          display: 'inline-block',
+          whiteSpace: 'nowrap',
+        },
+        text: {
+          fontSize: 12,
+          lineHeight: 1.15,
+          letterSpacing: '0.02em',
+          margin: '0 4px 0 1px',
+          whiteSpace: 'nowrap',
+          flex: '0 0 auto',
+        },
+      }
+    : null;
 
   // 使用国际化配置作为默认值
   const displayTitle = title || t('orderBook.title');
@@ -117,6 +165,24 @@ export default function OrderBook({
       setSelectedOption(opts[0]);
     }
   }, [displayDropdownOptions, selectedOption]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    const mediaQuery = window.matchMedia('(min-width: 1024px)');
+    const applyMatch = (matches) => setIsPcLayout(matches);
+
+    applyMatch(mediaQuery.matches);
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      const handler = (event) => applyMatch(event.matches);
+      mediaQuery.addEventListener('change', handler);
+      return () => mediaQuery.removeEventListener('change', handler);
+    }
+
+    mediaQuery.addListener(applyMatch);
+    return () => mediaQuery.removeListener(applyMatch);
+  }, []);
 
   const visibleRowsCount = useMemo(() => {
     const trimmed = String(selectedOption ?? '').trim();
@@ -179,25 +245,25 @@ export default function OrderBook({
             {displayTag && <span className={styles.badge}>{displayTag}</span>}
           </div>
           {endTime && (
-            <div className={styles.countdown}>
-              <span className={styles.countdownLabel}>{t('orderBook.endIn')}</span>
-              <div className={styles.countdownNumbers}>
-                <span className={styles.countdownCircle}>
-                  <span className={styles.countdownValue}>{String(countdown.days).padStart(2, '0')}</span>
+            <div className={styles.countdown} style={pcCountdownStyles?.wrapper}>
+              <span className={styles.countdownLabel} style={pcCountdownStyles?.label}>{t('orderBook.endIn')}</span>
+              <div className={styles.countdownNumbers} style={pcCountdownStyles?.numbers}>
+                <span className={styles.countdownCircle} style={pcCountdownStyles?.circle}>
+                  <span className={styles.countdownValue} style={pcCountdownStyles?.value}>{String(countdown.days).padStart(2, '0')}</span>
                 </span>
-                <span className={styles.countdownText}>{t('orderBook.days')}</span>
-                <span className={styles.countdownCircle}>
-                  <span className={styles.countdownValue}>{String(countdown.hours).padStart(2, '0')}</span>
+                <span className={styles.countdownText} style={pcCountdownStyles?.text}>{t('orderBook.days')}</span>
+                <span className={styles.countdownCircle} style={pcCountdownStyles?.circle}>
+                  <span className={styles.countdownValue} style={pcCountdownStyles?.value}>{String(countdown.hours).padStart(2, '0')}</span>
                 </span>
-                <span className={styles.countdownText}>{t('orderBook.hours')}</span>
-                <span className={styles.countdownCircle}>
-                  <span className={styles.countdownValue}>{String(countdown.minutes).padStart(2, '0')}</span>
+                <span className={styles.countdownText} style={pcCountdownStyles?.text}>{t('orderBook.hours')}</span>
+                <span className={styles.countdownCircle} style={pcCountdownStyles?.circle}>
+                  <span className={styles.countdownValue} style={pcCountdownStyles?.value}>{String(countdown.minutes).padStart(2, '0')}</span>
                 </span>
-                <span className={styles.countdownText}>{t('orderBook.minutes')}</span>
-                <span className={styles.countdownCircle}>
-                  <span className={styles.countdownValue}>{String(countdown.seconds).padStart(2, '0')}</span>
+                <span className={styles.countdownText} style={pcCountdownStyles?.text}>{t('orderBook.minutes')}</span>
+                <span className={styles.countdownCircle} style={pcCountdownStyles?.circle}>
+                  <span className={styles.countdownValue} style={pcCountdownStyles?.value}>{String(countdown.seconds).padStart(2, '0')}</span>
                 </span>
-                <span className={styles.countdownText}>{t('orderBook.seconds')}</span>
+                <span className={styles.countdownText} style={pcCountdownStyles?.text}>{t('orderBook.seconds')}</span>
               </div>
             </div>
           )}

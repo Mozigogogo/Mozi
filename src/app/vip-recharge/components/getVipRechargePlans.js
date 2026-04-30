@@ -55,7 +55,7 @@ function formatPoints(points, tabKey) {
 
 function formatAiCallQuota(aiCallQuota, tabKey) {
   if (aiCallQuota == null || aiCallQuota === '') return '';
-  const suffix = tabKey === 'yearly' ? '/年' : '/月';
+  const suffix = '/月';
   return `AI Call ${aiCallQuota}次${suffix}`;
 }
 
@@ -330,8 +330,9 @@ function mergeRemoteIntoPlans(plansByTab, benefitsRes, pricingRes) {
           const maxCall = tiers[tiers.length - 1].aiCallQuota;
           const minPts = tiers[0].monthlyPoints;
           const maxPts = tiers[tiers.length - 1].monthlyPoints;
-          const callSuffix = tabKey === 'yearly' ? '/年' : '/月';
+          const callSuffix = '/月';
           const ptsSuffix = tabKey === 'yearly' ? '/年' : '/月';
+          const pointsLabel = tabKey === 'yearly' ? '年度积分' : '月度积分';
 
           if (Array.isArray(next.features)) {
             next.features = next.features.map((f) => {
@@ -339,8 +340,8 @@ function mergeRemoteIntoPlans(plansByTab, benefitsRes, pricingRes) {
               if (f.label.startsWith('AI Call')) {
                 return { ...f, label: `AI Call ${minCall}~${maxCall}次${callSuffix}` };
               }
-              if (f.label.startsWith('月度积分')) {
-                return { ...f, label: `月度积分 ${minPts}~${maxPts}${ptsSuffix}` };
+              if (f.label.startsWith('月度积分') || f.label.startsWith('年度积分')) {
+                return { ...f, label: `${pointsLabel} ${minPts}~${maxPts}${ptsSuffix}` };
               }
               return f;
             });
@@ -348,15 +349,16 @@ function mergeRemoteIntoPlans(plansByTab, benefitsRes, pricingRes) {
         }
 
         if (p.title === 'Lite' && tiers[0] && Array.isArray(next.features)) {
-          // Lite：同步 AI Call / 月度积分具体值
+          // Lite：同步 AI Call / 积分具体值
           const t0 = tiers[0];
+          const pointsLabel = tabKey === 'yearly' ? '年度积分' : '月度积分';
           next.features = next.features.map((f) => {
             if (!f || typeof f !== 'object' || typeof f.label !== 'string') return f;
             if (f.label.startsWith('AI Call')) {
               return { ...f, label: formatAiCallQuota(t0.aiCallQuota, tabKey) };
             }
-            if (f.label.startsWith('月度积分')) {
-              return { ...f, label: `月度积分 ${formatPoints(t0.monthlyPoints, tabKey)}` };
+            if (f.label.startsWith('月度积分') || f.label.startsWith('年度积分')) {
+              return { ...f, label: `${pointsLabel} ${formatPoints(t0.monthlyPoints, tabKey)}` };
             }
             return f;
           });
@@ -394,7 +396,7 @@ export function getVipRechargePlans({ benefitsRes = null, pricingRes = null } = 
         accentColor: '#C1C1C1',
         highlightFeature: {
           label: 'AI CALL / 月',
-          value: '120x',
+          value: '20x',
           subtitle: '升级到Lite/Pro可享受',
           locked: true,
         },
@@ -403,7 +405,7 @@ export function getVipRechargePlans({ benefitsRes = null, pricingRes = null } = 
           { label: 'APP基础推送', icon: '/point/Information_push.svg' },
           { label: '邮件告警', icon: '/point/Email_alert.svg' },
           { label: '大单行情', icon: '/point/Order_situation.svg' },
-          { label: 'AI Call', icon: '/point/AI_call.svg' },
+          { label: 'AI Call', icon: '/icons/ai-call.gray.svg' },
           { label: '月度积分', icon: '/point/Monthly_points.svg' },
           { label: '专属标志', icon: '/point/Exclusive_logo.svg' },
           { label: '无广告', icon: '/point/No_advertisement.svg' },
@@ -425,7 +427,7 @@ export function getVipRechargePlans({ benefitsRes = null, pricingRes = null } = 
         accentColor: '#22C55E',
         highlightFeature: {
           label: 'AI CALL / 月',
-          value: '120x',
+          value: '20x',
           subtitle: 'Every 30-Day Cycle',
           locked: false,
         },
@@ -433,8 +435,8 @@ export function getVipRechargePlans({ benefitsRes = null, pricingRes = null } = 
           { label: '基础行情', icon: '/point/Basic_market .svg' },
           { label: 'APP基础推送', icon: '/point/Information_push.svg' },
           { label: '邮件告警', icon: '/point/Email_alert.svg' },
-          { label: '大单行情 20条（5s延迟）', icon: '/point/Order_situation.svg' },
-          { label: 'AI Call 20次/月', icon: '/point/AI_call.svg' },
+          { label: '大单行情 20档深度（5s延迟）', icon: '/point/Order_situation.svg' },
+          { label: 'AI Call 20次/月', icon: '/icons/ai-call.gray.svg' },
           { label: '月度积分 5000/月', icon: '/point/Monthly_points.svg' },
           { label: '专属标志', icon: '/point/Exclusive_logo.svg' },
           { label: '无广告', icon: '/point/No_advertisement.svg' },
@@ -470,8 +472,8 @@ export function getVipRechargePlans({ benefitsRes = null, pricingRes = null } = 
           { label: '基础行情', icon: '/point/Basic_market .svg' },
           { label: 'APP基础推送', icon: '/point/Information_push.svg' },
           { label: '邮件告警', icon: '/point/Email_alert.svg' },
-          { label: '大单行情 40条（0s延迟）', icon: '/point/Order_situation.svg' },
-          { label: 'AI Call 40~220次/月', icon: '/point/AI_call.svg' },
+          { label: '大单行情 40档深度（0s延迟）', icon: '/point/Order_situation.svg' },
+          { label: 'AI Call 40~220次/月', icon: '/icons/ai-call.gray.svg' },
           { label: '月度积分 10000~10,000/月', icon: '/point/Monthly_points.svg' },
           { label: '专属黑金标志', icon: '/point/Exclusive_logo.svg' },
           { label: '无广告', icon: '/point/No_advertisement.svg' },
@@ -495,7 +497,7 @@ export function getVipRechargePlans({ benefitsRes = null, pricingRes = null } = 
         accentColor: '#C1C1C1',
         highlightFeature: {
           label: 'AI CALL / 月',
-          value: '120x',
+          value: '20x',
           subtitle: '升级到Lite/Pro可享受',
           locked: true,
         },
@@ -504,8 +506,8 @@ export function getVipRechargePlans({ benefitsRes = null, pricingRes = null } = 
           { label: 'APP基础推送', icon: '/point/Information_push.svg' },
           { label: '邮件告警', icon: '/point/Email_alert.svg' },
           { label: '大单行情', icon: '/point/Order_situation.svg' },
-          { label: 'AI Call', icon: '/point/AI_call.svg' },
-          { label: '月度积分', icon: '/point/Monthly_points.svg' },
+          { label: 'AI Call', icon: '/icons/ai-call.gray.svg' },
+          { label: '年度积分', icon: '/point/Monthly_points.svg' },
           { label: '专属标志', icon: '/point/Exclusive_logo.svg' },
           { label: '无广告', icon: '/point/No_advertisement.svg' },
           { label: '多主题切换', icon: '/point/Topic_witching.svg' },
@@ -526,7 +528,7 @@ export function getVipRechargePlans({ benefitsRes = null, pricingRes = null } = 
         accentColor: '#22C55E',
         highlightFeature: {
           label: 'AI CALL / 月',
-          value: '120x',
+          value: '20x',
           subtitle: 'Every 30-Day Cycle',
           locked: false,
         },
@@ -534,9 +536,9 @@ export function getVipRechargePlans({ benefitsRes = null, pricingRes = null } = 
           { label: '基础行情', icon: '/point/Basic_market .svg' },
           { label: 'APP基础推送', icon: '/point/Information_push.svg' },
           { label: '邮件告警', icon: '/point/Email_alert.svg' },
-          { label: '大单行情 20条（5s延迟）', icon: '/point/Order_situation.svg' },
-          { label: 'AI Call 20次/月', icon: '/point/AI_call.svg' },
-          { label: '月度积分 5000/月', icon: '/point/Monthly_points.svg' },
+          { label: '大单行情 20档深度（5s延迟）', icon: '/point/Order_situation.svg' },
+          { label: 'AI Call 20次/月', icon: '/icons/ai-call.gray.svg' },
+          { label: '年度积分 5000/月', icon: '/point/Monthly_points.svg' },
           { label: '专属标志', icon: '/point/Exclusive_logo.svg' },
           { label: '无广告', icon: '/point/No_advertisement.svg' },
           { label: '多主题切换', icon: '/point/Topic_witching.svg' },
@@ -571,9 +573,9 @@ export function getVipRechargePlans({ benefitsRes = null, pricingRes = null } = 
           { label: '基础行情', icon: '/point/Basic_market .svg' },
           { label: 'APP基础推送', icon: '/point/Information_push.svg' },
           { label: '邮件告警', icon: '/point/Email_alert.svg' },
-          { label: '大单行情 40条（0s延迟）', icon: '/point/Order_situation.svg' },
-          { label: 'AI Call 40~220次/月', icon: '/point/AI_call.svg' },
-          { label: '月度积分 10000~10,000/月', icon: '/point/Monthly_points.svg' },
+          { label: '大单行情 40档深度（0s延迟）', icon: '/point/Order_situation.svg' },
+          { label: 'AI Call 40~220次/月', icon: '/icons/ai-call.gray.svg' },
+          { label: '年度积分 10000~10,000/月', icon: '/point/Monthly_points.svg' },
           { label: '专属黑金标志', icon: '/point/Exclusive_logo.svg' },
           { label: '无广告', icon: '/point/No_advertisement.svg' },
           { label: '多主题切换', icon: '/point/Topic_witching.svg' },
@@ -609,8 +611,8 @@ export function getVipRechargePlans({ benefitsRes = null, pricingRes = null } = 
           { label: '基础行情', icon: '/point/Basic_market.svg' },
           { label: 'APP基础推送', icon: '/point/Information_push.svg' },
           { label: '邮件告警', icon: '/point/Email_alert.svg' },
-          { label: '大单行情 40条（0s延迟）', icon: '/point/Order_situation.svg' },
-          { label: 'AI Call 40~220次/月', icon: '/point/AI_call.svg' },
+          { label: '大单行情 40档深度（0s延迟）', icon: '/point/Order_situation.svg' },
+          { label: 'AI Call 40~220次/月', icon: '/icons/ai-call.gray.svg' },
           { label: '月度积分 10000~10,000/月', icon: '/point/Monthly_points.svg' },
           { label: '专属黑金标志', icon: '/point/Exclusive_logo.svg' },
           { label: '无广告', icon: '/point/No_advertisement.svg' },

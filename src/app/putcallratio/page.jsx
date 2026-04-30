@@ -10,6 +10,7 @@ import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 import { handleOptions } from '@/utils/chartUtils';
 import { isEmpty } from 'lodash';
+import * as echarts from 'echarts';
 import styles from './page.module.less';
 
 const PutCallRatio = () => {

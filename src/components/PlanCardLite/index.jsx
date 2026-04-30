@@ -14,6 +14,7 @@ export default function PlanCardLite({
   daysLeft,
   activeTier = 'lite',
   onPro2Upgrade,
+  isPc = false,
 }) {
   const { t } = useTranslation();
   const isPro = activeTier === 'pro';
@@ -32,7 +33,7 @@ export default function PlanCardLite({
 
   return (
     <>
-      <div className={`${styles.planCard} ${isPro ? styles.planCardPro : styles.planCardLite}`}>
+      <div className={`${styles.planCard} ${isPro ? styles.planCardPro : styles.planCardLite} ${isPc ? styles.pcMode : ''}`}>
         <div className={styles.headerRow}>
           <div className={styles.planTop}>
             <div className={styles.planTitle}>{title}</div>
@@ -144,7 +145,7 @@ export default function PlanCardLite({
         )}
       </div>
 
-      <ProgressLine activeTier={activeTier} />
+      {!isPc && <ProgressLine activeTier={activeTier} />}
     </>
   );
 }

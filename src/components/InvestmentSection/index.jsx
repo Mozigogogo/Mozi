@@ -84,6 +84,7 @@ export default function InvestmentSection({
   
   // 是否有第二页数据
   const hasSecondPage = hotIndustry.length > 10;
+  const shouldShowIndustrySkeleton = industryLoading && hotIndustry.length === 0;
 
   // 渲染热门板块内容
   const renderContent = () => {
@@ -101,7 +102,7 @@ export default function InvestmentSection({
               className={styles.pageContainer}
             >
               <div className={styles.centerLoading}>
-                {industryLoading ? (
+                {shouldShowIndustrySkeleton ? (
                   <div style={{ 
                     display: 'grid', 
                     gridTemplateColumns: 'repeat(4, 1fr)', 
@@ -133,7 +134,7 @@ export default function InvestmentSection({
             </div>
 
             {/* 第二页 - 只在有数据时显示 */}
-            {hasSecondPage && !industryLoading && (
+            {hasSecondPage && !shouldShowIndustrySkeleton && (
               <div 
                 className={styles.pageContainer}
               >
@@ -151,7 +152,7 @@ export default function InvestmentSection({
           </div>
           
           {/* 可滑动标识 - 只在有第二页数据时显示 */}
-          {!industryLoading && hasSecondPage && (
+          {!shouldShowIndustrySkeleton && hasSecondPage && (
             <div className={styles.scrollIndicator}>
               <div className={`${styles.dot} ${currentPage === 0 ? styles.active : ''}`} />
               <div className={`${styles.dot} ${currentPage === 1 ? styles.active : ''}`} />

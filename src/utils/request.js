@@ -323,9 +323,10 @@ instance.interceptors.response.use(
             sessionStorage.removeItem('tg_auto_login_last_success_ts_v1');
             localStorage.removeItem('tg_auto_login_skip_once_v1');
 
-            // 跳转到首页触发 TelegramAutoLogin（其内部只在 path === '/' 时发起登录接口）
-            if (window.location.pathname !== '/') {
-              window.location.replace('/');
+            // 跳转到 TG 首页触发 TelegramAutoLogin。
+            // 当前 TG 入口统一使用 `/home`，避免重新回到营销首页 `/`。
+            if (window.location.pathname !== '/home') {
+              window.location.replace('/home');
             } else {
               // 若已经在首页，避免整页 reload；直接通知 TelegramAutoLogin 重试登录
               window.dispatchEvent(new CustomEvent('tg-force-relogin'));

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import styles from './index.module.less';
@@ -8,7 +8,6 @@ import styles from './index.module.less';
 export default function PinkContainer() {
   const { t } = useTranslation();
   const router = useRouter();
-  const [loadedIcons, setLoadedIcons] = useState({});
 
   const buttons = useMemo(() => [
     {
@@ -61,38 +60,23 @@ export default function PinkContainer() {
     }
   ], [router, t]);
 
-  // 进入首页即预热图标到浏览器缓存，减少首屏等待
-  useEffect(() => {
-    buttons.forEach((button) => {
-      const img = new window.Image();
-      img.src = button.icon;
-    });
-  }, [buttons]);
-
   return (
     <div className={styles.quickActionsContainer}>
       <div className={styles.gridContainer}>
-        {buttons.map((button) => (
+        {buttons.map((button, index) => (
           <div
             key={button.id}
             className={styles.gridItem}
             onClick={button.onClick}
           >
-            <div
-              className={`${styles.iconWrapper} ${loadedIcons[button.id] ? '' : styles.iconPulse}`}
-            >
+            <div className={styles.iconWrapper}>
               <img
                 src={button.icon} 
                 alt={button.label}
                 className={styles.iconImage}
                 loading="eager"
                 decoding="async"
-                onLoad={() => {
-                  setLoadedIcons((prev) => ({ ...prev, [button.id]: true }));
-                }}
-                onError={() => {
-                  setLoadedIcons((prev) => ({ ...prev, [button.id]: true }));
-                }}
+                fetchPriority={index < 4 ? 'high' : 'auto'}
               />
             </div>
             <div className={styles.label}>{button.label}</div>

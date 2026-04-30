@@ -88,8 +88,6 @@ const HomeTreeMap = ({ list = [], name, desc }) => {
     };
 
     const run = async () => {
-      // 首次绘制前展示骨架屏（避免内容区域短暂无内容）
-      if (!cancelled) setHasDrawn(false);
       const d3 = await ensureD3();
       if (cancelled) return;
 

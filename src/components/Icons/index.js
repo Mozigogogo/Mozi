@@ -8,3 +8,4 @@ export { default as CaretUpIcon } from './CaretUpIcon';
 export { default as UpArrowIcon } from './UpArrowIcon';
 export { default as CaretDownIcon } from './CaretDownIcon';
 export { default as DailyFooterIcon } from './DailyFooterIcon';
+export { default as ShareIcon } from './ShareIcon';

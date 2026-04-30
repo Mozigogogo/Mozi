@@ -1,13 +1,24 @@
-import { headers } from 'next/headers';
-import HomeClient from './HomeClient';
+import RootTelegramRedirect from './RootTelegramRedirect';
+import styles from './site.module.css';
+import HeroSection from '@/components/site-home/HeroSection/index';
+import AlertsSection from '@/components/site-home/AlertsSection/index';
+import SectorSection from '@/components/site-home/SectorSection/index';
+import FlashSection from '@/components/site-home/FlashSection/index';
+import AlphaSection from '@/components/site-home/AlphaSection/index';
+import KnowledgeSection from '@/components/site-home/KnowledgeSection/index';
 
-function isProbablyMobile(ua = '') {
-  const s = String(ua);
-  return /Android|iPhone|iPad|iPod|Mobile/i.test(s);
-}
-
-export default function HomePage() {
-  const ua = headers().get('user-agent') || '';
-  const initialIsPC = !isProbablyMobile(ua);
-  return <HomeClient initialIsPC={initialIsPC} />;
+export default function SiteHomePage() {
+  return (
+    <main className={styles.page}>
+      <RootTelegramRedirect />
+      <section className={styles.heroWrap}>
+        <HeroSection />
+        <AlertsSection />
+        <SectorSection />
+        <FlashSection />
+        <AlphaSection />
+        <KnowledgeSection />
+      </section>
+    </main>
+  );
 }

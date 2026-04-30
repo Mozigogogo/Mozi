@@ -22,7 +22,7 @@ const planCodeToTier = (planCode) => {
   return 'lite';
 };
 
-export function BenefitsPageContent({ showNavBar = true, className = '' } = {}) {
+export function BenefitsPageContent({ showNavBar = true, className = '', isPc = false } = {}) {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const isEnglish = (i18n.language || '').startsWith('en');
@@ -205,8 +205,19 @@ export function BenefitsPageContent({ showNavBar = true, className = '' } = {}) 
     [t]
   );
 
-  const liteQuickIcons = useMemo(
-    () => [
+  const liteQuickIcons = useMemo(() => {
+    if (isPc) {
+      return [
+        { icon: '/benefits/market.svg', label: t('vip.benefit.basicChart') },
+        { icon: '/benefits/push.svg', label: t('vip.benefit.basicPush') },
+        { icon: '/benefits/email_alert.svg', label: t('benefitsPage.emailAlerts') },
+        { icon: '/benefits/multi_skin.svg', label: t('vip.benefit.multiTheme') },
+        { icon: '/benefits/helper.svg', label: t('benefitsPage.supportShort') },
+        { icon: '/benefits/no_advertise.svg', label: t('vip.benefit.noAds') },
+        { icon: '/benefits/high_flag.svg', label: t('benefitsPage.identityTag') },
+      ];
+    }
+    return [
       { icon: '/point/Basic_market .svg', label: t('vip.benefit.basicChart') },
       { icon: '/point/Information_push.svg', label: t('vip.benefit.basicPush') },
       { icon: '/point/Email_alert.svg', label: t('benefitsPage.emailAlerts') },
@@ -214,9 +225,8 @@ export function BenefitsPageContent({ showNavBar = true, className = '' } = {}) 
       { icon: '/point/Customer_service.svg', label: t('benefitsPage.supportShort') },
       { icon: '/point/No_advertisement.svg', label: t('vip.benefit.noAds') },
       { icon: '/point/Exclusive_logo.svg', label: t('benefitsPage.identityTag') },
-    ],
-    [t]
-  );
+    ];
+  }, [isPc, t]);
 
   const proQuickIcons = useMemo(
     () => [
@@ -263,7 +273,9 @@ export function BenefitsPageContent({ showNavBar = true, className = '' } = {}) 
   const navBg = '#ffffff';
   const navColor = undefined;
 
-  const containerClassName = [styles.container, containerModeClass, className].filter(Boolean).join(' ');
+  const containerClassName = [styles.container, containerModeClass, isPc ? styles.pcMode : '', className]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <div className={containerClassName}>
@@ -299,6 +311,7 @@ export function BenefitsPageContent({ showNavBar = true, className = '' } = {}) 
                 daysLeft={tier === 'lite' ? liteDaysLeft : tier === 'pro' ? proDaysLeft : undefined}
                 activeTier={tier}
                 onPro2Upgrade={tier === 'pro' ? goRecharge : undefined}
+                isPc={isPc}
               />
             ) : (
               <PlanCardFree
@@ -309,6 +322,7 @@ export function BenefitsPageContent({ showNavBar = true, className = '' } = {}) 
                 ctaText="Upgrade"
                 onCtaClick={goRecharge}
                 activeTier={tier}
+                isPc={isPc}
               />
             )}
 

@@ -40,6 +40,26 @@
   padding: 0 12px 12px 12px;
 }
 
+.sectionSkeleton {
+  width: 100%;
+  margin-bottom: 12px;
+  border-radius: 20px;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.9) 50%, rgba(255, 255, 255, 0.55) 100%),
+    #f3f4f6;
+  background-size: 200% 100%;
+  animation: userSectionSkeleton 1.2s ease-in-out infinite;
+}
+
+@keyframes userSectionSkeleton {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 .headerBox {
   background: transparent;
 }

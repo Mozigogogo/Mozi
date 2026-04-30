@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, memo, useCallback } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 import { Swiper } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
@@ -12,21 +12,69 @@ import AddMonitor from '../AddMonitor';
 import AdaptiveSymbolText from '../AdaptiveSymbolText';
 import AdaptivePrice from '../AdaptivePrice';
 import PinkContainer from '../PinkContainer';
+import MarketDistribution from '../MarketDistribution';
 import { WS_URL } from '../../utils/constants';
 
 // Lazy load heavy components
-const MarketDistribution = dynamic(() => import('../MarketDistribution'));
 const FloatingRobot = dynamic(() => import('../FloatingRobot'), { ssr: false });
-const ActivityModal = dynamic(() => import('../ActivityModal'), { ssr: false });
-const DerivativeArea = dynamic(() => import('../DerivativeArea'));
-const InvestmentSection = dynamic(() => import('../InvestmentSection'));
-const RealTimeRanking = dynamic(() => import('../RealTimeRanking'));
-const HotTopics = dynamic(() => import('../HotTopics'));
+const DerivativeArea = dynamic(() => import('../DerivativeArea'), {
+  loading: () => <HomeSectionSkeleton height={128} />,
+});
+const InvestmentSection = dynamic(() => import('../InvestmentSection'), {
+  loading: () => <HomeSectionSkeleton height={220} card />,
+});
+const RealTimeRanking = dynamic(() => import('../RealTimeRanking'), {
+  loading: () => <HomeSectionSkeleton height={300} card />,
+});
+const HotTopics = dynamic(() => import('../HotTopics'), {
+  loading: () => <HomeSectionSkeleton height={180} card />,
+});
 import { jump2Detail } from '../../utils/core';
 import * as homeApi from '../../api/home';
 import { useWebSocket } from '../../utils/useWebSocket';
 import { useAmplitude } from '../../hooks/useAmplitude';
 import styles from './index.module.less';
+
+function HomeSectionSkeleton({ height = 160, card = false }) {
+  return (
+    <div
+      className={`${styles.homeSectionSkeleton} ${card ? styles.homeSectionSkeletonCard : ''}`}
+      style={{ minHeight: `${height}px` }}
+      aria-hidden="true"
+    >
+      <div className={styles.homeSectionSkeletonShimmer} />
+    </div>
+  );
+}
+
+function LazyMount({ children, placeholder = null, rootMargin = '180px 0px', onVisible }) {
+  const [isVisible, setIsVisible] = useState(false);
+  const mountRef = useRef(null);
+
+  useEffect(() => {
+    if (isVisible) return;
+    if (typeof window === 'undefined') return;
+
+    const node = mountRef.current;
+    if (!node) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (!entry?.isIntersecting) return;
+        setIsVisible(true);
+        onVisible?.();
+        observer.disconnect();
+      },
+      { root: null, rootMargin, threshold: 0.01 }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [isVisible, onVisible, rootMargin]);
+
+  return <div ref={mountRef}>{isVisible ? children : placeholder}</div>;
+}
 
 // CDN 图片前缀
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
@@ -37,8 +85,6 @@ const SearchIcon = `${CDN_PREFIX}/icon/community/search.png`;
 // 公告栏显示状态（可持久隐藏）
 const NOTICE_HIDE_KEY = 'hideHomeNotice';
 
-// 活动弹窗显示状态（每个UTC日期显示一次）
-const ACTIVITY_LAST_SHOWN_KEY = 'activityModalLastShownDate';
 const MOBILE_HOME_CACHE_KEY = 'mozi_mobile_home_cache_v1';
 const MOBILE_HOME_SCROLL_KEY = 'mozi_mobile_home_scroll_y_v1';
 const MOBILE_HOME_CACHE_TTL = 2 * 60 * 1000;
@@ -71,15 +117,9 @@ export default function MobileHome() {
   const { track } = useAmplitude('Home');
   const isEN = (i18n?.language || '').startsWith('en');
   const debugEnabled = typeof window !== 'undefined' ? isHomeDebugEnabled() : false;
-  const [searchKeyword, setSearchKeyword] = useState('');
   const initialCache = readMobileHomeCache();
   const hasWarmCache = !!initialCache;
-  // 活动弹窗状态
-  const [showActivityModal, setShowActivityModal] = useState(false);
-  
-  // 活动弹窗图片预加载只影响弹窗本身，不阻塞首页主数据请求
-  const [activityImagesLoaded, setActivityImagesLoaded] = useState(true);
-  
+
   // Telegram WebApp 检测状态
   const [tgInfo, setTgInfo] = useState({
     available: false,
@@ -95,8 +135,7 @@ export default function MobileHome() {
     window.__moziDebug.mobileHomeRender += 1;
     console.log('[MobileHome][debug] render', {
       renderCount: window.__moziDebug.mobileHomeRender,
-      showActivityModal,
-      activityImagesLoaded,
+      activityModalRemoved: true,
     });
   }
   const localRenderCountRef = useRef(0);
@@ -148,27 +187,6 @@ export default function MobileHome() {
     }
   };
 
-  // 每次进入页面都显示活动弹窗
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (debugEnabled) console.log('[MobileHome][debug] activity modal effect run');
-
-    try {
-      const hasShownActivity = sessionStorage.getItem(ACTIVITY_LAST_SHOWN_KEY);
-
-      if (!hasShownActivity) {
-        const timer = setTimeout(() => {
-          setShowActivityModal(true);
-          sessionStorage.setItem(ACTIVITY_LAST_SHOWN_KEY, 'true');
-        }, 500);
-        
-        return () => clearTimeout(timer);
-      }
-    } catch (e) {
-      console.warn('检测活动弹窗状态失败:', e);
-    }
-  }, []);
-
   useEffect(() => {
     if (debugEnabled) {
       window.__mobileHomeDebug = window.__mobileHomeDebug || { mountSeq: 0, renderSeq: 0 };
@@ -181,11 +199,6 @@ export default function MobileHome() {
     }
   }, []);
   
-  // 处理活动弹窗确认
-  const handleActivityConfirm = () => {
-    router.push('/experiencer');
-  };
-
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (debugEnabled) console.log('[MobileHome][debug] telegram init effect run');
@@ -232,6 +245,8 @@ export default function MobileHome() {
   const [topicsLoading, setTopicsLoading] = useState(false);
   const [lastTopicsLoadTime, setLastTopicsLoadTime] = useState(null);
   const topicsCacheTimer = useRef(null);
+  const [showHotTopics, setShowHotTopics] = useState(false);
+  const [enableRankingFetch, setEnableRankingFetch] = useState(false);
   
   const rankRequestIds = useRef(Array(7).fill(0));
 
@@ -657,27 +672,35 @@ export default function MobileHome() {
     }
   };
 
-  // 初始化数据加载 + 轮询（仅更新数据区域）
+  // 首屏基础数据加载 + 轮询（优先第一屏，不包含重榜单请求）
   useEffect(() => {
-    // 首次初始化：允许展示加载态
     fetchHotCoin();
     fetchHotIndustry();
     fetchHotContract();
     fetchOwnList(!hasWarmCache);
-    fetchRankingData(!hasWarmCache);
 
-    // 后续轮询：静默更新数据，不再触发加载动画
     const interval = setInterval(() => {
       if (debugEnabled) console.log('[MobileHome][debug] polling tick 30s');
       fetchHotCoin();
       fetchHotIndustry();
       fetchHotContract();
       fetchOwnList(false);
-      fetchRankingData(false);
     }, 30000);
 
     return () => clearInterval(interval);
   }, []);
+
+  // 榜单数据延后到榜单模块即将进入视口时再加载
+  useEffect(() => {
+    if (!enableRankingFetch) return;
+
+    fetchRankingData(!hasWarmCache);
+    const interval = setInterval(() => {
+      fetchRankingData(false);
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [enableRankingFetch]);
 
   // 榜单切换处理
   const rankActiveClick = (value) => {
@@ -686,16 +709,6 @@ export default function MobileHome() {
       refreshSelfSelectRank();
     }
   };
-
-  const handleActivityClose = useCallback(() => {
-    if (debugEnabled) console.log('[MobileHome][debug] activity modal close');
-    setShowActivityModal(false);
-  }, [debugEnabled]);
-
-  const handleActivityImagesLoaded = useCallback(() => {
-    if (debugEnabled) console.log('[MobileHome][debug] activity images loaded');
-    setActivityImagesLoaded(true);
-  }, [debugEnabled]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -708,6 +721,11 @@ export default function MobileHome() {
       console.log('[MobileHome][debug] unmount', { mountId });
     };
   }, []);
+
+  // Prefetch search page to make tap-to-search transition smoother.
+  useEffect(() => {
+    router.prefetch('/search');
+  }, [router]);
 
   // 跳转到榜单详情页
   const go2List = () => {
@@ -727,13 +745,8 @@ export default function MobileHome() {
     }
   };
 
-  const submitSearch = () => {
-    const keyword = String(searchKeyword || '').trim();
-    if (!keyword) {
-      router.push('/search');
-      return;
-    }
-    router.push(`/search?keyword=${encodeURIComponent(keyword)}`);
+  const enterSearchPage = () => {
+    router.push('/search');
   };
 
   return (
@@ -765,21 +778,27 @@ export default function MobileHome() {
             </Swiper>
 
             <div className={styles.header} style={{ bottom: showNotice ? 10 : 10 }}>
-              <div className={styles.searchBox}>
+              <div
+                className={styles.searchBox}
+                onClick={enterSearchPage}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') enterSearchPage();
+                }}
+                role="button"
+                tabIndex={0}
+              >
                 <input
                   className={styles.searchInput}
-                  value={searchKeyword}
-                  onChange={(e) => setSearchKeyword(e.target.value)}
+                  value=""
+                  readOnly
                   placeholder={t('home.searchPlaceholder')}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') submitSearch();
-                  }}
+                  onFocus={enterSearchPage}
                 />
                 <button
                   type="button"
                   className={styles.searchCancel}
                   style={isEN ? { minWidth: 44, padding: '0 14px' } : undefined}
-                  onClick={submitSearch}
+                  onClick={enterSearchPage}
                 >
                   <img src={SearchIcon} alt={t('common.search')} className={styles.searchIcon} />
                   {!isEN && t('common.search')}
@@ -789,59 +808,64 @@ export default function MobileHome() {
           </div>
         </div>
 
-        <HomeStaticSections />
+        <HomeStaticSections showHotTopics={showHotTopics} onShowHotTopics={() => setShowHotTopics(true)} />
         
-        <InvestmentSection
-          hotCoin={hotCoin}
-          hotContract={hotContract}
-          hotIndustry={hotIndustry}
-          hotTopics={hotTopics}
-          coinLoading={coinLoading}
-          contractLoading={contractLoading}
-          industryLoading={industryLoading}
-          topicsLoading={topicsLoading}
-          onFetchHotTopics={fetchHotTopics}
-        />
+        <LazyMount rootMargin="220px 0px" placeholder={<HomeSectionSkeleton height={220} card />}>
+          <InvestmentSection
+            hotCoin={hotCoin}
+            hotContract={hotContract}
+            hotIndustry={hotIndustry}
+            hotTopics={hotTopics}
+            coinLoading={coinLoading}
+            contractLoading={contractLoading}
+            industryLoading={industryLoading}
+            topicsLoading={topicsLoading}
+            onFetchHotTopics={fetchHotTopics}
+          />
+        </LazyMount>
 
-        <RealTimeRanking
-          activeArr={activeArr}
-          footerArr={footerArr}
-          rankActiveKey={rankActiveKey}
-          rankLoadingStates={rankLoadingStates}
-          rankLoadedStates={rankLoadedStates}
-          onRankActiveClick={rankActiveClick}
-          onJump2Detail={jump2Detail}
-          onGo2List={go2List}
-        />
+        <LazyMount
+          rootMargin="220px 0px"
+          onVisible={() => setEnableRankingFetch(true)}
+          placeholder={<HomeSectionSkeleton height={300} card />}
+        >
+          <RealTimeRanking
+            activeArr={activeArr}
+            footerArr={footerArr}
+            rankActiveKey={rankActiveKey}
+            rankLoadingStates={rankLoadingStates}
+            rankLoadedStates={rankLoadedStates}
+            onRankActiveClick={rankActiveClick}
+            onJump2Detail={jump2Detail}
+            onGo2List={go2List}
+          />
+        </LazyMount>
 
         <FloatingRobotMemo />
-        
-        <ActivityModalMemo
-          visible={showActivityModal}
-          onClose={handleActivityClose}
-          onConfirm={handleActivityConfirm}
-          onImagesLoaded={handleActivityImagesLoaded}
-        />
       </div>
     </Layout>
   );
 }
 
-const HomeStaticSections = memo(function HomeStaticSections() {
+const HomeStaticSections = memo(function HomeStaticSections({ showHotTopics, onShowHotTopics }) {
   return (
     <>
       <PinkContainer />
       <DerivativeArea />
       <MarketDistribution />
-      <HotTopics limit={30} showViewMore={true} />
+      {showHotTopics ? (
+        <HotTopics limit={30} showViewMore={true} />
+      ) : (
+        <LazyMount
+          rootMargin="180px 0px"
+          onVisible={onShowHotTopics}
+          placeholder={<HomeSectionSkeleton height={180} card />}
+        />
+      )}
     </>
   );
 });
 
 const FloatingRobotMemo = memo(function FloatingRobotMemo() {
   return <FloatingRobot />;
-});
-
-const ActivityModalMemo = memo(function ActivityModalMemo(props) {
-  return <ActivityModal {...props} />;
 });

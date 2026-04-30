@@ -7,16 +7,17 @@ import ProgressLine from '@/components/ProgressLine';
 export default function PlanCardFree({
   title,
   subtitle,
-  highlightNum = '120x',
+  highlightNum = '20x',
   highlightSub,
   hint,
   ctaText,
   onCtaClick,
   activeTier = 'free',
+  isPc = false,
 }) {
   return (
     <>
-      <div className={`${styles.planCard} ${styles.planCardFree}`}>
+      <div className={`${styles.planCard} ${styles.planCardFree} ${isPc ? styles.pcMode : ''}`}>
         <div className={styles.planTop}>
           <div className={styles.planTitle}>{title}</div>
           <div className={styles.planSub}>{subtitle}</div>
@@ -42,7 +43,7 @@ export default function PlanCardFree({
         </div>
       </div>
 
-      <ProgressLine activeTier={activeTier} />
+      {!isPc && <ProgressLine activeTier={activeTier} />}
     </>
   );
 }

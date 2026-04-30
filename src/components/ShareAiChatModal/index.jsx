@@ -15,13 +15,16 @@ function buildShareText({ question, answer }) {
 export default function ShareAiChatModal({
   open,
   onClose,
+  title,
   question,
   answer,
+  preview,
   brandLabel = 'Mozi问答',
   shareUrl,
 }) {
   const [copied, setCopied] = useState(false);
   const { t } = useTranslation();
+  const resolvedTitle = title || t('shareChat.title');
 
   useEffect(() => {
     if (!open) return undefined;
@@ -99,7 +102,7 @@ export default function ShareAiChatModal({
       className={styles.overlay}
       role="dialog"
       aria-modal="true"
-      aria-label={t('shareChat.title')}
+      aria-label={resolvedTitle}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose?.();
       }}
@@ -115,45 +118,51 @@ export default function ShareAiChatModal({
         </button>
 
         <div className={styles.header}>
-          <div className={styles.title}>{t('shareChat.title')}</div>
+          <div className={styles.title}>{resolvedTitle}</div>
         </div>
 
         <div className={styles.previewOuter}>
-          <div className={styles.previewInner}>
-            <div className={styles.previewScroll}>
-              {question ? (
-                <div className={`${styles.previewMsgRow} ${styles.previewMsgRight}`}>
-                  <div className={`${styles.previewBubble} ${styles.previewBubbleUser}`}>{question}</div>
-                </div>
-              ) : null}
-              {answer ? (
-                <div className={`${styles.previewMsgRow} ${styles.previewMsgLeft}`}>
-                  <div className={`${styles.previewBubble} ${styles.previewBubbleAssistant}`}>
-                    <Markdown
-                      options={{
-                        overrides: {
-                          p: {
-                            props: { className: styles.mdParagraph },
-                          },
-                          ul: {
-                            props: { className: styles.mdList },
-                          },
-                          ol: {
-                            props: { className: styles.mdList },
-                          },
-                          li: {
-                            props: { className: styles.mdListItem },
-                          },
-                        },
-                      }}
-                    >
-                      {answer}
-                    </Markdown>
-                  </div>
-                </div>
-              ) : null}
+          <div className={`${styles.previewInner} ${preview ? styles.previewInnerCard : ''}`}>
+            <div className={`${styles.previewScroll} ${preview ? styles.previewScrollCard : ''}`}>
+              {preview ? (
+                preview
+              ) : (
+                <>
+                  {question ? (
+                    <div className={`${styles.previewMsgRow} ${styles.previewMsgRight}`}>
+                      <div className={`${styles.previewBubble} ${styles.previewBubbleUser}`}>{question}</div>
+                    </div>
+                  ) : null}
+                  {answer ? (
+                    <div className={`${styles.previewMsgRow} ${styles.previewMsgLeft}`}>
+                      <div className={`${styles.previewBubble} ${styles.previewBubbleAssistant}`}>
+                        <Markdown
+                          options={{
+                            overrides: {
+                              p: {
+                                props: { className: styles.mdParagraph },
+                              },
+                              ul: {
+                                props: { className: styles.mdList },
+                              },
+                              ol: {
+                                props: { className: styles.mdList },
+                              },
+                              li: {
+                                props: { className: styles.mdListItem },
+                              },
+                            },
+                          }}
+                        >
+                          {answer}
+                        </Markdown>
+                      </div>
+                    </div>
+                  ) : null}
+                </>
+              )}
             </div>
-            <div className={styles.brand}>{brandLabel}</div>
+            {brandLabel ? <div className={styles.brand}>{brandLabel}</div> : null}
           </div>
         </div>
 

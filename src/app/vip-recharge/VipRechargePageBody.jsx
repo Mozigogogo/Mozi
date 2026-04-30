@@ -9,6 +9,7 @@ import { getVipRechargePlans } from './components/getVipRechargePlans';
 import { isTelegramEnv, startVipPurchase } from './utils/startVipPurchase';
 import { getSubscriptionBenefits, getSubscriptionPricing, getMySubscription } from '@/api/vip';
 import { confirm } from '@/components/Modal/confirm';
+import { LogoLoading } from '@/components/Loading';
 
 /**
  * 订阅方案主体：月/年切换 + 方案卡片。供移动端 vip-recharge 与 PC /subscribe 复用。
@@ -233,6 +234,13 @@ export default function VipRechargePageBody({
 
   return (
     <div className={contentClassName}>
+      <LogoLoading
+        visible={purchaseSubmitting}
+        fullscreen
+        mask
+        image="/images/community/loadding.png"
+        size={72}
+      />
       {renderTabs &&
         (tabsWrapClassName ? <div className={tabsWrapClassName}>{tabsNode}</div> : tabsNode)}
       <div className={planCardsClassName} key={activeTab}>
