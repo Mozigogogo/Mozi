@@ -29,10 +29,11 @@ export default function KnowledgeSection() {
         <div className={styles.knowledgeRightPane}>
           <div className={styles.knowledgePhoneWrap} aria-hidden="true">
             <Image
-              src="/images/pc/introduction6_2.svg"
+              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/introduction6_2.svg"
               alt=""
               fill
               className={styles.knowledgePhoneImage}
+              unoptimized
               sizes="(max-width: 1024px) 90vw, 42vw"
             />
             
@@ -40,7 +41,7 @@ export default function KnowledgeSection() {
         </div>
         <div className={styles.knowledgeOverlay} aria-hidden="true">
               <Image
-                src="/images/pc/introduction6_3.webp"
+                src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/introduction6_3.png"
                 alt=""
                 fill
                 className={styles.knowledgeOverlayImage}

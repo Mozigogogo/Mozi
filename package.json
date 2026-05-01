@@ -59,6 +59,7 @@
     "ethers": "^6.15.0",
     "hardhat": "^2.22.3",
     "less": "^4.2.0",
+    "less-loader": "^12.3.2",
     "next-plugin-less": "^1.0.2",
     "next-with-less": "^3.0.1"
   }
