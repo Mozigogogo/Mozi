@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { WagmiProvider, http, useAccount, useSwitchChain, useWalletClient } from 'wagmi'
 import { mainnet, arbitrum } from 'wagmi/chains'
@@ -38,7 +38,9 @@ const wagmiConfig = getDefaultConfig({
     [mainnet.id]: http(MAINNET_RPC_URL),
     [arbitrum.id]: http(ARBITRUM_RPC_URL),
   },
-  ssr: true,
+  // 该项目在 Next SSR 环境下会触发 WalletConnect 依赖 indexedDB 导致崩溃；
+  // 因此禁用 SSR，改为仅在浏览器端初始化。
+  ssr: false,
 })
 
 function WalletModalBridge() {
@@ -92,6 +94,15 @@ function WalletModalBridge() {
 }
 
 export default function Web3Provider({ children }) {
+  // 关键：为了避免 hydration mismatch，首次渲染（含 SSR + CSR hydrate）都不包 Provider。
+  // 等客户端挂载后再启用 Web3 Provider（同时也避免 SSR 触发 indexedDB）。
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) return <>{children}</>
   return (
     <WagmiProvider config={wagmiConfig} reconnectOnMount={true}>
       <QueryClientProvider client={queryClient}>
