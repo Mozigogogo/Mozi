@@ -52,6 +52,16 @@ export default function PCHome() {
   const { t, i18n } = useTranslation();
   const isEN = (i18n?.language || '').startsWith('en');
 
+  const scheduleLowPriority = (fn) => {
+    try {
+      if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(() => fn(), { timeout: 1500 });
+        return;
+      }
+    } catch (_) {}
+    setTimeout(() => fn(), 0);
+  };
+
   // 状态
   const [rankData, setRankData] = useState([]);
   const [rankLoading, setRankLoading] = useState(false);
@@ -375,8 +385,11 @@ export default function PCHome() {
   };
 
   useEffect(() => {
+    // 首屏优先：榜单（左侧表格）先出
     fetchRankData('zhangfu');
-    fetchTreeMapData();
+
+    // 非首屏关键：TreeMap 等浏览器空闲再拉，降低首屏并发压力
+    scheduleLowPriority(() => fetchTreeMapData());
   }, []);
 
   const handleRankTabChange = (key) => {

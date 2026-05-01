@@ -24,8 +24,15 @@ export default function TelegramAutoLogin() {
     return `${head}...${tail}`;
   };
 
-  // 调试开关：当前默认开启，便于定位 TG 环境识别问题
-  const ENABLE_TG_AUTO_LOGIN_DEBUG = true;
+  // 调试开关：默认关闭（避免拖慢首页/主线程），仅在 ?tgautologin_debug=1 时开启
+  const ENABLE_TG_AUTO_LOGIN_DEBUG = (() => {
+    try {
+      if (typeof window === 'undefined') return false;
+      return new URLSearchParams(window.location.search).get('tgautologin_debug') === '1';
+    } catch (_) {
+      return false;
+    }
+  })();
 
   // 调试：定位是谁渲染了该组件（线上排查用）
   // 用法：URL 加 `?tgautologin_debug=1`，仅打印一次调用栈
