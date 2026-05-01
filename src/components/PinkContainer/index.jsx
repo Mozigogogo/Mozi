@@ -12,49 +12,49 @@ export default function PinkContainer() {
   const buttons = useMemo(() => [
     {
       id: 'ai',
-      icon: '/icons/new_detail/ai_chat.svg',
+      icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/ai_chat.svg',
       label: t('home.quickActions.ai'),
       onClick: () => router.push('/ai')
     },
     {
       id: 'price',
-      icon: '/icons/new_detail/price_wran.svg',
+      icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/price_wran.svg',
       label: t('home.quickActions.priceMonitor'),
       onClick: () => router.push('/mywarn')
     },
     {
       id: 'notice',
-      icon: '/icons/new_detail/announcement_onitoring.svg',
+      icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/announcement_onitoring.svg',
       label: t('home.quickActions.noticeMonitor'),
       onClick: () => router.push('/user?scrollTo=calendar')
     },
     {
       id: 'sector',
-      icon: '/icons/new_detail/block_select.svg',
+      icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/block_select.svg',
       label: t('home.quickActions.sectorSelect'),
       onClick: () => router.push('/hotsector')
     },
     {
       id: 'news',
-      icon: '/icons/new_detail/breaking.svg',
+      icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/breaking.svg',
       label: t('home.quickActions.news'),
       onClick: () => router.push('/community?tab=news')
     },
     {
       id: 'discover',
-      icon: '/icons/new_detail/find_coin.svg',
+      icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/find_coin.svg',
       label: t('home.quickActions.discoverCoins'),
       onClick: () => router.push('/community?tab=discovery')
     },
     {
       id: 'ask',
-      icon: '/icons/new_detail/question.svg',
+      icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/question.svg',
       label: t('home.quickActions.askQuestion'),
       onClick: () => router.push('/community?tab=question')
     },
     {
       id: 'ranking',
-      icon: '/icons/new_home/calendar.png',
+      icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/calendar.png',
       label: t('home.quickActions.rankingSelect'),
       onClick: () => router.push('/daily')
     }

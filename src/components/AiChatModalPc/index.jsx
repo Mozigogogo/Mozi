@@ -270,7 +270,7 @@ export default function AiChatModalPc({
                         ) : (
                           <img
                             className={styles.sendIcon}
-                            src="/icons/new_home/send_messages.svg"
+                            src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/send_messages.svg"
                             alt=""
                           />
                         )}

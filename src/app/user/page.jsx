@@ -640,7 +640,7 @@ export default function UserPage() {
   // 预加载反馈成功弹窗的图片资源
   useEffect(() => {
     const preloadImage = new Image();
-    preloadImage.src = '/images/activity/toast_modal.png';
+    preloadImage.src = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/activity/toast_modal.png';
   }, []);
 
   // 页面加载时调用 getMyInterface 接口（只传年月）
@@ -1580,7 +1580,7 @@ export default function UserPage() {
   const footerList = [
     {
       key: 'language',
-      icon: (<img src={'/icons/zh-en.svg'} alt={t('user.language')} style={{ width: 22, height: 22 }} loading="lazy" decoding="async" />),
+      icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/zh-en.svg'} alt={t('user.language')} style={{ width: 22, height: 22 }} loading="lazy" decoding="async" />),
       text: t('user.language'),
       extra: i18n.language === 'zh' ? '中文' : 'English',
       callback: () => {

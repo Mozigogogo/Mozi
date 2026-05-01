@@ -25,7 +25,7 @@ export default function PlanCardFree({
 
         <div className={styles.freeInnerBox}>
           <div className={styles.freeHighlightRow}>
-            <img className={styles.freeShield} src="/benefits/flag.svg" alt="" aria-hidden />
+            <img className={styles.freeShield} src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/flag.svg" alt="" aria-hidden />
             <div className={styles.freeHighlightText}>
               <div className={styles.freeHighlightStrong}>{highlightNum}</div>
               <div className={styles.freeHighlightSub}>{highlightSub}</div>

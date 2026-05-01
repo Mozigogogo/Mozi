@@ -154,36 +154,36 @@ export default function PointsHistoryPage() {
   const getTypeIcon = (taskCode) => {
     const iconMap = {
       // 活动/新手任务图标（与积分中心一致）
-      REGISTER: '/point/first_login.svg',
-      FIRST_LOGIN: '/point/first_login.svg',
-      FOLLOW_TWITTER: '/point/X.svg',
-      TWITTER: '/point/X.svg',
-      JOIN_COMMUNITY: '/point/group.svg',
-      COMMUNITY: '/point/group.svg',
-      EARLY_BIRD: '/point/eraly_bird.svg',
-      SET_ALARM: '/point/setting_alert.svg',
-      ALARM: '/point/setting_alert.svg',
-      VIDEO_LEARN: '/point/video@2x.png',
-      VIDEO: '/point/video@2x.png',
-      WECHAT: '/point/like@2x.png',
-      INVITE_USER: '/point/shared.svg',
-      USER_INFO: '/point/user_info.svg',
-      COMPLETE_PROFILE: '/point/user_info.svg',
-      ADD: '/point/add.svg',
-      ADD_WATCHLIST: '/point/add.svg',
-      PUSH: '/point/push.svg',
-      FIRST_POST: '/point/push.svg',
+      REGISTER: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/first_login.svg',
+      FIRST_LOGIN: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/first_login.svg',
+      FOLLOW_TWITTER: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/X.svg',
+      TWITTER: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/X.svg',
+      JOIN_COMMUNITY: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/group.svg',
+      COMMUNITY: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/group.svg',
+      EARLY_BIRD: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/eraly_bird.svg',
+      SET_ALARM: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/setting_alert.svg',
+      ALARM: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/setting_alert.svg',
+      VIDEO_LEARN: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/video@2x.png',
+      VIDEO: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/video@2x.png',
+      WECHAT: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/like@2x.png',
+      INVITE_USER: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/shared.svg',
+      USER_INFO: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/user_info.svg',
+      COMPLETE_PROFILE: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/user_info.svg',
+      ADD: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/add.svg',
+      ADD_WATCHLIST: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/add.svg',
+      PUSH: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/push.svg',
+      FIRST_POST: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/push.svg',
 
       // 每日任务图标（与积分中心 DailyTasks 匹配）
-      DAILY_LIKE: '/point/like.svg',
-      POST: '/point/push_article.svg',
-      RECEIVE_LIKE: '/point/received_like.svg',
-      REPLY: '/point/reply.svg',
-      POST_RECEIVE_REPLY: '/point/received.svg',
-      DAILY_LOGIN: '/point/daily_login.svg',
-      SHARE: '/point/shared.svg',
+      DAILY_LIKE: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/like.svg',
+      POST: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/push_article.svg',
+      RECEIVE_LIKE: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/received_like.svg',
+      REPLY: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/reply.svg',
+      POST_RECEIVE_REPLY: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/received.svg',
+      DAILY_LOGIN: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/daily_login.svg',
+      SHARE: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/shared.svg',
     };
-    return iconMap[taskCode] || '/point/daily_login.svg';
+    return iconMap[taskCode] || 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/daily_login.svg';
   };
 
   // taskCode -> i18n key（复用 pointsDetail.tasks.*.title 配置）
@@ -282,7 +282,7 @@ export default function PointsHistoryPage() {
                   <span className={`${styles.pointsText} ${item.points >= 0 ? styles.add : styles.sub}`}>
                     {item.points >= 0 ? '+' : ''}{item.points}
                   </span>
-                  <img src="/point/new_coin.svg" className={styles.coinIcon} alt="积分" />
+                  <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/new_coin.svg" className={styles.coinIcon} alt="积分" />
                 </div>
               </div>
             </div>

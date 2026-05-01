@@ -55,7 +55,7 @@ export default function RootLayout({ children }) {
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#1677ff" />
         {/* Keep only truly global/critical preload asset to avoid stealing bandwidth from home first paint */}
-        <link rel="preload" href="/images/community/loadding.png" as="image" />
+        <link rel="preload" href="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/community/loadding.png" as="image" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} ${chakraPetch.variable}`} suppressHydrationWarning>
         <TelegramSdkLoader />
@@ -76,7 +76,7 @@ export default function RootLayout({ children }) {
               <TonConnectProvider>
                 <Web3Provider>
                   <GlobalClientEffects />
-                  <Suspense fallback={<LogoLoading visible={true} fullscreen mask image="/images/community/loadding.png" size={72} />}>
+                  <Suspense fallback={<LogoLoading visible={true} fullscreen mask image="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/community/loadding.png" size={72} />}>
                     {children}
                   </Suspense>
                 </Web3Provider>

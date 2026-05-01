@@ -12,9 +12,9 @@ import styles from './index.module.less';
 
 // 预加载图标
 const preloadImages = [
-  '/icons/new_detail/like_actived.svg',
-  '/icons/new_detail/like_no_actived.svg',
-  '/icons/new_home/monitor-bell.svg'
+  'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/like_actived.svg',
+  'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/like_no_actived.svg',
+  'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/monitor-bell.svg'
 ];
 
 // 控制是否显示骨架屏

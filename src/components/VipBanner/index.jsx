@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import styles from './index.module.less';
 
 // 使用项目中已有的 VIP 图标，如果没有则需要替换
-const VIP_ICON = '/icons/new_user/vip_logo.png';
+const VIP_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_user/vip_logo.png';
 
 export default function VipBanner({ onClick, planCode }) {
   const router = useRouter();

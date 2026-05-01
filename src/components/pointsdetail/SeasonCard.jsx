@@ -25,7 +25,7 @@ const SeasonCard = ({ pointsData }) => {
             </div>
           </div>
           <DeferredImg
-            src="/point/ip.png"
+            src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/ip.png"
             alt="Mozi mascot"
             className={styles.seasonMascot}
             width={200}
@@ -37,7 +37,7 @@ const SeasonCard = ({ pointsData }) => {
       <div className={styles.seasonCardBottom}>
         <div className={styles.pointsRow}>
           <div className={styles.totalPoints}>
-            <DeferredImg src="/icons/points.svg" alt="Points" className={styles.coinIcon} width={40} height={40} />
+            <DeferredImg src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/points.svg" alt="Points" className={styles.coinIcon} width={40} height={40} />
             <span>{pointsData.totalPoints}</span>
           </div>
           <button className={styles.historyBtn} onClick={() => router.push('/pointshistory')}>
@@ -45,8 +45,8 @@ const SeasonCard = ({ pointsData }) => {
           </button>
         </div>
 
-        <DeferredImg src="/icons/link.svg" className={styles.linkImage} alt="Decoration left" width={32} height={32} />
-        <DeferredImg src="/icons/link.svg" className={styles.linkImageRight} alt="Decoration right" width={32} height={32} />
+        <DeferredImg src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/link.svg" className={styles.linkImage} alt="Decoration left" width={32} height={32} />
+        <DeferredImg src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/link.svg" className={styles.linkImageRight} alt="Decoration right" width={32} height={32} />
       </div>
     </div>
   );

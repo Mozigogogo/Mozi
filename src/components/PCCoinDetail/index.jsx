@@ -71,7 +71,7 @@ export default function PCCoinDetail({
     showBarrage ? (
       <div className={styles.barrageBar}>
         <img
-          src="/icons/new_home/comment.svg"
+          src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/comment.svg"
           alt=""
           className={styles.barrageIcon}
         />
@@ -115,7 +115,7 @@ export default function PCCoinDetail({
         <div className={styles.actions}>
           {onToggleFavorite ? (
             <button type="button" className={styles.actionBtn} onClick={onToggleFavorite}>
-              <img src="/icons/new_home/like.svg" alt="" />
+              <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/like.svg" alt="" />
               <span className={isFavorite ? styles.actionLabelInFavorites : undefined}>
                 {t('detail.actions.favorite')}
               </span>
@@ -123,13 +123,13 @@ export default function PCCoinDetail({
           ) : null}
           {onShare ? (
             <button type="button" className={styles.actionBtn} onClick={onShare}>
-              <img src="/icons/new_home/share.svg" alt="" />
+              <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/share.svg" alt="" />
               <span>{t('detail.actions.share')}</span>
             </button>
           ) : null}
           {onTradingRadar ? (
             <button type="button" className={styles.actionBtn} onClick={onTradingRadar}>
-              <img src="/icons/new_home/trading_radar.svg" alt="" />
+              <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/trading_radar.svg" alt="" />
               <span>{t('pcCoinDetail.tradingRadar')}</span>
             </button>
           ) : null}
@@ -139,7 +139,7 @@ export default function PCCoinDetail({
               className={`${styles.actionBtn} ${styles.alertCta}`}
               onClick={onAlert}
             >
-              <img src="/icons/new_home/belling.svg" alt="" />
+              <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/belling.svg" alt="" />
               <span>{t('detail.actions.addAlert')}</span>
             </button>
           ) : null}

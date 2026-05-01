@@ -63,7 +63,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
   // Preload background image
   useEffect(() => {
     const img = new Image();
-    img.src = '/images/new_login/modal_bg.png';
+    img.src = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/modal_bg.png';
     img.onload = () => setBgLoaded(true);
     img.onerror = () => setBgLoaded(false);
   }, []);
@@ -362,7 +362,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
       return (
         <>
           <div className={styles.logo}>
-            <img src="/images/new_login/logo.svg" alt="Mozi" />
+            <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/logo.svg" alt="Mozi" />
           </div>
           <div className={styles.title}>
             {t('auth.registerMozi') || '注册mozi账号'}
@@ -371,14 +371,14 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
           <div className={styles.buttonGroup}>
             <button className={`${styles.authButton} ${styles.googleButton}`} onClick={() => googleLogin()}>
               <div className={styles.icon}>
-                <img src="/images/new_login/google.svg" alt="Google" />
+                <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/google.svg" alt="Google" />
               </div>
               {t('auth.continueWithGoogle') || '使用谷歌继续'}
             </button>
             
             <button className={`${styles.authButton} ${styles.walletButton}`} onClick={handleWeb3Login}>
               <div className={styles.icon}>
-                <img src="/images/new_login/wallet.svg" alt="Wallet" />
+                <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/wallet.svg" alt="Wallet" />
               </div>
               {t('auth.continueWithWallet') || '使用钱包继续'}
             </button>
@@ -390,7 +390,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
               onClick={() => setMode('email_register')}
             >
               <div className={styles.icon}>
-                <img src="/images/new_login/email.svg" alt="Email" />
+                <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/email.svg" alt="Email" />
               </div>
               {t('auth.continueWithEmail') || '使用邮箱继续'}
             </button>
@@ -414,7 +414,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
       return (
         <>
           <div className={styles.logo}>
-            <img src="/images/new_login/logo.svg" alt="Mozi" />
+            <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/logo.svg" alt="Mozi" />
           </div>
           
           <div className={styles.title}>
@@ -426,7 +426,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
             <div className={styles.inputWrapper}>
               <div className={styles.prefixIcon}>
                 <img 
-                  src={isEmailFocused ? "/images/new_login/email_active.svg" : "/images/new_login/email_default.svg"} 
+                  src={isEmailFocused ? "https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/email_active.svg" : "https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/email_default.svg"} 
                   alt="email" 
                 />
               </div>
@@ -445,7 +445,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
             <div className={styles.inputWrapper}>
               <div className={styles.prefixIcon}>
                 <img 
-                  src={isPasswordFocused ? "/images/new_login/password_active.svg" : "/images/new_login/password.svg"} 
+                  src={isPasswordFocused ? "https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/password_active.svg" : "https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/password.svg"} 
                   alt="password" 
                 />
               </div>
@@ -460,7 +460,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
               />
               <div className={styles.suffixIcon} onClick={() => setPasswordVisible(!passwordVisible)}>
                 <img 
-                  src={passwordVisible ? "/images/new_login/open_eyes.png" : "/images/new_login/close_eyes.svg"} 
+                  src={passwordVisible ? "https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/open_eyes.png" : "https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/close_eyes.svg"} 
                   alt="toggle visibility" 
                 />
               </div>
@@ -470,7 +470,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
             <div className={styles.inputWrapper}>
               <div className={styles.prefixIcon}>
                 <img 
-                  src={isVerificationFocused ? "/images/new_login/verify_active.svg" : "/images/new_login/verify.svg"} 
+                  src={isVerificationFocused ? "https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/verify_active.svg" : "https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/verify.svg"} 
                   alt="verify" 
                 />
               </div>
@@ -496,7 +496,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
             <div className={`${styles.inputWrapper} ${styles.inputWrapperLast}`}>
               <div className={styles.prefixIcon}>
                 <img 
-                  src={isInviteCodeFocused ? "/images/new_login/invite_active.svg" : "/images/new_login/invite.svg"} 
+                  src={isInviteCodeFocused ? "https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/invite_active.svg" : "https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/invite.svg"} 
                   alt="invite" 
                 />
               </div>
@@ -517,10 +517,10 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
             {/* Social Buttons (Google, Wallet) */}
             <div className={styles.quickLoginRow}>
               <button className={styles.circleButton} onClick={() => googleLogin()}>
-                <img src="/images/new_login/google.svg" alt="Google" />
+                <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/google.svg" alt="Google" />
               </button>
               <button className={styles.circleButton} onClick={handleWeb3Login}>
-                <img src="/images/new_login/wallet_green.svg" alt="Wallet" />
+                <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/wallet_green.svg" alt="Wallet" />
               </button>
             </div>
             
@@ -553,7 +553,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
       return (
         <>
           <div className={styles.logo}>
-            <img src="/images/new_login/logo.svg" alt="Mozi" />
+            <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/logo.svg" alt="Mozi" />
           </div>
           
           <div className={styles.title}>
@@ -565,7 +565,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
             <div className={styles.inputWrapper}>
               <div className={styles.prefixIcon}>
                 <img 
-                  src={isEmailFocused ? "/images/new_login/email_active.svg" : "/images/new_login/email_default.svg"} 
+                  src={isEmailFocused ? "https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/email_active.svg" : "https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/email_default.svg"} 
                   alt="email" 
                 />
               </div>
@@ -584,7 +584,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
             <div className={styles.inputWrapper}>
               <div className={styles.prefixIcon}>
                 <img 
-                  src={isPasswordFocused ? "/images/new_login/password_active.svg" : "/images/new_login/password.svg"} 
+                  src={isPasswordFocused ? "https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/password_active.svg" : "https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/password.svg"} 
                   alt="password" 
                 />
               </div>
@@ -599,7 +599,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
               />
               <div className={styles.suffixIcon} onClick={() => setPasswordVisible(!passwordVisible)}>
                 <img 
-                  src={passwordVisible ? "/images/new_login/open_eyes.png" : "/images/new_login/close_eyes.svg"} 
+                  src={passwordVisible ? "https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/open_eyes.png" : "https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/close_eyes.svg"} 
                   alt="toggle visibility" 
                 />
               </div>
@@ -609,7 +609,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
             <div className={styles.inputWrapper}>
               <div className={styles.prefixIcon}>
                 <img 
-                  src={isVerificationFocused ? "/images/new_login/verify_active.svg" : "/images/new_login/verify.svg"} 
+                  src={isVerificationFocused ? "https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/verify_active.svg" : "https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/verify.svg"} 
                   alt="verify" 
                 />
               </div>
@@ -658,7 +658,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
     return (
       <>
         <div className={styles.logo}>
-          <img src="/images/new_login/logo.svg" alt="Mozi" />
+          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/logo.svg" alt="Mozi" />
         </div>
         
         <div className={styles.title}>
@@ -668,20 +668,20 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
         <div className={styles.form}>
           <div className={styles.quickLoginRow}>
             <button className={styles.circleButton} onClick={() => googleLogin()}>
-              <img src="/images/new_login/google.svg" alt="Google" />
+              <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/google.svg" alt="Google" />
             </button>
             <button className={styles.circleButton} onClick={handleWeb3Login}>
-              <img src="/images/new_login/wallet_green.svg" alt="Wallet" />
+              <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/wallet_green.svg" alt="Wallet" />
             </button>
             <button className={styles.circleButton} onClick={() => setMode('email_register')}>
-               <img src="/images/new_login/email_green.svg" alt="email" />
+               <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/email_green.svg" alt="email" />
             </button>
           </div>
           
           <div className={styles.inputWrapper}>
             <div className={styles.prefixIcon}>
               <img 
-                src={isEmailFocused ? "/images/new_login/email_active.svg" : "/images/new_login/email_default.svg"} 
+                src={isEmailFocused ? "https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/email_active.svg" : "https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/email_default.svg"} 
                 alt="email" 
               />
             </div>
@@ -699,7 +699,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
           <div className={styles.inputWrapper}>
             <div className={styles.prefixIcon}>
               <img 
-                src={isPasswordFocused ? "/images/new_login/password_active.svg" : "/images/new_login/password.svg"} 
+                src={isPasswordFocused ? "https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/password_active.svg" : "https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/password.svg"} 
                 alt="password" 
               />
             </div>
@@ -714,7 +714,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
             />
             <div className={styles.suffixIcon} onClick={() => setPasswordVisible(!passwordVisible)}>
               <img 
-                src={passwordVisible ? "/images/new_login/open_eyes.png" : "/images/new_login/close_eyes.svg"} 
+                src={passwordVisible ? "https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/open_eyes.png" : "https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/close_eyes.svg"} 
                 alt="toggle visibility" 
               />
             </div>
@@ -761,7 +761,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
       >
         <div className={styles.innerContainer}>
           <button className={styles.closeButton} onClick={onClose}>
-            <img src="/images/new_login/close.svg" alt="Close" />
+            <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/close.svg" alt="Close" />
           </button>
           {renderContent()}
         </div>

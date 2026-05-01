@@ -6,8 +6,8 @@ import styles from '@/app/user/page.module.less';
 const StatsAndActions = ({ userInfo, openEditProfile, setShowBenefitCodeModal, pointsTotal }) => {
   const router = useRouter();
   const { t } = useTranslation();
-  const EDIT_ICON = '/icons/new_user/edit.svg';
-  const BIND_ICON = '/icons/new_user/bind.svg';
+  const EDIT_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_user/edit.svg';
+  const BIND_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_user/bind.svg';
 
   if (!userInfo.isLogin) return null;
 

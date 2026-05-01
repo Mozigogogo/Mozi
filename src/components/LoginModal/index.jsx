@@ -664,13 +664,13 @@ export default function LoginModal({ visible, onClose, onLoginSuccess, onWalletL
                   <>
                     {/* 钱包登录按钮 */}
                     <div className={styles.walletBtn} onClick={handleWalletLoginClick}>
-                      <img src="/icons/user/login_wallet.png" alt="wallet" className={styles.walletIcon} />
+                      <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/user/login_wallet.png" alt="wallet" className={styles.walletIcon} />
                       <span>{t('auth.walletLoginBtn')}</span>
                     </div>
 
                     {/* 邮箱登录按钮 */}
                     <div className={styles.emailBtn} onClick={handleEmailLoginClick}>
-                      <img src="/icons/user/login_email.png" alt="email" className={styles.emailIcon} />
+                      <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/user/login_email.png" alt="email" className={styles.emailIcon} />
                       <span>{t('auth.emailLoginBtn') || '邮箱登录'}</span>
                     </div>
                   </>

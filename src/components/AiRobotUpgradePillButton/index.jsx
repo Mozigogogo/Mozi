@@ -31,8 +31,8 @@ export default function AiRobotUpgradePillButton({
       (localStorage.getItem('i18nextLng') || '').toLowerCase().startsWith('en'));
 
   const backgroundSrc = isEnglish
-    ? '/images/ai_robot/button_en.svg'
-    : '/images/ai_robot/button.svg';
+    ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/button_en.svg'
+    : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/button.svg';
 
   return (
     <button

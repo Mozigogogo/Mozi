@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import styles from '@/app/user/page.module.less';
 
 const DEFAULT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png';
-const VIP_ICON = '/icons/new_user/vip.svg';
-const LITE_ICON = '/icons/vip/lite.svg';
+const VIP_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_user/vip.svg';
+const LITE_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/vip/lite.svg';
 
 /** datainfo.identityTag：单字符串或逗号/中文逗号分隔的多标签 */
 const parseIdentityTags = (raw) => {

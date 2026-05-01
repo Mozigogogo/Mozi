@@ -533,6 +533,6 @@ export default function TelegramAutoLogin() {
     };
   }, []);
 
-  // return <LogoLoading visible={isLoading} fullscreen mask image="/images/community/loadding.png" />;
+  // return <LogoLoading visible={isLoading} fullscreen mask image="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/community/loadding.png" />;
   return null;
 }

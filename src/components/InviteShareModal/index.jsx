@@ -79,19 +79,19 @@ export default function InviteShareModal({ open, onClose, inviteCode, inviteLink
         <div className={styles.actions}>
           <button type="button" className={styles.actionItem} onClick={copyLink}>
             <span className={styles.iconCircle}>
-              <img className={styles.iconImg} src="/icons/pc/link.svg" alt="" />
+              <img className={styles.iconImg} src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/link.svg" alt="" />
             </span>
             <span className={styles.actionLabel}>{t('shareChat.copyLink') || '复制链接'}</span>
           </button>
           <button type="button" className={styles.actionItem} onClick={shareToTwitter}>
             <span className={styles.iconCircle}>
-              <img className={styles.iconImg} src="/icons/x-logo-45556c.svg" alt="" />
+              <img className={styles.iconImg} src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/x-logo-45556c.svg" alt="" />
             </span>
             <span className={styles.actionLabel}>{t('shareChat.twitter') || 'Twitter'}</span>
           </button>
           <button type="button" className={styles.actionItem} onClick={shareToTelegram}>
             <span className={styles.iconCircle}>
-              <img className={styles.iconImg} src="/icons/pc/tg.svg" alt="" />
+              <img className={styles.iconImg} src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/tg.svg" alt="" />
             </span>
             <span className={styles.actionLabel}>{t('shareChat.tg') || 'TG'}</span>
           </button>

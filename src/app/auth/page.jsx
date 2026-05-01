@@ -694,11 +694,11 @@ export default function PCLoginPage() {
           {/* 第三方登录按钮 */}
           <div className={styles.socialLogins}>
             <button className={styles.googleBtn} onClick={() => googleLogin()}>
-              <img src="/icons/google.svg" alt="google" className={styles.googleIcon} />
+              <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/google.svg" alt="google" className={styles.googleIcon} />
               <span>{t('auth.googleLoginBtn')}</span>
             </button>
             <button className={styles.walletBtn} onClick={handleWeb3Login}>
-              <img src="/icons/wallet.svg" alt="wallet" className={styles.walletIcon} />
+              <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/wallet.svg" alt="wallet" className={styles.walletIcon} />
               <span>{t('auth.walletLoginBtn')}</span>
             </button>
           </div>

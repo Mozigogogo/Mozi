@@ -757,14 +757,14 @@ export default function MobileHome() {
             <Swiper loop autoplay indicator={() => null}>
               {(isEN 
                 ? [
-                    '/images/new_home/banner1_en.png',
-                    '/images/new_home/banner2_en.png',
-                    '/images/new_home/banner3_en.png'
+                    'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/banner1_en.png',
+                    'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/banner2_en.png',
+                    'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/banner3_en.png'
                   ]
                 : [
-                    '/images/new_home/banner1_zh.png',
-                    '/images/new_home/banner2_zh.png',
-                    '/images/new_home/banner3_zh.png'
+                    'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/banner1_zh.png',
+                    'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/banner2_zh.png',
+                    'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/banner3_zh.png'
                   ]
               ).map((src, index) => (
                 <Swiper.Item key={index}>

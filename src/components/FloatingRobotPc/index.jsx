@@ -38,7 +38,7 @@ export default function FloatingRobotPc({ message, targetPath = '/ai', onClick }
     >
       <img
         className={styles.robotIcon}
-        src="/images/new_home/robot_ip.svg"
+        src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/robot_ip.svg"
         alt={t('home.robotBubble') || 'AI机器人'}
       />
     </button>

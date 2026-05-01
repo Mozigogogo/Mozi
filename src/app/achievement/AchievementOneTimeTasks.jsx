@@ -12,7 +12,7 @@ export default function AchievementOneTimeTasks({ tasks, onTaskClick, verifyingT
   return (
     <section className={styles.card}>
       <div className={styles.header}>
-        <img src="/point/new_alert.svg" alt="starter reward" className={styles.starIcon} />
+        <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/new_alert.svg" alt="starter reward" className={styles.starIcon} />
         <h3 className={styles.title}>
           {t('pointsDetail.newbieTasks', { defaultValue: 'Starter Quest Reward' })}
         </h3>

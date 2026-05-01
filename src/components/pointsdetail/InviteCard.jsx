@@ -11,12 +11,12 @@ const InviteCard = ({ pointsData, copyToClipboard }) => {
 
   return (
     <div className={styles.inviteCard}>
-      <SectionHeader iconSrc="/point/invite_icon.svg" iconAlt="Invite" title={t('pointsDetail.inviteRewards')} />
+      <SectionHeader iconSrc="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/invite_icon.svg" iconAlt="Invite" title={t('pointsDetail.inviteRewards')} />
 
       <div className={styles.inviteRewardTypes}>
         <div className={styles.inviteRewardType}>
           <div className={styles.rewardIconBg}>
-            <DeferredImg src="/point/invite_register.png" alt="Register" width={40} height={40} />
+            <DeferredImg src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/invite_register.png" alt="Register" width={40} height={40} />
           </div>
           <div className={styles.rewardText}>
             <div className={styles.rewardTitle}>{t('pointsDetail.inviteRegister')}</div>
@@ -25,7 +25,7 @@ const InviteCard = ({ pointsData, copyToClipboard }) => {
         </div>
         <div className={styles.inviteRewardType}>
           <div className={styles.rewardIconBg}>
-            <DeferredImg src="/point/invite_pay.png" alt="Pay" width={40} height={40} />
+            <DeferredImg src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/invite_pay.png" alt="Pay" width={40} height={40} />
           </div>
           <div className={styles.rewardText}>
             <div className={styles.rewardTitle}>{t('pointsDetail.invitePay')}</div>
@@ -44,7 +44,7 @@ const InviteCard = ({ pointsData, copyToClipboard }) => {
             className={styles.copyBtn}
             onClick={() => copyToClipboard(inviteLinkFallback)}
           >
-            <DeferredImg src="/point/copy.svg" alt="Copy" width={18} height={18} />
+            <DeferredImg src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/copy.svg" alt="Copy" width={18} height={18} />
           </button>
         </div>
       </div>
@@ -56,7 +56,7 @@ const InviteCard = ({ pointsData, copyToClipboard }) => {
             <div className={styles.inviteLinkText}>{pointsData.inviteCode || 'MOZI888'}</div>
           </div>
           <button className={styles.copyBtn} onClick={() => copyToClipboard(pointsData.inviteCode || 'MOZI888')}>
-            <DeferredImg src="/point/copy.svg" alt="Copy" width={18} height={18} />
+            <DeferredImg src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/copy.svg" alt="Copy" width={18} height={18} />
           </button>
         </div>
       </div>

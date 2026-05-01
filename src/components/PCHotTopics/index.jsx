@@ -212,7 +212,7 @@ const PCHotTopics = () => {
               <div className={styles.mainRow}>
                 {isTop3 ? (
                   <img 
-                    src={`/images/new_home/hot_top${rank}.svg`} 
+                    src={`https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/hot_top${rank}.svg`} 
                     alt={`Rank ${rank}`} 
                     className={styles.rankIcon}
                   />

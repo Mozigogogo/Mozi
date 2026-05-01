@@ -10,13 +10,13 @@ const DailyTasks = ({ dailyInvestments, loading, onTaskClick }) => {
 
   return (
     <div className={styles.taskListSection}>
-      <SectionHeader iconSrc="/point/task_daily.svg" iconAlt="Task" title={t('pointsDetail.dailyTasks')} />
+      <SectionHeader iconSrc="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/task_daily.svg" iconAlt="Task" title={t('pointsDetail.dailyTasks')} />
       {loading ? (
         <SectionSkeleton count={5} />
       ) : dailyInvestments.length === 0 ? (
         <div className={styles.emptyState}>
           <img
-            src="/point/no_task.svg"
+            src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/no_task.svg"
             alt="no task"
             className={styles.emptyIcon}
             onError={(e) => {
@@ -62,7 +62,7 @@ const DailyTasks = ({ dailyInvestments, loading, onTaskClick }) => {
                   <div className={styles.dailyTaskReward}>
                     <span>+{task.reward}</span>
                     <DeferredImg
-                      src="/point/new_coin.svg"
+                      src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/new_coin.svg"
                       className={styles.rewardIcon}
                       alt="point"
                       width={14}

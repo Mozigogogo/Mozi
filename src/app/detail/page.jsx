@@ -2352,7 +2352,7 @@ ${coinInfo.name || symbol} (${symbol})
 
   const communitySymbol = String(symbol || 'BTC').toUpperCase();
   const likeNoActiveIcon = `https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/like-no-active.png`;
-  const shareIcon = '/icons/new_home/share.svg';
+  const shareIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/share.svg';
 
   const communityFeedItems = rightCommunityPosts;
 
@@ -2650,7 +2650,7 @@ ${coinInfo.name || symbol} (${symbol})
               <div className={styles.footerIconSlot}>
                 <img
                   className={styles.footerIcon}
-                  src="/icons/new_detail/community.svg"
+                  src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/community.svg"
                   alt={t('detail.actions.community')}
                 />
               </div>

@@ -251,7 +251,7 @@ export default function DailyPage() {
         {/* Card Header */}
         <div className={styles.cardHeader}>
           <div className={styles.cardTitle}>{t('daily.title')}</div>
-          <img src="/images/daily/right.svg" className={styles.cardArrow} alt=">" />
+          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/daily/right.svg" className={styles.cardArrow} alt=">" />
         </div>
 
         {/* Data Table */}
@@ -304,8 +304,8 @@ export default function DailyPage() {
         </div>
         
         {/* Decorative Images */}
-        <img src="/images/daily/split.png" className={styles.splitImage} alt="" />
-        <img src="/images/daily/verctor.png" className={styles.vectorImage} alt="" />
+        <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/daily/split.png" className={styles.splitImage} alt="" />
+        <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/daily/verctor.png" className={styles.vectorImage} alt="" />
 
         {/* Note Card：仅在有有效日历数据时展示 */}
         {hasCalendarData && (

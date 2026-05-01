@@ -39,6 +39,7 @@ import styles from './index.module.less';
 import AISearchBadge from './AISearchBadge';
 
 const searchIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/search.png';
+const CDN_PUBLIC_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public';
 const MY_SUBSCRIPTION_PLAN_CODE_KEY = 'mozi_my_subscription_plan_code_v1';
 
 const isNonFreePlanCode = (planCode) => {
@@ -303,20 +304,20 @@ export default function PCLayout({ children }) {
   // 预加载所有图标 - 优化：使用link标签预加载，更快
   useEffect(() => {
     const iconUrls = [
-      '/icons/pc/home@2x.png',
-      '/icons/pc/home_actived@2x.png',
-      '/icons/pc/find.png',
-      '/icons/pc/find_actived@2x.png',
-      '/icons/pc/social.png',
-      '/icons/pc/social_actived.png',
-      '/icons/pc/Collection@2x.png',
-      '/icons/pc/Collection_actived@2x.png',
-      '/icons/pc/alert@2x.png',
-      '/icons/pc/alert_actived@2x.png',
-      '/icons/pc/Subscribe.png',
-      '/icons/pc/Subscribe_actived.png',
-      '/icons/pc/Achievement.png',
-      '/icons/pc/Achievement_actived.png',
+      `${CDN_PUBLIC_PREFIX}/icons/pc/home@2x.png`,
+      `${CDN_PUBLIC_PREFIX}/icons/pc/home_actived@2x.png`,
+      `${CDN_PUBLIC_PREFIX}/icons/pc/find.png`,
+      `${CDN_PUBLIC_PREFIX}/icons/pc/find_actived@2x.png`,
+      `${CDN_PUBLIC_PREFIX}/icons/pc/social.png`,
+      `${CDN_PUBLIC_PREFIX}/icons/pc/social_actived.png`,
+      `${CDN_PUBLIC_PREFIX}/icons/pc/Collection@2x.png`,
+      `${CDN_PUBLIC_PREFIX}/icons/pc/Collection_actived@2x.png`,
+      `${CDN_PUBLIC_PREFIX}/icons/pc/alert@2x.png`,
+      `${CDN_PUBLIC_PREFIX}/icons/pc/alert_actived@2x.png`,
+      `${CDN_PUBLIC_PREFIX}/icons/pc/Subscribe.png`,
+      `${CDN_PUBLIC_PREFIX}/icons/pc/Subscribe_actived.png`,
+      `${CDN_PUBLIC_PREFIX}/icons/pc/Achievement.png`,
+      `${CDN_PUBLIC_PREFIX}/icons/pc/Achievement_actived.png`,
     ];
 
     // 使用link标签预加载，比Image对象更快
@@ -386,8 +387,8 @@ export default function PCLayout({ children }) {
         key: '/subscribe',
         icon: (
           <CustomIcon
-            src="/icons/pc/Subscribe.png"
-            activeSrc="/icons/pc/Subscribe_actived.png"
+            src={`${CDN_PUBLIC_PREFIX}/icons/pc/Subscribe.png`}
+            activeSrc={`${CDN_PUBLIC_PREFIX}/icons/pc/Subscribe_actived.png`}
             itemKey="/subscribe"
             alt="subscription"
           />
@@ -398,8 +399,8 @@ export default function PCLayout({ children }) {
         key: '/ai',
         icon: (
           <CustomIcon
-            src="/icons/new_home/ai_chat.svg"
-            activeSrc="/icons/new_home/ai_chat.svg"
+            src={`${CDN_PUBLIC_PREFIX}/icons/new_home/ai_chat.svg`}
+            activeSrc={`${CDN_PUBLIC_PREFIX}/icons/new_home/ai_chat.svg`}
             itemKey="/ai"
             alt="myqa"
           />
@@ -410,8 +411,8 @@ export default function PCLayout({ children }) {
         key: '/achievement',
         icon: (
           <CustomIcon
-            src="/icons/pc/Achievement.png"
-            activeSrc="/icons/pc/Achievement_actived.png"
+            src={`${CDN_PUBLIC_PREFIX}/icons/pc/Achievement.png`}
+            activeSrc={`${CDN_PUBLIC_PREFIX}/icons/pc/Achievement_actived.png`}
             itemKey="/achievement"
             alt="achievements"
           />
@@ -427,8 +428,8 @@ export default function PCLayout({ children }) {
       key: '/pc/alarm',
       icon: (
         <CustomIcon
-          src="/icons/pc/alert@2x.png"
-          activeSrc="/icons/pc/alert_actived@2x.png"
+          src={`${CDN_PUBLIC_PREFIX}/icons/pc/alert@2x.png`}
+          activeSrc={`${CDN_PUBLIC_PREFIX}/icons/pc/alert_actived@2x.png`}
           itemKey="/pc/alarm"
           alt="alerts"
         />
@@ -443,8 +444,8 @@ export default function PCLayout({ children }) {
       key: '/selfrank',
       icon: (
         <CustomIcon
-          src="/icons/pc/Collection@2x.png"
-          activeSrc="/icons/pc/Collection_actived@2x.png"
+          src={`${CDN_PUBLIC_PREFIX}/icons/pc/Collection@2x.png`}
+          activeSrc={`${CDN_PUBLIC_PREFIX}/icons/pc/Collection_actived@2x.png`}
           itemKey="/selfrank"
           alt="favorites"
         />
@@ -461,8 +462,8 @@ export default function PCLayout({ children }) {
         key: '/home',
         icon: (
           <CustomIcon
-            src="/icons/pc/home@2x.png"
-            activeSrc="/icons/pc/home_actived@2x.png"
+            src={`${CDN_PUBLIC_PREFIX}/icons/pc/home@2x.png`}
+            activeSrc={`${CDN_PUBLIC_PREFIX}/icons/pc/home_actived@2x.png`}
             itemKey="/home"
             alt="home"
           />
@@ -473,8 +474,8 @@ export default function PCLayout({ children }) {
         key: '/pc/find',
         icon: (
           <CustomIcon
-            src="/icons/pc/find.png"
-            activeSrc="/icons/pc/find_actived@2x.png"
+            src={`${CDN_PUBLIC_PREFIX}/icons/pc/find.png`}
+            activeSrc={`${CDN_PUBLIC_PREFIX}/icons/pc/find_actived@2x.png`}
             itemKey="/pc/find"
             alt="discover"
           />
@@ -485,8 +486,8 @@ export default function PCLayout({ children }) {
         key: '/pc/community',
         icon: (
           <CustomIcon
-            src="/icons/pc/social.png"
-            activeSrc="/icons/pc/social_actived.png"
+            src={`${CDN_PUBLIC_PREFIX}/icons/pc/social.png`}
+            activeSrc={`${CDN_PUBLIC_PREFIX}/icons/pc/social_actived.png`}
             itemKey="/pc/community"
             alt="community"
           />
@@ -607,7 +608,7 @@ export default function PCLayout({ children }) {
           </div>
           <div className={styles.logo} onClick={() => router.push('/home')}>
             <div className={styles.logoIcon}>
-              <Image src="/images/community/loadding.png" alt="Mozi" width={37} height={37} />
+              <Image src={`${CDN_PUBLIC_PREFIX}/images/community/loadding.png`} alt="Mozi" width={37} height={37} />
             </div>
             <span>MoziInnovations</span>
           </div>
@@ -695,21 +696,21 @@ export default function PCLayout({ children }) {
           <Button 
             type="text" 
             onClick={() => setShowBenefitModal(true)}
-            icon={<img src="/icons/new_user/bind.svg" alt="bind" style={{ width: 18, height: 18, objectFit: 'contain' }} />} 
+            icon={<img src={`${CDN_PUBLIC_PREFIX}/icons/new_user/bind.svg`} alt="bind" style={{ width: 18, height: 18, objectFit: 'contain' }} />} 
           />
           <Button 
             type="text" 
             onClick={() => setShowUserProfilePopup(true)}
-            icon={<img src="/icons/pc/setting@2x.png" alt="settings" style={{ width: 22, height: 22, objectFit: 'contain' }} />} 
+            icon={<img src={`${CDN_PUBLIC_PREFIX}/icons/pc/setting@2x.png`} alt="settings" style={{ width: 22, height: 22, objectFit: 'contain' }} />} 
           />
           <Button 
             type="text" 
-            icon={<img src="/icons/pc/skin@2x.png" alt="theme" style={{ width: 22, height: 22, objectFit: 'contain' }} />} 
+            icon={<img src={`${CDN_PUBLIC_PREFIX}/icons/pc/skin@2x.png`} alt="theme" style={{ width: 22, height: 22, objectFit: 'contain' }} />} 
           />
           <Badge count={notificationCount} size="small" offset={[-6, 0]}>
             <Button 
               type="text" 
-              icon={<img src="/icons/pc/email@2x.png" alt="notifications" style={{ width: 18, height: 18, objectFit: 'contain' }} />} 
+              icon={<img src={`${CDN_PUBLIC_PREFIX}/icons/pc/email@2x.png`} alt="notifications" style={{ width: 18, height: 18, objectFit: 'contain' }} />} 
             />
           </Badge>
         </div>
@@ -739,7 +740,7 @@ export default function PCLayout({ children }) {
               <Avatar size={40} src={userInfo.avatar} icon={<UserOutlined />} />
             ) : (
               <img 
-                src="/icons/new_home/not_login.svg" 
+                src={`${CDN_PUBLIC_PREFIX}/icons/new_home/not_login.svg`} 
                 alt="Not Logged In" 
                 style={{ width: 40, height: 40, borderRadius: '50%' }} 
               />
@@ -796,8 +797,8 @@ export default function PCLayout({ children }) {
                     <span className={styles.pcWatchlistHeaderIconSvg} aria-hidden>
                       <img
                         src={isMineExpanded || pathname === '/selfrank'
-                          ? '/icons/new_home/collect_actived.svg'
-                          : '/icons/pc/Collection@2x.png'}
+                          ? `${CDN_PUBLIC_PREFIX}/icons/new_home/collect_actived.svg`
+                          : `${CDN_PUBLIC_PREFIX}/icons/pc/Collection@2x.png`}
                         alt=""
                         width={16}
                         height={16}
@@ -886,8 +887,8 @@ export default function PCLayout({ children }) {
                     <span className={styles.pcWatchlistHeaderIconSvg} aria-hidden>
                       <img
                         src={isAlertsExpanded || pathname === '/pc/alarm'
-                          ? '/icons/pc/alert_actived@2x.png'
-                          : '/icons/pc/alert@2x.png'}
+                          ? `${CDN_PUBLIC_PREFIX}/icons/pc/alert_actived@2x.png`
+                          : `${CDN_PUBLIC_PREFIX}/icons/pc/alert@2x.png`}
                         alt=""
                         width={16}
                         height={16}

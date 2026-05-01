@@ -14,8 +14,8 @@ export default function WelcomePopup({ visible, onClose, onConfirm }) {
   const isEnglish = i18n.language?.startsWith('en');
   
   // 根据语言选择图片资源
-  const bgImage = isEnglish ? '/point/point_en_modal_bg.png' : '/point/point_modal_bg.png';
-  const rightImage = isEnglish ? '/point/ponit_en_modal_right_text.png' : '/point/ponit_modal_right_text.png';
+  const bgImage = isEnglish ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/point_en_modal_bg.png' : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/point_modal_bg.png';
+  const rightImage = isEnglish ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/ponit_en_modal_right_text.png' : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/ponit_modal_right_text.png';
 
   const handleJoinClick = () => {
     // 保存状态并跳转到积分中心页面
@@ -49,7 +49,7 @@ export default function WelcomePopup({ visible, onClose, onConfirm }) {
         >
           {/* 顶部品牌标识 */}
           <Image 
-            src="/point/ponit_modal_logo.png" 
+            src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/ponit_modal_logo.png" 
             alt="Mozi Logo" 
             width={140} 
             height={40}

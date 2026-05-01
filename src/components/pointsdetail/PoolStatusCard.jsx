@@ -53,7 +53,7 @@ const PoolStatusCard = ({ poolStatus, countdown, weekendRemainingHours }) => {
         <div className={styles.poolTitleWrap}>
           <DeferredImg
             className={styles.poolTitleIcon}
-            src="/icons/pool_status_logo.svg"
+            src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pool_status_logo.svg"
             alt=""
             width={22}
             height={22}
@@ -78,12 +78,12 @@ const PoolStatusCard = ({ poolStatus, countdown, weekendRemainingHours }) => {
         </div>
         {poolStatus.mode === 'SCARCE' ? (
           <span className={styles.poolTagAlert}>
-            <DeferredImg src="/point/warn.svg" alt="" width={14} height={14} />
+            <DeferredImg src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/warn.svg" alt="" width={14} height={14} />
             {t('pointsDetail.poolScarce') || '紧张'}
           </span>
         ) : (
           <span className={styles.poolTagSufficient}>
-            <DeferredImg src="/point/supply_volume.svg" alt="" width={14} height={14} />
+            <DeferredImg src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/supply_volume.svg" alt="" width={14} height={14} />
             {t('pointsDetail.poolSufficient') || '充足'}
           </span>
         )}
@@ -145,14 +145,14 @@ const PoolStatusCard = ({ poolStatus, countdown, weekendRemainingHours }) => {
           <div className={styles.statLabel}>{t('pointsDetail.poolDistributed') || '已发放'}</div>
           <div className={styles.statValueRow} ref={leftRowRef}>
             <div className={styles.statValue}>{poolStatus.totalPool}</div>
-            {!hideLeftIcon && <DeferredImg className={styles.statIcon} src="/icons/gift.svg" alt="" width={28} height={28} />}
+            {!hideLeftIcon && <DeferredImg className={styles.statIcon} src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/gift.svg" alt="" width={28} height={28} />}
           </div>
         </div>
         <div className={styles.poolStatBox}>
           <div className={styles.statLabel}>{t('pointsDetail.poolMineable')}</div>
           <div className={styles.statValueRow} ref={rightRowRef}>
             <div className={styles.statValue}>{poolStatus.remainingMineable}</div>
-            {!hideRightIcon && <DeferredImg className={styles.statIcon} src="/icons/balance.svg" alt="" width={28} height={28} />}
+            {!hideRightIcon && <DeferredImg className={styles.statIcon} src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/balance.svg" alt="" width={28} height={28} />}
           </div>
         </div>
       </div>
@@ -198,12 +198,12 @@ const PoolStatusCard = ({ poolStatus, countdown, weekendRemainingHours }) => {
       {poolStatus.mode === 'SCARCE' ? (
         <div className={styles.poolEventBannerScarce}>
           <div className={styles.eventHeader}>
-            <DeferredImg src="/point/warn.svg" alt="Alert" className={styles.eventIcon} width={32} height={32} />
+            <DeferredImg src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/warn.svg" alt="Alert" className={styles.eventIcon} width={32} height={32} />
             <span className={styles.eventTitleScarce}>{t('pointsDetail.poolScarceTitle') || '积分池紧张！'}</span>
           </div>
           <div className={styles.eventList}>
             <div className={styles.eventItem}>
-              <DeferredImg src="/point/star.svg" alt="Star" className={styles.scarceBulletIcon} width={14} height={14} />
+              <DeferredImg src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/star.svg" alt="Star" className={styles.scarceBulletIcon} width={14} height={14} />
               <span>
                 {t('pointsDetail.poolScarceDesc1_part1') || '任务奖励已降至 '}
                 <span className={styles.highlightRed}>{t('pointsDetail.poolScarceDesc1_highlight') || '70折'}</span>
@@ -211,7 +211,7 @@ const PoolStatusCard = ({ poolStatus, countdown, weekendRemainingHours }) => {
               </span>
             </div>
             <div className={styles.eventItem}>
-              <DeferredImg src="/point/star.svg" alt="Star" className={styles.scarceBulletIcon} width={14} height={14} />
+              <DeferredImg src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/star.svg" alt="Star" className={styles.scarceBulletIcon} width={14} height={14} />
               <span>
                 {t('pointsDetail.poolScarceDesc2_part1') || '预计 '}
                 <span className={styles.highlightRed}>{t('pointsDetail.poolScarceDesc2_highlight') || '7天后'}</span>
@@ -219,7 +219,7 @@ const PoolStatusCard = ({ poolStatus, countdown, weekendRemainingHours }) => {
               </span>
             </div>
             <div className={styles.eventItem}>
-              <DeferredImg src="/point/star.svg" alt="Star" className={styles.scarceBulletIcon} width={14} height={14} />
+              <DeferredImg src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/star.svg" alt="Star" className={styles.scarceBulletIcon} width={14} height={14} />
               <span className={styles.highlightGreen} style={{ color: '#10B981' }}>
                 {t('pointsDetail.poolScarceDesc3') || '会员用户不受影响，效率保持1.5-2倍'}
               </span>
@@ -229,7 +229,7 @@ const PoolStatusCard = ({ poolStatus, countdown, weekendRemainingHours }) => {
       ) : poolStatus.mode === 'NORMAL' ? (
         <div className={styles.poolEventBannerNormal}>
           <div className={styles.eventHeader}>
-            <DeferredImg src="/point/gift.svg" alt="Gift" className={styles.eventIcon} width={32} height={32} />
+            <DeferredImg src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/gift.svg" alt="Gift" className={styles.eventIcon} width={32} height={32} />
             <span className={styles.tipsTitleNormal}>{t('pointsDetail.poolNormalTitle') || '积分小帖士'}</span>
           </div>
           <div className={styles.tipsContent}>
@@ -239,12 +239,12 @@ const PoolStatusCard = ({ poolStatus, countdown, weekendRemainingHours }) => {
       ) : (
         <div className={styles.poolEventBannerBoost}>
           <div className={styles.eventHeaderBoost}>
-            <DeferredImg src="/point/gift.svg" alt="Gift" className={styles.eventIconBoost} width={30} height={30} />
+            <DeferredImg src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/gift.svg" alt="Gift" className={styles.eventIconBoost} width={30} height={30} />
             <span className={styles.eventTitleBoost}>{t('pointsDetail.poolEventTitle') || '周末积分加倍活动!'}</span>
           </div>
           <div className={styles.eventListBoost}>
             <div className={styles.eventItemBoost}>
-              <DeferredImg src="/point/star.svg" alt="Star" className={styles.starIconBoost} width={12} height={12} />
+              <DeferredImg src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/star.svg" alt="Star" className={styles.starIconBoost} width={12} height={12} />
               <span>
                 {t('pointsDetail.poolEventDesc1_part1') || '所有任务奖励'}
                 <span className={styles.highlightTextBoost}>{t('pointsDetail.poolEventDesc1_highlight') || 'x1.5倍'}</span>
@@ -252,7 +252,7 @@ const PoolStatusCard = ({ poolStatus, countdown, weekendRemainingHours }) => {
               </span>
             </div>
             <div className={styles.eventItemBoost}>
-              <DeferredImg src="/point/star.svg" alt="Star" className={styles.starIconBoost} width={12} height={12} />
+              <DeferredImg src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/star.svg" alt="Star" className={styles.starIconBoost} width={12} height={12} />
               <span>
                 {t('pointsDetail.poolEventDesc2_part1') || '活动时间：本周末48小时(还剩 '}
                 <span className={styles.highlightTextBoost}>
@@ -262,7 +262,7 @@ const PoolStatusCard = ({ poolStatus, countdown, weekendRemainingHours }) => {
               </span>
             </div>
             <div className={styles.eventItemBoost}>
-              <DeferredImg src="/point/star.svg" alt="Star" className={styles.starIconBoost} width={12} height={12} />
+              <DeferredImg src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/star.svg" alt="Star" className={styles.starIconBoost} width={12} height={12} />
               <span>{t('pointsDetail.poolEventDesc3') || '积分充足，抓紧领取，机不可失!'}</span>
             </div>
           </div>
@@ -270,7 +270,7 @@ const PoolStatusCard = ({ poolStatus, countdown, weekendRemainingHours }) => {
       )}
 
       <button className={styles.upgradeBtn} onClick={() => router.push('/vip-recharge')}>
-        <DeferredImg src="/point/vip.svg" alt="Crown" className={styles.crownIcon} width={28} height={28} />
+        <DeferredImg src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/vip.svg" alt="Crown" className={styles.crownIcon} width={28} height={28} />
         <div className={styles.upgradeText}>
           <span className={styles.upgradeTitle}>{t('pointsDetail.poolUpgradeMember') || 'Unlock pro'}</span>
           <span className={styles.upgradeSubtitle}>{t('pointsDetail.poolUpgradeMemberSubtitle') || 'no pool limits'}</span>

@@ -15,7 +15,7 @@ export default function ExperiencerPage() {
   // 根据语言选择图片
   const activityImage = useMemo(() => {
     const isEN = (i18n?.language || '').startsWith('en');
-    return isEN ? '/images/activity/h5_activity_en.png' : '/images/activity/h5_activity_zh.png';
+    return isEN ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/activity/h5_activity_en.png' : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/activity/h5_activity_zh.png';
   }, [i18n?.language]);
 
   // 判断是否为英文模式
@@ -68,12 +68,12 @@ export default function ExperiencerPage() {
         
         {/* 返回按钮 */}
         <div className={styles.backButton} onClick={handleBack}>
-          <img src="/images/activity/left_arrow.svg" alt="返回" />
+          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/activity/left_arrow.svg" alt="返回" />
         </div>
         
         {/* Logo */}
         <div className={styles.logo}>
-          <img src="/images/activity/logo.png" alt="Logo" />
+          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/activity/logo.png" alt="Logo" />
         </div>
         
         {/* 内容层 */}

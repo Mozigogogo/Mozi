@@ -333,7 +333,7 @@ const StreamingMarkdown = ({ content, isStreaming }) => {
 export default function RobotPage({ isPC: propIsPC = false }) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
-  const BOT_AVATAR = '/images/ai_robot/robot_logo.svg';
+  const BOT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/robot_logo.svg';
   // 是否根据积分余额限制对话（积分不足时展示气泡并阻止继续对话）
   const ENABLE_POINTS_LIMIT = true;
   /** 临时：不请求 /api/ai/chat/history，测完请改回 false */
@@ -1174,10 +1174,10 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
                 // 用 svg 图标替换原本的彩色圆点
                 const iconSvgs = [
-                  '/images/ai_robot/chat1.svg',
-                  '/images/ai_robot/chat2.svg',
-                  '/images/ai_robot/chat3.svg',
-                  '/images/ai_robot/chat4.svg',
+                  'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/chat1.svg',
+                  'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/chat2.svg',
+                  'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/chat3.svg',
+                  'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/chat4.svg',
                 ];
                 const getBtnLabel = (q) => getSuggestedQuestionDisplay(q) || q;
 
@@ -1275,7 +1275,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                           onClick={() => handleCopyMessage(msg.content)}
                           aria-label="copy"
                         >
-                          <img src="/images/ai_robot/copy.svg" alt="" aria-hidden />
+                          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/copy.svg" alt="" aria-hidden />
                         </button>
                         <button
                           type="button"
@@ -1283,7 +1283,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                           onClick={handleRegenerate}
                           aria-label="regenerate"
                         >
-                          <img src="/images/ai_robot/reload.svg" alt="" aria-hidden />
+                          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/reload.svg" alt="" aria-hidden />
                         </button>
                         <button
                           type="button"
@@ -1291,7 +1291,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                           onClick={() => openShareModalForMessage(msg.id)}
                           aria-label="share"
                         >
-                          <img src="/images/ai_robot/share.svg" alt="" aria-hidden />
+                          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/share.svg" alt="" aria-hidden />
                         </button>
                       </div>
                     )}
@@ -1345,7 +1345,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                 >
                   <span className={styles.modeIconWrap}>
                     <Image
-                      src="/images/ai_robot/deep.svg"
+                      src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/deep.svg"
                       alt=""
                       width={11}
                       height={18}
@@ -1369,7 +1369,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                 >
                   <span className={styles.modeIconWrap}>
                     <Image
-                      src="/images/ai_robot/chat.svg"
+                      src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/chat.svg"
                       alt=""
                       width={10}
                       height={10}
@@ -1383,7 +1383,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
               <div className={styles.actionTools}>
                 <span className={`${styles.pointsTag} ${totalPoints === 0 ? styles.pointsTagWarning : ''}`}>
                   <Image
-                    src="/images/ai_robot/point.svg"
+                    src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/point.svg"
                     alt=""
                     width={12}
                     height={12}
@@ -1400,7 +1400,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                     onClick={handleToggleMic}
                   >
                     <Image
-                      src="/images/ai_robot/micro_phone.svg"
+                      src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/micro_phone.svg"
                       alt=""
                       width={16}
                       height={16}
@@ -1415,7 +1415,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                     onClick={handleStop}
                   >
                     <Image
-                      src="/icons/pause.svg"
+                      src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pause.svg"
                       alt={t('robot.stopAlt')}
                       width={14}
                       height={14}
@@ -1429,7 +1429,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                     disabled={!inputValue.trim()}
                   >
                     <Image
-                      src="/images/ai_robot/send.svg"
+                      src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/send.svg"
                       alt=""
                       width={18}
                       height={18}

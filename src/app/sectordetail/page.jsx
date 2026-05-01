@@ -312,13 +312,13 @@ export default function SectorDetailPage() {
         right={
           <div className={styles.navRight}>
             <img 
-              src="/icons/new_sector/group.svg" 
+              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_sector/group.svg" 
               alt={t('sectorDetail.altCommunity')} 
               className={styles.iconBtn}
               onClick={handleGoToCommunity}
             />
             <img 
-              src="/icons/new_sector/share.svg" 
+              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_sector/share.svg" 
               alt={t('sectorDetail.altShare')} 
               className={styles.iconBtn}
               onClick={handleShare}
@@ -465,7 +465,7 @@ export default function SectorDetailPage() {
                         }}
                       >
                         <img
-                          src={coin.isLiked ? '/icons/new_detail/like_actived.svg' : '/icons/new_detail/like_no_actived.svg'}
+                          src={coin.isLiked ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/like_actived.svg' : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/like_no_actived.svg'}
                           alt={t('sectorDetail.altLike')}
                           className={styles.iconImg}
                         />
@@ -479,7 +479,7 @@ export default function SectorDetailPage() {
                         }}
                       >
                         <img
-                          src="/icons/new_home/monitor-bell.svg"
+                          src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/monitor-bell.svg"
                           alt={t('sectorDetail.altMonitor')}
                           className={styles.iconImg}
                         />

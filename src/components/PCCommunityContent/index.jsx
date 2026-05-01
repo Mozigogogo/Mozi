@@ -961,7 +961,7 @@ export default function PCCommunityContent() {
     setDetailModalLoading(true);
     setDetailModalPost({
       id: `topic-${id}`,
-      coverImage: '/images/community/post_detail.png',
+      coverImage: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/community/post_detail.png',
       authorName: t('pcCommunity.hotRankingTitle'),
       authorAvatar: '/default-avatar.png',
       timeText: '',

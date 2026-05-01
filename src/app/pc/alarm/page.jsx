@@ -12,6 +12,8 @@ import { Interface } from '@/utils/constants';
 import { allCountries } from 'country-telephone-data';
 import styles from './page.module.less';
 
+const CDN_PUBLIC_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public';
+
 function PCAlarmContent() {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
@@ -537,7 +539,7 @@ function PCAlarmContent() {
               <div className={styles.headerMeta}>{t('addAlarm.executing', { defaultValue: '实时行情接入中' })}</div>
             </div>
             <button type="button" className={styles.manageBtn}>
-              <img src="/icons/pc/manage.svg" alt="" aria-hidden className={styles.manageIcon} />
+              <img src={`${CDN_PUBLIC_PREFIX}/icons/pc/manage.svg`} alt="" aria-hidden className={styles.manageIcon} />
               {t('common.manage', { defaultValue: '管理' })} (1)
             </button>
           </div>
@@ -607,7 +609,7 @@ function PCAlarmContent() {
 
               <div className={styles.footerRow}>
                 <span className={styles.riskTip}>
-                  <img src="/icons/pc/warn.svg" alt="" aria-hidden className={styles.riskTipIcon} />
+                  <img src={`${CDN_PUBLIC_PREFIX}/icons/pc/warn.svg`} alt="" aria-hidden className={styles.riskTipIcon} />
                   <span>{t('addAlarm.riskTip', { defaultValue: '了解告警风险提示' })}</span>
                 </span>
                 <button
@@ -617,7 +619,7 @@ function PCAlarmContent() {
                   onClick={saveWarnings}
                 >
                   <img
-                    src="/images/pc/save_alarm.svg"
+                    src={`${CDN_PUBLIC_PREFIX}/images/pc/save_alarm.svg`}
                     alt={t('addAlarm.saveAlarm')}
                     className={styles.saveButtonImage}
                   />
@@ -645,7 +647,7 @@ function PCAlarmContent() {
             <div className={styles.sideItem}>
               <div className={styles.sideItemLabel}>
                 <img
-                  src="/images/pc/phone_alarm.svg"
+                  src={`${CDN_PUBLIC_PREFIX}/images/pc/phone_alarm.svg`}
                   alt=""
                   aria-hidden
                   className={`${styles.sideItemIcon} ${styles.sideItemIconPhone}`}
@@ -699,7 +701,7 @@ function PCAlarmContent() {
 
             <div className={styles.sideItem}>
               <div className={styles.sideItemLabel}>
-                <img src="/icons/new_detail/email.svg" alt="" aria-hidden className={styles.sideItemIcon} />
+                <img src={`${CDN_PUBLIC_PREFIX}/icons/new_detail/email.svg`} alt="" aria-hidden className={styles.sideItemIcon} />
                 <span>{t('addAlarm.emailAlarm', { defaultValue: '邮件告警' })}</span>
               </div>
               <Switch
@@ -722,7 +724,7 @@ function PCAlarmContent() {
 
             <div className={styles.sideItem}>
               <div className={styles.sideItemLabel}>
-                <img src="/icons/new_detail/push.svg" alt="" aria-hidden className={styles.sideItemIcon} />
+                <img src={`${CDN_PUBLIC_PREFIX}/icons/new_detail/push.svg`} alt="" aria-hidden className={styles.sideItemIcon} />
                 <span>{t('addAlarm.sitePush', { defaultValue: '应用内推送' })}</span>
               </div>
               <Switch
@@ -742,7 +744,7 @@ function PCAlarmContent() {
               disabled={sideSubmitting}
             >
               <img
-                src="/images/pc/confirm_open.svg"
+                src={`${CDN_PUBLIC_PREFIX}/images/pc/confirm_open.svg`}
                 alt={t('common.confirm', { defaultValue: '确认开启' })}
                 className={styles.sideConfirmBtnImage}
               />

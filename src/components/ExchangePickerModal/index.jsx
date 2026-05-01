@@ -6,10 +6,10 @@ import { useTranslation } from 'react-i18next';
 import styles from './index.module.less';
 
 const EXCHANGES = [
-  { id: 'binance', label: 'Binance', icon: '/icons/pc/binance.svg' },
-  { id: 'okx', label: 'OKX', icon: '/icons/pc/okx.svg' },
-  { id: 'bitget', label: 'Bitget', icon: '/icons/pc/bitget.svg' },
-  { id: 'gate', label: 'Gate.io', icon: '/icons/pc/gate.svg' },
+  { id: 'binance', label: 'Binance', icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/binance.svg' },
+  { id: 'okx', label: 'OKX', icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/okx.svg' },
+  { id: 'bitget', label: 'Bitget', icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/bitget.svg' },
+  { id: 'gate', label: 'Gate.io', icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/gate.svg' },
 ];
 
 export default function ExchangePickerModal({

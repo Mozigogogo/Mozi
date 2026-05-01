@@ -10,21 +10,21 @@ export default function SocialMediaPopup({ isPC = false }) {
     {
       id: 'twitter',
       name: t('socialMedia.twitter'),
-      icon: '/icons/x-logo.svg',
+      icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/x-logo.svg',
       url: 'https://x.com/moziinnovation',
       borderColor: '#000000'
     },
     {
       id: 'telegram-group',
       name: t('socialMedia.telegramGroup'),
-      icon: '/icons/telegram-group.svg',
+      icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/telegram-group.svg',
       url: 'https://t.me/MoziInnovations',
       borderColor: '#2AABEE'
     },
     {
       id: 'xiaohongshu',
       name: t('socialMedia.xiaohongshu'),
-      icon: '/icons/xiaohongshu.svg',
+      icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/xiaohongshu.svg',
       url: 'https://xhslink.com/m/60xi0L4Wsea',
       borderColor: '#FF2442'
     }

@@ -218,30 +218,30 @@ function AchievementContent() {
   };
 
   const starterTaskIconMap = {
-    FIRST_LOGIN: '/point/first_login.svg',
-    COMPLETE_PROFILE: '/point/user_info.svg',
-    USER_INFO: '/point/user_info.svg',
-    FIRST_POST: '/point/push.svg',
-    PUSH: '/point/push.svg',
-    ADD_WATCHLIST: '/point/add.svg',
-    ADD: '/point/add.svg',
-    SET_ALARM: '/point/setting_alert.svg',
-    ALARM: '/point/setting_alert.svg',
-    JOIN_COMMUNITY: '/point/group.svg',
-    COMMUNITY: '/point/group.svg',
-    EARLY_BIRD: '/point/eraly_bird.svg',
-    FOLLOW_TWITTER: '/point/X.svg',
-    TWITTER: '/point/X.svg',
+    FIRST_LOGIN: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/first_login.svg',
+    COMPLETE_PROFILE: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/user_info.svg',
+    USER_INFO: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/user_info.svg',
+    FIRST_POST: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/push.svg',
+    PUSH: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/push.svg',
+    ADD_WATCHLIST: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/add.svg',
+    ADD: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/add.svg',
+    SET_ALARM: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/setting_alert.svg',
+    ALARM: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/setting_alert.svg',
+    JOIN_COMMUNITY: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/group.svg',
+    COMMUNITY: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/group.svg',
+    EARLY_BIRD: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/eraly_bird.svg',
+    FOLLOW_TWITTER: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/X.svg',
+    TWITTER: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/X.svg',
   };
 
   const dailyTaskIconMap = {
-    DAILY_LOGIN: '/point/daily_login.svg',
-    DAILY_LIKE: '/point/like.svg',
-    POST: '/point/push_article.svg',
-    REPLY: '/point/reply.svg',
-    POST_RECEIVE_REPLY: '/point/received.svg',
-    SHARE: '/point/shared.svg',
-    RECEIVE_LIKE: '/point/received_like.svg',
+    DAILY_LOGIN: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/daily_login.svg',
+    DAILY_LIKE: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/like.svg',
+    POST: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/push_article.svg',
+    REPLY: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/reply.svg',
+    POST_RECEIVE_REPLY: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/received.svg',
+    SHARE: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/shared.svg',
+    RECEIVE_LIKE: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/received_like.svg',
   };
 
   const mapStarterBtnType = (taskCode) => {
@@ -295,7 +295,7 @@ function AchievementContent() {
             needsAction: !completed,
             action: mapStarterActionLabel(code, completed),
             btnType: mapStarterBtnType(code),
-            icon: starterTaskIconMap[code] || '/point/first_login.svg',
+            icon: starterTaskIconMap[code] || 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/first_login.svg',
           };
         });
 
@@ -312,7 +312,7 @@ function AchievementContent() {
             current: task.currentProgress || 0,
             target: task.targetProgress || 1,
             completed: task.isCompleted || false,
-            icon: dailyTaskIconMap[code] || '/point/glove_praise@2x.png',
+            icon: dailyTaskIconMap[code] || 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/glove_praise@2x.png',
           };
         });
 
@@ -474,7 +474,7 @@ function AchievementContent() {
 
           <div className={styles.scoreCard}>
             <div className={styles.scoreValue}>
-              <img src="/point/new_coin.svg" alt="coin" className={styles.coinIcon} />
+              <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/new_coin.svg" alt="coin" className={styles.coinIcon} />
               <span>{formatPoints(inviteData.totalPoints || 0)}</span>
             </div>
             <button
@@ -487,7 +487,7 @@ function AchievementContent() {
           </div>
 
           <div className={styles.heroDecor}>
-            <img src="/point/ip.png" alt="mozi mascot" className={styles.ipImage} />
+            <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/ip.png" alt="mozi mascot" className={styles.ipImage} />
           </div>
         </div>
 

@@ -7,16 +7,18 @@ import { motion } from 'framer-motion';
 import BarChart from '@/components/BarChart';
 import styles from './index.module.less';
 
+const CDN_PUBLIC_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public';
+
 const exchangeIcons = [
-  '/icons/new_detail/Ellipse%203832.png',
-  '/icons/new_detail/Ellipse%203834.png',
-  '/icons/new_detail/Ellipse%203835.png',
-  '/icons/new_detail/Ellipse%203836.png',
-  '/icons/new_detail/Ellipse%203837.png',
-  '/icons/new_detail/Ellipse%203838.png',
-  '/icons/new_detail/Ellipse%203839.png',
-  '/icons/new_detail/Ellipse%203840.png',
-  '/icons/new_detail/Frame%202087326500.png',
+  `${CDN_PUBLIC_PREFIX}/icons/new_detail/Ellipse%203832.png`,
+  `${CDN_PUBLIC_PREFIX}/icons/new_detail/Ellipse%203834.png`,
+  `${CDN_PUBLIC_PREFIX}/icons/new_detail/Ellipse%203835.png`,
+  `${CDN_PUBLIC_PREFIX}/icons/new_detail/Ellipse%203836.png`,
+  `${CDN_PUBLIC_PREFIX}/icons/new_detail/Ellipse%203837.png`,
+  `${CDN_PUBLIC_PREFIX}/icons/new_detail/Ellipse%203838.png`,
+  `${CDN_PUBLIC_PREFIX}/icons/new_detail/Ellipse%203839.png`,
+  `${CDN_PUBLIC_PREFIX}/icons/new_detail/Ellipse%203840.png`,
+  `${CDN_PUBLIC_PREFIX}/icons/new_detail/Frame%202087326500.png`,
 ];
 
 const pickExchangeIcon = (seed) => {
@@ -403,7 +405,7 @@ export default function OrderBook({
               <div 
                 className={styles.maskHeaderBadge}
                 style={{
-                  backgroundImage: `url('/images/new_detail/experience_end_badge${i18n.language === 'en' ? '_en' : ''}.svg')`
+                  backgroundImage: `url('${CDN_PUBLIC_PREFIX}/images/new_detail/experience_end_badge${i18n.language === 'en' ? '_en' : ''}.svg')`
                 }}
               />
             )}
@@ -448,7 +450,7 @@ export default function OrderBook({
               )}
 
               {showVipElements && (
-                <img src="/images/new_detail/vip_right_mask.svg" alt="VIP" className={styles.maskVipIcon} />
+                <img src={`${CDN_PUBLIC_PREFIX}/images/new_detail/vip_right_mask.svg`} alt="VIP" className={styles.maskVipIcon} />
               )}
             </div>
 
