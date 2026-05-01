@@ -18,18 +18,50 @@ export default function AlphaSection() {
       <div className={styles.alphaBottom} aria-hidden="true">
         <div className={styles.alphaPhoneWrap}>
           <div className={styles.alphaPhone}>
-            <Image src="/images/pc/introduction5_1.svg" alt="" fill className={styles.alphaPhoneImage} />
+            <Image
+              src="/images/pc/introduction5_1.svg"
+              alt=""
+              fill
+              className={styles.alphaPhoneImage}
+              loading="lazy"
+              fetchPriority="low"
+              sizes="(max-width: 1024px) 92vw, 42vw"
+            />
           </div>
 
           {/* 让这三个资产以手机容器为定位参照 */}
           <div className={`${styles.alphaAsset} ${styles.alphaScoreLeft}`}>
-            <Image src="/images/pc/introduction5_2.svg" alt="" fill className={styles.alphaAssetImage} />
+            <Image
+              src="/images/pc/introduction5_2.svg"
+              alt=""
+              fill
+              className={styles.alphaAssetImage}
+              loading="lazy"
+              fetchPriority="low"
+              sizes="(max-width: 1024px) 34vw, 14vw"
+            />
           </div>
           <div className={`${styles.alphaAsset} ${styles.alphaScoreRight}`}>
-            <Image src="/images/pc/introduction5_3.svg" alt="" fill className={styles.alphaAssetImage} />
+            <Image
+              src="/images/pc/introduction5_3.svg"
+              alt=""
+              fill
+              className={styles.alphaAssetImage}
+              loading="lazy"
+              fetchPriority="low"
+              sizes="(max-width: 1024px) 34vw, 14vw"
+            />
           </div>
           <div className={`${styles.alphaAsset} ${styles.alphaScoreBottom}`}>
-            <Image src="/images/pc/introduction5_4.svg" alt="" fill className={styles.alphaAssetImage} />
+            <Image
+              src="/images/pc/introduction5_4.svg"
+              alt=""
+              fill
+              className={styles.alphaAssetImage}
+              loading="lazy"
+              fetchPriority="low"
+              sizes="(max-width: 1024px) 42vw, 16vw"
+            />
           </div>
         </div>
       </div>

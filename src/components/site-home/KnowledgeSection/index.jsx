@@ -28,12 +28,28 @@ export default function KnowledgeSection() {
 
         <div className={styles.knowledgeRightPane}>
           <div className={styles.knowledgePhoneWrap} aria-hidden="true">
-            <Image src="/images/pc/introduction6_2.svg" alt="" fill className={styles.knowledgePhoneImage} />
+            <Image
+              src="/images/pc/introduction6_2.svg"
+              alt=""
+              fill
+              className={styles.knowledgePhoneImage}
+              loading="lazy"
+              fetchPriority="low"
+              sizes="(max-width: 1024px) 90vw, 42vw"
+            />
             
           </div>
         </div>
         <div className={styles.knowledgeOverlay} aria-hidden="true">
-              <Image src="/images/pc/introduction6_3.png" alt="" fill className={styles.knowledgeOverlayImage} />
+              <Image
+                src="/images/pc/introduction6_3.webp"
+                alt=""
+                fill
+                className={styles.knowledgeOverlayImage}
+                loading="lazy"
+                fetchPriority="low"
+                sizes="(max-width: 1024px) 70vw, 36vw"
+              />
         </div>
       </div>
     </section>

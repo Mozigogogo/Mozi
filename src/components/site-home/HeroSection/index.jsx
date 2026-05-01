@@ -18,7 +18,14 @@ export default function HeroSection() {
 
         <div className={styles.rightPane}>
           <div className={styles.screenFrame} aria-hidden="true">
-            <Image src="/images/pc/introduction1.svg" alt="Mozi introduction preview" fill className={styles.screenImage} priority />
+            <Image
+              src="/images/pc/introduction1.svg"
+              alt="Mozi introduction preview"
+              fill
+              className={styles.screenImage}
+              priority
+              sizes="(max-width: 1024px) 92vw, 50vw"
+            />
           </div>
 
           <div className={styles.floatCard}>
