@@ -19,8 +19,6 @@ export default function FlashSection() {
             alt="flash news left preview"
             fill
             className={styles.flashPhoneImage}
-            loading="lazy"
-            fetchPriority="low"
             sizes="(max-width: 1024px) 88vw, 30vw"
           />
         </div>
@@ -31,8 +29,6 @@ export default function FlashSection() {
               alt=""
               fill
               className={styles.flashClusterAssetImage}
-              loading="lazy"
-              fetchPriority="low"
               sizes="(max-width: 1024px) 32vw, 12vw"
             />
           </div>
@@ -42,8 +38,6 @@ export default function FlashSection() {
               alt="flash news right preview"
               fill
               className={styles.flashPhoneImage}
-              loading="lazy"
-              fetchPriority="low"
               sizes="(max-width: 1024px) 88vw, 30vw"
             />
           </div>
@@ -53,8 +47,6 @@ export default function FlashSection() {
               alt=""
               fill
               className={styles.flashClusterAssetImage}
-              loading="lazy"
-              fetchPriority="low"
               sizes="(max-width: 1024px) 32vw, 12vw"
             />
           </div>

@@ -33,8 +33,6 @@ export default function KnowledgeSection() {
               alt=""
               fill
               className={styles.knowledgePhoneImage}
-              loading="lazy"
-              fetchPriority="low"
               sizes="(max-width: 1024px) 90vw, 42vw"
             />
             
@@ -46,8 +44,6 @@ export default function KnowledgeSection() {
                 alt=""
                 fill
                 className={styles.knowledgeOverlayImage}
-                loading="lazy"
-                fetchPriority="low"
                 sizes="(max-width: 1024px) 70vw, 36vw"
               />
         </div>

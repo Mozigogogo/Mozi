@@ -23,8 +23,6 @@ export default function SectorSection() {
               alt=""
               fill
               className={styles.sectorPreviewImage}
-              loading="lazy"
-              fetchPriority="low"
               sizes="(max-width: 1024px) 90vw, 44vw"
             />
           </div>

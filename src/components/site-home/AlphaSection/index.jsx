@@ -23,8 +23,6 @@ export default function AlphaSection() {
               alt=""
               fill
               className={styles.alphaPhoneImage}
-              loading="lazy"
-              fetchPriority="low"
               sizes="(max-width: 1024px) 92vw, 42vw"
             />
           </div>
@@ -36,8 +34,6 @@ export default function AlphaSection() {
               alt=""
               fill
               className={styles.alphaAssetImage}
-              loading="lazy"
-              fetchPriority="low"
               sizes="(max-width: 1024px) 34vw, 14vw"
             />
           </div>
@@ -47,8 +43,6 @@ export default function AlphaSection() {
               alt=""
               fill
               className={styles.alphaAssetImage}
-              loading="lazy"
-              fetchPriority="low"
               sizes="(max-width: 1024px) 34vw, 14vw"
             />
           </div>
@@ -58,8 +52,6 @@ export default function AlphaSection() {
               alt=""
               fill
               className={styles.alphaAssetImage}
-              loading="lazy"
-              fetchPriority="low"
               sizes="(max-width: 1024px) 42vw, 16vw"
             />
           </div>
