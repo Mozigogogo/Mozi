@@ -15,38 +15,42 @@ export default function FlashSection() {
       <div className={styles.flashPhones}>
         <div className={styles.flashPhoneLeft}>
           <Image
-            src="/images/pc/introduction4_1.svg"
+            src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/introduction4_1.svg"
             alt="flash news left preview"
             fill
             className={styles.flashPhoneImage}
+            unoptimized
             sizes="(max-width: 1024px) 88vw, 30vw"
           />
         </div>
         <div className={styles.flashPhoneCluster}>
           <div className={`${styles.flashClusterAsset} ${styles.flashClusterAssetLeft}`}>
             <Image
-              src="/images/pc/introduction4_3.svg"
+              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/introduction4_3.svg"
               alt=""
               fill
               className={styles.flashClusterAssetImage}
+              unoptimized
               sizes="(max-width: 1024px) 32vw, 12vw"
             />
           </div>
           <div className={styles.flashPhone}>
             <Image
-              src="/images/pc/introduction4_2.svg"
+              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/introduction4_2.svg"
               alt="flash news right preview"
               fill
               className={styles.flashPhoneImage}
+              unoptimized
               sizes="(max-width: 1024px) 88vw, 30vw"
             />
           </div>
           <div className={`${styles.flashClusterAsset} ${styles.flashClusterAssetRight}`}>
             <Image
-              src="/images/pc/introduction4_4.svg"
+              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/introduction4_4.svg"
               alt=""
               fill
               className={styles.flashClusterAssetImage}
+              unoptimized
               sizes="(max-width: 1024px) 32vw, 12vw"
             />
           </div>

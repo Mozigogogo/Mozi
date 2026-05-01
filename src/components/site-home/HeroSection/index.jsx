@@ -19,7 +19,7 @@ export default function HeroSection() {
         <div className={styles.rightPane}>
           <div className={styles.screenFrame} aria-hidden="true">
             <Image
-              src="/images/pc/introduction1.svg"
+              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/introduction1.svg"
               alt="Mozi introduction preview"
               fill
               className={styles.screenImage}

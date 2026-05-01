@@ -44,7 +44,7 @@ export default function AlertsSection() {
           <div className={styles.centerCol}>
             <div className={styles.phoneFrame}>
               <Image
-                src="/images/pc/introduction2.svg"
+                src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/introduction2.svg"
                 alt=""
                 fill
                 className={styles.alertBottomPreviewImage}
