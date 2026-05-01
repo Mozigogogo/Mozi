@@ -48,6 +48,7 @@ export default function AlertsSection() {
                 alt=""
                 fill
                 className={styles.alertBottomPreviewImage}
+                sizes="(max-width: 1024px) 92vw, 44vw"
               />
             </div>
 

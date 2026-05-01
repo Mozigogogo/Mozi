@@ -18,7 +18,13 @@ export default function SectorSection() {
 
         <div className={styles.sectorRightPane} aria-hidden="true">
           <div className={styles.sectorPreview}>
-            <Image src="/images/pc/introduction3.svg" alt="" fill className={styles.sectorPreviewImage} />
+            <Image
+              src="/images/pc/introduction3.svg"
+              alt=""
+              fill
+              className={styles.sectorPreviewImage}
+              sizes="(max-width: 1024px) 90vw, 44vw"
+            />
           </div>
         </div>
       </div>
