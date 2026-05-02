@@ -49,7 +49,7 @@ const GetPointsModal = ({ visible: propVisible, points: propPoints = 10, onClose
     <div className={styles.mask} onClick={onClose}>
       <div className={`${styles.container} ${isEnglish ? styles.enContainer : ''}`} onClick={e => e.stopPropagation()}>
         <img 
-          src={isEnglish ? "/icons/new_home/get_point_en.png" : "/icons/new_home/get_ponit.png"}
+          src={isEnglish ? "https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/get_point_en.png" : "https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/get_ponit.png"}
           alt="Get Points" 
           className={styles.mainImage}
         />

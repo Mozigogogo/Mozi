@@ -10,9 +10,9 @@ const rankTypeByTab = { day: 'daily', month: 'monthly', total: 'total' };
 const avatarColorPalette = ['#8db8ff', '#f7c748', '#ff8a8a', '#8fe2ff', '#b395ff', '#89e9b8', '#ffae6b', '#ff8bc9'];
 
 const crownByRank = {
-  1: '/icons/pc/top1_header.svg',
-  2: '/icons/pc/top2_header.svg',
-  3: '/icons/pc/top3_header.svg',
+  1: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/top1_header.svg',
+  2: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/top2_header.svg',
+  3: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/top3_header.svg',
 };
 
 export default function AchievementRankingCard({ onInviteClick, style, noTopMargin = false }) {
@@ -102,7 +102,7 @@ export default function AchievementRankingCard({ onInviteClick, style, noTopMarg
     <section className={`${styles.card} ${noTopMargin ? styles.noTopMargin : ''}`} style={style}>
       <div className={styles.header}>
         <div className={styles.titleWrap}>
-          <img src="/icons/pool_status_logo.svg" alt="" className={styles.titleIcon} />
+          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pool_status_logo.svg" alt="" className={styles.titleIcon} />
           <h3 className={styles.title}>{t('pointsDetail.rankingListTitle', { defaultValue: 'Ranking List' })}</h3>
           <span className={styles.titleUnderline} />
         </div>
@@ -137,7 +137,7 @@ export default function AchievementRankingCard({ onInviteClick, style, noTopMarg
                 </div>
                 <div className={`${styles.name} ${item.rank === 1 ? styles.top1Name : ''}`}>{item.name}</div>
                 <div className={`${styles.score} ${item.rank === 1 ? styles.top1Score : styles.topSideScore}`}>
-                  <img src="/point/new_coin.svg" alt="" className={styles.scoreCoinIcon} />
+                  <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/new_coin.svg" alt="" className={styles.scoreCoinIcon} />
                   <span>{item.score}</span>
                 </div>
               </div>
@@ -154,7 +154,7 @@ export default function AchievementRankingCard({ onInviteClick, style, noTopMarg
                   <span className={styles.rowName}>{item.name}</span>
                 </div>
                 <span className={styles.rowScore}>
-                  <img src="/point/new_coin.svg" alt="" className={styles.rowScoreCoinIcon} />
+                  <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/new_coin.svg" alt="" className={styles.rowScoreCoinIcon} />
                   <span>{item.score}</span>
                 </span>
               </div>
@@ -164,7 +164,7 @@ export default function AchievementRankingCard({ onInviteClick, style, noTopMarg
       )}
 
       <button type="button" className={styles.inviteBtn} onClick={onInviteClick}>
-        <img src="/icons/pc/share.svg" alt="" className={styles.inviteIcon} />
+        <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/share.svg" alt="" className={styles.inviteIcon} />
         {t('pointsDetail.inviteChallenge', { defaultValue: 'Invite friends to challenge' })}
       </button>
     </section>

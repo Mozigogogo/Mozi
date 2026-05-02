@@ -9,7 +9,7 @@ const nextConfig = withLess({
   reactStrictMode: true,
   productionBrowserSourceMaps: false,
   images: {
-    domains: ['localhost', 'example.com'],
+    domains: ['localhost', 'example.com', 'image-1317406749.cos.ap-shanghai.myqcloud.com'],
     unoptimized: true,
   },
   webpack: (webpackConfig) => {

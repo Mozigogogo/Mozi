@@ -31,17 +31,17 @@ const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets
 
 // Banner 图片
 const HOME_BANNERS = [
-  '/images/new_home/banner1_pc_en.png',
-  '/images/new_home/banner2_pc_en.png',
-  '/images/new_home/banner3_pc_en.png',
+  'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/banner1_pc_en.png',
+  'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/banner2_pc_en.png',
+  'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/banner3_pc_en.png',
 ];
 
 // 合约专区图标
 const derivativeIcons = {
-  bullBear: '/images/new_home/bull_bear_ratio.png',
-  inventory: '/images/new_home/position_size.png',
-  fundingRate: '/images/new_home/funding_rate.png',
-  volume: '/images/new_home/trade_volume.png',
+  bullBear: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/bull_bear_ratio.png',
+  inventory: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/position_size.png',
+  fundingRate: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/funding_rate.png',
+  volume: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/trade_volume.png',
 };
 
 /**
@@ -266,7 +266,7 @@ export default function PCHome() {
       align: 'center',
       render: () => (
         <img 
-          src="/icons/new_home/monitor-bell.svg" 
+          src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/monitor-bell.svg" 
           className={styles.actionIcon} 
           alt="monitor"
           style={{ width: 18, height: 18 }} 

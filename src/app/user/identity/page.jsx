@@ -73,7 +73,7 @@ export default function UserIdentityPage() {
                 <div className={styles.iconWrap} aria-hidden="true">
                   <img
                     className={styles.icon}
-                    src={`/images/identify/${opt.image}`}
+                    src={`https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/identify/${opt.image}`}
                     alt=""
                     loading="lazy"
                   />

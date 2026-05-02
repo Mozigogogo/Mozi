@@ -7,12 +7,12 @@ import { getUserDataInfo, updateUserInfo } from '@/api/user';
 import styles from './index.module.less';
 
 const TAG_OPTIONS = [
-  { id: 'compliance', icon: '/icons/pc/tag1.svg' },
-  { id: 'trader', icon: '/icons/pc/tag2.svg' },
-  { id: 'quant', icon: '/icons/pc/tag3.svg' },
-  { id: 'creator', icon: '/icons/pc/tag4.svg' },
-  { id: 'community_builder', icon: '/icons/pc/tag5.svg' },
-  { id: 'institution', icon: '/icons/pc/tag6.svg' },
+  { id: 'compliance', icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/tag1.svg' },
+  { id: 'trader', icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/tag2.svg' },
+  { id: 'quant', icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/tag3.svg' },
+  { id: 'creator', icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/tag4.svg' },
+  { id: 'community_builder', icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/tag5.svg' },
+  { id: 'institution', icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/tag6.svg' },
 ];
 
 const LEGACY_TAG_TO_ID = {
@@ -212,7 +212,7 @@ export default function UserProfilePanelPopup({
         <div className={styles.sectionCard}>
           <div className={styles.bindRow}>
             <div className={styles.bindLeft}>
-              <img src="/icons/pc/bind_telegram.svg" alt="" />
+              <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/bind_telegram.svg" alt="" />
               <span>{t('user.profilePanel.telegram')}</span>
             </div>
             <div className={styles.boundBtn}>
@@ -221,11 +221,11 @@ export default function UserProfilePanelPopup({
           </div>
           <div className={styles.bindRow}>
             <div className={styles.bindLeft}>
-              <img src="/icons/pc/wallet.svg" alt="" />
+              <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/wallet.svg" alt="" />
               <span>{t('user.profilePanel.wallet')}</span>
             </div>
             <div className={styles.unboundBtn}>
-              <img src="/icons/pc/plus.svg" alt="" />
+              <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/plus.svg" alt="" />
               <span>{profileData.boundWallet ? t('user.profilePanel.bound') : t('user.profilePanel.bind')}</span>
             </div>
           </div>
@@ -237,7 +237,7 @@ export default function UserProfilePanelPopup({
             onClick={() => setTagExpanded((prev) => !prev)}
           >
             <div className={styles.labelTitle}>
-              <img src="/icons/new_user/user_tag_90A1B9.svg" alt="" />
+              <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_user/user_tag_90A1B9.svg" alt="" />
               <div>
                 <div className={styles.labelMain}>{t('editProfile.identity.label')}</div>
                 <div className={styles.labelSub}>{selectedTagLabel}</div>
@@ -269,28 +269,28 @@ export default function UserProfilePanelPopup({
           ) : null}
 
           <div className={styles.formRow}>
-            <img src="/icons/pc/user_icon.svg" alt="" />
+            <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/user_icon.svg" alt="" />
             <div className={styles.formField}>
               <div className={styles.formLabel}>{t('editProfile.bio.label')}</div>
               <input value={bio} onChange={(e) => setBio(e.target.value)} />
             </div>
           </div>
           <div className={styles.formRow}>
-            <img src="/icons/pc/email.svg" alt="" />
+            <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/email.svg" alt="" />
             <div className={styles.formField}>
               <div className={styles.formLabel}>{t('editProfile.email.label')}</div>
               <input value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
           </div>
           <div className={styles.formRow}>
-            <img src="/icons/pc/phone.svg" alt="" />
+            <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/phone.svg" alt="" />
             <div className={styles.formField}>
               <div className={styles.formLabel}>{t('editProfile.phone.label')}</div>
               <input value={phone} onChange={(e) => setPhone(e.target.value)} />
             </div>
           </div>
           <div className={styles.formRow}>
-            <img src="/icons/pc/earn.svg" alt="" />
+            <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/earn.svg" alt="" />
             <div className={styles.formField}>
               <div className={styles.formLabel}>{t('editProfile.commission.label')}</div>
               <input value={commission} onChange={(e) => setCommission(e.target.value)} />
@@ -302,14 +302,14 @@ export default function UserProfilePanelPopup({
           className={styles.logoutBtn}
           onClick={() => onLogout?.()}
         >
-          <img src="/icons/pc/logout.svg" alt="" className={styles.logoutIcon} />
+          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/logout.svg" alt="" className={styles.logoutIcon} />
           <span>{t('user.profilePanel.logout')}</span>
         </div>
 
         <div className={styles.sectionCard}>
           <div className={styles.bottomRow} onClick={() => onSave?.()}>
             <div className={styles.bottomLeft}>
-              <img src="/icons/pc/vip.svg" alt="" />
+              <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/vip.svg" alt="" />
               <span>{t('user.profilePanel.subscriptionAndMembership')}</span>
             </div>
           </div>
@@ -318,7 +318,7 @@ export default function UserProfilePanelPopup({
             onClick={() => setLanguageExpanded((prev) => !prev)}
           >
             <div className={styles.bottomLeft}>
-              <img src="/icons/pc/language.svg" alt="" />
+              <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/language.svg" alt="" />
               <span>{t('user.language')}：{selectedLanguage}</span>
             </div>
             <RightArrowIcon

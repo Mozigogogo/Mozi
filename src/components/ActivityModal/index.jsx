@@ -26,13 +26,13 @@ export default function ActivityModal({ visible, onClose, onConfirm, onImagesLoa
     const preloadImage = new Image();
     preloadImage.onload = checkAllLoaded;
     preloadImage.onerror = checkAllLoaded; // 即使失败也继续
-    preloadImage.src = '/images/activity/activity_bg.png';
+    preloadImage.src = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/activity/activity_bg.png';
     
     // 预加载关闭按钮图标
     const preloadCloseIcon = new Image();
     preloadCloseIcon.onload = checkAllLoaded;
     preloadCloseIcon.onerror = checkAllLoaded;
-    preloadCloseIcon.src = '/images/activity/close.svg';
+    preloadCloseIcon.src = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/activity/close.svg';
   }, [onImagesLoaded]);
 
   if (!visible) return null;
@@ -61,7 +61,7 @@ export default function ActivityModal({ visible, onClose, onConfirm, onImagesLoa
         {/* 合并的弹窗背景图 */}
         <div className={styles.mergedBackground}>
           <img 
-            src="/images/activity/activity_bg.png" 
+            src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/activity/activity_bg.png" 
             alt="activity" 
             loading="eager"
             fetchpriority="high"
@@ -74,7 +74,7 @@ export default function ActivityModal({ visible, onClose, onConfirm, onImagesLoa
             <>
               {/* 关闭按钮 */}
               <button className={styles.closeButton} onClick={handleCloseClick}>
-                <img src="/images/activity/close.svg" alt="close" loading="eager" />
+                <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/activity/close.svg" alt="close" loading="eager" />
               </button>
               
               {/* 活动标题文字 */}

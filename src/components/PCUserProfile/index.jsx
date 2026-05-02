@@ -42,7 +42,7 @@ export default function PCUserProfile({
           <img src={resolvedProfile.avatar || DEFAULT_AVATAR} alt="avatar" className={styles.avatar} />
           {(resolvedProfile.isVip || resolvedProfile.isLite) && (
             <img
-              src={resolvedProfile.isVip ? '/icons/new_user/vip.svg' : '/icons/vip/lite.svg'}
+              src={resolvedProfile.isVip ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_user/vip.svg' : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/vip/lite.svg'}
               alt={resolvedProfile.isVip ? 'vip' : 'lite'}
               className={styles.vipBadge}
             />

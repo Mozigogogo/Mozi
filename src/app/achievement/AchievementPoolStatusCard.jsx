@@ -23,7 +23,7 @@ export default function AchievementPoolStatusCard({
     <section className={styles.card}>
       <div className={styles.header}>
         <div className={styles.titleWrap}>
-          <img src="/icons/pool_status_logo.svg" alt="" className={styles.titleIcon} />
+          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pool_status_logo.svg" alt="" className={styles.titleIcon} />
           <h3 className={styles.title}>{t('pointsDetail.poolTitleText', { defaultValue: 'Points pool status' })}</h3>
           <span className={styles.titleUnderline} />
         </div>
@@ -56,14 +56,14 @@ export default function AchievementPoolStatusCard({
           <div className={styles.statLabel}>{t('pointsDetail.poolDistributed', { defaultValue: 'Points Rewarded' })}</div>
           <div className={styles.statValueRow}>
             <span className={styles.statValue}>{totalAwarded}</span>
-            <img src="/icons/gift.svg" alt="" className={styles.statIcon} />
+            <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/gift.svg" alt="" className={styles.statIcon} />
           </div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statLabel}>{t('pointsDetail.poolMineable', { defaultValue: 'Points Balance' })}</div>
           <div className={styles.statValueRow}>
             <span className={styles.statValue}>{pointsBalance}</span>
-            <img src="/icons/balance.svg" alt="" className={styles.statIcon} />
+            <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/balance.svg" alt="" className={styles.statIcon} />
           </div>
         </div>
       </div>

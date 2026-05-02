@@ -310,7 +310,7 @@ export default function UserProfile({ params }) {
               <img src={profile.avatar} alt="avatar" className={styles.avatar} />
               {(profile.isVip || profile.isLite) && (
                 <img
-                  src={profile.isVip ? '/icons/new_user/vip.svg' : '/icons/vip/lite.svg'}
+                  src={profile.isVip ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_user/vip.svg' : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/vip/lite.svg'}
                   alt={profile.isVip ? 'vip' : 'lite'}
                   className={styles.verifyIcon}
                   onError={(e) => {
@@ -329,7 +329,7 @@ export default function UserProfile({ params }) {
                   onClick={handleFollowToggle}
                   style={{ opacity: followLoading ? 0.7 : 1, pointerEvents: followLoading ? 'none' : 'auto' }}
                 >
-                  {!profile.isFollowing && <img src="/icons/new_user/plus.svg" alt="" />}
+                  {!profile.isFollowing && <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_user/plus.svg" alt="" />}
                   {profile.isFollowing
                     ? t('common.followed', { defaultValue: '已关注' })
                     : t('user.stats.following', { defaultValue: '关注' })}

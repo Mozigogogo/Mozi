@@ -52,7 +52,7 @@ export default function CommentInput({
         disabled={disabled || !value.trim()}
       >
         <img 
-          src="/icons/pc/post_icon@2x.png" 
+          src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/post_icon@2x.png" 
           alt="发送" 
           className={styles.submitIcon}
         />

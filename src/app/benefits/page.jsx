@@ -81,9 +81,9 @@ export function BenefitsPageContent({ showNavBar = true, className = '', isPc = 
 
   const freeUnlocked = useMemo(
     () => [
-      { icon: '/benefits/market.svg', label: t('vip.benefit.basicChart') },
-      { icon: '/benefits/push.svg', label: t('vip.benefit.basicPush') },
-      { icon: '/benefits/email_alert.svg', label: t('benefitsPage.emailAlerts') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/market.svg', label: t('vip.benefit.basicChart') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/push.svg', label: t('vip.benefit.basicPush') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/email_alert.svg', label: t('benefitsPage.emailAlerts') },
     ],
     [t]
   );
@@ -92,21 +92,21 @@ export function BenefitsPageContent({ showNavBar = true, className = '', isPc = 
     () => [
       {
         tone: 'chart',
-        icon: '/benefits/monthly_points.svg',
+        icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/monthly_points.svg',
         title: t('benefitsPage.monthlyPoints'),
         value: `${litePoints.cur.toLocaleString()}/${litePoints.max.toLocaleString()}`,
         percent: (litePoints.cur / litePoints.max) * 100
       },
       {
         tone: 'ai',
-        icon: '/benefits/ai_call.svg',
+        icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/ai_call.svg',
         title: t('benefitsPage.aiCall'),
         value: `${liteAi.cur}/${liteAi.max}`,
         percent: (liteAi.cur / liteAi.max) * 100
       },
       {
         tone: 'deal',
-        icon: '/benefits/big_deal.svg',
+        icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/big_deal.svg',
         title: t('vipRecharge.features.bigOrder'),
         value: t('benefitsPage.depth20'),
         percent: (liteDepth.cur / liteDepth.max) * 100
@@ -119,21 +119,21 @@ export function BenefitsPageContent({ showNavBar = true, className = '', isPc = 
     () => [
       {
         tone: 'chart',
-        icon: '/benefits/monthly_points.svg',
+        icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/monthly_points.svg',
         title: t('benefitsPage.monthlyPoints'),
         value: `${proPoints.cur.toLocaleString()}/${proPoints.max.toLocaleString()}`,
         percent: (proPoints.cur / proPoints.max) * 100
       },
       {
         tone: 'ai',
-        icon: '/benefits/ai_call.svg',
+        icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/ai_call.svg',
         title: t('benefitsPage.aiCall'),
         value: `${proAi.cur}/${proAi.max}`,
         percent: (proAi.cur / proAi.max) * 100
       },
       {
         tone: 'deal',
-        icon: '/benefits/big_deal.svg',
+        icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/big_deal.svg',
         title: t('vipRecharge.features.bigOrder'),
         value: t('benefitsPage.depth40'),
         percent: 100
@@ -151,25 +151,25 @@ export function BenefitsPageContent({ showNavBar = true, className = '', isPc = 
         title: t('vipRecharge.features.bigOrder'),
         subtitle: t('benefitsPage.depth40'),
         tone: 'peach',
-        icon: '/benefits/big_deal.svg',
+        icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/big_deal.svg',
       },
       {
         title: 'Points',
         subtitle: '10k/mo',
         tone: 'lavender',
-        icon: '/benefits/monthly_points.svg',
+        icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/monthly_points.svg',
       },
       {
         title: t('benefitsPage.aiCall'),
         subtitle: t('benefitsPage.aiCallRange'),
         tone: 'sky',
-        icon: '/benefits/ai_call.svg',
+        icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/ai_call.svg',
       },
       {
         title: t('vip.benefit.ogBadge'),
         subtitle: '',
         tone: 'sand',
-        icon: '/benefits/gold_vip.svg',
+        icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/gold_vip.svg',
       },
     ],
     [t]
@@ -177,10 +177,10 @@ export function BenefitsPageContent({ showNavBar = true, className = '', isPc = 
 
   const lockedProRows = useMemo(
     () => [
-      { icon: '/benefits/group.svg', label: t('vip.benefit.alphaGroup') },
-      { icon: '/benefits/helper.svg', label: t('benefitsPage.exclusiveService') },
-      { icon: '/benefits/no_advertise.svg', label: t('vip.benefit.noAds') },
-      { icon: '/benefits/multi_skin.svg', label: t('vip.benefit.multiTheme') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/group.svg', label: t('vip.benefit.alphaGroup') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/helper.svg', label: t('benefitsPage.exclusiveService') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/no_advertise.svg', label: t('vip.benefit.noAds') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/multi_skin.svg', label: t('vip.benefit.multiTheme') },
     ],
     [t]
   );
@@ -188,19 +188,19 @@ export function BenefitsPageContent({ showNavBar = true, className = '', isPc = 
   // Pro 模式：隐藏“专属客服 / 纯净无广告沉浸式 / 多主题自由切换”
   //（只保留“专属Alpha核心群组”这一行，匹配设计稿红框消失的效果）
   const hiddenInProIcons = useMemo(() => {
-    return ['/benefits/helper.svg', '/benefits/no_advertise.svg', '/benefits/multi_skin.svg'];
+    return ['https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/helper.svg', 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/no_advertise.svg', 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/multi_skin.svg'];
   }, []);
 
   const proIconGrid = useMemo(
     () => [
-      { icon: '/point/first_login.svg', label: t('vip.benefit.basicChart') },
-      { icon: '/icons/new_detail/community.svg', label: t('vip.benefit.basicPush') },
-      { icon: '/point/new_coin.svg', label: t('benefitsPage.emailAlerts') },
-      { icon: '/icons/new_detail/vip.svg', label: t('vip.benefit.multiTheme') },
-      { icon: '/icons/new_detail/vip.svg', label: t('benefitsPage.exclusiveService') },
-      { icon: '/icons/new_detail/vip.svg', label: t('vip.benefit.noAds') },
-      { icon: '/icons/new_detail/vip.svg', label: t('benefitsPage.identityTag') },
-      { icon: '/icons/new_detail/vip.svg', label: t('vip.benefit.alphaGroup') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/first_login.svg', label: t('vip.benefit.basicChart') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/community.svg', label: t('vip.benefit.basicPush') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/new_coin.svg', label: t('benefitsPage.emailAlerts') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/vip.svg', label: t('vip.benefit.multiTheme') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/vip.svg', label: t('benefitsPage.exclusiveService') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/vip.svg', label: t('vip.benefit.noAds') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/vip.svg', label: t('benefitsPage.identityTag') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/vip.svg', label: t('vip.benefit.alphaGroup') },
     ],
     [t]
   );
@@ -208,36 +208,36 @@ export function BenefitsPageContent({ showNavBar = true, className = '', isPc = 
   const liteQuickIcons = useMemo(() => {
     if (isPc) {
       return [
-        { icon: '/benefits/market.svg', label: t('vip.benefit.basicChart') },
-        { icon: '/benefits/push.svg', label: t('vip.benefit.basicPush') },
-        { icon: '/benefits/email_alert.svg', label: t('benefitsPage.emailAlerts') },
-        { icon: '/benefits/multi_skin.svg', label: t('vip.benefit.multiTheme') },
-        { icon: '/benefits/helper.svg', label: t('benefitsPage.supportShort') },
-        { icon: '/benefits/no_advertise.svg', label: t('vip.benefit.noAds') },
-        { icon: '/benefits/high_flag.svg', label: t('benefitsPage.identityTag') },
+        { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/market.svg', label: t('vip.benefit.basicChart') },
+        { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/push.svg', label: t('vip.benefit.basicPush') },
+        { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/email_alert.svg', label: t('benefitsPage.emailAlerts') },
+        { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/multi_skin.svg', label: t('vip.benefit.multiTheme') },
+        { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/helper.svg', label: t('benefitsPage.supportShort') },
+        { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/no_advertise.svg', label: t('vip.benefit.noAds') },
+        { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/high_flag.svg', label: t('benefitsPage.identityTag') },
       ];
     }
     return [
-      { icon: '/point/Basic_market .svg', label: t('vip.benefit.basicChart') },
-      { icon: '/point/Information_push.svg', label: t('vip.benefit.basicPush') },
-      { icon: '/point/Email_alert.svg', label: t('benefitsPage.emailAlerts') },
-      { icon: '/point/Topic_witching.svg', label: t('vip.benefit.multiTheme') },
-      { icon: '/point/Customer_service.svg', label: t('benefitsPage.supportShort') },
-      { icon: '/point/No_advertisement.svg', label: t('vip.benefit.noAds') },
-      { icon: '/point/Exclusive_logo.svg', label: t('benefitsPage.identityTag') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/Basic_market .svg', label: t('vip.benefit.basicChart') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/Information_push.svg', label: t('vip.benefit.basicPush') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/Email_alert.svg', label: t('benefitsPage.emailAlerts') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/Topic_witching.svg', label: t('vip.benefit.multiTheme') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/Customer_service.svg', label: t('benefitsPage.supportShort') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/No_advertisement.svg', label: t('vip.benefit.noAds') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/Exclusive_logo.svg', label: t('benefitsPage.identityTag') },
     ];
   }, [isPc, t]);
 
   const proQuickIcons = useMemo(
     () => [
-      { icon: '/benefits/market_gold.svg', label: t('vip.benefit.basicChart') },
-      { icon: '/benefits/push_gold.svg', label: t('vip.benefit.basicPush') },
-      { icon: '/benefits/email_gold.svg', label: t('benefitsPage.emailAlerts') },
-      { icon: '/benefits/multi_skin.svg', label: t('vip.benefit.multiTheme') },
-      { icon: '/benefits/helper.svg', label: t('benefitsPage.supportShort') },
-      { icon: '/benefits/no_advertise.svg', label: t('vip.benefit.noAds') },
-      { icon: '/benefits/high_flag.svg', label: t('benefitsPage.identityTag') },
-      { icon: '/benefits/group.svg', label: t('vip.benefit.alphaGroup') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/market_gold.svg', label: t('vip.benefit.basicChart') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/push_gold.svg', label: t('vip.benefit.basicPush') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/email_gold.svg', label: t('benefitsPage.emailAlerts') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/multi_skin.svg', label: t('vip.benefit.multiTheme') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/helper.svg', label: t('benefitsPage.supportShort') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/no_advertise.svg', label: t('vip.benefit.noAds') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/high_flag.svg', label: t('benefitsPage.identityTag') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/group.svg', label: t('vip.benefit.alphaGroup') },
     ],
     [t]
   );
@@ -332,7 +332,7 @@ export function BenefitsPageContent({ showNavBar = true, className = '', isPc = 
                   <div className={styles.sectionTitleLite}>
                     <img
                       className={styles.sectionTitleLiteIcon}
-                      src="/benefits/flag.svg"
+                      src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/flag.svg"
                       alt=""
                       aria-hidden="true"
                     />
@@ -340,7 +340,7 @@ export function BenefitsPageContent({ showNavBar = true, className = '', isPc = 
                   </div>
                 ) : tier === 'pro' ? (
                   <div className={styles.sectionTitle}>
-                    <img className={styles.sectionTitleProIcon} src="/benefits/vip_pro.svg" alt="" aria-hidden="true" />
+                    <img className={styles.sectionTitleProIcon} src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/vip_pro.svg" alt="" aria-hidden="true" />
                     {t('benefitsPage.exclusiveMemberLine', { name: 'Pro1' })}
                   </div>
                 ) : (
@@ -429,8 +429,8 @@ export function BenefitsPageContent({ showNavBar = true, className = '', isPc = 
                       (x) =>
                         !(
                           tier === 'lite' &&
-                          (x.icon === '/benefits/no_advertise.svg' ||
-                            x.icon === '/benefits/multi_skin.svg')
+                          (x.icon === 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/no_advertise.svg' ||
+                            x.icon === 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/multi_skin.svg')
                         ) &&
                         !(tier === 'pro' && hiddenInProIcons.includes(x.icon))
                     )
@@ -453,16 +453,16 @@ export function BenefitsPageContent({ showNavBar = true, className = '', isPc = 
                         tabIndex={0}
                         className={styles.upgradePill}
                         onClick={() =>
-                          tier === 'pro' && x.icon === '/benefits/group.svg' ? goAlphaGroup() : goRecharge()
+                          tier === 'pro' && x.icon === 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/group.svg' ? goAlphaGroup() : goRecharge()
                         }
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
-                            tier === 'pro' && x.icon === '/benefits/group.svg' ? goAlphaGroup() : goRecharge();
+                            tier === 'pro' && x.icon === 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/group.svg' ? goAlphaGroup() : goRecharge();
                           }
                         }}
                       >
-                        {tier === 'pro' && x.icon === '/benefits/group.svg'
+                        {tier === 'pro' && x.icon === 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/group.svg'
                           ? t('benefitsPage.enterAlpha')
                           : t('benefitsPage.upgrade')}
                       </div>
@@ -473,7 +473,7 @@ export function BenefitsPageContent({ showNavBar = true, className = '', isPc = 
                       <div className={styles.lockedRowLeft}>
                         <img
                           className={styles.lockedRowIconImg}
-                          src="/benefits/high_flag.svg"
+                          src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/high_flag.svg"
                           alt=""
                           aria-hidden="true"
                         />

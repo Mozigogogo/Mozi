@@ -246,7 +246,7 @@ export default function Me() {
               <div className={styles.headerSelectText}>我的报警</div>
             </div>
             <div className={styles.headerSelectItem} onClick={attendUs}>
-              <img src="/icons/twitter.svg" alt="Twitter" style={{width: '30px', height: '30px'}} />
+              <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/twitter.svg" alt="Twitter" style={{width: '30px', height: '30px'}} />
               <div className={styles.headerSelectText}>关注Twitter</div>
             </div>
           </div>

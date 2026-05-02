@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { WagmiProvider, http, useAccount, useSwitchChain, useWalletClient } from 'wagmi'
 import { mainnet, arbitrum } from 'wagmi/chains'
@@ -29,19 +29,6 @@ const ARBITRUM_RPC_URL =
   process.env.NEXT_PUBLIC_ARBITRUM_RPC_URL || 'https://arbitrum-one-rpc.publicnode.com'
 
 const queryClient = new QueryClient()
-
-const wagmiConfig = getDefaultConfig({
-  appName: 'Mozi H5',
-  projectId: projectId || 'missing-project-id',
-  chains: [mainnet, arbitrum],
-  transports: {
-    [mainnet.id]: http(MAINNET_RPC_URL),
-    [arbitrum.id]: http(ARBITRUM_RPC_URL),
-  },
-  // 该项目在 Next SSR 环境下会触发 WalletConnect 依赖 indexedDB 导致崩溃；
-  // 因此禁用 SSR，改为仅在浏览器端初始化。
-  ssr: false,
-})
 
 function WalletModalBridge() {
   const { openConnectModal } = useConnectModal()
@@ -94,15 +81,23 @@ function WalletModalBridge() {
 }
 
 export default function Web3Provider({ children }) {
-  // 关键：为了避免 hydration mismatch，首次渲染（含 SSR + CSR hydrate）都不包 Provider。
-  // 等客户端挂载后再启用 Web3 Provider（同时也避免 SSR 触发 indexedDB）。
-  const [mounted, setMounted] = useState(false)
+  // 必须在整棵子树首帧就提供 WagmiProvider，否则 RainbowKit / ConnectButton 会立刻调用 useConfig 报错。
+  // ssr: true 为 RainbowKit + Next 推荐写法，避免在服务端走 WalletConnect 的 indexedDB 路径。
+  const wagmiConfig = useMemo(
+    () =>
+      getDefaultConfig({
+        appName: 'Mozi H5',
+        projectId: projectId || 'missing-project-id',
+        chains: [mainnet, arbitrum],
+        transports: {
+          [mainnet.id]: http(MAINNET_RPC_URL),
+          [arbitrum.id]: http(ARBITRUM_RPC_URL),
+        },
+        ssr: true,
+      }),
+    []
+  )
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!mounted) return <>{children}</>
   return (
     <WagmiProvider config={wagmiConfig} reconnectOnMount={true}>
       <QueryClientProvider client={queryClient}>

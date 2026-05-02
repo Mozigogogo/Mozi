@@ -9,7 +9,7 @@ export default function AiRobotButtonSvg({
   className,
   width = 188,
   height = 67,
-  src = '/images/ai_robot/button.svg',
+  src = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/button.svg',
   alt = '',
   ariaLabel,
 }) {

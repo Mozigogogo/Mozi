@@ -14,10 +14,10 @@ export default function PCTopicSearchModal({
   results = [],
   loading = false,
   onTopicClick,
-  nov1Icon = '/icons/nov1.svg',
-  nov2Icon = '/icons/nov2.svg',
-  nov3Icon = '/icons/nov3.svg',
-  hotIcon = '/icons/hot.svg',
+  nov1Icon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/nov1.svg',
+  nov2Icon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/nov2.svg',
+  nov3Icon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/nov3.svg',
+  hotIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/hot.svg',
   searchKeyword = '', // 新增：搜索关键词
 }) {
   const { t } = useTranslation();

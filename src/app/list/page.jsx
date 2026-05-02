@@ -15,7 +15,7 @@ import AddMonitor from '../../components/AddMonitor';
 import { LeftArrowIcon } from '../../components/Icons';
 import styles from './page.module.less';
 
-const loadingImg = '/images/community/loadding.png';
+const loadingImg = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/community/loadding.png';
 
 export default function List() {
   const router = useRouter();

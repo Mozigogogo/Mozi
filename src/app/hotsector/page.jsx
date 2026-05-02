@@ -89,7 +89,7 @@ export default function HotSectorPage() {
           <div className={styles.title}>{t('hotsector.title')}</div>
           <div className={styles.shareButton} onClick={handleShare}>
             <Image 
-              src="/icons/new_home/external-link.svg" 
+              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/external-link.svg" 
               alt="share" 
               width={17} 
               height={16}

@@ -291,7 +291,7 @@ const PlanCard = ({
           <div className={styles.price}>
             {displayCurrency === '⭐' ? (
               <img
-                src="/point/star-solid.svg"
+                src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/star-solid.svg"
                 alt="Stars"
                 className={styles.currencyStarIcon}
               />
@@ -331,7 +331,7 @@ const PlanCard = ({
                 )}
               </div>
               <img
-                src="/icons/new_detail/down_arrow.svg"
+                src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/down_arrow.svg"
                 alt=""
                 className={`${styles.tierChevron} ${tierOpen ? styles.tierChevronOpen : ''}`}
               />
@@ -358,7 +358,7 @@ const PlanCard = ({
                       </div>
                       {active && (
                         <img
-                          src="/point/select.svg"
+                          src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/select.svg"
                           alt=""
                           className={styles.tierOptionSelectIcon}
                         />
@@ -391,7 +391,7 @@ const PlanCard = ({
             </span>
             {highlightFeature.locked && (
               <img
-                src="/point/lock.svg"
+                src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/lock.svg"
                 alt="locked"
                 className={styles.highlightLock}
               />
@@ -438,7 +438,7 @@ const PlanCard = ({
                 </span>
                 {isLocked && (
                   <img
-                    src="/point/lock.svg"
+                    src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/lock.svg"
                     alt=""
                     className={styles.featureLockIcon}
                   />

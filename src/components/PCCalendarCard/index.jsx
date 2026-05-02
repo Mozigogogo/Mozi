@@ -76,7 +76,7 @@ export default function PCCalendarCard({
         <div className={styles.leftInfo}>
           <img
             className={styles.icon}
-            src="/icons/pc/calendar.svg"
+            src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/calendar.svg"
             alt="calendar"
           />
           <div>

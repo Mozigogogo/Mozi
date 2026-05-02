@@ -7,10 +7,10 @@ import { jump2NoTab } from '../../utils/core';
 import styles from './index.module.less';
 
 // 合约专区图标（使用本地SVG）
-const bullBearRatioIcon = '/images/new_home/bull_bear_ratio.png';
-const inventoryIcon = '/images/new_home/position_size.png';
-const fundingRateIcon = '/images/new_home/funding_rate.png';
-const volumeTransactionIcon = '/images/new_home/trade_volume.png';
+const bullBearRatioIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/bull_bear_ratio.png';
+const inventoryIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/position_size.png';
+const fundingRateIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/funding_rate.png';
+const volumeTransactionIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/trade_volume.png';
 
 export default function DerivativeArea() {
   const { t } = useTranslation();

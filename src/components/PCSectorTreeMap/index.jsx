@@ -530,8 +530,8 @@ const PCSectorTreeMap = ({
                   </span>
                 </div>
                 <div className={styles.tooltipTopActions}>
-                  <img src="/icons/new_sector/group.svg" alt="" />
-                  <img src="/icons/new_sector/share.svg" alt="" />
+                  <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_sector/group.svg" alt="" />
+                  <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_sector/share.svg" alt="" />
                 </div>
               </div>
               <div className={styles.tooltipSectorStats}>
@@ -615,14 +615,14 @@ const PCSectorTreeMap = ({
                       </span>
                       <span className={styles.tooltipCoinAction}>
                         <img
-                          src={coin.isLiked ? '/icons/new_detail/like_actived.svg' : '/icons/new_detail/like_no_actived.svg'}
+                          src={coin.isLiked ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/like_actived.svg' : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/like_no_actived.svg'}
                           alt=""
                           className={styles.tooltipActionIcon}
                         />
                       </span>
                       <span className={styles.tooltipCoinAction}>
                         <img
-                          src="/icons/new_home/monitor-bell.svg"
+                          src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/monitor-bell.svg"
                           alt=""
                           className={styles.tooltipActionIconBell}
                         />

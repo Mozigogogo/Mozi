@@ -846,7 +846,7 @@ export default function PCFindContent() {
                       <div className={styles.rankTopHeader}>
                         <div className={styles.rankTopInfo}>
                           <img
-                            src="/icons/pc/top.svg"
+                            src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/top.svg"
                             alt="top rank"
                             className={styles.rankTopInfoIcon}
                           />
@@ -972,7 +972,7 @@ export default function PCFindContent() {
                               <div className={styles.rankTopCardSymbol}>{item.symbol}</div>
                               <div className={styles.rankTopCardRank}>
                                 <img
-                                  src={`/icons/pc/top${item.rankNo}.svg`}
+                                  src={`https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/top${item.rankNo}.svg`}
                                   alt={`top ${item.rankNo}`}
                                   className={styles.rankTopCardRankIcon}
                                   onError={(e) => { e.currentTarget.style.display = 'none'; }}

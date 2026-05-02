@@ -49,36 +49,36 @@ export default function PCBenefitsContent() {
 
   const quickIcons = useMemo(
     () => [
-      { icon: '/images/pc/line.svg', label: t('vip.benefit.basicChart') },
-      { icon: '/images/pc/push.svg', label: t('vip.benefit.basicPush') },
-      { icon: '/images/pc/email.svg', label: t('benefitsPage.emailAlerts') },
-      { icon: '/images/pc/skin.svg', label: t('vip.benefit.multiTheme') },
-      { icon: '/images/pc/helper.svg', label: t('benefitsPage.supportShort') },
-      { icon: '/images/pc/no_ad.svg', label: t('vip.benefit.noAds') },
-      { icon: '/images/pc/flag.svg', label: t('benefitsPage.identityTag') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/line.svg', label: t('vip.benefit.basicChart') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/push.svg', label: t('vip.benefit.basicPush') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/email.svg', label: t('benefitsPage.emailAlerts') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/skin.svg', label: t('vip.benefit.multiTheme') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/helper.svg', label: t('benefitsPage.supportShort') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/no_ad.svg', label: t('vip.benefit.noAds') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/flag.svg', label: t('benefitsPage.identityTag') },
     ],
     [t]
   );
 
   const lockedItems = useMemo(
     () => [
-      { icon: '/benefits/group.svg', label: t('vip.benefit.alphaGroup') },
-      { icon: '/benefits/helper.svg', label: t('benefitsPage.exclusiveService') },
-      { icon: '/benefits/high_flag.svg', label: t('benefitsPage.identityTag') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/group.svg', label: t('vip.benefit.alphaGroup') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/helper.svg', label: t('benefitsPage.exclusiveService') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/high_flag.svg', label: t('benefitsPage.identityTag') },
     ],
     [t]
   );
 
   const proRightIcons = useMemo(
     () => [
-      { icon: '/benefits/market_gold.svg', label: t('vip.benefit.basicChart') },
-      { icon: '/benefits/push_gold.svg', label: t('vip.benefit.basicPush') },
-      { icon: '/benefits/email_gold.svg', label: t('benefitsPage.emailAlerts') },
-      { icon: '/benefits/multi_skin.svg', label: t('vip.benefit.multiTheme') },
-      { icon: '/benefits/helper.svg', label: t('benefitsPage.exclusiveService') },
-      { icon: '/benefits/no_advertise.svg', label: t('vip.benefit.noAds') },
-      { icon: '/benefits/high_flag.svg', label: t('benefitsPage.identityTag') },
-      { icon: '/benefits/group.svg', label: t('vip.benefit.alphaGroup') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/market_gold.svg', label: t('vip.benefit.basicChart') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/push_gold.svg', label: t('vip.benefit.basicPush') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/email_gold.svg', label: t('benefitsPage.emailAlerts') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/multi_skin.svg', label: t('vip.benefit.multiTheme') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/helper.svg', label: t('benefitsPage.exclusiveService') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/no_advertise.svg', label: t('vip.benefit.noAds') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/high_flag.svg', label: t('benefitsPage.identityTag') },
+      { icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/group.svg', label: t('vip.benefit.alphaGroup') },
     ],
     [t]
   );
@@ -104,7 +104,7 @@ export default function PCBenefitsContent() {
                   <div className={styles.planTitle}>{isPro ? 'Pro-1' : 'Lite'}</div>
                   <div className={styles.planSub}>{isPro ? t('benefitsPage.planSubPro') : t('benefitsPage.planSubLite')}</div>
                 </div>
-                <img className={styles.tierBadge} src={isPro ? '/benefits/vip_pro1.svg' : '/benefits/flag.svg'} alt="" />
+                <img className={styles.tierBadge} src={isPro ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/vip_pro1.svg' : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/flag.svg'} alt="" />
               </div>
 
               <div className={styles.pointsLabel}>{t('benefitsPage.pointsThisMonth')}</div>
@@ -121,14 +121,14 @@ export default function PCBenefitsContent() {
 
             <div className={styles.benefitsPanel}>
               <div className={styles.benefitsHeader}>
-                <img src={isPro ? '/benefits/vip_pro.svg' : '/benefits/flag.svg'} alt="" />
+                <img src={isPro ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/vip_pro.svg' : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/flag.svg'} alt="" />
                 <span>{t('benefitsPage.exclusiveMemberLine', { name: isPro ? 'Pro1' : 'Lite' })}</span>
               </div>
 
               <div className={`${styles.metricCard} ${styles.metricCardFirst}`}>
                 <div className={styles.metricTop}>
                   <span className={styles.metricLabelWithIcon}>
-                    <img src="/benefits/monthly_points.svg" alt="" />
+                    <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/monthly_points.svg" alt="" />
                     <span>{t('benefitsPage.monthlyPoints')}</span>
                   </span>
                   <span>{pointsCur}/{pointsMax}</span>
@@ -139,7 +139,7 @@ export default function PCBenefitsContent() {
               <div className={`${styles.metricCard} ${styles.metricCardSecond}`}>
                 <div className={styles.metricTop}>
                   <span className={styles.metricLabelWithIcon}>
-                    <img src="/benefits/ai_call.svg" alt="" />
+                    <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/ai_call.svg" alt="" />
                     <span>{t('benefitsPage.aiCall')}</span>
                   </span>
                   <span>{aiCur}/{aiMax}</span>
@@ -150,7 +150,7 @@ export default function PCBenefitsContent() {
               <div className={`${styles.metricCard} ${styles.metricCardThird}`}>
                 <div className={styles.metricTop}>
                   <span className={styles.metricLabelWithIcon}>
-                    <img src="/benefits/big_deal.svg" alt="" />
+                    <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/big_deal.svg" alt="" />
                     <span>{t('vipRecharge.features.bigOrder')}</span>
                   </span>
                   <span>{depthText}</span>
@@ -185,7 +185,7 @@ export default function PCBenefitsContent() {
               <>
                 <div className={styles.proUpgradeCard}>
                   <div className={styles.proUpgradeTop}>
-                    <img className={styles.proUpgradeBadge} src="/benefits/vip_pro2.svg" alt="" />
+                    <img className={styles.proUpgradeBadge} src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/vip_pro2.svg" alt="" />
                     <div className={styles.proUpgradeMain}>
                       <div className={styles.proUpgradeTitleRow}>
                         <span>{t('benefitsPage.nextLevelCardTitle')}</span>
@@ -216,7 +216,7 @@ export default function PCBenefitsContent() {
                 <div className={styles.proAlphaCard}>
                   <div className={styles.proAlphaLeft}>
                     <span className={styles.proAlphaIconWrap}>
-                      <img src="/benefits/group.svg" alt="" />
+                      <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/group.svg" alt="" />
                     </span>
                     <span>{t('vip.benefit.alphaGroup')}</span>
                   </div>

@@ -29,7 +29,7 @@ const UserActions = ({
         </div>
         <div className={styles.actionButton} onClick={attendUs}>
           <div className={styles.actionIcon}>
-            <img className={styles.actionIconImg} src={'/icons/twitter.svg'} alt={t('user.followTwitter')} loading="lazy" decoding="async" />
+            <img className={styles.actionIconImg} src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/twitter.svg'} alt={t('user.followTwitter')} loading="lazy" decoding="async" />
           </div>
           <div className={styles.actionText}>{t('user.followTwitter')}</div>
         </div>

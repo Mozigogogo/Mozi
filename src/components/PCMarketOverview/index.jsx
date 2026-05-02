@@ -12,10 +12,10 @@ import styles from './index.module.less';
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
 const UpIcon = `${CDN_PREFIX}/icon/find/up.png`;
 const DownIcon = `${CDN_PREFIX}/icon/find/down.png`;
-const CoinIcon = '/icons/pc/total.svg';
-const TurnoverIcon = '/icons/pc/vol.svg';
-const MarketMonitoringIcon = '/icons/pc/watch.svg';
-const CalendarIcon = '/icons/pc/find_calendar.svg';
+const CoinIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/total.svg';
+const TurnoverIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/vol.svg';
+const MarketMonitoringIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/watch.svg';
+const CalendarIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/find_calendar.svg';
 
 /**
  * PC端市场概况组件 - 4个统计卡片

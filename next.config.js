@@ -9,7 +9,7 @@ const nextConfig = withLess({
   // 排查完成后建议关闭，避免暴露源码细节。
   productionBrowserSourceMaps: false,
   images: {
-    domains: ['localhost', 'moziinnovations.com'],
+    domains: ['localhost', 'moziinnovations.com', 'image-1317406749.cos.ap-shanghai.myqcloud.com'],
     unoptimized: true,
   },
   webpack: (config) => {

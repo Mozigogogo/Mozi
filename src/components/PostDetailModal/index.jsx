@@ -100,7 +100,7 @@ export default function PostDetailModal({
   if (!open) return null;
 
   const {
-    coverImage = '/images/community/post_detail.png',
+    coverImage = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/community/post_detail.png',
     authorName = '墨子交易员',
     authorAvatar = '/default-avatar.png',
     timeText = '1小时前',

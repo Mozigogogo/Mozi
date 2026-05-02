@@ -11,13 +11,13 @@ const NewbieTasks = ({ tasksList, handleTaskClick, loading, verifyingTaskId }) =
 
   return (
     <div className={styles.taskListSection}>
-      <SectionHeader iconSrc="/point/new_alert.svg" iconAlt="Task" title={t('pointsDetail.newbieTasks')} />
+      <SectionHeader iconSrc="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/new_alert.svg" iconAlt="Task" title={t('pointsDetail.newbieTasks')} />
       {loading ? (
         <SectionSkeleton count={5} />
       ) : tasksList.length === 0 ? (
         <div className={styles.emptyState}>
           <img
-            src="/point/no_task.svg"
+            src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/no_task.svg"
             alt="no task"
             className={styles.emptyIcon}
             onError={(e) => {
@@ -49,7 +49,7 @@ const NewbieTasks = ({ tasksList, handleTaskClick, loading, verifyingTaskId }) =
                 <div className={styles.taskMetaRow}>
                   <div className={styles.dailyTaskReward}>
                     <span>+{task.points}</span>
-                    <DeferredImg src="/point/new_coin.svg" className={styles.rewardIcon} alt="point" width={14} height={14} />
+                    <DeferredImg src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/new_coin.svg" className={styles.rewardIcon} alt="point" width={14} height={14} />
                   </div>
                   {(task.taskCode === 'PUSH' || task.taskCode === 'FIRST_POST') && (
                     <div className={styles.taskSubText}>{t('pointsDetail.tasks.push.note') || 'more than 50'}</div>

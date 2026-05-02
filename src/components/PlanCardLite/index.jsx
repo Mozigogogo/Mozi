@@ -18,7 +18,7 @@ export default function PlanCardLite({
 }) {
   const { t } = useTranslation();
   const isPro = activeTier === 'pro';
-  const tierIconSrc = isPro ? '/benefits/vip_pro1.svg' : '/benefits/flag.svg';
+  const tierIconSrc = isPro ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/vip_pro1.svg' : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/flag.svg';
   const curNum = typeof pointsCur === 'number' ? pointsCur : Number(pointsCur);
   const maxNum = typeof pointsMax === 'number' ? pointsMax : Number(pointsMax);
   const percent = maxNum > 0 ? Math.max(0, Math.min(100, (curNum / maxNum) * 100)) : 0;
@@ -76,7 +76,7 @@ export default function PlanCardLite({
                 <div className={styles.proNextTierHeader}>
                   <img
                     className={styles.proNextTierHexBadge}
-                    src="/benefits/vip_pro2.svg"
+                    src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/benefits/vip_pro2.svg"
                     alt=""
                     aria-hidden="true"
                   />

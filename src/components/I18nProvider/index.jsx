@@ -35,7 +35,7 @@ export default function I18nProvider({ children }) {
   return (
     <I18nextProvider i18n={i18n}>
       {!isInitialized && !isHomeRoute ? (
-        <LogoLoading visible={true} fullscreen mask image="/images/community/loadding.png" size={72} />
+        <LogoLoading visible={true} fullscreen mask image="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/community/loadding.png" size={72} />
       ) : (
         children
       )}

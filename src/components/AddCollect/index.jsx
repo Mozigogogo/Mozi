@@ -102,7 +102,7 @@ const AddCollect = ({ isOwn: propIsOwn, symbol, loginCb, onSuccess }) => {
       <img
         key={curOwn ? 'liked' : 'unliked'}
         className={styles.collectIcon}
-        src={curOwn ? '/icons/new_detail/like_actived.svg' : '/icons/new_detail/like_no_actived.svg'}
+        src={curOwn ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/like_actived.svg' : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/like_no_actived.svg'}
         alt="favorite"
       />
     </div>

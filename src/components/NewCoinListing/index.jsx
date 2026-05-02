@@ -54,7 +54,7 @@ const NewCoinListing = ({ showMore = false, data = [], onMoreClick, loading = fa
               const details = coin.deteil || coin.details || coin.description;
               const title = coin.title;
               const coinName = coin.symbol || coin.coin || coin.currency || coin.name || '';
-              const iconUrl = coin.logoUrl || coin.exchangeIcon || coin.icon || '/icons/pc/calendar.svg';
+              const iconUrl = coin.logoUrl || coin.exchangeIcon || coin.icon || 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/calendar.svg';
               
               return (
                 <div className={styles.coinItem} key={coin.id || index}>

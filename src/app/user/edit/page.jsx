@@ -163,14 +163,14 @@ function buildEditFormSignature(patch, identityOverride) {
 
 // 模拟图标，实际项目中请替换为真实资源
 const ICONS = {
-  identity: '/icons/new_user/user_tag.svg',
-  bio: '/icons/new_user/user_info.svg',
-  email: '/icons/new_user/email.svg',
-  phone: '/icons/new_user/phone.svg',
-  commission: '/icons/new_user/reward.svg',
-  edit: '/icons/new_user/edit.svg',
-  upload: '/icons/new_user/upload_image.svg',
-  right: '/icons/new_user/right.svg'
+  identity: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_user/user_tag.svg',
+  bio: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_user/user_info.svg',
+  email: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_user/email.svg',
+  phone: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_user/phone.svg',
+  commission: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_user/reward.svg',
+  edit: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_user/edit.svg',
+  upload: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_user/upload_image.svg',
+  right: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_user/right.svg'
 };
 
 const PENDING_IDENTITY_KEY = 'mozi_pending_profile_identity';

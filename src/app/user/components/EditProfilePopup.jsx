@@ -7,12 +7,12 @@ const DEFAULT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/as
 
 // 图标常量
 const ICONS = {
-  tag: '/icons/new_user/user_tag.svg',
-  info: '/icons/new_user/user_info.svg',
-  email: '/icons/new_user/email.svg',
-  phone: '/icons/new_user/phone.svg',
-  reward: '/icons/new_user/reward.svg',
-  edit: '/icons/new_user/edit.svg'
+  tag: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_user/user_tag.svg',
+  info: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_user/user_info.svg',
+  email: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_user/email.svg',
+  phone: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_user/phone.svg',
+  reward: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_user/reward.svg',
+  edit: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_user/edit.svg'
 };
 
 const EditProfilePopup = ({ visible, onClose, t, userInfo, setUserInfo }) => {

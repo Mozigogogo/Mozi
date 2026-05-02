@@ -13,8 +13,8 @@ export default function PointsInsufficientBubble({
 }) {
   const { t, i18n } = useTranslation();
   const isEnglish = i18n?.language?.startsWith('en');
-  const earnPointsSvg = isEnglish ? '/images/ai_robot/earn_points_en.svg' : '/images/ai_robot/earn_points.svg';
-  const upgradeVipSvg = isEnglish ? '/images/ai_robot/upgrade_vip_en.svg' : '/images/ai_robot/upgrade_vip.svg';
+  const earnPointsSvg = isEnglish ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/earn_points_en.svg' : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/earn_points.svg';
+  const upgradeVipSvg = isEnglish ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/upgrade_vip_en.svg' : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/upgrade_vip.svg';
 
   const displayTitle = title || t('robot.pointsLock.title');
   const currentLabel = t('robot.pointsLock.currentPoints', { points: currentPoints ?? '--' });

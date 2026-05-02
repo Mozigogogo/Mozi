@@ -80,7 +80,7 @@ export default function AchievementPoolEventCard({ mode = 'BOOST', remainingHour
         onClick={() => router.push(isPC ? '/subscribe' : '/vip-recharge')}
       >
         <div className={styles.upgradeLeft}>
-          <img src="/point/vip.svg" alt="vip" className={styles.crown} />
+          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/vip.svg" alt="vip" className={styles.crown} />
           <div>
             <div className={styles.upgradeTitle}>
               {t('pointsDetail.poolUpgradeMember', { defaultValue: 'Unlock pro' })}

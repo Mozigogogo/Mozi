@@ -189,7 +189,7 @@ export default function HomeClient({ initialIsPC = false }) {
           visible={homeBootMaskVisible}
           fullscreen
           mask
-          image="/images/community/loadding.png"
+          image="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/community/loadding.png"
           size={72}
         />
       </>
@@ -204,7 +204,7 @@ export default function HomeClient({ initialIsPC = false }) {
         visible={homeBootMaskVisible}
         fullscreen
         mask
-        image="/images/community/loadding.png"
+        image="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/community/loadding.png"
         size={72}
       />
     </>

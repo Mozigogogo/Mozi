@@ -169,7 +169,7 @@ export default function ShareAiChatModal({
         <div className={styles.actions}>
           <button type="button" className={styles.actionItem} onClick={copyLink}>
             <span className={styles.actionIconCircle}>
-              <img className={styles.actionIconImg} src="/icons/pc/link.svg" alt="" aria-hidden />
+              <img className={styles.actionIconImg} src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/link.svg" alt="" aria-hidden />
             </span>
             <span className={styles.actionLabel}>
               {copied ? t('shareChat.copied') : t('shareChat.copyLink')}
@@ -178,14 +178,14 @@ export default function ShareAiChatModal({
 
           <button type="button" className={styles.actionItem} onClick={shareToTwitter}>
             <span className={styles.actionIconCircle}>
-              <img className={styles.actionIconImg} src="/icons/x-logo-45556c.svg" alt="" aria-hidden />
+              <img className={styles.actionIconImg} src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/x-logo-45556c.svg" alt="" aria-hidden />
             </span>
             <span className={styles.actionLabel}>{t('shareChat.twitter')}</span>
           </button>
 
           <button type="button" className={styles.actionItem} onClick={shareToTelegram}>
             <span className={styles.actionIconCircle}>
-              <img className={styles.actionIconImg} src="/icons/pc/tg.svg" alt="" aria-hidden />
+              <img className={styles.actionIconImg} src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/tg.svg" alt="" aria-hidden />
             </span>
             <span className={styles.actionLabel}>{t('shareChat.tg')}</span>
           </button>

@@ -69,7 +69,7 @@ export default function BindBenefitCodeModal({
         return (
           <span key={index} className={styles.iconButton}>
             <Image 
-              src="/icons/new_bind/bind.svg"
+              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_bind/bind.svg"
               alt="link"
               width={52}
               height={48}

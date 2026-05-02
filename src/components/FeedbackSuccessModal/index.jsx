@@ -44,7 +44,7 @@ export default function FeedbackSuccessModal({ visible, onClose }) {
       <div className={s.modalContent}>
         <div className={s.imageContainer}>
           <img 
-            src="/images/activity/toast_modal.png" 
+            src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/activity/toast_modal.png" 
             alt="Success"
             className={s.successImage}
           />

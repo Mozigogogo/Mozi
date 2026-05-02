@@ -31,31 +31,31 @@ function Toggle({ checked, onChange, disabled }) {
 
 function PhoneAlarmIcon() {
   return (
-    <img src="/icons/new_detail/telephone.svg" alt="phone" width="45" height="45" />
+    <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/telephone.svg" alt="phone" width="45" height="45" />
   );
 }
 
 function MailAlarmIcon() {
   return (
-    <img src="/icons/new_detail/email.svg" alt="email" width="24" height="24" />
+    <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/email.svg" alt="email" width="24" height="24" />
   );
 }
 
 function PushAlarmIcon() {
   return (
-    <img src="/icons/new_detail/push.svg" alt="push" width="24" height="24" />
+    <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/push.svg" alt="push" width="24" height="24" />
   );
 }
 
 function PhoneInputIcon() {
   return (
-    <img src="/icons/new_detail/telephone_num.svg" alt="phone" width="14" height="16" />
+    <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/telephone_num.svg" alt="phone" width="14" height="16" />
   );
 }
 
 function MailInputIcon() {
   return (
-    <img src="/icons/new_detail/email_num.svg" alt="email" width="18" height="14" />
+    <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/email_num.svg" alt="email" width="18" height="14" />
   );
 }
 
@@ -510,7 +510,7 @@ export default function OneClickAlarmModal({
       >
         {(mode === 'config' || mode === 'oneClick') && (
           <img 
-            src={i18n.language === 'en' ? '/images/new_detail/alert_text_en.svg' : '/images/new_detail/alert_text_zh.svg'}
+            src={i18n.language === 'en' ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_detail/alert_text_en.svg' : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_detail/alert_text_zh.svg'}
             alt="alert text"
             className={styles.alertTextImage}
           />
@@ -684,7 +684,7 @@ export default function OneClickAlarmModal({
                           }}
                         >
                           <span className={styles.countryPickerTriggerValue}>{countryCode}</span>
-                          <img className={styles.countryPickerTriggerArrow} src="/icons/new_detail/down_arrow.svg" alt="down" />
+                          <img className={styles.countryPickerTriggerArrow} src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/down_arrow.svg" alt="down" />
                         </button>
                       </div>
                       <input
