@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import TelegramAutoLogin from '@/components/TelegramAutoLogin';
 import { getMySubscription } from '@/api/vip';
@@ -31,6 +31,36 @@ export default function HomeClient({ initialIsPC = false }) {
   const [didKickoffSubscription, setDidKickoffSubscription] = useState(false);
   const [tgLoginSuccessReceived, setTgLoginSuccessReceived] = useState(false);
   const [homeBootMaskVisible, setHomeBootMaskVisible] = useState(true);
+  const [pcModuleReady, setPcModuleReady] = useState(false);
+  const [mobileModuleReady, setMobileModuleReady] = useState(false);
+
+  // 预加载首屏模块，避免遮罩提前消失后出现长时间空白
+  useEffect(() => {
+    let cancelled = false;
+    if (typeof window === 'undefined') return;
+    if (isPC) {
+      Promise.all([import('../components/PCLayout'), import('../components/PCHome')])
+        .then(() => {
+          if (!cancelled) setPcModuleReady(true);
+        })
+        .catch(() => {
+          if (!cancelled) setPcModuleReady(true);
+        });
+      return () => {
+        cancelled = true;
+      };
+    }
+    Promise.all([import('../components/MobileHome')])
+      .then(() => {
+        if (!cancelled) setMobileModuleReady(true);
+      })
+      .catch(() => {
+        if (!cancelled) setMobileModuleReady(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isPC]);
 
   useLayoutEffect(() => {
     if (typeof window === 'undefined') return;
@@ -133,6 +163,9 @@ export default function HomeClient({ initialIsPC = false }) {
       const elapsed = Date.now() - startTs;
       const remain = seen || fastReturn ? 0 : Math.max(0, MIN_MASK_MS - elapsed);
       window.setTimeout(() => {
+        // 额外等待：首屏模块至少 ready（避免关闭遮罩后白屏）
+        const moduleReady = isPC ? pcModuleReady : mobileModuleReady;
+        if (!moduleReady) return;
         setHomeBootMaskVisible(false);
         try {
           sessionStorage.setItem(SPLASH_SEEN_KEY, '1');
@@ -143,7 +176,7 @@ export default function HomeClient({ initialIsPC = false }) {
     // 不等待 window load（图片/三方资源），首屏结构优先展示
     const rafId = window.requestAnimationFrame(hideMask);
     return () => window.cancelAnimationFrame(rafId);
-  }, []);
+  }, [isPC, pcModuleReady, mobileModuleReady]);
 
   if (isPC) {
     return (

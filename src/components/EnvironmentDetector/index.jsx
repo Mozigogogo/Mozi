@@ -8,7 +8,6 @@ export default function EnvironmentDetector() {
 
     const isDebugEnabled = (() => {
       try {
-        if (process.env.NODE_ENV !== 'production') return true;
         return new URLSearchParams(window.location.search).get('envDebug') === '1';
       } catch (_) {
         return false;
@@ -86,7 +85,23 @@ export default function EnvironmentDetector() {
     };
 
     // 立即检测一次
-    if (detectEnvironment()) return;
+    // 如果已经明确是 pc（无 TG 迹象），无需轮询 10 秒；直接退出即可，减少首屏噪音与开销。
+    const matchedNow = detectEnvironment();
+    if (!matchedNow) {
+      const telegramWebApp = window.Telegram?.WebApp;
+      const hash = window.location?.hash || '';
+      const rawHash = hash.startsWith('#') ? hash.slice(1) : hash;
+      const hashParams = new URLSearchParams(rawHash);
+      const hasTgSignals =
+        !!telegramWebApp ||
+        hashParams.has('tgWebAppData') ||
+        hashParams.has('tgWebAppPlatform');
+      if (!hasTgSignals) {
+        return;
+      }
+    } else {
+      return;
+    }
 
     // TG SDK 可能延迟注入：短时间内轮询重试，直到识别到 TG 或达到最大次数
     let attempts = 0;

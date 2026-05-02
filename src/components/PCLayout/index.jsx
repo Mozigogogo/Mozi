@@ -163,12 +163,25 @@ export default function PCLayout({ children }) {
     // 监听storage事件（跨标签页同步）
     window.addEventListener('storage', syncUserInfo);
     
-    // 定期检查userInfo变化（同一标签页内的更新）- 改为5秒一次
-    const timer = setInterval(syncUserInfo, 5000);
+    // 定期检查 userInfo 变化（同一标签页内的更新）
+    // 低优先级启动：避免与首页首屏请求抢主线程/网络
+    const startPolling = () => setInterval(syncUserInfo, 5000);
+    let timer;
+    try {
+      if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(() => {
+          timer = startPolling();
+        }, { timeout: 2000 });
+      } else {
+        timer = startPolling();
+      }
+    } catch (_) {
+      timer = startPolling();
+    }
     
     return () => {
       window.removeEventListener('storage', syncUserInfo);
-      clearInterval(timer);
+      if (timer) clearInterval(timer);
     };
   }, []);
 
