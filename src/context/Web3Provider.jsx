@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { WagmiProvider, http, useAccount, useSwitchChain, useWalletClient } from 'wagmi'
 import { mainnet, arbitrum } from 'wagmi/chains'
@@ -29,17 +29,6 @@ const ARBITRUM_RPC_URL =
   process.env.NEXT_PUBLIC_ARBITRUM_RPC_URL || 'https://arbitrum-one-rpc.publicnode.com'
 
 const queryClient = new QueryClient()
-
-const wagmiConfig = getDefaultConfig({
-  appName: 'Mozi H5',
-  projectId: projectId || 'missing-project-id',
-  chains: [mainnet, arbitrum],
-  transports: {
-    [mainnet.id]: http(MAINNET_RPC_URL),
-    [arbitrum.id]: http(ARBITRUM_RPC_URL),
-  },
-  ssr: true,
-})
 
 function WalletModalBridge() {
   const { openConnectModal } = useConnectModal()
@@ -92,6 +81,23 @@ function WalletModalBridge() {
 }
 
 export default function Web3Provider({ children }) {
+  // 必须在整棵子树首帧就提供 WagmiProvider，否则 RainbowKit / ConnectButton 会立刻调用 useConfig 报错。
+  // ssr: true 为 RainbowKit + Next 推荐写法，避免在服务端走 WalletConnect 的 indexedDB 路径。
+  const wagmiConfig = useMemo(
+    () =>
+      getDefaultConfig({
+        appName: 'Mozi H5',
+        projectId: projectId || 'missing-project-id',
+        chains: [mainnet, arbitrum],
+        transports: {
+          [mainnet.id]: http(MAINNET_RPC_URL),
+          [arbitrum.id]: http(ARBITRUM_RPC_URL),
+        },
+        ssr: true,
+      }),
+    []
+  )
+
   return (
     <WagmiProvider config={wagmiConfig} reconnectOnMount={true}>
       <QueryClientProvider client={queryClient}>

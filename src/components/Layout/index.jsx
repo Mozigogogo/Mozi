@@ -103,10 +103,8 @@ const Layout = ({ children, title, isLoading, isError, errMsg, needLogin, loginC
             const isActive = item.path === '/' ? isHomePath(pathname) : pathname === item.path;
             const iconName = iconMap[item.icon] || 'home';
             const iconSrc = `/icons/${iconName}-${isActive ? 'actived' : 'no-actived'}.png`;
-            const href =
-              item.path === '/' && isHomePath(pathname)
-                ? '/home'
-                : item.path;
+            // 配置里首页 path 为 `/`，但 `/` 是营销落地页；应用内首页统一走 `/home`（与 middleware 里 TG 进 `/` 重定向一致）
+            const href = item.path === '/' ? '/home' : item.path;
             
             return (
               <Link href={href} key={item.path} className={styles.tabItem}>

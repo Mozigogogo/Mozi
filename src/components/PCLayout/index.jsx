@@ -9,6 +9,7 @@ import {
   Button, 
   Typography, 
   ConfigProvider,
+  message,
 } from 'antd';
 import {
   UserOutlined,
@@ -22,6 +23,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useAccount, useDisconnect } from 'wagmi';
 import PCSearchResults from '../PCSearchResults';
 import PCFindContent from '../PCFindContent';
 import PCCommunityContent from '../PCCommunityContent';
@@ -62,6 +64,8 @@ export default function PCLayout({ children }) {
   const searchParams = useSearchParams();
   const { formatValue, formatPrice } = useFormatNumber();
   const { t, i18n } = useTranslation();
+  const { isConnected: web3Connected } = useAccount();
+  const { disconnect } = useDisconnect();
   const noFavoritesText = t('discover.noFavorites', {
     defaultValue: (i18n?.language || '').startsWith('en') ? 'No Favorites' : '暂无收藏自选',
   });
@@ -102,6 +106,26 @@ export default function PCLayout({ children }) {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [showUserPanel, setShowUserPanel] = useState(false);
   const [showUserProfilePopup, setShowUserProfilePopup] = useState(false);
+
+  const handleProfilePanelLogout = useCallback(() => {
+    try {
+      localStorage.removeItem('token');
+      localStorage.removeItem('userInfo');
+      localStorage.removeItem('userDataInfo');
+      localStorage.removeItem('userId');
+    } catch (_) {}
+    if (web3Connected) {
+      try {
+        disconnect();
+      } catch (_) {}
+    }
+    setUserInfo(null);
+    setShowUserProfilePopup(false);
+    message.success(t('user.logoutSuccess') || '退出成功');
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
+  }, [disconnect, web3Connected, t]);
 
   useEffect(() => {
     const syncUserInfo = () => {
@@ -1067,10 +1091,7 @@ export default function PCLayout({ children }) {
       <UserProfilePanelPopup
         open={showUserProfilePopup}
         onClose={() => setShowUserProfilePopup(false)}
-        onLogout={() => {
-          setShowUserProfilePopup(false);
-          router.push('/user');
-        }}
+        onLogout={handleProfilePanelLogout}
         onSave={() => {
           setShowUserProfilePopup(false);
           let nextRoute = '/subscribe';
