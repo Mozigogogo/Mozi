@@ -8,6 +8,7 @@ import I18nProvider from "@/components/I18nProvider";
 import { LogoLoading } from "@/components/Loading";
 import VConsoleLoader from "@/components/VConsole";
 import InviteCodeHandler from "@/components/InviteCodeHandler";
+import DetailDeepLinkHandler from "@/components/DetailDeepLinkHandler";
 import EnvironmentDetector from "@/components/EnvironmentDetector";
 import RouteChangeHandler from "@/components/RouteChangeHandler";
 import TokenDebugMonitor from "@/components/TokenDebugMonitor";
@@ -69,6 +70,7 @@ export default function RootLayout({ children }) {
         <VConsoleLoader />
         <Suspense fallback={null}>
           <InviteCodeHandler />
+          <DetailDeepLinkHandler />
         </Suspense>
         <ThemeProvider>
           <I18nProvider>

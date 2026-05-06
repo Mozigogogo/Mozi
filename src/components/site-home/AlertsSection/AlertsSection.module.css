@@ -338,6 +338,65 @@
   background: #b83f3f;
 }
 
+/* 1367px–1440px：常见 1440pt 逻辑宽设备仍走「大屏」分支，单独收敛 ticker 与手机比例 */
+@media (max-width: 1440px) and (min-width: 1367px) {
+  .alertTicker {
+    --ticker-width: min(480px, 34vw);
+    border-radius: 22px;
+    border-width: 2.4px;
+    padding: 18px 14px;
+  }
+
+  .alertTickerSecondary {
+    margin-top: -18px;
+    padding: 14px 14px;
+  }
+
+  .alertTickerRow {
+    gap: 11px;
+  }
+
+  .alertTickerCoinWrap {
+    gap: 8px;
+  }
+
+  .alertTickerCoinIcon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .alertTickerCoin,
+  .alertTickerCoinMuted {
+    font-size: clamp(16px, 1.15vw, 24px);
+  }
+
+  .alertTickerChart {
+    height: 48px;
+  }
+
+  .alertTickerChartDown {
+    transform: translateY(4px);
+  }
+
+  .alertTickerChartWrap {
+    padding-right: 28px;
+  }
+
+  .alertTickerUp,
+  .alertTickerDown {
+    min-width: 88px;
+    height: 44px;
+    border-radius: 10px;
+    font-size: clamp(14px, 1vw, 20px);
+  }
+
+  .alertTickerSecondary .alertTickerDown {
+    min-width: 76px;
+    height: 40px;
+    font-size: 13px;
+  }
+}
+
 @media (max-width: 1366px), (max-height: 680px) {
   .alertSideCard {
     width: 90px;
