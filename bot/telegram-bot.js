@@ -15,6 +15,11 @@ const APP_URL = process.env.APP_URL || 'https://moziinnovations-production.up.ra
 const TG_COMMUNITY_URL = 'https://t.me/MoziInnovations';
 const TWITTER_URL = 'https://x.com/Innovation56171';
 
+// 告警引导卡片图（可与欢迎图相同，或通过环境变量覆盖）
+const ALERT_CARD_IMAGE =
+  process.env.ALERT_CARD_IMAGE ||
+  'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/twitter.jpg';
+
 // 检查必要的环境变量
 if (!BOT_TOKEN) {
   console.error('❌ 错误: 请设置 BOT_TOKEN 环境变量');
@@ -32,8 +37,10 @@ const i18n = {
     bindSuccess: '邀请绑定成功',
     bindFailed: '邀请绑定失败',
     alertNeedSymbol: '请带上交易对符号，例如：\n<code>/alert btc</code>\n或 <code>/alert 设置告警 btc</code>',
-    alertIntro: (sym) => `🔔 为 <b>${sym}</b> 设置价格告警（免费）\n\n点击下方按钮在 Mini App 详情页中完成配置。`,
-    alertOpenDetail: '📱 打开详情并配置告警',
+    alertIntro: (sym) => `🔔 为 <b>${sym}</b> 设置价格告警（免费）\n\n点击下方「设置告警」在 Mini App 详情页中完成配置。`,
+    alertOpenDetail: '设置告警',
+    alertWebAppBlocked:
+      '（Mini App 按钮未通过校验，已改为浏览器打开；请在 BotFather 为该 Bot 配置与 APP_URL 一致的 Mini App 域名。）',
   },
   en: {
     welcomeWithInvite: (code) => `🎉 Welcome to MoziInnovations!\n\nYou have joined via invite code ${code}, come and register now!`,
@@ -44,8 +51,10 @@ const i18n = {
     bindSuccess: 'Invitation binding successful',
     bindFailed: 'Invitation binding failed',
     alertNeedSymbol: 'Please include a symbol, e.g.:\n<code>/alert btc</code>',
-    alertIntro: (sym) => `🔔 Set price alerts for <b>${sym}</b> (free)\n\nTap the button below to finish setup in the Mini App detail page.`,
-    alertOpenDetail: '📱 Open detail & set alerts',
+    alertIntro: (sym) => `🔔 Set price alerts for <b>${sym}</b> (free)\n\nTap below to open the Mini App detail page and finish setup.`,
+    alertOpenDetail: 'Set alert',
+    alertWebAppBlocked:
+      '(Mini App button was rejected; opening in browser instead. Configure the Mini App domain in BotFather to match APP_URL.)',
   }
 };
 
@@ -103,9 +112,7 @@ bot.start(async (ctx) => {
   const message = inviteCode ? texts.welcomeWithInvite(inviteCode) : texts.welcome;
   
   // 发送带图片的消息
-  const welcomeImage = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/twitter.jpg';
-  
-  await ctx.replyWithPhoto(welcomeImage, {
+  await ctx.replyWithPhoto(ALERT_CARD_IMAGE, {
     caption: message,
     reply_markup: {
       inline_keyboard: [
@@ -130,13 +137,40 @@ bot.command('alert', async (ctx) => {
   }
 
   const detailUrl = `${APP_URL.replace(/\/$/, '')}/detail?symbol=${encodeURIComponent(symbol)}`;
+  const caption = texts.alertIntro(symbol);
+  const keyboardWebApp = {
+    inline_keyboard: [[{ text: texts.alertOpenDetail, web_app: { url: detailUrl } }]],
+  };
+  const keyboardUrl = {
+    inline_keyboard: [[{ text: texts.alertOpenDetail, url: detailUrl }]],
+  };
 
-  await ctx.reply(texts.alertIntro(symbol), {
-    parse_mode: 'HTML',
-    reply_markup: {
-      inline_keyboard: [[{ text: texts.alertOpenDetail, web_app: { url: detailUrl } }]],
-    },
-  });
+  try {
+    await ctx.replyWithPhoto(ALERT_CARD_IMAGE, {
+      caption,
+      parse_mode: 'HTML',
+      reply_markup: keyboardWebApp,
+    });
+  } catch (err) {
+    const reason = err?.response?.description || err?.message || String(err);
+    console.error('[/alert] web_app 消息发送失败:', reason);
+
+    try {
+      await ctx.replyWithPhoto(ALERT_CARD_IMAGE, {
+        caption: `${caption}\n\n<i>${texts.alertWebAppBlocked}</i>`,
+        parse_mode: 'HTML',
+        reply_markup: keyboardUrl,
+      });
+    } catch (err2) {
+      console.error('[/alert] 备用链接发送失败:', err2?.response?.description || err2?.message);
+      await ctx.reply(`${caption}\n\n${detailUrl}`, { parse_mode: 'HTML' });
+    }
+  }
+});
+
+bot.catch((err, ctx) => {
+  console.error('Bot 未捕获错误:', err?.response?.description || err?.message || err);
+  return ctx.reply('处理失败，请稍后重试。').catch(() => {});
 });
 
 // 启动
