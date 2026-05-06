@@ -10,6 +10,8 @@ const { Telegraf } = require('telegraf');
 // 环境变量配置
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const APP_URL = process.env.APP_URL || 'https://moziinnovations-production.up.railway.app';
+/** 机器人用户名（不含 @），用于 /alert 在 web_app 被拒时在 Telegram 内打开 Mini App：t.me/<用户名>?startapp=… */
+const BOT_USERNAME = (process.env.BOT_USERNAME || 'Moziinnovations_bot').replace(/^@/, '');
 
 // 社交媒体链接
 const TG_COMMUNITY_URL = 'https://t.me/MoziInnovations';
@@ -40,7 +42,7 @@ const i18n = {
     alertIntro: (sym) => `🔔 为 <b>${sym}</b> 设置价格告警（免费）\n\n点击下方「设置告警」在 Mini App 详情页中完成配置。`,
     alertOpenDetail: '设置告警',
     alertWebAppBlocked:
-      '（Mini App 按钮未通过校验，已改为浏览器打开；请在 BotFather 为该 Bot 配置与 APP_URL 一致的 Mini App 域名。）',
+      '（内联 Mini App 按钮未通过域名校验，已改为在 Telegram 内打开机器人 Mini App；建议在 BotFather 中将 Mini App 域名与 APP_URL 保持一致以支持直达详情。）',
   },
   en: {
     welcomeWithInvite: (code) => `🎉 Welcome to MoziInnovations!\n\nYou have joined via invite code ${code}, come and register now!`,
@@ -54,7 +56,7 @@ const i18n = {
     alertIntro: (sym) => `🔔 Set price alerts for <b>${sym}</b> (free)\n\nTap below to open the Mini App detail page and finish setup.`,
     alertOpenDetail: 'Set alert',
     alertWebAppBlocked:
-      '(Mini App button was rejected; opening in browser instead. Configure the Mini App domain in BotFather to match APP_URL.)',
+      '(Inline Mini App button failed domain check; opening the bot Mini App inside Telegram instead. Configure BotFather Mini App domain to match APP_URL for direct detail links.)',
   }
 };
 
@@ -75,6 +77,13 @@ const resolveSymbolFromAlertArgs = (args = []) => {
   if (!sym) return null;
   if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,31}$/.test(sym)) return null;
   return sym.toUpperCase();
+};
+
+/** Telegram startapp 仅允许 [A-Za-z0-9_-]，最长 64；与前端 TelegramStartappHandler 约定 alert_<SYMBOL> */
+const buildAlertStartappParam = (symbol) => {
+  const p = `alert_${symbol}`;
+  if (p.length > 64) return null;
+  return /^alert_[A-Za-z0-9_-]+$/.test(p) ? p : null;
 };
 
 // 获取用户语言对应的文本
@@ -138,13 +147,18 @@ bot.command('alert', async (ctx) => {
 
   // 供 Mini App 识别：从 Telegram 机器人「设置告警」入口进入详情（非普通浏览）
   const detailUrl = `${APP_URL.replace(/\/$/, '')}/detail?symbol=${encodeURIComponent(symbol)}&from=tg_alert`;
+  const startapp = buildAlertStartappParam(symbol);
+  const telegramMiniAppUrl = startapp
+    ? `https://t.me/${BOT_USERNAME}?startapp=${startapp}`
+    : null;
   const caption = texts.alertIntro(symbol);
   const keyboardWebApp = {
     inline_keyboard: [[{ text: texts.alertOpenDetail, web_app: { url: detailUrl } }]],
   };
-  const keyboardUrl = {
-    inline_keyboard: [[{ text: texts.alertOpenDetail, url: detailUrl }]],
-  };
+  /** web_app 被拒时：用 t.me?startapp= 在客户端内拉起 Mini App，避免 url= 外链进系统浏览器 */
+  const keyboardTelegramMiniApp = telegramMiniAppUrl
+    ? { inline_keyboard: [[{ text: texts.alertOpenDetail, url: telegramMiniAppUrl }]] }
+    : { inline_keyboard: [[{ text: texts.alertOpenDetail, url: detailUrl }]] };
 
   try {
     await ctx.replyWithPhoto(ALERT_CARD_IMAGE, {
@@ -160,11 +174,12 @@ bot.command('alert', async (ctx) => {
       await ctx.replyWithPhoto(ALERT_CARD_IMAGE, {
         caption: `${caption}\n\n<i>${texts.alertWebAppBlocked}</i>`,
         parse_mode: 'HTML',
-        reply_markup: keyboardUrl,
+        reply_markup: keyboardTelegramMiniApp,
       });
     } catch (err2) {
       console.error('[/alert] 备用链接发送失败:', err2?.response?.description || err2?.message);
-      await ctx.reply(`${caption}\n\n${detailUrl}`, { parse_mode: 'HTML' });
+      const fallbackUrl = telegramMiniAppUrl || detailUrl;
+      await ctx.reply(`${caption}\n\n${fallbackUrl}`, { parse_mode: 'HTML' });
     }
   }
 });
