@@ -10,8 +10,8 @@ const { Telegraf } = require('telegraf');
 // 环境变量配置
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const APP_URL = process.env.APP_URL || 'https://moziinnovations-production.up.railway.app';
-/** 机器人用户名（不含 @），用于 /alert 在 web_app 被拒时在 Telegram 内打开 Mini App：t.me/<用户名>?startapp=… */
-const BOT_USERNAME = (process.env.BOT_USERNAME || 'Moziinnovations_bot').replace(/^@/, '');
+/** 机器人用户名（不含 @），须与 Telegram 上 @ 名一致；默认与 src/utils/constants.js 的 TG_BOT_USERNAME 相同 */
+const BOT_USERNAME = (process.env.BOT_USERNAME || 'Moziinovations_bot').replace(/^@/, '');
 
 // 社交媒体链接
 const TG_COMMUNITY_URL = 'https://t.me/MoziInnovations';
