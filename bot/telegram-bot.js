@@ -1,6 +1,7 @@
 /**
  * Mozi Telegram Bot
  * 监听 /start 命令，处理邀请码绑定
+ * /alert：群内免费引导至 Mini App 详情页配置告警
  * 支持中英文国际化
  */
 
@@ -30,6 +31,9 @@ const i18n = {
     followX: '🐦 关注 X',
     bindSuccess: '邀请绑定成功',
     bindFailed: '邀请绑定失败',
+    alertNeedSymbol: '请带上交易对符号，例如：\n<code>/alert btc</code>\n或 <code>/alert 设置告警 btc</code>',
+    alertIntro: (sym) => `🔔 为 <b>${sym}</b> 设置价格告警（免费）\n\n点击下方按钮在 Mini App 详情页中完成配置。`,
+    alertOpenDetail: '📱 打开详情并配置告警',
   },
   en: {
     welcomeWithInvite: (code) => `🎉 Welcome to MoziInnovations!\n\nYou have joined via invite code ${code}, come and register now!`,
@@ -39,7 +43,29 @@ const i18n = {
     followX: '🐦 Follow X',
     bindSuccess: 'Invitation binding successful',
     bindFailed: 'Invitation binding failed',
+    alertNeedSymbol: 'Please include a symbol, e.g.:\n<code>/alert btc</code>',
+    alertIntro: (sym) => `🔔 Set price alerts for <b>${sym}</b> (free)\n\nTap the button below to finish setup in the Mini App detail page.`,
+    alertOpenDetail: '📱 Open detail & set alerts',
   }
+};
+
+/** 从 /alert 后的参数中解析币种符号（忽略「设置告警」等引导词） */
+const ALERT_ARG_SKIP = new Set([
+  '设置告警', '告警', '设置', '设置提醒', '提醒',
+  'set', 'alert', 'alerts', 'price',
+]);
+
+const resolveSymbolFromAlertArgs = (args = []) => {
+  const tokens = args
+    .map((a) => String(a).trim())
+    .filter(Boolean);
+  const meaningful = tokens.filter(
+    (t) => !ALERT_ARG_SKIP.has(t) && !ALERT_ARG_SKIP.has(t.toLowerCase()),
+  );
+  const sym = meaningful[meaningful.length - 1] || meaningful[0];
+  if (!sym) return null;
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,31}$/.test(sym)) return null;
+  return sym.toUpperCase();
 };
 
 // 获取用户语言对应的文本
@@ -88,6 +114,28 @@ bot.start(async (ctx) => {
         [{ text: texts.followX, url: TWITTER_URL }]
       ]
     }
+  });
+});
+
+// /alert：跳转 Mini App 币种详情页，用户在 App 内配置告警（免费）
+bot.command('alert', async (ctx) => {
+  const languageCode = ctx.from?.language_code || 'en';
+  const texts = getTexts(languageCode);
+  const args = ctx.args || [];
+  const symbol = resolveSymbolFromAlertArgs(args);
+
+  if (!symbol) {
+    await ctx.reply(texts.alertNeedSymbol, { parse_mode: 'HTML' });
+    return;
+  }
+
+  const detailUrl = `${APP_URL.replace(/\/$/, '')}/detail?symbol=${encodeURIComponent(symbol)}`;
+
+  await ctx.reply(texts.alertIntro(symbol), {
+    parse_mode: 'HTML',
+    reply_markup: {
+      inline_keyboard: [[{ text: texts.alertOpenDetail, web_app: { url: detailUrl } }]],
+    },
   });
 });
 
