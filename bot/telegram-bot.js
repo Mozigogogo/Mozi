@@ -136,7 +136,8 @@ bot.command('alert', async (ctx) => {
     return;
   }
 
-  const detailUrl = `${APP_URL.replace(/\/$/, '')}/detail?symbol=${encodeURIComponent(symbol)}`;
+  // 供 Mini App 识别：从 Telegram 机器人「设置告警」入口进入详情（非普通浏览）
+  const detailUrl = `${APP_URL.replace(/\/$/, '')}/detail?symbol=${encodeURIComponent(symbol)}&from=tg_alert`;
   const caption = texts.alertIntro(symbol);
   const keyboardWebApp = {
     inline_keyboard: [[{ text: texts.alertOpenDetail, web_app: { url: detailUrl } }]],
