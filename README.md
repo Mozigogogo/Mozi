@@ -32,8 +32,9 @@ npm start
 - **根目录**：使用仓库**根**（含 `package.json`），不要指到子目录 `bot/`  alone。  
 - **启动命令**：`npm start` 或 `node bot/telegram-bot.js`。  
 - **构建命令**：勿再填 `next build`。若平台里曾配置过，请**清空**或改为 `npm run build`（本仓库的 `build` 仅作占位校验，无前端打包）。  
-- 仓库内已提供 **`Dockerfile`**：Railway 若选 **Dockerfile** 构建，会 `npm ci` 后只复制 `bot/`，最稳定。  
-- 若仍用 **Nixpacks**，根目录的 **`nixpacks.toml`** 会固定 Node 20、安装后跳过无意义的前端构建。  
+- 仓库根目录有 **`railway.json`**：指定 **`builder: DOCKERFILE`**，避免默认 **Railpack** 仍按旧前端流程推断构建而失败。  
+- **`Dockerfile`**：`npm ci` 后复制 `bot/` 再启动；部署前请把本次改动 **push 到 GitHub**。  
+- 若在 Railway 面板里曾填过 **Build Command**（例如 `next build`），可在 Settings 里删空；配置以仓库里的 **`railway.json`** 为准并会覆盖面板。  
 - 环境变量在 Railway **Variables** 里配置 `BOT_TOKEN` 等（勿把 token 写进代码）。  
 
 ## 目录结构
@@ -43,7 +44,7 @@ npm start
 ├── package.json
 ├── package-lock.json
 ├── Dockerfile
-├── nixpacks.toml
+├── railway.json
 ├── .env.example
 ├── README.md
 └── bot/
