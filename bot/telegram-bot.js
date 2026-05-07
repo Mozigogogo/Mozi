@@ -41,8 +41,6 @@ const i18n = {
     alertNeedSymbol: '请带上交易对符号，例如：\n<code>/alert btc</code>\n或 <code>/alert 设置告警 btc</code>',
     alertIntro: (sym) => `🔔 为 <b>${sym}</b> 设置价格告警（免费）\n\n点击下方「设置告警」在 Mini App 详情页中完成配置。`,
     alertOpenDetail: '设置告警',
-    alertWebAppBlocked:
-      '（内联 Mini App 按钮未通过域名校验，已改为在 Telegram 内打开机器人 Mini App；建议在 BotFather 中将 Mini App 域名与 APP_URL 保持一致以支持直达详情。）',
   },
   en: {
     welcomeWithInvite: (code) => `🎉 Welcome to MoziInnovations!\n\nYou have joined via invite code ${code}, come and register now!`,
@@ -55,8 +53,6 @@ const i18n = {
     alertNeedSymbol: 'Please include a symbol, e.g.:\n<code>/alert btc</code>',
     alertIntro: (sym) => `🔔 Set price alerts for <b>${sym}</b> (free)\n\nTap below to open the Mini App detail page and finish setup.`,
     alertOpenDetail: 'Set alert',
-    alertWebAppBlocked:
-      '(Inline Mini App button failed domain check; opening the bot Mini App inside Telegram instead. Configure BotFather Mini App domain to match APP_URL for direct detail links.)',
   }
 };
 
@@ -172,7 +168,7 @@ bot.command('alert', async (ctx) => {
 
     try {
       await ctx.replyWithPhoto(ALERT_CARD_IMAGE, {
-        caption: `${caption}\n\n<i>${texts.alertWebAppBlocked}</i>`,
+        caption,
         parse_mode: 'HTML',
         reply_markup: keyboardTelegramMiniApp,
       });
