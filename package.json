@@ -4,6 +4,7 @@
   "private": true,
   "description": "Mozi Telegram Bot（/start 邀请码、/alert 告警引导）",
   "scripts": {
+    "build": "node -e \"require('fs').accessSync('bot/telegram-bot.js'); console.log('build: ok')\"",
     "start": "node bot/telegram-bot.js",
     "dev": "node bot/telegram-bot.js"
   },
