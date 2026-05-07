@@ -48,5 +48,15 @@ npm start
 ├── .env.example
 ├── README.md
 └── bot/
-    └── telegram-bot.js
+    ├── telegram-bot.js
+    ├── config.js
+    ├── i18n.js
+    ├── lib/invite.js
+    ├── lib/alertSymbol.js
+    ├── handlers/start.js
+    ├── handlers/alert.js
+    ├── Dockerfile
+    ├── package.json
+    ├── package-lock.json
+    └── railway.json
 ```
