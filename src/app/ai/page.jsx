@@ -872,9 +872,8 @@ export default function RobotPage({ isPC: propIsPC = false }) {
       let payload = {};
       if (selectedModel === 'analyze') {
         payload = {
-          symbol: "BTC",
           question: message,
-          lang: lang
+          lang: lang,
         };
       } else {
         payload = {
@@ -937,7 +936,6 @@ export default function RobotPage({ isPC: propIsPC = false }) {
       let payload = {};
       if (selectedModel === 'analyze') {
         payload = {
-          symbol: "BTC",
           question: lastMessage,
           lang: lang,
         };
