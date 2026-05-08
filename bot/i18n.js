@@ -20,6 +20,16 @@ const i18n = {
     alertGroupGuide: (sym) =>
       `🔔 要为 <b>${sym}</b> 设置告警，请在<strong>私聊</strong>中继续（群内无法打开 Mini App 按钮）。\n\n点击下方按钮向我发私信，我会自动带上告警指令；若未自动发送，请手动发送：\n<code>/alert ${sym}</code>`,
     alertOpenPrivate: '私聊机器人设置告警',
+    aiTitleHtml: '🤖 <b>AI深度分析</b>',
+    aiFooterHtml: (n) => `\n\n────────\n本次消耗 <b>${n}</b> 积分`,
+    aiNeedQuestion: '请在 <code>/ai</code> 后输入问题，例如：\n<code>/ai ETH为何跌？</code>',
+    aiNotConfigured:
+      'AI 分析服务不可用，请检查 <code>API_BASE_URL</code>（默认对接 <code>/v1/analyze/stream</code>）或设置 <code>AI_BACKEND_URL</code> 覆盖完整地址。',
+    aiError: '分析暂时失败，请稍后再试。',
+    chatTitleHtml: '💬 <b>AI 对话</b>',
+    chatFooterHtml: (n) => `\n\n────────\n本次消耗 <b>${n}</b> 积分`,
+    chatNeedQuestion: '请在 <code>/chat</code> 后输入内容，例如：\n<code>/chat 你好</code>',
+    chatError: '对话暂时失败，请稍后再试。',
   },
   en: {
     welcomeWithInvite: (code) =>
@@ -37,6 +47,16 @@ const i18n = {
     alertGroupGuide: (sym) =>
       `🔔 To set alerts for <b>${sym}</b>, please continue in a <strong>private chat</strong> (Mini App buttons don't work well in groups).\n\nTap below to message me — your client may open the chat with the command ready; if not, send:\n<code>/alert ${sym}</code>`,
     alertOpenPrivate: 'Message bot to set alert',
+    aiTitleHtml: '🤖 <b>AI deep analysis</b>',
+    aiFooterHtml: (n) => `\n\n────────\n<b>${n}</b> points used`,
+    aiNeedQuestion: 'Add your question after <code>/ai</code>, e.g.:\n<code>/ai Why is ETH down?</code>',
+    aiNotConfigured:
+      'AI analysis is unavailable. Check <code>API_BASE_URL</code> (defaults to <code>/v1/analyze/stream</code>) or set <code>AI_BACKEND_URL</code> for a full URL override.',
+    aiError: 'Analysis failed temporarily. Please try again later.',
+    chatTitleHtml: '💬 <b>AI chat</b>',
+    chatFooterHtml: (n) => `\n\n────────\n<b>${n}</b> points used`,
+    chatNeedQuestion: 'Add your message after <code>/chat</code>, e.g.:\n<code>/chat Hello</code>',
+    chatError: 'Chat failed temporarily. Please try again later.',
   },
 };
 
