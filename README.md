@@ -6,7 +6,7 @@
 
 - `/start`：欢迎、邀请码、打开 Mini App、社区与 X 链接  
 - `/alert <symbol>`：引导至 Mini App 币种详情配置价格告警  
-- `/ai <问题>`：POST 流式接口（默认 `API_BASE_URL` + `/v1/analyze/stream`，可用 `AI_BACKEND_URL` 覆盖完整 URL）；群内/私聊回复分析；底部展示积分（默认 50，可由后端 `pointsCost` 覆盖）  
+- `/ai <问题>`：POST 流式接口（默认直连 `https://mozibackend-production.up.railway.app/api/v1/analyze/stream`，可用 `AI_BACKEND_URL` 覆盖）；群内/私聊回复分析；底部展示积分（默认 50，可由后端 `pointsCost` 覆盖）  
 - `/chat <内容>`：POST 流式对话（默认 `API_BASE_URL` + `/ai/chat/stream`，可用 `AI_CHAT_BACKEND_URL` 覆盖）；展示积分规则同 `/ai`  
 
 ## 环境变量
@@ -19,8 +19,8 @@
 | `APP_URL` | Mini App 根地址，默认见 `.env.example` |
 | `BOT_USERNAME` | 机器人用户名（无 `@`） |
 | `ALERT_CARD_IMAGE` | 可选，消息卡片图片 URL |
-| `API_BASE_URL` | 自建 API 根地址，默认 `https://moziinnovations.com`；与 `/v1/analyze/stream` 拼接为 `/ai` 请求地址 |
-| `AI_BACKEND_URL` | 可选；覆盖 `/ai` 的 **完整流式 POST URL**（契约见 `bot/lib/aiBackend.js`） |
+| `API_BASE_URL` | 自建 API 根地址，默认 `https://moziinnovations.com`；与 `/ai/chat/stream` 拼接为 `/chat` 默认请求根（`/ai` 默认已改为 mozibackend，见下） |
+| `AI_BACKEND_URL` | 可选；覆盖 `/ai` 的 **完整流式 POST URL**；不设时默认 `https://mozibackend-production.up.railway.app/api/v1/analyze/stream`（契约见 `bot/lib/aiBackend.js`） |
 | `AI_CHAT_BACKEND_URL` | 可选；覆盖 `/chat` 的 **完整流式 POST URL**（默认 `/ai/chat/stream`） |
 | `AI_BACKEND_SECRET` | 可选；若设置，请求头 `Authorization: Bearer …`（`/ai` 与 `/chat` 共用） |
 | `AI_POINTS_COST` | 可选；回复底部展示的积分数，默认 `50` |

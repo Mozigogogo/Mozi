@@ -18,9 +18,11 @@ const ALERT_CARD_IMAGE =
   process.env.ALERT_CARD_IMAGE ||
   'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/twitter.jpg';
 
-/** 可选：覆盖流式分析完整 POST URL；未设置时为 ${API_BASE_URL}/v1/analyze/stream */
+/** 可选：覆盖 /ai 流式分析完整 POST URL；未设置时直连 mozibackend-production */
 const AI_BACKEND_URL = (process.env.AI_BACKEND_URL || '').trim();
-const AI_ANALYZE_STREAM_URL = AI_BACKEND_URL || `${API_BASE_URL}/v1/analyze/stream`;
+const DEFAULT_AI_ANALYZE_STREAM_URL =
+  'https://mozibackend-production.up.railway.app/api/v1/analyze/stream';
+const AI_ANALYZE_STREAM_URL = AI_BACKEND_URL || DEFAULT_AI_ANALYZE_STREAM_URL;
 /** 可选：覆盖 /chat 流式 POST 完整 URL；未设置时为 ${API_BASE_URL}/ai/chat/stream */
 const AI_CHAT_BACKEND_URL = (process.env.AI_CHAT_BACKEND_URL || '').trim();
 const AI_CHAT_STREAM_URL = AI_CHAT_BACKEND_URL || `${API_BASE_URL}/ai/chat/stream`;

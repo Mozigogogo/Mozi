@@ -1,5 +1,5 @@
 /**
- * 调用自建流式分析接口 POST（默认 /v1/analyze/stream）
+ * 调用自建流式分析接口 POST（默认 https://mozibackend-production.up.railway.app/api/v1/analyze/stream，可用 AI_BACKEND_URL 覆盖）
  *
  * Headers: Content-Type: application/json
  *         Accept: text/event-stream, application/json
