@@ -15,6 +15,7 @@ import { INTERFACE_URL, Interface } from '@/utils/constants';
 import { request } from '@/utils/request';
 import { executeConsume } from '@/api/points';
 import { useRobotTestSSE } from '@/hooks/useRobotTestSSE';
+import { extractCoinSymbolFromText } from '@/utils/extractCoinSymbolFromText';
 import { forceBlurAndResetViewport } from '@/utils/iosViewportFix';
 import { safeBack } from '@/utils/navigation';
 import { fetchUserDataInfoOnce } from '@/utils/postLogin';
@@ -871,7 +872,9 @@ export default function RobotPage({ isPC: propIsPC = false }) {
       // 构造请求 payload
       let payload = {};
       if (selectedModel === 'analyze') {
+        const symbol = extractCoinSymbolFromText(message);
         payload = {
+          ...(symbol ? { symbol } : {}),
           question: message,
           lang: lang,
         };
@@ -935,7 +938,9 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
       let payload = {};
       if (selectedModel === 'analyze') {
+        const symbol = extractCoinSymbolFromText(lastMessage);
         payload = {
+          ...(symbol ? { symbol } : {}),
           question: lastMessage,
           lang: lang,
         };
