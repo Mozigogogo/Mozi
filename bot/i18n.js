@@ -17,6 +17,9 @@ const i18n = {
     alertIntro: (sym) =>
       `🔔 为 <b>${sym}</b> 设置价格告警（免费）\n\n点击下方「设置告警」在 Mini App 详情页中完成配置。`,
     alertOpenDetail: '设置告警',
+    alertGroupGuide: (sym) =>
+      `🔔 要为 <b>${sym}</b> 设置告警，请在<strong>私聊</strong>中继续（群内无法打开 Mini App 按钮）。\n\n点击下方按钮向我发私信，我会自动带上告警指令；若未自动发送，请手动发送：\n<code>/alert ${sym}</code>`,
+    alertOpenPrivate: '私聊机器人设置告警',
   },
   en: {
     welcomeWithInvite: (code) =>
@@ -31,6 +34,9 @@ const i18n = {
     alertIntro: (sym) =>
       `🔔 Set price alerts for <b>${sym}</b> (free)\n\nTap below to open the Mini App detail page and finish setup.`,
     alertOpenDetail: 'Set alert',
+    alertGroupGuide: (sym) =>
+      `🔔 To set alerts for <b>${sym}</b>, please continue in a <strong>private chat</strong> (Mini App buttons don't work well in groups).\n\nTap below to message me — your client may open the chat with the command ready; if not, send:\n<code>/alert ${sym}</code>`,
+    alertOpenPrivate: 'Message bot to set alert',
   },
 };
 

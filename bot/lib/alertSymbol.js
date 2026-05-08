@@ -26,14 +26,25 @@ const resolveSymbolFromAlertArgs = (args = []) => {
   return sym.toUpperCase();
 };
 
-/** Telegram startapp 仅允许 [A-Za-z0-9_-]，最长 64 */
+/** Telegram startapp / ?start= 载荷：仅允许 [A-Za-z0-9_-]，最长 64 */
 const buildAlertStartappParam = (symbol) => {
   const p = `alert_${symbol}`;
   if (p.length > 64) return null;
   return /^alert_[A-Za-z0-9_-]+$/.test(p) ? p : null;
 };
 
+/** /start 深度链接载荷 alert_SYMBOL → 交易对；否则 null */
+const parseAlertDeepLinkPayload = (payload) => {
+  if (!payload || typeof payload !== 'string') return null;
+  const s = String(payload).trim();
+  if (!s.toLowerCase().startsWith('alert_')) return null;
+  const sym = s.slice('alert_'.length);
+  if (!sym || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,31}$/.test(sym)) return null;
+  return sym.toUpperCase();
+};
+
 module.exports = {
   resolveSymbolFromAlertArgs,
   buildAlertStartappParam,
+  parseAlertDeepLinkPayload,
 };
