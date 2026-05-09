@@ -2,8 +2,7 @@
  * Mozi Telegram Bot 入口
  * /start：邀请码见 handlers/start.js、lib/invite.js
  * /alert：见 handlers/alert.js、lib/alertSymbol.js
- * /ai、/chat 流式 POST：handlers/ai.js、handlers/chat.js、lib/apis.js
- * /chat：handlers/chat.js + lib/apis.js（robot_proxy …/chat/stream）
+ * /ai、/chat：同为 lib/apis.js requestChatStream（body: message+lang）；/ai → …/analyze/stream，/chat → …/chat/stream
  * /price：handlers/price.js + lib/apis.js（GET /detail/header）
  * 首次任意命令前：middleware/firstCommandTgCheck.js → POST /user/tg/registered/check
  * 调试：环境变量 BOT_DEBUG=1 → middleware/debugCommands.js + lib/debugLog.js（命令与 apis 内 HTTP 摘要）

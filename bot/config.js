@@ -18,18 +18,15 @@ const ALERT_CARD_IMAGE =
   process.env.ALERT_CARD_IMAGE ||
   'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/twitter.jpg';
 
-/** 可选：覆盖 /ai 流式分析完整 POST URL；未设置时直连 mozibackend-production */
+/** 可选：覆盖 /ai 流式 POST 完整 URL；默认 ${APP_URL}/api/robot_proxy/api/v1/analyze/stream（请求体与 /chat 相同） */
 const AI_BACKEND_URL = (process.env.AI_BACKEND_URL || '').trim();
-const DEFAULT_AI_ANALYZE_STREAM_URL =
-  'https://mozibackend-production.up.railway.app/api/v1/analyze/stream';
-const AI_ANALYZE_STREAM_URL = AI_BACKEND_URL || DEFAULT_AI_ANALYZE_STREAM_URL;
-/** 可选：覆盖 /chat 流式 POST 完整 URL；未设置时为 ${APP_URL}/api/robot_proxy/api/v1/chat/stream（与前端一致） */
+/** 可选：覆盖 /chat 流式 POST 完整 URL；默认 ${APP_URL}/api/robot_proxy/api/v1/chat/stream（与前端一致） */
 const AI_CHAT_BACKEND_URL = (process.env.AI_CHAT_BACKEND_URL || '').trim();
-const AI_CHAT_STREAM_URL =
-  AI_CHAT_BACKEND_URL ||
-  `${String(APP_URL || '').replace(/\/+$/, '')}/api/robot_proxy/api/v1/chat/stream`;
-/** 可选，发给后端时带 Authorization: Bearer … */
-const AI_BACKEND_SECRET = (process.env.AI_BACKEND_SECRET || '').trim();
+const APP_ORIGIN = String(APP_URL || '').replace(/\/+$/, '');
+const DEFAULT_ROBOT_CHAT_STREAM = `${APP_ORIGIN}/api/robot_proxy/api/v1/chat/stream`;
+const DEFAULT_ROBOT_ANALYZE_STREAM = `${APP_ORIGIN}/api/robot_proxy/api/v1/analyze/stream`;
+const AI_CHAT_STREAM_URL = AI_CHAT_BACKEND_URL || DEFAULT_ROBOT_CHAT_STREAM;
+const AI_ANALYZE_STREAM_URL = AI_BACKEND_URL || DEFAULT_ROBOT_ANALYZE_STREAM;
 /** 底部展示：/ai 未返回 pointsCost 时默认 50 */
 const AI_POINTS_COST = Math.max(
   1,
@@ -41,7 +38,7 @@ const AI_CHAT_POINTS_COST = Math.max(
   Math.min(1_000_000, parseInt(process.env.AI_CHAT_POINTS_COST || '10', 10) || 10),
 );
 
-/** /chat 消费 SSE 的最长等待（毫秒）；默认 5 分钟，偏短会导致 Railway 已记「成功」但 Bot 侧超时仍显示对话失败 */
+/** /ai 与 /chat 消费 SSE 的最长等待（毫秒）；默认 5 分钟 */
 const AI_CHAT_STREAM_TIMEOUT_MS = Math.max(
   30_000,
   Math.min(1_800_000, parseInt(process.env.AI_CHAT_STREAM_TIMEOUT_MS || '300000', 10) || 300_000),
@@ -65,7 +62,6 @@ module.exports = {
   AI_ANALYZE_STREAM_URL,
   AI_CHAT_BACKEND_URL,
   AI_CHAT_STREAM_URL,
-  AI_BACKEND_SECRET,
   AI_POINTS_COST,
   AI_CHAT_POINTS_COST,
   AI_CHAT_STREAM_TIMEOUT_MS,

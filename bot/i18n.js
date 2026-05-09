@@ -24,7 +24,7 @@ const i18n = {
     aiFooterHtml: (n) => `\n\n────────\n本次消耗 <b>${n}</b> 积分`,
     aiNeedQuestion: '请在 <code>/ai</code> 后输入问题，例如：\n<code>/ai ETH为何跌？</code>',
     aiNotConfigured:
-      'AI 分析服务不可用，请检查后端是否可达（默认 <code>https://mozibackend-production.up.railway.app/api/v1/analyze/stream</code>）或设置 <code>AI_BACKEND_URL</code> 覆盖完整地址。',
+      'AI 分析服务不可用，请检查 <code>APP_URL</code> 下 <code>/api/robot_proxy/api/v1/analyze/stream</code> 是否可达，或设置 <code>AI_BACKEND_URL</code> 覆盖完整地址。',
     aiError: '分析暂时失败，请稍后再试。',
     chatTitleHtml: '💬 <b>AI 对话</b>',
     chatFooterHtml: (n) => `\n\n────────\n本次消耗 <b>${n}</b> 积分`,
@@ -86,7 +86,7 @@ const i18n = {
     aiFooterHtml: (n) => `\n\n────────\n<b>${n}</b> points used`,
     aiNeedQuestion: 'Add your question after <code>/ai</code>, e.g.:\n<code>/ai Why is ETH down?</code>',
     aiNotConfigured:
-      'AI analysis is unavailable. Check backend reachability (default <code>https://mozibackend-production.up.railway.app/api/v1/analyze/stream</code>) or set <code>AI_BACKEND_URL</code> for a full URL override.',
+      'AI analysis is unavailable. Check <code>APP_URL</code> <code>/api/robot_proxy/api/v1/analyze/stream</code> or set <code>AI_BACKEND_URL</code>.',
     aiError: 'Analysis failed temporarily. Please try again later.',
     chatTitleHtml: '💬 <b>AI chat</b>',
     chatFooterHtml: (n) => `\n\n────────\n<b>${n}</b> points used`,

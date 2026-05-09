@@ -1,10 +1,10 @@
 /**
- * /ai <问题>：群内或私聊，请求自建后端返回分析；底部展示积分（默认来自配置或由后端 pointsCost 覆盖）
- * HTTP 见 lib/apis.js（requestAiAnalysis）
+ * /ai <问题>：POST APP_URL/api/robot_proxy/api/v1/analyze/stream（可用 AI_BACKEND_URL 覆盖）
+ * 请求体与 /chat 一致（message + lang）；HTTP 见 lib/apis.js（requestChatStream）
  */
 
 const { extractAiQuery } = require('../lib/aiQuery');
-const { requestAiAnalysis } = require('../lib/apis');
+const { requestChatStream } = require('../lib/apis');
 const { aiMarkdownToTelegramHtml, escapeHtml, buildHtmlChunks, splitOversized } = require('../lib/telegramHtml');
 
 function registerAi(bot, config, { getTexts }) {
@@ -21,25 +21,32 @@ function registerAi(bot, config, { getTexts }) {
 
     await ctx.telegram.sendChatAction(ctx.chat.id, 'typing').catch(() => {});
 
-    const from = ctx.from;
-    const chat = ctx.chat;
+    const lang = (languageCode || 'en').toLowerCase().startsWith('zh') ? 'zh' : 'en';
 
     let result;
     try {
-      result = await requestAiAnalysis({
+      result = await requestChatStream({
         url: config.AI_ANALYZE_STREAM_URL,
-        secret: config.AI_BACKEND_SECRET,
-        body: {
-          question: query,
-          telegramUserId: from?.id ?? null,
-          telegramUsername: from?.username ?? null,
-          chatId: chat?.id ?? null,
-          chatType: chat?.type ?? null,
-          languageCode: languageCode || 'en',
-        },
+        message: query,
+        lang,
+        appUrl: config.APP_URL,
+        timeoutMs: config.AI_CHAT_STREAM_TIMEOUT_MS,
       });
     } catch (err) {
-      console.error('[/ai] 后端错误:', err?.message || err, err?.rawBody || '');
+      const aborted =
+        err?.name === 'AbortError' ||
+        /aborted|AbortError|signal is aborted/i.test(String(err?.message || ''));
+      console.error('[/ai] 后端错误:', {
+        message: err?.message || String(err),
+        name: err?.name || null,
+        likelyTimeout: aborted,
+        timeoutMs: config.AI_CHAT_STREAM_TIMEOUT_MS,
+        httpStatus: err?.status ?? null,
+        userMessage: err?.userMessage ?? null,
+        rawBody: err?.rawBody ?? null,
+        streamHint: err?.streamHint ?? null,
+        analyzeStreamUrl: config.AI_ANALYZE_STREAM_URL,
+      });
       if (err?.userMessage) {
         await ctx.reply(escapeHtml(err.userMessage), { parse_mode: 'HTML' });
         return;
