@@ -113,7 +113,7 @@ async function postTgRegisteredCheck({
 //          Accept: text/event-stream, application/json
 //          若配置了 secret：Authorization: Bearer <secret>
 //
-// Body: question, telegramUserId, telegramUsername, chatId, chatType, languageCode
+// Body: question, telegramUserId, …（/chat 另见 requestChatStream：message + lang）
 //
 // 成功 200：text/event-stream（SSE）或 application/json（answer | content | text | message）
 
@@ -257,6 +257,120 @@ async function consumeSseStream(res, signal) {
 }
 
 /**
+ * POST …/chat/stream：body 仅 `{ message, lang }`；不传 authentication（与 /price 一样可无 JWT）
+ * @param {{ url: string; message: string; lang: string; appUrl?: string; timeoutMs?: number }} opts
+ * @returns {Promise<{ answer: string, pointsCost?: number }>}
+ */
+async function requestChatStream({ url, message, lang, appUrl = '', timeoutMs = 120000 }) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const langNorm = lang === 'zh' || lang === 'en' ? lang : 'en';
+
+  const headers = {
+    accept: 'text/event-stream',
+    'accept-language': langNorm,
+    'content-type': 'application/json',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    language: langNorm,
+    'user-agent': DEFAULT_UA,
+  };
+  if (app) {
+    headers.origin = app;
+    headers.referer = `${app}/ai`;
+  }
+
+  apiDebug('POST chat/stream ←', {
+    url,
+    lang: langNorm,
+    messagePreview: typeof message === 'string' ? message.slice(0, 160) : undefined,
+  });
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ message, lang: langNorm }),
+      signal: ctrl.signal,
+    });
+
+    const ct = (res.headers.get('content-type') || '').toLowerCase();
+    const likelySse = ct.includes('text/event-stream') || /\/stream\b/i.test(url);
+
+    if (!res.ok) {
+      const raw = await res.text();
+      let userMessage;
+      try {
+        const errData = JSON.parse(raw);
+        userMessage =
+          (typeof errData.error === 'string' && errData.error) ||
+          (typeof errData.message === 'string' && errData.message) ||
+          undefined;
+      } catch {
+        /* ignore */
+      }
+      const err = new Error(`Chat stream HTTP ${res.status}`);
+      err.status = res.status;
+      err.userMessage = userMessage;
+      err.rawBody = raw.slice(0, 500);
+      throw err;
+    }
+
+    if (likelySse) {
+      const result = await consumeSseStream(res, ctrl.signal);
+      apiDebug('POST chat/stream → ok', {
+        mode: 'sse',
+        answerChars: result.answer.length,
+        pointsCost: result.pointsCost ?? null,
+      });
+      return result;
+    }
+
+    const raw = await res.text();
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      apiDebug('POST chat/stream → invalid_json', { bodyPreview: raw.slice(0, 400) });
+      throw new Error('Invalid JSON from chat stream');
+    }
+
+    const answer =
+      (typeof data.answer === 'string' && data.answer) ||
+      (typeof data.content === 'string' && data.content) ||
+      (typeof data.text === 'string' && data.text) ||
+      (typeof data.message === 'string' && data.message) ||
+      '';
+
+    if (!String(answer).trim()) {
+      apiDebug('POST chat/stream → empty_answer', {
+        jsonKeys: data && typeof data === 'object' ? Object.keys(data) : [],
+      });
+      throw new Error('Empty answer from chat stream');
+    }
+
+    const pointsCost = extractPointsCost(data);
+    apiDebug('POST chat/stream → ok', {
+      mode: 'json',
+      answerChars: String(answer).trim().length,
+      pointsCost: pointsCost ?? null,
+    });
+    return { answer: String(answer).trim(), pointsCost };
+  } catch (err) {
+    apiDebug('POST chat/stream → failed', {
+      message: err?.message || String(err),
+      userMessage: err?.userMessage ?? null,
+      httpStatus: err?.status ?? null,
+      rawBody: err?.rawBody ?? null,
+    });
+    throw err;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+/**
  * @param {object} opts
  * @param {string} opts.url
  * @param {string} [opts.secret]
@@ -366,4 +480,9 @@ async function requestAiAnalysis({ url, secret, body, timeoutMs = 120000 }) {
   }
 }
 
-module.exports = { fetchDetailHeader, postTgRegisteredCheck, requestAiAnalysis };
+module.exports = {
+  fetchDetailHeader,
+  postTgRegisteredCheck,
+  requestChatStream,
+  requestAiAnalysis,
+};

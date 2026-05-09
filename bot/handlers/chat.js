@@ -1,10 +1,10 @@
 /**
- * /chat <内容>：请求 /ai/chat/stream 流式对话接口
- * HTTP 见 lib/apis.js（requestAiAnalysis）
+ * /chat <内容>：请求 robot_proxy …/chat/stream（body: message + lang）
+ * HTTP 见 lib/apis.js（requestChatStream，body 为 message + lang）
  */
 
 const { extractChatQuery } = require('../lib/aiQuery');
-const { requestAiAnalysis } = require('../lib/apis');
+const { requestChatStream } = require('../lib/apis');
 const { escapeHtml, buildHtmlChunks, splitOversized } = require('../lib/telegramHtml');
 
 function registerChat(bot, config, { getTexts }) {
@@ -21,22 +21,15 @@ function registerChat(bot, config, { getTexts }) {
 
     await ctx.telegram.sendChatAction(ctx.chat.id, 'typing').catch(() => {});
 
-    const from = ctx.from;
-    const chat = ctx.chat;
+    const lang = (languageCode || 'en').toLowerCase().startsWith('zh') ? 'zh' : 'en';
 
     let result;
     try {
-      result = await requestAiAnalysis({
+      result = await requestChatStream({
         url: config.AI_CHAT_STREAM_URL,
-        secret: config.AI_BACKEND_SECRET,
-        body: {
-          question: query,
-          telegramUserId: from?.id ?? null,
-          telegramUsername: from?.username ?? null,
-          chatId: chat?.id ?? null,
-          chatType: chat?.type ?? null,
-          languageCode: languageCode || 'en',
-        },
+        message: query,
+        lang,
+        appUrl: config.APP_URL,
       });
     } catch (err) {
       console.error('[/chat] 后端错误:', err?.message || err, err?.rawBody || '');

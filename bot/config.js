@@ -23,9 +23,11 @@ const AI_BACKEND_URL = (process.env.AI_BACKEND_URL || '').trim();
 const DEFAULT_AI_ANALYZE_STREAM_URL =
   'https://mozibackend-production.up.railway.app/api/v1/analyze/stream';
 const AI_ANALYZE_STREAM_URL = AI_BACKEND_URL || DEFAULT_AI_ANALYZE_STREAM_URL;
-/** 可选：覆盖 /chat 流式 POST 完整 URL；未设置时为 ${API_BASE_URL}/ai/chat/stream */
+/** 可选：覆盖 /chat 流式 POST 完整 URL；未设置时为 ${APP_URL}/api/robot_proxy/api/v1/chat/stream（与前端一致） */
 const AI_CHAT_BACKEND_URL = (process.env.AI_CHAT_BACKEND_URL || '').trim();
-const AI_CHAT_STREAM_URL = AI_CHAT_BACKEND_URL || `${API_BASE_URL}/ai/chat/stream`;
+const AI_CHAT_STREAM_URL =
+  AI_CHAT_BACKEND_URL ||
+  `${String(APP_URL || '').replace(/\/+$/, '')}/api/robot_proxy/api/v1/chat/stream`;
 /** 可选，发给后端时带 Authorization: Bearer … */
 const AI_BACKEND_SECRET = (process.env.AI_BACKEND_SECRET || '').trim();
 const AI_POINTS_COST = Math.max(
@@ -33,7 +35,7 @@ const AI_POINTS_COST = Math.max(
   Math.min(1_000_000, parseInt(process.env.AI_POINTS_COST || '50', 10) || 50),
 );
 
-/** 可选：部分接口（如 POST /user/tg/registered/check）请求头 authentication 的 JWT */
+/** 可选：POST /user/tg/registered/check 请求头 authentication 的 JWT（/chat、/price 不使用） */
 const MOZI_DETAIL_AUTH = (process.env.MOZI_DETAIL_AUTH || '').trim();
 
 /** 为 1/true/yes 时打印命令与 HTTP 调试信息（见 lib/debugLog.js） */
