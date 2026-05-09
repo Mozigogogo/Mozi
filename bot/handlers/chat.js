@@ -1,9 +1,10 @@
 /**
  * /chat <内容>：请求 robot_proxy …/chat/stream（body: message + lang）
- * HTTP 见 lib/apis.js（requestChatStream，body 为 message + lang）
+ * HTTP 见 lib/apis.js（requestChatStream：message + lang，可选 symbol 意图兜底）
  */
 
 const { extractChatQuery } = require('../lib/aiQuery');
+const { extractSymbolIntent } = require('../lib/symbolIntent');
 const { requestChatStream } = require('../lib/apis');
 const { aiMarkdownToTelegramHtml, escapeHtml, buildHtmlChunks, splitOversized } = require('../lib/telegramHtml');
 
@@ -22,6 +23,7 @@ function registerChat(bot, config, { getTexts }) {
     await ctx.telegram.sendChatAction(ctx.chat.id, 'typing').catch(() => {});
 
     const lang = (languageCode || 'en').toLowerCase().startsWith('zh') ? 'zh' : 'en';
+    const symbol = extractSymbolIntent(query);
 
     let result;
     try {
@@ -29,6 +31,7 @@ function registerChat(bot, config, { getTexts }) {
         url: config.AI_CHAT_STREAM_URL,
         message: query,
         lang,
+        symbol,
         appUrl: config.APP_URL,
         timeoutMs: config.AI_CHAT_STREAM_TIMEOUT_MS,
       });
@@ -46,6 +49,7 @@ function registerChat(bot, config, { getTexts }) {
         rawBody: err?.rawBody ?? null,
         streamHint: err?.streamHint ?? null,
         chatStreamUrl: config.AI_CHAT_STREAM_URL,
+        symbolIntent: symbol,
       });
       if (err?.userMessage) {
         await ctx.reply(escapeHtml(err.userMessage), { parse_mode: 'HTML' });

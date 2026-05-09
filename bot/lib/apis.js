@@ -262,11 +262,11 @@ async function consumeSseStream(res, signal) {
 }
 
 /**
- * POST …/chat/stream：body 仅 `{ message, lang }`；不传 authentication（与 /price 一样可无 JWT）
- * @param {{ url: string; message: string; lang: string; appUrl?: string; timeoutMs?: number }} opts
+ * POST …/chat/stream：body `{ message, lang }`，可选 `symbol`（意图识别兜底）
+ * @param {{ url: string; message: string; lang: string; symbol?: string | null; appUrl?: string; timeoutMs?: number }} opts
  * @returns {Promise<{ answer: string, pointsCost?: number }>}
  */
-async function requestChatStream({ url, message, lang, appUrl = '', timeoutMs = 300000 }) {
+async function requestChatStream({ url, message, lang, symbol, appUrl = '', timeoutMs = 300000 }) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   const app = String(appUrl || '').replace(/\/+$/, '');
@@ -286,9 +286,17 @@ async function requestChatStream({ url, message, lang, appUrl = '', timeoutMs = 
     headers.referer = `${app}/ai`;
   }
 
+  const sym =
+    symbol != null && String(symbol).trim() !== '' ? String(symbol).trim().toUpperCase() : null;
+  const payload = { message, lang: langNorm };
+  if (sym) {
+    payload.symbol = sym;
+  }
+
   apiDebug('POST chat/stream ←', {
     url,
     lang: langNorm,
+    symbol: sym,
     messagePreview: typeof message === 'string' ? message.slice(0, 160) : undefined,
   });
 
@@ -296,7 +304,7 @@ async function requestChatStream({ url, message, lang, appUrl = '', timeoutMs = 
     const res = await fetch(url, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ message, lang: langNorm }),
+      body: JSON.stringify(payload),
       signal: ctrl.signal,
     });
 
@@ -311,9 +319,13 @@ async function requestChatStream({ url, message, lang, appUrl = '', timeoutMs = 
         userMessage =
           (typeof errData.error === 'string' && errData.error) ||
           (typeof errData.message === 'string' && errData.message) ||
+          (typeof errData.msg === 'string' && errData.msg) ||
           undefined;
       } catch {
         /* ignore */
+      }
+      if (!userMessage && raw && String(raw).trim()) {
+        userMessage = String(raw).trim().slice(0, 500);
       }
       const err = new Error(`Chat stream HTTP ${res.status}`);
       err.status = res.status;

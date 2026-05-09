@@ -27,6 +27,9 @@ const DEFAULT_ROBOT_CHAT_STREAM = `${APP_ORIGIN}/api/robot_proxy/api/v1/chat/str
 const DEFAULT_ROBOT_ANALYZE_STREAM = `${APP_ORIGIN}/api/robot_proxy/api/v1/analyze/stream`;
 const AI_CHAT_STREAM_URL = AI_CHAT_BACKEND_URL || DEFAULT_ROBOT_CHAT_STREAM;
 const AI_ANALYZE_STREAM_URL = AI_BACKEND_URL || DEFAULT_ROBOT_ANALYZE_STREAM;
+/** /ai 请求 analyze 失败（如 422）时是否自动改请求 chat/stream */
+const _fb = String(process.env.AI_ANALYZE_FALLBACK_TO_CHAT ?? '1').trim().toLowerCase();
+const AI_ANALYZE_FALLBACK_TO_CHAT = _fb !== '0' && _fb !== 'false' && _fb !== 'no';
 /** 底部展示：/ai 未返回 pointsCost 时默认 50 */
 const AI_POINTS_COST = Math.max(
   1,
@@ -60,6 +63,7 @@ module.exports = {
   ALERT_CARD_IMAGE,
   AI_BACKEND_URL,
   AI_ANALYZE_STREAM_URL,
+  AI_ANALYZE_FALLBACK_TO_CHAT,
   AI_CHAT_BACKEND_URL,
   AI_CHAT_STREAM_URL,
   AI_POINTS_COST,

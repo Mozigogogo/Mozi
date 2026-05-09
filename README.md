@@ -6,8 +6,8 @@
 
 - `/start`：欢迎、邀请码、打开 Mini App、社区与 X 链接  
 - `/alert <symbol>`：引导至 Mini App 币种详情配置价格告警  
-- `/ai <问题>`：默认 `APP_URL` + `/api/robot_proxy/api/v1/analyze/stream`，请求体与 `/chat` 相同（`message` + `lang`）；可用 `AI_BACKEND_URL` 覆盖完整 URL；底部积分默认 **50**  
-- `/chat <内容>`：POST 流式对话（默认 `APP_URL` + `/api/robot_proxy/api/v1/chat/stream`，与 Web 一致；可用 `AI_CHAT_BACKEND_URL` 覆盖）；底部展示积分默认 **10**（可由后端 `pointsCost` 覆盖）  
+- `/ai <问题>`：默认 `APP_URL` + `/api/robot_proxy/api/v1/analyze/stream`，请求体与 `/chat` 相同（`message` + `lang`，可选 `symbol`）；可用 `AI_BACKEND_URL` 覆盖完整 URL；底部积分默认 **50**；analyze 失败时可自动回退 chat/stream（`AI_ANALYZE_FALLBACK_TO_CHAT`）  
+- `/chat <内容>`：POST 流式对话（默认 `APP_URL` + `/api/robot_proxy/api/v1/chat/stream`，与 Web 一致；可用 `AI_CHAT_BACKEND_URL` 覆盖）；底部展示积分默认 **10**（可由后端 `pointsCost` 覆盖）；对用户文案做简易币种意图识别，命中时在请求体中带 `symbol`（见 `bot/lib/symbolIntent.js`）  
 
 ## 环境变量
 
@@ -21,6 +21,7 @@
 | `ALERT_CARD_IMAGE` | 可选，消息卡片图片 URL |
 | `API_BASE_URL` | 自建 API 根地址，默认 `https://moziinnovations.com`（`/price` 等）；`/chat` 默认流式地址见 `APP_URL` + `robot_proxy` 路径 |
 | `AI_BACKEND_URL` | 可选；覆盖 `/ai` 的 **完整流式 POST URL**（请求体与 `/chat` 一致）；不设时默认 `APP_URL/api/robot_proxy/api/v1/analyze/stream` |
+| `AI_ANALYZE_FALLBACK_TO_CHAT` | 可选；`/ai` 请求 analyze 失败（如 422）时是否自动改请求 **chat/stream**（默认 `1`）；`0`/`false` 关闭 |
 | `AI_CHAT_BACKEND_URL` | 可选；覆盖 `/chat` 的 **完整流式 POST URL**（默认 `APP_URL/api/robot_proxy/api/v1/chat/stream`） |
 | `AI_CHAT_STREAM_TIMEOUT_MS` | 可选；`/ai` 与 `/chat` 等待 SSE 的最长时间（毫秒），默认 `300000`（5 分钟） |
 | `MOZI_DETAIL_AUTH` | 可选；JWT，请求头 `authentication`（仅首次命令 `POST /user/tg/registered/check`；`/chat` 不传该头） |
