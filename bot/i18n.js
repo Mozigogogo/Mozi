@@ -30,8 +30,6 @@ const i18n = {
     chatFooterHtml: (n) => `\n\n────────\n本次消耗 <b>${n}</b> 积分`,
     chatNeedQuestion: '请在 <code>/chat</code> 后输入内容，例如：\n<code>/chat 你好</code>',
     chatError: '对话暂时失败，请稍后再试。',
-    priceNotConfigured:
-      '行情接口需要鉴权：请为 Bot 配置环境变量 <code>MOZI_DETAIL_AUTH</code>（与浏览器请求里请求头 <code>authentication</code> 相同的 JWT）。',
     priceInvalidSymbol: '交易对格式无效，请使用字母与数字，例如：<code>/price PLUME</code>',
     priceError: (code) => `获取行情失败（HTTP ${code}），请稍后再试。`,
     priceTitleHtml: (sym) => `📊 <b>${sym}</b> 行情`,
@@ -94,8 +92,6 @@ const i18n = {
     chatFooterHtml: (n) => `\n\n────────\n<b>${n}</b> points used`,
     chatNeedQuestion: 'Add your message after <code>/chat</code>, e.g.:\n<code>/chat Hello</code>',
     chatError: 'Chat failed temporarily. Please try again later.',
-    priceNotConfigured:
-      'Price API needs auth: set env <code>MOZI_DETAIL_AUTH</code> (same JWT as the <code>authentication</code> header in the browser).',
     priceInvalidSymbol: 'Invalid symbol. Use letters and digits only, e.g.:\n<code>/price PLUME</code>',
     priceError: (code) => `Failed to fetch price (HTTP ${code}). Please try again later.`,
     priceTitleHtml: (sym) => `📊 <b>${sym}</b>`,

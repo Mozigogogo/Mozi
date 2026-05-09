@@ -33,8 +33,11 @@ const AI_POINTS_COST = Math.max(
   Math.min(1_000_000, parseInt(process.env.AI_POINTS_COST || '50', 10) || 50),
 );
 
-/** GET /detail/header 使用的 JWT，对应请求头 authentication（环境变量 MOZI_DETAIL_AUTH） */
+/** 可选：部分接口（如 POST /user/tg/registered/check）请求头 authentication 的 JWT */
 const MOZI_DETAIL_AUTH = (process.env.MOZI_DETAIL_AUTH || '').trim();
+
+/** 为 1/true/yes 时打印命令与 HTTP 调试信息（见 lib/debugLog.js） */
+const BOT_DEBUG = /^1|true|yes$/i.test(String(process.env.BOT_DEBUG || '').trim());
 
 module.exports = {
   BOT_TOKEN,
@@ -51,4 +54,5 @@ module.exports = {
   AI_BACKEND_SECRET,
   AI_POINTS_COST,
   MOZI_DETAIL_AUTH,
+  BOT_DEBUG,
 };

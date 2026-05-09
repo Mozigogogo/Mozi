@@ -2,17 +2,19 @@
  * 项目内所有对外 HTTP 接口：TG 注册检查 POST、详情行情 GET、AI 流式 POST 等
  */
 
+const { apiDebug } = require('./debugLog');
+
 const DEFAULT_UA =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1';
 
 // --- GET /detail/header -----------------------------------------------------
 
 /**
- * GET /detail/header?symbol=
- * @param {{ apiBaseUrl: string; appUrl: string; symbol: string; auth: string; acceptLanguage: string }} opts
+ * GET /detail/header?symbol=（不传鉴权头）
+ * @param {{ apiBaseUrl: string; appUrl: string; symbol: string; acceptLanguage: string }} opts
  * @returns {Promise<{ ok: boolean; status: number; json: object | null; text: string }>}
  */
-async function fetchDetailHeader({ apiBaseUrl, appUrl, symbol, auth, acceptLanguage }) {
+async function fetchDetailHeader({ apiBaseUrl, appUrl, symbol, acceptLanguage }) {
   const base = String(apiBaseUrl || '').replace(/\/+$/, '');
   const app = String(appUrl || '').replace(/\/+$/, '');
   const url = `${base}/detail/header?symbol=${encodeURIComponent(symbol)}`;
@@ -20,7 +22,6 @@ async function fetchDetailHeader({ apiBaseUrl, appUrl, symbol, auth, acceptLangu
     headers: {
       accept: 'application/json, text/plain, */*',
       'accept-language': acceptLanguage,
-      authentication: auth,
       'cache-control': 'no-cache',
       pragma: 'no-cache',
       referer: `${app}/detail?symbol=${encodeURIComponent(symbol)}`,
@@ -34,7 +35,17 @@ async function fetchDetailHeader({ apiBaseUrl, appUrl, symbol, auth, acceptLangu
   } catch {
     json = null;
   }
-  return { ok: res.ok, status: res.status, json, text };
+  const out = { ok: res.ok, status: res.status, json, text };
+  apiDebug('GET /detail/header →', {
+    symbol,
+    httpStatus: res.status,
+    ok: res.ok,
+    parseJsonOk: json != null,
+    ...(res.ok && json && typeof json === 'object' && !Array.isArray(json)
+      ? { jsonKeys: Object.keys(json).slice(0, 40) }
+      : { bodyPreview: text.slice(0, 500) }),
+  });
+  return out;
 }
 
 // --- POST /user/tg/registered/check -----------------------------------------
@@ -82,7 +93,15 @@ async function postTgRegisteredCheck({
     } catch {
       json = null;
     }
-    return { ok: res.ok, status: res.status, json, text };
+    const out = { ok: res.ok, status: res.status, json, text };
+    apiDebug('POST /user/tg/registered/check →', {
+      telegramId,
+      httpStatus: res.status,
+      ok: res.ok,
+      hasAuth: Boolean(auth),
+      bodyPreview: text.slice(0, 500),
+    });
+    return out;
   } finally {
     clearTimeout(t);
   }
@@ -257,6 +276,14 @@ async function requestAiAnalysis({ url, secret, body, timeoutMs = 120000 }) {
     headers.Authorization = `Bearer ${secret}`;
   }
 
+  const q = body?.question;
+  apiDebug('POST AI stream ←', {
+    url,
+    hasBearer: Boolean(secret),
+    telegramUserId: body?.telegramUserId ?? null,
+    questionPreview: typeof q === 'string' ? q.slice(0, 160) : undefined,
+  });
+
   try {
     const res = await fetch(url, {
       method: 'POST',
@@ -288,7 +315,13 @@ async function requestAiAnalysis({ url, secret, body, timeoutMs = 120000 }) {
     }
 
     if (likelySse) {
-      return await consumeSseStream(res, ctrl.signal);
+      const result = await consumeSseStream(res, ctrl.signal);
+      apiDebug('POST AI stream → ok', {
+        mode: 'sse',
+        answerChars: result.answer.length,
+        pointsCost: result.pointsCost ?? null,
+      });
+      return result;
     }
 
     const raw = await res.text();
@@ -296,6 +329,7 @@ async function requestAiAnalysis({ url, secret, body, timeoutMs = 120000 }) {
     try {
       data = JSON.parse(raw);
     } catch {
+      apiDebug('POST AI stream → invalid_json', { bodyPreview: raw.slice(0, 400) });
       throw new Error('Invalid JSON from AI backend');
     }
 
@@ -307,12 +341,26 @@ async function requestAiAnalysis({ url, secret, body, timeoutMs = 120000 }) {
       '';
 
     if (!String(answer).trim()) {
+      apiDebug('POST AI stream → empty_answer', { jsonKeys: data && typeof data === 'object' ? Object.keys(data) : [] });
       throw new Error('Empty answer from AI backend');
     }
 
     const pointsCost = extractPointsCost(data);
 
+    apiDebug('POST AI stream → ok', {
+      mode: 'json',
+      answerChars: String(answer).trim().length,
+      pointsCost: pointsCost ?? null,
+    });
     return { answer: String(answer).trim(), pointsCost };
+  } catch (err) {
+    apiDebug('POST AI stream → failed', {
+      message: err?.message || String(err),
+      userMessage: err?.userMessage ?? null,
+      httpStatus: err?.status ?? null,
+      rawBody: err?.rawBody ?? null,
+    });
+    throw err;
   } finally {
     clearTimeout(t);
   }

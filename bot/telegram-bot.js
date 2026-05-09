@@ -6,12 +6,14 @@
  * /chat：见 handlers/chat.js（/ai/chat/stream）
  * /price：handlers/price.js + lib/apis.js（GET /detail/header）
  * 首次任意命令前：middleware/firstCommandTgCheck.js → POST /user/tg/registered/check
+ * 调试：环境变量 BOT_DEBUG=1 → middleware/debugCommands.js + lib/debugLog.js（命令与 apis 内 HTTP 摘要）
  */
 
 const { Telegraf } = require('telegraf');
 
 const config = require('./config');
 const { getTexts } = require('./i18n');
+const { registerDebugCommandLogging } = require('./middleware/debugCommands');
 const { registerFirstCommandTgCheck } = require('./middleware/firstCommandTgCheck');
 const { registerStart } = require('./handlers/start');
 const { registerAlert } = require('./handlers/alert');
@@ -28,6 +30,7 @@ const bot = new Telegraf(config.BOT_TOKEN);
 
 const i18nApi = { getTexts };
 
+registerDebugCommandLogging(bot);
 registerFirstCommandTgCheck(bot, config);
 registerStart(bot, config, i18nApi);
 registerAlert(bot, config, i18nApi);
@@ -43,6 +46,9 @@ bot.catch((err, ctx) => {
 bot.launch().then(() => {
   console.log('🤖 Mozi Bot 已启动');
   console.log('等待用户消息...\n');
+  if (config.BOT_DEBUG) {
+    console.log('ℹ️  BOT_DEBUG 已开启：将打印 [BOT_DEBUG] 命令入口与 HTTP 调用结果（不含 JWT 原文）\n');
+  }
 });
 
 process.once('SIGINT', () => bot.stop('SIGINT'));

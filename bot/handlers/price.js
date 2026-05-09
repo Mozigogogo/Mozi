@@ -4,6 +4,7 @@
  */
 
 const { fetchDetailHeader } = require('../lib/apis');
+const { apiDebug } = require('../lib/debugLog');
 const { escapeHtml, buildHtmlChunks, splitOversized } = require('../lib/telegramHtml');
 
 const DEFAULT_SYMBOL = 'PLUME';
@@ -108,10 +109,10 @@ function registerPrice(bot, config, { getTexts }) {
       return;
     }
 
-    if (!config.MOZI_DETAIL_AUTH) {
-      await ctx.reply(texts.priceNotConfigured, { parse_mode: 'HTML' });
-      return;
-    }
+    apiDebug('/price handler', {
+      symbol,
+      telegramId: ctx.from?.id ?? null,
+    });
 
     await ctx.telegram.sendChatAction(ctx.chat.id, 'typing').catch(() => {});
 
@@ -123,22 +124,28 @@ function registerPrice(bot, config, { getTexts }) {
         apiBaseUrl: config.API_BASE_URL,
         appUrl: config.APP_URL,
         symbol,
-        auth: config.MOZI_DETAIL_AUTH,
         acceptLanguage,
       });
     } catch (err) {
       console.error('[/price] 请求错误:', err?.message || err);
+      apiDebug('/price handler', { failed: 'network', message: err?.message || String(err) });
       await ctx.reply(texts.priceNetworkError, { parse_mode: 'HTML' });
       return;
     }
 
     if (!result.ok) {
       console.error('[/price] HTTP', result.status, result.text?.slice(0, 500));
+      apiDebug('/price handler', {
+        failed: 'http',
+        httpStatus: result.status,
+        bodyPreview: result.text?.slice(0, 600),
+      });
       await ctx.reply(texts.priceError(result.status), { parse_mode: 'HTML' });
       return;
     }
 
     if (result.json == null) {
+      apiDebug('/price handler', { failed: 'non_json', bodyPreview: result.text?.slice(0, 400) });
       await ctx.reply(texts.priceBadJson, { parse_mode: 'HTML' });
       return;
     }
