@@ -5,7 +5,7 @@
 
 const { extractChatQuery } = require('../lib/aiQuery');
 const { requestChatStream } = require('../lib/apis');
-const { escapeHtml, buildHtmlChunks, splitOversized } = require('../lib/telegramHtml');
+const { aiMarkdownToTelegramHtml, escapeHtml, buildHtmlChunks, splitOversized } = require('../lib/telegramHtml');
 
 function registerChat(bot, config, { getTexts }) {
   bot.command('chat', async (ctx) => {
@@ -56,7 +56,7 @@ function registerChat(bot, config, { getTexts }) {
     }
 
     const points = result.pointsCost ?? config.AI_CHAT_POINTS_COST;
-    const bodyEscaped = escapeHtml(result.answer);
+    const bodyEscaped = aiMarkdownToTelegramHtml(result.answer);
     const titleHtml = texts.chatTitleHtml;
     const footerHtml = texts.chatFooterHtml(points);
     const parts = splitOversized(buildHtmlChunks(titleHtml, bodyEscaped, footerHtml));

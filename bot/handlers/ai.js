@@ -5,7 +5,7 @@
 
 const { extractAiQuery } = require('../lib/aiQuery');
 const { requestAiAnalysis } = require('../lib/apis');
-const { escapeHtml, buildHtmlChunks, splitOversized } = require('../lib/telegramHtml');
+const { aiMarkdownToTelegramHtml, escapeHtml, buildHtmlChunks, splitOversized } = require('../lib/telegramHtml');
 
 function registerAi(bot, config, { getTexts }) {
   bot.command('ai', async (ctx) => {
@@ -49,7 +49,7 @@ function registerAi(bot, config, { getTexts }) {
     }
 
     const points = result.pointsCost ?? config.AI_POINTS_COST;
-    const bodyEscaped = escapeHtml(result.answer);
+    const bodyEscaped = aiMarkdownToTelegramHtml(result.answer);
     const titleHtml = texts.aiTitleHtml;
     const footerHtml = texts.aiFooterHtml(points);
     const parts = splitOversized(buildHtmlChunks(titleHtml, bodyEscaped, footerHtml));
