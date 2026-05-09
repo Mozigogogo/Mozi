@@ -139,12 +139,13 @@ function extractChunkText(obj) {
         .join('');
     }
   }
-  for (const k of ['content', 'text', 'answer', 'message', 'token', 'delta']) {
+  for (const k of ['content', 'text', 'answer', 'message', 'token', 'delta', 'output', 'response', 'result']) {
     const v = obj[k];
     if (typeof v === 'string') return v;
   }
-  if (obj.data && typeof obj.data === 'object') {
-    return extractChunkText(obj.data);
+  if (obj.data !== undefined && obj.data !== null) {
+    if (typeof obj.data === 'string') return obj.data;
+    if (typeof obj.data === 'object') return extractChunkText(obj.data);
   }
   return '';
 }
@@ -251,7 +252,11 @@ async function consumeSseStream(res, signal) {
   }
 
   if (!String(answer).trim()) {
-    throw new Error('Empty answer from AI backend stream');
+    const err = new Error('Empty answer from AI backend stream');
+    err.streamHint = buffer.trim()
+      ? `tail:${buffer.slice(-Math.min(800, buffer.length))}`
+      : 'no_sse_text_extracted';
+    throw err;
   }
   return { answer: String(answer).trim(), pointsCost };
 }
@@ -261,7 +266,7 @@ async function consumeSseStream(res, signal) {
  * @param {{ url: string; message: string; lang: string; appUrl?: string; timeoutMs?: number }} opts
  * @returns {Promise<{ answer: string, pointsCost?: number }>}
  */
-async function requestChatStream({ url, message, lang, appUrl = '', timeoutMs = 120000 }) {
+async function requestChatStream({ url, message, lang, appUrl = '', timeoutMs = 300000 }) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   const app = String(appUrl || '').replace(/\/+$/, '');
@@ -358,11 +363,16 @@ async function requestChatStream({ url, message, lang, appUrl = '', timeoutMs = 
     });
     return { answer: String(answer).trim(), pointsCost };
   } catch (err) {
+    const aborted =
+      err?.name === 'AbortError' ||
+      /aborted|AbortError|signal is aborted/i.test(String(err?.message || ''));
     apiDebug('POST chat/stream → failed', {
       message: err?.message || String(err),
+      likelyTimeout: aborted,
       userMessage: err?.userMessage ?? null,
       httpStatus: err?.status ?? null,
       rawBody: err?.rawBody ?? null,
+      streamHint: err?.streamHint ?? null,
     });
     throw err;
   } finally {

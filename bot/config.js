@@ -35,6 +35,12 @@ const AI_POINTS_COST = Math.max(
   Math.min(1_000_000, parseInt(process.env.AI_POINTS_COST || '50', 10) || 50),
 );
 
+/** /chat 消费 SSE 的最长等待（毫秒）；默认 5 分钟，偏短会导致 Railway 已记「成功」但 Bot 侧超时仍显示对话失败 */
+const AI_CHAT_STREAM_TIMEOUT_MS = Math.max(
+  30_000,
+  Math.min(1_800_000, parseInt(process.env.AI_CHAT_STREAM_TIMEOUT_MS || '300000', 10) || 300_000),
+);
+
 /** 可选：POST /user/tg/registered/check 请求头 authentication 的 JWT（/chat、/price 不使用） */
 const MOZI_DETAIL_AUTH = (process.env.MOZI_DETAIL_AUTH || '').trim();
 
@@ -55,6 +61,7 @@ module.exports = {
   AI_CHAT_STREAM_URL,
   AI_BACKEND_SECRET,
   AI_POINTS_COST,
+  AI_CHAT_STREAM_TIMEOUT_MS,
   MOZI_DETAIL_AUTH,
   BOT_DEBUG,
 };

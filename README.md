@@ -22,6 +22,7 @@
 | `API_BASE_URL` | 自建 API 根地址，默认 `https://moziinnovations.com`（`/price` 等）；`/chat` 默认流式地址见 `APP_URL` + `robot_proxy` 路径 |
 | `AI_BACKEND_URL` | 可选；覆盖 `/ai` 的 **完整流式 POST URL**；不设时默认 `https://mozibackend-production.up.railway.app/api/v1/analyze/stream`（契约见 `bot/lib/apis.js`） |
 | `AI_CHAT_BACKEND_URL` | 可选；覆盖 `/chat` 的 **完整流式 POST URL**（默认 `APP_URL/api/robot_proxy/api/v1/chat/stream`） |
+| `AI_CHAT_STREAM_TIMEOUT_MS` | 可选；`/chat` 等待 SSE 的最长时间（毫秒），默认 `300000`（5 分钟）。接口已返回 200 但若生成较慢或 Bot 侧超时，仍会显示「对话暂时失败」 |
 | `AI_BACKEND_SECRET` | 可选；若设置，请求头 `Authorization: Bearer …`（仅 `/ai` 分析流） |
 | `MOZI_DETAIL_AUTH` | 可选；JWT，请求头 `authentication`（仅首次命令 `POST /user/tg/registered/check`；`/chat` 不传该头） |
 | `AI_POINTS_COST` | 可选；回复底部展示的积分数，默认 `50` |

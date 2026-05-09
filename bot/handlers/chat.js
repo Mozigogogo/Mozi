@@ -30,9 +30,23 @@ function registerChat(bot, config, { getTexts }) {
         message: query,
         lang,
         appUrl: config.APP_URL,
+        timeoutMs: config.AI_CHAT_STREAM_TIMEOUT_MS,
       });
     } catch (err) {
-      console.error('[/chat] 后端错误:', err?.message || err, err?.rawBody || '');
+      const aborted =
+        err?.name === 'AbortError' ||
+        /aborted|AbortError|signal is aborted/i.test(String(err?.message || ''));
+      console.error('[/chat] 后端错误:', {
+        message: err?.message || String(err),
+        name: err?.name || null,
+        likelyTimeout: aborted,
+        timeoutMs: config.AI_CHAT_STREAM_TIMEOUT_MS,
+        httpStatus: err?.status ?? null,
+        userMessage: err?.userMessage ?? null,
+        rawBody: err?.rawBody ?? null,
+        streamHint: err?.streamHint ?? null,
+        chatStreamUrl: config.AI_CHAT_STREAM_URL,
+      });
       if (err?.userMessage) {
         await ctx.reply(escapeHtml(err.userMessage), { parse_mode: 'HTML' });
         return;
