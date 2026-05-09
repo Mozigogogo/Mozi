@@ -1,9 +1,10 @@
 /**
  * /chat <内容>：请求 /ai/chat/stream 流式对话接口
+ * HTTP 见 lib/apis.js（requestAiAnalysis）
  */
 
 const { extractChatQuery } = require('../lib/aiQuery');
-const { requestAiAnalysis } = require('../lib/aiBackend');
+const { requestAiAnalysis } = require('../lib/apis');
 const { escapeHtml, buildHtmlChunks, splitOversized } = require('../lib/telegramHtml');
 
 function registerChat(bot, config, { getTexts }) {

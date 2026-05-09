@@ -20,7 +20,7 @@
 | `BOT_USERNAME` | 机器人用户名（无 `@`） |
 | `ALERT_CARD_IMAGE` | 可选，消息卡片图片 URL |
 | `API_BASE_URL` | 自建 API 根地址，默认 `https://moziinnovations.com`；与 `/ai/chat/stream` 拼接为 `/chat` 默认请求根（`/ai` 默认已改为 mozibackend，见下） |
-| `AI_BACKEND_URL` | 可选；覆盖 `/ai` 的 **完整流式 POST URL**；不设时默认 `https://mozibackend-production.up.railway.app/api/v1/analyze/stream`（契约见 `bot/lib/aiBackend.js`） |
+| `AI_BACKEND_URL` | 可选；覆盖 `/ai` 的 **完整流式 POST URL**；不设时默认 `https://mozibackend-production.up.railway.app/api/v1/analyze/stream`（契约见 `bot/lib/apis.js`） |
 | `AI_CHAT_BACKEND_URL` | 可选；覆盖 `/chat` 的 **完整流式 POST URL**（默认 `/ai/chat/stream`） |
 | `AI_BACKEND_SECRET` | 可选；若设置，请求头 `Authorization: Bearer …`（`/ai` 与 `/chat` 共用） |
 | `AI_POINTS_COST` | 可选；回复底部展示的积分数，默认 `50` |
@@ -61,7 +61,7 @@ npm start
     ├── lib/invite.js
     ├── lib/alertSymbol.js
     ├── lib/alertFlow.js
-    ├── lib/aiBackend.js
+    ├── lib/apis.js
     ├── lib/aiQuery.js
     ├── lib/telegramHtml.js
     ├── handlers/start.js

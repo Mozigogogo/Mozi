@@ -33,6 +33,9 @@ const AI_POINTS_COST = Math.max(
   Math.min(1_000_000, parseInt(process.env.AI_POINTS_COST || '50', 10) || 50),
 );
 
+/** GET /detail/header 使用的 JWT，对应请求头 authentication（环境变量 MOZI_DETAIL_AUTH） */
+const MOZI_DETAIL_AUTH = (process.env.MOZI_DETAIL_AUTH || '').trim();
+
 module.exports = {
   BOT_TOKEN,
   APP_URL,
@@ -47,4 +50,5 @@ module.exports = {
   AI_CHAT_STREAM_URL,
   AI_BACKEND_SECRET,
   AI_POINTS_COST,
+  MOZI_DETAIL_AUTH,
 };

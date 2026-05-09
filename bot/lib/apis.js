@@ -1,25 +1,51 @@
 /**
- * 调用自建流式分析接口 POST（默认 https://mozibackend-production.up.railway.app/api/v1/analyze/stream，可用 AI_BACKEND_URL 覆盖）
- *
- * Headers: Content-Type: application/json
- *         Accept: text/event-stream, application/json
- *         若配置了 AI_BACKEND_SECRET：Authorization: Bearer <secret>
- *
- * Body:
- *   question          string  用户问题（必填）
- *   telegramUserId    number  Telegram 用户 id
- *   telegramUsername  string | null
- *   chatId            number  当前会话 id
- *   chatType          string  private | group | supergroup | …
- *   languageCode      string  用户 language_code
- *
- * 成功 200：
- *   - text/event-stream：SSE，若干 data: 行；JSON 片段可含 OpenAI 风格 choices[0].delta.content，
- *     或 content / text / answer / message 等字符串字段；可选 pointsCost
- *   - application/json：与旧版一致，answer | content | text | message
- *
- * 失败：HTTP 错误或流内 JSON { error | message }；Bot 会尽量原样回复用户（HTML 转义）
+ * 项目内所有对外 HTTP 接口：详情行情 GET、AI 流式 POST 等
  */
+
+const DEFAULT_UA =
+  'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1';
+
+// --- GET /detail/header -----------------------------------------------------
+
+/**
+ * GET /detail/header?symbol=
+ * @param {{ apiBaseUrl: string; appUrl: string; symbol: string; auth: string; acceptLanguage: string }} opts
+ * @returns {Promise<{ ok: boolean; status: number; json: object | null; text: string }>}
+ */
+async function fetchDetailHeader({ apiBaseUrl, appUrl, symbol, auth, acceptLanguage }) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const url = `${base}/detail/header?symbol=${encodeURIComponent(symbol)}`;
+  const res = await fetch(url, {
+    headers: {
+      accept: 'application/json, text/plain, */*',
+      'accept-language': acceptLanguage,
+      authentication: auth,
+      'cache-control': 'no-cache',
+      pragma: 'no-cache',
+      referer: `${app}/detail?symbol=${encodeURIComponent(symbol)}`,
+      'user-agent': DEFAULT_UA,
+    },
+  });
+  const text = await res.text();
+  let json = null;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    json = null;
+  }
+  return { ok: res.ok, status: res.status, json, text };
+}
+
+// --- POST 流式分析 / 对话（/ai、/chat）---------------------------------------
+//
+// Headers: Content-Type: application/json
+//          Accept: text/event-stream, application/json
+//          若配置了 secret：Authorization: Bearer <secret>
+//
+// Body: question, telegramUserId, telegramUsername, chatId, chatType, languageCode
+//
+// 成功 200：text/event-stream（SSE）或 application/json（answer | content | text | message）
 
 /**
  * @param {unknown} obj
@@ -241,4 +267,4 @@ async function requestAiAnalysis({ url, secret, body, timeoutMs = 120000 }) {
   }
 }
 
-module.exports = { requestAiAnalysis };
+module.exports = { fetchDetailHeader, requestAiAnalysis };

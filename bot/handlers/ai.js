@@ -1,9 +1,10 @@
 /**
  * /ai <问题>：群内或私聊，请求自建后端返回分析；底部展示积分（默认来自配置或由后端 pointsCost 覆盖）
+ * HTTP 见 lib/apis.js（requestAiAnalysis）
  */
 
 const { extractAiQuery } = require('../lib/aiQuery');
-const { requestAiAnalysis } = require('../lib/aiBackend');
+const { requestAiAnalysis } = require('../lib/apis');
 const { escapeHtml, buildHtmlChunks, splitOversized } = require('../lib/telegramHtml');
 
 function registerAi(bot, config, { getTexts }) {
