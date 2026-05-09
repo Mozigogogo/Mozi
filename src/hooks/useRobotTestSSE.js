@@ -10,6 +10,8 @@ export function useRobotTestSSE(url, options = {}) {
     onChunk = () => {},
     onComplete = () => {},
     onError = () => {},
+    /** SSE data: { type: "suggestions", suggestions: [{ id, suggestion }] } */
+    onSuggestions = () => {},
     headers = {},
     getToken = null,
   } = options;
@@ -149,6 +151,13 @@ export function useRobotTestSSE(url, options = {}) {
                 // 而且 catch 块可能依赖它。
                 // 但为了避免重复调用 abort，可以不置空，反正下次 sendMessage 会重置。
               }
+            } else if (messageType === 'suggestions') {
+              const list = Array.isArray(eventData.suggestions) ? eventData.suggestions : [];
+              try {
+                onSuggestions(list, eventData);
+              } catch (cbErr) {
+                console.warn('[useRobotTestSSE] onSuggestions error:', cbErr);
+              }
             } else if (messageType === 'error') {
               throw new Error(eventData.message || 'SSE stream error');
             }
@@ -191,7 +200,7 @@ export function useRobotTestSSE(url, options = {}) {
       
       // 不再重新抛出
     }
-  }, [headers, getToken, onStart, onChunk, onComplete, onError, abort, isStreaming, url]);
+  }, [headers, getToken, onStart, onChunk, onComplete, onError, onSuggestions, abort, isStreaming, url]);
 
   return {
     sendMessage,

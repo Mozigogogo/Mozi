@@ -911,6 +911,7 @@
     "regenerateAlt": "Regenerate",
     "me": "Me",
     "suggestedTitle": "You might also ask:",
+    "suggestedFollowUpTitle": "You might also want to ask:",
     "inputPlaceholder": "Enter your question...",
     "send": "Send",
     "stopAlt": "Stop generating",

@@ -16,6 +16,7 @@ import { request } from '@/utils/request';
 import { executeConsume } from '@/api/points';
 import { useRobotTestSSE } from '@/hooks/useRobotTestSSE';
 import { extractCoinSymbolFromText } from '@/utils/extractCoinSymbolFromText';
+import { normalizeSuggestionItems } from '@/utils/normalizeSuggestionItems';
 import { forceBlurAndResetViewport } from '@/utils/iosViewportFix';
 import { safeBack } from '@/utils/navigation';
 import { fetchUserDataInfoOnce } from '@/utils/postLogin';
@@ -566,8 +567,9 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
           // 保存建议问题：即使没有历史消息，也可能由后端下发默认 suggestedQuestions
           if (data.data.suggestedQuestions && Array.isArray(data.data.suggestedQuestions)) {
-            setSuggestedQuestions(data.data.suggestedQuestions);
-            console.log('✅ 加载了', data.data.suggestedQuestions.length, '个建议问题');
+            const norm = normalizeSuggestionItems(data.data.suggestedQuestions);
+            setSuggestedQuestions(norm);
+            console.log('✅ 加载了', norm.length, '个建议问题');
           } else {
             setSuggestedQuestions([]);
           }
@@ -647,6 +649,12 @@ export default function RobotPage({ isPC: propIsPC = false }) {
       onStart: () => {
         // AI 开始回复
       },
+      onSuggestions: (list) => {
+        const norm = normalizeSuggestionItems(list);
+        if (norm.length > 0) {
+          setSuggestedQuestions(norm);
+        }
+      },
       onChunk: (chunk, accumulated, eventData) => {
         // 更新消息内容
         if (currentAiMsgIdRef.current) {
@@ -693,9 +701,9 @@ export default function RobotPage({ isPC: propIsPC = false }) {
         }
         currentAiMsgIdRef.current = null;
 
-        // 更新建议问题
+        // 更新建议问题（complete 事件里附带）
         if (eventData?.suggestedQuestions && eventData.suggestedQuestions.length > 0) {
-          setSuggestedQuestions(eventData.suggestedQuestions);
+          setSuggestedQuestions(normalizeSuggestionItems(eventData.suggestedQuestions));
         }
 
         // 埋点：AI 回复完成
@@ -1320,6 +1328,29 @@ export default function RobotPage({ isPC: propIsPC = false }) {
             </div>
           )}
         </div>
+
+        {suggestedQuestions.length > 0 && messages.length > 0 && (
+          <div className={styles.suggestedQuestions}>
+            <div className={styles.suggestedTitle}>{t('robot.suggestedFollowUpTitle')}</div>
+            {suggestedQuestions.map((item, idx) => {
+              const text = typeof item === 'string' ? item : item?.text ?? '';
+              if (!text) return null;
+              const label = getSuggestedQuestionDisplay(text) || text;
+              const key = typeof item === 'object' && item?.id != null ? item.id : `${idx}-${text.slice(0, 24)}`;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  className={styles.suggestedBtn}
+                  disabled={isStreaming}
+                  onClick={() => handleSuggestedQuestion(text)}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         <div className={styles.chatInputBar}>
           <div className={styles.inputBox}>

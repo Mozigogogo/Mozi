@@ -894,6 +894,7 @@
     "regenerateAlt": "重新生成",
     "me": "我",
     "suggestedTitle": "你可以问我加密货币行情、投资策略、DeFi 知识等。",
+    "suggestedFollowUpTitle": "你可能还想问：",
     "inputPlaceholder": "输入你的问题...",
     "send": "发送",
     "stopAlt": "停止生成",
