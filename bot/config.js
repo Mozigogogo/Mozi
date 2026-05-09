@@ -30,9 +30,15 @@ const AI_CHAT_STREAM_URL =
   `${String(APP_URL || '').replace(/\/+$/, '')}/api/robot_proxy/api/v1/chat/stream`;
 /** 可选，发给后端时带 Authorization: Bearer … */
 const AI_BACKEND_SECRET = (process.env.AI_BACKEND_SECRET || '').trim();
+/** 底部展示：/ai 未返回 pointsCost 时默认 50 */
 const AI_POINTS_COST = Math.max(
   1,
   Math.min(1_000_000, parseInt(process.env.AI_POINTS_COST || '50', 10) || 50),
+);
+/** 底部展示：/chat 未返回 pointsCost 时默认 10 */
+const AI_CHAT_POINTS_COST = Math.max(
+  1,
+  Math.min(1_000_000, parseInt(process.env.AI_CHAT_POINTS_COST || '10', 10) || 10),
 );
 
 /** /chat 消费 SSE 的最长等待（毫秒）；默认 5 分钟，偏短会导致 Railway 已记「成功」但 Bot 侧超时仍显示对话失败 */
@@ -61,6 +67,7 @@ module.exports = {
   AI_CHAT_STREAM_URL,
   AI_BACKEND_SECRET,
   AI_POINTS_COST,
+  AI_CHAT_POINTS_COST,
   AI_CHAT_STREAM_TIMEOUT_MS,
   MOZI_DETAIL_AUTH,
   BOT_DEBUG,

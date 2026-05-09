@@ -55,7 +55,7 @@ function registerChat(bot, config, { getTexts }) {
       return;
     }
 
-    const points = result.pointsCost ?? config.AI_POINTS_COST;
+    const points = result.pointsCost ?? config.AI_CHAT_POINTS_COST;
     const bodyEscaped = escapeHtml(result.answer);
     const titleHtml = texts.chatTitleHtml;
     const footerHtml = texts.chatFooterHtml(points);
