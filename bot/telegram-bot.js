@@ -5,12 +5,14 @@
  * /ai、/chat 流式 POST：handlers/ai.js、handlers/chat.js、lib/apis.js
  * /chat：见 handlers/chat.js（/ai/chat/stream）
  * /price：handlers/price.js + lib/apis.js（GET /detail/header）
+ * 首次任意命令前：middleware/firstCommandTgCheck.js → POST /user/tg/registered/check
  */
 
 const { Telegraf } = require('telegraf');
 
 const config = require('./config');
 const { getTexts } = require('./i18n');
+const { registerFirstCommandTgCheck } = require('./middleware/firstCommandTgCheck');
 const { registerStart } = require('./handlers/start');
 const { registerAlert } = require('./handlers/alert');
 const { registerAi } = require('./handlers/ai');
@@ -26,6 +28,7 @@ const bot = new Telegraf(config.BOT_TOKEN);
 
 const i18nApi = { getTexts };
 
+registerFirstCommandTgCheck(bot, config);
 registerStart(bot, config, i18nApi);
 registerAlert(bot, config, i18nApi);
 registerAi(bot, config, i18nApi);

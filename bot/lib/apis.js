@@ -1,5 +1,5 @@
 /**
- * 项目内所有对外 HTTP 接口：详情行情 GET、AI 流式 POST 等
+ * 项目内所有对外 HTTP 接口：TG 注册检查 POST、详情行情 GET、AI 流式 POST 等
  */
 
 const DEFAULT_UA =
@@ -35,6 +35,57 @@ async function fetchDetailHeader({ apiBaseUrl, appUrl, symbol, auth, acceptLangu
     json = null;
   }
   return { ok: res.ok, status: res.status, json, text };
+}
+
+// --- POST /user/tg/registered/check -----------------------------------------
+
+/**
+ * @param {{ apiBaseUrl: string; telegramId: string; auth?: string; appUrl?: string; timeoutMs?: number }} opts
+ * @returns {Promise<{ ok: boolean; status: number; json: object | null; text: string }>}
+ */
+async function postTgRegisteredCheck({
+  apiBaseUrl,
+  telegramId,
+  auth = '',
+  appUrl = '',
+  timeoutMs = 15000,
+}) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const url = `${base}/user/tg/registered/check`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    'content-type': 'application/json',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    'user-agent': DEFAULT_UA,
+  };
+  if (auth) {
+    headers.authentication = auth;
+  }
+  if (app) {
+    headers.referer = `${app}/`;
+  }
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ telegramId }),
+      signal: ctrl.signal,
+    });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    return { ok: res.ok, status: res.status, json, text };
+  } finally {
+    clearTimeout(t);
+  }
 }
 
 // --- POST 流式分析 / 对话（/ai、/chat）---------------------------------------
@@ -267,4 +318,4 @@ async function requestAiAnalysis({ url, secret, body, timeoutMs = 120000 }) {
   }
 }
 
-module.exports = { fetchDetailHeader, requestAiAnalysis };
+module.exports = { fetchDetailHeader, postTgRegisteredCheck, requestAiAnalysis };
