@@ -50,6 +50,11 @@ const AI_CHAT_STREAM_TIMEOUT_MS = Math.max(
 /** 可选：POST /user/tg/registered/check 请求头 authentication 的 JWT（/chat、/price 不使用） */
 const MOZI_DETAIL_AUTH = (process.env.MOZI_DETAIL_AUTH || '').trim();
 
+/** GET 积分摘要路径（相对 API_BASE_URL），默认 user/tg/points/summary?telegramId= */
+const TG_POINTS_SUMMARY_PATH = (
+  process.env.TG_POINTS_SUMMARY_PATH || 'user/tg/points/summary'
+).trim().replace(/^\/+/, '');
+
 /** 为 1/true/yes 时打印命令与 HTTP 调试信息（见 lib/debugLog.js） */
 const BOT_DEBUG = /^1|true|yes$/i.test(String(process.env.BOT_DEBUG || '').trim());
 
@@ -70,5 +75,6 @@ module.exports = {
   AI_CHAT_POINTS_COST,
   AI_CHAT_STREAM_TIMEOUT_MS,
   MOZI_DETAIL_AUTH,
+  TG_POINTS_SUMMARY_PATH,
   BOT_DEBUG,
 };

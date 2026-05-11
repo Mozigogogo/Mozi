@@ -65,6 +65,55 @@ const i18n = {
       isSelfSelected: '自选',
       url: '图标链接',
     },
+    helpBody: `🤖   Mozi AI 行情助手 · 指令说明
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 行情查询（免费）
+/price [币种]   查询实时价格
+  示例：/price BTC  /price ETH  /price SOL
+
+🤖   AI 分析
+/ai [问题]      深度分析，消耗 50 积分
+  示例：/ai 以太坊近期为何下跌？
+/chat [问题]    普通问答，消耗 10 积分
+  示例：/chat BTC今天支撑位在哪？
+
+🔔 告警设置（免费）
+/alert          跳转 App 配置价格告警
+
+👤 账户管理（免费）
+/balance        查询积分余额（仅私聊；群内发送不响应）
+/help           显示本帮助信息
+
+━━━━━━━━━━━━━━━━━━━━━━━━`,
+    helpFooterTip: '💡 积分不足？在 Mozi App 社区发帖可获取积分',
+    helpOpenAppBtn: '打开 Mozi App',
+    helpBindAccountBtn: '绑定/管理账户',
+    helpDmFailed:
+      '无法私发帮助说明：请先<strong>私聊</strong>本机器人发送任意消息或 <code>/start</code>，再在群内使用 <code>/help</code>。',
+    balanceBodyHtml: (current, consumed, earned) => {
+      const c = consumed != null ? consumed : 0;
+      const e = earned != null ? earned : 0;
+      return `💰   Mozi 积分账户
+━━━━━━━━━━━━━━━━━━━━━━━━
+当前余额：  <b>${current}</b> 积分
+本月已消耗：<b>${c}</b> 积分
+本月已获取：<b>${e}</b> 积分
+
+━━━━━━━━━━━━━━━━━━━━━━━━`;
+    },
+    balanceFooterTip: '💡 获取更多积分：在 Mozi App 社区发布高质量内容',
+    balanceNeedBind:
+      '尚未绑定 Mozi 账户或无法校验绑定状态。\n\n请先在 <b>Mozi App</b> 完成绑定后，再在<strong>私信</strong>中使用 <code>/balance</code> 查询积分。',
+    balanceNetworkError: '查询失败（网络异常），请稍后再试。',
+    balanceHttpError: (code) => `查询失败（HTTP ${code}），请稍后再试。`,
+    balanceApiNotFound:
+      '积分接口未就绪。请联系管理员配置 <code>TG_POINTS_SUMMARY_PATH</code> 或后端 <code>GET …/points/summary</code>。',
+    balanceParseError: '接口返回格式异常，暂时无法展示积分明细。',
+    balanceBtnBill: '查看完整账单',
+    balanceBtnPost: '去发帖赚积分',
+    balanceNotePrivateOnly:
+      '\n\n📌 说明：<code>/balance</code> 仅在与 Bot 的<strong>私信</strong>中可用；群内发送不会有任何回复。',
   },
   en: {
     welcomeWithInvite: (code) =>
@@ -127,6 +176,55 @@ const i18n = {
       isSelfSelected: 'Watchlist',
       url: 'Icon URL',
     },
+    helpBody: `🤖 Mozi AI · Commands
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 Price (free)
+/price [symbol]  Live price
+  e.g. /price BTC  /price ETH  /price SOL
+
+🤖 AI
+/ai [question]   Deep analysis · 50 points
+  e.g. /ai Why is ETH down recently?
+/chat [question] Chat · 10 points
+  e.g. /chat Where is BTC support today?
+
+🔔 Alerts (free)
+/alert           Open app to set price alerts
+
+👤 Account (free)
+/balance         Points (DM only; ignored in groups)
+/help            This help
+
+━━━━━━━━━━━━━━━━━━━━━━━━`,
+    helpFooterTip: '💡 Need points? Post in the Mozi App community to earn.',
+    helpOpenAppBtn: 'Open Mozi App',
+    helpBindAccountBtn: 'Bind / manage account',
+    helpDmFailed:
+      'Could not DM you the help text. Please <strong>message this bot</strong> first (any message or <code>/start</code>), then use <code>/help</code> in the group again.',
+    balanceBodyHtml: (current, consumed, earned) => {
+      const c = consumed != null ? consumed : 0;
+      const e = earned != null ? earned : 0;
+      return `💰 Mozi points
+━━━━━━━━━━━━━━━━━━━━━━━━
+Balance:      <b>${current}</b> pts
+Used (month): <b>${c}</b> pts
+Earned (mo.): <b>${e}</b> pts
+
+━━━━━━━━━━━━━━━━━━━━━━━━`;
+    },
+    balanceFooterTip: '💡 Earn more: post quality content in the Mozi App community.',
+    balanceNeedBind:
+      'Account not bound or binding could not be verified.\n\nPlease complete binding in <b>Mozi App</b>, then use <code>/balance</code> in a <strong>private chat</strong> with this bot.',
+    balanceNetworkError: 'Request failed (network). Please try again later.',
+    balanceHttpError: (code) => `Request failed (HTTP ${code}). Please try again later.`,
+    balanceApiNotFound:
+      'Points API not available. Ask admin to configure <code>TG_POINTS_SUMMARY_PATH</code> or the backend summary endpoint.',
+    balanceParseError: 'Unexpected API format; cannot show points.',
+    balanceBtnBill: 'Full statement',
+    balanceBtnPost: 'Post to earn points',
+    balanceNotePrivateOnly:
+      '\n\n📌 <code>/balance</code> works only in <strong>private chat</strong> with the bot; it is ignored in groups.',
   },
 };
 

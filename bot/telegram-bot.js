@@ -4,6 +4,8 @@
  * /alert：见 handlers/alert.js、lib/alertSymbol.js
  * /ai、/chat：同为 lib/apis.js requestChatStream（body: message+lang）；/ai → …/analyze/stream，/chat → …/chat/stream
  * /price：handlers/price.js + lib/apis.js（GET /detail/header）
+ * /help：handlers/help.js（群内仅私聊发全文，防刷屏）
+ * /balance：handlers/balance.js（仅私聊；GET 积分摘要，路径见 TG_POINTS_SUMMARY_PATH）
  * 首次任意命令前：middleware/firstCommandTgCheck.js → POST /user/tg/registered/check
  * 调试：环境变量 BOT_DEBUG=1 → middleware/debugCommands.js + lib/debugLog.js（命令与 apis 内 HTTP 摘要）
  */
@@ -19,6 +21,8 @@ const { registerAlert } = require('./handlers/alert');
 const { registerAi } = require('./handlers/ai');
 const { registerChat } = require('./handlers/chat');
 const { registerPrice } = require('./handlers/price');
+const { registerHelp } = require('./handlers/help');
+const { registerBalance } = require('./handlers/balance');
 
 if (!config.BOT_TOKEN) {
   console.error('❌ 错误: 请设置 BOT_TOKEN 环境变量');
@@ -36,6 +40,8 @@ registerAlert(bot, config, i18nApi);
 registerAi(bot, config, i18nApi);
 registerChat(bot, config, i18nApi);
 registerPrice(bot, config, i18nApi);
+registerHelp(bot, config, i18nApi);
+registerBalance(bot, config, i18nApi);
 
 bot.catch((err, ctx) => {
   console.error('Bot 未捕获错误:', err?.response?.description || err?.message || err);

@@ -107,6 +107,60 @@ async function postTgRegisteredCheck({
   }
 }
 
+// --- GET /user/tg/points/summary（/balance 私聊）------------------------------
+
+/**
+ * @param {{ apiBaseUrl: string; telegramId: string; auth?: string; appUrl?: string; path?: string; timeoutMs?: number }} opts
+ * @returns {Promise<{ ok: boolean; status: number; json: object | null; text: string }>}
+ */
+async function fetchTgPointsSummary({
+  apiBaseUrl,
+  telegramId,
+  auth = '',
+  appUrl = '',
+  path = 'user/tg/points/summary',
+  timeoutMs = 15000,
+}) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const rel = String(path || 'user/tg/points/summary').replace(/^\/+/, '');
+  const url = `${base}/${rel}?telegramId=${encodeURIComponent(String(telegramId))}`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    'user-agent': DEFAULT_UA,
+  };
+  if (auth) {
+    headers.authentication = auth;
+  }
+  if (app) {
+    headers.referer = `${app}/`;
+  }
+  try {
+    const res = await fetch(url, { method: 'GET', headers, signal: ctrl.signal });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const out = { ok: res.ok, status: res.status, json, text };
+    apiDebug('GET tg/points/summary →', {
+      httpStatus: res.status,
+      ok: res.ok,
+      hasAuth: Boolean(auth),
+      bodyPreview: text.slice(0, 400),
+    });
+    return out;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 // --- POST 流式分析 / 对话（/ai、/chat）---------------------------------------
 //
 // Headers: Content-Type: application/json
@@ -505,6 +559,7 @@ async function requestAiAnalysis({ url, secret, body, timeoutMs = 120000 }) {
 module.exports = {
   fetchDetailHeader,
   postTgRegisteredCheck,
+  fetchTgPointsSummary,
   requestChatStream,
   requestAiAnalysis,
 };
