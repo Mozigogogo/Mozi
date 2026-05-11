@@ -37,6 +37,7 @@ function PCAlarmContent() {
   const [phoneEnabled, setPhoneEnabled] = useState(true);
   const [emailEnabled, setEmailEnabled] = useState(true);
   const [inAppEnabled, setInAppEnabled] = useState(false);
+  const [smsEnabled, setSmsEnabled] = useState(false);
   const [countryCode, setCountryCode] = useState('+86');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -369,6 +370,7 @@ function PCAlarmContent() {
       if (cfg?.phoneEnabled !== undefined) setPhoneEnabled(Number(cfg.phoneEnabled) === 1);
       if (cfg?.emailEnabled !== undefined) setEmailEnabled(Number(cfg.emailEnabled) === 1);
       if (cfg?.defaultEnabled !== undefined) setInAppEnabled(Number(cfg.defaultEnabled) === 1);
+      if (cfg?.smsEnabled !== undefined) setSmsEnabled(Number(cfg.smsEnabled) === 1);
     } catch (e) {
       // ignore invalid local data
     }
@@ -390,16 +392,26 @@ function PCAlarmContent() {
       }
     }
 
+    if (phoneEnabled && (!phone || phone.trim() === '')) {
+      Toast.show({ content: t('oneClickAlarm.phoneRequired') });
+      return;
+    }
+    if (smsEnabled && (!phone || phone.trim() === '' || !countryCode || !String(countryCode).trim())) {
+      Toast.show({ content: t('oneClickAlarm.smsNeedsPhoneAndCountry') });
+      return;
+    }
+
     setSideSubmitting(true);
     try {
       const alertConfig = {
         phoneEnabled: phoneEnabled ? 1 : 0,
         emailEnabled: emailEnabled ? 1 : 0,
+        smsEnabled: smsEnabled ? 1 : 0,
         defaultEnabled: inAppEnabled ? 1 : 0,
       };
-      if (phoneEnabled && phone) {
-        alertConfig.alertPhone = phone;
-        alertConfig.alertPhoneCountryCode = countryCode;
+      if ((phoneEnabled || smsEnabled) && phone && String(phone).trim()) {
+        alertConfig.alertPhone = String(phone).trim();
+        alertConfig.alertPhoneCountryCode = countryCode || '+86';
       }
       if (emailEnabled && email) {
         alertConfig.alertEmail = email;
@@ -662,7 +674,7 @@ function PCAlarmContent() {
               />
             </div>
 
-            {phoneEnabled && (
+            {(phoneEnabled || smsEnabled) && (
               <div className={styles.sideInputRow} ref={countryDropdownRef}>
                 <button
                   type="button"
@@ -721,6 +733,25 @@ function PCAlarmContent() {
                 />
               </div>
             )}
+
+            <div className={styles.sideItem}>
+              <div className={styles.sideItemLabel}>
+                <img
+                  src={`${CDN_PUBLIC_PREFIX}/icons/new_detail/email.svg`}
+                  alt=""
+                  aria-hidden
+                  className={styles.sideItemIcon}
+                />
+                <span>{t('addAlarm.smsAlarm', { defaultValue: '短信告警' })}</span>
+              </div>
+              <Switch
+                className={styles.compactSwitch}
+                checked={smsEnabled}
+                onChange={setSmsEnabled}
+                style={{ '--checked-color': '#11B787' }}
+              />
+            </div>
+            <div className={styles.sideSmsHint}>{t('oneClickAlarm.smsUsesSamePhone')}</div>
 
             <div className={styles.sideItem}>
               <div className={styles.sideItemLabel}>

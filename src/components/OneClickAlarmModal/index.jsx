@@ -47,6 +47,17 @@ function PushAlarmIcon() {
   );
 }
 
+function SmsAlarmIcon() {
+  return (
+    <img
+      src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/email.svg"
+      alt="sms"
+      width="24"
+      height="24"
+    />
+  );
+}
+
 function PhoneInputIcon() {
   return (
     <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/telephone_num.svg" alt="phone" width="14" height="16" />
@@ -80,6 +91,7 @@ export default function OneClickAlarmModal({
       phone: '',
       emailEnabled: false,
       email: '',
+      smsEnabled: false,
       pushEnabled: false,
       ...(initialValue || {}),
     }),
@@ -91,6 +103,7 @@ export default function OneClickAlarmModal({
   const [phone, setPhone] = useState(init.phone);
   const [emailEnabled, setEmailEnabled] = useState(init.emailEnabled);
   const [email, setEmail] = useState(init.email);
+  const [smsEnabled, setSmsEnabled] = useState(init.smsEnabled);
   const [pushEnabled, setPushEnabled] = useState(init.pushEnabled);
 
   const [countryPickerOpen, setCountryPickerOpen] = useState(false);
@@ -100,6 +113,7 @@ export default function OneClickAlarmModal({
   const [hideInputs, setHideInputs] = useState(false); // 控制输入框显示/隐藏
   const [phoneError, setPhoneError] = useState(''); // 手机号错误提示
   const [emailError, setEmailError] = useState(''); // 邮箱错误提示
+  const [smsError, setSmsError] = useState(''); // 短信接收号码错误提示
   const [isLoading, setIsLoading] = useState(false); // 开启告警按钮的 loading 状态
   const [configs, setConfigs] = useState({
     priceRise: { value: '', enabled: true, unit: '$', labelKey: 'addAlarm.priceRise' },
@@ -141,16 +155,20 @@ export default function OneClickAlarmModal({
           setHideInputs(true);
           
           // 预填充表单数据
+          if (alertConfig.alertPhoneCountryCode) {
+            setCountryCode(String(alertConfig.alertPhoneCountryCode));
+          }
           if (alertConfig.alertPhone) {
-            // 解析国家区号和手机号
-            const phoneStr = alertConfig.alertPhone;
-            // 尝试匹配国家区号（+开头的数字）
-            const match = phoneStr.match(/^(\+\d+)(.+)$/);
-            if (match) {
-              setCountryCode(match[1]); // 国家区号，如 +86
-              setPhone(match[2]); // 手机号
+            const phoneStr = String(alertConfig.alertPhone);
+            if (!alertConfig.alertPhoneCountryCode) {
+              const match = phoneStr.match(/^(\+\d+)(.+)$/);
+              if (match) {
+                setCountryCode(match[1]);
+                setPhone(match[2]);
+              } else {
+                setPhone(phoneStr);
+              }
             } else {
-              // 如果没有匹配到区号，直接使用原值
               setPhone(phoneStr);
             }
           }
@@ -165,6 +183,9 @@ export default function OneClickAlarmModal({
           }
           if (alertConfig.defaultEnabled !== undefined) {
             setPushEnabled(alertConfig.defaultEnabled === 1);
+          }
+          if (alertConfig.smsEnabled !== undefined) {
+            setSmsEnabled(alertConfig.smsEnabled === 1);
           }
         } else {
           // localStorage 中没有配置数据，显示输入框
@@ -298,6 +319,7 @@ export default function OneClickAlarmModal({
       // 清空之前的错误提示
       setPhoneError('');
       setEmailError('');
+      setSmsError('');
 
       const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
       
@@ -316,6 +338,15 @@ export default function OneClickAlarmModal({
         }
       }
 
+      if (phoneEnabled && (!phone || phone.trim() === '')) {
+        setPhoneError(t('oneClickAlarm.phoneRequired'));
+        return;
+      }
+      if (smsEnabled && (!phone || phone.trim() === '' || !countryCode || !String(countryCode).trim())) {
+        setSmsError(t('oneClickAlarm.smsNeedsPhoneAndCountry'));
+        return;
+      }
+
       // 开始 loading
       setIsLoading(true);
 
@@ -323,15 +354,14 @@ export default function OneClickAlarmModal({
       const alertConfig = {
         phoneEnabled: phoneEnabled ? 1 : 0,
         emailEnabled: emailEnabled ? 1 : 0,
+        smsEnabled: smsEnabled ? 1 : 0,
         defaultEnabled: pushEnabled ? 1 : 0  // 推送开关状态
       };
 
-      // 只在开关打开时才传递对应的联系方式
-      if (phoneEnabled && phone) {
-        // 只传递手机号（不包含国家码）
-        alertConfig.alertPhone = phone;
-        // 单独传递国家码参数
-        alertConfig.alertPhoneCountryCode = countryCode;
+      // 电话与短信共用 alertPhone + alertPhoneCountryCode（任一方开启且已填则提交）
+      if ((phoneEnabled || smsEnabled) && phone && String(phone).trim()) {
+        alertConfig.alertPhone = String(phone).trim();
+        alertConfig.alertPhoneCountryCode = countryCode || '+86';
       }
       if (emailEnabled && email) {
         alertConfig.alertEmail = email;
@@ -365,6 +395,7 @@ export default function OneClickAlarmModal({
           phone,
           emailEnabled,
           email,
+          smsEnabled,
           pushEnabled,
         });
         
@@ -671,7 +702,7 @@ export default function OneClickAlarmModal({
                   <Toggle checked={phoneEnabled} onChange={setPhoneEnabled} />
                 </div>
 
-                {phoneEnabled && (
+                {(phoneEnabled || smsEnabled) && (
                   <>
                     <div className={styles.inputRow}>
                       <span className={styles.inputIcon}><PhoneInputIcon /></span>
@@ -693,12 +724,15 @@ export default function OneClickAlarmModal({
                         value={phone}
                         onChange={(e) => {
                           setPhone(e.target.value);
-                          if (phoneError) setPhoneError(''); // 清除错误提示
+                          if (phoneError) setPhoneError('');
+                          if (smsError) setSmsError('');
                         }}
                         inputMode="tel"
                       />
                     </div>
-                    {phoneError && <div className={styles.errorText}>{phoneError}</div>}
+                    {(phoneError || smsError) && (
+                      <div className={styles.errorText}>{phoneError || smsError}</div>
+                    )}
                   </>
                 )}
 
@@ -730,6 +764,23 @@ export default function OneClickAlarmModal({
                     {emailError && <div className={styles.errorText}>{emailError}</div>}
                   </>
                 )}
+
+                <div className={styles.divider} />
+
+                <div className={styles.row}>
+                  <div className={styles.rowLeft}>
+                    <span className={styles.icon}><SmsAlarmIcon /></span>
+                    <span className={styles.rowLabel}>{t('oneClickAlarm.smsAlarm')}</span>
+                  </div>
+                  <Toggle
+                    checked={smsEnabled}
+                    onChange={(v) => {
+                      setSmsEnabled(v);
+                      if (smsError) setSmsError('');
+                    }}
+                  />
+                </div>
+                <div className={styles.smsHint}>{t('oneClickAlarm.smsUsesSamePhone')}</div>
 
                 <div className={styles.divider} />
 

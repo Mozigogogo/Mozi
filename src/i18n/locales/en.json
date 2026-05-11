@@ -1445,6 +1445,7 @@
     "enableNow": "Enable now",
     "phoneAlarm": "Phone alert",
     "emailAlarm": "Email alert",
+    "smsAlarm": "SMS alert",
     "sitePush": "In-app push",
     "loading": "Loading...",
     "placeholder": "Enter value",
@@ -1764,6 +1765,7 @@
     "subtitle": "Real-time Monitoring · Instant Alerts",
     "phoneAlarm": "Phone Alert",
     "emailAlarm": "Email Alert",
+    "smsAlarm": "SMS Alert",
     "pushAlarm": "Push",
     "phonePlaceholder": "Enter phone number",
     "emailPlaceholder": "Enter email",
@@ -1777,6 +1779,8 @@
     "phoneRequired": "Please enter phone number",
     "emailRequired": "Please enter email",
     "emailInvalid": "Invalid email format",
+    "smsUsesSamePhone": "SMS uses the same number as phone alerts above (shared country code and mobile number).",
+    "smsNeedsPhoneAndCountry": "To enable SMS alerts, fill in the country code and mobile number above (shared with phone alerts).",
     "atLeastOneMethod": "Please enable at least one alert method"
   },
   "orderBook": {

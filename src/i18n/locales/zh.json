@@ -1426,6 +1426,7 @@
     "enableNow": "立即开启",
     "phoneAlarm": "电话告警",
     "emailAlarm": "邮件告警",
+    "smsAlarm": "短信告警",
     "sitePush": "应用内推送",
     "loading": "加载中...",
     "placeholder": "请输入数值",
@@ -1745,6 +1746,7 @@
     "subtitle": "实时监控 即时提醒",
     "phoneAlarm": "电话告警",
     "emailAlarm": "邮件告警",
+    "smsAlarm": "短信告警",
     "pushAlarm": "推送",
     "phonePlaceholder": "请输入手机号",
     "emailPlaceholder": "请输入邮箱",
@@ -1758,6 +1760,8 @@
     "phoneRequired": "请输入手机号",
     "emailRequired": "请输入邮箱",
     "emailInvalid": "邮箱格式不正确",
+    "smsUsesSamePhone": "接收号码与上方电话告警相同（共用区号与手机号）",
+    "smsNeedsPhoneAndCountry": "开启短信告警时请先填写国家区号与手机号（与电话告警共用）",
     "atLeastOneMethod": "请至少开启一种告警方式"
   },
   "orderBook": {

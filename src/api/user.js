@@ -540,28 +540,51 @@ export const addAlertConfig = (params) => {
 export const createAlertConfig = async (config) => {
   try {
     // 参数验证
-    const { alertPhone, alertPhoneCountryCode, alertEmail, phoneEnabled, emailEnabled, defaultEnabled } = config;
-    
+    const {
+      alertPhone,
+      alertPhoneCountryCode,
+      alertEmail,
+      phoneEnabled,
+      emailEnabled,
+      smsEnabled,
+      defaultEnabled,
+    } = config;
+    const smsOn = smsEnabled === 1 ? 1 : 0;
+    const phoneTrim = alertPhone != null ? String(alertPhone).trim() : '';
+    const ccTrim = alertPhoneCountryCode != null ? String(alertPhoneCountryCode).trim() : '';
+
     // 验证必填字段
     if (phoneEnabled === undefined || emailEnabled === undefined || defaultEnabled === undefined) {
       console.error('❌ 缺少必填字段: phoneEnabled, emailEnabled, defaultEnabled');
       return { success: false, error: '缺少必填字段' };
     }
-    
+
     // 验证开关值
     if (![0, 1].includes(phoneEnabled) || ![0, 1].includes(emailEnabled) || ![0, 1].includes(defaultEnabled)) {
       console.error('❌ 开关值必须为 0 或 1');
       return { success: false, error: '开关值必须为 0 或 1' };
     }
-    
+    if (smsEnabled !== undefined && smsEnabled !== 0 && smsEnabled !== 1) {
+      console.error('❌ smsEnabled 必须为 0 或 1');
+      return { success: false, error: '开关值必须为 0 或 1' };
+    }
+
     // 验证电话告警
     if (phoneEnabled === 1) {
-      if (!alertPhone || alertPhone.trim() === '') {
+      if (!phoneTrim) {
         console.error('❌ 开启电话告警时，alertPhone 不能为空');
         return { success: false, error: '开启电话告警时，手机号不能为空' };
       }
     }
-    
+
+    // 验证短信告警（与电话共用 alertPhone + alertPhoneCountryCode）
+    if (smsOn === 1) {
+      if (!phoneTrim || !ccTrim) {
+        console.error('❌ 开启短信告警时，alertPhone / alertPhoneCountryCode 不能为空');
+        return { success: false, error: '开启短信告警时手机号与国家区号不能为空' };
+      }
+    }
+
     // 验证邮箱告警
     if (emailEnabled === 1) {
       if (!alertEmail || alertEmail.trim() === '') {
@@ -575,7 +598,7 @@ export const createAlertConfig = async (config) => {
         return { success: false, error: '邮箱格式不正确' };
       }
     }
-    
+
     // 调用接口
     const res = await addAlertConfig(config);
     
@@ -643,28 +666,51 @@ export const updateAlertConfig = (params) => {
 export const modifyAlertConfig = async (config) => {
   try {
     // 参数验证（与 createAlertConfig 相同）
-    const { alertPhone, alertPhoneCountryCode, alertEmail, phoneEnabled, emailEnabled, defaultEnabled } = config;
-    
+    const {
+      alertPhone,
+      alertPhoneCountryCode,
+      alertEmail,
+      phoneEnabled,
+      emailEnabled,
+      smsEnabled,
+      defaultEnabled,
+    } = config;
+    const smsOn = smsEnabled === 1 ? 1 : 0;
+    const phoneTrim = alertPhone != null ? String(alertPhone).trim() : '';
+    const ccTrim = alertPhoneCountryCode != null ? String(alertPhoneCountryCode).trim() : '';
+
     // 验证必填字段
     if (phoneEnabled === undefined || emailEnabled === undefined || defaultEnabled === undefined) {
       console.error('❌ 缺少必填字段: phoneEnabled, emailEnabled, defaultEnabled');
       return { success: false, error: '缺少必填字段' };
     }
-    
+
     // 验证开关值
     if (![0, 1].includes(phoneEnabled) || ![0, 1].includes(emailEnabled) || ![0, 1].includes(defaultEnabled)) {
       console.error('❌ 开关值必须为 0 或 1');
       return { success: false, error: '开关值必须为 0 或 1' };
     }
-    
+    if (smsEnabled !== undefined && smsEnabled !== 0 && smsEnabled !== 1) {
+      console.error('❌ smsEnabled 必须为 0 或 1');
+      return { success: false, error: '开关值必须为 0 或 1' };
+    }
+
     // 验证电话告警
     if (phoneEnabled === 1) {
-      if (!alertPhone || alertPhone.trim() === '') {
+      if (!phoneTrim) {
         console.error('❌ 开启电话告警时，alertPhone 不能为空');
         return { success: false, error: '开启电话告警时，手机号不能为空' };
       }
     }
-    
+
+    // 验证短信告警（与电话共用 alertPhone + alertPhoneCountryCode）
+    if (smsOn === 1) {
+      if (!phoneTrim || !ccTrim) {
+        console.error('❌ 开启短信告警时，alertPhone / alertPhoneCountryCode 不能为空');
+        return { success: false, error: '开启短信告警时手机号与国家区号不能为空' };
+      }
+    }
+
     // 验证邮箱告警
     if (emailEnabled === 1) {
       if (!alertEmail || alertEmail.trim() === '') {
@@ -678,7 +724,7 @@ export const modifyAlertConfig = async (config) => {
         return { success: false, error: '邮箱格式不正确' };
       }
     }
-    
+
     // 调用接口
     const res = await updateAlertConfig(config);
     
