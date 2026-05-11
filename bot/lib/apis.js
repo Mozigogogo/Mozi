@@ -107,6 +107,68 @@ async function postTgRegisteredCheck({
   }
 }
 
+// --- POST /user/tg/login（telegramId → 用户 JWT，见 lib/tgUserTokenCache.js）----
+
+/**
+ * @param {{ apiBaseUrl: string; telegramId: string; auth?: string; appUrl?: string; path?: string; timeoutMs?: number }} opts
+ * @returns {Promise<{ ok: boolean; status: number; json: object | null; text: string }>}
+ */
+async function postTgLogin({
+  apiBaseUrl,
+  telegramId,
+  auth = '',
+  appUrl = '',
+  path = 'user/tg/login',
+  timeoutMs = 15000,
+}) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const rel = String(path || 'user/tg/login').replace(/^\/+/, '');
+  const url = `${base}/${rel}`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    'content-type': 'application/json',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    'user-agent': DEFAULT_UA,
+  };
+  if (auth) {
+    headers.authentication = auth;
+  }
+  if (app) {
+    headers.referer = `${app}/`;
+  }
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ telegramId }),
+      signal: ctrl.signal,
+    });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const out = { ok: res.ok, status: res.status, json, text };
+    apiDebug('POST tg/login →', {
+      telegramId,
+      path: rel,
+      httpStatus: res.status,
+      ok: res.ok,
+      hasBootstrapAuth: Boolean(auth),
+      bodyPreview: text.slice(0, 500),
+    });
+    return out;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 // --- GET /user/tg/points/summary（/balance 私聊）------------------------------
 
 /**
@@ -559,6 +621,7 @@ async function requestAiAnalysis({ url, secret, body, timeoutMs = 120000 }) {
 module.exports = {
   fetchDetailHeader,
   postTgRegisteredCheck,
+  postTgLogin,
   fetchTgPointsSummary,
   requestChatStream,
   requestAiAnalysis,

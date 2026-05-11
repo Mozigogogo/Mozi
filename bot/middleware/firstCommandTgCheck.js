@@ -1,8 +1,10 @@
 /**
- * 用户在本进程内首次发出任意「命令类」消息时，先 POST /user/tg/registered/check
+ * 用户在本进程内首次发出任意「命令类」消息时：POST /user/tg/login 换用户 JWT（缓存），
+ * 再 POST /user/tg/registered/check（请求头优先带用户 token，否则 MOZI_DETAIL_AUTH）
  */
 
 const { postTgRegisteredCheck } = require('../lib/apis');
+const { ensureTgUserToken } = require('../lib/tgUserTokenCache');
 
 /** 已成功调用过 check 的 Telegram 用户 id */
 const registeredOk = new Set();
@@ -42,10 +44,11 @@ function registerFirstCommandTgCheck(bot, config) {
       const telegramId = String(uid);
       p = (async () => {
         try {
+          const userToken = await ensureTgUserToken(config, telegramId);
           const r = await postTgRegisteredCheck({
             apiBaseUrl: config.API_BASE_URL,
             telegramId,
-            auth: config.MOZI_DETAIL_AUTH || '',
+            auth: userToken || config.MOZI_DETAIL_AUTH || '',
             appUrl: config.APP_URL,
           });
           if (r.ok) {

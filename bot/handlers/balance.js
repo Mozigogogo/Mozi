@@ -4,6 +4,7 @@
 
 const { buildMiniAppUrlWithInvite } = require('../lib/invite');
 const { fetchTgPointsSummary } = require('../lib/apis');
+const { ensureTgUserToken, clearCachedToken } = require('../lib/tgUserTokenCache');
 const { escapeHtml } = require('../lib/telegramHtml');
 
 function isPrivateChat(ctx) {
@@ -94,15 +95,31 @@ function registerBalance(bot, config, { getTexts }) {
 
     await ctx.telegram.sendChatAction(ctx.chat.id, 'typing').catch(() => {});
 
+    const uidStr = String(uid);
+    let userToken = await ensureTgUserToken(config, uidStr);
+    let authHeader = userToken || config.MOZI_DETAIL_AUTH || '';
+
     let res;
     try {
       res = await fetchTgPointsSummary({
         apiBaseUrl: config.API_BASE_URL,
-        telegramId: String(uid),
-        auth: config.MOZI_DETAIL_AUTH || '',
+        telegramId: uidStr,
+        auth: authHeader,
         appUrl: config.APP_URL,
         path: config.TG_POINTS_SUMMARY_PATH,
       });
+      if ((res.status === 401 || res.status === 403) && userToken) {
+        clearCachedToken(uidStr);
+        userToken = await ensureTgUserToken(config, uidStr, { forceRefresh: true });
+        authHeader = userToken || config.MOZI_DETAIL_AUTH || '';
+        res = await fetchTgPointsSummary({
+          apiBaseUrl: config.API_BASE_URL,
+          telegramId: uidStr,
+          auth: authHeader,
+          appUrl: config.APP_URL,
+          path: config.TG_POINTS_SUMMARY_PATH,
+        });
+      }
     } catch (err) {
       console.error('[/balance] 请求错误:', err?.message || err);
       await ctx.reply(texts.balanceNetworkError, { parse_mode: 'HTML' });
