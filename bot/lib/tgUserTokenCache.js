@@ -4,6 +4,7 @@
  */
 
 const { postTgLogin } = require('./apis');
+const { buildTelegramWebAppLoginHash } = require('./telegramWebAppLoginHash');
 
 /** 无 expiresIn 时默认缓存时长（略短于常见 1h access） */
 const DEFAULT_TTL_MS = 50 * 60 * 1000;
@@ -78,7 +79,7 @@ function clearCachedToken(telegramId) {
 /**
  * @param {object} config
  * @param {string} telegramId
- * @param {{ forceRefresh?: boolean; username?: string; photoUrl?: string; hash?: string; inviteCode?: string }} [opts]
+ * @param {{ forceRefresh?: boolean; username?: string; telegramUsername?: string; firstName?: string; lastName?: string; photoUrl?: string; hash?: string; inviteCode?: string }} [opts]
  * @returns {Promise<string>} 无 token 时返回 ''
  */
 async function ensureTgUserToken(config, telegramId, opts = {}) {
@@ -93,6 +94,21 @@ async function ensureTgUserToken(config, telegramId, opts = {}) {
   if (!p) {
     p = (async () => {
       try {
+        const explicitHash = opts.hash != null && String(opts.hash).trim() !== '' ? String(opts.hash).trim() : '';
+        const hash =
+          explicitHash ||
+          buildTelegramWebAppLoginHash({
+            botToken: config.BOT_TOKEN,
+            telegramId: id,
+            telegramUsername: opts.telegramUsername ?? '',
+            firstName: opts.firstName ?? '',
+            lastName: opts.lastName ?? '',
+            photoUrl: opts.photoUrl ?? '',
+          });
+        if (!hash) {
+          console.warn('[tg/login] 无法生成 hash：请检查 BOT_TOKEN 与 telegramId');
+        }
+
         const r = await postTgLogin({
           apiBaseUrl: config.API_BASE_URL,
           telegramId: id,
@@ -101,7 +117,7 @@ async function ensureTgUserToken(config, telegramId, opts = {}) {
           path: config.TG_LOGIN_PATH || 'user/login',
           username: opts.username ?? '',
           photoUrl: opts.photoUrl ?? '',
-          hash: opts.hash ?? '',
+          hash,
           inviteCode: opts.inviteCode ?? '',
           env: config.MOZI_LOGIN_ENV || 'test',
         });

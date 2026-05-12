@@ -107,11 +107,17 @@ async function postTgRegisteredCheck({
   }
 }
 
-// --- POST /user/login（Telegram：与 H5 loginByTelegram 相同 body，见 lib/tgUserTokenCache.js）----
+// --- POST /user/login（Telegram：与 Mozi TG WebApp 登录 body 一致）----
+//
+// 期望 JSON 示例（与 Network 面板一致）：
+// { "chanel":3, "channel":"tg", "env":"production", "hash":"…", "inviteCode":"",
+//   "photoUrl":"", "telegramId":"7351978574", "type":"login", "username":"" }
+//
+// hash：Mini App 内从 `Telegram.WebApp.initData` 解析；Bot 见 `telegramWebAppLoginHash.js`。
 
 /**
  * 与 Web 端 `loginByTelegram` 一致：POST /user/login，chanel=3。
- * Bot 无 WebApp initData 时 hash 传空串（若后端要求 Mini App 校验，需另行约定）。
+ * hash 须非空：由 tgUserTokenCache 用 BOT_TOKEN 按 Telegram WebApp 规则生成（见 telegramWebAppLoginHash.js）。
  *
  * @param {{ apiBaseUrl: string; telegramId: string; auth?: string; appUrl?: string; path?: string; timeoutMs?: number; username?: string; photoUrl?: string; hash?: string; inviteCode?: string; env?: string }} opts
  * @returns {Promise<{ ok: boolean; status: number; json: object | null; text: string }>}
@@ -148,16 +154,17 @@ async function postTgLogin({
   if (app) {
     headers.referer = `${app}/`;
   }
+  /* 字段顺序与浏览器 DevTools / 前端常见展示一致，便于对照 */
   const body = {
     chanel: 3,
-    type: 'login',
-    telegramId: String(telegramId),
-    username: String(username || ''),
-    photoUrl: String(photoUrl || ''),
-    hash: String(hash || ''),
-    inviteCode: String(inviteCode || ''),
     channel: 'tg',
     env: String(env || 'test'),
+    hash: String(hash || ''),
+    inviteCode: String(inviteCode || ''),
+    photoUrl: String(photoUrl || ''),
+    telegramId: String(telegramId),
+    type: 'login',
+    username: String(username || ''),
   };
   try {
     const res = await fetch(url, {

@@ -46,11 +46,16 @@ function registerFirstCommandTgCheck(bot, config) {
         try {
           const from = ctx.from;
           const username = from ? String(from.username || from.first_name || '').trim() : '';
+          const telegramUsername = from && from.username ? String(from.username).trim() : '';
+          const firstName = from && from.first_name ? String(from.first_name).trim() : '';
+          const lastName = from && from.last_name ? String(from.last_name).trim() : '';
           const photoUrl = from && from.photo_url ? String(from.photo_url).trim() : '';
           const userToken = await ensureTgUserToken(config, telegramId, {
             username,
+            telegramUsername,
+            firstName,
+            lastName,
             photoUrl,
-            hash: '',
             inviteCode: '',
           });
           const r = await postTgRegisteredCheck({

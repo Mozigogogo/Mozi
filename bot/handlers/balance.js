@@ -99,8 +99,10 @@ function registerBalance(bot, config, { getTexts }) {
     const from = ctx.from;
     const loginOpts = {
       username: from ? String(from.username || from.first_name || '').trim() : '',
+      telegramUsername: from && from.username ? String(from.username).trim() : '',
+      firstName: from && from.first_name ? String(from.first_name).trim() : '',
+      lastName: from && from.last_name ? String(from.last_name).trim() : '',
       photoUrl: from && from.photo_url ? String(from.photo_url).trim() : '',
-      hash: '',
       inviteCode: '',
     };
     let userToken = await ensureTgUserToken(config, uidStr, loginOpts);
