@@ -24,8 +24,9 @@
 | `AI_ANALYZE_FALLBACK_TO_CHAT` | 可选；`/ai` 请求 analyze 失败（如 422）时是否自动改请求 **chat/stream**（默认 `1`）；`0`/`false` 关闭 |
 | `AI_CHAT_BACKEND_URL` | 可选；覆盖 `/chat` 的 **完整流式 POST URL**（默认 `APP_URL/api/robot_proxy/api/v1/chat/stream`） |
 | `AI_CHAT_STREAM_TIMEOUT_MS` | 可选；`/ai` 与 `/chat` 等待 SSE 的最长时间（毫秒），默认 `300000`（5 分钟） |
-| `MOZI_DETAIL_AUTH` | 可选；Bootstrap JWT，请求头 `authentication`（`POST …/tg/login` 与 `registered/check` 在无用户 token 时使用；`/chat` 不传该头） |
-| `TG_LOGIN_PATH` | 可选；相对 `API_BASE_URL` 的登录路径，默认 `user/tg/login`；Body `{ telegramId }`，响应中解析 `token` / `accessToken` 等（见 `bot/lib/tgUserTokenCache.js`） |
+| `MOZI_DETAIL_AUTH` | 可选；Bootstrap JWT，请求头 `authentication`（`POST …/user/login` 与 `registered/check` 在无用户 token 时使用；`/chat` 不传该头） |
+| `TG_LOGIN_PATH` | 可选；相对 `API_BASE_URL` 的登录路径，默认 **`user/login`**（与 H5 `loginByTelegram` 相同：`chanel:3`、`type:'login'`、`channel:'tg'`、`telegramId`、`username`、`photoUrl`、`hash`、`inviteCode`、`env`；Bot 无 WebApp 时 `hash` 为空串）；响应中解析 `token` / `accessToken` 等（见 `bot/lib/tgUserTokenCache.js`） |
+| `MOZI_APP_ENV` / `NEXT_PUBLIC_APP_ENV` | 可选；写入登录 body 的 `env`（与前端一致），未设时默认 `test` |
 | `AI_POINTS_COST` | 可选；`/ai` 回复底部展示的积分数（后端未返回 `pointsCost` 时），默认 `50` |
 | `AI_CHAT_POINTS_COST` | 可选；`/chat` 回复底部展示的积分数（后端未返回 `pointsCost` 时），默认 `10` |
 

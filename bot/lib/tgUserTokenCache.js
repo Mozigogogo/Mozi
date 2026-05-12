@@ -1,5 +1,5 @@
 /**
- * 用 telegramId 调登录接口拿用户 JWT，进程内缓存；过期或 401 后可 force 刷新。
+ * 用 telegramId 调 Mozi POST /user/login（Telegram，与 H5 loginByTelegram 相同 body）拿用户 JWT，进程内缓存；过期或 401 后可 force 刷新。
  * 与 firstCommandTgCheck、/balance 共用。
  */
 
@@ -78,7 +78,7 @@ function clearCachedToken(telegramId) {
 /**
  * @param {object} config
  * @param {string} telegramId
- * @param {{ forceRefresh?: boolean }} [opts]
+ * @param {{ forceRefresh?: boolean; username?: string; photoUrl?: string; hash?: string; inviteCode?: string }} [opts]
  * @returns {Promise<string>} 无 token 时返回 ''
  */
 async function ensureTgUserToken(config, telegramId, opts = {}) {
@@ -98,7 +98,12 @@ async function ensureTgUserToken(config, telegramId, opts = {}) {
           telegramId: id,
           auth: config.MOZI_DETAIL_AUTH || '',
           appUrl: config.APP_URL,
-          path: config.TG_LOGIN_PATH || 'user/tg/login',
+          path: config.TG_LOGIN_PATH || 'user/login',
+          username: opts.username ?? '',
+          photoUrl: opts.photoUrl ?? '',
+          hash: opts.hash ?? '',
+          inviteCode: opts.inviteCode ?? '',
+          env: config.MOZI_LOGIN_ENV || 'test',
         });
         if (!r.ok) {
           console.warn('[tg/login] HTTP', r.status, (r.text || '').slice(0, 200));

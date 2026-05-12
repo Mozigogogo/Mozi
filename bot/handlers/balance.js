@@ -96,7 +96,14 @@ function registerBalance(bot, config, { getTexts }) {
     await ctx.telegram.sendChatAction(ctx.chat.id, 'typing').catch(() => {});
 
     const uidStr = String(uid);
-    let userToken = await ensureTgUserToken(config, uidStr);
+    const from = ctx.from;
+    const loginOpts = {
+      username: from ? String(from.username || from.first_name || '').trim() : '',
+      photoUrl: from && from.photo_url ? String(from.photo_url).trim() : '',
+      hash: '',
+      inviteCode: '',
+    };
+    let userToken = await ensureTgUserToken(config, uidStr, loginOpts);
     let authHeader = userToken || config.MOZI_DETAIL_AUTH || '';
 
     let res;
@@ -110,7 +117,7 @@ function registerBalance(bot, config, { getTexts }) {
       });
       if ((res.status === 401 || res.status === 403) && userToken) {
         clearCachedToken(uidStr);
-        userToken = await ensureTgUserToken(config, uidStr, { forceRefresh: true });
+        userToken = await ensureTgUserToken(config, uidStr, { ...loginOpts, forceRefresh: true });
         authHeader = userToken || config.MOZI_DETAIL_AUTH || '';
         res = await fetchTgPointsSummary({
           apiBaseUrl: config.API_BASE_URL,

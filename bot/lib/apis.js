@@ -107,10 +107,13 @@ async function postTgRegisteredCheck({
   }
 }
 
-// --- POST /user/tg/login（telegramId → 用户 JWT，见 lib/tgUserTokenCache.js）----
+// --- POST /user/login（Telegram：与 H5 loginByTelegram 相同 body，见 lib/tgUserTokenCache.js）----
 
 /**
- * @param {{ apiBaseUrl: string; telegramId: string; auth?: string; appUrl?: string; path?: string; timeoutMs?: number }} opts
+ * 与 Web 端 `loginByTelegram` 一致：POST /user/login，chanel=3。
+ * Bot 无 WebApp initData 时 hash 传空串（若后端要求 Mini App 校验，需另行约定）。
+ *
+ * @param {{ apiBaseUrl: string; telegramId: string; auth?: string; appUrl?: string; path?: string; timeoutMs?: number; username?: string; photoUrl?: string; hash?: string; inviteCode?: string; env?: string }} opts
  * @returns {Promise<{ ok: boolean; status: number; json: object | null; text: string }>}
  */
 async function postTgLogin({
@@ -118,12 +121,17 @@ async function postTgLogin({
   telegramId,
   auth = '',
   appUrl = '',
-  path = 'user/tg/login',
+  path = 'user/login',
   timeoutMs = 15000,
+  username = '',
+  photoUrl = '',
+  hash = '',
+  inviteCode = '',
+  env = 'test',
 }) {
   const base = String(apiBaseUrl || '').replace(/\/+$/, '');
   const app = String(appUrl || '').replace(/\/+$/, '');
-  const rel = String(path || 'user/tg/login').replace(/^\/+/, '');
+  const rel = String(path || 'user/login').replace(/^\/+/, '');
   const url = `${base}/${rel}`;
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -140,11 +148,22 @@ async function postTgLogin({
   if (app) {
     headers.referer = `${app}/`;
   }
+  const body = {
+    chanel: 3,
+    type: 'login',
+    telegramId: String(telegramId),
+    username: String(username || ''),
+    photoUrl: String(photoUrl || ''),
+    hash: String(hash || ''),
+    inviteCode: String(inviteCode || ''),
+    channel: 'tg',
+    env: String(env || 'test'),
+  };
   try {
     const res = await fetch(url, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ telegramId }),
+      body: JSON.stringify(body),
       signal: ctrl.signal,
     });
     const text = await res.text();
@@ -155,7 +174,7 @@ async function postTgLogin({
       json = null;
     }
     const out = { ok: res.ok, status: res.status, json, text };
-    apiDebug('POST tg/login →', {
+    apiDebug('POST user/login (tg) →', {
       telegramId,
       path: rel,
       httpStatus: res.status,

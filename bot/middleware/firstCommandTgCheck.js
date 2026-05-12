@@ -1,5 +1,5 @@
 /**
- * 用户在本进程内首次发出任意「命令类」消息时：POST /user/tg/login 换用户 JWT（缓存），
+ * 用户在本进程内首次发出任意「命令类」消息时：POST /user/login（Telegram，与 H5 一致）换用户 JWT（缓存），
  * 再 POST /user/tg/registered/check（请求头优先带用户 token，否则 MOZI_DETAIL_AUTH）
  */
 
@@ -44,7 +44,15 @@ function registerFirstCommandTgCheck(bot, config) {
       const telegramId = String(uid);
       p = (async () => {
         try {
-          const userToken = await ensureTgUserToken(config, telegramId);
+          const from = ctx.from;
+          const username = from ? String(from.username || from.first_name || '').trim() : '';
+          const photoUrl = from && from.photo_url ? String(from.photo_url).trim() : '';
+          const userToken = await ensureTgUserToken(config, telegramId, {
+            username,
+            photoUrl,
+            hash: '',
+            inviteCode: '',
+          });
           const r = await postTgRegisteredCheck({
             apiBaseUrl: config.API_BASE_URL,
             telegramId,

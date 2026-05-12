@@ -47,7 +47,7 @@ const AI_CHAT_STREAM_TIMEOUT_MS = Math.max(
   Math.min(1_800_000, parseInt(process.env.AI_CHAT_STREAM_TIMEOUT_MS || '300000', 10) || 300_000),
 );
 
-/** 可选：Bootstrap JWT；无用户 token 时用于 POST tg/login、registered/check（/chat、/price 不使用） */
+/** 可选：Bootstrap JWT；无用户 token 时用于 POST /user/login（Telegram）、registered/check（/chat、/price 不使用） */
 const MOZI_DETAIL_AUTH = (process.env.MOZI_DETAIL_AUTH || '').trim();
 
 /** GET 积分摘要路径（相对 API_BASE_URL），默认 user/tg/points/summary?telegramId= */
@@ -55,8 +55,12 @@ const TG_POINTS_SUMMARY_PATH = (
   process.env.TG_POINTS_SUMMARY_PATH || 'user/tg/points/summary'
 ).trim().replace(/^\/+/, '');
 
-/** POST 用 telegramId 换用户 JWT 的路径（相对 API_BASE_URL），默认 user/tg/login */
-const TG_LOGIN_PATH = (process.env.TG_LOGIN_PATH || 'user/tg/login').trim().replace(/^\/+/, '');
+/** POST 换用户 JWT 的路径（相对 API_BASE_URL），默认与 H5 一致：user/login（chanel=3 Telegram） */
+const TG_LOGIN_PATH = (process.env.TG_LOGIN_PATH || 'user/login').trim().replace(/^\/+/, '');
+
+/** 传给 /user/login 的 env 字段，与前端 NEXT_PUBLIC_APP_ENV 对齐；未设时默认 test */
+const MOZI_LOGIN_ENV =
+  String(process.env.MOZI_APP_ENV || process.env.NEXT_PUBLIC_APP_ENV || 'test').trim() || 'test';
 
 /** 为 1/true/yes 时打印命令与 HTTP 调试信息（见 lib/debugLog.js） */
 const BOT_DEBUG = /^1|true|yes$/i.test(String(process.env.BOT_DEBUG || '').trim());
@@ -80,5 +84,6 @@ module.exports = {
   MOZI_DETAIL_AUTH,
   TG_POINTS_SUMMARY_PATH,
   TG_LOGIN_PATH,
+  MOZI_LOGIN_ENV,
   BOT_DEBUG,
 };
