@@ -1394,6 +1394,7 @@
     "confirmDelete": "确定要删除 {{symbol}} 的所有告警吗？",
     "coins": "告警币种",
     "noHistory": "暂无历史记录",
+    "noConfig": "暂无配置",
     "historyConfigTitle": "历史告警配置",
     "historyConfigDesc": "管理您为该币种设置的历史告警阈值",
     "latestTrigger": "最新触发",

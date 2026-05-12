@@ -1413,6 +1413,7 @@
     "confirmDelete": "Are you sure you want to delete all alerts for {{symbol}}?",
     "coins": "Alert coins",
     "noHistory": "No history records",
+    "noConfig": "No configuration yet",
     "historyConfigTitle": "Alert history configuration",
     "historyConfigDesc": "Manage your historical alert thresholds for this coin",
     "latestTrigger": "Latest trigger",

@@ -82,22 +82,28 @@ function PCAlarmContent() {
   }, [symbol]);
 
   useEffect(() => {
-    if (activeTab !== 'history') return;
-    if (historyState.loading) return;
-    if (historyState.activeSymbol) return;
+    if (activeTab !== 'history') {
+      setHistoryState((prev) => (prev.loading ? { ...prev, loading: false } : prev));
+      return undefined;
+    }
 
-    const loadHistory = async () => {
-      const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
-      if (!userId) {
-        Toast.show({ content: t('addAlarm.pleaseLogin') });
-        return;
-      }
-      setHistoryState((prev) => ({ ...prev, loading: true }));
+    const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+    if (!userId) {
+      setHistoryState({ loading: false, data: {}, activeSymbol: null });
+      Toast.show({ content: t('addAlarm.pleaseLogin') });
+      return undefined;
+    }
+
+    let cancelled = false;
+    setHistoryState((prev) => ({ ...prev, loading: true }));
+
+    (async () => {
       try {
         const res = await Promise.race([
           getAlarmInfoByUserId(userId),
           new Promise((_, reject) => setTimeout(() => reject(new Error('getAlarmInfoByUserId timeout (12s)')), 12000)),
         ]);
+        if (cancelled) return;
 
         const payload = res?.data?.data ?? res?.data ?? null;
         let normalized = {};
@@ -131,13 +137,17 @@ function PCAlarmContent() {
           activeSymbol: symbols.length ? symbols[0] : null,
         });
       } catch (e) {
-        setHistoryState((prev) => ({ ...prev, loading: false }));
-        Toast.show({ content: t('addAlarm.networkError') });
+        if (!cancelled) {
+          setHistoryState({ loading: false, data: {}, activeSymbol: null });
+          Toast.show({ content: t('addAlarm.networkError') });
+        }
       }
-    };
+    })();
 
-    loadHistory();
-  }, [activeTab, historyState.activeSymbol, historyState.loading, t]);
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, t]);
 
   const historyFixedCodes = useMemo(
     () => [
@@ -482,7 +492,7 @@ function PCAlarmContent() {
                     );
                   })}
                   {!Object.keys(historyState.data || {}).length && !historyState.loading && (
-                    <div className={styles.historyEmpty}>{t('alarm.noHistory', { defaultValue: '暂无历史记录' })}</div>
+                    <div className={styles.historyEmpty}>{t('alarm.noConfig', { defaultValue: '暂无配置' })}</div>
                   )}
                 </div>
               </div>
@@ -538,7 +548,7 @@ function PCAlarmContent() {
                     </button>
                   </>
                 ) : (
-                  <div className={styles.historyEmpty}>{t('alarm.noHistory', { defaultValue: '暂无历史记录' })}</div>
+                  <div className={styles.historyEmpty}>{t('alarm.noConfig', { defaultValue: '暂无配置' })}</div>
                 )}
               </div>
             </div>
