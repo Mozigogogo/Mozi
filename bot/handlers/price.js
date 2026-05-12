@@ -10,6 +10,9 @@ const { escapeHtml, buildHtmlChunks, splitOversized } = require('../lib/telegram
 const DEFAULT_SYMBOL = 'PLUME';
 const SYMBOL_RE = /^[A-Za-z0-9]{1,32}$/;
 
+/** 不在 Telegram 中展示（自选、图标 URL 等） */
+const PRICE_OMIT_KEYS = new Set(['isSelfSelected', 'url']);
+
 /** 与 /detail/header 返回字段一致，控制展示顺序 */
 const DETAIL_HEADER_FIELD_ORDER = [
   'name',
@@ -35,8 +38,6 @@ const DETAIL_HEADER_FIELD_ORDER = [
   'atl',
   'atlDate',
   'atlChangePercentage',
-  'isSelfSelected',
-  'url',
 ];
 
 function normalizeSymbol(raw) {
@@ -89,7 +90,7 @@ function formatDetailPayload(data, texts) {
   }
 
   for (const key of Object.keys(payload)) {
-    if (used.has(key)) continue;
+    if (used.has(key) || PRICE_OMIT_KEYS.has(key)) continue;
     const label = labels[key] || key;
     lines.push(`${label}: ${formatDetailValue(payload[key], texts)}`);
   }
