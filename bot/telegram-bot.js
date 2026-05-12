@@ -5,7 +5,7 @@
  * /ai、/chat：同为 lib/apis.js requestChatStream（body: message+lang）；/ai → …/analyze/stream，/chat → …/chat/stream
  * /price：handlers/price.js + lib/apis.js（GET /detail/header）
  * /help：handlers/help.js（群内仅私聊发全文，防刷屏）
- * /balance：handlers/balance.js（仅私聊；GET 积分摘要，路径见 TG_POINTS_SUMMARY_PATH）
+ * /balance：handlers/balance.js（仅私聊；GET /user/datainfo，路径见 USER_DATA_INFO_PATH）
  * 首次任意命令前：middleware/firstCommandTgCheck.js → POST TG_LOGIN_PATH（默认 user/login，与 H5 Telegram 登录 body 一致）换用户 JWT 缓存 + POST /user/tg/registered/check
  * 调试：环境变量 BOT_DEBUG=1 → middleware/debugCommands.js + lib/debugLog.js（命令与 apis 内 HTTP 摘要）
  */

@@ -93,24 +93,19 @@ const i18n = {
     helpBindAccountBtn: '绑定/管理账户',
     helpDmFailed:
       '无法私发帮助说明：请先<strong>私聊</strong>本机器人发送任意消息或 <code>/start</code>，再在群内使用 <code>/help</code>。',
-    balanceBodyHtml: (current, consumed, earned) => {
-      const c = consumed != null ? consumed : 0;
-      const e = earned != null ? earned : 0;
-      return `💰   Mozi 积分账户
+    balanceBodyHtml: (totalPoints) =>
+      `💰   Mozi 积分账户
 ━━━━━━━━━━━━━━━━━━━━━━━━
-当前余额：  <b>${current}</b> 积分
-本月已消耗：<b>${c}</b> 积分
-本月已获取：<b>${e}</b> 积分
+当前剩余积分：<b>${totalPoints}</b>
 
-━━━━━━━━━━━━━━━━━━━━━━━━`;
-    },
+━━━━━━━━━━━━━━━━━━━━━━━━`,
     balanceFooterTip: '💡 获取更多积分：在 Mozi App 社区发布高质量内容',
     balanceNeedBind:
       '尚未绑定 Mozi 账户或无法校验绑定状态。\n\n请先在 <b>Mozi App</b> 完成绑定后，再在<strong>私信</strong>中使用 <code>/balance</code> 查询积分。',
     balanceNetworkError: '查询失败（网络异常），请稍后再试。',
     balanceHttpError: (code) => `查询失败（HTTP ${code}），请稍后再试。`,
     balanceApiNotFound:
-      '积分接口未就绪。请联系管理员配置 <code>TG_POINTS_SUMMARY_PATH</code> 或后端 <code>GET …/points/summary</code>。',
+      '用户资料接口未就绪。请联系管理员配置 <code>USER_DATA_INFO_PATH</code> 或后端 <code>GET /user/datainfo</code>。',
     balanceParseError: '接口返回格式异常，暂时无法展示积分明细。',
     balanceBtnBill: '查看完整账单',
     balanceBtnPost: '去发帖赚积分',
@@ -206,24 +201,19 @@ const i18n = {
     helpBindAccountBtn: 'Bind / manage account',
     helpDmFailed:
       'Could not DM you the help text. Please <strong>message this bot</strong> first (any message or <code>/start</code>), then use <code>/help</code> in the group again.',
-    balanceBodyHtml: (current, consumed, earned) => {
-      const c = consumed != null ? consumed : 0;
-      const e = earned != null ? earned : 0;
-      return `💰 Mozi points
+    balanceBodyHtml: (totalPoints) =>
+      `💰 Mozi points
 ━━━━━━━━━━━━━━━━━━━━━━━━
-Balance:      <b>${current}</b> pts
-Used (month): <b>${c}</b> pts
-Earned (mo.): <b>${e}</b> pts
+Remaining points: <b>${totalPoints}</b>
 
-━━━━━━━━━━━━━━━━━━━━━━━━`;
-    },
+━━━━━━━━━━━━━━━━━━━━━━━━`,
     balanceFooterTip: '💡 Earn more: post quality content in the Mozi App community.',
     balanceNeedBind:
       'Account not bound or binding could not be verified.\n\nPlease complete binding in <b>Mozi App</b>, then use <code>/balance</code> in a <strong>private chat</strong> with this bot.',
     balanceNetworkError: 'Request failed (network). Please try again later.',
     balanceHttpError: (code) => `Request failed (HTTP ${code}). Please try again later.`,
     balanceApiNotFound:
-      'Points API not available. Ask admin to configure <code>TG_POINTS_SUMMARY_PATH</code> or the backend summary endpoint.',
+      'User profile API unavailable. Ask admin to set <code>USER_DATA_INFO_PATH</code> or enable <code>GET /user/datainfo</code>.',
     balanceParseError: 'Unexpected API format; cannot show points.',
     balanceBtnBill: 'Full statement',
     balanceBtnPost: 'Post to earn points',

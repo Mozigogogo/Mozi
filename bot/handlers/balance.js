@@ -1,9 +1,9 @@
 /**
- * /balance：仅私聊；群内静默不响应；需已绑定账户（由接口返回判断）
+ * /balance：仅私聊；群内静默不响应；GET /user/datainfo，展示 data.totalPoints（与 H5 一致，含 userInfo.totalPoints 兜底）
  */
 
 const { buildMiniAppUrlWithInvite } = require('../lib/invite');
-const { fetchTgPointsSummary } = require('../lib/apis');
+const { fetchUserDatainfo } = require('../lib/apis');
 const { ensureTgUserToken, clearCachedToken } = require('../lib/tgUserTokenCache');
 const { escapeHtml } = require('../lib/telegramHtml');
 
@@ -21,63 +21,63 @@ function firstFiniteNumber(obj, keys) {
   return null;
 }
 
+/** 与 H5「我的」页 normalizeDatainfoPayload 对齐，得到 datainfo 业务对象 */
+function unwrapDatainfoData(json) {
+  if (!json || typeof json !== 'object') return null;
+  let p = json.data;
+  if (p && typeof p === 'object' && p.data && typeof p.data === 'object' && !Array.isArray(p.data)) {
+    p = p.data;
+  }
+  if (p && typeof p === 'object' && !Array.isArray(p)) {
+    return p;
+  }
+  if (json.userId != null || json.totalPoints != null || json.followingCount != null) {
+    return json;
+  }
+  return null;
+}
+
 /**
  * @param {object | null} json
- * @returns {{ kind: 'ok', current: number, consumed: number | null, earned: number | null } | { kind: 'unbound' } | { kind: 'bad' }}
+ * @returns {{ kind: 'ok', totalPoints: number } | { kind: 'unbound' } | { kind: 'bad' }}
  */
-function parseBalancePayload(json) {
+function parseDatainfoBalance(json) {
   if (!json || typeof json !== 'object') return { kind: 'bad' };
 
   const msg = String(json.message || json.msg || json.error || '').toLowerCase();
-  if (/未绑定|未注册|not\s*bound|not\s*registered|unbound/i.test(msg)) {
+  if (/未绑定|未注册|not\s*bound|not\s*registered|unbound|登录已失效|login\s*expired|token\s*expired/i.test(msg)) {
     return { kind: 'unbound' };
   }
-  if (json.code != null && json.code !== 0) {
-    if (/未绑定|未注册|not\s*bound/i.test(String(json.message || json.msg || ''))) {
+
+  const code = json.code;
+  if (code != null && code !== 0 && code !== 200) {
+    if (/未绑定|未注册|not\s*bound|登录已失效|请先登录|未登录/i.test(String(json.message || json.msg || ''))) {
       return { kind: 'unbound' };
     }
+    return { kind: 'bad' };
   }
 
-  const data =
-    json.data != null && typeof json.data === 'object' && !Array.isArray(json.data) ? json.data : json;
+  const data = unwrapDatainfoData(json);
+  if (!data) {
+    return { kind: 'bad' };
+  }
 
   if (data.bound === false || data.registered === false || data.isBound === false) {
     return { kind: 'unbound' };
   }
 
-  const current = firstFiniteNumber(data, [
-    'currentBalance',
-    'balance',
-    'totalPoints',
-    'remainingPoints',
-    'points',
-    'availablePoints',
-  ]);
-  const consumed = firstFiniteNumber(data, [
-    'consumedThisMonth',
-    'monthConsumed',
-    'usedThisMonth',
-    'consumeMonth',
-    'spentThisMonth',
-  ]);
-  const earned = firstFiniteNumber(data, [
-    'earnedThisMonth',
-    'monthEarned',
-    'gainThisMonth',
-    'acquiredThisMonth',
-    'gainedThisMonth',
-  ]);
+  const fromRoot = firstFiniteNumber(data, ['totalPoints']);
+  const fromUserInfo =
+    data.userInfo && typeof data.userInfo === 'object'
+      ? firstFiniteNumber(data.userInfo, ['totalPoints'])
+      : null;
+  const totalPoints = fromRoot ?? fromUserInfo;
 
-  if (current == null && consumed == null && earned == null) {
+  if (totalPoints == null) {
     return { kind: 'bad' };
   }
 
-  return {
-    kind: 'ok',
-    current: current ?? 0,
-    consumed,
-    earned,
-  };
+  return { kind: 'ok', totalPoints };
 }
 
 function registerBalance(bot, config, { getTexts }) {
@@ -110,23 +110,21 @@ function registerBalance(bot, config, { getTexts }) {
 
     let res;
     try {
-      res = await fetchTgPointsSummary({
+      res = await fetchUserDatainfo({
         apiBaseUrl: config.API_BASE_URL,
-        telegramId: uidStr,
         auth: authHeader,
         appUrl: config.APP_URL,
-        path: config.TG_POINTS_SUMMARY_PATH,
+        path: config.USER_DATA_INFO_PATH,
       });
       if ((res.status === 401 || res.status === 403) && userToken) {
         clearCachedToken(uidStr);
         userToken = await ensureTgUserToken(config, uidStr, { ...loginOpts, forceRefresh: true });
         authHeader = userToken || config.MOZI_DETAIL_AUTH || '';
-        res = await fetchTgPointsSummary({
+        res = await fetchUserDatainfo({
           apiBaseUrl: config.API_BASE_URL,
-          telegramId: uidStr,
           auth: authHeader,
           appUrl: config.APP_URL,
-          path: config.TG_POINTS_SUMMARY_PATH,
+          path: config.USER_DATA_INFO_PATH,
         });
       }
     } catch (err) {
@@ -149,9 +147,9 @@ function registerBalance(bot, config, { getTexts }) {
     }
 
     const j = res.json;
-    if (j && typeof j.code === 'number' && j.code !== 0) {
+    if (j && typeof j.code === 'number' && j.code !== 0 && j.code !== 200) {
       const m = String(j.message || j.msg || j.error || '');
-      if (/未绑定|未注册|not\s*bound|not\s*registered/i.test(m)) {
+      if (/未绑定|未注册|not\s*bound|not\s*registered|登录已失效/i.test(m)) {
         await ctx.reply(texts.balanceNeedBind, { parse_mode: 'HTML', ...bindKeyboard(config, texts) });
         return;
       }
@@ -159,7 +157,7 @@ function registerBalance(bot, config, { getTexts }) {
       return;
     }
 
-    const parsed = parseBalancePayload(j);
+    const parsed = parseDatainfoBalance(j);
     if (parsed.kind === 'unbound') {
       await ctx.reply(texts.balanceNeedBind, { parse_mode: 'HTML', ...bindKeyboard(config, texts) });
       return;
@@ -169,8 +167,7 @@ function registerBalance(bot, config, { getTexts }) {
       return;
     }
 
-    const { current, consumed, earned } = parsed;
-    const body = texts.balanceBodyHtml(current, consumed, earned);
+    const body = texts.balanceBodyHtml(parsed.totalPoints);
     const footer = texts.balanceFooterTip;
     const note = texts.balanceNotePrivateOnly || '';
     await ctx.reply(`${body}\n\n${footer}${note}`, {

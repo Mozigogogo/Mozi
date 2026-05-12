@@ -50,9 +50,9 @@ const AI_CHAT_STREAM_TIMEOUT_MS = Math.max(
 /** 可选：Bootstrap JWT；无用户 token 时用于 POST /user/login（Telegram）、registered/check（/chat、/price 不使用） */
 const MOZI_DETAIL_AUTH = (process.env.MOZI_DETAIL_AUTH || '').trim();
 
-/** GET 积分摘要路径（相对 API_BASE_URL），默认 user/tg/points/summary?telegramId= */
-const TG_POINTS_SUMMARY_PATH = (
-  process.env.TG_POINTS_SUMMARY_PATH || 'user/tg/points/summary'
+/** GET 用户资料与积分等（相对 API_BASE_URL），默认与 H5 一致：user/datainfo */
+const USER_DATA_INFO_PATH = (
+  process.env.USER_DATA_INFO_PATH || 'user/datainfo'
 ).trim().replace(/^\/+/, '');
 
 /** POST 换用户 JWT 的路径（相对 API_BASE_URL），默认与 H5 一致：user/login（chanel=3 Telegram） */
@@ -82,7 +82,7 @@ module.exports = {
   AI_CHAT_POINTS_COST,
   AI_CHAT_STREAM_TIMEOUT_MS,
   MOZI_DETAIL_AUTH,
-  TG_POINTS_SUMMARY_PATH,
+  USER_DATA_INFO_PATH,
   TG_LOGIN_PATH,
   MOZI_LOGIN_ENV,
   BOT_DEBUG,

@@ -195,24 +195,23 @@ async function postTgLogin({
   }
 }
 
-// --- GET /user/tg/points/summary（/balance 私聊）------------------------------
+// --- GET /user/datainfo（/balance 私聊，与 H5 getUserDataInfo 一致）-----------
 
 /**
- * @param {{ apiBaseUrl: string; telegramId: string; auth?: string; appUrl?: string; path?: string; timeoutMs?: number }} opts
+ * @param {{ apiBaseUrl: string; auth?: string; appUrl?: string; path?: string; timeoutMs?: number }} opts
  * @returns {Promise<{ ok: boolean; status: number; json: object | null; text: string }>}
  */
-async function fetchTgPointsSummary({
+async function fetchUserDatainfo({
   apiBaseUrl,
-  telegramId,
   auth = '',
   appUrl = '',
-  path = 'user/tg/points/summary',
+  path = 'user/datainfo',
   timeoutMs = 15000,
 }) {
   const base = String(apiBaseUrl || '').replace(/\/+$/, '');
   const app = String(appUrl || '').replace(/\/+$/, '');
-  const rel = String(path || 'user/tg/points/summary').replace(/^\/+/, '');
-  const url = `${base}/${rel}?telegramId=${encodeURIComponent(String(telegramId))}`;
+  const rel = String(path || 'user/datainfo').replace(/^\/+/, '');
+  const url = `${base}/${rel}`;
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   const headers = {
@@ -237,7 +236,7 @@ async function fetchTgPointsSummary({
       json = null;
     }
     const out = { ok: res.ok, status: res.status, json, text };
-    apiDebug('GET tg/points/summary →', {
+    apiDebug('GET /user/datainfo →', {
       httpStatus: res.status,
       ok: res.ok,
       hasAuth: Boolean(auth),
@@ -277,7 +276,7 @@ async function postPointsConsume({
   };
   const rawAuth = String(auth || '').trim().replace(/^Bearer\s+/i, '');
   if (rawAuth) {
-    /* 与 postTgRegisteredCheck / fetchTgPointsSummary 一致；勿用 Authorization: Bearer，后端会判未登录 */
+    /* 与 postTgRegisteredCheck / fetchUserDatainfo 一致；勿用 Authorization: Bearer，后端会判未登录 */
     headers.authentication = rawAuth;
   }
   if (app) {
@@ -730,7 +729,7 @@ module.exports = {
   fetchDetailHeader,
   postTgRegisteredCheck,
   postTgLogin,
-  fetchTgPointsSummary,
+  fetchUserDatainfo,
   postPointsConsume,
   requestChatStream,
   requestAiAnalysis,
