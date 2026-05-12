@@ -1,5 +1,5 @@
 /**
- * /balance：仅私聊；群内静默不响应；GET /user/datainfo，展示 data.totalPoints（与 H5 一致，含 userInfo.totalPoints 兜底）
+ * /balance：GET /user/datainfo，展示 totalPoints。私聊直接回复；群内与 /help 相同——尝试私信用户，失败则群内一行提示。
  */
 
 const { buildMiniAppUrlWithInvite } = require('../lib/invite');
@@ -9,6 +9,32 @@ const { escapeHtml } = require('../lib/telegramHtml');
 
 function isPrivateChat(ctx) {
   return ctx.chat?.type === 'private';
+}
+
+/**
+ * 私聊：ctx.reply；群聊：向用户 uid 发私信（需用户曾主动私聊过 Bot）。失败时在群内回复 balanceDmFailed。
+ * @param {import('telegraf').Context} ctx
+ * @param {object} texts getTexts(...)
+ * @param {string} html
+ * @param {object} [extra] parse_mode / reply_markup 等
+ */
+async function replyOrDmBalance(ctx, texts, html, extra = {}) {
+  const opts = { parse_mode: 'HTML', ...extra };
+  if (isPrivateChat(ctx)) {
+    await ctx.reply(html, opts);
+    return;
+  }
+  const uid = ctx.from?.id;
+  if (uid == null) {
+    return;
+  }
+  try {
+    await ctx.telegram.sendMessage(uid, html, opts);
+  } catch (err) {
+    const desc = err?.response?.description || err?.message || '';
+    console.warn('[/balance] 私聊发送失败:', desc);
+    await ctx.reply(texts.balanceDmFailed, { parse_mode: 'HTML' }).catch(() => {});
+  }
 }
 
 function firstFiniteNumber(obj, keys) {
@@ -82,10 +108,6 @@ function parseDatainfoBalance(json) {
 
 function registerBalance(bot, config, { getTexts }) {
   bot.command('balance', async (ctx) => {
-    if (!isPrivateChat(ctx)) {
-      return;
-    }
-
     const languageCode = ctx.from?.language_code || 'en';
     const texts = getTexts(languageCode);
     const uid = ctx.from?.id;
@@ -129,20 +151,20 @@ function registerBalance(bot, config, { getTexts }) {
       }
     } catch (err) {
       console.error('[/balance] 请求错误:', err?.message || err);
-      await ctx.reply(texts.balanceNetworkError, { parse_mode: 'HTML' });
+      await replyOrDmBalance(ctx, texts, texts.balanceNetworkError);
       return;
     }
 
     if (!res.ok) {
       if (res.status === 401 || res.status === 403) {
-        await ctx.reply(texts.balanceNeedBind, { parse_mode: 'HTML', ...bindKeyboard(config, texts) });
+        await replyOrDmBalance(ctx, texts, texts.balanceNeedBind, bindKeyboard(config, texts));
         return;
       }
       if (res.status === 404) {
-        await ctx.reply(texts.balanceApiNotFound, { parse_mode: 'HTML' });
+        await replyOrDmBalance(ctx, texts, texts.balanceApiNotFound);
         return;
       }
-      await ctx.reply(texts.balanceHttpError(res.status), { parse_mode: 'HTML' });
+      await replyOrDmBalance(ctx, texts, texts.balanceHttpError(res.status));
       return;
     }
 
@@ -150,30 +172,27 @@ function registerBalance(bot, config, { getTexts }) {
     if (j && typeof j.code === 'number' && j.code !== 0 && j.code !== 200) {
       const m = String(j.message || j.msg || j.error || '');
       if (/未绑定|未注册|not\s*bound|not\s*registered|登录已失效/i.test(m)) {
-        await ctx.reply(texts.balanceNeedBind, { parse_mode: 'HTML', ...bindKeyboard(config, texts) });
+        await replyOrDmBalance(ctx, texts, texts.balanceNeedBind, bindKeyboard(config, texts));
         return;
       }
-      await ctx.reply(m ? escapeHtml(m) : texts.balanceParseError, { parse_mode: 'HTML' });
+      await replyOrDmBalance(ctx, texts, m ? escapeHtml(m) : texts.balanceParseError);
       return;
     }
 
     const parsed = parseDatainfoBalance(j);
     if (parsed.kind === 'unbound') {
-      await ctx.reply(texts.balanceNeedBind, { parse_mode: 'HTML', ...bindKeyboard(config, texts) });
+      await replyOrDmBalance(ctx, texts, texts.balanceNeedBind, bindKeyboard(config, texts));
       return;
     }
     if (parsed.kind === 'bad') {
-      await ctx.reply(texts.balanceParseError, { parse_mode: 'HTML' });
+      await replyOrDmBalance(ctx, texts, texts.balanceParseError);
       return;
     }
 
     const body = texts.balanceBodyHtml(parsed.totalPoints);
     const footer = texts.balanceFooterTip;
-    const note = texts.balanceNotePrivateOnly || '';
-    await ctx.reply(`${body}\n\n${footer}${note}`, {
-      parse_mode: 'HTML',
-      ...billKeyboard(config, texts),
-    });
+    const note = isPrivateChat(ctx) ? texts.balanceNotePrivateHint || '' : '';
+    await replyOrDmBalance(ctx, texts, `${body}\n\n${footer}${note}`, billKeyboard(config, texts));
   });
 }
 

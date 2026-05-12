@@ -84,7 +84,7 @@ const i18n = {
 /alert          跳转 App 配置价格告警
 
 👤 账户管理（免费）
-/balance        查询积分余额（仅私聊；群内发送不响应）
+/balance        查询积分余额（群内会通过私信回复）
 /help           显示本帮助信息
 
 ━━━━━━━━━━━━━━━━━━━━━━━━`,
@@ -101,7 +101,7 @@ const i18n = {
 ━━━━━━━━━━━━━━━━━━━━━━━━`,
     balanceFooterTip: '💡 获取更多积分：在 Mozi App 社区发布高质量内容',
     balanceNeedBind:
-      '尚未绑定 Mozi 账户或无法校验绑定状态。\n\n请先在 <b>Mozi App</b> 完成绑定后，再在<strong>私信</strong>中使用 <code>/balance</code> 查询积分。',
+      '尚未绑定 Mozi 账户或无法校验绑定状态。\n\n请先在 <b>Mozi App</b> 完成绑定后，再在<strong>私信</strong>或<strong>群内</strong>使用 <code>/balance</code>（群内时结果会通过<strong>私信</strong>发送）。',
     balanceNetworkError: '查询失败（网络异常），请稍后再试。',
     balanceHttpError: (code) => `查询失败（HTTP ${code}），请稍后再试。`,
     balanceApiNotFound:
@@ -109,8 +109,10 @@ const i18n = {
     balanceParseError: '接口返回格式异常，暂时无法展示积分明细。',
     balanceBtnBill: '查看完整账单',
     balanceBtnPost: '去发帖赚积分',
-    balanceNotePrivateOnly:
-      '\n\n📌 说明：<code>/balance</code> 仅在与 Bot 的<strong>私信</strong>中可用；群内发送不会有任何回复。',
+    balanceDmFailed:
+      '无法私发积分说明：请先<strong>私聊</strong>本机器人发送任意消息或 <code>/start</code>，再在群内使用 <code>/balance</code>。',
+    balanceNotePrivateHint:
+      '\n\n📌 在群内使用 <code>/balance</code> 时，结果会通过<strong>私信</strong>发送给您。',
   },
   en: {
     welcomeWithInvite: (code) =>
@@ -192,7 +194,7 @@ const i18n = {
 /alert           Open app to set price alerts
 
 👤 Account (free)
-/balance         Points (DM only; ignored in groups)
+/balance         Points (in groups, sent via DM)
 /help            This help
 
 ━━━━━━━━━━━━━━━━━━━━━━━━`,
@@ -209,7 +211,7 @@ Remaining points: <b>${totalPoints}</b>
 ━━━━━━━━━━━━━━━━━━━━━━━━`,
     balanceFooterTip: '💡 Earn more: post quality content in the Mozi App community.',
     balanceNeedBind:
-      'Account not bound or binding could not be verified.\n\nPlease complete binding in <b>Mozi App</b>, then use <code>/balance</code> in a <strong>private chat</strong> with this bot.',
+      'Account not bound or binding could not be verified.\n\nPlease complete binding in <b>Mozi App</b>, then use <code>/balance</code> in a <strong>private chat</strong> or <strong>group</strong> (in groups, the result is sent via <strong>DM</strong>).',
     balanceNetworkError: 'Request failed (network). Please try again later.',
     balanceHttpError: (code) => `Request failed (HTTP ${code}). Please try again later.`,
     balanceApiNotFound:
@@ -217,8 +219,10 @@ Remaining points: <b>${totalPoints}</b>
     balanceParseError: 'Unexpected API format; cannot show points.',
     balanceBtnBill: 'Full statement',
     balanceBtnPost: 'Post to earn points',
-    balanceNotePrivateOnly:
-      '\n\n📌 <code>/balance</code> works only in <strong>private chat</strong> with the bot; it is ignored in groups.',
+    balanceDmFailed:
+      'Could not DM you the balance. Please <strong>message this bot</strong> first (any message or <code>/start</code>), then use <code>/balance</code> in the group again.',
+    balanceNotePrivateHint:
+      '\n\n📌 In groups, <code>/balance</code> replies are sent in a <strong>private chat</strong> with the bot.',
   },
 };
 
