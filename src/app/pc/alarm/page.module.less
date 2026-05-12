@@ -418,6 +418,17 @@
   gap: 0;
 }
 
+/* 大屏主卡：价格类配置双列排布，避免左侧整卡过宽时表单仍占一条窄带 */
+@media (min-width: 1280px) {
+  .configList {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 20px;
+    row-gap: 0;
+    align-items: start;
+  }
+}
+
 .configItem {
   padding: 10PX 0;
 }
@@ -656,6 +667,8 @@
   padding: 34PX 16PX 0;
   flex: 1;
   min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .sideItem {
@@ -698,6 +711,8 @@
   align-items: center;
   padding: 0 10PX;
   margin: 0 0 10PX;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .sideInputPrefixBtn {
@@ -808,6 +823,37 @@
   height: 58PX;
   max-width: 100%;
   display: block;
+}
+
+/* 大屏：主列吃满剩余宽度；侧栏固定舒适宽度，避免超宽屏主卡过宽、侧栏过窄比例失调 */
+@media (min-width: 1600px) {
+  .page:not(.pageHistory) {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+    column-gap: 16px;
+  }
+}
+
+/* 超宽屏：整页略加宽；历史记录区居中限宽 */
+@media (min-width: 1920px) {
+  .page:not(.pageHistory) {
+    max-width: min(1760px, calc(100vw - 48px));
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 clamp(16px, 3vw, 72px) 0 clamp(16px, 2.5vw, 96px);
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
+    column-gap: 20px;
+  }
+
+  .pageHistory {
+    max-width: min(1760px, calc(100vw - 48px));
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 clamp(20px, 3vw, 100px);
+  }
+
+  .historyCard {
+    height: min(82vh, 920px);
+  }
 }
 
 /* 中等屏：略收窄侧栏 */
