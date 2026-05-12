@@ -17,6 +17,9 @@ const TurnoverIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi
 const MarketMonitoringIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/watch.svg';
 const CalendarIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/find_calendar.svg';
 
+/** PC 端「去配置报警」统一进入 PC 告警页，默认 BTC */
+const PC_ALARM_CONFIGURE_HREF = '/pc/alarm?symbol=BTC';
+
 /**
  * PC端市场概况组件 - 4个统计卡片
  */
@@ -27,7 +30,7 @@ const PCMarketOverview = memo(({ onCalendarClick }) => {
   const [smartAction, setSmartAction] = useState(t('overview.configAlarm'));
   const [smartOnClick, setSmartOnClick] = useState(() => () => {
     if (typeof window !== 'undefined') {
-      window.location.href = '/addwarn';
+      window.location.href = PC_ALARM_CONFIGURE_HREF;
     }
   });
 
@@ -61,7 +64,7 @@ const PCMarketOverview = memo(({ onCalendarClick }) => {
           setSmartAction(t('overview.configAlarm'));
           setSmartOnClick(() => () => {
             if (typeof window !== 'undefined') {
-              window.location.href = '/addwarn';
+              window.location.href = PC_ALARM_CONFIGURE_HREF;
             }
           });
           return;
@@ -99,7 +102,7 @@ const PCMarketOverview = memo(({ onCalendarClick }) => {
           setSmartAction(t('overview.configAlarm'));
           setSmartOnClick(() => () => {
             if (typeof window !== 'undefined') {
-              window.location.href = '/addwarn';
+              window.location.href = PC_ALARM_CONFIGURE_HREF;
             }
           });
           return;

@@ -1,22 +1,36 @@
 .page {
   display: grid;
-  grid-template-columns: 70% 30%;
-  gap: 16PX;
+  /* 主列占剩余空间；侧栏固定上限，避免超宽屏中间「空一截」 */
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 400px);
+  column-gap: 12px;
+  row-gap: 12px;
   min-height: auto;
-  padding: 0 300PX 0 140PX;
+  padding: 0 clamp(12px, 4vw, 56px) 0 clamp(12px, 3vw, 80px);
   box-sizing: border-box;
   align-items: stretch;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* 配置双列：限制整体宽度并居中，大屏上两卡不会离得过开 */
+.page:not(.pageHistory) {
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .pageHistory {
   grid-template-columns: 1fr;
-  padding: 0 140PX;
+  padding: 0 clamp(16px, 4vw, 140px);
 }
 
 .mainPanel {
   min-width: 0;
+  width: 100%;
   display: flex;
   flex-direction: column;
+  align-self: stretch;
+  min-height: 0;
 }
 
 .topTabs {
@@ -279,7 +293,10 @@
   box-shadow: 0 4PX 20PX rgba(17, 183, 135, 0.08);
   padding: 14PX 16PX 16PX;
   flex: 1;
-  height: 80vh;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 80vh;
+  height: auto;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -535,12 +552,18 @@
 }
 
 .sidePanel {
-  align-self: start;
-  margin-top: 52PX;
+  /* 与左侧主栏同高：随 grid 行拉伸，底部与左侧白卡对齐 */
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  box-sizing: border-box;
+  padding: 52PX 0 0;
+  margin-top: 0;
   position: relative;
-  height: 80vh;
-  padding: 0;
   overflow: visible;
+  min-width: 0;
+  width: 100%;
 }
 
 .sidePanel::before {
@@ -559,7 +582,9 @@
 }
 
 .sidePanelMask {
-  height: 100%;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
   background: linear-gradient(180deg, #a1eadd 0%, rgba(161, 234, 221, 0) 26.5507%), #ffffff;
   border: 1PX solid #e7f0ea;
   box-shadow: 0 4PX 20PX rgba(17, 183, 135, 0.08);
@@ -586,10 +611,11 @@
 }
 
 .sideHeaderTextRow {
-  display: inline-flex;
+  display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: 16PX;
-  white-space: nowrap;
+  gap: 10PX 16PX;
+  max-width: 100%;
 }
 
 .sideTitle {
@@ -605,15 +631,16 @@
 
 .sideSubTitle {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12PX;
+  gap: 8PX 12PX;
   font-family: wendaofengzhishi, sans-serif;
   font-size: 13PX;
-  line-height: 1;
+  line-height: 1.35;
   font-weight: 400;
   font-style: normal;
   letter-spacing: -0.3PX;
-  white-space: nowrap;
+  max-width: 100%;
 }
 
 .sideSubTitle span {
@@ -639,9 +666,11 @@
 
 .sideSmsHint {
   font-size: 12PX;
-  line-height: 16PX;
+  line-height: 1.45;
   color: rgba(26, 26, 46, 0.55);
   margin: -6PX 0 8PX;
+  max-width: 100%;
+  word-break: break-word;
 }
 
 .sideItemLabel {
@@ -755,7 +784,7 @@
 }
 
 .sideFooter {
-  margin-top: 0;
+  margin-top: auto;
   padding: 0 16PX 16PX;
   display: flex;
   align-items: flex-end;
@@ -778,4 +807,76 @@
   height: 58PX;
   max-width: 100%;
   display: block;
+}
+
+/* 中等屏：略收窄侧栏 */
+@media (max-width: 1440px) {
+  .page:not(.pageHistory) {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+    column-gap: 12px;
+  }
+}
+
+/* 窄屏 / 平板：上下堆叠，侧栏占满行，输入区不再被压扁 */
+@media (max-width: 1024px) {
+  .page:not(.pageHistory) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 0 clamp(12px, 4vw, 32px);
+  }
+
+  .sidePanel {
+    margin-top: 0;
+    padding-top: 0;
+    height: auto;
+    min-height: 0;
+    max-width: 560px;
+    width: 100%;
+    justify-self: center;
+  }
+
+  .sidePanelMask {
+    min-height: auto;
+  }
+
+  .card,
+  .historyCard {
+    height: auto;
+    min-height: 60vh;
+    max-height: none;
+  }
+}
+
+/* 手机横竖屏 */
+@media (max-width: 640px) {
+  .page {
+    padding: 0 12px;
+  }
+
+  .sidePanel {
+    max-width: 100%;
+  }
+
+  .sidePanelHeader {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .sideBody,
+  .sideFooter {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .footerRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .saveButton,
+  .saveButtonImage {
+    width: 100%;
+    max-width: 280px;
+    align-self: center;
+  }
 }
