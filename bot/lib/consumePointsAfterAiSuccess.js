@@ -24,17 +24,24 @@ function loginOptsFromTgFrom(from) {
 }
 
 /**
- * 在流式 AI 成功返回后调用 Mozi POST /points/consume（与 H5 executeConsume 一致）。
- * 失败仅打日志，不阻断用户已收到的回复。
- *
  * @param {object} config
  * @param {object} ctx Telegraf context
  * @param {string} actionCode AI_DEEP_ANALYZE | AI_BASIC_CHAT
  * @param {string} [reason]
+ * @returns {Promise<{ remainingPoints: number | null }>}
  */
 async function consumePointsAfterAiSuccess(config, ctx, actionCode, reason = 'complete') {
   const uid = ctx.from?.id;
-  if (uid == null) return;
+  if (uid == null) return { remainingPoints: null };
+
+  const parseRemaining = (data) => {
+    if (!data || typeof data !== 'object') return null;
+    const rp = data.remainingPoints;
+    if (typeof rp === 'number' && Number.isFinite(rp)) return Math.round(rp);
+    if (typeof rp === 'string' && String(rp).trim() !== '' && Number.isFinite(Number(rp))) return Math.round(Number(rp));
+    return null;
+  };
+
   try {
     apiDebug('points/consume:enter', {
       telegramId: String(uid),
@@ -45,7 +52,7 @@ async function consumePointsAfterAiSuccess(config, ctx, actionCode, reason = 'co
     if (!token) {
       console.warn('[points/consume] skip: empty user jwt', { actionCode, uid });
       apiDebug('points/consume:no-jwt', { actionCode, uid: String(uid) });
-      return;
+      return { remainingPoints: null };
     }
     apiDebug('points/consume:jwt-ready', {
       actionCode,
@@ -62,7 +69,7 @@ async function consumePointsAfterAiSuccess(config, ctx, actionCode, reason = 'co
     if (!r.ok) {
       console.warn('[points/consume] HTTP', r.status, (r.text || '').slice(0, 300));
       apiDebug('points/consume:http-fail', { httpStatus: r.status, textHead: (r.text || '').slice(0, 200) });
-      return;
+      return { remainingPoints: null };
     }
     const c = r.json?.code;
     if (c !== 0 && c !== 200) {
@@ -77,15 +84,18 @@ async function consumePointsAfterAiSuccess(config, ctx, actionCode, reason = 'co
         actionCode,
         data: r.json?.data,
       });
-    } else {
-      apiDebug('points/consume:ok', {
-        actionCode,
-        remainingPoints: r.json?.data?.remainingPoints,
-      });
+      return { remainingPoints: null };
     }
+    const remainingPoints = parseRemaining(r.json?.data);
+    apiDebug('points/consume:ok', {
+      actionCode,
+      remainingPoints,
+    });
+    return { remainingPoints };
   } catch (e) {
     console.warn('[points/consume] request failed', e?.message || e);
     apiDebug('points/consume:exception', { message: e?.message || String(e) });
+    return { remainingPoints: null };
   }
 }
 

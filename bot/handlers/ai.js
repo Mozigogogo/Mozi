@@ -82,12 +82,16 @@ function registerAi(bot, config, { getTexts }) {
       return;
     }
 
-    await consumePointsAfterAiSuccess(config, ctx, ACTION_AI_ANALYZE, 'complete');
+    const { remainingPoints } = await consumePointsAfterAiSuccess(
+      config,
+      ctx,
+      ACTION_AI_ANALYZE,
+      'complete',
+    );
 
-    const points = result.pointsCost ?? config.AI_POINTS_COST;
     const bodyEscaped = aiMarkdownToTelegramHtml(result.answer);
     const titleHtml = texts.aiTitleHtml;
-    const footerHtml = texts.aiFooterHtml(points);
+    const footerHtml = texts.aiFooterHtml(remainingPoints);
     const parts = splitOversized(buildHtmlChunks(titleHtml, bodyEscaped, footerHtml));
 
     for (let i = 0; i < parts.length; i += 1) {

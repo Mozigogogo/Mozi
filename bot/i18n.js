@@ -21,13 +21,15 @@ const i18n = {
       `🔔 要为 <b>${sym}</b> 设置告警，请在<strong>私聊</strong>中继续（群内无法打开 Mini App 按钮）。\n\n点击下方按钮向我发私信，我会自动带上告警指令；若未自动发送，请手动发送：\n<code>/alert ${sym}</code>`,
     alertOpenPrivate: '私聊机器人设置告警',
     aiTitleHtml: '🤖 <b>AI深度分析</b>',
-    aiFooterHtml: (n) => `\n\n────────\n本次消耗 <b>${n}</b> 积分`,
+    aiFooterHtml: (remainingPoints) =>
+      `\n\n────────\n当前剩余积分：<b>${remainingPoints == null ? '—' : remainingPoints}</b>`,
     aiNeedQuestion: '请在 <code>/ai</code> 后输入问题，例如：\n<code>/ai ETH为何跌？</code>',
     aiNotConfigured:
       'AI 分析服务不可用，请检查 <code>APP_URL</code> 下 <code>/api/robot_proxy/api/v1/analyze/stream</code> 是否可达，或设置 <code>AI_BACKEND_URL</code> 覆盖完整地址。',
     aiError: '分析暂时失败，请稍后再试。',
     chatTitleHtml: '💬 <b>AI 对话</b>',
-    chatFooterHtml: (n) => `\n\n────────\n本次消耗 <b>${n}</b> 积分`,
+    chatFooterHtml: (remainingPoints) =>
+      `\n\n────────\n当前剩余积分：<b>${remainingPoints == null ? '—' : remainingPoints}</b>`,
     chatNeedQuestion: '请在 <code>/chat</code> 后输入内容，例如：\n<code>/chat 你好</code>',
     chatError: '对话暂时失败，请稍后再试。',
     priceInvalidSymbol: '交易对格式无效，请使用字母与数字，例如：<code>/price PLUME</code>',
@@ -132,13 +134,15 @@ const i18n = {
       `🔔 To set alerts for <b>${sym}</b>, please continue in a <strong>private chat</strong> (Mini App buttons don't work well in groups).\n\nTap below to message me — your client may open the chat with the command ready; if not, send:\n<code>/alert ${sym}</code>`,
     alertOpenPrivate: 'Message bot to set alert',
     aiTitleHtml: '🤖 <b>AI deep analysis</b>',
-    aiFooterHtml: (n) => `\n\n────────\n<b>${n}</b> points used`,
+    aiFooterHtml: (remainingPoints) =>
+      `\n\n────────\nRemaining points: <b>${remainingPoints == null ? '—' : remainingPoints}</b>`,
     aiNeedQuestion: 'Add your question after <code>/ai</code>, e.g.:\n<code>/ai Why is ETH down?</code>',
     aiNotConfigured:
       'AI analysis is unavailable. Check <code>APP_URL</code> <code>/api/robot_proxy/api/v1/analyze/stream</code> or set <code>AI_BACKEND_URL</code>.',
     aiError: 'Analysis failed temporarily. Please try again later.',
     chatTitleHtml: '💬 <b>AI chat</b>',
-    chatFooterHtml: (n) => `\n\n────────\n<b>${n}</b> points used`,
+    chatFooterHtml: (remainingPoints) =>
+      `\n\n────────\nRemaining points: <b>${remainingPoints == null ? '—' : remainingPoints}</b>`,
     chatNeedQuestion: 'Add your message after <code>/chat</code>, e.g.:\n<code>/chat Hello</code>',
     chatError: 'Chat failed temporarily. Please try again later.',
     priceInvalidSymbol: 'Invalid symbol. Use letters and digits only, e.g.:\n<code>/price PLUME</code>',

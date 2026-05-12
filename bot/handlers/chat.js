@@ -59,12 +59,16 @@ function registerChat(bot, config, { getTexts }) {
       return;
     }
 
-    await consumePointsAfterAiSuccess(config, ctx, ACTION_AI_CHAT, 'complete');
+    const { remainingPoints } = await consumePointsAfterAiSuccess(
+      config,
+      ctx,
+      ACTION_AI_CHAT,
+      'complete',
+    );
 
-    const points = result.pointsCost ?? config.AI_CHAT_POINTS_COST;
     const bodyEscaped = aiMarkdownToTelegramHtml(result.answer);
     const titleHtml = texts.chatTitleHtml;
-    const footerHtml = texts.chatFooterHtml(points);
+    const footerHtml = texts.chatFooterHtml(remainingPoints);
     const parts = splitOversized(buildHtmlChunks(titleHtml, bodyEscaped, footerHtml));
 
     for (let i = 0; i < parts.length; i += 1) {
