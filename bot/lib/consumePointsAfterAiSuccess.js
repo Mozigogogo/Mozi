@@ -2,6 +2,7 @@
 
 const { ensureTgUserToken } = require('./tgUserTokenCache');
 const { postPointsConsume } = require('./apis');
+const { apiDebug, jwtPreview } = require('./debugLog');
 
 /** 与 H5 `src/app/ai/page.jsx` 中 analyze 模式一致 */
 const ACTION_AI_ANALYZE = 'AI_DEEP_ANALYZE';
@@ -35,11 +36,22 @@ async function consumePointsAfterAiSuccess(config, ctx, actionCode, reason = 'co
   const uid = ctx.from?.id;
   if (uid == null) return;
   try {
+    apiDebug('points/consume:enter', {
+      telegramId: String(uid),
+      actionCode,
+      reason,
+    });
     const token = await ensureTgUserToken(config, String(uid), loginOptsFromTgFrom(ctx.from));
     if (!token) {
       console.warn('[points/consume] skip: empty user jwt', { actionCode, uid });
+      apiDebug('points/consume:no-jwt', { actionCode, uid: String(uid) });
       return;
     }
+    apiDebug('points/consume:jwt-ready', {
+      actionCode,
+      jwtLen: String(token).length,
+      jwtPreview: jwtPreview(token),
+    });
     const r = await postPointsConsume({
       apiBaseUrl: config.API_BASE_URL,
       appUrl: config.APP_URL,
@@ -49,6 +61,7 @@ async function consumePointsAfterAiSuccess(config, ctx, actionCode, reason = 'co
     });
     if (!r.ok) {
       console.warn('[points/consume] HTTP', r.status, (r.text || '').slice(0, 300));
+      apiDebug('points/consume:http-fail', { httpStatus: r.status, textHead: (r.text || '').slice(0, 200) });
       return;
     }
     const c = r.json?.code;
@@ -58,9 +71,21 @@ async function consumePointsAfterAiSuccess(config, ctx, actionCode, reason = 'co
         msg: r.json?.message || r.json?.errorMsg,
         actionCode,
       });
+      apiDebug('points/consume:biz-fail', {
+        code: c,
+        msg: r.json?.message || r.json?.errorMsg,
+        actionCode,
+        data: r.json?.data,
+      });
+    } else {
+      apiDebug('points/consume:ok', {
+        actionCode,
+        remainingPoints: r.json?.data?.remainingPoints,
+      });
     }
   } catch (e) {
     console.warn('[points/consume] request failed', e?.message || e);
+    apiDebug('points/consume:exception', { message: e?.message || String(e) });
   }
 }
 

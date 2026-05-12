@@ -2,7 +2,7 @@
  * 项目内所有对外 HTTP 接口：TG 注册检查 POST、详情行情 GET、AI 流式 POST 等
  */
 
-const { apiDebug } = require('./debugLog');
+const { apiDebug, jwtPreview } = require('./debugLog');
 
 const DEFAULT_UA =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1';
@@ -249,7 +249,7 @@ async function fetchTgPointsSummary({
   }
 }
 
-// --- POST /points/consume（与 Mozi H5 `executeConsume` / AI 页一致）------------
+// --- POST /points/consume（与 Bot 其它 Mozi 接口一致：小写 authentication + 裸 JWT）---
 
 /**
  * @param {{ apiBaseUrl: string; auth: string; appUrl?: string; actionCode: string; reason?: string; timeoutMs?: number }} opts
@@ -275,9 +275,10 @@ async function postPointsConsume({
     pragma: 'no-cache',
     'user-agent': DEFAULT_UA,
   };
-  const rawAuth = String(auth || '').trim();
+  const rawAuth = String(auth || '').trim().replace(/^Bearer\s+/i, '');
   if (rawAuth) {
-    headers.Authentication = rawAuth.startsWith('Bearer ') ? rawAuth : `Bearer ${rawAuth}`;
+    /* 与 postTgRegisteredCheck / fetchTgPointsSummary 一致；勿用 Authorization: Bearer，后端会判未登录 */
+    headers.authentication = rawAuth;
   }
   if (app) {
     headers.referer = `${app}/`;
@@ -286,6 +287,15 @@ async function postPointsConsume({
     actionCode: String(actionCode || ''),
     reason: String(reason || 'complete'),
   };
+  apiDebug('POST /points/consume ←', {
+    url,
+    actionCode: body.actionCode,
+    reason: body.reason,
+    hasAuthenticationHeader: Boolean(rawAuth),
+    authenticationLen: rawAuth.length,
+    authenticationPreview: jwtPreview(rawAuth),
+    requestHeaderKeys: Object.keys(headers),
+  });
   try {
     const res = await fetch(url, {
       method: 'POST',
@@ -306,7 +316,14 @@ async function postPointsConsume({
       reason: body.reason,
       httpStatus: res.status,
       ok: res.ok,
-      bodyPreview: text.slice(0, 400),
+      jsonCode: json && typeof json === 'object' ? json.code : null,
+      jsonSuccess: json && typeof json === 'object' ? json.success : null,
+      errorMsg: json && typeof json === 'object' ? json.errorMsg || json.message : null,
+      dataKeys:
+        json && typeof json === 'object' && json.data && typeof json.data === 'object'
+          ? Object.keys(json.data).slice(0, 12)
+          : null,
+      bodyPreview: text.slice(0, 500),
     });
     return out;
   } finally {
