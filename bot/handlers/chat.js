@@ -1,12 +1,12 @@
 /**
- * /chat <内容>：请求 robot_proxy …/chat/stream（body: message + lang）
- * HTTP 见 lib/apis.js（requestChatStream：message + lang，可选 symbol 意图兜底）
+ * /chat <内容>：POST …/chat/stream；成功后 POST /points/consume，actionCode=AI_BASIC_CHAT（与 H5 chat 一致）
  */
 
 const { extractChatQuery } = require('../lib/aiQuery');
 const { extractSymbolIntent } = require('../lib/symbolIntent');
 const { requestChatStream } = require('../lib/apis');
 const { aiMarkdownToTelegramHtml, escapeHtml, buildHtmlChunks, splitOversized } = require('../lib/telegramHtml');
+const { consumePointsAfterAiSuccess, ACTION_AI_CHAT } = require('../lib/consumePointsAfterAiSuccess');
 
 function registerChat(bot, config, { getTexts }) {
   bot.command('chat', async (ctx) => {
@@ -58,6 +58,8 @@ function registerChat(bot, config, { getTexts }) {
       await ctx.reply(texts.chatError, { parse_mode: 'HTML' });
       return;
     }
+
+    await consumePointsAfterAiSuccess(config, ctx, ACTION_AI_CHAT, 'complete');
 
     const points = result.pointsCost ?? config.AI_CHAT_POINTS_COST;
     const bodyEscaped = aiMarkdownToTelegramHtml(result.answer);

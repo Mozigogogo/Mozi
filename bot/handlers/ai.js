@@ -1,12 +1,12 @@
 /**
- * /ai <问题>：POST APP_URL/api/robot_proxy/api/v1/analyze/stream（可用 AI_BACKEND_URL 覆盖）
- * 请求体与 /chat 一致（message + lang，可选 symbol）；HTTP 见 lib/apis.js（requestChatStream）
+ * /ai <问题>：POST …/analyze/stream；成功后 POST /points/consume，actionCode=AI_DEEP_ANALYZE（与 H5 analyze 一致）
  */
 
 const { extractAiQuery } = require('../lib/aiQuery');
 const { extractSymbolIntent } = require('../lib/symbolIntent');
 const { requestChatStream } = require('../lib/apis');
 const { aiMarkdownToTelegramHtml, escapeHtml, buildHtmlChunks, splitOversized } = require('../lib/telegramHtml');
+const { consumePointsAfterAiSuccess, ACTION_AI_ANALYZE } = require('../lib/consumePointsAfterAiSuccess');
 
 function registerAi(bot, config, { getTexts }) {
   bot.command('ai', async (ctx) => {
@@ -81,6 +81,8 @@ function registerAi(bot, config, { getTexts }) {
       await ctx.reply(texts.aiError, { parse_mode: 'HTML' });
       return;
     }
+
+    await consumePointsAfterAiSuccess(config, ctx, ACTION_AI_ANALYZE, 'complete');
 
     const points = result.pointsCost ?? config.AI_POINTS_COST;
     const bodyEscaped = aiMarkdownToTelegramHtml(result.answer);

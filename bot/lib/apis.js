@@ -249,6 +249,71 @@ async function fetchTgPointsSummary({
   }
 }
 
+// --- POST /points/consume（与 Mozi H5 `executeConsume` / AI 页一致）------------
+
+/**
+ * @param {{ apiBaseUrl: string; auth: string; appUrl?: string; actionCode: string; reason?: string; timeoutMs?: number }} opts
+ * @returns {Promise<{ ok: boolean; status: number; json: object | null; text: string }>}
+ */
+async function postPointsConsume({
+  apiBaseUrl,
+  auth,
+  appUrl = '',
+  actionCode,
+  reason = 'complete',
+  timeoutMs = 15000,
+}) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const url = `${base}/points/consume`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    'content-type': 'application/json',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    'user-agent': DEFAULT_UA,
+  };
+  const rawAuth = String(auth || '').trim();
+  if (rawAuth) {
+    headers.Authentication = rawAuth.startsWith('Bearer ') ? rawAuth : `Bearer ${rawAuth}`;
+  }
+  if (app) {
+    headers.referer = `${app}/`;
+  }
+  const body = {
+    actionCode: String(actionCode || ''),
+    reason: String(reason || 'complete'),
+  };
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      signal: ctrl.signal,
+    });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const out = { ok: res.ok, status: res.status, json, text };
+    apiDebug('POST /points/consume →', {
+      actionCode: body.actionCode,
+      reason: body.reason,
+      httpStatus: res.status,
+      ok: res.ok,
+      bodyPreview: text.slice(0, 400),
+    });
+    return out;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 // --- POST 流式分析 / 对话（/ai、/chat）---------------------------------------
 //
 // Headers: Content-Type: application/json
@@ -649,6 +714,7 @@ module.exports = {
   postTgRegisteredCheck,
   postTgLogin,
   fetchTgPointsSummary,
+  postPointsConsume,
   requestChatStream,
   requestAiAnalysis,
 };
