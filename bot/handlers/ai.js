@@ -7,6 +7,7 @@ const { extractSymbolIntent } = require('../lib/symbolIntent');
 const { requestChatStream } = require('../lib/apis');
 const { aiMarkdownToTelegramHtml, escapeHtml, buildHtmlChunks, splitOversized } = require('../lib/telegramHtml');
 const { consumePointsAfterAiSuccess, ACTION_AI_ANALYZE } = require('../lib/consumePointsAfterAiSuccess');
+const { replyOrDmUserHtml } = require('../lib/replyOrDmUserHtml');
 
 function registerAi(bot, config, { getTexts }, loginGate) {
   bot.command('ai', loginGate, async (ctx) => {
@@ -91,7 +92,8 @@ function registerAi(bot, config, { getTexts }, loginGate) {
 
     const bodyEscaped = aiMarkdownToTelegramHtml(result.answer);
     const titleHtml = texts.aiTitleHtml;
-    const footerHtml = texts.aiFooterHtml(remainingPoints);
+    const isPrivate = ctx.chat?.type === 'private';
+    const footerHtml = isPrivate ? texts.aiFooterHtml(remainingPoints) : '';
     const parts = splitOversized(buildHtmlChunks(titleHtml, bodyEscaped, footerHtml));
 
     for (let i = 0; i < parts.length; i += 1) {
@@ -100,6 +102,10 @@ function registerAi(bot, config, { getTexts }, loginGate) {
         opts.reply_to_message_id = ctx.message.message_id;
       }
       await ctx.reply(parts[i], opts);
+    }
+
+    if (!isPrivate) {
+      await replyOrDmUserHtml(ctx, texts.aiCompleteDmHtml(remainingPoints), texts.aiPointsDmFailed);
     }
   });
 }

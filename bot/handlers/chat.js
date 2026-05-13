@@ -7,6 +7,7 @@ const { extractSymbolIntent } = require('../lib/symbolIntent');
 const { requestChatStream } = require('../lib/apis');
 const { aiMarkdownToTelegramHtml, escapeHtml, buildHtmlChunks, splitOversized } = require('../lib/telegramHtml');
 const { consumePointsAfterAiSuccess, ACTION_AI_CHAT } = require('../lib/consumePointsAfterAiSuccess');
+const { replyOrDmUserHtml } = require('../lib/replyOrDmUserHtml');
 
 function registerChat(bot, config, { getTexts }, loginGate) {
   bot.command('chat', loginGate, async (ctx) => {
@@ -68,7 +69,8 @@ function registerChat(bot, config, { getTexts }, loginGate) {
 
     const bodyEscaped = aiMarkdownToTelegramHtml(result.answer);
     const titleHtml = texts.chatTitleHtml;
-    const footerHtml = texts.chatFooterHtml(remainingPoints);
+    const isPrivate = ctx.chat?.type === 'private';
+    const footerHtml = isPrivate ? texts.chatFooterHtml(remainingPoints) : '';
     const parts = splitOversized(buildHtmlChunks(titleHtml, bodyEscaped, footerHtml));
 
     for (let i = 0; i < parts.length; i += 1) {
@@ -77,6 +79,10 @@ function registerChat(bot, config, { getTexts }, loginGate) {
         opts.reply_to_message_id = ctx.message.message_id;
       }
       await ctx.reply(parts[i], opts);
+    }
+
+    if (!isPrivate) {
+      await replyOrDmUserHtml(ctx, texts.chatCompleteDmHtml(remainingPoints), texts.chatPointsDmFailed);
     }
   });
 }

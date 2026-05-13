@@ -23,6 +23,10 @@ const i18n = {
     aiTitleHtml: '🤖 <b>AI深度分析</b>',
     aiFooterHtml: (remainingPoints) =>
       `\n\n────────\n当前剩余积分：<b>${remainingPoints == null ? '—' : remainingPoints}</b>`,
+    aiCompleteDmHtml: (remainingPoints) =>
+      `✅ <b>分析完成</b>\n\n当前剩余积分：<b>${remainingPoints == null ? '—' : remainingPoints}</b>`,
+    aiPointsDmFailed:
+      '无法私发积分说明：请先<strong>私聊</strong>本机器人发送任意消息或 <code>/start</code>，再在群内使用 <code>/ai</code>。',
     aiNeedQuestion: '请在 <code>/ai</code> 后输入问题，例如：\n<code>/ai ETH为何跌？</code>',
     aiNotConfigured:
       'AI 分析服务不可用，请检查 <code>APP_URL</code> 下 <code>/api/robot_proxy/api/v1/analyze/stream</code> 是否可达，或设置 <code>AI_BACKEND_URL</code> 覆盖完整地址。',
@@ -30,6 +34,10 @@ const i18n = {
     chatTitleHtml: '💬 <b>AI 对话</b>',
     chatFooterHtml: (remainingPoints) =>
       `\n\n────────\n当前剩余积分：<b>${remainingPoints == null ? '—' : remainingPoints}</b>`,
+    chatCompleteDmHtml: (remainingPoints) =>
+      `✅ <b>对话完成</b>\n\n当前剩余积分：<b>${remainingPoints == null ? '—' : remainingPoints}</b>`,
+    chatPointsDmFailed:
+      '无法私发积分说明：请先<strong>私聊</strong>本机器人发送任意消息或 <code>/start</code>，再在群内使用 <code>/chat</code>。',
     chatNeedQuestion: '请在 <code>/chat</code> 后输入内容，例如：\n<code>/chat 你好</code>',
     chatError: '对话暂时失败，请稍后再试。',
     priceInvalidSymbol: '交易对格式无效，请使用字母与数字，例如：<code>/price PLUME</code>',
@@ -144,6 +152,10 @@ const i18n = {
     aiTitleHtml: '🤖 <b>AI deep analysis</b>',
     aiFooterHtml: (remainingPoints) =>
       `\n\n────────\nRemaining points: <b>${remainingPoints == null ? '—' : remainingPoints}</b>`,
+    aiCompleteDmHtml: (remainingPoints) =>
+      `✅ <b>Analysis finished</b>\n\nRemaining points: <b>${remainingPoints == null ? '—' : remainingPoints}</b>`,
+    aiPointsDmFailed:
+      'Could not DM your points summary. Please <strong>message this bot</strong> first (any message or <code>/start</code>), then use <code>/ai</code> in the group again.',
     aiNeedQuestion: 'Add your question after <code>/ai</code>, e.g.:\n<code>/ai Why is ETH down?</code>',
     aiNotConfigured:
       'AI analysis is unavailable. Check <code>APP_URL</code> <code>/api/robot_proxy/api/v1/analyze/stream</code> or set <code>AI_BACKEND_URL</code>.',
@@ -151,6 +163,10 @@ const i18n = {
     chatTitleHtml: '💬 <b>AI chat</b>',
     chatFooterHtml: (remainingPoints) =>
       `\n\n────────\nRemaining points: <b>${remainingPoints == null ? '—' : remainingPoints}</b>`,
+    chatCompleteDmHtml: (remainingPoints) =>
+      `✅ <b>Chat finished</b>\n\nRemaining points: <b>${remainingPoints == null ? '—' : remainingPoints}</b>`,
+    chatPointsDmFailed:
+      'Could not DM your points summary. Please <strong>message this bot</strong> first (any message or <code>/start</code>), then use <code>/chat</code> in the group again.',
     chatNeedQuestion: 'Add your message after <code>/chat</code>, e.g.:\n<code>/chat Hello</code>',
     chatError: 'Chat failed temporarily. Please try again later.',
     priceInvalidSymbol: 'Invalid symbol. Use letters and digits only, e.g.:\n<code>/price PLUME</code>',
