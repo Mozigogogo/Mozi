@@ -130,6 +130,7 @@ function registerBalance(bot, config, { getTexts }, registeredGate, loginGate) {
     let userToken = await ensureTgUserToken(config, uidStr, loginOpts);
     let authHeader = userToken || config.MOZI_DETAIL_AUTH || '';
 
+    const datainfoTimeout = config.USER_DATA_INFO_TIMEOUT_MS;
     let res;
     try {
       res = await fetchUserDatainfo({
@@ -137,6 +138,7 @@ function registerBalance(bot, config, { getTexts }, registeredGate, loginGate) {
         auth: authHeader,
         appUrl: config.APP_URL,
         path: config.USER_DATA_INFO_PATH,
+        timeoutMs: datainfoTimeout,
       });
       if ((res.status === 401 || res.status === 403) && userToken) {
         clearCachedToken(uidStr);
@@ -147,11 +149,16 @@ function registerBalance(bot, config, { getTexts }, registeredGate, loginGate) {
           auth: authHeader,
           appUrl: config.APP_URL,
           path: config.USER_DATA_INFO_PATH,
+          timeoutMs: datainfoTimeout,
         });
       }
     } catch (err) {
-      console.error('[/balance] 请求错误:', err?.message || err);
-      await replyOrDmBalance(ctx, texts, texts.balanceNetworkError);
+      const aborted =
+        err?.name === 'AbortError' ||
+        /aborted|AbortError|signal is aborted|operation was aborted/i.test(String(err?.message || ''));
+      console.error('[/balance] 请求错误:', err?.message || err, { likelyTimeout: aborted });
+      const userText = aborted ? texts.balanceTimeoutError : texts.balanceNetworkError;
+      await replyOrDmBalance(ctx, texts, userText);
       return;
     }
 

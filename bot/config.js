@@ -55,6 +55,12 @@ const USER_DATA_INFO_PATH = (
   process.env.USER_DATA_INFO_PATH || 'user/datainfo'
 ).trim().replace(/^\/+/, '');
 
+/** GET user/datainfo 超时（毫秒）；默认 45s，避免积分等接口较慢时被 15s 误判为「网络异常」 */
+const USER_DATA_INFO_TIMEOUT_MS = Math.max(
+  5_000,
+  Math.min(120_000, parseInt(process.env.USER_DATA_INFO_TIMEOUT_MS || '45000', 10) || 45_000),
+);
+
 /** POST 换用户 JWT 的路径（相对 API_BASE_URL），默认与 H5 一致：user/login（chanel=3 Telegram） */
 const TG_LOGIN_PATH = (process.env.TG_LOGIN_PATH || 'user/login').trim().replace(/^\/+/, '');
 
@@ -83,6 +89,7 @@ module.exports = {
   AI_CHAT_STREAM_TIMEOUT_MS,
   MOZI_DETAIL_AUTH,
   USER_DATA_INFO_PATH,
+  USER_DATA_INFO_TIMEOUT_MS,
   TG_LOGIN_PATH,
   MOZI_LOGIN_ENV,
   BOT_DEBUG,

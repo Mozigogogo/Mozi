@@ -296,6 +296,7 @@ async function fetchUserDatainfo({
   if (app) {
     headers.referer = `${app}/`;
   }
+  apiDebug('GET /user/datainfo ←', { url, timeoutMs });
   try {
     const res = await fetch(url, { method: 'GET', headers, signal: ctrl.signal });
     const text = await res.text();

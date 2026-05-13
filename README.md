@@ -29,6 +29,8 @@
 | `TG_LOGIN_PATH` | 可选；相对 `API_BASE_URL` 的登录路径，默认 **`user/login`**（与 H5 `loginByTelegram` 相同：`chanel:3`、`type:'login'`、`channel:'tg'`、`telegramId`、`username`、`photoUrl`、`hash`、`inviteCode`、`env`；Bot 无 WebApp 时 `hash` 为空串）；响应中解析 `token` / `accessToken` 等（见 `bot/lib/tgUserTokenCache.js`） |
 | `MOZI_APP_ENV` / `NEXT_PUBLIC_APP_ENV` | 可选；写入登录 body 的 `env`（与前端一致），未设时默认 `test` |
 | `AI_POINTS_COST` | 可选；`/ai` 回复底部展示的积分数（后端未返回 `pointsCost` 时），默认 `50` |
+| `USER_DATA_INFO_PATH` | 可选；`/balance` 请求的相对路径，默认 `user/datainfo` |
+| `USER_DATA_INFO_TIMEOUT_MS` | 可选；`GET user/datainfo` 超时（毫秒），默认 **45000**；此前为 15s，慢接口会触发 Abort 被误报为网络异常 |
 | `AI_CHAT_POINTS_COST` | 可选；`/chat` 回复底部展示的积分数（后端未返回 `pointsCost` 时），默认 `10` |
 
 ## 本地运行

@@ -131,6 +131,8 @@ const i18n = {
     sessionReloginCbToastOk: '已更新登录状态',
     sessionReloginCbToastFail: '登录失败，请稍后再试',
     balanceNetworkError: '查询失败（网络异常），请稍后再试。',
+    balanceTimeoutError:
+      '查询超时：积分服务响应较慢或暂时不可用。请稍后再试；若经常出现，可在部署环境提高 <code>USER_DATA_INFO_TIMEOUT_MS</code> 或检查 <code>API_BASE_URL</code> 下 <code>GET /user/datainfo</code>。',
     balanceHttpError: (code) => `查询失败（HTTP ${code}），请稍后再试。`,
     balanceApiNotFound:
       '用户资料接口未就绪。请联系管理员配置 <code>USER_DATA_INFO_PATH</code> 或后端 <code>GET /user/datainfo</code>。',
@@ -270,6 +272,8 @@ Tap <b>Register in one tap</b> to open the Mozi Mini App on the <b>account / sig
     sessionReloginCbToastOk: 'Session updated',
     sessionReloginCbToastFail: 'Sign-in failed, try again later',
     balanceNetworkError: 'Request failed (network). Please try again later.',
+    balanceTimeoutError:
+      'Request timed out: the profile/points API was too slow. Try again later, or raise <code>USER_DATA_INFO_TIMEOUT_MS</code> and check <code>GET /user/datainfo</code> on <code>API_BASE_URL</code>.',
     balanceHttpError: (code) => `Request failed (HTTP ${code}). Please try again later.`,
     balanceApiNotFound:
       'User profile API unavailable. Ask admin to set <code>USER_DATA_INFO_PATH</code> or enable <code>GET /user/datainfo</code>.',
