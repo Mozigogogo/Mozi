@@ -6,7 +6,7 @@
  * /price：handlers/price.js + lib/apis.js（GET /detail/header）
  * /help：handlers/help.js（群内仅私聊发全文，防刷屏）
  * /balance：handlers/balance.js（GET /user/datainfo；私聊直接回复，群内尝试私信用户，路径见 USER_DATA_INFO_PATH）
- * /ai、/chat、/balance：middleware/requireMoziLogin.js 校验 JWT + POST /user/session/token-check；失效则私信提示并可点「重新登录」刷新 token；registerMoziReloginCallback 处理回调
+ * /ai、/chat、/balance：middleware/requireMoziRegistered.js 先 POST /user/tg/registered/check；未注册则群内 @ 提示 + 私信一键注册 /user；已注册则 requireMoziLogin（JWT + token-check）
  * 调试：环境变量 BOT_DEBUG=1 → middleware/debugCommands.js + lib/debugLog.js（命令与 apis 内 HTTP 摘要）
  */
 
@@ -15,7 +15,7 @@ const { Telegraf } = require('telegraf');
 const config = require('./config');
 const { getTexts } = require('./i18n');
 const { registerDebugCommandLogging } = require('./middleware/debugCommands');
-const { registerFirstCommandTgCheck } = require('./middleware/firstCommandTgCheck');
+const { createRequireMoziRegistered } = require('./middleware/requireMoziRegistered');
 const { createRequireMoziLogin, registerMoziReloginCallback } = require('./middleware/requireMoziLogin');
 const { registerStart } = require('./handlers/start');
 const { registerAlert } = require('./handlers/alert');
@@ -33,18 +33,18 @@ if (!config.BOT_TOKEN) {
 const bot = new Telegraf(config.BOT_TOKEN);
 
 const i18nApi = { getTexts };
+const registeredGate = createRequireMoziRegistered(config, i18nApi);
 const loginGate = createRequireMoziLogin(config, i18nApi);
 
 registerDebugCommandLogging(bot);
-registerFirstCommandTgCheck(bot, config);
 registerMoziReloginCallback(bot, config, i18nApi);
 registerStart(bot, config, i18nApi);
 registerAlert(bot, config, i18nApi);
-registerAi(bot, config, i18nApi, loginGate);
-registerChat(bot, config, i18nApi, loginGate);
+registerAi(bot, config, i18nApi, registeredGate, loginGate);
+registerChat(bot, config, i18nApi, registeredGate, loginGate);
 registerPrice(bot, config, i18nApi);
 registerHelp(bot, config, i18nApi);
-registerBalance(bot, config, i18nApi, loginGate);
+registerBalance(bot, config, i18nApi, registeredGate, loginGate);
 
 bot.catch((err, ctx) => {
   console.error('Bot 未捕获错误:', err?.response?.description || err?.message || err);

@@ -9,8 +9,8 @@ const { aiMarkdownToTelegramHtml, escapeHtml, buildHtmlChunks, splitOversized } 
 const { consumePointsAfterAiSuccess, ACTION_AI_ANALYZE } = require('../lib/consumePointsAfterAiSuccess');
 const { replyOrDmUserHtml } = require('../lib/replyOrDmUserHtml');
 
-function registerAi(bot, config, { getTexts }, loginGate) {
-  bot.command('ai', loginGate, async (ctx) => {
+function registerAi(bot, config, { getTexts }, registeredGate, loginGate) {
+  bot.command('ai', registeredGate, loginGate, async (ctx) => {
     const languageCode = ctx.from?.language_code || 'en';
     const texts = getTexts(languageCode);
     const rawText = ctx.message?.text || '';

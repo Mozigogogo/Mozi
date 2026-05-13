@@ -112,6 +112,15 @@ const i18n = {
       '尚未绑定 Mozi 账户或无法校验绑定状态。\n\n请先在 <b>Mozi App</b> 完成绑定后，再在<strong>私信</strong>或<strong>群内</strong>使用 <code>/balance</code>（群内时结果会通过<strong>私信</strong>发送）。',
     needMoziLogin:
       '该功能需要已登录的 Mozi 账户（Telegram 绑定）。\n\n请先通过下方按钮打开 <b>Mozi App</b> 完成绑定后，再使用 <code>/ai</code>、<code>/chat</code> 或 <code>/balance</code>。',
+    bindGroupPingHtml: (mentionHtml) =>
+      `${mentionHtml} 检测到您尚未绑定账户，已私信您完成设置 👇`,
+    bindDmIntroHtml: `👋 <b>请先完成 Mozi 账户绑定</b>
+
+点击下方 <b>一键注册</b>，将打开 Mozi Mini App 并进入 <b>账户 / 注册</b> 页面。完成后回到群内即可继续使用 <code>/ai</code>、<code>/chat</code>、<code>/balance</code>。`,
+    bindOneTapRegisterBtn: '一键注册',
+    bindSuccessDm: '绑定成功！可以在群里继续使用啦 🎉',
+    bindDmFailedInGroup:
+      '无法私信您：请先<strong>私聊</strong>本机器人发送任意消息或 <code>/start</code>，再使用群内指令，以便收到绑定引导。',
     sessionIdentityExpiredHtml:
       '🔐 <b>登录状态已失效</b>\n\n你的 Mozi 身份可能已在其他端重新登录，或会话已过期。\n\n请点击下方「重新登录」以刷新本机器人的访问凭证。',
     sessionReloginBtn: '重新登录',
@@ -241,6 +250,15 @@ Remaining points: <b>${totalPoints}</b>
       'Account not bound or binding could not be verified.\n\nPlease complete binding in <b>Mozi App</b>, then use <code>/balance</code> in a <strong>private chat</strong> or <strong>group</strong> (in groups, the result is sent via <strong>DM</strong>).',
     needMoziLogin:
       'This feature requires a logged-in Mozi account (Telegram binding).\n\nOpen <b>Mozi App</b> via the buttons below to complete binding, then use <code>/ai</code>, <code>/chat</code>, or <code>/balance</code>.',
+    bindGroupPingHtml: (mentionHtml) =>
+      `${mentionHtml} You’re not linked to a Mozi account yet — check your <b>DM</b> from me to finish setup 👇`,
+    bindDmIntroHtml: `👋 <b>Link your Mozi account</b>
+
+Tap <b>Register in one tap</b> to open the Mozi Mini App on the <b>account / sign-up</b> page. When you’re done, you can use <code>/ai</code>, <code>/chat</code>, and <code>/balance</code> in the group again.`,
+    bindOneTapRegisterBtn: 'Register in one tap',
+    bindSuccessDm: 'You’re all set! You can keep using the bot in the group 🎉',
+    bindDmFailedInGroup:
+      'I couldn’t DM you. Please <strong>message this bot</strong> first (any message or <code>/start</code>), then try the command in the group again so I can send the setup steps.',
     sessionIdentityExpiredHtml:
       '🔐 <b>Your Mozi session is no longer valid</b>\n\nYou may have signed in elsewhere, or the session expired.\n\nTap <b>Sign in again</b> below to refresh this bot\'s credentials.',
     sessionReloginBtn: 'Sign in again',

@@ -106,8 +106,8 @@ function parseDatainfoBalance(json) {
   return { kind: 'ok', totalPoints };
 }
 
-function registerBalance(bot, config, { getTexts }, loginGate) {
-  bot.command('balance', loginGate, async (ctx) => {
+function registerBalance(bot, config, { getTexts }, registeredGate, loginGate) {
+  bot.command('balance', registeredGate, loginGate, async (ctx) => {
     const languageCode = ctx.from?.language_code || 'en';
     const texts = getTexts(languageCode);
     const uid = ctx.from?.id;

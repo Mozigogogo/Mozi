@@ -1,6 +1,6 @@
 /**
  * 用 telegramId 调 Mozi POST /user/login（Telegram，与 H5 loginByTelegram 相同 body）拿用户 JWT，进程内缓存；过期或 401 后可 force 刷新。
- * 与 firstCommandTgCheck（需登录命令）、requireMoziLogin、/balance 等共用。
+ * 与 requireMoziRegistered、requireMoziLogin、/balance 等共用。
  */
 
 const { postTgLogin } = require('./apis');

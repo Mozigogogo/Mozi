@@ -6,6 +6,7 @@
 
 - `/start`：欢迎、邀请码、打开 Mini App、社区与 X 链接  
 - `/alert <symbol>`：引导至 Mini App 币种详情配置价格告警  
+- `/ai`、`/chat`、`/balance`：先 `POST …/user/tg/registered/check`（未注册则群内 @ 提示 + 私信「一键注册」打开 Mini App `/user`；绑定成功后下次通过校验时私信祝贺），再换 JWT、`token-check` 后执行业务  
 - `/ai <问题>`：默认 `APP_URL` + `/api/robot_proxy/api/v1/analyze/stream`，请求体与 `/chat` 相同（`message` + `lang`，可选 `symbol`）；可用 `AI_BACKEND_URL` 覆盖完整 URL；底部积分默认 **50**；analyze 失败时可自动回退 chat/stream（`AI_ANALYZE_FALLBACK_TO_CHAT`）  
 - `/chat <内容>`：POST 流式对话（默认 `APP_URL` + `/api/robot_proxy/api/v1/chat/stream`，与 Web 一致；可用 `AI_CHAT_BACKEND_URL` 覆盖）；底部展示积分默认 **10**（可由后端 `pointsCost` 覆盖）；对用户文案做简易币种意图识别，命中时在请求体中带 `symbol`（见 `bot/lib/symbolIntent.js`）  
 
@@ -24,7 +25,7 @@
 | `AI_ANALYZE_FALLBACK_TO_CHAT` | 可选；`/ai` 请求 analyze 失败（如 422）时是否自动改请求 **chat/stream**（默认 `1`）；`0`/`false` 关闭 |
 | `AI_CHAT_BACKEND_URL` | 可选；覆盖 `/chat` 的 **完整流式 POST URL**（默认 `APP_URL/api/robot_proxy/api/v1/chat/stream`） |
 | `AI_CHAT_STREAM_TIMEOUT_MS` | 可选；`/ai` 与 `/chat` 等待 SSE 的最长时间（毫秒），默认 `300000`（5 分钟） |
-| `MOZI_DETAIL_AUTH` | 可选；Bootstrap JWT，请求头 `authentication`（`POST …/user/login` 与 `registered/check` 在无用户 token 时使用；`/chat` 不传该头） |
+| `MOZI_DETAIL_AUTH` | 可选；Bootstrap JWT，请求头 `authentication`。在尚无用户 JWT 时用于 `POST …/user/tg/registered/check` 与 `POST …/user/login`（Telegram）；建议生产配置以便群内校验注册态 |
 | `TG_LOGIN_PATH` | 可选；相对 `API_BASE_URL` 的登录路径，默认 **`user/login`**（与 H5 `loginByTelegram` 相同：`chanel:3`、`type:'login'`、`channel:'tg'`、`telegramId`、`username`、`photoUrl`、`hash`、`inviteCode`、`env`；Bot 无 WebApp 时 `hash` 为空串）；响应中解析 `token` / `accessToken` 等（见 `bot/lib/tgUserTokenCache.js`） |
 | `MOZI_APP_ENV` / `NEXT_PUBLIC_APP_ENV` | 可选；写入登录 body 的 `env`（与前端一致），未设时默认 `test` |
 | `AI_POINTS_COST` | 可选；`/ai` 回复底部展示的积分数（后端未返回 `pointsCost` 时），默认 `50` |
