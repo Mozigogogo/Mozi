@@ -1,33 +1,21 @@
 /**
- * 用户在本进程内首次发出任意「命令类」消息时：POST /user/login（Telegram，与 H5 一致）换用户 JWT（缓存），
+ * 用户在本进程内首次发出需登录的命令（/ai、/chat、/balance）时：POST /user/login（Telegram，与 H5 一致）换用户 JWT（缓存），
  * 再 POST /user/tg/registered/check（请求头优先带用户 token，否则 MOZI_DETAIL_AUTH）
  */
 
 const { postTgRegisteredCheck } = require('../lib/apis');
 const { ensureTgUserToken } = require('../lib/tgUserTokenCache');
+const { MOZI_LOGIN_COMMANDS, inboundCommandName } = require('../lib/moziLoginCommands');
 
 /** 已成功调用过 check 的 Telegram 用户 id */
 const registeredOk = new Set();
 /** 同一用户并发请求合并 */
 const inFlight = new Map();
 
-function isInboundCommandMessage(ctx) {
-  const m = ctx.message;
-  if (!m) return false;
-  if (typeof m.text === 'string' && m.text.startsWith('/')) {
-    const e = m.entities;
-    return Boolean(e?.[0]?.type === 'bot_command' && e[0].offset === 0);
-  }
-  if (typeof m.caption === 'string' && m.caption.startsWith('/')) {
-    const e = m.caption_entities;
-    return Boolean(e?.[0]?.type === 'bot_command' && e[0].offset === 0);
-  }
-  return false;
-}
-
 function registerFirstCommandTgCheck(bot, config) {
   bot.use(async (ctx, next) => {
-    if (!isInboundCommandMessage(ctx)) {
+    const cmd = inboundCommandName(ctx);
+    if (!cmd || !MOZI_LOGIN_COMMANDS.has(cmd)) {
       return next();
     }
     const uid = ctx.from?.id;

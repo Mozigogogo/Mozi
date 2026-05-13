@@ -74,7 +74,7 @@ const i18n = {
 /price [币种]   查询实时价格
   示例：/price BTC  /price ETH  /price SOL
 
-🤖   AI 分析
+🤖   AI 分析（需登录 Mozi）
 /ai [问题]      深度分析，消耗 50 积分
   示例：/ai 以太坊近期为何下跌？
 /chat [问题]    普通问答，消耗 10 积分
@@ -83,7 +83,7 @@ const i18n = {
 🔔 告警设置（免费）
 /alert          跳转 App 配置价格告警
 
-👤 账户管理（免费）
+👤 账户管理（需登录 Mozi）
 /balance        查询积分余额（群内会通过私信回复）
 /help           显示本帮助信息
 
@@ -102,6 +102,17 @@ const i18n = {
     balanceFooterTip: '💡 获取更多积分：在 Mozi App 社区发布高质量内容',
     balanceNeedBind:
       '尚未绑定 Mozi 账户或无法校验绑定状态。\n\n请先在 <b>Mozi App</b> 完成绑定后，再在<strong>私信</strong>或<strong>群内</strong>使用 <code>/balance</code>（群内时结果会通过<strong>私信</strong>发送）。',
+    needMoziLogin:
+      '该功能需要已登录的 Mozi 账户（Telegram 绑定）。\n\n请先通过下方按钮打开 <b>Mozi App</b> 完成绑定后，再使用 <code>/ai</code>、<code>/chat</code> 或 <code>/balance</code>。',
+    sessionIdentityExpiredHtml:
+      '🔐 <b>登录状态已失效</b>\n\n你的 Mozi 身份可能已在其他端重新登录，或会话已过期。\n\n请点击下方「重新登录」以刷新本机器人的访问凭证。',
+    sessionReloginBtn: '重新登录',
+    sessionReloginSuccessHtml: '✅ <b>已重新登录</b>\n\n可以再次使用 <code>/ai</code>、<code>/chat</code> 或 <code>/balance</code>。',
+    sessionReloginFailedHtml:
+      '❌ <b>重新登录失败</b>\n\n请稍后再试，或通过 Mozi App 打开账户页检查绑定状态。',
+    sessionReloginFailedShort: '操作失败',
+    sessionReloginCbToastOk: '已更新登录状态',
+    sessionReloginCbToastFail: '登录失败，请稍后再试',
     balanceNetworkError: '查询失败（网络异常），请稍后再试。',
     balanceHttpError: (code) => `查询失败（HTTP ${code}），请稍后再试。`,
     balanceApiNotFound:
@@ -184,7 +195,7 @@ const i18n = {
 /price [symbol]  Live price
   e.g. /price BTC  /price ETH  /price SOL
 
-🤖 AI
+🤖 AI (Mozi login required)
 /ai [question]   Deep analysis · 50 points
   e.g. /ai Why is ETH down recently?
 /chat [question] Chat · 10 points
@@ -193,7 +204,7 @@ const i18n = {
 🔔 Alerts (free)
 /alert           Open app to set price alerts
 
-👤 Account (free)
+👤 Account (Mozi login required)
 /balance         Points (in groups, sent via DM)
 /help            This help
 
@@ -212,6 +223,18 @@ Remaining points: <b>${totalPoints}</b>
     balanceFooterTip: '💡 Earn more: post quality content in the Mozi App community.',
     balanceNeedBind:
       'Account not bound or binding could not be verified.\n\nPlease complete binding in <b>Mozi App</b>, then use <code>/balance</code> in a <strong>private chat</strong> or <strong>group</strong> (in groups, the result is sent via <strong>DM</strong>).',
+    needMoziLogin:
+      'This feature requires a logged-in Mozi account (Telegram binding).\n\nOpen <b>Mozi App</b> via the buttons below to complete binding, then use <code>/ai</code>, <code>/chat</code>, or <code>/balance</code>.',
+    sessionIdentityExpiredHtml:
+      '🔐 <b>Your Mozi session is no longer valid</b>\n\nYou may have signed in elsewhere, or the session expired.\n\nTap <b>Sign in again</b> below to refresh this bot\'s credentials.',
+    sessionReloginBtn: 'Sign in again',
+    sessionReloginSuccessHtml:
+      '✅ <b>Signed in again</b>\n\nYou can use <code>/ai</code>, <code>/chat</code>, or <code>/balance</code> again.',
+    sessionReloginFailedHtml:
+      '❌ <b>Sign-in failed</b>\n\nPlease try again later or open Mozi App and check your account binding.',
+    sessionReloginFailedShort: 'Something went wrong',
+    sessionReloginCbToastOk: 'Session updated',
+    sessionReloginCbToastFail: 'Sign-in failed, try again later',
     balanceNetworkError: 'Request failed (network). Please try again later.',
     balanceHttpError: (code) => `Request failed (HTTP ${code}). Please try again later.`,
     balanceApiNotFound:

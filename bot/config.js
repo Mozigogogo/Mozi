@@ -47,7 +47,7 @@ const AI_CHAT_STREAM_TIMEOUT_MS = Math.max(
   Math.min(1_800_000, parseInt(process.env.AI_CHAT_STREAM_TIMEOUT_MS || '300000', 10) || 300_000),
 );
 
-/** 可选：Bootstrap JWT；无用户 token 时用于 POST /user/login（Telegram）、registered/check（/chat、/price 不使用） */
+/** 可选：Bootstrap JWT；无用户 token 时用于 POST /user/login（Telegram）、registered/check（仅需登录命令首次触发热身） */
 const MOZI_DETAIL_AUTH = (process.env.MOZI_DETAIL_AUTH || '').trim();
 
 /** GET 用户资料与积分等（相对 API_BASE_URL），默认与 H5 一致：user/datainfo */

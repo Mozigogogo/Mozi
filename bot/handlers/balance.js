@@ -2,9 +2,9 @@
  * /balance：GET /user/datainfo，展示 totalPoints。私聊直接回复；群内与 /help 相同——尝试私信用户，失败则群内一行提示。
  */
 
-const { buildMiniAppUrlWithInvite } = require('../lib/invite');
 const { fetchUserDatainfo } = require('../lib/apis');
 const { ensureTgUserToken, clearCachedToken } = require('../lib/tgUserTokenCache');
+const { buildBindAccountKeyboard } = require('../lib/moziBindKeyboard');
 const { escapeHtml } = require('../lib/telegramHtml');
 
 function isPrivateChat(ctx) {
@@ -106,8 +106,8 @@ function parseDatainfoBalance(json) {
   return { kind: 'ok', totalPoints };
 }
 
-function registerBalance(bot, config, { getTexts }) {
-  bot.command('balance', async (ctx) => {
+function registerBalance(bot, config, { getTexts }, loginGate) {
+  bot.command('balance', loginGate, async (ctx) => {
     const languageCode = ctx.from?.language_code || 'en';
     const texts = getTexts(languageCode);
     const uid = ctx.from?.id;
@@ -157,7 +157,7 @@ function registerBalance(bot, config, { getTexts }) {
 
     if (!res.ok) {
       if (res.status === 401 || res.status === 403) {
-        await replyOrDmBalance(ctx, texts, texts.balanceNeedBind, bindKeyboard(config, texts));
+        await replyOrDmBalance(ctx, texts, texts.balanceNeedBind, buildBindAccountKeyboard(config, texts));
         return;
       }
       if (res.status === 404) {
@@ -172,7 +172,7 @@ function registerBalance(bot, config, { getTexts }) {
     if (j && typeof j.code === 'number' && j.code !== 0 && j.code !== 200) {
       const m = String(j.message || j.msg || j.error || '');
       if (/未绑定|未注册|not\s*bound|not\s*registered|登录已失效/i.test(m)) {
-        await replyOrDmBalance(ctx, texts, texts.balanceNeedBind, bindKeyboard(config, texts));
+        await replyOrDmBalance(ctx, texts, texts.balanceNeedBind, buildBindAccountKeyboard(config, texts));
         return;
       }
       await replyOrDmBalance(ctx, texts, m ? escapeHtml(m) : texts.balanceParseError);
@@ -181,7 +181,7 @@ function registerBalance(bot, config, { getTexts }) {
 
     const parsed = parseDatainfoBalance(j);
     if (parsed.kind === 'unbound') {
-      await replyOrDmBalance(ctx, texts, texts.balanceNeedBind, bindKeyboard(config, texts));
+      await replyOrDmBalance(ctx, texts, texts.balanceNeedBind, buildBindAccountKeyboard(config, texts));
       return;
     }
     if (parsed.kind === 'bad') {
@@ -194,19 +194,6 @@ function registerBalance(bot, config, { getTexts }) {
     const note = isPrivateChat(ctx) ? texts.balanceNotePrivateHint || '' : '';
     await replyOrDmBalance(ctx, texts, `${body}\n\n${footer}${note}`, billKeyboard(config, texts));
   });
-}
-
-function bindKeyboard(config, texts) {
-  const appUrl = buildMiniAppUrlWithInvite(config.APP_URL);
-  const base = String(config.APP_URL || '').replace(/\/+$/, '');
-  return {
-    reply_markup: {
-      inline_keyboard: [
-        [{ text: texts.helpOpenAppBtn, web_app: { url: appUrl } }],
-        [{ text: texts.helpBindAccountBtn, web_app: { url: `${base}/user` } }],
-      ],
-    },
-  };
 }
 
 function billKeyboard(config, texts) {

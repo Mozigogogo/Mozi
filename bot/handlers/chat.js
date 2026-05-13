@@ -8,8 +8,8 @@ const { requestChatStream } = require('../lib/apis');
 const { aiMarkdownToTelegramHtml, escapeHtml, buildHtmlChunks, splitOversized } = require('../lib/telegramHtml');
 const { consumePointsAfterAiSuccess, ACTION_AI_CHAT } = require('../lib/consumePointsAfterAiSuccess');
 
-function registerChat(bot, config, { getTexts }) {
-  bot.command('chat', async (ctx) => {
+function registerChat(bot, config, { getTexts }, loginGate) {
+  bot.command('chat', loginGate, async (ctx) => {
     const languageCode = ctx.from?.language_code || 'en';
     const texts = getTexts(languageCode);
     const rawText = ctx.message?.text || '';

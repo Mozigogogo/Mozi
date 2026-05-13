@@ -107,6 +107,76 @@ async function postTgRegisteredCheck({
   }
 }
 
+// --- POST /user/session/token-check（会话是否仍为当前 token）-----------------
+
+/**
+ * @param {{ apiBaseUrl: string; telegramId: string; token: string; appUrl?: string; timeoutMs?: number }} opts
+ * @returns {Promise<{ ok: boolean; status: number; json: object | null; text: string }>}
+ */
+async function postUserSessionTokenCheck({
+  apiBaseUrl,
+  telegramId,
+  token,
+  appUrl = '',
+  timeoutMs = 15000,
+}) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const url = `${base}/user/session/token-check`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    'content-type': 'application/json',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    'user-agent': DEFAULT_UA,
+  };
+  if (app) {
+    headers.referer = `${app}/`;
+  }
+  const rawTok = String(token || '').trim().replace(/^Bearer\s+/i, '');
+  if (rawTok) {
+    headers.authentication = rawTok;
+  }
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        telegramId: String(telegramId),
+        token: rawTok,
+      }),
+      signal: ctrl.signal,
+    });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const out = { ok: res.ok, status: res.status, json, text };
+    apiDebug('POST /user/session/token-check →', {
+      telegramId: String(telegramId),
+      httpStatus: res.status,
+      ok: res.ok,
+      hasToken: Boolean(rawTok),
+      authenticationPreview: jwtPreview(rawTok),
+      dataTrue:
+        json && typeof json === 'object' && json.data === true
+          ? true
+          : json && typeof json === 'object' && json.data === false
+            ? false
+            : null,
+      bodyPreview: text.slice(0, 400),
+    });
+    return out;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 // --- POST /user/login（Telegram：与 Mozi TG WebApp 登录 body 一致）----
 //
 // 期望 JSON 示例（与 Network 面板一致）：
@@ -728,6 +798,7 @@ async function requestAiAnalysis({ url, secret, body, timeoutMs = 120000 }) {
 module.exports = {
   fetchDetailHeader,
   postTgRegisteredCheck,
+  postUserSessionTokenCheck,
   postTgLogin,
   fetchUserDatainfo,
   postPointsConsume,

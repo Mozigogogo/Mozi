@@ -6,7 +6,7 @@
  * /price：handlers/price.js + lib/apis.js（GET /detail/header）
  * /help：handlers/help.js（群内仅私聊发全文，防刷屏）
  * /balance：handlers/balance.js（GET /user/datainfo；私聊直接回复，群内尝试私信用户，路径见 USER_DATA_INFO_PATH）
- * 首次任意命令前：middleware/firstCommandTgCheck.js → POST TG_LOGIN_PATH（默认 user/login，与 H5 Telegram 登录 body 一致）换用户 JWT 缓存 + POST /user/tg/registered/check
+ * /ai、/chat、/balance：middleware/requireMoziLogin.js 校验 JWT + POST /user/session/token-check；失效则私信提示并可点「重新登录」刷新 token；registerMoziReloginCallback 处理回调
  * 调试：环境变量 BOT_DEBUG=1 → middleware/debugCommands.js + lib/debugLog.js（命令与 apis 内 HTTP 摘要）
  */
 
@@ -16,6 +16,7 @@ const config = require('./config');
 const { getTexts } = require('./i18n');
 const { registerDebugCommandLogging } = require('./middleware/debugCommands');
 const { registerFirstCommandTgCheck } = require('./middleware/firstCommandTgCheck');
+const { createRequireMoziLogin, registerMoziReloginCallback } = require('./middleware/requireMoziLogin');
 const { registerStart } = require('./handlers/start');
 const { registerAlert } = require('./handlers/alert');
 const { registerAi } = require('./handlers/ai');
@@ -32,16 +33,18 @@ if (!config.BOT_TOKEN) {
 const bot = new Telegraf(config.BOT_TOKEN);
 
 const i18nApi = { getTexts };
+const loginGate = createRequireMoziLogin(config, i18nApi);
 
 registerDebugCommandLogging(bot);
 registerFirstCommandTgCheck(bot, config);
+registerMoziReloginCallback(bot, config, i18nApi);
 registerStart(bot, config, i18nApi);
 registerAlert(bot, config, i18nApi);
-registerAi(bot, config, i18nApi);
-registerChat(bot, config, i18nApi);
+registerAi(bot, config, i18nApi, loginGate);
+registerChat(bot, config, i18nApi, loginGate);
 registerPrice(bot, config, i18nApi);
 registerHelp(bot, config, i18nApi);
-registerBalance(bot, config, i18nApi);
+registerBalance(bot, config, i18nApi, loginGate);
 
 bot.catch((err, ctx) => {
   console.error('Bot 未捕获错误:', err?.response?.description || err?.message || err);
