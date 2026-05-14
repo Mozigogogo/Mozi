@@ -13,6 +13,16 @@ import { saveAlarmSettings, createAlertConfig, modifyAlertConfig } from '../../a
 import styles from './index.module.less';
 import configStyles from './config.module.less';
 
+/** 一键告警行内图标（sms / hook / wechat / tgbot）。默认 COS 前缀 mozi_public/icons；本地可设 NEXT_PUBLIC_ALERT_ICON_CDN=/icons */
+const ALERT_ICON_CDN_BASE = (
+  process.env.NEXT_PUBLIC_ALERT_ICON_CDN ||
+  'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons'
+).replace(/\/$/, '');
+
+function alertIconUrl(filename) {
+  return `${ALERT_ICON_CDN_BASE}/${filename}`;
+}
+
 function Toggle({ checked, onChange, disabled }) {
   return (
     <button
@@ -31,8 +41,20 @@ function Toggle({ checked, onChange, disabled }) {
 
 function PhoneAlarmIcon() {
   return (
-    <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/telephone.svg" alt="phone" width="45" height="45" />
+    <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/telephone.svg" alt="" width="24" height="24" />
   );
+}
+
+function WebhookLinkIcon() {
+  return <img src={alertIconUrl('hook_alert.svg')} alt="" width="24" height="24" />;
+}
+
+function WeChatBrandIcon() {
+  return <img src={alertIconUrl('wechat_alert.svg')} alt="" width="24" height="24" />;
+}
+
+function TelegramBotIcon() {
+  return <img src={alertIconUrl('tgbot_alert.svg')} alt="" width="24" height="24" />;
 }
 
 function MailAlarmIcon() {
@@ -48,14 +70,7 @@ function PushAlarmIcon() {
 }
 
 function SmsAlarmIcon() {
-  return (
-    <img
-      src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/email.svg"
-      alt="sms"
-      width="24"
-      height="24"
-    />
-  );
+  return <img src={alertIconUrl('sms_alert.svg')} alt="" width="24" height="24" />;
 }
 
 function PhoneInputIcon() {
@@ -67,6 +82,19 @@ function PhoneInputIcon() {
 function MailInputIcon() {
   return (
     <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/email_num.svg" alt="email" width="18" height="14" />
+  );
+}
+
+function LinkInputIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <path
+        d="M10 13a5 5 0 007.07 0l1.42-1.42a5 5 0 00-7.07-7.07L10 6M14 11a5 5 0 00-7.07 0L5.51 12.42a5 5 0 007.07 7.07L14 18"
+        stroke="#6b7280"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
 
@@ -105,6 +133,12 @@ export default function OneClickAlarmModal({
   const [email, setEmail] = useState(init.email);
   const [smsEnabled, setSmsEnabled] = useState(init.smsEnabled);
   const [pushEnabled, setPushEnabled] = useState(init.pushEnabled);
+  const [webhookEnabled, setWebhookEnabled] = useState(false);
+  const [webhookUrl, setWebhookUrl] = useState('');
+  const [wechatEnabled, setWechatEnabled] = useState(false);
+  const [telegramEnabled, setTelegramEnabled] = useState(false);
+  const [alertFrequency, setAlertFrequency] = useState('continuous');
+  const [webhookError, setWebhookError] = useState('');
 
   const [countryPickerOpen, setCountryPickerOpen] = useState(false);
 
@@ -199,6 +233,24 @@ export default function OneClickAlarmModal({
     };
 
     checkAlertConfig();
+  }, [open, mode]);
+
+  useEffect(() => {
+    if (!open || mode !== 'oneClick') return;
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem('oneClickAlarmUi') : null;
+      if (!raw) return;
+      const j = JSON.parse(raw);
+      if (typeof j.webhookEnabled === 'boolean') setWebhookEnabled(j.webhookEnabled);
+      if (typeof j.webhookUrl === 'string') setWebhookUrl(j.webhookUrl);
+      if (typeof j.wechatEnabled === 'boolean') setWechatEnabled(j.wechatEnabled);
+      if (typeof j.telegramEnabled === 'boolean') setTelegramEnabled(j.telegramEnabled);
+      if (j.alertFrequency === 'continuous' || j.alertFrequency === 'daily' || j.alertFrequency === 'once') {
+        setAlertFrequency(j.alertFrequency);
+      }
+    } catch (e) {
+      console.error('[OneClickAlarmModal] oneClickAlarmUi parse failed', e);
+    }
   }, [open, mode]);
 
   useEffect(() => {
@@ -320,6 +372,7 @@ export default function OneClickAlarmModal({
       setPhoneError('');
       setEmailError('');
       setSmsError('');
+      setWebhookError('');
 
       const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
       
@@ -329,7 +382,11 @@ export default function OneClickAlarmModal({
         return;
       }
 
-      // 邮箱格式验证（只在有输入内容时才验证）
+      // 邮箱：开启时必填，有内容时校验格式
+      if (emailEnabled && (!email || email.trim() === '')) {
+        setEmailError(t('oneClickAlarm.emailRequired'));
+        return;
+      }
       if (emailEnabled && email && email.trim() !== '') {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email.trim())) {
@@ -345,6 +402,24 @@ export default function OneClickAlarmModal({
       if (smsEnabled && (!phone || phone.trim() === '' || !countryCode || !String(countryCode).trim())) {
         setSmsError(t('oneClickAlarm.smsNeedsPhoneAndCountry'));
         return;
+      }
+
+      if (webhookEnabled) {
+        const w = String(webhookUrl || '').trim();
+        if (!w) {
+          setWebhookError(t('oneClickAlarm.webhookPlaceholder'));
+          return;
+        }
+        try {
+          const u = new URL(w);
+          if (u.protocol !== 'http:' && u.protocol !== 'https:') {
+            setWebhookError(t('oneClickAlarm.urlInvalid'));
+            return;
+          }
+        } catch {
+          setWebhookError(t('oneClickAlarm.urlInvalid'));
+          return;
+        }
       }
 
       // 开始 loading
@@ -385,7 +460,21 @@ export default function OneClickAlarmModal({
       if (result.success) {
         // 保存配置到 localStorage
         localStorage.setItem('alertConfig', JSON.stringify(result.data));
-        
+        try {
+          localStorage.setItem(
+            'oneClickAlarmUi',
+            JSON.stringify({
+              webhookEnabled,
+              webhookUrl: String(webhookUrl || '').trim(),
+              wechatEnabled,
+              telegramEnabled,
+              alertFrequency,
+            })
+          );
+        } catch {
+          /* ignore */
+        }
+
         setHideInputs(true); // 隐藏输入框
         
         // 调用原有的 onConfirm 回调
@@ -539,12 +628,22 @@ export default function OneClickAlarmModal({
         height={mode === 'config' ? '85vh' : undefined}
         maxHeight={mode === 'config' ? '92vh' : '90vh'}
       >
-        {(mode === 'config' || mode === 'oneClick') && (
-          <img 
-            src={i18n.language === 'en' ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_detail/alert_text_en.svg' : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_detail/alert_text_zh.svg'}
-            alt="alert text"
+        {mode === 'config' && (
+          <img
+            src={
+              i18n.language === 'en'
+                ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_detail/alert_text_en.svg'
+                : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_detail/alert_text_zh.svg'
+            }
+            alt=""
             className={styles.alertTextImage}
           />
+        )}
+        {mode === 'oneClick' && (
+          <div className={styles.oneClickTitleBlock}>
+            <h2 className={styles.oneClickTitle}>{title || t('oneClickAlarm.title')}</h2>
+            <p className={styles.oneClickSubtitle}>{subtitle || t('oneClickAlarm.subtitle')}</p>
+          </div>
         )}
         {mode === 'config' ? (
           <div className={configStyles.configModeWrap}>
@@ -692,104 +791,199 @@ export default function OneClickAlarmModal({
           </div>
         ) : (
           <div className={styles.content}>
-            <div className={styles.card}>
+            <div className={styles.oneClickCard}>
               <div className={styles.cardContent}>
-                <div className={styles.row}>
-                  <div className={styles.rowLeft}>
-                    <span className={styles.icon}><PhoneAlarmIcon /></span>
-                    <span className={styles.rowLabel}>{t('oneClickAlarm.phoneAlarm')}</span>
-                  </div>
-                  <Toggle checked={phoneEnabled} onChange={setPhoneEnabled} />
-                </div>
-
-                {(phoneEnabled || smsEnabled) && (
-                  <>
-                    <div className={styles.inputRow}>
-                      <span className={styles.inputIcon}><PhoneInputIcon /></span>
-                      <div className={styles.countryCodeWrap}>
-                        <button
-                          type="button"
-                          className={styles.countryPickerTrigger}
-                          onClick={() => {
-                            setCountryPickerOpen(true);
-                          }}
-                        >
-                          <span className={styles.countryPickerTriggerValue}>{countryCode}</span>
-                          <img className={styles.countryPickerTriggerArrow} src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/down_arrow.svg" alt="down" />
-                        </button>
-                      </div>
-                      <input
-                        className={styles.input}
-                        placeholder={t('oneClickAlarm.phonePlaceholder')}
-                        value={phone}
-                        onChange={(e) => {
-                          setPhone(e.target.value);
-                          if (phoneError) setPhoneError('');
-                          if (smsError) setSmsError('');
-                        }}
-                        inputMode="tel"
+                <div className={styles.inputRow}>
+                  <span className={styles.inputIcon}>
+                    <PhoneInputIcon />
+                  </span>
+                  <div className={styles.countryCodeWrap}>
+                    <button
+                      type="button"
+                      className={styles.countryPickerTrigger}
+                      onClick={() => {
+                        setCountryPickerOpen(true);
+                      }}
+                    >
+                      <span className={styles.countryPickerTriggerValue}>{countryCode}</span>
+                      <img
+                        className={styles.countryPickerTriggerArrow}
+                        src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/down_arrow.svg"
+                        alt=""
                       />
-                    </div>
-                    {(phoneError || smsError) && (
-                      <div className={styles.errorText}>{phoneError || smsError}</div>
-                    )}
-                  </>
-                )}
-
-                <div className={styles.divider} />
-
-                <div className={styles.row}>
-                  <div className={styles.rowLeft}>
-                    <span className={styles.icon}><MailAlarmIcon /></span>
-                    <span className={styles.rowLabel}>{t('oneClickAlarm.emailAlarm')}</span>
+                    </button>
                   </div>
-                  <Toggle checked={emailEnabled} onChange={setEmailEnabled} />
-                </div>
-
-                {emailEnabled && (
-                  <>
-                    <div className={styles.inputRow}>
-                      <span className={styles.inputIcon}><MailInputIcon /></span>
-                      <input
-                        className={styles.input}
-                        placeholder={t('oneClickAlarm.emailPlaceholder')}
-                        value={email}
-                        onChange={(e) => {
-                          setEmail(e.target.value);
-                          if (emailError) setEmailError(''); // 清除错误提示
-                        }}
-                        inputMode="email"
-                      />
-                    </div>
-                    {emailError && <div className={styles.errorText}>{emailError}</div>}
-                  </>
-                )}
-
-                <div className={styles.divider} />
-
-                <div className={styles.row}>
-                  <div className={styles.rowLeft}>
-                    <span className={styles.icon}><SmsAlarmIcon /></span>
-                    <span className={styles.rowLabel}>{t('oneClickAlarm.smsAlarm')}</span>
-                  </div>
-                  <Toggle
-                    checked={smsEnabled}
-                    onChange={(v) => {
-                      setSmsEnabled(v);
+                  <input
+                    className={styles.input}
+                    placeholder={t('oneClickAlarm.phonePlaceholder')}
+                    value={phone}
+                    onChange={(e) => {
+                      setPhone(e.target.value);
+                      if (phoneError) setPhoneError('');
                       if (smsError) setSmsError('');
                     }}
+                    inputMode="tel"
                   />
                 </div>
-                <div className={styles.smsHint}>{t('oneClickAlarm.smsUsesSamePhone')}</div>
+                {(phoneError || smsError) && (
+                  <div className={styles.errorText}>{phoneError || smsError}</div>
+                )}
 
-                <div className={styles.divider} />
-
-                <div className={styles.row}>
-                  <div className={styles.rowLeft}>
-                    <span className={styles.icon}><PushAlarmIcon /></span>
-                    <span className={styles.rowLabel}>{t('oneClickAlarm.pushAlarm')}</span>
+                <div className={styles.notifyRow}>
+                  <div className={styles.notifyRowInner}>
+                    <div className={styles.notifyRowLeft}>
+                      <span className={styles.notifyIconWrap}>
+                        <PhoneAlarmIcon />
+                      </span>
+                      <span className={styles.rowLabel}>{t('oneClickAlarm.phoneAlarm')}</span>
+                    </div>
+                    <Toggle checked={phoneEnabled} onChange={setPhoneEnabled} />
                   </div>
-                  <Toggle checked={pushEnabled} onChange={setPushEnabled} />
+                </div>
+
+                <div className={styles.notifyRow}>
+                  <div className={styles.notifyRowInner}>
+                    <div className={styles.notifyRowLeft}>
+                      <span className={styles.notifyIconWrap}>
+                        <SmsAlarmIcon />
+                      </span>
+                      <span className={styles.rowLabel}>{t('oneClickAlarm.smsAlarm')}</span>
+                    </div>
+                    <Toggle
+                      checked={smsEnabled}
+                      onChange={(v) => {
+                        setSmsEnabled(v);
+                        if (smsError) setSmsError('');
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.notifyRow}>
+                  <div className={styles.notifyRowInner}>
+                    <div className={styles.notifyRowLeft}>
+                      <span className={styles.notifyIconWrap}>
+                        <MailAlarmIcon />
+                      </span>
+                      <span className={styles.rowLabel}>{t('oneClickAlarm.emailAlarm')}</span>
+                    </div>
+                    <Toggle checked={emailEnabled} onChange={setEmailEnabled} />
+                  </div>
+                </div>
+                <div className={styles.inputRow}>
+                  <span className={styles.inputIcon}>
+                    <MailInputIcon />
+                  </span>
+                  <input
+                    className={styles.input}
+                    placeholder={t('oneClickAlarm.emailPlaceholder')}
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (emailError) setEmailError('');
+                    }}
+                    inputMode="email"
+                  />
+                </div>
+                {emailError && <div className={styles.errorText}>{emailError}</div>}
+
+                <div className={styles.notifyRow}>
+                  <div className={styles.notifyRowInner}>
+                    <div className={styles.notifyRowLeft}>
+                      <span className={styles.notifyIconWrap}>
+                        <WebhookLinkIcon />
+                      </span>
+                      <span className={styles.rowLabel}>{t('oneClickAlarm.webhookLabel')}</span>
+                    </div>
+                    <Toggle
+                      checked={webhookEnabled}
+                      onChange={(v) => {
+                        setWebhookEnabled(v);
+                        if (webhookError) setWebhookError('');
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className={styles.inputRow}>
+                  <span className={styles.inputIcon}>
+                    <LinkInputIcon />
+                  </span>
+                  <input
+                    className={styles.input}
+                    placeholder={t('oneClickAlarm.webhookPlaceholder')}
+                    value={webhookUrl}
+                    onChange={(e) => {
+                      setWebhookUrl(e.target.value);
+                      if (webhookError) setWebhookError('');
+                    }}
+                    inputMode="url"
+                  />
+                </div>
+                <p className={styles.fieldHint}>{t('oneClickAlarm.webhookHint')}</p>
+                {webhookError && <div className={styles.errorText}>{webhookError}</div>}
+
+                <div className={styles.notifyRow}>
+                  <div className={styles.notifyRowInner}>
+                    <div className={styles.notifyRowLeft}>
+                      <span className={styles.notifyIconWrap}>
+                        <WeChatBrandIcon />
+                      </span>
+                      <div className={styles.notifyTextCol}>
+                        <span className={styles.rowLabel}>{t('oneClickAlarm.wechatAlarm')}</span>
+                        <span className={styles.rowSub}>{t('oneClickAlarm.wechatHint')}</span>
+                      </div>
+                    </div>
+                    <Toggle checked={wechatEnabled} onChange={setWechatEnabled} />
+                  </div>
+                </div>
+
+                <div className={styles.notifyRow}>
+                  <div className={styles.notifyRowInner}>
+                    <div className={styles.notifyRowLeft}>
+                      <span className={styles.notifyIconWrap}>
+                        <TelegramBotIcon />
+                      </span>
+                      <div className={styles.notifyTextCol}>
+                        <span className={styles.rowLabel}>{t('oneClickAlarm.telegramBot')}</span>
+                        <span className={styles.rowSub}>{t('oneClickAlarm.telegramHint')}</span>
+                      </div>
+                    </div>
+                    <Toggle checked={telegramEnabled} onChange={setTelegramEnabled} />
+                  </div>
+                </div>
+
+                <div className={styles.notifyRow}>
+                  <div className={styles.notifyRowInner}>
+                    <div className={styles.notifyRowLeft}>
+                      <span className={styles.notifyIconWrap}>
+                        <PushAlarmIcon />
+                      </span>
+                      <div className={styles.notifyTextCol}>
+                        <span className={styles.rowLabel}>{t('oneClickAlarm.popupAlarm')}</span>
+                        <span className={styles.rowSub}>{t('oneClickAlarm.popupHint')}</span>
+                      </div>
+                    </div>
+                    <Toggle checked={pushEnabled} onChange={setPushEnabled} />
+                  </div>
+                </div>
+
+                <div className={styles.freqSection}>
+                  <div className={styles.freqTitle}>{t('oneClickAlarm.freqTitle')}</div>
+                  {[
+                    { id: 'continuous', titleKey: 'oneClickAlarm.freqContinuous', descKey: 'oneClickAlarm.freqContinuousDesc' },
+                    { id: 'daily', titleKey: 'oneClickAlarm.freqDaily', descKey: 'oneClickAlarm.freqDailyDesc' },
+                    { id: 'once', titleKey: 'oneClickAlarm.freqOnce', descKey: 'oneClickAlarm.freqOnceDesc' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      className={`${styles.freqOption} ${alertFrequency === opt.id ? styles.freqOptionSelected : ''}`}
+                      onClick={() => setAlertFrequency(opt.id)}
+                    >
+                      <span className={styles.freqOptionTitle}>{t(opt.titleKey)}</span>
+                      <span className={styles.freqOptionDesc}>{t(opt.descKey)}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -801,9 +995,9 @@ export default function OneClickAlarmModal({
                   disabled={isLoading}
                 >
                   {isLoading ? (
-                    <span className={styles.loadingSpinner}></span>
+                    <span className={styles.loadingSpinner} />
                   ) : (
-                    confirmText || t('common.confirm')
+                    confirmText || t('oneClickAlarm.actionConfirm')
                   )}
                 </button>
                 <button
