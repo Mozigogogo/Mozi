@@ -6,6 +6,7 @@ const { extractChatQuery } = require('../lib/aiQuery');
 const { extractSymbolIntent } = require('../lib/symbolIntent');
 const { requestChatStream } = require('../lib/apis');
 const { precheckAiChatPointsGate } = require('../lib/aiChatPointsPrecheck');
+const { withTypingWhileAwaiting } = require('../lib/telegramTypingPulse');
 const { aiMarkdownToTelegramHtml, escapeHtml, buildHtmlChunks, splitOversized } = require('../lib/telegramHtml');
 const { consumePointsAfterAiSuccess, ACTION_AI_CHAT } = require('../lib/consumePointsAfterAiSuccess');
 const { replyOrDmUserHtml } = require('../lib/replyOrDmUserHtml');
@@ -26,31 +27,35 @@ function registerChat(bot, config, { getTexts }, registeredGate, loginGate) {
     if (uid == null) {
       return;
     }
-    const ok = await precheckAiChatPointsGate(ctx, config, texts, {
-      requiredPoints: config.AI_CHAT_POINTS_COST,
-      insufficientHtml: texts.chatInsufficientPointsHtml,
-      insufficientDmFailed: texts.chatInsufficientPointsDmFailed,
-      precheckDmFailed: texts.chatPrecheckDmFailed,
-    });
+    const ok = await withTypingWhileAwaiting(
+      ctx,
+      precheckAiChatPointsGate(ctx, config, texts, {
+        requiredPoints: config.AI_CHAT_POINTS_COST,
+        insufficientHtml: texts.chatInsufficientPointsHtml,
+        insufficientDmFailed: texts.chatInsufficientPointsDmFailed,
+        precheckDmFailed: texts.chatPrecheckDmFailed,
+      }),
+    );
     if (!ok) {
       return;
     }
-
-    await ctx.telegram.sendChatAction(ctx.chat.id, 'typing').catch(() => {});
 
     const lang = (languageCode || 'en').toLowerCase().startsWith('zh') ? 'zh' : 'en';
     const symbol = extractSymbolIntent(query);
 
     let result;
     try {
-      result = await requestChatStream({
-        url: config.AI_CHAT_STREAM_URL,
-        message: query,
-        lang,
-        symbol,
-        appUrl: config.APP_URL,
-        timeoutMs: config.AI_CHAT_STREAM_TIMEOUT_MS,
-      });
+      result = await withTypingWhileAwaiting(
+        ctx,
+        requestChatStream({
+          url: config.AI_CHAT_STREAM_URL,
+          message: query,
+          lang,
+          symbol,
+          appUrl: config.APP_URL,
+          timeoutMs: config.AI_CHAT_STREAM_TIMEOUT_MS,
+        }),
+      );
     } catch (err) {
       const aborted =
         err?.name === 'AbortError' ||

@@ -6,6 +6,7 @@ const { extractAiQuery } = require('../lib/aiQuery');
 const { extractSymbolIntent } = require('../lib/symbolIntent');
 const { requestChatStream } = require('../lib/apis');
 const { precheckAiChatPointsGate } = require('../lib/aiChatPointsPrecheck');
+const { withTypingWhileAwaiting } = require('../lib/telegramTypingPulse');
 const { aiMarkdownToTelegramHtml, escapeHtml, buildHtmlChunks, splitOversized } = require('../lib/telegramHtml');
 const { consumePointsAfterAiSuccess, ACTION_AI_ANALYZE } = require('../lib/consumePointsAfterAiSuccess');
 const { replyOrDmUserHtml } = require('../lib/replyOrDmUserHtml');
@@ -26,17 +27,18 @@ function registerAi(bot, config, { getTexts }, registeredGate, loginGate) {
     if (uid == null) {
       return;
     }
-    const ok = await precheckAiChatPointsGate(ctx, config, texts, {
-      requiredPoints: config.AI_POINTS_COST,
-      insufficientHtml: texts.aiInsufficientPointsHtml,
-      insufficientDmFailed: texts.aiInsufficientPointsDmFailed,
-      precheckDmFailed: texts.aiPrecheckDmFailed,
-    });
+    const ok = await withTypingWhileAwaiting(
+      ctx,
+      precheckAiChatPointsGate(ctx, config, texts, {
+        requiredPoints: config.AI_POINTS_COST,
+        insufficientHtml: texts.aiInsufficientPointsHtml,
+        insufficientDmFailed: texts.aiInsufficientPointsDmFailed,
+        precheckDmFailed: texts.aiPrecheckDmFailed,
+      }),
+    );
     if (!ok) {
       return;
     }
-
-    await ctx.telegram.sendChatAction(ctx.chat.id, 'typing').catch(() => {});
 
     const lang = (languageCode || 'en').toLowerCase().startsWith('zh') ? 'zh' : 'en';
     const symbol = extractSymbolIntent(query);
@@ -51,29 +53,34 @@ function registerAi(bot, config, { getTexts }, registeredGate, loginGate) {
 
     let result;
     try {
-      try {
-        result = await requestChatStream({
-          url: config.AI_ANALYZE_STREAM_URL,
-          ...streamOpts,
-        });
-      } catch (analyzeErr) {
-        const canFallback =
-          config.AI_ANALYZE_FALLBACK_TO_CHAT &&
-          config.AI_ANALYZE_STREAM_URL !== config.AI_CHAT_STREAM_URL &&
-          analyzeErr?.status != null &&
-          analyzeErr.status >= 400;
-        if (!canFallback) {
-          throw analyzeErr;
-        }
-        console.warn('[/ai] analyze/stream 失败，回退到 chat/stream:', {
-          httpStatus: analyzeErr.status,
-          symbolIntent: symbol,
-        });
-        result = await requestChatStream({
-          url: config.AI_CHAT_STREAM_URL,
-          ...streamOpts,
-        });
-      }
+      result = await withTypingWhileAwaiting(
+        ctx,
+        (async () => {
+          try {
+            return await requestChatStream({
+              url: config.AI_ANALYZE_STREAM_URL,
+              ...streamOpts,
+            });
+          } catch (analyzeErr) {
+            const canFallback =
+              config.AI_ANALYZE_FALLBACK_TO_CHAT &&
+              config.AI_ANALYZE_STREAM_URL !== config.AI_CHAT_STREAM_URL &&
+              analyzeErr?.status != null &&
+              analyzeErr.status >= 400;
+            if (!canFallback) {
+              throw analyzeErr;
+            }
+            console.warn('[/ai] analyze/stream 失败，回退到 chat/stream:', {
+              httpStatus: analyzeErr.status,
+              symbolIntent: symbol,
+            });
+            return await requestChatStream({
+              url: config.AI_CHAT_STREAM_URL,
+              ...streamOpts,
+            });
+          }
+        })(),
+      );
     } catch (err) {
       const aborted =
         err?.name === 'AbortError' ||
