@@ -917,7 +917,8 @@
     "model": {
       "analyze": "分析模型",
       "chat": "对话模型",
-      "bigOrder": "大单侦测"
+      "bigOrder": "大单侦测",
+      "openMenu": "切换模型"
     },
     "quickAsk": {
       "btcTrend": "BTC后市如何",

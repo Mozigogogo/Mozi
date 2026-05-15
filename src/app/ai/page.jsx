@@ -390,9 +390,9 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   // 消息列表：只有加载到历史记录或用户开始对话时才会出现内容
   const [messages, setMessages] = useState([]);
   const [suggestedQuestions, setSuggestedQuestions] = useState([]);
-  // 模型选择状态（bigorder 仅 PC 展示入口；窄屏会 effect 回落到 chat）
+  // 模型选择状态：PC 为三个独立按钮，移动端为下拉面板
   const [selectedModel, setSelectedModel] = useState('analyze'); // 'analyze' | 'chat' | 'bigorder'
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [modelMenuOpen, setModelMenuOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [shareQuestion, setShareQuestion] = useState('');
   const [shareAnswer, setShareAnswer] = useState('');
@@ -402,6 +402,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
   const [bigorderLoading, setBigorderLoading] = useState(false);
   const bigorderAbortRef = useRef(null);
+  const modelMenuRef = useRef(null);
 
   // 语音转文字（Web Speech API）
   const {
@@ -849,13 +850,37 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     trackPageView('AI Assistant');
   }, []);
 
-  /** 非 PC 不展示大单模式：从宽屏切到窄屏时自动回落到对话模型 */
+  /** 移动端模型下拉：点击外部关闭 */
   useEffect(() => {
-    if (!mounted) return;
-    if (!isPC && selectedModel === 'bigorder') {
-      setSelectedModel('chat');
-    }
-  }, [mounted, isPC, selectedModel]);
+    if (isPC || !modelMenuOpen) return undefined;
+    const onDocMouseDown = (event) => {
+      if (modelMenuRef.current && !modelMenuRef.current.contains(event.target)) {
+        setModelMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDocMouseDown);
+    return () => document.removeEventListener('mousedown', onDocMouseDown);
+  }, [isPC, modelMenuOpen]);
+
+  /** 移动端模型下拉：Escape 关闭 */
+  useEffect(() => {
+    if (!modelMenuOpen) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setModelMenuOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [modelMenuOpen]);
+
+  /** 请求进行中关闭下拉，避免状态错乱 */
+  useEffect(() => {
+    if (isBusy) setModelMenuOpen(false);
+  }, [isBusy]);
+
+  /** 切到 PC 布局时收起移动端下拉 */
+  useEffect(() => {
+    if (isPC) setModelMenuOpen(false);
+  }, [isPC]);
 
   // 登录成功回调
   const handleLoginSuccess = () => {
@@ -1217,6 +1242,55 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
   };
 
+  const robotModelLabel = (id) => {
+    if (id === 'analyze') return t('robot.model.analyze');
+    if (id === 'chat') return t('robot.model.chat');
+    return t('robot.model.bigOrder');
+  };
+
+  const renderRobotModelIcon = (modelId) => {
+    if (modelId === 'analyze') {
+      return (
+        <span className={styles.modeIconWrap}>
+          <Image
+            src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/deep.svg"
+            alt=""
+            width={11}
+            height={18}
+            className={`${styles.modeIcon} ${styles.modeIconDeep}`}
+            aria-hidden
+          />
+        </span>
+      );
+    }
+    if (modelId === 'chat') {
+      return (
+        <span className={styles.modeIconWrap}>
+          <Image
+            src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/chat.svg"
+            alt=""
+            width={10}
+            height={10}
+            className={styles.modeIcon}
+            aria-hidden
+          />
+        </span>
+      );
+    }
+    return (
+      <span className={styles.modeIconWrap}>
+        <Image
+          src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/Order_situation.svg"
+          alt=""
+          width={12}
+          height={12}
+          className={styles.modeIcon}
+          aria-hidden
+        />
+      </span>
+    );
+  };
+
   const content = (
       <div className={`${styles.robotPage} ${isPC ? styles.pcMode : ''}`}>
         {isPC && (isBusy || messages.length > 0) && (
@@ -1477,78 +1551,93 @@ export default function RobotPage({ isPC: propIsPC = false }) {
             />
             <div className={styles.inputActions}>
               <div className={styles.actionModes}>
-                <div
-                  className={`${styles.modeItem} ${selectedModel === 'analyze' ? styles.activeMode : ''}`}
-                  onClick={() => setSelectedModel('analyze')}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setSelectedModel('analyze');
-                    }
-                  }}
-                >
-                  <span className={styles.modeIconWrap}>
-                    <Image
-                      src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/deep.svg"
-                      alt=""
-                      width={11}
-                      height={18}
-                      className={`${styles.modeIcon} ${styles.modeIconDeep}`}
-                      aria-hidden
-                    />
-                  </span>
-                  <span className={styles.modeLabel}>{t('robot.model.analyze')}</span>
-                </div>
-                <div
-                  className={`${styles.modeItem} ${selectedModel === 'chat' ? styles.activeMode : ''}`}
-                  onClick={() => setSelectedModel('chat')}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setSelectedModel('chat');
-                    }
-                  }}
-                >
-                  <span className={styles.modeIconWrap}>
-                    <Image
-                      src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/chat.svg"
-                      alt=""
-                      width={10}
-                      height={10}
-                      className={styles.modeIcon}
-                      aria-hidden
-                    />
-                  </span>
-                  <span className={styles.modeLabel}>{t('robot.model.chat')}</span>
-                </div>
-                {isPC && (
-                  <div
-                    className={`${styles.modeItem} ${selectedModel === 'bigorder' ? styles.activeMode : ''}`}
-                    onClick={() => setSelectedModel('bigorder')}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        setSelectedModel('bigorder');
-                      }
-                    }}
-                  >
-                    <span className={styles.modeIconWrap}>
-                      <Image
-                        src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/Order_situation.svg"
-                        alt=""
-                        width={12}
-                        height={12}
-                        className={styles.modeIcon}
-                        aria-hidden
-                      />
-                    </span>
-                    <span className={styles.modeLabel}>{t('robot.model.bigOrder')}</span>
+                {isPC ? (
+                  <>
+                    <div
+                      className={`${styles.modeItem} ${selectedModel === 'analyze' ? styles.activeMode : ''}`}
+                      onClick={() => setSelectedModel('analyze')}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setSelectedModel('analyze');
+                        }
+                      }}
+                    >
+                      {renderRobotModelIcon('analyze')}
+                      <span className={styles.modeLabel}>{t('robot.model.analyze')}</span>
+                    </div>
+                    <div
+                      className={`${styles.modeItem} ${selectedModel === 'chat' ? styles.activeMode : ''}`}
+                      onClick={() => setSelectedModel('chat')}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setSelectedModel('chat');
+                        }
+                      }}
+                    >
+                      {renderRobotModelIcon('chat')}
+                      <span className={styles.modeLabel}>{t('robot.model.chat')}</span>
+                    </div>
+                    <div
+                      className={`${styles.modeItem} ${selectedModel === 'bigorder' ? styles.activeMode : ''}`}
+                      onClick={() => setSelectedModel('bigorder')}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setSelectedModel('bigorder');
+                        }
+                      }}
+                    >
+                      {renderRobotModelIcon('bigorder')}
+                      <span className={styles.modeLabel}>{t('robot.model.bigOrder')}</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className={styles.modeDropdownWrap} ref={modelMenuRef}>
+                    <button
+                      type="button"
+                      className={`${styles.modeDropdownTrigger} ${modelMenuOpen ? styles.modeDropdownTriggerOpen : ''} ${isBusy ? styles.modeDropdownTriggerDisabled : ''}`}
+                      disabled={isBusy}
+                      aria-expanded={modelMenuOpen}
+                      aria-haspopup="listbox"
+                      aria-label={t('robot.model.openMenu')}
+                      onClick={() => setModelMenuOpen((o) => !o)}
+                    >
+                      <span className={styles.modeDropdownTriggerInner}>
+                        {renderRobotModelIcon(selectedModel)}
+                        <span className={styles.modeDropdownTriggerText}>{robotModelLabel(selectedModel)}</span>
+                        <span className={styles.modeDropdownCaret} aria-hidden>
+                          ▾
+                        </span>
+                      </span>
+                    </button>
+                    {modelMenuOpen && (
+                      <div className={styles.modeDropdownPanel} role="listbox">
+                        {(['analyze', 'chat', 'bigorder']).map((id) => (
+                          <button
+                            key={id}
+                            type="button"
+                            role="option"
+                            aria-selected={selectedModel === id}
+                            className={`${styles.modeDropdownOption} ${selectedModel === id ? styles.modeDropdownOptionActive : ''}`}
+                            onClick={() => {
+                              setSelectedModel(id);
+                              setModelMenuOpen(false);
+                            }}
+                          >
+                            {renderRobotModelIcon(id)}
+                            <span className={styles.modeDropdownOptionLabel}>{robotModelLabel(id)}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

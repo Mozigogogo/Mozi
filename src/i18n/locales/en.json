@@ -934,7 +934,8 @@
     "model": {
       "analyze": "Analyze",
       "chat": "Chat",
-      "bigOrder": "Big order detection"
+      "bigOrder": "Big order detection",
+      "openMenu": "Switch model"
     },
     "quickAsk": {
       "btcTrend": "BTC outlook",
