@@ -5,6 +5,7 @@
 const { extractAiQuery } = require('../lib/aiQuery');
 const { extractSymbolIntent } = require('../lib/symbolIntent');
 const { requestChatStream } = require('../lib/apis');
+const { precheckAiChatPointsGate } = require('../lib/aiChatPointsPrecheck');
 const { aiMarkdownToTelegramHtml, escapeHtml, buildHtmlChunks, splitOversized } = require('../lib/telegramHtml');
 const { consumePointsAfterAiSuccess, ACTION_AI_ANALYZE } = require('../lib/consumePointsAfterAiSuccess');
 const { replyOrDmUserHtml } = require('../lib/replyOrDmUserHtml');
@@ -18,6 +19,20 @@ function registerAi(bot, config, { getTexts }, registeredGate, loginGate) {
 
     if (!query) {
       await ctx.reply(texts.aiNeedQuestion, { parse_mode: 'HTML' });
+      return;
+    }
+
+    const uid = ctx.from?.id;
+    if (uid == null) {
+      return;
+    }
+    const ok = await precheckAiChatPointsGate(ctx, config, texts, {
+      requiredPoints: config.AI_POINTS_COST,
+      insufficientHtml: texts.aiInsufficientPointsHtml,
+      insufficientDmFailed: texts.aiInsufficientPointsDmFailed,
+      precheckDmFailed: texts.aiPrecheckDmFailed,
+    });
+    if (!ok) {
       return;
     }
 

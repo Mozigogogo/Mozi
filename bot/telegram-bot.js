@@ -2,7 +2,7 @@
  * Mozi Telegram Bot 入口
  * /start：邀请码见 handlers/start.js、lib/invite.js
  * /alert：见 handlers/alert.js、lib/alertSymbol.js
- * /ai、/chat：同为 lib/apis.js requestChatStream（body: message+lang）；/ai → …/analyze/stream，/chat → …/chat/stream
+ * /ai、/chat：进程内缓存上次剩余积分（consume 成功写回；datainfo /balance 同步）；前置校验 datainfo（可配短 TTL 跳过）；不足则私信 + Mini App 社区/账单按钮
  * /price：handlers/price.js + lib/apis.js（GET /detail/header）
  * /help：handlers/help.js（群内仅私聊发全文，防刷屏）
  * /balance：handlers/balance.js（GET /user/datainfo；私聊直接回复，群内尝试私信用户，路径见 USER_DATA_INFO_PATH）

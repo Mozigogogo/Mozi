@@ -31,6 +31,12 @@ const i18n = {
     aiNotConfigured:
       'AI 分析服务不可用，请检查 <code>APP_URL</code> 下 <code>/api/robot_proxy/api/v1/analyze/stream</code> 是否可达，或设置 <code>AI_BACKEND_URL</code> 覆盖完整地址。',
     aiError: '分析暂时失败，请稍后再试。',
+    aiPrecheckDmFailed:
+      '无法私发积分校验结果：请先<strong>私聊</strong>本机器人发送任意消息或 <code>/start</code>，再在群内使用 <code>/ai</code>。',
+    aiInsufficientPointsHtml: (have, need) =>
+      `⚠️ <b>积分不足</b>\n\n当前剩余积分：<b>${have}</b>\n使用 <code>/ai</code> 深度分析需要至少 <b>${need}</b> 积分。\n\n点击下方按钮前往 <b>社区发帖</b> 赚取积分，或查看积分明细。`,
+    aiInsufficientPointsDmFailed: (need) =>
+      `无法私信积分说明：请先<strong>私聊</strong>本机器人，再使用 <code>/ai</code>（深度分析需至少 <b>${need}</b> 积分）。`,
     chatTitleHtml: '💬 <b>AI 对话</b>',
     chatFooterHtml: (remainingPoints) =>
       `\n\n────────\n当前剩余积分：<b>${remainingPoints == null ? '—' : remainingPoints}</b>`,
@@ -40,6 +46,12 @@ const i18n = {
       '无法私发积分说明：请先<strong>私聊</strong>本机器人发送任意消息或 <code>/start</code>，再在群内使用 <code>/chat</code>。',
     chatNeedQuestion: '请在 <code>/chat</code> 后输入内容，例如：\n<code>/chat 你好</code>',
     chatError: '对话暂时失败，请稍后再试。',
+    chatPrecheckDmFailed:
+      '无法私发积分校验结果：请先<strong>私聊</strong>本机器人发送任意消息或 <code>/start</code>，再在群内使用 <code>/chat</code>。',
+    chatInsufficientPointsHtml: (have, need) =>
+      `⚠️ <b>积分不足</b>\n\n当前剩余积分：<b>${have}</b>\n使用 <code>/chat</code> 对话需要至少 <b>${need}</b> 积分。\n\n点击下方按钮前往 <b>社区发帖</b> 赚取积分，或查看积分明细。`,
+    chatInsufficientPointsDmFailed: (need) =>
+      `无法私信积分说明：请先<strong>私聊</strong>本机器人，再使用 <code>/chat</code>（对话需至少 <b>${need}</b> 积分）。`,
     priceInvalidSymbol: '交易对格式无效，请使用字母与数字，例如：<code>/price PLUME</code>',
     priceError: (code) => `获取行情失败（HTTP ${code}），请稍后再试。`,
     priceTitleHtml: (sym) => `📊 <b>${sym}</b> 行情`,
@@ -171,6 +183,12 @@ const i18n = {
     aiNotConfigured:
       'AI analysis is unavailable. Check <code>APP_URL</code> <code>/api/robot_proxy/api/v1/analyze/stream</code> or set <code>AI_BACKEND_URL</code>.',
     aiError: 'Analysis failed temporarily. Please try again later.',
+    aiPrecheckDmFailed:
+      'Could not DM the points check result. Please <strong>message this bot</strong> first (any message or <code>/start</code>), then use <code>/ai</code> in the group again.',
+    aiInsufficientPointsHtml: (have, need) =>
+      `⚠️ <b>Not enough points</b>\n\nYou have: <b>${have}</b>\n<code>/ai</code> deep analysis needs at least <b>${need}</b> points.\n\nUse the buttons below to open the <b>community</b> and earn points, or view your statement.`,
+    aiInsufficientPointsDmFailed: (need) =>
+      `Could not DM you. Please <strong>message this bot</strong> first, then use <code>/ai</code> again (needs at least <b>${need}</b> points).`,
     chatTitleHtml: '💬 <b>AI chat</b>',
     chatFooterHtml: (remainingPoints) =>
       `\n\n────────\nRemaining points: <b>${remainingPoints == null ? '—' : remainingPoints}</b>`,
@@ -180,6 +198,12 @@ const i18n = {
       'Could not DM your points summary. Please <strong>message this bot</strong> first (any message or <code>/start</code>), then use <code>/chat</code> in the group again.',
     chatNeedQuestion: 'Add your message after <code>/chat</code>, e.g.:\n<code>/chat Hello</code>',
     chatError: 'Chat failed temporarily. Please try again later.',
+    chatPrecheckDmFailed:
+      'Could not DM the points check result. Please <strong>message this bot</strong> first (any message or <code>/start</code>), then use <code>/chat</code> in the group again.',
+    chatInsufficientPointsHtml: (have, need) =>
+      `⚠️ <b>Not enough points</b>\n\nYou have: <b>${have}</b>\n<code>/chat</code> needs at least <b>${need}</b> points.\n\nUse the buttons below to open the <b>community</b> and earn points, or view your statement.`,
+    chatInsufficientPointsDmFailed: (need) =>
+      `Could not DM you. Please <strong>message this bot</strong> first, then use <code>/chat</code> again (needs at least <b>${need}</b> points).`,
     priceInvalidSymbol: 'Invalid symbol. Use letters and digits only, e.g.:\n<code>/price PLUME</code>',
     priceError: (code) => `Failed to fetch price (HTTP ${code}). Please try again later.`,
     priceTitleHtml: (sym) => `📊 <b>${sym}</b>`,

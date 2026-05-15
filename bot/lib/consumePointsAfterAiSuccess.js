@@ -3,6 +3,7 @@
 const { ensureTgUserToken } = require('./tgUserTokenCache');
 const { postPointsConsume } = require('./apis');
 const { apiDebug, jwtPreview } = require('./debugLog');
+const { setUserRemainingPointsCache, clearUserRemainingPointsCache } = require('./userRemainingPointsCache');
 
 /** 与 H5 `src/app/ai/page.jsx` 中 analyze 模式一致 */
 const ACTION_AI_ANALYZE = 'AI_DEEP_ANALYZE';
@@ -52,6 +53,7 @@ async function consumePointsAfterAiSuccess(config, ctx, actionCode, reason = 'co
     if (!token) {
       console.warn('[points/consume] skip: empty user jwt', { actionCode, uid });
       apiDebug('points/consume:no-jwt', { actionCode, uid: String(uid) });
+      clearUserRemainingPointsCache(String(uid));
       return { remainingPoints: null };
     }
     apiDebug('points/consume:jwt-ready', {
@@ -69,6 +71,7 @@ async function consumePointsAfterAiSuccess(config, ctx, actionCode, reason = 'co
     if (!r.ok) {
       console.warn('[points/consume] HTTP', r.status, (r.text || '').slice(0, 300));
       apiDebug('points/consume:http-fail', { httpStatus: r.status, textHead: (r.text || '').slice(0, 200) });
+      clearUserRemainingPointsCache(String(uid));
       return { remainingPoints: null };
     }
     const c = r.json?.code;
@@ -84,6 +87,7 @@ async function consumePointsAfterAiSuccess(config, ctx, actionCode, reason = 'co
         actionCode,
         data: r.json?.data,
       });
+      clearUserRemainingPointsCache(String(uid));
       return { remainingPoints: null };
     }
     const remainingPoints = parseRemaining(r.json?.data);
@@ -91,10 +95,16 @@ async function consumePointsAfterAiSuccess(config, ctx, actionCode, reason = 'co
       actionCode,
       remainingPoints,
     });
+    if (remainingPoints != null) {
+      setUserRemainingPointsCache(String(uid), remainingPoints);
+    } else {
+      clearUserRemainingPointsCache(String(uid));
+    }
     return { remainingPoints };
   } catch (e) {
     console.warn('[points/consume] request failed', e?.message || e);
     apiDebug('points/consume:exception', { message: e?.message || String(e) });
+    if (uid != null) clearUserRemainingPointsCache(String(uid));
     return { remainingPoints: null };
   }
 }
