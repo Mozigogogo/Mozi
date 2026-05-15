@@ -68,6 +68,9 @@ const TG_LOGIN_PATH = (process.env.TG_LOGIN_PATH || 'user/login').trim().replace
 const MOZI_LOGIN_ENV =
   String(process.env.MOZI_APP_ENV || process.env.NEXT_PUBLIC_APP_ENV || 'test').trim() || 'test';
 
+/** 为 1/true/yes 时打印命令与 HTTP 调试信息（见 lib/debugLog.js） */
+const BOT_DEBUG = /^1|true|yes$/i.test(String(process.env.BOT_DEBUG || '').trim());
+
 /** 进程内缓存「上次已知剩余积分」（POST /points/consume 成功后写入；GET datainfo 成功时同步）。大于 0 时，若缓存在该毫秒内且积分 ≥ 本次门槛，则跳过 GET datainfo（默认 0 表示每次都拉 datainfo） */
 const USER_POINTS_DATAINFO_SKIP_TTL_MS = Math.max(
   0,
