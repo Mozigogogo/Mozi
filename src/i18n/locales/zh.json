@@ -1769,6 +1769,7 @@
     "webhookAddUrl": "新增 URL",
     "webhookRemoveUrl": "删除 URL",
     "webhookHint": "警报触发时，向您指定的URL发送POST请求",
+    "webhookMaxUrls": "Webhook URL 最多 {{max}} 个",
     "wechatAlarm": "微信告警",
     "wechatHint": "请开启微信通知，以便接收告警",
     "telegramBot": "Telegram bot",

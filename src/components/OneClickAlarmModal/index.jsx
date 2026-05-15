@@ -10,6 +10,14 @@ import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { jump2NoTab } from '../../utils/core';
 import { saveAlarmSettings, createAlertConfig, modifyAlertConfig } from '../../api/user';
+import {
+  alertFrequencyFromApi,
+  alertFrequencyToApi,
+  isAlertFlagOn,
+  MAX_WEBHOOK_URLS,
+  parseWebhookUrlsFromConfig,
+  validateWebhookUrls,
+} from '../../utils/alertConfig';
 import styles from './index.module.less';
 import configStyles from './config.module.less';
 
@@ -153,7 +161,7 @@ export default function OneClickAlarmModal({
   const [webhookUrls, setWebhookUrls] = useState(['']);
   const [wechatEnabled, setWechatEnabled] = useState(false);
   const [telegramEnabled, setTelegramEnabled] = useState(false);
-  const [alertFrequency, setAlertFrequency] = useState('continuous');
+  const [alertFrequency, setAlertFrequency] = useState('daily');
   const [webhookError, setWebhookError] = useState('');
 
   const [countryPickerOpen, setCountryPickerOpen] = useState(false);
@@ -237,9 +245,31 @@ export default function OneClickAlarmModal({
           if (alertConfig.smsEnabled !== undefined) {
             setSmsEnabled(alertConfig.smsEnabled === 1);
           }
+          if (alertConfig.webhookEnabled !== undefined) {
+            setWebhookEnabled(isAlertFlagOn(alertConfig.webhookEnabled));
+          }
+          setWebhookUrls(parseWebhookUrlsFromConfig(alertConfig));
+          setAlertFrequency(alertFrequencyFromApi(alertConfig.alertFrequency));
         } else {
           // localStorage 中没有配置数据，显示输入框
           setHideInputs(false);
+          // 兼容旧版本地缓存 oneClickAlarmUi
+          try {
+            const legacyRaw = typeof window !== 'undefined' ? localStorage.getItem('oneClickAlarmUi') : null;
+            if (legacyRaw) {
+              const legacy = JSON.parse(legacyRaw);
+              if (typeof legacy.webhookEnabled === 'boolean') setWebhookEnabled(legacy.webhookEnabled);
+              const legacyUrls = parseWebhookUrlsFromConfig(legacy);
+              if (legacyUrls.length > 1 || legacyUrls[0]) setWebhookUrls(legacyUrls);
+              if (typeof legacy.wechatEnabled === 'boolean') setWechatEnabled(legacy.wechatEnabled);
+              if (typeof legacy.telegramEnabled === 'boolean') setTelegramEnabled(legacy.telegramEnabled);
+              if (legacy.alertFrequency) {
+                setAlertFrequency(alertFrequencyFromApi(legacy.alertFrequency));
+              }
+            }
+          } catch {
+            /* ignore legacy parse */
+          }
         }
       } catch (error) {
         console.error('读取告警配置失败:', error);
@@ -249,28 +279,6 @@ export default function OneClickAlarmModal({
     };
 
     checkAlertConfig();
-  }, [open, mode]);
-
-  useEffect(() => {
-    if (!open || mode !== 'oneClick') return;
-    try {
-      const raw = typeof window !== 'undefined' ? localStorage.getItem('oneClickAlarmUi') : null;
-      if (!raw) return;
-      const j = JSON.parse(raw);
-      if (typeof j.webhookEnabled === 'boolean') setWebhookEnabled(j.webhookEnabled);
-      if (Array.isArray(j.webhookUrls) && j.webhookUrls.length > 0) {
-        setWebhookUrls(j.webhookUrls.map((u) => String(u)));
-      } else if (typeof j.webhookUrl === 'string' && j.webhookUrl.trim()) {
-        setWebhookUrls([j.webhookUrl]);
-      }
-      if (typeof j.wechatEnabled === 'boolean') setWechatEnabled(j.wechatEnabled);
-      if (typeof j.telegramEnabled === 'boolean') setTelegramEnabled(j.telegramEnabled);
-      if (j.alertFrequency === 'continuous' || j.alertFrequency === 'daily' || j.alertFrequency === 'once') {
-        setAlertFrequency(j.alertFrequency);
-      }
-    } catch (e) {
-      console.error('[OneClickAlarmModal] oneClickAlarmUi parse failed', e);
-    }
   }, [open, mode]);
 
   useEffect(() => {
@@ -348,7 +356,7 @@ export default function OneClickAlarmModal({
   };
 
   const addWebhookUrlRow = () => {
-    setWebhookUrls((prev) => (prev.length >= 10 ? prev : [...prev, '']));
+    setWebhookUrls((prev) => (prev.length >= MAX_WEBHOOK_URLS ? prev : [...prev, '']));
   };
 
   const removeWebhookUrlRow = (index) => {
@@ -359,6 +367,12 @@ export default function OneClickAlarmModal({
 
   const getTrimmedWebhookUrls = () =>
     webhookUrls.map((u) => String(u || '').trim()).filter(Boolean);
+
+  const webhookErrorMessage = (code) => {
+    if (code === 'empty') return t('oneClickAlarm.webhookPlaceholder');
+    if (code === 'max') return t('oneClickAlarm.webhookMaxUrls', { max: MAX_WEBHOOK_URLS });
+    return t('oneClickAlarm.urlInvalid');
+  };
 
   const canCompleteDailyTask = () => {
     if (typeof window === 'undefined') return false;
@@ -442,24 +456,10 @@ export default function OneClickAlarmModal({
         return;
       }
 
-      if (webhookEnabled) {
-        const urls = getTrimmedWebhookUrls();
-        if (urls.length === 0) {
-          setWebhookError(t('oneClickAlarm.webhookPlaceholder'));
-          return;
-        }
-        for (const w of urls) {
-          try {
-            const u = new URL(w);
-            if (u.protocol !== 'http:' && u.protocol !== 'https:') {
-              setWebhookError(t('oneClickAlarm.urlInvalid'));
-              return;
-            }
-          } catch {
-            setWebhookError(t('oneClickAlarm.urlInvalid'));
-            return;
-          }
-        }
+      const webhookCheck = validateWebhookUrls(getTrimmedWebhookUrls(), webhookEnabled);
+      if (!webhookCheck.ok) {
+        setWebhookError(webhookErrorMessage(webhookCheck.error));
+        return;
       }
 
       // 开始 loading
@@ -470,7 +470,10 @@ export default function OneClickAlarmModal({
         phoneEnabled: phoneEnabled ? 1 : 0,
         emailEnabled: emailEnabled ? 1 : 0,
         smsEnabled: smsEnabled ? 1 : 0,
-        defaultEnabled: pushEnabled ? 1 : 0  // 推送开关状态
+        defaultEnabled: pushEnabled ? 1 : 0,
+        webhookEnabled: webhookEnabled ? 1 : 0,
+        webhookUrls: webhookCheck.urls,
+        alertFrequency: alertFrequencyToApi(alertFrequency),
       };
 
       // 电话与短信共用 alertPhone + alertPhoneCountryCode（任一方开启且已填则提交）
@@ -498,24 +501,8 @@ export default function OneClickAlarmModal({
       }
 
       if (result.success) {
-        // 保存配置到 localStorage
+        // 保存配置到 localStorage（含 webhook / alertFrequency）
         localStorage.setItem('alertConfig', JSON.stringify(result.data));
-        try {
-          const trimmedWebhookUrls = getTrimmedWebhookUrls();
-          localStorage.setItem(
-            'oneClickAlarmUi',
-            JSON.stringify({
-              webhookEnabled,
-              webhookUrls: trimmedWebhookUrls,
-              webhookUrl: trimmedWebhookUrls[0] || '',
-              wechatEnabled,
-              telegramEnabled,
-              alertFrequency,
-            })
-          );
-        } catch {
-          /* ignore */
-        }
 
         setHideInputs(true); // 隐藏输入框
         
@@ -977,7 +964,7 @@ export default function OneClickAlarmModal({
                             type="button"
                             className={styles.webhookAddBtn}
                             onClick={addWebhookUrlRow}
-                            disabled={webhookUrls.length >= 10}
+                            disabled={webhookUrls.length >= MAX_WEBHOOK_URLS}
                             aria-label={t('oneClickAlarm.webhookAddUrl')}
                           >
                             <WebhookAddIcon />

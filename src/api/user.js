@@ -3,7 +3,18 @@
  */
 import { request } from '../utils/request';
 import { Interface } from '../utils/constants';
+import { validateWebhookUrls } from '../utils/alertConfig';
 
+const WEBHOOK_VALIDATION_ERRORS = {
+  empty: '开启 Webhook 时至少填写一个 URL',
+  max: 'Webhook URL 最多 20 个',
+  invalid: '请输入有效的 URL',
+};
+
+function webhookValidationResult(check) {
+  if (check.ok) return null;
+  return { success: false, error: WEBHOOK_VALIDATION_ERRORS[check.error] || WEBHOOK_VALIDATION_ERRORS.invalid };
+}
 
 /**
  * 邮箱登录
@@ -568,6 +579,10 @@ export const createAlertConfig = async (config) => {
       console.error('❌ smsEnabled 必须为 0 或 1');
       return { success: false, error: '开关值必须为 0 或 1' };
     }
+    if (config.webhookEnabled !== undefined && config.webhookEnabled !== 0 && config.webhookEnabled !== 1) {
+      console.error('❌ webhookEnabled 必须为 0 或 1');
+      return { success: false, error: '开关值必须为 0 或 1' };
+    }
 
     // 验证电话告警
     if (phoneEnabled === 1) {
@@ -597,6 +612,12 @@ export const createAlertConfig = async (config) => {
         console.error('❌ 邮箱格式不正确');
         return { success: false, error: '邮箱格式不正确' };
       }
+    }
+
+    if (config.webhookEnabled !== undefined) {
+      const webhookCheck = validateWebhookUrls(config.webhookUrls, config.webhookEnabled);
+      const webhookErr = webhookValidationResult(webhookCheck);
+      if (webhookErr) return webhookErr;
     }
 
     // 调用接口
@@ -675,7 +696,8 @@ export const modifyAlertConfig = async (config) => {
       smsEnabled,
       defaultEnabled,
     } = config;
-    const smsOn = smsEnabled === 1 ? 1 : 0;
+    const smsOn =
+      Object.prototype.hasOwnProperty.call(config, 'smsEnabled') && config.smsEnabled === 1 ? 1 : 0;
     const phoneTrim = alertPhone != null ? String(alertPhone).trim() : '';
     const ccTrim = alertPhoneCountryCode != null ? String(alertPhoneCountryCode).trim() : '';
 
@@ -690,8 +712,20 @@ export const modifyAlertConfig = async (config) => {
       console.error('❌ 开关值必须为 0 或 1');
       return { success: false, error: '开关值必须为 0 或 1' };
     }
-    if (smsEnabled !== undefined && smsEnabled !== 0 && smsEnabled !== 1) {
+    if (
+      Object.prototype.hasOwnProperty.call(config, 'smsEnabled') &&
+      config.smsEnabled !== 0 &&
+      config.smsEnabled !== 1
+    ) {
       console.error('❌ smsEnabled 必须为 0 或 1');
+      return { success: false, error: '开关值必须为 0 或 1' };
+    }
+    if (
+      Object.prototype.hasOwnProperty.call(config, 'webhookEnabled') &&
+      config.webhookEnabled !== 0 &&
+      config.webhookEnabled !== 1
+    ) {
+      console.error('❌ webhookEnabled 必须为 0 或 1');
       return { success: false, error: '开关值必须为 0 或 1' };
     }
 
@@ -703,7 +737,7 @@ export const modifyAlertConfig = async (config) => {
       }
     }
 
-    // 验证短信告警（与电话共用 alertPhone + alertPhoneCountryCode）
+    // 验证短信告警（仅 body 传入 smsEnabled 时校验）
     if (smsOn === 1) {
       if (!phoneTrim || !ccTrim) {
         console.error('❌ 开启短信告警时，alertPhone / alertPhoneCountryCode 不能为空');
@@ -723,6 +757,18 @@ export const modifyAlertConfig = async (config) => {
         console.error('❌ 邮箱格式不正确');
         return { success: false, error: '邮箱格式不正确' };
       }
+    }
+
+    const hasWebhookPatch =
+      Object.prototype.hasOwnProperty.call(config, 'webhookEnabled') ||
+      Object.prototype.hasOwnProperty.call(config, 'webhookUrls');
+    if (hasWebhookPatch) {
+      const hookEnabled = Object.prototype.hasOwnProperty.call(config, 'webhookEnabled')
+        ? config.webhookEnabled
+        : 0;
+      const webhookCheck = validateWebhookUrls(config.webhookUrls, hookEnabled);
+      const webhookErr = webhookValidationResult(webhookCheck);
+      if (webhookErr) return webhookErr;
     }
 
     // 调用接口

@@ -1788,6 +1788,7 @@
     "webhookAddUrl": "Add URL",
     "webhookRemoveUrl": "Remove URL",
     "webhookHint": "When an alert fires, a POST request is sent to the URL you specify.",
+    "webhookMaxUrls": "You can add up to {{max}} webhook URLs",
     "wechatAlarm": "WeChat alerts",
     "wechatHint": "Turn on WeChat notifications to receive alerts.",
     "telegramBot": "Telegram bot",
