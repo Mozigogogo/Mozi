@@ -26,6 +26,29 @@ import AiRobotUpgradePillButton from '@/components/AiRobotUpgradePillButton';
 import PointsInsufficientBubble from '@/components/PointsInsufficientBubble';
 import ShareAiChatModal from '@/components/ShareAiChatModal';
 
+/** 与 analyze/chat 一致：经 Next `/api` rewrite 到同一后端域名 */
+const BIGORDER_CHAT_API = '/api/robot_proxy/bigorder/v1/chat';
+
+function extractBigorderAssistantText(rawText) {
+  const trimmed = String(rawText || '').trim();
+  if (!trimmed) return '';
+  try {
+    const j = JSON.parse(trimmed);
+    if (typeof j === 'string') return j;
+    if (j == null) return '';
+    const core = Object.prototype.hasOwnProperty.call(j, 'data') ? j.data : j;
+    if (typeof core === 'string') return core;
+    if (core && typeof core === 'object') {
+      for (const k of ['content', 'message', 'reply', 'answer', 'text']) {
+        if (typeof core[k] === 'string' && core[k].trim()) return core[k].trim();
+      }
+    }
+    return '';
+  } catch {
+    return trimmed;
+  }
+}
+
 // 大依赖按需加载：避免首屏把 syntax-highlighter 整包打进来
 const LazySyntaxHighlighter = dynamic(
   () => import('react-syntax-highlighter').then((m) => m.Prism),
@@ -367,15 +390,18 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   // 消息列表：只有加载到历史记录或用户开始对话时才会出现内容
   const [messages, setMessages] = useState([]);
   const [suggestedQuestions, setSuggestedQuestions] = useState([]);
-  // 模型选择状态
-  const [selectedModel, setSelectedModel] = useState('analyze'); // 'analyze' | 'chat'
+  // 模型选择状态（bigorder 仅 PC 展示入口；窄屏会 effect 回落到 chat）
+  const [selectedModel, setSelectedModel] = useState('analyze'); // 'analyze' | 'chat' | 'bigorder'
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [shareQuestion, setShareQuestion] = useState('');
   const [shareAnswer, setShareAnswer] = useState('');
 
-  // 当前模型单次对话所需积分
+  // 当前模型单次对话所需积分（大单侦测与对话模型同档）
   const requiredPointsPerAsk = selectedModel === 'analyze' ? 50 : 10;
+
+  const [bigorderLoading, setBigorderLoading] = useState(false);
+  const bigorderAbortRef = useRef(null);
 
   // 语音转文字（Web Speech API）
   const {
@@ -633,7 +659,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
   // 使用 SSE Stream Hook（对话结束或中断后再扣积分）
   const { sendMessage, isStreaming, abort } = useRobotTestSSE(
-    selectedModel === 'analyze' 
+    selectedModel === 'analyze'
       ? '/api/robot_proxy/api/v1/analyze/stream'
       : '/api/robot_proxy/api/v1/chat/stream',
     {
@@ -736,9 +762,73 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     }
   );
 
+  const isBusy = isStreaming || bigorderLoading;
+
+  /** 大单侦测：JSON POST（非 SSE），与 analyze/chat 共用 robot_proxy 域名 */
+  const runBigorderChatRequest = async (message, aiMsgId) => {
+    setBigorderLoading(true);
+    bigorderAbortRef.current = new AbortController();
+    currentActionCodeRef.current = 'AI_BASIC_CHAT';
+    hasConsumedRef.current = false;
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const res = await fetch(BIGORDER_CHAT_API, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { authentication: token } : {}),
+        },
+        body: JSON.stringify({ message }),
+        signal: bigorderAbortRef.current.signal,
+      });
+      const raw = await res.text();
+      if (!res.ok) {
+        throw new Error(raw || `HTTP ${res.status}`);
+      }
+      let text = extractBigorderAssistantText(raw);
+      if (!text) text = t('robot.genericError');
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === aiMsgId ? { ...msg, content: text, loading: false, error: false } : msg
+        )
+      );
+      currentAiMsgIdRef.current = null;
+      trackEvent(AIEvents.RESPONSE_RECEIVED, {
+        requestId: currentRequestIdRef.current,
+        responseLength: text.length,
+      });
+      await consumeOnce('complete');
+    } catch (error) {
+      const isAbort = error?.name === 'AbortError';
+      if (isAbort) {
+        const aid = currentAiMsgIdRef.current;
+        if (aid) {
+          setMessages((prev) =>
+            prev.map((msg) => (msg.id === aid ? { ...msg, loading: false } : msg))
+          );
+        }
+        currentAiMsgIdRef.current = null;
+        await consumeOnce('abort');
+      } else {
+        console.error('[Robot] bigorder chat failed:', error);
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === aiMsgId
+              ? { ...msg, content: t('robot.sendFailed'), loading: false, error: true }
+              : msg
+          )
+        );
+        currentAiMsgIdRef.current = null;
+      }
+    } finally {
+      setBigorderLoading(false);
+      bigorderAbortRef.current = null;
+    }
+  };
+
   // 右上角 “AI Assistant Pro” 升级胶囊：只在空状态展示，开始对话后隐藏
   // 放在这里是为了确保 `isBootstrappingUserData` / `isStreaming` 已初始化
-  const showUpgradePill = messages.length === 0 && !isBootstrappingUserData && !isStreaming;
+  const showUpgradePill = messages.length === 0 && !isBootstrappingUserData && !isBusy;
   
   // 检查登录状态
   useEffect(() => {
@@ -758,7 +848,15 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   useEffect(() => {
     trackPageView('AI Assistant');
   }, []);
-  
+
+  /** 非 PC 不展示大单模式：从宽屏切到窄屏时自动回落到对话模型 */
+  useEffect(() => {
+    if (!mounted) return;
+    if (!isPC && selectedModel === 'bigorder') {
+      setSelectedModel('chat');
+    }
+  }, [mounted, isPC, selectedModel]);
+
   // 登录成功回调
   const handleLoginSuccess = () => {
     window.location.reload();
@@ -828,7 +926,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     forceBlurAndResetViewport();
     
     const message = text || inputValue.trim();
-    if (!message || isStreaming) return;
+    if (!message || isBusy) return;
 
     // 埋点：用户发送问题
     trackEvent(AIEvents.QUESTION_SENT, {
@@ -868,6 +966,11 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     }]);
 
     try {
+      if (selectedModel === 'bigorder') {
+        await runBigorderChatRequest(message, aiMsgId);
+        return;
+      }
+
       // 记录本轮对话对应的 actionCode，待对话完成或中断后再调用 /points/consume
       const actionCode = selectedModel === 'analyze' ? 'AI_DEEP_ANALYZE' : 'AI_BASIC_CHAT';
       currentActionCodeRef.current = actionCode;
@@ -903,7 +1006,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
   // 重新生成：基于上一条用户输入再请求一次
   const handleRegenerate = async () => {
-    if (isStreaming) return;
+    if (isBusy) return;
     const lastMessage = lastUserMessageRef.current;
     if (!lastMessage) return;
 
@@ -936,6 +1039,11 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     ]);
 
     try {
+      if (selectedModel === 'bigorder') {
+        await runBigorderChatRequest(lastMessage, aiMsgId);
+        return;
+      }
+
       const actionCode = selectedModel === 'analyze' ? 'AI_DEEP_ANALYZE' : 'AI_BASIC_CHAT';
       currentActionCodeRef.current = actionCode;
       hasConsumedRef.current = false;
@@ -1011,7 +1119,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   };
 
   const handleToggleMic = async () => {
-    if (isStreaming) return;
+    if (isBusy) return;
 
     if (!browserSupportsSpeechRecognition) {
       console.warn('[Robot] SpeechRecognition not supported by this browser');
@@ -1046,8 +1154,12 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
   // 停止生成
   const handleStop = () => {
+    if (bigorderLoading && bigorderAbortRef.current) {
+      bigorderAbortRef.current.abort();
+      return;
+    }
     if (!isStreaming) return;
-    
+
     // 中止 SSE 流
     abort();
     
@@ -1107,7 +1219,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
   const content = (
       <div className={`${styles.robotPage} ${isPC ? styles.pcMode : ''}`}>
-        {isPC && (isStreaming || messages.length > 0) && (
+        {isPC && (isBusy || messages.length > 0) && (
           <div
             className={styles.pcBackBar}
             role="button"
@@ -1139,13 +1251,13 @@ export default function RobotPage({ isPC: propIsPC = false }) {
               </svg>
             </span>
             <span className={styles.pcBackText}>
-              {isStreaming ? t('robot.chattingTitle') : t('pcLayout.menu.myQA')}
+              {isBusy ? t('robot.chattingTitle') : t('pcLayout.menu.myQA')}
             </span>
           </div>
         )}
         {!isPC && (
           <NavBar 
-            title={isStreaming ? t('robot.chattingTitle') : t('pcLayout.menu.myQA')}
+            title={isBusy ? t('robot.chattingTitle') : t('pcLayout.menu.myQA')}
             showBack={true}
             className={styles.navBarCustom}
           />
@@ -1166,7 +1278,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
             </div>
           )}
 
-          {messages.length === 0 && !isBootstrappingUserData && !isStreaming && (
+          {messages.length === 0 && !isBootstrappingUserData && !isBusy && (
             <div className={styles.emptyState}>
               <div className={styles.emptyTextBlock}>
                 <div
@@ -1342,7 +1454,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                   key={key}
                   type="button"
                   className={styles.suggestedBtn}
-                  disabled={isStreaming}
+                  disabled={isBusy}
                   onClick={() => handleSuggestedQuestion(text)}
                 >
                   {label}
@@ -1358,10 +1470,10 @@ export default function RobotPage({ isPC: propIsPC = false }) {
               className={styles.input}
               value={inputValue}
               placeholder={t('robot.inputPlaceholder')}
-              onKeyDown={(e) => e.key === 'Enter' && !isStreaming && handleSend()}
+              onKeyDown={(e) => e.key === 'Enter' && !isBusy && handleSend()}
               onChange={(e) => setInputValue(e.target.value)}
               onFocus={() => trackEvent(AIEvents.INPUT_FOCUSED)}
-              disabled={isStreaming}
+              disabled={isBusy}
             />
             <div className={styles.inputActions}>
               <div className={styles.actionModes}>
@@ -1413,6 +1525,32 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                   </span>
                   <span className={styles.modeLabel}>{t('robot.model.chat')}</span>
                 </div>
+                {isPC && (
+                  <div
+                    className={`${styles.modeItem} ${selectedModel === 'bigorder' ? styles.activeMode : ''}`}
+                    onClick={() => setSelectedModel('bigorder')}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setSelectedModel('bigorder');
+                      }
+                    }}
+                  >
+                    <span className={styles.modeIconWrap}>
+                      <Image
+                        src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/Order_situation.svg"
+                        alt=""
+                        width={12}
+                        height={12}
+                        className={styles.modeIcon}
+                        aria-hidden
+                      />
+                    </span>
+                    <span className={styles.modeLabel}>{t('robot.model.bigOrder')}</span>
+                  </div>
+                )}
               </div>
               <div className={styles.actionTools}>
                 <span className={`${styles.pointsTag} ${totalPoints === 0 ? styles.pointsTagWarning : ''}`}>
@@ -1443,7 +1581,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                     />
                   </button>
                 )}
-                {isStreaming ? (
+                {isBusy ? (
                   <button
                     className={styles.stopBtn}
                     onClick={handleStop}

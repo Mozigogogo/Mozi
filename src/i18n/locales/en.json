@@ -933,7 +933,8 @@
     "welcome": "Hi! I'm your AI assistant. I can analyze crypto and answer your questions.",
     "model": {
       "analyze": "Analyze",
-      "chat": "Chat"
+      "chat": "Chat",
+      "bigOrder": "Big order detection"
     },
     "quickAsk": {
       "btcTrend": "BTC outlook",
