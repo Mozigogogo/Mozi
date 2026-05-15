@@ -577,11 +577,11 @@
   width: 100%;
 }
 
+/* 与 .sidePanelMask 同级，不被父级 mask 裁切；top 对齐白卡上沿 = 上内边距 + 微调 */
 .sidePanel::before {
   content: '';
   position: absolute;
-  /* 与「立即开启」标题视觉对齐，略低于顶边 */
-  top: 20PX;
+  top: calc(52PX + 2PX);
   right: 6PX;
   width: 120PX;
   height: 120PX;
@@ -616,6 +616,7 @@
 .sidePanelHeader {
   position: relative;
   min-height: 76PX;
+  flex-shrink: 0;
   padding: 35PX 16PX 12PX;
   display: flex;
   align-items: center;
@@ -664,10 +665,40 @@
 }
 
 .sideBody {
-  padding: 34PX 16PX 0;
+  padding: 34PX 8PX 16PX;
   flex: 1;
   min-height: 0;
   width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.notifySection {
+  margin-top: 0;
+  padding: 10PX 6PX 12PX;
+  border: 1PX solid #e5e7eb;
+  border-radius: 12PX;
+  background: #ffffff;
+
+  .sideInputRow {
+    margin-bottom: 0;
+  }
+
+  .sideItem {
+    padding: 8PX 0;
+  }
+
+  .sideItem + .sideItem {
+    padding-top: 4PX;
+  }
+}
+
+.sideBelowInset {
+  padding-left: 6PX;
+  padding-right: 6PX;
   box-sizing: border-box;
 }
 
@@ -693,6 +724,182 @@
   gap: 6PX;
   font-size: 14PX;
   color: #1a1a2e;
+}
+
+.sideItemLabelCol {
+  display: flex;
+  flex-direction: column;
+  gap: 4PX;
+  min-width: 0;
+  flex: 1;
+}
+
+.sideItemSub {
+  font-size: 11PX;
+  line-height: 1.35;
+  color: #9ca3af;
+  padding-left: 34PX;
+}
+
+.sideFieldError {
+  margin: 4PX 0 8PX;
+  font-size: 12PX;
+  line-height: 16PX;
+  color: #ff4d4f;
+}
+
+.sideFieldHint {
+  margin: 4PX 0 10PX;
+  font-size: 11PX;
+  line-height: 1.45;
+  color: #9ca3af;
+}
+
+.webhookUrlList {
+  display: flex;
+  flex-direction: column;
+  gap: 8PX;
+  margin-bottom: 4PX;
+}
+
+.webhookInputGroup {
+  display: flex;
+  align-items: center;
+  gap: 8PX;
+  min-width: 0;
+
+  .sideInputRow {
+    flex: 1;
+    margin: 0;
+    min-width: 0;
+  }
+}
+
+.webhookRowActions {
+  display: flex;
+  align-items: center;
+  gap: 6PX;
+  flex-shrink: 0;
+}
+
+.webhookAddBtn,
+.webhookRemoveBtn {
+  flex-shrink: 0;
+  width: 28PX;
+  height: 28PX;
+  border-radius: 50%;
+  border: 1PX solid #e5e7eb;
+  background: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  appearance: none;
+  cursor: pointer;
+  color: #6b7280;
+  transition: opacity 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.webhookAddBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.webhookAddBtn:active:not(:disabled) {
+  border-color: #11b787;
+  color: #11b787;
+}
+
+.webhookRemoveBtn {
+  color: #9ca3af;
+}
+
+.webhookRemoveBtn:active {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.freqSection {
+  margin-top: 14PX;
+  padding-top: 4PX;
+}
+
+.freqTitle {
+  font-size: 14PX;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 10PX;
+}
+
+.freqOption {
+  position: relative;
+  width: 100%;
+  text-align: left;
+  border: 1PX solid #e5e7eb;
+  border-radius: 12PX;
+  padding: 12PX 14PX;
+  margin-bottom: 8PX;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.freqOption:last-child {
+  margin-bottom: 0;
+}
+
+.freqOptionSelected {
+  border: 2PX solid #11b787;
+  padding: 11PX 32PX 11PX 13PX;
+  box-shadow: 0 0 0 1PX rgba(17, 183, 135, 0.12);
+}
+
+.freqOptionSelected::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 20PX;
+  height: 20PX;
+  background: #11b787;
+  border-radius: 0 10PX 0 11PX;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.freqOptionSelected::after {
+  content: '\2713';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 20PX;
+  height: 20PX;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9PX;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.freqOptionTitle {
+  display: block;
+  font-size: 14PX;
+  font-weight: 600;
+  color: #111827;
+}
+
+.freqOptionDesc {
+  display: block;
+  margin-top: 4PX;
+  font-size: 12PX;
+  line-height: 1.4;
+  color: #9ca3af;
 }
 
 .sideItemIcon {
@@ -801,6 +1008,7 @@
 
 .sideFooter {
   margin-top: auto;
+  flex-shrink: 0;
   padding: 0 16PX 16PX;
   display: flex;
   align-items: flex-end;
@@ -880,6 +1088,10 @@
     max-width: 560px;
     width: 100%;
     justify-self: center;
+  }
+
+  .sidePanel::before {
+    top: 4PX;
   }
 
   .sidePanelMask {

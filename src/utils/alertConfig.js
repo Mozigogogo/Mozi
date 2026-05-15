@@ -12,7 +12,7 @@ export const ALERT_FREQUENCY_UI = {
   ONCE: 'once',
 };
 
-export const MAX_WEBHOOK_URLS = 20;
+export const MAX_WEBHOOK_URLS = 5;
 
 const API_TO_UI = {
   [ALERT_FREQUENCY_API.CONTINUOUS]: ALERT_FREQUENCY_UI.CONTINUOUS,
@@ -47,7 +47,9 @@ export function parseWebhookUrlsFromConfig(config) {
   if (!config || typeof config !== 'object') return [''];
   if (Array.isArray(config.webhookUrls)) {
     if (config.webhookUrls.length === 0) return [''];
-    return config.webhookUrls.map((u) => String(u));
+    const list = config.webhookUrls.map((u) => String(u));
+    if (list.length > MAX_WEBHOOK_URLS) return list.slice(0, MAX_WEBHOOK_URLS);
+    return list;
   }
   if (typeof config.webhookUrl === 'string' && config.webhookUrl.trim()) {
     return [config.webhookUrl.trim()];
