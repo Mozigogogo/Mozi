@@ -822,7 +822,8 @@ export default function OneClickAlarmModal({
           <div className={styles.content}>
             <div className={styles.oneClickCard}>
               <div className={styles.cardContent}>
-                <div className={styles.inputRow}>
+                <div className={styles.notifySection}>
+                  <div className={styles.inputRow}>
                   <span className={styles.inputIcon}>
                     <PhoneInputIcon />
                   </span>
@@ -887,7 +888,9 @@ export default function OneClickAlarmModal({
                     />
                   </div>
                 </div>
+                </div>
 
+                <div className={styles.oneClickBelowInset}>
                 <div className={styles.notifyRow}>
                   <div className={styles.notifyRowInner}>
                     <div className={styles.notifyRowLeft}>
@@ -1039,6 +1042,7 @@ export default function OneClickAlarmModal({
                       <span className={styles.freqOptionDesc}>{t(opt.descKey)}</span>
                     </button>
                   ))}
+                </div>
                 </div>
               </div>
 

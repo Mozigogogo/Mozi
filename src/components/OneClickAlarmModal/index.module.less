@@ -141,7 +141,43 @@
   min-height: 0;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 14px 14px 8px;
+  padding: 14px 8px 8px;
+}
+
+.notifySection {
+  margin-top: 12px;
+  /* 左右与下方 oneClickBelowInset 一致，保证列表对齐 */
+  padding: 10px 6px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+
+  &:first-child {
+    margin-top: 0;
+  }
+
+  .inputRow {
+    margin-bottom: 0;
+  }
+
+  .notifyRow {
+    margin-top: 8px;
+  }
+
+  .notifyRow + .notifyRow {
+    margin-top: 0;
+  }
+
+  .errorText {
+    margin: 6px 0 0;
+  }
+}
+
+/** 电话区块以下：与 notifySection 左右 gutter（6px）一致 */
+.oneClickBelowInset {
+  padding-left: 6px;
+  padding-right: 6px;
+  box-sizing: border-box;
 }
 
 .notifyRow {
