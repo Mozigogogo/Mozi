@@ -1766,6 +1766,8 @@
     "atLeastOneMethod": "请至少开启一种告警方式",
     "webhookLabel": "Web hook",
     "webhookPlaceholder": "请输入URL",
+    "webhookAddUrl": "新增 URL",
+    "webhookRemoveUrl": "删除 URL",
     "webhookHint": "警报触发时，向您指定的URL发送POST请求",
     "wechatAlarm": "微信告警",
     "wechatHint": "请开启微信通知，以便接收告警",

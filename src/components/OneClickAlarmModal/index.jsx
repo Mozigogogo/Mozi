@@ -98,6 +98,22 @@ function LinkInputIcon() {
   );
 }
 
+function WebhookAddIcon() {
+  return (
+    <svg className={styles.webhookBtnIcon} width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
+      <path d="M6 1.5v9M1.5 6h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function WebhookRemoveIcon() {
+  return (
+    <svg className={styles.webhookBtnIcon} width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
+      <path d="M2.5 2.5l7 7M9.5 2.5l-7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export default function OneClickAlarmModal({
   open = false,
   onClose,
@@ -134,7 +150,7 @@ export default function OneClickAlarmModal({
   const [smsEnabled, setSmsEnabled] = useState(init.smsEnabled);
   const [pushEnabled, setPushEnabled] = useState(init.pushEnabled);
   const [webhookEnabled, setWebhookEnabled] = useState(false);
-  const [webhookUrl, setWebhookUrl] = useState('');
+  const [webhookUrls, setWebhookUrls] = useState(['']);
   const [wechatEnabled, setWechatEnabled] = useState(false);
   const [telegramEnabled, setTelegramEnabled] = useState(false);
   const [alertFrequency, setAlertFrequency] = useState('continuous');
@@ -242,7 +258,11 @@ export default function OneClickAlarmModal({
       if (!raw) return;
       const j = JSON.parse(raw);
       if (typeof j.webhookEnabled === 'boolean') setWebhookEnabled(j.webhookEnabled);
-      if (typeof j.webhookUrl === 'string') setWebhookUrl(j.webhookUrl);
+      if (Array.isArray(j.webhookUrls) && j.webhookUrls.length > 0) {
+        setWebhookUrls(j.webhookUrls.map((u) => String(u)));
+      } else if (typeof j.webhookUrl === 'string' && j.webhookUrl.trim()) {
+        setWebhookUrls([j.webhookUrl]);
+      }
       if (typeof j.wechatEnabled === 'boolean') setWechatEnabled(j.wechatEnabled);
       if (typeof j.telegramEnabled === 'boolean') setTelegramEnabled(j.telegramEnabled);
       if (j.alertFrequency === 'continuous' || j.alertFrequency === 'daily' || j.alertFrequency === 'once') {
@@ -321,6 +341,24 @@ export default function OneClickAlarmModal({
       [key]: { ...prev[key], enabled },
     }));
   };
+
+  const updateWebhookUrl = (index, value) => {
+    setWebhookUrls((prev) => prev.map((u, i) => (i === index ? value : u)));
+    if (webhookError) setWebhookError('');
+  };
+
+  const addWebhookUrlRow = () => {
+    setWebhookUrls((prev) => (prev.length >= 10 ? prev : [...prev, '']));
+  };
+
+  const removeWebhookUrlRow = (index) => {
+    if (index <= 0) return;
+    setWebhookUrls((prev) => prev.filter((_, i) => i !== index));
+    if (webhookError) setWebhookError('');
+  };
+
+  const getTrimmedWebhookUrls = () =>
+    webhookUrls.map((u) => String(u || '').trim()).filter(Boolean);
 
   const canCompleteDailyTask = () => {
     if (typeof window === 'undefined') return false;
@@ -405,20 +443,22 @@ export default function OneClickAlarmModal({
       }
 
       if (webhookEnabled) {
-        const w = String(webhookUrl || '').trim();
-        if (!w) {
+        const urls = getTrimmedWebhookUrls();
+        if (urls.length === 0) {
           setWebhookError(t('oneClickAlarm.webhookPlaceholder'));
           return;
         }
-        try {
-          const u = new URL(w);
-          if (u.protocol !== 'http:' && u.protocol !== 'https:') {
+        for (const w of urls) {
+          try {
+            const u = new URL(w);
+            if (u.protocol !== 'http:' && u.protocol !== 'https:') {
+              setWebhookError(t('oneClickAlarm.urlInvalid'));
+              return;
+            }
+          } catch {
             setWebhookError(t('oneClickAlarm.urlInvalid'));
             return;
           }
-        } catch {
-          setWebhookError(t('oneClickAlarm.urlInvalid'));
-          return;
         }
       }
 
@@ -461,11 +501,13 @@ export default function OneClickAlarmModal({
         // 保存配置到 localStorage
         localStorage.setItem('alertConfig', JSON.stringify(result.data));
         try {
+          const trimmedWebhookUrls = getTrimmedWebhookUrls();
           localStorage.setItem(
             'oneClickAlarmUi',
             JSON.stringify({
               webhookEnabled,
-              webhookUrl: String(webhookUrl || '').trim(),
+              webhookUrls: trimmedWebhookUrls,
+              webhookUrl: trimmedWebhookUrls[0] || '',
               wechatEnabled,
               telegramEnabled,
               alertFrequency,
@@ -904,20 +946,46 @@ export default function OneClickAlarmModal({
                     />
                   </div>
                 </div>
-                <div className={styles.inputRow}>
-                  <span className={styles.inputIcon}>
-                    <LinkInputIcon />
-                  </span>
-                  <input
-                    className={styles.input}
-                    placeholder={t('oneClickAlarm.webhookPlaceholder')}
-                    value={webhookUrl}
-                    onChange={(e) => {
-                      setWebhookUrl(e.target.value);
-                      if (webhookError) setWebhookError('');
-                    }}
-                    inputMode="url"
-                  />
+                <div className={styles.webhookUrlList}>
+                  {webhookUrls.map((url, index) => (
+                    <div key={`webhook-${index}`} className={styles.webhookInputGroup}>
+                      <div className={styles.inputRow}>
+                        <span className={styles.inputIcon}>
+                          <LinkInputIcon />
+                        </span>
+                        <input
+                          className={styles.input}
+                          placeholder={t('oneClickAlarm.webhookPlaceholder')}
+                          value={url}
+                          onChange={(e) => updateWebhookUrl(index, e.target.value)}
+                          inputMode="url"
+                        />
+                      </div>
+                      <div className={styles.webhookRowActions}>
+                        {index > 0 && (
+                          <button
+                            type="button"
+                            className={styles.webhookRemoveBtn}
+                            onClick={() => removeWebhookUrlRow(index)}
+                            aria-label={t('oneClickAlarm.webhookRemoveUrl')}
+                          >
+                            <WebhookRemoveIcon />
+                          </button>
+                        )}
+                        {index === webhookUrls.length - 1 && (
+                          <button
+                            type="button"
+                            className={styles.webhookAddBtn}
+                            onClick={addWebhookUrlRow}
+                            disabled={webhookUrls.length >= 10}
+                            aria-label={t('oneClickAlarm.webhookAddUrl')}
+                          >
+                            <WebhookAddIcon />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
                 <p className={styles.fieldHint}>{t('oneClickAlarm.webhookHint')}</p>
                 {webhookError && <div className={styles.errorText}>{webhookError}</div>}

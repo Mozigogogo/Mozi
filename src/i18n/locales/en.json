@@ -1785,6 +1785,8 @@
     "atLeastOneMethod": "Please enable at least one alert method",
     "webhookLabel": "Web hook",
     "webhookPlaceholder": "Enter URL",
+    "webhookAddUrl": "Add URL",
+    "webhookRemoveUrl": "Remove URL",
     "webhookHint": "When an alert fires, a POST request is sent to the URL you specify.",
     "wechatAlarm": "WeChat alerts",
     "wechatHint": "Turn on WeChat notifications to receive alerts.",
