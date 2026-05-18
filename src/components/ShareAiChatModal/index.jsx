@@ -20,10 +20,12 @@ export default function ShareAiChatModal({
   answer,
   preview,
   previewVariant,
+  hidePreview = false,
   brandLabel = 'Mozi问答',
   shareUrl,
 }) {
   const isDailyCardPreview = Boolean(preview) && previewVariant === 'dailyCard';
+  const showPreviewSection = !hidePreview;
   const [copied, setCopied] = useState(false);
   const { t } = useTranslation();
   const resolvedTitle = title || t('shareChat.title');
@@ -109,7 +111,11 @@ export default function ShareAiChatModal({
         if (e.target === e.currentTarget) onClose?.();
       }}
     >
-      <div className={`${styles.modal} ${isDailyCardPreview ? styles.modalDailyCard : ''}`}>
+      <div
+        className={`${styles.modal} ${isDailyCardPreview ? styles.modalDailyCard : ''} ${
+          hidePreview ? styles.modalActionsOnly : ''
+        }`}
+      >
         <button
           type="button"
           className={styles.closeBtn}
@@ -123,6 +129,7 @@ export default function ShareAiChatModal({
           <div className={styles.title}>{resolvedTitle}</div>
         </div>
 
+        {showPreviewSection ? (
         <div
           className={`${styles.previewOuter} ${isDailyCardPreview ? styles.previewOuterDailyCard : ''}`}
         >
@@ -177,6 +184,7 @@ export default function ShareAiChatModal({
             {brandLabel ? <div className={styles.brand}>{brandLabel}</div> : null}
           </div>
         </div>
+        ) : null}
 
         <div className={styles.actions}>
           <button type="button" className={styles.actionItem} onClick={copyLink}>

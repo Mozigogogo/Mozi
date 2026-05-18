@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Tabs, Card, Table, Tag, Spin } from 'antd';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { HeartOutlined, BellOutlined, ReloadOutlined, ShareAltOutlined } from '@ant-design/icons';
+import { HeartOutlined, BellOutlined } from '@ant-design/icons';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 import { getMyInterface } from '@/api/user';
@@ -14,9 +14,13 @@ import { RankGrid } from '../Find/RankGrid';
 import PCCalendarCard from '../PCCalendarCard';
 import NewCoinListing from '../NewCoinListing';
 import PCDailyCard from '../PCDailyCard';
+import ShareAiChatModal from '../ShareAiChatModal';
 import { isEmpty } from 'lodash';
 import { normalizePcFindRankType } from '@/utils/pcFindNavigation';
 import styles from './index.module.less';
+
+const RANK_SHARE_ICON = '/icons/pc/share_toolbar.svg';
+const RANK_COMMENT_ICON = '/icons/pc/comment_toolbar.svg';
 
 /** 公告日历视图调试：浏览器控制台过滤 `[PCFindCalendar]` */
 const dbgCalendar = (...args) => {
@@ -105,6 +109,37 @@ export default function PCFindContent() {
   const [upTradePickIndex, setUpTradePickIndex] = useState(0);
 
   const [rankActiveType, setRankActiveType] = useState('up'); // exchange | up | down | wave | volume | new | surge
+  const [rankShareOpen, setRankShareOpen] = useState(false);
+
+  const rankShareConfig = useMemo(() => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const suffix = ` - ${t('exchangeRank.realTimeUpdate')}`;
+    const shareTitle = (name) => `${name} ${t('common.share', { defaultValue: '分享' })}`;
+
+    if (rankActiveType === 'up') {
+      const name = t('home.rank.up');
+      return { shareUrl: `${origin}/pricerank`, shareText: `${name}${suffix}`, title: shareTitle(name) };
+    }
+    if (rankActiveType === 'down') {
+      const name = t('home.rank.down');
+      return { shareUrl: `${origin}/downrank`, shareText: `${name}${suffix}`, title: shareTitle(name) };
+    }
+    if (rankActiveType === 'wave') {
+      const name = t('home.rank.wave');
+      return { shareUrl: `${origin}/waverank`, shareText: `${name}${suffix}`, title: shareTitle(name) };
+    }
+    if (rankActiveType === 'volume') {
+      const name = t('home.rank.volume');
+      return { shareUrl: `${origin}/traderank`, shareText: `${name}${suffix}`, title: shareTitle(name) };
+    }
+    const name = t('home.rank.surge');
+    const interval = upTradeIntervalsArr[upTradePickIndex];
+    return {
+      shareUrl: `${origin}/uptraderank?intervals=${encodeURIComponent(interval)}`,
+      shareText: `${name}${suffix}`,
+      title: shareTitle(name),
+    };
+  }, [rankActiveType, upTradePickIndex, t, upTradeIntervalsArr]);
 
   // 支持从首页「实时榜单 → 查看更多」带入 tab / 排行榜类型
   useEffect(() => {
@@ -988,30 +1023,30 @@ export default function PCFindContent() {
                               <button
                                 type="button"
                                 className={styles.rankIconBtn}
-                                aria-label={t('common.refresh', { defaultValue: '刷新' })}
-                                onClick={() => {
-                                  if (rankActiveType === 'up') loadPriceData(true);
-                                  else if (rankActiveType === 'down') loadDownData(true);
-                                  else if (rankActiveType === 'wave') loadWaveData(true);
-                                  else if (rankActiveType === 'volume') loadTradeData(true);
-                                  else loadUpTradeData(true);
-                                }}
+                                aria-label={t('common.share', { defaultValue: '分享' })}
+                                onClick={() => setRankShareOpen(true)}
                               >
-                                <ReloadOutlined />
+                                <img src={RANK_SHARE_ICON} alt="" className={styles.rankToolbarIcon} />
                               </button>
                               <button
                                 type="button"
                                 className={styles.rankIconBtn}
-                                aria-label={t('common.share', { defaultValue: '分享' })}
+                                aria-label={t('community.comment', { defaultValue: '评论' })}
                                 onClick={() => {
-                                  if (rankActiveType === 'up') router.push('/pricerank');
-                                  else if (rankActiveType === 'down') router.push('/downrank');
-                                  else if (rankActiveType === 'wave') router.push('/waverank');
-                                  else if (rankActiveType === 'volume') router.push('/traderank');
-                                  else router.push(`/uptraderank?intervals=${encodeURIComponent(upTradeIntervalsArr[upTradePickIndex])}`);
+                                  if (rankActiveType === 'up') {
+                                    router.push(`/rankdiscuss?type=price&name=${encodeURIComponent(t('home.rank.up'))}`);
+                                  } else if (rankActiveType === 'down') {
+                                    router.push(`/rankdiscuss?type=down&name=${encodeURIComponent(t('home.rank.down'))}`);
+                                  } else if (rankActiveType === 'wave') {
+                                    router.push(`/rankdiscuss?type=wave&name=${encodeURIComponent(t('home.rank.wave'))}`);
+                                  } else if (rankActiveType === 'volume') {
+                                    router.push(`/rankdiscuss?type=trade&name=${encodeURIComponent(t('home.rank.volume'))}`);
+                                  } else {
+                                    router.push(`/rankdiscuss?type=surge&name=${encodeURIComponent(t('home.rank.surge'))}`);
+                                  }
                                 }}
                               >
-                                <ShareAltOutlined />
+                                <img src={RANK_COMMENT_ICON} alt="" className={styles.rankToolbarIcon} />
                               </button>
                             </div>
                           </div>
@@ -1259,6 +1294,16 @@ export default function PCFindContent() {
           </Spin>
         )}
       </Card>
+
+      <ShareAiChatModal
+        open={rankShareOpen}
+        onClose={() => setRankShareOpen(false)}
+        title={rankShareConfig.title}
+        question={rankShareConfig.shareText}
+        hidePreview
+        shareUrl={rankShareConfig.shareUrl}
+        brandLabel=""
+      />
     </div>
   );
 }
