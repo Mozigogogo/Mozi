@@ -1071,7 +1071,7 @@ export default function PCCommunityContent() {
       </div>
 
       {/* 币种、热门榜单 */}
-      {/* 70/30 分栏容器 */}
+      {/* 60/40 分栏 */}
       <SplitLayout
         className={styles.coinHotTopicSection}
         leftContent={
@@ -1240,7 +1240,7 @@ export default function PCCommunityContent() {
             </div>
           </div>
         }
-        leftWidth={70}
+        leftWidth={60}
         gap={20}
       />
       <PostDetailModal
