@@ -31,11 +31,13 @@ export default function PCCommunityContent() {
   const router = useRouter();
   const { t } = useTranslation();
   const QA_CATEGORY_KEY = '不懂就问';
+  const DISCOVERY_CATEGORY_KEY = '发现好币';
   const COIN_POST_PAGE_SIZE = 5;
   const capsuleTabItems = [
+    { key: 'all', label: t('community.tabs.all') },
     { key: 'coin', label: t('community.tabs.currency') },
     { key: 'discover', label: t('community.tabs.discovery') },
-    { key: 'qa', label: t('community.tabs.question') }
+    { key: 'qa', label: t('community.tabs.question') },
   ];
   const [flashNewsItems, setFlashNewsItems] = useState([]);
   const [flashNewsLoading, setFlashNewsLoading] = useState(false);
@@ -62,14 +64,15 @@ export default function PCCommunityContent() {
   const [searchLoading, setSearchLoading] = useState(false); // 搜索加载状态
   const [showSearchPanel, setShowSearchPanel] = useState(false); // 是否显示搜索下拉面板
   const [activeCapsuleTab, setActiveCapsuleTab] = useState('coin'); // 顶部胶囊tab
-  const isDiscoveryLikeTab = activeCapsuleTab !== 'coin';
+  const isDiscoveryLikeTab = activeCapsuleTab === 'discover' || activeCapsuleTab === 'qa';
+  const isCoinStyleTab = activeCapsuleTab === 'coin' || activeCapsuleTab === 'all';
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [detailModalPost, setDetailModalPost] = useState(null);
   const [detailModalComments, setDetailModalComments] = useState([]);
   const [detailModalVariant, setDetailModalVariant] = useState('post'); // 'post' | 'topic'
   const [detailModalLoading, setDetailModalLoading] = useState(false);
   const [detailFollowSubmitting, setDetailFollowSubmitting] = useState(false);
-  // 解决 coin/discover/qa 三个 tab 快速切换导致的请求竞态
+  // 解决 all/coin/discover/qa 四个 tab 快速切换导致的请求竞态
   const coinPostsRequestIdRef = useRef(0);
 
   const getBackendErrorMsg = (err) => {
@@ -212,7 +215,7 @@ export default function PCCommunityContent() {
     return hit == null ? '' : String(hit).trim();
   };
 
-  // 获取左侧帖子（币种 / 发现好币 / 不懂就问）
+  // 获取左侧帖子（全部 / 币种 / 发现好币 / 不懂就问）
   const fetchCoinPosts = async (coin, nextPage = 1, tabKey = activeCapsuleTab) => {
     const requestId = ++coinPostsRequestIdRef.current;
     setCoinLoading(true);
@@ -223,8 +226,14 @@ export default function PCCommunityContent() {
       };
       if (tabKey === 'qa') {
         requestData.category = QA_CATEGORY_KEY;
+        requestData.userType = 'real';
+      } else if (tabKey === 'discover') {
+        requestData.category = DISCOVERY_CATEGORY_KEY;
+        requestData.userType = 'real';
+      } else if (tabKey === 'all') {
+        requestData.userType = 'real';
       } else {
-        requestData.tag = coin; // 币种 / 发现好币沿用币种标签筛选
+        requestData.tag = coin;
       }
 
       const response = await request({
@@ -1141,7 +1150,7 @@ export default function PCCommunityContent() {
                     className={`${styles.coinPostsList} ${isDiscoveryLikeTab ? styles.discoveryPostsGrid : ''}`}
                   >
                     {coinPosts.map(post => (
-                      activeCapsuleTab === 'coin' ? (
+                      isCoinStyleTab ? (
                         <PostCard
                           key={post.id}
                           post={post}
@@ -1183,12 +1192,14 @@ export default function PCCommunityContent() {
                     description={
                       activeCapsuleTab === 'qa'
                         ? t('pcCommunity.emptyQaPosts')
-                        : t('pcCommunity.emptyCoinPosts', { coin: selectedCoin })
+                        : activeCapsuleTab === 'all'
+                          ? t('community.actions.noPosts')
+                          : t('pcCommunity.emptyCoinPosts', { coin: selectedCoin })
                     }
                   />
                 )}
               </div>
-              {(activeCapsuleTab === 'qa' || coinPostsTotalPages > 1) && (
+              {(activeCapsuleTab === 'qa' || activeCapsuleTab === 'all' || coinPostsTotalPages > 1) && (
                 <PCPagination
                   className={styles.leftPagination}
                   current={coinPostsPage}
@@ -1196,7 +1207,7 @@ export default function PCCommunityContent() {
                   pageSize={COIN_POST_PAGE_SIZE}
                   loading={coinLoading}
                   onChange={handleCoinPostsPageChange}
-                  alwaysShow={activeCapsuleTab === 'qa'}
+                  alwaysShow={activeCapsuleTab === 'qa' || activeCapsuleTab === 'all'}
                 />
               )}
               
