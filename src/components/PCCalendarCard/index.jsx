@@ -1,18 +1,33 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import styles from './index.module.less';
 
+const dbgCalendarCard = (...args) => {
+  if (typeof console !== 'undefined') {
+    console.log('[PCFindCalendar][PCCalendarCard]', ...args);
+  }
+};
+
 export default function PCCalendarCard({
   eventDates = [],
   defaultToggle = true,
+  toggleOn,
+  onToggleChange,
   onDateChange,
   onMonthChange,
 }) {
   const { t, i18n } = useTranslation();
   const [isToggleOn, setIsToggleOn] = useState(defaultToggle);
+  const resolvedToggleOn = toggleOn !== undefined ? toggleOn : isToggleOn;
+
+  useEffect(() => {
+    if (toggleOn !== undefined) {
+      setIsToggleOn(toggleOn);
+    }
+  }, [toggleOn]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
 
@@ -70,6 +85,19 @@ export default function PCCalendarCard({
     if (onMonthChange) onMonthChange(next);
   };
 
+  const handleToggleChange = async () => {
+    const next = !resolvedToggleOn;
+    dbgCalendarCard('switch click', { resolvedToggleOn, next, toggleOn });
+    if (onToggleChange) {
+      const result = await onToggleChange(next);
+      dbgCalendarCard('onToggleChange result', { next, result });
+      if (result === false) return;
+    }
+    if (toggleOn === undefined) {
+      setIsToggleOn(next);
+    }
+  };
+
   return (
     <div className={styles.card}>
       <div className={styles.topRow}>
@@ -85,8 +113,8 @@ export default function PCCalendarCard({
           </div>
         </div>
         <div
-          className={`${styles.switch} ${isToggleOn ? styles.checked : ''}`}
-          onClick={() => setIsToggleOn((v) => !v)}
+          className={`${styles.switch} ${resolvedToggleOn ? styles.checked : ''}`}
+          onClick={handleToggleChange}
         >
           <span className={styles.dot} />
         </div>

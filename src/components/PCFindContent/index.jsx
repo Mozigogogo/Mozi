@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Tabs, Card, Table, Tag, Spin } from 'antd';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +18,13 @@ import { isEmpty } from 'lodash';
 import { normalizePcFindRankType } from '@/utils/pcFindNavigation';
 import styles from './index.module.less';
 
+/** 公告日历视图调试：浏览器控制台过滤 `[PCFindCalendar]` */
+const dbgCalendar = (...args) => {
+  if (typeof console !== 'undefined') {
+    console.log('[PCFindCalendar]', ...args);
+  }
+};
+
 /**
  * PC端发现页面内容组件
  */
@@ -28,6 +35,25 @@ export default function PCFindContent() {
   
   const [activeTab, setActiveTab] = useState('market');
   const [marketViewMode, setMarketViewMode] = useState('table'); // table | calendar
+  const isCalendarViewOpen = activeTab === 'market' && marketViewMode === 'calendar';
+
+  const openCalendarView = useCallback(() => {
+    dbgCalendar('openCalendarView');
+    setMarketViewMode('calendar');
+  }, []);
+
+  const closeCalendarView = useCallback(() => {
+    dbgCalendar('closeCalendarView');
+    setMarketViewMode('table');
+  }, []);
+
+  useEffect(() => {
+    dbgCalendar('view state', {
+      activeTab,
+      marketViewMode,
+      isCalendarViewOpen,
+    });
+  }, [activeTab, marketViewMode, isCalendarViewOpen]);
   const [loading, setLoading] = useState(false);
   const [marketData, setMarketData] = useState([]);
   const [selfData, setSelfData] = useState([]);
@@ -594,6 +620,25 @@ export default function PCFindContent() {
     // 排行榜数据由 activeTab === 'rank' 的 effect 统一加载（含 URL 深链进入）
   };
 
+  const handleTabClick = (key) => {
+    dbgCalendar('tab click', { key, activeTab, isCalendarViewOpen });
+    if (key === 'market' && activeTab === 'market' && isCalendarViewOpen) {
+      closeCalendarView();
+    }
+  };
+
+  const handleCalendarCardClick = useCallback(
+    (open) => {
+      dbgCalendar('onCalendarClick from overview', { open, before: marketViewMode });
+      if (open) {
+        openCalendarView();
+      } else {
+        closeCalendarView();
+      }
+    },
+    [marketViewMode, openCalendarView, closeCalendarView]
+  );
+
   // 进入排行榜 Tab 时拉取各榜数据（首页「查看更多」带 ?tab=rank 时不会走 handleTabChange）
   useEffect(() => {
     if (activeTab !== 'rank') return;
@@ -744,6 +789,7 @@ export default function PCFindContent() {
       <Tabs
         activeKey={activeTab}
         onChange={handleTabChange}
+        onTabClick={handleTabClick}
         items={tabs}
         className={styles.mainTabs}
       />
@@ -752,14 +798,15 @@ export default function PCFindContent() {
         <>
           {/* 市场统计卡片 - 使用PC专用组件 */}
           <PCMarketOverview
-            onCalendarClick={(open) => setMarketViewMode(open === false ? 'table' : 'calendar')}
+            calendarExpanded={isCalendarViewOpen}
+            onCalendarClick={handleCalendarCardClick}
           />
         </>
       )}
 
 
 
-      {activeTab === 'market' && marketViewMode === 'table' && (
+      {activeTab === 'market' && !isCalendarViewOpen && (
         <div className={styles.tableHeader}>
           <div className={styles.headerCell}>{t('home.columns.symbol')}</div>
           <div className={styles.headerCell}>{t('home.columns.lastPrice')}</div>
@@ -771,7 +818,7 @@ export default function PCFindContent() {
 
       <Card
         className={`${styles.contentCard} ${activeTab === 'market' ? styles.marketContentCard : ''} ${
-          activeTab === 'market' && marketViewMode === 'calendar' ? styles.marketContentCardCalendar : ''
+          isCalendarViewOpen ? styles.marketContentCardCalendar : ''
         }`}
       >
         {/* 排行榜tab不需要外层loading，每个卡片有独立loading状态 */}
@@ -1152,8 +1199,9 @@ export default function PCFindContent() {
           </>
         ) : (
           <Spin spinning={loading}>
-            {activeTab === 'market' && marketViewMode === 'table' && (
+            {activeTab === 'market' && !isCalendarViewOpen && (
               <Table
+                key="market-table"
                 columns={marketColumns}
                 dataSource={marketData}
                 pagination={{ pageSize: 20 }}
@@ -1175,13 +1223,19 @@ export default function PCFindContent() {
                 })}
               />
             )}
-            {activeTab === 'market' && marketViewMode === 'calendar' && (
-              <div className={styles.pcCalendarView}>
+            {isCalendarViewOpen && (
+              <div key="market-calendar" className={styles.pcCalendarView}>
                 <div className={styles.pcCalendarMain}>
                   <div className={styles.leftColumn}>
                     <div className={styles.calendarBlock}>
                       <PCCalendarCard
                         eventDates={calendarEventDates}
+                        toggleOn={isCalendarViewOpen}
+                        onToggleChange={(next) => {
+                          dbgCalendar('calendar switch toggle', { next, isCalendarViewOpen });
+                          if (!next) closeCalendarView();
+                          return true;
+                        }}
                         onDateChange={setCalendarSelectedDate}
                         onMonthChange={setCalendarCurrentMonth}
                       />
