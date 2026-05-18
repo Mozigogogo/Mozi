@@ -23,6 +23,7 @@ const PCSectorTreeMap = ({
   customColorMethod,
   showPercentage = true,
   showPrice = true,
+  showHoverPanel = true,
   onItemClick 
 }) => {
   const router = useRouter();
@@ -347,6 +348,7 @@ const PCSectorTreeMap = ({
           // Add hover effect and tooltip logic
           nodes.on('mouseenter', function(event, d) {
             d3.select(this).style('opacity', 0.9).style('z-index', 10);
+            if (!showHoverPanel) return;
             setHoveredItem({
               name: d.data.name,
               change: d.data.change,
@@ -363,7 +365,7 @@ const PCSectorTreeMap = ({
           })
           .on('mouseleave', function() {
             d3.select(this).style('opacity', 1).style('z-index', 1);
-            if (!isTooltipHovered) {
+            if (!showHoverPanel || !isTooltipHovered) {
               setHoveredItem(null);
             }
           })
@@ -375,7 +377,7 @@ const PCSectorTreeMap = ({
       console.error("TreeMap Render Error:", error);
     }
 
-  }, [list, dimensions, loading, LEGEND_ITEMS, getColor, isTooltipHovered]);
+  }, [list, dimensions, loading, LEGEND_ITEMS, getColor, isTooltipHovered, showHoverPanel]);
 
   const getTooltipStyle = (item) => {
     if (!item) return {};
@@ -471,6 +473,7 @@ const PCSectorTreeMap = ({
   }, [coinSortField, coinSortOrder]);
 
   useEffect(() => {
+    if (!showHoverPanel) return;
     const category = hoveredItem?.category;
     if (!category) {
       setSectorCoins([]);
@@ -520,7 +523,7 @@ const PCSectorTreeMap = ({
         if (requestId !== latestCoinsRequestIdRef.current) return;
         setCoinsLoading(false);
       });
-  }, [hoveredItem?.category, parseNumericDisplay]);
+  }, [hoveredItem?.category, parseNumericDisplay, showHoverPanel]);
 
   return (
     <div className={styles.container} style={{ minHeight: '600px' }}>
@@ -566,7 +569,7 @@ const PCSectorTreeMap = ({
         )}
 
         {/* Highlight Overlay */}
-        {hoveredItem && hoveredItem.width && (
+        {showHoverPanel && hoveredItem && hoveredItem.width && (
           <div 
             className={styles.hoverOverlay}
             style={{ 
@@ -603,7 +606,7 @@ const PCSectorTreeMap = ({
         )}
 
         {/* Tooltip */}
-        {hoveredItem && (
+        {showHoverPanel && hoveredItem && (
           <div 
             className={styles.customTooltip}
             style={getTooltipStyle(hoveredItem)}
