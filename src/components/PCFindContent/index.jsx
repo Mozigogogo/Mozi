@@ -158,8 +158,8 @@ export default function PCFindContent() {
     },
     {
       title: t('discover.columns.change24hValue'),
-      dataIndex: 'priceChangePercentage24h',
-      key: 'priceChangePercentage24h',
+      dataIndex: 'priceChange24h',
+      key: 'priceChange24h',
       align: 'right',
       width: 120,
       render: (value) => {
@@ -179,12 +179,18 @@ export default function PCFindContent() {
     },
     {
       title: t('discover.columns.change24hPercent'),
-      dataIndex: 'priceChange24h',
-      key: 'priceChange24h',
+      dataIndex: 'priceChangePercentage24h',
+      key: 'priceChangePercentage24h',
       align: 'right',
       width: 120,
       render: (value) => {
         const isNegative = value?.toString().includes('-');
+        const display =
+          value === undefined || value === null || value === ''
+            ? '--'
+            : String(value).trim().endsWith('%')
+              ? String(value).trim()
+              : `${value}%`;
         return (
           <div style={{ 
             width: '82px',
@@ -198,7 +204,7 @@ export default function PCFindContent() {
             fontSize: '14px',
             fontWeight: 500
           }}>
-            {value}%
+            {display}
           </div>
         );
       },
