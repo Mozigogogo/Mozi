@@ -204,6 +204,13 @@ export default function PCHome() {
     }
   };
 
+  const handleAddMonitor = (e, record) => {
+    e.stopPropagation();
+    const symbol = record?.symbol || record?.key;
+    if (!symbol) return;
+    router.push(`/pc/alarm?symbol=${encodeURIComponent(symbol)}`);
+  };
+
   // 表格列配置
   const columns = [
     {
@@ -264,12 +271,21 @@ export default function PCHome() {
       title: t('pcHome.table.monitor'),
       key: 'addMonitor',
       align: 'center',
-      render: () => (
-        <img 
-          src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/monitor-bell.svg" 
-          className={styles.actionIcon} 
+      render: (_, record) => (
+        <img
+          src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/monitor-bell.svg"
+          className={styles.actionIcon}
           alt="monitor"
-          style={{ width: 18, height: 18 }} 
+          role="button"
+          tabIndex={0}
+          style={{ width: 18, height: 18, cursor: 'pointer' }}
+          onClick={(e) => handleAddMonitor(e, record)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleAddMonitor(e, record);
+            }
+          }}
         />
       ),
     },

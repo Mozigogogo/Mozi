@@ -134,7 +134,18 @@ export default function PCSearchResults({ keyword, onClose }) {
       title: t('home.columns.addMonitor'),
       key: 'monitor',
       align: 'center',
-      render: () => <BellOutlined className={styles.actionIcon} />,
+      render: (_, record) => (
+        <BellOutlined
+          className={styles.actionIcon}
+          style={{ cursor: 'pointer' }}
+          onClick={(e) => {
+            e.stopPropagation();
+            const symbol = record?.symbol || record?.key || keyword;
+            if (!symbol) return;
+            router.push(`/pc/alarm?symbol=${encodeURIComponent(symbol)}`);
+          }}
+        />
+      ),
     },
   ];
 
