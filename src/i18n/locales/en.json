@@ -952,7 +952,8 @@
       "isGoodToBuy": "Good time to buy {{symbol}}?",
       "technicalView": "{{symbol}} technical view",
       "topGainer": "Top gainer today?",
-      "fearGreedIndex": "Fear & Greed Index?"
+      "fearGreedIndex": "Fear & Greed Index?",
+      "goTradeEarn": "Trade & earn"
     }
   },
   "aiAssistant": {

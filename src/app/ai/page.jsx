@@ -16,7 +16,12 @@ import { request } from '@/utils/request';
 import { executeConsume } from '@/api/points';
 import { useRobotTestSSE } from '@/hooks/useRobotTestSSE';
 import { extractCoinSymbolFromText } from '@/utils/extractCoinSymbolFromText';
-import { normalizeSuggestionItems } from '@/utils/normalizeSuggestionItems';
+import {
+  normalizeSuggestionItems,
+  TRADE_SUGGESTION_ID,
+  withTradeSuggestion,
+} from '@/utils/normalizeSuggestionItems';
+import ExchangePickerModal from '@/components/ExchangePickerModal';
 import { forceBlurAndResetViewport } from '@/utils/iosViewportFix';
 import { safeBack } from '@/utils/navigation';
 import { fetchUserDataInfoOnce } from '@/utils/postLogin';
@@ -379,6 +384,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   }, []);
 
   const isPC = propIsPC || isPCState;
+
   const fixedSuggestedQuestions = [
     t('robot.quickAsk.btcTrend'),
     t('robot.quickAsk.ethTechnical'),
@@ -391,6 +397,12 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   // 消息列表：只有加载到历史记录或用户开始对话时才会出现内容
   const [messages, setMessages] = useState([]);
   const [suggestedQuestions, setSuggestedQuestions] = useState([]);
+  const displaySuggestedQuestions = useMemo(
+    () => withTradeSuggestion(suggestedQuestions),
+    [suggestedQuestions]
+  );
+  const [exchangePickerOpen, setExchangePickerOpen] = useState(false);
+  const [tradePickerSymbol, setTradePickerSymbol] = useState('BTC');
   // 模型选择状态：PC 为三个独立按钮，移动端为下拉面板
   const [selectedModel, setSelectedModel] = useState('analyze'); // 'analyze' | 'chat' | 'bigorder'
   const [modelMenuOpen, setModelMenuOpen] = useState(false);
@@ -909,7 +921,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
         scrollToBottom();
       });
     });
-  }, [messages]);
+  }, [messages, displaySuggestedQuestions]);
 
   /** 与底部积分展示一致：优先用扣减后的 remainingPoints，否则用 userData 的 totalPoints */
   const getEffectivePoints = () => {
@@ -1226,9 +1238,48 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     consumeOnce('abort');
   };
 
+  const getTradeSymbolFromMessages = () => {
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      const content = String(messages[i]?.content || '');
+      if (!content) continue;
+      const symbol = extractCoinSymbolFromText(content);
+      if (symbol) return symbol;
+    }
+    return 'BTC';
+  };
+
+  const handleSelectExchange = (exchangeId) => {
+    const map = {
+      binance: 'https://www.bsmkweb.cc/register?ref=195208591',
+      okx: 'https://www.growthhivex.com/join/12214659',
+      bitget:
+        'https://www.nlviwq.cn/zh-CN/referral/register?clacCode=0YL9JUZB&from=%2Fzh-CN%2Fevents%2Freferral-all-program&source=events&utmSource=PremierInviter',
+      gate: 'https://www.gateport.biz/zh/signup/BQNCA1pf?ref_type=103',
+    };
+    const target = map[exchangeId];
+    if (!target) return;
+    window.open(target, '_blank', 'noopener,noreferrer');
+    setExchangePickerOpen(false);
+  };
+
+  const handleOpenTradePicker = () => {
+    setTradePickerSymbol(getTradeSymbolFromMessages());
+    setExchangePickerOpen(true);
+  };
+
   // 点击建议问题
   const handleSuggestedQuestion = (question) => {
     handleSend(question);
+  };
+
+  const handleSuggestedItemClick = (item) => {
+    const id = typeof item === 'object' && item?.id != null ? item.id : '';
+    if (id === TRADE_SUGGESTION_ID) {
+      handleOpenTradePicker();
+      return;
+    }
+    const text = typeof item === 'string' ? item : item?.text ?? '';
+    if (text) handleSuggestedQuestion(text);
   };
 
   const getSuggestedQuestionDisplay = (question) => {
@@ -1537,6 +1588,41 @@ export default function RobotPage({ isPC: propIsPC = false }) {
               </div>
             ))}
           </div>
+
+          {!isBusy && messages.length > 0 && displaySuggestedQuestions.length > 0 && (
+            <div className={styles.suggestedQuestions}>
+              <div className={styles.suggestedTitle}>{t('robot.suggestedFollowUpTitle')}</div>
+              <div className={styles.suggestedList}>
+                {displaySuggestedQuestions.map((item, idx) => {
+                  const isTradeCta = item.id === TRADE_SUGGESTION_ID;
+                  const text = item?.text ?? '';
+                  if (!isTradeCta && !text) return null;
+                  const label = getSuggestedQuestionDisplay(text) || text;
+                  const key = item.id || `${idx}-${text.slice(0, 24)}`;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      className={`${styles.suggestedBtn} ${isTradeCta ? styles.suggestedBtnTrade : ''}`}
+                      disabled={isBusy}
+                      onClick={() => handleSuggestedItemClick(item)}
+                    >
+                      {isTradeCta ? (
+                        <>
+                          <span>{t('robot.suggest.goTradeEarn')}</span>
+                          <span className={styles.suggestedTradeArrow} aria-hidden>
+                            →
+                          </span>
+                        </>
+                      ) : (
+                        label
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           
           {/* 历史记录加载遮罩层 - 只遮罩聊天区域 */}
           {isBootstrappingUserData && (
@@ -1549,28 +1635,6 @@ export default function RobotPage({ isPC: propIsPC = false }) {
           )}
         </div>
 
-        {suggestedQuestions.length > 0 && messages.length > 0 && (
-          <div className={styles.suggestedQuestions}>
-            <div className={styles.suggestedTitle}>{t('robot.suggestedFollowUpTitle')}</div>
-            {suggestedQuestions.map((item, idx) => {
-              const text = typeof item === 'string' ? item : item?.text ?? '';
-              if (!text) return null;
-              const label = getSuggestedQuestionDisplay(text) || text;
-              const key = typeof item === 'object' && item?.id != null ? item.id : `${idx}-${text.slice(0, 24)}`;
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  className={styles.suggestedBtn}
-                  disabled={isBusy}
-                  onClick={() => handleSuggestedQuestion(text)}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-        )}
 
         <div className={styles.chatInputBar}>
           <div className={styles.inputBox}>
@@ -1750,6 +1814,13 @@ export default function RobotPage({ isPC: propIsPC = false }) {
           onClose={() => setShareOpen(false)}
           question={shareQuestion}
           answer={shareAnswer}
+        />
+
+        <ExchangePickerModal
+          open={exchangePickerOpen}
+          symbol={tradePickerSymbol}
+          onClose={() => setExchangePickerOpen(false)}
+          onSelect={handleSelectExchange}
         />
       </div>
   );

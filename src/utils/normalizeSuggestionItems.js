@@ -1,3 +1,6 @@
+/** 固定「去交易」引导项 id */
+export const TRADE_SUGGESTION_ID = '__trade_cta__';
+
 /**
  * 统一建议卡片数据：兼容字符串、{ id, suggestion }、{ id, text } 等
  * @param {unknown} arr
@@ -21,4 +24,10 @@ export function normalizeSuggestionItems(arr) {
       return null;
     })
     .filter(Boolean);
+}
+
+/** 在建议列表末尾追加「去交易，赚收益」引导项 */
+export function withTradeSuggestion(items) {
+  const norm = normalizeSuggestionItems(items).filter((item) => item.id !== TRADE_SUGGESTION_ID);
+  return [...norm, { id: TRADE_SUGGESTION_ID, text: '' }];
 }
