@@ -37,6 +37,7 @@ import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { getShareCount } from '@/api/home';
+import { savePcAiFromSearch } from '@/utils/pcAiFromSearch';
 import styles from './index.module.less';
 import AISearchBadge from './AISearchBadge';
 
@@ -237,6 +238,15 @@ export default function PCLayout({ children }) {
     searchRef.current = '';
     setShowSearchResults(false);
     setSearchKeyword('');
+  };
+
+  /** 顶栏 AI 问答：若搜索框有币种，进入 /ai 并默认提问「{币种}的综合分析」 */
+  const handleAiNavigate = () => {
+    const keyword = searchRef.current.trim();
+    if (keyword) {
+      savePcAiFromSearch(keyword);
+    }
+    router.push('/ai');
   };
 
   // 内容显示状态 - 用于PC端tab切换
@@ -682,13 +692,17 @@ export default function PCLayout({ children }) {
               <span className={styles.searchText}>{t('common.search')}</span>
             </div>
           </div>
-          <Link
+          <a
             href="/ai"
             className={styles.aiSearchBadgeLink}
             aria-label={t('home.quickActions.ai')}
+            onClick={(e) => {
+              e.preventDefault();
+              handleAiNavigate();
+            }}
           >
             <AISearchBadge />
-          </Link>
+          </a>
         </div>
 
         <div className={styles.headerRight}>

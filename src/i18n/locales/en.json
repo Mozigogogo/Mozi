@@ -947,6 +947,7 @@
     },
     "pointsUnit": "Points",
     "suggest": {
+      "comprehensiveAnalysis": "Comprehensive analysis of {{symbol}}",
       "analyzeTrend": "Analyze {{symbol}}'s trend",
       "isGoodToBuy": "Good time to buy {{symbol}}?",
       "technicalView": "{{symbol}} technical view",

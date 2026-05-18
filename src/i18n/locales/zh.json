@@ -930,6 +930,7 @@
     },
     "pointsUnit": "积分",
     "suggest": {
+      "comprehensiveAnalysis": "{{symbol}}的综合分析",
       "analyzeTrend": "帮我分析一下 {{symbol}} 的走势",
       "isGoodToBuy": "{{symbol}} 现在适合买入吗？",
       "technicalView": "{{symbol}} 的技术面如何？",

@@ -20,6 +20,7 @@ import { normalizeSuggestionItems } from '@/utils/normalizeSuggestionItems';
 import { forceBlurAndResetViewport } from '@/utils/iosViewportFix';
 import { safeBack } from '@/utils/navigation';
 import { fetchUserDataInfoOnce } from '@/utils/postLogin';
+import { consumePcAiFromSearch } from '@/utils/pcAiFromSearch';
 import styles from './page.module.less';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import AiRobotUpgradePillButton from '@/components/AiRobotUpgradePillButton';
@@ -498,6 +499,8 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   const messageIdRef = useRef(null);
   const lastUserMessageRef = useRef(null); // 用于“重新生成”
   const historyLoadedRef = useRef(false); // 防止重复加载历史记录
+  const pcSearchAutoSentRef = useRef(false);
+  const handleSendRef = useRef(null);
   const abortControllerRef = useRef(null);
   const currentActionCodeRef = useRef(null); // 本轮对话对应的积分扣除动作
   const hasConsumedRef = useRef(false); // 防止重复调用 /points/consume
@@ -1029,6 +1032,27 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     }
   };
 
+  handleSendRef.current = handleSend;
+
+  // PC 顶栏：搜索框输入币种后点「AI问答」→ 自动以「{币种}的综合分析」发起对话
+  useEffect(() => {
+    if (!mounted || !isPC || isBootstrappingUserData) return;
+    if (pcSearchAutoSentRef.current) return;
+
+    const payload = consumePcAiFromSearch();
+    if (!payload?.symbol) return;
+
+    pcSearchAutoSentRef.current = true;
+    setSelectedModel('analyze');
+    const question = t('robot.suggest.comprehensiveAnalysis', { symbol: payload.symbol });
+
+    const timer = window.setTimeout(() => {
+      handleSendRef.current?.(question);
+    }, 350);
+
+    return () => window.clearTimeout(timer);
+  }, [mounted, isPC, isBootstrappingUserData, t]);
+
   // 重新生成：基于上一条用户输入再请求一次
   const handleRegenerate = async () => {
     if (isBusy) return;
@@ -1209,6 +1233,16 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
   const getSuggestedQuestionDisplay = (question) => {
     if (!question) return '';
+    const comprehensiveMatch = question.match(/^(.+?)的综合分析$/);
+    if (comprehensiveMatch) {
+      const symbol = comprehensiveMatch[1].trim();
+      return t('robot.suggest.comprehensiveAnalysis', { symbol });
+    }
+    const comprehensiveEnMatch = question.match(/^Comprehensive analysis of (.+)$/i);
+    if (comprehensiveEnMatch) {
+      const symbol = comprehensiveEnMatch[1].trim();
+      return t('robot.suggest.comprehensiveAnalysis', { symbol });
+    }
     const trendMatch = question.match(/^帮我分析一下\s+(.+?)\s+的走势$/);
     if (trendMatch) {
       const symbol = trendMatch[1].trim();
