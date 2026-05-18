@@ -4,18 +4,20 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './index.module.less';
 
-export const MoziPCRColChart = ({ data }) => {
+export const MoziPCRColChart = ({ data, isPC = false }) => {
   const { t } = useTranslation();
+  const rootClassName = isPC ? `${styles.PCRBox} ${styles['pc-pcr-box']}` : styles.PCRBox;
+
   if (!data || !Array.isArray(data)) {
     return (
-      <div className={styles.PCRBox}>
+      <div className={rootClassName}>
         <div className={styles.emptyData}>{t('pcr.empty')}</div>
       </div>
     );
   }
 
   return (
-    <div className={styles.PCRBox}>
+    <div className={rootClassName}>
       <div className={styles.PCRDesc}>
         <div className={styles.PCRDescName}>{t('pcr.chart.exchange')}</div>
         <div className={styles.PCRDescContent}>
