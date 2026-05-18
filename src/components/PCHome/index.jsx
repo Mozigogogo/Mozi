@@ -18,6 +18,7 @@ import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { getSectionList } from '@/api/market';
 import { buildSectorDetailHref } from '@/utils/sectorNavigation';
+import { buildPcFindRankHref } from '@/utils/pcFindNavigation';
 import { completeTask } from '@/api/user';
 import styles from './index.module.less';
 
@@ -529,7 +530,7 @@ export default function PCHome() {
         {/* 标题 */}
         <div className={styles.rankHeader}>
           <h2 className={styles.rankTitle}>{t('pcHome.ranks.title')}</h2>
-          <div className={styles.headerViewMore} onClick={() => router.push('/pricerank')}>
+          <div className={styles.headerViewMore} onClick={() => router.push(buildPcFindRankHref(activeRankTab))}>
             {t('pcHome.ranks.viewMore')}
           </div>
         </div>

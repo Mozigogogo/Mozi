@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Tabs, Card, Table, Tag, Spin } from 'antd';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { HeartOutlined, BellOutlined, ReloadOutlined, ShareAltOutlined } from '@ant-design/icons';
 import { request } from '@/utils/request';
@@ -15,6 +15,7 @@ import PCCalendarCard from '../PCCalendarCard';
 import NewCoinListing from '../NewCoinListing';
 import PCDailyCard from '../PCDailyCard';
 import { isEmpty } from 'lodash';
+import { normalizePcFindRankType } from '@/utils/pcFindNavigation';
 import styles from './index.module.less';
 
 /**
@@ -22,6 +23,7 @@ import styles from './index.module.less';
  */
 export default function PCFindContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useTranslation();
   
   const [activeTab, setActiveTab] = useState('market');
@@ -77,6 +79,21 @@ export default function PCFindContent() {
   const [upTradePickIndex, setUpTradePickIndex] = useState(0);
 
   const [rankActiveType, setRankActiveType] = useState('up'); // exchange | up | down | wave | volume | new | surge
+
+  // 支持从首页「实时榜单 → 查看更多」带入 tab / 排行榜类型
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'rank') {
+      setActiveTab('rank');
+      const rankType = normalizePcFindRankType(searchParams.get('rankType'));
+      if (rankType) {
+        setRankActiveType(rankType);
+      }
+    } else if (tab === 'market') {
+      setActiveTab('market');
+    }
+  }, [searchParams]);
+
   // 表格列配置 - 行情
   const marketColumns = [
     {
@@ -553,6 +570,16 @@ export default function PCFindContent() {
     setUpTradePickIndex(index);
   };
 
+  const loadAllRankPanels = () => {
+    loadExchangeData();
+    loadPriceData();
+    loadDownData();
+    loadWaveData();
+    loadTradeData();
+    loadXinbiData();
+    loadUpTradeData();
+  };
+
   // Tab切换
   const handleTabChange = (key) => {
     setActiveTab(key);
@@ -563,16 +590,15 @@ export default function PCFindContent() {
       fetchMarketData();
     } else if (key === 'self') {
       fetchSelfData();
-    } else if (key === 'rank') {
-      loadExchangeData();
-      loadPriceData();
-      loadDownData();
-      loadWaveData();
-      loadTradeData();
-      loadXinbiData();
-      loadUpTradeData();
     }
+    // 排行榜数据由 activeTab === 'rank' 的 effect 统一加载（含 URL 深链进入）
   };
+
+  // 进入排行榜 Tab 时拉取各榜数据（首页「查看更多」带 ?tab=rank 时不会走 handleTabChange）
+  useEffect(() => {
+    if (activeTab !== 'rank') return;
+    loadAllRankPanels();
+  }, [activeTab]);
 
   // 初始加载
   useEffect(() => {
