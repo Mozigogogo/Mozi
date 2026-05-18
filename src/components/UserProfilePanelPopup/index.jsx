@@ -1,10 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import RightArrowIcon from '../Icons/RightArrowIcon';
 import { getUserDataInfo, updateUserInfo } from '@/api/user';
 import styles from './index.module.less';
+
+const CDN_PUBLIC_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public';
 
 const TAG_OPTIONS = [
   { id: 'compliance', icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/tag1.svg' },
@@ -39,6 +42,44 @@ const pickFirstNonEmptyString = (...vals) => {
   return '';
 };
 
+/** 是否已绑定 Telegram（PC 账号与 TG 关联），兼容多种后端字段名 */
+const resolveTelegramBound = (data, user) => {
+  const pickBool = (...vals) => {
+    for (const v of vals) {
+      if (typeof v === 'boolean') return v;
+      if (v === 1 || v === '1' || v === 'true') return true;
+      if (v === 0 || v === '0' || v === 'false') return false;
+    }
+    return null;
+  };
+
+  const explicit = pickBool(
+    data?.telegramBound,
+    data?.isTelegramBound,
+    data?.bindTelegram,
+    data?.telegramBind,
+    data?.hasTelegram,
+    user?.telegramBound,
+    user?.isTelegramBound,
+    user?.bindTelegram,
+    user?.telegramBind,
+    user?.hasTelegram,
+  );
+  if (explicit !== null) return explicit;
+
+  const tgId = pickFirstNonEmptyString(
+    data?.telegramId,
+    user?.telegramId,
+    data?.telegramUserId,
+    user?.telegramUserId,
+    data?.tgId,
+    user?.tgId,
+    data?.tgUserId,
+    user?.tgUserId,
+  );
+  return Boolean(tgId);
+};
+
 const formatPhone = (data, user) => {
   const ap = pickFirstNonEmptyString(
     data?.alertPhone,
@@ -69,6 +110,7 @@ const mapDatainfoToPopupData = (rawData, fallbackData) => {
     commission: pickFirstNonEmptyString(data?.tronUsdtAddress, user?.tronUsdtAddress, data?.commissionId, user?.commissionId, fallbackData.commission),
     avatar: pickFirstNonEmptyString(user?.avatar, data?.avatar, fallbackData.avatar),
     selectedTagId,
+    boundTelegram: resolveTelegramBound(data, user),
     boundWallet: !!pickFirstNonEmptyString(user?.walletAddress, data?.walletAddress, user?.address, data?.address),
   };
   next.account = next.bio || fallbackData.account;
@@ -81,9 +123,11 @@ export default function UserProfilePanelPopup({
   onClose,
   onSave,
   onLogout,
+  onBindBenefitCode,
   initialData,
 }) {
   const { i18n, t } = useTranslation();
+  const router = useRouter();
 
   const data = useMemo(
     () => ({
@@ -94,7 +138,7 @@ export default function UserProfilePanelPopup({
       phone: initialData?.phone || '+8234567900',
       commission: initialData?.commission || 'TronUSDTbinubho',
       avatar: initialData?.avatar || 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png',
-      boundTelegram: initialData?.boundTelegram ?? true,
+      boundTelegram: initialData?.boundTelegram ?? false,
       boundWallet: initialData?.boundWallet ?? false,
       language: initialData?.language || ((i18n?.language || '').startsWith('en') ? 'English' : '中文（中国）'),
       selectedTagId:
@@ -175,6 +219,11 @@ export default function UserProfilePanelPopup({
     };
   }, [open, data]);
 
+  const handleSwitchTheme = () => {
+    onClose?.();
+    router.push('/theme');
+  };
+
   const selectLanguage = async (lng) => {
     const normalizedLng = lng === 'en' ? 'en' : 'zh';
 
@@ -215,19 +264,13 @@ export default function UserProfilePanelPopup({
               <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/bind_telegram.svg" alt="" />
               <span>{t('user.profilePanel.telegram')}</span>
             </div>
-            <div className={styles.boundBtn}>
+            <button
+              type="button"
+              className={profileData.boundTelegram ? styles.boundBtn : styles.unboundBtn}
+              onClick={() => onBindBenefitCode?.()}
+            >
               {profileData.boundTelegram ? t('user.profilePanel.bound') : t('user.profilePanel.bind')}
-            </div>
-          </div>
-          <div className={styles.bindRow}>
-            <div className={styles.bindLeft}>
-              <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/wallet.svg" alt="" />
-              <span>{t('user.profilePanel.wallet')}</span>
-            </div>
-            <div className={styles.unboundBtn}>
-              <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/plus.svg" alt="" />
-              <span>{profileData.boundWallet ? t('user.profilePanel.bound') : t('user.profilePanel.bind')}</span>
-            </div>
+            </button>
           </div>
         </div>
 
@@ -343,6 +386,17 @@ export default function UserProfilePanelPopup({
               </div>
             </div>
           ) : null}
+          <div className={styles.bottomRow} onClick={handleSwitchTheme}>
+            <div className={styles.bottomLeft}>
+              <img
+                src={`${CDN_PUBLIC_PREFIX}/icons/pc/skin@2x.png`}
+                alt=""
+                style={{ width: 22, height: 22, objectFit: 'contain' }}
+              />
+              <span>{t('user.profilePanel.switchTheme')}</span>
+            </div>
+            <RightArrowIcon size={16} color="#9ca3af" className={styles.rowArrow} />
+          </div>
         </div>
       </div>
       </div>

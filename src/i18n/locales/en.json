@@ -461,6 +461,7 @@
       "bound": "Bound",
       "logout": "Logout",
       "subscriptionAndMembership": "Membership",
+      "switchTheme": "Switch theme color",
       "defaultAccount": "Account"
     },
     "subscriptionEnabled": "Subscription enabled",

@@ -732,17 +732,8 @@ export default function PCLayout({ children }) {
           </ConnectButton.Custom>
           <Button 
             type="text" 
-            onClick={() => setShowBenefitModal(true)}
-            icon={<img src={`${CDN_PUBLIC_PREFIX}/icons/new_user/bind.svg`} alt="bind" style={{ width: 18, height: 18, objectFit: 'contain' }} />} 
-          />
-          <Button 
-            type="text" 
             onClick={() => setShowUserProfilePopup(true)}
             icon={<img src={`${CDN_PUBLIC_PREFIX}/icons/pc/setting@2x.png`} alt="settings" style={{ width: 22, height: 22, objectFit: 'contain' }} />} 
-          />
-          <Button 
-            type="text" 
-            icon={<img src={`${CDN_PUBLIC_PREFIX}/icons/pc/skin@2x.png`} alt="theme" style={{ width: 22, height: 22, objectFit: 'contain' }} />} 
           />
           <Badge count={notificationCount} size="small" offset={[-6, 0]}>
             <Button 
@@ -1104,6 +1095,7 @@ export default function PCLayout({ children }) {
       <UserProfilePanelPopup
         open={showUserProfilePopup}
         onClose={() => setShowUserProfilePopup(false)}
+        onBindBenefitCode={() => setShowBenefitModal(true)}
         onLogout={handleProfilePanelLogout}
         onSave={() => {
           setShowUserProfilePopup(false);
