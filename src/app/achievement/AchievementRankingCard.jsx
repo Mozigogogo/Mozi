@@ -165,7 +165,7 @@ export default function AchievementRankingCard({ onInviteClick, style, noTopMarg
 
       <button type="button" className={styles.inviteBtn} onClick={onInviteClick}>
         <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/share.svg" alt="" className={styles.inviteIcon} />
-        {t('pointsDetail.inviteChallenge', { defaultValue: 'Invite friends to challenge' })}
+        {t('pointsDetail.inviteChallenge')}
       </button>
     </section>
   );

@@ -15,6 +15,7 @@ import AchievementPoolStatusCard from './AchievementPoolStatusCard';
 import AchievementPoolEventCard from './AchievementPoolEventCard';
 import AchievementRankingCard from './AchievementRankingCard';
 import EditProfilePopup from '@/app/user/components/EditProfilePopup';
+import InviteShareModal from '@/components/InviteShareModal';
 import { safeBack } from '@/utils/navigation';
 import styles from './page.module.less';
 
@@ -57,6 +58,7 @@ function AchievementContent() {
   const [dailyTasksLoading, setDailyTasksLoading] = useState(false);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [editProfileUserInfo, setEditProfileUserInfo] = useState({ isLogin: false, nickname: '', avatar: '' });
+  const [inviteShareOpen, setInviteShareOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -410,12 +412,13 @@ function AchievementContent() {
     }
   }, [isPC, router, t, verifyStarterTask, verifyingTaskId]);
 
-  const handleRankingInviteClick = async () => {
+  const handleRankingInviteClick = () => {
     const inviteCode = String(inviteData.inviteCode || '').trim();
-    if (!inviteCode || typeof window === 'undefined') return;
-    const shareUrl = new URL('/', window.location.origin);
-    shareUrl.searchParams.set('inviteCode', inviteCode);
-    await copyToClipboard(shareUrl.toString());
+    if (!inviteCode) {
+      Toast.show({ content: t('pointsDetail.pleaseRegister', { defaultValue: '请先注册' }) });
+      return;
+    }
+    setInviteShareOpen(true);
   };
 
   const handleDailyTaskClick = useCallback((task) => {
@@ -534,6 +537,12 @@ function AchievementContent() {
         t={t}
         userInfo={editProfileUserInfo}
         setUserInfo={setEditProfileUserInfo}
+      />
+      <InviteShareModal
+        open={inviteShareOpen}
+        onClose={() => setInviteShareOpen(false)}
+        inviteCode={inviteData.inviteCode || ''}
+        inviteLink={inviteData.inviteLink || ''}
       />
     </div>
   );
