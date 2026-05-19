@@ -2,7 +2,7 @@ import { withSentryConfig } from '@sentry/nextjs';
 import withLess from 'next-plugin-less';
 import config from './config/index.js';
 
-const { API_BASE_URL, PROJECT_ID } = config;
+const { API_BASE_URL, PROJECT_ID, ROBOT_BACKEND_URL, BIGORDER_CHAT_API } = config;
 const isSentryEnabled = String(process.env.NEXT_PUBLIC_ENABLE_SENTRY || '').toLowerCase() === 'true';
 
 const nextConfig = withLess({
@@ -25,6 +25,8 @@ const nextConfig = withLess({
   env: {
     API_BASE_URL,
     NEXT_PUBLIC_PROJECT_ID: PROJECT_ID,
+    NEXT_PUBLIC_ROBOT_BACKEND_URL: ROBOT_BACKEND_URL,
+    NEXT_PUBLIC_BIGORDER_CHAT_API: BIGORDER_CHAT_API,
   },
   async rewrites() {
     return [

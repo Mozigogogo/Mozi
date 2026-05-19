@@ -34,12 +34,21 @@ const API_BASE_URL = process.env.API_BASE_URL || selectedConfig.API_BASE_URL;
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || process.env.WS_URL || selectedConfig.WS_URL;
 // Reown AppKit 项目ID（用于钱包连接）；优先读取公开前缀，便于在浏览器端使用
 const PROJECT_ID = process.env.NEXT_PUBLIC_PROJECT_ID || process.env.PROJECT_ID || 'b258644e56a8613d8d020223eab73c4f';
+// AI Robot（Python）后端：大单侦测等接口浏览器直连，不走 Next /api 代理
+const ROBOT_BACKEND_URL = (
+  process.env.NEXT_PUBLIC_ROBOT_BACKEND_URL ||
+  process.env.ROBOT_BACKEND_URL ||
+  'https://mozibackend-production.up.railway.app'
+).replace(/\/$/, '');
+const BIGORDER_CHAT_API = `${ROBOT_BACKEND_URL}/bigorder/v1/chat`;
 
 module.exports = {
   APP_ENV,
   API_BASE_URL,
   WS_URL,
   PROJECT_ID,
+  ROBOT_BACKEND_URL,
+  BIGORDER_CHAT_API,
 };
 
 

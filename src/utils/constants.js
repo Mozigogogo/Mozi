@@ -1,4 +1,7 @@
-import { WS_URL as CONFIG_WS_URL } from '../../config/index.js';
+import {
+  WS_URL as CONFIG_WS_URL,
+  BIGORDER_CHAT_API as CONFIG_BIGORDER_CHAT_API,
+} from '../../config/index.js';
 
 // 通用兜底提示语
 export const COMMON_MSG = '网络繁忙，请稍后再试';
@@ -15,6 +18,9 @@ export const getTgInviteLink = (inviteCode) => {
 
 // 接口基础URL - 使用代理路径避免跨域
 export const INTERFACE_URL = '/api';
+
+/** 大单侦测：浏览器直连 Python 后端（需后端 CORS + Redis） */
+export const BIGORDER_CHAT_API = CONFIG_BIGORDER_CHAT_API;
 
 /**
  * 获取适配当前页面协议的 WebSocket URL

@@ -11,7 +11,7 @@ import PCLayout from '../../components/PCLayout';
 import ThinkingAnimation from '../../components/ThinkingAnimation';
 import PopLogin from '../../components/PopLogin';
 import { trackEvent, trackPageView, AIEvents } from '@/utils/amplitude';
-import { INTERFACE_URL, Interface } from '@/utils/constants';
+import { INTERFACE_URL, Interface, BIGORDER_CHAT_API } from '@/utils/constants';
 import { request } from '@/utils/request';
 import { executeConsume } from '@/api/points';
 import { useRobotTestSSE } from '@/hooks/useRobotTestSSE';
@@ -31,9 +31,6 @@ import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognitio
 import AiRobotUpgradePillButton from '@/components/AiRobotUpgradePillButton';
 import PointsInsufficientBubble from '@/components/PointsInsufficientBubble';
 import ShareAiChatModal from '@/components/ShareAiChatModal';
-
-/** 与 analyze/chat 一致：经 Next `/api` rewrite 到同一后端域名 */
-const BIGORDER_CHAT_API = '/api/robot_proxy/bigorder/v1/chat';
 
 function extractBigorderAssistantText(rawText) {
   const trimmed = String(rawText || '').trim();
@@ -780,7 +777,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
   const isBusy = isStreaming || bigorderLoading;
 
-  /** 大单侦测：JSON POST（非 SSE），与 analyze/chat 共用 robot_proxy 域名 */
+  /** 大单侦测：JSON POST（非 SSE），浏览器直连 Python 后端 */
   const runBigorderChatRequest = async (message, aiMsgId) => {
     setBigorderLoading(true);
     bigorderAbortRef.current = new AbortController();
