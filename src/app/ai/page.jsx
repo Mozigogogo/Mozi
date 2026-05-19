@@ -855,7 +855,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
         requestId: currentRequestIdRef.current,
         responseLength: (fullContent || '').length,
       });
-      await consumeOnce('complete');
+      // 大单侦测不扣积分
     },
     onError: () => {
       if (userAbortedRef.current) return;
@@ -962,6 +962,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   /** 输入框发送 / 快捷提示词 / 重新生成 共用：积分不足以支付当前模式单次消耗时拦截 */
   const shouldShowPointsLockBeforeSend = () => {
     if (!ENABLE_POINTS_LIMIT) return false;
+    if (selectedModel === 'bigorder') return false;
     if (!hasEnoughPoints) return true;
     const eff = getEffectivePoints();
     if (typeof eff !== 'number') return false;
@@ -1038,8 +1039,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
     try {
       if (selectedModel === 'bigorder') {
-        currentActionCodeRef.current = 'AI_BASIC_CHAT';
-        hasConsumedRef.current = false;
+        currentActionCodeRef.current = null;
         await sendBigorderMessage({ message, lang: getRobotLang() });
         return;
       }
@@ -1135,8 +1135,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
     try {
       if (selectedModel === 'bigorder') {
-        currentActionCodeRef.current = 'AI_BASIC_CHAT';
-        hasConsumedRef.current = false;
+        currentActionCodeRef.current = null;
         await sendBigorderMessage({ message: lastMessage, lang: getRobotLang() });
         return;
       }
@@ -1254,7 +1253,6 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     if (isBigorderStreaming) {
       abortBigorder();
       markCurrentMessageAborted();
-      consumeOnce('abort');
       return;
     }
     if (!isStreaming) return;
