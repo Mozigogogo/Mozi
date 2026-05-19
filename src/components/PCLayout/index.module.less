@@ -279,7 +279,86 @@
   :global(.ant-layout-sider-children) {
     display: flex;
     flex-direction: column;
+    min-height: 100%;
   }
+}
+
+/* 侧边栏底部：链接 + 社交媒体 */
+.siderFooter {
+  flex-shrink: 0;
+  margin-top: auto;
+  padding: 16PX;
+  border-top: 1PX solid #f0f0f0;
+  background: #fff;
+}
+
+.footerLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8PX 16PX;
+  margin-bottom: 12PX;
+}
+
+.footerLink {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #666;
+  font-size: 12PX;
+  line-height: 1.4;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    color: #11B787;
+  }
+}
+
+.socialIcons {
+  display: flex;
+  align-items: center;
+  gap: 12PX;
+}
+
+.socialIcon {
+  width: 32PX;
+  height: 32PX;
+  border-radius: 50%;
+  background: #f3f4f6;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+
+  img {
+    width: 16PX;
+    height: 16PX;
+    object-fit: contain;
+  }
+
+  &:hover {
+    background: #e8f8f2;
+  }
+}
+
+.socialIconFill {
+  padding: 0;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+
+.socialIconFillCover img {
+  object-fit: cover;
+}
+
+.socialIconDiscord img {
+  width: 24PX;
+  height: 24PX;
 }
 
 .user {
