@@ -491,6 +491,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   const abortControllerRef = useRef(null);
   const currentActionCodeRef = useRef(null); // 本轮对话对应的积分扣除动作
   const hasConsumedRef = useRef(false); // 防止重复调用 /points/consume
+  const userAbortedRef = useRef(false); // 用户手动停止后，忽略后续 SSE 回调
   // const [isStreaming, setIsStreaming] = useState(false); // 使用 hook 中的 isStreaming
 
   // 加载聊天历史记录
@@ -649,12 +650,33 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   };
 
   const patchCurrentAiMessage = useCallback((patch) => {
+    if (userAbortedRef.current) return;
     const msgId = currentAiMsgIdRef.current;
     if (!msgId) return;
     setMessages((prev) =>
       prev.map((msg) => (msg.id === msgId ? { ...msg, ...patch } : msg))
     );
   }, []);
+
+  const markCurrentMessageAborted = useCallback(() => {
+    const msgId = currentAiMsgIdRef.current;
+    if (!msgId) return;
+    const abortedText = t('robot.conversationAborted');
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === msgId
+          ? {
+              ...msg,
+              loading: false,
+              statusHint: '',
+              content: msg.content || abortedText,
+              aborted: true,
+            }
+          : msg
+      )
+    );
+    currentAiMsgIdRef.current = null;
+  }, [t]);
 
   const getRobotLang = () =>
     typeof window !== 'undefined' ? localStorage.getItem('i18nextLng') || 'zh' : 'zh';
@@ -679,6 +701,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
         }
       },
       onChunk: (chunk, accumulated, eventData) => {
+        if (userAbortedRef.current) return;
         // 更新消息内容
         if (currentAiMsgIdRef.current) {
           setMessages(prev => prev.map(msg => 
@@ -706,6 +729,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
         }
       },
       onComplete: async (fullContent, eventData) => {
+        if (userAbortedRef.current) return;
         // AI 回复完成
         if (currentAiMsgIdRef.current) {
           const msgId = currentAiMsgIdRef.current;
@@ -742,6 +766,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
         await consumeOnce('complete');
       },
       onError: (error) => {
+        if (userAbortedRef.current) return;
         // AI 对话错误
         // 更新消息为错误状态
         if (currentAiMsgIdRef.current) {
@@ -805,6 +830,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
       });
     },
     onComplete: async (fullContent, eventData) => {
+      if (userAbortedRef.current) return;
       const msgId = currentAiMsgIdRef.current;
       if (msgId) {
         setMessages((prev) =>
@@ -834,6 +860,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
       await consumeOnce('complete');
     },
     onError: () => {
+      if (userAbortedRef.current) return;
       patchCurrentAiMessage({
         content: t('robot.sendFailed'),
         loading: false,
@@ -972,6 +999,8 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     const message = text || inputValue.trim();
     if (!message || isBusy) return;
 
+    userAbortedRef.current = false;
+
     // 埋点：用户发送问题
     trackEvent(AIEvents.QUESTION_SENT, {
       question: message,
@@ -1083,6 +1112,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     }
 
     forceBlurAndResetViewport();
+    userAbortedRef.current = false;
 
     // 生成请求 ID
     const requestId = `req_${Date.now()}`;
@@ -1221,37 +1251,18 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
   // 停止生成
   const handleStop = () => {
+    userAbortedRef.current = true;
+
     if (isBigorderStreaming) {
       abortBigorder();
-      if (currentAiMsgIdRef.current) {
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === currentAiMsgIdRef.current
-              ? { ...msg, loading: false, statusHint: '' }
-              : msg
-          )
-        );
-      }
-      currentAiMsgIdRef.current = null;
+      markCurrentMessageAborted();
       consumeOnce('abort');
       return;
     }
     if (!isStreaming) return;
 
-    // 中止 SSE 流
     abort();
-    
-    // 更新消息状态
-    if (currentAiMsgIdRef.current) {
-      setMessages(prev => prev.map(msg => 
-        msg.id === currentAiMsgIdRef.current
-          ? { ...msg, loading: false }
-          : msg
-      ));
-    }
-    
-    currentAiMsgIdRef.current = null;
-    // 停止生成后视为一次对话尝试，进行积分扣除
+    markCurrentMessageAborted();
     consumeOnce('abort');
   };
 
@@ -1529,7 +1540,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                   <div
                     className={`${styles.bubble} ${
                       msg.type === 'pointsLock' ? styles.cardBubbleWrap : styles[msg.role]
-                    } ${msg.error ? styles.error : ''}`}
+                    } ${msg.error ? styles.error : ''} ${msg.aborted ? styles.aborted : ''}`}
                   >
                     <div className={styles.text}>
                       {msg.type === 'pointsLock' ? (

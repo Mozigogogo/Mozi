@@ -908,6 +908,7 @@
     "aiAlt": "AI",
     "tokens": "Consumed {{tokens}} tokens",
     "thinking": "Thinking",
+    "conversationAborted": "Conversation stopped",
     "regenerate": "Regenerate",
     "regenerateAlt": "Regenerate",
     "me": "Me",

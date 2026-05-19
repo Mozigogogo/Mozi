@@ -891,6 +891,7 @@
     "aiAlt": "AI",
     "tokens": "消耗 {{tokens}} tokens",
     "thinking": "正在思考中",
+    "conversationAborted": "对话已中止",
     "regenerate": "重新生成",
     "regenerateAlt": "重新生成",
     "me": "我",
