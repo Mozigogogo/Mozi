@@ -35,7 +35,7 @@ import BindBenefitCodeModal from '../BindBenefitCodeModal';
 import UserProfilePanelPopup from '../UserProfilePanelPopup';
 import GeneralPopup from '@/app/user/components/GeneralPopup';
 import { request } from '@/utils/request';
-import { Interface } from '@/utils/constants';
+import { EMAIL, Interface } from '@/utils/constants';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { getShareCount } from '@/api/home';
 import { savePcAiFromSearch } from '@/utils/pcAiFromSearch';
@@ -575,20 +575,36 @@ export default function PCLayout({ children }) {
     setSiderFooterPopupOpen(true);
   }, []);
 
+  const businessCooperationMailto = useMemo(() => {
+    const subject = encodeURIComponent(t('pcLayout.footer.businessMailSubject'));
+    return `mailto:${EMAIL}?subject=${subject}`;
+  }, [t, i18n.language]);
+
+  const goToInviteRewards = useCallback(() => {
+    setActiveContent(null);
+    setShowSearchResults(false);
+    router.push('/achievement');
+  }, [router]);
+
   const pcFooterLinkRows = useMemo(
     () => [
       [
         { key: 'aboutUs', label: t('pcLayout.footer.aboutUs'), href: '/pc/about' },
-        { key: 'service', label: t('pcLayout.footer.service'), href: '/vip-recharge' },
-        { key: 'affiliate', label: t('pcLayout.footer.affiliate'), href: '/pc/benefitsPage' },
+        {
+          key: 'businessCooperation',
+          label: t('pcLayout.footer.businessCooperation'),
+          href: businessCooperationMailto,
+        },
       ],
       [
-        { key: 'inviteRewards', label: t('pcLayout.footer.inviteRewards'), href: '/achievement' },
+        { key: 'inviteRewards', label: t('pcLayout.footer.inviteRewards'), action: goToInviteRewards },
         { key: 'helpCenter', label: t('pcLayout.footer.helpCenter'), href: '/pc/help' },
+      ],
+      [
         { key: 'videoGuides', label: t('pcLayout.footer.videoGuides'), action: () => openSiderFooterPopup('social') },
       ],
     ],
-    [openSiderFooterPopup, t]
+    [businessCooperationMailto, goToInviteRewards, openSiderFooterPopup, t]
   );
 
   const pcFooterSocialLinks = useMemo(
@@ -1081,17 +1097,31 @@ export default function PCLayout({ children }) {
               <div className={styles.siderFooter}>
                 {pcFooterLinkRows.map((row, rowIndex) => (
                   <div key={`footer-row-${rowIndex}`} className={styles.footerLinks}>
-                    {row.map((item) =>
-                      item.href ? (
-                        <Link
-                          key={item.key}
-                          href={item.href}
-                          className={styles.footerLink}
-                          onClick={() => setActiveContent(null)}
-                        >
-                          {item.label}
-                        </Link>
-                      ) : (
+                    {row.map((item) => {
+                      if (item.href?.startsWith('mailto:')) {
+                        return (
+                          <a
+                            key={item.key}
+                            href={item.href}
+                            className={styles.footerLink}
+                          >
+                            {item.label}
+                          </a>
+                        );
+                      }
+                      if (item.href) {
+                        return (
+                          <Link
+                            key={item.key}
+                            href={item.href}
+                            className={styles.footerLink}
+                            onClick={() => setActiveContent(null)}
+                          >
+                            {item.label}
+                          </Link>
+                        );
+                      }
+                      return (
                         <button
                           key={item.key}
                           type="button"
@@ -1100,8 +1130,8 @@ export default function PCLayout({ children }) {
                         >
                           {item.label}
                         </button>
-                      )
-                    )}
+                      );
+                    })}
                   </div>
                 ))}
                 <div className={styles.socialIcons}>

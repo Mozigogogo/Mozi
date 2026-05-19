@@ -1826,8 +1826,8 @@
     },
     "footer": {
       "aboutUs": "About Us",
-      "service": "Service",
-      "affiliate": "Affiliate",
+      "businessCooperation": "Business",
+      "businessMailSubject": "Business cooperation inquiry",
       "inviteRewards": "Referral Rewards",
       "helpCenter": "Help Center",
       "videoGuides": "Video Guides"

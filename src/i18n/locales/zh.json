@@ -1824,8 +1824,8 @@
     },
     "footer": {
       "aboutUs": "关于我们",
-      "service": "服务",
-      "affiliate": "联盟计划",
+      "businessCooperation": "商务合作",
+      "businessMailSubject": "商务合作咨询",
       "inviteRewards": "邀请奖励",
       "helpCenter": "帮助中心",
       "videoGuides": "Video Guides"
