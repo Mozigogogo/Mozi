@@ -586,6 +586,12 @@ export default function PCLayout({ children }) {
     router.push('/achievement');
   }, [router]);
 
+  const goToVideoGuides = useCallback(() => {
+    setActiveContent(null);
+    setShowSearchResults(false);
+    router.push('/');
+  }, [router]);
+
   const pcFooterLinkRows = useMemo(
     () => [
       [
@@ -601,10 +607,10 @@ export default function PCLayout({ children }) {
         { key: 'helpCenter', label: t('pcLayout.footer.helpCenter'), href: '/pc/help' },
       ],
       [
-        { key: 'videoGuides', label: t('pcLayout.footer.videoGuides'), action: () => openSiderFooterPopup('social') },
+        { key: 'videoGuides', label: t('pcLayout.footer.videoGuides'), action: goToVideoGuides },
       ],
     ],
-    [businessCooperationMailto, goToInviteRewards, openSiderFooterPopup, t]
+    [businessCooperationMailto, goToInviteRewards, goToVideoGuides, t]
   );
 
   const pcFooterSocialLinks = useMemo(
