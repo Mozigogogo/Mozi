@@ -11,7 +11,7 @@ export default function HeroSection() {
             className={styles.heroLeft}
             title={['AI Trade', 'Radar']}
             subtitle={['News, OI & Long/Short depth.', 'AI-calculated Win Rate.']}
-            href="/pc/find"
+            href="/ai"
             ctaText="Get Started"
           />
         </div>

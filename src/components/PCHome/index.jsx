@@ -53,6 +53,13 @@ export default function PCHome() {
   const { t, i18n } = useTranslation();
   const isEN = (i18n?.language || '').startsWith('en');
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || window.location.hash !== '#sector') return;
+    requestAnimationFrame(() => {
+      document.getElementById('sector')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, []);
+
   const scheduleLowPriority = (fn) => {
     try {
       if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
@@ -509,7 +516,7 @@ export default function PCHome() {
       </div>
 
       {/* 板块选币 TreeMap */}
-      <div className={styles.sectorSection}>
+      <div id="sector" className={styles.sectorSection}>
         <div className={styles.sectorHeader}>
           <h2 className={styles.sectorTitle}>{t('pcHome.sectorMap.title')}</h2>
         </div>

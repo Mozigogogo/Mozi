@@ -11,7 +11,7 @@ export default function SectorSection() {
             className={styles.sectorLeft}
             title={['Sector', 'Rotation']}
             subtitle={['Ride the trend. One-click', 'to find the sector leaders']}
-            href="/pc/find"
+            href="/home#sector"
             ctaText="Enter Mozi"
           />
         </div>

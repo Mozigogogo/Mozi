@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Empty, message } from 'antd';
 import { SpinLoading } from 'antd-mobile';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
@@ -27,8 +27,11 @@ import styles from './index.module.less';
 /**
  * PC端社区页面内容组件
  */
+const CAPSULE_TAB_KEYS = new Set(['all', 'coin', 'discover', 'qa']);
+
 export default function PCCommunityContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useTranslation();
   const QA_CATEGORY_KEY = '不懂就问';
   const DISCOVERY_CATEGORY_KEY = '发现好币';
@@ -74,6 +77,34 @@ export default function PCCommunityContent() {
   const [detailFollowSubmitting, setDetailFollowSubmitting] = useState(false);
   // 解决 all/coin/discover/qa 四个 tab 快速切换导致的请求竞态
   const coinPostsRequestIdRef = useRef(0);
+  const hotTopicsPanelRef = useRef(null);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (!tab) return;
+
+    if (tab === 'hot') {
+      setActiveCapsuleTab('coin');
+      requestAnimationFrame(() => {
+        hotTopicsPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      return;
+    }
+
+    if (tab === 'discovery' || tab === 'discover') {
+      setActiveCapsuleTab('discover');
+      return;
+    }
+
+    if (tab === 'question' || tab === 'qa') {
+      setActiveCapsuleTab('qa');
+      return;
+    }
+
+    if (CAPSULE_TAB_KEYS.has(tab)) {
+      setActiveCapsuleTab(tab);
+    }
+  }, [searchParams]);
 
   const getBackendErrorMsg = (err) => {
     if (!err) return '';
@@ -1228,7 +1259,8 @@ export default function PCCommunityContent() {
                 onPageChange={(p) => fetchFlashNews(p)}
               />
             </div>
-            <div 
+            <div
+              ref={hotTopicsPanelRef}
               className={styles.hotTopicsScrollContainer}
             >
               <HotTopicList
