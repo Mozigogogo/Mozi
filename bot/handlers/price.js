@@ -5,6 +5,7 @@
 
 const { fetchDetailHeader } = require('../lib/apis');
 const { apiDebug } = require('../lib/debugLog');
+const { escapeHtml } = require('../lib/telegramHtml');
 
 const DEFAULT_SYMBOL = 'BTC';
 const SYMBOL_RE = /^[A-Za-z0-9]{1,32}$/;
@@ -25,22 +26,49 @@ function unwrapDetailPayload(data) {
 
 function isDetailHeaderShape(payload) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return false;
-  return typeof payload.symbol === 'string' && payload.symbol.length > 0;
+  const sym = payload.symbol ?? payload.s;
+  return sym != null && String(sym).trim().length > 0;
 }
 
 function toNum(value) {
-  const n = Number(value);
+  if (value == null || value === '') return null;
+  const s = String(value).trim().replace(/,/g, '');
+  const n = Number(s);
   return Number.isFinite(n) ? n : null;
+}
+
+/** 解析接口已格式化的中文数量，如 2003.11万、$1.53万亿 */
+function parseLocalizedNumber(value) {
+  if (value == null || value === '') return null;
+  let s = String(value).trim().replace(/,/g, '').replace(/\$/g, '');
+  let mul = 1;
+  if (s.includes('亿')) {
+    mul = 1e8;
+    s = s.replace(/亿/g, '');
+  } else if (s.includes('万')) {
+    mul = 1e4;
+    s = s.replace(/万/g, '');
+  }
+  const n = Number(s);
+  return Number.isFinite(n) ? n * mul : null;
+}
+
+function isPreformattedMetric(value) {
+  const s = String(value ?? '').trim();
+  if (!s) return false;
+  return /[万亿]/.test(s) || /%$/.test(s) || (s.startsWith('$') && !Number.isFinite(Number(s.replace(/[$,]/g, ''))));
 }
 
 function trimZeros(str) {
   return String(str).replace(/\.?0+$/, '');
 }
 
-/** 美元价格：小额保留更多小数 */
 function formatUsdPrice(value) {
-  const n = toNum(value);
-  if (n == null) return '—';
+  const n = toNum(value) ?? parseLocalizedNumber(value);
+  if (n == null) {
+    const s = String(value ?? '').trim();
+    return s || '—';
+  }
   const abs = Math.abs(n);
   if (abs >= 1000) {
     return `$${n.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
@@ -54,9 +82,9 @@ function formatUsdPrice(value) {
   return `$${trimZeros(n.toFixed(6))}`;
 }
 
-/** 美元大额：中文万/亿 */
 function formatUsdCompactZh(value) {
-  const n = toNum(value);
+  if (isPreformattedMetric(value)) return String(value).trim();
+  const n = toNum(value) ?? parseLocalizedNumber(value);
   if (n == null) return '—';
   const abs = Math.abs(n);
   if (abs >= 1e8) return `$${trimZeros((n / 1e8).toFixed(2))}亿`;
@@ -64,9 +92,9 @@ function formatUsdCompactZh(value) {
   return formatUsdPrice(n);
 }
 
-/** 美元大额：英文 K/M/B */
 function formatUsdCompactEn(value) {
-  const n = toNum(value);
+  if (isPreformattedMetric(value)) return String(value).trim();
+  const n = toNum(value) ?? parseLocalizedNumber(value);
   if (n == null) return '—';
   const abs = Math.abs(n);
   if (abs >= 1e9) return `$${trimZeros((n / 1e9).toFixed(2))}B`;
@@ -75,9 +103,9 @@ function formatUsdCompactEn(value) {
   return formatUsdPrice(n);
 }
 
-/** 供应量：中文万/亿 */
 function formatSupplyZh(value) {
-  const n = toNum(value);
+  if (isPreformattedMetric(value)) return String(value).trim().replace(/^\$/, '');
+  const n = toNum(value) ?? parseLocalizedNumber(value);
   if (n == null) return '—';
   const abs = Math.abs(n);
   if (abs >= 1e8) return `${trimZeros((n / 1e8).toFixed(2))}亿`;
@@ -85,9 +113,9 @@ function formatSupplyZh(value) {
   return n.toLocaleString('en-US', { maximumFractionDigits: 2 });
 }
 
-/** 供应量：英文 K/M/B */
 function formatSupplyEn(value) {
-  const n = toNum(value);
+  if (isPreformattedMetric(value)) return String(value).trim().replace(/^\$/, '');
+  const n = toNum(value) ?? parseLocalizedNumber(value);
   if (n == null) return '—';
   const abs = Math.abs(n);
   if (abs >= 1e9) return `${trimZeros((n / 1e9).toFixed(2))}B`;
@@ -96,19 +124,24 @@ function formatSupplyEn(value) {
   return n.toLocaleString('en-US', { maximumFractionDigits: 2 });
 }
 
-function formatPct(value) {
-  const n = toNum(value);
-  if (n == null) return '—';
+function formatPctDisplay(value) {
+  if (value == null || value === '') return null;
+  const s = String(value).trim();
+  if (/%$/.test(s)) return s;
+  const n = toNum(s);
+  if (n == null) return null;
   const sign = n > 0 ? '+' : '';
   return `${sign}${n.toFixed(2)}%`;
 }
 
-function trendEmoji(pct) {
-  const n = toNum(pct);
-  if (n == null) return '➖';
-  if (n > 0) return '📈';
-  if (n < 0) return '📉';
-  return '➖';
+function pickPct24h(payload) {
+  return (
+    payload.priceChangePercentage_24h
+    ?? payload.price_change_percentage_24h
+    ?? payload.priceChangePercent24h
+    ?? payload.change24hPercent
+    ?? payload.changePercent24h
+  );
 }
 
 function pickVolume24h(payload) {
@@ -123,24 +156,34 @@ function pickIconUrl(payload) {
 }
 
 function circulatingPct(payload) {
-  const circ = toNum(payload.circulatingSupply);
-  const total = toNum(payload.totalSupply);
+  const circ = parseLocalizedNumber(payload.circulatingSupply) ?? toNum(payload.circulatingSupply);
+  const total = parseLocalizedNumber(payload.totalSupply) ?? toNum(payload.totalSupply);
   if (circ == null || total == null || total <= 0) return null;
   return (circ / total) * 100;
 }
 
+function buildTitleHtml(sym, iconUrl, texts, isZh) {
+  const suffix = isZh ? '项目简报' : 'Brief';
+  const symHtml = escapeHtml(sym);
+  if (iconUrl) {
+    return `<a href="${escapeHtml(iconUrl)}">🪙</a> <b>$${symHtml}</b> ${suffix}`;
+  }
+  return escapeHtml(texts.priceBriefTitle(sym));
+}
+
 /**
- * @param {object} payload /detail/header 解包后的对象
- * @param {object} texts getTexts()
+ * @param {object} payload
+ * @param {object} texts
+ * @param {string} requestedSymbol 用户请求的币种（用于展示兜底）
  */
-function formatPriceBrief(payload, texts, isZh, { withIcon = false } = {}) {
+function formatPriceBriefHtml(payload, texts, isZh, requestedSymbol) {
   if (!payload || typeof payload !== 'object') return '—';
 
-  const sym = String(payload.symbol || '').trim().toUpperCase() || '—';
-  const pct = payload.priceChangePercentage_24h ?? payload.price_change_percentage_24h;
-  const trend = trendEmoji(pct);
-  const pctStr = formatPct(pct);
-  const rank = toNum(payload.marketCapRank);
+  const sym = String(payload.symbol || requestedSymbol || '')
+    .trim()
+    .toUpperCase() || '—';
+  const pctStr = formatPctDisplay(pickPct24h(payload));
+  const rank = toNum(payload.marketCapRank ?? payload.market_cap_rank);
   const rankPart = rank != null ? `#${Math.round(rank)}` : '—';
   const circPct = circulatingPct(payload);
   const circPctStr = circPct != null ? ` (${circPct.toFixed(1)}%)` : '';
@@ -149,19 +192,32 @@ function formatPriceBrief(payload, texts, isZh, { withIcon = false } = {}) {
     ? { usdPrice: formatUsdPrice, usdCompact: formatUsdCompactZh, supply: formatSupplyZh }
     : { usdPrice: formatUsdPrice, usdCompact: formatUsdCompactEn, supply: formatSupplyEn };
 
-  const titleLine = withIcon ? texts.priceBriefTitleWithIcon(sym) : texts.priceBriefTitle(sym);
+  const iconUrl = pickIconUrl(payload);
+  const priceStr = fmt.usdPrice(payload.currentPrice);
+  const capStr = fmt.usdCompact(payload.marketCap);
+  const volStr = fmt.usdCompact(pickVolume24h(payload));
 
-  return [
-    titleLine,
-    texts.priceBriefCurrent(fmt.usdPrice(payload.currentPrice), trend, pctStr),
-    texts.priceBriefHighLow(fmt.usdPrice(payload.high_24h), fmt.usdPrice(payload.low_24h)),
-    texts.priceBriefRank(rankPart, fmt.usdCompact(payload.marketCap)),
-    texts.priceBriefFdv(fmt.usdCompact(payload.fullyDilutedValuation)),
-    texts.priceBriefSupplySection,
-    texts.priceBriefCirculating(fmt.supply(payload.circulatingSupply), circPctStr),
-    texts.priceBriefTotalSupply(fmt.supply(payload.totalSupply)),
-    texts.priceBriefVolume(fmt.usdCompact(pickVolume24h(payload))),
-  ].join('\n');
+  const lines = [
+    buildTitleHtml(sym, iconUrl, texts, isZh),
+    pctStr
+      ? escapeHtml(texts.priceBriefCurrent(priceStr, pctStr))
+      : escapeHtml(texts.priceBriefCurrentPlain(priceStr)),
+    escapeHtml(
+      texts.priceBriefHighLow(
+        fmt.usdPrice(payload.high_24h),
+        fmt.usdPrice(payload.low_24h),
+      ),
+    ),
+    capStr !== '—'
+      ? escapeHtml(texts.priceBriefRank(rankPart, capStr))
+      : escapeHtml(texts.priceBriefRankPlain(rankPart)),
+    escapeHtml(texts.priceBriefSupplySection),
+    escapeHtml(texts.priceBriefCirculating(fmt.supply(payload.circulatingSupply), circPctStr)),
+    escapeHtml(texts.priceBriefTotalSupply(fmt.supply(payload.totalSupply))),
+    escapeHtml(texts.priceBriefVolume(volStr)),
+  ];
+
+  return lines.join('\n');
 }
 
 function registerPrice(bot, config, { getTexts }) {
@@ -223,25 +279,14 @@ function registerPrice(bot, config, { getTexts }) {
       return;
     }
 
-    const iconUrl = pickIconUrl(payload);
-    const message = formatPriceBrief(payload, texts, acceptLanguage === 'zh', {
-      withIcon: Boolean(iconUrl),
-    });
-    const opts = {};
+    const message = formatPriceBriefHtml(payload, texts, acceptLanguage === 'zh', symbol);
+    const opts = {
+      parse_mode: 'HTML',
+      link_preview_options: { is_disabled: true },
+    };
     if (ctx.message?.message_id) {
       opts.reply_to_message_id = ctx.message.message_id;
     }
-
-    if (iconUrl) {
-      try {
-        await ctx.replyWithPhoto(iconUrl, { caption: message, ...opts });
-        return;
-      } catch (err) {
-        console.error('[/price] 发送币种图标失败:', err?.message || err);
-        apiDebug('/price handler', { failed: 'photo', iconUrl, message: err?.message || String(err) });
-      }
-    }
-
     await ctx.reply(message, opts);
   });
 }
