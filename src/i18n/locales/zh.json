@@ -1700,6 +1700,114 @@
       "monitor": "加监控"
     }
   },
+  "pcAbout": {
+    "title": "关于 Mozi (墨子)",
+    "lead": "Mozi 是一家全球领先的专业加密数据智能分析平台。我们秉持墨子“兼爱非攻”的哲学理念，致力于通过技术创新打破信息差，降低交易门槛，让每一位用户都能在复杂的加密市场中做出明智决策。",
+    "coreFunctionsTitle": "核心功能：解决「买什么、去哪买、怎么买」",
+    "coreFunctionsIntro": "Mozi 通过实时整合主流交易所全量数据，为用户提供一站式探索方案：",
+    "coreFunctionItems": [
+      {
+        "label": "全维榜单：",
+        "text": "涵盖交易所排名、热门币种、涨跌幅榜等实时排行榜。"
+      },
+      {
+        "label": "深度搜索：",
+        "text": "毫秒级索引，精准定位全球主流加密资产。"
+      },
+      {
+        "label": "智能决策：",
+        "text": "整合人工智能与大数据分析，量化市场风险，辅助高收益决策。"
+      }
+    ],
+    "advantagesTitle": "我们的优势",
+    "advantageItems": [
+      {
+        "label": "专业团队：",
+        "text": "由交易专家、数据科学家及 AI 架构师组成，确保数据的极端准确与实时性。"
+      },
+      {
+        "label": "硬核技术：",
+        "text": "兼具金融级安全性与互联网级易用性，为您的资产发现保驾护航。"
+      }
+    ],
+    "cultureTitle": "企业文化",
+    "mission": "使命： 让财富触手可及",
+    "vision": "愿景： 让交易更简单、更智能、更安全",
+    "values": "价值观： 兼爱 · 务实 · 专注 · 创新 · 自由",
+    "joinTitle": "加入我们：",
+    "joinText": "Mozi 正处于高速成长期，诚邀志同道合的技术、运营、产品专家及投资机构共谋发展，将科技与兼爱理念传播至全球。"
+  },
+  "pcHelp": {
+    "heroLabel": "Help Center · 帮助中心",
+    "heroTitle": "有问题？",
+    "heroTitleEm": "我们来解答。",
+    "heroDesc": "在这里找到关于 Mozi 的所有常见问题解答。大多数问题都能在几秒钟内得到答案。",
+    "searchPlaceholder": "搜索问题，例如「支持哪些付款方式」…",
+    "dividerLabel": "详细问答",
+    "contactLabel": "还是没找到答案？",
+    "contactTitle": "我们在这里。",
+    "contactDesc": "工作日 09:00 – 22:00，我们的支持团队会在 2 小时内回复。紧急问题请在消息中注明「紧急」。",
+    "contactEmail": "发送邮件至客服",
+    "mailSubject": "帮助请求",
+    "sections": [
+      {
+        "id": "account",
+        "title": "🔐 账户与安全",
+        "count": "1 个问题",
+        "items": [
+          {
+            "id": "q-email",
+            "question": "如何修改账户邮箱或手机号？",
+            "answerHtml": "<p>前往<span class=\"tag\">设置 → 账户信息</span>，在「联系方式」板块中点击对应的「修改」按钮。</p><p>修改邮箱需要在新邮箱中完成验证；修改手机号需要通过短信验证码确认。出于安全考虑，每 7 天内只能修改一次主要联系方式。</p>"
+          }
+        ]
+      },
+      {
+        "id": "billing",
+        "title": "💳 订阅与付款",
+        "count": "4 个问题",
+        "items": [
+          {
+            "id": "q-plan",
+            "question": "如何升级、降级或更换套餐？",
+            "answerHtml": "<p>前往<span class=\"tag\">设置 → 订阅</span>，点击「更改套餐」即可选择新的方案。</p><ul><li><strong>升级</strong>：立即生效，按剩余天数比例收取差额</li><li><strong>降级</strong>：当前计费周期结束后生效，不收取额外费用</li><li><strong>取消</strong>：当前周期结束后自动停止续费，期间仍可正常使用</li></ul>"
+          },
+          {
+            "id": "q-refund",
+            "question": "退款政策是什么？",
+            "answerHtml": "<p>请<a href=\"#contact\">联系客服</a>。</p>"
+          },
+          {
+            "id": "q-payment",
+            "question": "支持哪些付款方式？",
+            "answerHtml": "<p>目前支持以下付款方式：</p><ul><li>Stars 支付</li><li>USDT 支付</li></ul>"
+          },
+          {
+            "id": "q-failed",
+            "question": "扣款失败了怎么办？",
+            "answerHtml": "<p><a href=\"mailto:notice@moziinnovations.com?subject=帮助请求\">发邮件</a>邀请我们。</p>"
+          }
+        ]
+      },
+      {
+        "id": "technical",
+        "title": "🛠 技术问题",
+        "count": "2 个问题",
+        "items": [
+          {
+            "id": "q-slow",
+            "question": "页面加载缓慢或无法访问，怎么排查？",
+            "answerHtml": "<p>请按以下步骤排查：</p><ul><li>刷新页面，或强制刷新（Ctrl + Shift + R）</li><li>清除浏览器缓存和 Cookie</li><li>尝试无痕模式或其他浏览器（推荐 Chrome、Edge 最新版）</li><li>检查网络连接，尝试切换 Wi-Fi 或移动数据</li><li>查看 <a href=\"#\">status.mozi.app</a> 确认是否有服务中断公告</li></ul><p>以上均无效，请<a href=\"#contact\">联系技术支持</a>并附上截图或错误信息。</p>"
+          },
+          {
+            "id": "q-browser",
+            "question": "支持哪些浏览器和设备？",
+            "answerHtml": "<p>支持所有主流现代浏览器的最新两个大版本，包括 Chrome、Firefox、Safari、Edge。不支持 IE 11 及以下版本。</p><p>移动端支持 iOS 15+ 和 Android 10+，建议使用系统自带浏览器或 Chrome 移动版以获得最佳体验。</p>"
+          }
+        ]
+      }
+    ]
+  },
   "pcLayout": {
     "notice": "告别手动盯盘！先让AI分析走势，再设置精准报警！",
     "menu": {

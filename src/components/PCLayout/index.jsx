@@ -578,13 +578,13 @@ export default function PCLayout({ children }) {
   const pcFooterLinkRows = useMemo(
     () => [
       [
-        { key: 'aboutUs', label: t('pcLayout.footer.aboutUs'), action: () => openSiderFooterPopup('about') },
+        { key: 'aboutUs', label: t('pcLayout.footer.aboutUs'), href: '/pc/about' },
         { key: 'service', label: t('pcLayout.footer.service'), href: '/vip-recharge' },
         { key: 'affiliate', label: t('pcLayout.footer.affiliate'), href: '/pc/benefitsPage' },
       ],
       [
         { key: 'inviteRewards', label: t('pcLayout.footer.inviteRewards'), href: '/achievement' },
-        { key: 'helpCenter', label: t('pcLayout.footer.helpCenter'), action: () => openSiderFooterPopup('contact') },
+        { key: 'helpCenter', label: t('pcLayout.footer.helpCenter'), href: '/pc/help' },
         { key: 'videoGuides', label: t('pcLayout.footer.videoGuides'), action: () => openSiderFooterPopup('social') },
       ],
     ],
@@ -663,6 +663,9 @@ export default function PCLayout({ children }) {
     setActiveContent(null);
     router.push(key);
   };
+
+  const isHelpPage =
+    pathname === '/pc/help' || (pathname && pathname.startsWith('/pc/help/'));
 
   const getSelectedKey = () => {
     if (activeContent) {
@@ -1128,9 +1131,11 @@ export default function PCLayout({ children }) {
         </Sider>
 
         {/* 右侧 Content */}
-        <Content className={`${styles.content} ${styles.homeContent} ${collapsed ? styles.contentCollapsed : ''}`}>
-          <div className={styles.contentWrapper}>
-            <div className={styles.contentMain}>
+        <Content
+          className={`${styles.content} ${!isHelpPage ? styles.homeContent : ''} ${collapsed ? styles.contentCollapsed : ''}`}
+        >
+          <div className={`${styles.contentWrapper} ${isHelpPage ? styles.contentWrapperHelp : ''}`}>
+            <div className={`${styles.contentMain} ${isHelpPage ? styles.contentMainFlush : ''}`}>
               {(() => {
                 if (showSearchResults) {
                   return <PCSearchResults keyword={searchKeyword} onClose={() => setShowSearchResults(false)} />;

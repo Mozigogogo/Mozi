@@ -748,6 +748,22 @@
   min-height: calc(100vh - 64px);
 }
 
+/* 帮助中心：内容在右侧 Content 区域内铺满并可滚动 */
+.contentWrapperHelp {
+  min-height: calc(100vh - 64px);
+  overflow: hidden;
+}
+
+.contentMainFlush {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  padding: 0;
+  padding-bottom: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
 .contentCollapsed {
   margin-left: 80px;
 }
@@ -838,7 +854,7 @@
     gap: 4px;
   }
 
-  .contentMain {
+  .contentMain:not(.contentMainFlush) {
     padding: 16px;
     padding-bottom: 64PX;
   }
@@ -912,9 +928,13 @@
     min-height: calc(100vh - 56px);
   }
 
-  .contentMain {
+  .contentMain:not(.contentMainFlush) {
     padding: 12px;
     padding-bottom: 56PX;
+    min-height: calc(100vh - 56px);
+  }
+
+  .contentWrapperHelp {
     min-height: calc(100vh - 56px);
   }
 
