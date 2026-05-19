@@ -661,7 +661,6 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   const markCurrentMessageAborted = useCallback(() => {
     const msgId = currentAiMsgIdRef.current;
     if (!msgId) return;
-    const abortedText = t('robot.conversationAborted');
     setMessages((prev) =>
       prev.map((msg) =>
         msg.id === msgId
@@ -669,14 +668,13 @@ export default function RobotPage({ isPC: propIsPC = false }) {
               ...msg,
               loading: false,
               statusHint: '',
-              content: msg.content || abortedText,
               aborted: true,
             }
           : msg
       )
     );
     currentAiMsgIdRef.current = null;
-  }, [t]);
+  }, []);
 
   const getRobotLang = () =>
     typeof window !== 'undefined' ? localStorage.getItem('i18nextLng') || 'zh' : 'zh';
@@ -1550,6 +1548,10 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                           onEarnPoints={() => router.push('/pointsdetail')}
                           onUpgrade={() => router.push('/vip-recharge')}
                         />
+                      ) : msg.aborted && !msg.content ? (
+                        <div className={styles.abortedText}>
+                          {t('robot.conversationAborted', { defaultValue: '对话已中止' })}
+                        </div>
                       ) : msg.loading && !msg.content ? (
                         msg.statusHint ? (
                           <div className={styles.bigorderStatus}>
