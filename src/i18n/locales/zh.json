@@ -921,6 +921,12 @@
       "bigOrder": "大单侦测",
       "openMenu": "切换模型"
     },
+    "bigorder": {
+      "analyzing": "正在分析大单信号…",
+      "toolCall": "正在查询 {{coin}} 异动数据（{{tool}}）",
+      "toolCallGeneric": "正在调用 {{tool}}…",
+      "generating": "正在生成分析报告…"
+    },
     "quickAsk": {
       "btcTrend": "BTC后市如何",
       "ethTechnical": "ETH技术面怎么样",

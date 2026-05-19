@@ -12,6 +12,12 @@ export function useRobotTestSSE(url, options = {}) {
     onError = () => {},
     /** SSE data: { type: "suggestions", suggestions: [{ id, suggestion }] } */
     onSuggestions = () => {},
+    /** 大单侦测：event: thinking */
+    onThinking = () => {},
+    /** 大单侦测：event: toolcall */
+    onToolCall = () => {},
+    /** 大单侦测：event: toolresult */
+    onToolResult = () => {},
     headers = {},
     getToken = null,
   } = options;
@@ -106,6 +112,26 @@ export function useRobotTestSSE(url, options = {}) {
             // 2. 自定义 JSON: event/type 字段在 JSON 数据内部 (data: {"type": "chunk", "data": "..."})
             const messageType = eventData.type || event || 'message';
 
+            const finishStream = () => {
+              if (finishRef.current) return;
+              finishRef.current = true;
+              setIsStreaming(false);
+              const fullContent = accumulatedContentRef.current;
+              const finalEventData =
+                eventData && Object.keys(eventData).length > 0 ? eventData : lastEventDataRef.current;
+              onComplete(fullContent, finalEventData);
+              if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+              }
+            };
+
+            const appendTextDelta = (delta) => {
+              if (!delta) return;
+              accumulatedContentRef.current += delta;
+              lastEventDataRef.current = eventData;
+              onChunk(delta, accumulatedContentRef.current, eventData);
+            };
+
             if (messageType === 'start') {
               lastEventDataRef.current = eventData;
               // 如果 start 事件也包含文本内容，尝试提取
@@ -125,31 +151,40 @@ export function useRobotTestSSE(url, options = {}) {
                 delta = eventData.content;
               }
 
-              if (delta) {
-                accumulatedContentRef.current += delta;
-                lastEventDataRef.current = eventData;
-                onChunk(delta, accumulatedContentRef.current, eventData);
+              appendTextDelta(delta);
+            } else if (messageType === 'content') {
+              // 大单侦测：event: content, data: {"text": "..."}
+              const delta =
+                typeof eventData.text === 'string'
+                  ? eventData.text
+                  : typeof eventData.data === 'string'
+                    ? eventData.data
+                    : '';
+              appendTextDelta(delta);
+            } else if (
+              messageType === 'complete' ||
+              messageType === 'end' ||
+              messageType === 'finish' ||
+              messageType === 'done'
+            ) {
+              finishStream();
+            } else if (messageType === 'thinking') {
+              try {
+                onThinking(eventData);
+              } catch (cbErr) {
+                console.warn('[useRobotTestSSE] onThinking error:', cbErr);
               }
-            } else if (messageType === 'complete' || messageType === 'end' || messageType === 'finish') {
-              console.log('Stream finished:', messageType);
-              
-              // 1. 立即更新状态，防止 UI 卡顿
-              setIsStreaming(false);
-              finishRef.current = true;
-
-              // 2. 触发完成回调
-              const fullContent = accumulatedContentRef.current;
-              // 确保传递最新的 eventData
-              const finalEventData = eventData && Object.keys(eventData).length > 0 ? eventData : lastEventDataRef.current;
-              onComplete(fullContent, finalEventData);
-              
-              // 3. 主动断开连接
-              if (abortControllerRef.current) {
-                abortControllerRef.current.abort();
-                // 注意：这里不要立即置空 abortControllerRef.current，
-                // 因为 fetchEventSource 内部可能还需要 signal，
-                // 而且 catch 块可能依赖它。
-                // 但为了避免重复调用 abort，可以不置空，反正下次 sendMessage 会重置。
+            } else if (messageType === 'toolcall') {
+              try {
+                onToolCall(eventData);
+              } catch (cbErr) {
+                console.warn('[useRobotTestSSE] onToolCall error:', cbErr);
+              }
+            } else if (messageType === 'toolresult') {
+              try {
+                onToolResult(eventData);
+              } catch (cbErr) {
+                console.warn('[useRobotTestSSE] onToolResult error:', cbErr);
               }
             } else if (messageType === 'suggestions') {
               const list = Array.isArray(eventData.suggestions) ? eventData.suggestions : [];
@@ -184,12 +219,15 @@ export function useRobotTestSSE(url, options = {}) {
       }
 
       if (err.message === 'Server closed connection') {
-        // 服务器主动关闭连接，视为完成
-        setIsStreaming(false);
-        const fullContent = accumulatedContentRef.current;
-        const finalEventData = lastEventDataRef.current;
-        onComplete(fullContent, finalEventData);
-        return fullContent;
+        // 服务器主动关闭连接，视为完成（若已由 done/complete 处理则跳过）
+        if (!finishRef.current) {
+          finishRef.current = true;
+          setIsStreaming(false);
+          const fullContent = accumulatedContentRef.current;
+          const finalEventData = lastEventDataRef.current;
+          onComplete(fullContent, finalEventData);
+        }
+        return accumulatedContentRef.current;
       }
 
       setError(err);
@@ -200,7 +238,21 @@ export function useRobotTestSSE(url, options = {}) {
       
       // 不再重新抛出
     }
-  }, [headers, getToken, onStart, onChunk, onComplete, onError, onSuggestions, abort, isStreaming, url]);
+  }, [
+    headers,
+    getToken,
+    onStart,
+    onChunk,
+    onComplete,
+    onError,
+    onSuggestions,
+    onThinking,
+    onToolCall,
+    onToolResult,
+    abort,
+    isStreaming,
+    url,
+  ]);
 
   return {
     sendMessage,

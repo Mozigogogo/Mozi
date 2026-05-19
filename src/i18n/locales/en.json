@@ -938,6 +938,12 @@
       "bigOrder": "Big order detection",
       "openMenu": "Switch model"
     },
+    "bigorder": {
+      "analyzing": "Analyzing large-order signals…",
+      "toolCall": "Fetching {{coin}} anomaly data ({{tool}})",
+      "toolCallGeneric": "Running {{tool}}…",
+      "generating": "Generating analysis report…"
+    },
     "quickAsk": {
       "btcTrend": "BTC outlook",
       "ethTechnical": "ETH technical view",

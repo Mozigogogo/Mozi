@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -31,26 +31,6 @@ import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognitio
 import AiRobotUpgradePillButton from '@/components/AiRobotUpgradePillButton';
 import PointsInsufficientBubble from '@/components/PointsInsufficientBubble';
 import ShareAiChatModal from '@/components/ShareAiChatModal';
-
-function extractBigorderAssistantText(rawText) {
-  const trimmed = String(rawText || '').trim();
-  if (!trimmed) return '';
-  try {
-    const j = JSON.parse(trimmed);
-    if (typeof j === 'string') return j;
-    if (j == null) return '';
-    const core = Object.prototype.hasOwnProperty.call(j, 'data') ? j.data : j;
-    if (typeof core === 'string') return core;
-    if (core && typeof core === 'object') {
-      for (const k of ['content', 'message', 'reply', 'answer', 'text']) {
-        if (typeof core[k] === 'string' && core[k].trim()) return core[k].trim();
-      }
-    }
-    return '';
-  } catch {
-    return trimmed;
-  }
-}
 
 // 大依赖按需加载：避免首屏把 syntax-highlighter 整包打进来
 const LazySyntaxHighlighter = dynamic(
@@ -410,8 +390,6 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   // 当前模型单次对话所需积分（大单侦测与对话模型同档）
   const requiredPointsPerAsk = selectedModel === 'analyze' ? 50 : 10;
 
-  const [bigorderLoading, setBigorderLoading] = useState(false);
-  const bigorderAbortRef = useRef(null);
   const modelMenuRef = useRef(null);
 
   // 语音转文字（Web Speech API）
@@ -670,20 +648,26 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     }
   };
 
+  const patchCurrentAiMessage = useCallback((patch) => {
+    const msgId = currentAiMsgIdRef.current;
+    if (!msgId) return;
+    setMessages((prev) =>
+      prev.map((msg) => (msg.id === msgId ? { ...msg, ...patch } : msg))
+    );
+  }, []);
+
+  const getRobotLang = () =>
+    typeof window !== 'undefined' ? localStorage.getItem('i18nextLng') || 'zh' : 'zh';
+
   // 使用 SSE Stream Hook（对话结束或中断后再扣积分）
   const { sendMessage, isStreaming, abort } = useRobotTestSSE(
     selectedModel === 'analyze'
       ? '/api/robot_proxy/api/v1/analyze/stream'
       : '/api/robot_proxy/api/v1/chat/stream',
     {
-      headers: () => {
-        const lang = typeof window !== 'undefined' 
-          ? (localStorage.getItem('i18nextLng') || 'zh') 
-          : 'zh';
-        return {
-          'language': lang,
-        };
-      },
+      headers: () => ({
+        language: getRobotLang(),
+      }),
       getToken: () => typeof window !== 'undefined' ? localStorage.getItem('token') : null,
       onStart: () => {
         // AI 开始回复
@@ -775,69 +759,92 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     }
   );
 
-  const isBusy = isStreaming || bigorderLoading;
-
-  /** 大单侦测：JSON POST（非 SSE），浏览器直连 Python 后端 */
-  const runBigorderChatRequest = async (message, aiMsgId) => {
-    setBigorderLoading(true);
-    bigorderAbortRef.current = new AbortController();
-    currentActionCodeRef.current = 'AI_BASIC_CHAT';
-    hasConsumedRef.current = false;
-    try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      const res = await fetch(BIGORDER_CHAT_API, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { authentication: token } : {}),
-        },
-        body: JSON.stringify({ message }),
-        signal: bigorderAbortRef.current.signal,
+  /** 大单侦测：SSE 直连 Python 后端（thinking / toolcall / content / suggestions / done） */
+  const {
+    sendMessage: sendBigorderMessage,
+    isStreaming: isBigorderStreaming,
+    abort: abortBigorder,
+  } = useRobotTestSSE(BIGORDER_CHAT_API, {
+    headers: () => ({
+      language: getRobotLang(),
+    }),
+    getToken: () => (typeof window !== 'undefined' ? localStorage.getItem('token') : null),
+    onThinking: (data) => {
+      patchCurrentAiMessage({
+        statusHint: t('robot.bigorder.analyzing'),
+        loading: true,
       });
-      const raw = await res.text();
-      if (!res.ok) {
-        throw new Error(raw || `HTTP ${res.status}`);
+    },
+    onToolCall: (data) => {
+      const coin = data?.args?.coin || '';
+      const tool = data?.tool || '';
+      patchCurrentAiMessage({
+        statusHint: coin
+          ? t('robot.bigorder.toolCall', { tool, coin })
+          : t('robot.bigorder.toolCallGeneric', { tool: tool || 'tool' }),
+        loading: true,
+      });
+    },
+    onToolResult: () => {
+      patchCurrentAiMessage({
+        statusHint: t('robot.bigorder.generating'),
+        loading: true,
+      });
+    },
+    onSuggestions: (list) => {
+      const norm = normalizeSuggestionItems(list);
+      if (norm.length > 0) {
+        setSuggestedQuestions(norm);
       }
-      let text = extractBigorderAssistantText(raw);
-      if (!text) text = t('robot.genericError');
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === aiMsgId ? { ...msg, content: text, loading: false, error: false } : msg
-        )
-      );
-      currentAiMsgIdRef.current = null;
-      trackEvent(AIEvents.RESPONSE_RECEIVED, {
-        requestId: currentRequestIdRef.current,
-        responseLength: text.length,
+    },
+    onChunk: (_chunk, accumulated) => {
+      patchCurrentAiMessage({
+        content: accumulated,
+        loading: true,
+        statusHint: '',
       });
-      await consumeOnce('complete');
-    } catch (error) {
-      const isAbort = error?.name === 'AbortError';
-      if (isAbort) {
-        const aid = currentAiMsgIdRef.current;
-        if (aid) {
-          setMessages((prev) =>
-            prev.map((msg) => (msg.id === aid ? { ...msg, loading: false } : msg))
-          );
-        }
-        currentAiMsgIdRef.current = null;
-        await consumeOnce('abort');
-      } else {
-        console.error('[Robot] bigorder chat failed:', error);
+    },
+    onComplete: async (fullContent, eventData) => {
+      const msgId = currentAiMsgIdRef.current;
+      if (msgId) {
         setMessages((prev) =>
           prev.map((msg) =>
-            msg.id === aiMsgId
-              ? { ...msg, content: t('robot.sendFailed'), loading: false, error: true }
+            msg.id === msgId
+              ? {
+                  ...msg,
+                  content: fullContent || t('robot.genericError'),
+                  loading: false,
+                  statusHint: '',
+                  error: false,
+                }
               : msg
           )
         );
-        currentAiMsgIdRef.current = null;
       }
-    } finally {
-      setBigorderLoading(false);
-      bigorderAbortRef.current = null;
-    }
-  };
+      currentAiMsgIdRef.current = null;
+
+      if (eventData?.suggestions?.length) {
+        setSuggestedQuestions(normalizeSuggestionItems(eventData.suggestions));
+      }
+
+      trackEvent(AIEvents.RESPONSE_RECEIVED, {
+        requestId: currentRequestIdRef.current,
+        responseLength: (fullContent || '').length,
+      });
+      await consumeOnce('complete');
+    },
+    onError: () => {
+      patchCurrentAiMessage({
+        content: t('robot.sendFailed'),
+        loading: false,
+        statusHint: '',
+        error: true,
+      });
+      currentAiMsgIdRef.current = null;
+    },
+  });
+
+  const isBusy = isStreaming || isBigorderStreaming;
 
   // 右上角 “AI Assistant Pro” 升级胶囊：只在空状态展示，开始对话后隐藏
   // 放在这里是为了确保 `isBootstrappingUserData` / `isStreaming` 已初始化
@@ -1004,7 +1011,9 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
     try {
       if (selectedModel === 'bigorder') {
-        await runBigorderChatRequest(message, aiMsgId);
+        currentActionCodeRef.current = 'AI_BASIC_CHAT';
+        hasConsumedRef.current = false;
+        await sendBigorderMessage({ message, lang: getRobotLang() });
         return;
       }
 
@@ -1098,7 +1107,9 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
     try {
       if (selectedModel === 'bigorder') {
-        await runBigorderChatRequest(lastMessage, aiMsgId);
+        currentActionCodeRef.current = 'AI_BASIC_CHAT';
+        hasConsumedRef.current = false;
+        await sendBigorderMessage({ message: lastMessage, lang: getRobotLang() });
         return;
       }
 
@@ -1106,9 +1117,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
       currentActionCodeRef.current = actionCode;
       hasConsumedRef.current = false;
 
-      const lang = typeof window !== 'undefined'
-        ? (localStorage.getItem('i18nextLng') || 'zh')
-        : 'zh';
+      const lang = getRobotLang();
 
       let payload = {};
       if (selectedModel === 'analyze') {
@@ -1212,8 +1221,19 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
   // 停止生成
   const handleStop = () => {
-    if (bigorderLoading && bigorderAbortRef.current) {
-      bigorderAbortRef.current.abort();
+    if (isBigorderStreaming) {
+      abortBigorder();
+      if (currentAiMsgIdRef.current) {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === currentAiMsgIdRef.current
+              ? { ...msg, loading: false, statusHint: '' }
+              : msg
+          )
+        );
+      }
+      currentAiMsgIdRef.current = null;
+      consumeOnce('abort');
       return;
     }
     if (!isStreaming) return;
@@ -1520,9 +1540,19 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                           onUpgrade={() => router.push('/vip-recharge')}
                         />
                       ) : msg.loading && !msg.content ? (
-                        <ThinkingAnimation />
+                        msg.statusHint ? (
+                          <div className={styles.bigorderStatus}>
+                            <ThinkingAnimation size={28} />
+                            <span>{msg.statusHint}</span>
+                          </div>
+                        ) : (
+                          <ThinkingAnimation />
+                        )
                       ) : msg.role === 'assistant' && msg.content ? (
                         <>
+                          {msg.statusHint ? (
+                            <div className={styles.bigorderStatus}>{msg.statusHint}</div>
+                          ) : null}
                           <StreamingMarkdown
                             content={msg.content}
                             isStreaming={msg.loading}
