@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import styles from './HeroSection.module.css';
 import PromoCopy from '../PromoCopy/index';
 
@@ -18,13 +17,13 @@ export default function HeroSection() {
 
         <div className={styles.rightPane}>
           <div className={styles.screenFrame} aria-hidden="true">
-            <Image
-              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/introduction1.svg"
-              alt="Mozi introduction preview"
-              fill
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/ai.gif"
+              alt="Mozi AI assistant preview"
               className={styles.screenImage}
-              priority
-              sizes="(max-width: 1024px) 92vw, 50vw"
+              loading="eager"
+              decoding="async"
             />
           </div>
 
