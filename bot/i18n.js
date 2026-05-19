@@ -52,47 +52,26 @@ const i18n = {
       `⚠️ <b>积分不足</b>\n\n当前剩余积分：<b>${have}</b>\n使用 <code>/chat</code> 对话需要至少 <b>${need}</b> 积分。\n\n点击下方按钮前往 <b>社区发帖</b> 赚取积分，或查看积分明细。`,
     chatInsufficientPointsDmFailed: (need) =>
       `无法私信积分说明：请先<strong>私聊</strong>本机器人，再使用 <code>/chat</code>（对话需至少 <b>${need}</b> 积分）。`,
-    priceInvalidSymbol: '交易对格式无效，请使用字母与数字，例如：<code>/price PLUME</code>',
+    priceInvalidSymbol: '交易对格式无效，请使用字母与数字，例如：<code>/price BTC</code>',
     priceError: (code) => `获取行情失败（HTTP ${code}），请稍后再试。`,
-    priceTitleHtml: (sym) => `📊 <b>${sym}</b> 行情`,
-    priceTitleHtmlDetail: (nameHtml, symHtml) => `📊 <b>${nameHtml}</b> <code>${symHtml}</code>`,
     priceBadJson: '接口返回了非 JSON 内容，请稍后重试或联系管理员。',
     priceNetworkError: '获取行情失败（网络异常），请稍后再试。',
-    priceBoolYes: '是',
-    priceBoolNo: '否',
-    priceLabels: {
-      name: '名称',
-      symbol: '代码',
-      currentPrice: '当前价格',
-      priceChange_24h: '24h 涨跌额',
-      priceChangePercentage_24h: '24h 涨跌幅',
-      high_24h: '24h 最高',
-      low_24h: '24h 最低',
-      marketCap: '市值',
-      marketCapRank: '市值排名',
-      marketCapChange_24h: '24h 市值变化',
-      marketCapChangePercentage_24h: '24h 市值涨跌幅',
-      fullyDilutedValuation: '完全稀释估值',
-      totalVolume: '总成交额',
-      volume: '成交量',
-      quoteVolume: '计价成交量',
-      circulatingSupply: '流通供应量',
-      totalSupply: '总供应量',
-      ath: '历史最高价',
-      athDate: 'ATH 日期',
-      athChangePercentage: '较 ATH 涨跌幅',
-      atl: '历史最低价',
-      atlDate: 'ATL 日期',
-      atlChangePercentage: '较 ATL 涨跌幅',
-      isSelfSelected: '自选',
-      url: '图标链接',
-    },
+    priceBriefTitle: (sym) => ` $${sym} 项目简报`,
+    priceBriefTitleWithIcon: (sym) => `$${sym} 项目简报`,
+    priceBriefCurrent: (price, trend, pct) => `💰 当前价格: ${price} (${trend} ${pct})`,
+    priceBriefHighLow: (high, low) => `📊 24h 高/低: ${high} / ${low}`,
+    priceBriefRank: (rank, cap) => `📈 市值排名: ${rank} (${cap})`,
+    priceBriefFdv: (fdv) => `💎 FDV (全稀释): ${fdv}`,
+    priceBriefSupplySection: '【供应量信息】',
+    priceBriefCirculating: (amount, pctSuffix) => `🔄 流通量: ${amount}${pctSuffix}`,
+    priceBriefTotalSupply: (amount) => `📦 总总量: ${amount}`,
+    priceBriefVolume: (vol) => `💸 24h 成交额: ${vol}`,
     helpBody: `🤖   Mozi AI 行情助手 · 指令说明
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
 📊 行情查询（免费）
-/price [币种]   查询实时价格
-  示例：/price BTC  /price ETH  /price SOL
+/price [币种]   查询实时价格（不写币种默认 BTC）
+  示例：/price  /price BTC  /price ETH
 
 🤖   AI 分析（需登录 Mozi）
 /ai [问题]      深度分析，消耗 50 积分
@@ -204,47 +183,26 @@ const i18n = {
       `⚠️ <b>Not enough points</b>\n\nYou have: <b>${have}</b>\n<code>/chat</code> needs at least <b>${need}</b> points.\n\nUse the buttons below to open the <b>community</b> and earn points, or view your statement.`,
     chatInsufficientPointsDmFailed: (need) =>
       `Could not DM you. Please <strong>message this bot</strong> first, then use <code>/chat</code> again (needs at least <b>${need}</b> points).`,
-    priceInvalidSymbol: 'Invalid symbol. Use letters and digits only, e.g.:\n<code>/price PLUME</code>',
+    priceInvalidSymbol: 'Invalid symbol. Use letters and digits only, e.g.:\n<code>/price BTC</code>',
     priceError: (code) => `Failed to fetch price (HTTP ${code}). Please try again later.`,
-    priceTitleHtml: (sym) => `📊 <b>${sym}</b>`,
-    priceTitleHtmlDetail: (nameHtml, symHtml) => `📊 <b>${nameHtml}</b> <code>${symHtml}</code>`,
     priceBadJson: 'The API did not return JSON. Please try again later.',
     priceNetworkError: 'Failed to fetch price (network error). Please try again later.',
-    priceBoolYes: 'Yes',
-    priceBoolNo: 'No',
-    priceLabels: {
-      name: 'Name',
-      symbol: 'Symbol',
-      currentPrice: 'Price',
-      priceChange_24h: '24h change',
-      priceChangePercentage_24h: '24h change %',
-      high_24h: '24h high',
-      low_24h: '24h low',
-      marketCap: 'Market cap',
-      marketCapRank: 'MC rank',
-      marketCapChange_24h: '24h MC change',
-      marketCapChangePercentage_24h: '24h MC change %',
-      fullyDilutedValuation: 'Fully diluted valuation',
-      totalVolume: 'Total volume',
-      volume: 'Volume',
-      quoteVolume: 'Quote volume',
-      circulatingSupply: 'Circulating supply',
-      totalSupply: 'Total supply',
-      ath: 'ATH',
-      athDate: 'ATH date',
-      athChangePercentage: 'From ATH %',
-      atl: 'ATL',
-      atlDate: 'ATL date',
-      atlChangePercentage: 'From ATL %',
-      isSelfSelected: 'Watchlist',
-      url: 'Icon URL',
-    },
+    priceBriefTitle: (sym) => ` $${sym} Brief`,
+    priceBriefTitleWithIcon: (sym) => `$${sym} Brief`,
+    priceBriefCurrent: (price, trend, pct) => `💰 Price: ${price} (${trend} ${pct})`,
+    priceBriefHighLow: (high, low) => `📊 24h H/L: ${high} / ${low}`,
+    priceBriefRank: (rank, cap) => `📈 Rank: ${rank} (${cap})`,
+    priceBriefFdv: (fdv) => `💎 FDV: ${fdv}`,
+    priceBriefSupplySection: '【Supply】',
+    priceBriefCirculating: (amount, pctSuffix) => `🔄 Circulating: ${amount}${pctSuffix}`,
+    priceBriefTotalSupply: (amount) => `📦 Total supply: ${amount}`,
+    priceBriefVolume: (vol) => `💸 24h Volume: ${vol}`,
     helpBody: `🤖 Mozi AI · Commands
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
 📊 Price (free)
-/price [symbol]  Live price
-  e.g. /price BTC  /price ETH  /price SOL
+/price [symbol]  Live price (default BTC if omitted)
+  e.g. /price  /price BTC  /price ETH
 
 🤖 AI (Mozi login required)
 /ai [question]   Deep analysis · 50 points
