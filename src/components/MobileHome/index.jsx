@@ -727,22 +727,13 @@ export default function MobileHome() {
     router.prefetch('/search');
   }, [router]);
 
-  // 跳转到榜单详情页
+  // 跳转到发现页排行榜（与 PC 首页「查看更多」一致）
   const go2List = () => {
-    switch (rankActiveKey) {
-      case 'zixuan': router.push('/selfrank'); break;
-      case 'zhangfu': router.push('/pricerank'); break;
-      case 'diefu': router.push('/downrank'); break;
-      case 'zhenfu': router.push('/waverank'); break;
-      case 'chengjiaoe': router.push('/traderank'); break;
-      case 'xinbi': router.push('/newcoinrank'); break;
-      case 'biaosheng': {
-        const intervals = '7_day';
-        router.push(`/uptraderank?intervals=${encodeURIComponent(intervals)}`);
-        break;
-      }
-      default: router.push('/find?tab=rank');
+    if (rankActiveKey === 'zixuan') {
+      router.push('/find?tab=self');
+      return;
     }
+    router.push('/find?tab=rank');
   };
 
   const enterSearchPage = () => {

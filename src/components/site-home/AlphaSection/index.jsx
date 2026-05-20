@@ -10,7 +10,7 @@ export default function AlphaSection() {
           className={styles.alphaCopy}
           title={['Alpha Scanner']}
           subtitle={['Hunt the next 100x gem before the pump.']}
-          href="/pc/find"
+          href="/pc/community?tab=discover"
           ctaText="Get Started"
         />
       </div>

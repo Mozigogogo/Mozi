@@ -1,4 +1,3 @@
-import RootTelegramRedirect from './RootTelegramRedirect';
 import styles from './site.module.css';
 import HeroSection from '@/components/site-home/HeroSection/index';
 import AlertsSection from '@/components/site-home/AlertsSection/index';
@@ -10,7 +9,6 @@ import KnowledgeSection from '@/components/site-home/KnowledgeSection/index';
 export default function SiteHomePage() {
   return (
     <main className={styles.page}>
-      <RootTelegramRedirect />
       <section className={styles.heroWrap}>
         <HeroSection />
         <AlertsSection />

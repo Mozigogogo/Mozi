@@ -18,6 +18,7 @@ import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { getSectionList } from '@/api/market';
 import { buildSectorDetailHref } from '@/utils/sectorNavigation';
+import { buildPcFindRankHref } from '@/utils/pcFindNavigation';
 import { completeTask } from '@/api/user';
 import styles from './index.module.less';
 
@@ -51,6 +52,13 @@ export default function PCHome() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const isEN = (i18n?.language || '').startsWith('en');
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || window.location.hash !== '#sector') return;
+    requestAnimationFrame(() => {
+      document.getElementById('sector')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, []);
 
   const scheduleLowPriority = (fn) => {
     try {
@@ -204,6 +212,13 @@ export default function PCHome() {
     }
   };
 
+  const handleAddMonitor = (e, record) => {
+    e.stopPropagation();
+    const symbol = record?.symbol || record?.key;
+    if (!symbol) return;
+    router.push(`/pc/alarm?symbol=${encodeURIComponent(symbol)}`);
+  };
+
   // 表格列配置
   const columns = [
     {
@@ -264,12 +279,21 @@ export default function PCHome() {
       title: t('pcHome.table.monitor'),
       key: 'addMonitor',
       align: 'center',
-      render: () => (
-        <img 
-          src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/monitor-bell.svg" 
-          className={styles.actionIcon} 
+      render: (_, record) => (
+        <img
+          src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/monitor-bell.svg"
+          className={styles.actionIcon}
           alt="monitor"
-          style={{ width: 18, height: 18 }} 
+          role="button"
+          tabIndex={0}
+          style={{ width: 18, height: 18, cursor: 'pointer' }}
+          onClick={(e) => handleAddMonitor(e, record)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleAddMonitor(e, record);
+            }
+          }}
         />
       ),
     },
@@ -492,10 +516,10 @@ export default function PCHome() {
       </div>
 
       {/* 板块选币 TreeMap */}
-      <div className={styles.sectorSection}>
+      <div id="sector" className={styles.sectorSection}>
         <div className={styles.sectorHeader}>
           <h2 className={styles.sectorTitle}>{t('pcHome.sectorMap.title')}</h2>
-          <div className={styles.headerViewMore} onClick={() => router.push('/hotsector')}>
+          <div className={styles.headerViewMore} onClick={() => router.push('/pc/hotsector')}>
             {t('pcHome.sectorMap.viewMore')}
           </div>
         </div>
@@ -513,7 +537,7 @@ export default function PCHome() {
         {/* 标题 */}
         <div className={styles.rankHeader}>
           <h2 className={styles.rankTitle}>{t('pcHome.ranks.title')}</h2>
-          <div className={styles.headerViewMore} onClick={() => router.push('/pricerank')}>
+          <div className={styles.headerViewMore} onClick={() => router.push(buildPcFindRankHref(activeRankTab))}>
             {t('pcHome.ranks.viewMore')}
           </div>
         </div>

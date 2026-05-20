@@ -105,13 +105,12 @@ const PCHotTopics = () => {
     }
   };
 
-  const handleTopicClick = (topic) => {
-    // Navigate to topic detail or community page
-    router.push(`/community?tab=hot`);
+  const handleTopicClick = () => {
+    router.push('/pc/community');
   };
 
   const handleMoreClick = () => {
-    router.push('/community?tab=hot');
+    router.push('/pc/community');
   };
 
   const formatHotValue = (val) => {

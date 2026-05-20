@@ -17,17 +17,34 @@ const TurnoverIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi
 const MarketMonitoringIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/watch.svg';
 const CalendarIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/find_calendar.svg';
 
+/** PC 端「去配置报警」统一进入 PC 告警页，默认 BTC */
+const PC_ALARM_CONFIGURE_HREF = '/pc/alarm?symbol=BTC';
+
+const dbgOverview = (...args) => {
+  if (typeof console !== 'undefined') {
+    console.log('[PCFindCalendar][PCMarketOverview]', ...args);
+  }
+};
+
 /**
  * PC端市场概况组件 - 4个统计卡片
  */
-const PCMarketOverview = memo(({ onCalendarClick }) => {
+const PCMarketOverview = memo(({ onCalendarClick, calendarExpanded = false }) => {
   const { t } = useTranslation();
   const [selectedCardId, setSelectedCardId] = useState('');
+
+  useEffect(() => {
+    setSelectedCardId((prev) => {
+      if (calendarExpanded) return 'today';
+      if (prev === 'today') return '';
+      return prev;
+    });
+  }, [calendarExpanded]);
   const [smartValue, setSmartValue] = useState(t('overview.noConfig'));
   const [smartAction, setSmartAction] = useState(t('overview.configAlarm'));
   const [smartOnClick, setSmartOnClick] = useState(() => () => {
     if (typeof window !== 'undefined') {
-      window.location.href = '/addwarn';
+      window.location.href = PC_ALARM_CONFIGURE_HREF;
     }
   });
 
@@ -61,7 +78,7 @@ const PCMarketOverview = memo(({ onCalendarClick }) => {
           setSmartAction(t('overview.configAlarm'));
           setSmartOnClick(() => () => {
             if (typeof window !== 'undefined') {
-              window.location.href = '/addwarn';
+              window.location.href = PC_ALARM_CONFIGURE_HREF;
             }
           });
           return;
@@ -99,7 +116,7 @@ const PCMarketOverview = memo(({ onCalendarClick }) => {
           setSmartAction(t('overview.configAlarm'));
           setSmartOnClick(() => () => {
             if (typeof window !== 'undefined') {
-              window.location.href = '/addwarn';
+              window.location.href = PC_ALARM_CONFIGURE_HREF;
             }
           });
           return;
@@ -251,13 +268,6 @@ const PCMarketOverview = memo(({ onCalendarClick }) => {
       icon: CalendarIcon,
       title: t('overview.calendar'),
       value: t('overview.todayUpdated'),
-      onClick: () => {
-        if (typeof onCalendarClick === 'function') {
-          onCalendarClick();
-          return;
-        }
-        if (typeof window !== 'undefined') window.location.href = '/daily';
-      }
     }
   ];
 
@@ -270,15 +280,33 @@ const PCMarketOverview = memo(({ onCalendarClick }) => {
               card.id === 'today' && selectedCardId === 'today' ? styles.statCardTodaySelected : ''
             }`}
             onClick={() => {
-              const nextSelected = selectedCardId === card.id ? '' : card.id;
-              setSelectedCardId(nextSelected);
+              dbgOverview('card click', {
+                cardId: card.id,
+                calendarExpanded,
+                selectedCardId,
+                hasOnCalendarClick: typeof onCalendarClick === 'function',
+              });
 
-              // “公告日历”需要支持二次点击取消选中，并同步收起下方日历视图
+              // “公告日历”：以父级 calendarExpanded 为准 toggle
               if (card.id === 'today' && typeof onCalendarClick === 'function') {
-                onCalendarClick(nextSelected === 'today');
+                const nextOpen = !calendarExpanded;
+                dbgOverview('today card toggle', { nextOpen });
+                setSelectedCardId(nextOpen ? 'today' : '');
+                onCalendarClick(nextOpen);
                 return;
               }
 
+              // 点击其它卡片（成交量/总市值/智能盯盘）时，若日历已展开则收起
+              if (calendarExpanded && typeof onCalendarClick === 'function') {
+                dbgOverview('other card click -> close calendar', { cardId: card.id });
+                setSelectedCardId('');
+                onCalendarClick(false);
+                if (typeof card.onClick === 'function') card.onClick();
+                return;
+              }
+
+              const nextSelected = selectedCardId === card.id ? '' : card.id;
+              setSelectedCardId(nextSelected);
               if (typeof card.onClick === 'function') card.onClick();
             }}
           >

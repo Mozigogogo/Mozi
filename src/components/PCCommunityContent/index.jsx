@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Empty, message } from 'antd';
 import { SpinLoading } from 'antd-mobile';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
@@ -27,15 +27,20 @@ import styles from './index.module.less';
 /**
  * PC端社区页面内容组件
  */
+const CAPSULE_TAB_KEYS = new Set(['all', 'coin', 'discover', 'qa']);
+
 export default function PCCommunityContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useTranslation();
   const QA_CATEGORY_KEY = '不懂就问';
+  const DISCOVERY_CATEGORY_KEY = '发现好币';
   const COIN_POST_PAGE_SIZE = 5;
   const capsuleTabItems = [
+    { key: 'all', label: t('community.tabs.all') },
     { key: 'coin', label: t('community.tabs.currency') },
     { key: 'discover', label: t('community.tabs.discovery') },
-    { key: 'qa', label: t('community.tabs.question') }
+    { key: 'qa', label: t('community.tabs.question') },
   ];
   const [flashNewsItems, setFlashNewsItems] = useState([]);
   const [flashNewsLoading, setFlashNewsLoading] = useState(false);
@@ -62,15 +67,44 @@ export default function PCCommunityContent() {
   const [searchLoading, setSearchLoading] = useState(false); // 搜索加载状态
   const [showSearchPanel, setShowSearchPanel] = useState(false); // 是否显示搜索下拉面板
   const [activeCapsuleTab, setActiveCapsuleTab] = useState('coin'); // 顶部胶囊tab
-  const isDiscoveryLikeTab = activeCapsuleTab !== 'coin';
+  const isDiscoveryLikeTab = activeCapsuleTab === 'discover' || activeCapsuleTab === 'qa';
+  const isCoinStyleTab = activeCapsuleTab === 'coin' || activeCapsuleTab === 'all';
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [detailModalPost, setDetailModalPost] = useState(null);
   const [detailModalComments, setDetailModalComments] = useState([]);
   const [detailModalVariant, setDetailModalVariant] = useState('post'); // 'post' | 'topic'
   const [detailModalLoading, setDetailModalLoading] = useState(false);
   const [detailFollowSubmitting, setDetailFollowSubmitting] = useState(false);
-  // 解决 coin/discover/qa 三个 tab 快速切换导致的请求竞态
+  // 解决 all/coin/discover/qa 四个 tab 快速切换导致的请求竞态
   const coinPostsRequestIdRef = useRef(0);
+  const hotTopicsPanelRef = useRef(null);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (!tab) return;
+
+    if (tab === 'hot') {
+      setActiveCapsuleTab('coin');
+      requestAnimationFrame(() => {
+        hotTopicsPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      return;
+    }
+
+    if (tab === 'discovery' || tab === 'discover') {
+      setActiveCapsuleTab('discover');
+      return;
+    }
+
+    if (tab === 'question' || tab === 'qa') {
+      setActiveCapsuleTab('qa');
+      return;
+    }
+
+    if (CAPSULE_TAB_KEYS.has(tab)) {
+      setActiveCapsuleTab(tab);
+    }
+  }, [searchParams]);
 
   const getBackendErrorMsg = (err) => {
     if (!err) return '';
@@ -212,7 +246,7 @@ export default function PCCommunityContent() {
     return hit == null ? '' : String(hit).trim();
   };
 
-  // 获取左侧帖子（币种 / 发现好币 / 不懂就问）
+  // 获取左侧帖子（全部 / 币种 / 发现好币 / 不懂就问）
   const fetchCoinPosts = async (coin, nextPage = 1, tabKey = activeCapsuleTab) => {
     const requestId = ++coinPostsRequestIdRef.current;
     setCoinLoading(true);
@@ -223,8 +257,14 @@ export default function PCCommunityContent() {
       };
       if (tabKey === 'qa') {
         requestData.category = QA_CATEGORY_KEY;
+        requestData.userType = 'real';
+      } else if (tabKey === 'discover') {
+        requestData.category = DISCOVERY_CATEGORY_KEY;
+        requestData.userType = 'real';
+      } else if (tabKey === 'all') {
+        requestData.userType = 'real';
       } else {
-        requestData.tag = coin; // 币种 / 发现好币沿用币种标签筛选
+        requestData.tag = coin;
       }
 
       const response = await request({
@@ -1071,7 +1111,7 @@ export default function PCCommunityContent() {
       </div>
 
       {/* 币种、热门榜单 */}
-      {/* 70/30 分栏容器 */}
+      {/* 60/40 分栏 */}
       <SplitLayout
         className={styles.coinHotTopicSection}
         leftContent={
@@ -1141,7 +1181,7 @@ export default function PCCommunityContent() {
                     className={`${styles.coinPostsList} ${isDiscoveryLikeTab ? styles.discoveryPostsGrid : ''}`}
                   >
                     {coinPosts.map(post => (
-                      activeCapsuleTab === 'coin' ? (
+                      isCoinStyleTab ? (
                         <PostCard
                           key={post.id}
                           post={post}
@@ -1183,12 +1223,14 @@ export default function PCCommunityContent() {
                     description={
                       activeCapsuleTab === 'qa'
                         ? t('pcCommunity.emptyQaPosts')
-                        : t('pcCommunity.emptyCoinPosts', { coin: selectedCoin })
+                        : activeCapsuleTab === 'all'
+                          ? t('community.actions.noPosts')
+                          : t('pcCommunity.emptyCoinPosts', { coin: selectedCoin })
                     }
                   />
                 )}
               </div>
-              {(activeCapsuleTab === 'qa' || coinPostsTotalPages > 1) && (
+              {(activeCapsuleTab === 'qa' || activeCapsuleTab === 'all' || coinPostsTotalPages > 1) && (
                 <PCPagination
                   className={styles.leftPagination}
                   current={coinPostsPage}
@@ -1196,7 +1238,7 @@ export default function PCCommunityContent() {
                   pageSize={COIN_POST_PAGE_SIZE}
                   loading={coinLoading}
                   onChange={handleCoinPostsPageChange}
-                  alwaysShow={activeCapsuleTab === 'qa'}
+                  alwaysShow={activeCapsuleTab === 'qa' || activeCapsuleTab === 'all'}
                 />
               )}
               
@@ -1217,7 +1259,8 @@ export default function PCCommunityContent() {
                 onPageChange={(p) => fetchFlashNews(p)}
               />
             </div>
-            <div 
+            <div
+              ref={hotTopicsPanelRef}
               className={styles.hotTopicsScrollContainer}
             >
               <HotTopicList
@@ -1240,7 +1283,7 @@ export default function PCCommunityContent() {
             </div>
           </div>
         }
-        leftWidth={70}
+        leftWidth={60}
         gap={20}
       />
       <PostDetailModal

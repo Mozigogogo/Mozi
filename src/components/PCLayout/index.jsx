@@ -33,10 +33,12 @@ import PCFooterNotice from '../PCFooterNotice';
 import BenefitCodeModal from '../BenefitCodeModal';
 import BindBenefitCodeModal from '../BindBenefitCodeModal';
 import UserProfilePanelPopup from '../UserProfilePanelPopup';
+import GeneralPopup from '@/app/user/components/GeneralPopup';
 import { request } from '@/utils/request';
-import { Interface } from '@/utils/constants';
+import { EMAIL, Interface } from '@/utils/constants';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { getShareCount } from '@/api/home';
+import { savePcAiFromSearch } from '@/utils/pcAiFromSearch';
 import styles from './index.module.less';
 import AISearchBadge from './AISearchBadge';
 
@@ -75,6 +77,8 @@ export default function PCLayout({ children }) {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showBenefitModal, setShowBenefitModal] = useState(false);
   const [showBindBenefitCodeModal, setShowBindBenefitCodeModal] = useState(false);
+  const [siderFooterPopupOpen, setSiderFooterPopupOpen] = useState(false);
+  const [siderFooterPopupType, setSiderFooterPopupType] = useState('');
   
   // 首次登录引导弹窗 - 与移动端保持一致
   useEffect(() => {
@@ -237,6 +241,15 @@ export default function PCLayout({ children }) {
     searchRef.current = '';
     setShowSearchResults(false);
     setSearchKeyword('');
+  };
+
+  /** 顶栏 AI 问答：若搜索框有币种，进入 /ai 并默认提问「{币种}的综合分析」 */
+  const handleAiNavigate = () => {
+    const keyword = searchRef.current.trim();
+    if (keyword) {
+      savePcAiFromSearch(keyword);
+    }
+    router.push('/ai');
   };
 
   // 内容显示状态 - 用于PC端tab切换
@@ -557,6 +570,79 @@ export default function PCLayout({ children }) {
     ];
   }, [collapsed, favoritesMenuItemCollapsed, mineRestMenuItems]);
 
+  const openSiderFooterPopup = useCallback((type) => {
+    setSiderFooterPopupType(type);
+    setSiderFooterPopupOpen(true);
+  }, []);
+
+  const businessCooperationMailto = useMemo(() => {
+    const subject = encodeURIComponent(t('pcLayout.footer.businessMailSubject'));
+    return `mailto:${EMAIL}?subject=${subject}`;
+  }, [t, i18n.language]);
+
+  const goToInviteRewards = useCallback(() => {
+    setActiveContent(null);
+    setShowSearchResults(false);
+    router.push('/achievement');
+  }, [router]);
+
+  const goToVideoGuides = useCallback(() => {
+    setActiveContent(null);
+    setShowSearchResults(false);
+    router.push('/');
+  }, [router]);
+
+  const pcFooterLinkRows = useMemo(
+    () => [
+      [
+        { key: 'aboutUs', label: t('pcLayout.footer.aboutUs'), href: '/pc/about' },
+        {
+          key: 'businessCooperation',
+          label: t('pcLayout.footer.businessCooperation'),
+          href: businessCooperationMailto,
+        },
+      ],
+      [
+        { key: 'inviteRewards', label: t('pcLayout.footer.inviteRewards'), action: goToInviteRewards },
+        { key: 'helpCenter', label: t('pcLayout.footer.helpCenter'), href: '/pc/help' },
+      ],
+      [
+        { key: 'videoGuides', label: t('pcLayout.footer.videoGuides'), action: goToVideoGuides },
+      ],
+    ],
+    [businessCooperationMailto, goToInviteRewards, goToVideoGuides, t]
+  );
+
+  const pcFooterSocialLinks = useMemo(
+    () => [
+      {
+        id: 'discord',
+        icon: `${CDN_PUBLIC_PREFIX}/icons/discord.svg`,
+        url: 'https://discord.gg/KVGEZKsy',
+        label: 'Discord',
+      },
+      {
+        id: 'xiaohongshu',
+        icon: `${CDN_PUBLIC_PREFIX}/icons/xiaohongshu.svg`,
+        url: 'https://xhslink.com/m/60xi0L4Wsea',
+        label: 'Xiaohongshu',
+      },
+      {
+        id: 'telegram',
+        icon: `${CDN_PUBLIC_PREFIX}/icons/pc/tg.svg`,
+        url: 'https://t.me/MoziInnovations',
+        label: 'Telegram',
+      },
+      {
+        id: 'x',
+        icon: `${CDN_PUBLIC_PREFIX}/icons/x-logo.svg`,
+        url: 'https://x.com/moziinnovation',
+        label: 'X',
+      },
+    ],
+    []
+  );
+
   const handleMenuClick = ({ key }) => {
     // PC 端：发现/社区使用独立路由
     if (key === '/pc/find' || key === '/pc/community') {
@@ -599,6 +685,9 @@ export default function PCLayout({ children }) {
     setActiveContent(null);
     router.push(key);
   };
+
+  const isHelpPage =
+    pathname === '/pc/help' || (pathname && pathname.startsWith('/pc/help/'));
 
   const getSelectedKey = () => {
     if (activeContent) {
@@ -682,13 +771,17 @@ export default function PCLayout({ children }) {
               <span className={styles.searchText}>{t('common.search')}</span>
             </div>
           </div>
-          <Link
+          <a
             href="/ai"
             className={styles.aiSearchBadgeLink}
             aria-label={t('home.quickActions.ai')}
+            onClick={(e) => {
+              e.preventDefault();
+              handleAiNavigate();
+            }}
           >
             <AISearchBadge />
-          </Link>
+          </a>
         </div>
 
         <div className={styles.headerRight}>
@@ -732,17 +825,8 @@ export default function PCLayout({ children }) {
           </ConnectButton.Custom>
           <Button 
             type="text" 
-            onClick={() => setShowBenefitModal(true)}
-            icon={<img src={`${CDN_PUBLIC_PREFIX}/icons/new_user/bind.svg`} alt="bind" style={{ width: 18, height: 18, objectFit: 'contain' }} />} 
-          />
-          <Button 
-            type="text" 
             onClick={() => setShowUserProfilePopup(true)}
             icon={<img src={`${CDN_PUBLIC_PREFIX}/icons/pc/setting@2x.png`} alt="settings" style={{ width: 22, height: 22, objectFit: 'contain' }} />} 
-          />
-          <Button 
-            type="text" 
-            icon={<img src={`${CDN_PUBLIC_PREFIX}/icons/pc/skin@2x.png`} alt="theme" style={{ width: 22, height: 22, objectFit: 'contain' }} />} 
           />
           <Badge count={notificationCount} size="small" offset={[-6, 0]}>
             <Button 
@@ -1010,18 +1094,84 @@ export default function PCLayout({ children }) {
                 selectedKeys={getSelectedKey()}
                 items={mineMenuItems}
                 onClick={handleMenuClick}
-                style={{ borderRight: 0, flex: 1 }}
+                style={{ borderRight: 0 }}
                 inlineCollapsed={collapsed}
               />
             </div>
+
+            {!collapsed && (
+              <div className={styles.siderFooter}>
+                {pcFooterLinkRows.map((row, rowIndex) => (
+                  <div key={`footer-row-${rowIndex}`} className={styles.footerLinks}>
+                    {row.map((item) => {
+                      if (item.href?.startsWith('mailto:')) {
+                        return (
+                          <a
+                            key={item.key}
+                            href={item.href}
+                            className={styles.footerLink}
+                          >
+                            {item.label}
+                          </a>
+                        );
+                      }
+                      if (item.href) {
+                        return (
+                          <Link
+                            key={item.key}
+                            href={item.href}
+                            className={styles.footerLink}
+                            onClick={() => setActiveContent(null)}
+                          >
+                            {item.label}
+                          </Link>
+                        );
+                      }
+                      return (
+                        <button
+                          key={item.key}
+                          type="button"
+                          className={styles.footerLink}
+                          onClick={item.action}
+                        >
+                          {item.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
+                <div className={styles.socialIcons}>
+                  {pcFooterSocialLinks.map((social) => (
+                    <a
+                      key={social.id}
+                      href={social.url}
+                      className={`${styles.socialIcon} ${
+                        social.id === 'discord'
+                          ? `${styles.socialIconFill} ${styles.socialIconDiscord}`
+                          : social.id === 'xiaohongshu'
+                            ? `${styles.socialIconFill} ${styles.socialIconFillCover}`
+                            : ''
+                      }`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={social.label}
+                    >
+                      <img src={social.icon} alt="" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
           </ConfigProvider>
 
         </Sider>
 
         {/* 右侧 Content */}
-        <Content className={`${styles.content} ${styles.homeContent} ${collapsed ? styles.contentCollapsed : ''}`}>
-          <div className={styles.contentWrapper}>
-            <div className={styles.contentMain}>
+        <Content
+          className={`${styles.content} ${!isHelpPage ? styles.homeContent : ''} ${collapsed ? styles.contentCollapsed : ''}`}
+        >
+          <div className={`${styles.contentWrapper} ${isHelpPage ? styles.contentWrapperHelp : ''}`}>
+            <div className={`${styles.contentMain} ${isHelpPage ? styles.contentMainFlush : ''}`}>
               {(() => {
                 if (showSearchResults) {
                   return <PCSearchResults keyword={searchKeyword} onClose={() => setShowSearchResults(false)} />;
@@ -1101,9 +1251,19 @@ export default function PCLayout({ children }) {
         onClose={() => setShowBindBenefitCodeModal(false)}
       />
 
+      <GeneralPopup
+        visible={siderFooterPopupOpen}
+        popType={siderFooterPopupType}
+        onClose={() => setSiderFooterPopupOpen(false)}
+        t={t}
+        i18n={i18n}
+        isPC
+      />
+
       <UserProfilePanelPopup
         open={showUserProfilePopup}
         onClose={() => setShowUserProfilePopup(false)}
+        onBindBenefitCode={() => setShowBenefitModal(true)}
         onLogout={handleProfilePanelLogout}
         onSave={() => {
           setShowUserProfilePopup(false);

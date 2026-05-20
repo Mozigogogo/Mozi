@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './index.module.less';
 import { getFinanceCalendar } from '@/api/financeCalendar';
+import ShareAiChatModal from '@/components/ShareAiChatModal';
+import DailyShareCard from '@/components/DailyShareCard';
 
 const normalizeItem = (item) => {
   const time = item?.time ?? item?.datetime ?? item?.eventTime ?? item?.ctime ?? '';
@@ -29,6 +31,7 @@ export default function PCDailyCard({
   const [loading, setLoading] = useState(false);
   const [noteSummary, setNoteSummary] = useState('');
   const [utcNow, setUtcNow] = useState(() => new Date());
+  const [shareOpen, setShareOpen] = useState(false);
 
   const isEnglish = String(i18n.language || '').toLowerCase().startsWith('en');
   const timeZone = isEnglish ? 'UTC' : defaultTimeZone;
@@ -86,9 +89,52 @@ export default function PCDailyCard({
     };
   }, [maxRows]);
 
+  const shareQuestion = useMemo(() => {
+    return `${t('daily.title')} · ${monthYearText} · ${weekdayText}`;
+  }, [monthYearText, t, weekdayText]);
+
+  const shareAnswer = useMemo(() => {
+    const topEvents = (events || []).slice(0, 4);
+    const lines = topEvents
+      .map(
+        (e) =>
+          `- **${e.time || '--'} ${e.country || '--'}** ${e.event || '--'}  \n  ${e.value || '--'}`
+      )
+      .join('\n');
+    const summary = (noteSummary || t('daily.note') || '').trim();
+    return [lines, summary].filter(Boolean).join('\n\n');
+  }, [events, noteSummary, t]);
+
+  const sharePreview = useMemo(() => {
+    const topEvents = (events || []).slice(0, 4);
+    return (
+      <DailyShareCard
+        title="MOZI Daily"
+        variant="pc"
+        columns={{
+          time: t('daily.table.time'),
+          country: t('daily.table.country'),
+          event: t('daily.table.event'),
+          values: t('daily.table.values'),
+        }}
+        events={topEvents}
+        loading={loading}
+        emptyText={{ loading: t('common.loading'), noEvents: t('daily.noEvents') }}
+        note={(noteSummary || t('daily.note') || '').trim()}
+        showArrow={false}
+      />
+    );
+  }, [events, loading, noteSummary, t]);
+
+  const shareUrl = useMemo(() => {
+    if (typeof window === 'undefined') return '';
+    if (window.location.pathname.includes('/daily')) return window.location.href;
+    return `${window.location.origin}/daily`;
+  }, []);
+
   const handleShare = () => {
     if (onShare) return onShare();
-    window.open('/daily', '_blank');
+    setShareOpen(true);
   };
 
   const handleShareKeyDown = (e) => {
@@ -170,6 +216,18 @@ export default function PCDailyCard({
       >
         {shareLabel || t('daily.share')}
       </div>
+
+      <ShareAiChatModal
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        title={`${t('daily.title')} ${t('daily.share')}`}
+        question={shareQuestion}
+        answer={shareAnswer}
+        preview={sharePreview}
+        previewVariant="dailyCard"
+        shareUrl={shareUrl}
+        brandLabel=""
+      />
     </div>
   );
 }

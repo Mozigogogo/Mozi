@@ -166,23 +166,6 @@
   },
   "common": {
     "home": "Home",
-    "pcLayout": {
-      "notice": "Say goodbye to manual monitoring! Let AI analyze trends first, then set precise alerts!",
-      "menu": {
-        "home": "Home",
-        "market": "Market",
-        "discover": "Discover",
-        "indicator": "Indicator",
-        "more": "More",
-        "mine": "Mine",
-        "myAchievement": "My Achievement",
-        "myQA": "My Q&A",
-        "createdLists": "Created Lists",
-        "collectedLists": "Collected Lists",
-        "login": "Login / Register",
-        "logout": "Logout"
-      }
-    },
     "find": "Discover",
     "community": "Community",
     "profile": "Profile",
@@ -461,6 +444,7 @@
       "bound": "Bound",
       "logout": "Logout",
       "subscriptionAndMembership": "Membership",
+      "switchTheme": "Switch theme color",
       "defaultAccount": "Account"
     },
     "subscriptionEnabled": "Subscription enabled",
@@ -907,10 +891,12 @@
     "aiAlt": "AI",
     "tokens": "Consumed {{tokens}} tokens",
     "thinking": "Thinking",
+    "conversationAborted": "Conversation stopped",
     "regenerate": "Regenerate",
     "regenerateAlt": "Regenerate",
     "me": "Me",
     "suggestedTitle": "You might also ask:",
+    "suggestedFollowUpTitle": "You might also want to ask:",
     "inputPlaceholder": "Enter your question...",
     "send": "Send",
     "stopAlt": "Stop generating",
@@ -932,7 +918,15 @@
     "welcome": "Hi! I'm your AI assistant. I can analyze crypto and answer your questions.",
     "model": {
       "analyze": "Analyze",
-      "chat": "Chat"
+      "chat": "Chat",
+      "bigOrder": "Big order detection",
+      "openMenu": "Switch model"
+    },
+    "bigorder": {
+      "analyzing": "Analyzing large-order signals…",
+      "toolCall": "Fetching {{coin}} anomaly data ({{tool}})",
+      "toolCallGeneric": "Running {{tool}}…",
+      "generating": "Generating analysis report…"
     },
     "quickAsk": {
       "btcTrend": "BTC outlook",
@@ -943,11 +937,13 @@
     },
     "pointsUnit": "Points",
     "suggest": {
+      "comprehensiveAnalysis": "Comprehensive analysis of {{symbol}}",
       "analyzeTrend": "Analyze {{symbol}}'s trend",
       "isGoodToBuy": "Good time to buy {{symbol}}?",
       "technicalView": "{{symbol}} technical view",
       "topGainer": "Top gainer today?",
-      "fearGreedIndex": "Fear & Greed Index?"
+      "fearGreedIndex": "Fear & Greed Index?",
+      "goTradeEarn": "Trade & earn"
     }
   },
   "aiAssistant": {
@@ -1074,6 +1070,7 @@
     "rankMonth": "Monthly",
     "rankTotal": "Total",
     "rankingListTitle": "Ranking List",
+    "inviteChallenge": "Invite friends to challenge",
     "completed": "Completed",
     "goFinish": "Go",
     "claimed": "Claimed",
@@ -1412,6 +1409,7 @@
     "confirmDelete": "Are you sure you want to delete all alerts for {{symbol}}?",
     "coins": "Alert coins",
     "noHistory": "No history records",
+    "noConfig": "No configuration yet",
     "historyConfigTitle": "Alert history configuration",
     "historyConfigDesc": "Manage your historical alert thresholds for this coin",
     "latestTrigger": "Latest trigger",
@@ -1444,6 +1442,7 @@
     "enableNow": "Enable now",
     "phoneAlarm": "Phone alert",
     "emailAlarm": "Email alert",
+    "smsAlarm": "SMS alert",
     "sitePush": "In-app push",
     "loading": "Loading...",
     "placeholder": "Enter value",
@@ -1703,6 +1702,114 @@
       "monitor": "Monitor"
     }
   },
+  "pcAbout": {
+    "title": "About Mozi",
+    "lead": "Mozi is a premier crypto data intelligence platform dedicated to providing global users with precise, real-time market insights. Inspired by the ancient philosophy of \"Universal Love and Non-Aggression\" (Jian'ai & Feigong), we strive to bridge the information gap, simplify trading, and empower users to make smarter investment decisions with reduced risk.",
+    "coreFunctionsTitle": "Core Functions: Smart Discovery & Analysis",
+    "coreFunctionsIntro": "To solve the industry pain points of Where, What, and How to buy, Mozi integrates multi-dimensional data to offer:",
+    "coreFunctionItems": [
+      {
+        "label": "Comprehensive Rankings:",
+        "text": "Real-time leaderboards including Exchange Rankings, Trending Coins, Top Gainers/Losers, and more."
+      },
+      {
+        "label": "Advanced Search:",
+        "text": "Deep exploration tools covering data from all major global exchanges."
+      },
+      {
+        "label": "Data Intelligence:",
+        "text": "Leveraging AI and big data to transform complex market signals into actionable insights."
+      }
+    ],
+    "advantagesTitle": "Why Mozi?",
+    "advantageItems": [
+      {
+        "label": "Expertise-Driven:",
+        "text": "Our team consists of seasoned professionals in high-frequency trading, AI architecture, and data science, ensuring the highest standards of accuracy and reliability."
+      },
+      {
+        "label": "User-Centric:",
+        "text": "We lower the barrier to entry for crypto trading, making professional-grade tools accessible to everyone."
+      }
+    ],
+    "cultureTitle": "Corporate Identity",
+    "mission": "Mission: To make wealth accessible to everyone.",
+    "vision": "Vision: To make trading simpler, smarter, and safer.",
+    "values": "Values: Universal Love · Pragmatism · Focus · Innovation · Freedom",
+    "joinTitle": "Connect With Us:",
+    "joinText": "As a fast-growing startup, Mozi is actively seeking talented individuals in Tech, Operations, and Product, as well as Investment Institutions who share our vision. Let's build the future of intelligent trading together."
+  },
+  "pcHelp": {
+    "heroLabel": "Help Center",
+    "heroTitle": "Got questions?",
+    "heroTitleEm": "We've got answers.",
+    "heroDesc": "Find answers to common questions about Mozi. Most issues can be resolved in seconds.",
+    "searchPlaceholder": "Search questions, e.g. \"What payment methods are supported\"…",
+    "dividerLabel": "All Q&A",
+    "contactLabel": "Still need help?",
+    "contactTitle": "We're here for you.",
+    "contactDesc": "Weekdays 09:00 – 22:00, our support team replies within 2 hours. Mark urgent issues as \"Urgent\" in your message.",
+    "contactEmail": "Email support",
+    "mailSubject": "Help request",
+    "sections": [
+      {
+        "id": "account",
+        "title": "🔐 Account & Security",
+        "count": "1 question",
+        "items": [
+          {
+            "id": "q-email",
+            "question": "How do I change my email or phone number?",
+            "answerHtml": "<p>Go to <span class=\"tag\">Settings → Account</span> and click Edit next to the contact method you want to change.</p><p>Changing email requires verification on the new address; changing phone requires an SMS code. For security, you can only change primary contact info once every 7 days.</p>"
+          }
+        ]
+      },
+      {
+        "id": "billing",
+        "title": "💳 Billing",
+        "count": "4 questions",
+        "items": [
+          {
+            "id": "q-plan",
+            "question": "How do I upgrade, downgrade, or change my plan?",
+            "answerHtml": "<p>Go to <span class=\"tag\">Settings → Subscription</span> and click Change plan.</p><ul><li><strong>Upgrade</strong>: takes effect immediately; you pay the prorated difference</li><li><strong>Downgrade</strong>: applies at the end of the current billing cycle</li><li><strong>Cancel</strong>: auto-renew stops after the current period; you keep access until then</li></ul>"
+          },
+          {
+            "id": "q-refund",
+            "question": "What is the refund policy?",
+            "answerHtml": "<p>Please <a href=\"#contact\">contact support</a>.</p>"
+          },
+          {
+            "id": "q-payment",
+            "question": "What payment methods do you accept?",
+            "answerHtml": "<p>We currently accept:</p><ul><li>Stars Pay</li><li>USDT Pay</li></ul>"
+          },
+          {
+            "id": "q-failed",
+            "question": "What if a payment fails?",
+            "answerHtml": "<p><a href=\"mailto:notice@moziinnovations.com?subject=Help%20request\">Email us</a> to get in touch.</p>"
+          }
+        ]
+      },
+      {
+        "id": "technical",
+        "title": "🛠 Technical issues",
+        "count": "2 questions",
+        "items": [
+          {
+            "id": "q-slow",
+            "question": "The page is slow or will not load — how do I troubleshoot?",
+            "answerHtml": "<p>Try these steps:</p><ul><li>Refresh or hard refresh (Ctrl + Shift + R)</li><li>Clear cache and cookies</li><li>Try incognito or another browser (Chrome or Edge recommended)</li><li>Check your network; try another connection</li><li>Check <a href=\"#\">status.mozi.app</a> for outages</li></ul><p>Still stuck? <a href=\"#contact\">Contact technical support</a> with screenshots or error messages.</p>"
+          },
+          {
+            "id": "q-browser",
+            "question": "Which browsers and devices are supported?",
+            "answerHtml": "<p>We support the latest two major versions of Chrome, Firefox, Safari, and Edge. IE 11 and below are not supported.</p><p>Mobile: iOS 15+ and Android 10+. Use the system browser or Chrome for the best experience.</p>"
+          }
+        ]
+      }
+    ]
+  },
   "pcLayout": {
     "notice": "Say goodbye to manual monitoring! Let AI analyze trends, then set precise alerts!",
     "menu": {
@@ -1719,8 +1826,8 @@
     },
     "footer": {
       "aboutUs": "About Us",
-      "service": "Service",
-      "affiliate": "Affiliate",
+      "businessCooperation": "Business",
+      "businessMailSubject": "Business cooperation inquiry",
       "inviteRewards": "Referral Rewards",
       "helpCenter": "Help Center",
       "videoGuides": "Video Guides"
@@ -1763,6 +1870,7 @@
     "subtitle": "Real-time Monitoring · Instant Alerts",
     "phoneAlarm": "Phone Alert",
     "emailAlarm": "Email Alert",
+    "smsAlarm": "SMS Alert",
     "pushAlarm": "Push",
     "phonePlaceholder": "Enter phone number",
     "emailPlaceholder": "Enter email",
@@ -1776,7 +1884,30 @@
     "phoneRequired": "Please enter phone number",
     "emailRequired": "Please enter email",
     "emailInvalid": "Invalid email format",
-    "atLeastOneMethod": "Please enable at least one alert method"
+    "smsUsesSamePhone": "SMS uses the same number as phone alerts above (shared country code and mobile number).",
+    "smsNeedsPhoneAndCountry": "To enable SMS alerts, fill in the country code and mobile number above (shared with phone alerts).",
+    "atLeastOneMethod": "Please enable at least one alert method",
+    "webhookLabel": "Web hook",
+    "webhookPlaceholder": "Enter URL",
+    "webhookAddUrl": "Add URL",
+    "webhookRemoveUrl": "Remove URL",
+    "webhookHint": "When an alert fires, a POST request is sent to the URL you specify.",
+    "webhookMaxUrls": "You can add up to {{max}} webhook URLs",
+    "wechatAlarm": "WeChat alerts",
+    "wechatHint": "Turn on WeChat notifications to receive alerts.",
+    "telegramBot": "Telegram bot",
+    "telegramHint": "Start the bot to receive alerts.",
+    "popupAlarm": "In-app popup",
+    "popupHint": "Show a popup reminder in the app or browser.",
+    "freqTitle": "Alert frequency",
+    "freqContinuous": "Continuous",
+    "freqContinuousDesc": "Notify every time the condition triggers.",
+    "freqDaily": "Once per day",
+    "freqDailyDesc": "Only the first trigger on each trading day.",
+    "freqOnce": "Once only",
+    "freqOnceDesc": "Notify only on the first trigger.",
+    "actionConfirm": "Confirm",
+    "urlInvalid": "Please enter a valid URL"
   },
   "orderBook": {
     "title": "Large Order Detection",

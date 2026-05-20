@@ -7,6 +7,11 @@
   flex-direction: column;
 }
 
+.containerFill {
+  flex: 1;
+  min-height: 0;
+}
+
 .treemapContainer {
   flex: 1;
   width: 100%;
@@ -15,6 +20,12 @@
   position: relative;
   border-radius: 8px;
   overflow: hidden;
+}
+
+.treemapContainerFill {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
 }
 
 .treemapItem {
@@ -341,6 +352,10 @@
   justify-content: center;
   width: 28px;
   height: 28px;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  padding: 0;
 }
 
 .tooltipActionIcon {

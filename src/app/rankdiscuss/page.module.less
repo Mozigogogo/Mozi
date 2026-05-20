@@ -2,8 +2,18 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh;
   background: var(--bg-color, #fff);
   color: var(--text-color, #333);
+}
+
+.pcContentArea {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
 }
 
 .header {
@@ -16,6 +26,7 @@
   position: sticky;
   top: 0;
   z-index: 10;
+  flex-shrink: 0;
 }
 
 .backBtn {
@@ -25,6 +36,9 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  border: none;
+  background: transparent;
+  padding: 0;
 }
 
 .backIcon {
@@ -37,16 +51,20 @@
   font-size: 17px;
   font-weight: 600;
   color: var(--text-color, #333);
+  text-align: center;
+  flex: 1;
 }
 
 .placeholder {
   width: 32px;
+  flex-shrink: 0;
 }
 
 .commentList {
   flex: 1;
   overflow-y: auto;
   padding: 16px;
+  min-height: 0;
 }
 
 .empty {
@@ -87,11 +105,13 @@
 
 .inputArea {
   padding: 12px 16px;
-  background: var(--input-bg, #f8f8f8);
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  background: var(--input-bg, #f5f5f5);
   border-top: 1px solid var(--border-color, #eee);
   display: flex;
   gap: 12px;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .textarea {
@@ -107,11 +127,12 @@
   color: var(--text-color, #333);
   outline: none;
   overflow: hidden;
-  
+  box-sizing: border-box;
+
   &:focus {
-    border-color: #11B787;
+    border-color: #11b787;
   }
-  
+
   &::placeholder {
     color: var(--text-secondary, #999);
     line-height: 40px;
@@ -121,7 +142,7 @@
 .submitBtn {
   height: 40px;
   padding: 0 20px;
-  background: #11B787;
+  background: #11b787;
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -129,19 +150,18 @@
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
-  
+
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
-  
+
   &:active:not(:disabled) {
     opacity: 0.8;
   }
 }
 
-// 深色模式适配
-:global([data-theme="dark"]) {
+:global([data-theme='dark']) {
   .container {
     --bg-color: #1a1a1a;
     --header-bg: #222;
@@ -152,21 +172,163 @@
   }
 }
 
-// 移动端适配
 @media screen and (max-width: 768px) {
   .header {
     padding: 10px 12px;
   }
-  
+
   .title {
     font-size: 16px;
   }
-  
+
   .commentList {
     padding: 12px;
   }
-  
+
   .inputArea {
     padding: 10px 12px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  }
+}
+
+/* PC：使用 PX 避免 postcss 转成 vw */
+@media (min-width: 1024px) {
+  .pcContentArea {
+    padding: 20PX 24PX 24PX;
+    background: transparent;
+  }
+
+  .container {
+    flex: 1;
+    width: min(760PX, 100%);
+    max-width: 760PX;
+    height: 100%;
+    min-height: 0;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 16PX;
+    box-shadow: 0 8PX 24PX rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+  }
+
+  .header {
+    padding: 18PX 24PX;
+    border-bottom: 1PX solid #f0f0f0;
+    position: relative;
+  }
+
+  .backBtn {
+    width: 32PX;
+    height: 32PX;
+    border-radius: 6PX;
+    transition: background 0.2s;
+
+    &:hover {
+      background: rgba(17, 183, 135, 0.08);
+    }
+  }
+
+  .backIcon {
+    width: 22PX;
+    height: 22PX;
+  }
+
+  .title {
+    font-size: 18PX;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .placeholder {
+    width: 32PX;
+  }
+
+  .commentList {
+    padding: 24PX 28PX;
+  }
+
+  .empty {
+    padding: 80PX 24PX;
+    font-size: 14PX;
+    color: #9ca3af;
+  }
+
+  .commentItem {
+    padding: 14PX 0;
+    border-bottom: 1PX solid #f3f4f6;
+  }
+
+  .commentHeader {
+    margin-bottom: 8PX;
+  }
+
+  .author {
+    font-size: 14PX;
+  }
+
+  .time {
+    font-size: 12PX;
+  }
+
+  .commentContent {
+    font-size: 14PX;
+    line-height: 1.6;
+  }
+
+  .inputArea {
+    padding: 16PX 24PX 20PX;
+    background: #f5f7fb;
+    border-top: 1PX solid #eef0f3;
+    gap: 12PX;
+  }
+
+  .textarea {
+    height: 44PX;
+    padding: 0 14PX;
+    border-radius: 10PX;
+    font-size: 14PX;
+    line-height: 44PX;
+    border-color: #e5e7eb;
+
+    &::placeholder {
+      line-height: 44PX;
+    }
+  }
+
+  .submitBtn {
+    height: 44PX;
+    padding: 0 24PX;
+    border-radius: 10PX;
+    font-size: 14PX;
+    font-weight: 600;
+    transition: opacity 0.2s;
+
+    &:hover:not(:disabled) {
+      opacity: 0.92;
+    }
+  }
+
+  :global([data-theme='dark']) {
+    .container {
+      background: #1f1f1f;
+      box-shadow: 0 8PX 24PX rgba(0, 0, 0, 0.35);
+    }
+
+    .header {
+      border-bottom-color: #333;
+    }
+
+    .inputArea {
+      background: #252525;
+      border-top-color: #333;
+    }
+
+    .textarea {
+      border-color: #404040;
+    }
+
+    .commentItem {
+      border-bottom-color: #333;
+    }
   }
 }

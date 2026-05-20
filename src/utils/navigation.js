@@ -1,7 +1,31 @@
+import { getAppChannel } from './core';
+
+const TG_BACK_FALLBACK = '/home';
+
+/** TG 端不允许返回到营销根路径 `/`，统一落到应用首页 */
+function isMarketingRootPath(pathname) {
+  if (!pathname) return false;
+  return pathname === '/' || pathname === '';
+}
+
+function resolveFallback(userFallback) {
+  const fb = userFallback ?? '/';
+  if (typeof window === 'undefined') return fb;
+  if (getAppChannel() === 'tg') {
+    if (!fb || fb === '/') return TG_BACK_FALLBACK;
+  }
+  return fb;
+}
+
+/**
+ * @param {import('next/navigation').AppRouterInstance} router
+ * @param {{ fallback?: string, fallbackDelayMs?: number }} [options]
+ */
 export function safeBack(router, { fallback = '/', fallbackDelayMs = 250 } = {}) {
+  const resolvedFallback = resolveFallback(fallback);
+  const isTg = typeof window !== 'undefined' && getAppChannel() === 'tg';
+
   try {
-    // WebView / 嵌入场景中，Next router.back() 可能无效；
-    // 优先用浏览器 history.back，并在无跳转时自动兜底到 fallback。
     const currentHref = typeof window !== 'undefined' ? window.location.href : '';
     const canGoBack =
       typeof window !== 'undefined' &&
@@ -14,13 +38,22 @@ export function safeBack(router, { fallback = '/', fallbackDelayMs = 250 } = {})
       if (typeof window !== 'undefined') {
         window.setTimeout(() => {
           try {
-            if (window.location.href !== currentHref) return;
-            if (router?.replace) {
-              router.replace(fallback);
+            // history.back() 后地址未变：兜底
+            if (window.location.href === currentHref) {
+              if (router?.replace) {
+                router.replace(resolvedFallback);
+              } else if (router?.push) {
+                router.push(resolvedFallback);
+              }
               return;
             }
-            if (router?.push) {
-              router.push(fallback);
+            // TG：若返回到营销落地页 `/`，改为 `/home`
+            if (isTg && isMarketingRootPath(window.location.pathname)) {
+              if (router?.replace) {
+                router.replace(TG_BACK_FALLBACK);
+              } else if (router?.push) {
+                router.push(TG_BACK_FALLBACK);
+              }
             }
           } catch (_) {}
         }, Math.max(0, Number(fallbackDelayMs) || 0));
@@ -29,14 +62,11 @@ export function safeBack(router, { fallback = '/', fallbackDelayMs = 250 } = {})
     }
   } catch (_) {}
 
-  // fallback：确保用户能离开当前页
   if (router?.replace) {
-    router.replace(fallback);
+    router.replace(resolvedFallback);
     return;
   }
   if (router?.push) {
-    router.push(fallback);
-    return;
+    router.push(resolvedFallback);
   }
 }
-

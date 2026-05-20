@@ -1,21 +1,27 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
 import { Picker, Toast } from 'antd-mobile';
+import { Select } from 'antd';
 import NavBar from '@/components/NavBar';
 import MoziPCRColChart from '@/components/MoziPCRColChart';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 import { handleOptions } from '@/utils/chartUtils';
+import { safeBack } from '@/utils/navigation';
 import { isEmpty } from 'lodash';
 import * as echarts from 'echarts';
 import styles from './page.module.less';
 
+const PCLayout = dynamic(() => import('@/components/PCLayout'), { ssr: false });
+
 const PutCallRatio = () => {
   const router = useRouter();
   const { t } = useTranslation();
+  const [isPC, setIsPC] = useState(false);
 
   const ratioTabs = useMemo(() => [
     t('pcr.tabs.activeBuySell'),
@@ -38,28 +44,18 @@ const PutCallRatio = () => {
   });
   const [hisLoading, setHisLoading] = useState(true);
   
-  const chartRef = useRef(null);
+  const chartInstanceRef = useRef(null);
   const chartData = useRef(null);
   const chartContainerRef = useRef(null);
 
-  // 初始化图表
-  const initChart = () => {
-    if (!chartContainerRef.current) return;
-    
-    const chart = echarts.init(chartContainerRef.current);
-    chartRef.current = chart;
-    
-    // 监听窗口大小变化
-    const handleResize = () => {
-      chart.resize();
+  useEffect(() => {
+    const checkDevice = () => {
+      setIsPC(window.innerWidth >= 1024);
     };
-    window.addEventListener('resize', handleResize);
-    
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      chart.dispose();
-    };
-  };
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+    return () => window.removeEventListener('resize', checkDevice);
+  }, []);
 
   // 页面加载时初始化数据
   useEffect(() => {
@@ -95,10 +91,53 @@ const PutCallRatio = () => {
     initData();
   }, []);
 
-  // 初始化图表
+  const disposeChartInstance = useCallback(() => {
+    if (chartInstanceRef.current) {
+      chartInstanceRef.current.dispose();
+      chartInstanceRef.current = null;
+    }
+  }, []);
+
+  const applyChartOption = useCallback((data, msg) => {
+    if (!data || !chartInstanceRef.current) return;
+    chartInstanceRef.current.setOption(handleOptions(data, 'samebar', msg));
+    chartInstanceRef.current.resize();
+  }, []);
+
+  const initChartInstance = useCallback(() => {
+    const container = chartContainerRef.current;
+    if (!container) return;
+
+    disposeChartInstance();
+    const chart = echarts.init(container);
+    chartInstanceRef.current = chart;
+
+    if (chartData.current?.data) {
+      applyChartOption(chartData.current.data, chartData.current.msg);
+    }
+
+    requestAnimationFrame(() => chart.resize());
+    setTimeout(() => chart.resize(), 100);
+  }, [applyChartOption, disposeChartInstance]);
+
+  const chartContainerCallbackRef = useCallback(
+    (node) => {
+      chartContainerRef.current = node;
+      if (!node) {
+        disposeChartInstance();
+        return;
+      }
+      initChartInstance();
+    },
+    [disposeChartInstance, initChartInstance]
+  );
+
   useEffect(() => {
-    const cleanup = initChart();
-    return cleanup;
+    const handleResize = () => {
+      chartInstanceRef.current?.resize();
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // 获取数据
@@ -116,24 +155,26 @@ const PutCallRatio = () => {
         }
       });
 
-      // 更新图表
-      if (chartRef.current && pcrHisData?.data) {
-        const chartMsg = { 
-          labels: { 
-            short: t('pcr.chart.short'), 
-            long: t('pcr.chart.long'), 
-            ratio: t('pcr.chart.ratio') 
-          },
-          title: t('pcr.section.history')
-        };
+      const chartMsg = {
+        labels: {
+          short: t('pcr.chart.short'),
+          long: t('pcr.chart.long'),
+          ratio: t('pcr.chart.ratio'),
+        },
+        title: t('pcr.section.history'),
+      };
+
+      if (pcrHisData?.data) {
         chartData.current = {
           data: pcrHisData.data,
           type: 'samebar',
-          msg: chartMsg
+          msg: chartMsg,
         };
-        chartRef.current.setOption(handleOptions(pcrHisData.data, 'samebar', chartMsg));
-        setHisLoading(false);
+        applyChartOption(pcrHisData.data, chartMsg);
+      } else {
+        chartData.current = null;
       }
+      setHisLoading(false);
 
       if (getType === 'his') {
         setCurPCRData(prev => ({ ...prev, loading: false }));
@@ -189,12 +230,17 @@ const PutCallRatio = () => {
 
   // 交易所变化
   const onExchangeChange = (value) => {
-    console.log('交易所选择变化:', value);
     const selectedCex = cexArr[value[0]];
     setCexSelected(selectedCex);
-    
+
     const ratioTypeSelected = ratioTypeArr[ratioTabs.indexOf(ratioSelected)];
     getData({ ratioTypeSelected, exchange: selectedCex, getType: 'his' });
+  };
+
+  const handlePcExchangeChange = (exchange) => {
+    const index = cexArr.indexOf(exchange);
+    if (index < 0) return;
+    onExchangeChange([index]);
   };
 
   // 跳转到横屏图表
@@ -207,6 +253,95 @@ const PutCallRatio = () => {
       Toast.show(t('pcr.noChartData'));
     }
   };
+
+  if (isPC) {
+    return (
+      <PCLayout>
+        <div className={styles['pc-container']}>
+          <div className={styles['pc-header']}>
+            <div className={styles['pc-back-container']} onClick={() => safeBack(router, { fallback: '/' })}>
+              <div className={styles['pc-back-btn']}>
+                <svg className={styles['pc-back-icon']} width="43" height="26" viewBox="0 0 43 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M24.6821 18.8008L18.4321 12.5508L24.6821 6.30078" stroke="#4A5565" strokeWidth="2.08333" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <span className={styles['pc-title']}>{t('pcr.title')}</span>
+            </div>
+          </div>
+
+          <div className={styles['pc-toolbar']}>
+            <div className={styles['pc-control-item']}>
+              <span className={styles['pc-label']}>{t('pcr.coin')}</span>
+              <Select
+                className={styles['pc-select']}
+                value={coinSelected || undefined}
+                onChange={(value) => {
+                  const index = coinArr.indexOf(value);
+                  if (index >= 0) onCoinChange([index]);
+                }}
+                options={coinArr.map((coin) => ({ value: coin, label: coin }))}
+                style={{ width: 140 }}
+              />
+            </div>
+          </div>
+
+          <div className={styles['pc-ratio-tabs']}>
+            {ratioTabs.map((ratio, index) => (
+              <div
+                key={index}
+                className={`${styles['pc-ratio-tab']} ${ratioSelected === ratio ? styles['pc-ratio-tab-active'] : ''}`}
+                onClick={() => onRatioTabClick(ratio)}
+              >
+                {ratio}
+              </div>
+            ))}
+          </div>
+
+          <div className={styles['pc-content']}>
+            <div className={styles['pc-section-title']}>{t('pcr.section.current')}</div>
+            <div className={styles['pc-current-section']}>
+              {curPCRData.loading ? (
+                <div className={styles['pc-loading']}>
+                  <div className={styles['pc-spinner']} />
+                </div>
+              ) : curPCRData.close ? (
+                <div className={styles['pc-empty']}>{t('pcr.empty')}</div>
+              ) : (
+                <div className={styles['pc-current-list']}>
+                  <MoziPCRColChart data={curPCRData.data?.list} isPC />
+                </div>
+              )}
+            </div>
+
+            <div className={styles['pc-section-title']}>{t('pcr.section.history')}</div>
+            <div className={styles['pc-history-container']}>
+              <div className={styles['pc-history-controls']}>
+                <div className={styles['pc-exchange-tabs']}>
+                  {cexArr.map((exchange, index) => (
+                    <div
+                      key={index}
+                      className={`${styles['pc-exchange-tab']} ${cexSelected === exchange ? styles['pc-tab-active'] : ''}`}
+                      onClick={() => handlePcExchangeChange(exchange)}
+                    >
+                      {exchange}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className={styles['pc-chart-wrapper']}>
+                {hisLoading && (
+                  <div className={styles['pc-chart-loading']}>
+                    <div className={styles['pc-spinner']} />
+                  </div>
+                )}
+                <div ref={chartContainerCallbackRef} className={styles['pc-chart']} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </PCLayout>
+    );
+  }
 
   return (
       <>
@@ -307,7 +442,7 @@ const PutCallRatio = () => {
             <div className={`${styles.chartArrawsalt} ${styles.hisChartBtn}`} onClick={jump2Land}>
               <span className={styles.fullscreenIcon}>⛶</span>
             </div>
-            <div ref={chartContainerRef} className={styles.chart}></div>
+            <div ref={chartContainerCallbackRef} className={styles.chart}></div>
           </div>
         </div>
       </div>

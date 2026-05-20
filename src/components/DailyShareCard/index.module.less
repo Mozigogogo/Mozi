@@ -1,10 +1,12 @@
+/* 分享卡样式统一用大写 PX，避免 postcss 按 375 宽转成 vw 导致 PC 预览巨大化 */
+
 .card {
   width: 100%;
-  border-radius: 20px;
+  border-radius: 20PX;
   overflow: hidden;
   background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  border: 1PX solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1PX 2PX rgba(0, 0, 0, 0.06);
 }
 
 .topBar {
@@ -13,7 +15,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px;
+  padding: 12PX 14PX;
   font-weight: 900;
   font-family: 'PangMenZhengDao', 'PingFang SC', 'Roboto', sans-serif;
 }
@@ -25,27 +27,27 @@
 .tableHeader {
   display: grid;
   grid-template-columns: 1.2fr 1fr 3.8fr 2.8fr;
-  gap: 4px;
+  gap: 4PX;
   background: rgba(255, 225, 0, 1);
   color: #000;
-  font-size: 12px;
+  font-size: 12PX;
   font-weight: 600;
-  padding: 8px 12px;
+  padding: 8PX 12PX;
 }
 
 .tableBody {
-  padding: 8px 12px;
+  padding: 8PX 12PX;
 }
 
 .row {
   display: grid;
   grid-template-columns: 1.2fr 1fr 3.8fr 2.8fr;
-  gap: 4px;
+  gap: 4PX;
   align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid #eee;
+  padding: 8PX 0;
+  border-bottom: 1PX solid #eee;
   color: #000;
-  font-size: 12px;
+  font-size: 12PX;
 }
 
 .row:last-child {
@@ -74,20 +76,133 @@
 .empty {
   color: #999;
   text-align: center;
-  padding: 18px 0;
-  font-size: 12px;
+  padding: 18PX 0;
+  font-size: 12PX;
 }
 
 .note {
-  margin: 10px 12px 12px;
+  margin: 10PX 12PX 12PX;
   background: rgba(254, 224, 0, 1);
-  border-radius: 16px;
-  padding: 12px;
-  font-size: 12px;
+  border-radius: 16PX;
+  padding: 12PX;
+  font-size: 12PX;
   line-height: 1.35;
   color: #000;
-  max-height: 96px;
+  max-height: 96PX;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 
+/* PC 分享弹窗预览 */
+.cardPcRoot {
+  box-sizing: border-box;
+  width: 480PX;
+  max-width: 100%;
+  margin: 0 auto;
+  border-radius: 16PX;
+  overflow: hidden;
+  background: #fff;
+  border: 1PX solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1PX 2PX rgba(0, 0, 0, 0.06);
+}
+
+.pcTopBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12PX 16PX;
+  background: rgba(57, 233, 145, 1);
+  color: rgba(15, 23, 42, 1);
+  font-weight: 700;
+  font-family: 'PingFang SC', 'Microsoft YaHei', 'Roboto', sans-serif;
+}
+
+.pcTitle {
+  font-size: 16PX;
+  line-height: 1.25;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.pcTableWrap {
+  width: 100%;
+  background: #fff;
+}
+
+.pcTable {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 12PX;
+  color: #000;
+}
+
+.pcTable thead th {
+  background: rgba(255, 225, 0, 1);
+  font-weight: 600;
+  text-align: left;
+  padding: 8PX 6PX;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11PX;
+}
+
+.pcTable thead th:nth-child(1) {
+  width: 52PX;
+}
+
+.pcTable thead th:nth-child(2) {
+  width: 48PX;
+}
+
+.pcTable thead th:nth-child(3) {
+  width: auto;
+}
+
+.pcTable thead th:nth-child(4) {
+  width: 120PX;
+  text-align: right;
+  font-size: 10PX;
+}
+
+.pcTable tbody td {
+  padding: 8PX 6PX;
+  border-bottom: 1PX solid #eee;
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12PX;
+}
+
+.pcTable tbody td:nth-child(4) {
+  text-align: right;
+  font-weight: 600;
+  font-size: 11PX;
+}
+
+.pcTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.pcEmpty {
+  text-align: center;
+  color: #999;
+  padding: 16PX 8PX !important;
+  white-space: normal !important;
+  font-size: 12PX;
+}
+
+.pcNote {
+  margin: 8PX 10PX 10PX;
+  background: rgba(254, 224, 0, 1);
+  border-radius: 12PX;
+  padding: 10PX 12PX;
+  font-size: 12PX;
+  line-height: 1.45;
+  color: #000;
+  max-height: 96PX;
+  overflow-y: auto;
+  word-break: break-word;
+}

@@ -1,7 +1,12 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import * as d3 from 'd3';
+import { message } from 'antd';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { getSectionSymbols } from '@/api/market';
+import { completeTask } from '@/api/user';
+import { request } from '@/utils/request';
+import { Interface } from '@/utils/constants';
 import styles from './index.module.less';
 
 const PCSectorTreeMap = ({ 
@@ -18,8 +23,12 @@ const PCSectorTreeMap = ({
   customColorMethod,
   showPercentage = true,
   showPrice = true,
+  showHoverPanel = true,
+  hideLegend = false,
+  fillHeight = false,
   onItemClick 
 }) => {
+  const router = useRouter();
   const { t } = useTranslation();
   const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -31,6 +40,92 @@ const PCSectorTreeMap = ({
   const [coinSortOrder, setCoinSortOrder] = useState('asc'); // 'asc' | 'desc'
   const sectorCoinsCacheRef = useRef(new Map());
   const latestCoinsRequestIdRef = useRef(0);
+  const favoriteToggleInFlightRef = useRef(false);
+
+  const patchSectorCoins = useCallback((category, updater) => {
+    setSectorCoins((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      if (category) {
+        sectorCoinsCacheRef.current.set(category, next);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleToggleFavorite = useCallback(
+    async (e, coin) => {
+      e.stopPropagation();
+      e.preventDefault();
+
+      const symbol = coin?.symbol;
+      if (!symbol || favoriteToggleInFlightRef.current) return;
+
+      const category = hoveredItem?.category || hoveredItem?.name;
+      const prevLiked = !!coin.isLiked;
+      const nextLiked = !prevLiked;
+
+      patchSectorCoins(category, (prev) =>
+        prev.map((item) => (item.symbol === symbol ? { ...item, isLiked: nextLiked } : item))
+      );
+
+      favoriteToggleInFlightRef.current = true;
+      try {
+        const res = await request({
+          url: nextLiked ? Interface.ADD_OWN : Interface.CANCEL_OWN,
+          method: 'GET',
+          data: { coin: symbol },
+        });
+
+        if (res?.data?.isLogin === false) {
+          patchSectorCoins(category, (prev) =>
+            prev.map((item) => (item.symbol === symbol ? { ...item, isLiked: prevLiked } : item))
+          );
+          message.warning(t('auth.notLoggedIn') || t('user.pleaseLogin'));
+          return;
+        }
+
+        if (res?.code === 0 || res?.data) {
+          message.success(nextLiked ? t('common.addSuccess') : t('common.cancelSuccess'));
+          if (nextLiked) {
+            try {
+              const ownListRes = await request({ url: Interface.COIN_SELF, method: 'GET' });
+              const ownCount = ownListRes?.data?.length ?? ownListRes?.data?.list?.length ?? 0;
+              if (ownCount >= 3) {
+                await completeTask('ADD_WATCHLIST');
+              }
+            } catch (taskErr) {
+              console.error('[PCSectorTreeMap] completeTask ADD_WATCHLIST failed:', taskErr);
+            }
+          }
+        } else {
+          patchSectorCoins(category, (prev) =>
+            prev.map((item) => (item.symbol === symbol ? { ...item, isLiked: prevLiked } : item))
+          );
+          message.error(res?.msg || res?.errorMsg || t('common.operationFailed'));
+        }
+      } catch (error) {
+        console.error('[PCSectorTreeMap] toggle favorite failed:', error);
+        patchSectorCoins(category, (prev) =>
+          prev.map((item) => (item.symbol === symbol ? { ...item, isLiked: prevLiked } : item))
+        );
+        message.error(t('common.operationFailed'));
+      } finally {
+        favoriteToggleInFlightRef.current = false;
+      }
+    },
+    [hoveredItem, patchSectorCoins, t]
+  );
+
+  const handleAddMonitor = useCallback(
+    (e, coin) => {
+      e.stopPropagation();
+      e.preventDefault();
+      const symbol = coin?.symbol;
+      if (!symbol || symbol === '--') return;
+      router.push(`/pc/alarm?symbol=${encodeURIComponent(symbol)}`);
+    },
+    [router]
+  );
 
   const normalizeMoneyDisplay = useCallback((raw) => {
     if (raw == null || raw === '') return '--';
@@ -255,6 +350,7 @@ const PCSectorTreeMap = ({
           // Add hover effect and tooltip logic
           nodes.on('mouseenter', function(event, d) {
             d3.select(this).style('opacity', 0.9).style('z-index', 10);
+            if (!showHoverPanel) return;
             setHoveredItem({
               name: d.data.name,
               change: d.data.change,
@@ -271,7 +367,7 @@ const PCSectorTreeMap = ({
           })
           .on('mouseleave', function() {
             d3.select(this).style('opacity', 1).style('z-index', 1);
-            if (!isTooltipHovered) {
+            if (!showHoverPanel || !isTooltipHovered) {
               setHoveredItem(null);
             }
           })
@@ -283,7 +379,7 @@ const PCSectorTreeMap = ({
       console.error("TreeMap Render Error:", error);
     }
 
-  }, [list, dimensions, loading, LEGEND_ITEMS, getColor, isTooltipHovered]);
+  }, [list, dimensions, loading, LEGEND_ITEMS, getColor, isTooltipHovered, showHoverPanel]);
 
   const getTooltipStyle = (item) => {
     if (!item) return {};
@@ -379,6 +475,7 @@ const PCSectorTreeMap = ({
   }, [coinSortField, coinSortOrder]);
 
   useEffect(() => {
+    if (!showHoverPanel) return;
     const category = hoveredItem?.category;
     if (!category) {
       setSectorCoins([]);
@@ -428,28 +525,33 @@ const PCSectorTreeMap = ({
         if (requestId !== latestCoinsRequestIdRef.current) return;
         setCoinsLoading(false);
       });
-  }, [hoveredItem?.category, parseNumericDisplay]);
+  }, [hoveredItem?.category, parseNumericDisplay, showHoverPanel]);
+
+  const containerClassName = [
+    styles.container,
+    fillHeight ? styles.containerFill : '',
+  ].filter(Boolean).join(' ');
 
   return (
-    <div className={styles.container} style={{ minHeight: '600px' }}>
-      
-      {/* Legend */}
-      <div className={styles.legendContainer}>
-        {LEGEND_ITEMS.map((item, index) => (
+    <div className={containerClassName} style={fillHeight ? undefined : { minHeight: '600px' }}>
+      {!hideLegend && (
+        <div className={styles.legendContainer}>
+          {LEGEND_ITEMS.map((item, index) => (
           <div key={index} className={styles.legendItem}>
-            <div 
-              className={styles.legendDot} 
+            <div
+              className={styles.legendDot}
               style={{ backgroundColor: item.color }}
             />
             <span>{item.label}</span>
           </div>
         ))}
-      </div>
+        </div>
+      )}
 
-      <div 
-        className={styles.treemapContainer} 
+      <div
+        className={`${styles.treemapContainer} ${fillHeight ? styles.treemapContainerFill : ''}`}
         ref={containerRef}
-        style={{ position: 'relative', width: '100%', height: '600px' }}
+        style={fillHeight ? undefined : { position: 'relative', width: '100%', height: '600px' }}
       >
         {loading && (
           <div className={styles.skeletonContainer}>
@@ -474,7 +576,7 @@ const PCSectorTreeMap = ({
         )}
 
         {/* Highlight Overlay */}
-        {hoveredItem && hoveredItem.width && (
+        {showHoverPanel && hoveredItem && hoveredItem.width && (
           <div 
             className={styles.hoverOverlay}
             style={{ 
@@ -511,7 +613,7 @@ const PCSectorTreeMap = ({
         )}
 
         {/* Tooltip */}
-        {hoveredItem && (
+        {showHoverPanel && hoveredItem && (
           <div 
             className={styles.customTooltip}
             style={getTooltipStyle(hoveredItem)}
@@ -587,7 +689,7 @@ const PCSectorTreeMap = ({
                   <span>{t('sectorDetail.sort.change24h')}</span>
                     <i className={`${styles.sortArrows} ${changeActive ? styles.sortArrowsActive : ''} ${changeOrder === 'asc' ? styles.sortAsc : styles.sortDesc}`} />
                 </button>
-                <span>{t('sectorDetail.watchlist')}</span>
+                <span>{t('home.columns.addFavorites')}</span>
                 <span>{t('sectorDetail.addMonitor')}</span>
                     </>
                   );
@@ -613,14 +715,38 @@ const PCSectorTreeMap = ({
                       <span className={`${styles.tooltipCoinPct} ${coin.change24h >= 0 ? styles.coinPctPositive : styles.coinPctNegative}`}>
                         {coin.change24h >= 0 ? '+' : ''}{coin.change24h.toFixed(2)}%
                       </span>
-                      <span className={styles.tooltipCoinAction}>
+                      <span
+                        className={styles.tooltipCoinAction}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={t('home.columns.addFavorites')}
+                        onClick={(e) => handleToggleFavorite(e, coin)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleToggleFavorite(e, coin);
+                          }
+                        }}
+                      >
                         <img
                           src={coin.isLiked ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/like_actived.svg' : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/like_no_actived.svg'}
                           alt=""
                           className={styles.tooltipActionIcon}
                         />
                       </span>
-                      <span className={styles.tooltipCoinAction}>
+                      <span
+                        className={styles.tooltipCoinAction}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={t('sectorDetail.addMonitor')}
+                        onClick={(e) => handleAddMonitor(e, coin)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleAddMonitor(e, coin);
+                          }
+                        }}
+                      >
                         <img
                           src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/monitor-bell.svg"
                           alt=""

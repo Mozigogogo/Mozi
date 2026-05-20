@@ -10,7 +10,7 @@ export default function AlertsSection() {
           className={`${styles.alertsCopy} ${styles.alertsCopyInLayout}`}
           title={['Smart Alerts']}
           subtitle={["Phone & Email alerts. Catch whales' moves instantly."]}
-          href="/pc/alarm"
+          href="/detail?symbol=BTC"
           ctaText="See what&apos;s Moving"
         />
       </div>

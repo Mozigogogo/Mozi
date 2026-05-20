@@ -25,6 +25,7 @@
   position: relative;
   flex: 0 0 52%;
   height: 100%;
+  overflow: visible;
 }
 
 .sectorLeft {
@@ -37,17 +38,56 @@
 
 .sectorPreview {
   position: absolute;
-  left: 0;
-  top: 8%;
+  left: auto;
+  right: 0;
+  top: 38%;
+  transform: translateY(-50%) translateX(clamp(20px, 4vw, 64px));
   width: 100%;
-  aspect-ratio: 715 / 533;
-  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0;
+  box-sizing: border-box;
+  pointer-events: none;
+  border-radius: 20px;
   overflow: hidden;
 }
 
+.sectorPoster,
 .sectorPreviewImage {
-  object-fit: cover;
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: min(78vh, 760px);
+  object-fit: contain;
   object-position: right center;
+  border-radius: 20px;
+}
+
+.sectorPoster {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  transition: opacity 0.25s ease;
+}
+
+.sectorPosterHidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.sectorPreviewImage {
+  position: relative;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.sectorPreviewImageReady {
+  opacity: 1;
 }
 
 @media (max-width: 1100px) {
@@ -81,7 +121,21 @@
     left: auto;
     right: auto;
     top: auto;
+    transform: none;
     margin-top: 24px;
     width: 100%;
+    padding: 0 4%;
+  }
+
+  .sectorPoster,
+  .sectorPreviewImage {
+    max-height: min(56vh, 520px);
+  }
+
+  .sectorPoster {
+    position: relative;
+    right: auto;
+    top: auto;
+    transform: none;
   }
 }

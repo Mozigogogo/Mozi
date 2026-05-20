@@ -62,8 +62,35 @@
   pointer-events: none;
   object-fit: contain;
 }
+
+.oneClickTitleBlock {
+  position: relative;
+  z-index: 12;
+  padding: 8px 108px 12px 18px;
+  pointer-events: none;
+}
+
+.oneClickTitle {
+  margin: 0;
+  font-family: 'PingFang SC', -apple-system, sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1.25;
+  letter-spacing: -0.3px;
+  color: #059669;
+}
+
+.oneClickSubtitle {
+  margin: 6px 0 0;
+  font-family: 'PingFang SC', -apple-system, sans-serif;
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 1.35;
+  color: #6b7280;
+}
+
 .bodyNoPadding {
-  padding: 47px 16px 0;
+  padding: 6px 16px 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -96,12 +123,216 @@
   flex-direction: column;
 }
 
+.oneClickCard {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  padding: 0;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
 .cardContent {
   flex: 1;
   min-height: 0;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: 16px;
+  padding: 14px 8px 8px;
+}
+
+.notifySection {
+  margin-top: 12px;
+  /* 左右与下方 oneClickBelowInset 一致，保证列表对齐 */
+  padding: 10px 6px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+
+  &:first-child {
+    margin-top: 0;
+  }
+
+  .inputRow {
+    margin-bottom: 0;
+  }
+
+  .notifyRow {
+    margin-top: 8px;
+  }
+
+  .notifyRow + .notifyRow {
+    margin-top: 0;
+  }
+
+  .errorText {
+    margin: 6px 0 0;
+  }
+}
+
+/** 电话区块以下：与 notifySection 左右 gutter（6px）一致 */
+.oneClickBelowInset {
+  padding-left: 6px;
+  padding-right: 6px;
+  box-sizing: border-box;
+}
+
+.notifyRow {
+  margin-top: 12px;
+}
+
+.notifyRow + .notifyRow {
+  margin-top: 2px;
+}
+
+.notifyRowInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 4px;
+  min-height: 44px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.notifyRowLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.notifyIconWrap {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notifyIconWrap img {
+  display: block;
+}
+
+.notifyTextCol {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.notifyTextCol .rowLabel {
+  display: block;
+  width: 100%;
+}
+
+.rowSub {
+  font-family: 'PingFang SC', sans-serif;
+  font-weight: 400;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #9ca3af;
+  text-align: left;
+}
+
+.fieldHint {
+  margin: 4px 4px 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #9ca3af;
+}
+
+.freqSection {
+  margin-top: 18px;
+  padding-top: 4px;
+}
+
+.freqTitle {
+  font-family: 'PingFang SC', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: #111827;
+  margin-bottom: 10px;
+}
+
+.freqOption {
+  position: relative;
+  width: 100%;
+  text-align: left;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.freqOption:last-child {
+  margin-bottom: 0;
+}
+
+.freqOptionSelected {
+  border: 2px solid #10b981;
+  padding: 11px 32px 11px 13px;
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.12);
+}
+
+/* 右上角选中角标：绿色块（略小，左下大圆角） */
+.freqOptionSelected::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  background: #10b981;
+  border-radius: 0 10px 0 11px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* 对勾与角标同区域，flex 居中 */
+.freqOptionSelected::after {
+  content: '\2713';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.freqOptionTitle {
+  display: block;
+  font-family: 'PingFang SC', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: #111827;
+}
+
+.freqOptionDesc {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #9ca3af;
 }
 
 .row {
@@ -129,31 +360,115 @@
   font-family: 'PingFang SC', sans-serif;
   font-weight: 600;
   font-size: 14px;
-  line-height: 100%;
+  line-height: 1.3;
   letter-spacing: -0.3px;
-  text-align: center;
+  text-align: left;
   color: rgba(49, 48, 48, 1);
 }
 
 .inputRow {
-  margin: 0 14px 8px;
-  height: 44px;
-  border-radius: 999px;
-  background: rgba(247, 247, 247, 1);
+  margin: 0 0 8px;
+  min-height: 44px;
+  border-radius: 12px;
+  background: #f3f4f6;
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 0 12px;
 }
 
+.webhookUrlList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.webhookInputGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.webhookInputGroup .inputRow {
+  flex: 1;
+  margin: 0;
+  min-width: 0;
+}
+
+.webhookRowActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.webhookAddBtn,
+.webhookRemoveBtn {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+  transition: opacity 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.webhookBtnIcon {
+  display: block;
+  flex-shrink: 0;
+}
+
+.webhookAddBtn {
+  color: #6b7280;
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  &:active:not(:disabled) {
+    border-color: #10b981;
+    color: #10b981;
+  }
+}
+
+.webhookRemoveBtn {
+  color: #9ca3af;
+
+  &:active {
+    border-color: #ef4444;
+    color: #ef4444;
+  }
+}
+
 .errorText {
-  margin: -4px 14px 8px 14px;
-  padding-left: 12px;
+  margin: -4px 0 8px;
+  padding-left: 4px;
   font-family: 'PingFang SC', sans-serif;
   font-weight: 400;
   font-size: 12px;
   line-height: 16px;
   color: #ff4d4f;
+}
+
+.smsHint {
+  margin: -6px 14px 4px;
+  padding: 0 14px 0 14px;
+  font-size: 12px;
+  line-height: 16px;
+  color: rgba(49, 48, 48, 0.55);
 }
 
 .inputIcon {
@@ -402,6 +717,7 @@
 .toggle {
   width: 40px;
   height: 24px;
+  flex-shrink: 0;
   border-radius: 32px;
   border: none;
   position: relative;
@@ -411,7 +727,7 @@
 }
 
 .toggleOn {
-  background: rgba(17, 183, 135, 1);
+  background: #10b981;
 }
 
 .toggleOff {
@@ -443,21 +759,19 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 16px 0 calc(16px + env(safe-area-inset-bottom));
+  padding: 14px 14px calc(14px + env(safe-area-inset-bottom));
   flex-shrink: 0;
   background: #fff;
-  margin: 0 -16px -16px;
-  padding-left: 16px;
-  padding-right: 16px;
+  border-top: 1px solid #f3f4f6;
 }
 
 .primaryBtn {
   width: 100%;
   height: 48px;
-  border-radius: 100px;
+  border-radius: 24px;
   border: none;
   padding: 10px;
-  background: rgba(17, 183, 135, 1);
+  background: #10b981;
   opacity: 1;
   display: flex;
   align-items: center;
@@ -499,9 +813,9 @@
 .secondaryBtn {
   width: 100%;
   height: 48px;
-  border-radius: 100px;
+  border-radius: 24px;
   border-width: 1px;
-  border: 1px solid rgba(153, 153, 153, 1);
+  border: 1px solid #e5e7eb;
   padding: 10px;
   gap: 10px;
   opacity: 1;
@@ -510,9 +824,9 @@
   justify-content: center;
   margin: 0 auto;
   background: #ffffff;
-  color: rgba(17, 24, 39, 0.72);
+  color: #6b7280;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   transition: opacity 0.2s;
 

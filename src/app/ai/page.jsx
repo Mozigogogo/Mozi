@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -11,13 +11,21 @@ import PCLayout from '../../components/PCLayout';
 import ThinkingAnimation from '../../components/ThinkingAnimation';
 import PopLogin from '../../components/PopLogin';
 import { trackEvent, trackPageView, AIEvents } from '@/utils/amplitude';
-import { INTERFACE_URL, Interface } from '@/utils/constants';
+import { INTERFACE_URL, Interface, BIGORDER_CHAT_API } from '@/utils/constants';
 import { request } from '@/utils/request';
 import { executeConsume } from '@/api/points';
 import { useRobotTestSSE } from '@/hooks/useRobotTestSSE';
+import { extractCoinSymbolFromText } from '@/utils/extractCoinSymbolFromText';
+import {
+  normalizeSuggestionItems,
+  TRADE_SUGGESTION_ID,
+  withTradeSuggestion,
+} from '@/utils/normalizeSuggestionItems';
+import ExchangePickerModal from '@/components/ExchangePickerModal';
 import { forceBlurAndResetViewport } from '@/utils/iosViewportFix';
 import { safeBack } from '@/utils/navigation';
 import { fetchUserDataInfoOnce } from '@/utils/postLogin';
+import { consumePcAiFromSearch } from '@/utils/pcAiFromSearch';
 import styles from './page.module.less';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import AiRobotUpgradePillButton from '@/components/AiRobotUpgradePillButton';
@@ -353,6 +361,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   }, []);
 
   const isPC = propIsPC || isPCState;
+
   const fixedSuggestedQuestions = [
     t('robot.quickAsk.btcTrend'),
     t('robot.quickAsk.ethTechnical'),
@@ -365,15 +374,23 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   // 消息列表：只有加载到历史记录或用户开始对话时才会出现内容
   const [messages, setMessages] = useState([]);
   const [suggestedQuestions, setSuggestedQuestions] = useState([]);
-  // 模型选择状态
-  const [selectedModel, setSelectedModel] = useState('analyze'); // 'analyze' | 'chat'
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const displaySuggestedQuestions = useMemo(
+    () => withTradeSuggestion(suggestedQuestions),
+    [suggestedQuestions]
+  );
+  const [exchangePickerOpen, setExchangePickerOpen] = useState(false);
+  const [tradePickerSymbol, setTradePickerSymbol] = useState('BTC');
+  // 模型选择状态：PC 为三个独立按钮，移动端为下拉面板
+  const [selectedModel, setSelectedModel] = useState('analyze'); // 'analyze' | 'chat' | 'bigorder'
+  const [modelMenuOpen, setModelMenuOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [shareQuestion, setShareQuestion] = useState('');
   const [shareAnswer, setShareAnswer] = useState('');
 
-  // 当前模型单次对话所需积分
+  // 当前模型单次对话所需积分（大单侦测与对话模型同档）
   const requiredPointsPerAsk = selectedModel === 'analyze' ? 50 : 10;
+
+  const modelMenuRef = useRef(null);
 
   // 语音转文字（Web Speech API）
   const {
@@ -469,9 +486,12 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   const messageIdRef = useRef(null);
   const lastUserMessageRef = useRef(null); // 用于“重新生成”
   const historyLoadedRef = useRef(false); // 防止重复加载历史记录
+  const pcSearchAutoSentRef = useRef(false);
+  const handleSendRef = useRef(null);
   const abortControllerRef = useRef(null);
   const currentActionCodeRef = useRef(null); // 本轮对话对应的积分扣除动作
   const hasConsumedRef = useRef(false); // 防止重复调用 /points/consume
+  const userAbortedRef = useRef(false); // 用户手动停止后，忽略后续 SSE 回调
   // const [isStreaming, setIsStreaming] = useState(false); // 使用 hook 中的 isStreaming
 
   // 加载聊天历史记录
@@ -565,8 +585,9 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
           // 保存建议问题：即使没有历史消息，也可能由后端下发默认 suggestedQuestions
           if (data.data.suggestedQuestions && Array.isArray(data.data.suggestedQuestions)) {
-            setSuggestedQuestions(data.data.suggestedQuestions);
-            console.log('✅ 加载了', data.data.suggestedQuestions.length, '个建议问题');
+            const norm = normalizeSuggestionItems(data.data.suggestedQuestions);
+            setSuggestedQuestions(norm);
+            console.log('✅ 加载了', norm.length, '个建议问题');
           } else {
             setSuggestedQuestions([]);
           }
@@ -628,25 +649,57 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     }
   };
 
+  const patchCurrentAiMessage = useCallback((patch) => {
+    if (userAbortedRef.current) return;
+    const msgId = currentAiMsgIdRef.current;
+    if (!msgId) return;
+    setMessages((prev) =>
+      prev.map((msg) => (msg.id === msgId ? { ...msg, ...patch } : msg))
+    );
+  }, []);
+
+  const markCurrentMessageAborted = useCallback(() => {
+    const msgId = currentAiMsgIdRef.current;
+    if (!msgId) return;
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === msgId
+          ? {
+              ...msg,
+              loading: false,
+              statusHint: '',
+              aborted: true,
+            }
+          : msg
+      )
+    );
+    currentAiMsgIdRef.current = null;
+  }, []);
+
+  const getRobotLang = () =>
+    typeof window !== 'undefined' ? localStorage.getItem('i18nextLng') || 'zh' : 'zh';
+
   // 使用 SSE Stream Hook（对话结束或中断后再扣积分）
   const { sendMessage, isStreaming, abort } = useRobotTestSSE(
-    selectedModel === 'analyze' 
+    selectedModel === 'analyze'
       ? '/api/robot_proxy/api/v1/analyze/stream'
       : '/api/robot_proxy/api/v1/chat/stream',
     {
-      headers: () => {
-        const lang = typeof window !== 'undefined' 
-          ? (localStorage.getItem('i18nextLng') || 'zh') 
-          : 'zh';
-        return {
-          'language': lang,
-        };
-      },
+      headers: () => ({
+        language: getRobotLang(),
+      }),
       getToken: () => typeof window !== 'undefined' ? localStorage.getItem('token') : null,
       onStart: () => {
         // AI 开始回复
       },
+      onSuggestions: (list) => {
+        const norm = normalizeSuggestionItems(list);
+        if (norm.length > 0) {
+          setSuggestedQuestions(norm);
+        }
+      },
       onChunk: (chunk, accumulated, eventData) => {
+        if (userAbortedRef.current) return;
         // 更新消息内容
         if (currentAiMsgIdRef.current) {
           setMessages(prev => prev.map(msg => 
@@ -674,6 +727,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
         }
       },
       onComplete: async (fullContent, eventData) => {
+        if (userAbortedRef.current) return;
         // AI 回复完成
         if (currentAiMsgIdRef.current) {
           const msgId = currentAiMsgIdRef.current;
@@ -692,9 +746,9 @@ export default function RobotPage({ isPC: propIsPC = false }) {
         }
         currentAiMsgIdRef.current = null;
 
-        // 更新建议问题
+        // 更新建议问题（complete 事件里附带）
         if (eventData?.suggestedQuestions && eventData.suggestedQuestions.length > 0) {
-          setSuggestedQuestions(eventData.suggestedQuestions);
+          setSuggestedQuestions(normalizeSuggestionItems(eventData.suggestedQuestions));
         }
 
         // 埋点：AI 回复完成
@@ -710,6 +764,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
         await consumeOnce('complete');
       },
       onError: (error) => {
+        if (userAbortedRef.current) return;
         // AI 对话错误
         // 更新消息为错误状态
         if (currentAiMsgIdRef.current) {
@@ -727,9 +782,98 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     }
   );
 
+  /** 大单侦测：SSE 直连 Python 后端（thinking / toolcall / content / suggestions / done） */
+  const {
+    sendMessage: sendBigorderMessage,
+    isStreaming: isBigorderStreaming,
+    abort: abortBigorder,
+  } = useRobotTestSSE(BIGORDER_CHAT_API, {
+    headers: () => ({
+      language: getRobotLang(),
+    }),
+    getToken: () => (typeof window !== 'undefined' ? localStorage.getItem('token') : null),
+    onThinking: (data) => {
+      patchCurrentAiMessage({
+        statusHint: t('robot.bigorder.analyzing'),
+        loading: true,
+      });
+    },
+    onToolCall: (data) => {
+      const coin = data?.args?.coin || '';
+      const tool = data?.tool || '';
+      patchCurrentAiMessage({
+        statusHint: coin
+          ? t('robot.bigorder.toolCall', { tool, coin })
+          : t('robot.bigorder.toolCallGeneric', { tool: tool || 'tool' }),
+        loading: true,
+      });
+    },
+    onToolResult: () => {
+      patchCurrentAiMessage({
+        statusHint: t('robot.bigorder.generating'),
+        loading: true,
+      });
+    },
+    onSuggestions: (list) => {
+      const norm = normalizeSuggestionItems(list);
+      if (norm.length > 0) {
+        setSuggestedQuestions(norm);
+      }
+    },
+    onChunk: (_chunk, accumulated) => {
+      patchCurrentAiMessage({
+        content: accumulated,
+        loading: true,
+        statusHint: '',
+      });
+    },
+    onComplete: async (fullContent, eventData) => {
+      if (userAbortedRef.current) return;
+      const msgId = currentAiMsgIdRef.current;
+      if (msgId) {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === msgId
+              ? {
+                  ...msg,
+                  content: fullContent || t('robot.genericError'),
+                  loading: false,
+                  statusHint: '',
+                  error: false,
+                }
+              : msg
+          )
+        );
+      }
+      currentAiMsgIdRef.current = null;
+
+      if (eventData?.suggestions?.length) {
+        setSuggestedQuestions(normalizeSuggestionItems(eventData.suggestions));
+      }
+
+      trackEvent(AIEvents.RESPONSE_RECEIVED, {
+        requestId: currentRequestIdRef.current,
+        responseLength: (fullContent || '').length,
+      });
+      // 大单侦测不扣积分
+    },
+    onError: () => {
+      if (userAbortedRef.current) return;
+      patchCurrentAiMessage({
+        content: t('robot.sendFailed'),
+        loading: false,
+        statusHint: '',
+        error: true,
+      });
+      currentAiMsgIdRef.current = null;
+    },
+  });
+
+  const isBusy = isStreaming || isBigorderStreaming;
+
   // 右上角 “AI Assistant Pro” 升级胶囊：只在空状态展示，开始对话后隐藏
   // 放在这里是为了确保 `isBootstrappingUserData` / `isStreaming` 已初始化
-  const showUpgradePill = messages.length === 0 && !isBootstrappingUserData && !isStreaming;
+  const showUpgradePill = messages.length === 0 && !isBootstrappingUserData && !isBusy;
   
   // 检查登录状态
   useEffect(() => {
@@ -749,7 +893,39 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   useEffect(() => {
     trackPageView('AI Assistant');
   }, []);
-  
+
+  /** 移动端模型下拉：点击外部关闭 */
+  useEffect(() => {
+    if (isPC || !modelMenuOpen) return undefined;
+    const onDocMouseDown = (event) => {
+      if (modelMenuRef.current && !modelMenuRef.current.contains(event.target)) {
+        setModelMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDocMouseDown);
+    return () => document.removeEventListener('mousedown', onDocMouseDown);
+  }, [isPC, modelMenuOpen]);
+
+  /** 移动端模型下拉：Escape 关闭 */
+  useEffect(() => {
+    if (!modelMenuOpen) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setModelMenuOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [modelMenuOpen]);
+
+  /** 请求进行中关闭下拉，避免状态错乱 */
+  useEffect(() => {
+    if (isBusy) setModelMenuOpen(false);
+  }, [isBusy]);
+
+  /** 切到 PC 布局时收起移动端下拉 */
+  useEffect(() => {
+    if (isPC) setModelMenuOpen(false);
+  }, [isPC]);
+
   // 登录成功回调
   const handleLoginSuccess = () => {
     window.location.reload();
@@ -774,7 +950,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
         scrollToBottom();
       });
     });
-  }, [messages]);
+  }, [messages, displaySuggestedQuestions]);
 
   /** 与底部积分展示一致：优先用扣减后的 remainingPoints，否则用 userData 的 totalPoints */
   const getEffectivePoints = () => {
@@ -786,6 +962,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   /** 输入框发送 / 快捷提示词 / 重新生成 共用：积分不足以支付当前模式单次消耗时拦截 */
   const shouldShowPointsLockBeforeSend = () => {
     if (!ENABLE_POINTS_LIMIT) return false;
+    if (selectedModel === 'bigorder') return false;
     if (!hasEnoughPoints) return true;
     const eff = getEffectivePoints();
     if (typeof eff !== 'number') return false;
@@ -819,7 +996,9 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     forceBlurAndResetViewport();
     
     const message = text || inputValue.trim();
-    if (!message || isStreaming) return;
+    if (!message || isBusy) return;
+
+    userAbortedRef.current = false;
 
     // 埋点：用户发送问题
     trackEvent(AIEvents.QUESTION_SENT, {
@@ -859,6 +1038,12 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     }]);
 
     try {
+      if (selectedModel === 'bigorder') {
+        currentActionCodeRef.current = null;
+        await sendBigorderMessage({ message, lang: getRobotLang() });
+        return;
+      }
+
       // 记录本轮对话对应的 actionCode，待对话完成或中断后再调用 /points/consume
       const actionCode = selectedModel === 'analyze' ? 'AI_DEEP_ANALYZE' : 'AI_BASIC_CHAT';
       currentActionCodeRef.current = actionCode;
@@ -871,10 +1056,11 @@ export default function RobotPage({ isPC: propIsPC = false }) {
       // 构造请求 payload
       let payload = {};
       if (selectedModel === 'analyze') {
+        const symbol = extractCoinSymbolFromText(message);
         payload = {
-          symbol: "BTC",
+          ...(symbol ? { symbol } : {}),
           question: message,
-          lang: lang
+          lang: lang,
         };
       } else {
         payload = {
@@ -891,9 +1077,30 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     }
   };
 
+  handleSendRef.current = handleSend;
+
+  // PC 顶栏：搜索框输入币种后点「AI问答」→ 自动以「{币种}的综合分析」发起对话
+  useEffect(() => {
+    if (!mounted || !isPC || isBootstrappingUserData) return;
+    if (pcSearchAutoSentRef.current) return;
+
+    const payload = consumePcAiFromSearch();
+    if (!payload?.symbol) return;
+
+    pcSearchAutoSentRef.current = true;
+    setSelectedModel('analyze');
+    const question = t('robot.suggest.comprehensiveAnalysis', { symbol: payload.symbol });
+
+    const timer = window.setTimeout(() => {
+      handleSendRef.current?.(question);
+    }, 350);
+
+    return () => window.clearTimeout(timer);
+  }, [mounted, isPC, isBootstrappingUserData, t]);
+
   // 重新生成：基于上一条用户输入再请求一次
   const handleRegenerate = async () => {
-    if (isStreaming) return;
+    if (isBusy) return;
     const lastMessage = lastUserMessageRef.current;
     if (!lastMessage) return;
 
@@ -903,6 +1110,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     }
 
     forceBlurAndResetViewport();
+    userAbortedRef.current = false;
 
     // 生成请求 ID
     const requestId = `req_${Date.now()}`;
@@ -926,18 +1134,23 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     ]);
 
     try {
+      if (selectedModel === 'bigorder') {
+        currentActionCodeRef.current = null;
+        await sendBigorderMessage({ message: lastMessage, lang: getRobotLang() });
+        return;
+      }
+
       const actionCode = selectedModel === 'analyze' ? 'AI_DEEP_ANALYZE' : 'AI_BASIC_CHAT';
       currentActionCodeRef.current = actionCode;
       hasConsumedRef.current = false;
 
-      const lang = typeof window !== 'undefined'
-        ? (localStorage.getItem('i18nextLng') || 'zh')
-        : 'zh';
+      const lang = getRobotLang();
 
       let payload = {};
       if (selectedModel === 'analyze') {
+        const symbol = extractCoinSymbolFromText(lastMessage);
         payload = {
-          symbol: "BTC",
+          ...(symbol ? { symbol } : {}),
           question: lastMessage,
           lang: lang,
         };
@@ -1000,7 +1213,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   };
 
   const handleToggleMic = async () => {
-    if (isStreaming) return;
+    if (isBusy) return;
 
     if (!browserSupportsSpeechRecognition) {
       console.warn('[Robot] SpeechRecognition not supported by this browser');
@@ -1035,23 +1248,47 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
   // 停止生成
   const handleStop = () => {
-    if (!isStreaming) return;
-    
-    // 中止 SSE 流
-    abort();
-    
-    // 更新消息状态
-    if (currentAiMsgIdRef.current) {
-      setMessages(prev => prev.map(msg => 
-        msg.id === currentAiMsgIdRef.current
-          ? { ...msg, loading: false }
-          : msg
-      ));
+    userAbortedRef.current = true;
+
+    if (isBigorderStreaming) {
+      abortBigorder();
+      markCurrentMessageAborted();
+      return;
     }
-    
-    currentAiMsgIdRef.current = null;
-    // 停止生成后视为一次对话尝试，进行积分扣除
+    if (!isStreaming) return;
+
+    abort();
+    markCurrentMessageAborted();
     consumeOnce('abort');
+  };
+
+  const getTradeSymbolFromMessages = () => {
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      const content = String(messages[i]?.content || '');
+      if (!content) continue;
+      const symbol = extractCoinSymbolFromText(content);
+      if (symbol) return symbol;
+    }
+    return 'BTC';
+  };
+
+  const handleSelectExchange = (exchangeId) => {
+    const map = {
+      binance: 'https://www.bsmkweb.cc/register?ref=195208591',
+      okx: 'https://www.growthhivex.com/join/12214659',
+      bitget:
+        'https://www.nlviwq.cn/zh-CN/referral/register?clacCode=0YL9JUZB&from=%2Fzh-CN%2Fevents%2Freferral-all-program&source=events&utmSource=PremierInviter',
+      gate: 'https://www.gateport.biz/zh/signup/BQNCA1pf?ref_type=103',
+    };
+    const target = map[exchangeId];
+    if (!target) return;
+    window.open(target, '_blank', 'noopener,noreferrer');
+    setExchangePickerOpen(false);
+  };
+
+  const handleOpenTradePicker = () => {
+    setTradePickerSymbol(getTradeSymbolFromMessages());
+    setExchangePickerOpen(true);
   };
 
   // 点击建议问题
@@ -1059,8 +1296,28 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     handleSend(question);
   };
 
+  const handleSuggestedItemClick = (item) => {
+    const id = typeof item === 'object' && item?.id != null ? item.id : '';
+    if (id === TRADE_SUGGESTION_ID) {
+      handleOpenTradePicker();
+      return;
+    }
+    const text = typeof item === 'string' ? item : item?.text ?? '';
+    if (text) handleSuggestedQuestion(text);
+  };
+
   const getSuggestedQuestionDisplay = (question) => {
     if (!question) return '';
+    const comprehensiveMatch = question.match(/^(.+?)的综合分析$/);
+    if (comprehensiveMatch) {
+      const symbol = comprehensiveMatch[1].trim();
+      return t('robot.suggest.comprehensiveAnalysis', { symbol });
+    }
+    const comprehensiveEnMatch = question.match(/^Comprehensive analysis of (.+)$/i);
+    if (comprehensiveEnMatch) {
+      const symbol = comprehensiveEnMatch[1].trim();
+      return t('robot.suggest.comprehensiveAnalysis', { symbol });
+    }
     const trendMatch = question.match(/^帮我分析一下\s+(.+?)\s+的走势$/);
     if (trendMatch) {
       const symbol = trendMatch[1].trim();
@@ -1094,9 +1351,58 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
   };
 
+  const robotModelLabel = (id) => {
+    if (id === 'analyze') return t('robot.model.analyze');
+    if (id === 'chat') return t('robot.model.chat');
+    return t('robot.model.bigOrder');
+  };
+
+  const renderRobotModelIcon = (modelId) => {
+    if (modelId === 'analyze') {
+      return (
+        <span className={styles.modeIconWrap}>
+          <Image
+            src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/deep.svg"
+            alt=""
+            width={11}
+            height={18}
+            className={`${styles.modeIcon} ${styles.modeIconDeep}`}
+            aria-hidden
+          />
+        </span>
+      );
+    }
+    if (modelId === 'chat') {
+      return (
+        <span className={styles.modeIconWrap}>
+          <Image
+            src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/chat.svg"
+            alt=""
+            width={10}
+            height={10}
+            className={styles.modeIcon}
+            aria-hidden
+          />
+        </span>
+      );
+    }
+    return (
+      <span className={styles.modeIconWrap}>
+        <Image
+          src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/Order_situation.svg"
+          alt=""
+          width={12}
+          height={12}
+          className={styles.modeIcon}
+          aria-hidden
+        />
+      </span>
+    );
+  };
+
   const content = (
       <div className={`${styles.robotPage} ${isPC ? styles.pcMode : ''}`}>
-        {isPC && (isStreaming || messages.length > 0) && (
+        {isPC && (isBusy || messages.length > 0) && (
           <div
             className={styles.pcBackBar}
             role="button"
@@ -1128,13 +1434,13 @@ export default function RobotPage({ isPC: propIsPC = false }) {
               </svg>
             </span>
             <span className={styles.pcBackText}>
-              {isStreaming ? t('robot.chattingTitle') : t('pcLayout.menu.myQA')}
+              {isBusy ? t('robot.chattingTitle') : t('pcLayout.menu.myQA')}
             </span>
           </div>
         )}
         {!isPC && (
           <NavBar 
-            title={isStreaming ? t('robot.chattingTitle') : t('pcLayout.menu.myQA')}
+            title={isBusy ? t('robot.chattingTitle') : t('pcLayout.menu.myQA')}
             showBack={true}
             className={styles.navBarCustom}
           />
@@ -1155,7 +1461,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
             </div>
           )}
 
-          {messages.length === 0 && !isBootstrappingUserData && !isStreaming && (
+          {messages.length === 0 && !isBootstrappingUserData && !isBusy && (
             <div className={styles.emptyState}>
               <div className={styles.emptyTextBlock}>
                 <div
@@ -1230,7 +1536,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                   <div
                     className={`${styles.bubble} ${
                       msg.type === 'pointsLock' ? styles.cardBubbleWrap : styles[msg.role]
-                    } ${msg.error ? styles.error : ''}`}
+                    } ${msg.error ? styles.error : ''} ${msg.aborted ? styles.aborted : ''}`}
                   >
                     <div className={styles.text}>
                       {msg.type === 'pointsLock' ? (
@@ -1240,10 +1546,24 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                           onEarnPoints={() => router.push('/pointsdetail')}
                           onUpgrade={() => router.push('/vip-recharge')}
                         />
+                      ) : msg.aborted && !msg.content ? (
+                        <div className={styles.abortedText}>
+                          {t('robot.conversationAborted', { defaultValue: '对话已中止' })}
+                        </div>
                       ) : msg.loading && !msg.content ? (
-                        <ThinkingAnimation />
+                        msg.statusHint ? (
+                          <div className={styles.bigorderStatus}>
+                            <ThinkingAnimation size={28} />
+                            <span>{msg.statusHint}</span>
+                          </div>
+                        ) : (
+                          <ThinkingAnimation />
+                        )
                       ) : msg.role === 'assistant' && msg.content ? (
                         <>
+                          {msg.statusHint ? (
+                            <div className={styles.bigorderStatus}>{msg.statusHint}</div>
+                          ) : null}
                           <StreamingMarkdown
                             content={msg.content}
                             isStreaming={msg.loading}
@@ -1306,6 +1626,41 @@ export default function RobotPage({ isPC: propIsPC = false }) {
               </div>
             ))}
           </div>
+
+          {!isBusy && messages.length > 0 && displaySuggestedQuestions.length > 0 && (
+            <div className={styles.suggestedQuestions}>
+              <div className={styles.suggestedTitle}>{t('robot.suggestedFollowUpTitle')}</div>
+              <div className={styles.suggestedList}>
+                {displaySuggestedQuestions.map((item, idx) => {
+                  const isTradeCta = item.id === TRADE_SUGGESTION_ID;
+                  const text = item?.text ?? '';
+                  if (!isTradeCta && !text) return null;
+                  const label = getSuggestedQuestionDisplay(text) || text;
+                  const key = item.id || `${idx}-${text.slice(0, 24)}`;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      className={`${styles.suggestedBtn} ${isTradeCta ? styles.suggestedBtnTrade : ''}`}
+                      disabled={isBusy}
+                      onClick={() => handleSuggestedItemClick(item)}
+                    >
+                      {isTradeCta ? (
+                        <>
+                          <span>{t('robot.suggest.goTradeEarn')}</span>
+                          <span className={styles.suggestedTradeArrow} aria-hidden>
+                            →
+                          </span>
+                        </>
+                      ) : (
+                        label
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           
           {/* 历史记录加载遮罩层 - 只遮罩聊天区域 */}
           {isBootstrappingUserData && (
@@ -1318,67 +1673,109 @@ export default function RobotPage({ isPC: propIsPC = false }) {
           )}
         </div>
 
+
         <div className={styles.chatInputBar}>
           <div className={styles.inputBox}>
             <input
               className={styles.input}
               value={inputValue}
               placeholder={t('robot.inputPlaceholder')}
-              onKeyDown={(e) => e.key === 'Enter' && !isStreaming && handleSend()}
+              onKeyDown={(e) => e.key === 'Enter' && !isBusy && handleSend()}
               onChange={(e) => setInputValue(e.target.value)}
               onFocus={() => trackEvent(AIEvents.INPUT_FOCUSED)}
-              disabled={isStreaming}
+              disabled={isBusy}
             />
             <div className={styles.inputActions}>
               <div className={styles.actionModes}>
-                <div
-                  className={`${styles.modeItem} ${selectedModel === 'analyze' ? styles.activeMode : ''}`}
-                  onClick={() => setSelectedModel('analyze')}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setSelectedModel('analyze');
-                    }
-                  }}
-                >
-                  <span className={styles.modeIconWrap}>
-                    <Image
-                      src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/deep.svg"
-                      alt=""
-                      width={11}
-                      height={18}
-                      className={`${styles.modeIcon} ${styles.modeIconDeep}`}
-                      aria-hidden
-                    />
-                  </span>
-                  <span className={styles.modeLabel}>{t('robot.model.analyze')}</span>
-                </div>
-                <div
-                  className={`${styles.modeItem} ${selectedModel === 'chat' ? styles.activeMode : ''}`}
-                  onClick={() => setSelectedModel('chat')}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setSelectedModel('chat');
-                    }
-                  }}
-                >
-                  <span className={styles.modeIconWrap}>
-                    <Image
-                      src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/chat.svg"
-                      alt=""
-                      width={10}
-                      height={10}
-                      className={styles.modeIcon}
-                      aria-hidden
-                    />
-                  </span>
-                  <span className={styles.modeLabel}>{t('robot.model.chat')}</span>
-                </div>
+                {isPC ? (
+                  <>
+                    <div
+                      className={`${styles.modeItem} ${selectedModel === 'analyze' ? styles.activeMode : ''}`}
+                      onClick={() => setSelectedModel('analyze')}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setSelectedModel('analyze');
+                        }
+                      }}
+                    >
+                      {renderRobotModelIcon('analyze')}
+                      <span className={styles.modeLabel}>{t('robot.model.analyze')}</span>
+                    </div>
+                    <div
+                      className={`${styles.modeItem} ${selectedModel === 'chat' ? styles.activeMode : ''}`}
+                      onClick={() => setSelectedModel('chat')}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setSelectedModel('chat');
+                        }
+                      }}
+                    >
+                      {renderRobotModelIcon('chat')}
+                      <span className={styles.modeLabel}>{t('robot.model.chat')}</span>
+                    </div>
+                    <div
+                      className={`${styles.modeItem} ${selectedModel === 'bigorder' ? styles.activeMode : ''}`}
+                      onClick={() => setSelectedModel('bigorder')}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setSelectedModel('bigorder');
+                        }
+                      }}
+                    >
+                      {renderRobotModelIcon('bigorder')}
+                      <span className={styles.modeLabel}>{t('robot.model.bigOrder')}</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className={styles.modeDropdownWrap} ref={modelMenuRef}>
+                    <button
+                      type="button"
+                      className={`${styles.modeDropdownTrigger} ${modelMenuOpen ? styles.modeDropdownTriggerOpen : ''} ${isBusy ? styles.modeDropdownTriggerDisabled : ''}`}
+                      disabled={isBusy}
+                      aria-expanded={modelMenuOpen}
+                      aria-haspopup="listbox"
+                      aria-label={t('robot.model.openMenu')}
+                      onClick={() => setModelMenuOpen((o) => !o)}
+                    >
+                      <span className={styles.modeDropdownTriggerInner}>
+                        {renderRobotModelIcon(selectedModel)}
+                        <span className={styles.modeDropdownTriggerText}>{robotModelLabel(selectedModel)}</span>
+                        <span className={styles.modeDropdownCaret} aria-hidden>
+                          ▾
+                        </span>
+                      </span>
+                    </button>
+                    {modelMenuOpen && (
+                      <div className={styles.modeDropdownPanel} role="listbox">
+                        {(['analyze', 'chat', 'bigorder']).map((id) => (
+                          <button
+                            key={id}
+                            type="button"
+                            role="option"
+                            aria-selected={selectedModel === id}
+                            className={`${styles.modeDropdownOption} ${selectedModel === id ? styles.modeDropdownOptionActive : ''}`}
+                            onClick={() => {
+                              setSelectedModel(id);
+                              setModelMenuOpen(false);
+                            }}
+                          >
+                            {renderRobotModelIcon(id)}
+                            <span className={styles.modeDropdownOptionLabel}>{robotModelLabel(id)}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               <div className={styles.actionTools}>
                 <span className={`${styles.pointsTag} ${totalPoints === 0 ? styles.pointsTagWarning : ''}`}>
@@ -1409,7 +1806,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                     />
                   </button>
                 )}
-                {isStreaming ? (
+                {isBusy ? (
                   <button
                     className={styles.stopBtn}
                     onClick={handleStop}
@@ -1455,6 +1852,13 @@ export default function RobotPage({ isPC: propIsPC = false }) {
           onClose={() => setShareOpen(false)}
           question={shareQuestion}
           answer={shareAnswer}
+        />
+
+        <ExchangePickerModal
+          open={exchangePickerOpen}
+          symbol={tradePickerSymbol}
+          onClose={() => setExchangePickerOpen(false)}
+          onSelect={handleSelectExchange}
         />
       </div>
   );

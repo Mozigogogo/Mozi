@@ -104,6 +104,86 @@
       }
     }
   }
+
+  /* PC 端：.pc- 前缀避免 px 被转成 vw */
+  &.pc-pcr-box {
+    width: 100%;
+
+    .PCRDesc {
+      margin-bottom: 12px;
+      padding: 0 4px;
+
+      .PCRDescName {
+        flex: 0 0 140px;
+        min-width: 140px;
+        font-size: 12px;
+        color: #86909c;
+      }
+
+      .PCRDescContent {
+        flex: 1;
+        font-size: 12px;
+        color: #86909c;
+
+        > div {
+          font-size: 12px;
+          color: #86909c;
+        }
+      }
+    }
+
+    .PCRList {
+      .pcrItem {
+        margin-top: 12px;
+        align-items: center;
+
+        .pcrItemTitle {
+          flex: 0 0 140px;
+          min-width: 140px;
+
+          > div:first-child {
+            width: 20px;
+            font-size: 12px;
+            color: #86909c;
+          }
+
+          .pcrItemIcon {
+            width: 24px;
+            height: 24px;
+            margin: 0 8px;
+          }
+
+          .pcrItemName {
+            font-size: 14px;
+            font-weight: 500;
+            color: #1d2129;
+          }
+        }
+
+        .pcrItemRatio {
+          flex: 1;
+          height: 32px;
+          line-height: 32px;
+          font-size: 12px;
+          border-radius: 4px;
+
+          .pcrItemLeft {
+            padding-right: 8px;
+            border-radius: 4px 0 0 4px;
+          }
+
+          .pcrItemDesc {
+            padding: 0 10px;
+
+            > div {
+              font-size: 12px;
+              font-weight: 600;
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 /* 暗色模式适配 */
@@ -131,6 +211,22 @@
             color: #fff;
           }
         }
+      }
+    }
+  }
+
+  .PCRBox {
+    &.pc-pcr-box {
+      .PCRDesc {
+        .PCRDescName,
+        .PCRDescContent,
+        .PCRDescContent > div {
+          color: #86909c;
+        }
+      }
+
+      .PCRList .pcrItem .pcrItemTitle .pcrItemName {
+        color: #fff;
       }
     }
   }

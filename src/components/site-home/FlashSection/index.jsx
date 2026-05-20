@@ -9,7 +9,7 @@ export default function FlashSection() {
         className={styles.flashCopy}
         title={['Flash News']}
         subtitle={['Zero noise. Real-time global crypto signal.']}
-        href="/pc/news"
+        href="/pc/community?tab=hot"
         ctaText="Read News"
       />
       <div className={styles.flashPhones}>

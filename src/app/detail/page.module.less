@@ -23,10 +23,10 @@
   min-height: 320px;
 }
 
-/* PC 端主内容区：左窄右宽双栏，顶对齐、撑满可用高度 */
+/* PC 端主内容区：左 60% / 右 40% 双栏 */
 .pcContentLayout {
   display: grid;
-  grid-template-columns: minmax(0, 40%) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 60%) minmax(0, 40%);
   grid-template-rows: 1fr;
   gap: 4px;
   align-items: stretch;

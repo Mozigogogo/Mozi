@@ -1,3 +1,4 @@
+import { syncAlertConfigFromDatainfo } from './alertConfig';
 import { request } from './request';
 import { Interface } from './constants';
 import { completeTask } from '@/api/user';
@@ -133,6 +134,7 @@ export async function fetchUserDataInfoOnce({ force = false, caller = 'unknown' 
     if (res?.data) {
       try {
         localStorage.setItem('userDataInfo', JSON.stringify(res.data));
+        syncAlertConfigFromDatainfo(res.data);
       } catch {
         // ignore
       }

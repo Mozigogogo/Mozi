@@ -19,6 +19,7 @@ import {
 } from '@/api/user';
 import { getMySubscription } from '@/api/vip';
 import { ensureFirstLoginAt } from '@/utils/postLogin';
+import { syncAlertConfigFromDatainfo } from '@/utils/alertConfig';
 import UserInfo from '@/app/user/components/UserInfo';
 import StatsAndActions from '@/app/user/components/StatsAndActions';
 import UserActions from '@/app/user/components/UserActions';
@@ -526,6 +527,7 @@ export default function UserPage() {
 
       try {
         localStorage.setItem(USER_DATA_INFO_STORAGE_KEY, JSON.stringify(data));
+        syncAlertConfigFromDatainfo(data);
       } catch (e) {
         console.error('❌ 保存 dataInfo 到 localStorage 失败:', e);
       }

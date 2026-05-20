@@ -4,6 +4,7 @@
   height: 100vh;
   aspect-ratio: auto;
   flex: 0 0 auto;
+  overflow-x: clip;
   background:
     radial-gradient(900px 420px at 10% 18%, rgba(45, 212, 191, 0.22), transparent 60%),
     radial-gradient(980px 520px at 92% 78%, rgba(99, 102, 241, 0.3), transparent 58%),
@@ -27,6 +28,7 @@
   position: relative;
   flex: 0 0 52%;
   height: 100%;
+  overflow: visible;
 }
 
 .heroLeft {
@@ -39,25 +41,37 @@
 
 .screenFrame {
   position: absolute;
-  left: 0;
+  left: auto;
   right: 0;
-  top: 8%;
+  top: 38%;
+  transform: translateY(-50%) translateX(clamp(20px, 4vw, 64px));
   width: 100%;
-  aspect-ratio: 715 / 533;
-  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0;
+  box-sizing: border-box;
+  pointer-events: none;
+  border-radius: 20px;
   overflow: hidden;
 }
 
 .screenImage {
-  object-fit: cover;
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: min(78vh, 760px);
+  object-fit: contain;
   object-position: right center;
+  border-radius: 20px;
 }
 
 .floatCard {
   position: absolute;
   /* 在右侧分区中按“旧版全局坐标”换算：float left:45% (stage) 相对 rightPane 左边 48% => -5.77% */
-  left: -5.77%;
-  top: 56%;
+  left: -8%;
+  top: 50%;
   width: clamp(320px, 32vw, 560px);
   max-width: min(560px, 42vw);
   border-radius: clamp(28px, 3.2vw, 54px);
@@ -146,8 +160,14 @@
     left: auto;
     right: auto;
     top: auto;
+    transform: none;
     width: 100%;
     margin-top: 20px;
+    padding: 0 4%;
+  }
+
+  .screenImage {
+    max-height: min(56vh, 520px);
   }
 
   .floatCard {

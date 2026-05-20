@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter, useSearchParams } from "next/navigation";
+import PCLayout from "@/components/PCLayout";
 import { safeBack } from "@/utils/navigation";
 import styles from "./page.module.less";
 
@@ -10,36 +11,44 @@ export default function RankDiscussPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useTranslation();
-  
-  // 从 URL 获取榜单类型和名称
-  const rankType = searchParams?.get('type') || 'surge';
-  const rankName = searchParams?.get('name') || t('home.rank.surge');
-  
-  const [content, setContent] = useState('');
+
+  const rankName = searchParams?.get("name") || t("home.rank.surge");
+
+  const [content, setContent] = useState("");
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const mediaQuery = window.matchMedia("(min-width: 1024px)");
+    const updateIsDesktop = () => setIsDesktop(mediaQuery.matches);
+    updateIsDesktop();
+    mediaQuery.addEventListener("change", updateIsDesktop);
+    return () => mediaQuery.removeEventListener("change", updateIsDesktop);
+  }, []);
 
   const onBack = () => {
-    safeBack(router, { fallback: '/' });
+    if (isDesktop) {
+      router.push("/find?tab=rank");
+      return;
+    }
+    safeBack(router, { fallback: "/" });
   };
 
   const handleSubmit = async () => {
     if (!content.trim()) return;
-    
+
     setLoading(true);
     try {
-      // TODO: 调用发布评论 API
-      // await request({ url: Interface.POST_COMMENT, data: { rankType, content } });
-      
-      // 模拟添加评论
       const newComment = {
         id: Date.now(),
         content: content.trim(),
-        author: '我',
+        author: "我",
         time: new Date().toLocaleString(),
       };
       setComments([newComment, ...comments]);
-      setContent('');
+      setContent("");
     } catch (e) {
       console.error(e);
     } finally {
@@ -47,23 +56,26 @@ export default function RankDiscussPage() {
     }
   };
 
-  return (
+  const pageContent = (
     <div className={styles.container}>
-      {/* 头部 */}
       <div className={styles.header}>
-        <div className={styles.backBtn} onClick={onBack}>
-          <svg className={styles.backIcon} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z" fill="currentColor"/>
+        <button
+          type="button"
+          className={styles.backBtn}
+          onClick={onBack}
+          aria-label={t("common.back", { defaultValue: "返回" })}
+        >
+          <svg className={styles.backIcon} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+            <path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z" fill="currentColor" />
           </svg>
-        </div>
-        <div className={styles.title}>{t('rankDiscuss.title', { rankName })}</div>
+        </button>
+        <div className={styles.title}>{t("rankDiscuss.title", { rankName })}</div>
         <div className={styles.placeholder} />
       </div>
 
-      {/* 评论列表 */}
       <div className={styles.commentList}>
         {comments.length === 0 ? (
-          <div className={styles.empty}>{t('rankDiscuss.noComments')}</div>
+          <div className={styles.empty}>{t("rankDiscuss.noComments")}</div>
         ) : (
           comments.map((comment) => (
             <div key={comment.id} className={styles.commentItem}>
@@ -77,23 +89,39 @@ export default function RankDiscussPage() {
         )}
       </div>
 
-      {/* 输入框 */}
       <div className={styles.inputArea}>
         <input
           type="text"
           className={styles.textarea}
-          placeholder={t('rankDiscuss.placeholder', { rankName })}
+          placeholder={t("rankDiscuss.placeholder", { rankName })}
           value={content}
           onChange={(e) => setContent(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              handleSubmit();
+            }
+          }}
         />
-        <button 
-          className={styles.submitBtn} 
+        <button
+          type="button"
+          className={styles.submitBtn}
           onClick={handleSubmit}
           disabled={loading || !content.trim()}
         >
-          {loading ? '...' : t('rankDiscuss.submit')}
+          {loading ? "..." : t("rankDiscuss.submit")}
         </button>
       </div>
     </div>
   );
+
+  if (isDesktop) {
+    return (
+      <PCLayout>
+        <div className={styles.pcContentArea}>{pageContent}</div>
+      </PCLayout>
+    );
+  }
+
+  return pageContent;
 }

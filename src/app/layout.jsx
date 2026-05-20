@@ -9,6 +9,7 @@ import { LogoLoading } from "@/components/Loading";
 import VConsoleLoader from "@/components/VConsole";
 import InviteCodeHandler from "@/components/InviteCodeHandler";
 import DetailDeepLinkHandler from "@/components/DetailDeepLinkHandler";
+import TelegramRootGate from "@/components/TelegramRootGate";
 import EnvironmentDetector from "@/components/EnvironmentDetector";
 import RouteChangeHandler from "@/components/RouteChangeHandler";
 import TokenDebugMonitor from "@/components/TokenDebugMonitor";
@@ -69,6 +70,7 @@ export default function RootLayout({ children }) {
         {process.env.NODE_ENV !== 'production' ? <TokenDebugMonitor /> : null}
         <VConsoleLoader />
         <Suspense fallback={null}>
+          <TelegramRootGate />
           <InviteCodeHandler />
           <DetailDeepLinkHandler />
         </Suspense>
