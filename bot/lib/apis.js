@@ -796,6 +796,83 @@ async function requestAiAnalysis({ url, secret, body, timeoutMs = 120000 }) {
   }
 }
 
+// --- POST /user/tg/group-referrer/pending（bot 入群记录拉群人）-----------------
+
+/**
+ * @param {{
+ *   apiBaseUrl: string;
+ *   chatId: string | number;
+ *   adderTelegramId: string | number;
+ *   chatTitle?: string;
+ *   botUsername?: string;
+ *   auth?: string;
+ *   appUrl?: string;
+ *   timeoutMs?: number;
+ * }} opts
+ * @returns {Promise<{ ok: boolean; status: number; json: object | null; text: string }>}
+ */
+async function postGroupReferrerPending({
+  apiBaseUrl,
+  chatId,
+  adderTelegramId,
+  chatTitle = '',
+  botUsername = '',
+  auth = '',
+  appUrl = '',
+  timeoutMs = 15000,
+}) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const url = `${base}/user/tg/group-referrer/pending`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    'content-type': 'application/json',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    'user-agent': DEFAULT_UA,
+  };
+  if (auth) {
+    headers.authentication = auth;
+  }
+  if (app) {
+    headers.referer = `${app}/`;
+  }
+  const body = {
+    chatId: String(chatId),
+    adderTelegramId: String(adderTelegramId),
+    chatTitle: String(chatTitle || ''),
+    botUsername: String(botUsername || '').replace(/^@/, ''),
+  };
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      signal: ctrl.signal,
+    });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const out = { ok: res.ok, status: res.status, json, text };
+    apiDebug('POST /user/tg/group-referrer/pending →', {
+      chatId: body.chatId,
+      adderTelegramId: body.adderTelegramId,
+      httpStatus: res.status,
+      ok: res.ok,
+      bodyPreview: text.slice(0, 500),
+    });
+    return out;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 module.exports = {
   fetchDetailHeader,
   postTgRegisteredCheck,
@@ -803,6 +880,7 @@ module.exports = {
   postTgLogin,
   fetchUserDatainfo,
   postPointsConsume,
+  postGroupReferrerPending,
   requestChatStream,
   requestAiAnalysis,
 };

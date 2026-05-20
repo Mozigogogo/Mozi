@@ -6,6 +6,7 @@
  * /price：handlers/price.js + lib/apis.js（GET /detail/header，默认 BTC，简报格式）
  * /help：handlers/help.js（群内仅私聊发全文，防刷屏）
  * /balance：handlers/balance.js（GET /user/datainfo；私聊直接回复，群内尝试私信用户，路径见 USER_DATA_INFO_PATH）
+ * my_chat_member：handlers/groupReferrer.js（bot 入群记录拉群人 TG ID + 群 ID，POST pending）
  * /ai、/chat、/balance：middleware/requireMoziRegistered.js 先 POST /user/tg/registered/check；未注册则群内 @ 提示 + 私信一键注册 /user；已注册则 requireMoziLogin（JWT + token-check）
  * 调试：环境变量 BOT_DEBUG=1 → middleware/debugCommands.js + lib/debugLog.js（命令与 apis 内 HTTP 摘要）
  */
@@ -24,6 +25,7 @@ const { registerChat } = require('./handlers/chat');
 const { registerPrice } = require('./handlers/price');
 const { registerHelp } = require('./handlers/help');
 const { registerBalance } = require('./handlers/balance');
+const { registerGroupReferrer } = require('./handlers/groupReferrer');
 
 if (!config.BOT_TOKEN) {
   console.error('❌ 错误: 请设置 BOT_TOKEN 环境变量');
@@ -39,6 +41,7 @@ const loginGate = createRequireMoziLogin(config, i18nApi);
 registerDebugCommandLogging(bot);
 registerMoziReloginCallback(bot, config, i18nApi);
 registerStart(bot, config, i18nApi);
+registerGroupReferrer(bot, config);
 registerAlert(bot, config, i18nApi);
 registerAi(bot, config, i18nApi, registeredGate, loginGate);
 registerChat(bot, config, i18nApi, registeredGate, loginGate);
