@@ -24,6 +24,8 @@ const PCSectorTreeMap = ({
   showPercentage = true,
   showPrice = true,
   showHoverPanel = true,
+  hideLegend = false,
+  fillHeight = false,
   onItemClick 
 }) => {
   const router = useRouter();
@@ -525,26 +527,31 @@ const PCSectorTreeMap = ({
       });
   }, [hoveredItem?.category, parseNumericDisplay, showHoverPanel]);
 
+  const containerClassName = [
+    styles.container,
+    fillHeight ? styles.containerFill : '',
+  ].filter(Boolean).join(' ');
+
   return (
-    <div className={styles.container} style={{ minHeight: '600px' }}>
-      
-      {/* Legend */}
-      <div className={styles.legendContainer}>
-        {LEGEND_ITEMS.map((item, index) => (
+    <div className={containerClassName} style={fillHeight ? undefined : { minHeight: '600px' }}>
+      {!hideLegend && (
+        <div className={styles.legendContainer}>
+          {LEGEND_ITEMS.map((item, index) => (
           <div key={index} className={styles.legendItem}>
-            <div 
-              className={styles.legendDot} 
+            <div
+              className={styles.legendDot}
               style={{ backgroundColor: item.color }}
             />
             <span>{item.label}</span>
           </div>
         ))}
-      </div>
+        </div>
+      )}
 
-      <div 
-        className={styles.treemapContainer} 
+      <div
+        className={`${styles.treemapContainer} ${fillHeight ? styles.treemapContainerFill : ''}`}
         ref={containerRef}
-        style={{ position: 'relative', width: '100%', height: '600px' }}
+        style={fillHeight ? undefined : { position: 'relative', width: '100%', height: '600px' }}
       >
         {loading && (
           <div className={styles.skeletonContainer}>

@@ -519,6 +519,9 @@ export default function PCHome() {
       <div id="sector" className={styles.sectorSection}>
         <div className={styles.sectorHeader}>
           <h2 className={styles.sectorTitle}>{t('pcHome.sectorMap.title')}</h2>
+          <div className={styles.headerViewMore} onClick={() => router.push('/pc/hotsector')}>
+            {t('pcHome.sectorMap.viewMore')}
+          </div>
         </div>
         <div className={styles.sectorCard}>
           <PCSectorTreeMap 

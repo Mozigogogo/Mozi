@@ -28,6 +28,12 @@ export default function HotSectorPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches) {
+      router.replace('/pc/hotsector');
+    }
+  }, [router]);
+
+  useEffect(() => {
     fetchSectorData();
   }, [sortField, sortOrder]);
 

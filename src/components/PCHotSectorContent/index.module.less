@@ -1,0 +1,148 @@
+/* 与 PCHome sectorSection 保持一致，PX 单位 */
+
+.sectorSection {
+  margin: 0 -24px -64px -24px;
+  padding: 24PX 24PX 64PX;
+  box-sizing: border-box;
+}
+
+.sectorHeader {
+  display: flex;
+  align-items: center;
+  gap: 12PX;
+  margin-bottom: 16PX;
+}
+
+.backBtn {
+  width: 32PX;
+  height: 32PX;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  color: #333;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8PX;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: #11b787;
+    color: #11b787;
+  }
+}
+
+.sectorTitle {
+  margin: 0;
+  font-size: 18PX;
+  font-weight: 600;
+  color: #333;
+}
+
+.legendToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24PX;
+  margin-bottom: 16PX;
+  flex-wrap: wrap;
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16PX;
+  flex: 1;
+  min-width: 0;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6PX;
+  font-size: 12PX;
+  font-weight: 500;
+  color: #666;
+  white-space: nowrap;
+}
+
+.legendDot {
+  width: 12PX;
+  height: 12PX;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* SortButton 默认走 vw 适配，PC 页内强制 PX 字号 */
+.filterBar {
+  display: flex;
+  align-items: center;
+  gap: 16PX;
+  flex-shrink: 0;
+
+  :global {
+    [class*='sortButton'] {
+      font-size: 14PX;
+      font-weight: 400;
+      line-height: 20PX;
+      padding: 4PX 0;
+      gap: 6PX;
+      color: #999999;
+
+      span {
+        font-size: 14PX;
+        line-height: 20PX;
+      }
+
+      svg {
+        width: 7PX;
+        height: 4PX;
+      }
+    }
+
+    [class*='sortButton'][class*='active'] {
+      color: #0b7556;
+      font-weight: 600;
+
+      &::after {
+        bottom: 0;
+        height: 8PX;
+        border-radius: 6PX;
+      }
+    }
+  }
+}
+
+.sectorCard {
+  border-radius: 30PX;
+  overflow: hidden;
+  background: #fff;
+  padding: 20PX;
+}
+
+.chartWrap {
+  width: 100%;
+  /* 按视口高度自适应 */
+  height: 70vh;
+  min-height: 480PX;
+  max-height: 720PX;
+  position: relative;
+
+  :global {
+    [class*='container'] {
+      height: 100% !important;
+      min-height: 0 !important;
+      display: flex !important;
+      flex-direction: column !important;
+    }
+
+    [class*='treemapContainer'] {
+      flex: 1 !important;
+      height: 100% !important;
+      min-height: 0 !important;
+      background: #f8f9fa;
+    }
+  }
+}
