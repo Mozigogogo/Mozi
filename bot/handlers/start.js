@@ -6,6 +6,8 @@
 const { buildMiniAppUrlWithInvite } = require('../lib/invite');
 const { parseAlertDeepLinkPayload } = require('../lib/alertSymbol');
 const { sendAlertCard } = require('../lib/alertFlow');
+const { isRegisterStartPayload } = require('../lib/registerDeepLink');
+const { sendRegisterCard } = require('../lib/registerFlow');
 
 function registerStart(bot, config, { getTexts }) {
   const { APP_URL, ALERT_CARD_IMAGE, TG_COMMUNITY_URL, TWITTER_URL } = config;
@@ -17,6 +19,14 @@ function registerStart(bot, config, { getTexts }) {
     const inviteCode = ctx.startPayload;
 
     const texts = getTexts(languageCode);
+
+    if (isRegisterStartPayload(inviteCode)) {
+      console.log(`\n[${new Date().toLocaleString()}] 用户通过注册深链启动`);
+      console.log(`  TG ID: ${userId}`);
+      console.log(`  Username: ${username}`);
+      await sendRegisterCard(ctx, config, getTexts);
+      return;
+    }
 
     const alertSymbol = parseAlertDeepLinkPayload(inviteCode);
     if (alertSymbol) {

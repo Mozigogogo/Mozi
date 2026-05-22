@@ -2,6 +2,7 @@
 
 const { postTgRegisteredCheck } = require('../lib/apis');
 const { escapeHtml } = require('../lib/telegramHtml');
+const { buildRegisterPrivateUrl } = require('../lib/registerDeepLink');
 
 /** 已发过绑定私信、等待用户完成注册后发送「绑定成功」的用户（telegramId 字符串） */
 const pendingBindNotice = new Set();
@@ -84,18 +85,27 @@ function createRequireMoziRegistered(config, { getTexts }) {
 
     const mention = buildMentionHtml(ctx.from);
     const userPage = userMiniAppRegisterUrl(config);
+    const privateUrl = buildRegisterPrivateUrl(config.BOT_USERNAME);
     const dmOpts = {
       parse_mode: 'HTML',
       reply_markup: {
-        inline_keyboard: [[{ text: texts.bindOneTapRegisterBtn, web_app: { url: userPage } }]],
+        inline_keyboard: [[{ text: texts.bindStartBtn, web_app: { url: userPage } }]],
+      },
+    };
+    const groupRegisterKeyboard = {
+      parse_mode: 'HTML',
+      reply_markup: {
+        inline_keyboard: [[{ text: texts.bindStartBtn, url: privateUrl }]],
       },
     };
 
     if (isGroup) {
-      await ctx.reply(texts.bindGroupPingHtml(mention), { parse_mode: 'HTML' }).catch(() => {});
+      await ctx
+        .reply(texts.bindGroupRegisterGuideHtml(mention), groupRegisterKeyboard)
+        .catch(() => {});
       if (!pendingBindNotice.has(uidStr)) {
         try {
-          await ctx.telegram.sendMessage(uid, texts.bindDmIntroHtml, dmOpts);
+          await ctx.telegram.sendMessage(uid, texts.registerIntroHtml, dmOpts);
         } catch (e) {
           console.warn('[requireMoziRegistered] bind DM:', e?.message || e);
           await ctx.reply(texts.bindDmFailedInGroup, { parse_mode: 'HTML' }).catch(() => {});
@@ -104,7 +114,7 @@ function createRequireMoziRegistered(config, { getTexts }) {
       }
     } else {
       try {
-        await ctx.reply(texts.bindDmIntroHtml, dmOpts);
+        await ctx.reply(texts.registerIntroHtml, dmOpts);
         pendingBindNotice.add(uidStr);
       } catch (e) {
         console.warn('[requireMoziRegistered] bind reply (private):', e?.message || e);

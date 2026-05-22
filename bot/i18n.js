@@ -82,8 +82,9 @@ const i18n = {
 🔔 告警设置（免费）
 /alert          跳转 App 配置价格告警
 
-👤 账户管理（需登录 Mozi）
-/balance        查询积分余额（群内会通过私信回复）
+👤 账户管理
+/register       绑定 / 注册 Mozi 账户（群内点「启动」私聊继续）
+/balance        查询积分余额（需登录；群内会通过私信回复）
 /help           显示本帮助信息
 
 ━━━━━━━━━━━━━━━━━━━━━━━━`,
@@ -105,13 +106,21 @@ const i18n = {
       '该功能需要已登录的 Mozi 账户（Telegram 绑定）。\n\n请先通过下方按钮打开 <b>Mozi App</b> 完成绑定后，再使用 <code>/ai</code>、<code>/chat</code> 或 <code>/balance</code>。',
     bindGroupPingHtml: (mentionHtml) =>
       `${mentionHtml} 检测到您尚未绑定账户，已私信您完成设置 👇`,
+    bindGroupRegisterGuideHtml: (mentionHtml) =>
+      `${mentionHtml} 您尚未绑定 Mozi 账户。请在<strong>私聊</strong>中完成注册（群内无法使用 Mini App 按钮）。\n\n点击下方「启动」向我发私信；若未自动发送，请手动发送：\n<code>/register</code>`,
+    registerGroupGuideHtml:
+      '👋 <b>绑定 Mozi 账户</b>\n\n请在<strong>私聊</strong>中继续（群内 Mini App 按钮不便使用）。\n\n点击下方「启动」向我发私信；若未自动发送，请手动发送：\n<code>/register</code>',
+    registerIntroHtml: `👋 <b>请先完成 Mozi 账户绑定</b>
+
+点击下方 <b>启动</b>，将打开 Mozi Mini App 并进入 <b>账户 / 注册</b> 页面。完成后回到群内即可继续使用 <code>/ai</code>、<code>/chat</code>、<code>/balance</code>。`,
     bindDmIntroHtml: `👋 <b>请先完成 Mozi 账户绑定</b>
 
-点击下方 <b>一键注册</b>，将打开 Mozi Mini App 并进入 <b>账户 / 注册</b> 页面。完成后回到群内即可继续使用 <code>/ai</code>、<code>/chat</code>、<code>/balance</code>。`,
-    bindOneTapRegisterBtn: '一键注册',
+点击下方 <b>启动</b>，将打开 Mozi Mini App 并进入 <b>账户 / 注册</b> 页面。完成后回到群内即可继续使用 <code>/ai</code>、<code>/chat</code>、<code>/balance</code>。`,
+    bindStartBtn: '启动',
+    bindOneTapRegisterBtn: '启动',
     bindSuccessDm: '绑定成功！可以在群里继续使用啦 🎉',
     bindDmFailedInGroup:
-      '无法私信您：请先<strong>私聊</strong>本机器人发送任意消息或 <code>/start</code>，再使用群内指令，以便收到绑定引导。',
+      '无法私信您：请先<strong>私聊</strong>本机器人发送任意消息、<code>/start</code> 或 <code>/register</code>，再使用群内指令；也可点击上一条消息中的「启动」按钮。',
     sessionIdentityExpiredHtml:
       '🔐 <b>登录状态已失效</b>\n\n你的 Mozi 身份可能已在其他端重新登录，或会话已过期。\n\n请点击下方「重新登录」以刷新本机器人的访问凭证。',
     sessionReloginBtn: '重新登录',
@@ -213,8 +222,9 @@ const i18n = {
 🔔 Alerts (free)
 /alert           Open app to set price alerts
 
-👤 Account (Mozi login required)
-/balance         Points (in groups, sent via DM)
+👤 Account
+/register        Link or sign up for Mozi (tap Start in groups to DM)
+/balance         Points (login required; in groups, sent via DM)
 /help            This help
 
 ━━━━━━━━━━━━━━━━━━━━━━━━`,
@@ -236,13 +246,21 @@ Remaining points: <b>${totalPoints}</b>
       'This feature requires a logged-in Mozi account (Telegram binding).\n\nOpen <b>Mozi App</b> via the buttons below to complete binding, then use <code>/ai</code>, <code>/chat</code>, or <code>/balance</code>.',
     bindGroupPingHtml: (mentionHtml) =>
       `${mentionHtml} You’re not linked to a Mozi account yet — check your <b>DM</b> from me to finish setup 👇`,
+    bindGroupRegisterGuideHtml: (mentionHtml) =>
+      `${mentionHtml} You’re not linked to a Mozi account yet. Please continue in a <strong>private chat</strong> (Mini App buttons don’t work well in groups).\n\nTap <b>Start</b> below to message me; if nothing opens, send:\n<code>/register</code>`,
+    registerGroupGuideHtml:
+      '👋 <b>Link your Mozi account</b>\n\nPlease continue in a <strong>private chat</strong>.\n\nTap <b>Start</b> below to message me; if nothing opens, send:\n<code>/register</code>',
+    registerIntroHtml: `👋 <b>Link your Mozi account</b>
+
+Tap <b>Start</b> to open the Mozi Mini App <b>account / sign-up</b> page. When you’re done, you can use <code>/ai</code>, <code>/chat</code>, and <code>/balance</code> in the group again.`,
     bindDmIntroHtml: `👋 <b>Link your Mozi account</b>
 
-Tap <b>Register in one tap</b> to open the Mozi Mini App on the <b>account / sign-up</b> page. When you’re done, you can use <code>/ai</code>, <code>/chat</code>, and <code>/balance</code> in the group again.`,
-    bindOneTapRegisterBtn: 'Register in one tap',
+Tap <b>Start</b> to open the Mozi Mini App <b>account / sign-up</b> page. When you’re done, you can use <code>/ai</code>, <code>/chat</code>, and <code>/balance</code> in the group again.`,
+    bindStartBtn: 'Start',
+    bindOneTapRegisterBtn: 'Start',
     bindSuccessDm: 'You’re all set! You can keep using the bot in the group 🎉',
     bindDmFailedInGroup:
-      'I couldn’t DM you. Please <strong>message this bot</strong> first (any message or <code>/start</code>), then try the command in the group again so I can send the setup steps.',
+      'I couldn’t DM you. Please <strong>message this bot</strong> first (any message, <code>/start</code>, or <code>/register</code>), then try again in the group — or tap <b>Start</b> on the message above.',
     sessionIdentityExpiredHtml:
       '🔐 <b>Your Mozi session is no longer valid</b>\n\nYou may have signed in elsewhere, or the session expired.\n\nTap <b>Sign in again</b> below to refresh this bot\'s credentials.',
     sessionReloginBtn: 'Sign in again',
