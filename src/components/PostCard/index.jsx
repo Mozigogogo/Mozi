@@ -164,7 +164,9 @@ function PostCard({
           />
           <div className={styles.userMeta}>
             <div className={styles.userRow}>
-              <span className={styles.username}>{post.username}</span>
+              <span className={styles.username} title={post.username}>
+                {post.username}
+              </span>
               <span className={styles.badgeLabel}>
                 {post.categoryLabel || post.category || post.type || '资讯'}
               </span>
