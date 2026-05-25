@@ -74,12 +74,16 @@ function createRequireMoziLogin(config, { getTexts }) {
     const languageCode = ctx.from?.language_code || 'en';
     const texts = getTexts(languageCode);
     const uidStr = String(uid);
-    const token = await ensureTgUserToken(config, uidStr, loginOptsFromTgFrom(ctx.from));
+    const loginOpts = loginOptsFromTgFrom(ctx.from);
+    if (ctx.state?.groupReferrer?.inviteCode) {
+      loginOpts.inviteCode = ctx.state.groupReferrer.inviteCode;
+    }
+    const token = await ensureTgUserToken(config, uidStr, loginOpts);
     if (!token) {
       await ctx
         .reply(texts.needMoziLogin, {
           parse_mode: 'HTML',
-          ...buildBindAccountKeyboard(config, texts),
+          ...buildBindAccountKeyboard(config, texts, ctx.state?.groupReferrer),
         })
         .catch(() => {});
       return;
@@ -130,7 +134,11 @@ function registerMoziReloginCallback(bot, config, { getTexts }) {
     clearCachedToken(uidStr);
     let token = '';
     try {
-      token = await ensureTgUserToken(config, uidStr, loginOptsFromTgFrom(ctx.from), { forceRefresh: true });
+      const reloginOpts = loginOptsFromTgFrom(ctx.from);
+      if (ctx.state?.groupReferrer?.inviteCode) {
+        reloginOpts.inviteCode = ctx.state.groupReferrer.inviteCode;
+      }
+      token = await ensureTgUserToken(config, uidStr, reloginOpts, { forceRefresh: true });
     } catch (e) {
       console.warn('[mozi_rl] ensureTgUserToken:', e?.message || e);
     }

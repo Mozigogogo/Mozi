@@ -796,6 +796,88 @@ async function requestAiAnalysis({ url, secret, body, timeoutMs = 120000 }) {
   }
 }
 
+// --- POST /user/tg/queryInviteCode（按 telegramId 查询邀请码）------------------
+
+/**
+ * @param {object | null} json
+ * @returns {string | null}
+ */
+function parseQueryInviteCodeResult(json) {
+  if (!json || typeof json !== 'object') return null;
+  const c = json.code;
+  if (c !== undefined && c !== 0 && c !== 200) return null;
+  const d = json.data;
+  if (typeof d === 'string' && d.trim()) return d.trim();
+  if (d && typeof d === 'object' && !Array.isArray(d)) {
+    const code =
+      d.inviteCode ?? d.invite_code ?? d.code ?? d.invitationCode ?? d.invitation_code;
+    if (code != null && String(code).trim()) return String(code).trim();
+  }
+  const top = json.inviteCode ?? json.invite_code;
+  if (top != null && String(top).trim()) return String(top).trim();
+  return null;
+}
+
+/**
+ * @param {{ apiBaseUrl: string; telegramId: string | number; auth?: string; appUrl?: string; timeoutMs?: number }} opts
+ * @returns {Promise<{ ok: boolean; status: number; json: object | null; text: string; inviteCode: string | null }>}
+ */
+async function postTgQueryInviteCode({
+  apiBaseUrl,
+  telegramId,
+  auth = '',
+  appUrl = '',
+  timeoutMs = 15000,
+}) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const url = `${base}/user/tg/queryInviteCode`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    'content-type': 'application/json',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    'user-agent': DEFAULT_UA,
+  };
+  if (auth) {
+    headers.authentication = auth;
+  }
+  if (app) {
+    headers.referer = `${app}/`;
+  }
+  const body = { telegramId: String(telegramId) };
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      signal: ctrl.signal,
+    });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const inviteCode = parseQueryInviteCodeResult(json);
+    const out = { ok: res.ok, status: res.status, json, text, inviteCode };
+    apiDebug('POST /user/tg/queryInviteCode →', {
+      telegramId: body.telegramId,
+      httpStatus: res.status,
+      ok: res.ok,
+      hasAuth: Boolean(auth),
+      inviteCode: inviteCode ?? null,
+      bodyPreview: text.slice(0, 500),
+    });
+    return out;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 // --- POST /user/tg/group-referrer/pending（bot 入群记录拉群人）-----------------
 
 /**
@@ -873,14 +955,191 @@ async function postGroupReferrerPending({
   }
 }
 
+// --- GET /user/tg/group-referrer?chatId=（查询群推广人记录）--------------------
+
+/**
+ * @param {object | null} json
+ * @returns {{ adderTelegramId: string; status?: string; inviteCode?: string; rawUrl?: string } | null}
+ */
+function parseGroupReferrerGetResult(json) {
+  if (!json || typeof json !== 'object') return null;
+  const c = json.code;
+  if (c !== undefined && c !== 0 && c !== 200) return null;
+  const d = json.data;
+  if (!d || typeof d !== 'object' || Array.isArray(d)) return null;
+  const adder = d.adderTelegramId ?? d.adder_telegram_id;
+  if (adder == null || !String(adder).trim()) return null;
+  return {
+    adderTelegramId: String(adder).trim(),
+    status: d.status != null ? String(d.status) : undefined,
+    inviteCode:
+      d.inviteCode != null
+        ? String(d.inviteCode).trim()
+        : d.invite_code != null
+          ? String(d.invite_code).trim()
+          : undefined,
+    rawUrl: d.rawUrl != null ? String(d.rawUrl).trim() : d.raw_url != null ? String(d.raw_url).trim() : undefined,
+  };
+}
+
+/**
+ * @param {{ apiBaseUrl: string; chatId: string | number; auth?: string; appUrl?: string; timeoutMs?: number }} opts
+ * @returns {Promise<{ ok: boolean; status: number; json: object | null; text: string; referrer: ReturnType<typeof parseGroupReferrerGetResult> }>}
+ */
+async function getGroupReferrer({ apiBaseUrl, chatId, auth = '', appUrl = '', timeoutMs = 15000 }) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const q = new URLSearchParams({ chatId: String(chatId) });
+  const url = `${base}/user/tg/group-referrer?${q.toString()}`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    'user-agent': DEFAULT_UA,
+  };
+  if (auth) {
+    headers.authentication = auth;
+  }
+  if (app) {
+    headers.referer = `${app}/`;
+  }
+  try {
+    const res = await fetch(url, { method: 'GET', headers, signal: ctrl.signal });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const referrer = parseGroupReferrerGetResult(json);
+    const out = { ok: res.ok, status: res.status, json, text, referrer };
+    apiDebug('GET /user/tg/group-referrer →', {
+      chatId: String(chatId),
+      httpStatus: res.status,
+      ok: res.ok,
+      hasReferrer: Boolean(referrer),
+      bodyPreview: text.slice(0, 500),
+    });
+    return out;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+// --- POST /user/tg/group-referrer/bind（绑定群推广 inviteCode）-----------------
+
+/**
+ * @param {object | null} json
+ * @returns {string | null}
+ */
+function parseApiErrorMessage(json) {
+  if (!json || typeof json !== 'object') return null;
+  const m = json.message ?? json.msg ?? json.error;
+  if (m != null && String(m).trim()) return String(m).trim();
+  return null;
+}
+
+/**
+ * @param {{
+ *   apiBaseUrl: string;
+ *   chatId: string | number;
+ *   binderTelegramId: string | number;
+ *   inviteCode: string;
+ *   rawUrl?: string;
+ *   auth?: string;
+ *   appUrl?: string;
+ *   timeoutMs?: number;
+ * }} opts
+ * @returns {Promise<{ ok: boolean; status: number; json: object | null; text: string; errorMessage: string | null }>}
+ */
+async function postGroupReferrerBind({
+  apiBaseUrl,
+  chatId,
+  binderTelegramId,
+  inviteCode,
+  rawUrl = '',
+  auth = '',
+  appUrl = '',
+  timeoutMs = 15000,
+}) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const url = `${base}/user/tg/group-referrer/bind`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    'content-type': 'application/json',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    'user-agent': DEFAULT_UA,
+  };
+  if (auth) {
+    headers.authentication = auth;
+  }
+  if (app) {
+    headers.referer = `${app}/`;
+  }
+  const body = {
+    chatId: String(chatId),
+    binderTelegramId: String(binderTelegramId),
+    inviteCode: String(inviteCode),
+    rawUrl: String(rawUrl || ''),
+    referrerTelegramId: String(binderTelegramId),
+  };
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      signal: ctrl.signal,
+    });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const codeOk =
+      json && typeof json === 'object' && (json.code === undefined || json.code === 0 || json.code === 200);
+    const out = {
+      ok: res.ok && codeOk,
+      status: res.status,
+      json,
+      text,
+      errorMessage: parseApiErrorMessage(json),
+    };
+    apiDebug('POST /user/tg/group-referrer/bind →', {
+      chatId: body.chatId,
+      binderTelegramId: body.binderTelegramId,
+      inviteCode: body.inviteCode,
+      httpStatus: res.status,
+      ok: out.ok,
+      bodyPreview: text.slice(0, 500),
+    });
+    return out;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 module.exports = {
   fetchDetailHeader,
   postTgRegisteredCheck,
+  postTgQueryInviteCode,
+  parseQueryInviteCodeResult,
   postUserSessionTokenCheck,
   postTgLogin,
   fetchUserDatainfo,
   postPointsConsume,
   postGroupReferrerPending,
+  getGroupReferrer,
+  parseGroupReferrerGetResult,
+  postGroupReferrerBind,
   requestChatStream,
   requestAiAnalysis,
 };

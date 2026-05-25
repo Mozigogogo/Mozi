@@ -56,7 +56,47 @@ function parseBotJoinFromMyChatMember(mcm) {
   };
 }
 
+/** @type {Map<string, { adderTelegramId: string; chatTitle?: string; recordedAt: number }>} */
+const pendingAdderByChatId = new Map();
+
+/**
+ * bot 入群成功后写入，供 GET pending 失败时 /bind_ref 回退
+ * @param {number | string} chatId
+ * @param {number | string} adderTelegramId
+ * @param {{ chatTitle?: string }} [meta]
+ */
+function rememberChatPendingAdder(chatId, adderTelegramId, meta = {}) {
+  pendingAdderByChatId.set(String(chatId), {
+    adderTelegramId: String(adderTelegramId),
+    chatTitle: meta.chatTitle,
+    recordedAt: Date.now(),
+  });
+}
+
+/**
+ * @param {number | string} chatId
+ * @returns {{ adderTelegramId: string; chatTitle?: string } | null}
+ */
+function getRememberedChatPendingAdder(chatId) {
+  return pendingAdderByChatId.get(String(chatId)) ?? null;
+}
+
+/**
+ * @param {string} botUsername 不含 @
+ * @param {string} inviteCode
+ * @returns {string}
+ */
+function buildBotStartUrlWithInviteCode(botUsername, inviteCode) {
+  const user = String(botUsername || '').replace(/^@/, '');
+  const code = String(inviteCode || '').trim();
+  if (!user || !code) return '';
+  return `https://t.me/${user}?start=${encodeURIComponent(code)}`;
+}
+
 module.exports = {
   parseBotJoinFromMyChatMember,
   isLikelyAnonymousAdder,
+  rememberChatPendingAdder,
+  getRememberedChatPendingAdder,
+  buildBotStartUrlWithInviteCode,
 };

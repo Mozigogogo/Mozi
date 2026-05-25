@@ -3,6 +3,7 @@
 const { postTgRegisteredCheck } = require('../lib/apis');
 const { escapeHtml } = require('../lib/telegramHtml');
 const { buildRegisterPrivateUrl } = require('../lib/registerDeepLink');
+const { buildMiniAppUrlWithInvite } = require('../lib/invite');
 
 /** 已发过绑定私信、等待用户完成注册后发送「绑定成功」的用户（telegramId 字符串） */
 const pendingBindNotice = new Set();
@@ -84,7 +85,11 @@ function createRequireMoziRegistered(config, { getTexts }) {
     }
 
     const mention = buildMentionHtml(ctx.from);
-    const userPage = userMiniAppRegisterUrl(config);
+    const base = String(config.APP_URL || '').replace(/\/+$/, '');
+    const groupInvite = ctx.state?.groupReferrer?.inviteCode;
+    const userPage = groupInvite
+      ? buildMiniAppUrlWithInvite(`${base}/user`, groupInvite)
+      : userMiniAppRegisterUrl(config);
     const privateUrl = buildRegisterPrivateUrl(config.BOT_USERNAME);
     const dmOpts = {
       parse_mode: 'HTML',
