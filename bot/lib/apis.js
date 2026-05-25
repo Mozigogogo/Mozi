@@ -818,6 +818,31 @@ function parseQueryInviteCodeResult(json) {
   return null;
 }
 
+/** 打印 queryInviteCode 完整响应，便于核对后端字段名（设 QUERY_INVITE_CODE_LOG=0 可关闭） */
+function logQueryInviteCodeResponse({ telegramId, status, ok, json, text, inviteCode }) {
+  const off = String(process.env.QUERY_INVITE_CODE_LOG || '1').trim().toLowerCase();
+  if (off === '0' || off === 'false' || off === 'no') return;
+  console.log('\n[queryInviteCode] ----------');
+  console.log('[queryInviteCode] telegramId:', telegramId);
+  console.log('[queryInviteCode] HTTP', status, 'fetch.ok=', ok);
+  if (json != null && typeof json === 'object') {
+    console.log('[queryInviteCode] JSON 全文:');
+    console.log(JSON.stringify(json, null, 2));
+    console.log('[queryInviteCode] 顶层 keys:', Object.keys(json).join(', '));
+    const d = json.data;
+    if (d != null && typeof d === 'object' && !Array.isArray(d)) {
+      console.log('[queryInviteCode] data keys:', Object.keys(d).join(', '));
+    } else if (d != null) {
+      console.log('[queryInviteCode] data 类型:', typeof d, Array.isArray(d) ? '(array)' : '');
+    }
+  } else {
+    console.log('[queryInviteCode] 非 JSON，raw body:');
+    console.log((text || '').slice(0, 3000));
+  }
+  console.log('[queryInviteCode] 当前解析出的 inviteCode:', inviteCode ?? '(null)');
+  console.log('[queryInviteCode] ----------\n');
+}
+
 /**
  * @param {{ apiBaseUrl: string; telegramId: string | number; auth?: string; appUrl?: string; timeoutMs?: number }} opts
  * @returns {Promise<{ ok: boolean; status: number; json: object | null; text: string; inviteCode: string | null }>}
@@ -864,6 +889,14 @@ async function postTgQueryInviteCode({
     }
     const inviteCode = parseQueryInviteCodeResult(json);
     const out = { ok: res.ok, status: res.status, json, text, inviteCode };
+    logQueryInviteCodeResponse({
+      telegramId: body.telegramId,
+      status: res.status,
+      ok: res.ok,
+      json,
+      text,
+      inviteCode,
+    });
     apiDebug('POST /user/tg/queryInviteCode →', {
       telegramId: body.telegramId,
       httpStatus: res.status,
