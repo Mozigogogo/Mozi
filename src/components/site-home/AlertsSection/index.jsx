@@ -2,6 +2,9 @@ import Image from 'next/image';
 import styles from './AlertsSection.module.css';
 import PromoCopy from '../PromoCopy/index';
 
+const ALERTS_CENTER_GIF_SRC =
+  'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/big_order.gif';
+
 export default function AlertsSection() {
   return (
     <section className={`${styles.alertsSection} ${styles.alertsSectionLayout}`}>
@@ -15,7 +18,7 @@ export default function AlertsSection() {
         />
       </div>
 
-      {/* 下方内容区域：三列布局（左侧卡/中间手机+ticker/右侧卡），从参考系上避免重叠 */}
+      {/* 下方内容区域：三列布局（左侧卡/中间动图/右侧卡） */}
       <div className={styles.alertsBottom}>
         <div className={styles.alertsThreeCols} aria-hidden="true">
           <div className={styles.sideColLeft}>
@@ -42,50 +45,53 @@ export default function AlertsSection() {
           </div>
 
           <div className={styles.centerCol}>
-            <div className={styles.phoneFrame}>
-              <Image
-                src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/introduction2.svg"
-                alt=""
-                fill
-                className={styles.alertBottomPreviewImage}
-                sizes="(max-width: 1024px) 92vw, 44vw"
-              />
-            </div>
-
-            <div className={styles.tickerOverlay}>
-              <div className={styles.alertTicker}>
-                <div className={styles.alertTickerRow}>
-                  <div className={styles.alertTickerCoinWrap}>
-                    <Image src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/btc.svg" alt="BTC" width={34} height={34} className={styles.alertTickerCoinIcon} />
-                    <span className={styles.alertTickerCoin}>BTC</span>
-                  </div>
-                  <div className={styles.alertTickerChartWrap}>
-                    <Image src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/line_up.svg" alt="" width={145} height={98} className={styles.alertTickerChart} />
-                  </div>
-                  <span className={styles.alertTickerUp}>
-                    <span>+3.25%</span>
-                  </span>
-                </div>
+            <div className={styles.centerStage}>
+              <div className={styles.alertGifCrop}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={ALERTS_CENTER_GIF_SRC}
+                  alt="Mozi smart alerts preview"
+                  className={styles.alertCenterGif}
+                  loading="eager"
+                  decoding="async"
+                />
               </div>
 
-              <div className={`${styles.alertTicker} ${styles.alertTickerSecondary}`}>
-                <div className={styles.alertTickerRow}>
-                  <div className={styles.alertTickerCoinWrap}>
-                    <Image src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/eth.svg" alt="ETH" width={34} height={34} className={styles.alertTickerCoinIcon} />
-                    <span className={styles.alertTickerCoinMuted}>ETH</span>
+              <div className={styles.tickerOverlay}>
+                <div className={styles.alertTicker}>
+                  <div className={styles.alertTickerRow}>
+                    <div className={styles.alertTickerCoinWrap}>
+                      <Image src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/btc.svg" alt="BTC" width={34} height={34} className={styles.alertTickerCoinIcon} />
+                      <span className={styles.alertTickerCoin}>BTC</span>
+                    </div>
+                    <div className={styles.alertTickerChartWrap}>
+                      <Image src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/line_up.svg" alt="" width={145} height={98} className={styles.alertTickerChart} />
+                    </div>
+                    <span className={styles.alertTickerUp}>
+                      <span>+3.25%</span>
+                    </span>
                   </div>
-                  <div className={styles.alertTickerChartWrap}>
-                    <Image
-                      src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/line_down.svg"
-                      alt=""
-                      width={132}
-                      height={73}
-                      className={`${styles.alertTickerChart} ${styles.alertTickerChartDown}`}
-                    />
+                </div>
+
+                <div className={`${styles.alertTicker} ${styles.alertTickerSecondary}`}>
+                  <div className={styles.alertTickerRow}>
+                    <div className={styles.alertTickerCoinWrap}>
+                      <Image src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/eth.svg" alt="ETH" width={34} height={34} className={styles.alertTickerCoinIcon} />
+                      <span className={styles.alertTickerCoinMuted}>ETH</span>
+                    </div>
+                    <div className={styles.alertTickerChartWrap}>
+                      <Image
+                        src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/line_down.svg"
+                        alt=""
+                        width={132}
+                        height={73}
+                        className={`${styles.alertTickerChart} ${styles.alertTickerChartDown}`}
+                      />
+                    </div>
+                    <span className={styles.alertTickerDown}>
+                      <span>-0.65%</span>
+                    </span>
                   </div>
-                  <span className={styles.alertTickerDown}>
-                    <span>-0.65%</span>
-                  </span>
                 </div>
               </div>
             </div>

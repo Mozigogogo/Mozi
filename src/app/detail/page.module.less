@@ -23,10 +23,10 @@
   min-height: 320px;
 }
 
-/* PC 端主内容区：左 60% / 右 40% 双栏 */
+/* PC 端主内容区：左 57% / 右 43% 双栏（略收窄左侧 K 线区） */
 .pcContentLayout {
   display: grid;
-  grid-template-columns: minmax(0, 60%) minmax(0, 40%);
+  grid-template-columns: minmax(0, 55%) minmax(0, 45%);
   grid-template-rows: 1fr;
   gap: 4px;
   align-items: stretch;
@@ -468,24 +468,78 @@
 }
 
 .pcRightMarketGrid {
+  /* 各列按市场卡片宽度缩放（cqw），不跟整屏 vw */
+  --pc-market-title-size: clamp(10PX, 2.85cqw, 12PX);
+  --pc-market-cell-size: clamp(10PX, 3.15cqw, 13PX);
+  --pc-market-col1-size: clamp(10PX, 2.75cqw, 12PX);
+  --pc-market-col45-size: clamp(10PX, 2.9cqw, 12PX);
+  --pc-market-badge-font: clamp(10PX, 2.55cqw, 11PX);
+  --pc-market-badge-w: clamp(40PX, 12.5cqw, 52PX);
+  --pc-market-badge-h: clamp(18PX, 5.4cqw, 22PX);
+  --pc-market-exchange-icon: clamp(12PX, 3.6cqw, 16PX);
+
   :global([class*='titleNum']) {
-    font-size: 12PX !important;
+    font-size: var(--pc-market-title-size) !important;
     line-height: 1 !important;
     margin-left: 3PX !important;
   }
 
   :global([class*='gridTitle']) {
     margin-bottom: 2PX;
-    font-size: 12PX !important;
+    font-size: var(--pc-market-title-size) !important;
   }
 
   :global([class*='gridTitleItem']) {
     padding: 2PX 6PX !important;
     white-space: nowrap;
+    font-size: var(--pc-market-title-size) !important;
+    line-height: 1.2 !important;
+    min-width: 0 !important;
+  }
+
+  :global([class*='gridTitleItem']:first-child) {
+    font-size: var(--pc-market-col1-size) !important;
+  }
+
+  :global([class*='gridTitleItem']:nth-child(4)),
+  :global([class*='gridTitleItem']:nth-child(5)) {
+    font-size: var(--pc-market-col45-size) !important;
   }
 
   :global([class*='gridContent']) {
-    font-size: 13PX !important;
+    font-size: var(--pc-market-cell-size) !important;
+  }
+
+  :global([class*='gridConItem']) {
+    font-size: var(--pc-market-cell-size) !important;
+    line-height: 1.2 !important;
+  }
+
+  :global([class*='gridConItem']:first-child) {
+    font-size: var(--pc-market-col1-size) !important;
+  }
+
+  :global([class*='gridConItem']:nth-child(4)),
+  :global([class*='gridConItem']:nth-child(5)) {
+    font-size: var(--pc-market-col45-size) !important;
+  }
+
+  :global([class*='gridConItem']:nth-child(3)) {
+    :global([class*='pcMarketBadge']) {
+      width: var(--pc-market-badge-w) !important;
+      min-width: var(--pc-market-badge-w) !important;
+      height: var(--pc-market-badge-h) !important;
+      font-size: var(--pc-market-badge-font) !important;
+    }
+  }
+
+  .pcMarketExchangeCell img {
+    width: var(--pc-market-exchange-icon);
+    height: var(--pc-market-exchange-icon);
+  }
+
+  .pcMarketExchangeName {
+    font-size: inherit;
   }
 
   :global([class*='gridListItem']) {
@@ -509,15 +563,91 @@
   :global([class*='gridConItem']:first-child) {
     justify-content: flex-start !important;
     text-align: left !important;
+    min-width: 0 !important;
+    max-width: 100%;
+    word-break: normal !important;
+  }
+
+  :global([class*='gridTitleItem']:first-child) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.pcMarketExchangeCell {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+
+  img {
+    width: 16PX;
+    height: 16PX;
+    margin-right: 4PX;
+    border-radius: 4PX;
+    object-fit: contain;
+    background-color: #fff;
+    flex-shrink: 0;
+  }
+}
+
+.pcMarketExchangeName {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@container pc-market-card (max-width: 380px) {
+  .pcRightMarketGrid {
+    --pc-market-title-size: clamp(10PX, 2.65cqw, 11PX);
+    --pc-market-cell-size: clamp(10PX, 2.95cqw, 11PX);
+    --pc-market-col1-size: clamp(10PX, 2.55cqw, 11PX);
+    --pc-market-col45-size: clamp(10PX, 2.7cqw, 11PX);
+    --pc-market-badge-font: clamp(10PX, 2.35cqw, 11PX);
+    --pc-market-badge-w: clamp(36PX, 11.5cqw, 48PX);
+    --pc-market-badge-h: clamp(16PX, 5cqw, 20PX);
+    --pc-market-exchange-icon: clamp(11PX, 3.3cqw, 15PX);
+  }
+}
+
+@container pc-market-card (max-width: 320px) {
+  .pcRightMarketGrid {
+    --pc-market-title-size: clamp(10PX, 2.5cqw, 11PX);
+    --pc-market-cell-size: clamp(10PX, 2.8cqw, 11PX);
+    --pc-market-col1-size: clamp(10PX, 2.4cqw, 11PX);
+    --pc-market-col45-size: clamp(10PX, 2.55cqw, 11PX);
+    --pc-market-badge-font: clamp(10PX, 2.2cqw, 11PX);
+    --pc-market-badge-w: clamp(32PX, 10.5cqw, 44PX);
+    --pc-market-badge-h: clamp(15PX, 4.6cqw, 18PX);
+    --pc-market-exchange-icon: clamp(10PX, 3.1cqw, 14PX);
   }
 }
 
 .pcRightMarketCard {
+  container-type: inline-size;
+  container-name: pc-market-card;
+
   :global([class*='titleNum']) {
     font-size: 12PX !important;
     line-height: 12PX !important;
     margin-left: 3PX !important;
     transform: none !important;
+  }
+
+  /* 空态勿用小写 px（会被 postcss 按 375 转 vw，PC 宽屏下字号过大） */
+  .emptyInfo {
+    min-height: 120PX;
+    padding: 24PX 20PX;
+    font-size: 14PX;
+    line-height: 1.5;
+    color: rgba(140, 140, 140, 1);
+    text-align: center;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
   }
 }
 
@@ -1214,24 +1344,9 @@
     }
   }
 
-  .pcRightMarketGrid {
-    :global([class*='titleNum']) {
-      font-size: 12PX !important;
-    }
-
-    :global([class*='gridTitle']) {
-      font-size: 12PX !important;
-    }
-
-    :global([class*='gridContent']) {
-      font-size: 13PX !important;
-    }
-  }
-
   .pcRightMarketCard {
     :global([class*='titleNum']) {
-      font-size: 12PX !important;
-      line-height: 12PX !important;
+      line-height: 1 !important;
     }
   }
 }

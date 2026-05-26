@@ -64,7 +64,41 @@ export default function DetailPage() {
     window.addEventListener('resize', checkDevice);
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
-  
+
+  const renderMarketExchangeTitle = useCallback(
+    (item) => {
+      if (isPC) {
+        return (
+          <div className={styles.pcMarketExchangeCell}>
+            <img src={item.url} alt={item.exchanges} />
+            <span className={styles.pcMarketExchangeName} title={item.exchanges}>
+              {item.exchanges}
+            </span>
+          </div>
+        );
+      }
+      return (
+        <div style={{ display: 'flex', width: '100%', alignItems: 'center' }}>
+          <img
+            src={item.url}
+            alt={item.exchanges}
+            style={{
+              height: '18px',
+              width: '18px',
+              marginRight: '5px',
+              borderRadius: '4px',
+              objectFit: 'contain',
+              backgroundColor: '#fff',
+              flexShrink: 0,
+            }}
+          />
+          {item.exchanges}
+        </div>
+      );
+    },
+    [isPC],
+  );
+
   // 使用告警配置 Hook（自动获取）
   const { fetchConfig: fetchAlertConfig } = useAlertConfig({ autoFetch: false });
   
@@ -770,24 +804,7 @@ export default function DetailPage() {
       if (response?.data && response.data.length > 0) {
         // 处理市场数据，转换为MoziGrid需要的格式
         const processedData = response.data.map((item) => ({
-          title: (
-            <div style={{ display: 'flex', width: '100%', alignItems: 'center' }}>
-              <img 
-                src={item.url} 
-                alt={item.exchanges}
-                style={{
-                  height: '18px',
-                  width: '18px',
-                  marginRight: '5px',
-                  borderRadius: '4px',
-                  objectFit: 'contain',
-                  backgroundColor: '#fff',
-                  flexShrink: 0
-                }}
-              />
-              {item.exchanges}
-            </div>
-          ),
+          title: renderMarketExchangeTitle(item),
           last: item.last,
           price24h: <HighlightArea value={item.price24h} variant={isPC ? 'pcMarket' : 'default'} />,
           vol: item.vol,
@@ -1718,24 +1735,7 @@ ${coinInfo.name || symbol} (${symbol})
       // 5. 更新市场数据（如果存在）
       if (exchangesPriceData && Array.isArray(exchangesPriceData) && exchangesPriceData.length > 0) {
         const processedData = exchangesPriceData.map((item) => ({
-          title: (
-            <div style={{ display: 'flex', width: '100%', alignItems: 'center' }}>
-              <img 
-                src={item.url} 
-                alt={item.exchanges}
-                style={{
-                  height: '18px',
-                  width: '18px',
-                  marginRight: '5px',
-                  borderRadius: '4px',
-                  objectFit: 'contain',
-                  backgroundColor: '#fff',
-                  flexShrink: 0
-                }}
-              />
-              {item.exchanges}
-            </div>
-          ),
+          title: renderMarketExchangeTitle(item),
           last: item.last,
           price24h: <HighlightArea value={item.price24h} variant={isPC ? 'pcMarket' : 'default'} />,
           vol: item.vol,
@@ -2261,10 +2261,8 @@ ${coinInfo.name || symbol} (${symbol})
           colName={[t('detail.market.exchange'), t('detail.market.lastPrice'), t('detail.market.change24h'), t('detail.market.volume24h'), t('detail.market.amount24h')]}
           gridContent={marketData}
           gridTitleBgColor="transparent"
-          columnWidths={isPC ? ['28%', '16%', '16%', '20%', '20%'] : ['25%', '22%', '20%', '20%', '22%']}
+          columnWidths={isPC ? ['22%', '17%', '17%', '22%', '22%'] : ['25%', '22%', '20%', '20%', '22%']}
           isPC={isPC}
-          titleFontSize={isPC ? '12PX' : null}
-          contentFontSize={isPC ? '13PX' : null}
           rowPadding={isPC ? '12PX 0' : null}
           className={isPC ? styles.pcRightMarketGrid : ''}
         />
