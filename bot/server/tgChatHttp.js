@@ -1,6 +1,6 @@
 /**
  * POST /tg/chat/save、GET /tg/chat/get、DELETE /tg/chat/remove
- * POST /tg/chat/on-registered — 绑定成功后立即触发重放（可选，与轮询互补）
+ * POST /tg/chat/on-registered — 绑定/注册成功后立即触发群内重放（必接：H5 或后端在注册接口成功后调用）
  */
 
 const http = require('http');
@@ -101,7 +101,7 @@ function startTgChatHttpServer({ port }) {
 
   server.listen(port, () => {
     console.log(
-      `📡 TG Chat API :${port}（save/get/remove/on-registered，TTL 10min，注册后自动重放）`,
+      `📡 TG Chat API :${port}（save/get/remove/on-registered，TTL 10min，注册成功后事件驱动重放）`,
     );
   });
 

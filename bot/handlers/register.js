@@ -1,9 +1,8 @@
 /**
- * /register：引导绑定 / 注册 Mozi 账户（群内 → 深链私聊；私聊 → Mini App /user）
+ * /register：群内/私聊均直接调用 Mozi Telegram 登录注册 API，成功后自动重放待处理提问
  */
 
-const { buildRegisterPrivateUrl } = require('../lib/registerDeepLink');
-const { sendRegisterCard } = require('../lib/registerFlow');
+const { runInlineRegisterFlow } = require('./inlineRegister');
 
 function isGroupChat(ctx) {
   const t = ctx.chat?.type;
@@ -11,24 +10,8 @@ function isGroupChat(ctx) {
 }
 
 function registerRegister(bot, config, { getTexts }) {
-  const { BOT_USERNAME } = config;
-
   bot.command('register', async (ctx) => {
-    const languageCode = ctx.from?.language_code || 'en';
-    const texts = getTexts(languageCode);
-
-    if (isGroupChat(ctx)) {
-      const privateUrl = buildRegisterPrivateUrl(BOT_USERNAME);
-      await ctx.reply(texts.registerGroupGuideHtml, {
-        parse_mode: 'HTML',
-        reply_markup: {
-          inline_keyboard: [[{ text: texts.bindStartBtn, url: privateUrl }]],
-        },
-      });
-      return;
-    }
-
-    await sendRegisterCard(ctx, config, getTexts);
+    await runInlineRegisterFlow(ctx, config, getTexts);
   });
 }
 

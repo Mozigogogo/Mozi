@@ -7,7 +7,9 @@ const { buildMiniAppUrlWithInvite } = require('../lib/invite');
 const { parseAlertDeepLinkPayload } = require('../lib/alertSymbol');
 const { sendAlertCard } = require('../lib/alertFlow');
 const { isRegisterStartPayload } = require('../lib/registerDeepLink');
-const { sendRegisterCard } = require('../lib/registerFlow');
+const { runInlineRegisterFlow } = require('./inlineRegister');
+const { hasPendingWatchForUser } = require('../lib/tgChatRegisterWatcher');
+const { markUserDmReachable } = require('../lib/botDmReachable');
 
 function registerStart(bot, config, { getTexts }) {
   const { APP_URL, ALERT_CARD_IMAGE, TG_COMMUNITY_URL, TWITTER_URL } = config;
@@ -17,14 +19,21 @@ function registerStart(bot, config, { getTexts }) {
     const username = ctx.from.username || '';
     const languageCode = ctx.from.language_code || 'en';
     const inviteCode = ctx.startPayload;
+    const uidStr = String(userId);
 
     const texts = getTexts(languageCode);
+    markUserDmReachable(userId);
+
+    if (hasPendingWatchForUser(uidStr)) {
+      await runInlineRegisterFlow(ctx, config, getTexts);
+      return;
+    }
 
     if (isRegisterStartPayload(inviteCode)) {
       console.log(`\n[${new Date().toLocaleString()}] 用户通过注册深链启动`);
       console.log(`  TG ID: ${userId}`);
       console.log(`  Username: ${username}`);
-      await sendRegisterCard(ctx, config, getTexts);
+      await runInlineRegisterFlow(ctx, config, getTexts);
       return;
     }
 

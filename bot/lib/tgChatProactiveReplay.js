@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * 用户注册完成后，由后台轮询或 POST /tg/chat/on-registered 触发，无需用户再发消息。
+ * 用户注册完成后，由 POST /tg/chat/on-registered（或私聊注册流程单次检查）触发，无需用户再发消息。
  */
 
 const { getTexts } = require('../i18n');

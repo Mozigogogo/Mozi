@@ -82,9 +82,31 @@ function getTgChatQuestions(telegramId) {
     }));
 }
 
+/**
+ * @returns {{ telegramId: string; groupId: number; question: string; command: 'ai' | 'chat' }[]}
+ */
+function listAllPendingTgChatQuestions() {
+  const now = Date.now();
+  const out = [];
+  for (const [tid, byGroup] of byTelegramId) {
+    for (const entry of byGroup.values()) {
+      if (entry.expireAt > now) {
+        out.push({
+          telegramId: tid,
+          groupId: entry.groupId,
+          question: entry.question,
+          command: entry.command === 'ai' ? 'ai' : 'chat',
+        });
+      }
+    }
+  }
+  return out;
+}
+
 module.exports = {
   TTL_MS,
   saveTgChatQuestion,
   getTgChatQuestions,
   removeTgChatQuestion,
+  listAllPendingTgChatQuestions,
 };

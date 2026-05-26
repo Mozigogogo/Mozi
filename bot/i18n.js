@@ -106,13 +106,24 @@ const i18n = {
       '该功能需要已登录的 Mozi 账户（Telegram 绑定）。\n\n请先通过下方按钮打开 <b>Mozi App</b> 完成绑定后，再使用 <code>/ai</code>、<code>/chat</code> 或 <code>/balance</code>。',
     bindGroupPingHtml: (mentionHtml) =>
       `${mentionHtml} 检测到您尚未绑定账户，已私信您完成设置 👇`,
+    bindRegisterBtn: '注册',
+    bindGroupCanDmHtml: (mentionHtml) =>
+      `${mentionHtml} 您尚未绑定 Mozi 账户。\n\n请点击下方「注册」，将直接在群内完成注册；成功后<strong>自动继续</strong>您刚才的 <code>/ai</code> 或 <code>/chat</code> 提问。`,
+    bindGroupNeedStartHtml: (mentionHtml) =>
+      `${mentionHtml} 您尚未绑定 Mozi 账户，且我暂时<strong>无法私信您</strong>。\n\n请先点击下方「启动」打开与我的私聊（等同发送 <code>/start</code>），完成后将在<strong>本群自动继续</strong>您刚才的提问。`,
     bindGroupRegisterGuideHtml: (mentionHtml) =>
-      `${mentionHtml} 您尚未绑定 Mozi 账户。请在<strong>私聊</strong>中完成注册（群内无法使用 Mini App 按钮）。\n\n点击下方「启动」向我发私信；若未自动发送，请手动发送：\n<code>/register</code>`,
+      `${mentionHtml} 您尚未绑定 Mozi 账户。请点击下方「注册」。`,
     registerGroupGuideHtml:
-      '👋 <b>绑定 Mozi 账户</b>\n\n请在<strong>私聊</strong>中继续（群内 Mini App 按钮不便使用）。\n\n点击下方「启动」向我发私信；若未自动发送，请手动发送：\n<code>/register</code>',
+      '👋 <b>注册 Mozi 账户</b>\n\n点击下方「注册」即可在群内完成注册；成功后自动继续您之前的 <code>/ai</code> 或 <code>/chat</code> 提问。',
+    registerApiProgressToast: '正在注册…',
+    registerApiSuccessInGroupHtml: '✅ 注册成功，正在继续您之前的提问…',
+    registerApiFailedHtml: '❌ 注册失败，请稍后再试。',
+    registerApiLoginFailedHtml: '❌ 注册失败：无法完成 Telegram 登录，请检查 Bot 配置或联系管理员。',
+    registerApiNetworkErrorHtml: '❌ 注册失败：网络异常，请稍后再试。',
+    registerApiStillUnregisteredHtml: '❌ 注册未完成，请稍后再试或联系客服。',
     registerIntroHtml: `👋 <b>请先完成 Mozi 账户绑定</b>
 
-点击下方 <b>启动</b>，将打开 Mozi Mini App 并进入 <b>账户 / 注册</b> 页面。完成后回到群内即可继续使用 <code>/ai</code>、<code>/chat</code>、<code>/balance</code>。`,
+点击下方 <b>启动</b>，将打开 Mozi Mini App 并进入 <b>账户 / 注册</b> 页面。完成后将<strong>自动继续</strong>您之前在群里的 <code>/ai</code> 或 <code>/chat</code> 提问，无需再发一遍。`,
     bindDmIntroHtml: `👋 <b>请先完成 Mozi 账户绑定</b>
 
 点击下方 <b>启动</b>，将打开 Mozi Mini App 并进入 <b>账户 / 注册</b> 页面。完成后回到群内即可继续使用 <code>/ai</code>、<code>/chat</code>、<code>/balance</code>。`,
@@ -122,7 +133,7 @@ const i18n = {
     tgChatReplayChatHtml: '⏳ 注册完成，正在自动继续您之前的 <code>/chat</code> 提问…',
     tgChatReplayAiHtml: '⏳ 注册完成，正在自动继续您之前的 <code>/ai</code> 提问…',
     bindDmFailedInGroup:
-      '无法私信您：请先<strong>私聊</strong>本机器人发送任意消息、<code>/start</code> 或 <code>/register</code>，再使用群内指令；也可点击上一条消息中的「启动」按钮。',
+      '无法私信您：请先<strong>私聊</strong>本机器人发送任意消息、<code>/start</code> 或 <code>/register</code>，完成绑定后将<strong>自动继续</strong>您刚才的提问，无需在群里再发一遍；也可点击上一条消息中的「启动」按钮。',
     sessionIdentityExpiredHtml:
       '🔐 <b>登录状态已失效</b>\n\n你的 Mozi 身份可能已在其他端重新登录，或会话已过期。\n\n请点击下方「重新登录」以刷新本机器人的访问凭证。',
     sessionReloginBtn: '重新登录',
@@ -260,13 +271,24 @@ Remaining points: <b>${totalPoints}</b>
       'This feature requires a logged-in Mozi account (Telegram binding).\n\nOpen <b>Mozi App</b> via the buttons below to complete binding, then use <code>/ai</code>, <code>/chat</code>, or <code>/balance</code>.',
     bindGroupPingHtml: (mentionHtml) =>
       `${mentionHtml} You’re not linked to a Mozi account yet — check your <b>DM</b> from me to finish setup 👇`,
+    bindRegisterBtn: 'Register',
+    bindGroupCanDmHtml: (mentionHtml) =>
+      `${mentionHtml} You’re not linked to a Mozi account yet.\n\nTap <b>Register</b> below to sign up in this group. Your last <code>/ai</code> or <code>/chat</code> question will <strong>resume automatically</strong>.`,
+    bindGroupNeedStartHtml: (mentionHtml) =>
+      `${mentionHtml} You’re not linked yet, and I <strong>can’t DM you</strong> yet.\n\nTap <b>Start</b> below to open a private chat with me (same as <code>/start</code>). Your previous question will <strong>resume automatically in this group</strong>.`,
     bindGroupRegisterGuideHtml: (mentionHtml) =>
-      `${mentionHtml} You’re not linked to a Mozi account yet. Please continue in a <strong>private chat</strong> (Mini App buttons don’t work well in groups).\n\nTap <b>Start</b> below to message me; if nothing opens, send:\n<code>/register</code>`,
+      `${mentionHtml} You’re not linked yet. Tap <b>Register</b> below.`,
     registerGroupGuideHtml:
-      '👋 <b>Link your Mozi account</b>\n\nPlease continue in a <strong>private chat</strong>.\n\nTap <b>Start</b> below to message me; if nothing opens, send:\n<code>/register</code>',
+      '👋 <b>Sign up for Mozi</b>\n\nTap <b>Register</b> below to sign up in this chat. Your previous <code>/ai</code> or <code>/chat</code> question will resume automatically.',
+    registerApiProgressToast: 'Signing up…',
+    registerApiSuccessInGroupHtml: '✅ Signed up — resuming your previous question…',
+    registerApiFailedHtml: '❌ Sign-up failed. Please try again later.',
+    registerApiLoginFailedHtml: '❌ Sign-up failed: could not complete Telegram login. Please try again later.',
+    registerApiNetworkErrorHtml: '❌ Sign-up failed: network error. Please try again later.',
+    registerApiStillUnregisteredHtml: '❌ Sign-up did not complete. Please try again later.',
     registerIntroHtml: `👋 <b>Link your Mozi account</b>
 
-Tap <b>Start</b> to open the Mozi Mini App <b>account / sign-up</b> page. When you’re done, you can use <code>/ai</code>, <code>/chat</code>, and <code>/balance</code> in the group again.`,
+Tap <b>Start</b> to open the Mozi Mini App <b>account / sign-up</b> page. When you’re done, your previous <code>/ai</code> or <code>/chat</code> question in the group will <strong>resume automatically</strong> — no need to send it again.`,
     bindDmIntroHtml: `👋 <b>Link your Mozi account</b>
 
 Tap <b>Start</b> to open the Mozi Mini App <b>account / sign-up</b> page. When you’re done, you can use <code>/ai</code>, <code>/chat</code>, and <code>/balance</code> in the group again.`,
@@ -276,7 +298,7 @@ Tap <b>Start</b> to open the Mozi Mini App <b>account / sign-up</b> page. When y
     tgChatReplayChatHtml: '⏳ Sign-up complete — resuming your previous <code>/chat</code> question…',
     tgChatReplayAiHtml: '⏳ Sign-up complete — resuming your previous <code>/ai</code> question…',
     bindDmFailedInGroup:
-      'I couldn’t DM you. Please <strong>message this bot</strong> first (any message, <code>/start</code>, or <code>/register</code>), then try again in the group — or tap <b>Start</b> on the message above.',
+      'I couldn’t DM you. Please <strong>message this bot</strong> first (any message, <code>/start</code>, or <code>/register</code>). After you finish linking, your last <code>/ai</code> or <code>/chat</code> question will <strong>resume automatically</strong> — or tap <b>Start</b> on the message above.',
     sessionIdentityExpiredHtml:
       '🔐 <b>Your Mozi session is no longer valid</b>\n\nYou may have signed in elsewhere, or the session expired.\n\nTap <b>Sign in again</b> below to refresh this bot\'s credentials.',
     sessionReloginBtn: 'Sign in again',

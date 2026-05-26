@@ -2,13 +2,13 @@
  * Mozi Telegram Bot 入口
  * /start：邀请码见 handlers/start.js、lib/invite.js
  * /alert：见 handlers/alert.js、lib/alertSymbol.js
- * /register：见 handlers/register.js、lib/registerFlow.js（未注册时群内「启动」深链）
+ * /register：见 handlers/register.js、handlers/inlineRegister.js（群内 API 注册 + 自动重放）
  * /ai、/chat：进程内缓存上次剩余积分（consume 成功写回；datainfo /balance 同步）；前置校验 datainfo（可配短 TTL 跳过）；不足则私信 + Mini App 社区/账单按钮
  * /price：handlers/price.js + lib/apis.js（GET /detail/header，默认 BTC，简报格式）
  * /help：handlers/help.js（群内仅私聊发全文，防刷屏）
  * /balance：handlers/balance.js（GET /user/datainfo；私聊直接回复，群内尝试私信用户，路径见 USER_DATA_INFO_PATH）
  * my_chat_member、/bind_ref：handlers/groupReferrer.js（入群 pending；仅拉群人自动 queryInviteCode 并绑定群）
- * /ai、/chat：未注册时 save 提问并轮询注册态；注册完成后 Bot 自动重放（无需用户再输入）；见 tgChatRegisterWatcher
+ * /ai、/chat：未注册时 save 提问 + 群内「注册」按钮；注册成功后 on-registered 事件驱动群内重放；见 tgChatRegisterWatcher
  * 调试：环境变量 BOT_DEBUG=1 → middleware/debugCommands.js + lib/debugLog.js（命令与 apis 内 HTTP 摘要）
  */
 
@@ -22,6 +22,7 @@ const { createRequireMoziLogin, registerMoziReloginCallback } = require('./middl
 const { registerStart } = require('./handlers/start');
 const { registerAlert } = require('./handlers/alert');
 const { registerRegister } = require('./handlers/register');
+const { registerInlineRegister } = require('./handlers/inlineRegister');
 const { registerAi } = require('./handlers/ai');
 const { registerChat } = require('./handlers/chat');
 const { registerPrice } = require('./handlers/price');
@@ -31,6 +32,7 @@ const { createInjectGroupReferrer } = require('./middleware/groupReferrer');
 const { registerGroupReferrer } = require('./handlers/groupReferrer');
 const { startTgChatHttpServer } = require('./server/tgChatHttp');
 const { initTgChatRegisterWatcher } = require('./lib/tgChatRegisterWatcher');
+const { createResumePendingAiChatOnPrivate } = require('./middleware/resumePendingAiChatOnPrivate');
 
 if (!config.BOT_TOKEN) {
   console.error('❌ 错误: 请设置 BOT_TOKEN 环境变量');
@@ -46,11 +48,13 @@ const loginGate = createRequireMoziLogin(config, i18nApi);
 
 registerDebugCommandLogging(bot);
 bot.use(createInjectGroupReferrer(config));
+bot.use(createResumePendingAiChatOnPrivate(config));
 registerMoziReloginCallback(bot, config, i18nApi);
 registerStart(bot, config, i18nApi);
 registerGroupReferrer(bot, config, i18nApi);
 registerAlert(bot, config, i18nApi);
 registerRegister(bot, config, i18nApi);
+registerInlineRegister(bot, config, i18nApi);
 registerAi(bot, config, i18nApi, registeredGate, loginGate);
 registerChat(bot, config, i18nApi, registeredGate, loginGate);
 registerPrice(bot, config, i18nApi);

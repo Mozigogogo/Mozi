@@ -43,7 +43,12 @@
 | `DELETE` | `/tg/chat/remove?telegramId=&groupId=` | 重放成功后清除 |
 | `POST` | `/tg/chat/on-registered` | Body：`{ "telegramId", "groupId"? }` — 绑定成功立即重放（可选，建议 H5/后端调用） |
 
-**流程**：未注册用户使用 `/ai`、`/chat` 带问题 → 保存并 **每 3s 轮询** `registered/check` → 一旦注册完成，Bot **自动**在群内/私聊执行原命令（用户无需再输入）。也可在绑定成功时调 `on-registered` 立即触发。
+**流程**（未注册 + `/ai`、`/chat` 带问题，保存提问后分流）：
+
+1. **已与 Bot 私聊过**：群内文案 +「注册」按钮 → 点击调 `POST /user/login` → 群内自动重放。
+2. **未私聊过**（Bot 无法私信）：群内文案 +「启动」按钮 → 打开私聊 `/start` → API 注册 → 群内自动重放。
+
+可选：`POST /tg/chat/on-registered` 供其他入口回调重放。
 
 实现：`bot/lib/tgChatRegisterWatcher.js`、`bot/lib/tgChatProactiveReplay.js`。
 

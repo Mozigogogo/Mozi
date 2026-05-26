@@ -3,6 +3,7 @@
 const { postUserSessionTokenCheck } = require('../lib/apis');
 const { ensureTgUserToken, clearCachedToken } = require('../lib/tgUserTokenCache');
 const { buildBindAccountKeyboard } = require('../lib/moziBindKeyboard');
+const { saveAndWatchPendingAiChat } = require('../lib/tgChatPendingSave');
 
 /** 与 inline_keyboard 中 callback_data 一致（须 ≤64 字节） */
 const CALLBACK_MOZI_RELOGIN = 'mozi_rl';
@@ -80,6 +81,7 @@ function createRequireMoziLogin(config, { getTexts }) {
     }
     const token = await ensureTgUserToken(config, uidStr, loginOpts);
     if (!token) {
+      await saveAndWatchPendingAiChat(ctx, config);
       await ctx
         .reply(texts.needMoziLogin, {
           parse_mode: 'HTML',

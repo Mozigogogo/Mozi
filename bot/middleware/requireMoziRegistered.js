@@ -3,15 +3,13 @@
 const { postTgRegisteredCheck } = require('../lib/apis');
 const { saveAndWatchPendingAiChat } = require('../lib/tgChatPendingSave');
 const { escapeHtml } = require('../lib/telegramHtml');
-const { buildRegisterPrivateUrl } = require('../lib/registerDeepLink');
-const { buildMiniAppUrlWithInvite } = require('../lib/invite');
-
-/** 已发过绑定私信、等待用户完成注册后发送「绑定成功」的用户（telegramId 字符串） */
-const pendingBindNotice = new Set();
+const { buildGroupRegisterKeyboard, buildGroupStartKeyboard } = require('../lib/registerDeepLink');
+const { canBotReachUserInDm } = require('../lib/botDmReachable');
+const { runInlineRegisterFlow } = require('../handlers/inlineRegister');
 
 /**
  * @param {object | null} json
- * @returns {boolean | null} true=已注册，false=未注册，null=无法从响应判断
+ * @returns {boolean | null}
  */
 function parseRegisteredFlag(json) {
   if (!json || typeof json !== 'object') return null;
@@ -33,16 +31,10 @@ function buildMentionHtml(from) {
   return `<a href="tg://user?id=${uid}">${escapeHtml(labelRaw)}</a>`;
 }
 
-function userMiniAppRegisterUrl(config) {
-  const base = String(config.APP_URL || '').replace(/\/+$/, '');
-  return `${base}/user`;
-}
-
 /**
- * 在 requireMoziLogin 之前：仅已注册 Mozi 的用户可继续；未注册则群内 @ 简短提示 + 私信引导与一键注册 Mini App /user
- * @param {object} config
- * @param {{ getTexts: (lang?: string) => object }} i18nApi
- * @returns {import('telegraf').MiddlewareFn}
+ * 未注册分流：
+ * - 已与 Bot 私聊：群内「注册」→ API 注册 → 群内重放
+ * - 未私聊过：群内「启动」→ /start → 私聊内注册 → 群内重放
  */
 function createRequireMoziRegistered(config, { getTexts }) {
   return async (ctx, next) => {
@@ -74,55 +66,34 @@ function createRequireMoziRegistered(config, { getTexts }) {
     }
 
     if (registered === true) {
-      pendingBindNotice.delete(uidStr);
       return next();
     }
 
     const mention = buildMentionHtml(ctx.from);
-    const base = String(config.APP_URL || '').replace(/\/+$/, '');
-    const groupInvite = ctx.state?.groupReferrer?.inviteCode;
-    const userPage = groupInvite
-      ? buildMiniAppUrlWithInvite(`${base}/user`, groupInvite)
-      : userMiniAppRegisterUrl(config);
-    const privateUrl = buildRegisterPrivateUrl(config.BOT_USERNAME);
-    const dmOpts = {
-      parse_mode: 'HTML',
-      reply_markup: {
-        inline_keyboard: [[{ text: texts.bindStartBtn, web_app: { url: userPage } }]],
-      },
-    };
-    const groupRegisterKeyboard = {
-      parse_mode: 'HTML',
-      reply_markup: {
-        inline_keyboard: [[{ text: texts.bindStartBtn, url: privateUrl }]],
-      },
-    };
-
     await saveAndWatchPendingAiChat(ctx, config);
 
     if (isGroup) {
-      await ctx
-        .reply(texts.bindGroupRegisterGuideHtml(mention), groupRegisterKeyboard)
-        .catch(() => {});
-      if (!pendingBindNotice.has(uidStr)) {
-        try {
-          await ctx.telegram.sendMessage(uid, texts.registerIntroHtml, dmOpts);
-        } catch (e) {
-          console.warn('[requireMoziRegistered] bind DM:', e?.message || e);
-          await ctx.reply(texts.bindDmFailedInGroup, { parse_mode: 'HTML' }).catch(() => {});
-        }
-        pendingBindNotice.add(uidStr);
+      const canDm = await canBotReachUserInDm(ctx.telegram, uid);
+      if (canDm) {
+        await ctx
+          .reply(texts.bindGroupCanDmHtml(mention), {
+            parse_mode: 'HTML',
+            reply_markup: buildGroupRegisterKeyboard(texts),
+          })
+          .catch(() => {});
+      } else {
+        await ctx
+          .reply(texts.bindGroupNeedStartHtml(mention), {
+            parse_mode: 'HTML',
+            reply_markup: buildGroupStartKeyboard(config.BOT_USERNAME, texts),
+          })
+          .catch(() => {});
       }
     } else {
-      try {
-        await ctx.reply(texts.registerIntroHtml, dmOpts);
-        pendingBindNotice.add(uidStr);
-      } catch (e) {
-        console.warn('[requireMoziRegistered] bind reply (private):', e?.message || e);
-      }
+      await runInlineRegisterFlow(ctx, config, getTexts);
     }
     return;
   };
 }
 
-module.exports = { createRequireMoziRegistered, pendingBindNotice };
+module.exports = { createRequireMoziRegistered };

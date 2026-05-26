@@ -1,11 +1,11 @@
 'use strict';
 
 /**
- * 未注册时登记 /ai、/chat 提问后，轮询 registered/check；一旦注册完成立即主动重放。
+ * 未注册时登记 /ai、/chat 提问；注册成功后由 POST /tg/chat/on-registered 或私聊进入注册流程时触发重放（不轮询）。
  */
 
 const { postTgRegisteredCheck, getTgChatGet } = require('./apis');
-const { TTL_MS } = require('./tgChatQuestionStore');
+const { TTL_MS, listAllPendingTgChatQuestions } = require('./tgChatQuestionStore');
 const { runTgChatProactiveReplay } = require('./tgChatProactiveReplay');
 
 /** @type {import('telegraf').Telegraf | null} */
@@ -14,10 +14,7 @@ let botRef = null;
 let configRef = null;
 
 /** @type {Map<string, { telegramId: string; groupId: number; question: string; command: 'ai' | 'chat'; languageCode: string; username?: string; firstName?: string; expireAt: number; replaying?: boolean }>} */
-const watchJobs = new Map();
-
-/** @type {ReturnType<typeof setInterval> | null} */
-let pollTimer = null;
+const pendingReplayJobs = new Map();
 
 function jobKey(telegramId, groupId) {
   return `${telegramId}:${groupId}`;
@@ -37,52 +34,57 @@ function parseRegisteredFlag(json) {
   return null;
 }
 
-function ensurePollLoop() {
-  if (pollTimer || !configRef || !botRef) return;
-  const intervalMs = Math.max(
-    2000,
-    Math.min(30_000, parseInt(configRef.TG_CHAT_REGISTER_POLL_MS || '3000', 10) || 3000),
-  );
-  pollTimer = setInterval(() => {
-    tickRegisterWatch().catch((e) => {
-      console.warn('[tgChatRegisterWatcher] tick:', e?.message || e);
+function hasPendingWatchForUser(telegramId) {
+  const tid = String(telegramId ?? '').trim();
+  if (!tid) return false;
+  const now = Date.now();
+  for (const job of pendingReplayJobs.values()) {
+    if (job.telegramId === tid && now <= job.expireAt) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function restorePendingReplayJobsFromStore() {
+  if (!botRef || !configRef) return;
+  for (const row of listAllPendingTgChatQuestions()) {
+    savePendingReplayJob({
+      telegramId: row.telegramId,
+      groupId: row.groupId,
+      question: row.question,
+      command: row.command,
+      languageCode: 'en',
     });
-  }, intervalMs);
-  if (typeof pollTimer.unref === 'function') {
-    pollTimer.unref();
   }
 }
 
-/**
- * @param {import('telegraf').Telegraf} bot
- * @param {object} config
- */
 function initTgChatRegisterWatcher(bot, config) {
   botRef = bot;
   configRef = config;
-  ensurePollLoop();
+  restorePendingReplayJobsFromStore();
 }
 
 /**
+ * 保存待重放任务（注册成功或 on-registered 时再执行）
  * @param {object} job
  */
-function scheduleTgChatRegisterWatch(job) {
+function savePendingReplayJob(job) {
   if (!botRef || !configRef) return;
   const key = jobKey(job.telegramId, job.groupId);
-  watchJobs.set(key, {
+  pendingReplayJobs.set(key, {
     ...job,
     command: job.command === 'ai' ? 'ai' : 'chat',
     expireAt: Date.now() + TTL_MS,
     replaying: false,
   });
-  ensurePollLoop();
-  tickRegisterWatch().catch((e) => {
-    console.warn('[tgChatRegisterWatcher] immediate tick:', e?.message || e);
-  });
 }
 
+/** @deprecated 别名 */
+const scheduleTgChatRegisterWatch = savePendingReplayJob;
+
 /**
- * 后端或 Mini App 绑定成功时可调用，立即尝试重放（不等下一轮轮询）
+ * 注册接口成功或 H5 绑定完成后调用，立即在群内重放
  * @param {string} telegramId
  * @param {number | string | undefined | null} [groupId]
  */
@@ -93,14 +95,14 @@ async function notifyTgChatRegistered(telegramId, groupId) {
 
   if (groupId != null && groupId !== '') {
     const key = jobKey(tid, groupId);
-    const job = watchJobs.get(key);
+    const job = pendingReplayJobs.get(key);
     if (job && !job.replaying) {
       await tryReplayJob(job);
     }
     return;
   }
 
-  for (const job of watchJobs.values()) {
+  for (const job of pendingReplayJobs.values()) {
     if (job.telegramId === tid && !job.replaying) {
       await tryReplayJob(job);
     }
@@ -113,7 +115,7 @@ async function notifyTgChatRegistered(telegramId, groupId) {
 async function tryReplayJob(job) {
   if (!botRef || !configRef || job.replaying) return;
   if (Date.now() > job.expireAt) {
-    watchJobs.delete(jobKey(job.telegramId, job.groupId));
+    pendingReplayJobs.delete(jobKey(job.telegramId, job.groupId));
     return;
   }
 
@@ -138,28 +140,15 @@ async function tryReplayJob(job) {
   const key = jobKey(job.telegramId, job.groupId);
   try {
     await runTgChatProactiveReplay(botRef, configRef, job);
-    watchJobs.delete(key);
+    pendingReplayJobs.delete(key);
   } catch (e) {
     job.replaying = false;
     console.warn('[tgChatRegisterWatcher] replay failed:', e?.message || e);
   }
 }
 
-async function tickRegisterWatch() {
-  if (!botRef || !configRef) return;
-  const now = Date.now();
-
-  for (const [key, job] of watchJobs) {
-    if (now > job.expireAt) {
-      watchJobs.delete(key);
-      continue;
-    }
-    await tryReplayJob(job);
-  }
-}
-
 /**
- * 从 API get 结果恢复 watcher（Bot 重启后可选）
+ * @param {object} config
  * @param {string} telegramId
  */
 async function syncWatchFromRemote(config, telegramId) {
@@ -171,7 +160,7 @@ async function syncWatchFromRemote(config, telegramId) {
     if (!res.ok || !Array.isArray(res.json)) return;
     for (const row of res.json) {
       if (!row?.question) continue;
-      scheduleTgChatRegisterWatch({
+      savePendingReplayJob({
         telegramId,
         groupId: row.groupId,
         question: row.question,
@@ -184,9 +173,26 @@ async function syncWatchFromRemote(config, telegramId) {
   }
 }
 
+/**
+ * 用户点击「注册」进入私聊后，尝试一次重放（若后端已标记注册成功）
+ * @param {object} config
+ * @param {string} telegramId
+ */
+async function triggerPendingAiChatReplay(config, telegramId) {
+  const tid = String(telegramId ?? '').trim();
+  if (!tid || !botRef || !configRef) return;
+  if (config?.API_BASE_URL) {
+    await syncWatchFromRemote(config, tid).catch(() => {});
+  }
+  await notifyTgChatRegistered(tid);
+}
+
 module.exports = {
   initTgChatRegisterWatcher,
+  savePendingReplayJob,
   scheduleTgChatRegisterWatch,
   notifyTgChatRegistered,
   syncWatchFromRemote,
+  hasPendingWatchForUser,
+  triggerPendingAiChatReplay,
 };

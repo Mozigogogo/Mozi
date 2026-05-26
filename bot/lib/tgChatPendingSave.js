@@ -2,10 +2,11 @@
 
 const { extractAiQuery, extractChatQuery } = require('./aiQuery');
 const { postTgChatSave } = require('./apis');
-const { scheduleTgChatRegisterWatch } = require('./tgChatRegisterWatcher');
+const { savePendingReplayJob } = require('./tgChatRegisterWatcher');
+const { saveTgChatQuestion } = require('./tgChatQuestionStore');
 
 /**
- * 未注册拦截时：持久化提问并启动「注册完成自动重放」轮询
+ * 未注册拦截时：持久化提问，待注册成功（on-registered）后在群内自动重放
  * @param {import('telegraf').Context} ctx
  * @param {object} config
  */
@@ -33,6 +34,12 @@ async function saveAndWatchPendingAiChat(ctx, config) {
   const languageCode = ctx.from?.language_code || 'en';
 
   try {
+    saveTgChatQuestion({ telegramId, groupId: chatId, question, command });
+  } catch (e) {
+    console.warn('[tgChatPendingSave] local store:', e?.message || e);
+  }
+
+  try {
     const res = await postTgChatSave({
       apiBaseUrl: config.API_BASE_URL,
       groupId: chatId,
@@ -47,7 +54,7 @@ async function saveAndWatchPendingAiChat(ctx, config) {
     console.warn('[tgChatPendingSave] save error:', e?.message || e);
   }
 
-  scheduleTgChatRegisterWatch({
+  savePendingReplayJob({
     telegramId,
     groupId: chatId,
     question,

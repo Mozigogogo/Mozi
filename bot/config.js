@@ -83,7 +83,7 @@ const TG_CHAT_API_PORT = Math.max(
   Math.min(65535, parseInt(process.env.TG_CHAT_API_PORT || '0', 10) || 0),
 );
 
-/** 轮询 registered/check 间隔（毫秒），用于注册完成后自动重放 /ai、/chat */
+/** 已废弃：重放改为 on-registered 事件驱动，保留配置项兼容旧部署 */
 const TG_CHAT_REGISTER_POLL_MS = Math.max(
   2000,
   Math.min(30_000, parseInt(process.env.TG_CHAT_REGISTER_POLL_MS || '3000', 10) || 3000),
