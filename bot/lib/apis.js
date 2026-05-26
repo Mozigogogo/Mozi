@@ -1160,9 +1160,141 @@ async function postGroupReferrerBind({
   }
 }
 
+// --- POST /tg/chat/save、GET /tg/chat/get（群内提问缓存，TTL 10min）----------------
+
+/**
+ * @param {{ apiBaseUrl: string; groupId: number | string; telegramId: string | number; question: string; command?: 'ai' | 'chat' | string; timeoutMs?: number }} opts
+ * @returns {Promise<{ ok: boolean; status: number; json: object | null; text: string }>}
+ */
+async function postTgChatSave({
+  apiBaseUrl,
+  groupId,
+  telegramId,
+  question,
+  command = 'chat',
+  timeoutMs = 15000,
+}) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const url = `${base}/tg/chat/save`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        accept: 'application/json, text/plain, */*',
+        'content-type': 'application/json',
+        'user-agent': DEFAULT_UA,
+      },
+      body: JSON.stringify({
+        groupId: Number(groupId),
+        telegramId: String(telegramId),
+        question: String(question || ''),
+        command: String(command || 'chat').toLowerCase() === 'ai' ? 'ai' : 'chat',
+      }),
+      signal: ctrl.signal,
+    });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const out = { ok: res.ok, status: res.status, json, text };
+    apiDebug('POST /tg/chat/save →', {
+      telegramId: String(telegramId),
+      groupId,
+      httpStatus: res.status,
+      ok: res.ok,
+      bodyPreview: text.slice(0, 300),
+    });
+    return out;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+/**
+ * @param {{ apiBaseUrl: string; telegramId: string | number; timeoutMs?: number }} opts
+ * @returns {Promise<{ ok: boolean; status: number; json: Array<{ groupId: number; question: string }> | object | null; text: string }>}
+ */
+async function getTgChatGet({ apiBaseUrl, telegramId, timeoutMs = 15000 }) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const q = new URLSearchParams({ telegramId: String(telegramId) });
+  const url = `${base}/tg/chat/get?${q.toString()}`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        accept: 'application/json, text/plain, */*',
+        'user-agent': DEFAULT_UA,
+      },
+      signal: ctrl.signal,
+    });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const out = { ok: res.ok, status: res.status, json, text };
+    apiDebug('GET /tg/chat/get →', {
+      telegramId: String(telegramId),
+      httpStatus: res.status,
+      ok: res.ok,
+      count: Array.isArray(json) ? json.length : null,
+      bodyPreview: text.slice(0, 500),
+    });
+    return out;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+/**
+ * @param {{ apiBaseUrl: string; telegramId: string | number; groupId: number | string; timeoutMs?: number }} opts
+ */
+async function postTgChatRemove({ apiBaseUrl, telegramId, groupId, timeoutMs = 15000 }) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const q = new URLSearchParams({
+    telegramId: String(telegramId),
+    groupId: String(groupId),
+  });
+  const url = `${base}/tg/chat/remove?${q.toString()}`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        accept: 'application/json, text/plain, */*',
+        'user-agent': DEFAULT_UA,
+      },
+      signal: ctrl.signal,
+    });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    return { ok: res.ok, status: res.status, json, text };
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 module.exports = {
   fetchDetailHeader,
   postTgRegisteredCheck,
+  postTgChatSave,
+  getTgChatGet,
+  postTgChatRemove,
   postTgQueryInviteCode,
   parseQueryInviteCodeResult,
   postUserSessionTokenCheck,

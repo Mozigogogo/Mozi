@@ -8,6 +8,7 @@ RUN npm ci --omit=dev
 COPY config.js i18n.js telegram-bot.js ./
 COPY lib ./lib
 COPY handlers ./handlers
+COPY server ./server
 
 ENV NODE_ENV=production
 CMD ["node", "telegram-bot.js"]

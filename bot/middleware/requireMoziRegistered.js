@@ -1,6 +1,7 @@
 'use strict';
 
 const { postTgRegisteredCheck } = require('../lib/apis');
+const { saveAndWatchPendingAiChat } = require('../lib/tgChatPendingSave');
 const { escapeHtml } = require('../lib/telegramHtml');
 const { buildRegisterPrivateUrl } = require('../lib/registerDeepLink');
 const { buildMiniAppUrlWithInvite } = require('../lib/invite');
@@ -73,14 +74,7 @@ function createRequireMoziRegistered(config, { getTexts }) {
     }
 
     if (registered === true) {
-      if (pendingBindNotice.has(uidStr)) {
-        try {
-          await ctx.telegram.sendMessage(uid, texts.bindSuccessDm, { parse_mode: 'HTML' });
-          pendingBindNotice.delete(uidStr);
-        } catch (e) {
-          console.warn('[requireMoziRegistered] bind success DM:', e?.message || e);
-        }
-      }
+      pendingBindNotice.delete(uidStr);
       return next();
     }
 
@@ -104,6 +98,8 @@ function createRequireMoziRegistered(config, { getTexts }) {
       },
     };
 
+    await saveAndWatchPendingAiChat(ctx, config);
+
     if (isGroup) {
       await ctx
         .reply(texts.bindGroupRegisterGuideHtml(mention), groupRegisterKeyboard)
@@ -125,6 +121,7 @@ function createRequireMoziRegistered(config, { getTexts }) {
         console.warn('[requireMoziRegistered] bind reply (private):', e?.message || e);
       }
     }
+    return;
   };
 }
 

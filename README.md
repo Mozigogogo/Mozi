@@ -32,6 +32,20 @@
 | `USER_DATA_INFO_PATH` | 可选；`/balance` 请求的相对路径，默认 `user/datainfo` |
 | `USER_DATA_INFO_TIMEOUT_MS` | 可选；`GET user/datainfo` 超时（毫秒），默认 **45000**；此前为 15s，慢接口会触发 Abort 被误报为网络异常 |
 | `AI_CHAT_POINTS_COST` | 可选；`/chat` 回复底部展示的积分数（后端未返回 `pointsCost` 时），默认 `10` |
+| `TG_CHAT_API_PORT` | 可选；大于 0 时随 Bot 启动内嵌 HTTP：`POST /tg/chat/save`、`GET /tg/chat/get?telegramId=…`（按用户+群缓存提问，**TTL 10 分钟**）；默认 `0` 不启动 |
+
+### TG 群内提问缓存 API
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| `POST` | `/tg/chat/save` | Body：`{ "groupId", "telegramId", "question", "command": "ai" \| "chat" }` |
+| `GET` | `/tg/chat/get?telegramId=…` | 返回 `[{ "groupId", "question", "command" }, …]` |
+| `DELETE` | `/tg/chat/remove?telegramId=&groupId=` | 重放成功后清除 |
+| `POST` | `/tg/chat/on-registered` | Body：`{ "telegramId", "groupId"? }` — 绑定成功立即重放（可选，建议 H5/后端调用） |
+
+**流程**：未注册用户使用 `/ai`、`/chat` 带问题 → 保存并 **每 3s 轮询** `registered/check` → 一旦注册完成，Bot **自动**在群内/私聊执行原命令（用户无需再输入）。也可在绑定成功时调 `on-registered` 立即触发。
+
+实现：`bot/lib/tgChatRegisterWatcher.js`、`bot/lib/tgChatProactiveReplay.js`。
 
 ## 本地运行
 

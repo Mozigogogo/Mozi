@@ -8,7 +8,7 @@
  * /help：handlers/help.js（群内仅私聊发全文，防刷屏）
  * /balance：handlers/balance.js（GET /user/datainfo；私聊直接回复，群内尝试私信用户，路径见 USER_DATA_INFO_PATH）
  * my_chat_member、/bind_ref：handlers/groupReferrer.js（入群 pending；仅拉群人自动 queryInviteCode 并绑定群）
- * /ai、/chat、/balance：middleware/requireMoziRegistered.js 先 POST /user/tg/registered/check；未注册则群内 @ 提示 + 私信一键注册 /user；已注册则 requireMoziLogin（JWT + token-check）
+ * /ai、/chat：未注册时 save 提问并轮询注册态；注册完成后 Bot 自动重放（无需用户再输入）；见 tgChatRegisterWatcher
  * 调试：环境变量 BOT_DEBUG=1 → middleware/debugCommands.js + lib/debugLog.js（命令与 apis 内 HTTP 摘要）
  */
 
@@ -29,6 +29,8 @@ const { registerHelp } = require('./handlers/help');
 const { registerBalance } = require('./handlers/balance');
 const { createInjectGroupReferrer } = require('./middleware/groupReferrer');
 const { registerGroupReferrer } = require('./handlers/groupReferrer');
+const { startTgChatHttpServer } = require('./server/tgChatHttp');
+const { initTgChatRegisterWatcher } = require('./lib/tgChatRegisterWatcher');
 
 if (!config.BOT_TOKEN) {
   console.error('❌ 错误: 请设置 BOT_TOKEN 环境变量');
@@ -36,6 +38,7 @@ if (!config.BOT_TOKEN) {
 }
 
 const bot = new Telegraf(config.BOT_TOKEN);
+initTgChatRegisterWatcher(bot, config);
 
 const i18nApi = { getTexts };
 const registeredGate = createRequireMoziRegistered(config, i18nApi);
@@ -58,6 +61,10 @@ bot.catch((err, ctx) => {
   console.error('Bot 未捕获错误:', err?.response?.description || err?.message || err);
   return ctx.reply('处理失败，请稍后重试。').catch(() => {});
 });
+
+if (config.TG_CHAT_API_PORT > 0) {
+  startTgChatHttpServer({ port: config.TG_CHAT_API_PORT });
+}
 
 bot.launch().then(() => {
   console.log('🤖 Mozi Bot 已启动');

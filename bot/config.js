@@ -77,6 +77,18 @@ const USER_POINTS_DATAINFO_SKIP_TTL_MS = Math.max(
   Math.min(600_000, parseInt(process.env.USER_POINTS_DATAINFO_SKIP_TTL_MS || '0', 10) || 0),
 );
 
+/** 大于 0 时随 Bot 启动内嵌 HTTP：POST /tg/chat/save、GET /tg/chat/get（内存 TTL 10min） */
+const TG_CHAT_API_PORT = Math.max(
+  0,
+  Math.min(65535, parseInt(process.env.TG_CHAT_API_PORT || '0', 10) || 0),
+);
+
+/** 轮询 registered/check 间隔（毫秒），用于注册完成后自动重放 /ai、/chat */
+const TG_CHAT_REGISTER_POLL_MS = Math.max(
+  2000,
+  Math.min(30_000, parseInt(process.env.TG_CHAT_REGISTER_POLL_MS || '3000', 10) || 3000),
+);
+
 module.exports = {
   BOT_TOKEN,
   APP_URL,
@@ -100,4 +112,6 @@ module.exports = {
   MOZI_LOGIN_ENV,
   BOT_DEBUG,
   USER_POINTS_DATAINFO_SKIP_TTL_MS,
+  TG_CHAT_API_PORT,
+  TG_CHAT_REGISTER_POLL_MS,
 };

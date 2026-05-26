@@ -119,6 +119,8 @@ const i18n = {
     bindStartBtn: '启动',
     bindOneTapRegisterBtn: '启动',
     bindSuccessDm: '绑定成功！可以在群里继续使用啦 🎉',
+    tgChatReplayChatHtml: '⏳ 注册完成，正在自动继续您之前的 <code>/chat</code> 提问…',
+    tgChatReplayAiHtml: '⏳ 注册完成，正在自动继续您之前的 <code>/ai</code> 提问…',
     bindDmFailedInGroup:
       '无法私信您：请先<strong>私聊</strong>本机器人发送任意消息、<code>/start</code> 或 <code>/register</code>，再使用群内指令；也可点击上一条消息中的「启动」按钮。',
     sessionIdentityExpiredHtml:
@@ -271,6 +273,8 @@ Tap <b>Start</b> to open the Mozi Mini App <b>account / sign-up</b> page. When y
     bindStartBtn: 'Start',
     bindOneTapRegisterBtn: 'Start',
     bindSuccessDm: 'You’re all set! You can keep using the bot in the group 🎉',
+    tgChatReplayChatHtml: '⏳ Sign-up complete — resuming your previous <code>/chat</code> question…',
+    tgChatReplayAiHtml: '⏳ Sign-up complete — resuming your previous <code>/ai</code> question…',
     bindDmFailedInGroup:
       'I couldn’t DM you. Please <strong>message this bot</strong> first (any message, <code>/start</code>, or <code>/register</code>), then try again in the group — or tap <b>Start</b> on the message above.',
     sessionIdentityExpiredHtml:
