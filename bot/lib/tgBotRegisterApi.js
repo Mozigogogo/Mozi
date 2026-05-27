@@ -54,6 +54,12 @@ async function performTelegramRegisterViaApi(config, ctx) {
   clearCachedToken(uidStr);
   const token = await ensureTgUserToken(config, uidStr, { ...loginOpts, forceRefresh: true });
   if (!token) {
+    if (!config.BOT_TOKEN?.trim()) {
+      return { ok: false, message: 'login_no_bot_token' };
+    }
+    if (!String(config.API_BASE_URL || '').trim()) {
+      return { ok: false, message: 'login_no_api_base' };
+    }
     return { ok: false, message: 'login_no_token' };
   }
 

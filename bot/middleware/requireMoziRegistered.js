@@ -3,7 +3,7 @@
 const { postTgRegisteredCheck } = require('../lib/apis');
 const { saveAndWatchPendingAiChat } = require('../lib/tgChatPendingSave');
 const { escapeHtml } = require('../lib/telegramHtml');
-const { buildGroupRegisterKeyboard, buildGroupStartKeyboard } = require('../lib/registerDeepLink');
+const { buildGroupStartKeyboard } = require('../lib/registerDeepLink');
 const { canBotReachUserInDm } = require('../lib/botDmReachable');
 const { runInlineRegisterFlow } = require('../handlers/inlineRegister');
 
@@ -32,9 +32,9 @@ function buildMentionHtml(from) {
 }
 
 /**
- * 未注册分流：
- * - 已与 Bot 私聊：群内「注册」→ API 注册 → 群内重放
- * - 未私聊过：群内「启动」→ /start → 私聊内注册 → 群内重放
+ * 未注册 /ai、/chat：
+ * - 已与 Bot 私聊：自动调注册 API + 群内重放（无拦截提示）
+ * - 未私聊过：群内「首次提问需启动 Bot…」+「启动」按钮
  */
 function createRequireMoziRegistered(config, { getTexts }) {
   return async (ctx, next) => {
@@ -73,22 +73,17 @@ function createRequireMoziRegistered(config, { getTexts }) {
     await saveAndWatchPendingAiChat(ctx, config);
 
     if (isGroup) {
-      const canDm = await canBotReachUserInDm(ctx.telegram, uid);
-      if (canDm) {
-        await ctx
-          .reply(texts.bindGroupCanDmHtml(mention), {
-            parse_mode: 'HTML',
-            reply_markup: buildGroupRegisterKeyboard(texts),
-          })
-          .catch(() => {});
-      } else {
-        await ctx
-          .reply(texts.bindGroupNeedStartHtml(mention), {
-            parse_mode: 'HTML',
-            reply_markup: buildGroupStartKeyboard(config.BOT_USERNAME, texts),
-          })
-          .catch(() => {});
+      const canReachDm = await canBotReachUserInDm(ctx.telegram, uid);
+      if (canReachDm) {
+        await runInlineRegisterFlow(ctx, config, getTexts, { silent: true });
+        return;
       }
+      await ctx
+        .reply(texts.bindGroupNeedStartHtml(mention), {
+          parse_mode: 'HTML',
+          reply_markup: buildGroupStartKeyboard(config.BOT_USERNAME, texts),
+        })
+        .catch(() => {});
     } else {
       await runInlineRegisterFlow(ctx, config, getTexts);
     }

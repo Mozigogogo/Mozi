@@ -16,12 +16,20 @@ const cache = new Map();
 const inFlight = new Map();
 
 /**
+ * @param {number | undefined | null} code
+ * @returns {boolean}
+ */
+function isLoginApiSuccessCode(code) {
+  return code == null || code === 0 || code === 200;
+}
+
+/**
  * @param {object | null} json
  * @returns {string}
  */
 function extractLoginToken(json) {
   if (!json || typeof json !== 'object') return '';
-  if (typeof json.code === 'number' && json.code !== 0) return '';
+  if (typeof json.code === 'number' && !isLoginApiSuccessCode(json.code)) return '';
   const data =
     json.data != null && typeof json.data === 'object' && !Array.isArray(json.data) ? json.data : json;
   const keys = ['accessToken', 'token', 'jwt', 'access_token', 'authentication'];
@@ -122,13 +130,22 @@ async function ensureTgUserToken(config, telegramId, opts = {}) {
           env: config.MOZI_LOGIN_ENV || 'test',
         });
         if (!r.ok) {
-          console.warn('[tg/login] HTTP', r.status, (r.text || '').slice(0, 200));
+          console.warn('[tg/login] HTTP', r.status, (r.text || '').slice(0, 300));
           return '';
         }
         const token = extractLoginToken(r.json);
         if (!token) {
-          const keys = r.json && typeof r.json === 'object' ? Object.keys(r.json).slice(0, 20) : [];
-          console.warn('[tg/login] 响应中未解析到 token，json 顶层 keys:', keys.join(','));
+          const bizCode = r.json && typeof r.json === 'object' ? r.json.code : undefined;
+          const bizMsg = r.json && typeof r.json === 'object' ? r.json.message || r.json.msg : '';
+          console.warn('[tg/login] 未解析到 token', {
+            telegramId: id,
+            httpStatus: r.status,
+            bizCode,
+            bizMsg: String(bizMsg || '').slice(0, 200),
+            bodyPreview: (r.text || '').slice(0, 300),
+            hasHash: Boolean(hash),
+            env: config.MOZI_LOGIN_ENV || 'test',
+          });
           return '';
         }
         const ttl = extractTtlMs(r.json) ?? DEFAULT_TTL_MS;

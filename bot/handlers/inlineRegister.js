@@ -20,6 +20,10 @@ function registerFailText(texts, code) {
   switch (code) {
     case 'login_no_token':
       return texts.registerApiLoginFailedHtml;
+    case 'login_no_bot_token':
+      return texts.registerApiBotTokenMissingHtml;
+    case 'login_no_api_base':
+      return texts.registerApiApiBaseMissingHtml;
     case 'check_network':
       return texts.registerApiNetworkErrorHtml;
     case 'still_unregistered':
@@ -34,7 +38,7 @@ function registerFailText(texts, code) {
  * @param {import('telegraf').Context} ctx
  * @param {object} config
  * @param {(lang?: string) => object} getTexts
- * @param {{ fromCallback?: boolean }} [opts]
+ * @param {{ fromCallback?: boolean; silent?: boolean }} [opts]
  */
 async function runInlineRegisterFlow(ctx, config, getTexts, opts = {}) {
   const languageCode = ctx.from?.language_code || 'en';
@@ -75,7 +79,7 @@ async function runInlineRegisterFlow(ctx, config, getTexts, opts = {}) {
   });
 
   const isGroup = ctx.chat?.type === 'group' || ctx.chat?.type === 'supergroup';
-  if (isGroup && !opts.fromCallback) {
+  if (isGroup && !opts.fromCallback && !opts.silent) {
     await ctx.reply(texts.registerApiSuccessInGroupHtml, { parse_mode: 'HTML' }).catch(() => {});
   }
 }

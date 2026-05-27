@@ -108,9 +108,9 @@ const i18n = {
       `${mentionHtml} 检测到您尚未绑定账户，已私信您完成设置 👇`,
     bindRegisterBtn: '注册',
     bindGroupCanDmHtml: (mentionHtml) =>
-      `${mentionHtml} 您尚未绑定 Mozi 账户。\n\n请点击下方「注册」，将直接在群内完成注册；成功后<strong>自动继续</strong>您刚才的 <code>/ai</code> 或 <code>/chat</code> 提问。`,
+      `${mentionHtml} 首次提问需启动 Bot，请点击下方 👇「启动」`,
     bindGroupNeedStartHtml: (mentionHtml) =>
-      `${mentionHtml} 您尚未绑定 Mozi 账户，且我暂时<strong>无法私信您</strong>。\n\n请先点击下方「启动」打开与我的私聊（等同发送 <code>/start</code>），完成后将在<strong>本群自动继续</strong>您刚才的提问。`,
+      `${mentionHtml} 首次提问需启动 Bot，请点击下方 👇「启动」`,
     bindGroupRegisterGuideHtml: (mentionHtml) =>
       `${mentionHtml} 您尚未绑定 Mozi 账户。请点击下方「注册」。`,
     registerGroupGuideHtml:
@@ -118,7 +118,10 @@ const i18n = {
     registerApiProgressToast: '正在注册…',
     registerApiSuccessInGroupHtml: '✅ 注册成功，正在继续您之前的提问…',
     registerApiFailedHtml: '❌ 注册失败，请稍后再试。',
-    registerApiLoginFailedHtml: '❌ 注册失败：无法完成 Telegram 登录，请检查 Bot 配置或联系管理员。',
+    registerApiLoginFailedHtml:
+      '❌ 注册失败：无法完成 Telegram 登录（后端未返回有效 token）。请确认 <code>MOZI_LOGIN_ENV</code>、<code>API_BASE_URL</code> 与 Bot 的 <code>BOT_TOKEN</code> 与线上一致；查看 Bot 日志中 <code>[tg/login]</code> 详情。',
+    registerApiBotTokenMissingHtml: '❌ 注册失败：未配置 <code>BOT_TOKEN</code>，请联系管理员。',
+    registerApiApiBaseMissingHtml: '❌ 注册失败：未配置 <code>API_BASE_URL</code>，请联系管理员。',
     registerApiNetworkErrorHtml: '❌ 注册失败：网络异常，请稍后再试。',
     registerApiStillUnregisteredHtml: '❌ 注册未完成，请稍后再试或联系客服。',
     registerIntroHtml: `👋 <b>请先完成 Mozi 账户绑定</b>
@@ -273,9 +276,9 @@ Remaining points: <b>${totalPoints}</b>
       `${mentionHtml} You’re not linked to a Mozi account yet — check your <b>DM</b> from me to finish setup 👇`,
     bindRegisterBtn: 'Register',
     bindGroupCanDmHtml: (mentionHtml) =>
-      `${mentionHtml} You’re not linked to a Mozi account yet.\n\nTap <b>Register</b> below to sign up in this group. Your last <code>/ai</code> or <code>/chat</code> question will <strong>resume automatically</strong>.`,
+      `${mentionHtml} First time? Start the Bot — tap <b>Start</b> below 👇`,
     bindGroupNeedStartHtml: (mentionHtml) =>
-      `${mentionHtml} You’re not linked yet, and I <strong>can’t DM you</strong> yet.\n\nTap <b>Start</b> below to open a private chat with me (same as <code>/start</code>). Your previous question will <strong>resume automatically in this group</strong>.`,
+      `${mentionHtml} First time? Start the Bot — tap <b>Start</b> below 👇`,
     bindGroupRegisterGuideHtml: (mentionHtml) =>
       `${mentionHtml} You’re not linked yet. Tap <b>Register</b> below.`,
     registerGroupGuideHtml:
@@ -283,7 +286,10 @@ Remaining points: <b>${totalPoints}</b>
     registerApiProgressToast: 'Signing up…',
     registerApiSuccessInGroupHtml: '✅ Signed up — resuming your previous question…',
     registerApiFailedHtml: '❌ Sign-up failed. Please try again later.',
-    registerApiLoginFailedHtml: '❌ Sign-up failed: could not complete Telegram login. Please try again later.',
+    registerApiLoginFailedHtml:
+      '❌ Sign-up failed: Telegram login did not return a valid token. Check <code>MOZI_LOGIN_ENV</code>, <code>API_BASE_URL</code>, and <code>BOT_TOKEN</code>; see bot logs for <code>[tg/login]</code>.',
+    registerApiBotTokenMissingHtml: '❌ Sign-up failed: <code>BOT_TOKEN</code> is not configured.',
+    registerApiApiBaseMissingHtml: '❌ Sign-up failed: <code>API_BASE_URL</code> is not configured.',
     registerApiNetworkErrorHtml: '❌ Sign-up failed: network error. Please try again later.',
     registerApiStillUnregisteredHtml: '❌ Sign-up did not complete. Please try again later.',
     registerIntroHtml: `👋 <b>Link your Mozi account</b>
