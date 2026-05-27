@@ -5,6 +5,22 @@
 
 const { postTgLogin } = require('./apis');
 const { buildTelegramWebAppLoginHash } = require('./telegramWebAppLoginHash');
+const { jwtPreview } = require('./debugLog');
+
+function registerLog(tag, info) {
+  const payload =
+    info && typeof info === 'object'
+      ? JSON.stringify(info, (_, val) => (typeof val === 'bigint' ? val.toString() : val))
+      : '';
+  console.log(`[tg/register] ${new Date().toISOString()} ${tag}${payload ? ` ${payload}` : ''}`);
+}
+
+function hashPreview(hash) {
+  const s = String(hash || '').trim();
+  if (!s) return '(empty)';
+  if (s.length <= 16) return `${s.slice(0, 4)}…(len=${s.length})`;
+  return `${s.slice(0, 8)}…${s.slice(-6)} len=${s.length}`;
+}
 
 /** 无 expiresIn 时默认缓存时长（略短于常见 1h access） */
 const DEFAULT_TTL_MS = 50 * 60 * 1000;
@@ -87,7 +103,7 @@ function clearCachedToken(telegramId) {
 /**
  * @param {object} config
  * @param {string} telegramId
- * @param {{ forceRefresh?: boolean; username?: string; telegramUsername?: string; firstName?: string; lastName?: string; photoUrl?: string; hash?: string; inviteCode?: string }} [opts]
+ * @param {{ forceRefresh?: boolean; registerLog?: boolean; username?: string; telegramUsername?: string; firstName?: string; lastName?: string; photoUrl?: string; hash?: string; inviteCode?: string }} [opts]
  * @returns {Promise<string>} 无 token 时返回 ''
  */
 async function ensureTgUserToken(config, telegramId, opts = {}) {
@@ -117,23 +133,71 @@ async function ensureTgUserToken(config, telegramId, opts = {}) {
           console.warn('[tg/login] 无法生成 hash：请检查 BOT_TOKEN 与 telegramId');
         }
 
+        const loginPath = config.TG_LOGIN_PATH || 'user/login';
+        const loginEnv = config.MOZI_LOGIN_ENV || 'test';
+        const loginBody = {
+          chanel: 3,
+          channel: 'tg',
+          env: loginEnv,
+          hashPreview: hashPreview(hash),
+          inviteCode: String(opts.inviteCode ?? ''),
+          photoUrl: String(opts.photoUrl ?? ''),
+          telegramId: id,
+          type: 'login',
+          username: String(opts.username ?? ''),
+        };
+
+        if (opts.registerLog) {
+          registerLog('POST user/login 请求', {
+            url: `${String(config.API_BASE_URL || '').replace(/\/+$/, '')}/${loginPath}`,
+            body: loginBody,
+            hasBootstrapAuth: Boolean(config.MOZI_DETAIL_AUTH),
+          });
+        }
+
         const r = await postTgLogin({
           apiBaseUrl: config.API_BASE_URL,
           telegramId: id,
           auth: config.MOZI_DETAIL_AUTH || '',
           appUrl: config.APP_URL,
-          path: config.TG_LOGIN_PATH || 'user/login',
+          path: loginPath,
           username: opts.username ?? '',
           photoUrl: opts.photoUrl ?? '',
           hash,
           inviteCode: opts.inviteCode ?? '',
-          env: config.MOZI_LOGIN_ENV || 'test',
+          env: loginEnv,
         });
         if (!r.ok) {
+          if (opts.registerLog) {
+            registerLog('POST user/login 响应', {
+              telegramId: id,
+              httpStatus: r.status,
+              httpOk: false,
+              loginSuccess: false,
+              bodyPreview: (r.text || '').slice(0, 500),
+            });
+          }
           console.warn('[tg/login] HTTP', r.status, (r.text || '').slice(0, 300));
           return '';
         }
         const token = extractLoginToken(r.json);
+        if (opts.registerLog) {
+          const bizCode = r.json && typeof r.json === 'object' ? r.json.code : undefined;
+          const bizMsg =
+            r.json && typeof r.json === 'object'
+              ? r.json.message || r.json.msg || r.json.errorMsg
+              : '';
+          registerLog('POST user/login 响应', {
+            telegramId: id,
+            httpStatus: r.status,
+            httpOk: true,
+            bizCode,
+            bizMsg: String(bizMsg || '').slice(0, 300),
+            loginSuccess: Boolean(token),
+            tokenPreview: token ? jwtPreview(token) : '(empty)',
+            bodyPreview: (r.text || '').slice(0, 500),
+          });
+        }
         if (!token) {
           const bizCode = r.json && typeof r.json === 'object' ? r.json.code : undefined;
           const bizMsg = r.json && typeof r.json === 'object' ? r.json.message || r.json.msg : '';
