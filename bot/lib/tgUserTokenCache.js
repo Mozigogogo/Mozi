@@ -6,6 +6,7 @@
 const { postTgLogin } = require('./apis');
 const { buildTelegramWebAppLoginHash } = require('./telegramWebAppLoginHash');
 const { jwtPreview } = require('./debugLog');
+const { sanitizeTelegramLoginOpts } = require('./sanitizeMysqlUtf8');
 
 function registerLog(tag, info) {
   const payload =
@@ -107,6 +108,7 @@ function clearCachedToken(telegramId) {
  * @returns {Promise<string>} 无 token 时返回 ''
  */
 async function ensureTgUserToken(config, telegramId, opts = {}) {
+  opts = sanitizeTelegramLoginOpts(opts);
   const id = String(telegramId);
   if (opts.forceRefresh) {
     clearCachedToken(id);

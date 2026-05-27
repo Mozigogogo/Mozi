@@ -22,6 +22,7 @@ const {
 } = require('./telegramHtml');
 const { insufficientPointsEarnKeyboard } = require('./pointsDetailKeyboard');
 const { removeTgChatQuestion } = require('./tgChatQuestionStore');
+const { sanitizeTelegramLoginOpts } = require('./sanitizeMysqlUtf8');
 
 /** @typedef {{ telegramId: string; groupId: number; question: string; command: 'ai' | 'chat'; languageCode?: string; username?: string; firstName?: string }} TgChatReplayJob */
 
@@ -71,14 +72,14 @@ async function runTgChatProactiveReplay(bot, config, job) {
   const isAi = job.command === 'ai';
   const requiredPoints = isAi ? config.AI_POINTS_COST : config.AI_CHAT_POINTS_COST;
 
-  const loginOpts = {
+  const loginOpts = sanitizeTelegramLoginOpts({
     username: String(job.username || job.firstName || '').trim(),
     telegramUsername: job.username ? String(job.username).trim() : '',
     firstName: job.firstName ? String(job.firstName).trim() : '',
     lastName: '',
     photoUrl: '',
     inviteCode: '',
-  };
+  });
 
   try {
     await bot.telegram.sendMessage(

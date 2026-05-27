@@ -2,6 +2,7 @@
 
 const { fetchUserDatainfo } = require('./apis');
 const { ensureTgUserToken, clearCachedToken } = require('./tgUserTokenCache');
+const { sanitizeTelegramLoginOpts } = require('./sanitizeMysqlUtf8');
 
 function firstFiniteNumber(obj, keys) {
   if (!obj || typeof obj !== 'object') return null;
@@ -142,14 +143,14 @@ async function loadMoziDatainfoPoints(config, uidStr, loginOpts) {
 }
 
 function buildTelegramLoginOpts(from) {
-  return {
+  return sanitizeTelegramLoginOpts({
     username: from ? String(from.username || from.first_name || '').trim() : '',
     telegramUsername: from && from.username ? String(from.username).trim() : '',
     firstName: from && from.first_name ? String(from.first_name).trim() : '',
     lastName: from && from.last_name ? String(from.last_name).trim() : '',
     photoUrl: from && from.photo_url ? String(from.photo_url).trim() : '',
     inviteCode: '',
-  };
+  });
 }
 
 module.exports = {

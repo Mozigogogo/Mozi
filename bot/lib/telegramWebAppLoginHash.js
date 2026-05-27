@@ -1,6 +1,7 @@
 'use strict';
 
 const crypto = require('crypto');
+const { sanitizeMysqlUtf8Text } = require('./sanitizeMysqlUtf8');
 
 /**
  * Telegram 登录 POST /user/login 的 hash 来源（与 Mozi 前端一致）：
@@ -29,9 +30,9 @@ function buildTelegramWebAppLoginHash(p) {
     : Math.floor(Date.now() / 1000);
 
   const user = { id };
-  const firstName = String(p.firstName || '').trim();
-  const lastName = String(p.lastName || '').trim();
-  const tgUsername = String(p.telegramUsername || '').trim();
+  const firstName = sanitizeMysqlUtf8Text(p.firstName);
+  const lastName = sanitizeMysqlUtf8Text(p.lastName);
+  const tgUsername = sanitizeMysqlUtf8Text(p.telegramUsername);
   const photoUrl = String(p.photoUrl || '').trim();
 
   if (firstName) user.first_name = firstName;

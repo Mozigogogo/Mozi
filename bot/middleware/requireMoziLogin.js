@@ -4,22 +4,13 @@ const { postUserSessionTokenCheck } = require('../lib/apis');
 const { ensureTgUserToken, clearCachedToken } = require('../lib/tgUserTokenCache');
 const { buildBindAccountKeyboard } = require('../lib/moziBindKeyboard');
 const { saveAndWatchPendingAiChat } = require('../lib/tgChatPendingSave');
+const { buildTelegramLoginOpts } = require('../lib/datainfoPoints');
 
 /** 与 inline_keyboard 中 callback_data 一致（须 ≤64 字节） */
 const CALLBACK_MOZI_RELOGIN = 'mozi_rl';
 
 function loginOptsFromTgFrom(from) {
-  if (!from || typeof from !== 'object') {
-    return { username: '', telegramUsername: '', firstName: '', lastName: '', photoUrl: '', inviteCode: '' };
-  }
-  return {
-    username: String(from.username || from.first_name || '').trim(),
-    telegramUsername: from.username ? String(from.username).trim() : '',
-    firstName: from.first_name ? String(from.first_name).trim() : '',
-    lastName: from.last_name ? String(from.last_name).trim() : '',
-    photoUrl: from.photo_url ? String(from.photo_url).trim() : '',
-    inviteCode: '',
-  };
+  return buildTelegramLoginOpts(from);
 }
 
 /**

@@ -4,6 +4,7 @@ const { ensureTgUserToken } = require('./tgUserTokenCache');
 const { postPointsConsume } = require('./apis');
 const { apiDebug, jwtPreview } = require('./debugLog');
 const { setUserRemainingPointsCache, clearUserRemainingPointsCache } = require('./userRemainingPointsCache');
+const { buildTelegramLoginOpts } = require('./datainfoPoints');
 
 /** 与 H5 `src/app/ai/page.jsx` 中 analyze 模式一致 */
 const ACTION_AI_ANALYZE = 'AI_DEEP_ANALYZE';
@@ -11,17 +12,7 @@ const ACTION_AI_ANALYZE = 'AI_DEEP_ANALYZE';
 const ACTION_AI_CHAT = 'AI_BASIC_CHAT';
 
 function loginOptsFromTgFrom(from) {
-  if (!from || typeof from !== 'object') {
-    return { username: '', telegramUsername: '', firstName: '', lastName: '', photoUrl: '', inviteCode: '' };
-  }
-  return {
-    username: String(from.username || from.first_name || '').trim(),
-    telegramUsername: from.username ? String(from.username).trim() : '',
-    firstName: from.first_name ? String(from.first_name).trim() : '',
-    lastName: from.last_name ? String(from.last_name).trim() : '',
-    photoUrl: from.photo_url ? String(from.photo_url).trim() : '',
-    inviteCode: '',
-  };
+  return buildTelegramLoginOpts(from);
 }
 
 /**
