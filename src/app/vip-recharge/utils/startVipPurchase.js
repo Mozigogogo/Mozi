@@ -8,6 +8,7 @@ import { encodeFunctionData, getAddress, parseUnits } from 'viem';
 import { TELEGRAM_PAYMENT_CONFIG, TG_PAYMENT_METHODS } from './telegramPaymentConfig';
 import {
   isTonSignedBoc,
+  resolveTonTxHashFromBoc,
   resolveTonTxHashFromSendResult,
   validateTonTxHashForWalletPay,
 } from './resolveTonTxHash';
@@ -1198,7 +1199,15 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
       rawBocLen: rawBoc ? String(rawBoc).length : 0,
     });
 
-    const txHashResolved = await resolveTonTxHashFromSendResult(res);
+    let txHashResolved = await resolveTonTxHashFromSendResult(res);
+    if (!txHashResolved && rawBoc) {
+      txHashResolved = resolveTonTxHashFromBoc(String(rawBoc));
+      // eslint-disable-next-line no-console
+      console.log('[VipPurchase][TON][USDT] txHash fallback from rawBoc', {
+        ok: !!txHashResolved,
+        hashPreview: txHashResolved ? `${txHashResolved.slice(0, 8)}…` : null,
+      });
+    }
     const txCheck = validateTonTxHashForWalletPay(txHashResolved);
 
     // eslint-disable-next-line no-console

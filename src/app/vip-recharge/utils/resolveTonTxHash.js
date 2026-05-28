@@ -49,6 +49,15 @@ function cellHashToHex(cell) {
 }
 
 /**
+ * 从 TonConnect 返回的 BOC（te6...）解析 message hash（64 位 hex）
+ * @param {string} boc
+ * @returns {string | null}
+ */
+export function resolveTonTxHashFromBoc(boc) {
+  return hashFromBoc(boc);
+}
+
+/**
  * @param {string} boc
  * @returns {string | null}
  */

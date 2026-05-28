@@ -1,5 +1,54 @@
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
+import {
+  isTonSignedBoc,
+  resolveTonTxHashFromBoc,
+  resolveTonTxHashFromSendResult,
+  validateTonTxHashForWalletPay,
+} from '@/app/vip-recharge/utils/resolveTonTxHash';
+
+/**
+ * TON walletPay 提交前：BOC(te6) → 64 位 hex，避免误传整段 BOC
+ * @param {Record<string, unknown>} data
+ * @returns {Promise<Record<string, unknown>>}
+ */
+async function coerceTonWalletPayPayload(data) {
+  if (!data || data.chain !== 'TON') return data;
+
+  const rawTxHash = data.txHash;
+  let resolved = null;
+
+  if (typeof rawTxHash === 'string' && isTonSignedBoc(rawTxHash)) {
+    resolved = resolveTonTxHashFromBoc(rawTxHash);
+    // eslint-disable-next-line no-console
+    console.log('[walletPay][TON] BOC→hash', {
+      bocLen: rawTxHash.length,
+      hashPreview: resolved ? `${resolved.slice(0, 8)}…${resolved.slice(-8)}` : null,
+    });
+  } else if (rawTxHash != null) {
+    resolved = await resolveTonTxHashFromSendResult(rawTxHash);
+  }
+
+  const candidate = resolved ?? rawTxHash;
+  const check = validateTonTxHashForWalletPay(candidate);
+  if (!check.ok) {
+    const errMsg = `[walletPay] TON txHash 无效（${check.reason}），需 64 位 hex，不能传 BOC`;
+    // eslint-disable-next-line no-console
+    console.error(errMsg, { reason: check.reason, detail: check.detail, pricingId: data.pricingId });
+    throw new Error(errMsg);
+  }
+
+  if (String(rawTxHash).trim() !== check.txHash) {
+    // eslint-disable-next-line no-console
+    console.log('[walletPay][TON] 使用反查后的 txHash', {
+      beforeLen: String(rawTxHash).length,
+      afterLen: check.txHash.length,
+      txHash: check.txHash,
+    });
+  }
+
+  return { ...data, txHash: check.txHash };
+}
 
 /**
  * 查询链支付参数（钱包收款信息）
@@ -19,31 +68,14 @@ export const getWalletPaymentInfo = () => {
  * @param {{ pricingId: number|string, fromAddress: string, chain: string, txHash: string }} data
  * @returns {Promise<{ orderNo: string, message?: string }>}
  */
-export const walletPay = (data) => {
-  const txHash = data?.txHash;
-  if (typeof txHash === 'string' && /^te6/i.test(txHash.trim())) {
-    const errMsg = '[walletPay] txHash 不能是 BOC(te6...)，需 64 位 hex';
-    // eslint-disable-next-line no-console
-    console.error(errMsg, { len: txHash.length, chain: data?.chain, pricingId: data?.pricingId });
-    return Promise.reject(new Error(errMsg));
-  }
-  if (data?.chain === 'TON' && typeof txHash === 'string' && txHash.trim()) {
-    const hex = txHash.trim().replace(/^0x/i, '');
-    if (!/^[0-9a-f]{64}$/i.test(hex)) {
-      // eslint-disable-next-line no-console
-      console.warn('[walletPay] TON txHash 非 64 位 hex', {
-        len: txHash.length,
-        head: txHash.slice(0, 24),
-        pricingId: data?.pricingId,
-      });
-    }
-  }
+export async function walletPay(data) {
+  const payload = data?.chain === 'TON' ? await coerceTonWalletPayPayload({ ...data }) : data;
   return request({
     url: Interface.PAYMENT_WALLET_PAY,
     method: 'POST',
-    data,
+    data: payload,
   });
-};
+}
 
 /**
  * 获取 Telegram Stars 支付链接
