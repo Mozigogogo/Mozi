@@ -1013,12 +1013,19 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
     paymentInfo?.receiveAddress ||
     paymentInfo?.toAddress ||
     paymentInfo?.to;
-  const providedJettonWalletAddress =
+  /** 商户侧 USDT Jetton 钱包（仅用于 transfer payload 的 destination，不能作为 sendTransaction 的 address） */
+  const merchantJettonWallet =
     paymentInfo?.merchantUsdtJettonWallet ||
-    paymentInfo?.jettonWalletAddress ||
-    paymentInfo?.fromJettonWallet ||
+    paymentInfo?.merchantJettonAddress ||
+    paymentInfo?.receiveJettonAddress ||
+    null;
+  /** 后端若直接下发付款人 Jetton 钱包，可作为解析结果兜底 */
+  const userJettonWalletFromApi =
+    paymentInfo?.userJettonWallet ||
     paymentInfo?.senderJettonWallet ||
-    paymentInfo?.userJettonWallet;
+    paymentInfo?.fromJettonWallet ||
+    paymentInfo?.payerJettonWallet ||
+    null;
   const usdtMasterAddress = paymentInfo?.usdtContract || paymentInfo?.tokenAddress || paymentInfo?.contractAddress;
   const payloadBase64FromConfig =
     paymentInfo?.payloadBase64 ||
@@ -1030,7 +1037,6 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
   const amountUsdt =
     paymentInfo?.usdtAmount ??
     paymentInfo?.amountUsdt ??
-    paymentInfo?.amount ??
     paymentInfo?.payAmount ??
     plan?.price ??
     meta?.amount;
@@ -1039,10 +1045,8 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
     paymentInfo?.forwardTonAmountNano ??
     paymentInfo?.forwardAmountNano ??
     '1';
-  const gasAmountNanoRaw =
-    paymentInfo?.gasAmountNano ??
-    paymentInfo?.amountNano ??
-    50_000_000;
+  // 仅用于支付 Jetton 合约调用的 TON gas，勿与订单 USDT 金额或 amountNano 混用
+  const gasAmountNanoRaw = paymentInfo?.gasAmountNano ?? 50_000_000;
   const memoPrefix = paymentInfo?.memoPrefix || 'VIP';
   const memo = paymentInfo?.memo || `${memoPrefix}_${pricingId}_${Date.now()}`;
 
@@ -1053,20 +1057,23 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
     gasAmountNano = 50_000_000n;
   }
 
-  let jettonWalletAddress = providedJettonWalletAddress;
-  if (!jettonWalletAddress && usdtMasterAddress && connectedTonAddress) {
+  const jettonTransferDestination = merchantJettonWallet || merchantAddress;
+
+  let userJettonWalletAddress = userJettonWalletFromApi;
+  if (!userJettonWalletAddress && usdtMasterAddress && connectedTonAddress) {
     emitVipPurchaseLoading(true, {
       stage: 'resolveTonJettonWallet',
     });
     try {
-      jettonWalletAddress = await buildUserJettonWalletAddressFromMaster({
+      userJettonWalletAddress = await buildUserJettonWalletAddressFromMaster({
         masterAddress: usdtMasterAddress,
         ownerAddress: connectedTonAddress,
       });
       // eslint-disable-next-line no-console
-      console.log('[VipPurchase][TON][USDT] jettonWalletAddress resolved on frontend', {
-        hasProvided: !!providedJettonWalletAddress,
-        hasResolved: !!jettonWalletAddress,
+      console.log('[VipPurchase][TON][USDT] userJettonWallet resolved', {
+        hasApiProvided: !!userJettonWalletFromApi,
+        hasResolved: !!userJettonWalletAddress,
+        usdtMasterAddress,
       });
     } finally {
       emitVipPurchaseLoading(false, {
@@ -1075,14 +1082,37 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
     }
   }
 
-  if (!merchantAddress || !jettonWalletAddress || amountUsdt == null || amountUsdt === '') {
+  if (
+    !merchantAddress ||
+    !jettonTransferDestination ||
+    !userJettonWalletAddress ||
+    !usdtMasterAddress ||
+    amountUsdt == null ||
+    amountUsdt === ''
+  ) {
     // eslint-disable-next-line no-console
     console.error('[VipPurchase][TON][USDT] walletPaymentInfo 字段不完整', {
       paymentInfo,
-      providedJettonWalletAddress,
+      merchantAddress,
+      merchantJettonWallet,
+      userJettonWalletAddress,
+      userJettonWalletFromApi,
       usdtMasterAddress,
       amountUsdt,
       meta,
+    });
+    return;
+  }
+
+  if (
+    userJettonWalletAddress === merchantAddress ||
+    userJettonWalletAddress === merchantJettonWallet
+  ) {
+    // eslint-disable-next-line no-console
+    console.error('[VipPurchase][TON][USDT] 付款 Jetton 钱包与商户地址相同，拒绝发起原生 TON 转账', {
+      userJettonWalletAddress,
+      merchantAddress,
+      merchantJettonWallet,
     });
     return;
   }
@@ -1092,7 +1122,7 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
     payloadBase64 = await buildJettonTransferPayloadBase64({
       amountUsdt,
       decimals,
-      destinationAddress: merchantAddress,
+      destinationAddress: jettonTransferDestination,
       responseAddress: connectedTonAddress,
       forwardTonAmountNano,
       comment: memo,
@@ -1122,8 +1152,8 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
       validUntil: Math.floor(Date.now() / 1000) + 5 * 60,
       messages: [
         {
-          // USDT-TON: 消息发给用户的 Jetton Wallet 合约，实际 USDT 数量在 payload 里
-          address: jettonWalletAddress,
+          // USDT-TON: 消息必须发给「付款人自己的 Jetton 钱包」；USDT 数量与商户在 payload 内
+          address: userJettonWalletAddress,
           amount: gasAmountNano.toString(),
           payload: payloadBase64,
         },
@@ -1131,17 +1161,22 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
     };
     // eslint-disable-next-line no-console
     console.log('[VipPurchase][TON][USDT] sendTransaction', {
-      jettonWalletAddress,
+      userJettonWalletAddress,
+      jettonTransferDestination,
+      merchantAddress,
       gasAmountNano: gasAmountNano.toString(),
       hasPayload: true,
       payloadSource: payloadBase64FromConfig ? 'backend' : 'frontend',
       amountUsdt,
+      decimals,
     });
     // eslint-disable-next-line no-console
     console.log('[VipPurchase][TON][USDT] payment route', {
       fromAddress: connectedTonAddress,
       merchantAddress,
-      jettonWalletAddress,
+      merchantJettonWallet,
+      userJettonWalletAddress,
+      jettonTransferDestination,
       gasAmountNano: gasAmountNano.toString(),
       pricingId,
     });
