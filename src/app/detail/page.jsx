@@ -822,28 +822,46 @@ export default function DetailPage() {
     }
   };
 
-  // 右侧顶部走马灯：使用成交额榜（/discovery/traderank?intervals=0）
+  // 右侧顶部走马灯：与发现页行情表一致，取 /discovery/coin 市值榜前 10
   useEffect(() => {
     let alive = true;
-    const toPercent = (v) => {
+    /** 与发现页「24H价格变化%」列一致，保留正负号 */
+    const toChangePercent24h = (v) => {
       if (v === null || v === undefined || v === '') return '--';
-      const n = Number(String(v).replace('%', '').trim());
-      return Number.isFinite(n) ? `${Math.abs(n).toFixed(2)}%` : String(v);
+      const s = String(v).trim();
+      if (s.endsWith('%')) {
+        const n = Number(s.replace('%', '').trim());
+        return Number.isFinite(n) ? `${n.toFixed(2)}%` : s;
+      }
+      const n = Number(s);
+      return Number.isFinite(n) ? `${n.toFixed(2)}%` : s;
+    };
+    const formatMarqueePrice = (priceRaw) => {
+      if (priceRaw === null || priceRaw === undefined || priceRaw === '') return '--';
+      if (typeof priceRaw === 'number' && Number.isFinite(priceRaw)) {
+        const digits = Math.abs(priceRaw) >= 1 ? 2 : 6;
+        return `$${formatNumber(priceRaw, digits)}`;
+      }
+      const s = String(priceRaw).trim();
+      return s.startsWith('$') ? s : `$${s}`;
     };
     const loadHotCoins = async () => {
       if (alive) setRightHotTickerLoading(true);
       try {
-        const res = await request({ url: Interface.coin_trade, data: { intervals: 0 } });
+        const res = await request({
+          url: Interface.find_coin,
+          data: { pageNo: 1, pageSize: 10 },
+        });
         const listRaw = res?.data;
-        const list = Array.isArray(listRaw)
-          ? listRaw
-          : Array.isArray(listRaw?.data)
-            ? listRaw.data
-          : Array.isArray(listRaw?.list)
-            ? listRaw.list
-            : Array.isArray(listRaw?.items)
-              ? listRaw.items
-              : [];
+        const list = Array.isArray(listRaw?.list)
+          ? listRaw.list
+          : Array.isArray(listRaw)
+            ? listRaw
+            : Array.isArray(listRaw?.data)
+              ? listRaw.data
+              : Array.isArray(listRaw?.items)
+                ? listRaw.items
+                : [];
         const mapped = list
           .map((item) => {
             const symbol = String(
@@ -851,31 +869,18 @@ export default function DetailPage() {
             ).toUpperCase();
             const priceRaw =
               item?.currentPrice ?? item?.last ?? item?.price ?? item?.close ?? '--';
-            const changeRaw =
-              item?.price_24h ??
-              item?.price24h ??
-              item?.priceRange ??
-              item?.priceChangePercentage24h ??
-              item?.priceChangePercentage_24h ??
-              item?.changePercent ??
-              item?.change ??
-              '--';
-            const price =
-              typeof priceRaw === 'number'
-                ? `$${priceRaw.toLocaleString()}`
-                : String(priceRaw).startsWith('$')
-                  ? String(priceRaw)
-                  : `$${priceRaw}`;
-            const changeNum = Number(String(changeRaw).replace('%', '').trim());
+            const changeRaw = item?.priceChangePercentage24h ?? item?.priceChangePercentage_24h ?? '--';
+            const changePercent = toChangePercent24h(changeRaw);
+            const changeNum = Number(String(changePercent).replace('%', '').trim());
             return {
               symbol,
-              price,
-              changePercent: toPercent(changeRaw),
+              price: formatMarqueePrice(priceRaw),
+              changePercent,
               isUp: Number.isFinite(changeNum) ? changeNum >= 0 : null,
             };
           })
           .filter((x) => x.symbol)
-          .slice(0, 8);
+          .slice(0, 10);
         if (!alive) return;
         setRightHotTicker(mapped);
       } catch (_) {
