@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import styles from './PCBenefitsContent.module.less';
+import { useCompanionDays } from '@/hooks/useCompanionDays';
 
 const MY_SUBSCRIPTION_PLAN_CODE_KEY = 'mozi_my_subscription_plan_code_v1';
 
@@ -40,6 +41,8 @@ export default function PCBenefitsContent() {
   }, []);
 
   const isPro = tier === 'pro';
+  const companionDays = useCompanionDays();
+  const daysDisplay = companionDays != null ? companionDays : '--';
   const pointsCur = isPro ? 9518 : 4518;
   const pointsMax = isPro ? 10000 : 5000;
   const aiCur = 12;
@@ -89,7 +92,7 @@ export default function PCBenefitsContent() {
         <div className={styles.heroText}>
           <div className={styles.heroSub}>{t('benefitsPage.heroSub')}</div>
           <div className={styles.heroDays}>
-            <span className={styles.daysNum}>259</span>
+            <span className={styles.daysNum}>{daysDisplay}</span>
             <span className={styles.daysUnit}>{t('benefitsPage.daysUnit')}</span>
           </div>
         </div>

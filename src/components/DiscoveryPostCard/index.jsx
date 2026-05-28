@@ -163,7 +163,9 @@ export default function DiscoveryPostCard({
           />
           <div className={styles.discoveryUserContent}>
             <div className={styles.nicknameRow}>
-              <span className={styles.discoveryNickname}>{post.username}</span>
+              <span className={styles.discoveryNickname} title={post.username}>
+                {post.username}
+              </span>
               {badgeLabel ? <span className={styles.qaTagBadge}>{badgeLabel}</span> : null}
             </div>
             <span className={styles.discoveryTime}>

@@ -339,25 +339,25 @@ export default function Addwarn() {
                 <div className={styles.configList}>
                   {Object.entries(configs).map(([key, config]) => (
                     <div key={key} className={styles.configItem}>
-                      <div className={styles.configLabel}>{t(config.labelKey)}</div>
-                      <div className={styles.configInputContainer}>
-                        <div className={styles.configInputWrapper}>
-                          <Input
-                            className={styles.configInput}
-                            type="number"
-                            value={config.value}
-                            placeholder={config.value || t('addAlarm.placeholder')}
-                            onChange={(val) => handleInputChange(key, val)}
-                          />
-                        </div>
+                      <div className={styles.configItemHead}>
+                        <div className={styles.configLabel}>{t(config.labelKey)}</div>
+                        <Switch
+                          className={styles.configSwitch}
+                          checked={config.enabled}
+                          onChange={(checked) => handleSwitchChange(key, checked)}
+                          style={{"--checked-color":"#11B787"}}
+                        />
+                      </div>
+                      <div className={styles.configInputWrap}>
+                        <Input
+                          className={styles.configInput}
+                          type="number"
+                          value={config.value}
+                          placeholder={config.value || t('addAlarm.placeholder')}
+                          onChange={(val) => handleInputChange(key, val)}
+                        />
                         <div className={styles.configUnit}>{config.unit}</div>
                       </div>
-                      <Switch
-                        className={styles.configSwitch}
-                        checked={config.enabled}
-                        onChange={(checked) => handleSwitchChange(key, checked)}
-                        style={{"--checked-color":"#11B787"}}
-                      />
                     </div>
                   ))}
                 </div>

@@ -43,9 +43,18 @@ export default function PCRightTopMarquee({
           const price = item.price ?? '--';
           const changePercent = item.changePercent ?? '--';
           const changeNum = Number(String(changePercent).replace('%', '').trim());
-          const isUp = Number.isFinite(changeNum) ? changeNum >= 0 : null;
+          const isUp =
+            item.isUp === true || item.isUp === false
+              ? item.isUp
+              : Number.isFinite(changeNum)
+                ? changeNum >= 0
+                : null;
+          const changeDisplay =
+            changePercent === '--' || !Number.isFinite(changeNum)
+              ? changePercent
+              : `${changeNum > 0 ? '+' : ''}${changeNum.toFixed(2)}%`;
           const symbolColor = getStableColorBySymbol(symbol);
-          return { symbol, price, changePercent, isUp, symbolColor };
+          return { symbol, price, changePercent: changeDisplay, isUp, symbolColor };
         })
         .filter((item) => item && item.symbol),
     [items]
@@ -80,9 +89,7 @@ export default function PCRightTopMarquee({
                     item.isUp === null ? '' : item.isUp ? styles.up : styles.down
                   }`}
                 >
-                  {item.isUp === null
-                    ? item.changePercent
-                    : `${item.isUp ? '+' : ''}${item.changePercent}`}
+                  {item.changePercent}
                 </span>
               </span>
             ))}

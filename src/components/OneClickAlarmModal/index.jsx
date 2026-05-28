@@ -715,8 +715,16 @@ export default function OneClickAlarmModal({
                       const config = configs[key];
                       return (
                         <div key={key} className={configStyles.configItem}>
-                          <div className={configStyles.configLabel}>{t(config.labelKey)}</div>
-                          <div className={configStyles.configInputContainer}>
+                          <div className={configStyles.configItemHead}>
+                            <div className={configStyles.configLabel}>{t(config.labelKey)}</div>
+                            <Switch
+                              className={configStyles.configSwitch}
+                              checked={config.enabled}
+                              onChange={(checked) => handleSwitchChange(key, checked)}
+                              style={{ '--checked-color': '#11B787' }}
+                            />
+                          </div>
+                          <div className={configStyles.configInputWrap}>
                             <Input
                               className={configStyles.configInput}
                               type="number"
@@ -726,12 +734,6 @@ export default function OneClickAlarmModal({
                             />
                             <div className={configStyles.configUnit}>{config.unit}</div>
                           </div>
-                          <Switch
-                            className={configStyles.configSwitch}
-                            checked={config.enabled}
-                            onChange={(checked) => handleSwitchChange(key, checked)}
-                            style={{ '--checked-color': '#11B787' }}
-                          />
                         </div>
                       );
                     })}

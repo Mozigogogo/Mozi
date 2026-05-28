@@ -8,6 +8,7 @@ import styles from './page.module.less';
 import PlanCardFree from '@/components/PlanCardFree';
 import ProgressLine from '@/components/ProgressLine';
 import PlanCardLite from '@/components/PlanCardLite';
+import { useCompanionDays } from '@/hooks/useCompanionDays';
 
 const MY_SUBSCRIPTION_PLAN_CODE_KEY = 'mozi_my_subscription_plan_code_v1';
 
@@ -65,7 +66,8 @@ export function BenefitsPageContent({ showNavBar = true, className = '', isPc = 
     };
   }, []);
 
-  const days = 259;
+  const companionDays = useCompanionDays();
+  const daysDisplay = companionDays != null ? companionDays : '--';
   const litePoints = { cur: 4518, max: 5000 };
   const liteAi = { cur: 12, max: 40 };
   const liteDepth = { cur: 20, max: 40 };
@@ -291,9 +293,9 @@ export function BenefitsPageContent({ showNavBar = true, className = '', isPc = 
       <div className={styles.content}>
         <div className={styles.hero}>
           <div className={styles.heroText}>
-            <div className={styles.heroSub}>With Mozi for</div>
+            <div className={styles.heroSub}>{t('benefitsPage.heroSub')}</div>
             <div className={styles.heroDays}>
-              <span className={styles.daysNum}>{days}</span>
+              <span className={styles.daysNum}>{daysDisplay}</span>
               <span className={styles.daysUnit}>{t('benefitsPage.daysUnit')}</span>
             </div>
           </div>

@@ -64,7 +64,41 @@ export default function DetailPage() {
     window.addEventListener('resize', checkDevice);
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
-  
+
+  const renderMarketExchangeTitle = useCallback(
+    (item) => {
+      if (isPC) {
+        return (
+          <div className={styles.pcMarketExchangeCell}>
+            <img src={item.url} alt={item.exchanges} />
+            <span className={styles.pcMarketExchangeName} title={item.exchanges}>
+              {item.exchanges}
+            </span>
+          </div>
+        );
+      }
+      return (
+        <div style={{ display: 'flex', width: '100%', alignItems: 'center' }}>
+          <img
+            src={item.url}
+            alt={item.exchanges}
+            style={{
+              height: '18px',
+              width: '18px',
+              marginRight: '5px',
+              borderRadius: '4px',
+              objectFit: 'contain',
+              backgroundColor: '#fff',
+              flexShrink: 0,
+            }}
+          />
+          {item.exchanges}
+        </div>
+      );
+    },
+    [isPC],
+  );
+
   // 使用告警配置 Hook（自动获取）
   const { fetchConfig: fetchAlertConfig } = useAlertConfig({ autoFetch: false });
   
@@ -770,24 +804,7 @@ export default function DetailPage() {
       if (response?.data && response.data.length > 0) {
         // 处理市场数据，转换为MoziGrid需要的格式
         const processedData = response.data.map((item) => ({
-          title: (
-            <div style={{ display: 'flex', width: '100%', alignItems: 'center' }}>
-              <img 
-                src={item.url} 
-                alt={item.exchanges}
-                style={{
-                  height: '18px',
-                  width: '18px',
-                  marginRight: '5px',
-                  borderRadius: '4px',
-                  objectFit: 'contain',
-                  backgroundColor: '#fff',
-                  flexShrink: 0
-                }}
-              />
-              {item.exchanges}
-            </div>
-          ),
+          title: renderMarketExchangeTitle(item),
           last: item.last,
           price24h: <HighlightArea value={item.price24h} variant={isPC ? 'pcMarket' : 'default'} />,
           vol: item.vol,
@@ -805,28 +822,46 @@ export default function DetailPage() {
     }
   };
 
-  // 右侧顶部走马灯：使用成交额榜（/discovery/traderank?intervals=0）
+  // 右侧顶部走马灯：与发现页行情表一致，取 /discovery/coin 市值榜前 10
   useEffect(() => {
     let alive = true;
-    const toPercent = (v) => {
+    /** 与发现页「24H价格变化%」列一致，保留正负号 */
+    const toChangePercent24h = (v) => {
       if (v === null || v === undefined || v === '') return '--';
-      const n = Number(String(v).replace('%', '').trim());
-      return Number.isFinite(n) ? `${Math.abs(n).toFixed(2)}%` : String(v);
+      const s = String(v).trim();
+      if (s.endsWith('%')) {
+        const n = Number(s.replace('%', '').trim());
+        return Number.isFinite(n) ? `${n.toFixed(2)}%` : s;
+      }
+      const n = Number(s);
+      return Number.isFinite(n) ? `${n.toFixed(2)}%` : s;
+    };
+    const formatMarqueePrice = (priceRaw) => {
+      if (priceRaw === null || priceRaw === undefined || priceRaw === '') return '--';
+      if (typeof priceRaw === 'number' && Number.isFinite(priceRaw)) {
+        const digits = Math.abs(priceRaw) >= 1 ? 2 : 6;
+        return `$${formatNumber(priceRaw, digits)}`;
+      }
+      const s = String(priceRaw).trim();
+      return s.startsWith('$') ? s : `$${s}`;
     };
     const loadHotCoins = async () => {
       if (alive) setRightHotTickerLoading(true);
       try {
-        const res = await request({ url: Interface.coin_trade, data: { intervals: 0 } });
+        const res = await request({
+          url: Interface.find_coin,
+          data: { pageNo: 1, pageSize: 10 },
+        });
         const listRaw = res?.data;
-        const list = Array.isArray(listRaw)
-          ? listRaw
-          : Array.isArray(listRaw?.data)
-            ? listRaw.data
-          : Array.isArray(listRaw?.list)
-            ? listRaw.list
-            : Array.isArray(listRaw?.items)
-              ? listRaw.items
-              : [];
+        const list = Array.isArray(listRaw?.list)
+          ? listRaw.list
+          : Array.isArray(listRaw)
+            ? listRaw
+            : Array.isArray(listRaw?.data)
+              ? listRaw.data
+              : Array.isArray(listRaw?.items)
+                ? listRaw.items
+                : [];
         const mapped = list
           .map((item) => {
             const symbol = String(
@@ -834,31 +869,18 @@ export default function DetailPage() {
             ).toUpperCase();
             const priceRaw =
               item?.currentPrice ?? item?.last ?? item?.price ?? item?.close ?? '--';
-            const changeRaw =
-              item?.price_24h ??
-              item?.price24h ??
-              item?.priceRange ??
-              item?.priceChangePercentage24h ??
-              item?.priceChangePercentage_24h ??
-              item?.changePercent ??
-              item?.change ??
-              '--';
-            const price =
-              typeof priceRaw === 'number'
-                ? `$${priceRaw.toLocaleString()}`
-                : String(priceRaw).startsWith('$')
-                  ? String(priceRaw)
-                  : `$${priceRaw}`;
-            const changeNum = Number(String(changeRaw).replace('%', '').trim());
+            const changeRaw = item?.priceChangePercentage24h ?? item?.priceChangePercentage_24h ?? '--';
+            const changePercent = toChangePercent24h(changeRaw);
+            const changeNum = Number(String(changePercent).replace('%', '').trim());
             return {
               symbol,
-              price,
-              changePercent: toPercent(changeRaw),
+              price: formatMarqueePrice(priceRaw),
+              changePercent,
               isUp: Number.isFinite(changeNum) ? changeNum >= 0 : null,
             };
           })
           .filter((x) => x.symbol)
-          .slice(0, 8);
+          .slice(0, 10);
         if (!alive) return;
         setRightHotTicker(mapped);
       } catch (_) {
@@ -1718,24 +1740,7 @@ ${coinInfo.name || symbol} (${symbol})
       // 5. 更新市场数据（如果存在）
       if (exchangesPriceData && Array.isArray(exchangesPriceData) && exchangesPriceData.length > 0) {
         const processedData = exchangesPriceData.map((item) => ({
-          title: (
-            <div style={{ display: 'flex', width: '100%', alignItems: 'center' }}>
-              <img 
-                src={item.url} 
-                alt={item.exchanges}
-                style={{
-                  height: '18px',
-                  width: '18px',
-                  marginRight: '5px',
-                  borderRadius: '4px',
-                  objectFit: 'contain',
-                  backgroundColor: '#fff',
-                  flexShrink: 0
-                }}
-              />
-              {item.exchanges}
-            </div>
-          ),
+          title: renderMarketExchangeTitle(item),
           last: item.last,
           price24h: <HighlightArea value={item.price24h} variant={isPC ? 'pcMarket' : 'default'} />,
           vol: item.vol,
@@ -2261,10 +2266,8 @@ ${coinInfo.name || symbol} (${symbol})
           colName={[t('detail.market.exchange'), t('detail.market.lastPrice'), t('detail.market.change24h'), t('detail.market.volume24h'), t('detail.market.amount24h')]}
           gridContent={marketData}
           gridTitleBgColor="transparent"
-          columnWidths={isPC ? ['28%', '16%', '16%', '20%', '20%'] : ['25%', '22%', '20%', '20%', '22%']}
+          columnWidths={isPC ? ['22%', '17%', '17%', '22%', '22%'] : ['25%', '22%', '20%', '20%', '22%']}
           isPC={isPC}
-          titleFontSize={isPC ? '12PX' : null}
-          contentFontSize={isPC ? '13PX' : null}
           rowPadding={isPC ? '12PX 0' : null}
           className={isPC ? styles.pcRightMarketGrid : ''}
         />

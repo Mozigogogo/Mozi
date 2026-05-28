@@ -148,15 +148,39 @@
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  overflow: hidden;
+  overflow: visible;
 }
 
-.phoneFrame {
+.centerStage {
   position: relative;
-  /* 让“高度变小”时 phone 框也随之变小：首选取 vw 与 vh 的较小者 */
-  width: clamp(220px, min(21.5vw, 44vh), 430px);
-  aspect-ratio: 551 / 741;
+  flex-shrink: 0;
+}
+
+/* 中间动图 594×1280，裁掉底部约 38px 纯黑边 → 可视高 1242 */
+.alertGifCrop {
+  width: clamp(240px, min(32vw, calc(min(72vh, 700px) * 594 / 1242)), 580px);
+  aspect-ratio: 594 / 1242;
+  max-height: min(72vh, 700px);
+  border-top-left-radius: 32PX;
+  border-top-right-radius: 32PX;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  overflow: hidden;
+  isolation: isolate;
+  line-height: 0;
+  flex-shrink: 0;
   z-index: 1;
+  /* 保证子元素 transform 时仍按顶部圆角裁剪 */
+  clip-path: inset(0 round 32PX 32PX 0 0);
+}
+
+.alertCenterGif {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-top-left-radius: 32PX;
+  border-top-right-radius: 32PX;
+  transform: translateY(15%);
 }
 
 .tickerOverlay {
@@ -165,80 +189,9 @@
   bottom: 12%;
   transform: translateX(-50%);
   z-index: 3;
+  pointer-events: none;
 }
 
-/* 左右侧卡 */
-.alertSideCard {
-  position: relative;
-  width: clamp(96px, 10vw, 140px);
-  max-width: 272px;
-  aspect-ratio: 1 / 1;
-  border-radius: 30px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.3));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2;
-}
-
-.alertSideCard span {
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: clamp(13px, 0.95vw, 20px);
-  font-weight: 500;
-  line-height: 1;
-  min-height: 1em;
-  white-space: nowrap;
-}
-
-.alertSideIconWrap {
-  position: absolute;
-  left: 50%;
-  top: 57%;
-  transform: translate(-50%, -50%);
-  width: 80px;
-  height: 80px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.alertSideIconWrapLarge {
-  width: 110px;
-  height: 110px;
-}
-
-.alertSideIconWrapXL {
-  width: 110px;
-  height: 110px;
-}
-
-.alertSideIcon {
-  width: 80px;
-  height: 80px;
-  object-fit: contain;
-}
-
-.alertSideIconLarge {
-  width: 110px;
-  height: 110px;
-}
-
-.alertSideIconXL {
-  width: 110px;
-  height: 110px;
-}
-
-/* 中间手机图 */
-.alertBottomPreviewImage {
-  object-fit: contain;
-  object-position: center bottom;
-}
-
-/* ticker 浮层 */
 .alertTicker {
   --ticker-width: min(620px, 40vw);
   position: relative;
@@ -257,11 +210,9 @@
 
 .alertTickerSecondary {
   margin-top: -22px;
-  /* Parent 不是 flex，所以 align-self 无效；用 margin auto 让它在 ticker 区域内水平居中 */
   margin-left: auto;
   margin-right: auto;
   width: calc(var(--ticker-width) * 0.9);
-  opacity: 1;
   border-top-left-radius: 0;
   border-top-right-radius: 0;
   padding: 18px 18px;
@@ -338,7 +289,6 @@
   background: #b83f3f;
 }
 
-/* 1367px–1440px：常见 1440pt 逻辑宽设备仍走「大屏」分支，单独收敛 ticker 与手机比例 */
 @media (max-width: 1440px) and (min-width: 1367px) {
   .alertTicker {
     --ticker-width: min(480px, 34vw);
@@ -397,6 +347,71 @@
   }
 }
 
+/* 左右侧卡 */
+.alertSideCard {
+  position: relative;
+  width: clamp(96px, 10vw, 140px);
+  max-width: 272px;
+  aspect-ratio: 1 / 1;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.3));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.alertSideCard span {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: clamp(13px, 0.95vw, 20px);
+  font-weight: 500;
+  line-height: 1;
+  min-height: 1em;
+  white-space: nowrap;
+}
+
+.alertSideIconWrap {
+  position: absolute;
+  left: 50%;
+  top: 57%;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.alertSideIconWrapLarge {
+  width: 110px;
+  height: 110px;
+}
+
+.alertSideIconWrapXL {
+  width: 110px;
+  height: 110px;
+}
+
+.alertSideIcon {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+}
+
+.alertSideIconLarge {
+  width: 110px;
+  height: 110px;
+}
+
+.alertSideIconXL {
+  width: 110px;
+  height: 110px;
+}
+
 @media (max-width: 1366px), (max-height: 680px) {
   .alertSideCard {
     width: 90px;
@@ -428,6 +443,11 @@
   .alertSideIconXL {
     width: 72px;
     height: 72px;
+  }
+
+  .alertGifCrop {
+    width: clamp(220px, min(30vw, calc(min(64vh, 580px) * 594 / 1242)), 520px);
+    max-height: min(64vh, 580px);
   }
 
   .alertTicker {

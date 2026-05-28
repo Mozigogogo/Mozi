@@ -1,5 +1,50 @@
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
+import {
+  isTonSignedBoc,
+  resolveTonTxHashFromBoc,
+  resolveTonTxHashFromSendResult,
+  validateTonTxHashForWalletPay,
+} from '@/app/vip-recharge/utils/resolveTonTxHash';
+import {
+  getTonPaymentTraceId,
+  logTonPaymentTrace,
+} from '@/app/vip-recharge/utils/tonPaymentTrace';
+
+function extractOrderNo(res) {
+  const root = res?.data ?? res;
+  if (!root || typeof root !== 'object') return null;
+  return root.orderNo || root.order_no || root.data?.orderNo || null;
+}
+
+/**
+ * TON walletPay 提交前：BOC(te6) → 64 位 hex，避免误传整段 BOC
+ * @param {Record<string, unknown>} data
+ * @returns {Promise<Record<string, unknown>>}
+ */
+async function coerceTonWalletPayPayload(data) {
+  if (!data || data.chain !== 'TON') return data;
+
+  const rawTxHash = data.txHash;
+  let resolved = null;
+
+  if (typeof rawTxHash === 'string' && isTonSignedBoc(rawTxHash)) {
+    resolved = resolveTonTxHashFromBoc(rawTxHash);
+  } else if (rawTxHash != null) {
+    resolved = await resolveTonTxHashFromSendResult(rawTxHash);
+  }
+
+  const candidate = resolved ?? rawTxHash;
+  const check = validateTonTxHashForWalletPay(candidate);
+  if (!check.ok) {
+    const errMsg = `[walletPay] TON txHash 无效（${check.reason}），需 64 位 hex，不能传 BOC`;
+    // eslint-disable-next-line no-console
+    console.error(errMsg, { reason: check.reason, detail: check.detail, pricingId: data.pricingId });
+    throw new Error(errMsg);
+  }
+
+  return { ...data, txHash: check.txHash };
+}
 
 /**
  * 查询链支付参数（钱包收款信息）
@@ -7,9 +52,29 @@ import { Interface } from '@/utils/constants';
  * @returns {Promise<Array<{chain:string, chainType:string, receiveAddress:string, usdtContract:string, usdtDecimals:number}>>}
  */
 export const getWalletPaymentInfo = () => {
+  const traceId = getTonPaymentTraceId();
+  if (traceId) {
+    logTonPaymentTrace('api:walletPaymentInfo:request', {
+      api: 'GET /payment/walletPaymentInfo',
+    });
+  }
   return request({
     url: Interface.PAYMENT_WALLET_PAYMENT_INFO,
     method: 'GET',
+  }).then((res) => {
+    if (traceId) {
+      const list = res?.data ?? res ?? [];
+      const ton = Array.isArray(list)
+        ? list.find((x) => String(x?.chain || x?.chainType || '').toUpperCase() === 'TON')
+        : null;
+      logTonPaymentTrace('api:walletPaymentInfo:response', {
+        api: 'GET /payment/walletPaymentInfo',
+        code: res?.code,
+        tonChainFound: !!ton,
+        paymentInfo: ton,
+      });
+    }
+    return res;
   });
 };
 
@@ -19,13 +84,53 @@ export const getWalletPaymentInfo = () => {
  * @param {{ pricingId: number|string, fromAddress: string, chain: string, txHash: string }} data
  * @returns {Promise<{ orderNo: string, message?: string }>}
  */
-export const walletPay = (data) => {
-  return request({
-    url: Interface.PAYMENT_WALLET_PAY,
-    method: 'POST',
-    data,
-  });
-};
+export async function walletPay(data) {
+  const isTon = data?.chain === 'TON';
+  const traceId = isTon ? getTonPaymentTraceId() : null;
+
+  if (traceId) {
+    logTonPaymentTrace('api:walletPay:request', {
+      api: 'POST /payment/walletPay',
+      pricingId: data?.pricingId,
+      chain: data?.chain,
+      token: data?.token,
+      fromAddress: data?.fromAddress,
+      txHash: data?.txHash,
+    });
+  }
+
+  try {
+    const payload = isTon ? await coerceTonWalletPayPayload({ ...data }) : data;
+    if (traceId && payload?.txHash) {
+      logTonPaymentTrace('api:walletPay:payloadReady', {
+        txHash: payload.txHash,
+        pricingId: payload.pricingId,
+      });
+    }
+    const res = await request({
+      url: Interface.PAYMENT_WALLET_PAY,
+      method: 'POST',
+      data: payload,
+    });
+    if (traceId) {
+      logTonPaymentTrace('api:walletPay:response', {
+        api: 'POST /payment/walletPay',
+        code: res?.code,
+        message: res?.message,
+        orderNo: extractOrderNo(res),
+        success: res?.code === 0 || res?.code === 200,
+      });
+    }
+    return res;
+  } catch (e) {
+    if (traceId) {
+      logTonPaymentTrace('api:walletPay:error', {
+        message: e?.message || String(e),
+      });
+    }
+    throw e;
+  }
+}
 
 /**
  * 获取 Telegram Stars 支付链接
@@ -60,10 +165,26 @@ export const createStarsInvoice = (dataOrPricingId) => {
  * - CANCELLED：已取消
  */
 export const getOrderStatus = (orderNo) => {
+  const traceId = getTonPaymentTraceId();
   return request({
     url: Interface.PAYMENT_ORDER_STATUS,
     method: 'GET',
     params: { orderNo },
+  }).then((res) => {
+    if (traceId) {
+      const statusData = res?.data?.data ?? res?.data ?? res;
+      logTonPaymentTrace('api:orderStatus:response', {
+        api: 'GET /payment/orderStatus',
+        orderNo,
+        code: res?.code,
+        status:
+          statusData?.status ??
+          statusData?.orderStatus ??
+          statusData?.order_status ??
+          statusData?.payStatus,
+      });
+    }
+    return res;
   });
 };
 

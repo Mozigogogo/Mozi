@@ -418,19 +418,12 @@
   gap: 0;
 }
 
-/* 大屏主卡：价格类配置双列排布，避免左侧整卡过宽时表单仍占一条窄带 */
-@media (min-width: 1280px) {
-  .configList {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: 20px;
-    row-gap: 0;
-    align-items: start;
-  }
-}
-
 .configItem {
-  padding: 10PX 0;
+  padding: 12PX 0;
+
+  &:not(:last-child) {
+    margin-bottom: 4PX;
+  }
 }
 
 .configItemHead {
@@ -445,15 +438,18 @@
   font-size: 14PX;
   color: #1a1a2e;
   font-weight: 500;
+  line-height: 1.2;
 }
 
 .configInputWrap {
   display: flex;
   align-items: center;
+  width: 100%;
+  box-sizing: border-box;
   border: 1PX solid rgba(226, 232, 240, 1);
   border-radius: 10PX;
-  padding: 0 10PX;
-  height: 38PX;
+  padding: 0 12PX;
+  height: 40PX;
   background: rgba(248, 250, 252, 1);
 }
 

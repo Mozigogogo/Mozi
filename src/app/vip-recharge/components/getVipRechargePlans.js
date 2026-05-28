@@ -1,3 +1,5 @@
+import { isTelegramStarsPaymentEnabled } from '../utils/telegramPaymentConfig';
+
 function buildIconMapFromPlans(plansByTab) {
   const iconMap = {};
   Object.values(plansByTab || {}).forEach((plans) => {
@@ -283,10 +285,11 @@ function mergeRemoteIntoPlans(plansByTab, benefitsRes, pricingRes) {
         const planCode = (p.title || '').toUpperCase(); // Free/Lite/Pro -> FREE/LITE/PRO
         const tiers = pricingV2Grouped?.[tabKey]?.[planCode] || [];
 
-        const tgStarsDisplayForTier = (tier) => (isTgEnv ? resolveTelegramStarsDisplay(tier) : null);
+        const tgStarsDisplayForTier = (tier) =>
+          isTgEnv && isTelegramStarsPaymentEnabled() ? resolveTelegramStarsDisplay(tier) : null;
 
-        // Telegram 环境下优先展示星星字段（无星星字段时再回退美元）
-        if (p.title === 'Free' && isTgEnv) {
+        // Telegram + Stars 支付时展示星星价；TON 支付时与 PC 一致展示美元
+        if (p.title === 'Free' && isTgEnv && isTelegramStarsPaymentEnabled()) {
           next.currency = '⭐';
           next.period = tabKey === 'yearly' ? '/年' : '/月';
         }
@@ -297,7 +300,7 @@ function mergeRemoteIntoPlans(plansByTab, benefitsRes, pricingRes) {
           next.price = starsDisplay?.price || String(liteTier.price);
           next.currency = starsDisplay?.currency || '$';
           next.period = tabKey === 'yearly' ? '/年' : '/月';
-          // 为 Lite 方案挂上 pricingId，供 Telegram Stars 支付使用
+          // 为 Lite 方案挂上 pricingId，供 Telegram 支付使用
           next.pricingId = liteTier.pricingId || liteTier.id;
         }
 
