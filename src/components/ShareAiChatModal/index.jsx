@@ -12,6 +12,16 @@ function buildShareText({ question, answer }) {
   return q || a || '';
 }
 
+/** t.me/share/url 经 nginx 限制请求行长度，过长会 400 Bad Request */
+const TELEGRAM_SHARE_TEXT_MAX = 200;
+
+function truncateForTelegramShare(text) {
+  const s = (text || '').trim();
+  if (!s) return '';
+  if (s.length <= TELEGRAM_SHARE_TEXT_MAX) return s;
+  return `${s.slice(0, TELEGRAM_SHARE_TEXT_MAX - 1)}…`;
+}
+
 export default function ShareAiChatModal({
   open,
   onClose,
@@ -68,8 +78,13 @@ export default function ShareAiChatModal({
 
   const shareToTelegram = () => {
     if (!resolvedUrl && !shareText) return;
+    // 仅带短文案 + 链接；勿把整段回答塞进 text=，否则会触发 t.me 400
+    const questionOnly = (question || '').trim();
+    const telegramText = truncateForTelegramShare(
+      questionOnly || shareText.split('\n')[0] || shareText
+    );
     const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(resolvedUrl)}&text=${encodeURIComponent(
-      shareText
+      telegramText
     )}`;
 
     const isTelegram = typeof window !== 'undefined' && localStorage.getItem('appChannel') === 'tg';

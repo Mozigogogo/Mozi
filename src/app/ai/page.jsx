@@ -1852,6 +1852,11 @@ export default function RobotPage({ isPC: propIsPC = false }) {
           onClose={() => setShareOpen(false)}
           question={shareQuestion}
           answer={shareAnswer}
+          shareUrl={
+            typeof window !== 'undefined'
+              ? `${window.location.origin}/ai`
+              : 'https://www.moziai.xyz/ai'
+          }
         />
 
         <ExchangePickerModal
