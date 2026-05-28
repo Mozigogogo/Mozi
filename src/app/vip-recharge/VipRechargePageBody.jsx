@@ -10,6 +10,7 @@ import { isTelegramEnv, startVipPurchase } from './utils/startVipPurchase';
 import { getSubscriptionBenefits, getSubscriptionPricing, getMySubscription } from '@/api/vip';
 import { confirm } from '@/components/Modal/confirm';
 import { LogoLoading } from '@/components/Loading';
+import VipOrderPollingModal from './components/VipOrderPollingModal';
 
 /**
  * 订阅方案主体：月/年切换 + 方案卡片。供移动端 vip-recharge 与 PC /subscribe 复用。
@@ -25,7 +26,10 @@ export default function VipRechargePageBody({
 }) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('monthly');
-  const [purchaseSubmitting, setPurchaseSubmitting] = useState(false);
+  /** 创建订单、解析钱包等短流程 loading（全屏 LogoLoading） */
+  const [preparingPurchase, setPreparingPurchase] = useState(false);
+  /** 支付后订单确认弹窗 */
+  const [orderPollingOpen, setOrderPollingOpen] = useState(false);
 
   const [benefitsRes, setBenefitsRes] = useState(null);
   const [pricingRes, setPricingRes] = useState(null);
@@ -72,15 +76,25 @@ export default function VipRechargePageBody({
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
-    const pollingStart = () => setPurchaseSubmitting(true);
-    const pollingDone = () => setPurchaseSubmitting(false);
+
+    const pollingStart = () => {
+      setOrderPollingOpen(true);
+    };
+    const pollingDone = () => {
+      setOrderPollingOpen(false);
+    };
     const purchaseLoading = (e) => {
-      const isLoading = !!e?.detail?.loading;
-      setPurchaseSubmitting(isLoading);
+      const detail = e?.detail || {};
+      const stage = detail.stage || '';
+      // 订单轮询由弹窗 loading 负责，不走 LogoLoading
+      if (stage === 'pollOrderStatus') return;
+      setPreparingPurchase(!!detail.loading);
     };
     const handler = (e) => {
       const detail = e?.detail || {};
       if (!detail.tabKey || !detail.planTitle) return;
+      setOrderPollingOpen(false);
+      setPreparingPurchase(false);
       setOrderSuccessInfo({
         tabKey: detail.tabKey,
         planTitle: detail.planTitle,
@@ -235,11 +249,16 @@ export default function VipRechargePageBody({
   return (
     <div className={contentClassName}>
       <LogoLoading
-        visible={purchaseSubmitting}
+        visible={preparingPurchase}
         fullscreen
         mask
         image="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/community/loadding.png"
         size={72}
+      />
+      <VipOrderPollingModal
+        open={orderPollingOpen}
+        onHide={() => setOrderPollingOpen(false)}
+        t={t}
       />
       {renderTabs &&
         (tabsWrapClassName ? <div className={tabsWrapClassName}>{tabsNode}</div> : tabsNode)}
@@ -247,7 +266,7 @@ export default function VipRechargePageBody({
         {remoteError && !remoteLoading && <div>{t('vipRecharge.errors.loadSubscriptionData')}</div>}
         <VipRechargePlanCards
           plans={planCardsWithHandlers[activeTab] || []}
-          loading={purchaseSubmitting}
+          loading={preparingPurchase}
           fullWidth={fullWidthCards}
         />
       </div>

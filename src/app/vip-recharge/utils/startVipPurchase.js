@@ -47,6 +47,33 @@ function emitVipPurchaseLoading(loading, detail = {}) {
   } catch (_) {}
 }
 
+function emitVipOrderPollingDone(detail = {}) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.dispatchEvent(new CustomEvent('mozi:vipOrderPollingDone', { detail }));
+  } catch (_) {}
+}
+
+function unwrapOrderStatusPayload(res) {
+  const root = res?.data ?? res;
+  if (!root || typeof root !== 'object') return root ?? {};
+  if (root.data && typeof root.data === 'object' && !Array.isArray(root.data)) {
+    return root.data;
+  }
+  return root;
+}
+
+function readOrderStatusValue(statusData) {
+  if (!statusData || typeof statusData !== 'object') return '';
+  const raw =
+    statusData.status ??
+    statusData.orderStatus ??
+    statusData.order_status ??
+    statusData.payStatus ??
+    statusData.state;
+  return String(raw || '').toUpperCase();
+}
+
 function createOnceRunner(fn) {
   let called = false;
   return (...args) => {
@@ -172,85 +199,80 @@ async function pollOrderStatus(
       window.dispatchEvent(new CustomEvent('mozi:vipOrderPolling', { detail: { orderNo } }));
     } catch (_) {}
   }
-  for (let i = 0; i < maxAttempts; i += 1) {
-    try {
-      logStarsFlow('pollOrderStatus:request', {
-        traceTag,
-        attempt: i + 1,
-        backendApi: '/payment/orderStatus',
-        requestParams: { orderNo },
-      });
-      const statusRes = await getOrderStatus(orderNo);
-      const statusData = statusRes?.data ?? statusRes;
-      logStarsFlow('pollOrderStatus:response', {
-        traceTag,
-        attempt: i + 1,
-        backendApi: '/payment/orderStatus',
-        responseData: statusData,
-      });
 
-      const status = String(statusData?.status || '').toUpperCase();
+  try {
+    for (let i = 0; i < maxAttempts; i += 1) {
+      try {
+        logStarsFlow('pollOrderStatus:request', {
+          traceTag,
+          attempt: i + 1,
+          backendApi: '/payment/orderStatus',
+          requestParams: { orderNo },
+        });
+        const statusRes = await getOrderStatus(orderNo);
+        const statusData = unwrapOrderStatusPayload(statusRes);
+        const bizCode = statusRes?.code ?? statusData?.code;
+        logStarsFlow('pollOrderStatus:response', {
+          traceTag,
+          attempt: i + 1,
+          backendApi: '/payment/orderStatus',
+          responseData: statusData,
+          bizCode,
+        });
 
-      if (status === 'SUCCESS') {
-        if (typeof window !== 'undefined') {
-          try {
-            window.dispatchEvent(
-              new CustomEvent('mozi:vipOrderPollingDone', { detail: { orderNo, status: 'SUCCESS' } })
-            );
-          } catch (_) {}
+        if (bizCode != null && bizCode !== 0 && bizCode !== 200) {
+          // eslint-disable-next-line no-console
+          console.warn('[VipPurchase][OrderStatus] 业务错误，停止轮询', { orderNo, bizCode, statusData });
+          return;
         }
-        try {
-          const event = new CustomEvent('mozi:vipOrderSuccess', {
-            detail: { orderNo, tabKey, planTitle },
+
+        const status = readOrderStatusValue(statusData);
+
+        if (status === 'SUCCESS') {
+          try {
+            const event = new CustomEvent('mozi:vipOrderSuccess', {
+              detail: { orderNo, tabKey, planTitle },
+            });
+            window.dispatchEvent(event);
+          } catch (e) {
+            window.location.reload();
+          }
+          logStarsFlow('pollOrderStatus:done', {
+            traceTag,
+            finalStatus: 'SUCCESS',
+            orderNo,
           });
-          window.dispatchEvent(event);
-        } catch (e) {
-          window.location.reload();
+          return;
         }
-        logStarsFlow('pollOrderStatus:done', {
-          traceTag,
-          finalStatus: 'SUCCESS',
-          orderNo,
-        });
-        return;
-      }
 
-      if (status === 'FAILED' || status === 'CANCELLED') {
-        if (typeof window !== 'undefined') {
-          try {
-            window.dispatchEvent(new CustomEvent('mozi:vipOrderPollingDone', { detail: { orderNo, status: statusData?.status } }));
-          } catch (_) {}
+        if (status === 'FAILED' || status === 'CANCELLED') {
+          logStarsFlow('pollOrderStatus:done', {
+            traceTag,
+            finalStatus: status,
+            orderNo,
+          });
+          return;
         }
-        logStarsFlow('pollOrderStatus:done', {
-          traceTag,
-          finalStatus: statusData?.status || status,
-          orderNo,
-        });
-        return;
-      }
 
-      // 只有 PENDING / PROCESSING（以及空状态）才继续轮询；其余未知状态也继续等待直到超时兜底
-      if (status && status !== 'PENDING' && status !== 'PROCESSING') {
+        if (status && status !== 'PENDING' && status !== 'PROCESSING') {
+          // eslint-disable-next-line no-console
+          console.warn('[VipPurchase][OrderStatus] 未识别的订单状态，继续轮询等待:', statusData);
+        }
+      } catch (err) {
         // eslint-disable-next-line no-console
-        console.warn('[VipPurchase][OrderStatus] 未识别的订单状态，继续轮询等待:', statusData);
+        console.error('[VipPurchase][OrderStatus] 查询订单状态失败', err, { orderNo });
       }
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('[VipPurchase][OrderStatus] 查询订单状态失败', err, { orderNo });
-    }
 
-    await sleep(interval);
+      await sleep(interval);
+    }
+    logStarsFlow('pollOrderStatus:done', {
+      traceTag,
+      finalStatus: 'TIMEOUT',
+      orderNo,
+    });
+  } finally {
+    emitVipOrderPollingDone({ orderNo, stage: 'pollOrderStatus:finally' });
   }
-  if (typeof window !== 'undefined') {
-    try {
-      window.dispatchEvent(new CustomEvent('mozi:vipOrderPollingDone', { detail: { orderNo, status: 'TIMEOUT' } }));
-    } catch (_) {}
-  }
-  logStarsFlow('pollOrderStatus:done', {
-    traceTag,
-    finalStatus: 'TIMEOUT',
-    orderNo,
-  });
 }
 
 function getCookieValue(name) {
@@ -784,8 +806,11 @@ async function startStarsPayment({ pricingId, tabKey, plan, meta }) {
     if (!invoiceLink || !orderNo) {
       // eslint-disable-next-line no-console
       console.error('[VipPurchase][Stars] 创建订单返回异常', res);
+      emitVipPurchaseLoading(false, { stage: 'starsInvoiceInvalid', pricingId });
       return;
     }
+
+    emitVipPurchaseLoading(false, { stage: 'beforeOpenInvoice', orderNo });
 
     try {
       window.localStorage?.setItem('mozi:lastStarsOrderNo', orderNo);
@@ -841,12 +866,7 @@ async function startStarsPayment({ pricingId, tabKey, plan, meta }) {
         }
         if (cb.status !== 'paid') return;
 
-        // 3. 支付成功后轮询订单状态，等待后端 webhook 开通会员
-        emitVipPurchaseLoading(true, {
-          stage: 'pollOrderStatus',
-          method: TG_PAYMENT_METHODS.STARS,
-          orderNo,
-        });
+        // 3. 支付成功后轮询（弹窗 loading 由 mozi:vipOrderPolling 触发）
         startPollingOnce();
       });
     } else {
@@ -875,15 +895,6 @@ async function startStarsPayment({ pricingId, tabKey, plan, meta }) {
         });
       }
     }
-
-    // 兜底：即便 openInvoice callback 丢失，也持续轮询订单状态
-    logStarsFlow('pollOrderStatus:fallback:start', {
-      traceTag,
-      reason: 'openInvoice callback may be missing',
-      backendApi: '/payment/orderStatus',
-      requestParams: { orderNo },
-    });
-    startPollingOnce();
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('[VipPurchase][Stars] 整体流程失败：', e, meta);
@@ -1154,6 +1165,7 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
   }
 
   try {
+    emitVipPurchaseLoading(false, { stage: 'beforeTonWallet' });
     const tx = {
       validUntil: Math.floor(Date.now() / 1000) + 5 * 60,
       messages: [

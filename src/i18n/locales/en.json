@@ -71,6 +71,11 @@
       "hint": "Proceed with the purchase to switch plans.",
       "confirm": "Confirm switch"
     },
+    "orderPolling": {
+      "title": "Confirming order",
+      "desc": "On-chain confirmation may take a moment. You can hide this dialog and we'll keep confirming in the background.",
+      "hide": "Hide"
+    },
     "plans": {
       "yearly": {
         "title": "Yearly",
