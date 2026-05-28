@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getTonPaymentTraceId } from '@/app/vip-recharge/utils/tonPaymentTrace';
 import { INTERFACE_URL, Interface } from './constants.js';
 
 // 创建axios实例
@@ -41,6 +42,14 @@ instance.interceptors.request.use(
     // 从localStorage获取用户选择的语言
     const language = localStorage.getItem('i18nextLng') || 'en';
     config.headers['Accept-Language'] = language;
+
+    try {
+      const tonTraceId = getTonPaymentTraceId();
+      const url = String(config.url || '');
+      if (tonTraceId && url.includes('/payment/')) {
+        config.headers['X-Mozi-Ton-Trace-Id'] = tonTraceId;
+      }
+    } catch (_) {}
     
     return config;
   },

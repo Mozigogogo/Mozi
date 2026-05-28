@@ -4,17 +4,6 @@ import { Cell } from '@ton/ton';
 
 const TON_BOC_PREFIX_RE = /^te6/i;
 const TON_HEX_HASH_RE = /^[0-9a-f]{64}$/i;
-const DEBUG_PREFIX = '[VipPurchase][TON][TxHash]';
-
-function debugLog(...args) {
-  // eslint-disable-next-line no-console
-  console.log(DEBUG_PREFIX, ...args);
-}
-
-function debugWarn(...args) {
-  // eslint-disable-next-line no-console
-  console.warn(DEBUG_PREFIX, ...args);
-}
 
 /**
  * @param {Uint8Array | Buffer | ArrayLike<number>} bytes
@@ -42,8 +31,7 @@ function cellHashToHex(cell) {
       if (normalized) return normalized;
     }
     return normalizeTonHexHash(bytesToHex(hash));
-  } catch (e) {
-    debugWarn('cellHashToHex failed', e?.message || e);
+  } catch (_) {
     return null;
   }
 }
@@ -65,19 +53,10 @@ function hashFromBoc(boc) {
   const trimmed = String(boc || '').trim();
   if (!trimmed || !TON_BOC_PREFIX_RE.test(trimmed)) return null;
 
-  debugLog('hashFromBoc:start', { bocLen: trimmed.length, bocHead: trimmed.slice(0, 16) });
-
   try {
     const cell = Cell.fromBase64(trimmed);
-    const hex = cellHashToHex(cell);
-    debugLog('hashFromBoc:done', {
-      ok: !!hex,
-      hexLen: hex?.length ?? 0,
-      hexPreview: hex ? `${hex.slice(0, 8)}…${hex.slice(-8)}` : null,
-    });
-    return hex;
-  } catch (e) {
-    debugWarn('hashFromBoc:failed', e?.message || e);
+    return cellHashToHex(cell);
+  } catch (_) {
     return null;
   }
 }
@@ -89,40 +68,29 @@ function hashFromBoc(boc) {
  * @returns {Promise<string | null>}
  */
 export async function resolveTonTxHashFromSendResult(sendResult) {
-  debugLog('resolve:start', { inputType: typeof sendResult });
-
   if (typeof sendResult === 'string') {
     const trimmed = sendResult.trim();
     if (TON_BOC_PREFIX_RE.test(trimmed)) {
-      debugLog('resolve:path=string-boc');
       return hashFromBoc(trimmed);
     }
-    const hex = normalizeTonHexHash(trimmed);
-    debugLog('resolve:path=string-hex', { ok: !!hex });
-    return hex;
+    return normalizeTonHexHash(trimmed);
   }
 
   if (!sendResult || typeof sendResult !== 'object') {
-    debugWarn('resolve:invalid-input');
     return null;
   }
 
-  debugLog('resolve:object-keys', Object.keys(sendResult));
-
   const directFields = [
-    ['transactionHash', sendResult.transactionHash],
-    ['txHash', sendResult.txHash],
-    ['hash', sendResult.hash],
-    ['tx_id', sendResult.tx_id],
-    ['txId', sendResult.txId],
+    sendResult.transactionHash,
+    sendResult.txHash,
+    sendResult.hash,
+    sendResult.tx_id,
+    sendResult.txId,
   ];
 
-  for (const [field, raw] of directFields) {
+  for (const raw of directFields) {
     const hex = normalizeTonHexHash(raw);
-    if (hex) {
-      debugLog('resolve:path=direct', { field, hexPreview: `${hex.slice(0, 8)}…` });
-      return hex;
-    }
+    if (hex) return hex;
   }
 
   const boc =
@@ -132,23 +100,10 @@ export async function resolveTonTxHashFromSendResult(sendResult) {
       : '');
 
   if (boc) {
-    debugLog('resolve:path=boc-field', {
-      from: typeof sendResult.boc === 'string' ? 'boc' : 'result',
-    });
-    const hex = hashFromBoc(boc);
-    if (hex) return hex;
-    debugWarn('resolve:boc-parse-failed — 不会把 BOC 原样当 txHash');
-    return null;
+    return hashFromBoc(boc);
   }
 
-  const resultHex = normalizeTonHexHash(sendResult.result);
-  if (resultHex) {
-    debugLog('resolve:path=result-hex');
-    return resultHex;
-  }
-
-  debugWarn('resolve:failed', sendResult);
-  return null;
+  return normalizeTonHexHash(sendResult.result);
 }
 
 /**
@@ -186,11 +141,4 @@ export function validateTonTxHashForWalletPay(txHash) {
     return { ok: false, reason: 'not_hex_64', detail: { len: raw.length, head: raw.slice(0, 24) } };
   }
   return { ok: true, txHash: hex };
-}
-
-if (typeof window !== 'undefined') {
-  try {
-    window.__moziResolveTonTxHash = resolveTonTxHashFromSendResult;
-    window.__moziValidateTonTxHash = validateTonTxHashForWalletPay;
-  } catch (_) {}
 }

@@ -6,6 +6,16 @@ import {
   resolveTonTxHashFromSendResult,
   validateTonTxHashForWalletPay,
 } from '@/app/vip-recharge/utils/resolveTonTxHash';
+import {
+  getTonPaymentTraceId,
+  logTonPaymentTrace,
+} from '@/app/vip-recharge/utils/tonPaymentTrace';
+
+function extractOrderNo(res) {
+  const root = res?.data ?? res;
+  if (!root || typeof root !== 'object') return null;
+  return root.orderNo || root.order_no || root.data?.orderNo || null;
+}
 
 /**
  * TON walletPay 提交前：BOC(te6) → 64 位 hex，避免误传整段 BOC
@@ -20,11 +30,6 @@ async function coerceTonWalletPayPayload(data) {
 
   if (typeof rawTxHash === 'string' && isTonSignedBoc(rawTxHash)) {
     resolved = resolveTonTxHashFromBoc(rawTxHash);
-    // eslint-disable-next-line no-console
-    console.log('[walletPay][TON] BOC→hash', {
-      bocLen: rawTxHash.length,
-      hashPreview: resolved ? `${resolved.slice(0, 8)}…${resolved.slice(-8)}` : null,
-    });
   } else if (rawTxHash != null) {
     resolved = await resolveTonTxHashFromSendResult(rawTxHash);
   }
@@ -38,15 +43,6 @@ async function coerceTonWalletPayPayload(data) {
     throw new Error(errMsg);
   }
 
-  if (String(rawTxHash).trim() !== check.txHash) {
-    // eslint-disable-next-line no-console
-    console.log('[walletPay][TON] 使用反查后的 txHash', {
-      beforeLen: String(rawTxHash).length,
-      afterLen: check.txHash.length,
-      txHash: check.txHash,
-    });
-  }
-
   return { ...data, txHash: check.txHash };
 }
 
@@ -56,9 +52,29 @@ async function coerceTonWalletPayPayload(data) {
  * @returns {Promise<Array<{chain:string, chainType:string, receiveAddress:string, usdtContract:string, usdtDecimals:number}>>}
  */
 export const getWalletPaymentInfo = () => {
+  const traceId = getTonPaymentTraceId();
+  if (traceId) {
+    logTonPaymentTrace('api:walletPaymentInfo:request', {
+      api: 'GET /payment/walletPaymentInfo',
+    });
+  }
   return request({
     url: Interface.PAYMENT_WALLET_PAYMENT_INFO,
     method: 'GET',
+  }).then((res) => {
+    if (traceId) {
+      const list = res?.data ?? res ?? [];
+      const ton = Array.isArray(list)
+        ? list.find((x) => String(x?.chain || x?.chainType || '').toUpperCase() === 'TON')
+        : null;
+      logTonPaymentTrace('api:walletPaymentInfo:response', {
+        api: 'GET /payment/walletPaymentInfo',
+        code: res?.code,
+        tonChainFound: !!ton,
+        paymentInfo: ton,
+      });
+    }
+    return res;
   });
 };
 
@@ -69,12 +85,51 @@ export const getWalletPaymentInfo = () => {
  * @returns {Promise<{ orderNo: string, message?: string }>}
  */
 export async function walletPay(data) {
-  const payload = data?.chain === 'TON' ? await coerceTonWalletPayPayload({ ...data }) : data;
-  return request({
-    url: Interface.PAYMENT_WALLET_PAY,
-    method: 'POST',
-    data: payload,
-  });
+  const isTon = data?.chain === 'TON';
+  const traceId = isTon ? getTonPaymentTraceId() : null;
+
+  if (traceId) {
+    logTonPaymentTrace('api:walletPay:request', {
+      api: 'POST /payment/walletPay',
+      pricingId: data?.pricingId,
+      chain: data?.chain,
+      token: data?.token,
+      fromAddress: data?.fromAddress,
+      txHash: data?.txHash,
+    });
+  }
+
+  try {
+    const payload = isTon ? await coerceTonWalletPayPayload({ ...data }) : data;
+    if (traceId && payload?.txHash) {
+      logTonPaymentTrace('api:walletPay:payloadReady', {
+        txHash: payload.txHash,
+        pricingId: payload.pricingId,
+      });
+    }
+    const res = await request({
+      url: Interface.PAYMENT_WALLET_PAY,
+      method: 'POST',
+      data: payload,
+    });
+    if (traceId) {
+      logTonPaymentTrace('api:walletPay:response', {
+        api: 'POST /payment/walletPay',
+        code: res?.code,
+        message: res?.message,
+        orderNo: extractOrderNo(res),
+        success: res?.code === 0 || res?.code === 200,
+      });
+    }
+    return res;
+  } catch (e) {
+    if (traceId) {
+      logTonPaymentTrace('api:walletPay:error', {
+        message: e?.message || String(e),
+      });
+    }
+    throw e;
+  }
 }
 
 /**
@@ -110,10 +165,26 @@ export const createStarsInvoice = (dataOrPricingId) => {
  * - CANCELLED：已取消
  */
 export const getOrderStatus = (orderNo) => {
+  const traceId = getTonPaymentTraceId();
   return request({
     url: Interface.PAYMENT_ORDER_STATUS,
     method: 'GET',
     params: { orderNo },
+  }).then((res) => {
+    if (traceId) {
+      const statusData = res?.data?.data ?? res?.data ?? res;
+      logTonPaymentTrace('api:orderStatus:response', {
+        api: 'GET /payment/orderStatus',
+        orderNo,
+        code: res?.code,
+        status:
+          statusData?.status ??
+          statusData?.orderStatus ??
+          statusData?.order_status ??
+          statusData?.payStatus,
+      });
+    }
+    return res;
   });
 };
 

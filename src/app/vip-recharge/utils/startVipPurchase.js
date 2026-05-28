@@ -12,6 +12,11 @@ import {
   resolveTonTxHashFromSendResult,
   validateTonTxHashForWalletPay,
 } from './resolveTonTxHash';
+import {
+  endTonPaymentTrace,
+  logTonPaymentTrace,
+  startTonPaymentTrace,
+} from './tonPaymentTrace';
 const ARBITRUM_CHAIN_ID = 42161;
 const ARBITRUM_ORDER_CHAIN = 'ARBITRUM';
 
@@ -28,10 +33,6 @@ export function isTelegramEnv() {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-function logStarsFlow(stage, payload = {}) {
-  // eslint-disable-next-line no-console
-  console.log(`[VipPurchase][Stars][Trace] ${stage}`, payload);
-}
 
 function emitVipPurchaseLoading(loading, detail = {}) {
   if (typeof window === 'undefined') return;
@@ -186,49 +187,39 @@ async function buildUserJettonWalletAddressFromMaster({
 
 async function pollOrderStatus(
   orderNo,
-  { maxAttempts = 60, interval = 1500, tabKey, planTitle, traceTag = '' } = {}
+  { maxAttempts = 60, interval = 1500, tabKey, planTitle } = {}
 ) {
-  logStarsFlow('pollOrderStatus:start', {
-    traceTag,
-    backendApi: '/payment/orderStatus',
-    requestParams: { orderNo },
-    pollConfig: { maxAttempts, interval },
-  });
+  logTonPaymentTrace('order:poll:start', { orderNo, maxAttempts, interval });
+
   if (typeof window !== 'undefined') {
     try {
       window.dispatchEvent(new CustomEvent('mozi:vipOrderPolling', { detail: { orderNo } }));
     } catch (_) {}
   }
 
+  let finalStatus = 'TIMEOUT';
+
   try {
     for (let i = 0; i < maxAttempts; i += 1) {
       try {
-        logStarsFlow('pollOrderStatus:request', {
-          traceTag,
-          attempt: i + 1,
-          backendApi: '/payment/orderStatus',
-          requestParams: { orderNo },
-        });
+        logTonPaymentTrace('order:poll:tick', { orderNo, attempt: i + 1, maxAttempts });
         const statusRes = await getOrderStatus(orderNo);
         const statusData = unwrapOrderStatusPayload(statusRes);
         const bizCode = statusRes?.code ?? statusData?.code;
-        logStarsFlow('pollOrderStatus:response', {
-          traceTag,
-          attempt: i + 1,
-          backendApi: '/payment/orderStatus',
-          responseData: statusData,
-          bizCode,
-        });
 
         if (bizCode != null && bizCode !== 0 && bizCode !== 200) {
+          finalStatus = 'BIZ_ERROR';
+          logTonPaymentTrace('order:poll:stop', { orderNo, bizCode, statusData });
           // eslint-disable-next-line no-console
           console.warn('[VipPurchase][OrderStatus] 业务错误，停止轮询', { orderNo, bizCode, statusData });
           return;
         }
 
         const status = readOrderStatusValue(statusData);
+        logTonPaymentTrace('order:poll:status', { orderNo, attempt: i + 1, status });
 
         if (status === 'SUCCESS') {
+          finalStatus = 'SUCCESS';
           try {
             const event = new CustomEvent('mozi:vipOrderSuccess', {
               detail: { orderNo, tabKey, planTitle },
@@ -237,20 +228,11 @@ async function pollOrderStatus(
           } catch (e) {
             window.location.reload();
           }
-          logStarsFlow('pollOrderStatus:done', {
-            traceTag,
-            finalStatus: 'SUCCESS',
-            orderNo,
-          });
           return;
         }
 
         if (status === 'FAILED' || status === 'CANCELLED') {
-          logStarsFlow('pollOrderStatus:done', {
-            traceTag,
-            finalStatus: status,
-            orderNo,
-          });
+          finalStatus = status;
           return;
         }
 
@@ -259,19 +241,25 @@ async function pollOrderStatus(
           console.warn('[VipPurchase][OrderStatus] 未识别的订单状态，继续轮询等待:', statusData);
         }
       } catch (err) {
+        logTonPaymentTrace('order:poll:error', {
+          orderNo,
+          attempt: i + 1,
+          message: err?.message || String(err),
+        });
         // eslint-disable-next-line no-console
         console.error('[VipPurchase][OrderStatus] 查询订单状态失败', err, { orderNo });
       }
 
       await sleep(interval);
     }
-    logStarsFlow('pollOrderStatus:done', {
-      traceTag,
-      finalStatus: 'TIMEOUT',
-      orderNo,
-    });
   } finally {
-    emitVipOrderPollingDone({ orderNo, stage: 'pollOrderStatus:finally' });
+    logTonPaymentTrace('order:poll:done', { orderNo, finalStatus });
+    emitVipOrderPollingDone({ orderNo, stage: 'pollOrderStatus:finally', status: finalStatus });
+    if (finalStatus === 'SUCCESS') {
+      endTonPaymentTrace('flow:success', { orderNo });
+    } else {
+      endTonPaymentTrace('flow:finished', { orderNo, finalStatus });
+    }
   }
 }
 
@@ -282,17 +270,10 @@ function getCookieValue(name) {
 }
 
 async function switchToArbitrumIfNeeded(provider) {
-  // eslint-disable-next-line no-console
-  console.log('[VipPurchase][Arbitrum] switchToArbitrumIfNeeded:start', {
-    hasInjectedProvider: !!(provider && typeof provider.request === 'function'),
-    hasBridgeSwitch: typeof window !== 'undefined' && typeof window.__switchEvmChain === 'function',
-  });
   if (!provider || typeof provider.request !== 'function') {
     if (typeof window !== 'undefined' && typeof window.__switchEvmChain === 'function') {
       try {
         await window.__switchEvmChain(ARBITRUM_CHAIN_ID);
-        // eslint-disable-next-line no-console
-        console.log('[VipPurchase][Arbitrum] switch chain via bridge:success', { chainId: ARBITRUM_CHAIN_ID });
       } catch (e) {
         // eslint-disable-next-line no-console
         console.warn('[VipPurchase][Arbitrum] 通过钱包桥接切链失败', e);
@@ -302,15 +283,11 @@ async function switchToArbitrumIfNeeded(provider) {
   }
   const hexChainId = `0x${ARBITRUM_CHAIN_ID.toString(16)}`;
   const current = await provider.request({ method: 'eth_chainId' });
-  // eslint-disable-next-line no-console
-  console.log('[VipPurchase][Arbitrum] current chain id', { current, target: hexChainId });
   if (current?.toLowerCase?.() === hexChainId) return;
   await provider.request({
     method: 'wallet_switchEthereumChain',
     params: [{ chainId: hexChainId }],
   });
-  // eslint-disable-next-line no-console
-  console.log('[VipPurchase][Arbitrum] switch chain via injected provider:success', { chainId: ARBITRUM_CHAIN_ID });
 }
 
 async function waitForReceipt(provider, txHash, { maxAttempts = 120, interval = 1500 } = {}) {
@@ -361,8 +338,6 @@ async function waitForEvmWalletAddress({ timeoutMs = 60_000, pollMs = 500 } = {}
 
   const existing = await readAddress();
   if (existing) return existing;
-  // eslint-disable-next-line no-console
-  console.log('[VipPurchase][Arbitrum] waitForEvmWalletAddress:start', { timeoutMs, pollMs });
 
   return new Promise((resolve) => {
     let settled = false;
@@ -389,8 +364,6 @@ async function waitForEvmWalletAddress({ timeoutMs = 60_000, pollMs = 500 } = {}
     const onAccountsChanged = (accounts) => {
       const address = accounts?.[0] || '';
       if (!address) return;
-      // eslint-disable-next-line no-console
-      console.log('[VipPurchase][Arbitrum] waitForEvmWalletAddress:accountsChanged', { address });
       finish(address);
     };
 
@@ -502,14 +475,6 @@ async function startArbitrumPayment({
   preferConnectModal = false,
   forceConnectModalFirst = false,
 }) {
-  // eslint-disable-next-line no-console
-  console.log('[VipPurchase][Arbitrum] startArbitrumPayment:start', {
-    pricingId,
-    tabKey,
-    planTitle: plan?.title,
-    preferConnectModal,
-    forceConnectModalFirst,
-  });
   if (!pricingId) {
     // eslint-disable-next-line no-console
     console.error('[VipPurchase][Arbitrum] 缺少 pricingId，无法创建钱包订单', meta);
@@ -520,20 +485,14 @@ async function startArbitrumPayment({
   if (typeof window !== 'undefined' && typeof window.__getConnectedEvmAddress === 'function') {
     connectedAddress = window.__getConnectedEvmAddress() || '';
   }
-  // eslint-disable-next-line no-console
-  console.log('[VipPurchase][Arbitrum] connected address before flow', { connectedAddress });
 
   // 在 TG 端优先走 RainbowKit 连接弹窗（用户先选择钱包），
   // 连上后再执行一次购买进入链路。
   if (forceConnectModalFirst) {
     if (!connectedAddress) {
       const opened = openRainbowKit(meta);
-      // eslint-disable-next-line no-console
-      console.log('[VipPurchase][Arbitrum] forceConnectModalFirst:openRainbowKit', { opened });
       if (!opened) return;
       connectedAddress = await waitForEvmWalletAddress({ timeoutMs: 60_000, pollMs: 500 });
-      // eslint-disable-next-line no-console
-      console.log('[VipPurchase][Arbitrum] forceConnectModalFirst:wait wallet result', { connectedAddress });
       if (!connectedAddress) {
         // eslint-disable-next-line no-console
         console.warn('[VipPurchase][Arbitrum] 钱包连接超时或已取消', meta);
@@ -544,8 +503,6 @@ async function startArbitrumPayment({
 
   if (preferConnectModal && !connectedAddress) {
     const opened = openRainbowKit(meta);
-    // eslint-disable-next-line no-console
-    console.log('[VipPurchase][Arbitrum] preferConnectModal:openRainbowKit', { opened });
     if (opened && isTelegramEnv()) {
       // 给钱包 deeplink 一些时间；若仍未连接，给 TG 用户兜底方案
       window.setTimeout(() => {
@@ -561,13 +518,6 @@ async function startArbitrumPayment({
   const provider = typeof window !== 'undefined' ? window.ethereum : null;
   const hasInjectedProvider = !!(provider && typeof provider.request === 'function');
   const hasWagmiSender = typeof window !== 'undefined' && typeof window.__sendEvmTransaction === 'function';
-  // eslint-disable-next-line no-console
-  console.log('[VipPurchase][Arbitrum] provider readiness', {
-    hasInjectedProvider,
-    hasWagmiSender,
-    hasBridgeAddressGetter: typeof window !== 'undefined' && typeof window.__getConnectedEvmAddress === 'function',
-    hasBridgeChainSwitcher: typeof window !== 'undefined' && typeof window.__switchEvmChain === 'function',
-  });
   if (!hasInjectedProvider && !hasWagmiSender) {
     openRainbowKit(meta);
     return;
@@ -578,8 +528,6 @@ async function startArbitrumPayment({
     let accounts = [];
     if (!hasWagmiSender && hasInjectedProvider) {
       accounts = await provider.request({ method: 'eth_requestAccounts' });
-      // eslint-disable-next-line no-console
-      console.log('[VipPurchase][Arbitrum] eth_requestAccounts result', { accounts });
     }
     const bridgeAddress =
       typeof window !== 'undefined' && typeof window.__getConnectedEvmAddress === 'function'
@@ -594,8 +542,6 @@ async function startArbitrumPayment({
       console.error('[VipPurchase][Arbitrum] 未获取到钱包地址', meta);
       return;
     }
-    // eslint-disable-next-line no-console
-    console.log('[VipPurchase][Arbitrum] resolved fromAddress', { fromAddress });
 
     // 2) 查询链支付参数（收款地址、USDT 合约、精度）
     const paymentInfoRes = await getWalletPaymentInfo();
@@ -642,21 +588,6 @@ async function startArbitrumPayment({
       });
       return;
     }
-    // eslint-disable-next-line no-console
-    console.log('[VipPurchase][Arbitrum] payment params resolved', {
-      receiveAddress,
-      amountUsdtRaw,
-      usdtContractAddress: usdtToAddress,
-      usdtDecimals,
-    });
-    // eslint-disable-next-line no-console
-    console.log('[VipPurchase][Arbitrum] payment route', {
-      fromAddress,
-      toAddress: receiveAddress,
-      tokenContract: usdtToAddress,
-      amountUsdtRaw,
-      chain: ARBITRUM_ORDER_CHAIN,
-    });
 
     // 3) 切链到 Arbitrum
     if (hasInjectedProvider || typeof window.__switchEvmChain === 'function') {
@@ -683,18 +614,12 @@ async function startArbitrumPayment({
       args: [receiveAddress, amount],
     });
     if (hasWagmiSender) {
-      // eslint-disable-next-line no-console
-      console.log('[VipPurchase][Arbitrum] sending tx via wagmi bridge');
       txHash = await window.__sendEvmTransaction({
         to: usdtToAddress,
         data,
       });
-      // eslint-disable-next-line no-console
-      console.log('[VipPurchase][Arbitrum] wagmi bridge tx result', { txHash });
     }
     if (!txHash && hasInjectedProvider) {
-      // eslint-disable-next-line no-console
-      console.log('[VipPurchase][Arbitrum] sending tx via injected provider');
       txHash = await provider.request({
         method: 'eth_sendTransaction',
         params: [
@@ -705,8 +630,6 @@ async function startArbitrumPayment({
           },
         ],
       });
-      // eslint-disable-next-line no-console
-      console.log('[VipPurchase][Arbitrum] injected provider tx result', { txHash });
     }
 
     if (!txHash) {
@@ -714,10 +637,6 @@ async function startArbitrumPayment({
       console.error('[VipPurchase][Arbitrum] 未获取到 txHash', { meta });
       return;
     }
-    // eslint-disable-next-line no-console
-    console.log('[VipPurchase][Arbitrum] txHash acquired', {
-      txHash: String(txHash),
-    });
 
     // 5) 提交钱包支付（后端生成 orderNo 并进入链上确认）
     const payRes = await walletPay({
@@ -737,8 +656,6 @@ async function startArbitrumPayment({
     // 6) 可选：前端等待 receipt，便于调试和用户感知
     try {
       const receipt = await waitForReceipt(provider, txHash);
-      // eslint-disable-next-line no-console
-      console.log('[VipPurchase][Arbitrum] tx receipt', receipt);
     } catch (e) {
       // eslint-disable-next-line no-console
       console.warn('[VipPurchase][Arbitrum] wait receipt failed', e);
@@ -753,16 +670,6 @@ async function startArbitrumPayment({
 }
 
 async function startStarsPayment({ pricingId, tabKey, plan, meta }) {
-  const traceTag = `stars_${Date.now()}`;
-  logStarsFlow('flow:start', {
-    traceTag,
-    stage: 'startStarsPayment',
-    inTelegram: isTelegramEnv(),
-    pricingId,
-    planTitle: plan?.title,
-    meta,
-  });
-
   if (!pricingId) {
     // eslint-disable-next-line no-console
     console.error('[VipPurchase][Stars] 缺少 pricingId，无法创建 Stars 订单', meta);
@@ -778,30 +685,12 @@ async function startStarsPayment({ pricingId, tabKey, plan, meta }) {
 
     const tg = await waitForTelegramWebAppReady({ timeoutMs: 2000, pollMs: 100 });
     const canUseTelegramOpenInvoice = !!tg && typeof tg.openInvoice === 'function';
-    logStarsFlow('telegram:webapp:check', {
-      traceTag,
-      hasTelegramWebApp: !!tg,
-      hasOpenInvoice: canUseTelegramOpenInvoice,
-      tgVersion: tg?.version || '',
-      tgPlatform: tg?.platform || '',
-    });
 
     // 1. 调后端创建 Stars 订单
-    logStarsFlow('backend:request:starsInvoiceLink', {
-      traceTag,
-      backendApi: '/payment/starsInvoiceLink',
-      requestBody: { pricingId },
-    });
     const res = await createStarsInvoice(pricingId);
     const data = res?.data ?? res;
     const invoiceLink = data?.invoiceLink;
     const orderNo = data?.orderNo;
-    logStarsFlow('backend:response:starsInvoiceLink', {
-      traceTag,
-      backendApi: '/payment/starsInvoiceLink',
-      responseData: data,
-      parsed: { invoiceLink, orderNo },
-    });
 
     if (!invoiceLink || !orderNo) {
       // eslint-disable-next-line no-console
@@ -819,40 +708,13 @@ async function startStarsPayment({ pricingId, tabKey, plan, meta }) {
     }
 
     // 2. 打开 Telegram Stars 支付弹窗（若 Telegram WebApp 不可用则降级为打开 invoiceLink）
-    const invoiceLinkHasOrderNo = typeof invoiceLink === 'string' && /(?:\?|&)orderNo=/.test(invoiceLink);
-    const tgOrderNoPassMode = invoiceLinkHasOrderNo ? 'INVOICE_LINK_QUERY' : 'NOT_PASSED';
-    logStarsFlow('telegramApi:orderNo:pass-check', {
-      traceTag,
-      question: 'is orderNo passed to Telegram openInvoice?',
-      result: tgOrderNoPassMode === 'NOT_PASSED' ? 'NO' : 'YES',
-      passMode: tgOrderNoPassMode,
-      why:
-        tgOrderNoPassMode === 'NOT_PASSED'
-          ? 'openInvoice only receives invoiceLink; no explicit orderNo param is passed'
-          : 'orderNo detected in invoiceLink query string',
-      localOrderNo: orderNo,
-      tgApi: 'Telegram.WebApp.openInvoice',
-      tgCallParamsSnapshot: { invoiceLink },
-    });
     const startPollingOnce = createOnceRunner(() =>
-      pollOrderStatus(orderNo, { tabKey, planTitle: plan?.title, traceTag })
+      pollOrderStatus(orderNo, { tabKey, planTitle: plan?.title })
     );
 
     if (canUseTelegramOpenInvoice) {
-      logStarsFlow('telegramApi:openInvoice:request', {
-        traceTag,
-        tgApi: 'Telegram.WebApp.openInvoice',
-        tgParams: { invoiceLink },
-        relatedOrderNo: orderNo,
-      });
       tg.openInvoice(invoiceLink, async (cb) => {
         // cb.status: 'paid' | 'cancelled' | 'failed' ...
-        logStarsFlow('telegramApi:openInvoice:callback', {
-          traceTag,
-          tgApi: 'Telegram.WebApp.openInvoice(callback)',
-          callbackPayload: cb,
-          relatedOrderNo: orderNo,
-        });
 
         if (!cb) return;
         if (cb.status === 'cancelled' || cb.status === 'failed') {
@@ -870,12 +732,6 @@ async function startStarsPayment({ pricingId, tabKey, plan, meta }) {
         startPollingOnce();
       });
     } else {
-      logStarsFlow('telegramApi:openInvoice:unavailable:fallback', {
-        traceTag,
-        reason: 'Telegram WebApp or openInvoice unavailable',
-        fallbackAction: 'open invoiceLink by browser/openLink',
-        invoiceLink,
-      });
       try {
         if (typeof tg?.openLink === 'function') {
           tg.openLink(invoiceLink);
@@ -1001,15 +857,25 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
   }
   if (typeof window === 'undefined') return;
 
+  const traceId = startTonPaymentTrace({
+    pricingId,
+    tabKey,
+    planTitle: plan?.title,
+    amount: meta?.amount,
+    currency: meta?.currency,
+  });
+
   // 1) 真正发起交易前，先确保已连接 TON 钱包（TG WebView 里这是必须的）
+  logTonPaymentTrace('wallet:ensure:start', { traceId });
   const connectedTonAddress = await ensureTonConnected(meta, { timeoutMs: 60_000, pollMs: 500 });
-  // eslint-disable-next-line no-console
-  console.log('[VipPurchase][TON][USDT] connected address', { connectedTonAddress, pricingId });
   if (!connectedTonAddress) {
+    logTonPaymentTrace('wallet:ensure:failed', { traceId });
+    endTonPaymentTrace('flow:abort', { reason: 'wallet_not_connected' });
     // eslint-disable-next-line no-console
     console.warn('[VipPurchase][TON][USDT] 未绑定 TON 钱包，支付流程中止');
     return;
   }
+  logTonPaymentTrace('wallet:ensure:ok', { connectedTonAddress, traceId });
 
   // 2) 查询 TON 支付参数（不预创建订单）
   let paymentInfo = null;
@@ -1020,6 +886,8 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
       ? paymentInfoList.find((x) => String(x?.chain || x?.chainType || '').toUpperCase() === 'TON')
       : null;
   } catch (e) {
+    logTonPaymentTrace('api:walletPaymentInfo:error', { message: e?.message || String(e) });
+    endTonPaymentTrace('flow:abort', { reason: 'walletPaymentInfo_failed' });
     // eslint-disable-next-line no-console
     console.error('[VipPurchase][TON][USDT] getWalletPaymentInfo failed', e, meta);
     return;
@@ -1086,12 +954,6 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
         masterAddress: usdtMasterAddress,
         ownerAddress: connectedTonAddress,
       });
-      // eslint-disable-next-line no-console
-      console.log('[VipPurchase][TON][USDT] userJettonWallet resolved', {
-        hasApiProvided: !!userJettonWalletFromApi,
-        hasResolved: !!userJettonWalletAddress,
-        usdtMasterAddress,
-      });
     } finally {
       emitVipPurchaseLoading(false, {
         stage: 'resolveTonJettonWallet',
@@ -1108,6 +970,16 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
     amountUsdt === ''
   ) {
     // eslint-disable-next-line no-console
+    logTonPaymentTrace('prepare:invalid', {
+      paymentInfo,
+      merchantAddress,
+      merchantJettonWallet,
+      userJettonWalletAddress,
+      usdtMasterAddress,
+      amountUsdt,
+    });
+    endTonPaymentTrace('flow:abort', { reason: 'walletPaymentInfo_incomplete' });
+    // eslint-disable-next-line no-console
     console.error('[VipPurchase][TON][USDT] walletPaymentInfo 字段不完整', {
       paymentInfo,
       merchantAddress,
@@ -1121,10 +993,20 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
     return;
   }
 
+  logTonPaymentTrace('prepare:ok', {
+    amountUsdt,
+    memo,
+    gasAmountNano: gasAmountNano?.toString?.(),
+    userJettonWalletAddress,
+    jettonTransferDestination,
+    payloadSource: payloadBase64FromConfig ? 'backend' : 'frontend',
+  });
+
   if (
     userJettonWalletAddress === merchantAddress ||
     userJettonWalletAddress === merchantJettonWallet
   ) {
+    endTonPaymentTrace('flow:abort', { reason: 'same_jetton_wallet' });
     // eslint-disable-next-line no-console
     console.error('[VipPurchase][TON][USDT] 付款 Jetton 钱包与商户地址相同，拒绝发起原生 TON 转账', {
       userJettonWalletAddress,
@@ -1148,6 +1030,8 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
 
   if (!payloadBase64) {
     // eslint-disable-next-line no-console
+    endTonPaymentTrace('flow:abort', { reason: 'payload_build_failed' });
+    // eslint-disable-next-line no-console
     console.error('[VipPurchase][TON][USDT] payload 构造失败', {
       paymentInfo,
       amountUsdt,
@@ -1158,6 +1042,8 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
 
   // 3) 拉起 TonConnect 官方钱包发起转账
   if (typeof window.__tonSendTransaction !== 'function') {
+    logTonPaymentTrace('tonConnect:bridge:missing', {});
+    endTonPaymentTrace('flow:abort', { reason: 'ton_connect_bridge_missing' });
     // eslint-disable-next-line no-console
     console.warn('[VipPurchase][TON][USDT] TonConnect bridge 不存在，尝试打开连接弹窗', meta);
     await window.__openTonConnectModal?.();
@@ -1166,6 +1052,11 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
 
   try {
     emitVipPurchaseLoading(false, { stage: 'beforeTonWallet' });
+    logTonPaymentTrace('tonConnect:send:start', {
+      userJettonWalletAddress,
+      gasAmountNano: gasAmountNano.toString(),
+      validUntil: Math.floor(Date.now() / 1000) + 5 * 60,
+    });
     const tx = {
       validUntil: Math.floor(Date.now() / 1000) + 5 * 60,
       messages: [
@@ -1177,62 +1068,32 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
         },
       ],
     };
-    // eslint-disable-next-line no-console
-    console.log('[VipPurchase][TON][USDT] sendTransaction', {
-      userJettonWalletAddress,
-      jettonTransferDestination,
-      merchantAddress,
-      gasAmountNano: gasAmountNano.toString(),
-      hasPayload: true,
-      payloadSource: payloadBase64FromConfig ? 'backend' : 'frontend',
-      amountUsdt,
-      decimals,
-    });
-    // eslint-disable-next-line no-console
-    console.log('[VipPurchase][TON][USDT] payment route', {
-      fromAddress: connectedTonAddress,
-      merchantAddress,
-      merchantJettonWallet,
-      userJettonWalletAddress,
-      jettonTransferDestination,
-      gasAmountNano: gasAmountNano.toString(),
-      pricingId,
-    });
     const res = await window.__tonSendTransaction(tx);
+    try {
+      window.__closeTonConnectModal?.();
+    } catch (_) {}
+    logTonPaymentTrace('tonConnect:send:returned', {
+      resType: typeof res,
+      resKeys: res && typeof res === 'object' ? Object.keys(res) : [],
+    });
     const rawBoc =
       (res && typeof res === 'object' && typeof res.boc === 'string' && res.boc) ||
       (res && typeof res === 'object' && isTonSignedBoc(res.result) ? res.result : null) ||
       (typeof res === 'string' && isTonSignedBoc(res) ? res : null);
 
-    // eslint-disable-next-line no-console
-    console.log('[VipPurchase][TON][USDT] sendTransaction raw', {
-      resType: typeof res,
-      resKeys: res && typeof res === 'object' ? Object.keys(res) : [],
-      rawBocLen: rawBoc ? String(rawBoc).length : 0,
-    });
-
     let txHashResolved = await resolveTonTxHashFromSendResult(res);
     if (!txHashResolved && rawBoc) {
       txHashResolved = resolveTonTxHashFromBoc(String(rawBoc));
-      // eslint-disable-next-line no-console
-      console.log('[VipPurchase][TON][USDT] txHash fallback from rawBoc', {
-        ok: !!txHashResolved,
-        hashPreview: txHashResolved ? `${txHashResolved.slice(0, 8)}…` : null,
-      });
     }
     const txCheck = validateTonTxHashForWalletPay(txHashResolved);
 
-    // eslint-disable-next-line no-console
-    console.log('[VipPurchase][TON][USDT] txHash check', {
-      resolvedLen: txHashResolved ? String(txHashResolved).length : 0,
-      resolvedIsBoc: isTonSignedBoc(txHashResolved),
-      valid: txCheck.ok,
-      reason: txCheck.ok ? null : txCheck.reason,
-      txHash: txCheck.ok ? txCheck.txHash : null,
-      explorerUrl: txCheck.ok ? `https://tonviewer.com/transaction/${txCheck.txHash}` : null,
-    });
-
     if (!txCheck.ok) {
+      logTonPaymentTrace('tonConnect:txHash:invalid', {
+        reason: txCheck.reason,
+        detail: txCheck.detail,
+        rawBocLen: rawBoc ? String(rawBoc).length : 0,
+      });
+      endTonPaymentTrace('flow:abort', { reason: 'invalid_tx_hash' });
       // eslint-disable-next-line no-console
       console.error('[VipPurchase][TON][USDT] txHash 无效，拒绝 walletPay（勿传 te6 BOC）', {
         reason: txCheck.reason,
@@ -1244,6 +1105,8 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
       return;
     }
 
+    logTonPaymentTrace('tonConnect:txHash:ok', { txHash: txCheck.txHash });
+
     const walletPayPayload = {
       pricingId,
       fromAddress: connectedTonAddress,
@@ -1252,22 +1115,26 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
       token: 'USDT_TON',
     };
 
-    // eslint-disable-next-line no-console
-    console.log('[VipPurchase][TON][USDT] walletPay request', walletPayPayload);
-
-    // 4) 上报链上交易（txHash = 64 位 hex；后端 tx_hash 字段放不下 BOC）
+    // 4) 上报链上交易并创建订单（walletPay）
+    logTonPaymentTrace('order:create:start', { pricingId, chain: 'TON' });
     const payRes = await walletPay(walletPayPayload);
     const payData = payRes?.data ?? payRes ?? {};
-    const orderNo = payData.orderNo;
+    const orderNo = payData.orderNo || payData.order_no;
     if (!orderNo) {
+      logTonPaymentTrace('order:create:failed', { payData, code: payRes?.code });
+      endTonPaymentTrace('flow:abort', { reason: 'walletPay_no_orderNo' });
       // eslint-disable-next-line no-console
       console.error('[VipPurchase][TON][USDT] walletPay 未返回 orderNo', { payData, meta });
       return;
     }
 
+    logTonPaymentTrace('order:create:ok', { orderNo });
+
     // 5) 轮询订单状态，等待后端链上核验完成
     await pollOrderStatus(orderNo, { tabKey, planTitle: plan?.title });
   } catch (e) {
+    logTonPaymentTrace('flow:error', { message: e?.message || String(e) });
+    endTonPaymentTrace('flow:error', { message: e?.message || String(e) });
     // eslint-disable-next-line no-console
     console.error('[VipPurchase][TON][USDT] sendTransaction/walletPay failed', e, { pricingId, meta });
   }
