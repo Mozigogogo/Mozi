@@ -6,7 +6,11 @@ import { confirm } from '@/components/Modal/confirm';
 import { waitForTelegramWebAppReady } from '@/hooks/useTelegramWebApp';
 import { encodeFunctionData, getAddress, parseUnits } from 'viem';
 import { TELEGRAM_PAYMENT_CONFIG, TG_PAYMENT_METHODS } from './telegramPaymentConfig';
-import { isTonSignedBoc, resolveTonTxHashFromSendResult } from './resolveTonTxHash';
+import {
+  isTonSignedBoc,
+  resolveTonTxHashFromSendResult,
+  validateTonTxHashForWalletPay,
+} from './resolveTonTxHash';
 const ARBITRUM_CHAIN_ID = 42161;
 const ARBITRUM_ORDER_CHAIN = 'ARBITRUM';
 
@@ -1182,32 +1186,56 @@ async function startTonPayment({ pricingId, tabKey, plan, meta }) {
       pricingId,
     });
     const res = await window.__tonSendTransaction(tx);
-    const txHash = await resolveTonTxHashFromSendResult(res);
-    const rawBoc = res?.boc || (isTonSignedBoc(res?.result) ? res.result : null);
+    const rawBoc =
+      (res && typeof res === 'object' && typeof res.boc === 'string' && res.boc) ||
+      (res && typeof res === 'object' && isTonSignedBoc(res.result) ? res.result : null) ||
+      (typeof res === 'string' && isTonSignedBoc(res) ? res : null);
+
     // eslint-disable-next-line no-console
-    console.log('[VipPurchase][TON][USDT] sendTransaction result', {
-      hasTxHash: !!txHash,
-      txHashPreview: txHash ? `${txHash.slice(0, 8)}…${txHash.slice(-8)}` : null,
-      hadBoc: !!rawBoc,
+    console.log('[VipPurchase][TON][USDT] sendTransaction raw', {
+      resType: typeof res,
       resKeys: res && typeof res === 'object' ? Object.keys(res) : [],
+      rawBocLen: rawBoc ? String(rawBoc).length : 0,
     });
-    if (!txHash) {
+
+    const txHashResolved = await resolveTonTxHashFromSendResult(res);
+    const txCheck = validateTonTxHashForWalletPay(txHashResolved);
+
+    // eslint-disable-next-line no-console
+    console.log('[VipPurchase][TON][USDT] txHash check', {
+      resolvedLen: txHashResolved ? String(txHashResolved).length : 0,
+      resolvedIsBoc: isTonSignedBoc(txHashResolved),
+      valid: txCheck.ok,
+      reason: txCheck.ok ? null : txCheck.reason,
+      txHash: txCheck.ok ? txCheck.txHash : null,
+      explorerUrl: txCheck.ok ? `https://tonviewer.com/transaction/${txCheck.txHash}` : null,
+    });
+
+    if (!txCheck.ok) {
       // eslint-disable-next-line no-console
-      console.error('[VipPurchase][TON][USDT] 无法从 TonConnect 结果解析链上 txHash，拒绝上报 BOC', {
+      console.error('[VipPurchase][TON][USDT] txHash 无效，拒绝 walletPay（勿传 te6 BOC）', {
+        reason: txCheck.reason,
+        detail: txCheck.detail,
+        rawBocLen: rawBoc ? String(rawBoc).length : 0,
         res,
         meta,
       });
       return;
     }
 
-    // 4) 上报链上交易并由后端创建/关联订单（txHash 须为 64 位 hex，不是 te6 BOC）
-    const payRes = await walletPay({
+    const walletPayPayload = {
       pricingId,
       fromAddress: connectedTonAddress,
       chain: 'TON',
-      txHash,
+      txHash: txCheck.txHash,
       token: 'USDT_TON',
-    });
+    };
+
+    // eslint-disable-next-line no-console
+    console.log('[VipPurchase][TON][USDT] walletPay request', walletPayPayload);
+
+    // 4) 上报链上交易（txHash = 64 位 hex；后端 tx_hash 字段放不下 BOC）
+    const payRes = await walletPay(walletPayPayload);
     const payData = payRes?.data ?? payRes ?? {};
     const orderNo = payData.orderNo;
     if (!orderNo) {

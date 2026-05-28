@@ -16,7 +16,20 @@ function TonBridge() {
 
     window.__openTonConnectModal = async () => tonConnectUI?.openModal?.();
     window.__disconnectTon = async () => tonConnectUI?.disconnect?.();
-    window.__tonSendTransaction = async (tx) => tonConnectUI?.sendTransaction?.(tx);
+    window.__tonSendTransaction = async (tx) => {
+      const res = await tonConnectUI?.sendTransaction?.(tx);
+      // eslint-disable-next-line no-console
+      console.log('[TonConnect][sendTransaction] raw response', {
+        type: typeof res,
+        keys: res && typeof res === 'object' ? Object.keys(res) : [],
+        resultType: typeof res?.result,
+        resultIsBoc:
+          typeof res?.result === 'string' ? /^te6/i.test(String(res.result).trim()) : false,
+        resultLen: typeof res?.result === 'string' ? res.result.length : 0,
+        bocLen: typeof res?.boc === 'string' ? res.boc.length : 0,
+      });
+      return res;
+    };
     window.__getTonWalletAddress = () =>
       tonWallet?.account?.address ||
       tonConnectUI?.wallet?.account?.address ||

@@ -4,6 +4,7 @@ const { API_BASE_URL, PROJECT_ID, ROBOT_BACKEND_URL, BIGORDER_CHAT_API } = requi
 const isSentryEnabled = String(process.env.NEXT_PUBLIC_ENABLE_SENTRY || '').toLowerCase() === 'true';
 
 const nextConfig = withLess({
+  transpilePackages: ['@ton/ton', '@ton/core'],
   reactStrictMode: true,
   // 仅用于线上排查：开启浏览器 sourcemap，便于从 chunk 调用栈映射回 src/ 源码。
   // 排查完成后建议关闭，避免暴露源码细节。

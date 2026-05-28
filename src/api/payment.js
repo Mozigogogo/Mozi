@@ -20,6 +20,24 @@ export const getWalletPaymentInfo = () => {
  * @returns {Promise<{ orderNo: string, message?: string }>}
  */
 export const walletPay = (data) => {
+  const txHash = data?.txHash;
+  if (typeof txHash === 'string' && /^te6/i.test(txHash.trim())) {
+    const errMsg = '[walletPay] txHash 不能是 BOC(te6...)，需 64 位 hex';
+    // eslint-disable-next-line no-console
+    console.error(errMsg, { len: txHash.length, chain: data?.chain, pricingId: data?.pricingId });
+    return Promise.reject(new Error(errMsg));
+  }
+  if (data?.chain === 'TON' && typeof txHash === 'string' && txHash.trim()) {
+    const hex = txHash.trim().replace(/^0x/i, '');
+    if (!/^[0-9a-f]{64}$/i.test(hex)) {
+      // eslint-disable-next-line no-console
+      console.warn('[walletPay] TON txHash 非 64 位 hex', {
+        len: txHash.length,
+        head: txHash.slice(0, 24),
+        pricingId: data?.pricingId,
+      });
+    }
+  }
   return request({
     url: Interface.PAYMENT_WALLET_PAY,
     method: 'POST',
