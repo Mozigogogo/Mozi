@@ -5,33 +5,7 @@ import { getOrderStatus, getWalletPaymentInfo, walletPay } from '@/api/payment';
 import { confirm } from '@/components/Modal/confirm';
 import { waitForTelegramWebAppReady } from '@/hooks/useTelegramWebApp';
 import { encodeFunctionData, getAddress, parseUnits } from 'viem';
-
-const TG_PAYMENT_METHODS = {
-  STARS: 'STARS',
-  TON: 'TON',
-  ARBITRUM: 'ARBITRUM',
-};
-
-const TG_PAYMENT_METHOD_ENV_KEY = 'NEXT_PUBLIC_TG_PAYMENT_METHOD';
-
-function resolveTelegramDefaultMethod() {
-  const fromEnv = String(process.env[TG_PAYMENT_METHOD_ENV_KEY] || '')
-    .trim()
-    .toUpperCase();
-  if (fromEnv === TG_PAYMENT_METHODS.STARS || fromEnv === TG_PAYMENT_METHODS.TON) {
-    return fromEnv;
-  }
-  return TG_PAYMENT_METHODS.STARS;
-}
-
-// TG 端支付策略：
-// - 三种方式都保留在代码里（STARS / TON / ARBITRUM）
-// - TG 环境默认支付方式由 NEXT_PUBLIC_TG_PAYMENT_METHOD 控制（STARS / TON）
-// - STARS / ARBITRUM 分支保留（后续可随时打开）
-const TELEGRAM_PAYMENT_CONFIG = {
-  defaultMethod: resolveTelegramDefaultMethod(),
-  hiddenMethods: [TG_PAYMENT_METHODS.TON, TG_PAYMENT_METHODS.ARBITRUM],
-};
+import { TELEGRAM_PAYMENT_CONFIG, TG_PAYMENT_METHODS } from './telegramPaymentConfig';
 const ARBITRUM_CHAIN_ID = 42161;
 const ARBITRUM_ORDER_CHAIN = 'ARBITRUM';
 
@@ -1251,7 +1225,7 @@ async function chooseTelegramPaymentMethod() {
 
 /**
  * 统一的 VIP 购买入口：
- * - TG 环境：走 Stars 支付（createStarsInvoice + openInvoice + 查询订单状态）
+ * - TG 环境：默认 TON USDT（TELEGRAM_PAYMENT_CONFIG）；可 env 切回 Stars
  * - 非 TG 环境：走 RainbowKit 钱包支付
  */
 export async function startVipPurchase({ tabKey, plan, payload, preferredMethod }) {
