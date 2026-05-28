@@ -25,7 +25,7 @@ import ExchangePickerModal from '@/components/ExchangePickerModal';
 import { forceBlurAndResetViewport } from '@/utils/iosViewportFix';
 import { safeBack } from '@/utils/navigation';
 import { fetchUserDataInfoOnce } from '@/utils/postLogin';
-import { consumePcAiFromSearch } from '@/utils/pcAiFromSearch';
+import { consumePcAiFromSearch, consumePcAiNav } from '@/utils/pcAiFromSearch';
 import styles from './page.module.less';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import AiRobotUpgradePillButton from '@/components/AiRobotUpgradePillButton';
@@ -487,6 +487,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   const lastUserMessageRef = useRef(null); // 用于“重新生成”
   const historyLoadedRef = useRef(false); // 防止重复加载历史记录
   const pcSearchAutoSentRef = useRef(false);
+  const pcNavAutoSentRef = useRef(false);
   const handleSendRef = useRef(null);
   const abortControllerRef = useRef(null);
   const currentActionCodeRef = useRef(null); // 本轮对话对应的积分扣除动作
@@ -1079,10 +1080,29 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
   handleSendRef.current = handleSend;
 
+  // 发现页行情表等：跳转 /ai 并自动切换模型、发送首条提问
+  useEffect(() => {
+    if (!mounted || isBootstrappingUserData) return;
+    if (pcNavAutoSentRef.current) return;
+
+    const payload = consumePcAiNav();
+    if (!payload?.message) return;
+
+    pcNavAutoSentRef.current = true;
+    pcSearchAutoSentRef.current = true;
+    if (payload.model) setSelectedModel(payload.model);
+
+    const timer = window.setTimeout(() => {
+      handleSendRef.current?.(payload.message);
+    }, 350);
+
+    return () => window.clearTimeout(timer);
+  }, [mounted, isBootstrappingUserData]);
+
   // PC 顶栏：搜索框输入币种后点「AI问答」→ 自动以「{币种}的综合分析」发起对话
   useEffect(() => {
     if (!mounted || !isPC || isBootstrappingUserData) return;
-    if (pcSearchAutoSentRef.current) return;
+    if (pcSearchAutoSentRef.current || pcNavAutoSentRef.current) return;
 
     const payload = consumePcAiFromSearch();
     if (!payload?.symbol) return;
@@ -1388,14 +1408,21 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     }
     return (
       <span className={styles.modeIconWrap}>
-        <Image
-          src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/Order_situation.svg"
-          alt=""
-          width={12}
-          height={12}
-          className={styles.modeIcon}
+        <svg
+          className={`${styles.modeIcon} ${styles.modeIconBigOrder}`}
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
           aria-hidden
-        />
+        >
+          <path
+            d="M3 12h3l2-5 3 10 2-8 3 6h4"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
       </span>
     );
   };

@@ -17,10 +17,53 @@ import PCDailyCard from '../PCDailyCard';
 import ShareAiChatModal from '../ShareAiChatModal';
 import { isEmpty } from 'lodash';
 import { normalizePcFindRankType } from '@/utils/pcFindNavigation';
+import { savePcAiNav } from '@/utils/pcAiFromSearch';
 import styles from './index.module.less';
 
 const RANK_SHARE_ICON = '/icons/pc/share_toolbar.svg';
 const RANK_COMMENT_ICON = '/icons/pc/comment_toolbar.svg';
+
+/** 行情表 7 列宽比例（与表头 grid 一致；后两列为操作按钮，略窄） */
+const MARKET_TABLE_COL_WIDTHS = ['17.5%', '17.5%', '17.5%', '14.25%', '14.25%', '9.5%', '9.5%'];
+const MARKET_TABLE_COL_TEMPLATE = MARKET_TABLE_COL_WIDTHS.join(' ');
+
+const MARKET_TRADING_RADAR_ICON =
+  'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/trading_radar.svg';
+
+/** 大单侦测专用图标（与详情页 K 线「大单侦测」一致，使用 currentColor 保证绿色清晰） */
+function BigOrderDetectIcon({ className }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+    >
+      <path
+        d="M3 12h3l2-5 3 10 2-8 3 6h4"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/** 交易雷达专用图标（与详情页一致图形，mask 着色保证绿色清晰） */
+function TradingRadarIcon({ className }) {
+  return (
+    <span
+      className={className}
+      style={{
+        WebkitMaskImage: `url(${MARKET_TRADING_RADAR_ICON})`,
+        maskImage: `url(${MARKET_TRADING_RADAR_ICON})`,
+      }}
+      aria-hidden
+    />
+  );
+}
 
 /** 公告日历视图调试：浏览器控制台过滤 `[PCFindCalendar]` */
 const dbgCalendar = (...args) => {
@@ -155,13 +198,38 @@ export default function PCFindContent() {
     }
   }, [searchParams]);
 
+  const handleBigOrderDetect = useCallback(
+    (symbol, e) => {
+      e?.stopPropagation?.();
+      const coin = String(symbol || '').trim().toUpperCase();
+      if (!coin) return;
+      savePcAiNav({ model: 'bigorder', message: `${coin}最近的大单` });
+      router.push('/ai');
+    },
+    [router]
+  );
+
+  const handleTradingRadar = useCallback(
+    (symbol, e) => {
+      e?.stopPropagation?.();
+      const coin = String(symbol || '').trim().toUpperCase();
+      if (!coin) return;
+      savePcAiNav({
+        model: 'analyze',
+        message: `帮我分析一下目前的 ${coin} 行情趋势，以及是否有大单异动。`,
+      });
+      router.push('/ai');
+    },
+    [router]
+  );
+
   // 表格列配置 - 行情
   const marketColumns = [
     {
       title: t('home.columns.symbol'),
       dataIndex: 'symbol',
       key: 'symbol',
-      width: 150,
+      width: MARKET_TABLE_COL_WIDTHS[0],
       render: (text, record) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <img 
@@ -182,21 +250,21 @@ export default function PCFindContent() {
       dataIndex: 'currentPrice',
       key: 'currentPrice',
       align: 'right',
-      width: 150,
+      width: MARKET_TABLE_COL_WIDTHS[1],
     },
     {
       title: t('discover.columns.symbolMarketCap'),
       dataIndex: 'totalVolume',
       key: 'totalVolume',
       align: 'right',
-      width: 150,
+      width: MARKET_TABLE_COL_WIDTHS[2],
     },
     {
       title: t('discover.columns.change24hValue'),
       dataIndex: 'priceChange24h',
       key: 'priceChange24h',
       align: 'right',
-      width: 120,
+      width: MARKET_TABLE_COL_WIDTHS[3],
       render: (value) => {
         const isNegative = value?.toString().includes('-');
         return (
@@ -217,7 +285,7 @@ export default function PCFindContent() {
       dataIndex: 'priceChangePercentage24h',
       key: 'priceChangePercentage24h',
       align: 'right',
-      width: 120,
+      width: MARKET_TABLE_COL_WIDTHS[4],
       render: (value) => {
         const isNegative = value?.toString().includes('-');
         const display =
@@ -243,6 +311,46 @@ export default function PCFindContent() {
           </div>
         );
       },
+    },
+    {
+      title: t('addAlarm.bigOrderDetect'),
+      key: 'bigOrderDetect',
+      align: 'center',
+      width: MARKET_TABLE_COL_WIDTHS[5],
+      onHeaderCell: () => ({ style: { textAlign: 'center' } }),
+      onCell: () => ({ style: { textAlign: 'center' } }),
+      render: (_, record) => (
+        <div className={styles.marketActionCell}>
+          <button
+            type="button"
+            className={styles.marketActionBtn}
+            onClick={(e) => handleBigOrderDetect(record.symbol, e)}
+          >
+            <BigOrderDetectIcon className={styles.marketActionBtnIconBigOrder} />
+            <span>{t('addAlarm.bigOrderDetect')}</span>
+          </button>
+        </div>
+      ),
+    },
+    {
+      title: t('pcCoinDetail.tradingRadar'),
+      key: 'tradingRadar',
+      align: 'center',
+      width: MARKET_TABLE_COL_WIDTHS[6],
+      onHeaderCell: () => ({ style: { textAlign: 'center' } }),
+      onCell: () => ({ style: { textAlign: 'center' } }),
+      render: (_, record) => (
+        <div className={styles.marketActionCell}>
+          <button
+            type="button"
+            className={styles.marketActionBtn}
+            onClick={(e) => handleTradingRadar(record.symbol, e)}
+          >
+            <TradingRadarIcon className={styles.marketActionBtnIconRadar} />
+            <span>{t('pcCoinDetail.tradingRadar')}</span>
+          </button>
+        </div>
+      ),
     },
   ];
 
@@ -847,16 +955,6 @@ export default function PCFindContent() {
 
 
 
-      {activeTab === 'market' && !isCalendarViewOpen && (
-        <div className={styles.tableHeader}>
-          <div className={styles.headerCell}>{t('home.columns.symbol')}</div>
-          <div className={styles.headerCell}>{t('home.columns.lastPrice')}</div>
-          <div className={styles.headerCell}>{t('discover.columns.symbolMarketCap')}</div>
-          <div className={styles.headerCell}>{t('discover.columns.change24hValue')}</div>
-          <div className={styles.headerCell}>{t('discover.columns.change24hPercent')}</div>
-        </div>
-      )}
-
       <Card
         className={`${styles.contentCard} ${activeTab === 'market' ? styles.marketContentCard : ''} ${
           isCalendarViewOpen ? styles.marketContentCardCalendar : ''
@@ -1241,16 +1339,53 @@ export default function PCFindContent() {
         ) : (
           <Spin spinning={loading}>
             {activeTab === 'market' && !isCalendarViewOpen && (
-              <Table
-                key="market-table"
-                columns={marketColumns}
-                dataSource={marketData}
-                pagination={{ pageSize: 20 }}
-                onRow={(record) => ({
-                  onClick: () => router.push(`/detail?symbol=${record.symbol}`),
-                  style: { cursor: 'pointer' },
-                })}
-              />
+              <>
+                <div
+                  className={styles.marketTableHeader}
+                  style={{ gridTemplateColumns: MARKET_TABLE_COL_TEMPLATE }}
+                >
+                  <div className={styles.marketTableHeaderCell}>{t('home.columns.symbol')}</div>
+                  <div className={`${styles.marketTableHeaderCell} ${styles.marketTableHeaderCellRight}`}>
+                    {t('home.columns.lastPrice')}
+                  </div>
+                  <div className={`${styles.marketTableHeaderCell} ${styles.marketTableHeaderCellRight}`}>
+                    {t('discover.columns.symbolMarketCap')}
+                  </div>
+                  <div className={`${styles.marketTableHeaderCell} ${styles.marketTableHeaderCellRight}`}>
+                    {t('discover.columns.change24hValue')}
+                  </div>
+                  <div
+                    className={`${styles.marketTableHeaderCell} ${styles.marketTableHeaderCellRight} ${styles.marketTableHeaderCellShiftRight}`}
+                  >
+                    {t('discover.columns.change24hPercent')}
+                  </div>
+                  <div
+                    className={`${styles.marketTableHeaderCell} ${styles.marketTableHeaderCellCenter} ${styles.marketTableHeaderCellShiftRight}`}
+                  >
+                    {t('addAlarm.bigOrderDetect')}
+                  </div>
+                  <div
+                    className={`${styles.marketTableHeaderCell} ${styles.marketTableHeaderCellCenter} ${styles.marketTableHeaderCellShiftRight}`}
+                  >
+                    {t('pcCoinDetail.tradingRadar')}
+                  </div>
+                </div>
+                <div className={styles.marketTableBody}>
+                  <Table
+                    key="market-table"
+                    className={styles.marketTable}
+                    tableLayout="fixed"
+                    showHeader={false}
+                    columns={marketColumns}
+                    dataSource={marketData}
+                    pagination={{ pageSize: 20 }}
+                    onRow={(record) => ({
+                      onClick: () => router.push(`/detail?symbol=${record.symbol}`),
+                      style: { cursor: 'pointer' },
+                    })}
+                  />
+                </div>
+              </>
             )}
 
             {activeTab === 'self' && (
