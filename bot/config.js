@@ -12,7 +12,7 @@ const API_BASE_URL = (
 const BOT_USERNAME = (process.env.BOT_USERNAME || 'Moziinovations_bot').replace(/^@/, '');
 
 const TG_COMMUNITY_URL = 'https://t.me/MoziInnovations';
-const TWITTER_URL = 'https://x.com/Innovation56171';
+const TWITTER_URL = 'https://x.com/moziinnovation';
 
 const ALERT_CARD_IMAGE =
   process.env.ALERT_CARD_IMAGE ||
