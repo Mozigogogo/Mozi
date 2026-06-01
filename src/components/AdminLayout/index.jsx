@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Layout, Menu, Button, ConfigProvider, theme } from 'antd';
+import { Layout, Menu, Button, ConfigProvider, theme, Drawer, Grid } from 'antd';
 import {
   UserOutlined,
   DollarOutlined,
   DashboardOutlined,
   LogoutOutlined,
+  MenuOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
 } from '@ant-design/icons';
@@ -15,6 +16,7 @@ import zhCN from 'antd/locale/zh_CN';
 import { clearAdminSession, getAdminInfo, isAdminLoggedIn } from '@/api/admin';
 
 const { Header, Sider, Content } = Layout;
+const { useBreakpoint } = Grid;
 
 const MENU_ITEMS = [
   { key: '/admin', icon: <DashboardOutlined />, label: '概览' },
@@ -28,10 +30,23 @@ const PAGE_TITLES = {
   '/admin/commission': '分佣管理',
 };
 
+function AdminLogo({ collapsed }) {
+  return (
+    <div className="pc-admin-shell__logo">
+      <span className="pc-admin-shell__logo-icon">M</span>
+      {!collapsed && <span className="pc-admin-shell__logo-text">Mozi 后台</span>}
+    </div>
+  );
+}
+
 export default function AdminLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
+  const screens = useBreakpoint();
+  const isMobile = screens.md === false;
+
   const [collapsed, setCollapsed] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [adminInfo, setAdminInfo] = useState(null);
   const [ready, setReady] = useState(false);
 
@@ -50,6 +65,16 @@ export default function AdminLayout({ children }) {
     setReady(true);
   }, [isLoginPage, router]);
 
+  useEffect(() => {
+    if (!isMobile) {
+      setDrawerOpen(false);
+    }
+  }, [isMobile]);
+
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [pathname]);
+
   const selectedKey = useMemo(() => {
     if (pathname === '/admin') return ['/admin'];
     const matched = MENU_ITEMS.find(
@@ -64,6 +89,38 @@ export default function AdminLayout({ children }) {
     clearAdminSession();
     router.replace('/admin/login');
   };
+
+  const handleMenuClick = ({ key }) => {
+    router.push(key);
+    if (isMobile) {
+      setDrawerOpen(false);
+    }
+  };
+
+  const handleToggleNav = () => {
+    if (isMobile) {
+      setDrawerOpen(true);
+      return;
+    }
+    setCollapsed((v) => !v);
+  };
+
+  const menu = (
+    <Menu
+      className="pc-admin-shell__menu"
+      mode="inline"
+      selectedKeys={selectedKey}
+      items={MENU_ITEMS}
+      onClick={handleMenuClick}
+    />
+  );
+
+  const navContent = (showFullLogo) => (
+    <>
+      <AdminLogo collapsed={!showFullLogo} />
+      {menu}
+    </>
+  );
 
   if (isLoginPage) {
     return children;
@@ -81,7 +138,7 @@ export default function AdminLayout({ children }) {
           colorPrimary: '#11B787',
           borderRadius: 6,
           fontSize: 14,
-          controlHeight: 32,
+          controlHeight: isMobile ? 40 : 32,
         },
         components: {
           Menu: {
@@ -95,44 +152,68 @@ export default function AdminLayout({ children }) {
         algorithm: theme.defaultAlgorithm,
       }}
     >
-      <Layout className="pc-admin-shell">
-        <Sider
-          trigger={null}
-          collapsible
-          collapsed={collapsed}
-          width={220}
-          collapsedWidth={80}
-          theme="light"
-        >
-          <div className="pc-admin-shell__logo">
-            <span className="pc-admin-shell__logo-icon">M</span>
-            {!collapsed && <span>Mozi 后台</span>}
-          </div>
-          <Menu
-            className="pc-admin-shell__menu"
-            mode="inline"
-            selectedKeys={selectedKey}
-            items={MENU_ITEMS}
-            onClick={({ key }) => router.push(key)}
-          />
-        </Sider>
+      <Layout
+        className={`pc-admin-shell${isMobile ? ' pc-admin-shell--mobile' : ''}`}
+      >
+        {!isMobile && (
+          <Sider
+            className="pc-admin-shell__sider"
+            trigger={null}
+            collapsible
+            collapsed={collapsed}
+            width={220}
+            collapsedWidth={80}
+            theme="light"
+          >
+            {navContent(!collapsed)}
+          </Sider>
+        )}
+
+        {isMobile && (
+          <Drawer
+            className="pc-admin-shell__drawer"
+            title={null}
+            placement="left"
+            width={280}
+            open={drawerOpen}
+            onClose={() => setDrawerOpen(false)}
+            styles={{ body: { padding: 0 } }}
+          >
+            {navContent(true)}
+          </Drawer>
+        )}
 
         <Layout className="pc-admin-shell__main">
           <Header className="pc-admin-shell__header">
             <div className="pc-admin-shell__header-left">
               <Button
                 type="text"
-                icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-                onClick={() => setCollapsed(!collapsed)}
+                className="pc-admin-shell__menu-btn"
+                icon={
+                  isMobile ? (
+                    <MenuOutlined />
+                  ) : collapsed ? (
+                    <MenuUnfoldOutlined />
+                  ) : (
+                    <MenuFoldOutlined />
+                  )
+                }
+                onClick={handleToggleNav}
+                aria-label={isMobile ? '打开菜单' : collapsed ? '展开侧边栏' : '收起侧边栏'}
               />
               <h1 className="pc-admin-shell__header-title">{pageTitle}</h1>
             </div>
             <div className="pc-admin-shell__header-right">
               <span className="pc-admin-shell__admin-name">
-                {adminInfo?.username || adminInfo?.nickName || '管理员'}
+                {adminInfo?.username || adminInfo?.nickName || adminInfo?.nickname || '管理员'}
               </span>
-              <Button type="text" icon={<LogoutOutlined />} onClick={handleLogout}>
-                退出
+              <Button
+                type="text"
+                className="pc-admin-shell__logout-btn"
+                icon={<LogoutOutlined />}
+                onClick={handleLogout}
+              >
+                <span className="pc-admin-shell__logout-text">退出</span>
               </Button>
             </div>
           </Header>

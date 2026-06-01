@@ -78,8 +78,7 @@ export default function AdminCommissionPage() {
     {
       title: '操作',
       key: 'action',
-      width: 100,
-      fixed: 'right',
+      width: 88,
       render: () => (
         <Popconfirm title="确认结算？" onConfirm={notifyApiPending}>
           <Button type="link" size="small" icon={<CheckOutlined />}>
@@ -113,31 +112,32 @@ export default function AdminCommissionPage() {
                     批量结算 (0)
                   </Button>
                 </div>
-                <Table
-                  rowKey="id"
-                  columns={recordColumns}
-                  dataSource={records}
-                  loading={false}
-                  style={{ width: '100%' }}
-                  tableLayout="fixed"
-                  locale={{ emptyText: '暂无数据（接口未对接）' }}
-                  rowSelection={{
-                    selectedRowKeys,
-                    onChange: setSelectedRowKeys,
-                  }}
-                  pagination={{
-                    current: page,
-                    pageSize,
-                    total: 0,
-                    showSizeChanger: true,
-                    showTotal: () => '共 0 条',
-                    onChange: (p, ps) => {
-                      setPage(p);
-                      setPageSize(ps);
-                      setSelectedRowKeys([]);
-                    },
-                  }}
-                />
+                <div className="pc-admin-table-wrap">
+                  <Table
+                    rowKey="id"
+                    columns={recordColumns}
+                    dataSource={records}
+                    loading={false}
+                    scroll={{ x: 700 }}
+                    locale={{ emptyText: '暂无数据（接口未对接）' }}
+                    rowSelection={{
+                      selectedRowKeys,
+                      onChange: setSelectedRowKeys,
+                    }}
+                    pagination={{
+                      current: page,
+                      pageSize,
+                      total: 0,
+                      showSizeChanger: true,
+                      showTotal: () => '共 0 条',
+                      onChange: (p, ps) => {
+                        setPage(p);
+                        setPageSize(ps);
+                        setSelectedRowKeys([]);
+                      },
+                    }}
+                  />
+                </div>
               </div>
             ),
           },

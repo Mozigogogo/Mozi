@@ -10,9 +10,18 @@ html:has(.pc-admin-shell) body {
 
 .pc-admin-shell {
   min-height: 100vh;
-  min-width: 1024px;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
   background: #f5f7fa;
   font-size: 14px;
+  box-sizing: border-box;
+}
+
+@media (min-width: 992px) {
+  .pc-admin-shell {
+    min-width: 1024px;
+  }
 }
 
 .pc-admin-shell .ant-layout-sider {
@@ -50,6 +59,12 @@ html:has(.pc-admin-shell) body {
   white-space: nowrap;
   overflow: hidden;
   flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.pc-admin-shell__logo-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .pc-admin-shell__logo-icon {
@@ -119,6 +134,8 @@ html:has(.pc-admin-shell) body {
   display: flex;
   align-items: center;
   gap: 16px;
+  flex: 1;
+  min-width: 0;
 }
 
 .pc-admin-shell__header-title {
@@ -127,6 +144,9 @@ html:has(.pc-admin-shell) body {
   color: #1a1a1a;
   line-height: 1.4;
   margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .pc-admin-shell__header-right {
@@ -237,26 +257,32 @@ html:has(.pc-admin-shell) body {
   margin-bottom: 16px;
 }
 
+/* 表格横向滚动容器 */
+.pc-admin-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .pc-admin-shell .ant-table-wrapper {
   width: 100%;
+  max-width: 100%;
 }
 
 .pc-admin-shell .ant-table {
   font-size: 14px !important;
-  width: 100% !important;
 }
 
+/* 不要强制 table 宽度 100%，否则会压扁 scroll.x 列宽导致表头竖排 */
 .pc-admin-shell .ant-table-content > table {
-  width: 100% !important;
-  min-width: 100% !important;
+  width: max-content;
+  min-width: 100%;
 }
 
-.pc-admin-shell .ant-table-placeholder {
-  width: 100% !important;
-}
-
-.pc-admin-shell .ant-table-placeholder .ant-table-cell {
-  width: 100% !important;
+.pc-admin-shell .ant-table-thead > tr > th,
+.pc-admin-shell .ant-table-tbody > tr > td {
+  white-space: nowrap;
 }
 
 .pc-admin-shell .ant-empty {
@@ -282,7 +308,6 @@ html:has(.pc-admin-shell) body {
   font-size: 14px !important;
   padding: 12px 16px !important;
 }
-
 .pc-admin-shell .ant-input,
 .pc-admin-shell .ant-select-selector,
 .pc-admin-shell .ant-btn {
@@ -299,13 +324,115 @@ html:has(.pc-admin-shell) body {
   }
 }
 
-@media (max-width: 991px) {
-  .pc-admin-shell {
-    min-width: 0;
+/* 移动端：侧边栏改为抽屉，主内容占满屏宽 */
+@media (max-width: 767px) {
+  html:has(.pc-admin-shell),
+  html:has(.pc-admin-shell) body {
+    overflow-x: hidden;
+  }
+
+  .pc-admin-shell--mobile.ant-layout {
+    flex-direction: column;
+  }
+
+  .pc-admin-shell--mobile .pc-admin-shell__main {
+    width: 100%;
+    flex: 1 1 auto;
+  }
+
+  .pc-admin-shell__header {
+    height: 56px !important;
+    line-height: 56px !important;
+    padding: 0 12px !important;
+  }
+
+  .pc-admin-shell__header-left {
+    gap: 8px;
+  }
+
+  .pc-admin-shell__header-title {
+    font-size: 16px;
+  }
+
+  .pc-admin-shell__header-right {
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .pc-admin-shell__admin-name {
+    max-width: 72px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+  }
+
+  .pc-admin-shell__logout-text {
+    display: none;
+  }
+
+  .pc-admin-shell__content,
+  .pc-admin-shell .ant-layout-content {
+    padding: 12px !important;
+  }
+
+  .pc-admin-shell__content-inner {
+    padding: 16px;
+    border-radius: 6px;
+    min-height: calc(100vh - 56px - 24px);
   }
 
   .pc-admin-stats {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .pc-admin-stat-card {
+    padding: 16px;
+  }
+
+  .pc-admin-stat-card__value {
+    font-size: 22px;
+  }
+
+  .pc-admin-alert {
+    margin-bottom: 16px;
+  }
+
+  .pc-admin-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .pc-admin-toolbar .ant-input,
+  .pc-admin-toolbar .ant-select {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .pc-admin-toolbar .ant-btn {
+    width: 100%;
+  }
+
+  .pc-admin-shell .ant-table-wrapper,
+  .pc-admin-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pc-admin-shell .ant-tabs-nav {
+    margin-bottom: 12px !important;
+  }
+
+  .pc-admin-shell .ant-tabs-tab {
+    padding: 8px 12px !important;
+  }
+}
+
+@media (max-width: 991px) and (min-width: 768px) {
+  .pc-admin-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .pc-admin-shell__content,
@@ -316,4 +443,15 @@ html:has(.pc-admin-shell) body {
   .pc-admin-shell__content-inner {
     padding: 16px;
   }
+}
+
+.pc-admin-shell__drawer .ant-drawer-body {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.pc-admin-shell__drawer .pc-admin-shell__menu {
+  flex: 1;
 }

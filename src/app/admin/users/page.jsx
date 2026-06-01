@@ -59,24 +59,31 @@ export default function AdminUsersPage() {
       title: '昵称',
       dataIndex: 'nickName',
       key: 'nickName',
+      width: 120,
+      ellipsis: true,
       render: (_, record) => record.nickName || record.nickname || '-',
     },
     {
       title: '邮箱',
       dataIndex: 'email',
       key: 'email',
+      width: 180,
+      ellipsis: true,
       render: (v) => v || '-',
     },
     {
       title: '邀请码',
       dataIndex: 'inviteCode',
       key: 'inviteCode',
+      width: 100,
+      ellipsis: true,
       render: (v) => v || '-',
     },
     {
       title: '会员等级',
       dataIndex: 'planCode',
       key: 'planCode',
+      width: 100,
       render: (_, record) => record.planCode || record.memberTier || 'FREE',
     },
     {
@@ -99,8 +106,7 @@ export default function AdminUsersPage() {
     {
       title: '操作',
       key: 'action',
-      width: 160,
-      fixed: 'right',
+      width: 140,
       render: (_, record) => {
         const isActive = normalizeStatus(record.status) === 1;
         return (
@@ -161,14 +167,14 @@ export default function AdminUsersPage() {
         </Button>
       </div>
 
-      <Table
-        rowKey="id"
-        columns={columns}
-        dataSource={list}
-        loading={false}
-        style={{ width: '100%' }}
-        tableLayout="fixed"
-        locale={{ emptyText: '暂无数据（接口未对接）' }}
+      <div className="pc-admin-table-wrap">
+        <Table
+          rowKey="id"
+          columns={columns}
+          dataSource={list}
+          loading={false}
+          scroll={{ x: 1110 }}
+          locale={{ emptyText: '暂无数据（接口未对接）' }}
         pagination={{
           current: page,
           pageSize,
@@ -180,7 +186,8 @@ export default function AdminUsersPage() {
             setPageSize(ps);
           },
         }}
-      />
+        />
+      </div>
 
       <Modal
         title="用户详情"
