@@ -10,6 +10,8 @@ import {
   MenuOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  CrownOutlined,
+  WalletOutlined,
 } from '@ant-design/icons';
 import { usePathname, useRouter } from 'next/navigation';
 import zhCN from 'antd/locale/zh_CN';
@@ -20,14 +22,18 @@ const { useBreakpoint } = Grid;
 
 const MENU_ITEMS = [
   { key: '/admin', icon: <DashboardOutlined />, label: '概览' },
+  { key: '/admin/user-level', icon: <CrownOutlined />, label: '用户等级' },
   { key: '/admin/users', icon: <UserOutlined />, label: '用户管理' },
   { key: '/admin/commission', icon: <DollarOutlined />, label: '分佣管理' },
+  { key: '/admin/withdraw', icon: <WalletOutlined />, label: '提现申请' },
 ];
 
 const PAGE_TITLES = {
   '/admin': '概览',
   '/admin/users': '用户管理',
+  '/admin/user-level': '用户等级',
   '/admin/commission': '分佣管理',
+  '/admin/withdraw': '提现申请',
 };
 
 function AdminLogo({ collapsed }) {
@@ -77,9 +83,10 @@ export default function AdminLayout({ children }) {
 
   const selectedKey = useMemo(() => {
     if (pathname === '/admin') return ['/admin'];
-    const matched = MENU_ITEMS.find(
-      (item) => item.key !== '/admin' && pathname.startsWith(item.key)
-    );
+    const matched = [...MENU_ITEMS]
+      .filter((item) => item.key !== '/admin')
+      .sort((a, b) => b.key.length - a.key.length)
+      .find((item) => pathname.startsWith(item.key));
     return matched ? [matched.key] : ['/admin'];
   }, [pathname]);
 
