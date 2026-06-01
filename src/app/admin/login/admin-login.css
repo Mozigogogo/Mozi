@@ -1,0 +1,219 @@
+/**
+ * 后台登录页 - 纯 CSS 固定像素，不经过 postcss px-to-viewport
+ */
+
+html:has(.pc-admin-login),
+html:has(.pc-admin-login) body {
+  font-size: 16px !important;
+  line-height: 1.5 !important;
+  margin: 0;
+  padding: 0;
+}
+
+.pc-admin-login {
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, #f0faf6 0%, #f5f7fa 100%);
+}
+
+.pc-admin-login__main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  width: 100%;
+  padding: 24px 16px;
+  box-sizing: border-box;
+}
+
+.pc-admin-login__card {
+  width: 100%;
+  max-width: 400px;
+  padding: 36px 28px 32px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(17, 183, 135, 0.1);
+  border: 1px solid #eef0f3;
+  box-sizing: border-box;
+}
+
+.pc-admin-login__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 28px;
+}
+
+.pc-admin-login__logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #11b787 0%, #0d9668 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.pc-admin-login__title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 6px;
+  line-height: 1.3;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.pc-admin-login__subtitle {
+  font-size: 14px;
+  font-weight: 400;
+  color: #8c8c8c;
+  margin: 0;
+  line-height: 1.4;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.pc-admin-login__form {
+  width: 100%;
+}
+
+.pc-admin-login__form .ant-form-item {
+  margin-bottom: 20px;
+}
+
+.pc-admin-login__form .ant-form-item-explain-error {
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+}
+
+.pc-admin-login__form .ant-form-item:last-child {
+  margin-bottom: 0;
+  margin-top: 8px;
+}
+
+.pc-admin-login__field {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  background: #ffffff;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.pc-admin-login__field:hover {
+  border-color: #11b787;
+}
+
+.pc-admin-login__field:focus-within {
+  border-color: #11b787;
+  box-shadow: 0 0 0 2px rgba(17, 183, 135, 0.12);
+}
+
+.pc-admin-login__field-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  color: #bfbfbf;
+  line-height: 1;
+}
+
+.pc-admin-login__field-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  margin: 0 0 0 10px;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 15px;
+  line-height: 20px;
+  color: #1a1a1a;
+  box-sizing: border-box;
+}
+
+.pc-admin-login__field-input::placeholder {
+  color: #bfbfbf;
+  font-size: 15px;
+}
+
+.pc-admin-login__field-input:-webkit-autofill,
+.pc-admin-login__field-input:-webkit-autofill:hover,
+.pc-admin-login__field-input:-webkit-autofill:focus,
+.pc-admin-login__field-input:-webkit-autofill:active {
+  -webkit-text-fill-color: #1a1a1a !important;
+  caret-color: #1a1a1a;
+  transition: background-color 99999s ease-out;
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  box-shadow: 0 0 0 1000px #ffffff inset !important;
+}
+
+.pc-admin-login__field-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-left: 8px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #bfbfbf;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pc-admin-login__field-toggle:hover {
+  color: #8c8c8c;
+}
+
+.pc-admin-login__submit.ant-btn-primary {
+  width: 100%;
+  height: 44px !important;
+  font-size: 15px !important;
+  font-weight: 500;
+  border-radius: 8px !important;
+}
+
+/* PC 宽屏 */
+@media (min-width: 992px) {
+  .pc-admin-login__main {
+    padding: 40px 24px;
+  }
+
+  .pc-admin-login__card {
+    width: 420px;
+    max-width: 420px;
+    padding: 44px 40px 40px;
+    box-shadow: 0 8px 32px rgba(17, 183, 135, 0.12);
+  }
+
+  .pc-admin-login__logo {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+  }
+
+  .pc-admin-login__title {
+    font-size: 22px;
+  }
+}
