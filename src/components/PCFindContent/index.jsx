@@ -30,6 +30,35 @@ const MARKET_TABLE_COL_TEMPLATE = MARKET_TABLE_COL_WIDTHS.join(' ');
 const MARKET_TRADING_RADAR_ICON =
   'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/trading_radar.svg';
 
+function parsePercentValue(raw) {
+  if (raw == null || raw === '') return null;
+  const n = parseFloat(String(raw).replace(/%/g, '').replace(/,/g, ''));
+  return Number.isFinite(n) ? n : null;
+}
+
+function isPriceFalling(record) {
+  const fromPercent = parsePercentValue(record?.priceChangePercentage24h);
+  if (fromPercent !== null) return fromPercent < 0;
+  const fromValue = parsePercentValue(record?.priceChange24h);
+  if (fromValue !== null) return fromValue < 0;
+  return String(record?.priceChange24h ?? '').includes('-');
+}
+
+function getBigOrderActionLabelKey(record) {
+  return isPriceFalling(record)
+    ? 'discover.marketActions.bigOrderSell'
+    : 'discover.marketActions.bigOrderBuy';
+}
+
+function getTradingRadarActionLabelKey(record) {
+  const percent = parsePercentValue(record?.priceChangePercentage24h);
+  if (percent === null) return 'discover.marketActions.tradingRadarMonitoring';
+  const abs = Math.abs(percent);
+  if (abs > 10) return 'discover.marketActions.tradingRadarAbnormal';
+  if (abs > 2) return 'discover.marketActions.tradingRadarActive';
+  return 'discover.marketActions.tradingRadarMonitoring';
+}
+
 /** 大单侦测专用图标（与详情页 K 线「大单侦测」一致，使用 currentColor 保证绿色清晰） */
 function BigOrderDetectIcon({ className }) {
   return (
@@ -327,7 +356,7 @@ export default function PCFindContent() {
             onClick={(e) => handleBigOrderDetect(record.symbol, e)}
           >
             <BigOrderDetectIcon className={styles.marketActionBtnIconBigOrder} />
-            <span>{t('addAlarm.bigOrderDetect')}</span>
+            <span>{t(getBigOrderActionLabelKey(record))}</span>
           </button>
         </div>
       ),
@@ -347,7 +376,7 @@ export default function PCFindContent() {
             onClick={(e) => handleTradingRadar(record.symbol, e)}
           >
             <TradingRadarIcon className={styles.marketActionBtnIconRadar} />
-            <span>{t('pcCoinDetail.tradingRadar')}</span>
+            <span>{t(getTradingRadarActionLabelKey(record))}</span>
           </button>
         </div>
       ),

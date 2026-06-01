@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import RightArrowIcon from '../Icons/RightArrowIcon';
@@ -118,6 +118,24 @@ const mapDatainfoToPopupData = (rawData, fallbackData) => {
   return next;
 };
 
+const COMMISSION_SAVE_DEBOUNCE_MS = 500;
+
+const syncCommissionToLocalStorage = (value) => {
+  if (typeof window === 'undefined') return;
+  try {
+    const raw = localStorage.getItem('userDataInfo');
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    parsed.tronUsdtAddress = value;
+    if (parsed.userInfo && typeof parsed.userInfo === 'object') {
+      parsed.userInfo.tronUsdtAddress = value;
+    }
+    localStorage.setItem('userDataInfo', JSON.stringify(parsed));
+  } catch (error) {
+    console.error('[UserProfilePanelPopup] sync commission to localStorage failed:', error);
+  }
+};
+
 export default function UserProfilePanelPopup({
   open,
   onClose,
@@ -159,6 +177,8 @@ export default function UserProfilePanelPopup({
   const [commission, setCommission] = useState(data.commission);
   const [profileData, setProfileData] = useState(data);
   const selectedTagLabel = t(`editProfile.identity.options.${selectedTagId}`);
+  const commissionSaveTimerRef = useRef(null);
+  const lastSavedCommissionRef = useRef((data.commission || '').trim());
 
   useEffect(() => {
     setProfileData(data);
@@ -168,6 +188,7 @@ export default function UserProfilePanelPopup({
     setEmail(data.email);
     setPhone(data.phone);
     setCommission(data.commission);
+    lastSavedCommissionRef.current = (data.commission || '').trim();
   }, [data]);
 
   useEffect(() => {
@@ -189,6 +210,7 @@ export default function UserProfilePanelPopup({
         setEmail(mapped.email);
         setPhone(mapped.phone);
         setCommission(mapped.commission);
+        lastSavedCommissionRef.current = (mapped.commission || '').trim();
       } catch (error) {
         console.error('[UserProfilePanelPopup] parse local userDataInfo failed:', error);
       }
@@ -205,6 +227,7 @@ export default function UserProfilePanelPopup({
         setEmail(mapped.email);
         setPhone(mapped.phone);
         setCommission(mapped.commission);
+        lastSavedCommissionRef.current = (mapped.commission || '').trim();
         localStorage.setItem('userDataInfo', JSON.stringify(res.data));
       } catch (error) {
         console.error('[UserProfilePanelPopup] fetch user datainfo failed:', error);
@@ -218,6 +241,46 @@ export default function UserProfilePanelPopup({
       cancelled = true;
     };
   }, [open, data]);
+
+  const persistCommission = useCallback(async (value) => {
+    const trimmed = (value || '').trim();
+    if (trimmed === lastSavedCommissionRef.current) return;
+
+    if (typeof window !== 'undefined' && !localStorage.getItem('token')) return;
+
+    try {
+      await updateUserInfo({ tronUsdtAddress: trimmed });
+      lastSavedCommissionRef.current = trimmed;
+      syncCommissionToLocalStorage(trimmed);
+    } catch (error) {
+      console.error('[UserProfilePanelPopup] update commission failed:', error);
+    }
+  }, []);
+
+  const handleCommissionChange = useCallback(
+    (e) => {
+      const next = e.target.value;
+      setCommission(next);
+
+      if (commissionSaveTimerRef.current) {
+        clearTimeout(commissionSaveTimerRef.current);
+      }
+
+      commissionSaveTimerRef.current = setTimeout(() => {
+        persistCommission(next);
+      }, COMMISSION_SAVE_DEBOUNCE_MS);
+    },
+    [persistCommission]
+  );
+
+  useEffect(
+    () => () => {
+      if (commissionSaveTimerRef.current) {
+        clearTimeout(commissionSaveTimerRef.current);
+      }
+    },
+    []
+  );
 
   const handleSwitchTheme = () => {
     onClose?.();
@@ -336,7 +399,11 @@ export default function UserProfilePanelPopup({
             <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/earn.svg" alt="" />
             <div className={styles.formField}>
               <div className={styles.formLabel}>{t('editProfile.commission.label')}</div>
-              <input value={commission} onChange={(e) => setCommission(e.target.value)} />
+              <input
+                value={commission}
+                onChange={handleCommissionChange}
+                placeholder={t('editProfile.commission.placeholder')}
+              />
             </div>
           </div>
         </div>

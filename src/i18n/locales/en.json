@@ -394,6 +394,13 @@
       "1y": "1Y"
     },
     "addFavoriteButton": "Add Favorite",
+    "marketActions": {
+      "bigOrderBuy": "Large buy",
+      "bigOrderSell": "Large sell",
+      "tradingRadarMonitoring": "Monitoring",
+      "tradingRadarActive": "Active",
+      "tradingRadarAbnormal": "Abnormal"
+    },
     "loadFinished": "All loaded",
     "robotMessage": "Want to hear my analysis of the market?",
     "pullToRefresh": {

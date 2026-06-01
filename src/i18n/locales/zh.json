@@ -394,6 +394,13 @@
       "1y": "1年"
     },
     "addFavoriteButton": "添加自选",
+    "marketActions": {
+      "bigOrderBuy": "大额买入",
+      "bigOrderSell": "大额卖出",
+      "tradingRadarMonitoring": "监控中",
+      "tradingRadarActive": "活跃",
+      "tradingRadarAbnormal": "异常"
+    },
     "loadFinished": "已全部加载完毕",
     "robotMessage": "想听听我对行情的分析吗？",
     "pullToRefresh": {
