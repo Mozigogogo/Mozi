@@ -387,8 +387,9 @@ export const Interface = {
   // 执行积分消费
   POINTS_CONSUME: '/points/consume',
 
-  // 后台管理（当前仅登录）
+  // 后台管理
   ADMIN_LOGIN: '/admin/auth/login',
+  ADMIN_COMMISSION_LEVELS: '/admin/commission/levels',
 };
 
 // 业务中使用到的联系邮箱和链上地址（打包报错缺失导出）

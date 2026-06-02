@@ -1,26 +1,36 @@
-/** 后台可配置的用户等级 / 身份 */
-export const USER_LEVEL_OPTIONS = [
-  { value: 'NORMAL', label: '普通用户', color: 'default' },
-  { value: 'KOL', label: 'KOL', color: 'purple' },
-  { value: 'SUPER_KOL', label: '超级 KOL', color: 'magenta' },
-  { value: 'PARTNER', label: '合伙人', color: 'gold' },
-  { value: 'AGENCY', label: '代理商', color: 'blue' },
-];
-
-/** 各等级推荐分佣比例（管理员可再手动调整） */
-export const USER_LEVEL_RATE_PRESETS = {
-  NORMAL: { rateL1: 5, rateL2: 2, rateL3: 1 },
-  KOL: { rateL1: 15, rateL2: 8, rateL3: 3 },
-  SUPER_KOL: { rateL1: 20, rateL2: 10, rateL3: 5 },
-  PARTNER: { rateL1: 25, rateL2: 12, rateL3: 6 },
-  AGENCY: { rateL1: 30, rateL2: 15, rateL3: 8 },
-};
-
-export function getUserLevelMeta(level) {
-  return USER_LEVEL_OPTIONS.find((item) => item.value === level) || USER_LEVEL_OPTIONS[0];
+/** 解析分佣等级列表响应 */
+export function normalizeCommissionLevelList(data) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.list)) return data.list;
+  if (Array.isArray(data?.records)) return data.records;
+  if (Array.isArray(data?.items)) return data.items;
+  return [];
 }
 
-export function formatRate(value) {
-  if (value == null || value === '' || Number.isNaN(Number(value))) return '-';
-  return `${Number(value).toFixed(2)}%`;
+/** 展示分佣比例：接口 0.1 表示 10% */
+export function formatCommissionRate(value) {
+  if (value == null || value === '') return '-';
+  const n = Number(value);
+  if (Number.isNaN(n)) return String(value);
+  if (n <= 1) return `${(n * 100).toFixed(2)}%`;
+  return `${n.toFixed(2)}%`;
+}
+
+/** 表单百分比 -> 接口字符串 */
+export function toApiCommissionRate(percentValue) {
+  const n = Number(percentValue);
+  if (Number.isNaN(n)) return '0';
+  return String(n / 100);
+}
+
+/** 接口值 -> 表单百分比 */
+export function toFormCommissionRate(apiValue) {
+  const n = Number(apiValue);
+  if (Number.isNaN(n)) return undefined;
+  if (n <= 1) return Number((n * 100).toFixed(4));
+  return n;
+}
+
+export function getCommissionLevelId(record) {
+  return record?.id ?? record?.levelId;
 }
