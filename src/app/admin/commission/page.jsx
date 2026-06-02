@@ -101,27 +101,6 @@ export default function AdminCommissionPage() {
       render: (v) => v || '-',
     },
     {
-      title: '一级分佣 (%)',
-      dataIndex: 'rateL1',
-      key: 'rateL1',
-      width: 110,
-      render: (_, record) => formatAmount(record.rateL1 ?? record.level1Rate),
-    },
-    {
-      title: '二级分佣 (%)',
-      dataIndex: 'rateL2',
-      key: 'rateL2',
-      width: 110,
-      render: (_, record) => formatAmount(record.rateL2 ?? record.level2Rate),
-    },
-    {
-      title: '三级分佣 (%)',
-      dataIndex: 'rateL3',
-      key: 'rateL3',
-      width: 110,
-      render: (_, record) => formatAmount(record.rateL3 ?? record.level3Rate),
-    },
-    {
       title: '累计分佣 (USDT)',
       dataIndex: 'totalCommission',
       key: 'totalCommission',
@@ -181,7 +160,7 @@ export default function AdminCommissionPage() {
           columns={columns}
           dataSource={pagedList}
           loading={false}
-          scroll={{ x: 1280 }}
+          scroll={{ x: 950 }}
           locale={{ emptyText: '暂无用户分佣数据（接口未对接）' }}
           pagination={{
             current: page,
