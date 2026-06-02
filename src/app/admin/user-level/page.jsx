@@ -35,6 +35,9 @@ import {
   toFormCommissionRate,
 } from './userLevelConstants';
 
+/** 暂时隐藏搜索，改为 true 可恢复 */
+const SHOW_LEVEL_SEARCH = false;
+
 export default function AdminUserLevelPage() {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -204,7 +207,6 @@ export default function AdminUserLevelPage() {
       title: '操作',
       key: 'action',
       width: 150,
-      fixed: 'right',
       align: 'center',
       render: (_, record) => (
         <Space size={4}>
@@ -222,6 +224,8 @@ export default function AdminUserLevelPage() {
             okText="删除"
             cancelText="取消"
             okButtonProps={{ danger: true }}
+            placement="topLeft"
+            getPopupContainer={() => document.body}
             onConfirm={() => handleDelete(record)}
           >
             <Button type="link" size="small" danger icon={<DeleteOutlined />}>
@@ -243,16 +247,21 @@ export default function AdminUserLevelPage() {
       />
 
       <div className="pc-admin-toolbar">
-        <Input
-          placeholder="搜索等级编码 / 名称 / 说明"
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          onPressEnter={handleSearch}
-          allowClear
-        />
-        <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
-          搜索
-        </Button>
+        {SHOW_LEVEL_SEARCH ? (
+          <>
+            <Input
+              placeholder="搜索等级编码 / 名称 / 说明"
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              onPressEnter={handleSearch}
+              allowClear
+              style={{ width: 260 }}
+            />
+            <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
+              搜索
+            </Button>
+          </>
+        ) : null}
         <Button icon={<ReloadOutlined />} onClick={fetchLevels} loading={loading}>
           刷新
         </Button>
@@ -267,7 +276,6 @@ export default function AdminUserLevelPage() {
           columns={columns}
           dataSource={pagedList}
           loading={loading}
-          scroll={{ x: 900 }}
           locale={{ emptyText: '暂无分佣等级，请点击「新增等级」创建' }}
           pagination={{
             current: page,
