@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, Table, Tag, Empty, Spin } from 'antd';
+import { Card, Table, Tag, Empty } from 'antd';
 import { HeartOutlined, BellOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
+import { Loading } from '@/components/Loading';
 import isEmpty from 'lodash/isEmpty';
 import styles from './index.module.less';
 
@@ -223,9 +224,9 @@ export default function PCSearchResults({ keyword, onClose }) {
 
   if (loading) {
     return (
-      <div className={styles.searchResults}>
+      <div className={`${styles.searchResults} ${styles.searchResultsLoading}`}>
         <div className={styles.loadingWrapper}>
-          <Spin size="large" tip={t('common.loading')} />
+          <Loading tip={t('common.loading')} size={32} />
         </div>
       </div>
     );

@@ -17,6 +17,7 @@ import {
 } from '@/utils/alertConfig';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
+import { Loading } from '@/components/Loading';
 import { allCountries } from 'country-telephone-data';
 import styles from './page.module.less';
 
@@ -592,7 +593,9 @@ function PCAlarmContent() {
 
               <div className={styles.historyRight}>
                 {historyState.loading ? (
-                  <div className={styles.loading}>{t('addAlarm.loading')}</div>
+                  <div className={styles.loadingWrap}>
+                    <Loading tip={t('addAlarm.loading')} size={28} />
+                  </div>
                 ) : historyState.activeSymbol ? (
                   <>
                     <div className={styles.historyHeader}>
@@ -677,7 +680,9 @@ function PCAlarmContent() {
             </button>
           </div>
           {coinData.loading ? (
-            <div className={styles.loading}>{t('addAlarm.loading')}</div>
+            <div className={styles.loadingWrap}>
+              <Loading tip={t('addAlarm.loading')} size={28} />
+            </div>
           ) : (
             <div className={styles.cardBody}>
               <div className={styles.configList}>
