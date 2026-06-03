@@ -8,7 +8,6 @@ import {
   Modal,
   Form,
   InputNumber,
-  Alert,
   message,
   Descriptions,
 } from 'antd';
@@ -134,13 +133,6 @@ export default function AdminCommissionPage() {
 
   return (
     <div className="pc-admin-page">
-      <Alert
-        className="pc-admin-alert"
-        type="info"
-        showIcon
-        message="按用户查看并设置分佣比例（一级 / 二级 / 三级）。列表与保存接口暂未对接，当前仅开放管理员登录。"
-      />
-
       <div className="pc-admin-toolbar">
         <Input
           placeholder="搜索用户 ID / 昵称 / 邮箱"

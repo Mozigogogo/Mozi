@@ -58,7 +58,7 @@ export const GardenLoading = () => {
   return (
     <div className={styles.gardenLoading}>
       <div className={styles.gardenLoadingContent}>
-        <SpinLoading color="primary" />
+        <SpinLoading color="#11B787" />
         <span className={styles.loadingText}>{t('common.loading')}</span>
       </div>
     </div>
@@ -89,7 +89,7 @@ export const LogoLoading = ({
             style={{ width: `${size}px`, height: `${size}px` }}
           />
         )}
-        {!image && <SpinLoading color="primary" style={{ '--size': `${size}px` }} />}
+        {!image && <SpinLoading color="#11B787" style={{ '--size': `${size}px` }} />}
       </div>
     </div>
   );

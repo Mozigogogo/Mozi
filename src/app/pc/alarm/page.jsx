@@ -17,6 +17,7 @@ import {
 } from '@/utils/alertConfig';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
+import { Loading } from '@/components/Loading';
 import { allCountries } from 'country-telephone-data';
 import styles from './page.module.less';
 
@@ -82,6 +83,24 @@ function PCAlarmContent() {
     data: {},
     activeSymbol: null,
   });
+
+  const isPriceDown = useMemo(() => {
+    if (coinData.change == null || coinData.change === '--') return false;
+    return String(coinData.change).includes('-');
+  }, [coinData.change]);
+
+  const displayChange = useMemo(() => {
+    const raw = coinData.change;
+    if (raw == null || raw === '' || raw === '--') return '--';
+    const text = String(raw).trim();
+    if (text.endsWith('%')) return text;
+    const n = parseFloat(text.replace(/,/g, ''));
+    if (Number.isFinite(n)) {
+      const prefix = n > 0 ? '+' : '';
+      return `${prefix}${n.toFixed(2)}%`;
+    }
+    return text;
+  }, [coinData.change]);
 
   useEffect(() => {
     const fetchCoinData = async () => {
@@ -574,7 +593,9 @@ function PCAlarmContent() {
 
               <div className={styles.historyRight}>
                 {historyState.loading ? (
-                  <div className={styles.loading}>{t('addAlarm.loading')}</div>
+                  <div className={styles.loadingWrap}>
+                    <Loading tip={t('addAlarm.loading')} size={28} />
+                  </div>
                 ) : historyState.activeSymbol ? (
                   <>
                     <div className={styles.historyHeader}>
@@ -631,9 +652,27 @@ function PCAlarmContent() {
         ) : (
         <div className={styles.card}>
           <div className={styles.cardHeader}>
-            <div className={styles.headerTitleRow}>
-              <div className={styles.headerTitle}>{t('addAlarm.configTitle', { defaultValue: '配置告警' })}</div>
-              <div className={styles.headerMeta}>{t('addAlarm.executing', { defaultValue: '实时行情接入中' })}</div>
+            <div className={styles.cardHeaderLeft}>
+              <div className={styles.headerTitleRow}>
+                <div className={styles.headerTitle}>{t('addAlarm.configTitle', { defaultValue: '配置告警' })}</div>
+                <div className={styles.headerMeta}>{t('addAlarm.executing', { defaultValue: '实时行情接入中' })}</div>
+              </div>
+              <div className={styles.priceRow}>
+                <span className={styles.symbol}>{coinData.symbol}</span>
+                <span className={styles.priceLabel}>{t('addAlarm.latestPrice', { defaultValue: '最新价' })}</span>
+                {coinData.loading ? (
+                  <span className={styles.priceMetaMuted}>{t('addAlarm.loading', { defaultValue: '加载中...' })}</span>
+                ) : (
+                  <>
+                    <span className={`${styles.price} ${isPriceDown ? styles.negative : styles.positive}`}>
+                      {coinData.price}
+                    </span>
+                    <span className={`${styles.change} ${isPriceDown ? styles.negative : styles.positive}`}>
+                      {displayChange}
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
             <button type="button" className={styles.manageBtn}>
               <img src={`${CDN_PUBLIC_PREFIX}/icons/pc/manage.svg`} alt="" aria-hidden className={styles.manageIcon} />
@@ -641,7 +680,9 @@ function PCAlarmContent() {
             </button>
           </div>
           {coinData.loading ? (
-            <div className={styles.loading}>{t('addAlarm.loading')}</div>
+            <div className={styles.loadingWrap}>
+              <Loading tip={t('addAlarm.loading')} size={28} />
+            </div>
           ) : (
             <div className={styles.cardBody}>
               <div className={styles.configList}>

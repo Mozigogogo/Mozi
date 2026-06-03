@@ -390,6 +390,8 @@ export const Interface = {
   // 后台管理
   ADMIN_LOGIN: '/admin/auth/login',
   ADMIN_COMMISSION_LEVELS: '/admin/commission/levels',
+  ADMIN_USERS: '/admin/users',
+  ADMIN_USER_COMMISSION_LEVEL: '/admin/users/commission-level',
 };
 
 // 业务中使用到的联系邮箱和链上地址（打包报错缺失导出）

@@ -145,6 +145,49 @@ export async function deleteCommissionLevel(id) {
   return res.data;
 }
 
+/**
+ * @typedef {Object} AdminUserListParams
+ * @property {string} [nickName] - 昵称模糊匹配
+ * @property {number} [page] - 页码，从 1 开始
+ * @property {number} [size] - 每页条数，最大 100
+ */
+
+/**
+ * @typedef {Object} UpdateUserCommissionLevelPayload
+ * @property {string} userId - 用户 ID
+ * @property {number|null} commissionLevelId - 分佣等级 ID，传 null 表示取消分配
+ */
+
+/** 分页查询用户 GET /admin/users */
+export async function listAdminUsers(params = {}) {
+  const res = await adminInstance.get(Interface.ADMIN_USERS, { params });
+  return res.data;
+}
+
+/** 修改用户分佣等级 PUT /admin/users/commission-level */
+export async function updateUserCommissionLevel(payload) {
+  const res = await adminInstance.put(Interface.ADMIN_USER_COMMISSION_LEVEL, payload);
+  return res.data;
+}
+
+/** 解析用户分页列表 */
+export function normalizeAdminUserPage(data) {
+  if (!data || typeof data !== 'object') {
+    return { list: [], total: 0, page: 1, size: 20 };
+  }
+  const list = Array.isArray(data.list)
+    ? data.list
+    : Array.isArray(data.records)
+      ? data.records
+      : [];
+  return {
+    list,
+    total: Number(data.total) || list.length,
+    page: Number(data.page) || 1,
+    size: Number(data.size) || 20,
+  };
+}
+
 /** 判断后台接口是否成功（code === 0） */
 export function isAdminApiSuccess(res) {
   return res?.code === 0;

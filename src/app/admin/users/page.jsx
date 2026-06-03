@@ -1,49 +1,151 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Table,
   Input,
-  Select,
-  Space,
-  Tag,
   Button,
   Modal,
-  Descriptions,
-  message,
-  Popconfirm,
+  Form,
+  Select,
   Alert,
+  message,
+  Space,
 } from 'antd';
-import { SearchOutlined, EyeOutlined } from '@ant-design/icons';
-
-const STATUS_MAP = {
-  1: { text: '正常', color: 'success' },
-  0: { text: '禁用', color: 'error' },
-};
-
-function normalizeStatus(status) {
-  if (status === 1 || status === 'active') return 1;
-  return 0;
-}
+import { SearchOutlined, EditOutlined, ReloadOutlined } from '@ant-design/icons';
+import {
+  listAdminUsers,
+  listCommissionLevels,
+  updateUserCommissionLevel,
+  isAdminApiSuccess,
+  normalizeAdminUserPage,
+} from '@/api/admin';
+import { getCommissionLevelId, normalizeCommissionLevelList } from '../user-level/userLevelConstants';
 
 export default function AdminUsersPage() {
-  const [list] = useState([]);
+  const [list, setList] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [keyword, setKeyword] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [detailOpen, setDetailOpen] = useState(false);
+  const [pageSize, setPageSize] = useState(20);
+  const [searchInput, setSearchInput] = useState('');
+  const [appliedNickName, setAppliedNickName] = useState('');
+  const [levelOptions, setLevelOptions] = useState([]);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [form] = Form.useForm();
+
+  const levelLabelMap = useMemo(() => {
+    const map = new Map();
+    levelOptions.forEach((item) => {
+      const id = getCommissionLevelId(item);
+      if (id != null) {
+        map.set(Number(id), item.levelName || item.levelCode || String(id));
+      }
+    });
+    return map;
+  }, [levelOptions]);
+
+  const fetchLevels = useCallback(async () => {
+    try {
+      const res = await listCommissionLevels();
+      if (!isAdminApiSuccess(res)) return;
+      setLevelOptions(normalizeCommissionLevelList(res?.data));
+    } catch (error) {
+      console.error('[AdminUsers] fetch levels failed:', error);
+    }
+  }, []);
+
+  const fetchUsers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = { page, size: pageSize };
+      if (appliedNickName) params.nickName = appliedNickName;
+
+      const res = await listAdminUsers(params);
+      if (!isAdminApiSuccess(res)) {
+        message.error(res?.errorMsg || '加载用户列表失败');
+        setList([]);
+        setTotal(0);
+        return;
+      }
+
+      const pageData = normalizeAdminUserPage(res?.data);
+      setList(pageData.list);
+      setTotal(pageData.total);
+    } catch (error) {
+      console.error('[AdminUsers] fetch users failed:', error);
+      message.error(error?.response?.data?.errorMsg || error?.message || '加载用户列表失败');
+      setList([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [appliedNickName, page, pageSize]);
+
+  useEffect(() => {
+    fetchLevels();
+  }, [fetchLevels]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const handleSearch = () => {
-    message.info('用户列表接口暂未对接');
+    setAppliedNickName(searchInput.trim());
+    setPage(1);
   };
 
-  const handleViewDetail = () => {
-    setDetailOpen(true);
+  const handleClearSearch = () => {
+    setSearchInput('');
+    setAppliedNickName('');
+    setPage(1);
   };
 
-  const handleToggleStatus = () => {
-    message.info('用户状态接口暂未对接');
+  const openEditModal = (record) => {
+    setEditingUser(record);
+    form.setFieldsValue({
+      commissionLevelId:
+        record.commissionLevelId == null ? undefined : Number(record.commissionLevelId),
+    });
+    setEditOpen(true);
+  };
+
+  const handleSaveLevel = async () => {
+    try {
+      const values = await form.validateFields();
+      if (!editingUser?.userId) {
+        message.error('缺少用户 ID');
+        return;
+      }
+
+      setSaving(true);
+      const res = await updateUserCommissionLevel({
+        userId: editingUser.userId,
+        commissionLevelId:
+          values.commissionLevelId == null || values.commissionLevelId === ''
+            ? null
+            : Number(values.commissionLevelId),
+      });
+
+      if (!isAdminApiSuccess(res)) {
+        message.error(res?.errorMsg || '保存失败');
+        return;
+      }
+
+      message.success('分佣等级已更新');
+      setEditOpen(false);
+      setEditingUser(null);
+      form.resetFields();
+      await fetchUsers();
+    } catch (error) {
+      if (error?.errorFields) return;
+      console.error('[AdminUsers] update commission level failed:', error);
+      message.error(error?.response?.data?.errorMsg || error?.message || '保存失败');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const columns = [
@@ -51,85 +153,51 @@ export default function AdminUsersPage() {
       title: '用户 ID',
       dataIndex: 'userId',
       key: 'userId',
-      width: 200,
+      width: 220,
       ellipsis: true,
-      render: (_, record) => record.userId || record.id || '-',
+      render: (v) => v || '-',
     },
     {
       title: '昵称',
       dataIndex: 'nickName',
       key: 'nickName',
-      width: 120,
+      width: 140,
       ellipsis: true,
       render: (_, record) => record.nickName || record.nickname || '-',
-    },
-    {
-      title: '邮箱',
-      dataIndex: 'email',
-      key: 'email',
-      width: 180,
-      ellipsis: true,
-      render: (v) => v || '-',
     },
     {
       title: '邀请码',
       dataIndex: 'inviteCode',
       key: 'inviteCode',
-      width: 100,
+      width: 120,
       ellipsis: true,
       render: (v) => v || '-',
     },
     {
-      title: '会员等级',
-      dataIndex: 'planCode',
-      key: 'planCode',
-      width: 100,
-      render: (_, record) => record.planCode || record.memberTier || 'FREE',
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      width: 90,
-      render: (status) => {
-        const info = STATUS_MAP[status] || STATUS_MAP[normalizeStatus(status) === 1 ? 1 : 0];
-        return <Tag color={info.color}>{info.text}</Tag>;
+      title: '分佣等级',
+      dataIndex: 'commissionLevelId',
+      key: 'commissionLevelId',
+      width: 160,
+      render: (v) => {
+        if (v == null || v === '') return '未分配';
+        return levelLabelMap.get(Number(v)) || `等级 #${v}`;
       },
-    },
-    {
-      title: '注册时间',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      width: 180,
-      render: () => '-',
     },
     {
       title: '操作',
       key: 'action',
-      width: 140,
-      render: (_, record) => {
-        const isActive = normalizeStatus(record.status) === 1;
-        return (
-          <Space>
-            <Button
-              type="link"
-              size="small"
-              icon={<EyeOutlined />}
-              onClick={handleViewDetail}
-            >
-              详情
-            </Button>
-            <Popconfirm
-              title={isActive ? '确定禁用该用户？' : '确定启用该用户？'}
-              onConfirm={handleToggleStatus}
-            >
-              <Button type="link" size="small" danger={isActive}>
-                {isActive ? '禁用' : '启用'}
-              </Button>
-            </Popconfirm>
-          </Space>
-        );
-      },
+      width: 120,
+      align: 'center',
+      render: (_, record) => (
+        <Button
+          type="link"
+          size="small"
+          icon={<EditOutlined />}
+          onClick={() => openEditModal(record)}
+        >
+          设置等级
+        </Button>
+      ),
     },
   ];
 
@@ -139,68 +207,91 @@ export default function AdminUsersPage() {
         className="pc-admin-alert"
         type="info"
         showIcon
-        message="用户管理接口暂未对接，当前仅开放管理员登录。"
+        message="查询正常状态用户，支持按昵称模糊搜索，并为用户分配分佣等级。"
       />
 
       <div className="pc-admin-toolbar">
         <Input
-          placeholder="搜索用户 ID / 昵称 / 邮箱"
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
+          placeholder="搜索昵称"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
           onPressEnter={handleSearch}
+          onClear={handleClearSearch}
+          allowClear
           style={{ width: 260 }}
-          allowClear
-        />
-        <Select
-          placeholder="状态筛选"
-          value={statusFilter || undefined}
-          onChange={(v) => setStatusFilter(v || '')}
-          allowClear
-          style={{ width: 120 }}
-          options={[
-            { value: '1', label: '正常' },
-            { value: '0', label: '禁用' },
-          ]}
         />
         <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
           搜索
+        </Button>
+        <Button icon={<ReloadOutlined />} onClick={fetchUsers} loading={loading}>
+          刷新
         </Button>
       </div>
 
       <div className="pc-admin-table-wrap">
         <Table
-          rowKey="id"
+          rowKey={(record) => String(record.userId || record.id)}
           columns={columns}
           dataSource={list}
-          loading={false}
-          scroll={{ x: 1110 }}
-          locale={{ emptyText: '暂无数据（接口未对接）' }}
-        pagination={{
-          current: page,
-          pageSize,
-          total: 0,
-          showSizeChanger: true,
-          showTotal: () => '共 0 条',
-          onChange: (p, ps) => {
-            setPage(p);
-            setPageSize(ps);
-          },
-        }}
+          loading={loading}
+          locale={{
+            emptyText: appliedNickName ? '未找到匹配的用户' : '暂无用户数据',
+          }}
+          pagination={{
+            current: page,
+            pageSize,
+            total,
+            showSizeChanger: true,
+            showTotal: (t) => `共 ${t} 条`,
+            pageSizeOptions: [10, 20, 50, 100],
+            onChange: (p, ps) => {
+              setPage(p);
+              setPageSize(ps);
+            },
+          }}
         />
       </div>
 
       <Modal
-        title="用户详情"
-        open={detailOpen}
-        onCancel={() => setDetailOpen(false)}
-        footer={null}
-        width={640}
+        title="设置用户分佣等级"
+        open={editOpen}
+        onCancel={() => {
+          setEditOpen(false);
+          setEditingUser(null);
+          form.resetFields();
+        }}
+        onOk={handleSaveLevel}
+        confirmLoading={saving}
+        okText="保存"
+        cancelText="取消"
+        destroyOnClose
+        width={480}
       >
-        <Descriptions column={2} bordered size="small">
-          <Descriptions.Item label="说明" span={2}>
-            用户详情接口暂未对接
-          </Descriptions.Item>
-        </Descriptions>
+        {editingUser ? (
+          <Form form={form} layout="vertical" requiredMark={false}>
+            <Form.Item label="用户 ID">
+              <Input value={editingUser.userId} disabled />
+            </Form.Item>
+            <Form.Item label="昵称">
+              <Input value={editingUser.nickName || editingUser.nickname || '-'} disabled />
+            </Form.Item>
+            <Form.Item name="commissionLevelId" label="分佣等级">
+              <Select
+                allowClear
+                placeholder="请选择分佣等级，清空表示取消分配"
+                options={levelOptions.map((item) => {
+                  const id = getCommissionLevelId(item);
+                  return {
+                    value: Number(id),
+                    label: `${item.levelName || item.levelCode || id}${
+                      item.levelCode ? ` (${item.levelCode})` : ''
+                    }`,
+                  };
+                })}
+              />
+            </Form.Item>
+          </Form>
+        ) : null}
       </Modal>
     </div>
   );
