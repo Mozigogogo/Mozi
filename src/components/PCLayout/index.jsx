@@ -64,7 +64,7 @@ export default function PCLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { formatValue, formatPrice } = useFormatNumber();
+  const { formatValue, formatPrice, formatSmallDecimal } = useFormatNumber();
   const { t, i18n } = useTranslation();
   const { isConnected: web3Connected } = useAccount();
   const { disconnect } = useDisconnect();
@@ -953,9 +953,10 @@ export default function PCLayout({ children }) {
                         const isRowActive = pathname === '/detail' && activeSymbol === sym;
                         const rawChange = item.price24h;
                         const isNeg = String(rawChange ?? '').includes('-');
+                        const rawLast = item.last ?? item.currentPrice ?? item.price;
                         const priceStr =
-                          item.last !== undefined && item.last !== null && item.last !== ''
-                            ? `$${formatPrice(item.last)}`
+                          rawLast !== undefined && rawLast !== null && rawLast !== ''
+                            ? `$${formatSmallDecimal(rawLast)}`
                             : '—';
                         const changeDisplay = rawChange != null && rawChange !== '' ? formatValue(rawChange) : '—';
                         const displaySub =

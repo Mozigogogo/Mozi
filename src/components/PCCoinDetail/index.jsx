@@ -6,6 +6,9 @@ import { useTranslation } from 'react-i18next';
 import { Loading } from '@/components/Loading';
 import styles from './index.module.less';
 
+const ICON_FAVORITE_ACTIVE = '/icons/new_detail/like_actived.svg';
+const ICON_FAVORITE_INACTIVE = '/icons/new_detail/like_no_actived.svg';
+
 /**
  * PC 端币种详情页布局壳：顶栏（返回 + 操作）、行情概要、主卡片内容区、可选弹幕条。
  * 图表/大单侦测等通过 children 传入。
@@ -115,10 +118,8 @@ export default function PCCoinDetail({
         <div className={styles.actions}>
           {onToggleFavorite ? (
             <button type="button" className={styles.actionBtn} onClick={onToggleFavorite}>
-              <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/like.svg" alt="" />
-              <span className={isFavorite ? styles.actionLabelInFavorites : undefined}>
-                {t('detail.actions.favorite')}
-              </span>
+              <img src={isFavorite ? ICON_FAVORITE_ACTIVE : ICON_FAVORITE_INACTIVE} alt="" />
+              <span>{t('detail.actions.favorite')}</span>
             </button>
           ) : null}
           {onShare ? (

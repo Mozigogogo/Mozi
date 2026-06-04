@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Tabs, Toast, Button, TabBar } from 'antd-mobile';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -43,6 +43,25 @@ import {
   createKlineChannel,
 } from '../../utils/websocketProtocol';
 import styles from './page.module.less';
+
+function normalizeWatchlistSymbols(data) {
+  const list = Array.isArray(data) ? data : Array.isArray(data?.list) ? data.list : [];
+  return list
+    .map((item) => String(item?.symbol || item?.coin || item?.base || '').toUpperCase())
+    .filter(Boolean);
+}
+
+async function checkIsInWatchlist(coinSymbol) {
+  try {
+    const res = await request({ url: Interface.COIN_SELF });
+    if (res?.data?.isLogin === false) return false;
+    return normalizeWatchlistSymbols(res?.data).includes(
+      String(coinSymbol || '').toUpperCase()
+    );
+  } catch {
+    return false;
+  }
+}
 
 export default function DetailPage() {
   const router = useRouter();
@@ -120,7 +139,7 @@ export default function DetailPage() {
   const [activeTab, setActiveTab] = useState('chart');
   const [activeKlineTab, setActiveKlineTab] = useState('hour');
   const [chartType, setChartType] = useState('line'); // 图表类型：line | kline
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(fromFavorite);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [infoExpanded, setInfoExpanded] = useState(false);
   const [coinInfoLeft, setCoinInfoLeft] = useState([]);
@@ -591,8 +610,17 @@ export default function DetailPage() {
       
       if (response?.data) {
         const coinData = response.data;
-        setCoinInfo(coinData);
-        setIsFavorite(coinData.isFavorite || false);
+        let favorite = Boolean(
+          coinData.isSelfSelected ?? coinData.isFavorite ?? coinData.favorite ?? fromFavorite
+        );
+        if (!favorite && symbol) {
+          favorite = await checkIsInWatchlist(symbol);
+        }
+        setIsFavorite(favorite);
+        setCoinInfo({
+          ...coinData,
+          isSelfSelected: coinData.isSelfSelected ?? favorite,
+        });
         
         // 设置详细信息
         const headerInfoLeft = [
@@ -1112,18 +1140,19 @@ export default function DetailPage() {
   // 添加/移除自选
   const toggleFavorite = async () => {
     if (favoriteLoading) return;
-    
+
+    const curFavorite = Boolean(isFavorite || coinInfo?.isSelfSelected || fromFavorite);
+
     setFavoriteLoading(true);
     try {
       const response = await request({
-        url: isFavorite ? Interface.CANCEL_OWN : Interface.ADD_OWN,
+        url: curFavorite ? Interface.CANCEL_OWN : Interface.ADD_OWN,
         method: 'GET',
         data: { coin: symbol }
       });
       
       if (response?.code === 0) {
-        // 如果是添加操作（当前不是 isFavorite），则上报任务
-        if (!isFavorite) {
+        if (!curFavorite) {
           try {
             await completeTask('ADD_WATCHLIST');
           } catch (e) {
@@ -1131,11 +1160,11 @@ export default function DetailPage() {
           }
         }
 
-        const next = !isFavorite;
+        const next = !curFavorite;
         setIsFavorite(next);
         setCoinInfo((prev) => (prev ? { ...prev, isSelfSelected: next } : prev));
         Toast.show({
-          content: isFavorite ? '已移除自选' : '已添加自选',
+          content: curFavorite ? '已移除自选' : '已添加自选',
           position: 'bottom',
         });
       }
@@ -1296,6 +1325,19 @@ ${coinInfo.name || symbol} (${symbol})
       pollingTimerRef.current = null;
     }
   };
+
+  useEffect(() => {
+    setIsFavorite(fromFavorite);
+    if (!symbol || fromFavorite) return undefined;
+
+    let alive = true;
+    checkIsInWatchlist(symbol).then((inList) => {
+      if (alive && inList) setIsFavorite(true);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [symbol, fromFavorite]);
 
   // 初始加载
   useEffect(() => {
@@ -1684,6 +1726,10 @@ ${coinInfo.name || symbol} (${symbol})
         
         return updatedInfo;
       });
+
+      if (headerData.isSelfSelected !== undefined) {
+        setIsFavorite(Boolean(headerData.isSelfSelected));
+      }
       
       // 更新详细信息（左侧）- 使用显式检查避免假值被忽略
       setCoinInfoLeft(prev => prev.map(item => {
@@ -2359,6 +2405,11 @@ ${coinInfo.name || symbol} (${symbol})
 
   const communityFeedItems = rightCommunityPosts;
 
+  const displayIsFavorite = useMemo(
+    () => Boolean(isFavorite || coinInfo?.isSelfSelected || fromFavorite),
+    [isFavorite, coinInfo?.isSelfSelected, fromFavorite]
+  );
+
   if (isPC) {
     return (
       <PCLayout>
@@ -2374,7 +2425,7 @@ ${coinInfo.name || symbol} (${symbol})
               priceChangeAbs={coinInfo?.priceChange_24h}
               priceChangePercent={coinInfo?.priceChangePercentage_24h}
               isUp={!String(coinInfo?.priceChange_24h ?? '').includes('-')}
-              isFavorite={isFavorite}
+              isFavorite={displayIsFavorite}
               onToggleFavorite={toggleFavorite}
               onAlert={jump2Alert}
               onGoTrade={handleGoTrade}
