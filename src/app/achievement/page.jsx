@@ -17,6 +17,8 @@ import AchievementRankingCard from './AchievementRankingCard';
 import EditProfilePopup from '@/app/user/components/EditProfilePopup';
 import InviteShareModal from '@/components/InviteShareModal';
 import { safeBack } from '@/utils/navigation';
+import { fetchUserDataInfoOnce } from '@/utils/postLogin';
+import { buildInviteDatainfoPatch } from '@/utils/datainfoCommission';
 import styles from './page.module.less';
 
 function AchievementContent() {
@@ -125,18 +127,6 @@ function AchievementContent() {
           inviteCode: data.inviteCode ?? prev.inviteCode,
           totalInvites: data.totalInvites ?? prev.totalInvites,
           earnedPoints: data.earnedPoints ?? prev.earnedPoints,
-          totalCommission:
-            data.totalCommission ??
-            data.totalCommissionUsdt ??
-            data.accumulatedCommission ??
-            prev.totalCommission,
-          withdrawnAmount:
-            data.withdrawnAmount ?? data.withdrawnUsdt ?? data.withdrawn ?? prev.withdrawnAmount,
-          withdrawableAmount:
-            data.withdrawableAmount ??
-            data.availableWithdrawAmount ??
-            data.withdrawable ??
-            prev.withdrawableAmount,
         }));
       }
     } catch (error) {
@@ -156,18 +146,6 @@ function AchievementContent() {
           inviteLink: data.inviteLink || prev.inviteLink,
           totalInvites: data.totalInvites ?? invitations.length ?? prev.totalInvites,
           earnedPoints: data.totalInvitePoints ?? data.earnedPoints ?? prev.earnedPoints,
-          totalCommission:
-            data.totalCommission ??
-            data.totalCommissionUsdt ??
-            data.accumulatedCommission ??
-            prev.totalCommission,
-          withdrawnAmount:
-            data.withdrawnAmount ?? data.withdrawnUsdt ?? data.withdrawn ?? prev.withdrawnAmount,
-          withdrawableAmount:
-            data.withdrawableAmount ??
-            data.availableWithdrawAmount ??
-            data.withdrawable ??
-            prev.withdrawableAmount,
         }));
       }
     } catch (error) {
@@ -175,19 +153,33 @@ function AchievementContent() {
     }
   }, []);
 
-  const hydrateInviteCodeFromStorage = useCallback(() => {
+  const applyDatainfoToInviteData = useCallback((raw) => {
+    const patch = buildInviteDatainfoPatch(raw);
+    if (!patch) return;
+    setInviteData((prev) => ({ ...prev, ...patch }));
+  }, []);
+
+  const hydrateFromDatainfoStorage = useCallback(() => {
     try {
       const stored = localStorage.getItem('userDataInfo');
       if (!stored) return;
-      const data = JSON.parse(stored);
-      setInviteData((prev) => ({
-        ...prev,
-        inviteCode: data.inviteCode || data.invitationCode || prev.inviteCode,
-      }));
+      applyDatainfoToInviteData(JSON.parse(stored));
     } catch (error) {
       console.error('Failed to read userDataInfo:', error);
     }
-  }, []);
+  }, [applyDatainfoToInviteData]);
+
+  const fetchCommissionFromDatainfo = useCallback(async () => {
+    if (typeof window === 'undefined') return;
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const data = await fetchUserDataInfoOnce({ caller: 'achievement' });
+      if (data) applyDatainfoToInviteData(data);
+    } catch (error) {
+      console.error('Failed to fetch user datainfo for commission:', error);
+    }
+  }, [applyDatainfoToInviteData]);
 
   useEffect(() => {
     fetchPoolStatusData();
@@ -358,11 +350,18 @@ function AchievementContent() {
   }, [t]);
 
   useEffect(() => {
-    hydrateInviteCodeFromStorage();
+    hydrateFromDatainfoStorage();
+    fetchCommissionFromDatainfo();
     fetchAchievementPoints();
     fetchAchievementInvites();
     fetchAllTasks();
-  }, [fetchAchievementInvites, fetchAchievementPoints, hydrateInviteCodeFromStorage, fetchAllTasks]);
+  }, [
+    fetchAchievementInvites,
+    fetchAchievementPoints,
+    hydrateFromDatainfoStorage,
+    fetchCommissionFromDatainfo,
+    fetchAllTasks,
+  ]);
 
   const verifyStarterTask = useCallback(async (task) => {
     const code = String(task?.taskCode || '').toUpperCase();

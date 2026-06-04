@@ -434,18 +434,6 @@ export default function PCLayout({ children }) {
   const mineRestMenuItems = useMemo(
     () => [
       {
-        key: '/subscribe',
-        icon: (
-          <CustomIcon
-            src={`${CDN_PUBLIC_PREFIX}/icons/pc/Subscribe.png`}
-            activeSrc={`${CDN_PUBLIC_PREFIX}/icons/pc/Subscribe_actived.png`}
-            itemKey="/subscribe"
-            alt="subscription"
-          />
-        ),
-        label: t('pcLayout.menu.mySubscription'),
-      },
-      {
         key: '/ai',
         icon: (
           <CustomIcon
@@ -468,6 +456,18 @@ export default function PCLayout({ children }) {
           />
         ),
         label: t('pcLayout.menu.myAchievements'),
+      },
+      {
+        key: '/subscribe',
+        icon: (
+          <CustomIcon
+            src={`${CDN_PUBLIC_PREFIX}/icons/pc/Subscribe.png`}
+            activeSrc={`${CDN_PUBLIC_PREFIX}/icons/pc/Subscribe_actived.png`}
+            itemKey="/subscribe"
+            alt="subscription"
+          />
+        ),
+        label: t('pcLayout.menu.mySubscription'),
       },
     ],
     [t, activeContent, pathname]

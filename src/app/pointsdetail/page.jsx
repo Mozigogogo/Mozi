@@ -9,6 +9,8 @@ import InviteBanner from '@/components/InviteBanner';
 import { getPoolStatus, getTaskPoints, getInvitationList, getTaskList, completeTask } from '../../api/points';
 import { getTgInviteLink } from '../../utils/constants';
 import { safeBack } from '@/utils/navigation';
+import { fetchUserDataInfoOnce } from '@/utils/postLogin';
+import { buildInviteDatainfoPatch } from '@/utils/datainfoCommission';
 import styles from './page.module.less';
 
 // Components
@@ -146,18 +148,6 @@ export default function PointsDetail() {
           inviteCode: data.inviteCode ?? prev.inviteCode,
           totalInvites: data.totalInvites ?? prev.totalInvites,
           earnedPoints: data.earnedPoints ?? prev.earnedPoints,
-          totalCommission:
-            data.totalCommission ??
-            data.totalCommissionUsdt ??
-            data.accumulatedCommission ??
-            prev.totalCommission,
-          withdrawnAmount:
-            data.withdrawnAmount ?? data.withdrawnUsdt ?? data.withdrawn ?? prev.withdrawnAmount,
-          withdrawableAmount:
-            data.withdrawableAmount ??
-            data.availableWithdrawAmount ??
-            data.withdrawable ??
-            prev.withdrawableAmount,
           activeInvites: data.activeInvites ?? prev.activeInvites,
           pendingRewards: data.pendingRewards ?? prev.pendingRewards,
           seasonStart: data.seasonStart ?? prev.seasonStart,
@@ -175,27 +165,39 @@ export default function PointsDetail() {
     }
   }, [t]);
 
-  // 获取用户数据（含邀请码）- 从本地存储读取
+  const applyDatainfoToPointsData = useCallback((raw) => {
+    const patch = buildInviteDatainfoPatch(raw);
+    if (!patch) return;
+    setPointsData((prev) => ({ ...prev, ...patch }));
+  }, []);
+
+  // 从 datainfo 读取邀请码与分佣字段（本地缓存 + 接口）
   const fetchUserDataInfo = useCallback(() => {
     try {
-      // 从 localStorage 读取 userDataInfo
       const storedData = localStorage.getItem('userDataInfo');
-      
       if (storedData) {
         const data = JSON.parse(storedData);
         debugLog('🔍 [DEBUG] 从本地读取用户数据:', data);
-        
-        setPointsData(prev => ({
-          ...prev,
-          inviteCode: data.inviteCode || data.invitationCode || prev.inviteCode,
-        }));
+        applyDatainfoToPointsData(data);
       } else {
         debugLog('⚠️ [DEBUG] 本地未找到 userDataInfo 数据');
       }
     } catch (error) {
       console.error('读取本地用户数据失败:', error);
     }
-  }, []);
+  }, [applyDatainfoToPointsData]);
+
+  const fetchCommissionFromDatainfo = useCallback(async () => {
+    if (typeof window === 'undefined') return;
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const data = await fetchUserDataInfoOnce({ caller: 'pointsdetail' });
+      if (data) applyDatainfoToPointsData(data);
+    } catch (error) {
+      console.error('获取 datainfo 分佣数据失败:', error);
+    }
+  }, [applyDatainfoToPointsData]);
 
   // 获取邀请列表数据
   const fetchInvitationList = useCallback(async () => {
@@ -213,18 +215,6 @@ export default function PointsDetail() {
           totalInvites: data.totalInvites ?? invitations.length ?? prev.totalInvites,
           activeInvites: data.activeInvites ?? invitations.filter(i => i.status === 'active' || i.isActive).length ?? prev.activeInvites,
           earnedPoints: data.totalInvitePoints ?? data.earnedPoints ?? prev.earnedPoints,
-          totalCommission:
-            data.totalCommission ??
-            data.totalCommissionUsdt ??
-            data.accumulatedCommission ??
-            prev.totalCommission,
-          withdrawnAmount:
-            data.withdrawnAmount ?? data.withdrawnUsdt ?? data.withdrawn ?? prev.withdrawnAmount,
-          withdrawableAmount:
-            data.withdrawableAmount ??
-            data.availableWithdrawAmount ??
-            data.withdrawable ??
-            prev.withdrawableAmount,
           pendingRewards: data.pendingRewards ?? prev.pendingRewards
         }));
         debugLog('邀请列表数据:', data);
@@ -242,6 +232,7 @@ export default function PointsDetail() {
     // 首屏优先：先拿到用户积分总览，尽快可交互
     fetchPointsData();
     fetchUserDataInfo();
+    fetchCommissionFromDatainfo();
 
     // 次要信息延后：TG WebView 主线程紧张时先让 UI 跑起来
     scheduleLowPriority(() => fetchInvitationList());
