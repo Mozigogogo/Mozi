@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Input, Switch, Toast } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
@@ -23,6 +23,9 @@ import styles from './page.module.less';
 
 const CDN_PUBLIC_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public';
 const ALERT_ICON_CDN = `${CDN_PUBLIC_PREFIX}/icons`;
+const HISTORY_PRICE_CODES = ['priceRise', 'priceFall'];
+const HISTORY_FLUSH_DEBOUNCE_MS = 500;
+const HISTORY_FLUSH_BLUR_MS = 200;
 
 function WebhookAddIcon() {
   return (
@@ -83,6 +86,17 @@ function PCAlarmContent() {
     data: {},
     activeSymbol: null,
   });
+  const [historyInputs, setHistoryInputs] = useState({});
+  const [historySaving, setHistorySaving] = useState(false);
+  const historyInputsRef = useRef({});
+  const historyBaselineRef = useRef({});
+  const historyDirtyRef = useRef(new Set());
+  const historyFlushTimerRef = useRef(null);
+  const historyActiveSymbolRef = useRef(null);
+  const historySavingRef = useRef(false);
+
+  historyActiveSymbolRef.current = historyState.activeSymbol;
+  historySavingRef.current = historySaving;
 
   const isPriceDown = useMemo(() => {
     if (coinData.change == null || coinData.change === '--') return false;
@@ -238,6 +252,11 @@ function PCAlarmContent() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [countryDropdownOpen]);
 
+  const parseHistoryContentForInput = (content) => {
+    if (content == null || content === '' || content === '--') return '';
+    return String(content).replace(/[%$]/g, '').trim();
+  };
+
   const getHistoryWarnRows = (item) => {
     const backend = Array.isArray(item?.warnContent) ? item.warnContent : [];
     return historyFixedCodes.map((fixed) => {
@@ -250,9 +269,195 @@ function PCAlarmContent() {
     });
   };
 
+  const syncHistoryInputsFromData = useCallback((sym, data) => {
+    const rows = historyFixedCodes.map((fixed) => {
+      const backend = Array.isArray(data?.[sym]?.warnContent) ? data[sym].warnContent : [];
+      const found = backend.find((x) => x?.code === fixed.code);
+      return {
+        ...fixed,
+        content: found?.content ?? fixed.defaultContent,
+      };
+    });
+    const next = {};
+    rows.forEach((row) => {
+      next[row.code] = parseHistoryContentForInput(row.content);
+    });
+    historyBaselineRef.current[sym] = { ...next };
+    historyInputsRef.current = next;
+    setHistoryInputs(next);
+    historyDirtyRef.current = new Set();
+  }, [historyFixedCodes]);
+
+  useEffect(() => {
+    const sym = historyState.activeSymbol;
+    if (!sym) {
+      historyInputsRef.current = {};
+      setHistoryInputs({});
+      historyDirtyRef.current = new Set();
+      return;
+    }
+    if (historyState.loading) return;
+
+    if (historyBaselineRef.current[sym]) {
+      const cached = { ...historyBaselineRef.current[sym] };
+      historyInputsRef.current = cached;
+      setHistoryInputs(cached);
+      historyDirtyRef.current = new Set();
+      return;
+    }
+    syncHistoryInputsFromData(sym, historyState.data);
+  }, [historyState.activeSymbol, historyState.loading, historyState.data, syncHistoryInputsFromData]);
+
+  const applyHistoryContentPatch = useCallback((sym, contentPatch) => {
+    setHistoryState((prev) => {
+      const next = { ...prev.data };
+      const item = next[sym];
+      if (!item) return prev;
+      const backend = Array.isArray(item?.warnContent) ? item.warnContent : [];
+      let newWarnContent = [...backend];
+      Object.entries(contentPatch).forEach(([code, formattedValue]) => {
+        const existingIndex = newWarnContent.findIndex((w) => w?.code === code);
+        if (existingIndex >= 0) {
+          newWarnContent[existingIndex] = { ...newWarnContent[existingIndex], content: formattedValue };
+        } else {
+          const rows = getHistoryWarnRows(item);
+          const row = rows.find((r) => r.code === code);
+          newWarnContent.push({ code, content: formattedValue, active: Boolean(row?.active) });
+        }
+      });
+      next[sym] = { ...item, warnContent: newWarnContent };
+      return { ...prev, data: next };
+    });
+  }, []);
+
+  const flushHistoryChanges = useCallback(async () => {
+    if (historyFlushTimerRef.current) {
+      clearTimeout(historyFlushTimerRef.current);
+      historyFlushTimerRef.current = null;
+    }
+
+    const sym = historyActiveSymbolRef.current;
+    if (!sym || historySavingRef.current) return true;
+
+    const baseline = historyBaselineRef.current[sym] || {};
+    const inputs = historyInputsRef.current;
+    const dirtyCodes = [...historyDirtyRef.current];
+    const content = {};
+
+    for (const code of dirtyCodes) {
+      const value = String(inputs[code] ?? '').trim();
+      const oldVal = String(baseline[code] ?? '').trim();
+      if (value === oldVal) continue;
+      if (!value || !/^[0-9]+(\.[0-9]+)?$/.test(value)) {
+        Toast.show({ content: t('myAlarm.enterNumber', { defaultValue: '请输入数字' }) });
+        return false;
+      }
+      content[code] = HISTORY_PRICE_CODES.includes(code) ? value : `${value}%`;
+    }
+
+    if (Object.keys(content).length === 0) {
+      historyDirtyRef.current.clear();
+      return true;
+    }
+
+    setHistorySaving(true);
+    try {
+      const addRes = await request({
+        url: Interface.ADD_WARN,
+        method: 'POST',
+        data: { symbol: sym, content },
+      });
+
+      if (addRes?.data === true) {
+        applyHistoryContentPatch(sym, content);
+        const nextBaseline = { ...(historyBaselineRef.current[sym] || {}) };
+        Object.keys(content).forEach((code) => {
+          nextBaseline[code] = String(inputs[code] ?? '').trim();
+        });
+        historyBaselineRef.current[sym] = nextBaseline;
+        historyDirtyRef.current.clear();
+        Toast.show({ content: t('myAlarm.editSuccess', { defaultValue: '修改成功' }) });
+        return true;
+      }
+      Toast.show({ content: addRes?.errorMsg || t('myAlarm.editFailed', { defaultValue: '修改失败' }) });
+      return false;
+    } catch (e) {
+      Toast.show({ content: t('myAlarm.editFailed', { defaultValue: '修改失败' }) });
+      return false;
+    } finally {
+      setHistorySaving(false);
+    }
+  }, [applyHistoryContentPatch, t]);
+
+  const scheduleHistoryFlush = useCallback(
+    (delay = HISTORY_FLUSH_DEBOUNCE_MS) => {
+      if (historyFlushTimerRef.current) clearTimeout(historyFlushTimerRef.current);
+      historyFlushTimerRef.current = setTimeout(() => {
+        historyFlushTimerRef.current = null;
+        flushHistoryChanges();
+      }, delay);
+    },
+    [flushHistoryChanges],
+  );
+
+  const markHistoryFieldDirty = useCallback(
+    (code, value) => {
+      historyInputsRef.current = { ...historyInputsRef.current, [code]: value };
+      setHistoryInputs(historyInputsRef.current);
+      historyDirtyRef.current.add(code);
+      scheduleHistoryFlush();
+    },
+    [scheduleHistoryFlush],
+  );
+
+  const handleHistoryInputBlur = useCallback(() => {
+    scheduleHistoryFlush(HISTORY_FLUSH_BLUR_MS);
+  }, [scheduleHistoryFlush]);
+
+  const handleSelectHistorySymbol = useCallback(
+    async (sym) => {
+      if (sym === historyState.activeSymbol) return;
+      await flushHistoryChanges();
+      setHistoryState((prev) => ({ ...prev, activeSymbol: sym }));
+    },
+    [historyState.activeSymbol, flushHistoryChanges],
+  );
+
+  useEffect(() => {
+    if (activeTab !== 'history') {
+      flushHistoryChanges();
+      if (historyFlushTimerRef.current) {
+        clearTimeout(historyFlushTimerRef.current);
+        historyFlushTimerRef.current = null;
+      }
+    }
+    return () => {
+      if (historyFlushTimerRef.current) {
+        clearTimeout(historyFlushTimerRef.current);
+        historyFlushTimerRef.current = null;
+      }
+    };
+  }, [activeTab, flushHistoryChanges]);
+
   const toggleHistoryWarn = async (row) => {
     const sym = historyState.activeSymbol;
     if (!sym) return;
+
+    await flushHistoryChanges();
+
+    const item = historyState.data?.[sym];
+    const backend = Array.isArray(item?.warnContent) ? item.warnContent : [];
+    const backendItem = backend.find((w) => w?.code === row.code);
+    const baselineVal = String(historyBaselineRef.current[sym]?.[row.code] ?? '').trim();
+    if (!backendItem && !row.active) {
+      const inputVal = String(historyInputsRef.current[row.code] ?? historyInputs[row.code] ?? '').trim();
+      const effectiveVal = inputVal || baselineVal;
+      if (!effectiveVal || !/^[0-9]+(\.[0-9]+)?$/.test(effectiveVal)) {
+        Toast.show({ content: t('myAlarm.setValueFirst', { defaultValue: '请先设置告警值' }) });
+        return;
+      }
+    }
+
     const interfaceUrl = row.active ? Interface.CLOSE_WARN : Interface.OPEN_WARN;
     try {
       const res = await request({
@@ -283,6 +488,7 @@ function PCAlarmContent() {
   const deleteHistorySymbol = async () => {
     const sym = historyState.activeSymbol;
     if (!sym) return;
+    await flushHistoryChanges();
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
       const res = await request({
@@ -291,6 +497,7 @@ function PCAlarmContent() {
         headers: token ? { authentication: token } : undefined,
       });
       if ((res?.code === 200 || res?.code === 0) && res?.data === true) {
+        delete historyBaselineRef.current[sym];
         setHistoryState((prev) => {
           const next = { ...prev.data };
           delete next[sym];
@@ -575,7 +782,7 @@ function PCAlarmContent() {
                         key={sym}
                         type="button"
                         className={`${styles.historyCoinItem} ${historyState.activeSymbol === sym ? styles.historyCoinItemActive : ''}`}
-                        onClick={() => setHistoryState((prev) => ({ ...prev, activeSymbol: sym }))}
+                        onClick={() => handleSelectHistorySymbol(sym)}
                       >
                         <span className={styles.historyCoinAvatar}>{sym.slice(0, 1)}</span>
                         <span className={styles.historyCoinText}>
@@ -624,7 +831,16 @@ function PCAlarmContent() {
                           <div className={styles.historyRowRight}>
                             <div className={styles.historyRowInputWrap}>
                               <span className={styles.historyRowPrefix}>{row.unit === '$' ? '$' : ''}</span>
-                              <input className={styles.historyRowInput} value={row.content} readOnly />
+                              <input
+                                className={styles.historyRowInput}
+                                type="text"
+                                inputMode="decimal"
+                                value={historyInputs[row.code] ?? parseHistoryContentForInput(row.content)}
+                                disabled={historySaving}
+                                placeholder={t('myAlarm.enterNumber', { defaultValue: '请输入数字' })}
+                                onChange={(e) => markHistoryFieldDirty(row.code, e.target.value)}
+                                onBlur={handleHistoryInputBlur}
+                              />
                               <span className={styles.historyRowUnit}>{row.unit === '%' ? '%' : ''}</span>
                             </div>
                             <Switch
