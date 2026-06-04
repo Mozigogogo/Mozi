@@ -4,9 +4,15 @@ import { useTranslation } from 'react-i18next';
 import { getTgInviteLink } from '@/utils/constants';
 import styles from './AchievementInviteCard.module.less';
 
-export default function AchievementInviteCard({ pointsData, copyToClipboard }) {
+export default function AchievementInviteCard({ pointsData, copyToClipboard, onApplyWithdraw }) {
   const { t } = useTranslation();
   const inviteCode = String(pointsData.inviteCode || '').trim();
+
+  const formatUsdt = (val) => {
+    const n = Number(val);
+    if (!Number.isFinite(n)) return '0';
+    return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  };
   const inviteLinkFallback =
     pointsData.inviteLink ||
     (typeof window !== 'undefined' && inviteCode
@@ -67,6 +73,30 @@ export default function AchievementInviteCard({ pointsData, copyToClipboard }) {
         <div className={styles.statBox}>
           <div className={styles.statValue}>{pointsData.earnedPoints || 0}</div>
           <div className={styles.statLabel}>{t('pointsDetail.totalEarned')}</div>
+        </div>
+      </div>
+
+      <div className={styles.statsRow}>
+        <div className={styles.statBox}>
+          <div className={styles.statValue}>{formatUsdt(pointsData.totalCommission)}</div>
+          <div className={styles.statLabel}>{t('pointsDetail.totalCommission')}</div>
+        </div>
+        <div className={styles.statBox}>
+          <div className={styles.statValue}>{formatUsdt(pointsData.withdrawnAmount)}</div>
+          <div className={styles.statLabel}>{t('pointsDetail.withdrawnAmount')}</div>
+        </div>
+      </div>
+
+      <div className={styles.statsRow}>
+        <div className={styles.statBox}>
+          <div className={styles.statValue}>{formatUsdt(pointsData.withdrawableAmount)}</div>
+          <div className={styles.statLabel}>{t('pointsDetail.withdrawableAmount')}</div>
+        </div>
+        <div className={`${styles.statBox} ${styles.statBoxApply}`}>
+          <div className={styles.statLabel}>{t('pointsDetail.applyTH')}</div>
+          <button type="button" className={styles.withdrawBtn} onClick={() => onApplyWithdraw?.()}>
+            {t('pointsDetail.applyWithdrawAction')}
+          </button>
         </div>
       </div>
 

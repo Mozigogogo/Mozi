@@ -5,9 +5,15 @@ import SectionHeader from './SectionHeader';
 import DeferredImg from './DeferredImg';
 import { getTgInviteLink } from '@/utils/constants';
 
-const InviteCard = ({ pointsData, copyToClipboard }) => {
+const InviteCard = ({ pointsData, copyToClipboard, onApplyWithdraw }) => {
   const { t } = useTranslation();
   const inviteLinkFallback = pointsData.inviteLink || getTgInviteLink(pointsData.inviteCode);
+
+  const formatUsdt = (val) => {
+    const n = Number(val);
+    if (!Number.isFinite(n)) return '0';
+    return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  };
 
   return (
     <div className={styles.inviteCard}>
@@ -69,6 +75,30 @@ const InviteCard = ({ pointsData, copyToClipboard }) => {
         <div className={styles.inviteStatBox}>
           <div className={styles.inviteStatValue2}>{pointsData.earnedPoints || 0}</div>
           <div className={styles.inviteStatLabel}>{t('pointsDetail.totalEarned')}</div>
+        </div>
+      </div>
+
+      <div className={styles.inviteStatsGrid}>
+        <div className={styles.inviteStatBox}>
+          <div className={styles.inviteStatValue}>{formatUsdt(pointsData.totalCommission)}</div>
+          <div className={styles.inviteStatLabel}>{t('pointsDetail.totalCommission')}</div>
+        </div>
+        <div className={styles.inviteStatBox}>
+          <div className={styles.inviteStatValue2}>{formatUsdt(pointsData.withdrawnAmount)}</div>
+          <div className={styles.inviteStatLabel}>{t('pointsDetail.withdrawnAmount')}</div>
+        </div>
+      </div>
+
+      <div className={styles.inviteStatsGrid}>
+        <div className={styles.inviteStatBox}>
+          <div className={styles.inviteStatValue}>{formatUsdt(pointsData.withdrawableAmount)}</div>
+          <div className={styles.inviteStatLabel}>{t('pointsDetail.withdrawableAmount')}</div>
+        </div>
+        <div className={`${styles.inviteStatBox} ${styles.inviteStatBoxApply}`}>
+          <div className={styles.inviteStatLabel}>{t('pointsDetail.applyTH')}</div>
+          <button type="button" className={styles.inviteWithdrawBtn} onClick={() => onApplyWithdraw?.()}>
+            {t('pointsDetail.applyWithdrawAction')}
+          </button>
         </div>
       </div>
 

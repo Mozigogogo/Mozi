@@ -40,6 +40,9 @@ function AchievementContent() {
     totalInvites: 0,
     earnedPoints: 0,
     totalPoints: 0,
+    totalCommission: 0,
+    withdrawnAmount: 0,
+    withdrawableAmount: 0,
   });
   const [poolStatus, setPoolStatus] = useState({
     percent: 60,
@@ -122,6 +125,18 @@ function AchievementContent() {
           inviteCode: data.inviteCode ?? prev.inviteCode,
           totalInvites: data.totalInvites ?? prev.totalInvites,
           earnedPoints: data.earnedPoints ?? prev.earnedPoints,
+          totalCommission:
+            data.totalCommission ??
+            data.totalCommissionUsdt ??
+            data.accumulatedCommission ??
+            prev.totalCommission,
+          withdrawnAmount:
+            data.withdrawnAmount ?? data.withdrawnUsdt ?? data.withdrawn ?? prev.withdrawnAmount,
+          withdrawableAmount:
+            data.withdrawableAmount ??
+            data.availableWithdrawAmount ??
+            data.withdrawable ??
+            prev.withdrawableAmount,
         }));
       }
     } catch (error) {
@@ -141,6 +156,18 @@ function AchievementContent() {
           inviteLink: data.inviteLink || prev.inviteLink,
           totalInvites: data.totalInvites ?? invitations.length ?? prev.totalInvites,
           earnedPoints: data.totalInvitePoints ?? data.earnedPoints ?? prev.earnedPoints,
+          totalCommission:
+            data.totalCommission ??
+            data.totalCommissionUsdt ??
+            data.accumulatedCommission ??
+            prev.totalCommission,
+          withdrawnAmount:
+            data.withdrawnAmount ?? data.withdrawnUsdt ?? data.withdrawn ?? prev.withdrawnAmount,
+          withdrawableAmount:
+            data.withdrawableAmount ??
+            data.availableWithdrawAmount ??
+            data.withdrawable ??
+            prev.withdrawableAmount,
         }));
       }
     } catch (error) {
@@ -496,7 +523,16 @@ function AchievementContent() {
 
         <div className={styles.mainGrid} ref={mainGridRef}>
           <div className={styles.leftColumn} ref={leftColumnRef}>
-            <AchievementInviteCard pointsData={inviteData} copyToClipboard={copyToClipboard} />
+            <AchievementInviteCard
+              pointsData={inviteData}
+              copyToClipboard={copyToClipboard}
+              onApplyWithdraw={() => {
+                Toast.show({
+                  content: t('pointsDetail.historyFeatureInDevelopment'),
+                  position: 'bottom',
+                });
+              }}
+            />
             <AchievementOneTimeTasks
               tasks={starterTasks}
               onTaskClick={handleStarterTaskClick}

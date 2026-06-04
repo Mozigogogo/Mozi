@@ -1058,7 +1058,11 @@
     "inviteCode": "邀请码",
     "shareCount": "总邀请数",
     "totalEarned": "邀请积分",
+    "totalCommission": "累计分佣",
+    "withdrawnAmount": "已提现金额",
+    "withdrawableAmount": "可提现金额",
     "applyTH": "申请提现",
+    "applyWithdrawAction": "立即申请",
     "lastVisit": "上次访问",
     "inviteRules": {
       "1": "1. 积分未来将用于生态权益",

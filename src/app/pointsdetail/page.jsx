@@ -63,6 +63,9 @@ export default function PointsDetail() {
     inviteCode: '',
     totalInvites: 0,
     earnedPoints: 0,
+    totalCommission: 0,
+    withdrawnAmount: 0,
+    withdrawableAmount: 0,
     activeInvites: 0,
     pendingRewards: 0,
     level: 1,
@@ -143,6 +146,18 @@ export default function PointsDetail() {
           inviteCode: data.inviteCode ?? prev.inviteCode,
           totalInvites: data.totalInvites ?? prev.totalInvites,
           earnedPoints: data.earnedPoints ?? prev.earnedPoints,
+          totalCommission:
+            data.totalCommission ??
+            data.totalCommissionUsdt ??
+            data.accumulatedCommission ??
+            prev.totalCommission,
+          withdrawnAmount:
+            data.withdrawnAmount ?? data.withdrawnUsdt ?? data.withdrawn ?? prev.withdrawnAmount,
+          withdrawableAmount:
+            data.withdrawableAmount ??
+            data.availableWithdrawAmount ??
+            data.withdrawable ??
+            prev.withdrawableAmount,
           activeInvites: data.activeInvites ?? prev.activeInvites,
           pendingRewards: data.pendingRewards ?? prev.pendingRewards,
           seasonStart: data.seasonStart ?? prev.seasonStart,
@@ -198,6 +213,18 @@ export default function PointsDetail() {
           totalInvites: data.totalInvites ?? invitations.length ?? prev.totalInvites,
           activeInvites: data.activeInvites ?? invitations.filter(i => i.status === 'active' || i.isActive).length ?? prev.activeInvites,
           earnedPoints: data.totalInvitePoints ?? data.earnedPoints ?? prev.earnedPoints,
+          totalCommission:
+            data.totalCommission ??
+            data.totalCommissionUsdt ??
+            data.accumulatedCommission ??
+            prev.totalCommission,
+          withdrawnAmount:
+            data.withdrawnAmount ?? data.withdrawnUsdt ?? data.withdrawn ?? prev.withdrawnAmount,
+          withdrawableAmount:
+            data.withdrawableAmount ??
+            data.availableWithdrawAmount ??
+            data.withdrawable ??
+            prev.withdrawableAmount,
           pendingRewards: data.pendingRewards ?? prev.pendingRewards
         }));
         debugLog('邀请列表数据:', data);
@@ -738,6 +765,13 @@ export default function PointsDetail() {
     }
   };
 
+  const handleApplyWithdraw = () => {
+    Toast.show({
+      content: t('pointsDetail.historyFeatureInDevelopment'),
+      position: 'bottom',
+    });
+  };
+
   return (
     <div className={styles.pointsDetailContainer}>
       {/* NavBar 导航 */}
@@ -768,7 +802,11 @@ export default function PointsDetail() {
       />
 
       {/* 邀请有奖 */}
-      <InviteCard pointsData={pointsData} copyToClipboard={copyToClipboard} />
+      <InviteCard
+        pointsData={pointsData}
+        copyToClipboard={copyToClipboard}
+        onApplyWithdraw={handleApplyWithdraw}
+      />
 
       {/* 新手任务 */}
       <NewbieTasks

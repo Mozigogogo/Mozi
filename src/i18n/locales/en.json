@@ -1059,7 +1059,11 @@
     "inviteCode": "Invite Code",
     "shareCount": "Total Invited",
     "totalEarned": "Invite Points",
+    "totalCommission": "Total Commission",
+    "withdrawnAmount": "Withdrawn",
+    "withdrawableAmount": "Withdrawable",
     "applyTH": "Withdraw",
+    "applyWithdrawAction": "Apply Now",
     "lastVisit": "Last Visit",
     "inviteRules": {
       "1": "1. Points will be used for ecosystem benefits in the future",
