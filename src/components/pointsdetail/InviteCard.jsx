@@ -11,8 +11,8 @@ const InviteCard = ({ pointsData, copyToClipboard, onApplyWithdraw }) => {
 
   const formatUsdt = (val) => {
     const n = Number(val);
-    if (!Number.isFinite(n)) return '0';
-    return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    if (!Number.isFinite(n)) return '$0';
+    return `$${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
   };
 
   return (
@@ -95,10 +95,10 @@ const InviteCard = ({ pointsData, copyToClipboard, onApplyWithdraw }) => {
           <div className={styles.inviteStatLabel}>{t('pointsDetail.withdrawableAmount')}</div>
         </div>
         <div className={`${styles.inviteStatBox} ${styles.inviteStatBoxApply}`}>
-          <div className={styles.inviteStatLabel}>{t('pointsDetail.applyTH')}</div>
           <button type="button" className={styles.inviteWithdrawBtn} onClick={() => onApplyWithdraw?.()}>
             {t('pointsDetail.applyWithdrawAction')}
           </button>
+          <div className={styles.inviteStatLabel}>{t('pointsDetail.applyTH')}</div>
         </div>
       </div>
 

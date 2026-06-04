@@ -10,8 +10,8 @@ export default function AchievementInviteCard({ pointsData, copyToClipboard, onA
 
   const formatUsdt = (val) => {
     const n = Number(val);
-    if (!Number.isFinite(n)) return '0';
-    return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    if (!Number.isFinite(n)) return '$0';
+    return `$${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
   };
   const inviteLinkFallback =
     pointsData.inviteLink ||
@@ -93,10 +93,10 @@ export default function AchievementInviteCard({ pointsData, copyToClipboard, onA
           <div className={styles.statLabel}>{t('pointsDetail.withdrawableAmount')}</div>
         </div>
         <div className={`${styles.statBox} ${styles.statBoxApply}`}>
-          <div className={styles.statLabel}>{t('pointsDetail.applyTH')}</div>
           <button type="button" className={styles.withdrawBtn} onClick={() => onApplyWithdraw?.()}>
             {t('pointsDetail.applyWithdrawAction')}
           </button>
+          <div className={styles.statLabel}>{t('pointsDetail.applyTH')}</div>
         </div>
       </div>
 
