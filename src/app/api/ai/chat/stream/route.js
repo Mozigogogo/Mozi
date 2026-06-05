@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request) {
   try {
-    // 获取请求体
+    // 获取请求体 如果请求体为空，则返回错误
     const body = await request.json();
     
     // 获取 authentication header
