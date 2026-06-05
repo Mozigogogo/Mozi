@@ -1,10 +1,13 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import { RightOutline } from 'antd-mobile-icons';
 import { getTgInviteLink } from '@/utils/constants';
 import styles from './AchievementInviteCard.module.less';
 
 export default function AchievementInviteCard({ pointsData, copyToClipboard, onApplyWithdraw }) {
+  const router = useRouter();
   const { t } = useTranslation();
   const inviteCode = String(pointsData.inviteCode || '').trim();
 
@@ -99,6 +102,15 @@ export default function AchievementInviteCard({ pointsData, copyToClipboard, onA
           <div className={styles.statLabel}>{t('pointsDetail.applyTH')}</div>
         </div>
       </div>
+
+      <button
+        type="button"
+        className={styles.withdrawHistoryBtn}
+        onClick={() => router.push('/withdrawhistory')}
+      >
+        <span>{t('pointsDetail.withdrawHistory')}</span>
+        <RightOutline fontSize={14} />
+      </button>
 
       <div className={styles.rules}>
         <p>{t('pointsDetail.inviteRules.1')}</p>

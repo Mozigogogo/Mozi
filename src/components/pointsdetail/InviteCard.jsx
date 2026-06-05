@@ -1,11 +1,14 @@
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import { RightOutline } from 'antd-mobile-icons';
 import styles from '@/app/pointsdetail/page.module.less';
 import SectionHeader from './SectionHeader';
 import DeferredImg from './DeferredImg';
 import { getTgInviteLink } from '@/utils/constants';
 
 const InviteCard = ({ pointsData, copyToClipboard, onApplyWithdraw }) => {
+  const router = useRouter();
   const { t } = useTranslation();
   const inviteLinkFallback = pointsData.inviteLink || getTgInviteLink(pointsData.inviteCode);
 
@@ -101,6 +104,15 @@ const InviteCard = ({ pointsData, copyToClipboard, onApplyWithdraw }) => {
           <div className={styles.inviteStatLabel}>{t('pointsDetail.applyTH')}</div>
         </div>
       </div>
+
+      <button
+        type="button"
+        className={styles.inviteWithdrawHistory}
+        onClick={() => router.push('/withdrawhistory')}
+      >
+        <span className={styles.inviteWithdrawHistoryLabel}>{t('pointsDetail.withdrawHistory')}</span>
+        <RightOutline fontSize={14} className={styles.inviteWithdrawHistoryArrow} />
+      </button>
 
       <div className={styles.inviteRules}>
         <p>{t('pointsDetail.inviteRules.1')}</p>

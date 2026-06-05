@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import NavBar from '@/components/NavBar';
 import InviteBanner from '@/components/InviteBanner';
 import { getPoolStatus, getTaskPoints, getInvitationList, getTaskList, completeTask } from '../../api/points';
+import { applyCommissionWithdraw } from '../../api/commission';
 import { getTgInviteLink } from '../../utils/constants';
 import { safeBack } from '@/utils/navigation';
 import { fetchUserDataInfoOnce } from '@/utils/postLogin';
@@ -756,11 +757,35 @@ export default function PointsDetail() {
     }
   };
 
-  const handleApplyWithdraw = () => {
-    Toast.show({
-      content: t('pointsDetail.historyFeatureInDevelopment'),
-      position: 'bottom',
-    });
+  const handleApplyWithdraw = async () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) {
+      Toast.show({ content: t('pointsDetail.pleaseRegister'), position: 'bottom' });
+      return;
+    }
+
+    const withdrawable = Number(pointsData.withdrawableAmount);
+    if (!Number.isFinite(withdrawable) || withdrawable <= 0) {
+      Toast.show({ content: t('pointsDetail.applyWithdrawNoBalance'), position: 'bottom' });
+      return;
+    }
+
+    try {
+      const res = await applyCommissionWithdraw();
+      if (res?.code === 0) {
+        Toast.show({ content: t('pointsDetail.applyWithdrawSuccess'), icon: 'success', position: 'bottom' });
+        fetchCommissionFromDatainfo();
+        return;
+      }
+      Toast.show({
+        content: res?.message || t('pointsDetail.applyWithdrawFailed'),
+        icon: 'fail',
+        position: 'bottom',
+      });
+    } catch (error) {
+      console.error('申请提现失败:', error);
+      Toast.show({ content: t('pointsDetail.applyWithdrawFailed'), icon: 'fail', position: 'bottom' });
+    }
   };
 
   return (

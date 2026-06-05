@@ -7,6 +7,7 @@ import { Toast } from 'antd-mobile';
 import NavBar from '@/components/NavBar';
 import PCLayout from '@/components/PCLayout';
 import { getPoolStatus, getTaskPoints, getInvitationList, getTaskList, completeTask } from '@/api/points';
+import { applyCommissionWithdraw } from '@/api/commission';
 import AchievementInviteCard from './AchievementInviteCard';
 import AchievementOneTimeTasks from './AchievementOneTimeTasks';
 import AchievementMoreRewardsBanner from './AchievementMoreRewardsBanner';
@@ -180,6 +181,37 @@ function AchievementContent() {
       console.error('Failed to fetch user datainfo for commission:', error);
     }
   }, [applyDatainfoToInviteData]);
+
+  const handleApplyWithdraw = useCallback(async () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) {
+      Toast.show({ content: t('pointsDetail.pleaseRegister'), position: 'bottom' });
+      return;
+    }
+
+    const withdrawable = Number(inviteData.withdrawableAmount);
+    if (!Number.isFinite(withdrawable) || withdrawable <= 0) {
+      Toast.show({ content: t('pointsDetail.applyWithdrawNoBalance'), position: 'bottom' });
+      return;
+    }
+
+    try {
+      const res = await applyCommissionWithdraw();
+      if (res?.code === 0) {
+        Toast.show({ content: t('pointsDetail.applyWithdrawSuccess'), icon: 'success', position: 'bottom' });
+        fetchCommissionFromDatainfo();
+        return;
+      }
+      Toast.show({
+        content: res?.message || t('pointsDetail.applyWithdrawFailed'),
+        icon: 'fail',
+        position: 'bottom',
+      });
+    } catch (error) {
+      console.error('Apply commission withdraw failed:', error);
+      Toast.show({ content: t('pointsDetail.applyWithdrawFailed'), icon: 'fail', position: 'bottom' });
+    }
+  }, [fetchCommissionFromDatainfo, inviteData.withdrawableAmount, t]);
 
   useEffect(() => {
     fetchPoolStatusData();
@@ -525,12 +557,7 @@ function AchievementContent() {
             <AchievementInviteCard
               pointsData={inviteData}
               copyToClipboard={copyToClipboard}
-              onApplyWithdraw={() => {
-                Toast.show({
-                  content: t('pointsDetail.historyFeatureInDevelopment'),
-                  position: 'bottom',
-                });
-              }}
+              onApplyWithdraw={handleApplyWithdraw}
             />
             <AchievementOneTimeTasks
               tasks={starterTasks}

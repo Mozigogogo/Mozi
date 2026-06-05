@@ -1063,6 +1063,10 @@
     "withdrawableAmount": "可提现金额",
     "applyTH": "申请提现",
     "applyWithdrawAction": "立即申请",
+    "applyWithdrawSuccess": "提现申请已提交",
+    "applyWithdrawFailed": "提现申请失败",
+    "applyWithdrawNoBalance": "暂无可提现金额",
+    "withdrawHistory": "提现记录",
     "lastVisit": "上次访问",
     "inviteRules": {
       "1": "1. 积分未来将用于生态权益",
@@ -1178,6 +1182,20 @@
   "pointsHistory": {
     "title": "积分历史",
     "empty": "暂无积分记录"
+  },
+  "withdrawHistory": {
+    "title": "提现记录",
+    "empty": "暂无提现记录",
+    "loadFailed": "加载失败",
+    "toAddress": "收款地址",
+    "status": {
+      "PENDING": "审核中",
+      "PAID": "已打款",
+      "REJECTED": "已驳回（余额已退回）",
+      "pending": "审核中",
+      "paid": "已打款",
+      "rejected": "已驳回（余额已退回）"
+    }
   },
   "pcr": {
     "title": "多空比",

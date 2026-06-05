@@ -1064,6 +1064,10 @@
     "withdrawableAmount": "Withdrawable",
     "applyTH": "Withdraw",
     "applyWithdrawAction": "Apply Now",
+    "applyWithdrawSuccess": "Withdrawal request submitted",
+    "applyWithdrawFailed": "Withdrawal request failed",
+    "applyWithdrawNoBalance": "No withdrawable balance",
+    "withdrawHistory": "Withdrawal Records",
     "lastVisit": "Last Visit",
     "inviteRules": {
       "1": "1. Points will be used for ecosystem benefits in the future",
@@ -1179,6 +1183,20 @@
   "pointsHistory": {
     "title": "Points History",
     "empty": "No points records yet"
+  },
+  "withdrawHistory": {
+    "title": "Withdrawal Records",
+    "empty": "No withdrawal records",
+    "loadFailed": "Failed to load",
+    "toAddress": "Receiving Address",
+    "status": {
+      "PENDING": "Under Review",
+      "PAID": "Paid",
+      "REJECTED": "Rejected (Balance Refunded)",
+      "pending": "Under Review",
+      "paid": "Paid",
+      "rejected": "Rejected (Balance Refunded)"
+    }
   },
   "pcr": {
     "title": "Long/Short Ratio",

@@ -170,6 +170,50 @@ export async function updateUserCommissionLevel(payload) {
   return res.data;
 }
 
+/**
+ * @typedef {Object} AdminCommissionWithdrawListParams
+ * @property {'PENDING'|'PAID'|'REJECTED'} [status]
+ * @property {number} [page]
+ * @property {number} [size]
+ */
+
+/**
+ * @typedef {Object} UpdateCommissionWithdrawStatusPayload
+ * @property {'PAID'|'REJECTED'} status
+ * @property {string} [txHash] - 改为 PAID 时必填
+ * @property {string} [remark] - 改为 REJECTED 时可填驳回原因
+ */
+
+function adminCommissionWithdrawPath(id) {
+  return `${Interface.ADMIN_COMMISSION_WITHDRAWALS}/${encodeURIComponent(String(id))}/status`;
+}
+
+/** 分页查询分佣提现申请 GET /admin/commission/withdrawals */
+export async function listAdminCommissionWithdrawals(params = {}) {
+  const res = await adminInstance.get(Interface.ADMIN_COMMISSION_WITHDRAWALS, { params });
+  return res.data;
+}
+
+/** 修改分佣提现申请状态 PUT /admin/commission/withdrawals/{id}/status */
+export async function updateAdminCommissionWithdrawalStatus(id, payload) {
+  const res = await adminInstance.put(adminCommissionWithdrawPath(id), payload);
+  return res.data;
+}
+
+/** 解析提现申请分页列表 */
+export function normalizeAdminWithdrawPage(data) {
+  if (!data || typeof data !== 'object') {
+    return { list: [], total: 0, page: 1, size: 20 };
+  }
+  const list = Array.isArray(data.list) ? data.list : [];
+  return {
+    list,
+    total: Number(data.total) || list.length,
+    page: Number(data.page) || 1,
+    size: Number(data.size) || 20,
+  };
+}
+
 /** 解析用户分页列表 */
 export function normalizeAdminUserPage(data) {
   if (!data || typeof data !== 'object') {
