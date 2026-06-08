@@ -10,7 +10,7 @@ module.exports = {
       minPixelValue: 1, // 设置最小的转换数值，如果为1的话，只有大于1的值会被转换
       mediaQuery: false, // 媒体查询里的单位是否需要转换单位
       replace: true, // 是否直接更换属性值，而不添加备用属性
-      exclude: [/node_modules/, /PCLayout/, /PCHome/, /\/PC/, /\/pc\//, /\/admin\//, /AdminLayout/, /admin-login\.css/, /admin-shell\.css/, /MarketDistribution/, /TopicHotList/, /achievement/, /AlertsSection\.module\.css/,/PromoCopy\.module\.css/,/AlphaSection\.module\.css/,/FlashSection\.module\.css/,/KnowledgeSection\.module\.css/,/HeroSection\.module\.css/,/SectorSection\.module\.css/,/site\.module\.css/, /DailyShareCard/, /ShareAiChatModal/, /rankdiscuss/], // 排除 node_modules、PC 端组件、app/pc 与 admin 路由、分享弹窗（PC 使用 PX）
+      exclude: [/node_modules/, /PCLayout/, /PCHome/, /\/PC/, /\/pc\//, /\/admin\//, /AdminLayout/, /admin-login\.css/, /admin-shell\.css/, /MarketDistribution/, /TopicHotList/, /achievement/, /AlertsSection\.module\.css/,/PromoCopy\.module\.css/,/AlphaSection\.module\.css/,/FlashSection\.module\.css/,/KnowledgeSection\.module\.css/,/HeroSection\.module\.css/,/SectorSection\.module\.css/,/site\.module\.css/, /DailyShareCard/, /ShareAiChatModal/, /SignalCard/, /rankdiscuss/], // 排除 node_modules、PC 端组件、app/pc 与 admin 路由、分享弹窗（PC 使用 PX）
       include: undefined, // 如果设置了include，那将只有匹配到的文件才会被转换
       landscape: false, // 是否添加根据 landscapeWidth 生成的媒体查询条件
       landscapeUnit: 'vw', // 横屏时使用的单位

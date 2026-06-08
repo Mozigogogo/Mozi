@@ -78,24 +78,26 @@ function ConfidenceRing({ value }) {
 
   return (
     <div className={styles.confidenceRing}>
-      <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden>
-        <circle cx="32" cy="32" r={radius} fill="none" stroke="#f0f0f0" strokeWidth="5" />
-        <circle
-          cx="32"
-          cy="32"
-          r={radius}
-          fill="none"
-          stroke="#f5a623"
-          strokeWidth="5"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          transform="rotate(-90 32 32)"
-        />
-      </svg>
-      <div className={styles.confidenceInner}>
-        <span className={styles.confidenceValue}>{Math.round(pct)}%</span>
-        <span className={styles.confidenceUnit}>CONF</span>
+      <div className={styles.confidenceChart}>
+        <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden>
+          <circle cx="32" cy="32" r={radius} fill="none" stroke="#f0f0f0" strokeWidth="5" />
+          <circle
+            cx="32"
+            cy="32"
+            r={radius}
+            fill="none"
+            stroke="#f5a623"
+            strokeWidth="5"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            transform="rotate(-90 32 32)"
+          />
+        </svg>
+        <div className={styles.confidenceInner}>
+          <span className={styles.confidenceValue}>{Math.round(pct)}%</span>
+          <span className={styles.confidenceUnit}>CONF</span>
+        </div>
       </div>
       <span className={styles.confidenceLabel}>置信度</span>
     </div>
@@ -175,7 +177,7 @@ function parseMathNotes(display) {
     .slice(0, 3);
 }
 
-export default function SignalCard({ data }) {
+export default function SignalCard({ data, isPC = false }) {
   if (!data) return null;
 
   const card = data.card || {};
@@ -234,11 +236,15 @@ export default function SignalCard({ data }) {
   ].filter(Boolean);
 
   if (!coin && data.display) {
-    return <pre className={styles.displayFallback}>{data.display}</pre>;
+    return (
+      <pre className={`${styles.displayFallback} ${isPC ? styles.pcMode : ''}`}>
+        {data.display}
+      </pre>
+    );
   }
 
   return (
-    <div className={styles.root}>
+    <div className={`${styles.root} ${isPC ? styles.pcMode : ''}`}>
       <div className={styles.header}>
         <div className={styles.headerLeft}>
           <div className={styles.badges}>

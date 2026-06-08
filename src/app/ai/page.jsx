@@ -1611,7 +1611,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                           {msg.statusHint ? (
                             <div className={styles.bigorderStatus}>{msg.statusHint}</div>
                           ) : null}
-                          {msg.signalCard ? <SignalCard data={msg.signalCard} /> : null}
+                          {msg.signalCard ? <SignalCard data={msg.signalCard} isPC={isPC} /> : null}
                           {msg.content ? (
                             <StreamingMarkdown
                               content={msg.content}
