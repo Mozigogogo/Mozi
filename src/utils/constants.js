@@ -1,6 +1,7 @@
 import {
   WS_URL as CONFIG_WS_URL,
   BIGORDER_CHAT_API as CONFIG_BIGORDER_CHAT_API,
+  SIGNALS_CHAT_API as CONFIG_SIGNALS_CHAT_API,
 } from '../../config/index.js';
 
 // 通用兜底提示语
@@ -21,6 +22,9 @@ export const INTERFACE_URL = '/api';
 
 /** 大单侦测：浏览器直连 Python 后端（需后端 CORS + Redis） */
 export const BIGORDER_CHAT_API = CONFIG_BIGORDER_CHAT_API;
+
+/** 信号卡 Chat：SSE 流式对话 */
+export const SIGNALS_CHAT_API = CONFIG_SIGNALS_CHAT_API;
 
 /**
  * 获取适配当前页面协议的 WebSocket URL

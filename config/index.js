@@ -41,6 +41,7 @@ const ROBOT_BACKEND_URL = (
   'https://mozibackend-production.up.railway.app'
 ).replace(/\/$/, '');
 const BIGORDER_CHAT_API = `${ROBOT_BACKEND_URL}/bigorder/v1/chat`;
+const SIGNALS_CHAT_API = `${ROBOT_BACKEND_URL}/signals/v1/chat`;
 
 module.exports = {
   APP_ENV,
@@ -49,6 +50,7 @@ module.exports = {
   PROJECT_ID,
   ROBOT_BACKEND_URL,
   BIGORDER_CHAT_API,
+  SIGNALS_CHAT_API,
 };
 
 

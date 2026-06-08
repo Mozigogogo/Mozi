@@ -35,7 +35,9 @@ export function consumePcAiFromSearch() {
   }
 }
 
-/** @param {{ model?: 'analyze'|'chat'|'bigorder', message: string }} payload */
+const VALID_AI_NAV_MODELS = new Set(['analyze', 'chat', 'signals', 'bigorder']);
+
+/** @param {{ model?: 'analyze'|'chat'|'signals'|'bigorder', message: string }} payload */
 export function savePcAiNav(payload) {
   if (typeof window === 'undefined') return;
   const message = String(payload?.message || '').trim();
@@ -45,7 +47,7 @@ export function savePcAiNav(payload) {
     sessionStorage.setItem(
       PC_AI_NAV_KEY,
       JSON.stringify({
-        model: model === 'analyze' || model === 'chat' || model === 'bigorder' ? model : undefined,
+        model: VALID_AI_NAV_MODELS.has(model) ? model : undefined,
         message,
         ts: Date.now(),
       })
@@ -55,7 +57,7 @@ export function savePcAiNav(payload) {
   }
 }
 
-/** @returns {{ model?: 'analyze'|'chat'|'bigorder', message: string } | null} */
+/** @returns {{ model?: 'analyze'|'chat'|'signals'|'bigorder', message: string } | null} */
 export function consumePcAiNav() {
   if (typeof window === 'undefined') return null;
   try {
@@ -68,7 +70,7 @@ export function consumePcAiNav() {
     const model = parsed?.model;
     return {
       message,
-      model: model === 'analyze' || model === 'chat' || model === 'bigorder' ? model : undefined,
+      model: VALID_AI_NAV_MODELS.has(model) ? model : undefined,
     };
   } catch {
     sessionStorage.removeItem(PC_AI_NAV_KEY);

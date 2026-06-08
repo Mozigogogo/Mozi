@@ -931,6 +931,7 @@
     "model": {
       "analyze": "分析模型",
       "chat": "对话模型",
+      "signals": "信号卡",
       "bigOrder": "大单侦测",
       "openMenu": "切换模型"
     },

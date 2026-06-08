@@ -931,6 +931,7 @@
     "model": {
       "analyze": "Analyze",
       "chat": "Chat",
+      "signals": "Signal card",
       "bigOrder": "Big order detection",
       "openMenu": "Switch model"
     },

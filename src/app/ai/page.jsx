@@ -33,6 +33,9 @@ import PointsInsufficientBubble from '@/components/PointsInsufficientBubble';
 import ShareAiChatModal from '@/components/ShareAiChatModal';
 import SignalCard from '@/components/SignalCard';
 
+const SIGNALS_CHAT_API = '/api/robot_proxy/signals/v1/chat';
+const ROBOT_MODEL_IDS = ['analyze', 'chat', 'signals', 'bigorder'];
+
 // 大依赖按需加载：避免首屏把 syntax-highlighter 整包打进来
 const LazySyntaxHighlighter = dynamic(
   () => import('react-syntax-highlighter').then((m) => m.Prism),
@@ -382,7 +385,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   const [exchangePickerOpen, setExchangePickerOpen] = useState(false);
   const [tradePickerSymbol, setTradePickerSymbol] = useState('BTC');
   // 模型选择状态：PC 为三个独立按钮，移动端为下拉面板
-  const [selectedModel, setSelectedModel] = useState('analyze'); // 'analyze' | 'chat' | 'bigorder'
+  const [selectedModel, setSelectedModel] = useState('analyze'); // 'analyze' | 'chat' | 'signals' | 'bigorder'
   const [modelMenuOpen, setModelMenuOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [shareQuestion, setShareQuestion] = useState('');
@@ -798,6 +801,72 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     }
   );
 
+  /** 信号卡 Chat：SSE /signals/v1/chat（signal_card + 文本流） */
+  const {
+    sendMessage: sendSignalsMessage,
+    isStreaming: isSignalsStreaming,
+    abort: abortSignals,
+  } = useRobotTestSSE(SIGNALS_CHAT_API, {
+    headers: () => ({
+      language: getRobotLang(),
+    }),
+    getToken: () => (typeof window !== 'undefined' ? localStorage.getItem('token') : null),
+    onSuggestions: (list) => {
+      const norm = normalizeSuggestionItems(list);
+      if (norm.length > 0) {
+        setSuggestedQuestions(norm);
+      }
+    },
+    onSignalCard: handleSignalCardEvent,
+    onChunk: (_chunk, accumulated) => {
+      patchCurrentAiMessage({
+        content: accumulated,
+        loading: true,
+        statusHint: '',
+      });
+    },
+    onComplete: async (fullContent, eventData) => {
+      if (userAbortedRef.current) return;
+      const msgId = currentAiMsgIdRef.current;
+      if (msgId) {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === msgId
+              ? {
+                  ...msg,
+                  content: fullContent || '',
+                  loading: false,
+                  statusHint: '',
+                  error: false,
+                }
+              : msg
+          )
+        );
+      }
+      currentAiMsgIdRef.current = null;
+
+      if (eventData?.suggestions?.length) {
+        setSuggestedQuestions(normalizeSuggestionItems(eventData.suggestions));
+      }
+
+      trackEvent(AIEvents.RESPONSE_RECEIVED, {
+        requestId: currentRequestIdRef.current,
+        responseLength: (fullContent || '').length,
+      });
+      await consumeOnce('complete');
+    },
+    onError: () => {
+      if (userAbortedRef.current) return;
+      patchCurrentAiMessage({
+        content: t('robot.sendFailed'),
+        loading: false,
+        statusHint: '',
+        error: true,
+      });
+      currentAiMsgIdRef.current = null;
+    },
+  });
+
   /** 大单侦测：SSE 直连 Python 后端（thinking / toolcall / content / suggestions / done） */
   const {
     sendMessage: sendBigorderMessage,
@@ -886,7 +955,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     },
   });
 
-  const isBusy = isStreaming || isBigorderStreaming;
+  const isBusy = isStreaming || isSignalsStreaming || isBigorderStreaming;
 
   // 右上角 “AI Assistant Pro” 升级胶囊：只在空状态展示，开始对话后隐藏
   // 放在这里是为了确保 `isBootstrappingUserData` / `isStreaming` 已初始化
@@ -1061,6 +1130,13 @@ export default function RobotPage({ isPC: propIsPC = false }) {
         return;
       }
 
+      if (selectedModel === 'signals') {
+        currentActionCodeRef.current = 'AI_BASIC_CHAT';
+        hasConsumedRef.current = false;
+        await sendSignalsMessage({ message, lang: getRobotLang() });
+        return;
+      }
+
       // 记录本轮对话对应的 actionCode，待对话完成或中断后再调用 /points/consume
       const actionCode = selectedModel === 'analyze' ? 'AI_DEEP_ANALYZE' : 'AI_BASIC_CHAT';
       currentActionCodeRef.current = actionCode;
@@ -1173,6 +1249,13 @@ export default function RobotPage({ isPC: propIsPC = false }) {
       if (selectedModel === 'bigorder') {
         currentActionCodeRef.current = null;
         await sendBigorderMessage({ message: lastMessage, lang: getRobotLang() });
+        return;
+      }
+
+      if (selectedModel === 'signals') {
+        currentActionCodeRef.current = 'AI_BASIC_CHAT';
+        hasConsumedRef.current = false;
+        await sendSignalsMessage({ message: lastMessage, lang: getRobotLang() });
         return;
       }
 
@@ -1291,6 +1374,12 @@ export default function RobotPage({ isPC: propIsPC = false }) {
       markCurrentMessageAborted();
       return;
     }
+    if (isSignalsStreaming) {
+      abortSignals();
+      markCurrentMessageAborted();
+      consumeOnce('abort');
+      return;
+    }
     if (!isStreaming) return;
 
     abort();
@@ -1390,6 +1479,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   const robotModelLabel = (id) => {
     if (id === 'analyze') return t('robot.model.analyze');
     if (id === 'chat') return t('robot.model.chat');
+    if (id === 'signals') return t('robot.model.signals');
     return t('robot.model.bigOrder');
   };
 
@@ -1419,6 +1509,22 @@ export default function RobotPage({ isPC: propIsPC = false }) {
             className={styles.modeIcon}
             aria-hidden
           />
+        </span>
+      );
+    }
+    if (modelId === 'signals') {
+      return (
+        <span className={styles.modeIconWrap}>
+          <svg
+            className={`${styles.modeIcon} ${styles.modeIconSignals}`}
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden
+          >
+            <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="2" />
+            <path d="M7 14l3-3 3 2 4-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </span>
       );
     }
@@ -1770,6 +1876,21 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                       <span className={styles.modeLabel}>{t('robot.model.chat')}</span>
                     </div>
                     <div
+                      className={`${styles.modeItem} ${selectedModel === 'signals' ? styles.activeMode : ''}`}
+                      onClick={() => setSelectedModel('signals')}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setSelectedModel('signals');
+                        }
+                      }}
+                    >
+                      {renderRobotModelIcon('signals')}
+                      <span className={styles.modeLabel}>{t('robot.model.signals')}</span>
+                    </div>
+                    <div
                       className={`${styles.modeItem} ${selectedModel === 'bigorder' ? styles.activeMode : ''}`}
                       onClick={() => setSelectedModel('bigorder')}
                       role="button"
@@ -1806,7 +1927,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                     </button>
                     {modelMenuOpen && (
                       <div className={styles.modeDropdownPanel} role="listbox">
-                        {(['analyze', 'chat', 'bigorder']).map((id) => (
+                        {ROBOT_MODEL_IDS.map((id) => (
                           <button
                             key={id}
                             type="button"
