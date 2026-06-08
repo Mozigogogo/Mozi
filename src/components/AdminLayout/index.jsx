@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Layout, Menu, Button, ConfigProvider, theme, Drawer, Grid } from 'antd';
 import {
   UserOutlined,
-  DollarOutlined,
   DashboardOutlined,
   LogoutOutlined,
   MenuOutlined,
@@ -24,7 +23,6 @@ const MENU_ITEMS = [
   { key: '/admin', icon: <DashboardOutlined />, label: '概览' },
   { key: '/admin/user-level', icon: <CrownOutlined />, label: '等级配置' },
   { key: '/admin/users', icon: <UserOutlined />, label: '用户管理' },
-  { key: '/admin/commission', icon: <DollarOutlined />, label: '分佣管理' },
   { key: '/admin/withdraw', icon: <WalletOutlined />, label: '提现申请' },
 ];
 
@@ -32,7 +30,6 @@ const PAGE_TITLES = {
   '/admin': '概览',
   '/admin/users': '用户管理',
   '/admin/user-level': '等级配置',
-  '/admin/commission': '分佣管理',
   '/admin/withdraw': '提现申请',
 };
 
