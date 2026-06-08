@@ -12,6 +12,8 @@ export function useRobotTestSSE(url, options = {}) {
     onError = () => {},
     /** SSE data: { type: "suggestions", suggestions: [{ id, suggestion }] } */
     onSuggestions = () => {},
+    /** 交易信号卡：{ type: "signal_card", data: { card, display, ... } } */
+    onSignalCard = () => {},
     /** 大单侦测：event: thinking */
     onThinking = () => {},
     /** 大单侦测：event: toolcall */
@@ -193,6 +195,12 @@ export function useRobotTestSSE(url, options = {}) {
               } catch (cbErr) {
                 console.warn('[useRobotTestSSE] onSuggestions error:', cbErr);
               }
+            } else if (messageType === 'signal_card') {
+              try {
+                onSignalCard(eventData);
+              } catch (cbErr) {
+                console.warn('[useRobotTestSSE] onSignalCard error:', cbErr);
+              }
             } else if (messageType === 'error') {
               throw new Error(eventData.message || 'SSE stream error');
             }
@@ -246,6 +254,7 @@ export function useRobotTestSSE(url, options = {}) {
     onComplete,
     onError,
     onSuggestions,
+    onSignalCard,
     onThinking,
     onToolCall,
     onToolResult,

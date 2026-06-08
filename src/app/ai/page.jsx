@@ -31,6 +31,7 @@ import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognitio
 import AiRobotUpgradePillButton from '@/components/AiRobotUpgradePillButton';
 import PointsInsufficientBubble from '@/components/PointsInsufficientBubble';
 import ShareAiChatModal from '@/components/ShareAiChatModal';
+import SignalCard from '@/components/SignalCard';
 
 // 大依赖按需加载：避免首屏把 syntax-highlighter 整包打进来
 const LazySyntaxHighlighter = dynamic(
@@ -659,6 +660,19 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     );
   }, []);
 
+  const handleSignalCardEvent = useCallback(
+    (eventData) => {
+      if (userAbortedRef.current) return;
+      const payload = eventData?.data ?? eventData;
+      if (!payload?.card && !payload?.display) return;
+      patchCurrentAiMessage({
+        signalCard: payload,
+        loading: true,
+      });
+    },
+    [patchCurrentAiMessage]
+  );
+
   const markCurrentMessageAborted = useCallback(() => {
     const msgId = currentAiMsgIdRef.current;
     if (!msgId) return;
@@ -699,6 +713,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
           setSuggestedQuestions(norm);
         }
       },
+      onSignalCard: handleSignalCardEvent,
       onChunk: (chunk, accumulated, eventData) => {
         if (userAbortedRef.current) return;
         // 更新消息内容
@@ -821,6 +836,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
         setSuggestedQuestions(norm);
       }
     },
+    onSignalCard: handleSignalCardEvent,
     onChunk: (_chunk, accumulated) => {
       patchCurrentAiMessage({
         content: accumulated,
@@ -1562,7 +1578,11 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                 <div className={styles.msgContent}>
                   <div
                     className={`${styles.bubble} ${
-                      msg.type === 'pointsLock' ? styles.cardBubbleWrap : styles[msg.role]
+                      msg.type === 'pointsLock'
+                        ? styles.cardBubbleWrap
+                        : msg.signalCard
+                          ? styles.cardBubbleWrap
+                          : styles[msg.role]
                     } ${msg.error ? styles.error : ''} ${msg.aborted ? styles.aborted : ''}`}
                   >
                     <div className={styles.text}>
@@ -1573,11 +1593,11 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                           onEarnPoints={() => router.push('/pointsdetail')}
                           onUpgrade={() => router.push('/vip-recharge')}
                         />
-                      ) : msg.aborted && !msg.content ? (
+                      ) : msg.aborted && !msg.content && !msg.signalCard ? (
                         <div className={styles.abortedText}>
                           {t('robot.conversationAborted', { defaultValue: '对话已中止' })}
                         </div>
-                      ) : msg.loading && !msg.content ? (
+                      ) : msg.loading && !msg.content && !msg.signalCard ? (
                         msg.statusHint ? (
                           <div className={styles.bigorderStatus}>
                             <ThinkingAnimation size={28} />
@@ -1586,15 +1606,18 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                         ) : (
                           <ThinkingAnimation />
                         )
-                      ) : msg.role === 'assistant' && msg.content ? (
+                      ) : msg.role === 'assistant' && (msg.content || msg.signalCard) ? (
                         <>
                           {msg.statusHint ? (
                             <div className={styles.bigorderStatus}>{msg.statusHint}</div>
                           ) : null}
-                          <StreamingMarkdown
-                            content={msg.content}
-                            isStreaming={msg.loading}
-                          />
+                          {msg.signalCard ? <SignalCard data={msg.signalCard} /> : null}
+                          {msg.content ? (
+                            <StreamingMarkdown
+                              content={msg.content}
+                              isStreaming={msg.loading}
+                            />
+                          ) : null}
                           {msg.loading && (
                             <span className={styles.loadingDots}>...</span>
                           )}
@@ -1614,7 +1637,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                       {formatTime(msg.time)}
                     </span>
 
-                    {msg.role === 'assistant' && msg.content && (
+                    {msg.role === 'assistant' && (msg.content || msg.signalCard) && (
                       <div className={styles.msgActions} aria-label="message actions">
                         <button
                           type="button"
