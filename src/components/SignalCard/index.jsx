@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useFormatNumber } from '@/hooks/useFormatNumber';
 import styles from './index.module.less';
 
 const SOURCE_LABELS = {
@@ -23,16 +24,6 @@ const REGIME_LABELS = {
 };
 
 const RING_CIRCUMFERENCE = 157;
-
-function formatPrice(value) {
-  if (value === undefined || value === null || value === '') return '--';
-  const num = Number(value);
-  if (Number.isNaN(num)) return String(value);
-  return `$${num.toLocaleString('en-US', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  })}`;
-}
 
 function formatPct(value, digits = 1) {
   if (value === undefined || value === null || value === '') return '--';
@@ -243,6 +234,23 @@ export default function SignalCard({ data, isPC = false }) {
   const cardRef = useRef(null);
   const sparkRef = useRef(null);
   const sparkDataRef = useRef([]);
+  const { formatSmallDecimal } = useFormatNumber();
+
+  const formatPrice = useCallback(
+    (value) => {
+      if (value === undefined || value === null || value === '') return '--';
+      const num = Number(value);
+      if (Number.isNaN(num)) return String(value);
+      if (num !== 0 && Math.abs(num) < 1) {
+        return `$${formatSmallDecimal(num)}`;
+      }
+      return `$${num.toLocaleString('en-US', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      })}`;
+    },
+    [formatSmallDecimal]
+  );
 
   const card = data?.card || {};
   const math = data?.math || {};
