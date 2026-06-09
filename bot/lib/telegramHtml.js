@@ -8,12 +8,60 @@ function escapeHtml(s) {
 
 const PRE_MARK = (i) => `\uE000TG_PRE_${i}\uE001`;
 
+/** GFM 表格行：以 | 开头且含多列 */
+function isMarkdownTableRow(line) {
+  const t = String(line ?? '').trim();
+  if (!t.startsWith('|')) return false;
+  return (t.match(/\|/g) || []).length >= 2;
+}
+
+/** |:---|:---| 分隔行 */
+function isMarkdownTableSeparator(line) {
+  const t = String(line ?? '').trim();
+  return /^\|[\s\-:]+(\|[\s\-:]+)+\|?$/.test(t);
+}
+
+/**
+ * Telegram 不支持 HTML/Markdown 表格；将连续 GFM 表格行包进 ``` 以便后续转成 <pre>
+ */
+function convertMarkdownTablesToFencedPre(raw) {
+  const lines = String(raw).split('\n');
+  const out = [];
+  let i = 0;
+  while (i < lines.length) {
+    if (isMarkdownTableRow(lines[i])) {
+      const tableLines = [];
+      while (i < lines.length && isMarkdownTableRow(lines[i])) {
+        tableLines.push(lines[i]);
+        i += 1;
+      }
+      const body = tableLines
+        .filter((l) => !isMarkdownTableSeparator(l))
+        .map((l) => {
+          let t = l.trim();
+          if (t.startsWith('|')) t = t.slice(1);
+          if (t.endsWith('|')) t = t.slice(0, -1);
+          return t
+            .split('|')
+            .map((c) => c.trim())
+            .join('  ');
+        })
+        .join('\n');
+      out.push('```', body, '```');
+    } else {
+      out.push(lines[i]);
+      i += 1;
+    }
+  }
+  return out.join('\n');
+}
+
 /**
  * 将常见 Markdown 转为 Telegram HTML（parse_mode HTML）。
  * Telegram 不会解析 **粗体**，必须转成 <b>；本函数仅处理安全子集，其余文本做 HTML 转义。
  */
 function aiMarkdownToTelegramHtml(raw) {
-  let s = String(raw);
+  let s = convertMarkdownTablesToFencedPre(raw);
   const preBlocks = [];
 
   s = s.replace(/```([\s\S]*?)```/g, (_, code) => {
@@ -89,4 +137,11 @@ function splitOversized(messages) {
   return out;
 }
 
-module.exports = { escapeHtml, aiMarkdownToTelegramHtml, buildHtmlChunks, splitOversized, TG_MAX };
+module.exports = {
+  escapeHtml,
+  aiMarkdownToTelegramHtml,
+  convertMarkdownTablesToFencedPre,
+  buildHtmlChunks,
+  splitOversized,
+  TG_MAX,
+};
