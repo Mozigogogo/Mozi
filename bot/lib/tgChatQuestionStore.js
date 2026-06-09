@@ -4,8 +4,18 @@
 
 const TTL_MS = 10 * 60 * 1000;
 
-/** @type {Map<string, Map<string, { groupId: number; question: string; command: 'ai' | 'chat'; expireAt: number }>>} */
+/** @typedef {'ai' | 'chat' | 'bigorder'} TgChatCommand */
+
+/** @type {Map<string, Map<string, { groupId: number; question: string; command: TgChatCommand; expireAt: number }>>} */
 const byTelegramId = new Map();
+
+/** @returns {TgChatCommand} */
+function normalizeTgChatCommand(command) {
+  const raw = String(command || 'chat').toLowerCase();
+  if (raw === 'ai') return 'ai';
+  if (raw === 'bigorder') return 'bigorder';
+  return 'chat';
+}
 
 function purgeTelegramId(telegramId) {
   const tid = String(telegramId);
@@ -29,8 +39,7 @@ function saveTgChatQuestion({ telegramId, groupId, question, command = 'chat' })
   const tid = String(telegramId ?? '').trim();
   const gid = Number(groupId);
   const q = String(question ?? '').trim();
-  const cmdRaw = String(command || 'chat').toLowerCase();
-  const cmd = cmdRaw === 'ai' ? 'ai' : 'chat';
+  const cmd = normalizeTgChatCommand(command);
   if (!tid) throw new Error('telegramId is required');
   if (!Number.isFinite(gid)) throw new Error('groupId is required');
   if (!q) throw new Error('question is required');
@@ -64,7 +73,7 @@ function removeTgChatQuestion(telegramId, groupId) {
 
 /**
  * @param {string | number} telegramId
- * @returns {{ groupId: number; question: string; command: 'ai' | 'chat' }[]}
+ * @returns {{ groupId: number; question: string; command: TgChatCommand }[]}
  */
 function getTgChatQuestions(telegramId) {
   const tid = String(telegramId ?? '').trim();
@@ -78,12 +87,12 @@ function getTgChatQuestions(telegramId) {
     .map(({ groupId, question, command }) => ({
       groupId,
       question,
-      command: command === 'ai' ? 'ai' : 'chat',
+      command: normalizeTgChatCommand(command),
     }));
 }
 
 /**
- * @returns {{ telegramId: string; groupId: number; question: string; command: 'ai' | 'chat' }[]}
+ * @returns {{ telegramId: string; groupId: number; question: string; command: TgChatCommand }[]}
  */
 function listAllPendingTgChatQuestions() {
   const now = Date.now();
@@ -95,7 +104,7 @@ function listAllPendingTgChatQuestions() {
           telegramId: tid,
           groupId: entry.groupId,
           question: entry.question,
-          command: entry.command === 'ai' ? 'ai' : 'chat',
+          command: normalizeTgChatCommand(entry.command),
         });
       }
     }
@@ -105,6 +114,7 @@ function listAllPendingTgChatQuestions() {
 
 module.exports = {
   TTL_MS,
+  normalizeTgChatCommand,
   saveTgChatQuestion,
   getTgChatQuestions,
   removeTgChatQuestion,

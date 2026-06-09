@@ -52,6 +52,14 @@ const i18n = {
       `⚠️ <b>积分不足</b>\n\n当前剩余积分：<b>${have}</b>\n使用 <code>/chat</code> 对话需要至少 <b>${need}</b> 积分。\n\n点击下方按钮前往 <b>社区发帖</b> 赚取积分，或查看积分明细。`,
     chatInsufficientPointsDmFailed: (need) =>
       `无法私信积分说明：请先<strong>私聊</strong>本机器人，再使用 <code>/chat</code>（对话需至少 <b>${need}</b> 积分）。`,
+    bigorderTitleHtml: '📊 <b>大单侦测</b>',
+    bigorderFooterHtml: '\n\n────────\n本功能不消耗积分',
+    bigorderCompleteDmHtml: '✅ <b>大单侦测完成</b>',
+    bigorderCompleteDmFailed:
+      '无法私发完成提示：请先<strong>私聊</strong>本机器人发送任意消息或 <code>/start</code>，再在群内使用 <code>/bigorder</code>。',
+    bigorderNeedQuestion:
+      '请在 <code>/bigorder</code> 后输入内容，例如：\n<code>/bigorder PEPE最近的大单</code>',
+    bigorderError: '大单侦测暂时失败，请稍后再试。',
     priceInvalidSymbol: '交易对格式无效，请使用字母与数字，例如：<code>/price BTC</code>',
     priceError: (code) => `获取行情失败（HTTP ${code}），请稍后再试。`,
     priceBadJson: '接口返回了非 JSON 内容，请稍后重试或联系管理员。',
@@ -78,6 +86,8 @@ const i18n = {
   示例：/ai 以太坊近期为何下跌？
 /chat [问题]    普通问答，消耗 10 积分
   示例：/chat BTC今天支撑位在哪？
+/bigorder [问题] 大单侦测分析，不消耗积分
+  示例：/bigorder PEPE最近的大单
 
 🔔 告警设置（免费）
 /alert          跳转 App 配置价格告警
@@ -103,7 +113,7 @@ const i18n = {
     balanceNeedBind:
       '尚未绑定 Mozi 账户或无法校验绑定状态。\n\n请先在 <b>Mozi App</b> 完成绑定后，再在<strong>私信</strong>或<strong>群内</strong>使用 <code>/balance</code>（群内时结果会通过<strong>私信</strong>发送）。',
     needMoziLogin:
-      '该功能需要已登录的 Mozi 账户（Telegram 绑定）。\n\n请先通过下方按钮打开 <b>Mozi App</b> 完成绑定后，再使用 <code>/ai</code>、<code>/chat</code> 或 <code>/balance</code>。',
+      '该功能需要已登录的 Mozi 账户（Telegram 绑定）。\n\n请先通过下方按钮打开 <b>Mozi App</b> 完成绑定后，再使用 <code>/ai</code>、<code>/chat</code>、<code>/bigorder</code> 或 <code>/balance</code>。',
     bindGroupPingHtml: (mentionHtml) =>
       `${mentionHtml} 检测到您尚未绑定账户，已私信您完成设置 👇`,
     bindRegisterBtn: '注册',
@@ -114,7 +124,7 @@ const i18n = {
     bindGroupRegisterGuideHtml: (mentionHtml) =>
       `${mentionHtml} 您尚未绑定 Mozi 账户。请点击下方「注册」。`,
     registerGroupGuideHtml:
-      '👋 <b>注册 Mozi 账户</b>\n\n点击下方「注册」即可在群内完成注册；成功后自动继续您之前的 <code>/ai</code> 或 <code>/chat</code> 提问。',
+      '👋 <b>注册 Mozi 账户</b>\n\n点击下方「注册」即可在群内完成注册；成功后自动继续您之前的 <code>/ai</code>、<code>/chat</code> 或 <code>/bigorder</code> 提问。',
     registerApiProgressToast: '正在注册…',
     registerApiSuccessInGroupHtml: '✅ 注册成功，正在继续您之前的提问…',
     registerApiFailedHtml: '❌ 注册失败，请稍后再试。',
@@ -126,21 +136,23 @@ const i18n = {
     registerApiStillUnregisteredHtml: '❌ 注册未完成，请稍后再试或联系客服。',
     registerIntroHtml: `👋 <b>请先完成 Mozi 账户绑定</b>
 
-点击下方 <b>启动</b>，将打开 Mozi Mini App 并进入 <b>账户 / 注册</b> 页面。完成后将<strong>自动继续</strong>您之前在群里的 <code>/ai</code> 或 <code>/chat</code> 提问，无需再发一遍。`,
+点击下方 <b>启动</b>，将打开 Mozi Mini App 并进入 <b>账户 / 注册</b> 页面。完成后将<strong>自动继续</strong>您之前在群里的 <code>/ai</code>、<code>/chat</code> 或 <code>/bigorder</code> 提问，无需再发一遍。`,
     bindDmIntroHtml: `👋 <b>请先完成 Mozi 账户绑定</b>
 
-点击下方 <b>启动</b>，将打开 Mozi Mini App 并进入 <b>账户 / 注册</b> 页面。完成后回到群内即可继续使用 <code>/ai</code>、<code>/chat</code>、<code>/balance</code>。`,
+点击下方 <b>启动</b>，将打开 Mozi Mini App 并进入 <b>账户 / 注册</b> 页面。完成后回到群内即可继续使用 <code>/ai</code>、<code>/chat</code>、<code>/bigorder</code>、<code>/balance</code>。`,
     bindStartBtn: '启动',
     bindOneTapRegisterBtn: '启动',
     bindSuccessDm: '绑定成功！可以在群里继续使用啦 🎉',
     tgChatReplayChatHtml: '⏳ 注册完成，正在自动继续您之前的 <code>/chat</code> 提问…',
     tgChatReplayAiHtml: '⏳ 注册完成，正在自动继续您之前的 <code>/ai</code> 提问…',
+    tgChatReplayBigorderHtml: '⏳ 注册完成，正在自动继续您之前的 <code>/bigorder</code> 提问…',
     bindDmFailedInGroup:
       '无法私信您：请先<strong>私聊</strong>本机器人发送任意消息、<code>/start</code> 或 <code>/register</code>，完成绑定后将<strong>自动继续</strong>您刚才的提问，无需在群里再发一遍；也可点击上一条消息中的「启动」按钮。',
     sessionIdentityExpiredHtml:
       '🔐 <b>登录状态已失效</b>\n\n你的 Mozi 身份可能已在其他端重新登录，或会话已过期。\n\n请点击下方「重新登录」以刷新本机器人的访问凭证。',
     sessionReloginBtn: '重新登录',
-    sessionReloginSuccessHtml: '✅ <b>已重新登录</b>\n\n可以再次使用 <code>/ai</code>、<code>/chat</code> 或 <code>/balance</code>。',
+    sessionReloginSuccessHtml:
+      '✅ <b>已重新登录</b>\n\n可以再次使用 <code>/ai</code>、<code>/chat</code>、<code>/bigorder</code> 或 <code>/balance</code>。',
     sessionReloginFailedHtml:
       '❌ <b>重新登录失败</b>\n\n请稍后再试，或通过 Mozi App 打开账户页检查绑定状态。',
     sessionReloginFailedShort: '操作失败',
@@ -220,6 +232,14 @@ const i18n = {
       `⚠️ <b>Not enough points</b>\n\nYou have: <b>${have}</b>\n<code>/chat</code> needs at least <b>${need}</b> points.\n\nUse the buttons below to open the <b>community</b> and earn points, or view your statement.`,
     chatInsufficientPointsDmFailed: (need) =>
       `Could not DM you. Please <strong>message this bot</strong> first, then use <code>/chat</code> again (needs at least <b>${need}</b> points).`,
+    bigorderTitleHtml: '📊 <b>Big order detection</b>',
+    bigorderFooterHtml: '\n\n────────\nNo points charged for this feature',
+    bigorderCompleteDmHtml: '✅ <b>Big order analysis finished</b>',
+    bigorderCompleteDmFailed:
+      'Could not DM the completion notice. Please <strong>message this bot</strong> first, then use <code>/bigorder</code> in the group again.',
+    bigorderNeedQuestion:
+      'Add your message after <code>/bigorder</code>, e.g.:\n<code>/bigorder Recent large orders on PEPE</code>',
+    bigorderError: 'Big order detection failed temporarily. Please try again later.',
     priceInvalidSymbol: 'Invalid symbol. Use letters and digits only, e.g.:\n<code>/price BTC</code>',
     priceError: (code) => `Failed to fetch price (HTTP ${code}). Please try again later.`,
     priceBadJson: 'The API did not return JSON. Please try again later.',
@@ -246,6 +266,8 @@ const i18n = {
   e.g. /ai Why is ETH down recently?
 /chat [question] Chat · 10 points
   e.g. /chat Where is BTC support today?
+/bigorder [question] Big order analysis · free
+  e.g. /bigorder Recent large orders on PEPE
 
 🔔 Alerts (free)
 /alert           Open app to set price alerts
@@ -271,7 +293,7 @@ Remaining points: <b>${totalPoints}</b>
     balanceNeedBind:
       'Account not bound or binding could not be verified.\n\nPlease complete binding in <b>Mozi App</b>, then use <code>/balance</code> in a <strong>private chat</strong> or <strong>group</strong> (in groups, the result is sent via <strong>DM</strong>).',
     needMoziLogin:
-      'This feature requires a logged-in Mozi account (Telegram binding).\n\nOpen <b>Mozi App</b> via the buttons below to complete binding, then use <code>/ai</code>, <code>/chat</code>, or <code>/balance</code>.',
+      'This feature requires a logged-in Mozi account (Telegram binding).\n\nOpen <b>Mozi App</b> via the buttons below to complete binding, then use <code>/ai</code>, <code>/chat</code>, <code>/bigorder</code>, or <code>/balance</code>.',
     bindGroupPingHtml: (mentionHtml) =>
       `${mentionHtml} You’re not linked to a Mozi account yet — check your <b>DM</b> from me to finish setup 👇`,
     bindRegisterBtn: 'Register',
@@ -294,22 +316,23 @@ Remaining points: <b>${totalPoints}</b>
     registerApiStillUnregisteredHtml: '❌ Sign-up did not complete. Please try again later.',
     registerIntroHtml: `👋 <b>Link your Mozi account</b>
 
-Tap <b>Start</b> to open the Mozi Mini App <b>account / sign-up</b> page. When you’re done, your previous <code>/ai</code> or <code>/chat</code> question in the group will <strong>resume automatically</strong> — no need to send it again.`,
+Tap <b>Start</b> to open the Mozi Mini App <b>account / sign-up</b> page. When you’re done, your previous <code>/ai</code>, <code>/chat</code>, or <code>/bigorder</code> question in the group will <strong>resume automatically</strong> — no need to send it again.`,
     bindDmIntroHtml: `👋 <b>Link your Mozi account</b>
 
-Tap <b>Start</b> to open the Mozi Mini App <b>account / sign-up</b> page. When you’re done, you can use <code>/ai</code>, <code>/chat</code>, and <code>/balance</code> in the group again.`,
+Tap <b>Start</b> to open the Mozi Mini App <b>account / sign-up</b> page. When you’re done, you can use <code>/ai</code>, <code>/chat</code>, <code>/bigorder</code>, and <code>/balance</code> in the group again.`,
     bindStartBtn: 'Start',
     bindOneTapRegisterBtn: 'Start',
     bindSuccessDm: 'You’re all set! You can keep using the bot in the group 🎉',
     tgChatReplayChatHtml: '⏳ Sign-up complete — resuming your previous <code>/chat</code> question…',
     tgChatReplayAiHtml: '⏳ Sign-up complete — resuming your previous <code>/ai</code> question…',
+    tgChatReplayBigorderHtml: '⏳ Sign-up complete — resuming your previous <code>/bigorder</code> question…',
     bindDmFailedInGroup:
-      'I couldn’t DM you. Please <strong>message this bot</strong> first (any message, <code>/start</code>, or <code>/register</code>). After you finish linking, your last <code>/ai</code> or <code>/chat</code> question will <strong>resume automatically</strong> — or tap <b>Start</b> on the message above.',
+      'I couldn’t DM you. Please <strong>message this bot</strong> first (any message, <code>/start</code>, or <code>/register</code>). After you finish linking, your last <code>/ai</code>, <code>/chat</code>, or <code>/bigorder</code> question will <strong>resume automatically</strong> — or tap <b>Start</b> on the message above.',
     sessionIdentityExpiredHtml:
       '🔐 <b>Your Mozi session is no longer valid</b>\n\nYou may have signed in elsewhere, or the session expired.\n\nTap <b>Sign in again</b> below to refresh this bot\'s credentials.',
     sessionReloginBtn: 'Sign in again',
     sessionReloginSuccessHtml:
-      '✅ <b>Signed in again</b>\n\nYou can use <code>/ai</code>, <code>/chat</code>, or <code>/balance</code> again.',
+      '✅ <b>Signed in again</b>\n\nYou can use <code>/ai</code>, <code>/chat</code>, <code>/bigorder</code>, or <code>/balance</code> again.',
     sessionReloginFailedHtml:
       '❌ <b>Sign-in failed</b>\n\nPlease try again later or open Mozi App and check your account binding.',
     sessionReloginFailedShort: 'Something went wrong',

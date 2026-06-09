@@ -5,7 +5,7 @@
  */
 
 const { postTgRegisteredCheck, getTgChatGet } = require('./apis');
-const { TTL_MS, listAllPendingTgChatQuestions } = require('./tgChatQuestionStore');
+const { TTL_MS, listAllPendingTgChatQuestions, normalizeTgChatCommand } = require('./tgChatQuestionStore');
 const { runTgChatProactiveReplay } = require('./tgChatProactiveReplay');
 
 /** @type {import('telegraf').Telegraf | null} */
@@ -13,7 +13,7 @@ let botRef = null;
 /** @type {object | null} */
 let configRef = null;
 
-/** @type {Map<string, { telegramId: string; groupId: number; question: string; command: 'ai' | 'chat'; languageCode: string; username?: string; firstName?: string; expireAt: number; replaying?: boolean }>} */
+/** @type {Map<string, { telegramId: string; groupId: number; question: string; command: 'ai' | 'chat' | 'bigorder'; languageCode: string; username?: string; firstName?: string; expireAt: number; replaying?: boolean }>} */
 const pendingReplayJobs = new Map();
 
 function jobKey(telegramId, groupId) {
@@ -74,7 +74,7 @@ function savePendingReplayJob(job) {
   const key = jobKey(job.telegramId, job.groupId);
   pendingReplayJobs.set(key, {
     ...job,
-    command: job.command === 'ai' ? 'ai' : 'chat',
+    command: normalizeTgChatCommand(job.command),
     expireAt: Date.now() + TTL_MS,
     replaying: false,
   });
@@ -164,7 +164,7 @@ async function syncWatchFromRemote(config, telegramId) {
         telegramId,
         groupId: row.groupId,
         question: row.question,
-        command: row.command === 'ai' ? 'ai' : 'chat',
+        command: normalizeTgChatCommand(row.command),
         languageCode: 'en',
       });
     }

@@ -3,6 +3,7 @@
  */
 
 const { apiDebug, jwtPreview } = require('./debugLog');
+const { normalizeTgChatCommand } = require('./tgChatQuestionStore');
 
 const DEFAULT_UA =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1';
@@ -456,6 +457,26 @@ function extractPointsCost(obj) {
 }
 
 /**
+ * 大单侦测 SSE：content.text、signal_card.display、以及通用 chunk 字段
+ * @param {unknown} obj
+ * @returns {string}
+ */
+function extractBigorderChunk(obj) {
+  if (obj == null || typeof obj !== 'object') return '';
+  const type = typeof obj.type === 'string' ? obj.type : '';
+  if (type === 'signal_card') {
+    const display =
+      (typeof obj.display === 'string' && obj.display) ||
+      (obj.data && typeof obj.data.display === 'string' && obj.data.display) ||
+      '';
+    if (display.trim()) return `\n\n${display.trim()}`;
+    return '';
+  }
+  if (type === 'content' && typeof obj.text === 'string') return obj.text;
+  return extractChunkText(obj);
+}
+
+/**
  * SSE 事件块 → data: 合并后的 payload（不含 data: 前缀），无 data 则 null
  * @param {string} block
  * @returns {string | null}
@@ -477,7 +498,10 @@ function parseSseDataPayload(block) {
  * @param {AbortSignal} signal
  * @returns {Promise<{ answer: string, pointsCost?: number }>}
  */
-async function consumeSseStream(res, signal) {
+async function consumeSseStream(res, signal, options = {}) {
+  const pickChunk =
+    typeof options.extractChunk === 'function' ? options.extractChunk : extractChunkText;
+
   const reader = res.body?.getReader();
   if (!reader) {
     const raw = await res.text();
@@ -513,7 +537,7 @@ async function consumeSseStream(res, signal) {
         continue;
       }
 
-      const textChunk = extractChunkText(parsed);
+      const textChunk = pickChunk(parsed);
       if (parsed && typeof parsed === 'object') {
         const errStr = typeof parsed.error === 'string' ? parsed.error : '';
         if (errStr && !textChunk) {
@@ -536,7 +560,7 @@ async function consumeSseStream(res, signal) {
         const parsed = JSON.parse(payload);
         const pc = extractPointsCost(parsed);
         if (pc !== undefined) pointsCost = pc;
-        answer += extractChunkText(parsed);
+        answer += pickChunk(parsed);
       } catch {
         answer += payload;
       }
@@ -673,6 +697,133 @@ async function requestChatStream({ url, message, lang, symbol, appUrl = '', time
       err?.name === 'AbortError' ||
       /aborted|AbortError|signal is aborted/i.test(String(err?.message || ''));
     apiDebug('POST chat/stream → failed', {
+      message: err?.message || String(err),
+      likelyTimeout: aborted,
+      userMessage: err?.userMessage ?? null,
+      httpStatus: err?.status ?? null,
+      rawBody: err?.rawBody ?? null,
+      streamHint: err?.streamHint ?? null,
+    });
+    throw err;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+/**
+ * POST …/bigorder/v1/chat：body `{ message, lang }`；需用户 JWT（authentication 头）
+ * @param {{ url: string; message: string; lang: string; auth: string; appUrl?: string; timeoutMs?: number }} opts
+ * @returns {Promise<{ answer: string, pointsCost?: number }>}
+ */
+async function requestBigorderStream({ url, message, lang, auth, appUrl = '', timeoutMs = 300000 }) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const langNorm = lang === 'zh' || lang === 'en' ? lang : 'en';
+  const rawAuth = String(auth || '').trim().replace(/^Bearer\s+/i, '');
+
+  const headers = {
+    accept: 'text/event-stream',
+    'accept-language': langNorm,
+    'content-type': 'application/json',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    language: langNorm,
+    'user-agent': DEFAULT_UA,
+  };
+  if (rawAuth) {
+    headers.authentication = rawAuth;
+  }
+  if (app) {
+    headers.origin = app;
+    headers.referer = `${app}/ai`;
+  }
+
+  const payload = { message, lang: langNorm };
+
+  apiDebug('POST bigorder/v1/chat ←', {
+    url,
+    lang: langNorm,
+    hasAuth: Boolean(rawAuth),
+    messagePreview: typeof message === 'string' ? message.slice(0, 160) : undefined,
+  });
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+      signal: ctrl.signal,
+    });
+
+    const ct = (res.headers.get('content-type') || '').toLowerCase();
+    const likelySse = ct.includes('text/event-stream') || /\/chat\b/i.test(url);
+
+    if (!res.ok) {
+      const raw = await res.text();
+      let userMessage;
+      try {
+        const errData = JSON.parse(raw);
+        userMessage =
+          (typeof errData.error === 'string' && errData.error) ||
+          (typeof errData.message === 'string' && errData.message) ||
+          (typeof errData.msg === 'string' && errData.msg) ||
+          undefined;
+      } catch {
+        /* ignore */
+      }
+      if (!userMessage && raw && String(raw).trim()) {
+        userMessage = String(raw).trim().slice(0, 500);
+      }
+      const err = new Error(`Bigorder stream HTTP ${res.status}`);
+      err.status = res.status;
+      err.userMessage = userMessage;
+      err.rawBody = raw.slice(0, 500);
+      throw err;
+    }
+
+    if (likelySse) {
+      const result = await consumeSseStream(res, ctrl.signal, { extractChunk: extractBigorderChunk });
+      apiDebug('POST bigorder/v1/chat → ok', {
+        mode: 'sse',
+        answerChars: result.answer.length,
+      });
+      return result;
+    }
+
+    const raw = await res.text();
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      apiDebug('POST bigorder/v1/chat → invalid_json', { bodyPreview: raw.slice(0, 400) });
+      throw new Error('Invalid JSON from bigorder stream');
+    }
+
+    const answer =
+      (typeof data.answer === 'string' && data.answer) ||
+      (typeof data.content === 'string' && data.content) ||
+      (typeof data.text === 'string' && data.text) ||
+      (typeof data.message === 'string' && data.message) ||
+      extractBigorderChunk(data);
+
+    if (!String(answer).trim()) {
+      apiDebug('POST bigorder/v1/chat → empty_answer', {
+        jsonKeys: data && typeof data === 'object' ? Object.keys(data) : [],
+      });
+      throw new Error('Empty answer from bigorder stream');
+    }
+
+    apiDebug('POST bigorder/v1/chat → ok', {
+      mode: 'json',
+      answerChars: String(answer).trim().length,
+    });
+    return { answer: String(answer).trim() };
+  } catch (err) {
+    const aborted =
+      err?.name === 'AbortError' ||
+      /aborted|AbortError|signal is aborted/i.test(String(err?.message || ''));
+    apiDebug('POST bigorder/v1/chat → failed', {
       message: err?.message || String(err),
       likelyTimeout: aborted,
       userMessage: err?.userMessage ?? null,
@@ -1163,7 +1314,7 @@ async function postGroupReferrerBind({
 // --- POST /tg/chat/save、GET /tg/chat/get（群内提问缓存，TTL 10min）----------------
 
 /**
- * @param {{ apiBaseUrl: string; groupId: number | string; telegramId: string | number; question: string; command?: 'ai' | 'chat' | string; timeoutMs?: number }} opts
+ * @param {{ apiBaseUrl: string; groupId: number | string; telegramId: string | number; question: string; command?: 'ai' | 'chat' | 'bigorder' | string; timeoutMs?: number }} opts
  * @returns {Promise<{ ok: boolean; status: number; json: object | null; text: string }>}
  */
 async function postTgChatSave({
@@ -1190,7 +1341,7 @@ async function postTgChatSave({
         groupId: Number(groupId),
         telegramId: String(telegramId),
         question: String(question || ''),
-        command: String(command || 'chat').toLowerCase() === 'ai' ? 'ai' : 'chat',
+        command: normalizeTgChatCommand(command),
       }),
       signal: ctrl.signal,
     });
@@ -1306,5 +1457,7 @@ module.exports = {
   parseGroupReferrerGetResult,
   postGroupReferrerBind,
   requestChatStream,
+  requestBigorderStream,
+  normalizeTgChatCommand,
   requestAiAnalysis,
 };

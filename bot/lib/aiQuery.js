@@ -32,4 +32,17 @@ function extractChatQuery(text, botUsername) {
   return m ? m[1].trim() : '';
 }
 
-module.exports = { extractAiQuery, extractChatQuery };
+/**
+ * @param {string} text
+ * @param {string} botUsername 无 @
+ */
+function extractBigorderQuery(text, botUsername) {
+  const u = escapeRegex(botUsername);
+  const re = u
+    ? new RegExp(`^/bigorder(?:@${u})?\\s*(.*)$`, 'is')
+    : /^\/bigorder\s*(.*)$/is;
+  const m = String(text || '').match(re);
+  return m ? m[1].trim() : '';
+}
+
+module.exports = { extractAiQuery, extractChatQuery, extractBigorderQuery };

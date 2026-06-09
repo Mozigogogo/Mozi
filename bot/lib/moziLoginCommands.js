@@ -1,7 +1,7 @@
 'use strict';
 
 /** 需 Mozi 登录（用户 JWT）后才可使用的 Bot 命令名（不含 /，小写） */
-const MOZI_LOGIN_COMMANDS = new Set(['ai', 'chat', 'balance']);
+const MOZI_LOGIN_COMMANDS = new Set(['ai', 'chat', 'bigorder', 'balance']);
 
 /**
  * 从当前消息解析 Telegram 命令名（去掉 / 与 @bot后缀）

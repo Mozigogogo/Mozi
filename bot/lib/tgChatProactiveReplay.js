@@ -5,10 +5,10 @@
  */
 
 const { getTexts } = require('../i18n');
-const { requestChatStream, postTgChatRemove } = require('./apis');
+const { requestChatStream, requestBigorderStream, postTgChatRemove } = require('./apis');
+const { ensureTgUserToken } = require('./tgUserTokenCache');
 const { extractSymbolIntent } = require('./symbolIntent');
 const { loadMoziDatainfoPoints } = require('./datainfoPoints');
-const { ensureTgUserToken } = require('./tgUserTokenCache');
 const {
   consumePointsAfterAiSuccess,
   ACTION_AI_CHAT,
@@ -24,7 +24,7 @@ const { insufficientPointsEarnKeyboard } = require('./pointsDetailKeyboard');
 const { removeTgChatQuestion } = require('./tgChatQuestionStore');
 const { sanitizeTelegramLoginOpts } = require('./sanitizeMysqlUtf8');
 
-/** @typedef {{ telegramId: string; groupId: number; question: string; command: 'ai' | 'chat'; languageCode?: string; username?: string; firstName?: string }} TgChatReplayJob */
+/** @typedef {{ telegramId: string; groupId: number; question: string; command: 'ai' | 'chat' | 'bigorder'; languageCode?: string; username?: string; firstName?: string }} TgChatReplayJob */
 
 /**
  * @param {import('telegraf').Telegraf['telegram']} telegram
@@ -70,6 +70,7 @@ async function runTgChatProactiveReplay(bot, config, job) {
   const ctx = buildReplayContext(bot, job);
   const isPrivate = ctx.chat.type === 'private';
   const isAi = job.command === 'ai';
+  const isBigorder = job.command === 'bigorder';
   const requiredPoints = isAi ? config.AI_POINTS_COST : config.AI_CHAT_POINTS_COST;
 
   const loginOpts = sanitizeTelegramLoginOpts({
@@ -91,7 +92,11 @@ async function runTgChatProactiveReplay(bot, config, job) {
     console.warn('[tgChatProactiveReplay] bindSuccessDm:', e?.message || e);
   }
 
-  const hint = isAi ? texts.tgChatReplayAiHtml : texts.tgChatReplayChatHtml;
+  const hint = isBigorder
+    ? texts.tgChatReplayBigorderHtml
+    : isAi
+      ? texts.tgChatReplayAiHtml
+      : texts.tgChatReplayChatHtml;
   await ctx.reply(hint, { parse_mode: 'HTML' }).catch(() => {});
 
   const token = await ensureTgUserToken(config, job.telegramId, loginOpts);
@@ -100,23 +105,25 @@ async function runTgChatProactiveReplay(bot, config, job) {
     return false;
   }
 
-  const di = await loadMoziDatainfoPoints(config, job.telegramId, loginOpts);
-  if (di.outcome !== 'ok') {
-    await ctx.reply(texts.needMoziLogin, { parse_mode: 'HTML' }).catch(() => {});
-    return false;
-  }
-  if (di.totalPoints < requiredPoints) {
-    const kb = insufficientPointsEarnKeyboard(config, texts);
-    const insufficientHtml = isAi
-      ? texts.aiInsufficientPointsHtml
-      : texts.chatInsufficientPointsHtml;
-    await bot.telegram
-      .sendMessage(Number(job.telegramId), insufficientHtml(di.totalPoints, requiredPoints), {
-        parse_mode: 'HTML',
-        ...kb,
-      })
-      .catch(() => {});
-    return false;
+  if (!isBigorder) {
+    const di = await loadMoziDatainfoPoints(config, job.telegramId, loginOpts);
+    if (di.outcome !== 'ok') {
+      await ctx.reply(texts.needMoziLogin, { parse_mode: 'HTML' }).catch(() => {});
+      return false;
+    }
+    if (di.totalPoints < requiredPoints) {
+      const kb = insufficientPointsEarnKeyboard(config, texts);
+      const insufficientHtml = isAi
+        ? texts.aiInsufficientPointsHtml
+        : texts.chatInsufficientPointsHtml;
+      await bot.telegram
+        .sendMessage(Number(job.telegramId), insufficientHtml(di.totalPoints, requiredPoints), {
+          parse_mode: 'HTML',
+          ...kb,
+        })
+        .catch(() => {});
+      return false;
+    }
   }
 
   const lang = (job.languageCode || 'en').toLowerCase().startsWith('zh') ? 'zh' : 'en';
@@ -133,7 +140,16 @@ async function runTgChatProactiveReplay(bot, config, job) {
 
   let result;
   try {
-    if (isAi) {
+    if (isBigorder) {
+      result = await requestBigorderStream({
+        url: config.BIGORDER_CHAT_URL,
+        message: job.question,
+        lang,
+        auth: token,
+        appUrl: config.APP_URL,
+        timeoutMs: config.AI_CHAT_STREAM_TIMEOUT_MS,
+      });
+    } else if (isAi) {
       try {
         result = await requestChatStream({
           url: config.AI_ANALYZE_STREAM_URL,
@@ -162,20 +178,35 @@ async function runTgChatProactiveReplay(bot, config, job) {
     if (err?.userMessage) {
       await ctx.reply(escapeHtml(err.userMessage), { parse_mode: 'HTML' }).catch(() => {});
     } else {
-      await ctx.reply(isAi ? texts.aiError : texts.chatError, { parse_mode: 'HTML' }).catch(() => {});
+      const errText = isBigorder
+        ? texts.bigorderError
+        : isAi
+          ? texts.aiError
+          : texts.chatError;
+      await ctx.reply(errText, { parse_mode: 'HTML' }).catch(() => {});
     }
     return false;
   }
 
-  const actionCode = isAi ? ACTION_AI_ANALYZE : ACTION_AI_CHAT;
-  const { remainingPoints } = await consumePointsAfterAiSuccess(config, ctx, actionCode, 'complete');
+  let remainingPoints = null;
+  if (!isBigorder) {
+    const actionCode = isAi ? ACTION_AI_ANALYZE : ACTION_AI_CHAT;
+    const consumed = await consumePointsAfterAiSuccess(config, ctx, actionCode, 'complete');
+    remainingPoints = consumed.remainingPoints;
+  }
 
   const bodyEscaped = aiMarkdownToTelegramHtml(result.answer);
-  const titleHtml = isAi ? texts.aiTitleHtml : texts.chatTitleHtml;
+  const titleHtml = isBigorder
+    ? texts.bigorderTitleHtml
+    : isAi
+      ? texts.aiTitleHtml
+      : texts.chatTitleHtml;
   const footerHtml = isPrivate
-    ? isAi
-      ? texts.aiFooterHtml(remainingPoints)
-      : texts.chatFooterHtml(remainingPoints)
+    ? isBigorder
+      ? texts.bigorderFooterHtml
+      : isAi
+        ? texts.aiFooterHtml(remainingPoints)
+        : texts.chatFooterHtml(remainingPoints)
     : '';
   const parts = splitOversized(buildHtmlChunks(titleHtml, bodyEscaped, footerHtml));
 
@@ -184,7 +215,11 @@ async function runTgChatProactiveReplay(bot, config, job) {
   }
 
   if (!isPrivate) {
-    const dmHtml = isAi ? texts.aiCompleteDmHtml(remainingPoints) : texts.chatCompleteDmHtml(remainingPoints);
+    const dmHtml = isBigorder
+      ? texts.bigorderCompleteDmHtml
+      : isAi
+        ? texts.aiCompleteDmHtml(remainingPoints)
+        : texts.chatCompleteDmHtml(remainingPoints);
     await bot.telegram.sendMessage(Number(job.telegramId), dmHtml, { parse_mode: 'HTML' }).catch(() => {});
   }
 

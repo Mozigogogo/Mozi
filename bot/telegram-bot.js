@@ -4,6 +4,7 @@
  * /alert：见 handlers/alert.js、lib/alertSymbol.js
  * /register：见 handlers/register.js、handlers/inlineRegister.js（群内 API 注册 + 自动重放）
  * /ai、/chat：进程内缓存上次剩余积分（consume 成功写回；datainfo /balance 同步）；前置校验 datainfo（可配短 TTL 跳过）；不足则私信 + Mini App 社区/账单按钮
+ * /bigorder：POST Robot 后端 /bigorder/v1/chat（SSE，带用户 JWT）；与 H5 一致，不扣积分
  * /price：handlers/price.js + lib/apis.js（GET /detail/header，默认 BTC，简报格式）
  * /help：handlers/help.js（群内仅私聊发全文，防刷屏）
  * /balance：handlers/balance.js（GET /user/datainfo；私聊直接回复，群内尝试私信用户，路径见 USER_DATA_INFO_PATH）
@@ -25,6 +26,7 @@ const { registerRegister } = require('./handlers/register');
 const { registerInlineRegister } = require('./handlers/inlineRegister');
 const { registerAi } = require('./handlers/ai');
 const { registerChat } = require('./handlers/chat');
+const { registerBigorder } = require('./handlers/bigorder');
 const { registerPrice } = require('./handlers/price');
 const { registerHelp } = require('./handlers/help');
 const { registerBalance } = require('./handlers/balance');
@@ -57,6 +59,7 @@ registerRegister(bot, config, i18nApi);
 registerInlineRegister(bot, config, i18nApi);
 registerAi(bot, config, i18nApi, registeredGate, loginGate);
 registerChat(bot, config, i18nApi, registeredGate, loginGate);
+registerBigorder(bot, config, i18nApi, registeredGate, loginGate);
 registerPrice(bot, config, i18nApi);
 registerHelp(bot, config, i18nApi);
 registerBalance(bot, config, i18nApi, registeredGate, loginGate);

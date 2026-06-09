@@ -26,6 +26,14 @@ const APP_ORIGIN = String(APP_URL || '').replace(/\/+$/, '');
 const DEFAULT_ROBOT_CHAT_STREAM = `${APP_ORIGIN}/api/robot_proxy/api/v1/chat/stream`;
 const DEFAULT_ROBOT_ANALYZE_STREAM = `${APP_ORIGIN}/api/robot_proxy/api/v1/analyze/stream`;
 const AI_CHAT_STREAM_URL = AI_CHAT_BACKEND_URL || DEFAULT_ROBOT_CHAT_STREAM;
+/** 大单侦测 SSE：默认直连 Python Robot 后端 /bigorder/v1/chat（与 H5 BIGORDER_CHAT_API 一致） */
+const ROBOT_BACKEND_URL = (
+  process.env.ROBOT_BACKEND_URL ||
+  process.env.NEXT_PUBLIC_ROBOT_BACKEND_URL ||
+  'https://mozibackend-production.up.railway.app'
+).trim().replace(/\/+$/, '');
+const BIGORDER_CHAT_BACKEND_URL = (process.env.BIGORDER_CHAT_BACKEND_URL || '').trim();
+const BIGORDER_CHAT_URL = BIGORDER_CHAT_BACKEND_URL || `${ROBOT_BACKEND_URL}/bigorder/v1/chat`;
 const AI_ANALYZE_STREAM_URL = AI_BACKEND_URL || DEFAULT_ROBOT_ANALYZE_STREAM;
 /** /ai 请求 analyze 失败（如 422）时是否自动改请求 chat/stream */
 const _fb = String(process.env.AI_ANALYZE_FALLBACK_TO_CHAT ?? '1').trim().toLowerCase();
@@ -102,6 +110,9 @@ module.exports = {
   AI_ANALYZE_FALLBACK_TO_CHAT,
   AI_CHAT_BACKEND_URL,
   AI_CHAT_STREAM_URL,
+  ROBOT_BACKEND_URL,
+  BIGORDER_CHAT_BACKEND_URL,
+  BIGORDER_CHAT_URL,
   AI_POINTS_COST,
   AI_CHAT_POINTS_COST,
   AI_CHAT_STREAM_TIMEOUT_MS,

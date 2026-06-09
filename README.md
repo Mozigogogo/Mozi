@@ -9,6 +9,7 @@
 - `/ai`、`/chat`、`/balance`：先 `POST …/user/tg/registered/check`（未注册则群内 @ 提示 + 私信「一键注册」打开 Mini App `/user`；绑定成功后下次通过校验时私信祝贺），再换 JWT、`token-check` 后执行业务  
 - `/ai <问题>`：默认 `APP_URL` + `/api/robot_proxy/api/v1/analyze/stream`，请求体与 `/chat` 相同（`message` + `lang`，可选 `symbol`）；可用 `AI_BACKEND_URL` 覆盖完整 URL；底部积分默认 **50**；analyze 失败时可自动回退 chat/stream（`AI_ANALYZE_FALLBACK_TO_CHAT`）  
 - `/chat <内容>`：POST 流式对话（默认 `APP_URL` + `/api/robot_proxy/api/v1/chat/stream`，与 Web 一致；可用 `AI_CHAT_BACKEND_URL` 覆盖）；底部展示积分默认 **10**（可由后端 `pointsCost` 覆盖）；对用户文案做简易币种意图识别，命中时在请求体中带 `symbol`（见 `bot/lib/symbolIntent.js`）  
+- `/bigorder <内容>`：POST `ROBOT_BACKEND_URL/bigorder/v1/chat`（SSE，请求头 `authentication` 为用户 JWT；与 H5 大单侦测一致）；**不扣积分**；未注册时与 `/ai`、`/chat` 相同可缓存提问并在注册后自动重放  
 
 ## 环境变量
 
@@ -24,6 +25,8 @@
 | `AI_BACKEND_URL` | 可选；覆盖 `/ai` 的 **完整流式 POST URL**（请求体与 `/chat` 一致）；不设时默认 `APP_URL/api/robot_proxy/api/v1/analyze/stream` |
 | `AI_ANALYZE_FALLBACK_TO_CHAT` | 可选；`/ai` 请求 analyze 失败（如 422）时是否自动改请求 **chat/stream**（默认 `1`）；`0`/`false` 关闭 |
 | `AI_CHAT_BACKEND_URL` | 可选；覆盖 `/chat` 的 **完整流式 POST URL**（默认 `APP_URL/api/robot_proxy/api/v1/chat/stream`） |
+| `ROBOT_BACKEND_URL` | 可选；Python Robot 后端根地址，默认 `https://mozibackend-production.up.railway.app`；`/bigorder` 默认请求 `{ROBOT_BACKEND_URL}/bigorder/v1/chat` |
+| `BIGORDER_CHAT_BACKEND_URL` | 可选；覆盖 `/bigorder` 的 **完整流式 POST URL** |
 | `AI_CHAT_STREAM_TIMEOUT_MS` | 可选；`/ai` 与 `/chat` 等待 SSE 的最长时间（毫秒），默认 `300000`（5 分钟） |
 | `MOZI_DETAIL_AUTH` | 可选；Bootstrap JWT，请求头 `authentication`。在尚无用户 JWT 时用于 `POST …/user/tg/registered/check` 与 `POST …/user/login`（Telegram）；建议生产配置以便群内校验注册态 |
 | `TG_LOGIN_PATH` | 可选；相对 `API_BASE_URL` 的登录路径，默认 **`user/login`**（与 H5 `loginByTelegram` 相同：`chanel:3`、`type:'login'`、`channel:'tg'`、`telegramId`、`username`、`photoUrl`、`hash`、`inviteCode`、`env`；Bot 无 WebApp 时 `hash` 为空串）；响应中解析 `token` / `accessToken` 等（见 `bot/lib/tgUserTokenCache.js`） |
@@ -38,12 +41,12 @@
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| `POST` | `/tg/chat/save` | Body：`{ "groupId", "telegramId", "question", "command": "ai" \| "chat" }` |
+| `POST` | `/tg/chat/save` | Body：`{ "groupId", "telegramId", "question", "command": "ai" \| "chat" \| "bigorder" }` |
 | `GET` | `/tg/chat/get?telegramId=…` | 返回 `[{ "groupId", "question", "command" }, …]` |
 | `DELETE` | `/tg/chat/remove?telegramId=&groupId=` | 重放成功后清除 |
 | `POST` | `/tg/chat/on-registered` | Body：`{ "telegramId", "groupId"? }` — 绑定成功立即重放（可选，建议 H5/后端调用） |
 
-**流程**（未注册 + `/ai`、`/chat`）：保存提问 → 若已与 Bot 私聊则**自动** `POST /user/login` 并在群内重放；若未私聊则提示「首次提问需启动 Bot」+「启动」按钮。
+**流程**（未注册 + `/ai`、`/chat`、`/bigorder`）：保存提问 → 若已与 Bot 私聊则**自动** `POST /user/login` 并在群内重放；若未私聊则提示「首次提问需启动 Bot」+「启动」按钮。
 
 实现：`bot/lib/tgChatRegisterWatcher.js`、`bot/lib/tgChatProactiveReplay.js`。
 

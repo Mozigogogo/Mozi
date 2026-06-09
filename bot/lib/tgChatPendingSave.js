@@ -1,6 +1,6 @@
 'use strict';
 
-const { extractAiQuery, extractChatQuery } = require('./aiQuery');
+const { extractAiQuery, extractChatQuery, extractBigorderQuery } = require('./aiQuery');
 const { postTgChatSave } = require('./apis');
 const { savePendingReplayJob } = require('./tgChatRegisterWatcher');
 const { saveTgChatQuestion } = require('./tgChatQuestionStore');
@@ -18,6 +18,7 @@ async function saveAndWatchPendingAiChat(ctx, config) {
   const rawText = ctx.message?.text || ctx.message?.caption || '';
   const aiQ = extractAiQuery(rawText, config.BOT_USERNAME);
   const chatQ = extractChatQuery(rawText, config.BOT_USERNAME);
+  const bigorderQ = extractBigorderQuery(rawText, config.BOT_USERNAME);
 
   let command = null;
   let question = '';
@@ -27,6 +28,9 @@ async function saveAndWatchPendingAiChat(ctx, config) {
   } else if (chatQ) {
     command = 'chat';
     question = chatQ;
+  } else if (bigorderQ) {
+    command = 'bigorder';
+    question = bigorderQ;
   }
   if (!command || !question) return;
 
