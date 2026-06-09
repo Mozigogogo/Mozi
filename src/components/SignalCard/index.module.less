@@ -17,17 +17,24 @@
 
   width: 100%;
   max-width: 360PX;
-  background: var(--surface);
-  border-radius: 28PX;
-  border: 1PX solid var(--border2);
-  overflow: hidden;
-  position: relative;
+  perspective: 900PX;
   color: var(--text);
   font-family: var(--sans);
   box-sizing: border-box;
   opacity: 0;
   transform: translateY(24PX);
   animation: cardIn 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+}
+
+.cardSurface {
+  background: var(--surface);
+  border-radius: 28PX;
+  border: 1PX solid var(--border2);
+  overflow: hidden;
+  position: relative;
+  transform-style: preserve-3d;
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 .pcMode {

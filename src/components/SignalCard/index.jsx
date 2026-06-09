@@ -348,20 +348,23 @@ export default function SignalCard({ data, isPC = false }) {
   }, [currentPrice, paintSparkline]);
 
   useEffect(() => {
-    if (!isPC || !cardRef.current) return undefined;
     const el = cardRef.current;
+    if (!el || typeof window === 'undefined') return undefined;
+
+    const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    if (!canHover) return undefined;
 
     const onMove = (e) => {
       const r = el.getBoundingClientRect();
-      const x = ((e.clientX - r.left) / r.width - 0.5) * 5;
-      const y = ((e.clientY - r.top) / r.height - 0.5) * -3;
+      const x = ((e.clientX - r.left) / r.width - 0.5) * 8;
+      const y = ((e.clientY - r.top) / r.height - 0.5) * -5;
       el.style.transition = 'transform 0.12s ease';
-      el.style.transform = `perspective(900px) rotateY(${x}deg) rotateX(${y}deg)`;
+      el.style.transform = `rotateY(${x}deg) rotateX(${y}deg)`;
     };
 
     const onLeave = () => {
       el.style.transition = 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
-      el.style.transform = 'perspective(900px) rotateY(0deg) rotateX(0deg)';
+      el.style.transform = 'rotateY(0deg) rotateX(0deg)';
     };
 
     el.addEventListener('mousemove', onMove);
@@ -369,8 +372,10 @@ export default function SignalCard({ data, isPC = false }) {
     return () => {
       el.removeEventListener('mousemove', onMove);
       el.removeEventListener('mouseleave', onLeave);
+      el.style.transform = '';
+      el.style.transition = '';
     };
-  }, [isPC]);
+  }, [data]);
 
   if (!data) return null;
 
@@ -384,9 +389,9 @@ export default function SignalCard({ data, isPC = false }) {
 
   return (
     <div
-      ref={cardRef}
       className={`${styles.root} ${isPC ? styles.pcMode : ''} ${isShort ? '' : styles.rootLong}`}
     >
+      <div ref={cardRef} className={styles.cardSurface}>
       <div className={styles.ambientGlow} aria-hidden />
 
       <div className={styles.header}>
@@ -538,6 +543,7 @@ export default function SignalCard({ data, isPC = false }) {
           </div>
         </div>
       ) : null}
+      </div>
     </div>
   );
 }
