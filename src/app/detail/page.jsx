@@ -4,7 +4,6 @@ import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } fr
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Tabs, Toast, Button, TabBar } from 'antd-mobile';
 import { motion, AnimatePresence } from 'framer-motion';
-import PCLayout from '@/components/PCLayout';
 import PCCoinDetail from '@/components/PCCoinDetail';
 import PCRightTopMarquee from '@/components/PCRightTopMarquee';
 import Layout from '../../components/Layout';
@@ -2412,8 +2411,8 @@ ${coinInfo.name || symbol} (${symbol})
 
   if (isPC) {
     return (
-      <PCLayout>
-        <div ref={pcContentLayoutRef} className={styles.pcContentLayout}>
+      <>
+      <div ref={pcContentLayoutRef} className={styles.pcContentLayout}>
           <aside className={styles.pcContentColLeft}>
             <PCCoinDetail
               headerTitle={coinInfo?.name || symbol}
@@ -2642,7 +2641,7 @@ ${coinInfo.name || symbol} (${symbol})
           onClose={() => setExchangePickerOpen(false)}
           onSelect={handleSelectExchange}
         />
-      </PCLayout>
+      </>
     );
   }
 

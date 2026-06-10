@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter, useSearchParams } from "next/navigation";
-import PCLayout from "@/components/PCLayout";
 import { safeBack } from "@/utils/navigation";
 import styles from "./page.module.less";
 
@@ -116,11 +115,7 @@ export default function RankDiscussPage() {
   );
 
   if (isDesktop) {
-    return (
-      <PCLayout>
-        <div className={styles.pcContentArea}>{pageContent}</div>
-      </PCLayout>
-    );
+    return <div className={styles.pcContentArea}>{pageContent}</div>;
   }
 
   return pageContent;

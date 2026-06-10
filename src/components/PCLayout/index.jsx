@@ -400,6 +400,31 @@ export default function PCLayout({ children }) {
             pathname.startsWith('/pc/benefitsPage/')));
     }
     
+    if (src === activeSrc) {
+      return (
+        <span
+          className="ant-menu-item-icon"
+          style={{
+            display: 'inline-block',
+            width: 16,
+            height: 16,
+            backgroundColor: 'currentColor',
+            WebkitMaskImage: `url(${src})`,
+            WebkitMaskSize: 'contain',
+            WebkitMaskRepeat: 'no-repeat',
+            WebkitMaskPosition: 'center',
+            maskImage: `url(${src})`,
+            maskSize: 'contain',
+            maskRepeat: 'no-repeat',
+            maskPosition: 'center',
+            transition: 'color 0.15s ease',
+          }}
+          role="img"
+          aria-label={alt}
+        />
+      );
+    }
+
     return (
       <span className="ant-menu-item-icon" style={{ position: 'relative', display: 'inline-block', width: 16, height: 16 }}>
         <img 

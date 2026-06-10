@@ -10,9 +10,6 @@ import { LogoLoading } from '@/components/Loading';
 const PCHome = dynamic(() => import('../components/PCHome'), {
   loading: () => null,
 });
-const PCLayout = dynamic(() => import('../components/PCLayout'), {
-  loading: () => null,
-});
 const MobileHome = dynamic(() => import('../components/MobileHome'), {
   loading: () => null,
 });
@@ -54,7 +51,7 @@ export default function HomeClient({ initialIsPC = false }) {
     let cancelled = false;
     if (typeof window === 'undefined') return;
     if (isPC) {
-      Promise.all([import('../components/PCLayout'), import('../components/PCHome')])
+      Promise.all([import('../components/PCHome')])
         .then(() => {
           if (!cancelled) setPcModuleReady(true);
         })
@@ -197,9 +194,7 @@ export default function HomeClient({ initialIsPC = false }) {
     return (
       <>
         <TelegramAutoLogin />
-        <PCLayout>
-          <PCHome />
-        </PCLayout>
+        <PCHome />
         <LogoLoading
           visible={homeBootMaskVisible}
           fullscreen

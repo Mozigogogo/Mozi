@@ -10,7 +10,6 @@ import { safeBack } from '@/utils/navigation';
 import styles from './page.module.less';
 import { SkeletonElement } from '@/components/Skeleton';
 import PCPagination from '@/components/PCPagination';
-import PCLayout from '@/components/PCLayout';
 
 const STATUS_CLASS_MAP = {
   PENDING: 'statusPending',
@@ -255,8 +254,5 @@ export default function WithdrawHistoryPage() {
     </div>
   );
 
-  if (isPC) {
-    return <PCLayout>{content}</PCLayout>;
-  }
   return content;
 }

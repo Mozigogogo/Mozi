@@ -2,7 +2,6 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import PCLayout from '@/components/PCLayout';
 import { useHelpContent } from './useHelpContent';
 import styles from './page.module.less';
 
@@ -102,7 +101,7 @@ export default function PCHelpPage() {
   const visibleSections = content.sections.filter((s) => !hiddenSections.has(s.id));
 
   return (
-    <PCLayout>
+    <>
       <link
         rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap"
@@ -200,6 +199,6 @@ export default function PCHelpPage() {
           </section>
         </main>
       </div>
-    </PCLayout>
+    </>
   );
 }

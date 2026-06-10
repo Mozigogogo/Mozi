@@ -11,11 +11,13 @@ import DetailDeepLinkHandler from "@/components/DetailDeepLinkHandler";
 import TelegramRootGate from "@/components/TelegramRootGate";
 import EnvironmentDetector from "@/components/EnvironmentDetector";
 import RouteChangeHandler from "@/components/RouteChangeHandler";
+import RouteBootLoading from "@/components/RouteBootLoading";
 import TokenDebugMonitor from "@/components/TokenDebugMonitor";
 import BuildFingerprint from "@/components/BuildFingerprint";
 import ChunkErrorRecovery from "@/components/ChunkErrorRecovery";
 import GoogleAuthProvider from "../context/GoogleAuthProvider";
 import GlobalClientEffects from "@/components/GlobalClientEffects";
+import PcLayoutGate from "@/components/PcLayoutGate";
 import PerfDebug from "@/components/PerfDebug";
 import TelegramSdkLoader from "@/components/TelegramSdkLoader";
 import TgWcWebviewCheck from "@/components/TgWcWebviewCheck";
@@ -66,6 +68,7 @@ export default function RootLayout({ children }) {
         <BuildFingerprint />
         <ChunkErrorRecovery />
         <RouteChangeHandler />
+        <RouteBootLoading />
         {process.env.NODE_ENV !== 'production' ? <TokenDebugMonitor /> : null}
         <VConsoleLoader />
         <Suspense fallback={null}>
@@ -80,7 +83,7 @@ export default function RootLayout({ children }) {
                 <Web3Provider>
                   <GlobalClientEffects />
                   <Suspense fallback={null}>
-                    {children}
+                    <PcLayoutGate>{children}</PcLayoutGate>
                   </Suspense>
                 </Web3Provider>
               </TonConnectProvider>

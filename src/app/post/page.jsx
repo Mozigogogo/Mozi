@@ -9,7 +9,6 @@ import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { completeTask } from '@/api/user';
 import NavBar from '../../components/NavBar';
-import PCLayout from '@/components/PCLayout';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { safeBack } from '@/utils/navigation';
 import styles from './page.module.less';
@@ -1357,8 +1356,7 @@ export default function PostPage() {
 
   if (isPC) {
     return (
-      <PCLayout>
-        <div className={styles.pcPageWrap}>
+      <div className={styles.pcPageWrap}>
           <header className={styles.pcHeader}>
             <div className={styles.pcHeaderLeft}>
               <button
@@ -1376,7 +1374,6 @@ export default function PostPage() {
           </header>
           {pageContent}
         </div>
-      </PCLayout>
     );
   }
 

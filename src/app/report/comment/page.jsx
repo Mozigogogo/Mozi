@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Toast } from 'antd-mobile';
 import { useRouter, useSearchParams } from 'next/navigation';
 import NavBar from '@/components/NavBar';
-import PCLayout from '@/components/PCLayout';
 import { reportPost } from '@/api/community';
 import { safeBack } from '@/utils/navigation';
 import styles from './page.module.less';
@@ -130,11 +129,7 @@ export default function CommentReportPage() {
   );
 
   if (isDesktop) {
-    return (
-      <PCLayout>
-        <div className={styles.pcContentArea}>{pageContent}</div>
-      </PCLayout>
-    );
+    return <div className={styles.pcContentArea}>{pageContent}</div>;
   }
 
   return pageContent;

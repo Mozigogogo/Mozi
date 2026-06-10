@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { safeBack } from '@/utils/navigation';
-import dynamic from 'next/dynamic';
 import { Tabs, Picker, Image } from 'antd-mobile';
 import { Pagination, Select } from 'antd';
 import { request } from '../../utils/request';
@@ -14,8 +13,6 @@ import { useTranslation } from 'react-i18next';
 import { Loading } from '../../components/Loading';
 import { handleOptions } from '../../utils/chartUtils';
 import styles from './page.module.less';
-
-const PCLayout = dynamic(() => import('../../components/PCLayout'), { ssr: false });
 
 // 将右轴单位从“千”转换为“万”，并控制小数位与去零
 function formatRightAxisToWan(value, slot, unitWan = '万') {
@@ -358,8 +355,7 @@ export default function FundingRate() {
 
   if (isPC) {
     return (
-      <PCLayout>
-        <div className={styles['pc-container']}>
+      <div className={styles['pc-container']}>
           <div className={styles['pc-header']}>
             <div className={styles['pc-back-container']} onClick={() => safeBack(router, { fallback: '/' })}>
               <div className={styles['pc-back-btn']}>
@@ -486,7 +482,6 @@ export default function FundingRate() {
             )}
           </div>
         </div>
-      </PCLayout>
     );
   }
 

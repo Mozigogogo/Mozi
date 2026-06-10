@@ -3,7 +3,6 @@
 import { LeftOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import PCLayout from '@/components/PCLayout';
 import { safeBack } from '@/utils/navigation';
 import PCBenefitsContent from './PCBenefitsContent';
 import styles from './page.module.less';
@@ -13,8 +12,7 @@ export default function PCBenefitsPage() {
   const { t } = useTranslation();
 
   return (
-    <PCLayout>
-      <div className={styles.pcWrap}>
+    <div className={styles.pcWrap}>
         <header className={styles.pcHeader}>
           <div className={styles.pcHeaderLeft}>
             <button
@@ -48,6 +46,5 @@ export default function PCBenefitsPage() {
           <PCBenefitsContent />
         </div>
       </div>
-    </PCLayout>
   );
 }

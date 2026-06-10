@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Markdown from 'markdown-to-jsx';
 import NavBar from '../../components/NavBar';
-import PCLayout from '../../components/PCLayout';
 import ThinkingAnimation from '../../components/ThinkingAnimation';
 import PopLogin from '../../components/PopLogin';
 import { trackEvent, trackPageView, AIEvents } from '@/utils/amplitude';
@@ -26,6 +25,7 @@ import { forceBlurAndResetViewport } from '@/utils/iosViewportFix';
 import { safeBack } from '@/utils/navigation';
 import { fetchUserDataInfoOnce } from '@/utils/postLogin';
 import { consumePcAiFromSearch, consumePcAiNav } from '@/utils/pcAiFromSearch';
+import { notifyRouteBootReady } from '@/utils/routeBootLoading';
 import styles from './page.module.less';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import AiRobotUpgradePillButton from '@/components/AiRobotUpgradePillButton';
@@ -472,6 +472,14 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     runWhenIdle(bootstrapUserData);
   }, []);
 
+  useEffect(() => {
+    if (!mounted || isBootstrappingUserData) return undefined;
+    const startTs = Date.now();
+    const timer = window.setTimeout(() => {
+      notifyRouteBootReady();
+    }, Math.max(0, 250 - (Date.now() - startTs)));
+    return () => window.clearTimeout(timer);
+  }, [mounted, isBootstrappingUserData]);
 
   const handleCopyMessage = async (text) => {
     try {
@@ -2040,14 +2048,6 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   );
 
   if (!mounted) return null;
-
-  if (isPC) {
-    return (
-      <PCLayout>
-        {content}
-      </PCLayout>
-    );
-  }
 
   return content;
 }

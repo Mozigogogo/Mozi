@@ -20,9 +20,6 @@ import userMeStyles from '@/app/user/page.module.less';
 const PCUserProfile = dynamic(() => import('../../../components/PCUserProfile'), {
   loading: () => null,
 });
-const PCLayout = dynamic(() => import('../../../components/PCLayout'), {
-  loading: () => null,
-});
 
 // Simple Icon Components for Demo
 const HeartIcon = () => (
@@ -273,8 +270,7 @@ export default function UserProfile({ params }) {
 
   if (isPC) {
     return (
-      <PCLayout>
-        <PCUserProfile
+      <PCUserProfile
           profile={profile}
           targetUserId={targetUserId}
           activeTab={activeTab}
@@ -285,7 +281,6 @@ export default function UserProfile({ params }) {
           onFollowToggle={handleFollowToggle}
           followLoading={followLoading}
         />
-      </PCLayout>
     );
   }
 

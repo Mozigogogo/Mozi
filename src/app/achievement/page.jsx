@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { Toast } from 'antd-mobile';
 import NavBar from '@/components/NavBar';
-import PCLayout from '@/components/PCLayout';
 import { getPoolStatus, getTaskPoints, getInvitationList, getTaskList, completeTask } from '@/api/points';
 import { applyCommissionWithdraw } from '@/api/commission';
 import AchievementInviteCard from './AchievementInviteCard';
@@ -611,10 +610,6 @@ function AchievementContent() {
 }
 
 export default function AchievementPage() {
-  return (
-    <PCLayout>
-      <AchievementContent />
-    </PCLayout>
-  );
+  return <AchievementContent />;
 }
 

@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
 import { Picker, Toast } from 'antd-mobile';
 import { Select } from 'antd';
 import { request } from '@/utils/request';
@@ -14,8 +13,6 @@ import { handleOptions } from '@/utils/chartUtils';
 import { safeBack } from '@/utils/navigation';
 import * as echarts from 'echarts';
 import styles from './page.module.less';
-
-const PCLayout = dynamic(() => import('@/components/PCLayout'), { ssr: false });
 
 const PS_LEGEND_ITEMS = [
   { label: '<1亿', color: '#8A444F' },
@@ -312,8 +309,7 @@ export default function Positionsize() {
 
   if (isPC) {
     return (
-      <PCLayout>
-        <div className={styles['pc-container']}>
+      <div className={styles['pc-container']}>
           <div className={styles['pc-header']}>
             <div className={styles['pc-back-btn']} onClick={() => safeBack(router, { fallback: '/' })}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -408,7 +404,6 @@ export default function Positionsize() {
             </div>
           </div>
         </div>
-      </PCLayout>
     );
   }
 

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Input, Switch, Toast } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
-import PCLayout from '@/components/PCLayout';
 import { addAlarm, completeAlarmTask, getAlarmInfoByUserId, getCoinInfo } from '@/api/alarm';
 import { createAlertConfig, modifyAlertConfig } from '@/api/user';
 import {
@@ -1240,9 +1239,5 @@ function PCAlarmContent() {
 }
 
 export default function PCAlarmPage() {
-  return (
-    <PCLayout>
-      <PCAlarmContent />
-    </PCLayout>
-  );
+  return <PCAlarmContent />;
 }
