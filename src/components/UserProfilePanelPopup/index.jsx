@@ -81,6 +81,42 @@ const resolveTelegramBound = (data, user) => {
   return Boolean(tgId);
 };
 
+const resolveCurrentUserId = (...extraCandidates) => {
+  const pickId = (...vals) => {
+    for (const v of vals) {
+      if (v == null) continue;
+      const s = String(v).trim();
+      if (s) return s;
+    }
+    return '';
+  };
+
+  if (typeof window !== 'undefined') {
+    try {
+      const fromStorage = localStorage.getItem('userId');
+      if (fromStorage) return pickId(fromStorage, ...extraCandidates);
+
+      const raw = localStorage.getItem('userDataInfo');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const data = parsed?.data && typeof parsed.data === 'object' ? parsed.data : parsed;
+        const user = data?.userInfo && typeof data.userInfo === 'object' ? data.userInfo : {};
+        const fromDatainfo = pickId(data?.userId, user?.userId, user?.id);
+        if (fromDatainfo) return fromDatainfo;
+      }
+
+      const ui = localStorage.getItem('userInfo');
+      if (ui) {
+        const parsed = JSON.parse(ui);
+        const fromUserInfo = pickId(parsed?.userId, parsed?.id);
+        if (fromUserInfo) return fromUserInfo;
+      }
+    } catch (_) {}
+  }
+
+  return pickId(...extraCandidates);
+};
+
 const formatPhone = (data, user) => {
   const ap = pickFirstNonEmptyString(
     data?.alertPhone,
@@ -113,6 +149,12 @@ const mapDatainfoToPopupData = (rawData, fallbackData) => {
     selectedTagId,
     boundTelegram: resolveTelegramBound(data, user),
     boundWallet: !!pickFirstNonEmptyString(user?.walletAddress, data?.walletAddress, user?.address, data?.address),
+    userId: resolveCurrentUserId(
+      data?.userId,
+      user?.userId,
+      user?.id,
+      fallbackData?.userId
+    ),
   };
   next.account = next.bio || fallbackData.account;
 
@@ -164,6 +206,7 @@ export default function UserProfilePanelPopup({
         initialData?.selectedTagId ||
         LEGACY_TAG_TO_ID[initialData?.selectedTag] ||
         'creator',
+      userId: resolveCurrentUserId(initialData?.userId, initialData?.id),
     }),
     [initialData, i18n?.language, t]
   );
@@ -288,6 +331,13 @@ export default function UserProfilePanelPopup({
     router.push('/theme');
   };
 
+  const handleViewChannel = () => {
+    const userId = resolveCurrentUserId(profileData?.userId);
+    if (!userId) return;
+    onClose?.();
+    router.push(`/user/${encodeURIComponent(userId)}`);
+  };
+
   const selectLanguage = async (lng) => {
     const normalizedLng = lng === 'en' ? 'en' : 'zh';
 
@@ -319,7 +369,9 @@ export default function UserProfilePanelPopup({
           <div className={styles.headerRight}>
             <div className={styles.name}>{profileData.name}</div>
             <div className={styles.account}>{profileData.account}</div>
-            <div className={styles.channelBtn}>{t('user.profilePanel.viewChannel')}</div>
+            <button type="button" className={styles.channelBtn} onClick={handleViewChannel}>
+              {t('user.profilePanel.viewChannel')}
+            </button>
           </div>
         </div>
 

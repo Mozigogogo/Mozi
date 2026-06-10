@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { Pagination } from 'antd';
 import { FavoriteIcon } from '@/components/Icons/FavoriteIcon';
@@ -21,16 +22,49 @@ export default function PCUserProfile({
   watchlistError,
   onFollowToggle,
   followLoading,
+  isSelfProfile = false,
 }) {
+  const router = useRouter();
   const { t } = useTranslation();
   const resolvedProfile = profile || {};
+
+  const goFollowingList = () => {
+    router.push(
+      targetUserId
+        ? `/user/following?userId=${encodeURIComponent(targetUserId)}`
+        : '/user/following'
+    );
+  };
+
+  const goFansList = () => {
+    router.push(
+      targetUserId
+        ? `/user/fans?userId=${encodeURIComponent(targetUserId)}`
+        : '/user/fans'
+    );
+  };
   const stats = resolvedProfile.stats || {};
   const identityTags = Array.isArray(resolvedProfile.tags) ? resolvedProfile.tags : [];
 
   const tabs = [
-    { key: 'watchlist', title: t('user.tabs.watchlist') || '自选', subtitle: t('user.tabs.watchlistDesc') || '他自选的币' },
-    { key: 'monitor', title: t('user.tabs.monitor') || '监控', subtitle: t('user.tabs.monitorDesc') || '他监控的商品' },
-    { key: 'content', title: t('user.tabs.content') || '内容', subtitle: t('user.tabs.contentDesc') || '他发布的内容' },
+    {
+      key: 'watchlist',
+      title: t('user.tabs.watchlist') || '自选',
+      subtitle: t(isSelfProfile ? 'user.tabs.watchlistDescSelf' : 'user.tabs.watchlistDesc')
+        || (isSelfProfile ? '我选购的商品' : '他选购的商品'),
+    },
+    {
+      key: 'monitor',
+      title: t('user.tabs.monitor') || '监控',
+      subtitle: t(isSelfProfile ? 'user.tabs.monitorDescSelf' : 'user.tabs.monitorDesc')
+        || (isSelfProfile ? '我监控的商品' : '他监控的商品'),
+    },
+    {
+      key: 'content',
+      title: t('user.tabs.content') || '内容',
+      subtitle: t(isSelfProfile ? 'user.tabs.contentDescSelf' : 'user.tabs.contentDesc')
+        || (isSelfProfile ? '我发布的内容' : '他发布的内容'),
+    },
   ];
 
   return (
@@ -52,16 +86,18 @@ export default function PCUserProfile({
         <div className={styles.userInfo}>
           <div className={styles.nameRow}>
             <span className={styles.nickname}>{resolvedProfile.nickname || '-'}</span>
-            <button
-              type="button"
-              className={styles.followBtn}
-              onClick={onFollowToggle}
-              disabled={followLoading}
-            >
-              {resolvedProfile.isFollowing
-                ? t('common.followed', { defaultValue: '已关注' })
-                : t('user.stats.following', { defaultValue: '关注' })}
-            </button>
+            {!isSelfProfile ? (
+              <button
+                type="button"
+                className={styles.followBtn}
+                onClick={onFollowToggle}
+                disabled={followLoading}
+              >
+                {resolvedProfile.isFollowing
+                  ? t('common.followed', { defaultValue: '已关注' })
+                  : t('user.stats.following', { defaultValue: '关注' })}
+              </button>
+            ) : null}
           </div>
           
           <div className={styles.tagsRow}>
@@ -73,11 +109,33 @@ export default function PCUserProfile({
           <div className={styles.bio}>{resolvedProfile.bio || '-'}</div>
           
           <div className={styles.statsRow}>
-            <div className={styles.statItem}>
+            <div
+              className={`${styles.statItem} ${styles.statItemClickable}`}
+              onClick={goFollowingList}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  goFollowingList();
+                }
+              }}
+            >
               <span className={styles.statValue}>{stats.following ?? 0}</span>
               <span className={styles.statLabel}>{t('user.stats.following') || '关注'}</span>
             </div>
-            <div className={styles.statItem}>
+            <div
+              className={`${styles.statItem} ${styles.statItemClickable}`}
+              onClick={goFansList}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  goFansList();
+                }
+              }}
+            >
               <span className={styles.statValue}>{stats.followers ?? 0}</span>
               <span className={styles.statLabel}>{t('user.stats.followers') || '粉丝'}</span>
             </div>

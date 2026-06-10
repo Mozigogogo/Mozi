@@ -427,10 +427,13 @@
     "tabs": {
       "watchlist": "自选",
       "watchlistDesc": "他选购的商品",
+      "watchlistDescSelf": "我选购的商品",
       "monitor": "监控",
       "monitorDesc": "他监控的商品",
+      "monitorDescSelf": "我监控的商品",
       "content": "内容",
-      "contentDesc": "他发布的内容"
+      "contentDesc": "他发布的内容",
+      "contentDescSelf": "我发布的内容"
     },
     "list": {
       "coin": "币种",

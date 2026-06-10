@@ -1308,6 +1308,7 @@ export default function PCLayout({ children }) {
           avatar:
             userInfo?.avatar ||
             'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png',
+          userId: userInfo?.userId || userInfo?.id,
         }}
       />
     </Layout>

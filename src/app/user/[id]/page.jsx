@@ -86,9 +86,23 @@ export default function UserProfile({ params }) {
   });
   const [profile, setProfile] = useState(EMPTY_PROFILE);
   const [followLoading, setFollowLoading] = useState(false);
+  const [isSelfProfile, setIsSelfProfile] = useState(false);
   const targetUserId = decodeURIComponent(
     String(pathname || '').match(/^\/user\/([^/?#]+)/)?.[1] || String(params?.id ?? '')
   ).trim();
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !targetUserId) {
+      setIsSelfProfile(false);
+      return;
+    }
+    try {
+      const selfId = String(localStorage.getItem('userId') || '').trim();
+      setIsSelfProfile(Boolean(selfId) && selfId === targetUserId);
+    } catch {
+      setIsSelfProfile(false);
+    }
+  }, [targetUserId]);
 
   // 仅允许内部内容区滚动：进入本页时锁住 body 滚动，离开恢复
   useEffect(() => {
@@ -280,6 +294,7 @@ export default function UserProfile({ params }) {
           watchlistError={watchlistError}
           onFollowToggle={handleFollowToggle}
           followLoading={followLoading}
+          isSelfProfile={isSelfProfile}
         />
     );
   }
@@ -319,16 +334,18 @@ export default function UserProfile({ params }) {
                 <div className={`${userMeStyles.nicknameWrapper} ${styles.nicknameSlot}`}>
                   <span className={nicknameClass}>{profile.nickname}</span>
                 </div>
-                <div
-                  className={styles.followBtn}
-                  onClick={handleFollowToggle}
-                  style={{ opacity: followLoading ? 0.7 : 1, pointerEvents: followLoading ? 'none' : 'auto' }}
-                >
-                  {!profile.isFollowing && <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_user/plus.svg" alt="" />}
-                  {profile.isFollowing
-                    ? t('common.followed', { defaultValue: '已关注' })
-                    : t('user.stats.following', { defaultValue: '关注' })}
-                </div>
+                {!isSelfProfile ? (
+                  <div
+                    className={styles.followBtn}
+                    onClick={handleFollowToggle}
+                    style={{ opacity: followLoading ? 0.7 : 1, pointerEvents: followLoading ? 'none' : 'auto' }}
+                  >
+                    {!profile.isFollowing && <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_user/plus.svg" alt="" />}
+                    {profile.isFollowing
+                      ? t('common.followed', { defaultValue: '已关注' })
+                      : t('user.stats.following', { defaultValue: '关注' })}
+                  </div>
+                ) : null}
               </div>
             </div>
             <div className={styles.tagRow}>
@@ -354,7 +371,16 @@ export default function UserProfile({ params }) {
               <span className={styles.statValue}>{profile.stats.following}</span>
               <span className={styles.statLabel}>{t('user.stats.following') || '关注'}</span>
             </div>
-            <div className={styles.statItem}>
+            <div
+              className={`${styles.statItem} ${styles.statItemClickable}`}
+              onClick={() =>
+                router.push(
+                  targetUserId
+                    ? `/user/fans?userId=${encodeURIComponent(targetUserId)}`
+                    : '/user/fans'
+                )
+              }
+            >
               <span className={styles.statValue}>{profile.stats.followers}</span>
               <span className={styles.statLabel}>{t('user.stats.followers') || '粉丝'}</span>
             </div>
@@ -379,21 +405,27 @@ export default function UserProfile({ params }) {
             onClick={() => setActiveTab('watchlist')}
           >
             <div>{t('user.tabs.watchlist') || '自选'}</div>
-            <span className={styles.subText}>{t('user.tabs.watchlistDesc') || '他选购的商品'}</span>
+            <span className={styles.subText}>
+              {t(isSelfProfile ? 'user.tabs.watchlistDescSelf' : 'user.tabs.watchlistDesc') || (isSelfProfile ? '我选购的商品' : '他选购的商品')}
+            </span>
           </div>
           <div 
             className={`${styles.tabItem} ${activeTab === 'monitor' ? styles.tabItemActive : ''}`}
             onClick={() => setActiveTab('monitor')}
           >
             <div>{t('user.tabs.monitor') || '监控'}</div>
-            <span className={styles.subText}>{t('user.tabs.monitorDesc') || '他监控的商品'}</span>
+            <span className={styles.subText}>
+              {t(isSelfProfile ? 'user.tabs.monitorDescSelf' : 'user.tabs.monitorDesc') || (isSelfProfile ? '我监控的商品' : '他监控的商品')}
+            </span>
           </div>
           <div 
             className={`${styles.tabItem} ${activeTab === 'content' ? styles.tabItemActive : ''}`}
             onClick={() => setActiveTab('content')}
           >
             <div>{t('user.tabs.content') || '内容'}</div>
-            <span className={styles.subText}>{t('user.tabs.contentDesc') || '他发布的内容'}</span>
+            <span className={styles.subText}>
+              {t(isSelfProfile ? 'user.tabs.contentDescSelf' : 'user.tabs.contentDesc') || (isSelfProfile ? '我发布的内容' : '他发布的内容')}
+            </span>
           </div>
         </div>
 

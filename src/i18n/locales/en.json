@@ -427,10 +427,13 @@
     "tabs": {
       "watchlist": "Watchlist",
       "watchlistDesc": "His watchlist",
+      "watchlistDescSelf": "My watchlist",
       "monitor": "Monitor",
       "monitorDesc": "Monitored",
+      "monitorDescSelf": "My monitored items",
       "content": "Content",
-      "contentDesc": "Posts"
+      "contentDesc": "Posts",
+      "contentDescSelf": "My posts"
     },
     "list": {
       "coin": "Coin",

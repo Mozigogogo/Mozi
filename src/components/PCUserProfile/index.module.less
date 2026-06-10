@@ -125,6 +125,20 @@
   gap: 4px;
 }
 
+.statItemClickable {
+  cursor: pointer;
+  user-select: none;
+
+  &:hover .statValue,
+  &:hover .statLabel {
+    color: #11b787;
+  }
+
+  &:active {
+    opacity: 0.75;
+  }
+}
+
 .statValue {
   font-size: 18px;
   font-weight: 600;
