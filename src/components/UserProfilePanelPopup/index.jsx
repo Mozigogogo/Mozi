@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import RightArrowIcon from '../Icons/RightArrowIcon';
@@ -307,8 +308,9 @@ export default function UserProfilePanelPopup({
   };
 
   if (!open) return null;
+  if (typeof document === 'undefined') return null;
 
-  return (
+  return createPortal(
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.floatingPanel} onClick={(e) => e.stopPropagation()}>
       <div className={styles.panel}>
@@ -467,7 +469,8 @@ export default function UserProfilePanelPopup({
         </div>
       </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

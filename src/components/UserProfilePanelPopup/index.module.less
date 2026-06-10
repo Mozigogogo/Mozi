@@ -10,7 +10,8 @@
 .overlay {
   position: fixed;
   inset: 0;
-  z-index: 1200;
+  /* 高于 AI 升级胶囊(2000)、右下角机器人(10000)，低于全屏 Modal(99999) */
+  z-index: 11000;
   pointer-events: auto;
 }
 
