@@ -97,6 +97,39 @@ export async function adminLogin(username, password) {
 }
 
 /**
+ * @typedef {Object} AdminOverviewData
+ * @property {number} [userTotalCount] - 总用户数
+ * @property {number} [totalCommissionAmount] - 累计分佣金额
+ * @property {number} [pendingCommissionAmount] - 待审核分佣金额
+ */
+
+/** 查询概览 GET /admin/overview */
+export async function getAdminOverview() {
+  const res = await adminInstance.get(Interface.ADMIN_OVERVIEW);
+  return res.data;
+}
+
+/** 解析概览统计 */
+export function normalizeAdminOverview(data) {
+  if (!data || typeof data !== 'object') {
+    return {
+      userTotalCount: 0,
+      totalCommissionAmount: 0,
+      pendingCommissionAmount: 0,
+    };
+  }
+  const toNum = (v) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  };
+  return {
+    userTotalCount: toNum(data.userTotalCount),
+    totalCommissionAmount: toNum(data.totalCommissionAmount),
+    pendingCommissionAmount: toNum(data.pendingCommissionAmount),
+  };
+}
+
+/**
  * @typedef {Object} CommissionLevelPayload
  * @property {string} levelCode - 等级编码，如 L1
  * @property {string} levelName - 等级名称，如 普通代理

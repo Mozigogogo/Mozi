@@ -397,6 +397,7 @@ export const Interface = {
 
   // 后台管理
   ADMIN_LOGIN: '/admin/auth/login',
+  ADMIN_OVERVIEW: '/admin/overview',
   ADMIN_COMMISSION_LEVELS: '/admin/commission/levels',
   ADMIN_USERS: '/admin/users',
   ADMIN_USER_COMMISSION_LEVEL: '/admin/users/commission-level',
