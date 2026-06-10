@@ -20,6 +20,7 @@ import {
 } from '@ant-design/icons';
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { MOZI_SESSION_CHANGED, notifySessionChanged } from '@/utils/sessionEvents';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
@@ -126,9 +127,7 @@ export default function PCLayout({ children }) {
     setUserInfo(null);
     setShowUserProfilePopup(false);
     message.success(t('user.logoutSuccess') || '退出成功');
-    if (typeof window !== 'undefined') {
-      window.location.reload();
-    }
+    notifySessionChanged();
   }, [disconnect, web3Connected, t]);
 
   useEffect(() => {
@@ -164,8 +163,8 @@ export default function PCLayout({ children }) {
     // 首次加载时同步
     syncUserInfo();
     
-    // 监听storage事件（跨标签页同步）
     window.addEventListener('storage', syncUserInfo);
+    window.addEventListener(MOZI_SESSION_CHANGED, syncUserInfo);
     
     // 定期检查 userInfo 变化（同一标签页内的更新）
     // 低优先级启动：避免与首页首屏请求抢主线程/网络
@@ -185,6 +184,7 @@ export default function PCLayout({ children }) {
     
     return () => {
       window.removeEventListener('storage', syncUserInfo);
+      window.removeEventListener(MOZI_SESSION_CHANGED, syncUserInfo);
       if (timer) clearInterval(timer);
     };
   }, []);

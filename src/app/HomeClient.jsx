@@ -17,6 +17,17 @@ const MobileHome = dynamic(() => import('../components/MobileHome'), {
   loading: () => null,
 });
 
+const HOME_SPLASH_SEEN_KEY = 'mozi_home_splash_seen_v1';
+
+function hasSeenHomeSplash() {
+  if (typeof window === 'undefined') return false;
+  try {
+    return sessionStorage.getItem(HOME_SPLASH_SEEN_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
 export default function HomeClient({ initialIsPC = false }) {
   // 关键：避免“服务端先猜成 PC → 客户端再纠正成 Mobile”的闪烁/空白
   // 客户端首帧优先用 matchMedia 计算，减少错误分支渲染时间窗口
@@ -30,7 +41,11 @@ export default function HomeClient({ initialIsPC = false }) {
   });
   const [didKickoffSubscription, setDidKickoffSubscription] = useState(false);
   const [tgLoginSuccessReceived, setTgLoginSuccessReceived] = useState(false);
-  const [homeBootMaskVisible, setHomeBootMaskVisible] = useState(true);
+  // 同会话内再次进入 /home（如登录后跳转）不再展示全屏 Logo 遮罩
+  const [homeBootMaskVisible, setHomeBootMaskVisible] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return !hasSeenHomeSplash();
+  });
   const [pcModuleReady, setPcModuleReady] = useState(false);
   const [mobileModuleReady, setMobileModuleReady] = useState(false);
 
@@ -145,35 +160,35 @@ export default function HomeClient({ initialIsPC = false }) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    if (hasSeenHomeSplash()) {
+      setHomeBootMaskVisible(false);
+      return;
+    }
+
     const MIN_MASK_MS = 250;
-    const SPLASH_SEEN_KEY = 'mozi_home_splash_seen_v1';
     const FAST_RETURN_KEY = 'mozi_home_fast_return_once_v1';
     const startTs = Date.now();
 
     const hideMask = () => {
-      let seen = false;
       let fastReturn = false;
       try {
-        seen = sessionStorage.getItem(SPLASH_SEEN_KEY) === '1';
         fastReturn = sessionStorage.getItem(FAST_RETURN_KEY) === '1';
         if (fastReturn) {
           sessionStorage.removeItem(FAST_RETURN_KEY);
         }
       } catch (_) {}
       const elapsed = Date.now() - startTs;
-      const remain = seen || fastReturn ? 0 : Math.max(0, MIN_MASK_MS - elapsed);
+      const remain = fastReturn ? 0 : Math.max(0, MIN_MASK_MS - elapsed);
       window.setTimeout(() => {
-        // 额外等待：首屏模块至少 ready（避免关闭遮罩后白屏）
         const moduleReady = isPC ? pcModuleReady : mobileModuleReady;
         if (!moduleReady) return;
         setHomeBootMaskVisible(false);
         try {
-          sessionStorage.setItem(SPLASH_SEEN_KEY, '1');
+          sessionStorage.setItem(HOME_SPLASH_SEEN_KEY, '1');
         } catch (_) {}
       }, remain);
     };
 
-    // 不等待 window load（图片/三方资源），首屏结构优先展示
     const rafId = window.requestAnimationFrame(hideMask);
     return () => window.cancelAnimationFrame(rafId);
   }, [isPC, pcModuleReady, mobileModuleReady]);

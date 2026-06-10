@@ -5,7 +5,6 @@ import Web3Provider from "../context/Web3Provider.jsx";
 import ThemeProvider from "../context/ThemeProvider.jsx";
 import TonConnectProvider from "../context/TonConnectProvider.jsx";
 import I18nProvider from "@/components/I18nProvider";
-import { LogoLoading } from "@/components/Loading";
 import VConsoleLoader from "@/components/VConsole";
 import InviteCodeHandler from "@/components/InviteCodeHandler";
 import DetailDeepLinkHandler from "@/components/DetailDeepLinkHandler";
@@ -80,7 +79,7 @@ export default function RootLayout({ children }) {
               <TonConnectProvider>
                 <Web3Provider>
                   <GlobalClientEffects />
-                  <Suspense fallback={<LogoLoading visible={true} fullscreen mask image="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/community/loadding.png" size={72} />}>
+                  <Suspense fallback={null}>
                     {children}
                   </Suspense>
                 </Web3Provider>
