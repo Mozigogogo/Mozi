@@ -30,6 +30,43 @@
   flex-shrink: 0;
 }
 
+.avatarWrapperEditable {
+  cursor: pointer;
+
+  &:hover .avatarEditOverlay,
+  &:focus-visible .avatarEditOverlay {
+    opacity: 1;
+  }
+}
+
+.avatarUploading {
+  pointer-events: none;
+  opacity: 0.72;
+}
+
+.avatarEditOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.avatarEditIcon {
+  width: 40px;
+  height: 40px;
+}
+
+.avatarFileInput {
+  display: none;
+}
+
 .avatar {
   width: 100%;
   height: 100%;
@@ -42,6 +79,7 @@
   position: absolute;
   bottom: 0;
   right: 0;
+  z-index: 2;
   width: 36px;
   height: 36px;
 }
@@ -61,6 +99,63 @@
   margin-bottom: 6px;
 }
 
+.nameEditGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.nicknameEditBtn {
+  border: none;
+  padding: 4px;
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  &:hover {
+    opacity: 0.75;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+.nicknameEditIcon {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.nicknameInput {
+  font-family: Roboto, sans-serif;
+  font-size: 32px;
+  font-weight: 500;
+  line-height: 26.76px;
+  color: #333;
+  border: 1px solid #11b787;
+  border-radius: 8px;
+  padding: 4px 10px;
+  min-width: 180px;
+  max-width: 360px;
+  outline: none;
+  background: #fff;
+
+  &:focus {
+    box-shadow: 0 0 0 2px rgba(17, 183, 135, 0.15);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+}
+
 .followBtn {
   border: none;
   height: 32PX;
@@ -78,7 +173,28 @@
   font-style: normal;
   font-weight: 500;
   line-height: 26.76px;
+  color: #333;
+}
+
+.nicknameVip {
+  font-family: Roboto;
+  font-size: 32px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 26.76px;
   background: linear-gradient(180deg, #F8D5A9 4.06%, #E5B372 33.13%, #DE9E4C 54.37%, #663409 90%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.nicknameLite {
+  font-family: Roboto;
+  font-size: 32px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 26.76px;
+  background: linear-gradient(180deg, #99EDB3 4.06%, #8AE8A9 33.13%, #4BCB79 54.37%, #219E4A 90%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

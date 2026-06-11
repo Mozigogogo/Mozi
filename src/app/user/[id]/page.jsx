@@ -295,6 +295,8 @@ export default function UserProfile({ params }) {
           onFollowToggle={handleFollowToggle}
           followLoading={followLoading}
           isSelfProfile={isSelfProfile}
+          onAvatarUpdated={(avatar) => setProfile((prev) => ({ ...prev, avatar }))}
+          onNicknameUpdated={(nickname) => setProfile((prev) => ({ ...prev, nickname }))}
         />
     );
   }
