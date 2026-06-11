@@ -94,7 +94,7 @@
 .nameRow {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
   margin-bottom: 6px;
 }
@@ -102,8 +102,9 @@
 .nameEditGroup {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
+  min-height: 34px;
 }
 
 .nicknameEditBtn {
@@ -133,21 +134,24 @@
 }
 
 .nicknameInput {
+  box-sizing: border-box;
   font-family: Roboto, sans-serif;
-  font-size: 32px;
+  font-size: 22px;
   font-weight: 500;
-  line-height: 26.76px;
+  line-height: 1.2;
+  height: 34px;
   color: #333;
-  border: 1px solid #11b787;
-  border-radius: 8px;
-  padding: 4px 10px;
-  min-width: 180px;
-  max-width: 360px;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  padding: 0 10px;
+  min-width: 120px;
+  max-width: 240px;
   outline: none;
   background: #fff;
 
   &:focus {
-    box-shadow: 0 0 0 2px rgba(17, 183, 135, 0.15);
+    border-color: #11b787;
+    box-shadow: 0 0 0 2px rgba(17, 183, 135, 0.12);
   }
 
   &:disabled {
