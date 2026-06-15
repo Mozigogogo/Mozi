@@ -16,6 +16,12 @@ const SOURCE_GRADIENTS = {
   technical: 'linear-gradient(90deg, #38bdf8, #7dd3fc)',
 };
 
+const SIDEBAR_SOURCE_GRADIENTS = {
+  bigorder_anomaly: 'linear-gradient(90deg, #ff8c42, #ffb347)',
+  quantitative: 'linear-gradient(90deg, #a78bfa, #c4b5fd)',
+  technical: 'linear-gradient(90deg, #38bdf8, #7dd3fc)',
+};
+
 const REGIME_LABELS = {
   trending_down: 'trending_down',
   trending_up: 'trending_up',
@@ -129,9 +135,15 @@ function drawSparkline(canvas, data, strokeColor, fillTopColor) {
   ctx.stroke();
 }
 
-function ConfidenceRing({ value, isShort }) {
+function ConfidenceRing({ value, isShort, variant = 'default' }) {
   const pct = Math.max(0, Math.min(100, Number(value) || 0));
   const ringOffset = RING_CIRCUMFERENCE - (RING_CIRCUMFERENCE * pct) / 100;
+  const isSidebar = variant === 'sidebar';
+  const ringStroke = isSidebar
+    ? 'url(#ringGradSidebar)'
+    : isShort
+      ? 'url(#ringGradShort)'
+      : 'url(#ringGradLong)';
 
   return (
     <div className={styles.confRing}>
@@ -149,13 +161,17 @@ function ConfidenceRing({ value, isShort }) {
           cy="28"
           r="25"
           fill="none"
-          stroke={isShort ? 'url(#ringGradShort)' : 'url(#ringGradLong)'}
+          stroke={ringStroke}
           strokeWidth="3"
           strokeLinecap="round"
           transform="rotate(-90 28 28)"
           style={{ '--ring-offset': ringOffset }}
         />
         <defs>
+          <linearGradient id="ringGradSidebar" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#ff8c42" />
+            <stop offset="100%" stopColor="#ffb347" />
+          </linearGradient>
           <linearGradient id="ringGradShort" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#ff3b5c" />
             <stop offset="100%" stopColor="#ff6b35" />
@@ -167,7 +183,7 @@ function ConfidenceRing({ value, isShort }) {
         </defs>
         <text
           x="28"
-          y="24"
+          y={isSidebar ? 26 : 24}
           textAnchor="middle"
           fontFamily="Roboto Mono, monospace"
           fontSize="11"
@@ -176,27 +192,41 @@ function ConfidenceRing({ value, isShort }) {
         >
           {Math.round(pct)}%
         </text>
-        <text
-          x="28"
-          y="35"
-          textAnchor="middle"
-          fontFamily="inherit"
-          fontSize="7.5"
-          fill="rgba(245,245,247,0.4)"
-          letterSpacing="0.3"
-        >
-          CONF
-        </text>
+        {isSidebar ? (
+          <text
+            x="28"
+            y="36"
+            textAnchor="middle"
+            fontFamily="inherit"
+            fontSize="7"
+            fill="rgba(245,245,247,0.45)"
+          >
+            置信度
+          </text>
+        ) : (
+          <text
+            x="28"
+            y="35"
+            textAnchor="middle"
+            fontFamily="inherit"
+            fontSize="7.5"
+            fill="rgba(245,245,247,0.4)"
+            letterSpacing="0.3"
+          >
+            CONF
+          </text>
+        )}
       </svg>
-      <div className={styles.ringLabel}>置信度</div>
+      {!isSidebar ? <div className={styles.ringLabel}>置信度</div> : null}
     </div>
   );
 }
 
-function AnimatedSignalBar({ name, target, delay = 0 }) {
+function AnimatedSignalBar({ name, target, delay = 0, isSidebar = false }) {
   const [width, setWidth] = useState(0);
   const [display, setDisplay] = useState(0);
-  const gradient = SOURCE_GRADIENTS[name] || 'linear-gradient(90deg, #11b787, #38bdf8)';
+  const palette = isSidebar ? SIDEBAR_SOURCE_GRADIENTS : SOURCE_GRADIENTS;
+  const gradient = palette[name] || 'linear-gradient(90deg, #11b787, #38bdf8)';
 
   useEffect(() => {
     const goal = Math.max(0, Math.min(100, Math.round(Number(target) || 0)));
@@ -230,7 +260,8 @@ function AnimatedSignalBar({ name, target, delay = 0 }) {
   );
 }
 
-export default function SignalCard({ data, isPC = false }) {
+export default function SignalCard({ data, isPC = false, embedded = false, variant = 'default' }) {
+  const isSidebar = variant === 'sidebar';
   const cardRef = useRef(null);
   const sparkRef = useRef(null);
   const sparkDataRef = useRef([]);
@@ -276,6 +307,7 @@ export default function SignalCard({ data, isPC = false }) {
   } = card;
 
   const isShort = direction !== 'long';
+  const isGradeS = String(grade).toUpperCase() === 'S';
   const entryLow = Array.isArray(entryZone) ? entryZone[0] : null;
   const entryHigh = Array.isArray(entryZone) ? entryZone[1] : null;
   const tpChange = calcChangePct(currentPrice, takeProfit);
@@ -300,6 +332,25 @@ export default function SignalCard({ data, isPC = false }) {
       '--entry-left': `${leftPct}%`,
     };
   }, [entryLow, entryHigh, currentPrice]);
+
+  const sidebarEntryFill = useMemo(() => {
+    if (entryLow == null || entryHigh == null) {
+      return { width: '42%', left: '29%' };
+    }
+    const low = Math.min(entryLow, entryHigh);
+    const high = Math.max(entryLow, entryHigh);
+    const range = high - low || 1;
+    const pad = range * 0.38;
+    const min = low - pad;
+    const max = high + pad;
+    const span = max - min || 1;
+    const leftPct = ((low - min) / span) * 100;
+    const widthPct = (range / span) * 100;
+    return {
+      width: `${widthPct}%`,
+      left: `${leftPct}%`,
+    };
+  }, [entryLow, entryHigh]);
 
   const mathTags = useMemo(
     () =>
@@ -357,7 +408,7 @@ export default function SignalCard({ data, isPC = false }) {
 
   useEffect(() => {
     const el = cardRef.current;
-    if (!el || typeof window === 'undefined') return undefined;
+    if (!el || typeof window === 'undefined' || isSidebar) return undefined;
 
     const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     if (!canHover) return undefined;
@@ -383,7 +434,7 @@ export default function SignalCard({ data, isPC = false }) {
       el.style.transform = '';
       el.style.transition = '';
     };
-  }, [data]);
+  }, [data, isSidebar]);
 
   if (!data) return null;
 
@@ -397,16 +448,26 @@ export default function SignalCard({ data, isPC = false }) {
 
   return (
     <div
-      className={`${styles.root} ${isPC ? styles.pcMode : ''} ${isShort ? '' : styles.rootLong}`}
+      className={`${styles.root} ${isPC ? styles.pcMode : ''} ${embedded || isSidebar ? styles.embedded : ''} ${isSidebar ? styles.sidebarVariant : ''} ${isShort ? '' : styles.rootLong}`}
     >
       <div ref={cardRef} className={styles.cardSurface}>
-      <div className={styles.ambientGlow} aria-hidden />
+      {!isSidebar ? <div className={styles.ambientGlow} aria-hidden /> : null}
 
       <div className={styles.header}>
         <div className={styles.headerLeft}>
           <div className={styles.gradeRow}>
-            {grade ? <div className={styles.gradeBadge}>{grade}级</div> : null}
-            {coin ? <div className={styles.coinTag}>{coin} / USDT</div> : null}
+            {grade ? (
+              <div
+                className={`${styles.gradeBadge} ${isGradeS ? styles.gradeBadgeS : isSidebar ? styles.gradeBadgeSidebar : ''}`}
+              >
+                {grade}级
+              </div>
+            ) : null}
+            {coin ? (
+              <div className={`${styles.coinTag} ${isSidebar ? styles.coinTagSidebar : ''}`}>
+                {isSidebar ? coin : `${coin} / USDT`}
+              </div>
+            ) : null}
             {direction ? (
               <div className={styles.directionTag}>
                 <span className={styles.directionArrow}>{isShort ? '▼' : '▲'}</span>
@@ -414,17 +475,23 @@ export default function SignalCard({ data, isPC = false }) {
               </div>
             ) : null}
           </div>
-          <div className={styles.headerTitle}>
-            实时交易信号{strategyVersion != null ? ` · 策略 v${strategyVersion}` : ''}
-          </div>
+          {!isSidebar ? (
+            <div className={styles.headerTitle}>
+              实时交易信号{strategyVersion != null ? ` · 策略 v${strategyVersion}` : ''}
+            </div>
+          ) : null}
         </div>
-        {confidence != null ? <ConfidenceRing value={confidence} isShort={isShort} /> : null}
+        {confidence != null ? (
+          <ConfidenceRing value={confidence} isShort={isShort} variant={variant} />
+        ) : null}
       </div>
 
       <div className={styles.priceSection}>
-        <div className={styles.priceLabel}>当前价格</div>
+        {!isSidebar ? <div className={styles.priceLabel}>当前价格</div> : null}
         <div className={styles.priceHero}>
-          <div className={styles.priceNum}>{formatPrice(currentPrice)}</div>
+          <div className={`${styles.priceNum} ${isSidebar && !isShort ? styles.priceNumLong : ''}`}>
+            {formatPrice(currentPrice)}
+          </div>
           <div className={styles.priceTicker}>USD</div>
         </div>
         <div className={styles.sparklineWrap}>
@@ -433,72 +500,82 @@ export default function SignalCard({ data, isPC = false }) {
       </div>
 
       {entryLow != null && entryHigh != null ? (
-        <div className={styles.entryZone}>
+        <div className={`${styles.entryZone} ${isSidebar ? styles.entryZoneSidebar : ''}`}>
           <div className={styles.entryLabel}>进场区间</div>
           <div className={styles.entryBar}>
-            <div className={styles.entryFill} style={entryStyle} />
+            <div
+              className={`${styles.entryFill} ${isSidebar ? styles.entryFillSidebar : ''}`}
+              style={isSidebar ? sidebarEntryFill : entryStyle}
+            />
           </div>
-          <div className={styles.entryPrices}>
+          <div className={`${styles.entryPrices} ${isSidebar ? styles.entryPricesSidebar : ''}`}>
             <div className={styles.entryLow}>{formatPrice(entryLow)}</div>
-            <div className={styles.entryMid}>进场区间</div>
+            <div className={`${styles.entryMid} ${isSidebar ? styles.entryMidSidebar : ''}`}>
+              进场区间
+            </div>
             <div className={styles.entryHigh}>{formatPrice(entryHigh)}</div>
           </div>
         </div>
       ) : null}
 
-      <div className={styles.tpslSection}>
-        <div className={styles.tpslCell}>
-          <div className={`${styles.tpslType} ${styles.tpType}`}>止盈 TP</div>
-          <div className={styles.tpslPrice}>{formatPrice(takeProfit)}</div>
-          {tpChange != null ? (
-            <div className={`${styles.tpslPct} ${styles.tpPct}`}>{formatPct(tpChange)}</div>
-          ) : null}
+      {!isSidebar ? (
+        <div className={styles.tpslSection}>
+          <div className={styles.tpslCell}>
+            <div className={`${styles.tpslType} ${styles.tpType}`}>止盈 TP</div>
+            <div className={styles.tpslPrice}>{formatPrice(takeProfit)}</div>
+            {tpChange != null ? (
+              <div className={`${styles.tpslPct} ${styles.tpPct}`}>{formatPct(tpChange)}</div>
+            ) : null}
+          </div>
+          <div className={styles.tpslCell}>
+            <div className={`${styles.tpslType} ${styles.slType}`}>止损 SL</div>
+            <div className={styles.tpslPrice}>{formatPrice(stopLoss)}</div>
+            {slChange != null ? (
+              <div className={`${styles.tpslPct} ${styles.slPct}`}>{formatPct(slChange)}</div>
+            ) : null}
+          </div>
         </div>
-        <div className={styles.tpslCell}>
-          <div className={`${styles.tpslType} ${styles.slType}`}>止损 SL</div>
-          <div className={styles.tpslPrice}>{formatPrice(stopLoss)}</div>
-          {slChange != null ? (
-            <div className={`${styles.tpslPct} ${styles.slPct}`}>{formatPct(slChange)}</div>
-          ) : null}
-        </div>
-      </div>
+      ) : null}
 
-      <div className={styles.metrics}>
+      <div className={`${styles.metrics} ${isSidebar ? styles.metricsSidebar : ''}`}>
         <div className={styles.metric}>
           <div className={`${styles.metricVal} ${styles.metricValAccent}`}>
             {riskReward != null ? `${riskReward}x` : '--'}
           </div>
           <div className={styles.metricLbl}>盈亏比</div>
         </div>
-        <div className={styles.metric}>
-          <div className={styles.metricVal}>
-            {positionPct != null ? `${Number(positionPct).toFixed(0)}%` : '--'}
+        {!isSidebar ? (
+          <div className={styles.metric}>
+            <div className={styles.metricVal}>
+              {positionPct != null ? `${Number(positionPct).toFixed(0)}%` : '--'}
+            </div>
+            <div className={styles.metricLbl}>建议仓位</div>
           </div>
-          <div className={styles.metricLbl}>建议仓位</div>
-        </div>
+        ) : null}
         <div className={styles.metric}>
           <div className={styles.metricVal}>
-            {resolvedKelly != null ? `${Number(resolvedKelly).toFixed(1)}%` : '--'}
+            {resolvedKelly != null ? `${Number(resolvedKelly).toFixed(0)}%` : '--'}
           </div>
           <div className={styles.metricLbl}>Kelly仓位</div>
         </div>
       </div>
 
       {sources.length > 0 ? (
-        <div className={styles.signals}>
-          <div className={styles.sectionHead}>信号源融合</div>
+        <div className={`${styles.signals} ${isSidebar ? styles.signalsSidebar : ''}`}>
+          <div className={styles.sectionHead}>{isSidebar ? '信号源' : '信号源融合'}</div>
           {sources.map((source, idx) => (
             <AnimatedSignalBar
               key={`${source.name}-${idx}`}
               name={source.name}
               target={source.score}
-              delay={900 + idx * 100}
+              delay={isSidebar ? idx * 80 : 900 + idx * 100}
+              isSidebar={isSidebar}
             />
           ))}
         </div>
       ) : null}
 
-      {mathTags.length > 0 || mathNotes.length > 0 ? (
+      {!isSidebar && (mathTags.length > 0 || mathNotes.length > 0) ? (
         <div className={styles.mathBlock}>
           <div className={styles.sectionHead}>数学推导</div>
           {mathTags.length > 0 ? (
@@ -529,7 +606,7 @@ export default function SignalCard({ data, isPC = false }) {
         </div>
       ) : null}
 
-      {statChips.length > 0 ? (
+      {!isSidebar && statChips.length > 0 ? (
         <div className={styles.backtest}>
           {statChips.map((chip) => (
             <div
@@ -542,7 +619,7 @@ export default function SignalCard({ data, isPC = false }) {
         </div>
       ) : null}
 
-      {invalidation != null ? (
+      {!isSidebar && invalidation != null ? (
         <div className={styles.invalid}>
           <div className={styles.invalidLabel}>失效条件</div>
           <div className={styles.invalidPrice}>
@@ -550,6 +627,15 @@ export default function SignalCard({ data, isPC = false }) {
             突破 {formatPrice(invalidation)}
           </div>
         </div>
+      ) : null}
+
+      {isSidebar ? (
+        <button type="button" className={styles.viewMore}>
+          <span className={styles.viewMoreIcon} aria-hidden>
+            ︾
+          </span>
+          查看更多
+        </button>
       ) : null}
       </div>
     </div>

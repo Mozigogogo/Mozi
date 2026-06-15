@@ -41,6 +41,211 @@
   max-width: 460PX;
 }
 
+.embedded {
+  max-width: 100%;
+  perspective: none;
+  opacity: 1;
+  transform: none;
+  animation: none;
+}
+
+.sidebarVariant {
+  .cardSurface {
+    background: #151722;
+    border-radius: 16PX;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .header {
+    padding: 16PX 16PX 10PX;
+    border-bottom: none;
+  }
+
+  .gradeRow,
+  .confRing,
+  .priceHero,
+  .sparklineWrap,
+  .entryZone,
+  .metrics,
+  .signals {
+    opacity: 1;
+    animation: none;
+  }
+
+  .gradeRow {
+    margin-bottom: 0;
+  }
+
+  .gradeBadgeSidebar {
+    background: linear-gradient(90deg, #ff8c42, #ffb347);
+    color: #fff;
+  }
+
+  .coinTagSidebar {
+    color: #ffb347;
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 183, 64, 0.35);
+  }
+
+  .priceSection {
+    padding: 4PX 16PX 12PX;
+    border-bottom: none;
+  }
+
+  .priceLabel {
+    display: none;
+  }
+
+  .priceNumLong {
+    color: #00ffa3;
+    font-size: 32PX;
+    letter-spacing: -1PX;
+  }
+
+  .entryZone {
+    padding: 0 16PX 14PX;
+    background: transparent;
+    border-bottom: none;
+  }
+
+  .entryLabel {
+    text-transform: none;
+    font-size: 11PX;
+    letter-spacing: 0;
+    color: rgba(245, 245, 247, 0.45);
+    margin-bottom: 8PX;
+  }
+
+  .entryZoneSidebar .entryBar {
+    height: 6PX;
+    border-radius: 999PX;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.08);
+    margin-bottom: 8PX;
+  }
+
+  .entryFillSidebar {
+    width: auto;
+    background: #00ffa3;
+    border-radius: 999PX;
+    animation: none;
+  }
+
+  .entryPricesSidebar {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 8PX;
+  }
+
+  .entryPricesSidebar .entryLow {
+    text-align: left;
+  }
+
+  .entryPricesSidebar .entryMid {
+    text-align: center;
+    justify-self: center;
+  }
+
+  .entryPricesSidebar .entryHigh {
+    text-align: right;
+    justify-self: end;
+  }
+
+  .entryMidSidebar {
+    color: #00ffa3;
+    font-size: 11PX;
+    font-weight: 500;
+  }
+
+  .entryZoneSidebar .entryLow,
+  .entryZoneSidebar .entryHigh {
+    font-size: 11PX;
+    color: rgba(245, 245, 247, 0.45);
+  }
+
+  .metricsSidebar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8PX;
+    padding: 0 16PX 14PX;
+    border-bottom: none;
+  }
+
+  .metricsSidebar .metric {
+    padding: 10PX 12PX;
+    border: 1PX solid rgba(255, 255, 255, 0.08);
+    border-radius: 10PX;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .metricsSidebar .metric:last-child {
+    border-right: 1PX solid rgba(255, 255, 255, 0.08);
+  }
+
+  .metricValAccent {
+    font-size: 20PX;
+    color: #ffb347;
+  }
+
+  .metricsSidebar .metricVal {
+    font-size: 20PX;
+  }
+
+  .metricLbl {
+    text-transform: none;
+    font-size: 11PX;
+    letter-spacing: 0;
+  }
+
+  .signalsSidebar {
+    padding: 0 16PX 8PX;
+    border-bottom: none;
+  }
+
+  .signalsSidebar .sectionHead {
+    text-transform: none;
+    font-size: 12PX;
+    letter-spacing: 0;
+    margin-bottom: 10PX;
+  }
+
+  .sigName {
+    min-width: 64PX;
+    font-size: 11PX;
+  }
+
+  .sigBar {
+    height: 5PX;
+    border-radius: 999PX;
+  }
+
+  .viewMore {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4PX;
+    width: calc(100% - 32PX);
+    margin: 0 16PX 14PX;
+    padding: 8PX 0;
+    border: none;
+    background: transparent;
+    color: rgba(245, 245, 247, 0.45);
+    font-size: 12PX;
+    cursor: pointer;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: rgba(245, 245, 247, 0.75);
+    }
+  }
+
+  .viewMoreIcon {
+    font-size: 12PX;
+    line-height: 1;
+  }
+}
+
 .rootLong {
   --accent: #00e5a0;
   --accent-dim: rgba(0, 229, 160, 0.08);
@@ -107,6 +312,10 @@
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
   transform: translateX(-100%);
   animation: shimmer 3s ease 1.5s infinite;
+}
+
+.gradeBadgeS {
+  background: #ff3b5c;
 }
 
 .coinTag {

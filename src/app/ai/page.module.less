@@ -21,6 +21,41 @@
     display: flex;
     flex-direction: column;
 
+    .pcBody {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+      gap: 16PX;
+      padding: 0 24PX 0 0;
+      box-sizing: border-box;
+    }
+
+    .pcChatColumn {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .pcBody > aside {
+      align-self: stretch;
+      flex-shrink: 0;
+      min-height: 0;
+      max-height: 100%;
+    }
+
+    .pcRightColumn {
+      width: 360PX;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+    }
+
     // Use PX (uppercase) or media query to potentially bypass px-to-viewport/rem conversion
     @media screen and (min-width: 1024px) {
       .pcBackBar {

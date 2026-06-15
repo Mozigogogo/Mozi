@@ -32,6 +32,7 @@ import AiRobotUpgradePillButton from '@/components/AiRobotUpgradePillButton';
 import PointsInsufficientBubble from '@/components/PointsInsufficientBubble';
 import ShareAiChatModal from '@/components/ShareAiChatModal';
 import SignalCard from '@/components/SignalCard';
+import PCAlphaSignalPanel from '@/components/PCAlphaSignalPanel';
 
 const SIGNALS_CHAT_API = '/api/robot_proxy/signals/v1/chat';
 const ROBOT_MODEL_IDS = ['analyze', 'chat', 'signals', 'bigorder'];
@@ -1604,10 +1605,11 @@ export default function RobotPage({ isPC: propIsPC = false }) {
         )}
         
         {/* 顶部标题/副标题/下拉模型选择（AI Assistant 区域）已移除 */}
-        
 
+        <div className={isPC ? styles.pcBody : undefined}>
+        <div className={isPC ? styles.pcChatColumn : undefined}>
         <div className={styles.chatScroll} ref={scrollRef}>
-          {showUpgradePill && (
+          {showUpgradePill && !isPC && (
             <div className={styles.upgradePillInChatScrollWrapper}>
               <AiRobotUpgradePillButton
                 onClick={() => router.push('/vip-recharge')}
@@ -1837,7 +1839,6 @@ export default function RobotPage({ isPC: propIsPC = false }) {
           )}
         </div>
 
-
         <div className={styles.chatInputBar}>
           <div className={styles.inputBox}>
             <input
@@ -2017,6 +2018,19 @@ export default function RobotPage({ isPC: propIsPC = false }) {
               </div>
             </div>
           </div>
+        </div>
+        </div>
+
+        {isPC ? (
+          <aside className={styles.pcRightColumn} aria-label="Alpha 信号">
+            <PCAlphaSignalPanel
+              showUpgrade={showUpgradePill}
+              onUpgrade={() => router.push('/vip-recharge')}
+              upgradeLabel={t('aiAssistant.title')}
+              upgradeAriaLabel={t('aiAssistant.title')}
+            />
+          </aside>
+        ) : null}
         </div>
         
         {/* 登录提示弹窗 */}
