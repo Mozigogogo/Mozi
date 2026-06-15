@@ -32,7 +32,13 @@ import AiRobotUpgradePillButton from '@/components/AiRobotUpgradePillButton';
 import PointsInsufficientBubble from '@/components/PointsInsufficientBubble';
 import ShareAiChatModal from '@/components/ShareAiChatModal';
 import SignalCard from '@/components/SignalCard';
+import SignalCardCarousel from '@/components/SignalCardCarousel';
 import PCAlphaSignalPanel from '@/components/PCAlphaSignalPanel';
+import {
+  ALPHA_SIGNAL_USER_QUERY,
+  MOCK_ALPHA_SIGNAL_CARDS,
+  MOCK_ALPHA_SIGNAL_REPLY,
+} from '@/data/mockAlphaSignalCards';
 
 const SIGNALS_CHAT_API = '/api/robot_proxy/signals/v1/chat';
 const ROBOT_MODEL_IDS = ['analyze', 'chat', 'signals', 'bigorder'];
@@ -677,12 +683,22 @@ export default function RobotPage({ isPC: propIsPC = false }) {
       if (userAbortedRef.current) return;
       const payload = eventData?.data ?? eventData;
       if (!payload?.card && !payload?.display) return;
-      patchCurrentAiMessage({
-        signalCard: payload,
-        loading: true,
-      });
+      const msgId = currentAiMsgIdRef.current;
+      if (!msgId) return;
+      setMessages((prev) =>
+        prev.map((msg) => {
+          if (msg.id !== msgId) return msg;
+          const existing = msg.signalCards || (msg.signalCard ? [msg.signalCard] : []);
+          return {
+            ...msg,
+            signalCard: undefined,
+            signalCards: [...existing, payload],
+            loading: true,
+          };
+        })
+      );
     },
-    [patchCurrentAiMessage]
+    []
   );
 
   const markCurrentMessageAborted = useCallback(() => {
@@ -1181,6 +1197,46 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
   handleSendRef.current = handleSend;
 
+  /** 右侧 Alpha 信号面板：在对话区展示 S 级多维共振信号列表（假数据，后续接 API） */
+  const handleAlphaSignalViewMore = useCallback(() => {
+    if (isBusy || isBootstrappingUserData) return;
+    if (shouldShowPointsLockBeforeSend()) {
+      appendPointsLockMessage();
+      return;
+    }
+
+    forceBlurAndResetViewport();
+    setSelectedModel('signals');
+    setSuggestedQuestions([]);
+
+    const now = Date.now();
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `user-${now}`,
+        role: 'user',
+        content: ALPHA_SIGNAL_USER_QUERY,
+        time: now,
+      },
+      {
+        id: `ai-${now + 1}`,
+        role: 'assistant',
+        content: MOCK_ALPHA_SIGNAL_REPLY,
+        signalCards: MOCK_ALPHA_SIGNAL_CARDS,
+        time: now + 1,
+        loading: false,
+      },
+    ]);
+
+    trackEvent(AIEvents.QUESTION_SENT, {
+      question: ALPHA_SIGNAL_USER_QUERY,
+      questionLength: ALPHA_SIGNAL_USER_QUERY.length,
+      isSuggestedQuestion: true,
+      source: 'alpha_signal_panel',
+      timestamp: now,
+    });
+  }, [isBusy, isBootstrappingUserData]);
+
   // 发现页行情表等：跳转 /ai 并自动切换模型、发送首条提问
   useEffect(() => {
     if (!mounted || isBootstrappingUserData) return;
@@ -1608,6 +1664,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
         <div className={isPC ? styles.pcBody : undefined}>
         <div className={isPC ? styles.pcChatColumn : undefined}>
+        <div className={isPC ? styles.pcChatRail : undefined}>
         <div className={styles.chatScroll} ref={scrollRef}>
           {showUpgradePill && !isPC && (
             <div className={styles.upgradePillInChatScrollWrapper}>
@@ -1691,7 +1748,23 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                   </div>
                 )}
 
-                <div className={styles.msgContent}>
+                <div
+                  className={`${styles.msgContent} ${
+                    msg.signalCards?.length ? styles.msgContentCarousel : ''
+                  }`}
+                >
+                  {msg.signalCards?.length ? (
+                    <>
+                      {msg.content ? (
+                        <div className={`${styles.bubble} ${styles.assistant}`}>
+                          <div className={styles.text}>
+                            <StreamingMarkdown content={msg.content} isStreaming={msg.loading} />
+                          </div>
+                        </div>
+                      ) : null}
+                      <SignalCardCarousel cards={msg.signalCards} isPC={isPC} />
+                    </>
+                  ) : (
                   <div
                     className={`${styles.bubble} ${
                       msg.type === 'pointsLock'
@@ -1743,6 +1816,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                       )}
                     </div>
                   </div>
+                  )}
 
                   <div className={styles.bubbleFooter}>
                     <span
@@ -1753,7 +1827,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
                       {formatTime(msg.time)}
                     </span>
 
-                    {msg.role === 'assistant' && (msg.content || msg.signalCard) && (
+                    {msg.role === 'assistant' && (msg.content || msg.signalCard || msg.signalCards?.length) && (
                       <div className={styles.msgActions} aria-label="message actions">
                         <button
                           type="button"
@@ -2020,12 +2094,14 @@ export default function RobotPage({ isPC: propIsPC = false }) {
           </div>
         </div>
         </div>
+        </div>
 
         {isPC ? (
           <aside className={styles.pcRightColumn} aria-label="Alpha 信号">
             <PCAlphaSignalPanel
               showUpgrade={showUpgradePill}
               onUpgrade={() => router.push('/vip-recharge')}
+              onViewMore={handleAlphaSignalViewMore}
               upgradeLabel={t('aiAssistant.title')}
               upgradeAriaLabel={t('aiAssistant.title')}
             />

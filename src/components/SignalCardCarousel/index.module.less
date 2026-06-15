@@ -1,0 +1,34 @@
+.carousel {
+  margin-top: 12PX;
+  border-radius: 16PX;
+  background: #ffffff66;
+  border: 1PX solid #ffffff;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
+
+  &::-webkit-scrollbar {
+    height: 4PX;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.12);
+    border-radius: 999PX;
+  }
+}
+
+.track {
+  display: flex;
+  gap: 12PX;
+  width: max-content;
+  min-width: 100%;
+  padding: 16PX;
+  box-sizing: border-box;
+}
+
+.cardItem {
+  flex: 0 0 280PX;
+  min-width: 280PX;
+}

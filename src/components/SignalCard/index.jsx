@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import styles from './index.module.less';
 
@@ -28,6 +28,38 @@ const REGIME_LABELS = {
   ranging: 'ranging',
   volatile: 'volatile',
 };
+
+const GRADE_BADGE_CLASS = {
+  S: 'gradeBadgeS',
+  A: 'gradeBadgeA',
+  B: 'gradeBadgeB',
+  C: 'gradeBadgeC',
+};
+
+const GRADE_RING_GRADIENTS = {
+  S: ['#ef4444', '#f97316'],
+  A: ['#f97316', '#fbbf24'],
+  B: ['#eab308', '#facc15'],
+  C: ['#64748b', '#94a3b8'],
+};
+
+const GRADE_ACCENT = {
+  S: { text: '#fca5a5', rgb: '239, 68, 68' },
+  A: { text: '#fed7aa', rgb: '249, 115, 22' },
+  B: { text: '#fef08a', rgb: '234, 179, 8' },
+  C: { text: '#cbd5e1', rgb: '100, 116, 139' },
+};
+
+function getGradeBadgeClassName(grade, stylesMap) {
+  const key = String(grade || '').toUpperCase();
+  const token = GRADE_BADGE_CLASS[key];
+  return token ? stylesMap[token] : '';
+}
+
+function getGradeAccent(grade) {
+  const key = String(grade || '').toUpperCase();
+  return GRADE_ACCENT[key] || GRADE_ACCENT.S;
+}
 
 const RING_CIRCUMFERENCE = 157;
 
@@ -135,12 +167,16 @@ function drawSparkline(canvas, data, strokeColor, fillTopColor) {
   ctx.stroke();
 }
 
-function ConfidenceRing({ value, isShort, variant = 'default' }) {
+function ConfidenceRing({ value, isShort, variant = 'default', grade = '' }) {
+  const uid = useId().replace(/:/g, '');
   const pct = Math.max(0, Math.min(100, Number(value) || 0));
   const ringOffset = RING_CIRCUMFERENCE - (RING_CIRCUMFERENCE * pct) / 100;
   const isSidebar = variant === 'sidebar';
+  const gradeKey = String(grade || '').toUpperCase();
+  const gradeRing = GRADE_RING_GRADIENTS[gradeKey] || GRADE_RING_GRADIENTS.S;
+  const gradeRingId = `ringGradGrade-${uid}`;
   const ringStroke = isSidebar
-    ? 'url(#ringGradSidebar)'
+    ? `url(#${gradeRingId})`
     : isShort
       ? 'url(#ringGradShort)'
       : 'url(#ringGradLong)';
@@ -168,10 +204,12 @@ function ConfidenceRing({ value, isShort, variant = 'default' }) {
           style={{ '--ring-offset': ringOffset }}
         />
         <defs>
-          <linearGradient id="ringGradSidebar" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#ff8c42" />
-            <stop offset="100%" stopColor="#ffb347" />
-          </linearGradient>
+          {isSidebar ? (
+            <linearGradient id={gradeRingId} x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor={gradeRing[0]} />
+              <stop offset="100%" stopColor={gradeRing[1]} />
+            </linearGradient>
+          ) : null}
           <linearGradient id="ringGradShort" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#ff3b5c" />
             <stop offset="100%" stopColor="#ff6b35" />
@@ -260,7 +298,7 @@ function AnimatedSignalBar({ name, target, delay = 0, isSidebar = false }) {
   );
 }
 
-export default function SignalCard({ data, isPC = false, embedded = false, variant = 'default' }) {
+export default function SignalCard({ data, isPC = false, embedded = false, variant = 'default', onViewMore }) {
   const isSidebar = variant === 'sidebar';
   const cardRef = useRef(null);
   const sparkRef = useRef(null);
@@ -307,7 +345,14 @@ export default function SignalCard({ data, isPC = false, embedded = false, varia
   } = card;
 
   const isShort = direction !== 'long';
-  const isGradeS = String(grade).toUpperCase() === 'S';
+  const gradeBadgeClass = getGradeBadgeClassName(grade, styles);
+  const gradeAccent = getGradeAccent(grade);
+  const sidebarGradeStyle = isSidebar
+    ? {
+        '--grade-accent': gradeAccent.text,
+        '--grade-accent-rgb': gradeAccent.rgb,
+      }
+    : undefined;
   const entryLow = Array.isArray(entryZone) ? entryZone[0] : null;
   const entryHigh = Array.isArray(entryZone) ? entryZone[1] : null;
   const tpChange = calcChangePct(currentPrice, takeProfit);
@@ -449,6 +494,7 @@ export default function SignalCard({ data, isPC = false, embedded = false, varia
   return (
     <div
       className={`${styles.root} ${isPC ? styles.pcMode : ''} ${embedded || isSidebar ? styles.embedded : ''} ${isSidebar ? styles.sidebarVariant : ''} ${isShort ? '' : styles.rootLong}`}
+      style={sidebarGradeStyle}
     >
       <div ref={cardRef} className={styles.cardSurface}>
       {!isSidebar ? <div className={styles.ambientGlow} aria-hidden /> : null}
@@ -457,9 +503,7 @@ export default function SignalCard({ data, isPC = false, embedded = false, varia
         <div className={styles.headerLeft}>
           <div className={styles.gradeRow}>
             {grade ? (
-              <div
-                className={`${styles.gradeBadge} ${isGradeS ? styles.gradeBadgeS : isSidebar ? styles.gradeBadgeSidebar : ''}`}
-              >
+              <div className={`${styles.gradeBadge} ${gradeBadgeClass}`.trim()}>
                 {grade}级
               </div>
             ) : null}
@@ -482,7 +526,7 @@ export default function SignalCard({ data, isPC = false, embedded = false, varia
           ) : null}
         </div>
         {confidence != null ? (
-          <ConfidenceRing value={confidence} isShort={isShort} variant={variant} />
+          <ConfidenceRing value={confidence} isShort={isShort} variant={variant} grade={grade} />
         ) : null}
       </div>
 
@@ -629,8 +673,8 @@ export default function SignalCard({ data, isPC = false, embedded = false, varia
         </div>
       ) : null}
 
-      {isSidebar ? (
-        <button type="button" className={styles.viewMore}>
+      {isSidebar && !embedded ? (
+        <button type="button" className={styles.viewMore} onClick={(e) => { e.stopPropagation(); onViewMore?.(); }}>
           <span className={styles.viewMoreIcon} aria-hidden>
             ︾
           </span>

@@ -39,6 +39,18 @@
       min-height: 0;
     }
 
+    .pcChatRail {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: 900PX;
+      margin: 0 auto;
+      padding: 0 24PX;
+      box-sizing: border-box;
+    }
+
     .pcRightColumn {
       position: absolute;
       top: 0;
@@ -172,22 +184,71 @@
         padding: 20PX 0 12PX;
         
         .messages {
-          max-width: 800PX;
-          margin: 0 auto;
-          padding: 0 20PX;
-          gap: 16PX;
           width: 100%;
+          max-width: none;
+          margin: 0;
+          padding: 0;
+          gap: 16PX;
           box-sizing: border-box;
         }
 
         .msgRow {
           width: 100%;
-          gap: 10PX;
+          gap: 0;
+          display: grid;
+          grid-template-columns: 50PX minmax(0, 1fr) 50PX;
+          align-items: start;
+        }
+
+        .msgRow.left {
+          justify-content: stretch;
+        }
+
+        .msgRow.right {
+          justify-content: stretch;
+
+          .msgContent {
+            grid-column: 2;
+            justify-self: end;
+            width: auto;
+            max-width: 100%;
+            align-items: flex-end;
+          }
+
+          .avatarCol {
+            grid-column: 3;
+            justify-self: end;
+          }
+
+          .bubble {
+            width: fit-content;
+            max-width: 100%;
+          }
+
+          .bubbleFooter {
+            width: auto;
+            justify-content: flex-end;
+          }
+        }
+
+        .msgRow.left .avatarCol {
+          grid-column: 1;
+        }
+
+        .msgRow.left .msgContent {
+          grid-column: 2;
+          min-width: 0;
         }
 
         .msgContent {
-          max-width: 72%;
+          max-width: none;
+          width: 100%;
           gap: 6PX;
+        }
+
+        .msgContentCarousel {
+          max-width: none;
+          width: 100%;
         }
 
         .bubble {
@@ -340,13 +401,18 @@
 
       .chatInputBar {
         flex-shrink: 0;
-        padding: 24PX;
-        justify-content: center;
+        display: grid;
+        grid-template-columns: 50PX minmax(0, 1fr) 50PX;
+        align-items: center;
+        padding: 24PX 0;
+        justify-content: stretch;
         background: transparent;
         border-top: none;
 
         .inputBox {
-          max-width: 800PX;
+          grid-column: 2;
+          width: 100%;
+          max-width: none;
           border-radius: 28PX;
           padding: 8PX 16PX;
           
@@ -697,6 +763,12 @@
     padding: 0;
     background: transparent;
     border: none;
+  }
+
+  .msgContentCarousel {
+    max-width: 100%;
+    width: 100%;
+    gap: 8PX;
   }
 
   .avatar {

@@ -76,15 +76,10 @@
     margin-bottom: 0;
   }
 
-  .gradeBadgeSidebar {
-    background: linear-gradient(90deg, #ff8c42, #ffb347);
-    color: #fff;
-  }
-
   .coinTagSidebar {
-    color: #ffb347;
-    background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(255, 183, 64, 0.35);
+    color: var(--grade-accent, #ffb347);
+    background: rgba(var(--grade-accent-rgb, 255, 183, 64), 0.12);
+    border-color: rgba(var(--grade-accent-rgb, 255, 183, 64), 0.35);
   }
 
   .priceSection {
@@ -185,7 +180,7 @@
 
   .metricValAccent {
     font-size: 20PX;
-    color: #ffb347;
+    color: var(--grade-accent, #ffb347);
   }
 
   .metricsSidebar .metricVal {
@@ -315,7 +310,23 @@
 }
 
 .gradeBadgeS {
-  background: #ff3b5c;
+  background: #ef4444;
+  color: #fff;
+}
+
+.gradeBadgeA {
+  background: #f97316;
+  color: #fff;
+}
+
+.gradeBadgeB {
+  background: #eab308;
+  color: #1c1004;
+}
+
+.gradeBadgeC {
+  background: #64748b;
+  color: #fff;
 }
 
 .coinTag {
