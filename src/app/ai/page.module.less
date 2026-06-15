@@ -11,6 +11,60 @@
   overflow: hidden; /* 防止整个页面滚动 */
   position: relative;
 
+  .mobileBody {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding-top: 50px;
+  }
+
+  .mobileChatColumn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    width: 100%;
+  }
+
+  .chatShell {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  &:not(.pcMode) {
+    .mobileUpgradeRow {
+      position: fixed;
+      top: 50px;
+      right: 12px;
+      z-index: 998;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      pointer-events: auto;
+    }
+
+    .mobileUpgradeBtn {
+      flex-shrink: 0;
+      transform: scale(0.92);
+      transform-origin: right center;
+    }
+
+    .chatScrollEmpty {
+      padding: 12px 6px 12px;
+    }
+
+    .emptyState {
+      justify-content: center;
+    }
+
+    .chatInputBar {
+      flex-shrink: 0;
+    }
+  }
+
   &.pcMode {
     height: calc(100vh - 120PX); // Use PX to avoid scaling. 64px header + 24px padding + 32px bottom gap
     background: transparent;

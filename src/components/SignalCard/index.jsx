@@ -325,24 +325,27 @@ export default function SignalCard({ data, isPC = false, embedded = false, varia
   const math = data?.math || {};
   const strategy = data?.strategy || {};
 
-  const {
-    coin = '',
-    direction = '',
-    grade = '',
-    confidence,
-    current_price: currentPrice,
-    entry_zone: entryZone = [],
-    stop_loss: stopLoss,
-    take_profit: takeProfit,
-    risk_reward: riskReward,
-    position_pct: positionPct,
-    kelly_pct: kellyPct,
-    invalidation,
-    sources = [],
-    win_rate: winRate,
-    sample_count: sampleCount,
-    avg_profit: avgProfit,
-  } = card;
+  const coin = card.coin || '';
+  const direction = card.direction || '';
+  const grade = card.grade || '';
+  const confidence = card.confidence;
+  const currentPrice = card.current_price ?? card.currentPrice;
+  const entryZone =
+    card.entry_zone ??
+    card.entryZone ??
+    (card.entry_low != null && card.entry_high != null
+      ? [card.entry_low, card.entry_high]
+      : []);
+  const stopLoss = card.stop_loss ?? card.stopLoss;
+  const takeProfit = card.take_profit ?? card.takeProfit;
+  const riskReward = card.risk_reward ?? card.riskReward ?? card.risk_reward_ratio;
+  const positionPct = card.position_pct ?? card.positionPct;
+  const kellyPct = card.kelly_pct ?? card.kellyPct ?? data?.kellyPct;
+  const invalidation = card.invalidation ?? card.invalidation_price;
+  const sources = card.sources || [];
+  const winRate = card.win_rate ?? card.winRate;
+  const sampleCount = card.sample_count ?? card.sampleCount;
+  const avgProfit = card.avg_profit ?? card.avgProfit ?? card.avg_profit_pct;
 
   const isShort = direction !== 'long';
   const gradeBadgeClass = getGradeBadgeClassName(grade, styles);
@@ -357,16 +360,18 @@ export default function SignalCard({ data, isPC = false, embedded = false, varia
   const entryHigh = Array.isArray(entryZone) ? entryZone[1] : null;
   const tpChange = calcChangePct(currentPrice, takeProfit);
   const slChange = calcChangePct(currentPrice, stopLoss);
+  const mcBullProb = math.mc_bull_prob ?? math.mcBullProb ?? math.monte_carlo_bull_prob;
   const mcProb =
-    math.mc_bull_prob != null
-      ? (isShort ? 1 - Number(math.mc_bull_prob) : Number(math.mc_bull_prob)) * 100
+    mcBullProb != null
+      ? (isShort ? 1 - Number(mcBullProb) : Number(mcBullProb)) * 100
       : null;
-  const regime = math.market_regime || strategy.regime;
-  const strategyVersion = strategy.version;
+  const regime = math.market_regime ?? math.marketRegime ?? strategy.regime;
+  const strategyVersion = strategy.version ?? strategy.strategy_version;
   const mathNotes =
     (Array.isArray(math.notes) ? math.notes : null) ||
-    parseMathNotes(data?.display);
-  const resolvedKelly = kellyPct ?? data?.kelly_pct;
+    (Array.isArray(math.key_findings) ? math.key_findings : null) ||
+    parseMathNotes(data?.displayText || data?.display);
+  const resolvedKelly = kellyPct ?? data?.kelly_pct ?? data?.kellyPct;
   const showExpandedDetail = !isSidebar || embedded;
 
   const entryStyle = useMemo(() => {
@@ -410,7 +415,9 @@ export default function SignalCard({ data, isPC = false, embedded = false, varia
         mcProb != null
           ? `${isShort ? 'MC看跌' : 'MC看涨'} ${Math.round(mcProb)}%`
           : null,
-        math.volatility ? `波动率 ${math.volatility}` : null,
+        (math.volatility ?? math.vol_regime)
+          ? `波动率 ${math.volatility ?? math.vol_regime}`
+          : null,
         resolvedKelly != null ? `Kelly ${Number(resolvedKelly).toFixed(1)}%` : null,
         regime && !embedded ? `趋势 ${REGIME_LABELS[regime] || regime}` : null,
       ].filter(Boolean),
@@ -429,10 +436,10 @@ export default function SignalCard({ data, isPC = false, embedded = false, varia
           : null,
         sampleCount != null ? { label: '样本', value: `n=${sampleCount}`, warn: false } : null,
         avgProfit != null ? { label: '均盈', value: formatPct(avgProfit), warn: false } : null,
-        strategy.global_win_rate != null
+        (strategy.global_win_rate ?? strategy.globalWinRate) != null
           ? {
               label: '全局胜率',
-              value: `${Math.round(Number(strategy.global_win_rate) * (strategy.global_win_rate <= 1 ? 100 : 1))}%`,
+              value: `${Math.round(Number(strategy.global_win_rate ?? strategy.globalWinRate) * ((strategy.global_win_rate ?? strategy.globalWinRate) <= 1 ? 100 : 1))}%`,
               warn: true,
             }
           : null,
@@ -491,10 +498,19 @@ export default function SignalCard({ data, isPC = false, embedded = false, varia
 
   if (!data) return null;
 
-  if (!coin && data.display) {
+  if (!coin && (data.displayText || data.display)) {
+    const displayText =
+      typeof data.displayText === 'string'
+        ? data.displayText
+        : typeof data.display === 'string'
+          ? data.display
+          : typeof data.display === 'object' && typeof data.display?.data === 'string'
+            ? data.display.data
+            : '';
+    if (!displayText) return null;
     return (
       <pre className={`${styles.displayFallback} ${isPC ? styles.pcMode : ''}`}>
-        {data.display}
+        {displayText}
       </pre>
     );
   }
@@ -660,33 +676,39 @@ export default function SignalCard({ data, isPC = false, embedded = false, varia
         </div>
       ) : null}
 
-      {showExpandedDetail && statChips.length > 0 ? (
-        <div className={`${styles.backtest} ${embedded ? styles.backtestExpanded : ''}`}>
-          {statChips.map((chip) => (
-            <div
-              key={chip.label}
-              className={`${styles.btPill} ${chip.warn ? styles.btPillWarn : ''}`}
-            >
-              {chip.label} <strong>{chip.value}</strong>
+      {showExpandedDetail && (statChips.length > 0 || invalidation != null) ? (
+        <div className={embedded ? styles.expandedFooter : undefined}>
+          {statChips.length > 0 ? (
+            <div className={`${styles.backtest} ${embedded ? styles.backtestExpanded : ''}`}>
+              {statChips.map((chip) => (
+                <div
+                  key={chip.label}
+                  className={`${styles.btPill} ${chip.warn ? styles.btPillWarn : ''}`}
+                >
+                  {chip.label} <strong>{chip.value}</strong>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      ) : null}
+          ) : embedded ? (
+            <div className={`${styles.backtest} ${styles.backtestExpanded} ${styles.backtestPlaceholder}`} aria-hidden />
+          ) : null}
 
-      {showExpandedDetail && invalidation != null ? (
-        <div className={`${styles.invalid} ${embedded ? styles.invalidExpanded : ''}`}>
-          <div className={styles.invalidLabel}>失效条件</div>
-          <div
-            className={styles.invalidPrice}
-            style={embedded ? { color: gradeAccent.text } : undefined}
-          >
-            <span
-              className={styles.dotLive}
-              style={embedded ? { background: gradeAccent.text } : undefined}
-              aria-hidden
-            />
-            {isShort ? '突破' : '跌破'} {formatPrice(invalidation)}
-          </div>
+          {invalidation != null ? (
+            <div className={`${styles.invalid} ${embedded ? styles.invalidExpanded : ''}`}>
+              <div className={styles.invalidLabel}>失效条件</div>
+              <div
+                className={styles.invalidPrice}
+                style={embedded ? { color: gradeAccent.text } : undefined}
+              >
+                <span
+                  className={styles.dotLive}
+                  style={embedded ? { background: gradeAccent.text } : undefined}
+                  aria-hidden
+                />
+                {isShort ? '突破' : '跌破'} {formatPrice(invalidation)}
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : null}
 

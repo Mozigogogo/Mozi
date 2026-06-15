@@ -34,14 +34,82 @@ import ShareAiChatModal from '@/components/ShareAiChatModal';
 import SignalCard from '@/components/SignalCard';
 import SignalCardCarousel from '@/components/SignalCardCarousel';
 import PCAlphaSignalPanel from '@/components/PCAlphaSignalPanel';
+import { fetchLatestScanCache } from '@/api/signals';
 import {
   ALPHA_SIGNAL_USER_QUERY,
   MOCK_ALPHA_SIGNAL_CARDS,
   MOCK_ALPHA_SIGNAL_REPLY,
+  MOCK_SIDEBAR_SIGNAL_CARD,
 } from '@/data/mockAlphaSignalCards';
 
 const SIGNALS_CHAT_API = '/api/robot_proxy/signals/v1/chat';
 const ROBOT_MODEL_IDS = ['analyze', 'chat', 'signals', 'bigorder'];
+const GRADE_ORDER = { S: 0, A: 1, B: 2, C: 3 };
+
+function getGradeRank(item) {
+  const grade = String(item?.card?.grade || '').toUpperCase();
+  return GRADE_ORDER[grade] ?? 99;
+}
+
+function sortSignalCardsByGrade(cards = []) {
+  return [...cards].sort((a, b) => {
+    const gradeDiff = getGradeRank(a) - getGradeRank(b);
+    if (gradeDiff !== 0) return gradeDiff;
+
+    const confA = Number(a?.card?.confidence) || 0;
+    const confB = Number(b?.card?.confidence) || 0;
+    if (confB !== confA) return confB - confA;
+
+    return String(a?.card?.coin || '').localeCompare(String(b?.card?.coin || ''));
+  });
+}
+
+function getSignalCardsFromCache(cache) {
+  if (!cache) return [];
+  const results = Array.isArray(cache.results) ? cache.results : [];
+  const displays = Array.isArray(cache.displays) ? cache.displays : [];
+
+  const cards = results
+    .map((item, idx) => {
+      if (item?.card) {
+        return {
+          ...item,
+          display: item.display || displays[idx] || '',
+        };
+      }
+      return {
+        card: item,
+        math: item.math,
+        strategy: item.strategy,
+        display: displays[idx] || '',
+      };
+    })
+    .filter((item) => item?.card?.coin);
+
+  return sortSignalCardsByGrade(cards);
+}
+
+function buildAlphaScanReply(cache) {
+  if (!cache) return '';
+  const totalCoins = cache.totalCoins ?? '--';
+  const signalCount = cache.signalCount ?? '--';
+  const scanTimeMs = Number(cache.scanTime);
+  let scanTimeText = '';
+  if (Number.isFinite(scanTimeMs)) {
+    if (scanTimeMs >= 60000) {
+      scanTimeText = `，耗时约 ${(scanTimeMs / 60000).toFixed(1)} 分钟`;
+    } else if (scanTimeMs >= 1000) {
+      scanTimeText = `，耗时约 ${(scanTimeMs / 1000).toFixed(1)} 秒`;
+    }
+  }
+
+  return [
+    `最新一轮全市场扫描已完成，覆盖 ${totalCoins} 个币种`,
+    scanTimeText,
+    `，共识别出 ${signalCount} 个 S/A 级多维共振机会。`,
+    '以下为优先推荐信号，请结合个人风险偏好与仓位管理决策。',
+  ].join('');
+}
 
 // 大依赖按需加载：避免首屏把 syntax-highlighter 整包打进来
 const LazySyntaxHighlighter = dynamic(
@@ -173,15 +241,24 @@ const CodeBlock = ({ language, children, ...props }) => {
 
 // 流式 Markdown 渲染组件 - 逐行渲染
 const StreamingMarkdown = ({ content, isStreaming }) => {
-  if (!content) return null;
+  const textContent =
+    typeof content === 'string'
+      ? content
+      : content == null
+        ? ''
+        : typeof content === 'object' && typeof content.data === 'string'
+          ? content.data
+          : String(content);
 
-  const lines = useMemo(() => String(content).split('\n'), [content]);
+  if (!textContent) return null;
+
+  const lines = useMemo(() => textContent.split('\n'), [textContent]);
 
   const completedLines = useMemo(() => {
-    if (!isStreaming) return content;
+    if (!isStreaming) return textContent;
     if (lines.length <= 1) return '';
     return lines.slice(0, -1).join('\n');
-  }, [content, isStreaming, lines]);
+  }, [textContent, isStreaming, lines]);
 
   const currentLine = useMemo(() => {
     if (!isStreaming) return '';
@@ -274,7 +351,7 @@ const StreamingMarkdown = ({ content, isStreaming }) => {
   // 流式阶段：依旧渲染 Markdown（恢复体验），但代码块不做高亮，避免大幅卡顿
   if (isStreaming) {
     if (lines.length === 1) {
-      return <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{content}</div>;
+      return <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{textContent}</div>;
     }
 
     return (
@@ -344,7 +421,7 @@ const StreamingMarkdown = ({ content, isStreaming }) => {
         },
       }}
     >
-      {content}
+      {textContent}
     </Markdown>
   );
 };
@@ -373,6 +450,20 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
   const isPC = propIsPC || isPCState;
 
+  useEffect(() => {
+    if (!mounted || scanCacheRequestRef.current) return;
+    scanCacheRequestRef.current = true;
+
+    let cancelled = false;
+    fetchLatestScanCache().then((data) => {
+      if (!cancelled && data) setScanCache(data);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [mounted]);
+
   const fixedSuggestedQuestions = [
     t('robot.quickAsk.btcTrend'),
     t('robot.quickAsk.ethTechnical'),
@@ -385,6 +476,8 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   // 消息列表：只有加载到历史记录或用户开始对话时才会出现内容
   const [messages, setMessages] = useState([]);
   const [suggestedQuestions, setSuggestedQuestions] = useState([]);
+  const [scanCache, setScanCache] = useState(null);
+  const scanCacheRequestRef = useRef(false);
   const displaySuggestedQuestions = useMemo(
     () => withTradeSuggestion(suggestedQuestions),
     [suggestedQuestions]
@@ -986,6 +1079,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   // 放在这里是为了确保 `isBootstrappingUserData` / `isStreaming` 已初始化
   const showUpgradePill = messages.length === 0 && !isBootstrappingUserData && !isBusy;
   const showPcAlphaPanel = showUpgradePill;
+  const isMobileEmpty = !isPC && showUpgradePill;
   
   // 检查登录状态
   useEffect(() => {
@@ -1198,7 +1292,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
 
   handleSendRef.current = handleSend;
 
-  /** 右侧 Alpha 信号面板：在对话区展示 S 级多维共振信号列表（假数据，后续接 API） */
+  /** 右侧 Alpha 信号面板：使用初次加载的扫描缓存，在对话区展示信号列表 */
   const handleAlphaSignalViewMore = useCallback(() => {
     if (isBusy || isBootstrappingUserData) return;
     if (shouldShowPointsLockBeforeSend()) {
@@ -1209,6 +1303,12 @@ export default function RobotPage({ isPC: propIsPC = false }) {
     forceBlurAndResetViewport();
     setSelectedModel('signals');
     setSuggestedQuestions([]);
+
+    const cards = getSignalCardsFromCache(scanCache);
+    const reply = scanCache
+      ? buildAlphaScanReply(scanCache)
+      : MOCK_ALPHA_SIGNAL_REPLY;
+    const signalCards = cards.length ? cards : MOCK_ALPHA_SIGNAL_CARDS;
 
     const now = Date.now();
     setMessages((prev) => [
@@ -1222,8 +1322,8 @@ export default function RobotPage({ isPC: propIsPC = false }) {
       {
         id: `ai-${now + 1}`,
         role: 'assistant',
-        content: MOCK_ALPHA_SIGNAL_REPLY,
-        signalCards: MOCK_ALPHA_SIGNAL_CARDS,
+        content: reply,
+        signalCards: signalCards,
         time: now + 1,
         loading: false,
       },
@@ -1236,7 +1336,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
       source: 'alpha_signal_panel',
       timestamp: now,
     });
-  }, [isBusy, isBootstrappingUserData]);
+  }, [isBusy, isBootstrappingUserData, scanCache]);
 
   // 发现页行情表等：跳转 /ai 并自动切换模型、发送首条提问
   useEffect(() => {
@@ -1658,26 +1758,29 @@ export default function RobotPage({ isPC: propIsPC = false }) {
             title={isBusy ? t('robot.chattingTitle') : t('pcLayout.menu.myQA')}
             showBack={true}
             className={styles.navBarCustom}
+            backgroundColor="transparent"
           />
         )}
         
         {/* 顶部标题/副标题/下拉模型选择（AI Assistant 区域）已移除 */}
 
-        <div className={isPC ? styles.pcBody : undefined}>
-        <div className={isPC ? styles.pcChatColumn : undefined}>
-        <div className={isPC ? styles.pcChatRail : undefined}>
-        <div className={styles.chatScroll} ref={scrollRef}>
-          {showUpgradePill && !isPC && (
-            <div className={styles.upgradePillInChatScrollWrapper}>
-              <AiRobotUpgradePillButton
-                onClick={() => router.push('/vip-recharge')}
-                ariaLabel={t('aiAssistant.title')}
-                label={t('aiAssistant.title')}
-                className={styles.upgradePillNavBtn}
-              />
-            </div>
-          )}
-
+        <div className={isPC ? styles.pcBody : styles.mobileBody}>
+        <div className={isPC ? styles.pcChatColumn : styles.mobileChatColumn}>
+        <div className={`${styles.chatShell} ${isPC ? styles.pcChatRail : ''}`}>
+        {showUpgradePill && !isPC ? (
+          <div className={styles.mobileUpgradeRow}>
+            <AiRobotUpgradePillButton
+              onClick={() => router.push('/vip-recharge')}
+              ariaLabel={t('aiAssistant.title')}
+              label={t('aiAssistant.title')}
+              className={styles.mobileUpgradeBtn}
+            />
+          </div>
+        ) : null}
+        <div
+          className={`${styles.chatScroll} ${isMobileEmpty ? styles.chatScrollEmpty : ''}`}
+          ref={scrollRef}
+        >
           {messages.length === 0 && !isBootstrappingUserData && !isBusy && (
             <div className={styles.emptyState}>
               <div className={styles.emptyTextBlock}>
@@ -2100,6 +2203,8 @@ export default function RobotPage({ isPC: propIsPC = false }) {
         {isPC && showPcAlphaPanel ? (
           <aside className={styles.pcRightColumn} aria-label="Alpha 信号">
             <PCAlphaSignalPanel
+              signalData={getSignalCardsFromCache(scanCache)[0] ?? MOCK_SIDEBAR_SIGNAL_CARD}
+              alertCount={scanCache?.signalCount ?? 3}
               showUpgrade={showUpgradePill}
               onUpgrade={() => router.push('/vip-recharge')}
               onViewMore={handleAlphaSignalViewMore}

@@ -8,6 +8,8 @@
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
+  cursor: grab;
+  touch-action: pan-x;
 
   &::-webkit-scrollbar {
     height: 4PX;
@@ -17,10 +19,21 @@
     background: rgba(0, 0, 0, 0.12);
     border-radius: 999PX;
   }
+
+  &.dragging {
+    cursor: grabbing;
+    scroll-behavior: auto;
+    user-select: none;
+
+    * {
+      cursor: grabbing;
+    }
+  }
 }
 
 .track {
   display: flex;
+  align-items: stretch;
   gap: 12PX;
   width: max-content;
   min-width: 100%;
@@ -31,4 +44,11 @@
 .cardItem {
   flex: 0 0 300PX;
   min-width: 300PX;
+  display: flex;
+  align-self: stretch;
+
+  > * {
+    flex: 1;
+    width: 100%;
+  }
 }

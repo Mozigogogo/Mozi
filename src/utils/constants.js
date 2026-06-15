@@ -329,6 +329,9 @@ export const Interface = {
   
   // 财经日历
   GET_FINANCE_CALENDAR: '/easy/getFinanceCalendar',
+
+  // 最新全市场信号扫描缓存
+  GET_LATEST_SCAN_CACHE: '/easy/getLatestScanCache',
   
   // 榜单分享次数
   GET_SHARE_COUNT: '/discovery/getShareCount',

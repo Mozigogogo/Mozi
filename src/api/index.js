@@ -18,6 +18,9 @@ export * from './community';
 // 告警相关
 export * from './alarm';
 
+// 交易信号相关
+export * from './signals';
+
 // VIP/订阅相关
 export * from './vip';
 

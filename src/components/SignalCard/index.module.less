@@ -242,6 +242,17 @@
 }
 
 .sidebarExpanded {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  .cardSurface {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+  }
+
   .signalsSidebar {
     padding-bottom: 0;
     border-bottom: 1PX solid rgba(255, 255, 255, 0.06);
@@ -300,12 +311,31 @@
     line-height: 0.9;
   }
 
+  .mathBlockExpanded .insightList {
+    min-height: 48PX;
+  }
+
+  .expandedFooter {
+    margin-top: auto;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
   .backtestExpanded {
     padding: 12PX 16PX;
     border-bottom: 1PX solid rgba(255, 255, 255, 0.06);
     gap: 5PX;
     opacity: 1;
     animation: none;
+    min-height: 34PX;
+    box-sizing: border-box;
+  }
+
+  .backtestPlaceholder {
+    padding-top: 12PX;
+    padding-bottom: 12PX;
+    border-bottom: 1PX solid rgba(255, 255, 255, 0.06);
   }
 
   .backtestExpanded .btPill {
@@ -318,6 +348,8 @@
     padding: 11PX 16PX;
     opacity: 1;
     animation: none;
+    min-height: 38PX;
+    box-sizing: border-box;
   }
 
   .invalidExpanded .invalidLabel {
