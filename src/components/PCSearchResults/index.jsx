@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, Table, Tag, Empty } from 'antd';
-import { HeartOutlined, BellOutlined } from '@ant-design/icons';
+import { Card, Table, Tag, Empty, message } from 'antd';
+import { HeartOutlined, HeartFilled, BellOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
+import { completeTask } from '@/api/user';
 import { Loading } from '@/components/Loading';
 import isEmpty from 'lodash/isEmpty';
 import styles from './index.module.less';
@@ -14,7 +15,7 @@ import styles from './index.module.less';
 /**
  * PC端搜索结果组件
  */
-export default function PCSearchResults({ keyword, onClose }) {
+export default function PCSearchResults({ keyword, onClose, onYieldToPage }) {
   const router = useRouter();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
@@ -32,6 +33,13 @@ export default function PCSearchResults({ keyword, onClose }) {
       fetchSearchResults();
     }
   }, [keyword]);
+
+  const navigateToDetail = (symbol) => {
+    const sym = symbol || keyword;
+    if (!sym) return;
+    onYieldToPage?.();
+    router.push(`/detail?symbol=${encodeURIComponent(sym)}`);
+  };
 
   const fetchSearchResults = async () => {
     setLoading(true);
@@ -61,7 +69,12 @@ export default function PCSearchResults({ keyword, onClose }) {
 
       // 处理币种信息
       if (coinRes.status === 'fulfilled' && !isEmpty(coinRes.value?.data)) {
-        setCoinInfo(coinRes.value.data);
+        setCoinInfo(
+          coinRes.value.data.map((item) => ({
+            ...item,
+            isFavorite: Boolean(item.favorite || item.isSelfSelected || item.isLiked),
+          }))
+        );
       }
 
       // 处理相关板块
@@ -85,6 +98,86 @@ export default function PCSearchResults({ keyword, onClose }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleToggleFavorite = async (e, record) => {
+    e.stopPropagation();
+
+    const symbol = record?.symbol;
+    if (!symbol) return;
+
+    const newIsFavorite = !record.isFavorite;
+    setCoinInfo((prev) =>
+      prev.map((item) =>
+        item.symbol === symbol
+          ? { ...item, isFavorite: newIsFavorite, favorite: newIsFavorite }
+          : item
+      )
+    );
+
+    try {
+      const url = newIsFavorite ? Interface.ADD_OWN : Interface.CANCEL_OWN;
+      const res = await request({
+        url,
+        method: 'GET',
+        data: { coin: symbol },
+      });
+
+      if (res?.data?.isLogin === false) {
+        setCoinInfo((prev) =>
+          prev.map((item) =>
+            item.symbol === symbol
+              ? { ...item, isFavorite: !newIsFavorite, favorite: !newIsFavorite }
+              : item
+          )
+        );
+        message.warning(t('common.pleaseLogin', { defaultValue: '请先登录' }));
+        return;
+      }
+
+      if (res?.code === 0 || res?.data) {
+        message.success(
+          newIsFavorite
+            ? t('common.addSuccess', { defaultValue: '添加成功' })
+            : t('common.cancelSuccess', { defaultValue: '取消成功' })
+        );
+        if (newIsFavorite) {
+          try {
+            await completeTask('ADD_WATCHLIST');
+          } catch (err) {
+            console.error('上报 ADD_WATCHLIST 失败', err);
+          }
+        }
+        return;
+      }
+
+      setCoinInfo((prev) =>
+        prev.map((item) =>
+          item.symbol === symbol
+            ? { ...item, isFavorite: !newIsFavorite, favorite: !newIsFavorite }
+            : item
+        )
+      );
+      message.error(res?.msg || t('common.operationFailed', { defaultValue: '操作失败' }));
+    } catch (error) {
+      console.error('操作失败:', error);
+      setCoinInfo((prev) =>
+        prev.map((item) =>
+          item.symbol === symbol
+            ? { ...item, isFavorite: !newIsFavorite, favorite: !newIsFavorite }
+            : item
+        )
+      );
+      message.error(t('common.operationFailed', { defaultValue: '操作失败' }));
+    }
+  };
+
+  const handleAddMonitor = (e, record) => {
+    e.stopPropagation();
+    const symbol = record?.symbol || record?.key || keyword;
+    if (!symbol) return;
+    onYieldToPage?.();
+    router.push(`/pc/alarm?symbol=${encodeURIComponent(symbol)}`);
   };
 
   // 币种信息表格列
@@ -124,12 +217,18 @@ export default function PCSearchResults({ keyword, onClose }) {
       title: t('home.columns.addFavorites'),
       key: 'favorite',
       align: 'center',
-      render: (_, record) => (
-        <HeartOutlined 
-          className={styles.actionIcon} 
-          style={{ color: record.favorite ? '#11B787' : '#999' }}
-        />
-      ),
+      render: (_, record) =>
+        record.isFavorite ? (
+          <HeartFilled
+            className={`${styles.actionIcon} ${styles.actionIconActive}`}
+            onClick={(e) => handleToggleFavorite(e, record)}
+          />
+        ) : (
+          <HeartOutlined
+            className={styles.actionIcon}
+            onClick={(e) => handleToggleFavorite(e, record)}
+          />
+        ),
     },
     {
       title: t('home.columns.addMonitor'),
@@ -138,13 +237,7 @@ export default function PCSearchResults({ keyword, onClose }) {
       render: (_, record) => (
         <BellOutlined
           className={styles.actionIcon}
-          style={{ cursor: 'pointer' }}
-          onClick={(e) => {
-            e.stopPropagation();
-            const symbol = record?.symbol || record?.key || keyword;
-            if (!symbol) return;
-            router.push(`/pc/alarm?symbol=${encodeURIComponent(symbol)}`);
-          }}
+          onClick={(e) => handleAddMonitor(e, record)}
         />
       ),
     },
@@ -254,7 +347,7 @@ export default function PCSearchResults({ keyword, onClose }) {
             rowKey="symbol"
             pagination={false}
             onRow={(record) => ({
-              onClick: () => router.push(`/detail?symbol=${record.symbol}`),
+              onClick: () => navigateToDetail(record.symbol),
               style: { cursor: 'pointer' },
             })}
           />

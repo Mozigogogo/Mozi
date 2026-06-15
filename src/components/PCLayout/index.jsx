@@ -47,6 +47,9 @@ const searchIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets
 const CDN_PUBLIC_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public';
 const MY_SUBSCRIPTION_PLAN_CODE_KEY = 'mozi_my_subscription_plan_code_v1';
 
+/** 进入这些路由时不再盖住页面内容，避免搜索层挡住详情/报警页 */
+const SEARCH_OVERLAY_YIELD_ROUTES = ['/detail', '/pc/alarm'];
+
 const isNonFreePlanCode = (planCode) => {
   const raw = String(planCode || '').trim();
   if (!raw) return false;
@@ -109,6 +112,8 @@ export default function PCLayout({ children }) {
   const searchRef = useRef('');
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
+  /** 从搜索结果跳转到详情/告警页时暂时让出覆盖层，主动搜索时会重置 */
+  const [searchYieldToPage, setSearchYieldToPage] = useState(false);
   const [showUserPanel, setShowUserPanel] = useState(false);
   const [showUserProfilePopup, setShowUserProfilePopup] = useState(false);
 
@@ -219,6 +224,7 @@ export default function PCLayout({ children }) {
   const handleSearch = () => {
     const keyword = searchRef.current.trim();
     if (keyword) {
+      setSearchYieldToPage(false);
       setSearchKeyword(keyword);
       setShowSearchResults(true);
     }
@@ -241,7 +247,12 @@ export default function PCLayout({ children }) {
     searchRef.current = '';
     setShowSearchResults(false);
     setSearchKeyword('');
+    setSearchYieldToPage(false);
   };
+
+  const handleSearchYieldToPage = useCallback(() => {
+    setSearchYieldToPage(true);
+  }, []);
 
   /** 顶栏 AI 问答：若搜索框有币种，进入 /ai 并默认提问「{币种}的综合分析」 */
   const handleAiNavigate = () => {
@@ -736,7 +747,12 @@ export default function PCLayout({ children }) {
     return matched ? [matched.key] : [];
   };
 
-  // 当路由变化时，清除activeContent
+  const detailSymbol = searchParams.get('symbol') || '';
+  const shouldShowSearchOverlay =
+    showSearchResults &&
+    !(searchYieldToPage && SEARCH_OVERLAY_YIELD_ROUTES.includes(pathname));
+
+  // 当路由变化时，清除 activeContent 与搜索结果覆盖层
   useEffect(() => {
     if (
       pathname !== '/find' &&
@@ -746,7 +762,15 @@ export default function PCLayout({ children }) {
     ) {
       setActiveContent(null);
     }
-  }, [pathname]);
+    setShowSearchResults(false);
+    setSearchYieldToPage(false);
+
+    if (pathname === '/detail' || pathname === '/pc/alarm') {
+      setSearchValue('');
+      searchRef.current = '';
+      setSearchKeyword('');
+    }
+  }, [pathname, detailSymbol]);
 
   return (
     <Layout className={styles.layout}>
@@ -1199,8 +1223,14 @@ export default function PCLayout({ children }) {
           <div className={`${styles.contentWrapper} ${isHelpPage ? styles.contentWrapperHelp : ''}`}>
             <div className={`${styles.contentMain} ${isHelpPage ? styles.contentMainFlush : ''}`}>
               {(() => {
-                if (showSearchResults) {
-                  return <PCSearchResults keyword={searchKeyword} onClose={() => setShowSearchResults(false)} />;
+                if (shouldShowSearchOverlay) {
+                  return (
+                    <PCSearchResults
+                      keyword={searchKeyword}
+                      onClose={() => setShowSearchResults(false)}
+                      onYieldToPage={handleSearchYieldToPage}
+                    />
+                  );
                 } else if (activeContent === '/find') {
                   return <PCFindContent />;
                 } else if (activeContent === '/community') {
