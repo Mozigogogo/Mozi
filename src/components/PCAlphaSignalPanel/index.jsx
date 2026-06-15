@@ -32,16 +32,23 @@ export default function PCAlphaSignalPanel({
       <div className={styles.centerBody}>
         <div className={styles.container}>
           <div className={styles.header}>
-            <div className={styles.titleRow}>
-              <span className={styles.titleDot} aria-hidden />
-              今日 Alpha 信号
+            <div className={styles.textRow}>
+              <span className={styles.leadIcon} aria-hidden>
+                <span className={styles.titleDot} />
+              </span>
+              <span className={styles.titleText}>今日 Alpha 信号</span>
             </div>
             <button
               type="button"
-              className={styles.reminderBox}
+              className={`${styles.reminderBox} ${styles.textRow}`}
               onClick={onViewMore}
             >
-              🔥 探测到{alertCount}个S级/A级多维共振交易机会
+              <span className={styles.leadIcon} aria-hidden>
+                🔥
+              </span>
+              <span className={styles.reminderText}>
+                探测到{alertCount}个S级/A级多维共振交易机会
+              </span>
             </button>
           </div>
 
