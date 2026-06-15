@@ -357,11 +357,17 @@ export default function SignalCard({ data, isPC = false, embedded = false, varia
   const entryHigh = Array.isArray(entryZone) ? entryZone[1] : null;
   const tpChange = calcChangePct(currentPrice, takeProfit);
   const slChange = calcChangePct(currentPrice, stopLoss);
-  const mcBearProb = math.mc_bull_prob != null ? (1 - Number(math.mc_bull_prob)) * 100 : null;
+  const mcProb =
+    math.mc_bull_prob != null
+      ? (isShort ? 1 - Number(math.mc_bull_prob) : Number(math.mc_bull_prob)) * 100
+      : null;
   const regime = math.market_regime || strategy.regime;
   const strategyVersion = strategy.version;
-  const mathNotes = parseMathNotes(data?.display);
+  const mathNotes =
+    (Array.isArray(math.notes) ? math.notes : null) ||
+    parseMathNotes(data?.display);
   const resolvedKelly = kellyPct ?? data?.kelly_pct;
+  const showExpandedDetail = !isSidebar || embedded;
 
   const entryStyle = useMemo(() => {
     if (entryLow == null || entryHigh == null) {
@@ -401,12 +407,14 @@ export default function SignalCard({ data, isPC = false, embedded = false, varia
     () =>
       [
         math.hurst != null ? `Hurst ${Number(math.hurst).toFixed(2)}` : null,
-        mcBearProb != null ? `MC看跌 ${Math.round(mcBearProb)}%` : null,
+        mcProb != null
+          ? `${isShort ? 'MC看跌' : 'MC看涨'} ${Math.round(mcProb)}%`
+          : null,
         math.volatility ? `波动率 ${math.volatility}` : null,
         resolvedKelly != null ? `Kelly ${Number(resolvedKelly).toFixed(1)}%` : null,
-        regime ? `趋势 ${REGIME_LABELS[regime] || regime}` : null,
+        regime && !embedded ? `趋势 ${REGIME_LABELS[regime] || regime}` : null,
       ].filter(Boolean),
-    [math.hurst, math.volatility, mcBearProb, resolvedKelly, regime]
+    [math.hurst, math.volatility, mcProb, resolvedKelly, regime, isShort, embedded]
   );
 
   const statChips = useMemo(
@@ -493,7 +501,7 @@ export default function SignalCard({ data, isPC = false, embedded = false, varia
 
   return (
     <div
-      className={`${styles.root} ${isPC ? styles.pcMode : ''} ${embedded || isSidebar ? styles.embedded : ''} ${isSidebar ? styles.sidebarVariant : ''} ${isShort ? '' : styles.rootLong}`}
+      className={`${styles.root} ${isPC ? styles.pcMode : ''} ${embedded || isSidebar ? styles.embedded : ''} ${isSidebar ? styles.sidebarVariant : ''} ${isSidebar && embedded ? styles.sidebarExpanded : ''} ${isShort ? '' : styles.rootLong}`}
       style={sidebarGradeStyle}
     >
       <div ref={cardRef} className={styles.cardSurface}>
@@ -606,7 +614,9 @@ export default function SignalCard({ data, isPC = false, embedded = false, varia
 
       {sources.length > 0 ? (
         <div className={`${styles.signals} ${isSidebar ? styles.signalsSidebar : ''}`}>
-          <div className={styles.sectionHead}>{isSidebar ? '信号源' : '信号源融合'}</div>
+          <div className={styles.sectionHead}>
+            {isSidebar && !embedded ? '信号源' : '信号源融合'}
+          </div>
           {sources.map((source, idx) => (
             <AnimatedSignalBar
               key={`${source.name}-${idx}`}
@@ -619,9 +629,9 @@ export default function SignalCard({ data, isPC = false, embedded = false, varia
         </div>
       ) : null}
 
-      {!isSidebar && (mathTags.length > 0 || mathNotes.length > 0) ? (
-        <div className={styles.mathBlock}>
-          <div className={styles.sectionHead}>数学推导</div>
+      {showExpandedDetail && (mathTags.length > 0 || mathNotes.length > 0) ? (
+        <div className={`${styles.mathBlock} ${embedded ? styles.mathBlockExpanded : ''}`}>
+          {!embedded ? <div className={styles.sectionHead}>数学推导</div> : null}
           {mathTags.length > 0 ? (
             <div className={styles.mathChips}>
               {mathTags.map((tag) => {
@@ -650,8 +660,8 @@ export default function SignalCard({ data, isPC = false, embedded = false, varia
         </div>
       ) : null}
 
-      {!isSidebar && statChips.length > 0 ? (
-        <div className={styles.backtest}>
+      {showExpandedDetail && statChips.length > 0 ? (
+        <div className={`${styles.backtest} ${embedded ? styles.backtestExpanded : ''}`}>
           {statChips.map((chip) => (
             <div
               key={chip.label}
@@ -663,12 +673,19 @@ export default function SignalCard({ data, isPC = false, embedded = false, varia
         </div>
       ) : null}
 
-      {!isSidebar && invalidation != null ? (
-        <div className={styles.invalid}>
+      {showExpandedDetail && invalidation != null ? (
+        <div className={`${styles.invalid} ${embedded ? styles.invalidExpanded : ''}`}>
           <div className={styles.invalidLabel}>失效条件</div>
-          <div className={styles.invalidPrice}>
-            <span className={styles.dotLive} aria-hidden />
-            突破 {formatPrice(invalidation)}
+          <div
+            className={styles.invalidPrice}
+            style={embedded ? { color: gradeAccent.text } : undefined}
+          >
+            <span
+              className={styles.dotLive}
+              style={embedded ? { background: gradeAccent.text } : undefined}
+              aria-hidden
+            />
+            {isShort ? '突破' : '跌破'} {formatPrice(invalidation)}
           </div>
         </div>
       ) : null}

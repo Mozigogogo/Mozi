@@ -985,6 +985,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
   // 右上角 “AI Assistant Pro” 升级胶囊：只在空状态展示，开始对话后隐藏
   // 放在这里是为了确保 `isBootstrappingUserData` / `isStreaming` 已初始化
   const showUpgradePill = messages.length === 0 && !isBootstrappingUserData && !isBusy;
+  const showPcAlphaPanel = showUpgradePill;
   
   // 检查登录状态
   useEffect(() => {
@@ -2096,7 +2097,7 @@ export default function RobotPage({ isPC: propIsPC = false }) {
         </div>
         </div>
 
-        {isPC ? (
+        {isPC && showPcAlphaPanel ? (
           <aside className={styles.pcRightColumn} aria-label="Alpha 信号">
             <PCAlphaSignalPanel
               showUpgrade={showUpgradePill}
