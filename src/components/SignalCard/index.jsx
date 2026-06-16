@@ -111,6 +111,19 @@ function getGradeAccent(grade) {
   return GRADE_ACCENT[key] || GRADE_ACCENT.S;
 }
 
+/** 失效条件文案/圆点 — 与 btc_signal_all_grades.html 各等级配色一致 */
+const GRADE_INVALID = {
+  S: { text: '#f87171', dot: '#ef4444' },
+  A: { text: '#fb923c', dot: '#f97316' },
+  B: { text: '#fde047', dot: '#eab308' },
+  C: { text: '#94a3b8', dot: '#64748b' },
+};
+
+function getGradeInvalid(grade) {
+  const key = String(grade || '').toUpperCase();
+  return GRADE_INVALID[key] || GRADE_INVALID.S;
+}
+
 const RING_CIRCUMFERENCE = 157;
 
 function formatPct(value, digits = 1) {
@@ -362,6 +375,8 @@ export default function SignalCard({
   onViewMore,
 }) {
   const isSidebar = variant === 'sidebar';
+  const isCompactSidebar = isSidebar && !embedded;
+  const isFullLayout = !isSidebar || embedded;
   const cardRef = useRef(null);
   const sparkRef = useRef(null);
   const sparkDataRef = useRef([]);
@@ -413,6 +428,7 @@ export default function SignalCard({
   const gradeBadgeClass = getGradeBadgeClassName(grade, styles);
   const gradeAmbientClass = getGradeAmbientClassName(grade, styles);
   const gradeAccent = getGradeAccent(grade);
+  const gradeInvalid = getGradeInvalid(grade);
   const gradeChart = useMemo(() => getGradeChart(grade), [grade]);
   const sidebarGradeStyle = isSidebar
     ? {
@@ -436,7 +452,7 @@ export default function SignalCard({
     (Array.isArray(math.key_findings) ? math.key_findings : null) ||
     parseMathNotes(data?.displayText || data?.display);
   const resolvedKelly = kellyPct ?? data?.kelly_pct ?? data?.kellyPct;
-  const showExpandedDetail = !isSidebar || embedded;
+  const showExpandedDetail = isFullLayout;
 
   const entryStyle = useMemo(() => {
     if (entryLow == null || entryHigh == null) {
@@ -589,7 +605,7 @@ export default function SignalCard({
 
   return (
     <div
-      className={`${styles.root} ${isPC ? styles.pcMode : ''} ${embedded || isSidebar ? styles.embedded : ''} ${isSidebar ? styles.sidebarVariant : ''} ${isSidebar && embedded ? styles.sidebarExpanded : ''} ${isShort ? '' : styles.rootLong}`}
+      className={`${styles.root} ${isPC ? styles.pcMode : ''} ${embedded || isSidebar ? styles.embedded : ''} ${isSidebar ? styles.sidebarVariant : ''} ${isSidebar && embedded ? styles.sidebarExpanded : ''} ${embedded ? styles.htmlMatch : ''} ${isShort ? '' : styles.rootLong}`}
       style={sidebarGradeStyle}
     >
       <div
@@ -609,8 +625,8 @@ export default function SignalCard({
               </div>
             ) : null}
             {coin ? (
-              <div className={`${styles.coinTag} ${isSidebar ? styles.coinTagSidebar : ''}`}>
-                {isSidebar ? coin : `${coin} / USDT`}
+              <div className={`${styles.coinTag} ${isCompactSidebar ? styles.coinTagSidebar : ''}`}>
+                {isCompactSidebar ? coin : `${coin} / USDT`}
               </div>
             ) : null}
             {direction ? (
@@ -620,7 +636,7 @@ export default function SignalCard({
               </div>
             ) : null}
           </div>
-          {!isSidebar ? (
+          {isFullLayout ? (
             <div className={styles.headerTitle}>
               实时交易信号{strategyVersion != null ? ` · 策略 v${strategyVersion}` : ''}
             </div>
@@ -632,7 +648,7 @@ export default function SignalCard({
       </div>
 
       <div className={styles.priceSection}>
-        {!isSidebar ? <div className={styles.priceLabel}>当前价格</div> : null}
+        {isFullLayout ? <div className={styles.priceLabel}>当前价格</div> : null}
         <div className={styles.priceHero}>
           <div className={`${styles.priceNum} ${isSidebar && !isShort ? styles.priceNumLong : ''}`}>
             {formatPrice(currentPrice)}
@@ -666,7 +682,7 @@ export default function SignalCard({
         </div>
       ) : null}
 
-      {!isSidebar ? (
+      {isFullLayout && (takeProfit != null || stopLoss != null) ? (
         <div className={styles.tpslSection}>
           <div className={styles.tpslCell}>
             <div className={`${styles.tpslType} ${styles.tpType}`}>止盈 TP</div>
@@ -685,14 +701,14 @@ export default function SignalCard({
         </div>
       ) : null}
 
-      <div className={`${styles.metrics} ${isSidebar ? styles.metricsSidebar : ''}`}>
+      <div className={`${styles.metrics} ${isCompactSidebar ? styles.metricsSidebar : ''}`}>
         <div className={styles.metric}>
           <div className={`${styles.metricVal} ${styles.metricValAccent}`}>
-            {riskReward != null ? `${riskReward}x` : '--'}
+            {riskReward != null ? `${Number(riskReward).toFixed(1)}x` : '--'}
           </div>
           <div className={styles.metricLbl}>盈亏比</div>
         </div>
-        {!isSidebar ? (
+        {isFullLayout ? (
           <div className={styles.metric}>
             <div className={styles.metricVal}>
               {positionPct != null ? `${Number(positionPct).toFixed(0)}%` : '--'}
@@ -702,7 +718,7 @@ export default function SignalCard({
         ) : null}
         <div className={styles.metric}>
           <div className={styles.metricVal}>
-            {resolvedKelly != null ? `${Number(resolvedKelly).toFixed(0)}%` : '--'}
+            {resolvedKelly != null ? `${Number(resolvedKelly).toFixed(1)}%` : '--'}
           </div>
           <div className={styles.metricLbl}>Kelly仓位</div>
         </div>
@@ -711,7 +727,7 @@ export default function SignalCard({
       {sources.length > 0 ? (
         <div className={`${styles.signals} ${isSidebar ? styles.signalsSidebar : ''}`}>
           <div className={styles.sectionHead}>
-            {isSidebar && !embedded ? '信号源' : '信号源融合'}
+            {isCompactSidebar ? '信号源' : '信号源融合'}
           </div>
           {sources.map((source, idx) => (
             <AnimatedSignalBar
@@ -779,11 +795,11 @@ export default function SignalCard({
               <div className={styles.invalidLabel}>失效条件</div>
               <div
                 className={styles.invalidPrice}
-                style={embedded ? { color: gradeAccent.text } : undefined}
+                style={{ color: gradeInvalid.text }}
               >
                 <span
                   className={styles.dotLive}
-                  style={embedded ? { background: gradeAccent.text } : undefined}
+                  style={{ background: gradeInvalid.dot }}
                   aria-hidden
                 />
                 {isShort ? '突破' : '跌破'} {formatPrice(invalidation)}
@@ -793,7 +809,7 @@ export default function SignalCard({
         </div>
       ) : null}
 
-      {isSidebar && !embedded ? (
+      {isCompactSidebar ? (
         <button type="button" className={styles.viewMore} onClick={(e) => { e.stopPropagation(); onViewMore?.(); }}>
           <span className={styles.viewMoreIcon} aria-hidden>
             ︾

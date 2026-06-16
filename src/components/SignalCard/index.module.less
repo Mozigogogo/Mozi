@@ -597,6 +597,226 @@
   }
 }
 
+.sidebarVariant.htmlMatch {
+  .header {
+    padding:
+      var(--sc-header-py, 20PX)
+      var(--sc-header-px, 22PX)
+      calc(var(--sc-header-py, 20PX) * 0.75);
+    border-bottom: 1PX solid rgba(255, 255, 255, 0.06);
+  }
+
+  .headerTitle {
+    font-size: 11.5PX;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.35);
+    letter-spacing: 0;
+    opacity: 1;
+    animation: none;
+  }
+
+  .priceSection {
+    padding: 17PX var(--sc-section-px, 22PX) 13PX;
+    border-bottom: 1PX solid rgba(255, 255, 255, 0.06);
+  }
+
+  .priceLabel {
+    display: block;
+    font-size: 9PX;
+    color: rgba(255, 255, 255, 0.3);
+    letter-spacing: 1PX;
+    text-transform: uppercase;
+    margin-bottom: 3PX;
+    opacity: 1;
+    animation: none;
+  }
+
+  .entryZone {
+    padding: 12PX var(--sc-section-px, 22PX);
+    border-bottom: 1PX solid rgba(255, 255, 255, 0.06);
+  }
+
+  .tpslSection {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1PX solid rgba(255, 255, 255, 0.06);
+    opacity: 1;
+    animation: none;
+  }
+
+  .tpslCell {
+    padding: 14PX var(--sc-section-px, 22PX);
+  }
+
+  .tpslCell:first-child {
+    border-right: 1PX solid rgba(255, 255, 255, 0.06);
+  }
+
+  .tpslType {
+    font-size: 9PX;
+    font-weight: 600;
+    letter-spacing: 1.1PX;
+    text-transform: uppercase;
+    margin-bottom: 3PX;
+  }
+
+  .tpType {
+    color: #34d399;
+  }
+
+  .slType {
+    color: #f87171;
+  }
+
+  .tpslPrice {
+    font-family: var(--mono);
+    font-size: clamp(16PX, 6.5cqw, 18PX);
+    font-weight: 500;
+    color: #f5f5f7;
+    letter-spacing: -0.5PX;
+    margin-bottom: 1PX;
+  }
+
+  .tpslPct {
+    font-size: 12PX;
+    font-weight: 500;
+  }
+
+  .tpPct {
+    color: #34d399;
+  }
+
+  .slPct {
+    color: #f87171;
+  }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    padding: 0;
+    gap: 0;
+    border-bottom: 1PX solid rgba(255, 255, 255, 0.06);
+    opacity: 1;
+    animation: none;
+  }
+
+  .metrics .metric {
+    padding: 12PX 16PX;
+    text-align: center;
+    border: none;
+    border-right: 1PX solid rgba(255, 255, 255, 0.06);
+    border-radius: 0;
+    background: transparent;
+    min-width: 0;
+    display: block;
+  }
+
+  .metrics .metric:last-child {
+    border-right: none;
+  }
+
+  .metricVal {
+    font-family: var(--mono);
+    font-size: clamp(14PX, 5.5cqw, 16PX);
+    font-weight: 500;
+    color: #f5f5f7;
+    margin-bottom: 2PX;
+  }
+
+  .metricValAccent {
+    color: #fbbf24;
+  }
+
+  .metricLbl {
+    font-size: 9PX;
+    color: rgba(255, 255, 255, 0.3);
+    letter-spacing: 0.7PX;
+    text-transform: uppercase;
+  }
+
+  .signals {
+    padding: 14PX var(--sc-section-px, 22PX);
+    border-bottom: 1PX solid rgba(255, 255, 255, 0.06);
+  }
+
+  .signals .sectionHead {
+    font-size: 9PX;
+    color: rgba(255, 255, 255, 0.3);
+    letter-spacing: 1.1PX;
+    text-transform: uppercase;
+    margin-bottom: 10PX;
+  }
+
+  .sigName {
+    min-width: 85PX;
+    font-size: 11PX;
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .sigVal {
+    font-size: 11PX;
+    color: rgba(255, 255, 255, 0.4);
+  }
+
+  .mathBlockExpanded {
+    padding: 13PX var(--sc-section-px, 22PX);
+    border-bottom: 1PX solid rgba(255, 255, 255, 0.06);
+  }
+
+  .backtestExpanded {
+    padding: 12PX var(--sc-section-px, 22PX);
+    border-bottom: 1PX solid rgba(255, 255, 255, 0.06);
+  }
+
+  .invalidExpanded {
+    padding: 11PX var(--sc-section-px, 22PX);
+    border-bottom: none;
+  }
+
+  .invalidExpanded .invalidLabel {
+    font-size: 9PX;
+    color: rgba(255, 255, 255, 0.25);
+    letter-spacing: 0.8PX;
+    text-transform: uppercase;
+  }
+
+  .invalidExpanded .invalidPrice {
+    font-family: var(--mono);
+    font-size: 11.5PX;
+    font-weight: 500;
+    gap: 6PX;
+  }
+}
+
+.htmlMatch {
+  .coinTag {
+    background: rgba(251, 191, 36, 0.12);
+    border: 1PX solid rgba(251, 191, 36, 0.25);
+    color: #fbbf24;
+    font-size: 10PX;
+    font-weight: 600;
+  }
+
+  .directionTag {
+    font-size: 10PX;
+    font-weight: 600;
+    padding: 3PX 9PX;
+    border-radius: 6PX;
+  }
+
+  &.rootLong .directionTag {
+    background: rgba(52, 211, 153, 0.1);
+    border: 1PX solid rgba(52, 211, 153, 0.2);
+    color: #34d399;
+  }
+
+  &:not(.rootLong) .directionTag {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1PX solid rgba(239, 68, 68, 0.2);
+    color: #f87171;
+  }
+}
+
 .rootLong {
   --accent: #00e5a0;
   --accent-dim: rgba(0, 229, 160, 0.08);
@@ -912,11 +1132,11 @@
 }
 
 .tpType {
-  color: var(--green);
+  color: #34d399;
 }
 
 .slType {
-  color: var(--accent);
+  color: #f87171;
 }
 
 .tpslPrice {
@@ -934,11 +1154,11 @@
 }
 
 .tpPct {
-  color: var(--green);
+  color: #34d399;
 }
 
 .slPct {
-  color: var(--accent);
+  color: #f87171;
 }
 
 .metrics {

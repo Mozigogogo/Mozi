@@ -1778,7 +1778,7 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
               const cardsBlock = hasSignalCards ? (
                 <SignalCardCarousel cards={msg.signalCards} isPC={isPC} />
               ) : hasSignalCard ? (
-                <SignalCard data={msg.signalCard} isPC={isPC} />
+                <SignalCard data={msg.signalCard} variant="sidebar" embedded hideAmbient surfaceHosted isPC={isPC} />
               ) : null;
 
               return (
