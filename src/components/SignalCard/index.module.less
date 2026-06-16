@@ -57,6 +57,8 @@
 }
 
 .sidebarVariant {
+  max-width: 100%;
+
   .cardSurface {
     background: #151722;
     border-radius: 16PX;
@@ -75,8 +77,22 @@
   }
 
   .header {
-    padding: 16PX 16PX 10PX;
+    padding:
+      var(--sc-header-py, 16PX)
+      var(--sc-header-px, 16PX)
+      calc(var(--sc-header-py, 16PX) * 0.625);
     border-bottom: none;
+    flex-wrap: wrap;
+    gap: clamp(6PX, 2.2cqw, 12PX);
+  }
+
+  .headerLeft {
+    min-width: 0;
+    flex: 1 1 120PX;
+  }
+
+  .confRing {
+    flex: 0 0 auto;
   }
 
   .gradeRow,
@@ -92,6 +108,29 @@
 
   .gradeRow {
     margin-bottom: 0;
+    gap: var(--sc-grade-gap, 8PX);
+    row-gap: var(--sc-grade-row-gap, 8PX);
+  }
+
+  .gradeBadge {
+    font-size: var(--sc-badge-font, 10PX);
+    padding: var(--sc-badge-pad-y, 3PX) var(--sc-badge-pad-x, 9PX) var(--sc-badge-pad-y, 3PX)
+      calc(var(--sc-badge-pad-x, 9PX) - 1PX);
+  }
+
+  .coinTag {
+    font-size: var(--sc-badge-font, 11PX);
+    padding: var(--sc-badge-pad-y, 3PX) var(--sc-badge-pad-x, 9PX);
+  }
+
+  .directionTag {
+    font-size: var(--sc-badge-font, 11PX);
+    padding: var(--sc-badge-pad-y, 3PX) var(--sc-badge-pad-x, 9PX);
+  }
+
+  .ringSvg {
+    width: var(--sc-ring-size, 56PX);
+    height: var(--sc-ring-size, 56PX);
   }
 
   .coinTagSidebar {
@@ -101,7 +140,7 @@
   }
 
   .priceSection {
-    padding: 4PX 16PX 12PX;
+    padding: 4PX var(--sc-section-px, 16PX) var(--sc-block-gap, 12PX);
     border-bottom: none;
   }
 
@@ -109,32 +148,53 @@
     display: none;
   }
 
+  .priceHero {
+    gap: clamp(6PX, 2.5cqw, 12PX);
+  }
+
   .priceNumLong {
     color: #00ffa3;
-    font-size: 32PX;
-    letter-spacing: -1PX;
+    font-size: var(--sc-price-size, 32PX);
+    letter-spacing: clamp(-0.5PX, -0.2cqw, -1PX);
+  }
+
+  .priceNum {
+    font-size: var(--sc-price-size, 32PX);
+    letter-spacing: clamp(-0.5PX, -0.2cqw, -1PX);
+  }
+
+  .priceTicker {
+    font-size: var(--sc-price-ticker, 12PX);
+  }
+
+  .sparkCanvas {
+    height: var(--sc-spark-h, 44PX);
+  }
+
+  .sparklineWrap {
+    margin-top: clamp(8PX, 3cqw, 10PX);
   }
 
   .entryZone {
-    padding: 0 16PX 14PX;
+    padding: 0 var(--sc-section-px, 16PX) var(--sc-block-gap, 14PX);
     background: transparent;
     border-bottom: none;
   }
 
   .entryLabel {
     text-transform: none;
-    font-size: 11PX;
+    font-size: var(--sc-font-xs, 11PX);
     letter-spacing: 0;
     color: rgba(245, 245, 247, 0.45);
-    margin-bottom: 8PX;
+    margin-bottom: clamp(6PX, 2.2cqw, 8PX);
   }
 
   .entryZoneSidebar .entryBar {
-    height: 6PX;
+    height: clamp(5PX, 1.8cqw, 6PX);
     border-radius: 999PX;
     overflow: hidden;
     background: rgba(255, 255, 255, 0.08);
-    margin-bottom: 8PX;
+    margin-bottom: clamp(6PX, 2.2cqw, 8PX);
   }
 
   .entryFillSidebar {
@@ -147,7 +207,7 @@
     display: grid;
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    gap: 8PX;
+    gap: clamp(4PX, 1.8cqw, 8PX);
   }
 
   .entryPricesSidebar .entryLow {
@@ -165,29 +225,33 @@
   }
 
   .entryMidSidebar {
-    font-size: 11PX;
+    font-size: var(--sc-font-xs, 11PX);
     font-weight: 500;
   }
 
   .entryZoneSidebar .entryLow,
   .entryZoneSidebar .entryHigh {
-    font-size: 11PX;
+    font-size: var(--sc-font-xs, 11PX);
     color: rgba(245, 245, 247, 0.45);
   }
 
   .metricsSidebar {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8PX;
-    padding: 0 16PX 14PX;
+    gap: var(--sc-metric-gap, 10PX);
+    padding: 0 var(--sc-section-px, 16PX) var(--sc-block-gap, 14PX);
     border-bottom: none;
   }
 
   .metricsSidebar .metric {
-    padding: 10PX 12PX;
+    padding: var(--sc-metric-pad-y, 10PX) var(--sc-metric-pad-x, 12PX);
     border: 1PX solid rgba(255, 255, 255, 0.08);
-    border-radius: 10PX;
+    border-radius: clamp(8PX, 3cqw, 10PX);
     background: rgba(255, 255, 255, 0.03);
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(4PX, 1.5cqw, 6PX);
   }
 
   .metricsSidebar .metric:last-child {
@@ -195,40 +259,57 @@
   }
 
   .metricValAccent {
-    font-size: 20PX;
+    font-size: var(--sc-metric-val, 20PX);
     color: var(--grade-accent, #ffb347);
   }
 
   .metricsSidebar .metricVal {
-    font-size: 20PX;
+    font-size: var(--sc-metric-val, 20PX);
   }
 
   .metricLbl {
     text-transform: none;
-    font-size: 11PX;
+    font-size: var(--sc-font-xs, 11PX);
     letter-spacing: 0;
   }
 
   .signalsSidebar {
-    padding: 0 16PX 8PX;
+    padding: 0 var(--sc-section-px, 16PX) var(--sc-block-gap, 10PX);
     border-bottom: none;
   }
 
   .signalsSidebar .sectionHead {
     text-transform: none;
-    font-size: 12PX;
+    font-size: var(--sc-font-sm, 12PX);
     letter-spacing: 0;
-    margin-bottom: 10PX;
+    margin-bottom: clamp(10PX, 3.6cqw, 12PX);
+  }
+
+  .sigRow {
+    gap: clamp(8PX, 3cqw, 10PX);
+    min-width: 0;
+    margin-bottom: clamp(8PX, 3cqw, 10PX);
+  }
+
+  .sigRow:last-child {
+    margin-bottom: 0;
   }
 
   .sigName {
-    min-width: 64PX;
-    font-size: 11PX;
+    min-width: var(--sc-sig-name-min, 64PX);
+    font-size: var(--sc-font-xs, 11PX);
+    flex-shrink: 0;
+  }
+
+  .sigVal {
+    font-size: var(--sc-font-xs, 11PX);
+    flex-shrink: 0;
   }
 
   .sigBar {
-    height: 5PX;
+    height: clamp(4PX, 1.4cqw, 5PX);
     border-radius: 999PX;
+    min-width: 0;
   }
 
   .viewMore {
@@ -236,13 +317,13 @@
     align-items: center;
     justify-content: center;
     gap: 4PX;
-    width: calc(100% - 32PX);
-    margin: 0 16PX 14PX;
-    padding: 8PX 0;
+    width: calc(100% - var(--sc-viewmore-mx, 16PX) * 2);
+    margin: 0 var(--sc-viewmore-mx, 16PX) clamp(10PX, 4cqw, 14PX);
+    padding: clamp(6PX, 2.2cqw, 8PX) 0;
     border: none;
     background: transparent;
     color: rgba(245, 245, 247, 0.45);
-    font-size: 12PX;
+    font-size: var(--sc-font-sm, 12PX);
     cursor: pointer;
     transition: color 0.2s ease;
 
@@ -252,8 +333,97 @@
   }
 
   .viewMoreIcon {
-    font-size: 12PX;
+    font-size: var(--sc-font-sm, 12PX);
     line-height: 1;
+  }
+}
+
+@container alpha-panel-root (max-height: 540px) {
+  .sidebarVariant .metricsSidebar {
+    grid-template-columns: 1fr 1fr;
+    gap: 6PX;
+    padding-bottom: 8PX;
+  }
+
+  .sidebarVariant .signalsSidebar {
+    padding-bottom: 6PX;
+  }
+
+  .sidebarVariant .signalsSidebar .sectionHead {
+    margin-bottom: 6PX;
+  }
+
+  .sidebarVariant .sigRow {
+    gap: 6PX;
+    margin-bottom: 6PX;
+  }
+
+  .sidebarVariant .viewMore {
+    margin-bottom: 8PX;
+    padding: 4PX 0;
+  }
+
+  .sidebarVariant .entryZone {
+    padding-bottom: 8PX;
+  }
+
+  .sidebarVariant .priceSection {
+    padding-bottom: 8PX;
+  }
+}
+
+@container alpha-panel-root (max-height: 460px) {
+  .sidebarVariant .metricsSidebar {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebarVariant .sparklineWrap {
+    margin-top: 4PX;
+  }
+}
+
+@container alpha-panel-root (max-height: 400px) {
+  .sidebarVariant .viewMore {
+    margin-bottom: 6PX;
+    padding: 2PX 0;
+    font-size: 9PX;
+  }
+
+  .sidebarVariant .sigRow {
+    gap: 4PX;
+    margin-bottom: 4PX;
+  }
+}
+
+@media screen and (max-height: 560px) {
+  .sidebarVariant .metricsSidebar {
+    grid-template-columns: 1fr;
+    gap: 4PX;
+    padding-bottom: 6PX;
+  }
+
+  .sidebarVariant .sigRow {
+    gap: 5PX;
+    margin-bottom: 5PX;
+  }
+
+  .sidebarVariant .viewMore {
+    margin-bottom: 6PX;
+    padding: 3PX 0;
+  }
+}
+
+@container alpha-signal-panel (max-width: 300px) {
+  .sidebarVariant .metricsSidebar {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebarVariant .header {
+    row-gap: 10PX;
+  }
+
+  .sidebarVariant .confRing {
+    margin-left: auto;
   }
 }
 
@@ -412,6 +582,12 @@
 
 .ambientGlowC {
   background: radial-gradient(circle, rgba(148, 163, 184, 0.08) 0%, transparent 70%);
+}
+
+.panelAmbientGlow {
+  width: var(--sc-ambient-w, clamp(200PX, 82cqw, 280PX));
+  height: var(--sc-ambient-h, clamp(160PX, 64cqw, 220PX));
+  top: var(--sc-ambient-top, clamp(-56PX, -22cqw, -80PX));
 }
 
 .header {

@@ -78,19 +78,44 @@
     .pcBody {
       flex: 1;
       display: flex;
+      flex-direction: column;
       min-height: 0;
       position: relative;
-      padding: 0;
+      width: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    .pcBodyWithPanel {
+      display: grid;
+      /* 左侧弹性留白 | 聊天区(靠右，宽度与改前 pcChatRail 一致) | Alpha 面板 */
+      grid-template-columns:
+        minmax(0, 1fr)
+        minmax(320PX, 900PX)
+        minmax(280PX, 360PX);
+      grid-template-rows: minmax(0, 1fr);
+      column-gap: 24PX;
+      align-items: stretch;
+      padding-right: 24PX;
       box-sizing: border-box;
     }
 
     .pcChatColumn {
       flex: 1;
       min-width: 0;
-      width: 100%;
+      min-height: 0;
       display: flex;
       flex-direction: column;
-      min-height: 0;
+      overflow: hidden;
+    }
+
+    .pcBodyWithPanel .pcChatColumn {
+      flex: none;
+      grid-column: 2;
+      grid-row: 1;
+      justify-self: end;
+      width: 100%;
+      max-width: 900PX;
     }
 
     .pcChatRail {
@@ -105,22 +130,118 @@
       box-sizing: border-box;
     }
 
+    .pcBodyWithPanel .pcChatRail {
+      width: 100%;
+      max-width: none;
+      margin: 0;
+      padding: 0 24PX 0 24PX;
+    }
+
     .pcRightColumn {
-      position: absolute;
-      top: 0;
-      right: 24PX;
-      bottom: 0;
+      position: relative;
+      grid-column: 3;
+      grid-row: 1;
+      width: 100%;
+      min-width: 0;
+      min-height: 0;
+      max-height: 100%;
       z-index: 2;
-      width: 360PX;
       display: flex;
       flex-direction: column;
       align-items: stretch;
-      min-height: 0;
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: auto;
       pointer-events: none;
+      padding-left: 4PX;
+      box-sizing: border-box;
 
       > * {
         pointer-events: auto;
+        flex: 1;
+        min-height: 0;
+      }
+    }
+
+    @media screen and (max-width: 1280px) {
+      .pcBodyWithPanel {
+        grid-template-columns:
+          minmax(0, 1fr)
+          minmax(300PX, 820PX)
+          minmax(260PX, 300PX);
+        column-gap: 20PX;
+        padding-right: 16PX;
+      }
+
+      .pcBodyWithPanel .pcChatColumn {
+        max-width: 820PX;
+        padding-right: 8PX;
+        box-sizing: border-box;
+      }
+
+      .pcRightColumn {
+        padding-left: 8PX;
+      }
+
+      .chatInputBar {
+        grid-template-columns: 16PX minmax(0, 1fr) 16PX;
+        padding: 20PX 0;
+      }
+    }
+
+    @media screen and (max-width: 1200px) {
+      .pcBodyWithPanel {
+        grid-template-columns:
+          minmax(0, 1fr)
+          minmax(280PX, 760PX)
+          minmax(260PX, 300PX);
+        column-gap: 24PX;
+      }
+
+      .pcBodyWithPanel .pcChatColumn {
+        max-width: 760PX;
+        padding-right: 12PX;
+      }
+
+      .pcBodyWithPanel .pcChatRail {
+        padding-right: 16PX;
+      }
+
+      .pcRightColumn {
+        padding-left: 12PX;
+      }
+    }
+
+    @media screen and (max-width: 1160px) {
+      .pcBodyWithPanel {
+        grid-template-columns:
+          minmax(0, 1fr)
+          minmax(280PX, 760PX)
+          minmax(260PX, 300PX);
+        column-gap: 24PX;
+      }
+
+      .pcBodyWithPanel .pcChatColumn {
+        max-width: 760PX;
+      }
+
+      .pcBodyWithPanel .emptyState {
+        max-width: 100%;
+        padding: 0 8PX;
+      }
+
+      .pcBodyWithPanel .emptyGrid {
+        max-width: 100%;
+      }
+
+      .pcBodyWithPanel .emptyTitle {
+        white-space: normal;
+        font-size: 20PX;
+        line-height: 1.3;
+      }
+
+      .chatInputBar {
+        grid-template-columns: 8PX minmax(0, 1fr) 8PX;
+        padding: 16PX 0;
       }
     }
 
@@ -467,19 +588,21 @@
 
       .emptyState {
         width: 100%;
-        max-width: 760PX;
+        max-width: min(760PX, 100%);
         margin: 0 auto;
         padding: 0 16PX;
+        box-sizing: border-box;
       }
 
       .emptyTextBlock {
-        max-width: 720PX;
+        max-width: 100%;
       }
 
       .emptyTitle {
         font-size: 24PX;
         line-height: 1.2;
         letter-spacing: -0.6PX;
+        max-width: 100%;
       }
 
       .emptyTitleEn {
@@ -494,9 +617,11 @@
       }
 
       .emptyGrid {
-        max-width: 620PX;
+        width: 100%;
+        max-width: min(620PX, 100%);
         gap: 10PX 12PX;
         justify-content: center;
+        box-sizing: border-box;
       }
 
       .emptyGridBtn {
@@ -533,9 +658,11 @@
         .inputBox {
           grid-column: 2;
           width: 100%;
-          max-width: none;
+          max-width: 100%;
+          min-width: 0;
           border-radius: 28PX;
           padding: 8PX 16PX;
+          box-sizing: border-box;
           
           .input {
             height: 40PX;
@@ -549,73 +676,94 @@
         }
 
         .inputActions {
-          gap: 12PX;
+          gap: clamp(6PX, 1.5cqw, 12PX);
+          flex-wrap: nowrap;
+          align-items: center;
         }
 
         .actionModes {
-          flex: 0 1 auto;
-          gap: 8PX;
-          height: 30PX;
+          flex: 1 1 0;
+          flex-wrap: nowrap;
+          gap: clamp(3PX, 1cqw, 8PX);
+          min-height: clamp(24PX, 4.5cqw, 30PX);
+          height: auto;
+          min-width: 0;
         }
 
         .modeItem {
-          font-size: 12PX;
-          gap: 4PX;
-          padding: 4PX 10PX 4PX 6PX;
-          border-radius: 14PX;
+          flex: 0 1 auto;
+          min-width: 0;
+          font-size: clamp(9PX, 1.65cqw, 12PX);
+          gap: clamp(2PX, 0.55cqw, 4PX);
+          padding:
+            clamp(2PX, 0.65cqw, 4PX)
+            clamp(3PX, 1.35cqw, 10PX)
+            clamp(2PX, 0.65cqw, 4PX)
+            clamp(3PX, 0.95cqw, 6PX);
+          border-radius: clamp(10PX, 2cqw, 14PX);
+          min-height: clamp(24PX, 4.5cqw, 30PX);
+          height: auto;
         }
 
         .modeIconWrap {
-          width: 16PX;
-          height: 16PX;
+          width: clamp(12PX, 2.4cqw, 16PX);
+          height: clamp(12PX, 2.4cqw, 16PX);
         }
 
         .modeIcon {
-          width: 14PX !important;
-          height: 14PX !important;
+          width: clamp(10PX, 2.1cqw, 14PX) !important;
+          height: clamp(10PX, 2.1cqw, 14PX) !important;
         }
 
         .modeIconDeep {
-          width: 13PX !important;
-          height: 16PX !important;
+          width: clamp(9PX, 1.9cqw, 13PX) !important;
+          height: clamp(11PX, 2.4cqw, 16PX) !important;
         }
 
         .modeIconBigOrder,
         .modeIconSignals {
-          width: 14PX !important;
-          height: 14PX !important;
+          width: clamp(10PX, 2.1cqw, 14PX) !important;
+          height: clamp(10PX, 2.1cqw, 14PX) !important;
           color: #6a7282;
         }
 
         .modeLabel {
-          font-size: 12PX;
+          font-size: clamp(9PX, 1.65cqw, 12PX);
+          line-height: 1;
+          white-space: nowrap;
         }
 
         .actionTools {
-          gap: 12PX;
+          gap: clamp(6PX, 1.5cqw, 12PX);
+          flex: 0 0 auto;
+          margin-left: auto;
         }
 
         .pointsTag {
-          height: 30PX;
-          padding: 0 14PX;
-          border-radius: 16PX;
-          font-size: 12PX;
-          gap: 6PX;
+          height: clamp(22PX, 4.2cqw, 30PX);
+          padding: 0 clamp(6PX, 1.8cqw, 14PX);
+          border-radius: clamp(10PX, 2.2cqw, 16PX);
+          font-size: clamp(8PX, 1.65cqw, 12PX);
+          line-height: 1;
+          gap: clamp(2PX, 0.65cqw, 6PX);
+          flex: 0 1 auto;
+          min-width: 0;
+          white-space: nowrap;
         }
 
         .pointsIcon {
-          width: 14PX !important;
-          height: 14PX !important;
+          width: clamp(10PX, 2.1cqw, 14PX) !important;
+          height: clamp(10PX, 2.1cqw, 14PX) !important;
         }
 
         .micBtn {
-          width: 30PX;
-          height: 30PX;
+          width: clamp(24PX, 4.5cqw, 30PX);
+          height: clamp(24PX, 4.5cqw, 30PX);
         }
 
         .sendBtn, .stopBtn {
-          width: 36PX;
-          height: 36PX;
+          width: clamp(28PX, 5.2cqw, 36PX);
+          height: clamp(28PX, 5.2cqw, 36PX);
           border-radius: 50%;
           padding: 0;
           display: flex;
@@ -639,6 +787,73 @@
         .pauseIcon {
             width: 14PX;
             height: 14PX;
+        }
+
+        @container chat-input (max-width: 920px) {
+          .modeItem {
+            font-size: clamp(8PX, 1.5cqw, 11PX);
+            padding: clamp(2PX, 0.5cqw, 4PX) clamp(3PX, 1cqw, 8PX);
+          }
+
+          .modeLabel {
+            font-size: clamp(8PX, 1.5cqw, 11PX);
+          }
+
+          .pointsTag {
+            font-size: clamp(8PX, 1.5cqw, 11PX);
+            height: clamp(20PX, 3.8cqw, 28PX);
+            padding: 0 clamp(5PX, 1.5cqw, 10PX);
+          }
+
+          .pointsIcon {
+            width: clamp(9PX, 1.9cqw, 12PX) !important;
+            height: clamp(9PX, 1.9cqw, 12PX) !important;
+          }
+
+          .actionTools {
+            gap: clamp(4PX, 1.2cqw, 8PX);
+          }
+        }
+
+        @container chat-input (max-width: 620px) {
+          .actionModes {
+            gap: clamp(3PX, 0.9cqw, 5PX);
+          }
+
+          .modeItem {
+            font-size: clamp(7PX, 1.3cqw, 10PX);
+            padding: 2PX 4PX;
+            min-height: 22PX;
+          }
+
+          .modeLabel {
+            font-size: clamp(7PX, 1.3cqw, 10PX);
+          }
+
+          .pointsTag {
+            font-size: clamp(7PX, 1.3cqw, 10PX);
+            height: clamp(18PX, 3.5cqw, 24PX);
+            padding: 0 clamp(4PX, 1.2cqw, 8PX);
+          }
+
+          .pointsIcon {
+            width: clamp(8PX, 1.7cqw, 11PX) !important;
+            height: clamp(8PX, 1.7cqw, 11PX) !important;
+          }
+
+          .micBtn {
+            width: clamp(22PX, 4cqw, 28PX);
+            height: clamp(22PX, 4cqw, 28PX);
+          }
+
+          .sendBtn, .stopBtn {
+            width: clamp(24PX, 4.6cqw, 32PX);
+            height: clamp(24PX, 4.6cqw, 32PX);
+          }
+
+          .actionTools {
+            gap: 4PX;
+          }
         }
       }
 
@@ -1069,6 +1284,10 @@
 
   .inputBox {
     flex: 1;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
     background: rgba(255, 255, 255, 0.9);
     border-radius: 32px;
     padding: 14px 12px 10px;
@@ -1078,10 +1297,64 @@
     position: relative;
     border: none;
     box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.08);
+    container-type: inline-size;
+    container-name: chat-input;
     
     &:focus-within {
       background: rgba(255, 255, 255, 0.9);
       box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.08);
+    }
+  }
+
+  @container chat-input (max-width: 920px) {
+    .modeItem {
+      font-size: clamp(8PX, 1.5cqw, 11PX);
+      padding: 3PX 6PX;
+    }
+
+    .modeLabel {
+      font-size: clamp(8PX, 1.5cqw, 11PX);
+    }
+
+    .pointsTag {
+      font-size: clamp(8PX, 1.5cqw, 11PX);
+      height: clamp(20PX, 3.8cqw, 28PX);
+      padding: 0 clamp(5PX, 1.5cqw, 10PX);
+    }
+
+    .pointsIcon {
+      width: clamp(9PX, 1.9cqw, 12PX) !important;
+      height: clamp(9PX, 1.9cqw, 12PX) !important;
+    }
+  }
+
+  @container chat-input (max-width: 620px) {
+    .actionModes {
+      gap: 4PX;
+    }
+
+    .modeItem {
+      font-size: clamp(7PX, 1.3cqw, 10PX);
+      padding: 2PX 4PX;
+    }
+
+    .modeLabel {
+      font-size: clamp(7PX, 1.3cqw, 10PX);
+    }
+
+    .pointsTag {
+      font-size: clamp(7PX, 1.3cqw, 10PX);
+      height: clamp(18PX, 3.5cqw, 24PX);
+      padding: 0 clamp(4PX, 1.2cqw, 8PX);
+    }
+
+    .pointsIcon {
+      width: clamp(8PX, 1.7cqw, 11PX) !important;
+      height: clamp(8PX, 1.7cqw, 11PX) !important;
+    }
+
+    .actionTools {
+      gap: 6PX;
     }
   }
 
@@ -1115,24 +1388,29 @@
     justify-content: space-between;
     gap: 8px;
     min-width: 0;
+    flex-wrap: nowrap;
   }
 
   .actionModes {
     display: flex;
     align-items: center;
+    flex-wrap: nowrap;
     gap: 6px;
-    height: 26px;
-    flex-shrink: 0;
+    min-height: 26px;
+    height: auto;
+    flex: 1 1 0;
+    min-width: 0;
   }
 
   .modeItem {
     color: rgba(106, 114, 130, 1);
     font-size: 12px;
     font-weight: 600;
-    height: 100%;
+    min-height: 26px;
+    height: auto;
     display: inline-flex;
     align-items: center;
-    flex-shrink: 0;
+    flex: 0 1 auto;
     gap: 2px;
     line-height: 1;
     white-space: nowrap;
@@ -1322,7 +1600,8 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    flex-shrink: 0;
+    flex: 0 0 auto;
+    margin-left: auto;
   }
 
   .pointsTag {
@@ -1335,10 +1614,12 @@
     border-radius: 20px;
     background: #dff4ec;
     color: #1ca674;
-    font-size: 11px;
+    font-size: clamp(8px, 1.65cqw, 11px);
     font-weight: 600;
     line-height: 1;
     white-space: nowrap;
+    flex: 0 1 auto;
+    min-width: 0;
   }
 
   .pointsTagWarning {

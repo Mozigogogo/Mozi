@@ -2,6 +2,7 @@
 
 import SignalCard from '@/components/SignalCard';
 import SignalCardAmbient from '@/components/SignalCard/SignalCardAmbient';
+import signalCardStyles from '@/components/SignalCard/index.module.less';
 import AiRobotUpgradePillButton from '@/components/AiRobotUpgradePillButton';
 import { MOCK_SIDEBAR_SIGNAL_CARD } from '@/data/mockAlphaSignalCards';
 import styles from './index.module.less';
@@ -65,7 +66,10 @@ export default function PCAlphaSignalPanel({
               }
             }}
           >
-            <SignalCardAmbient grade={signalData?.card?.grade} />
+            <SignalCardAmbient
+              grade={signalData?.card?.grade}
+              className={signalCardStyles.panelAmbientGlow}
+            />
             <div className={styles.signalCardInner}>
               <SignalCard
                 data={signalData}

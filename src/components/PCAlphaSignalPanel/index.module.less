@@ -1,54 +1,60 @@
 .container {
   width: 100%;
+  min-width: 0;
+  flex-shrink: 0;
   box-sizing: border-box;
   background: #ffffff66;
   border: 1PX solid #ffffff;
-  border-radius: 16PX;
-  padding: 16PX;
+  border-radius: clamp(12PX, 4.5cqw, 16PX);
+  padding: clamp(12PX, 5cqw, 16PX);
   display: flex;
   flex-direction: column;
-  gap: 12PX;
+  gap: clamp(12PX, 4cqw, 16PX);
+  container-type: inline-size;
+  container-name: alpha-signal-panel;
 }
 
 .header {
   display: flex;
   flex-direction: column;
-  gap: 4PX;
+  gap: clamp(6PX, 2cqw, 8PX);
   width: 100%;
+  min-width: 0;
   align-items: stretch;
 }
 
 .textRow {
   display: flex;
   align-items: center;
-  gap: 6PX;
+  gap: clamp(4PX, 1.6cqw, 6PX);
   width: 100%;
+  min-width: 0;
   padding: 0;
   margin: 0;
 }
 
 .leadIcon {
-  width: 14PX;
-  flex: 0 0 14PX;
+  width: clamp(12PX, 4.2cqw, 14PX);
+  flex: 0 0 clamp(12PX, 4.2cqw, 14PX);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   line-height: 1;
-  font-size: 11PX;
+  font-size: clamp(10PX, 3.5cqw, 11PX);
 }
 
 .titleText {
   flex: 1;
   min-width: 0;
-  font-size: 14PX;
+  font-size: clamp(12PX, 4.5cqw, 14PX);
   font-weight: 600;
   color: #1d2129;
   line-height: 1.3;
 }
 
 .titleDot {
-  width: 6PX;
-  height: 6PX;
+  width: clamp(5PX, 1.8cqw, 6PX);
+  height: clamp(5PX, 1.8cqw, 6PX);
   border-radius: 50%;
   background: #1d2129;
   flex-shrink: 0;
@@ -71,7 +77,7 @@
 .reminderText {
   flex: 1;
   min-width: 0;
-  font-size: 12PX;
+  font-size: clamp(10PX, 3.8cqw, 12PX);
   line-height: 1.45;
 }
 
@@ -81,22 +87,53 @@
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  border-radius: 16PX;
+  border-radius: clamp(12PX, 4.5cqw, 16PX);
   background: #151722;
   border: 1PX solid rgba(255, 255, 255, 0.08);
+
+  --sc-header-py: clamp(10PX, 4.2cqw, 16PX);
+  --sc-header-px: clamp(10PX, 4.2cqw, 16PX);
+  --sc-price-size: clamp(22PX, 9cqw, 32PX);
+  --sc-price-ticker: clamp(10PX, 3.4cqw, 12PX);
+  --sc-metric-val: clamp(14PX, 6.2cqw, 20PX);
+  --sc-section-px: clamp(10PX, 4.2cqw, 16PX);
+  --sc-metric-gap: clamp(8PX, 3cqw, 10PX);
+  --sc-metric-pad-y: clamp(10PX, 3.6cqw, 12PX);
+  --sc-metric-pad-x: clamp(10PX, 3.6cqw, 14PX);
+  --sc-sig-name-min: clamp(48PX, 16cqw, 64PX);
+  --sc-font-xs: clamp(9PX, 3.1cqw, 11PX);
+  --sc-font-sm: clamp(10PX, 3.5cqw, 12PX);
+  --sc-ring-size: clamp(44PX, 15.5cqw, 56PX);
+  --sc-spark-h: clamp(34PX, 11.5cqw, 44PX);
+  --sc-grade-gap: clamp(6PX, 2.4cqw, 8PX);
+  --sc-grade-row-gap: clamp(6PX, 2.2cqw, 8PX);
+  --sc-block-gap: clamp(10PX, 3.6cqw, 14PX);
+  --sc-viewmore-mx: clamp(10PX, 4.2cqw, 16PX);
+  --sc-badge-font: clamp(9PX, 3.1cqw, 10PX);
+  --sc-badge-pad-y: clamp(2PX, 0.75cqw, 3PX);
+  --sc-badge-pad-x: clamp(5PX, 2.1cqw, 9PX);
+  --sc-ambient-w: clamp(200PX, 82cqw, 280PX);
+  --sc-ambient-h: clamp(160PX, 64cqw, 220PX);
+  --sc-ambient-top: clamp(-56PX, -22cqw, -80PX);
 }
 
 .signalCardInner {
   position: relative;
   z-index: 1;
+  min-width: 0;
 }
 
 .wrapper {
   width: 100%;
   height: 100%;
+  min-width: 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  gap: clamp(12PX, 4cqw, 16PX);
+  container-type: size;
+  container-name: alpha-panel-root;
+  overflow: hidden;
 }
 
 .upgradeRow {
@@ -104,19 +141,223 @@
   justify-content: flex-end;
   width: 100%;
   flex-shrink: 0;
-  padding-top: 16PX;
+  padding-top: clamp(8PX, 2vh, 16PX);
 }
 
 .upgradeBtn {
   flex-shrink: 0;
+  transform: scale(clamp(0.82, 0.12vh + 0.7, 1));
+  transform-origin: right top;
 }
 
 .centerBody {
   flex: 1;
+  min-width: 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
+  overflow-x: hidden;
   overflow-y: auto;
-  padding-bottom: 56PX;
+  padding-top: clamp(4PX, 1.5vh, 16PX);
+  padding-bottom: clamp(12PX, 3vh, 32PX);
+  -webkit-overflow-scrolling: touch;
+}
+
+@container alpha-panel-root (max-height: 680px) {
+  .upgradeRow {
+    padding-top: 6PX;
+  }
+
+  .centerBody {
+    padding-top: 4PX;
+    padding-bottom: 10PX;
+  }
+
+  .container {
+    padding: 10PX;
+    gap: 8PX;
+  }
+
+  .header {
+    gap: 4PX;
+  }
+
+  .signalCardWrap {
+    --sc-spark-h: 30PX;
+    --sc-block-gap: 8PX;
+    --sc-price-size: clamp(18PX, 8cqw, 28PX);
+    --sc-metric-val: clamp(13PX, 5.8cqw, 18PX);
+    --sc-ring-size: 42PX;
+    --sc-header-py: 8PX;
+    --sc-header-px: 12PX;
+    --sc-section-px: 12PX;
+    --sc-metric-pad-y: 8PX;
+    --sc-metric-pad-x: 10PX;
+    --sc-metric-gap: 6PX;
+  }
+}
+
+@container alpha-panel-root (max-height: 540px) {
+  .wrapper {
+    gap: 6PX;
+  }
+
+  .centerBody {
+    padding-top: 2PX;
+    padding-bottom: 8PX;
+  }
+
+  .container {
+    padding: 8PX;
+    gap: 6PX;
+  }
+
+  .titleText {
+    font-size: 12PX;
+  }
+
+  .reminderText {
+    font-size: 10PX;
+    line-height: 1.35;
+  }
+
+  .signalCardWrap {
+    --sc-spark-h: 24PX;
+    --sc-block-gap: 6PX;
+    --sc-price-size: clamp(16PX, 7.2cqw, 22PX);
+    --sc-metric-val: clamp(12PX, 5.2cqw, 16PX);
+    --sc-ring-size: 36PX;
+    --sc-header-py: 6PX;
+    --sc-header-px: 10PX;
+    --sc-section-px: 10PX;
+    --sc-metric-pad-y: 6PX;
+    --sc-metric-pad-x: 8PX;
+    --sc-metric-gap: 6PX;
+    --sc-font-xs: 9PX;
+    --sc-font-sm: 10PX;
+    --sc-ambient-h: clamp(100PX, 45cqw, 150PX);
+    --sc-ambient-top: clamp(-40PX, -18cqw, -56PX);
+  }
+}
+
+@container alpha-panel-root (max-height: 420px) {
+  .upgradeRow {
+    padding-top: 4PX;
+  }
+
+  .upgradeBtn {
+    transform: scale(0.82);
+  }
+
+  .centerBody {
+    padding-top: 0;
+    padding-bottom: 6PX;
+  }
+
+  .container {
+    padding: 6PX;
+    gap: 4PX;
+  }
+
+  .header {
+    gap: 3PX;
+  }
+
+  .signalCardWrap {
+    --sc-spark-h: 20PX;
+    --sc-block-gap: 4PX;
+    --sc-price-size: clamp(14PX, 6.5cqw, 18PX);
+    --sc-metric-val: clamp(11PX, 4.8cqw, 14PX);
+    --sc-ring-size: 32PX;
+    --sc-header-py: 5PX;
+    --sc-header-px: 8PX;
+    --sc-section-px: 8PX;
+    --sc-metric-pad-y: 5PX;
+    --sc-metric-pad-x: 6PX;
+    --sc-metric-gap: 4PX;
+    --sc-font-xs: 8PX;
+    --sc-font-sm: 9PX;
+    --sc-grade-gap: 4PX;
+    --sc-grade-row-gap: 4PX;
+    --sc-ambient-h: clamp(80PX, 38cqw, 120PX);
+    --sc-ambient-top: clamp(-32PX, -14cqw, -44PX);
+  }
+}
+
+@media screen and (max-height: 680px) {
+  .wrapper {
+    gap: 8PX;
+  }
+
+  .centerBody {
+    padding-bottom: 10PX;
+  }
+}
+
+@media screen and (max-height: 560px) {
+  .upgradeRow {
+    padding-top: 4PX;
+  }
+
+  .upgradeBtn {
+    transform: scale(0.85);
+  }
+
+  .centerBody {
+    padding-top: 0;
+    padding-bottom: 6PX;
+  }
+
+  .container {
+    padding: 8PX;
+    gap: 6PX;
+  }
+
+  .signalCardWrap {
+    --sc-spark-h: 22PX;
+    --sc-block-gap: 5PX;
+    --sc-price-size: clamp(15PX, 6.8cqw, 20PX);
+    --sc-metric-val: clamp(11PX, 5cqw, 15PX);
+    --sc-ring-size: 34PX;
+    --sc-header-py: 6PX;
+    --sc-section-px: 9PX;
+    --sc-block-gap: 5PX;
+  }
+}
+
+@container alpha-signal-panel (max-width: 320px) {
+  .titleText {
+    font-size: 11PX;
+  }
+
+  .reminderText {
+    font-size: 10PX;
+    line-height: 1.4;
+  }
+
+  .signalCardWrap {
+    --sc-price-size: clamp(18PX, 7.8cqw, 26PX);
+    --sc-metric-val: clamp(12PX, 5.2cqw, 18PX);
+    --sc-sig-name-min: clamp(44PX, 14.5cqw, 56PX);
+    --sc-ring-size: clamp(40PX, 14cqw, 50PX);
+    --sc-spark-h: clamp(30PX, 10cqw, 38PX);
+    --sc-ambient-w: clamp(180PX, 74cqw, 240PX);
+    --sc-ambient-h: clamp(140PX, 58cqw, 190PX);
+    --sc-metric-gap: 10PX;
+    --sc-grade-gap: 6PX;
+    --sc-block-gap: 12PX;
+  }
+}
+
+@container alpha-signal-panel (max-width: 260px) {
+  .signalCardWrap {
+    --sc-price-size: clamp(16PX, 7cqw, 22PX);
+    --sc-metric-val: clamp(11PX, 4.8cqw, 16PX);
+    --sc-section-px: clamp(8PX, 3.4cqw, 12PX);
+    --sc-header-py: clamp(8PX, 3.4cqw, 12PX);
+    --sc-header-px: clamp(8PX, 3.4cqw, 12PX);
+    --sc-ambient-w: clamp(160PX, 68cqw, 210PX);
+    --sc-ambient-h: clamp(120PX, 52cqw, 170PX);
+  }
 }

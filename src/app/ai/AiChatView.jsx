@@ -1706,7 +1706,11 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
         
         {/* 顶部标题/副标题/下拉模型选择（AI Assistant 区域）已移除 */}
 
-        <div className={isPC ? styles.pcBody : styles.mobileBody}>
+        <div
+          className={`${isPC ? styles.pcBody : styles.mobileBody} ${
+            isPC && showPcAlphaPanel ? styles.pcBodyWithPanel : ''
+          }`}
+        >
         <div className={isPC ? styles.pcChatColumn : styles.mobileChatColumn}>
         <div className={`${styles.chatShell} ${isPC ? styles.pcChatRail : ''}`}>
         {showUpgradePill && !isPC ? (
