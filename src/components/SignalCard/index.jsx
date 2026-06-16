@@ -36,6 +36,13 @@ const GRADE_BADGE_CLASS = {
   C: 'gradeBadgeC',
 };
 
+const GRADE_AMBIENT_CLASS = {
+  S: 'ambientGlowS',
+  A: 'ambientGlowA',
+  B: 'ambientGlowB',
+  C: 'ambientGlowC',
+};
+
 const GRADE_RING_GRADIENTS = {
   S: ['#ef4444', '#f97316'],
   A: ['#f97316', '#fbbf24'],
@@ -50,10 +57,53 @@ const GRADE_ACCENT = {
   C: { text: '#cbd5e1', rgb: '100, 116, 139' },
 };
 
+/** K 线 / 进场区间 — 按等级配色，与 btc_signal_all_grades.html 一致 */
+const GRADE_CHART = {
+  S: {
+    stroke: 'rgba(239, 68, 68, 0.7)',
+    fillTop: 'rgba(239, 68, 68, 0.15)',
+    entryFill: 'rgba(239, 68, 68, 0.5)',
+    entryMid: '#f87171',
+    bigorderGradient: 'linear-gradient(90deg, #ef4444, #f87171)',
+  },
+  A: {
+    stroke: 'rgba(249, 115, 22, 0.7)',
+    fillTop: 'rgba(249, 115, 22, 0.15)',
+    entryFill: 'rgba(249, 115, 22, 0.5)',
+    entryMid: '#fb923c',
+    bigorderGradient: 'linear-gradient(90deg, #f97316, #fdba74)',
+  },
+  B: {
+    stroke: 'rgba(234, 179, 8, 0.7)',
+    fillTop: 'rgba(234, 179, 8, 0.15)',
+    entryFill: 'rgba(234, 179, 8, 0.45)',
+    entryMid: '#facc15',
+    bigorderGradient: 'linear-gradient(90deg, #eab308, #fde047)',
+  },
+  C: {
+    stroke: 'rgba(100, 116, 139, 0.7)',
+    fillTop: 'rgba(100, 116, 139, 0.15)',
+    entryFill: 'rgba(100, 116, 139, 0.5)',
+    entryMid: '#94a3b8',
+    bigorderGradient: 'linear-gradient(90deg, #64748b, #94a3b8)',
+  },
+};
+
+function getGradeChart(grade) {
+  const key = String(grade || '').toUpperCase();
+  return GRADE_CHART[key] || GRADE_CHART.S;
+}
+
 function getGradeBadgeClassName(grade, stylesMap) {
   const key = String(grade || '').toUpperCase();
   const token = GRADE_BADGE_CLASS[key];
   return token ? stylesMap[token] : '';
+}
+
+function getGradeAmbientClassName(grade, stylesMap) {
+  const key = String(grade || '').toUpperCase();
+  const token = GRADE_AMBIENT_CLASS[key];
+  return token ? stylesMap[token] : stylesMap.ambientGlowS;
 }
 
 function getGradeAccent(grade) {
@@ -260,11 +310,15 @@ function ConfidenceRing({ value, isShort, variant = 'default', grade = '' }) {
   );
 }
 
-function AnimatedSignalBar({ name, target, delay = 0, isSidebar = false }) {
+function AnimatedSignalBar({ name, target, delay = 0, isSidebar = false, grade = '' }) {
   const [width, setWidth] = useState(0);
   const [display, setDisplay] = useState(0);
+  const gradeChart = getGradeChart(grade);
   const palette = isSidebar ? SIDEBAR_SOURCE_GRADIENTS : SOURCE_GRADIENTS;
-  const gradient = palette[name] || 'linear-gradient(90deg, #11b787, #38bdf8)';
+  let gradient = palette[name] || 'linear-gradient(90deg, #11b787, #38bdf8)';
+  if (name === 'bigorder_anomaly') {
+    gradient = gradeChart.bigorderGradient;
+  }
 
   useEffect(() => {
     const goal = Math.max(0, Math.min(100, Math.round(Number(target) || 0)));
@@ -298,7 +352,15 @@ function AnimatedSignalBar({ name, target, delay = 0, isSidebar = false }) {
   );
 }
 
-export default function SignalCard({ data, isPC = false, embedded = false, variant = 'default', onViewMore }) {
+export default function SignalCard({
+  data,
+  isPC = false,
+  embedded = false,
+  variant = 'default',
+  hideAmbient = false,
+  surfaceHosted = false,
+  onViewMore,
+}) {
   const isSidebar = variant === 'sidebar';
   const cardRef = useRef(null);
   const sparkRef = useRef(null);
@@ -349,7 +411,9 @@ export default function SignalCard({ data, isPC = false, embedded = false, varia
 
   const isShort = direction !== 'long';
   const gradeBadgeClass = getGradeBadgeClassName(grade, styles);
+  const gradeAmbientClass = getGradeAmbientClassName(grade, styles);
   const gradeAccent = getGradeAccent(grade);
+  const gradeChart = useMemo(() => getGradeChart(grade), [grade]);
   const sidebarGradeStyle = isSidebar
     ? {
         '--grade-accent': gradeAccent.text,
@@ -447,8 +511,16 @@ export default function SignalCard({ data, isPC = false, embedded = false, varia
     [winRate, sampleCount, avgProfit, strategy.global_win_rate]
   );
 
-  const strokeColor = isShort ? 'rgba(255,59,92,0.8)' : 'rgba(0,229,160,0.8)';
-  const fillTopColor = isShort ? 'rgba(255,59,92,0.18)' : 'rgba(0,229,160,0.18)';
+  const strokeColor = gradeChart.stroke;
+  const fillTopColor = gradeChart.fillTop;
+
+  const entryFillStyle = useMemo(
+    () => ({
+      ...(isSidebar ? sidebarEntryFill : entryStyle),
+      background: gradeChart.entryFill,
+    }),
+    [isSidebar, sidebarEntryFill, entryStyle, gradeChart.entryFill]
+  );
 
   const paintSparkline = useCallback(() => {
     if (!sparkRef.current) return;
@@ -520,8 +592,13 @@ export default function SignalCard({ data, isPC = false, embedded = false, varia
       className={`${styles.root} ${isPC ? styles.pcMode : ''} ${embedded || isSidebar ? styles.embedded : ''} ${isSidebar ? styles.sidebarVariant : ''} ${isSidebar && embedded ? styles.sidebarExpanded : ''} ${isShort ? '' : styles.rootLong}`}
       style={sidebarGradeStyle}
     >
-      <div ref={cardRef} className={styles.cardSurface}>
-      {!isSidebar ? <div className={styles.ambientGlow} aria-hidden /> : null}
+      <div
+        ref={cardRef}
+        className={`${styles.cardSurface} ${surfaceHosted ? styles.cardSurfaceHosted : ''}`.trim()}
+      >
+      {!hideAmbient ? (
+        <div className={`${styles.ambientGlow} ${gradeAmbientClass}`} aria-hidden />
+      ) : null}
 
       <div className={styles.header}>
         <div className={styles.headerLeft}>
@@ -573,12 +650,15 @@ export default function SignalCard({ data, isPC = false, embedded = false, varia
           <div className={styles.entryBar}>
             <div
               className={`${styles.entryFill} ${isSidebar ? styles.entryFillSidebar : ''}`}
-              style={isSidebar ? sidebarEntryFill : entryStyle}
+              style={entryFillStyle}
             />
           </div>
           <div className={`${styles.entryPrices} ${isSidebar ? styles.entryPricesSidebar : ''}`}>
             <div className={styles.entryLow}>{formatPrice(entryLow)}</div>
-            <div className={`${styles.entryMid} ${isSidebar ? styles.entryMidSidebar : ''}`}>
+            <div
+              className={`${styles.entryMid} ${isSidebar ? styles.entryMidSidebar : ''}`}
+              style={{ color: gradeChart.entryMid }}
+            >
               进场区间
             </div>
             <div className={styles.entryHigh}>{formatPrice(entryHigh)}</div>
@@ -640,6 +720,7 @@ export default function SignalCard({ data, isPC = false, embedded = false, varia
               target={source.score}
               delay={isSidebar ? idx * 80 : 900 + idx * 100}
               isSidebar={isSidebar}
+              grade={grade}
             />
           ))}
         </div>

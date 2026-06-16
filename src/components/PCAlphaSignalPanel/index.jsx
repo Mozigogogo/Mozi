@@ -1,6 +1,7 @@
 'use client';
 
 import SignalCard from '@/components/SignalCard';
+import SignalCardAmbient from '@/components/SignalCard/SignalCardAmbient';
 import AiRobotUpgradePillButton from '@/components/AiRobotUpgradePillButton';
 import { MOCK_SIDEBAR_SIGNAL_CARD } from '@/data/mockAlphaSignalCards';
 import styles from './index.module.less';
@@ -64,7 +65,16 @@ export default function PCAlphaSignalPanel({
               }
             }}
           >
-            <SignalCard data={signalData} variant="sidebar" onViewMore={onViewMore} />
+            <SignalCardAmbient grade={signalData?.card?.grade} />
+            <div className={styles.signalCardInner}>
+              <SignalCard
+                data={signalData}
+                variant="sidebar"
+                hideAmbient
+                surfaceHosted
+                onViewMore={onViewMore}
+              />
+            </div>
           </div>
         </div>
       </div>

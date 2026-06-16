@@ -37,6 +37,13 @@
   backface-visibility: hidden;
 }
 
+.cardSurfaceHosted {
+  background: transparent;
+  border: none;
+  overflow: visible;
+  box-shadow: none;
+}
+
 .pcMode {
   max-width: 460PX;
 }
@@ -54,6 +61,17 @@
     background: #151722;
     border-radius: 16PX;
     border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .cardSurfaceHosted {
+    background: transparent;
+    border: none;
+  }
+
+  .ambientGlow {
+    width: 280PX;
+    height: 220PX;
+    top: -80PX;
   }
 
   .header {
@@ -121,7 +139,6 @@
 
   .entryFillSidebar {
     width: auto;
-    background: #00ffa3;
     border-radius: 999PX;
     animation: none;
   }
@@ -148,7 +165,6 @@
   }
 
   .entryMidSidebar {
-    color: #00ffa3;
     font-size: 11PX;
     font-weight: 500;
   }
@@ -371,15 +387,31 @@
 
 .ambientGlow {
   position: absolute;
-  top: -120PX;
+  top: -100PX;
   left: 50%;
   transform: translateX(-50%);
-  width: 380PX;
-  height: 380PX;
-  background: radial-gradient(circle, var(--accent-glow) 0%, transparent 65%);
+  width: 360PX;
+  height: 280PX;
+  border-radius: 50%;
   pointer-events: none;
   z-index: 0;
   animation: ambientPulse 4s ease-in-out infinite;
+}
+
+.ambientGlowS {
+  background: radial-gradient(circle, rgba(239, 68, 68, 0.14) 0%, transparent 70%);
+}
+
+.ambientGlowA {
+  background: radial-gradient(circle, rgba(251, 146, 60, 0.12) 0%, transparent 70%);
+}
+
+.ambientGlowB {
+  background: radial-gradient(circle, rgba(250, 204, 21, 0.1) 0%, transparent 70%);
+}
+
+.ambientGlowC {
+  background: radial-gradient(circle, rgba(148, 163, 184, 0.08) 0%, transparent 70%);
 }
 
 .header {
@@ -577,7 +609,6 @@
   position: relative;
   z-index: 1;
   padding: 14PX 24PX;
-  background: var(--accent-dim);
   border-bottom: 1PX solid var(--border);
   opacity: 0;
   animation: fadeUp 0.5s ease 0.85s forwards;
@@ -606,12 +637,7 @@
   height: 100%;
   border-radius: 4PX;
   width: 0;
-  background: linear-gradient(90deg, rgba(255, 59, 92, 0.4), rgba(255, 59, 92, 0.7));
   animation: entryFillAnim 1.2s cubic-bezier(0.4, 0, 0.2, 1) 1.2s forwards;
-}
-
-.rootLong .entryFill {
-  background: linear-gradient(90deg, rgba(0, 229, 160, 0.35), rgba(0, 229, 160, 0.7));
 }
 
 .entryPrices {
@@ -630,7 +656,6 @@
 
 .entryMid {
   font-size: 10PX;
-  color: var(--accent);
   font-weight: 600;
   letter-spacing: 0.4PX;
   white-space: nowrap;
@@ -959,11 +984,9 @@
   0%,
   100% {
     opacity: 0.7;
-    transform: translateX(-50%) scale(1);
   }
   50% {
     opacity: 1;
-    transform: translateX(-50%) scale(1.08);
   }
 }
 
