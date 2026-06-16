@@ -22,7 +22,6 @@ import {
 } from '@/utils/normalizeSuggestionItems';
 import ExchangePickerModal from '@/components/ExchangePickerModal';
 import { forceBlurAndResetViewport } from '@/utils/iosViewportFix';
-import { safeBack } from '@/utils/navigation';
 import { fetchUserDataInfoOnce } from '@/utils/postLogin';
 import { consumePcAiFromSearch, consumePcAiNav } from '@/utils/pcAiFromSearch';
 import { notifyRouteBootReady } from '@/utils/routeBootLoading';
@@ -1637,40 +1636,6 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
       <div className={`${styles.robotPage} ${isPC ? styles.pcMode : ''}`}>
         {isPC && (isBusy || messages.length > 0) && (
           <div className={styles.pcTopBar}>
-            <div
-              className={styles.pcBackBar}
-              role="button"
-              tabIndex={0}
-              onClick={() => safeBack(router, { fallback: '/' })}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  safeBack(router, { fallback: '/' });
-                }
-              }}
-              aria-label={t('common.back')}
-            >
-              <span className={styles.pcBackIcon} aria-hidden="true">
-                <svg
-                  width="26"
-                  height="26"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M15 18L9 12L15 6"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
-              <span className={styles.pcBackText}>
-                {isBusy ? t('robot.chattingTitle') : t('pcLayout.menu.myQA')}
-              </span>
-            </div>
             <button
               type="button"
               className={styles.newChatBtn}

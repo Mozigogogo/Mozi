@@ -1290,7 +1290,7 @@ export default function PCLayout({ children }) {
                   <span
                     className={`${styles.pcWatchlistChevron} ${
                       isAiChatExpanded ? styles.pcWatchlistChevronExpanded : ''
-                    }`}
+                    } ${isAiRoute ? styles.pcWatchlistChevronSelected : ''}`}
                     aria-hidden
                   />
                 </button>
