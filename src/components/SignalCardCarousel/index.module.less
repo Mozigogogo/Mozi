@@ -1,6 +1,9 @@
 .carousel {
   margin-top: 12PX;
-  border-radius: 16PX;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  border-radius: clamp(12PX, 3.5cqw, 16PX);
   background: #ffffff66;
   border: 1PX solid #ffffff;
   overflow-x: auto;
@@ -10,6 +13,8 @@
   scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
   cursor: grab;
   touch-action: pan-x;
+  container-type: inline-size;
+  container-name: signal-card-carousel;
 
   &::-webkit-scrollbar {
     height: 4PX;
@@ -34,21 +39,156 @@
 .track {
   display: flex;
   align-items: stretch;
-  gap: 12PX;
+  gap: clamp(8PX, 2.8cqw, 12PX);
   width: max-content;
   min-width: 100%;
-  padding: 16PX;
+  padding: clamp(10PX, 3.2cqw, 16PX);
   box-sizing: border-box;
 }
 
 .cardItem {
-  flex: 0 0 300PX;
-  min-width: 300PX;
+  flex: 0 0 clamp(220PX, 31cqw, 300PX);
+  min-width: clamp(220PX, 31cqw, 300PX);
+  max-width: 300PX;
   display: flex;
   align-self: stretch;
+  container-type: inline-size;
+  container-name: signal-card-carousel-item;
+
+  --sc-header-py: clamp(10PX, 3.8cqw, 16PX);
+  --sc-header-px: clamp(10PX, 3.8cqw, 16PX);
+  --sc-price-size: clamp(22PX, 9cqw, 32PX);
+  --sc-price-ticker: clamp(10PX, 3.4cqw, 12PX);
+  --sc-metric-val: clamp(14PX, 6.2cqw, 20PX);
+  --sc-section-px: clamp(10PX, 3.8cqw, 16PX);
+  --sc-metric-gap: clamp(8PX, 3cqw, 10PX);
+  --sc-metric-pad-y: clamp(10PX, 3.6cqw, 12PX);
+  --sc-metric-pad-x: clamp(10PX, 3.6cqw, 14PX);
+  --sc-sig-name-min: clamp(48PX, 16cqw, 64PX);
+  --sc-font-xs: clamp(9PX, 3.1cqw, 11PX);
+  --sc-font-sm: clamp(10PX, 3.5cqw, 12PX);
+  --sc-ring-size: clamp(44PX, 15.5cqw, 56PX);
+  --sc-spark-h: clamp(34PX, 11.5cqw, 44PX);
+  --sc-grade-gap: clamp(6PX, 2.4cqw, 8PX);
+  --sc-grade-row-gap: clamp(6PX, 2.2cqw, 8PX);
+  --sc-block-gap: clamp(10PX, 3.6cqw, 14PX);
+  --sc-viewmore-mx: clamp(10PX, 3.8cqw, 16PX);
+  --sc-badge-font: clamp(9PX, 3.1cqw, 10PX);
+  --sc-badge-pad-y: clamp(2PX, 0.75cqw, 3PX);
+  --sc-badge-pad-x: clamp(5PX, 2.1cqw, 9PX);
+  --sc-ambient-w: clamp(200PX, 82cqw, 280PX);
+  --sc-ambient-h: clamp(160PX, 64cqw, 220PX);
+  --sc-ambient-top: clamp(-56PX, -22cqw, -80PX);
 
   > * {
     flex: 1;
     width: 100%;
+    min-width: 0;
+  }
+}
+
+@container signal-card-carousel (max-width: 860px) {
+  .cardItem {
+    flex-basis: clamp(210PX, 36cqw, 280PX);
+    min-width: clamp(210PX, 36cqw, 280PX);
+    --sc-price-size: clamp(20PX, 8.5cqw, 28PX);
+    --sc-metric-val: clamp(13PX, 5.8cqw, 18PX);
+    --sc-ring-size: clamp(40PX, 14.5cqw, 52PX);
+    --sc-spark-h: clamp(30PX, 10.5cqw, 40PX);
+  }
+}
+
+@container signal-card-carousel (max-width: 640px) {
+  .track {
+    gap: 8PX;
+    padding: 10PX;
+  }
+
+  .cardItem {
+    flex-basis: clamp(200PX, 44cqw, 260PX);
+    min-width: clamp(200PX, 44cqw, 260PX);
+    --sc-header-py: clamp(8PX, 3.4cqw, 12PX);
+    --sc-header-px: clamp(8PX, 3.4cqw, 12PX);
+    --sc-section-px: clamp(8PX, 3.4cqw, 12PX);
+    --sc-price-size: clamp(18PX, 7.8cqw, 24PX);
+    --sc-metric-val: clamp(12PX, 5.2cqw, 16PX);
+    --sc-ring-size: clamp(36PX, 13cqw, 46PX);
+    --sc-spark-h: clamp(26PX, 9.5cqw, 34PX);
+    --sc-block-gap: clamp(8PX, 3.2cqw, 10PX);
+    --sc-sig-name-min: clamp(44PX, 14.5cqw, 56PX);
+  }
+}
+
+@container signal-card-carousel (max-width: 480px) {
+  .cardItem {
+    flex-basis: clamp(240PX, 82cqw, 300PX);
+    min-width: clamp(240PX, 82cqw, 300PX);
+  }
+}
+
+@container signal-card-carousel-item (max-width: 260px) {
+  --sc-price-size: clamp(16PX, 7cqw, 22PX);
+  --sc-metric-val: clamp(11PX, 4.8cqw, 16PX);
+  --sc-section-px: clamp(8PX, 3.4cqw, 12PX);
+  --sc-header-py: clamp(8PX, 3.4cqw, 12PX);
+  --sc-header-px: clamp(8PX, 3.4cqw, 12PX);
+  --sc-ambient-w: clamp(160PX, 68cqw, 210PX);
+  --sc-ambient-h: clamp(120PX, 52cqw, 170PX);
+}
+
+@media screen and (max-height: 720px) {
+  .cardItem {
+    --sc-spark-h: clamp(26PX, 10cqw, 34PX);
+    --sc-block-gap: clamp(8PX, 3cqw, 10PX);
+    --sc-price-size: clamp(18PX, 8cqw, 26PX);
+    --sc-metric-val: clamp(12PX, 5.5cqw, 17PX);
+    --sc-ring-size: clamp(38PX, 14cqw, 48PX);
+    --sc-header-py: clamp(8PX, 3.2cqw, 12PX);
+    --sc-header-px: clamp(8PX, 3.2cqw, 12PX);
+    --sc-section-px: clamp(8PX, 3.2cqw, 12PX);
+    --sc-metric-pad-y: clamp(8PX, 3cqw, 10PX);
+    --sc-metric-pad-x: clamp(8PX, 3cqw, 12PX);
+    --sc-metric-gap: 6PX;
+  }
+}
+
+@media screen and (max-height: 600px) {
+  .cardItem {
+    --sc-spark-h: clamp(22PX, 8.5cqw, 28PX);
+    --sc-block-gap: 6PX;
+    --sc-price-size: clamp(16PX, 7.2cqw, 22PX);
+    --sc-metric-val: clamp(11PX, 4.8cqw, 14PX);
+    --sc-ring-size: clamp(34PX, 12.5cqw, 40PX);
+    --sc-header-py: 6PX;
+    --sc-header-px: 10PX;
+    --sc-section-px: 10PX;
+    --sc-metric-pad-y: 6PX;
+    --sc-metric-pad-x: 8PX;
+    --sc-font-xs: 9PX;
+    --sc-font-sm: 10PX;
+    --sc-ambient-h: clamp(100PX, 45cqw, 150PX);
+    --sc-ambient-top: clamp(-40PX, -18cqw, -56PX);
+  }
+}
+
+@media screen and (max-height: 480px) {
+  .cardItem {
+    --sc-spark-h: 20PX;
+    --sc-block-gap: 4PX;
+    --sc-price-size: clamp(14PX, 6.5cqw, 18PX);
+    --sc-metric-val: clamp(10PX, 4.5cqw, 13PX);
+    --sc-ring-size: 32PX;
+    --sc-header-py: 5PX;
+    --sc-header-px: 8PX;
+    --sc-section-px: 8PX;
+    --sc-metric-pad-y: 5PX;
+    --sc-metric-pad-x: 6PX;
+    --sc-metric-gap: 4PX;
+    --sc-font-xs: 8PX;
+    --sc-font-sm: 9PX;
+    --sc-grade-gap: 4PX;
+    --sc-grade-row-gap: 4PX;
+    --sc-ambient-h: clamp(80PX, 38cqw, 120PX);
+    --sc-ambient-top: clamp(-32PX, -14cqw, -44PX);
   }
 }

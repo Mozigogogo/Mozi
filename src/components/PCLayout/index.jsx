@@ -50,6 +50,59 @@ const MY_SUBSCRIPTION_PLAN_CODE_KEY = 'mozi_my_subscription_plan_code_v1';
 /** 进入这些路由时不再盖住页面内容，避免搜索层挡住详情/报警页 */
 const SEARCH_OVERLAY_YIELD_ROUTES = ['/detail', '/pc/alarm'];
 
+function getConversationId(item) {
+  return item?.conversationId || item?.conversation_id || item?.id || '';
+}
+
+function getConversationTitle(item, fallback) {
+  const raw =
+    item?.title ||
+    item?.name ||
+    item?.topic ||
+    item?.summary ||
+    item?.firstMessage ||
+    item?.lastMessage ||
+    '';
+  const text = String(raw).trim();
+  return text || fallback;
+}
+
+function normalizeConversationsResponse(res) {
+  const data = res?.data;
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.list)) return data.list;
+  if (Array.isArray(data?.conversations)) return data.conversations;
+  if (Array.isArray(data?.items)) return data.items;
+  return [];
+}
+
+const AI_CHAT_ICON = `${CDN_PUBLIC_PREFIX}/icons/new_home/ai_chat.svg`;
+
+function AiChatMaskIcon({ color = '#333333', className = '' }) {
+  return (
+    <span
+      className={className}
+      style={{
+        display: 'inline-block',
+        width: 16,
+        height: 16,
+        flexShrink: 0,
+        backgroundColor: color,
+        WebkitMaskImage: `url(${AI_CHAT_ICON})`,
+        WebkitMaskSize: 'contain',
+        WebkitMaskRepeat: 'no-repeat',
+        WebkitMaskPosition: 'center',
+        maskImage: `url(${AI_CHAT_ICON})`,
+        maskSize: 'contain',
+        maskRepeat: 'no-repeat',
+        maskPosition: 'center',
+        transition: 'background-color 0.15s ease',
+      }}
+      aria-hidden
+    />
+  );
+}
+
 const isNonFreePlanCode = (planCode) => {
   const raw = String(planCode || '').trim();
   if (!raw) return false;
@@ -268,14 +321,51 @@ export default function PCLayout({ children }) {
   const [isCreatedListExpanded, setIsCreatedListExpanded] = useState(false);
   const [isMineExpanded, setIsMineExpanded] = useState(false);
   const [isAlertsExpanded, setIsAlertsExpanded] = useState(false);
+  const [isAiChatExpanded, setIsAiChatExpanded] = useState(false);
   const [watchlist, setWatchlist] = useState([]);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
   const [alertsList, setAlertsList] = useState([]);
   const [alertsLoading, setAlertsLoading] = useState(false);
+  const [aiConversations, setAiConversations] = useState([]);
+  const [aiConversationsLoading, setAiConversationsLoading] = useState(false);
 
   useEffect(() => {
     setIsMineExpanded(false);
   }, []);
+
+  const fetchAiConversations = useCallback(async () => {
+    setAiConversationsLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setAiConversations([]);
+        return;
+      }
+      const res = await request({ url: Interface.AI_CHAT_CONVERSATIONS });
+      if (res?.data?.isLogin === false) {
+        setAiConversations([]);
+        return;
+      }
+      setAiConversations(normalizeConversationsResponse(res));
+    } catch (e) {
+      console.error('PC sidebar AI conversations:', e);
+      setAiConversations([]);
+    } finally {
+      setAiConversationsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (pathname === '/ai' || pathname.startsWith('/ai/')) {
+      setIsAiChatExpanded(true);
+    }
+  }, [pathname]);
+
+  useEffect(() => {
+    if (collapsed || !isAiChatExpanded) return undefined;
+    fetchAiConversations();
+    return undefined;
+  }, [collapsed, isAiChatExpanded, pathname, fetchAiConversations]);
 
   const fetchWatchlist = useCallback(async () => {
     setWatchlistLoading(true);
@@ -470,18 +560,6 @@ export default function PCLayout({ children }) {
   const mineRestMenuItems = useMemo(
     () => [
       {
-        key: '/ai',
-        icon: (
-          <CustomIcon
-            src={`${CDN_PUBLIC_PREFIX}/icons/new_home/ai_chat.svg`}
-            activeSrc={`${CDN_PUBLIC_PREFIX}/icons/new_home/ai_chat.svg`}
-            itemKey="/ai"
-            alt="myqa"
-          />
-        ),
-        label: t('pcLayout.menu.myQA'),
-      },
-      {
         key: '/achievement',
         icon: (
           <CustomIcon
@@ -506,6 +584,22 @@ export default function PCLayout({ children }) {
         label: t('pcLayout.menu.mySubscription'),
       },
     ],
+    [t, activeContent, pathname]
+  );
+
+  const aiMenuItemCollapsed = useMemo(
+    () => ({
+      key: '/ai',
+      icon: (
+        <CustomIcon
+          src={AI_CHAT_ICON}
+          activeSrc={AI_CHAT_ICON}
+          itemKey="/ai"
+          alt="myqa"
+        />
+      ),
+      label: t('pcLayout.menu.myQA'),
+    }),
     [t, activeContent, pathname]
   );
 
@@ -592,7 +686,7 @@ export default function PCLayout({ children }) {
           key: 'mine',
           label: '',
           type: 'group',
-          children: [favoritesMenuItemCollapsed, ...mineRestMenuItems],
+          children: [favoritesMenuItemCollapsed, aiMenuItemCollapsed, ...mineRestMenuItems],
         },
       ];
     }
@@ -604,7 +698,7 @@ export default function PCLayout({ children }) {
         children: mineRestMenuItems,
       },
     ];
-  }, [collapsed, favoritesMenuItemCollapsed, mineRestMenuItems]);
+  }, [collapsed, favoritesMenuItemCollapsed, aiMenuItemCollapsed, mineRestMenuItems]);
 
   const openSiderFooterPopup = useCallback((type) => {
     setSiderFooterPopupType(type);
@@ -725,6 +819,25 @@ export default function PCLayout({ children }) {
   const isHelpPage =
     pathname === '/pc/help' || (pathname && pathname.startsWith('/pc/help/'));
 
+  const isAiRoute = pathname === '/ai' || (pathname && pathname.startsWith('/ai/'));
+  const activeAiConversationId = useMemo(() => {
+    if (!pathname?.startsWith('/ai/')) return null;
+    const id = pathname.slice('/ai/'.length).split('/')[0];
+    return id || null;
+  }, [pathname]);
+
+  const aiConversationFallback = t('pcLayout.menu.dialogueItem', { defaultValue: '对话' });
+
+  const aiHeaderIconColor = useMemo(() => {
+    if (isAiRoute) {
+      return isAiChatExpanded ? '#00ac72' : '#11b787';
+    }
+    if (isAiChatExpanded) {
+      return '#00ac72';
+    }
+    return '#333333';
+  }, [isAiRoute, isAiChatExpanded]);
+
   const getSelectedKey = () => {
     if (activeContent) {
       return [activeContent];
@@ -740,7 +853,13 @@ export default function PCLayout({ children }) {
     ) {
       return ['/subscribe'];
     }
-    const flat = [...topMenuItems, myAlertsMenuItem, ...mineRestMenuItems, favoritesMenuItemCollapsed];
+    const flat = [
+      ...topMenuItems,
+      myAlertsMenuItem,
+      aiMenuItemCollapsed,
+      ...mineRestMenuItems,
+      favoritesMenuItemCollapsed,
+    ];
     const matched = flat.find(
       (item) => pathname === item.key || pathname.startsWith(`${item.key}/`)
     );
@@ -994,7 +1113,7 @@ export default function PCLayout({ children }) {
                         {t('common.loading')}
                       </div>
                     ) : watchlist.length === 0 ? (
-                      <div className={styles.pcWatchlistHint}>{noFavoritesText}</div>
+                      <div className={`${styles.pcWatchlistHint} ${styles.pcWatchlistHintCenter}`}>{noFavoritesText}</div>
                     ) : (
                       watchlist.map((item) => {
                         const sym = item.symbol;
@@ -1085,7 +1204,7 @@ export default function PCLayout({ children }) {
                         {t('common.loading')}
                       </div>
                     ) : alertsList.length === 0 ? (
-                      <div className={styles.pcWatchlistHint}>
+                      <div className={`${styles.pcWatchlistHint} ${styles.pcWatchlistHintCenter}`}>
                         {t('myAlarm.noAlerts', {
                           defaultValue: (i18n?.language || '').startsWith('en')
                             ? 'No alerts configured'
@@ -1132,6 +1251,80 @@ export default function PCLayout({ children }) {
                           </span>
                         </button>
                       ))
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!collapsed && (
+              <div className={styles.pcWatchlist}>
+                <button
+                  type="button"
+                  className={`${styles.pcWatchlistHeader} ${
+                    isAiRoute ? styles.pcWatchlistHeaderSelected : ''
+                  }`}
+                  onClick={() => setIsAiChatExpanded((v) => !v)}
+                >
+                  <span className={styles.pcWatchlistHeaderLeft}>
+                    <span className={styles.pcWatchlistHeaderIconSvg} aria-hidden>
+                      <AiChatMaskIcon color={aiHeaderIconColor} />
+                    </span>
+                    <span
+                      className={`${styles.pcWatchlistTitle} ${
+                        isAiChatExpanded ? styles.pcWatchlistTitleExpanded : ''
+                      } ${isAiRoute ? styles.pcWatchlistTitleSelected : ''}`}
+                    >
+                      {t('pcLayout.menu.myQA')}
+                    </span>
+                  </span>
+                  <span
+                    className={`${styles.pcWatchlistChevron} ${
+                      isAiChatExpanded ? styles.pcWatchlistChevronExpanded : ''
+                    }`}
+                    aria-hidden
+                  />
+                </button>
+                {isAiChatExpanded && (
+                  <div className={styles.pcAiChatBody}>
+                    {aiConversationsLoading && aiConversations.length === 0 ? (
+                      <div className={`${styles.pcWatchlistHint} ${styles.pcWatchlistHintCenter}`}>
+                        {t('common.loading')}
+                      </div>
+                    ) : aiConversations.length === 0 ? (
+                      <div className={`${styles.pcWatchlistHint} ${styles.pcWatchlistHintCenter}`}>
+                        {t('pcLayout.menu.noAiConversations', {
+                          defaultValue: (i18n?.language || '').startsWith('en')
+                            ? 'No conversations yet'
+                            : '暂无对话',
+                        })}
+                      </div>
+                    ) : (
+                      aiConversations.map((item) => {
+                        const conversationId = getConversationId(item);
+                        if (!conversationId) return null;
+                        const isRowActive = activeAiConversationId === conversationId;
+                        const title = getConversationTitle(item, aiConversationFallback);
+                        return (
+                          <button
+                            key={conversationId}
+                            type="button"
+                            className={`${styles.pcAiChatRow} ${
+                              isRowActive ? styles.pcAiChatRowActive : ''
+                            }`}
+                            onClick={() => {
+                              setActiveContent(null);
+                              setShowSearchResults(false);
+                              router.push(`/ai/${conversationId}`);
+                            }}
+                          >
+                            <span className={styles.pcAiChatRowIcon} aria-hidden>
+                              <AiChatMaskIcon color={isRowActive ? '#11b787' : '#94a3b8'} />
+                            </span>
+                            <span className={styles.pcAiChatRowLabel}>{title}</span>
+                          </button>
+                        );
+                      })
                     )}
                   </div>
                 )}

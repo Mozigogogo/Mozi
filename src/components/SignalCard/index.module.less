@@ -427,6 +427,54 @@
   }
 }
 
+@container signal-card-carousel-item (max-width: 300px) {
+  .sidebarVariant .metricsSidebar {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebarVariant .header {
+    row-gap: 10PX;
+  }
+
+  .sidebarVariant .confRing {
+    margin-left: auto;
+  }
+}
+
+@container signal-card-carousel-item (max-width: 240px) {
+  .sidebarVariant .metricsSidebar {
+    grid-template-columns: 1fr;
+    gap: 6PX;
+    padding-bottom: 8PX;
+  }
+
+  .sidebarVariant .signalsSidebar {
+    padding-bottom: 6PX;
+  }
+
+  .sidebarVariant .signalsSidebar .sectionHead {
+    margin-bottom: 6PX;
+  }
+
+  .sidebarVariant .sigRow {
+    gap: 6PX;
+    margin-bottom: 6PX;
+  }
+
+  .sidebarVariant .viewMore {
+    margin-bottom: 8PX;
+    padding: 4PX 0;
+  }
+
+  .sidebarVariant .entryZone {
+    padding-bottom: 8PX;
+  }
+
+  .sidebarVariant .priceSection {
+    padding-bottom: 8PX;
+  }
+}
+
 .sidebarExpanded {
   height: 100%;
   display: flex;
