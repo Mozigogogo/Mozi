@@ -126,11 +126,17 @@
 
     // Use PX (uppercase) or media query to potentially bypass px-to-viewport/rem conversion
     @media screen and (min-width: 1024px) {
-      .pcBackBar {
+      .pcTopBar {
         position: absolute;
         top: 16PX;
         left: 16PX;
         z-index: 5;
+        display: inline-flex;
+        align-items: center;
+        gap: 12PX;
+      }
+
+      .pcBackBar {
         display: inline-flex;
         align-items: center;
         gap: 10PX;
@@ -173,6 +179,60 @@
         line-height: 24PX;
         font-weight: 500;
         white-space: nowrap;
+      }
+
+      .newChatBtn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6PX;
+        padding: 8PX 16PX;
+        border: 1px solid #e8e8e8;
+        border-radius: 8PX;
+        background: #fff;
+        color: #333;
+        font-size: 14PX;
+        font-weight: 500;
+        line-height: 1;
+        cursor: pointer;
+        white-space: nowrap;
+        box-shadow: 0 2PX 8PX rgba(0, 0, 0, 0.04);
+        transition: border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+
+        &:hover {
+          border-color: #11B787;
+          color: #11B787;
+          box-shadow: 0 4PX 12PX rgba(17, 183, 135, 0.12);
+        }
+      }
+
+      .newChatIcon {
+        position: relative;
+        flex-shrink: 0;
+        width: 18PX;
+        height: 18PX;
+        box-sizing: border-box;
+        border: 1px solid currentColor;
+        border-radius: 50%;
+
+        &::before,
+        &::after {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          background: currentColor;
+          transform: translate(-50%, -50%);
+        }
+
+        &::before {
+          width: 8PX;
+          height: 1.5PX;
+        }
+
+        &::after {
+          width: 1.5PX;
+          height: 8PX;
+        }
       }
 
       .chatHeader {
@@ -315,6 +375,13 @@
             background: transparent;
             border: none;
             max-width: 420PX;
+          }
+
+          &.bubbleLoading {
+            padding: 0;
+            background: transparent;
+            border: none;
+            box-shadow: none;
           }
           
           .text {
@@ -821,6 +888,13 @@
     padding: 0;
     background: transparent;
     border: none;
+  }
+
+  .bubbleLoading {
+    padding: 0;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none;
   }
 
   .msgContentCarousel {
@@ -1496,6 +1570,62 @@
 // 自定义 NavBar 样式 - 去掉底部边框
 .navBarCustom {
   border-bottom: none !important;
+}
+
+.newChatBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  background: #fff;
+  color: #333;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+  &:hover {
+    border-color: #11B787;
+    color: #11B787;
+  }
+}
+
+.newChatBtnMobile {
+  margin-right: 4px;
+}
+
+.newChatIcon {
+  position: relative;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    background: currentColor;
+    transform: translate(-50%, -50%);
+  }
+
+  &::before {
+    width: 7px;
+    height: 1.5px;
+  }
+
+  &::after {
+    width: 1.5px;
+    height: 7px;
+  }
 }
 
 

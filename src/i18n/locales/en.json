@@ -898,6 +898,7 @@
   "robot": {
     "title": "AI Assistant",
     "chattingTitle": "In conversation...",
+    "newConversation": "New chat",
     "subtitle": "Smart Q&A · Quick Response",
     "connecting": "Connecting...",
     "conversationId": "Conversation ID",

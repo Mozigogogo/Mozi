@@ -383,6 +383,8 @@ export const Interface = {
   AI_ANALYZE: '/v1/analyze',
   // AI 流式对话
   AI_CHAT_STREAM: '/ai/chat/stream',
+  // Agent SSE 流式对话
+  AI_AGENT_STREAM: '/ai/agent/stream',
   // AI 聊天历史记录
   AI_CHAT_HISTORY: '/ai/chat/history',
   // AI 会话列表

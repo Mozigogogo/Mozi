@@ -1,8 +1,22 @@
 import { useState, useRef, useCallback } from 'react';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 
+function getConversationId(eventData) {
+  return eventData?.conversation_id || eventData?.conversationId || null;
+}
+
+function normalizeEventData(eventData) {
+  if (!eventData || typeof eventData !== 'object') return eventData;
+  const conversationId = getConversationId(eventData);
+  if (conversationId && !eventData.conversationId) {
+    return { ...eventData, conversationId };
+  }
+  return eventData;
+}
+
 /**
- * SSE 流式输出 Hook (Robot Test 专用 - 支持 POST)
+ * SSE 流式输出 Hook (支持 POST)
+ * 兼容 Agent SSE（/ai/agent/stream）与旧 Robot SSE 格式
  */
 export function useRobotTestSSE(url, options = {}) {
   const {
@@ -10,23 +24,19 @@ export function useRobotTestSSE(url, options = {}) {
     onChunk = () => {},
     onComplete = () => {},
     onError = () => {},
-    /** SSE data: { type: "suggestions", suggestions: [{ id, suggestion }] } */
     onSuggestions = () => {},
-    /** 交易信号卡：{ type: "signal_card", data: { card, display, ... } } */
     onSignalCard = () => {},
-    /** 大单侦测：event: thinking */
     onThinking = () => {},
-    /** 大单侦测：event: toolcall */
     onToolCall = () => {},
-    /** 大单侦测：event: toolresult */
     onToolResult = () => {},
     headers = {},
     getToken = null,
+    includeLanguage = true,
   } = options;
 
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState(null);
-  
+
   const abortControllerRef = useRef(null);
   const accumulatedContentRef = useRef('');
   const lastEventDataRef = useRef(null);
@@ -49,12 +59,11 @@ export function useRobotTestSSE(url, options = {}) {
     accumulatedContentRef.current = '';
     lastEventDataRef.current = null;
     finishRef.current = false;
-    
+
     abortControllerRef.current = new AbortController();
     setIsStreaming(true);
 
     try {
-      // 从 localStorage 获取 i18next 语言设置
       const getLanguage = () => {
         if (typeof window !== 'undefined') {
           return localStorage.getItem('i18nextLng') || navigator.language || 'en';
@@ -62,11 +71,10 @@ export function useRobotTestSSE(url, options = {}) {
         return 'en';
       };
 
-      // 支持 headers 为函数，实现动态获取
       const dynamicHeaders = typeof headers === 'function' ? headers() : headers;
       const requestHeaders = {
         'Content-Type': 'application/json',
-        'Accept': 'text/event-stream',
+        Accept: 'text/event-stream',
         'Accept-Language': getLanguage(),
         ...dynamicHeaders,
       };
@@ -74,20 +82,20 @@ export function useRobotTestSSE(url, options = {}) {
       if (getToken) {
         const token = getToken();
         if (token) {
-          requestHeaders['authentication'] = token;
+          requestHeaders.authentication = token;
         }
       }
 
       onStart();
 
-      // 自动添加 language 参数到 payload
-      const payloadWithLanguage = {
-        ...payload,
-        language: getLanguage(),
-      };
+      const payloadWithLanguage = includeLanguage
+        ? {
+            ...payload,
+            ...(payload.lang ? {} : { language: getLanguage() }),
+          }
+        : { ...payload };
 
-      // 如果 payload 中已经包含 lang，则不自动添加 language，避免重复
-      if (payload.lang) {
+      if (payload.lang && payloadWithLanguage.language) {
         delete payloadWithLanguage.language;
       }
 
@@ -100,50 +108,116 @@ export function useRobotTestSSE(url, options = {}) {
         async onopen(response) {
           if (response.ok) {
             return;
-          } else {
-            throw new Error(`HTTP error! status: ${response.status}`);
           }
+          throw new Error(`HTTP error! status: ${response.status}`);
         },
         onmessage(msg) {
           const { event, data } = msg;
           try {
             const eventData = data ? JSON.parse(data) : {};
-
-            // 兼容两种格式：
-            // 1. 标准 SSE: event 字段在 SSE 协议层，数据在 data 字段
-            // 2. 自定义 JSON: event/type 字段在 JSON 数据内部 (data: {"type": "chunk", "data": "..."})
-            const messageType = eventData.type || event || 'message';
+            const messageType = event || eventData.event || eventData.type || 'message';
+            const dataType = eventData.data_type;
 
             const finishStream = () => {
               if (finishRef.current) return;
               finishRef.current = true;
               setIsStreaming(false);
               const fullContent = accumulatedContentRef.current;
-              const finalEventData =
+              const rawFinal =
                 eventData && Object.keys(eventData).length > 0 ? eventData : lastEventDataRef.current;
+              const finalEventData = normalizeEventData(rawFinal);
               onComplete(fullContent, finalEventData);
               if (abortControllerRef.current) {
                 abortControllerRef.current.abort();
               }
             };
 
+            const rememberEvent = (nextEventData) => {
+              const normalized = normalizeEventData(nextEventData);
+              lastEventDataRef.current = {
+                ...(lastEventDataRef.current || {}),
+                ...normalized,
+              };
+              return normalized;
+            };
+
             const appendTextDelta = (delta) => {
               if (!delta) return;
               accumulatedContentRef.current += delta;
-              lastEventDataRef.current = eventData;
-              onChunk(delta, accumulatedContentRef.current, eventData);
+              const normalized = rememberEvent(eventData);
+              onChunk(delta, accumulatedContentRef.current, normalized);
+            };
+
+            const handleToolDebug = (payload) => {
+              const debugPayload = payload || eventData;
+              const stage = String(debugPayload?.stage || eventData.stage || '').toLowerCase();
+              try {
+                if (stage.includes('result')) {
+                  onToolResult(debugPayload);
+                } else if (stage.includes('tool') || stage.includes('call')) {
+                  onToolCall(debugPayload);
+                } else {
+                  onThinking(debugPayload);
+                }
+              } catch (cbErr) {
+                console.warn('[useRobotTestSSE] tool_debug error:', cbErr);
+              }
             };
 
             if (messageType === 'start') {
-              lastEventDataRef.current = eventData;
-              // 如果 start 事件也包含文本内容，尝试提取
+              rememberEvent(eventData);
               if (typeof eventData.data === 'string' && eventData.data) {
-                accumulatedContentRef.current += eventData.data;
-                onChunk(eventData.data, accumulatedContentRef.current, eventData);
+                appendTextDelta(eventData.data);
               }
-            } else if (messageType === 'stream' || messageType === 'chunk') {
-              // 尝试获取增量内容
-              // 优先级: delta (OpenAI 风格) > data (用户日志风格) > content (通用回落)
+              return;
+            }
+
+            if (messageType === 'delta') {
+              if (dataType === 'chat') {
+                appendTextDelta(eventData.delta);
+                return;
+              }
+              if (dataType === 'signal_card') {
+                rememberEvent(eventData);
+                try {
+                  onSignalCard({
+                    ...eventData,
+                    data: eventData.payload,
+                    payload: eventData.payload,
+                  });
+                } catch (cbErr) {
+                  console.warn('[useRobotTestSSE] onSignalCard error:', cbErr);
+                }
+                return;
+              }
+              if (dataType === 'suggestions') {
+                const list = Array.isArray(eventData.payload) ? eventData.payload : [];
+                try {
+                  onSuggestions(list, eventData);
+                } catch (cbErr) {
+                  console.warn('[useRobotTestSSE] onSuggestions error:', cbErr);
+                }
+                return;
+              }
+              if (dataType === 'tool_debug') {
+                rememberEvent(eventData);
+                handleToolDebug(eventData.payload);
+                return;
+              }
+            }
+
+            if (
+              messageType === 'complete' ||
+              messageType === 'end' ||
+              messageType === 'finish' ||
+              messageType === 'done'
+            ) {
+              rememberEvent(eventData);
+              finishStream();
+              return;
+            }
+
+            if (messageType === 'stream' || messageType === 'chunk') {
               let delta = '';
               if (typeof eventData.delta === 'string') {
                 delta = eventData.delta;
@@ -152,10 +226,11 @@ export function useRobotTestSSE(url, options = {}) {
               } else if (typeof eventData.content === 'string') {
                 delta = eventData.content;
               }
-
               appendTextDelta(delta);
-            } else if (messageType === 'content') {
-              // 大单侦测：event: content, data: {"text": "..."}
+              return;
+            }
+
+            if (messageType === 'content') {
               const delta =
                 typeof eventData.text === 'string'
                   ? eventData.text
@@ -163,76 +238,88 @@ export function useRobotTestSSE(url, options = {}) {
                     ? eventData.data
                     : '';
               appendTextDelta(delta);
-            } else if (
-              messageType === 'complete' ||
-              messageType === 'end' ||
-              messageType === 'finish' ||
-              messageType === 'done'
-            ) {
-              finishStream();
-            } else if (messageType === 'thinking') {
+              return;
+            }
+
+            if (messageType === 'thinking') {
               try {
                 onThinking(eventData);
               } catch (cbErr) {
                 console.warn('[useRobotTestSSE] onThinking error:', cbErr);
               }
-            } else if (messageType === 'toolcall') {
+              return;
+            }
+
+            if (messageType === 'toolcall') {
               try {
                 onToolCall(eventData);
               } catch (cbErr) {
                 console.warn('[useRobotTestSSE] onToolCall error:', cbErr);
               }
-            } else if (messageType === 'toolresult') {
+              return;
+            }
+
+            if (messageType === 'toolresult') {
               try {
                 onToolResult(eventData);
               } catch (cbErr) {
                 console.warn('[useRobotTestSSE] onToolResult error:', cbErr);
               }
-            } else if (messageType === 'suggestions') {
-              const list = Array.isArray(eventData.suggestions) ? eventData.suggestions : [];
+              return;
+            }
+
+            if (messageType === 'suggestions') {
+              const list = Array.isArray(eventData.suggestions)
+                ? eventData.suggestions
+                : Array.isArray(eventData.payload)
+                  ? eventData.payload
+                  : [];
               try {
                 onSuggestions(list, eventData);
               } catch (cbErr) {
                 console.warn('[useRobotTestSSE] onSuggestions error:', cbErr);
               }
-            } else if (messageType === 'signal_card') {
+              return;
+            }
+
+            if (messageType === 'signal_card') {
               try {
                 onSignalCard(eventData);
               } catch (cbErr) {
                 console.warn('[useRobotTestSSE] onSignalCard error:', cbErr);
               }
-            } else if (messageType === 'error') {
-              throw new Error(eventData.message || 'SSE stream error');
+              return;
+            }
+
+            if (messageType === 'error') {
+              throw new Error(
+                eventData.message || eventData.errorMsg || eventData.error || 'SSE stream error'
+              );
             }
           } catch (e) {
-            console.error('Parse error:', e);
+            console.error('SSE message error:', e);
+            throw e;
           }
         },
         onclose() {
-          // 服务器关闭连接，抛出错误以停止重试
           throw new Error('Server closed connection');
         },
         onerror(err) {
-          // 抛出错误以停止重试
           throw err;
-        }
+        },
       });
-
     } catch (err) {
       if (err.name === 'AbortError') {
         setIsStreaming(false);
-        // 如果是因为完成而触发的 Abort，已经在 onmessage 中处理了 onComplete，这里不需要再处理
-        // 如果是用户手动点击停止触发的 Abort，也不需要调用 onComplete
         return accumulatedContentRef.current;
       }
 
       if (err.message === 'Server closed connection') {
-        // 服务器主动关闭连接，视为完成（若已由 done/complete 处理则跳过）
         if (!finishRef.current) {
           finishRef.current = true;
           setIsStreaming(false);
           const fullContent = accumulatedContentRef.current;
-          const finalEventData = lastEventDataRef.current;
+          const finalEventData = normalizeEventData(lastEventDataRef.current);
           onComplete(fullContent, finalEventData);
         }
         return accumulatedContentRef.current;
@@ -241,14 +328,12 @@ export function useRobotTestSSE(url, options = {}) {
       setError(err);
       setIsStreaming(false);
       abortControllerRef.current = null;
-      
       onError(err);
-      
-      // 不再重新抛出
     }
   }, [
     headers,
     getToken,
+    includeLanguage,
     onStart,
     onChunk,
     onComplete,
