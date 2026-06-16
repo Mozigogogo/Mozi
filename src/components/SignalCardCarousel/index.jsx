@@ -64,23 +64,27 @@ export default function SignalCardCarousel({ cards = [], isPC = false }) {
 
   if (!cards.length) return null;
 
+  const isSingle = cards.length === 1;
+
   return (
     <div
       ref={carouselRef}
-      className={`${styles.carousel} ${isDragging ? styles.dragging : ''}`}
+      className={`${styles.carousel} ${isSingle ? styles.carouselSingle : ''} ${
+        isDragging ? styles.dragging : ''
+      }`}
       role="list"
       aria-label="信号卡片列表"
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={endDrag}
-      onPointerCancel={endDrag}
-      onClickCapture={handleClickCapture}
+      onPointerDown={isSingle ? undefined : handlePointerDown}
+      onPointerMove={isSingle ? undefined : handlePointerMove}
+      onPointerUp={isSingle ? undefined : endDrag}
+      onPointerCancel={isSingle ? undefined : endDrag}
+      onClickCapture={isSingle ? undefined : handleClickCapture}
     >
       <div className={styles.track}>
         {cards.map((data, idx) => (
           <div
             key={`${data?.card?.coin || 'signal'}-${idx}`}
-            className={styles.cardItem}
+            className={`${styles.cardItem} ${isSingle ? styles.cardItemSingle : ''}`}
             role="listitem"
           >
             <SignalCard data={data} variant="sidebar" embedded isPC={isPC} />

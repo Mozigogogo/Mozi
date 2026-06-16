@@ -36,6 +36,21 @@
   }
 }
 
+.carouselSingle {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  cursor: default;
+  overflow: visible;
+  touch-action: auto;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  scrollbar-width: none;
+}
+
 .track {
   display: flex;
   align-items: stretch;
@@ -44,6 +59,12 @@
   min-width: 100%;
   padding: clamp(10PX, 3.2cqw, 16PX);
   box-sizing: border-box;
+}
+
+.carouselSingle .track {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
 }
 
 .cardItem {
@@ -87,6 +108,92 @@
   }
 }
 
+.carouselSingle .cardItemSingle {
+  flex: 1 1 100%;
+  width: 100%;
+  min-width: 0;
+  max-width: min(100%, 460PX);
+
+  --sc-header-py: clamp(12PX, 4.2cqw, 20PX);
+  --sc-header-px: clamp(12PX, 4.2cqw, 22PX);
+  --sc-header-subtitle: clamp(11PX, 3.6cqw, 11.5PX);
+  --sc-price-size: clamp(26PX, 10cqw, 38PX);
+  --sc-price-label: clamp(9PX, 3.1cqw, 9PX);
+  --sc-price-ticker: clamp(11PX, 3.6cqw, 12PX);
+  --sc-metric-val: clamp(15PX, 5.5cqw, 18PX);
+  --sc-metric-lbl: clamp(9PX, 3.1cqw, 9PX);
+  --sc-tpsl-type: clamp(9PX, 3.1cqw, 9PX);
+  --sc-tpsl-price: clamp(17PX, 6.2cqw, 18PX);
+  --sc-tpsl-pct: clamp(11PX, 3.6cqw, 12PX);
+  --sc-section-px: clamp(12PX, 4.2cqw, 22PX);
+  --sc-metric-gap: clamp(8PX, 3cqw, 10PX);
+  --sc-metric-pad-y: clamp(10PX, 3.6cqw, 12PX);
+  --sc-metric-pad-x: clamp(10PX, 3.6cqw, 14PX);
+  --sc-sig-name-min: clamp(72PX, 18cqw, 85PX);
+  --sc-font-xs: clamp(10PX, 3.4cqw, 11PX);
+  --sc-font-sm: clamp(11PX, 3.6cqw, 12PX);
+  --sc-section-head: clamp(9PX, 3.1cqw, 9PX);
+  --sc-ring-size: clamp(48PX, 14cqw, 56PX);
+  --sc-spark-h: clamp(36PX, 11cqw, 44PX);
+  --sc-grade-gap: clamp(6PX, 2.4cqw, 8PX);
+  --sc-grade-row-gap: clamp(6PX, 2.2cqw, 8PX);
+  --sc-block-gap: clamp(10PX, 3.6cqw, 14PX);
+  --sc-viewmore-mx: clamp(12PX, 4.2cqw, 16PX);
+  --sc-badge-font: clamp(10PX, 3.2cqw, 11PX);
+  --sc-badge-pad-y: clamp(2PX, 0.75cqw, 3PX);
+  --sc-badge-pad-x: clamp(5PX, 2.1cqw, 9PX);
+  --sc-invalid-label: clamp(9PX, 3.1cqw, 9PX);
+  --sc-invalid-price: clamp(11PX, 3.8cqw, 11.5PX);
+  --sc-ambient-w: clamp(220PX, 82cqw, 300PX);
+  --sc-ambient-h: clamp(170PX, 64cqw, 230PX);
+  --sc-ambient-top: clamp(-60PX, -22cqw, -84PX);
+}
+
+@container signal-card-carousel (max-width: 860px) {
+  .carouselSingle .cardItemSingle {
+    flex-basis: 100%;
+    min-width: 0;
+    max-width: min(100%, 460PX);
+    --sc-price-size: clamp(24PX, 9.2cqw, 34PX);
+    --sc-metric-val: clamp(14PX, 5.2cqw, 17PX);
+    --sc-ring-size: clamp(44PX, 13.5cqw, 52PX);
+    --sc-spark-h: clamp(32PX, 10.5cqw, 40PX);
+  }
+}
+
+@container signal-card-carousel (max-width: 640px) {
+  .carouselSingle .cardItemSingle {
+    flex-basis: 100%;
+    min-width: 0;
+    max-width: 100%;
+    --sc-header-py: clamp(10PX, 3.6cqw, 14PX);
+    --sc-header-px: clamp(10PX, 3.6cqw, 16PX);
+    --sc-section-px: clamp(10PX, 3.6cqw, 16PX);
+    --sc-price-size: clamp(22PX, 8.5cqw, 30PX);
+    --sc-metric-val: clamp(13PX, 5cqw, 16PX);
+    --sc-tpsl-price: clamp(16PX, 5.8cqw, 17PX);
+    --sc-ring-size: clamp(42PX, 12.5cqw, 48PX);
+    --sc-spark-h: clamp(30PX, 9.5cqw, 38PX);
+    --sc-font-xs: clamp(9.5PX, 3.2cqw, 10.5PX);
+    --sc-font-sm: clamp(10.5PX, 3.4cqw, 11.5PX);
+  }
+}
+
+@container signal-card-carousel (max-width: 480px) {
+  .carouselSingle .cardItemSingle {
+    flex-basis: 100%;
+    min-width: 0;
+    max-width: 100%;
+    --sc-price-size: clamp(20PX, 8cqw, 28PX);
+    --sc-metric-val: clamp(12.5PX, 4.8cqw, 15PX);
+    --sc-tpsl-price: clamp(15PX, 5.5cqw, 16PX);
+    --sc-ring-size: clamp(40PX, 12cqw, 46PX);
+    --sc-spark-h: clamp(28PX, 9cqw, 36PX);
+    --sc-font-xs: clamp(9PX, 3.1cqw, 10PX);
+    --sc-font-sm: clamp(10PX, 3.3cqw, 11PX);
+  }
+}
+
 @container signal-card-carousel (max-width: 860px) {
   .cardItem {
     flex-basis: clamp(210PX, 36cqw, 280PX);
@@ -126,17 +233,43 @@
   }
 }
 
+@container signal-card-carousel-item (max-width: 360px) {
+  .carouselSingle .cardItemSingle {
+    --sc-price-size: clamp(18PX, 7.5cqw, 26PX);
+    --sc-metric-val: clamp(12PX, 4.6cqw, 14PX);
+    --sc-section-px: clamp(9PX, 3.4cqw, 14PX);
+    --sc-header-py: clamp(9PX, 3.2cqw, 12PX);
+    --sc-header-px: clamp(9PX, 3.2cqw, 14PX);
+  }
+}
+
 @container signal-card-carousel-item (max-width: 260px) {
-  --sc-price-size: clamp(16PX, 7cqw, 22PX);
-  --sc-metric-val: clamp(11PX, 4.8cqw, 16PX);
-  --sc-section-px: clamp(8PX, 3.4cqw, 12PX);
-  --sc-header-py: clamp(8PX, 3.4cqw, 12PX);
-  --sc-header-px: clamp(8PX, 3.4cqw, 12PX);
-  --sc-ambient-w: clamp(160PX, 68cqw, 210PX);
-  --sc-ambient-h: clamp(120PX, 52cqw, 170PX);
+  .cardItem {
+    --sc-price-size: clamp(16PX, 7cqw, 22PX);
+    --sc-metric-val: clamp(11PX, 4.8cqw, 16PX);
+    --sc-section-px: clamp(8PX, 3.4cqw, 12PX);
+    --sc-header-py: clamp(8PX, 3.4cqw, 12PX);
+    --sc-header-px: clamp(8PX, 3.4cqw, 12PX);
+    --sc-ambient-w: clamp(160PX, 68cqw, 210PX);
+    --sc-ambient-h: clamp(120PX, 52cqw, 170PX);
+  }
+
+  .carouselSingle .cardItemSingle {
+    --sc-price-size: clamp(17PX, 7.2cqw, 24PX);
+    --sc-metric-val: clamp(11.5PX, 4.5cqw, 14PX);
+    --sc-font-xs: clamp(9PX, 3.1cqw, 10PX);
+    --sc-font-sm: clamp(10PX, 3.3cqw, 11PX);
+  }
 }
 
 @media screen and (max-height: 720px) {
+  .carouselSingle .cardItemSingle {
+    --sc-spark-h: clamp(28PX, 9.5cqw, 36PX);
+    --sc-price-size: clamp(22PX, 8.5cqw, 32PX);
+    --sc-metric-val: clamp(13PX, 5cqw, 16PX);
+    --sc-ring-size: clamp(42PX, 13cqw, 50PX);
+  }
+
   .cardItem {
     --sc-spark-h: clamp(26PX, 10cqw, 34PX);
     --sc-block-gap: clamp(8PX, 3cqw, 10PX);
@@ -153,6 +286,15 @@
 }
 
 @media screen and (max-height: 600px) {
+  .carouselSingle .cardItemSingle {
+    --sc-spark-h: clamp(26PX, 9cqw, 32PX);
+    --sc-price-size: clamp(20PX, 7.8cqw, 28PX);
+    --sc-metric-val: clamp(12.5PX, 4.8cqw, 15PX);
+    --sc-ring-size: clamp(40PX, 12.5cqw, 46PX);
+    --sc-font-xs: clamp(9.5PX, 3.2cqw, 10PX);
+    --sc-font-sm: clamp(10.5PX, 3.4cqw, 11PX);
+  }
+
   .cardItem {
     --sc-spark-h: clamp(22PX, 8.5cqw, 28PX);
     --sc-block-gap: 6PX;
@@ -172,6 +314,15 @@
 }
 
 @media screen and (max-height: 480px) {
+  .carouselSingle .cardItemSingle {
+    --sc-spark-h: clamp(22PX, 8.5cqw, 28PX);
+    --sc-price-size: clamp(18PX, 7.2cqw, 24PX);
+    --sc-metric-val: clamp(11.5PX, 4.5cqw, 13PX);
+    --sc-ring-size: clamp(36PX, 12cqw, 42PX);
+    --sc-font-xs: 9PX;
+    --sc-font-sm: 10PX;
+  }
+
   .cardItem {
     --sc-spark-h: 20PX;
     --sc-block-gap: 4PX;
