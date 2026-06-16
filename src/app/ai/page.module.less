@@ -611,11 +611,15 @@
         background: transparent;
         border-top: none;
 
-        .inputBox {
+        .chatInputBarStack {
           grid-column: 2;
           width: 100%;
-          max-width: 100%;
           min-width: 0;
+        }
+
+        .inputBox {
+          width: 100%;
+          max-width: 100%;
           border-radius: 28PX;
           padding: 8PX 16PX;
           box-sizing: border-box;
@@ -1233,10 +1237,20 @@
 
   .chatInputBar {
     display: flex;
+    flex-direction: column;
     padding: 10px 12px;
     padding-bottom: calc(10px + env(safe-area-inset-bottom));
     background: transparent;
     border-top: none;
+  }
+
+  .chatInputBarStack {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    min-width: 0;
+    flex: 1;
   }
 
   .inputBox {
@@ -1261,6 +1275,40 @@
       background: rgba(255, 255, 255, 0.9);
       box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.08);
     }
+  }
+
+  .mobileAlphaReminder {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    width: 100%;
+    margin: 0 0 8px;
+    padding: 0 4px;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+
+    &:active {
+      color: #475569;
+    }
+  }
+
+  .mobileAlphaReminderIcon {
+    flex-shrink: 0;
+    line-height: 1.45;
+    font-size: 12px;
+  }
+
+  .mobileAlphaReminderText {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    line-height: 1.45;
+    font-weight: 400;
   }
 
   @container chat-input (max-width: 920px) {

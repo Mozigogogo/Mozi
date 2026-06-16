@@ -1015,6 +1015,7 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
   const showUpgradePill = messages.length === 0 && !isBootstrappingUserData && !isBusy;
   const showPcAlphaPanel = showUpgradePill;
   const isMobileEmpty = !isPC && showUpgradePill;
+  const alphaAlertCount = scanCache?.signalCount ?? 3;
   
   // 检查登录状态
   useEffect(() => {
@@ -1950,7 +1951,22 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
         </div>
 
         <div className={styles.chatInputBar}>
-          <div className={styles.inputBox}>
+          <div className={styles.chatInputBarStack}>
+            {isMobileEmpty ? (
+              <button
+                type="button"
+                className={styles.mobileAlphaReminder}
+                onClick={handleAlphaSignalViewMore}
+              >
+                <span className={styles.mobileAlphaReminderIcon} aria-hidden>
+                  🔥
+                </span>
+                <span className={styles.mobileAlphaReminderText}>
+                  探测到{alphaAlertCount}个S级/A级多维共振交易机会
+                </span>
+              </button>
+            ) : null}
+            <div className={styles.inputBox}>
             <input
               className={styles.input}
               value={inputValue}
@@ -2128,6 +2144,7 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
               </div>
             </div>
           </div>
+        </div>
         </div>
         </div>
         </div>
