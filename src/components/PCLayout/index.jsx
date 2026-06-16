@@ -1264,7 +1264,16 @@ export default function PCLayout({ children }) {
                   className={`${styles.pcWatchlistHeader} ${
                     isAiRoute ? styles.pcWatchlistHeaderSelected : ''
                   }`}
-                  onClick={() => setIsAiChatExpanded((v) => !v)}
+                  onClick={() => {
+                    setActiveContent(null);
+                    setShowSearchResults(false);
+                    if (pathname !== '/ai') {
+                      router.push('/ai');
+                      setIsAiChatExpanded(true);
+                    } else {
+                      setIsAiChatExpanded((v) => !v);
+                    }
+                  }}
                 >
                   <span className={styles.pcWatchlistHeaderLeft}>
                     <span className={styles.pcWatchlistHeaderIconSvg} aria-hidden>
