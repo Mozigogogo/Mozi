@@ -37,6 +37,7 @@ import FireSignalBanner from '@/components/FireSignalBanner';
 import PointsInsufficientBubble from '@/components/PointsInsufficientBubble';
 import ShareAiChatModal from '@/components/ShareAiChatModal';
 import SignalCardCarousel from '@/components/SignalCardCarousel';
+import MobileAiHistoryDrawer from './MobileAiHistoryDrawer';
 import { fetchLatestScanCache } from '@/api/signals';
 import {
   getLocalizedMockAlphaSignalCards,
@@ -553,6 +554,7 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
   const [selectedModel, setSelectedModel] = useState('analyze'); // 'analyze' | 'chat' | 'signals' | 'bigorder'
   const [modelMenuOpen, setModelMenuOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [historyDrawerOpen, setHistoryDrawerOpen] = useState(false);
   const [shareQuestion, setShareQuestion] = useState('');
   const [shareAnswer, setShareAnswer] = useState('');
 
@@ -1699,6 +1701,23 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
             showBack={true}
             className={styles.navBarCustom}
             backgroundColor="transparent"
+            leftExtra={
+              <button
+                type="button"
+                className={styles.historyMenuBtn}
+                onClick={() => setHistoryDrawerOpen(true)}
+                aria-label={t('pcLayout.menu.myQA')}
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <path
+                    d="M4 7h16M4 12h16M4 17h16"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+            }
             rightContent={
               showNewChatBtn ? (
                 <button
@@ -1712,6 +1731,13 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
                 </button>
               ) : null
             }
+          />
+        )}
+        {!isPC && (
+          <MobileAiHistoryDrawer
+            open={historyDrawerOpen}
+            onClose={() => setHistoryDrawerOpen(false)}
+            activeConversationId={routeConversationId}
           />
         )}
         
