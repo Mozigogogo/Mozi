@@ -967,6 +967,76 @@
     "title": "AI 助手 专业版",
     "subtitle": "智能答疑 · 快速响应"
   },
+  "signalCard": {
+    "source": {
+      "bigorder_anomaly": "大单异动",
+      "quantitative": "量化六因子",
+      "technical": "技术分析"
+    },
+    "direction": {
+      "long": "做多",
+      "short": "做空"
+    },
+    "regime": {
+      "trending_down": "下跌趋势",
+      "trending_up": "上涨趋势",
+      "ranging": "震荡",
+      "volatile": "高波动"
+    },
+    "confidence": "置信度",
+    "confidenceShort": "CONF",
+    "gradeBadge": "{{grade}}级",
+    "liveSignalTitle": "实时交易信号",
+    "strategyVersion": "策略 v{{version}}",
+    "currentPrice": "当前价格",
+    "entryZone": "进场区间",
+    "takeProfit": "止盈 TP",
+    "stopLoss": "止损 SL",
+    "riskReward": "盈亏比",
+    "suggestedPosition": "建议仓位",
+    "kellyPosition": "Kelly仓位",
+    "signalSources": "信号源",
+    "signalFusion": "信号源融合",
+    "mathDerivation": "数学推导",
+    "winRate": "胜率",
+    "sample": "样本",
+    "avgProfit": "均盈",
+    "globalWinRate": "全局胜率",
+    "invalidation": "失效条件",
+    "breakAbove": "突破",
+    "breakBelow": "跌破",
+    "viewMore": "查看更多",
+    "mathMcBear": "MC看跌",
+    "mathMcBull": "MC看涨",
+    "mathVolatility": "波动率",
+    "mathTrend": "趋势",
+    "alphaPanel": {
+      "title": "今日 Alpha 信号",
+      "alert": "探测到{{count}}个S级/A级多维共振交易机会",
+      "ariaLabel": "Alpha 信号"
+    },
+    "alphaQuery": "查看更多S级多维共振交易",
+    "alphaMockReply": "结合您当前所在时区的最新市场数据，比特币呈现宽幅震荡特征。当前价格在 $103,000–$105,000 区间运行，MACD 指标显示多头动能正在减弱，但尚未形成明确的死叉信号。建议关注 $103,000 支撑位，若有效跌破则可能开启新一轮下行。",
+    "scanReply": {
+      "intro": "最新一轮全市场扫描已完成，覆盖 {{totalCoins}} 个币种",
+      "scanMinutes": "，耗时约 {{minutes}} 分钟",
+      "scanSeconds": "，耗时约 {{seconds}} 秒",
+      "signalsFound": "，共识别出 {{signalCount}} 个 S/A 级多维共振机会。",
+      "footer": "以下为优先推荐信号，请结合个人风险偏好与仓位管理决策。"
+    },
+    "mockNotes": {
+      "btc": [
+        "趋势持续性强 (Hurst > 0.55)，支撑做多",
+        "MC 上涨概率 78%，方向确认",
+        "波动率中位 P35，信号稳定"
+      ],
+      "ethSol": [
+        "Hurst 0.58，趋势方向性中等偏强",
+        "MC 上涨概率 72%，多方占优",
+        "支撑区间完好，风险收益合理"
+      ]
+    }
+  },
   "language": {
     "zh": "简体中文",
     "en": "English"

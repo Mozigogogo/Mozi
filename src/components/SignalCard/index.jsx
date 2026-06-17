@@ -1,14 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import styles from './index.module.less';
-
-const SOURCE_LABELS = {
-  bigorder_anomaly: '大单异动',
-  quantitative: '量化六因子',
-  technical: '技术分析',
-};
 
 const SOURCE_GRADIENTS = {
   bigorder_anomaly: 'linear-gradient(90deg, #ff3b5c, #ff6b9d)',
@@ -20,13 +15,6 @@ const SIDEBAR_SOURCE_GRADIENTS = {
   bigorder_anomaly: 'linear-gradient(90deg, #ff8c42, #ffb347)',
   quantitative: 'linear-gradient(90deg, #a78bfa, #c4b5fd)',
   technical: 'linear-gradient(90deg, #38bdf8, #7dd3fc)',
-};
-
-const REGIME_LABELS = {
-  trending_down: 'trending_down',
-  trending_up: 'trending_up',
-  ranging: 'ranging',
-  volatile: 'volatile',
 };
 
 const GRADE_BADGE_CLASS = {
@@ -142,16 +130,6 @@ function calcChangePct(from, to) {
   return ((target - base) / base) * 100;
 }
 
-function getDirectionLabel(direction) {
-  if (direction === 'short') return '做空';
-  if (direction === 'long') return '做多';
-  return direction || '--';
-}
-
-function getSourceLabel(name) {
-  return SOURCE_LABELS[name] || name || '--';
-}
-
 function parseMathNotes(display) {
   if (!display || typeof display !== 'string') return [];
   return display
@@ -230,7 +208,14 @@ function drawSparkline(canvas, data, strokeColor, fillTopColor) {
   ctx.stroke();
 }
 
-function ConfidenceRing({ value, isShort, variant = 'default', grade = '' }) {
+function ConfidenceRing({
+  value,
+  isShort,
+  variant = 'default',
+  grade = '',
+  confidenceLabel,
+  confidenceShortLabel,
+}) {
   const uid = useId().replace(/:/g, '');
   const pct = Math.max(0, Math.min(100, Number(value) || 0));
   const ringOffset = RING_CIRCUMFERENCE - (RING_CIRCUMFERENCE * pct) / 100;
@@ -302,7 +287,7 @@ function ConfidenceRing({ value, isShort, variant = 'default', grade = '' }) {
             fontSize="7"
             fill="rgba(245,245,247,0.45)"
           >
-            置信度
+            {confidenceLabel}
           </text>
         ) : (
           <text
@@ -314,16 +299,16 @@ function ConfidenceRing({ value, isShort, variant = 'default', grade = '' }) {
             fill="rgba(245,245,247,0.4)"
             letterSpacing="0.3"
           >
-            CONF
+            {confidenceShortLabel}
           </text>
         )}
       </svg>
-      {!isSidebar ? <div className={styles.ringLabel}>置信度</div> : null}
+      {!isSidebar ? <div className={styles.ringLabel}>{confidenceLabel}</div> : null}
     </div>
   );
 }
 
-function AnimatedSignalBar({ name, target, delay = 0, isSidebar = false, grade = '' }) {
+function AnimatedSignalBar({ name, target, delay = 0, isSidebar = false, grade = '', sourceLabel }) {
   const [width, setWidth] = useState(0);
   const [display, setDisplay] = useState(0);
   const gradeChart = getGradeChart(grade);
@@ -356,7 +341,7 @@ function AnimatedSignalBar({ name, target, delay = 0, isSidebar = false, grade =
 
   return (
     <div className={styles.sigRow}>
-      <div className={styles.sigName}>{getSourceLabel(name)}</div>
+      <div className={styles.sigName}>{sourceLabel || name || '--'}</div>
       <div className={styles.sigBar}>
         <div className={styles.sigFill} style={{ width: `${width}%`, background: gradient }} />
       </div>
@@ -374,6 +359,7 @@ export default function SignalCard({
   surfaceHosted = false,
   onViewMore,
 }) {
+  const { t } = useTranslation();
   const isSidebar = variant === 'sidebar';
   const isCompactSidebar = isSidebar && !embedded;
   const isFullLayout = !isSidebar || embedded;
@@ -488,20 +474,38 @@ export default function SignalCard({
     };
   }, [entryLow, entryHigh]);
 
+  const directionLabel = useMemo(() => {
+    if (direction === 'short') return t('signalCard.direction.short');
+    if (direction === 'long') return t('signalCard.direction.long');
+    return direction || '--';
+  }, [direction, t]);
+
+  const getSourceLabel = useCallback(
+    (name) => t(`signalCard.source.${name}`, { defaultValue: name || '--' }),
+    [t]
+  );
+
+  const getRegimeLabel = useCallback(
+    (value) => t(`signalCard.regime.${value}`, { defaultValue: value || '--' }),
+    [t]
+  );
+
   const mathTags = useMemo(
     () =>
       [
         math.hurst != null ? `Hurst ${Number(math.hurst).toFixed(2)}` : null,
         mcProb != null
-          ? `${isShort ? 'MC看跌' : 'MC看涨'} ${Math.round(mcProb)}%`
+          ? `${isShort ? t('signalCard.mathMcBear') : t('signalCard.mathMcBull')} ${Math.round(mcProb)}%`
           : null,
         (math.volatility ?? math.vol_regime)
-          ? `波动率 ${math.volatility ?? math.vol_regime}`
+          ? `${t('signalCard.mathVolatility')} ${math.volatility ?? math.vol_regime}`
           : null,
         resolvedKelly != null ? `Kelly ${Number(resolvedKelly).toFixed(1)}%` : null,
-        regime && !embedded ? `趋势 ${REGIME_LABELS[regime] || regime}` : null,
+        regime && !embedded
+          ? `${t('signalCard.mathTrend')} ${getRegimeLabel(regime)}`
+          : null,
       ].filter(Boolean),
-    [math.hurst, math.volatility, mcProb, resolvedKelly, regime, isShort, embedded]
+    [math.hurst, math.volatility, math.vol_regime, mcProb, resolvedKelly, regime, isShort, embedded, t, getRegimeLabel]
   );
 
   const statChips = useMemo(
@@ -509,22 +513,26 @@ export default function SignalCard({
       [
         winRate != null
           ? {
-              label: '胜率',
+              label: t('signalCard.winRate'),
               value: `${Math.round(Number(winRate) * (winRate <= 1 ? 100 : 1))}%`,
               warn: false,
             }
           : null,
-        sampleCount != null ? { label: '样本', value: `n=${sampleCount}`, warn: false } : null,
-        avgProfit != null ? { label: '均盈', value: formatPct(avgProfit), warn: false } : null,
+        sampleCount != null
+          ? { label: t('signalCard.sample'), value: `n=${sampleCount}`, warn: false }
+          : null,
+        avgProfit != null
+          ? { label: t('signalCard.avgProfit'), value: formatPct(avgProfit), warn: false }
+          : null,
         (strategy.global_win_rate ?? strategy.globalWinRate) != null
           ? {
-              label: '全局胜率',
+              label: t('signalCard.globalWinRate'),
               value: `${Math.round(Number(strategy.global_win_rate ?? strategy.globalWinRate) * ((strategy.global_win_rate ?? strategy.globalWinRate) <= 1 ? 100 : 1))}%`,
               warn: true,
             }
           : null,
       ].filter(Boolean),
-    [winRate, sampleCount, avgProfit, strategy.global_win_rate]
+    [winRate, sampleCount, avgProfit, strategy.global_win_rate, strategy.globalWinRate, t]
   );
 
   const strokeColor = gradeChart.stroke;
@@ -621,7 +629,7 @@ export default function SignalCard({
           <div className={styles.gradeRow}>
             {grade ? (
               <div className={`${styles.gradeBadge} ${gradeBadgeClass}`.trim()}>
-                {grade}级
+                {t('signalCard.gradeBadge', { grade })}
               </div>
             ) : null}
             {coin ? (
@@ -632,23 +640,33 @@ export default function SignalCard({
             {direction ? (
               <div className={styles.directionTag}>
                 <span className={styles.directionArrow}>{isShort ? '▼' : '▲'}</span>
-                {getDirectionLabel(direction)}
+                {directionLabel}
               </div>
             ) : null}
           </div>
           {isFullLayout ? (
             <div className={styles.headerTitle}>
-              实时交易信号{strategyVersion != null ? ` · 策略 v${strategyVersion}` : ''}
+              {t('signalCard.liveSignalTitle')}
+              {strategyVersion != null
+                ? ` · ${t('signalCard.strategyVersion', { version: strategyVersion })}`
+                : ''}
             </div>
           ) : null}
         </div>
         {confidence != null ? (
-          <ConfidenceRing value={confidence} isShort={isShort} variant={variant} grade={grade} />
+          <ConfidenceRing
+            value={confidence}
+            isShort={isShort}
+            variant={variant}
+            grade={grade}
+            confidenceLabel={t('signalCard.confidence')}
+            confidenceShortLabel={t('signalCard.confidenceShort')}
+          />
         ) : null}
       </div>
 
       <div className={styles.priceSection}>
-        {isFullLayout ? <div className={styles.priceLabel}>当前价格</div> : null}
+        {isFullLayout ? <div className={styles.priceLabel}>{t('signalCard.currentPrice')}</div> : null}
         <div className={styles.priceHero}>
           <div className={`${styles.priceNum} ${isSidebar && !isShort ? styles.priceNumLong : ''}`}>
             {formatPrice(currentPrice)}
@@ -662,7 +680,7 @@ export default function SignalCard({
 
       {entryLow != null && entryHigh != null ? (
         <div className={`${styles.entryZone} ${isSidebar ? styles.entryZoneSidebar : ''}`}>
-          <div className={styles.entryLabel}>进场区间</div>
+          <div className={styles.entryLabel}>{t('signalCard.entryZone')}</div>
           <div className={styles.entryBar}>
             <div
               className={`${styles.entryFill} ${isSidebar ? styles.entryFillSidebar : ''}`}
@@ -675,7 +693,7 @@ export default function SignalCard({
               className={`${styles.entryMid} ${isSidebar ? styles.entryMidSidebar : ''}`}
               style={{ color: gradeChart.entryMid }}
             >
-              进场区间
+              {t('signalCard.entryZone')}
             </div>
             <div className={styles.entryHigh}>{formatPrice(entryHigh)}</div>
           </div>
@@ -685,14 +703,14 @@ export default function SignalCard({
       {isFullLayout && (takeProfit != null || stopLoss != null) ? (
         <div className={styles.tpslSection}>
           <div className={styles.tpslCell}>
-            <div className={`${styles.tpslType} ${styles.tpType}`}>止盈 TP</div>
+            <div className={`${styles.tpslType} ${styles.tpType}`}>{t('signalCard.takeProfit')}</div>
             <div className={styles.tpslPrice}>{formatPrice(takeProfit)}</div>
             {tpChange != null ? (
               <div className={`${styles.tpslPct} ${styles.tpPct}`}>{formatPct(tpChange)}</div>
             ) : null}
           </div>
           <div className={styles.tpslCell}>
-            <div className={`${styles.tpslType} ${styles.slType}`}>止损 SL</div>
+            <div className={`${styles.tpslType} ${styles.slType}`}>{t('signalCard.stopLoss')}</div>
             <div className={styles.tpslPrice}>{formatPrice(stopLoss)}</div>
             {slChange != null ? (
               <div className={`${styles.tpslPct} ${styles.slPct}`}>{formatPct(slChange)}</div>
@@ -706,28 +724,28 @@ export default function SignalCard({
           <div className={`${styles.metricVal} ${styles.metricValAccent}`}>
             {riskReward != null ? `${Number(riskReward).toFixed(1)}x` : '--'}
           </div>
-          <div className={styles.metricLbl}>盈亏比</div>
+          <div className={styles.metricLbl}>{t('signalCard.riskReward')}</div>
         </div>
         {isFullLayout ? (
           <div className={styles.metric}>
             <div className={styles.metricVal}>
               {positionPct != null ? `${Number(positionPct).toFixed(0)}%` : '--'}
             </div>
-            <div className={styles.metricLbl}>建议仓位</div>
+            <div className={styles.metricLbl}>{t('signalCard.suggestedPosition')}</div>
           </div>
         ) : null}
         <div className={styles.metric}>
           <div className={styles.metricVal}>
             {resolvedKelly != null ? `${Number(resolvedKelly).toFixed(1)}%` : '--'}
           </div>
-          <div className={styles.metricLbl}>Kelly仓位</div>
+          <div className={styles.metricLbl}>{t('signalCard.kellyPosition')}</div>
         </div>
       </div>
 
       {sources.length > 0 ? (
         <div className={`${styles.signals} ${isSidebar ? styles.signalsSidebar : ''}`}>
           <div className={styles.sectionHead}>
-            {isCompactSidebar ? '信号源' : '信号源融合'}
+            {isCompactSidebar ? t('signalCard.signalSources') : t('signalCard.signalFusion')}
           </div>
           {sources.map((source, idx) => (
             <AnimatedSignalBar
@@ -737,6 +755,7 @@ export default function SignalCard({
               delay={isSidebar ? idx * 80 : 900 + idx * 100}
               isSidebar={isSidebar}
               grade={grade}
+              sourceLabel={getSourceLabel(source.name)}
             />
           ))}
         </div>
@@ -744,7 +763,7 @@ export default function SignalCard({
 
       {showExpandedDetail && (mathTags.length > 0 || mathNotes.length > 0) ? (
         <div className={`${styles.mathBlock} ${embedded ? styles.mathBlockExpanded : ''}`}>
-          {!embedded ? <div className={styles.sectionHead}>数学推导</div> : null}
+          {!embedded ? <div className={styles.sectionHead}>{t('signalCard.mathDerivation')}</div> : null}
           {mathTags.length > 0 ? (
             <div className={styles.mathChips}>
               {mathTags.map((tag) => {
@@ -792,7 +811,7 @@ export default function SignalCard({
 
           {invalidation != null ? (
             <div className={`${styles.invalid} ${embedded ? styles.invalidExpanded : ''}`}>
-              <div className={styles.invalidLabel}>失效条件</div>
+              <div className={styles.invalidLabel}>{t('signalCard.invalidation')}</div>
               <div
                 className={styles.invalidPrice}
                 style={{ color: gradeInvalid.text }}
@@ -802,7 +821,8 @@ export default function SignalCard({
                   style={{ background: gradeInvalid.dot }}
                   aria-hidden
                 />
-                {isShort ? '突破' : '跌破'} {formatPrice(invalidation)}
+                {isShort ? t('signalCard.breakAbove') : t('signalCard.breakBelow')}{' '}
+                {formatPrice(invalidation)}
               </div>
             </div>
           ) : null}
@@ -814,7 +834,7 @@ export default function SignalCard({
           <span className={styles.viewMoreIcon} aria-hidden>
             ︾
           </span>
-          查看更多
+          {t('signalCard.viewMore')}
         </button>
       ) : null}
       </div>

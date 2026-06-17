@@ -35,10 +35,8 @@ import SignalCardCarousel from '@/components/SignalCardCarousel';
 import PCAlphaSignalPanel from '@/components/PCAlphaSignalPanel';
 import { fetchLatestScanCache } from '@/api/signals';
 import {
-  ALPHA_SIGNAL_USER_QUERY,
-  MOCK_ALPHA_SIGNAL_CARDS,
-  MOCK_ALPHA_SIGNAL_REPLY,
-  MOCK_SIDEBAR_SIGNAL_CARD,
+  getLocalizedMockAlphaSignalCards,
+  getLocalizedSidebarSignalCard,
 } from '@/data/mockAlphaSignalCards';
 
 const AGENT_STREAM_API = '/api/ai/agent/stream';
@@ -139,7 +137,7 @@ function getSignalCardsFromCache(cache) {
   return sortSignalCardsByGrade(cards);
 }
 
-function buildAlphaScanReply(cache) {
+function buildAlphaScanReply(cache, t) {
   if (!cache) return '';
   const totalCoins = cache.totalCoins ?? '--';
   const signalCount = cache.signalCount ?? '--';
@@ -147,17 +145,21 @@ function buildAlphaScanReply(cache) {
   let scanTimeText = '';
   if (Number.isFinite(scanTimeMs)) {
     if (scanTimeMs >= 60000) {
-      scanTimeText = `，耗时约 ${(scanTimeMs / 60000).toFixed(1)} 分钟`;
+      scanTimeText = t('signalCard.scanReply.scanMinutes', {
+        minutes: (scanTimeMs / 60000).toFixed(1),
+      });
     } else if (scanTimeMs >= 1000) {
-      scanTimeText = `，耗时约 ${(scanTimeMs / 1000).toFixed(1)} 秒`;
+      scanTimeText = t('signalCard.scanReply.scanSeconds', {
+        seconds: (scanTimeMs / 1000).toFixed(1),
+      });
     }
   }
 
   return [
-    `最新一轮全市场扫描已完成，覆盖 ${totalCoins} 个币种`,
+    t('signalCard.scanReply.intro', { totalCoins }),
     scanTimeText,
-    `，共识别出 ${signalCount} 个 S/A 级多维共振机会。`,
-    '以下为优先推荐信号，请结合个人风险偏好与仓位管理决策。',
+    t('signalCard.scanReply.signalsFound', { signalCount }),
+    t('signalCard.scanReply.footer'),
   ].join('');
 }
 
@@ -1220,10 +1222,11 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
     setSuggestedQuestions([]);
 
     const cards = getSignalCardsFromCache(scanCache);
+    const alphaQuery = t('signalCard.alphaQuery');
     const reply = scanCache
-      ? buildAlphaScanReply(scanCache)
-      : MOCK_ALPHA_SIGNAL_REPLY;
-    const signalCards = cards.length ? cards : MOCK_ALPHA_SIGNAL_CARDS;
+      ? buildAlphaScanReply(scanCache, t)
+      : t('signalCard.alphaMockReply');
+    const signalCards = cards.length ? cards : getLocalizedMockAlphaSignalCards(t);
 
     const now = Date.now();
     setMessages((prev) => [
@@ -1231,7 +1234,7 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
       {
         id: `user-${now}`,
         role: 'user',
-        content: ALPHA_SIGNAL_USER_QUERY,
+        content: alphaQuery,
         time: now,
       },
       {
@@ -1246,13 +1249,13 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
     ]);
 
     trackEvent(AIEvents.QUESTION_SENT, {
-      question: ALPHA_SIGNAL_USER_QUERY,
-      questionLength: ALPHA_SIGNAL_USER_QUERY.length,
+      question: alphaQuery,
+      questionLength: alphaQuery.length,
       isSuggestedQuestion: true,
       source: 'alpha_signal_panel',
       timestamp: now,
     });
-  }, [isBusy, isBootstrappingUserData, scanCache]);
+  }, [isBusy, isBootstrappingUserData, scanCache, t]);
 
   // 发现页行情表等：跳转 /ai 并自动切换模型、发送首条提问
   useEffect(() => {
@@ -2150,9 +2153,9 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
         </div>
 
         {isPC && showPcAlphaPanel ? (
-          <aside className={styles.pcRightColumn} aria-label="Alpha 信号">
+          <aside className={styles.pcRightColumn} aria-label={t('signalCard.alphaPanel.ariaLabel')}>
             <PCAlphaSignalPanel
-              signalData={getSignalCardsFromCache(scanCache)[0] ?? MOCK_SIDEBAR_SIGNAL_CARD}
+              signalData={getSignalCardsFromCache(scanCache)[0] ?? getLocalizedSidebarSignalCard(t)}
               alertCount={scanCache?.signalCount ?? 3}
               showUpgrade={showUpgradePill}
               onUpgrade={() => router.push('/vip-recharge')}

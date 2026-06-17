@@ -821,6 +821,10 @@ export default function PCLayout({ children }) {
     pathname === '/pc/help' || (pathname && pathname.startsWith('/pc/help/'));
 
   const isAiRoute = pathname === '/ai' || (pathname && pathname.startsWith('/ai/'));
+  const isAlertsRoute =
+    pathname === '/pc/alarm' || (pathname && pathname.startsWith('/pc/alarm/'));
+  const isFavoritesRoute =
+    pathname === '/selfrank' || (pathname && pathname.startsWith('/selfrank/'));
   const activeAiConversationId = useMemo(() => {
     if (!pathname?.startsWith('/ai/')) return null;
     const id = pathname.slice('/ai/'.length).split('/')[0];
@@ -830,13 +834,10 @@ export default function PCLayout({ children }) {
   const aiConversationFallback = t('pcLayout.menu.dialogueItem', { defaultValue: '对话' });
 
   const aiHeaderIconColor = useMemo(() => {
-    if (isAiRoute) {
-      return isAiChatExpanded ? '#00ac72' : '#11b787';
+    if (!isAiRoute) {
+      return '#333333';
     }
-    if (isAiChatExpanded) {
-      return '#00ac72';
-    }
-    return '#333333';
+    return isAiChatExpanded ? '#00ac72' : '#11b787';
   }, [isAiRoute, isAiChatExpanded]);
 
   const getSelectedKey = () => {
@@ -1080,13 +1081,13 @@ export default function PCLayout({ children }) {
               <div className={styles.pcWatchlist}>
                 <button
                   type="button"
-                  className={`${styles.pcWatchlistHeader} ${pathname === '/selfrank' ? styles.pcWatchlistHeaderSelected : ''}`}
+                  className={`${styles.pcWatchlistHeader} ${isFavoritesRoute ? styles.pcWatchlistHeaderSelected : ''}`}
                   onClick={() => setIsMineExpanded((v) => !v)}
                 >
                   <span className={styles.pcWatchlistHeaderLeft}>
                     <span className={styles.pcWatchlistHeaderIconSvg} aria-hidden>
                       <img
-                        src={isMineExpanded || pathname === '/selfrank'
+                        src={isFavoritesRoute
                           ? `${CDN_PUBLIC_PREFIX}/icons/new_home/collect_actived.svg`
                           : `${CDN_PUBLIC_PREFIX}/icons/pc/Collection@2x.png`}
                         alt=""
@@ -1097,13 +1098,15 @@ export default function PCLayout({ children }) {
                     <span
                       className={`${styles.pcWatchlistTitle} ${
                         isMineExpanded ? styles.pcWatchlistTitleExpanded : ''
-                      }`}
+                      } ${isFavoritesRoute ? styles.pcWatchlistTitleSelected : ''}`}
                     >
                       {t('pcLayout.menu.myFavorites')}
                     </span>
                   </span>
                   <span
-                    className={`${styles.pcWatchlistChevron} ${isMineExpanded ? styles.pcWatchlistChevronExpanded : ''}`}
+                    className={`${styles.pcWatchlistChevron} ${
+                      isMineExpanded ? styles.pcWatchlistChevronExpanded : ''
+                    } ${isFavoritesRoute ? styles.pcWatchlistChevronSelected : ''}`}
                     aria-hidden
                   />
                 </button>
@@ -1170,14 +1173,14 @@ export default function PCLayout({ children }) {
                 <button
                   type="button"
                   className={`${styles.pcWatchlistHeader} ${
-                    pathname === '/pc/alarm' ? styles.pcWatchlistHeaderSelected : ''
+                    isAlertsRoute ? styles.pcWatchlistHeaderSelected : ''
                   }`}
                   onClick={() => setIsAlertsExpanded((v) => !v)}
                 >
                   <span className={styles.pcWatchlistHeaderLeft}>
                     <span className={styles.pcWatchlistHeaderIconSvg} aria-hidden>
                       <img
-                        src={isAlertsExpanded || pathname === '/pc/alarm'
+                        src={isAlertsRoute
                           ? `${CDN_PUBLIC_PREFIX}/icons/pc/alert_actived@2x.png`
                           : `${CDN_PUBLIC_PREFIX}/icons/pc/alert@2x.png`}
                         alt=""
@@ -1188,13 +1191,15 @@ export default function PCLayout({ children }) {
                     <span
                       className={`${styles.pcWatchlistTitle} ${
                         isAlertsExpanded ? styles.pcWatchlistTitleExpanded : ''
-                      }`}
+                      } ${isAlertsRoute ? styles.pcWatchlistTitleSelected : ''}`}
                     >
                       {t('pcLayout.menu.myAlerts')}
                     </span>
                   </span>
                   <span
-                    className={`${styles.pcWatchlistChevron} ${isAlertsExpanded ? styles.pcWatchlistChevronExpanded : ''}`}
+                    className={`${styles.pcWatchlistChevron} ${
+                      isAlertsExpanded ? styles.pcWatchlistChevronExpanded : ''
+                    } ${isAlertsRoute ? styles.pcWatchlistChevronSelected : ''}`}
                     aria-hidden
                   />
                 </button>

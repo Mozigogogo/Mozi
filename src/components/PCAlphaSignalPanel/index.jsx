@@ -1,31 +1,35 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
 import SignalCard from '@/components/SignalCard';
 import SignalCardAmbient from '@/components/SignalCard/SignalCardAmbient';
 import signalCardStyles from '@/components/SignalCard/index.module.less';
 import AiRobotUpgradePillButton from '@/components/AiRobotUpgradePillButton';
-import { MOCK_SIDEBAR_SIGNAL_CARD } from '@/data/mockAlphaSignalCards';
+import { getLocalizedSidebarSignalCard } from '@/data/mockAlphaSignalCards';
 import styles from './index.module.less';
 
-export { MOCK_SIDEBAR_SIGNAL_CARD };
-
 export default function PCAlphaSignalPanel({
-  signalData = MOCK_SIDEBAR_SIGNAL_CARD,
+  signalData,
   alertCount = 3,
   showUpgrade = false,
   onUpgrade,
   onViewMore,
-  upgradeLabel = '升级到 mozi Pro',
-  upgradeAriaLabel = '升级到 mozi Pro',
+  upgradeLabel,
+  upgradeAriaLabel,
 }) {
+  const { t } = useTranslation();
+  const resolvedSignalData = signalData ?? getLocalizedSidebarSignalCard(t);
+  const resolvedUpgradeLabel = upgradeLabel ?? t('aiAssistant.title');
+  const resolvedUpgradeAriaLabel = upgradeAriaLabel ?? t('aiAssistant.title');
+
   return (
     <div className={styles.wrapper}>
       {showUpgrade ? (
         <div className={styles.upgradeRow}>
           <AiRobotUpgradePillButton
             onClick={onUpgrade}
-            ariaLabel={upgradeAriaLabel}
-            label={upgradeLabel}
+            ariaLabel={resolvedUpgradeAriaLabel}
+            label={resolvedUpgradeLabel}
             className={styles.upgradeBtn}
           />
         </div>
@@ -38,7 +42,7 @@ export default function PCAlphaSignalPanel({
               <span className={styles.leadIcon} aria-hidden>
                 <span className={styles.titleDot} />
               </span>
-              <span className={styles.titleText}>今日 Alpha 信号</span>
+              <span className={styles.titleText}>{t('signalCard.alphaPanel.title')}</span>
             </div>
             <button
               type="button"
@@ -49,7 +53,7 @@ export default function PCAlphaSignalPanel({
                 🔥
               </span>
               <span className={styles.reminderText}>
-                探测到{alertCount}个S级/A级多维共振交易机会
+                {t('signalCard.alphaPanel.alert', { count: alertCount })}
               </span>
             </button>
           </div>
@@ -67,12 +71,12 @@ export default function PCAlphaSignalPanel({
             }}
           >
             <SignalCardAmbient
-              grade={signalData?.card?.grade}
+              grade={resolvedSignalData?.card?.grade}
               className={signalCardStyles.panelAmbientGlow}
             />
             <div className={styles.signalCardInner}>
               <SignalCard
-                data={signalData}
+                data={resolvedSignalData}
                 variant="sidebar"
                 hideAmbient
                 surfaceHosted

@@ -1,19 +1,10 @@
 /** 假数据 — 侧边栏点击「查看更多」后在对话中展示的 S 级信号列表，后续接入真实 API */
 
-export const ALPHA_SIGNAL_USER_QUERY = '查看更多S级多维共振交易';
-
-export const MOCK_ALPHA_SIGNAL_REPLY =
-  '结合您当前所在时区的最新市场数据，比特币呈现宽幅震荡特征。当前价格在 $103,000–$105,000 区间运行，MACD 指标显示多头动能正在减弱，但尚未形成明确的死叉信号。建议关注 $103,000 支撑位，若有效跌破则可能开启新一轮下行。';
-
 const BASE_MATH = {
   hurst: 0.63,
   mc_bull_prob: 0.78,
   volatility: 'Normal',
-  notes: [
-    '趋势持续性强 (Hurst > 0.55)，支撑做多',
-    'MC 上涨概率 78%，方向确认',
-    '波动率中位 P35，信号稳定',
-  ],
+  notesKey: 'btc',
 };
 
 const BASE_SOURCES = [
@@ -22,7 +13,7 @@ const BASE_SOURCES = [
   { name: 'technical', score: 55 },
 ];
 
-export const MOCK_ALPHA_SIGNAL_CARDS = [
+const MOCK_ALPHA_SIGNAL_CARDS_RAW = [
   {
     card: {
       coin: 'BTC',
@@ -72,11 +63,7 @@ export const MOCK_ALPHA_SIGNAL_CARDS = [
       hurst: 0.58,
       mc_bull_prob: 0.72,
       volatility: 'Normal',
-      notes: [
-        'Hurst 0.58，趋势方向性中等偏强',
-        'MC 上涨概率 72%，多方占优',
-        '支撑区间完好，风险收益合理',
-      ],
+      notesKey: 'ethSol',
     },
     strategy: { version: 3, global_win_rate: 0.58 },
   },
@@ -107,14 +94,37 @@ export const MOCK_ALPHA_SIGNAL_CARDS = [
       hurst: 0.58,
       mc_bull_prob: 0.72,
       volatility: 'Normal',
-      notes: [
-        'Hurst 0.58，趋势方向性中等偏强',
-        'MC 上涨概率 72%，多方占优',
-        '支撑区间完好，风险收益合理',
-      ],
+      notesKey: 'ethSol',
     },
     strategy: { version: 3, global_win_rate: 0.58 },
   },
 ];
 
-export const MOCK_SIDEBAR_SIGNAL_CARD = MOCK_ALPHA_SIGNAL_CARDS[0];
+function resolveMockNotes(math, t) {
+  if (!math || typeof math !== 'object') return math;
+  const notesKey = math.notesKey;
+  if (!notesKey || typeof t !== 'function') {
+    return math;
+  }
+  const raw = t(`signalCard.mockNotes.${notesKey}`, { returnObjects: true });
+  const notes = Array.isArray(raw) ? raw : [];
+  const { notesKey: _omit, ...rest } = math;
+  return { ...rest, notes };
+}
+
+/** @param {(key: string, opts?: object) => string} t */
+export function getLocalizedMockAlphaSignalCards(t) {
+  return MOCK_ALPHA_SIGNAL_CARDS_RAW.map((item) => ({
+    ...item,
+    math: resolveMockNotes(item.math, t),
+  }));
+}
+
+export const MOCK_ALPHA_SIGNAL_CARDS = MOCK_ALPHA_SIGNAL_CARDS_RAW;
+export const MOCK_SIDEBAR_SIGNAL_CARD = MOCK_ALPHA_SIGNAL_CARDS_RAW[0];
+
+/** @param {(key: string, opts?: object) => string} t */
+export function getLocalizedSidebarSignalCard(t) {
+  const cards = getLocalizedMockAlphaSignalCards(t);
+  return cards[0] || MOCK_SIDEBAR_SIGNAL_CARD;
+}
