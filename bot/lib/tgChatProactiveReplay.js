@@ -5,9 +5,8 @@
  */
 
 const { getTexts } = require('../i18n');
-const { requestChatStream, requestBigorderStream, postTgChatRemove } = require('./apis');
+const { requestAgentStream, postTgChatRemove } = require('./apis');
 const { ensureTgUserToken } = require('./tgUserTokenCache');
-const { extractSymbolIntent } = require('./symbolIntent');
 const { loadMoziDatainfoPoints } = require('./datainfoPoints');
 const {
   consumePointsAfterAiSuccess,
@@ -126,53 +125,20 @@ async function runTgChatProactiveReplay(bot, config, job) {
     }
   }
 
-  const lang = (job.languageCode || 'en').toLowerCase().startsWith('zh') ? 'zh' : 'en';
-  const symbol = extractSymbolIntent(job.question);
-  const streamOpts = {
-    message: job.question,
-    lang,
-    symbol,
-    appUrl: config.APP_URL,
-    timeoutMs: config.AI_CHAT_STREAM_TIMEOUT_MS,
-  };
+  const agentType = isBigorder ? 'bigorder' : isAi ? 'analyze' : 'chat';
 
   await sendTyping(bot.telegram, job.groupId);
 
   let result;
   try {
-    if (isBigorder) {
-      result = await requestBigorderStream({
-        url: config.BIGORDER_CHAT_URL,
-        message: job.question,
-        lang,
-        auth: token,
-        appUrl: config.APP_URL,
-        timeoutMs: config.AI_CHAT_STREAM_TIMEOUT_MS,
-      });
-    } else if (isAi) {
-      try {
-        result = await requestChatStream({
-          url: config.AI_ANALYZE_STREAM_URL,
-          ...streamOpts,
-        });
-      } catch (analyzeErr) {
-        const canFallback =
-          config.AI_ANALYZE_FALLBACK_TO_CHAT &&
-          config.AI_ANALYZE_STREAM_URL !== config.AI_CHAT_STREAM_URL &&
-          analyzeErr?.status != null &&
-          analyzeErr.status >= 400;
-        if (!canFallback) throw analyzeErr;
-        result = await requestChatStream({
-          url: config.AI_CHAT_STREAM_URL,
-          ...streamOpts,
-        });
-      }
-    } else {
-      result = await requestChatStream({
-        url: config.AI_CHAT_STREAM_URL,
-        ...streamOpts,
-      });
-    }
+    result = await requestAgentStream({
+      url: config.AI_AGENT_STREAM_URL,
+      message: job.question,
+      type: agentType,
+      auth: token,
+      appUrl: config.APP_URL,
+      timeoutMs: config.AI_CHAT_STREAM_TIMEOUT_MS,
+    });
   } catch (err) {
     console.error('[tgChatProactiveReplay] 流式请求失败:', err?.message || err);
     if (err?.userMessage) {

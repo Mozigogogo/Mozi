@@ -579,6 +579,304 @@ async function consumeSseStream(res, signal, options = {}) {
   return { answer: String(answer).trim(), pointsCost };
 }
 
+function createAgentRequestId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `req_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+/**
+ * @param {string} block
+ * @returns {{ event: string; dataPayload: string | null }}
+ */
+function parseSseBlock(block) {
+  const lines = block.split(/\r?\n/);
+  let event = '';
+  const dataParts = [];
+  for (const line of lines) {
+    if (line.startsWith('event:')) {
+      event = line.slice(6).trim();
+    } else if (line.startsWith('data:')) {
+      dataParts.push(line.slice(5).trimStart());
+    }
+  }
+  return {
+    event,
+    dataPayload: dataParts.length ? dataParts.join('\n') : null,
+  };
+}
+
+/**
+ * Agent SSE（/ai/agent/stream）单块解析，对齐 H5 useRobotTestSSE
+ * @returns {{ text: string; done: boolean; error: string | null }}
+ */
+function extractAgentChunkFromEvent(messageType, eventData) {
+  if (!eventData || typeof eventData !== 'object') {
+    return { text: '', done: false, error: null };
+  }
+
+  const dataType = eventData.data_type;
+
+  if (messageType === 'error') {
+    return {
+      text: '',
+      done: false,
+      error:
+        eventData.message ||
+        eventData.errorMsg ||
+        eventData.error ||
+        'SSE stream error',
+    };
+  }
+
+  if (
+    messageType === 'complete' ||
+    messageType === 'end' ||
+    messageType === 'finish' ||
+    messageType === 'done'
+  ) {
+    return { text: '', done: true, error: null };
+  }
+
+  if (messageType === 'start') {
+    const text = typeof eventData.data === 'string' ? eventData.data : '';
+    return { text, done: false, error: null };
+  }
+
+  if (messageType === 'delta') {
+    if (dataType === 'chat') {
+      return {
+        text: typeof eventData.delta === 'string' ? eventData.delta : '',
+        done: false,
+        error: null,
+      };
+    }
+    if (dataType === 'signal_card') {
+      const payload = eventData.payload ?? eventData.data;
+      const display =
+        (payload && typeof payload.display === 'string' && payload.display) || '';
+      return {
+        text: display.trim() ? `\n\n${display.trim()}` : '',
+        done: false,
+        error: null,
+      };
+    }
+    return { text: '', done: false, error: null };
+  }
+
+  if (messageType === 'stream' || messageType === 'chunk') {
+    let text = '';
+    if (typeof eventData.delta === 'string') text = eventData.delta;
+    else if (typeof eventData.data === 'string' && messageType === 'chunk') text = eventData.data;
+    else if (typeof eventData.content === 'string') text = eventData.content;
+    return { text, done: false, error: null };
+  }
+
+  if (messageType === 'content') {
+    const text =
+      typeof eventData.text === 'string'
+        ? eventData.text
+        : typeof eventData.data === 'string'
+          ? eventData.data
+          : '';
+    return { text, done: false, error: null };
+  }
+
+  if (messageType === 'signal_card') {
+    const display =
+      (typeof eventData.display === 'string' && eventData.display) ||
+      (eventData.payload && typeof eventData.payload.display === 'string' && eventData.payload.display) ||
+      (eventData.data && typeof eventData.data.display === 'string' && eventData.data.display) ||
+      '';
+    return {
+      text: display.trim() ? `\n\n${display.trim()}` : '',
+      done: false,
+      error: null,
+    };
+  }
+
+  return { text: extractChunkText(eventData), done: false, error: null };
+}
+
+/**
+ * @param {Response} res
+ * @param {AbortSignal} signal
+ * @returns {Promise<{ answer: string, pointsCost?: number }>}
+ */
+async function consumeAgentSseStream(res, signal) {
+  const reader = res.body?.getReader();
+  if (!reader) {
+    const raw = await res.text();
+    throw new Error(raw ? `No stream body: ${raw.slice(0, 200)}` : 'No stream body');
+  }
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let answer = '';
+  /** @type {number | undefined} */
+  let pointsCost;
+
+  while (!signal.aborted) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    let sep;
+    while ((sep = buffer.search(/\r\n\r\n|\n\n/)) !== -1) {
+      const block = buffer.slice(0, sep);
+      buffer = buffer.slice(sep + (buffer[sep] === '\r' ? 4 : 2));
+
+      const { event, dataPayload } = parseSseBlock(block);
+      if (dataPayload == null) continue;
+      const trimmed = dataPayload.trim();
+      if (!trimmed || trimmed === '[DONE]') continue;
+
+      let eventData;
+      try {
+        eventData = JSON.parse(dataPayload);
+      } catch {
+        answer += dataPayload;
+        continue;
+      }
+
+      const messageType = event || eventData.event || eventData.type || 'message';
+      const chunk = extractAgentChunkFromEvent(messageType, eventData);
+      if (chunk.error) {
+        const err = new Error('AI agent stream error');
+        err.userMessage = chunk.error;
+        throw err;
+      }
+
+      const pc = extractPointsCost(eventData);
+      if (pc !== undefined) pointsCost = pc;
+      if (chunk.text) answer += chunk.text;
+    }
+  }
+
+  if (buffer.trim()) {
+    const { event, dataPayload } = parseSseBlock(buffer);
+    if (dataPayload != null && dataPayload.trim() && dataPayload.trim() !== '[DONE]') {
+      try {
+        const eventData = JSON.parse(dataPayload);
+        const messageType = event || eventData.event || eventData.type || 'message';
+        const chunk = extractAgentChunkFromEvent(messageType, eventData);
+        const pc = extractPointsCost(eventData);
+        if (pc !== undefined) pointsCost = pc;
+        if (chunk.text) answer += chunk.text;
+      } catch {
+        answer += dataPayload;
+      }
+    }
+  }
+
+  if (!String(answer).trim()) {
+    const err = new Error('Empty answer from agent stream');
+    err.streamHint = buffer.trim()
+      ? `tail:${buffer.slice(-Math.min(800, buffer.length))}`
+      : 'no_sse_text_extracted';
+    throw err;
+  }
+
+  return { answer: String(answer).trim(), pointsCost };
+}
+
+/**
+ * POST /ai/agent/stream：body `{ request_id, type, message }`；需用户 JWT
+ * @param {{ url: string; message: string; type: 'analyze'|'chat'|'bigorder'|'signals'; auth: string; appUrl?: string; timeoutMs?: number }} opts
+ * @returns {Promise<{ answer: string, pointsCost?: number }>}
+ */
+async function requestAgentStream({ url, message, type, auth, appUrl = '', timeoutMs = 300000 }) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const rawAuth = String(auth || '').trim().replace(/^Bearer\s+/i, '');
+
+  const headers = {
+    accept: 'text/event-stream',
+    'content-type': 'application/json',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    'user-agent': DEFAULT_UA,
+  };
+  if (rawAuth) {
+    headers.authentication = rawAuth;
+  }
+  if (app) {
+    headers.origin = app;
+    headers.referer = `${app}/ai`;
+  }
+
+  const payload = {
+    request_id: createAgentRequestId(),
+    type,
+    message,
+  };
+
+  apiDebug('POST ai/agent/stream ←', {
+    url,
+    type,
+    hasAuth: Boolean(rawAuth),
+    messagePreview: typeof message === 'string' ? message.slice(0, 160) : undefined,
+  });
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+      signal: ctrl.signal,
+    });
+
+    if (!res.ok) {
+      const raw = await res.text();
+      let userMessage;
+      try {
+        const errData = JSON.parse(raw);
+        userMessage =
+          (typeof errData.error === 'string' && errData.error) ||
+          (typeof errData.message === 'string' && errData.message) ||
+          (typeof errData.msg === 'string' && errData.msg) ||
+          undefined;
+      } catch {
+        /* ignore */
+      }
+      if (!userMessage && raw && String(raw).trim()) {
+        userMessage = String(raw).trim().slice(0, 500);
+      }
+      const err = new Error(`Agent stream HTTP ${res.status}`);
+      err.status = res.status;
+      err.userMessage = userMessage;
+      err.rawBody = raw.slice(0, 500);
+      throw err;
+    }
+
+    const result = await consumeAgentSseStream(res, ctrl.signal);
+    apiDebug('POST ai/agent/stream → ok', {
+      type,
+      answerChars: result.answer.length,
+      pointsCost: result.pointsCost ?? null,
+    });
+    return result;
+  } catch (err) {
+    const aborted =
+      err?.name === 'AbortError' ||
+      /aborted|AbortError|signal is aborted/i.test(String(err?.message || ''));
+    apiDebug('POST ai/agent/stream → failed', {
+      type,
+      message: err?.message || String(err),
+      likelyTimeout: aborted,
+      userMessage: err?.userMessage ?? null,
+      httpStatus: err?.status ?? null,
+      rawBody: err?.rawBody ?? null,
+      streamHint: err?.streamHint ?? null,
+    });
+    throw err;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 /**
  * POST …/chat/stream：body `{ message, lang }`，可选 `symbol`（意图识别兜底）
  * @param {{ url: string; message: string; lang: string; symbol?: string | null; appUrl?: string; timeoutMs?: number }} opts
@@ -1456,6 +1754,7 @@ module.exports = {
   getGroupReferrer,
   parseGroupReferrerGetResult,
   postGroupReferrerBind,
+  requestAgentStream,
   requestChatStream,
   requestBigorderStream,
   normalizeTgChatCommand,

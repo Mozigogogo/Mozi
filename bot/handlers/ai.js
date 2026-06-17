@@ -1,11 +1,12 @@
 /**
- * /ai <问题>：POST …/analyze/stream；成功后 POST /points/consume，actionCode=AI_DEEP_ANALYZE（与 H5 analyze 一致）
+ * /ai <问题>：POST /ai/agent/stream type=analyze；成功后 POST /points/consume actionCode=AI_DEEP_ANALYZE
  */
 
 const { extractAiQuery } = require('../lib/aiQuery');
-const { extractSymbolIntent } = require('../lib/symbolIntent');
-const { requestChatStream } = require('../lib/apis');
+const { requestAgentStream } = require('../lib/apis');
 const { precheckAiChatPointsGate } = require('../lib/aiChatPointsPrecheck');
+const { ensureTgUserToken } = require('../lib/tgUserTokenCache');
+const { buildTelegramLoginOpts } = require('../lib/datainfoPoints');
 const { withTypingWhileAwaiting } = require('../lib/telegramTypingPulse');
 const { aiMarkdownToTelegramHtml, escapeHtml, buildHtmlChunks, splitOversized } = require('../lib/telegramHtml');
 const { consumePointsAfterAiSuccess, ACTION_AI_ANALYZE } = require('../lib/consumePointsAfterAiSuccess');
@@ -40,46 +41,28 @@ function registerAi(bot, config, { getTexts }, registeredGate, loginGate) {
       return;
     }
 
-    const lang = (languageCode || 'en').toLowerCase().startsWith('zh') ? 'zh' : 'en';
-    const symbol = extractSymbolIntent(query);
-
-    const streamOpts = {
-      message: query,
-      lang,
-      symbol,
-      appUrl: config.APP_URL,
-      timeoutMs: config.AI_CHAT_STREAM_TIMEOUT_MS,
-    };
+    const loginOpts = buildTelegramLoginOpts(ctx.from);
+    if (ctx.state?.groupReferrer?.inviteCode) {
+      loginOpts.inviteCode = ctx.state.groupReferrer.inviteCode;
+    }
+    const token = await ensureTgUserToken(config, String(uid), loginOpts);
+    if (!token) {
+      await ctx.reply(texts.needMoziLogin, { parse_mode: 'HTML' }).catch(() => {});
+      return;
+    }
 
     let result;
     try {
       result = await withTypingWhileAwaiting(
         ctx,
-        (async () => {
-          try {
-            return await requestChatStream({
-              url: config.AI_ANALYZE_STREAM_URL,
-              ...streamOpts,
-            });
-          } catch (analyzeErr) {
-            const canFallback =
-              config.AI_ANALYZE_FALLBACK_TO_CHAT &&
-              config.AI_ANALYZE_STREAM_URL !== config.AI_CHAT_STREAM_URL &&
-              analyzeErr?.status != null &&
-              analyzeErr.status >= 400;
-            if (!canFallback) {
-              throw analyzeErr;
-            }
-            console.warn('[/ai] analyze/stream 失败，回退到 chat/stream:', {
-              httpStatus: analyzeErr.status,
-              symbolIntent: symbol,
-            });
-            return await requestChatStream({
-              url: config.AI_CHAT_STREAM_URL,
-              ...streamOpts,
-            });
-          }
-        })(),
+        requestAgentStream({
+          url: config.AI_AGENT_STREAM_URL,
+          message: query,
+          type: 'analyze',
+          auth: token,
+          appUrl: config.APP_URL,
+          timeoutMs: config.AI_CHAT_STREAM_TIMEOUT_MS,
+        }),
       );
     } catch (err) {
       const aborted =
@@ -94,8 +77,7 @@ function registerAi(bot, config, { getTexts }, registeredGate, loginGate) {
         userMessage: err?.userMessage ?? null,
         rawBody: err?.rawBody ?? null,
         streamHint: err?.streamHint ?? null,
-        analyzeStreamUrl: config.AI_ANALYZE_STREAM_URL,
-        symbolIntent: symbol,
+        agentStreamUrl: config.AI_AGENT_STREAM_URL,
       });
       if (err?.userMessage) {
         await ctx.reply(escapeHtml(err.userMessage), { parse_mode: 'HTML' });

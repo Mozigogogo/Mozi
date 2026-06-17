@@ -18,26 +18,13 @@ const ALERT_CARD_IMAGE =
   process.env.ALERT_CARD_IMAGE ||
   'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/twitter.jpg';
 
-/** 可选：覆盖 /ai 流式 POST 完整 URL；默认 ${APP_URL}/api/robot_proxy/api/v1/analyze/stream（请求体与 /chat 相同） */
-const AI_BACKEND_URL = (process.env.AI_BACKEND_URL || '').trim();
-/** 可选：覆盖 /chat 流式 POST 完整 URL；默认 ${APP_URL}/api/robot_proxy/api/v1/chat/stream（与前端一致） */
-const AI_CHAT_BACKEND_URL = (process.env.AI_CHAT_BACKEND_URL || '').trim();
-const APP_ORIGIN = String(APP_URL || '').replace(/\/+$/, '');
-const DEFAULT_ROBOT_CHAT_STREAM = `${APP_ORIGIN}/api/robot_proxy/api/v1/chat/stream`;
-const DEFAULT_ROBOT_ANALYZE_STREAM = `${APP_ORIGIN}/api/robot_proxy/api/v1/analyze/stream`;
-const AI_CHAT_STREAM_URL = AI_CHAT_BACKEND_URL || DEFAULT_ROBOT_CHAT_STREAM;
-/** 大单侦测 SSE：默认直连 Python Robot 后端 /bigorder/v1/chat（与 H5 BIGORDER_CHAT_API 一致） */
-const ROBOT_BACKEND_URL = (
-  process.env.ROBOT_BACKEND_URL ||
-  process.env.NEXT_PUBLIC_ROBOT_BACKEND_URL ||
-  'https://mozibackend-production.up.railway.app'
-).trim().replace(/\/+$/, '');
-const BIGORDER_CHAT_BACKEND_URL = (process.env.BIGORDER_CHAT_BACKEND_URL || '').trim();
-const BIGORDER_CHAT_URL = BIGORDER_CHAT_BACKEND_URL || `${ROBOT_BACKEND_URL}/bigorder/v1/chat`;
-const AI_ANALYZE_STREAM_URL = AI_BACKEND_URL || DEFAULT_ROBOT_ANALYZE_STREAM;
-/** /ai 请求 analyze 失败（如 422）时是否自动改请求 chat/stream */
-const _fb = String(process.env.AI_ANALYZE_FALLBACK_TO_CHAT ?? '1').trim().toLowerCase();
-const AI_ANALYZE_FALLBACK_TO_CHAT = _fb !== '0' && _fb !== 'false' && _fb !== 'no';
+/** 可选：覆盖 Agent 流式 POST 完整 URL；默认主栈 ${API_BASE_URL}/ai/agent/stream（与 H5 一致） */
+const AI_AGENT_STREAM_BACKEND_URL = (
+  process.env.AI_AGENT_STREAM_URL ||
+  process.env.AI_BACKEND_URL ||
+  ''
+).trim();
+const AI_AGENT_STREAM_URL = AI_AGENT_STREAM_BACKEND_URL || `${API_BASE_URL}/ai/agent/stream`;
 /** 底部展示：/ai 未返回 pointsCost 时默认 50 */
 const AI_POINTS_COST = Math.max(
   1,
@@ -105,14 +92,7 @@ module.exports = {
   TG_COMMUNITY_URL,
   TWITTER_URL,
   ALERT_CARD_IMAGE,
-  AI_BACKEND_URL,
-  AI_ANALYZE_STREAM_URL,
-  AI_ANALYZE_FALLBACK_TO_CHAT,
-  AI_CHAT_BACKEND_URL,
-  AI_CHAT_STREAM_URL,
-  ROBOT_BACKEND_URL,
-  BIGORDER_CHAT_BACKEND_URL,
-  BIGORDER_CHAT_URL,
+  AI_AGENT_STREAM_URL,
   AI_POINTS_COST,
   AI_CHAT_POINTS_COST,
   AI_CHAT_STREAM_TIMEOUT_MS,

@@ -1,11 +1,12 @@
 /**
- * /chat <内容>：POST …/chat/stream；成功后 POST /points/consume，actionCode=AI_BASIC_CHAT（与 H5 chat 一致）
+ * /chat <内容>：POST /ai/agent/stream type=chat；成功后 POST /points/consume actionCode=AI_BASIC_CHAT
  */
 
 const { extractChatQuery } = require('../lib/aiQuery');
-const { extractSymbolIntent } = require('../lib/symbolIntent');
-const { requestChatStream } = require('../lib/apis');
+const { requestAgentStream } = require('../lib/apis');
 const { precheckAiChatPointsGate } = require('../lib/aiChatPointsPrecheck');
+const { ensureTgUserToken } = require('../lib/tgUserTokenCache');
+const { buildTelegramLoginOpts } = require('../lib/datainfoPoints');
 const { withTypingWhileAwaiting } = require('../lib/telegramTypingPulse');
 const { aiMarkdownToTelegramHtml, escapeHtml, buildHtmlChunks, splitOversized } = require('../lib/telegramHtml');
 const { consumePointsAfterAiSuccess, ACTION_AI_CHAT } = require('../lib/consumePointsAfterAiSuccess');
@@ -40,18 +41,25 @@ function registerChat(bot, config, { getTexts }, registeredGate, loginGate) {
       return;
     }
 
-    const lang = (languageCode || 'en').toLowerCase().startsWith('zh') ? 'zh' : 'en';
-    const symbol = extractSymbolIntent(query);
+    const loginOpts = buildTelegramLoginOpts(ctx.from);
+    if (ctx.state?.groupReferrer?.inviteCode) {
+      loginOpts.inviteCode = ctx.state.groupReferrer.inviteCode;
+    }
+    const token = await ensureTgUserToken(config, String(uid), loginOpts);
+    if (!token) {
+      await ctx.reply(texts.needMoziLogin, { parse_mode: 'HTML' }).catch(() => {});
+      return;
+    }
 
     let result;
     try {
       result = await withTypingWhileAwaiting(
         ctx,
-        requestChatStream({
-          url: config.AI_CHAT_STREAM_URL,
+        requestAgentStream({
+          url: config.AI_AGENT_STREAM_URL,
           message: query,
-          lang,
-          symbol,
+          type: 'chat',
+          auth: token,
           appUrl: config.APP_URL,
           timeoutMs: config.AI_CHAT_STREAM_TIMEOUT_MS,
         }),
@@ -69,8 +77,7 @@ function registerChat(bot, config, { getTexts }, registeredGate, loginGate) {
         userMessage: err?.userMessage ?? null,
         rawBody: err?.rawBody ?? null,
         streamHint: err?.streamHint ?? null,
-        chatStreamUrl: config.AI_CHAT_STREAM_URL,
-        symbolIntent: symbol,
+        agentStreamUrl: config.AI_AGENT_STREAM_URL,
       });
       if (err?.userMessage) {
         await ctx.reply(escapeHtml(err.userMessage), { parse_mode: 'HTML' });

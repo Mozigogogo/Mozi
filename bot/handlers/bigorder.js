@@ -1,9 +1,9 @@
 /**
- * /bigorder <内容>：POST …/bigorder/v1/chat（SSE）；与 H5 大单侦测一致，不扣积分
+ * /bigorder <内容>：POST /ai/agent/stream type=bigorder；与 H5 一致，不扣积分
  */
 
 const { extractBigorderQuery } = require('../lib/aiQuery');
-const { requestBigorderStream } = require('../lib/apis');
+const { requestAgentStream } = require('../lib/apis');
 const { ensureTgUserToken } = require('../lib/tgUserTokenCache');
 const { buildTelegramLoginOpts } = require('../lib/datainfoPoints');
 const { withTypingWhileAwaiting } = require('../lib/telegramTypingPulse');
@@ -37,16 +37,14 @@ function registerBigorder(bot, config, { getTexts }, registeredGate, loginGate) 
       return;
     }
 
-    const lang = (languageCode || 'en').toLowerCase().startsWith('zh') ? 'zh' : 'en';
-
     let result;
     try {
       result = await withTypingWhileAwaiting(
         ctx,
-        requestBigorderStream({
-          url: config.BIGORDER_CHAT_URL,
+        requestAgentStream({
+          url: config.AI_AGENT_STREAM_URL,
           message: query,
-          lang,
+          type: 'bigorder',
           auth: token,
           appUrl: config.APP_URL,
           timeoutMs: config.AI_CHAT_STREAM_TIMEOUT_MS,
@@ -65,7 +63,7 @@ function registerBigorder(bot, config, { getTexts }, registeredGate, loginGate) 
         userMessage: err?.userMessage ?? null,
         rawBody: err?.rawBody ?? null,
         streamHint: err?.streamHint ?? null,
-        bigorderUrl: config.BIGORDER_CHAT_URL,
+        agentStreamUrl: config.AI_AGENT_STREAM_URL,
       });
       if (err?.userMessage) {
         await ctx.reply(escapeHtml(err.userMessage), { parse_mode: 'HTML' });
