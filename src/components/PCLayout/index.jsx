@@ -35,7 +35,7 @@ import BenefitCodeModal from '../BenefitCodeModal';
 import BindBenefitCodeModal from '../BindBenefitCodeModal';
 import UserProfilePanelPopup from '../UserProfilePanelPopup';
 import GeneralPopup from '@/app/user/components/GeneralPopup';
-import { getAgentConversations } from '@/api/ai';
+import { getChatConversations } from '@/api/ai';
 import { request } from '@/utils/request';
 import { EMAIL, Interface } from '@/utils/constants';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
@@ -342,7 +342,7 @@ export default function PCLayout({ children }) {
         setAiConversations([]);
         return;
       }
-      const res = await getAgentConversations();
+      const res = await getChatConversations();
       if (res?.data?.isLogin === false) {
         setAiConversations([]);
         return;
