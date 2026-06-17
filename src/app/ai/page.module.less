@@ -66,6 +66,9 @@
   }
 
   &.pcMode {
+    --pc-chat-rail-width: 68%;
+    --pc-chat-rail-gutter: 5.5%;
+
     height: calc(100vh - 120PX); // Use PX to avoid scaling. 64px header + 24px padding + 32px bottom gap
     background: transparent;
     background-image: none;
@@ -116,21 +119,24 @@
       min-height: 0;
       display: flex;
       flex-direction: column;
-      width: 100%;
-      max-width: 900PX;
+      width: var(--pc-chat-rail-width);
+      max-width: 100%;
       margin: 0 auto;
-      padding: 0 24PX;
+      padding: 0 2.5%;
       box-sizing: border-box;
     }
 
     @media screen and (max-width: 1280px) {
+      --pc-chat-rail-gutter: 1.5%;
+
       .chatInputBar {
-        grid-template-columns: 16PX minmax(0, 1fr) 16PX;
+        grid-template-columns: var(--pc-chat-rail-gutter) minmax(0, 1fr) var(--pc-chat-rail-gutter);
         padding: 20PX 0;
       }
     }
 
     @media screen and (max-width: 1160px) {
+      --pc-chat-rail-gutter: 1%;
       .emptyState {
         max-width: 100%;
         padding: 0 8PX;
@@ -147,7 +153,7 @@
       }
 
       .chatInputBar {
-        grid-template-columns: 8PX minmax(0, 1fr) 8PX;
+        grid-template-columns: var(--pc-chat-rail-gutter) minmax(0, 1fr) var(--pc-chat-rail-gutter);
         padding: 16PX 0;
       }
     }
@@ -224,9 +230,9 @@
         padding-left: 24PX;
         padding-right: 24PX;
         padding-bottom: 12PX;
-        max-width: 1000PX;
+        width: var(--pc-chat-rail-width);
+        max-width: 100%;
         margin: 0 auto;
-        width: 100%;
         box-sizing: border-box;
         border-bottom: none;
 
@@ -293,7 +299,7 @@
           width: 100%;
           gap: 0;
           display: grid;
-          grid-template-columns: 50PX minmax(0, 1fr) 50PX;
+          grid-template-columns: var(--pc-chat-rail-gutter) minmax(0, 1fr) var(--pc-chat-rail-gutter);
           align-items: start;
         }
 
@@ -347,6 +353,13 @@
           max-width: none;
           width: 100%;
           min-width: 0;
+          gap: 20PX;
+          overflow: visible;
+
+          .bubble {
+            position: relative;
+            z-index: 2;
+          }
         }
 
         .bubble {
@@ -511,7 +524,7 @@
       .chatInputBar {
         flex-shrink: 0;
         display: grid;
-        grid-template-columns: 50PX minmax(0, 1fr) 50PX;
+        grid-template-columns: var(--pc-chat-rail-gutter) minmax(0, 1fr) var(--pc-chat-rail-gutter);
         align-items: center;
         padding: 24PX 0;
         justify-content: stretch;
@@ -540,7 +553,21 @@
           border-radius: 28PX;
           padding: 8PX 16PX;
           box-sizing: border-box;
-          
+          /* 固定 PX，避免 cqw 导致宽屏字号反而变小 */
+          --mode-font-size: 13PX;
+          --mode-icon-size: 15PX;
+          --mode-item-min-h: 32PX;
+          --mode-item-pad-y: 4PX;
+          --mode-item-pad-x: 10PX;
+          --mode-item-pad-left: 6PX;
+          --mode-item-gap: 8PX;
+          --mode-item-radius: 14PX;
+          --tool-btn-size: 32PX;
+          --tool-icon-size: 15PX;
+          --points-font-size: 12PX;
+          --points-icon-size: 14PX;
+          --action-gap: 10PX;
+
           .input {
             height: 40PX;
             font-size: 15PX;
@@ -552,8 +579,47 @@
           }
         }
 
+        @container chat-input (min-width: 640px) {
+          .inputBox {
+            --mode-font-size: 14PX;
+            --mode-icon-size: 16PX;
+            --mode-item-min-h: 34PX;
+            --tool-btn-size: 34PX;
+            --tool-icon-size: 16PX;
+            --points-font-size: 13PX;
+            --points-icon-size: 15PX;
+          }
+        }
+
+        @container chat-input (min-width: 780px) {
+          .inputBox {
+            --mode-font-size: 14PX;
+            --mode-icon-size: 17PX;
+            --mode-item-min-h: 36PX;
+            --mode-item-pad-x: 12PX;
+            --tool-btn-size: 36PX;
+            --tool-icon-size: 17PX;
+            --points-font-size: 13PX;
+            --action-gap: 12PX;
+          }
+        }
+
+        @container chat-input (min-width: 920px) {
+          .inputBox {
+            --mode-font-size: 15PX;
+            --mode-icon-size: 18PX;
+            --mode-item-min-h: 38PX;
+            --mode-item-pad-x: 14PX;
+            --tool-btn-size: 38PX;
+            --tool-icon-size: 18PX;
+            --points-font-size: 14PX;
+            --points-icon-size: 16PX;
+            --action-gap: 14PX;
+          }
+        }
+
         .inputActions {
-          gap: clamp(6PX, 1.5cqw, 12PX);
+          gap: var(--action-gap);
           flex-wrap: nowrap;
           align-items: center;
         }
@@ -561,8 +627,8 @@
         .actionModes {
           flex: 1 1 0;
           flex-wrap: nowrap;
-          gap: clamp(3PX, 1cqw, 8PX);
-          min-height: clamp(24PX, 4.5cqw, 30PX);
+          gap: var(--mode-item-gap);
+          min-height: var(--mode-item-min-h);
           height: auto;
           min-width: 0;
         }
@@ -570,166 +636,116 @@
         .modeItem {
           flex: 0 1 auto;
           min-width: 0;
-          font-size: clamp(9PX, 1.65cqw, 12PX);
-          gap: clamp(2PX, 0.55cqw, 4PX);
+          font-size: var(--mode-font-size) !important;
+          gap: 6PX;
           padding:
-            clamp(2PX, 0.65cqw, 4PX)
-            clamp(3PX, 1.35cqw, 10PX)
-            clamp(2PX, 0.65cqw, 4PX)
-            clamp(3PX, 0.95cqw, 6PX);
-          border-radius: clamp(10PX, 2cqw, 14PX);
-          min-height: clamp(24PX, 4.5cqw, 30PX);
+            var(--mode-item-pad-y)
+            var(--mode-item-pad-x)
+            var(--mode-item-pad-y)
+            var(--mode-item-pad-left);
+          border-radius: var(--mode-item-radius);
+          min-height: var(--mode-item-min-h);
           height: auto;
         }
 
         .modeIconWrap {
-          width: clamp(12PX, 2.4cqw, 16PX);
-          height: clamp(12PX, 2.4cqw, 16PX);
-        }
+          width: var(--mode-icon-size);
+          height: var(--mode-icon-size);
+          flex-shrink: 0;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
 
-        .modeIcon {
-          width: clamp(10PX, 2.1cqw, 14PX) !important;
-          height: clamp(10PX, 2.1cqw, 14PX) !important;
+          .modeIcon,
+          img {
+            width: 100% !important;
+            height: 100% !important;
+            max-width: none !important;
+            max-height: none !important;
+            object-fit: contain;
+            flex-shrink: 0;
+          }
         }
 
         .modeIconDeep {
-          width: clamp(9PX, 1.9cqw, 13PX) !important;
-          height: clamp(11PX, 2.4cqw, 16PX) !important;
+          width: 78% !important;
+          height: 100% !important;
         }
 
         .modeIconBigOrder,
         .modeIconSignals {
-          width: clamp(10PX, 2.1cqw, 14PX) !important;
-          height: clamp(10PX, 2.1cqw, 14PX) !important;
           color: #6a7282;
         }
 
         .modeLabel {
-          font-size: clamp(9PX, 1.65cqw, 12PX);
+          font-size: 1em !important;
           line-height: 1;
           white-space: nowrap;
         }
 
         .actionTools {
-          gap: clamp(6PX, 1.5cqw, 12PX);
+          gap: var(--action-gap);
           flex: 0 0 auto;
           margin-left: auto;
         }
 
         .pointsTag {
-          height: clamp(22PX, 4.2cqw, 30PX);
-          padding: 0 clamp(6PX, 1.8cqw, 14PX);
-          border-radius: clamp(10PX, 2.2cqw, 16PX);
-          font-size: clamp(8PX, 1.65cqw, 12PX);
+          height: var(--mode-item-min-h);
+          padding: 0 var(--mode-item-pad-x);
+          border-radius: var(--mode-item-radius);
+          font-size: var(--points-font-size) !important;
           line-height: 1;
-          gap: clamp(2PX, 0.65cqw, 6PX);
+          gap: 6PX;
           flex: 0 1 auto;
           min-width: 0;
           white-space: nowrap;
         }
 
         .pointsIcon {
-          width: clamp(10PX, 2.1cqw, 14PX) !important;
-          height: clamp(10PX, 2.1cqw, 14PX) !important;
+          width: var(--points-icon-size) !important;
+          height: var(--points-icon-size) !important;
+          flex-shrink: 0;
+          object-fit: contain;
         }
 
         .micBtn {
-          width: clamp(24PX, 4.5cqw, 30PX);
-          height: clamp(24PX, 4.5cqw, 30PX);
+          width: var(--tool-btn-size);
+          height: var(--tool-btn-size);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+
+          .micIcon,
+          img {
+            width: var(--tool-icon-size) !important;
+            height: var(--tool-icon-size) !important;
+            object-fit: contain;
+          }
         }
 
         .sendBtn, .stopBtn {
-          width: clamp(28PX, 5.2cqw, 36PX);
-          height: clamp(28PX, 5.2cqw, 36PX);
+          width: var(--tool-btn-size);
+          height: var(--tool-btn-size);
           border-radius: 50%;
           padding: 0;
           display: flex;
           align-items: center;
           justify-content: center;
-          
-          svg {
-              width: 16PX;
-              height: 16PX;
-              margin: 0;
-          }
 
+          .sendIcon,
+          .pauseIcon,
           img {
-              width: 16PX;
-              height: 16PX;
-              margin: 0;
-              display: block;
-          }
-        }
-        
-        .pauseIcon {
-            width: 14PX;
-            height: 14PX;
-        }
-
-        @container chat-input (max-width: 920px) {
-          .modeItem {
-            font-size: clamp(8PX, 1.5cqw, 11PX);
-            padding: clamp(2PX, 0.5cqw, 4PX) clamp(3PX, 1cqw, 8PX);
+            width: var(--tool-icon-size) !important;
+            height: var(--tool-icon-size) !important;
+            margin: 0;
+            display: block;
+            object-fit: contain;
           }
 
-          .modeLabel {
-            font-size: clamp(8PX, 1.5cqw, 11PX);
-          }
-
-          .pointsTag {
-            font-size: clamp(8PX, 1.5cqw, 11PX);
-            height: clamp(20PX, 3.8cqw, 28PX);
-            padding: 0 clamp(5PX, 1.5cqw, 10PX);
-          }
-
-          .pointsIcon {
-            width: clamp(9PX, 1.9cqw, 12PX) !important;
-            height: clamp(9PX, 1.9cqw, 12PX) !important;
-          }
-
-          .actionTools {
-            gap: clamp(4PX, 1.2cqw, 8PX);
-          }
-        }
-
-        @container chat-input (max-width: 620px) {
-          .actionModes {
-            gap: clamp(3PX, 0.9cqw, 5PX);
-          }
-
-          .modeItem {
-            font-size: clamp(7PX, 1.3cqw, 10PX);
-            padding: 2PX 4PX;
-            min-height: 22PX;
-          }
-
-          .modeLabel {
-            font-size: clamp(7PX, 1.3cqw, 10PX);
-          }
-
-          .pointsTag {
-            font-size: clamp(7PX, 1.3cqw, 10PX);
-            height: clamp(18PX, 3.5cqw, 24PX);
-            padding: 0 clamp(4PX, 1.2cqw, 8PX);
-          }
-
-          .pointsIcon {
-            width: clamp(8PX, 1.7cqw, 11PX) !important;
-            height: clamp(8PX, 1.7cqw, 11PX) !important;
-          }
-
-          .micBtn {
-            width: clamp(22PX, 4cqw, 28PX);
-            height: clamp(22PX, 4cqw, 28PX);
-          }
-
-          .sendBtn, .stopBtn {
-            width: clamp(24PX, 4.6cqw, 32PX);
-            height: clamp(24PX, 4.6cqw, 32PX);
-          }
-
-          .actionTools {
-            gap: 4PX;
+          svg {
+            width: var(--tool-icon-size);
+            height: var(--tool-icon-size);
+            margin: 0;
           }
         }
       }
@@ -993,7 +1009,13 @@
     max-width: 100%;
     width: 100%;
     min-width: 0;
-    gap: 8PX;
+    gap: 16PX;
+    overflow: visible;
+
+    .bubble {
+      position: relative;
+      z-index: 2;
+    }
   }
 
   .avatar {
@@ -1246,55 +1268,57 @@
     font-weight: 400;
   }
 
-  @container chat-input (max-width: 920px) {
-    .modeItem {
-      font-size: clamp(8PX, 1.5cqw, 11PX);
-      padding: 3PX 6PX;
+  &:not(.pcMode) {
+    @container chat-input (max-width: 920px) {
+      .modeItem {
+        font-size: clamp(8PX, 1.5cqw, 11PX);
+        padding: 3PX 6PX;
+      }
+
+      .modeLabel {
+        font-size: clamp(8PX, 1.5cqw, 11PX);
+      }
+
+      .pointsTag {
+        font-size: clamp(8PX, 1.5cqw, 11PX);
+        height: clamp(20PX, 3.8cqw, 28PX);
+        padding: 0 clamp(5PX, 1.5cqw, 10PX);
+      }
+
+      .pointsIcon {
+        width: clamp(9PX, 1.9cqw, 12PX) !important;
+        height: clamp(9PX, 1.9cqw, 12PX) !important;
+      }
     }
 
-    .modeLabel {
-      font-size: clamp(8PX, 1.5cqw, 11PX);
-    }
+    @container chat-input (max-width: 620px) {
+      .actionModes {
+        gap: 4PX;
+      }
 
-    .pointsTag {
-      font-size: clamp(8PX, 1.5cqw, 11PX);
-      height: clamp(20PX, 3.8cqw, 28PX);
-      padding: 0 clamp(5PX, 1.5cqw, 10PX);
-    }
+      .modeItem {
+        font-size: clamp(7PX, 1.3cqw, 10PX);
+        padding: 2PX 4PX;
+      }
 
-    .pointsIcon {
-      width: clamp(9PX, 1.9cqw, 12PX) !important;
-      height: clamp(9PX, 1.9cqw, 12PX) !important;
-    }
-  }
+      .modeLabel {
+        font-size: clamp(7PX, 1.3cqw, 10PX);
+      }
 
-  @container chat-input (max-width: 620px) {
-    .actionModes {
-      gap: 4PX;
-    }
+      .pointsTag {
+        font-size: clamp(7PX, 1.3cqw, 10PX);
+        height: clamp(18PX, 3.5cqw, 24PX);
+        padding: 0 clamp(4PX, 1.2cqw, 8PX);
+      }
 
-    .modeItem {
-      font-size: clamp(7PX, 1.3cqw, 10PX);
-      padding: 2PX 4PX;
-    }
+      .pointsIcon {
+        width: clamp(8PX, 1.7cqw, 11PX) !important;
+        height: clamp(8PX, 1.7cqw, 11PX) !important;
+      }
 
-    .modeLabel {
-      font-size: clamp(7PX, 1.3cqw, 10PX);
-    }
-
-    .pointsTag {
-      font-size: clamp(7PX, 1.3cqw, 10PX);
-      height: clamp(18PX, 3.5cqw, 24PX);
-      padding: 0 clamp(4PX, 1.2cqw, 8PX);
-    }
-
-    .pointsIcon {
-      width: clamp(8PX, 1.7cqw, 11PX) !important;
-      height: clamp(8PX, 1.7cqw, 11PX) !important;
-    }
-
-    .actionTools {
-      gap: 6PX;
+      .actionTools {
+        gap: 6PX;
+      }
     }
   }
 
