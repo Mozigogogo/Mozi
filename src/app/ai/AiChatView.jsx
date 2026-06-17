@@ -28,15 +28,14 @@ import { notifyRouteBootReady } from '@/utils/routeBootLoading';
 import styles from './page.module.less';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import AiRobotUpgradePillButton from '@/components/AiRobotUpgradePillButton';
+import FireSignalBanner from '@/components/FireSignalBanner';
 import PointsInsufficientBubble from '@/components/PointsInsufficientBubble';
 import ShareAiChatModal from '@/components/ShareAiChatModal';
 import SignalCard from '@/components/SignalCard';
 import SignalCardCarousel from '@/components/SignalCardCarousel';
-import PCAlphaSignalPanel from '@/components/PCAlphaSignalPanel';
 import { fetchLatestScanCache } from '@/api/signals';
 import {
   getLocalizedMockAlphaSignalCards,
-  getLocalizedSidebarSignalCard,
 } from '@/data/mockAlphaSignalCards';
 
 const AGENT_STREAM_API = '/api/ai/agent/stream';
@@ -1015,7 +1014,6 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
   // 右上角 “AI Assistant Pro” 升级胶囊：只在空状态展示，开始对话后隐藏
   // 放在这里是为了确保 `isBootstrappingUserData` / `isStreaming` 已初始化
   const showUpgradePill = messages.length === 0 && !isBootstrappingUserData && !isBusy;
-  const showPcAlphaPanel = showUpgradePill;
   const isMobileEmpty = !isPC && showUpgradePill;
   const alphaAlertCount = scanCache?.signalCount ?? 3;
   
@@ -1675,11 +1673,17 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
         
         {/* 顶部标题/副标题/下拉模型选择（AI Assistant 区域）已移除 */}
 
-        <div
-          className={`${isPC ? styles.pcBody : styles.mobileBody} ${
-            isPC && showPcAlphaPanel ? styles.pcBodyWithPanel : ''
-          }`}
-        >
+        <div className={isPC ? styles.pcBody : styles.mobileBody}>
+        {isPC && showUpgradePill ? (
+          <div className={styles.pcUpgradeRow}>
+            <AiRobotUpgradePillButton
+              onClick={() => router.push('/vip-recharge')}
+              ariaLabel={t('aiAssistant.title')}
+              label={t('aiAssistant.title')}
+              className={styles.pcUpgradeBtn}
+            />
+          </div>
+        ) : null}
         <div className={isPC ? styles.pcChatColumn : styles.mobileChatColumn}>
         <div className={`${styles.chatShell} ${isPC ? styles.pcChatRail : ''}`}>
         {showUpgradePill && !isPC ? (
@@ -1954,20 +1958,20 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
         </div>
 
         <div className={styles.chatInputBar}>
-          <div className={styles.chatInputBarStack}>
-            {isMobileEmpty ? (
-              <button
-                type="button"
-                className={styles.mobileAlphaReminder}
+          <div
+            className={`${styles.chatInputBarStack} ${
+              showUpgradePill && !isPC ? styles.chatInputBarStackWithBanner : ''
+            }`}
+          >
+            <div className={styles.inputBoxWrap}>
+            {showUpgradePill ? (
+              <FireSignalBanner
+                compact={isPC}
+                shortSub={!isPC}
+                count={alphaAlertCount}
                 onClick={handleAlphaSignalViewMore}
-              >
-                <span className={styles.mobileAlphaReminderIcon} aria-hidden>
-                  🔥
-                </span>
-                <span className={styles.mobileAlphaReminderText}>
-                  探测到{alphaAlertCount}个S级/A级多维共振交易机会
-                </span>
-              </button>
+                className={styles.inputFireBanner}
+              />
             ) : null}
             <div className={styles.inputBox}>
             <input
@@ -2146,25 +2150,12 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
                 )}
               </div>
             </div>
+            </div>
           </div>
         </div>
         </div>
         </div>
         </div>
-
-        {isPC && showPcAlphaPanel ? (
-          <aside className={styles.pcRightColumn} aria-label={t('signalCard.alphaPanel.ariaLabel')}>
-            <PCAlphaSignalPanel
-              signalData={getSignalCardsFromCache(scanCache)[0] ?? getLocalizedSidebarSignalCard(t)}
-              alertCount={scanCache?.signalCount ?? 3}
-              showUpgrade={showUpgradePill}
-              onUpgrade={() => router.push('/vip-recharge')}
-              onViewMore={handleAlphaSignalViewMore}
-              upgradeLabel={t('aiAssistant.title')}
-              upgradeAriaLabel={t('aiAssistant.title')}
-            />
-          </aside>
-        ) : null}
         </div>
         
         {/* 登录提示弹窗 */}

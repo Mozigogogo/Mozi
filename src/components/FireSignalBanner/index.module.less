@@ -1,0 +1,172 @@
+.banner {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10PX;
+  max-width: 100%;
+  background: #0d0d14;
+  border: 1PX solid rgba(255, 160, 40, 0.2);
+  border-radius: 16PX;
+  padding: 10PX 20PX 10PX 10PX;
+  overflow: hidden;
+  user-select: none;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(255, 100, 0, 0.07), rgba(255, 180, 0, 0.04), transparent);
+    pointer-events: none;
+  }
+
+  &:hover {
+    border-color: rgba(255, 160, 40, 0.35);
+  }
+}
+
+.bannerCompact {
+  gap: 8PX;
+  padding: 8PX 14PX 8PX 8PX;
+  border-radius: 12PX;
+
+  .flameIcon {
+    width: 30PX;
+    height: 36PX;
+  }
+
+  .canvas {
+    width: 30PX;
+    height: 36PX;
+  }
+
+  .main {
+    font-size: 12PX;
+    letter-spacing: -0.2PX;
+  }
+
+  .sub {
+    font-size: 8PX;
+    letter-spacing: 0.3PX;
+  }
+
+  .badge {
+    font-size: 11PX;
+    padding: 2PX 8PX;
+    margin-left: 0;
+  }
+}
+
+.flameIcon {
+  position: relative;
+  width: 36PX;
+  height: 42PX;
+  flex-shrink: 0;
+}
+
+.canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 36PX;
+  height: 42PX;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 2PX;
+  min-width: 0;
+}
+
+.main {
+  font-size: 14PX;
+  font-weight: 800;
+  letter-spacing: -0.3PX;
+  line-height: 1.25;
+  background: linear-gradient(90deg, #ff6a00, #ffb340, #fff07a, #ffb340, #ff6a00);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: textFlow 3s linear infinite;
+  white-space: nowrap;
+}
+
+.sub {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9PX;
+  font-weight: 500;
+  letter-spacing: 0.4PX;
+  color: rgba(255, 180, 80, 0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge {
+  flex-shrink: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12PX;
+  font-weight: 500;
+  background: rgba(255, 140, 30, 0.12);
+  border: 1PX solid rgba(255, 140, 30, 0.3);
+  color: #ffb340;
+  padding: 3PX 10PX;
+  border-radius: 20PX;
+  margin-left: 2PX;
+  letter-spacing: 0.3PX;
+  animation: badgePulse 2.4s ease-in-out infinite;
+}
+
+.glow {
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 2PX;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 140, 30, 0.6),
+    rgba(255, 200, 60, 0.8),
+    rgba(255, 140, 30, 0.6),
+    transparent
+  );
+  animation: glowMove 2s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes textFlow {
+  to {
+    background-position: 200% center;
+  }
+}
+
+@keyframes badgePulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 140, 30, 0.25);
+  }
+
+  50% {
+    box-shadow: 0 0 0 6PX rgba(255, 140, 30, 0);
+  }
+}
+
+@keyframes glowMove {
+  from {
+    opacity: 0.5;
+    transform: scaleX(0.7);
+  }
+
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}

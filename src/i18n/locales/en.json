@@ -1015,6 +1015,12 @@
       "alert": "{{count}} Grade S/A multi-factor opportunities detected",
       "ariaLabel": "Alpha signals"
     },
+    "fireBanner": {
+      "main": "Grade S/A multi-factor opportunities detected",
+      "sub": "MULTI-DIMENSIONAL RESONANCE SIGNAL DETECTED",
+      "subShort": "S/A GRADE SIGNAL",
+      "ariaLabel": "View Alpha signals"
+    },
     "alphaQuery": "View more Grade S multi-factor trades",
     "alphaMockReply": "Based on the latest market data in your timezone, Bitcoin is in a wide range. Price is trading between $103,000–$105,000. MACD shows bullish momentum fading but no clear bearish cross yet. Watch the $103,000 support; a sustained break lower may start a new leg down.",
     "scanReply": {

@@ -86,18 +86,20 @@
       overflow: hidden;
     }
 
-    .pcBodyWithPanel {
-      display: grid;
-      /* 左侧弹性留白 | 聊天区(靠右，宽度与改前 pcChatRail 一致) | Alpha 面板 */
-      grid-template-columns:
-        minmax(0, 1fr)
-        minmax(320PX, 900PX)
-        minmax(280PX, 360PX);
-      grid-template-rows: minmax(0, 1fr);
-      column-gap: 24PX;
-      align-items: stretch;
-      padding-right: 24PX;
-      box-sizing: border-box;
+    .pcUpgradeRow {
+      position: absolute;
+      top: 16PX;
+      right: 24PX;
+      z-index: 5;
+      display: flex;
+      justify-content: flex-end;
+      pointer-events: auto;
+    }
+
+    .pcUpgradeBtn {
+      flex-shrink: 0;
+      transform: scale(1);
+      transform-origin: right top;
     }
 
     .pcChatColumn {
@@ -107,15 +109,6 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
-    }
-
-    .pcBodyWithPanel .pcChatColumn {
-      flex: none;
-      grid-column: 2;
-      grid-row: 1;
-      justify-self: end;
-      width: 100%;
-      max-width: 900PX;
     }
 
     .pcChatRail {
@@ -130,110 +123,24 @@
       box-sizing: border-box;
     }
 
-    .pcBodyWithPanel .pcChatRail {
-      width: 100%;
-      max-width: none;
-      margin: 0;
-      padding: 0 24PX 0 24PX;
-    }
-
-    .pcRightColumn {
-      position: relative;
-      grid-column: 3;
-      grid-row: 1;
-      width: 100%;
-      min-width: 0;
-      min-height: 0;
-      max-height: 100%;
-      z-index: 2;
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      overflow-x: hidden;
-      overflow-y: auto;
-      pointer-events: none;
-      padding-left: 4PX;
-      box-sizing: border-box;
-
-      > * {
-        pointer-events: auto;
-        flex: 1;
-        min-height: 0;
-      }
-    }
-
     @media screen and (max-width: 1280px) {
-      .pcBodyWithPanel {
-        grid-template-columns:
-          minmax(0, 1fr)
-          minmax(300PX, 820PX)
-          minmax(260PX, 300PX);
-        column-gap: 20PX;
-        padding-right: 16PX;
-      }
-
-      .pcBodyWithPanel .pcChatColumn {
-        max-width: 820PX;
-        padding-right: 8PX;
-        box-sizing: border-box;
-      }
-
-      .pcRightColumn {
-        padding-left: 8PX;
-      }
-
       .chatInputBar {
         grid-template-columns: 16PX minmax(0, 1fr) 16PX;
         padding: 20PX 0;
       }
     }
 
-    @media screen and (max-width: 1200px) {
-      .pcBodyWithPanel {
-        grid-template-columns:
-          minmax(0, 1fr)
-          minmax(280PX, 760PX)
-          minmax(260PX, 300PX);
-        column-gap: 24PX;
-      }
-
-      .pcBodyWithPanel .pcChatColumn {
-        max-width: 760PX;
-        padding-right: 12PX;
-      }
-
-      .pcBodyWithPanel .pcChatRail {
-        padding-right: 16PX;
-      }
-
-      .pcRightColumn {
-        padding-left: 12PX;
-      }
-    }
-
     @media screen and (max-width: 1160px) {
-      .pcBodyWithPanel {
-        grid-template-columns:
-          minmax(0, 1fr)
-          minmax(280PX, 760PX)
-          minmax(260PX, 300PX);
-        column-gap: 24PX;
-      }
-
-      .pcBodyWithPanel .pcChatColumn {
-        max-width: 760PX;
-      }
-
-      .pcBodyWithPanel .emptyState {
+      .emptyState {
         max-width: 100%;
         padding: 0 8PX;
       }
 
-      .pcBodyWithPanel .emptyGrid {
+      .emptyGrid {
         max-width: 100%;
       }
 
-      .pcBodyWithPanel .emptyTitle {
+      .emptyTitle {
         white-space: normal;
         font-size: 20PX;
         line-height: 1.3;
@@ -615,6 +522,16 @@
           grid-column: 2;
           width: 100%;
           min-width: 0;
+          flex-shrink: 0;
+        }
+
+        .inputBoxWrap {
+          gap: 8PX;
+        }
+
+        .inputFireBanner {
+          margin-left: 4PX;
+          max-width: min(480PX, 100%);
         }
 
         .inputBox {
@@ -1250,7 +1167,25 @@
     align-items: stretch;
     width: 100%;
     min-width: 0;
-    flex: 1;
+    flex-shrink: 0;
+  }
+
+  .inputBoxWrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    min-width: 0;
+    gap: 10px;
+  }
+
+  .inputFireBanner {
+    flex-shrink: 0;
+    max-width: 100%;
+  }
+
+  .chatInputBarStackWithBanner {
+    gap: 8px;
   }
 
   .inputBox {

@@ -16,6 +16,8 @@ export default function PCAlphaSignalPanel({
   onViewMore,
   upgradeLabel,
   upgradeAriaLabel,
+  inline = false,
+  className = '',
 }) {
   const { t } = useTranslation();
   const resolvedSignalData = signalData ?? getLocalizedSidebarSignalCard(t);
@@ -23,7 +25,9 @@ export default function PCAlphaSignalPanel({
   const resolvedUpgradeAriaLabel = upgradeAriaLabel ?? t('aiAssistant.title');
 
   return (
-    <div className={styles.wrapper}>
+    <div
+      className={`${styles.wrapper} ${inline ? styles.wrapperInline : ''} ${className}`.trim()}
+    >
       {showUpgrade ? (
         <div className={styles.upgradeRow}>
           <AiRobotUpgradePillButton

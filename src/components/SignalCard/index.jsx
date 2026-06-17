@@ -130,17 +130,6 @@ function calcChangePct(from, to) {
   return ((target - base) / base) * 100;
 }
 
-function parseMathNotes(display) {
-  if (!display || typeof display !== 'string') return [];
-  return display
-    .split('\n')
-    .map((line) => line.replace(/^[│\s·]+/, '').trim())
-    .filter((line) => line.startsWith('·') || line.startsWith('•'))
-    .map((line) => line.replace(/^[·•]\s*/, '').trim())
-    .filter(Boolean)
-    .slice(0, 3);
-}
-
 function parseMathChip(tag) {
   const idx = tag.indexOf(' ');
   if (idx < 0) return { label: tag, value: '' };
@@ -433,10 +422,6 @@ export default function SignalCard({
       : null;
   const regime = math.market_regime ?? math.marketRegime ?? strategy.regime;
   const strategyVersion = strategy.version ?? strategy.strategy_version;
-  const mathNotes =
-    (Array.isArray(math.notes) ? math.notes : null) ||
-    (Array.isArray(math.key_findings) ? math.key_findings : null) ||
-    parseMathNotes(data?.displayText || data?.display);
   const resolvedKelly = kellyPct ?? data?.kelly_pct ?? data?.kellyPct;
   const showExpandedDetail = isFullLayout;
 
@@ -761,34 +746,25 @@ export default function SignalCard({
         </div>
       ) : null}
 
-      {showExpandedDetail && (mathTags.length > 0 || mathNotes.length > 0) ? (
+      {showExpandedDetail && mathTags.length > 0 ? (
         <div className={`${styles.mathBlock} ${embedded ? styles.mathBlockExpanded : ''}`}>
           {!embedded ? <div className={styles.sectionHead}>{t('signalCard.mathDerivation')}</div> : null}
-          {mathTags.length > 0 ? (
-            <div className={styles.mathChips}>
-              {mathTags.map((tag) => {
-                const { label, value } = parseMathChip(tag);
-                return (
-                  <div key={tag} className={styles.mchip}>
-                    {label}
-                    {value ? (
-                      <>
-                        {' '}
-                        <span className={styles.mchipValue}>{value}</span>
-                      </>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-          ) : null}
-          {mathNotes.length > 0 ? (
-            <ul className={styles.insightList}>
-              {mathNotes.map((note) => (
-                <li key={note}>{note}</li>
-              ))}
-            </ul>
-          ) : null}
+          <div className={styles.mathChips}>
+            {mathTags.map((tag) => {
+              const { label, value } = parseMathChip(tag);
+              return (
+                <div key={tag} className={styles.mchip}>
+                  {label}
+                  {value ? (
+                    <>
+                      {' '}
+                      <span className={styles.mchipValue}>{value}</span>
+                    </>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
         </div>
       ) : null}
 
