@@ -1842,6 +1842,32 @@
 
 .newChatBtnMobile {
   margin-right: 4px;
+  gap: 6px;
+  padding: 8px 10px;
+  font-size: 14px;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+
+  .newChatIcon {
+    width: 18px;
+    height: 18px;
+
+    &::before {
+      width: 8px;
+      height: 1.5px;
+    }
+
+    &::after {
+      width: 1.5px;
+      height: 8px;
+    }
+  }
+
+  &:active {
+    background: rgba(17, 183, 135, 0.08);
+    border-color: rgba(17, 183, 135, 0.15);
+  }
 }
 
 .newChatIcon {
