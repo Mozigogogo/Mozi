@@ -24,6 +24,9 @@ export * from './signals';
 // VIP/订阅相关
 export * from './vip';
 
+// AI / Agent 相关
+export * from './ai';
+
 // 未来可以添加更多 API 模块
 // export * from './trading';
 

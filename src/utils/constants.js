@@ -385,6 +385,8 @@ export const Interface = {
   AI_CHAT_STREAM: '/ai/chat/stream',
   // Agent SSE 流式对话
   AI_AGENT_STREAM: '/ai/agent/stream',
+  // Agent 会话列表
+  AI_AGENT_CONVERSATIONS: '/ai/agent/conversations',
   // AI 聊天历史记录
   AI_CHAT_HISTORY: '/ai/chat/history',
   // AI 会话列表
