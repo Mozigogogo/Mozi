@@ -35,7 +35,8 @@ import BenefitCodeModal from '../BenefitCodeModal';
 import BindBenefitCodeModal from '../BindBenefitCodeModal';
 import UserProfilePanelPopup from '../UserProfilePanelPopup';
 import GeneralPopup from '@/app/user/components/GeneralPopup';
-import { getChatConversations } from '@/api/ai';
+import { getAgentConversations } from '@/api/ai';
+import { MOZI_AI_CONVERSATIONS_CHANGED } from '@/utils/aiConversationEvents';
 import { request } from '@/utils/request';
 import { EMAIL, Interface } from '@/utils/constants';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
@@ -76,6 +77,8 @@ function normalizeConversationsResponse(res) {
   if (Array.isArray(data?.items)) return data.items;
   return [];
 }
+
+const AI_CONVERSATIONS_PAGE_SIZE = 5;
 
 const AI_CHAT_ICON = `${CDN_PUBLIC_PREFIX}/icons/new_home/ai_chat.svg`;
 
@@ -329,6 +332,9 @@ export default function PCLayout({ children }) {
   const [alertsLoading, setAlertsLoading] = useState(false);
   const [aiConversations, setAiConversations] = useState([]);
   const [aiConversationsLoading, setAiConversationsLoading] = useState(false);
+  const [aiConversationsVisibleCount, setAiConversationsVisibleCount] = useState(
+    AI_CONVERSATIONS_PAGE_SIZE,
+  );
 
   useEffect(() => {
     setIsMineExpanded(false);
@@ -342,7 +348,7 @@ export default function PCLayout({ children }) {
         setAiConversations([]);
         return;
       }
-      const res = await getChatConversations();
+      const res = await getAgentConversations();
       if (res?.data?.isLogin === false) {
         setAiConversations([]);
         return;
@@ -363,10 +369,34 @@ export default function PCLayout({ children }) {
   }, [pathname]);
 
   useEffect(() => {
-    if (collapsed || !isAiChatExpanded) return undefined;
+    if (collapsed) return undefined;
     fetchAiConversations();
     return undefined;
-  }, [collapsed, isAiChatExpanded, pathname, fetchAiConversations]);
+  }, [collapsed, pathname, fetchAiConversations]);
+
+  useEffect(() => {
+    const onConversationsChanged = () => {
+      fetchAiConversations();
+    };
+
+    window.addEventListener(MOZI_AI_CONVERSATIONS_CHANGED, onConversationsChanged);
+    return () => window.removeEventListener(MOZI_AI_CONVERSATIONS_CHANGED, onConversationsChanged);
+  }, [fetchAiConversations]);
+
+  useEffect(() => {
+    setAiConversationsVisibleCount(AI_CONVERSATIONS_PAGE_SIZE);
+  }, [aiConversations]);
+
+  const visibleAiConversations = useMemo(
+    () => aiConversations.slice(0, aiConversationsVisibleCount),
+    [aiConversations, aiConversationsVisibleCount],
+  );
+  const hasMoreAiConversations = aiConversations.length > aiConversationsVisibleCount;
+  const shouldAiChatBodyScroll = visibleAiConversations.length > AI_CONVERSATIONS_PAGE_SIZE;
+
+  const handleLoadMoreAiConversations = useCallback(() => {
+    setAiConversationsVisibleCount((prev) => prev + AI_CONVERSATIONS_PAGE_SIZE);
+  }, []);
 
   const fetchWatchlist = useCallback(async () => {
     setWatchlistLoading(true);
@@ -1301,46 +1331,61 @@ export default function PCLayout({ children }) {
                   />
                 </button>
                 {isAiChatExpanded && (
-                  <div className={styles.pcAiChatBody}>
-                    {aiConversationsLoading && aiConversations.length === 0 ? (
-                      <div className={`${styles.pcWatchlistHint} ${styles.pcWatchlistHintCenter}`}>
-                        {t('common.loading')}
-                      </div>
-                    ) : aiConversations.length === 0 ? (
-                      <div className={`${styles.pcWatchlistHint} ${styles.pcWatchlistHintCenter}`}>
-                        {t('pcLayout.menu.noAiConversations', {
-                          defaultValue: (i18n?.language || '').startsWith('en')
-                            ? 'No conversations yet'
-                            : '暂无对话',
-                        })}
-                      </div>
-                    ) : (
-                      aiConversations.map((item) => {
-                        const conversationId = getConversationId(item);
-                        if (!conversationId) return null;
-                        const isRowActive = activeAiConversationId === conversationId;
-                        const title = getConversationTitle(item, aiConversationFallback);
-                        return (
-                          <button
-                            key={conversationId}
-                            type="button"
-                            className={`${styles.pcAiChatRow} ${
-                              isRowActive ? styles.pcAiChatRowActive : ''
-                            }`}
-                            onClick={() => {
-                              setActiveContent(null);
-                              setShowSearchResults(false);
-                              router.push(`/ai/${conversationId}`);
-                            }}
-                          >
-                            <span className={styles.pcAiChatRowIcon} aria-hidden>
-                              <AiChatMaskIcon color={isRowActive ? '#11b787' : '#94a3b8'} />
-                            </span>
-                            <span className={styles.pcAiChatRowLabel}>{title}</span>
-                          </button>
-                        );
-                      })
-                    )}
+                  <div className={styles.pcAiChatSection}>
+                    <div
+                      className={`${styles.pcAiChatBody} ${
+                        shouldAiChatBodyScroll ? styles.pcAiChatBodyScrollable : ''
+                      }`}
+                    >
+                      {aiConversationsLoading && aiConversations.length === 0 ? (
+                        <div className={`${styles.pcWatchlistHint} ${styles.pcWatchlistHintCenter}`}>
+                          {t('common.loading')}
+                        </div>
+                      ) : aiConversations.length === 0 ? (
+                        <div className={`${styles.pcWatchlistHint} ${styles.pcWatchlistHintCenter}`}>
+                          {t('pcLayout.menu.noAiConversations', {
+                            defaultValue: (i18n?.language || '').startsWith('en')
+                              ? 'No conversations yet'
+                              : '暂无对话',
+                          })}
+                        </div>
+                      ) : (
+                        visibleAiConversations.map((item) => {
+                          const conversationId = getConversationId(item);
+                          if (!conversationId) return null;
+                          const isRowActive = activeAiConversationId === conversationId;
+                          const title = getConversationTitle(item, aiConversationFallback);
+                          return (
+                            <button
+                              key={conversationId}
+                              type="button"
+                              className={`${styles.pcAiChatRow} ${
+                                isRowActive ? styles.pcAiChatRowActive : ''
+                              }`}
+                              onClick={() => {
+                                setActiveContent(null);
+                                setShowSearchResults(false);
+                                router.push(`/ai/${conversationId}`);
+                              }}
+                            >
+                              <span className={styles.pcAiChatRowIcon} aria-hidden>
+                                <AiChatMaskIcon color={isRowActive ? '#11b787' : '#94a3b8'} />
+                              </span>
+                              <span className={styles.pcAiChatRowLabel}>{title}</span>
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                    {hasMoreAiConversations ? (
+                      <button
+                        type="button"
+                        className={styles.pcAiChatLoadMore}
+                        onClick={handleLoadMoreAiConversations}
+                      >
+                        {t('common.loadMore')}
+                      </button>
+                    ) : null}
                   </div>
                 )}
               </div>

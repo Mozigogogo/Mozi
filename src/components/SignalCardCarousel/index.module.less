@@ -13,6 +13,44 @@
   container-name: signal-card-carousel-3d;
 }
 
+.carousel3dMobile {
+  margin-top: 4PX;
+  margin-left: -10px;
+  margin-right: -4px;
+  width: calc(100% + 14px);
+  max-width: calc(100% + 14px);
+  touch-action: pan-y;
+  overflow-x: visible;
+  overflow-y: visible;
+
+  .scene {
+    padding-top: 8PX;
+  }
+
+  .cardSlot {
+    top: calc(8PX + var(--center-card-height, 420px) / 2);
+  }
+
+  .hitZone {
+    top: 8PX;
+    height: calc(var(--center-card-height, 420px) + 8PX);
+  }
+
+  .cardSlot .cardItem {
+    --sc-header-py: 10PX;
+    --sc-header-px: 12PX;
+    --sc-section-px: 12PX;
+    --sc-price-size: clamp(22PX, 8.5cqw, 28PX);
+    --sc-metric-val: clamp(13PX, 5cqw, 16PX);
+    --sc-ring-size: clamp(40PX, 14cqw, 48PX);
+    --sc-spark-h: clamp(30PX, 10.5cqw, 38PX);
+    --sc-font-xs: 10PX;
+    --sc-font-sm: 11PX;
+    --sc-sig-name-min: 56PX;
+    --sc-block-gap: 10PX;
+  }
+}
+
 .scene {
   position: relative;
   width: 100%;
@@ -132,6 +170,13 @@
       cursor: grabbing;
     }
   }
+}
+
+.carouselSingleMobile {
+  margin-left: -10px;
+  margin-right: -4px;
+  width: calc(100% + 14px);
+  max-width: calc(100% + 14px);
 }
 
 .carouselSingle {

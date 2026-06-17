@@ -387,6 +387,7 @@ export const Interface = {
   AI_AGENT_STREAM: '/ai/agent/stream',
   // Agent 会话列表
   AI_AGENT_CONVERSATIONS: '/ai/agent/conversations',
+  // Agent 会话消息：GET /ai/agent/conversations/{conversationId}/messages
   // AI 聊天历史记录
   AI_CHAT_HISTORY: '/ai/chat/history',
   // AI 会话列表

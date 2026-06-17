@@ -68,6 +68,7 @@
   &.pcMode {
     --pc-chat-rail-width: 68%;
     --pc-chat-rail-gutter: 5.5%;
+    @pc-msg-avatar-slot: 50PX;
 
     height: calc(100vh - 120PX); // Use PX to avoid scaling. 64px header + 24px padding + 32px bottom gap
     background: transparent;
@@ -305,6 +306,23 @@
 
         .msgRow.left {
           justify-content: stretch;
+
+          .avatarCol {
+            grid-column: 2;
+            grid-row: 1;
+            justify-self: start;
+            align-self: start;
+          }
+
+          .msgContent {
+            grid-column: 2;
+            grid-row: 1;
+            justify-self: start;
+            width: calc(100% - @pc-msg-avatar-slot);
+            max-width: calc(100% - @pc-msg-avatar-slot);
+            margin-left: @pc-msg-avatar-slot;
+            min-width: 0;
+          }
         }
 
         .msgRow.right {
@@ -312,15 +330,20 @@
 
           .msgContent {
             grid-column: 2;
+            grid-row: 1;
             justify-self: end;
-            width: auto;
-            max-width: 100%;
+            width: calc(100% - @pc-msg-avatar-slot);
+            max-width: calc(100% - @pc-msg-avatar-slot);
+            margin-right: @pc-msg-avatar-slot;
+            min-width: 0;
             align-items: flex-end;
           }
 
           .avatarCol {
-            grid-column: 3;
+            grid-column: 2;
+            grid-row: 1;
             justify-self: end;
+            align-self: start;
           }
 
           .bubble {
@@ -332,15 +355,6 @@
             width: auto;
             justify-content: flex-end;
           }
-        }
-
-        .msgRow.left .avatarCol {
-          grid-column: 1;
-        }
-
-        .msgRow.left .msgContent {
-          grid-column: 2;
-          min-width: 0;
         }
 
         .msgContent {
@@ -674,7 +688,7 @@
 
         .modeIconBigOrder,
         .modeIconSignals {
-          color: #6a7282;
+          color: currentColor;
         }
 
         .modeLabel {
@@ -757,7 +771,7 @@
         padding: 0;
         box-sizing: border-box;
         display: grid;
-        grid-template-columns: 50PX minmax(0, 1fr) 50PX;
+        grid-template-columns: var(--pc-chat-rail-gutter) minmax(0, 1fr) var(--pc-chat-rail-gutter);
         align-items: start;
         background: transparent;
         border: none;
@@ -767,6 +781,7 @@
 
         .suggestedTitle {
           grid-column: 2;
+          margin-left: @pc-msg-avatar-slot;
           margin-bottom: 10PX;
           font-size: 14PX;
           font-weight: 400;
@@ -777,6 +792,7 @@
 
         .suggestedList {
           grid-column: 2;
+          margin-left: @pc-msg-avatar-slot;
           display: flex;
           flex-direction: column;
           align-items: flex-start;
@@ -973,7 +989,7 @@
   .msgRow {
     display: flex;
     align-items: flex-start;
-    gap: 5px; // 10rpx→5px
+    gap: 8px;
     position: relative;
 
     &.left {
@@ -1015,6 +1031,20 @@
     .bubble {
       position: relative;
       z-index: 2;
+    }
+  }
+
+  &:not(.pcMode) {
+    .msgRow.left .msgContentCarousel {
+      flex: 1;
+      min-width: 0;
+      max-width: none;
+      width: auto;
+      overflow: visible;
+    }
+
+    .msgRow.left:has(.msgContentCarousel) {
+      overflow: visible;
     }
   }
 
@@ -1269,56 +1299,24 @@
   }
 
   &:not(.pcMode) {
-    @container chat-input (max-width: 920px) {
-      .modeItem {
-        font-size: clamp(8PX, 1.5cqw, 11PX);
-        padding: 3PX 6PX;
-      }
-
-      .modeLabel {
-        font-size: clamp(8PX, 1.5cqw, 11PX);
-      }
-
-      .pointsTag {
-        font-size: clamp(8PX, 1.5cqw, 11PX);
-        height: clamp(20PX, 3.8cqw, 28PX);
-        padding: 0 clamp(5PX, 1.5cqw, 10PX);
-      }
-
-      .pointsIcon {
-        width: clamp(9PX, 1.9cqw, 12PX) !important;
-        height: clamp(9PX, 1.9cqw, 12PX) !important;
-      }
+    .modeIconWrap {
+      width: 14px;
+      height: 14px;
     }
 
-    @container chat-input (max-width: 620px) {
-      .actionModes {
-        gap: 4PX;
-      }
+    .modeDropdownCaret {
+      font-size: 11px;
+    }
 
-      .modeItem {
-        font-size: clamp(7PX, 1.3cqw, 10PX);
-        padding: 2PX 4PX;
-      }
+    .micIcon {
+      width: 18px !important;
+      height: 18px !important;
+    }
 
-      .modeLabel {
-        font-size: clamp(7PX, 1.3cqw, 10PX);
-      }
-
-      .pointsTag {
-        font-size: clamp(7PX, 1.3cqw, 10PX);
-        height: clamp(18PX, 3.5cqw, 24PX);
-        padding: 0 clamp(4PX, 1.2cqw, 8PX);
-      }
-
-      .pointsIcon {
-        width: clamp(8PX, 1.7cqw, 11PX) !important;
-        height: clamp(8PX, 1.7cqw, 11PX) !important;
-      }
-
-      .actionTools {
-        gap: 6PX;
-      }
+    .sendBtn img,
+    .stopBtn img {
+      width: 18px;
+      height: 18px;
     }
   }
 
@@ -1360,7 +1358,7 @@
     align-items: center;
     flex-wrap: nowrap;
     gap: 6px;
-    min-height: 26px;
+    min-height: 30px;
     height: auto;
     flex: 1 1 0;
     min-width: 0;
@@ -1411,6 +1409,7 @@
     flex-shrink: 0;
     width: 10px !important;
     height: 10px !important;
+    color: currentColor;
   }
 
   .modeIconDeep {
@@ -1420,7 +1419,7 @@
 
   .modeIconBigOrder,
   .modeIconSignals {
-    color: #6a7282;
+    color: currentColor;
     width: 12px !important;
     height: 12px !important;
   }
@@ -1433,7 +1432,7 @@
   /* 移动端：模型三选一，下拉面板（固定宽度，不用 flex:1 撑满） */
   .modeDropdownWrap {
     position: relative;
-    width: 108px;
+    width: 118px;
     flex-shrink: 0;
     z-index: 30;
   }
@@ -1443,14 +1442,14 @@
     align-items: center;
     justify-content: flex-start;
     width: 100%;
-    min-height: 26px;
-    padding: 3px 8px 3px 4px;
+    min-height: 30px;
+    padding: 5px 10px 5px 6px;
     margin: 0;
     border: 1px solid rgba(226, 232, 240, 1);
     border-radius: 12px;
     background: rgba(248, 250, 252, 1);
     color: rgba(106, 114, 130, 1);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
     line-height: 1;
     cursor: pointer;
@@ -1572,13 +1571,13 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    height: 26px;
-    padding: 0 14px;
+    gap: 5px;
+    height: 30px;
+    padding: 0 12px;
     border-radius: 20px;
     background: #dff4ec;
     color: #1ca674;
-    font-size: clamp(8px, 1.65cqw, 11px);
+    font-size: 12px;
     font-weight: 600;
     line-height: 1;
     white-space: nowrap;
@@ -1594,6 +1593,8 @@
   .pointsIcon {
     display: block;
     flex-shrink: 0;
+    width: 14px !important;
+    height: 14px !important;
   }
 
   .pointsIconWarning {
@@ -1605,8 +1606,8 @@
     border: none;
     background: transparent;
     color: #8c94a3;
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     padding: 0;
     font-size: 22px;
     line-height: 1;
@@ -1630,8 +1631,8 @@
     background: #95ddd3;
     color: #fff;
     border: none;
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     padding: 0;
     display: flex;
@@ -1662,8 +1663,8 @@
     background: #ff4d4f;
     color: #fff;
     border: none;
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     padding: 0;
     cursor: pointer;
@@ -1876,7 +1877,7 @@
 
 // 历史记录加载遮罩层 - 只覆盖聊天内容区域
 .loadingOverlay {
-  position: absolute; // 改为绝对定位
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
@@ -1885,8 +1886,46 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100; // 降低z-index，只需要在聊天区域内最高即可
-  backdrop-filter: none;
+  z-index: 100;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+  will-change: opacity;
+}
+
+.loadingOverlayExit {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.messagesWhileLoading {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.messagesHistoryReveal {
+  animation: historyContentFadeIn 0.24s ease forwards;
+}
+
+@keyframes historyContentFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loadingOverlay {
+    transition: none;
+  }
+
+  .messagesHistoryReveal {
+    animation: none;
+  }
 }
 
 .upgradePillInChatScrollWrapper {

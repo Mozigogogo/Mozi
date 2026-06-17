@@ -21,12 +21,13 @@ function getWrappedRel(index, current, total) {
 
 /** 与 signal_card_carousel.html 中 layout() 保持一致，仅展示 rel ∈ {-1,0,1} */
 function getCardSlotStyle(rel, total, config) {
-  const { offsetX, scaleSide, transZSide } = config;
+  const { offsetX, scaleSide, transZSide, rotateSide = 22, centerOffsetX = 0 } = config;
   const anchor = 'translate(-50%, -50%)';
 
   if (Math.abs(rel) > 1) {
+    const farX = (rel > 0 ? offsetX * 2 : -offsetX * 2) + centerOffsetX;
     return {
-      transform: `${anchor} translateX(${rel > 0 ? offsetX * 2 : -offsetX * 2}px) translateZ(-460px) rotateY(${rel > 0 ? -48 : 48}deg) scale(0.4)`,
+      transform: `${anchor} translateX(${farX}px) translateZ(-460px) rotateY(${rel > 0 ? -48 : 48}deg) scale(0.4)`,
       opacity: 0,
       filter: 'blur(6px)',
       zIndex: 0,
@@ -37,7 +38,7 @@ function getCardSlotStyle(rel, total, config) {
 
   if (rel === 0) {
     return {
-      transform: `${anchor} translateX(0px) translateZ(0px) rotateY(0deg) scale(1)`,
+      transform: `${anchor} translateX(${centerOffsetX}px) translateZ(0px) rotateY(0deg) scale(1)`,
       opacity: 1,
       filter: 'none',
       zIndex: 10,
@@ -48,13 +49,13 @@ function getCardSlotStyle(rel, total, config) {
   }
 
   const isRight = rel === 1 || rel === -(total - 1);
-  const tx = isRight ? offsetX : -offsetX;
-  const ry = isRight ? -22 : 22;
+  const tx = (isRight ? offsetX : -offsetX) + centerOffsetX;
+  const ry = isRight ? -rotateSide : rotateSide;
 
   return {
     transform: `${anchor} translateX(${tx}px) translateZ(${transZSide}px) rotateY(${ry}deg) scale(${scaleSide})`,
-    opacity: 0.65,
-    filter: 'blur(2px)',
+    opacity: config.sideOpacity ?? 0.65,
+    filter: config.sideBlur ? `blur(${config.sideBlur}px)` : 'blur(2px)',
     zIndex: 5,
     pointerEvents: 'auto',
     visibility: 'visible',
@@ -62,8 +63,27 @@ function getCardSlotStyle(rel, total, config) {
   };
 }
 
-function getLayoutConfig(containerWidth) {
+function getLayoutConfig(containerWidth, isPC = false) {
   const width = Math.max(280, containerWidth || 900);
+  const isMobileLayout = !isPC || width < 640;
+
+  if (isMobileLayout) {
+    const cardWidth = Math.round(width * 0.84);
+    return {
+      cardWidth,
+      offsetX: Math.round(width * 0.26),
+      scaleSide: 0.9,
+      transZSide: -32,
+      transZFar: -140,
+      perspective: Math.max(480, Math.min(680, width * 1.05)),
+      sceneHeight: Math.round(Math.max(260, width * 0.7)),
+      rotateSide: 8,
+      sideOpacity: 0.72,
+      sideBlur: 1,
+      centerOffsetX: Math.round(-width * 0.03),
+    };
+  }
+
   const scale = Math.min(1, Math.max(0.45, width / 900));
   const cardWidth = Math.round(Math.min(340, Math.max(160, width * 0.38)));
 
@@ -75,15 +95,24 @@ function getLayoutConfig(containerWidth) {
     transZFar: -320 * scale,
     perspective: Math.max(560, Math.min(1200, 1200 * scale)),
     sceneHeight: Math.round(Math.min(560, Math.max(340, width * 0.58))),
+    rotateSide: 22,
+    sideOpacity: 0.65,
+    sideBlur: 2,
   };
 }
 
 export default function SignalCardCarousel({ cards = [], isPC = false }) {
   const wrapRef = useRef(null);
   const sceneRef = useRef(null);
-  const dragRef = useRef({ startX: null, dragging: false, moved: false });
+  const dragRef = useRef({
+    startX: null,
+    startY: null,
+    dragging: false,
+    moved: false,
+    isHorizontal: null,
+  });
   const [current, setCurrent] = useState(0);
-  const [layoutConfig, setLayoutConfig] = useState(() => getLayoutConfig(900));
+  const [layoutConfig, setLayoutConfig] = useState(() => getLayoutConfig(900, isPC));
   const [measuredSceneHeight, setMeasuredSceneHeight] = useState(null);
   const [centerCardHeight, setCenterCardHeight] = useState(0);
   const [centerCardWidth, setCenterCardWidth] = useState(0);
@@ -99,13 +128,13 @@ export default function SignalCardCarousel({ cards = [], isPC = false }) {
     const el = wrapRef.current;
     if (!el || isSingle) return undefined;
 
-    const update = () => setLayoutConfig(getLayoutConfig(el.clientWidth));
+    const update = () => setLayoutConfig(getLayoutConfig(el.clientWidth, isPC));
     update();
 
     const observer = new ResizeObserver(update);
     observer.observe(el);
     return () => observer.disconnect();
-  }, [isSingle]);
+  }, [isSingle, isPC]);
 
   useEffect(() => {
     if (isSingle) return undefined;
@@ -169,43 +198,104 @@ export default function SignalCardCarousel({ cards = [], isPC = false }) {
   useEffect(() => {
     if (isSingle) return undefined;
 
+    const wrap = wrapRef.current;
+    if (!wrap) return undefined;
+
+    const swipeThreshold = isPC ? DRAG_THRESHOLD : 24;
+
+    const shouldIgnoreTarget = (target) =>
+      target.closest('button, a') && !target.closest(`.${styles.hitZone}`);
+
     const onPointerDown = (event) => {
-      if (event.button !== 0) return;
-      if (
-        event.target.closest('button, a') &&
-        !event.target.closest(`.${styles.hitZone}`)
-      ) {
-        return;
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      if (shouldIgnoreTarget(event.target)) return;
+
+      dragRef.current = {
+        startX: event.clientX,
+        startY: event.clientY,
+        dragging: true,
+        moved: false,
+        isHorizontal: null,
+      };
+
+      try {
+        wrap.setPointerCapture(event.pointerId);
+      } catch (_) {
+        // ignore
       }
-      dragRef.current = { startX: event.clientX, dragging: true, moved: false };
+    };
+
+    const onPointerMove = (event) => {
+      const drag = dragRef.current;
+      if (!drag.dragging || drag.startX === null) return;
+
+      const dx = event.clientX - drag.startX;
+      const dy = event.clientY - (drag.startY ?? event.clientY);
+
+      if (drag.isHorizontal === null && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
+        drag.isHorizontal = Math.abs(dx) > Math.abs(dy);
+      }
+
+      if (drag.isHorizontal) {
+        event.preventDefault();
+      }
+    };
+
+    const resetDrag = () => {
+      dragRef.current = {
+        startX: null,
+        startY: null,
+        dragging: false,
+        moved: dragRef.current.moved,
+        isHorizontal: null,
+      };
     };
 
     const onPointerUp = (event) => {
-      if (!dragRef.current.dragging || dragRef.current.startX === null) return;
+      const drag = dragRef.current;
+      if (!drag.dragging || drag.startX === null) return;
 
-      const dx = event.clientX - dragRef.current.startX;
-      dragRef.current.dragging = false;
-      dragRef.current.startX = null;
+      const dx = event.clientX - drag.startX;
 
-      if (Math.abs(dx) >= DRAG_THRESHOLD) {
-        dragRef.current.moved = true;
-        if (dx < -DRAG_THRESHOLD) goNext();
-        else if (dx > DRAG_THRESHOLD) goPrev();
+      try {
+        wrap.releasePointerCapture(event.pointerId);
+      } catch (_) {
+        // ignore
+      }
+
+      if (drag.isHorizontal !== false && Math.abs(dx) >= swipeThreshold) {
+        drag.moved = true;
+        if (dx < -swipeThreshold) goNext();
+        else if (dx > swipeThreshold) goPrev();
         window.setTimeout(() => {
           dragRef.current.moved = false;
-        }, 0);
+        }, 50);
       }
+
+      resetDrag();
     };
 
-    const wrap = wrapRef.current;
-    wrap?.addEventListener('pointerdown', onPointerDown);
-    window.addEventListener('pointerup', onPointerUp);
+    const onPointerCancel = (event) => {
+      try {
+        wrap.releasePointerCapture(event.pointerId);
+      } catch (_) {
+        // ignore
+      }
+      resetDrag();
+    };
+
+    wrap.addEventListener('pointerdown', onPointerDown, { capture: true });
+    wrap.addEventListener('pointermove', onPointerMove, { passive: false, capture: true });
+    wrap.addEventListener('pointerup', onPointerUp, { capture: true });
+    wrap.addEventListener('pointercancel', onPointerCancel, { capture: true });
 
     return () => {
-      wrap?.removeEventListener('pointerdown', onPointerDown);
-      window.removeEventListener('pointerup', onPointerUp);
+      wrap.removeEventListener('pointerdown', onPointerDown, { capture: true });
+      wrap.removeEventListener('pointermove', onPointerMove, { capture: true });
+      wrap.removeEventListener('pointerup', onPointerUp, { capture: true });
+      wrap.removeEventListener('pointercancel', onPointerCancel, { capture: true });
     };
-  }, [goNext, goPrev, isSingle]);
+  }, [goNext, goPrev, isPC, isSingle]);
 
   useEffect(() => {
     if (isSingle) return undefined;
@@ -232,7 +322,7 @@ export default function SignalCardCarousel({ cards = [], isPC = false }) {
   if (isSingle) {
     return (
       <div
-        className={`${styles.carousel} ${styles.carouselSingle}`}
+        className={`${styles.carousel} ${styles.carouselSingle} ${!isPC ? styles.carouselSingleMobile : ''}`}
         role="list"
         aria-label="信号卡片列表"
       >
@@ -248,9 +338,10 @@ export default function SignalCardCarousel({ cards = [], isPC = false }) {
   return (
     <div
       ref={wrapRef}
-      className={styles.carousel3d}
+      className={`${styles.carousel3d} ${!isPC ? styles.carousel3dMobile : ''}`}
       style={{
         perspective: `${layoutConfig.perspective}px`,
+        perspectiveOrigin: !isPC ? '48% 42%' : '50% 50%',
         '--center-card-height': `${centerHeightVar}px`,
         '--center-card-half': `${centerCardHalf}px`,
         '--carousel-card-width': `${layoutConfig.cardWidth}px`,

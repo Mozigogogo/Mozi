@@ -735,14 +735,47 @@
 @pc-ai-chat-row-height: 36px;
 @pc-ai-chat-row-gap: 4px;
 
+.pcAiChatSection {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .pcAiChatBody {
   display: flex;
   flex-direction: column;
   gap: @pc-ai-chat-row-gap;
   padding: 0 4px 4px @pcWatchlist-text-align-inset;
-  max-height: calc(5 * @pc-ai-chat-row-height + 4 * @pc-ai-chat-row-gap);
   overflow-x: hidden;
+  min-height: 0;
+}
+
+.pcAiChatBodyScrollable {
+  max-height: calc(5 * @pc-ai-chat-row-height + 4 * @pc-ai-chat-row-gap);
   overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.pcAiChatLoadMore {
+  display: block;
+  width: calc(100% - @pcWatchlist-text-align-inset - 4px);
+  margin: 0 4px 4px @pcWatchlist-text-align-inset;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #11b787;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba(17, 183, 135, 0.08);
+  }
 }
 
 .pcAiChatRow {

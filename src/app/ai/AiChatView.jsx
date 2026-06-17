@@ -10,8 +10,6 @@ import NavBar from '../../components/NavBar';
 import ThinkingAnimation from '../../components/ThinkingAnimation';
 import PopLogin from '../../components/PopLogin';
 import { trackEvent, trackPageView, AIEvents } from '@/utils/amplitude';
-import { INTERFACE_URL, Interface } from '@/utils/constants';
-import { request } from '@/utils/request';
 import { executeConsume } from '@/api/points';
 import { useRobotTestSSE } from '@/hooks/useRobotTestSSE';
 import { extractCoinSymbolFromText } from '@/utils/extractCoinSymbolFromText';
@@ -25,13 +23,19 @@ import { forceBlurAndResetViewport } from '@/utils/iosViewportFix';
 import { fetchUserDataInfoOnce } from '@/utils/postLogin';
 import { consumePcAiFromSearch, consumePcAiNav } from '@/utils/pcAiFromSearch';
 import { notifyRouteBootReady } from '@/utils/routeBootLoading';
+import { notifyAiConversationsChanged } from '@/utils/aiConversationEvents';
+import {
+  getAgentConversationMessages,
+  normalizeAgentConversationMessages,
+  extractSuggestedQuestionsFromAgentMessages,
+  normalizeSignalCardPayload,
+} from '@/api/ai';
 import styles from './page.module.less';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import AiRobotUpgradePillButton from '@/components/AiRobotUpgradePillButton';
 import FireSignalBanner from '@/components/FireSignalBanner';
 import PointsInsufficientBubble from '@/components/PointsInsufficientBubble';
 import ShareAiChatModal from '@/components/ShareAiChatModal';
-import SignalCard from '@/components/SignalCard';
 import SignalCardCarousel from '@/components/SignalCardCarousel';
 import { fetchLatestScanCache } from '@/api/signals';
 import {
@@ -109,6 +113,16 @@ function sortSignalCardsByGrade(cards = []) {
 
     return String(a?.card?.coin || '').localeCompare(String(b?.card?.coin || ''));
   });
+}
+
+function getMessageSignalCards(msg) {
+  if (Array.isArray(msg?.signalCards) && msg.signalCards.length > 0) {
+    return msg.signalCards;
+  }
+  if (msg?.signalCard) {
+    return [msg.signalCard];
+  }
+  return [];
 }
 
 function getSignalCardsFromCache(cache) {
@@ -579,6 +593,8 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
   const [totalPoints, setTotalPoints] = useState(0);
   const [isTelegramEnv, setIsTelegramEnv] = useState(false);
   const [showPointsLock, setShowPointsLock] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [isHistoryOverlayExiting, setIsHistoryOverlayExiting] = useState(false);
   /** 同页复用一次 datainfo Promise，避免 effect 重入时重复 await 新请求（全局 fetchUserDataInfoOnce 另有并发去重） */
   const robotDataInfoSyncRef = useRef(null);
 
@@ -650,8 +666,9 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
   const sessionAgentSendCountRef = useRef(0);
   const messageIdRef = useRef(null);
   const lastUserMessageRef = useRef(null); // 用于“重新生成”
-  const historyLoadedRef = useRef(false); // 防止重复加载历史记录
   const pcSearchAutoSentRef = useRef(false);
+  const historyRevealPendingRef = useRef(false);
+  const historyRevealTimerRef = useRef(null);
   const pcNavAutoSentRef = useRef(false);
   const handleSendRef = useRef(null);
   const abortControllerRef = useRef(null);
@@ -665,131 +682,144 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
   useEffect(() => {
     if (routeConversationId && !isValidConversationId(routeConversationId)) {
       router.replace('/ai');
-      return;
+      return undefined;
     }
 
-    historyLoadedRef.current = false;
+    if (!routeConversationId) {
+      setIsLoadingHistory(false);
+      return undefined;
+    }
+
+    if (pendingUrlConversationIdRef.current === routeConversationId) {
+      pendingUrlConversationIdRef.current = null;
+      setIsLoadingHistory(false);
+      return undefined;
+    }
+
+    if (DEBUG_SKIP_CHAT_HISTORY_LOAD) {
+      setIsLoadingHistory(false);
+      return undefined;
+    }
+
+    let cancelled = false;
+
+    setIsLoadingHistory(true);
+    setIsHistoryOverlayExiting(false);
+    setMessages([]);
+    setSuggestedQuestions([]);
+    sessionAgentSendCountRef.current = 0;
+
+    const finishHistoryLoading = (hasContent) => {
+      if (cancelled) return;
+
+      if (!hasContent) {
+        setIsLoadingHistory(false);
+        setIsHistoryOverlayExiting(false);
+        return;
+      }
+
+      historyRevealPendingRef.current = true;
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (cancelled) return;
+
+          const el = scrollRef.current;
+          if (el) {
+            el.scrollTop = el.scrollHeight;
+          }
+
+          setIsHistoryOverlayExiting(true);
+
+          if (historyRevealTimerRef.current) {
+            window.clearTimeout(historyRevealTimerRef.current);
+          }
+
+          historyRevealTimerRef.current = window.setTimeout(() => {
+            if (cancelled) return;
+            setIsLoadingHistory(false);
+            setIsHistoryOverlayExiting(false);
+            historyRevealTimerRef.current = null;
+          }, 200);
+        });
+      });
+    };
 
     const loadChatHistory = async () => {
-      if (historyLoadedRef.current) {
-        console.log('⏭️ 历史记录已加载，跳过重复请求');
-        return;
-      }
-
-      if (
-        routeConversationId &&
-        pendingUrlConversationIdRef.current === routeConversationId
-      ) {
-        pendingUrlConversationIdRef.current = null;
-        historyLoadedRef.current = true;
-        return;
-      }
-
-      historyLoadedRef.current = true;
-
-      if (DEBUG_SKIP_CHAT_HISTORY_LOAD) {
-        return;
-      }
-
-      // /ai 首页不自动恢复 localStorage 中的会话
-      if (!routeConversationId) {
-        return;
-      }
-
       try {
         conversationIdRef.current = routeConversationId;
         if (typeof window !== 'undefined') {
           localStorage.setItem('ai_conversation_id', routeConversationId);
         }
 
-        setMessages([]);
-        setSuggestedQuestions([]);
-        sessionAgentSendCountRef.current = 0;
-
         console.log('🔍 检查历史记录 conversationId:', routeConversationId);
 
-        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-        const lang = typeof window !== 'undefined'
-          ? (localStorage.getItem('i18nextLng') || 'zh')
-          : 'zh';
+        const data = await getAgentConversationMessages(routeConversationId);
+        if (cancelled) return;
 
-        const url = `${INTERFACE_URL}${Interface.AI_CHAT_HISTORY}/${routeConversationId}`;
-
-        console.log('📡 正在加载聊天历史:', url);
-
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Accept-Language': lang,
-            ...(token ? { 'Authentication': `${token}` } : {})
-          }
-        });
-
-        console.log('📥 历史记录响应状态:', response.status);
-
-        if (!response.ok) {
-          throw new Error(`Failed to load chat history: ${response.status}`);
-        }
-
-        const data = await response.json();
         console.log('📦 历史记录数据:', data);
-        
-        // 检查返回的数据格式 - 格式：{ code: 0, data: { conversationId, messages, suggestedQuestions } }
-        if (data.code === 0 && data.data && data.data.conversationId && data.data.messages && Array.isArray(data.data.messages)) {
-          // 过滤掉 system 角色的消息，只保留 user 和 assistant 的对话
-          const historyMessages = data.data.messages
-            .filter(item => item.role !== 'system')
-            .map((item, index) => {
-              return {
-                id: `history-${item.role}-${index}-${Date.now()}`,
-                role: item.role, // 'user' 或 'assistant'
-                content: item.content || '',
-                time: Date.now() - (data.data.messages.length - index) * 1000, // 模拟时间戳
-                conversationId: data.data.conversationId
-              };
-            });
+
+        if (data?.code === 0) {
+          const historyMessages = normalizeAgentConversationMessages(data, routeConversationId);
 
           console.log('✅ 加载了', historyMessages.length, '条历史消息');
 
           if (historyMessages.length > 0) {
             setMessages(historyMessages);
 
-            if (data.data.conversationId) {
-              conversationIdRef.current = data.data.conversationId;
+            const resolvedConversationId =
+              data?.data?.conversationId ||
+              data?.data?.conversation_id ||
+              routeConversationId;
+            if (resolvedConversationId) {
+              conversationIdRef.current = resolvedConversationId;
               if (typeof window !== 'undefined') {
-                localStorage.setItem('ai_conversation_id', data.data.conversationId);
+                localStorage.setItem('ai_conversation_id', resolvedConversationId);
               }
             }
-            // 已有历史：后续请求直接传 conversation_id
             sessionAgentSendCountRef.current = 1;
-          } else {
-            // 没有历史记录时，不展示欢迎气泡/默认消息
-            setMessages([]);
+
+            const suggested = extractSuggestedQuestionsFromAgentMessages(data);
+            if (suggested.length > 0) {
+              const norm = normalizeSuggestionItems(suggested);
+              setSuggestedQuestions(norm);
+              console.log('✅ 加载了', norm.length, '个建议问题');
+            } else {
+              setSuggestedQuestions([]);
+            }
+
+            finishHistoryLoading(true);
+            return;
           }
 
-          // 保存建议问题：即使没有历史消息，也可能由后端下发默认 suggestedQuestions
-          if (data.data.suggestedQuestions && Array.isArray(data.data.suggestedQuestions)) {
-            const norm = normalizeSuggestionItems(data.data.suggestedQuestions);
-            setSuggestedQuestions(norm);
-            console.log('✅ 加载了', norm.length, '个建议问题');
-          } else {
-            setSuggestedQuestions([]);
-          }
+          setMessages([]);
+          setSuggestedQuestions([]);
+          finishHistoryLoading(false);
         } else {
           console.log('⚠️ 数据格式不符合预期或无历史记录:', data);
           setMessages([]);
           setSuggestedQuestions([]);
+          finishHistoryLoading(false);
         }
       } catch (error) {
+        if (cancelled) return;
         console.error('❌ 加载聊天历史失败:', error);
-        // 加载失败时，不展示默认欢迎消息
         setMessages([]);
         setSuggestedQuestions([]);
+        finishHistoryLoading(false);
       }
     };
 
-    // 历史记录请求 + JSON 解析也会占用主线程，延后到空闲时段再做
-    runWhenIdle(loadChatHistory);
+    void loadChatHistory();
+
+    return () => {
+      cancelled = true;
+      if (historyRevealTimerRef.current) {
+        window.clearTimeout(historyRevealTimerRef.current);
+        historyRevealTimerRef.current = null;
+      }
+      setIsHistoryOverlayExiting(false);
+    };
   }, [routeConversationId, router]);
 
   const consumeOnce = async (reason = 'complete') => {
@@ -809,25 +839,26 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
         }
       }
 
-      // 每次对话完成/中断后，强制拉取最新用户总积分，保证展示值与 /user 一致
-      try {
-        const latest = await fetchUserDataInfoOnce({
-          force: true,
-          caller: 'RobotPage_consumeOnce_afterConversation',
-        });
-        if (latest && typeof latest.totalPoints === 'number') {
-          setTotalPoints(latest.totalPoints);
-          setRemainingPoints(latest.totalPoints);
-          if (latest.totalPoints <= 0) {
-            setHasEnoughPoints(false);
-            setShowPointsLock(true);
-          } else {
-            setHasEnoughPoints(true);
+      // 积分同步与 datainfo 刷新不阻塞其它接口（如会话列表）
+      fetchUserDataInfoOnce({
+        force: true,
+        caller: 'RobotPage_consumeOnce_afterConversation',
+      })
+        .then((latest) => {
+          if (latest && typeof latest.totalPoints === 'number') {
+            setTotalPoints(latest.totalPoints);
+            setRemainingPoints(latest.totalPoints);
+            if (latest.totalPoints <= 0) {
+              setHasEnoughPoints(false);
+              setShowPointsLock(true);
+            } else {
+              setHasEnoughPoints(true);
+            }
           }
-        }
-      } catch (syncErr) {
-        console.warn('[Robot] sync latest totalPoints failed:', syncErr);
-      }
+        })
+        .catch((syncErr) => {
+          console.warn('[Robot] sync latest totalPoints failed:', syncErr);
+        });
     } catch (err) {
       console.error('[Robot] points consume failed:', err, { actionCode, reason });
     }
@@ -846,16 +877,8 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
     (eventData) => {
       if (userAbortedRef.current) return;
       const raw = eventData?.data ?? eventData?.payload ?? eventData;
-      let payload = raw;
-      if (raw && typeof raw === 'object' && !raw.card && !raw.display && raw.coin) {
-        payload = {
-          card: raw,
-          math: raw.math,
-          strategy: raw.strategy,
-          display: raw.display || '',
-        };
-      }
-      if (!payload?.card && !payload?.display) return;
+      const payload = normalizeSignalCardPayload(raw);
+      if (!payload) return;
       const msgId = currentAiMsgIdRef.current;
       if (!msgId) return;
       setMessages((prev) =>
@@ -990,8 +1013,10 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
         tokens: eventData?.tokens,
       });
 
+      notifyAiConversationsChanged();
+
       if (currentActionCodeRef.current !== null) {
-        await consumeOnce('complete');
+        void consumeOnce('complete');
       }
     },
     onError: () => {
@@ -1013,7 +1038,7 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
 
   // 右上角 “AI Assistant Pro” 升级胶囊：只在空状态展示，开始对话后隐藏
   // 放在这里是为了确保 `isBootstrappingUserData` / `isStreaming` 已初始化
-  const showUpgradePill = messages.length === 0 && !isBootstrappingUserData && !isBusy;
+  const showUpgradePill = messages.length === 0 && !isBootstrappingUserData && !isBusy && !isLoadingHistory;
   const isMobileEmpty = !isPC && showUpgradePill;
   const alphaAlertCount = scanCache?.signalCount ?? 3;
   
@@ -1085,8 +1110,13 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
     }
   };
 
-  // 自动滚动到底部
+  // 自动滚动到底部（历史记录切换时已在遮罩下预定位，避免二次跳动）
   useEffect(() => {
+    if (historyRevealPendingRef.current) {
+      historyRevealPendingRef.current = false;
+      return;
+    }
+
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         scrollToBottom();
@@ -1138,7 +1168,7 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
     forceBlurAndResetViewport();
     
     const message = text || inputValue.trim();
-    if (!message || isBusy) return;
+    if (!message || isBusy || isLoadingHistory) return;
 
     userAbortedRef.current = false;
 
@@ -1457,7 +1487,6 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
     userAbortedRef.current = false;
     lastUserMessageRef.current = null;
     pendingUrlConversationIdRef.current = null;
-    historyLoadedRef.current = true;
 
     if (typeof window !== 'undefined') {
       localStorage.removeItem('ai_conversation_id');
@@ -1467,10 +1496,13 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
     setSuggestedQuestions([]);
     setInputValue('');
     setShowPointsLock(false);
+    setIsLoadingHistory(false);
+    setIsHistoryOverlayExiting(false);
     router.replace('/ai', { scroll: false });
   }, [abort, isStreaming, router]);
 
-  const showNewChatBtn = messages.length > 0 || isBusy;
+  const showNewChatBtn =
+    !isLoadingHistory && (messages.length > 0 || isBusy || !!routeConversationId);
 
   const getTradeSymbolFromMessages = () => {
     for (let i = messages.length - 1; i >= 0; i -= 1) {
@@ -1572,28 +1604,40 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
     if (modelId === 'analyze') {
       return (
         <span className={styles.modeIconWrap}>
-          <Image
-            src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/deep.svg"
-            alt=""
-            width={11}
-            height={18}
+          <svg
             className={`${styles.modeIcon} ${styles.modeIconDeep}`}
+            viewBox="0 0 11 18"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
             aria-hidden
-          />
+          >
+            <path
+              d="M5.2593 13.504C5.1713 12.984 4.9393 12.424 4.5633 11.824C4.1873 11.216 3.6513 10.652 2.9553 10.132C2.2673 9.612 1.5793 9.28 0.891297 9.136V8.632C1.5713 8.472 2.2233 8.176 2.8473 7.744C3.4793 7.304 4.0073 6.776 4.4313 6.16C4.8633 5.528 5.1393 4.904 5.2593 4.288H5.7633C5.8353 4.688 5.9793 5.1 6.1953 5.524C6.4113 5.94 6.6873 6.34 7.0233 6.724C7.3673 7.1 7.7513 7.44 8.1753 7.744C8.8073 8.192 9.4513 8.488 10.1073 8.632V9.136C9.6673 9.224 9.2113 9.404 8.7393 9.676C8.2753 9.948 7.8433 10.272 7.4433 10.648C7.0433 11.016 6.7153 11.404 6.4593 11.812C6.0833 12.412 5.8513 12.976 5.7633 13.504H5.2593Z"
+              fill="currentColor"
+            />
+          </svg>
         </span>
       );
     }
     if (modelId === 'chat') {
       return (
         <span className={styles.modeIconWrap}>
-          <Image
-            src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/chat.svg"
-            alt=""
-            width={10}
-            height={10}
+          <svg
             className={styles.modeIcon}
+            viewBox="0 0 10 10"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
             aria-hidden
-          />
+          >
+            <path
+              d="M5.22729 5.79545H3.18184C2.93184 5.79545 2.72729 6 2.72729 6.25C2.72729 6.5 2.93184 6.70455 3.18184 6.70455H5.22729C5.47729 6.70455 5.68184 6.5 5.68184 6.25C5.68184 6 5.47729 5.79545 5.22729 5.79545ZM6.8182 3.75H3.18184C2.93184 3.75 2.72729 3.95455 2.72729 4.20455C2.72729 4.45455 2.93184 4.65909 3.18184 4.65909H6.8182C7.0682 4.65909 7.27275 4.45455 7.27275 4.20455C7.27275 3.95455 7.0682 3.75 6.8182 3.75Z"
+              fill="currentColor"
+            />
+            <path
+              d="M5 0C2.25 0 0 2.25 0 5V7.95455C0 9.09091 0.909091 10 2.04545 10H5C7.75 10 10 7.75 10 5C10 2.25 7.75 0 5 0ZM5 9.09091H2.04545C1.40909 9.09091 0.909091 8.59091 0.909091 7.95455V5C0.909091 2.75 2.75 0.909091 5 0.909091C7.25 0.909091 9.09091 2.75 9.09091 5C9.09091 7.25 7.25 9.09091 5 9.09091Z"
+              fill="currentColor"
+            />
+          </svg>
         </span>
       );
     }
@@ -1636,7 +1680,7 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
 
   const content = (
       <div className={`${styles.robotPage} ${isPC ? styles.pcMode : ''}`}>
-        {isPC && (isBusy || messages.length > 0) && (
+        {isPC && !isLoadingHistory && (isBusy || messages.length > 0 || !!routeConversationId) && (
           <div className={styles.pcTopBar}>
             <button
               type="button"
@@ -1700,7 +1744,7 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
           className={`${styles.chatScroll} ${isMobileEmpty ? styles.chatScrollEmpty : ''}`}
           ref={scrollRef}
         >
-          {messages.length === 0 && !isBootstrappingUserData && !isBusy && (
+          {messages.length === 0 && !isBootstrappingUserData && !isBusy && !isLoadingHistory && (
             <div className={styles.emptyState}>
               <div className={styles.emptyTextBlock}>
                 <div
@@ -1762,11 +1806,20 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
             </div>
           )}
 
-          <div className={styles.messages}>
+          <div
+            className={`${styles.messages} ${
+              isLoadingHistory && !isHistoryOverlayExiting && messages.length > 0
+                ? styles.messagesWhileLoading
+                : ''
+            } ${
+              messages.length > 0 && (!isLoadingHistory || isHistoryOverlayExiting)
+                ? styles.messagesHistoryReveal
+                : ''
+            }`}
+          >
             {messages.map((msg) => {
-              const hasSignalCards = msg.signalCards?.length > 0;
-              const hasSignalCard = !!msg.signalCard;
-              const hasCards = hasSignalCards || hasSignalCard;
+              const messageSignalCards = getMessageSignalCards(msg);
+              const hasCards = messageSignalCards.length > 0;
               const signalCardFirst =
                 msg.agentType === 'signals' && hasCards && !msg.signalCardsAfterText;
 
@@ -1783,10 +1836,8 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
                 </div>
               ) : null;
 
-              const cardsBlock = hasSignalCards ? (
-                <SignalCardCarousel cards={msg.signalCards} isPC={isPC} />
-              ) : hasSignalCard ? (
-                <SignalCard data={msg.signalCard} variant="sidebar" embedded hideAmbient surfaceHosted isPC={isPC} />
+              const cardsBlock = hasCards ? (
+                <SignalCardCarousel cards={messageSignalCards} isPC={isPC} />
               ) : null;
 
               return (
@@ -1799,7 +1850,7 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
 
                 <div
                   className={`${styles.msgContent} ${
-                    msg.signalCards?.length ? styles.msgContentCarousel : ''
+                    hasCards ? styles.msgContentCarousel : ''
                   }`}
                 >
                   {msg.role === 'user' ? (
@@ -1819,7 +1870,7 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
                             />
                           </div>
                         </div>
-                      ) : msg.aborted && !msg.content && !msg.signalCard && !msg.signalCards?.length ? (
+                      ) : msg.aborted && !msg.content && !hasCards ? (
                         <div className={`${styles.bubble} ${styles.assistant} ${styles.aborted}`}>
                           <div className={styles.text}>
                             <div className={styles.abortedText}>
@@ -1829,8 +1880,7 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
                         </div>
                       ) : msg.loading &&
                         !msg.content &&
-                        !msg.signalCard &&
-                        !msg.signalCards?.length ? (
+                        !hasCards ? (
                         <div className={`${styles.bubble} ${styles.assistant} ${styles.bubbleLoading}`}>
                           <div className={styles.text}>
                             {msg.statusHint ? (
@@ -1849,8 +1899,7 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
                       !(
                         msg.loading &&
                         !msg.content &&
-                        !msg.signalCard &&
-                        !msg.signalCards?.length
+                        !hasCards
                       ) ? (
                         <div className={styles.bigorderStatus}>{msg.statusHint}</div>
                       ) : null}
@@ -1870,7 +1919,7 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
                       {formatTime(msg.time)}
                     </span>
 
-                    {msg.role === 'assistant' && (msg.content || msg.signalCard || msg.signalCards?.length) && (
+                    {msg.role === 'assistant' && (msg.content || hasCards) && (
                       <div className={styles.msgActions} aria-label="message actions">
                         <button
                           type="button"
@@ -1911,7 +1960,7 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
             })}
           </div>
 
-          {!isBusy && messages.length > 0 && displaySuggestedQuestions.length > 0 && (
+          {!isBusy && !isLoadingHistory && messages.length > 0 && displaySuggestedQuestions.length > 0 && (
             <div className={styles.suggestedQuestions}>
               <div className={styles.suggestedTitle}>{t('robot.suggestedFollowUpTitle')}</div>
               <div className={styles.suggestedList}>
@@ -1947,6 +1996,19 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
           )}
           
           {/* 历史记录加载遮罩层 - 只遮罩聊天区域 */}
+          {(isLoadingHistory || isHistoryOverlayExiting) && (
+            <div
+              className={`${styles.loadingOverlay} ${
+                isHistoryOverlayExiting ? styles.loadingOverlayExit : ''
+              }`}
+            >
+              <div className={styles.loadingContent}>
+                <ThinkingAnimation />
+                <div className={styles.loadingText}>{t('common.loading')}</div>
+              </div>
+            </div>
+          )}
+
           {isBootstrappingUserData && (
             <div className={styles.loadingOverlay}>
               <div className={styles.loadingContent}>
@@ -1978,10 +2040,10 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
               className={styles.input}
               value={inputValue}
               placeholder={t('robot.inputPlaceholder')}
-              onKeyDown={(e) => e.key === 'Enter' && !isBusy && handleSend()}
+              onKeyDown={(e) => e.key === 'Enter' && !isBusy && !isLoadingHistory && handleSend()}
               onChange={(e) => setInputValue(e.target.value)}
               onFocus={() => trackEvent(AIEvents.INPUT_FOCUSED)}
-              disabled={isBusy}
+              disabled={isBusy || isLoadingHistory}
             />
             <div className={styles.inputActions}>
               <div className={styles.actionModes}>
