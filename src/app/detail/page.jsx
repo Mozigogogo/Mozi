@@ -2417,7 +2417,7 @@ ${coinInfo.name || symbol} (${symbol})
             <PCCoinDetail
               headerTitle={coinInfo?.name || symbol}
               onBack={handleDetailBack}
-              showBack={false}
+              showBack
               coinIcon={coinInfo?.url}
               symbol={symbol}
               currentPrice={coinInfo?.currentPrice}
