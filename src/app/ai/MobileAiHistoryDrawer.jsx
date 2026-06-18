@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import { getAgentConversations } from '@/api/ai';
 import { MOZI_AI_CONVERSATIONS_CHANGED } from '@/utils/aiConversationEvents';
+import AiConversationRowMenu from './AiConversationRowMenu';
 import styles from './MobileAiHistoryDrawer.module.less';
 
 const AI_CONVERSATIONS_PAGE_SIZE = 5;
@@ -167,6 +168,19 @@ export default function MobileAiHistoryDrawer({ open, onClose, activeConversatio
     router.push(`/ai/${conversationId}`);
   };
 
+  const handleDeleteConversation = useCallback(
+    (conversationId) => {
+      setConversations((prev) =>
+        prev.filter((item) => getConversationId(item) !== conversationId),
+      );
+      if (activeConversationId === conversationId) {
+        onClose();
+        router.push('/ai');
+      }
+    },
+    [activeConversationId, onClose, router],
+  );
+
   if (!open) return null;
 
   return (
@@ -204,17 +218,26 @@ export default function MobileAiHistoryDrawer({ open, onClose, activeConversatio
               const isActive = activeConversationId === conversationId;
               const title = getConversationTitle(item, fallbackTitle);
               return (
-                <button
+                <div
                   key={conversationId}
-                  type="button"
                   className={`${styles.row} ${isActive ? styles.rowActive : ''}`}
-                  onClick={() => handleSelect(conversationId)}
                 >
-                  <span className={styles.rowIcon} aria-hidden>
-                    <AiChatMaskIcon color={isActive ? '#11b787' : '#94a3b8'} />
-                  </span>
-                  <span className={styles.rowLabel}>{title}</span>
-                </button>
+                  <button
+                    type="button"
+                    className={styles.rowMain}
+                    onClick={() => handleSelect(conversationId)}
+                  >
+                    <span className={styles.rowIcon} aria-hidden>
+                      <AiChatMaskIcon color={isActive ? '#11b787' : '#94a3b8'} />
+                    </span>
+                    <span className={styles.rowLabel}>{title}</span>
+                  </button>
+                  <AiConversationRowMenu
+                    conversationId={conversationId}
+                    onDeleted={handleDeleteConversation}
+                    buttonClassName={styles.rowMenuBtn}
+                  />
+                </div>
               );
             })
           )}

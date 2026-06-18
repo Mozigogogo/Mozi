@@ -6,6 +6,41 @@ import styles from './index.module.less';
 
 const DRAG_THRESHOLD = 40;
 
+function isCarouselDebugEnabled() {
+  if (typeof window === 'undefined') return false;
+  if (process.env.NODE_ENV === 'development') return true;
+  try {
+    return (
+      new URLSearchParams(window.location.search).get('carouselDebug') === '1' ||
+      window.localStorage?.getItem('carouselDebug') === '1'
+    );
+  } catch {
+    return false;
+  }
+}
+
+function logCarousel(label, payload) {
+  if (!isCarouselDebugEnabled()) return;
+  if (payload !== undefined) {
+    console.log(`[SignalCardCarousel] ${label}`, payload);
+    return;
+  }
+  console.log(`[SignalCardCarousel] ${label}`);
+}
+
+function describeTarget(target) {
+  if (!target || !(target instanceof Element)) return String(target);
+  const el = target.closest(`.${styles.cardSlot}`) || target;
+  return {
+    tag: el.tagName,
+    className: el.className,
+    coin: el.getAttribute?.('data-coin') ?? null,
+    index: el.getAttribute?.('data-index') ?? null,
+    pointerEvents: el instanceof HTMLElement ? getComputedStyle(el).pointerEvents : null,
+    zIndex: el instanceof HTMLElement ? getComputedStyle(el).zIndex : null,
+  };
+}
+
 function modIndex(idx, length) {
   if (!length) return 0;
   return ((idx % length) + length) % length;
@@ -20,9 +55,10 @@ function getWrappedRel(index, current, total) {
 }
 
 /** 与 signal_card_carousel.html 中 layout() 保持一致，仅展示 rel ∈ {-1,0,1} */
-function getCardSlotStyle(rel, total, config) {
+function getCardSlotStyle(rel, total, config, isPC = false) {
   const { offsetX, scaleSide, transZSide, rotateSide = 22, centerOffsetX = 0 } = config;
   const anchor = 'translate(-50%, -50%)';
+  const sideZIndex = isPC ? 35 : 5;
 
   if (Math.abs(rel) > 1) {
     const farX = (rel > 0 ? offsetX * 2 : -offsetX * 2) + centerOffsetX;
@@ -44,7 +80,7 @@ function getCardSlotStyle(rel, total, config) {
       zIndex: 10,
       pointerEvents: 'none',
       visibility: 'visible',
-      cursor: 'pointer',
+      cursor: 'default',
     };
   }
 
@@ -56,7 +92,7 @@ function getCardSlotStyle(rel, total, config) {
     transform: `${anchor} translateX(${tx}px) translateZ(${transZSide}px) rotateY(${ry}deg) scale(${scaleSide})`,
     opacity: config.sideOpacity ?? 0.65,
     filter: config.sideBlur ? `blur(${config.sideBlur}px)` : 'blur(2px)',
-    zIndex: 5,
+    zIndex: sideZIndex,
     pointerEvents: 'auto',
     visibility: 'visible',
     cursor: 'pointer',
@@ -110,7 +146,10 @@ export default function SignalCardCarousel({ cards = [], isPC = false }) {
     dragging: false,
     moved: false,
     isHorizontal: null,
+    startHitZone: null,
+    startSideIndex: null,
   });
+  const tapHandledRef = useRef(false);
   const [current, setCurrent] = useState(0);
   const [layoutConfig, setLayoutConfig] = useState(() => getLayoutConfig(900, isPC));
   const [measuredSceneHeight, setMeasuredSceneHeight] = useState(null);
@@ -166,31 +205,51 @@ export default function SignalCardCarousel({ cards = [], isPC = false }) {
   const centerCardHalf = Math.round((centerCardWidth || layoutConfig.cardWidth || 280) / 2);
 
   const goTo = useCallback(
-    (idx) => {
-      setCurrent(modIndex(idx, total));
+    (idx, reason = 'unknown') => {
+      const next = modIndex(idx, total);
+      logCarousel('goTo', { from: current, to: next, reason, total });
+      setCurrent(next);
     },
-    [total]
+    [current, total]
   );
 
-  const goPrev = useCallback(() => goTo(current - 1), [current, goTo]);
-  const goNext = useCallback(() => goTo(current + 1), [current, goTo]);
+  const goPrev = useCallback(
+    (reason = 'goPrev') => goTo(current - 1, reason),
+    [current, goTo]
+  );
+  const goNext = useCallback(
+    (reason = 'goNext') => goTo(current + 1, reason),
+    [current, goTo]
+  );
 
   const handleSideClick = useCallback(
-    (index) => {
-      if (dragRef.current.moved) return;
-      if (index !== current) goTo(index);
+    (index, event) => {
+      if (tapHandledRef.current || dragRef.current.moved) {
+        logCarousel('handleSideClick blocked', {
+          reason: tapHandledRef.current ? 'tap already handled' : 'drag moved',
+        });
+        return;
+      }
+      const rel = getWrappedRel(index, current, total);
+      logCarousel('handleSideClick', { index, current, total, rel });
+      if (index === current) return;
+      goTo(index, 'side-click');
     },
-    [current, goTo]
+    [current, goTo, total]
   );
 
   const handleHitZoneClick = useCallback(
     (direction, event) => {
-      if (dragRef.current.moved) {
+      if (tapHandledRef.current || dragRef.current.moved) {
         event.preventDefault();
+        logCarousel('handleHitZoneClick blocked', {
+          reason: tapHandledRef.current ? 'tap already handled' : 'drag moved',
+        });
         return;
       }
-      if (direction === 'prev') goPrev();
-      else goNext();
+      logCarousel('handleHitZoneClick', { direction });
+      if (direction === 'prev') goPrev('hit-zone-click');
+      else goNext('hit-zone-click');
     },
     [goNext, goPrev]
   );
@@ -203,31 +262,93 @@ export default function SignalCardCarousel({ cards = [], isPC = false }) {
 
     const swipeThreshold = isPC ? DRAG_THRESHOLD : 24;
 
-    const shouldIgnoreTarget = (target) =>
-      target.closest('button, a') && !target.closest(`.${styles.hitZone}`);
-
-    const onPointerDown = (event) => {
-      if (event.pointerType === 'mouse' && event.button !== 0) return;
-      if (shouldIgnoreTarget(event.target)) return;
-
-      dragRef.current = {
-        startX: event.clientX,
-        startY: event.clientY,
-        dragging: true,
-        moved: false,
-        isHorizontal: null,
-      };
-
-      try {
-        wrap.setPointerCapture(event.pointerId);
-      } catch (_) {
-        // ignore
-      }
+    const getHitZoneDirection = (target) => {
+      if (target.closest(`.${styles.hitZoneLeft}`)) return 'prev';
+      if (target.closest(`.${styles.hitZoneRight}`)) return 'next';
+      return null;
     };
 
-    const onPointerMove = (event) => {
+    const getSideIndexFromTarget = (target) => {
+      const slot = target.closest(`.${styles.cardSlotSide}`);
+      if (!slot) return null;
+      const raw = slot.getAttribute('data-index');
+      if (raw == null) return null;
+      const index = Number(raw);
+      return Number.isFinite(index) ? index : null;
+    };
+
+    const shouldSkipDragStart = (target) => {
+      if (target.closest(`.${styles.hitZone}`)) return false;
+      if (target.closest(`.${styles.cardSlotSide}`)) {
+        return Boolean(target.closest('button, a'));
+      }
+      if (target.closest(`.${styles.cardSlotActive}`) && target.closest('button, a')) {
+        return true;
+      }
+      return Boolean(target.closest('button, a'));
+    };
+
+    const cleanupWindowListeners = () => {
+      window.removeEventListener('pointermove', onWindowPointerMove);
+      window.removeEventListener('pointerup', onWindowPointerUp);
+      window.removeEventListener('pointercancel', onWindowPointerCancel);
+    };
+
+    const finishDrag = (event) => {
       const drag = dragRef.current;
-      if (!drag.dragging || drag.startX === null) return;
+      if (!drag.dragging || drag.startX == null) return;
+
+      cleanupWindowListeners();
+
+      const dx = event.clientX - drag.startX;
+      const absDx = Math.abs(dx);
+
+      if (drag.isHorizontal !== false && absDx >= swipeThreshold) {
+        drag.moved = true;
+        logCarousel('pointerup swipe', {
+          dx,
+          swipeThreshold,
+          direction: dx < 0 ? 'next' : 'prev',
+        });
+        if (dx < -swipeThreshold) goNext('swipe-left');
+        else if (dx > swipeThreshold) goPrev('swipe-right');
+        window.setTimeout(() => {
+          dragRef.current.moved = false;
+        }, 50);
+      } else {
+        logCarousel('pointerup tap', {
+          dx,
+          startHitZone: drag.startHitZone,
+          startSideIndex: drag.startSideIndex,
+        });
+        tapHandledRef.current = true;
+        window.setTimeout(() => {
+          tapHandledRef.current = false;
+        }, 0);
+
+        if (drag.startHitZone === 'prev') {
+          goPrev('hit-zone-tap');
+        } else if (drag.startHitZone === 'next') {
+          goNext('hit-zone-tap');
+        } else if (drag.startSideIndex != null) {
+          goTo(drag.startSideIndex, 'side-tap');
+        }
+      }
+
+      dragRef.current = {
+        startX: null,
+        startY: null,
+        dragging: false,
+        moved: dragRef.current.moved,
+        isHorizontal: null,
+        startHitZone: null,
+        startSideIndex: null,
+      };
+    };
+
+    const onWindowPointerMove = (event) => {
+      const drag = dragRef.current;
+      if (!drag.dragging || drag.startX == null) return;
 
       const dx = event.clientX - drag.startX;
       const dy = event.clientY - (drag.startY ?? event.clientY);
@@ -241,61 +362,56 @@ export default function SignalCardCarousel({ cards = [], isPC = false }) {
       }
     };
 
-    const resetDrag = () => {
+    const onWindowPointerUp = (event) => {
+      finishDrag(event);
+    };
+
+    const onWindowPointerCancel = () => {
+      cleanupWindowListeners();
       dragRef.current = {
         startX: null,
         startY: null,
         dragging: false,
-        moved: dragRef.current.moved,
+        moved: false,
         isHorizontal: null,
+        startHitZone: null,
+        startSideIndex: null,
       };
     };
 
-    const onPointerUp = (event) => {
-      const drag = dragRef.current;
-      if (!drag.dragging || drag.startX === null) return;
+    const onPointerDown = (event) => {
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      if (shouldSkipDragStart(event.target)) return;
 
-      const dx = event.clientX - drag.startX;
+      dragRef.current = {
+        startX: event.clientX,
+        startY: event.clientY,
+        dragging: true,
+        moved: false,
+        isHorizontal: null,
+        startHitZone: getHitZoneDirection(event.target),
+        startSideIndex: getSideIndexFromTarget(event.target),
+      };
 
-      try {
-        wrap.releasePointerCapture(event.pointerId);
-      } catch (_) {
-        // ignore
-      }
+      logCarousel('pointerdown', {
+        pointerType: event.pointerType,
+        target: describeTarget(event.target),
+        startHitZone: dragRef.current.startHitZone,
+        startSideIndex: dragRef.current.startSideIndex,
+      });
 
-      if (drag.isHorizontal !== false && Math.abs(dx) >= swipeThreshold) {
-        drag.moved = true;
-        if (dx < -swipeThreshold) goNext();
-        else if (dx > swipeThreshold) goPrev();
-        window.setTimeout(() => {
-          dragRef.current.moved = false;
-        }, 50);
-      }
-
-      resetDrag();
-    };
-
-    const onPointerCancel = (event) => {
-      try {
-        wrap.releasePointerCapture(event.pointerId);
-      } catch (_) {
-        // ignore
-      }
-      resetDrag();
+      window.addEventListener('pointermove', onWindowPointerMove, { passive: false });
+      window.addEventListener('pointerup', onWindowPointerUp);
+      window.addEventListener('pointercancel', onWindowPointerCancel);
     };
 
     wrap.addEventListener('pointerdown', onPointerDown, { capture: true });
-    wrap.addEventListener('pointermove', onPointerMove, { passive: false, capture: true });
-    wrap.addEventListener('pointerup', onPointerUp, { capture: true });
-    wrap.addEventListener('pointercancel', onPointerCancel, { capture: true });
 
     return () => {
       wrap.removeEventListener('pointerdown', onPointerDown, { capture: true });
-      wrap.removeEventListener('pointermove', onPointerMove, { capture: true });
-      wrap.removeEventListener('pointerup', onPointerUp, { capture: true });
-      wrap.removeEventListener('pointercancel', onPointerCancel, { capture: true });
+      cleanupWindowListeners();
     };
-  }, [goNext, goPrev, isPC, isSingle]);
+  }, [goNext, goPrev, goTo, isPC, isSingle]);
 
   useEffect(() => {
     if (isSingle) return undefined;
@@ -313,9 +429,28 @@ export default function SignalCardCarousel({ cards = [], isPC = false }) {
     if (isSingle) return [];
     return cards.map((_, index) => {
       const rel = getWrappedRel(index, current, total);
-      return getCardSlotStyle(rel, total, layoutConfig);
+      return getCardSlotStyle(rel, total, layoutConfig, isPC);
     });
-  }, [cards, current, isSingle, layoutConfig, total]);
+  }, [cards, current, isPC, isSingle, layoutConfig, total]);
+
+  useEffect(() => {
+    if (!isCarouselDebugEnabled() || isSingle) return;
+    logCarousel('layout', {
+      isPC,
+      current,
+      total,
+      layoutConfig,
+      centerCardHalf,
+      centerCardWidth,
+      centerCardHeight,
+      slots: cards.map((data, index) => ({
+        index,
+        coin: data?.card?.coin,
+        rel: getWrappedRel(index, current, total),
+        style: slotStyles[index],
+      })),
+    });
+  }, [cards, centerCardHalf, centerCardHeight, centerCardWidth, current, isPC, isSingle, layoutConfig, slotStyles, total]);
 
   if (!total) return null;
 
@@ -358,10 +493,14 @@ export default function SignalCardCarousel({ cards = [], isPC = false }) {
         {cards.map((data, index) => {
           const coin = data?.card?.coin || `signal-${index}`;
           const slotStyle = slotStyles[index];
+          const rel = getWrappedRel(index, current, total);
 
           return (
             <div
               key={`${coin}-${index}`}
+              data-index={index}
+              data-coin={coin}
+              data-rel={rel}
               className={`${styles.cardSlot} ${
                 index === current ? styles.cardSlotActive : styles.cardSlotSide
               }`}
@@ -369,11 +508,15 @@ export default function SignalCardCarousel({ cards = [], isPC = false }) {
               role="listitem"
               aria-hidden={index !== current}
               tabIndex={index === current ? -1 : 0}
-              onClick={() => handleSideClick(index)}
+              onClick={(event) => {
+                if (tapHandledRef.current) return;
+                if (event.target.closest('button, a')) return;
+                handleSideClick(index, event);
+              }}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault();
-                  handleSideClick(index);
+                  handleSideClick(index, event);
                 }
               }}
             >

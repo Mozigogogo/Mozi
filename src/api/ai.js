@@ -37,6 +37,18 @@ export const getAgentConversationMessages = (conversationId) =>
   });
 
 /**
+ * 删除 Agent 会话
+ * DELETE /ai/agent/conversations/{conversationId}
+ * @param {string} conversationId
+ * @returns {Promise}
+ */
+export const deleteAgentConversation = (conversationId) =>
+  request({
+    url: `${Interface.AI_AGENT_CONVERSATIONS}/${encodeURIComponent(String(conversationId || '').trim())}`,
+    method: 'DELETE',
+  });
+
+/**
  * 尝试把接口里的 JSON 字符串字段解析为对象
  */
 function parseMaybeJson(value) {

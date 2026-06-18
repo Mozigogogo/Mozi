@@ -86,24 +86,48 @@
 .row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 2px;
   width: 100%;
   min-height: 44px;
   margin: 0;
-  padding: 10px 12px;
+  padding: 4px 6px 4px 4px;
   border: 1px solid transparent;
   border-radius: 10px;
+  background: transparent;
+  color: rgba(15, 23, 42, 0.55);
+
+  &:hover {
+    background: rgba(17, 183, 135, 0.06);
+
+    .rowMenuBtn {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+}
+
+.rowMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 8px;
   background: transparent;
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
   font: inherit;
   text-align: left;
-  color: rgba(15, 23, 42, 0.55);
+  color: inherit;
+}
 
-  &:active {
-    background: rgba(17, 183, 135, 0.08);
-  }
+.rowMenuBtn {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .rowActive {

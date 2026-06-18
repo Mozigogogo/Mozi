@@ -37,6 +37,7 @@ import UserProfilePanelPopup from '../UserProfilePanelPopup';
 import GeneralPopup from '@/app/user/components/GeneralPopup';
 import { getAgentConversations } from '@/api/ai';
 import { MOZI_AI_CONVERSATIONS_CHANGED } from '@/utils/aiConversationEvents';
+import AiConversationRowMenu from '@/app/ai/AiConversationRowMenu';
 import { request } from '@/utils/request';
 import { EMAIL, Interface } from '@/utils/constants';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
@@ -863,6 +864,20 @@ export default function PCLayout({ children }) {
 
   const aiConversationFallback = t('pcLayout.menu.dialogueItem', { defaultValue: '对话' });
 
+  const handleDeleteAiConversation = useCallback(
+    (conversationId) => {
+      setAiConversations((prev) =>
+        prev.filter((item) => getConversationId(item) !== conversationId),
+      );
+      if (activeAiConversationId === conversationId) {
+        setActiveContent(null);
+        setShowSearchResults(false);
+        router.push('/ai');
+      }
+    },
+    [activeAiConversationId, router],
+  );
+
   const aiHeaderIconColor = useMemo(() => {
     if (!isAiRoute) {
       return '#333333';
@@ -1356,23 +1371,36 @@ export default function PCLayout({ children }) {
                           const isRowActive = activeAiConversationId === conversationId;
                           const title = getConversationTitle(item, aiConversationFallback);
                           return (
-                            <button
+                            <div
                               key={conversationId}
-                              type="button"
                               className={`${styles.pcAiChatRow} ${
                                 isRowActive ? styles.pcAiChatRowActive : ''
                               }`}
-                              onClick={() => {
-                                setActiveContent(null);
-                                setShowSearchResults(false);
-                                router.push(`/ai/${conversationId}`);
-                              }}
                             >
-                              <span className={styles.pcAiChatRowIcon} aria-hidden>
-                                <AiChatMaskIcon color={isRowActive ? '#11b787' : '#94a3b8'} />
-                              </span>
-                              <span className={styles.pcAiChatRowLabel}>{title}</span>
-                            </button>
+                              <button
+                                type="button"
+                                className={styles.pcAiChatRowMain}
+                                onClick={() => {
+                                  setActiveContent(null);
+                                  setShowSearchResults(false);
+                                  router.push(`/ai/${conversationId}`);
+                                }}
+                              >
+                                <span className={styles.pcAiChatRowIcon} aria-hidden>
+                                  <AiChatMaskIcon color={isRowActive ? '#11b787' : '#94a3b8'} />
+                                </span>
+                                <span className={styles.pcAiChatRowLabel}>{title}</span>
+                              </button>
+                              <AiConversationRowMenu
+                                conversationId={conversationId}
+                                onDeleted={handleDeleteAiConversation}
+                                wrapClassName={styles.pcAiChatRowMenuWrap}
+                                buttonClassName={styles.pcAiChatRowMenuBtn}
+                                dropdownClassName={styles.pcAiChatRowDropdown}
+                                deleteMenuItemClassName={styles.pcAiChatRowDeleteItem}
+                                iconSize={14}
+                              />
+                            </div>
                           );
                         })
                       )}
