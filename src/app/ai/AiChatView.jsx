@@ -48,10 +48,7 @@ const ROBOT_MODEL_IDS = ['analyze', 'chat', 'signals', 'bigorder'];
 
 function isValidConversationId(value) {
   if (!value || typeof value !== 'string') return false;
-  return (
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value) ||
-    /^conv_/i.test(value)
-  );
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
 function createAgentRequestId() {
@@ -59,13 +56,6 @@ function createAgentRequestId() {
     return crypto.randomUUID();
   }
   return `req_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-}
-
-function createConversationId() {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
-  }
-  return `conv_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
 function buildAgentPayload(message, type, conversationId, includeConversationId) {
@@ -77,24 +67,10 @@ function buildAgentPayload(message, type, conversationId, includeConversationId)
   };
 }
 
-/** 首轮不传 conversation_id，本地先生成；从第二轮起带上同一 id */
-function prepareAgentPayload(message, type, conversationIdRef, sessionAgentSendCountRef) {
-  if (sessionAgentSendCountRef.current === 0) {
-    conversationIdRef.current = createConversationId();
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('ai_conversation_id', conversationIdRef.current);
-    }
-  }
-
-  const includeConversationId = sessionAgentSendCountRef.current >= 1;
-  const payload = buildAgentPayload(
-    message,
-    type,
-    conversationIdRef.current,
-    includeConversationId
-  );
-  sessionAgentSendCountRef.current += 1;
-  return payload;
+/** 仅当已有服务端 conversation_id 时才带上（新对话首轮不传） */
+function prepareAgentPayload(message, type, conversationIdRef) {
+  const conversationId = conversationIdRef.current;
+  return buildAgentPayload(message, type, conversationId, !!conversationId);
 }
 const GRADE_ORDER = { S: 0, A: 1, B: 2, C: 3 };
 
@@ -664,8 +640,6 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
   const currentRequestIdRef = useRef(null);
   const currentAiMsgIdRef = useRef(null);
   const conversationIdRef = useRef(null);
-  /** 当前会话已发送 Agent 请求次数：0=下一条为首轮（不传 conversation_id） */
-  const sessionAgentSendCountRef = useRef(0);
   const messageIdRef = useRef(null);
   const lastUserMessageRef = useRef(null); // 用于“重新生成”
   const pcSearchAutoSentRef = useRef(false);
@@ -675,10 +649,30 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
   const handleSendRef = useRef(null);
   const abortControllerRef = useRef(null);
   const pendingUrlConversationIdRef = useRef(null);
+  const routeConversationIdRef = useRef(routeConversationId);
   const currentActionCodeRef = useRef(null); // 本轮对话对应的积分扣除动作
   const hasConsumedRef = useRef(false); // 防止重复调用 /points/consume
   const userAbortedRef = useRef(false); // 用户手动停止后，忽略后续 SSE 回调
   // const [isStreaming, setIsStreaming] = useState(false); // 使用 hook 中的 isStreaming
+
+  useEffect(() => {
+    routeConversationIdRef.current = routeConversationId;
+  }, [routeConversationId]);
+
+  const applyStreamConversationId = useCallback((conversationId) => {
+    if (!isValidConversationId(conversationId)) return;
+
+    conversationIdRef.current = conversationId;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('ai_conversation_id', conversationId);
+    }
+
+    const routeId = routeConversationIdRef.current;
+    if (!routeId || routeId !== conversationId) {
+      pendingUrlConversationIdRef.current = conversationId;
+      router.replace(`/ai/${conversationId}`, { scroll: false });
+    }
+  }, [router]);
 
   // 加载聊天历史记录
   useEffect(() => {
@@ -709,7 +703,6 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
     setIsHistoryOverlayExiting(false);
     setMessages([]);
     setSuggestedQuestions([]);
-    sessionAgentSendCountRef.current = 0;
 
     const finishHistoryLoading = (hasContent) => {
       if (cancelled) return;
@@ -779,7 +772,6 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
                 localStorage.setItem('ai_conversation_id', resolvedConversationId);
               }
             }
-            sessionAgentSendCountRef.current = 1;
 
             const suggested = extractSuggestedQuestionsFromAgentMessages(data);
             if (suggested.length > 0) {
@@ -921,6 +913,7 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
   const { sendMessage, isStreaming, abort } = useRobotTestSSE(AGENT_STREAM_API, {
     includeLanguage: false,
     getToken: () => (typeof window !== 'undefined' ? localStorage.getItem('token') : null),
+    onConversationId: applyStreamConversationId,
     onSuggestions: (list) => {
       const norm = normalizeSuggestionItems(list);
       if (norm.length > 0) {
@@ -1240,18 +1233,8 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
     setInputValue('');
     setSuggestedQuestions([]);
 
-    const payload = prepareAgentPayload(
-      message,
-      selectedModel,
-      conversationIdRef,
-      sessionAgentSendCountRef
-    );
+    const payload = prepareAgentPayload(message, selectedModel, conversationIdRef);
     currentRequestIdRef.current = payload.request_id;
-
-    if (!routeConversationId && conversationIdRef.current) {
-      pendingUrlConversationIdRef.current = conversationIdRef.current;
-      router.replace(`/ai/${conversationIdRef.current}`, { scroll: false });
-    }
 
     // 添加 AI 加载消息
     const aiMsgId = `ai-loading-${Date.now()}`;
@@ -1386,12 +1369,7 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
     userAbortedRef.current = false;
 
     // 生成请求 ID（与 Agent payload 保持一致）
-    const payload = prepareAgentPayload(
-      lastMessage,
-      selectedModel,
-      conversationIdRef,
-      sessionAgentSendCountRef
-    );
+    const payload = prepareAgentPayload(lastMessage, selectedModel, conversationIdRef);
     currentRequestIdRef.current = payload.request_id;
 
     // 添加 AI 加载消息（重新生成会新增一条 assistant 消息）
@@ -1526,7 +1504,6 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
     }
 
     conversationIdRef.current = null;
-    sessionAgentSendCountRef.current = 0;
     messageIdRef.current = null;
     currentAiMsgIdRef.current = null;
     currentRequestIdRef.current = null;

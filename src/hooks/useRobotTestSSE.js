@@ -62,6 +62,7 @@ export function useRobotTestSSE(url, options = {}) {
     onChunk = () => {},
     onComplete = () => {},
     onError = () => {},
+    onConversationId = () => {},
     onSuggestions = () => {},
     onSignalCard = () => {},
     onThinking = () => {},
@@ -78,6 +79,7 @@ export function useRobotTestSSE(url, options = {}) {
   const abortControllerRef = useRef(null);
   const accumulatedContentRef = useRef('');
   const lastEventDataRef = useRef(null);
+  const lastConversationIdRef = useRef(null);
   const finishRef = useRef(false);
   const streamFailedRef = useRef(false);
 
@@ -97,6 +99,7 @@ export function useRobotTestSSE(url, options = {}) {
     setError(null);
     accumulatedContentRef.current = '';
     lastEventDataRef.current = null;
+    lastConversationIdRef.current = null;
     finishRef.current = false;
     streamFailedRef.current = false;
 
@@ -203,6 +206,15 @@ export function useRobotTestSSE(url, options = {}) {
                 ...(lastEventDataRef.current || {}),
                 ...normalized,
               };
+              const conversationId = getConversationId(normalized);
+              if (conversationId && conversationId !== lastConversationIdRef.current) {
+                lastConversationIdRef.current = conversationId;
+                try {
+                  onConversationId(conversationId, normalized);
+                } catch (cbErr) {
+                  console.warn('[useRobotTestSSE] onConversationId error:', cbErr);
+                }
+              }
               return normalized;
             };
 
@@ -424,6 +436,7 @@ export function useRobotTestSSE(url, options = {}) {
     onChunk,
     onComplete,
     onError,
+    onConversationId,
     onSuggestions,
     onSignalCard,
     onThinking,

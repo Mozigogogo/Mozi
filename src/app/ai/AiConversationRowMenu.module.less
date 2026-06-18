@@ -14,6 +14,17 @@
   }
 }
 
+.menuWrapMobile {
+  position: relative;
+  z-index: 2;
+
+  :global(.ant-dropdown-trigger) {
+    width: 100% !important;
+    height: 100% !important;
+    flex: none !important;
+  }
+}
+
 .menuBtn {
   display: inline-flex;
   align-items: center;
@@ -44,6 +55,23 @@
   background: rgba(15, 23, 42, 0.06);
 }
 
+.menuBtnAlwaysVisible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.menuBtnMobile {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 8px;
+
+  &:active {
+    background: rgba(15, 23, 42, 0.08);
+  }
+}
+
 .dropdown {
   :global {
     .ant-dropdown-menu {
@@ -72,6 +100,35 @@
     .anticon {
       color: #ef4444;
       font-size: 14px;
+    }
+  }
+}
+
+.dropdownMobile {
+  z-index: 1200;
+
+  :global {
+    .ant-dropdown-menu {
+      min-width: 108px;
+      padding: 6px;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
+    }
+
+    .ant-dropdown-menu-item {
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+  }
+}
+
+.deleteMenuItemMobile {
+  gap: 8px;
+  font-size: 15px;
+
+  :global {
+    .anticon {
+      font-size: 15px;
     }
   }
 }

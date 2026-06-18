@@ -235,7 +235,10 @@ export default function MobileAiHistoryDrawer({ open, onClose, activeConversatio
                   <AiConversationRowMenu
                     conversationId={conversationId}
                     onDeleted={handleDeleteConversation}
+                    variant="mobile"
+                    wrapClassName={styles.rowMenuWrap}
                     buttonClassName={styles.rowMenuBtn}
+                    iconSize={16}
                   />
                 </div>
               );

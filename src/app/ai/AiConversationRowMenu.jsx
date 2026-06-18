@@ -26,9 +26,11 @@ export default function AiConversationRowMenu({
   deleteMenuItemClassName = '',
   wrapClassName = '',
   iconSize = 16,
+  variant = 'default',
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const isMobile = variant === 'mobile';
 
   const handleDelete = async () => {
     setOpen(false);
@@ -52,20 +54,26 @@ export default function AiConversationRowMenu({
   };
 
   return (
-    <div className={`${styles.menuWrap} ${wrapClassName}`.trim()}>
+    <div
+      className={`${styles.menuWrap} ${isMobile ? styles.menuWrapMobile : ''} ${wrapClassName}`.trim()}
+      onClick={(event) => event.stopPropagation()}
+    >
       <Dropdown
         open={open}
         onOpenChange={setOpen}
         trigger={['click']}
         placement="bottomRight"
         getPopupContainer={() => (typeof document !== 'undefined' ? document.body : undefined)}
+        styles={isMobile ? { root: { zIndex: 1200 } } : undefined}
         menu={{
           items: [
             {
               key: 'delete',
               label: (
                 <span
-                  className={`${styles.deleteMenuItem} ${deleteMenuItemClassName}`.trim()}
+                  className={`${styles.deleteMenuItem} ${
+                    isMobile ? styles.deleteMenuItemMobile : ''
+                  } ${deleteMenuItemClassName}`.trim()}
                 >
                   <DeleteOutlined />
                   <span>{t('common.delete')}</span>
@@ -80,13 +88,16 @@ export default function AiConversationRowMenu({
             }
           },
         }}
-        overlayClassName={`${styles.dropdown} ${dropdownClassName}`.trim()}
+        overlayClassName={`${styles.dropdown} ${
+          isMobile ? styles.dropdownMobile : ''
+        } ${dropdownClassName}`.trim()}
       >
         <button
           type="button"
-          className={`${styles.menuBtn} ${open ? styles.menuBtnOpen : ''} ${buttonClassName}`.trim()}
+          className={`${styles.menuBtn} ${open ? styles.menuBtnOpen : ''} ${
+            isMobile ? styles.menuBtnAlwaysVisible : ''
+          } ${isMobile ? styles.menuBtnMobile : ''} ${buttonClassName}`.trim()}
           aria-label={t('common.moreActions', { defaultValue: '更多操作' })}
-          onClick={(event) => event.stopPropagation()}
         >
           <VerticalDotsIcon size={iconSize} />
         </button>
