@@ -129,31 +129,9 @@ function calcChangePct(from, to) {
   return ((target - base) / base) * 100;
 }
 
-function truncatePriceDecimals(value, decimals = 4) {
-  const str = String(value).trim();
-  if (!str) return null;
-  const num = Number(value);
-  if (Number.isNaN(num)) return null;
-
-  const isNegative = num < 0;
-  const absStr = str.replace(/^-/, '');
-  const dotIndex = absStr.indexOf('.');
-  const intPart = dotIndex === -1 ? absStr : absStr.slice(0, dotIndex) || '0';
-  const fracPart = dotIndex === -1 ? '' : absStr.slice(dotIndex + 1);
-  const truncatedFrac = fracPart.slice(0, decimals).replace(/0+$/, '');
-
-  if (!truncatedFrac) {
-    return `${isNegative ? '-' : ''}${intPart}`;
-  }
-
-  return `${isNegative ? '-' : ''}${intPart}.${truncatedFrac}`;
-}
-
-function formatFixedPrice(value, decimals = 4) {
+function displayRawValue(value) {
   if (value === undefined || value === null || value === '') return '--';
-  const truncated = truncatePriceDecimals(value, decimals);
-  if (truncated == null) return String(value);
-  return `$${truncated}`;
+  return String(value);
 }
 
 function parseMathChip(tag) {
@@ -663,7 +641,7 @@ export default function SignalCard({
         {isFullLayout ? <div className={styles.priceLabel}>{t('signalCard.currentPrice')}</div> : null}
         <div className={styles.priceHero}>
           <div className={`${styles.priceNum} ${isSidebar && !isShort ? styles.priceNumLong : ''}`}>
-            {formatFixedPrice(currentPrice)}
+            {displayRawValue(currentPrice)}
           </div>
           <div className={styles.priceTicker}>USD</div>
         </div>
@@ -682,14 +660,14 @@ export default function SignalCard({
             />
           </div>
           <div className={`${styles.entryPrices} ${isSidebar ? styles.entryPricesSidebar : ''}`}>
-            <div className={styles.entryLow}>{formatFixedPrice(entryLow)}</div>
+            <div className={styles.entryLow}>{displayRawValue(entryLow)}</div>
             <div
               className={`${styles.entryMid} ${isSidebar ? styles.entryMidSidebar : ''}`}
               style={{ color: gradeChart.entryMid }}
             >
               {t('signalCard.entryZone')}
             </div>
-            <div className={styles.entryHigh}>{formatFixedPrice(entryHigh)}</div>
+            <div className={styles.entryHigh}>{displayRawValue(entryHigh)}</div>
           </div>
         </div>
       ) : null}
@@ -698,14 +676,14 @@ export default function SignalCard({
         <div className={styles.tpslSection}>
           <div className={styles.tpslCell}>
             <div className={`${styles.tpslType} ${styles.tpType}`}>{t('signalCard.takeProfit')}</div>
-            <div className={styles.tpslPrice}>{formatFixedPrice(takeProfit)}</div>
+            <div className={styles.tpslPrice}>{displayRawValue(takeProfit)}</div>
             {tpChange != null ? (
               <div className={`${styles.tpslPct} ${styles.tpPct}`}>{formatPct(tpChange)}</div>
             ) : null}
           </div>
           <div className={styles.tpslCell}>
             <div className={`${styles.tpslType} ${styles.slType}`}>{t('signalCard.stopLoss')}</div>
-            <div className={styles.tpslPrice}>{formatFixedPrice(stopLoss)}</div>
+            <div className={styles.tpslPrice}>{displayRawValue(stopLoss)}</div>
             {slChange != null ? (
               <div className={`${styles.tpslPct} ${styles.slPct}`}>{formatPct(slChange)}</div>
             ) : null}
@@ -807,7 +785,7 @@ export default function SignalCard({
                   aria-hidden
                 />
                 {isShort ? t('signalCard.breakAbove') : t('signalCard.breakBelow')}{' '}
-                {formatFixedPrice(invalidation)}
+                {displayRawValue(invalidation)}
               </div>
             </div>
           ) : null}

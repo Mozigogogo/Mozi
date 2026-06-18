@@ -808,7 +808,7 @@ export default function PCLayout({ children }) {
       {
         id: 'discord',
         icon: `${CDN_PUBLIC_PREFIX}/icons/discord.svg`,
-        url: 'https://discord.gg/v3krzFdvxU',
+        url: 'https://discord.gg/GJW6h9GNQ8',
         label: 'Discord',
       },
       {
