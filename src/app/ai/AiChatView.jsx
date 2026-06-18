@@ -16,6 +16,7 @@ import { extractCoinSymbolFromText } from '@/utils/extractCoinSymbolFromText';
 import {
   normalizeSuggestionItems,
   TRADE_SUGGESTION_ID,
+  ALPHA_SUGGESTION_ID,
   withTradeSuggestion,
 } from '@/utils/normalizeSuggestionItems';
 import ExchangePickerModal from '@/components/ExchangePickerModal';
@@ -1569,6 +1570,10 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
       handleOpenTradePicker();
       return;
     }
+    if (id === ALPHA_SUGGESTION_ID) {
+      handleAlphaSignalViewMore();
+      return;
+    }
     const text = typeof item === 'string' ? item : item?.text ?? '';
     if (text) handleSuggestedQuestion(text);
   };
@@ -2019,10 +2024,29 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
               <div className={styles.suggestedList}>
                 {displaySuggestedQuestions.map((item, idx) => {
                   const isTradeCta = item.id === TRADE_SUGGESTION_ID;
+                  const isAlphaCta = item.id === ALPHA_SUGGESTION_ID;
                   const text = item?.text ?? '';
-                  if (!isTradeCta && !text) return null;
+                  if (!isTradeCta && !isAlphaCta && !text) return null;
                   const label = getSuggestedQuestionDisplay(text) || text;
                   const key = item.id || `${idx}-${text.slice(0, 24)}`;
+
+                  if (isAlphaCta) {
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        className={`${styles.suggestedBtn} ${styles.suggestedBtnTrade}`}
+                        disabled={isBusy}
+                        onClick={() => handleSuggestedItemClick(item)}
+                      >
+                        <span>{t('signalCard.alphaPanel.title')}</span>
+                        <span className={styles.suggestedTradeArrow} aria-hidden>
+                          →
+                        </span>
+                      </button>
+                    );
+                  }
+
                   return (
                     <button
                       key={key}
