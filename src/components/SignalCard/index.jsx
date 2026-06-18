@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useFormatNumber } from '@/hooks/useFormatNumber';
 import styles from './index.module.less';
 
 const SOURCE_GRADIENTS = {
@@ -128,6 +127,33 @@ function calcChangePct(from, to) {
   const target = Number(to);
   if (!base || Number.isNaN(base) || Number.isNaN(target)) return null;
   return ((target - base) / base) * 100;
+}
+
+function truncatePriceDecimals(value, decimals = 4) {
+  const str = String(value).trim();
+  if (!str) return null;
+  const num = Number(value);
+  if (Number.isNaN(num)) return null;
+
+  const isNegative = num < 0;
+  const absStr = str.replace(/^-/, '');
+  const dotIndex = absStr.indexOf('.');
+  const intPart = dotIndex === -1 ? absStr : absStr.slice(0, dotIndex) || '0';
+  const fracPart = dotIndex === -1 ? '' : absStr.slice(dotIndex + 1);
+  const truncatedFrac = fracPart.slice(0, decimals).replace(/0+$/, '');
+
+  if (!truncatedFrac) {
+    return `${isNegative ? '-' : ''}${intPart}`;
+  }
+
+  return `${isNegative ? '-' : ''}${intPart}.${truncatedFrac}`;
+}
+
+function formatFixedPrice(value, decimals = 4) {
+  if (value === undefined || value === null || value === '') return '--';
+  const truncated = truncatePriceDecimals(value, decimals);
+  if (truncated == null) return String(value);
+  return `$${truncated}`;
 }
 
 function parseMathChip(tag) {
@@ -355,23 +381,6 @@ export default function SignalCard({
   const cardRef = useRef(null);
   const sparkRef = useRef(null);
   const sparkDataRef = useRef([]);
-  const { formatSmallDecimal } = useFormatNumber();
-
-  const formatPrice = useCallback(
-    (value) => {
-      if (value === undefined || value === null || value === '') return '--';
-      const num = Number(value);
-      if (Number.isNaN(num)) return String(value);
-      if (num !== 0 && Math.abs(num) < 1) {
-        return `$${formatSmallDecimal(num)}`;
-      }
-      return `$${num.toLocaleString('en-US', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      })}`;
-    },
-    [formatSmallDecimal]
-  );
 
   const card = data?.card || {};
   const math = data?.math || {};
@@ -654,7 +663,7 @@ export default function SignalCard({
         {isFullLayout ? <div className={styles.priceLabel}>{t('signalCard.currentPrice')}</div> : null}
         <div className={styles.priceHero}>
           <div className={`${styles.priceNum} ${isSidebar && !isShort ? styles.priceNumLong : ''}`}>
-            {formatPrice(currentPrice)}
+            {formatFixedPrice(currentPrice)}
           </div>
           <div className={styles.priceTicker}>USD</div>
         </div>
@@ -673,14 +682,14 @@ export default function SignalCard({
             />
           </div>
           <div className={`${styles.entryPrices} ${isSidebar ? styles.entryPricesSidebar : ''}`}>
-            <div className={styles.entryLow}>{formatPrice(entryLow)}</div>
+            <div className={styles.entryLow}>{formatFixedPrice(entryLow)}</div>
             <div
               className={`${styles.entryMid} ${isSidebar ? styles.entryMidSidebar : ''}`}
               style={{ color: gradeChart.entryMid }}
             >
               {t('signalCard.entryZone')}
             </div>
-            <div className={styles.entryHigh}>{formatPrice(entryHigh)}</div>
+            <div className={styles.entryHigh}>{formatFixedPrice(entryHigh)}</div>
           </div>
         </div>
       ) : null}
@@ -689,14 +698,14 @@ export default function SignalCard({
         <div className={styles.tpslSection}>
           <div className={styles.tpslCell}>
             <div className={`${styles.tpslType} ${styles.tpType}`}>{t('signalCard.takeProfit')}</div>
-            <div className={styles.tpslPrice}>{formatPrice(takeProfit)}</div>
+            <div className={styles.tpslPrice}>{formatFixedPrice(takeProfit)}</div>
             {tpChange != null ? (
               <div className={`${styles.tpslPct} ${styles.tpPct}`}>{formatPct(tpChange)}</div>
             ) : null}
           </div>
           <div className={styles.tpslCell}>
             <div className={`${styles.tpslType} ${styles.slType}`}>{t('signalCard.stopLoss')}</div>
-            <div className={styles.tpslPrice}>{formatPrice(stopLoss)}</div>
+            <div className={styles.tpslPrice}>{formatFixedPrice(stopLoss)}</div>
             {slChange != null ? (
               <div className={`${styles.tpslPct} ${styles.slPct}`}>{formatPct(slChange)}</div>
             ) : null}
@@ -798,7 +807,7 @@ export default function SignalCard({
                   aria-hidden
                 />
                 {isShort ? t('signalCard.breakAbove') : t('signalCard.breakBelow')}{' '}
-                {formatPrice(invalidation)}
+                {formatFixedPrice(invalidation)}
               </div>
             </div>
           ) : null}
