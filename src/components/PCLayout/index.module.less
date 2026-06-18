@@ -797,7 +797,7 @@
     background: rgba(245, 245, 245, 0.9);
 
     .pcAiChatRowMain {
-      padding-right: 26px;
+      padding-right: 32px;
     }
 
     .pcAiChatRowMenuBtn {
@@ -833,13 +833,26 @@
   top: 50%;
   transform: translateY(-50%);
   z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+
+  :global(.ant-dropdown-trigger) {
+    width: 28px !important;
+    height: 28px !important;
+    flex: none !important;
+  }
 }
 
 .pcAiChatRowMenuBtn {
   opacity: 0;
   pointer-events: none;
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
   border-radius: 6px;
 }
 

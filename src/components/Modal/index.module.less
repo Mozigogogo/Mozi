@@ -63,6 +63,7 @@
   line-height: 20px;
   font-weight: 500;
   cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .btn + .btn {
@@ -120,28 +121,83 @@
   }
 
   .panel {
-    width: min(560px, calc(100vw - 96px));
-    border-radius: 20px;
-    box-shadow: 0 18px 56px rgba(0, 0, 0, 0.22);
+    width: min(400px, calc(100vw - 96px));
+    border-radius: 16px;
+    box-shadow: 0 18px 56px rgba(15, 23, 42, 0.16);
     max-height: min(560px, calc(100vh - 160px));
   }
 
   .header {
-    padding: 18px 20px 8px;
+    padding: 22px 24px 8px;
     font-size: 18px;
   }
 
   .content {
-    padding: 0 20px 16px;
+    padding: 0 24px 20px;
     font-size: 15px;
     line-height: 1.55;
+    color: #334155;
+    text-align: center;
+  }
+
+  .contentNoHeader {
+    padding-top: 28px;
+    font-size: 16px;
+    color: #0f172a;
+  }
+
+  .footer {
+    display: flex;
+    gap: 12px;
+    padding: 0 24px 24px;
+    border-top: none;
   }
 
   .btn {
-    height: 56px;
-    min-height: 56px;
-    padding: 0 12px;
-    font-size: 17px;
+    flex: 1;
+    height: 44px;
+    min-height: 44px;
+    padding: 0 16px;
+    font-size: 15px;
+    border-radius: 22px;
+  }
+
+  .btn + .btn {
+    border-left: none;
+  }
+
+  .cancel {
+    color: #64748b;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+
+    &:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+      color: #475569;
+    }
+
+    &:active {
+      background: #f1f5f9;
+    }
+  }
+
+  .confirm {
+    color: #fff;
+    font-weight: 600;
+    background: #11b787;
+    border: 1px solid #11b787;
+    box-shadow: 0 4px 12px rgba(17, 183, 135, 0.28);
+
+    &:hover {
+      background: #0fa076;
+      border-color: #0fa076;
+    }
+
+    &:active {
+      background: #0d9468;
+      border-color: #0d9468;
+    }
   }
 }
 
