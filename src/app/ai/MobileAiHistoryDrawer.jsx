@@ -90,7 +90,7 @@ export default function MobileAiHistoryDrawer({ open, onClose, activeConversatio
       }
       const items = normalizeConversationsResponse(res);
       setConversations(items);
-      setVisibleCount(items.length);
+      setVisibleCount(Math.min(items.length, AI_CONVERSATIONS_PAGE_SIZE));
     } catch (e) {
       console.error('Mobile AI history drawer:', e);
       setConversations([]);
@@ -134,7 +134,7 @@ export default function MobileAiHistoryDrawer({ open, onClose, activeConversatio
     const el = bodyRef.current;
     if (!el) return false;
     const overflows = el.scrollHeight > el.clientHeight + 1;
-    setBodyOverflows(overflows);
+    setBodyOverflows((prev) => (prev === overflows ? prev : overflows));
     return overflows;
   }, []);
 
@@ -146,11 +146,11 @@ export default function MobileAiHistoryDrawer({ open, onClose, activeConversatio
       conversations.length > AI_CONVERSATIONS_PAGE_SIZE &&
       visibleCount >= conversations.length
     ) {
-      setVisibleCount(AI_CONVERSATIONS_PAGE_SIZE);
-    } else if (!overflows && conversations.length > visibleCount) {
-      setVisibleCount(conversations.length);
+      setVisibleCount((prev) =>
+        prev === AI_CONVERSATIONS_PAGE_SIZE ? prev : AI_CONVERSATIONS_PAGE_SIZE,
+      );
     }
-  }, [open, loading, conversations.length, visibleCount, visibleConversations, syncBodyOverflow]);
+  }, [open, loading, conversations.length, visibleCount, syncBodyOverflow]);
 
   useEffect(() => {
     if (!open) return undefined;
