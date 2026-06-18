@@ -165,6 +165,35 @@ function shouldDropSignalCardTextContent(item, content, displayText) {
   return false;
 }
 
+function resolveHistoryMessageId(item, index) {
+  const role = item?.role || 'unknown';
+  const sortNo = item?.sort_no ?? item?.sortNo ?? index;
+  const rawId =
+    item?.id ||
+    item?.messageId ||
+    item?.message_id ||
+    item?.request_id ||
+    item?.requestId;
+  if (rawId) return `${rawId}-${role}-${sortNo}`;
+  return `history-${role}-${index}`;
+}
+
+function ensureUniqueMessageIds(messages) {
+  const used = new Set();
+  return messages.map((msg) => {
+    let id = String(msg.id);
+    if (!used.has(id)) {
+      used.add(id);
+      return msg;
+    }
+    let suffix = 1;
+    while (used.has(`${id}-${suffix}`)) suffix += 1;
+    id = `${id}-${suffix}`;
+    used.add(id);
+    return { ...msg, id };
+  });
+}
+
 function buildSignalCardHistoryMessage(base, item, signalCards, content) {
   const displayText = signalCards[0]?.display || item?.payload?.display || '';
   const finalContent = shouldDropSignalCardTextContent(item, content, displayText) ? '' : content;
@@ -185,13 +214,7 @@ function normalizeAgentHistoryMessage(item, index, conversationId, data) {
   const content = rawContent == null ? '' : String(rawContent);
 
   const base = {
-    id:
-      normalizedItem.id ||
-      normalizedItem.messageId ||
-      normalizedItem.message_id ||
-      normalizedItem.request_id ||
-      normalizedItem.requestId ||
-      `history-${normalizedItem.role}-${index}`,
+    id: resolveHistoryMessageId(normalizedItem, index),
     role: normalizedItem.role,
     content,
     time:
@@ -254,15 +277,17 @@ export function normalizeAgentConversationMessages(res, conversationId) {
     rawMessages = data.list;
   }
 
-  return rawMessages
-    .slice()
-    .sort((a, b) => {
-      const sortA = a?.sort_no ?? a?.sortNo ?? 0;
-      const sortB = b?.sort_no ?? b?.sortNo ?? 0;
-      return sortA - sortB;
-    })
-    .filter((item) => item?.role !== 'system')
-    .map((item, index) => normalizeAgentHistoryMessage(item, index, conversationId, data));
+  return ensureUniqueMessageIds(
+    rawMessages
+      .slice()
+      .sort((a, b) => {
+        const sortA = a?.sort_no ?? a?.sortNo ?? 0;
+        const sortB = b?.sort_no ?? b?.sortNo ?? 0;
+        return sortA - sortB;
+      })
+      .filter((item) => item?.role !== 'system')
+      .map((item, index) => normalizeAgentHistoryMessage(item, index, conversationId, data)),
+  );
 }
 
 /**

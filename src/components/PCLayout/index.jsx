@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
 import {
   Layout,
   Menu,
@@ -82,6 +82,104 @@ function normalizeConversationsResponse(res) {
 const AI_CONVERSATIONS_PAGE_SIZE = 5;
 
 const AI_CHAT_ICON = `${CDN_PUBLIC_PREFIX}/icons/new_home/ai_chat.svg`;
+
+function dedupeConversations(items) {
+  const seen = new Set();
+  return items.filter((item) => {
+    const id = getConversationId(item);
+    if (!id || seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+}
+
+function resolvePcMenuIconActive(itemKey, pathname, activeContent) {
+  const isSubscriptionEntry = itemKey === '/subscribe';
+  if (activeContent) {
+    return activeContent === itemKey;
+  }
+  return (
+    pathname === itemKey ||
+    pathname.startsWith(`${itemKey}/`) ||
+    (isSubscriptionEntry &&
+      (pathname === '/subscribe' ||
+        pathname.startsWith('/subscribe/') ||
+        pathname === '/pc/benefitsPage' ||
+        pathname.startsWith('/pc/benefitsPage/')))
+  );
+}
+
+const PcMenuIcon = memo(function PcMenuIcon({
+  src,
+  activeSrc,
+  itemKey,
+  alt = 'icon',
+  activeContent = null,
+}) {
+  const pathname = usePathname();
+  const isActive = resolvePcMenuIconActive(itemKey, pathname, activeContent);
+
+  if (src === activeSrc) {
+    return (
+      <span
+        className="ant-menu-item-icon"
+        style={{
+          display: 'inline-block',
+          width: 16,
+          height: 16,
+          backgroundColor: 'currentColor',
+          WebkitMaskImage: `url(${src})`,
+          WebkitMaskSize: 'contain',
+          WebkitMaskRepeat: 'no-repeat',
+          WebkitMaskPosition: 'center',
+          maskImage: `url(${src})`,
+          maskSize: 'contain',
+          maskRepeat: 'no-repeat',
+          maskPosition: 'center',
+        }}
+        role="img"
+        aria-label={alt}
+      />
+    );
+  }
+
+  return (
+    <span
+      className="ant-menu-item-icon"
+      style={{ position: 'relative', display: 'inline-block', width: 16, height: 16 }}
+    >
+      <img
+        src={src}
+        alt={alt}
+        width={16}
+        height={16}
+        decoding="async"
+        style={{
+          width: 16,
+          height: 16,
+          objectFit: 'contain',
+          opacity: isActive ? 0 : 1,
+        }}
+      />
+      <img
+        src={activeSrc}
+        alt={`${alt}-active`}
+        width={16}
+        height={16}
+        decoding="async"
+        style={{
+          width: 16,
+          height: 16,
+          objectFit: 'contain',
+          opacity: isActive ? 1 : 0,
+          position: 'absolute',
+          top: 0,
+          left: 0,
+        }}
+      />
+    </span>
+  );
+});
 
 function AiChatMaskIcon({ color = '#333333', className = '' }) {
   return (
@@ -341,8 +439,10 @@ export default function PCLayout({ children }) {
     setIsMineExpanded(false);
   }, []);
 
-  const fetchAiConversations = useCallback(async () => {
-    setAiConversationsLoading(true);
+  const fetchAiConversations = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) {
+      setAiConversationsLoading(true);
+    }
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -354,12 +454,14 @@ export default function PCLayout({ children }) {
         setAiConversations([]);
         return;
       }
-      setAiConversations(normalizeConversationsResponse(res));
+      setAiConversations(dedupeConversations(normalizeConversationsResponse(res)));
     } catch (e) {
       console.error('PC sidebar AI conversations:', e);
       setAiConversations([]);
     } finally {
-      setAiConversationsLoading(false);
+      if (!silent) {
+        setAiConversationsLoading(false);
+      }
     }
   }, []);
 
@@ -373,11 +475,11 @@ export default function PCLayout({ children }) {
     if (collapsed) return undefined;
     fetchAiConversations();
     return undefined;
-  }, [collapsed, pathname, fetchAiConversations]);
+  }, [collapsed, fetchAiConversations]);
 
   useEffect(() => {
     const onConversationsChanged = () => {
-      fetchAiConversations();
+      fetchAiConversations({ silent: true });
     };
 
     window.addEventListener(MOZI_AI_CONVERSATIONS_CHANGED, onConversationsChanged);
@@ -513,92 +615,17 @@ export default function PCLayout({ children }) {
     });
   }, []);
 
-  // 自定义图标组件 - 使用双图标避免闪烁
-  const CustomIcon = ({ src, activeSrc, itemKey, alt = 'icon' }) => {
-    // 判断是否激活：
-    // 1. 如果有activeContent，只有当itemKey等于activeContent时才激活
-    // 2. 如果没有activeContent，根据pathname判断
-    let isActive = false;
-    const isSubscriptionEntry = itemKey === '/subscribe';
-    if (activeContent) {
-      isActive = activeContent === itemKey;
-    } else {
-      isActive =
-        pathname === itemKey ||
-        pathname.startsWith(itemKey + '/') ||
-        (isSubscriptionEntry &&
-          (pathname === '/subscribe' ||
-            pathname.startsWith('/subscribe/') ||
-            pathname === '/pc/benefitsPage' ||
-            pathname.startsWith('/pc/benefitsPage/')));
-    }
-    
-    if (src === activeSrc) {
-      return (
-        <span
-          className="ant-menu-item-icon"
-          style={{
-            display: 'inline-block',
-            width: 16,
-            height: 16,
-            backgroundColor: 'currentColor',
-            WebkitMaskImage: `url(${src})`,
-            WebkitMaskSize: 'contain',
-            WebkitMaskRepeat: 'no-repeat',
-            WebkitMaskPosition: 'center',
-            maskImage: `url(${src})`,
-            maskSize: 'contain',
-            maskRepeat: 'no-repeat',
-            maskPosition: 'center',
-            transition: 'color 0.15s ease',
-          }}
-          role="img"
-          aria-label={alt}
-        />
-      );
-    }
-
-    return (
-      <span className="ant-menu-item-icon" style={{ position: 'relative', display: 'inline-block', width: 16, height: 16 }}>
-        <img 
-          src={src}
-          alt={alt} 
-          style={{ 
-            width: 16, 
-            height: 16, 
-            objectFit: 'contain',
-            opacity: isActive ? 0 : 1,
-            transition: 'opacity 0.15s ease'
-          }} 
-        />
-        <img 
-          src={activeSrc}
-          alt={`${alt}-active`} 
-          style={{ 
-            width: 16, 
-            height: 16, 
-            objectFit: 'contain',
-            opacity: isActive ? 1 : 0,
-            transition: 'opacity 0.15s ease',
-            position: 'absolute',
-            top: 0,
-            left: 0
-          }} 
-        />
-      </span>
-    );
-  };
-
   const mineRestMenuItems = useMemo(
     () => [
       {
         key: '/achievement',
         icon: (
-          <CustomIcon
+          <PcMenuIcon
             src={`${CDN_PUBLIC_PREFIX}/icons/pc/Achievement.png`}
             activeSrc={`${CDN_PUBLIC_PREFIX}/icons/pc/Achievement_actived.png`}
             itemKey="/achievement"
             alt="achievements"
+            activeContent={activeContent}
           />
         ),
         label: t('pcLayout.menu.myAchievements'),
@@ -606,24 +633,25 @@ export default function PCLayout({ children }) {
       {
         key: '/subscribe',
         icon: (
-          <CustomIcon
+          <PcMenuIcon
             src={`${CDN_PUBLIC_PREFIX}/icons/pc/Subscribe.png`}
             activeSrc={`${CDN_PUBLIC_PREFIX}/icons/pc/Subscribe_actived.png`}
             itemKey="/subscribe"
             alt="subscription"
+            activeContent={activeContent}
           />
         ),
         label: t('pcLayout.menu.mySubscription'),
       },
     ],
-    [t, activeContent, pathname]
+    [t, activeContent]
   );
 
   const aiMenuItemCollapsed = useMemo(
     () => ({
       key: '/ai',
       icon: (
-        <CustomIcon
+        <PcMenuIcon
           src={AI_CHAT_ICON}
           activeSrc={AI_CHAT_ICON}
           itemKey="/ai"
@@ -632,14 +660,14 @@ export default function PCLayout({ children }) {
       ),
       label: t('pcLayout.menu.myQA'),
     }),
-    [t, activeContent, pathname]
+    [t]
   );
 
   const myAlertsMenuItem = useMemo(
     () => ({
       key: '/pc/alarm',
       icon: (
-        <CustomIcon
+        <PcMenuIcon
           src={`${CDN_PUBLIC_PREFIX}/icons/pc/alert@2x.png`}
           activeSrc={`${CDN_PUBLIC_PREFIX}/icons/pc/alert_actived@2x.png`}
           itemKey="/pc/alarm"
@@ -648,14 +676,14 @@ export default function PCLayout({ children }) {
       ),
       label: t('pcLayout.menu.myAlerts'),
     }),
-    [t, activeContent, pathname]
+    [t]
   );
 
   const favoritesMenuItemCollapsed = useMemo(
     () => ({
       key: '/selfrank',
       icon: (
-        <CustomIcon
+        <PcMenuIcon
           src={`${CDN_PUBLIC_PREFIX}/icons/pc/Collection@2x.png`}
           activeSrc={`${CDN_PUBLIC_PREFIX}/icons/pc/Collection_actived@2x.png`}
           itemKey="/selfrank"
@@ -664,7 +692,7 @@ export default function PCLayout({ children }) {
       ),
       label: t('pcLayout.menu.myFavorites'),
     }),
-    [t, activeContent, pathname]
+    [t]
   );
 
   // 主导航：首页 / 发现 / 社区
@@ -673,7 +701,7 @@ export default function PCLayout({ children }) {
       {
         key: '/home',
         icon: (
-          <CustomIcon
+          <PcMenuIcon
             src={`${CDN_PUBLIC_PREFIX}/icons/pc/home@2x.png`}
             activeSrc={`${CDN_PUBLIC_PREFIX}/icons/pc/home_actived@2x.png`}
             itemKey="/home"
@@ -685,7 +713,7 @@ export default function PCLayout({ children }) {
       {
         key: '/pc/find',
         icon: (
-          <CustomIcon
+          <PcMenuIcon
             src={`${CDN_PUBLIC_PREFIX}/icons/pc/find.png`}
             activeSrc={`${CDN_PUBLIC_PREFIX}/icons/pc/find_actived@2x.png`}
             itemKey="/pc/find"
@@ -697,7 +725,7 @@ export default function PCLayout({ children }) {
       {
         key: '/pc/community',
         icon: (
-          <CustomIcon
+          <PcMenuIcon
             src={`${CDN_PUBLIC_PREFIX}/icons/pc/social.png`}
             activeSrc={`${CDN_PUBLIC_PREFIX}/icons/pc/social_actived.png`}
             itemKey="/pc/community"
@@ -707,7 +735,7 @@ export default function PCLayout({ children }) {
         label: t('pcLayout.menu.community'),
       },
     ],
-    [t, activeContent, pathname]
+    [t]
   );
 
   // 展开时「我的」标题在自选区块上方单独渲染；折叠时组内保留「我的自选」图标入口 + 其余项
@@ -1365,14 +1393,14 @@ export default function PCLayout({ children }) {
                           })}
                         </div>
                       ) : (
-                        visibleAiConversations.map((item) => {
+                        visibleAiConversations.map((item, index) => {
                           const conversationId = getConversationId(item);
                           if (!conversationId) return null;
                           const isRowActive = activeAiConversationId === conversationId;
                           const title = getConversationTitle(item, aiConversationFallback);
                           return (
                             <div
-                              key={conversationId}
+                              key={`${conversationId}-${index}`}
                               className={`${styles.pcAiChatRow} ${
                                 isRowActive ? styles.pcAiChatRowActive : ''
                               }`}

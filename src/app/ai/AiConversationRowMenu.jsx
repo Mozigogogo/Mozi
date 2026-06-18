@@ -88,9 +88,11 @@ export default function AiConversationRowMenu({
             }
           },
         }}
-        overlayClassName={`${styles.dropdown} ${
-          isMobile ? styles.dropdownMobile : ''
-        } ${dropdownClassName}`.trim()}
+        classNames={{
+          root: `${styles.dropdown} ${
+            isMobile ? styles.dropdownMobile : ''
+          } ${dropdownClassName}`.trim(),
+        }}
       >
         <button
           type="button"

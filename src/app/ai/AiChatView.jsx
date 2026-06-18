@@ -73,6 +73,29 @@ function prepareAgentPayload(message, type, conversationIdRef) {
   const conversationId = conversationIdRef.current;
   return buildAgentPayload(message, type, conversationId, !!conversationId);
 }
+
+/** 流式输出完成后以 JSON 打印原始 Markdown（\n 等转义可见，不做解析） */
+function logAgentStreamRawMarkdown(rawMarkdown, meta = {}) {
+  if (typeof window === 'undefined') return;
+
+  const record = {
+    requestId: meta.requestId ?? null,
+    conversationId: meta.conversationId ?? null,
+    messageId: meta.messageId ?? null,
+    agentType: meta.agentType ?? null,
+    length: rawMarkdown?.length ?? 0,
+    timestamp: new Date().toISOString(),
+    rawMarkdown: rawMarkdown ?? '',
+    eventData: meta.eventData ?? null,
+  };
+
+  const json = JSON.stringify(record, null, 2);
+  window.__MOZI_AI_LAST_RAW_MARKDOWN__ = record;
+  window.__MOZI_AI_LAST_RAW_MARKDOWN_JSON__ = json;
+
+  console.log(`[AiChatView] agent stream complete — raw markdown JSON:\n${json}`);
+}
+
 const GRADE_ORDER = { S: 0, A: 1, B: 2, C: 3 };
 
 function getGradeRank(item) {
@@ -1017,6 +1040,14 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
         );
       }
       currentAiMsgIdRef.current = null;
+
+      logAgentStreamRawMarkdown(fullContent ?? '', {
+        requestId: currentRequestIdRef.current,
+        conversationId: eventData?.conversationId || eventData?.conversation_id,
+        messageId: eventData?.messageId,
+        agentType: selectedModel,
+        eventData,
+      });
 
       if (eventData?.suggestedQuestions?.length) {
         setSuggestedQuestions(normalizeSuggestionItems(eventData.suggestedQuestions));
