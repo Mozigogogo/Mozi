@@ -14,6 +14,44 @@ function normalizeEventData(eventData) {
   return eventData;
 }
 
+function parseEventPayload(data) {
+  if (!data) return {};
+  if (typeof data === 'object') return data;
+  const raw = String(data).trim();
+  if (!raw) return {};
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
+}
+
+export function extractStreamErrorMessage(eventData) {
+  if (!eventData || typeof eventData !== 'object') return '';
+  return (
+    eventData.message ||
+    eventData.errorMsg ||
+    eventData.error ||
+    eventData.msg ||
+    ''
+  );
+}
+
+export function isStreamErrorPayload(eventData, sseEvent = '') {
+  if (!eventData || typeof eventData !== 'object') return false;
+  const payloadEvent = String(eventData.event || eventData.type || '').toLowerCase();
+  const sse = String(sseEvent || '').toLowerCase();
+  if (payloadEvent === 'error' || sse === 'error') return true;
+  const code = Number(eventData.code);
+  return Number.isFinite(code) && code >= 4000;
+}
+
+function resolveMessageType(eventData, sseEvent = '') {
+  const payloadEvent = eventData?.event || eventData?.type || '';
+  const normalizedSseEvent = sseEvent && sseEvent !== 'message' ? sseEvent : '';
+  return payloadEvent || normalizedSseEvent || sseEvent || 'message';
+}
+
 /**
  * SSE 流式输出 Hook (支持 POST)
  * 兼容 Agent SSE（/ai/agent/stream）与旧 Robot SSE 格式
@@ -41,6 +79,7 @@ export function useRobotTestSSE(url, options = {}) {
   const accumulatedContentRef = useRef('');
   const lastEventDataRef = useRef(null);
   const finishRef = useRef(false);
+  const streamFailedRef = useRef(false);
 
   const abort = useCallback(() => {
     if (abortControllerRef.current) {
@@ -59,6 +98,7 @@ export function useRobotTestSSE(url, options = {}) {
     accumulatedContentRef.current = '';
     lastEventDataRef.current = null;
     finishRef.current = false;
+    streamFailedRef.current = false;
 
     abortControllerRef.current = new AbortController();
     setIsStreaming(true);
@@ -88,6 +128,37 @@ export function useRobotTestSSE(url, options = {}) {
 
       onStart();
 
+      const failStream = (errorMessage) => {
+        if (finishRef.current || streamFailedRef.current) return;
+        streamFailedRef.current = true;
+        finishRef.current = true;
+        setIsStreaming(false);
+        const err = new Error(errorMessage || 'SSE stream error');
+        setError(err);
+        onError(err);
+        if (abortControllerRef.current) {
+          const controller = abortControllerRef.current;
+          abortControllerRef.current = null;
+          window.setTimeout(() => controller.abort(), 0);
+        }
+      };
+
+      const finishStream = (eventData) => {
+        if (finishRef.current) return;
+        finishRef.current = true;
+        setIsStreaming(false);
+        const fullContent = accumulatedContentRef.current;
+        const rawFinal =
+          eventData && Object.keys(eventData).length > 0 ? eventData : lastEventDataRef.current;
+        const finalEventData = normalizeEventData(rawFinal);
+        onComplete(fullContent, finalEventData);
+        if (abortControllerRef.current) {
+          const controller = abortControllerRef.current;
+          abortControllerRef.current = null;
+          window.setTimeout(() => controller.abort(), 0);
+        }
+      };
+
       const payloadWithLanguage = includeLanguage
         ? {
             ...payload,
@@ -99,7 +170,15 @@ export function useRobotTestSSE(url, options = {}) {
         delete payloadWithLanguage.language;
       }
 
-      await fetchEventSource(url, {
+      const streamTimeoutMs = 120000;
+      const streamTimeoutId = window.setTimeout(() => {
+        if (!finishRef.current && !streamFailedRef.current) {
+          failStream('SSE stream timeout');
+        }
+      }, streamTimeoutMs);
+
+      try {
+        await fetchEventSource(url, {
         method: 'POST',
         headers: requestHeaders,
         body: JSON.stringify(payloadWithLanguage),
@@ -114,23 +193,9 @@ export function useRobotTestSSE(url, options = {}) {
         onmessage(msg) {
           const { event, data } = msg;
           try {
-            const eventData = data ? JSON.parse(data) : {};
-            const messageType = event || eventData.event || eventData.type || 'message';
+            const eventData = parseEventPayload(data);
+            const messageType = resolveMessageType(eventData, event);
             const dataType = eventData.data_type;
-
-            const finishStream = () => {
-              if (finishRef.current) return;
-              finishRef.current = true;
-              setIsStreaming(false);
-              const fullContent = accumulatedContentRef.current;
-              const rawFinal =
-                eventData && Object.keys(eventData).length > 0 ? eventData : lastEventDataRef.current;
-              const finalEventData = normalizeEventData(rawFinal);
-              onComplete(fullContent, finalEventData);
-              if (abortControllerRef.current) {
-                abortControllerRef.current.abort();
-              }
-            };
 
             const rememberEvent = (nextEventData) => {
               const normalized = normalizeEventData(nextEventData);
@@ -140,6 +205,13 @@ export function useRobotTestSSE(url, options = {}) {
               };
               return normalized;
             };
+
+            rememberEvent(eventData);
+
+            if (isStreamErrorPayload(eventData, event)) {
+              failStream(extractStreamErrorMessage(eventData) || 'SSE stream error');
+              return;
+            }
 
             const appendTextDelta = (delta) => {
               if (!delta) return;
@@ -163,6 +235,11 @@ export function useRobotTestSSE(url, options = {}) {
                 console.warn('[useRobotTestSSE] tool_debug error:', cbErr);
               }
             };
+
+            if (messageType === 'error') {
+              failStream(extractStreamErrorMessage(eventData) || 'SSE stream error');
+              return;
+            }
 
             if (messageType === 'start') {
               rememberEvent(eventData);
@@ -213,7 +290,7 @@ export function useRobotTestSSE(url, options = {}) {
               messageType === 'done'
             ) {
               rememberEvent(eventData);
-              finishStream();
+              finishStream(eventData);
               return;
             }
 
@@ -290,38 +367,47 @@ export function useRobotTestSSE(url, options = {}) {
               }
               return;
             }
-
-            if (messageType === 'error') {
-              throw new Error(
-                eventData.message || eventData.errorMsg || eventData.error || 'SSE stream error'
-              );
-            }
           } catch (e) {
             console.error('SSE message error:', e);
-            throw e;
+            failStream(e?.message || 'SSE stream error');
           }
         },
         onclose() {
-          throw new Error('Server closed connection');
+          if (streamFailedRef.current || finishRef.current) {
+            return;
+          }
+
+          const pendingError = extractStreamErrorMessage(lastEventDataRef.current);
+          if (isStreamErrorPayload(lastEventDataRef.current)) {
+            failStream(pendingError || 'SSE stream error');
+            return;
+          }
+
+          if (!accumulatedContentRef.current) {
+            failStream(pendingError || 'SSE stream error');
+            return;
+          }
+
+          finishStream(lastEventDataRef.current);
         },
         onerror(err) {
+          if (streamFailedRef.current || finishRef.current) {
+            throw err;
+          }
+          failStream(err?.message || 'SSE stream error');
           throw err;
         },
       });
+      } finally {
+        window.clearTimeout(streamTimeoutId);
+      }
     } catch (err) {
-      if (err.name === 'AbortError') {
-        setIsStreaming(false);
+      if (streamFailedRef.current || finishRef.current) {
         return accumulatedContentRef.current;
       }
 
-      if (err.message === 'Server closed connection') {
-        if (!finishRef.current) {
-          finishRef.current = true;
-          setIsStreaming(false);
-          const fullContent = accumulatedContentRef.current;
-          const finalEventData = normalizeEventData(lastEventDataRef.current);
-          onComplete(fullContent, finalEventData);
-        }
+      if (err.name === 'AbortError') {
+        setIsStreaming(false);
         return accumulatedContentRef.current;
       }
 

@@ -11,7 +11,7 @@ import ThinkingAnimation from '../../components/ThinkingAnimation';
 import PopLogin from '../../components/PopLogin';
 import { trackEvent, trackPageView, AIEvents } from '@/utils/amplitude';
 import { executeConsume } from '@/api/points';
-import { useRobotTestSSE } from '@/hooks/useRobotTestSSE';
+import { useRobotTestSSE, isStreamErrorPayload, extractStreamErrorMessage } from '@/hooks/useRobotTestSSE';
 import { extractCoinSymbolFromText } from '@/utils/extractCoinSymbolFromText';
 import {
   normalizeSuggestionItems,
@@ -978,6 +978,27 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
     },
     onComplete: async (fullContent, eventData) => {
       if (userAbortedRef.current) return;
+      if (isStreamErrorPayload(eventData)) {
+        const errorMessage = extractStreamErrorMessage(eventData) || t('robot.sendFailed');
+        if (currentAiMsgIdRef.current) {
+          const msgId = currentAiMsgIdRef.current;
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === msgId
+                ? {
+                    ...msg,
+                    content: errorMessage,
+                    loading: false,
+                    statusHint: '',
+                    error: true,
+                  }
+                : msg
+            )
+          );
+        }
+        currentAiMsgIdRef.current = null;
+        return;
+      }
       if (currentAiMsgIdRef.current) {
         const msgId = currentAiMsgIdRef.current;
         setMessages((prev) =>
@@ -1021,17 +1042,42 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
         void consumeOnce('complete');
       }
     },
-    onError: () => {
+    onError: (err) => {
       if (userAbortedRef.current) return;
-      if (currentAiMsgIdRef.current) {
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === currentAiMsgIdRef.current
-              ? { ...msg, content: t('robot.sendFailed'), loading: false, statusHint: '', error: true }
+      const errorMessage = err?.message || t('robot.sendFailed');
+      const targetId = currentAiMsgIdRef.current;
+      setMessages((prev) => {
+        if (targetId) {
+          return prev.map((msg) =>
+            msg.id === targetId
+              ? {
+                  ...msg,
+                  content: errorMessage,
+                  loading: false,
+                  statusHint: '',
+                  error: true,
+                }
               : msg
-          )
-        );
-      }
+          );
+        }
+        for (let i = prev.length - 1; i >= 0; i -= 1) {
+          const msg = prev[i];
+          if (msg.role === 'assistant' && msg.loading) {
+            return prev.map((item, idx) =>
+              idx === i
+                ? {
+                    ...item,
+                    content: errorMessage,
+                    loading: false,
+                    statusHint: '',
+                    error: true,
+                  }
+                : item
+            );
+          }
+        }
+        return prev;
+      });
       currentAiMsgIdRef.current = null;
     },
   });
@@ -1849,14 +1895,17 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
               const signalCardFirst =
                 msg.agentType === 'signals' && hasCards && !msg.signalCardsAfterText;
 
-              const textBlock = msg.content ? (
+              const textBlock = msg.content || msg.error ? (
                 <div
                   className={`${styles.bubble} ${styles.assistant} ${
                     msg.error ? styles.error : ''
                   } ${msg.aborted ? styles.aborted : ''}`}
                 >
                   <div className={styles.text}>
-                    <StreamingMarkdown content={msg.content} isStreaming={msg.loading} />
+                    <StreamingMarkdown
+                      content={msg.content || t('robot.sendFailed')}
+                      isStreaming={msg.loading}
+                    />
                     {msg.loading ? <span className={styles.loadingDots}>...</span> : null}
                   </div>
                 </div>
@@ -1906,6 +1955,7 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
                         </div>
                       ) : msg.loading &&
                         !msg.content &&
+                        !msg.error &&
                         !hasCards ? (
                         <div className={`${styles.bubble} ${styles.assistant} ${styles.bubbleLoading}`}>
                           <div className={styles.text}>
