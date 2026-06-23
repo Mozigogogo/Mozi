@@ -14,6 +14,8 @@ const {
   publishPredict,
   cancelPredict,
   showCustomSymbolInput,
+  cancelCustomSymbolInput,
+  confirmCustomSymbolInput,
   handlePredictTextInput,
   backToSymbolPicker,
 } = require('../lib/predictFlow');
@@ -96,7 +98,10 @@ function registerPredict(bot, config, { getTexts }) {
       });
     }
     if (data === 'p:noop') {
-      await ctx.answerCbQuery().catch(() => {});
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      const hint =
+        session.step === 'pick_custom_input' ? texts.predictCustomInputTapHint : '';
+      await ctx.answerCbQuery({ text: hint }).catch(() => {});
       return;
     }
     if (data === 'p:cancel') {
@@ -109,6 +114,14 @@ function registerPredict(bot, config, { getTexts }) {
     }
     if (data === 'p:cst') {
       await showCustomSymbolInput(ctx, getTexts);
+      return;
+    }
+    if (data === 'p:cst:x') {
+      await cancelCustomSymbolInput(ctx, getTexts);
+      return;
+    }
+    if (data === 'p:cst:ok') {
+      await confirmCustomSymbolInput(ctx, config, getTexts);
       return;
     }
     if (data === 'p:ok') {
