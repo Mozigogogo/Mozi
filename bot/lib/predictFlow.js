@@ -143,6 +143,34 @@ async function refreshCustomInputKeyboard(ctx, uid, getTexts) {
     .catch(() => {});
 }
 
+/** 清除客户端残留的 force_reply（旧版 bot 消息遗留；不发 force_reply，仅 remove_keyboard） */
+async function clearStaleForceReply(ctx) {
+  const chatId = ctx.chat?.id;
+  if (chatId == null || !isPrivateChat(ctx)) return;
+
+  const dismissTexts = ['\u3164', '\u2800', '.'];
+  for (const dismissText of dismissTexts) {
+    try {
+      const msg = await ctx.telegram.sendMessage(chatId, dismissText, {
+        reply_markup: { remove_keyboard: true },
+        disable_notification: true,
+      });
+      if (msg?.message_id != null) {
+        setTimeout(() => {
+          ctx.telegram.deleteMessage(chatId, msg.message_id).catch(() => {});
+        }, 500);
+      }
+      predictDebug('clearStaleForceReply.ok', { chatId, messageId: msg?.message_id });
+      return;
+    } catch (err) {
+      predictDebug('clearStaleForceReply.retry', {
+        chatId,
+        reason: err?.response?.description || err?.message || String(err),
+      });
+    }
+  }
+}
+
 function buildConfirmKeyboard(texts) {
   return {
     inline_keyboard: [
@@ -241,6 +269,10 @@ async function startPredictFlow(ctx, config, getTexts, opts = {}) {
   const uid = ctx.from?.id;
   const flowChatId = ctx.chat?.id;
   if (uid == null || flowChatId == null) return;
+
+  if (isPrivateChat(ctx)) {
+    await clearStaleForceReply(ctx);
+  }
 
   const existing = getPredictSession(uid);
 
@@ -642,6 +674,8 @@ async function showCustomSymbolInput(ctx, getTexts) {
     return;
   }
 
+  await clearStaleForceReply(ctx);
+
   const pickerMessageId =
     ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message
       ? ctx.callbackQuery.message.message_id
@@ -679,6 +713,7 @@ async function cancelCustomSymbolInput(ctx, getTexts) {
   patchPredictSession(uid, { step: 'pick_symbol', customSymbolDraft: '' });
   const texts = getTexts(ctx.from?.language_code || 'en');
   await ctx.answerCbQuery().catch(() => {});
+  await clearStaleForceReply(ctx);
 
   const html = texts.predictStep1Title;
   const keyboard = buildSymbolPickerKeyboard(texts);

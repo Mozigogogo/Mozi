@@ -98,10 +98,7 @@ function registerPredict(bot, config, { getTexts }) {
       });
     }
     if (data === 'p:noop') {
-      const texts = getTexts(ctx.from?.language_code || 'en');
-      const hint =
-        session.step === 'pick_custom_input' ? texts.predictCustomInputTapHint : '';
-      await ctx.answerCbQuery({ text: hint }).catch(() => {});
+      await ctx.answerCbQuery().catch(() => {});
       return;
     }
     if (data === 'p:cancel') {
