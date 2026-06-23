@@ -12,8 +12,8 @@ const {
   selectSymbolAndConfirm,
   publishPredict,
   cancelPredict,
-  showCustomLetterPicker,
-  showCustomSymbolPage,
+  showCustomSymbolInput,
+  handleCustomSymbolText,
   backToSymbolPicker,
 } = require('../lib/predictFlow');
 
@@ -27,6 +27,22 @@ function registerPredict(bot, config, { getTexts }) {
     }
 
     await startPredictFlow(ctx, config, getTexts);
+  });
+
+  bot.on('text', async (ctx, next) => {
+    const uid = ctx.from?.id;
+    const session = uid != null ? getPredictSession(uid) : null;
+    if (!session || session.step !== 'pick_custom_input') {
+      return next();
+    }
+    const text = String(ctx.message?.text || '').trim();
+    if (!text || text.startsWith('/')) {
+      return next();
+    }
+    const handled = await handleCustomSymbolText(ctx, config, getTexts, text);
+    if (!handled) {
+      return next();
+    }
   });
 
   bot.action(/^p:/, async (ctx) => {
@@ -53,7 +69,7 @@ function registerPredict(bot, config, { getTexts }) {
       return;
     }
     if (data === 'p:cst') {
-      await showCustomLetterPicker(ctx, getTexts);
+      await showCustomSymbolInput(ctx, getTexts);
       return;
     }
     if (data === 'p:ok') {
@@ -64,24 +80,6 @@ function registerPredict(bot, config, { getTexts }) {
     const symMatch = data.match(/^p:sym:([A-Z0-9]{1,16})$/);
     if (symMatch) {
       await selectSymbolAndConfirm(ctx, config, getTexts, symMatch[1]);
-      return;
-    }
-
-    const pickMatch = data.match(/^p:pick:([A-Z0-9]{1,16})$/);
-    if (pickMatch) {
-      await selectSymbolAndConfirm(ctx, config, getTexts, pickMatch[1]);
-      return;
-    }
-
-    const ltrMatch = data.match(/^p:ltr:([A-Z0-9])$/);
-    if (ltrMatch) {
-      await showCustomSymbolPage(ctx, getTexts, ltrMatch[1], 0);
-      return;
-    }
-
-    const pgMatch = data.match(/^p:pg:([A-Z0-9]):(\d+)$/);
-    if (pgMatch) {
-      await showCustomSymbolPage(ctx, getTexts, pgMatch[1], parseInt(pgMatch[2], 10) || 0);
       return;
     }
 

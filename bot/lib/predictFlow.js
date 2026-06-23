@@ -15,11 +15,8 @@ const {
 } = require('./predictSession');
 
 const QUICK_SYMBOLS = ['BTC', 'ETH', 'SOL'];
-const CUSTOM_PAGE_SIZE = 8;
 const DEFAULT_HOURS = 24;
-
-/** @type {string[]} */
-const SORTED_SYMBOLS = [...SYMBOL_WHITELIST].sort();
+const SYMBOL_INPUT_RE = /^[A-Z0-9]{1,16}$/;
 
 function isGroupChat(ctx) {
   const t = ctx.chat?.type;
@@ -67,20 +64,6 @@ function unwrapDetailPayload(data) {
   return data;
 }
 
-function symbolsForLetter(letter) {
-  const L = String(letter || '').toUpperCase();
-  if (!/^[A-Z0-9]$/.test(L)) return [];
-  return SORTED_SYMBOLS.filter((sym) => sym.startsWith(L));
-}
-
-function paginate(items, page, pageSize = CUSTOM_PAGE_SIZE) {
-  const total = items.length;
-  const pages = Math.max(1, Math.ceil(total / pageSize));
-  const p = Math.max(0, Math.min(page, pages - 1));
-  const slice = items.slice(p * pageSize, p * pageSize + pageSize);
-  return { items: slice, page: p, pages, total };
-}
-
 function buildSymbolPickerKeyboard(texts) {
   const row1 = QUICK_SYMBOLS.map((sym) => ({
     text: sym,
@@ -95,44 +78,12 @@ function buildSymbolPickerKeyboard(texts) {
   };
 }
 
-function buildLetterKeyboard() {
-  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.split('');
-  const rows = [];
-  for (let i = 0; i < letters.length; i += 6) {
-    rows.push(
-      letters.slice(i, i + 6).map((ch) => ({
-        text: ch,
-        callback_data: `p:ltr:${ch}`,
-      })),
-    );
-  }
-  rows.push([{ text: '«', callback_data: 'p:back' }]);
-  return { inline_keyboard: rows };
-}
-
-/**
- * @param {object} texts
- * @param {string} letter
- * @param {number} page
- */
-function buildCustomSymbolKeyboard(texts, letter, page) {
-  const all = symbolsForLetter(letter);
-  const { items, page: p, pages } = paginate(all, page);
-  const rows = [];
-  for (let i = 0; i < items.length; i += 2) {
-    const pair = items.slice(i, i + 2).map((sym) => ({
-      text: sym,
-      callback_data: `p:pick:${sym}`,
-    }));
-    rows.push(pair);
-  }
-  const nav = [];
-  if (p > 0) nav.push({ text: '◀', callback_data: `p:pg:${letter}:${p - 1}` });
-  if (pages > 1) nav.push({ text: `${p + 1}/${pages}`, callback_data: 'p:noop' });
-  if (p < pages - 1) nav.push({ text: '▶', callback_data: `p:pg:${letter}:${p + 1}` });
-  if (nav.length) rows.push(nav);
-  rows.push([{ text: texts.predictBackBtn, callback_data: 'p:back' }]);
-  return { inline_keyboard: rows };
+function buildCustomInputForceReply(texts) {
+  return {
+    force_reply: true,
+    selective: true,
+    input_field_placeholder: texts.predictCustomInputPlaceholder,
+  };
 }
 
 function buildConfirmKeyboard(texts) {
@@ -230,9 +181,17 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol) {
   const sym = String(symbol || '')
     .trim()
     .toUpperCase();
+  const fromTextInput = !ctx.callbackQuery;
   if (!sym || !SYMBOL_WHITELIST.has(sym)) {
     const texts = getTexts(ctx.from?.language_code || 'en');
-    await ctx.answerCbQuery({ text: texts.predictInvalidSymbol, show_alert: true }).catch(() => {});
+    if (fromTextInput) {
+      await ctx.reply(texts.predictInvalidSymbol, {
+        parse_mode: 'HTML',
+        reply_markup: buildCustomInputForceReply(texts),
+      });
+    } else {
+      await ctx.answerCbQuery({ text: texts.predictInvalidSymbol, show_alert: true }).catch(() => {});
+    }
     return;
   }
 
@@ -255,12 +214,26 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol) {
     });
   } catch (err) {
     console.error('[predict] fetch price:', err?.message || err);
-    await replyOrEdit(ctx, session, texts.predictNetworkError, { parse_mode: 'HTML' });
+    if (fromTextInput) {
+      await ctx.reply(texts.predictNetworkError, {
+        parse_mode: 'HTML',
+        reply_markup: buildCustomInputForceReply(texts),
+      });
+    } else {
+      await replyOrEdit(ctx, session, texts.predictNetworkError, { parse_mode: 'HTML' });
+    }
     return;
   }
 
   if (!result.ok || result.json == null) {
-    await replyOrEdit(ctx, session, texts.predictSymbolNotSupported(sym), { parse_mode: 'HTML' });
+    if (fromTextInput) {
+      await ctx.reply(texts.predictSymbolNotSupported(sym), {
+        parse_mode: 'HTML',
+        reply_markup: buildCustomInputForceReply(texts),
+      });
+    } else {
+      await replyOrEdit(ctx, session, texts.predictSymbolNotSupported(sym), { parse_mode: 'HTML' });
+    }
     return;
   }
 
@@ -268,7 +241,14 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol) {
   const priceRaw = payload?.currentPrice ?? payload?.price;
   const priceStr = formatUsdPrice(priceRaw);
   if (priceStr === '—') {
-    await replyOrEdit(ctx, session, texts.predictSymbolNotSupported(sym), { parse_mode: 'HTML' });
+    if (fromTextInput) {
+      await ctx.reply(texts.predictSymbolNotSupported(sym), {
+        parse_mode: 'HTML',
+        reply_markup: buildCustomInputForceReply(texts),
+      });
+    } else {
+      await replyOrEdit(ctx, session, texts.predictSymbolNotSupported(sym), { parse_mode: 'HTML' });
+    }
     return;
   }
 
@@ -399,65 +379,59 @@ async function cancelPredict(ctx, getTexts) {
 }
 
 /**
- * @param {import('telegraf').Context} ctx
- * @param {(code?: string) => object} getTexts
+ * 点击「自定义」：提示用户输入币种符号（force_reply 输入框）
  */
-async function showCustomLetterPicker(ctx, getTexts) {
+async function showCustomSymbolInput(ctx, getTexts) {
   const uid = ctx.from?.id;
   const session = uid != null ? getPredictSession(uid) : null;
   if (!session) {
     await ctx.answerCbQuery().catch(() => {});
     return;
   }
-  patchPredictSession(uid, { step: 'pick_custom' });
+  patchPredictSession(uid, { step: 'pick_custom_input' });
   const texts = getTexts(ctx.from?.language_code || 'en');
   await ctx.answerCbQuery().catch(() => {});
-  const html = texts.predictCustomTitle;
-  const keyboard = buildLetterKeyboard();
+
   if (ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message) {
     await ctx.telegram
-      .editMessageText(html, {
+      .editMessageText(texts.predictCustomInputPrompt, {
         chat_id: session.flowChatId,
         message_id: ctx.callbackQuery.message.message_id,
         parse_mode: 'HTML',
-        reply_markup: keyboard,
+        reply_markup: {
+          inline_keyboard: [[{ text: texts.predictBackBtn, callback_data: 'p:back' }]],
+        },
       })
-      .catch(() => ctx.reply(html, { parse_mode: 'HTML', reply_markup: keyboard }));
+      .catch(() => {});
   }
+
+  await ctx.reply(texts.predictCustomInputHint, {
+    parse_mode: 'HTML',
+    reply_markup: buildCustomInputForceReply(texts),
+  });
 }
 
 /**
- * @param {import('telegraf').Context} ctx
- * @param {(code?: string) => object} getTexts
- * @param {string} letter
- * @param {number} page
+ * 用户输入自定义币种文本
+ * @returns {boolean} 是否已处理
  */
-async function showCustomSymbolPage(ctx, getTexts, letter, page) {
+async function handleCustomSymbolText(ctx, config, getTexts, rawText) {
   const uid = ctx.from?.id;
   const session = uid != null ? getPredictSession(uid) : null;
-  if (!session) {
-    await ctx.answerCbQuery().catch(() => {});
-    return;
-  }
+  if (!session || session.step !== 'pick_custom_input') return false;
+
   const texts = getTexts(ctx.from?.language_code || 'en');
-  const all = symbolsForLetter(letter);
-  if (!all.length) {
-    await ctx.answerCbQuery({ text: texts.predictNoSymbolsForLetter(letter), show_alert: true }).catch(() => {});
-    return;
+  const sym = String(rawText || '').trim().toUpperCase();
+  if (!sym || !SYMBOL_INPUT_RE.test(sym)) {
+    await ctx.reply(texts.predictCustomInputInvalid, {
+      parse_mode: 'HTML',
+      reply_markup: buildCustomInputForceReply(texts),
+    });
+    return true;
   }
-  await ctx.answerCbQuery().catch(() => {});
-  const html = texts.predictCustomListTitle(letter);
-  const keyboard = buildCustomSymbolKeyboard(texts, letter, page);
-  if (ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message) {
-    await ctx.telegram
-      .editMessageText(html, {
-        chat_id: session.flowChatId,
-        message_id: ctx.callbackQuery.message.message_id,
-        parse_mode: 'HTML',
-        reply_markup: keyboard,
-      })
-      .catch(() => ctx.reply(html, { parse_mode: 'HTML', reply_markup: keyboard }));
-  }
+
+  await selectSymbolAndConfirm(ctx, config, getTexts, sym);
+  return true;
 }
 
 /**
@@ -496,8 +470,8 @@ module.exports = {
   selectSymbolAndConfirm,
   publishPredict,
   cancelPredict,
-  showCustomLetterPicker,
-  showCustomSymbolPage,
+  showCustomSymbolInput,
+  handleCustomSymbolText,
   backToSymbolPicker,
   QUICK_SYMBOLS,
 };

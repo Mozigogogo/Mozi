@@ -79,14 +79,14 @@ const i18n = {
     predictCancelBtn: '取消',
     predictBackBtn: '« 返回',
     predictConfirmBtn: '确认发布',
-    predictCustomTitle:
-      '🔍 <b>自定义币种</b>\n\n请选择首字母，从行情库已支持的币种中挑选（不支持手动输入）：',
-    predictCustomListTitle: (letter) =>
-      `🔍 <b>币种列表 · ${letter}</b>\n\n点选币种（仅行情库已收录）：`,
-    predictNoSymbolsForLetter: (letter) => `字母 ${letter} 下暂无已支持币种`,
-    predictInvalidSymbol: '该币种不在支持列表中',
+    predictCustomInputPrompt:
+      '🔍 <b>自定义币种</b>\n\n请直接输入币种符号（如 BTC、ETH），须为行情库已收录币种：',
+    predictCustomInputHint: '👇 在下方输入框发送币种符号',
+    predictCustomInputPlaceholder: 'BTC',
+    predictCustomInputInvalid: '格式无效，请输入 1–16 位字母或数字（如 <code>BTC</code>）',
+    predictInvalidSymbol: '该币种不在支持列表中，请换一个已收录的符号',
     predictSymbolNotSupported: (sym) =>
-      `❌ <b>${sym}</b> 暂无行情数据，请从列表中选择已收录的币种。`,
+      `❌ <b>${sym}</b> 暂无行情数据，请换一个已收录的币种。`,
     predictNetworkError: '获取价格失败（网络异常），请稍后再试。',
     predictConfirmBody: (sym, hours, price) =>
       `${sym} 接下来 ${hours} 小时会涨还是跌？\n当前价：${price}（创建时锁定）`,
@@ -287,14 +287,14 @@ const i18n = {
     predictCancelBtn: 'Cancel',
     predictBackBtn: '« Back',
     predictConfirmBtn: 'Publish',
-    predictCustomTitle:
-      '🔍 <b>Custom symbol</b>\n\nPick a letter — only coins in our market database (no free text):',
-    predictCustomListTitle: (letter) =>
-      `🔍 <b>Symbols · ${letter}</b>\n\nTap a listed coin:`,
-    predictNoSymbolsForLetter: (letter) => `No supported symbols under “${letter}”`,
-    predictInvalidSymbol: 'Symbol not in the supported list',
+    predictCustomInputPrompt:
+      '🔍 <b>Custom symbol</b>\n\nType a ticker (e.g. BTC, ETH). It must be in our market database:',
+    predictCustomInputHint: '👇 Send the symbol in the input below',
+    predictCustomInputPlaceholder: 'BTC',
+    predictCustomInputInvalid: 'Invalid format. Use 1–16 letters/digits (e.g. <code>BTC</code>).',
+    predictInvalidSymbol: 'Symbol not in the supported list. Try another listed ticker.',
     predictSymbolNotSupported: (sym) =>
-      `❌ No market data for <b>${sym}</b>. Please pick from the list.`,
+      `❌ No market data for <b>${sym}</b>. Try another listed symbol.`,
     predictNetworkError: 'Failed to fetch price (network). Please try again later.',
     predictConfirmBody: (sym, hours, price) =>
       `Will ${sym} go up or down in the next ${hours} hours?\nCurrent price: ${price} (locked at creation)`,
