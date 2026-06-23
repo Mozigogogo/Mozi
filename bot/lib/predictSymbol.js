@@ -1,32 +1,38 @@
 /**
- * /predict Mini App startapp 载荷（固定 predict，不带群 ID）
- * 来源群由 Bot 进程内 session 记录（见 predictSession.js），确认发布时发回该群
+ * /predict 私聊深链载荷（与 /alert 相同模式：?start=predict）
+ * 来源群由 Bot 进程内 session 记录，确认发布时发回该群
  */
 
-const PREDICT_STARTAPP_PARAM = 'predict';
+const PREDICT_START_PAYLOAD = 'predict';
 
-function buildPredictStartappParam() {
-  return PREDICT_STARTAPP_PARAM;
+function buildPredictStartPayload() {
+  return PREDICT_START_PAYLOAD;
 }
 
-/** @deprecated 使用 buildPredictStartappParam */
-const buildPredictStartParam = buildPredictStartappParam;
+/** @deprecated 使用 buildPredictStartPayload */
+const buildPredictStartParam = buildPredictStartPayload;
+/** @deprecated 使用 buildPredictStartPayload */
+const buildPredictStartappParam = buildPredictStartPayload;
 
-/** Mini App H5 地址（web_app 备用，不带 group_id） */
-function buildPredictMiniAppUrl(appUrl) {
-  const base = String(appUrl || '').replace(/\/$/, '');
-  return `${base}/predict`;
+/**
+ * 群内「发起竞猜」按钮：跳转 Bot 私聊（与 /alert 一致）
+ * @param {string} botUsername
+ */
+function buildPredictPrivateUrl(botUsername) {
+  const name = String(botUsername || '').replace(/^@/, '');
+  return `https://t.me/${name}?start=${PREDICT_START_PAYLOAD}`;
 }
 
-/** /start 或 ?startapp= 是否为 predict 入口 */
+/** /start 深链是否为 predict 入口 */
 function isPredictDeepLinkPayload(payload) {
-  return String(payload || '').trim().toLowerCase() === PREDICT_STARTAPP_PARAM;
+  return String(payload || '').trim().toLowerCase() === PREDICT_START_PAYLOAD;
 }
 
 module.exports = {
-  PREDICT_STARTAPP_PARAM,
-  buildPredictStartappParam,
+  PREDICT_START_PAYLOAD,
+  buildPredictStartPayload,
   buildPredictStartParam,
-  buildPredictMiniAppUrl,
+  buildPredictStartappParam,
+  buildPredictPrivateUrl,
   isPredictDeepLinkPayload,
 };

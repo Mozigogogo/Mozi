@@ -115,7 +115,7 @@ const i18n = {
   示例：/bigorder PEPE最近的大单
 
 📈 涨跌预测（免费）
-/predict        发起 24h 涨跌竞猜（群内打开 Mini App，Bot 记录来源群，确认后发布到该群）
+/predict        发起 24h 涨跌竞猜（群内点按钮私聊 Bot，确认后发布到该群）
 
 🔔 告警设置（免费）
 /alert          跳转 App 配置价格告警
@@ -323,7 +323,7 @@ const i18n = {
   e.g. /bigorder Recent large orders on PEPE
 
 📈 Up/down poll (free)
-/predict         Start a 24h poll (Mini App from group; bot remembers source group for publish)
+/predict         Start a 24h poll (tap button to DM bot; publishes back to source group)
 
 🔔 Alerts (free)
 /alert           Open app to set price alerts

@@ -1,6 +1,6 @@
 /**
  * /predict：发起涨跌预测
- * PREDICT_FORCE_PRIVATE=1（默认）时群内记录来源群 + Mini App 入口；选币确认在 Bot 私聊，发布回原群
+ * PREDICT_FORCE_PRIVATE=1（默认）时群内记录来源群 + 私聊深链；选币确认在 Bot 私聊，发布回原群
  * PREDICT_FORCE_PRIVATE=0 时在群内用 Bot 内联按钮走完选币与确认流程
  */
 

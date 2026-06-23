@@ -5,7 +5,7 @@
 const { fetchDetailHeader } = require('./apis');
 const { SYMBOL_WHITELIST } = require('./symbolIntent');
 const { escapeHtml } = require('./telegramHtml');
-const { buildPredictStartappParam, buildPredictMiniAppUrl } = require('./predictSymbol');
+const { buildPredictPrivateUrl } = require('./predictSymbol');
 const {
   savePredictSession,
   getPredictSession,
@@ -153,10 +153,10 @@ function buildConfirmHtml(texts, symbol, priceStr, hours) {
 }
 
 /**
- * 群内 /predict：Bot 记录来源群 ID，引用回复 + Mini App 按钮（startapp 仅 predict）
+ * 群内 /predict：Bot 记录来源群 ID，引用回复 + 私聊深链按钮（与 /alert 一致）
  */
 async function sendPredictGroupGuide(ctx, config, getTexts) {
-  const { APP_URL, BOT_USERNAME } = config;
+  const { BOT_USERNAME } = config;
   const languageCode = ctx.from?.language_code || 'en';
   const texts = getTexts(languageCode);
   const uid = ctx.from?.id;
@@ -166,34 +166,18 @@ async function sendPredictGroupGuide(ctx, config, getTexts) {
 
   rememberPredictSourceGroup(uid, groupChatId);
 
-  const startapp = buildPredictStartappParam();
-  const telegramMiniAppUrl = `https://t.me/${BOT_USERNAME}?startapp=${startapp}`;
-  const webAppUrl = buildPredictMiniAppUrl(APP_URL);
-  const caption = texts.predictGroupInvite;
-  const keyboardStartapp = {
-    inline_keyboard: [[{ text: texts.predictStartBtn, url: telegramMiniAppUrl }]],
+  const privateUrl = buildPredictPrivateUrl(BOT_USERNAME);
+  const sendOpts = {
+    parse_mode: 'HTML',
+    reply_markup: {
+      inline_keyboard: [[{ text: texts.predictStartBtn, url: privateUrl }]],
+    },
   };
-  const keyboardWebApp = {
-    inline_keyboard: [[{ text: texts.predictStartBtn, web_app: { url: webAppUrl } }]],
-  };
-
-  const sendOpts = { parse_mode: 'HTML' };
   if (ctx.message?.message_id) {
     sendOpts.reply_to_message_id = ctx.message.message_id;
   }
 
-  try {
-    await ctx.reply(caption, { ...sendOpts, reply_markup: keyboardStartapp });
-  } catch (err) {
-    const reason = err?.response?.description || err?.message || String(err);
-    console.warn('[predict] startapp 按钮发送失败，改用 web_app:', reason);
-    try {
-      await ctx.reply(caption, { ...sendOpts, reply_markup: keyboardWebApp });
-    } catch (err2) {
-      console.error('[predict] web_app 发送失败:', err2?.response?.description || err2?.message);
-      await ctx.reply(`${caption}\n\n${telegramMiniAppUrl}`, sendOpts);
-    }
-  }
+  await ctx.reply(texts.predictGroupInvite, sendOpts);
 }
 
 /**
