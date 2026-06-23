@@ -27,6 +27,7 @@ const { registerAi } = require('./handlers/ai');
 const { registerChat } = require('./handlers/chat');
 const { registerBigorder } = require('./handlers/bigorder');
 const { registerPrice } = require('./handlers/price');
+const { registerPredict } = require('./handlers/predict');
 const { registerHelp } = require('./handlers/help');
 const { registerBalance } = require('./handlers/balance');
 const { createInjectGroupReferrer } = require('./middleware/groupReferrer');
@@ -60,6 +61,7 @@ registerAi(bot, config, i18nApi, registeredGate, loginGate);
 registerChat(bot, config, i18nApi, registeredGate, loginGate);
 registerBigorder(bot, config, i18nApi, registeredGate, loginGate);
 registerPrice(bot, config, i18nApi);
+registerPredict(bot, config, i18nApi);
 registerHelp(bot, config, i18nApi);
 registerBalance(bot, config, i18nApi, registeredGate, loginGate);
 

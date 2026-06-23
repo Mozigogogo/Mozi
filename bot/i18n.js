@@ -74,6 +74,31 @@ const i18n = {
     priceBriefCirculating: (amount, pctSuffix) => `🔄 流通量: ${amount}${pctSuffix}`,
     priceBriefTotalSupply: (amount) => `📦 总量: ${amount}`,
     priceBriefVolume: (vol) => `💸 24h 成交额: ${vol}`,
+    predictStep1Title: '📊 <b>Step 1 · 选择币种</b>\n\n请选择要发起涨跌预测的币种：',
+    predictCustomBtn: '自定义…',
+    predictCancelBtn: '取消',
+    predictBackBtn: '« 返回',
+    predictConfirmBtn: '确认发布',
+    predictCustomTitle:
+      '🔍 <b>自定义币种</b>\n\n请选择首字母，从行情库已支持的币种中挑选（不支持手动输入）：',
+    predictCustomListTitle: (letter) =>
+      `🔍 <b>币种列表 · ${letter}</b>\n\n点选币种（仅行情库已收录）：`,
+    predictNoSymbolsForLetter: (letter) => `字母 ${letter} 下暂无已支持币种`,
+    predictInvalidSymbol: '该币种不在支持列表中',
+    predictSymbolNotSupported: (sym) =>
+      `❌ <b>${sym}</b> 暂无行情数据，请从列表中选择已收录的币种。`,
+    predictNetworkError: '获取价格失败（网络异常），请稍后再试。',
+    predictConfirmBody: (sym, hours, price) =>
+      `${sym} 接下来 ${hours} 小时会涨还是跌？\n当前价：${price}（创建时锁定）`,
+    predictPublishingToast: '正在发布…',
+    predictPublished: '✅ 预测已发布，群成员可参与投票。',
+    predictPublishedToGroup: '✅ 已发布到原群，群成员可参与投票。',
+    predictPublishFailed: '❌ 发布失败：请确认机器人在目标群有发消息与投票权限。',
+    predictCancelled: '已取消。',
+    predictCancelledToast: '已取消',
+    predictGroupInvite: '🎯 发起一个竞猜吧，点击下方按钮开始',
+    predictStartBtn: '发起竞猜 →',
+    predictGroupGuideFallback: '无法生成竞猜入口，请稍后再试或联系管理员。',
     helpBody: `🤖   Mozi AI 行情助手 · 指令说明
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -88,6 +113,9 @@ const i18n = {
   示例：/chat BTC今天支撑位在哪？
 /bigorder [问题] 大单侦测分析，不消耗积分
   示例：/bigorder PEPE最近的大单
+
+📈 涨跌预测（免费）
+/predict        发起 24h 涨跌竞猜（群内打开 Mini App，Bot 记录来源群，确认后发布到该群）
 
 🔔 告警设置（免费）
 /alert          跳转 App 配置价格告警
@@ -254,6 +282,31 @@ const i18n = {
     priceBriefCirculating: (amount, pctSuffix) => `🔄 Circulating: ${amount}${pctSuffix}`,
     priceBriefTotalSupply: (amount) => `📦 Total supply: ${amount}`,
     priceBriefVolume: (vol) => `💸 24h Volume: ${vol}`,
+    predictStep1Title: '📊 <b>Step 1 · Pick a symbol</b>\n\nChoose a coin for the up/down poll:',
+    predictCustomBtn: 'Custom…',
+    predictCancelBtn: 'Cancel',
+    predictBackBtn: '« Back',
+    predictConfirmBtn: 'Publish',
+    predictCustomTitle:
+      '🔍 <b>Custom symbol</b>\n\nPick a letter — only coins in our market database (no free text):',
+    predictCustomListTitle: (letter) =>
+      `🔍 <b>Symbols · ${letter}</b>\n\nTap a listed coin:`,
+    predictNoSymbolsForLetter: (letter) => `No supported symbols under “${letter}”`,
+    predictInvalidSymbol: 'Symbol not in the supported list',
+    predictSymbolNotSupported: (sym) =>
+      `❌ No market data for <b>${sym}</b>. Please pick from the list.`,
+    predictNetworkError: 'Failed to fetch price (network). Please try again later.',
+    predictConfirmBody: (sym, hours, price) =>
+      `Will ${sym} go up or down in the next ${hours} hours?\nCurrent price: ${price} (locked at creation)`,
+    predictPublishingToast: 'Publishing…',
+    predictPublished: '✅ Poll published. Members can vote now.',
+    predictPublishedToGroup: '✅ Published to the original group. Members can vote now.',
+    predictPublishFailed: '❌ Publish failed. Ensure the bot can post messages and polls in the target chat.',
+    predictCancelled: 'Cancelled.',
+    predictCancelledToast: 'Cancelled',
+    predictGroupInvite: '🎯 Start a poll — tap the button below',
+    predictStartBtn: 'Start poll →',
+    predictGroupGuideFallback: 'Could not open the poll entry. Please try again later.',
     helpBody: `🤖 Mozi AI · Commands
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -268,6 +321,9 @@ const i18n = {
   e.g. /chat Where is BTC support today?
 /bigorder [question] Big order analysis · free
   e.g. /bigorder Recent large orders on PEPE
+
+📈 Up/down poll (free)
+/predict         Start a 24h poll (Mini App from group; bot remembers source group for publish)
 
 🔔 Alerts (free)
 /alert           Open app to set price alerts

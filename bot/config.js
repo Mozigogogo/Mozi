@@ -84,6 +84,16 @@ const TG_CHAT_REGISTER_POLL_MS = Math.max(
   Math.min(30_000, parseInt(process.env.TG_CHAT_REGISTER_POLL_MS || '3000', 10) || 3000),
 );
 
+/**
+ * /predict 群内是否走 Mini App 入口（默认 true）。
+ * true：群内 Bot 记录来源群 ID，引用回复 +「发起竞猜」打开 Mini App（startapp=predict）；
+ *       用户在 Bot 私聊完成选币/确认后，发布回记录的来源群
+ * false：在群内用 Bot 内联按钮走完选币与确认流程
+ */
+const PREDICT_FORCE_PRIVATE = !/^0|false|no$/i.test(
+  String(process.env.PREDICT_FORCE_PRIVATE ?? '1').trim(),
+);
+
 module.exports = {
   BOT_TOKEN,
   APP_URL,
@@ -105,4 +115,5 @@ module.exports = {
   USER_POINTS_DATAINFO_SKIP_TTL_MS,
   TG_CHAT_API_PORT,
   TG_CHAT_REGISTER_POLL_MS,
+  PREDICT_FORCE_PRIVATE,
 };
