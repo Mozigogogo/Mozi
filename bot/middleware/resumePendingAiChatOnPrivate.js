@@ -31,6 +31,8 @@ function createResumePendingAiChatOnPrivate(config) {
     const predictSession = getPredictSession(ctx.from.id);
     const predictStep = predictSession?.step;
     if (predictStep === 'pick_symbol' || predictStep === 'pick_custom_input' || predictStep === 'confirm') {
+      const { predictDebug } = require('../lib/predictDebug');
+      predictDebug('resume.skip', { uid: ctx.from.id, predictStep, reason: 'active_predict_flow' });
       return next();
     }
 

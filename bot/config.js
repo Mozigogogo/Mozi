@@ -94,6 +94,9 @@ const PREDICT_FORCE_PRIVATE = !/^0|false|no$/i.test(
   String(process.env.PREDICT_FORCE_PRIVATE ?? '1').trim(),
 );
 
+/** 为 1/true/yes 时打印 /predict 流程调试（见 lib/predictDebug.js）；未设时跟随 BOT_DEBUG */
+const PREDICT_DEBUG = /^1|true|yes$/i.test(String(process.env.PREDICT_DEBUG || '').trim());
+
 module.exports = {
   BOT_TOKEN,
   APP_URL,
@@ -116,4 +119,5 @@ module.exports = {
   TG_CHAT_API_PORT,
   TG_CHAT_REGISTER_POLL_MS,
   PREDICT_FORCE_PRIVATE,
+  PREDICT_DEBUG,
 };

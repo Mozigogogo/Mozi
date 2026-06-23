@@ -3,6 +3,7 @@
  */
 
 const TTL_MS = 15 * 60 * 1000;
+const { predictDebug } = require('./predictDebug');
 
 /** @type {Map<string, object>} */
 const sessions = new Map();
@@ -45,6 +46,12 @@ function savePredictSession(userId, data) {
     hours: data.hours ?? 24,
     expireAt: Date.now() + TTL_MS,
   });
+  predictDebug('session.save', {
+    userId: key,
+    step: data.step || 'pick_symbol',
+    flowChatId: data.flowChatId,
+    publishChatId: data.publishChatId,
+  });
 }
 
 /** @param {string | number} userId */
@@ -54,6 +61,9 @@ function getPredictSession(userId) {
   purgeExpired();
   const session = sessions.get(key);
   if (!session || Date.now() > session.expireAt) {
+    if (session) {
+      predictDebug('session.expired', { userId: key, step: session.step });
+    }
     sessions.delete(key);
     return null;
   }
@@ -62,7 +72,9 @@ function getPredictSession(userId) {
 
 /** @param {string | number} userId */
 function clearPredictSession(userId) {
-  sessions.delete(sessionKey(userId));
+  const key = sessionKey(userId);
+  predictDebug('session.clear', { userId: key });
+  sessions.delete(key);
 }
 
 /**
@@ -73,6 +85,7 @@ function patchPredictSession(userId, patch) {
   const session = getPredictSession(userId);
   if (!session) return null;
   Object.assign(session, patch, { expireAt: Date.now() + TTL_MS });
+  predictDebug('session.patch', { userId: sessionKey(userId), patch });
   return session;
 }
 

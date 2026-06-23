@@ -6,6 +6,7 @@ const { fetchDetailHeader, fetchSearchLastPriceChange } = require('./apis');
 const { SYMBOL_WHITELIST } = require('./symbolIntent');
 const { escapeHtml } = require('./telegramHtml');
 const { buildPredictPrivateUrl } = require('./predictSymbol');
+const { predictDebug } = require('./predictDebug');
 const {
   savePredictSession,
   getPredictSession,
@@ -84,21 +85,34 @@ function buildCustomInputBackKeyboard(texts) {
   };
 }
 
-/** 清除 Telegram 残留的 force_reply / 自定义键盘，避免一进私聊就处于 Reply 状态 */
+/** 清除 Telegram 残留的 force_reply；勿立刻 delete 该消息，否则客户端来不及处理 remove_keyboard */
 async function clearForceReplyInput(ctx) {
   const chatId = ctx.chat?.id;
-  if (chatId == null) return;
+  if (chatId == null) {
+    predictDebug('clearForceReply.skip', { reason: 'no_chat_id' });
+    return false;
+  }
+  predictDebug('clearForceReply.send', { chatId });
   try {
     const msg = await ctx.telegram.sendMessage(chatId, '\u200b', {
       reply_markup: { remove_keyboard: true },
     });
-    if (msg?.message_id != null) {
-      await ctx.telegram.deleteMessage(chatId, msg.message_id).catch(() => {});
+    predictDebug('clearForceReply.ok', { chatId, messageId: msg?.message_id });
+    return true;
+  } catch (err) {
+    const reason = err?.response?.description || err?.message || String(err);
+    predictDebug('clearForceReply.fail', { chatId, reason });
+    try {
+      const msg = await ctx.telegram.sendMessage(chatId, ' ', {
+        reply_markup: { remove_keyboard: true },
+      });
+      predictDebug('clearForceReply.ok_fallback', { chatId, messageId: msg?.message_id });
+      return true;
+    } catch (err2) {
+      const reason2 = err2?.response?.description || err2?.message || String(err2);
+      predictDebug('clearForceReply.fail_fallback', { chatId, reason: reason2 });
+      return false;
     }
-  } catch {
-    await ctx.telegram
-      .sendMessage(chatId, ' ', { reply_markup: { remove_keyboard: true } })
-      .catch(() => {});
   }
 }
 
@@ -132,6 +146,11 @@ async function sendPredictGroupGuide(ctx, config, getTexts) {
   if (uid == null || groupChatId == null) return;
 
   rememberPredictSourceGroup(uid, groupChatId);
+  predictDebug('group.guide', {
+    uid,
+    groupChatId,
+    publishChatId: groupChatId,
+  });
 
   const privateUrl = buildPredictPrivateUrl(BOT_USERNAME);
   const sendOpts = {
@@ -177,6 +196,15 @@ async function startPredictFlow(ctx, config, getTexts, opts = {}) {
     hours: existing?.hours ?? DEFAULT_HOURS,
   });
 
+  predictDebug('flow.start', {
+    uid,
+    flowChatId,
+    publishChatId,
+    step: 'pick_symbol',
+    hadExisting: Boolean(existing),
+    existingStep: existing?.step ?? null,
+  });
+
   const texts = getTexts(ctx.from?.language_code || 'en');
   await ctx.reply(texts.predictStep1Title, {
     parse_mode: 'HTML',
@@ -208,6 +236,7 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol, options = {
   const acceptLanguage = languageCode?.toLowerCase().startsWith('zh') ? 'zh' : 'en';
 
   if (useSearchApi) {
+    predictDebug('symbol.search', { uid, rawCoin: rawCoin.slice(0, 32), fromTextInput });
     if (!rawCoin || !SYMBOL_INPUT_RE.test(symInput)) {
       if (fromTextInput) {
         await ctx.reply(texts.predictCustomInputInvalid, { parse_mode: 'HTML' });
@@ -232,6 +261,14 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol, options = {
     }
 
     const hit = searchResult.hit;
+    predictDebug('symbol.search.result', {
+      uid,
+      rawCoin,
+      httpOk: searchResult.ok,
+      status: searchResult.status,
+      hasHit: Boolean(hit),
+      symbol: hit?.symbol ?? null,
+    });
     if (!searchResult.ok || !hit) {
       await ctx.reply(texts.predictSymbolNotSupported(symInput), { parse_mode: 'HTML' });
       return;
@@ -451,6 +488,8 @@ async function showCustomSymbolInput(ctx, getTexts) {
   patchPredictSession(uid, { step: 'pick_custom_input' });
   const texts = getTexts(ctx.from?.language_code || 'en');
   await ctx.answerCbQuery().catch(() => {});
+  await clearForceReplyInput(ctx);
+  predictDebug('custom.input.show', { uid, flowChatId: session.flowChatId });
 
   const html = `${texts.predictCustomInputPrompt}\n\n${texts.predictCustomInputHint}`;
   const keyboard = buildCustomInputBackKeyboard(texts);
@@ -520,18 +559,44 @@ async function backToSymbolPicker(ctx, getTexts) {
 async function handlePredictTextInput(ctx, config, getTexts) {
   const uid = ctx.from?.id;
   const session = uid != null ? getPredictSession(uid) : null;
-  if (!session || ctx.chat?.type !== 'private') return false;
-
   const text = String(ctx.message?.text || '').trim();
-  if (!text || text.startsWith('/')) return false;
+  const chatType = ctx.chat?.type;
+
+  predictDebug('text.seen', {
+    uid,
+    chatType,
+    textPreview: text.slice(0, 48),
+    isCommand: text.startsWith('/'),
+    hasSession: Boolean(session),
+    sessionStep: session?.step ?? null,
+    flowChatId: session?.flowChatId ?? null,
+    publishChatId: session?.publishChatId ?? null,
+    isReply: Boolean(ctx.message?.reply_to_message),
+    replyToMessageId: ctx.message?.reply_to_message?.message_id ?? null,
+    messageId: ctx.message?.message_id ?? null,
+  });
+
+  if (!session || chatType !== 'private') {
+    predictDebug('text.skip', { uid, reason: !session ? 'no_session' : 'not_private' });
+    return false;
+  }
+
+  if (!text || text.startsWith('/')) {
+    predictDebug('text.skip', { uid, reason: !text ? 'empty' : 'is_command' });
+    return false;
+  }
 
   if (session.step === 'pick_custom_input') {
+    predictDebug('text.handle', { uid, mode: 'pick_custom_input', text });
     return handleCustomSymbolText(ctx, config, getTexts, text);
   }
   if (session.step === 'pick_symbol') {
+    predictDebug('text.handle', { uid, mode: 'pick_symbol_search', text });
     await selectSymbolAndConfirm(ctx, config, getTexts, text, { useSearchApi: true });
     return true;
   }
+
+  predictDebug('text.skip', { uid, reason: 'step_not_accepting_text', step: session.step });
   return false;
 }
 

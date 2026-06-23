@@ -5,6 +5,7 @@
  */
 
 const { getPredictSession } = require('../lib/predictSession');
+const { predictDebug } = require('../lib/predictDebug');
 const {
   isGroupChat,
   sendPredictGroupGuide,
@@ -24,11 +25,21 @@ const {
  */
 function createPredictTextMiddleware(config, { getTexts }) {
   return async (ctx, next) => {
+    if (ctx.message?.text && ctx.chat?.type === 'private') {
+      predictDebug('middleware.text', {
+        uid: ctx.from?.id ?? null,
+        textPreview: String(ctx.message.text).slice(0, 48),
+      });
+    }
     try {
       const handled = await handlePredictTextInput(ctx, config, getTexts);
-      if (handled) return;
+      if (handled) {
+        predictDebug('middleware.handled', { uid: ctx.from?.id ?? null });
+        return;
+      }
     } catch (err) {
       console.error('[predict] text input:', err?.message || err);
+      predictDebug('middleware.error', { uid: ctx.from?.id ?? null, message: err?.message || String(err) });
       await ctx.reply('处理失败，请稍后重试。').catch(() => {});
       return;
     }
@@ -40,6 +51,12 @@ function registerPredict(bot, config, { getTexts }) {
   const { PREDICT_FORCE_PRIVATE } = config;
 
   bot.command('predict', async (ctx) => {
+    predictDebug('command.predict', {
+      uid: ctx.from?.id ?? null,
+      chatType: ctx.chat?.type ?? null,
+      chatId: ctx.chat?.id ?? null,
+      forcePrivate: PREDICT_FORCE_PRIVATE,
+    });
     if (isGroupChat(ctx) && PREDICT_FORCE_PRIVATE) {
       await sendPredictGroupGuide(ctx, config, getTexts);
       return;
@@ -59,6 +76,13 @@ function registerPredict(bot, config, { getTexts }) {
     }
 
     const data = String(ctx.callbackQuery?.data || '');
+    predictDebug('callback', {
+      uid,
+      data,
+      sessionStep: session.step,
+      flowChatId: session.flowChatId,
+      publishChatId: session.publishChatId,
+    });
     if (data === 'p:noop') {
       await ctx.answerCbQuery().catch(() => {});
       return;

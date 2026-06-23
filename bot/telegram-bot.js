@@ -35,6 +35,7 @@ const { registerGroupReferrer } = require('./handlers/groupReferrer');
 const { startTgChatHttpServer } = require('./server/tgChatHttp');
 const { initTgChatRegisterWatcher } = require('./lib/tgChatRegisterWatcher');
 const { createResumePendingAiChatOnPrivate } = require('./middleware/resumePendingAiChatOnPrivate');
+const { predictDebugEnabled } = require('./lib/predictDebug');
 
 if (!config.BOT_TOKEN) {
   console.error('❌ 错误: 请设置 BOT_TOKEN 环境变量');
@@ -80,6 +81,9 @@ bot.launch().then(() => {
   console.log('等待用户消息...\n');
   if (config.BOT_DEBUG) {
     console.log('ℹ️  BOT_DEBUG 已开启：将打印 [BOT_DEBUG] 命令入口与 HTTP 调用结果（不含 JWT 原文）\n');
+  }
+  if (predictDebugEnabled()) {
+    console.log('ℹ️  PREDICT_DEBUG 已开启：将打印 [PREDICT_DEBUG] /predict 流程日志\n');
   }
 });
 
