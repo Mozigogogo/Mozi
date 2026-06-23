@@ -5,7 +5,7 @@
  */
 
 const { getPredictSession } = require('../lib/predictSession');
-const { predictDebug } = require('../lib/predictDebug');
+const { predictDebug, predictLog } = require('../lib/predictDebug');
 const {
   isGroupChat,
   sendPredictGroupGuide,
@@ -71,6 +71,7 @@ function registerPredict(bot, config, { getTexts }) {
 
     const session = getPredictSession(uid);
     if (!session) {
+      predictLog('callback.no_session', { uid, data: String(ctx.callbackQuery?.data || '') });
       await ctx.answerCbQuery().catch(() => {});
       return;
     }
@@ -82,7 +83,18 @@ function registerPredict(bot, config, { getTexts }) {
       sessionStep: session.step,
       flowChatId: session.flowChatId,
       publishChatId: session.publishChatId,
+      sourceGroupChatId: session.sourceGroupChatId ?? null,
     });
+    if (data === 'p:ok') {
+      predictLog('callback.confirm_publish', {
+        uid,
+        flowChatId: session.flowChatId,
+        publishChatId: session.publishChatId,
+        sourceGroupChatId: session.sourceGroupChatId ?? null,
+        symbol: session.symbol ?? null,
+        step: session.step,
+      });
+    }
     if (data === 'p:noop') {
       await ctx.answerCbQuery().catch(() => {});
       return;

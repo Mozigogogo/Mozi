@@ -3,7 +3,7 @@
  */
 
 const TTL_MS = 15 * 60 * 1000;
-const { predictDebug } = require('./predictDebug');
+const { predictDebug, predictLog } = require('./predictDebug');
 
 /** @type {Map<string, object>} */
 const sessions = new Map();
@@ -55,6 +55,15 @@ function savePredictSession(userId, data) {
     publishChatId: data.publishChatId,
     sourceGroupChatId: data.sourceGroupChatId ?? null,
   });
+  if (data.sourceGroupChatId != null || data.publishChatId !== data.flowChatId) {
+    predictLog('session.save', {
+      userId: key,
+      step: data.step || 'pick_symbol',
+      flowChatId: data.flowChatId,
+      publishChatId: data.publishChatId,
+      sourceGroupChatId: data.sourceGroupChatId ?? null,
+    });
+  }
 }
 
 /** @param {string | number} userId */

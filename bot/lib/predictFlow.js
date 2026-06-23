@@ -6,7 +6,7 @@ const { fetchDetailHeader, fetchSearchLastPriceChange } = require('./apis');
 const { SYMBOL_WHITELIST } = require('./symbolIntent');
 const { escapeHtml } = require('./telegramHtml');
 const { buildPredictPrivateUrl } = require('./predictSymbol');
-const { predictDebug } = require('./predictDebug');
+const { predictDebug, predictLog } = require('./predictDebug');
 const {
   savePredictSession,
   getPredictSession,
@@ -152,6 +152,20 @@ function buildConfirmHtml(texts, symbol, priceStr, hours) {
   return texts.predictConfirmBody(sym, hours, price);
 }
 
+function logConfirmStep(uid, symbol) {
+  const session = uid != null ? getPredictSession(uid) : null;
+  predictLog('flow.confirm', {
+    uid,
+    symbol,
+    flowChatId: session?.flowChatId ?? null,
+    publishChatId: session?.publishChatId ?? null,
+    sourceGroupChatId: session?.sourceGroupChatId ?? null,
+    willPublishToGroup:
+      session?.sourceGroupChatId != null &&
+      session.sourceGroupChatId !== session?.flowChatId,
+  });
+}
+
 /**
  * 群内 /predict：Bot 记录来源群 ID，引用回复 + 私聊深链按钮（与 /alert 一致）
  */
@@ -165,13 +179,20 @@ async function sendPredictGroupGuide(ctx, config, getTexts) {
   if (uid == null || groupChatId == null) return;
 
   rememberPredictSourceGroup(uid, groupChatId);
+  const privateUrl = buildPredictPrivateUrl(BOT_USERNAME, groupChatId);
+  predictLog('group.guide', {
+    uid,
+    groupChatId,
+    privateUrl,
+    hasGroupInDeepLink: privateUrl.includes(String(groupChatId)),
+  });
   predictDebug('group.guide', {
     uid,
     groupChatId,
     publishChatId: groupChatId,
+    privateUrl,
   });
 
-  const privateUrl = buildPredictPrivateUrl(BOT_USERNAME, groupChatId);
   const sendOpts = {
     parse_mode: 'HTML',
     reply_markup: {
@@ -231,6 +252,15 @@ async function startPredictFlow(ctx, config, getTexts, opts = {}) {
     hours: existing?.hours ?? DEFAULT_HOURS,
   });
 
+  predictLog('flow.start', {
+    uid,
+    chatType: ctx.chat?.type ?? null,
+    flowChatId,
+    publishChatId,
+    sourceGroupChatId,
+    deepLinkGroupId: opts.publishChatId ?? null,
+    willPublishToGroup: sourceGroupChatId != null && sourceGroupChatId !== flowChatId,
+  });
   predictDebug('flow.start', {
     uid,
     flowChatId,
@@ -340,6 +370,7 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol, options = {
       priceLocked: priceStr,
       hours: session.hours ?? DEFAULT_HOURS,
     });
+    logConfirmStep(uid, sym);
 
     const hours = session.hours ?? DEFAULT_HOURS;
     const html = buildConfirmHtml(texts, sym, priceStr, hours);
@@ -408,6 +439,7 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol, options = {
     priceLocked: priceStr,
     hours: session.hours ?? DEFAULT_HOURS,
   });
+  logConfirmStep(uid, sym);
 
   const hours = session.hours ?? DEFAULT_HOURS;
   const html = buildConfirmHtml(texts, sym, priceStr, hours);
@@ -457,7 +489,15 @@ async function replyOrEdit(ctx, session, text, extra = {}) {
 async function publishPredict(ctx, config, getTexts) {
   const uid = ctx.from?.id;
   const session = uid != null ? getPredictSession(uid) : null;
+
   if (!session || session.step !== 'confirm' || !session.symbol || !session.priceLocked) {
+    predictLog('publish.skip', {
+      uid,
+      hasSession: Boolean(session),
+      step: session?.step ?? null,
+      symbol: session?.symbol ?? null,
+      priceLocked: session?.priceLocked ?? null,
+    });
     await ctx.answerCbQuery().catch(() => {});
     return;
   }
@@ -472,6 +512,27 @@ async function publishPredict(ctx, config, getTexts) {
   await ctx.answerCbQuery({ text: texts.predictPublishingToast }).catch(() => {});
 
   const publishChatId = session.sourceGroupChatId ?? session.publishChatId;
+  const publishingToPrivateOnly =
+    isPrivateChat(ctx) && publishChatId === session.flowChatId;
+
+  predictLog('publish.attempt', {
+    uid,
+    chatType: ctx.chat?.type ?? null,
+    flowChatId: session.flowChatId,
+    publishChatId,
+    sourceGroupChatId: session.sourceGroupChatId ?? null,
+    sessionPublishChatId: session.publishChatId,
+    symbol: sym,
+    publishingToPrivateOnly,
+  });
+
+  if (publishingToPrivateOnly) {
+    predictLog('publish.warn_no_group_target', {
+      uid,
+      hint: 'sourceGroupChatId missing; poll will be sent to private chat only. Re-run /predict in group and use the latest button link.',
+    });
+  }
+
   predictDebug('publish.send', {
     uid,
     flowChatId: session.flowChatId,
@@ -479,19 +540,41 @@ async function publishPredict(ctx, config, getTexts) {
     sourceGroupChatId: session.sourceGroupChatId ?? null,
     symbol: sym,
   });
+
   const headerHtml = buildConfirmHtml(texts, sym, priceStr, hours);
   const pollQuestion = isZh
     ? `${sym} 接下来 ${hours} 小时会涨还是跌？`
     : `Will ${sym} go up or down in the next ${hours} hours?`;
   const pollOptions = isZh ? ['涨', '跌'] : ['Up', 'Down'];
 
+  let headerMsg;
+  let pollMsg;
   try {
-    await ctx.telegram.sendMessage(publishChatId, headerHtml, { parse_mode: 'HTML' });
-    await ctx.telegram.sendPoll(publishChatId, pollQuestion, pollOptions, {
+    headerMsg = await ctx.telegram.sendMessage(publishChatId, headerHtml, { parse_mode: 'HTML' });
+    predictLog('publish.header_sent', {
+      uid,
+      publishChatId,
+      messageId: headerMsg?.message_id ?? null,
+    });
+    pollMsg = await ctx.telegram.sendPoll(publishChatId, pollQuestion, pollOptions, {
       is_anonymous: false,
     });
+    predictLog('publish.poll_sent', {
+      uid,
+      publishChatId,
+      messageId: pollMsg?.message_id ?? null,
+      pollId: pollMsg?.poll?.id ?? null,
+    });
   } catch (err) {
-    console.error('[predict] publish:', err?.response?.description || err?.message || err);
+    const description = err?.response?.description || err?.message || String(err);
+    const errorCode = err?.response?.error_code ?? null;
+    predictLog('publish.fail', {
+      uid,
+      publishChatId,
+      errorCode,
+      description,
+    });
+    console.error('[predict] publish:', description);
     await replyOrEdit(ctx, session, texts.predictPublishFailed, { parse_mode: 'HTML' });
     return;
   }
@@ -500,6 +583,16 @@ async function publishPredict(ctx, config, getTexts) {
 
   const doneText =
     publishChatId !== session.flowChatId ? texts.predictPublishedToGroup : texts.predictPublished;
+
+  predictLog('publish.ok', {
+    uid,
+    publishChatId,
+    flowChatId: session.flowChatId,
+    publishedToGroup: publishChatId !== session.flowChatId,
+    doneTextPreview: doneText.slice(0, 40),
+    headerMessageId: headerMsg?.message_id ?? null,
+    pollMessageId: pollMsg?.message_id ?? null,
+  });
 
   if (ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message) {
     await ctx.telegram
