@@ -86,6 +86,24 @@ function buildCustomInputForceReply(texts) {
   };
 }
 
+/** 取消 force_reply，恢复普通输入框（发完币种后调用） */
+async function clearForceReplyInput(ctx) {
+  const chatId = ctx.chat?.id;
+  if (chatId == null) return;
+  try {
+    const msg = await ctx.telegram.sendMessage(chatId, '\u200b', {
+      reply_markup: { remove_keyboard: true },
+    });
+    if (msg?.message_id != null) {
+      await ctx.telegram.deleteMessage(chatId, msg.message_id).catch(() => {});
+    }
+  } catch {
+    await ctx.telegram
+      .sendMessage(chatId, ' ', { reply_markup: { remove_keyboard: true } })
+      .catch(() => {});
+  }
+}
+
 function buildConfirmKeyboard(texts) {
   return {
     inline_keyboard: [
@@ -196,6 +214,10 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol, options = {
         });
       }
       return;
+    }
+
+    if (fromTextInput) {
+      await clearForceReplyInput(ctx);
     }
 
     await ctx.telegram.sendChatAction(session.flowChatId, 'typing').catch(() => {});
@@ -429,8 +451,12 @@ async function cancelPredict(ctx, getTexts) {
   const uid = ctx.from?.id;
   const session = uid != null ? getPredictSession(uid) : null;
   const texts = getTexts(ctx.from?.language_code || 'en');
+  const wasCustomInput = session?.step === 'pick_custom_input';
   clearPredictSession(uid);
   await ctx.answerCbQuery({ text: texts.predictCancelledToast }).catch(() => {});
+  if (wasCustomInput) {
+    await clearForceReplyInput(ctx);
+  }
   if (session && ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message) {
     await ctx.telegram
       .editMessageText(texts.predictCancelled, {
@@ -509,9 +535,13 @@ async function backToSymbolPicker(ctx, getTexts) {
     await ctx.answerCbQuery().catch(() => {});
     return;
   }
+  const wasCustomInput = session.step === 'pick_custom_input';
   patchPredictSession(uid, { step: 'pick_symbol' });
   const texts = getTexts(ctx.from?.language_code || 'en');
   await ctx.answerCbQuery().catch(() => {});
+  if (wasCustomInput) {
+    await clearForceReplyInput(ctx);
+  }
   const html = texts.predictStep1Title;
   const keyboard = buildSymbolPickerKeyboard(texts);
   if (ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message) {
