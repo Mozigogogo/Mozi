@@ -80,7 +80,7 @@ const i18n = {
     predictBackBtn: '« 返回',
     predictConfirmBtn: '确认发布',
     predictCustomInputPrompt:
-      '🔍 <b>自定义币种</b>\n\n请直接输入币种符号（如 BTC、ETH），须为行情库已收录币种：',
+      '🔍 <b>自定义币种</b>\n\n请直接输入币种符号（如 BTC、ZETA），将通过行情搜索校验：',
     predictCustomInputHint: '👇 在下方输入框发送币种符号',
     predictCustomInputPlaceholder: 'BTC',
     predictCustomInputInvalid: '格式无效，请输入 1–16 位字母或数字（如 <code>BTC</code>）',
@@ -288,7 +288,7 @@ const i18n = {
     predictBackBtn: '« Back',
     predictConfirmBtn: 'Publish',
     predictCustomInputPrompt:
-      '🔍 <b>Custom symbol</b>\n\nType a ticker (e.g. BTC, ETH). It must be in our market database:',
+      '🔍 <b>Custom symbol</b>\n\nType a ticker (e.g. BTC, ZETA). We will look it up via market search:',
     predictCustomInputHint: '👇 Send the symbol in the input below',
     predictCustomInputPlaceholder: 'BTC',
     predictCustomInputInvalid: 'Invalid format. Use 1–16 letters/digits (e.g. <code>BTC</code>).',

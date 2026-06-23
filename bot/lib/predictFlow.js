@@ -2,7 +2,7 @@
  * /predict 多步 UI：选币 → 确认文案 → 发布投票
  */
 
-const { fetchDetailHeader } = require('./apis');
+const { fetchDetailHeader, fetchSearchLastPriceChange } = require('./apis');
 const { SYMBOL_WHITELIST } = require('./symbolIntent');
 const { escapeHtml } = require('./telegramHtml');
 const { buildPredictPrivateUrl } = require('./predictSymbol');
@@ -169,8 +169,10 @@ async function startPredictFlow(ctx, config, getTexts, opts = {}) {
  * @param {object} config
  * @param {(code?: string) => object} getTexts
  * @param {string} symbol
+ * @param {{ useSearchApi?: boolean }} [options]
  */
-async function selectSymbolAndConfirm(ctx, config, getTexts, symbol) {
+async function selectSymbolAndConfirm(ctx, config, getTexts, symbol, options = {}) {
+  const { useSearchApi = false } = options;
   const uid = ctx.from?.id;
   const session = uid != null ? getPredictSession(uid) : null;
   if (!session) {
@@ -178,12 +180,78 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol) {
     return;
   }
 
-  const sym = String(symbol || '')
-    .trim()
-    .toUpperCase();
+  const rawCoin = String(symbol || '').trim();
+  const symInput = rawCoin.toUpperCase();
   const fromTextInput = !ctx.callbackQuery;
+  const languageCode = ctx.from?.language_code || 'en';
+  const texts = getTexts(languageCode);
+  const acceptLanguage = languageCode?.toLowerCase().startsWith('zh') ? 'zh' : 'en';
+
+  if (useSearchApi) {
+    if (!rawCoin || !SYMBOL_INPUT_RE.test(symInput)) {
+      if (fromTextInput) {
+        await ctx.reply(texts.predictCustomInputInvalid, {
+          parse_mode: 'HTML',
+          reply_markup: buildCustomInputForceReply(texts),
+        });
+      }
+      return;
+    }
+
+    await ctx.telegram.sendChatAction(session.flowChatId, 'typing').catch(() => {});
+
+    let searchResult;
+    try {
+      searchResult = await fetchSearchLastPriceChange({
+        appUrl: config.APP_URL,
+        coin: rawCoin,
+        acceptLanguage,
+        auth: config.MOZI_DETAIL_AUTH,
+      });
+    } catch (err) {
+      console.error('[predict] search coin:', err?.message || err);
+      await ctx.reply(texts.predictNetworkError, {
+        parse_mode: 'HTML',
+        reply_markup: buildCustomInputForceReply(texts),
+      });
+      return;
+    }
+
+    const hit = searchResult.hit;
+    if (!searchResult.ok || !hit) {
+      await ctx.reply(texts.predictSymbolNotSupported(symInput), {
+        parse_mode: 'HTML',
+        reply_markup: buildCustomInputForceReply(texts),
+      });
+      return;
+    }
+
+    const sym = hit.symbol;
+    const priceStr = formatUsdPrice(hit.last);
+    if (priceStr === '—') {
+      await ctx.reply(texts.predictSymbolNotSupported(sym), {
+        parse_mode: 'HTML',
+        reply_markup: buildCustomInputForceReply(texts),
+      });
+      return;
+    }
+
+    patchPredictSession(uid, {
+      step: 'confirm',
+      symbol: sym,
+      priceLocked: priceStr,
+      hours: session.hours ?? DEFAULT_HOURS,
+    });
+
+    const hours = session.hours ?? DEFAULT_HOURS;
+    const html = buildConfirmHtml(texts, sym, priceStr, hours);
+    const keyboard = buildConfirmKeyboard(texts);
+    await ctx.reply(html, { parse_mode: 'HTML', reply_markup: keyboard });
+    return;
+  }
+
+  const sym = symInput;
   if (!sym || !SYMBOL_WHITELIST.has(sym)) {
-    const texts = getTexts(ctx.from?.language_code || 'en');
     if (fromTextInput) {
       await ctx.reply(texts.predictInvalidSymbol, {
         parse_mode: 'HTML',
@@ -194,10 +262,6 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol) {
     }
     return;
   }
-
-  const languageCode = ctx.from?.language_code || 'en';
-  const texts = getTexts(languageCode);
-  const acceptLanguage = languageCode?.toLowerCase().startsWith('zh') ? 'zh' : 'en';
 
   await ctx.answerCbQuery().catch(() => {});
   if (ctx.callbackQuery?.message) {
@@ -430,7 +494,7 @@ async function handleCustomSymbolText(ctx, config, getTexts, rawText) {
     return true;
   }
 
-  await selectSymbolAndConfirm(ctx, config, getTexts, sym);
+  await selectSymbolAndConfirm(ctx, config, getTexts, rawText.trim(), { useSearchApi: true });
   return true;
 }
 

@@ -49,6 +49,83 @@ async function fetchDetailHeader({ apiBaseUrl, appUrl, symbol, acceptLanguage })
   return out;
 }
 
+// --- GET /api/search/lastpricechange?coin=（自定义币种搜索）--------------------
+
+/**
+ * @param {object | null} json
+ * @returns {{ symbol: string; last: string | number } | null}
+ */
+function parseSearchLastPriceChangeResult(json) {
+  if (!json || typeof json !== 'object') return null;
+  const code = json.code;
+  if (code !== undefined && code !== 0 && code !== 200) return null;
+  if (json.success === false) return null;
+  const list = Array.isArray(json.data) ? json.data : [];
+  if (!list.length) return null;
+  const row = list[0];
+  if (!row || typeof row !== 'object') return null;
+  const symbol = String(row.symbol ?? row.coin ?? '').trim().toUpperCase();
+  const last = row.last ?? row.price ?? row.currentPrice;
+  if (!symbol || last == null || String(last).trim() === '') return null;
+  return { symbol, last };
+}
+
+/**
+ * GET {APP_URL}/api/search/lastpricechange?coin=（与 H5 搜索一致）
+ * @param {{ appUrl: string; coin: string; acceptLanguage?: string; auth?: string; timeoutMs?: number }} opts
+ * @returns {Promise<{ ok: boolean; status: number; json: object | null; text: string; hit: ReturnType<typeof parseSearchLastPriceChangeResult> }>}
+ */
+async function fetchSearchLastPriceChange({
+  appUrl,
+  coin,
+  acceptLanguage = 'zh',
+  auth = '',
+  timeoutMs = 15000,
+}) {
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const coinNorm = String(coin || '').trim().toLowerCase();
+  const q = new URLSearchParams({ coin: coinNorm });
+  const url = `${app}/api/search/lastpricechange?${q.toString()}`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const lang = acceptLanguage === 'en' ? 'en' : 'zh';
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    'accept-language': lang,
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    referer: `${app}/home`,
+    'user-agent': DEFAULT_UA,
+  };
+  const rawAuth = String(auth || '').trim().replace(/^Bearer\s+/i, '');
+  if (rawAuth) {
+    headers.authentication = rawAuth;
+  }
+  try {
+    const res = await fetch(url, { method: 'GET', headers, signal: ctrl.signal });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const hit = parseSearchLastPriceChangeResult(json);
+    const out = { ok: res.ok, status: res.status, json, text, hit };
+    apiDebug('GET /api/search/lastpricechange →', {
+      coin: coinNorm,
+      httpStatus: res.status,
+      ok: res.ok,
+      hasHit: Boolean(hit),
+      symbol: hit?.symbol ?? null,
+      bodyPreview: text.slice(0, 500),
+    });
+    return out;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 // --- POST /user/tg/registered/check -----------------------------------------
 
 /**
@@ -1740,6 +1817,8 @@ async function postTgChatRemove({ apiBaseUrl, telegramId, groupId, timeoutMs = 1
 
 module.exports = {
   fetchDetailHeader,
+  fetchSearchLastPriceChange,
+  parseSearchLastPriceChangeResult,
   postTgRegisteredCheck,
   postTgChatSave,
   getTgChatGet,
