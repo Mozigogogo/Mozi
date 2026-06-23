@@ -26,6 +26,7 @@ function purgeExpired() {
  * @param {{
  *   flowChatId: number;
  *   publishChatId: number;
+ *   sourceGroupChatId?: number | null;
  *   step?: string;
  *   symbol?: string;
  *   priceLocked?: string;
@@ -40,6 +41,7 @@ function savePredictSession(userId, data) {
     userId: key,
     flowChatId: data.flowChatId,
     publishChatId: data.publishChatId,
+    sourceGroupChatId: data.sourceGroupChatId ?? null,
     step: data.step || 'pick_symbol',
     symbol: data.symbol || null,
     priceLocked: data.priceLocked || null,
@@ -51,6 +53,7 @@ function savePredictSession(userId, data) {
     step: data.step || 'pick_symbol',
     flowChatId: data.flowChatId,
     publishChatId: data.publishChatId,
+    sourceGroupChatId: data.sourceGroupChatId ?? null,
   });
 }
 
@@ -99,6 +102,7 @@ function rememberPredictSourceGroup(userId, groupChatId) {
   savePredictSession(userId, {
     flowChatId: gid,
     publishChatId: gid,
+    sourceGroupChatId: gid,
     step: 'await_entry',
     hours: 24,
   });

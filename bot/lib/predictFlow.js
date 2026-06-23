@@ -171,7 +171,7 @@ async function sendPredictGroupGuide(ctx, config, getTexts) {
     publishChatId: groupChatId,
   });
 
-  const privateUrl = buildPredictPrivateUrl(BOT_USERNAME);
+  const privateUrl = buildPredictPrivateUrl(BOT_USERNAME, groupChatId);
   const sendOpts = {
     parse_mode: 'HTML',
     reply_markup: {
@@ -183,6 +183,23 @@ async function sendPredictGroupGuide(ctx, config, getTexts) {
   }
 
   await ctx.reply(texts.predictGroupInvite, sendOpts);
+}
+
+function resolveSourceGroupChatId(flowChatId, existing, opts = {}) {
+  if (opts.publishChatId != null && Number.isFinite(Number(opts.publishChatId))) {
+    return Number(opts.publishChatId);
+  }
+  if (existing?.sourceGroupChatId != null && Number.isFinite(Number(existing.sourceGroupChatId))) {
+    return Number(existing.sourceGroupChatId);
+  }
+  if (
+    existing?.publishChatId != null &&
+    Number.isFinite(Number(existing.publishChatId)) &&
+    Number(existing.publishChatId) !== flowChatId
+  ) {
+    return Number(existing.publishChatId);
+  }
+  return null;
 }
 
 /**
@@ -203,16 +220,13 @@ async function startPredictFlow(ctx, config, getTexts, opts = {}) {
       .catch(() => {});
   }
 
-  let publishChatId = flowChatId;
-  if (opts.publishChatId != null && Number.isFinite(Number(opts.publishChatId))) {
-    publishChatId = Number(opts.publishChatId);
-  } else if (existing?.publishChatId != null && Number.isFinite(Number(existing.publishChatId))) {
-    publishChatId = Number(existing.publishChatId);
-  }
+  const sourceGroupChatId = resolveSourceGroupChatId(flowChatId, existing, opts);
+  const publishChatId = sourceGroupChatId ?? flowChatId;
 
   savePredictSession(uid, {
     flowChatId,
     publishChatId,
+    sourceGroupChatId,
     step: 'pick_symbol',
     hours: existing?.hours ?? DEFAULT_HOURS,
   });
@@ -221,9 +235,11 @@ async function startPredictFlow(ctx, config, getTexts, opts = {}) {
     uid,
     flowChatId,
     publishChatId,
+    sourceGroupChatId,
     step: 'pick_symbol',
     hadExisting: Boolean(existing),
     existingStep: existing?.step ?? null,
+    fromDeepLink: opts.publishChatId != null,
   });
 
   const texts = getTexts(ctx.from?.language_code || 'en');
@@ -455,7 +471,14 @@ async function publishPredict(ctx, config, getTexts) {
 
   await ctx.answerCbQuery({ text: texts.predictPublishingToast }).catch(() => {});
 
-  const publishChatId = session.publishChatId;
+  const publishChatId = session.sourceGroupChatId ?? session.publishChatId;
+  predictDebug('publish.send', {
+    uid,
+    flowChatId: session.flowChatId,
+    publishChatId,
+    sourceGroupChatId: session.sourceGroupChatId ?? null,
+    symbol: sym,
+  });
   const headerHtml = buildConfirmHtml(texts, sym, priceStr, hours);
   const pollQuestion = isZh
     ? `${sym} 接下来 ${hours} 小时会涨还是跌？`

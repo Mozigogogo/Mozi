@@ -5,7 +5,7 @@
 
 const { buildMiniAppUrlWithInvite } = require('../lib/invite');
 const { parseAlertDeepLinkPayload } = require('../lib/alertSymbol');
-const { isPredictDeepLinkPayload } = require('../lib/predictSymbol');
+const { parsePredictDeepLinkPayload } = require('../lib/predictSymbol');
 const { startPredictFlow } = require('../lib/predictFlow');
 const { predictDebug } = require('../lib/predictDebug');
 const { sendAlertCard } = require('../lib/alertFlow');
@@ -40,7 +40,8 @@ function registerStart(bot, config, { getTexts }) {
       return;
     }
 
-    if (isPredictDeepLinkPayload(inviteCode)) {
+    const predictPayload = parsePredictDeepLinkPayload(inviteCode);
+    if (predictPayload?.isPredict) {
       console.log(`\n[${new Date().toLocaleString()}] 用户通过竞猜入口启动`);
       console.log(`  TG ID: ${userId}`);
       console.log(`  Username: ${username}`);
@@ -48,8 +49,11 @@ function registerStart(bot, config, { getTexts }) {
         uid: userId,
         payload: inviteCode,
         chatId: ctx.chat?.id ?? null,
+        publishChatId: predictPayload.publishChatId,
       });
-      await startPredictFlow(ctx, config, getTexts);
+      await startPredictFlow(ctx, config, getTexts, {
+        publishChatId: predictPayload.publishChatId,
+      });
       return;
     }
 
