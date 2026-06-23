@@ -97,7 +97,7 @@ function registerPredict(bot, config, { getTexts }) {
         step: session.step,
       });
     }
-    if (data === 'p:noop') {
+    if (data === 'p:cst:f') {
       await ctx.answerCbQuery().catch(() => {});
       return;
     }

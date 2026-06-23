@@ -107,7 +107,7 @@ function buildCustomInputKeyboard(texts, draft = '') {
     inline_keyboard: [
       row1,
       [
-        { text: formatCustomInputField(texts, draft), callback_data: 'p:noop' },
+        { text: formatCustomInputField(texts, draft), callback_data: 'p:cst:f' },
         { text: texts.predictCustomCancelBtn, callback_data: 'p:cst:x' },
         { text: texts.predictCustomConfirmBtn, callback_data: 'p:cst:ok' },
       ],
@@ -690,7 +690,7 @@ async function cancelPredict(ctx, getTexts) {
 }
 
 /**
- * 点击「自定义…」：原按钮行变为 [输入框展示] [✕] [✓]
+ * 点击「自定义…」：一次点击即展开 [输入框展示] [✕] [✓]
  */
 async function showCustomSymbolInput(ctx, getTexts) {
   const uid = ctx.from?.id;
@@ -700,7 +700,12 @@ async function showCustomSymbolInput(ctx, getTexts) {
     return;
   }
 
-  await clearStaleForceReply(ctx);
+  const texts = getTexts(ctx.from?.language_code || 'en');
+
+  if (session.step === 'pick_custom_input') {
+    await ctx.answerCbQuery().catch(() => {});
+    return;
+  }
 
   const pickerMessageId =
     ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message
@@ -713,7 +718,6 @@ async function showCustomSymbolInput(ctx, getTexts) {
     pickerMessageId,
   });
 
-  const texts = getTexts(ctx.from?.language_code || 'en');
   await ctx.answerCbQuery().catch(() => {});
   predictDebug('custom.input.show', { uid, flowChatId: session.flowChatId, pickerMessageId });
 
@@ -739,7 +743,6 @@ async function cancelCustomSymbolInput(ctx, getTexts) {
   patchPredictSession(uid, { step: 'pick_symbol', customSymbolDraft: '' });
   const texts = getTexts(ctx.from?.language_code || 'en');
   await ctx.answerCbQuery().catch(() => {});
-  await clearStaleForceReply(ctx);
 
   const html = texts.predictStep1Title;
   const keyboard = buildSymbolPickerKeyboard(texts);
@@ -846,11 +849,6 @@ async function handlePredictTextInput(ctx, config, getTexts) {
   if (session.step === 'pick_custom_input') {
     predictDebug('text.handle', { uid, mode: 'pick_custom_input', text });
     return handleCustomSymbolText(ctx, config, getTexts, text);
-  }
-  if (session.step === 'pick_symbol') {
-    predictDebug('text.handle', { uid, mode: 'pick_symbol_search', text });
-    await selectSymbolAndConfirm(ctx, config, getTexts, text, { useSearchApi: true });
-    return true;
   }
 
   predictDebug('text.skip', { uid, reason: 'step_not_accepting_text', step: session.step });
