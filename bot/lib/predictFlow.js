@@ -28,6 +28,18 @@ function isPrivateChat(ctx) {
   return ctx.chat?.type === 'private';
 }
 
+/** answerCbQuery 的 text 必须是字符串；传 { text } 对象会在客户端显示 JSON */
+function answerPredictCbQuery(ctx, text, options = {}) {
+  const msg = text == null ? '' : String(text).trim();
+  if (!msg) {
+    return ctx.answerCbQuery().catch(() => {});
+  }
+  if (options.show_alert) {
+    return ctx.answerCbQuery(msg, { show_alert: true }).catch(() => {});
+  }
+  return ctx.answerCbQuery(msg).catch(() => {});
+}
+
 function trimZeros(str) {
   return String(str).replace(/\.?0+$/, '');
 }
@@ -419,7 +431,7 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol, options = {
     if (fromTextInput) {
       await ctx.reply(texts.predictInvalidSymbol, { parse_mode: 'HTML' });
     } else {
-      await ctx.answerCbQuery({ text: texts.predictInvalidSymbol, show_alert: true }).catch(() => {});
+      await answerPredictCbQuery(ctx, texts.predictInvalidSymbol, { show_alert: true });
     }
     return;
   }
@@ -544,7 +556,7 @@ async function publishPredict(ctx, config, getTexts) {
   const hours = session.hours ?? DEFAULT_HOURS;
   const priceStr = session.priceLocked;
 
-  await ctx.answerCbQuery({ text: texts.predictPublishingToast }).catch(() => {});
+  await answerPredictCbQuery(ctx, texts.predictPublishingToast);
 
   const publishChatId = session.sourceGroupChatId ?? session.publishChatId;
   const publishingToPrivateOnly =
@@ -650,17 +662,31 @@ async function cancelPredict(ctx, getTexts) {
   const uid = ctx.from?.id;
   const session = uid != null ? getPredictSession(uid) : null;
   const texts = getTexts(ctx.from?.language_code || 'en');
-  clearPredictSession(uid);
-  await ctx.answerCbQuery({ text: texts.predictCancelledToast }).catch(() => {});
-  if (session && ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message) {
-    await ctx.telegram
-      .editMessageText(texts.predictCancelled, {
-        chat_id: session.flowChatId,
-        message_id: ctx.callbackQuery.message.message_id,
-        parse_mode: 'HTML',
-      })
-      .catch(() => {});
+
+  await answerPredictCbQuery(ctx, texts.predictCancelledToast);
+
+  const chatId = session?.flowChatId ?? ctx.chat?.id;
+  const messageIds = new Set();
+  if (ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message) {
+    messageIds.add(ctx.callbackQuery.message.message_id);
   }
+  if (session?.pickerMessageId != null) {
+    messageIds.add(session.pickerMessageId);
+  }
+
+  clearPredictSession(uid);
+
+  if (chatId != null) {
+    for (const messageId of messageIds) {
+      await ctx.telegram.deleteMessage(chatId, messageId).catch(() => {});
+    }
+  }
+
+  predictDebug('flow.cancel', {
+    uid,
+    chatId,
+    deletedMessageIds: [...messageIds],
+  });
 }
 
 /**
@@ -738,13 +764,11 @@ async function confirmCustomSymbolInput(ctx, config, getTexts) {
   const draft = String(session.customSymbolDraft || '').trim();
 
   if (!draft) {
-    await ctx.answerCbQuery({ text: texts.predictCustomInputEmpty, show_alert: true }).catch(() => {});
+    await answerPredictCbQuery(ctx, texts.predictCustomInputEmpty, { show_alert: true });
     return;
   }
   if (!SYMBOL_INPUT_RE.test(draft.toUpperCase())) {
-    await ctx
-      .answerCbQuery({ text: texts.predictCustomInputInvalidShort, show_alert: true })
-      .catch(() => {});
+    await answerPredictCbQuery(ctx, texts.predictCustomInputInvalidShort, { show_alert: true });
     return;
   }
 
