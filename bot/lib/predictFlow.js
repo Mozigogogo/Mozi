@@ -85,35 +85,46 @@ function buildCustomInputBackKeyboard(texts) {
   };
 }
 
-/** 清除 Telegram 残留的 force_reply；勿立刻 delete 该消息，否则客户端来不及处理 remove_keyboard */
-async function clearForceReplyInput(ctx) {
+function buildCustomInputForceReply(texts) {
+  return {
+    force_reply: true,
+    selective: true,
+    input_field_placeholder: texts.predictCustomInputPlaceholder,
+  };
+}
+
+/** 清除残留的 force_reply（Telegram 要求 text 非空） */
+async function clearForceReplyInput(ctx, texts) {
   const chatId = ctx.chat?.id;
   if (chatId == null) {
     predictDebug('clearForceReply.skip', { reason: 'no_chat_id' });
     return false;
   }
-  predictDebug('clearForceReply.send', { chatId });
+  const dismissText = String(texts?.predictClearReplyText || '·').trim() || '·';
+  predictDebug('clearForceReply.send', { chatId, dismissText });
   try {
-    const msg = await ctx.telegram.sendMessage(chatId, '\u200b', {
+    const msg = await ctx.telegram.sendMessage(chatId, dismissText, {
       reply_markup: { remove_keyboard: true },
     });
     predictDebug('clearForceReply.ok', { chatId, messageId: msg?.message_id });
+    if (msg?.message_id != null) {
+      setTimeout(() => {
+        ctx.telegram.deleteMessage(chatId, msg.message_id).catch(() => {});
+      }, 1200);
+    }
     return true;
   } catch (err) {
     const reason = err?.response?.description || err?.message || String(err);
     predictDebug('clearForceReply.fail', { chatId, reason });
-    try {
-      const msg = await ctx.telegram.sendMessage(chatId, ' ', {
-        reply_markup: { remove_keyboard: true },
-      });
-      predictDebug('clearForceReply.ok_fallback', { chatId, messageId: msg?.message_id });
-      return true;
-    } catch (err2) {
-      const reason2 = err2?.response?.description || err2?.message || String(err2);
-      predictDebug('clearForceReply.fail_fallback', { chatId, reason: reason2 });
-      return false;
-    }
+    return false;
   }
+}
+
+async function replyCustomInputPrompt(ctx, texts, html) {
+  await ctx.reply(html, {
+    parse_mode: 'HTML',
+    reply_markup: buildCustomInputForceReply(texts),
+  });
 }
 
 function buildConfirmKeyboard(texts) {
@@ -178,7 +189,8 @@ async function startPredictFlow(ctx, config, getTexts, opts = {}) {
   if (uid == null || flowChatId == null) return;
 
   if (isPrivateChat(ctx)) {
-    await clearForceReplyInput(ctx);
+    const texts = getTexts(ctx.from?.language_code || 'en');
+    await clearForceReplyInput(ctx, texts);
   }
 
   const existing = getPredictSession(uid);
@@ -239,7 +251,7 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol, options = {
     predictDebug('symbol.search', { uid, rawCoin: rawCoin.slice(0, 32), fromTextInput });
     if (!rawCoin || !SYMBOL_INPUT_RE.test(symInput)) {
       if (fromTextInput) {
-        await ctx.reply(texts.predictCustomInputInvalid, { parse_mode: 'HTML' });
+        await replyCustomInputPrompt(ctx, texts, texts.predictCustomInputInvalid);
       }
       return;
     }
@@ -256,7 +268,11 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol, options = {
       });
     } catch (err) {
       console.error('[predict] search coin:', err?.message || err);
-      await ctx.reply(texts.predictNetworkError, { parse_mode: 'HTML' });
+      if (fromTextInput) {
+        await replyCustomInputPrompt(ctx, texts, texts.predictNetworkError);
+      } else {
+        await ctx.reply(texts.predictNetworkError, { parse_mode: 'HTML' });
+      }
       return;
     }
 
@@ -270,15 +286,27 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol, options = {
       symbol: hit?.symbol ?? null,
     });
     if (!searchResult.ok || !hit) {
-      await ctx.reply(texts.predictSymbolNotSupported(symInput), { parse_mode: 'HTML' });
+      if (fromTextInput) {
+        await replyCustomInputPrompt(ctx, texts, texts.predictSymbolNotSupported(symInput));
+      } else {
+        await ctx.reply(texts.predictSymbolNotSupported(symInput), { parse_mode: 'HTML' });
+      }
       return;
     }
 
     const sym = hit.symbol;
     const priceStr = formatUsdPrice(hit.last);
     if (priceStr === '—') {
-      await ctx.reply(texts.predictSymbolNotSupported(sym), { parse_mode: 'HTML' });
+      if (fromTextInput) {
+        await replyCustomInputPrompt(ctx, texts, texts.predictSymbolNotSupported(sym));
+      } else {
+        await ctx.reply(texts.predictSymbolNotSupported(sym), { parse_mode: 'HTML' });
+      }
       return;
+    }
+
+    if (fromTextInput) {
+      await clearForceReplyInput(ctx, texts);
     }
 
     patchPredictSession(uid, {
@@ -462,8 +490,12 @@ async function cancelPredict(ctx, getTexts) {
   const uid = ctx.from?.id;
   const session = uid != null ? getPredictSession(uid) : null;
   const texts = getTexts(ctx.from?.language_code || 'en');
+  const wasCustomInput = session?.step === 'pick_custom_input';
   clearPredictSession(uid);
   await ctx.answerCbQuery({ text: texts.predictCancelledToast }).catch(() => {});
+  if (wasCustomInput) {
+    await clearForceReplyInput(ctx, texts);
+  }
   if (session && ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message) {
     await ctx.telegram
       .editMessageText(texts.predictCancelled, {
@@ -476,7 +508,7 @@ async function cancelPredict(ctx, getTexts) {
 }
 
 /**
- * 点击「自定义」：提示用户直接在普通输入框发送币种（不用 force_reply，避免一进私聊就 Reply）
+ * 点击「自定义」：仅此时启用 force_reply 输入框
  */
 async function showCustomSymbolInput(ctx, getTexts) {
   const uid = ctx.from?.id;
@@ -488,10 +520,10 @@ async function showCustomSymbolInput(ctx, getTexts) {
   patchPredictSession(uid, { step: 'pick_custom_input' });
   const texts = getTexts(ctx.from?.language_code || 'en');
   await ctx.answerCbQuery().catch(() => {});
-  await clearForceReplyInput(ctx);
-  predictDebug('custom.input.show', { uid, flowChatId: session.flowChatId });
+  await clearForceReplyInput(ctx, texts);
+  predictDebug('custom.input.show', { uid, flowChatId: session.flowChatId, forceReply: true });
 
-  const html = `${texts.predictCustomInputPrompt}\n\n${texts.predictCustomInputHint}`;
+  const html = texts.predictCustomInputPrompt;
   const keyboard = buildCustomInputBackKeyboard(texts);
 
   if (ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message) {
@@ -506,6 +538,8 @@ async function showCustomSymbolInput(ctx, getTexts) {
   } else {
     await ctx.reply(html, { parse_mode: 'HTML', reply_markup: keyboard });
   }
+
+  await replyCustomInputPrompt(ctx, texts, texts.predictCustomInputHint);
 }
 
 /**
@@ -520,7 +554,7 @@ async function handleCustomSymbolText(ctx, config, getTexts, rawText) {
   const texts = getTexts(ctx.from?.language_code || 'en');
   const sym = String(rawText || '').trim().toUpperCase();
   if (!sym || !SYMBOL_INPUT_RE.test(sym)) {
-    await ctx.reply(texts.predictCustomInputInvalid, { parse_mode: 'HTML' });
+    await replyCustomInputPrompt(ctx, texts, texts.predictCustomInputInvalid);
     return true;
   }
 
@@ -539,9 +573,13 @@ async function backToSymbolPicker(ctx, getTexts) {
     await ctx.answerCbQuery().catch(() => {});
     return;
   }
+  const wasCustomInput = session.step === 'pick_custom_input';
   patchPredictSession(uid, { step: 'pick_symbol' });
   const texts = getTexts(ctx.from?.language_code || 'en');
   await ctx.answerCbQuery().catch(() => {});
+  if (wasCustomInput) {
+    await clearForceReplyInput(ctx, texts);
+  }
   const html = texts.predictStep1Title;
   const keyboard = buildSymbolPickerKeyboard(texts);
   if (ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message) {
