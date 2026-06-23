@@ -27,7 +27,7 @@ const { registerAi } = require('./handlers/ai');
 const { registerChat } = require('./handlers/chat');
 const { registerBigorder } = require('./handlers/bigorder');
 const { registerPrice } = require('./handlers/price');
-const { registerPredict } = require('./handlers/predict');
+const { registerPredict, createPredictTextMiddleware } = require('./handlers/predict');
 const { registerHelp } = require('./handlers/help');
 const { registerBalance } = require('./handlers/balance');
 const { createInjectGroupReferrer } = require('./middleware/groupReferrer');
@@ -49,6 +49,7 @@ const registeredGate = createRequireMoziRegistered(config, i18nApi);
 const loginGate = createRequireMoziLogin(config, i18nApi);
 
 registerDebugCommandLogging(bot);
+bot.use(createPredictTextMiddleware(config, i18nApi));
 bot.use(createInjectGroupReferrer(config));
 bot.use(createResumePendingAiChatOnPrivate(config));
 registerMoziReloginCallback(bot, config, i18nApi);

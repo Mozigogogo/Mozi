@@ -78,15 +78,13 @@ function buildSymbolPickerKeyboard(texts) {
   };
 }
 
-function buildCustomInputForceReply(texts) {
+function buildCustomInputBackKeyboard(texts) {
   return {
-    force_reply: true,
-    selective: true,
-    input_field_placeholder: texts.predictCustomInputPlaceholder,
+    inline_keyboard: [[{ text: texts.predictBackBtn, callback_data: 'p:back' }]],
   };
 }
 
-/** 取消 force_reply，恢复普通输入框（发完币种后调用） */
+/** 清除 Telegram 残留的 force_reply / 自定义键盘，避免一进私聊就处于 Reply 状态 */
 async function clearForceReplyInput(ctx) {
   const chatId = ctx.chat?.id;
   if (chatId == null) return;
@@ -160,6 +158,10 @@ async function startPredictFlow(ctx, config, getTexts, opts = {}) {
   const flowChatId = ctx.chat?.id;
   if (uid == null || flowChatId == null) return;
 
+  if (isPrivateChat(ctx)) {
+    await clearForceReplyInput(ctx);
+  }
+
   const existing = getPredictSession(uid);
   let publishChatId = flowChatId;
   if (opts.publishChatId != null && Number.isFinite(Number(opts.publishChatId))) {
@@ -208,16 +210,9 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol, options = {
   if (useSearchApi) {
     if (!rawCoin || !SYMBOL_INPUT_RE.test(symInput)) {
       if (fromTextInput) {
-        await ctx.reply(texts.predictCustomInputInvalid, {
-          parse_mode: 'HTML',
-          reply_markup: buildCustomInputForceReply(texts),
-        });
+        await ctx.reply(texts.predictCustomInputInvalid, { parse_mode: 'HTML' });
       }
       return;
-    }
-
-    if (fromTextInput) {
-      await clearForceReplyInput(ctx);
     }
 
     await ctx.telegram.sendChatAction(session.flowChatId, 'typing').catch(() => {});
@@ -232,29 +227,20 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol, options = {
       });
     } catch (err) {
       console.error('[predict] search coin:', err?.message || err);
-      await ctx.reply(texts.predictNetworkError, {
-        parse_mode: 'HTML',
-        reply_markup: buildCustomInputForceReply(texts),
-      });
+      await ctx.reply(texts.predictNetworkError, { parse_mode: 'HTML' });
       return;
     }
 
     const hit = searchResult.hit;
     if (!searchResult.ok || !hit) {
-      await ctx.reply(texts.predictSymbolNotSupported(symInput), {
-        parse_mode: 'HTML',
-        reply_markup: buildCustomInputForceReply(texts),
-      });
+      await ctx.reply(texts.predictSymbolNotSupported(symInput), { parse_mode: 'HTML' });
       return;
     }
 
     const sym = hit.symbol;
     const priceStr = formatUsdPrice(hit.last);
     if (priceStr === '—') {
-      await ctx.reply(texts.predictSymbolNotSupported(sym), {
-        parse_mode: 'HTML',
-        reply_markup: buildCustomInputForceReply(texts),
-      });
+      await ctx.reply(texts.predictSymbolNotSupported(sym), { parse_mode: 'HTML' });
       return;
     }
 
@@ -275,10 +261,7 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol, options = {
   const sym = symInput;
   if (!sym || !SYMBOL_WHITELIST.has(sym)) {
     if (fromTextInput) {
-      await ctx.reply(texts.predictInvalidSymbol, {
-        parse_mode: 'HTML',
-        reply_markup: buildCustomInputForceReply(texts),
-      });
+      await ctx.reply(texts.predictInvalidSymbol, { parse_mode: 'HTML' });
     } else {
       await ctx.answerCbQuery({ text: texts.predictInvalidSymbol, show_alert: true }).catch(() => {});
     }
@@ -301,10 +284,7 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol, options = {
   } catch (err) {
     console.error('[predict] fetch price:', err?.message || err);
     if (fromTextInput) {
-      await ctx.reply(texts.predictNetworkError, {
-        parse_mode: 'HTML',
-        reply_markup: buildCustomInputForceReply(texts),
-      });
+      await ctx.reply(texts.predictNetworkError, { parse_mode: 'HTML' });
     } else {
       await replyOrEdit(ctx, session, texts.predictNetworkError, { parse_mode: 'HTML' });
     }
@@ -313,10 +293,7 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol, options = {
 
   if (!result.ok || result.json == null) {
     if (fromTextInput) {
-      await ctx.reply(texts.predictSymbolNotSupported(sym), {
-        parse_mode: 'HTML',
-        reply_markup: buildCustomInputForceReply(texts),
-      });
+      await ctx.reply(texts.predictSymbolNotSupported(sym), { parse_mode: 'HTML' });
     } else {
       await replyOrEdit(ctx, session, texts.predictSymbolNotSupported(sym), { parse_mode: 'HTML' });
     }
@@ -328,10 +305,7 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol, options = {
   const priceStr = formatUsdPrice(priceRaw);
   if (priceStr === '—') {
     if (fromTextInput) {
-      await ctx.reply(texts.predictSymbolNotSupported(sym), {
-        parse_mode: 'HTML',
-        reply_markup: buildCustomInputForceReply(texts),
-      });
+      await ctx.reply(texts.predictSymbolNotSupported(sym), { parse_mode: 'HTML' });
     } else {
       await replyOrEdit(ctx, session, texts.predictSymbolNotSupported(sym), { parse_mode: 'HTML' });
     }
@@ -451,12 +425,8 @@ async function cancelPredict(ctx, getTexts) {
   const uid = ctx.from?.id;
   const session = uid != null ? getPredictSession(uid) : null;
   const texts = getTexts(ctx.from?.language_code || 'en');
-  const wasCustomInput = session?.step === 'pick_custom_input';
   clearPredictSession(uid);
   await ctx.answerCbQuery({ text: texts.predictCancelledToast }).catch(() => {});
-  if (wasCustomInput) {
-    await clearForceReplyInput(ctx);
-  }
   if (session && ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message) {
     await ctx.telegram
       .editMessageText(texts.predictCancelled, {
@@ -469,7 +439,7 @@ async function cancelPredict(ctx, getTexts) {
 }
 
 /**
- * 点击「自定义」：提示用户输入币种符号（force_reply 输入框）
+ * 点击「自定义」：提示用户直接在普通输入框发送币种（不用 force_reply，避免一进私聊就 Reply）
  */
 async function showCustomSymbolInput(ctx, getTexts) {
   const uid = ctx.from?.id;
@@ -482,23 +452,21 @@ async function showCustomSymbolInput(ctx, getTexts) {
   const texts = getTexts(ctx.from?.language_code || 'en');
   await ctx.answerCbQuery().catch(() => {});
 
+  const html = `${texts.predictCustomInputPrompt}\n\n${texts.predictCustomInputHint}`;
+  const keyboard = buildCustomInputBackKeyboard(texts);
+
   if (ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message) {
     await ctx.telegram
-      .editMessageText(texts.predictCustomInputPrompt, {
+      .editMessageText(html, {
         chat_id: session.flowChatId,
         message_id: ctx.callbackQuery.message.message_id,
         parse_mode: 'HTML',
-        reply_markup: {
-          inline_keyboard: [[{ text: texts.predictBackBtn, callback_data: 'p:back' }]],
-        },
+        reply_markup: keyboard,
       })
-      .catch(() => {});
+      .catch(() => ctx.reply(html, { parse_mode: 'HTML', reply_markup: keyboard }));
+  } else {
+    await ctx.reply(html, { parse_mode: 'HTML', reply_markup: keyboard });
   }
-
-  await ctx.reply(texts.predictCustomInputHint, {
-    parse_mode: 'HTML',
-    reply_markup: buildCustomInputForceReply(texts),
-  });
 }
 
 /**
@@ -513,10 +481,7 @@ async function handleCustomSymbolText(ctx, config, getTexts, rawText) {
   const texts = getTexts(ctx.from?.language_code || 'en');
   const sym = String(rawText || '').trim().toUpperCase();
   if (!sym || !SYMBOL_INPUT_RE.test(sym)) {
-    await ctx.reply(texts.predictCustomInputInvalid, {
-      parse_mode: 'HTML',
-      reply_markup: buildCustomInputForceReply(texts),
-    });
+    await ctx.reply(texts.predictCustomInputInvalid, { parse_mode: 'HTML' });
     return true;
   }
 
@@ -535,13 +500,9 @@ async function backToSymbolPicker(ctx, getTexts) {
     await ctx.answerCbQuery().catch(() => {});
     return;
   }
-  const wasCustomInput = session.step === 'pick_custom_input';
   patchPredictSession(uid, { step: 'pick_symbol' });
   const texts = getTexts(ctx.from?.language_code || 'en');
   await ctx.answerCbQuery().catch(() => {});
-  if (wasCustomInput) {
-    await clearForceReplyInput(ctx);
-  }
   const html = texts.predictStep1Title;
   const keyboard = buildSymbolPickerKeyboard(texts);
   if (ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message) {
@@ -556,6 +517,24 @@ async function backToSymbolPicker(ctx, getTexts) {
   }
 }
 
+async function handlePredictTextInput(ctx, config, getTexts) {
+  const uid = ctx.from?.id;
+  const session = uid != null ? getPredictSession(uid) : null;
+  if (!session || ctx.chat?.type !== 'private') return false;
+
+  const text = String(ctx.message?.text || '').trim();
+  if (!text || text.startsWith('/')) return false;
+
+  if (session.step === 'pick_custom_input') {
+    return handleCustomSymbolText(ctx, config, getTexts, text);
+  }
+  if (session.step === 'pick_symbol') {
+    await selectSymbolAndConfirm(ctx, config, getTexts, text, { useSearchApi: true });
+    return true;
+  }
+  return false;
+}
+
 module.exports = {
   isGroupChat,
   isPrivateChat,
@@ -566,6 +545,7 @@ module.exports = {
   cancelPredict,
   showCustomSymbolInput,
   handleCustomSymbolText,
+  handlePredictTextInput,
   backToSymbolPicker,
   QUICK_SYMBOLS,
 };

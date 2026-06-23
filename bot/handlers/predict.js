@@ -13,9 +13,28 @@ const {
   publishPredict,
   cancelPredict,
   showCustomSymbolInput,
-  handleCustomSymbolText,
+  handlePredictTextInput,
   backToSymbolPicker,
 } = require('../lib/predictFlow');
+
+/**
+ * 私聊内 predict 流程的文本输入（尽早拦截，避免被其他中间件吞掉）
+ * @param {object} config
+ * @param {{ getTexts: Function }} i18nApi
+ */
+function createPredictTextMiddleware(config, { getTexts }) {
+  return async (ctx, next) => {
+    try {
+      const handled = await handlePredictTextInput(ctx, config, getTexts);
+      if (handled) return;
+    } catch (err) {
+      console.error('[predict] text input:', err?.message || err);
+      await ctx.reply('处理失败，请稍后重试。').catch(() => {});
+      return;
+    }
+    return next();
+  };
+}
 
 function registerPredict(bot, config, { getTexts }) {
   const { PREDICT_FORCE_PRIVATE } = config;
@@ -27,22 +46,6 @@ function registerPredict(bot, config, { getTexts }) {
     }
 
     await startPredictFlow(ctx, config, getTexts);
-  });
-
-  bot.on('text', async (ctx, next) => {
-    const uid = ctx.from?.id;
-    const session = uid != null ? getPredictSession(uid) : null;
-    if (!session || session.step !== 'pick_custom_input') {
-      return next();
-    }
-    const text = String(ctx.message?.text || '').trim();
-    if (!text || text.startsWith('/')) {
-      return next();
-    }
-    const handled = await handleCustomSymbolText(ctx, config, getTexts, text);
-    if (!handled) {
-      return next();
-    }
   });
 
   bot.action(/^p:/, async (ctx) => {
@@ -87,4 +90,4 @@ function registerPredict(bot, config, { getTexts }) {
   });
 }
 
-module.exports = { registerPredict };
+module.exports = { registerPredict, createPredictTextMiddleware };

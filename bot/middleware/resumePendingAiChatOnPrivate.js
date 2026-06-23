@@ -5,6 +5,7 @@
  */
 
 const { hasPendingWatchForUser } = require('../lib/tgChatRegisterWatcher');
+const { getPredictSession } = require('../lib/predictSession');
 const { markUserDmReachable } = require('../lib/botDmReachable');
 
 /**
@@ -26,6 +27,12 @@ function createResumePendingAiChatOnPrivate(config) {
     }
 
     markUserDmReachable(ctx.from.id);
+
+    const predictSession = getPredictSession(ctx.from.id);
+    const predictStep = predictSession?.step;
+    if (predictStep === 'pick_symbol' || predictStep === 'pick_custom_input' || predictStep === 'confirm') {
+      return next();
+    }
 
     if (isStartCommand(ctx) && hasPendingWatchForUser(String(ctx.from.id))) {
       return next();
