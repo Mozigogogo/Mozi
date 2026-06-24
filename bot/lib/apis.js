@@ -1836,7 +1836,7 @@ function isCoinDirectionGuessPublishOk(json) {
  *   appUrl?: string;
  *   groupId: number;
  *   symbol: string;
- *   duration: string;
+ *   duration: number;
  *   title: string;
  *   path?: string;
  *   timeoutMs?: number;
@@ -1877,7 +1877,7 @@ async function postCoinDirectionGuessPublish({
   const body = {
     groupId: Number(groupId),
     symbol: String(symbol || '').trim().toUpperCase(),
-    duration: String(duration || '').trim(),
+    duration: Math.max(1, Math.floor(Number(duration) || 0)),
     title: String(title || '').trim(),
   };
   apiDebug('POST /coinDirectionGuess/publish ←', {

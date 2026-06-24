@@ -21,10 +21,10 @@ const QUICK_SYMBOLS = ['BTC', 'ETH', 'SOL'];
 const DEFAULT_HOURS = 24;
 const SYMBOL_INPUT_RE = /^[A-Z0-9]{1,16}$/;
 
-/** 后端 duration 枚举，如 24 小时 → H24 */
+/** 后端 duration 单位：秒，如 24 小时 → 86400 */
 function formatPredictDuration(hours) {
   const h = Math.max(1, Math.min(168, Number(hours) || DEFAULT_HOURS));
-  return `H${h}`;
+  return h * 3600;
 }
 
 async function registerCoinDirectionGuessPublish(ctx, config, { publishChatId, sym, hours, title }) {
