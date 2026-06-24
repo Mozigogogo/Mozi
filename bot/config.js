@@ -97,6 +97,11 @@ const PREDICT_FORCE_PRIVATE = !/^0|false|no$/i.test(
 /** 为 1/true/yes 时打印 /predict 流程调试（见 lib/predictDebug.js）；未设时跟随 BOT_DEBUG */
 const PREDICT_DEBUG = /^1|true|yes$/i.test(String(process.env.PREDICT_DEBUG || '').trim());
 
+/** POST 涨跌竞猜发布登记（相对 API_BASE_URL），默认 coinDirectionGuess/publish */
+const COIN_DIRECTION_GUESS_PUBLISH_PATH = (
+  process.env.COIN_DIRECTION_GUESS_PUBLISH_PATH || 'coinDirectionGuess/publish'
+).trim().replace(/^\/+/, '');
+
 module.exports = {
   BOT_TOKEN,
   APP_URL,
@@ -120,4 +125,5 @@ module.exports = {
   TG_CHAT_REGISTER_POLL_MS,
   PREDICT_FORCE_PRIVATE,
   PREDICT_DEBUG,
+  COIN_DIRECTION_GUESS_PUBLISH_PATH,
 };

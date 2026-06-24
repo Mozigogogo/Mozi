@@ -1815,6 +1815,117 @@ async function postTgChatRemove({ apiBaseUrl, telegramId, groupId, timeoutMs = 1
   }
 }
 
+// --- POST /coinDirectionGuess/publish（涨跌竞猜发布登记）-----------------------
+
+/**
+ * @param {object | null} json
+ * @returns {boolean}
+ */
+function isCoinDirectionGuessPublishOk(json) {
+  if (!json || typeof json !== 'object') return false;
+  if (json.success === false) return false;
+  const code = json.code;
+  return code === undefined || code === 0 || code === 200;
+}
+
+/**
+ * POST /coinDirectionGuess/publish
+ * @param {{
+ *   apiBaseUrl: string;
+ *   auth?: string;
+ *   appUrl?: string;
+ *   groupId: number;
+ *   symbol: string;
+ *   duration: string;
+ *   title: string;
+ *   path?: string;
+ *   timeoutMs?: number;
+ * }} opts
+ * @returns {Promise<{ ok: boolean; status: number; json: object | null; text: string; errorMessage: string | null }>}
+ */
+async function postCoinDirectionGuessPublish({
+  apiBaseUrl,
+  auth = '',
+  appUrl = '',
+  groupId,
+  symbol,
+  duration,
+  title,
+  path = 'coinDirectionGuess/publish',
+  timeoutMs = 15000,
+}) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const rel = String(path || 'coinDirectionGuess/publish').trim().replace(/^\/+/, '');
+  const url = `${base}/${rel}`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    'content-type': 'application/json',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    'user-agent': DEFAULT_UA,
+  };
+  const rawAuth = String(auth || '').trim().replace(/^Bearer\s+/i, '');
+  if (rawAuth) {
+    headers.authentication = rawAuth;
+  }
+  if (app) {
+    headers.referer = `${app}/`;
+  }
+  const body = {
+    groupId: Number(groupId),
+    symbol: String(symbol || '').trim().toUpperCase(),
+    duration: String(duration || '').trim(),
+    title: String(title || '').trim(),
+  };
+  apiDebug('POST /coinDirectionGuess/publish ←', {
+    url,
+    groupId: body.groupId,
+    symbol: body.symbol,
+    duration: body.duration,
+    titlePreview: body.title.slice(0, 80),
+    hasAuthenticationHeader: Boolean(rawAuth),
+  });
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      signal: ctrl.signal,
+    });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const bizOk = isCoinDirectionGuessPublishOk(json);
+    const out = {
+      ok: res.ok && bizOk,
+      status: res.status,
+      json,
+      text,
+      errorMessage: parseApiErrorMessage(json),
+    };
+    apiDebug('POST /coinDirectionGuess/publish →', {
+      groupId: body.groupId,
+      symbol: body.symbol,
+      duration: body.duration,
+      httpStatus: res.status,
+      ok: out.ok,
+      jsonCode: json && typeof json === 'object' ? json.code : null,
+      errorMessage: out.errorMessage,
+      bodyPreview: text.slice(0, 500),
+    });
+    return out;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 module.exports = {
   fetchDetailHeader,
   fetchSearchLastPriceChange,
@@ -1833,6 +1944,7 @@ module.exports = {
   getGroupReferrer,
   parseGroupReferrerGetResult,
   postGroupReferrerBind,
+  postCoinDirectionGuessPublish,
   requestAgentStream,
   requestChatStream,
   requestBigorderStream,

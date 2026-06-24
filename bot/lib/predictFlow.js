@@ -2,11 +2,13 @@
  * /predict 多步 UI：选币 → 确认文案 → 发布投票
  */
 
-const { fetchDetailHeader, fetchSearchLastPriceChange } = require('./apis');
+const { fetchDetailHeader, fetchSearchLastPriceChange, postCoinDirectionGuessPublish } = require('./apis');
 const { SYMBOL_WHITELIST } = require('./symbolIntent');
 const { escapeHtml } = require('./telegramHtml');
 const { buildPredictPrivateUrl } = require('./predictSymbol');
 const { predictDebug, predictLog } = require('./predictDebug');
+const { ensureTgUserToken } = require('./tgUserTokenCache');
+const { buildTelegramLoginOpts } = require('./datainfoPoints');
 const {
   savePredictSession,
   getPredictSession,
@@ -18,6 +20,55 @@ const {
 const QUICK_SYMBOLS = ['BTC', 'ETH', 'SOL'];
 const DEFAULT_HOURS = 24;
 const SYMBOL_INPUT_RE = /^[A-Z0-9]{1,16}$/;
+
+/** 后端 duration 枚举，如 24 小时 → H24 */
+function formatPredictDuration(hours) {
+  const h = Math.max(1, Math.min(168, Number(hours) || DEFAULT_HOURS));
+  return `H${h}`;
+}
+
+async function registerCoinDirectionGuessPublish(ctx, config, { publishChatId, sym, hours, title }) {
+  const uid = ctx.from?.id;
+  if (uid == null || publishChatId == null) return;
+
+  let auth = '';
+  try {
+    auth = await ensureTgUserToken(config, uid, buildTelegramLoginOpts(ctx.from));
+  } catch (err) {
+    predictLog('publish.api.auth_fail', { uid, message: err?.message || String(err) });
+  }
+  if (!auth) {
+    auth = String(config.MOZI_DETAIL_AUTH || '').trim();
+  }
+
+  try {
+    const result = await postCoinDirectionGuessPublish({
+      apiBaseUrl: config.API_BASE_URL,
+      appUrl: config.APP_URL,
+      auth,
+      path: config.COIN_DIRECTION_GUESS_PUBLISH_PATH,
+      groupId: publishChatId,
+      symbol: sym,
+      duration: formatPredictDuration(hours),
+      title,
+    });
+    predictLog('publish.api', {
+      uid,
+      groupId: publishChatId,
+      symbol: sym,
+      duration: formatPredictDuration(hours),
+      ok: result.ok,
+      status: result.status,
+      errorMessage: result.errorMessage ?? null,
+    });
+    if (!result.ok) {
+      console.warn('[predict] coinDirectionGuess/publish:', result.errorMessage || result.text?.slice(0, 200));
+    }
+  } catch (err) {
+    predictLog('publish.api.fail', { uid, message: err?.message || String(err) });
+    console.warn('[predict] coinDirectionGuess/publish:', err?.message || err);
+  }
+}
 
 function isGroupChat(ctx) {
   const t = ctx.chat?.type;
@@ -677,6 +728,13 @@ async function publishPredict(ctx, config, getTexts) {
     await replyOrEdit(ctx, session, texts.predictPublishFailed, { parse_mode: 'HTML' });
     return;
   }
+
+  await registerCoinDirectionGuessPublish(ctx, config, {
+    publishChatId,
+    sym,
+    hours,
+    title: pollQuestion,
+  });
 
   clearPredictSession(uid);
 
