@@ -2,7 +2,7 @@
  * /predict 多步 UI：选币 → 确认文案 → 发布投票
  */
 
-const { fetchDetailHeader, fetchSearchLastPriceChange, postCoinDirectionGuessPublish } = require('./apis');
+const { fetchDetailHeader, fetchSearchLastPriceChange, postCoinDirectionGuessPublish, postCoinDirectionGuessBindMessage, parseCoinDirectionGuessNo } = require('./apis');
 const { SYMBOL_WHITELIST } = require('./symbolIntent');
 const { escapeHtml } = require('./telegramHtml');
 const { buildPredictPrivateUrl } = require('./predictSymbol');
@@ -67,6 +67,7 @@ async function registerCoinDirectionGuessPublish(ctx, config, { publishChatId, s
       duration: formatPredictDuration(hours),
       ok: result.ok,
       status: result.status,
+      guessNo: result.guessNo ?? parseCoinDirectionGuessNo(result.json) ?? null,
       errorMessage: result.errorMessage ?? null,
     });
     if (!result.ok) {
@@ -76,6 +77,64 @@ async function registerCoinDirectionGuessPublish(ctx, config, { publishChatId, s
   } catch (err) {
     predictLog('publish.api.fail', { uid, message: err?.message || String(err) });
     console.warn('[predict] coinDirectionGuess/publish:', err?.message || err);
+    return {
+      ok: false,
+      status: 0,
+      json: null,
+      text: '',
+      errorMessage: err?.message || String(err),
+    };
+  }
+}
+
+async function bindCoinDirectionGuessMessage(ctx, config, { guessNo, tgMessageId }) {
+  const uid = ctx.from?.id;
+  const guess = String(guessNo || '').trim();
+  const messageId = Math.floor(Number(tgMessageId));
+  if (!guess || !Number.isFinite(messageId) || messageId <= 0) {
+    return {
+      ok: false,
+      status: 0,
+      json: null,
+      text: '',
+      errorMessage: 'missing guessNo or tgMessageId',
+    };
+  }
+
+  let auth = '';
+  try {
+    auth = await ensureTgUserToken(config, uid, buildTelegramLoginOpts(ctx.from));
+  } catch (err) {
+    predictLog('bind.api.auth_fail', { uid, message: err?.message || String(err) });
+  }
+  if (!auth) {
+    auth = String(config.MOZI_DETAIL_AUTH || '').trim();
+  }
+
+  try {
+    const result = await postCoinDirectionGuessBindMessage({
+      apiBaseUrl: config.API_BASE_URL,
+      appUrl: config.APP_URL,
+      auth,
+      path: config.COIN_DIRECTION_GUESS_BIND_MESSAGE_PATH,
+      guessNo: guess,
+      tgMessageId: messageId,
+    });
+    predictLog('bind.api', {
+      uid,
+      guessNo: guess,
+      tgMessageId: messageId,
+      ok: result.ok,
+      status: result.status,
+      errorMessage: result.errorMessage ?? null,
+    });
+    if (!result.ok) {
+      console.warn('[predict] coinDirectionGuess/bindMessage:', result.errorMessage || result.text?.slice(0, 200));
+    }
+    return result;
+  } catch (err) {
+    predictLog('bind.api.fail', { uid, guessNo: guess, tgMessageId: messageId, message: err?.message || String(err) });
+    console.warn('[predict] coinDirectionGuess/bindMessage:', err?.message || err);
     return {
       ok: false,
       status: 0,
@@ -748,23 +807,39 @@ async function publishPredict(ctx, config, getTexts) {
     return;
   }
 
+  const guessNo = apiResult.guessNo ?? parseCoinDirectionGuessNo(apiResult.json);
+  predictLog('publish.guess_created', {
+    uid,
+    publishChatId,
+    guessNo: guessNo ?? null,
+  });
+
   let headerMsg;
   let pollMsg;
   try {
     headerMsg = await ctx.telegram.sendMessage(publishChatId, headerHtml, { parse_mode: 'HTML' });
+    const headerMessageId = headerMsg?.message_id ?? null;
     predictLog('publish.header_sent', {
       uid,
       publishChatId,
-      messageId: headerMsg?.message_id ?? null,
+      messageId: headerMessageId,
     });
     pollMsg = await ctx.telegram.sendPoll(publishChatId, pollQuestion, pollOptions, {
       is_anonymous: false,
     });
+    const pollMessageId = pollMsg?.message_id ?? null;
     predictLog('publish.poll_sent', {
       uid,
       publishChatId,
-      messageId: pollMsg?.message_id ?? null,
+      messageId: pollMessageId,
       pollId: pollMsg?.poll?.id ?? null,
+    });
+    predictLog('publish.target_group_message_ids', {
+      uid,
+      publishChatId,
+      headerMessageId,
+      pollMessageId,
+      bindTgMessageId: pollMessageId,
     });
   } catch (err) {
     const description = err?.response?.description || err?.message || String(err);
@@ -780,6 +855,19 @@ async function publishPredict(ctx, config, getTexts) {
     return;
   }
 
+  const tgMessageId = pollMsg?.message_id ?? null;
+  if (guessNo && tgMessageId != null) {
+    await bindCoinDirectionGuessMessage(ctx, config, { guessNo, tgMessageId });
+  } else {
+    predictLog('bind.api.skip', {
+      uid,
+      publishChatId,
+      guessNo: guessNo ?? null,
+      tgMessageId,
+      reason: !guessNo ? 'missing_guessNo' : 'missing_tgMessageId',
+    });
+  }
+
   clearPredictSession(uid);
 
   predictLog('publish.ok', {
@@ -787,8 +875,10 @@ async function publishPredict(ctx, config, getTexts) {
     publishChatId,
     flowChatId: session.flowChatId,
     publishedToGroup: publishChatId !== session.flowChatId,
+    guessNo: guessNo ?? null,
     headerMessageId: headerMsg?.message_id ?? null,
     pollMessageId: pollMsg?.message_id ?? null,
+    bindTgMessageId: tgMessageId,
     confirmMessageId: session.confirmMessageId ?? null,
   });
 

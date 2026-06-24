@@ -102,6 +102,11 @@ const COIN_DIRECTION_GUESS_PUBLISH_PATH = (
   process.env.COIN_DIRECTION_GUESS_PUBLISH_PATH || 'coinDirectionGuess/publish'
 ).trim().replace(/^\/+/, '');
 
+/** POST 涨跌竞猜绑定 TG 消息（相对 API_BASE_URL），默认 coinDirectionGuess/bindMessage */
+const COIN_DIRECTION_GUESS_BIND_MESSAGE_PATH = (
+  process.env.COIN_DIRECTION_GUESS_BIND_MESSAGE_PATH || 'coinDirectionGuess/bindMessage'
+).trim().replace(/^\/+/, '');
+
 module.exports = {
   BOT_TOKEN,
   APP_URL,
@@ -126,4 +131,5 @@ module.exports = {
   PREDICT_FORCE_PRIVATE,
   PREDICT_DEBUG,
   COIN_DIRECTION_GUESS_PUBLISH_PATH,
+  COIN_DIRECTION_GUESS_BIND_MESSAGE_PATH,
 };

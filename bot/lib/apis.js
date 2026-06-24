@@ -1829,6 +1829,30 @@ function isCoinDirectionGuessPublishOk(json) {
 }
 
 /**
+ * @param {object | null} json
+ * @returns {string | null}
+ */
+function parseCoinDirectionGuessNo(json) {
+  if (!json || typeof json !== 'object') return null;
+  const direct = json.guessNo ?? json.guess_no;
+  if (direct != null && String(direct).trim()) return String(direct).trim();
+  const data = json.data;
+  if (typeof data === 'string' && data.trim()) return data.trim();
+  if (data && typeof data === 'object') {
+    const nested = data.guessNo ?? data.guess_no;
+    if (nested != null && String(nested).trim()) return String(nested).trim();
+  }
+  return null;
+}
+
+function isCoinDirectionGuessBindMessageOk(json) {
+  if (!json || typeof json !== 'object') return false;
+  if (json.success === false) return false;
+  const code = json.code;
+  return code === undefined || code === 0 || code === 200;
+}
+
+/**
  * POST /coinDirectionGuess/publish
  * @param {{
  *   apiBaseUrl: string;
@@ -1903,6 +1927,99 @@ async function postCoinDirectionGuessPublish({
       json = null;
     }
     const bizOk = isCoinDirectionGuessPublishOk(json);
+    const guessNo = parseCoinDirectionGuessNo(json);
+    const out = {
+      ok: res.status === 200 && bizOk,
+      status: res.status,
+      json,
+      text,
+      guessNo,
+      errorMessage: parseApiErrorMessage(json),
+    };
+    apiDebug('POST /coinDirectionGuess/publish →', {
+      groupId: body.groupId,
+      symbol: body.symbol,
+      duration: body.duration,
+      httpStatus: res.status,
+      ok: out.ok,
+      guessNo,
+      jsonCode: json && typeof json === 'object' ? json.code : null,
+      errorMessage: out.errorMessage,
+      bodyPreview: text.slice(0, 500),
+    });
+    return out;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+/**
+ * POST /coinDirectionGuess/bindMessage
+ * @param {{
+ *   apiBaseUrl: string;
+ *   auth?: string;
+ *   appUrl?: string;
+ *   guessNo: string;
+ *   tgMessageId: number;
+ *   path?: string;
+ *   timeoutMs?: number;
+ * }} opts
+ * @returns {Promise<{ ok: boolean; status: number; json: object | null; text: string; errorMessage: string | null }>}
+ */
+async function postCoinDirectionGuessBindMessage({
+  apiBaseUrl,
+  auth = '',
+  appUrl = '',
+  guessNo,
+  tgMessageId,
+  path = 'coinDirectionGuess/bindMessage',
+  timeoutMs = 15000,
+}) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const rel = String(path || 'coinDirectionGuess/bindMessage').trim().replace(/^\/+/, '');
+  const url = `${base}/${rel}`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    'content-type': 'application/json',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    'user-agent': DEFAULT_UA,
+  };
+  const rawAuth = String(auth || '').trim().replace(/^Bearer\s+/i, '');
+  if (rawAuth) {
+    headers.authentication = rawAuth;
+  }
+  if (app) {
+    headers.referer = `${app}/`;
+  }
+  const body = {
+    guessNo: String(guessNo || '').trim(),
+    tgMessageId: Math.floor(Number(tgMessageId)),
+  };
+  apiDebug('POST /coinDirectionGuess/bindMessage ←', {
+    url,
+    guessNo: body.guessNo,
+    tgMessageId: body.tgMessageId,
+    hasAuthenticationHeader: Boolean(rawAuth),
+  });
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      signal: ctrl.signal,
+    });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const bizOk = isCoinDirectionGuessBindMessageOk(json);
     const out = {
       ok: res.status === 200 && bizOk,
       status: res.status,
@@ -1910,10 +2027,9 @@ async function postCoinDirectionGuessPublish({
       text,
       errorMessage: parseApiErrorMessage(json),
     };
-    apiDebug('POST /coinDirectionGuess/publish →', {
-      groupId: body.groupId,
-      symbol: body.symbol,
-      duration: body.duration,
+    apiDebug('POST /coinDirectionGuess/bindMessage →', {
+      guessNo: body.guessNo,
+      tgMessageId: body.tgMessageId,
       httpStatus: res.status,
       ok: out.ok,
       jsonCode: json && typeof json === 'object' ? json.code : null,
@@ -1945,6 +2061,8 @@ module.exports = {
   parseGroupReferrerGetResult,
   postGroupReferrerBind,
   postCoinDirectionGuessPublish,
+  postCoinDirectionGuessBindMessage,
+  parseCoinDirectionGuessNo,
   requestAgentStream,
   requestChatStream,
   requestBigorderStream,
