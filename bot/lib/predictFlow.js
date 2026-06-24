@@ -29,7 +29,15 @@ function formatPredictDuration(hours) {
 
 async function registerCoinDirectionGuessPublish(ctx, config, { publishChatId, sym, hours, title }) {
   const uid = ctx.from?.id;
-  if (uid == null || publishChatId == null) return;
+  if (uid == null || publishChatId == null) {
+    return {
+      ok: false,
+      status: 0,
+      json: null,
+      text: '',
+      errorMessage: 'missing uid or publishChatId',
+    };
+  }
 
   let auth = '';
   try {
@@ -64,9 +72,17 @@ async function registerCoinDirectionGuessPublish(ctx, config, { publishChatId, s
     if (!result.ok) {
       console.warn('[predict] coinDirectionGuess/publish:', result.errorMessage || result.text?.slice(0, 200));
     }
+    return result;
   } catch (err) {
     predictLog('publish.api.fail', { uid, message: err?.message || String(err) });
     console.warn('[predict] coinDirectionGuess/publish:', err?.message || err);
+    return {
+      ok: false,
+      status: 0,
+      json: null,
+      text: '',
+      errorMessage: err?.message || String(err),
+    };
   }
 }
 
@@ -117,6 +133,32 @@ async function dismissLegacyCustomHint(ctx, session) {
   await ctx.telegram.deleteMessage(chatId, messageId).catch(() => {});
   const uid = session.userId ?? ctx.from?.id;
   if (uid != null) patchPredictSession(uid, { customHintMessageId: null });
+}
+
+/** 点击 Step 1 币种按钮后删除选币卡片（自定义文本输入路径保留 Step 1） */
+async function dismissStep1PickerMessage(ctx, session) {
+  const chatId = resolvePredictChatId(ctx, session);
+  if (chatId == null) return;
+
+  const messageIds = new Set();
+  if (ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message) {
+    messageIds.add(ctx.callbackQuery.message.message_id);
+  }
+  if (session?.pickerMessageId != null) {
+    messageIds.add(session.pickerMessageId);
+  }
+  if (session?.customHintMessageId != null) {
+    messageIds.add(session.customHintMessageId);
+  }
+
+  for (const messageId of messageIds) {
+    await ctx.telegram.deleteMessage(chatId, messageId).catch(() => {});
+  }
+
+  const uid = session?.userId ?? ctx.from?.id;
+  if (uid != null) {
+    patchPredictSession(uid, { pickerMessageId: null, customHintMessageId: null });
+  }
 }
 
 function trimZeros(str) {
@@ -259,7 +301,6 @@ function buildConfirmHtml(texts, symbol, priceStr, hours) {
 async function showConfirmMessage(ctx, uid, session, texts, sym, priceStr, hours) {
   const html = buildConfirmHtml(texts, sym, priceStr, hours);
   const keyboard = buildConfirmKeyboard(texts);
-  const chatId = resolvePredictChatId(ctx, session);
   const fromTextInput = !ctx.callbackQuery;
   let confirmMessageId = null;
 
@@ -267,18 +308,9 @@ async function showConfirmMessage(ctx, uid, session, texts, sym, priceStr, hours
   if (fromTextInput) {
     const msg = await ctx.reply(html, { parse_mode: 'HTML', reply_markup: keyboard });
     confirmMessageId = msg?.message_id ?? null;
-  } else if (ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message) {
-    confirmMessageId = ctx.callbackQuery.message.message_id;
-    try {
-      await tgEditMessageText(ctx, chatId, confirmMessageId, html, {
-        parse_mode: 'HTML',
-        reply_markup: keyboard,
-      });
-    } catch {
-      const msg = await ctx.reply(html, { parse_mode: 'HTML', reply_markup: keyboard });
-      confirmMessageId = msg?.message_id ?? confirmMessageId;
-    }
   } else {
+    // 点击 Step 1 币种按钮：删除 Step 1，再发确认消息
+    await dismissStep1PickerMessage(ctx, session);
     const msg = await ctx.reply(html, { parse_mode: 'HTML', reply_markup: keyboard });
     confirmMessageId = msg?.message_id ?? null;
   }
@@ -697,6 +729,25 @@ async function publishPredict(ctx, config, getTexts) {
     : `Will ${sym} go up or down in the next ${hours} hours?`;
   const pollOptions = isZh ? ['涨', '跌'] : ['Up', 'Down'];
 
+  const apiResult = await registerCoinDirectionGuessPublish(ctx, config, {
+    publishChatId,
+    sym,
+    hours,
+    title: pollQuestion,
+  });
+
+  if (apiResult.status !== 200 || !apiResult.ok) {
+    predictLog('publish.api_gate_fail', {
+      uid,
+      publishChatId,
+      status: apiResult.status,
+      ok: apiResult.ok,
+      errorMessage: apiResult.errorMessage ?? null,
+    });
+    await replyOrEdit(ctx, session, texts.predictPublishFailed, { parse_mode: 'HTML' });
+    return;
+  }
+
   let headerMsg;
   let pollMsg;
   try {
@@ -728,13 +779,6 @@ async function publishPredict(ctx, config, getTexts) {
     await replyOrEdit(ctx, session, texts.predictPublishFailed, { parse_mode: 'HTML' });
     return;
   }
-
-  await registerCoinDirectionGuessPublish(ctx, config, {
-    publishChatId,
-    sym,
-    hours,
-    title: pollQuestion,
-  });
 
   clearPredictSession(uid);
 

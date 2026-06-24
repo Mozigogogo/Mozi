@@ -1904,7 +1904,7 @@ async function postCoinDirectionGuessPublish({
     }
     const bizOk = isCoinDirectionGuessPublishOk(json);
     const out = {
-      ok: res.ok && bizOk,
+      ok: res.status === 200 && bizOk,
       status: res.status,
       json,
       text,
