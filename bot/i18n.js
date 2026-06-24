@@ -88,7 +88,9 @@ const i18n = {
     predictPublishedBtn: '已发布',
     predictCustomInputPrompt:
       '🔍 <b>自定义币种</b>\n\n请直接输入币种符号（如 BTC、ZETA），将通过行情搜索校验：',
-    predictCustomInputHint: '请直接发送币种符号（如 BTC、ZETA）',
+    predictCustomInputHint: '👇 在下方输入框发送币种符号',
+    predictCustomInputPlaceholder: 'BTC',
+    predictCustomInputFailed: '切换自定义输入失败，请重试',
     predictCustomInputInvalid: '格式无效，请输入 1–16 位字母或数字（如 <code>BTC</code>）',
     predictInvalidSymbol: '该币种不在支持列表中，请换一个已收录的符号',
     predictSymbolNotSupported: (sym) =>
@@ -303,7 +305,9 @@ const i18n = {
     predictPublishedBtn: 'Published',
     predictCustomInputPrompt:
       '🔍 <b>Custom symbol</b>\n\nType a ticker (e.g. BTC, ZETA). We will look it up via market search:',
-    predictCustomInputHint: 'Send the symbol directly (e.g. BTC, ZETA)',
+    predictCustomInputHint: '👇 Type the symbol in the box below',
+    predictCustomInputPlaceholder: 'BTC',
+    predictCustomInputFailed: 'Could not open custom input, please try again',
     predictCustomInputInvalid: 'Invalid format. Use 1–16 letters/digits (e.g. <code>BTC</code>).',
     predictInvalidSymbol: 'Symbol not in the supported list. Try another listed ticker.',
     predictSymbolNotSupported: (sym) =>

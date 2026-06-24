@@ -40,6 +40,51 @@ function answerPredictCbQuery(ctx, text, options = {}) {
   return ctx.answerCbQuery(msg).catch(() => {});
 }
 
+/** Telegraf 4：editMessageText(chatId, messageId, inlineMessageId, text, extra) */
+function resolvePredictChatId(ctx, session) {
+  return (
+    ctx.callbackQuery?.message?.chat?.id ??
+    ctx.chat?.id ??
+    session?.flowChatId ??
+    null
+  );
+}
+
+async function tgEditMessageText(ctx, chatId, messageId, html, extra = {}) {
+  return ctx.telegram.editMessageText(chatId, messageId, undefined, html, extra);
+}
+
+async function tgEditMessageReplyMarkup(ctx, chatId, messageId, replyMarkup) {
+  return ctx.telegram.editMessageReplyMarkup(chatId, messageId, undefined, replyMarkup);
+}
+
+async function dismissCustomForceReplyHint(ctx, session) {
+  const chatId = resolvePredictChatId(ctx, session);
+  const messageId = session?.customHintMessageId;
+  if (chatId == null || messageId == null) return;
+  await ctx.telegram.deleteMessage(chatId, messageId).catch(() => {});
+  const uid = session.userId ?? ctx.from?.id;
+  if (uid != null) patchPredictSession(uid, { customHintMessageId: null });
+}
+
+async function sendCustomForceReplyHint(ctx, texts, session) {
+  const chatId = resolvePredictChatId(ctx, session);
+  if (chatId == null) return;
+  await dismissCustomForceReplyHint(ctx, session);
+  const msg = await ctx.telegram.sendMessage(chatId, texts.predictCustomInputHint, {
+    reply_markup: {
+      force_reply: true,
+      selective: true,
+      input_field_placeholder: texts.predictCustomInputPlaceholder,
+    },
+  });
+  const uid = session.userId ?? ctx.from?.id;
+  if (uid != null && msg?.message_id != null) {
+    patchPredictSession(uid, { customHintMessageId: msg.message_id });
+  }
+  predictLog('custom.input.force_reply', { uid, chatId, messageId: msg?.message_id ?? null });
+}
+
 function trimZeros(str) {
   return String(str).replace(/\.?0+$/, '');
 }
@@ -117,7 +162,7 @@ function buildCustomInputKeyboard(texts, draft = '') {
 }
 
 async function editPickerMessage(ctx, session, html, keyboard) {
-  const chatId = session.flowChatId ?? ctx.chat?.id;
+  const chatId = resolvePredictChatId(ctx, session);
   const clickedMessageId =
     ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message
       ? ctx.callbackQuery.message.message_id
@@ -143,9 +188,7 @@ async function editPickerMessage(ctx, session, html, keyboard) {
   }
 
   try {
-    await ctx.telegram.editMessageText(html, {
-      chat_id: chatId,
-      message_id: messageId,
+    await tgEditMessageText(ctx, chatId, messageId, html, {
       parse_mode: 'HTML',
       reply_markup: keyboard,
     });
@@ -155,11 +198,7 @@ async function editPickerMessage(ctx, session, html, keyboard) {
     const reason = err?.response?.description || err?.message || String(err);
     predictLog('editPickerMessage.retry_markup', { chatId, messageId, reason });
     try {
-      await ctx.telegram.editMessageReplyMarkup({
-        chat_id: chatId,
-        message_id: messageId,
-        reply_markup: keyboard,
-      });
+      await tgEditMessageReplyMarkup(ctx, chatId, messageId, keyboard);
       predictLog('editPickerMessage.ok', { chatId, messageId, mode: 'reply_markup' });
       return true;
     } catch (err2) {
@@ -182,11 +221,7 @@ async function refreshCustomInputKeyboard(ctx, uid, getTexts) {
     return;
   }
   try {
-    await ctx.telegram.editMessageReplyMarkup({
-      chat_id: chatId,
-      message_id: messageId,
-      reply_markup: keyboard,
-    });
+    await ctx.telegram.editMessageReplyMarkup(chatId, messageId, undefined, keyboard);
     predictLog('custom.input.refresh.ok', { uid, messageId });
   } catch (err) {
     predictLog('custom.input.refresh.fail', {
@@ -249,17 +284,16 @@ function buildConfirmHtml(texts, symbol, priceStr, hours) {
 }
 
 async function showConfirmMessage(ctx, uid, session, texts, sym, priceStr, hours) {
+  await dismissCustomForceReplyHint(ctx, session);
   const html = buildConfirmHtml(texts, sym, priceStr, hours);
   const keyboard = buildConfirmKeyboard(texts);
-  const chatId = session.flowChatId;
+  const chatId = resolvePredictChatId(ctx, session);
   let confirmMessageId = null;
 
   if (ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message) {
     confirmMessageId = ctx.callbackQuery.message.message_id;
     try {
-      await ctx.telegram.editMessageText(html, {
-        chat_id: chatId,
-        message_id: confirmMessageId,
+      await tgEditMessageText(ctx, chatId, confirmMessageId, html, {
         parse_mode: 'HTML',
         reply_markup: keyboard,
       });
@@ -278,7 +312,7 @@ async function showConfirmMessage(ctx, uid, session, texts, sym, priceStr, hours
 }
 
 async function markConfirmPublished(ctx, session, texts, sym, priceStr, hours) {
-  const chatId = session.flowChatId ?? ctx.chat?.id;
+  const chatId = resolvePredictChatId(ctx, session);
   let messageId = null;
   if (ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message) {
     messageId = ctx.callbackQuery.message.message_id;
@@ -296,11 +330,7 @@ async function markConfirmPublished(ctx, session, texts, sym, priceStr, hours) {
   const confirmHtml = buildConfirmHtml(texts, sym, priceStr, hours);
 
   try {
-    await ctx.telegram.editMessageReplyMarkup({
-      chat_id: chatId,
-      message_id: messageId,
-      reply_markup: publishedKeyboard,
-    });
+    await tgEditMessageReplyMarkup(ctx, chatId, messageId, publishedKeyboard);
     predictLog('publish.mark_published.ok', { chatId, messageId, mode: 'reply_markup' });
     return;
   } catch (err1) {
@@ -310,9 +340,7 @@ async function markConfirmPublished(ctx, session, texts, sym, priceStr, hours) {
   }
 
   try {
-    await ctx.telegram.editMessageText(confirmHtml, {
-      chat_id: chatId,
-      message_id: messageId,
+    await tgEditMessageText(ctx, chatId, messageId, confirmHtml, {
       parse_mode: 'HTML',
       reply_markup: publishedKeyboard,
     });
@@ -622,13 +650,9 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol, options = {
  */
 async function replyOrEdit(ctx, session, text, extra = {}) {
   if (ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message) {
-    await ctx.telegram
-      .editMessageText(text, {
-        chat_id: session.flowChatId,
-        message_id: ctx.callbackQuery.message.message_id,
-        ...extra,
-      })
-      .catch(() => ctx.reply(text, extra));
+    const chatId = resolvePredictChatId(ctx, session);
+    const messageId = ctx.callbackQuery.message.message_id;
+    await tgEditMessageText(ctx, chatId, messageId, text, extra).catch(() => ctx.reply(text, extra));
   } else {
     await ctx.reply(text, extra);
   }
@@ -766,6 +790,11 @@ async function cancelPredict(ctx, getTexts) {
   if (session?.pickerMessageId != null) {
     messageIds.add(session.pickerMessageId);
   }
+  if (session?.customHintMessageId != null) {
+    messageIds.add(session.customHintMessageId);
+  }
+
+  await dismissCustomForceReplyHint(ctx, session);
 
   clearPredictSession(uid);
 
@@ -809,13 +838,8 @@ async function showCustomSymbolInput(ctx, getTexts) {
 
   const texts = getTexts(ctx.from?.language_code || 'en');
 
-  if (session.step === 'pick_custom_input') {
-    predictLog('custom.input.already_open', { uid, clickedMessageId });
-    await ctx.answerCbQuery().catch(() => {});
-    return;
-  }
-
-  if (session.step !== 'pick_symbol') {
+  const retrying = session.step === 'pick_custom_input';
+  if (!retrying && session.step !== 'pick_symbol') {
     predictLog('custom.input.skip_wrong_step', {
       uid,
       step: session.step,
@@ -825,31 +849,46 @@ async function showCustomSymbolInput(ctx, getTexts) {
     return;
   }
 
+  if (retrying) {
+    predictLog('custom.input.retry', { uid, clickedMessageId });
+  }
+
   const pickerMessageId = clickedMessageId ?? session.pickerMessageId;
 
   patchPredictSession(uid, {
     step: 'pick_custom_input',
-    customSymbolDraft: '',
+    customSymbolDraft: retrying ? session.customSymbolDraft ?? '' : '',
     pickerMessageId,
   });
 
   await ctx.answerCbQuery().catch(() => {});
 
   const html = texts.predictStep1Title;
-  const keyboard = buildCustomInputKeyboard(texts, '');
+  const keyboard = buildCustomInputKeyboard(texts, retrying ? session.customSymbolDraft ?? '' : '');
   const updated = getPredictSession(uid);
-  if (updated) {
-    const ok = await editPickerMessage(ctx, updated, html, keyboard);
-    if (ok && pickerMessageId != null) {
-      patchPredictSession(uid, { pickerMessageId });
-    }
+  if (!updated) return;
+
+  const ok = await editPickerMessage(ctx, updated, html, keyboard);
+  if (ok) {
+    patchPredictSession(uid, { pickerMessageId });
+    await sendCustomForceReplyHint(ctx, texts, updated);
     predictLog('custom.input.show', {
       uid,
       flowChatId: updated.flowChatId,
       pickerMessageId,
-      editOk: ok,
+      editOk: true,
     });
+    return;
   }
+
+  patchPredictSession(uid, { step: 'pick_symbol' });
+  predictLog('custom.input.show', {
+    uid,
+    flowChatId: updated.flowChatId,
+    pickerMessageId,
+    editOk: false,
+  });
+  await answerPredictCbQuery(ctx, texts.predictCustomInputFailed);
 }
 
 /**
@@ -866,6 +905,7 @@ async function cancelCustomSymbolInput(ctx, getTexts) {
   patchPredictSession(uid, { step: 'pick_symbol', customSymbolDraft: '' });
   const texts = getTexts(ctx.from?.language_code || 'en');
   await ctx.answerCbQuery().catch(() => {});
+  await dismissCustomForceReplyHint(ctx, session);
 
   const html = texts.predictStep1Title;
   const keyboard = buildSymbolPickerKeyboard(texts);
