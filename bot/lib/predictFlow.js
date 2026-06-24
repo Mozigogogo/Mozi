@@ -194,6 +194,12 @@ function buildConfirmKeyboard(texts) {
   };
 }
 
+function buildPublishedKeyboard(texts) {
+  return {
+    inline_keyboard: [[{ text: texts.predictPublishedBtn, callback_data: 'p:published' }]],
+  };
+}
+
 function buildConfirmHtml(texts, symbol, priceStr, hours) {
   const sym = escapeHtml(symbol);
   const price = escapeHtml(priceStr);
@@ -628,29 +634,42 @@ async function publishPredict(ctx, config, getTexts) {
 
   clearPredictSession(uid);
 
-  const doneText =
-    publishChatId !== session.flowChatId ? texts.predictPublishedToGroup : texts.predictPublished;
+  const confirmHtml = buildConfirmHtml(texts, sym, priceStr, hours);
+  const publishedKeyboard = buildPublishedKeyboard(texts);
 
   predictLog('publish.ok', {
     uid,
     publishChatId,
     flowChatId: session.flowChatId,
     publishedToGroup: publishChatId !== session.flowChatId,
-    doneTextPreview: doneText.slice(0, 40),
     headerMessageId: headerMsg?.message_id ?? null,
     pollMessageId: pollMsg?.message_id ?? null,
   });
 
-  if (ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message) {
+  const confirmMessageId =
+    ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message
+      ? ctx.callbackQuery.message.message_id
+      : null;
+
+  if (confirmMessageId != null && session.flowChatId != null) {
     await ctx.telegram
-      .editMessageText(doneText, {
+      .editMessageText(confirmHtml, {
         chat_id: session.flowChatId,
-        message_id: ctx.callbackQuery.message.message_id,
+        message_id: confirmMessageId,
         parse_mode: 'HTML',
+        reply_markup: publishedKeyboard,
       })
-      .catch(() => ctx.reply(doneText, { parse_mode: 'HTML' }));
-  } else {
-    await ctx.reply(doneText, { parse_mode: 'HTML' });
+      .catch(() => {});
+  }
+
+  if (
+    session.pickerMessageId != null &&
+    session.flowChatId != null &&
+    session.pickerMessageId !== confirmMessageId
+  ) {
+    await ctx.telegram
+      .deleteMessage(session.flowChatId, session.pickerMessageId)
+      .catch(() => {});
   }
 }
 

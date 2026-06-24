@@ -85,6 +85,7 @@ const i18n = {
     predictCancelBtn: '取消',
     predictBackBtn: '« 返回',
     predictConfirmBtn: '确认发布',
+    predictPublishedBtn: '已发布',
     predictCustomInputPrompt:
       '🔍 <b>自定义币种</b>\n\n请直接输入币种符号（如 BTC、ZETA），将通过行情搜索校验：',
     predictCustomInputHint: '请直接发送币种符号（如 BTC、ZETA）',
@@ -298,6 +299,7 @@ const i18n = {
     predictCancelBtn: 'Cancel',
     predictBackBtn: '« Back',
     predictConfirmBtn: 'Publish',
+    predictPublishedBtn: 'Published',
     predictCustomInputPrompt:
       '🔍 <b>Custom symbol</b>\n\nType a ticker (e.g. BTC, ZETA). We will look it up via market search:',
     predictCustomInputHint: 'Send the symbol directly (e.g. BTC, ZETA)',

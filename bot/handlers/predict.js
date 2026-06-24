@@ -71,14 +71,20 @@ function registerPredict(bot, config, { getTexts }) {
     const uid = ctx.from?.id;
     if (uid == null) return;
 
-    const session = getPredictSession(uid);
-    if (!session) {
-      predictLog('callback.no_session', { uid, data: String(ctx.callbackQuery?.data || '') });
+    const data = String(ctx.callbackQuery?.data || '');
+
+    if (data === 'p:published') {
       await ctx.answerCbQuery().catch(() => {});
       return;
     }
 
-    const data = String(ctx.callbackQuery?.data || '');
+    const session = getPredictSession(uid);
+    if (!session) {
+      predictLog('callback.no_session', { uid, data });
+      await ctx.answerCbQuery().catch(() => {});
+      return;
+    }
+
     predictDebug('callback', {
       uid,
       data,
