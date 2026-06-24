@@ -15,7 +15,6 @@ const {
   cancelPredict,
   showCustomSymbolInput,
   cancelCustomSymbolInput,
-  confirmCustomSymbolInput,
   handlePredictTextInput,
   backToSymbolPicker,
   answerPredictCbQuery,
@@ -128,10 +127,6 @@ function registerPredict(bot, config, { getTexts }) {
         step: session.step,
       });
     }
-    if (data === 'p:cst:f') {
-      await ctx.answerCbQuery().catch(() => {});
-      return;
-    }
     if (data === 'p:cancel') {
       await cancelPredict(ctx, getTexts);
       return;
@@ -146,10 +141,6 @@ function registerPredict(bot, config, { getTexts }) {
     }
     if (data === 'p:cst:x') {
       await cancelCustomSymbolInput(ctx, getTexts);
-      return;
-    }
-    if (data === 'p:cst:ok') {
-      await confirmCustomSymbolInput(ctx, config, getTexts);
       return;
     }
     if (data === 'p:ok') {
