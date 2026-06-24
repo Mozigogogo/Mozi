@@ -244,15 +244,15 @@ async function showConfirmMessage(ctx, uid, session, texts, sym, priceStr, hours
   const html = buildConfirmHtml(texts, sym, priceStr, hours);
   const keyboard = buildConfirmKeyboard(texts);
   const chatId = resolvePredictChatId(ctx, session);
+  const fromTextInput = !ctx.callbackQuery;
   let confirmMessageId = null;
 
-  if (ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message) {
+  // 文本输入（自定义币种）：保留 Step 1 卡片，确认页单独发一条新消息
+  if (fromTextInput) {
+    const msg = await ctx.reply(html, { parse_mode: 'HTML', reply_markup: keyboard });
+    confirmMessageId = msg?.message_id ?? null;
+  } else if (ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message) {
     confirmMessageId = ctx.callbackQuery.message.message_id;
-  } else if (session.pickerMessageId != null) {
-    confirmMessageId = session.pickerMessageId;
-  }
-
-  if (confirmMessageId != null && chatId != null) {
     try {
       await tgEditMessageText(ctx, chatId, confirmMessageId, html, {
         parse_mode: 'HTML',
