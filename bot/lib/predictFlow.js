@@ -58,13 +58,42 @@ async function tgEditMessageReplyMarkup(ctx, chatId, messageId, replyMarkup) {
   return ctx.telegram.editMessageReplyMarkup(chatId, messageId, undefined, replyMarkup);
 }
 
+async function clearForceReplyBar(telegram, chatId) {
+  if (chatId == null) return false;
+  const dismissTexts = ['\u3164', '\u2800', '.'];
+  for (const dismissText of dismissTexts) {
+    try {
+      const msg = await telegram.sendMessage(chatId, dismissText, {
+        reply_markup: { remove_keyboard: true },
+        disable_notification: true,
+      });
+      if (msg?.message_id != null) {
+        setTimeout(() => {
+          telegram.deleteMessage(chatId, msg.message_id).catch(() => {});
+        }, 500);
+      }
+      predictDebug('clearForceReplyBar.ok', { chatId, messageId: msg?.message_id });
+      return true;
+    } catch (err) {
+      predictDebug('clearForceReplyBar.retry', {
+        chatId,
+        reason: err?.response?.description || err?.message || String(err),
+      });
+    }
+  }
+  return false;
+}
+
 async function dismissCustomForceReplyHint(ctx, session) {
   const chatId = resolvePredictChatId(ctx, session);
   const messageId = session?.customHintMessageId;
-  if (chatId == null || messageId == null) return;
-  await ctx.telegram.deleteMessage(chatId, messageId).catch(() => {});
-  const uid = session.userId ?? ctx.from?.id;
-  if (uid != null) patchPredictSession(uid, { customHintMessageId: null });
+  if (chatId == null) return;
+  if (messageId != null) {
+    await ctx.telegram.deleteMessage(chatId, messageId).catch(() => {});
+    const uid = session.userId ?? ctx.from?.id;
+    if (uid != null) patchPredictSession(uid, { customHintMessageId: null });
+  }
+  await clearForceReplyBar(ctx.telegram, chatId);
 }
 
 async function sendCustomForceReplyHint(ctx, texts, session) {
@@ -236,28 +265,7 @@ async function refreshCustomInputKeyboard(ctx, uid, getTexts) {
 async function clearStaleForceReply(ctx) {
   const chatId = ctx.chat?.id;
   if (chatId == null || !isPrivateChat(ctx)) return;
-
-  const dismissTexts = ['\u3164', '\u2800', '.'];
-  for (const dismissText of dismissTexts) {
-    try {
-      const msg = await ctx.telegram.sendMessage(chatId, dismissText, {
-        reply_markup: { remove_keyboard: true },
-        disable_notification: true,
-      });
-      if (msg?.message_id != null) {
-        setTimeout(() => {
-          ctx.telegram.deleteMessage(chatId, msg.message_id).catch(() => {});
-        }, 500);
-      }
-      predictDebug('clearStaleForceReply.ok', { chatId, messageId: msg?.message_id });
-      return;
-    } catch (err) {
-      predictDebug('clearStaleForceReply.retry', {
-        chatId,
-        reason: err?.response?.description || err?.message || String(err),
-      });
-    }
-  }
+  await clearForceReplyBar(ctx.telegram, chatId);
 }
 
 function buildConfirmKeyboard(texts) {
@@ -958,6 +966,7 @@ async function handleCustomSymbolText(ctx, config, getTexts, rawText) {
   patchPredictSession(uid, { customSymbolDraft: draft });
   await refreshCustomInputKeyboard(ctx, uid, getTexts);
   await ctx.deleteMessage().catch(() => {});
+  await dismissCustomForceReplyHint(ctx, session);
   predictDebug('custom.input.draft', { uid, draft });
   return true;
 }
