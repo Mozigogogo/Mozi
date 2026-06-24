@@ -18,6 +18,7 @@ const {
   confirmCustomSymbolInput,
   handlePredictTextInput,
   backToSymbolPicker,
+  answerPredictCbQuery,
 } = require('../lib/predictFlow');
 
 /**
@@ -80,11 +81,35 @@ function registerPredict(bot, config, { getTexts }) {
 
     const session = getPredictSession(uid);
     if (!session) {
-      predictLog('callback.no_session', { uid, data });
-      await ctx.answerCbQuery().catch(() => {});
+      predictLog('callback.no_session', {
+        uid,
+        data,
+        chatId: ctx.chat?.id ?? null,
+        messageId:
+          ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message
+            ? ctx.callbackQuery.message.message_id
+            : null,
+      });
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      if (data === 'p:cst') {
+        await answerPredictCbQuery(ctx, texts.predictSessionExpired);
+      } else {
+        await ctx.answerCbQuery().catch(() => {});
+      }
       return;
     }
 
+    predictLog('callback.incoming', {
+      uid,
+      data,
+      sessionStep: session.step,
+      flowChatId: session.flowChatId,
+      pickerMessageId: session.pickerMessageId ?? null,
+      clickedMessageId:
+        ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message
+          ? ctx.callbackQuery.message.message_id
+          : null,
+    });
     predictDebug('callback', {
       uid,
       data,

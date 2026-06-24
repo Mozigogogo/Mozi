@@ -117,26 +117,56 @@ function buildCustomInputKeyboard(texts, draft = '') {
 }
 
 async function editPickerMessage(ctx, session, html, keyboard) {
-  if (session.pickerMessageId != null && session.flowChatId != null) {
-    await ctx.telegram
-      .editMessageText(html, {
-        chat_id: session.flowChatId,
-        message_id: session.pickerMessageId,
-        parse_mode: 'HTML',
-        reply_markup: keyboard,
-      })
-      .catch(() => {});
-    return;
+  const chatId = session.flowChatId ?? ctx.chat?.id;
+  const clickedMessageId =
+    ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message
+      ? ctx.callbackQuery.message.message_id
+      : null;
+  const messageId = clickedMessageId ?? session.pickerMessageId ?? null;
+
+  if (chatId == null || messageId == null) {
+    predictLog('editPickerMessage.skip', {
+      chatId,
+      messageId,
+      clickedMessageId,
+      sessionPickerMessageId: session.pickerMessageId ?? null,
+    });
+    return false;
   }
-  if (ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message) {
-    await ctx.telegram
-      .editMessageText(html, {
-        chat_id: session.flowChatId,
-        message_id: ctx.callbackQuery.message.message_id,
-        parse_mode: 'HTML',
+
+  if (clickedMessageId != null && clickedMessageId !== session.pickerMessageId) {
+    predictLog('editPickerMessage.message_mismatch', {
+      clickedMessageId,
+      sessionPickerMessageId: session.pickerMessageId ?? null,
+      usingMessageId: messageId,
+    });
+  }
+
+  try {
+    await ctx.telegram.editMessageText(html, {
+      chat_id: chatId,
+      message_id: messageId,
+      parse_mode: 'HTML',
+      reply_markup: keyboard,
+    });
+    predictLog('editPickerMessage.ok', { chatId, messageId, mode: 'edit_text' });
+    return true;
+  } catch (err) {
+    const reason = err?.response?.description || err?.message || String(err);
+    predictLog('editPickerMessage.retry_markup', { chatId, messageId, reason });
+    try {
+      await ctx.telegram.editMessageReplyMarkup({
+        chat_id: chatId,
+        message_id: messageId,
         reply_markup: keyboard,
-      })
-      .catch(() => {});
+      });
+      predictLog('editPickerMessage.ok', { chatId, messageId, mode: 'reply_markup' });
+      return true;
+    } catch (err2) {
+      const reason2 = err2?.response?.description || err2?.message || String(err2);
+      predictLog('editPickerMessage.fail', { chatId, messageId, reason: reason2 });
+      return false;
+    }
   }
 }
 
@@ -145,14 +175,26 @@ async function refreshCustomInputKeyboard(ctx, uid, getTexts) {
   if (!session) return;
   const texts = getTexts(ctx.from?.language_code || 'en');
   const keyboard = buildCustomInputKeyboard(texts, session.customSymbolDraft ?? '');
-  if (session.pickerMessageId == null || session.flowChatId == null) return;
-  await ctx.telegram
-    .editMessageReplyMarkup({
-      chat_id: session.flowChatId,
-      message_id: session.pickerMessageId,
+  const chatId = session.flowChatId;
+  const messageId = session.pickerMessageId;
+  if (messageId == null || chatId == null) {
+    predictLog('custom.input.refresh.skip', { uid, messageId, chatId });
+    return;
+  }
+  try {
+    await ctx.telegram.editMessageReplyMarkup({
+      chat_id: chatId,
+      message_id: messageId,
       reply_markup: keyboard,
-    })
-    .catch(() => {});
+    });
+    predictLog('custom.input.refresh.ok', { uid, messageId });
+  } catch (err) {
+    predictLog('custom.input.refresh.fail', {
+      uid,
+      messageId,
+      reason: err?.response?.description || err?.message || String(err),
+    });
+  }
 }
 
 /** 清除客户端残留的 force_reply（旧版 bot 消息遗留；不发 force_reply，仅 remove_keyboard） */
@@ -703,21 +745,6 @@ async function publishPredict(ctx, config, getTexts) {
   });
 
   await markConfirmPublished(ctx, session, texts, sym, priceStr, hours);
-
-  const confirmMessageId =
-    (ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message
-      ? ctx.callbackQuery.message.message_id
-      : null) ?? session.confirmMessageId;
-
-  if (
-    session.pickerMessageId != null &&
-    session.flowChatId != null &&
-    session.pickerMessageId !== confirmMessageId
-  ) {
-    await ctx.telegram
-      .deleteMessage(session.flowChatId, session.pickerMessageId)
-      .catch(() => {});
-  }
 }
 
 /**
@@ -761,6 +788,20 @@ async function cancelPredict(ctx, getTexts) {
 async function showCustomSymbolInput(ctx, getTexts) {
   const uid = ctx.from?.id;
   const session = uid != null ? getPredictSession(uid) : null;
+  const clickedMessageId =
+    ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message
+      ? ctx.callbackQuery.message.message_id
+      : null;
+
+  predictLog('custom.input.click', {
+    uid,
+    hasSession: Boolean(session),
+    sessionStep: session?.step ?? null,
+    clickedMessageId,
+    sessionPickerMessageId: session?.pickerMessageId ?? null,
+    flowChatId: session?.flowChatId ?? ctx.chat?.id ?? null,
+  });
+
   if (!session) {
     await ctx.answerCbQuery().catch(() => {});
     return;
@@ -769,14 +810,22 @@ async function showCustomSymbolInput(ctx, getTexts) {
   const texts = getTexts(ctx.from?.language_code || 'en');
 
   if (session.step === 'pick_custom_input') {
+    predictLog('custom.input.already_open', { uid, clickedMessageId });
     await ctx.answerCbQuery().catch(() => {});
     return;
   }
 
-  const pickerMessageId =
-    ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message
-      ? ctx.callbackQuery.message.message_id
-      : session.pickerMessageId;
+  if (session.step !== 'pick_symbol') {
+    predictLog('custom.input.skip_wrong_step', {
+      uid,
+      step: session.step,
+      clickedMessageId,
+    });
+    await answerPredictCbQuery(ctx, texts.predictSessionExpired);
+    return;
+  }
+
+  const pickerMessageId = clickedMessageId ?? session.pickerMessageId;
 
   patchPredictSession(uid, {
     step: 'pick_custom_input',
@@ -785,13 +834,21 @@ async function showCustomSymbolInput(ctx, getTexts) {
   });
 
   await ctx.answerCbQuery().catch(() => {});
-  predictDebug('custom.input.show', { uid, flowChatId: session.flowChatId, pickerMessageId });
 
   const html = texts.predictStep1Title;
   const keyboard = buildCustomInputKeyboard(texts, '');
   const updated = getPredictSession(uid);
   if (updated) {
-    await editPickerMessage(ctx, updated, html, keyboard);
+    const ok = await editPickerMessage(ctx, updated, html, keyboard);
+    if (ok && pickerMessageId != null) {
+      patchPredictSession(uid, { pickerMessageId });
+    }
+    predictLog('custom.input.show', {
+      uid,
+      flowChatId: updated.flowChatId,
+      pickerMessageId,
+      editOk: ok,
+    });
   }
 }
 
@@ -935,5 +992,6 @@ module.exports = {
   handleCustomSymbolText,
   handlePredictTextInput,
   backToSymbolPicker,
+  answerPredictCbQuery,
   QUICK_SYMBOLS,
 };
