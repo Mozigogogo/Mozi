@@ -58,42 +58,14 @@ async function tgEditMessageReplyMarkup(ctx, chatId, messageId, replyMarkup) {
   return ctx.telegram.editMessageReplyMarkup(chatId, messageId, undefined, replyMarkup);
 }
 
-async function clearForceReplyBar(telegram, chatId) {
-  if (chatId == null) return false;
-  const dismissTexts = ['\u3164', '\u2800', '.'];
-  for (const dismissText of dismissTexts) {
-    try {
-      const msg = await telegram.sendMessage(chatId, dismissText, {
-        reply_markup: { remove_keyboard: true },
-        disable_notification: true,
-      });
-      if (msg?.message_id != null) {
-        setTimeout(() => {
-          telegram.deleteMessage(chatId, msg.message_id).catch(() => {});
-        }, 500);
-      }
-      predictDebug('clearForceReplyBar.ok', { chatId, messageId: msg?.message_id });
-      return true;
-    } catch (err) {
-      predictDebug('clearForceReplyBar.retry', {
-        chatId,
-        reason: err?.response?.description || err?.message || String(err),
-      });
-    }
-  }
-  return false;
-}
-
-async function dismissCustomForceReplyHint(ctx, session) {
+/** 清理旧版 force_reply 提示消息（若仍存在） */
+async function dismissLegacyCustomHint(ctx, session) {
   const chatId = resolvePredictChatId(ctx, session);
   const messageId = session?.customHintMessageId;
-  if (chatId == null) return;
-  if (messageId != null) {
-    await ctx.telegram.deleteMessage(chatId, messageId).catch(() => {});
-    const uid = session.userId ?? ctx.from?.id;
-    if (uid != null) patchPredictSession(uid, { customHintMessageId: null });
-  }
-  await clearForceReplyBar(ctx.telegram, chatId);
+  if (chatId == null || messageId == null) return;
+  await ctx.telegram.deleteMessage(chatId, messageId).catch(() => {});
+  const uid = session.userId ?? ctx.from?.id;
+  if (uid != null) patchPredictSession(uid, { customHintMessageId: null });
 }
 
 function trimZeros(str) {
@@ -208,13 +180,6 @@ async function editPickerMessage(ctx, session, html, keyboard) {
       return false;
     }
   }
-}
-
-/** 清除客户端残留的 force_reply（旧版 bot 消息遗留；不发 force_reply，仅 remove_keyboard） */
-async function clearStaleForceReply(ctx) {
-  const chatId = ctx.chat?.id;
-  if (chatId == null || !isPrivateChat(ctx)) return;
-  await clearForceReplyBar(ctx.telegram, chatId);
 }
 
 function buildConfirmKeyboard(texts) {
@@ -396,10 +361,6 @@ async function startPredictFlow(ctx, config, getTexts, opts = {}) {
   const uid = ctx.from?.id;
   const flowChatId = ctx.chat?.id;
   if (uid == null || flowChatId == null) return;
-
-  if (isPrivateChat(ctx)) {
-    await clearStaleForceReply(ctx);
-  }
 
   const existing = getPredictSession(uid);
 
@@ -755,7 +716,7 @@ async function cancelPredict(ctx, getTexts) {
     messageIds.add(session.customHintMessageId);
   }
 
-  await dismissCustomForceReplyHint(ctx, session);
+  await dismissLegacyCustomHint(ctx, session);
 
   clearPredictSession(uid);
 
@@ -822,7 +783,7 @@ async function showCustomSymbolInput(ctx, getTexts) {
   });
 
   await ctx.answerCbQuery().catch(() => {});
-  await dismissCustomForceReplyHint(ctx, session);
+  await dismissLegacyCustomHint(ctx, session);
 
   const html = texts.predictCustomInputPrompt;
   const keyboard = buildCustomInputKeyboard(texts);
@@ -865,7 +826,7 @@ async function cancelCustomSymbolInput(ctx, getTexts) {
   patchPredictSession(uid, { step: 'pick_symbol' });
   const texts = getTexts(ctx.from?.language_code || 'en');
   await ctx.answerCbQuery().catch(() => {});
-  await dismissCustomForceReplyHint(ctx, session);
+  await dismissLegacyCustomHint(ctx, session);
 
   const html = texts.predictStep1Title;
   const keyboard = buildSymbolPickerKeyboard(texts);
