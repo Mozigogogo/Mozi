@@ -206,6 +206,84 @@ function buildConfirmHtml(texts, symbol, priceStr, hours) {
   return texts.predictConfirmBody(sym, hours, price);
 }
 
+async function showConfirmMessage(ctx, uid, session, texts, sym, priceStr, hours) {
+  const html = buildConfirmHtml(texts, sym, priceStr, hours);
+  const keyboard = buildConfirmKeyboard(texts);
+  const chatId = session.flowChatId;
+  let confirmMessageId = null;
+
+  if (ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message) {
+    confirmMessageId = ctx.callbackQuery.message.message_id;
+    try {
+      await ctx.telegram.editMessageText(html, {
+        chat_id: chatId,
+        message_id: confirmMessageId,
+        parse_mode: 'HTML',
+        reply_markup: keyboard,
+      });
+    } catch {
+      const msg = await ctx.reply(html, { parse_mode: 'HTML', reply_markup: keyboard });
+      confirmMessageId = msg?.message_id ?? confirmMessageId;
+    }
+  } else {
+    const msg = await ctx.reply(html, { parse_mode: 'HTML', reply_markup: keyboard });
+    confirmMessageId = msg?.message_id ?? null;
+  }
+
+  if (confirmMessageId != null) {
+    patchPredictSession(uid, { confirmMessageId });
+  }
+}
+
+async function markConfirmPublished(ctx, session, texts, sym, priceStr, hours) {
+  const chatId = session.flowChatId ?? ctx.chat?.id;
+  let messageId = null;
+  if (ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message) {
+    messageId = ctx.callbackQuery.message.message_id;
+  }
+  if (messageId == null) {
+    messageId = session.confirmMessageId ?? null;
+  }
+
+  if (chatId == null || messageId == null) {
+    predictLog('publish.mark_published.skip', { chatId, messageId });
+    return;
+  }
+
+  const publishedKeyboard = buildPublishedKeyboard(texts);
+  const confirmHtml = buildConfirmHtml(texts, sym, priceStr, hours);
+
+  try {
+    await ctx.telegram.editMessageReplyMarkup({
+      chat_id: chatId,
+      message_id: messageId,
+      reply_markup: publishedKeyboard,
+    });
+    predictLog('publish.mark_published.ok', { chatId, messageId, mode: 'reply_markup' });
+    return;
+  } catch (err1) {
+    predictDebug('publish.mark_published.retry', {
+      reason: err1?.response?.description || err1?.message || String(err1),
+    });
+  }
+
+  try {
+    await ctx.telegram.editMessageText(confirmHtml, {
+      chat_id: chatId,
+      message_id: messageId,
+      parse_mode: 'HTML',
+      reply_markup: publishedKeyboard,
+    });
+    predictLog('publish.mark_published.ok', { chatId, messageId, mode: 'edit_text' });
+  } catch (err2) {
+    predictLog('publish.mark_published.fail', {
+      chatId,
+      messageId,
+      reason: err2?.response?.description || err2?.message || String(err2),
+    });
+  }
+}
+
 function logConfirmStep(uid, symbol) {
   const session = uid != null ? getPredictSession(uid) : null;
   predictLog('flow.confirm', {
@@ -425,10 +503,7 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol, options = {
     });
     logConfirmStep(uid, sym);
 
-    const hours = session.hours ?? DEFAULT_HOURS;
-    const html = buildConfirmHtml(texts, sym, priceStr, hours);
-    const keyboard = buildConfirmKeyboard(texts);
-    await ctx.reply(html, { parse_mode: 'HTML', reply_markup: keyboard });
+    await showConfirmMessage(ctx, uid, session, texts, sym, priceStr, session.hours ?? DEFAULT_HOURS);
     return;
   }
 
@@ -494,24 +569,7 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol, options = {
   });
   logConfirmStep(uid, sym);
 
-  const hours = session.hours ?? DEFAULT_HOURS;
-  const html = buildConfirmHtml(texts, sym, priceStr, hours);
-  const keyboard = buildConfirmKeyboard(texts);
-
-  if (ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message) {
-    await ctx.telegram
-      .editMessageText(html, {
-        chat_id: session.flowChatId,
-        message_id: ctx.callbackQuery.message.message_id,
-        parse_mode: 'HTML',
-        reply_markup: keyboard,
-      })
-      .catch(async () => {
-        await ctx.reply(html, { parse_mode: 'HTML', reply_markup: keyboard });
-      });
-  } else {
-    await ctx.reply(html, { parse_mode: 'HTML', reply_markup: keyboard });
-  }
+  await showConfirmMessage(ctx, uid, session, texts, sym, priceStr, session.hours ?? DEFAULT_HOURS);
 }
 
 /**
@@ -634,9 +692,6 @@ async function publishPredict(ctx, config, getTexts) {
 
   clearPredictSession(uid);
 
-  const confirmHtml = buildConfirmHtml(texts, sym, priceStr, hours);
-  const publishedKeyboard = buildPublishedKeyboard(texts);
-
   predictLog('publish.ok', {
     uid,
     publishChatId,
@@ -644,23 +699,15 @@ async function publishPredict(ctx, config, getTexts) {
     publishedToGroup: publishChatId !== session.flowChatId,
     headerMessageId: headerMsg?.message_id ?? null,
     pollMessageId: pollMsg?.message_id ?? null,
+    confirmMessageId: session.confirmMessageId ?? null,
   });
 
-  const confirmMessageId =
-    ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message
-      ? ctx.callbackQuery.message.message_id
-      : null;
+  await markConfirmPublished(ctx, session, texts, sym, priceStr, hours);
 
-  if (confirmMessageId != null && session.flowChatId != null) {
-    await ctx.telegram
-      .editMessageText(confirmHtml, {
-        chat_id: session.flowChatId,
-        message_id: confirmMessageId,
-        parse_mode: 'HTML',
-        reply_markup: publishedKeyboard,
-      })
-      .catch(() => {});
-  }
+  const confirmMessageId =
+    (ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message
+      ? ctx.callbackQuery.message.message_id
+      : null) ?? session.confirmMessageId;
 
   if (
     session.pickerMessageId != null &&
