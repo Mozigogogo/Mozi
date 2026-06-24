@@ -18,6 +18,7 @@ const {
   handlePredictTextInput,
   backToSymbolPicker,
   answerPredictCbQuery,
+  handleGuessVote,
 } = require('../lib/predictFlow');
 
 /**
@@ -65,6 +66,12 @@ function registerPredict(bot, config, { getTexts }) {
     }
 
     await startPredictFlow(ctx, config, getTexts);
+  });
+
+  bot.action(/^g:v:(UP|DN):(.+)$/, async (ctx) => {
+    const direction = ctx.match[1] === 'DN' ? 'DOWN' : 'UP';
+    const guessNo = ctx.match[2];
+    await handleGuessVote(ctx, config, getTexts, guessNo, direction);
   });
 
   bot.action(/^p:/, async (ctx) => {

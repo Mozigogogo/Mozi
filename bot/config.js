@@ -107,6 +107,11 @@ const COIN_DIRECTION_GUESS_BIND_MESSAGE_PATH = (
   process.env.COIN_DIRECTION_GUESS_BIND_MESSAGE_PATH || 'coinDirectionGuess/bindMessage'
 ).trim().replace(/^\/+/, '');
 
+/** POST 涨跌竞猜投票（相对 API_BASE_URL），默认 coinDirectionGuess/vote */
+const COIN_DIRECTION_GUESS_VOTE_PATH = (
+  process.env.COIN_DIRECTION_GUESS_VOTE_PATH || 'coinDirectionGuess/vote'
+).trim().replace(/^\/+/, '');
+
 module.exports = {
   BOT_TOKEN,
   APP_URL,
@@ -132,4 +137,5 @@ module.exports = {
   PREDICT_DEBUG,
   COIN_DIRECTION_GUESS_PUBLISH_PATH,
   COIN_DIRECTION_GUESS_BIND_MESSAGE_PATH,
+  COIN_DIRECTION_GUESS_VOTE_PATH,
 };

@@ -94,6 +94,14 @@ const i18n = {
     predictNetworkError: '获取价格失败（网络异常），请稍后再试。',
     predictConfirmBody: (sym, hours, price) =>
       `${sym} 接下来 ${hours} 小时会涨还是跌？\n当前价：${price}（创建时锁定）`,
+    predictGroupPublishBody: (nickName, sym, hours, price, endAt) =>
+      `由 <b>${nickName}</b> 发起\n${sym} 接下来 ${hours} 小时会涨还是跌？\n当前价：${price}（创建时锁定）\n截止时间：${endAt}\n\n点击下方按钮参与预测：`,
+    predictVoteUpBtn: '📈 涨',
+    predictVoteDownBtn: '📉 跌',
+    predictVoteUpBtnCount: (count) => `📈 涨 ${count}`,
+    predictVoteDownBtnCount: (count) => `📉 跌 ${count}`,
+    predictVoteSuccess: (dir) => `已投票：${dir}`,
+    predictVoteFailed: '投票失败，请稍后再试',
     predictPublishingToast: '正在发布…',
     predictPublished: '✅ 预测已发布，群成员可参与投票。',
     predictPublishedToGroup: '✅ 已发布到原群，群成员可参与投票。',
@@ -307,6 +315,14 @@ const i18n = {
     predictNetworkError: 'Failed to fetch price (network). Please try again later.',
     predictConfirmBody: (sym, hours, price) =>
       `Will ${sym} go up or down in the next ${hours} hours?\nCurrent price: ${price} (locked at creation)`,
+    predictGroupPublishBody: (nickName, sym, hours, price, endAt) =>
+      `Started by <b>${nickName}</b>\nWill ${sym} go up or down in the next ${hours} hours?\nCurrent price: ${price} (locked at creation)\nDeadline: ${endAt}\n\nTap a button below to vote:`,
+    predictVoteUpBtn: '📈 Up',
+    predictVoteDownBtn: '📉 Down',
+    predictVoteUpBtnCount: (count) => `📈 Up ${count}`,
+    predictVoteDownBtnCount: (count) => `📉 Down ${count}`,
+    predictVoteSuccess: (dir) => `Voted: ${dir}`,
+    predictVoteFailed: 'Vote failed. Please try again later.',
     predictPublishingToast: 'Publishing…',
     predictPublished: '✅ Poll published. Members can vote now.',
     predictPublishedToGroup: '✅ Published to the original group. Members can vote now.',

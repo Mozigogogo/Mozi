@@ -2,7 +2,7 @@
  * /predict 多步 UI：选币 → 确认文案 → 发布投票
  */
 
-const { fetchDetailHeader, fetchSearchLastPriceChange, postCoinDirectionGuessPublish, postCoinDirectionGuessBindMessage, parseCoinDirectionGuessNo } = require('./apis');
+const { fetchDetailHeader, fetchSearchLastPriceChange, postCoinDirectionGuessPublish, postCoinDirectionGuessBindMessage, postCoinDirectionGuessVote, parseCoinDirectionGuessNo, parseCoinDirectionGuessPublishData, parseGuessVoteCounts } = require('./apis');
 const { SYMBOL_WHITELIST } = require('./symbolIntent');
 const { escapeHtml } = require('./telegramHtml');
 const { buildPredictPrivateUrl } = require('./predictSymbol');
@@ -25,6 +25,46 @@ const SYMBOL_INPUT_RE = /^[A-Z0-9]{1,16}$/;
 function formatPredictDuration(hours) {
   const h = Math.max(1, Math.min(168, Number(hours) || DEFAULT_HOURS));
   return h * 3600;
+}
+
+function parseEndAtMs(endAt) {
+  if (endAt == null || endAt === '') return null;
+  if (typeof endAt === 'number' && Number.isFinite(endAt)) {
+    return endAt < 1e12 ? endAt * 1000 : endAt;
+  }
+  const raw = String(endAt).trim();
+  if (!raw) return null;
+  const n = Number(raw);
+  if (Number.isFinite(n)) return n < 1e12 ? n * 1000 : n;
+  const parsed = Date.parse(raw);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function formatEndAtDisplay(endAt, languageCode) {
+  const ms = parseEndAtMs(endAt);
+  if (ms == null) return '—';
+  const isZh = String(languageCode || '').toLowerCase().startsWith('zh');
+  try {
+    return new Date(ms).toLocaleString(isZh ? 'zh-CN' : 'en-US', {
+      timeZone: 'Asia/Shanghai',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+  } catch {
+    return new Date(ms).toISOString();
+  }
+}
+
+function resolvePublishNickName(publishData, ctx) {
+  if (publishData?.nickName) return String(publishData.nickName).trim();
+  const from = ctx.from;
+  if (from?.username) return String(from.username).trim();
+  const name = [from?.first_name, from?.last_name].filter(Boolean).join(' ').trim();
+  return name || 'User';
 }
 
 async function registerCoinDirectionGuessPublish(ctx, config, { publishChatId, sym, hours, title }) {
@@ -194,32 +234,6 @@ async function dismissLegacyCustomHint(ctx, session) {
   if (uid != null) patchPredictSession(uid, { customHintMessageId: null });
 }
 
-/** 点击 Step 1 币种按钮后删除选币卡片（自定义文本输入路径保留 Step 1） */
-async function dismissStep1PickerMessage(ctx, session) {
-  const chatId = resolvePredictChatId(ctx, session);
-  if (chatId == null) return;
-
-  const messageIds = new Set();
-  if (ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message) {
-    messageIds.add(ctx.callbackQuery.message.message_id);
-  }
-  if (session?.pickerMessageId != null) {
-    messageIds.add(session.pickerMessageId);
-  }
-  if (session?.customHintMessageId != null) {
-    messageIds.add(session.customHintMessageId);
-  }
-
-  for (const messageId of messageIds) {
-    await ctx.telegram.deleteMessage(chatId, messageId).catch(() => {});
-  }
-
-  const uid = session?.userId ?? ctx.from?.id;
-  if (uid != null) {
-    patchPredictSession(uid, { pickerMessageId: null, customHintMessageId: null });
-  }
-}
-
 function trimZeros(str) {
   return String(str).replace(/\.?0+$/, '');
 }
@@ -351,6 +365,26 @@ function buildPublishedKeyboard(texts) {
   };
 }
 
+function buildGuessVoteKeyboard(texts, guessNo, counts) {
+  const g = String(guessNo || '').trim();
+  const upText =
+    counts && Number.isFinite(counts.up)
+      ? texts.predictVoteUpBtnCount(counts.up)
+      : texts.predictVoteUpBtn;
+  const downText =
+    counts && Number.isFinite(counts.down)
+      ? texts.predictVoteDownBtnCount(counts.down)
+      : texts.predictVoteDownBtn;
+  return {
+    inline_keyboard: [
+      [
+        { text: upText, callback_data: `g:v:UP:${g}` },
+        { text: downText, callback_data: `g:v:DN:${g}` },
+      ],
+    ],
+  };
+}
+
 function buildConfirmHtml(texts, symbol, priceStr, hours) {
   const sym = escapeHtml(symbol);
   const price = escapeHtml(priceStr);
@@ -360,22 +394,10 @@ function buildConfirmHtml(texts, symbol, priceStr, hours) {
 async function showConfirmMessage(ctx, uid, session, texts, sym, priceStr, hours) {
   const html = buildConfirmHtml(texts, sym, priceStr, hours);
   const keyboard = buildConfirmKeyboard(texts);
-  const fromTextInput = !ctx.callbackQuery;
-  let confirmMessageId = null;
-
-  // 文本输入（自定义币种）：保留 Step 1 卡片，确认页单独发一条新消息
-  if (fromTextInput) {
-    const msg = await ctx.reply(html, { parse_mode: 'HTML', reply_markup: keyboard });
-    confirmMessageId = msg?.message_id ?? null;
-  } else {
-    // 点击 Step 1 币种按钮：删除 Step 1，再发确认消息
-    await dismissStep1PickerMessage(ctx, session);
-    const msg = await ctx.reply(html, { parse_mode: 'HTML', reply_markup: keyboard });
-    confirmMessageId = msg?.message_id ?? null;
-  }
-
-  if (confirmMessageId != null) {
-    patchPredictSession(uid, { confirmMessageId });
+  // 保留 Step 1 选币卡片，确认页始终单独发一条新消息
+  const msg = await ctx.reply(html, { parse_mode: 'HTML', reply_markup: keyboard });
+  if (msg?.message_id != null) {
+    patchPredictSession(uid, { confirmMessageId: msg.message_id });
   }
 }
 
@@ -666,20 +688,12 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol, options = {
     });
   } catch (err) {
     console.error('[predict] fetch price:', err?.message || err);
-    if (fromTextInput) {
-      await ctx.reply(texts.predictNetworkError, { parse_mode: 'HTML' });
-    } else {
-      await replyOrEdit(ctx, session, texts.predictNetworkError, { parse_mode: 'HTML' });
-    }
+    await ctx.reply(texts.predictNetworkError, { parse_mode: 'HTML' });
     return;
   }
 
   if (!result.ok || result.json == null) {
-    if (fromTextInput) {
-      await ctx.reply(texts.predictSymbolNotSupported(sym), { parse_mode: 'HTML' });
-    } else {
-      await replyOrEdit(ctx, session, texts.predictSymbolNotSupported(sym), { parse_mode: 'HTML' });
-    }
+    await ctx.reply(texts.predictSymbolNotSupported(sym), { parse_mode: 'HTML' });
     return;
   }
 
@@ -687,11 +701,7 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol, options = {
   const priceRaw = payload?.currentPrice ?? payload?.price;
   const priceStr = formatUsdPrice(priceRaw);
   if (priceStr === '—') {
-    if (fromTextInput) {
-      await ctx.reply(texts.predictSymbolNotSupported(sym), { parse_mode: 'HTML' });
-    } else {
-      await replyOrEdit(ctx, session, texts.predictSymbolNotSupported(sym), { parse_mode: 'HTML' });
-    }
+    await ctx.reply(texts.predictSymbolNotSupported(sym), { parse_mode: 'HTML' });
     return;
   }
 
@@ -782,11 +792,9 @@ async function publishPredict(ctx, config, getTexts) {
     symbol: sym,
   });
 
-  const headerHtml = buildConfirmHtml(texts, sym, priceStr, hours);
   const pollQuestion = isZh
     ? `${sym} 接下来 ${hours} 小时会涨还是跌？`
     : `Will ${sym} go up or down in the next ${hours} hours?`;
-  const pollOptions = isZh ? ['涨', '跌'] : ['Up', 'Down'];
 
   const apiResult = await registerCoinDirectionGuessPublish(ctx, config, {
     publishChatId,
@@ -808,38 +816,64 @@ async function publishPredict(ctx, config, getTexts) {
   }
 
   const guessNo = apiResult.guessNo ?? parseCoinDirectionGuessNo(apiResult.json);
+  const publishData =
+    apiResult.publishData ?? parseCoinDirectionGuessPublishData(apiResult.json);
+  const nickName = escapeHtml(resolvePublishNickName(publishData, ctx));
+  const avatarUrl = publishData.avatar ? String(publishData.avatar).trim() : '';
+  const endAtFormatted = escapeHtml(formatEndAtDisplay(publishData.endAt, languageCode));
+  const groupPublishHtml = texts.predictGroupPublishBody(
+    nickName,
+    escapeHtml(sym),
+    hours,
+    escapeHtml(priceStr),
+    endAtFormatted,
+  );
+  const voteKeyboard = guessNo ? buildGuessVoteKeyboard(texts, guessNo) : undefined;
+  const sendExtra = voteKeyboard ? { parse_mode: 'HTML', reply_markup: voteKeyboard } : { parse_mode: 'HTML' };
+
   predictLog('publish.guess_created', {
     uid,
     publishChatId,
     guessNo: guessNo ?? null,
+    nickName: publishData.nickName ?? null,
+    hasAvatar: Boolean(avatarUrl),
+    endAt: publishData.endAt ?? null,
+    endAtFormatted,
+    customVote: true,
   });
 
-  let headerMsg;
-  let pollMsg;
+  let guessMsg;
   try {
-    headerMsg = await ctx.telegram.sendMessage(publishChatId, headerHtml, { parse_mode: 'HTML' });
-    const headerMessageId = headerMsg?.message_id ?? null;
-    predictLog('publish.header_sent', {
+    if (avatarUrl) {
+      try {
+        guessMsg = await ctx.telegram.sendPhoto(publishChatId, avatarUrl, {
+          caption: groupPublishHtml,
+          ...sendExtra,
+        });
+      } catch (photoErr) {
+        predictLog('publish.avatar_fail', {
+          uid,
+          publishChatId,
+          message: photoErr?.response?.description || photoErr?.message || String(photoErr),
+        });
+        guessMsg = await ctx.telegram.sendMessage(publishChatId, groupPublishHtml, sendExtra);
+      }
+    } else {
+      guessMsg = await ctx.telegram.sendMessage(publishChatId, groupPublishHtml, sendExtra);
+    }
+    const guessMessageId = guessMsg?.message_id ?? null;
+    predictLog('publish.guess_sent', {
       uid,
       publishChatId,
-      messageId: headerMessageId,
-    });
-    pollMsg = await ctx.telegram.sendPoll(publishChatId, pollQuestion, pollOptions, {
-      is_anonymous: false,
-    });
-    const pollMessageId = pollMsg?.message_id ?? null;
-    predictLog('publish.poll_sent', {
-      uid,
-      publishChatId,
-      messageId: pollMessageId,
-      pollId: pollMsg?.poll?.id ?? null,
+      messageId: guessMessageId,
+      withAvatar: Boolean(avatarUrl),
+      hasVoteButtons: Boolean(voteKeyboard),
     });
     predictLog('publish.target_group_message_ids', {
       uid,
       publishChatId,
-      headerMessageId,
-      pollMessageId,
-      bindTgMessageId: pollMessageId,
+      guessMessageId,
+      bindTgMessageId: guessMessageId,
     });
   } catch (err) {
     const description = err?.response?.description || err?.message || String(err);
@@ -855,7 +889,7 @@ async function publishPredict(ctx, config, getTexts) {
     return;
   }
 
-  const tgMessageId = pollMsg?.message_id ?? null;
+  const tgMessageId = guessMsg?.message_id ?? null;
   if (guessNo && tgMessageId != null) {
     await bindCoinDirectionGuessMessage(ctx, config, { guessNo, tgMessageId });
   } else {
@@ -876,13 +910,86 @@ async function publishPredict(ctx, config, getTexts) {
     flowChatId: session.flowChatId,
     publishedToGroup: publishChatId !== session.flowChatId,
     guessNo: guessNo ?? null,
-    headerMessageId: headerMsg?.message_id ?? null,
-    pollMessageId: pollMsg?.message_id ?? null,
+    guessMessageId: guessMsg?.message_id ?? null,
     bindTgMessageId: tgMessageId,
     confirmMessageId: session.confirmMessageId ?? null,
   });
 
   await markConfirmPublished(ctx, session, texts, sym, priceStr, hours);
+}
+
+async function tryRefreshGuessVoteKeyboard(ctx, texts, guessNo, voteResult) {
+  const counts = parseGuessVoteCounts(voteResult?.json);
+  if (!counts) return;
+  const msg = ctx.callbackQuery?.message;
+  if (!msg || !('message_id' in msg)) return;
+  const chatId = msg.chat?.id;
+  const messageId = msg.message_id;
+  if (chatId == null || messageId == null) return;
+  const keyboard = buildGuessVoteKeyboard(texts, guessNo, counts);
+  await ctx.telegram.editMessageReplyMarkup(chatId, messageId, undefined, keyboard).catch(() => {});
+}
+
+/**
+ * 群内自定义投票：涨 / 跌 inline 按钮
+ */
+async function handleGuessVote(ctx, config, getTexts, guessNo, direction) {
+  const uid = ctx.from?.id;
+  const languageCode = ctx.from?.language_code || 'en';
+  const texts = getTexts(languageCode);
+  const isZh = languageCode.toLowerCase().startsWith('zh');
+  const apiDirection = direction === 'DOWN' ? 'DOWN' : 'UP';
+  const dirLabel = apiDirection === 'UP' ? (isZh ? '涨' : 'Up') : (isZh ? '跌' : 'Down');
+  const guess = String(guessNo || '').trim();
+
+  if (!guess) {
+    await answerPredictCbQuery(ctx, texts.predictVoteFailed, { show_alert: true });
+    return;
+  }
+
+  predictLog('vote.attempt', { uid, guessNo: guess, direction: apiDirection });
+
+  let auth = '';
+  try {
+    auth = await ensureTgUserToken(config, uid, buildTelegramLoginOpts(ctx.from));
+  } catch (err) {
+    predictLog('vote.auth_fail', { uid, message: err?.message || String(err) });
+  }
+  if (!auth) {
+    auth = String(config.MOZI_DETAIL_AUTH || '').trim();
+  }
+
+  try {
+    const result = await postCoinDirectionGuessVote({
+      apiBaseUrl: config.API_BASE_URL,
+      appUrl: config.APP_URL,
+      auth,
+      path: config.COIN_DIRECTION_GUESS_VOTE_PATH,
+      guessNo: guess,
+      direction: apiDirection,
+    });
+    predictLog('vote.api', {
+      uid,
+      guessNo: guess,
+      direction: apiDirection,
+      ok: result.ok,
+      status: result.status,
+      errorMessage: result.errorMessage ?? null,
+    });
+    if (!result.ok) {
+      await answerPredictCbQuery(
+        ctx,
+        result.errorMessage || texts.predictVoteFailed,
+        { show_alert: true },
+      );
+      return;
+    }
+    await ctx.answerCbQuery(texts.predictVoteSuccess(dirLabel)).catch(() => {});
+    await tryRefreshGuessVoteKeyboard(ctx, texts, guess, result);
+  } catch (err) {
+    predictLog('vote.fail', { uid, guessNo: guess, message: err?.message || String(err) });
+    await answerPredictCbQuery(ctx, texts.predictVoteFailed, { show_alert: true });
+  }
 }
 
 /**
@@ -1109,6 +1216,7 @@ module.exports = {
   startPredictFlow,
   selectSymbolAndConfirm,
   publishPredict,
+  handleGuessVote,
   cancelPredict,
   showCustomSymbolInput,
   cancelCustomSymbolInput,

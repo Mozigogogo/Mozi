@@ -1596,7 +1596,7 @@ async function getGroupReferrer({ apiBaseUrl, chatId, auth = '', appUrl = '', ti
  */
 function parseApiErrorMessage(json) {
   if (!json || typeof json !== 'object') return null;
-  const m = json.message ?? json.msg ?? json.error;
+  const m = json.message ?? json.msg ?? json.error ?? json.errorMsg;
   if (m != null && String(m).trim()) return String(m).trim();
   return null;
 }
@@ -1845,6 +1845,30 @@ function parseCoinDirectionGuessNo(json) {
   return null;
 }
 
+/**
+ * @param {object | null} json
+ * @returns {{ guessNo: string | null; nickName: string | null; avatar: string | null; endAt: string | number | null }}
+ */
+function parseCoinDirectionGuessPublishData(json) {
+  const guessNo = parseCoinDirectionGuessNo(json);
+  if (!json || typeof json !== 'object') {
+    return { guessNo, nickName: null, avatar: null, endAt: null };
+  }
+  const data =
+    json.data != null && typeof json.data === 'object'
+      ? json.data
+      : json;
+  const nickName = data.nickName ?? data.nickname ?? data.nick_name ?? null;
+  const avatar = data.avatar ?? data.avatarUrl ?? data.avatar_url ?? null;
+  const endAt = data.endAt ?? data.end_at ?? null;
+  return {
+    guessNo,
+    nickName: nickName != null && String(nickName).trim() ? String(nickName).trim() : null,
+    avatar: avatar != null && String(avatar).trim() ? String(avatar).trim() : null,
+    endAt: endAt != null && String(endAt).trim() ? endAt : null,
+  };
+}
+
 function isCoinDirectionGuessBindMessageOk(json) {
   if (!json || typeof json !== 'object') return false;
   if (json.success === false) return false;
@@ -1928,12 +1952,14 @@ async function postCoinDirectionGuessPublish({
     }
     const bizOk = isCoinDirectionGuessPublishOk(json);
     const guessNo = parseCoinDirectionGuessNo(json);
+    const publishData = parseCoinDirectionGuessPublishData(json);
     const out = {
       ok: res.status === 200 && bizOk,
       status: res.status,
       json,
       text,
       guessNo,
+      publishData,
       errorMessage: parseApiErrorMessage(json),
     };
     apiDebug('POST /coinDirectionGuess/publish →', {
@@ -1943,6 +1969,9 @@ async function postCoinDirectionGuessPublish({
       httpStatus: res.status,
       ok: out.ok,
       guessNo,
+      nickName: publishData.nickName,
+      hasAvatar: Boolean(publishData.avatar),
+      endAt: publishData.endAt,
       jsonCode: json && typeof json === 'object' ? json.code : null,
       errorMessage: out.errorMessage,
       bodyPreview: text.slice(0, 500),
@@ -2042,6 +2071,119 @@ async function postCoinDirectionGuessBindMessage({
   }
 }
 
+function isCoinDirectionGuessVoteOk(json) {
+  if (!json || typeof json !== 'object') return false;
+  if (json.success === false) return false;
+  const code = json.code;
+  return code === undefined || code === 0 || code === 200;
+}
+
+/**
+ * @param {object | null} json
+ * @returns {{ up: number; down: number } | null}
+ */
+function parseGuessVoteCounts(json) {
+  if (!json || typeof json !== 'object') return null;
+  const data = json.data;
+  if (!data || typeof data !== 'object') return null;
+  const up = data.upCount ?? data.up_count ?? data.upVotes ?? data.upVoteCount;
+  const down = data.downCount ?? data.down_count ?? data.downVotes ?? data.downVoteCount;
+  if (up == null && down == null) return null;
+  return {
+    up: Number(up) || 0,
+    down: Number(down) || 0,
+  };
+}
+
+/**
+ * POST /coinDirectionGuess/vote
+ * @param {{
+ *   apiBaseUrl: string;
+ *   auth?: string;
+ *   appUrl?: string;
+ *   guessNo: string;
+ *   direction: 'UP' | 'DOWN';
+ *   path?: string;
+ *   timeoutMs?: number;
+ * }} opts
+ */
+async function postCoinDirectionGuessVote({
+  apiBaseUrl,
+  auth = '',
+  appUrl = '',
+  guessNo,
+  direction,
+  path = 'coinDirectionGuess/vote',
+  timeoutMs = 15000,
+}) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const rel = String(path || 'coinDirectionGuess/vote').trim().replace(/^\/+/, '');
+  const url = `${base}/${rel}`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    'content-type': 'application/json',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    'user-agent': DEFAULT_UA,
+  };
+  const rawAuth = String(auth || '').trim().replace(/^Bearer\s+/i, '');
+  if (rawAuth) {
+    headers.authentication = rawAuth;
+  }
+  if (app) {
+    headers.referer = `${app}/`;
+  }
+  const dir = String(direction || '').trim().toUpperCase() === 'DOWN' ? 'DOWN' : 'UP';
+  const body = {
+    guessNo: String(guessNo || '').trim(),
+    direction: dir,
+  };
+  apiDebug('POST /coinDirectionGuess/vote ←', {
+    url,
+    guessNo: body.guessNo,
+    direction: body.direction,
+    hasAuthenticationHeader: Boolean(rawAuth),
+  });
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      signal: ctrl.signal,
+    });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const bizOk = isCoinDirectionGuessVoteOk(json);
+    const out = {
+      ok: res.status === 200 && bizOk,
+      status: res.status,
+      json,
+      text,
+      errorMessage: parseApiErrorMessage(json),
+    };
+    apiDebug('POST /coinDirectionGuess/vote →', {
+      guessNo: body.guessNo,
+      direction: body.direction,
+      httpStatus: res.status,
+      ok: out.ok,
+      jsonCode: json && typeof json === 'object' ? json.code : null,
+      errorMessage: out.errorMessage,
+      bodyPreview: text.slice(0, 500),
+    });
+    return out;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 module.exports = {
   fetchDetailHeader,
   fetchSearchLastPriceChange,
@@ -2062,7 +2204,10 @@ module.exports = {
   postGroupReferrerBind,
   postCoinDirectionGuessPublish,
   postCoinDirectionGuessBindMessage,
+  postCoinDirectionGuessVote,
   parseCoinDirectionGuessNo,
+  parseCoinDirectionGuessPublishData,
+  parseGuessVoteCounts,
   requestAgentStream,
   requestChatStream,
   requestBigorderStream,
