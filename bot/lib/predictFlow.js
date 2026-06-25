@@ -1023,6 +1023,8 @@ async function publishPredict(ctx, config, getTexts) {
     saveGuessMessageContext(guessNo, messageMeta);
   }
 
+  const avatarUrl = publishData.avatar ? String(publishData.avatar).trim() : '';
+
   predictLog('publish.guess_created', {
     uid,
     publishChatId,
@@ -1033,7 +1035,6 @@ async function publishPredict(ctx, config, getTexts) {
     customVote: true,
   });
 
-  const avatarUrl = publishData.avatar ? String(publishData.avatar).trim() : '';
   let guessMsg;
   try {
     if (avatarUrl) {
