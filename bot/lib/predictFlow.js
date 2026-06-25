@@ -602,6 +602,9 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol, options = {
       return;
     }
 
+    if (!fromTextInput) {
+      await answerPredictCbQuery(ctx, texts.predictSymbolSearchingToast);
+    }
     await ctx.telegram.sendChatAction(session.flowChatId, 'typing').catch(() => {});
 
     let searchResult;
@@ -673,7 +676,9 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol, options = {
     return;
   }
 
-  await ctx.answerCbQuery().catch(() => {});
+  if (!fromTextInput) {
+    await answerPredictCbQuery(ctx, texts.predictSymbolSearchingToast);
+  }
   if (ctx.callbackQuery?.message) {
     await ctx.telegram.sendChatAction(session.flowChatId, 'typing').catch(() => {});
   }
