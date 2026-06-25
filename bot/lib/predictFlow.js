@@ -1094,12 +1094,12 @@ async function handleGuessBetCustom(ctx, getTexts, guessNo) {
     await ctx.answerCbQuery().catch(() => {});
     return;
   }
+  await answerPredictCbQuery(ctx, texts.predictBetCustomInputToast);
   saveGuessBetCustomSession(uid, {
     guessNo: guess,
     chatId: msg.chat.id,
     messageId: msg.message_id,
   });
-  await answerPredictCbQuery(ctx, texts.predictBetCustomInputToast);
 }
 
 async function handleGuessBetBack(ctx, getTexts, guessNo) {
@@ -1111,12 +1111,8 @@ async function handleGuessBetBack(ctx, getTexts, guessNo) {
     await ctx.answerCbQuery().catch(() => {});
     return;
   }
-  const ok = await editGuessCallbackKeyboard(ctx, buildGuessVoteKeyboard(texts, guess));
-  if (ok) {
-    await ctx.answerCbQuery().catch(() => {});
-  } else {
-    await answerPredictCbQuery(ctx, texts.predictVoteFailed, { show_alert: true });
-  }
+  await ctx.answerCbQuery().catch(() => {});
+  await editGuessCallbackKeyboard(ctx, buildGuessVoteKeyboard(texts, guess));
 }
 
 /**
@@ -1124,13 +1120,16 @@ async function handleGuessBetBack(ctx, getTexts, guessNo) {
  * @returns {boolean}
  */
 async function handleGuessBetCustomTextInput(ctx, getTexts) {
+  if (ctx.callbackQuery) return false;
+  if (!ctx.message?.text) return false;
+
   const uid = ctx.from?.id;
   const session = uid != null ? getGuessBetCustomSession(uid) : null;
   if (!session) return false;
 
   const chatType = ctx.chat?.type;
   if (chatType !== 'group' && chatType !== 'supergroup') return false;
-  if (ctx.chat?.id !== session.chatId) return false;
+  if (String(ctx.chat?.id) !== String(session.chatId)) return false;
 
   const texts = getTexts(ctx.from?.language_code || 'en');
   const raw = String(ctx.message?.text || '').trim();

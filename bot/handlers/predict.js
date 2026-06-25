@@ -33,6 +33,10 @@ const {
  */
 function createPredictTextMiddleware(config, { getTexts }) {
   return async (ctx, next) => {
+    // inline 按钮点击也会带上 ctx.message（竞猜卡片），不能当成用户输入
+    if (ctx.callbackQuery) {
+      return next();
+    }
     if (ctx.message?.text && ctx.chat?.type === 'private') {
       predictDebug('middleware.text', {
         uid: ctx.from?.id ?? null,
