@@ -549,21 +549,23 @@ function buildGuessBetNumpadKeyboard(texts, draft) {
   };
 }
 
-async function editGuessCallbackKeyboard(ctx, keyboard) {
-  if (!ctx.callbackQuery?.message) return false;
+async function editGuessMessageKeyboard(ctx, chatId, messageId, keyboard) {
+  if (chatId == null || messageId == null) return false;
   try {
-    await ctx.editMessageReplyMarkup(keyboard);
+    await ctx.telegram.editMessageReplyMarkup(chatId, messageId, undefined, keyboard);
     return true;
   } catch (err) {
-    const msg = ctx.callbackQuery.message;
-    if (!('message_id' in msg)) {
-      predictLog('guess.keyboard_edit_fail', {
-        reason: err?.response?.description || err?.message || String(err),
-      });
-      return false;
-    }
-    return editGuessMessageKeyboard(ctx, msg.chat?.id, msg.message_id, keyboard);
+    const reason = err?.response?.description || err?.message || String(err);
+    if (String(reason).includes('message is not modified')) return true;
+    predictLog('guess.keyboard_edit_fail', { chatId, messageId, reason });
+    return false;
   }
+}
+
+async function editGuessCallbackKeyboard(ctx, keyboard) {
+  const msg = ctx.callbackQuery?.message;
+  if (!msg || !('message_id' in msg)) return false;
+  return editGuessMessageKeyboard(ctx, msg.chat?.id, msg.message_id, keyboard);
 }
 
 function buildConfirmHtml(texts, symbol, priceStr, hours) {
