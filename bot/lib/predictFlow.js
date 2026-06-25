@@ -1279,9 +1279,16 @@ async function handleGuessBetNumpadAction(ctx, config, getTexts, action) {
       await answerPredictCbQuery(ctx, texts.predictBetNumpadEmptyToast, { show_alert: true });
       return;
     }
+    const minBet = Math.max(1, Math.floor(Number(config.COIN_DIRECTION_GUESS_MIN_BET_AMOUNT) || 50));
+    if (pts < minBet) {
+      await answerPredictCbQuery(ctx, texts.predictBetMinAmountToast(minBet), { show_alert: true });
+      return;
+    }
     const direction = session.choice === 2 ? 'DOWN' : 'UP';
-    clearGuessBetCustomSession(uid);
-    await submitGuessBet(ctx, config, getTexts, session.guessNo, direction, pts);
+    const ok = await submitGuessBet(ctx, config, getTexts, session.guessNo, direction, pts);
+    if (ok) {
+      clearGuessBetCustomSession(uid);
+    }
     return;
   }
 

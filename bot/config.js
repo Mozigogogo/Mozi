@@ -114,6 +114,12 @@ const COIN_DIRECTION_GUESS_BET_PATH = (
   'coinDirectionGuess/bet'
 ).trim().replace(/^\/+/, '');
 
+/** 涨跌竞猜最低下注积分 */
+const COIN_DIRECTION_GUESS_MIN_BET_AMOUNT = Math.max(
+  1,
+  Math.floor(Number(process.env.COIN_DIRECTION_GUESS_MIN_BET_AMOUNT) || 50),
+);
+
 module.exports = {
   BOT_TOKEN,
   APP_URL,
@@ -140,4 +146,5 @@ module.exports = {
   COIN_DIRECTION_GUESS_PUBLISH_PATH,
   COIN_DIRECTION_GUESS_BIND_MESSAGE_PATH,
   COIN_DIRECTION_GUESS_BET_PATH,
+  COIN_DIRECTION_GUESS_MIN_BET_AMOUNT,
 };
