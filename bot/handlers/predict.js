@@ -19,6 +19,11 @@ const {
   backToSymbolPicker,
   answerPredictCbQuery,
   handleGuessVote,
+  handleGuessBetOpen,
+  handleGuessBetQuick,
+  handleGuessBetCustom,
+  handleGuessBetBack,
+  handleGuessBetCustomTextInput,
 } = require('../lib/predictFlow');
 
 /**
@@ -35,6 +40,11 @@ function createPredictTextMiddleware(config, { getTexts }) {
       });
     }
     try {
+      const handledBet = await handleGuessBetCustomTextInput(ctx, getTexts);
+      if (handledBet) {
+        predictDebug('middleware.handled', { uid: ctx.from?.id ?? null, mode: 'guess_bet_custom' });
+        return;
+      }
       const handled = await handlePredictTextInput(ctx, config, getTexts);
       if (handled) {
         predictDebug('middleware.handled', { uid: ctx.from?.id ?? null });
@@ -72,6 +82,22 @@ function registerPredict(bot, config, { getTexts }) {
     const direction = ctx.match[1] === 'DN' ? 'DOWN' : 'UP';
     const guessNo = ctx.match[2];
     await handleGuessVote(ctx, config, getTexts, guessNo, direction);
+  });
+
+  bot.action(/^g:b:back:(.+)$/, async (ctx) => {
+    await handleGuessBetBack(ctx, getTexts, ctx.match[1]);
+  });
+
+  bot.action(/^g:b:cst:(.+)$/, async (ctx) => {
+    await handleGuessBetCustom(ctx, getTexts, ctx.match[1]);
+  });
+
+  bot.action(/^g:b:o:(.+)$/, async (ctx) => {
+    await handleGuessBetOpen(ctx, getTexts, ctx.match[1]);
+  });
+
+  bot.action(/^g:b:(\d{1,6}):(.+)$/, async (ctx) => {
+    await handleGuessBetQuick(ctx, getTexts, ctx.match[2], ctx.match[1]);
   });
 
   bot.action(/^p:/, async (ctx) => {

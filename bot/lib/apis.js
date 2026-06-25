@@ -2103,6 +2103,7 @@ function parseGuessVoteCounts(json) {
  *   appUrl?: string;
  *   guessNo: string;
  *   direction: 'UP' | 'DOWN';
+ *   points?: number;
  *   path?: string;
  *   timeoutMs?: number;
  * }} opts
@@ -2113,6 +2114,7 @@ async function postCoinDirectionGuessVote({
   appUrl = '',
   guessNo,
   direction,
+  points,
   path = 'coinDirectionGuess/vote',
   timeoutMs = 15000,
 }) {
@@ -2141,10 +2143,15 @@ async function postCoinDirectionGuessVote({
     guessNo: String(guessNo || '').trim(),
     direction: dir,
   };
+  const pts = Math.floor(Number(points));
+  if (Number.isFinite(pts) && pts > 0) {
+    body.points = pts;
+  }
   apiDebug('POST /coinDirectionGuess/vote ←', {
     url,
     guessNo: body.guessNo,
     direction: body.direction,
+    points: body.points ?? null,
     hasAuthenticationHeader: Boolean(rawAuth),
   });
   try {
