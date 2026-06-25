@@ -2,7 +2,7 @@
  * /predict 多步 UI：选币 → 确认文案 → 发布投票
  */
 
-const { fetchDetailHeader, fetchSearchLastPriceChange, postCoinDirectionGuessPublish, postCoinDirectionGuessBindMessage, postCoinDirectionGuessVote, parseCoinDirectionGuessNo, parseCoinDirectionGuessPublishData, parseGuessVoteCounts } = require('./apis');
+const { fetchDetailHeader, fetchSearchLastPriceChange, fetchUserDatainfo, postCoinDirectionGuessPublish, postCoinDirectionGuessBindMessage, postCoinDirectionGuessBet, parseCoinDirectionGuessNo, parseCoinDirectionGuessPublishData, parseGuessVoteCounts, parseDatainfoUserId } = require('./apis');
 const { SYMBOL_WHITELIST } = require('./symbolIntent');
 const { escapeHtml } = require('./telegramHtml');
 const { buildPredictPrivateUrl } = require('./predictSymbol');
@@ -1024,15 +1024,33 @@ async function tryRefreshGuessVoteKeyboard(ctx, texts, guessNo, voteResult) {
 }
 
 /**
- * 群内自定义投票：涨 / 跌 inline 按钮
+ * 群内自定义投票：涨 / 跌 inline 按钮 → POST /coinDirectionGuess/bet
  */
+async function resolveGuessBetUserId(config, auth) {
+  try {
+    const res = await fetchUserDatainfo({
+      apiBaseUrl: config.API_BASE_URL,
+      auth,
+      appUrl: config.APP_URL,
+      path: config.USER_DATA_INFO_PATH,
+      timeoutMs: config.USER_DATA_INFO_TIMEOUT_MS,
+    });
+    if (res.ok && res.json) {
+      return parseDatainfoUserId(res.json);
+    }
+  } catch (err) {
+    predictLog('bet.user_resolve_fail', { message: err?.message || String(err) });
+  }
+  return null;
+}
+
 async function handleGuessVote(ctx, config, getTexts, guessNo, direction) {
   const uid = ctx.from?.id;
   const languageCode = ctx.from?.language_code || 'en';
   const texts = getTexts(languageCode);
   const isZh = languageCode.toLowerCase().startsWith('zh');
-  const apiDirection = direction === 'DOWN' ? 'DOWN' : 'UP';
-  const dirLabel = apiDirection === 'UP' ? (isZh ? '涨' : 'Up') : (isZh ? '跌' : 'Down');
+  const choice = direction === 'DOWN' ? 2 : 1;
+  const dirLabel = choice === 1 ? (isZh ? '涨' : 'Up') : (isZh ? '跌' : 'Down');
   const guess = String(guessNo || '').trim();
 
   if (!guess) {
@@ -1040,35 +1058,47 @@ async function handleGuessVote(ctx, config, getTexts, guessNo, direction) {
     return;
   }
 
-  predictLog('vote.attempt', { uid, guessNo: guess, direction: apiDirection });
+  const betAmount = getGuessBetPending(uid, guess);
+  if (betAmount == null || betAmount <= 0) {
+    await answerPredictCbQuery(ctx, texts.predictBetRequiredToast, { show_alert: true });
+    return;
+  }
 
-  const pendingPoints = getGuessBetPending(uid, guess);
+  predictLog('bet.attempt', { uid, guessNo: guess, choice, betAmount });
 
   let auth = '';
   try {
     auth = await ensureTgUserToken(config, uid, buildTelegramLoginOpts(ctx.from));
   } catch (err) {
-    predictLog('vote.auth_fail', { uid, message: err?.message || String(err) });
+    predictLog('bet.auth_fail', { uid, message: err?.message || String(err) });
   }
   if (!auth) {
     auth = String(config.MOZI_DETAIL_AUTH || '').trim();
   }
 
+  const userId = await resolveGuessBetUserId(config, auth);
+  if (!userId) {
+    await answerPredictCbQuery(ctx, texts.predictBetUserResolveFailed, { show_alert: true });
+    return;
+  }
+
   try {
-    const result = await postCoinDirectionGuessVote({
+    const result = await postCoinDirectionGuessBet({
       apiBaseUrl: config.API_BASE_URL,
       appUrl: config.APP_URL,
       auth,
-      path: config.COIN_DIRECTION_GUESS_VOTE_PATH,
+      path: config.COIN_DIRECTION_GUESS_BET_PATH,
       guessNo: guess,
-      direction: apiDirection,
-      points: pendingPoints ?? undefined,
+      userId,
+      choice,
+      betAmount,
     });
-    predictLog('vote.api', {
+    predictLog('bet.api', {
       uid,
+      userId,
       guessNo: guess,
-      direction: apiDirection,
-      points: pendingPoints ?? null,
+      choice,
+      betAmount,
       ok: result.ok,
       status: result.status,
       errorMessage: result.errorMessage ?? null,
@@ -1085,7 +1115,7 @@ async function handleGuessVote(ctx, config, getTexts, guessNo, direction) {
     clearGuessBetPending(uid, guess);
     await tryRefreshGuessVoteKeyboard(ctx, texts, guess, result);
   } catch (err) {
-    predictLog('vote.fail', { uid, guessNo: guess, message: err?.message || String(err) });
+    predictLog('bet.fail', { uid, guessNo: guess, message: err?.message || String(err) });
     await answerPredictCbQuery(ctx, texts.predictVoteFailed, { show_alert: true });
   }
 }

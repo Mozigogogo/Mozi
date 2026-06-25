@@ -2071,7 +2071,7 @@ async function postCoinDirectionGuessBindMessage({
   }
 }
 
-function isCoinDirectionGuessVoteOk(json) {
+function isCoinDirectionGuessBetOk(json) {
   if (!json || typeof json !== 'object') return false;
   if (json.success === false) return false;
   const code = json.code;
@@ -2080,47 +2080,49 @@ function isCoinDirectionGuessVoteOk(json) {
 
 /**
  * @param {object | null} json
- * @returns {{ up: number; down: number } | null}
+ * @returns {string | null}
  */
-function parseGuessVoteCounts(json) {
+function parseDatainfoUserId(json) {
   if (!json || typeof json !== 'object') return null;
-  const data = json.data;
-  if (!data || typeof data !== 'object') return null;
-  const up = data.upCount ?? data.up_count ?? data.upVotes ?? data.upVoteCount;
-  const down = data.downCount ?? data.down_count ?? data.downVotes ?? data.downVoteCount;
-  if (up == null && down == null) return null;
-  return {
-    up: Number(up) || 0,
-    down: Number(down) || 0,
-  };
+  let data = json.data;
+  if (data && typeof data === 'object' && data.data && typeof data.data === 'object' && !Array.isArray(data.data)) {
+    data = data.data;
+  }
+  const profile = data && typeof data === 'object' && !Array.isArray(data) ? data : json;
+  const raw = profile.userId ?? profile.user_id ?? profile.uid ?? profile.id;
+  if (raw == null || !String(raw).trim()) return null;
+  const s = String(raw).trim();
+  return /^U/i.test(s) ? s : `U${s}`;
 }
 
 /**
- * POST /coinDirectionGuess/vote
+ * POST /coinDirectionGuess/bet
  * @param {{
  *   apiBaseUrl: string;
  *   auth?: string;
  *   appUrl?: string;
  *   guessNo: string;
- *   direction: 'UP' | 'DOWN';
- *   points?: number;
+ *   userId: string;
+ *   choice: 1 | 2;
+ *   betAmount: number;
  *   path?: string;
  *   timeoutMs?: number;
  * }} opts
  */
-async function postCoinDirectionGuessVote({
+async function postCoinDirectionGuessBet({
   apiBaseUrl,
   auth = '',
   appUrl = '',
   guessNo,
-  direction,
-  points,
-  path = 'coinDirectionGuess/vote',
+  userId,
+  choice,
+  betAmount,
+  path = 'coinDirectionGuess/bet',
   timeoutMs = 15000,
 }) {
   const base = String(apiBaseUrl || '').replace(/\/+$/, '');
   const app = String(appUrl || '').replace(/\/+$/, '');
-  const rel = String(path || 'coinDirectionGuess/vote').trim().replace(/^\/+/, '');
+  const rel = String(path || 'coinDirectionGuess/bet').trim().replace(/^\/+/, '');
   const url = `${base}/${rel}`;
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -2138,20 +2140,18 @@ async function postCoinDirectionGuessVote({
   if (app) {
     headers.referer = `${app}/`;
   }
-  const dir = String(direction || '').trim().toUpperCase() === 'DOWN' ? 'DOWN' : 'UP';
   const body = {
     guessNo: String(guessNo || '').trim(),
-    direction: dir,
+    userId: String(userId || '').trim(),
+    choice: Number(choice) === 2 ? 2 : 1,
+    betAmount: Math.max(1, Math.floor(Number(betAmount) || 0)),
   };
-  const pts = Math.floor(Number(points));
-  if (Number.isFinite(pts) && pts > 0) {
-    body.points = pts;
-  }
-  apiDebug('POST /coinDirectionGuess/vote ←', {
+  apiDebug('POST /coinDirectionGuess/bet ←', {
     url,
     guessNo: body.guessNo,
-    direction: body.direction,
-    points: body.points ?? null,
+    userId: body.userId,
+    choice: body.choice,
+    betAmount: body.betAmount,
     hasAuthenticationHeader: Boolean(rawAuth),
   });
   try {
@@ -2168,7 +2168,7 @@ async function postCoinDirectionGuessVote({
     } catch {
       json = null;
     }
-    const bizOk = isCoinDirectionGuessVoteOk(json);
+    const bizOk = isCoinDirectionGuessBetOk(json);
     const out = {
       ok: res.status === 200 && bizOk,
       status: res.status,
@@ -2176,9 +2176,11 @@ async function postCoinDirectionGuessVote({
       text,
       errorMessage: parseApiErrorMessage(json),
     };
-    apiDebug('POST /coinDirectionGuess/vote →', {
+    apiDebug('POST /coinDirectionGuess/bet →', {
       guessNo: body.guessNo,
-      direction: body.direction,
+      userId: body.userId,
+      choice: body.choice,
+      betAmount: body.betAmount,
       httpStatus: res.status,
       ok: out.ok,
       jsonCode: json && typeof json === 'object' ? json.code : null,
@@ -2189,6 +2191,23 @@ async function postCoinDirectionGuessVote({
   } finally {
     clearTimeout(t);
   }
+}
+
+/**
+ * @param {object | null} json
+ * @returns {{ up: number; down: number } | null}
+ */
+function parseGuessVoteCounts(json) {
+  if (!json || typeof json !== 'object') return null;
+  const data = json.data;
+  if (!data || typeof data !== 'object') return null;
+  const up = data.upCount ?? data.up_count ?? data.upVotes ?? data.upVoteCount;
+  const down = data.downCount ?? data.down_count ?? data.downVotes ?? data.downVoteCount;
+  if (up == null && down == null) return null;
+  return {
+    up: Number(up) || 0,
+    down: Number(down) || 0,
+  };
 }
 
 module.exports = {
@@ -2211,10 +2230,11 @@ module.exports = {
   postGroupReferrerBind,
   postCoinDirectionGuessPublish,
   postCoinDirectionGuessBindMessage,
-  postCoinDirectionGuessVote,
+  postCoinDirectionGuessBet,
   parseCoinDirectionGuessNo,
   parseCoinDirectionGuessPublishData,
   parseGuessVoteCounts,
+  parseDatainfoUserId,
   requestAgentStream,
   requestChatStream,
   requestBigorderStream,
