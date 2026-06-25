@@ -410,17 +410,35 @@ function buildGuessBetPointsKeyboard(texts, guessNo) {
   };
 }
 
-async function editGuessCallbackKeyboard(ctx, keyboard) {
-  const msg = ctx.callbackQuery?.message;
-  if (!msg || !('message_id' in msg)) return false;
-  const chatId = msg.chat?.id;
-  const messageId = msg.message_id;
+async function editGuessMessageKeyboard(ctx, chatId, messageId, keyboard) {
   if (chatId == null || messageId == null) return false;
   try {
     await ctx.telegram.editMessageReplyMarkup(chatId, messageId, undefined, keyboard);
     return true;
-  } catch {
+  } catch (err) {
+    predictLog('guess.keyboard_edit_fail', {
+      chatId,
+      messageId,
+      reason: err?.response?.description || err?.message || String(err),
+    });
     return false;
+  }
+}
+
+async function editGuessCallbackKeyboard(ctx, keyboard) {
+  if (!ctx.callbackQuery?.message) return false;
+  try {
+    await ctx.editMessageReplyMarkup(keyboard);
+    return true;
+  } catch (err) {
+    const msg = ctx.callbackQuery.message;
+    if (!('message_id' in msg)) {
+      predictLog('guess.keyboard_edit_fail', {
+        reason: err?.response?.description || err?.message || String(err),
+      });
+      return false;
+    }
+    return editGuessMessageKeyboard(ctx, msg.chat?.id, msg.message_id, keyboard);
   }
 }
 
@@ -967,11 +985,8 @@ async function tryRefreshGuessVoteKeyboard(ctx, texts, guessNo, voteResult) {
   if (!counts) return;
   const msg = ctx.callbackQuery?.message;
   if (!msg || !('message_id' in msg)) return;
-  const chatId = msg.chat?.id;
-  const messageId = msg.message_id;
-  if (chatId == null || messageId == null) return;
   const keyboard = buildGuessVoteKeyboard(texts, guessNo, counts);
-  await ctx.telegram.editMessageReplyMarkup(chatId, messageId, undefined, keyboard).catch(() => {});
+  await editGuessMessageKeyboard(ctx, msg.chat?.id, msg.message_id, keyboard);
 }
 
 /**
@@ -1090,9 +1105,18 @@ async function handleGuessBetCustom(ctx, getTexts, guessNo) {
 async function handleGuessBetBack(ctx, getTexts, guessNo) {
   const uid = ctx.from?.id;
   const texts = getTexts(ctx.from?.language_code || 'en');
+  const guess = String(guessNo || '').trim();
   clearGuessBetCustomSession(uid);
-  await ctx.answerCbQuery().catch(() => {});
-  await editGuessCallbackKeyboard(ctx, buildGuessVoteKeyboard(texts, guessNo));
+  if (!guess) {
+    await ctx.answerCbQuery().catch(() => {});
+    return;
+  }
+  const ok = await editGuessCallbackKeyboard(ctx, buildGuessVoteKeyboard(texts, guess));
+  if (ok) {
+    await ctx.answerCbQuery().catch(() => {});
+  } else {
+    await answerPredictCbQuery(ctx, texts.predictVoteFailed, { show_alert: true });
+  }
 }
 
 /**
@@ -1106,15 +1130,17 @@ async function handleGuessBetCustomTextInput(ctx, getTexts) {
 
   const chatType = ctx.chat?.type;
   if (chatType !== 'group' && chatType !== 'supergroup') return false;
+  if (ctx.chat?.id !== session.chatId) return false;
 
   const texts = getTexts(ctx.from?.language_code || 'en');
   const raw = String(ctx.message?.text || '').trim();
-  if (!raw || !/^\d{1,9}$/.test(raw)) {
+  const digits = raw.replace(/[^\d]/g, '');
+  if (!digits || !/^\d{1,9}$/.test(digits)) {
     await ctx.reply(texts.predictBetCustomInputInvalid).catch(() => {});
     return true;
   }
 
-  const pts = Math.floor(Number(raw));
+  const pts = Math.floor(Number(digits));
   if (pts <= 0) {
     await ctx.reply(texts.predictBetCustomInputInvalid).catch(() => {});
     return true;
@@ -1123,14 +1149,12 @@ async function handleGuessBetCustomTextInput(ctx, getTexts) {
   setGuessBetPending(uid, session.guessNo, pts);
   clearGuessBetCustomSession(uid);
   await ctx.deleteMessage().catch(() => {});
-  await ctx.telegram
-    .editMessageReplyMarkup(
-      session.chatId,
-      session.messageId,
-      undefined,
-      buildGuessVoteKeyboard(texts, session.guessNo),
-    )
-    .catch(() => {});
+  await editGuessMessageKeyboard(
+    ctx,
+    session.chatId,
+    session.messageId,
+    buildGuessVoteKeyboard(texts, session.guessNo),
+  );
   await ctx.reply(texts.predictBetPointsSelectedToast(pts)).catch(() => {});
   return true;
 }
