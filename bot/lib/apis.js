@@ -2198,16 +2198,57 @@ async function postCoinDirectionGuessBet({
  * @returns {{ up: number; down: number } | null}
  */
 function parseGuessVoteCounts(json) {
+  const stats = parseGuessBetStats(json);
+  if (!stats) return null;
+  return { up: stats.upCount, down: stats.downCount };
+}
+
+/**
+ * @param {object | null} json
+ * @returns {{
+ *   upCount: number;
+ *   downCount: number;
+ *   upPoints: number;
+ *   downPoints: number;
+ *   upPercent: number | null;
+ *   downPercent: number | null;
+ * } | null}
+ */
+function parseGuessBetStats(json) {
   if (!json || typeof json !== 'object') return null;
   const data = json.data;
   if (!data || typeof data !== 'object') return null;
-  const up = data.upCount ?? data.up_count ?? data.upVotes ?? data.upVoteCount;
-  const down = data.downCount ?? data.down_count ?? data.downVotes ?? data.downVoteCount;
-  if (up == null && down == null) return null;
-  return {
-    up: Number(up) || 0,
-    down: Number(down) || 0,
-  };
+  const upCount = Number(
+    data.upCount ?? data.up_count ?? data.upVotes ?? data.upVoteCount ?? data.bullCount ?? 0,
+  ) || 0;
+  const downCount = Number(
+    data.downCount ?? data.down_count ?? data.downVotes ?? data.downVoteCount ?? data.bearCount ?? 0,
+  ) || 0;
+  const upPoints = Number(
+    data.upPoints ?? data.up_points ?? data.upBetAmount ?? data.up_bet_amount ?? data.bullPoints ?? 0,
+  ) || 0;
+  const downPoints = Number(
+    data.downPoints ?? data.down_points ?? data.downBetAmount ?? data.down_bet_amount ?? data.bearPoints ?? 0,
+  ) || 0;
+  const upPercentRaw = data.upPercent ?? data.up_percent ?? data.bullPercent ?? data.bullishPercent;
+  const downPercentRaw = data.downPercent ?? data.down_percent ?? data.bearPercent ?? data.bearishPercent;
+  const upPercent =
+    upPercentRaw != null && Number.isFinite(Number(upPercentRaw)) ? Math.round(Number(upPercentRaw)) : null;
+  const downPercent =
+    downPercentRaw != null && Number.isFinite(Number(downPercentRaw))
+      ? Math.round(Number(downPercentRaw))
+      : null;
+  if (
+    upCount === 0 &&
+    downCount === 0 &&
+    upPoints === 0 &&
+    downPoints === 0 &&
+    upPercent == null &&
+    downPercent == null
+  ) {
+    return null;
+  }
+  return { upCount, downCount, upPoints, downPoints, upPercent, downPercent };
 }
 
 module.exports = {
@@ -2234,6 +2275,7 @@ module.exports = {
   parseCoinDirectionGuessNo,
   parseCoinDirectionGuessPublishData,
   parseGuessVoteCounts,
+  parseGuessBetStats,
   parseDatainfoUserId,
   requestAgentStream,
   requestChatStream,

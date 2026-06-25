@@ -18,12 +18,9 @@ const {
   handlePredictTextInput,
   backToSymbolPicker,
   answerPredictCbQuery,
-  handleGuessVote,
-  handleGuessBetOpen,
-  handleGuessBetQuick,
+  handleGuessBetDirect,
   handleGuessBetCustom,
   handleGuessBetNumpadAction,
-  handleGuessBetBack,
 } = require('../lib/predictFlow');
 
 /**
@@ -77,38 +74,21 @@ function registerPredict(bot, config, { getTexts }) {
     await startPredictFlow(ctx, config, getTexts);
   });
 
-  bot.action(/^g:v:(UP|DN):(.+)$/, async (ctx) => {
+  bot.action(/^g:b:(UP|DN):(\d{1,6}|cst):(.+)$/, async (ctx) => {
     const direction = ctx.match[1] === 'DN' ? 'DOWN' : 'UP';
-    const guessNo = ctx.match[2];
-    await handleGuessVote(ctx, config, getTexts, guessNo, direction);
-  });
-
-  bot.action(/^g:b:/, async (ctx) => {
-    const data = String(ctx.callbackQuery?.data || '');
-    if (data.startsWith('g:b:back:')) {
-      await handleGuessBetBack(ctx, getTexts, data.slice('g:b:back:'.length));
+    const amountOrCst = ctx.match[2];
+    const guessNo = ctx.match[3];
+    if (amountOrCst === 'cst') {
+      await handleGuessBetCustom(ctx, getTexts, guessNo, direction);
       return;
     }
-    if (data.startsWith('g:b:cst:')) {
-      await handleGuessBetCustom(ctx, getTexts, data.slice('g:b:cst:'.length));
-      return;
-    }
-    if (data.startsWith('g:b:o:')) {
-      await handleGuessBetOpen(ctx, getTexts, data.slice('g:b:o:'.length));
-      return;
-    }
-    const quickMatch = data.match(/^g:b:(\d{1,6}):(.+)$/);
-    if (quickMatch) {
-      await handleGuessBetQuick(ctx, getTexts, quickMatch[2], quickMatch[1]);
-      return;
-    }
-    await ctx.answerCbQuery().catch(() => {});
+    await handleGuessBetDirect(ctx, config, getTexts, guessNo, direction, Number(amountOrCst));
   });
 
   bot.action(/^g:n:/, async (ctx) => {
     const data = String(ctx.callbackQuery?.data || '');
     const action = data.slice('g:n:'.length);
-    await handleGuessBetNumpadAction(ctx, getTexts, action);
+    await handleGuessBetNumpadAction(ctx, config, getTexts, action);
   });
 
   bot.action(/^p:/, async (ctx) => {

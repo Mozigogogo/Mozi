@@ -26,7 +26,7 @@ function purgeExpired() {
 
 /**
  * @param {string | number} userId
- * @param {{ guessNo: string; chatId: number; messageId: number }} data
+ * @param {{ guessNo: string; chatId: number; messageId: number; choice?: 1 | 2 }} data
  */
 function saveGuessBetCustomSession(userId, data) {
   const key = String(userId ?? '').trim();
@@ -36,6 +36,7 @@ function saveGuessBetCustomSession(userId, data) {
     guessNo: String(data.guessNo || '').trim(),
     chatId: data.chatId,
     messageId: data.messageId,
+    choice: Number(data.choice) === 2 ? 2 : 1,
     draft: String(data.draft ?? '').replace(/\D/g, '').slice(0, 9),
     expireAt: Date.now() + TTL_MS,
   });

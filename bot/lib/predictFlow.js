@@ -2,7 +2,7 @@
  * /predict 多步 UI：选币 → 确认文案 → 发布投票
  */
 
-const { fetchDetailHeader, fetchSearchLastPriceChange, fetchUserDatainfo, postCoinDirectionGuessPublish, postCoinDirectionGuessBindMessage, postCoinDirectionGuessBet, parseCoinDirectionGuessNo, parseCoinDirectionGuessPublishData, parseGuessVoteCounts, parseDatainfoUserId } = require('./apis');
+const { fetchDetailHeader, fetchSearchLastPriceChange, fetchUserDatainfo, postCoinDirectionGuessPublish, postCoinDirectionGuessBindMessage, postCoinDirectionGuessBet, parseCoinDirectionGuessNo, parseCoinDirectionGuessPublishData, parseGuessBetStats, parseDatainfoUserId } = require('./apis');
 const { SYMBOL_WHITELIST } = require('./symbolIntent');
 const { escapeHtml } = require('./telegramHtml');
 const { buildPredictPrivateUrl } = require('./predictSymbol');
@@ -21,10 +21,8 @@ const {
   getGuessBetCustomSession,
   clearGuessBetCustomSession,
   patchGuessBetCustomSession,
-  setGuessBetPending,
-  getGuessBetPending,
-  clearGuessBetPending,
 } = require('./guessBetSession');
+const { saveGuessMessageContext, getGuessMessageContext } = require('./guessMessageContext');
 
 const QUICK_SYMBOLS = ['BTC', 'ETH', 'SOL'];
 const DEFAULT_HOURS = 24;
@@ -68,12 +66,156 @@ function formatEndAtDisplay(endAt, languageCode) {
   }
 }
 
+function formatLockedAtDisplay(ms, languageCode) {
+  const ts = Number(ms);
+  if (!Number.isFinite(ts)) return '—';
+  const isZh = String(languageCode || '').toLowerCase().startsWith('zh');
+  try {
+    return new Date(ts).toLocaleString(isZh ? 'zh-CN' : 'en-US', {
+      timeZone: 'Asia/Shanghai',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).replace(/\//g, '-');
+  } catch {
+    return new Date(ts).toISOString();
+  }
+}
+
+function formatCountdownRelative(endAt, languageCode) {
+  const ms = parseEndAtMs(endAt);
+  if (ms == null) return '—';
+  const isZh = String(languageCode || '').toLowerCase().startsWith('zh');
+  const diff = ms - Date.now();
+  if (diff <= 0) return isZh ? '已截止' : 'Closed';
+  const totalMin = Math.floor(diff / 60000);
+  const hours = Math.floor(totalMin / 60);
+  const mins = totalMin % 60;
+  if (isZh) {
+    if (hours > 0 && mins > 0) return `${hours}小时${mins}分后`;
+    if (hours > 0) return `${hours}小时后`;
+    return `${mins}分后`;
+  }
+  if (hours > 0 && mins > 0) return `${hours}h ${mins}m`;
+  if (hours > 0) return `${hours}h`;
+  return `${mins}m`;
+}
+
+function formatPointsDisplay(points, languageCode) {
+  const n = Math.max(0, Math.floor(Number(points) || 0));
+  const isZh = String(languageCode || '').toLowerCase().startsWith('zh');
+  return isZh ? n.toLocaleString('zh-CN') : n.toLocaleString('en-US');
+}
+
+/**
+ * @param {ReturnType<typeof parseGuessBetStats> | null | undefined} raw
+ * @param {string} [languageCode]
+ */
+function normalizeGuessBetStats(raw, languageCode) {
+  const isZh = String(languageCode || '').toLowerCase().startsWith('zh');
+  const upCount = raw?.upCount ?? 0;
+  const downCount = raw?.downCount ?? 0;
+  const upPoints = raw?.upPoints ?? 0;
+  const downPoints = raw?.downPoints ?? 0;
+  let upPercent = raw?.upPercent;
+  let downPercent = raw?.downPercent;
+  const totalPts = upPoints + downPoints;
+  if (upPercent == null && downPercent == null && totalPts > 0) {
+    upPercent = Math.round((upPoints / totalPts) * 100);
+    downPercent = 100 - upPercent;
+  } else if (upPercent == null && downPercent == null) {
+    const total = upCount + downCount;
+    if (total > 0) {
+      upPercent = Math.round((upCount / total) * 100);
+      downPercent = 100 - upPercent;
+    } else {
+      upPercent = 0;
+      downPercent = 0;
+    }
+  } else {
+    upPercent = upPercent ?? 0;
+    downPercent = downPercent ?? (upPercent != null ? 100 - upPercent : 0);
+  }
+  return {
+    upCount,
+    downCount,
+    upPoints: formatPointsDisplay(upPoints, isZh ? 'zh' : 'en'),
+    downPoints: formatPointsDisplay(downPoints, isZh ? 'zh' : 'en'),
+    upPercent,
+    downPercent,
+  };
+}
+
 function resolvePublishNickName(publishData, ctx) {
   if (publishData?.nickName) return String(publishData.nickName).trim();
   const from = ctx.from;
   if (from?.username) return String(from.username).trim();
   const name = [from?.first_name, from?.last_name].filter(Boolean).join(' ').trim();
   return name || 'User';
+}
+
+function formatPublisherLabel(publishData, ctx) {
+  const username = ctx.from?.username ? String(ctx.from.username).trim() : '';
+  if (username) return `@${escapeHtml(username)}`;
+  const nick = publishData?.nickName || resolvePublishNickName(publishData, ctx);
+  return escapeHtml(nick);
+}
+
+function buildGroupPublishHtml(texts, meta, statsRaw) {
+  const stats = normalizeGuessBetStats(statsRaw, meta.languageCode);
+  const lockedAt = formatLockedAtDisplay(meta.lockedAtMs, meta.languageCode);
+  const countdown = formatCountdownRelative(meta.endAt, meta.languageCode);
+  return texts.predictGroupPublishBody(
+    escapeHtml(meta.sym),
+    meta.hours,
+    escapeHtml(meta.price),
+    lockedAt,
+    stats,
+    countdown,
+    meta.publisher,
+  );
+}
+
+function buildGuessBetKeyboard(texts, guessNo) {
+  const g = String(guessNo || '').trim();
+  return {
+    inline_keyboard: [
+      [
+        { text: texts.predictBetUp50Btn, callback_data: `g:b:UP:50:${g}` },
+        { text: texts.predictBetUp100Btn, callback_data: `g:b:UP:100:${g}` },
+        { text: texts.predictBetUpCustomBtn, callback_data: `g:b:UP:cst:${g}` },
+      ],
+      [
+        { text: texts.predictBetDown50Btn, callback_data: `g:b:DN:50:${g}` },
+        { text: texts.predictBetDown100Btn, callback_data: `g:b:DN:100:${g}` },
+        { text: texts.predictBetDownCustomBtn, callback_data: `g:b:DN:cst:${g}` },
+      ],
+    ],
+  };
+}
+
+async function editGuessMessageContent(ctx, chatId, messageId, html, keyboard, hasPhoto) {
+  if (chatId == null || messageId == null) return false;
+  const extra = { parse_mode: 'HTML', reply_markup: keyboard };
+  try {
+    if (hasPhoto) {
+      await ctx.telegram.editMessageCaption(chatId, messageId, undefined, html, extra);
+    } else {
+      await ctx.telegram.editMessageText(chatId, messageId, undefined, html, extra);
+    }
+    return true;
+  } catch (err) {
+    predictLog('guess.message_edit_fail', {
+      chatId,
+      messageId,
+      hasPhoto,
+      reason: err?.response?.description || err?.message || String(err),
+    });
+    return false;
+  }
 }
 
 async function registerCoinDirectionGuessPublish(ctx, config, { publishChatId, sym, hours, title }) {
@@ -372,58 +514,6 @@ function buildPublishedKeyboard(texts) {
   return {
     inline_keyboard: [[{ text: texts.predictPublishedBtn, callback_data: 'p:published' }]],
   };
-}
-
-function buildGuessVoteKeyboard(texts, guessNo, counts) {
-  const g = String(guessNo || '').trim();
-  const upText =
-    counts && Number.isFinite(counts.up)
-      ? texts.predictVoteUpBtnCount(counts.up)
-      : texts.predictVoteUpBtn;
-  const downText =
-    counts && Number.isFinite(counts.down)
-      ? texts.predictVoteDownBtnCount(counts.down)
-      : texts.predictVoteDownBtn;
-  return {
-    inline_keyboard: [
-      [
-        { text: upText, callback_data: `g:v:UP:${g}` },
-        { text: downText, callback_data: `g:v:DN:${g}` },
-      ],
-      [{ text: texts.predictBetPointsBtn, callback_data: `g:b:o:${g}` }],
-    ],
-  };
-}
-
-function buildGuessBetPointsKeyboard(texts, guessNo) {
-  const g = String(guessNo || '').trim();
-  return {
-    inline_keyboard: [
-      [
-        { text: texts.predictBetPoints100Btn, callback_data: `g:b:100:${g}` },
-        { text: texts.predictBetPoints200Btn, callback_data: `g:b:200:${g}` },
-      ],
-      [
-        { text: texts.predictBetPointsCustomBtn, callback_data: `g:b:cst:${g}` },
-        { text: texts.predictBetBackBtn, callback_data: `g:b:back:${g}` },
-      ],
-    ],
-  };
-}
-
-async function editGuessMessageKeyboard(ctx, chatId, messageId, keyboard) {
-  if (chatId == null || messageId == null) return false;
-  try {
-    await ctx.telegram.editMessageReplyMarkup(chatId, messageId, undefined, keyboard);
-    return true;
-  } catch (err) {
-    predictLog('guess.keyboard_edit_fail', {
-      chatId,
-      messageId,
-      reason: err?.response?.description || err?.message || String(err),
-    });
-    return false;
-  }
 }
 
 function buildGuessBetNumpadKeyboard(texts, draft) {
@@ -914,18 +1004,24 @@ async function publishPredict(ctx, config, getTexts) {
   const guessNo = apiResult.guessNo ?? parseCoinDirectionGuessNo(apiResult.json);
   const publishData =
     apiResult.publishData ?? parseCoinDirectionGuessPublishData(apiResult.json);
-  const nickName = escapeHtml(resolvePublishNickName(publishData, ctx));
-  const avatarUrl = publishData.avatar ? String(publishData.avatar).trim() : '';
-  const endAtFormatted = escapeHtml(formatEndAtDisplay(publishData.endAt, languageCode));
-  const groupPublishHtml = texts.predictGroupPublishBody(
-    nickName,
-    escapeHtml(sym),
+  const publisher = formatPublisherLabel(publishData, ctx);
+  const lockedAtMs = Date.now();
+  const messageMeta = {
+    sym,
     hours,
-    escapeHtml(priceStr),
-    endAtFormatted,
-  );
-  const voteKeyboard = guessNo ? buildGuessVoteKeyboard(texts, guessNo) : undefined;
-  const sendExtra = voteKeyboard ? { parse_mode: 'HTML', reply_markup: voteKeyboard } : { parse_mode: 'HTML' };
+    price: priceStr,
+    lockedAtMs,
+    endAt: publishData.endAt ?? null,
+    publisher,
+    languageCode,
+  };
+  const groupPublishHtml = buildGroupPublishHtml(texts, messageMeta, null);
+  const betKeyboard = guessNo ? buildGuessBetKeyboard(texts, guessNo) : undefined;
+  const sendExtra = betKeyboard ? { parse_mode: 'HTML', reply_markup: betKeyboard } : { parse_mode: 'HTML' };
+
+  if (guessNo) {
+    saveGuessMessageContext(guessNo, messageMeta);
+  }
 
   predictLog('publish.guess_created', {
     uid,
@@ -934,10 +1030,10 @@ async function publishPredict(ctx, config, getTexts) {
     nickName: publishData.nickName ?? null,
     hasAvatar: Boolean(avatarUrl),
     endAt: publishData.endAt ?? null,
-    endAtFormatted,
     customVote: true,
   });
 
+  const avatarUrl = publishData.avatar ? String(publishData.avatar).trim() : '';
   let guessMsg;
   try {
     if (avatarUrl) {
@@ -963,7 +1059,7 @@ async function publishPredict(ctx, config, getTexts) {
       publishChatId,
       messageId: guessMessageId,
       withAvatar: Boolean(avatarUrl),
-      hasVoteButtons: Boolean(voteKeyboard),
+      hasVoteButtons: Boolean(betKeyboard),
     });
     predictLog('publish.target_group_message_ids', {
       uid,
@@ -1014,17 +1110,19 @@ async function publishPredict(ctx, config, getTexts) {
   await markConfirmPublished(ctx, session, texts, sym, priceStr, hours);
 }
 
-async function tryRefreshGuessVoteKeyboard(ctx, texts, guessNo, voteResult) {
-  const counts = parseGuessVoteCounts(voteResult?.json);
-  if (!counts) return;
+async function tryRefreshGuessMessage(ctx, texts, guessNo, betResult) {
+  const meta = getGuessMessageContext(guessNo);
   const msg = ctx.callbackQuery?.message;
-  if (!msg || !('message_id' in msg)) return;
-  const keyboard = buildGuessVoteKeyboard(texts, guessNo, counts);
-  await editGuessMessageKeyboard(ctx, msg.chat?.id, msg.message_id, keyboard);
+  if (!meta || !msg || !('message_id' in msg)) return;
+  const statsRaw = parseGuessBetStats(betResult?.json);
+  const html = buildGroupPublishHtml(texts, meta, statsRaw);
+  const keyboard = buildGuessBetKeyboard(texts, guessNo);
+  const hasPhoto = Boolean(msg.photo && msg.photo.length > 0);
+  await editGuessMessageContent(ctx, msg.chat?.id, msg.message_id, html, keyboard, hasPhoto);
 }
 
 /**
- * 群内自定义投票：涨 / 跌 inline 按钮 → POST /coinDirectionGuess/bet
+ * 群内下注：方向 + 积分 → POST /coinDirectionGuess/bet
  */
 async function resolveGuessBetUserId(config, auth) {
   try {
@@ -1044,27 +1142,22 @@ async function resolveGuessBetUserId(config, auth) {
   return null;
 }
 
-async function handleGuessVote(ctx, config, getTexts, guessNo, direction) {
+async function submitGuessBet(ctx, config, getTexts, guessNo, direction, betAmount) {
   const uid = ctx.from?.id;
   const languageCode = ctx.from?.language_code || 'en';
   const texts = getTexts(languageCode);
   const isZh = languageCode.toLowerCase().startsWith('zh');
   const choice = direction === 'DOWN' ? 2 : 1;
-  const dirLabel = choice === 1 ? (isZh ? '涨' : 'Up') : (isZh ? '跌' : 'Down');
+  const dirLabel = choice === 1 ? (isZh ? '看涨' : 'Bull') : (isZh ? '看跌' : 'Bear');
   const guess = String(guessNo || '').trim();
+  const pts = Math.floor(Number(betAmount));
 
-  if (!guess) {
+  if (!guess || pts <= 0) {
     await answerPredictCbQuery(ctx, texts.predictVoteFailed, { show_alert: true });
-    return;
+    return false;
   }
 
-  const betAmount = getGuessBetPending(uid, guess);
-  if (betAmount == null || betAmount <= 0) {
-    await answerPredictCbQuery(ctx, texts.predictBetRequiredToast, { show_alert: true });
-    return;
-  }
-
-  predictLog('bet.attempt', { uid, guessNo: guess, choice, betAmount });
+  predictLog('bet.attempt', { uid, guessNo: guess, choice, betAmount: pts });
 
   let auth = '';
   try {
@@ -1079,7 +1172,7 @@ async function handleGuessVote(ctx, config, getTexts, guessNo, direction) {
   const userId = await resolveGuessBetUserId(config, auth);
   if (!userId) {
     await answerPredictCbQuery(ctx, texts.predictBetUserResolveFailed, { show_alert: true });
-    return;
+    return false;
   }
 
   try {
@@ -1091,14 +1184,14 @@ async function handleGuessVote(ctx, config, getTexts, guessNo, direction) {
       guessNo: guess,
       userId,
       choice,
-      betAmount,
+      betAmount: pts,
     });
     predictLog('bet.api', {
       uid,
       userId,
       guessNo: guess,
       choice,
-      betAmount,
+      betAmount: pts,
       ok: result.ok,
       status: result.status,
       errorMessage: result.errorMessage ?? null,
@@ -1109,47 +1202,24 @@ async function handleGuessVote(ctx, config, getTexts, guessNo, direction) {
         result.errorMessage || texts.predictVoteFailed,
         { show_alert: true },
       );
-      return;
+      return false;
     }
-    await ctx.answerCbQuery(texts.predictVoteSuccess(dirLabel)).catch(() => {});
-    clearGuessBetPending(uid, guess);
-    await tryRefreshGuessVoteKeyboard(ctx, texts, guess, result);
+    await ctx.answerCbQuery(texts.predictVoteSuccess(dirLabel, pts)).catch(() => {});
+    const refreshTexts = getTexts(getGuessMessageContext(guess)?.languageCode || languageCode);
+    await tryRefreshGuessMessage(ctx, refreshTexts, guess, result);
+    return true;
   } catch (err) {
     predictLog('bet.fail', { uid, guessNo: guess, message: err?.message || String(err) });
     await answerPredictCbQuery(ctx, texts.predictVoteFailed, { show_alert: true });
+    return false;
   }
 }
 
-async function handleGuessBetOpen(ctx, getTexts, guessNo) {
-  const texts = getTexts(ctx.from?.language_code || 'en');
-  const guess = String(guessNo || '').trim();
-  if (!guess) {
-    await ctx.answerCbQuery().catch(() => {});
-    return;
-  }
-  await ctx.answerCbQuery().catch(() => {});
-  const ok = await editGuessCallbackKeyboard(ctx, buildGuessBetPointsKeyboard(texts, guess));
-  if (!ok) {
-    await answerPredictCbQuery(ctx, texts.predictVoteFailed, { show_alert: true });
-  }
+async function handleGuessBetDirect(ctx, config, getTexts, guessNo, direction, betAmount) {
+  await submitGuessBet(ctx, config, getTexts, guessNo, direction, betAmount);
 }
 
-async function handleGuessBetQuick(ctx, getTexts, guessNo, points) {
-  const uid = ctx.from?.id;
-  const texts = getTexts(ctx.from?.language_code || 'en');
-  const guess = String(guessNo || '').trim();
-  const pts = Math.floor(Number(points));
-  if (!guess || pts <= 0) {
-    await ctx.answerCbQuery().catch(() => {});
-    return;
-  }
-  setGuessBetPending(uid, guess, pts);
-  clearGuessBetCustomSession(uid);
-  await answerPredictCbQuery(ctx, texts.predictBetPointsSelectedToast(pts));
-  await editGuessCallbackKeyboard(ctx, buildGuessVoteKeyboard(texts, guess));
-}
-
-async function handleGuessBetCustom(ctx, getTexts, guessNo) {
+async function handleGuessBetCustom(ctx, getTexts, guessNo, direction) {
   const uid = ctx.from?.id;
   const texts = getTexts(ctx.from?.language_code || 'en');
   const guess = String(guessNo || '').trim();
@@ -1163,12 +1233,13 @@ async function handleGuessBetCustom(ctx, getTexts, guessNo) {
     guessNo: guess,
     chatId: msg.chat.id,
     messageId: msg.message_id,
+    choice: direction === 'DOWN' ? 2 : 1,
     draft: '',
   });
   await editGuessCallbackKeyboard(ctx, buildGuessBetNumpadKeyboard(texts, ''));
 }
 
-async function handleGuessBetNumpadAction(ctx, getTexts, action) {
+async function handleGuessBetNumpadAction(ctx, config, getTexts, action) {
   const uid = ctx.from?.id;
   const texts = getTexts(ctx.from?.language_code || 'en');
   const session = uid != null ? getGuessBetCustomSession(uid) : null;
@@ -1185,7 +1256,7 @@ async function handleGuessBetNumpadAction(ctx, getTexts, action) {
   if (action === 'menu') {
     clearGuessBetCustomSession(uid);
     await ctx.answerCbQuery().catch(() => {});
-    await editGuessCallbackKeyboard(ctx, buildGuessBetPointsKeyboard(texts, session.guessNo));
+    await editGuessCallbackKeyboard(ctx, buildGuessBetKeyboard(texts, session.guessNo));
     return;
   }
 
@@ -1205,10 +1276,9 @@ async function handleGuessBetNumpadAction(ctx, getTexts, action) {
       await answerPredictCbQuery(ctx, texts.predictBetNumpadEmptyToast, { show_alert: true });
       return;
     }
-    setGuessBetPending(uid, session.guessNo, pts);
+    const direction = session.choice === 2 ? 'DOWN' : 'UP';
     clearGuessBetCustomSession(uid);
-    await answerPredictCbQuery(ctx, texts.predictBetPointsSelectedToast(pts));
-    await editGuessCallbackKeyboard(ctx, buildGuessVoteKeyboard(texts, session.guessNo));
+    await submitGuessBet(ctx, config, getTexts, session.guessNo, direction, pts);
     return;
   }
 
@@ -1225,19 +1295,6 @@ async function handleGuessBetNumpadAction(ctx, getTexts, action) {
   }
 
   await ctx.answerCbQuery().catch(() => {});
-}
-
-async function handleGuessBetBack(ctx, getTexts, guessNo) {
-  const uid = ctx.from?.id;
-  const texts = getTexts(ctx.from?.language_code || 'en');
-  const guess = String(guessNo || '').trim();
-  clearGuessBetCustomSession(uid);
-  if (!guess) {
-    await ctx.answerCbQuery().catch(() => {});
-    return;
-  }
-  await ctx.answerCbQuery().catch(() => {});
-  await editGuessCallbackKeyboard(ctx, buildGuessVoteKeyboard(texts, guess));
 }
 
 /**
@@ -1472,12 +1529,9 @@ module.exports = {
   startPredictFlow,
   selectSymbolAndConfirm,
   publishPredict,
-  handleGuessVote,
-  handleGuessBetOpen,
-  handleGuessBetQuick,
+  handleGuessBetDirect,
   handleGuessBetCustom,
   handleGuessBetNumpadAction,
-  handleGuessBetBack,
   handleGuessBetCustomTextInput,
   cancelPredict,
   showCustomSymbolInput,
