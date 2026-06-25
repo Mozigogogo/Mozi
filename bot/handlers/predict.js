@@ -21,6 +21,7 @@ const {
   handleGuessBetDirect,
   handleGuessBetCustom,
   handleGuessBetNumpadAction,
+  handlePredictList,
 } = require('../lib/predictFlow');
 
 /**
@@ -60,6 +61,21 @@ function registerPredict(bot, config, { getTexts }) {
   const { PREDICT_FORCE_PRIVATE } = config;
 
   bot.command('predict', async (ctx) => {
+    const payload = String(ctx.message?.text || '')
+      .replace(/^\/predict(?:@\w+)?\s*/i, '')
+      .trim()
+      .toLowerCase();
+
+    if (payload === 'list') {
+      predictDebug('command.predict_list', {
+        uid: ctx.from?.id ?? null,
+        chatType: ctx.chat?.type ?? null,
+        chatId: ctx.chat?.id ?? null,
+      });
+      await handlePredictList(ctx, config, getTexts);
+      return;
+    }
+
     predictDebug('command.predict', {
       uid: ctx.from?.id ?? null,
       chatType: ctx.chat?.type ?? null,

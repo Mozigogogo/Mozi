@@ -2193,6 +2193,90 @@ async function postCoinDirectionGuessBet({
   }
 }
 
+function isCoinDirectionGuessListOk(json) {
+  if (!json || typeof json !== 'object') return false;
+  if (json.success === false) return false;
+  const code = json.code;
+  return code === undefined || code === 0 || code === 200;
+}
+
+/**
+ * @param {object | null} json
+ * @returns {object[]}
+ */
+function parseCoinDirectionGuessList(json) {
+  if (!json || typeof json !== 'object') return [];
+  const data = json.data;
+  if (!Array.isArray(data)) return [];
+  return data.filter((item) => item && typeof item === 'object');
+}
+
+/**
+ * GET /coinDirectionGuess/list?groupId=
+ * @param {{
+ *   apiBaseUrl: string;
+ *   groupId: number | string;
+ *   appUrl?: string;
+ *   path?: string;
+ *   timeoutMs?: number;
+ * }} opts
+ */
+async function getCoinDirectionGuessList({
+  apiBaseUrl,
+  groupId,
+  appUrl = '',
+  path = 'coinDirectionGuess/list',
+  timeoutMs = 15000,
+}) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const rel = String(path || 'coinDirectionGuess/list').trim().replace(/^\/+/, '');
+  const q = new URLSearchParams({ groupId: String(groupId) });
+  const url = `${base}/${rel}?${q.toString()}`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    'user-agent': DEFAULT_UA,
+  };
+  if (app) {
+    headers.referer = `${app}/`;
+  }
+  apiDebug('GET /coinDirectionGuess/list ←', { url, groupId: String(groupId) });
+  try {
+    const res = await fetch(url, { method: 'GET', headers, signal: ctrl.signal });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const bizOk = isCoinDirectionGuessListOk(json);
+    const out = {
+      ok: res.status === 200 && bizOk,
+      status: res.status,
+      json,
+      text,
+      items: parseCoinDirectionGuessList(json),
+      errorMessage: parseApiErrorMessage(json),
+    };
+    apiDebug('GET /coinDirectionGuess/list →', {
+      groupId: String(groupId),
+      httpStatus: res.status,
+      ok: out.ok,
+      count: out.items.length,
+      errorMessage: out.errorMessage,
+      bodyPreview: text.slice(0, 500),
+    });
+    return out;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 /**
  * @param {object | null} json
  * @returns {{ up: number; down: number } | null}
@@ -2272,8 +2356,10 @@ module.exports = {
   postCoinDirectionGuessPublish,
   postCoinDirectionGuessBindMessage,
   postCoinDirectionGuessBet,
+  getCoinDirectionGuessList,
   parseCoinDirectionGuessNo,
   parseCoinDirectionGuessPublishData,
+  parseCoinDirectionGuessList,
   parseGuessVoteCounts,
   parseGuessBetStats,
   parseDatainfoUserId,

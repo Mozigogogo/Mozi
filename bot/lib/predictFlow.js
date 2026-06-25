@@ -2,7 +2,7 @@
  * /predict 多步 UI：选币 → 确认文案 → 发布投票
  */
 
-const { fetchDetailHeader, fetchSearchLastPriceChange, fetchUserDatainfo, postCoinDirectionGuessPublish, postCoinDirectionGuessBindMessage, postCoinDirectionGuessBet, parseCoinDirectionGuessNo, parseCoinDirectionGuessPublishData, parseGuessBetStats, parseDatainfoUserId } = require('./apis');
+const { fetchDetailHeader, fetchSearchLastPriceChange, fetchUserDatainfo, postCoinDirectionGuessPublish, postCoinDirectionGuessBindMessage, postCoinDirectionGuessBet, getCoinDirectionGuessList, parseCoinDirectionGuessNo, parseCoinDirectionGuessPublishData, parseGuessBetStats, parseDatainfoUserId } = require('./apis');
 const { SYMBOL_WHITELIST } = require('./symbolIntent');
 const { escapeHtml } = require('./telegramHtml');
 const { buildPredictPrivateUrl } = require('./predictSymbol');
@@ -1532,6 +1532,104 @@ async function handlePredictTextInput(ctx, config, getTexts) {
   return false;
 }
 
+function formatGuessListStatus(texts, status) {
+  const s = String(status || '').trim().toLowerCase();
+  if (s === 'active') return texts.predictListStatusActive;
+  if (s === 'settled') return texts.predictListStatusSettled;
+  return escapeHtml(status || '—');
+}
+
+function formatGuessListResultLine(texts, result) {
+  const r = String(result || '').trim().toUpperCase();
+  if (r === 'UP') return texts.predictListResultUp;
+  if (r === 'DOWN') return texts.predictListResultDown;
+  return '';
+}
+
+function formatGuessListPoints(points, languageCode) {
+  const n = Math.max(0, Math.floor(Number(points) || 0));
+  const isZh = String(languageCode || '').toLowerCase().startsWith('zh');
+  return isZh ? n.toLocaleString('zh-CN') : n.toLocaleString('en-US');
+}
+
+function buildGuessListHtml(texts, items, languageCode) {
+  if (!items.length) return texts.predictListEmpty;
+  const lines = [texts.predictListTitle(items.length), ''];
+  const maxItems = 15;
+  for (let i = 0; i < Math.min(items.length, maxItems); i += 1) {
+    const item = items[i];
+    const sym = escapeHtml(String(item.symbol || '—').trim());
+    const status = formatGuessListStatus(texts, item.status);
+    const bullishPool = formatGuessListPoints(item.bullishPool, languageCode);
+    const bearishPool = formatGuessListPoints(item.bearishPool, languageCode);
+    const bullishCount = Number(item.bullishCount) || 0;
+    const bearishCount = Number(item.bearishCount) || 0;
+    const endAt = escapeHtml(formatEndAtDisplay(item.endAt, languageCode));
+    const resultLine = formatGuessListResultLine(texts, item.result);
+    lines.push(
+      texts.predictListItemLine(
+        sym,
+        status,
+        bullishPool,
+        bullishCount,
+        bearishPool,
+        bearishCount,
+        endAt,
+        resultLine,
+      ),
+    );
+    lines.push('');
+  }
+  if (items.length > maxItems) {
+    lines.push(`… +${items.length - maxItems}`);
+  }
+  return lines.join('\n').trim();
+}
+
+/**
+ * /predict list → GET /coinDirectionGuess/list?groupId=
+ */
+async function handlePredictList(ctx, config, getTexts) {
+  const languageCode = ctx.from?.language_code || 'en';
+  const texts = getTexts(languageCode);
+
+  if (!isGroupChat(ctx)) {
+    await ctx.reply(texts.predictListGroupOnly, { parse_mode: 'HTML' }).catch(() => {});
+    return;
+  }
+
+  const groupId = ctx.chat?.id;
+  if (groupId == null) return;
+
+  predictLog('list.attempt', { uid: ctx.from?.id ?? null, groupId });
+
+  try {
+    const result = await getCoinDirectionGuessList({
+      apiBaseUrl: config.API_BASE_URL,
+      appUrl: config.APP_URL,
+      groupId,
+      path: config.COIN_DIRECTION_GUESS_LIST_PATH,
+    });
+    predictLog('list.api', {
+      uid: ctx.from?.id ?? null,
+      groupId,
+      ok: result.ok,
+      status: result.status,
+      count: result.items?.length ?? 0,
+      errorMessage: result.errorMessage ?? null,
+    });
+    if (!result.ok) {
+      await ctx.reply(result.errorMessage || texts.predictListFailed, { parse_mode: 'HTML' }).catch(() => {});
+      return;
+    }
+    const html = buildGuessListHtml(texts, result.items || [], languageCode);
+    await ctx.reply(html, { parse_mode: 'HTML' }).catch(() => {});
+  } catch (err) {
+    predictLog('list.fail', { uid: ctx.from?.id ?? null, groupId, message: err?.message || String(err) });
+    await ctx.reply(texts.predictListFailed, { parse_mode: 'HTML' }).catch(() => {});
+  }
+}
+
 module.exports = {
   isGroupChat,
   isPrivateChat,
@@ -1539,6 +1637,7 @@ module.exports = {
   startPredictFlow,
   selectSymbolAndConfirm,
   publishPredict,
+  handlePredictList,
   handleGuessBetDirect,
   handleGuessBetCustom,
   handleGuessBetNumpadAction,

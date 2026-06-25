@@ -123,6 +123,16 @@ const i18n = {
     predictGroupInvite: '🎯 发起一个竞猜吧，点击下方按钮开始',
     predictStartBtn: '发起竞猜 →',
     predictGroupGuideFallback: '无法生成竞猜入口，请稍后再试或联系管理员。',
+    predictListGroupOnly: '请在<strong>群内</strong>使用 <code>/predict list</code> 查看本群竞猜列表。',
+    predictListTitle: (count) => `🎯 <b>本群竞猜列表</b>（共 ${count} 条）`,
+    predictListEmpty: '📭 本群暂无竞猜记录。',
+    predictListFailed: '获取竞猜列表失败，请稍后再试。',
+    predictListStatusActive: '进行中',
+    predictListStatusSettled: '已结算',
+    predictListItemLine: (sym, status, bullishPool, bullishCount, bearishPool, bearishCount, endAt, resultLine) =>
+      `<b>${sym}</b> · ${status}\n📈 ${bullishPool} 积分（${bullishCount}人） · 📉 ${bearishPool} 积分（${bearishCount}人）\n⏳ 截止：${endAt}${resultLine}`,
+    predictListResultUp: '\n✅ 结果：涨',
+    predictListResultDown: '\n✅ 结果：跌',
     helpBody: `🤖   Mozi AI 行情助手 · 指令说明
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -140,6 +150,7 @@ const i18n = {
 
 📈 涨跌预测（免费）
 /predict        发起 24h 涨跌竞猜（群内点按钮私聊 Bot，确认后发布到该群）
+/predict list   查看本群竞猜列表
 
 🔔 告警设置（免费）
 /alert          跳转 App 配置价格告警
@@ -355,6 +366,16 @@ const i18n = {
     predictGroupInvite: '🎯 Start a poll — tap the button below',
     predictStartBtn: 'Start poll →',
     predictGroupGuideFallback: 'Could not open the poll entry. Please try again later.',
+    predictListGroupOnly: 'Use <code>/predict list</code> in a <strong>group</strong> to see polls for that chat.',
+    predictListTitle: (count) => `🎯 <b>Group polls</b> (${count})`,
+    predictListEmpty: '📭 No polls in this group yet.',
+    predictListFailed: 'Could not load poll list. Please try again later.',
+    predictListStatusActive: 'Active',
+    predictListStatusSettled: 'Settled',
+    predictListItemLine: (sym, status, bullishPool, bullishCount, bearishPool, bearishCount, endAt, resultLine) =>
+      `<b>${sym}</b> · ${status}\n📈 ${bullishPool} pts (${bullishCount}) · 📉 ${bearishPool} pts (${bearishCount})\n⏳ Ends: ${endAt}${resultLine}`,
+    predictListResultUp: '\n✅ Result: Up',
+    predictListResultDown: '\n✅ Result: Down',
     helpBody: `🤖 Mozi AI · Commands
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -372,6 +393,7 @@ const i18n = {
 
 📈 Up/down poll (free)
 /predict         Start a 24h poll (tap button to DM bot; publishes back to source group)
+/predict list    List polls in this group
 
 🔔 Alerts (free)
 /alert           Open app to set price alerts
