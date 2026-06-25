@@ -36,8 +36,29 @@ function saveGuessBetCustomSession(userId, data) {
     guessNo: String(data.guessNo || '').trim(),
     chatId: data.chatId,
     messageId: data.messageId,
+    draft: String(data.draft ?? '').replace(/\D/g, '').slice(0, 9),
     expireAt: Date.now() + TTL_MS,
   });
+}
+
+/**
+ * @param {string | number} userId
+ * @param {{ draft?: string }} patch
+ */
+function patchGuessBetCustomSession(userId, patch) {
+  const key = String(userId ?? '').trim();
+  if (!key) return null;
+  purgeExpired();
+  const session = customSessions.get(key);
+  if (!session || Date.now() > session.expireAt) {
+    customSessions.delete(key);
+    return null;
+  }
+  if (patch.draft !== undefined) {
+    session.draft = String(patch.draft ?? '').replace(/\D/g, '').slice(0, 9);
+  }
+  session.expireAt = Date.now() + TTL_MS;
+  return session;
 }
 
 /** @param {string | number} userId */
@@ -99,6 +120,7 @@ function clearGuessBetPending(userId, guessNo) {
 module.exports = {
   saveGuessBetCustomSession,
   getGuessBetCustomSession,
+  patchGuessBetCustomSession,
   clearGuessBetCustomSession,
   setGuessBetPending,
   getGuessBetPending,

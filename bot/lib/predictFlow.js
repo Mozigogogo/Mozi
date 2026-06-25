@@ -20,6 +20,7 @@ const {
   saveGuessBetCustomSession,
   getGuessBetCustomSession,
   clearGuessBetCustomSession,
+  patchGuessBetCustomSession,
   setGuessBetPending,
   getGuessBetPending,
   clearGuessBetPending,
@@ -423,6 +424,39 @@ async function editGuessMessageKeyboard(ctx, chatId, messageId, keyboard) {
     });
     return false;
   }
+}
+
+function buildGuessBetNumpadKeyboard(texts, draft) {
+  const display =
+    draft && String(draft).length > 0
+      ? texts.predictBetNumpadDisplay(draft)
+      : texts.predictBetNumpadPlaceholder;
+  return {
+    inline_keyboard: [
+      [{ text: display, callback_data: 'g:n:noop' }],
+      [
+        { text: '1', callback_data: 'g:n:1' },
+        { text: '2', callback_data: 'g:n:2' },
+        { text: '3', callback_data: 'g:n:3' },
+      ],
+      [
+        { text: '4', callback_data: 'g:n:4' },
+        { text: '5', callback_data: 'g:n:5' },
+        { text: '6', callback_data: 'g:n:6' },
+      ],
+      [
+        { text: '7', callback_data: 'g:n:7' },
+        { text: '8', callback_data: 'g:n:8' },
+        { text: '9', callback_data: 'g:n:9' },
+      ],
+      [
+        { text: texts.predictBetNumpadDelBtn, callback_data: 'g:n:del' },
+        { text: '0', callback_data: 'g:n:0' },
+        { text: texts.predictBetNumpadConfirmBtn, callback_data: 'g:n:ok' },
+      ],
+      [{ text: texts.predictBetNumpadBackBtn, callback_data: 'g:n:menu' }],
+    ],
+  };
 }
 
 async function editGuessCallbackKeyboard(ctx, keyboard) {
@@ -1094,12 +1128,73 @@ async function handleGuessBetCustom(ctx, getTexts, guessNo) {
     await ctx.answerCbQuery().catch(() => {});
     return;
   }
-  await answerPredictCbQuery(ctx, texts.predictBetCustomInputToast);
+  await ctx.answerCbQuery().catch(() => {});
   saveGuessBetCustomSession(uid, {
     guessNo: guess,
     chatId: msg.chat.id,
     messageId: msg.message_id,
+    draft: '',
   });
+  await editGuessCallbackKeyboard(ctx, buildGuessBetNumpadKeyboard(texts, ''));
+}
+
+async function handleGuessBetNumpadAction(ctx, getTexts, action) {
+  const uid = ctx.from?.id;
+  const texts = getTexts(ctx.from?.language_code || 'en');
+  const session = uid != null ? getGuessBetCustomSession(uid) : null;
+  if (!session) {
+    await answerPredictCbQuery(ctx, texts.predictSessionExpired, { show_alert: true });
+    return;
+  }
+
+  if (action === 'noop') {
+    await ctx.answerCbQuery().catch(() => {});
+    return;
+  }
+
+  if (action === 'menu') {
+    clearGuessBetCustomSession(uid);
+    await ctx.answerCbQuery().catch(() => {});
+    await editGuessCallbackKeyboard(ctx, buildGuessBetPointsKeyboard(texts, session.guessNo));
+    return;
+  }
+
+  let draft = String(session.draft || '');
+
+  if (action === 'del') {
+    draft = draft.slice(0, -1);
+    patchGuessBetCustomSession(uid, { draft });
+    await ctx.answerCbQuery().catch(() => {});
+    await editGuessCallbackKeyboard(ctx, buildGuessBetNumpadKeyboard(texts, draft));
+    return;
+  }
+
+  if (action === 'ok') {
+    const pts = Math.floor(Number(draft));
+    if (!draft || pts <= 0) {
+      await answerPredictCbQuery(ctx, texts.predictBetNumpadEmptyToast, { show_alert: true });
+      return;
+    }
+    setGuessBetPending(uid, session.guessNo, pts);
+    clearGuessBetCustomSession(uid);
+    await answerPredictCbQuery(ctx, texts.predictBetPointsSelectedToast(pts));
+    await editGuessCallbackKeyboard(ctx, buildGuessVoteKeyboard(texts, session.guessNo));
+    return;
+  }
+
+  if (/^\d$/.test(action)) {
+    if (draft.length >= 9) {
+      await ctx.answerCbQuery().catch(() => {});
+      return;
+    }
+    draft = `${draft}${action}`.replace(/^0+(?=\d)/, '');
+    patchGuessBetCustomSession(uid, { draft });
+    await ctx.answerCbQuery().catch(() => {});
+    await editGuessCallbackKeyboard(ctx, buildGuessBetNumpadKeyboard(texts, draft));
+    return;
+  }
+
+  await ctx.answerCbQuery().catch(() => {});
 }
 
 async function handleGuessBetBack(ctx, getTexts, guessNo) {
@@ -1116,46 +1211,11 @@ async function handleGuessBetBack(ctx, getTexts, guessNo) {
 }
 
 /**
- * 群内自定义下注积分：用户发送纯数字
+ * @deprecated 已改为数字键盘输入，保留兼容入口
  * @returns {boolean}
  */
-async function handleGuessBetCustomTextInput(ctx, getTexts) {
-  if (ctx.callbackQuery) return false;
-  if (!ctx.message?.text) return false;
-
-  const uid = ctx.from?.id;
-  const session = uid != null ? getGuessBetCustomSession(uid) : null;
-  if (!session) return false;
-
-  const chatType = ctx.chat?.type;
-  if (chatType !== 'group' && chatType !== 'supergroup') return false;
-  if (String(ctx.chat?.id) !== String(session.chatId)) return false;
-
-  const texts = getTexts(ctx.from?.language_code || 'en');
-  const raw = String(ctx.message?.text || '').trim();
-  const digits = raw.replace(/[^\d]/g, '');
-  if (!digits || !/^\d{1,9}$/.test(digits)) {
-    await ctx.reply(texts.predictBetCustomInputInvalid).catch(() => {});
-    return true;
-  }
-
-  const pts = Math.floor(Number(digits));
-  if (pts <= 0) {
-    await ctx.reply(texts.predictBetCustomInputInvalid).catch(() => {});
-    return true;
-  }
-
-  setGuessBetPending(uid, session.guessNo, pts);
-  clearGuessBetCustomSession(uid);
-  await ctx.deleteMessage().catch(() => {});
-  await editGuessMessageKeyboard(
-    ctx,
-    session.chatId,
-    session.messageId,
-    buildGuessVoteKeyboard(texts, session.guessNo),
-  );
-  await ctx.reply(texts.predictBetPointsSelectedToast(pts)).catch(() => {});
-  return true;
+async function handleGuessBetCustomTextInput() {
+  return false;
 }
 
 /**
@@ -1386,6 +1446,7 @@ module.exports = {
   handleGuessBetOpen,
   handleGuessBetQuick,
   handleGuessBetCustom,
+  handleGuessBetNumpadAction,
   handleGuessBetBack,
   handleGuessBetCustomTextInput,
   cancelPredict,

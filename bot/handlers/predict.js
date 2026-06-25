@@ -22,8 +22,8 @@ const {
   handleGuessBetOpen,
   handleGuessBetQuick,
   handleGuessBetCustom,
+  handleGuessBetNumpadAction,
   handleGuessBetBack,
-  handleGuessBetCustomTextInput,
 } = require('../lib/predictFlow');
 
 /**
@@ -44,11 +44,6 @@ function createPredictTextMiddleware(config, { getTexts }) {
       });
     }
     try {
-      const handledBet = await handleGuessBetCustomTextInput(ctx, getTexts);
-      if (handledBet) {
-        predictDebug('middleware.handled', { uid: ctx.from?.id ?? null, mode: 'guess_bet_custom' });
-        return;
-      }
       const handled = await handlePredictTextInput(ctx, config, getTexts);
       if (handled) {
         predictDebug('middleware.handled', { uid: ctx.from?.id ?? null });
@@ -108,6 +103,12 @@ function registerPredict(bot, config, { getTexts }) {
       return;
     }
     await ctx.answerCbQuery().catch(() => {});
+  });
+
+  bot.action(/^g:n:/, async (ctx) => {
+    const data = String(ctx.callbackQuery?.data || '');
+    const action = data.slice('g:n:'.length);
+    await handleGuessBetNumpadAction(ctx, getTexts, action);
   });
 
   bot.action(/^p:/, async (ctx) => {
