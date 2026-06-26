@@ -27,7 +27,7 @@ function hashPreview(hash) {
 const DEFAULT_TTL_MS = 50 * 60 * 1000;
 const MAX_TTL_MS = 23 * 60 * 60 * 1000;
 
-/** @type {Map<string, { token: string; expireAt: number }>} */
+/** @type {Map<string, { token: string; userId: string | null; expireAt: number }>} */
 const cache = new Map();
 /** @type {Map<string, Promise<string>>} */
 const inFlight = new Map();
@@ -55,6 +55,20 @@ function extractLoginToken(json) {
     if (typeof v === 'string' && v.trim()) return v.trim();
   }
   return '';
+}
+
+/**
+ * @param {object | null} json
+ * @returns {string | null}
+ */
+function extractLoginUserId(json) {
+  if (!json || typeof json !== 'object') return null;
+  if (typeof json.code === 'number' && !isLoginApiSuccessCode(json.code)) return null;
+  const data =
+    json.data != null && typeof json.data === 'object' && !Array.isArray(json.data) ? json.data : json;
+  const raw = data.userId ?? data.user_id;
+  if (raw == null || !String(raw).trim()) return null;
+  return String(raw).trim();
 }
 
 /**
@@ -91,10 +105,21 @@ function getCachedToken(telegramId) {
   return e.token;
 }
 
-function setCachedToken(telegramId, token, ttlMs) {
+/** @param {string | number} telegramId */
+function getCachedUserId(telegramId) {
+  const id = String(telegramId);
+  const e = cache.get(id);
+  if (!e || Date.now() >= e.expireAt) {
+    cache.delete(id);
+    return null;
+  }
+  return e.userId || null;
+}
+
+function setCachedToken(telegramId, token, ttlMs, userId = null) {
   const id = String(telegramId);
   const ttl = Math.max(60_000, Math.min(MAX_TTL_MS, ttlMs || DEFAULT_TTL_MS));
-  cache.set(id, { token, expireAt: Date.now() + ttl });
+  cache.set(id, { token, userId: userId ? String(userId).trim() : null, expireAt: Date.now() + ttl });
 }
 
 function clearCachedToken(telegramId) {
@@ -215,7 +240,8 @@ async function ensureTgUserToken(config, telegramId, opts = {}) {
           return '';
         }
         const ttl = extractTtlMs(r.json) ?? DEFAULT_TTL_MS;
-        setCachedToken(id, token, ttl);
+        const userId = extractLoginUserId(r.json);
+        setCachedToken(id, token, ttl, userId);
         return token;
       } catch (err) {
         console.error('[tg/login]', err?.message || err);
@@ -233,4 +259,6 @@ module.exports = {
   ensureTgUserToken,
   clearCachedToken,
   getCachedToken,
+  getCachedUserId,
+  extractLoginUserId,
 };

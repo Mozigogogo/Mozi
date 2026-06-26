@@ -2,12 +2,12 @@
  * /predict 多步 UI：选币 → 确认文案 → 发布投票
  */
 
-const { fetchDetailHeader, fetchSearchLastPriceChange, fetchUserDatainfo, postCoinDirectionGuessPublish, postCoinDirectionGuessBindMessage, postCoinDirectionGuessBet, getCoinDirectionGuessList, parseCoinDirectionGuessNo, parseCoinDirectionGuessPublishData, parseGuessBetStats, parseDatainfoUserId } = require('./apis');
+const { fetchDetailHeader, fetchSearchLastPriceChange, postCoinDirectionGuessPublish, postCoinDirectionGuessBindMessage, postCoinDirectionGuessBet, getCoinDirectionGuessList, parseCoinDirectionGuessNo, parseCoinDirectionGuessPublishData, parseGuessBetStats } = require('./apis');
 const { SYMBOL_WHITELIST } = require('./symbolIntent');
 const { escapeHtml } = require('./telegramHtml');
 const { buildPredictPrivateUrl } = require('./predictSymbol');
 const { predictDebug, predictLog } = require('./predictDebug');
-const { ensureTgUserToken } = require('./tgUserTokenCache');
+const { ensureTgUserToken, getCachedUserId } = require('./tgUserTokenCache');
 const { buildTelegramLoginOpts } = require('./datainfoPoints');
 const {
   savePredictSession,
@@ -1126,25 +1126,8 @@ async function tryRefreshGuessMessage(ctx, texts, guessNo, betResult) {
 
 /**
  * 群内下注：方向 + 积分 → POST /coinDirectionGuess/bet
+ * userId 与 POST /user/login 响应 data.userId 原样一致
  */
-async function resolveGuessBetUserId(config, auth) {
-  try {
-    const res = await fetchUserDatainfo({
-      apiBaseUrl: config.API_BASE_URL,
-      auth,
-      appUrl: config.APP_URL,
-      path: config.USER_DATA_INFO_PATH,
-      timeoutMs: config.USER_DATA_INFO_TIMEOUT_MS,
-    });
-    if (res.ok && res.json) {
-      return parseDatainfoUserId(res.json);
-    }
-  } catch (err) {
-    predictLog('bet.user_resolve_fail', { message: err?.message || String(err) });
-  }
-  return null;
-}
-
 async function submitGuessBet(ctx, config, getTexts, guessNo, direction, betAmount) {
   const uid = ctx.from?.id;
   const languageCode = ctx.from?.language_code || 'en';
@@ -1160,19 +1143,29 @@ async function submitGuessBet(ctx, config, getTexts, guessNo, direction, betAmou
     return false;
   }
 
-  predictLog('bet.attempt', { uid, guessNo: guess, choice, betAmount: pts });
+  predictLog('bet.attempt', { telegramId: uid, guessNo: guess, choice, betAmount: pts });
 
+  const loginOpts = buildTelegramLoginOpts(ctx.from);
   let auth = '';
   try {
-    auth = await ensureTgUserToken(config, uid, buildTelegramLoginOpts(ctx.from));
+    auth = await ensureTgUserToken(config, uid, loginOpts);
   } catch (err) {
-    predictLog('bet.auth_fail', { uid, message: err?.message || String(err) });
+    predictLog('bet.auth_fail', { telegramId: uid, message: err?.message || String(err) });
   }
   if (!auth) {
-    auth = String(config.MOZI_DETAIL_AUTH || '').trim();
+    await answerPredictCbQuery(ctx, texts.predictBetUserResolveFailed, { show_alert: true });
+    return false;
   }
 
-  const userId = await resolveGuessBetUserId(config, auth);
+  let userId = getCachedUserId(uid);
+  if (!userId) {
+    try {
+      auth = await ensureTgUserToken(config, uid, { ...loginOpts, forceRefresh: true });
+      userId = getCachedUserId(uid);
+    } catch (err) {
+      predictLog('bet.user_resolve_fail', { telegramId: uid, message: err?.message || String(err) });
+    }
+  }
   if (!userId) {
     await answerPredictCbQuery(ctx, texts.predictBetUserResolveFailed, { show_alert: true });
     return false;
@@ -1190,7 +1183,7 @@ async function submitGuessBet(ctx, config, getTexts, guessNo, direction, betAmou
       betAmount: pts,
     });
     predictLog('bet.api', {
-      uid,
+      telegramId: uid,
       userId,
       guessNo: guess,
       choice,
@@ -1212,7 +1205,7 @@ async function submitGuessBet(ctx, config, getTexts, guessNo, direction, betAmou
     await tryRefreshGuessMessage(ctx, refreshTexts, guess, result);
     return true;
   } catch (err) {
-    predictLog('bet.fail', { uid, guessNo: guess, message: err?.message || String(err) });
+    predictLog('bet.fail', { telegramId: uid, guessNo: guess, message: err?.message || String(err) });
     await answerPredictCbQuery(ctx, texts.predictVoteFailed, { show_alert: true });
     return false;
   }

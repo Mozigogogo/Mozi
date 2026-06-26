@@ -2091,8 +2091,7 @@ function parseDatainfoUserId(json) {
   const profile = data && typeof data === 'object' && !Array.isArray(data) ? data : json;
   const raw = profile.userId ?? profile.user_id ?? profile.uid ?? profile.id;
   if (raw == null || !String(raw).trim()) return null;
-  const s = String(raw).trim();
-  return /^U/i.test(s) ? s : `U${s}`;
+  return String(raw).trim();
 }
 
 /**
