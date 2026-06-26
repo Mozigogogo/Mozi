@@ -1,8 +1,7 @@
 'use strict';
 
 /**
- * 群内 @Bot / 回复 Bot → POST /ai/agent/route
- * 使用 bot.on('message') 显式监听（比纯 middleware 更可靠）
+ * 群内 @Bot / 回复 Bot → 意图识别；失败时回退为 /chat 同路径（已验证可用）
  */
 
 const {
@@ -14,21 +13,48 @@ const {
   getMessageEntities,
 } = require('../lib/botMention');
 const { handleBotMentionRouted } = require('../lib/agentRouteDispatch');
+const { executeChatCommand } = require('../lib/agentCommandRunner');
 const { botMentionLog } = require('../lib/botMentionDebug');
 
-/**
- * @param {import('telegraf').Context} ctx
- */
 function isGroupTextMessage(ctx) {
   const t = ctx.chat?.type;
   return (t === 'group' || t === 'supergroup') && Boolean(ctx.message) && !ctx.from?.is_bot;
 }
 
 /**
+ * @param {import('telegraf').MiddlewareFn} gate
+ * @param {import('telegraf').Context} ctx
+ */
+async function runGate(gate, ctx) {
+  let passed = false;
+  await gate(ctx, async () => {
+    passed = true;
+  });
+  return passed;
+}
+
+/**
+ * @param {import('telegraf').Context} ctx
+ * @param {object} config
+ * @param {Function} getTexts
+ * @param {import('telegraf').MiddlewareFn} registeredGate
+ * @param {import('telegraf').MiddlewareFn} loginGate
+ * @param {string} rawQuery
+ */
+async function dispatchMentionAsChat(ctx, config, getTexts, registeredGate, loginGate, rawQuery) {
+  const texts = getTexts(ctx.from?.language_code || 'en');
+  if (!(await runGate(registeredGate, ctx))) return;
+  if (!(await runGate(loginGate, ctx))) return;
+  await executeChatCommand(ctx, config, texts, rawQuery);
+}
+
+/**
+ * @param {import('telegraf').Context} ctx
  * @param {object} config
  * @param {{ getTexts: Function }} i18nApi
  * @param {import('telegraf').MiddlewareFn} registeredGate
  * @param {import('telegraf').MiddlewareFn} loginGate
+ * @returns {Promise<boolean>} 是否已处理（true 则勿 next）
  */
 async function handleGroupMentionMessage(ctx, config, { getTexts }, registeredGate, loginGate) {
   if (!isGroupTextMessage(ctx)) return false;
@@ -81,33 +107,29 @@ async function handleGroupMentionMessage(ctx, config, { getTexts }, registeredGa
 
   await ctx.telegram.sendChatAction(ctx.chat.id, 'typing').catch(() => {});
 
+  const languageCode = ctx.from?.language_code || 'en';
+  const texts = getTexts(languageCode);
+
   try {
     await handleBotMentionRouted(ctx, config, getTexts, registeredGate, loginGate, rawQuery);
     botMentionLog('done', { query: rawQuery });
   } catch (err) {
     console.error('[agent/mention]', err?.message || err);
-    botMentionLog('error', { query: rawQuery, message: err?.message || String(err) });
-    const texts = getTexts(ctx.from?.language_code || 'en');
-    await ctx.reply(texts.agentRouteFailed, { parse_mode: 'HTML' }).catch(() => {});
+    botMentionLog('fallback.chat', { query: rawQuery, reason: err?.message || String(err) });
+    try {
+      await dispatchMentionAsChat(ctx, config, getTexts, registeredGate, loginGate, rawQuery);
+    } catch (err2) {
+      console.error('[agent/mention/chat-fallback]', err2?.message || err2);
+      await ctx.reply(texts.agentRouteFailed, { parse_mode: 'HTML' }).catch(() => {});
+    }
   }
 
   return true;
 }
 
 /**
- * @param {import('telegraf').Telegraf} bot
- * @param {object} config
- * @param {{ getTexts: Function }} i18nApi
- * @param {import('telegraf').MiddlewareFn} registeredGate
- * @param {import('telegraf').MiddlewareFn} loginGate
+ * 必须在 bot.command 之前注册，确保群内 @ 消息先被拦截
  */
-function registerGroupMentionHandler(bot, config, i18nApi, registeredGate, loginGate) {
-  bot.on('message', async (ctx) => {
-    await handleGroupMentionMessage(ctx, config, i18nApi, registeredGate, loginGate);
-  });
-}
-
-/** @deprecated 使用 registerGroupMentionHandler */
 function createAgentMentionMiddleware(config, i18nApi, registeredGate, loginGate) {
   return async (ctx, next) => {
     const handled = await handleGroupMentionMessage(ctx, config, i18nApi, registeredGate, loginGate);
@@ -116,8 +138,13 @@ function createAgentMentionMiddleware(config, i18nApi, registeredGate, loginGate
   };
 }
 
+/** @deprecated 使用 createAgentMentionMiddleware */
+function registerGroupMentionHandler(bot, config, i18nApi, registeredGate, loginGate) {
+  bot.use(createAgentMentionMiddleware(config, i18nApi, registeredGate, loginGate));
+}
+
 module.exports = {
-  registerGroupMentionHandler,
   createAgentMentionMiddleware,
+  registerGroupMentionHandler,
   handleGroupMentionMessage,
 };
