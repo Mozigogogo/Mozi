@@ -32,6 +32,7 @@ const { registerPredict, createPredictTextMiddleware } = require('./handlers/pre
 const { registerHelp } = require('./handlers/help');
 const { registerBalance } = require('./handlers/balance');
 const { createAgentMentionMiddleware } = require('./handlers/agentMention');
+const { createAgentMentionLoggerMiddleware } = require('./middleware/agentMentionLogger');
 const { createInjectGroupReferrer } = require('./middleware/groupReferrer');
 const { registerGroupReferrer } = require('./handlers/groupReferrer');
 const { startTgChatHttpServer } = require('./server/tgChatHttp');
@@ -56,6 +57,7 @@ const registeredGate = createRequireMoziRegistered(config, i18nApi);
 const loginGate = createRequireMoziLogin(config, i18nApi);
 
 registerDebugCommandLogging(bot);
+bot.use(createAgentMentionLoggerMiddleware(config));
 bot.use(createPredictTextMiddleware(config, i18nApi));
 bot.use(createAgentMentionMiddleware(config, i18nApi, registeredGate, loginGate));
 bot.use(createInjectGroupReferrer(config));
@@ -167,7 +169,7 @@ async function startBot() {
     console.log('ℹ️  PREDICT_DEBUG 已开启：将打印 [PREDICT_DEBUG] /predict 流程日志\n');
   }
   if (config.BOT_NATURAL_LANGUAGE_ENABLED) {
-    console.log('ℹ️  意图识别日志：[AGENT_ROUTE]（每次 @ 提及会打印 request / response）\n');
+    console.log('ℹ️  @ 提及日志：[AGENT_ROUTE] msg.at / mention.check / mention.incoming\n');
     if (agentRouteDebugEnabled()) {
       console.log('ℹ️  AGENT_ROUTE_DEBUG 已开启：将额外打印原始 HTTP body\n');
     }

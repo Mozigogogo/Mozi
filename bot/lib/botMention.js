@@ -45,12 +45,24 @@ function textContainsBotUsername(text, bot) {
   return text.toLowerCase().includes(`@${bot}`);
 }
 
+function getMessageText(ctx) {
+  if (!ctx?.message) return '';
+  return String(ctx.message.text || ctx.message.caption || '');
+}
+
+function getMessageEntities(ctx) {
+  if (!ctx?.message) return [];
+  if (ctx.message.text) return ctx.message.entities || [];
+  if (ctx.message.caption) return ctx.message.caption_entities || [];
+  return [];
+}
+
 /**
  * @param {import('telegraf').Context} ctx
  * @param {string} [configBotUsername]
  */
 function isBotMentioned(ctx, configBotUsername) {
-  const text = ctx.message?.text;
+  const text = getMessageText(ctx);
   if (!text) return false;
   const bot = resolveBotUsername(ctx, configBotUsername);
   const botId = ctx.me?.id ?? cachedBotInfo?.id;
@@ -59,7 +71,7 @@ function isBotMentioned(ctx, configBotUsername) {
     return true;
   }
 
-  const entities = ctx.message?.entities || [];
+  const entities = getMessageEntities(ctx);
   for (const e of entities) {
     if (e.type === 'mention') {
       const mention = text.slice(e.offset, e.offset + e.length).replace(/^@/, '').toLowerCase();
@@ -114,11 +126,13 @@ function extractBotMentionQuery(text, entities, ctx, configBotUsername) {
  * @param {string} [configBotUsername]
  */
 function shouldHandleBotMention(ctx, configBotUsername) {
-  if (!ctx.message?.text || ctx.from?.is_bot) return false;
+  if (!ctx.message || ctx.from?.is_bot) return false;
+  const text = getMessageText(ctx).trim();
+  if (!text) return false;
   if (!isBotMentioned(ctx, configBotUsername)) return false;
   const query = extractBotMentionQuery(
-    ctx.message.text,
-    ctx.message.entities,
+    text,
+    getMessageEntities(ctx),
     ctx,
     configBotUsername,
   );
@@ -129,6 +143,8 @@ function shouldHandleBotMention(ctx, configBotUsername) {
 
 module.exports = {
   ensureBotInfo,
+  getMessageText,
+  getMessageEntities,
   resolveBotUsername,
   isBotMentioned,
   textContainsBotUsername,

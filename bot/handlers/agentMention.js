@@ -10,7 +10,8 @@ const {
   isBotMentioned,
   resolveBotUsername,
   ensureBotInfo,
-  textContainsBotUsername,
+  getMessageText,
+  getMessageEntities,
   getCachedBotUsername,
 } = require('../lib/botMention');
 const { handleBotMentionRouted } = require('../lib/agentRouteDispatch');
@@ -25,72 +26,61 @@ const { agentRouteLog } = require('../lib/agentRouteDebug');
  */
 function createAgentMentionMiddleware(config, { getTexts }, registeredGate, loginGate) {
   return async (ctx, next) => {
-    if (ctx.callbackQuery || !ctx.message?.text) {
+    if (ctx.callbackQuery) {
+      return next();
+    }
+
+    const chatType = ctx.chat?.type;
+    const isGroup = chatType === 'group' || chatType === 'supergroup';
+    const text = getMessageText(ctx).trim();
+    if (!isGroup || !text) {
       return next();
     }
 
     await ensureBotInfo(ctx.telegram);
 
-    const botUser = resolveBotUsername(ctx, config.BOT_USERNAME);
-    const text = ctx.message.text;
-    const chatType = ctx.chat?.type;
-    const looksLikeMention =
-      (chatType === 'group' || chatType === 'supergroup') &&
-      botUser &&
-      textContainsBotUsername(text, botUser);
-
-    if (looksLikeMention) {
-      agentRouteLog('mention.check', {
-        telegramId: ctx.from?.id ?? null,
-        chatId: ctx.chat?.id ?? null,
-        textPreview: text.slice(0, 160),
-        entities: (ctx.message.entities || []).map((e) => e.type),
-        configBot: config.BOT_USERNAME,
-        ctxBot: ctx.me?.username ?? getCachedBotUsername(),
-        matched: isBotMentioned(ctx, config.BOT_USERNAME),
-        naturalLanguage: config.BOT_NATURAL_LANGUAGE_ENABLED,
-      });
-    }
-
-    if (!config.BOT_NATURAL_LANGUAGE_ENABLED) {
-      if (looksLikeMention && isBotMentioned(ctx, config.BOT_USERNAME)) {
-        const texts = getTexts(ctx.from?.language_code || 'en');
-        await ctx.reply(texts.agentRouteCommandModeHint, { parse_mode: 'HTML' }).catch(() => {});
-        return;
-      }
-      return next();
-    }
-
     if (!isBotMentioned(ctx, config.BOT_USERNAME)) {
       return next();
+    }
+
+    const botUser = resolveBotUsername(ctx, config.BOT_USERNAME);
+    const entities = getMessageEntities(ctx);
+
+    agentRouteLog('mention.check', {
+      telegramId: ctx.from?.id ?? null,
+      chatId: ctx.chat?.id ?? null,
+      chatType,
+      messageId: ctx.message?.message_id ?? null,
+      textPreview: text.slice(0, 200),
+      entities: entities.map((e) => e.type),
+      configBot: config.BOT_USERNAME,
+      ctxBot: ctx.me?.username ?? getCachedBotUsername(),
+      naturalLanguage: config.BOT_NATURAL_LANGUAGE_ENABLED,
+      inputMode: config.BOT_INPUT_MODE,
+    });
+
+    if (!config.BOT_NATURAL_LANGUAGE_ENABLED) {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.reply(texts.agentRouteCommandModeHint, { parse_mode: 'HTML' }).catch(() => {});
+      agentRouteLog('mention.blocked', { reason: 'command_mode' });
+      return;
     }
 
     if (!shouldHandleBotMention(ctx, config.BOT_USERNAME)) {
       agentRouteLog('mention.skip', {
         reason: 'empty_or_command',
-        telegramId: ctx.from?.id ?? null,
-        chatId: ctx.chat?.id ?? null,
         textPreview: text.slice(0, 160),
-        entities: (ctx.message.entities || []).map((e) => e.type),
-        configBot: config.BOT_USERNAME,
-        ctxBot: ctx.me?.username ?? getCachedBotUsername(),
       });
       const texts = getTexts(ctx.from?.language_code || 'en');
       await ctx.reply(texts.agentRouteNeedQuestion, { parse_mode: 'HTML' }).catch(() => {});
       return;
     }
 
-    const rawQuery = extractBotMentionQuery(
-      ctx.message.text,
-      ctx.message.entities,
-      ctx,
-      config.BOT_USERNAME,
-    );
+    const rawQuery = extractBotMentionQuery(text, entities, ctx, config.BOT_USERNAME);
 
     agentRouteLog('mention.incoming', {
       telegramId: ctx.from?.id ?? null,
       chatId: ctx.chat?.id ?? null,
-      chatType: ctx.chat?.type ?? null,
       botUser,
       query: rawQuery,
     });
