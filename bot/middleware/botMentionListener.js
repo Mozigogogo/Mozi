@@ -3,7 +3,7 @@
 const {
   ensureBotInfo,
   resolveBotUsername,
-  isBotMentioned,
+  isGroupBotMention,
   extractBotMentionQuery,
   shouldHandleBotMention,
   getMessageText,
@@ -32,7 +32,7 @@ function createBotMentionListenerMiddleware(config) {
 
     const botUser = resolveBotUsername(ctx, config.BOT_USERNAME);
     const entities = getMessageEntities(ctx);
-    const mentioned = isBotMentioned(ctx, config.BOT_USERNAME);
+    const mentioned = isGroupBotMention(ctx, config.BOT_USERNAME);
 
     if (botMentionVerboseEnabled()) {
       botMentionLog('group.inbound', {

@@ -75,7 +75,9 @@ function createRequireMoziRegistered(config, { getTexts }) {
     if (isGroup) {
       const canReachDm = await canBotReachUserInDm(ctx.telegram, uid);
       if (canReachDm) {
-        await runInlineRegisterFlow(ctx, config, getTexts, { silent: true });
+        await runInlineRegisterFlow(ctx, config, getTexts, {
+          silent: !(isGroup && ctx.state?.agentRouteDispatch),
+        });
         return;
       }
       await ctx

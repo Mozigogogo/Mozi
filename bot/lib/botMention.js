@@ -57,6 +57,16 @@ function getMessageEntities(ctx) {
   return [];
 }
 
+function isReplyToBotMessage(ctx, configBotUsername) {
+  const replyFrom = ctx.message?.reply_to_message?.from;
+  if (!replyFrom?.is_bot) return false;
+  const botId = ctx.me?.id ?? cachedBotInfo?.id;
+  if (botId != null && replyFrom.id === botId) return true;
+  const bot = resolveBotUsername(ctx, configBotUsername);
+  if (bot && replyFrom.username && replyFrom.username.toLowerCase() === bot) return true;
+  return false;
+}
+
 /**
  * @param {import('telegraf').Context} ctx
  * @param {string} [configBotUsername]
@@ -83,6 +93,13 @@ function isBotMentioned(ctx, configBotUsername) {
   }
 
   return false;
+}
+
+/**
+ * 群内 @Bot、或回复 Bot 消息
+ */
+function isGroupBotMention(ctx, configBotUsername) {
+  return isBotMentioned(ctx, configBotUsername) || isReplyToBotMessage(ctx, configBotUsername);
 }
 
 /**
@@ -129,7 +146,7 @@ function shouldHandleBotMention(ctx, configBotUsername) {
   if (!ctx.message || ctx.from?.is_bot) return false;
   const text = getMessageText(ctx).trim();
   if (!text) return false;
-  if (!isBotMentioned(ctx, configBotUsername)) return false;
+  if (!isGroupBotMention(ctx, configBotUsername)) return false;
   const query = extractBotMentionQuery(
     text,
     getMessageEntities(ctx),
@@ -147,6 +164,8 @@ module.exports = {
   getMessageEntities,
   resolveBotUsername,
   isBotMentioned,
+  isGroupBotMention,
+  isReplyToBotMessage,
   textContainsBotUsername,
   extractBotMentionQuery,
   shouldHandleBotMention,

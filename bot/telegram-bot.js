@@ -29,7 +29,7 @@ const { registerPrice } = require('./handlers/price');
 const { registerPredict, createPredictTextMiddleware } = require('./handlers/predict');
 const { registerHelp } = require('./handlers/help');
 const { registerBalance } = require('./handlers/balance');
-const { createAgentMentionMiddleware } = require('./handlers/agentMention');
+const { registerGroupMentionHandler } = require('./handlers/agentMention');
 const { createBotMentionListenerMiddleware } = require('./middleware/botMentionListener');
 const { createInjectGroupReferrer } = require('./middleware/groupReferrer');
 const { registerGroupReferrer } = require('./handlers/groupReferrer');
@@ -56,7 +56,6 @@ const loginGate = createRequireMoziLogin(config, i18nApi);
 
 bot.use(createBotMentionListenerMiddleware(config));
 bot.use(createPredictTextMiddleware(config, i18nApi));
-bot.use(createAgentMentionMiddleware(config, i18nApi, registeredGate, loginGate));
 bot.use(createInjectGroupReferrer(config));
 bot.use(createResumePendingAiChatOnPrivate(config));
 registerMoziReloginCallback(bot, config, i18nApi);
@@ -72,6 +71,7 @@ registerPrice(bot, config, i18nApi);
 registerPredict(bot, config, i18nApi);
 registerHelp(bot, config, i18nApi);
 registerBalance(bot, config, i18nApi, registeredGate, loginGate);
+registerGroupMentionHandler(bot, config, i18nApi, registeredGate, loginGate);
 
 bot.catch((err, ctx) => {
   if (err?.response?.error_code === 409) {
