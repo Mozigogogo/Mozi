@@ -9,6 +9,9 @@ const {
   extractBotMentionQuery,
   isBotMentioned,
   resolveBotUsername,
+  ensureBotInfo,
+  textContainsBotUsername,
+  getCachedBotUsername,
 } = require('../lib/botMention');
 const { handleBotMentionRouted } = require('../lib/agentRouteDispatch');
 const { apiDebug } = require('../lib/debugLog');
@@ -22,15 +25,41 @@ const { agentRouteLog } = require('../lib/agentRouteDebug');
  */
 function createAgentMentionMiddleware(config, { getTexts }, registeredGate, loginGate) {
   return async (ctx, next) => {
-    if (!config.BOT_NATURAL_LANGUAGE_ENABLED) {
-      return next();
-    }
     if (ctx.callbackQuery || !ctx.message?.text) {
       return next();
     }
 
+    await ensureBotInfo(ctx.telegram);
+
     const botUser = resolveBotUsername(ctx, config.BOT_USERNAME);
     const text = ctx.message.text;
+    const chatType = ctx.chat?.type;
+    const looksLikeMention =
+      (chatType === 'group' || chatType === 'supergroup') &&
+      botUser &&
+      textContainsBotUsername(text, botUser);
+
+    if (looksLikeMention) {
+      agentRouteLog('mention.check', {
+        telegramId: ctx.from?.id ?? null,
+        chatId: ctx.chat?.id ?? null,
+        textPreview: text.slice(0, 160),
+        entities: (ctx.message.entities || []).map((e) => e.type),
+        configBot: config.BOT_USERNAME,
+        ctxBot: ctx.me?.username ?? getCachedBotUsername(),
+        matched: isBotMentioned(ctx, config.BOT_USERNAME),
+        naturalLanguage: config.BOT_NATURAL_LANGUAGE_ENABLED,
+      });
+    }
+
+    if (!config.BOT_NATURAL_LANGUAGE_ENABLED) {
+      if (looksLikeMention && isBotMentioned(ctx, config.BOT_USERNAME)) {
+        const texts = getTexts(ctx.from?.language_code || 'en');
+        await ctx.reply(texts.agentRouteCommandModeHint, { parse_mode: 'HTML' }).catch(() => {});
+        return;
+      }
+      return next();
+    }
 
     if (!isBotMentioned(ctx, config.BOT_USERNAME)) {
       return next();
@@ -44,9 +73,11 @@ function createAgentMentionMiddleware(config, { getTexts }, registeredGate, logi
         textPreview: text.slice(0, 160),
         entities: (ctx.message.entities || []).map((e) => e.type),
         configBot: config.BOT_USERNAME,
-        ctxBot: ctx.me?.username ?? null,
+        ctxBot: ctx.me?.username ?? getCachedBotUsername(),
       });
-      return next();
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.reply(texts.agentRouteNeedQuestion, { parse_mode: 'HTML' }).catch(() => {});
+      return;
     }
 
     const rawQuery = extractBotMentionQuery(
@@ -78,6 +109,7 @@ function createAgentMentionMiddleware(config, { getTexts }, registeredGate, logi
       const texts = getTexts(ctx.from?.language_code || 'en');
       await ctx.reply(texts.agentRouteFailed, { parse_mode: 'HTML' }).catch(() => {});
     }
+    return;
   };
 }
 

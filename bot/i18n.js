@@ -123,6 +123,8 @@ const i18n = {
     agentRouteFailed: '意图识别失败，请稍后再试。',
     agentRouteUnknownCommand: (cmd) => `暂不支持通过 @ 触发 <code>${String(cmd || '—')}</code>，请使用对应斜杠命令。`,
     agentRouteUsePredict: '发起竞猜请使用 <code>/predict</code>。',
+    agentRouteCommandModeHint:
+      '当前为<strong>命令模式</strong>，@ 不会触发意图识别。请用斜杠命令，例如 <code>/price BTC</code>、<code>/chat 问题</code>；或在 Railway 设置 <code>BOT_INPUT_MODE=natural</code> 后重启。',
     predictSymbolSearchingToast: '正在搜索币种信息…',
     predictPublishingToast: '正在发布…',
     predictPublished: '✅ 预测已发布，群成员可参与投票。',
@@ -378,6 +380,8 @@ const i18n = {
     agentRouteUnknownCommand: (cmd) =>
       `Cannot run <code>${String(cmd || '—')}</code> via @mention yet. Use the slash command instead.`,
     agentRouteUsePredict: 'To start a poll, use <code>/predict</code>.',
+    agentRouteCommandModeHint:
+      'Bot is in <strong>command mode</strong>; @mentions are ignored. Use slash commands like <code>/price BTC</code> or set <code>BOT_INPUT_MODE=natural</code> on Railway and redeploy.',
     predictSymbolSearchingToast: 'Searching coin info…',
     predictPublishingToast: 'Publishing…',
     predictPublished: '✅ Poll published. Members can vote now.',

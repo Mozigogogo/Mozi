@@ -12,12 +12,37 @@ function escapeRegex(s) {
   return String(s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/** @type {{ id?: number; username?: string } | null} */
+let cachedBotInfo = null;
+
+/**
+ * @param {import('telegraf').Telegram} telegram
+ */
+async function ensureBotInfo(telegram) {
+  if (cachedBotInfo?.username) return cachedBotInfo;
+  try {
+    cachedBotInfo = await telegram.getMe();
+  } catch {
+    cachedBotInfo = null;
+  }
+  return cachedBotInfo;
+}
+
 /**
  * @param {import('telegraf').Context} ctx
  * @param {string} [configBotUsername]
  */
 function resolveBotUsername(ctx, configBotUsername) {
-  return normalizeBotUsername(ctx.me?.username || configBotUsername);
+  return normalizeBotUsername(ctx.me?.username || cachedBotInfo?.username || configBotUsername);
+}
+
+/**
+ * @param {string} text
+ * @param {string} bot
+ */
+function textContainsBotUsername(text, bot) {
+  if (!bot || !text) return false;
+  return text.toLowerCase().includes(`@${bot}`);
 }
 
 /**
@@ -28,8 +53,11 @@ function isBotMentioned(ctx, configBotUsername) {
   const text = ctx.message?.text;
   if (!text) return false;
   const bot = resolveBotUsername(ctx, configBotUsername);
-  const botId = ctx.me?.id;
-  if (!bot && botId == null) return false;
+  const botId = ctx.me?.id ?? cachedBotInfo?.id;
+
+  if (bot && textContainsBotUsername(text, bot)) {
+    return true;
+  }
 
   const entities = ctx.message?.entities || [];
   for (const e of entities) {
@@ -42,10 +70,6 @@ function isBotMentioned(ctx, configBotUsername) {
     }
   }
 
-  if (bot) {
-    const re = new RegExp(`@${escapeRegex(bot)}(?:\\s|$|[，,。.!?？])`, 'i');
-    if (re.test(text)) return true;
-  }
   return false;
 }
 
@@ -58,7 +82,7 @@ function isBotMentioned(ctx, configBotUsername) {
 function extractBotMentionQuery(text, entities, ctx, configBotUsername) {
   let s = String(text || '');
   const bot = resolveBotUsername(ctx, configBotUsername);
-  const botId = ctx.me?.id;
+  const botId = ctx.me?.id ?? cachedBotInfo?.id;
   const sorted = [...(entities || [])].sort((a, b) => b.offset - a.offset);
 
   for (const e of sorted) {
@@ -76,7 +100,7 @@ function extractBotMentionQuery(text, entities, ctx, configBotUsername) {
 
   let out = s.replace(/\s+/g, ' ').trim();
   if (bot) {
-    const prefixRe = new RegExp(`^@${escapeRegex(bot)}\\s*`, 'i');
+    const prefixRe = new RegExp(`@${escapeRegex(bot)}\\s*`, 'i');
     out = out.replace(prefixRe, '').trim();
     if (!out) {
       out = String(text || '').replace(prefixRe, '').replace(/\s+/g, ' ').trim();
@@ -104,8 +128,11 @@ function shouldHandleBotMention(ctx, configBotUsername) {
 }
 
 module.exports = {
+  ensureBotInfo,
   resolveBotUsername,
   isBotMentioned,
+  textContainsBotUsername,
   extractBotMentionQuery,
   shouldHandleBotMention,
+  getCachedBotUsername: () => cachedBotInfo?.username ?? null,
 };

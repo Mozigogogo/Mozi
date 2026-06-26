@@ -40,6 +40,7 @@ const { initGuessSettlementWatcher } = require('./lib/guessSettlementWatcher');
 const { createResumePendingAiChatOnPrivate } = require('./middleware/resumePendingAiChatOnPrivate');
 const { predictDebugEnabled } = require('./lib/predictDebug');
 const { agentRouteDebugEnabled } = require('./lib/agentRouteDebug');
+const { ensureBotInfo } = require('./lib/botMention');
 
 if (!config.BOT_TOKEN) {
   console.error('❌ 错误: 请设置 BOT_TOKEN 环境变量');
@@ -139,14 +140,16 @@ async function startBot() {
 
   console.log('🤖 Mozi Bot 已启动');
   try {
-    const me = await bot.telegram.getMe();
-    const actual = me.username ? `@${me.username}` : '(no username)';
+    const me = await ensureBotInfo(bot.telegram);
+    if (me) {
+      const actual = me.username ? `@${me.username}` : '(no username)';
     const cfg = config.BOT_USERNAME ? `@${config.BOT_USERNAME}` : '(unset)';
     console.log(`ℹ️  Bot 账号：${actual}（配置 BOT_USERNAME=${cfg}）`);
     if (me.username && config.BOT_USERNAME && me.username.toLowerCase() !== config.BOT_USERNAME.toLowerCase()) {
       console.warn(
         `⚠️  BOT_USERNAME 与 Token 不一致，@提及 以 Token 对应账号 ${actual} 为准`,
       );
+    }
     }
   } catch (err) {
     console.warn('⚠️  getMe 失败:', err?.message || err);
