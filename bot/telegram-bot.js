@@ -77,7 +77,7 @@ bot.catch((err, ctx) => {
   const code = err?.response?.error_code;
   if (code === 409) {
     console.error(
-      '❌ [BOT] 409 Conflict：同一 BOT_TOKEN 有多个实例在 getUpdates。请只保留 Railway 或新加坡服务器其中一个 Bot 进程。',
+      '❌ [BOT] 409 Conflict：同一 BOT_TOKEN 有多个实例在 getUpdates。请检查 Railway Replicas、本机 npm start、或 Revoke Token。',
     );
     return;
   }
@@ -89,27 +89,52 @@ if (config.TG_CHAT_API_PORT > 0) {
   startTgChatHttpServer({ port: config.TG_CHAT_API_PORT });
 }
 
+async function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function startBot() {
   try {
+    const wh = await bot.telegram.getWebhookInfo();
+    if (wh?.url) {
+      console.warn(`⚠️  检测到 webhook：${wh.url}，将清除后改用 long polling`);
+    }
     await bot.telegram.deleteWebhook({ drop_pending_updates: false });
     console.log('ℹ️  已清除 Telegram webhook，使用 long polling');
   } catch (err) {
     console.warn('⚠️  deleteWebhook 失败（可忽略）:', err?.message || err);
   }
 
-  try {
-    await bot.launch();
-  } catch (err) {
-    const code = err?.response?.error_code;
-    if (code === 409) {
-      console.error(
-        '❌ 启动失败 409 Conflict：同一 BOT_TOKEN 已在别处运行（例如 Railway + 新加坡服务器同时跑 Bot）。',
-      );
-      console.error('   → 只保留一个实例：停掉另一边的 pm2 / Railway 服务后再启动。');
-    } else {
-      console.error('❌ Bot 启动失败:', err?.response?.description || err?.message || err);
+  const maxAttempts = 6;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      await bot.launch();
+      break;
+    } catch (err) {
+      const code = err?.response?.error_code;
+      if (code === 409 && attempt < maxAttempts) {
+        const waitSec = 5 * attempt;
+        console.warn(
+          `⚠️  409 Conflict（第 ${attempt}/${maxAttempts} 次）：可能有另一个进程占用同一 BOT_TOKEN，${waitSec}s 后重试…`,
+        );
+        console.warn(
+          '   常见原因：Railway Replicas>1、同项目多个服务共用 Token、本机 npm start、或上次部署尚未退出。',
+        );
+        await sleep(waitSec * 1000);
+        continue;
+      }
+      if (code === 409) {
+        console.error('❌ 启动失败 409 Conflict：同一 BOT_TOKEN 仍被其他进程占用。');
+        console.error('   请检查：');
+        console.error('   1) Railway → tg_bot → Settings → Replicas = 1');
+        console.error('   2) 同账号下是否还有另一个服务/环境在用同一 BOT_TOKEN');
+        console.error('   3) 本机是否跑着 npm start / node bot/telegram-bot.js');
+        console.error('   4) BotFather Revoke token 后只把新 Token 填到 Railway');
+      } else {
+        console.error('❌ Bot 启动失败:', err?.response?.description || err?.message || err);
+      }
+      process.exit(1);
     }
-    process.exit(1);
   }
 
   console.log('🤖 Mozi Bot 已启动');
