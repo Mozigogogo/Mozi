@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * 群内 @Bot / 回复 Bot / /bot → 意图识别；失败时回退为 /chat 同路径
+ * 群内 @Bot / 回复 Bot → 意图识别；失败时回退为 /chat 同路径
  */
 
 const {
@@ -49,7 +49,7 @@ async function dispatchMentionAsChat(ctx, config, getTexts, registeredGate, logi
 }
 
 /**
- * 自然语言意图识别（@ 提及与 /bot 共用）
+ * 自然语言意图识别（@ 提及）
  */
 async function runNaturalLanguageQuery(ctx, config, { getTexts }, registeredGate, loginGate, rawQuery) {
   const query = String(rawQuery || '').trim();

@@ -45,18 +45,4 @@ function extractBigorderQuery(text, botUsername) {
   return m ? m[1].trim() : '';
 }
 
-/**
- * /bot 自然语言（群内替代 @ 提及）
- * @param {string} text
- * @param {string} botUsername 无 @
- */
-function extractBotQuery(text, botUsername) {
-  const u = escapeRegex(botUsername);
-  const re = u
-    ? new RegExp(`^/bot(?:@${u})?\\s*(.*)$`, 'is')
-    : /^\/bot\s*(.*)$/is;
-  const m = String(text || '').match(re);
-  return m ? m[1].trim() : '';
-}
-
-module.exports = { extractAiQuery, extractChatQuery, extractBigorderQuery, extractBotQuery };
+module.exports = { extractAiQuery, extractChatQuery, extractBigorderQuery };

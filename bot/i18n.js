@@ -120,7 +120,6 @@ const i18n = {
     predictBetDeadlinePassed: '下注已截止',
     predictBetUserResolveFailed: '无法获取用户信息，请先登录 Mozi',
     agentRouteNeedQuestion: '请在 @ 我之后输入问题，例如：<code>@MoziBot BTC 后市如何</code>',
-    agentRouteNeedBotQuestion: '请在 <code>/bot</code> 后输入问题，例如：<code>/bot BTC 后市如何</code>',
     agentRouteFailed: '意图识别失败，请稍后再试。',
     agentRouteUnknownCommand: (cmd) => `暂不支持通过 @ 触发 <code>${String(cmd || '—')}</code>，请使用对应斜杠命令。`,
     agentRouteUsePredict: '发起竞猜请使用 <code>/predict</code>。',
@@ -377,7 +376,6 @@ const i18n = {
     predictBetDeadlinePassed: 'Betting has closed for this poll',
     predictBetUserResolveFailed: 'Could not resolve user profile. Please log in to Mozi first.',
     agentRouteNeedQuestion: 'Ask a question after @mentioning me, e.g. <code>@MoziBot BTC outlook</code>',
-    agentRouteNeedBotQuestion: 'Add your question after <code>/bot</code>, e.g. <code>/bot BTC outlook</code>',
     agentRouteFailed: 'Could not recognize your intent. Please try again later.',
     agentRouteUnknownCommand: (cmd) =>
       `Cannot run <code>${String(cmd || '—')}</code> via @mention yet. Use the slash command instead.`,
