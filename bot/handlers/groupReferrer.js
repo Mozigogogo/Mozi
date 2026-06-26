@@ -54,19 +54,7 @@ function registerGroupReferrer(bot, config, { getTexts } = {}) {
     const join = parseBotJoinFromMyChatMember(mcm);
     if (!join) return;
 
-    const ts = new Date().toLocaleString();
-    console.log(`\n[${ts}] Bot 被拉进群`);
-    console.log(`  群 ID (chatId): ${join.chatId}`);
-    console.log(`  群名: ${join.chatTitle || '(无标题)'}`);
-    console.log(`  拉群人 TG ID (adderTelegramId): ${join.adderTelegramId}`);
-    if (join.adderUsername) {
-      console.log(`  拉群人用户名: @${join.adderUsername}`);
-    }
-    if (join.likelyAnonymousAdder) {
-      console.log(
-        '  ⚠️ 拉群人可能为匿名管理员，adderTelegramId 可能无法用于 /bind_ref，请用非匿名账号拉 bot 进群',
-      );
-    } else {
+    if (!join.likelyAnonymousAdder) {
       rememberChatPendingAdder(join.chatId, join.adderTelegramId, { chatTitle: join.chatTitle });
     }
 
@@ -197,9 +185,6 @@ function registerGroupReferrer(bot, config, { getTexts } = {}) {
     });
 
     await ctx.reply(successText, { parse_mode: 'HTML' });
-    console.log(
-      `[groupReferrer] 群 ${chatId} 已绑定 inviteCode=${inviteCode} adder=${binderId}`,
-    );
   });
 }
 

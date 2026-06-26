@@ -12,11 +12,8 @@ const {
   ensureBotInfo,
   getMessageText,
   getMessageEntities,
-  getCachedBotUsername,
 } = require('../lib/botMention');
 const { handleBotMentionRouted } = require('../lib/agentRouteDispatch');
-const { apiDebug } = require('../lib/debugLog');
-const { agentRouteLog } = require('../lib/agentRouteDebug');
 
 /**
  * @param {object} config
@@ -43,34 +40,24 @@ function createAgentMentionMiddleware(config, { getTexts }, registeredGate, logi
       return next();
     }
 
-    const botUser = resolveBotUsername(ctx, config.BOT_USERNAME);
     const entities = getMessageEntities(ctx);
-
-    agentRouteLog('mention.check', {
-      telegramId: ctx.from?.id ?? null,
-      chatId: ctx.chat?.id ?? null,
-      chatType,
-      messageId: ctx.message?.message_id ?? null,
-      textPreview: text.slice(0, 200),
-      entities: entities.map((e) => e.type),
-      configBot: config.BOT_USERNAME,
-      ctxBot: ctx.me?.username ?? getCachedBotUsername(),
-      naturalLanguage: config.BOT_NATURAL_LANGUAGE_ENABLED,
-      inputMode: config.BOT_INPUT_MODE,
-    });
 
     if (!config.BOT_NATURAL_LANGUAGE_ENABLED) {
       const texts = getTexts(ctx.from?.language_code || 'en');
       await ctx.reply(texts.agentRouteCommandModeHint, { parse_mode: 'HTML' }).catch(() => {});
-      agentRouteLog('mention.blocked', { reason: 'command_mode' });
       return;
     }
 
     if (!shouldHandleBotMention(ctx, config.BOT_USERNAME)) {
-      agentRouteLog('mention.skip', {
-        reason: 'empty_or_command',
-        textPreview: text.slice(0, 160),
-      });
+      const query = extractBotMentionQuery(text, entities, ctx, config.BOT_USERNAME);
+      const isSlashCmd =
+        entities.some((e) => e.type === 'bot_command' && e.offset === 0) ||
+        /^\s*\//.test(query);
+
+      if (isSlashCmd) {
+        return next();
+      }
+
       const texts = getTexts(ctx.from?.language_code || 'en');
       await ctx.reply(texts.agentRouteNeedQuestion, { parse_mode: 'HTML' }).catch(() => {});
       return;
@@ -78,28 +65,13 @@ function createAgentMentionMiddleware(config, { getTexts }, registeredGate, logi
 
     const rawQuery = extractBotMentionQuery(text, entities, ctx, config.BOT_USERNAME);
 
-    agentRouteLog('mention.incoming', {
-      telegramId: ctx.from?.id ?? null,
-      chatId: ctx.chat?.id ?? null,
-      botUser,
-      query: rawQuery,
-    });
-
-    apiDebug('agent.mention.incoming', {
-      telegramId: ctx.from?.id ?? null,
-      chatId: ctx.chat?.id ?? null,
-      queryPreview: rawQuery.slice(0, 160),
-    });
-
     try {
       await handleBotMentionRouted(ctx, config, getTexts, registeredGate, loginGate, rawQuery);
     } catch (err) {
       console.error('[agent/mention]', err?.message || err);
-      agentRouteLog('mention.error', { message: err?.message || String(err) });
       const texts = getTexts(ctx.from?.language_code || 'en');
       await ctx.reply(texts.agentRouteFailed, { parse_mode: 'HTML' }).catch(() => {});
     }
-    return;
   };
 }
 

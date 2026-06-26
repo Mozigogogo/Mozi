@@ -99,11 +99,7 @@ function startTgChatHttpServer({ port }) {
     }
   });
 
-  server.listen(port, () => {
-    console.log(
-      `📡 TG Chat API :${port}（save/get/remove/on-registered，TTL 10min，注册成功后事件驱动重放）`,
-    );
-  });
+  server.listen(port);
 
   return server;
 }

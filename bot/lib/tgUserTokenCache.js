@@ -8,13 +8,7 @@ const { buildTelegramWebAppLoginHash } = require('./telegramWebAppLoginHash');
 const { jwtPreview } = require('./debugLog');
 const { sanitizeTelegramLoginOpts } = require('./sanitizeMysqlUtf8');
 
-function registerLog(tag, info) {
-  const payload =
-    info && typeof info === 'object'
-      ? JSON.stringify(info, (_, val) => (typeof val === 'bigint' ? val.toString() : val))
-      : '';
-  console.log(`[tg/register] ${new Date().toISOString()} ${tag}${payload ? ` ${payload}` : ''}`);
-}
+function registerLog() {}
 
 function hashPreview(hash) {
   const s = String(hash || '').trim();

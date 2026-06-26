@@ -11,13 +11,7 @@ const { buildTelegramLoginOpts } = require('./datainfoPoints');
 /** inline 按钮 callback_data（≤64 字节） */
 const CALLBACK_MOZI_REGISTER = 'mozi_reg';
 
-function registerLog(tag, info) {
-  const payload =
-    info && typeof info === 'object'
-      ? JSON.stringify(info, (_, val) => (typeof val === 'bigint' ? val.toString() : val))
-      : '';
-  console.log(`[tg/register] ${new Date().toISOString()} ${tag}${payload ? ` ${payload}` : ''}`);
-}
+function registerLog() {}
 
 /**
  * @param {object | null} json

@@ -10,14 +10,12 @@
  * /balance：handlers/balance.js（GET /user/datainfo；私聊直接回复，群内尝试私信用户，路径见 USER_DATA_INFO_PATH）
  * my_chat_member、/bind_ref：handlers/groupReferrer.js（入群 pending；仅拉群人自动 queryInviteCode 并绑定群）
  * /ai、/chat：未注册时 save 提问 + 群内「注册」按钮；注册成功后 on-registered 事件驱动群内重放；见 tgChatRegisterWatcher
- * 调试：环境变量 BOT_DEBUG=1 → middleware/debugCommands.js + lib/debugLog.js（命令与 apis 内 HTTP 摘要）
  */
 
 const { Telegraf } = require('telegraf');
 
 const config = require('./config');
 const { getTexts } = require('./i18n');
-const { registerDebugCommandLogging } = require('./middleware/debugCommands');
 const { createRequireMoziRegistered } = require('./middleware/requireMoziRegistered');
 const { createRequireMoziLogin, registerMoziReloginCallback } = require('./middleware/requireMoziLogin');
 const { registerStart } = require('./handlers/start');
@@ -32,15 +30,12 @@ const { registerPredict, createPredictTextMiddleware } = require('./handlers/pre
 const { registerHelp } = require('./handlers/help');
 const { registerBalance } = require('./handlers/balance');
 const { createAgentMentionMiddleware } = require('./handlers/agentMention');
-const { createAgentMentionLoggerMiddleware } = require('./middleware/agentMentionLogger');
 const { createInjectGroupReferrer } = require('./middleware/groupReferrer');
 const { registerGroupReferrer } = require('./handlers/groupReferrer');
 const { startTgChatHttpServer } = require('./server/tgChatHttp');
 const { initTgChatRegisterWatcher } = require('./lib/tgChatRegisterWatcher');
 const { initGuessSettlementWatcher } = require('./lib/guessSettlementWatcher');
 const { createResumePendingAiChatOnPrivate } = require('./middleware/resumePendingAiChatOnPrivate');
-const { predictDebugEnabled } = require('./lib/predictDebug');
-const { agentRouteDebugEnabled } = require('./lib/agentRouteDebug');
 const { ensureBotInfo } = require('./lib/botMention');
 
 if (!config.BOT_TOKEN) {
@@ -56,8 +51,6 @@ const i18nApi = { getTexts };
 const registeredGate = createRequireMoziRegistered(config, i18nApi);
 const loginGate = createRequireMoziLogin(config, i18nApi);
 
-registerDebugCommandLogging(bot);
-bot.use(createAgentMentionLoggerMiddleware(config));
 bot.use(createPredictTextMiddleware(config, i18nApi));
 bot.use(createAgentMentionMiddleware(config, i18nApi, registeredGate, loginGate));
 bot.use(createInjectGroupReferrer(config));
@@ -103,7 +96,6 @@ async function startBot() {
       console.warn(`⚠️  检测到 webhook：${wh.url}，将清除后改用 long polling`);
     }
     await bot.telegram.deleteWebhook({ drop_pending_updates: false });
-    console.log('ℹ️  已清除 Telegram webhook，使用 long polling');
   } catch (err) {
     console.warn('⚠️  deleteWebhook 失败（可忽略）:', err?.message || err);
   }
@@ -140,39 +132,15 @@ async function startBot() {
     }
   }
 
-  console.log('🤖 Mozi Bot 已启动');
   try {
     const me = await ensureBotInfo(bot.telegram);
-    if (me) {
-      const actual = me.username ? `@${me.username}` : '(no username)';
-    const cfg = config.BOT_USERNAME ? `@${config.BOT_USERNAME}` : '(unset)';
-    console.log(`ℹ️  Bot 账号：${actual}（配置 BOT_USERNAME=${cfg}）`);
-    if (me.username && config.BOT_USERNAME && me.username.toLowerCase() !== config.BOT_USERNAME.toLowerCase()) {
+    if (me?.username && config.BOT_USERNAME && me.username.toLowerCase() !== config.BOT_USERNAME.toLowerCase()) {
       console.warn(
-        `⚠️  BOT_USERNAME 与 Token 不一致，@提及 以 Token 对应账号 ${actual} 为准`,
+        `⚠️  BOT_USERNAME 与 Token 不一致，@提及 以 Token 对应账号 @${me.username} 为准`,
       );
-    }
     }
   } catch (err) {
     console.warn('⚠️  getMe 失败:', err?.message || err);
-  }
-  console.log(
-    `ℹ️  交互模式：${config.BOT_INPUT_MODE}（${
-      config.BOT_NATURAL_LANGUAGE_ENABLED ? '@提及自然语言 + 斜杠命令' : '仅斜杠命令'
-    }）\n`,
-  );
-  console.log('等待用户消息...\n');
-  if (config.BOT_DEBUG) {
-    console.log('ℹ️  BOT_DEBUG 已开启：将打印 [BOT_DEBUG] 命令入口与 HTTP 调用结果（不含 JWT 原文）\n');
-  }
-  if (predictDebugEnabled()) {
-    console.log('ℹ️  PREDICT_DEBUG 已开启：将打印 [PREDICT_DEBUG] /predict 流程日志\n');
-  }
-  if (config.BOT_NATURAL_LANGUAGE_ENABLED) {
-    console.log('ℹ️  @ 提及日志：[AGENT_ROUTE] msg.at / mention.check / mention.incoming\n');
-    if (agentRouteDebugEnabled()) {
-      console.log('ℹ️  AGENT_ROUTE_DEBUG 已开启：将额外打印原始 HTTP body\n');
-    }
   }
 }
 
