@@ -10,10 +10,10 @@ const {
   getMessageEntities,
   getCachedBotUsername,
 } = require('../lib/botMention');
-const { botMentionLog } = require('../lib/botMentionDebug');
+const { botMentionLog, botMentionVerboseEnabled } = require('../lib/botMentionDebug');
 
 /**
- * 监听群内 @Bot 消息并打印调试（不拦截业务逻辑）
+ * 监听群内消息：诊断 Telegram 是否投递、@ 是否识别为 Bot
  */
 function createBotMentionListenerMiddleware(config) {
   return async (ctx, next) => {
@@ -30,11 +30,46 @@ function createBotMentionListenerMiddleware(config) {
 
     await ensureBotInfo(ctx.telegram);
 
-    if (!isBotMentioned(ctx, config.BOT_USERNAME)) {
+    const botUser = resolveBotUsername(ctx, config.BOT_USERNAME);
+    const entities = getMessageEntities(ctx);
+    const mentioned = isBotMentioned(ctx, config.BOT_USERNAME);
+
+    if (botMentionVerboseEnabled()) {
+      botMentionLog('group.inbound', {
+        telegramId: ctx.from?.id ?? null,
+        chatId: ctx.chat?.id ?? null,
+        messageId: ctx.message.message_id ?? null,
+        textPreview: text.slice(0, 200),
+        entityTypes: entities.map((e) => e.type),
+        isBotMentioned: mentioned,
+        botUser,
+      });
+    }
+
+    if (text.includes('@')) {
+      botMentionLog('group.at_seen', {
+        telegramId: ctx.from?.id ?? null,
+        chatId: ctx.chat?.id ?? null,
+        messageId: ctx.message.message_id ?? null,
+        textPreview: text.slice(0, 300),
+        entities: entities.map((e) => ({
+          type: e.type,
+          offset: e.offset,
+          length: e.length,
+          slice: text.slice(e.offset, e.offset + e.length),
+          userId: e.user?.id ?? null,
+        })),
+        configBot: config.BOT_USERNAME,
+        ctxBot: ctx.me?.username ?? getCachedBotUsername(),
+        botUser,
+        isBotMentioned: mentioned,
+      });
+    }
+
+    if (!mentioned) {
       return next();
     }
 
-    const entities = getMessageEntities(ctx);
     const query = extractBotMentionQuery(text, entities, ctx, config.BOT_USERNAME);
     const isSlashCmd =
       entities.some((e) => e.type === 'bot_command' && e.offset === 0) || /^\s*\//.test(query);
@@ -45,15 +80,9 @@ function createBotMentionListenerMiddleware(config) {
       chatType,
       messageId: ctx.message.message_id ?? null,
       textPreview: text.slice(0, 300),
-      entities: entities.map((e) => ({
-        type: e.type,
-        offset: e.offset,
-        length: e.length,
-        userId: e.user?.id ?? null,
-      })),
       configBot: config.BOT_USERNAME,
       ctxBot: ctx.me?.username ?? getCachedBotUsername(),
-      botUser: resolveBotUsername(ctx, config.BOT_USERNAME),
+      botUser,
       extractedQuery: query,
       isSlashCommand: isSlashCmd,
       willHandleNaturalLanguage:

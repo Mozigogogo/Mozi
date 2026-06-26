@@ -141,6 +141,9 @@ async function startBot() {
         `⚠️  BOT_USERNAME 与 Token 不一致，@提及 以 Token 对应账号 @${me.username} 为准`,
       );
     }
+    console.log(
+      `[BOT_MENTION] Bot 已启动 polling @${me?.username || config.BOT_USERNAME}（群内 @ 监听已挂载；设 BOT_MENTION_DEBUG=verbose 可看每条群消息）`,
+    );
   } catch (err) {
     console.warn('⚠️  getMe 失败:', err?.message || err);
   }

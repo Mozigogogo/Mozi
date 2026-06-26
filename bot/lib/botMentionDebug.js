@@ -1,12 +1,25 @@
 'use strict';
 
 /**
- * 群内 @Bot 调试日志。默认开启；设 BOT_MENTION_DEBUG=0 可关闭。
+ * 群内 @Bot 调试日志。
+ * - 默认开启（mentioned / handle 等）
+ * - BOT_MENTION_DEBUG=verbose 时额外打印群内每条文本、含 @ 的消息
+ * - BOT_MENTION_DEBUG=0 关闭
  */
 
-function botMentionDebugEnabled() {
+function botMentionDebugLevel() {
   const v = String(process.env.BOT_MENTION_DEBUG ?? '1').trim().toLowerCase();
-  return v !== '0' && v !== 'false' && v !== 'no';
+  if (v === '0' || v === 'false' || v === 'no' || v === 'off') return 'off';
+  if (v === 'verbose' || v === '2' || v === 'all') return 'verbose';
+  return 'on';
+}
+
+function botMentionDebugEnabled() {
+  return botMentionDebugLevel() !== 'off';
+}
+
+function botMentionVerboseEnabled() {
+  return botMentionDebugLevel() === 'verbose';
 }
 
 function serialize(info) {
@@ -24,4 +37,8 @@ function botMentionLog(tag, info) {
   console.log(`[BOT_MENTION] ${new Date().toISOString()} ${tag}${payload ? ` ${payload}` : ''}`);
 }
 
-module.exports = { botMentionDebugEnabled, botMentionLog };
+module.exports = {
+  botMentionDebugEnabled,
+  botMentionVerboseEnabled,
+  botMentionLog,
+};
