@@ -10,6 +10,7 @@ const { runPriceCommand } = require('../handlers/price');
 const { runBalanceCommand } = require('../handlers/balance');
 const { escapeHtml } = require('./telegramHtml');
 const { apiDebug } = require('./debugLog');
+const { agentRouteLog, agentRouteDebug } = require('./agentRouteDebug');
 
 /** @typedef {{ command: string; message: string; coinSymbol: string | null; rawQuery: string }} AgentRouteDispatch */
 
@@ -113,6 +114,12 @@ async function resolveAgentRouteDispatch(ctx, config, texts, rawQuery) {
 
   await ctx.telegram.sendChatAction(ctx.chat.id, 'typing').catch(() => {});
 
+  agentRouteLog('request', {
+    telegramId: ctx.from?.id ?? null,
+    chatId: ctx.chat?.id ?? null,
+    message: query,
+  });
+
   let routeRes;
   try {
     routeRes = await postAgentRoute({
@@ -121,10 +128,25 @@ async function resolveAgentRouteDispatch(ctx, config, texts, rawQuery) {
       appUrl: config.APP_URL,
     });
   } catch (err) {
+    agentRouteLog('error', { message: err?.message || String(err), query });
     console.warn('[agent/route] request failed:', err?.message || err);
     await ctx.reply(texts.agentRouteFailed, { parse_mode: 'HTML' }).catch(() => {});
     return null;
   }
+
+  agentRouteLog('response', {
+    ok: routeRes.ok,
+    httpStatus: routeRes.status,
+    code: routeRes.json?.code ?? null,
+    success: routeRes.json?.success ?? null,
+    errorMsg: routeRes.json?.errorMsg ?? routeRes.errorMessage ?? null,
+    data: routeRes.json?.data ?? null,
+    route: routeRes.route,
+  });
+
+  agentRouteDebug('response.raw', {
+    bodyPreview: routeRes.text?.slice(0, 800) ?? null,
+  });
 
   if (!routeRes.ok || !routeRes.route) {
     const detail = routeRes.errorMessage ? `：${escapeHtml(routeRes.errorMessage)}` : '';
@@ -134,12 +156,14 @@ async function resolveAgentRouteDispatch(ctx, config, texts, rawQuery) {
 
   const route = routeRes.route;
   if (route.fallbackText) {
+    agentRouteLog('fallback', { fallbackText: route.fallbackText, route });
     await ctx.reply(escapeHtml(route.fallbackText), { parse_mode: 'HTML' }).catch(() => {});
     return null;
   }
 
   const command = normalizeRouteCommand(route.command);
   if (!command) {
+    agentRouteLog('skip', { reason: 'empty_command', route });
     await ctx
       .reply(texts.agentRouteUnknownCommand(escapeHtml(route.command || '—')), { parse_mode: 'HTML' })
       .catch(() => {});
@@ -167,6 +191,12 @@ async function handleBotMentionRouted(ctx, config, getTexts, registeredGate, log
   const texts = getTexts(languageCode);
   const dispatch = await resolveAgentRouteDispatch(ctx, config, texts, rawQuery);
   if (!dispatch) return;
+
+  agentRouteLog('dispatch', {
+    command: dispatch.command,
+    message: dispatch.message,
+    coinSymbol: dispatch.coinSymbol,
+  });
 
   ctx.state.agentRouteDispatch = dispatch;
 

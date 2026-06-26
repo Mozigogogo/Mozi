@@ -39,6 +39,7 @@ const { initTgChatRegisterWatcher } = require('./lib/tgChatRegisterWatcher');
 const { initGuessSettlementWatcher } = require('./lib/guessSettlementWatcher');
 const { createResumePendingAiChatOnPrivate } = require('./middleware/resumePendingAiChatOnPrivate');
 const { predictDebugEnabled } = require('./lib/predictDebug');
+const { agentRouteDebugEnabled } = require('./lib/agentRouteDebug');
 
 if (!config.BOT_TOKEN) {
   console.error('❌ 错误: 请设置 BOT_TOKEN 环境变量');
@@ -94,6 +95,12 @@ bot.launch().then(() => {
   }
   if (predictDebugEnabled()) {
     console.log('ℹ️  PREDICT_DEBUG 已开启：将打印 [PREDICT_DEBUG] /predict 流程日志\n');
+  }
+  if (config.BOT_NATURAL_LANGUAGE_ENABLED) {
+    console.log('ℹ️  意图识别日志：[AGENT_ROUTE]（每次 @ 提及会打印 request / response）\n');
+    if (agentRouteDebugEnabled()) {
+      console.log('ℹ️  AGENT_ROUTE_DEBUG 已开启：将额外打印原始 HTTP body\n');
+    }
   }
 });
 

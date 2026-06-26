@@ -980,7 +980,9 @@ async function postAgentRoute({
       command: route?.command ?? null,
       coinSymbol: route?.coinSymbol ?? null,
       confidence: route?.confidence ?? null,
+      reason: route?.reason ?? null,
       language: route?.language ?? null,
+      fallbackText: route?.fallbackText ?? null,
       errorMessage: out.errorMessage,
       bodyPreview: text.slice(0, 500),
     });
