@@ -4,7 +4,7 @@
  * /alert：见 handlers/alert.js、lib/alertSymbol.js
  * /register：见 handlers/register.js、handlers/inlineRegister.js（群内 API 注册 + 自动重放）
  * /ai、/chat、/bigorder：统一 POST 主栈 /ai/agent/stream（type=analyze|chat|bigorder）；/ai、/chat 成功后扣积分
- * 群内 @Bot 自然语言：POST /ai/agent/route 意图识别后触发对应指令（handlers/agentMention.js）
+ * 群内 @Bot 自然语言：POST /ai/agent/route（handlers/agentMention.js）；也可用 /bot <问题>
  * /price：handlers/price.js + lib/apis.js（GET /detail/header，默认 BTC，简报格式）
  * /help：handlers/help.js（群内仅私聊发全文，防刷屏）
  * /balance：handlers/balance.js（GET /user/datainfo；私聊直接回复，群内尝试私信用户，路径见 USER_DATA_INFO_PATH）
@@ -30,6 +30,7 @@ const { registerPredict, createPredictTextMiddleware } = require('./handlers/pre
 const { registerHelp } = require('./handlers/help');
 const { registerBalance } = require('./handlers/balance');
 const { createAgentMentionMiddleware } = require('./handlers/agentMention');
+const { registerBotCommand } = require('./handlers/bot');
 const { createBotMentionListenerMiddleware } = require('./middleware/botMentionListener');
 const { createInjectGroupReferrer } = require('./middleware/groupReferrer');
 const { registerGroupReferrer } = require('./handlers/groupReferrer');
@@ -67,6 +68,7 @@ registerRegister(bot, config, i18nApi);
 registerInlineRegister(bot, config, i18nApi);
 registerAi(bot, config, i18nApi, registeredGate, loginGate);
 registerChat(bot, config, i18nApi, registeredGate, loginGate);
+registerBotCommand(bot, config, i18nApi, registeredGate, loginGate);
 registerBigorder(bot, config, i18nApi, registeredGate, loginGate);
 registerPrice(bot, config, i18nApi);
 registerPredict(bot, config, i18nApi);

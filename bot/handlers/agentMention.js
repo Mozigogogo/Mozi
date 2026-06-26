@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * 群内 @Bot / 回复 Bot → 意图识别；失败时回退为 /chat 同路径（已验证可用）
+ * 群内 @Bot / 回复 Bot / /bot → 意图识别；失败时回退为 /chat 同路径
  */
 
 const {
@@ -49,12 +49,47 @@ async function dispatchMentionAsChat(ctx, config, getTexts, registeredGate, logi
 }
 
 /**
+ * 自然语言意图识别（@ 提及与 /bot 共用）
+ */
+async function runNaturalLanguageQuery(ctx, config, { getTexts }, registeredGate, loginGate, rawQuery) {
+  const query = String(rawQuery || '').trim();
+  if (!query) return false;
+
+  botMentionLog('handle', {
+    telegramId: ctx.from?.id ?? null,
+    chatId: ctx.chat?.id ?? null,
+    query,
+  });
+
+  await ctx.telegram.sendChatAction(ctx.chat.id, 'typing').catch(() => {});
+
+  const languageCode = ctx.from?.language_code || 'en';
+  const texts = getTexts(languageCode);
+
+  try {
+    await handleBotMentionRouted(ctx, config, getTexts, registeredGate, loginGate, query);
+    botMentionLog('done', { query });
+  } catch (err) {
+    console.error('[agent/mention]', err?.message || err);
+    botMentionLog('fallback.chat', { query, reason: err?.message || String(err) });
+    try {
+      await dispatchMentionAsChat(ctx, config, getTexts, registeredGate, loginGate, query);
+    } catch (err2) {
+      console.error('[agent/mention/chat-fallback]', err2?.message || err2);
+      await ctx.reply(texts.agentRouteFailed, { parse_mode: 'HTML' }).catch(() => {});
+    }
+  }
+
+  return true;
+}
+
+/**
  * @param {import('telegraf').Context} ctx
  * @param {object} config
  * @param {{ getTexts: Function }} i18nApi
  * @param {import('telegraf').MiddlewareFn} registeredGate
  * @param {import('telegraf').MiddlewareFn} loginGate
- * @returns {Promise<boolean>} 是否已处理（true 则勿 next）
+ * @returns {Promise<boolean>}
  */
 async function handleGroupMentionMessage(ctx, config, { getTexts }, registeredGate, loginGate) {
   if (!isGroupTextMessage(ctx)) return false;
@@ -98,38 +133,10 @@ async function handleGroupMentionMessage(ctx, config, { getTexts }, registeredGa
   }
 
   const rawQuery = extractBotMentionQuery(text, entities, ctx, config.BOT_USERNAME);
-
-  botMentionLog('handle', {
-    telegramId: ctx.from?.id ?? null,
-    chatId: ctx.chat?.id ?? null,
-    query: rawQuery,
-  });
-
-  await ctx.telegram.sendChatAction(ctx.chat.id, 'typing').catch(() => {});
-
-  const languageCode = ctx.from?.language_code || 'en';
-  const texts = getTexts(languageCode);
-
-  try {
-    await handleBotMentionRouted(ctx, config, getTexts, registeredGate, loginGate, rawQuery);
-    botMentionLog('done', { query: rawQuery });
-  } catch (err) {
-    console.error('[agent/mention]', err?.message || err);
-    botMentionLog('fallback.chat', { query: rawQuery, reason: err?.message || String(err) });
-    try {
-      await dispatchMentionAsChat(ctx, config, getTexts, registeredGate, loginGate, rawQuery);
-    } catch (err2) {
-      console.error('[agent/mention/chat-fallback]', err2?.message || err2);
-      await ctx.reply(texts.agentRouteFailed, { parse_mode: 'HTML' }).catch(() => {});
-    }
-  }
-
+  await runNaturalLanguageQuery(ctx, config, { getTexts }, registeredGate, loginGate, rawQuery);
   return true;
 }
 
-/**
- * 必须在 bot.command 之前注册，确保群内 @ 消息先被拦截
- */
 function createAgentMentionMiddleware(config, i18nApi, registeredGate, loginGate) {
   return async (ctx, next) => {
     const handled = await handleGroupMentionMessage(ctx, config, i18nApi, registeredGate, loginGate);
@@ -147,4 +154,5 @@ module.exports = {
   createAgentMentionMiddleware,
   registerGroupMentionHandler,
   handleGroupMentionMessage,
+  runNaturalLanguageQuery,
 };
