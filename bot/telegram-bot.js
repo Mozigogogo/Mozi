@@ -44,6 +44,8 @@ if (!config.BOT_TOKEN) {
   process.exit(1);
 }
 
+console.log('[bot] starting pid=%s', process.pid);
+
 const bot = new Telegraf(config.BOT_TOKEN);
 initTgChatRegisterWatcher(bot, config);
 initGuessSettlementWatcher(bot, config);
@@ -89,29 +91,28 @@ async function sleep(ms) {
 
 async function startBot() {
   try {
-    const wh = await bot.telegram.getWebhookInfo();
-    if (wh?.url) {
-      console.warn(`⚠️  检测到 webhook：${wh.url}，将清除后改用 long polling`);
-    }
-    await bot.telegram.deleteWebhook({ drop_pending_updates: false });
+    await bot.telegram.deleteWebhook({ drop_pending_updates: true });
   } catch (err) {
-    console.warn('⚠️  deleteWebhook 失败（可忽略）:', err?.message || err);
+    console.warn('[bot] deleteWebhook:', err?.message || err);
   }
 
-  const maxAttempts = 6;
-  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+  let attempt = 0;
+  for (;;) {
+    attempt += 1;
     try {
-      await bot.launch();
+      await bot.launch({ dropPendingUpdates: true });
       break;
     } catch (err) {
       const code = err?.response?.error_code;
-      if (code === 409 && attempt < maxAttempts) {
-        await sleep(5 * attempt * 1000);
+      if (code === 409) {
+        const waitSec = Math.min(30, 5 * attempt);
+        if (attempt === 1 || attempt % 6 === 0) {
+          console.log('[bot] waiting for polling slot (%ss)...', waitSec);
+        }
+        await sleep(waitSec * 1000);
         continue;
       }
-      if (code !== 409) {
-        console.error('❌ Bot 启动失败:', err?.response?.description || err?.message || err);
-      }
+      console.error('[bot] launch failed:', err?.response?.description || err?.message || err);
       process.exit(1);
     }
   }
@@ -119,22 +120,27 @@ async function startBot() {
   try {
     const me = await ensureBotInfo(bot.telegram);
     if (me?.username && config.BOT_USERNAME && me.username.toLowerCase() !== config.BOT_USERNAME.toLowerCase()) {
-      console.warn(
-        `⚠️  BOT_USERNAME 与 Token 不一致，@提及 以 Token 对应账号 @${me.username} 为准`,
-      );
+      console.warn('[bot] BOT_USERNAME mismatch, using @%s', me.username);
     }
-    console.log(
-      `[BOT_MENTION] Bot 已启动 polling @${me?.username || config.BOT_USERNAME}（群内 @ 监听已挂载；设 BOT_MENTION_DEBUG=verbose 可看每条群消息）`,
-    );
+    console.log('[bot] ready @%s mode=%s', me?.username || config.BOT_USERNAME, config.BOT_INPUT_MODE);
   } catch (err) {
-    console.warn('⚠️  getMe 失败:', err?.message || err);
+    console.warn('[bot] getMe failed:', err?.message || err);
   }
 }
 
 startBot().catch((err) => {
-  console.error('❌ Bot 启动异常:', err?.message || err);
+  console.error('[bot] fatal:', err?.message || err);
   process.exit(1);
 });
 
-process.once('SIGINT', () => bot.stop('SIGINT'));
-process.once('SIGTERM', () => bot.stop('SIGTERM'));
+async function shutdown(signal) {
+  try {
+    await bot.stop(signal);
+  } catch {
+    /* ignore */
+  }
+  process.exit(0);
+}
+
+process.once('SIGINT', () => shutdown('SIGINT'));
+process.once('SIGTERM', () => shutdown('SIGTERM'));
