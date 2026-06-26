@@ -142,10 +142,11 @@ async function resolveAgentRouteDispatch(ctx, config, texts, rawQuery) {
     errorMsg: routeRes.json?.errorMsg ?? routeRes.errorMessage ?? null,
     data: routeRes.json?.data ?? null,
     route: routeRes.route,
+    rawJson: routeRes.json ?? null,
   });
 
-  agentRouteDebug('response.raw', {
-    bodyPreview: routeRes.text?.slice(0, 800) ?? null,
+  agentRouteDebug('response.body', {
+    body: routeRes.text?.slice(0, 2000) ?? null,
   });
 
   if (!routeRes.ok || !routeRes.route) {
