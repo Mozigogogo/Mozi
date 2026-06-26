@@ -14,6 +14,7 @@ const {
   getMessageEntities,
 } = require('../lib/botMention');
 const { handleBotMentionRouted } = require('../lib/agentRouteDispatch');
+const { botMentionLog } = require('../lib/botMentionDebug');
 
 /**
  * @param {object} config
@@ -43,6 +44,7 @@ function createAgentMentionMiddleware(config, { getTexts }, registeredGate, logi
     const entities = getMessageEntities(ctx);
 
     if (!config.BOT_NATURAL_LANGUAGE_ENABLED) {
+      botMentionLog('blocked', { reason: 'command_mode', textPreview: text.slice(0, 160) });
       const texts = getTexts(ctx.from?.language_code || 'en');
       await ctx.reply(texts.agentRouteCommandModeHint, { parse_mode: 'HTML' }).catch(() => {});
       return;
@@ -55,9 +57,11 @@ function createAgentMentionMiddleware(config, { getTexts }, registeredGate, logi
         /^\s*\//.test(query);
 
       if (isSlashCmd) {
+        botMentionLog('skip', { reason: 'slash_command_delegate', textPreview: text.slice(0, 160) });
         return next();
       }
 
+      botMentionLog('skip', { reason: 'empty_question', textPreview: text.slice(0, 160) });
       const texts = getTexts(ctx.from?.language_code || 'en');
       await ctx.reply(texts.agentRouteNeedQuestion, { parse_mode: 'HTML' }).catch(() => {});
       return;
@@ -65,10 +69,18 @@ function createAgentMentionMiddleware(config, { getTexts }, registeredGate, logi
 
     const rawQuery = extractBotMentionQuery(text, entities, ctx, config.BOT_USERNAME);
 
+    botMentionLog('handle', {
+      telegramId: ctx.from?.id ?? null,
+      chatId: ctx.chat?.id ?? null,
+      query: rawQuery,
+    });
+
     try {
       await handleBotMentionRouted(ctx, config, getTexts, registeredGate, loginGate, rawQuery);
+      botMentionLog('done', { query: rawQuery });
     } catch (err) {
       console.error('[agent/mention]', err?.message || err);
+      botMentionLog('error', { query: rawQuery, message: err?.message || String(err) });
       const texts = getTexts(ctx.from?.language_code || 'en');
       await ctx.reply(texts.agentRouteFailed, { parse_mode: 'HTML' }).catch(() => {});
     }

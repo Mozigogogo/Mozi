@@ -30,6 +30,7 @@ const { registerPredict, createPredictTextMiddleware } = require('./handlers/pre
 const { registerHelp } = require('./handlers/help');
 const { registerBalance } = require('./handlers/balance');
 const { createAgentMentionMiddleware } = require('./handlers/agentMention');
+const { createBotMentionListenerMiddleware } = require('./middleware/botMentionListener');
 const { createInjectGroupReferrer } = require('./middleware/groupReferrer');
 const { registerGroupReferrer } = require('./handlers/groupReferrer');
 const { startTgChatHttpServer } = require('./server/tgChatHttp');
@@ -51,6 +52,7 @@ const i18nApi = { getTexts };
 const registeredGate = createRequireMoziRegistered(config, i18nApi);
 const loginGate = createRequireMoziLogin(config, i18nApi);
 
+bot.use(createBotMentionListenerMiddleware(config));
 bot.use(createPredictTextMiddleware(config, i18nApi));
 bot.use(createAgentMentionMiddleware(config, i18nApi, registeredGate, loginGate));
 bot.use(createInjectGroupReferrer(config));
