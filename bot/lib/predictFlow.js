@@ -2,7 +2,7 @@
  * /predict 多步 UI：选币 → 确认文案 → 发布投票
  */
 
-const { fetchDetailHeader, fetchSearchLastPriceChange, postCoinDirectionGuessPublish, postCoinDirectionGuessBindMessage, postCoinDirectionGuessBet, getCoinDirectionGuessList, parseCoinDirectionGuessNo, parseCoinDirectionGuessPublishData, parseGuessBetStats } = require('./apis');
+const { fetchDetailHeader, fetchSearchLastPriceChange, postCoinDirectionGuessPublish, postCoinDirectionGuessBindMessage, postCoinDirectionGuessBet, getCoinDirectionGuessList, parseCoinDirectionGuessNo, parseCoinDirectionGuessPublishData, parseGuessBetStats, parseGuessItemStats } = require('./apis');
 const { SYMBOL_WHITELIST } = require('./symbolIntent');
 const { escapeHtml } = require('./telegramHtml');
 const { buildPredictPrivateUrl } = require('./predictSymbol');
@@ -1096,15 +1096,50 @@ async function publishPredict(ctx, config, getTexts) {
   await markConfirmPublished(ctx, session, texts, sym, priceStr, hours);
 }
 
-async function tryRefreshGuessMessage(ctx, texts, guessNo, betResult) {
+async function tryRefreshGuessMessage(ctx, config, texts, guessNo, betResult) {
   const meta = getGuessMessageContext(guessNo);
   const msg = ctx.callbackQuery?.message;
-  if (!meta || !msg || !('message_id' in msg)) return;
-  const statsRaw = parseGuessBetStats(betResult?.json);
+  if (!msg || !('message_id' in msg)) return;
+
+  let statsRaw = parseGuessBetStats(betResult?.json);
+  if (!statsRaw && config && msg.chat?.id != null) {
+    try {
+      const listRes = await getCoinDirectionGuessList({
+        apiBaseUrl: config.API_BASE_URL,
+        appUrl: config.APP_URL,
+        groupId: msg.chat.id,
+        path: config.COIN_DIRECTION_GUESS_LIST_PATH,
+      });
+      if (listRes.ok) {
+        const guess = String(guessNo || '').trim();
+        const item = listRes.items.find((i) => String(i.guessNo || '').trim() === guess);
+        if (item) statsRaw = parseGuessItemStats(item);
+      }
+    } catch (err) {
+      predictLog('bet.refresh_list_fail', {
+        guessNo,
+        message: err?.message || String(err),
+      });
+    }
+  }
+
+  if (!meta) {
+    predictLog('bet.refresh_skip', { guessNo, reason: 'missing_message_context' });
+    return;
+  }
+
   const html = buildGroupPublishHtml(texts, meta, statsRaw);
   const keyboard = buildGuessBetKeyboard(texts, guessNo);
   const hasPhoto = Boolean(msg.photo && msg.photo.length > 0);
-  await editGuessMessageContent(ctx, msg.chat?.id, msg.message_id, html, keyboard, hasPhoto);
+  const ok = await editGuessMessageContent(ctx, msg.chat?.id, msg.message_id, html, keyboard, hasPhoto);
+  predictLog('bet.refresh', {
+    guessNo,
+    ok,
+    upCount: statsRaw?.upCount ?? null,
+    downCount: statsRaw?.downCount ?? null,
+    upPoints: statsRaw?.upPoints ?? null,
+    downPoints: statsRaw?.downPoints ?? null,
+  });
 }
 
 /**
@@ -1185,7 +1220,7 @@ async function submitGuessBet(ctx, config, getTexts, guessNo, direction, betAmou
     }
     await ctx.answerCbQuery(texts.predictVoteSuccess(dirLabel, pts)).catch(() => {});
     const refreshTexts = getTexts(getGuessMessageContext(guess)?.languageCode || languageCode);
-    await tryRefreshGuessMessage(ctx, refreshTexts, guess, result);
+    await tryRefreshGuessMessage(ctx, config, refreshTexts, guess, result);
     return true;
   } catch (err) {
     predictLog('bet.fail', { telegramId: uid, guessNo: guess, message: err?.message || String(err) });
