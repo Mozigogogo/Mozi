@@ -85,25 +85,6 @@ function formatLockedAtDisplay(ms, languageCode) {
   }
 }
 
-function formatCountdownRelative(endAt, languageCode) {
-  const ms = parseEndAtMs(endAt);
-  if (ms == null) return '—';
-  const isZh = String(languageCode || '').toLowerCase().startsWith('zh');
-  const diff = ms - Date.now();
-  if (diff <= 0) return isZh ? '已截止' : 'Closed';
-  const totalMin = Math.floor(diff / 60000);
-  const hours = Math.floor(totalMin / 60);
-  const mins = totalMin % 60;
-  if (isZh) {
-    if (hours > 0 && mins > 0) return `${hours}小时${mins}分后`;
-    if (hours > 0) return `${hours}小时后`;
-    return `${mins}分后`;
-  }
-  if (hours > 0 && mins > 0) return `${hours}h ${mins}m`;
-  if (hours > 0) return `${hours}h`;
-  return `${mins}m`;
-}
-
 function formatPointsDisplay(points, languageCode) {
   const n = Math.max(0, Math.floor(Number(points) || 0));
   const isZh = String(languageCode || '').toLowerCase().startsWith('zh');
@@ -167,14 +148,16 @@ function formatPublisherLabel(publishData, ctx) {
 function buildGroupPublishHtml(texts, meta, statsRaw) {
   const stats = normalizeGuessBetStats(statsRaw, meta.languageCode);
   const lockedAt = formatLockedAtDisplay(meta.lockedAtMs, meta.languageCode);
-  const countdown = formatCountdownRelative(meta.endAt, meta.languageCode);
+  const endAtMs = parseEndAtMs(meta.endAt);
+  const endAt =
+    endAtMs != null ? formatLockedAtDisplay(endAtMs, meta.languageCode) : '—';
   return texts.predictGroupPublishBody(
     escapeHtml(meta.sym),
     meta.hours,
     escapeHtml(meta.price),
     lockedAt,
     stats,
-    countdown,
+    endAt,
     meta.publisher,
   );
 }

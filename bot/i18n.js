@@ -94,8 +94,8 @@ const i18n = {
     predictNetworkError: '获取价格失败（网络异常），请稍后再试。',
     predictConfirmBody: (sym, hours, price) =>
       `${sym} 接下来 ${hours} 小时会涨还是跌？\n当前价：${price}（创建时锁定）`,
-    predictGroupPublishBody: (sym, hours, price, lockedAt, stats, countdown, publisher) =>
-      `🎯 竞猜 · ${sym}\n接下来 ${hours} 小时会涨还是跌？\n起始价：${price}（${lockedAt} 锁定）\n📊 看涨 ${stats.upPercent}%（${stats.upCount}人·${stats.upPoints}积分）\n📊 看跌 ${stats.downPercent}%（${stats.downCount}人·${stats.downPoints}积分）\n⏳ 下注截止：${countdown}\n由 ${publisher} 发起`,
+    predictGroupPublishBody: (sym, hours, price, lockedAt, stats, endAt, publisher) =>
+      `🎯 竞猜 · ${sym}\n接下来 ${hours} 小时会涨还是跌？\n起始价：${price}（${lockedAt} 锁定）\n📊 看涨 ${stats.upPercent}%（${stats.upCount}人·${stats.upPoints}积分）\n📊 看跌 ${stats.downPercent}%（${stats.downCount}人·${stats.downPoints}积分）\n⏳ 下注截止：${endAt}\n由 ${publisher} 发起`,
     predictBetUp50Btn: '看涨 +50',
     predictBetUp100Btn: '看涨 +100',
     predictBetUpCustomBtn: '自定义',
@@ -337,8 +337,8 @@ const i18n = {
     predictNetworkError: 'Failed to fetch price (network). Please try again later.',
     predictConfirmBody: (sym, hours, price) =>
       `Will ${sym} go up or down in the next ${hours} hours?\nCurrent price: ${price} (locked at creation)`,
-    predictGroupPublishBody: (sym, hours, price, lockedAt, stats, countdown, publisher) =>
-      `🎯 Guess · ${sym}\nUp or down in the next ${hours} hours?\nStart price: ${price} (locked at ${lockedAt})\n📊 Bullish ${stats.upPercent}% (${stats.upCount} · ${stats.upPoints} pts)\n📊 Bearish ${stats.downPercent}% (${stats.downCount} · ${stats.downPoints} pts)\n⏳ Closes in: ${countdown}\nStarted by ${publisher}`,
+    predictGroupPublishBody: (sym, hours, price, lockedAt, stats, endAt, publisher) =>
+      `🎯 Guess · ${sym}\nUp or down in the next ${hours} hours?\nStart price: ${price} (locked at ${lockedAt})\n📊 Bullish ${stats.upPercent}% (${stats.upCount} · ${stats.upPoints} pts)\n📊 Bearish ${stats.downPercent}% (${stats.downCount} · ${stats.downPoints} pts)\n⏳ Closes at: ${endAt}\nStarted by ${publisher}`,
     predictBetUp50Btn: 'Bull +50',
     predictBetUp100Btn: 'Bull +100',
     predictBetUpCustomBtn: 'Custom',
