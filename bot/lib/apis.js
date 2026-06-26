@@ -858,6 +858,138 @@ async function consumeAgentSseStream(res, signal) {
   return { answer: String(answer).trim(), pointsCost };
 }
 
+function isAgentRouteOk(json) {
+  if (!json || typeof json !== 'object') return false;
+  if (json.success === false) return false;
+  const code = json.code;
+  return code === undefined || code === 0 || code === 200;
+}
+
+/**
+ * @param {object | null} json
+ * @returns {{
+ *   command: string;
+ *   coinSymbol: string | null;
+ *   confidence: number | null;
+ *   reason: string;
+ *   language: string;
+ *   fallbackText: string | null;
+ * } | null}
+ */
+function parseAgentRouteData(json) {
+  if (!json || typeof json !== 'object') return null;
+  const data = json.data;
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+  const confidenceRaw = Number(data.confidence);
+  const coinRaw = data.coin_symbol ?? data.coinSymbol ?? null;
+  return {
+    command: String(data.command || '').trim(),
+    coinSymbol:
+      coinRaw != null && String(coinRaw).trim() ? String(coinRaw).trim().toUpperCase() : null,
+    confidence: Number.isFinite(confidenceRaw) ? confidenceRaw : null,
+    reason: data.reason != null ? String(data.reason).trim() : '',
+    language: data.language != null ? String(data.language).trim() : '',
+    fallbackText:
+      data.fallback_text != null && String(data.fallback_text).trim()
+        ? String(data.fallback_text).trim()
+        : data.fallbackText != null && String(data.fallbackText).trim()
+          ? String(data.fallbackText).trim()
+          : null,
+  };
+}
+
+/**
+ * POST /ai/agent/route：body `{ message }`；识别用户意图（command、币种等）
+ * @param {{
+ *   url?: string;
+ *   apiBaseUrl?: string;
+ *   message: string;
+ *   auth?: string;
+ *   appUrl?: string;
+ *   timeoutMs?: number;
+ * }} opts
+ * @returns {Promise<{
+ *   ok: boolean;
+ *   status: number;
+ *   json: object | null;
+ *   text: string;
+ *   route: ReturnType<typeof parseAgentRouteData>;
+ *   errorMessage: string | null;
+ * }>}
+ */
+async function postAgentRoute({
+  url,
+  apiBaseUrl = '',
+  message,
+  auth = '',
+  appUrl = '',
+  timeoutMs = 15000,
+}) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const endpoint = String(url || '').trim() || `${base}/ai/agent/route`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const rawAuth = String(auth || '').trim().replace(/^Bearer\s+/i, '');
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    'content-type': 'application/json',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    'user-agent': DEFAULT_UA,
+  };
+  if (rawAuth) {
+    headers.authentication = rawAuth;
+  }
+  if (app) {
+    headers.origin = app;
+    headers.referer = `${app}/ai`;
+  }
+  const body = { message: String(message ?? '').trim() };
+  apiDebug('POST /ai/agent/route ←', {
+    url: endpoint,
+    hasAuth: Boolean(rawAuth),
+    messagePreview: body.message.slice(0, 160),
+  });
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      signal: ctrl.signal,
+    });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const route = parseAgentRouteData(json);
+    const out = {
+      ok: res.status === 200 && isAgentRouteOk(json) && route != null,
+      status: res.status,
+      json,
+      text,
+      route,
+      errorMessage: parseApiErrorMessage(json),
+    };
+    apiDebug('POST /ai/agent/route →', {
+      httpStatus: res.status,
+      ok: out.ok,
+      command: route?.command ?? null,
+      coinSymbol: route?.coinSymbol ?? null,
+      confidence: route?.confidence ?? null,
+      language: route?.language ?? null,
+      errorMessage: out.errorMessage,
+      bodyPreview: text.slice(0, 500),
+    });
+    return out;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 /**
  * POST /ai/agent/stream：body `{ request_id, type, message }`；需用户 JWT
  * @param {{ url: string; message: string; type: 'analyze'|'chat'|'bigorder'|'signals'; auth: string; appUrl?: string; timeoutMs?: number }} opts
@@ -2556,6 +2688,8 @@ module.exports = {
   parseGuessVoteItem,
   parseCoinDirectionGuessDetail,
   parseDatainfoUserId,
+  postAgentRoute,
+  parseAgentRouteData,
   requestAgentStream,
   requestChatStream,
   requestBigorderStream,

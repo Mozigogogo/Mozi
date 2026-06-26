@@ -25,6 +25,9 @@ const AI_AGENT_STREAM_BACKEND_URL = (
   ''
 ).trim();
 const AI_AGENT_STREAM_URL = AI_AGENT_STREAM_BACKEND_URL || `${API_BASE_URL}/ai/agent/stream`;
+/** 可选：覆盖 Agent 意图识别 POST 完整 URL；默认主栈 ${API_BASE_URL}/ai/agent/route */
+const AI_AGENT_ROUTE_BACKEND_URL = (process.env.AI_AGENT_ROUTE_URL || '').trim();
+const AI_AGENT_ROUTE_URL = AI_AGENT_ROUTE_BACKEND_URL || `${API_BASE_URL}/ai/agent/route`;
 /** 底部展示：/ai 未返回 pointsCost 时默认 50 */
 const AI_POINTS_COST = Math.max(
   1,
@@ -41,6 +44,20 @@ const AI_CHAT_STREAM_TIMEOUT_MS = Math.max(
   30_000,
   Math.min(1_800_000, parseInt(process.env.AI_CHAT_STREAM_TIMEOUT_MS || '300000', 10) || 300_000),
 );
+
+/**
+ * 用户交互模式（环境变量 BOT_INPUT_MODE）：
+ * - natural（默认）：群内 @Bot 自然语言 → /ai/agent/route 意图识别
+ * - command：仅斜杠命令（/chat、/ai 等），不处理 @ 提及路由
+ */
+function parseBotInputMode(raw) {
+  const s = String(raw || 'natural').trim().toLowerCase();
+  if (s === 'command' || s === 'commands' || s === 'slash' || s === 'cmd') return 'command';
+  return 'natural';
+}
+
+const BOT_INPUT_MODE = parseBotInputMode(process.env.BOT_INPUT_MODE);
+const BOT_NATURAL_LANGUAGE_ENABLED = BOT_INPUT_MODE === 'natural';
 
 /** 可选：Bootstrap JWT；无用户 token 时用于 POST /user/login（Telegram）、registered/check（仅需登录命令首次触发热身） */
 const MOZI_DETAIL_AUTH = (process.env.MOZI_DETAIL_AUTH || '').trim();
@@ -135,10 +152,13 @@ module.exports = {
   APP_URL,
   API_BASE_URL,
   BOT_USERNAME,
+  BOT_INPUT_MODE,
+  BOT_NATURAL_LANGUAGE_ENABLED,
   TG_COMMUNITY_URL,
   TWITTER_URL,
   ALERT_CARD_IMAGE,
   AI_AGENT_STREAM_URL,
+  AI_AGENT_ROUTE_URL,
   AI_POINTS_COST,
   AI_CHAT_POINTS_COST,
   AI_CHAT_STREAM_TIMEOUT_MS,

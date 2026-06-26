@@ -226,69 +226,76 @@ function registerPrice(bot, config, { getTexts }) {
     const texts = getTexts(languageCode);
     const args = ctx.args || [];
     const symbol = normalizeSymbol(args[0]);
-
-    if (!SYMBOL_RE.test(symbol)) {
-      await ctx.reply(texts.priceInvalidSymbol, { parse_mode: 'HTML' });
-      return;
-    }
-
-    apiDebug('/price handler', {
-      symbol,
-      telegramId: ctx.from?.id ?? null,
-    });
-
-    await ctx.telegram.sendChatAction(ctx.chat.id, 'typing').catch(() => {});
-
-    const acceptLanguage = languageCode?.toLowerCase().startsWith('zh') ? 'zh' : 'en';
-
-    let result;
-    try {
-      result = await fetchDetailHeader({
-        apiBaseUrl: config.API_BASE_URL,
-        appUrl: config.APP_URL,
-        symbol,
-        acceptLanguage,
-      });
-    } catch (err) {
-      console.error('[/price] 请求错误:', err?.message || err);
-      apiDebug('/price handler', { failed: 'network', message: err?.message || String(err) });
-      await ctx.reply(texts.priceNetworkError, { parse_mode: 'HTML' });
-      return;
-    }
-
-    if (!result.ok) {
-      console.error('[/price] HTTP', result.status, result.text?.slice(0, 500));
-      apiDebug('/price handler', {
-        failed: 'http',
-        httpStatus: result.status,
-        bodyPreview: result.text?.slice(0, 600),
-      });
-      await ctx.reply(texts.priceError(result.status), { parse_mode: 'HTML' });
-      return;
-    }
-
-    if (result.json == null) {
-      apiDebug('/price handler', { failed: 'non_json', bodyPreview: result.text?.slice(0, 400) });
-      await ctx.reply(texts.priceBadJson, { parse_mode: 'HTML' });
-      return;
-    }
-
-    const payload = unwrapDetailPayload(result.json);
-    if (!isDetailHeaderShape(payload)) {
-      await ctx.reply(texts.priceBadJson, { parse_mode: 'HTML' });
-      return;
-    }
-
-    const message = formatPriceBriefHtml(payload, texts, acceptLanguage === 'zh', symbol);
-    const opts = {
-      parse_mode: 'HTML',
-      link_preview_options: { is_disabled: true },
-    };
-    if (ctx.message?.message_id) {
-      opts.reply_to_message_id = ctx.message.message_id;
-    }
-    await ctx.reply(message, opts);
+    await runPriceCommand(ctx, config, texts, symbol);
   });
 }
 
-module.exports = { registerPrice };
+async function runPriceCommand(ctx, config, texts, symbolInput) {
+  const languageCode = ctx.from?.language_code || 'en';
+  const symbol = normalizeSymbol(symbolInput);
+
+  if (!SYMBOL_RE.test(symbol)) {
+    await ctx.reply(texts.priceInvalidSymbol, { parse_mode: 'HTML' });
+    return false;
+  }
+
+  apiDebug('/price handler', {
+    symbol,
+    telegramId: ctx.from?.id ?? null,
+  });
+
+  await ctx.telegram.sendChatAction(ctx.chat.id, 'typing').catch(() => {});
+
+  const acceptLanguage = languageCode?.toLowerCase().startsWith('zh') ? 'zh' : 'en';
+
+  let result;
+  try {
+    result = await fetchDetailHeader({
+      apiBaseUrl: config.API_BASE_URL,
+      appUrl: config.APP_URL,
+      symbol,
+      acceptLanguage,
+    });
+  } catch (err) {
+    console.error('[/price] 请求错误:', err?.message || err);
+    apiDebug('/price handler', { failed: 'network', message: err?.message || String(err) });
+    await ctx.reply(texts.priceNetworkError, { parse_mode: 'HTML' });
+    return false;
+  }
+
+  if (!result.ok) {
+    console.error('[/price] HTTP', result.status, result.text?.slice(0, 500));
+    apiDebug('/price handler', {
+      failed: 'http',
+      httpStatus: result.status,
+      bodyPreview: result.text?.slice(0, 600),
+    });
+    await ctx.reply(texts.priceError(result.status), { parse_mode: 'HTML' });
+    return false;
+  }
+
+  if (result.json == null) {
+    apiDebug('/price handler', { failed: 'non_json', bodyPreview: result.text?.slice(0, 400) });
+    await ctx.reply(texts.priceBadJson, { parse_mode: 'HTML' });
+    return false;
+  }
+
+  const payload = unwrapDetailPayload(result.json);
+  if (!isDetailHeaderShape(payload)) {
+    await ctx.reply(texts.priceBadJson, { parse_mode: 'HTML' });
+    return false;
+  }
+
+  const message = formatPriceBriefHtml(payload, texts, acceptLanguage === 'zh', symbol);
+  const opts = {
+    parse_mode: 'HTML',
+    link_preview_options: { is_disabled: true },
+  };
+  if (ctx.message?.message_id) {
+    opts.reply_to_message_id = ctx.message.message_id;
+  }
+  await ctx.reply(message, opts);
+  return true;
+}
+
+module.exports = { registerPrice, runPriceCommand };

@@ -5,34 +5,21 @@ const { postTgChatSave } = require('./apis');
 const { savePendingReplayJob } = require('./tgChatRegisterWatcher');
 const { saveTgChatQuestion } = require('./tgChatQuestionStore');
 
+const REPLAY_COMMANDS = new Set(['ai', 'chat', 'bigorder']);
+
 /**
- * 未注册拦截时：持久化提问，待注册成功（on-registered）后在群内自动重放
  * @param {import('telegraf').Context} ctx
  * @param {object} config
+ * @param {{ command: string; question: string }} pending
  */
-async function saveAndWatchPendingAiChat(ctx, config) {
+async function savePendingAgentChat(ctx, config, pending) {
   const uid = ctx.from?.id;
   const chatId = ctx.chat?.id;
   if (uid == null || chatId == null) return;
 
-  const rawText = ctx.message?.text || ctx.message?.caption || '';
-  const aiQ = extractAiQuery(rawText, config.BOT_USERNAME);
-  const chatQ = extractChatQuery(rawText, config.BOT_USERNAME);
-  const bigorderQ = extractBigorderQuery(rawText, config.BOT_USERNAME);
-
-  let command = null;
-  let question = '';
-  if (aiQ) {
-    command = 'ai';
-    question = aiQ;
-  } else if (chatQ) {
-    command = 'chat';
-    question = chatQ;
-  } else if (bigorderQ) {
-    command = 'bigorder';
-    question = bigorderQ;
-  }
-  if (!command || !question) return;
+  const command = String(pending?.command || '').trim().toLowerCase().replace(/^\//, '');
+  const question = String(pending?.question || '').trim();
+  if (!REPLAY_COMMANDS.has(command) || !question) return;
 
   const telegramId = String(uid);
   const languageCode = ctx.from?.language_code || 'en';
@@ -69,4 +56,45 @@ async function saveAndWatchPendingAiChat(ctx, config) {
   });
 }
 
-module.exports = { saveAndWatchPendingAiChat };
+/**
+ * 未注册拦截时：持久化提问，待注册成功（on-registered）后在群内自动重放
+ * @param {import('telegraf').Context} ctx
+ * @param {object} config
+ */
+async function saveAndWatchPendingAiChat(ctx, config) {
+  const override = ctx.state?.agentRouteDispatch;
+  if (override?.command && override?.message) {
+    await savePendingAgentChat(ctx, config, {
+      command: override.command,
+      question: override.message,
+    });
+    return;
+  }
+
+  const uid = ctx.from?.id;
+  const chatId = ctx.chat?.id;
+  if (uid == null || chatId == null) return;
+
+  const rawText = ctx.message?.text || ctx.message?.caption || '';
+  const aiQ = extractAiQuery(rawText, config.BOT_USERNAME);
+  const chatQ = extractChatQuery(rawText, config.BOT_USERNAME);
+  const bigorderQ = extractBigorderQuery(rawText, config.BOT_USERNAME);
+
+  let command = null;
+  let question = '';
+  if (aiQ) {
+    command = 'ai';
+    question = aiQ;
+  } else if (chatQ) {
+    command = 'chat';
+    question = chatQ;
+  } else if (bigorderQ) {
+    command = 'bigorder';
+    question = bigorderQ;
+  }
+  if (!command || !question) return;
+
+  await savePendingAgentChat(ctx, config, { command, question });
+}
+
+module.exports = { saveAndWatchPendingAiChat, savePendingAgentChat };

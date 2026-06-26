@@ -53,58 +53,63 @@ function registerBalance(bot, config, { getTexts }, registeredGate, loginGate) {
   bot.command('balance', registeredGate, loginGate, async (ctx) => {
     const languageCode = ctx.from?.language_code || 'en';
     const texts = getTexts(languageCode);
-    const uid = ctx.from?.id;
-    if (uid == null) {
-      return;
-    }
-
-    await ctx.telegram.sendChatAction(ctx.chat.id, 'typing').catch(() => {});
-
-    const uidStr = String(uid);
-    const loginOpts = buildTelegramLoginOpts(ctx.from);
-
-    const r = await loadMoziDatainfoPoints(config, uidStr, loginOpts);
-
-    if (r.outcome === 'timeout') {
-      await replyOrDmBalance(ctx, texts, texts.balanceTimeoutError);
-      return;
-    }
-    if (r.outcome === 'network') {
-      await replyOrDmBalance(ctx, texts, texts.balanceNetworkError);
-      return;
-    }
-    if (r.outcome === 'http') {
-      if (r.status === 401 || r.status === 403) {
-        await replyOrDmBalance(ctx, texts, texts.balanceNeedBind, buildBindAccountKeyboard(config, texts));
-        return;
-      }
-      if (r.status === 404) {
-        await replyOrDmBalance(ctx, texts, texts.balanceApiNotFound);
-        return;
-      }
-      await replyOrDmBalance(ctx, texts, texts.balanceHttpError(r.status));
-      return;
-    }
-    if (r.outcome === 'biz') {
-      await replyOrDmBalance(ctx, texts, r.message ? escapeHtml(r.message) : texts.balanceParseError);
-      return;
-    }
-    if (r.outcome === 'unbound') {
-      await replyOrDmBalance(ctx, texts, texts.balanceNeedBind, buildBindAccountKeyboard(config, texts));
-      return;
-    }
-    if (r.outcome === 'malformed') {
-      await replyOrDmBalance(ctx, texts, texts.balanceParseError);
-      return;
-    }
-
-    setUserRemainingPointsCache(uidStr, r.totalPoints);
-
-    const body = texts.balanceBodyHtml(r.totalPoints);
-    const footer = texts.balanceFooterTip;
-    const note = isPrivateChat(ctx) ? texts.balanceNotePrivateHint || '' : '';
-    await replyOrDmBalance(ctx, texts, `${body}\n\n${footer}${note}`, billKeyboard(config, texts));
+    await runBalanceCommand(ctx, config, texts);
   });
 }
 
-module.exports = { registerBalance };
+async function runBalanceCommand(ctx, config, texts) {
+  const uid = ctx.from?.id;
+  if (uid == null) {
+    return false;
+  }
+
+  await ctx.telegram.sendChatAction(ctx.chat.id, 'typing').catch(() => {});
+
+  const uidStr = String(uid);
+  const loginOpts = buildTelegramLoginOpts(ctx.from);
+
+  const r = await loadMoziDatainfoPoints(config, uidStr, loginOpts);
+
+  if (r.outcome === 'timeout') {
+    await replyOrDmBalance(ctx, texts, texts.balanceTimeoutError);
+    return false;
+  }
+  if (r.outcome === 'network') {
+    await replyOrDmBalance(ctx, texts, texts.balanceNetworkError);
+    return false;
+  }
+  if (r.outcome === 'http') {
+    if (r.status === 401 || r.status === 403) {
+      await replyOrDmBalance(ctx, texts, texts.balanceNeedBind, buildBindAccountKeyboard(config, texts));
+      return false;
+    }
+    if (r.status === 404) {
+      await replyOrDmBalance(ctx, texts, texts.balanceApiNotFound);
+      return false;
+    }
+    await replyOrDmBalance(ctx, texts, texts.balanceHttpError(r.status));
+    return false;
+  }
+  if (r.outcome === 'biz') {
+    await replyOrDmBalance(ctx, texts, r.message ? escapeHtml(r.message) : texts.balanceParseError);
+    return false;
+  }
+  if (r.outcome === 'unbound') {
+    await replyOrDmBalance(ctx, texts, texts.balanceNeedBind, buildBindAccountKeyboard(config, texts));
+    return false;
+  }
+  if (r.outcome === 'malformed') {
+    await replyOrDmBalance(ctx, texts, texts.balanceParseError);
+    return false;
+  }
+
+  setUserRemainingPointsCache(uidStr, r.totalPoints);
+
+  const body = texts.balanceBodyHtml(r.totalPoints);
+  const footer = texts.balanceFooterTip;
+  const note = isPrivateChat(ctx) ? texts.balanceNotePrivateHint || '' : '';
+  await replyOrDmBalance(ctx, texts, `${body}\n\n${footer}${note}`, billKeyboard(config, texts));
+  return true;
+}
+
+module.exports = { registerBalance, runBalanceCommand };

@@ -4,6 +4,7 @@
  * /alert：见 handlers/alert.js、lib/alertSymbol.js
  * /register：见 handlers/register.js、handlers/inlineRegister.js（群内 API 注册 + 自动重放）
  * /ai、/chat、/bigorder：统一 POST 主栈 /ai/agent/stream（type=analyze|chat|bigorder）；/ai、/chat 成功后扣积分
+ * 群内 @Bot 自然语言：POST /ai/agent/route 意图识别后触发对应指令（handlers/agentMention.js）
  * /price：handlers/price.js + lib/apis.js（GET /detail/header，默认 BTC，简报格式）
  * /help：handlers/help.js（群内仅私聊发全文，防刷屏）
  * /balance：handlers/balance.js（GET /user/datainfo；私聊直接回复，群内尝试私信用户，路径见 USER_DATA_INFO_PATH）
@@ -30,6 +31,7 @@ const { registerPrice } = require('./handlers/price');
 const { registerPredict, createPredictTextMiddleware } = require('./handlers/predict');
 const { registerHelp } = require('./handlers/help');
 const { registerBalance } = require('./handlers/balance');
+const { registerAgentMention } = require('./handlers/agentMention');
 const { createInjectGroupReferrer } = require('./middleware/groupReferrer');
 const { registerGroupReferrer } = require('./handlers/groupReferrer');
 const { startTgChatHttpServer } = require('./server/tgChatHttp');
@@ -68,6 +70,7 @@ registerPrice(bot, config, i18nApi);
 registerPredict(bot, config, i18nApi);
 registerHelp(bot, config, i18nApi);
 registerBalance(bot, config, i18nApi, registeredGate, loginGate);
+registerAgentMention(bot, config, i18nApi, registeredGate, loginGate);
 
 bot.catch((err, ctx) => {
   console.error('Bot 未捕获错误:', err?.response?.description || err?.message || err);
@@ -80,6 +83,11 @@ if (config.TG_CHAT_API_PORT > 0) {
 
 bot.launch().then(() => {
   console.log('🤖 Mozi Bot 已启动');
+  console.log(
+    `ℹ️  交互模式：${config.BOT_INPUT_MODE}（${
+      config.BOT_NATURAL_LANGUAGE_ENABLED ? '@提及自然语言 + 斜杠命令' : '仅斜杠命令'
+    }）\n`,
+  );
   console.log('等待用户消息...\n');
   if (config.BOT_DEBUG) {
     console.log('ℹ️  BOT_DEBUG 已开启：将打印 [BOT_DEBUG] 命令入口与 HTTP 调用结果（不含 JWT 原文）\n');
