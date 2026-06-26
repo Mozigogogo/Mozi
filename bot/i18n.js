@@ -248,7 +248,7 @@ const i18n = {
     balanceNotePrivateHint:
       '\n\n📌 在群内使用 <code>/balance</code> 时，结果会通过<strong>私信</strong>发送给您。',
     bindRefHintAfterJoin:
-      '感谢拉 bot 进群。请由<strong>拉群的人</strong>在本群发送 <code>/bind_ref</code>，将自动绑定您的邀请码为本群推广。',
+      '嗨 👋 我是 Mozi，已经准备好为本群服务啦\n\n群主/管理员发送 <code>/bind_ref</code> 绑定您的专属邀请码吧',
     bindRefOnlyInGroup: '请在<strong>群内</strong>使用 <code>/bind_ref</code>。',
     bindRefOnlyAdder: '仅<strong>拉 bot 进群的人</strong>可以执行 <code>/bind_ref</code>。',
     bindRefNoPending:
