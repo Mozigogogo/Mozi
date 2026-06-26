@@ -119,6 +119,11 @@ const COIN_DIRECTION_GUESS_LIST_PATH = (
   process.env.COIN_DIRECTION_GUESS_LIST_PATH || 'coinDirectionGuess/list'
 ).trim().replace(/^\/+/, '');
 
+/** GET 涨跌竞猜详情（相对 API_BASE_URL），默认 coinDirectionGuess/detail */
+const COIN_DIRECTION_GUESS_DETAIL_PATH = (
+  process.env.COIN_DIRECTION_GUESS_DETAIL_PATH || 'coinDirectionGuess/detail'
+).trim().replace(/^\/+/, '');
+
 /** 涨跌竞猜最低下注积分 */
 const COIN_DIRECTION_GUESS_MIN_BET_AMOUNT = Math.max(
   1,
@@ -152,5 +157,6 @@ module.exports = {
   COIN_DIRECTION_GUESS_BIND_MESSAGE_PATH,
   COIN_DIRECTION_GUESS_BET_PATH,
   COIN_DIRECTION_GUESS_LIST_PATH,
+  COIN_DIRECTION_GUESS_DETAIL_PATH,
   COIN_DIRECTION_GUESS_MIN_BET_AMOUNT,
 };

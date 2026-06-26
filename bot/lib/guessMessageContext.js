@@ -1,16 +1,85 @@
 /**
- * 群内竞猜消息上下文（发布时写入，下注后刷新 caption 用）
+ * 群内竞猜消息上下文（guessNo → 截止时间与展示元数据）
+ * 持久化到 JSON 文件，Bot 重启后仍保留；截止后自动清理
  */
 
-const TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const fs = require('fs');
+const path = require('path');
+
+const STORE_PATH =
+  process.env.GUESS_CONTEXT_STORE_PATH ||
+  path.join(__dirname, '..', 'data', 'guess-context.json');
+
+const PURGE_GRACE_MS = 24 * 60 * 60 * 1000;
 
 /** @type {Map<string, object>} */
 const contexts = new Map();
+let loaded = false;
+let saveTimer = null;
+
+function parseEndAtMs(endAt) {
+  if (endAt == null || endAt === '') return null;
+  if (typeof endAt === 'number' && Number.isFinite(endAt)) {
+    return endAt < 1e12 ? endAt * 1000 : endAt;
+  }
+  const raw = String(endAt).trim();
+  if (!raw) return null;
+  const n = Number(raw);
+  if (Number.isFinite(n)) return n < 1e12 ? n * 1000 : n;
+  const parsed = Date.parse(raw);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function ensureLoaded() {
+  if (loaded) return;
+  loaded = true;
+  try {
+    const dir = path.dirname(STORE_PATH);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    if (fs.existsSync(STORE_PATH)) {
+      const raw = fs.readFileSync(STORE_PATH, 'utf8');
+      const data = JSON.parse(raw);
+      if (data && typeof data === 'object') {
+        for (const [key, val] of Object.entries(data)) {
+          if (val && typeof val === 'object') contexts.set(key, val);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[guess-context] load fail:', err?.message || err);
+  }
+  purgeExpired();
+}
+
+function scheduleSave() {
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    saveTimer = null;
+    try {
+      const dir = path.dirname(STORE_PATH);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      const obj = Object.fromEntries(contexts);
+      fs.writeFileSync(STORE_PATH, JSON.stringify(obj, null, 2), 'utf8');
+    } catch (err) {
+      console.warn('[guess-context] save fail:', err?.message || err);
+    }
+  }, 200);
+}
+
+function shouldPurgeContext(ctx, now) {
+  if (!ctx) return true;
+  if (ctx.settledAt && now > Number(ctx.settledAt) + PURGE_GRACE_MS) return true;
+  const savedAt = Number(ctx.savedAt);
+  if ((!ctx.chatId || !ctx.messageId) && Number.isFinite(savedAt) && now > savedAt + 7 * 24 * 60 * 60 * 1000) {
+    return true;
+  }
+  return false;
+}
 
 function purgeExpired() {
   const now = Date.now();
   for (const [key, ctx] of contexts) {
-    if (!ctx || now > ctx.expireAt) contexts.delete(key);
+    if (shouldPurgeContext(ctx, now)) contexts.delete(key);
   }
 }
 
@@ -24,38 +93,124 @@ function purgeExpired() {
  *   endAt: string | number | null;
  *   publisher: string;
  *   languageCode?: string;
+ *   groupId?: number | string | null;
+ *   chatId?: number | null;
+ *   messageId?: number | null;
+ *   hasPhoto?: boolean;
+ *   settledAt?: number | null;
+ *   settledResult?: string | null;
  * }} data
  */
 function saveGuessMessageContext(guessNo, data) {
   const key = String(guessNo || '').trim();
   if (!key) return;
+  ensureLoaded();
   purgeExpired();
+  const prev = contexts.get(key) || {};
   contexts.set(key, {
-    sym: String(data.sym || '').trim(),
-    hours: Number(data.hours) || 24,
-    price: String(data.price || '').trim(),
-    lockedAtMs: Number(data.lockedAtMs) || Date.now(),
-    endAt: data.endAt ?? null,
-    publisher: String(data.publisher || '').trim(),
-    languageCode: String(data.languageCode || 'zh'),
-    expireAt: Date.now() + TTL_MS,
+    sym: String(data.sym || prev.sym || '').trim(),
+    hours: Number(data.hours) || prev.hours || 24,
+    price: String(data.price || prev.price || '').trim(),
+    lockedAtMs: Number(data.lockedAtMs) || prev.lockedAtMs || Date.now(),
+    endAt: data.endAt ?? prev.endAt ?? null,
+    publisher: String(data.publisher || prev.publisher || '').trim(),
+    languageCode: String(data.languageCode || prev.languageCode || 'zh'),
+    groupId: data.groupId ?? prev.groupId ?? null,
+    chatId: data.chatId ?? prev.chatId ?? null,
+    messageId: data.messageId ?? prev.messageId ?? null,
+    hasPhoto: data.hasPhoto ?? prev.hasPhoto ?? false,
+    settledAt: data.settledAt ?? prev.settledAt ?? null,
+    settledResult: data.settledResult ?? prev.settledResult ?? null,
+    savedAt: prev.savedAt ?? Date.now(),
   });
+  scheduleSave();
+}
+
+/**
+ * @param {string} guessNo
+ * @param {object} patch
+ */
+function patchGuessMessageContext(guessNo, patch) {
+  const key = String(guessNo || '').trim();
+  if (!key) return null;
+  ensureLoaded();
+  const prev = contexts.get(key);
+  if (!prev) return null;
+  saveGuessMessageContext(key, { ...prev, ...patch });
+  return getGuessMessageContext(key);
 }
 
 /** @param {string} guessNo */
 function getGuessMessageContext(guessNo) {
   const key = String(guessNo || '').trim();
   if (!key) return null;
+  ensureLoaded();
   purgeExpired();
   const ctx = contexts.get(key);
-  if (!ctx || Date.now() > ctx.expireAt) {
+  if (!ctx) return null;
+  if (shouldPurgeContext(ctx, Date.now())) {
     contexts.delete(key);
+    scheduleSave();
     return null;
   }
   return ctx;
 }
 
+/** @param {string} guessNo */
+function getGuessEndAt(guessNo) {
+  const ctx = getGuessMessageContext(guessNo);
+  return ctx?.endAt ?? null;
+}
+
+/** @returns {Array<{ guessNo: string } & object>} */
+function listActiveGuessContexts() {
+  ensureLoaded();
+  purgeExpired();
+  const now = Date.now();
+  const out = [];
+  for (const [guessNo, ctx] of contexts) {
+    const endMs = parseEndAtMs(ctx.endAt);
+    if (endMs != null && now > endMs) continue;
+    out.push({ guessNo, ...ctx });
+  }
+  return out;
+}
+
+/** @returns {Array<{ guessNo: string } & object>} */
+function listPendingSettlement() {
+  ensureLoaded();
+  const now = Date.now();
+  const out = [];
+  for (const [guessNo, ctx] of contexts) {
+    if (!ctx || ctx.settledAt) continue;
+    const endMs = parseEndAtMs(ctx.endAt);
+    if (endMs == null || now < endMs) continue;
+    if (ctx.chatId == null || ctx.messageId == null) continue;
+    out.push({ guessNo, ...ctx });
+  }
+  return out;
+}
+
+/**
+ * @param {string} guessNo
+ * @param {'UP' | 'DOWN'} result
+ */
+function markGuessSettled(guessNo, result) {
+  const key = String(guessNo || '').trim();
+  if (!key) return;
+  patchGuessMessageContext(key, {
+    settledAt: Date.now(),
+    settledResult: result,
+  });
+}
+
 module.exports = {
   saveGuessMessageContext,
+  patchGuessMessageContext,
   getGuessMessageContext,
+  getGuessEndAt,
+  listActiveGuessContexts,
+  listPendingSettlement,
+  markGuessSettled,
+  parseEndAtMs,
 };

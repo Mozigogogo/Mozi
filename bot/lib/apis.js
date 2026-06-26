@@ -2277,6 +2277,136 @@ async function getCoinDirectionGuessList({
 }
 
 /**
+ * @param {object | null | undefined} row
+ * @returns {{
+ *   userId: string;
+ *   nickName: string;
+ *   avatar: string;
+ *   choice: 1 | 2;
+ *   betAmount: number;
+ *   payout: number | null;
+ *   createdAt: string | number | null;
+ * } | null}
+ */
+function parseGuessVoteItem(row) {
+  if (!row || typeof row !== 'object') return null;
+  const choice = Math.floor(Number(row.choice));
+  if (choice !== 1 && choice !== 2) return null;
+  const betAmount = Math.max(0, Math.floor(Number(row.betAmount) || 0));
+  const payoutRaw = row.payout;
+  let payout = null;
+  if (payoutRaw != null && payoutRaw !== '') {
+    const n = Math.floor(Number(payoutRaw));
+    if (Number.isFinite(n)) payout = n;
+  }
+  return {
+    userId: String(row.userId || '').trim(),
+    nickName: String(row.nickName ?? row.nickname ?? '').trim(),
+    avatar: String(row.avatar || '').trim(),
+    choice: /** @type {1 | 2} */ (choice),
+    betAmount,
+    payout,
+    createdAt: row.createdAt ?? row.created_at ?? null,
+  };
+}
+
+/**
+ * @param {object | null | undefined} data detail 响应 data
+ * @returns {ReturnType<typeof parseGuessVoteItem>[]}
+ */
+function parseGuessVotes(data) {
+  if (!data || typeof data !== 'object') return [];
+  const votes = data.votes;
+  if (!Array.isArray(votes)) return [];
+  return votes.map(parseGuessVoteItem).filter(Boolean);
+}
+
+/**
+ * @param {object | null} json
+ * @returns {{ item: object; votes: ReturnType<typeof parseGuessVoteItem>[] } | null}
+ */
+function parseCoinDirectionGuessDetail(json) {
+  if (!json || typeof json !== 'object') return null;
+  const data = json.data;
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+  return {
+    item: data,
+    votes: parseGuessVotes(data),
+  };
+}
+
+/**
+ * GET /coinDirectionGuess/detail?guessNo=
+ * @param {{
+ *   apiBaseUrl: string;
+ *   guessNo: string;
+ *   appUrl?: string;
+ *   path?: string;
+ *   timeoutMs?: number;
+ * }} opts
+ */
+async function getCoinDirectionGuessDetail({
+  apiBaseUrl,
+  guessNo,
+  appUrl = '',
+  path = 'coinDirectionGuess/detail',
+  timeoutMs = 15000,
+}) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const rel = String(path || 'coinDirectionGuess/detail').trim().replace(/^\/+/, '');
+  const guess = String(guessNo || '').trim();
+  const q = new URLSearchParams({ guessNo: guess });
+  const url = `${base}/${rel}?${q.toString()}`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    'user-agent': DEFAULT_UA,
+  };
+  if (app) {
+    headers.referer = `${app}/`;
+  }
+  apiDebug('GET /coinDirectionGuess/detail ←', { url, guessNo: guess });
+  try {
+    const res = await fetch(url, { method: 'GET', headers, signal: ctrl.signal });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const bizOk = isCoinDirectionGuessListOk(json);
+    const parsed = parseCoinDirectionGuessDetail(json);
+    const out = {
+      ok: res.status === 200 && bizOk && parsed != null,
+      status: res.status,
+      json,
+      text,
+      item: parsed?.item ?? null,
+      votes: parsed?.votes ?? [],
+      errorMessage: parseApiErrorMessage(json),
+    };
+    apiDebug('GET /coinDirectionGuess/detail →', {
+      guessNo: guess,
+      httpStatus: res.status,
+      ok: out.ok,
+      statusField: out.item?.status ?? null,
+      result: out.item?.result ?? null,
+      voteCount: out.votes.length,
+      errorMessage: out.errorMessage,
+      bodyPreview: text.slice(0, 500),
+    });
+    return out;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+/**
  * @param {object | null} json
  * @returns {{ up: number; down: number } | null}
  */
@@ -2368,6 +2498,29 @@ function parseGuessBetStats(json) {
   return parseGuessItemStats(data);
 }
 
+/**
+ * @param {object | null | undefined} item
+ * @returns {'UP' | 'DOWN' | null}
+ */
+function parseGuessResult(item) {
+  if (!item || typeof item !== 'object') return null;
+  const r = String(item.result ?? item.direction ?? '').trim().toUpperCase();
+  if (r === 'UP' || r === 'BULL' || r === 'BULLISH' || r === '1') return 'UP';
+  if (r === 'DOWN' || r === 'BEAR' || r === 'BEARISH' || r === '2') return 'DOWN';
+  return null;
+}
+
+/**
+ * @param {object | null | undefined} item
+ * @returns {boolean}
+ */
+function isGuessListItemSettled(item) {
+  if (!item || typeof item !== 'object') return false;
+  const status = String(item.status ?? '').trim().toLowerCase();
+  if (status === 'settled' || status === 'closed' || status === 'finished') return true;
+  return parseGuessResult(item) != null;
+}
+
 module.exports = {
   fetchDetailHeader,
   fetchSearchLastPriceChange,
@@ -2390,12 +2543,18 @@ module.exports = {
   postCoinDirectionGuessBindMessage,
   postCoinDirectionGuessBet,
   getCoinDirectionGuessList,
+  getCoinDirectionGuessDetail,
   parseCoinDirectionGuessNo,
   parseCoinDirectionGuessPublishData,
   parseCoinDirectionGuessList,
   parseGuessVoteCounts,
   parseGuessBetStats,
   parseGuessItemStats,
+  parseGuessResult,
+  isGuessListItemSettled,
+  parseGuessVotes,
+  parseGuessVoteItem,
+  parseCoinDirectionGuessDetail,
   parseDatainfoUserId,
   requestAgentStream,
   requestChatStream,

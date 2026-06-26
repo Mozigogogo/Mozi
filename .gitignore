@@ -15,3 +15,6 @@ yarn-error.log*
 
 # OS
 .DS_Store
+
+# bot runtime data
+bot/data/guess-context.json

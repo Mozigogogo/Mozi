@@ -22,7 +22,7 @@ const {
   clearGuessBetCustomSession,
   patchGuessBetCustomSession,
 } = require('./guessBetSession');
-const { saveGuessMessageContext, getGuessMessageContext } = require('./guessMessageContext');
+const { saveGuessMessageContext, getGuessMessageContext, patchGuessMessageContext, getGuessEndAt } = require('./guessMessageContext');
 
 const QUICK_SYMBOLS = ['BTC', 'ETH', 'SOL'];
 const DEFAULT_HOURS = 24;
@@ -160,6 +160,100 @@ function buildGroupPublishHtml(texts, meta, statsRaw) {
     endAt,
     meta.publisher,
   );
+}
+
+function formatEndPriceDisplay(endPrice) {
+  const n = Number(endPrice);
+  if (!Number.isFinite(n)) return '—';
+  return `$${n.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 8,
+  })}`;
+}
+
+function buildGroupSettledHtml(texts, meta, statsRaw, item, result, votes) {
+  const stats = normalizeGuessBetStats(statsRaw, meta.languageCode);
+  const lockedAt = formatLockedAtDisplay(meta.lockedAtMs, meta.languageCode);
+  const endAtMs = parseEndAtMs(meta.endAt ?? item?.endAt);
+  const endAt = endAtMs != null ? formatLockedAtDisplay(endAtMs, meta.languageCode) : '—';
+  const endPrice = formatEndPriceDisplay(item?.endPrice);
+  const resultLine =
+    result === 'UP' ? texts.predictSettledResultUp : texts.predictSettledResultDown;
+  const votesSection = formatSettledVotesSummary(texts, votes, result, meta.languageCode);
+  return texts.predictGroupSettledBody(
+    escapeHtml(meta.sym),
+    escapeHtml(meta.price),
+    escapeHtml(endPrice),
+    lockedAt,
+    stats,
+    endAt,
+    resultLine,
+    votesSection,
+    meta.publisher,
+  );
+}
+
+function formatSettledVotesSummary(texts, votes, result, languageCode) {
+  if (!Array.isArray(votes) || !votes.length) return '';
+  const winChoice = result === 'UP' ? 1 : 2;
+  const winners = votes
+    .filter((v) => v.choice === winChoice && v.payout != null && v.payout > 0)
+    .sort((a, b) => b.payout - a.payout);
+  if (!winners.length) return '';
+
+  const isZh = String(languageCode || '').toLowerCase().startsWith('zh');
+  const max = 8;
+  const parts = winners.slice(0, max).map((v) => {
+    const nick = escapeHtml(v.nickName || v.userId.slice(0, 8) || '—');
+    const pts = formatPointsDisplay(v.payout, languageCode);
+    return texts.predictSettledVoteWinner(nick, pts);
+  });
+  let line = parts.join(' · ');
+  if (winners.length > max) {
+    line += isZh ? ` …等${winners.length}人` : ` …+${winners.length - max} more`;
+  }
+  return texts.predictSettledWinnersSection(line);
+}
+
+async function editTelegramGuessMessage(telegram, chatId, messageId, html, keyboard, hasPhoto) {
+  if (chatId == null || messageId == null) return false;
+  const extra = { parse_mode: 'HTML' };
+  if (keyboard !== undefined) extra.reply_markup = keyboard;
+  try {
+    if (hasPhoto) {
+      await telegram.editMessageCaption(chatId, messageId, undefined, html, extra);
+    } else {
+      await telegram.editMessageText(chatId, messageId, undefined, html, extra);
+    }
+    return true;
+  } catch (err) {
+    predictLog('guess.message_edit_fail', {
+      chatId,
+      messageId,
+      hasPhoto,
+      reason: err?.response?.description || err?.message || String(err),
+    });
+    return false;
+  }
+}
+
+/**
+ * 截止结算：更新群内竞猜消息为最终结果，并移除下注按钮
+ */
+async function applyGuessSettlementToMessage({
+  telegram,
+  chatId,
+  messageId,
+  hasPhoto,
+  meta,
+  item,
+  votes,
+  result,
+  statsRaw,
+  texts,
+}) {
+  const html = buildGroupSettledHtml(texts, meta, statsRaw, item, result, votes);
+  return editTelegramGuessMessage(telegram, chatId, messageId, html, { inline_keyboard: [] }, hasPhoto);
 }
 
 function buildGuessBetKeyboard(texts, guessNo) {
@@ -1005,7 +1099,11 @@ async function publishPredict(ctx, config, getTexts) {
   const sendExtra = betKeyboard ? { parse_mode: 'HTML', reply_markup: betKeyboard } : { parse_mode: 'HTML' };
 
   if (guessNo) {
-    saveGuessMessageContext(guessNo, messageMeta);
+    saveGuessMessageContext(guessNo, {
+      ...messageMeta,
+      groupId: publishChatId,
+      chatId: publishChatId,
+    });
   }
 
   const avatarUrl = publishData.avatar ? String(publishData.avatar).trim() : '';
@@ -1069,6 +1167,11 @@ async function publishPredict(ctx, config, getTexts) {
 
   const tgMessageId = guessMsg?.message_id ?? null;
   if (guessNo && tgMessageId != null) {
+    patchGuessMessageContext(guessNo, {
+      chatId: publishChatId,
+      messageId: tgMessageId,
+      hasPhoto: Boolean(avatarUrl),
+    });
     await bindCoinDirectionGuessMessage(ctx, config, { guessNo, tgMessageId });
   } else {
     predictLog('bind.api.skip', {
@@ -1096,45 +1199,132 @@ async function publishPredict(ctx, config, getTexts) {
   await markConfirmPublished(ctx, session, texts, sym, priceStr, hours);
 }
 
+function buildMetaFromGuessItem(item, languageCode, publisher = '—') {
+  const sym = String(item.symbol || '').trim();
+  const startPrice = Number(item.startPrice);
+  let price = '—';
+  if (Number.isFinite(startPrice)) {
+    price = `$${startPrice.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 8,
+    })}`;
+  }
+  const hours = Math.max(1, Math.round(Number(item.duration) / 3600) || 24);
+  return {
+    sym,
+    hours,
+    price,
+    lockedAtMs: parseEndAtMs(item.startAt) ?? Date.now(),
+    endAt: item.endAt ?? null,
+    publisher,
+    languageCode: languageCode || 'zh',
+    groupId: item.groupId ?? null,
+  };
+}
+
+function syncGuessDeadlinesFromItems(items, languageCode, groupId) {
+  for (const item of items || []) {
+    const guessNo = String(item.guessNo || '').trim();
+    if (!guessNo) continue;
+    const prev = getGuessMessageContext(guessNo);
+    if (item.endAt != null) {
+      if (prev) {
+        patchGuessMessageContext(guessNo, { endAt: item.endAt });
+      } else {
+        saveGuessMessageContext(guessNo, {
+          ...buildMetaFromGuessItem(item, languageCode, '—'),
+          groupId: groupId ?? item.groupId ?? null,
+        });
+      }
+    }
+  }
+}
+
+async function resolveGuessEndAtMs(config, guessNo, groupId) {
+  const stored = getGuessEndAt(guessNo);
+  let endMs = parseEndAtMs(stored);
+  if (endMs != null) return endMs;
+  if (!config || groupId == null) return null;
+  try {
+    const listRes = await getCoinDirectionGuessList({
+      apiBaseUrl: config.API_BASE_URL,
+      appUrl: config.APP_URL,
+      groupId,
+      path: config.COIN_DIRECTION_GUESS_LIST_PATH,
+    });
+    if (!listRes.ok) return null;
+    const item = listRes.items.find((i) => String(i.guessNo || '').trim() === guessNo) || null;
+    if (!item) return null;
+    syncGuessDeadlinesFromItems([item], 'zh', groupId);
+    return parseEndAtMs(item.endAt);
+  } catch {
+    return null;
+  }
+}
+
 async function tryRefreshGuessMessage(ctx, config, texts, guessNo, betResult) {
-  const meta = getGuessMessageContext(guessNo);
   const msg = ctx.callbackQuery?.message;
   if (!msg || !('message_id' in msg)) return;
 
+  const guess = String(guessNo || '').trim();
+  let meta = getGuessMessageContext(guess);
   let statsRaw = parseGuessBetStats(betResult?.json);
-  if (!statsRaw && config && msg.chat?.id != null) {
+  let listItem = null;
+
+  if (config && msg.chat?.id != null) {
     try {
-      const listRes = await getCoinDirectionGuessList({
-        apiBaseUrl: config.API_BASE_URL,
-        appUrl: config.APP_URL,
-        groupId: msg.chat.id,
-        path: config.COIN_DIRECTION_GUESS_LIST_PATH,
-      });
-      if (listRes.ok) {
-        const guess = String(guessNo || '').trim();
-        const item = listRes.items.find((i) => String(i.guessNo || '').trim() === guess);
-        if (item) statsRaw = parseGuessItemStats(item);
+      const needList = !statsRaw || !meta;
+      if (needList) {
+        const listRes = await getCoinDirectionGuessList({
+          apiBaseUrl: config.API_BASE_URL,
+          appUrl: config.APP_URL,
+          groupId: msg.chat.id,
+          path: config.COIN_DIRECTION_GUESS_LIST_PATH,
+        });
+        if (listRes.ok) {
+          listItem = listRes.items.find((i) => String(i.guessNo || '').trim() === guess) || null;
+          if (listItem) {
+            if (!statsRaw) statsRaw = parseGuessItemStats(listItem);
+            const publisher = meta?.publisher || '—';
+            const rebuilt = buildMetaFromGuessItem(listItem, meta?.languageCode || 'zh', publisher);
+            saveGuessMessageContext(guess, {
+              ...rebuilt,
+              chatId: msg.chat.id,
+              messageId: msg.message_id,
+            });
+            meta = getGuessMessageContext(guess);
+          }
+        }
       }
     } catch (err) {
       predictLog('bet.refresh_list_fail', {
-        guessNo,
+        guessNo: guess,
         message: err?.message || String(err),
       });
     }
   }
 
+  if (listItem?.endAt != null) {
+    patchGuessMessageContext(guess, { endAt: listItem.endAt });
+    if (meta) meta = { ...meta, endAt: listItem.endAt };
+  } else if (betResult?.json?.data?.endAt != null) {
+    patchGuessMessageContext(guess, { endAt: betResult.json.data.endAt });
+    if (meta) meta = { ...meta, endAt: betResult.json.data.endAt };
+  }
+
   if (!meta) {
-    predictLog('bet.refresh_skip', { guessNo, reason: 'missing_message_context' });
+    predictLog('bet.refresh_skip', { guessNo: guess, reason: 'missing_message_context' });
     return;
   }
 
   const html = buildGroupPublishHtml(texts, meta, statsRaw);
-  const keyboard = buildGuessBetKeyboard(texts, guessNo);
+  const keyboard = buildGuessBetKeyboard(texts, guess);
   const hasPhoto = Boolean(msg.photo && msg.photo.length > 0);
   const ok = await editGuessMessageContent(ctx, msg.chat?.id, msg.message_id, html, keyboard, hasPhoto);
   predictLog('bet.refresh', {
-    guessNo,
+    guessNo: guess,
     ok,
+    endAt: meta.endAt ?? null,
     upCount: statsRaw?.upCount ?? null,
     downCount: statsRaw?.downCount ?? null,
     upPoints: statsRaw?.upPoints ?? null,
@@ -1158,6 +1348,13 @@ async function submitGuessBet(ctx, config, getTexts, guessNo, direction, betAmou
 
   if (!guess || pts <= 0) {
     await answerPredictCbQuery(ctx, texts.predictVoteFailed, { show_alert: true });
+    return false;
+  }
+
+  const groupId = ctx.callbackQuery?.message?.chat?.id ?? null;
+  const endMs = await resolveGuessEndAtMs(config, guess, groupId);
+  if (endMs != null && Date.now() > endMs) {
+    await answerPredictCbQuery(ctx, texts.predictBetDeadlinePassed, { show_alert: true });
     return false;
   }
 
@@ -1633,7 +1830,9 @@ async function handlePredictList(ctx, config, getTexts) {
       await ctx.reply(result.errorMessage || texts.predictListFailed, { parse_mode: 'HTML' }).catch(() => {});
       return;
     }
-    const html = buildGuessListHtml(texts, result.items || [], languageCode);
+    const items = result.items || [];
+    syncGuessDeadlinesFromItems(items, languageCode, groupId);
+    const html = buildGuessListHtml(texts, items, languageCode);
     await ctx.reply(html, { parse_mode: 'HTML' }).catch(() => {});
   } catch (err) {
     predictLog('list.fail', { uid: ctx.from?.id ?? null, groupId, message: err?.message || String(err) });
@@ -1661,4 +1860,5 @@ module.exports = {
   backToSymbolPicker,
   answerPredictCbQuery,
   QUICK_SYMBOLS,
+  applyGuessSettlementToMessage,
 };

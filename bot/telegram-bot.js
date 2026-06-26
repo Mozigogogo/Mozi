@@ -34,6 +34,7 @@ const { createInjectGroupReferrer } = require('./middleware/groupReferrer');
 const { registerGroupReferrer } = require('./handlers/groupReferrer');
 const { startTgChatHttpServer } = require('./server/tgChatHttp');
 const { initTgChatRegisterWatcher } = require('./lib/tgChatRegisterWatcher');
+const { initGuessSettlementWatcher } = require('./lib/guessSettlementWatcher');
 const { createResumePendingAiChatOnPrivate } = require('./middleware/resumePendingAiChatOnPrivate');
 const { predictDebugEnabled } = require('./lib/predictDebug');
 
@@ -44,6 +45,7 @@ if (!config.BOT_TOKEN) {
 
 const bot = new Telegraf(config.BOT_TOKEN);
 initTgChatRegisterWatcher(bot, config);
+initGuessSettlementWatcher(bot, config);
 
 const i18nApi = { getTexts };
 const registeredGate = createRequireMoziRegistered(config, i18nApi);

@@ -96,6 +96,12 @@ const i18n = {
       `${sym} 接下来 ${hours} 小时会涨还是跌？\n当前价：${price}（创建时锁定）`,
     predictGroupPublishBody: (sym, hours, price, lockedAt, stats, endAt, publisher) =>
       `🎯 竞猜 · ${sym}\n接下来 ${hours} 小时会涨还是跌？\n起始价：${price}（${lockedAt} 锁定）\n📊 看涨 ${stats.upPercent}%（${stats.upCount}人·${stats.upPoints}积分）\n📊 看跌 ${stats.downPercent}%（${stats.downCount}人·${stats.downPoints}积分）\n⏳ 下注截止：${endAt}\n由 ${publisher} 发起`,
+    predictGroupSettledBody: (sym, price, endPrice, lockedAt, stats, endAt, resultLine, votesSection, publisher) =>
+      `🎯 竞猜 · ${sym}（已结算）\n起始价：${price}（${lockedAt} 锁定）\n结算价：${endPrice}\n📊 看涨 ${stats.upPercent}%（${stats.upCount}人·${stats.upPoints}积分）\n📊 看跌 ${stats.downPercent}%（${stats.downCount}人·${stats.downPoints}积分）\n⏳ 下注截止：${endAt}\n${resultLine}${votesSection}\n由 ${publisher} 发起`,
+    predictSettledResultUp: '✅ 结果：涨',
+    predictSettledResultDown: '✅ 结果：跌',
+    predictSettledWinnersSection: (lines) => `\n🏆 获奖：${lines}`,
+    predictSettledVoteWinner: (nick, payout) => `${nick} +${payout}`,
     predictBetUp50Btn: '看涨 +50',
     predictBetUp100Btn: '看涨 +100',
     predictBetUpCustomBtn: '自定义',
@@ -111,6 +117,7 @@ const i18n = {
     predictBetNumpadBackBtn: '« 返回',
     predictBetNumpadEmptyToast: '请先输入积分',
     predictBetMinAmountToast: (min) => `下注积分不能低于 ${min}`,
+    predictBetDeadlinePassed: '下注已截止',
     predictBetUserResolveFailed: '无法获取用户信息，请先登录 Mozi',
     predictSymbolSearchingToast: '正在搜索币种信息…',
     predictPublishingToast: '正在发布…',
@@ -339,6 +346,12 @@ const i18n = {
       `Will ${sym} go up or down in the next ${hours} hours?\nCurrent price: ${price} (locked at creation)`,
     predictGroupPublishBody: (sym, hours, price, lockedAt, stats, endAt, publisher) =>
       `🎯 Guess · ${sym}\nUp or down in the next ${hours} hours?\nStart price: ${price} (locked at ${lockedAt})\n📊 Bullish ${stats.upPercent}% (${stats.upCount} · ${stats.upPoints} pts)\n📊 Bearish ${stats.downPercent}% (${stats.downCount} · ${stats.downPoints} pts)\n⏳ Closes at: ${endAt}\nStarted by ${publisher}`,
+    predictGroupSettledBody: (sym, price, endPrice, lockedAt, stats, endAt, resultLine, votesSection, publisher) =>
+      `🎯 Guess · ${sym} (settled)\nStart price: ${price} (locked at ${lockedAt})\nSettle price: ${endPrice}\n📊 Bullish ${stats.upPercent}% (${stats.upCount} · ${stats.upPoints} pts)\n📊 Bearish ${stats.downPercent}% (${stats.downCount} · ${stats.downPoints} pts)\n⏳ Closed at: ${endAt}\n${resultLine}${votesSection}\nStarted by ${publisher}`,
+    predictSettledResultUp: '✅ Result: Up',
+    predictSettledResultDown: '✅ Result: Down',
+    predictSettledWinnersSection: (lines) => `\n🏆 Winners: ${lines}`,
+    predictSettledVoteWinner: (nick, payout) => `${nick} +${payout}`,
     predictBetUp50Btn: 'Bull +50',
     predictBetUp100Btn: 'Bull +100',
     predictBetUpCustomBtn: 'Custom',
@@ -354,6 +367,7 @@ const i18n = {
     predictBetNumpadBackBtn: '« Back',
     predictBetNumpadEmptyToast: 'Enter points first',
     predictBetMinAmountToast: (min) => `Minimum bet is ${min} points`,
+    predictBetDeadlinePassed: 'Betting has closed for this poll',
     predictBetUserResolveFailed: 'Could not resolve user profile. Please log in to Mozi first.',
     predictSymbolSearchingToast: 'Searching coin info…',
     predictPublishingToast: 'Publishing…',
