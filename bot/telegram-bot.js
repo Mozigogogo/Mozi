@@ -74,6 +74,13 @@ registerHelp(bot, config, i18nApi);
 registerBalance(bot, config, i18nApi, registeredGate, loginGate);
 
 bot.catch((err, ctx) => {
+  const code = err?.response?.error_code;
+  if (code === 409) {
+    console.error(
+      '❌ [BOT] 409 Conflict：同一 BOT_TOKEN 有多个实例在 getUpdates。请只保留 Railway 或新加坡服务器其中一个 Bot 进程。',
+    );
+    return;
+  }
   console.error('Bot 未捕获错误:', err?.response?.description || err?.message || err);
   return ctx.reply('处理失败，请稍后重试。').catch(() => {});
 });
@@ -82,7 +89,29 @@ if (config.TG_CHAT_API_PORT > 0) {
   startTgChatHttpServer({ port: config.TG_CHAT_API_PORT });
 }
 
-bot.launch().then(async () => {
+async function startBot() {
+  try {
+    await bot.telegram.deleteWebhook({ drop_pending_updates: false });
+    console.log('ℹ️  已清除 Telegram webhook，使用 long polling');
+  } catch (err) {
+    console.warn('⚠️  deleteWebhook 失败（可忽略）:', err?.message || err);
+  }
+
+  try {
+    await bot.launch();
+  } catch (err) {
+    const code = err?.response?.error_code;
+    if (code === 409) {
+      console.error(
+        '❌ 启动失败 409 Conflict：同一 BOT_TOKEN 已在别处运行（例如 Railway + 新加坡服务器同时跑 Bot）。',
+      );
+      console.error('   → 只保留一个实例：停掉另一边的 pm2 / Railway 服务后再启动。');
+    } else {
+      console.error('❌ Bot 启动失败:', err?.response?.description || err?.message || err);
+    }
+    process.exit(1);
+  }
+
   console.log('🤖 Mozi Bot 已启动');
   try {
     const me = await bot.telegram.getMe();
@@ -115,6 +144,11 @@ bot.launch().then(async () => {
       console.log('ℹ️  AGENT_ROUTE_DEBUG 已开启：将额外打印原始 HTTP body\n');
     }
   }
+}
+
+startBot().catch((err) => {
+  console.error('❌ Bot 启动异常:', err?.message || err);
+  process.exit(1);
 });
 
 process.once('SIGINT', () => bot.stop('SIGINT'));
