@@ -31,7 +31,7 @@ const { registerPrice } = require('./handlers/price');
 const { registerPredict, createPredictTextMiddleware } = require('./handlers/predict');
 const { registerHelp } = require('./handlers/help');
 const { registerBalance } = require('./handlers/balance');
-const { registerAgentMention } = require('./handlers/agentMention');
+const { createAgentMentionMiddleware } = require('./handlers/agentMention');
 const { createInjectGroupReferrer } = require('./middleware/groupReferrer');
 const { registerGroupReferrer } = require('./handlers/groupReferrer');
 const { startTgChatHttpServer } = require('./server/tgChatHttp');
@@ -56,6 +56,7 @@ const loginGate = createRequireMoziLogin(config, i18nApi);
 
 registerDebugCommandLogging(bot);
 bot.use(createPredictTextMiddleware(config, i18nApi));
+bot.use(createAgentMentionMiddleware(config, i18nApi, registeredGate, loginGate));
 bot.use(createInjectGroupReferrer(config));
 bot.use(createResumePendingAiChatOnPrivate(config));
 registerMoziReloginCallback(bot, config, i18nApi);
@@ -71,7 +72,6 @@ registerPrice(bot, config, i18nApi);
 registerPredict(bot, config, i18nApi);
 registerHelp(bot, config, i18nApi);
 registerBalance(bot, config, i18nApi, registeredGate, loginGate);
-registerAgentMention(bot, config, i18nApi, registeredGate, loginGate);
 
 bot.catch((err, ctx) => {
   console.error('Bot 未捕获错误:', err?.response?.description || err?.message || err);
@@ -82,8 +82,21 @@ if (config.TG_CHAT_API_PORT > 0) {
   startTgChatHttpServer({ port: config.TG_CHAT_API_PORT });
 }
 
-bot.launch().then(() => {
+bot.launch().then(async () => {
   console.log('🤖 Mozi Bot 已启动');
+  try {
+    const me = await bot.telegram.getMe();
+    const actual = me.username ? `@${me.username}` : '(no username)';
+    const cfg = config.BOT_USERNAME ? `@${config.BOT_USERNAME}` : '(unset)';
+    console.log(`ℹ️  Bot 账号：${actual}（配置 BOT_USERNAME=${cfg}）`);
+    if (me.username && config.BOT_USERNAME && me.username.toLowerCase() !== config.BOT_USERNAME.toLowerCase()) {
+      console.warn(
+        `⚠️  BOT_USERNAME 与 Token 不一致，@提及 以 Token 对应账号 ${actual} 为准`,
+      );
+    }
+  } catch (err) {
+    console.warn('⚠️  getMe 失败:', err?.message || err);
+  }
   console.log(
     `ℹ️  交互模式：${config.BOT_INPUT_MODE}（${
       config.BOT_NATURAL_LANGUAGE_ENABLED ? '@提及自然语言 + 斜杠命令' : '仅斜杠命令'
