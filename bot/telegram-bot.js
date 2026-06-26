@@ -72,11 +72,7 @@ registerHelp(bot, config, i18nApi);
 registerBalance(bot, config, i18nApi, registeredGate, loginGate);
 
 bot.catch((err, ctx) => {
-  const code = err?.response?.error_code;
-  if (code === 409) {
-    console.error(
-      '❌ [BOT] 409 Conflict：同一 BOT_TOKEN 有多个实例在 getUpdates。请检查 Railway Replicas、本机 npm start、或 Revoke Token。',
-    );
+  if (err?.response?.error_code === 409) {
     return;
   }
   console.error('Bot 未捕获错误:', err?.response?.description || err?.message || err);
@@ -110,24 +106,10 @@ async function startBot() {
     } catch (err) {
       const code = err?.response?.error_code;
       if (code === 409 && attempt < maxAttempts) {
-        const waitSec = 5 * attempt;
-        console.warn(
-          `⚠️  409 Conflict（第 ${attempt}/${maxAttempts} 次）：可能有另一个进程占用同一 BOT_TOKEN，${waitSec}s 后重试…`,
-        );
-        console.warn(
-          '   常见原因：Railway Replicas>1、同项目多个服务共用 Token、本机 npm start、或上次部署尚未退出。',
-        );
-        await sleep(waitSec * 1000);
+        await sleep(5 * attempt * 1000);
         continue;
       }
-      if (code === 409) {
-        console.error('❌ 启动失败 409 Conflict：同一 BOT_TOKEN 仍被其他进程占用。');
-        console.error('   请检查：');
-        console.error('   1) Railway → tg_bot → Settings → Replicas = 1');
-        console.error('   2) 同账号下是否还有另一个服务/环境在用同一 BOT_TOKEN');
-        console.error('   3) 本机是否跑着 npm start / node bot/telegram-bot.js');
-        console.error('   4) BotFather Revoke token 后只把新 Token 填到 Railway');
-      } else {
+      if (code !== 409) {
         console.error('❌ Bot 启动失败:', err?.response?.description || err?.message || err);
       }
       process.exit(1);
