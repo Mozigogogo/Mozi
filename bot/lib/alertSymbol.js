@@ -43,8 +43,30 @@ const parseAlertDeepLinkPayload = (payload) => {
   return sym.toUpperCase();
 };
 
+/**
+ * 从路由 coinSymbol 或自然语言 query 解析告警币种
+ * @param {string | string[]} queryOrArgs
+ * @param {string | null | undefined} coinSymbol
+ */
+function resolveAlertSymbol(queryOrArgs, coinSymbol) {
+  if (coinSymbol) {
+    const sym = String(coinSymbol).trim();
+    if (/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,31}$/.test(sym)) {
+      return sym.toUpperCase();
+    }
+  }
+  const args = Array.isArray(queryOrArgs)
+    ? queryOrArgs
+    : String(queryOrArgs || '')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+  return resolveSymbolFromAlertArgs(args);
+}
+
 module.exports = {
   resolveSymbolFromAlertArgs,
+  resolveAlertSymbol,
   buildAlertStartappParam,
   parseAlertDeepLinkPayload,
 };

@@ -8,6 +8,8 @@ const {
 } = require('./agentCommandRunner');
 const { runPriceCommand } = require('../handlers/price');
 const { runBalanceCommand } = require('../handlers/balance');
+const { executePredictCommand } = require('./predictFlow');
+const { executeAlertCommand } = require('./alertFlow');
 const { escapeHtml } = require('./telegramHtml');
 const { apiDebug } = require('./debugLog');
 const { agentRouteLog, agentRouteDebug } = require('./agentRouteDebug');
@@ -55,12 +57,13 @@ async function runGate(gate, ctx) {
 /**
  * @param {import('telegraf').Context} ctx
  * @param {object} config
- * @param {object} texts
+ * @param {(code?: string) => object} getTexts
  * @param {AgentRouteDispatch} dispatch
  */
-async function dispatchAgentRoute(ctx, config, texts, dispatch) {
+async function dispatchAgentRoute(ctx, config, getTexts, dispatch) {
   const command = normalizeRouteCommand(dispatch.command);
   const message = String(dispatch.message || '').trim();
+  const texts = getTexts(ctx.from?.language_code || 'en');
 
   apiDebug('agent.route.dispatch', {
     command,
@@ -87,7 +90,10 @@ async function dispatchAgentRoute(ctx, config, texts, dispatch) {
       await runBalanceCommand(ctx, config, texts);
       return;
     case 'predict':
-      await ctx.reply(texts.agentRouteUsePredict, { parse_mode: 'HTML' }).catch(() => {});
+      await executePredictCommand(ctx, config, getTexts, message, dispatch.coinSymbol);
+      return;
+    case 'alert':
+      await executeAlertCommand(ctx, config, getTexts, message, dispatch.coinSymbol);
       return;
     default:
       await ctx
@@ -214,7 +220,7 @@ async function handleBotMentionRouted(ctx, config, getTexts, registeredGate, log
     if (!loginOk) return;
   }
 
-  await dispatchAgentRoute(ctx, config, texts, dispatch);
+  await dispatchAgentRoute(ctx, config, getTexts, dispatch);
 }
 
 module.exports = {

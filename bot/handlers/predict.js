@@ -7,9 +7,7 @@
 const { getPredictSession } = require('../lib/predictSession');
 const { predictDebug, predictLog } = require('../lib/predictDebug');
 const {
-  isGroupChat,
-  sendPredictGroupGuide,
-  startPredictFlow,
+  executePredictCommand,
   selectSymbolAndConfirm,
   publishPredict,
   cancelPredict,
@@ -21,7 +19,6 @@ const {
   handleGuessBetDirect,
   handleGuessBetCustom,
   handleGuessBetNumpadAction,
-  handlePredictList,
 } = require('../lib/predictFlow');
 
 /**
@@ -58,36 +55,12 @@ function createPredictTextMiddleware(config, { getTexts }) {
 }
 
 function registerPredict(bot, config, { getTexts }) {
-  const { PREDICT_FORCE_PRIVATE } = config;
-
   bot.command('predict', async (ctx) => {
     const payload = String(ctx.message?.text || '')
       .replace(/^\/predict(?:@\w+)?\s*/i, '')
-      .trim()
-      .toLowerCase();
+      .trim();
 
-    if (payload === 'list') {
-      predictDebug('command.predict_list', {
-        uid: ctx.from?.id ?? null,
-        chatType: ctx.chat?.type ?? null,
-        chatId: ctx.chat?.id ?? null,
-      });
-      await handlePredictList(ctx, config, getTexts);
-      return;
-    }
-
-    predictDebug('command.predict', {
-      uid: ctx.from?.id ?? null,
-      chatType: ctx.chat?.type ?? null,
-      chatId: ctx.chat?.id ?? null,
-      forcePrivate: PREDICT_FORCE_PRIVATE,
-    });
-    if (isGroupChat(ctx) && PREDICT_FORCE_PRIVATE) {
-      await sendPredictGroupGuide(ctx, config, getTexts);
-      return;
-    }
-
-    await startPredictFlow(ctx, config, getTexts);
+    await executePredictCommand(ctx, config, getTexts, payload);
   });
 
   bot.action(/^g:b:(UP|DN):(\d{1,6}|cst):(.+)$/, async (ctx) => {

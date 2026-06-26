@@ -1840,10 +1840,57 @@ async function handlePredictList(ctx, config, getTexts) {
   }
 }
 
+/**
+ * /predict 与 @ 意图路由 predict 共用
+ * @param {import('telegraf').Context} ctx
+ * @param {object} config
+ * @param {(code?: string) => object} getTexts
+ * @param {string} [query]
+ * @param {string | null} [coinSymbol]
+ */
+async function executePredictCommand(ctx, config, getTexts, query = '', coinSymbol = null) {
+  const payload = String(query || '')
+    .trim()
+    .toLowerCase();
+
+  if (payload === 'list') {
+    predictDebug('command.predict_list', {
+      uid: ctx.from?.id ?? null,
+      chatType: ctx.chat?.type ?? null,
+      chatId: ctx.chat?.id ?? null,
+      fromRoute: true,
+    });
+    await handlePredictList(ctx, config, getTexts);
+    return;
+  }
+
+  predictDebug('command.predict', {
+    uid: ctx.from?.id ?? null,
+    chatType: ctx.chat?.type ?? null,
+    chatId: ctx.chat?.id ?? null,
+    forcePrivate: config.PREDICT_FORCE_PRIVATE,
+    fromRoute: true,
+    coinSymbol: coinSymbol ?? null,
+  });
+
+  if (isGroupChat(ctx) && config.PREDICT_FORCE_PRIVATE) {
+    await sendPredictGroupGuide(ctx, config, getTexts);
+    return;
+  }
+
+  await startPredictFlow(ctx, config, getTexts);
+
+  const sym = String(coinSymbol || '').trim();
+  if (sym) {
+    await selectSymbolAndConfirm(ctx, config, getTexts, sym, { useSearchApi: true });
+  }
+}
+
 module.exports = {
   isGroupChat,
   isPrivateChat,
   sendPredictGroupGuide,
+  executePredictCommand,
   startPredictFlow,
   selectSymbolAndConfirm,
   publishPredict,
