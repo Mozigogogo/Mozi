@@ -1406,6 +1406,13 @@ async function submitGuessBet(ctx, config, getTexts, guessNo, direction, betAmou
       ok: result.ok,
       status: result.status,
       errorMessage: result.errorMessage ?? null,
+      responseJson: result.json ?? null,
+      responseText: result.text ?? null,
+      dataKeys:
+        result.json?.data && typeof result.json.data === 'object' && !Array.isArray(result.json.data)
+          ? Object.keys(result.json.data)
+          : [],
+      parsedStats: parseGuessBetStats(result.json),
     });
     if (!result.ok) {
       await answerPredictCbQuery(
