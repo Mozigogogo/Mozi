@@ -99,6 +99,8 @@ function purgeExpired() {
  *   hasPhoto?: boolean;
  *   settledAt?: number | null;
  *   settledResult?: string | null;
+ *   hourlyPollEnabled?: boolean;
+ *   lastDetailPollAt?: number | null;
  * }} data
  */
 function saveGuessMessageContext(guessNo, data) {
@@ -121,6 +123,8 @@ function saveGuessMessageContext(guessNo, data) {
     hasPhoto: data.hasPhoto ?? prev.hasPhoto ?? false,
     settledAt: data.settledAt ?? prev.settledAt ?? null,
     settledResult: data.settledResult ?? prev.settledResult ?? null,
+    hourlyPollEnabled: data.hourlyPollEnabled ?? prev.hourlyPollEnabled ?? false,
+    lastDetailPollAt: data.lastDetailPollAt ?? prev.lastDetailPollAt ?? null,
     savedAt: prev.savedAt ?? Date.now(),
   });
   scheduleSave();
@@ -192,6 +196,42 @@ function listPendingSettlement() {
 }
 
 /**
+ * 下注后启用、按间隔轮询 detail 的竞猜（未结算且有消息定位）
+ * @param {number} pollIntervalMs
+ */
+function listHourlyPollTargets(pollIntervalMs) {
+  ensureLoaded();
+  purgeExpired();
+  const now = Date.now();
+  const interval = Math.max(60_000, Number(pollIntervalMs) || 60 * 60 * 1000);
+  const out = [];
+  for (const [guessNo, ctx] of contexts) {
+    if (!ctx?.hourlyPollEnabled || ctx.settledAt) continue;
+    if (ctx.chatId == null || ctx.messageId == null) continue;
+    const last = Number(ctx.lastDetailPollAt) || 0;
+    if (last > 0 && now - last < interval) continue;
+    out.push({ guessNo, ...ctx });
+  }
+  return out;
+}
+
+/** @param {string} guessNo
+ * @param {{ chatId?: number | null; messageId?: number | null; hasPhoto?: boolean }} [patch]
+ */
+function enableGuessHourlyPoll(guessNo, patch = {}) {
+  saveGuessMessageContext(guessNo, {
+    hourlyPollEnabled: true,
+    lastDetailPollAt: Date.now(),
+    ...patch,
+  });
+}
+
+/** @param {string} guessNo */
+function touchGuessDetailPoll(guessNo) {
+  patchGuessMessageContext(guessNo, { lastDetailPollAt: Date.now() });
+}
+
+/**
  * @param {string} guessNo
  * @param {'UP' | 'DOWN'} result
  */
@@ -211,6 +251,9 @@ module.exports = {
   getGuessEndAt,
   listActiveGuessContexts,
   listPendingSettlement,
+  listHourlyPollTargets,
+  enableGuessHourlyPoll,
+  touchGuessDetailPoll,
   markGuessSettled,
   parseEndAtMs,
 };

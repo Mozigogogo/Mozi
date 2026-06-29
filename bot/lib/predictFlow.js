@@ -22,7 +22,7 @@ const {
   clearGuessBetCustomSession,
   patchGuessBetCustomSession,
 } = require('./guessBetSession');
-const { saveGuessMessageContext, getGuessMessageContext, patchGuessMessageContext, getGuessEndAt } = require('./guessMessageContext');
+const { saveGuessMessageContext, getGuessMessageContext, patchGuessMessageContext, getGuessEndAt, enableGuessHourlyPoll } = require('./guessMessageContext');
 
 const QUICK_SYMBOLS = ['BTC', 'ETH', 'SOL'];
 const DEFAULT_HOURS = 24;
@@ -254,6 +254,29 @@ async function applyGuessSettlementToMessage({
 }) {
   const html = buildGroupSettledHtml(texts, meta, statsRaw, item, result, votes);
   return editTelegramGuessMessage(telegram, chatId, messageId, html, { inline_keyboard: [] }, hasPhoto);
+}
+
+/**
+ * 进行中：按 detail 刷新群内竞猜消息（统计 + 结束时间，保留下注按钮）
+ */
+async function applyGuessActiveRefreshFromDetail({
+  telegram,
+  chatId,
+  messageId,
+  hasPhoto,
+  meta,
+  item,
+  statsRaw,
+  texts,
+  guessNo,
+}) {
+  const merged = {
+    ...meta,
+    ...(item ? buildMetaFromGuessItem(item, meta.languageCode, meta.publisher) : {}),
+  };
+  const html = buildGroupPublishHtml(texts, merged, statsRaw);
+  const keyboard = buildGuessBetKeyboard(texts, guessNo);
+  return editTelegramGuessMessage(telegram, chatId, messageId, html, keyboard, hasPhoto);
 }
 
 function buildGuessBetKeyboard(texts, guessNo) {
@@ -1425,6 +1448,12 @@ async function submitGuessBet(ctx, config, getTexts, guessNo, direction, betAmou
     await ctx.answerCbQuery(texts.predictVoteSuccess(dirLabel, pts)).catch(() => {});
     const refreshTexts = getTexts(getGuessMessageContext(guess)?.languageCode || languageCode);
     await tryRefreshGuessMessage(ctx, config, refreshTexts, guess, result);
+    const betMsg = ctx.callbackQuery?.message;
+    enableGuessHourlyPoll(guess, {
+      chatId: betMsg?.chat?.id ?? null,
+      messageId: betMsg && 'message_id' in betMsg ? betMsg.message_id : null,
+      hasPhoto: Boolean(betMsg?.photo?.length),
+    });
     return true;
   } catch (err) {
     predictLog('bet.fail', { telegramId: uid, guessNo: guess, message: err?.message || String(err) });
@@ -1915,4 +1944,5 @@ module.exports = {
   answerPredictCbQuery,
   QUICK_SYMBOLS,
   applyGuessSettlementToMessage,
+  applyGuessActiveRefreshFromDetail,
 };

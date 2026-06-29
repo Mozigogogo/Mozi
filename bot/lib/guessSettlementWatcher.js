@@ -1,7 +1,9 @@
 'use strict';
 
 /**
- * 竞猜截止后轮询 GET /coinDirectionGuess/detail?guessNo=，更新群内消息为结算结果（涨/跌）
+ * 下注后每小时轮询 GET /coinDirectionGuess/detail?guessNo=，刷新群内竞猜消息；
+ * 若后端已结算则更新为最终结果并停止轮询。
+ * 间隔：GUESS_SETTLEMENT_POLL_MS（毫秒，默认 3600000）
  */
 
 const {
@@ -10,9 +12,14 @@ const {
   parseGuessResult,
   isGuessListItemSettled,
 } = require('./apis');
-const { listPendingSettlement, markGuessSettled, patchGuessMessageContext } = require('./guessMessageContext');
+const {
+  listHourlyPollTargets,
+  markGuessSettled,
+  patchGuessMessageContext,
+  touchGuessDetailPoll,
+} = require('./guessMessageContext');
 const { getTexts } = require('../i18n');
-const { applyGuessSettlementToMessage } = require('./predictFlow');
+const { applyGuessSettlementToMessage, applyGuessActiveRefreshFromDetail } = require('./predictFlow');
 const { predictLog } = require('./predictDebug');
 
 /** @type {import('telegraf').Telegraf | null} */
@@ -26,15 +33,11 @@ let ticking = false;
 /** @type {Set<string>} */
 const inFlight = new Set();
 
-/** @type {Map<string, number>} */
-const lastAttemptAt = new Map();
-
-const DEFAULT_POLL_MS = 30_000;
-const RETRY_MS = 60_000;
+const DEFAULT_POLL_MS = 60 * 60 * 1000;
 
 function getPollMs() {
   const n = Number(process.env.GUESS_SETTLEMENT_POLL_MS);
-  return Number.isFinite(n) && n >= 10_000 ? n : DEFAULT_POLL_MS;
+  return Number.isFinite(n) && n >= 60_000 ? n : DEFAULT_POLL_MS;
 }
 
 function initGuessSettlementWatcher(bot, config) {
@@ -43,114 +46,128 @@ function initGuessSettlementWatcher(bot, config) {
   if (pollTimer) clearInterval(pollTimer);
   pollTimer = setInterval(() => {
     tickSettlement().catch((err) => {
-      predictLog('settle.tick_fail', { message: err?.message || String(err) });
+      predictLog('poll.tick_fail', { message: err?.message || String(err) });
     });
   }, getPollMs());
-  tickSettlement().catch(() => {});
 }
 
 async function tickSettlement() {
   if (!botRef || !configRef || ticking) return;
   ticking = true;
   try {
-    const pending = listPendingSettlement();
-    for (const ctx of pending) {
-      await settleOneGuess(ctx);
+    const targets = listHourlyPollTargets(getPollMs());
+    for (const ctx of targets) {
+      await refreshOneGuess(ctx);
     }
   } finally {
     ticking = false;
   }
 }
 
-async function settleOneGuess(ctx) {
+async function refreshOneGuess(ctx) {
   if (!configRef || !botRef) return;
 
   const guessNo = String(ctx.guessNo || '').trim();
   const groupId = ctx.groupId ?? ctx.chatId ?? null;
   if (!guessNo || inFlight.has(guessNo)) return;
 
-  const last = lastAttemptAt.get(guessNo) || 0;
-  if (Date.now() - last < RETRY_MS) return;
-
-  let detailRes;
-  try {
-    detailRes = await getCoinDirectionGuessDetail({
-      apiBaseUrl: configRef.API_BASE_URL,
-      appUrl: configRef.APP_URL,
-      guessNo,
-      path: configRef.COIN_DIRECTION_GUESS_DETAIL_PATH,
-    });
-  } catch (err) {
-    lastAttemptAt.set(guessNo, Date.now());
-    predictLog('settle.detail_fail', { guessNo, groupId, message: err?.message || String(err) });
-    return;
-  }
-
-  lastAttemptAt.set(guessNo, Date.now());
-
-  if (!detailRes.ok || !detailRes.item) {
-    predictLog('settle.detail_bad', {
-      guessNo,
-      groupId,
-      status: detailRes.status,
-      errorMessage: detailRes.errorMessage ?? null,
-    });
-    return;
-  }
-
-  const item = detailRes.item;
-  const votes = detailRes.votes || [];
-
-  if (!isGuessListItemSettled(item)) {
-    predictLog('settle.pending', {
-      guessNo,
-      groupId,
-      status: item.status ?? null,
-      voteCount: votes.length,
-    });
-    return;
-  }
-
-  const result = parseGuessResult(item);
-  if (!result) {
-    predictLog('settle.result_pending', { guessNo, groupId, status: item.status ?? null });
-    return;
-  }
-
   inFlight.add(guessNo);
   try {
+    let detailRes;
+    try {
+      detailRes = await getCoinDirectionGuessDetail({
+        apiBaseUrl: configRef.API_BASE_URL,
+        appUrl: configRef.APP_URL,
+        guessNo,
+        path: configRef.COIN_DIRECTION_GUESS_DETAIL_PATH,
+      });
+    } catch (err) {
+      predictLog('poll.detail_fail', { guessNo, groupId, message: err?.message || String(err) });
+      touchGuessDetailPoll(guessNo);
+      return;
+    }
+
+    if (!detailRes.ok || !detailRes.item) {
+      predictLog('poll.detail_bad', {
+        guessNo,
+        groupId,
+        status: detailRes.status,
+        errorMessage: detailRes.errorMessage ?? null,
+      });
+      touchGuessDetailPoll(guessNo);
+      return;
+    }
+
+    const item = detailRes.item;
+    const votes = detailRes.votes || [];
+    const statsRaw = parseGuessItemStats(item);
     const languageCode = ctx.languageCode || 'zh';
     const texts = getTexts(languageCode);
-    const statsRaw = parseGuessItemStats(item);
-    const ok = await applyGuessSettlementToMessage({
+
+    if (isGuessListItemSettled(item)) {
+      const result = parseGuessResult(item);
+      if (!result) {
+        predictLog('poll.result_pending', { guessNo, groupId, status: item.status ?? null });
+        touchGuessDetailPoll(guessNo);
+        return;
+      }
+
+      const ok = await applyGuessSettlementToMessage({
+        telegram: botRef.telegram,
+        chatId: ctx.chatId,
+        messageId: ctx.messageId,
+        hasPhoto: Boolean(ctx.hasPhoto),
+        meta: ctx,
+        item,
+        votes,
+        result,
+        statsRaw,
+        texts,
+      });
+      if (ok) {
+        markGuessSettled(guessNo, result);
+        if (item.endAt != null) {
+          patchGuessMessageContext(guessNo, { endAt: item.endAt });
+        }
+        predictLog('poll.settled', {
+          guessNo,
+          groupId,
+          result,
+          endPrice: item.endPrice ?? null,
+          voteCount: votes.length,
+        });
+      } else {
+        predictLog('poll.settle_message_fail', { guessNo, groupId, result });
+        touchGuessDetailPoll(guessNo);
+      }
+      return;
+    }
+
+    const ok = await applyGuessActiveRefreshFromDetail({
       telegram: botRef.telegram,
       chatId: ctx.chatId,
       messageId: ctx.messageId,
       hasPhoto: Boolean(ctx.hasPhoto),
       meta: ctx,
       item,
-      votes,
-      result,
       statsRaw,
       texts,
+      guessNo,
     });
-    if (ok) {
-      markGuessSettled(guessNo, result);
-      if (item.endAt != null) {
-        patchGuessMessageContext(guessNo, { endAt: item.endAt });
-      }
-      predictLog('settle.ok', {
-        guessNo,
-        groupId,
-        result,
-        endPrice: item.endPrice ?? null,
-        voteCount: votes.length,
-      });
-    } else {
-      predictLog('settle.message_fail', { guessNo, groupId, result });
-    }
+    const patch = { lastDetailPollAt: Date.now() };
+    if (item.endAt != null) patch.endAt = item.endAt;
+    patchGuessMessageContext(guessNo, patch);
+    predictLog('poll.refresh', {
+      guessNo,
+      groupId,
+      ok,
+      status: item.status ?? null,
+      upCount: statsRaw?.upCount ?? null,
+      downCount: statsRaw?.downCount ?? null,
+    });
   } catch (err) {
-    predictLog('settle.fail', { guessNo, groupId, message: err?.message || String(err) });
+    predictLog('poll.refresh_fail', { guessNo, groupId, message: err?.message || String(err) });
+    touchGuessDetailPoll(guessNo);
   } finally {
     inFlight.delete(guessNo);
   }
