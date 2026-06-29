@@ -47,23 +47,17 @@ function parseEndAtMs(endAt) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function formatEndAtDisplay(endAt, languageCode) {
+function formatEndAtDisplay(endAt, languageCode, referenceMs = Date.now()) {
   const ms = parseEndAtMs(endAt);
   if (ms == null) return '—';
   const isZh = String(languageCode || '').toLowerCase().startsWith('zh');
-  try {
-    return new Date(ms).toLocaleString(isZh ? 'zh-CN' : 'en-US', {
-      timeZone: 'Asia/Shanghai',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
-  } catch {
-    return new Date(ms).toISOString();
+  const ref = Number(referenceMs);
+  const diffMs = ms - (Number.isFinite(ref) ? ref : Date.now());
+  if (diffMs <= 0) {
+    return isZh ? '已结束' : 'Ended';
   }
+  const hours = Math.max(1, Math.ceil(diffMs / 3600000));
+  return isZh ? `${hours}小时后` : `in ${hours} hour${hours === 1 ? '' : 's'}`;
 }
 
 function formatLockedAtDisplay(ms, languageCode) {
@@ -89,6 +83,15 @@ function formatPointsDisplay(points, languageCode) {
   const n = Math.max(0, Math.floor(Number(points) || 0));
   const isZh = String(languageCode || '').toLowerCase().startsWith('zh');
   return isZh ? n.toLocaleString('zh-CN') : n.toLocaleString('en-US');
+}
+
+function resolveGuessBetLimits(config) {
+  const minBet = Math.max(1, Math.floor(Number(config?.COIN_DIRECTION_GUESS_MIN_BET_AMOUNT) || 50));
+  const maxBet = Math.max(
+    minBet,
+    Math.floor(Number(config?.COIN_DIRECTION_GUESS_MAX_BET_AMOUNT) || 500),
+  );
+  return { minBet, maxBet };
 }
 
 /**
@@ -148,9 +151,8 @@ function formatPublisherLabel(publishData, ctx) {
 function buildGroupPublishHtml(texts, meta, statsRaw) {
   const stats = normalizeGuessBetStats(statsRaw, meta.languageCode);
   const lockedAt = formatLockedAtDisplay(meta.lockedAtMs, meta.languageCode);
-  const endAtMs = parseEndAtMs(meta.endAt);
   const endAt =
-    endAtMs != null ? formatLockedAtDisplay(endAtMs, meta.languageCode) : '—';
+    meta.endAt != null ? formatEndAtDisplay(meta.endAt, meta.languageCode) : '—';
   return texts.predictGroupPublishBody(
     escapeHtml(meta.sym),
     meta.hours,
@@ -174,8 +176,11 @@ function formatEndPriceDisplay(endPrice) {
 function buildGroupSettledHtml(texts, meta, statsRaw, item, result, votes) {
   const stats = normalizeGuessBetStats(statsRaw, meta.languageCode);
   const lockedAt = formatLockedAtDisplay(meta.lockedAtMs, meta.languageCode);
-  const endAtMs = parseEndAtMs(meta.endAt ?? item?.endAt);
-  const endAt = endAtMs != null ? formatLockedAtDisplay(endAtMs, meta.languageCode) : '—';
+  const endAtRaw = meta.endAt ?? item?.endAt;
+  const endAt =
+    endAtRaw != null
+      ? formatEndAtDisplay(endAtRaw, meta.languageCode, meta.lockedAtMs)
+      : '—';
   const endPrice = formatEndPriceDisplay(item?.endPrice);
   const resultLine =
     result === 'UP' ? texts.predictSettledResultUp : texts.predictSettledResultDown;
@@ -1374,6 +1379,16 @@ async function submitGuessBet(ctx, config, getTexts, guessNo, direction, betAmou
     return false;
   }
 
+  const { minBet, maxBet } = resolveGuessBetLimits(config);
+  if (pts < minBet) {
+    await answerPredictCbQuery(ctx, texts.predictBetMinAmountToast(minBet), { show_alert: true });
+    return false;
+  }
+  if (pts > maxBet) {
+    await answerPredictCbQuery(ctx, texts.predictBetMaxAmountToast(maxBet), { show_alert: true });
+    return false;
+  }
+
   const groupId = ctx.callbackQuery?.message?.chat?.id ?? null;
   const endMs = await resolveGuessEndAtMs(config, guess, groupId);
   if (endMs != null && Date.now() > endMs) {
@@ -1523,9 +1538,13 @@ async function handleGuessBetNumpadAction(ctx, config, getTexts, action) {
       await answerPredictCbQuery(ctx, texts.predictBetNumpadEmptyToast, { show_alert: true });
       return;
     }
-    const minBet = Math.max(1, Math.floor(Number(config.COIN_DIRECTION_GUESS_MIN_BET_AMOUNT) || 50));
+    const { minBet, maxBet } = resolveGuessBetLimits(config);
     if (pts < minBet) {
       await answerPredictCbQuery(ctx, texts.predictBetMinAmountToast(minBet), { show_alert: true });
+      return;
+    }
+    if (pts > maxBet) {
+      await answerPredictCbQuery(ctx, texts.predictBetMaxAmountToast(maxBet), { show_alert: true });
       return;
     }
     const direction = session.choice === 2 ? 'DOWN' : 'UP';
@@ -1541,7 +1560,14 @@ async function handleGuessBetNumpadAction(ctx, config, getTexts, action) {
       await ctx.answerCbQuery().catch(() => {});
       return;
     }
-    draft = `${draft}${action}`.replace(/^0+(?=\d)/, '');
+    const nextDraft = `${draft}${action}`.replace(/^0+(?=\d)/, '');
+    const nextPts = Math.floor(Number(nextDraft));
+    const { maxBet } = resolveGuessBetLimits(config);
+    if (nextPts > maxBet) {
+      await answerPredictCbQuery(ctx, texts.predictBetMaxAmountToast(maxBet), { show_alert: true });
+      return;
+    }
+    draft = nextDraft;
     patchGuessBetCustomSession(uid, { draft });
     await ctx.answerCbQuery().catch(() => {});
     await editGuessCallbackKeyboard(ctx, buildGuessBetNumpadKeyboard(texts, draft));
@@ -1808,7 +1834,10 @@ function buildGuessListHtml(texts, items, languageCode) {
     const bearishPool = formatGuessListPoints(item.bearishPool, languageCode);
     const bullishCount = Number(item.bullishCount) || 0;
     const bearishCount = Number(item.bearishCount) || 0;
-    const endAt = escapeHtml(formatEndAtDisplay(item.endAt, languageCode));
+    const statusKey = String(item.status || '').trim().toLowerCase();
+    const refMs =
+      statusKey === 'settled' ? parseEndAtMs(item.startAt) ?? Date.now() : Date.now();
+    const endAt = escapeHtml(formatEndAtDisplay(item.endAt, languageCode, refMs));
     const resultLine = formatGuessListResultLine(texts, item.result);
     lines.push(
       texts.predictListItemLine(
