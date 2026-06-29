@@ -94,6 +94,32 @@ function resolveGuessBetLimits(config) {
   return { minBet, maxBet };
 }
 
+function resolveMaxActiveGuessesPerGroup(config) {
+  return Math.max(1, Math.floor(Number(config?.COIN_DIRECTION_GUESS_MAX_ACTIVE_PER_GROUP) || 3));
+}
+
+function isGuessStatusActive(status) {
+  return String(status || '').trim().toLowerCase() === 'active';
+}
+
+function countActiveGuesses(items) {
+  if (!Array.isArray(items)) return 0;
+  return items.filter((item) => isGuessStatusActive(item?.status)).length;
+}
+
+async function fetchActiveGuessCountForGroup(config, groupId) {
+  const listRes = await getCoinDirectionGuessList({
+    apiBaseUrl: config.API_BASE_URL,
+    appUrl: config.APP_URL,
+    groupId,
+    path: config.COIN_DIRECTION_GUESS_LIST_PATH,
+  });
+  if (!listRes.ok) {
+    return { ok: false, activeCount: 0, errorMessage: listRes.errorMessage ?? null };
+  }
+  return { ok: true, activeCount: countActiveGuesses(listRes.items), errorMessage: null };
+}
+
 /**
  * @param {ReturnType<typeof parseGuessBetStats> | null | undefined} raw
  * @param {string} [languageCode]
@@ -1084,6 +1110,40 @@ async function publishPredict(ctx, config, getTexts) {
     sourceGroupChatId: session.sourceGroupChatId ?? null,
     symbol: sym,
   });
+
+  if (publishChatId != null && !publishingToPrivateOnly) {
+    const maxActive = resolveMaxActiveGuessesPerGroup(config);
+    try {
+      const listCheck = await fetchActiveGuessCountForGroup(config, publishChatId);
+      if (!listCheck.ok) {
+        predictLog('publish.group_list_fail', {
+          uid,
+          publishChatId,
+          errorMessage: listCheck.errorMessage ?? null,
+        });
+        await replyOrEdit(ctx, session, texts.predictListFailed, { parse_mode: 'HTML' });
+        return;
+      }
+      if (listCheck.activeCount >= maxActive) {
+        predictLog('publish.group_full', {
+          uid,
+          publishChatId,
+          activeCount: listCheck.activeCount,
+          maxActive,
+        });
+        await replyOrEdit(ctx, session, texts.predictGroupGuessFull, { parse_mode: 'HTML' });
+        return;
+      }
+    } catch (err) {
+      predictLog('publish.group_list_error', {
+        uid,
+        publishChatId,
+        message: err?.message || String(err),
+      });
+      await replyOrEdit(ctx, session, texts.predictListFailed, { parse_mode: 'HTML' });
+      return;
+    }
+  }
 
   const pollQuestion = isZh
     ? `${sym} 接下来 ${hours} 小时会涨还是跌？`

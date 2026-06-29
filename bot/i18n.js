@@ -131,6 +131,7 @@ const i18n = {
     predictPublished: '✅ 预测已发布，群成员可参与投票。',
     predictPublishedToGroup: '✅ 已发布到原群，群成员可参与投票。',
     predictPublishFailed: '❌ 发布失败：请确认机器人在目标群有发消息与投票权限。',
+    predictGroupGuessFull: '本群竞猜已满，请等待现有竞猜结束',
     predictCancelled: '已取消。',
     predictCancelledToast: '已取消',
     predictSessionExpired: '流程已过期，请重新发起竞猜',
@@ -389,6 +390,8 @@ const i18n = {
     predictPublished: '✅ Poll published. Members can vote now.',
     predictPublishedToGroup: '✅ Published to the original group. Members can vote now.',
     predictPublishFailed: '❌ Publish failed. Ensure the bot can post messages and polls in the target chat.',
+    predictGroupGuessFull:
+      'This group already has the maximum number of active polls. Please wait for existing polls to finish.',
     predictCancelled: 'Cancelled.',
     predictCancelledToast: 'Cancelled',
     predictSessionExpired: 'Session expired. Please start again.',
