@@ -95,9 +95,9 @@ const i18n = {
     predictConfirmBody: (sym, hours, price) =>
       `${sym} 接下来 ${hours} 小时会涨还是跌？\n当前价：${price}（创建时锁定）`,
     predictGroupPublishBody: (sym, hours, price, lockedAt, stats, endAt, publisher) =>
-      `🎯 竞猜 · ${sym}\n接下来 ${hours} 小时会涨还是跌？\n起始价：${price}（${lockedAt} 锁定）\n📊 看涨 ${stats.upPercent}%（${stats.upCount}人·${stats.upPoints}积分）\n📊 看跌 ${stats.downPercent}%（${stats.downCount}人·${stats.downPoints}积分）\n⏳ 下注截止：${endAt}\n由 ${publisher} 发起`,
+      `🎯 竞猜 · ${sym}\n接下来 ${hours} 小时会涨还是跌？\n起始价：${price}（发布时间 ${lockedAt}）\n📊 看涨 ${stats.upPercent}%（${stats.upCount}人·${stats.upPoints}积分）\n📊 看跌 ${stats.downPercent}%（${stats.downCount}人·${stats.downPoints}积分）\n⏳ 结束时间：${endAt}\n由 ${publisher} 发起`,
     predictGroupSettledBody: (sym, price, endPrice, lockedAt, stats, endAt, resultLine, votesSection, publisher) =>
-      `🎯 竞猜 · ${sym}（已结算）\n起始价：${price}（${lockedAt} 锁定）\n结算价：${endPrice}\n📊 看涨 ${stats.upPercent}%（${stats.upCount}人·${stats.upPoints}积分）\n📊 看跌 ${stats.downPercent}%（${stats.downCount}人·${stats.downPoints}积分）\n⏳ 下注截止：${endAt}\n${resultLine}${votesSection}\n由 ${publisher} 发起`,
+      `🎯 竞猜 · ${sym}（已结算）\n起始价：${price}（发布时间 ${lockedAt}）\n结算价：${endPrice}\n📊 看涨 ${stats.upPercent}%（${stats.upCount}人·${stats.upPoints}积分）\n📊 看跌 ${stats.downPercent}%（${stats.downCount}人·${stats.downPoints}积分）\n⏳ 结束时间：${endAt}\n${resultLine}${votesSection}\n由 ${publisher} 发起`,
     predictSettledResultUp: '✅ 结果：涨',
     predictSettledResultDown: '✅ 结果：跌',
     predictSettledWinnersSection: (lines) => `\n🏆 获奖：${lines}`,
@@ -143,7 +143,7 @@ const i18n = {
     predictListStatusActive: '进行中',
     predictListStatusSettled: '已结算',
     predictListItemLine: (sym, status, bullishPool, bullishCount, bearishPool, bearishCount, endAt, resultLine) =>
-      `<b>${sym}</b> · ${status}\n📈 ${bullishPool} 积分（${bullishCount}人） · 📉 ${bearishPool} 积分（${bearishCount}人）\n⏳ 截止：${endAt}${resultLine}`,
+      `<b>${sym}</b> · ${status}\n📈 ${bullishPool} 积分（${bullishCount}人） · 📉 ${bearishPool} 积分（${bearishCount}人）\n⏳ 结束时间：${endAt}${resultLine}`,
     predictListResultUp: '\n✅ 结果：涨',
     predictListResultDown: '\n✅ 结果：跌',
     helpBody: `🤖   Mozi AI 行情助手 · 指令说明
@@ -351,9 +351,9 @@ const i18n = {
     predictConfirmBody: (sym, hours, price) =>
       `Will ${sym} go up or down in the next ${hours} hours?\nCurrent price: ${price} (locked at creation)`,
     predictGroupPublishBody: (sym, hours, price, lockedAt, stats, endAt, publisher) =>
-      `🎯 Guess · ${sym}\nUp or down in the next ${hours} hours?\nStart price: ${price} (locked at ${lockedAt})\n📊 Bullish ${stats.upPercent}% (${stats.upCount} · ${stats.upPoints} pts)\n📊 Bearish ${stats.downPercent}% (${stats.downCount} · ${stats.downPoints} pts)\n⏳ Closes at: ${endAt}\nStarted by ${publisher}`,
+      `🎯 Guess · ${sym}\nUp or down in the next ${hours} hours?\nStart price: ${price} (published at ${lockedAt})\n📊 Bullish ${stats.upPercent}% (${stats.upCount} · ${stats.upPoints} pts)\n📊 Bearish ${stats.downPercent}% (${stats.downCount} · ${stats.downPoints} pts)\n⏳ End time: ${endAt}\nStarted by ${publisher}`,
     predictGroupSettledBody: (sym, price, endPrice, lockedAt, stats, endAt, resultLine, votesSection, publisher) =>
-      `🎯 Guess · ${sym} (settled)\nStart price: ${price} (locked at ${lockedAt})\nSettle price: ${endPrice}\n📊 Bullish ${stats.upPercent}% (${stats.upCount} · ${stats.upPoints} pts)\n📊 Bearish ${stats.downPercent}% (${stats.downCount} · ${stats.downPoints} pts)\n⏳ Closed at: ${endAt}\n${resultLine}${votesSection}\nStarted by ${publisher}`,
+      `🎯 Guess · ${sym} (settled)\nStart price: ${price} (published at ${lockedAt})\nSettle price: ${endPrice}\n📊 Bullish ${stats.upPercent}% (${stats.upCount} · ${stats.upPoints} pts)\n📊 Bearish ${stats.downPercent}% (${stats.downCount} · ${stats.downPoints} pts)\n⏳ End time: ${endAt}\n${resultLine}${votesSection}\nStarted by ${publisher}`,
     predictSettledResultUp: '✅ Result: Up',
     predictSettledResultDown: '✅ Result: Down',
     predictSettledWinnersSection: (lines) => `\n🏆 Winners: ${lines}`,
@@ -400,7 +400,7 @@ const i18n = {
     predictListStatusActive: 'Active',
     predictListStatusSettled: 'Settled',
     predictListItemLine: (sym, status, bullishPool, bullishCount, bearishPool, bearishCount, endAt, resultLine) =>
-      `<b>${sym}</b> · ${status}\n📈 ${bullishPool} pts (${bullishCount}) · 📉 ${bearishPool} pts (${bearishCount})\n⏳ Ends: ${endAt}${resultLine}`,
+      `<b>${sym}</b> · ${status}\n📈 ${bullishPool} pts (${bullishCount}) · 📉 ${bearishPool} pts (${bearishCount})\n⏳ End time: ${endAt}${resultLine}`,
     predictListResultUp: '\n✅ Result: Up',
     predictListResultDown: '\n✅ Result: Down',
     helpBody: `🤖 Mozi AI · Commands
