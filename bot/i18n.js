@@ -4,10 +4,20 @@
 
 const i18n = {
   zh: {
-    welcomeWithInvite: (code) =>
-      `🎉 欢迎加入 MoziInnovations！\n\n您已通过邀请码 ${code} 加入，快来注册吧！`,
-    welcome: '👋 欢迎使用 MoziInnovations！',
-    openApp: '🚀 打开 MoziInnovations',
+    welcomeWithInvite: (code, botUsername) =>
+      `🎉 欢迎加入 MozInnovations！\n\n您已通过邀请码 ${code} 加入，快来注册吧！\n\n` +
+      `👋 <b>欢迎使用@${botUsername}，如何使用：</b>\n\n` +
+      `• 邀请 @${botUsername} 进入群组\n` +
+      `• 设置为管理员\n` +
+      `• 在机器人私聊中发送 <code>/start</code> 启动MiniApp。\n\n` +
+      `<code>/help</code> 查看我的功能`,
+    welcome: (botUsername) =>
+      `👋 <b>欢迎使用@${botUsername}，如何使用：</b>\n\n` +
+      `• 邀请 @${botUsername} 进入群组\n` +
+      `• 设置为管理员\n` +
+      `• 在机器人私聊中发送 <code>/start</code> 启动MiniApp。\n\n` +
+      `<code>/help</code> 查看我的功能`,
+    openApp: '🚀 打开 MozInnovations',
     joinCommunity: '💬 加入社区',
     followX: '🐦 关注 X',
     bindSuccess: '邀请绑定成功',
@@ -263,10 +273,20 @@ const i18n = {
       `✅ 本群推广人已绑定。\n\n邀请码：<code>${code}</code>\n群内成员通过本 bot 注册/打开 App 时将挂靠此邀请码。`,
   },
   en: {
-    welcomeWithInvite: (code) =>
-      `🎉 Welcome to MoziInnovations!\n\nYou have joined via invite code ${code}, come and register now!`,
-    welcome: '👋 Welcome to MoziInnovations!',
-    openApp: '🚀 Open MoziInnovations',
+    welcomeWithInvite: (code, botUsername) =>
+      `🎉 Welcome to MozInnovations!\n\nYou joined via invite code ${code}. Register now!\n\n` +
+      `👋 <b>Welcome to @${botUsername}! How to use:</b>\n\n` +
+      `• Add @${botUsername} to your group\n` +
+      `• Promote it to admin\n` +
+      `• Send <code>/start</code> in a private chat with the bot to launch the Mini App.\n\n` +
+      `<code>/help</code> View all commands`,
+    welcome: (botUsername) =>
+      `👋 <b>Welcome to @${botUsername}! How to use:</b>\n\n` +
+      `• Add @${botUsername} to your group\n` +
+      `• Promote it to admin\n` +
+      `• Send <code>/start</code> in a private chat with the bot to launch the Mini App.\n\n` +
+      `<code>/help</code> View all commands`,
+    openApp: '🚀 Open MozInnovations',
     joinCommunity: '💬 Join Community',
     followX: '🐦 Follow X',
     bindSuccess: 'Invitation binding successful',

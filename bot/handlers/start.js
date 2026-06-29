@@ -14,7 +14,7 @@ const { hasPendingWatchForUser } = require('../lib/tgChatRegisterWatcher');
 const { markUserDmReachable } = require('../lib/botDmReachable');
 
 function registerStart(bot, config, { getTexts }) {
-  const { APP_URL, ALERT_CARD_IMAGE, TG_COMMUNITY_URL, TWITTER_URL } = config;
+  const { APP_URL, ALERT_CARD_IMAGE, TG_COMMUNITY_URL, TWITTER_URL, BOT_USERNAME } = config;
 
   bot.start(async (ctx) => {
     const userId = ctx.from.id;
@@ -50,10 +50,13 @@ function registerStart(bot, config, { getTexts }) {
     }
 
     const appUrl = buildMiniAppUrlWithInvite(APP_URL, inviteCode);
-    const message = inviteCode ? texts.welcomeWithInvite(inviteCode) : texts.welcome;
+    const message = inviteCode
+      ? texts.welcomeWithInvite(inviteCode, BOT_USERNAME)
+      : texts.welcome(BOT_USERNAME);
 
     await ctx.replyWithPhoto(ALERT_CARD_IMAGE, {
       caption: message,
+      parse_mode: 'HTML',
       reply_markup: {
         inline_keyboard: [
           [{ text: texts.openApp, web_app: { url: appUrl } }],
