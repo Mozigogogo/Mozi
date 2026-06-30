@@ -2286,20 +2286,6 @@ async function postCoinDirectionGuessBet({
       text,
       errorMessage: parseApiErrorMessage(json),
     };
-    console.log(
-      '[GUESS_BET] POST /coinDirectionGuess/bet response',
-      JSON.stringify({
-        httpStatus: res.status,
-        ok: out.ok,
-        topLevelKeys: json && typeof json === 'object' ? Object.keys(json) : [],
-        dataKeys:
-          json?.data && typeof json.data === 'object' && !Array.isArray(json.data)
-            ? Object.keys(json.data)
-            : [],
-        json,
-        rawText: text,
-      }),
-    );
     apiDebug('POST /coinDirectionGuess/bet →', {
       guessNo: body.guessNo,
       userId: body.userId,

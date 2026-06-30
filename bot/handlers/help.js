@@ -46,7 +46,6 @@ function registerHelp(bot, config, { getTexts }) {
       await ctx.telegram.sendMessage(uid, fullText, { ...sendOpts, parse_mode: 'HTML' });
     } catch (err) {
       const desc = err?.response?.description || err?.message || '';
-      console.warn('[/help] 私聊发送失败:', desc);
       await ctx.reply(texts.helpDmFailed, { parse_mode: 'HTML' }).catch(() => {});
     }
   });

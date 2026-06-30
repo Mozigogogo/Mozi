@@ -46,7 +46,6 @@ async function sendSessionExpiredNotice(ctx, texts) {
     await ctx.telegram.sendMessage(uid, html, opts);
   } catch (err) {
     const desc = err?.response?.description || err?.message || '';
-    console.warn('[requireMoziLogin] 会话失效私信失败:', desc);
     await ctx.reply(html, opts).catch(() => {});
   }
 }
@@ -91,7 +90,6 @@ function createRequireMoziLogin(config, { getTexts }) {
         appUrl: config.APP_URL,
       });
     } catch (e) {
-      console.warn('[user/session/token-check] 请求异常:', e?.message || e);
       return next();
     }
 
@@ -133,8 +131,7 @@ function registerMoziReloginCallback(bot, config, { getTexts }) {
       }
       token = await ensureTgUserToken(config, uidStr, reloginOpts, { forceRefresh: true });
     } catch (e) {
-      console.warn('[mozi_rl] ensureTgUserToken:', e?.message || e);
-    }
+      }
     const ok = Boolean(token);
     await ctx
       .answerCbQuery({ text: ok ? texts.sessionReloginCbToastOk : texts.sessionReloginCbToastFail, show_alert: !ok })

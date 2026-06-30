@@ -257,14 +257,12 @@ async function runPriceCommand(ctx, config, texts, symbolInput) {
       acceptLanguage,
     });
   } catch (err) {
-    console.error('[/price] 请求错误:', err?.message || err);
     apiDebug('/price handler', { failed: 'network', message: err?.message || String(err) });
     await ctx.reply(texts.priceNetworkError, { parse_mode: 'HTML' });
     return false;
   }
 
   if (!result.ok) {
-    console.error('[/price] HTTP', result.status, result.text?.slice(0, 500));
     apiDebug('/price handler', {
       failed: 'http',
       httpStatus: result.status,

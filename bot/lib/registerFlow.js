@@ -32,7 +32,6 @@ async function sendRegisterCard(ctx, config, getTexts) {
     });
   } catch (err) {
     const reason = err?.response?.description || err?.message || String(err);
-    console.error('[register] web_app 消息发送失败:', reason);
     try {
       await ctx.replyWithPhoto(ALERT_CARD_IMAGE, {
         caption,
@@ -40,7 +39,6 @@ async function sendRegisterCard(ctx, config, getTexts) {
         reply_markup: keyboardUrl,
       });
     } catch (err2) {
-      console.error('[register] 备用链接发送失败:', err2?.response?.description || err2?.message);
       await ctx.reply(`${caption}\n\n${userPage}\n${startappUrl}`, { parse_mode: 'HTML' });
     }
   }

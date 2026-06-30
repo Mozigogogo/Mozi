@@ -27,8 +27,7 @@ async function savePendingAgentChat(ctx, config, pending) {
   try {
     saveTgChatQuestion({ telegramId, groupId: chatId, question, command });
   } catch (e) {
-    console.warn('[tgChatPendingSave] local store:', e?.message || e);
-  }
+    }
 
   try {
     const res = await postTgChatSave({
@@ -39,11 +38,9 @@ async function savePendingAgentChat(ctx, config, pending) {
       command,
     });
     if (!res.ok) {
-      console.warn('[tgChatPendingSave] save failed:', res.status, res.text?.slice(0, 200));
-    }
+      }
   } catch (e) {
-    console.warn('[tgChatPendingSave] save error:', e?.message || e);
-  }
+    }
 
   savePendingReplayJob({
     telegramId,

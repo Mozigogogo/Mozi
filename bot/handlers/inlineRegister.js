@@ -75,8 +75,7 @@ async function runInlineRegisterFlow(ctx, config, getTexts, opts = {}) {
 
   const chatId = ctx.chat?.id;
   await triggerPendingAiChatReplay(config, String(uid)).catch((e) => {
-    console.warn('[inlineRegister] replay:', e?.message || e);
-  });
+    });
 
   const isGroup = ctx.chat?.type === 'group' || ctx.chat?.type === 'supergroup';
   if (isGroup && !opts.fromCallback && !opts.silent) {

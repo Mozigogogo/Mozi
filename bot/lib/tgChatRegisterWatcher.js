@@ -128,7 +128,6 @@ async function tryReplayJob(job) {
       appUrl: configRef.APP_URL,
     });
   } catch (e) {
-    console.warn('[tgChatRegisterWatcher] registered/check:', e?.message || e);
     return;
   }
 
@@ -143,8 +142,7 @@ async function tryReplayJob(job) {
     pendingReplayJobs.delete(key);
   } catch (e) {
     job.replaying = false;
-    console.warn('[tgChatRegisterWatcher] replay failed:', e?.message || e);
-  }
+    }
 }
 
 /**

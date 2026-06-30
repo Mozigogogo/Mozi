@@ -27,8 +27,7 @@ async function canBotReachUserInDm(telegram, userId) {
         desc,
       );
     if (!blocked) {
-      console.warn('[botDmReachable] sendChatAction:', desc || err);
-    }
+      }
     reachCache.set(id, false);
     return false;
   }

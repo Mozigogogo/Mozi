@@ -45,8 +45,8 @@ function ensureLoaded() {
         }
       }
     }
-  } catch (err) {
-    console.warn('[guess-context] load fail:', err?.message || err);
+  } catch {
+    // ignore load errors
   }
   purgeExpired();
 }
@@ -60,8 +60,8 @@ function scheduleSave() {
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
       const obj = Object.fromEntries(contexts);
       fs.writeFileSync(STORE_PATH, JSON.stringify(obj, null, 2), 'utf8');
-    } catch (err) {
-      console.warn('[guess-context] save fail:', err?.message || err);
+    } catch {
+      // ignore save errors
     }
   }, 200);
 }

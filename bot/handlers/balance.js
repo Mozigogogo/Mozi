@@ -32,7 +32,6 @@ async function replyOrDmBalance(ctx, texts, html, extra = {}) {
     await ctx.telegram.sendMessage(uid, html, opts);
   } catch (err) {
     const desc = err?.response?.description || err?.message || '';
-    console.warn('[/balance] 私聊发送失败:', desc);
     await ctx.reply(texts.balanceDmFailed, { parse_mode: 'HTML' }).catch(() => {});
   }
 }

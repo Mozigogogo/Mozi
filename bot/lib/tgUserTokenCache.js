@@ -151,8 +151,7 @@ async function ensureTgUserToken(config, telegramId, opts = {}) {
             photoUrl: opts.photoUrl ?? '',
           });
         if (!hash) {
-          console.warn('[tg/login] 无法生成 hash：请检查 BOT_TOKEN 与 telegramId');
-        }
+          }
 
         const loginPath = config.TG_LOGIN_PATH || 'user/login';
         const loginEnv = config.MOZI_LOGIN_ENV || 'test';
@@ -198,7 +197,6 @@ async function ensureTgUserToken(config, telegramId, opts = {}) {
               bodyPreview: (r.text || '').slice(0, 500),
             });
           }
-          console.warn('[tg/login] HTTP', r.status, (r.text || '').slice(0, 300));
           return '';
         }
         const token = extractLoginToken(r.json);
@@ -222,15 +220,6 @@ async function ensureTgUserToken(config, telegramId, opts = {}) {
         if (!token) {
           const bizCode = r.json && typeof r.json === 'object' ? r.json.code : undefined;
           const bizMsg = r.json && typeof r.json === 'object' ? r.json.message || r.json.msg : '';
-          console.warn('[tg/login] 未解析到 token', {
-            telegramId: id,
-            httpStatus: r.status,
-            bizCode,
-            bizMsg: String(bizMsg || '').slice(0, 200),
-            bodyPreview: (r.text || '').slice(0, 300),
-            hasHash: Boolean(hash),
-            env: config.MOZI_LOGIN_ENV || 'test',
-          });
           return '';
         }
         const ttl = extractTtlMs(r.json) ?? DEFAULT_TTL_MS;
@@ -238,7 +227,6 @@ async function ensureTgUserToken(config, telegramId, opts = {}) {
         setCachedToken(id, token, ttl, userId);
         return token;
       } catch (err) {
-        console.error('[tg/login]', err?.message || err);
         return '';
       } finally {
         inFlight.delete(id);

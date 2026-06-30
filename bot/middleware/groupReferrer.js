@@ -48,7 +48,6 @@ async function loadActiveGroupReferrer(config, chatId) {
     activeReferrerByChatId.set(key, { data, at: Date.now() });
     return data;
   } catch (err) {
-    console.warn('[groupReferrer middleware] GET 异常:', err?.message || err);
     return hit?.data?.inviteCode ? hit.data : null;
   }
 }

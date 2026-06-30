@@ -70,12 +70,10 @@ async function runNaturalLanguageQuery(ctx, config, { getTexts }, registeredGate
     await handleBotMentionRouted(ctx, config, getTexts, registeredGate, loginGate, query);
     botMentionLog('done', { query });
   } catch (err) {
-    console.error('[agent/mention]', err?.message || err);
     botMentionLog('fallback.chat', { query, reason: err?.message || String(err) });
     try {
       await dispatchMentionAsChat(ctx, config, getTexts, registeredGate, loginGate, query);
     } catch (err2) {
-      console.error('[agent/mention/chat-fallback]', err2?.message || err2);
       await ctx.reply(texts.agentRouteFailed, { parse_mode: 'HTML' }).catch(() => {});
     }
   }

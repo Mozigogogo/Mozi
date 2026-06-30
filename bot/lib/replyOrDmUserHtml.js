@@ -21,7 +21,6 @@ async function replyOrDmUserHtml(ctx, html, groupFallbackHtml, telegramExtra = {
     await ctx.telegram.sendMessage(uid, html, opts);
   } catch (err) {
     const desc = err?.response?.description || err?.message || '';
-    console.warn('[replyOrDmUserHtml] 私聊发送失败:', desc);
     await ctx.reply(groupFallbackHtml, { parse_mode: 'HTML' }).catch(() => {});
   }
 }

@@ -33,8 +33,8 @@ async function resolveChatAdder(config, chatId) {
     if (res.referrer?.adderTelegramId) {
       return { adderTelegramId: res.referrer.adderTelegramId };
     }
-  } catch (err) {
-    console.warn('[groupReferrer] GET group-referrer 异常:', err?.message || err);
+  } catch {
+    /* ignore */
   }
   const local = getRememberedChatPendingAdder(chatId);
   if (local?.adderTelegramId) {
@@ -59,7 +59,7 @@ function registerGroupReferrer(bot, config, { getTexts } = {}) {
     }
 
     try {
-      const res = await postGroupReferrerPending({
+      await postGroupReferrerPending({
         apiBaseUrl: API_BASE_URL,
         appUrl: APP_URL,
         auth: MOZI_DETAIL_AUTH,
@@ -68,13 +68,8 @@ function registerGroupReferrer(bot, config, { getTexts } = {}) {
         chatTitle: join.chatTitle,
         botUsername: BOT_USERNAME,
       });
-      if (!res.ok) {
-        console.warn(
-          `[groupReferrer] POST pending 失败 HTTP ${res.status}: ${(res.text || '').slice(0, 200)}`,
-        );
-      }
-    } catch (err) {
-      console.warn('[groupReferrer] POST pending 异常:', err?.message || err);
+    } catch {
+      /* ignore */
     }
 
     if (!join.likelyAnonymousAdder) {
@@ -83,7 +78,7 @@ function registerGroupReferrer(bot, config, { getTexts } = {}) {
       if (texts.bindRefHintAfterJoin) {
         await ctx
           .reply(texts.bindRefHintAfterJoin, { parse_mode: 'HTML' })
-          .catch((e) => console.warn('[groupReferrer] 入群提示发送失败:', e?.message || e));
+          .catch(() => {});
       }
     }
   });
@@ -129,7 +124,6 @@ function registerGroupReferrer(bot, config, { getTexts } = {}) {
         telegramId: binderId,
       });
     } catch (err) {
-      console.warn('[groupReferrer] queryInviteCode 异常:', err?.message || err);
       await ctx.reply(texts.bindRefQueryFailed || '查询邀请码失败，请稍后重试。', {
         parse_mode: 'HTML',
       });
@@ -160,7 +154,6 @@ function registerGroupReferrer(bot, config, { getTexts } = {}) {
         rawUrl,
       });
     } catch (err) {
-      console.warn('[groupReferrer] bind 异常:', err?.message || err);
       await ctx.reply(texts.bindRefBindFailed || '绑定群推广人失败，请稍后重试。', {
         parse_mode: 'HTML',
       });

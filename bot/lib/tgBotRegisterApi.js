@@ -106,7 +106,6 @@ async function performTelegramRegisterViaApi(config, ctx) {
       appUrl: config.APP_URL,
     });
   } catch (e) {
-    console.warn('[tgBotRegisterApi] registered/check:', e?.message || e);
     registerLog('结果', {
       ok: false,
       stage: 'registered/check',

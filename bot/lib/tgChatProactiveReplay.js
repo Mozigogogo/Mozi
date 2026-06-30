@@ -88,8 +88,7 @@ async function runTgChatProactiveReplay(bot, config, job) {
       { parse_mode: 'HTML' },
     );
   } catch (e) {
-    console.warn('[tgChatProactiveReplay] bindSuccessDm:', e?.message || e);
-  }
+    }
 
   const hint = isBigorder
     ? texts.tgChatReplayBigorderHtml
@@ -100,7 +99,6 @@ async function runTgChatProactiveReplay(bot, config, job) {
 
   const token = await ensureTgUserToken(config, job.telegramId, loginOpts);
   if (!token) {
-    console.warn('[tgChatProactiveReplay] 无用户 JWT，跳过重放', job.telegramId);
     return false;
   }
 
@@ -140,7 +138,6 @@ async function runTgChatProactiveReplay(bot, config, job) {
       timeoutMs: config.AI_CHAT_STREAM_TIMEOUT_MS,
     });
   } catch (err) {
-    console.error('[tgChatProactiveReplay] 流式请求失败:', err?.message || err);
     if (err?.userMessage) {
       await ctx.reply(escapeHtml(err.userMessage), { parse_mode: 'HTML' }).catch(() => {});
     } else {

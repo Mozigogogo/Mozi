@@ -108,17 +108,6 @@ async function runAgentStreamCommand(ctx, config, texts, query, options) {
     const aborted =
       err?.name === 'AbortError' ||
       /aborted|AbortError|signal is aborted/i.test(String(err?.message || ''));
-    console.error(`[${logTag}] 后端错误:`, {
-      message: err?.message || String(err),
-      name: err?.name || null,
-      likelyTimeout: aborted,
-      timeoutMs: config.AI_CHAT_STREAM_TIMEOUT_MS,
-      httpStatus: err?.status ?? null,
-      userMessage: err?.userMessage ?? null,
-      rawBody: err?.rawBody ?? null,
-      streamHint: err?.streamHint ?? null,
-      agentStreamUrl: config.AI_AGENT_STREAM_URL,
-    });
     if (err?.userMessage) {
       await ctx.reply(escapeHtml(err.userMessage), { parse_mode: 'HTML' });
       return false;

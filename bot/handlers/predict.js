@@ -45,7 +45,6 @@ function createPredictTextMiddleware(config, { getTexts }) {
         return;
       }
     } catch (err) {
-      console.error('[predict] text input:', err?.message || err);
       predictDebug('middleware.error', { uid: ctx.from?.id ?? null, message: err?.message || String(err) });
       await ctx.reply('处理失败，请稍后重试。').catch(() => {});
       return;

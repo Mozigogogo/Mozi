@@ -135,7 +135,6 @@ async function resolveAgentRouteDispatch(ctx, config, texts, rawQuery) {
     });
   } catch (err) {
     agentRouteLog('error', { message: err?.message || String(err), query });
-    console.warn('[agent/route] request failed:', err?.message || err);
     await ctx.reply(texts.agentRouteFailed, { parse_mode: 'HTML' }).catch(() => {});
     return null;
   }

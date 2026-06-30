@@ -489,12 +489,16 @@ async function bindCoinDirectionGuessMessage(ctx, config, { guessNo, tgMessageId
       errorMessage: result.errorMessage ?? null,
     });
     if (!result.ok) {
-      console.warn('[predict] coinDirectionGuess/bindMessage:', result.errorMessage || result.text?.slice(0, 200));
+      predictError('bind.api.response_fail', {
+        uid,
+        guessNo: guess,
+        tgMessageId: messageId,
+        errorMessage: result.errorMessage ?? null,
+      });
     }
     return result;
   } catch (err) {
     predictLog('bind.api.fail', { uid, guessNo: guess, tgMessageId: messageId, message: err?.message || String(err) });
-    console.warn('[predict] coinDirectionGuess/bindMessage:', err?.message || err);
     return {
       ok: false,
       status: 0,
@@ -967,8 +971,7 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol, options = {
         acceptLanguage,
         auth: config.MOZI_DETAIL_AUTH,
       });
-    } catch (err) {
-      console.error('[predict] search coin:', err?.message || err);
+    } catch {
       if (fromTextInput) {
         await ctx.reply(texts.predictNetworkError, { parse_mode: 'HTML' });
       } else {
@@ -1043,8 +1046,7 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol, options = {
       symbol: sym,
       acceptLanguage,
     });
-  } catch (err) {
-    console.error('[predict] fetch price:', err?.message || err);
+  } catch {
     await ctx.reply(texts.predictNetworkError, { parse_mode: 'HTML' });
     return;
   }

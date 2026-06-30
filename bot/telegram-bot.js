@@ -40,11 +40,8 @@ const { createResumePendingAiChatOnPrivate } = require('./middleware/resumePendi
 const { ensureBotInfo } = require('./lib/botMention');
 
 if (!config.BOT_TOKEN) {
-  console.error('❌ 错误: 请设置 BOT_TOKEN 环境变量');
   process.exit(1);
 }
-
-console.log('[bot] starting pid=%s', process.pid);
 
 const bot = new Telegraf(config.BOT_TOKEN);
 initTgChatRegisterWatcher(bot, config);
@@ -77,7 +74,6 @@ bot.catch((err, ctx) => {
   if (err?.response?.error_code === 409) {
     return;
   }
-  console.error('Bot 未捕获错误:', err?.response?.description || err?.message || err);
   return ctx.reply('处理失败，请稍后重试。').catch(() => {});
 });
 
@@ -92,8 +88,8 @@ async function sleep(ms) {
 async function startBot() {
   try {
     await bot.telegram.deleteWebhook({ drop_pending_updates: true });
-  } catch (err) {
-    console.warn('[bot] deleteWebhook:', err?.message || err);
+  } catch {
+    /* ignore */
   }
 
   let attempt = 0;
@@ -106,42 +102,21 @@ async function startBot() {
       const code = err?.response?.error_code;
       if (code === 409) {
         const waitSec = Math.min(30, 5 * attempt);
-        if (attempt === 1 || attempt % 6 === 0) {
-          console.log('[bot] waiting for polling slot (%ss)...', waitSec);
-        }
         await sleep(waitSec * 1000);
         continue;
       }
-      console.error('[bot] launch failed:', err?.response?.description || err?.message || err);
       process.exit(1);
     }
   }
 
   try {
-    const me = await ensureBotInfo(bot.telegram);
-    if (me?.username && config.BOT_USERNAME && me.username.toLowerCase() !== config.BOT_USERNAME.toLowerCase()) {
-      console.warn('[bot] BOT_USERNAME mismatch, using @%s', me.username);
-    }
-    const privacyOn = me?.can_read_all_group_messages === false;
-    const privacyLabel =
-      me?.can_read_all_group_messages == null
-        ? 'unknown'
-        : privacyOn
-          ? 'ENABLED (@群消息需BotFather关闭或设管理员)'
-          : 'DISABLED';
-    console.log(
-      '[bot] ready @%s mode=%s privacy=%s',
-      me?.username || config.BOT_USERNAME,
-      config.BOT_INPUT_MODE,
-      privacyLabel,
-    );
-  } catch (err) {
-    console.warn('[bot] getMe failed:', err?.message || err);
+    await ensureBotInfo(bot.telegram);
+  } catch {
+    /* ignore */
   }
 }
 
-startBot().catch((err) => {
-  console.error('[bot] fatal:', err?.message || err);
+startBot().catch(() => {
   process.exit(1);
 });
 

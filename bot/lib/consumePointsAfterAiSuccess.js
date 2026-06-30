@@ -42,7 +42,6 @@ async function consumePointsAfterAiSuccess(config, ctx, actionCode, reason = 'co
     });
     const token = await ensureTgUserToken(config, String(uid), loginOptsFromTgFrom(ctx.from));
     if (!token) {
-      console.warn('[points/consume] skip: empty user jwt', { actionCode, uid });
       apiDebug('points/consume:no-jwt', { actionCode, uid: String(uid) });
       clearUserRemainingPointsCache(String(uid));
       return { remainingPoints: null };
@@ -60,18 +59,12 @@ async function consumePointsAfterAiSuccess(config, ctx, actionCode, reason = 'co
       reason,
     });
     if (!r.ok) {
-      console.warn('[points/consume] HTTP', r.status, (r.text || '').slice(0, 300));
       apiDebug('points/consume:http-fail', { httpStatus: r.status, textHead: (r.text || '').slice(0, 200) });
       clearUserRemainingPointsCache(String(uid));
       return { remainingPoints: null };
     }
     const c = r.json?.code;
     if (c !== 0 && c !== 200) {
-      console.warn('[points/consume] business', {
-        code: c,
-        msg: r.json?.message || r.json?.errorMsg,
-        actionCode,
-      });
       apiDebug('points/consume:biz-fail', {
         code: c,
         msg: r.json?.message || r.json?.errorMsg,
@@ -93,7 +86,6 @@ async function consumePointsAfterAiSuccess(config, ctx, actionCode, reason = 'co
     }
     return { remainingPoints };
   } catch (e) {
-    console.warn('[points/consume] request failed', e?.message || e);
     apiDebug('points/consume:exception', { message: e?.message || String(e) });
     if (uid != null) clearUserRemainingPointsCache(String(uid));
     return { remainingPoints: null };

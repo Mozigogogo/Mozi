@@ -56,7 +56,6 @@ function createRequireMoziRegistered(config, { getTexts }) {
         appUrl: config.APP_URL,
       });
     } catch (e) {
-      console.warn('[requireMoziRegistered] POST /user/tg/registered/check:', e?.message || e);
       return next();
     }
 

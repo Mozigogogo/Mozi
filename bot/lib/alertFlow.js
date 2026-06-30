@@ -79,8 +79,6 @@ async function sendAlertCard(ctx, config, getTexts, symbol) {
     });
   } catch (err) {
     const reason = err?.response?.description || err?.message || String(err);
-    console.error('[alert] web_app 消息发送失败:', reason);
-
     try {
       await ctx.replyWithPhoto(ALERT_CARD_IMAGE, {
         caption,
@@ -88,7 +86,6 @@ async function sendAlertCard(ctx, config, getTexts, symbol) {
         reply_markup: keyboardTelegramMiniApp,
       });
     } catch (err2) {
-      console.error('[alert] 备用链接发送失败:', err2?.response?.description || err2?.message);
       const fallbackUrl = telegramMiniAppUrl || detailUrl;
       await ctx.reply(`${caption}\n\n${fallbackUrl}`, { parse_mode: 'HTML' });
     }

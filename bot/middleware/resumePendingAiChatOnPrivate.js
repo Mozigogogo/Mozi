@@ -45,8 +45,7 @@ function createResumePendingAiChatOnPrivate(config) {
 
     if (hasPendingWatchForUser(tid)) {
       await triggerPendingAiChatReplay(config, tid).catch((e) => {
-        console.warn('[resumePendingAiChatOnPrivate] trigger replay:', e?.message || e);
-      });
+        });
       return next();
     }
 
@@ -55,8 +54,7 @@ function createResumePendingAiChatOnPrivate(config) {
       await syncWatchFromRemote(config, tid).catch(() => {});
       if (hasPendingWatchForUser(tid)) {
         await triggerPendingAiChatReplay(config, tid).catch((e) => {
-          console.warn('[resumePendingAiChatOnPrivate] trigger replay after sync:', e?.message || e);
-        });
+          });
       }
     }
     return next();
