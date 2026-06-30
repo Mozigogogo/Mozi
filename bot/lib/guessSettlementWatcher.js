@@ -13,6 +13,8 @@ const {
   getCoinDirectionGuessDetail,
   parseGuessItemStats,
   parseGuessResult,
+  normalizeGuessStatus,
+  isGuessStatusLocked,
   isGuessListItemSettled,
 } = require('./apis');
 const {
@@ -28,6 +30,7 @@ const { getTexts } = require('../i18n');
 const {
   applyGuessSettlementToMessage,
   applyGuessActiveRefreshFromDetail,
+  applyGuessLockedRefreshFromDetail,
   sendGuessResultAnnouncement,
 } = require('./predictFlow');
 const { predictLog } = require('./predictDebug');
@@ -199,6 +202,31 @@ async function refreshOneGuess(ctx) {
       return;
     }
 
+    if (isGuessStatusLocked(item)) {
+      const ok = await applyGuessLockedRefreshFromDetail({
+        telegram: botRef.telegram,
+        chatId: ctx.chatId,
+        messageId: ctx.messageId,
+        hasPhoto: Boolean(ctx.hasPhoto),
+        meta: ctx,
+        item,
+        statsRaw,
+        texts,
+      });
+      const patch = { lastDetailPollAt: Date.now() };
+      if (item.endAt != null) patch.endAt = item.endAt;
+      patchGuessMessageContext(guessNo, patch);
+      predictLog('poll.refresh_locked', {
+        guessNo,
+        groupId,
+        ok,
+        status: item.status ?? null,
+        upCount: statsRaw?.upCount ?? null,
+        downCount: statsRaw?.downCount ?? null,
+      });
+      return;
+    }
+
     const ok = await applyGuessActiveRefreshFromDetail({
       telegram: botRef.telegram,
       chatId: ctx.chatId,
@@ -259,10 +287,16 @@ async function announceOneGuess(ctx) {
     }
 
     const item = detailRes.item;
-    const status = String(item.status ?? '').trim().toLowerCase();
+    const status = normalizeGuessStatus(item.status);
 
     if (status === 'active') {
       predictLog('announce.still_active', { guessNo, groupChatId, status });
+      touchDeadlinePoll(guessNo);
+      return;
+    }
+
+    if (status === 'locked') {
+      predictLog('announce.still_locked', { guessNo, groupChatId, status });
       touchDeadlinePoll(guessNo);
       return;
     }

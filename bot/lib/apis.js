@@ -2610,6 +2610,46 @@ function parseGuessBetStats(json) {
 }
 
 /**
+ * @param {string | null | undefined} status
+ * @returns {'active' | 'locked' | 'settled' | string}
+ */
+function normalizeGuessStatus(status) {
+  const s = String(status ?? '').trim().toLowerCase();
+  if (s === 'active') return 'active';
+  if (s === 'locked') return 'locked';
+  if (s === 'settled' || s === 'closed' || s === 'finished') return 'settled';
+  return s || 'unknown';
+}
+
+/**
+ * @param {object | string | null | undefined} itemOrStatus
+ * @returns {boolean}
+ */
+function isGuessStatusActive(itemOrStatus) {
+  const status =
+    itemOrStatus && typeof itemOrStatus === 'object' ? itemOrStatus.status : itemOrStatus;
+  return normalizeGuessStatus(status) === 'active';
+}
+
+/**
+ * @param {object | string | null | undefined} itemOrStatus
+ * @returns {boolean}
+ */
+function isGuessStatusLocked(itemOrStatus) {
+  const status =
+    itemOrStatus && typeof itemOrStatus === 'object' ? itemOrStatus.status : itemOrStatus;
+  return normalizeGuessStatus(status) === 'locked';
+}
+
+/**
+ * @param {object | null | undefined} item
+ * @returns {boolean}
+ */
+function isGuessBettingAllowed(item) {
+  return isGuessStatusActive(item);
+}
+
+/**
  * @param {object | null | undefined} item
  * @returns {'UP' | 'DOWN' | null}
  */
@@ -2627,8 +2667,9 @@ function parseGuessResult(item) {
  */
 function isGuessListItemSettled(item) {
   if (!item || typeof item !== 'object') return false;
-  const status = String(item.status ?? '').trim().toLowerCase();
-  if (status === 'settled' || status === 'closed' || status === 'finished') return true;
+  const status = normalizeGuessStatus(item.status);
+  if (status === 'settled') return true;
+  if (status === 'active' || status === 'locked') return false;
   return parseGuessResult(item) != null;
 }
 
@@ -2662,6 +2703,10 @@ module.exports = {
   parseGuessBetStats,
   parseGuessItemStats,
   parseGuessResult,
+  normalizeGuessStatus,
+  isGuessStatusActive,
+  isGuessStatusLocked,
+  isGuessBettingAllowed,
   isGuessListItemSettled,
   parseGuessVotes,
   parseGuessVoteItem,

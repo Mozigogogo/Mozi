@@ -2,7 +2,25 @@
  * /predict 多步 UI：选币 → 确认文案 → 发布投票
  */
 
-const { fetchDetailHeader, fetchSearchLastPriceChange, postCoinDirectionGuessPublish, postCoinDirectionGuessBindMessage, postCoinDirectionGuessBet, getCoinDirectionGuessList, parseCoinDirectionGuessNo, parseCoinDirectionGuessPublishData, parseGuessBetStats, parseGuessItemStats } = require('./apis');
+const {
+  fetchDetailHeader,
+  fetchSearchLastPriceChange,
+  postCoinDirectionGuessPublish,
+  postCoinDirectionGuessBindMessage,
+  postCoinDirectionGuessBet,
+  getCoinDirectionGuessList,
+  getCoinDirectionGuessDetail,
+  parseCoinDirectionGuessNo,
+  parseCoinDirectionGuessPublishData,
+  parseGuessBetStats,
+  parseGuessItemStats,
+  parseGuessResult,
+  normalizeGuessStatus,
+  isGuessStatusActive,
+  isGuessStatusLocked,
+  isGuessBettingAllowed,
+  isGuessListItemSettled,
+} = require('./apis');
 const { SYMBOL_WHITELIST } = require('./symbolIntent');
 const { escapeHtml } = require('./telegramHtml');
 const { buildPredictPrivateUrl } = require('./predictSymbol');
@@ -22,7 +40,14 @@ const {
   clearGuessBetCustomSession,
   patchGuessBetCustomSession,
 } = require('./guessBetSession');
-const { saveGuessMessageContext, getGuessMessageContext, patchGuessMessageContext, getGuessEndAt, enableGuessHourlyPoll } = require('./guessMessageContext');
+const {
+  saveGuessMessageContext,
+  getGuessMessageContext,
+  patchGuessMessageContext,
+  getGuessEndAt,
+  enableGuessHourlyPoll,
+  markGuessSettled,
+} = require('./guessMessageContext');
 
 const QUICK_SYMBOLS = ['BTC', 'ETH', 'SOL'];
 const DEFAULT_HOURS = 24;
@@ -58,6 +83,42 @@ function formatEndAtDisplay(endAt, languageCode, referenceMs = Date.now()) {
   }
   const hours = Math.max(1, Math.ceil(diffMs / 3600000));
   return isZh ? `${hours}小时后` : `in ${hours} hour${hours === 1 ? '' : 's'}`;
+}
+
+/** 相对倒计时：X小时Y分后 */
+function formatRelativeCountdown(endAt, languageCode, referenceMs = Date.now(), expiredLabel) {
+  const ms = parseEndAtMs(endAt);
+  if (ms == null) return '—';
+  const isZh = String(languageCode || '').toLowerCase().startsWith('zh');
+  const ref = Number(referenceMs);
+  const diffMs = ms - (Number.isFinite(ref) ? ref : Date.now());
+  if (diffMs <= 0) {
+    if (expiredLabel != null) return expiredLabel;
+    return isZh ? '已截止' : 'Closed';
+  }
+  const totalMinutes = Math.ceil(diffMs / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (isZh) {
+    if (hours > 0 && minutes > 0) return `${hours}小时${minutes}分后`;
+    if (hours > 0) return `${hours}小时后`;
+    return `${Math.max(1, minutes)}分后`;
+  }
+  if (hours > 0 && minutes > 0) return `in ${hours}h ${minutes}m`;
+  if (hours > 0) return `in ${hours} hour${hours === 1 ? '' : 's'}`;
+  return `in ${Math.max(1, minutes)} min`;
+}
+
+/** 下注期倒计时：X小时Y分后 */
+function formatBetDeadlineDisplay(endAt, languageCode, referenceMs = Date.now()) {
+  const isZh = String(languageCode || '').toLowerCase().startsWith('zh');
+  return formatRelativeCountdown(endAt, languageCode, referenceMs, isZh ? '已截止' : 'Closed');
+}
+
+/** 锁定中等待结算倒计时 */
+function formatSettlementWaitDisplay(endAt, languageCode, referenceMs = Date.now()) {
+  const isZh = String(languageCode || '').toLowerCase().startsWith('zh');
+  return formatRelativeCountdown(endAt, languageCode, referenceMs, isZh ? '即将结算' : 'Settling soon');
 }
 
 function formatLockedAtDisplay(ms, languageCode) {
@@ -98,13 +159,9 @@ function resolveMaxActiveGuessesPerGroup(config) {
   return Math.max(1, Math.floor(Number(config?.COIN_DIRECTION_GUESS_MAX_ACTIVE_PER_GROUP) || 3));
 }
 
-function isGuessStatusActive(status) {
-  return String(status || '').trim().toLowerCase() === 'active';
-}
-
 function countActiveGuesses(items) {
   if (!Array.isArray(items)) return 0;
-  return items.filter((item) => isGuessStatusActive(item?.status)).length;
+  return items.filter((item) => isGuessStatusActive(item)).length;
 }
 
 async function fetchActiveGuessCountForGroup(config, groupId) {
@@ -130,24 +187,12 @@ function normalizeGuessBetStats(raw, languageCode) {
   const downCount = raw?.downCount ?? 0;
   const upPoints = raw?.upPoints ?? 0;
   const downPoints = raw?.downPoints ?? 0;
-  let upPercent = raw?.upPercent;
-  let downPercent = raw?.downPercent;
-  const totalPts = upPoints + downPoints;
-  if (upPercent == null && downPercent == null && totalPts > 0) {
-    upPercent = Math.round((upPoints / totalPts) * 100);
+  const totalVoters = upCount + downCount;
+  let upPercent = 0;
+  let downPercent = 0;
+  if (totalVoters > 0) {
+    upPercent = Math.round((upCount / totalVoters) * 100);
     downPercent = 100 - upPercent;
-  } else if (upPercent == null && downPercent == null) {
-    const total = upCount + downCount;
-    if (total > 0) {
-      upPercent = Math.round((upCount / total) * 100);
-      downPercent = 100 - upPercent;
-    } else {
-      upPercent = 0;
-      downPercent = 0;
-    }
-  } else {
-    upPercent = upPercent ?? 0;
-    downPercent = downPercent ?? (upPercent != null ? 100 - upPercent : 0);
   }
   return {
     upCount,
@@ -177,15 +222,39 @@ function formatPublisherLabel(publishData, ctx) {
 function buildGroupPublishHtml(texts, meta, statsRaw) {
   const stats = normalizeGuessBetStats(statsRaw, meta.languageCode);
   const lockedAt = formatLockedAtDisplay(meta.lockedAtMs, meta.languageCode);
-  const endAt =
-    meta.endAt != null ? formatEndAtDisplay(meta.endAt, meta.languageCode) : '—';
+  const betDeadline =
+    meta.endAt != null ? formatBetDeadlineDisplay(meta.endAt, meta.languageCode) : '—';
   return texts.predictGroupPublishBody(
     escapeHtml(meta.sym),
     meta.hours,
     escapeHtml(meta.price),
     lockedAt,
     stats,
-    endAt,
+    betDeadline,
+    meta.publisher,
+  );
+}
+
+function buildGroupLockedHtml(texts, meta, statsRaw) {
+  const stats = normalizeGuessBetStats(statsRaw, meta.languageCode);
+  const upPoints = Number(statsRaw?.upPoints) || 0;
+  const downPoints = Number(statsRaw?.downPoints) || 0;
+  const prizePool = formatPointsDisplay(upPoints + downPoints, meta.languageCode);
+  const settlementWait =
+    meta.endAt != null ? formatSettlementWaitDisplay(meta.endAt, meta.languageCode) : '—';
+  const oddsLine = texts.predictLockedOddsLine(
+    stats.upPercent,
+    stats.upCount,
+    stats.downPercent,
+    stats.downCount,
+  );
+  return texts.predictGroupLockedBody(
+    escapeHtml(meta.sym),
+    meta.hours,
+    escapeHtml(meta.price),
+    oddsLine,
+    prizePool,
+    settlementWait,
     meta.publisher,
   );
 }
@@ -199,51 +268,79 @@ function formatEndPriceDisplay(endPrice) {
   })}`;
 }
 
-function buildGroupSettledHtml(texts, meta, statsRaw, item, result, votes) {
-  const stats = normalizeGuessBetStats(statsRaw, meta.languageCode);
-  const lockedAt = formatLockedAtDisplay(meta.lockedAtMs, meta.languageCode);
-  const endAtRaw = meta.endAt ?? item?.endAt;
-  const endAt =
-    endAtRaw != null
-      ? formatEndAtDisplay(endAtRaw, meta.languageCode, meta.lockedAtMs)
-      : '—';
-  const endPrice = formatEndPriceDisplay(item?.endPrice);
-  const resultLine =
-    result === 'UP' ? texts.predictSettledResultUp : texts.predictSettledResultDown;
-  const votesSection = formatSettledVotesSummary(texts, votes, result, meta.languageCode);
-  return texts.predictGroupSettledBody(
-    escapeHtml(meta.sym),
-    escapeHtml(meta.price),
-    escapeHtml(endPrice),
-    lockedAt,
-    stats,
-    endAt,
-    resultLine,
-    votesSection,
-    meta.publisher,
-  );
+function resolveGuessStartPriceNumber(item, meta) {
+  const fromItem = Number(item?.startPrice);
+  if (Number.isFinite(fromItem)) return fromItem;
+  const fromMeta = Number(String(meta?.price || '').replace(/[$,\s]/g, ''));
+  if (Number.isFinite(fromMeta)) return fromMeta;
+  return null;
 }
 
-function formatSettledVotesSummary(texts, votes, result, languageCode) {
+function formatPriceChangePercent(startPrice, endPrice) {
+  if (!Number.isFinite(startPrice) || startPrice === 0 || !Number.isFinite(endPrice)) return null;
+  const pct = ((endPrice - startPrice) / startPrice) * 100;
+  const sign = pct >= 0 ? '+' : '';
+  return `${sign}${pct.toFixed(2)}%`;
+}
+
+function formatSettledVoteNick(vote) {
+  const nick = String(vote?.nickName || '').trim();
+  if (nick) {
+    const safe = escapeHtml(nick.replace(/^@+/, ''));
+    return `@${safe}`;
+  }
+  const uid = String(vote?.userId || '').trim();
+  if (uid) return `@${escapeHtml(uid.slice(0, 8))}`;
+  return '—';
+}
+
+function formatSettledTopWinners(texts, votes, result, languageCode) {
   if (!Array.isArray(votes) || !votes.length) return '';
   const winChoice = result === 'UP' ? 1 : 2;
   const winners = votes
     .filter((v) => v.choice === winChoice && v.payout != null && v.payout > 0)
-    .sort((a, b) => b.payout - a.payout);
+    .sort((a, b) => b.payout - a.payout)
+    .slice(0, 3);
   if (!winners.length) return '';
 
-  const isZh = String(languageCode || '').toLowerCase().startsWith('zh');
-  const max = 8;
-  const parts = winners.slice(0, max).map((v) => {
-    const nick = escapeHtml(v.nickName || v.userId.slice(0, 8) || '—');
-    const pts = formatPointsDisplay(v.payout, languageCode);
-    return texts.predictSettledVoteWinner(nick, pts);
+  const lines = winners.map((v) => {
+    const betAmount = Math.max(0, Math.floor(Number(v.betAmount) || 0));
+    const payout = Math.max(0, Math.floor(Number(v.payout) || 0));
+    const profitPct =
+      betAmount > 0 ? Math.round(((payout - betAmount) / betAmount) * 100) : 0;
+    return texts.predictSettledTopWinnerLine(
+      formatSettledVoteNick(v),
+      formatPointsDisplay(betAmount, languageCode),
+      formatPointsDisplay(payout, languageCode),
+      profitPct,
+    );
   });
-  let line = parts.join(' · ');
-  if (winners.length > max) {
-    line += isZh ? ` …等${winners.length}人` : ` …+${winners.length - max} more`;
-  }
-  return texts.predictSettledWinnersSection(line);
+  return texts.predictSettledTopWinnersSection(lines.join('\n'));
+}
+
+function buildGroupSettledHtml(texts, meta, statsRaw, item, result, votes) {
+  const startPriceNum = resolveGuessStartPriceNumber(item, meta);
+  const endPriceNum = Number(item?.endPrice);
+  const startPrice = formatEndPriceDisplay(startPriceNum);
+  const endPrice = formatEndPriceDisplay(endPriceNum);
+  const changePct = formatPriceChangePercent(startPriceNum, endPriceNum);
+  const priceLine = texts.predictSettledPriceLine(
+    escapeHtml(startPrice),
+    escapeHtml(endPrice),
+    changePct != null ? changePct : '—',
+  );
+  const winnerLine = result === 'UP' ? texts.predictSettledWinnerUp : texts.predictSettledWinnerDown;
+  const upPoints = Number(statsRaw?.upPoints) || 0;
+  const downPoints = Number(statsRaw?.downPoints) || 0;
+  const prizePool = formatPointsDisplay(upPoints + downPoints, meta.languageCode);
+  const topWinnersSection = formatSettledTopWinners(texts, votes, result, meta.languageCode);
+  return texts.predictGroupSettledBody(
+    escapeHtml(meta.sym),
+    priceLine,
+    winnerLine,
+    prizePool,
+    topWinnersSection,
+  );
 }
 
 async function editTelegramGuessMessage(telegram, chatId, messageId, html, keyboard, hasPhoto) {
@@ -319,6 +416,27 @@ async function sendGuessResultAnnouncement({
 }
 
 /**
+ * 锁定中：按 detail 刷新群内竞猜消息（统计 + 结束时间，移除下注按钮）
+ */
+async function applyGuessLockedRefreshFromDetail({
+  telegram,
+  chatId,
+  messageId,
+  hasPhoto,
+  meta,
+  item,
+  statsRaw,
+  texts,
+}) {
+  const merged = {
+    ...meta,
+    ...(item ? buildMetaFromGuessItem(item, meta.languageCode, meta.publisher) : {}),
+  };
+  const html = buildGroupLockedHtml(texts, merged, statsRaw);
+  return editTelegramGuessMessage(telegram, chatId, messageId, html, { inline_keyboard: [] }, hasPhoto);
+}
+
+/**
  * 进行中：按 detail 刷新群内竞猜消息（统计 + 结束时间，保留下注按钮）
  */
 async function applyGuessActiveRefreshFromDetail({
@@ -332,6 +450,18 @@ async function applyGuessActiveRefreshFromDetail({
   texts,
   guessNo,
 }) {
+  if (item && isGuessStatusLocked(item)) {
+    return applyGuessLockedRefreshFromDetail({
+      telegram,
+      chatId,
+      messageId,
+      hasPhoto,
+      meta,
+      item,
+      statsRaw,
+      texts,
+    });
+  }
   const merged = {
     ...meta,
     ...(item ? buildMetaFromGuessItem(item, meta.languageCode, meta.publisher) : {}),
@@ -1409,6 +1539,42 @@ async function resolveGuessEndAtMs(config, guessNo, groupId) {
   }
 }
 
+/**
+ * @returns {Promise<boolean | null>} false=blocked, true=allowed, null=detail unavailable
+ */
+async function checkGuessBettingAllowed(ctx, config, guess, texts) {
+  if (!config) return null;
+  try {
+    const detailRes = await getCoinDirectionGuessDetail({
+      apiBaseUrl: config.API_BASE_URL,
+      appUrl: config.APP_URL,
+      guessNo: guess,
+      path: config.COIN_DIRECTION_GUESS_DETAIL_PATH,
+    });
+    if (!detailRes.ok || !detailRes.item) return null;
+    const item = detailRes.item;
+    if (isGuessListItemSettled(item)) {
+      await answerPredictCbQuery(ctx, texts.predictBetDeadlinePassed, { show_alert: true });
+      return false;
+    }
+    if (isGuessStatusLocked(item)) {
+      await answerPredictCbQuery(ctx, texts.predictBetLocked, { show_alert: true });
+      return false;
+    }
+    if (!isGuessBettingAllowed(item)) {
+      await answerPredictCbQuery(ctx, texts.predictBetDeadlinePassed, { show_alert: true });
+      return false;
+    }
+    return true;
+  } catch (err) {
+    predictLog('bet.status_check_fail', {
+      guessNo: guess,
+      message: err?.message || String(err),
+    });
+    return null;
+  }
+}
+
 async function tryRefreshGuessMessage(ctx, config, texts, guessNo, betResult) {
   const msg = ctx.callbackQuery?.message;
   if (!msg || !('message_id' in msg)) return;
@@ -1416,44 +1582,87 @@ async function tryRefreshGuessMessage(ctx, config, texts, guessNo, betResult) {
   const guess = String(guessNo || '').trim();
   let meta = getGuessMessageContext(guess);
   let statsRaw = parseGuessBetStats(betResult?.json);
-  let listItem = null;
+  let detailItem = null;
+  let detailVotes = [];
+  let fallbackItem = null;
 
-  if (config && msg.chat?.id != null) {
+  if (config) {
     try {
-      const needList = !statsRaw || !meta;
-      if (needList) {
-        const listRes = await getCoinDirectionGuessList({
-          apiBaseUrl: config.API_BASE_URL,
-          appUrl: config.APP_URL,
-          groupId: msg.chat.id,
-          path: config.COIN_DIRECTION_GUESS_LIST_PATH,
+      const detailRes = await getCoinDirectionGuessDetail({
+        apiBaseUrl: config.API_BASE_URL,
+        appUrl: config.APP_URL,
+        guessNo: guess,
+        path: config.COIN_DIRECTION_GUESS_DETAIL_PATH,
+      });
+      if (detailRes.ok && detailRes.item) {
+        detailItem = detailRes.item;
+        detailVotes = detailRes.votes || [];
+        statsRaw = parseGuessItemStats(detailItem) || statsRaw;
+        const publisher = meta?.publisher || '—';
+        const rebuilt = buildMetaFromGuessItem(
+          detailItem,
+          meta?.languageCode || 'zh',
+          publisher,
+        );
+        saveGuessMessageContext(guess, {
+          ...rebuilt,
+          chatId: msg.chat?.id ?? null,
+          messageId: msg.message_id,
+          publisher,
         });
-        if (listRes.ok) {
-          listItem = listRes.items.find((i) => String(i.guessNo || '').trim() === guess) || null;
-          if (listItem) {
-            if (!statsRaw) statsRaw = parseGuessItemStats(listItem);
-            const publisher = meta?.publisher || '—';
-            const rebuilt = buildMetaFromGuessItem(listItem, meta?.languageCode || 'zh', publisher);
-            saveGuessMessageContext(guess, {
-              ...rebuilt,
-              chatId: msg.chat.id,
-              messageId: msg.message_id,
-            });
-            meta = getGuessMessageContext(guess);
-          }
-        }
+        meta = getGuessMessageContext(guess);
       }
     } catch (err) {
-      predictLog('bet.refresh_list_fail', {
+      predictLog('bet.refresh_detail_fail', {
         guessNo: guess,
         message: err?.message || String(err),
       });
     }
+
+    if (!detailItem && msg.chat?.id != null) {
+      try {
+        const needList = !statsRaw || !meta;
+        if (needList) {
+          const listRes = await getCoinDirectionGuessList({
+            apiBaseUrl: config.API_BASE_URL,
+            appUrl: config.APP_URL,
+            groupId: msg.chat.id,
+            path: config.COIN_DIRECTION_GUESS_LIST_PATH,
+          });
+          if (listRes.ok) {
+            fallbackItem =
+              listRes.items.find((i) => String(i.guessNo || '').trim() === guess) || null;
+            if (fallbackItem) {
+              if (!statsRaw) statsRaw = parseGuessItemStats(fallbackItem);
+              const publisher = meta?.publisher || '—';
+              const rebuilt = buildMetaFromGuessItem(
+                fallbackItem,
+                meta?.languageCode || 'zh',
+                publisher,
+              );
+              saveGuessMessageContext(guess, {
+                ...rebuilt,
+                chatId: msg.chat.id,
+                messageId: msg.message_id,
+                publisher,
+              });
+              meta = getGuessMessageContext(guess);
+            }
+          }
+        }
+      } catch (err) {
+        predictLog('bet.refresh_list_fail', {
+          guessNo: guess,
+          message: err?.message || String(err),
+        });
+      }
+    }
   }
 
-  if (listItem?.endAt != null) {
-    patchGuessMessageContext(guess, { endAt: listItem.endAt });
-    if (meta) meta = { ...meta, endAt: listItem.endAt };
+  const endAtSource = detailItem ?? fallbackItem;
+  if (endAtSource?.endAt != null) {
+    patchGuessMessageContext(guess, { endAt: endAtSource.endAt });
+    if (meta) meta = { ...meta, endAt: endAtSource.endAt };
   } else if (betResult?.json?.data?.endAt != null) {
     patchGuessMessageContext(guess, { endAt: betResult.json.data.endAt });
     if (meta) meta = { ...meta, endAt: betResult.json.data.endAt };
@@ -1464,13 +1673,60 @@ async function tryRefreshGuessMessage(ctx, config, texts, guessNo, betResult) {
     return;
   }
 
+  const hasPhoto = Boolean(msg.photo && msg.photo.length > 0);
+  const chatId = msg.chat?.id;
+  const messageId = msg.message_id;
+
+  if (detailItem && isGuessListItemSettled(detailItem)) {
+    const result = parseGuessResult(detailItem);
+    if (result) {
+      const html = buildGroupSettledHtml(texts, meta, statsRaw, detailItem, result, detailVotes);
+      const ok = await editGuessMessageContent(
+        ctx,
+        chatId,
+        messageId,
+        html,
+        { inline_keyboard: [] },
+        hasPhoto,
+      );
+      markGuessSettled(guess, result);
+      predictLog('bet.refresh_settled', {
+        guessNo: guess,
+        ok,
+        result,
+        endPrice: detailItem.endPrice ?? null,
+        voteCount: detailVotes.length,
+      });
+      return;
+    }
+  }
+
+  const statusItem = detailItem ?? fallbackItem;
+  if (statusItem && isGuessStatusLocked(statusItem)) {
+    const html = buildGroupLockedHtml(texts, meta, statsRaw);
+    const ok = await editGuessMessageContent(
+      ctx,
+      chatId,
+      messageId,
+      html,
+      { inline_keyboard: [] },
+      hasPhoto,
+    );
+    predictLog('bet.refresh_locked', {
+      guessNo: guess,
+      ok,
+      status: statusItem.status ?? null,
+    });
+    return;
+  }
+
   const html = buildGroupPublishHtml(texts, meta, statsRaw);
   const keyboard = buildGuessBetKeyboard(texts, guess);
-  const hasPhoto = Boolean(msg.photo && msg.photo.length > 0);
-  const ok = await editGuessMessageContent(ctx, msg.chat?.id, msg.message_id, html, keyboard, hasPhoto);
+  const ok = await editGuessMessageContent(ctx, chatId, messageId, html, keyboard, hasPhoto);
   predictLog('bet.refresh', {
     guessNo: guess,
     ok,
+    source: detailItem ? 'detail' : fallbackItem ? 'list' : 'bet',
     endAt: meta.endAt ?? null,
     upCount: statsRaw?.upCount ?? null,
     downCount: statsRaw?.downCount ?? null,
@@ -1509,10 +1765,14 @@ async function submitGuessBet(ctx, config, getTexts, guessNo, direction, betAmou
   }
 
   const groupId = ctx.callbackQuery?.message?.chat?.id ?? null;
-  const endMs = await resolveGuessEndAtMs(config, guess, groupId);
-  if (endMs != null && Date.now() > endMs) {
-    await answerPredictCbQuery(ctx, texts.predictBetDeadlinePassed, { show_alert: true });
-    return false;
+  const statusCheck = await checkGuessBettingAllowed(ctx, config, guess, texts);
+  if (statusCheck === false) return false;
+  if (statusCheck !== true) {
+    const endMs = await resolveGuessEndAtMs(config, guess, groupId);
+    if (endMs != null && Date.now() > endMs) {
+      await answerPredictCbQuery(ctx, texts.predictBetDeadlinePassed, { show_alert: true });
+      return false;
+    }
   }
 
   predictLog('bet.attempt', { telegramId: uid, guessNo: guess, choice, betAmount: pts });
@@ -1922,8 +2182,9 @@ async function handlePredictTextInput(ctx, config, getTexts) {
 }
 
 function formatGuessListStatus(texts, status) {
-  const s = String(status || '').trim().toLowerCase();
+  const s = normalizeGuessStatus(status);
   if (s === 'active') return texts.predictListStatusActive;
+  if (s === 'locked') return texts.predictListStatusLocked;
   if (s === 'settled') return texts.predictListStatusSettled;
   return escapeHtml(status || '—');
 }
@@ -1953,9 +2214,11 @@ function buildGuessListHtml(texts, items, languageCode) {
     const bearishPool = formatGuessListPoints(item.bearishPool, languageCode);
     const bullishCount = Number(item.bullishCount) || 0;
     const bearishCount = Number(item.bearishCount) || 0;
-    const statusKey = String(item.status || '').trim().toLowerCase();
+    const statusKey = normalizeGuessStatus(item.status);
     const refMs =
-      statusKey === 'settled' ? parseEndAtMs(item.startAt) ?? Date.now() : Date.now();
+      statusKey === 'settled' || statusKey === 'locked'
+        ? parseEndAtMs(item.startAt) ?? Date.now()
+        : Date.now();
     const endAt = escapeHtml(formatEndAtDisplay(item.endAt, languageCode, refMs));
     const resultLine = formatGuessListResultLine(texts, item.result);
     lines.push(
@@ -2093,5 +2356,6 @@ module.exports = {
   QUICK_SYMBOLS,
   applyGuessSettlementToMessage,
   applyGuessActiveRefreshFromDetail,
+  applyGuessLockedRefreshFromDetail,
   sendGuessResultAnnouncement,
 };

@@ -104,14 +104,23 @@ const i18n = {
     predictNetworkError: '获取价格失败（网络异常），请稍后再试。',
     predictConfirmBody: (sym, hours, price) =>
       `${sym} 接下来 ${hours} 小时会涨还是跌？\n当前价：${price}（创建时锁定）`,
-    predictGroupPublishBody: (sym, hours, price, lockedAt, stats, endAt, publisher) =>
-      `🎯 竞猜 · ${sym}\n接下来 ${hours} 小时会涨还是跌？\n起始价：${price}（发布时间 ${lockedAt}）\n📊 看涨 ${stats.upPercent}%（${stats.upCount}人·${stats.upPoints}积分）\n📊 看跌 ${stats.downPercent}%（${stats.downCount}人·${stats.downPoints}积分）\n⏳ 结束时间：${endAt}\n由 ${publisher} 发起`,
-    predictGroupSettledBody: (sym, price, endPrice, lockedAt, stats, endAt, resultLine, votesSection, publisher) =>
-      `🎯 竞猜 · ${sym}（已结算）\n起始价：${price}（发布时间 ${lockedAt}）\n结算价：${endPrice}\n📊 看涨 ${stats.upPercent}%（${stats.upCount}人·${stats.upPoints}积分）\n📊 看跌 ${stats.downPercent}%（${stats.downCount}人·${stats.downPoints}积分）\n⏳ 结束时间：${endAt}\n${resultLine}${votesSection}\n由 ${publisher} 发起`,
+    predictGroupPublishBody: (sym, hours, price, lockedAt, stats, betDeadline, publisher) =>
+      `🎯 竞猜 · ${sym}\n接下来 ${hours} 小时会涨还是跌？\n起始价：${price}（发布时间 ${lockedAt}）\n📊 看涨 ${stats.upPercent}%（${stats.upCount}人·${stats.upPoints}积分）\n📊 看跌 ${stats.downPercent}%（${stats.downCount}人·${stats.downPoints}积分）\n⏳ 下注截止：${betDeadline}\n由 ${publisher} 发起`,
+    predictGroupLockedBody: (sym, hours, price, oddsLine, prizePool, settlementWait, publisher) =>
+      `🎯 竞猜 · ${sym}（下注已截止）\n接下来 ${hours} 小时会涨还是跌？\n起始价：${price}\n${oddsLine}\n💰 奖池：${prizePool} 积分\n⏳ 等待结算：${settlementWait}\n由 ${publisher} 发起`,
+    predictLockedOddsLine: (upPercent, upCount, downPercent, downCount) =>
+      `📊 最终赔率：看涨 ${upPercent}%（${upCount}人）· 看跌 ${downPercent}%（${downCount}人）`,
+    predictGroupSettledBody: (sym, priceLine, winnerLine, prizePool, topWinnersSection) =>
+      `🎉 竞猜结果 · ${sym}\n${priceLine}\n${winnerLine}\n💰 奖池 ${prizePool} 积分${topWinnersSection}`,
+    predictSettledPriceLine: (startPrice, endPrice, changePct) =>
+      `起始价 ${startPrice} → 结算价 ${endPrice} (${changePct})`,
+    predictSettledWinnerUp: '📈 看涨方获胜！',
+    predictSettledWinnerDown: '📉 看跌方获胜！',
+    predictSettledTopWinnersSection: (lines) => `\n🏆 中奖战绩 Top3:\n${lines}`,
+    predictSettledTopWinnerLine: (nick, betAmount, payout, profitPct) =>
+      `${nick} 下注${betAmount} → 赢得 ${payout} (+${profitPct}%)`,
     predictSettledResultUp: '✅ 结果：涨',
     predictSettledResultDown: '✅ 结果：跌',
-    predictSettledWinnersSection: (lines) => `\n🏆 获奖：${lines}`,
-    predictSettledVoteWinner: (nick, payout) => `${nick} +${payout}`,
     predictBetUp50Btn: '看涨 +50',
     predictBetUp100Btn: '看涨 +100',
     predictBetUpCustomBtn: '自定义',
@@ -129,6 +138,7 @@ const i18n = {
     predictBetMinAmountToast: (min) => `下注积分不能低于 ${min}`,
     predictBetMaxAmountToast: (max) => `下注积分不能超过 ${max}`,
     predictBetDeadlinePassed: '下注已截止',
+    predictBetLocked: '竞猜已锁定，无法下注',
     predictBetUserResolveFailed: '无法获取用户信息，请先登录 Mozi',
     agentRouteNeedQuestion: '请在 @ 我之后输入问题，例如：<code>@MoziBot BTC 后市如何</code>',
     agentRouteFailed: '意图识别失败，请稍后再试。',
@@ -159,6 +169,7 @@ const i18n = {
     predictListEmpty: '📭 本群暂无竞猜记录。',
     predictListFailed: '获取竞猜列表失败，请稍后再试。',
     predictListStatusActive: '进行中',
+    predictListStatusLocked: '下注已截止',
     predictListStatusSettled: '已结算',
     predictListItemLine: (sym, status, bullishPool, bullishCount, bearishPool, bearishCount, endAt, resultLine) =>
       `<b>${sym}</b> · ${status}\n📈 ${bullishPool} 积分（${bullishCount}人） · 📉 ${bearishPool} 积分（${bearishCount}人）\n⏳ 结束时间：${endAt}${resultLine}`,
@@ -378,14 +389,23 @@ const i18n = {
     predictNetworkError: 'Failed to fetch price (network). Please try again later.',
     predictConfirmBody: (sym, hours, price) =>
       `Will ${sym} go up or down in the next ${hours} hours?\nCurrent price: ${price} (locked at creation)`,
-    predictGroupPublishBody: (sym, hours, price, lockedAt, stats, endAt, publisher) =>
-      `🎯 Guess · ${sym}\nUp or down in the next ${hours} hours?\nStart price: ${price} (published at ${lockedAt})\n📊 Bullish ${stats.upPercent}% (${stats.upCount} · ${stats.upPoints} pts)\n📊 Bearish ${stats.downPercent}% (${stats.downCount} · ${stats.downPoints} pts)\n⏳ End time: ${endAt}\nStarted by ${publisher}`,
-    predictGroupSettledBody: (sym, price, endPrice, lockedAt, stats, endAt, resultLine, votesSection, publisher) =>
-      `🎯 Guess · ${sym} (settled)\nStart price: ${price} (published at ${lockedAt})\nSettle price: ${endPrice}\n📊 Bullish ${stats.upPercent}% (${stats.upCount} · ${stats.upPoints} pts)\n📊 Bearish ${stats.downPercent}% (${stats.downCount} · ${stats.downPoints} pts)\n⏳ End time: ${endAt}\n${resultLine}${votesSection}\nStarted by ${publisher}`,
+    predictGroupPublishBody: (sym, hours, price, lockedAt, stats, betDeadline, publisher) =>
+      `🎯 Guess · ${sym}\nUp or down in the next ${hours} hours?\nStart price: ${price} (published at ${lockedAt})\n📊 Bullish ${stats.upPercent}% (${stats.upCount} · ${stats.upPoints} pts)\n📊 Bearish ${stats.downPercent}% (${stats.downCount} · ${stats.downPoints} pts)\n⏳ Betting closes: ${betDeadline}\nStarted by ${publisher}`,
+    predictGroupLockedBody: (sym, hours, price, oddsLine, prizePool, settlementWait, publisher) =>
+      `🎯 Guess · ${sym} (betting closed)\nUp or down in the next ${hours} hours?\nStart price: ${price}\n${oddsLine}\n💰 Prize pool: ${prizePool} pts\n⏳ Settlement in: ${settlementWait}\nStarted by ${publisher}`,
+    predictLockedOddsLine: (upPercent, upCount, downPercent, downCount) =>
+      `📊 Final odds: Bullish ${upPercent}% (${upCount}) · Bearish ${downPercent}% (${downCount})`,
+    predictGroupSettledBody: (sym, priceLine, winnerLine, prizePool, topWinnersSection) =>
+      `🎉 Poll result · ${sym}\n${priceLine}\n${winnerLine}\n💰 Prize pool: ${prizePool} pts${topWinnersSection}`,
+    predictSettledPriceLine: (startPrice, endPrice, changePct) =>
+      `Start ${startPrice} → Settle ${endPrice} (${changePct})`,
+    predictSettledWinnerUp: '📈 Bullish side wins!',
+    predictSettledWinnerDown: '📉 Bearish side wins!',
+    predictSettledTopWinnersSection: (lines) => `\n🏆 Top 3 winners:\n${lines}`,
+    predictSettledTopWinnerLine: (nick, betAmount, payout, profitPct) =>
+      `${nick} bet ${betAmount} → won ${payout} (+${profitPct}%)`,
     predictSettledResultUp: '✅ Result: Up',
     predictSettledResultDown: '✅ Result: Down',
-    predictSettledWinnersSection: (lines) => `\n🏆 Winners: ${lines}`,
-    predictSettledVoteWinner: (nick, payout) => `${nick} +${payout}`,
     predictBetUp50Btn: 'Bull +50',
     predictBetUp100Btn: 'Bull +100',
     predictBetUpCustomBtn: 'Custom',
@@ -403,6 +423,7 @@ const i18n = {
     predictBetMinAmountToast: (min) => `Minimum bet is ${min} points`,
     predictBetMaxAmountToast: (max) => `Maximum bet is ${max} points`,
     predictBetDeadlinePassed: 'Betting has closed for this poll',
+    predictBetLocked: 'This poll is locked — betting is closed',
     predictBetUserResolveFailed: 'Could not resolve user profile. Please log in to Mozi first.',
     agentRouteNeedQuestion: 'Ask a question after @mentioning me, e.g. <code>@MoziBot BTC outlook</code>',
     agentRouteFailed: 'Could not recognize your intent. Please try again later.',
@@ -435,6 +456,7 @@ const i18n = {
     predictListEmpty: '📭 No polls in this group yet.',
     predictListFailed: 'Could not load poll list. Please try again later.',
     predictListStatusActive: 'Active',
+    predictListStatusLocked: 'Betting closed',
     predictListStatusSettled: 'Settled',
     predictListItemLine: (sym, status, bullishPool, bullishCount, bearishPool, bearishCount, endAt, resultLine) =>
       `<b>${sym}</b> · ${status}\n📈 ${bullishPool} pts (${bullishCount}) · 📉 ${bearishPool} pts (${bearishCount})\n⏳ End time: ${endAt}${resultLine}`,
