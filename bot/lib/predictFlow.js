@@ -288,6 +288,37 @@ async function applyGuessSettlementToMessage({
 }
 
 /**
+ * 截止且已结算：在群内新发一条结算公告（不编辑原竞猜卡片）
+ */
+async function sendGuessResultAnnouncement({
+  telegram,
+  groupChatId,
+  meta,
+  item,
+  votes,
+  result,
+  statsRaw,
+  texts,
+}) {
+  if (groupChatId == null) return { ok: false, messageId: null };
+  const html = buildGroupSettledHtml(texts, meta, statsRaw, item, result, votes);
+  try {
+    const msg = await telegram.sendMessage(groupChatId, html, {
+      parse_mode: 'HTML',
+      reply_markup: { inline_keyboard: [] },
+    });
+    return { ok: true, messageId: msg?.message_id ?? null };
+  } catch (err) {
+    predictLog('announce.send_fail', {
+      groupChatId,
+      guessNo: item?.guessNo ?? null,
+      reason: err?.response?.description || err?.message || String(err),
+    });
+    return { ok: false, messageId: null };
+  }
+}
+
+/**
  * 进行中：按 detail 刷新群内竞猜消息（统计 + 结束时间，保留下注按钮）
  */
 async function applyGuessActiveRefreshFromDetail({
@@ -1191,6 +1222,7 @@ async function publishPredict(ctx, config, getTexts) {
       ...messageMeta,
       groupId: publishChatId,
       chatId: publishChatId,
+      deadlineWatchEnabled: true,
     });
   }
 
@@ -2034,4 +2066,5 @@ module.exports = {
   QUICK_SYMBOLS,
   applyGuessSettlementToMessage,
   applyGuessActiveRefreshFromDetail,
+  sendGuessResultAnnouncement,
 };

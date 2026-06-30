@@ -101,6 +101,10 @@ function purgeExpired() {
  *   settledResult?: string | null;
  *   hourlyPollEnabled?: boolean;
  *   lastDetailPollAt?: number | null;
+ *   deadlineWatchEnabled?: boolean;
+ *   lastDeadlinePollAt?: number | null;
+ *   resultAnnounceSentAt?: number | null;
+ *   resultAnnounceMessageId?: number | null;
  * }} data
  */
 function saveGuessMessageContext(guessNo, data) {
@@ -125,6 +129,11 @@ function saveGuessMessageContext(guessNo, data) {
     settledResult: data.settledResult ?? prev.settledResult ?? null,
     hourlyPollEnabled: data.hourlyPollEnabled ?? prev.hourlyPollEnabled ?? false,
     lastDetailPollAt: data.lastDetailPollAt ?? prev.lastDetailPollAt ?? null,
+    deadlineWatchEnabled:
+      data.deadlineWatchEnabled ?? prev.deadlineWatchEnabled ?? Boolean(data.endAt ?? prev.endAt),
+    lastDeadlinePollAt: data.lastDeadlinePollAt ?? prev.lastDeadlinePollAt ?? null,
+    resultAnnounceSentAt: data.resultAnnounceSentAt ?? prev.resultAnnounceSentAt ?? null,
+    resultAnnounceMessageId: data.resultAnnounceMessageId ?? prev.resultAnnounceMessageId ?? null,
     savedAt: prev.savedAt ?? Date.now(),
   });
   scheduleSave();
@@ -244,6 +253,47 @@ function markGuessSettled(guessNo, result) {
   });
 }
 
+/**
+ * 截止后待推送结算公告的竞猜（已过期、未发过新消息、有目标群）
+ * @param {number} pollIntervalMs
+ */
+function listDeadlineAnnounceTargets(pollIntervalMs) {
+  ensureLoaded();
+  purgeExpired();
+  const now = Date.now();
+  const interval = Math.max(30_000, Number(pollIntervalMs) || 5 * 60 * 1000);
+  const out = [];
+  for (const [guessNo, ctx] of contexts) {
+    if (!ctx?.deadlineWatchEnabled || ctx.resultAnnounceSentAt) continue;
+    const groupChatId = ctx.groupId ?? ctx.chatId ?? null;
+    if (groupChatId == null) continue;
+    const endMs = parseEndAtMs(ctx.endAt);
+    if (endMs == null || now < endMs) continue;
+    const last = Number(ctx.lastDeadlinePollAt) || 0;
+    if (last > 0 && now - last < interval) continue;
+    out.push({ guessNo, ...ctx });
+  }
+  return out;
+}
+
+/** @param {string} guessNo */
+function touchDeadlinePoll(guessNo) {
+  patchGuessMessageContext(guessNo, { lastDeadlinePollAt: Date.now() });
+}
+
+/**
+ * @param {string} guessNo
+ * @param {number} [messageId]
+ */
+function markResultAnnounceSent(guessNo, messageId) {
+  const key = String(guessNo || '').trim();
+  if (!key) return;
+  patchGuessMessageContext(key, {
+    resultAnnounceSentAt: Date.now(),
+    ...(messageId != null ? { resultAnnounceMessageId: messageId } : {}),
+  });
+}
+
 module.exports = {
   saveGuessMessageContext,
   patchGuessMessageContext,
@@ -255,5 +305,8 @@ module.exports = {
   enableGuessHourlyPoll,
   touchGuessDetailPoll,
   markGuessSettled,
+  listDeadlineAnnounceTargets,
+  touchDeadlinePoll,
+  markResultAnnounceSent,
   parseEndAtMs,
 };
