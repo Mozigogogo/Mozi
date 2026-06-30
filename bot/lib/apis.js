@@ -3,6 +3,7 @@
  */
 
 const { apiDebug, jwtPreview } = require('./debugLog');
+const { guessApiLog } = require('./guessApiDebug');
 const { normalizeTgChatCommand } = require('./tgChatQuestionStore');
 
 const DEFAULT_UA =
@@ -2102,9 +2103,18 @@ async function postCoinDirectionGuessPublish({
       nickName: publishData.nickName,
       hasAvatar: Boolean(publishData.avatar),
       endAt: publishData.endAt,
+      betEndAt: publishData.betEndAt,
       jsonCode: json && typeof json === 'object' ? json.code : null,
       errorMessage: out.errorMessage,
       bodyPreview: text.slice(0, 500),
+    });
+    guessApiLog('POST /coinDirectionGuess/publish →', {
+      httpStatus: res.status,
+      ok: out.ok,
+      guessNo,
+      publishData,
+      json,
+      rawText: text,
     });
     return out;
   } finally {
@@ -2194,6 +2204,14 @@ async function postCoinDirectionGuessBindMessage({
       jsonCode: json && typeof json === 'object' ? json.code : null,
       errorMessage: out.errorMessage,
       bodyPreview: text.slice(0, 500),
+    });
+    guessApiLog('POST /coinDirectionGuess/bindMessage →', {
+      httpStatus: res.status,
+      ok: out.ok,
+      guessNo: body.guessNo,
+      tgMessageId: body.tgMessageId,
+      json,
+      rawText: text,
     });
     return out;
   } finally {
@@ -2316,6 +2334,16 @@ async function postCoinDirectionGuessBet({
       errorMessage: out.errorMessage,
       bodyPreview: text.slice(0, 500),
     });
+    guessApiLog('POST /coinDirectionGuess/bet →', {
+      httpStatus: res.status,
+      ok: out.ok,
+      guessNo: body.guessNo,
+      userId: body.userId,
+      choice: body.choice,
+      betAmount: body.betAmount,
+      json,
+      rawText: text,
+    });
     return out;
   } finally {
     clearTimeout(t);
@@ -2399,6 +2427,15 @@ async function getCoinDirectionGuessList({
       count: out.items.length,
       errorMessage: out.errorMessage,
       bodyPreview: text.slice(0, 500),
+    });
+    guessApiLog('GET /coinDirectionGuess/list →', {
+      httpStatus: res.status,
+      ok: out.ok,
+      groupId: String(groupId),
+      count: out.items.length,
+      items: out.items,
+      json,
+      rawText: text,
     });
     return out;
   } finally {
@@ -2529,6 +2566,15 @@ async function getCoinDirectionGuessDetail({
       voteCount: out.votes.length,
       errorMessage: out.errorMessage,
       bodyPreview: text.slice(0, 500),
+    });
+    guessApiLog('GET /coinDirectionGuess/detail →', {
+      httpStatus: res.status,
+      ok: out.ok,
+      guessNo: guess,
+      item: out.item,
+      votes: out.votes,
+      json,
+      rawText: text,
     });
     return out;
   } finally {
