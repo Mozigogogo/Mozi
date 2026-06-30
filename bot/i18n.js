@@ -141,6 +141,12 @@ const i18n = {
     predictPublished: '✅ 预测已发布，群成员可参与投票。',
     predictPublishedToGroup: '✅ 已发布到原群，群成员可参与投票。',
     predictPublishFailed: '❌ 发布失败：请确认机器人在目标群有发消息与投票权限。',
+    predictPublishNoGroupTarget:
+      '❌ 发布失败：未绑定目标群。请先在<strong>群内</strong>发送 <code>/predict</code>，点击「发起竞猜 →」进入私聊后再确认发布。',
+    predictPublishApiFailed: (detail) =>
+      `❌ 发布失败（后端）：${detail || '请稍后再试'}`,
+    predictPublishTelegramFailed: (detail) =>
+      `❌ 发布失败（Telegram）：${detail || '请确认机器人在目标群有发消息权限'}`,
     predictGroupGuessFull: '本群竞猜已满，请等待现有竞猜结束',
     predictCancelled: '已取消。',
     predictCancelledToast: '已取消',
@@ -410,6 +416,12 @@ const i18n = {
     predictPublished: '✅ Poll published. Members can vote now.',
     predictPublishedToGroup: '✅ Published to the original group. Members can vote now.',
     predictPublishFailed: '❌ Publish failed. Ensure the bot can post messages and polls in the target chat.',
+    predictPublishNoGroupTarget:
+      '❌ Publish failed: no target group. Run <code>/predict</code> in the <strong>group</strong> first, tap <b>Start poll →</b>, then confirm in private chat.',
+    predictPublishApiFailed: (detail) =>
+      `❌ Publish failed (backend): ${detail || 'Please try again later'}`,
+    predictPublishTelegramFailed: (detail) =>
+      `❌ Publish failed (Telegram): ${detail || 'Ensure the bot can send messages in the target group'}`,
     predictGroupGuessFull:
       'This group already has the maximum number of active polls. Please wait for existing polls to finish.',
     predictCancelled: 'Cancelled.',

@@ -6,7 +6,7 @@ const { fetchDetailHeader, fetchSearchLastPriceChange, postCoinDirectionGuessPub
 const { SYMBOL_WHITELIST } = require('./symbolIntent');
 const { escapeHtml } = require('./telegramHtml');
 const { buildPredictPrivateUrl } = require('./predictSymbol');
-const { predictDebug, predictLog } = require('./predictDebug');
+const { predictDebug, predictLog, predictError } = require('./predictDebug');
 const { ensureTgUserToken, getCachedUserId } = require('./tgUserTokenCache');
 const { buildTelegramLoginOpts } = require('./datainfoPoints');
 const {
@@ -424,12 +424,19 @@ async function registerCoinDirectionGuessPublish(ctx, config, { publishChatId, s
       errorMessage: result.errorMessage ?? null,
     });
     if (!result.ok) {
-      console.warn('[predict] coinDirectionGuess/publish:', result.errorMessage || result.text?.slice(0, 200));
+      predictError('publish.api.response_fail', {
+        uid,
+        groupId: publishChatId,
+        symbol: sym,
+        status: result.status,
+        errorMessage: result.errorMessage ?? null,
+        responsePreview: String(result.text || '').slice(0, 800),
+        jsonCode: result.json?.code ?? null,
+      });
     }
     return result;
   } catch (err) {
-    predictLog('publish.api.fail', { uid, message: err?.message || String(err) });
-    console.warn('[predict] coinDirectionGuess/publish:', err?.message || err);
+    predictError('publish.api.exception', { uid, message: err?.message || String(err) });
     return {
       ok: false,
       status: 0,
@@ -1128,10 +1135,15 @@ async function publishPredict(ctx, config, getTexts) {
   });
 
   if (publishingToPrivateOnly) {
-    predictLog('publish.warn_no_group_target', {
+    predictError('publish.no_group_target', {
       uid,
-      hint: 'sourceGroupChatId missing; poll will be sent to private chat only. Re-run /predict in group and use the latest button link.',
+      flowChatId: session.flowChatId,
+      publishChatId,
+      sourceGroupChatId: session.sourceGroupChatId ?? null,
+      hint: 'User started /predict in private without group deep link; cannot publish to group',
     });
+    await replyOrEdit(ctx, session, texts.predictPublishNoGroupTarget, { parse_mode: 'HTML' });
+    return;
   }
 
   predictDebug('publish.send', {
@@ -1188,14 +1200,20 @@ async function publishPredict(ctx, config, getTexts) {
   });
 
   if (apiResult.status !== 200 || !apiResult.ok) {
-    predictLog('publish.api_gate_fail', {
+    predictError('publish.api_gate_fail', {
       uid,
       publishChatId,
       status: apiResult.status,
       ok: apiResult.ok,
       errorMessage: apiResult.errorMessage ?? null,
+      guessNo: apiResult.guessNo ?? null,
+      responsePreview: String(apiResult.text || '').slice(0, 800),
+      jsonCode: apiResult.json?.code ?? null,
     });
-    await replyOrEdit(ctx, session, texts.predictPublishFailed, { parse_mode: 'HTML' });
+    const detail = apiResult.errorMessage || `HTTP ${apiResult.status || '—'}`;
+    await replyOrEdit(ctx, session, texts.predictPublishApiFailed(escapeHtml(detail)), {
+      parse_mode: 'HTML',
+    });
     return;
   }
 
@@ -1274,14 +1292,21 @@ async function publishPredict(ctx, config, getTexts) {
   } catch (err) {
     const description = err?.response?.description || err?.message || String(err);
     const errorCode = err?.response?.error_code ?? null;
-    predictLog('publish.fail', {
+    predictError('publish.telegram_fail', {
       uid,
       publishChatId,
       errorCode,
       description,
+      guessNo: guessNo ?? null,
+      hasAvatar: Boolean(avatarUrl),
+      hint: 'Backend publish succeeded but sendMessage/sendPhoto to group failed',
     });
-    console.error('[predict] publish:', description);
-    await replyOrEdit(ctx, session, texts.predictPublishFailed, { parse_mode: 'HTML' });
+    await replyOrEdit(
+      ctx,
+      session,
+      texts.predictPublishTelegramFailed(escapeHtml(description)),
+      { parse_mode: 'HTML' },
+    );
     return;
   }
 
