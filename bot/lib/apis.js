@@ -1957,13 +1957,30 @@ function parseCoinDirectionGuessNo(json) {
 }
 
 /**
+ * @param {object | null | undefined} data
+ * @returns {string | number | null}
+ */
+function parseGuessBetEndAt(data) {
+  if (!data || typeof data !== 'object') return null;
+  const raw = data.betEndAt ?? data.bet_end_at ?? null;
+  if (raw == null || String(raw).trim() === '') return null;
+  return raw;
+}
+
+/**
  * @param {object | null} json
- * @returns {{ guessNo: string | null; nickName: string | null; avatar: string | null; endAt: string | number | null }}
+ * @returns {{
+ *   guessNo: string | null;
+ *   nickName: string | null;
+ *   avatar: string | null;
+ *   endAt: string | number | null;
+ *   betEndAt: string | number | null;
+ * }}
  */
 function parseCoinDirectionGuessPublishData(json) {
   const guessNo = parseCoinDirectionGuessNo(json);
   if (!json || typeof json !== 'object') {
-    return { guessNo, nickName: null, avatar: null, endAt: null };
+    return { guessNo, nickName: null, avatar: null, endAt: null, betEndAt: null };
   }
   const data =
     json.data != null && typeof json.data === 'object'
@@ -1972,11 +1989,13 @@ function parseCoinDirectionGuessPublishData(json) {
   const nickName = data.nickName ?? data.nickname ?? data.nick_name ?? null;
   const avatar = data.avatar ?? data.avatarUrl ?? data.avatar_url ?? null;
   const endAt = data.endAt ?? data.end_at ?? null;
+  const betEndAt = parseGuessBetEndAt(data);
   return {
     guessNo,
     nickName: nickName != null && String(nickName).trim() ? String(nickName).trim() : null,
     avatar: avatar != null && String(avatar).trim() ? String(avatar).trim() : null,
     endAt: endAt != null && String(endAt).trim() ? endAt : null,
+    betEndAt,
   };
 }
 
@@ -2698,6 +2717,7 @@ module.exports = {
   getCoinDirectionGuessDetail,
   parseCoinDirectionGuessNo,
   parseCoinDirectionGuessPublishData,
+  parseGuessBetEndAt,
   parseCoinDirectionGuessList,
   parseGuessVoteCounts,
   parseGuessBetStats,

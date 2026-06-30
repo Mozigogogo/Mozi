@@ -91,6 +91,7 @@ function purgeExpired() {
  *   price: string;
  *   lockedAtMs: number;
  *   endAt: string | number | null;
+ *   betEndAt?: string | number | null;
  *   publisher: string;
  *   languageCode?: string;
  *   groupId?: number | string | null;
@@ -119,6 +120,7 @@ function saveGuessMessageContext(guessNo, data) {
     price: String(data.price || prev.price || '').trim(),
     lockedAtMs: Number(data.lockedAtMs) || prev.lockedAtMs || Date.now(),
     endAt: data.endAt ?? prev.endAt ?? null,
+    betEndAt: data.betEndAt ?? prev.betEndAt ?? null,
     publisher: String(data.publisher || prev.publisher || '').trim(),
     languageCode: String(data.languageCode || prev.languageCode || 'zh'),
     groupId: data.groupId ?? prev.groupId ?? null,
@@ -173,6 +175,12 @@ function getGuessMessageContext(guessNo) {
 function getGuessEndAt(guessNo) {
   const ctx = getGuessMessageContext(guessNo);
   return ctx?.endAt ?? null;
+}
+
+/** @param {string} guessNo */
+function getGuessBetEndAt(guessNo) {
+  const ctx = getGuessMessageContext(guessNo);
+  return ctx?.betEndAt ?? null;
 }
 
 /** @returns {Array<{ guessNo: string } & object>} */
@@ -299,6 +307,7 @@ module.exports = {
   patchGuessMessageContext,
   getGuessMessageContext,
   getGuessEndAt,
+  getGuessBetEndAt,
   listActiveGuessContexts,
   listPendingSettlement,
   listHourlyPollTargets,

@@ -12,6 +12,7 @@
 const {
   getCoinDirectionGuessDetail,
   parseGuessItemStats,
+  parseGuessBetEndAt,
   parseGuessResult,
   normalizeGuessStatus,
   isGuessStatusLocked,
@@ -34,6 +35,14 @@ const {
   sendGuessResultAnnouncement,
 } = require('./predictFlow');
 const { predictLog } = require('./predictDebug');
+
+function buildGuessTimePatch(item) {
+  const patch = {};
+  if (item?.endAt != null) patch.endAt = item.endAt;
+  const betEndAt = parseGuessBetEndAt(item);
+  if (betEndAt != null) patch.betEndAt = betEndAt;
+  return patch;
+}
 
 /** @type {import('telegraf').Telegraf | null} */
 let botRef = null;
@@ -185,9 +194,7 @@ async function refreshOneGuess(ctx) {
       });
       if (ok) {
         markGuessSettled(guessNo, result);
-        if (item.endAt != null) {
-          patchGuessMessageContext(guessNo, { endAt: item.endAt });
-        }
+        patchGuessMessageContext(guessNo, buildGuessTimePatch(item));
         predictLog('poll.settled', {
           guessNo,
           groupId,
@@ -213,8 +220,7 @@ async function refreshOneGuess(ctx) {
         statsRaw,
         texts,
       });
-      const patch = { lastDetailPollAt: Date.now() };
-      if (item.endAt != null) patch.endAt = item.endAt;
+      const patch = { lastDetailPollAt: Date.now(), ...buildGuessTimePatch(item) };
       patchGuessMessageContext(guessNo, patch);
       predictLog('poll.refresh_locked', {
         guessNo,
@@ -238,8 +244,7 @@ async function refreshOneGuess(ctx) {
       texts,
       guessNo,
     });
-    const patch = { lastDetailPollAt: Date.now() };
-    if (item.endAt != null) patch.endAt = item.endAt;
+    const patch = { lastDetailPollAt: Date.now(), ...buildGuessTimePatch(item) };
     patchGuessMessageContext(guessNo, patch);
     predictLog('poll.refresh', {
       guessNo,
@@ -319,8 +324,7 @@ async function announceOneGuess(ctx) {
     const languageCode = ctx.languageCode || 'zh';
     const texts = getTexts(languageCode);
 
-    const mergedMeta = { ...ctx };
-    if (item.endAt != null) mergedMeta.endAt = item.endAt;
+    const mergedMeta = { ...ctx, ...buildGuessTimePatch(item) };
 
     const sent = await sendGuessResultAnnouncement({
       telegram: botRef.telegram,
@@ -336,9 +340,7 @@ async function announceOneGuess(ctx) {
     if (sent.ok) {
       markResultAnnounceSent(guessNo, sent.messageId);
       markGuessSettled(guessNo, result);
-      if (item.endAt != null) {
-        patchGuessMessageContext(guessNo, { endAt: item.endAt });
-      }
+      patchGuessMessageContext(guessNo, buildGuessTimePatch(item));
       predictLog('announce.sent', {
         guessNo,
         groupChatId,

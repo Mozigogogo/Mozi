@@ -14,6 +14,7 @@ const {
   parseCoinDirectionGuessPublishData,
   parseGuessBetStats,
   parseGuessItemStats,
+  parseGuessBetEndAt,
   parseGuessResult,
   normalizeGuessStatus,
   isGuessStatusActive,
@@ -45,6 +46,7 @@ const {
   getGuessMessageContext,
   patchGuessMessageContext,
   getGuessEndAt,
+  getGuessBetEndAt,
   enableGuessHourlyPoll,
   markGuessSettled,
 } = require('./guessMessageContext');
@@ -222,8 +224,9 @@ function formatPublisherLabel(publishData, ctx) {
 function buildGroupPublishHtml(texts, meta, statsRaw) {
   const stats = normalizeGuessBetStats(statsRaw, meta.languageCode);
   const lockedAt = formatLockedAtDisplay(meta.lockedAtMs, meta.languageCode);
+  const betDeadlineRaw = meta.betEndAt ?? meta.endAt;
   const betDeadline =
-    meta.endAt != null ? formatBetDeadlineDisplay(meta.endAt, meta.languageCode) : '—';
+    betDeadlineRaw != null ? formatBetDeadlineDisplay(betDeadlineRaw, meta.languageCode) : '—';
   return texts.predictGroupPublishBody(
     escapeHtml(meta.sym),
     meta.hours,
@@ -1360,6 +1363,7 @@ async function publishPredict(ctx, config, getTexts) {
     price: priceStr,
     lockedAtMs,
     endAt: publishData.endAt ?? null,
+    betEndAt: publishData.betEndAt ?? null,
     publisher,
     languageCode,
   };
@@ -1385,6 +1389,7 @@ async function publishPredict(ctx, config, getTexts) {
     nickName: publishData.nickName ?? null,
     hasAvatar: Boolean(avatarUrl),
     endAt: publishData.endAt ?? null,
+    betEndAt: publishData.betEndAt ?? null,
     customVote: true,
   });
 
@@ -1493,6 +1498,7 @@ function buildMetaFromGuessItem(item, languageCode, publisher = '—') {
     price,
     lockedAtMs: parseEndAtMs(item.startAt) ?? Date.now(),
     endAt: item.endAt ?? null,
+    betEndAt: parseGuessBetEndAt(item),
     publisher,
     languageCode: languageCode || 'zh',
     groupId: item.groupId ?? null,
@@ -1504,9 +1510,13 @@ function syncGuessDeadlinesFromItems(items, languageCode, groupId) {
     const guessNo = String(item.guessNo || '').trim();
     if (!guessNo) continue;
     const prev = getGuessMessageContext(guessNo);
-    if (item.endAt != null) {
+    const betEndAt = parseGuessBetEndAt(item);
+    if (item.endAt != null || betEndAt != null) {
       if (prev) {
-        patchGuessMessageContext(guessNo, { endAt: item.endAt });
+        const patch = {};
+        if (item.endAt != null) patch.endAt = item.endAt;
+        if (betEndAt != null) patch.betEndAt = betEndAt;
+        patchGuessMessageContext(guessNo, patch);
       } else {
         saveGuessMessageContext(guessNo, {
           ...buildMetaFromGuessItem(item, languageCode, '—'),
@@ -1514,6 +1524,28 @@ function syncGuessDeadlinesFromItems(items, languageCode, groupId) {
         });
       }
     }
+  }
+}
+
+async function resolveGuessBetEndAtMs(config, guessNo, groupId) {
+  const stored = getGuessBetEndAt(guessNo);
+  let betEndMs = parseEndAtMs(stored);
+  if (betEndMs != null) return betEndMs;
+  if (!config || groupId == null) return null;
+  try {
+    const listRes = await getCoinDirectionGuessList({
+      apiBaseUrl: config.API_BASE_URL,
+      appUrl: config.APP_URL,
+      groupId,
+      path: config.COIN_DIRECTION_GUESS_LIST_PATH,
+    });
+    if (!listRes.ok) return null;
+    const item = listRes.items.find((i) => String(i.guessNo || '').trim() === guessNo) || null;
+    if (!item) return null;
+    syncGuessDeadlinesFromItems([item], 'zh', groupId);
+    return parseEndAtMs(parseGuessBetEndAt(item));
+  } catch {
+    return null;
   }
 }
 
@@ -1660,12 +1692,25 @@ async function tryRefreshGuessMessage(ctx, config, texts, guessNo, betResult) {
   }
 
   const endAtSource = detailItem ?? fallbackItem;
-  if (endAtSource?.endAt != null) {
-    patchGuessMessageContext(guess, { endAt: endAtSource.endAt });
-    if (meta) meta = { ...meta, endAt: endAtSource.endAt };
-  } else if (betResult?.json?.data?.endAt != null) {
-    patchGuessMessageContext(guess, { endAt: betResult.json.data.endAt });
-    if (meta) meta = { ...meta, endAt: betResult.json.data.endAt };
+  if (endAtSource) {
+    const patch = {};
+    if (endAtSource.endAt != null) patch.endAt = endAtSource.endAt;
+    const betEndAt = parseGuessBetEndAt(endAtSource);
+    if (betEndAt != null) patch.betEndAt = betEndAt;
+    if (Object.keys(patch).length) {
+      patchGuessMessageContext(guess, patch);
+      if (meta) meta = { ...meta, ...patch };
+    }
+  } else if (betResult?.json?.data) {
+    const data = betResult.json.data;
+    const patch = {};
+    if (data.endAt != null) patch.endAt = data.endAt;
+    const betEndAt = parseGuessBetEndAt(data);
+    if (betEndAt != null) patch.betEndAt = betEndAt;
+    if (Object.keys(patch).length) {
+      patchGuessMessageContext(guess, patch);
+      if (meta) meta = { ...meta, ...patch };
+    }
   }
 
   if (!meta) {
@@ -1728,6 +1773,7 @@ async function tryRefreshGuessMessage(ctx, config, texts, guessNo, betResult) {
     ok,
     source: detailItem ? 'detail' : fallbackItem ? 'list' : 'bet',
     endAt: meta.endAt ?? null,
+    betEndAt: meta.betEndAt ?? null,
     upCount: statsRaw?.upCount ?? null,
     downCount: statsRaw?.downCount ?? null,
     upPoints: statsRaw?.upPoints ?? null,
@@ -1768,7 +1814,7 @@ async function submitGuessBet(ctx, config, getTexts, guessNo, direction, betAmou
   const statusCheck = await checkGuessBettingAllowed(ctx, config, guess, texts);
   if (statusCheck === false) return false;
   if (statusCheck !== true) {
-    const endMs = await resolveGuessEndAtMs(config, guess, groupId);
+    const endMs = await resolveGuessBetEndAtMs(config, guess, groupId);
     if (endMs != null && Date.now() > endMs) {
       await answerPredictCbQuery(ctx, texts.predictBetDeadlinePassed, { show_alert: true });
       return false;
