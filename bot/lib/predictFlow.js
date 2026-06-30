@@ -24,6 +24,7 @@ const {
   isGuessStatusLocked,
   isGuessBettingAllowed,
   isGuessListItemSettled,
+  resolveGuessPollStatus,
 } = require('./apis');
 const { SYMBOL_WHITELIST } = require('./symbolIntent');
 const { escapeHtml } = require('./telegramHtml');
@@ -48,9 +49,7 @@ const {
   saveGuessMessageContext,
   getGuessMessageContext,
   patchGuessMessageContext,
-  getGuessEndAt,
   getGuessBetEndAt,
-  enableGuessHourlyPoll,
   markGuessSettled,
 } = require('./guessMessageContext');
 
@@ -302,8 +301,9 @@ function formatSettledTopWinners(texts, votes, result, languageCode) {
   const lines = winners.map((v) => {
     const betAmount = Math.max(0, Math.floor(Number(v.betAmount) || 0));
     const payout = Math.max(0, Math.floor(Number(v.payout) || 0));
-    const profitPct =
+    const profitPctRaw =
       betAmount > 0 ? Math.round(((payout - betAmount) / betAmount) * 100) : 0;
+    const profitPct = profitPctRaw >= 0 ? `+${profitPctRaw}` : String(profitPctRaw);
     return texts.predictSettledTopWinnerLine(
       formatSettledVoteNick(v),
       formatPointsDisplay(betAmount, languageCode),
@@ -362,7 +362,7 @@ async function editTelegramGuessMessage(telegram, chatId, messageId, html, keybo
 }
 
 /**
- * 截止结算：更新群内竞猜消息为最终结果，并移除下注按钮
+ * 结算完成：编辑原竞猜卡片为最终结果，并移除下注按钮
  */
 async function applyGuessSettlementToMessage({
   telegram,
@@ -381,7 +381,7 @@ async function applyGuessSettlementToMessage({
 }
 
 /**
- * 截止且已结算：在群内新发一条结算公告（不编辑原竞猜卡片）
+ * 结算完成：在群内另发一条结算公告（原竞猜卡片由 applyGuessSettlementToMessage 更新）
  */
 async function sendGuessResultAnnouncement({
   telegram,
@@ -394,7 +394,11 @@ async function sendGuessResultAnnouncement({
   texts,
 }) {
   if (groupChatId == null) return { ok: false, messageId: null };
-  const html = buildGroupSettledHtml(texts, meta, statsRaw, item, result, votes);
+  const merged = {
+    ...meta,
+    ...(item ? buildMetaFromGuessItem(item, meta.languageCode, meta.publisher) : {}),
+  };
+  const html = buildGroupSettledHtml(texts, merged, statsRaw, item, result, votes);
   try {
     const msg = await telegram.sendMessage(groupChatId, html, {
       parse_mode: 'HTML',
@@ -559,7 +563,6 @@ async function syncGuessPublishCardFromDetail({
       guessNo: guess,
       ok,
       betEndAt: patch.betEndAt ?? null,
-      endAt: patch.endAt ?? null,
     });
   } catch (err) {
     predictLog('publish.detail_sync_fail', {
@@ -1418,7 +1421,6 @@ async function publishPredict(ctx, config, getTexts) {
     hours,
     price: priceStr,
     lockedAtMs,
-    endAt: publishData.endAt ?? null,
     betEndAt: publishData.betEndAt ?? null,
     publisher,
     languageCode,
@@ -1432,7 +1434,7 @@ async function publishPredict(ctx, config, getTexts) {
       ...messageMeta,
       groupId: publishChatId,
       chatId: publishChatId,
-      deadlineWatchEnabled: true,
+      lastKnownStatus: 'active',
     });
   }
 
@@ -1784,7 +1786,11 @@ async function tryRefreshGuessMessage(ctx, config, texts, guessNo, betResult) {
 
   const statusItem = detailItem ?? fallbackItem;
   if (statusItem && isGuessStatusLocked(statusItem)) {
-    const html = buildGroupLockedHtml(texts, meta, statsRaw);
+    const displayMeta = {
+      ...meta,
+      ...buildMetaFromGuessItem(statusItem, meta.languageCode, meta.publisher),
+    };
+    const html = buildGroupLockedHtml(texts, displayMeta, statsRaw);
     const ok = await editGuessMessageContent(
       ctx,
       chatId,
@@ -1798,12 +1804,16 @@ async function tryRefreshGuessMessage(ctx, config, texts, guessNo, betResult) {
       ok,
       status: statusItem.status ?? null,
     });
+    patchGuessMessageContext(guess, { lastKnownStatus: 'locked' });
     return;
   }
 
   const html = buildGroupPublishHtml(texts, meta, statsRaw);
   const keyboard = buildGuessBetKeyboard(texts, guess);
   const ok = await editGuessMessageContent(ctx, chatId, messageId, html, keyboard, hasPhoto);
+  if (statusItem) {
+    patchGuessMessageContext(guess, { lastKnownStatus: resolveGuessPollStatus(statusItem) });
+  }
   predictLog('bet.refresh', {
     guessNo: guess,
     ok,
@@ -1924,12 +1934,6 @@ async function submitGuessBet(ctx, config, getTexts, guessNo, direction, betAmou
     await ctx.answerCbQuery(texts.predictVoteSuccess(dirLabel, pts)).catch(() => {});
     const refreshTexts = getTexts(getGuessMessageContext(guess)?.languageCode || languageCode);
     await tryRefreshGuessMessage(ctx, config, refreshTexts, guess, result);
-    const betMsg = ctx.callbackQuery?.message;
-    enableGuessHourlyPoll(guess, {
-      chatId: betMsg?.chat?.id ?? null,
-      messageId: betMsg && 'message_id' in betMsg ? betMsg.message_id : null,
-      hasPhoto: Boolean(betMsg?.photo?.length),
-    });
     return true;
   } catch (err) {
     predictLog('bet.fail', { telegramId: uid, guessNo: guess, message: err?.message || String(err) });
@@ -2455,4 +2459,5 @@ module.exports = {
   applyGuessActiveRefreshFromDetail,
   applyGuessLockedRefreshFromDetail,
   sendGuessResultAnnouncement,
+  buildMetaFromGuessItem,
 };

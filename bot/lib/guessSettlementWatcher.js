@@ -1,31 +1,29 @@
 'use strict';
 
 /**
- * 1) 下注后按间隔轮询 GET /coinDirectionGuess/detail，刷新群内竞猜消息；已结算则更新原卡片。
- * 2) 发布时记录截止日；到期且后端已出结果时，在群内新发一条结算公告。
+ * 按间隔轮询 GET /coinDirectionGuess/list?groupId=；
+ * 状态变化时更新群内竞猜卡片；结算完成时同时编辑原卡片并另发结算公告。
  *
- * 间隔：
- * - GUESS_SETTLEMENT_POLL_MS（默认 3600000）下注卡片刷新
- * - GUESS_DEADLINE_ANNOUNCE_POLL_MS（默认 300000）截止结算公告
+ * 间隔：GUESS_SETTLEMENT_POLL_MS（默认 300000，5 分钟）
  */
 
 const {
+  getCoinDirectionGuessList,
   getCoinDirectionGuessDetail,
   parseGuessItemStats,
   buildGuessTimeFieldsPatch,
   parseGuessResult,
-  normalizeGuessStatus,
   isGuessStatusLocked,
   isGuessListItemSettled,
+  resolveGuessPollStatus,
 } = require('./apis');
 const {
-  listHourlyPollTargets,
-  listDeadlineAnnounceTargets,
+  listDistinctPollGroupIds,
+  listUnsettledGuessContextsForGroup,
   markGuessSettled,
   markResultAnnounceSent,
   patchGuessMessageContext,
-  touchGuessDetailPoll,
-  touchDeadlinePoll,
+  touchGuessListPoll,
 } = require('./guessMessageContext');
 const { getTexts } = require('../i18n');
 const {
@@ -33,11 +31,24 @@ const {
   applyGuessActiveRefreshFromDetail,
   applyGuessLockedRefreshFromDetail,
   sendGuessResultAnnouncement,
+  buildMetaFromGuessItem,
 } = require('./predictFlow');
-const { predictLog } = require('./predictDebug');
+const { guessPollLog } = require('./guessPollLog');
 
 function buildGuessTimePatch(item) {
   return buildGuessTimeFieldsPatch(item);
+}
+
+function summarizeListItem(item) {
+  return {
+    guessNo: String(item.guessNo || '').trim() || null,
+    symbol: item.symbol ?? null,
+    status: resolveGuessPollStatus(item),
+    rawStatus: item.status ?? null,
+    result: item.result ?? null,
+    bullishCount: item.bullishCount ?? null,
+    bearishCount: item.bearishCount ?? null,
+  };
 }
 
 /** @type {import('telegraf').Telegraf | null} */
@@ -46,56 +57,47 @@ let botRef = null;
 let configRef = null;
 
 let pollTimer = null;
-let announceTimer = null;
 let ticking = false;
-let announcing = false;
 
 /** @type {Set<string>} */
-const inFlight = new Set();
-/** @type {Set<string>} */
-const announceInFlight = new Set();
+const groupInFlight = new Set();
 
-const DEFAULT_POLL_MS = 60 * 60 * 1000;
-const DEFAULT_ANNOUNCE_POLL_MS = 5 * 60 * 1000;
+const DEFAULT_POLL_MS = 5 * 60 * 1000;
 
 function getPollMs() {
   const n = Number(process.env.GUESS_SETTLEMENT_POLL_MS);
-  return Number.isFinite(n) && n >= 60_000 ? n : DEFAULT_POLL_MS;
-}
-
-function getAnnouncePollMs() {
-  const n = Number(process.env.GUESS_DEADLINE_ANNOUNCE_POLL_MS);
-  return Number.isFinite(n) && n >= 30_000 ? n : DEFAULT_ANNOUNCE_POLL_MS;
+  return Number.isFinite(n) && n >= 30_000 ? n : DEFAULT_POLL_MS;
 }
 
 function initGuessSettlementWatcher(bot, config) {
   botRef = bot;
   configRef = config;
   if (pollTimer) clearInterval(pollTimer);
-  if (announceTimer) clearInterval(announceTimer);
 
   const pollMs = getPollMs();
-  const announceMs = getAnnouncePollMs();
 
   pollTimer = setInterval(() => {
     tickSettlement().catch((err) => {
-      predictLog('poll.tick_fail', { message: err?.message || String(err) });
+      guessPollLog('tick_fail', { message: err?.message || String(err) });
     });
   }, pollMs);
 
-  announceTimer = setInterval(() => {
-    tickDeadlineAnnounce().catch((err) => {
-      predictLog('announce.tick_fail', { message: err?.message || String(err) });
-    });
-  }, announceMs);
-
-  predictLog('poll.init', { pollMs, announceMs });
+  guessPollLog('init', { pollMs, source: 'GET /coinDirectionGuess/list?groupId=' });
 
   setTimeout(() => {
-    tickDeadlineAnnounce().catch((err) => {
-      predictLog('announce.startup_tick_fail', { message: err?.message || String(err) });
+    tickSettlement().catch((err) => {
+      guessPollLog('startup_tick_fail', { message: err?.message || String(err) });
     });
   }, 10_000);
+}
+
+async function fetchGuessList(groupId) {
+  return getCoinDirectionGuessList({
+    apiBaseUrl: configRef.API_BASE_URL,
+    appUrl: configRef.APP_URL,
+    groupId,
+    path: configRef.COIN_DIRECTION_GUESS_LIST_PATH,
+  });
 }
 
 async function fetchGuessDetail(guessNo) {
@@ -111,217 +113,150 @@ async function tickSettlement() {
   if (!botRef || !configRef || ticking) return;
   ticking = true;
   try {
-    const targets = listHourlyPollTargets(getPollMs());
-    for (const ctx of targets) {
-      await refreshOneGuess(ctx);
+    const groupIds = listDistinctPollGroupIds();
+    guessPollLog('tick_start', { groupCount: groupIds.length, groupIds });
+    for (const groupId of groupIds) {
+      await refreshGroupGuesses(groupId);
     }
+    guessPollLog('tick_done', { groupCount: groupIds.length });
   } finally {
     ticking = false;
   }
 }
 
-async function tickDeadlineAnnounce() {
-  if (!botRef || !configRef || announcing) return;
-  announcing = true;
+async function refreshGroupGuesses(groupId) {
+  if (!configRef || !botRef) return;
+
+  const groupKey = String(groupId);
+  if (groupInFlight.has(groupKey)) {
+    guessPollLog('group_skip_in_flight', { groupId });
+    return;
+  }
+
+  groupInFlight.add(groupKey);
   try {
-    const targets = listDeadlineAnnounceTargets(getAnnouncePollMs());
-    for (const ctx of targets) {
-      await announceOneGuess(ctx);
+    let listRes;
+    try {
+      listRes = await fetchGuessList(groupId);
+    } catch (err) {
+      guessPollLog('list_fail', { groupId, message: err?.message || String(err) });
+      return;
     }
+
+    const items = listRes.items || [];
+    guessPollLog('list_result', {
+      groupId,
+      httpStatus: listRes.status,
+      ok: listRes.ok,
+      count: items.length,
+      errorMessage: listRes.errorMessage ?? null,
+      items: items.map(summarizeListItem),
+    });
+
+    if (!listRes.ok) return;
+
+    const itemsByGuessNo = new Map();
+    for (const item of items) {
+      const guessNo = String(item.guessNo || '').trim();
+      if (guessNo) itemsByGuessNo.set(guessNo, item);
+    }
+
+    const targets = listUnsettledGuessContextsForGroup(groupId);
+    guessPollLog('group_targets', {
+      groupId,
+      targetCount: targets.length,
+      guessNos: targets.map((t) => t.guessNo),
+    });
+
+    for (const ctx of targets) {
+      const guessNo = String(ctx.guessNo || '').trim();
+      const item = itemsByGuessNo.get(guessNo);
+      if (!item) {
+        guessPollLog('item_missing', {
+          groupId,
+          guessNo,
+          prevStatus: ctx.lastKnownStatus ?? null,
+        });
+        touchGuessListPoll(guessNo);
+        continue;
+      }
+      await refreshOneGuessFromListItem(ctx, item);
+    }
+  } catch (err) {
+    guessPollLog('group_fail', { groupId, message: err?.message || String(err) });
   } finally {
-    announcing = false;
+    groupInFlight.delete(groupKey);
   }
 }
 
-async function refreshOneGuess(ctx) {
-  if (!configRef || !botRef) return;
+async function fetchDetailForSettled(guessNo) {
+  try {
+    const detailRes = await fetchGuessDetail(guessNo);
+    if (!detailRes.ok || !detailRes.item) {
+      guessPollLog('detail_for_settled_bad', {
+        guessNo,
+        ok: detailRes.ok,
+        status: detailRes.status,
+        errorMessage: detailRes.errorMessage ?? null,
+      });
+      return { item: null, votes: [] };
+    }
+    return { item: detailRes.item, votes: detailRes.votes || [] };
+  } catch (err) {
+    guessPollLog('detail_for_settled_fail', {
+      guessNo,
+      message: err?.message || String(err),
+    });
+    return { item: null, votes: [] };
+  }
+}
 
+async function handleSettledTransition(ctx, listItem, prevStatus, newStatus) {
   const guessNo = String(ctx.guessNo || '').trim();
   const groupId = ctx.groupId ?? ctx.chatId ?? null;
-  if (!guessNo || inFlight.has(guessNo)) return;
+  const groupChatId = groupId;
 
-  inFlight.add(guessNo);
-  try {
-    let detailRes;
-    try {
-      detailRes = await fetchGuessDetail(guessNo);
-    } catch (err) {
-      predictLog('poll.detail_fail', { guessNo, groupId, message: err?.message || String(err) });
-      touchGuessDetailPoll(guessNo);
-      return;
-    }
-
-    if (!detailRes.ok || !detailRes.item) {
-      predictLog('poll.detail_bad', {
-        guessNo,
-        groupId,
-        status: detailRes.status,
-        errorMessage: detailRes.errorMessage ?? null,
-      });
-      touchGuessDetailPoll(guessNo);
-      return;
-    }
-
-    const item = detailRes.item;
-    const votes = detailRes.votes || [];
-    const statsRaw = parseGuessItemStats(item);
-    const languageCode = ctx.languageCode || 'zh';
-    const texts = getTexts(languageCode);
-
-    if (isGuessListItemSettled(item)) {
-      const result = parseGuessResult(item);
-      if (!result) {
-        predictLog('poll.result_pending', { guessNo, groupId, status: item.status ?? null });
-        touchGuessDetailPoll(guessNo);
-        return;
-      }
-
-      const ok = await applyGuessSettlementToMessage({
-        telegram: botRef.telegram,
-        chatId: ctx.chatId,
-        messageId: ctx.messageId,
-        hasPhoto: Boolean(ctx.hasPhoto),
-        meta: ctx,
-        item,
-        votes,
-        result,
-        statsRaw,
-        texts,
-      });
-      if (ok) {
-        markGuessSettled(guessNo, result);
-        patchGuessMessageContext(guessNo, buildGuessTimePatch(item));
-        predictLog('poll.settled', {
-          guessNo,
-          groupId,
-          result,
-          endPrice: item.endPrice ?? null,
-          voteCount: votes.length,
-        });
-      } else {
-        predictLog('poll.settle_message_fail', { guessNo, groupId, result });
-        touchGuessDetailPoll(guessNo);
-      }
-      return;
-    }
-
-    if (isGuessStatusLocked(item)) {
-      const ok = await applyGuessLockedRefreshFromDetail({
-        telegram: botRef.telegram,
-        chatId: ctx.chatId,
-        messageId: ctx.messageId,
-        hasPhoto: Boolean(ctx.hasPhoto),
-        meta: ctx,
-        item,
-        statsRaw,
-        texts,
-      });
-      const patch = { lastDetailPollAt: Date.now(), ...buildGuessTimePatch(item) };
-      patchGuessMessageContext(guessNo, patch);
-      predictLog('poll.refresh_locked', {
-        guessNo,
-        groupId,
-        ok,
-        status: item.status ?? null,
-        upCount: statsRaw?.upCount ?? null,
-        downCount: statsRaw?.downCount ?? null,
-      });
-      return;
-    }
-
-    const ok = await applyGuessActiveRefreshFromDetail({
-      telegram: botRef.telegram,
-      chatId: ctx.chatId,
-      messageId: ctx.messageId,
-      hasPhoto: Boolean(ctx.hasPhoto),
-      meta: ctx,
-      item,
-      statsRaw,
-      texts,
-      guessNo,
-    });
-    const patch = { lastDetailPollAt: Date.now(), ...buildGuessTimePatch(item) };
-    patchGuessMessageContext(guessNo, patch);
-    predictLog('poll.refresh', {
+  const result = parseGuessResult(listItem);
+  if (!result) {
+    guessPollLog('settled_result_pending', {
       guessNo,
       groupId,
-      ok,
-      status: item.status ?? null,
-      upCount: statsRaw?.upCount ?? null,
-      downCount: statsRaw?.downCount ?? null,
+      prevStatus,
+      newStatus,
+      rawStatus: listItem.status ?? null,
     });
-  } catch (err) {
-    predictLog('poll.refresh_fail', { guessNo, groupId, message: err?.message || String(err) });
-    touchGuessDetailPoll(guessNo);
-  } finally {
-    inFlight.delete(guessNo);
+    touchGuessListPoll(guessNo);
+    patchGuessMessageContext(guessNo, { lastKnownStatus: newStatus });
+    return;
   }
-}
 
-async function announceOneGuess(ctx) {
-  if (!configRef || !botRef) return;
+  const { item: detailItem, votes } = await fetchDetailForSettled(guessNo);
+  const item = detailItem || listItem;
+  const statsRaw = parseGuessItemStats(item);
+  const languageCode = ctx.languageCode || 'zh';
+  const texts = getTexts(languageCode);
+  const mergedMeta = {
+    ...ctx,
+    ...buildMetaFromGuessItem(item, languageCode, ctx.publisher),
+    ...buildGuessTimePatch(item),
+  };
 
-  const guessNo = String(ctx.guessNo || '').trim();
-  const groupChatId = ctx.groupId ?? ctx.chatId ?? null;
-  if (!guessNo || groupChatId == null || announceInFlight.has(guessNo)) return;
+  const cardOk = await applyGuessSettlementToMessage({
+    telegram: botRef.telegram,
+    chatId: ctx.chatId,
+    messageId: ctx.messageId,
+    hasPhoto: Boolean(ctx.hasPhoto),
+    meta: mergedMeta,
+    item,
+    votes,
+    result,
+    statsRaw,
+    texts,
+  });
 
-  announceInFlight.add(guessNo);
-  try {
-    let detailRes;
-    try {
-      detailRes = await fetchGuessDetail(guessNo);
-    } catch (err) {
-      predictLog('announce.detail_fail', { guessNo, groupChatId, message: err?.message || String(err) });
-      touchDeadlinePoll(guessNo);
-      return;
-    }
-
-    if (!detailRes.ok || !detailRes.item) {
-      predictLog('announce.detail_bad', {
-        guessNo,
-        groupChatId,
-        status: detailRes.status,
-        errorMessage: detailRes.errorMessage ?? null,
-      });
-      touchDeadlinePoll(guessNo);
-      return;
-    }
-
-    const item = detailRes.item;
-    const status = normalizeGuessStatus(item.status);
-
-    if (status === 'active') {
-      predictLog('announce.still_active', { guessNo, groupChatId, status });
-      touchDeadlinePoll(guessNo);
-      return;
-    }
-
-    if (status === 'locked') {
-      predictLog('announce.still_locked', { guessNo, groupChatId, status });
-      touchDeadlinePoll(guessNo);
-      return;
-    }
-
-    if (!isGuessListItemSettled(item)) {
-      predictLog('announce.not_settled', { guessNo, groupChatId, status: item.status ?? null });
-      touchDeadlinePoll(guessNo);
-      return;
-    }
-
-    const result = parseGuessResult(item);
-    if (!result) {
-      predictLog('announce.result_pending', { guessNo, groupChatId, status: item.status ?? null });
-      touchDeadlinePoll(guessNo);
-      return;
-    }
-
-    const votes = detailRes.votes || [];
-    const statsRaw = parseGuessItemStats(item);
-    const languageCode = ctx.languageCode || 'zh';
-    const texts = getTexts(languageCode);
-
-    const mergedMeta = { ...ctx, ...buildGuessTimePatch(item) };
-
+  let announceOk = false;
+  let announceMessageId = null;
+  if (!ctx.resultAnnounceSentAt && groupChatId != null) {
     const sent = await sendGuessResultAnnouncement({
       telegram: botRef.telegram,
       groupChatId,
@@ -332,33 +267,132 @@ async function announceOneGuess(ctx) {
       statsRaw,
       texts,
     });
-
+    announceOk = sent.ok;
+    announceMessageId = sent.messageId ?? null;
     if (sent.ok) {
       markResultAnnounceSent(guessNo, sent.messageId);
-      markGuessSettled(guessNo, result);
-      patchGuessMessageContext(guessNo, buildGuessTimePatch(item));
-      predictLog('announce.sent', {
-        guessNo,
-        groupChatId,
-        result,
-        messageId: sent.messageId ?? null,
-        endPrice: item.endPrice ?? null,
-        voteCount: votes.length,
-      });
-    } else {
-      touchDeadlinePoll(guessNo);
-      predictLog('announce.send_fail', { guessNo, groupChatId, result });
     }
-  } catch (err) {
-    predictLog('announce.fail', { guessNo, groupChatId, message: err?.message || String(err) });
-    touchDeadlinePoll(guessNo);
-  } finally {
-    announceInFlight.delete(guessNo);
+  } else {
+    announceOk = true;
+    guessPollLog('announce_skip_already_sent', { guessNo, groupId });
   }
+
+  if (cardOk && announceOk) {
+    markGuessSettled(guessNo, result);
+    patchGuessMessageContext(guessNo, buildGuessTimePatch(item));
+  } else {
+    touchGuessListPoll(guessNo);
+    patchGuessMessageContext(guessNo, {
+      lastKnownStatus: newStatus,
+      ...buildGuessTimePatch(item),
+    });
+  }
+
+  guessPollLog('status_change_settled', {
+    guessNo,
+    groupId,
+    prevStatus,
+    newStatus,
+    result,
+    cardOk,
+    announceOk,
+    announceMessageId,
+    voteCount: votes.length,
+    endPrice: item.endPrice ?? null,
+  });
+}
+
+async function refreshOneGuessFromListItem(ctx, item) {
+  if (!configRef || !botRef) return;
+
+  const guessNo = String(ctx.guessNo || '').trim();
+  const groupId = ctx.groupId ?? ctx.chatId ?? null;
+  if (!guessNo) return;
+
+  const newStatus = resolveGuessPollStatus(item);
+  const prevStatus = ctx.lastKnownStatus || 'active';
+  const statusChanged = prevStatus !== newStatus;
+
+  guessPollLog('guess_poll', {
+    guessNo,
+    groupId,
+    prevStatus,
+    newStatus,
+    statusChanged,
+    rawStatus: item.status ?? null,
+    symbol: item.symbol ?? null,
+  });
+
+  if (!statusChanged) {
+    touchGuessListPoll(guessNo);
+    return;
+  }
+
+  const statsRaw = parseGuessItemStats(item);
+  const languageCode = ctx.languageCode || 'zh';
+  const texts = getTexts(languageCode);
+
+  if (isGuessListItemSettled(item) || newStatus === 'settled') {
+    await handleSettledTransition(ctx, item, prevStatus, newStatus);
+    return;
+  }
+
+  if (isGuessStatusLocked(item) || newStatus === 'locked') {
+    const ok = await applyGuessLockedRefreshFromDetail({
+      telegram: botRef.telegram,
+      chatId: ctx.chatId,
+      messageId: ctx.messageId,
+      hasPhoto: Boolean(ctx.hasPhoto),
+      meta: ctx,
+      item,
+      statsRaw,
+      texts,
+    });
+    patchGuessMessageContext(guessNo, {
+      lastListPollAt: Date.now(),
+      lastKnownStatus: 'locked',
+      ...buildGuessTimePatch(item),
+    });
+    guessPollLog('status_change_locked', {
+      guessNo,
+      groupId,
+      prevStatus,
+      newStatus,
+      cardOk: ok,
+      upCount: statsRaw?.upCount ?? null,
+      downCount: statsRaw?.downCount ?? null,
+    });
+    return;
+  }
+
+  const ok = await applyGuessActiveRefreshFromDetail({
+    telegram: botRef.telegram,
+    chatId: ctx.chatId,
+    messageId: ctx.messageId,
+    hasPhoto: Boolean(ctx.hasPhoto),
+    meta: ctx,
+    item,
+    statsRaw,
+    texts,
+    guessNo,
+  });
+  patchGuessMessageContext(guessNo, {
+    lastListPollAt: Date.now(),
+    lastKnownStatus: 'active',
+    ...buildGuessTimePatch(item),
+  });
+  guessPollLog('status_change_active', {
+    guessNo,
+    groupId,
+    prevStatus,
+    newStatus,
+    cardOk: ok,
+    upCount: statsRaw?.upCount ?? null,
+    downCount: statsRaw?.downCount ?? null,
+  });
 }
 
 module.exports = {
   initGuessSettlementWatcher,
   tickSettlement,
-  tickDeadlineAnnounce,
 };

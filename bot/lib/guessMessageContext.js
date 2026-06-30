@@ -1,11 +1,10 @@
 /**
- * 群内竞猜消息上下文（guessNo → 截止时间与展示元数据）
- * 持久化到 JSON 文件，Bot 重启后仍保留；截止后自动清理
+ * 群内竞猜消息上下文（guessNo → 消息定位与展示元数据）
+ * 持久化到 JSON 文件，Bot 重启后仍保留；结算后自动清理
  */
 
 const fs = require('fs');
 const path = require('path');
-const { parseGuessDateTimeMs } = require('./apis');
 
 const STORE_PATH =
   process.env.GUESS_CONTEXT_STORE_PATH ||
@@ -17,10 +16,6 @@ const PURGE_GRACE_MS = 24 * 60 * 60 * 1000;
 const contexts = new Map();
 let loaded = false;
 let saveTimer = null;
-
-function parseEndAtMs(endAt) {
-  return parseGuessDateTimeMs(endAt);
-}
 
 function ensureLoaded() {
   if (loaded) return;
@@ -82,7 +77,6 @@ function purgeExpired() {
  *   hours: number;
  *   price: string;
  *   lockedAtMs: number;
- *   endAt: string | number | null;
  *   betEndAt?: string | number | null;
  *   publisher: string;
  *   languageCode?: string;
@@ -92,10 +86,8 @@ function purgeExpired() {
  *   hasPhoto?: boolean;
  *   settledAt?: number | null;
  *   settledResult?: string | null;
- *   hourlyPollEnabled?: boolean;
- *   lastDetailPollAt?: number | null;
- *   deadlineWatchEnabled?: boolean;
- *   lastDeadlinePollAt?: number | null;
+ *   lastListPollAt?: number | null;
+ *   lastKnownStatus?: string | null;
  *   resultAnnounceSentAt?: number | null;
  *   resultAnnounceMessageId?: number | null;
  * }} data
@@ -111,7 +103,6 @@ function saveGuessMessageContext(guessNo, data) {
     hours: Number(data.hours) || prev.hours || 24,
     price: String(data.price || prev.price || '').trim(),
     lockedAtMs: Number(data.lockedAtMs) || prev.lockedAtMs || Date.now(),
-    endAt: data.endAt ?? prev.endAt ?? null,
     betEndAt: data.betEndAt ?? prev.betEndAt ?? null,
     publisher: String(data.publisher || prev.publisher || '').trim(),
     languageCode: String(data.languageCode || prev.languageCode || 'zh'),
@@ -121,11 +112,8 @@ function saveGuessMessageContext(guessNo, data) {
     hasPhoto: data.hasPhoto ?? prev.hasPhoto ?? false,
     settledAt: data.settledAt ?? prev.settledAt ?? null,
     settledResult: data.settledResult ?? prev.settledResult ?? null,
-    hourlyPollEnabled: data.hourlyPollEnabled ?? prev.hourlyPollEnabled ?? false,
-    lastDetailPollAt: data.lastDetailPollAt ?? prev.lastDetailPollAt ?? null,
-    deadlineWatchEnabled:
-      data.deadlineWatchEnabled ?? prev.deadlineWatchEnabled ?? Boolean(data.endAt ?? prev.endAt),
-    lastDeadlinePollAt: data.lastDeadlinePollAt ?? prev.lastDeadlinePollAt ?? null,
+    lastListPollAt: data.lastListPollAt ?? prev.lastListPollAt ?? null,
+    lastKnownStatus: data.lastKnownStatus ?? prev.lastKnownStatus ?? null,
     resultAnnounceSentAt: data.resultAnnounceSentAt ?? prev.resultAnnounceSentAt ?? null,
     resultAnnounceMessageId: data.resultAnnounceMessageId ?? prev.resultAnnounceMessageId ?? null,
     savedAt: prev.savedAt ?? Date.now(),
@@ -164,12 +152,6 @@ function getGuessMessageContext(guessNo) {
 }
 
 /** @param {string} guessNo */
-function getGuessEndAt(guessNo) {
-  const ctx = getGuessMessageContext(guessNo);
-  return ctx?.endAt ?? null;
-}
-
-/** @param {string} guessNo */
 function getGuessBetEndAt(guessNo) {
   const ctx = getGuessMessageContext(guessNo);
   return ctx?.betEndAt ?? null;
@@ -179,65 +161,54 @@ function getGuessBetEndAt(guessNo) {
 function listActiveGuessContexts() {
   ensureLoaded();
   purgeExpired();
-  const now = Date.now();
   const out = [];
   for (const [guessNo, ctx] of contexts) {
-    const endMs = parseEndAtMs(ctx.endAt);
-    if (endMs != null && now > endMs) continue;
-    out.push({ guessNo, ...ctx });
-  }
-  return out;
-}
-
-/** @returns {Array<{ guessNo: string } & object>} */
-function listPendingSettlement() {
-  ensureLoaded();
-  const now = Date.now();
-  const out = [];
-  for (const [guessNo, ctx] of contexts) {
-    if (!ctx || ctx.settledAt) continue;
-    const endMs = parseEndAtMs(ctx.endAt);
-    if (endMs == null || now < endMs) continue;
-    if (ctx.chatId == null || ctx.messageId == null) continue;
+    if (ctx?.settledAt) continue;
     out.push({ guessNo, ...ctx });
   }
   return out;
 }
 
 /**
- * 下注后启用、按间隔轮询 detail 的竞猜（未结算且有消息定位）
- * @param {number} pollIntervalMs
+ * 有待刷新消息、未结算的竞猜所在群 ID（去重）
+ * @returns {string[]}
  */
-function listHourlyPollTargets(pollIntervalMs) {
+function listDistinctPollGroupIds() {
   ensureLoaded();
   purgeExpired();
-  const now = Date.now();
-  const interval = Math.max(60_000, Number(pollIntervalMs) || 60 * 60 * 1000);
+  const ids = new Set();
+  for (const [, ctx] of contexts) {
+    if (ctx?.settledAt) continue;
+    if (ctx.chatId == null || ctx.messageId == null) continue;
+    const gid = ctx.groupId ?? ctx.chatId;
+    if (gid != null) ids.add(String(gid));
+  }
+  return [...ids];
+}
+
+/**
+ * 某群内未结算、可编辑消息的竞猜上下文
+ * @param {number | string} groupId
+ * @returns {Array<{ guessNo: string } & object>}
+ */
+function listUnsettledGuessContextsForGroup(groupId) {
+  ensureLoaded();
+  purgeExpired();
+  const gid = String(groupId);
   const out = [];
   for (const [guessNo, ctx] of contexts) {
-    if (!ctx?.hourlyPollEnabled || ctx.settledAt) continue;
+    if (ctx?.settledAt) continue;
     if (ctx.chatId == null || ctx.messageId == null) continue;
-    const last = Number(ctx.lastDetailPollAt) || 0;
-    if (last > 0 && now - last < interval) continue;
+    const ctxGid = String(ctx.groupId ?? ctx.chatId ?? '');
+    if (ctxGid !== gid) continue;
     out.push({ guessNo, ...ctx });
   }
   return out;
 }
 
-/** @param {string} guessNo
- * @param {{ chatId?: number | null; messageId?: number | null; hasPhoto?: boolean }} [patch]
- */
-function enableGuessHourlyPoll(guessNo, patch = {}) {
-  saveGuessMessageContext(guessNo, {
-    hourlyPollEnabled: true,
-    lastDetailPollAt: Date.now(),
-    ...patch,
-  });
-}
-
 /** @param {string} guessNo */
-function touchGuessDetailPoll(guessNo) {
-  patchGuessMessageContext(guessNo, { lastDetailPollAt: Date.now() });
+function touchGuessListPoll(guessNo) {
+  patchGuessMessageContext(guessNo, { lastListPollAt: Date.now() });
 }
 
 /**
@@ -250,35 +221,8 @@ function markGuessSettled(guessNo, result) {
   patchGuessMessageContext(key, {
     settledAt: Date.now(),
     settledResult: result,
+    lastKnownStatus: 'settled',
   });
-}
-
-/**
- * 截止后待推送结算公告的竞猜（已过期、未发过新消息、有目标群）
- * @param {number} pollIntervalMs
- */
-function listDeadlineAnnounceTargets(pollIntervalMs) {
-  ensureLoaded();
-  purgeExpired();
-  const now = Date.now();
-  const interval = Math.max(30_000, Number(pollIntervalMs) || 5 * 60 * 1000);
-  const out = [];
-  for (const [guessNo, ctx] of contexts) {
-    if (!ctx?.deadlineWatchEnabled || ctx.resultAnnounceSentAt) continue;
-    const groupChatId = ctx.groupId ?? ctx.chatId ?? null;
-    if (groupChatId == null) continue;
-    const endMs = parseEndAtMs(ctx.endAt);
-    if (endMs == null || now < endMs) continue;
-    const last = Number(ctx.lastDeadlinePollAt) || 0;
-    if (last > 0 && now - last < interval) continue;
-    out.push({ guessNo, ...ctx });
-  }
-  return out;
-}
-
-/** @param {string} guessNo */
-function touchDeadlinePoll(guessNo) {
-  patchGuessMessageContext(guessNo, { lastDeadlinePollAt: Date.now() });
 }
 
 /**
@@ -298,16 +242,11 @@ module.exports = {
   saveGuessMessageContext,
   patchGuessMessageContext,
   getGuessMessageContext,
-  getGuessEndAt,
   getGuessBetEndAt,
   listActiveGuessContexts,
-  listPendingSettlement,
-  listHourlyPollTargets,
-  enableGuessHourlyPoll,
-  touchGuessDetailPoll,
+  listDistinctPollGroupIds,
+  listUnsettledGuessContextsForGroup,
+  touchGuessListPoll,
   markGuessSettled,
-  listDeadlineAnnounceTargets,
-  touchDeadlinePoll,
   markResultAnnounceSent,
-  parseEndAtMs,
 };

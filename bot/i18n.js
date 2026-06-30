@@ -118,7 +118,7 @@ const i18n = {
     predictSettledWinnerDown: '📉 看跌方获胜！',
     predictSettledTopWinnersSection: (lines) => `\n🏆 中奖战绩 Top3:\n${lines}`,
     predictSettledTopWinnerLine: (nick, betAmount, payout, profitPct) =>
-      `${nick} 下注${betAmount} → 赢得 ${payout} (+${profitPct}%)`,
+      `${nick} 下注${betAmount} → 赢得 ${payout} (${profitPct}%)`,
     predictSettledResultUp: '✅ 结果：涨',
     predictSettledResultDown: '✅ 结果：跌',
     predictBetUp50Btn: '看涨 +50',
@@ -406,7 +406,7 @@ const i18n = {
     predictSettledWinnerDown: '📉 Bearish side wins!',
     predictSettledTopWinnersSection: (lines) => `\n🏆 Top 3 winners:\n${lines}`,
     predictSettledTopWinnerLine: (nick, betAmount, payout, profitPct) =>
-      `${nick} bet ${betAmount} → won ${payout} (+${profitPct}%)`,
+      `${nick} bet ${betAmount} → won ${payout} (${profitPct}%)`,
     predictSettledResultUp: '✅ Result: Up',
     predictSettledResultDown: '✅ Result: Down',
     predictBetUp50Btn: 'Bull +50',

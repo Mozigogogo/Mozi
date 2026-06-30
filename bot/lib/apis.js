@@ -2008,9 +2008,9 @@ function parseGuessStartAt(data) {
 }
 
 /**
- * 从竞猜 item 提取时间字段补丁（startAt→lockedAtMs, betEndAt, endAt）
+ * 从竞猜 item 提取时间字段补丁（startAt→lockedAtMs, betEndAt）
  * @param {object | null | undefined} item
- * @returns {{ lockedAtMs?: number; betEndAt?: string | number; endAt?: string | number }}
+ * @returns {{ lockedAtMs?: number; betEndAt?: string | number }}
  */
 function buildGuessTimeFieldsPatch(item) {
   const patch = {};
@@ -2019,7 +2019,6 @@ function buildGuessTimeFieldsPatch(item) {
   if (startMs != null) patch.lockedAtMs = startMs;
   const betEndAt = parseGuessBetEndAt(item);
   if (betEndAt != null) patch.betEndAt = betEndAt;
-  if (item.endAt != null) patch.endAt = item.endAt;
   return patch;
 }
 
@@ -2797,6 +2796,19 @@ function isGuessListItemSettled(item) {
   return parseGuessResult(item) != null;
 }
 
+/**
+ * 从 list/detail item 解析轮询用状态
+ * @param {object | null | undefined} item
+ * @returns {'active' | 'locked' | 'settled' | string}
+ */
+function resolveGuessPollStatus(item) {
+  if (!item || typeof item !== 'object') return 'unknown';
+  if (isGuessListItemSettled(item)) return 'settled';
+  if (isGuessStatusLocked(item)) return 'locked';
+  if (isGuessStatusActive(item)) return 'active';
+  return normalizeGuessStatus(item.status) || 'unknown';
+}
+
 module.exports = {
   fetchDetailHeader,
   fetchSearchLastPriceChange,
@@ -2836,6 +2848,7 @@ module.exports = {
   isGuessStatusLocked,
   isGuessBettingAllowed,
   isGuessListItemSettled,
+  resolveGuessPollStatus,
   parseGuessVotes,
   parseGuessVoteItem,
   parseCoinDirectionGuessDetail,
