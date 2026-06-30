@@ -171,8 +171,11 @@ const i18n = {
     predictListStatusActive: '进行中',
     predictListStatusLocked: '下注已截止',
     predictListStatusSettled: '已结算',
-    predictListItemLine: (sym, status, bullishPool, bullishCount, bearishPool, bearishCount, endAt, resultLine) =>
-      `<b>${sym}</b> · ${status}\n📈 ${bullishPool} 积分（${bullishCount}人） · 📉 ${bearishPool} 积分（${bearishCount}人）\n⏳ 结束时间：${endAt}${resultLine}`,
+    predictListItemLine: (sym, status, bullishPool, bullishCount, bearishPool, bearishCount, timeLine, resultLine) =>
+      `<b>${sym}</b> · ${status}\n📈 ${bullishPool} 积分（${bullishCount}人） · 📉 ${bearishPool} 积分（${bearishCount}人）\n${timeLine}${resultLine}`,
+    predictListBetDeadlineLine: (t) => `⏳ 下注截止：${t}`,
+    predictListSettlementWaitLine: (t) => `⏳ 等待结算：${t}`,
+    predictListEndTimeLine: (t) => `⏳ 结束时间：${t}`,
     predictListResultUp: '\n✅ 结果：涨',
     predictListResultDown: '\n✅ 结果：跌',
     helpBody: `🤖   Mozi AI 行情助手 · 指令说明
@@ -458,8 +461,11 @@ const i18n = {
     predictListStatusActive: 'Active',
     predictListStatusLocked: 'Betting closed',
     predictListStatusSettled: 'Settled',
-    predictListItemLine: (sym, status, bullishPool, bullishCount, bearishPool, bearishCount, endAt, resultLine) =>
-      `<b>${sym}</b> · ${status}\n📈 ${bullishPool} pts (${bullishCount}) · 📉 ${bearishPool} pts (${bearishCount})\n⏳ End time: ${endAt}${resultLine}`,
+    predictListItemLine: (sym, status, bullishPool, bullishCount, bearishPool, bearishCount, timeLine, resultLine) =>
+      `<b>${sym}</b> · ${status}\n📈 ${bullishPool} pts (${bullishCount}) · 📉 ${bearishPool} pts (${bearishCount})\n${timeLine}${resultLine}`,
+    predictListBetDeadlineLine: (t) => `⏳ Betting closes: ${t}`,
+    predictListSettlementWaitLine: (t) => `⏳ Settlement in: ${t}`,
+    predictListEndTimeLine: (t) => `⏳ End time: ${t}`,
     predictListResultUp: '\n✅ Result: Up',
     predictListResultDown: '\n✅ Result: Down',
     helpBody: `🤖 Mozi AI · Commands

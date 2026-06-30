@@ -5,6 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { parseGuessDateTimeMs } = require('./apis');
 
 const STORE_PATH =
   process.env.GUESS_CONTEXT_STORE_PATH ||
@@ -18,16 +19,7 @@ let loaded = false;
 let saveTimer = null;
 
 function parseEndAtMs(endAt) {
-  if (endAt == null || endAt === '') return null;
-  if (typeof endAt === 'number' && Number.isFinite(endAt)) {
-    return endAt < 1e12 ? endAt * 1000 : endAt;
-  }
-  const raw = String(endAt).trim();
-  if (!raw) return null;
-  const n = Number(raw);
-  if (Number.isFinite(n)) return n < 1e12 ? n * 1000 : n;
-  const parsed = Date.parse(raw);
-  return Number.isFinite(parsed) ? parsed : null;
+  return parseGuessDateTimeMs(endAt);
 }
 
 function ensureLoaded() {

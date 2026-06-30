@@ -15,6 +15,9 @@ const {
   parseGuessBetStats,
   parseGuessItemStats,
   parseGuessBetEndAt,
+  parseGuessStartAt,
+  buildGuessTimeFieldsPatch,
+  parseGuessDateTimeMs,
   parseGuessResult,
   normalizeGuessStatus,
   isGuessStatusActive,
@@ -62,16 +65,7 @@ function formatPredictDuration(hours) {
 }
 
 function parseEndAtMs(endAt) {
-  if (endAt == null || endAt === '') return null;
-  if (typeof endAt === 'number' && Number.isFinite(endAt)) {
-    return endAt < 1e12 ? endAt * 1000 : endAt;
-  }
-  const raw = String(endAt).trim();
-  if (!raw) return null;
-  const n = Number(raw);
-  if (Number.isFinite(n)) return n < 1e12 ? n * 1000 : n;
-  const parsed = Date.parse(raw);
-  return Number.isFinite(parsed) ? parsed : null;
+  return parseGuessDateTimeMs(endAt);
 }
 
 function formatEndAtDisplay(endAt, languageCode, referenceMs = Date.now()) {
@@ -224,9 +218,8 @@ function formatPublisherLabel(publishData, ctx) {
 function buildGroupPublishHtml(texts, meta, statsRaw) {
   const stats = normalizeGuessBetStats(statsRaw, meta.languageCode);
   const lockedAt = formatLockedAtDisplay(meta.lockedAtMs, meta.languageCode);
-  const betDeadlineRaw = meta.betEndAt ?? meta.endAt;
   const betDeadline =
-    betDeadlineRaw != null ? formatBetDeadlineDisplay(betDeadlineRaw, meta.languageCode) : '—';
+    meta.betEndAt != null ? formatBetDeadlineDisplay(meta.betEndAt, meta.languageCode) : '—';
   return texts.predictGroupPublishBody(
     escapeHtml(meta.sym),
     meta.hours,
@@ -510,6 +503,69 @@ async function editGuessMessageContent(ctx, chatId, messageId, html, keyboard, h
       reason: err?.response?.description || err?.message || String(err),
     });
     return false;
+  }
+}
+
+async function syncGuessPublishCardFromDetail({
+  telegram,
+  config,
+  guessNo,
+  texts,
+  messageMeta,
+  chatId,
+  messageId,
+  keyboard,
+  hasPhoto,
+}) {
+  const guess = String(guessNo || '').trim();
+  if (!guess || !config || chatId == null || messageId == null) return;
+
+  try {
+    const detailRes = await getCoinDirectionGuessDetail({
+      apiBaseUrl: config.API_BASE_URL,
+      appUrl: config.APP_URL,
+      guessNo: guess,
+      path: config.COIN_DIRECTION_GUESS_DETAIL_PATH,
+    });
+    if (!detailRes.ok || !detailRes.item) {
+      predictLog('publish.detail_sync_skip', {
+        guessNo: guess,
+        ok: detailRes.ok,
+        errorMessage: detailRes.errorMessage ?? null,
+      });
+      return;
+    }
+
+    const item = detailRes.item;
+    const patch = buildGuessTimeFieldsPatch(item);
+    if (Object.keys(patch).length) patchGuessMessageContext(guess, patch);
+
+    const meta = {
+      ...messageMeta,
+      ...buildMetaFromGuessItem(item, messageMeta.languageCode, messageMeta.publisher),
+      ...patch,
+    };
+    const statsRaw = parseGuessItemStats(item);
+    const html = buildGroupPublishHtml(texts, meta, statsRaw);
+    const ok = await editTelegramGuessMessage(
+      telegram,
+      chatId,
+      messageId,
+      html,
+      keyboard,
+      hasPhoto,
+    );
+    predictLog('publish.detail_sync', {
+      guessNo: guess,
+      ok,
+      betEndAt: patch.betEndAt ?? null,
+      endAt: patch.endAt ?? null,
+    });
+  } catch (err) {
+    predictLog('publish.detail_sync_fail', {
+      guessNo: guess,
+      message: err?.message || String(err),
+    });
   }
 }
 
@@ -1356,7 +1412,7 @@ async function publishPredict(ctx, config, getTexts) {
   const publishData =
     apiResult.publishData ?? parseCoinDirectionGuessPublishData(apiResult.json);
   const publisher = formatPublisherLabel(publishData, ctx);
-  const lockedAtMs = Date.now();
+  const lockedAtMs = parseGuessDateTimeMs(publishData.startAt) ?? Date.now();
   const messageMeta = {
     sym,
     hours,
@@ -1390,6 +1446,7 @@ async function publishPredict(ctx, config, getTexts) {
     hasAvatar: Boolean(avatarUrl),
     endAt: publishData.endAt ?? null,
     betEndAt: publishData.betEndAt ?? null,
+    startAt: publishData.startAt ?? null,
     customVote: true,
   });
 
@@ -1455,6 +1512,17 @@ async function publishPredict(ctx, config, getTexts) {
       hasPhoto: Boolean(avatarUrl),
     });
     await bindCoinDirectionGuessMessage(ctx, config, { guessNo, tgMessageId });
+    await syncGuessPublishCardFromDetail({
+      telegram: ctx.telegram,
+      config,
+      guessNo,
+      texts,
+      messageMeta,
+      chatId: publishChatId,
+      messageId: tgMessageId,
+      keyboard: betKeyboard,
+      hasPhoto: Boolean(avatarUrl),
+    });
   } else {
     predictLog('bind.api.skip', {
       uid,
@@ -1496,9 +1564,10 @@ function buildMetaFromGuessItem(item, languageCode, publisher = '—') {
     sym,
     hours,
     price,
-    lockedAtMs: parseEndAtMs(item.startAt) ?? Date.now(),
+    lockedAtMs: parseGuessDateTimeMs(parseGuessStartAt(item)) ?? Date.now(),
     endAt: item.endAt ?? null,
     betEndAt: parseGuessBetEndAt(item),
+    startAt: parseGuessStartAt(item),
     publisher,
     languageCode: languageCode || 'zh',
     groupId: item.groupId ?? null,
@@ -1510,19 +1579,15 @@ function syncGuessDeadlinesFromItems(items, languageCode, groupId) {
     const guessNo = String(item.guessNo || '').trim();
     if (!guessNo) continue;
     const prev = getGuessMessageContext(guessNo);
-    const betEndAt = parseGuessBetEndAt(item);
-    if (item.endAt != null || betEndAt != null) {
-      if (prev) {
-        const patch = {};
-        if (item.endAt != null) patch.endAt = item.endAt;
-        if (betEndAt != null) patch.betEndAt = betEndAt;
-        patchGuessMessageContext(guessNo, patch);
-      } else {
-        saveGuessMessageContext(guessNo, {
-          ...buildMetaFromGuessItem(item, languageCode, '—'),
-          groupId: groupId ?? item.groupId ?? null,
-        });
-      }
+    const patch = buildGuessTimeFieldsPatch(item);
+    if (!Object.keys(patch).length) continue;
+    if (prev) {
+      patchGuessMessageContext(guessNo, patch);
+    } else {
+      saveGuessMessageContext(guessNo, {
+        ...buildMetaFromGuessItem(item, languageCode, '—'),
+        groupId: groupId ?? item.groupId ?? null,
+      });
     }
   }
 }
@@ -1544,28 +1609,6 @@ async function resolveGuessBetEndAtMs(config, guessNo, groupId) {
     if (!item) return null;
     syncGuessDeadlinesFromItems([item], 'zh', groupId);
     return parseEndAtMs(parseGuessBetEndAt(item));
-  } catch {
-    return null;
-  }
-}
-
-async function resolveGuessEndAtMs(config, guessNo, groupId) {
-  const stored = getGuessEndAt(guessNo);
-  let endMs = parseEndAtMs(stored);
-  if (endMs != null) return endMs;
-  if (!config || groupId == null) return null;
-  try {
-    const listRes = await getCoinDirectionGuessList({
-      apiBaseUrl: config.API_BASE_URL,
-      appUrl: config.APP_URL,
-      groupId,
-      path: config.COIN_DIRECTION_GUESS_LIST_PATH,
-    });
-    if (!listRes.ok) return null;
-    const item = listRes.items.find((i) => String(i.guessNo || '').trim() === guessNo) || null;
-    if (!item) return null;
-    syncGuessDeadlinesFromItems([item], 'zh', groupId);
-    return parseEndAtMs(item.endAt);
   } catch {
     return null;
   }
@@ -1693,20 +1736,13 @@ async function tryRefreshGuessMessage(ctx, config, texts, guessNo, betResult) {
 
   const endAtSource = detailItem ?? fallbackItem;
   if (endAtSource) {
-    const patch = {};
-    if (endAtSource.endAt != null) patch.endAt = endAtSource.endAt;
-    const betEndAt = parseGuessBetEndAt(endAtSource);
-    if (betEndAt != null) patch.betEndAt = betEndAt;
+    const patch = buildGuessTimeFieldsPatch(endAtSource);
     if (Object.keys(patch).length) {
       patchGuessMessageContext(guess, patch);
       if (meta) meta = { ...meta, ...patch };
     }
   } else if (betResult?.json?.data) {
-    const data = betResult.json.data;
-    const patch = {};
-    if (data.endAt != null) patch.endAt = data.endAt;
-    const betEndAt = parseGuessBetEndAt(data);
-    if (betEndAt != null) patch.betEndAt = betEndAt;
+    const patch = buildGuessTimeFieldsPatch(betResult.json.data);
     if (Object.keys(patch).length) {
       patchGuessMessageContext(guess, patch);
       if (meta) meta = { ...meta, ...patch };
@@ -2248,6 +2284,26 @@ function formatGuessListPoints(points, languageCode) {
   return isZh ? n.toLocaleString('zh-CN') : n.toLocaleString('en-US');
 }
 
+function formatGuessListTimeLine(texts, item, languageCode) {
+  const status = normalizeGuessStatus(item.status);
+  const startMs = parseGuessDateTimeMs(parseGuessStartAt(item)) ?? Date.now();
+
+  if (status === 'active') {
+    const betEndAt = parseGuessBetEndAt(item);
+    const display =
+      betEndAt != null ? formatBetDeadlineDisplay(betEndAt, languageCode) : '—';
+    return texts.predictListBetDeadlineLine(escapeHtml(display));
+  }
+  if (status === 'locked') {
+    const display =
+      item.endAt != null ? formatSettlementWaitDisplay(item.endAt, languageCode) : '—';
+    return texts.predictListSettlementWaitLine(escapeHtml(display));
+  }
+  const display =
+    item.endAt != null ? formatEndAtDisplay(item.endAt, languageCode, startMs) : '—';
+  return texts.predictListEndTimeLine(escapeHtml(display));
+}
+
 function buildGuessListHtml(texts, items, languageCode) {
   if (!items.length) return texts.predictListEmpty;
   const lines = [texts.predictListTitle(items.length), ''];
@@ -2260,12 +2316,7 @@ function buildGuessListHtml(texts, items, languageCode) {
     const bearishPool = formatGuessListPoints(item.bearishPool, languageCode);
     const bullishCount = Number(item.bullishCount) || 0;
     const bearishCount = Number(item.bearishCount) || 0;
-    const statusKey = normalizeGuessStatus(item.status);
-    const refMs =
-      statusKey === 'settled' || statusKey === 'locked'
-        ? parseEndAtMs(item.startAt) ?? Date.now()
-        : Date.now();
-    const endAt = escapeHtml(formatEndAtDisplay(item.endAt, languageCode, refMs));
+    const timeLine = formatGuessListTimeLine(texts, item, languageCode);
     const resultLine = formatGuessListResultLine(texts, item.result);
     lines.push(
       texts.predictListItemLine(
@@ -2275,7 +2326,7 @@ function buildGuessListHtml(texts, items, languageCode) {
         bullishCount,
         bearishPool,
         bearishCount,
-        endAt,
+        timeLine,
         resultLine,
       ),
     );

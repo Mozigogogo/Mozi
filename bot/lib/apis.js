@@ -1958,6 +1958,34 @@ function parseCoinDirectionGuessNo(json) {
 }
 
 /**
+ * 竞猜接口时间字段：无时区的 ISO 字符串按 Asia/Shanghai（+08:00）解析
+ * @param {string | number | null | undefined} value
+ * @returns {number | null}
+ */
+function parseGuessDateTimeMs(value) {
+  if (value == null || value === '') return null;
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value < 1e12 ? value * 1000 : value;
+  }
+  const raw = String(value).trim();
+  if (!raw) return null;
+  const n = Number(raw);
+  if (Number.isFinite(n)) return n < 1e12 ? n * 1000 : n;
+  const hasTz = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(raw);
+  const isoDateTime = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(raw);
+  if (isoDateTime && !hasTz) {
+    const base = raw.replace(/\.\d+$/, '');
+    const withSeconds = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(base)
+      ? base
+      : `${base}:00`;
+    const parsed = Date.parse(`${withSeconds}+08:00`);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  const parsed = Date.parse(raw);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+/**
  * @param {object | null | undefined} data
  * @returns {string | number | null}
  */
@@ -1969,11 +1997,39 @@ function parseGuessBetEndAt(data) {
 }
 
 /**
+ * @param {object | null | undefined} data
+ * @returns {string | number | null}
+ */
+function parseGuessStartAt(data) {
+  if (!data || typeof data !== 'object') return null;
+  const raw = data.startAt ?? data.start_at ?? null;
+  if (raw == null || String(raw).trim() === '') return null;
+  return raw;
+}
+
+/**
+ * 从竞猜 item 提取时间字段补丁（startAt→lockedAtMs, betEndAt, endAt）
+ * @param {object | null | undefined} item
+ * @returns {{ lockedAtMs?: number; betEndAt?: string | number; endAt?: string | number }}
+ */
+function buildGuessTimeFieldsPatch(item) {
+  const patch = {};
+  if (!item || typeof item !== 'object') return patch;
+  const startMs = parseGuessDateTimeMs(parseGuessStartAt(item));
+  if (startMs != null) patch.lockedAtMs = startMs;
+  const betEndAt = parseGuessBetEndAt(item);
+  if (betEndAt != null) patch.betEndAt = betEndAt;
+  if (item.endAt != null) patch.endAt = item.endAt;
+  return patch;
+}
+
+/**
  * @param {object | null} json
  * @returns {{
  *   guessNo: string | null;
  *   nickName: string | null;
  *   avatar: string | null;
+ *   startAt: string | number | null;
  *   endAt: string | number | null;
  *   betEndAt: string | number | null;
  * }}
@@ -1981,7 +2037,7 @@ function parseGuessBetEndAt(data) {
 function parseCoinDirectionGuessPublishData(json) {
   const guessNo = parseCoinDirectionGuessNo(json);
   if (!json || typeof json !== 'object') {
-    return { guessNo, nickName: null, avatar: null, endAt: null, betEndAt: null };
+    return { guessNo, nickName: null, avatar: null, startAt: null, endAt: null, betEndAt: null };
   }
   const data =
     json.data != null && typeof json.data === 'object'
@@ -1989,12 +2045,14 @@ function parseCoinDirectionGuessPublishData(json) {
       : json;
   const nickName = data.nickName ?? data.nickname ?? data.nick_name ?? null;
   const avatar = data.avatar ?? data.avatarUrl ?? data.avatar_url ?? null;
+  const startAt = parseGuessStartAt(data);
   const endAt = data.endAt ?? data.end_at ?? null;
   const betEndAt = parseGuessBetEndAt(data);
   return {
     guessNo,
     nickName: nickName != null && String(nickName).trim() ? String(nickName).trim() : null,
     avatar: avatar != null && String(avatar).trim() ? String(avatar).trim() : null,
+    startAt,
     endAt: endAt != null && String(endAt).trim() ? endAt : null,
     betEndAt,
   };
@@ -2104,6 +2162,7 @@ async function postCoinDirectionGuessPublish({
       hasAvatar: Boolean(publishData.avatar),
       endAt: publishData.endAt,
       betEndAt: publishData.betEndAt,
+      startAt: publishData.startAt,
       jsonCode: json && typeof json === 'object' ? json.code : null,
       errorMessage: out.errorMessage,
       bodyPreview: text.slice(0, 500),
@@ -2764,6 +2823,9 @@ module.exports = {
   parseCoinDirectionGuessNo,
   parseCoinDirectionGuessPublishData,
   parseGuessBetEndAt,
+  parseGuessStartAt,
+  buildGuessTimeFieldsPatch,
+  parseGuessDateTimeMs,
   parseCoinDirectionGuessList,
   parseGuessVoteCounts,
   parseGuessBetStats,

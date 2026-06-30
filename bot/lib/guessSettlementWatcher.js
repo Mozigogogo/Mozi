@@ -12,7 +12,7 @@
 const {
   getCoinDirectionGuessDetail,
   parseGuessItemStats,
-  parseGuessBetEndAt,
+  buildGuessTimeFieldsPatch,
   parseGuessResult,
   normalizeGuessStatus,
   isGuessStatusLocked,
@@ -37,11 +37,7 @@ const {
 const { predictLog } = require('./predictDebug');
 
 function buildGuessTimePatch(item) {
-  const patch = {};
-  if (item?.endAt != null) patch.endAt = item.endAt;
-  const betEndAt = parseGuessBetEndAt(item);
-  if (betEndAt != null) patch.betEndAt = betEndAt;
-  return patch;
+  return buildGuessTimeFieldsPatch(item);
 }
 
 /** @type {import('telegraf').Telegraf | null} */
