@@ -112,7 +112,6 @@ export function pickAlertConfigFromDatainfo(datainfo) {
     datainfo.phoneEnabled != null ||
     datainfo.emailEnabled != null ||
     datainfo.smsEnabled != null ||
-    datainfo.defaultEnabled != null ||
     datainfo.webhookEnabled != null ||
     datainfo.webhookUrls != null ||
     datainfo.alertFrequency != null;
@@ -128,7 +127,6 @@ export function pickAlertConfigFromDatainfo(datainfo) {
   if (datainfo.phoneEnabled != null) out.phoneEnabled = datainfo.phoneEnabled;
   if (datainfo.emailEnabled != null) out.emailEnabled = datainfo.emailEnabled;
   if (datainfo.smsEnabled != null) out.smsEnabled = datainfo.smsEnabled;
-  if (datainfo.defaultEnabled != null) out.defaultEnabled = datainfo.defaultEnabled;
   if (datainfo.webhookEnabled != null) out.webhookEnabled = datainfo.webhookEnabled;
   if (Array.isArray(datainfo.webhookUrls)) out.webhookUrls = datainfo.webhookUrls;
   if (datainfo.alertFrequency != null) out.alertFrequency = datainfo.alertFrequency;

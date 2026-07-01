@@ -64,15 +64,12 @@ function PCAlarmContent() {
   const [spreadMonitor, setSpreadMonitor] = useState(false);
   const [phoneEnabled, setPhoneEnabled] = useState(true);
   const [emailEnabled, setEmailEnabled] = useState(true);
-  const [inAppEnabled, setInAppEnabled] = useState(false);
   const [smsEnabled, setSmsEnabled] = useState(false);
   const [countryCode, setCountryCode] = useState('+86');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [webhookEnabled, setWebhookEnabled] = useState(false);
   const [webhookUrls, setWebhookUrls] = useState(['']);
-  const [wechatEnabled, setWechatEnabled] = useState(false);
-  const [telegramEnabled, setTelegramEnabled] = useState(false);
   const [alertFrequency, setAlertFrequency] = useState('daily');
   const [webhookError, setWebhookError] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -588,7 +585,6 @@ function PCAlarmContent() {
     if (spreadMonitor) content.exchangeSpread = '';
     if (phoneEnabled) content.phoneOn = true;
     if (emailEnabled) content.emailOn = true;
-    if (inAppEnabled) content.appOn = true;
     try {
       const { getAppChannel } = await import('@/utils/core');
       const channel = getAppChannel();
@@ -636,7 +632,6 @@ function PCAlarmContent() {
       if (cfg?.alertEmail) setEmail(String(cfg.alertEmail));
       if (cfg?.phoneEnabled !== undefined) setPhoneEnabled(Number(cfg.phoneEnabled) === 1);
       if (cfg?.emailEnabled !== undefined) setEmailEnabled(Number(cfg.emailEnabled) === 1);
-      if (cfg?.defaultEnabled !== undefined) setInAppEnabled(Number(cfg.defaultEnabled) === 1);
       if (cfg?.smsEnabled !== undefined) setSmsEnabled(Number(cfg.smsEnabled) === 1);
       if (cfg?.webhookEnabled !== undefined) setWebhookEnabled(isAlertFlagOn(cfg.webhookEnabled));
       setWebhookUrls(parseWebhookUrlsFromConfig(cfg));
@@ -714,7 +709,6 @@ function PCAlarmContent() {
         phoneEnabled: phoneEnabled ? 1 : 0,
         emailEnabled: emailEnabled ? 1 : 0,
         smsEnabled: smsEnabled ? 1 : 0,
-        defaultEnabled: inAppEnabled ? 1 : 0,
         webhookEnabled: webhookEnabled ? 1 : 0,
         webhookUrls: webhookCheck.urls,
         alertFrequency: alertFrequencyToApi(alertFrequency),
@@ -1148,54 +1142,6 @@ function PCAlarmContent() {
               </div>
               <p className={styles.sideFieldHint}>{t('oneClickAlarm.webhookHint')}</p>
               {webhookError && <div className={styles.sideFieldError}>{webhookError}</div>}
-
-              <div className={styles.sideItem}>
-                <div className={styles.sideItemLabelCol}>
-                  <div className={styles.sideItemLabel}>
-                    <img src={`${ALERT_ICON_CDN}/wechat_alert.svg`} alt="" aria-hidden className={styles.sideItemIcon} />
-                    <span>{t('oneClickAlarm.wechatAlarm', { defaultValue: '微信告警' })}</span>
-                  </div>
-                  <span className={styles.sideItemSub}>{t('oneClickAlarm.wechatHint')}</span>
-                </div>
-                <Switch
-                  className={styles.compactSwitch}
-                  checked={wechatEnabled}
-                  onChange={setWechatEnabled}
-                  style={{ '--checked-color': '#11B787' }}
-                />
-              </div>
-
-              <div className={styles.sideItem}>
-                <div className={styles.sideItemLabelCol}>
-                  <div className={styles.sideItemLabel}>
-                    <img src={`${ALERT_ICON_CDN}/tgbot_alert.svg`} alt="" aria-hidden className={styles.sideItemIcon} />
-                    <span>{t('oneClickAlarm.telegramBot', { defaultValue: 'Telegram bot' })}</span>
-                  </div>
-                  <span className={styles.sideItemSub}>{t('oneClickAlarm.telegramHint')}</span>
-                </div>
-                <Switch
-                  className={styles.compactSwitch}
-                  checked={telegramEnabled}
-                  onChange={setTelegramEnabled}
-                  style={{ '--checked-color': '#11B787' }}
-                />
-              </div>
-
-              <div className={styles.sideItem}>
-                <div className={styles.sideItemLabelCol}>
-                  <div className={styles.sideItemLabel}>
-                    <img src={`${CDN_PUBLIC_PREFIX}/icons/new_detail/push.svg`} alt="" aria-hidden className={styles.sideItemIcon} />
-                    <span>{t('oneClickAlarm.popupAlarm', { defaultValue: '显示弹窗通知' })}</span>
-                  </div>
-                  <span className={styles.sideItemSub}>{t('oneClickAlarm.popupHint')}</span>
-                </div>
-                <Switch
-                  className={styles.compactSwitch}
-                  checked={inAppEnabled}
-                  onChange={setInAppEnabled}
-                  style={{ '--checked-color': '#11B787' }}
-                />
-              </div>
 
               <div className={styles.freqSection}>
                 <div className={styles.freqTitle}>{t('oneClickAlarm.freqTitle', { defaultValue: '预警频次' })}</div>

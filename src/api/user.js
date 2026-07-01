@@ -558,20 +558,19 @@ export const createAlertConfig = async (config) => {
       phoneEnabled,
       emailEnabled,
       smsEnabled,
-      defaultEnabled,
     } = config;
     const smsOn = smsEnabled === 1 ? 1 : 0;
     const phoneTrim = alertPhone != null ? String(alertPhone).trim() : '';
     const ccTrim = alertPhoneCountryCode != null ? String(alertPhoneCountryCode).trim() : '';
 
     // 验证必填字段
-    if (phoneEnabled === undefined || emailEnabled === undefined || defaultEnabled === undefined) {
-      console.error('❌ 缺少必填字段: phoneEnabled, emailEnabled, defaultEnabled');
+    if (phoneEnabled === undefined || emailEnabled === undefined) {
+      console.error('❌ 缺少必填字段: phoneEnabled, emailEnabled');
       return { success: false, error: '缺少必填字段' };
     }
 
     // 验证开关值
-    if (![0, 1].includes(phoneEnabled) || ![0, 1].includes(emailEnabled) || ![0, 1].includes(defaultEnabled)) {
+    if (![0, 1].includes(phoneEnabled) || ![0, 1].includes(emailEnabled)) {
       console.error('❌ 开关值必须为 0 或 1');
       return { success: false, error: '开关值必须为 0 或 1' };
     }
@@ -621,7 +620,9 @@ export const createAlertConfig = async (config) => {
     }
 
     // 调用接口
-    const res = await addAlertConfig(config);
+    const payload = { ...config };
+    delete payload.defaultEnabled;
+    const res = await addAlertConfig(payload);
     
     if (res?.code === 0 && res?.data) {
       console.log('✅ 新增告警配置成功:', res.data);
@@ -694,7 +695,6 @@ export const modifyAlertConfig = async (config) => {
       phoneEnabled,
       emailEnabled,
       smsEnabled,
-      defaultEnabled,
     } = config;
     const smsOn =
       Object.prototype.hasOwnProperty.call(config, 'smsEnabled') && config.smsEnabled === 1 ? 1 : 0;
@@ -702,13 +702,13 @@ export const modifyAlertConfig = async (config) => {
     const ccTrim = alertPhoneCountryCode != null ? String(alertPhoneCountryCode).trim() : '';
 
     // 验证必填字段
-    if (phoneEnabled === undefined || emailEnabled === undefined || defaultEnabled === undefined) {
-      console.error('❌ 缺少必填字段: phoneEnabled, emailEnabled, defaultEnabled');
+    if (phoneEnabled === undefined || emailEnabled === undefined) {
+      console.error('❌ 缺少必填字段: phoneEnabled, emailEnabled');
       return { success: false, error: '缺少必填字段' };
     }
 
     // 验证开关值
-    if (![0, 1].includes(phoneEnabled) || ![0, 1].includes(emailEnabled) || ![0, 1].includes(defaultEnabled)) {
+    if (![0, 1].includes(phoneEnabled) || ![0, 1].includes(emailEnabled)) {
       console.error('❌ 开关值必须为 0 或 1');
       return { success: false, error: '开关值必须为 0 或 1' };
     }
@@ -772,7 +772,9 @@ export const modifyAlertConfig = async (config) => {
     }
 
     // 调用接口
-    const res = await updateAlertConfig(config);
+    const payload = { ...config };
+    delete payload.defaultEnabled;
+    const res = await updateAlertConfig(payload);
     
     if (res?.code === 0 && res?.data) {
       console.log('✅ 修改告警配置成功:', res.data);

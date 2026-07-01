@@ -57,23 +57,9 @@ function WebhookLinkIcon() {
   return <img src={alertIconUrl('hook_alert.svg')} alt="" width="24" height="24" />;
 }
 
-function WeChatBrandIcon() {
-  return <img src={alertIconUrl('wechat_alert.svg')} alt="" width="24" height="24" />;
-}
-
-function TelegramBotIcon() {
-  return <img src={alertIconUrl('tgbot_alert.svg')} alt="" width="24" height="24" />;
-}
-
 function MailAlarmIcon() {
   return (
     <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/email.svg" alt="email" width="24" height="24" />
-  );
-}
-
-function PushAlarmIcon() {
-  return (
-    <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/push.svg" alt="push" width="24" height="24" />
   );
 }
 
@@ -144,7 +130,6 @@ export default function OneClickAlarmModal({
       emailEnabled: false,
       email: '',
       smsEnabled: false,
-      pushEnabled: false,
       ...(initialValue || {}),
     }),
     [initialValue]
@@ -156,11 +141,8 @@ export default function OneClickAlarmModal({
   const [emailEnabled, setEmailEnabled] = useState(init.emailEnabled);
   const [email, setEmail] = useState(init.email);
   const [smsEnabled, setSmsEnabled] = useState(init.smsEnabled);
-  const [pushEnabled, setPushEnabled] = useState(init.pushEnabled);
   const [webhookEnabled, setWebhookEnabled] = useState(false);
   const [webhookUrls, setWebhookUrls] = useState(['']);
-  const [wechatEnabled, setWechatEnabled] = useState(false);
-  const [telegramEnabled, setTelegramEnabled] = useState(false);
   const [alertFrequency, setAlertFrequency] = useState('daily');
   const [webhookError, setWebhookError] = useState('');
 
@@ -239,9 +221,6 @@ export default function OneClickAlarmModal({
           if (alertConfig.emailEnabled !== undefined) {
             setEmailEnabled(alertConfig.emailEnabled === 1);
           }
-          if (alertConfig.defaultEnabled !== undefined) {
-            setPushEnabled(alertConfig.defaultEnabled === 1);
-          }
           if (alertConfig.smsEnabled !== undefined) {
             setSmsEnabled(alertConfig.smsEnabled === 1);
           }
@@ -261,8 +240,6 @@ export default function OneClickAlarmModal({
               if (typeof legacy.webhookEnabled === 'boolean') setWebhookEnabled(legacy.webhookEnabled);
               const legacyUrls = parseWebhookUrlsFromConfig(legacy);
               if (legacyUrls.length > 1 || legacyUrls[0]) setWebhookUrls(legacyUrls);
-              if (typeof legacy.wechatEnabled === 'boolean') setWechatEnabled(legacy.wechatEnabled);
-              if (typeof legacy.telegramEnabled === 'boolean') setTelegramEnabled(legacy.telegramEnabled);
               if (legacy.alertFrequency) {
                 setAlertFrequency(alertFrequencyFromApi(legacy.alertFrequency));
               }
@@ -470,7 +447,6 @@ export default function OneClickAlarmModal({
         phoneEnabled: phoneEnabled ? 1 : 0,
         emailEnabled: emailEnabled ? 1 : 0,
         smsEnabled: smsEnabled ? 1 : 0,
-        defaultEnabled: pushEnabled ? 1 : 0,
         webhookEnabled: webhookEnabled ? 1 : 0,
         webhookUrls: webhookCheck.urls,
         alertFrequency: alertFrequencyToApi(alertFrequency),
@@ -514,7 +490,6 @@ export default function OneClickAlarmModal({
           emailEnabled,
           email,
           smsEnabled,
-          pushEnabled,
         });
         
         // 延迟关闭弹窗
@@ -979,51 +954,6 @@ export default function OneClickAlarmModal({
                 </div>
                 <p className={styles.fieldHint}>{t('oneClickAlarm.webhookHint')}</p>
                 {webhookError && <div className={styles.errorText}>{webhookError}</div>}
-
-                <div className={styles.notifyRow}>
-                  <div className={styles.notifyRowInner}>
-                    <div className={styles.notifyRowLeft}>
-                      <span className={styles.notifyIconWrap}>
-                        <WeChatBrandIcon />
-                      </span>
-                      <div className={styles.notifyTextCol}>
-                        <span className={styles.rowLabel}>{t('oneClickAlarm.wechatAlarm')}</span>
-                        <span className={styles.rowSub}>{t('oneClickAlarm.wechatHint')}</span>
-                      </div>
-                    </div>
-                    <Toggle checked={wechatEnabled} onChange={setWechatEnabled} />
-                  </div>
-                </div>
-
-                <div className={styles.notifyRow}>
-                  <div className={styles.notifyRowInner}>
-                    <div className={styles.notifyRowLeft}>
-                      <span className={styles.notifyIconWrap}>
-                        <TelegramBotIcon />
-                      </span>
-                      <div className={styles.notifyTextCol}>
-                        <span className={styles.rowLabel}>{t('oneClickAlarm.telegramBot')}</span>
-                        <span className={styles.rowSub}>{t('oneClickAlarm.telegramHint')}</span>
-                      </div>
-                    </div>
-                    <Toggle checked={telegramEnabled} onChange={setTelegramEnabled} />
-                  </div>
-                </div>
-
-                <div className={styles.notifyRow}>
-                  <div className={styles.notifyRowInner}>
-                    <div className={styles.notifyRowLeft}>
-                      <span className={styles.notifyIconWrap}>
-                        <PushAlarmIcon />
-                      </span>
-                      <div className={styles.notifyTextCol}>
-                        <span className={styles.rowLabel}>{t('oneClickAlarm.popupAlarm')}</span>
-                        <span className={styles.rowSub}>{t('oneClickAlarm.popupHint')}</span>
-                      </div>
-                    </div>
-                    <Toggle checked={pushEnabled} onChange={setPushEnabled} />
-                  </div>
-                </div>
 
                 <div className={styles.freqSection}>
                   <div className={styles.freqTitle}>{t('oneClickAlarm.freqTitle')}</div>
