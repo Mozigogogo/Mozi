@@ -1943,7 +1943,8 @@
       "businessMailSubject": "商务合作咨询",
       "inviteRewards": "邀请奖励",
       "helpCenter": "帮助中心",
-      "videoGuides": "Video Guides"
+      "videoGuides": "Video Guides",
+      "copyright": "Copyright © {{startYear}} – {{endYear}} MoziInnovations 版权所有"
     },
     "user": {
       "notLoggedIn": "未登录",

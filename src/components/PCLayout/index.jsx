@@ -776,12 +776,6 @@ export default function PCLayout({ children }) {
     router.push('/achievement');
   }, [router]);
 
-  const goToVideoGuides = useCallback(() => {
-    setActiveContent(null);
-    setShowSearchResults(false);
-    router.push('/');
-  }, [router]);
-
   const pcFooterLinkRows = useMemo(
     () => [
       [
@@ -796,11 +790,8 @@ export default function PCLayout({ children }) {
         { key: 'inviteRewards', label: t('pcLayout.footer.inviteRewards'), action: goToInviteRewards },
         { key: 'helpCenter', label: t('pcLayout.footer.helpCenter'), href: '/pc/help' },
       ],
-      [
-        { key: 'videoGuides', label: t('pcLayout.footer.videoGuides'), action: goToVideoGuides },
-      ],
     ],
-    [businessCooperationMailto, goToInviteRewards, goToVideoGuides, t]
+    [businessCooperationMailto, goToInviteRewards, t]
   );
 
   const pcFooterSocialLinks = useMemo(
@@ -1519,6 +1510,9 @@ export default function PCLayout({ children }) {
                     </a>
                   ))}
                 </div>
+                <p className={styles.footerCopyright}>
+                  {t('pcLayout.footer.copyright', { startYear: 2024, endYear: new Date().getFullYear() })}
+                </p>
               </div>
             )}
           </ConfigProvider>
