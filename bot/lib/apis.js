@@ -2008,9 +2008,9 @@ function parseGuessStartAt(data) {
 }
 
 /**
- * 从竞猜 item 提取时间字段补丁（startAt→lockedAtMs, betEndAt）
+ * 从竞猜 item 提取时间字段补丁（startAt→lockedAtMs, betEndAt, endAt）
  * @param {object | null | undefined} item
- * @returns {{ lockedAtMs?: number; betEndAt?: string | number }}
+ * @returns {{ lockedAtMs?: number; betEndAt?: string | number; endAt?: string | number }}
  */
 function buildGuessTimeFieldsPatch(item) {
   const patch = {};
@@ -2019,6 +2019,8 @@ function buildGuessTimeFieldsPatch(item) {
   if (startMs != null) patch.lockedAtMs = startMs;
   const betEndAt = parseGuessBetEndAt(item);
   if (betEndAt != null) patch.betEndAt = betEndAt;
+  const endAt = item.endAt ?? item.end_at ?? null;
+  if (endAt != null && String(endAt).trim()) patch.endAt = endAt;
   return patch;
 }
 

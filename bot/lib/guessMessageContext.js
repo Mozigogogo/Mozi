@@ -78,6 +78,7 @@ function purgeExpired() {
  *   price: string;
  *   lockedAtMs: number;
  *   betEndAt?: string | number | null;
+ *   endAt?: string | number | null;
  *   publisher: string;
  *   languageCode?: string;
  *   groupId?: number | string | null;
@@ -104,6 +105,7 @@ function saveGuessMessageContext(guessNo, data) {
     price: String(data.price || prev.price || '').trim(),
     lockedAtMs: Number(data.lockedAtMs) || prev.lockedAtMs || Date.now(),
     betEndAt: data.betEndAt ?? prev.betEndAt ?? null,
+    endAt: data.endAt ?? prev.endAt ?? null,
     publisher: String(data.publisher || prev.publisher || '').trim(),
     languageCode: String(data.languageCode || prev.languageCode || 'zh'),
     groupId: data.groupId ?? prev.groupId ?? null,

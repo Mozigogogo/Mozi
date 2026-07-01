@@ -3,6 +3,7 @@
 /**
  * 按间隔轮询 GET /coinDirectionGuess/list?groupId=；
  * 状态变化时更新群内竞猜卡片；结算完成时同时编辑原卡片并另发结算公告。
+ * active / locked 状态下每次轮询也会刷新卡片，同步倒计时与统计。
  *
  * 间隔：GUESS_SETTLEMENT_POLL_MS（默认 300000，5 分钟）
  */
@@ -323,17 +324,24 @@ async function refreshOneGuessFromListItem(ctx, item) {
     symbol: item.symbol ?? null,
   });
 
-  if (!statusChanged) {
-    touchGuessListPoll(guessNo);
-    return;
-  }
-
   const statsRaw = parseGuessItemStats(item);
   const languageCode = ctx.languageCode || 'zh';
   const texts = getTexts(languageCode);
 
   if (isGuessListItemSettled(item) || newStatus === 'settled') {
-    await handleSettledTransition(ctx, item, prevStatus, newStatus);
+    if (statusChanged || !ctx.settledAt) {
+      await handleSettledTransition(ctx, item, prevStatus, newStatus);
+    } else {
+      touchGuessListPoll(guessNo);
+    }
+    return;
+  }
+
+  // active / locked：即使状态未变，每次轮询也刷新卡片以同步倒计时与统计
+  const needsPeriodicRefresh =
+    newStatus === 'active' || newStatus === 'locked' || isGuessStatusLocked(item);
+  if (!statusChanged && !needsPeriodicRefresh) {
+    touchGuessListPoll(guessNo);
     return;
   }
 
@@ -353,7 +361,7 @@ async function refreshOneGuessFromListItem(ctx, item) {
       lastKnownStatus: 'locked',
       ...buildGuessTimePatch(item),
     });
-    guessPollLog('status_change_locked', {
+    guessPollLog(statusChanged ? 'status_change_locked' : 'locked_refresh', {
       guessNo,
       groupId,
       prevStatus,
@@ -381,7 +389,7 @@ async function refreshOneGuessFromListItem(ctx, item) {
     lastKnownStatus: 'active',
     ...buildGuessTimePatch(item),
   });
-  guessPollLog('status_change_active', {
+  guessPollLog(statusChanged ? 'status_change_active' : 'active_refresh', {
     guessNo,
     groupId,
     prevStatus,

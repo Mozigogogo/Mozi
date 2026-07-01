@@ -1422,6 +1422,7 @@ async function publishPredict(ctx, config, getTexts) {
     price: priceStr,
     lockedAtMs,
     betEndAt: publishData.betEndAt ?? null,
+    endAt: publishData.endAt ?? null,
     publisher,
     languageCode,
   };
