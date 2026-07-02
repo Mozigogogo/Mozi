@@ -112,6 +112,10 @@ const i18n = {
       `📊 最终赔率：看涨 ${upPercent}%（${upCount}人）· 看跌 ${downPercent}%（${downCount}人）`,
     predictGroupSettledBody: (sym, priceLine, winnerLine, prizePool, topWinnersSection) =>
       `🎉 竞猜结果 · ${sym}\n${priceLine}\n${winnerLine}\n💰 奖池 ${prizePool} 积分${topWinnersSection}`,
+    predictGroupVoidBody: (sym, reasonLine) => `⚠️ 竞猜流局 · ${sym}\n${reasonLine}`,
+    predictGroupVoidReasonTie: '本场竞猜平局，本场竞猜已取消',
+    predictGroupVoidReasonAbnormal: '结算时价格数据获取异常，本场竞猜已取消',
+    predictNewGuessBtn: '发起新竞猜',
     predictSettledPriceLine: (startPrice, endPrice, changePct) =>
       `起始价 ${startPrice} → 结算价 ${endPrice} (${changePct})`,
     predictSettledWinnerUp: '📈 看涨方获胜！',
@@ -402,6 +406,11 @@ const i18n = {
       `📊 Final odds: Bullish ${upPercent}% (${upCount}) · Bearish ${downPercent}% (${downCount})`,
     predictGroupSettledBody: (sym, priceLine, winnerLine, prizePool, topWinnersSection) =>
       `🎉 Poll result · ${sym}\n${priceLine}\n${winnerLine}\n💰 Prize pool: ${prizePool} pts${topWinnersSection}`,
+    predictGroupVoidBody: (sym, reasonLine) => `⚠️ Void poll · ${sym}\n${reasonLine}`,
+    predictGroupVoidReasonTie: 'This poll ended in a tie and has been cancelled.',
+    predictGroupVoidReasonAbnormal:
+      'Settlement price data could not be retrieved; this poll has been cancelled.',
+    predictNewGuessBtn: 'Start new poll',
     predictSettledPriceLine: (startPrice, endPrice, changePct) =>
       `Start ${startPrice} → Settle ${endPrice} (${changePct})`,
     predictSettledWinnerUp: '📈 Bullish side wins!',

@@ -20,12 +20,11 @@ const {
   parseGuessDateTimeMs,
   parseGuessResult,
   resolveGuessDisplayResult,
+  isGuessVoidSettlement,
   isGuessStatusSettled,
-  normalizeGuessStatus,
-  isGuessStatusActive,
-  isGuessStatusLocked,
-  isGuessBettingAllowed,
   isGuessListItemSettled,
+  isGuessBettingAllowed,
+  normalizeGuessStatus,
   resolveGuessPollStatus,
   mergeGuessBetEndFallback,
   isGuessEffectivelyLocked,
@@ -360,6 +359,34 @@ function formatSettledTopWinners(texts, votes, result, languageCode) {
   return texts.predictSettledTopWinnersSection(lines.join('\n'));
 }
 
+function resolveGuessVoidReasonLine(texts, item, displayResult) {
+  if (displayResult === 'TIE') return texts.predictGroupVoidReasonTie;
+  return texts.predictGroupVoidReasonAbnormal;
+}
+
+function buildGroupVoidHtml(texts, meta, item, displayResult) {
+  const reasonLine = resolveGuessVoidReasonLine(texts, item, displayResult);
+  return texts.predictGroupVoidBody(escapeHtml(meta.sym), reasonLine);
+}
+
+function buildPredictNewGuessKeyboard(texts, botUsername, groupChatId) {
+  const url = buildPredictPrivateUrl(botUsername, groupChatId);
+  return {
+    inline_keyboard: [[{ text: texts.predictNewGuessBtn, url }]],
+  };
+}
+
+function buildGuessSettlementMessage(texts, meta, statsRaw, item, displayResult, votes, botUsername, groupChatId) {
+  const voidSettlement = isGuessVoidSettlement(item, displayResult);
+  const html = voidSettlement
+    ? buildGroupVoidHtml(texts, meta, item, displayResult)
+    : buildGroupSettledHtml(texts, meta, statsRaw, item, displayResult, votes);
+  const keyboard = voidSettlement
+    ? buildPredictNewGuessKeyboard(texts, botUsername, groupChatId)
+    : { inline_keyboard: [] };
+  return { html, keyboard, voidSettlement };
+}
+
 function buildGroupSettledHtml(texts, meta, statsRaw, item, result, votes) {
   const startPriceNum = resolveGuessStartPriceNumber(item, meta);
   const endPriceNum = Number(item?.endPrice);
@@ -432,25 +459,98 @@ function resolveGuessMessageHasPhoto(message) {
   return Boolean(message?.photo?.length);
 }
 
+async function bindGuessMessageId(config, guessNo, tgMessageId) {
+  const guess = String(guessNo || '').trim();
+  const messageId = Math.floor(Number(tgMessageId));
+  if (!guess || !Number.isFinite(messageId) || messageId <= 0 || !config) {
+    return { ok: false };
+  }
+  const auth = String(config.MOZI_DETAIL_AUTH || '').trim();
+  if (!auth) return { ok: false };
+  try {
+    const result = await postCoinDirectionGuessBindMessage({
+      apiBaseUrl: config.API_BASE_URL,
+      appUrl: config.APP_URL,
+      auth,
+      path: config.COIN_DIRECTION_GUESS_BIND_MESSAGE_PATH,
+      guessNo: guess,
+      tgMessageId: messageId,
+    });
+    predictLog('bind.api.rebind', {
+      guessNo: guess,
+      tgMessageId: messageId,
+      ok: result.ok,
+      status: result.status,
+    });
+    return result;
+  } catch (err) {
+    predictLog('bind.api.rebind_fail', {
+      guessNo: guess,
+      tgMessageId: messageId,
+      message: err?.message || String(err),
+    });
+    return { ok: false };
+  }
+}
+
 /**
- * @param {{ guessNo?: string }} [opts]
+ * 带图竞猜消息无法 edit 成纯文字，删除后重发 text 消息
+ */
+async function convertGuessPhotoMessageToText(telegram, chatId, messageId, html, keyboard, opts = {}) {
+  try {
+    await telegram.deleteMessage(chatId, messageId);
+  } catch (err) {
+    predictLog('guess.photo_delete_fail', {
+      chatId,
+      messageId,
+      guessNo: opts.guessNo ?? null,
+      reason: err?.response?.description || err?.message || String(err),
+    });
+  }
+  const extra = { parse_mode: 'HTML' };
+  if (keyboard !== undefined) extra.reply_markup = keyboard;
+  const msg = await telegram.sendMessage(chatId, withGuessMessageEditStamp(html), extra);
+  const newId = msg?.message_id ?? null;
+  if (opts.guessNo && newId != null) {
+    patchGuessMessageContext(String(opts.guessNo), {
+      messageId: newId,
+      chatId,
+      hasPhoto: false,
+    });
+    if (opts.config) {
+      await bindGuessMessageId(opts.config, opts.guessNo, newId);
+    }
+  }
+  guessNoAvatarLog('edit.photo_to_text', {
+    chatId,
+    oldMessageId: messageId,
+    newMessageId: newId,
+    guessNo: opts.guessNo ?? null,
+  });
+  return newId != null;
+}
+
+/**
+ * @param {{ guessNo?: string; config?: object }} [opts]
  * @returns {Promise<boolean>}
  */
 async function editTelegramGuessMessage(telegram, chatId, messageId, html, keyboard, hasPhoto, opts = {}) {
   if (chatId == null || messageId == null) return false;
+
+  if (hasPhoto) {
+    return convertGuessPhotoMessageToText(telegram, chatId, messageId, html, keyboard, opts);
+  }
+
   const extra = { parse_mode: 'HTML' };
   if (keyboard !== undefined) extra.reply_markup = keyboard;
 
   const content = withGuessMessageEditStamp(html);
-  const trackNoAvatar = !hasPhoto;
-  if (trackNoAvatar) {
-    guessNoAvatarLog('edit.attempt', {
-      chatId,
-      messageId,
-      guessNo: opts.guessNo ?? null,
-      hasPhoto: Boolean(hasPhoto),
-    });
-  }
+  guessNoAvatarLog('edit.attempt', {
+    chatId,
+    messageId,
+    guessNo: opts.guessNo ?? null,
+    hasPhoto: false,
+  });
   const tryCaption = async () => {
     await telegram.editMessageCaption(chatId, messageId, undefined, content, extra);
     return true;
@@ -482,16 +582,14 @@ async function editTelegramGuessMessage(telegram, chatId, messageId, html, keybo
           usedPhoto,
           reason: err?.response?.description || err?.message || String(err),
         });
-        if (trackNoAvatar || preferPhoto) {
-          guessNoAvatarLog('edit.fallback', {
-            chatId,
-            messageId,
-            guessNo: opts.guessNo ?? null,
-            preferPhoto,
-            usedPhoto,
-            reason: err?.response?.description || err?.message || String(err),
-          });
-        }
+        guessNoAvatarLog('edit.fallback', {
+          chatId,
+          messageId,
+          guessNo: opts.guessNo ?? null,
+          preferPhoto,
+          usedPhoto,
+          reason: err?.response?.description || err?.message || String(err),
+        });
         return { ok: true, hasPhoto: usedPhoto };
       } catch (fallbackErr) {
         if (isTelegramMessageNotModifiedError(fallbackErr)) {
@@ -503,37 +601,36 @@ async function editTelegramGuessMessage(telegram, chatId, messageId, html, keybo
   };
 
   try {
-    let result = await run(Boolean(hasPhoto));
+    let result = await run(false);
     if (!result.ok) return false;
+    if (result.hasPhoto && opts.guessNo) {
+      return convertGuessPhotoMessageToText(telegram, chatId, messageId, html, keyboard, opts);
+    }
     if (opts.guessNo && typeof result.hasPhoto === 'boolean') {
       patchGuessMessageContext(String(opts.guessNo), { hasPhoto: result.hasPhoto });
     }
-    if (trackNoAvatar) {
-      guessNoAvatarLog('edit.ok', {
-        chatId,
-        messageId,
-        guessNo: opts.guessNo ?? null,
-        inputHasPhoto: Boolean(hasPhoto),
-        resultHasPhoto: result.hasPhoto,
-      });
-    }
+    guessNoAvatarLog('edit.ok', {
+      chatId,
+      messageId,
+      guessNo: opts.guessNo ?? null,
+      inputHasPhoto: false,
+      resultHasPhoto: result.hasPhoto,
+    });
     return true;
   } catch (err) {
     predictLog('guess.message_edit_fail', {
       chatId,
       messageId,
-      hasPhoto,
+      hasPhoto: false,
       reason: err?.response?.description || err?.message || String(err),
     });
-    if (trackNoAvatar) {
-      guessNoAvatarLog('edit.fail', {
-        chatId,
-        messageId,
-        guessNo: opts.guessNo ?? null,
-        hasPhoto: Boolean(hasPhoto),
-        reason: err?.response?.description || err?.message || String(err),
-      });
-    }
+    guessNoAvatarLog('edit.fail', {
+      chatId,
+      messageId,
+      guessNo: opts.guessNo ?? null,
+      hasPhoto: false,
+      reason: err?.response?.description || err?.message || String(err),
+    });
     return false;
   }
 }
@@ -553,20 +650,32 @@ async function applyGuessSettlementToMessage({
   statsRaw,
   texts,
   guessNo,
+  botUsername,
+  groupChatId,
+  config,
 }) {
   const merged = {
     ...meta,
     ...(item ? buildMetaFromGuessItem(item, meta.languageCode, meta.publisher) : {}),
   };
-  const html = buildGroupSettledHtml(texts, meta, statsRaw, item, result, votes);
+  const { html, keyboard } = buildGuessSettlementMessage(
+    texts,
+    merged,
+    statsRaw,
+    item,
+    result,
+    votes,
+    botUsername,
+    groupChatId ?? chatId,
+  );
   return editTelegramGuessMessage(
     telegram,
     chatId,
     messageId,
     html,
-    { inline_keyboard: [] },
+    keyboard,
     hasPhoto,
-    { guessNo },
+    { guessNo, config },
   );
 }
 
@@ -582,17 +691,27 @@ async function sendGuessResultAnnouncement({
   result,
   statsRaw,
   texts,
+  botUsername,
 }) {
   if (groupChatId == null) return { ok: false, messageId: null };
   const merged = {
     ...meta,
     ...(item ? buildMetaFromGuessItem(item, meta.languageCode, meta.publisher) : {}),
   };
-  const html = buildGroupSettledHtml(texts, merged, statsRaw, item, result, votes);
+  const { html, keyboard } = buildGuessSettlementMessage(
+    texts,
+    merged,
+    statsRaw,
+    item,
+    result,
+    votes,
+    botUsername,
+    groupChatId,
+  );
   try {
     const msg = await telegram.sendMessage(groupChatId, html, {
       parse_mode: 'HTML',
-      reply_markup: { inline_keyboard: [] },
+      reply_markup: keyboard,
     });
     return { ok: true, messageId: msg?.message_id ?? null };
   } catch (err) {
@@ -618,6 +737,7 @@ async function applyGuessLockedRefreshFromDetail({
   statsRaw,
   texts,
   guessNo,
+  config,
 }) {
   const merged = {
     ...meta,
@@ -631,7 +751,7 @@ async function applyGuessLockedRefreshFromDetail({
     html,
     { inline_keyboard: [] },
     hasPhoto,
-    { guessNo },
+    { guessNo, config },
   );
 }
 
@@ -648,6 +768,7 @@ async function applyGuessActiveRefreshFromDetail({
   statsRaw,
   texts,
   guessNo,
+  config,
 }) {
   const mergedItem = mergeGuessBetEndFallback(item, meta?.betEndAt);
   if (mergedItem && isGuessEffectivelyLocked(mergedItem)) {
@@ -661,6 +782,7 @@ async function applyGuessActiveRefreshFromDetail({
       statsRaw,
       texts,
       guessNo,
+      config,
     });
   }
   const merged = {
@@ -669,7 +791,10 @@ async function applyGuessActiveRefreshFromDetail({
   };
   const html = buildGroupPublishHtml(texts, merged, statsRaw);
   const keyboard = buildGuessBetKeyboard(texts, guessNo);
-  return editTelegramGuessMessage(telegram, chatId, messageId, html, keyboard, hasPhoto, { guessNo });
+  return editTelegramGuessMessage(telegram, chatId, messageId, html, keyboard, hasPhoto, {
+    guessNo,
+    config,
+  });
 }
 
 function buildGuessBetKeyboard(texts, guessNo) {
@@ -690,7 +815,7 @@ function buildGuessBetKeyboard(texts, guessNo) {
   };
 }
 
-async function editGuessMessageContent(ctx, chatId, messageId, html, keyboard, hasPhoto, guessNo) {
+async function editGuessMessageContent(ctx, chatId, messageId, html, keyboard, hasPhoto, guessNo, config) {
   return editTelegramGuessMessage(
     ctx.telegram,
     chatId,
@@ -698,7 +823,7 @@ async function editGuessMessageContent(ctx, chatId, messageId, html, keyboard, h
     html,
     keyboard,
     hasPhoto,
-    guessNo ? { guessNo } : {},
+    { guessNo, config },
   );
 }
 
@@ -761,7 +886,7 @@ async function syncGuessPublishCardFromDetail({
         lockedHtml,
         { inline_keyboard: [] },
         hasPhoto,
-        { guessNo: guess },
+        { guessNo: guess, config },
       );
       patchGuessMessageContext(guess, { lastKnownStatus: 'locked' });
       predictLog('publish.detail_sync_locked', { guessNo: guess, ok, betEndAt: patch.betEndAt ?? null });
@@ -778,7 +903,7 @@ async function syncGuessPublishCardFromDetail({
       html,
       keyboard,
       hasPhoto,
-      { guessNo: guess },
+      { guessNo: guess, config },
     );
     predictLog('publish.detail_sync', {
       guessNo: guess,
@@ -1718,37 +1843,21 @@ async function publishPredict(ctx, config, getTexts) {
 
   let guessMsg;
   try {
+    guessMsg = await ctx.telegram.sendMessage(publishChatId, groupPublishHtml, sendExtra);
     if (avatarUrl) {
-      try {
-        guessMsg = await ctx.telegram.sendPhoto(publishChatId, avatarUrl, {
-          caption: groupPublishHtml,
-          ...sendExtra,
-        });
-      } catch (photoErr) {
-        predictLog('publish.avatar_fail', {
-          uid,
-          publishChatId,
-          message: photoErr?.response?.description || photoErr?.message || String(photoErr),
-        });
-        guessNoAvatarLog('publish.avatar_fail', {
-          uid,
-          publishChatId,
-          guessNo: guessNo ?? null,
-          avatarUrl,
-          message: photoErr?.response?.description || photoErr?.message || String(photoErr),
-          willFallbackToText: true,
-        });
-        guessMsg = await ctx.telegram.sendMessage(publishChatId, groupPublishHtml, sendExtra);
-      }
-    } else {
-      guessMsg = await ctx.telegram.sendMessage(publishChatId, groupPublishHtml, sendExtra);
+      predictLog('publish.avatar_skipped', {
+        uid,
+        publishChatId,
+        guessNo: guessNo ?? null,
+        avatarUrl,
+      });
     }
     const guessMessageId = guessMsg?.message_id ?? null;
     predictLog('publish.guess_sent', {
       uid,
       publishChatId,
       messageId: guessMessageId,
-      withAvatar: Boolean(avatarUrl),
+      textOnly: true,
       hasVoteButtons: Boolean(betKeyboard),
     });
     predictLog('publish.target_group_message_ids', {
@@ -1779,8 +1888,16 @@ async function publishPredict(ctx, config, getTexts) {
   }
 
   const tgMessageId = guessMsg?.message_id ?? null;
-  const msgHasPhoto = resolveGuessMessageHasPhoto(guessMsg);
-  if (shouldTrackNoAvatarGuess(avatarUrl, msgHasPhoto)) {
+  const msgHasPhoto = false;
+  if (avatarUrl) {
+    guessNoAvatarLog('publish.text_only', {
+      uid,
+      publishChatId,
+      guessNo: guessNo ?? null,
+      messageId: tgMessageId,
+      avatarUrl,
+    });
+  } else {
     guessNoAvatarLog('publish.sent', {
       uid,
       publishChatId,
@@ -2065,15 +2182,25 @@ async function tryRefreshGuessMessage(ctx, config, texts, guessNo, betResult) {
 
   if (detailItem && isGuessListItemSettled(detailItem)) {
     const result = resolveGuessDisplayResult(detailItem);
-    const html = buildGroupSettledHtml(texts, meta, statsRaw, detailItem, result, detailVotes);
+    const { html, keyboard } = buildGuessSettlementMessage(
+      texts,
+      meta,
+      statsRaw,
+      detailItem,
+      result,
+      detailVotes,
+      config.BOT_USERNAME,
+      chatId,
+    );
     const ok = await editGuessMessageContent(
       ctx,
       chatId,
       messageId,
       html,
-      { inline_keyboard: [] },
+      keyboard,
       hasPhoto,
       guess,
+      config,
     );
     markGuessSettled(guess, result || String(detailItem.result || 'settled'));
     predictLog('bet.refresh_settled', {
@@ -2081,6 +2208,7 @@ async function tryRefreshGuessMessage(ctx, config, texts, guessNo, betResult) {
       ok,
       result: result ?? detailItem.result ?? null,
       status: detailItem.status ?? null,
+      voidSettlement: isGuessVoidSettlement(detailItem, result),
       endPrice: detailItem.endPrice ?? null,
       voteCount: detailVotes.length,
     });
@@ -2102,6 +2230,7 @@ async function tryRefreshGuessMessage(ctx, config, texts, guessNo, betResult) {
       { inline_keyboard: [] },
       hasPhoto,
       guess,
+      config,
     );
     predictLog('bet.refresh_locked', {
       guessNo: guess,
@@ -2114,7 +2243,7 @@ async function tryRefreshGuessMessage(ctx, config, texts, guessNo, betResult) {
 
   const html = buildGroupPublishHtml(texts, meta, statsRaw);
   const keyboard = buildGuessBetKeyboard(texts, guess);
-  const ok = await editGuessMessageContent(ctx, chatId, messageId, html, keyboard, hasPhoto, guess);
+  const ok = await editGuessMessageContent(ctx, chatId, messageId, html, keyboard, hasPhoto, guess, config);
   if (statusItem) {
     patchGuessMessageContext(guess, { lastKnownStatus: resolveGuessPollStatus(statusItem) });
   }

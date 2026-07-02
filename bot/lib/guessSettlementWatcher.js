@@ -13,10 +13,7 @@ const {
   getCoinDirectionGuessDetail,
   parseGuessItemStats,
   buildGuessTimeFieldsPatch,
-  parseGuessResult,
   resolveGuessDisplayResult,
-  isGuessStatusSettled,
-  isGuessStatusLocked,
   isGuessListItemSettled,
   resolveGuessPollStatus,
   mergeGuessBetEndFallback,
@@ -222,7 +219,7 @@ async function handleSettledTransition(ctx, listItem, prevStatus, newStatus) {
   const groupId = ctx.groupId ?? ctx.chatId ?? null;
   const groupChatId = groupId;
 
-  if (!isGuessStatusSettled(listItem)) {
+  if (!isGuessListItemSettled(listItem)) {
     guessPollLog('settled_skip_not_status', {
       guessNo,
       groupId,
@@ -257,6 +254,9 @@ async function handleSettledTransition(ctx, listItem, prevStatus, newStatus) {
     statsRaw,
     texts,
     guessNo,
+    botUsername: configRef.BOT_USERNAME,
+    groupChatId,
+    config: configRef,
   });
 
   let announceOk = false;
@@ -271,6 +271,7 @@ async function handleSettledTransition(ctx, listItem, prevStatus, newStatus) {
       result,
       statsRaw,
       texts,
+      botUsername: configRef.BOT_USERNAME,
     });
     announceOk = sent.ok;
     announceMessageId = sent.messageId ?? null;
@@ -364,6 +365,7 @@ async function refreshOneGuessFromListItem(ctx, item) {
       statsRaw,
       texts,
       guessNo,
+      config: configRef,
     });
     patchGuessMessageContext(guessNo, {
       lastListPollAt: Date.now(),
@@ -392,6 +394,7 @@ async function refreshOneGuessFromListItem(ctx, item) {
     statsRaw,
     texts,
     guessNo,
+    config: configRef,
   });
   patchGuessMessageContext(guessNo, {
     lastListPollAt: Date.now(),

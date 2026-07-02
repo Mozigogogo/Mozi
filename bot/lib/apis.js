@@ -2890,6 +2890,15 @@ function normalizeGuessStatus(status) {
   if (s === 'active') return 'active';
   if (s === 'locked') return 'locked';
   if (s === 'settled' || s === 'closed' || s === 'finished') return 'settled';
+  if (
+    s === 'cancelled' ||
+    s === 'canceled' ||
+    s === 'void' ||
+    s === 'aborted' ||
+    s === 'invalid'
+  ) {
+    return 'void';
+  }
   return s || 'unknown';
 }
 
@@ -2921,6 +2930,16 @@ function isGuessStatusSettled(itemOrStatus) {
   const status =
     itemOrStatus && typeof itemOrStatus === 'object' ? itemOrStatus.status : itemOrStatus;
   return normalizeGuessStatus(status) === 'settled';
+}
+
+/**
+ * @param {object | string | null | undefined} itemOrStatus
+ * @returns {boolean}
+ */
+function isGuessStatusVoid(itemOrStatus) {
+  const status =
+    itemOrStatus && typeof itemOrStatus === 'object' ? itemOrStatus.status : itemOrStatus;
+  return normalizeGuessStatus(status) === 'void';
 }
 
 /**
@@ -2962,12 +2981,30 @@ function resolveGuessDisplayResult(item) {
 }
 
 /**
+ * TIE 或流局（异常取消）：展示流局卡片而非普通结算
+ * @param {object | null | undefined} item
+ * @param {'UP' | 'DOWN' | 'TIE' | null} [displayResult]
+ * @returns {boolean}
+ */
+function isGuessVoidSettlement(item, displayResult) {
+  if (!item || typeof item !== 'object') return false;
+  if (displayResult === 'TIE') return true;
+  if (isGuessStatusVoid(item)) return true;
+  if (isGuessStatusSettled(item) && displayResult == null) {
+    const end = Number(item.endPrice);
+    if (!Number.isFinite(end)) return true;
+  }
+  return false;
+}
+
+/**
  * @param {object | null | undefined} item
  * @returns {boolean}
  */
 function isGuessListItemSettled(item) {
   if (!item || typeof item !== 'object') return false;
-  return isGuessStatusSettled(item);
+  const s = normalizeGuessStatus(item.status);
+  return s === 'settled' || s === 'void';
 }
 
 function isGuessEffectivelyLocked(item, referenceMs = Date.now()) {
@@ -3029,10 +3066,12 @@ module.exports = {
   parseGuessItemStats,
   parseGuessResult,
   resolveGuessDisplayResult,
+  isGuessVoidSettlement,
   normalizeGuessStatus,
   isGuessStatusActive,
   isGuessStatusLocked,
   isGuessStatusSettled,
+  isGuessStatusVoid,
   isGuessBettingAllowed,
   isGuessListItemSettled,
   resolveGuessPollStatus,
