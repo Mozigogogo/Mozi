@@ -39,6 +39,7 @@ const {
   predictError,
   guessNoAvatarLog,
   shouldTrackNoAvatarGuess,
+  predictPublishLog,
 } = require('./predictDebug');
 const { ensureTgUserToken, getCachedUserId } = require('./tgUserTokenCache');
 const { buildTelegramLoginOpts } = require('./datainfoPoints');
@@ -187,16 +188,75 @@ function countActiveGuesses(items) {
 }
 
 async function fetchActiveGuessCountForGroup(config, groupId) {
-  const listRes = await getCoinDirectionGuessList({
-    apiBaseUrl: config.API_BASE_URL,
-    appUrl: config.APP_URL,
-    groupId,
-    path: config.COIN_DIRECTION_GUESS_LIST_PATH,
+  const apiBaseUrl = config.API_BASE_URL;
+  const listPath = config.COIN_DIRECTION_GUESS_LIST_PATH;
+  const groupIdStr = String(groupId);
+  const url = `${String(apiBaseUrl || '').replace(/\/+$/, '')}/${String(listPath || 'coinDirectionGuess/list').trim().replace(/^\/+/, '')}?groupId=${encodeURIComponent(groupIdStr)}`;
+
+  predictPublishLog('list.preflight.request', {
+    groupId: groupIdStr,
+    apiBaseUrl,
+    listPath,
+    url,
   });
-  if (!listRes.ok) {
-    return { ok: false, activeCount: 0, errorMessage: listRes.errorMessage ?? null };
+
+  let listRes;
+  try {
+    listRes = await getCoinDirectionGuessList({
+      apiBaseUrl,
+      appUrl: config.APP_URL,
+      groupId,
+      path: listPath,
+    });
+  } catch (err) {
+    predictPublishLog('list.preflight.throw', {
+      groupId: groupIdStr,
+      url,
+      message: err?.message || String(err),
+      stack: err?.stack?.split('\n').slice(0, 4).join(' | ') ?? null,
+    });
+    throw err;
   }
-  return { ok: true, activeCount: countActiveGuesses(listRes.items), errorMessage: null };
+
+  const activeCount = countActiveGuesses(listRes.items);
+  const detail = {
+    groupId: groupIdStr,
+    url,
+    ok: listRes.ok,
+    httpStatus: listRes.status,
+    errorMessage: listRes.errorMessage ?? null,
+    jsonCode: listRes.json?.code ?? null,
+    jsonSuccess: listRes.json?.success ?? null,
+    jsonErrorMsg: listRes.json?.errorMsg ?? null,
+    itemCount: listRes.items?.length ?? 0,
+    activeCount,
+    bodyPreview: listRes.text?.slice(0, 600) ?? null,
+    activeGuessNos: (listRes.items || [])
+      .filter((item) => isGuessStatusActive(item))
+      .map((item) => ({
+        guessNo: item.guessNo ?? null,
+        symbol: item.symbol ?? null,
+        status: item.status ?? null,
+      })),
+  };
+
+  if (!listRes.ok) {
+    predictPublishLog('list.preflight.fail', detail);
+    return {
+      ok: false,
+      activeCount: 0,
+      errorMessage: listRes.errorMessage ?? null,
+      listDetail: detail,
+    };
+  }
+
+  predictPublishLog('list.preflight.ok', detail);
+  return {
+    ok: true,
+    activeCount,
+    errorMessage: null,
+    listDetail: detail,
+  };
 }
 
 /**
@@ -1670,6 +1730,26 @@ async function publishPredict(ctx, config, getTexts) {
   const uid = ctx.from?.id;
   const session = uid != null ? getPredictSession(uid) : null;
 
+  predictPublishLog('publish.enter', {
+    uid: uid ?? null,
+    chatId: ctx.chat?.id ?? null,
+    chatType: ctx.chat?.type ?? null,
+    callbackData: ctx.callbackQuery?.data ?? null,
+    hasSession: Boolean(session),
+    session: session
+      ? {
+          step: session.step ?? null,
+          symbol: session.symbol ?? null,
+          priceLocked: session.priceLocked ?? null,
+          flowChatId: session.flowChatId ?? null,
+          publishChatId: session.publishChatId ?? null,
+          sourceGroupChatId: session.sourceGroupChatId ?? null,
+          confirmMessageId: session.confirmMessageId ?? null,
+          durationMinutes: session.durationMinutes ?? null,
+        }
+      : null,
+  });
+
   if (!session || session.step !== 'confirm' || !session.symbol || !session.priceLocked) {
     predictLog('publish.skip', {
       uid,
@@ -1694,6 +1774,20 @@ async function publishPredict(ctx, config, getTexts) {
   const publishChatId = session.sourceGroupChatId ?? session.publishChatId;
   const publishingToPrivateOnly =
     isPrivateChat(ctx) && publishChatId === session.flowChatId;
+
+  predictPublishLog('publish.target', {
+    uid,
+    chatType: ctx.chat?.type ?? null,
+    flowChatId: session.flowChatId,
+    publishChatId,
+    sourceGroupChatId: session.sourceGroupChatId ?? null,
+    sessionPublishChatId: session.publishChatId ?? null,
+    publishingToPrivateOnly,
+    symbol: sym,
+    apiBaseUrl: config.API_BASE_URL,
+    listPath: config.COIN_DIRECTION_GUESS_LIST_PATH,
+    maxActivePerGroup: resolveMaxActiveGuessesPerGroup(config),
+  });
 
   predictLog('publish.attempt', {
     uid,
@@ -1731,25 +1825,40 @@ async function publishPredict(ctx, config, getTexts) {
     try {
       const listCheck = await fetchActiveGuessCountForGroup(config, publishChatId);
       if (!listCheck.ok) {
+        predictPublishLog('publish.blocked.list_fail', {
+          uid,
+          publishChatId,
+          errorMessage: listCheck.errorMessage ?? null,
+          listDetail: listCheck.listDetail ?? null,
+          userMessage: texts.predictListFailed,
+        });
         predictLog('publish.group_list_fail', {
           uid,
           publishChatId,
           errorMessage: listCheck.errorMessage ?? null,
+          listDetail: listCheck.listDetail ?? null,
         });
         await replyOrEdit(ctx, session, texts.predictListFailed, { parse_mode: 'HTML' });
         return;
       }
       if (listCheck.activeCount >= maxActive) {
-        predictLog('publish.group_full', {
+        predictPublishLog('publish.blocked.group_full', {
           uid,
           publishChatId,
           activeCount: listCheck.activeCount,
           maxActive,
+          listDetail: listCheck.listDetail ?? null,
         });
         await replyOrEdit(ctx, session, texts.predictGroupGuessFull, { parse_mode: 'HTML' });
         return;
       }
     } catch (err) {
+      predictPublishLog('publish.blocked.list_throw', {
+        uid,
+        publishChatId,
+        message: err?.message || String(err),
+        stack: err?.stack?.split('\n').slice(0, 4).join(' | ') ?? null,
+      });
       predictLog('publish.group_list_error', {
         uid,
         publishChatId,
@@ -1764,6 +1873,14 @@ async function publishPredict(ctx, config, getTexts) {
     ? `${sym} 接下来 ${durationMinutes} 分钟会涨还是跌？`
     : `Will ${sym} go up or down in the next ${durationMinutes} minutes?`;
 
+  predictPublishLog('publish.api.request', {
+    uid,
+    publishChatId,
+    symbol: sym,
+    durationMinutes,
+    title: pollQuestion,
+  });
+
   const apiResult = await registerCoinDirectionGuessPublish(ctx, config, {
     publishChatId,
     sym,
@@ -1772,6 +1889,16 @@ async function publishPredict(ctx, config, getTexts) {
   });
 
   if (apiResult.status !== 200 || !apiResult.ok) {
+    predictPublishLog('publish.api.fail', {
+      uid,
+      publishChatId,
+      status: apiResult.status,
+      ok: apiResult.ok,
+      errorMessage: apiResult.errorMessage ?? null,
+      guessNo: apiResult.guessNo ?? null,
+      jsonCode: apiResult.json?.code ?? null,
+      bodyPreview: String(apiResult.text || '').slice(0, 600),
+    });
     predictError('publish.api_gate_fail', {
       uid,
       publishChatId,
@@ -1952,6 +2079,17 @@ async function publishPredict(ctx, config, getTexts) {
   }
 
   clearPredictSession(uid);
+
+  predictPublishLog('publish.ok', {
+    uid,
+    publishChatId,
+    flowChatId: session.flowChatId,
+    publishedToGroup: publishChatId !== session.flowChatId,
+    guessNo: guessNo ?? null,
+    guessMessageId: guessMsg?.message_id ?? null,
+    bindTgMessageId: tgMessageId,
+    confirmMessageId: session.confirmMessageId ?? null,
+  });
 
   predictLog('publish.ok', {
     uid,

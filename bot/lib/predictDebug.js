@@ -1,24 +1,25 @@
 'use strict';
 
 /**
- * 无头像用户发起竞猜调试日志 [GUESS_NO_AVATAR]
- * 默认开启；PREDICT_NO_AVATAR_LOG=0 关闭
+ * 竞猜发布调试 [PREDICT_PUBLISH]：默认开启；PREDICT_PUBLISH_LOG=0 关闭
+ * 无头像调试 [GUESS_NO_AVATAR]：默认开启；PREDICT_NO_AVATAR_LOG=0 关闭
  */
+
+function predictPublishLogEnabled() {
+  const v = String(process.env.PREDICT_PUBLISH_LOG ?? '1').trim();
+  return !/^0|false|no$/i.test(v);
+}
 
 function guessNoAvatarLogEnabled() {
   const v = String(process.env.PREDICT_NO_AVATAR_LOG ?? '1').trim();
   return !/^0|false|no$/i.test(v);
 }
 
-/**
- * @param {string} label
- * @param {unknown} [payload]
- */
-function guessNoAvatarLog(label, payload) {
-  if (!guessNoAvatarLogEnabled()) return;
+function logChannel(enabled, channel, label, payload) {
+  if (!enabled()) return;
   const ts = new Date().toISOString();
   if (payload === undefined) {
-    console.log(`[GUESS_NO_AVATAR] ${ts} ${label}`);
+    console.log(`[${channel}] ${ts} ${label}`);
     return;
   }
   let body;
@@ -27,7 +28,23 @@ function guessNoAvatarLog(label, payload) {
   } catch {
     body = String(payload);
   }
-  console.log(`[GUESS_NO_AVATAR] ${ts} ${label} ${body}`);
+  console.log(`[${channel}] ${ts} ${label} ${body}`);
+}
+
+/**
+ * @param {string} label
+ * @param {unknown} [payload]
+ */
+function predictPublishLog(label, payload) {
+  logChannel(predictPublishLogEnabled, 'PREDICT_PUBLISH', label, payload);
+}
+
+/**
+ * @param {string} label
+ * @param {unknown} [payload]
+ */
+function guessNoAvatarLog(label, payload) {
+  logChannel(guessNoAvatarLogEnabled, 'GUESS_NO_AVATAR', label, payload);
 }
 
 /** 后端无 avatar，或 sendPhoto 失败后降级为文字消息 */
@@ -38,16 +55,24 @@ function shouldTrackNoAvatarGuess(avatarUrl, msgHasPhoto) {
 }
 
 function predictDebugEnabled() {
-  return false;
+  return predictPublishLogEnabled();
 }
 
-function predictLog() {}
+function predictLog(label, payload) {
+  predictPublishLog(label, payload);
+}
 
-function predictDebug() {}
+function predictDebug(label, payload) {
+  predictPublishLog(`debug.${label}`, payload);
+}
 
-function predictError() {}
+function predictError(label, payload) {
+  predictPublishLog(`error.${label}`, payload);
+}
 
 module.exports = {
+  predictPublishLogEnabled,
+  predictPublishLog,
   guessNoAvatarLogEnabled,
   guessNoAvatarLog,
   shouldTrackNoAvatarGuess,
