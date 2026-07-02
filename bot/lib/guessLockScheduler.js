@@ -125,6 +125,7 @@ async function refreshGuessCardToLocked({ telegram, config, guessNo, reason = 'b
     item,
     statsRaw,
     texts,
+    guessNo: guess,
   });
 
   guessPollLog('lock_refresh_done', {

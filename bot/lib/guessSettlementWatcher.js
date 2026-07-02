@@ -256,6 +256,7 @@ async function handleSettledTransition(ctx, listItem, prevStatus, newStatus) {
     result,
     statsRaw,
     texts,
+    guessNo,
   });
 
   let announceOk = false;
@@ -360,6 +361,7 @@ async function refreshOneGuessFromListItem(ctx, item) {
       item: itemForStatus,
       statsRaw,
       texts,
+      guessNo,
     });
     patchGuessMessageContext(guessNo, {
       lastListPollAt: Date.now(),
