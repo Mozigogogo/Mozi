@@ -2,39 +2,16 @@
 
 /**
  * 采集 Telegram 群元数据并 POST /tg/stats/group/save
+ * ownerUserId：拉 Bot 进群者的 Telegram user id（非 Mozi userId）
  */
 
-const { postTgStatsGroupSave, postTgRegisteredCheck } = require('./apis');
-const { parseBotJoinFromMyChatMember } = require('./groupReferrer');
-const { getCachedUserId } = require('./tgUserTokenCache');
+const { postTgStatsGroupSave } = require('./apis');
+const {
+  parseBotJoinFromMyChatMember,
+  rememberChatPendingAdder,
+  getRememberedChatPendingAdder,
+} = require('./groupReferrer');
 const { tgGroupStatsLog } = require('./tgGroupStatsLog');
-
-/**
- * @param {object | null} json
- * @returns {boolean | null}
- */
-function parseRegisteredFlag(json) {
-  if (!json || typeof json !== 'object') return null;
-  if (typeof json.registered === 'boolean') return json.registered;
-  const d = json.data;
-  if (d && typeof d === 'object' && !Array.isArray(d) && typeof d.registered === 'boolean') {
-    return d.registered;
-  }
-  return null;
-}
-
-/**
- * @param {object | null} json
- * @returns {string | null}
- */
-function parseRegisteredCheckUserId(json) {
-  if (!json || typeof json !== 'object') return null;
-  const d = json.data;
-  const profile = d && typeof d === 'object' && !Array.isArray(d) ? d : json;
-  const raw = profile.userId ?? profile.user_id ?? profile.uid ?? profile.id;
-  if (raw == null || !String(raw).trim()) return null;
-  return String(raw).trim();
-}
 
 /**
  * @param {import('telegraf').Telegram} telegram
@@ -55,35 +32,59 @@ async function resolveChatPhotoUrl(telegram, botToken, chat) {
 }
 
 /**
- * @param {object} config
- * @param {string | number} creatorTelegramId
- * @returns {Promise<string | undefined>}
+ * @param {import('telegraf').Telegram} telegram
+ * @param {number | string} chatId
+ * @param {import('telegraf/types').Chat} [chat]
+ * @returns {Promise<number | undefined>}
  */
-async function resolveOwnerUserId(config, creatorTelegramId) {
-  const tid = String(creatorTelegramId ?? '').trim();
-  if (!tid) return undefined;
-
-  const cached = getCachedUserId(tid);
-  if (cached) return cached;
-
-  try {
-    const res = await postTgRegisteredCheck({
-      apiBaseUrl: config.API_BASE_URL,
-      telegramId: tid,
-      auth: config.MOZI_DETAIL_AUTH || '',
-      appUrl: config.APP_URL,
-    });
-    if (parseRegisteredFlag(res.json) !== true) return undefined;
-    return parseRegisteredCheckUserId(res.json) || undefined;
-  } catch {
-    return undefined;
+async function resolveMemberCount(telegram, chatId, chat) {
+  const fromChat = Number(chat?.members_count ?? chat?.membersCount);
+  if (Number.isFinite(fromChat) && fromChat >= 0) {
+    return Math.floor(fromChat);
   }
+
+  const attempts = [
+    ['getChatMembersCount', () => telegram.getChatMembersCount(chatId)],
+    ['getChatMemberCount', () => telegram.callApi('getChatMemberCount', { chat_id: chatId })],
+  ];
+
+  for (const [method, run] of attempts) {
+    try {
+      const count = Number(await run());
+      if (Number.isFinite(count) && count >= 0) {
+        return Math.floor(count);
+      }
+    } catch (err) {
+      tgGroupStatsLog('member_count_fail', {
+        chatId: Number(chatId),
+        method,
+        message: err?.message || String(err),
+      });
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * @param {number | string} chatId
+ * @param {string | number | undefined | null} ownerUserId
+ * @returns {string | undefined}
+ */
+function resolveOwnerUserIdForGroup(chatId, ownerUserId) {
+  const direct = String(ownerUserId ?? '').trim();
+  if (direct) return direct;
+
+  const remembered = getRememberedChatPendingAdder(chatId)?.adderTelegramId;
+  const fromMemory = String(remembered ?? '').trim();
+  return fromMemory || undefined;
 }
 
 /**
  * @param {import('telegraf').Telegram} telegram
  * @param {object} config
  * @param {number | string} chatId
+ * @param {{ ownerUserId?: string | number }} [opts]
  * @returns {Promise<{
  *   groupId: number;
  *   groupTitle?: string;
@@ -92,7 +93,7 @@ async function resolveOwnerUserId(config, creatorTelegramId) {
  *   memberCount?: number;
  * } | null>}
  */
-async function collectGroupStatsRow(telegram, config, chatId) {
+async function collectGroupStatsRow(telegram, config, chatId, opts = {}) {
   let chat;
   try {
     chat = await telegram.getChat(chatId);
@@ -114,24 +115,21 @@ async function collectGroupStatsRow(telegram, config, chatId) {
   }
 
   try {
-    const memberCount = await telegram.getChatMemberCount(chat.id);
-    if (Number.isFinite(memberCount) && memberCount >= 0) {
+    const memberCount = await resolveMemberCount(telegram, chat.id, chat);
+    if (memberCount != null) {
       row.memberCount = memberCount;
     }
-  } catch {
-    /* ignore */
+  } catch (err) {
+    tgGroupStatsLog('member_count_fail', {
+      chatId: Number(chat.id),
+      method: 'resolveMemberCount',
+      message: err?.message || String(err),
+    });
   }
 
-  try {
-    const admins = await telegram.getChatAdministrators(chat.id);
-    const creator = admins.find((a) => a.status === 'creator');
-    const creatorId = creator?.user?.id;
-    if (creatorId != null) {
-      const ownerUserId = await resolveOwnerUserId(config, creatorId);
-      if (ownerUserId) row.ownerUserId = ownerUserId;
-    }
-  } catch {
-    /* ignore */
+  const ownerUserId = resolveOwnerUserIdForGroup(chat.id, opts.ownerUserId);
+  if (ownerUserId) {
+    row.ownerUserId = ownerUserId;
   }
 
   return row;
@@ -141,11 +139,13 @@ async function collectGroupStatsRow(telegram, config, chatId) {
  * @param {import('telegraf').Telegram} telegram
  * @param {object} config
  * @param {number | string} chatId
+ * @param {string} [reason]
+ * @param {{ ownerUserId?: string | number }} [opts]
  */
-async function syncGroupStatsForChatId(telegram, config, chatId, reason = 'unknown') {
+async function syncGroupStatsForChatId(telegram, config, chatId, reason = 'unknown', opts = {}) {
   tgGroupStatsLog('sync_start', { reason, chatId: Number(chatId) });
 
-  const row = await collectGroupStatsRow(telegram, config, chatId);
+  const row = await collectGroupStatsRow(telegram, config, chatId, opts);
   if (!row) {
     tgGroupStatsLog('sync_skip', { reason, chatId: Number(chatId), message: 'not_group_or_getChat_failed' });
     return;
@@ -163,6 +163,7 @@ async function syncGroupStatsForChatId(telegram, config, chatId, reason = 'unkno
   tgGroupStatsLog('sync_done', {
     reason,
     groupId: row.groupId,
+    ownerUserId: row.ownerUserId ?? null,
     httpStatus: res.status,
     ok: res.ok,
   });
@@ -175,7 +176,21 @@ async function syncGroupStatsForChatId(telegram, config, chatId, reason = 'unkno
 async function syncGroupStatsFromJoin(ctx, config) {
   const join = parseBotJoinFromMyChatMember(ctx.myChatMember);
   if (!join) return;
-  await syncGroupStatsForChatId(ctx.telegram, config, join.chatId, 'bot_join');
+
+  const opts = {};
+  if (!join.likelyAnonymousAdder) {
+    rememberChatPendingAdder(join.chatId, join.adderTelegramId, { chatTitle: join.chatTitle });
+    opts.ownerUserId = String(join.adderTelegramId);
+    tgGroupStatsLog('adder_saved', {
+      groupId: join.chatId,
+      ownerUserId: opts.ownerUserId,
+      adderUsername: join.adderUsername ?? null,
+    });
+  } else {
+    tgGroupStatsLog('adder_skip_anonymous', { groupId: join.chatId });
+  }
+
+  await syncGroupStatsForChatId(ctx.telegram, config, join.chatId, 'bot_join', opts);
 }
 
 /**
