@@ -1,11 +1,11 @@
 'use strict';
 
 /**
- * POST /tg/stats/group/save 调试日志，默认始终打印；设 TG_GROUP_STATS_LOG=0 可关闭
+ * POST /tg/stats/group/save 调试日志，默认关闭；TG_GROUP_STATS_LOG=1 开启
  */
 
 function tgGroupStatsLogEnabled() {
-  const v = String(process.env.TG_GROUP_STATS_LOG ?? '1').trim();
+  const v = String(process.env.TG_GROUP_STATS_LOG ?? '0').trim();
   return !/^0|false|no$/i.test(v);
 }
 

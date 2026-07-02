@@ -32,7 +32,13 @@ const {
 const { SYMBOL_WHITELIST } = require('./symbolIntent');
 const { escapeHtml } = require('./telegramHtml');
 const { buildPredictPrivateUrl } = require('./predictSymbol');
-const { predictDebug, predictLog, predictError } = require('./predictDebug');
+const {
+  predictDebug,
+  predictLog,
+  predictError,
+  guessNoAvatarLog,
+  shouldTrackNoAvatarGuess,
+} = require('./predictDebug');
 const { ensureTgUserToken, getCachedUserId } = require('./tgUserTokenCache');
 const { buildTelegramLoginOpts } = require('./datainfoPoints');
 const {
@@ -405,6 +411,15 @@ async function editTelegramGuessMessage(telegram, chatId, messageId, html, keybo
   if (keyboard !== undefined) extra.reply_markup = keyboard;
 
   const content = withGuessMessageEditStamp(html);
+  const trackNoAvatar = !hasPhoto;
+  if (trackNoAvatar) {
+    guessNoAvatarLog('edit.attempt', {
+      chatId,
+      messageId,
+      guessNo: opts.guessNo ?? null,
+      hasPhoto: Boolean(hasPhoto),
+    });
+  }
   const tryCaption = async () => {
     await telegram.editMessageCaption(chatId, messageId, undefined, content, extra);
     return true;
@@ -436,6 +451,16 @@ async function editTelegramGuessMessage(telegram, chatId, messageId, html, keybo
           usedPhoto,
           reason: err?.response?.description || err?.message || String(err),
         });
+        if (trackNoAvatar || preferPhoto) {
+          guessNoAvatarLog('edit.fallback', {
+            chatId,
+            messageId,
+            guessNo: opts.guessNo ?? null,
+            preferPhoto,
+            usedPhoto,
+            reason: err?.response?.description || err?.message || String(err),
+          });
+        }
         return { ok: true, hasPhoto: usedPhoto };
       } catch (fallbackErr) {
         if (isTelegramMessageNotModifiedError(fallbackErr)) {
@@ -452,6 +477,15 @@ async function editTelegramGuessMessage(telegram, chatId, messageId, html, keybo
     if (opts.guessNo && typeof result.hasPhoto === 'boolean') {
       patchGuessMessageContext(String(opts.guessNo), { hasPhoto: result.hasPhoto });
     }
+    if (trackNoAvatar) {
+      guessNoAvatarLog('edit.ok', {
+        chatId,
+        messageId,
+        guessNo: opts.guessNo ?? null,
+        inputHasPhoto: Boolean(hasPhoto),
+        resultHasPhoto: result.hasPhoto,
+      });
+    }
     return true;
   } catch (err) {
     predictLog('guess.message_edit_fail', {
@@ -460,6 +494,15 @@ async function editTelegramGuessMessage(telegram, chatId, messageId, html, keybo
       hasPhoto,
       reason: err?.response?.description || err?.message || String(err),
     });
+    if (trackNoAvatar) {
+      guessNoAvatarLog('edit.fail', {
+        chatId,
+        messageId,
+        guessNo: opts.guessNo ?? null,
+        hasPhoto: Boolean(hasPhoto),
+        reason: err?.response?.description || err?.message || String(err),
+      });
+    }
     return false;
   }
 }
@@ -642,6 +685,15 @@ async function syncGuessPublishCardFromDetail({
   const guess = String(guessNo || '').trim();
   if (!guess || !config || chatId == null || messageId == null) return;
 
+  if (!hasPhoto) {
+    guessNoAvatarLog('sync.detail_start', {
+      guessNo: guess,
+      chatId,
+      messageId,
+      hasPhoto: Boolean(hasPhoto),
+    });
+  }
+
   try {
     const detailRes = await getCoinDirectionGuessDetail({
       apiBaseUrl: config.API_BASE_URL,
@@ -682,6 +734,9 @@ async function syncGuessPublishCardFromDetail({
       );
       patchGuessMessageContext(guess, { lastKnownStatus: 'locked' });
       predictLog('publish.detail_sync_locked', { guessNo: guess, ok, betEndAt: patch.betEndAt ?? null });
+      if (!hasPhoto) {
+        guessNoAvatarLog('sync.detail_locked', { guessNo: guess, ok, betEndAt: patch.betEndAt ?? null });
+      }
       return;
     }
     const html = buildGroupPublishHtml(texts, meta, statsRaw);
@@ -699,11 +754,24 @@ async function syncGuessPublishCardFromDetail({
       ok,
       betEndAt: patch.betEndAt ?? null,
     });
+    if (!hasPhoto) {
+      guessNoAvatarLog('sync.detail_done', {
+        guessNo: guess,
+        ok,
+        betEndAt: patch.betEndAt ?? null,
+      });
+    }
   } catch (err) {
     predictLog('publish.detail_sync_fail', {
       guessNo: guess,
       message: err?.message || String(err),
     });
+    if (!hasPhoto) {
+      guessNoAvatarLog('sync.detail_fail', {
+        guessNo: guess,
+        message: err?.message || String(err),
+      });
+    }
   }
 }
 
@@ -1595,6 +1663,16 @@ async function publishPredict(ctx, config, getTexts) {
 
   const avatarUrl = publishData.avatar ? String(publishData.avatar).trim() : '';
 
+  if (!avatarUrl) {
+    guessNoAvatarLog('publish.start', {
+      uid,
+      publishChatId,
+      guessNo: guessNo ?? null,
+      nickName: publishData.nickName ?? null,
+      avatarUrl: null,
+    });
+  }
+
   predictLog('publish.guess_created', {
     uid,
     publishChatId,
@@ -1620,6 +1698,14 @@ async function publishPredict(ctx, config, getTexts) {
           uid,
           publishChatId,
           message: photoErr?.response?.description || photoErr?.message || String(photoErr),
+        });
+        guessNoAvatarLog('publish.avatar_fail', {
+          uid,
+          publishChatId,
+          guessNo: guessNo ?? null,
+          avatarUrl,
+          message: photoErr?.response?.description || photoErr?.message || String(photoErr),
+          willFallbackToText: true,
         });
         guessMsg = await ctx.telegram.sendMessage(publishChatId, groupPublishHtml, sendExtra);
       }
@@ -1663,12 +1749,32 @@ async function publishPredict(ctx, config, getTexts) {
 
   const tgMessageId = guessMsg?.message_id ?? null;
   const msgHasPhoto = resolveGuessMessageHasPhoto(guessMsg);
+  if (shouldTrackNoAvatarGuess(avatarUrl, msgHasPhoto)) {
+    guessNoAvatarLog('publish.sent', {
+      uid,
+      publishChatId,
+      guessNo: guessNo ?? null,
+      messageId: tgMessageId,
+      avatarUrl: avatarUrl || null,
+      msgHasPhoto,
+      sendMode: !avatarUrl ? 'text' : msgHasPhoto ? 'photo' : 'text_fallback',
+      typeMismatch: Boolean(avatarUrl) && !msgHasPhoto,
+    });
+  }
   if (guessNo && tgMessageId != null) {
     patchGuessMessageContext(guessNo, {
       chatId: publishChatId,
       messageId: tgMessageId,
       hasPhoto: msgHasPhoto,
     });
+    if (shouldTrackNoAvatarGuess(avatarUrl, msgHasPhoto)) {
+      guessNoAvatarLog('publish.context_saved', {
+        guessNo,
+        chatId: publishChatId,
+        messageId: tgMessageId,
+        hasPhoto: msgHasPhoto,
+      });
+    }
     await bindCoinDirectionGuessMessage(ctx, config, { guessNo, tgMessageId });
     await syncGuessPublishCardFromDetail({
       telegram: ctx.telegram,

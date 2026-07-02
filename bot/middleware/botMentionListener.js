@@ -46,7 +46,7 @@ function createBotMentionListenerMiddleware(config) {
       });
     }
 
-    if (text.includes('@')) {
+    if (text.includes('@') && botMentionVerboseEnabled()) {
       botMentionLog('group.at_seen', {
         telegramId: ctx.from?.id ?? null,
         chatId: ctx.chat?.id ?? null,
