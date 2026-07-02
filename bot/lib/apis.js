@@ -1798,6 +1798,100 @@ async function postGroupReferrerBind({
   }
 }
 
+// --- POST /tg/stats/group/save（Bot 上报群档案/统计）---------------------------
+
+/**
+ * @typedef {{
+ *   groupId: number | string;
+ *   groupTitle?: string;
+ *   avatar?: string;
+ *   ownerUserId?: string;
+ *   memberCount?: number;
+ * }} TgStatsGroupSaveRow
+ */
+
+/**
+ * @param {{
+ *   apiBaseUrl: string;
+ *   groups: TgStatsGroupSaveRow[];
+ *   auth?: string;
+ *   appUrl?: string;
+ *   path?: string;
+ *   timeoutMs?: number;
+ * }} opts
+ * @returns {Promise<{ ok: boolean; status: number; json: object | null; text: string }>}
+ */
+async function postTgStatsGroupSave({
+  apiBaseUrl,
+  groups,
+  auth = '',
+  appUrl = '',
+  path = 'tg/stats/group/save',
+  timeoutMs = 15000,
+}) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const rel = String(path || 'tg/stats/group/save').trim().replace(/^\/+/, '');
+  const url = `${base}/${rel}`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    'content-type': 'application/json',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    'user-agent': DEFAULT_UA,
+  };
+  if (auth) {
+    headers.authentication = auth;
+  }
+  if (app) {
+    headers.referer = `${app}/`;
+  }
+  const body = (Array.isArray(groups) ? groups : [])
+    .map((row) => {
+      const item = { groupId: Number(row.groupId) };
+      const title = String(row.groupTitle ?? '').trim();
+      if (title) item.groupTitle = title;
+      const avatar = String(row.avatar ?? '').trim();
+      if (avatar) item.avatar = avatar;
+      const ownerUserId = String(row.ownerUserId ?? '').trim();
+      if (ownerUserId) item.ownerUserId = ownerUserId;
+      const memberCount = Number(row.memberCount);
+      if (Number.isFinite(memberCount) && memberCount >= 0) {
+        item.memberCount = Math.floor(memberCount);
+      }
+      return item;
+    })
+    .filter((row) => Number.isFinite(row.groupId));
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      signal: ctrl.signal,
+    });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const out = { ok: res.ok, status: res.status, json, text };
+    apiDebug('POST /tg/stats/group/save →', {
+      groupCount: body.length,
+      groupIds: body.map((g) => g.groupId),
+      httpStatus: res.status,
+      ok: res.ok,
+      bodyPreview: text.slice(0, 500),
+    });
+    return out;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 // --- POST /tg/chat/save、GET /tg/chat/get（群内提问缓存，TTL 10min）----------------
 
 /**
@@ -2816,6 +2910,7 @@ module.exports = {
   fetchSearchLastPriceChange,
   parseSearchLastPriceChangeResult,
   postTgRegisteredCheck,
+  postTgStatsGroupSave,
   postTgChatSave,
   getTgChatGet,
   postTgChatRemove,
