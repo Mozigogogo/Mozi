@@ -17,6 +17,9 @@ const {
   isGuessStatusLocked,
   isGuessListItemSettled,
   resolveGuessPollStatus,
+  mergeGuessBetEndFallback,
+  isGuessEffectivelyLocked,
+  parseGuessBetEndAt,
 } = require('./apis');
 const {
   listDistinctPollGroupIds,
@@ -310,7 +313,8 @@ async function refreshOneGuessFromListItem(ctx, item) {
   const groupId = ctx.groupId ?? ctx.chatId ?? null;
   if (!guessNo) return;
 
-  const newStatus = resolveGuessPollStatus(item);
+  const itemForStatus = mergeGuessBetEndFallback(item, ctx.betEndAt);
+  const newStatus = resolveGuessPollStatus(itemForStatus);
   const prevStatus = ctx.lastKnownStatus || 'active';
   const statusChanged = prevStatus !== newStatus;
 
@@ -321,6 +325,7 @@ async function refreshOneGuessFromListItem(ctx, item) {
     newStatus,
     statusChanged,
     rawStatus: item.status ?? null,
+    betEndAt: parseGuessBetEndAt(itemForStatus),
     symbol: item.symbol ?? null,
   });
 
@@ -328,7 +333,7 @@ async function refreshOneGuessFromListItem(ctx, item) {
   const languageCode = ctx.languageCode || 'zh';
   const texts = getTexts(languageCode);
 
-  if (isGuessListItemSettled(item) || newStatus === 'settled') {
+  if (isGuessListItemSettled(itemForStatus) || newStatus === 'settled') {
     if (statusChanged || !ctx.settledAt) {
       await handleSettledTransition(ctx, item, prevStatus, newStatus);
     } else {
@@ -339,20 +344,20 @@ async function refreshOneGuessFromListItem(ctx, item) {
 
   // active / locked：即使状态未变，每次轮询也刷新卡片以同步倒计时与统计
   const needsPeriodicRefresh =
-    newStatus === 'active' || newStatus === 'locked' || isGuessStatusLocked(item);
+    newStatus === 'active' || newStatus === 'locked' || isGuessEffectivelyLocked(itemForStatus);
   if (!statusChanged && !needsPeriodicRefresh) {
     touchGuessListPoll(guessNo);
     return;
   }
 
-  if (isGuessStatusLocked(item) || newStatus === 'locked') {
+  if (isGuessEffectivelyLocked(itemForStatus) || newStatus === 'locked') {
     const ok = await applyGuessLockedRefreshFromDetail({
       telegram: botRef.telegram,
       chatId: ctx.chatId,
       messageId: ctx.messageId,
       hasPhoto: Boolean(ctx.hasPhoto),
       meta: ctx,
-      item,
+      item: itemForStatus,
       statsRaw,
       texts,
     });

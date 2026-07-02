@@ -2110,6 +2110,33 @@ function parseGuessBetEndAt(data) {
 }
 
 /**
+ * list/detail 缺 betEndAt 时，用本地缓存的下注截止时间补全
+ * @param {object | null | undefined} item
+ * @param {string | number | null | undefined} fallbackBetEndAt
+ * @returns {object | null | undefined}
+ */
+function mergeGuessBetEndFallback(item, fallbackBetEndAt) {
+  if (!item || typeof item !== 'object') return item;
+  if (parseGuessBetEndAt(item) != null) return item;
+  if (fallbackBetEndAt == null || String(fallbackBetEndAt).trim() === '') return item;
+  return { ...item, betEndAt: fallbackBetEndAt };
+}
+
+/**
+ * 下注窗口是否已结束（不依赖后端 status 是否已切 locked）
+ * @param {object | null | undefined} item
+ * @param {number} [referenceMs]
+ * @returns {boolean}
+ */
+function isGuessBettingClosedByDeadline(item, referenceMs = Date.now()) {
+  if (!item || typeof item !== 'object') return false;
+  const ms = parseGuessDateTimeMs(parseGuessBetEndAt(item));
+  if (ms == null) return false;
+  const ref = Number(referenceMs);
+  return (Number.isFinite(ref) ? ref : Date.now()) >= ms;
+}
+
+/**
  * @param {object | null | undefined} data
  * @returns {string | number | null}
  */
@@ -2891,7 +2918,9 @@ function isGuessStatusLocked(itemOrStatus) {
  * @returns {boolean}
  */
 function isGuessBettingAllowed(item) {
-  return isGuessStatusActive(item);
+  if (!isGuessStatusActive(item)) return false;
+  if (isGuessBettingClosedByDeadline(item)) return false;
+  return true;
 }
 
 /**
@@ -2918,6 +2947,13 @@ function isGuessListItemSettled(item) {
   return parseGuessResult(item) != null;
 }
 
+function isGuessEffectivelyLocked(item, referenceMs = Date.now()) {
+  if (!item || typeof item !== 'object') return false;
+  if (isGuessListItemSettled(item)) return false;
+  if (isGuessStatusLocked(item)) return true;
+  return isGuessBettingClosedByDeadline(item, referenceMs);
+}
+
 /**
  * 从 list/detail item 解析轮询用状态
  * @param {object | null | undefined} item
@@ -2926,7 +2962,7 @@ function isGuessListItemSettled(item) {
 function resolveGuessPollStatus(item) {
   if (!item || typeof item !== 'object') return 'unknown';
   if (isGuessListItemSettled(item)) return 'settled';
-  if (isGuessStatusLocked(item)) return 'locked';
+  if (isGuessEffectivelyLocked(item)) return 'locked';
   if (isGuessStatusActive(item)) return 'active';
   return normalizeGuessStatus(item.status) || 'unknown';
 }
@@ -2957,6 +2993,9 @@ module.exports = {
   getCoinDirectionGuessDetail,
   parseCoinDirectionGuessNo,
   parseCoinDirectionGuessPublishData,
+  isGuessBettingClosedByDeadline,
+  isGuessEffectivelyLocked,
+  mergeGuessBetEndFallback,
   parseGuessBetEndAt,
   parseGuessStartAt,
   buildGuessTimeFieldsPatch,

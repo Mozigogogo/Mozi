@@ -25,6 +25,9 @@ const {
   isGuessBettingAllowed,
   isGuessListItemSettled,
   resolveGuessPollStatus,
+  mergeGuessBetEndFallback,
+  isGuessEffectivelyLocked,
+  isGuessBettingClosedByDeadline,
 } = require('./apis');
 const { SYMBOL_WHITELIST } = require('./symbolIntent');
 const { escapeHtml } = require('./telegramHtml');
@@ -52,6 +55,7 @@ const {
   getGuessBetEndAt,
   markGuessSettled,
 } = require('./guessMessageContext');
+const { scheduleGuessLockCardRefresh } = require('./guessLockScheduler');
 
 const QUICK_SYMBOLS = ['BTC', 'ETH', 'SOL'];
 const DEFAULT_DURATION_MINUTES = 10;
@@ -466,14 +470,15 @@ async function applyGuessActiveRefreshFromDetail({
   texts,
   guessNo,
 }) {
-  if (item && isGuessStatusLocked(item)) {
+  const mergedItem = mergeGuessBetEndFallback(item, meta?.betEndAt);
+  if (mergedItem && isGuessEffectivelyLocked(mergedItem)) {
     return applyGuessLockedRefreshFromDetail({
       telegram,
       chatId,
       messageId,
       hasPhoto,
       meta,
-      item,
+      item: mergedItem,
       statsRaw,
       texts,
     });
@@ -557,6 +562,7 @@ async function syncGuessPublishCardFromDetail({
     }
 
     const item = detailRes.item;
+    const mergedItem = mergeGuessBetEndFallback(item, messageMeta.betEndAt);
     const patch = buildGuessTimeFieldsPatch(item);
     if (Object.keys(patch).length) patchGuessMessageContext(guess, patch);
 
@@ -566,6 +572,20 @@ async function syncGuessPublishCardFromDetail({
       ...patch,
     };
     const statsRaw = parseGuessItemStats(item);
+    if (isGuessEffectivelyLocked(mergedItem)) {
+      const lockedHtml = buildGroupLockedHtml(texts, meta, statsRaw);
+      const ok = await editTelegramGuessMessage(
+        telegram,
+        chatId,
+        messageId,
+        lockedHtml,
+        { inline_keyboard: [] },
+        hasPhoto,
+      );
+      patchGuessMessageContext(guess, { lastKnownStatus: 'locked' });
+      predictLog('publish.detail_sync_locked', { guessNo: guess, ok, betEndAt: patch.betEndAt ?? null });
+      return;
+    }
     const html = buildGroupPublishHtml(texts, meta, statsRaw);
     const ok = await editTelegramGuessMessage(
       telegram,
@@ -1561,6 +1581,12 @@ async function publishPredict(ctx, config, getTexts) {
       keyboard: betKeyboard,
       hasPhoto: Boolean(avatarUrl),
     });
+    scheduleGuessLockCardRefresh({
+      telegram: ctx.telegram,
+      config,
+      guessNo,
+      betEndAt: messageMeta.betEndAt,
+    });
   } else {
     predictLog('bind.api.skip', {
       uid,
@@ -1673,11 +1699,12 @@ async function checkGuessBettingAllowed(ctx, config, guess, texts) {
       await answerPredictCbQuery(ctx, texts.predictBetDeadlinePassed, { show_alert: true });
       return false;
     }
-    if (isGuessStatusLocked(item)) {
+    const merged = mergeGuessBetEndFallback(item, getGuessBetEndAt(guess));
+    if (isGuessEffectivelyLocked(merged)) {
       await answerPredictCbQuery(ctx, texts.predictBetLocked, { show_alert: true });
       return false;
     }
-    if (!isGuessBettingAllowed(item)) {
+    if (!isGuessBettingAllowed(merged)) {
       await answerPredictCbQuery(ctx, texts.predictBetDeadlinePassed, { show_alert: true });
       return false;
     }
@@ -1823,8 +1850,8 @@ async function tryRefreshGuessMessage(ctx, config, texts, guessNo, betResult) {
     }
   }
 
-  const statusItem = detailItem ?? fallbackItem;
-  if (statusItem && isGuessStatusLocked(statusItem)) {
+  const statusItem = mergeGuessBetEndFallback(detailItem ?? fallbackItem, meta.betEndAt);
+  if (statusItem && isGuessEffectivelyLocked(statusItem)) {
     const displayMeta = {
       ...meta,
       ...buildMetaFromGuessItem(statusItem, meta.languageCode, meta.publisher),
