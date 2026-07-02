@@ -4,7 +4,11 @@
  * Bot 入群与群信息变更时上报 POST /tg/stats/group/save
  */
 
-const { syncGroupStatsFromJoin, syncGroupStatsFromChatUpdate } = require('../lib/tgGroupStats');
+const {
+  syncGroupStatsFromJoin,
+  syncGroupStatsFromChatUpdate,
+  syncGroupStatsFromMemberChange,
+} = require('../lib/tgGroupStats');
 const { tgGroupStatsLog } = require('../lib/tgGroupStatsLog');
 
 function registerTgGroupStats(bot, config) {
@@ -25,6 +29,17 @@ function registerTgGroupStats(bot, config) {
     } catch (err) {
       tgGroupStatsLog('handler_error', {
         event: ctx.updateType || 'chat_update',
+        message: err?.message || String(err),
+      });
+    }
+  });
+
+  bot.on(['new_chat_members', 'left_chat_member'], async (ctx) => {
+    try {
+      await syncGroupStatsFromMemberChange(ctx, config);
+    } catch (err) {
+      tgGroupStatsLog('handler_error', {
+        event: ctx.updateType || 'member_change',
         message: err?.message || String(err),
       });
     }

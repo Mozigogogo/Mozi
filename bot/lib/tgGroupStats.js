@@ -13,6 +13,24 @@ const {
 } = require('./groupReferrer');
 const { tgGroupStatsLog } = require('./tgGroupStatsLog');
 
+/** @type {Map<string, ReturnType<typeof setTimeout>[]>} */
+const pendingResyncTimers = new Map();
+
+const MEMBER_COUNT_RETRY_DELAYS_MS = [0, 2000, 5000];
+const BOT_JOIN_RESYNC_DELAYS_MS = [8000, 20000];
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function clearScheduledResyncs(chatId) {
+  const key = String(chatId);
+  const timers = pendingResyncTimers.get(key);
+  if (!timers?.length) return;
+  for (const id of timers) clearTimeout(id);
+  pendingResyncTimers.delete(key);
+}
+
 /**
  * @param {import('telegraf').Telegram} telegram
  * @param {string} botToken
@@ -34,36 +52,71 @@ async function resolveChatPhotoUrl(telegram, botToken, chat) {
 /**
  * @param {import('telegraf').Telegram} telegram
  * @param {number | string} chatId
- * @param {import('telegraf/types').Chat} [chat]
+ * @param {{ retryDelaysMs?: number[]; reason?: string }} [opts]
  * @returns {Promise<number | undefined>}
  */
-async function resolveMemberCount(telegram, chatId, chat) {
-  const fromChat = Number(chat?.members_count ?? chat?.membersCount);
-  if (Number.isFinite(fromChat) && fromChat >= 0) {
-    return Math.floor(fromChat);
-  }
+async function resolveMemberCount(telegram, chatId, opts = {}) {
+  const delays = Array.isArray(opts.retryDelaysMs) && opts.retryDelaysMs.length
+    ? opts.retryDelaysMs
+    : MEMBER_COUNT_RETRY_DELAYS_MS;
+  const reason = opts.reason || 'resolveMemberCount';
+  let latest = null;
 
-  const attempts = [
-    ['getChatMembersCount', () => telegram.getChatMembersCount(chatId)],
-    ['getChatMemberCount', () => telegram.callApi('getChatMemberCount', { chat_id: chatId })],
-  ];
-
-  for (const [method, run] of attempts) {
-    try {
-      const count = Number(await run());
-      if (Number.isFinite(count) && count >= 0) {
-        return Math.floor(count);
-      }
-    } catch (err) {
-      tgGroupStatsLog('member_count_fail', {
-        chatId: Number(chatId),
-        method,
-        message: err?.message || String(err),
-      });
+  for (let i = 0; i < delays.length; i += 1) {
+    const delayMs = delays[i];
+    if (delayMs > 0) {
+      await sleep(delayMs);
     }
+
+    const counts = [];
+    const attempts = [
+      ['getChatMembersCount', () => telegram.getChatMembersCount(chatId)],
+      ['getChatMemberCount', () => telegram.callApi('getChatMemberCount', { chat_id: chatId })],
+    ];
+
+    for (const [method, run] of attempts) {
+      try {
+        const count = Number(await run());
+        if (Number.isFinite(count) && count >= 0) {
+          counts.push(Math.floor(count));
+        }
+      } catch (err) {
+        tgGroupStatsLog('member_count_fail', {
+          chatId: Number(chatId),
+          method,
+          attempt: i + 1,
+          reason,
+          message: err?.message || String(err),
+        });
+      }
+    }
+
+    try {
+      const chat = await telegram.getChat(chatId);
+      const fromChat = Number(chat?.members_count ?? chat?.membersCount);
+      if (Number.isFinite(fromChat) && fromChat >= 0) {
+        counts.push(Math.floor(fromChat));
+      }
+    } catch {
+      /* ignore */
+    }
+
+    if (!counts.length) continue;
+
+    const picked = Math.max(...counts);
+    latest = latest == null ? picked : Math.max(latest, picked);
+    tgGroupStatsLog('member_count_attempt', {
+      chatId: Number(chatId),
+      reason,
+      attempt: i + 1,
+      delayMs,
+      counts,
+      picked,
+      latest,
+    });
   }
 
-  return undefined;
+  return latest ?? undefined;
 }
 
 /**
@@ -84,7 +137,7 @@ function resolveOwnerUserIdForGroup(chatId, ownerUserId) {
  * @param {import('telegraf').Telegram} telegram
  * @param {object} config
  * @param {number | string} chatId
- * @param {{ ownerUserId?: string | number }} [opts]
+ * @param {{ ownerUserId?: string | number; memberCountReason?: string }} [opts]
  * @returns {Promise<{
  *   groupId: number;
  *   groupTitle?: string;
@@ -115,7 +168,9 @@ async function collectGroupStatsRow(telegram, config, chatId, opts = {}) {
   }
 
   try {
-    const memberCount = await resolveMemberCount(telegram, chat.id, chat);
+    const memberCount = await resolveMemberCount(telegram, chat.id, {
+      reason: opts.memberCountReason || 'collect',
+    });
     if (memberCount != null) {
       row.memberCount = memberCount;
     }
@@ -140,12 +195,15 @@ async function collectGroupStatsRow(telegram, config, chatId, opts = {}) {
  * @param {object} config
  * @param {number | string} chatId
  * @param {string} [reason]
- * @param {{ ownerUserId?: string | number }} [opts]
+ * @param {{ ownerUserId?: string | number; memberCountReason?: string }} [opts]
  */
 async function syncGroupStatsForChatId(telegram, config, chatId, reason = 'unknown', opts = {}) {
   tgGroupStatsLog('sync_start', { reason, chatId: Number(chatId) });
 
-  const row = await collectGroupStatsRow(telegram, config, chatId, opts);
+  const row = await collectGroupStatsRow(telegram, config, chatId, {
+    ...opts,
+    memberCountReason: opts.memberCountReason || reason,
+  });
   if (!row) {
     tgGroupStatsLog('sync_skip', { reason, chatId: Number(chatId), message: 'not_group_or_getChat_failed' });
     return;
@@ -164,8 +222,40 @@ async function syncGroupStatsForChatId(telegram, config, chatId, reason = 'unkno
     reason,
     groupId: row.groupId,
     ownerUserId: row.ownerUserId ?? null,
+    memberCount: row.memberCount ?? null,
     httpStatus: res.status,
     ok: res.ok,
+  });
+}
+
+/**
+ * Bot 入群后 Telegram 成员数可能尚未更新，延迟再同步几次。
+ * @param {import('telegraf').Telegram} telegram
+ * @param {object} config
+ * @param {number | string} chatId
+ * @param {{ ownerUserId?: string }} opts
+ */
+function scheduleGroupStatsResyncAfterJoin(telegram, config, chatId, opts = {}) {
+  clearScheduledResyncs(chatId);
+  const timers = BOT_JOIN_RESYNC_DELAYS_MS.map((delayMs) =>
+    setTimeout(() => {
+      syncGroupStatsForChatId(telegram, config, chatId, `bot_join_resync_${delayMs}`, {
+        ...opts,
+        memberCountReason: `bot_join_resync_${delayMs}`,
+      }).catch((err) => {
+        tgGroupStatsLog('handler_error', {
+          event: 'bot_join_resync',
+          chatId: Number(chatId),
+          delayMs,
+          message: err?.message || String(err),
+        });
+      });
+    }, delayMs),
+  );
+  pendingResyncTimers.set(String(chatId), timers);
+  tgGroupStatsLog('join_resync_scheduled', {
+    chatId: Number(chatId),
+    delaysMs: BOT_JOIN_RESYNC_DELAYS_MS,
   });
 }
 
@@ -191,6 +281,7 @@ async function syncGroupStatsFromJoin(ctx, config) {
   }
 
   await syncGroupStatsForChatId(ctx.telegram, config, join.chatId, 'bot_join', opts);
+  scheduleGroupStatsResyncAfterJoin(ctx.telegram, config, join.chatId, opts);
 }
 
 /**
@@ -204,9 +295,25 @@ async function syncGroupStatsFromChatUpdate(ctx, config) {
   await syncGroupStatsForChatId(ctx.telegram, config, chat.id, updateType);
 }
 
+/**
+ * @param {import('telegraf').Context} ctx
+ * @param {object} config
+ */
+async function syncGroupStatsFromMemberChange(ctx, config) {
+  const chat = ctx.chat;
+  if (!chat || (chat.type !== 'group' && chat.type !== 'supergroup')) return;
+  const updateType = ctx.updateType || 'member_change';
+  await syncGroupStatsForChatId(ctx.telegram, config, chat.id, updateType, {
+    memberCountReason: updateType,
+  });
+}
+
 module.exports = {
   collectGroupStatsRow,
   syncGroupStatsForChatId,
   syncGroupStatsFromJoin,
   syncGroupStatsFromChatUpdate,
+  syncGroupStatsFromMemberChange,
+  scheduleGroupStatsResyncAfterJoin,
+  clearScheduledResyncs,
 };
