@@ -19,6 +19,8 @@ const {
   buildGuessTimeFieldsPatch,
   parseGuessDateTimeMs,
   parseGuessResult,
+  resolveGuessDisplayResult,
+  isGuessStatusSettled,
   normalizeGuessStatus,
   isGuessStatusActive,
   isGuessStatusLocked,
@@ -317,6 +319,24 @@ function formatSettledVoteNick(vote) {
 
 function formatSettledTopWinners(texts, votes, result, languageCode) {
   if (!Array.isArray(votes) || !votes.length) return '';
+  if (result === 'TIE' || result == null) {
+    const refunded = votes
+      .filter((v) => v.payout != null && v.payout > 0)
+      .sort((a, b) => b.payout - a.payout)
+      .slice(0, 3);
+    if (!refunded.length) return '';
+    const lines = refunded.map((v) => {
+      const betAmount = Math.max(0, Math.floor(Number(v.betAmount) || 0));
+      const payout = Math.max(0, Math.floor(Number(v.payout) || 0));
+      return texts.predictSettledTopWinnerLine(
+        formatSettledVoteNick(v),
+        formatPointsDisplay(betAmount, languageCode),
+        formatPointsDisplay(payout, languageCode),
+        '0',
+      );
+    });
+    return texts.predictSettledTopWinnersSection(lines.join('\n'));
+  }
   const winChoice = result === 'UP' ? 1 : 2;
   const winners = votes
     .filter((v) => v.choice === winChoice && v.payout != null && v.payout > 0)
@@ -351,7 +371,18 @@ function buildGroupSettledHtml(texts, meta, statsRaw, item, result, votes) {
     escapeHtml(endPrice),
     changePct != null ? changePct : '—',
   );
-  const winnerLine = result === 'UP' ? texts.predictSettledWinnerUp : texts.predictSettledWinnerDown;
+  const winnerLine =
+    result === 'UP'
+      ? texts.predictSettledWinnerUp
+      : result === 'DOWN'
+        ? texts.predictSettledWinnerDown
+        : result === 'TIE'
+          ? texts.predictSettledWinnerTie
+          : typeof texts.predictSettledWinnerUnknown === 'function'
+            ? texts.predictSettledWinnerUnknown(
+                item?.result != null ? escapeHtml(String(item.result).trim()) : '',
+              )
+            : '✅ 已结算';
   const upPoints = Number(statsRaw?.upPoints) || 0;
   const downPoints = Number(statsRaw?.downPoints) || 0;
   const prizePool = formatPointsDisplay(upPoints + downPoints, meta.languageCode);
@@ -2033,28 +2064,27 @@ async function tryRefreshGuessMessage(ctx, config, texts, guessNo, betResult) {
   const messageId = msg.message_id;
 
   if (detailItem && isGuessListItemSettled(detailItem)) {
-    const result = parseGuessResult(detailItem);
-    if (result) {
-      const html = buildGroupSettledHtml(texts, meta, statsRaw, detailItem, result, detailVotes);
-      const ok = await editGuessMessageContent(
-        ctx,
-        chatId,
-        messageId,
-        html,
-        { inline_keyboard: [] },
-        hasPhoto,
-        guess,
-      );
-      markGuessSettled(guess, result);
-      predictLog('bet.refresh_settled', {
-        guessNo: guess,
-        ok,
-        result,
-        endPrice: detailItem.endPrice ?? null,
-        voteCount: detailVotes.length,
-      });
-      return;
-    }
+    const result = resolveGuessDisplayResult(detailItem);
+    const html = buildGroupSettledHtml(texts, meta, statsRaw, detailItem, result, detailVotes);
+    const ok = await editGuessMessageContent(
+      ctx,
+      chatId,
+      messageId,
+      html,
+      { inline_keyboard: [] },
+      hasPhoto,
+      guess,
+    );
+    markGuessSettled(guess, result || String(detailItem.result || 'settled'));
+    predictLog('bet.refresh_settled', {
+      guessNo: guess,
+      ok,
+      result: result ?? detailItem.result ?? null,
+      status: detailItem.status ?? null,
+      endPrice: detailItem.endPrice ?? null,
+      voteCount: detailVotes.length,
+    });
+    return;
   }
 
   const statusItem = mergeGuessBetEndFallback(detailItem ?? fallbackItem, meta.betEndAt);

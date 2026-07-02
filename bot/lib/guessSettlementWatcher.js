@@ -14,6 +14,8 @@ const {
   parseGuessItemStats,
   buildGuessTimeFieldsPatch,
   parseGuessResult,
+  resolveGuessDisplayResult,
+  isGuessStatusSettled,
   isGuessStatusLocked,
   isGuessListItemSettled,
   resolveGuessPollStatus,
@@ -220,22 +222,20 @@ async function handleSettledTransition(ctx, listItem, prevStatus, newStatus) {
   const groupId = ctx.groupId ?? ctx.chatId ?? null;
   const groupChatId = groupId;
 
-  const result = parseGuessResult(listItem);
-  if (!result) {
-    guessPollLog('settled_result_pending', {
+  if (!isGuessStatusSettled(listItem)) {
+    guessPollLog('settled_skip_not_status', {
       guessNo,
       groupId,
       prevStatus,
       newStatus,
-      rawStatus: listItem.status ?? null,
+      rawStatus: listItem?.status ?? null,
     });
-    touchGuessListPoll(guessNo);
-    patchGuessMessageContext(guessNo, { lastKnownStatus: newStatus });
     return;
   }
 
   const { item: detailItem, votes } = await fetchDetailForSettled(guessNo);
   const item = detailItem || listItem;
+  const result = resolveGuessDisplayResult(item);
   const statsRaw = parseGuessItemStats(item);
   const languageCode = ctx.languageCode || 'zh';
   const texts = getTexts(languageCode);
@@ -283,7 +283,7 @@ async function handleSettledTransition(ctx, listItem, prevStatus, newStatus) {
   }
 
   if (cardOk && announceOk) {
-    markGuessSettled(guessNo, result);
+    markGuessSettled(guessNo, result || String(item.result || 'settled'));
     patchGuessMessageContext(guessNo, buildGuessTimePatch(item));
   } else {
     touchGuessListPoll(guessNo);
@@ -298,7 +298,9 @@ async function handleSettledTransition(ctx, listItem, prevStatus, newStatus) {
     groupId,
     prevStatus,
     newStatus,
-    result,
+    rawStatus: item.status ?? null,
+    rawResult: item.result ?? null,
+    displayResult: result,
     cardOk,
     announceOk,
     announceMessageId,

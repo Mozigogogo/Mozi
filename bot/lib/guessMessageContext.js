@@ -221,7 +221,7 @@ function touchGuessListPoll(guessNo) {
 
 /**
  * @param {string} guessNo
- * @param {'UP' | 'DOWN'} result
+ * @param {'UP' | 'DOWN' | 'TIE' | string} result
  */
 function markGuessSettled(guessNo, result) {
   const key = String(guessNo || '').trim();

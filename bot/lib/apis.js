@@ -2914,6 +2914,16 @@ function isGuessStatusLocked(itemOrStatus) {
 }
 
 /**
+ * @param {object | string | null | undefined} itemOrStatus
+ * @returns {boolean}
+ */
+function isGuessStatusSettled(itemOrStatus) {
+  const status =
+    itemOrStatus && typeof itemOrStatus === 'object' ? itemOrStatus.status : itemOrStatus;
+  return normalizeGuessStatus(status) === 'settled';
+}
+
+/**
  * @param {object | null | undefined} item
  * @returns {boolean}
  */
@@ -2925,13 +2935,29 @@ function isGuessBettingAllowed(item) {
 
 /**
  * @param {object | null | undefined} item
- * @returns {'UP' | 'DOWN' | null}
+ * @returns {'UP' | 'DOWN' | 'TIE' | null}
  */
 function parseGuessResult(item) {
   if (!item || typeof item !== 'object') return null;
   const r = String(item.result ?? item.direction ?? '').trim().toUpperCase();
   if (r === 'UP' || r === 'BULL' || r === 'BULLISH' || r === '1') return 'UP';
   if (r === 'DOWN' || r === 'BEAR' || r === 'BEARISH' || r === '2') return 'DOWN';
+  if (r === 'TIE' || r === 'DRAW' || r === 'FLAT' || r === 'NEUTRAL' || r === '0') return 'TIE';
+  return null;
+}
+
+/**
+ * 结算卡片展示用结果（不用于判断是否已结算；以 status 为准）
+ * @param {object | null | undefined} item
+ * @returns {'UP' | 'DOWN' | 'TIE' | null}
+ */
+function resolveGuessDisplayResult(item) {
+  const parsed = parseGuessResult(item);
+  if (parsed) return parsed;
+  if (!item || typeof item !== 'object' || !isGuessStatusSettled(item)) return null;
+  const start = Number(item.startPrice);
+  const end = Number(item.endPrice);
+  if (Number.isFinite(start) && Number.isFinite(end) && start === end) return 'TIE';
   return null;
 }
 
@@ -2941,10 +2967,7 @@ function parseGuessResult(item) {
  */
 function isGuessListItemSettled(item) {
   if (!item || typeof item !== 'object') return false;
-  const status = normalizeGuessStatus(item.status);
-  if (status === 'settled') return true;
-  if (status === 'active' || status === 'locked') return false;
-  return parseGuessResult(item) != null;
+  return isGuessStatusSettled(item);
 }
 
 function isGuessEffectivelyLocked(item, referenceMs = Date.now()) {
@@ -3005,9 +3028,11 @@ module.exports = {
   parseGuessBetStats,
   parseGuessItemStats,
   parseGuessResult,
+  resolveGuessDisplayResult,
   normalizeGuessStatus,
   isGuessStatusActive,
   isGuessStatusLocked,
+  isGuessStatusSettled,
   isGuessBettingAllowed,
   isGuessListItemSettled,
   resolveGuessPollStatus,

@@ -116,6 +116,8 @@ const i18n = {
       `起始价 ${startPrice} → 结算价 ${endPrice} (${changePct})`,
     predictSettledWinnerUp: '📈 看涨方获胜！',
     predictSettledWinnerDown: '📉 看跌方获胜！',
+    predictSettledWinnerTie: '🤝 平局',
+    predictSettledWinnerUnknown: (raw) => (raw ? `✅ 已结算（${raw}）` : '✅ 已结算'),
     predictSettledTopWinnersSection: (lines) => `\n🏆 中奖战绩 Top3:\n${lines}`,
     predictSettledTopWinnerLine: (nick, betAmount, payout, profitPct) =>
       `${nick} 下注${betAmount} → 赢得 ${payout} (${profitPct}%)`,
@@ -404,6 +406,8 @@ const i18n = {
       `Start ${startPrice} → Settle ${endPrice} (${changePct})`,
     predictSettledWinnerUp: '📈 Bullish side wins!',
     predictSettledWinnerDown: '📉 Bearish side wins!',
+    predictSettledWinnerTie: '🤝 Tie',
+    predictSettledWinnerUnknown: (raw) => (raw ? `✅ Settled (${raw})` : '✅ Settled'),
     predictSettledTopWinnersSection: (lines) => `\n🏆 Top 3 winners:\n${lines}`,
     predictSettledTopWinnerLine: (nick, betAmount, payout, profitPct) =>
       `${nick} bet ${betAmount} → won ${payout} (${profitPct}%)`,
