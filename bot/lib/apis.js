@@ -4,6 +4,7 @@
 
 const { apiDebug, jwtPreview } = require('./debugLog');
 const { guessApiLog } = require('./guessApiDebug');
+const { tgGroupStatsLog } = require('./tgGroupStatsLog');
 const { normalizeTgChatCommand } = require('./tgChatQuestionStore');
 
 const DEFAULT_UA =
@@ -1864,6 +1865,12 @@ async function postTgStatsGroupSave({
       return item;
     })
     .filter((row) => Number.isFinite(row.groupId));
+  tgGroupStatsLog('request', {
+    method: 'POST',
+    url,
+    body,
+    hasAuth: Boolean(auth),
+  });
   try {
     const res = await fetch(url, {
       method: 'POST',
@@ -1879,6 +1886,12 @@ async function postTgStatsGroupSave({
       json = null;
     }
     const out = { ok: res.ok, status: res.status, json, text };
+    tgGroupStatsLog('response', {
+      httpStatus: res.status,
+      ok: res.ok,
+      json,
+      text: text.slice(0, 2000),
+    });
     apiDebug('POST /tg/stats/group/save →', {
       groupCount: body.length,
       groupIds: body.map((g) => g.groupId),
@@ -1887,6 +1900,11 @@ async function postTgStatsGroupSave({
       bodyPreview: text.slice(0, 500),
     });
     return out;
+  } catch (err) {
+    tgGroupStatsLog('response_error', {
+      message: err?.message || String(err),
+    });
+    throw err;
   } finally {
     clearTimeout(t);
   }

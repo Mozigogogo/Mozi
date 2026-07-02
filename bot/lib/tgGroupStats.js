@@ -7,6 +7,7 @@
 const { postTgStatsGroupSave, postTgRegisteredCheck } = require('./apis');
 const { parseBotJoinFromMyChatMember } = require('./groupReferrer');
 const { getCachedUserId } = require('./tgUserTokenCache');
+const { tgGroupStatsLog } = require('./tgGroupStatsLog');
 
 /**
  * @param {object | null} json
@@ -141,15 +142,29 @@ async function collectGroupStatsRow(telegram, config, chatId) {
  * @param {object} config
  * @param {number | string} chatId
  */
-async function syncGroupStatsForChatId(telegram, config, chatId) {
-  const row = await collectGroupStatsRow(telegram, config, chatId);
-  if (!row) return;
+async function syncGroupStatsForChatId(telegram, config, chatId, reason = 'unknown') {
+  tgGroupStatsLog('sync_start', { reason, chatId: Number(chatId) });
 
-  await postTgStatsGroupSave({
+  const row = await collectGroupStatsRow(telegram, config, chatId);
+  if (!row) {
+    tgGroupStatsLog('sync_skip', { reason, chatId: Number(chatId), message: 'not_group_or_getChat_failed' });
+    return;
+  }
+
+  tgGroupStatsLog('collected', { reason, row });
+
+  const res = await postTgStatsGroupSave({
     apiBaseUrl: config.API_BASE_URL,
     appUrl: config.APP_URL,
     auth: config.MOZI_DETAIL_AUTH || '',
     groups: [row],
+  });
+
+  tgGroupStatsLog('sync_done', {
+    reason,
+    groupId: row.groupId,
+    httpStatus: res.status,
+    ok: res.ok,
   });
 }
 
@@ -160,7 +175,7 @@ async function syncGroupStatsForChatId(telegram, config, chatId) {
 async function syncGroupStatsFromJoin(ctx, config) {
   const join = parseBotJoinFromMyChatMember(ctx.myChatMember);
   if (!join) return;
-  await syncGroupStatsForChatId(ctx.telegram, config, join.chatId);
+  await syncGroupStatsForChatId(ctx.telegram, config, join.chatId, 'bot_join');
 }
 
 /**
@@ -170,7 +185,8 @@ async function syncGroupStatsFromJoin(ctx, config) {
 async function syncGroupStatsFromChatUpdate(ctx, config) {
   const chat = ctx.chat;
   if (!chat || (chat.type !== 'group' && chat.type !== 'supergroup')) return;
-  await syncGroupStatsForChatId(ctx.telegram, config, chat.id);
+  const updateType = ctx.updateType || 'chat_update';
+  await syncGroupStatsForChatId(ctx.telegram, config, chat.id, updateType);
 }
 
 module.exports = {
