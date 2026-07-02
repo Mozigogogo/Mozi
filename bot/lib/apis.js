@@ -2189,6 +2189,7 @@ function isCoinDirectionGuessBindMessageOk(json) {
  *   symbol: string;
  *   duration: number;
  *   title: string;
+ *   betEndAt?: string | number;
  *   path?: string;
  *   timeoutMs?: number;
  * }} opts
@@ -2202,6 +2203,7 @@ async function postCoinDirectionGuessPublish({
   symbol,
   duration,
   title,
+  betEndAt,
   path = 'coinDirectionGuess/publish',
   timeoutMs = 15000,
 }) {
@@ -2231,11 +2233,16 @@ async function postCoinDirectionGuessPublish({
     duration: Math.max(1, Math.floor(Number(duration) || 0)),
     title: String(title || '').trim(),
   };
+  const betEndAtRaw = betEndAt ?? null;
+  if (betEndAtRaw != null && String(betEndAtRaw).trim() !== '') {
+    body.betEndAt = betEndAtRaw;
+  }
   apiDebug('POST /coinDirectionGuess/publish ←', {
     url,
     groupId: body.groupId,
     symbol: body.symbol,
     duration: body.duration,
+    betEndAt: body.betEndAt ?? null,
     titlePreview: body.title.slice(0, 80),
     hasAuthenticationHeader: Boolean(rawAuth),
   });

@@ -74,7 +74,8 @@ function purgeExpired() {
  * @param {string} guessNo
  * @param {{
  *   sym: string;
- *   hours: number;
+ *   durationMinutes?: number;
+ *   hours?: number;
  *   price: string;
  *   lockedAtMs: number;
  *   betEndAt?: string | number | null;
@@ -101,7 +102,12 @@ function saveGuessMessageContext(guessNo, data) {
   const prev = contexts.get(key) || {};
   contexts.set(key, {
     sym: String(data.sym || prev.sym || '').trim(),
-    hours: Number(data.hours) || prev.hours || 24,
+    durationMinutes:
+      Number(data.durationMinutes)
+      || (Number(data.hours) > 0 ? Number(data.hours) * 60 : 0)
+      || prev.durationMinutes
+      || (Number(prev.hours) > 0 ? Number(prev.hours) * 60 : 0)
+      || 10,
     price: String(data.price || prev.price || '').trim(),
     lockedAtMs: Number(data.lockedAtMs) || prev.lockedAtMs || Date.now(),
     betEndAt: data.betEndAt ?? prev.betEndAt ?? null,

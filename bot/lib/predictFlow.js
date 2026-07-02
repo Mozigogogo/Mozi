@@ -54,13 +54,29 @@ const {
 } = require('./guessMessageContext');
 
 const QUICK_SYMBOLS = ['BTC', 'ETH', 'SOL'];
-const DEFAULT_HOURS = 24;
+const DEFAULT_DURATION_MINUTES = 10;
+const BET_END_OFFSET_MS = 5 * 60 * 1000;
 const SYMBOL_INPUT_RE = /^[A-Z0-9]{1,16}$/;
 
-/** 后端 duration 单位：秒，如 24 小时 → 86400 */
-function formatPredictDuration(hours) {
-  const h = Math.max(1, Math.min(168, Number(hours) || DEFAULT_HOURS));
-  return h * 3600;
+/** 下注截止：当前时刻 + 5 分钟（毫秒时间戳） */
+function buildBetEndAtTimestamp(referenceMs = Date.now()) {
+  const ref = Number(referenceMs);
+  const base = Number.isFinite(ref) ? ref : Date.now();
+  return base + BET_END_OFFSET_MS;
+}
+
+/** 后端 duration 单位：秒，如 10 分钟 → 600 */
+function formatPredictDuration(minutes) {
+  const m = Math.max(1, Math.min(10_080, Number(minutes) || DEFAULT_DURATION_MINUTES));
+  return m * 60;
+}
+
+function resolveDurationMinutes(source) {
+  const minutes = Number(source?.durationMinutes);
+  if (Number.isFinite(minutes) && minutes > 0) return Math.floor(minutes);
+  const legacyHours = Number(source?.hours);
+  if (Number.isFinite(legacyHours) && legacyHours > 0) return Math.floor(legacyHours * 60);
+  return DEFAULT_DURATION_MINUTES;
 }
 
 function parseEndAtMs(endAt) {
@@ -221,7 +237,7 @@ function buildGroupPublishHtml(texts, meta, statsRaw) {
     meta.betEndAt != null ? formatBetDeadlineDisplay(meta.betEndAt, meta.languageCode) : '—';
   return texts.predictGroupPublishBody(
     escapeHtml(meta.sym),
-    meta.hours,
+    resolveDurationMinutes(meta),
     escapeHtml(meta.price),
     lockedAt,
     stats,
@@ -245,7 +261,7 @@ function buildGroupLockedHtml(texts, meta, statsRaw) {
   );
   return texts.predictGroupLockedBody(
     escapeHtml(meta.sym),
-    meta.hours,
+    resolveDurationMinutes(meta),
     escapeHtml(meta.price),
     oddsLine,
     prizePool,
@@ -572,7 +588,7 @@ async function syncGuessPublishCardFromDetail({
   }
 }
 
-async function registerCoinDirectionGuessPublish(ctx, config, { publishChatId, sym, hours, title }) {
+async function registerCoinDirectionGuessPublish(ctx, config, { publishChatId, sym, durationMinutes, title }) {
   const uid = ctx.from?.id;
   if (uid == null || publishChatId == null) {
     return {
@@ -595,6 +611,7 @@ async function registerCoinDirectionGuessPublish(ctx, config, { publishChatId, s
   }
 
   try {
+    const betEndAt = buildBetEndAtTimestamp();
     const result = await postCoinDirectionGuessPublish({
       apiBaseUrl: config.API_BASE_URL,
       appUrl: config.APP_URL,
@@ -602,14 +619,16 @@ async function registerCoinDirectionGuessPublish(ctx, config, { publishChatId, s
       path: config.COIN_DIRECTION_GUESS_PUBLISH_PATH,
       groupId: publishChatId,
       symbol: sym,
-      duration: formatPredictDuration(hours),
+      duration: formatPredictDuration(durationMinutes),
       title,
+      betEndAt,
     });
     predictLog('publish.api', {
       uid,
       groupId: publishChatId,
       symbol: sym,
-      duration: formatPredictDuration(hours),
+      duration: formatPredictDuration(durationMinutes),
+      betEndAt,
       ok: result.ok,
       status: result.status,
       guessNo: result.guessNo ?? parseCoinDirectionGuessNo(result.json) ?? null,
@@ -626,7 +645,7 @@ async function registerCoinDirectionGuessPublish(ctx, config, { publishChatId, s
         jsonCode: result.json?.code ?? null,
       });
     }
-    return result;
+    return { ...result, betEndAt };
   } catch (err) {
     predictError('publish.api.exception', { uid, message: err?.message || String(err) });
     return {
@@ -933,14 +952,14 @@ async function editGuessCallbackKeyboard(ctx, keyboard) {
   return editGuessMessageKeyboard(ctx, msg.chat?.id, msg.message_id, keyboard);
 }
 
-function buildConfirmHtml(texts, symbol, priceStr, hours) {
+function buildConfirmHtml(texts, symbol, priceStr, durationMinutes) {
   const sym = escapeHtml(symbol);
   const price = escapeHtml(priceStr);
-  return texts.predictConfirmBody(sym, hours, price);
+  return texts.predictConfirmBody(sym, durationMinutes, price);
 }
 
-async function showConfirmMessage(ctx, uid, session, texts, sym, priceStr, hours) {
-  const html = buildConfirmHtml(texts, sym, priceStr, hours);
+async function showConfirmMessage(ctx, uid, session, texts, sym, priceStr, durationMinutes) {
+  const html = buildConfirmHtml(texts, sym, priceStr, durationMinutes);
   const keyboard = buildConfirmKeyboard(texts);
   // 保留 Step 1 选币卡片，确认页始终单独发一条新消息
   const msg = await ctx.reply(html, { parse_mode: 'HTML', reply_markup: keyboard });
@@ -949,7 +968,7 @@ async function showConfirmMessage(ctx, uid, session, texts, sym, priceStr, hours
   }
 }
 
-async function markConfirmPublished(ctx, session, texts, sym, priceStr, hours) {
+async function markConfirmPublished(ctx, session, texts, sym, priceStr, durationMinutes) {
   const chatId = resolvePredictChatId(ctx, session);
   let messageId = null;
   if (ctx.callbackQuery?.message && 'message_id' in ctx.callbackQuery.message) {
@@ -965,7 +984,7 @@ async function markConfirmPublished(ctx, session, texts, sym, priceStr, hours) {
   }
 
   const publishedKeyboard = buildPublishedKeyboard(texts);
-  const confirmHtml = buildConfirmHtml(texts, sym, priceStr, hours);
+  const confirmHtml = buildConfirmHtml(texts, sym, priceStr, durationMinutes);
 
   try {
     await tgEditMessageReplyMarkup(ctx, chatId, messageId, publishedKeyboard);
@@ -1084,7 +1103,7 @@ async function startPredictFlow(ctx, config, getTexts, opts = {}) {
     publishChatId,
     sourceGroupChatId,
     step: 'pick_symbol',
-    hours: existing?.hours ?? DEFAULT_HOURS,
+    durationMinutes: existing?.durationMinutes ?? resolveDurationMinutes(existing),
   });
 
   predictLog('flow.start', {
@@ -1205,11 +1224,19 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol, options = {
       step: 'confirm',
       symbol: sym,
       priceLocked: priceStr,
-      hours: session.hours ?? DEFAULT_HOURS,
+      durationMinutes: resolveDurationMinutes(session),
     });
     logConfirmStep(uid, sym);
 
-    await showConfirmMessage(ctx, uid, session, texts, sym, priceStr, session.hours ?? DEFAULT_HOURS);
+    await showConfirmMessage(
+      ctx,
+      uid,
+      session,
+      texts,
+      sym,
+      priceStr,
+      resolveDurationMinutes(session),
+    );
     return;
   }
 
@@ -1260,11 +1287,19 @@ async function selectSymbolAndConfirm(ctx, config, getTexts, symbol, options = {
     step: 'confirm',
     symbol: sym,
     priceLocked: priceStr,
-    hours: session.hours ?? DEFAULT_HOURS,
+    durationMinutes: resolveDurationMinutes(session),
   });
   logConfirmStep(uid, sym);
 
-  await showConfirmMessage(ctx, uid, session, texts, sym, priceStr, session.hours ?? DEFAULT_HOURS);
+  await showConfirmMessage(
+    ctx,
+    uid,
+    session,
+    texts,
+    sym,
+    priceStr,
+    resolveDurationMinutes(session),
+  );
 }
 
 /**
@@ -1308,7 +1343,7 @@ async function publishPredict(ctx, config, getTexts) {
   const texts = getTexts(languageCode);
   const isZh = languageCode?.toLowerCase().startsWith('zh');
   const sym = session.symbol;
-  const hours = session.hours ?? DEFAULT_HOURS;
+  const durationMinutes = resolveDurationMinutes(session);
   const priceStr = session.priceLocked;
 
   await answerPredictCbQuery(ctx, texts.predictPublishingToast);
@@ -1383,13 +1418,13 @@ async function publishPredict(ctx, config, getTexts) {
   }
 
   const pollQuestion = isZh
-    ? `${sym} 接下来 ${hours} 小时会涨还是跌？`
-    : `Will ${sym} go up or down in the next ${hours} hours?`;
+    ? `${sym} 接下来 ${durationMinutes} 分钟会涨还是跌？`
+    : `Will ${sym} go up or down in the next ${durationMinutes} minutes?`;
 
   const apiResult = await registerCoinDirectionGuessPublish(ctx, config, {
     publishChatId,
     sym,
-    hours,
+    durationMinutes,
     title: pollQuestion,
   });
 
@@ -1418,10 +1453,10 @@ async function publishPredict(ctx, config, getTexts) {
   const lockedAtMs = parseGuessDateTimeMs(publishData.startAt) ?? Date.now();
   const messageMeta = {
     sym,
-    hours,
+    durationMinutes,
     price: priceStr,
     lockedAtMs,
-    betEndAt: publishData.betEndAt ?? null,
+    betEndAt: publishData.betEndAt ?? apiResult.betEndAt ?? null,
     endAt: publishData.endAt ?? null,
     publisher,
     languageCode,
@@ -1549,7 +1584,7 @@ async function publishPredict(ctx, config, getTexts) {
     confirmMessageId: session.confirmMessageId ?? null,
   });
 
-  await markConfirmPublished(ctx, session, texts, sym, priceStr, hours);
+  await markConfirmPublished(ctx, session, texts, sym, priceStr, durationMinutes);
 }
 
 function buildMetaFromGuessItem(item, languageCode, publisher = '—') {
@@ -1562,10 +1597,13 @@ function buildMetaFromGuessItem(item, languageCode, publisher = '—') {
       maximumFractionDigits: 8,
     })}`;
   }
-  const hours = Math.max(1, Math.round(Number(item.duration) / 3600) || 24);
+  const durationMinutes = Math.max(
+    1,
+    Math.round(Number(item.duration) / 60) || DEFAULT_DURATION_MINUTES,
+  );
   return {
     sym,
-    hours,
+    durationMinutes,
     price,
     lockedAtMs: parseGuessDateTimeMs(parseGuessStartAt(item)) ?? Date.now(),
     endAt: item.endAt ?? null,

@@ -30,7 +30,7 @@ function purgeExpired() {
  *   step?: string;
  *   symbol?: string;
  *   priceLocked?: string;
- *   hours?: number;
+ *   durationMinutes?: number;
  * }} data
  */
 function savePredictSession(userId, data) {
@@ -45,7 +45,12 @@ function savePredictSession(userId, data) {
     step: data.step || 'pick_symbol',
     symbol: data.symbol || null,
     priceLocked: data.priceLocked || null,
-    hours: data.hours ?? 24,
+    durationMinutes:
+      Number(data.durationMinutes) > 0
+        ? Number(data.durationMinutes)
+        : Number(data.hours) > 0
+          ? Number(data.hours) * 60
+          : 10,
     expireAt: Date.now() + TTL_MS,
   });
   predictDebug('session.save', {
@@ -113,7 +118,7 @@ function rememberPredictSourceGroup(userId, groupChatId) {
     publishChatId: gid,
     sourceGroupChatId: gid,
     step: 'await_entry',
-    hours: 24,
+    durationMinutes: 10,
   });
 }
 
