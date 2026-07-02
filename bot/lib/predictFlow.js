@@ -23,6 +23,7 @@ const {
   isGuessVoidSettlement,
   isGuessStatusSettled,
   isGuessListItemSettled,
+  isGuessStatusActive,
   isGuessBettingAllowed,
   normalizeGuessStatus,
   resolveGuessPollStatus,
