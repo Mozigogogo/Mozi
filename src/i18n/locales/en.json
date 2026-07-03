@@ -998,6 +998,7 @@
     "signalSources": "Sources",
     "signalFusion": "Signal fusion",
     "mathDerivation": "Math derivation",
+    "historicalBacktest": "Historical backtest",
     "winRate": "Win rate",
     "sample": "Sample",
     "avgProfit": "Avg profit",

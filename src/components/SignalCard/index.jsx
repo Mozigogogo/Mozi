@@ -735,7 +735,7 @@ export default function SignalCard({
 
       {showExpandedDetail && mathTags.length > 0 ? (
         <div className={`${styles.mathBlock} ${embedded ? styles.mathBlockExpanded : ''}`}>
-          {!embedded ? <div className={styles.sectionHead}>{t('signalCard.mathDerivation')}</div> : null}
+          <div className={styles.sectionHead}>{t('signalCard.mathDerivation')}</div>
           <div className={styles.mathChips}>
             {mathTags.map((tag) => {
               const { label, value } = parseMathChip(tag);
@@ -759,6 +759,7 @@ export default function SignalCard({
         <div className={embedded ? styles.expandedFooter : undefined}>
           {statChips.length > 0 ? (
             <div className={`${styles.backtest} ${embedded ? styles.backtestExpanded : ''}`}>
+              <div className={styles.sectionHead}>{t('signalCard.historicalBacktest')}</div>
               {statChips.map((chip) => (
                 <div
                   key={chip.label}

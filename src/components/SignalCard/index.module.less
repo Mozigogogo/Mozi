@@ -521,6 +521,14 @@
     animation: none;
   }
 
+  .mathBlockExpanded .sectionHead {
+    font-size: 9PX;
+    letter-spacing: 1.1PX;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.3);
+    margin-bottom: 10PX;
+  }
+
   .mathBlockExpanded .mathChips {
     gap: 5PX;
     margin-bottom: 8PX;
@@ -564,6 +572,15 @@
     animation: none;
     min-height: 34PX;
     box-sizing: border-box;
+  }
+
+  .backtestExpanded .sectionHead {
+    flex-basis: 100%;
+    font-size: 9PX;
+    letter-spacing: 1.1PX;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.3);
+    margin-bottom: 5PX;
   }
 
   .backtestPlaceholder {
@@ -763,9 +780,26 @@
     border-bottom: 1PX solid rgba(255, 255, 255, 0.06);
   }
 
+  .mathBlockExpanded .sectionHead {
+    font-size: var(--sc-section-head, 9PX);
+    color: rgba(255, 255, 255, 0.3);
+    letter-spacing: 1.1PX;
+    text-transform: uppercase;
+    margin-bottom: 10PX;
+  }
+
   .backtestExpanded {
     padding: 12PX var(--sc-section-px, 22PX);
     border-bottom: 1PX solid rgba(255, 255, 255, 0.06);
+  }
+
+  .backtestExpanded .sectionHead {
+    flex-basis: 100%;
+    font-size: var(--sc-section-head, 9PX);
+    color: rgba(255, 255, 255, 0.3);
+    letter-spacing: 1.1PX;
+    text-transform: uppercase;
+    margin-bottom: 5PX;
   }
 
   .invalidExpanded {
@@ -1326,6 +1360,11 @@
   gap: 6PX;
   opacity: 0;
   animation: fadeUp 0.5s ease 1.3s forwards;
+}
+
+.backtest .sectionHead {
+  flex-basis: 100%;
+  margin-bottom: 2PX;
 }
 
 .btPill {
