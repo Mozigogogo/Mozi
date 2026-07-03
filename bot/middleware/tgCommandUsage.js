@@ -4,7 +4,7 @@ const { inboundCommandName } = require('../lib/moziLoginCommands');
 const { recordCommandUsageFromCtx } = require('../lib/tgCommandUsage');
 
 /**
- * 统一记录斜杠指令调用（含 /start），按时间窗口聚合
+ * 统一记录斜杠指令调用，按时间窗口聚合（/start、/register、/bind_ref 除外）
  * @param {object} config
  */
 function createTgCommandUsageMiddleware(config) {

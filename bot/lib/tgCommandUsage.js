@@ -19,6 +19,21 @@ const {
 /** @type {ReturnType<typeof setInterval> | null} */
 let flushTimer = null;
 
+/** 不上报统计的斜杠命令（小写，不含 /） */
+const COMMAND_USAGE_EXCLUDE = new Set(['start', 'bind_ref', 'register']);
+
+/**
+ * @param {string} commandName
+ * @returns {boolean}
+ */
+function isCommandUsageExcluded(commandName) {
+  const name = String(commandName || '')
+    .trim()
+    .toLowerCase()
+    .replace(/^\//, '');
+  return COMMAND_USAGE_EXCLUDE.has(name);
+}
+
 /**
  * @param {string} commandName
  * @returns {string}
@@ -36,7 +51,7 @@ function formatCommandForStats(commandName) {
  */
 function recordCommandUsageFromCtx(ctx, commandName, config) {
   const command = formatCommandForStats(commandName || inboundCommandName(ctx));
-  if (!command || !ctx.chat) return null;
+  if (!command || !ctx.chat || isCommandUsageExcluded(command)) return null;
 
   const groupId = Number(ctx.chat.id);
   if (!Number.isFinite(groupId)) return null;
