@@ -5,9 +5,10 @@
  * ownerUserId：拉 Bot 进群者的 Telegram user id（非 Mozi userId）
  */
 
-const { postTgStatsGroupSave } = require('./apis');
+const { postTgStatsGroupSave, postTgStatsGroupLeave } = require('./apis');
 const {
   parseBotJoinFromMyChatMember,
+  parseBotLeaveFromMyChatMember,
   rememberChatPendingAdder,
   getRememberedChatPendingAdder,
 } = require('./groupReferrer');
@@ -285,6 +286,43 @@ async function syncGroupStatsFromJoin(ctx, config) {
 }
 
 /**
+ * Bot 被移出群时 POST /tg/stats/group/leave
+ * @param {import('telegraf').Context} ctx
+ * @param {object} config
+ */
+async function syncGroupStatsFromLeave(ctx, config) {
+  const leave = parseBotLeaveFromMyChatMember(ctx.myChatMember);
+  if (!leave) return;
+
+  clearScheduledResyncs(leave.chatId);
+
+  tgGroupStatsLog('leave_detected', {
+    groupId: leave.chatId,
+    groupTitle: leave.chatTitle ?? null,
+    leaveReason: leave.leaveReason,
+    removedAt: leave.removedAt ?? null,
+    removerTelegramId: leave.removerTelegramId ?? null,
+    removerUsername: leave.removerUsername ?? null,
+    likelyAnonymousRemover: leave.likelyAnonymousRemover,
+  });
+
+  const res = await postTgStatsGroupLeave({
+    apiBaseUrl: config.API_BASE_URL,
+    appUrl: config.APP_URL,
+    auth: config.MOZI_DETAIL_AUTH || '',
+    groups: [{ groupId: leave.chatId }],
+    path: config.TG_GROUP_LEAVE_PATH,
+  });
+
+  tgGroupStatsLog('leave_done', {
+    groupId: leave.chatId,
+    leaveReason: leave.leaveReason,
+    httpStatus: res.status,
+    ok: res.ok,
+  });
+}
+
+/**
  * @param {import('telegraf').Context} ctx
  * @param {object} config
  */
@@ -312,6 +350,7 @@ module.exports = {
   collectGroupStatsRow,
   syncGroupStatsForChatId,
   syncGroupStatsFromJoin,
+  syncGroupStatsFromLeave,
   syncGroupStatsFromChatUpdate,
   syncGroupStatsFromMemberChange,
   scheduleGroupStatsResyncAfterJoin,

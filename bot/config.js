@@ -159,6 +159,22 @@ const COIN_DIRECTION_GUESS_MAX_ACTIVE_PER_GROUP = Math.max(
   Math.floor(Number(process.env.COIN_DIRECTION_GUESS_MAX_ACTIVE_PER_GROUP) || 3),
 );
 
+/** POST Bot 指令调用统计（相对 API_BASE_URL），默认 tg/stats/command */
+const TG_COMMAND_USAGE_PATH = (
+  process.env.TG_COMMAND_USAGE_PATH || 'tg/stats/command'
+).trim().replace(/^\/+/, '');
+
+/** 指令统计批量上报间隔（毫秒）；默认 5 分钟，0 表示仅进程退出时上报 */
+const TG_COMMAND_USAGE_FLUSH_MS = Math.max(
+  0,
+  Math.min(3_600_000, parseInt(process.env.TG_COMMAND_USAGE_FLUSH_MS || '300000', 10) || 300_000),
+);
+
+/** POST Bot 退群记录（相对 API_BASE_URL），默认 tg/stats/group/leave */
+const TG_GROUP_LEAVE_PATH = (
+  process.env.TG_GROUP_LEAVE_PATH || 'tg/stats/group/leave'
+).trim().replace(/^\/+/, '');
+
 module.exports = {
   BOT_TOKEN,
   APP_URL,
@@ -193,4 +209,7 @@ module.exports = {
   COIN_DIRECTION_GUESS_MIN_BET_AMOUNT,
   COIN_DIRECTION_GUESS_MAX_BET_AMOUNT,
   COIN_DIRECTION_GUESS_MAX_ACTIVE_PER_GROUP,
+  TG_COMMAND_USAGE_PATH,
+  TG_COMMAND_USAGE_FLUSH_MS,
+  TG_GROUP_LEAVE_PATH,
 };

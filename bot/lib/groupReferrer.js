@@ -4,6 +4,8 @@
 
 const BOT_JOIN_OLD_STATUSES = new Set(['left', 'kicked']);
 const BOT_JOIN_NEW_STATUSES = new Set(['member', 'administrator']);
+const BOT_LEAVE_OLD_STATUSES = new Set(['member', 'administrator']);
+const BOT_LEAVE_NEW_STATUSES = new Set(['left', 'kicked']);
 
 /**
  * Telegram 匿名管理员拉群时 from 常为 Group Anonymous Bot，无法作为真实拉群人 ID。
@@ -56,6 +58,53 @@ function parseBotJoinFromMyChatMember(mcm) {
   };
 }
 
+/**
+ * bot 被移出群/超级群：member|administrator → left|kicked
+ * @param {import('telegraf').Context['myChatMember']} mcm
+ * @returns {{
+ *   chatId: number;
+ *   chatTitle?: string;
+ *   leaveReason: 'left' | 'kicked';
+ *   removedAt?: number;
+ *   removerTelegramId?: number;
+ *   removerUsername?: string;
+ *   likelyAnonymousRemover: boolean;
+ * } | null}
+ */
+function parseBotLeaveFromMyChatMember(mcm) {
+  if (!mcm?.chat) return null;
+
+  const chatType = mcm.chat.type;
+  if (chatType !== 'group' && chatType !== 'supergroup') return null;
+
+  const oldStatus = mcm.old_chat_member?.status;
+  const newStatus = mcm.new_chat_member?.status;
+  if (!BOT_LEAVE_OLD_STATUSES.has(oldStatus) || !BOT_LEAVE_NEW_STATUSES.has(newStatus)) {
+    return null;
+  }
+
+  const leaveReason = newStatus === 'kicked' ? 'kicked' : 'left';
+  const removerTelegramId = mcm.from?.id;
+  const removedAt = Number(mcm.date);
+  /** @type {ReturnType<typeof parseBotLeaveFromMyChatMember>} */
+  const out = {
+    chatId: mcm.chat.id,
+    chatTitle: mcm.chat.title,
+    leaveReason,
+    likelyAnonymousRemover: isLikelyAnonymousAdder(mcm),
+  };
+
+  if (Number.isFinite(removedAt) && removedAt > 0) {
+    out.removedAt = Math.floor(removedAt);
+  }
+  if (removerTelegramId != null && Number.isFinite(Number(removerTelegramId))) {
+    out.removerTelegramId = Number(removerTelegramId);
+    if (mcm.from?.username) out.removerUsername = mcm.from.username;
+  }
+
+  return out;
+}
+
 /** @type {Map<string, { adderTelegramId: string; chatTitle?: string; recordedAt: number }>} */
 const pendingAdderByChatId = new Map();
 
@@ -95,6 +144,7 @@ function buildBotStartUrlWithInviteCode(botUsername, inviteCode) {
 
 module.exports = {
   parseBotJoinFromMyChatMember,
+  parseBotLeaveFromMyChatMember,
   isLikelyAnonymousAdder,
   rememberChatPendingAdder,
   getRememberedChatPendingAdder,

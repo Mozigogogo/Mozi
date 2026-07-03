@@ -1911,6 +1911,203 @@ async function postTgStatsGroupSave({
   }
 }
 
+// --- POST /tg/stats/group/leave（Bot 上报退群）--------------------------------
+
+/**
+ * @typedef {{ groupId: number | string }} TgStatsGroupLeaveRow
+ */
+
+/**
+ * @param {{
+ *   apiBaseUrl: string;
+ *   groups: TgStatsGroupLeaveRow[];
+ *   auth?: string;
+ *   appUrl?: string;
+ *   path?: string;
+ *   timeoutMs?: number;
+ * }} opts
+ * @returns {Promise<{ ok: boolean; status: number; json: object | null; text: string }>}
+ */
+async function postTgStatsGroupLeave({
+  apiBaseUrl,
+  groups,
+  auth = '',
+  appUrl = '',
+  path = 'tg/stats/group/leave',
+  timeoutMs = 15000,
+}) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const rel = String(path || 'tg/stats/group/leave').trim().replace(/^\/+/, '');
+  const url = `${base}/${rel}`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    'content-type': 'application/json',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    'user-agent': DEFAULT_UA,
+  };
+  if (auth) {
+    headers.authentication = auth;
+  }
+  if (app) {
+    headers.referer = `${app}/`;
+  }
+  const body = (Array.isArray(groups) ? groups : [])
+    .map((row) => ({ groupId: Number(row.groupId) }))
+    .filter((row) => Number.isFinite(row.groupId));
+  tgGroupStatsLog('leave_request', {
+    method: 'POST',
+    url,
+    body,
+    hasAuth: Boolean(auth),
+  });
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      signal: ctrl.signal,
+    });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const out = { ok: res.ok, status: res.status, json, text };
+    tgGroupStatsLog('leave_response', {
+      httpStatus: res.status,
+      ok: res.ok,
+      json,
+      text: text.slice(0, 2000),
+    });
+    return out;
+  } catch (err) {
+    tgGroupStatsLog('leave_response_error', {
+      message: err?.message || String(err),
+    });
+    throw err;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+// --- POST /tg/stats/command（Bot 批量上报指令调用统计）-------------------------
+
+/**
+ * @typedef {{
+ *   groupId: number | string;
+ *   command: string;
+ *   count: number;
+ *   eventTime: number;
+ * }} TgStatsCommandRow
+ */
+
+/**
+ * @param {{
+ *   apiBaseUrl: string;
+ *   rows: TgStatsCommandRow[];
+ *   auth?: string;
+ *   appUrl?: string;
+ *   path?: string;
+ *   timeoutMs?: number;
+ * }} opts
+ * @returns {Promise<{ ok: boolean; status: number; json: object | null; text: string }>}
+ */
+async function postTgStatsCommand({
+  apiBaseUrl,
+  rows,
+  auth = '',
+  appUrl = '',
+  path = 'tg/stats/command',
+  timeoutMs = 15000,
+}) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const rel = String(path || 'tg/stats/command').trim().replace(/^\/+/, '');
+  const url = `${base}/${rel}`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    'content-type': 'application/json',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    'user-agent': DEFAULT_UA,
+  };
+  if (auth) {
+    headers.authentication = auth;
+  }
+  if (app) {
+    headers.referer = `${app}/`;
+  }
+  const body = (Array.isArray(rows) ? rows : [])
+    .map((row) => {
+      const command = String(row.command || '').trim();
+      const normalizedCommand = command.startsWith('/') ? command : `/${command}`;
+      const count = Math.max(1, Math.floor(Number(row.count) || 1));
+      const eventTime = Math.floor(Number(row.eventTime));
+      return {
+        groupId: Number(row.groupId),
+        command: normalizedCommand,
+        count,
+        eventTime,
+      };
+    })
+    .filter(
+      (row) =>
+        Number.isFinite(row.groupId) &&
+        row.command.length > 1 &&
+        Number.isFinite(row.eventTime) &&
+        row.eventTime > 0,
+    );
+  const { tgCommandUsageLog } = require('./tgCommandUsageLog');
+  tgCommandUsageLog('request', {
+    method: 'POST',
+    url,
+    buckets: body.length,
+    groups: new Set(body.map((row) => row.groupId)).size,
+    body,
+    totalCount: body.reduce((sum, row) => sum + row.count, 0),
+    hasAuth: Boolean(auth),
+  });
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      signal: ctrl.signal,
+    });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const out = { ok: res.ok, status: res.status, json, text };
+    tgCommandUsageLog('response', {
+      httpStatus: res.status,
+      ok: res.ok,
+      buckets: body.length,
+      json,
+      text: text.slice(0, 2000),
+    });
+    return out;
+  } catch (err) {
+    tgCommandUsageLog('response_error', {
+      message: err?.message || String(err),
+    });
+    throw err;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 // --- POST /tg/chat/save、GET /tg/chat/get（群内提问缓存，TTL 10min）----------------
 
 /**
@@ -3033,6 +3230,8 @@ module.exports = {
   parseSearchLastPriceChangeResult,
   postTgRegisteredCheck,
   postTgStatsGroupSave,
+  postTgStatsGroupLeave,
+  postTgStatsCommand,
   postTgChatSave,
   getTgChatGet,
   postTgChatRemove,

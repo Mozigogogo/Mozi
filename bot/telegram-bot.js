@@ -9,7 +9,8 @@
  * /help：handlers/help.js（群内仅私聊发全文，防刷屏）
  * /balance：handlers/balance.js（GET /user/datainfo；私聊直接回复，群内尝试私信用户，路径见 USER_DATA_INFO_PATH）
  * my_chat_member、/bind_ref：handlers/groupReferrer.js（入群 pending；仅拉群人自动 queryInviteCode 并绑定群）
- * my_chat_member、群名/头像变更：handlers/tgGroupStats.js（POST /tg/stats/group/save 群档案上报）
+ * my_chat_member、群名/头像变更：handlers/tgGroupStats.js（POST /tg/stats/group/save 群档案；POST /tg/stats/group/leave 退群）
+ * 斜杠指令调用：middleware/tgCommandUsage.js（按窗口聚合 count，定时 POST /tg/stats/command）
  * /ai、/chat：未注册时 save 提问 + 群内「注册」按钮；注册成功后 on-registered 事件驱动群内重放；见 tgChatRegisterWatcher
  */
 
@@ -39,6 +40,12 @@ const { initTgChatRegisterWatcher } = require('./lib/tgChatRegisterWatcher');
 const { initGuessSettlementWatcher } = require('./lib/guessSettlementWatcher');
 const { registerTgGroupStats } = require('./handlers/tgGroupStats');
 const { createResumePendingAiChatOnPrivate } = require('./middleware/resumePendingAiChatOnPrivate');
+const { createTgCommandUsageMiddleware } = require('./middleware/tgCommandUsage');
+const {
+  initCommandUsageFlushScheduler,
+  stopCommandUsageFlushScheduler,
+  flushCommandUsagesToBackend,
+} = require('./lib/tgCommandUsage');
 const { ensureBotInfo } = require('./lib/botMention');
 
 if (!config.BOT_TOKEN) {
@@ -48,12 +55,14 @@ if (!config.BOT_TOKEN) {
 const bot = new Telegraf(config.BOT_TOKEN);
 initTgChatRegisterWatcher(bot, config);
 initGuessSettlementWatcher(bot, config);
+initCommandUsageFlushScheduler(config);
 registerTgGroupStats(bot, config);
 
 const i18nApi = { getTexts };
 const registeredGate = createRequireMoziRegistered(config, i18nApi);
 const loginGate = createRequireMoziLogin(config, i18nApi);
 
+bot.use(createTgCommandUsageMiddleware(config));
 bot.use(createBotMentionListenerMiddleware(config));
 bot.use(createAgentMentionMiddleware(config, i18nApi, registeredGate, loginGate));
 bot.use(createPredictTextMiddleware(config, i18nApi));
@@ -124,6 +133,12 @@ startBot().catch(() => {
 });
 
 async function shutdown(signal) {
+  stopCommandUsageFlushScheduler();
+  try {
+    await flushCommandUsagesToBackend(config);
+  } catch {
+    /* ignore */
+  }
   try {
     await bot.stop(signal);
   } catch {

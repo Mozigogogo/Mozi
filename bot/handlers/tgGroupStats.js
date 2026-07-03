@@ -1,11 +1,12 @@
 'use strict';
 
 /**
- * Bot 入群与群信息变更时上报 POST /tg/stats/group/save
+ * Bot 入群、退群与群信息变更时上报群统计
  */
 
 const {
   syncGroupStatsFromJoin,
+  syncGroupStatsFromLeave,
   syncGroupStatsFromChatUpdate,
   syncGroupStatsFromMemberChange,
 } = require('../lib/tgGroupStats');
@@ -14,6 +15,7 @@ const { tgGroupStatsLog } = require('../lib/tgGroupStatsLog');
 function registerTgGroupStats(bot, config) {
   bot.on('my_chat_member', async (ctx) => {
     try {
+      await syncGroupStatsFromLeave(ctx, config);
       await syncGroupStatsFromJoin(ctx, config);
     } catch (err) {
       tgGroupStatsLog('handler_error', {
