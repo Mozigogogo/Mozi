@@ -114,6 +114,22 @@ const PREDICT_FORCE_PRIVATE = !/^0|false|no$/i.test(
 /** 为 1/true/yes 时打印 /predict 流程调试（见 lib/predictDebug.js）；未设时跟随 BOT_DEBUG */
 const PREDICT_DEBUG = /^1|true|yes$/i.test(String(process.env.PREDICT_DEBUG || '').trim());
 
+/** 涨跌竞猜总时长（分钟），默认 24 小时 */
+const PREDICT_DEFAULT_DURATION_MINUTES = Math.max(
+  1,
+  Math.min(43_200, parseInt(process.env.PREDICT_DEFAULT_DURATION_MINUTES || String(24 * 60), 10) || 24 * 60),
+);
+
+/** 涨跌竞猜可下注时长（毫秒），默认 6 小时 */
+const PREDICT_BET_END_OFFSET_MS = Math.max(
+  60_000,
+  Math.min(
+    7 * 24 * 60 * 60 * 1000,
+    parseInt(process.env.PREDICT_BET_END_OFFSET_MS || String(6 * 60 * 60 * 1000), 10) ||
+      6 * 60 * 60 * 1000,
+  ),
+);
+
 /** POST 涨跌竞猜发布登记（相对 API_BASE_URL），默认 coinDirectionGuess/publish */
 const COIN_DIRECTION_GUESS_PUBLISH_PATH = (
   process.env.COIN_DIRECTION_GUESS_PUBLISH_PATH || 'coinDirectionGuess/publish'
@@ -201,6 +217,8 @@ module.exports = {
   TG_CHAT_REGISTER_POLL_MS,
   PREDICT_FORCE_PRIVATE,
   PREDICT_DEBUG,
+  PREDICT_DEFAULT_DURATION_MINUTES,
+  PREDICT_BET_END_OFFSET_MS,
   COIN_DIRECTION_GUESS_PUBLISH_PATH,
   COIN_DIRECTION_GUESS_BIND_MESSAGE_PATH,
   COIN_DIRECTION_GUESS_BET_PATH,

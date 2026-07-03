@@ -3,6 +3,7 @@
  */
 
 const TTL_MS = 15 * 60 * 1000;
+const { PREDICT_DEFAULT_DURATION_MINUTES } = require('../config');
 const { predictDebug, predictLog } = require('./predictDebug');
 
 /** @type {Map<string, object>} */
@@ -50,7 +51,7 @@ function savePredictSession(userId, data) {
         ? Number(data.durationMinutes)
         : Number(data.hours) > 0
           ? Number(data.hours) * 60
-          : 10,
+          : PREDICT_DEFAULT_DURATION_MINUTES,
     expireAt: Date.now() + TTL_MS,
   });
   predictDebug('session.save', {
@@ -118,7 +119,7 @@ function rememberPredictSourceGroup(userId, groupChatId) {
     publishChatId: gid,
     sourceGroupChatId: gid,
     step: 'await_entry',
-    durationMinutes: 10,
+    durationMinutes: PREDICT_DEFAULT_DURATION_MINUTES,
   });
 }
 

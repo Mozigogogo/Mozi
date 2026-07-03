@@ -102,12 +102,12 @@ const i18n = {
     predictSymbolNotSupported: (sym) =>
       `❌ <b>${sym}</b> 暂无行情数据，请换一个已收录的币种。`,
     predictNetworkError: '获取价格失败（网络异常），请稍后再试。',
-    predictConfirmBody: (sym, minutes, price) =>
-      `${sym} 接下来 ${minutes} 分钟会涨还是跌？\n当前价：${price}（创建时锁定）`,
-    predictGroupPublishBody: (sym, minutes, price, lockedAt, stats, betDeadline, publisher) =>
-      `🎯 竞猜 · ${sym}\n接下来 ${minutes} 分钟会涨还是跌？\n起始价：${price}（发布时间 ${lockedAt}）\n📊 看涨 ${stats.upPercent}%（${stats.upCount}人·${stats.upPoints}积分）\n📊 看跌 ${stats.downPercent}%（${stats.downCount}人·${stats.downPoints}积分）\n⏳ 下注截止：${betDeadline}\n由 ${publisher} 发起`,
-    predictGroupLockedBody: (sym, minutes, price, oddsLine, prizePool, settlementWait, publisher) =>
-      `🎯 竞猜 · ${sym}（下注已截止）\n接下来 ${minutes} 分钟会涨还是跌？\n起始价：${price}\n${oddsLine}\n💰 奖池：${prizePool} 积分\n⏳ 等待结算：${settlementWait}\n由 ${publisher} 发起`,
+    predictConfirmBody: (sym, duration, price) =>
+      `${sym} 接下来 ${duration}会涨还是跌？\n当前价：${price}（创建时锁定）`,
+    predictGroupPublishBody: (sym, duration, price, lockedAt, stats, betDeadline, publisher) =>
+      `🎯 竞猜 · ${sym}\n接下来 ${duration}会涨还是跌？\n起始价：${price}（发布时间 ${lockedAt}）\n📊 看涨 ${stats.upPercent}%（${stats.upCount}人·${stats.upPoints}积分）\n📊 看跌 ${stats.downPercent}%（${stats.downCount}人·${stats.downPoints}积分）\n⏳ 下注截止：${betDeadline}\n由 ${publisher} 发起`,
+    predictGroupLockedBody: (sym, duration, price, oddsLine, prizePool, settlementWait, publisher) =>
+      `🎯 竞猜 · ${sym}（下注已截止）\n接下来 ${duration}会涨还是跌？\n起始价：${price}\n${oddsLine}\n💰 奖池：${prizePool} 积分\n⏳ 等待结算：${settlementWait}\n由 ${publisher} 发起`,
     predictLockedOddsLine: (upPercent, upCount, downPercent, downCount) =>
       `📊 最终赔率：看涨 ${upPercent}%（${upCount}人）· 看跌 ${downPercent}%（${downCount}人）`,
     predictGroupSettledBody: (sym, priceLine, winnerLine, prizePool, topWinnersSection) =>
@@ -200,7 +200,7 @@ const i18n = {
   示例：/bigorder PEPE最近的大单
 
 📈 涨跌预测（免费）
-/predict        发起 10 分钟涨跌竞猜（群内点按钮私聊 Bot，确认后发布到该群）
+/predict        发起 24 小时涨跌竞猜（前 6 小时可下注；群内点按钮私聊 Bot，确认后发布到该群）
 /predict list   查看本群竞猜列表
 
 🔔 告警设置（免费）
@@ -396,12 +396,12 @@ const i18n = {
     predictSymbolNotSupported: (sym) =>
       `❌ No market data for <b>${sym}</b>. Try another listed symbol.`,
     predictNetworkError: 'Failed to fetch price (network). Please try again later.',
-    predictConfirmBody: (sym, minutes, price) =>
-      `Will ${sym} go up or down in the next ${minutes} minutes?\nCurrent price: ${price} (locked at creation)`,
-    predictGroupPublishBody: (sym, minutes, price, lockedAt, stats, betDeadline, publisher) =>
-      `🎯 Guess · ${sym}\nUp or down in the next ${minutes} minutes?\nStart price: ${price} (published at ${lockedAt})\n📊 Bullish ${stats.upPercent}% (${stats.upCount} · ${stats.upPoints} pts)\n📊 Bearish ${stats.downPercent}% (${stats.downCount} · ${stats.downPoints} pts)\n⏳ Betting closes: ${betDeadline}\nStarted by ${publisher}`,
-    predictGroupLockedBody: (sym, minutes, price, oddsLine, prizePool, settlementWait, publisher) =>
-      `🎯 Guess · ${sym} (betting closed)\nUp or down in the next ${minutes} minutes?\nStart price: ${price}\n${oddsLine}\n💰 Prize pool: ${prizePool} pts\n⏳ Settlement in: ${settlementWait}\nStarted by ${publisher}`,
+    predictConfirmBody: (sym, duration, price) =>
+      `Will ${sym} go up or down in the next ${duration}?\nCurrent price: ${price} (locked at creation)`,
+    predictGroupPublishBody: (sym, duration, price, lockedAt, stats, betDeadline, publisher) =>
+      `🎯 Guess · ${sym}\nUp or down in the next ${duration}?\nStart price: ${price} (published at ${lockedAt})\n📊 Bullish ${stats.upPercent}% (${stats.upCount} · ${stats.upPoints} pts)\n📊 Bearish ${stats.downPercent}% (${stats.downCount} · ${stats.downPoints} pts)\n⏳ Betting closes: ${betDeadline}\nStarted by ${publisher}`,
+    predictGroupLockedBody: (sym, duration, price, oddsLine, prizePool, settlementWait, publisher) =>
+      `🎯 Guess · ${sym} (betting closed)\nUp or down in the next ${duration}?\nStart price: ${price}\n${oddsLine}\n💰 Prize pool: ${prizePool} pts\n⏳ Settlement in: ${settlementWait}\nStarted by ${publisher}`,
     predictLockedOddsLine: (upPercent, upCount, downPercent, downCount) =>
       `📊 Final odds: Bullish ${upPercent}% (${upCount}) · Bearish ${downPercent}% (${downCount})`,
     predictGroupSettledBody: (sym, priceLine, winnerLine, prizePool, topWinnersSection) =>
@@ -497,7 +497,7 @@ const i18n = {
   e.g. /bigorder Recent large orders on PEPE
 
 📈 Up/down poll (free)
-/predict         Start a 10-minute poll (tap button to DM bot; publishes back to source group)
+/predict         Start a 24-hour poll (6 hours to bet; tap button to DM bot; publishes back to source group)
 /predict list    List polls in this group
 
 🔔 Alerts (free)

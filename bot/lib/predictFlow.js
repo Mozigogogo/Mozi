@@ -65,22 +65,24 @@ const {
   markGuessSettled,
 } = require('./guessMessageContext');
 const { scheduleGuessLockCardRefresh } = require('./guessLockScheduler');
+const {
+  PREDICT_DEFAULT_DURATION_MINUTES,
+  PREDICT_BET_END_OFFSET_MS,
+} = require('../config');
 
 const QUICK_SYMBOLS = ['BTC', 'ETH', 'SOL'];
-const DEFAULT_DURATION_MINUTES = 10;
-const BET_END_OFFSET_MS = 5 * 60 * 1000;
 const SYMBOL_INPUT_RE = /^[A-Z0-9]{1,16}$/;
 
-/** 下注截止：当前时刻 + 5 分钟（毫秒时间戳） */
+/** 下注截止：发布时刻 + 可下注时长（默认 6 小时） */
 function buildBetEndAtTimestamp(referenceMs = Date.now()) {
   const ref = Number(referenceMs);
   const base = Number.isFinite(ref) ? ref : Date.now();
-  return base + BET_END_OFFSET_MS;
+  return base + PREDICT_BET_END_OFFSET_MS;
 }
 
-/** 后端 duration 单位：秒，如 10 分钟 → 600 */
+/** 后端 duration 单位：秒，如 24 小时 → 86400 */
 function formatPredictDuration(minutes) {
-  const m = Math.max(1, Math.min(10_080, Number(minutes) || DEFAULT_DURATION_MINUTES));
+  const m = Math.max(1, Math.min(10_080, Number(minutes) || PREDICT_DEFAULT_DURATION_MINUTES));
   return m * 60;
 }
 
@@ -89,7 +91,21 @@ function resolveDurationMinutes(source) {
   if (Number.isFinite(minutes) && minutes > 0) return Math.floor(minutes);
   const legacyHours = Number(source?.hours);
   if (Number.isFinite(legacyHours) && legacyHours > 0) return Math.floor(legacyHours * 60);
-  return DEFAULT_DURATION_MINUTES;
+  return PREDICT_DEFAULT_DURATION_MINUTES;
+}
+
+function formatDurationMinutesLabel(minutes, languageCode) {
+  const total = Math.max(1, Math.floor(Number(minutes) || PREDICT_DEFAULT_DURATION_MINUTES));
+  const isZh = String(languageCode || '').toLowerCase().startsWith('zh');
+  const hours = Math.floor(total / 60);
+  const remMinutes = total % 60;
+  if (hours > 0 && remMinutes === 0) {
+    return isZh ? `${hours}小时` : `${hours} hour${hours === 1 ? '' : 's'}`;
+  }
+  if (hours > 0) {
+    return isZh ? `${hours}小时${remMinutes}分钟` : `${hours}h ${remMinutes}m`;
+  }
+  return isZh ? `${total}分钟` : `${total} minute${total === 1 ? '' : 's'}`;
 }
 
 function parseEndAtMs(endAt) {
@@ -309,7 +325,7 @@ function buildGroupPublishHtml(texts, meta, statsRaw) {
     meta.betEndAt != null ? formatBetDeadlineDisplay(meta.betEndAt, meta.languageCode) : '—';
   return texts.predictGroupPublishBody(
     escapeHtml(meta.sym),
-    resolveDurationMinutes(meta),
+    formatDurationMinutesLabel(resolveDurationMinutes(meta), meta.languageCode),
     escapeHtml(meta.price),
     lockedAt,
     stats,
@@ -333,7 +349,7 @@ function buildGroupLockedHtml(texts, meta, statsRaw) {
   );
   return texts.predictGroupLockedBody(
     escapeHtml(meta.sym),
-    resolveDurationMinutes(meta),
+    formatDurationMinutesLabel(resolveDurationMinutes(meta), meta.languageCode),
     escapeHtml(meta.price),
     oddsLine,
     prizePool,
@@ -1356,14 +1372,16 @@ async function editGuessCallbackKeyboard(ctx, keyboard) {
   return editGuessMessageKeyboard(ctx, msg.chat?.id, msg.message_id, keyboard);
 }
 
-function buildConfirmHtml(texts, symbol, priceStr, durationMinutes) {
+function buildConfirmHtml(texts, symbol, priceStr, durationMinutes, languageCode) {
   const sym = escapeHtml(symbol);
   const price = escapeHtml(priceStr);
-  return texts.predictConfirmBody(sym, durationMinutes, price);
+  const duration = formatDurationMinutesLabel(durationMinutes, languageCode);
+  return texts.predictConfirmBody(sym, duration, price);
 }
 
 async function showConfirmMessage(ctx, uid, session, texts, sym, priceStr, durationMinutes) {
-  const html = buildConfirmHtml(texts, sym, priceStr, durationMinutes);
+  const languageCode = ctx.from?.language_code || 'en';
+  const html = buildConfirmHtml(texts, sym, priceStr, durationMinutes, languageCode);
   const keyboard = buildConfirmKeyboard(texts);
   // 保留 Step 1 选币卡片，确认页始终单独发一条新消息
   const msg = await ctx.reply(html, { parse_mode: 'HTML', reply_markup: keyboard });
@@ -1388,7 +1406,7 @@ async function markConfirmPublished(ctx, session, texts, sym, priceStr, duration
   }
 
   const publishedKeyboard = buildPublishedKeyboard(texts);
-  const confirmHtml = buildConfirmHtml(texts, sym, priceStr, durationMinutes);
+  const confirmHtml = buildConfirmHtml(texts, sym, priceStr, durationMinutes, session?.languageCode || ctx.from?.language_code || 'en');
 
   try {
     await tgEditMessageReplyMarkup(ctx, chatId, messageId, publishedKeyboard);
@@ -1870,9 +1888,10 @@ async function publishPredict(ctx, config, getTexts) {
     }
   }
 
+  const durationLabel = formatDurationMinutesLabel(durationMinutes, languageCode);
   const pollQuestion = isZh
-    ? `${sym} 接下来 ${durationMinutes} 分钟会涨还是跌？`
-    : `Will ${sym} go up or down in the next ${durationMinutes} minutes?`;
+    ? `${sym} 接下来 ${durationLabel}会涨还是跌？`
+    : `Will ${sym} go up or down in the next ${durationLabel}?`;
 
   predictPublishLog('publish.api.request', {
     uid,
@@ -2118,7 +2137,7 @@ function buildMetaFromGuessItem(item, languageCode, publisher = '—') {
   }
   const durationMinutes = Math.max(
     1,
-    Math.round(Number(item.duration) / 60) || DEFAULT_DURATION_MINUTES,
+    Math.round(Number(item.duration) / 60) || PREDICT_DEFAULT_DURATION_MINUTES,
   );
   return {
     sym,

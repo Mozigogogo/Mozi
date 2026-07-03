@@ -5,6 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { PREDICT_DEFAULT_DURATION_MINUTES } = require('../config');
 
 const STORE_PATH =
   process.env.GUESS_CONTEXT_STORE_PATH ||
@@ -107,7 +108,7 @@ function saveGuessMessageContext(guessNo, data) {
       || (Number(data.hours) > 0 ? Number(data.hours) * 60 : 0)
       || prev.durationMinutes
       || (Number(prev.hours) > 0 ? Number(prev.hours) * 60 : 0)
-      || 10,
+      || PREDICT_DEFAULT_DURATION_MINUTES,
     price: String(data.price || prev.price || '').trim(),
     lockedAtMs: Number(data.lockedAtMs) || prev.lockedAtMs || Date.now(),
     betEndAt: data.betEndAt ?? prev.betEndAt ?? null,
