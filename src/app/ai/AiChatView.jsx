@@ -781,6 +781,13 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
         if (data?.code === 0) {
           const historyMessages = normalizeAgentConversationMessages(data, routeConversationId);
 
+          const historySignalCards = historyMessages.filter(
+            (msg) => getMessageSignalCards(msg).length > 0
+          );
+          if (historySignalCards.length > 0) {
+            console.log('[信号卡] 历史消息:', historySignalCards);
+          }
+
           console.log('✅ 加载了', historyMessages.length, '条历史消息');
 
           if (historyMessages.length > 0) {
@@ -896,6 +903,8 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
       if (userAbortedRef.current) return;
       const raw = eventData?.data ?? eventData?.payload ?? eventData;
       const payload = normalizeSignalCardPayload(raw);
+      console.log('[信号卡] 原始数据:', eventData);
+      console.log('[信号卡] 解析后:', payload);
       if (!payload) return;
       const msgId = currentAiMsgIdRef.current;
       if (!msgId) return;
@@ -1048,6 +1057,10 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
         agentType: selectedModel,
         eventData,
       });
+
+      if (selectedModel === 'signals') {
+        console.log('[信号卡] 流式完成:', { fullContent, eventData });
+      }
 
       if (eventData?.suggestedQuestions?.length) {
         setSuggestedQuestions(normalizeSuggestionItems(eventData.suggestedQuestions));
@@ -1268,6 +1281,10 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
     const payload = prepareAgentPayload(message, selectedModel, conversationIdRef);
     currentRequestIdRef.current = payload.request_id;
 
+    if (selectedModel === 'signals') {
+      console.log('[信号卡] 发送消息:', { message, payload });
+    }
+
     // 添加 AI 加载消息
     const aiMsgId = `ai-loading-${Date.now()}`;
     currentAiMsgIdRef.current = aiMsgId;
@@ -1318,6 +1335,8 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
       ? buildAlphaScanReply(scanCache, t)
       : t('signalCard.alphaMockReply');
     const signalCards = cards.length ? cards : getLocalizedMockAlphaSignalCards(t);
+
+    console.log('[信号卡] Alpha面板展示:', { scanCache, cards, signalCards });
 
     const now = Date.now();
     setMessages((prev) => [

@@ -33,17 +33,21 @@ export const getLatestScanCache = () => {
  */
 export const fetchLatestScanCache = async () => {
   try {
+    console.log('[信号卡] 扫描缓存请求');
     const result = await getLatestScanCache();
+    console.log('[信号卡] 扫描缓存响应:', result);
     if (result?.code !== 0 || !result?.data) return null;
 
     const data = result.data;
-    return {
+    const parsed = {
       ...data,
       results: safeParseJson(data.resultsJson, []),
       displays: safeParseJson(data.displaysJson, []),
     };
+    console.log('[信号卡] 扫描缓存解析:', parsed);
+    return parsed;
   } catch (error) {
-    console.error('获取最新信号扫描缓存失败:', error);
+    console.error('[信号卡] 扫描缓存失败:', error);
     return null;
   }
 };

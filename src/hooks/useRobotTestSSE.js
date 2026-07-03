@@ -173,6 +173,10 @@ export function useRobotTestSSE(url, options = {}) {
         delete payloadWithLanguage.language;
       }
 
+      if (payloadWithLanguage?.type === 'signals') {
+        console.log('[信号卡] 请求参数:', payloadWithLanguage);
+      }
+
       const streamTimeoutMs = 120000;
       const streamTimeoutId = window.setTimeout(() => {
         if (!finishRef.current && !streamFailedRef.current) {
@@ -268,6 +272,7 @@ export function useRobotTestSSE(url, options = {}) {
               }
               if (dataType === 'signal_card') {
                 rememberEvent(eventData);
+                console.log('[信号卡] SSE delta:', eventData);
                 try {
                   onSignalCard({
                     ...eventData,
@@ -372,6 +377,7 @@ export function useRobotTestSSE(url, options = {}) {
             }
 
             if (messageType === 'signal_card') {
+              console.log('[信号卡] SSE message:', eventData);
               try {
                 onSignalCard(eventData);
               } catch (cbErr) {
