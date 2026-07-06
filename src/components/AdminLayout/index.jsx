@@ -11,6 +11,9 @@ import {
   MenuUnfoldOutlined,
   CrownOutlined,
   WalletOutlined,
+  TeamOutlined,
+  AccountBookOutlined,
+  RobotOutlined,
 } from '@ant-design/icons';
 import { usePathname, useRouter } from 'next/navigation';
 import zhCN from 'antd/locale/zh_CN';
@@ -19,15 +22,54 @@ import { clearAdminSession, getAdminInfo, isAdminLoggedIn } from '@/api/admin';
 const { Header, Sider, Content } = Layout;
 const { useBreakpoint } = Grid;
 
+const BOT_MENU_KEY = 'bot';
+const COMMISSION_MENU_KEY = 'commission';
+
 const MENU_ITEMS = [
   { key: '/admin', icon: <DashboardOutlined />, label: '概览' },
-  { key: '/admin/user-level', icon: <CrownOutlined />, label: '等级配置' },
-  { key: '/admin/users', icon: <UserOutlined />, label: '用户管理' },
-  { key: '/admin/withdraw', icon: <WalletOutlined />, label: '提现申请' },
+  {
+    key: COMMISSION_MENU_KEY,
+    icon: <AccountBookOutlined />,
+    label: '分佣管理',
+    children: [
+      { key: '/admin/user-level', icon: <CrownOutlined />, label: '等级配置' },
+      { key: '/admin/users', icon: <UserOutlined />, label: '用户管理' },
+      { key: '/admin/withdraw', icon: <WalletOutlined />, label: '提现申请' },
+    ],
+  },
+  {
+    key: BOT_MENU_KEY,
+    icon: <RobotOutlined />,
+    label: 'Bot管理',
+    children: [
+      { key: '/admin/groups', icon: <TeamOutlined />, label: 'Bot群组概览' },
+    ],
+  },
 ];
+
+const SUBMENU_ROUTES = [
+  { menuKey: BOT_MENU_KEY, paths: ['/admin/groups'] },
+  {
+    menuKey: COMMISSION_MENU_KEY,
+    paths: ['/admin/user-level', '/admin/users', '/admin/withdraw'],
+  },
+];
+
+function getLeafMenuKeys(items) {
+  const keys = [];
+  items.forEach((item) => {
+    if (item.children?.length) {
+      item.children.forEach((child) => keys.push(child.key));
+    } else {
+      keys.push(item.key);
+    }
+  });
+  return keys;
+}
 
 const PAGE_TITLES = {
   '/admin': '概览',
+  '/admin/groups': 'Bot群组概览',
   '/admin/users': '用户管理',
   '/admin/user-level': '等级配置',
   '/admin/withdraw': '提现申请',
@@ -50,6 +92,7 @@ export default function AdminLayout({ children }) {
 
   const [collapsed, setCollapsed] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [openKeys, setOpenKeys] = useState([]);
   const [adminInfo, setAdminInfo] = useState(null);
   const [ready, setReady] = useState(false);
 
@@ -78,13 +121,29 @@ export default function AdminLayout({ children }) {
     setDrawerOpen(false);
   }, [pathname]);
 
+  useEffect(() => {
+    const keysToOpen = SUBMENU_ROUTES.filter(({ paths }) =>
+      paths.some((path) => pathname.startsWith(path)),
+    ).map(({ menuKey }) => menuKey);
+
+    if (!keysToOpen.length) return;
+
+    setOpenKeys((prev) => {
+      const next = [...prev];
+      keysToOpen.forEach((key) => {
+        if (!next.includes(key)) next.push(key);
+      });
+      return next;
+    });
+  }, [pathname]);
+
   const selectedKey = useMemo(() => {
     if (pathname === '/admin') return ['/admin'];
-    const matched = [...MENU_ITEMS]
-      .filter((item) => item.key !== '/admin')
-      .sort((a, b) => b.key.length - a.key.length)
-      .find((item) => pathname.startsWith(item.key));
-    return matched ? [matched.key] : ['/admin'];
+    const matched = [...getLeafMenuKeys(MENU_ITEMS)]
+      .filter((key) => key !== '/admin')
+      .sort((a, b) => b.length - a.length)
+      .find((key) => pathname.startsWith(key));
+    return matched ? [matched] : ['/admin'];
   }, [pathname]);
 
   const pageTitle = PAGE_TITLES[pathname] || '后台管理';
@@ -95,6 +154,7 @@ export default function AdminLayout({ children }) {
   };
 
   const handleMenuClick = ({ key }) => {
+    if (!key.startsWith('/')) return;
     router.push(key);
     if (isMobile) {
       setDrawerOpen(false);
@@ -114,6 +174,8 @@ export default function AdminLayout({ children }) {
       className="pc-admin-shell__menu"
       mode="inline"
       selectedKeys={selectedKey}
+      openKeys={openKeys}
+      onOpenChange={setOpenKeys}
       items={MENU_ITEMS}
       onClick={handleMenuClick}
     />

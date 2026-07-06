@@ -233,6 +233,33 @@ export async function updateAdminCommissionWithdrawalStatus(id, payload) {
   return res.data;
 }
 
+/**
+ * @typedef {Object} AdminTgGroupListParams
+ * @property {number} [page] - 页码，从 1 开始
+ * @property {number} [size] - 每页条数
+ * @property {0|1} [status] - 状态：0 停用，1 正常
+ */
+
+/** 分页查询 TG 群组 GET /admin/tg/groups */
+export async function listAdminTgGroups(params = {}) {
+  const res = await adminInstance.get(Interface.ADMIN_TG_GROUPS, { params });
+  return res.data;
+}
+
+/** 解析 TG 群组分页列表 */
+export function normalizeAdminTgGroupPage(data) {
+  if (!data || typeof data !== 'object') {
+    return { list: [], total: 0, page: 1, size: 20 };
+  }
+  const list = Array.isArray(data.list) ? data.list : [];
+  return {
+    list,
+    total: Number(data.total) || list.length,
+    page: Number(data.page) || 1,
+    size: Number(data.size) || 20,
+  };
+}
+
 /** 解析提现申请分页列表 */
 export function normalizeAdminWithdrawPage(data) {
   if (!data || typeof data !== 'object') {
