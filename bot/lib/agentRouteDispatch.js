@@ -201,10 +201,15 @@ async function handleBotMentionRouted(ctx, config, getTexts, registeredGate, log
 
   recordCommandUsageFromCtx(ctx, dispatch.command, config);
 
-  agentRouteLog('dispatch', {
+  agentRouteLog('routed', {
+    telegramId: ctx.from?.id ?? null,
+    chatId: ctx.chat?.id ?? null,
+    chatType: ctx.chat?.type ?? null,
+    messageId: ctx.message?.message_id ?? null,
+    rawQuery: dispatch.rawQuery,
     command: dispatch.command,
     message: dispatch.message,
-    coinSymbol: dispatch.coinSymbol,
+    coinSymbol: dispatch.coinSymbol ?? null,
   });
 
   ctx.state.agentRouteDispatch = dispatch;
