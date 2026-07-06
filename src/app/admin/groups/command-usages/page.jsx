@@ -266,7 +266,13 @@ export default function AdminCommandUsagesPage() {
     );
   };
 
-  const dailyStats = filteredUsageData.dailyStats;
+  const dailyStats = useMemo(
+    () =>
+      [...filteredUsageData.dailyStats].sort((a, b) =>
+        (b.statDate || '').localeCompare(a.statDate || ''),
+      ),
+    [filteredUsageData.dailyStats],
+  );
   const totalUseCount = useMemo(
     () => dailyStats.reduce((sum, day) => sum + (Number(day.useCount) || 0), 0),
     [dailyStats],
