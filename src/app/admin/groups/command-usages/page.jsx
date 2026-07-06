@@ -14,7 +14,6 @@ const { RangePicker } = DatePicker;
 const MAX_RANGE_DAYS = 31;
 
 const COMMAND_OPTIONS = [
-  { value: '/start', label: '/start' },
   { value: '/ai', label: '/ai' },
   { value: '/chat', label: '/chat' },
   { value: '/predict', label: '/predict' },
@@ -22,6 +21,13 @@ const COMMAND_OPTIONS = [
   { value: '/price', label: '/price' },
   { value: '/bigorder', label: '/bigorder' },
 ];
+
+const HIDDEN_COMMANDS = new Set(['/start']);
+
+function isDisplayableCommand(command) {
+  const normalized = normalizeCommand(command);
+  return Boolean(normalized) && !HIDDEN_COMMANDS.has(normalized);
+}
 
 function formatCount(value) {
   if (value == null || Number.isNaN(Number(value))) return '-';
@@ -94,87 +100,105 @@ function filterUsageDataByCommand(data, commandFilter) {
   };
 }
 
-function buildDayDetailRows(day) {
-  const rows = [];
-  const groups = day?.groups || [];
+const DISPLAY_COMMAND_COLUMNS = COMMAND_OPTIONS.map((option) =>
+  normalizeCommand(option.value),
+);
 
-  groups.forEach((group, groupIndex) => {
-    const commands = group.commands?.length
-      ? group.commands
-      : [{ command: '-', useCount: group.useCount }];
+function buildDayDetailData(day) {
+  const groups = (day?.groups || []).filter((group) =>
+    (group.commands || []).some((cmd) => isDisplayableCommand(cmd.command)),
+  );
 
-    commands.forEach((cmd, cmdIndex) => {
-      rows.push({
-        key: `${day.statDate}-${group.groupId ?? 'g'}-${groupIndex}-${cmd.command}-${cmdIndex}`,
-        groupTitle:
-          group.groupTitle || (group.groupId != null ? String(group.groupId) : '-'),
-        groupId: group.groupId,
-        command: cmd.command || '-',
-        useCount: Number(cmd.useCount) || 0,
-      });
+  const rows = groups.map((group, groupIndex) => {
+    const commandCounts = {};
+    (group.commands || []).forEach((cmd) => {
+      const normalized = normalizeCommand(cmd.command);
+      if (!isDisplayableCommand(normalized)) return;
+      commandCounts[normalized] =
+        (commandCounts[normalized] || 0) + (Number(cmd.useCount) || 0);
     });
+
+    return {
+      key: `${day.statDate}-${group.groupId ?? groupIndex}`,
+      groupTitle:
+        group.groupTitle || (group.groupId != null ? String(group.groupId) : '-'),
+      groupId: group.groupId,
+      commandCounts,
+    };
   });
 
-  return rows;
+  return { rows, commandColumns: DISPLAY_COMMAND_COLUMNS };
 }
 
-const DETAIL_COLUMNS = [
+function hasDayDetails(day) {
+  return buildDayDetailData(day).rows.length > 0;
+}
+
+const DETAIL_FIXED_COLUMNS = [
   { key: 'groupTitle', title: '群名称', className: 'pc-admin-usage-detail__cell--title' },
   { key: 'groupId', title: '群 ID', className: 'pc-admin-usage-detail__cell--group-id' },
-  { key: 'command', title: '指令', className: 'pc-admin-usage-detail__cell--command' },
-  { key: 'useCount', title: '用量', className: 'pc-admin-usage-detail__cell--usage' },
 ];
 
-function renderDetailCell(key, row) {
-  if (key === 'groupTitle') {
-    return (
-      <span className="pc-admin-usage-detail__text" title={row.groupTitle}>
-        {row.groupTitle || '-'}
-      </span>
-    );
-  }
-  if (key === 'groupId') {
-    return row.groupId != null ? String(row.groupId) : '-';
-  }
-  if (key === 'command') {
-    return row.command || '-';
-  }
-  return formatCount(row.useCount);
-}
-
-function UsageDetailPanel({ rows }) {
+function UsageDetailPanel({ rows, commandColumns }) {
   if (!rows.length) {
     return <div className="pc-admin-usage-detail__empty">当日无群组指令用量</div>;
   }
 
   return (
-    <div className="pc-admin-usage-detail">
-      <div className="pc-admin-usage-detail__row pc-admin-usage-detail__head">
-        {DETAIL_COLUMNS.map((column) => (
-          <div
-            key={column.key}
-            className={`pc-admin-usage-detail__cell ${column.className}${
-              column.key === 'useCount' ? ' pc-admin-usage-detail__cell--right' : ''
-            }`}
-          >
-            {column.title}
-          </div>
-        ))}
-      </div>
-      {rows.map((row) => (
-        <div className="pc-admin-usage-detail__row" key={row.key}>
-          {DETAIL_COLUMNS.map((column) => (
+    <div className="pc-admin-usage-detail__scroll">
+      <div
+        className="pc-admin-usage-detail"
+        style={{
+          gridTemplateColumns: `minmax(180px, 2.2fr) minmax(140px, 1.5fr) repeat(${commandColumns.length}, minmax(72px, 1fr))`,
+        }}
+      >
+        <div className="pc-admin-usage-detail__row">
+          {DETAIL_FIXED_COLUMNS.map((column) => (
             <div
               key={column.key}
-              className={`pc-admin-usage-detail__cell ${column.className}${
-                column.key === 'useCount' ? ' pc-admin-usage-detail__cell--right' : ''
-              }`}
+              className={`pc-admin-usage-detail__cell pc-admin-usage-detail__cell--head ${column.className}`}
             >
-              {renderDetailCell(column.key, row)}
+              {column.title}
+            </div>
+          ))}
+          {commandColumns.map((command) => (
+            <div
+              key={command}
+              className="pc-admin-usage-detail__cell pc-admin-usage-detail__cell--head pc-admin-usage-detail__cell--cmd"
+            >
+              {command}
             </div>
           ))}
         </div>
-      ))}
+        {rows.map((row) => (
+          <div className="pc-admin-usage-detail__row" key={row.key}>
+            {DETAIL_FIXED_COLUMNS.map((column) => (
+              <div
+                key={column.key}
+                className={`pc-admin-usage-detail__cell ${column.className}`}
+              >
+                {column.key === 'groupTitle' ? (
+                  <span className="pc-admin-usage-detail__text" title={row.groupTitle}>
+                    {row.groupTitle || '-'}
+                  </span>
+                ) : row.groupId != null ? (
+                  String(row.groupId)
+                ) : (
+                  '-'
+                )}
+              </div>
+            ))}
+            {commandColumns.map((command) => (
+              <div
+                key={command}
+                className="pc-admin-usage-detail__cell pc-admin-usage-detail__cell--cmd"
+              >
+                {formatCount(row.commandCounts[command] ?? 0)}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -206,7 +230,7 @@ export default function AdminCommandUsagesPage() {
   const updateExpandedRows = useCallback((data) => {
     setExpandedRowKeys(
       data.dailyStats
-        .filter((day) => buildDayDetailRows(day).length > 0)
+        .filter((day) => hasDayDetails(day))
         .map((day) => day.statDate),
     );
   }, []);
@@ -291,7 +315,7 @@ export default function AdminCommandUsagesPage() {
       width: 160,
       align: 'right',
       render: (_, record) => {
-        const hasDetails = buildDayDetailRows(record).length > 0;
+        const hasDetails = hasDayDetails(record);
         const dayUseCount = Number(record.useCount) || 0;
         if (!hasDetails || dayUseCount <= 0) {
           return <span className="pc-admin-usage-day-empty">暂无用量</span>;
@@ -394,8 +418,11 @@ export default function AdminCommandUsagesPage() {
             showExpandColumn: false,
             expandedRowKeys,
             expandedRowClassName: () => 'pc-admin-usage-expand-row',
-            rowExpandable: (day) => buildDayDetailRows(day).length > 0,
-            expandedRowRender: (day) => <UsageDetailPanel rows={buildDayDetailRows(day)} />,
+            rowExpandable: (day) => hasDayDetails(day),
+            expandedRowRender: (day) => {
+              const { rows, commandColumns } = buildDayDetailData(day);
+              return <UsageDetailPanel rows={rows} commandColumns={commandColumns} />;
+            },
           }}
           pagination={false}
         />
