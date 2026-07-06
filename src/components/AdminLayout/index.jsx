@@ -14,6 +14,7 @@ import {
   TeamOutlined,
   AccountBookOutlined,
   RobotOutlined,
+  BarChartOutlined,
 } from '@ant-design/icons';
 import { usePathname, useRouter } from 'next/navigation';
 import zhCN from 'antd/locale/zh_CN';
@@ -43,12 +44,20 @@ const MENU_ITEMS = [
     label: 'Bot管理',
     children: [
       { key: '/admin/groups', icon: <TeamOutlined />, label: 'Bot群组概览' },
+      {
+        key: '/admin/groups/command-usages',
+        icon: <BarChartOutlined />,
+        label: '指令用量查询',
+      },
     ],
   },
 ];
 
 const SUBMENU_ROUTES = [
-  { menuKey: BOT_MENU_KEY, paths: ['/admin/groups'] },
+  {
+    menuKey: BOT_MENU_KEY,
+    paths: ['/admin/groups', '/admin/groups/command-usages'],
+  },
   {
     menuKey: COMMISSION_MENU_KEY,
     paths: ['/admin/user-level', '/admin/users', '/admin/withdraw'],
@@ -70,6 +79,7 @@ function getLeafMenuKeys(items) {
 const PAGE_TITLES = {
   '/admin': '概览',
   '/admin/groups': 'Bot群组概览',
+  '/admin/groups/command-usages': '指令用量查询',
   '/admin/users': '用户管理',
   '/admin/user-level': '等级配置',
   '/admin/withdraw': '提现申请',

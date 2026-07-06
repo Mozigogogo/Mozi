@@ -411,6 +411,7 @@ export const Interface = {
   ADMIN_USER_COMMISSION_LEVEL: '/admin/users/commission-level',
   ADMIN_COMMISSION_WITHDRAWALS: '/admin/commission/withdrawals',
   ADMIN_TG_GROUPS: '/admin/tg/groups',
+  ADMIN_TG_GROUP_COMMAND_USAGES: '/admin/tg/groups/command/usages',
 };
 
 // 业务中使用到的联系邮箱和链上地址（打包报错缺失导出）

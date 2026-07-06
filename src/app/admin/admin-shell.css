@@ -265,6 +265,117 @@ html:has(.pc-admin-shell) body {
   -webkit-overflow-scrolling: touch;
 }
 
+.pc-admin-expand-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #8c8c8c;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.pc-admin-expand-btn:hover {
+  color: #11b787;
+}
+
+.pc-admin-usage-expand-row > .ant-table-cell {
+  padding: 0 !important;
+  background: #fafafa;
+}
+
+.pc-admin-usage-table-wrap .ant-table-content > table {
+  width: 100% !important;
+  min-width: 100%;
+}
+
+.pc-admin-usage-day-empty {
+  color: #bfbfbf;
+  font-size: 13px;
+}
+
+.pc-admin-usage-day-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  width: 100%;
+}
+
+.pc-admin-usage-day-count {
+  color: #595959;
+  font-size: 13px;
+}
+
+.pc-admin-usage-detail {
+  width: 100%;
+  font-size: 14px;
+}
+
+.pc-admin-usage-detail__row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 40px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.pc-admin-usage-detail__row:last-child {
+  border-bottom: none;
+}
+
+.pc-admin-usage-detail__head {
+  min-height: 38px;
+  color: #8c8c8c;
+  font-weight: 500;
+  background: #f5f5f5;
+}
+
+.pc-admin-usage-detail__cell {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 8px 16px;
+  box-sizing: border-box;
+}
+
+.pc-admin-usage-detail__cell--title {
+  flex: 2 1 0;
+}
+
+.pc-admin-usage-detail__cell--group-id {
+  flex: 1.4 1 0;
+}
+
+.pc-admin-usage-detail__cell--command {
+  flex: 1 1 0;
+}
+
+.pc-admin-usage-detail__cell--usage {
+  flex: 0 0 120px;
+}
+
+.pc-admin-usage-detail__cell--right {
+  text-align: right;
+}
+
+.pc-admin-usage-detail__text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pc-admin-usage-detail__empty {
+  padding: 12px 16px;
+  color: #8c8c8c;
+}
+
 .pc-admin-shell .ant-table-wrapper {
   width: 100%;
   max-width: 100%;

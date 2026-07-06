@@ -260,6 +260,53 @@ export function normalizeAdminTgGroupPage(data) {
   };
 }
 
+/**
+ * @typedef {Object} AdminTgGroupCommandUsageParams
+ * @property {string} startDate - 起始日期 yyyy-MM-dd
+ * @property {string} endDate - 结束日期 yyyy-MM-dd
+ * @property {number|string} [groupId] - Telegram 群 ID
+ * @property {string} [groupTitle] - 群名称模糊匹配
+ * @property {string} [command] - 指令筛选，如 /price
+ */
+
+/** 查询 TG 群指令日用量 GET /admin/tg/groups/command/usages */
+export async function getAdminTgGroupCommandUsages(params = {}) {
+  const res = await adminInstance.get(Interface.ADMIN_TG_GROUP_COMMAND_USAGES, { params });
+  return res.data;
+}
+
+/** 将接口返回的列表字段统一为数组 */
+function toRecordArray(value) {
+  if (Array.isArray(value)) return value;
+  if (value && typeof value === 'object') return Object.values(value);
+  return [];
+}
+
+/** 解析 TG 群指令日用量 */
+export function normalizeAdminTgGroupCommandUsages(data) {
+  if (!data || typeof data !== 'object') {
+    return { startDate: '', endDate: '', dailyStats: [] };
+  }
+  const dailyStats = toRecordArray(data.dailyStats).map((day) => ({
+    statDate: day?.statDate || day?.stat_date || '',
+    useCount: Number(day?.useCount ?? day?.use_count) || 0,
+    groups: toRecordArray(day?.groups).map((group) => ({
+      groupId: group?.groupId ?? group?.group_id,
+      groupTitle: group?.groupTitle || group?.group_title || group?.title || '',
+      useCount: Number(group?.useCount ?? group?.use_count) || 0,
+      commands: toRecordArray(group?.commands).map((cmd) => ({
+        command: cmd?.command || '',
+        useCount: Number(cmd?.useCount ?? cmd?.use_count) || 0,
+      })),
+    })),
+  }));
+  return {
+    startDate: data.startDate || data.start_date || '',
+    endDate: data.endDate || data.end_date || '',
+    dailyStats,
+  };
+}
+
 /** 解析提现申请分页列表 */
 export function normalizeAdminWithdrawPage(data) {
   if (!data || typeof data !== 'object') {
