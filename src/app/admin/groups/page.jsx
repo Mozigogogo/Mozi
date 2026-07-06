@@ -19,6 +19,25 @@ const STATUS_OPTIONS = Object.entries(GROUP_STATUS).map(([value, item]) => ({
   label: item.text,
 }));
 
+const MEMBER_SIZE_OPTIONS = [
+  { value: 'lt500', label: '500人以下' },
+  { value: '500-2000', label: '500-2000' },
+  { value: 'gt2000', label: '2000+' },
+];
+
+function getMemberSizeParams(sizeFilter) {
+  switch (sizeFilter) {
+    case 'lt500':
+      return { maxMemberCount: 499 };
+    case '500-2000':
+      return { minMemberCount: 500, maxMemberCount: 2000 };
+    case 'gt2000':
+      return { minMemberCount: 2001 };
+    default:
+      return {};
+  }
+}
+
 function formatTime(value) {
   if (!value) return '-';
   const d = new Date(value);
@@ -40,12 +59,14 @@ export default function AdminGroupsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [statusFilter, setStatusFilter] = useState('');
+  const [memberSizeFilter, setMemberSizeFilter] = useState('');
 
   const fetchGroups = useCallback(async () => {
     setLoading(true);
     try {
       const params = { page, size: pageSize };
       if (statusFilter !== '') params.status = Number(statusFilter);
+      Object.assign(params, getMemberSizeParams(memberSizeFilter));
 
       const res = await listAdminTgGroups(params);
       if (!isAdminApiSuccess(res)) {
@@ -66,7 +87,7 @@ export default function AdminGroupsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, statusFilter]);
+  }, [page, pageSize, statusFilter, memberSizeFilter]);
 
   useEffect(() => {
     fetchGroups();
@@ -129,13 +150,6 @@ export default function AdminGroupsPage() {
       render: renderStatus,
     },
     {
-      title: '首次发现',
-      dataIndex: 'firstSeenAt',
-      key: 'firstSeenAt',
-      width: 170,
-      render: formatTime,
-    },
-    {
       title: '最近活跃',
       dataIndex: 'lastActiveAt',
       key: 'lastActiveAt',
@@ -143,16 +157,9 @@ export default function AdminGroupsPage() {
       render: formatTime,
     },
     {
-      title: '创建时间',
+      title: '加入时间',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      width: 170,
-      render: formatTime,
-    },
-    {
-      title: '更新时间',
-      dataIndex: 'updatedAt',
-      key: 'updatedAt',
       width: 170,
       render: formatTime,
     },
@@ -172,6 +179,17 @@ export default function AdminGroupsPage() {
           style={{ width: 140 }}
           options={STATUS_OPTIONS}
         />
+        <Select
+          placeholder="群规模筛选"
+          value={memberSizeFilter || undefined}
+          onChange={(v) => {
+            setMemberSizeFilter(v || '');
+            setPage(1);
+          }}
+          allowClear
+          style={{ width: 160 }}
+          options={MEMBER_SIZE_OPTIONS}
+        />
         <Button icon={<ReloadOutlined />} onClick={fetchGroups} loading={loading}>
           刷新
         </Button>
@@ -183,7 +201,7 @@ export default function AdminGroupsPage() {
           columns={columns}
           dataSource={list}
           loading={loading}
-          scroll={{ x: 1300 }}
+          scroll={{ x: 960 }}
           locale={{ emptyText: '暂无群组数据' }}
           pagination={{
             current: page,
