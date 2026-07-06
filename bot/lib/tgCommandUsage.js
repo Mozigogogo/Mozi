@@ -20,7 +20,7 @@ const {
 let flushTimer = null;
 
 /** 不上报统计的斜杠命令（小写，不含 /） */
-const COMMAND_USAGE_EXCLUDE = new Set(['start', 'bind_ref', 'register']);
+const COMMAND_USAGE_EXCLUDE = new Set(['bind_ref', 'register']);
 
 /**
  * @param {string} commandName

@@ -13,6 +13,7 @@ const { executeAlertCommand } = require('./alertFlow');
 const { escapeHtml } = require('./telegramHtml');
 const { apiDebug } = require('./debugLog');
 const { agentRouteLog, agentRouteDebug } = require('./agentRouteDebug');
+const { recordCommandUsageFromCtx } = require('./tgCommandUsage');
 
 /** @typedef {{ command: string; message: string; coinSymbol: string | null; rawQuery: string }} AgentRouteDispatch */
 
@@ -197,6 +198,8 @@ async function handleBotMentionRouted(ctx, config, getTexts, registeredGate, log
   const texts = getTexts(languageCode);
   const dispatch = await resolveAgentRouteDispatch(ctx, config, texts, rawQuery);
   if (!dispatch) return;
+
+  recordCommandUsageFromCtx(ctx, dispatch.command, config);
 
   agentRouteLog('dispatch', {
     command: dispatch.command,
