@@ -238,8 +238,6 @@ export async function updateAdminCommissionWithdrawalStatus(id, payload) {
  * @property {number} [page] - 页码，从 1 开始
  * @property {number} [size] - 每页条数
  * @property {0|1} [status] - 状态：0 停用，1 正常
- * @property {number} [minMemberCount] - 最小成员数
- * @property {number} [maxMemberCount] - 最大成员数
  */
 
 /** 分页查询 TG 群组 GET /admin/tg/groups */

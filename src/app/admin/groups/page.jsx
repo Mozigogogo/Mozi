@@ -25,17 +25,50 @@ const MEMBER_SIZE_OPTIONS = [
   { value: 'gt2000', label: '2000+' },
 ];
 
-function getMemberSizeParams(sizeFilter) {
+function getMemberCount(record) {
+  const value = record?.memberCount ?? record?.member_count;
+  const count = Number(value);
+  return Number.isNaN(count) ? null : count;
+}
+
+function matchesMemberSizeFilter(memberCount, sizeFilter) {
+  if (!sizeFilter) return true;
+  if (memberCount == null) return false;
+
   switch (sizeFilter) {
     case 'lt500':
-      return { maxMemberCount: 499 };
+      return memberCount < 500;
     case '500-2000':
-      return { minMemberCount: 500, maxMemberCount: 2000 };
+      return memberCount >= 500 && memberCount <= 2000;
     case 'gt2000':
-      return { minMemberCount: 2001 };
+      return memberCount > 2000;
     default:
-      return {};
+      return true;
   }
+}
+
+async function fetchAllGroups(statusFilter) {
+  const all = [];
+  const size = 100;
+  let pageNum = 1;
+
+  while (pageNum <= 50) {
+    const params = { page: pageNum, size };
+    if (statusFilter !== '') params.status = Number(statusFilter);
+
+    const res = await listAdminTgGroups(params);
+    if (!isAdminApiSuccess(res)) {
+      throw new Error(res?.errorMsg || '加载群组列表失败');
+    }
+
+    const pageData = normalizeAdminTgGroupPage(res?.data);
+    all.push(...pageData.list);
+
+    if (all.length >= pageData.total || pageData.list.length === 0) break;
+    pageNum += 1;
+  }
+
+  return all;
 }
 
 function formatTime(value) {
@@ -64,9 +97,21 @@ export default function AdminGroupsPage() {
   const fetchGroups = useCallback(async () => {
     setLoading(true);
     try {
+      const useClientMemberFilter = Boolean(memberSizeFilter);
+
+      if (useClientMemberFilter) {
+        const allGroups = await fetchAllGroups(statusFilter);
+        const filtered = allGroups.filter((item) =>
+          matchesMemberSizeFilter(getMemberCount(item), memberSizeFilter),
+        );
+        const start = (page - 1) * pageSize;
+        setList(filtered.slice(start, start + pageSize));
+        setTotal(filtered.length);
+        return;
+      }
+
       const params = { page, size: pageSize };
       if (statusFilter !== '') params.status = Number(statusFilter);
-      Object.assign(params, getMemberSizeParams(memberSizeFilter));
 
       const res = await listAdminTgGroups(params);
       if (!isAdminApiSuccess(res)) {
