@@ -53,7 +53,7 @@ async function loadActiveGroupReferrer(config, chatId) {
 }
 
 /**
- * 群聊消息注入 ctx.state.groupReferrer（已绑定且含 inviteCode）
+ * 群聊消息注入 ctx.state.groupReferrer（群主邀请码，供群内注册/登录挂靠分佣）
  * @param {object} config
  * @returns {import('telegraf').MiddlewareFn}
  */

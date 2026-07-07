@@ -237,10 +237,30 @@ async function ensureTgUserToken(config, telegramId, opts = {}) {
   return p;
 }
 
+/**
+ * 按 telegramId 解析 Mozi userId（POST /user/login 响应 data.userId）。
+ * @param {object} config
+ * @param {string | number} telegramId
+ * @param {{ telegramUsername?: string; firstName?: string; lastName?: string; username?: string; photoUrl?: string }} [opts]
+ * @returns {Promise<string | null>}
+ */
+async function resolveMoziUserIdByTelegramId(config, telegramId, opts = {}) {
+  const id = String(telegramId ?? '').trim();
+  if (!id) return null;
+
+  const cached = getCachedUserId(id);
+  if (cached) return cached;
+
+  const token = await ensureTgUserToken(config, id, opts);
+  if (!token) return null;
+  return getCachedUserId(id);
+}
+
 module.exports = {
   ensureTgUserToken,
   clearCachedToken,
   getCachedToken,
   getCachedUserId,
   extractLoginUserId,
+  resolveMoziUserIdByTelegramId,
 };

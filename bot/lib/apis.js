@@ -1812,7 +1812,7 @@ async function postGroupReferrerBind({
  */
 
 /**
- * ownerUserId：拉 Bot 进群者的 Telegram user id
+ * ownerUserId：群主 Mozi userId（Bot 经 getChatAdministrators + telegramId 登录解析）
  * @param {{
  *   apiBaseUrl: string;
  *   groups: TgStatsGroupSaveRow[];

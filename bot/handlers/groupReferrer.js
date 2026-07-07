@@ -1,47 +1,17 @@
 /**
- * 群推广人：my_chat_member（bot 入群）、/bind_ref（仅拉群人，自动 queryInviteCode 后绑定群）
+ * 群推广人：Bot 入群自动绑定群主邀请码；/bind_ref 仅群主可手动重绑
  */
 
 const {
   parseBotJoinFromMyChatMember,
   rememberChatPendingAdder,
-  getRememberedChatPendingAdder,
-  buildBotStartUrlWithInviteCode,
 } = require('../lib/groupReferrer');
+const { resolveGroupCreatorTelegramProfile } = require('../lib/groupOwnerResolve');
 const {
-  postGroupReferrerPending,
-  getGroupReferrer,
-  postTgQueryInviteCode,
-  postGroupReferrerBind,
-} = require('../lib/apis');
-const { setGroupReferrerCache } = require('../middleware/groupReferrer');
-
-/**
- * @param {object} config
- * @param {string} chatId
- * @returns {Promise<{ adderTelegramId: string } | null>}
- */
-async function resolveChatAdder(config, chatId) {
-  const { API_BASE_URL, APP_URL, MOZI_DETAIL_AUTH } = config;
-  try {
-    const res = await getGroupReferrer({
-      apiBaseUrl: API_BASE_URL,
-      appUrl: APP_URL,
-      auth: MOZI_DETAIL_AUTH,
-      chatId,
-    });
-    if (res.referrer?.adderTelegramId) {
-      return { adderTelegramId: res.referrer.adderTelegramId };
-    }
-  } catch {
-    /* ignore */
-  }
-  const local = getRememberedChatPendingAdder(chatId);
-  if (local?.adderTelegramId) {
-    return { adderTelegramId: local.adderTelegramId };
-  }
-  return null;
-}
+  syncGroupOwnerReferrerBinding,
+  isTelegramUserGroupCreator,
+} = require('../lib/groupOwnerReferrer');
+const { postGroupReferrerPending } = require('../lib/apis');
 
 function registerGroupReferrer(bot, config, { getTexts } = {}) {
   const { API_BASE_URL, APP_URL, BOT_USERNAME, MOZI_DETAIL_AUTH } = config;
@@ -58,28 +28,29 @@ function registerGroupReferrer(bot, config, { getTexts } = {}) {
       rememberChatPendingAdder(join.chatId, join.adderTelegramId, { chatTitle: join.chatTitle });
     }
 
-    try {
-      await postGroupReferrerPending({
-        apiBaseUrl: API_BASE_URL,
-        appUrl: APP_URL,
-        auth: MOZI_DETAIL_AUTH,
-        chatId: join.chatId,
-        adderTelegramId: join.adderTelegramId,
-        chatTitle: join.chatTitle,
-        botUsername: BOT_USERNAME,
-      });
-    } catch {
-      /* ignore */
+    const creator = await resolveGroupCreatorTelegramProfile(ctx.telegram, join.chatId);
+    if (creator?.telegramId) {
+      try {
+        await postGroupReferrerPending({
+          apiBaseUrl: API_BASE_URL,
+          appUrl: APP_URL,
+          auth: MOZI_DETAIL_AUTH,
+          chatId: join.chatId,
+          adderTelegramId: creator.telegramId,
+          chatTitle: join.chatTitle,
+          botUsername: BOT_USERNAME,
+        });
+      } catch {
+        /* ignore */
+      }
+
+      await syncGroupOwnerReferrerBinding(ctx.telegram, config, join.chatId).catch(() => {});
     }
 
-    if (!join.likelyAnonymousAdder) {
-      const languageCode = mcm.from?.language_code || 'en';
-      const texts = getText(languageCode);
-      if (texts.bindRefHintAfterJoin) {
-        await ctx
-          .reply(texts.bindRefHintAfterJoin, { parse_mode: 'HTML' })
-          .catch(() => {});
-      }
+    const languageCode = mcm.from?.language_code || 'en';
+    const texts = getText(languageCode);
+    if (texts.bindRefHintAfterJoin) {
+      await ctx.reply(texts.bindRefHintAfterJoin, { parse_mode: 'HTML' }).catch(() => {});
     }
   });
 
@@ -97,88 +68,47 @@ function registerGroupReferrer(bot, config, { getTexts } = {}) {
     const binderId = ctx.from?.id;
     if (binderId == null) return;
 
-    const adder = await resolveChatAdder(config, chatId);
-    if (!adder) {
+    const isOwner = await isTelegramUserGroupCreator(ctx.telegram, chatId, binderId);
+    if (!isOwner) {
       await ctx.reply(
-        texts.bindRefNoPending ||
-          '未找到本群拉 bot 记录，请由拉 bot 进群的人先将 bot 拉入本群后再试。',
+        texts.bindRefOnlyOwner || '仅<strong>群主</strong>可以执行 <code>/bind_ref</code>。',
         { parse_mode: 'HTML' },
       );
       return;
     }
-
-    if (String(binderId) !== String(adder.adderTelegramId)) {
-      await ctx.reply(
-        texts.bindRefOnlyAdder || '仅拉 bot 进群的人可以执行 /bind_ref。',
-        { parse_mode: 'HTML' },
-      );
-      return;
-    }
-
-    let queryRes;
-    try {
-      queryRes = await postTgQueryInviteCode({
-        apiBaseUrl: API_BASE_URL,
-        appUrl: APP_URL,
-        auth: MOZI_DETAIL_AUTH,
-        telegramId: binderId,
-      });
-    } catch (err) {
-      await ctx.reply(texts.bindRefQueryFailed || '查询邀请码失败，请稍后重试。', {
-        parse_mode: 'HTML',
-      });
-      return;
-    }
-
-    if (!queryRes.ok || !queryRes.inviteCode) {
-      await ctx.reply(
-        texts.bindRefNoInviteCode ||
-          '未查询到您的邀请码，请先在 Mozi 完成注册并生成邀请码后再执行 /bind_ref。',
-        { parse_mode: 'HTML' },
-      );
-      return;
-    }
-
-    const inviteCode = queryRes.inviteCode;
-    const rawUrl = buildBotStartUrlWithInviteCode(BOT_USERNAME, inviteCode);
 
     let bindRes;
     try {
-      bindRes = await postGroupReferrerBind({
-        apiBaseUrl: API_BASE_URL,
-        appUrl: APP_URL,
-        auth: MOZI_DETAIL_AUTH,
-        chatId,
-        binderTelegramId: binderId,
-        inviteCode,
-        rawUrl,
-      });
+      bindRes = await syncGroupOwnerReferrerBinding(ctx.telegram, config, chatId);
     } catch (err) {
-      await ctx.reply(texts.bindRefBindFailed || '绑定群推广人失败，请稍后重试。', {
+      await ctx.reply(texts.bindRefBindFailed || '绑定本群推广人失败，请稍后重试。', {
         parse_mode: 'HTML',
       });
       return;
     }
 
     if (!bindRes.ok) {
+      if (bindRes.reason === 'owner_invite_not_found' || bindRes.reason === 'invite_query_failed') {
+        await ctx.reply(
+          texts.bindRefNoInviteCode ||
+            '未查询到您的邀请码。请先在 Mozi 完成注册并生成邀请码后，再执行 <code>/bind_ref</code>。',
+          { parse_mode: 'HTML' },
+        );
+        return;
+      }
       const detail = bindRes.errorMessage ? `\n${bindRes.errorMessage}` : '';
       await ctx.reply((texts.bindRefBindFailed || '绑定失败。') + detail, { parse_mode: 'HTML' });
       return;
     }
 
+    const inviteCode = bindRes.inviteCode;
     const successText =
       typeof texts.bindRefSuccess === 'function'
         ? texts.bindRefSuccess(inviteCode)
-        : `本群推广人已绑定，邀请码：<code>${inviteCode}</code>`;
-
-    setGroupReferrerCache(chatId, {
-      inviteCode,
-      rawUrl,
-      referrerTelegramId: String(binderId),
-    });
+        : `本群推广人已绑定为群主，邀请码：<code>${inviteCode}</code>`;
 
     await ctx.reply(successText, { parse_mode: 'HTML' });
   });
 }
 
-module.exports = { registerGroupReferrer, resolveChatAdder };
+module.exports = { registerGroupReferrer };

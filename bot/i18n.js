@@ -286,17 +286,18 @@ const i18n = {
     balanceNotePrivateHint:
       '\n\n📌 在群内使用 <code>/balance</code> 时，结果会通过<strong>私信</strong>发送给您。',
     bindRefHintAfterJoin:
-      '嗨 👋 我是 Mozi，已经准备好为本群服务啦\n群主/管理员发送 <code>/bind_ref</code> 绑定您的专属邀请码吧',
+      '嗨 👋 我是 Mozi，已经准备好为本群服务啦\n本群使用 Bot 的分佣将归属<strong>群主</strong>；群主若已注册 Mozi，邀请码会自动绑定。',
     bindRefOnlyInGroup: '请在<strong>群内</strong>使用 <code>/bind_ref</code>。',
-    bindRefOnlyAdder: '仅<strong>拉 bot 进群的人</strong>可以执行 <code>/bind_ref</code>。',
+    bindRefOnlyOwner: '仅<strong>群主</strong>可以执行 <code>/bind_ref</code>。',
+    bindRefOnlyAdder: '仅<strong>群主</strong>可以执行 <code>/bind_ref</code>。',
     bindRefNoPending:
-      '未找到本群拉 bot 记录。请先将 bot 拉入本群，再由拉群的人发送 <code>/bind_ref</code>。',
+      '未找到本群群主信息。请确认 Bot 在群内且有读取管理员列表权限。',
     bindRefNoInviteCode:
-      '未查询到您的邀请码。请先在 Mozi 完成注册并生成邀请码后，再执行 <code>/bind_ref</code>。',
+      '未查询到群主的邀请码。请群主先在 Mozi 完成注册并生成邀请码后，再执行 <code>/bind_ref</code>。',
     bindRefQueryFailed: '查询邀请码失败，请稍后重试。',
     bindRefBindFailed: '绑定本群推广人失败，请稍后重试。',
     bindRefSuccess: (code) =>
-      `✅ 本群推广人已绑定。\n\n邀请码：<code>${code}</code>\n群内成员通过本 bot 注册/打开 App 时将挂靠此邀请码。`,
+      `✅ 本群推广人已绑定为<strong>群主</strong>。\n\n邀请码：<code>${code}</code>\n群内成员通过本 bot 注册/使用服务时，分佣将归属群主。`,
   },
   en: {
     welcomeWithInvite: (code, botUsername) =>
@@ -583,17 +584,18 @@ Tap <b>Start</b> to open the Mozi Mini App <b>account / sign-up</b> page. When y
     balanceNotePrivateHint:
       '\n\n📌 In groups, <code>/balance</code> replies are sent in a <strong>private chat</strong> with the bot.',
     bindRefHintAfterJoin:
-      'Thanks for adding the bot. The <strong>person who added the bot</strong> should send <code>/bind_ref</code> in this group to bind their invite code as the group referrer.',
+      'Thanks for adding the bot. <strong>Group owner</strong> commission applies in this chat; if the owner is registered on Mozi, their invite code is bound automatically.',
     bindRefOnlyInGroup: 'Use <code>/bind_ref</code> inside a <strong>group</strong> only.',
-    bindRefOnlyAdder: 'Only the <strong>user who added the bot to this group</strong> can run <code>/bind_ref</code>.',
+    bindRefOnlyOwner: 'Only the <strong>group owner</strong> can run <code>/bind_ref</code>.',
+    bindRefOnlyAdder: 'Only the <strong>group owner</strong> can run <code>/bind_ref</code>.',
     bindRefNoPending:
-      'No bot-add record for this group. Add the bot first, then run <code>/bind_ref</code> as the adder.',
+      'Could not resolve the group owner. Ensure the bot is in the group and can read administrators.',
     bindRefNoInviteCode:
-      'No invite code found for your account. Please register on Mozi and create an invite code, then run <code>/bind_ref</code> again.',
+      'No invite code found for the group owner. The owner must register on Mozi and create an invite code, then run <code>/bind_ref</code> again.',
     bindRefQueryFailed: 'Failed to query invite code. Please try again later.',
     bindRefBindFailed: 'Failed to bind group referrer. Please try again later.',
     bindRefSuccess: (code) =>
-      `✅ Group referrer bound.\n\nInvite code: <code>${code}</code>\nMembers who register or open the app via this bot in this group will use this code.`,
+      `✅ Group referrer bound to the <strong>group owner</strong>.\n\nInvite code: <code>${code}</code>\nMembers who register or use this bot in the group will credit commission to the owner.`,
   },
 };
 
