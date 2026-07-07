@@ -166,9 +166,30 @@ export default function AdminGroupsPage() {
       title: '群主 ID',
       dataIndex: 'ownerUserId',
       key: 'ownerUserId',
-      width: 180,
-      ellipsis: true,
-      render: (v) => v || '-',
+      width: 220,
+      onCell: () => ({
+        style: {
+          whiteSpace: 'normal',
+          wordBreak: 'break-all',
+          verticalAlign: 'top',
+        },
+      }),
+      render: (v) =>
+        v ? (
+          <span
+            style={{
+              display: 'inline-block',
+              maxWidth: '100%',
+              wordBreak: 'break-all',
+              whiteSpace: 'normal',
+              lineHeight: 1.5,
+            }}
+          >
+            {String(v)}
+          </span>
+        ) : (
+          '-'
+        ),
     },
     {
       title: '成员数',
