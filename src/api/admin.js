@@ -182,6 +182,7 @@ export async function deleteCommissionLevel(id) {
  * @typedef {Object} AdminUserListParams
  * @property {string} [nickName] - 昵称模糊匹配
  * @property {string} [telegramId] - Telegram 用户 ID 精确匹配
+ * @property {string} [userId] - Mozi 用户 ID 精确匹配
  * @property {number} [page] - 页码，从 1 开始
  * @property {number} [size] - 每页条数，最大 100
  */

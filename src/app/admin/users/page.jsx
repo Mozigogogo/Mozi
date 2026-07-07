@@ -30,8 +30,10 @@ export default function AdminUsersPage() {
   const [pageSize, setPageSize] = useState(20);
   const [nickNameInput, setNickNameInput] = useState('');
   const [telegramIdInput, setTelegramIdInput] = useState('');
+  const [userIdInput, setUserIdInput] = useState('');
   const [appliedNickName, setAppliedNickName] = useState('');
   const [appliedTelegramId, setAppliedTelegramId] = useState('');
+  const [appliedUserId, setAppliedUserId] = useState('');
   const [levelOptions, setLevelOptions] = useState([]);
   const [editOpen, setEditOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -65,6 +67,7 @@ export default function AdminUsersPage() {
       const params = { page, size: pageSize };
       if (appliedNickName) params.nickName = appliedNickName;
       if (appliedTelegramId) params.telegramId = appliedTelegramId;
+      if (appliedUserId) params.userId = appliedUserId;
 
       const res = await listAdminUsers(params);
       if (!isAdminApiSuccess(res)) {
@@ -85,7 +88,7 @@ export default function AdminUsersPage() {
     } finally {
       setLoading(false);
     }
-  }, [appliedNickName, appliedTelegramId, page, pageSize]);
+  }, [appliedNickName, appliedTelegramId, appliedUserId, page, pageSize]);
 
   useEffect(() => {
     fetchLevels();
@@ -98,6 +101,7 @@ export default function AdminUsersPage() {
   const handleSearch = () => {
     setAppliedNickName(nickNameInput.trim());
     setAppliedTelegramId(telegramIdInput.trim());
+    setAppliedUserId(userIdInput.trim());
     setPage(1);
   };
 
@@ -110,6 +114,12 @@ export default function AdminUsersPage() {
   const handleClearTelegramId = () => {
     setTelegramIdInput('');
     setAppliedTelegramId('');
+    setPage(1);
+  };
+
+  const handleClearUserId = () => {
+    setUserIdInput('');
+    setAppliedUserId('');
     setPage(1);
   };
 
@@ -225,7 +235,7 @@ export default function AdminUsersPage() {
         className="pc-admin-alert"
         type="info"
         showIcon
-        message="查询正常状态用户，支持按昵称模糊搜索、按 TGID 精确搜索，并为用户分配分佣等级。"
+        message="查询正常状态用户，支持按昵称模糊搜索、按 TGID / 用户 ID 精确搜索，并为用户分配分佣等级。"
       />
 
       <div className="pc-admin-toolbar">
@@ -247,6 +257,15 @@ export default function AdminUsersPage() {
           allowClear
           style={{ width: 220 }}
         />
+        <Input
+          placeholder="搜索用户 ID"
+          value={userIdInput}
+          onChange={(e) => setUserIdInput(e.target.value)}
+          onPressEnter={handleSearch}
+          onClear={handleClearUserId}
+          allowClear
+          style={{ width: 280 }}
+        />
         <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
           搜索
         </Button>
@@ -262,7 +281,10 @@ export default function AdminUsersPage() {
           dataSource={list}
           loading={loading}
           locale={{
-            emptyText: appliedNickName || appliedTelegramId ? '未找到匹配的用户' : '暂无用户数据',
+            emptyText:
+              appliedNickName || appliedTelegramId || appliedUserId
+                ? '未找到匹配的用户'
+                : '暂无用户数据',
           }}
           pagination={{
             current: page,
