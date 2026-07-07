@@ -237,9 +237,13 @@ export async function updateAdminCommissionWithdrawalStatus(id, payload) {
 
 /**
  * @typedef {Object} AdminTgGroupListParams
+ * @property {string} [groupTitle] - 群名称模糊匹配
+ * @property {'ACTIVE' | 'DORMANT' | 'CHURNED'} [health] - 健康度
+ * @property {'NONE' | 'INTENT' | 'COOPERATING' | 'STOPPED'} [cooperationStatus] - 合作状态精确匹配
+ * @property {number} [memberCountMin] - 群人数下限（含）
+ * @property {number} [memberCountMax] - 群人数上限（含）
  * @property {number} [page] - 页码，从 1 开始
- * @property {number} [size] - 每页条数
- * @property {0|1} [status] - 状态：0 停用，1 正常
+ * @property {number} [size] - 每页条数，最大 100
  */
 
 /** 分页查询 TG 群组 GET /admin/tg/groups */
@@ -260,6 +264,17 @@ export function normalizeAdminTgGroupPage(data) {
     page: Number(data.page) || 1,
     size: Number(data.size) || 20,
   };
+}
+
+/**
+ * @typedef {'NONE' | 'INTENT' | 'COOPERATING' | 'STOPPED'} TgGroupCooperationStatus
+ * @typedef {{ groupId: number | string; cooperationStatus: TgGroupCooperationStatus }} UpdateTgGroupCooperationStatusPayload
+ */
+
+/** 修改 TG 群合作状态 PUT /admin/tg/groups/cooperation-status */
+export async function updateAdminTgGroupCooperationStatus(payload) {
+  const res = await adminInstance.put(Interface.ADMIN_TG_GROUP_COOPERATION_STATUS, payload);
+  return res.data;
 }
 
 /**

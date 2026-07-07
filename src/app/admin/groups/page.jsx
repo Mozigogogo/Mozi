@@ -1,21 +1,35 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Table, Button, Avatar, Tag, Select, message } from 'antd';
-import { ReloadOutlined, TeamOutlined } from '@ant-design/icons';
+import { Table, Button, Avatar, Tag, Select, Dropdown, Input, message } from 'antd';
+import { ReloadOutlined, TeamOutlined, DownOutlined, SearchOutlined } from '@ant-design/icons';
 import {
   listAdminTgGroups,
+  updateAdminTgGroupCooperationStatus,
   isAdminApiSuccess,
   normalizeAdminTgGroupPage,
 } from '@/api/admin';
 
-const GROUP_STATUS = {
-  1: { text: '正常', color: 'success' },
-  0: { text: '停用', color: 'default' },
+const GROUP_HEALTH = {
+  ACTIVE: { text: '活跃', color: 'success' },
+  DORMANT: { text: '沉寂', color: 'warning' },
+  CHURNED: { text: '流失', color: 'default' },
 };
 
-const STATUS_OPTIONS = Object.entries(GROUP_STATUS).map(([value, item]) => ({
-  value: Number(value),
+const GROUP_COOPERATION_STATUS = {
+  NONE: { text: '洽谈中', color: 'processing' },
+  INTENT: { text: '意向合作', color: 'cyan' },
+  COOPERATING: { text: '已合作', color: 'success' },
+  STOPPED: { text: '暂停合作', color: 'warning' },
+};
+
+const HEALTH_OPTIONS = Object.entries(GROUP_HEALTH).map(([value, item]) => ({
+  value,
+  label: item.text,
+}));
+
+const COOPERATION_STATUS_OPTIONS = Object.entries(GROUP_COOPERATION_STATUS).map(([value, item]) => ({
+  value,
   label: item.text,
 }));
 
@@ -25,50 +39,41 @@ const MEMBER_SIZE_OPTIONS = [
   { value: 'gt2000', label: '2000+' },
 ];
 
-function getMemberCount(record) {
-  const value = record?.memberCount ?? record?.member_count;
-  const count = Number(value);
-  return Number.isNaN(count) ? null : count;
+const COOPERATION_STATUS_KEYS = Object.keys(GROUP_COOPERATION_STATUS);
+
+function normalizeCooperationStatusKey(value) {
+  const key = String(value ?? 'NONE').trim().toUpperCase();
+  return COOPERATION_STATUS_KEYS.includes(key) ? key : 'NONE';
 }
 
-function matchesMemberSizeFilter(memberCount, sizeFilter) {
-  if (!sizeFilter) return true;
-  if (memberCount == null) return false;
-
+/** 群规模 → memberCountMin / memberCountMax（与 GET /admin/tg/groups 一致，上下限均含） */
+function buildMemberCountRange(sizeFilter) {
   switch (sizeFilter) {
     case 'lt500':
-      return memberCount < 500;
+      return { memberCountMax: 499 };
     case '500-2000':
-      return memberCount >= 500 && memberCount <= 2000;
+      return { memberCountMin: 500, memberCountMax: 2000 };
     case 'gt2000':
-      return memberCount > 2000;
+      return { memberCountMin: 2001 };
     default:
-      return true;
+      return {};
   }
 }
 
-async function fetchAllGroups(statusFilter) {
-  const all = [];
-  const size = 100;
-  let pageNum = 1;
-
-  while (pageNum <= 50) {
-    const params = { page: pageNum, size };
-    if (statusFilter !== '') params.status = Number(statusFilter);
-
-    const res = await listAdminTgGroups(params);
-    if (!isAdminApiSuccess(res)) {
-      throw new Error(res?.errorMsg || '加载群组列表失败');
-    }
-
-    const pageData = normalizeAdminTgGroupPage(res?.data);
-    all.push(...pageData.list);
-
-    if (all.length >= pageData.total || pageData.list.length === 0) break;
-    pageNum += 1;
-  }
-
-  return all;
+function buildListParams({
+  page,
+  pageSize,
+  groupTitle,
+  health,
+  cooperationStatus,
+  memberSizeFilter,
+}) {
+  const params = { page, size: pageSize };
+  if (groupTitle) params.groupTitle = groupTitle;
+  if (health) params.health = health;
+  if (cooperationStatus) params.cooperationStatus = cooperationStatus;
+  Object.assign(params, buildMemberCountRange(memberSizeFilter));
+  return params;
 }
 
 function formatTime(value) {
@@ -78,11 +83,47 @@ function formatTime(value) {
   return d.toLocaleString('zh-CN');
 }
 
-function renderStatus(value) {
+function renderHealth(value) {
   if (value == null || value === '') return '-';
-  const item = GROUP_STATUS[Number(value)];
+  const key = String(value).trim().toUpperCase();
+  const item = GROUP_HEALTH[key];
   if (!item) return String(value);
   return <Tag color={item.color}>{item.text}</Tag>;
+}
+
+function CooperationStatusCell({ value, record, updating, onChange }) {
+  const statusKey = normalizeCooperationStatusKey(value);
+  const item = GROUP_COOPERATION_STATUS[statusKey];
+  const groupId = record?.groupId;
+
+  if (groupId == null) {
+    return item ? <Tag color={item.color}>{item.text}</Tag> : '-';
+  }
+
+  const menuItems = COOPERATION_STATUS_KEYS.map((key) => ({
+    key,
+    label: GROUP_COOPERATION_STATUS[key].text,
+    disabled: key === statusKey,
+  }));
+
+  return (
+    <Dropdown
+      menu={{
+        items: menuItems,
+        onClick: ({ key: next }) => onChange(record, next),
+      }}
+      trigger={['click']}
+      disabled={updating}
+    >
+      <Tag
+        color={item.color}
+        style={{ cursor: updating ? 'wait' : 'pointer', margin: 0, userSelect: 'none' }}
+      >
+        {updating ? '更新中…' : item.text}
+        {!updating ? <DownOutlined style={{ fontSize: 10, marginLeft: 4 }} /> : null}
+      </Tag>
+    </Dropdown>
+  );
 }
 
 export default function AdminGroupsPage() {
@@ -91,27 +132,67 @@ export default function AdminGroupsPage() {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const [statusFilter, setStatusFilter] = useState('');
+  const [groupTitleInput, setGroupTitleInput] = useState('');
+  const [healthFilter, setHealthFilter] = useState('');
+  const [cooperationStatusFilter, setCooperationStatusFilter] = useState('');
   const [memberSizeFilter, setMemberSizeFilter] = useState('');
+  const [appliedGroupTitle, setAppliedGroupTitle] = useState('');
+  const [appliedHealth, setAppliedHealth] = useState('');
+  const [appliedCooperationStatus, setAppliedCooperationStatus] = useState('');
+  const [appliedMemberSize, setAppliedMemberSize] = useState('');
+  const [updatingCooperationGroupId, setUpdatingCooperationGroupId] = useState(null);
+
+  const hasActiveFilters = Boolean(
+    appliedGroupTitle || appliedHealth || appliedCooperationStatus || appliedMemberSize,
+  );
+
+  const handleCooperationStatusChange = useCallback(async (record, cooperationStatus) => {
+    const groupId = record?.groupId;
+    if (groupId == null) {
+      message.error('缺少群组 ID');
+      return;
+    }
+
+    const current = normalizeCooperationStatusKey(record.cooperationStatus);
+    if (current === cooperationStatus) return;
+
+    const groupIdStr = String(groupId);
+    setUpdatingCooperationGroupId(groupIdStr);
+    try {
+      const res = await updateAdminTgGroupCooperationStatus({
+        groupId: Number(groupId),
+        cooperationStatus,
+      });
+      if (!isAdminApiSuccess(res)) {
+        message.error(res?.errorMsg || '更新合作状态失败');
+        return;
+      }
+
+      message.success('合作状态已更新');
+      setList((prev) =>
+        prev.map((row) =>
+          String(row.groupId) === groupIdStr ? { ...row, cooperationStatus } : row,
+        ),
+      );
+    } catch (error) {
+      console.error('[AdminGroups] update cooperation status failed:', error);
+      message.error(error?.response?.data?.errorMsg || error?.message || '更新合作状态失败');
+    } finally {
+      setUpdatingCooperationGroupId(null);
+    }
+  }, []);
 
   const fetchGroups = useCallback(async () => {
     setLoading(true);
     try {
-      const useClientMemberFilter = Boolean(memberSizeFilter);
-
-      if (useClientMemberFilter) {
-        const allGroups = await fetchAllGroups(statusFilter);
-        const filtered = allGroups.filter((item) =>
-          matchesMemberSizeFilter(getMemberCount(item), memberSizeFilter),
-        );
-        const start = (page - 1) * pageSize;
-        setList(filtered.slice(start, start + pageSize));
-        setTotal(filtered.length);
-        return;
-      }
-
-      const params = { page, size: pageSize };
-      if (statusFilter !== '') params.status = Number(statusFilter);
+      const params = buildListParams({
+        page,
+        pageSize,
+        groupTitle: appliedGroupTitle,
+        health: appliedHealth,
+        cooperationStatus: appliedCooperationStatus,
+        memberSizeFilter: appliedMemberSize,
+      });
 
       const res = await listAdminTgGroups(params);
       if (!isAdminApiSuccess(res)) {
@@ -132,11 +213,32 @@ export default function AdminGroupsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, statusFilter, memberSizeFilter]);
+  }, [
+    page,
+    pageSize,
+    appliedGroupTitle,
+    appliedHealth,
+    appliedCooperationStatus,
+    appliedMemberSize,
+  ]);
 
   useEffect(() => {
     fetchGroups();
   }, [fetchGroups]);
+
+  const handleSearch = () => {
+    setAppliedGroupTitle(groupTitleInput.trim());
+    setAppliedHealth(healthFilter);
+    setAppliedCooperationStatus(cooperationStatusFilter);
+    setAppliedMemberSize(memberSizeFilter);
+    setPage(1);
+  };
+
+  const handleClearGroupTitle = () => {
+    setGroupTitleInput('');
+    setAppliedGroupTitle('');
+    setPage(1);
+  };
 
   const columns = [
     {
@@ -208,12 +310,12 @@ export default function AdminGroupsPage() {
       render: (v) => (v == null ? '-' : Number(v).toLocaleString('zh-CN')),
     },
     {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
+      title: '健康度',
+      dataIndex: 'health',
+      key: 'health',
       width: 90,
       align: 'center',
-      render: renderStatus,
+      render: renderHealth,
     },
     {
       title: '最近活跃',
@@ -229,33 +331,62 @@ export default function AdminGroupsPage() {
       width: 170,
       render: formatTime,
     },
+    {
+      title: '合作状态',
+      dataIndex: 'cooperationStatus',
+      key: 'cooperationStatus',
+      width: 120,
+      align: 'center',
+      render: (value, record) => (
+        <CooperationStatusCell
+          value={value}
+          record={record}
+          updating={updatingCooperationGroupId === String(record.groupId)}
+          onChange={handleCooperationStatusChange}
+        />
+      ),
+    },
   ];
 
   return (
     <div className="pc-admin-page">
       <div className="pc-admin-toolbar">
+        <Input
+          placeholder="搜索群名称"
+          value={groupTitleInput}
+          onChange={(e) => setGroupTitleInput(e.target.value)}
+          onPressEnter={handleSearch}
+          onClear={handleClearGroupTitle}
+          allowClear
+          style={{ width: 200 }}
+        />
         <Select
-          placeholder="状态筛选"
-          value={statusFilter === '' ? undefined : Number(statusFilter)}
-          onChange={(v) => {
-            setStatusFilter(v == null ? '' : String(v));
-            setPage(1);
-          }}
+          placeholder="健康度"
+          value={healthFilter || undefined}
+          onChange={(v) => setHealthFilter(v || '')}
+          allowClear
+          style={{ width: 120 }}
+          options={HEALTH_OPTIONS}
+        />
+        <Select
+          placeholder="合作状态"
+          value={cooperationStatusFilter || undefined}
+          onChange={(v) => setCooperationStatusFilter(v || '')}
+          allowClear
+          style={{ width: 130 }}
+          options={COOPERATION_STATUS_OPTIONS}
+        />
+        <Select
+          placeholder="群规模"
+          value={memberSizeFilter || undefined}
+          onChange={(v) => setMemberSizeFilter(v || '')}
           allowClear
           style={{ width: 140 }}
-          options={STATUS_OPTIONS}
-        />
-        <Select
-          placeholder="群规模筛选"
-          value={memberSizeFilter || undefined}
-          onChange={(v) => {
-            setMemberSizeFilter(v || '');
-            setPage(1);
-          }}
-          allowClear
-          style={{ width: 160 }}
           options={MEMBER_SIZE_OPTIONS}
         />
+        <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
+          搜索
+        </Button>
         <Button icon={<ReloadOutlined />} onClick={fetchGroups} loading={loading}>
           刷新
         </Button>
@@ -267,8 +398,8 @@ export default function AdminGroupsPage() {
           columns={columns}
           dataSource={list}
           loading={loading}
-          scroll={{ x: 960 }}
-          locale={{ emptyText: '暂无群组数据' }}
+          scroll={{ x: 1080 }}
+          locale={{ emptyText: hasActiveFilters ? '未找到匹配的群组' : '暂无群组数据' }}
           pagination={{
             current: page,
             pageSize,

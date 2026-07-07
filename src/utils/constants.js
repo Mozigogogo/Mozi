@@ -411,6 +411,7 @@ export const Interface = {
   ADMIN_USER_COMMISSION_LEVEL: '/admin/users/commission-level',
   ADMIN_COMMISSION_WITHDRAWALS: '/admin/commission/withdrawals',
   ADMIN_TG_GROUPS: '/admin/tg/groups',
+  ADMIN_TG_GROUP_COOPERATION_STATUS: '/admin/tg/groups/cooperation-status',
   ADMIN_TG_GROUP_COMMAND_USAGES: '/admin/tg/groups/command/usages',
 };
 
