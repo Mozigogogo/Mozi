@@ -235,18 +235,18 @@ export default function AdminUsersPage() {
         className="pc-admin-alert"
         type="info"
         showIcon
-        message="查询正常状态用户，支持按昵称模糊搜索、按 TGID / 用户 ID 精确搜索，并为用户分配分佣等级。"
+        message="查询正常状态用户，支持按用户 ID / TGID 精确搜索、按昵称模糊搜索，并为用户分配分佣等级。"
       />
 
       <div className="pc-admin-toolbar">
         <Input
-          placeholder="搜索昵称"
-          value={nickNameInput}
-          onChange={(e) => setNickNameInput(e.target.value)}
+          placeholder="搜索用户 ID"
+          value={userIdInput}
+          onChange={(e) => setUserIdInput(e.target.value)}
           onPressEnter={handleSearch}
-          onClear={handleClearNickName}
+          onClear={handleClearUserId}
           allowClear
-          style={{ width: 220 }}
+          style={{ width: 280 }}
         />
         <Input
           placeholder="搜索 TGID"
@@ -258,13 +258,13 @@ export default function AdminUsersPage() {
           style={{ width: 220 }}
         />
         <Input
-          placeholder="搜索用户 ID"
-          value={userIdInput}
-          onChange={(e) => setUserIdInput(e.target.value)}
+          placeholder="搜索昵称"
+          value={nickNameInput}
+          onChange={(e) => setNickNameInput(e.target.value)}
           onPressEnter={handleSearch}
-          onClear={handleClearUserId}
+          onClear={handleClearNickName}
           allowClear
-          style={{ width: 280 }}
+          style={{ width: 220 }}
         />
         <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
           搜索
