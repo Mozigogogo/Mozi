@@ -28,8 +28,10 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const [searchInput, setSearchInput] = useState('');
+  const [nickNameInput, setNickNameInput] = useState('');
+  const [telegramIdInput, setTelegramIdInput] = useState('');
   const [appliedNickName, setAppliedNickName] = useState('');
+  const [appliedTelegramId, setAppliedTelegramId] = useState('');
   const [levelOptions, setLevelOptions] = useState([]);
   const [editOpen, setEditOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -62,6 +64,7 @@ export default function AdminUsersPage() {
     try {
       const params = { page, size: pageSize };
       if (appliedNickName) params.nickName = appliedNickName;
+      if (appliedTelegramId) params.telegramId = appliedTelegramId;
 
       const res = await listAdminUsers(params);
       if (!isAdminApiSuccess(res)) {
@@ -82,7 +85,7 @@ export default function AdminUsersPage() {
     } finally {
       setLoading(false);
     }
-  }, [appliedNickName, page, pageSize]);
+  }, [appliedNickName, appliedTelegramId, page, pageSize]);
 
   useEffect(() => {
     fetchLevels();
@@ -93,13 +96,20 @@ export default function AdminUsersPage() {
   }, [fetchUsers]);
 
   const handleSearch = () => {
-    setAppliedNickName(searchInput.trim());
+    setAppliedNickName(nickNameInput.trim());
+    setAppliedTelegramId(telegramIdInput.trim());
     setPage(1);
   };
 
-  const handleClearSearch = () => {
-    setSearchInput('');
+  const handleClearNickName = () => {
+    setNickNameInput('');
     setAppliedNickName('');
+    setPage(1);
+  };
+
+  const handleClearTelegramId = () => {
+    setTelegramIdInput('');
+    setAppliedTelegramId('');
     setPage(1);
   };
 
@@ -158,6 +168,14 @@ export default function AdminUsersPage() {
       render: (v) => v || '-',
     },
     {
+      title: 'TGID',
+      dataIndex: 'telegramId',
+      key: 'telegramId',
+      width: 140,
+      ellipsis: true,
+      render: (v) => v || '-',
+    },
+    {
       title: '昵称',
       dataIndex: 'nickName',
       key: 'nickName',
@@ -207,18 +225,27 @@ export default function AdminUsersPage() {
         className="pc-admin-alert"
         type="info"
         showIcon
-        message="查询正常状态用户，支持按昵称模糊搜索，并为用户分配分佣等级。"
+        message="查询正常状态用户，支持按昵称模糊搜索、按 TGID 精确搜索，并为用户分配分佣等级。"
       />
 
       <div className="pc-admin-toolbar">
         <Input
           placeholder="搜索昵称"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
+          value={nickNameInput}
+          onChange={(e) => setNickNameInput(e.target.value)}
           onPressEnter={handleSearch}
-          onClear={handleClearSearch}
+          onClear={handleClearNickName}
           allowClear
-          style={{ width: 260 }}
+          style={{ width: 220 }}
+        />
+        <Input
+          placeholder="搜索 TGID"
+          value={telegramIdInput}
+          onChange={(e) => setTelegramIdInput(e.target.value)}
+          onPressEnter={handleSearch}
+          onClear={handleClearTelegramId}
+          allowClear
+          style={{ width: 220 }}
         />
         <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
           搜索
@@ -235,7 +262,7 @@ export default function AdminUsersPage() {
           dataSource={list}
           loading={loading}
           locale={{
-            emptyText: appliedNickName ? '未找到匹配的用户' : '暂无用户数据',
+            emptyText: appliedNickName || appliedTelegramId ? '未找到匹配的用户' : '暂无用户数据',
           }}
           pagination={{
             current: page,
