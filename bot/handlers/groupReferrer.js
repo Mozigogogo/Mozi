@@ -12,6 +12,7 @@ const {
   isTelegramUserGroupCreator,
 } = require('../lib/groupOwnerReferrer');
 const { postGroupReferrerPending } = require('../lib/apis');
+const { rememberScheduleGroup } = require('../lib/predictScheduleStore');
 
 function registerGroupReferrer(bot, config, { getTexts } = {}) {
   const { API_BASE_URL, APP_URL, BOT_USERNAME, MOZI_DETAIL_AUTH } = config;
@@ -45,6 +46,13 @@ function registerGroupReferrer(bot, config, { getTexts } = {}) {
       }
 
       await syncGroupOwnerReferrerBinding(ctx.telegram, config, join.chatId).catch(() => {});
+
+      rememberScheduleGroup({
+        groupId: join.chatId,
+        groupTitle: join.chatTitle,
+        ownerTelegramId: creator.telegramId,
+        botActive: true,
+      });
     }
 
     const languageCode = mcm.from?.language_code || 'en';

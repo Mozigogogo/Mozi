@@ -247,6 +247,22 @@ const i18n = {
     predictListEndTimeLine: (t) => `⏳ 结束时间：${t}`,
     predictListResultUp: '\n✅ 结果：涨',
     predictListResultDown: '\n✅ 结果：跌',
+    predictSchedulePrivateOnly:
+      '请在<strong>私聊</strong>本机器人使用 <code>/predict_schedule</code>，用于管理群内每日定时 AI 信号卡推送。',
+    predictScheduleIntro: '⏰ <b>定时推送设置</b>\n\n你是以下群的群主，可开启/关闭每日自动推送 AI 信号卡：',
+    predictScheduleEmpty:
+      '暂无可用群。\n\n请先将 Bot 拉入你的群（需为群主），入群后稍等片刻再刷新本页。',
+    predictScheduleTimeLine: (time) => `默认推送时间：每日 <b>${time}</b>（北京时间）`,
+    predictScheduleGroupLine: (title, enabled, time) => {
+      const status = enabled ? '✅ 已开启' : '⬜ 已关闭';
+      return `• <b>${title}</b> — ${status} · ${time}`;
+    },
+    predictScheduleBtnOn: (title) => `✅ ${title}（已开启）`,
+    predictScheduleBtnOff: (title) => `⬜ ${title}（已关闭）`,
+    predictScheduleRefreshBtn: '🔄 刷新',
+    predictScheduleNotOwnerToast: '仅群主可修改该群的定时推送',
+    predictScheduleEnabledToast: '已开启定时推送',
+    predictScheduleDisabledToast: '已关闭定时推送',
     helpBody: `🤖   Mozi AI 行情助手 · 指令说明
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -265,6 +281,7 @@ const i18n = {
 📈 涨跌预测（免费）
 /predict        发起 24 小时涨跌竞猜（前 6 小时可下注；群内点按钮私聊 Bot，确认后发布到该群）
 /predict list   查看本群竞猜列表
+/predict_schedule  群主私聊 Bot：开启/关闭群内每日定时 AI 信号卡推送
 
 🔔 告警设置（免费）
 /alert          跳转 App 配置价格告警
@@ -610,6 +627,23 @@ const i18n = {
     predictListEndTimeLine: (t) => `⏳ End time: ${t}`,
     predictListResultUp: '\n✅ Result: Up',
     predictListResultDown: '\n✅ Result: Down',
+    predictSchedulePrivateOnly:
+      'Use <code>/predict_schedule</code> in a <strong>private chat</strong> with this bot to manage daily AI signal card auto-push for your groups.',
+    predictScheduleIntro:
+      '⏰ <b>Scheduled push</b>\n\nYou own the groups below. Toggle daily AI signal card auto-push:',
+    predictScheduleEmpty:
+      'No groups yet.\n\nAdd this bot to your group (you must be the owner), wait a moment, then tap Refresh.',
+    predictScheduleTimeLine: (time) => `Default push time: daily <b>${time}</b> (Beijing time)`,
+    predictScheduleGroupLine: (title, enabled, time) => {
+      const status = enabled ? '✅ On' : '⬜ Off';
+      return `• <b>${title}</b> — ${status} · ${time}`;
+    },
+    predictScheduleBtnOn: (title) => `✅ ${title} (on)`,
+    predictScheduleBtnOff: (title) => `⬜ ${title} (off)`,
+    predictScheduleRefreshBtn: '🔄 Refresh',
+    predictScheduleNotOwnerToast: 'Only the group owner can change scheduled push',
+    predictScheduleEnabledToast: 'Scheduled push enabled',
+    predictScheduleDisabledToast: 'Scheduled push disabled',
     helpBody: `🤖 Mozi AI · Commands
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -628,6 +662,7 @@ const i18n = {
 📈 Up/down poll (free)
 /predict         Start a 24-hour poll (6 hours to bet; tap button to DM bot; publishes back to source group)
 /predict list    List polls in this group
+/predict_schedule  Group owners (DM bot): enable/disable daily AI signal card auto-push
 
 🔔 Alerts (free)
 /alert           Open app to set price alerts

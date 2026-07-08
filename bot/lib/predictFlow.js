@@ -341,9 +341,18 @@ function formatAiDirectionLine(direction, languageCode) {
   return isZh ? '📉 方向：看空 (SHORT)' : '📉 Direction: Bearish (SHORT)';
 }
 
+function formatPercentDisplay(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  const clamped = Math.max(0, Math.min(100, n));
+  if (Math.abs(clamped - Math.round(clamped)) < 1e-9) return String(Math.round(clamped));
+  return clamped.toFixed(1);
+}
+
 function formatAiConfidenceLine(confidence, languageCode) {
   if (confidence == null || !Number.isFinite(Number(confidence))) return null;
-  const pct = Math.max(0, Math.min(100, Math.round(Number(confidence))));
+  const pct = formatPercentDisplay(confidence);
+  if (pct == null) return null;
   const isZh = String(languageCode || '').toLowerCase().startsWith('zh');
   return isZh ? `🎯 置信度：${pct}%` : `🎯 Confidence: ${pct}%`;
 }
@@ -366,15 +375,18 @@ function formatAiDirectionConfidenceLine(direction, confidence, languageCode) {
     parts.push(isZh ? `${dirIcon} 方向：${dirLabel}` : `${dirIcon} Direction: ${dirLabel}`);
   }
   if (hasConfidence) {
-    const pct = Math.max(0, Math.min(100, Math.round(Number(confidence))));
-    parts.push(isZh ? `🎯 置信度：${pct}%` : `🎯 Confidence: ${pct}%`);
+    const pct = formatPercentDisplay(confidence);
+    if (pct != null) {
+      parts.push(isZh ? `🎯 置信度：${pct}%` : `🎯 Confidence: ${pct}%`);
+    }
   }
   return parts.join(' ');
 }
 
 function formatAiWinRateLine(winRate, winCount, lossCount, languageCode) {
   if (winRate == null || !Number.isFinite(Number(winRate))) return null;
-  const pct = Math.max(0, Math.min(100, Math.round(Number(winRate))));
+  const pct = formatPercentDisplay(winRate);
+  if (pct == null) return null;
   const isZh = String(languageCode || '').toLowerCase().startsWith('zh');
   const hasRecord =
     winCount != null &&

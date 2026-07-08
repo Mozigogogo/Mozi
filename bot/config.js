@@ -174,6 +174,16 @@ const COIN_DIRECTION_GUESS_DETAIL_PATH = (
   process.env.COIN_DIRECTION_GUESS_DETAIL_PATH || 'coinDirectionGuess/detail'
 ).trim().replace(/^\/+/, '');
 
+/** GET 群主定时推送配置（相对 API_BASE_URL），默认 coinDirectionGuess/schedule/my */
+const COIN_DIRECTION_GUESS_SCHEDULE_MY_PATH = (
+  process.env.COIN_DIRECTION_GUESS_SCHEDULE_MY_PATH || 'coinDirectionGuess/schedule/my'
+).trim().replace(/^\/+/, '');
+
+/** PUT 保存群主定时推送配置（相对 API_BASE_URL），默认 coinDirectionGuess/schedule/save */
+const COIN_DIRECTION_GUESS_SCHEDULE_SAVE_PATH = (
+  process.env.COIN_DIRECTION_GUESS_SCHEDULE_SAVE_PATH || 'coinDirectionGuess/schedule/save'
+).trim().replace(/^\/+/, '');
+
 /** 涨跌竞猜最低下注积分 */
 const COIN_DIRECTION_GUESS_MIN_BET_AMOUNT = Math.max(
   1,
@@ -243,6 +253,8 @@ module.exports = {
   COIN_DIRECTION_GUESS_BET_PATH,
   COIN_DIRECTION_GUESS_LIST_PATH,
   COIN_DIRECTION_GUESS_DETAIL_PATH,
+  COIN_DIRECTION_GUESS_SCHEDULE_MY_PATH,
+  COIN_DIRECTION_GUESS_SCHEDULE_SAVE_PATH,
   COIN_DIRECTION_GUESS_MIN_BET_AMOUNT,
   COIN_DIRECTION_GUESS_MAX_BET_AMOUNT,
   COIN_DIRECTION_GUESS_MAX_ACTIVE_PER_GROUP,

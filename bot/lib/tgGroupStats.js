@@ -11,7 +11,8 @@ const {
   parseBotLeaveFromMyChatMember,
   rememberChatPendingAdder,
 } = require('./groupReferrer');
-const { resolveGroupOwnerMoziUserIdForChat } = require('./groupOwnerResolve');
+const { resolveGroupOwnerMoziUserIdForChat, resolveGroupCreatorTelegramProfile } = require('./groupOwnerResolve');
+const { rememberScheduleGroup, markScheduleGroupBotLeft } = require('./predictScheduleStore');
 const { syncGroupOwnerReferrerBinding } = require('./groupOwnerReferrer');
 const { tgGroupStatsLog } = require('./tgGroupStatsLog');
 
@@ -250,6 +251,20 @@ async function syncGroupStatsForChatId(telegram, config, chatId, reason = 'unkno
       message: err?.message || String(err),
     });
   }
+
+  try {
+    const creator = await resolveGroupCreatorTelegramProfile(telegram, chatId);
+    if (creator?.telegramId) {
+      rememberScheduleGroup({
+        groupId: row.groupId,
+        groupTitle: row.groupTitle,
+        ownerTelegramId: creator.telegramId,
+        botActive: true,
+      });
+    }
+  } catch {
+    /* ignore */
+  }
 }
 
 /**
@@ -341,6 +356,8 @@ async function syncGroupStatsFromLeave(ctx, config) {
     httpStatus: res.status,
     ok: res.ok,
   });
+
+  markScheduleGroupBotLeft(leave.chatId);
 }
 
 /**

@@ -2362,6 +2362,7 @@ function buildGuessTimeFieldsPatch(item) {
 }
 
 /**
+ * 解析竞猜 AI 信号字段（标准字段名：aiDirection / aiConfidence / aiWinRate）
  * @param {object | null | undefined} data
  * @returns {{
  *   direction: 'UP' | 'DOWN' | null;
@@ -2375,7 +2376,8 @@ function parseGuessAiSignalFields(data) {
   if (!data || typeof data !== 'object') {
     return { direction: null, confidence: null, winRate: null, winCount: null, lossCount: null };
   }
-  const dirRaw = data.direction ?? data.aiDirection ?? data.ai_direction ?? data.aiChoice ?? data.ai_choice ?? null;
+  const dirRaw =
+    data.aiDirection ?? data.ai_direction ?? data.direction ?? data.aiChoice ?? data.ai_choice ?? null;
   let direction = null;
   const dirNum = Number(dirRaw);
   if (Number.isFinite(dirNum) && String(dirRaw ?? '').trim() !== '') {
@@ -2391,20 +2393,18 @@ function parseGuessAiSignalFields(data) {
     else if (['DOWN', 'SHORT', '2', 'BEAR', 'BEARISH'].includes(d)) direction = 'DOWN';
   }
 
-  const confRaw = Number(data.confidence ?? data.aiConfidence ?? data.ai_confidence ?? data.aiConf ?? data.ai_conf);
+  const confRaw = Number(
+    data.aiConfidence ?? data.ai_confidence ?? data.confidence ?? data.aiConf ?? data.ai_conf,
+  );
   let confidence = Number.isFinite(confRaw) ? confRaw : null;
   if (confidence != null && confidence > 0 && confidence <= 1) {
-    confidence = Math.round(confidence * 100);
-  } else if (confidence != null) {
-    confidence = Math.round(confidence);
+    confidence = confidence * 100;
   }
 
-  const winRateRaw = Number(data.win_rate);
+  const winRateRaw = Number(data.aiWinRate ?? data.ai_win_rate ?? data.win_rate);
   let winRate = Number.isFinite(winRateRaw) ? winRateRaw : null;
   if (winRate != null && winRate > 0 && winRate <= 1) {
-    winRate = Math.round(winRate * 100);
-  } else if (winRate != null) {
-    winRate = Math.round(winRate);
+    winRate = winRate * 100;
   }
 
   const winCountRaw = Number(
@@ -2997,6 +2997,223 @@ async function getCoinDirectionGuessDetail({
   }
 }
 
+function isCoinDirectionGuessScheduleOk(json) {
+  if (!json || typeof json !== 'object') return false;
+  if (json.success === false) return false;
+  const code = json.code;
+  return code === undefined || code === 0 || code === 200;
+}
+
+/**
+ * @param {object | null} json
+ * @returns {object[]}
+ */
+function parseCoinDirectionGuessScheduleList(json) {
+  if (!json || typeof json !== 'object') return [];
+  const data = json.data;
+  if (Array.isArray(data)) {
+    return data.filter((item) => item && typeof item === 'object');
+  }
+  if (data && typeof data === 'object') {
+    if (Array.isArray(data.groups)) {
+      return data.groups.filter((item) => item && typeof item === 'object');
+    }
+    if (Array.isArray(data.list)) {
+      return data.list.filter((item) => item && typeof item === 'object');
+    }
+  }
+  return [];
+}
+
+/**
+ * @param {object | null | undefined} raw
+ * @returns {{
+ *   groupId: number;
+ *   groupTitle: string;
+ *   enabled: boolean;
+ *   publishTime: string | null;
+ * } | null}
+ */
+function parseCoinDirectionGuessScheduleItem(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const groupIdRaw = raw.groupId ?? raw.chatId ?? raw.telegramGroupId ?? raw.group_id;
+  const groupId = Number(groupIdRaw);
+  if (!Number.isFinite(groupId)) return null;
+  const enabledRaw = raw.enabled ?? raw.autoPublish ?? raw.scheduleEnabled ?? raw.auto_publish;
+  return {
+    groupId,
+    groupTitle: String(raw.groupTitle ?? raw.title ?? raw.chatTitle ?? raw.group_title ?? '').trim(),
+    enabled: enabledRaw == null ? false : Boolean(enabledRaw),
+    publishTime:
+      raw.publishTime != null
+        ? String(raw.publishTime).trim()
+        : raw.publish_time != null
+          ? String(raw.publish_time).trim()
+          : raw.time != null
+            ? String(raw.time).trim()
+            : null,
+  };
+}
+
+/**
+ * GET /coinDirectionGuess/schedule/my?telegramId=
+ * @param {{
+ *   apiBaseUrl: string;
+ *   auth?: string;
+ *   appUrl?: string;
+ *   telegramId: string | number;
+ *   path?: string;
+ *   timeoutMs?: number;
+ * }} opts
+ */
+async function getCoinDirectionGuessScheduleMy({
+  apiBaseUrl,
+  auth = '',
+  appUrl = '',
+  telegramId,
+  path = 'coinDirectionGuess/schedule/my',
+  timeoutMs = 15000,
+}) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const rel = String(path || 'coinDirectionGuess/schedule/my').trim().replace(/^\/+/, '');
+  const q = new URLSearchParams({ telegramId: String(telegramId) });
+  const url = `${base}/${rel}?${q.toString()}`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    'user-agent': DEFAULT_UA,
+  };
+  const rawAuth = String(auth || '').trim().replace(/^Bearer\s+/i, '');
+  if (rawAuth) {
+    headers.authentication = rawAuth;
+  }
+  if (app) {
+    headers.referer = `${app}/`;
+  }
+  guessApiLog('GET /coinDirectionGuess/schedule/my ← 请求', {
+    url,
+    params: { telegramId: String(telegramId) },
+  });
+  try {
+    const res = await fetch(url, { method: 'GET', headers, signal: ctrl.signal });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const bizOk = isCoinDirectionGuessScheduleOk(json);
+    const items = parseCoinDirectionGuessScheduleList(json)
+      .map(parseCoinDirectionGuessScheduleItem)
+      .filter(Boolean);
+    const out = {
+      ok: res.status === 200 && bizOk,
+      status: res.status,
+      json,
+      text,
+      items,
+      errorMessage: parseApiErrorMessage(json),
+    };
+    guessApiLog('GET /coinDirectionGuess/schedule/my → 响应', {
+      httpStatus: res.status,
+      ok: out.ok,
+      data: json,
+      rawText: text,
+    });
+    return out;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+/**
+ * PUT /coinDirectionGuess/schedule/save
+ * @param {{
+ *   apiBaseUrl: string;
+ *   auth?: string;
+ *   appUrl?: string;
+ *   groupId: number | string;
+ *   enabled: boolean;
+ *   publishTime?: string;
+ *   path?: string;
+ *   timeoutMs?: number;
+ * }} opts
+ */
+async function putCoinDirectionGuessScheduleSave({
+  apiBaseUrl,
+  auth = '',
+  appUrl = '',
+  groupId,
+  enabled,
+  publishTime,
+  path = 'coinDirectionGuess/schedule/save',
+  timeoutMs = 15000,
+}) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const rel = String(path || 'coinDirectionGuess/schedule/save').trim().replace(/^\/+/, '');
+  const url = `${base}/${rel}`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    'content-type': 'application/json',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    'user-agent': DEFAULT_UA,
+  };
+  const rawAuth = String(auth || '').trim().replace(/^Bearer\s+/i, '');
+  if (rawAuth) {
+    headers.authentication = rawAuth;
+  }
+  if (app) {
+    headers.referer = `${app}/`;
+  }
+  const body = {
+    groupId: Number(groupId),
+    enabled: Boolean(enabled),
+    publishTime: String(publishTime || '09:00').trim() || '09:00',
+  };
+  guessApiLog('PUT /coinDirectionGuess/schedule/save ← 请求', { url, params: body });
+  try {
+    const res = await fetch(url, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(body),
+      signal: ctrl.signal,
+    });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const bizOk = isCoinDirectionGuessScheduleOk(json);
+    const out = {
+      ok: res.status === 200 && bizOk,
+      status: res.status,
+      json,
+      text,
+      errorMessage: parseApiErrorMessage(json),
+    };
+    guessApiLog('PUT /coinDirectionGuess/schedule/save → 响应', {
+      httpStatus: res.status,
+      ok: out.ok,
+      data: json,
+      rawText: text,
+    });
+    return out;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 /**
  * @param {object | null} json
  * @returns {{ up: number; down: number } | null}
@@ -3261,6 +3478,9 @@ module.exports = {
   postCoinDirectionGuessBet,
   getCoinDirectionGuessList,
   getCoinDirectionGuessDetail,
+  getCoinDirectionGuessScheduleMy,
+  putCoinDirectionGuessScheduleSave,
+  parseCoinDirectionGuessScheduleItem,
   parseCoinDirectionGuessNo,
   parseCoinDirectionGuessPublishData,
   parseGuessAiSignalFields,
