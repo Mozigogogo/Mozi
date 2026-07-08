@@ -104,35 +104,98 @@ const i18n = {
     predictNetworkError: '获取价格失败（网络异常），请稍后再试。',
     predictConfirmBody: (sym, duration, price) =>
       `${sym} 接下来 ${duration}会涨还是跌？\n当前价：${price}（创建时锁定）`,
-    predictGroupPublishBody: (sym, duration, price, lockedAt, stats, betDeadline, publisher) =>
-      `🎯 竞猜 · ${sym}\n接下来 ${duration}会涨还是跌？\n起始价：${price}（发布时间 ${lockedAt}）\n📊 看涨 ${stats.upPercent}%（${stats.upCount}人·${stats.upPoints}积分）\n📊 看跌 ${stats.downPercent}%（${stats.downCount}人·${stats.downPoints}积分）\n⏳ 下注截止：${betDeadline}\n由 ${publisher} 发起`,
-    predictGroupLockedBody: (sym, duration, price, oddsLine, prizePool, settlementWait, publisher) =>
-      `🎯 竞猜 · ${sym}（下注已截止）\n接下来 ${duration}会涨还是跌？\n起始价：${price}\n${oddsLine}\n💰 奖池：${prizePool} 积分\n⏳ 等待结算：${settlementWait}\n由 ${publisher} 发起`,
-    predictLockedOddsLine: (upPercent, upCount, downPercent, downCount) =>
-      `📊 最终赔率：看涨 ${upPercent}%（${upCount}人）· 看跌 ${downPercent}%（${downCount}人）`,
-    predictGroupSettledBody: (sym, priceLine, winnerLine, prizePool, topWinnersSection) =>
-      `🎉 竞猜结果 · ${sym}\n${priceLine}\n${winnerLine}\n💰 奖池 ${prizePool} 积分${topWinnersSection}`,
+    predictGroupPublishBody: (
+      sym,
+      directionLine,
+      confidenceLine,
+      winRateLine,
+      price,
+      lockedAt,
+      duration,
+      stats,
+      betDeadline,
+    ) => {
+      const lines = [
+        `🤖 AI信号卡 · ${sym}`,
+        directionLine,
+        confidenceLine,
+        winRateLine,
+        `起始价：${price} (${lockedAt} 锁定)`,
+        `${duration}后验证AI判断是否正确`,
+        `📊 跟注AI ${stats.upPercent}%（${stats.upCount}人·${stats.upPoints}积分）`,
+        `📊 反向下注 ${stats.downPercent}%（${stats.downCount}人·${stats.downPoints}积分）`,
+        `⌛ 下注截止：${betDeadline}`,
+      ].filter(Boolean);
+      return lines.join('\n');
+    },
+    predictGroupLockedBody: (sym, directionConfidenceLine, price, oddsLine, prizePool, settlementWait) => {
+      const lines = [
+        `🤖 AI信号卡 · ${sym} (下注已截止)`,
+        directionConfidenceLine,
+        `起始价：${price}`,
+        oddsLine,
+        `💰 奖池：${prizePool} 积分`,
+        `⌛ 等待结算：${settlementWait}`,
+      ].filter(Boolean);
+      return lines.join('\n');
+    },
+    predictLockedOddsLine: (upPercent, downPercent) =>
+      `📊 最终赔率：跟注AI ${upPercent}% 反向下注 ${downPercent}%`,
+    predictGroupSettledBody: (
+      sym,
+      priceLine,
+      aiJudgmentLine,
+      winnerLine,
+      prizePoolLine,
+      topWinnersSection,
+      aiStatsLine,
+      historyLinkLine,
+    ) => {
+      const lines = [
+        `🎉 信号验证结果 · ${sym}`,
+        priceLine,
+        aiJudgmentLine,
+        winnerLine,
+        prizePoolLine,
+        topWinnersSection,
+        aiStatsLine,
+        historyLinkLine,
+      ].filter(Boolean);
+      return lines.join('\n');
+    },
     predictGroupVoidBody: (sym, reasonLine) => `⚠️ 竞猜流局 · ${sym}\n${reasonLine}`,
     predictGroupVoidReasonTie: '本场竞猜平局，本场竞猜已取消',
     predictGroupVoidReasonAbnormal: '结算时价格数据获取异常，本场竞猜已取消',
     predictNewGuessBtn: '发起新竞猜',
     predictSettledPriceLine: (startPrice, endPrice, changePct) =>
       `起始价 ${startPrice} → 结算价 ${endPrice} (${changePct})`,
-    predictSettledWinnerUp: '📈 看涨方获胜！',
-    predictSettledWinnerDown: '📉 看跌方获胜！',
+    predictSettledAiJudgmentLine: (direction, correct) =>
+      correct ? `🤖 AI判断：${direction} ✅ 判断正确！` : `🤖 AI判断：${direction} ❌ 判断错误！`,
+    predictSettledWinnerFollowAi: '📈 跟注AI方获胜',
+    predictSettledWinnerOpposite: '📉 反向下注方获胜',
+    predictSettledWinnerUp: '📈 跟注AI方获胜',
+    predictSettledWinnerDown: '📉 反向下注方获胜',
     predictSettledWinnerTie: '🤝 平局',
     predictSettledWinnerUnknown: (raw) => (raw ? `✅ 已结算（${raw}）` : '✅ 已结算'),
-    predictSettledTopWinnersSection: (lines) => `\n🏆 中奖战绩 Top3:\n${lines}`,
-    predictSettledTopWinnerLine: (nick, betAmount, payout, profitPct) =>
-      `${nick} 下注${betAmount} → 赢得 ${payout} (${profitPct}%)`,
+    predictSettledPrizePoolLine: (total, feeRate, distributed) =>
+      `💰 奖池 ${total} 积分 (扣${feeRate}%手续费后分配 ${distributed})`,
+    predictSettledTopWinnersSection: (lines) => `🏆 中奖战绩 Top3:\n${lines}`,
+    predictSettledTopWinnerLine: (nick, betLabel, betAmount, payout, profitPct) =>
+      `${nick} ${betLabel}${betAmount} → 赢得 ${payout} (${profitPct}%)`,
+    predictSettledAiLatestStatsLine: (winRate, wins, losses) =>
+      `📊 AI最新战绩：${winRate}% (${wins}胜${losses}负)`,
+    predictSettledAiHistoryLink: (url) => `<a href="${url}">查看AI完整历史战绩 →</a>`,
+    predictSettledBetFollowAi: '跟注',
+    predictSettledBetOpposite: '反向下注',
+    predictSettledBetGeneric: '下注',
     predictSettledResultUp: '✅ 结果：涨',
     predictSettledResultDown: '✅ 结果：跌',
-    predictBetUp50Btn: '看涨 +50',
-    predictBetUp100Btn: '看涨 +100',
-    predictBetUpCustomBtn: '自定义',
-    predictBetDown50Btn: '看跌 +50',
-    predictBetDown100Btn: '看跌 +100',
-    predictBetDownCustomBtn: '自定义',
+    predictBetUp50Btn: '✅ 跟注AI +50',
+    predictBetUp100Btn: '✅ 跟注AI +100',
+    predictBetUpCustomBtn: '✅ 跟注 自定义',
+    predictBetDown50Btn: '❌ 反向下注 +50',
+    predictBetDown100Btn: '❌ 反向下注 +100',
+    predictBetDownCustomBtn: '❌ 反向下注 自定义',
     predictVoteSuccess: (dir, pts) => `已下注：${dir} ${pts} 积分`,
     predictVoteFailed: '下注失败，请稍后再试',
     predictBetNumpadPlaceholder: '点击数字输入积分',
@@ -179,8 +242,8 @@ const i18n = {
     predictListStatusSettled: '已结算',
     predictListItemLine: (sym, status, bullishPool, bullishCount, bearishPool, bearishCount, timeLine, resultLine) =>
       `<b>${sym}</b> · ${status}\n📈 ${bullishPool} 积分（${bullishCount}人） · 📉 ${bearishPool} 积分（${bearishCount}人）\n${timeLine}${resultLine}`,
-    predictListBetDeadlineLine: (t) => `⏳ 下注截止：${t}`,
-    predictListSettlementWaitLine: (t) => `⏳ 等待结算：${t}`,
+    predictListBetDeadlineLine: (t) => `⌛ 下注截止：${t}`,
+    predictListSettlementWaitLine: (t) => `⌛ 等待结算：${t}`,
     predictListEndTimeLine: (t) => `⏳ 结束时间：${t}`,
     predictListResultUp: '\n✅ 结果：涨',
     predictListResultDown: '\n✅ 结果：跌',
@@ -399,14 +462,65 @@ const i18n = {
     predictNetworkError: 'Failed to fetch price (network). Please try again later.',
     predictConfirmBody: (sym, duration, price) =>
       `Will ${sym} go up or down in the next ${duration}?\nCurrent price: ${price} (locked at creation)`,
-    predictGroupPublishBody: (sym, duration, price, lockedAt, stats, betDeadline, publisher) =>
-      `🎯 Guess · ${sym}\nUp or down in the next ${duration}?\nStart price: ${price} (published at ${lockedAt})\n📊 Bullish ${stats.upPercent}% (${stats.upCount} · ${stats.upPoints} pts)\n📊 Bearish ${stats.downPercent}% (${stats.downCount} · ${stats.downPoints} pts)\n⏳ Betting closes: ${betDeadline}\nStarted by ${publisher}`,
-    predictGroupLockedBody: (sym, duration, price, oddsLine, prizePool, settlementWait, publisher) =>
-      `🎯 Guess · ${sym} (betting closed)\nUp or down in the next ${duration}?\nStart price: ${price}\n${oddsLine}\n💰 Prize pool: ${prizePool} pts\n⏳ Settlement in: ${settlementWait}\nStarted by ${publisher}`,
-    predictLockedOddsLine: (upPercent, upCount, downPercent, downCount) =>
-      `📊 Final odds: Bullish ${upPercent}% (${upCount}) · Bearish ${downPercent}% (${downCount})`,
-    predictGroupSettledBody: (sym, priceLine, winnerLine, prizePool, topWinnersSection) =>
-      `🎉 Poll result · ${sym}\n${priceLine}\n${winnerLine}\n💰 Prize pool: ${prizePool} pts${topWinnersSection}`,
+    predictGroupPublishBody: (
+      sym,
+      directionLine,
+      confidenceLine,
+      winRateLine,
+      price,
+      lockedAt,
+      duration,
+      stats,
+      betDeadline,
+    ) => {
+      const lines = [
+        `🤖 AI Signal · ${sym}`,
+        directionLine,
+        confidenceLine,
+        winRateLine,
+        `Start price: ${price} (locked at ${lockedAt})`,
+        `AI call verified after ${duration}`,
+        `📊 Follow AI ${stats.upPercent}% (${stats.upCount} · ${stats.upPoints} pts)`,
+        `📊 Bet opposite ${stats.downPercent}% (${stats.downCount} · ${stats.downPoints} pts)`,
+        `⌛ Betting closes: ${betDeadline}`,
+      ].filter(Boolean);
+      return lines.join('\n');
+    },
+    predictGroupLockedBody: (sym, directionConfidenceLine, price, oddsLine, prizePool, settlementWait) => {
+      const lines = [
+        `🤖 AI Signal · ${sym} (betting closed)`,
+        directionConfidenceLine,
+        `Start price: ${price}`,
+        oddsLine,
+        `💰 Prize pool: ${prizePool} pts`,
+        `⌛ Settlement in: ${settlementWait}`,
+      ].filter(Boolean);
+      return lines.join('\n');
+    },
+    predictLockedOddsLine: (upPercent, downPercent) =>
+      `📊 Final odds: Follow AI ${upPercent}% · Bet opposite ${downPercent}%`,
+    predictGroupSettledBody: (
+      sym,
+      priceLine,
+      aiJudgmentLine,
+      winnerLine,
+      prizePoolLine,
+      topWinnersSection,
+      aiStatsLine,
+      historyLinkLine,
+    ) => {
+      const lines = [
+        `🎉 Signal result · ${sym}`,
+        priceLine,
+        aiJudgmentLine,
+        winnerLine,
+        prizePoolLine,
+        topWinnersSection,
+        aiStatsLine,
+        historyLinkLine,
+      ].filter(Boolean);
+      return lines.join('\n');
+    },
     predictGroupVoidBody: (sym, reasonLine) => `⚠️ Void poll · ${sym}\n${reasonLine}`,
     predictGroupVoidReasonTie: 'This poll ended in a tie and has been cancelled.',
     predictGroupVoidReasonAbnormal:
@@ -414,21 +528,35 @@ const i18n = {
     predictNewGuessBtn: 'Start new poll',
     predictSettledPriceLine: (startPrice, endPrice, changePct) =>
       `Start ${startPrice} → Settle ${endPrice} (${changePct})`,
-    predictSettledWinnerUp: '📈 Bullish side wins!',
-    predictSettledWinnerDown: '📉 Bearish side wins!',
+    predictSettledAiJudgmentLine: (direction, correct) =>
+      correct
+        ? `🤖 AI call: ${direction} ✅ Correct!`
+        : `🤖 AI call: ${direction} ❌ Wrong!`,
+    predictSettledWinnerFollowAi: '📈 Follow AI side wins',
+    predictSettledWinnerOpposite: '📉 Opposite bet side wins',
+    predictSettledWinnerUp: '📈 Follow AI side wins',
+    predictSettledWinnerDown: '📉 Opposite bet side wins',
     predictSettledWinnerTie: '🤝 Tie',
     predictSettledWinnerUnknown: (raw) => (raw ? `✅ Settled (${raw})` : '✅ Settled'),
-    predictSettledTopWinnersSection: (lines) => `\n🏆 Top 3 winners:\n${lines}`,
-    predictSettledTopWinnerLine: (nick, betAmount, payout, profitPct) =>
-      `${nick} bet ${betAmount} → won ${payout} (${profitPct}%)`,
+    predictSettledPrizePoolLine: (total, feeRate, distributed) =>
+      `💰 Prize pool ${total} pts (${feeRate}% fee deducted, ${distributed} distributed)`,
+    predictSettledTopWinnersSection: (lines) => `🏆 Top 3 winners:\n${lines}`,
+    predictSettledTopWinnerLine: (nick, betLabel, betAmount, payout, profitPct) =>
+      `${nick} ${betLabel} ${betAmount} → won ${payout} (${profitPct}%)`,
+    predictSettledAiLatestStatsLine: (winRate, wins, losses) =>
+      `📊 AI latest record: ${winRate}% (${wins}W ${losses}L)`,
+    predictSettledAiHistoryLink: (url) => `<a href="${url}">View full AI history →</a>`,
+    predictSettledBetFollowAi: 'followed',
+    predictSettledBetOpposite: 'opposite bet',
+    predictSettledBetGeneric: 'bet',
     predictSettledResultUp: '✅ Result: Up',
     predictSettledResultDown: '✅ Result: Down',
-    predictBetUp50Btn: 'Bull +50',
-    predictBetUp100Btn: 'Bull +100',
-    predictBetUpCustomBtn: 'Custom',
-    predictBetDown50Btn: 'Bear +50',
-    predictBetDown100Btn: 'Bear +100',
-    predictBetDownCustomBtn: 'Custom',
+    predictBetUp50Btn: '✅ Follow AI +50',
+    predictBetUp100Btn: '✅ Follow AI +100',
+    predictBetUpCustomBtn: '✅ Follow custom',
+    predictBetDown50Btn: '❌ Bet opposite +50',
+    predictBetDown100Btn: '❌ Bet opposite +100',
+    predictBetDownCustomBtn: '❌ Opposite custom',
     predictVoteSuccess: (dir, pts) => `Bet placed: ${dir} ${pts} pts`,
     predictVoteFailed: 'Bet failed. Please try again later.',
     predictBetNumpadPlaceholder: 'Tap digits to enter points',
@@ -477,8 +605,8 @@ const i18n = {
     predictListStatusSettled: 'Settled',
     predictListItemLine: (sym, status, bullishPool, bullishCount, bearishPool, bearishCount, timeLine, resultLine) =>
       `<b>${sym}</b> · ${status}\n📈 ${bullishPool} pts (${bullishCount}) · 📉 ${bearishPool} pts (${bearishCount})\n${timeLine}${resultLine}`,
-    predictListBetDeadlineLine: (t) => `⏳ Betting closes: ${t}`,
-    predictListSettlementWaitLine: (t) => `⏳ Settlement in: ${t}`,
+    predictListBetDeadlineLine: (t) => `⌛ Betting closes: ${t}`,
+    predictListSettlementWaitLine: (t) => `⌛ Settlement in: ${t}`,
     predictListEndTimeLine: (t) => `⏳ End time: ${t}`,
     predictListResultUp: '\n✅ Result: Up',
     predictListResultDown: '\n✅ Result: Down',

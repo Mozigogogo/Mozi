@@ -2362,6 +2362,74 @@ function buildGuessTimeFieldsPatch(item) {
 }
 
 /**
+ * @param {object | null | undefined} data
+ * @returns {{
+ *   direction: 'UP' | 'DOWN' | null;
+ *   confidence: number | null;
+ *   winRate: number | null;
+ *   winCount: number | null;
+ *   lossCount: number | null;
+ * }}
+ */
+function parseGuessAiSignalFields(data) {
+  if (!data || typeof data !== 'object') {
+    return { direction: null, confidence: null, winRate: null, winCount: null, lossCount: null };
+  }
+  const dirRaw = data.direction ?? data.aiDirection ?? data.ai_direction ?? data.aiChoice ?? data.ai_choice ?? null;
+  let direction = null;
+  const dirNum = Number(dirRaw);
+  if (Number.isFinite(dirNum) && String(dirRaw ?? '').trim() !== '') {
+    if (dirNum === 1) direction = 'UP';
+    else if (dirNum === 2) direction = 'DOWN';
+  }
+  if (!direction) {
+    const dRaw = String(dirRaw || '').trim();
+    const d = dRaw.toUpperCase();
+    if (dRaw === '看多' || dRaw === '涨') direction = 'UP';
+    else if (dRaw === '看空' || dRaw === '跌') direction = 'DOWN';
+    else if (['UP', 'LONG', '1', 'BULL', 'BULLISH'].includes(d)) direction = 'UP';
+    else if (['DOWN', 'SHORT', '2', 'BEAR', 'BEARISH'].includes(d)) direction = 'DOWN';
+  }
+
+  const confRaw = Number(data.confidence ?? data.aiConfidence ?? data.ai_confidence ?? data.aiConf ?? data.ai_conf);
+  let confidence = Number.isFinite(confRaw) ? confRaw : null;
+  if (confidence != null && confidence > 0 && confidence <= 1) {
+    confidence = Math.round(confidence * 100);
+  } else if (confidence != null) {
+    confidence = Math.round(confidence);
+  }
+
+  const winRateRaw = Number(data.win_rate);
+  let winRate = Number.isFinite(winRateRaw) ? winRateRaw : null;
+  if (winRate != null && winRate > 0 && winRate <= 1) {
+    winRate = Math.round(winRate * 100);
+  } else if (winRate != null) {
+    winRate = Math.round(winRate);
+  }
+
+  const winCountRaw = Number(
+    data.winCount ?? data.win_count ?? data.wins ?? data.aiWinCount ?? data.ai_win_count ?? data.winNum ?? data.win_num,
+  );
+  const lossCountRaw = Number(
+    data.lossCount ??
+      data.loss_count ??
+      data.losses ??
+      data.aiLossCount ??
+      data.ai_loss_count ??
+      data.loseNum ??
+      data.lose_num,
+  );
+
+  return {
+    direction,
+    confidence,
+    winRate,
+    winCount: Number.isFinite(winCountRaw) ? Math.max(0, Math.floor(winCountRaw)) : null,
+    lossCount: Number.isFinite(lossCountRaw) ? Math.max(0, Math.floor(lossCountRaw)) : null,
+  };
+}
+
+/**
  * @param {object | null} json
  * @returns {{
  *   guessNo: string | null;
@@ -2370,12 +2438,29 @@ function buildGuessTimeFieldsPatch(item) {
  *   startAt: string | number | null;
  *   endAt: string | number | null;
  *   betEndAt: string | number | null;
+ *   aiDirection: 'UP' | 'DOWN' | null;
+ *   aiConfidence: number | null;
+ *   aiWinRate: number | null;
+ *   aiWinCount: number | null;
+ *   aiLossCount: number | null;
  * }}
  */
 function parseCoinDirectionGuessPublishData(json) {
   const guessNo = parseCoinDirectionGuessNo(json);
   if (!json || typeof json !== 'object') {
-    return { guessNo, nickName: null, avatar: null, startAt: null, endAt: null, betEndAt: null };
+    return {
+      guessNo,
+      nickName: null,
+      avatar: null,
+      startAt: null,
+      endAt: null,
+      betEndAt: null,
+      aiDirection: null,
+      aiConfidence: null,
+      aiWinRate: null,
+      aiWinCount: null,
+      aiLossCount: null,
+    };
   }
   const data =
     json.data != null && typeof json.data === 'object'
@@ -2386,6 +2471,7 @@ function parseCoinDirectionGuessPublishData(json) {
   const startAt = parseGuessStartAt(data);
   const endAt = data.endAt ?? data.end_at ?? null;
   const betEndAt = parseGuessBetEndAt(data);
+  const ai = parseGuessAiSignalFields(data);
   return {
     guessNo,
     nickName: nickName != null && String(nickName).trim() ? String(nickName).trim() : null,
@@ -2393,6 +2479,11 @@ function parseCoinDirectionGuessPublishData(json) {
     startAt,
     endAt: endAt != null && String(endAt).trim() ? endAt : null,
     betEndAt,
+    aiDirection: ai.direction,
+    aiConfidence: ai.confidence,
+    aiWinRate: ai.winRate,
+    aiWinCount: ai.winCount,
+    aiLossCount: ai.lossCount,
   };
 }
 
@@ -3252,6 +3343,7 @@ module.exports = {
   getCoinDirectionGuessDetail,
   parseCoinDirectionGuessNo,
   parseCoinDirectionGuessPublishData,
+  parseGuessAiSignalFields,
   isGuessBettingClosedByDeadline,
   isGuessEffectivelyLocked,
   mergeGuessBetEndFallback,

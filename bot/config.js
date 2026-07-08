@@ -130,6 +130,17 @@ const PREDICT_BET_END_OFFSET_MS = Math.max(
   ),
 );
 
+/** 涨跌竞猜结算手续费比例（%），默认 5 */
+const PREDICT_GUESS_FEE_RATE = Math.max(
+  0,
+  Math.min(50, Number(process.env.PREDICT_GUESS_FEE_RATE) || 5),
+);
+
+/** AI 历史战绩链接路径（相对 APP_URL） */
+const PREDICT_AI_HISTORY_PATH = (
+  process.env.PREDICT_AI_HISTORY_PATH || '/ai'
+).trim().replace(/^(?!\/)/, '/');
+
 /** POST 涨跌竞猜发布登记（相对 API_BASE_URL），默认 coinDirectionGuess/publish */
 const COIN_DIRECTION_GUESS_PUBLISH_PATH = (
   process.env.COIN_DIRECTION_GUESS_PUBLISH_PATH || 'coinDirectionGuess/publish'
@@ -219,6 +230,8 @@ module.exports = {
   PREDICT_DEBUG,
   PREDICT_DEFAULT_DURATION_MINUTES,
   PREDICT_BET_END_OFFSET_MS,
+  PREDICT_GUESS_FEE_RATE,
+  PREDICT_AI_HISTORY_PATH,
   COIN_DIRECTION_GUESS_PUBLISH_PATH,
   COIN_DIRECTION_GUESS_BIND_MESSAGE_PATH,
   COIN_DIRECTION_GUESS_BET_PATH,

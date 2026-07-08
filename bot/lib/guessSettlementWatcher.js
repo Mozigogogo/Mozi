@@ -272,6 +272,7 @@ async function handleSettledTransition(ctx, listItem, prevStatus, newStatus) {
       statsRaw,
       texts,
       botUsername: configRef.BOT_USERNAME,
+      config: configRef,
     });
     announceOk = sent.ok;
     announceMessageId = sent.messageId ?? null;

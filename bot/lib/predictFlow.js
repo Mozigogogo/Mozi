@@ -12,6 +12,7 @@ const {
   getCoinDirectionGuessDetail,
   parseCoinDirectionGuessNo,
   parseCoinDirectionGuessPublishData,
+  parseGuessAiSignalFields,
   parseGuessBetStats,
   parseGuessItemStats,
   parseGuessBetEndAt,
@@ -68,6 +69,8 @@ const { scheduleGuessLockCardRefresh } = require('./guessLockScheduler');
 const {
   PREDICT_DEFAULT_DURATION_MINUTES,
   PREDICT_BET_END_OFFSET_MS,
+  PREDICT_GUESS_FEE_RATE,
+  PREDICT_AI_HISTORY_PATH,
 } = require('../config');
 
 const QUICK_SYMBOLS = ['BTC', 'ETH', 'SOL'];
@@ -318,19 +321,97 @@ function formatPublisherLabel(publishData, ctx) {
   return escapeHtml(nick);
 }
 
+function resolveGuessAiSignalMeta(source) {
+  const ai = parseGuessAiSignalFields(source);
+  return {
+    aiDirection: ai.direction,
+    aiConfidence: ai.confidence,
+    aiWinRate: ai.winRate,
+    aiWinCount: ai.winCount,
+    aiLossCount: ai.lossCount,
+  };
+}
+
+function formatAiDirectionLine(direction, languageCode) {
+  if (direction !== 'UP' && direction !== 'DOWN') return null;
+  const isZh = String(languageCode || '').toLowerCase().startsWith('zh');
+  if (direction === 'UP') {
+    return isZh ? '📈 方向：看多 (LONG)' : '📈 Direction: Bullish (LONG)';
+  }
+  return isZh ? '📉 方向：看空 (SHORT)' : '📉 Direction: Bearish (SHORT)';
+}
+
+function formatAiConfidenceLine(confidence, languageCode) {
+  if (confidence == null || !Number.isFinite(Number(confidence))) return null;
+  const pct = Math.max(0, Math.min(100, Math.round(Number(confidence))));
+  const isZh = String(languageCode || '').toLowerCase().startsWith('zh');
+  return isZh ? `🎯 置信度：${pct}%` : `🎯 Confidence: ${pct}%`;
+}
+
+function formatAiDirectionLabelShort(direction, languageCode) {
+  if (direction !== 'UP' && direction !== 'DOWN') return null;
+  const isZh = String(languageCode || '').toLowerCase().startsWith('zh');
+  if (direction === 'UP') return isZh ? '看多' : 'Bullish';
+  return isZh ? '看空' : 'Bearish';
+}
+
+function formatAiDirectionConfidenceLine(direction, confidence, languageCode) {
+  const dirLabel = formatAiDirectionLabelShort(direction, languageCode);
+  const hasConfidence = confidence != null && Number.isFinite(Number(confidence));
+  if (!dirLabel && !hasConfidence) return null;
+  const isZh = String(languageCode || '').toLowerCase().startsWith('zh');
+  const dirIcon = direction === 'DOWN' ? '📉' : '📈';
+  const parts = [];
+  if (dirLabel) {
+    parts.push(isZh ? `${dirIcon} 方向：${dirLabel}` : `${dirIcon} Direction: ${dirLabel}`);
+  }
+  if (hasConfidence) {
+    const pct = Math.max(0, Math.min(100, Math.round(Number(confidence))));
+    parts.push(isZh ? `🎯 置信度：${pct}%` : `🎯 Confidence: ${pct}%`);
+  }
+  return parts.join(' ');
+}
+
+function formatAiWinRateLine(winRate, winCount, lossCount, languageCode) {
+  if (winRate == null || !Number.isFinite(Number(winRate))) return null;
+  const pct = Math.max(0, Math.min(100, Math.round(Number(winRate))));
+  const isZh = String(languageCode || '').toLowerCase().startsWith('zh');
+  const hasRecord =
+    winCount != null &&
+    lossCount != null &&
+    Number.isFinite(Number(winCount)) &&
+    Number.isFinite(Number(lossCount));
+  const record = hasRecord
+    ? isZh
+      ? ` (${Math.floor(Number(winCount))}胜${Math.floor(Number(lossCount))}负)`
+      : ` (${Math.floor(Number(winCount))}W ${Math.floor(Number(lossCount))}L)`
+    : '';
+  return isZh ? `💡 AI近30天胜率：${pct}%${record}` : `💡 AI 30-day win rate: ${pct}%${record}`;
+}
+
 function buildGroupPublishHtml(texts, meta, statsRaw) {
   const stats = normalizeGuessBetStats(statsRaw, meta.languageCode);
   const lockedAt = formatLockedAtDisplay(meta.lockedAtMs, meta.languageCode);
   const betDeadline =
     meta.betEndAt != null ? formatBetDeadlineDisplay(meta.betEndAt, meta.languageCode) : '—';
+  const directionLine = formatAiDirectionLine(meta.aiDirection, meta.languageCode);
+  const confidenceLine = formatAiConfidenceLine(meta.aiConfidence, meta.languageCode);
+  const winRateLine = formatAiWinRateLine(
+    meta.aiWinRate,
+    meta.aiWinCount,
+    meta.aiLossCount,
+    meta.languageCode,
+  );
   return texts.predictGroupPublishBody(
     escapeHtml(meta.sym),
-    formatDurationMinutesLabel(resolveDurationMinutes(meta), meta.languageCode),
+    directionLine,
+    confidenceLine,
+    winRateLine,
     escapeHtml(meta.price),
     lockedAt,
+    formatDurationMinutesLabel(resolveDurationMinutes(meta), meta.languageCode),
     stats,
     betDeadline,
-    meta.publisher,
   );
 }
 
@@ -341,20 +422,19 @@ function buildGroupLockedHtml(texts, meta, statsRaw) {
   const prizePool = formatPointsDisplay(upPoints + downPoints, meta.languageCode);
   const settlementWait =
     meta.endAt != null ? formatSettlementWaitDisplay(meta.endAt, meta.languageCode) : '—';
-  const oddsLine = texts.predictLockedOddsLine(
-    stats.upPercent,
-    stats.upCount,
-    stats.downPercent,
-    stats.downCount,
+  const directionConfidenceLine = formatAiDirectionConfidenceLine(
+    meta.aiDirection,
+    meta.aiConfidence,
+    meta.languageCode,
   );
+  const oddsLine = texts.predictLockedOddsLine(stats.upPercent, stats.downPercent);
   return texts.predictGroupLockedBody(
     escapeHtml(meta.sym),
-    formatDurationMinutesLabel(resolveDurationMinutes(meta), meta.languageCode),
+    directionConfidenceLine,
     escapeHtml(meta.price),
     oddsLine,
     prizePool,
     settlementWait,
-    meta.publisher,
   );
 }
 
@@ -393,7 +473,98 @@ function formatSettledVoteNick(vote) {
   return '—';
 }
 
-function formatSettledTopWinners(texts, votes, result, languageCode) {
+function resolveFollowAiChoice(aiDirection) {
+  if (aiDirection === 'UP') return 1;
+  if (aiDirection === 'DOWN') return 2;
+  return null;
+}
+
+function resolveSettledBetLabel(texts, choice, aiDirection) {
+  const followChoice = resolveFollowAiChoice(aiDirection);
+  if (followChoice == null) return texts.predictSettledBetGeneric;
+  return choice === followChoice ? texts.predictSettledBetFollowAi : texts.predictSettledBetOpposite;
+}
+
+function isAiJudgmentCorrect(aiDirection, result) {
+  if (!aiDirection || !result || result === 'TIE') return null;
+  return (aiDirection === 'UP' && result === 'UP') || (aiDirection === 'DOWN' && result === 'DOWN');
+}
+
+function formatSettledAiJudgmentLine(texts, aiDirection, result, languageCode) {
+  if (!aiDirection || result === 'TIE') return null;
+  const dirLabel = formatAiDirectionLabelShort(aiDirection, languageCode);
+  if (!dirLabel) return null;
+  const correct = isAiJudgmentCorrect(aiDirection, result);
+  if (correct == null) return null;
+  return texts.predictSettledAiJudgmentLine(dirLabel, correct);
+}
+
+function resolveSettledWinnerLine(texts, result, aiDirection) {
+  if (result === 'TIE') return texts.predictSettledWinnerTie;
+  if (aiDirection == null) {
+    return result === 'UP' ? texts.predictSettledWinnerUp : texts.predictSettledWinnerDown;
+  }
+  const followAiWins = isAiJudgmentCorrect(aiDirection, result) === true;
+  return followAiWins ? texts.predictSettledWinnerFollowAi : texts.predictSettledWinnerOpposite;
+}
+
+function resolveSettledPrizePoolLine(texts, statsRaw, item, languageCode) {
+  const upPoints = Number(statsRaw?.upPoints) || 0;
+  const downPoints = Number(statsRaw?.downPoints) || 0;
+  const total = Math.max(0, Math.floor(upPoints + downPoints));
+  const feeRateRaw = Number(
+    item?.feeRate ?? item?.fee_rate ?? item?.serviceFeeRate ?? item?.service_fee_rate,
+  );
+  const feeRate = Number.isFinite(feeRateRaw)
+    ? Math.max(0, Math.min(50, Math.round(feeRateRaw)))
+    : PREDICT_GUESS_FEE_RATE;
+  const distributedRaw = Number(
+    item?.distributedPoints ??
+      item?.distributed_points ??
+      item?.netPool ??
+      item?.net_pool ??
+      item?.payoutPool ??
+      item?.payout_pool,
+  );
+  const distributed = Number.isFinite(distributedRaw)
+    ? Math.max(0, Math.floor(distributedRaw))
+    : Math.max(0, Math.floor(total * (1 - feeRate / 100)));
+  return texts.predictSettledPrizePoolLine(
+    formatPointsDisplay(total, languageCode),
+    feeRate,
+    formatPointsDisplay(distributed, languageCode),
+  );
+}
+
+function formatSettledAiLatestStatsLine(texts, meta, languageCode) {
+  const winRate = meta.aiWinRate;
+  const wins = meta.aiWinCount;
+  const losses = meta.aiLossCount;
+  if (winRate == null || !Number.isFinite(Number(winRate))) return null;
+  const pct = Math.max(0, Math.min(100, Math.round(Number(winRate))));
+  const hasRecord =
+    wins != null &&
+    losses != null &&
+    Number.isFinite(Number(wins)) &&
+    Number.isFinite(Number(losses));
+  if (!hasRecord) return null;
+  return texts.predictSettledAiLatestStatsLine(
+    pct,
+    Math.floor(Number(wins)),
+    Math.floor(Number(losses)),
+  );
+}
+
+function buildAiHistoryUrl(config) {
+  const base = String(config?.APP_URL || '').replace(/\/+$/, '');
+  if (!base) return null;
+  const path = String(config?.PREDICT_AI_HISTORY_PATH || PREDICT_AI_HISTORY_PATH || '/ai')
+    .trim()
+    .replace(/^(?!\/)/, '/');
+  return `${base}${path}`;
+}
+
+function formatSettledTopWinners(texts, votes, result, languageCode, aiDirection) {
   if (!Array.isArray(votes) || !votes.length) return '';
   if (result === 'TIE' || result == null) {
     const refunded = votes
@@ -406,6 +577,7 @@ function formatSettledTopWinners(texts, votes, result, languageCode) {
       const payout = Math.max(0, Math.floor(Number(v.payout) || 0));
       return texts.predictSettledTopWinnerLine(
         formatSettledVoteNick(v),
+        resolveSettledBetLabel(texts, v.choice, aiDirection),
         formatPointsDisplay(betAmount, languageCode),
         formatPointsDisplay(payout, languageCode),
         '0',
@@ -428,6 +600,7 @@ function formatSettledTopWinners(texts, votes, result, languageCode) {
     const profitPct = profitPctRaw >= 0 ? `+${profitPctRaw}` : String(profitPctRaw);
     return texts.predictSettledTopWinnerLine(
       formatSettledVoteNick(v),
+      resolveSettledBetLabel(texts, v.choice, aiDirection),
       formatPointsDisplay(betAmount, languageCode),
       formatPointsDisplay(payout, languageCode),
       profitPct,
@@ -453,18 +626,28 @@ function buildPredictNewGuessKeyboard(texts, botUsername, groupChatId) {
   };
 }
 
-function buildGuessSettlementMessage(texts, meta, statsRaw, item, displayResult, votes, botUsername, groupChatId) {
+function buildGuessSettlementMessage(
+  texts,
+  meta,
+  statsRaw,
+  item,
+  displayResult,
+  votes,
+  botUsername,
+  groupChatId,
+  config,
+) {
   const voidSettlement = isGuessVoidSettlement(item, displayResult);
   const html = voidSettlement
     ? buildGroupVoidHtml(texts, meta, item, displayResult)
-    : buildGroupSettledHtml(texts, meta, statsRaw, item, displayResult, votes);
+    : buildGroupSettledHtml(texts, meta, statsRaw, item, displayResult, votes, config);
   const keyboard = voidSettlement
     ? buildPredictNewGuessKeyboard(texts, botUsername, groupChatId)
     : { inline_keyboard: [] };
   return { html, keyboard, voidSettlement };
 }
 
-function buildGroupSettledHtml(texts, meta, statsRaw, item, result, votes) {
+function buildGroupSettledHtml(texts, meta, statsRaw, item, result, votes, config) {
   const startPriceNum = resolveGuessStartPriceNumber(item, meta);
   const endPriceNum = Number(item?.endPrice);
   const startPrice = formatEndPriceDisplay(startPriceNum);
@@ -475,28 +658,34 @@ function buildGroupSettledHtml(texts, meta, statsRaw, item, result, votes) {
     escapeHtml(endPrice),
     changePct != null ? changePct : '—',
   );
-  const winnerLine =
-    result === 'UP'
-      ? texts.predictSettledWinnerUp
-      : result === 'DOWN'
-        ? texts.predictSettledWinnerDown
-        : result === 'TIE'
-          ? texts.predictSettledWinnerTie
-          : typeof texts.predictSettledWinnerUnknown === 'function'
-            ? texts.predictSettledWinnerUnknown(
-                item?.result != null ? escapeHtml(String(item.result).trim()) : '',
-              )
-            : '✅ 已结算';
-  const upPoints = Number(statsRaw?.upPoints) || 0;
-  const downPoints = Number(statsRaw?.downPoints) || 0;
-  const prizePool = formatPointsDisplay(upPoints + downPoints, meta.languageCode);
-  const topWinnersSection = formatSettledTopWinners(texts, votes, result, meta.languageCode);
+  const aiJudgmentLine = formatSettledAiJudgmentLine(
+    texts,
+    meta.aiDirection,
+    result,
+    meta.languageCode,
+  );
+  const winnerLine = resolveSettledWinnerLine(texts, result, meta.aiDirection);
+  const prizePoolLine = resolveSettledPrizePoolLine(texts, statsRaw, item, meta.languageCode);
+  const topWinnersSection = formatSettledTopWinners(
+    texts,
+    votes,
+    result,
+    meta.languageCode,
+    meta.aiDirection,
+  );
+  const aiStatsLine = formatSettledAiLatestStatsLine(texts, meta, meta.languageCode);
+  const historyUrl = buildAiHistoryUrl(config);
+  const historyLinkLine =
+    historyUrl != null ? texts.predictSettledAiHistoryLink(escapeHtml(historyUrl)) : null;
   return texts.predictGroupSettledBody(
     escapeHtml(meta.sym),
     priceLine,
+    aiJudgmentLine,
     winnerLine,
-    prizePool,
+    prizePoolLine,
     topWinnersSection,
+    aiStatsLine,
+    historyLinkLine,
   );
 }
 
@@ -744,6 +933,7 @@ async function applyGuessSettlementToMessage({
     votes,
     botUsername,
     groupChatId ?? chatId,
+    config,
   );
   return editTelegramGuessMessage(
     telegram,
@@ -769,6 +959,7 @@ async function sendGuessResultAnnouncement({
   statsRaw,
   texts,
   botUsername,
+  config,
 }) {
   if (groupChatId == null) return { ok: false, messageId: null };
   const merged = {
@@ -784,6 +975,7 @@ async function sendGuessResultAnnouncement({
     votes,
     botUsername,
     groupChatId,
+    config,
   );
   try {
     const msg = await telegram.sendMessage(groupChatId, html, {
@@ -1950,6 +2142,7 @@ async function publishPredict(ctx, config, getTexts) {
     endAt: publishData.endAt ?? null,
     publisher,
     languageCode,
+    ...resolveGuessAiSignalMeta(publishData),
   };
   const groupPublishHtml = buildGroupPublishHtml(texts, messageMeta, null);
   const betKeyboard = guessNo ? buildGuessBetKeyboard(texts, guessNo) : undefined;
@@ -2150,6 +2343,7 @@ function buildMetaFromGuessItem(item, languageCode, publisher = '—') {
     publisher,
     languageCode: languageCode || 'zh',
     groupId: item.groupId ?? null,
+    ...resolveGuessAiSignalMeta(item),
   };
 }
 
@@ -2349,6 +2543,7 @@ async function tryRefreshGuessMessage(ctx, config, texts, guessNo, betResult) {
       detailVotes,
       config.BOT_USERNAME,
       chatId,
+      config,
     );
     const ok = await editGuessMessageContent(
       ctx,
@@ -2428,7 +2623,7 @@ async function submitGuessBet(ctx, config, getTexts, guessNo, direction, betAmou
   const texts = getTexts(languageCode);
   const isZh = languageCode.toLowerCase().startsWith('zh');
   const choice = direction === 'DOWN' ? 2 : 1;
-  const dirLabel = choice === 1 ? (isZh ? '看涨' : 'Bull') : (isZh ? '看跌' : 'Bear');
+  const dirLabel = choice === 1 ? (isZh ? '跟注AI' : 'Follow AI') : (isZh ? '反向下注' : 'Bet opposite');
   const guess = String(guessNo || '').trim();
   const pts = Math.floor(Number(betAmount));
 
