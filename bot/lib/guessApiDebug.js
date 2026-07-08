@@ -1,13 +1,14 @@
 'use strict';
 
+const { predictModuleLogEnabled } = require('./predictDebug');
+
 /**
- * 涨跌竞猜（/predict）后端接口调试：仅打印请求参数与响应内容。
- * 开启：PREDICT_DEBUG=1 或 COIN_DIRECTION_GUESS_API_DEBUG=1
+ * 涨跌竞猜后端接口日志（传参 / 出参），默认开启，前缀 [PREDICT_API]。
+ * 关闭：PREDICT_LOG=0 或 PREDICT_DEBUG=0
  */
 
 function guessApiDebugEnabled() {
-  if (/^1|true|yes$/i.test(String(process.env.PREDICT_DEBUG || '').trim())) return true;
-  return /^1|true|yes$/i.test(String(process.env.COIN_DIRECTION_GUESS_API_DEBUG || '').trim());
+  return predictModuleLogEnabled();
 }
 
 /**

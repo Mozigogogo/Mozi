@@ -1224,6 +1224,16 @@ async function registerCoinDirectionGuessPublish(ctx, config, { publishChatId, s
 
   try {
     const betEndAt = buildBetEndAtTimestamp();
+    predictPublishLog('发起竞猜 · 调用 publish 接口', {
+      uid,
+      groupId: publishChatId,
+      symbol: sym,
+      durationMinutes,
+      durationSeconds: formatPredictDuration(durationMinutes),
+      title,
+      betEndAt,
+      path: config.COIN_DIRECTION_GUESS_PUBLISH_PATH,
+    });
     const result = await postCoinDirectionGuessPublish({
       apiBaseUrl: config.API_BASE_URL,
       appUrl: config.APP_URL,

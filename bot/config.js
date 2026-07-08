@@ -111,8 +111,14 @@ const PREDICT_FORCE_PRIVATE = !/^0|false|no$/i.test(
   String(process.env.PREDICT_FORCE_PRIVATE ?? '1').trim(),
 );
 
-/** 为 1/true/yes 时打印 /predict 流程调试（见 lib/predictDebug.js）；未设时跟随 BOT_DEBUG */
-const PREDICT_DEBUG = /^1|true|yes$/i.test(String(process.env.PREDICT_DEBUG || '').trim());
+/** /predict 模块日志默认开启；PREDICT_LOG=0 或 PREDICT_DEBUG=0 关闭 */
+const PREDICT_DEBUG_DEFAULT_ON = !/^0|false|no$/i.test(
+  String(process.env.PREDICT_LOG ?? process.env.PREDICT_DEBUG ?? '1').trim(),
+);
+/** 兼容旧配置：显式设 PREDICT_DEBUG=1 时也为 true */
+const PREDICT_DEBUG =
+  PREDICT_DEBUG_DEFAULT_ON ||
+  /^1|true|yes$/i.test(String(process.env.PREDICT_DEBUG || '').trim());
 
 /** 涨跌竞猜总时长（分钟），默认 24 小时 */
 const PREDICT_DEFAULT_DURATION_MINUTES = Math.max(
