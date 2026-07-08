@@ -5,8 +5,8 @@
  */
 
 function tgGroupStatsLogEnabled() {
-  const v = String(process.env.TG_GROUP_STATS_LOG ?? '1').trim();
-  return !/^0|false|no$/i.test(v);
+  const v = String(process.env.TG_GROUP_STATS_LOG ?? '0').trim();
+  return !/^0|false|no$/i.test(v) && /^1|true|yes$/i.test(v);
 }
 
 /**

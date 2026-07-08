@@ -4,7 +4,6 @@
  */
 
 const { fetchDetailHeader } = require('../lib/apis');
-const { apiDebug } = require('../lib/debugLog');
 const { escapeHtml } = require('../lib/telegramHtml');
 
 const DEFAULT_SYMBOL = 'BTC';
@@ -239,11 +238,6 @@ async function runPriceCommand(ctx, config, texts, symbolInput) {
     return false;
   }
 
-  apiDebug('/price handler', {
-    symbol,
-    telegramId: ctx.from?.id ?? null,
-  });
-
   await ctx.telegram.sendChatAction(ctx.chat.id, 'typing').catch(() => {});
 
   const acceptLanguage = languageCode?.toLowerCase().startsWith('zh') ? 'zh' : 'en';
@@ -257,23 +251,16 @@ async function runPriceCommand(ctx, config, texts, symbolInput) {
       acceptLanguage,
     });
   } catch (err) {
-    apiDebug('/price handler', { failed: 'network', message: err?.message || String(err) });
     await ctx.reply(texts.priceNetworkError, { parse_mode: 'HTML' });
     return false;
   }
 
   if (!result.ok) {
-    apiDebug('/price handler', {
-      failed: 'http',
-      httpStatus: result.status,
-      bodyPreview: result.text?.slice(0, 600),
-    });
     await ctx.reply(texts.priceError(result.status), { parse_mode: 'HTML' });
     return false;
   }
 
   if (result.json == null) {
-    apiDebug('/price handler', { failed: 'non_json', bodyPreview: result.text?.slice(0, 400) });
     await ctx.reply(texts.priceBadJson, { parse_mode: 'HTML' });
     return false;
   }

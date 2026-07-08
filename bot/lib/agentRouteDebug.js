@@ -5,8 +5,8 @@
  */
 
 function agentRouteLogEnabled() {
-  const v = String(process.env.AGENT_ROUTE_LOG ?? '1').trim();
-  return !/^0|false|no$/i.test(v);
+  const v = String(process.env.AGENT_ROUTE_LOG ?? '0').trim();
+  return !/^0|false|no$/i.test(v) && /^1|true|yes$/i.test(v);
 }
 
 function agentRouteDebugEnabled() {

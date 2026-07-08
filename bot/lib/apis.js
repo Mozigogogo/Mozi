@@ -2552,15 +2552,7 @@ async function postCoinDirectionGuessPublish({
   if (betEndAtRaw != null && String(betEndAtRaw).trim() !== '') {
     body.betEndAt = betEndAtRaw;
   }
-  apiDebug('POST /coinDirectionGuess/publish ←', {
-    url,
-    groupId: body.groupId,
-    symbol: body.symbol,
-    duration: body.duration,
-    betEndAt: body.betEndAt ?? null,
-    titlePreview: body.title.slice(0, 80),
-    hasAuthenticationHeader: Boolean(rawAuth),
-  });
+  guessApiLog('POST /coinDirectionGuess/publish ← 请求', { url, params: body });
   try {
     const res = await fetch(url, {
       method: 'POST',
@@ -2587,28 +2579,11 @@ async function postCoinDirectionGuessPublish({
       publishData,
       errorMessage: parseApiErrorMessage(json),
     };
-    apiDebug('POST /coinDirectionGuess/publish →', {
-      groupId: body.groupId,
-      symbol: body.symbol,
-      duration: body.duration,
+    guessApiLog('POST /coinDirectionGuess/publish → 响应', {
       httpStatus: res.status,
       ok: out.ok,
-      guessNo,
-      nickName: publishData.nickName,
-      hasAvatar: Boolean(publishData.avatar),
-      endAt: publishData.endAt,
-      betEndAt: publishData.betEndAt,
-      startAt: publishData.startAt,
-      jsonCode: json && typeof json === 'object' ? json.code : null,
-      errorMessage: out.errorMessage,
-      bodyPreview: text.slice(0, 500),
-    });
-    guessApiLog('POST /coinDirectionGuess/publish →', {
-      httpStatus: res.status,
-      ok: out.ok,
-      guessNo,
-      publishData,
-      json,
+      guessNo: out.guessNo,
+      data: json,
       rawText: text,
     });
     return out;
@@ -2663,12 +2638,7 @@ async function postCoinDirectionGuessBindMessage({
     guessNo: String(guessNo || '').trim(),
     tgMessageId: Math.floor(Number(tgMessageId)),
   };
-  apiDebug('POST /coinDirectionGuess/bindMessage ←', {
-    url,
-    guessNo: body.guessNo,
-    tgMessageId: body.tgMessageId,
-    hasAuthenticationHeader: Boolean(rawAuth),
-  });
+  guessApiLog('POST /coinDirectionGuess/bindMessage ← 请求', { url, params: body });
   try {
     const res = await fetch(url, {
       method: 'POST',
@@ -2691,21 +2661,10 @@ async function postCoinDirectionGuessBindMessage({
       text,
       errorMessage: parseApiErrorMessage(json),
     };
-    apiDebug('POST /coinDirectionGuess/bindMessage →', {
-      guessNo: body.guessNo,
-      tgMessageId: body.tgMessageId,
+    guessApiLog('POST /coinDirectionGuess/bindMessage → 响应', {
       httpStatus: res.status,
       ok: out.ok,
-      jsonCode: json && typeof json === 'object' ? json.code : null,
-      errorMessage: out.errorMessage,
-      bodyPreview: text.slice(0, 500),
-    });
-    guessApiLog('POST /coinDirectionGuess/bindMessage →', {
-      httpStatus: res.status,
-      ok: out.ok,
-      guessNo: body.guessNo,
-      tgMessageId: body.tgMessageId,
-      json,
+      data: json,
       rawText: text,
     });
     return out;
@@ -2788,14 +2747,7 @@ async function postCoinDirectionGuessBet({
     choice: Number(choice) === 2 ? 2 : 1,
     betAmount: Math.max(1, Math.floor(Number(betAmount) || 0)),
   };
-  apiDebug('POST /coinDirectionGuess/bet ←', {
-    url,
-    guessNo: body.guessNo,
-    userId: body.userId,
-    choice: body.choice,
-    betAmount: body.betAmount,
-    hasAuthenticationHeader: Boolean(rawAuth),
-  });
+  guessApiLog('POST /coinDirectionGuess/bet ← 请求', { url, params: body });
   try {
     const res = await fetch(url, {
       method: 'POST',
@@ -2818,25 +2770,10 @@ async function postCoinDirectionGuessBet({
       text,
       errorMessage: parseApiErrorMessage(json),
     };
-    apiDebug('POST /coinDirectionGuess/bet →', {
-      guessNo: body.guessNo,
-      userId: body.userId,
-      choice: body.choice,
-      betAmount: body.betAmount,
+    guessApiLog('POST /coinDirectionGuess/bet → 响应', {
       httpStatus: res.status,
       ok: out.ok,
-      jsonCode: json && typeof json === 'object' ? json.code : null,
-      errorMessage: out.errorMessage,
-      bodyPreview: text.slice(0, 500),
-    });
-    guessApiLog('POST /coinDirectionGuess/bet →', {
-      httpStatus: res.status,
-      ok: out.ok,
-      guessNo: body.guessNo,
-      userId: body.userId,
-      choice: body.choice,
-      betAmount: body.betAmount,
-      json,
+      data: json,
       rawText: text,
     });
     return out;
@@ -2896,7 +2833,10 @@ async function getCoinDirectionGuessList({
   if (app) {
     headers.referer = `${app}/`;
   }
-  apiDebug('GET /coinDirectionGuess/list ←', { url, groupId: String(groupId) });
+  guessApiLog('GET /coinDirectionGuess/list ← 请求', {
+    url,
+    params: { groupId: String(groupId) },
+  });
   try {
     const res = await fetch(url, { method: 'GET', headers, signal: ctrl.signal });
     const text = await res.text();
@@ -2915,21 +2855,11 @@ async function getCoinDirectionGuessList({
       items: parseCoinDirectionGuessList(json),
       errorMessage: parseApiErrorMessage(json),
     };
-    apiDebug('GET /coinDirectionGuess/list →', {
-      groupId: String(groupId),
+    guessApiLog('GET /coinDirectionGuess/list → 响应', {
       httpStatus: res.status,
       ok: out.ok,
       count: out.items.length,
-      errorMessage: out.errorMessage,
-      bodyPreview: text.slice(0, 500),
-    });
-    guessApiLog('GET /coinDirectionGuess/list →', {
-      httpStatus: res.status,
-      ok: out.ok,
-      groupId: String(groupId),
-      count: out.items.length,
-      items: out.items,
-      json,
+      data: json,
       rawText: text,
     });
     return out;
@@ -3031,7 +2961,10 @@ async function getCoinDirectionGuessDetail({
   if (app) {
     headers.referer = `${app}/`;
   }
-  apiDebug('GET /coinDirectionGuess/detail ←', { url, guessNo: guess });
+  guessApiLog('GET /coinDirectionGuess/detail ← 请求', {
+    url,
+    params: { guessNo: guess },
+  });
   try {
     const res = await fetch(url, { method: 'GET', headers, signal: ctrl.signal });
     const text = await res.text();
@@ -3052,23 +2985,10 @@ async function getCoinDirectionGuessDetail({
       votes: parsed?.votes ?? [],
       errorMessage: parseApiErrorMessage(json),
     };
-    apiDebug('GET /coinDirectionGuess/detail →', {
-      guessNo: guess,
+    guessApiLog('GET /coinDirectionGuess/detail → 响应', {
       httpStatus: res.status,
       ok: out.ok,
-      statusField: out.item?.status ?? null,
-      result: out.item?.result ?? null,
-      voteCount: out.votes.length,
-      errorMessage: out.errorMessage,
-      bodyPreview: text.slice(0, 500),
-    });
-    guessApiLog('GET /coinDirectionGuess/detail →', {
-      httpStatus: res.status,
-      ok: out.ok,
-      guessNo: guess,
-      item: out.item,
-      votes: out.votes,
-      json,
+      data: json,
       rawText: text,
     });
     return out;
