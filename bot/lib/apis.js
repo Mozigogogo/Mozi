@@ -1858,9 +1858,10 @@ function parseTgStatsGroupListItem(raw) {
 
 /**
  * GET /tg/stats/group/listByTelegramId?telegramId=
+ * 不传 telegramId 时返回全部群（定时发布筛选用）
  * @param {{
  *   apiBaseUrl: string;
- *   telegramId: string | number;
+ *   telegramId?: string | number | null;
  *   auth?: string;
  *   appUrl?: string;
  *   path?: string;
@@ -1878,8 +1879,10 @@ async function getTgStatsGroupListByTelegramId({
   const base = String(apiBaseUrl || '').replace(/\/+$/, '');
   const app = String(appUrl || '').replace(/\/+$/, '');
   const rel = String(path || 'tg/stats/group/listByTelegramId').trim().replace(/^\/+/, '');
-  const q = new URLSearchParams({ telegramId: String(telegramId) });
-  const url = `${base}/${rel}?${q.toString()}`;
+  const tid = telegramId == null ? '' : String(telegramId).trim();
+  const url = tid
+    ? `${base}/${rel}?${new URLSearchParams({ telegramId: tid }).toString()}`
+    : `${base}/${rel}`;
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   const headers = {
@@ -1898,13 +1901,14 @@ async function getTgStatsGroupListByTelegramId({
   tgGroupStatsLog('request', {
     method: 'GET',
     url,
-    params: { telegramId: String(telegramId) },
+    params: tid ? { telegramId: tid } : { all: true },
     hasAuth: Boolean(rawAuth),
   });
   tgGroupListLog('api.request', {
     method: 'GET',
     url,
-    telegramId: String(telegramId),
+    telegramId: tid || null,
+    allGroups: !tid,
     hasAuth: Boolean(rawAuth),
     authPreview: jwtPreview(rawAuth),
   });

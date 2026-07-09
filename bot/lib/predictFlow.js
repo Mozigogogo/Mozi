@@ -72,6 +72,7 @@ const {
   PREDICT_GUESS_FEE_RATE,
   PREDICT_AI_HISTORY_PATH,
 } = require('../config');
+const { getTexts } = require('../i18n');
 
 const QUICK_SYMBOLS = ['BTC', 'ETH', 'SOL'];
 const SYMBOL_INPUT_RE = /^[A-Z0-9]{1,16}$/;
@@ -3266,6 +3267,199 @@ async function handlePredictList(ctx, config, getTexts) {
 }
 
 /**
+ * 定时任务：向指定群发布 AI 信号卡（无需用户 ctx，使用 MOZI_DETAIL_AUTH）
+ * @param {import('telegraf').Telegram} telegram
+ * @param {object} config
+ * @param {{
+ *   groupId: number | string;
+ *   symbol?: string;
+ *   languageCode?: string;
+ *   groupTitle?: string;
+ * }} opts
+ */
+async function publishScheduledGuessToGroup(telegram, config, opts) {
+  const publishChatId = Number(opts.groupId);
+  const sym = String(opts.symbol || 'BTC').trim().toUpperCase();
+  const languageCode = opts.languageCode || 'zh';
+  const texts = getTexts(languageCode);
+  const isZh = languageCode.toLowerCase().startsWith('zh');
+
+  if (!Number.isFinite(publishChatId)) {
+    return { ok: false, reason: 'invalid_group_id' };
+  }
+
+  const auth = String(config.MOZI_DETAIL_AUTH || '').trim();
+  if (!auth) {
+    predictPublishLog('auto_publish.skip', { groupId: publishChatId, reason: 'no_auth' });
+    return { ok: false, reason: 'no_auth' };
+  }
+
+  const maxActive = resolveMaxActiveGuessesPerGroup(config);
+  try {
+    const listCheck = await fetchActiveGuessCountForGroup(config, publishChatId);
+    if (!listCheck.ok) {
+      return { ok: false, reason: 'list_fail', errorMessage: listCheck.errorMessage };
+    }
+    if (listCheck.activeCount >= maxActive) {
+      return {
+        ok: false,
+        reason: 'group_full',
+        activeCount: listCheck.activeCount,
+        maxActive,
+      };
+    }
+  } catch (err) {
+    return { ok: false, reason: 'list_error', message: err?.message || String(err) };
+  }
+
+  let priceResult;
+  try {
+    priceResult = await fetchDetailHeader({
+      apiBaseUrl: config.API_BASE_URL,
+      appUrl: config.APP_URL,
+      symbol: sym,
+      acceptLanguage: isZh ? 'zh' : 'en',
+    });
+  } catch (err) {
+    return { ok: false, reason: 'price_fetch_error', message: err?.message || String(err) };
+  }
+
+  if (!priceResult.ok || priceResult.json == null) {
+    return { ok: false, reason: 'price_unavailable', symbol: sym };
+  }
+
+  const payload = unwrapDetailPayload(priceResult.json);
+  const priceStr = formatUsdPrice(payload?.currentPrice ?? payload?.price);
+  if (priceStr === '—') {
+    return { ok: false, reason: 'price_invalid', symbol: sym };
+  }
+
+  const durationMinutes = PREDICT_DEFAULT_DURATION_MINUTES;
+  const durationLabel = formatDurationMinutesLabel(durationMinutes, languageCode);
+  const pollQuestion = isZh
+    ? `${sym} 接下来 ${durationLabel}会涨还是跌？`
+    : `Will ${sym} go up or down in the next ${durationLabel}?`;
+
+  const betEndAt = buildBetEndAtTimestamp();
+  let apiResult;
+  try {
+    apiResult = await postCoinDirectionGuessPublish({
+      apiBaseUrl: config.API_BASE_URL,
+      appUrl: config.APP_URL,
+      auth,
+      path: config.COIN_DIRECTION_GUESS_PUBLISH_PATH,
+      groupId: publishChatId,
+      symbol: sym,
+      duration: formatPredictDuration(durationMinutes),
+      title: pollQuestion,
+      betEndAt,
+    });
+  } catch (err) {
+    return { ok: false, reason: 'publish_api_error', message: err?.message || String(err) };
+  }
+
+  if (!apiResult.ok) {
+    return {
+      ok: false,
+      reason: 'publish_api_fail',
+      errorMessage: apiResult.errorMessage,
+      status: apiResult.status,
+    };
+  }
+
+  const guessNo = apiResult.guessNo ?? parseCoinDirectionGuessNo(apiResult.json);
+  const publishData =
+    apiResult.publishData ?? parseCoinDirectionGuessPublishData(apiResult.json);
+  const publisher = escapeHtml(String(publishData?.nickName || 'Mozi AI'));
+  const lockedAtMs = parseGuessDateTimeMs(publishData?.startAt) ?? Date.now();
+  const messageMeta = {
+    sym,
+    durationMinutes,
+    price: priceStr,
+    lockedAtMs,
+    betEndAt: publishData?.betEndAt ?? apiResult.betEndAt ?? null,
+    endAt: publishData?.endAt ?? null,
+    publisher,
+    languageCode,
+    ...resolveGuessAiSignalMeta(publishData),
+  };
+  const groupPublishHtml = buildGroupPublishHtml(texts, messageMeta, null);
+  const betKeyboard = guessNo
+    ? buildGuessBetKeyboard(texts, guessNo, messageMeta.aiDirection)
+    : undefined;
+  const sendExtra = betKeyboard ? { parse_mode: 'HTML', reply_markup: betKeyboard } : { parse_mode: 'HTML' };
+
+  if (guessNo) {
+    saveGuessMessageContext(guessNo, {
+      ...messageMeta,
+      groupId: publishChatId,
+      chatId: publishChatId,
+      lastKnownStatus: 'active',
+    });
+  }
+
+  let guessMsg;
+  try {
+    guessMsg = await telegram.sendMessage(publishChatId, groupPublishHtml, sendExtra);
+  } catch (err) {
+    return {
+      ok: false,
+      reason: 'telegram_send_fail',
+      guessNo: guessNo ?? null,
+      message: err?.response?.description || err?.message || String(err),
+    };
+  }
+
+  const tgMessageId = guessMsg?.message_id ?? null;
+  if (guessNo && tgMessageId != null) {
+    patchGuessMessageContext(guessNo, {
+      chatId: publishChatId,
+      messageId: tgMessageId,
+      hasPhoto: false,
+    });
+    try {
+      await postCoinDirectionGuessBindMessage({
+        apiBaseUrl: config.API_BASE_URL,
+        appUrl: config.APP_URL,
+        auth,
+        path: config.COIN_DIRECTION_GUESS_BIND_MESSAGE_PATH,
+        guessNo,
+        tgMessageId,
+      });
+    } catch {
+      /* bind 失败不阻断 */
+    }
+    await syncGuessPublishCardFromDetail({
+      telegram,
+      config,
+      guessNo,
+      texts,
+      messageMeta,
+      chatId: publishChatId,
+      messageId: tgMessageId,
+      keyboard: betKeyboard,
+      hasPhoto: false,
+    });
+    scheduleGuessLockCardRefresh({
+      telegram,
+      config,
+      guessNo,
+      betEndAt: messageMeta.betEndAt,
+    });
+  }
+
+  predictPublishLog('auto_publish.ok', {
+    groupId: publishChatId,
+    groupTitle: opts.groupTitle ?? null,
+    guessNo: guessNo ?? null,
+    messageId: tgMessageId,
+    symbol: sym,
+  });
+
+  return { ok: true, guessNo, messageId: tgMessageId, groupId: publishChatId, symbol: sym };
+}
+
+/**
  * /predict 与 @ 意图路由 predict 共用
  * @param {import('telegraf').Context} ctx
  * @param {object} config
@@ -3337,4 +3531,5 @@ module.exports = {
   applyGuessLockedRefreshFromDetail,
   sendGuessResultAnnouncement,
   buildMetaFromGuessItem,
+  publishScheduledGuessToGroup,
 };

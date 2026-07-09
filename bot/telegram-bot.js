@@ -6,7 +6,7 @@
  * /ai、/chat、/bigorder：统一 POST 主栈 /ai/agent/stream（type=analyze|chat|bigorder）；/ai、/chat 成功后扣积分
  * 群内 @Bot 自然语言：POST /ai/agent/route（handlers/agentMention.js）
  * /price：handlers/price.js + lib/apis.js（GET /detail/header，默认 BTC，简报格式）
- * /predict、/group：handlers/predict.js、handlers/predictSchedule.js（/group 群主定时推送开关）
+ * /predict、/group：handlers/predict.js、handlers/predictSchedule.js（/group 群主定时推送开关；每日自动发布见 lib/predictAutoPublishScheduler.js）
  * /help：handlers/help.js（群内仅私聊发全文，防刷屏）
  * /balance：handlers/balance.js（GET /user/datainfo；私聊直接回复，群内尝试私信用户，路径见 USER_DATA_INFO_PATH）
  * my_chat_member、/bind_ref：handlers/groupReferrer.js（入群自动绑定群主邀请码；/bind_ref 仅群主可重绑）
@@ -40,6 +40,7 @@ const { registerGroupReferrer } = require('./handlers/groupReferrer');
 const { startTgChatHttpServer } = require('./server/tgChatHttp');
 const { initTgChatRegisterWatcher } = require('./lib/tgChatRegisterWatcher');
 const { initGuessSettlementWatcher } = require('./lib/guessSettlementWatcher');
+const { initPredictAutoPublishScheduler, stopPredictAutoPublishScheduler } = require('./lib/predictAutoPublishScheduler');
 const { registerTgGroupStats } = require('./handlers/tgGroupStats');
 const { createResumePendingAiChatOnPrivate } = require('./middleware/resumePendingAiChatOnPrivate');
 const { createTgCommandUsageMiddleware } = require('./middleware/tgCommandUsage');
@@ -57,6 +58,7 @@ if (!config.BOT_TOKEN) {
 const bot = new Telegraf(config.BOT_TOKEN);
 initTgChatRegisterWatcher(bot, config);
 initGuessSettlementWatcher(bot, config);
+initPredictAutoPublishScheduler(bot, config);
 initCommandUsageFlushScheduler(config);
 registerTgGroupStats(bot, config);
 
@@ -138,6 +140,7 @@ startBot().catch(() => {
 });
 
 async function shutdown(signal) {
+  stopPredictAutoPublishScheduler();
   stopCommandUsageFlushScheduler();
   try {
     await flushCommandUsagesToBackend(config);

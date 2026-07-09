@@ -234,6 +234,23 @@ const TG_GROUP_SAVE_PATH = (process.env.TG_GROUP_SAVE_PATH || 'tg/stats/group/sa
   .trim()
   .replace(/^\/+/, '');
 
+/** 定时自动发布默认币种 */
+const PREDICT_AUTO_PUBLISH_SYMBOL = (
+  process.env.PREDICT_AUTO_PUBLISH_SYMBOL || 'BTC'
+)
+  .trim()
+  .toUpperCase();
+
+/** 定时自动发布时间（北京时间 HH:mm），默认 09:00 */
+const PREDICT_AUTO_PUBLISH_TIME = (
+  process.env.PREDICT_AUTO_PUBLISH_TIME || '09:00'
+).trim();
+
+/** 定时自动发布开关，默认开启；PREDICT_AUTO_PUBLISH_ENABLED=0 关闭 */
+const PREDICT_AUTO_PUBLISH_ENABLED = !/^0|false|no$/i.test(
+  String(process.env.PREDICT_AUTO_PUBLISH_ENABLED ?? '1').trim(),
+);
+
 module.exports = {
   BOT_TOKEN,
   APP_URL,
@@ -280,4 +297,7 @@ module.exports = {
   TG_GROUP_LEAVE_PATH,
   TG_GROUP_LIST_BY_TELEGRAM_ID_PATH,
   TG_GROUP_SAVE_PATH,
+  PREDICT_AUTO_PUBLISH_SYMBOL,
+  PREDICT_AUTO_PUBLISH_TIME,
+  PREDICT_AUTO_PUBLISH_ENABLED,
 };
