@@ -4,16 +4,12 @@ const { ensureTgUserToken } = require('./tgUserTokenCache');
 const { postPointsConsume } = require('./apis');
 const { apiDebug, jwtPreview } = require('./debugLog');
 const { setUserRemainingPointsCache, clearUserRemainingPointsCache } = require('./userRemainingPointsCache');
-const { buildTelegramLoginOpts } = require('./datainfoPoints');
+const { buildTelegramLoginOptsFromCtx } = require('./datainfoPoints');
 
 /** 与 H5 `src/app/ai/page.jsx` 中 analyze 模式一致 */
 const ACTION_AI_ANALYZE = 'AI_DEEP_ANALYZE';
 /** 与 H5 `src/app/ai/page.jsx` 中 chat 模式一致 */
 const ACTION_AI_CHAT = 'AI_BASIC_CHAT';
-
-function loginOptsFromTgFrom(from) {
-  return buildTelegramLoginOpts(from);
-}
 
 /**
  * @param {object} config
@@ -40,7 +36,7 @@ async function consumePointsAfterAiSuccess(config, ctx, actionCode, reason = 'co
       actionCode,
       reason,
     });
-    const token = await ensureTgUserToken(config, String(uid), loginOptsFromTgFrom(ctx.from));
+    const token = await ensureTgUserToken(config, String(uid), buildTelegramLoginOptsFromCtx(ctx));
     if (!token) {
       apiDebug('points/consume:no-jwt', { actionCode, uid: String(uid) });
       clearUserRemainingPointsCache(String(uid));

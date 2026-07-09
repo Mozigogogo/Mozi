@@ -6,7 +6,7 @@
 
 const { postTgRegisteredCheck } = require('./apis');
 const { ensureTgUserToken, clearCachedToken } = require('./tgUserTokenCache');
-const { buildTelegramLoginOpts } = require('./datainfoPoints');
+const { buildTelegramLoginOptsFromCtx } = require('./datainfoPoints');
 const { tgRegisterLog } = require('./tgRegisterDebug');
 const { resolveLoginPhotoUrlForRegister } = require('./telegramUserPhoto');
 
@@ -32,7 +32,7 @@ function parseRegisteredFlag(json) {
  * @param {object} [state]
  */
 function loginOptsFromCtx(ctx, state) {
-  const opts = buildTelegramLoginOpts(ctx.from);
+  const opts = buildTelegramLoginOptsFromCtx(ctx);
   if (state?.groupReferrer?.inviteCode) {
     opts.inviteCode = state.groupReferrer.inviteCode;
   }
@@ -52,15 +52,22 @@ async function performTelegramRegisterViaApi(config, ctx) {
     return { ok: false, message: 'no_user' };
   }
   const uidStr = String(uid);
+  const chatType = ctx.chat?.type || 'unknown';
+  const groupId = ctx.chat?.id;
   const loginOpts = loginOptsFromCtx(ctx, ctx.state);
+  if (!String(ctx.from?.username || ctx.from?.first_name || '').trim() && loginOpts.username) {
+    tgRegisterLog('username 使用群名+tgid 兜底', {
+      telegramId: uidStr,
+      chatId: groupId ?? null,
+      username: loginOpts.username,
+    });
+  }
   loginOpts.photoUrl = await resolveLoginPhotoUrlForRegister(
     ctx.telegram,
     config,
     uid,
     loginOpts.photoUrl,
   );
-  const chatType = ctx.chat?.type || 'unknown';
-  const groupId = ctx.chat?.id;
 
   tgRegisterLog('开始', {
     telegramId: uidStr,

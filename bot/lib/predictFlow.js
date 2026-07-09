@@ -44,7 +44,7 @@ const {
   predictPublishLog,
 } = require('./predictDebug');
 const { ensureTgUserToken, getCachedUserId } = require('./tgUserTokenCache');
-const { buildTelegramLoginOpts } = require('./datainfoPoints');
+const { buildTelegramLoginOptsFromCtx } = require('./datainfoPoints');
 const {
   savePredictSession,
   getPredictSession,
@@ -1226,7 +1226,7 @@ async function registerCoinDirectionGuessPublish(ctx, config, { publishChatId, s
 
   let auth = '';
   try {
-    auth = await ensureTgUserToken(config, uid, buildTelegramLoginOpts(ctx.from));
+    auth = await ensureTgUserToken(config, uid, buildTelegramLoginOptsFromCtx(ctx));
   } catch (err) {
     predictLog('publish.api.auth_fail', { uid, message: err?.message || String(err) });
   }
@@ -1308,7 +1308,7 @@ async function bindCoinDirectionGuessMessage(ctx, config, { guessNo, tgMessageId
 
   let auth = '';
   try {
-    auth = await ensureTgUserToken(config, uid, buildTelegramLoginOpts(ctx.from));
+    auth = await ensureTgUserToken(config, uid, buildTelegramLoginOptsFromCtx(ctx));
   } catch (err) {
     predictLog('bind.api.auth_fail', { uid, message: err?.message || String(err) });
   }
@@ -2677,7 +2677,7 @@ async function submitGuessBet(ctx, config, getTexts, guessNo, direction, betAmou
 
   predictLog('bet.attempt', { telegramId: uid, guessNo: guess, choice, betAmount: pts });
 
-  const loginOpts = buildTelegramLoginOpts(ctx.from);
+  const loginOpts = buildTelegramLoginOptsFromCtx(ctx);
   let auth = '';
   try {
     auth = await ensureTgUserToken(config, uid, loginOpts);

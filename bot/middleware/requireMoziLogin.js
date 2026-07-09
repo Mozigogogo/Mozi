@@ -4,13 +4,13 @@ const { postUserSessionTokenCheck } = require('../lib/apis');
 const { ensureTgUserToken, clearCachedToken } = require('../lib/tgUserTokenCache');
 const { buildBindAccountKeyboard } = require('../lib/moziBindKeyboard');
 const { saveAndWatchPendingAiChat } = require('../lib/tgChatPendingSave');
-const { buildTelegramLoginOpts } = require('../lib/datainfoPoints');
+const { buildTelegramLoginOptsFromCtx } = require('../lib/datainfoPoints');
 
 /** 与 inline_keyboard 中 callback_data 一致（须 ≤64 字节） */
 const CALLBACK_MOZI_RELOGIN = 'mozi_rl';
 
-function loginOptsFromTgFrom(from) {
-  return buildTelegramLoginOpts(from);
+function loginOptsFromCtx(ctx) {
+  return buildTelegramLoginOptsFromCtx(ctx);
 }
 
 /**
@@ -65,7 +65,7 @@ function createRequireMoziLogin(config, { getTexts }) {
     const languageCode = ctx.from?.language_code || 'en';
     const texts = getTexts(languageCode);
     const uidStr = String(uid);
-    const loginOpts = loginOptsFromTgFrom(ctx.from);
+    const loginOpts = loginOptsFromCtx(ctx);
     if (ctx.state?.groupReferrer?.inviteCode) {
       loginOpts.inviteCode = ctx.state.groupReferrer.inviteCode;
     }
@@ -125,7 +125,7 @@ function registerMoziReloginCallback(bot, config, { getTexts }) {
     clearCachedToken(uidStr);
     let token = '';
     try {
-      const reloginOpts = loginOptsFromTgFrom(ctx.from);
+      const reloginOpts = loginOptsFromCtx(ctx);
       if (ctx.state?.groupReferrer?.inviteCode) {
         reloginOpts.inviteCode = ctx.state.groupReferrer.inviteCode;
       }

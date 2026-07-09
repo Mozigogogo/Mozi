@@ -2,7 +2,7 @@
  * /balance：GET /user/datainfo，展示 totalPoints。私聊直接回复；群内与 /help 相同——尝试私信用户，失败则群内一行提示。
  */
 
-const { loadMoziDatainfoPoints, buildTelegramLoginOpts } = require('../lib/datainfoPoints');
+const { loadMoziDatainfoPoints, buildTelegramLoginOptsFromCtx } = require('../lib/datainfoPoints');
 const { setUserRemainingPointsCache } = require('../lib/userRemainingPointsCache');
 const { buildBindAccountKeyboard } = require('../lib/moziBindKeyboard');
 const { escapeHtml } = require('../lib/telegramHtml');
@@ -65,7 +65,7 @@ async function runBalanceCommand(ctx, config, texts) {
   await ctx.telegram.sendChatAction(ctx.chat.id, 'typing').catch(() => {});
 
   const uidStr = String(uid);
-  const loginOpts = buildTelegramLoginOpts(ctx.from);
+  const loginOpts = buildTelegramLoginOptsFromCtx(ctx);
 
   const r = await loadMoziDatainfoPoints(config, uidStr, loginOpts);
 

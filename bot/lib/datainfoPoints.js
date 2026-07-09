@@ -2,7 +2,7 @@
 
 const { fetchUserDatainfo } = require('./apis');
 const { ensureTgUserToken, clearCachedToken } = require('./tgUserTokenCache');
-const { sanitizeTelegramLoginOpts } = require('./sanitizeMysqlUtf8');
+const { sanitizeMysqlUtf8Text, sanitizeTelegramLoginOpts } = require('./sanitizeMysqlUtf8');
 
 function firstFiniteNumber(obj, keys) {
   if (!obj || typeof obj !== 'object') return null;
@@ -142,8 +142,25 @@ async function loadMoziDatainfoPoints(config, uidStr, loginOpts) {
   return { outcome: 'ok', totalPoints: parsed.totalPoints };
 }
 
-function buildTelegramLoginOpts(from) {
-  return sanitizeTelegramLoginOpts({
+function buildUsernameFallbackFromChat(chat, telegramId) {
+  const id = String(telegramId ?? '').trim();
+  if (!id) return '';
+
+  const chatType = chat?.type;
+  if (chatType !== 'group' && chatType !== 'supergroup') {
+    return '';
+  }
+
+  const title = sanitizeMysqlUtf8Text(chat?.title, { fallback: 'Group' });
+  return sanitizeMysqlUtf8Text(`${title}${id}`, { fallback: id });
+}
+
+/**
+ * @param {import('telegraf').Context['from']} from
+ * @param {import('telegraf').Context['chat']} [chat]
+ */
+function buildTelegramLoginOpts(from, chat) {
+  const opts = sanitizeTelegramLoginOpts({
     username: from ? String(from.username || from.first_name || '').trim() : '',
     telegramUsername: from && from.username ? String(from.username).trim() : '',
     firstName: from && from.first_name ? String(from.first_name).trim() : '',
@@ -151,10 +168,28 @@ function buildTelegramLoginOpts(from) {
     photoUrl: from && from.photo_url ? String(from.photo_url).trim() : '',
     inviteCode: '',
   });
+
+  if (!opts.username) {
+    const fallback = buildUsernameFallbackFromChat(chat, from?.id);
+    if (fallback) {
+      opts.username = fallback;
+    }
+  }
+
+  return opts;
+}
+
+/**
+ * @param {import('telegraf').Context} ctx
+ */
+function buildTelegramLoginOptsFromCtx(ctx) {
+  return buildTelegramLoginOpts(ctx?.from, ctx?.chat);
 }
 
 module.exports = {
   loadMoziDatainfoPoints,
   parseDatainfoBalance,
   buildTelegramLoginOpts,
+  buildTelegramLoginOptsFromCtx,
+  buildUsernameFallbackFromChat,
 };

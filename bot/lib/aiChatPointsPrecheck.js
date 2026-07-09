@@ -1,6 +1,6 @@
 'use strict';
 
-const { loadMoziDatainfoPoints, buildTelegramLoginOpts } = require('./datainfoPoints');
+const { loadMoziDatainfoPoints, buildTelegramLoginOptsFromCtx } = require('./datainfoPoints');
 const { replyDatainfoPrecheckFailure } = require('./replyDatainfoPrecheckFailure');
 const { replyOrDmUserHtml } = require('./replyOrDmUserHtml');
 const { getUserRemainingPointsCache, setUserRemainingPointsCache } = require('./userRemainingPointsCache');
@@ -37,7 +37,7 @@ async function precheckAiChatPointsGate(ctx, config, texts, options) {
     }
   }
 
-  const di = await loadMoziDatainfoPoints(config, uidStr, buildTelegramLoginOpts(ctx.from));
+  const di = await loadMoziDatainfoPoints(config, uidStr, buildTelegramLoginOptsFromCtx(ctx));
   if (di.outcome !== 'ok') {
     await replyDatainfoPrecheckFailure(ctx, config, texts, di, precheckDmFailed);
     return false;

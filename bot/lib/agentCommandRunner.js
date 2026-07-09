@@ -7,7 +7,7 @@
 const { requestAgentStream } = require('./apis');
 const { precheckAiChatPointsGate } = require('./aiChatPointsPrecheck');
 const { ensureTgUserToken } = require('./tgUserTokenCache');
-const { buildTelegramLoginOpts } = require('./datainfoPoints');
+const { buildTelegramLoginOptsFromCtx } = require('./datainfoPoints');
 const { withTypingWhileAwaiting } = require('./telegramTypingPulse');
 const { aiMarkdownToTelegramHtml, escapeHtml, buildHtmlChunks, splitOversized } = require('./telegramHtml');
 const {
@@ -20,7 +20,7 @@ const { replyOrDmUserHtml } = require('./replyOrDmUserHtml');
 async function ensureUserAgentToken(ctx, config, texts) {
   const uid = ctx.from?.id;
   if (uid == null) return '';
-  const loginOpts = buildTelegramLoginOpts(ctx.from);
+  const loginOpts = buildTelegramLoginOptsFromCtx(ctx);
   if (ctx.state?.groupReferrer?.inviteCode) {
     loginOpts.inviteCode = ctx.state.groupReferrer.inviteCode;
   }
