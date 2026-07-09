@@ -402,7 +402,7 @@ function formatAiWinRateLine(winRate, winCount, lossCount, languageCode) {
 }
 
 function buildGroupPublishHtml(texts, meta, statsRaw) {
-  const stats = normalizeGuessBetStats(statsRaw, meta.languageCode);
+  const stats = mapStatsForFollowOppositeDisplay(statsRaw, meta.aiDirection, meta.languageCode);
   const lockedAt = formatLockedAtDisplay(meta.lockedAtMs, meta.languageCode);
   const betDeadline =
     meta.betEndAt != null ? formatBetDeadlineDisplay(meta.betEndAt, meta.languageCode) : '—';
@@ -428,7 +428,7 @@ function buildGroupPublishHtml(texts, meta, statsRaw) {
 }
 
 function buildGroupLockedHtml(texts, meta, statsRaw) {
-  const stats = normalizeGuessBetStats(statsRaw, meta.languageCode);
+  const stats = mapStatsForFollowOppositeDisplay(statsRaw, meta.aiDirection, meta.languageCode);
   const upPoints = Number(statsRaw?.upPoints) || 0;
   const downPoints = Number(statsRaw?.downPoints) || 0;
   const prizePool = formatPointsDisplay(upPoints + downPoints, meta.languageCode);
@@ -489,6 +489,34 @@ function resolveFollowAiChoice(aiDirection) {
   if (aiDirection === 'UP') return 1;
   if (aiDirection === 'DOWN') return 2;
   return null;
+}
+
+/** AI 跟注的实际下注方向（long→涨，short→跌） */
+function resolveAiFollowBetDirection(aiDirection) {
+  if (aiDirection === 'UP' || aiDirection === 'DOWN') return aiDirection;
+  return 'UP';
+}
+
+function resolveAiOppositeBetDirection(aiDirection) {
+  return resolveAiFollowBetDirection(aiDirection) === 'UP' ? 'DOWN' : 'UP';
+}
+
+function directionToBetCallbackToken(direction) {
+  return direction === 'DOWN' ? 'DN' : 'UP';
+}
+
+/** 原始 up/down 统计 → 文案「跟注AI / 反向下注」对应的数据 */
+function mapStatsForFollowOppositeDisplay(raw, aiDirection, languageCode) {
+  const base = normalizeGuessBetStats(raw, languageCode);
+  const followIsUp = resolveAiFollowBetDirection(aiDirection) === 'UP';
+  return {
+    upCount: followIsUp ? base.upCount : base.downCount,
+    downCount: followIsUp ? base.downCount : base.upCount,
+    upPoints: followIsUp ? base.upPoints : base.downPoints,
+    downPoints: followIsUp ? base.downPoints : base.upPoints,
+    upPercent: followIsUp ? base.upPercent : base.downPercent,
+    downPercent: followIsUp ? base.downPercent : base.upPercent,
+  };
 }
 
 function resolveSettledBetLabel(texts, choice, aiDirection) {
@@ -1071,26 +1099,28 @@ async function applyGuessActiveRefreshFromDetail({
     ...(item ? buildMetaFromGuessItem(item, meta.languageCode, meta.publisher) : {}),
   };
   const html = buildGroupPublishHtml(texts, merged, statsRaw);
-  const keyboard = buildGuessBetKeyboard(texts, guessNo);
+  const keyboard = buildGuessBetKeyboard(texts, guessNo, merged.aiDirection);
   return editTelegramGuessMessage(telegram, chatId, messageId, html, keyboard, hasPhoto, {
     guessNo,
     config,
   });
 }
 
-function buildGuessBetKeyboard(texts, guessNo) {
+function buildGuessBetKeyboard(texts, guessNo, aiDirection) {
   const g = String(guessNo || '').trim();
+  const followToken = directionToBetCallbackToken(resolveAiFollowBetDirection(aiDirection));
+  const oppositeToken = directionToBetCallbackToken(resolveAiOppositeBetDirection(aiDirection));
   return {
     inline_keyboard: [
       [
-        { text: texts.predictBetUp50Btn, callback_data: `g:b:UP:50:${g}` },
-        { text: texts.predictBetUp100Btn, callback_data: `g:b:UP:100:${g}` },
-        { text: texts.predictBetUpCustomBtn, callback_data: `g:b:UP:cst:${g}` },
+        { text: texts.predictBetUp50Btn, callback_data: `g:b:${followToken}:50:${g}` },
+        { text: texts.predictBetUp100Btn, callback_data: `g:b:${followToken}:100:${g}` },
+        { text: texts.predictBetUpCustomBtn, callback_data: `g:b:${followToken}:cst:${g}` },
       ],
       [
-        { text: texts.predictBetDown50Btn, callback_data: `g:b:DN:50:${g}` },
-        { text: texts.predictBetDown100Btn, callback_data: `g:b:DN:100:${g}` },
-        { text: texts.predictBetDownCustomBtn, callback_data: `g:b:DN:cst:${g}` },
+        { text: texts.predictBetDown50Btn, callback_data: `g:b:${oppositeToken}:50:${g}` },
+        { text: texts.predictBetDown100Btn, callback_data: `g:b:${oppositeToken}:100:${g}` },
+        { text: texts.predictBetDownCustomBtn, callback_data: `g:b:${oppositeToken}:cst:${g}` },
       ],
     ],
   };
@@ -1177,12 +1207,13 @@ async function syncGuessPublishCardFromDetail({
       return;
     }
     const html = buildGroupPublishHtml(texts, meta, statsRaw);
+    const refreshedKeyboard = buildGuessBetKeyboard(texts, guess, meta.aiDirection);
     const ok = await editTelegramGuessMessage(
       telegram,
       chatId,
       messageId,
       html,
-      keyboard,
+      refreshedKeyboard,
       hasPhoto,
       { guessNo: guess, config },
     );
@@ -2167,7 +2198,9 @@ async function publishPredict(ctx, config, getTexts) {
     ...resolveGuessAiSignalMeta(publishData),
   };
   const groupPublishHtml = buildGroupPublishHtml(texts, messageMeta, null);
-  const betKeyboard = guessNo ? buildGuessBetKeyboard(texts, guessNo) : undefined;
+  const betKeyboard = guessNo
+    ? buildGuessBetKeyboard(texts, guessNo, messageMeta.aiDirection)
+    : undefined;
   const sendExtra = betKeyboard ? { parse_mode: 'HTML', reply_markup: betKeyboard } : { parse_mode: 'HTML' };
 
   if (guessNo) {
@@ -2617,7 +2650,7 @@ async function tryRefreshGuessMessage(ctx, config, texts, guessNo, betResult) {
   }
 
   const html = buildGroupPublishHtml(texts, meta, statsRaw);
-  const keyboard = buildGuessBetKeyboard(texts, guess);
+  const keyboard = buildGuessBetKeyboard(texts, guess, meta?.aiDirection);
   const ok = await editGuessMessageContent(ctx, chatId, messageId, html, keyboard, hasPhoto, guess, config);
   if (statusItem) {
     patchGuessMessageContext(guess, { lastKnownStatus: resolveGuessPollStatus(statusItem) });
@@ -2645,7 +2678,23 @@ async function submitGuessBet(ctx, config, getTexts, guessNo, direction, betAmou
   const texts = getTexts(languageCode);
   const isZh = languageCode.toLowerCase().startsWith('zh');
   const choice = direction === 'DOWN' ? 2 : 1;
-  const dirLabel = choice === 1 ? (isZh ? '跟注AI' : 'Follow AI') : (isZh ? '反向下注' : 'Bet opposite');
+  const followChoice = resolveFollowAiChoice(getGuessMessageContext(guess)?.aiDirection);
+  const dirLabel =
+    followChoice == null
+      ? choice === 1
+        ? isZh
+          ? '涨'
+          : 'Up'
+        : isZh
+          ? '跌'
+          : 'Down'
+      : choice === followChoice
+        ? isZh
+          ? '跟注AI'
+          : 'Follow AI'
+        : isZh
+          ? '反向下注'
+          : 'Bet opposite';
   const guess = String(guessNo || '').trim();
   const pts = Math.floor(Number(betAmount));
 
@@ -2791,7 +2840,10 @@ async function handleGuessBetNumpadAction(ctx, config, getTexts, action) {
   if (action === 'menu') {
     clearGuessBetCustomSession(uid);
     await ctx.answerCbQuery().catch(() => {});
-    await editGuessCallbackKeyboard(ctx, buildGuessBetKeyboard(texts, session.guessNo));
+    await editGuessCallbackKeyboard(
+      ctx,
+      buildGuessBetKeyboard(texts, session.guessNo, getGuessMessageContext(session.guessNo)?.aiDirection),
+    );
     return;
   }
 
