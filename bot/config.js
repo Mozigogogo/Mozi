@@ -224,6 +224,16 @@ const TG_GROUP_LEAVE_PATH = (
   process.env.TG_GROUP_LEAVE_PATH || 'tg/stats/group/leave'
 ).trim().replace(/^\/+/, '');
 
+/** GET 按 Telegram 用户 ID 查询其群列表（/predict_schedule），默认 tg/stats/group/listByTelegramId */
+const TG_GROUP_LIST_BY_TELEGRAM_ID_PATH = (
+  process.env.TG_GROUP_LIST_BY_TELEGRAM_ID_PATH || 'tg/stats/group/listByTelegramId'
+).trim().replace(/^\/+/, '');
+
+/** POST 群档案/自动推送开关（相对 API_BASE_URL），默认 tg/stats/group/save */
+const TG_GROUP_SAVE_PATH = (process.env.TG_GROUP_SAVE_PATH || 'tg/stats/group/save')
+  .trim()
+  .replace(/^\/+/, '');
+
 module.exports = {
   BOT_TOKEN,
   APP_URL,
@@ -268,4 +278,6 @@ module.exports = {
   TG_COMMAND_USAGE_PATH,
   TG_COMMAND_USAGE_FLUSH_MS,
   TG_GROUP_LEAVE_PATH,
+  TG_GROUP_LIST_BY_TELEGRAM_ID_PATH,
+  TG_GROUP_SAVE_PATH,
 };

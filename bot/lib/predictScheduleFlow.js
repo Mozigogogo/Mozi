@@ -1,86 +1,59 @@
 'use strict';
 
 const { Markup } = require('telegraf');
-const { isTelegramUserGroupCreator } = require('./groupOwnerReferrer');
 const { ensureTgUserToken } = require('./tgUserTokenCache');
-const { getCoinDirectionGuessScheduleMy, putCoinDirectionGuessScheduleSave } = require('./apis');
-const {
-  listScheduleGroupsForOwner,
-  getLocalScheduleConfig,
-  setLocalScheduleConfig,
-  DEFAULT_PUBLISH_TIME,
-} = require('./predictScheduleStore');
+const { getTgStatsGroupListByTelegramId, postTgStatsGroupSave } = require('./apis');
+const { buildTelegramLoginOptsFromCtx } = require('./datainfoPoints');
+const { DEFAULT_PUBLISH_TIME } = require('./predictScheduleStore');
 
 /**
  * @param {import('telegraf').Context} ctx
- */
-function loginOptsFromCtx(ctx) {
-  const from = ctx.from || {};
-  return {
-    telegramUsername: from.username || '',
-    firstName: from.first_name || '',
-    lastName: from.last_name || '',
-  };
-}
-
-/**
  * @param {object} config
- * @param {number | string} uid
- * @param {object} loginOpts
  */
-async function fetchRemoteSchedules(config, uid, loginOpts) {
+async function fetchOwnerGroupsFromApi(ctx, config) {
+  const uid = ctx.from?.id;
+  if (uid == null) return { ok: false, items: [] };
+
+  const loginOpts = buildTelegramLoginOptsFromCtx(ctx);
   const token = await ensureTgUserToken(config, String(uid), loginOpts);
-  if (!token) return { ok: false, items: [] };
-  const res = await getCoinDirectionGuessScheduleMy({
-    apiBaseUrl: config.API_BASE_URL,
-    auth: token,
-    appUrl: config.APP_URL,
-    telegramId: uid,
-    path: config.COIN_DIRECTION_GUESS_SCHEDULE_MY_PATH,
-  });
-  return { ok: res.ok, items: res.items || [] };
+  const auth = token || config.MOZI_DETAIL_AUTH || '';
+  if (!auth) return { ok: false, items: [] };
+
+  try {
+    const res = await getTgStatsGroupListByTelegramId({
+      apiBaseUrl: config.API_BASE_URL,
+      telegramId: uid,
+      auth,
+      appUrl: config.APP_URL,
+      path: config.TG_GROUP_LIST_BY_TELEGRAM_ID_PATH,
+    });
+    return { ok: res.ok, items: res.items || [] };
+  } catch {
+    return { ok: false, items: [] };
+  }
 }
 
 /**
- * @param {object[]} localGroups
- * @param {object[]} remoteItems
+ * @param {object[]} items
+ * @returns {object[]}
  */
-function mergeOwnerScheduleGroups(localGroups, remoteItems) {
-  /** @type {Map<number, { groupId: number; groupTitle: string; enabled: boolean; publishTime: string }>} */
-  const map = new Map();
-
-  for (const g of localGroups) {
-    const id = Number(g.groupId);
-    if (!Number.isFinite(id)) continue;
-    const localCfg = getLocalScheduleConfig(id);
-    map.set(id, {
-      groupId: id,
-      groupTitle: String(g.groupTitle || '').trim() || `群 ${id}`,
-      enabled: Boolean(localCfg?.enabled),
-      publishTime: String(localCfg?.publishTime || DEFAULT_PUBLISH_TIME),
-    });
-  }
-
-  for (const item of remoteItems) {
-    const id = Number(item.groupId);
-    if (!Number.isFinite(id)) continue;
-    const prev = map.get(id) || {
-      groupId: id,
-      groupTitle: `群 ${id}`,
-      enabled: false,
-      publishTime: DEFAULT_PUBLISH_TIME,
-    };
-    map.set(id, {
-      groupId: id,
-      groupTitle: String(item.groupTitle || prev.groupTitle || `群 ${id}`).trim(),
-      enabled: item.enabled != null ? Boolean(item.enabled) : prev.enabled,
-      publishTime: String(item.publishTime || prev.publishTime || DEFAULT_PUBLISH_TIME),
-    });
-  }
-
-  return Array.from(map.values()).sort(
-    (a, b) => String(a.groupTitle).localeCompare(String(b.groupTitle)) || a.groupId - b.groupId,
-  );
+function normalizeScheduleGroups(items) {
+  return (Array.isArray(items) ? items : [])
+    .map((item) => {
+      const groupId = Number(item.groupId);
+      if (!Number.isFinite(groupId)) return null;
+      return {
+        groupId,
+        groupTitle: String(item.groupTitle || '').trim() || `群 ${groupId}`,
+        enabled: Boolean(item.enabled),
+        publishTime: DEFAULT_PUBLISH_TIME,
+        autoPublishGuess: item.autoPublishGuess === 1 ? 1 : 0,
+      };
+    })
+    .filter(Boolean)
+    .sort(
+      (a, b) => String(a.groupTitle).localeCompare(String(b.groupTitle)) || a.groupId - b.groupId,
+    );
 }
 
 /**
@@ -125,12 +98,10 @@ async function renderSchedulePanel(ctx, config, getTexts, opts = {}) {
   const uid = ctx.from?.id;
   if (uid == null) return;
   const texts = getTexts(ctx.from?.language_code || 'en');
-  const loginOpts = loginOptsFromCtx(ctx);
 
-  const localGroups = listScheduleGroupsForOwner(uid);
-  const remote = await fetchRemoteSchedules(config, uid, loginOpts);
-  const groups = mergeOwnerScheduleGroups(localGroups, remote.items);
-  const publishTime = groups.find((g) => g.publishTime)?.publishTime || DEFAULT_PUBLISH_TIME;
+  const remote = await fetchOwnerGroupsFromApi(ctx, config);
+  const groups = normalizeScheduleGroups(remote.items);
+  const publishTime = DEFAULT_PUBLISH_TIME;
 
   const text = buildSchedulePanelText(texts, groups, publishTime);
   const keyboard = buildSchedulePanelKeyboard(texts, groups);
@@ -183,29 +154,34 @@ async function handleScheduleToggle(ctx, config, getTexts, groupId, enabled) {
   if (uid == null) return;
   const texts = getTexts(ctx.from?.language_code || 'en');
 
-  const isOwner = await isTelegramUserGroupCreator(ctx.telegram, groupId, uid);
-  if (!isOwner) {
+  const loginOpts = buildTelegramLoginOptsFromCtx(ctx);
+  const token = await ensureTgUserToken(config, String(uid), loginOpts);
+  const auth = token || config.MOZI_DETAIL_AUTH || '';
+  if (!auth) {
     await ctx
       .answerCbQuery(texts.predictScheduleNotOwnerToast, { show_alert: true })
       .catch(() => {});
     return;
   }
 
-  const localCfg = getLocalScheduleConfig(groupId);
-  const publishTime = String(localCfg?.publishTime || DEFAULT_PUBLISH_TIME);
-  setLocalScheduleConfig({ groupId, ownerTelegramId: uid, enabled, publishTime });
-
-  const token = await ensureTgUserToken(config, String(uid), loginOptsFromCtx(ctx));
-  if (token) {
-    await putCoinDirectionGuessScheduleSave({
+  const autoPublishGuess = enabled ? 1 : 0;
+  try {
+    const saveRes = await postTgStatsGroupSave({
       apiBaseUrl: config.API_BASE_URL,
-      auth: token,
+      auth,
       appUrl: config.APP_URL,
-      groupId,
-      enabled,
-      publishTime,
-      path: config.COIN_DIRECTION_GUESS_SCHEDULE_SAVE_PATH,
-    }).catch(() => {});
+      path: config.TG_GROUP_SAVE_PATH,
+      groups: [{ groupId: Number(groupId), autoPublishGuess }],
+    });
+    if (!saveRes.ok) {
+      await ctx
+        .answerCbQuery(texts.predictScheduleNotOwnerToast, { show_alert: true })
+        .catch(() => {});
+      return;
+    }
+  } catch {
+    await ctx.answerCbQuery(texts.predictScheduleNotOwnerToast, { show_alert: true }).catch(() => {});
+    return;
   }
 
   const toast = enabled ? texts.predictScheduleEnabledToast : texts.predictScheduleDisabledToast;
@@ -217,4 +193,6 @@ module.exports = {
   executePredictScheduleCommand,
   handleScheduleRefresh,
   handleScheduleToggle,
+  fetchOwnerGroupsFromApi,
+  normalizeScheduleGroups,
 };

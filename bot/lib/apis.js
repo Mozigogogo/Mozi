@@ -1799,6 +1799,151 @@ async function postGroupReferrerBind({
   }
 }
 
+// --- GET /tg/stats/group/listByTelegramId（/predict_schedule 群列表）----------------
+
+/**
+ * @param {object | null} json
+ * @returns {object[]}
+ */
+function parseTgStatsGroupListByTelegramId(json) {
+  if (!json || typeof json !== 'object') return [];
+  const data = json.data;
+  if (Array.isArray(data)) {
+    return data.filter((item) => item && typeof item === 'object');
+  }
+  if (data && typeof data === 'object' && Array.isArray(data.list)) {
+    return data.list.filter((item) => item && typeof item === 'object');
+  }
+  return [];
+}
+
+/**
+ * @param {object | null} raw
+ * @returns {{
+ *   groupId: number;
+ *   groupTitle: string;
+ *   avatar: string;
+ *   ownerUserId: string;
+ *   memberCount: number | null;
+ *   status: number | null;
+ *   autoPublishGuess: number;
+ *   enabled: boolean;
+ * } | null}
+ */
+function parseTgStatsGroupListItem(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const groupId = Number(raw.groupId ?? raw.group_id ?? raw.chatId ?? raw.chat_id);
+  if (!Number.isFinite(groupId)) return null;
+  const autoRaw = raw.autoPublishGuess ?? raw.auto_publish_guess ?? raw.autoPublish ?? 0;
+  const autoPublishGuess = Number(autoRaw) === 1 || autoRaw === true ? 1 : 0;
+  const memberCountRaw = raw.memberCount ?? raw.member_count;
+  const memberCount =
+    memberCountRaw == null || !Number.isFinite(Number(memberCountRaw))
+      ? null
+      : Math.floor(Number(memberCountRaw));
+  const statusRaw = raw.status;
+  const status = statusRaw == null || !Number.isFinite(Number(statusRaw)) ? null : Number(statusRaw);
+  return {
+    groupId,
+    groupTitle: String(raw.groupTitle ?? raw.title ?? raw.group_title ?? '').trim(),
+    avatar: String(raw.avatar ?? raw.avatarUrl ?? '').trim(),
+    ownerUserId: String(raw.ownerUserId ?? raw.owner_user_id ?? '').trim(),
+    memberCount,
+    status,
+    autoPublishGuess,
+    enabled: autoPublishGuess === 1,
+  };
+}
+
+/**
+ * GET /tg/stats/group/listByTelegramId?telegramId=
+ * @param {{
+ *   apiBaseUrl: string;
+ *   telegramId: string | number;
+ *   auth?: string;
+ *   appUrl?: string;
+ *   path?: string;
+ *   timeoutMs?: number;
+ * }} opts
+ */
+async function getTgStatsGroupListByTelegramId({
+  apiBaseUrl,
+  telegramId,
+  auth = '',
+  appUrl = '',
+  path = 'tg/stats/group/listByTelegramId',
+  timeoutMs = 15000,
+}) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const rel = String(path || 'tg/stats/group/listByTelegramId').trim().replace(/^\/+/, '');
+  const q = new URLSearchParams({ telegramId: String(telegramId) });
+  const url = `${base}/${rel}?${q.toString()}`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    'user-agent': DEFAULT_UA,
+  };
+  const rawAuth = String(auth || '').trim().replace(/^Bearer\s+/i, '');
+  if (rawAuth) {
+    headers.authentication = rawAuth;
+  }
+  if (app) {
+    headers.referer = `${app}/`;
+  }
+  tgGroupStatsLog('request', {
+    method: 'GET',
+    url,
+    params: { telegramId: String(telegramId) },
+    hasAuth: Boolean(rawAuth),
+  });
+  try {
+    const res = await fetch(url, { method: 'GET', headers, signal: ctrl.signal });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const code = json && typeof json === 'object' ? json.code : undefined;
+    const bizOk = code === undefined || code === 0 || code === 200;
+    const items = parseTgStatsGroupListByTelegramId(json)
+      .map(parseTgStatsGroupListItem)
+      .filter(Boolean);
+    const out = {
+      ok: res.status === 200 && bizOk,
+      status: res.status,
+      json,
+      text,
+      items,
+      errorMessage: parseApiErrorMessage(json),
+    };
+    tgGroupStatsLog('response', {
+      method: 'GET',
+      url,
+      httpStatus: res.status,
+      ok: out.ok,
+      itemCount: items.length,
+      json,
+      text: text.slice(0, 2000),
+    });
+    return out;
+  } catch (err) {
+    tgGroupStatsLog('response_error', {
+      method: 'GET',
+      url,
+      message: err?.message || String(err),
+    });
+    throw err;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 // --- POST /tg/stats/group/save（Bot 上报群档案/统计）---------------------------
 
 /**
@@ -1862,6 +2007,9 @@ async function postTgStatsGroupSave({
       const memberCount = Number(row.memberCount);
       if (Number.isFinite(memberCount) && memberCount >= 0) {
         item.memberCount = Math.floor(memberCount);
+      }
+      if (row.autoPublishGuess != null) {
+        item.autoPublishGuess = Number(row.autoPublishGuess) ? 1 : 0;
       }
       return item;
     })
@@ -3459,6 +3607,8 @@ module.exports = {
   postTgRegisteredCheck,
   postTgStatsGroupSave,
   postTgStatsGroupLeave,
+  getTgStatsGroupListByTelegramId,
+  parseTgStatsGroupListItem,
   postTgStatsCommand,
   postTgChatSave,
   getTgChatGet,
