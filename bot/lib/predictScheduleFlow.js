@@ -125,12 +125,17 @@ function normalizeScheduleGroups(items) {
  */
 function buildSchedulePanelKeyboard(texts, groups) {
   const rows = groups.map((g) => {
-    const title = String(g.groupTitle || g.groupId).slice(0, 40);
-    const label = g.enabled
-      ? texts.predictScheduleBtnOn(title)
-      : texts.predictScheduleBtnOff(title);
-    const data = `ps:t:${g.groupId}:${g.enabled ? 0 : 1}`;
-    return [Markup.button.callback(label, data)];
+    const title = String(g.groupTitle || g.groupId).slice(0, 16);
+    return [
+      Markup.button.callback(
+        texts.predictScheduleEnableBtn(title, g.enabled),
+        `ps:t:${g.groupId}:1`,
+      ),
+      Markup.button.callback(
+        texts.predictScheduleDisableBtn(title, g.enabled),
+        `ps:t:${g.groupId}:0`,
+      ),
+    ];
   });
   rows.push([Markup.button.callback(texts.predictScheduleRefreshBtn, 'ps:r')]);
   return Markup.inlineKeyboard(rows);
@@ -157,6 +162,17 @@ function buildSchedulePanelText(texts, groups, publishTime) {
 
 /**
  * @param {import('telegraf').Context} ctx
+ * @param {{ message_id?: number } | null | undefined} loadingMsg
+ */
+async function dismissScheduleLoadingMessage(ctx, loadingMsg) {
+  const chatId = ctx.chat?.id;
+  const messageId = loadingMsg?.message_id;
+  if (chatId == null || messageId == null) return;
+  await ctx.telegram.deleteMessage(chatId, messageId).catch(() => {});
+}
+
+/**
+ * @param {import('telegraf').Context} ctx
  * @param {object} config
  * @param {Function} getTexts
  * @param {{ edit?: boolean; skipLoading?: boolean }} [opts]
@@ -166,13 +182,16 @@ async function renderSchedulePanel(ctx, config, getTexts, opts = {}) {
   if (uid == null) return;
   const texts = getTexts(ctx.from?.language_code || 'en');
 
+  /** @type {{ message_id?: number } | null} */
+  let loadingMsg = null;
   if (!opts.skipLoading && !opts.edit) {
-    await ctx.reply(texts.predictScheduleLoading, { parse_mode: 'HTML' }).catch(() => {});
+    loadingMsg = await ctx.reply(texts.predictScheduleLoading, { parse_mode: 'HTML' }).catch(() => null);
   }
 
   const remote = await fetchOwnerGroupsFromApi(ctx, config);
   if (remote.authMissing) {
     tgGroupListLog('panel.auth_missing', { telegramId: uid, error: remote.error || null });
+    await dismissScheduleLoadingMessage(ctx, loadingMsg);
     await ctx.reply(texts.predictScheduleNeedLogin, { parse_mode: 'HTML' }).catch(() => {});
     return;
   }
@@ -183,6 +202,7 @@ async function renderSchedulePanel(ctx, config, getTexts, opts = {}) {
       httpStatus: remote.httpStatus,
       errorMessage: remote.errorMessage || remote.error || null,
     });
+    await dismissScheduleLoadingMessage(ctx, loadingMsg);
     await ctx.reply(texts.predictScheduleFetchFailed, { parse_mode: 'HTML' }).catch(() => {});
     return;
   }
@@ -201,6 +221,8 @@ async function renderSchedulePanel(ctx, config, getTexts, opts = {}) {
       /* fall through */
     }
   }
+
+  await dismissScheduleLoadingMessage(ctx, loadingMsg);
   await ctx.reply(text, extra).catch(async (err) => {
     tgGroupListLog('panel.reply_error', {
       telegramId: uid,
