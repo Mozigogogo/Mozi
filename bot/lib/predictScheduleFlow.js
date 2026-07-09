@@ -127,14 +127,8 @@ function buildSchedulePanelKeyboard(texts, groups) {
   const rows = groups.map((g) => {
     const title = String(g.groupTitle || g.groupId).slice(0, 16);
     return [
-      Markup.button.callback(
-        texts.predictScheduleEnableBtn(title, g.enabled),
-        `ps:t:${g.groupId}:1`,
-      ),
-      Markup.button.callback(
-        texts.predictScheduleDisableBtn(title, g.enabled),
-        `ps:t:${g.groupId}:0`,
-      ),
+      Markup.button.callback(texts.predictScheduleEnableBtn(title), `ps:t:${g.groupId}:1`),
+      Markup.button.callback(texts.predictScheduleDisableBtn(title), `ps:t:${g.groupId}:0`),
     ];
   });
   rows.push([Markup.button.callback(texts.predictScheduleRefreshBtn, 'ps:r')]);

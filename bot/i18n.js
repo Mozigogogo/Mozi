@@ -258,11 +258,11 @@ const i18n = {
       '暂无可用群。\n\n请先将 Bot 拉入你的群（需为群主），入群后稍等片刻再刷新本页。',
     predictScheduleTimeLine: (time) => `默认推送时间：每日 <b>${time}</b>（北京时间）`,
     predictScheduleGroupLine: (title, enabled, time) => {
-      const status = enabled ? '✅ 已开启' : '已关闭';
+      const status = enabled ? '已开启' : '已关闭';
       return `• <b>${title}</b> — ${status} · ${time}`;
     },
-    predictScheduleEnableBtn: (title, enabled) => `${enabled ? '✅ ' : ''}${title} · 开启`,
-    predictScheduleDisableBtn: (title, enabled) => `${!enabled ? '✅ ' : ''}${title} · 关闭`,
+    predictScheduleEnableBtn: (title) => `${title} · 开启`,
+    predictScheduleDisableBtn: (title) => `${title} · 关闭`,
     predictScheduleRefreshBtn: '🔄 刷新',
     predictScheduleNotOwnerToast: '仅群主可修改该群的定时推送',
     predictScheduleEnabledToast: '已开启定时推送',
@@ -642,11 +642,11 @@ const i18n = {
       'No groups yet.\n\nAdd this bot to your group (you must be the owner), wait a moment, then tap Refresh.',
     predictScheduleTimeLine: (time) => `Default push time: daily <b>${time}</b> (Beijing time)`,
     predictScheduleGroupLine: (title, enabled, time) => {
-      const status = enabled ? '✅ On' : 'Off';
+      const status = enabled ? 'On' : 'Off';
       return `• <b>${title}</b> — ${status} · ${time}`;
     },
-    predictScheduleEnableBtn: (title, enabled) => `${enabled ? '✅ ' : ''}${title} · On`,
-    predictScheduleDisableBtn: (title, enabled) => `${!enabled ? '✅ ' : ''}${title} · Off`,
+    predictScheduleEnableBtn: (title) => `${title} · On`,
+    predictScheduleDisableBtn: (title) => `${title} · Off`,
     predictScheduleRefreshBtn: '🔄 Refresh',
     predictScheduleNotOwnerToast: 'Only the group owner can change scheduled push',
     predictScheduleEnabledToast: 'Scheduled push enabled',
