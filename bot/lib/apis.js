@@ -2560,8 +2560,8 @@ function parseGuessAiSignalFields(data) {
   if (!direction) {
     const dRaw = String(dirRaw || '').trim();
     const d = dRaw.toUpperCase();
-    if (dRaw === '看多' || dRaw === '涨') direction = 'UP';
-    else if (dRaw === '看空' || dRaw === '跌') direction = 'DOWN';
+    if (dRaw === '看多' || dRaw === '涨' || dRaw === '看涨') direction = 'UP';
+    else if (dRaw === '看空' || dRaw === '跌' || dRaw === '看跌') direction = 'DOWN';
     else if (['UP', 'LONG', '1', 'BULL', 'BULLISH'].includes(d)) direction = 'UP';
     else if (['DOWN', 'SHORT', '2', 'BEAR', 'BEARISH'].includes(d)) direction = 'DOWN';
   }

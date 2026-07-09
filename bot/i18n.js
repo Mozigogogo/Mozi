@@ -115,9 +115,11 @@ const i18n = {
       stats,
       betDeadline,
     ) => {
+      const titleLine = directionLine
+        ? `🤖 AI信号卡 · ${sym}  ${directionLine}`
+        : `🤖 AI信号卡 · ${sym}`;
       const lines = [
-        `🤖 AI信号卡 · ${sym}`,
-        directionLine,
+        titleLine,
         confidenceLine,
         winRateLine,
         `起始价：${price} (${lockedAt} 锁定)`,
@@ -494,9 +496,11 @@ const i18n = {
       stats,
       betDeadline,
     ) => {
+      const titleLine = directionLine
+        ? `🤖 AI Signal · ${sym}  ${directionLine}`
+        : `🤖 AI Signal · ${sym}`;
       const lines = [
-        `🤖 AI Signal · ${sym}`,
-        directionLine,
+        titleLine,
         confidenceLine,
         winRateLine,
         `Start price: ${price} (locked at ${lockedAt})`,

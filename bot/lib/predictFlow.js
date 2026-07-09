@@ -336,9 +336,9 @@ function formatAiDirectionLine(direction, languageCode) {
   if (direction !== 'UP' && direction !== 'DOWN') return null;
   const isZh = String(languageCode || '').toLowerCase().startsWith('zh');
   if (direction === 'UP') {
-    return isZh ? '📈 方向：看多 (LONG)' : '📈 Direction: Bullish (LONG)';
+    return isZh ? 'AI预测：看涨' : 'AI: Bullish';
   }
-  return isZh ? '📉 方向：看空 (SHORT)' : '📉 Direction: Bearish (SHORT)';
+  return isZh ? 'AI预测：看跌' : 'AI: Bearish';
 }
 
 function formatPercentDisplay(value) {
