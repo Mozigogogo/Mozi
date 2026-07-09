@@ -1106,6 +1106,11 @@ async function applyGuessActiveRefreshFromDetail({
   });
 }
 
+/** Telegram 按钮多行时各行居中；补全角空格使 +N 与「跟注AI」等文案左对齐 */
+function formatBetAmountButtonText(labelLine, amount) {
+  return `${labelLine}\n\u3000\u3000+${amount}`;
+}
+
 function buildGuessBetKeyboard(texts, guessNo, aiDirection) {
   const g = String(guessNo || '').trim();
   const followToken = directionToBetCallbackToken(resolveAiFollowBetDirection(aiDirection));
@@ -1113,13 +1118,25 @@ function buildGuessBetKeyboard(texts, guessNo, aiDirection) {
   return {
     inline_keyboard: [
       [
-        { text: texts.predictBetUp50Btn, callback_data: `g:b:${followToken}:50:${g}` },
-        { text: texts.predictBetUp100Btn, callback_data: `g:b:${followToken}:100:${g}` },
+        {
+          text: formatBetAmountButtonText(texts.predictBetFollowLabel, 50),
+          callback_data: `g:b:${followToken}:50:${g}`,
+        },
+        {
+          text: formatBetAmountButtonText(texts.predictBetFollowLabel, 100),
+          callback_data: `g:b:${followToken}:100:${g}`,
+        },
         { text: texts.predictBetUpCustomBtn, callback_data: `g:b:${followToken}:cst:${g}` },
       ],
       [
-        { text: texts.predictBetDown50Btn, callback_data: `g:b:${oppositeToken}:50:${g}` },
-        { text: texts.predictBetDown100Btn, callback_data: `g:b:${oppositeToken}:100:${g}` },
+        {
+          text: formatBetAmountButtonText(texts.predictBetOppositeLabel, 50),
+          callback_data: `g:b:${oppositeToken}:50:${g}`,
+        },
+        {
+          text: formatBetAmountButtonText(texts.predictBetOppositeLabel, 100),
+          callback_data: `g:b:${oppositeToken}:100:${g}`,
+        },
         { text: texts.predictBetDownCustomBtn, callback_data: `g:b:${oppositeToken}:cst:${g}` },
       ],
     ],
