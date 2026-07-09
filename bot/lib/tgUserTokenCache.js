@@ -8,6 +8,7 @@ const { buildTelegramWebAppLoginHash } = require('./telegramWebAppLoginHash');
 const { jwtPreview } = require('./debugLog');
 const { sanitizeTelegramLoginOpts } = require('./sanitizeMysqlUtf8');
 const { tgRegisterLog, hashPreview } = require('./tgRegisterDebug');
+const { resolveLoginPhotoUrl } = require('./telegramUserPhoto');
 
 /** 无 expiresIn 时默认缓存时长（略短于常见 1h access） */
 const DEFAULT_TTL_MS = 50 * 60 * 1000;
@@ -132,6 +133,10 @@ async function ensureTgUserToken(config, telegramId, opts = {}) {
     p = (async () => {
       try {
         const explicitHash = opts.hash != null && String(opts.hash).trim() !== '' ? String(opts.hash).trim() : '';
+        const photoUrl = resolveLoginPhotoUrl(config, opts.photoUrl ?? '');
+        if (opts.registerLog && !String(opts.photoUrl ?? '').trim() && photoUrl) {
+          tgRegisterLog('photoUrl 回退默认头像', { telegramId: id, photoUrl });
+        }
         const hash =
           explicitHash ||
           buildTelegramWebAppLoginHash({
@@ -140,7 +145,7 @@ async function ensureTgUserToken(config, telegramId, opts = {}) {
             telegramUsername: opts.telegramUsername ?? '',
             firstName: opts.firstName ?? '',
             lastName: opts.lastName ?? '',
-            photoUrl: opts.photoUrl ?? '',
+            photoUrl,
           });
         if (!hash) {
           tgRegisterLog('hash 生成失败', { telegramId: id, hasBotToken: Boolean(config.BOT_TOKEN?.trim()) });
@@ -154,7 +159,7 @@ async function ensureTgUserToken(config, telegramId, opts = {}) {
           env: loginEnv,
           hashPreview: hashPreview(hash),
           inviteCode: String(opts.inviteCode ?? ''),
-          photoUrl: String(opts.photoUrl ?? ''),
+          photoUrl,
           telegramId: id,
           type: 'login',
           username: String(opts.username ?? ''),
@@ -176,7 +181,7 @@ async function ensureTgUserToken(config, telegramId, opts = {}) {
           appUrl: config.APP_URL,
           path: loginPath,
           username: opts.username ?? '',
-          photoUrl: opts.photoUrl ?? '',
+          photoUrl,
           hash,
           inviteCode: opts.inviteCode ?? '',
           env: loginEnv,

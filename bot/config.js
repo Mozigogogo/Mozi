@@ -18,6 +18,11 @@ const ALERT_CARD_IMAGE =
   process.env.ALERT_CARD_IMAGE ||
   'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/twitter.jpg';
 
+/** 新用户 Telegram 注册时 photoUrl 为空的后端 avatar 回退（user 表 avatar NOT NULL） */
+const DEFAULT_USER_AVATAR_URL = (
+  process.env.DEFAULT_USER_AVATAR_URL || ALERT_CARD_IMAGE
+).trim();
+
 /** 可选：覆盖 Agent 流式 POST 完整 URL；默认主栈 ${API_BASE_URL}/ai/agent/stream（与 H5 一致） */
 const AI_AGENT_STREAM_BACKEND_URL = (
   process.env.AI_AGENT_STREAM_URL ||
@@ -229,6 +234,7 @@ module.exports = {
   TG_COMMUNITY_URL,
   TWITTER_URL,
   ALERT_CARD_IMAGE,
+  DEFAULT_USER_AVATAR_URL,
   AI_AGENT_STREAM_URL,
   AI_AGENT_ROUTE_URL,
   AI_POINTS_COST,

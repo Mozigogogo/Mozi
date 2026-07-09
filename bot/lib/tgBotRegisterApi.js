@@ -8,6 +8,7 @@ const { postTgRegisteredCheck } = require('./apis');
 const { ensureTgUserToken, clearCachedToken } = require('./tgUserTokenCache');
 const { buildTelegramLoginOpts } = require('./datainfoPoints');
 const { tgRegisterLog } = require('./tgRegisterDebug');
+const { resolveLoginPhotoUrlForRegister } = require('./telegramUserPhoto');
 
 /** inline 按钮 callback_data（≤64 字节） */
 const CALLBACK_MOZI_REGISTER = 'mozi_reg';
@@ -52,6 +53,12 @@ async function performTelegramRegisterViaApi(config, ctx) {
   }
   const uidStr = String(uid);
   const loginOpts = loginOptsFromCtx(ctx, ctx.state);
+  loginOpts.photoUrl = await resolveLoginPhotoUrlForRegister(
+    ctx.telegram,
+    config,
+    uid,
+    loginOpts.photoUrl,
+  );
   const chatType = ctx.chat?.type || 'unknown';
   const groupId = ctx.chat?.id;
 
@@ -62,6 +69,7 @@ async function performTelegramRegisterViaApi(config, ctx) {
     tgUsername: ctx.from?.username || null,
     firstName: ctx.from?.first_name || null,
     inviteCode: loginOpts.inviteCode || '',
+    photoUrl: loginOpts.photoUrl || '',
     loginOpts: {
       username: loginOpts.username,
       telegramUsername: loginOpts.telegramUsername,
