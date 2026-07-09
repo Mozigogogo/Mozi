@@ -1799,7 +1799,7 @@ async function postGroupReferrerBind({
   }
 }
 
-// --- GET /tg/stats/group/listByTelegramId（/predict_schedule 群列表）----------------
+// --- GET /tg/stats/group/listByTelegramId（/group 群列表）----------------
 
 /**
  * @param {object | null} json

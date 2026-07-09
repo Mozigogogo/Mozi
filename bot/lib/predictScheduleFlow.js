@@ -4,6 +4,7 @@ const { Markup } = require('telegraf');
 const { ensureTgUserToken } = require('./tgUserTokenCache');
 const { getTgStatsGroupListByTelegramId, postTgStatsGroupSave } = require('./apis');
 const { buildTelegramLoginOptsFromCtx } = require('./datainfoPoints');
+const { escapeHtml } = require('./telegramHtml');
 const { DEFAULT_PUBLISH_TIME } = require('./predictScheduleStore');
 
 /**
@@ -12,12 +13,12 @@ const { DEFAULT_PUBLISH_TIME } = require('./predictScheduleStore');
  */
 async function fetchOwnerGroupsFromApi(ctx, config) {
   const uid = ctx.from?.id;
-  if (uid == null) return { ok: false, items: [] };
+  if (uid == null) return { ok: false, items: [], authMissing: true };
 
   const loginOpts = buildTelegramLoginOptsFromCtx(ctx);
   const token = await ensureTgUserToken(config, String(uid), loginOpts);
   const auth = token || config.MOZI_DETAIL_AUTH || '';
-  if (!auth) return { ok: false, items: [] };
+  if (!auth) return { ok: false, items: [], authMissing: true };
 
   try {
     const res = await getTgStatsGroupListByTelegramId({
@@ -27,9 +28,9 @@ async function fetchOwnerGroupsFromApi(ctx, config) {
       appUrl: config.APP_URL,
       path: config.TG_GROUP_LIST_BY_TELEGRAM_ID_PATH,
     });
-    return { ok: res.ok, items: res.items || [] };
+    return { ok: res.ok, items: res.items || [], authMissing: false };
   } catch {
-    return { ok: false, items: [] };
+    return { ok: false, items: [], authMissing: false };
   }
 }
 
@@ -62,7 +63,7 @@ function normalizeScheduleGroups(items) {
  */
 function buildSchedulePanelKeyboard(texts, groups) {
   const rows = groups.map((g) => {
-    const title = String(g.groupTitle || g.groupId);
+    const title = String(g.groupTitle || g.groupId).slice(0, 40);
     const label = g.enabled
       ? texts.predictScheduleBtnOn(title)
       : texts.predictScheduleBtnOff(title);
@@ -83,7 +84,11 @@ function buildSchedulePanelText(texts, groups, publishTime) {
     return `${texts.predictScheduleIntro}\n\n${texts.predictScheduleEmpty}`;
   }
   const lines = groups.map((g) =>
-    texts.predictScheduleGroupLine(g.groupTitle || String(g.groupId), g.enabled, g.publishTime || publishTime),
+    texts.predictScheduleGroupLine(
+      escapeHtml(g.groupTitle || String(g.groupId)),
+      g.enabled,
+      g.publishTime || publishTime,
+    ),
   );
   return `${texts.predictScheduleIntro}\n\n${texts.predictScheduleTimeLine(publishTime)}\n\n${lines.join('\n')}`;
 }
@@ -92,17 +97,29 @@ function buildSchedulePanelText(texts, groups, publishTime) {
  * @param {import('telegraf').Context} ctx
  * @param {object} config
  * @param {Function} getTexts
- * @param {{ edit?: boolean }} [opts]
+ * @param {{ edit?: boolean; skipLoading?: boolean }} [opts]
  */
 async function renderSchedulePanel(ctx, config, getTexts, opts = {}) {
   const uid = ctx.from?.id;
   if (uid == null) return;
   const texts = getTexts(ctx.from?.language_code || 'en');
 
+  if (!opts.skipLoading && !opts.edit) {
+    await ctx.reply(texts.predictScheduleLoading, { parse_mode: 'HTML' }).catch(() => {});
+  }
+
   const remote = await fetchOwnerGroupsFromApi(ctx, config);
+  if (remote.authMissing) {
+    await ctx.reply(texts.predictScheduleNeedLogin, { parse_mode: 'HTML' }).catch(() => {});
+    return;
+  }
+  if (!remote.ok && !remote.items.length) {
+    await ctx.reply(texts.predictScheduleFetchFailed, { parse_mode: 'HTML' }).catch(() => {});
+    return;
+  }
+
   const groups = normalizeScheduleGroups(remote.items);
   const publishTime = DEFAULT_PUBLISH_TIME;
-
   const text = buildSchedulePanelText(texts, groups, publishTime);
   const keyboard = buildSchedulePanelKeyboard(texts, groups);
   const extra = { parse_mode: 'HTML', ...keyboard };
@@ -115,7 +132,9 @@ async function renderSchedulePanel(ctx, config, getTexts, opts = {}) {
       /* fall through */
     }
   }
-  await ctx.reply(text, extra);
+  await ctx.reply(text, extra).catch(async () => {
+    await ctx.reply(texts.predictScheduleFetchFailed, { parse_mode: 'HTML' }).catch(() => {});
+  });
 }
 
 /**
@@ -124,11 +143,7 @@ async function renderSchedulePanel(ctx, config, getTexts, opts = {}) {
  * @param {Function} getTexts
  */
 async function executePredictScheduleCommand(ctx, config, getTexts) {
-  const texts = getTexts(ctx.from?.language_code || 'en');
-  if (ctx.chat?.type !== 'private') {
-    await ctx.reply(texts.predictSchedulePrivateOnly, { parse_mode: 'HTML' });
-    return;
-  }
+  await ctx.telegram.sendChatAction(ctx.chat.id, 'typing').catch(() => {});
   await renderSchedulePanel(ctx, config, getTexts);
 }
 
@@ -139,7 +154,7 @@ async function executePredictScheduleCommand(ctx, config, getTexts) {
  */
 async function handleScheduleRefresh(ctx, config, getTexts) {
   await ctx.answerCbQuery().catch(() => {});
-  await renderSchedulePanel(ctx, config, getTexts, { edit: true });
+  await renderSchedulePanel(ctx, config, getTexts, { edit: true, skipLoading: true });
 }
 
 /**
@@ -159,7 +174,7 @@ async function handleScheduleToggle(ctx, config, getTexts, groupId, enabled) {
   const auth = token || config.MOZI_DETAIL_AUTH || '';
   if (!auth) {
     await ctx
-      .answerCbQuery(texts.predictScheduleNotOwnerToast, { show_alert: true })
+      .answerCbQuery(texts.predictScheduleNeedLogin, { show_alert: true })
       .catch(() => {});
     return;
   }
@@ -175,18 +190,18 @@ async function handleScheduleToggle(ctx, config, getTexts, groupId, enabled) {
     });
     if (!saveRes.ok) {
       await ctx
-        .answerCbQuery(texts.predictScheduleNotOwnerToast, { show_alert: true })
+        .answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true })
         .catch(() => {});
       return;
     }
   } catch {
-    await ctx.answerCbQuery(texts.predictScheduleNotOwnerToast, { show_alert: true }).catch(() => {});
+    await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
     return;
   }
 
   const toast = enabled ? texts.predictScheduleEnabledToast : texts.predictScheduleDisabledToast;
   await ctx.answerCbQuery(toast).catch(() => {});
-  await renderSchedulePanel(ctx, config, getTexts, { edit: true });
+  await renderSchedulePanel(ctx, config, getTexts, { edit: true, skipLoading: true });
 }
 
 module.exports = {

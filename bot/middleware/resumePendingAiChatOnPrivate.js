@@ -26,6 +26,11 @@ function createResumePendingAiChatOnPrivate(config) {
       return next();
     }
 
+    const msgText = String(ctx.message?.text || '').trim();
+    if (msgText.startsWith('/')) {
+      return next();
+    }
+
     markUserDmReachable(ctx.from.id);
 
     const predictSession = getPredictSession(ctx.from.id);

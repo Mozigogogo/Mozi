@@ -1,5 +1,5 @@
 /**
- * /predict_schedule：群主私聊 Bot 开启/关闭群内每日定时 AI 信号卡推送
+ * /group：群主开启/关闭群内每日定时 AI 信号卡推送
  */
 
 const {
@@ -14,18 +14,37 @@ const {
  * @param {{ getTexts: Function }} i18nApi
  */
 function registerPredictSchedule(bot, config, { getTexts }) {
-  bot.command('predict_schedule', async (ctx) => {
-    await executePredictScheduleCommand(ctx, config, getTexts);
-  });
+  const runGroupScheduleCommand = async (ctx) => {
+    try {
+      await executePredictScheduleCommand(ctx, config, getTexts);
+    } catch (err) {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx
+        .reply(texts.predictScheduleFetchFailed || '加载失败，请稍后再试。', { parse_mode: 'HTML' })
+        .catch(() => {});
+    }
+  };
+
+  bot.command('group', runGroupScheduleCommand);
 
   bot.action(/^ps:t:(-?\d+):(0|1)$/, async (ctx) => {
     const groupId = ctx.match[1];
     const enabled = ctx.match[2] === '1';
-    await handleScheduleToggle(ctx, config, getTexts, groupId, enabled);
+    try {
+      await handleScheduleToggle(ctx, config, getTexts, groupId, enabled);
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
   });
 
   bot.action('ps:r', async (ctx) => {
-    await handleScheduleRefresh(ctx, config, getTexts);
+    try {
+      await handleScheduleRefresh(ctx, config, getTexts);
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
   });
 }
 

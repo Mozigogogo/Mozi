@@ -248,7 +248,11 @@ const i18n = {
     predictListResultUp: '\n✅ 结果：涨',
     predictListResultDown: '\n✅ 结果：跌',
     predictSchedulePrivateOnly:
-      '请在<strong>私聊</strong>本机器人使用 <code>/predict_schedule</code>，用于管理群内每日定时 AI 信号卡推送。',
+      '请私聊本机器人发送 <code>/group</code>，用于管理群内每日定时 AI 信号卡推送。',
+    predictScheduleLoading: '⏳ 正在加载你的群列表…',
+    predictScheduleNeedLogin:
+      '需要先完成 Mozi 账户绑定。请先 <code>/register</code> 或完成注册后再试。',
+    predictScheduleFetchFailed: '加载群列表失败，请稍后再试；若持续失败请联系管理员。',
     predictScheduleIntro: '⏰ <b>定时推送设置</b>\n\n你是以下群的群主，可开启/关闭每日自动推送 AI 信号卡：',
     predictScheduleEmpty:
       '暂无可用群。\n\n请先将 Bot 拉入你的群（需为群主），入群后稍等片刻再刷新本页。',
@@ -281,7 +285,7 @@ const i18n = {
 📈 涨跌预测（免费）
 /predict        发起 24 小时涨跌竞猜（前 6 小时可下注；群内点按钮私聊 Bot，确认后发布到该群）
 /predict list   查看本群竞猜列表
-/predict_schedule  群主私聊 Bot：开启/关闭群内每日定时 AI 信号卡推送
+/group  群主：开启/关闭群内每日定时 AI 信号卡推送
 
 🔔 告警设置（免费）
 /alert          跳转 App 配置价格告警
@@ -628,7 +632,10 @@ const i18n = {
     predictListResultUp: '\n✅ Result: Up',
     predictListResultDown: '\n✅ Result: Down',
     predictSchedulePrivateOnly:
-      'Use <code>/predict_schedule</code> in a <strong>private chat</strong> with this bot to manage daily AI signal card auto-push for your groups.',
+      'DM this bot and send <code>/group</code> to manage daily AI signal auto-push for your groups.',
+    predictScheduleLoading: '⏳ Loading your groups…',
+    predictScheduleNeedLogin: 'Please bind your Mozi account first (<code>/register</code>), then try again.',
+    predictScheduleFetchFailed: 'Could not load your groups. Please try again later.',
     predictScheduleIntro:
       '⏰ <b>Scheduled push</b>\n\nYou own the groups below. Toggle daily AI signal card auto-push:',
     predictScheduleEmpty:
@@ -662,7 +669,7 @@ const i18n = {
 📈 Up/down poll (free)
 /predict         Start a 24-hour poll (6 hours to bet; tap button to DM bot; publishes back to source group)
 /predict list    List polls in this group
-/predict_schedule  Group owners (DM bot): enable/disable daily AI signal card auto-push
+/group  Group owners: toggle daily AI signal auto-push
 
 🔔 Alerts (free)
 /alert           Open app to set price alerts

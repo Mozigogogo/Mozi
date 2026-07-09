@@ -224,7 +224,7 @@ const TG_GROUP_LEAVE_PATH = (
   process.env.TG_GROUP_LEAVE_PATH || 'tg/stats/group/leave'
 ).trim().replace(/^\/+/, '');
 
-/** GET 按 Telegram 用户 ID 查询其群列表（/predict_schedule），默认 tg/stats/group/listByTelegramId */
+/** GET 按 Telegram 用户 ID 查询其群列表（/group），默认 tg/stats/group/listByTelegramId */
 const TG_GROUP_LIST_BY_TELEGRAM_ID_PATH = (
   process.env.TG_GROUP_LIST_BY_TELEGRAM_ID_PATH || 'tg/stats/group/listByTelegramId'
 ).trim().replace(/^\/+/, '');
