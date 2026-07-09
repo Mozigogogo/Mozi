@@ -76,9 +76,10 @@ const USER_DATA_INFO_TIMEOUT_MS = Math.max(
 /** POST 换用户 JWT 的路径（相对 API_BASE_URL），默认与 H5 一致：user/login（chanel=3 Telegram） */
 const TG_LOGIN_PATH = (process.env.TG_LOGIN_PATH || 'user/login').trim().replace(/^\/+/, '');
 
-/** 传给 /user/login 的 env 字段，与前端 NEXT_PUBLIC_APP_ENV 对齐；未设时默认 test */
+/** 传给 /user/login 的 env 字段，与前端 NEXT_PUBLIC_APP_ENV 对齐；未设时默认 production */
 const MOZI_LOGIN_ENV =
-  String(process.env.MOZI_APP_ENV || process.env.NEXT_PUBLIC_APP_ENV || 'test').trim() || 'test';
+  String(process.env.MOZI_APP_ENV || process.env.NEXT_PUBLIC_APP_ENV || 'production').trim() ||
+  'production';
 
 /** 为 1/true/yes 时打印命令与 HTTP 调试信息（见 lib/debugLog.js） */
 const BOT_DEBUG = /^1|true|yes$/i.test(String(process.env.BOT_DEBUG || '').trim());

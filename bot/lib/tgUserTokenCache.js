@@ -154,7 +154,7 @@ async function ensureTgUserToken(config, telegramId, opts = {}) {
           }
 
         const loginPath = config.TG_LOGIN_PATH || 'user/login';
-        const loginEnv = config.MOZI_LOGIN_ENV || 'test';
+        const loginEnv = config.MOZI_LOGIN_ENV || 'production';
         const loginBody = {
           chanel: 3,
           channel: 'tg',

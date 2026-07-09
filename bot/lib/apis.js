@@ -283,7 +283,7 @@ async function postTgLogin({
   photoUrl = '',
   hash = '',
   inviteCode = '',
-  env = 'test',
+  env = 'production',
 }) {
   const base = String(apiBaseUrl || '').replace(/\/+$/, '');
   const app = String(appUrl || '').replace(/\/+$/, '');
@@ -308,7 +308,7 @@ async function postTgLogin({
   const body = {
     chanel: 3,
     channel: 'tg',
-    env: String(env || 'test'),
+    env: String(env || 'production'),
     hash: String(hash || ''),
     inviteCode: String(inviteCode || ''),
     photoUrl: String(photoUrl || ''),
