@@ -11,6 +11,7 @@ const {
 const { buildGroupRegisterKeyboard } = require('../lib/registerDeepLink');
 const { triggerPendingAiChatReplay } = require('../lib/tgChatRegisterWatcher');
 const { markUserDmReachable } = require('../lib/botDmReachable');
+const { tgRegisterLog } = require('../lib/tgRegisterDebug');
 
 /**
  * @param {object} texts
@@ -54,8 +55,20 @@ async function runInlineRegisterFlow(ctx, config, getTexts, opts = {}) {
 
   markUserDmReachable(uid);
 
+  tgRegisterLog('inline 注册流程开始', {
+    telegramId: String(uid),
+    chatType: ctx.chat?.type || 'unknown',
+    chatId: ctx.chat?.id ?? null,
+    fromCallback: Boolean(opts.fromCallback),
+    silent: Boolean(opts.silent),
+  });
+
   const result = await performTelegramRegisterViaApi(config, ctx);
   if (!result.ok) {
+    tgRegisterLog('inline 注册流程失败', {
+      telegramId: String(uid),
+      message: result.message,
+    });
     const html = registerFailText(texts, result.message);
     if (opts.fromCallback && ctx.callbackQuery?.message) {
       const msg = ctx.callbackQuery.message;
@@ -74,8 +87,10 @@ async function runInlineRegisterFlow(ctx, config, getTexts, opts = {}) {
   }
 
   const chatId = ctx.chat?.id;
+  tgRegisterLog('inline 注册成功，触发重放', { telegramId: String(uid), chatId: chatId ?? null });
   await triggerPendingAiChatReplay(config, String(uid)).catch((e) => {
-    });
+    tgRegisterLog('触发重放异常', { telegramId: String(uid), error: e?.message || String(e) });
+  });
 
   const isGroup = ctx.chat?.type === 'group' || ctx.chat?.type === 'supergroup';
   if (isGroup && !opts.fromCallback && !opts.silent) {

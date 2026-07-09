@@ -1,10 +1,28 @@
 'use strict';
 
 function debugEnabled() {
-  return false;
+  return /^1|true|yes$/i.test(String(process.env.BOT_DEBUG || '').trim());
 }
 
-function apiDebug() {}
+/**
+ * @param {string} label
+ * @param {unknown} [payload]
+ */
+function apiDebug(label, payload) {
+  if (!debugEnabled()) return;
+  const ts = new Date().toISOString();
+  if (payload === undefined) {
+    console.log(`[BOT_DEBUG] ${ts} ${label}`);
+    return;
+  }
+  let body;
+  try {
+    body = JSON.stringify(payload);
+  } catch {
+    body = String(payload);
+  }
+  console.log(`[BOT_DEBUG] ${ts} ${label} ${body}`);
+}
 
 /**
  * @param {string} token

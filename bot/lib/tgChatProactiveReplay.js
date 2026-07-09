@@ -22,6 +22,7 @@ const {
 const { insufficientPointsEarnKeyboard } = require('./pointsDetailKeyboard');
 const { removeTgChatQuestion } = require('./tgChatQuestionStore');
 const { sanitizeTelegramLoginOpts } = require('./sanitizeMysqlUtf8');
+const { tgRegisterLog } = require('./tgRegisterDebug');
 
 /** @typedef {{ telegramId: string; groupId: number; question: string; command: 'ai' | 'chat' | 'bigorder'; languageCode?: string; username?: string; firstName?: string }} TgChatReplayJob */
 
@@ -97,8 +98,16 @@ async function runTgChatProactiveReplay(bot, config, job) {
       : texts.tgChatReplayChatHtml;
   await ctx.reply(hint, { parse_mode: 'HTML' }).catch(() => {});
 
+  tgRegisterLog('重放执行', {
+    telegramId: job.telegramId,
+    groupId: job.groupId,
+    command: job.command,
+    questionPreview: String(job.question || '').slice(0, 120),
+  });
+
   const token = await ensureTgUserToken(config, job.telegramId, loginOpts);
   if (!token) {
+    tgRegisterLog('重放中止：无 token', { telegramId: job.telegramId, groupId: job.groupId });
     return false;
   }
 

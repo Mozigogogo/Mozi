@@ -7,11 +7,10 @@
 const { postTgRegisteredCheck } = require('./apis');
 const { ensureTgUserToken, clearCachedToken } = require('./tgUserTokenCache');
 const { buildTelegramLoginOpts } = require('./datainfoPoints');
+const { tgRegisterLog } = require('./tgRegisterDebug');
 
 /** inline 按钮 callback_data（≤64 字节） */
 const CALLBACK_MOZI_REGISTER = 'mozi_reg';
-
-function registerLog() {}
 
 /**
  * @param {object | null} json
@@ -48,7 +47,7 @@ function loginOptsFromCtx(ctx, state) {
 async function performTelegramRegisterViaApi(config, ctx) {
   const uid = ctx.from?.id;
   if (uid == null) {
-    registerLog('结果', { ok: false, stage: 'precheck', message: 'no_user' });
+    tgRegisterLog('结果', { ok: false, stage: 'precheck', message: 'no_user' });
     return { ok: false, message: 'no_user' };
   }
   const uidStr = String(uid);
@@ -56,7 +55,7 @@ async function performTelegramRegisterViaApi(config, ctx) {
   const chatType = ctx.chat?.type || 'unknown';
   const groupId = ctx.chat?.id;
 
-  registerLog('开始', {
+  tgRegisterLog('开始', {
     telegramId: uidStr,
     chatType,
     groupId: groupId ?? null,
@@ -84,7 +83,7 @@ async function performTelegramRegisterViaApi(config, ctx) {
     } else if (!String(config.API_BASE_URL || '').trim()) {
       message = 'login_no_api_base';
     }
-    registerLog('结果', {
+    tgRegisterLog('结果', {
       ok: false,
       stage: 'user/login',
       message,
@@ -95,7 +94,7 @@ async function performTelegramRegisterViaApi(config, ctx) {
 
   let regRes;
   try {
-    registerLog('POST registered/check 请求', {
+    tgRegisterLog('POST registered/check 请求', {
       telegramId: uidStr,
       url: `${String(config.API_BASE_URL || '').replace(/\/+$/, '')}/user/tg/registered/check`,
     });
@@ -106,7 +105,7 @@ async function performTelegramRegisterViaApi(config, ctx) {
       appUrl: config.APP_URL,
     });
   } catch (e) {
-    registerLog('结果', {
+    tgRegisterLog('结果', {
       ok: false,
       stage: 'registered/check',
       message: 'check_network',
@@ -117,7 +116,7 @@ async function performTelegramRegisterViaApi(config, ctx) {
   }
 
   const registered = parseRegisteredFlag(regRes.json);
-  registerLog('POST registered/check 响应', {
+  tgRegisterLog('POST registered/check 响应', {
     telegramId: uidStr,
     httpStatus: regRes.status,
     httpOk: regRes.ok,
@@ -126,7 +125,7 @@ async function performTelegramRegisterViaApi(config, ctx) {
   });
 
   if (registered !== true) {
-    registerLog('结果', {
+    tgRegisterLog('结果', {
       ok: false,
       stage: 'registered/check',
       message: 'still_unregistered',
@@ -135,7 +134,7 @@ async function performTelegramRegisterViaApi(config, ctx) {
     return { ok: false, message: 'still_unregistered' };
   }
 
-  registerLog('结果', {
+  tgRegisterLog('结果', {
     ok: true,
     registerSuccess: true,
     telegramId: uidStr,

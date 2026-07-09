@@ -7,15 +7,7 @@ const { postTgLogin } = require('./apis');
 const { buildTelegramWebAppLoginHash } = require('./telegramWebAppLoginHash');
 const { jwtPreview } = require('./debugLog');
 const { sanitizeTelegramLoginOpts } = require('./sanitizeMysqlUtf8');
-
-function registerLog() {}
-
-function hashPreview(hash) {
-  const s = String(hash || '').trim();
-  if (!s) return '(empty)';
-  if (s.length <= 16) return `${s.slice(0, 4)}…(len=${s.length})`;
-  return `${s.slice(0, 8)}…${s.slice(-6)} len=${s.length}`;
-}
+const { tgRegisterLog, hashPreview } = require('./tgRegisterDebug');
 
 /** 无 expiresIn 时默认缓存时长（略短于常见 1h access） */
 const DEFAULT_TTL_MS = 50 * 60 * 1000;
@@ -151,7 +143,8 @@ async function ensureTgUserToken(config, telegramId, opts = {}) {
             photoUrl: opts.photoUrl ?? '',
           });
         if (!hash) {
-          }
+          tgRegisterLog('hash 生成失败', { telegramId: id, hasBotToken: Boolean(config.BOT_TOKEN?.trim()) });
+        }
 
         const loginPath = config.TG_LOGIN_PATH || 'user/login';
         const loginEnv = config.MOZI_LOGIN_ENV || 'production';
@@ -168,10 +161,11 @@ async function ensureTgUserToken(config, telegramId, opts = {}) {
         };
 
         if (opts.registerLog) {
-          registerLog('POST user/login 请求', {
+          tgRegisterLog('POST user/login 请求', {
             url: `${String(config.API_BASE_URL || '').replace(/\/+$/, '')}/${loginPath}`,
             body: loginBody,
             hasBootstrapAuth: Boolean(config.MOZI_DETAIL_AUTH),
+            loginEnv,
           });
         }
 
@@ -189,7 +183,7 @@ async function ensureTgUserToken(config, telegramId, opts = {}) {
         });
         if (!r.ok) {
           if (opts.registerLog) {
-            registerLog('POST user/login 响应', {
+            tgRegisterLog('POST user/login 响应', {
               telegramId: id,
               httpStatus: r.status,
               httpOk: false,
@@ -206,7 +200,7 @@ async function ensureTgUserToken(config, telegramId, opts = {}) {
             r.json && typeof r.json === 'object'
               ? r.json.message || r.json.msg || r.json.errorMsg
               : '';
-          registerLog('POST user/login 响应', {
+          tgRegisterLog('POST user/login 响应', {
             telegramId: id,
             httpStatus: r.status,
             httpOk: true,
@@ -220,6 +214,9 @@ async function ensureTgUserToken(config, telegramId, opts = {}) {
         if (!token) {
           const bizCode = r.json && typeof r.json === 'object' ? r.json.code : undefined;
           const bizMsg = r.json && typeof r.json === 'object' ? r.json.message || r.json.msg : '';
+          if (opts.registerLog) {
+            tgRegisterLog('token 解析失败', { telegramId: id, bizCode, bizMsg: String(bizMsg || '').slice(0, 300) });
+          }
           return '';
         }
         const ttl = extractTtlMs(r.json) ?? DEFAULT_TTL_MS;
@@ -227,6 +224,9 @@ async function ensureTgUserToken(config, telegramId, opts = {}) {
         setCachedToken(id, token, ttl, userId);
         return token;
       } catch (err) {
+        if (opts.registerLog) {
+          tgRegisterLog('POST user/login 异常', { telegramId: id, error: err?.message || String(err) });
+        }
         return '';
       } finally {
         inFlight.delete(id);

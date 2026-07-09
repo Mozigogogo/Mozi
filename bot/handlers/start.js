@@ -12,6 +12,7 @@ const { isRegisterStartPayload } = require('../lib/registerDeepLink');
 const { runInlineRegisterFlow } = require('./inlineRegister');
 const { hasPendingWatchForUser } = require('../lib/tgChatRegisterWatcher');
 const { markUserDmReachable } = require('../lib/botDmReachable');
+const { tgRegisterLog } = require('../lib/tgRegisterDebug');
 
 function registerStart(bot, config, { getTexts }) {
   const { APP_URL, ALERT_CARD_IMAGE, TG_COMMUNITY_URL, TWITTER_URL, BOT_USERNAME } = config;
@@ -26,11 +27,13 @@ function registerStart(bot, config, { getTexts }) {
     markUserDmReachable(userId);
 
     if (hasPendingWatchForUser(uidStr)) {
+      tgRegisterLog('/start 有待重放提问，触发注册', { telegramId: uidStr, startPayload: inviteCode || null });
       await runInlineRegisterFlow(ctx, config, getTexts);
       return;
     }
 
     if (isRegisterStartPayload(inviteCode)) {
+      tgRegisterLog('/start 注册深链', { telegramId: uidStr, startPayload: inviteCode });
       await runInlineRegisterFlow(ctx, config, getTexts);
       return;
     }

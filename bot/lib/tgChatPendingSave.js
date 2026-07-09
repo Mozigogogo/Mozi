@@ -4,6 +4,7 @@ const { extractAiQuery, extractChatQuery, extractBigorderQuery } = require('./ai
 const { postTgChatSave } = require('./apis');
 const { savePendingReplayJob } = require('./tgChatRegisterWatcher');
 const { saveTgChatQuestion } = require('./tgChatQuestionStore');
+const { tgRegisterLog } = require('./tgRegisterDebug');
 
 const REPLAY_COMMANDS = new Set(['ai', 'chat', 'bigorder']);
 
@@ -50,6 +51,13 @@ async function savePendingAgentChat(ctx, config, pending) {
     languageCode,
     username: ctx.from?.username,
     firstName: ctx.from?.first_name,
+  });
+
+  tgRegisterLog('缓存待重放提问', {
+    telegramId,
+    groupId: chatId,
+    command,
+    questionPreview: question.slice(0, 120),
   });
 }
 

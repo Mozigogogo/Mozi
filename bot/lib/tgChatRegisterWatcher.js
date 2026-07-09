@@ -7,6 +7,7 @@
 const { postTgRegisteredCheck, getTgChatGet } = require('./apis');
 const { TTL_MS, listAllPendingTgChatQuestions, normalizeTgChatCommand } = require('./tgChatQuestionStore');
 const { runTgChatProactiveReplay } = require('./tgChatProactiveReplay');
+const { tgRegisterLog } = require('./tgRegisterDebug');
 
 /** @type {import('telegraf').Telegraf | null} */
 let botRef = null;
@@ -78,6 +79,12 @@ function savePendingReplayJob(job) {
     expireAt: Date.now() + TTL_MS,
     replaying: false,
   });
+  tgRegisterLog('登记重放任务', {
+    telegramId: job.telegramId,
+    groupId: job.groupId,
+    command: normalizeTgChatCommand(job.command),
+    questionPreview: String(job.question || '').slice(0, 120),
+  });
 }
 
 /** @deprecated 别名 */
@@ -115,10 +122,12 @@ async function notifyTgChatRegistered(telegramId, groupId) {
 async function tryReplayJob(job) {
   if (!botRef || !configRef || job.replaying) return;
   if (Date.now() > job.expireAt) {
+    tgRegisterLog('重放任务已过期', { telegramId: job.telegramId, groupId: job.groupId });
     pendingReplayJobs.delete(jobKey(job.telegramId, job.groupId));
     return;
   }
 
+  tgRegisterLog('重放前 registered/check', { telegramId: job.telegramId, groupId: job.groupId });
   let regRes;
   try {
     regRes = await postTgRegisteredCheck({
@@ -128,21 +137,42 @@ async function tryReplayJob(job) {
       appUrl: configRef.APP_URL,
     });
   } catch (e) {
+    tgRegisterLog('重放前 registered/check 失败', {
+      telegramId: job.telegramId,
+      error: e?.message || String(e),
+    });
     return;
   }
 
-  if (parseRegisteredFlag(regRes.json) !== true) {
+  const registered = parseRegisteredFlag(regRes.json);
+  if (registered !== true) {
+    tgRegisterLog('重放跳过：仍未注册', {
+      telegramId: job.telegramId,
+      groupId: job.groupId,
+      registered,
+    });
     return;
   }
 
   job.replaying = true;
   const key = jobKey(job.telegramId, job.groupId);
+  tgRegisterLog('开始群内重放', {
+    telegramId: job.telegramId,
+    groupId: job.groupId,
+    command: job.command,
+  });
   try {
     await runTgChatProactiveReplay(botRef, configRef, job);
     pendingReplayJobs.delete(key);
+    tgRegisterLog('群内重放完成', { telegramId: job.telegramId, groupId: job.groupId });
   } catch (e) {
     job.replaying = false;
-    }
+    tgRegisterLog('群内重放失败', {
+      telegramId: job.telegramId,
+      groupId: job.groupId,
+      error: e?.message || String(e),
+    });
+  }
 }
 
 /**
@@ -179,6 +209,7 @@ async function syncWatchFromRemote(config, telegramId) {
 async function triggerPendingAiChatReplay(config, telegramId) {
   const tid = String(telegramId ?? '').trim();
   if (!tid || !botRef || !configRef) return;
+  tgRegisterLog('triggerPendingAiChatReplay', { telegramId: tid });
   if (config?.API_BASE_URL) {
     await syncWatchFromRemote(config, tid).catch(() => {});
   }
