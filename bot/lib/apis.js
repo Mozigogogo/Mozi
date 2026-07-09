@@ -5,6 +5,7 @@
 const { apiDebug, jwtPreview } = require('./debugLog');
 const { guessApiLog } = require('./guessApiDebug');
 const { tgGroupStatsLog } = require('./tgGroupStatsLog');
+const { tgGroupListLog, tgGroupListDebug } = require('./tgGroupListDebug');
 const { normalizeTgChatCommand } = require('./tgChatQuestionStore');
 
 const DEFAULT_UA =
@@ -1900,6 +1901,13 @@ async function getTgStatsGroupListByTelegramId({
     params: { telegramId: String(telegramId) },
     hasAuth: Boolean(rawAuth),
   });
+  tgGroupListLog('api.request', {
+    method: 'GET',
+    url,
+    telegramId: String(telegramId),
+    hasAuth: Boolean(rawAuth),
+    authPreview: jwtPreview(rawAuth),
+  });
   try {
     const res = await fetch(url, { method: 'GET', headers, signal: ctrl.signal });
     const text = await res.text();
@@ -1931,12 +1939,29 @@ async function getTgStatsGroupListByTelegramId({
       json,
       text: text.slice(0, 2000),
     });
+    tgGroupListLog('api.response', {
+      url,
+      httpStatus: res.status,
+      ok: out.ok,
+      apiCode: code,
+      itemCount: items.length,
+      errorMessage: out.errorMessage || null,
+    });
+    tgGroupListDebug('api.response.body', {
+      text: text.slice(0, 2000),
+      json,
+    });
     return out;
   } catch (err) {
     tgGroupStatsLog('response_error', {
       method: 'GET',
       url,
       message: err?.message || String(err),
+    });
+    tgGroupListLog('api.error', {
+      url,
+      message: err?.message || String(err),
+      name: err?.name,
     });
     throw err;
   } finally {

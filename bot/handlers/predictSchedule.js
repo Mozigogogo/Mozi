@@ -7,6 +7,7 @@ const {
   handleScheduleRefresh,
   handleScheduleToggle,
 } = require('../lib/predictScheduleFlow');
+const { tgGroupListLog } = require('../lib/tgGroupListDebug');
 
 /**
  * @param {import('telegraf').Telegraf} bot
@@ -18,6 +19,11 @@ function registerPredictSchedule(bot, config, { getTexts }) {
     try {
       await executePredictScheduleCommand(ctx, config, getTexts);
     } catch (err) {
+      tgGroupListLog('command.error', {
+        telegramId: ctx.from?.id,
+        message: err?.message || String(err),
+        name: err?.name,
+      });
       const texts = getTexts(ctx.from?.language_code || 'en');
       await ctx
         .reply(texts.predictScheduleFetchFailed || '加载失败，请稍后再试。', { parse_mode: 'HTML' })

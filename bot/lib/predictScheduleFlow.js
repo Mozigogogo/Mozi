@@ -6,6 +6,8 @@ const { getTgStatsGroupListByTelegramId, postTgStatsGroupSave } = require('./api
 const { buildTelegramLoginOptsFromCtx } = require('./datainfoPoints');
 const { escapeHtml } = require('./telegramHtml');
 const { DEFAULT_PUBLISH_TIME } = require('./predictScheduleStore');
+const { tgGroupListLog, tgGroupListDebug } = require('./tgGroupListDebug');
+const { jwtPreview } = require('./debugLog');
 
 /**
  * @param {import('telegraf').Context} ctx
@@ -13,12 +15,44 @@ const { DEFAULT_PUBLISH_TIME } = require('./predictScheduleStore');
  */
 async function fetchOwnerGroupsFromApi(ctx, config) {
   const uid = ctx.from?.id;
-  if (uid == null) return { ok: false, items: [], authMissing: true };
+  if (uid == null) {
+    tgGroupListLog('fetch.skip', { reason: 'no_telegram_id' });
+    return { ok: false, items: [], authMissing: true };
+  }
+
+  tgGroupListLog('fetch.start', {
+    telegramId: uid,
+    chatType: ctx.chat?.type,
+    apiBaseUrl: config.API_BASE_URL,
+    path: config.TG_GROUP_LIST_BY_TELEGRAM_ID_PATH,
+  });
 
   const loginOpts = buildTelegramLoginOptsFromCtx(ctx);
-  const token = await ensureTgUserToken(config, String(uid), loginOpts);
+  tgGroupListDebug('fetch.loginOpts', loginOpts);
+
+  let token = '';
+  try {
+    token = await ensureTgUserToken(config, String(uid), loginOpts);
+  } catch (err) {
+    tgGroupListLog('fetch.token_error', {
+      telegramId: uid,
+      message: err?.message || String(err),
+    });
+    return { ok: false, items: [], authMissing: true, error: err?.message || String(err) };
+  }
+
   const auth = token || config.MOZI_DETAIL_AUTH || '';
-  if (!auth) return { ok: false, items: [], authMissing: true };
+  tgGroupListLog('fetch.auth', {
+    telegramId: uid,
+    hasToken: Boolean(token),
+    hasFallbackAuth: Boolean(!token && config.MOZI_DETAIL_AUTH),
+    authPreview: jwtPreview(auth),
+  });
+
+  if (!auth) {
+    tgGroupListLog('fetch.skip', { reason: 'no_auth', telegramId: uid });
+    return { ok: false, items: [], authMissing: true };
+  }
 
   try {
     const res = await getTgStatsGroupListByTelegramId({
@@ -28,9 +62,37 @@ async function fetchOwnerGroupsFromApi(ctx, config) {
       appUrl: config.APP_URL,
       path: config.TG_GROUP_LIST_BY_TELEGRAM_ID_PATH,
     });
-    return { ok: res.ok, items: res.items || [], authMissing: false };
-  } catch {
-    return { ok: false, items: [], authMissing: false };
+    tgGroupListLog('fetch.result', {
+      telegramId: uid,
+      ok: res.ok,
+      httpStatus: res.status,
+      itemCount: (res.items || []).length,
+      errorMessage: res.errorMessage || null,
+      apiCode: res.json?.code,
+    });
+    tgGroupListDebug('fetch.result.raw', {
+      text: res.text?.slice?.(0, 2000),
+      json: res.json,
+    });
+    return {
+      ok: res.ok,
+      items: res.items || [],
+      authMissing: false,
+      errorMessage: res.errorMessage,
+      httpStatus: res.status,
+    };
+  } catch (err) {
+    tgGroupListLog('fetch.api_error', {
+      telegramId: uid,
+      message: err?.message || String(err),
+      name: err?.name,
+    });
+    return {
+      ok: false,
+      items: [],
+      authMissing: false,
+      error: err?.message || String(err),
+    };
   }
 }
 
@@ -110,10 +172,17 @@ async function renderSchedulePanel(ctx, config, getTexts, opts = {}) {
 
   const remote = await fetchOwnerGroupsFromApi(ctx, config);
   if (remote.authMissing) {
+    tgGroupListLog('panel.auth_missing', { telegramId: uid, error: remote.error || null });
     await ctx.reply(texts.predictScheduleNeedLogin, { parse_mode: 'HTML' }).catch(() => {});
     return;
   }
   if (!remote.ok && !remote.items.length) {
+    tgGroupListLog('panel.fetch_failed', {
+      telegramId: uid,
+      ok: remote.ok,
+      httpStatus: remote.httpStatus,
+      errorMessage: remote.errorMessage || remote.error || null,
+    });
     await ctx.reply(texts.predictScheduleFetchFailed, { parse_mode: 'HTML' }).catch(() => {});
     return;
   }
@@ -132,7 +201,13 @@ async function renderSchedulePanel(ctx, config, getTexts, opts = {}) {
       /* fall through */
     }
   }
-  await ctx.reply(text, extra).catch(async () => {
+  await ctx.reply(text, extra).catch(async (err) => {
+    tgGroupListLog('panel.reply_error', {
+      telegramId: uid,
+      groupCount: groups.length,
+      message: err?.message || String(err),
+      description: err?.response?.description,
+    });
     await ctx.reply(texts.predictScheduleFetchFailed, { parse_mode: 'HTML' }).catch(() => {});
   });
 }
