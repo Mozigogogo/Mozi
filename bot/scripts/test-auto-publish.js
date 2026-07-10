@@ -26,6 +26,7 @@ const {
   postCoinDirectionGuessAutoPublish,
   getCoinDirectionGuessList,
   parseCoinDirectionGuessAutoPublishItems,
+  summarizeGuessItemTimes,
 } = require('../lib/apis');
 const { sendAutoPublishedGuessCardsBatch } = require('../lib/predictFlow');
 const { fetchAutoPublishGroups } = require('../lib/predictAutoPublishScheduler');
@@ -179,6 +180,10 @@ async function main() {
       aiDirection: item.aiDirection,
       startPrice: item.startPrice,
     });
+    console.log(
+      '[test-auto-publish] backend deadlines:',
+      JSON.stringify(summarizeGuessItemTimes(item, 'autoPublish'), null, 2),
+    );
   }
 
   if (!shouldSend) {

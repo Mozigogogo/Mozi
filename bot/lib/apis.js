@@ -2584,6 +2584,54 @@ function parseGuessStartAt(data) {
 }
 
 /**
+ * 日志用：格式化竞猜时间字段（含上海时区显示）
+ * @param {string | number | null | undefined} value
+ */
+function formatGuessTimeForLog(value) {
+  const ms = parseGuessDateTimeMs(value);
+  if (ms == null) {
+    return { raw: value ?? null, ms: null, shanghai: null };
+  }
+  return {
+    raw: value,
+    ms,
+    shanghai: new Date(ms).toLocaleString('zh-CN', {
+      timeZone: 'Asia/Shanghai',
+      hour12: false,
+    }),
+  };
+}
+
+/**
+ * 汇总竞猜 startAt / betEndAt / endAt，便于对比后端下注截止时长
+ * @param {object | null | undefined} item
+ * @param {string} [source]
+ */
+function summarizeGuessItemTimes(item, source = 'unknown') {
+  const startAt = parseGuessStartAt(item);
+  const betEndAt = parseGuessBetEndAt(item);
+  const endAt = item?.endAt ?? item?.end_at ?? null;
+  const startMs = parseGuessDateTimeMs(startAt);
+  const betEndMs = parseGuessDateTimeMs(betEndAt);
+  const endMs = parseGuessDateTimeMs(endAt);
+  const hoursBetween = (fromMs, toMs) => {
+    if (fromMs == null || toMs == null) return null;
+    return Math.round(((toMs - fromMs) / 3600000) * 100) / 100;
+  };
+  return {
+    source,
+    guessNo: item?.guessNo ?? item?.guess_no ?? null,
+    groupId: item?.groupId ?? item?.group_id ?? null,
+    startAt: formatGuessTimeForLog(startAt),
+    betEndAt: formatGuessTimeForLog(betEndAt),
+    endAt: formatGuessTimeForLog(endAt),
+    betWindowHours: hoursBetween(startMs, betEndMs),
+    totalDurationHours: hoursBetween(startMs, endMs),
+    note: 'betWindowHours = startAt 到 betEndAt（下注截止）',
+  };
+}
+
+/**
  * 从竞猜 item 提取时间字段补丁（startAt→lockedAtMs, betEndAt, endAt）
  * @param {object | null | undefined} item
  * @returns {{ lockedAtMs?: number; betEndAt?: string | number; endAt?: string | number }}
@@ -2951,6 +2999,7 @@ async function postCoinDirectionGuessAutoPublish({
       code: out.code,
       agentFailed: out.agentFailed,
       itemCount: out.items.length,
+      backendDeadlines: out.items.map((row) => summarizeGuessItemTimes(row, 'autoPublish')),
       data: json,
       rawText: text,
     });
@@ -3860,6 +3909,7 @@ module.exports = {
   isGuessEffectivelyLocked,
   mergeGuessBetEndFallback,
   parseGuessBetEndAt,
+  summarizeGuessItemTimes,
   parseGuessStartAt,
   buildGuessTimeFieldsPatch,
   parseGuessDateTimeMs,

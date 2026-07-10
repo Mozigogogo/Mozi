@@ -6,7 +6,11 @@
  * 再 POST /coinDirectionGuess/autoPublish 批量创建竞猜。
  */
 
-const { getTgStatsGroupListByTelegramId, postCoinDirectionGuessAutoPublish } = require('./apis');
+const {
+  getTgStatsGroupListByTelegramId,
+  postCoinDirectionGuessAutoPublish,
+  summarizeGuessItemTimes,
+} = require('./apis');
 const { sendAutoPublishedGuessCardsBatch } = require('./predictFlow');
 const { autoPublishLog, autoPublishDebug } = require('./predictAutoPublishDebug');
 
@@ -218,6 +222,7 @@ async function runAutoPublishForGroups(bot, config, groups) {
         groupId: item.groupId,
         guessNo: item.guessNo,
         symbol: item.symbol,
+        backendDeadlines: summarizeGuessItemTimes(item, 'autoPublish'),
       })),
     });
 

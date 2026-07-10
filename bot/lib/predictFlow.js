@@ -32,6 +32,7 @@ const {
   mergeGuessBetEndFallback,
   isGuessEffectivelyLocked,
   isGuessBettingClosedByDeadline,
+  summarizeGuessItemTimes,
 } = require('./apis');
 const { SYMBOL_WHITELIST } = require('./symbolIntent');
 const { escapeHtml } = require('./telegramHtml');
@@ -1197,6 +1198,20 @@ async function syncGuessPublishCardFromDetail({
     }
 
     const item = detailRes.item;
+    predictPublishLog('detail_sync.backend_deadlines', {
+      guessNo: guess,
+      autoPublish: summarizeGuessItemTimes(
+        {
+          guessNo: guess,
+          groupId: messageMeta.groupId,
+          startAt: messageMeta.startAt,
+          betEndAt: messageMeta.betEndAt,
+          endAt: messageMeta.endAt,
+        },
+        'autoPublish_cached',
+      ),
+      detailApi: summarizeGuessItemTimes(item, 'detail'),
+    });
     const mergedItem = mergeGuessBetEndFallback(item, messageMeta.betEndAt);
     const patch = buildGuessTimeFieldsPatch(item);
     if (Object.keys(patch).length) patchGuessMessageContext(guess, patch);
@@ -3290,6 +3305,8 @@ async function sendAutoPublishedGuessCardToGroup(telegram, config, item, opts = 
     return { ok: false, reason: 'invalid_item', groupId: publishChatId, guessNo: guessNo || null };
   }
 
+  predictPublishLog('auto_publish.backend_deadlines', summarizeGuessItemTimes(item, 'autoPublish'));
+
   const auth = String(config.MOZI_DETAIL_AUTH || '').trim();
   if (!auth) {
     predictPublishLog('auto_publish.warn', { groupId: publishChatId, reason: 'no_auth_skip_bind' });
@@ -3371,6 +3388,16 @@ async function sendAutoPublishedGuessCardToGroup(telegram, config, item, opts = 
     guessNo,
     messageId: tgMessageId,
     symbol: messageMeta.sym,
+    cardBetEndAt: summarizeGuessItemTimes(
+      {
+        guessNo,
+        groupId: publishChatId,
+        startAt: messageMeta.startAt,
+        betEndAt: messageMeta.betEndAt,
+        endAt: messageMeta.endAt,
+      },
+      'card_message_meta',
+    ),
   });
 
   return {
