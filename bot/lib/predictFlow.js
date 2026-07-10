@@ -1126,15 +1126,16 @@ async function applyGuessActiveRefreshFromDetail({
   });
 }
 
-/** 单行展示金额；Telegram 手机端对多行 inline 按钮第二行支持差，+50 常被裁切 */
+/** 紧凑金额文案，减少 inline 按钮被裁切 */
 function formatBetAmountButtonText(labelLine, amount) {
-  return `${labelLine} +${amount}`;
+  return `${labelLine}+${amount}`;
 }
 
 function buildGuessBetKeyboard(texts, guessNo, aiDirection) {
   const g = String(guessNo || '').trim();
   const followToken = directionToBetCallbackToken(resolveAiFollowBetDirection(aiDirection));
   const oppositeToken = directionToBetCallbackToken(resolveAiOppositeBetDirection(aiDirection));
+  // Telegram 同行按钮等宽；3 列时 +50/+100 文案易被裁切，改为 2 列下注 + 独立自定义行
   return {
     inline_keyboard: [
       [
@@ -1146,7 +1147,6 @@ function buildGuessBetKeyboard(texts, guessNo, aiDirection) {
           text: formatBetAmountButtonText(texts.predictBetFollowLabel, 100),
           callback_data: `g:b:${followToken}:100:${g}`,
         },
-        { text: texts.predictBetUpCustomBtn, callback_data: `g:b:${followToken}:cst:${g}` },
       ],
       [
         {
@@ -1157,6 +1157,9 @@ function buildGuessBetKeyboard(texts, guessNo, aiDirection) {
           text: formatBetAmountButtonText(texts.predictBetOppositeLabel, 100),
           callback_data: `g:b:${oppositeToken}:100:${g}`,
         },
+      ],
+      [
+        { text: texts.predictBetUpCustomBtn, callback_data: `g:b:${followToken}:cst:${g}` },
         { text: texts.predictBetDownCustomBtn, callback_data: `g:b:${oppositeToken}:cst:${g}` },
       ],
     ],
