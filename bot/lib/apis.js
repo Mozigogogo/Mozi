@@ -2584,6 +2584,20 @@ function parseGuessStartAt(data) {
 }
 
 /**
+ * 用户通过 /predict 手动发起的竞猜。
+ * autoPublish 创建的系统竞猜：creatorUserId、title 均为空。
+ * @param {object | null | undefined} item
+ * @returns {boolean}
+ */
+function isUserInitiatedGuessItem(item) {
+  if (!item || typeof item !== 'object') return false;
+  const creatorUserId = item.creatorUserId ?? item.creator_user_id ?? null;
+  if (creatorUserId != null && String(creatorUserId).trim() !== '') return true;
+  const title = item.title ?? null;
+  return title != null && String(title).trim() !== '';
+}
+
+/**
  * 日志用：格式化竞猜时间字段（含上海时区显示）
  * @param {string | number | null | undefined} value
  */
@@ -3922,6 +3936,7 @@ module.exports = {
   isGuessVoidSettlement,
   normalizeGuessStatus,
   isGuessStatusActive,
+  isUserInitiatedGuessItem,
   isGuessStatusLocked,
   isGuessStatusSettled,
   isGuessStatusVoid,

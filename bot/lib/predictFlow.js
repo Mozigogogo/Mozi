@@ -26,6 +26,7 @@ const {
   isGuessStatusSettled,
   isGuessListItemSettled,
   isGuessStatusActive,
+  isUserInitiatedGuessItem,
   isGuessBettingAllowed,
   normalizeGuessStatus,
   resolveGuessPollStatus,
@@ -210,6 +211,12 @@ function countActiveGuesses(items) {
   return items.filter((item) => isGuessStatusActive(item)).length;
 }
 
+/** 只统计用户手动 /predict 发起的 active 竞猜，不含 autoPublish 系统信号卡 */
+function countActiveUserInitiatedGuesses(items) {
+  if (!Array.isArray(items)) return 0;
+  return items.filter((item) => isGuessStatusActive(item) && isUserInitiatedGuessItem(item)).length;
+}
+
 async function fetchActiveGuessCountForGroup(config, groupId) {
   const apiBaseUrl = config.API_BASE_URL;
   const listPath = config.COIN_DIRECTION_GUESS_LIST_PATH;
@@ -242,6 +249,8 @@ async function fetchActiveGuessCountForGroup(config, groupId) {
   }
 
   const activeCount = countActiveGuesses(listRes.items);
+  const userInitiatedActiveCount = countActiveUserInitiatedGuesses(listRes.items);
+  const autoPublishedActiveCount = Math.max(0, activeCount - userInitiatedActiveCount);
   const detail = {
     groupId: groupIdStr,
     url,
@@ -253,6 +262,8 @@ async function fetchActiveGuessCountForGroup(config, groupId) {
     jsonErrorMsg: listRes.json?.errorMsg ?? null,
     itemCount: listRes.items?.length ?? 0,
     activeCount,
+    userInitiatedActiveCount,
+    autoPublishedActiveCount,
     bodyPreview: listRes.text?.slice(0, 600) ?? null,
     activeGuessNos: (listRes.items || [])
       .filter((item) => isGuessStatusActive(item))
@@ -260,6 +271,9 @@ async function fetchActiveGuessCountForGroup(config, groupId) {
         guessNo: item.guessNo ?? null,
         symbol: item.symbol ?? null,
         status: item.status ?? null,
+        userInitiated: isUserInitiatedGuessItem(item),
+        creatorUserId: item.creatorUserId ?? item.creator_user_id ?? null,
+        title: item.title ?? null,
       })),
   };
 
@@ -276,7 +290,10 @@ async function fetchActiveGuessCountForGroup(config, groupId) {
   predictPublishLog('list.preflight.ok', detail);
   return {
     ok: true,
-    activeCount,
+    activeCount: userInitiatedActiveCount,
+    userInitiatedActiveCount,
+    autoPublishedActiveCount,
+    totalActiveCount: activeCount,
     errorMessage: null,
     listDetail: detail,
   };
@@ -2143,9 +2160,13 @@ async function publishPredict(ctx, config, getTexts) {
         predictPublishLog('publish.blocked.group_full', {
           uid,
           publishChatId,
+          userInitiatedActiveCount: listCheck.userInitiatedActiveCount ?? listCheck.activeCount,
+          autoPublishedActiveCount: listCheck.autoPublishedActiveCount ?? null,
+          totalActiveCount: listCheck.totalActiveCount ?? null,
           activeCount: listCheck.activeCount,
           maxActive,
           listDetail: listCheck.listDetail ?? null,
+          note: '仅统计用户 /predict 发起的竞猜，autoPublish 信号卡不计入',
         });
         await replyOrEdit(ctx, session, texts.predictGroupGuessFull, { parse_mode: 'HTML' });
         return;
