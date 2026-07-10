@@ -12,6 +12,7 @@ const { executePredictCommand } = require('./predictFlow');
 const { executeAlertCommand } = require('./alertFlow');
 const { escapeHtml } = require('./telegramHtml');
 const { apiDebug } = require('./debugLog');
+const { bigorderLog } = require('./bigorderDebug');
 const { agentRouteLog, agentRouteDebug } = require('./agentRouteDebug');
 const { recordCommandUsageFromCtx } = require('./tgCommandUsage');
 
@@ -80,6 +81,11 @@ async function dispatchAgentRoute(ctx, config, getTexts, dispatch) {
       await executeAiCommand(ctx, config, texts, message);
       return;
     case 'bigorder':
+      bigorderLog('route.dispatch', {
+        uid: ctx.from?.id ?? null,
+        chatId: ctx.chat?.id ?? null,
+        messagePreview: message.slice(0, 200),
+      });
       await executeBigorderCommand(ctx, config, texts, message);
       return;
     case 'price': {

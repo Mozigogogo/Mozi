@@ -6,7 +6,8 @@
   "scripts": {
     "build": "echo \"telegram-bot: no compile\"",
     "start": "node bot/telegram-bot.js",
-    "dev": "node bot/telegram-bot.js"
+    "dev": "node bot/telegram-bot.js",
+    "test:auto-publish": "node bot/scripts/test-auto-publish.js"
   },
   "dependencies": {
     "telegraf": "^4.15.0"

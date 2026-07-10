@@ -23,6 +23,7 @@ const { insufficientPointsEarnKeyboard } = require('./pointsDetailKeyboard');
 const { removeTgChatQuestion } = require('./tgChatQuestionStore');
 const { sanitizeTelegramLoginOpts } = require('./sanitizeMysqlUtf8');
 const { tgRegisterLog } = require('./tgRegisterDebug');
+const { bigorderLog } = require('./bigorderDebug');
 
 /** @typedef {{ telegramId: string; groupId: number; question: string; command: 'ai' | 'chat' | 'bigorder'; languageCode?: string; username?: string; firstName?: string }} TgChatReplayJob */
 
@@ -104,6 +105,14 @@ async function runTgChatProactiveReplay(bot, config, job) {
     command: job.command,
     questionPreview: String(job.question || '').slice(0, 120),
   });
+  if (isBigorder) {
+    bigorderLog('replay.start', {
+      telegramId: job.telegramId,
+      groupId: job.groupId,
+      questionPreview: String(job.question || '').slice(0, 200),
+      streamUrl: config.AI_AGENT_STREAM_URL,
+    });
+  }
 
   const token = await ensureTgUserToken(config, job.telegramId, loginOpts);
   if (!token) {
@@ -146,7 +155,21 @@ async function runTgChatProactiveReplay(bot, config, job) {
       appUrl: config.APP_URL,
       timeoutMs: config.AI_CHAT_STREAM_TIMEOUT_MS,
     });
+    if (isBigorder) {
+      bigorderLog('replay.stream_ok', {
+        answerChars: result?.answer?.length ?? 0,
+        answerPreview: String(result?.answer || '').slice(0, 300),
+      });
+    }
   } catch (err) {
+    if (isBigorder) {
+      bigorderLog('replay.stream_fail', {
+        message: err?.message || String(err),
+        userMessage: err?.userMessage ?? null,
+        httpStatus: err?.status ?? null,
+        streamHint: err?.streamHint ?? null,
+      });
+    }
     if (err?.userMessage) {
       await ctx.reply(escapeHtml(err.userMessage), { parse_mode: 'HTML' }).catch(() => {});
     } else {

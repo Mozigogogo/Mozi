@@ -158,6 +158,11 @@ const COIN_DIRECTION_GUESS_PUBLISH_PATH = (
   process.env.COIN_DIRECTION_GUESS_PUBLISH_PATH || 'coinDirectionGuess/publish'
 ).trim().replace(/^\/+/, '');
 
+/** POST 定时批量自动发布 AI 信号卡（相对 API_BASE_URL），默认 coinDirectionGuess/autoPublish */
+const COIN_DIRECTION_GUESS_AUTO_PUBLISH_PATH = (
+  process.env.COIN_DIRECTION_GUESS_AUTO_PUBLISH_PATH || 'coinDirectionGuess/autoPublish'
+).trim().replace(/^\/+/, '');
+
 /** POST 涨跌竞猜绑定 TG 消息（相对 API_BASE_URL），默认 coinDirectionGuess/bindMessage */
 const COIN_DIRECTION_GUESS_BIND_MESSAGE_PATH = (
   process.env.COIN_DIRECTION_GUESS_BIND_MESSAGE_PATH || 'coinDirectionGuess/bindMessage'
@@ -283,6 +288,7 @@ module.exports = {
   PREDICT_GUESS_FEE_RATE,
   PREDICT_AI_HISTORY_PATH,
   COIN_DIRECTION_GUESS_PUBLISH_PATH,
+  COIN_DIRECTION_GUESS_AUTO_PUBLISH_PATH,
   COIN_DIRECTION_GUESS_BIND_MESSAGE_PATH,
   COIN_DIRECTION_GUESS_BET_PATH,
   COIN_DIRECTION_GUESS_LIST_PATH,

@@ -2,13 +2,15 @@
 
 /**
  * 每日定时向 autoPublishGuess=1 的群发布 AI 信号卡。
- * 发布前先 GET /tg/stats/group/listByTelegramId（不传 telegramId 查全部群）。
+ * 发布前先 GET /tg/stats/group/listByTelegramId（不传 telegramId 查全部群），
+ * 再 POST /coinDirectionGuess/autoPublish 批量创建竞猜。
  */
 
-const { getTgStatsGroupListByTelegramId } = require('./apis');
-const { publishScheduledGuessToGroup } = require('./predictFlow');
+const { getTgStatsGroupListByTelegramId, postCoinDirectionGuessAutoPublish } = require('./apis');
+const { sendAutoPublishedGuessCardsBatch } = require('./predictFlow');
 
 const CHECK_MS = 60_000;
+const AUTO_PUBLISH_BATCH_SIZE = 100;
 
 /** @type {ReturnType<typeof setInterval> | null} */
 let timer = null;
@@ -81,6 +83,24 @@ function matchesPublishTime(publishTime, parts) {
 }
 
 /**
+ * @param {Array<number | string>} ids
+ * @param {number} size
+ */
+function chunkGroupIds(ids, size) {
+  const out = [];
+  for (let i = 0; i < ids.length; i += size) {
+    out.push(ids.slice(i, i + size));
+  }
+  return out;
+}
+
+function resolveAutoPublishTimeoutMs() {
+  const raw = Number(process.env.COIN_DIRECTION_GUESS_AUTO_PUBLISH_TIMEOUT_MS);
+  if (Number.isFinite(raw) && raw >= 5000) return Math.floor(raw);
+  return 120_000;
+}
+
+/**
  * GET 全部群并筛 autoPublishGuess=1
  * @param {object} config
  */
@@ -100,6 +120,108 @@ async function fetchAutoPublishGroups(config) {
     return Number.isFinite(Number(g.groupId));
   });
   return { ok: true, groups };
+}
+
+/**
+ * @param {import('telegraf').Telegraf} bot
+ * @param {object} config
+ * @param {object[]} groups
+ */
+async function runAutoPublishForGroups(bot, config, groups) {
+  const groupTitleById = {};
+  const groupIds = [];
+  for (const group of groups) {
+    const groupId = Number(group.groupId);
+    if (!Number.isFinite(groupId)) continue;
+    groupIds.push(groupId);
+    if (group.groupTitle) groupTitleById[groupId] = group.groupTitle;
+  }
+
+  const batches = chunkGroupIds(groupIds, AUTO_PUBLISH_BATCH_SIZE);
+  const sendResults = [];
+  let createdCount = 0;
+
+  for (const batch of batches) {
+    autoPublishLog('auto_publish.request', { groupIds: batch, count: batch.length });
+
+    let apiResult;
+    try {
+      apiResult = await postCoinDirectionGuessAutoPublish({
+        apiBaseUrl: config.API_BASE_URL,
+        appUrl: config.APP_URL,
+        path: config.COIN_DIRECTION_GUESS_AUTO_PUBLISH_PATH,
+        groupIds: batch,
+        timeoutMs: resolveAutoPublishTimeoutMs(),
+      });
+    } catch (err) {
+      autoPublishLog('auto_publish.error', {
+        groupIds: batch,
+        message: err?.message || String(err),
+      });
+      return {
+        ok: false,
+        reason: 'auto_publish_exception',
+        sendResults,
+        createdCount,
+        attempted: groupIds.length,
+      };
+    }
+
+    autoPublishLog('auto_publish.response', {
+      httpStatus: apiResult.status,
+      code: apiResult.code,
+      agentFailed: apiResult.agentFailed,
+      created: apiResult.items.length,
+      errorMessage: apiResult.errorMessage || null,
+    });
+
+    if (apiResult.agentFailed) {
+      return {
+        ok: false,
+        reason: 'agent_failed',
+        code: apiResult.code,
+        errorMessage: apiResult.errorMessage,
+        sendResults,
+        createdCount,
+        attempted: groupIds.length,
+      };
+    }
+
+    if (!apiResult.ok) {
+      return {
+        ok: false,
+        reason: 'auto_publish_fail',
+        code: apiResult.code,
+        errorMessage: apiResult.errorMessage,
+        sendResults,
+        createdCount,
+        attempted: groupIds.length,
+      };
+    }
+
+    createdCount += apiResult.items.length;
+
+    if (!apiResult.items.length) {
+      autoPublishLog('auto_publish.batch_empty', { groupIds: batch });
+      continue;
+    }
+
+    const batchSendResults = await sendAutoPublishedGuessCardsBatch(
+      bot.telegram,
+      config,
+      apiResult.items,
+      groupTitleById,
+    );
+    sendResults.push(...batchSendResults);
+  }
+
+  return {
+    ok: true,
+    sendResults,
+    createdCount,
+    attempted: groupIds.length,
+    succeeded: sendResults.filter((r) => r.ok).length,
+  };
 }
 
 /**
@@ -142,32 +264,23 @@ async function runAutoPublishTick(bot, config) {
       return;
     }
 
-    const symbol = config.PREDICT_AUTO_PUBLISH_SYMBOL || 'BTC';
-    const results = [];
-
-    for (const group of remote.groups) {
-      const groupId = Number(group.groupId);
-      try {
-        const result = await publishScheduledGuessToGroup(bot.telegram, config, {
-          groupId,
-          symbol,
-          languageCode: 'zh',
-          groupTitle: group.groupTitle,
-        });
-        results.push({ groupId, groupTitle: group.groupTitle, ...result });
-        autoPublishLog('group.done', { groupId, groupTitle: group.groupTitle, ...result });
-      } catch (err) {
-        const message = err?.message || String(err);
-        results.push({ groupId, ok: false, reason: 'exception', message });
-        autoPublishLog('group.error', { groupId, message });
+    const result = await runAutoPublishForGroups(bot, config, remote.groups);
+    if (!result.ok) {
+      autoPublishLog('tick.fail', result);
+      if (result.reason !== 'agent_failed') {
+        lastRunDateKey = todayKey;
       }
+      return;
     }
 
     lastRunDateKey = todayKey;
     autoPublishLog('tick.done', {
       todayKey,
-      attempted: remote.groups.length,
-      succeeded: results.filter((r) => r.ok).length,
+      attempted: result.attempted,
+      created: result.createdCount,
+      telegramSent: result.succeeded,
+      skipped: Math.max(0, result.attempted - result.createdCount),
+      telegramFailed: result.sendResults.filter((r) => !r.ok).length,
     });
   } finally {
     ticking = false;
@@ -191,8 +304,8 @@ function initPredictAutoPublishScheduler(bot, config) {
   }, CHECK_MS);
   autoPublishLog('init', {
     publishTime: config.PREDICT_AUTO_PUBLISH_TIME,
-    symbol: config.PREDICT_AUTO_PUBLISH_SYMBOL,
     checkMs: CHECK_MS,
+    autoPublishPath: config.COIN_DIRECTION_GUESS_AUTO_PUBLISH_PATH,
   });
 }
 
@@ -205,5 +318,6 @@ module.exports = {
   initPredictAutoPublishScheduler,
   stopPredictAutoPublishScheduler,
   runAutoPublishTick,
+  runAutoPublishForGroups,
   fetchAutoPublishGroups,
 };

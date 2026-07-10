@@ -3,6 +3,7 @@
  */
 
 const { apiDebug, jwtPreview } = require('./debugLog');
+const { bigorderLog, bigorderDebug } = require('./bigorderDebug');
 const { guessApiLog } = require('./guessApiDebug');
 const { tgGroupStatsLog } = require('./tgGroupStatsLog');
 const { tgGroupListLog, tgGroupListDebug } = require('./tgGroupListDebug');
@@ -784,7 +785,8 @@ function extractAgentChunkFromEvent(messageType, eventData) {
  * @param {AbortSignal} signal
  * @returns {Promise<{ answer: string, pointsCost?: number }>}
  */
-async function consumeAgentSseStream(res, signal) {
+async function consumeAgentSseStream(res, signal, options = {}) {
+  const onEvent = typeof options.onEvent === 'function' ? options.onEvent : null;
   const reader = res.body?.getReader();
   if (!reader) {
     const raw = await res.text();
@@ -831,6 +833,14 @@ async function consumeAgentSseStream(res, signal) {
       const pc = extractPointsCost(eventData);
       if (pc !== undefined) pointsCost = pc;
       if (chunk.text) answer += chunk.text;
+      if (onEvent) {
+        onEvent({
+          messageType,
+          textChars: chunk.text ? chunk.text.length : 0,
+          answerChars: answer.length,
+          hasPointsCost: pc !== undefined,
+        });
+      }
     }
   }
 
@@ -1033,6 +1043,16 @@ async function requestAgentStream({ url, message, type, auth, appUrl = '', timeo
     hasAuth: Boolean(rawAuth),
     messagePreview: typeof message === 'string' ? message.slice(0, 160) : undefined,
   });
+  if (type === 'bigorder') {
+    bigorderLog('api.stream.request', {
+      url,
+      type,
+      hasAuth: Boolean(rawAuth),
+      timeoutMs,
+      messagePreview: typeof message === 'string' ? message.slice(0, 200) : undefined,
+      payload,
+    });
+  }
 
   try {
     const res = await fetch(url, {
@@ -1041,6 +1061,14 @@ async function requestAgentStream({ url, message, type, auth, appUrl = '', timeo
       body: JSON.stringify(payload),
       signal: ctrl.signal,
     });
+
+    if (type === 'bigorder') {
+      bigorderLog('api.stream.response_headers', {
+        httpStatus: res.status,
+        ok: res.ok,
+        contentType: res.headers.get('content-type'),
+      });
+    }
 
     if (!res.ok) {
       const raw = await res.text();
@@ -1062,15 +1090,39 @@ async function requestAgentStream({ url, message, type, auth, appUrl = '', timeo
       err.status = res.status;
       err.userMessage = userMessage;
       err.rawBody = raw.slice(0, 500);
+      if (type === 'bigorder') {
+        bigorderLog('api.stream.http_error', {
+          httpStatus: res.status,
+          userMessage: userMessage ?? null,
+          rawBody: err.rawBody,
+        });
+      }
       throw err;
     }
 
-    const result = await consumeAgentSseStream(res, ctrl.signal);
+    let sseEventCount = 0;
+    const result = await consumeAgentSseStream(res, ctrl.signal, {
+      onEvent:
+        type === 'bigorder'
+          ? (ev) => {
+              sseEventCount += 1;
+              bigorderDebug('api.stream.sse_chunk', { index: sseEventCount, ...ev });
+            }
+          : undefined,
+    });
     apiDebug('POST ai/agent/stream → ok', {
       type,
       answerChars: result.answer.length,
       pointsCost: result.pointsCost ?? null,
     });
+    if (type === 'bigorder') {
+      bigorderLog('api.stream.ok', {
+        answerChars: result.answer.length,
+        pointsCost: result.pointsCost ?? null,
+        sseEventCount,
+        answerPreview: result.answer.slice(0, 400),
+      });
+    }
     return result;
   } catch (err) {
     const aborted =
@@ -1085,6 +1137,16 @@ async function requestAgentStream({ url, message, type, auth, appUrl = '', timeo
       rawBody: err?.rawBody ?? null,
       streamHint: err?.streamHint ?? null,
     });
+    if (type === 'bigorder') {
+      bigorderLog('api.stream.fail', {
+        aborted,
+        message: err?.message || String(err),
+        userMessage: err?.userMessage ?? null,
+        httpStatus: err?.status ?? null,
+        rawBody: err?.rawBody ?? null,
+        streamHint: err?.streamHint ?? null,
+      });
+    }
     throw err;
   } finally {
     clearTimeout(t);
@@ -2770,6 +2832,135 @@ async function postCoinDirectionGuessPublish({
 }
 
 /**
+ * @param {object | null} json
+ * @returns {object[]}
+ */
+function parseCoinDirectionGuessAutoPublishItems(json) {
+  if (!json || typeof json !== 'object') return [];
+  const data = json.data;
+  if (!Array.isArray(data)) return [];
+  return data
+    .map((raw) => {
+      if (!raw || typeof raw !== 'object') return null;
+      const groupId = Number(raw.groupId ?? raw.group_id);
+      const guessNo = raw.guessNo ?? raw.guess_no ?? null;
+      if (!Number.isFinite(groupId)) return null;
+      if (guessNo == null || !String(guessNo).trim()) return null;
+      return {
+        guessNo: String(guessNo).trim(),
+        creatorUserId: raw.creatorUserId ?? raw.creator_user_id ?? null,
+        title: raw.title ?? null,
+        groupId,
+        symbol: String(raw.symbol || '').trim().toUpperCase(),
+        duration: raw.duration ?? null,
+        startPrice: raw.startPrice ?? raw.start_price ?? null,
+        startAt: raw.startAt ?? raw.start_at ?? null,
+        endAt: raw.endAt ?? raw.end_at ?? null,
+        betEndAt: raw.betEndAt ?? raw.bet_end_at ?? null,
+        status: raw.status ?? null,
+        aiDirection: raw.aiDirection ?? raw.ai_direction ?? null,
+        aiConfidence: raw.aiConfidence ?? raw.ai_confidence ?? null,
+        aiWinRate: raw.aiWinRate ?? raw.ai_win_rate ?? null,
+        aiWinCount: raw.aiWinCount ?? raw.ai_win_count ?? null,
+        aiLossCount: raw.aiLossCount ?? raw.ai_loss_count ?? null,
+      };
+    })
+    .filter(Boolean);
+}
+
+/**
+ * POST /coinDirectionGuess/autoPublish（无需 token）
+ * @param {{
+ *   apiBaseUrl: string;
+ *   appUrl?: string;
+ *   groupIds: Array<number | string>;
+ *   path?: string;
+ *   timeoutMs?: number;
+ * }} opts
+ * @returns {Promise<{
+ *   ok: boolean;
+ *   code: number | null;
+ *   agentFailed: boolean;
+ *   items: object[];
+ *   status: number;
+ *   json: object | null;
+ *   text: string;
+ *   errorMessage: string | null;
+ * }>}
+ */
+async function postCoinDirectionGuessAutoPublish({
+  apiBaseUrl,
+  appUrl = '',
+  groupIds,
+  path = 'coinDirectionGuess/autoPublish',
+  timeoutMs = 120000,
+}) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const rel = String(path || 'coinDirectionGuess/autoPublish').trim().replace(/^\/+/, '');
+  const url = `${base}/${rel}`;
+  const ids = (Array.isArray(groupIds) ? groupIds : [])
+    .map((id) => Number(id))
+    .filter((id) => Number.isFinite(id));
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    'content-type': 'application/json',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    'user-agent': DEFAULT_UA,
+  };
+  if (app) {
+    headers.referer = `${app}/`;
+  }
+  const body = { groupIds: ids };
+  guessApiLog('POST /coinDirectionGuess/autoPublish ← 请求', { url, params: body });
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      signal: ctrl.signal,
+    });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const code =
+      json && typeof json === 'object' && json.code != null ? Number(json.code) : null;
+    const agentFailed = code === 1;
+    const ok = res.status === 200 && code === 0;
+    const items = ok ? parseCoinDirectionGuessAutoPublishItems(json) : [];
+    const out = {
+      ok,
+      code: Number.isFinite(code) ? code : null,
+      agentFailed,
+      items,
+      status: res.status,
+      json,
+      text,
+      errorMessage: parseApiErrorMessage(json),
+    };
+    guessApiLog('POST /coinDirectionGuess/autoPublish → 响应', {
+      httpStatus: res.status,
+      ok: out.ok,
+      code: out.code,
+      agentFailed: out.agentFailed,
+      itemCount: out.items.length,
+      data: json,
+      rawText: text,
+    });
+    return out;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+/**
  * POST /coinDirectionGuess/bindMessage
  * @param {{
  *   apiBaseUrl: string;
@@ -3653,6 +3844,7 @@ module.exports = {
   parseGroupReferrerGetResult,
   postGroupReferrerBind,
   postCoinDirectionGuessPublish,
+  postCoinDirectionGuessAutoPublish,
   postCoinDirectionGuessBindMessage,
   postCoinDirectionGuessBet,
   getCoinDirectionGuessList,
@@ -3661,6 +3853,7 @@ module.exports = {
   putCoinDirectionGuessScheduleSave,
   parseCoinDirectionGuessScheduleItem,
   parseCoinDirectionGuessNo,
+  parseCoinDirectionGuessAutoPublishItems,
   parseCoinDirectionGuessPublishData,
   parseGuessAiSignalFields,
   isGuessBettingClosedByDeadline,
