@@ -1108,9 +1108,9 @@ async function applyGuessActiveRefreshFromDetail({
   });
 }
 
-/** Telegram 按钮多行时各行居中；补全角空格使 +N 与「跟注AI」等文案左对齐 */
+/** 单行展示金额；Telegram 手机端对多行 inline 按钮第二行支持差，+50 常被裁切 */
 function formatBetAmountButtonText(labelLine, amount) {
-  return `${labelLine}\n\u3000\u3000+${amount}`;
+  return `${labelLine} +${amount}`;
 }
 
 function buildGuessBetKeyboard(texts, guessNo, aiDirection) {
@@ -2697,6 +2697,10 @@ async function submitGuessBet(ctx, config, getTexts, guessNo, direction, betAmou
   const texts = getTexts(languageCode);
   const isZh = languageCode.toLowerCase().startsWith('zh');
   const choice = direction === 'DOWN' ? 2 : 1;
+  const guess = String(guessNo || '').trim();
+  const pts = Math.floor(Number(betAmount));
+
+  try {
   const followChoice = resolveFollowAiChoice(getGuessMessageContext(guess)?.aiDirection);
   const dirLabel =
     followChoice == null
@@ -2714,8 +2718,6 @@ async function submitGuessBet(ctx, config, getTexts, guessNo, direction, betAmou
         : isZh
           ? '反向下注'
           : 'Bet opposite';
-  const guess = String(guessNo || '').trim();
-  const pts = Math.floor(Number(betAmount));
 
   if (!guess || pts <= 0) {
     await answerPredictCbQuery(ctx, texts.predictVoteFailed, { show_alert: true });
@@ -2748,7 +2750,7 @@ async function submitGuessBet(ctx, config, getTexts, guessNo, direction, betAmou
   const loginOpts = buildTelegramLoginOptsFromCtx(ctx);
   let auth = '';
   try {
-    auth = await ensureTgUserToken(config, uid, loginOpts);
+    auth = await ensureTgUserToken(config, String(uid), loginOpts);
   } catch (err) {
     predictLog('bet.auth_fail', { telegramId: uid, message: err?.message || String(err) });
   }
@@ -2757,11 +2759,11 @@ async function submitGuessBet(ctx, config, getTexts, guessNo, direction, betAmou
     return false;
   }
 
-  let userId = getCachedUserId(uid);
+  let userId = getCachedUserId(String(uid));
   if (!userId) {
     try {
-      auth = await ensureTgUserToken(config, uid, { ...loginOpts, forceRefresh: true });
-      userId = getCachedUserId(uid);
+      auth = await ensureTgUserToken(config, String(uid), { ...loginOpts, forceRefresh: true });
+      userId = getCachedUserId(String(uid));
     } catch (err) {
       predictLog('bet.user_resolve_fail', { telegramId: uid, message: err?.message || String(err) });
     }
@@ -2771,7 +2773,6 @@ async function submitGuessBet(ctx, config, getTexts, guessNo, direction, betAmou
     return false;
   }
 
-  try {
     const result = await postCoinDirectionGuessBet({
       apiBaseUrl: config.API_BASE_URL,
       appUrl: config.APP_URL,
@@ -2812,7 +2813,12 @@ async function submitGuessBet(ctx, config, getTexts, guessNo, direction, betAmou
     await tryRefreshGuessMessage(ctx, config, refreshTexts, guess, result);
     return true;
   } catch (err) {
-    predictLog('bet.fail', { telegramId: uid, guessNo: guess, message: err?.message || String(err) });
+    predictLog('bet.fail', {
+      telegramId: uid,
+      guessNo: guess,
+      message: err?.message || String(err),
+      stack: err?.stack?.split('\n').slice(0, 3).join(' | ') ?? null,
+    });
     await answerPredictCbQuery(ctx, texts.predictVoteFailed, { show_alert: true });
     return false;
   }

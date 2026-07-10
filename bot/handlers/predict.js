@@ -66,11 +66,24 @@ function registerPredict(bot, config, { getTexts }) {
     const direction = ctx.match[1] === 'DN' ? 'DOWN' : 'UP';
     const amountOrCst = ctx.match[2];
     const guessNo = ctx.match[3];
-    if (amountOrCst === 'cst') {
-      await handleGuessBetCustom(ctx, getTexts, guessNo, direction);
-      return;
+    const texts = getTexts(ctx.from?.language_code || 'en');
+    try {
+      if (amountOrCst === 'cst') {
+        await handleGuessBetCustom(ctx, getTexts, guessNo, direction);
+        return;
+      }
+      await handleGuessBetDirect(ctx, config, getTexts, guessNo, direction, Number(amountOrCst));
+    } catch (err) {
+      predictLog('bet.callback.error', {
+        uid: ctx.from?.id ?? null,
+        guessNo,
+        direction,
+        amountOrCst,
+        message: err?.message || String(err),
+        stack: err?.stack?.split('\n').slice(0, 3).join(' | ') ?? null,
+      });
+      await answerPredictCbQuery(ctx, texts.predictVoteFailed, { show_alert: true }).catch(() => {});
     }
-    await handleGuessBetDirect(ctx, config, getTexts, guessNo, direction, Number(amountOrCst));
   });
 
   bot.action(/^g:n:/, async (ctx) => {

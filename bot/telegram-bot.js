@@ -93,6 +93,16 @@ bot.catch((err, ctx) => {
   if (err?.response?.error_code === 409) {
     return;
   }
+  const updateType = ctx?.updateType ?? null;
+  const callbackData = ctx?.callbackQuery?.data ?? null;
+  console.error('[BOT_CATCH]', {
+    updateType,
+    callbackData,
+    uid: ctx?.from?.id ?? null,
+    chatId: ctx?.chat?.id ?? ctx?.callbackQuery?.message?.chat?.id ?? null,
+    message: err?.message || String(err),
+    stack: err?.stack?.split('\n').slice(0, 5).join('\n') ?? null,
+  });
   return ctx.reply('处理失败，请稍后重试。').catch(() => {});
 });
 
