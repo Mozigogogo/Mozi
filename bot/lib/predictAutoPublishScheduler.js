@@ -54,7 +54,7 @@ function getTodayKey(parts) {
  * @returns {number | null}
  */
 function parsePublishTimeMinutes(publishTime) {
-  const seg = String(publishTime || '13:55').trim().split(':');
+  const seg = String(publishTime || '14:05').trim().split(':');
   const h = parseInt(seg[0], 10);
   const m = parseInt(seg[1], 10);
   if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
@@ -318,7 +318,7 @@ async function runAutoPublishTick(bot, config) {
 
   const parts = getBeijingDateTimeParts();
   const todayKey = getTodayKey(parts);
-  const publishTime = config.PREDICT_AUTO_PUBLISH_TIME || '13:55';
+  const publishTime = config.PREDICT_AUTO_PUBLISH_TIME || '14:05';
   const beijingTime = `${parts.hour}:${parts.minute}`;
 
   if (lastRunDateKey === todayKey) {

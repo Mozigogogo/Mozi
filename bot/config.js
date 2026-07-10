@@ -246,9 +246,9 @@ const PREDICT_AUTO_PUBLISH_SYMBOL = (
   .trim()
   .toUpperCase();
 
-/** 定时自动发布时间（北京时间 HH:mm），默认 13:55（临时联调） */
+/** 定时自动发布时间（北京时间 HH:mm），默认 14:05（临时联调） */
 const PREDICT_AUTO_PUBLISH_TIME = (
-  process.env.PREDICT_AUTO_PUBLISH_TIME || '13:55'
+  process.env.PREDICT_AUTO_PUBLISH_TIME || '14:05'
 ).trim();
 
 /** 定时自动发布开关，默认开启；PREDICT_AUTO_PUBLISH_ENABLED=0 关闭 */
