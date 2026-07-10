@@ -7,7 +7,7 @@ const STORE_PATH =
   process.env.PREDICT_SCHEDULE_STORE_PATH ||
   path.join(__dirname, '..', 'data', 'predict-schedule.json');
 
-const DEFAULT_PUBLISH_TIME = String(process.env.PREDICT_AUTO_PUBLISH_TIME || '09:00').trim() || '09:00';
+const DEFAULT_PUBLISH_TIME = String(process.env.PREDICT_AUTO_PUBLISH_TIME || '12:20').trim() || '12:20';
 
 /** @type {{ groups: Record<string, object>; schedules: Record<string, object> } | null} */
 let store = null;

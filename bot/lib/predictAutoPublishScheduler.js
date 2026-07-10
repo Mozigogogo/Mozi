@@ -8,39 +8,18 @@
 
 const { getTgStatsGroupListByTelegramId, postCoinDirectionGuessAutoPublish } = require('./apis');
 const { sendAutoPublishedGuessCardsBatch } = require('./predictFlow');
+const { autoPublishLog, autoPublishDebug } = require('./predictAutoPublishDebug');
 
 const CHECK_MS = 60_000;
 const AUTO_PUBLISH_BATCH_SIZE = 100;
+/** 北京时间匹配窗口（分钟）：避免 tick 偏晚 1 分钟时错过，且失败可在窗口内重试 */
+const PUBLISH_MATCH_WINDOW_MINUTES = 2;
 
 /** @type {ReturnType<typeof setInterval> | null} */
 let timer = null;
 /** @type {string | null} */
 let lastRunDateKey = null;
 let ticking = false;
-
-function autoPublishLogEnabled() {
-  return !/^0|false|no$/i.test(String(process.env.PREDICT_AUTO_PUBLISH_LOG ?? '1').trim());
-}
-
-/**
- * @param {string} label
- * @param {unknown} [payload]
- */
-function autoPublishLog(label, payload) {
-  if (!autoPublishLogEnabled()) return;
-  const ts = new Date().toISOString();
-  if (payload === undefined) {
-    console.log(`[PREDICT_AUTO_PUBLISH] ${ts} ${label}`);
-    return;
-  }
-  let body;
-  try {
-    body = JSON.stringify(payload);
-  } catch {
-    body = String(payload);
-  }
-  console.log(`[PREDICT_AUTO_PUBLISH] ${ts} ${label} ${body}`);
-}
 
 /**
  * @param {Date} [date]
@@ -72,14 +51,33 @@ function getTodayKey(parts) {
 
 /**
  * @param {string} publishTime HH:mm
+ * @returns {number | null}
+ */
+function parsePublishTimeMinutes(publishTime) {
+  const seg = String(publishTime || '12:20').trim().split(':');
+  const h = parseInt(seg[0], 10);
+  const m = parseInt(seg[1], 10);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+  return h * 60 + m;
+}
+
+/**
+ * @param {Record<string, string>} parts
+ * @returns {number}
+ */
+function getBeijingMinutesOfDay(parts) {
+  return parseInt(parts.hour, 10) * 60 + parseInt(parts.minute, 10);
+}
+
+/**
+ * @param {string} publishTime HH:mm
  * @param {Record<string, string>} parts
  */
 function matchesPublishTime(publishTime, parts) {
-  const seg = String(publishTime || '09:00').trim().split(':');
-  const h = parseInt(seg[0], 10);
-  const m = parseInt(seg[1], 10);
-  if (!Number.isFinite(h) || !Number.isFinite(m)) return false;
-  return parseInt(parts.hour, 10) === h && parseInt(parts.minute, 10) === m;
+  const target = parsePublishTimeMinutes(publishTime);
+  if (target == null) return false;
+  const now = getBeijingMinutesOfDay(parts);
+  return now >= target && now < target + PUBLISH_MATCH_WINDOW_MINUTES;
 }
 
 /**
@@ -105,20 +103,46 @@ function resolveAutoPublishTimeoutMs() {
  * @param {object} config
  */
 async function fetchAutoPublishGroups(config) {
+  autoPublishDebug('fetch.start', {
+    apiBaseUrl: config.API_BASE_URL,
+    path: config.TG_GROUP_LIST_BY_TELEGRAM_ID_PATH,
+    hasAuth: Boolean(config.MOZI_DETAIL_AUTH),
+  });
+
   const res = await getTgStatsGroupListByTelegramId({
     apiBaseUrl: config.API_BASE_URL,
     appUrl: config.APP_URL,
     auth: config.MOZI_DETAIL_AUTH || '',
     path: config.TG_GROUP_LIST_BY_TELEGRAM_ID_PATH,
   });
+
   if (!res.ok) {
+    autoPublishLog('fetch.fail', {
+      httpStatus: res.status ?? null,
+      errorMessage: res.errorMessage || null,
+      apiCode: res.json?.code ?? null,
+    });
     return { ok: false, groups: [], errorMessage: res.errorMessage || null };
   }
+
+  const allCount = (res.items || []).length;
   const groups = (res.items || []).filter((g) => {
     if (!g || g.autoPublishGuess !== 1) return false;
     if (g.status != null && Number(g.status) === 0) return false;
     return Number.isFinite(Number(g.groupId));
   });
+
+  autoPublishLog('fetch.ok', {
+    totalFromApi: allCount,
+    enabledCount: groups.length,
+    groups: groups.map((g) => ({
+      groupId: g.groupId,
+      groupTitle: g.groupTitle,
+      autoPublishGuess: g.autoPublishGuess,
+      status: g.status ?? null,
+    })),
+  });
+
   return { ok: true, groups };
 }
 
@@ -137,12 +161,26 @@ async function runAutoPublishForGroups(bot, config, groups) {
     if (group.groupTitle) groupTitleById[groupId] = group.groupTitle;
   }
 
+  autoPublishLog('publish.start', {
+    groupCount: groupIds.length,
+    batchSize: AUTO_PUBLISH_BATCH_SIZE,
+    autoPublishPath: config.COIN_DIRECTION_GUESS_AUTO_PUBLISH_PATH,
+    timeoutMs: resolveAutoPublishTimeoutMs(),
+    hasBindAuth: Boolean(config.MOZI_DETAIL_AUTH),
+  });
+
   const batches = chunkGroupIds(groupIds, AUTO_PUBLISH_BATCH_SIZE);
   const sendResults = [];
   let createdCount = 0;
 
-  for (const batch of batches) {
-    autoPublishLog('auto_publish.request', { groupIds: batch, count: batch.length });
+  for (let batchIndex = 0; batchIndex < batches.length; batchIndex += 1) {
+    const batch = batches[batchIndex];
+    autoPublishLog('auto_publish.request', {
+      batchIndex: batchIndex + 1,
+      batchTotal: batches.length,
+      groupIds: batch,
+      count: batch.length,
+    });
 
     let apiResult;
     try {
@@ -155,6 +193,7 @@ async function runAutoPublishForGroups(bot, config, groups) {
       });
     } catch (err) {
       autoPublishLog('auto_publish.error', {
+        batchIndex: batchIndex + 1,
         groupIds: batch,
         message: err?.message || String(err),
       });
@@ -168,11 +207,18 @@ async function runAutoPublishForGroups(bot, config, groups) {
     }
 
     autoPublishLog('auto_publish.response', {
+      batchIndex: batchIndex + 1,
       httpStatus: apiResult.status,
       code: apiResult.code,
       agentFailed: apiResult.agentFailed,
       created: apiResult.items.length,
+      skippedInBatch: Math.max(0, batch.length - apiResult.items.length),
       errorMessage: apiResult.errorMessage || null,
+      createdItems: apiResult.items.map((item) => ({
+        groupId: item.groupId,
+        guessNo: item.guessNo,
+        symbol: item.symbol,
+      })),
     });
 
     if (apiResult.agentFailed) {
@@ -202,9 +248,18 @@ async function runAutoPublishForGroups(bot, config, groups) {
     createdCount += apiResult.items.length;
 
     if (!apiResult.items.length) {
-      autoPublishLog('auto_publish.batch_empty', { groupIds: batch });
+      autoPublishLog('auto_publish.batch_empty', {
+        batchIndex: batchIndex + 1,
+        groupIds: batch,
+        note: '后端跳过全部群（可能已满或不符合条件）',
+      });
       continue;
     }
+
+    autoPublishLog('telegram.send.start', {
+      batchIndex: batchIndex + 1,
+      count: apiResult.items.length,
+    });
 
     const batchSendResults = await sendAutoPublishedGuessCardsBatch(
       bot.telegram,
@@ -212,15 +267,38 @@ async function runAutoPublishForGroups(bot, config, groups) {
       apiResult.items,
       groupTitleById,
     );
+
+    for (const r of batchSendResults) {
+      autoPublishLog(r.ok ? 'telegram.send.ok' : 'telegram.send.fail', {
+        groupId: r.groupId ?? null,
+        guessNo: r.guessNo ?? null,
+        symbol: r.symbol ?? null,
+        messageId: r.messageId ?? null,
+        reason: r.reason ?? null,
+        message: r.message ?? null,
+      });
+    }
+
     sendResults.push(...batchSendResults);
   }
+
+  const succeeded = sendResults.filter((r) => r.ok).length;
+  const telegramFailed = sendResults.filter((r) => !r.ok).length;
+
+  autoPublishLog('publish.summary', {
+    attempted: groupIds.length,
+    apiCreated: createdCount,
+    telegramSent: succeeded,
+    apiSkipped: Math.max(0, groupIds.length - createdCount),
+    telegramFailed,
+  });
 
   return {
     ok: true,
     sendResults,
     createdCount,
     attempted: groupIds.length,
-    succeeded: sendResults.filter((r) => r.ok).length,
+    succeeded,
   };
 }
 
@@ -229,45 +307,68 @@ async function runAutoPublishForGroups(bot, config, groups) {
  * @param {object} config
  */
 async function runAutoPublishTick(bot, config) {
-  if (ticking) return;
-  if (!config.PREDICT_AUTO_PUBLISH_ENABLED) return;
+  if (ticking) {
+    autoPublishDebug('tick.skip', { reason: 'already_ticking' });
+    return;
+  }
+  if (!config.PREDICT_AUTO_PUBLISH_ENABLED) {
+    autoPublishDebug('tick.skip', { reason: 'disabled' });
+    return;
+  }
 
   const parts = getBeijingDateTimeParts();
   const todayKey = getTodayKey(parts);
-  const publishTime = config.PREDICT_AUTO_PUBLISH_TIME || '09:00';
+  const publishTime = config.PREDICT_AUTO_PUBLISH_TIME || '12:20';
+  const beijingTime = `${parts.hour}:${parts.minute}`;
 
-  if (lastRunDateKey === todayKey) return;
-  if (!matchesPublishTime(publishTime, parts)) return;
+  if (lastRunDateKey === todayKey) {
+    autoPublishDebug('tick.skip', { reason: 'already_ran_today', todayKey, beijingTime });
+    return;
+  }
+
+  if (!matchesPublishTime(publishTime, parts)) {
+    autoPublishDebug('tick.skip', {
+      reason: 'not_publish_window',
+      publishTime,
+      beijingTime,
+      windowMinutes: PUBLISH_MATCH_WINDOW_MINUTES,
+    });
+    return;
+  }
 
   ticking = true;
   try {
-    autoPublishLog('tick.start', { todayKey, publishTime, beijingTime: `${parts.hour}:${parts.minute}` });
+    autoPublishLog('tick.start', {
+      todayKey,
+      publishTime,
+      beijingTime,
+      windowMinutes: PUBLISH_MATCH_WINDOW_MINUTES,
+      enabled: config.PREDICT_AUTO_PUBLISH_ENABLED,
+    });
 
     const remote = await fetchAutoPublishGroups(config);
     if (!remote.ok) {
-      autoPublishLog('fetch.fail', { errorMessage: remote.errorMessage });
+      autoPublishLog('tick.fail', {
+        reason: 'fetch_groups_failed',
+        errorMessage: remote.errorMessage,
+        willRetryInWindow: true,
+      });
       return;
     }
 
-    autoPublishLog('fetch.ok', {
-      total: remote.groups.length,
-      groups: remote.groups.map((g) => ({
-        groupId: g.groupId,
-        groupTitle: g.groupTitle,
-        autoPublishGuess: g.autoPublishGuess,
-      })),
-    });
-
     if (!remote.groups.length) {
       lastRunDateKey = todayKey;
-      autoPublishLog('tick.skip', { reason: 'no_enabled_groups' });
+      autoPublishLog('tick.skip', { reason: 'no_enabled_groups', todayKey });
       return;
     }
 
     const result = await runAutoPublishForGroups(bot, config, remote.groups);
     if (!result.ok) {
-      autoPublishLog('tick.fail', result);
-      if (result.reason !== 'agent_failed') {
+      autoPublishLog('tick.fail', {
+        ...result,
+        willRetryInWindow: result.reason !== 'auto_publish_fail',
+      });
+      if (result.reason === 'auto_publish_fail') {
         lastRunDateKey = todayKey;
       }
       return;
@@ -276,10 +377,11 @@ async function runAutoPublishTick(bot, config) {
     lastRunDateKey = todayKey;
     autoPublishLog('tick.done', {
       todayKey,
+      publishTime,
       attempted: result.attempted,
-      created: result.createdCount,
+      apiCreated: result.createdCount,
       telegramSent: result.succeeded,
-      skipped: Math.max(0, result.attempted - result.createdCount),
+      apiSkipped: Math.max(0, result.attempted - result.createdCount),
       telegramFailed: result.sendResults.filter((r) => !r.ok).length,
     });
   } finally {
@@ -302,16 +404,24 @@ function initPredictAutoPublishScheduler(bot, config) {
       autoPublishLog('tick.error', { message: err?.message || String(err) });
     });
   }, CHECK_MS);
+
+  const parts = getBeijingDateTimeParts();
   autoPublishLog('init', {
     publishTime: config.PREDICT_AUTO_PUBLISH_TIME,
+    timezone: 'Asia/Shanghai',
+    currentBeijingTime: `${parts.hour}:${parts.minute}`,
     checkMs: CHECK_MS,
+    matchWindowMinutes: PUBLISH_MATCH_WINDOW_MINUTES,
     autoPublishPath: config.COIN_DIRECTION_GUESS_AUTO_PUBLISH_PATH,
+    groupListPath: config.TG_GROUP_LIST_BY_TELEGRAM_ID_PATH,
+    hasBindAuth: Boolean(config.MOZI_DETAIL_AUTH),
   });
 }
 
 function stopPredictAutoPublishScheduler() {
   if (timer) clearInterval(timer);
   timer = null;
+  autoPublishLog('stop');
 }
 
 module.exports = {
@@ -320,4 +430,6 @@ module.exports = {
   runAutoPublishTick,
   runAutoPublishForGroups,
   fetchAutoPublishGroups,
+  matchesPublishTime,
+  getBeijingDateTimeParts,
 };
