@@ -272,8 +272,7 @@ async function fetchActiveGuessCountForGroup(config, groupId) {
         symbol: item.symbol ?? null,
         status: item.status ?? null,
         userInitiated: isUserInitiatedGuessItem(item),
-        creatorUserId: item.creatorUserId ?? item.creator_user_id ?? null,
-        title: item.title ?? null,
+        source: item.source ?? null,
       })),
   };
 
@@ -2169,7 +2168,7 @@ async function publishPredict(ctx, config, getTexts) {
           activeCount: listCheck.activeCount,
           maxActive,
           listDetail: listCheck.listDetail ?? null,
-          note: '仅统计用户 /predict 发起的竞猜，autoPublish 信号卡不计入',
+          note: '仅统计 list 返回 source=user 的竞猜，source=bot 的 autoPublish 不计入',
         });
         await replyOrEdit(ctx, session, texts.predictGroupGuessFull, { parse_mode: 'HTML' });
         return;

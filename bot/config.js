@@ -207,7 +207,7 @@ const COIN_DIRECTION_GUESS_MAX_BET_AMOUNT = Math.max(
   Math.floor(Number(process.env.COIN_DIRECTION_GUESS_MAX_BET_AMOUNT) || 500),
 );
 
-/** 单群同时进行中的用户发起竞猜上限（不含 autoPublish 自动信号卡） */
+/** 单群同时进行中的用户发起竞猜上限（list 返回 source=user；source=bot 不计入） */
 const COIN_DIRECTION_GUESS_MAX_ACTIVE_PER_GROUP = Math.max(
   1,
   Math.floor(Number(process.env.COIN_DIRECTION_GUESS_MAX_ACTIVE_PER_GROUP) || 3),

@@ -2584,17 +2584,27 @@ function parseGuessStartAt(data) {
 }
 
 /**
- * 用户通过 /predict 手动发起的竞猜。
- * autoPublish 创建的系统竞猜：creatorUserId、title 均为空。
+ * list/detail 返回的竞猜来源：user=用户手动 /predict，bot=定时 autoPublish
+ * @param {object | null | undefined} item
+ * @returns {'user' | 'bot' | null}
+ */
+function parseGuessSource(item) {
+  if (!item || typeof item !== 'object') return null;
+  const raw = item.source ?? null;
+  if (raw == null || String(raw).trim() === '') return null;
+  const normalized = String(raw).trim().toLowerCase();
+  if (normalized === 'user') return 'user';
+  if (normalized === 'bot') return 'bot';
+  return null;
+}
+
+/**
+ * 用户通过 /predict 手动发起的竞猜（list 返回 source=user）
  * @param {object | null | undefined} item
  * @returns {boolean}
  */
 function isUserInitiatedGuessItem(item) {
-  if (!item || typeof item !== 'object') return false;
-  const creatorUserId = item.creatorUserId ?? item.creator_user_id ?? null;
-  if (creatorUserId != null && String(creatorUserId).trim() !== '') return true;
-  const title = item.title ?? null;
-  return title != null && String(title).trim() !== '';
+  return parseGuessSource(item) === 'user';
 }
 
 /**
@@ -3923,6 +3933,7 @@ module.exports = {
   isGuessEffectivelyLocked,
   mergeGuessBetEndFallback,
   parseGuessBetEndAt,
+  parseGuessSource,
   summarizeGuessItemTimes,
   parseGuessStartAt,
   buildGuessTimeFieldsPatch,
