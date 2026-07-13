@@ -277,6 +277,16 @@ export async function updateAdminTgGroupCooperationStatus(payload) {
   return res.data;
 }
 
+function adminTgGroupPath(groupId) {
+  return `${Interface.ADMIN_TG_GROUPS}/${encodeURIComponent(String(groupId))}`;
+}
+
+/** 物理删除 TG 群 DELETE /admin/tg/groups/{groupId} */
+export async function deleteAdminTgGroup(groupId) {
+  const res = await adminInstance.delete(adminTgGroupPath(groupId));
+  return res.data;
+}
+
 /**
  * @typedef {Object} AdminTgGroupCommandUsageParams
  * @property {string} startDate - 起始日期 yyyy-MM-dd

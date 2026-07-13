@@ -1,11 +1,18 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Table, Button, Avatar, Tag, Select, Dropdown, Input, message } from 'antd';
-import { ReloadOutlined, TeamOutlined, DownOutlined, SearchOutlined } from '@ant-design/icons';
+import { Table, Button, Avatar, Tag, Select, Dropdown, Input, message, Popconfirm } from 'antd';
+import {
+  ReloadOutlined,
+  TeamOutlined,
+  DownOutlined,
+  SearchOutlined,
+  DeleteOutlined,
+} from '@ant-design/icons';
 import {
   listAdminTgGroups,
   updateAdminTgGroupCooperationStatus,
+  deleteAdminTgGroup,
   isAdminApiSuccess,
   normalizeAdminTgGroupPage,
 } from '@/api/admin';
@@ -141,9 +148,40 @@ export default function AdminGroupsPage() {
   const [appliedCooperationStatus, setAppliedCooperationStatus] = useState('');
   const [appliedMemberSize, setAppliedMemberSize] = useState('');
   const [updatingCooperationGroupId, setUpdatingCooperationGroupId] = useState(null);
+  const [deletingGroupId, setDeletingGroupId] = useState(null);
 
   const hasActiveFilters = Boolean(
     appliedGroupTitle || appliedHealth || appliedCooperationStatus || appliedMemberSize,
+  );
+
+  const handleDeleteGroup = useCallback(
+    async (record) => {
+      const groupId = record?.groupId;
+      if (groupId == null) {
+        message.error('缺少群组 ID');
+        return;
+      }
+
+      const groupIdStr = String(groupId);
+      setDeletingGroupId(groupIdStr);
+      try {
+        const res = await deleteAdminTgGroup(groupId);
+        if (!isAdminApiSuccess(res)) {
+          message.error(res?.errorMsg || '删除群组失败');
+          return;
+        }
+
+        message.success('群组已删除');
+        setList((prev) => prev.filter((row) => String(row.groupId) !== groupIdStr));
+        setTotal((prev) => Math.max(0, prev - 1));
+      } catch (error) {
+        console.error('[AdminGroups] delete group failed:', error);
+        message.error(error?.response?.data?.errorMsg || error?.message || '删除群组失败');
+      } finally {
+        setDeletingGroupId(null);
+      }
+    },
+    [],
   );
 
   const handleCooperationStatusChange = useCallback(async (record, cooperationStatus) => {
@@ -346,6 +384,42 @@ export default function AdminGroupsPage() {
         />
       ),
     },
+    {
+      title: '操作',
+      key: 'action',
+      width: 90,
+      align: 'center',
+      fixed: 'right',
+      render: (_, record) => {
+        const groupIdStr = record?.groupId != null ? String(record.groupId) : '';
+        const deleting = deletingGroupId === groupIdStr;
+
+        return (
+          <Popconfirm
+            title="确认删除该群组？"
+            description="将物理删除 tg_group 记录及该群的指令日统计，不可恢复。"
+            okText="删除"
+            cancelText="取消"
+            okButtonProps={{ danger: true, loading: deleting }}
+            placement="topLeft"
+            getPopupContainer={() => document.body}
+            disabled={!groupIdStr || deleting}
+            onConfirm={() => handleDeleteGroup(record)}
+          >
+            <Button
+              type="link"
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+              loading={deleting}
+              disabled={!groupIdStr}
+            >
+              删除
+            </Button>
+          </Popconfirm>
+        );
+      },
+    },
   ];
 
   return (
@@ -398,7 +472,7 @@ export default function AdminGroupsPage() {
           columns={columns}
           dataSource={list}
           loading={loading}
-          scroll={{ x: 1080 }}
+          scroll={{ x: 1170 }}
           locale={{ emptyText: hasActiveFilters ? '未找到匹配的群组' : '暂无群组数据' }}
           pagination={{
             current: page,
