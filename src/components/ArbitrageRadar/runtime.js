@@ -117,6 +117,7 @@ function render() {
   if(currentView==='detail') calcUpdate();
   animateRows();
   if(currentView==='detail') startCountdown();
+  if(currentView==='radar') initTableHScroll();
 }
 
 // ===== RADAR VIEW =====
@@ -153,23 +154,32 @@ function renderRadar() {
   </div>
 
   <div class="tbl-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>标的</th>
-          <th>交易所</th>
-          <th>当前 Funding <span class="tip" style="margin-left:4px"><span class="tip-ico">?</span><span class="tip-txt">每8小时结算一次的资金费率，正数代表多头支付给空头</span></span></th>
-          <th>年化 <span class="tip" style="margin-left:4px"><span class="tip-ico">?</span><span class="tip-txt">按当前一期费率折算，实际收益受市场波动影响</span></span></th>
-          <th>30d 均值</th>
-          <th>持续</th>
-          <th>评级</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${ops.map((o,i)=>rowHTML(o,i)).join('')}
-      </tbody>
-    </table>
+    <div class="tbl-head-scroll" id="tbl-head-scroll">
+      <table class="tbl-sync" id="tbl-head-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>标的</th>
+            <th>交易所</th>
+            <th>当前 Funding <span class="tip" style="margin-left:4px"><span class="tip-ico">?</span><span class="tip-txt">每8小时结算一次的资金费率，正数代表多头支付给空头</span></span></th>
+            <th>年化 <span class="tip" style="margin-left:4px"><span class="tip-ico">?</span><span class="tip-txt">按当前一期费率折算，实际收益受市场波动影响</span></span></th>
+            <th>30d 均值</th>
+            <th>持续</th>
+            <th>评级</th>
+          </tr>
+        </thead>
+      </table>
+    </div>
+    <div class="tbl-hscroll" id="tbl-hscroll" aria-label="表格横向滚动">
+      <div class="tbl-hscroll-inner" id="tbl-hscroll-inner"></div>
+    </div>
+    <div class="tbl-body-scroll" id="tbl-body-scroll">
+      <table class="tbl-sync" id="tbl-body-table">
+        <tbody>
+          ${ops.map((o,i)=>rowHTML(o,i)).join('')}
+        </tbody>
+      </table>
+    </div>
     <button class="load-more" onclick="showToast('📊 已加载全部实时数据')">加载更多 ↓</button>
   </div>`;
 }
@@ -540,6 +550,115 @@ function bindTG() {
   },1200);
 }
 
+// ===== TABLE TOP SCROLLBAR (between thead & tbody) =====
+function initTableHScroll() {
+  const head = __root.querySelector('#tbl-head-scroll');
+  const top = __root.querySelector('#tbl-hscroll');
+  const body = __root.querySelector('#tbl-body-scroll');
+  const spacer = __root.querySelector('#tbl-hscroll-inner');
+  const headTable = __root.querySelector('#tbl-head-table');
+  const bodyTable = __root.querySelector('#tbl-body-table');
+  if (!head || !top || !body || !spacer || !headTable || !bodyTable) return;
+
+  if (__root.__tblScrollCleanup) {
+    __root.__tblScrollCleanup();
+    __root.__tblScrollCleanup = null;
+  }
+
+  const syncColWidths = () => {
+    const ths = headTable.querySelectorAll('thead th');
+    const firstRow = bodyTable.querySelector('tbody tr');
+    if (!ths.length || !firstRow) return;
+    const tds = firstRow.children;
+
+    // clear fixed widths first to measure natural size
+    ths.forEach((th) => { th.style.width = ''; th.style.minWidth = ''; });
+    bodyTable.querySelectorAll('tbody tr td').forEach((td) => {
+      td.style.width = '';
+      td.style.minWidth = '';
+    });
+    headTable.style.tableLayout = 'auto';
+    bodyTable.style.tableLayout = 'auto';
+    headTable.style.width = '';
+    bodyTable.style.width = '';
+
+    const widths = [];
+    ths.forEach((th, i) => {
+      const td = tds[i];
+      const w = Math.ceil(Math.max(
+        th.getBoundingClientRect().width,
+        td ? td.getBoundingClientRect().width : 0
+      ));
+      widths.push(Math.max(w, 48));
+    });
+
+    const total = widths.reduce((a, b) => a + b, 0);
+    headTable.style.width = total + 'px';
+    bodyTable.style.width = total + 'px';
+    ths.forEach((th, i) => {
+      th.style.width = widths[i] + 'px';
+      th.style.minWidth = widths[i] + 'px';
+    });
+    // apply widths to all body rows
+    bodyTable.querySelectorAll('tbody tr').forEach((tr) => {
+      Array.from(tr.children).forEach((td, i) => {
+        if (!widths[i]) return;
+        td.style.width = widths[i] + 'px';
+        td.style.minWidth = widths[i] + 'px';
+      });
+    });
+
+    bodyTable.style.tableLayout = 'fixed';
+    headTable.style.tableLayout = 'fixed';
+
+    spacer.style.width = total + 'px';
+    const need = total > body.clientWidth + 1;
+    top.classList.toggle('show', need);
+    if (!need) {
+      top.scrollLeft = 0;
+      body.scrollLeft = 0;
+      head.scrollLeft = 0;
+    }
+  };
+
+  let lock = false;
+  const setScroll = (left) => {
+    if (lock) return;
+    lock = true;
+    top.scrollLeft = left;
+    body.scrollLeft = left;
+    head.scrollLeft = left;
+    lock = false;
+  };
+
+  const onTopScroll = () => setScroll(top.scrollLeft);
+  const onBodyScroll = () => setScroll(body.scrollLeft);
+  const onHeadScroll = () => setScroll(head.scrollLeft);
+
+  top.addEventListener('scroll', onTopScroll);
+  body.addEventListener('scroll', onBodyScroll);
+  head.addEventListener('scroll', onHeadScroll);
+
+  let ro = null;
+  if (typeof ResizeObserver !== 'undefined') {
+    ro = new ResizeObserver(() => syncColWidths());
+    ro.observe(body);
+    ro.observe(headTable);
+    ro.observe(bodyTable);
+  }
+  const onWinResize = () => syncColWidths();
+  window.addEventListener('resize', onWinResize);
+  requestAnimationFrame(() => requestAnimationFrame(syncColWidths));
+
+  __root.__tblScrollCleanup = () => {
+    top.removeEventListener('scroll', onTopScroll);
+    body.removeEventListener('scroll', onBodyScroll);
+    head.removeEventListener('scroll', onHeadScroll);
+    window.removeEventListener('resize', onWinResize);
+    if (ro) ro.disconnect();
+  };
+}
+
 // ===== ANIMATIONS =====
 function animateRows() {
   __root.querySelectorAll('tbody tr').forEach((tr,i)=>{
@@ -584,6 +703,10 @@ function showToast(msg) {
   render();
 
   return function cleanup() {
+    if (__root.__tblScrollCleanup) {
+      __root.__tblScrollCleanup();
+      __root.__tblScrollCleanup = null;
+    }
     _intervals.forEach(nativeClearInterval);
     _timeouts.forEach(nativeClearTimeout);
     try { if (cdInterval) nativeClearInterval(cdInterval); } catch (_) {}
