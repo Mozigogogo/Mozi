@@ -5,6 +5,7 @@ import { Table, Button, Input, DatePicker, Select, message } from 'antd';
 import { SearchOutlined, ReloadOutlined, RightOutlined, DownOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import {
+  buildAdminTgGroupCommandUsageParams,
   getAdminTgGroupCommandUsages,
   isAdminApiSuccess,
   normalizeAdminTgGroupCommandUsages,
@@ -55,49 +56,23 @@ function normalizeCommand(value) {
   return text.startsWith('/') ? text : `/${text}`;
 }
 
-function commandMatches(command, filter) {
-  if (!filter) return true;
-  return normalizeCommand(command) === normalizeCommand(filter);
-}
-
 function buildAppliedQuery(dateRange, groupId, groupTitle, command) {
   return {
     startDate: dateRange[0].format('YYYY-MM-DD'),
     endDate: dateRange[1].format('YYYY-MM-DD'),
     groupId: groupId.trim(),
     groupTitle: groupTitle.trim(),
-    command: command || '',
+    command: command ? (command.startsWith('/') ? command : `/${command}`) : '',
   };
 }
 
-function filterDayByCommand(day, commandFilter) {
-  if (!commandFilter) return day;
-
-  const groups = (day.groups || [])
-    .map((group) => {
-      const commands = (group.commands || []).filter((cmd) =>
-        commandMatches(cmd.command, commandFilter),
-      );
-      const useCount = commands.reduce((sum, cmd) => sum + (Number(cmd.useCount) || 0), 0);
-      return { ...group, commands, useCount };
-    })
-    .filter((group) => group.commands.length > 0);
-
-  const useCount = groups.reduce((sum, group) => sum + (Number(group.useCount) || 0), 0);
-  return { ...day, groups, useCount };
-}
-
-function filterUsageDataByCommand(data, commandFilter) {
-  if (!commandFilter) return data;
-
-  const dailyStats = (data.dailyStats || [])
-    .map((day) => filterDayByCommand(day, commandFilter))
-    .filter((day) => (Number(day.useCount) || 0) > 0 && (day.groups?.length || 0) > 0);
-
-  return {
-    ...data,
-    dailyStats,
-  };
+function validateGroupId(groupId) {
+  const text = String(groupId || '').trim();
+  if (!text) return '';
+  if (!/^-?\d+$/.test(text)) return '群 ID 必须为整数';
+  const parsed = Number(text);
+  if (!Number.isSafeInteger(parsed)) return '群 ID 超出有效范围';
+  return '';
 }
 
 const DISPLAY_COMMAND_COLUMNS = COMMAND_OPTIONS.map((option) =>
@@ -222,11 +197,6 @@ export default function AdminCommandUsagesPage() {
   const [queried, setQueried] = useState(false);
   const [expandedRowKeys, setExpandedRowKeys] = useState([]);
 
-  const filteredUsageData = useMemo(
-    () => filterUsageDataByCommand(usageData, appliedQuery.command),
-    [appliedQuery.command, usageData],
-  );
-
   const updateExpandedRows = useCallback((data) => {
     setExpandedRowKeys(
       data.dailyStats
@@ -238,13 +208,7 @@ export default function AdminCommandUsagesPage() {
   const fetchUsages = useCallback(async () => {
     setLoading(true);
     try {
-      const params = {
-        startDate: appliedQuery.startDate,
-        endDate: appliedQuery.endDate,
-      };
-      if (appliedQuery.groupId) params.groupId = appliedQuery.groupId;
-      if (appliedQuery.groupTitle) params.groupTitle = appliedQuery.groupTitle;
-      if (appliedQuery.command) params.command = appliedQuery.command;
+      const params = buildAdminTgGroupCommandUsageParams(appliedQuery);
 
       const res = await getAdminTgGroupCommandUsages(params);
       if (!isAdminApiSuccess(res)) {
@@ -255,9 +219,8 @@ export default function AdminCommandUsagesPage() {
       }
 
       const normalized = normalizeAdminTgGroupCommandUsages(res?.data);
-      const displayData = filterUsageDataByCommand(normalized, appliedQuery.command);
       setUsageData(normalized);
-      updateExpandedRows(displayData);
+      updateExpandedRows(normalized);
       setQueried(true);
     } catch (error) {
       console.error('[AdminCommandUsages] fetch failed:', error);
@@ -279,6 +242,11 @@ export default function AdminCommandUsagesPage() {
       message.warning(rangeError);
       return;
     }
+    const groupIdError = validateGroupId(groupIdInput);
+    if (groupIdError) {
+      message.warning(groupIdError);
+      return;
+    }
     setAppliedQuery(
       buildAppliedQuery(dateRange, groupIdInput, groupTitleInput, commandFilter),
     );
@@ -292,10 +260,10 @@ export default function AdminCommandUsagesPage() {
 
   const dailyStats = useMemo(
     () =>
-      [...filteredUsageData.dailyStats].sort((a, b) =>
+      [...usageData.dailyStats].sort((a, b) =>
         (b.statDate || '').localeCompare(a.statDate || ''),
       ),
-    [filteredUsageData.dailyStats],
+    [usageData.dailyStats],
   );
   const totalUseCount = useMemo(
     () => dailyStats.reduce((sum, day) => sum + (Number(day.useCount) || 0), 0),
@@ -391,7 +359,13 @@ export default function AdminCommandUsagesPage() {
 
       {queried ? (
         <div style={{ marginBottom: 16, color: '#595959', fontSize: 14 }}>
-          统计区间：{filteredUsageData.startDate || '-'} ~ {filteredUsageData.endDate || '-'}
+          统计区间：{usageData.startDate || '-'} ~ {usageData.endDate || '-'}
+          {appliedQuery.groupId ? (
+            <span style={{ marginLeft: 24 }}>群 ID：{appliedQuery.groupId}</span>
+          ) : null}
+          {appliedQuery.groupTitle ? (
+            <span style={{ marginLeft: 24 }}>群名称：{appliedQuery.groupTitle}</span>
+          ) : null}
           {appliedQuery.command ? (
             <span style={{ marginLeft: 24 }}>指令：{appliedQuery.command}</span>
           ) : null}
@@ -408,11 +382,7 @@ export default function AdminCommandUsagesPage() {
           loading={loading}
           tableLayout="fixed"
           locale={{
-            emptyText: queried
-              ? appliedQuery.command
-                ? `该区间暂无 ${appliedQuery.command} 指令用量数据`
-                : '该区间暂无指令用量数据'
-              : '请选择日期后查询',
+            emptyText: queried ? '该筛选条件下暂无指令用量数据' : '请选择日期后查询',
           }}
           expandable={{
             showExpandColumn: false,

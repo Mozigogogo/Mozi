@@ -296,6 +296,33 @@ export async function deleteAdminTgGroup(groupId) {
  * @property {string} [command] - 指令筛选，如 /price
  */
 
+/** 组装 TG 群指令日用量查询参数（与 GET /admin/tg/groups/command/usages 一致） */
+export function buildAdminTgGroupCommandUsageParams({
+  startDate,
+  endDate,
+  groupId,
+  groupTitle,
+  command,
+} = {}) {
+  const params = {
+    startDate: String(startDate || '').trim(),
+    endDate: String(endDate || '').trim(),
+  };
+
+  const groupIdText = String(groupId ?? '').trim();
+  if (groupIdText) {
+    params.groupId = Number(groupIdText);
+  }
+
+  const title = String(groupTitle || '').trim();
+  if (title) params.groupTitle = title;
+
+  const cmd = String(command || '').trim();
+  if (cmd) params.command = cmd.startsWith('/') ? cmd : `/${cmd}`;
+
+  return params;
+}
+
 /** 查询 TG 群指令日用量 GET /admin/tg/groups/command/usages */
 export async function getAdminTgGroupCommandUsages(params = {}) {
   const res = await adminInstance.get(Interface.ADMIN_TG_GROUP_COMMAND_USAGES, { params });
