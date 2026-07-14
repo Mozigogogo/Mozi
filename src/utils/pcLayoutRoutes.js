@@ -10,6 +10,7 @@ export const CONDITIONAL_PC_LAYOUT_PREFIXES = [
   '/theme',
   '/tradevol',
   '/fundingrate',
+  '/arbitrage',
   '/putcallratio',
   '/positionsize',
   '/pointshistory',

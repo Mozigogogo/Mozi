@@ -1790,6 +1790,9 @@
       "volume": "成交额",
       "volumeSub": "Trading Volume"
     },
+    "arbitrage": {
+      "title": "套利专区"
+    },
     "sectorMap": {
       "title": "板块选币",
       "viewMore": "查看更多"

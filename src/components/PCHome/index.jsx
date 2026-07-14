@@ -478,10 +478,17 @@ export default function PCHome() {
       {/* 内容区域：左侧60% 右侧40% */}
       <div className={styles.contentSplit}>
         <div className={styles.leftColumn}>
-          {/* 合约专区 */}
+          {/* 合约专区 / 套利专区 */}
           <div>
             <div className={styles.derivativeHeader}>
               <h2 className={styles.derivativeSectionTitle}>{t('pcHome.derivatives.title')}</h2>
+              <button
+                type="button"
+                className={styles.arbitrageSectionTitle}
+                onClick={() => router.push('/arbitrage')}
+              >
+                {t('pcHome.arbitrage.title')}
+              </button>
             </div>
             <div className={styles.derivativeRow}>
               {derivativeItems.map((item) => (
