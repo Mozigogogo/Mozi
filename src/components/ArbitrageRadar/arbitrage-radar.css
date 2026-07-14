@@ -5,6 +5,17 @@
   font-family:'Inter',sans-serif;font-size:14PX;background:#F5F7FA;color:#1A1F36;
   min-height:calc(100vh - 88PX);overflow-x:hidden;border-radius:12PX;position:relative;
 }
+#mozi-arbitrage-radar.is-embedded{
+  min-height:0;
+  background:#fff;
+}
+#mozi-arbitrage-radar.is-embedded .hdr{
+  display:none;
+}
+#mozi-arbitrage-radar.is-embedded .main{
+  max-width:none;
+  padding:20PX 16PX 24PX;
+}
 #mozi-arbitrage-radar *,#mozi-arbitrage-radar *::before,#mozi-arbitrage-radar *::after{box-sizing:border-box;margin:0;padding:0}
 #mozi-arbitrage-radar ::-webkit-scrollbar{width:4PX}
 #mozi-arbitrage-radar ::-webkit-scrollbar-track{background:#F5F7FA}

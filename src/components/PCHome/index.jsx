@@ -26,6 +26,7 @@ import styles from './index.module.less';
 const MarketDistribution = dynamic(() => import('../MarketDistribution'));
 const PCHotTopics = dynamic(() => import('../PCHotTopics'));
 const PCSectorTreeMap = dynamic(() => import('../PCSectorTreeMap'));
+const ArbitrageRadar = dynamic(() => import('../ArbitrageRadar'), { ssr: false });
 
 // CDN 图片前缀
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
@@ -79,6 +80,7 @@ export default function PCHome() {
   const [bannerLoading, setBannerLoading] = useState(true);
   const [treeMapData, setTreeMapData] = useState([]);
   const [treeMapLoading, setTreeMapLoading] = useState(true);
+  const [activeZone, setActiveZone] = useState('arbitrage'); // arbitrage | derivatives
 
   // 自动轮播
   useEffect(() => {
@@ -481,38 +483,52 @@ export default function PCHome() {
           {/* 合约专区 / 套利专区 */}
           <div>
             <div className={styles.derivativeHeader}>
-              <h2 className={styles.derivativeSectionTitle}>{t('pcHome.derivatives.title')}</h2>
               <button
                 type="button"
-                className={styles.arbitrageSectionTitle}
-                onClick={() => router.push('/arbitrage')}
+                className={`${styles.zoneTab} ${activeZone === 'arbitrage' ? styles.zoneTabActive : ''}`}
+                onClick={() => setActiveZone('arbitrage')}
               >
                 {t('pcHome.arbitrage.title')}
               </button>
+              <button
+                type="button"
+                className={`${styles.zoneTab} ${activeZone === 'derivatives' ? styles.zoneTabActive : ''}`}
+                onClick={() => setActiveZone('derivatives')}
+              >
+                {t('pcHome.derivatives.title')}
+              </button>
             </div>
-            <div className={styles.derivativeRow}>
-              {derivativeItems.map((item) => (
-                <div key={item.key} className={styles.derivativeCol}>
-                  <Card 
-                    className={styles.derivativeCard} 
-                    hoverable
-                    onClick={() => router.push(item.path)}
-                  >
-                    <div className={styles.derivativeContent}>
-                      <img src={item.icon} alt={item.title} className={styles.derivativeIcon} />
-                      <div className={styles.derivativeText}>
-                        <div className={styles.derivativeTitle}>{item.title}</div>
-                      </div>
-                    </div>
-                  </Card>
-                </div>
-              ))}
-            </div>
-          </div>
 
-          {/* 涨跌分布 */}
-          <div className={styles.marketDistributionWrapper}>
-            <MarketDistribution isPC={true} />
+            {activeZone === 'derivatives' ? (
+              <div className={styles.zoneBody}>
+                <div className={styles.derivativeRow}>
+                  {derivativeItems.map((item) => (
+                    <div key={item.key} className={styles.derivativeCol}>
+                      <Card
+                        className={styles.derivativeCard}
+                        hoverable
+                        onClick={() => router.push(item.path)}
+                      >
+                        <div className={styles.derivativeContent}>
+                          <img src={item.icon} alt={item.title} className={styles.derivativeIcon} />
+                          <div className={styles.derivativeText}>
+                            <div className={styles.derivativeTitle}>{item.title}</div>
+                          </div>
+                        </div>
+                      </Card>
+                    </div>
+                  ))}
+                </div>
+
+                <div className={styles.marketDistributionWrapper}>
+                  <MarketDistribution isPC={true} />
+                </div>
+              </div>
+            ) : (
+              <div className={styles.arbitrageEmbed}>
+                <ArbitrageRadar embedded={true} />
+              </div>
+            )}
           </div>
         </div>
 

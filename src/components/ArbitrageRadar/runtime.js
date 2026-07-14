@@ -1,8 +1,9 @@
 /* eslint-disable */
 /** Adapted from public/mozi-radar.html */
-export function mountArbitrageRadar(__root) {
+export function mountArbitrageRadar(__root, options = {}) {
   if (!__root || __root.__mounted) return () => {};
   __root.__mounted = true;
+  const embedded = !!options.embedded;
 
   const _intervals = [];
   const _timeouts = [];
@@ -22,7 +23,12 @@ export function mountArbitrageRadar(__root) {
     return id;
   };
 
-  __root.innerHTML = `
+  if (embedded) __root.classList.add('is-embedded');
+  else __root.classList.remove('is-embedded');
+
+  __root.innerHTML = embedded
+    ? `<main class="main" id="main"></main><div id="toast"><span id="toast-txt"></span></div>`
+    : `
 <header class="hdr">
   <nav class="nav">
     <button type="button" class="nbtn on" id="nav-radar" data-nav="radar">套利雷达</button>
@@ -158,7 +164,6 @@ function renderRadar() {
           <th>30d 均值</th>
           <th>持续</th>
           <th>评级</th>
-          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -194,7 +199,6 @@ function rowHTML(o,i) {
     <td><span class="mono" style="color:var(--t3)">${o.avg30.toFixed(3)}%</span></td>
     <td><span class="mono" style="color:var(--t2)">${o.days}d</span></td>
     <td><div class="stars">${stars}</div></td>
-    <td><span class="row-arrow">→</span></td>
   </tr>`;
 }
 
@@ -574,7 +578,7 @@ function showToast(msg) {
   const prev = {};
   keys.forEach(k => { prev[k] = window[k]; window[k] = api[k]; });
 
-  // Header nav
+  // Header nav (standalone only)
   __root.querySelector('#nav-radar')?.addEventListener('click', () => nav('radar'));
 
   render();
