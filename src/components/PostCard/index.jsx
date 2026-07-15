@@ -170,6 +170,18 @@ function PostCard({
               <span className={styles.badgeLabel}>
                 {post.categoryLabel || post.category || post.type || '资讯'}
               </span>
+              {post.tags?.map((tag) => (
+                <span
+                  key={`tag-${tag.id}`}
+                  className={styles.coinTag}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onTagClick?.(tag.name);
+                  }}
+                >
+                  ${tag.name}$
+                </span>
+              ))}
             </div>
             <span className={styles.postTime}>
               {formatTimeAgo ? formatTimeAgo(post.createTime || post.updatedAt) : post.createTime}
@@ -208,8 +220,8 @@ function PostCard({
       </div>
       
       <div className={styles.postContent}>
-        <h3 className={styles.postTitle}>{post.title}</h3>
-        <p className={styles.postText}>{post.content}</p>
+        {post.title ? <h3 className={styles.postTitle}>{post.title}</h3> : null}
+        {post.content ? <p className={styles.postText}>{post.content}</p> : null}
         {post.images && post.images.length > 0 && (
           <div className={styles.postImages}>
             {post.images.map((image, index) => (
@@ -219,22 +231,9 @@ function PostCard({
         )}
       </div>
       
-      {(post.tags?.length > 0 || post.topics?.length > 0) && (
+      {post.topics?.length > 0 && (
         <div className={styles.tagsTopicsContainer}>
-          {post.tags?.map(tag => (
-            <span 
-              key={`tag-${tag.id}`} 
-              className={styles.coinTag}
-              onClick={(e) => {
-                e.stopPropagation();
-                onTagClick?.(tag.name);
-              }}
-            >
-              ${tag.name}$
-            </span>
-          ))}
-          
-          {post.topics?.map(topic => (
+          {post.topics.map((topic) => (
             <span 
               key={`topic-${topic.id}`} 
               className={styles.topicTag}

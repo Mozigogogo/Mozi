@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Button, Input, Toast, Divider } from 'antd-mobile';
 import { Dropdown } from 'antd';
 import { WarningOutlined, DeleteOutlined } from '@ant-design/icons';
@@ -16,6 +16,13 @@ import { Interface } from '@/utils/constants';
 import { forceBlurAndResetViewport } from '@/utils/iosViewportFix';
 import styles from './page.module.less';
 
+const SHARE_SITE_ORIGIN = 'https://www.moziai.xyz';
+
+function buildSiteUrl(path) {
+  const p = String(path || '').startsWith('/') ? path : `/${path || ''}`;
+  return `${SHARE_SITE_ORIGIN}${p}`;
+}
+
 // 图标资源
 const CDN_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community';
 const likeActiveIcon = `${CDN_ICON}/like-active.png`;
@@ -25,6 +32,7 @@ const editIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/i
 
 export default function CommentInfo() {
   const { t } = useTranslation();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const commentId = searchParams.get('id');
   
@@ -61,6 +69,7 @@ export default function CommentInfo() {
   const [likedPosts, setLikedPosts] = useState({});
   const [likedComments, setLikedComments] = useState({});
   const [expandedComments, setExpandedComments] = useState({});
+  const [redirectingToPc, setRedirectingToPc] = useState(false);
 
   const normalizeId = (value) => String(value ?? '').trim();
   const localStorageUserId =
@@ -742,13 +751,23 @@ export default function CommentInfo() {
 
   // 初始化数据
   useEffect(() => {
+    // PC 宽屏打开评论页会被 vw 放大变形，跳到 PC 社区并弹出详情
+    if (typeof window === 'undefined' || !commentId) return;
+    if (window.matchMedia('(min-width: 1024px)').matches) {
+      setRedirectingToPc(true);
+      router.replace(`/pc/community?postId=${encodeURIComponent(String(commentId))}`);
+    }
+  }, [commentId, router]);
+
+  useEffect(() => {
+    if (redirectingToPc) return;
     if (commentId) {
       loadCommentData(commentId);
       getCurrentUser();
       initLikeStatus(commentId);
       loadComments(true);
     }
-  }, [commentId]);
+  }, [commentId, redirectingToPc]);
 
   // 监听滚动加载更多
   useEffect(() => {
@@ -772,6 +791,16 @@ export default function CommentInfo() {
     }
   };
 
+  if (redirectingToPc) {
+    return (
+      <Layout>
+        <div className={styles.loadingContainer}>
+          <Loading />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <NavBar title={t('comment.title')} showBack={true} backgroundColor="#EEF0F3" showBorder={false} />
@@ -786,8 +815,23 @@ export default function CommentInfo() {
             <div className={styles.firstComment}>
               <div className={styles.header}>
                 <img className={styles.avatar} src={detail.avatar || 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0'} alt="avatar" />
-                <span className={styles.nickname}>{detail.nickName || '匿名用户'}</span>
-                <span className={styles.category}>{detail.category || '普通'}</span>
+                <div className={styles.headerMain}>
+                  <div className={styles.userRow}>
+                    <span className={styles.nickname}>{detail.nickName || '匿名用户'}</span>
+                    <span className={styles.category}>{detail.category || '普通'}</span>
+                    {detail.tags?.map((tag) => (
+                      <span
+                        key={`tag-${tag.id || tag.name}`}
+                        className={styles.coinTag}
+                        onClick={() => {
+                          window.location.href = `/detail?symbol=${tag.name}`;
+                        }}
+                      >
+                        ${tag.name}$
+                      </span>
+                    ))}
+                  </div>
+                </div>
                 <div className={styles.editActions}>
                   <Dropdown
                     trigger={['click']}
@@ -813,8 +857,8 @@ export default function CommentInfo() {
                 </div>
               </div>
               <div className={styles.postInfo}>
-                <div className={styles.title}>{detail.title}</div>
-                <div className={styles.content}>{detail.content}</div>
+                {detail.title ? <div className={styles.title}>{detail.title}</div> : null}
+                {detail.content ? <div className={styles.content}>{detail.content}</div> : null}
                 
                 {/* 投票区域 */}
                 {detail.voteInfo && detail.voteInfo?.options && (
@@ -841,26 +885,16 @@ export default function CommentInfo() {
                   </div>
                 )}
                 
-                {/* 币种和话题标签 */}
-                {(detail.tags?.length > 0 || detail.topics?.length > 0) && (
+                {/* 话题标签 */}
+                {detail.topics?.length > 0 && (
                   <div className={styles.tagsTopicsContainer}>
-                    {/* 币种标签 */}
-                    {detail.tags?.map(tag => (
-                      <span 
-                        key={`tag-${tag.id}`} 
-                        className={styles.coinTag}
-                        onClick={() => window.location.href = `/detail?symbol=${tag.name}`}
-                      >
-                        ${tag.name}$
-                      </span>
-                    ))}
-                    
-                    {/* 话题标签 */}
-                    {detail.topics?.map(topic => (
+                    {detail.topics.map((topic) => (
                       <span 
                         key={`topic-${topic.id}`} 
                         className={styles.topicTag}
-                        onClick={() => window.location.href = `/topicinfo?id=${topic.id}`}
+                        onClick={() => {
+                          window.location.href = `/topicinfo?id=${topic.id}`;
+                        }}
                       >
                         #{topic.name}
                       </span>
