@@ -8,15 +8,11 @@ const SYMBOL_RE = /^[A-Za-z0-9][A-Za-z0-9_-]{0,31}$/;
 const ALERT_STARTAPP_RE = /^alert_([A-Za-z0-9_-]+)$/;
 const DEBUG_PREFIX = '[Mozi/TG DetailDeepLink]';
 
-function isPcViewport() {
-  return typeof window !== 'undefined' && window.innerWidth >= 1024;
-}
-
 function buildTgAlertTarget(symbol) {
   const qs = new URLSearchParams();
   qs.set('symbol', symbol);
   qs.set('from', 'tg_alert');
-  return isPcViewport() ? `/pc/alarm?${qs.toString()}` : `/detail?${qs.toString()}`;
+  return `/detail?${qs.toString()}`;
 }
 
 function log(...args) {

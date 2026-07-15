@@ -84,14 +84,11 @@ export default function DetailPage() {
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
 
+  // TG Mini App 深链：带币种进入详情后自动弹出告警配置弹窗（仅移动端）
   useEffect(() => {
     if (!fromTgAlert || tgAlertHandledRef.current || !symbol) return;
+    if (isPC) return;
     tgAlertHandledRef.current = true;
-
-    if (isPC) {
-      router.replace(`/pc/alarm?symbol=${encodeURIComponent(symbol)}&from=tg_alert`);
-      return;
-    }
 
     setOneClickAlarmMode('config');
     setOneClickAlarmOpen(true);
@@ -101,7 +98,7 @@ export default function DetailPage() {
       url.searchParams.delete('from');
       window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
     }
-  }, [fromTgAlert, symbol, isPC, router]);
+  }, [fromTgAlert, symbol, isPC]);
 
   const renderMarketExchangeTitle = useCallback(
     (item) => {

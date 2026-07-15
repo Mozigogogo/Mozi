@@ -17,7 +17,6 @@ import {
 import { request } from '@/utils/request';
 import { getTgAlertMiniAppLink, Interface } from '@/utils/constants';
 import { Loading } from '@/components/Loading';
-import OneClickAlarmModal from '@/components/OneClickAlarmModal';
 import { allCountries } from 'country-telephone-data';
 import styles from './page.module.less';
 
@@ -47,9 +46,6 @@ function PCAlarmContent() {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const symbol = (searchParams.get('symbol') || 'BTC').toUpperCase();
-  const fromTgAlert = searchParams.get('from') === 'tg_alert';
-  const [alarmModalOpen, setAlarmModalOpen] = useState(false);
-  const tgAlertHandledRef = useRef(false);
   const [activeTab, setActiveTab] = useState('config'); // config | history
   const [btnDisabled, setBtnDisabled] = useState(false);
   const [coinData, setCoinData] = useState({
@@ -115,26 +111,6 @@ function PCAlarmContent() {
     }
     return text;
   }, [coinData.change]);
-
-  const openAlarmConfigModal = useCallback(() => {
-    setActiveTab('config');
-    setAlarmModalOpen(true);
-  }, []);
-
-  const clearTgAlertQuery = useCallback(() => {
-    if (typeof window === 'undefined') return;
-    const url = new URL(window.location.href);
-    if (!url.searchParams.has('from')) return;
-    url.searchParams.delete('from');
-    window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
-  }, []);
-
-  useEffect(() => {
-    if (!fromTgAlert || tgAlertHandledRef.current || !symbol) return;
-    tgAlertHandledRef.current = true;
-    openAlarmConfigModal();
-    clearTgAlertQuery();
-  }, [fromTgAlert, symbol, openAlarmConfigModal, clearTgAlertQuery]);
 
   useEffect(() => {
     const fetchCoinData = async () => {
@@ -1176,7 +1152,6 @@ function PCAlarmContent() {
                 aria-label={t('oneClickAlarm.telegramOpenMiniApp')}
                 onClick={() => {
                   window.open(getTgAlertMiniAppLink(symbol), '_blank', 'noopener,noreferrer');
-                  openAlarmConfigModal();
                 }}
               >
                 <span className={styles.sideItemLabel}>
@@ -1247,13 +1222,6 @@ function PCAlarmContent() {
           </div>
         </div>
       </div>}
-
-      <OneClickAlarmModal
-        open={alarmModalOpen}
-        mode="config"
-        symbol={symbol}
-        onClose={() => setAlarmModalOpen(false)}
-      />
     </div>
   );
 }

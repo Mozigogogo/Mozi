@@ -57,15 +57,11 @@ function hasMiniAppHash() {
   return hashParams.has('tgWebAppData') || hashParams.has('tgWebAppPlatform');
 }
 
-function isPcViewport() {
-  return typeof window !== 'undefined' && window.innerWidth >= 1024;
-}
-
 function buildTgAlertTarget(symbol) {
   const qs = new URLSearchParams();
   qs.set('symbol', symbol);
   qs.set('from', 'tg_alert');
-  return isPcViewport() ? `/pc/alarm?${qs.toString()}` : `/detail?${qs.toString()}`;
+  return `/detail?${qs.toString()}`;
 }
 
 function shouldWaitForTelegramWebApp(attemptIndex, maxAttempts) {

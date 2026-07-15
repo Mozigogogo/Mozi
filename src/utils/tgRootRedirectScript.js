@@ -30,8 +30,7 @@ export const TG_ROOT_REDIRECT_SCRIPT = `(function(){
     var alertMatch = startParam && startParam.match(/^alert_([A-Za-z0-9_-]+)$/);
     if (alertMatch) {
       var sym = alertMatch[1].toUpperCase();
-      var qs = 'symbol=' + encodeURIComponent(sym) + '&from=tg_alert';
-      target = (window.innerWidth >= 1024 ? '/pc/alarm?' : '/detail?') + qs + hash;
+      target = '/detail?symbol=' + encodeURIComponent(sym) + '&from=tg_alert' + hash;
     }
 
     window.location.replace(target);
