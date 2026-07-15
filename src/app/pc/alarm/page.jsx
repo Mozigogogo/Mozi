@@ -1149,6 +1149,7 @@ function PCAlarmContent() {
               <button
                 type="button"
                 className={styles.sideTgLink}
+                aria-label={t('oneClickAlarm.telegramOpenMiniApp')}
                 onClick={() => {
                   window.open(getTgAlertMiniAppLink(symbol), '_blank', 'noopener,noreferrer');
                 }}
@@ -1165,18 +1166,22 @@ function PCAlarmContent() {
                   />
                   <span>{t('oneClickAlarm.telegramBot')}</span>
                 </span>
-                <span className={styles.sideTgLinkAction}>
-                  {t('oneClickAlarm.telegramOpenMiniApp')}
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
-                    <path
-                      d="M5 3h6v6M11 3L5.5 8.5M3 11h8"
-                      stroke="currentColor"
-                      strokeWidth="1.4"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
+                <svg
+                  className={styles.sideTgLinkArrow}
+                  width="12"
+                  height="12"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  aria-hidden
+                >
+                  <path
+                    d="M4.5 2.5L8 6L4.5 9.5"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </button>
               <p className={styles.sideFieldHint}>{t('oneClickAlarm.telegramOpenMiniAppHint')}</p>
 
