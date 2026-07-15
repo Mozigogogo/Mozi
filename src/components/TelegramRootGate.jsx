@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 const SYMBOL_RE = /^[A-Za-z0-9][A-Za-z0-9_-]{0,31}$/;
@@ -57,6 +57,17 @@ function hasMiniAppHash() {
   return hashParams.has('tgWebAppData') || hashParams.has('tgWebAppPlatform');
 }
 
+function isPcViewport() {
+  return typeof window !== 'undefined' && window.innerWidth >= 1024;
+}
+
+function buildTgAlertTarget(symbol) {
+  const qs = new URLSearchParams();
+  qs.set('symbol', symbol);
+  qs.set('from', 'tg_alert');
+  return isPcViewport() ? `/pc/alarm?${qs.toString()}` : `/detail?${qs.toString()}`;
+}
+
 function shouldWaitForTelegramWebApp(attemptIndex, maxAttempts) {
   if (attemptIndex >= maxAttempts) return false;
   if (typeof window === 'undefined') return false;
@@ -70,8 +81,7 @@ function resolveTgExitTarget(searchParams) {
     if (searchParams?.get('from') === 'tg_alert') {
       const raw = searchParams.get('symbol');
       if (raw && SYMBOL_RE.test(raw.trim())) {
-        const symbol = raw.trim().toUpperCase();
-        return `/detail?symbol=${encodeURIComponent(symbol)}&from=tg_alert`;
+        return buildTgAlertTarget(raw.trim().toUpperCase());
       }
     }
   } catch (_) {}
@@ -79,8 +89,7 @@ function resolveTgExitTarget(searchParams) {
   const sp = getTgStartParam();
   const m = sp?.match(ALERT_STARTAPP_RE);
   if (m) {
-    const symbol = m[1].toUpperCase();
-    return `/detail?symbol=${encodeURIComponent(symbol)}&from=tg_alert`;
+    return buildTgAlertTarget(m[1].toUpperCase());
   }
 
   const query = searchParams?.toString();
@@ -97,7 +106,7 @@ export default function TelegramRootGate() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (pathname !== '/') return;
 
     let attempts = 0;

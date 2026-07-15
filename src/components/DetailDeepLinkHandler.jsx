@@ -8,6 +8,17 @@ const SYMBOL_RE = /^[A-Za-z0-9][A-Za-z0-9_-]{0,31}$/;
 const ALERT_STARTAPP_RE = /^alert_([A-Za-z0-9_-]+)$/;
 const DEBUG_PREFIX = '[Mozi/TG DetailDeepLink]';
 
+function isPcViewport() {
+  return typeof window !== 'undefined' && window.innerWidth >= 1024;
+}
+
+function buildTgAlertTarget(symbol) {
+  const qs = new URLSearchParams();
+  qs.set('symbol', symbol);
+  qs.set('from', 'tg_alert');
+  return isPcViewport() ? `/pc/alarm?${qs.toString()}` : `/detail?${qs.toString()}`;
+}
+
 function log(...args) {
   // 调试：在 Telegram WebView 里用 Eruda/VConsole 看控制台；上线后可删或改 localStorage
   // eslint-disable-next-line no-console
@@ -96,25 +107,21 @@ export default function DetailDeepLinkHandler() {
     }
 
     const symbol = raw.trim().toUpperCase();
-    if (pathname === '/detail' || pathname?.startsWith('/detail/')) {
-      log('query skip: already on /detail');
-      return;
+    const target = buildTgAlertTarget(symbol);
+    if (typeof window !== 'undefined') {
+      const current = `${window.location.pathname}${window.location.search}`;
+      if (current === target) {
+        log('query skip: already on target', target);
+        return;
+      }
     }
 
-    const qs = new URLSearchParams();
-    qs.set('symbol', symbol);
-    qs.set('from', 'tg_alert');
-    const target = `/detail?${qs.toString()}`;
     log('query → router.replace', target);
     router.replace(target);
   }, [pathname, searchParams, router]);
 
   // B) Telegram startapp=alert_XXX（地址栏通常没有 ?symbol）
   useEffect(() => {
-    if (pathname === '/detail' || pathname?.startsWith('/detail/')) {
-      log('startapp skip: already on /detail');
-      return;
-    }
     if (startappHandledRef.current) return;
 
     let cancelled = false;
@@ -161,7 +168,14 @@ export default function DetailDeepLinkHandler() {
 
       startappHandledRef.current = true;
       const symbol = m[1].toUpperCase();
-      const target = `/detail?symbol=${encodeURIComponent(symbol)}&from=tg_alert`;
+      const target = buildTgAlertTarget(symbol);
+      if (typeof window !== 'undefined') {
+        const current = `${window.location.pathname}${window.location.search}`;
+        if (current === target) {
+          log('startapp skip: already on target', target);
+          return;
+        }
+      }
       log('startapp → router.replace', target);
       router.replace(target);
     };

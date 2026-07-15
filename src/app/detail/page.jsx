@@ -67,6 +67,7 @@ export default function DetailPage() {
   const searchParams = useSearchParams();
   const symbol = searchParams.get('symbol') || '';
   const fromFavorite = searchParams.get('fromFavorite') === '1'; // 是否从自选榜进入
+  const fromTgAlert = searchParams.get('from') === 'tg_alert';
   const { t } = useTranslation();
   // 高度调试：在 URL 加 ?debugHeight=1 时启用，避免污染日志
   const debugHeight = searchParams.get('debugHeight') === '1';
@@ -82,6 +83,25 @@ export default function DetailPage() {
     window.addEventListener('resize', checkDevice);
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
+
+  useEffect(() => {
+    if (!fromTgAlert || tgAlertHandledRef.current || !symbol) return;
+    tgAlertHandledRef.current = true;
+
+    if (isPC) {
+      router.replace(`/pc/alarm?symbol=${encodeURIComponent(symbol)}&from=tg_alert`);
+      return;
+    }
+
+    setOneClickAlarmMode('config');
+    setOneClickAlarmOpen(true);
+
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('from');
+      window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+    }
+  }, [fromTgAlert, symbol, isPC, router]);
 
   const renderMarketExchangeTitle = useCallback(
     (item) => {
@@ -145,6 +165,7 @@ export default function DetailPage() {
   const [coinInfoRight, setCoinInfoRight] = useState([]);
   const [oneClickAlarmOpen, setOneClickAlarmOpen] = useState(false);
   const [oneClickAlarmMode, setOneClickAlarmMode] = useState('oneClick');
+  const tgAlertHandledRef = useRef(false);
   const [exchangePickerOpen, setExchangePickerOpen] = useState(false);
   const [rightHotTicker, setRightHotTicker] = useState([]);
   const [rightHotTickerLoading, setRightHotTickerLoading] = useState(true);

@@ -19,6 +19,7 @@ import GoogleAuthProvider from "../context/GoogleAuthProvider";
 import GlobalClientEffects from "@/components/GlobalClientEffects";
 import PcLayoutGate from "@/components/PcLayoutGate";
 import PerfDebug from "@/components/PerfDebug";
+import TgRootRedirectScript from "@/components/TgRootRedirectScript";
 import TelegramSdkLoader from "@/components/TelegramSdkLoader";
 import TgWcWebviewCheck from "@/components/TgWcWebviewCheck";
 
@@ -59,6 +60,7 @@ export default function RootLayout({ children }) {
         <meta name="theme-color" content="#1677ff" />
         {/* Keep only truly global/critical preload asset to avoid stealing bandwidth from home first paint */}
         <link rel="preload" href="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/community/loadding.png" as="image" />
+        <TgRootRedirectScript />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} ${chakraPetch.variable}`} suppressHydrationWarning>
         <TelegramSdkLoader />
