@@ -2011,7 +2011,7 @@
     "wechatAlarm": "微信告警",
     "wechatHint": "请开启微信通知，以便接收告警",
     "telegramBot": "Telegram bot",
-    "telegramHint": "请点击启动bot，以便接收告警",
+    "telegramHint": "若自动获取chatid失败，请手动填写",
     "telegramOpenMiniApp": "前往 Telegram Mini App 开启推送",
     "telegramOpenMiniAppHint": "在 Telegram 内完成绑定后即可接收告警",
     "openIdPlaceholder": "请输入微信 openId",

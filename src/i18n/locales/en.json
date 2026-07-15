@@ -2013,7 +2013,7 @@
     "wechatAlarm": "WeChat alerts",
     "wechatHint": "Turn on WeChat notifications to receive alerts.",
     "telegramBot": "Telegram bot",
-    "telegramHint": "Start the bot to receive alerts.",
+    "telegramHint": "If chat ID cannot be retrieved automatically, please enter it manually.",
     "telegramOpenMiniApp": "Open Telegram Mini App to enable alerts",
     "telegramOpenMiniAppHint": "Bind in Telegram to receive alert notifications",
     "openIdPlaceholder": "Enter WeChat openId",
