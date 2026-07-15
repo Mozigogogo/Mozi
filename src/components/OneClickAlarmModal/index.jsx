@@ -7,8 +7,8 @@ import BottomSheetModal from '../BottomSheetModal';
 import CountryPickerOverlay from '../CountryPickerOverlay';
 import PopLogin from '../PopLogin';
 import { request } from '../../utils/request';
-import { Interface } from '../../utils/constants';
-import { jump2NoTab } from '../../utils/core';
+import { getTgBotStartLink, Interface } from '../../utils/constants';
+import { isTelegramEnv, jump2NoTab } from '../../utils/core';
 import { saveAlarmSettings, createAlertConfig, modifyAlertConfig } from '../../api/user';
 import {
   alertFrequencyFromApi,
@@ -16,6 +16,7 @@ import {
   isAlertFlagOn,
   MAX_WEBHOOK_URLS,
   parseWebhookUrlsFromConfig,
+  resolveAlertChatId,
   validateWebhookUrls,
 } from '../../utils/alertConfig';
 import styles from './index.module.less';
@@ -65,6 +66,20 @@ function MailAlarmIcon() {
 
 function SmsAlarmIcon() {
   return <img src={alertIconUrl('sms_alert.svg')} alt="" width="24" height="24" />;
+}
+
+function TelegramAlarmIcon() {
+  return (
+    <img
+      src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/tgbot_alert.svg"
+      alt=""
+      width="24"
+      height="24"
+      onError={(e) => {
+        e.currentTarget.src = '/icons/telegram-group.svg';
+      }}
+    />
+  );
 }
 
 function PhoneInputIcon() {
@@ -145,6 +160,9 @@ export default function OneClickAlarmModal({
   const [webhookUrls, setWebhookUrls] = useState(['']);
   const [alertFrequency, setAlertFrequency] = useState('daily');
   const [webhookError, setWebhookError] = useState('');
+  const [tgEnabled, setTgEnabled] = useState(false);
+  const [chatId, setChatId] = useState('');
+  const [channelError, setChannelError] = useState('');
 
   const [countryPickerOpen, setCountryPickerOpen] = useState(false);
 
@@ -229,6 +247,14 @@ export default function OneClickAlarmModal({
           }
           setWebhookUrls(parseWebhookUrlsFromConfig(alertConfig));
           setAlertFrequency(alertFrequencyFromApi(alertConfig.alertFrequency));
+          if (alertConfig.tgEnabled !== undefined) {
+            setTgEnabled(isAlertFlagOn(alertConfig.tgEnabled));
+          }
+          setChatId(
+            alertConfig.chatId != null && String(alertConfig.chatId).trim()
+              ? String(alertConfig.chatId).trim()
+              : resolveAlertChatId()
+          );
         } else {
           // localStorage 中没有配置数据，显示输入框
           setHideInputs(false);
@@ -439,10 +465,17 @@ export default function OneClickAlarmModal({
         return;
       }
 
+      const nextChatId = resolveAlertChatId(chatId);
+      if (tgEnabled && !nextChatId) {
+        setChannelError(t('oneClickAlarm.tgChatIdRequired'));
+        return;
+      }
+      setChannelError('');
+
       // 开始 loading
       setIsLoading(true);
 
-      // 构建告警配置参数（只在开关打开时传递对应的值）
+      // 构建告警配置参数（开关一律 0/1；update 由封装层合并完整配置）
       const alertConfig = {
         phoneEnabled: phoneEnabled ? 1 : 0,
         emailEnabled: emailEnabled ? 1 : 0,
@@ -450,6 +483,10 @@ export default function OneClickAlarmModal({
         webhookEnabled: webhookEnabled ? 1 : 0,
         webhookUrls: webhookCheck.urls,
         alertFrequency: alertFrequencyToApi(alertFrequency),
+        tgEnabled: tgEnabled ? 1 : 0,
+        wechatEnabled: 0,
+        chatId: tgEnabled ? nextChatId : null,
+        openId: null,
       };
 
       // 电话与短信共用 alertPhone + alertPhoneCountryCode（任一方开启且已填则提交）
@@ -491,6 +528,21 @@ export default function OneClickAlarmModal({
           email,
           smsEnabled,
         });
+
+        // TG Mini App：开启 Telegram bot 后跳转 Bot 私聊并触发 /start
+        if (tgEnabled && isTelegramEnv()) {
+          const botStartUrl = getTgBotStartLink('alert');
+          try {
+            if (window.Telegram?.WebApp?.openTelegramLink) {
+              window.Telegram.WebApp.openTelegramLink(botStartUrl);
+            } else {
+              window.open(botStartUrl, '_blank', 'noopener,noreferrer');
+            }
+          } catch (e) {
+            console.warn('[OneClickAlarmModal] openTelegramLink failed', e);
+            window.open(botStartUrl, '_blank', 'noopener,noreferrer');
+          }
+        }
         
         // 延迟关闭弹窗
         setTimeout(() => {
@@ -954,6 +1006,42 @@ export default function OneClickAlarmModal({
                 </div>
                 <p className={styles.fieldHint}>{t('oneClickAlarm.webhookHint')}</p>
                 {webhookError && <div className={styles.errorText}>{webhookError}</div>}
+
+                <div className={styles.notifyRow}>
+                  <div className={styles.notifyRowInner}>
+                    <div className={styles.notifyRowLeft}>
+                      <span className={styles.notifyIconWrap}>
+                        <TelegramAlarmIcon />
+                      </span>
+                      <span className={styles.rowLabel}>{t('oneClickAlarm.telegramBot')}</span>
+                    </div>
+                    <Toggle
+                      checked={tgEnabled}
+                      onChange={(v) => {
+                        setTgEnabled(v);
+                        if (v && !chatId) setChatId(resolveAlertChatId());
+                        if (channelError) setChannelError('');
+                      }}
+                    />
+                  </div>
+                </div>
+                {tgEnabled && (
+                  <>
+                    <div className={styles.inputRow}>
+                      <input
+                        className={styles.input}
+                        placeholder={t('oneClickAlarm.chatIdPlaceholder')}
+                        value={chatId}
+                        onChange={(e) => {
+                          setChatId(e.target.value);
+                          if (channelError) setChannelError('');
+                        }}
+                      />
+                    </div>
+                    <p className={styles.fieldHint}>{t('oneClickAlarm.telegramHint')}</p>
+                  </>
+                )}
+                {channelError && <div className={styles.errorText}>{channelError}</div>}
 
                 <div className={styles.freqSection}>
                   <div className={styles.freqTitle}>{t('oneClickAlarm.freqTitle')}</div>

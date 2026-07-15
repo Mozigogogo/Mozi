@@ -3,7 +3,11 @@
  */
 import { request } from '../utils/request';
 import { Interface } from '../utils/constants';
-import { validateWebhookUrls } from '../utils/alertConfig';
+import {
+  buildFullAlertConfigPayload,
+  readStoredAlertConfig,
+  validateWebhookUrls,
+} from '../utils/alertConfig';
 
 const WEBHOOK_VALIDATION_ERRORS = {
   empty: '开启 Webhook 时至少填写一个 URL',
@@ -14,6 +18,68 @@ const WEBHOOK_VALIDATION_ERRORS = {
 function webhookValidationResult(check) {
   if (check.ok) return null;
   return { success: false, error: WEBHOOK_VALIDATION_ERRORS[check.error] || WEBHOOK_VALIDATION_ERRORS.invalid };
+}
+
+function normalizeAlertWritePayload(config, { mergeExisting = false } = {}) {
+  const existing = mergeExisting ? readStoredAlertConfig() : null;
+  const built = buildFullAlertConfigPayload(config || {}, existing);
+  if (!built.ok) {
+    return { success: false, error: built.error };
+  }
+
+  const payload = built.payload;
+  const {
+    alertPhone,
+    alertPhoneCountryCode,
+    alertEmail,
+    phoneEnabled,
+    emailEnabled,
+    smsEnabled,
+    webhookEnabled,
+    webhookUrls,
+  } = payload;
+
+  const phoneTrim = alertPhone != null ? String(alertPhone).trim() : '';
+  const ccTrim = alertPhoneCountryCode != null ? String(alertPhoneCountryCode).trim() : '';
+
+  if (phoneEnabled === undefined || emailEnabled === undefined) {
+    return { success: false, error: '缺少必填字段' };
+  }
+  if (![0, 1].includes(phoneEnabled) || ![0, 1].includes(emailEnabled)) {
+    return { success: false, error: '开关值必须为 0 或 1' };
+  }
+  if (smsEnabled !== undefined && smsEnabled !== 0 && smsEnabled !== 1) {
+    return { success: false, error: '开关值必须为 0 或 1' };
+  }
+  if (webhookEnabled !== undefined && webhookEnabled !== 0 && webhookEnabled !== 1) {
+    return { success: false, error: '开关值必须为 0 或 1' };
+  }
+
+  if (phoneEnabled === 1 && !phoneTrim) {
+    return { success: false, error: '开启电话告警时，手机号不能为空' };
+  }
+  if (smsEnabled === 1 && (!phoneTrim || !ccTrim)) {
+    return { success: false, error: '开启短信告警时手机号与国家区号不能为空' };
+  }
+  if (emailEnabled === 1) {
+    if (!alertEmail || String(alertEmail).trim() === '') {
+      return { success: false, error: '开启邮箱告警时，邮箱不能为空' };
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(String(alertEmail))) {
+      return { success: false, error: '邮箱格式不正确' };
+    }
+  }
+
+  const webhookCheck = validateWebhookUrls(webhookUrls, webhookEnabled || 0);
+  const webhookErr = webhookValidationResult(webhookCheck);
+  if (webhookErr) return webhookErr;
+  if (webhookEnabled === 1) {
+    payload.webhookUrls = webhookCheck.urls;
+  }
+
+  // defaultEnabled 由后端保留；写入时若不需要可不传，保留已有值随完整配置提交
+  return { success: true, payload };
 }
 
 /**
@@ -444,22 +510,8 @@ export const completeTask = (taskCode) => {
  * @returns {Promise}
  * @example
  * const result = await getAlertConfig();
- * // 返回示例：
- * // {
- * //   code: 0,
- * //   data: {
- * //     id: 1,
- * //     userId: "user-123",
- * //     alertPhone: "13800138000",
- * //     alertEmail: "test@gmail.com",
- * //     phoneEnabled: 1,
- * //     emailEnabled: 1,
- * //     defaultEnabled: 1,
- * //     createdAt: "2026-01-29T10:00:00",
- * //     updatedAt: "2026-01-29T10:00:00"
- * //   }
- * // }
- * // 未配置时 data 为 null
+ * // data 含：phoneEnabled/emailEnabled/smsEnabled/webhookEnabled/
+ * // tgEnabled/wechatEnabled(0|1)、chatId/openId、defaultEnabled 等
  */
 export const getAlertConfig = () => {
   return request({
@@ -502,23 +554,11 @@ export const fetchUserAlertConfig = async () => {
 
 /**
  * 新增告警配置
- * @param {Object} params - 告警配置参数
- * @param {string} params.alertPhone - 告警电话（1开头11位手机号，可选）
- * @param {string} params.alertPhoneCountryCode - 告警电话国家码（如 +1, +86，可选）
- * @param {string} params.alertEmail - 告警邮箱（标准邮箱格式，可选）
- * @param {number} params.phoneEnabled - 电话告警开关：0-关闭，1-开启
- * @param {number} params.emailEnabled - 邮箱告警开关：0-关闭，1-开启
- * @param {number} params.defaultEnabled - 默认告警开关：0-关闭，1-开启
- * @returns {Promise}
- * @example
- * const result = await addAlertConfig({
- *   alertPhone: "13800138000",
- *   alertPhoneCountryCode: "+86",
- *   alertEmail: "test@gmail.com",
- *   phoneEnabled: 1,
- *   emailEnabled: 1,
- *   defaultEnabled: 1
- * });
+ * @param {Object} params
+ * @param {number} [params.tgEnabled=0] - TG 推送开关 0/1
+ * @param {number} [params.wechatEnabled=0] - 微信推送开关 0/1
+ * @param {string|null} [params.chatId] - tgEnabled=1 时必填
+ * @param {string|null} [params.openId] - wechatEnabled=1 时必填
  */
 export const addAlertConfig = (params) => {
   return request({
@@ -530,107 +570,33 @@ export const addAlertConfig = (params) => {
 
 /**
  * 新增告警配置（封装方法，带参数验证和错误处理）
- * @param {Object} config - 告警配置对象
- * @param {string} config.alertPhone - 告警电话
- * @param {string} config.alertPhoneCountryCode - 告警电话国家码（如 +1, +86）
- * @param {string} config.alertEmail - 告警邮箱
- * @param {number} config.phoneEnabled - 电话告警开关：0-关闭，1-开启
- * @param {number} config.emailEnabled - 邮箱告警开关：0-关闭，1-开启
- * @param {number} config.defaultEnabled - 默认告警开关：0-关闭，1-开启
- * @returns {Promise<Object|null>} 返回创建的配置对象，失败时返回 null
- * @example
- * const result = await createAlertConfig({
- *   alertPhone: "13800138000",
- *   alertPhoneCountryCode: "+86",
- *   alertEmail: "test@gmail.com",
- *   phoneEnabled: 1,
- *   emailEnabled: 1,
- *   defaultEnabled: 1
- * });
+ * @param {Object} config - 告警配置对象（可部分字段，会补默认 tg/wechat=0）
  */
 export const createAlertConfig = async (config) => {
   try {
-    // 参数验证
-    const {
-      alertPhone,
-      alertPhoneCountryCode,
-      alertEmail,
-      phoneEnabled,
-      emailEnabled,
-      smsEnabled,
-    } = config;
-    const smsOn = smsEnabled === 1 ? 1 : 0;
-    const phoneTrim = alertPhone != null ? String(alertPhone).trim() : '';
-    const ccTrim = alertPhoneCountryCode != null ? String(alertPhoneCountryCode).trim() : '';
-
-    // 验证必填字段
-    if (phoneEnabled === undefined || emailEnabled === undefined) {
-      console.error('❌ 缺少必填字段: phoneEnabled, emailEnabled');
-      return { success: false, error: '缺少必填字段' };
+    const normalized = normalizeAlertWritePayload(
+      {
+        tgEnabled: 0,
+        wechatEnabled: 0,
+        chatId: null,
+        openId: null,
+        ...(config || {}),
+      },
+      { mergeExisting: false }
+    );
+    if (!normalized.success) {
+      console.error('❌', normalized.error);
+      return normalized;
     }
 
-    // 验证开关值
-    if (![0, 1].includes(phoneEnabled) || ![0, 1].includes(emailEnabled)) {
-      console.error('❌ 开关值必须为 0 或 1');
-      return { success: false, error: '开关值必须为 0 或 1' };
-    }
-    if (smsEnabled !== undefined && smsEnabled !== 0 && smsEnabled !== 1) {
-      console.error('❌ smsEnabled 必须为 0 或 1');
-      return { success: false, error: '开关值必须为 0 或 1' };
-    }
-    if (config.webhookEnabled !== undefined && config.webhookEnabled !== 0 && config.webhookEnabled !== 1) {
-      console.error('❌ webhookEnabled 必须为 0 或 1');
-      return { success: false, error: '开关值必须为 0 或 1' };
-    }
+    const res = await addAlertConfig(normalized.payload);
 
-    // 验证电话告警
-    if (phoneEnabled === 1) {
-      if (!phoneTrim) {
-        console.error('❌ 开启电话告警时，alertPhone 不能为空');
-        return { success: false, error: '开启电话告警时，手机号不能为空' };
-      }
-    }
-
-    // 验证短信告警（与电话共用 alertPhone + alertPhoneCountryCode）
-    if (smsOn === 1) {
-      if (!phoneTrim || !ccTrim) {
-        console.error('❌ 开启短信告警时，alertPhone / alertPhoneCountryCode 不能为空');
-        return { success: false, error: '开启短信告警时手机号与国家区号不能为空' };
-      }
-    }
-
-    // 验证邮箱告警
-    if (emailEnabled === 1) {
-      if (!alertEmail || alertEmail.trim() === '') {
-        console.error('❌ 开启邮箱告警时，alertEmail 不能为空');
-        return { success: false, error: '开启邮箱告警时，邮箱不能为空' };
-      }
-      // 验证邮箱格式
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(alertEmail)) {
-        console.error('❌ 邮箱格式不正确');
-        return { success: false, error: '邮箱格式不正确' };
-      }
-    }
-
-    if (config.webhookEnabled !== undefined) {
-      const webhookCheck = validateWebhookUrls(config.webhookUrls, config.webhookEnabled);
-      const webhookErr = webhookValidationResult(webhookCheck);
-      if (webhookErr) return webhookErr;
-    }
-
-    // 调用接口
-    const payload = { ...config };
-    delete payload.defaultEnabled;
-    const res = await addAlertConfig(payload);
-    
     if (res?.code === 0 && res?.data) {
       console.log('✅ 新增告警配置成功:', res.data);
       return { success: true, data: res.data };
-    } else {
-      console.warn('⚠️ 新增告警配置失败:', res?.errorMsg || '未知错误');
-      return { success: false, error: res?.errorMsg || '新增失败' };
     }
+    console.warn('⚠️ 新增告警配置失败:', res?.errorMsg || '未知错误');
+    return { success: false, error: res?.errorMsg || '新增失败' };
   } catch (error) {
     console.error('❌ 新增告警配置异常:', error);
     return { success: false, error: error.message || '网络异常' };
@@ -639,23 +605,7 @@ export const createAlertConfig = async (config) => {
 
 /**
  * 修改告警配置
- * @param {Object} params - 告警配置参数
- * @param {string} params.alertPhone - 告警电话（1开头11位手机号，可选）
- * @param {string} params.alertPhoneCountryCode - 告警电话国家码（如 +1, +86，可选）
- * @param {string} params.alertEmail - 告警邮箱（标准邮箱格式，可选）
- * @param {number} params.phoneEnabled - 电话告警开关：0-关闭，1-开启
- * @param {number} params.emailEnabled - 邮箱告警开关：0-关闭，1-开启
- * @param {number} params.defaultEnabled - 默认告警开关：0-关闭，1-开启
- * @returns {Promise}
- * @example
- * const result = await updateAlertConfig({
- *   alertPhone: "13900139000",
- *   alertPhoneCountryCode: "+86",
- *   alertEmail: "new@gmail.com",
- *   phoneEnabled: 0,
- *   emailEnabled: 1,
- *   defaultEnabled: 1
- * });
+ * @param {Object} params - 需传完整配置（封装层会与本地已有配置合并）
  */
 export const updateAlertConfig = (params) => {
   return request({
@@ -667,122 +617,24 @@ export const updateAlertConfig = (params) => {
 
 /**
  * 修改告警配置（封装方法，带参数验证和错误处理）
- * @param {Object} config - 告警配置对象
- * @param {string} config.alertPhone - 告警电话
- * @param {string} config.alertPhoneCountryCode - 告警电话国家码（如 +1, +86）
- * @param {string} config.alertEmail - 告警邮箱
- * @param {number} config.phoneEnabled - 电话告警开关：0-关闭，1-开启
- * @param {number} config.emailEnabled - 邮箱告警开关：0-关闭，1-开启
- * @param {number} config.defaultEnabled - 默认告警开关：0-关闭，1-开启
- * @returns {Promise<Object|null>} 返回更新后的配置对象，失败时返回 null
- * @example
- * const result = await modifyAlertConfig({
- *   alertPhone: "13900139000",
- *   alertPhoneCountryCode: "+86",
- *   alertEmail: "new@gmail.com",
- *   phoneEnabled: 0,
- *   emailEnabled: 1,
- *   defaultEnabled: 1
- * });
+ * update 会与本地已有配置合并，确保提交完整字段
  */
 export const modifyAlertConfig = async (config) => {
   try {
-    // 参数验证（与 createAlertConfig 相同）
-    const {
-      alertPhone,
-      alertPhoneCountryCode,
-      alertEmail,
-      phoneEnabled,
-      emailEnabled,
-      smsEnabled,
-    } = config;
-    const smsOn =
-      Object.prototype.hasOwnProperty.call(config, 'smsEnabled') && config.smsEnabled === 1 ? 1 : 0;
-    const phoneTrim = alertPhone != null ? String(alertPhone).trim() : '';
-    const ccTrim = alertPhoneCountryCode != null ? String(alertPhoneCountryCode).trim() : '';
-
-    // 验证必填字段
-    if (phoneEnabled === undefined || emailEnabled === undefined) {
-      console.error('❌ 缺少必填字段: phoneEnabled, emailEnabled');
-      return { success: false, error: '缺少必填字段' };
+    const normalized = normalizeAlertWritePayload(config || {}, { mergeExisting: true });
+    if (!normalized.success) {
+      console.error('❌', normalized.error);
+      return normalized;
     }
 
-    // 验证开关值
-    if (![0, 1].includes(phoneEnabled) || ![0, 1].includes(emailEnabled)) {
-      console.error('❌ 开关值必须为 0 或 1');
-      return { success: false, error: '开关值必须为 0 或 1' };
-    }
-    if (
-      Object.prototype.hasOwnProperty.call(config, 'smsEnabled') &&
-      config.smsEnabled !== 0 &&
-      config.smsEnabled !== 1
-    ) {
-      console.error('❌ smsEnabled 必须为 0 或 1');
-      return { success: false, error: '开关值必须为 0 或 1' };
-    }
-    if (
-      Object.prototype.hasOwnProperty.call(config, 'webhookEnabled') &&
-      config.webhookEnabled !== 0 &&
-      config.webhookEnabled !== 1
-    ) {
-      console.error('❌ webhookEnabled 必须为 0 或 1');
-      return { success: false, error: '开关值必须为 0 或 1' };
-    }
+    const res = await updateAlertConfig(normalized.payload);
 
-    // 验证电话告警
-    if (phoneEnabled === 1) {
-      if (!phoneTrim) {
-        console.error('❌ 开启电话告警时，alertPhone 不能为空');
-        return { success: false, error: '开启电话告警时，手机号不能为空' };
-      }
-    }
-
-    // 验证短信告警（仅 body 传入 smsEnabled 时校验）
-    if (smsOn === 1) {
-      if (!phoneTrim || !ccTrim) {
-        console.error('❌ 开启短信告警时，alertPhone / alertPhoneCountryCode 不能为空');
-        return { success: false, error: '开启短信告警时手机号与国家区号不能为空' };
-      }
-    }
-
-    // 验证邮箱告警
-    if (emailEnabled === 1) {
-      if (!alertEmail || alertEmail.trim() === '') {
-        console.error('❌ 开启邮箱告警时，alertEmail 不能为空');
-        return { success: false, error: '开启邮箱告警时，邮箱不能为空' };
-      }
-      // 验证邮箱格式
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(alertEmail)) {
-        console.error('❌ 邮箱格式不正确');
-        return { success: false, error: '邮箱格式不正确' };
-      }
-    }
-
-    const hasWebhookPatch =
-      Object.prototype.hasOwnProperty.call(config, 'webhookEnabled') ||
-      Object.prototype.hasOwnProperty.call(config, 'webhookUrls');
-    if (hasWebhookPatch) {
-      const hookEnabled = Object.prototype.hasOwnProperty.call(config, 'webhookEnabled')
-        ? config.webhookEnabled
-        : 0;
-      const webhookCheck = validateWebhookUrls(config.webhookUrls, hookEnabled);
-      const webhookErr = webhookValidationResult(webhookCheck);
-      if (webhookErr) return webhookErr;
-    }
-
-    // 调用接口
-    const payload = { ...config };
-    delete payload.defaultEnabled;
-    const res = await updateAlertConfig(payload);
-    
     if (res?.code === 0 && res?.data) {
       console.log('✅ 修改告警配置成功:', res.data);
       return { success: true, data: res.data };
-    } else {
-      console.warn('⚠️ 修改告警配置失败:', res?.errorMsg || '未知错误');
-      return { success: false, error: res?.errorMsg || '修改失败' };
     }
+    console.warn('⚠️ 修改告警配置失败:', res?.errorMsg || '未知错误');
+    return { success: false, error: res?.errorMsg || '修改失败' };
   } catch (error) {
     console.error('❌ 修改告警配置异常:', error);
     return { success: false, error: error.message || '网络异常' };

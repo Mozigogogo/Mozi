@@ -931,6 +931,36 @@
   object-fit: contain;
 }
 
+.sideTgLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12PX;
+  width: 100%;
+  padding: 10PX 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  box-sizing: border-box;
+
+  &:hover .sideTgLinkAction {
+    color: #0d966f;
+  }
+}
+
+.sideTgLinkAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 4PX;
+  flex-shrink: 0;
+  max-width: 52%;
+  font-size: 12PX;
+  line-height: 1.35;
+  color: #11b787;
+  text-align: right;
+}
+
 .sideInputRow {
   position: relative;
   height: 36PX;

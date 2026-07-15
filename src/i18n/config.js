@@ -5,48 +5,45 @@ import { initReactI18next } from 'react-i18next';
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 
-// 获取初始语言，如果 localStorage 中没有，则使用默认值并保存
-const getInitialLanguage = () => {
-  if (typeof window === 'undefined') {
-    return 'en';
-  }
-  
-  const storedLng = localStorage.getItem('i18nextLng');
-  
-  // 如果已经有保存的语言，直接使用
-  if (storedLng) {
-    return storedLng;
-  }
-  
-  // 如果没有保存的语言，使用默认值并保存到 localStorage
-  const defaultLng = 'en';
+/**
+ * SSR / 首屏 hydration 必须使用同一语言，避免
+ * Text content does not match server-rendered HTML。
+ * 用户本地语言在 I18nProvider mount 后再同步。
+ */
+export const I18N_SSR_DEFAULT_LNG = 'en';
+
+export function readStoredLanguage() {
+  if (typeof window === 'undefined') return null;
   try {
-    localStorage.setItem('i18nextLng', defaultLng);
-  } catch (e) {
-    console.warn('无法保存语言设置到 localStorage:', e);
+    const storedLng = localStorage.getItem('i18nextLng');
+    if (!storedLng) return null;
+    return storedLng.toLowerCase().startsWith('zh') ? 'zh' : 'en';
+  } catch {
+    return null;
   }
-  
-  return defaultLng;
-};
+}
 
-const initialLng = getInitialLanguage();
+// 配置 i18n：初始化一律用 SSR 默认语言
+i18n.use(initReactI18next).init({
+  resources: {
+    zh: { translation: zh },
+    en: { translation: en },
+  },
+  lng: I18N_SSR_DEFAULT_LNG,
+  fallbackLng: 'en',
+  debug: false,
+  initImmediate: false,
+  interpolation: {
+    escapeValue: false,
+  },
+  react: {
+    useSuspense: false,
+  },
+});
 
-// 配置 i18n
-i18n
-  .use(initReactI18next)
-  // 初始化 i18next
-  .init({
-    resources: {
-      zh: { translation: zh },
-      en: { translation: en },
-    },
-    lng: initialLng,
-    fallbackLng: 'en',
-    debug: false, // 开发模式下可以设置为 true 查看日志
-    
-    interpolation: {
-      escapeValue: false, // React 已经处理了 XSS
-    },
-  });
+// 防止热更新 / 重复 init 后语言被污染：模块加载时强制回到 SSR 默认语言
+if (i18n.language !== I18N_SSR_DEFAULT_LNG) {
+  i18n.changeLanguage(I18N_SSR_DEFAULT_LNG);
+}
 
 export default i18n;

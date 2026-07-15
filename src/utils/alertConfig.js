@@ -98,6 +98,116 @@ export function isAlertFlagOn(value) {
   return value === 1 || value === true || value === '1';
 }
 
+/** 归一化为接口要求的 0/1 */
+export function toAlertFlag(value, defaultVal = 0) {
+  if (value === 1 || value === true || value === '1') return 1;
+  if (value === 0 || value === false || value === '0') return 0;
+  return defaultVal;
+}
+
+/** TG chatId：优先 WebApp，其次本地缓存 */
+export function resolveAlertChatId(fallback = '') {
+  if (typeof window === 'undefined') return String(fallback || '').trim();
+  try {
+    const fromTg = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString();
+    if (fromTg) return fromTg;
+  } catch {
+    /* ignore */
+  }
+  const stored =
+    localStorage.getItem('tgChatId') ||
+    localStorage.getItem('alertChatId') ||
+    '';
+  return String(stored || fallback || '').trim();
+}
+
+/** 微信 openId：优先入参，其次本地缓存 */
+export function resolveAlertOpenId(fallback = '') {
+  if (typeof window === 'undefined') return String(fallback || '').trim();
+  const stored =
+    localStorage.getItem('wechatOpenId') ||
+    localStorage.getItem('openId') ||
+    '';
+  return String(stored || fallback || '').trim();
+}
+
+/**
+ * tgEnabled / wechatEnabled + chatId / openId 校验
+ * @returns {{ ok: true, tgEnabled: number, wechatEnabled: number, chatId: string|null, openId: string|null } | { ok: false, error: string }}
+ */
+export function validateTgWechatAlertFields(config = {}) {
+  const tgEnabled = toAlertFlag(config.tgEnabled, 0);
+  const wechatEnabled = toAlertFlag(config.wechatEnabled, 0);
+  const chatId = config.chatId != null ? String(config.chatId).trim() : '';
+  const openId = config.openId != null ? String(config.openId).trim() : '';
+
+  if (tgEnabled !== 0 && tgEnabled !== 1) {
+    return { ok: false, error: 'tgEnabled 必须为 0 或 1' };
+  }
+  if (wechatEnabled !== 0 && wechatEnabled !== 1) {
+    return { ok: false, error: 'wechatEnabled 必须为 0 或 1' };
+  }
+  if (tgEnabled === 1 && !chatId) {
+    return { ok: false, error: '开启 Telegram 推送时，chatId 不能为空' };
+  }
+  if (wechatEnabled === 1 && !openId) {
+    return { ok: false, error: '开启微信推送时，openId 不能为空' };
+  }
+
+  return {
+    ok: true,
+    tgEnabled,
+    wechatEnabled,
+    chatId: chatId || null,
+    openId: openId || null,
+  };
+}
+
+const SERVER_ONLY_ALERT_KEYS = ['id', 'userId', 'createdAt', 'updatedAt'];
+
+/**
+ * 合并已有配置 + 本次 patch，生成完整提交体（update 需传完整配置）
+ * @param {object} patch
+ * @param {object|null} existing
+ */
+export function buildFullAlertConfigPayload(patch = {}, existing = null) {
+  const base =
+    existing && typeof existing === 'object' && !Array.isArray(existing)
+      ? { ...existing }
+      : {};
+  SERVER_ONLY_ALERT_KEYS.forEach((k) => {
+    delete base[k];
+  });
+
+  const merged = { ...base, ...patch };
+
+  merged.phoneEnabled = toAlertFlag(merged.phoneEnabled, 0);
+  merged.emailEnabled = toAlertFlag(merged.emailEnabled, 0);
+  merged.smsEnabled = toAlertFlag(merged.smsEnabled, 0);
+  merged.webhookEnabled = toAlertFlag(merged.webhookEnabled, 0);
+  merged.tgEnabled = toAlertFlag(merged.tgEnabled, 0);
+  merged.wechatEnabled = toAlertFlag(merged.wechatEnabled, 0);
+
+  if (merged.defaultEnabled != null) {
+    merged.defaultEnabled = toAlertFlag(merged.defaultEnabled, 0);
+  }
+
+  const tgCheck = validateTgWechatAlertFields(merged);
+  if (!tgCheck.ok) {
+    return { ok: false, error: tgCheck.error };
+  }
+  merged.tgEnabled = tgCheck.tgEnabled;
+  merged.wechatEnabled = tgCheck.wechatEnabled;
+  merged.chatId = tgCheck.chatId;
+  merged.openId = tgCheck.openId;
+
+  if (Array.isArray(merged.webhookUrls)) {
+    merged.webhookUrls = merged.webhookUrls.map((u) => String(u));
+  }
+
+  return { ok: true, payload: merged };
+}
+
 /**
  * 从 datainfo 提取告警字段（与 GET /user/alert/config 对齐）
  * @param {object | null | undefined} datainfo
@@ -114,7 +224,12 @@ export function pickAlertConfigFromDatainfo(datainfo) {
     datainfo.smsEnabled != null ||
     datainfo.webhookEnabled != null ||
     datainfo.webhookUrls != null ||
-    datainfo.alertFrequency != null;
+    datainfo.alertFrequency != null ||
+    datainfo.tgEnabled != null ||
+    datainfo.wechatEnabled != null ||
+    datainfo.chatId != null ||
+    datainfo.openId != null ||
+    datainfo.defaultEnabled != null;
 
   if (!hasAny) return null;
 
@@ -130,6 +245,11 @@ export function pickAlertConfigFromDatainfo(datainfo) {
   if (datainfo.webhookEnabled != null) out.webhookEnabled = datainfo.webhookEnabled;
   if (Array.isArray(datainfo.webhookUrls)) out.webhookUrls = datainfo.webhookUrls;
   if (datainfo.alertFrequency != null) out.alertFrequency = datainfo.alertFrequency;
+  if (datainfo.tgEnabled != null) out.tgEnabled = datainfo.tgEnabled;
+  if (datainfo.wechatEnabled != null) out.wechatEnabled = datainfo.wechatEnabled;
+  if (datainfo.chatId !== undefined) out.chatId = datainfo.chatId;
+  if (datainfo.openId !== undefined) out.openId = datainfo.openId;
+  if (datainfo.defaultEnabled != null) out.defaultEnabled = datainfo.defaultEnabled;
   return out;
 }
 
@@ -147,5 +267,18 @@ export function syncAlertConfigFromDatainfo(datainfo) {
     localStorage.setItem('alertConfig', JSON.stringify({ ...prev, ...slice }));
   } catch {
     /* ignore */
+  }
+}
+
+/** 读取本地已缓存的完整告警配置 */
+export function readStoredAlertConfig() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem('alertConfig');
+    if (!raw || raw === 'null') return null;
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
   }
 }

@@ -17,6 +17,35 @@ export const getTgInviteLink = (inviteCode) => {
   return `https://t.me/${TG_BOT_USERNAME}?start=${inviteCode}`;
 };
 
+/**
+ * Bot 私聊深链：打开与 Bot 的对话并自动触发 /start[ payload]
+ * 需在 Telegram 内通过 openTelegramLink 打开更可靠
+ */
+export const getTgBotStartLink = (payload = '') => {
+  const p = String(payload || '').trim();
+  if (p) return `https://t.me/${TG_BOT_USERNAME}?start=${encodeURIComponent(p)}`;
+  return `https://t.me/${TG_BOT_USERNAME}?start=`;
+};
+
+/** 打开 Bot 关联的 Telegram Mini App（PC 浏览器会拉起 Telegram 客户端） */
+export const getTgMiniAppLink = (startParam = '') => {
+  const base = `https://t.me/${TG_BOT_USERNAME}`;
+  const param = String(startParam || '').trim();
+  if (!param) return `${base}?startapp`;
+  return `${base}?startapp=${encodeURIComponent(param)}`;
+};
+
+/** 告警场景：startapp=alert_BTC，Mini App 内可落到对应币种详情 */
+export const getTgAlertMiniAppLink = (symbol) => {
+  const sym = String(symbol || '')
+    .trim()
+    .toUpperCase();
+  if (sym && /^[A-Z0-9]+$/.test(sym)) {
+    return getTgMiniAppLink(`alert_${sym}`);
+  }
+  return getTgMiniAppLink();
+};
+
 // 接口基础URL - 使用代理路径避免跨域
 export const INTERFACE_URL = '/api';
 

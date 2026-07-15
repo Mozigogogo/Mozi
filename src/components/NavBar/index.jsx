@@ -90,7 +90,9 @@ export default function NavBar({
 
       {/* 中间标题 */}
       <div className={styles.center}>
-        <div className={styles.title} style={textStyle}>{title}</div>
+        <div className={styles.title} style={textStyle} suppressHydrationWarning>
+          {title}
+        </div>
       </div>
 
       {/* 右侧操作按钮 */}

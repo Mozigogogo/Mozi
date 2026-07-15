@@ -15,7 +15,7 @@ import {
   validateWebhookUrls,
 } from '@/utils/alertConfig';
 import { request } from '@/utils/request';
-import { Interface } from '@/utils/constants';
+import { getTgAlertMiniAppLink, Interface } from '@/utils/constants';
 import { Loading } from '@/components/Loading';
 import { allCountries } from 'country-telephone-data';
 import styles from './page.module.less';
@@ -705,6 +705,7 @@ function PCAlarmContent() {
 
     setSideSubmitting(true);
     try {
+      // PC 不提供 TG 开关：update 合并本地已有 tgEnabled/chatId；新建默认 0
       const alertConfig = {
         phoneEnabled: phoneEnabled ? 1 : 0,
         emailEnabled: emailEnabled ? 1 : 0,
@@ -712,6 +713,8 @@ function PCAlarmContent() {
         webhookEnabled: webhookEnabled ? 1 : 0,
         webhookUrls: webhookCheck.urls,
         alertFrequency: alertFrequencyToApi(alertFrequency),
+        wechatEnabled: 0,
+        openId: null,
       };
       if ((phoneEnabled || smsEnabled) && phone && String(phone).trim()) {
         alertConfig.alertPhone = String(phone).trim();
@@ -1142,6 +1145,40 @@ function PCAlarmContent() {
               </div>
               <p className={styles.sideFieldHint}>{t('oneClickAlarm.webhookHint')}</p>
               {webhookError && <div className={styles.sideFieldError}>{webhookError}</div>}
+
+              <button
+                type="button"
+                className={styles.sideTgLink}
+                onClick={() => {
+                  window.open(getTgAlertMiniAppLink(symbol), '_blank', 'noopener,noreferrer');
+                }}
+              >
+                <span className={styles.sideItemLabel}>
+                  <img
+                    src={`${ALERT_ICON_CDN}/tgbot_alert.svg`}
+                    alt=""
+                    aria-hidden
+                    className={styles.sideItemIcon}
+                    onError={(e) => {
+                      e.currentTarget.src = '/icons/telegram-group.svg';
+                    }}
+                  />
+                  <span>{t('oneClickAlarm.telegramBot')}</span>
+                </span>
+                <span className={styles.sideTgLinkAction}>
+                  {t('oneClickAlarm.telegramOpenMiniApp')}
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+                    <path
+                      d="M5 3h6v6M11 3L5.5 8.5M3 11h8"
+                      stroke="currentColor"
+                      strokeWidth="1.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+              </button>
+              <p className={styles.sideFieldHint}>{t('oneClickAlarm.telegramOpenMiniAppHint')}</p>
 
               <div className={styles.freqSection}>
                 <div className={styles.freqTitle}>{t('oneClickAlarm.freqTitle', { defaultValue: '预警频次' })}</div>
