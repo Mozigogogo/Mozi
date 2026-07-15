@@ -78,7 +78,8 @@ function normalizeAlertWritePayload(config, { mergeExisting = false } = {}) {
     payload.webhookUrls = webhookCheck.urls;
   }
 
-  // defaultEnabled 由后端保留；写入时若不需要可不传，保留已有值随完整配置提交
+  // defaultEnabled 不写入：由后端自行维护，add/update 一律不传
+  delete payload.defaultEnabled;
   return { success: true, payload };
 }
 

@@ -188,9 +188,8 @@ export function buildFullAlertConfigPayload(patch = {}, existing = null) {
   merged.tgEnabled = toAlertFlag(merged.tgEnabled, 0);
   merged.wechatEnabled = toAlertFlag(merged.wechatEnabled, 0);
 
-  if (merged.defaultEnabled != null) {
-    merged.defaultEnabled = toAlertFlag(merged.defaultEnabled, 0);
-  }
+  // 写入接口不传 defaultEnabled（含 null）
+  delete merged.defaultEnabled;
 
   const tgCheck = validateTgWechatAlertFields(merged);
   if (!tgCheck.ok) {
