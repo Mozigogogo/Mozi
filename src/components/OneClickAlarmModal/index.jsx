@@ -531,7 +531,7 @@ export default function OneClickAlarmModal({
 
         // TG Mini App：开启 Telegram bot 后跳转 Bot 私聊并触发 /start
         if (tgEnabled && isTelegramEnv()) {
-          const botStartUrl = getTgBotStartLink('alert');
+          const botStartUrl = getTgBotStartLink();
           try {
             if (window.Telegram?.WebApp?.openTelegramLink) {
               window.Telegram.WebApp.openTelegramLink(botStartUrl);
