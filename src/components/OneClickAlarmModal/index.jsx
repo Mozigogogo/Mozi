@@ -660,6 +660,12 @@ export default function OneClickAlarmModal({
         return;
       }
 
+      if (addRes?.data === false) {
+        Toast.show({ content: addRes.errorMsg || t('addAlarm.saveFailed') });
+        onClose?.();
+        return;
+      }
+
       Toast.show({ content: addRes.errorMsg || t('addAlarm.saveFailed') });
     } catch (error) {
       setBtnDisabled(false);
