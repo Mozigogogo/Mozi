@@ -14,6 +14,9 @@ import {
   parseWebhookUrlsFromConfig,
   validateWebhookUrls,
 } from '@/utils/alertConfig';
+import {
+  buildFullWarnContentPayload,
+} from '@/utils/warnContent';
 import { request } from '@/utils/request';
 import { getTgAlertMiniAppLink, Interface } from '@/utils/constants';
 import { Loading } from '@/components/Loading';
@@ -84,6 +87,7 @@ function PCAlarmContent() {
   });
   const [historyInputs, setHistoryInputs] = useState({});
   const [historySaving, setHistorySaving] = useState(false);
+  const [historyTogglingCode, setHistoryTogglingCode] = useState(null);
   const historyInputsRef = useRef({});
   const historyBaselineRef = useRef({});
   const historyDirtyRef = useRef(new Set());
@@ -91,6 +95,7 @@ function PCAlarmContent() {
   const historyActiveSymbolRef = useRef(null);
   const historySavingRef = useRef(false);
   const historyDataRef = useRef({});
+  const historyTogglingRef = useRef(null);
 
   historyActiveSymbolRef.current = historyState.activeSymbol;
   historySavingRef.current = historySaving;
@@ -194,6 +199,9 @@ function PCAlarmContent() {
         }
 
         const symbols = Object.keys(normalized || {});
+        // 重新拉取后丢弃本地输入缓存，避免触发后 active 已变但输入/开关状态不同步
+        historyBaselineRef.current = {};
+        historyDirtyRef.current = new Set();
         setHistoryState({
           loading: false,
           data: normalized || {},
@@ -295,14 +303,8 @@ function PCAlarmContent() {
       return;
     }
     if (historyState.loading) return;
-
-    if (historyBaselineRef.current[sym]) {
-      const cached = { ...historyBaselineRef.current[sym] };
-      historyInputsRef.current = cached;
-      setHistoryInputs(cached);
-      historyDirtyRef.current = new Set();
-      return;
-    }
+    // 有未保存编辑时保留用户输入；否则与服务端 warnContent 对齐
+    if (historyDirtyRef.current.size > 0) return;
     syncHistoryInputsFromData(sym, historyState.data);
   }, [historyState.activeSymbol, historyState.loading, historyState.data, syncHistoryInputsFromData]);
 
@@ -329,6 +331,23 @@ function PCAlarmContent() {
     });
   }, []);
 
+  const buildHistoryWarnItems = useCallback((sym, overrideCode, overrideValue) => {
+    const inputs = historyInputsRef.current;
+    const item = historyDataRef.current?.[sym];
+    const rows = getHistoryWarnRows(item);
+    return historyFixedCodes.map((fixed) => {
+      let raw = String(inputs[fixed.code] ?? '').trim();
+      if (!raw) {
+        const row = rows.find((r) => r.code === fixed.code);
+        raw = parseHistoryContentForInput(row?.content);
+      }
+      if (fixed.code === overrideCode && overrideValue != null) {
+        raw = String(overrideValue).trim();
+      }
+      return { code: fixed.code, content: raw };
+    });
+  }, [historyFixedCodes]);
+
   const flushHistoryChanges = useCallback(async () => {
     if (historyFlushTimerRef.current) {
       clearTimeout(historyFlushTimerRef.current);
@@ -341,7 +360,6 @@ function PCAlarmContent() {
     const baseline = historyBaselineRef.current[sym] || {};
     const inputs = historyInputsRef.current;
     const dirtyCodes = [...historyDirtyRef.current];
-    const content = {};
 
     for (const code of dirtyCodes) {
       const value = String(inputs[code] ?? '').trim();
@@ -351,9 +369,20 @@ function PCAlarmContent() {
         Toast.show({ content: t('myAlarm.enterNumber', { defaultValue: '请输入数字' }) });
         return false;
       }
-      content[code] = HISTORY_PRICE_CODES.includes(code) ? value : `${value}%`;
     }
 
+    const hasRealChanges = dirtyCodes.some((code) => {
+      const value = String(inputs[code] ?? '').trim();
+      const oldVal = String(baseline[code] ?? '').trim();
+      return value !== oldVal;
+    });
+
+    if (dirtyCodes.length === 0 || !hasRealChanges) {
+      historyDirtyRef.current.clear();
+      return true;
+    }
+
+    const content = buildFullWarnContentPayload(buildHistoryWarnItems(sym));
     if (Object.keys(content).length === 0) {
       historyDirtyRef.current.clear();
       return true;
@@ -371,7 +400,7 @@ function PCAlarmContent() {
         applyHistoryContentPatch(sym, content);
         const nextBaseline = { ...(historyBaselineRef.current[sym] || {}) };
         Object.keys(content).forEach((code) => {
-          nextBaseline[code] = String(inputs[code] ?? '').trim();
+          nextBaseline[code] = String(inputs[code] ?? parseHistoryContentForInput(content[code]) ?? '').trim();
         });
         historyBaselineRef.current[sym] = nextBaseline;
         historyDirtyRef.current.clear();
@@ -386,7 +415,7 @@ function PCAlarmContent() {
     } finally {
       setHistorySaving(false);
     }
-  }, [applyHistoryContentPatch, t]);
+  }, [applyHistoryContentPatch, buildHistoryWarnItems, t]);
 
   const scheduleHistoryFlush = useCallback(
     (delay = HISTORY_FLUSH_DEBOUNCE_MS) => {
@@ -438,52 +467,59 @@ function PCAlarmContent() {
     };
   }, [activeTab, flushHistoryChanges]);
 
+  const ensureHistoryWarnRegistered = async (sym, row, effectiveVal) => {
+    const val = String(effectiveVal ?? '').trim();
+    if (!val || !/^[0-9]+(\.[0-9]+)?$/.test(val)) {
+      Toast.show({ content: t('myAlarm.setValueFirst', { defaultValue: '请先设置告警值' }) });
+      return false;
+    }
+    const fullContent = buildFullWarnContentPayload(buildHistoryWarnItems(sym, row.code, val));
+    try {
+      const addRes = await request({
+        url: Interface.ADD_WARN,
+        method: 'POST',
+        data: { symbol: sym, content: fullContent },
+      });
+      if (addRes?.data !== true) {
+        Toast.show({ content: addRes?.errorMsg || t('myAlarm.enableFailed', { defaultValue: '开启失败' }) });
+        return false;
+      }
+      applyHistoryContentPatch(sym, fullContent);
+      historyBaselineRef.current[sym] = {
+        ...(historyBaselineRef.current[sym] || {}),
+        [row.code]: val,
+      };
+      historyDirtyRef.current.delete(row.code);
+      return true;
+    } catch (e) {
+      Toast.show({ content: t('myAlarm.enableFailed', { defaultValue: '开启失败' }) });
+      return false;
+    }
+  };
+
   const toggleHistoryWarn = async (row) => {
     const sym = historyActiveSymbolRef.current || historyState.activeSymbol;
-    if (!sym) return;
+    if (!sym || historyTogglingRef.current) return;
 
     const flushed = await flushHistoryChanges();
     if (flushed === false) return;
 
     const baselineVal = String(historyBaselineRef.current[sym]?.[row.code] ?? '').trim();
     const inputVal = String(historyInputsRef.current[row.code] ?? '').trim();
-    const effectiveVal = inputVal || baselineVal;
+    const effectiveVal = inputVal || baselineVal || parseHistoryContentForInput(row.content);
     const nextActive = !row.active;
 
-    const latestBackend = Array.isArray(historyDataRef.current?.[sym]?.warnContent)
-      ? historyDataRef.current[sym].warnContent
-      : [];
-    const hasBackendItem = latestBackend.some((w) => w?.code === row.code);
+    historyTogglingRef.current = row.code;
+    setHistoryTogglingCode(row.code);
 
-    if (!row.active && !hasBackendItem) {
-      if (!effectiveVal || !/^[0-9]+(\.[0-9]+)?$/.test(effectiveVal)) {
-        Toast.show({ content: t('myAlarm.setValueFirst', { defaultValue: '请先设置告警值' }) });
-        return;
-      }
-      const formattedValue = HISTORY_PRICE_CODES.includes(row.code) ? effectiveVal : `${effectiveVal}%`;
-      try {
-        const addRes = await request({
-          url: Interface.ADD_WARN,
-          method: 'POST',
-          data: { symbol: sym, content: { [row.code]: formattedValue } },
-        });
-        if (addRes?.data !== true) {
-          Toast.show({ content: addRes?.errorMsg || t('myAlarm.enableFailed', { defaultValue: '开启失败' }) });
-          return;
-        }
-        applyHistoryContentPatch(sym, { [row.code]: formattedValue });
-        historyBaselineRef.current[sym] = {
-          ...(historyBaselineRef.current[sym] || {}),
-          [row.code]: effectiveVal,
-        };
-      } catch (e) {
-        Toast.show({ content: t('myAlarm.enableFailed', { defaultValue: '开启失败' }) });
-        return;
-      }
-    }
-
-    const interfaceUrl = row.active ? Interface.CLOSE_WARN : Interface.OPEN_WARN;
     try {
+      // 告警触发后后端会置 active=false，仅 OPEN 无法重新开启，须先 ADD 写回当前阈值（改值能开也是因此）
+      if (nextActive) {
+        const registered = await ensureHistoryWarnRegistered(sym, row, effectiveVal);
+        if (!registered) return;
+      }
+
+      const interfaceUrl = row.active ? Interface.CLOSE_WARN : Interface.OPEN_WARN;
       const res = await request({
         url: interfaceUrl,
         data: { code: row.code, symbol: sym },
@@ -497,21 +533,20 @@ function PCAlarmContent() {
         });
         return;
       }
-      // upsert：warnContent 无该 code 时仅 map 不会改 active，开关会一直关着
       setHistoryState((prev) => {
         const next = { ...prev.data };
         const item = next[sym];
         if (!item) return prev;
         const backend = Array.isArray(item?.warnContent) ? [...item.warnContent] : [];
         const idx = backend.findIndex((w) => w?.code === row.code);
+        const formattedValue = HISTORY_PRICE_CODES.includes(row.code)
+          ? String(effectiveVal).trim()
+          : effectiveVal
+            ? `${String(effectiveVal).trim()}%`
+            : row.content;
         if (idx >= 0) {
           backend[idx] = { ...backend[idx], active: nextActive };
         } else {
-          const formattedValue = HISTORY_PRICE_CODES.includes(row.code)
-            ? effectiveVal
-            : effectiveVal
-              ? `${effectiveVal}%`
-              : row.content;
           backend.push({
             code: row.code,
             content: formattedValue || row.content,
@@ -533,6 +568,9 @@ function PCAlarmContent() {
           ? t('myAlarm.disableFailed', { defaultValue: '关闭失败' })
           : t('myAlarm.enableFailed', { defaultValue: '开启失败' }),
       });
+    } finally {
+      historyTogglingRef.current = null;
+      setHistoryTogglingCode(null);
     }
   };
 
@@ -897,6 +935,7 @@ function PCAlarmContent() {
                             <Switch
                               className={styles.compactSwitch}
                               checked={row.active}
+                              disabled={historySaving || historyTogglingCode === row.code}
                               onChange={() => toggleHistoryWarn(row)}
                               style={{ '--checked-color': '#11B787' }}
                             />

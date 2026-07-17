@@ -12,6 +12,12 @@ import NavBar from '../../components/NavBar';
 import PopLogin from '../../components/PopLogin';
 import Error from '../../components/Error';
 import { isEmpty } from 'lodash';
+import {
+  buildFullWarnContentPayload,
+  buildFullWarnContentWithOverride,
+  formatWarnContentValue,
+  parseWarnContentNumeric,
+} from '@/utils/warnContent';
 import styles from './page.module.less';
 
 export default function Mywarn() {
@@ -50,6 +56,8 @@ export default function Mywarn() {
       return backendItem ? backendItem : { code: fixed.code, content: fixed.defaultContent, active: false };
     });
   };
+
+  const buildCurrentWarnItems = () => getStandardizedWarnContent();
   
   useEffect(() => {
     init();
@@ -98,11 +106,13 @@ export default function Mywarn() {
   };
   
   const changeSide = (value) => {
+    setEditingIndex(-1);
+    setEditValue('');
     setActiveKey(value);
-    setWarnData({
-      ...warnData,
-      sideData: warnData.data[Object.keys(warnData.data)[value]]
-    });
+    setWarnData((prev) => ({
+      ...prev,
+      sideData: prev.data[Object.keys(prev.data)[value]],
+    }));
   };
   
   const startEdit = (item, index) => {
@@ -127,21 +137,19 @@ export default function Mywarn() {
     const sideKey = ['priceRise', 'priceFall', 'priceRiseChange24HPercent', 'priceFallChange24HPercent'];
     const codeIndex = sideKey.indexOf(code);
     const formattedValue = (codeIndex === 0 || codeIndex === 1) ? editValue : `${editValue}%`;
-    
+    const fullContent = buildFullWarnContentWithOverride(buildCurrentWarnItems(), code, formattedValue);
+
     try {
       const addRes = await request({
         url: Interface.ADD_WARN,
         method: 'POST',
         data: {
           symbol,
-          content: {
-            [code]: formattedValue
-          }
+          content: fullContent,
         }
       });
       
       if (addRes.data === true) {
-        // 更新本地数据：如不存在则追加
         const backendContent = warnData.sideData.warnContent || [];
         const existingIndex = backendContent.findIndex(item => item.code === code);
         let newWarnContent;
@@ -150,7 +158,6 @@ export default function Mywarn() {
             idx === existingIndex ? { ...item, content: formattedValue } : item
           ));
         } else {
-          // 默认未存在：新增条目，保持当前 active（默认 false）
           const standardizedContent = getStandardizedWarnContent();
           const currentItem = standardizedContent[index];
           newWarnContent = [
@@ -158,15 +165,20 @@ export default function Mywarn() {
             { code: currentItem.code, content: formattedValue, active: currentItem.active }
           ];
         }
-        
-        setWarnData({
-          ...warnData,
-          sideData: {
-            ...warnData.sideData,
-            warnContent: newWarnContent
-          }
-        });
-        
+
+        const updatedSideData = {
+          ...warnData.sideData,
+          warnContent: newWarnContent,
+        };
+        setWarnData((prev) => ({
+          ...prev,
+          data: {
+            ...prev.data,
+            [symbol]: updatedSideData,
+          },
+          sideData: updatedSideData,
+        }));
+
         setEditValue('');
         Toast.show(t('myAlarm.editSuccess'));
       } else {
@@ -182,42 +194,71 @@ export default function Mywarn() {
     const standardizedContent = getStandardizedWarnContent();
     const currentItem = standardizedContent[index];
     const backendContent = warnData.sideData.warnContent || [];
-    const backendItem = backendContent.find(item => item.code === currentItem.code);
+    const symbol = Object.keys(warnData.data)[activeKey];
+    const nextActive = !active;
 
-    // 后端未存在该条目且尝试开启，先提示设置值
-    if (!backendItem && !active) {
-      Toast.show(t('myAlarm.setValueFirst'));
-      return;
+    // 开启时：界面默认值（如 10%）可能尚未写入后端，须先 ADD 再 OPEN
+    if (nextActive) {
+      const numericValue = parseWarnContentNumeric(currentItem.content);
+      if (!numericValue || !/^[0-9]+(\.[0-9]+)?$/.test(numericValue)) {
+        Toast.show(t('myAlarm.setValueFirst'));
+        return;
+      }
+      const formattedValue = formatWarnContentValue(code, numericValue);
+      const fullContent = buildFullWarnContentWithOverride(standardizedContent, code, formattedValue);
+      try {
+        const addRes = await request({
+          url: Interface.ADD_WARN,
+          method: 'POST',
+          data: { symbol, content: fullContent },
+        });
+        if (addRes?.data !== true) {
+          Toast.show(addRes?.errorMsg || t('myAlarm.enableFailed'));
+          return;
+        }
+      } catch (error) {
+        console.error('注册告警值失败:', error);
+        Toast.show(t('myAlarm.enableFailed'));
+        return;
+      }
     }
 
-    let interfaceurl = Interface.CLOSE_WARN;
-    if (!active) {
-      interfaceurl = Interface.OPEN_WARN;
-    }
-    
+    const interfaceurl = active ? Interface.CLOSE_WARN : Interface.OPEN_WARN;
+
     try {
       const { data } = await request({
         url: interfaceurl,
-        data: {
-          code,
-          symbol: Object.keys(warnData.data)[activeKey]
-        }
+        data: { code, symbol },
       });
-      
+
       if (data) {
-        // 更新后端数据中对应的 active 状态（按 code 匹配）
-        const newWarnContent = backendContent.map((warnItem) => (
-          warnItem.code === code ? { ...warnItem, active: !active } : warnItem
-        ));
-        
-        setWarnData({
-          ...warnData,
-          sideData: {
-            ...warnData.sideData,
-            warnContent: newWarnContent
-          }
-        });
-        
+        const numericValue = parseWarnContentNumeric(currentItem.content);
+        const formattedValue = formatWarnContentValue(code, numericValue);
+        const newWarnContent = [...backendContent];
+        const existingIndex = newWarnContent.findIndex((item) => item.code === code);
+        if (existingIndex >= 0) {
+          newWarnContent[existingIndex] = {
+            ...newWarnContent[existingIndex],
+            active: nextActive,
+            ...(nextActive ? { content: formattedValue } : {}),
+          };
+        } else if (nextActive) {
+          newWarnContent.push({ code, content: formattedValue, active: true });
+        }
+
+        const updatedSideData = {
+          ...warnData.sideData,
+          warnContent: newWarnContent,
+        };
+        setWarnData((prev) => ({
+          ...prev,
+          data: {
+            ...prev.data,
+            [symbol]: updatedSideData,
+          },
+          sideData: updatedSideData,
+        }));
+
         Toast.show(active ? t('myAlarm.disableSuccess') : t('myAlarm.enableSuccess'));
       } else {
         Toast.show(active ? t('myAlarm.disableFailed') : t('myAlarm.enableFailed'));
