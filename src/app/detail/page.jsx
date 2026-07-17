@@ -27,6 +27,7 @@ import { request } from '@/utils/request';
 import { Interface, LOOPTIME, WS_URL } from '@/utils/constants';
 import { formatNumber, formatPercent, jump2NoTab } from '@/utils/core';
 import { safeBack } from '@/utils/navigation';
+import { markTgAlertDeeplinkHandledBySymbol } from '@/utils/tgAlertDeeplink';
 import { MoziWebSocket } from '@/utils/moziWebSocket';
 import { useTranslation } from 'react-i18next';
 import { useAlertConfig } from '@/hooks/useAlertConfig';
@@ -89,6 +90,8 @@ export default function DetailPage() {
     if (!fromTgAlert || tgAlertHandledRef.current || !symbol) return;
     if (isPC) return;
     tgAlertHandledRef.current = true;
+    // 消费深链：避免后续整页跳转后仍因 startParam 残留被强制拉回详情
+    markTgAlertDeeplinkHandledBySymbol(symbol);
 
     setOneClickAlarmMode('config');
     setOneClickAlarmOpen(true);

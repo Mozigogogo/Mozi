@@ -3,6 +3,7 @@
  * 避免先闪营销落地页再跳 `/home`。
  *
  * 仅内联到 layout <head>，勿 import 到客户端组件。
+ * 告警深链消费标记 key 需与 src/utils/tgAlertDeeplink.js 保持一致。
  */
 export const TG_ROOT_REDIRECT_SCRIPT = `(function(){
   try {
@@ -28,7 +29,10 @@ export const TG_ROOT_REDIRECT_SCRIPT = `(function(){
 
     var target = '/home' + search + hash;
     var alertMatch = startParam && startParam.match(/^alert_([A-Za-z0-9_-]+)$/);
-    if (alertMatch) {
+    var handled = '';
+    try { handled = (window.sessionStorage && sessionStorage.getItem('tgAlertDeeplinkHandled')) || ''; } catch (e) {}
+    if (alertMatch && handled !== startParam) {
+      try { sessionStorage.setItem('tgAlertDeeplinkHandled', startParam); } catch (e) {}
       var sym = alertMatch[1].toUpperCase();
       target = '/detail?symbol=' + encodeURIComponent(sym) + '&from=tg_alert' + hash;
     }

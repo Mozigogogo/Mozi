@@ -2,10 +2,14 @@
 
 import { useEffect, useRef } from 'react';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
+import {
+  ALERT_STARTAPP_RE,
+  isTgAlertDeeplinkHandled,
+  markTgAlertDeeplinkHandled,
+} from '@/utils/tgAlertDeeplink';
 
 const TG_SCRIPT_SRC = 'https://telegram.org/js/telegram-web-app.js';
 const SYMBOL_RE = /^[A-Za-z0-9][A-Za-z0-9_-]{0,31}$/;
-const ALERT_STARTAPP_RE = /^alert_([A-Za-z0-9_-]+)$/;
 const DEBUG_PREFIX = '[Mozi/TG DetailDeepLink]';
 
 function buildTgAlertTarget(symbol) {
@@ -162,7 +166,15 @@ export default function DetailDeepLinkHandler() {
         return;
       }
 
+      // startParam 在整个 Mini App 会话内不会消失；整页跳转后 useRef 会丢，需用 sessionStorage 防重复重定向
+      if (isTgAlertDeeplinkHandled(raw)) {
+        startappHandledRef.current = true;
+        log('startapp skip: already consumed in session', raw);
+        return;
+      }
+
       startappHandledRef.current = true;
+      markTgAlertDeeplinkHandled(raw);
       const symbol = m[1].toUpperCase();
       const target = buildTgAlertTarget(symbol);
       if (typeof window !== 'undefined') {

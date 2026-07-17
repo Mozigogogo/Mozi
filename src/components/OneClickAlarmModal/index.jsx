@@ -9,6 +9,7 @@ import PopLogin from '../PopLogin';
 import { request } from '../../utils/request';
 import { getTgBotStartLink, Interface } from '../../utils/constants';
 import { isTelegramEnv, jump2NoTab } from '../../utils/core';
+import { markTgAlertDeeplinkHandledBySymbol } from '../../utils/tgAlertDeeplink';
 import { saveAlarmSettings, createAlertConfig, modifyAlertConfig } from '../../api/user';
 import {
   alertFrequencyFromApi,
@@ -833,6 +834,8 @@ export default function OneClickAlarmModal({
                   <Button
                     className={configStyles.viewButton}
                     onClick={() => {
+                      // 离开前标记深链已消费，防止 jump2NoTab 整页刷新后被 startParam 再次拉回详情
+                      markTgAlertDeeplinkHandledBySymbol(symbol);
                       onClose?.();
                       jump2NoTab('mywarn');
                     }}

@@ -2,9 +2,13 @@
 
 import { useLayoutEffect } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import {
+  ALERT_STARTAPP_RE,
+  isTgAlertDeeplinkHandled,
+  markTgAlertDeeplinkHandled,
+} from '@/utils/tgAlertDeeplink';
 
 const SYMBOL_RE = /^[A-Za-z0-9][A-Za-z0-9_-]{0,31}$/;
-const ALERT_STARTAPP_RE = /^alert_([A-Za-z0-9_-]+)$/;
 
 function isTelegramRouteEntry() {
   if (typeof window === 'undefined') return false;
@@ -84,7 +88,8 @@ function resolveTgExitTarget(searchParams) {
 
   const sp = getTgStartParam();
   const m = sp?.match(ALERT_STARTAPP_RE);
-  if (m) {
+  if (m && !isTgAlertDeeplinkHandled(sp)) {
+    markTgAlertDeeplinkHandled(sp);
     return buildTgAlertTarget(m[1].toUpperCase());
   }
 
