@@ -16,7 +16,7 @@ import KlineChart from '../../components/KlineChart';
 import OrderBook from '../../components/OrderBook';
 import OneClickAlarmModal from '@/components/OneClickAlarmModal';
 import ExchangePickerModal from '@/components/ExchangePickerModal';
-import { Loading } from '@/components/Loading';
+import { Loading, LogoLoading } from '@/components/Loading';
 import { CaretUpIcon, CaretDownIcon, BellIcon, ShareIcon } from '@/components/Icons';
 import FloatingRobot from '@/components/FloatingRobot';
 import FloatingRobotPc from '@/components/FloatingRobotPc';
@@ -28,6 +28,7 @@ import { Interface, LOOPTIME, WS_URL } from '@/utils/constants';
 import { formatNumber, formatPercent, jump2NoTab } from '@/utils/core';
 import { safeBack } from '@/utils/navigation';
 import { markTgAlertDeeplinkHandledBySymbol } from '@/utils/tgAlertDeeplink';
+import { notifyRouteBootReady, ROUTE_BOOT_LOGO } from '@/utils/routeBootLoading';
 import { MoziWebSocket } from '@/utils/moziWebSocket';
 import { useTranslation } from 'react-i18next';
 import { useAlertConfig } from '@/hooks/useAlertConfig';
@@ -671,6 +672,12 @@ export default function DetailPage() {
       console.error('获取币种信息失败:', error);
     } finally {
       setLoading(false);
+      setIsInitialLoad(false);
+      if (initialLoadTimeoutRef.current) {
+        clearTimeout(initialLoadTimeoutRef.current);
+        initialLoadTimeoutRef.current = null;
+      }
+      notifyRouteBootReady();
     }
   };
 
@@ -1362,11 +1369,14 @@ ${coinInfo.name || symbol} (${symbol})
   // 初始加载
   useEffect(() => {
     if (!symbol) {
+      setLoading(false);
+      setIsInitialLoad(false);
+      notifyRouteBootReady();
       Toast.show({
         content: '币种信息不存在',
         position: 'bottom',
       });
-      return;
+      return undefined;
     }
     
     // 设置首次加载超时（1分钟）
@@ -2430,9 +2440,24 @@ ${coinInfo.name || symbol} (${symbol})
     [isFavorite, coinInfo?.isSelfSelected, fromFavorite]
   );
 
+  const showBootLoading = Boolean(symbol) && loading && !coinInfo;
+
+  useEffect(() => {
+    if (coinInfo || (!loading && symbol)) {
+      notifyRouteBootReady();
+    }
+  }, [coinInfo, loading, symbol]);
+
   if (isPC) {
     return (
       <>
+      <LogoLoading
+        visible={showBootLoading}
+        fullscreen
+        mask
+        image={ROUTE_BOOT_LOGO}
+        size={72}
+      />
       <div ref={pcContentLayoutRef} className={styles.pcContentLayout}>
           <aside className={styles.pcContentColLeft}>
             <PCCoinDetail
@@ -2668,6 +2693,13 @@ ${coinInfo.name || symbol} (${symbol})
 
   return (
     <>
+      <LogoLoading
+        visible={showBootLoading}
+        fullscreen
+        mask
+        image={ROUTE_BOOT_LOGO}
+        size={72}
+      />
       <NavBar
         title={coinInfo?.name || symbol || t('detail.title')}
         showBack={true}

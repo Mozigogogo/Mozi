@@ -281,3 +281,85 @@ export function readStoredAlertConfig() {
     return null;
   }
 }
+
+const ALERT_CONFIG_LOG_PREFIX = '[Mozi/AlertConfig]';
+
+function maskAlertSensitive(value) {
+  if (value == null || value === '') return value;
+  const text = String(value);
+  if (text.length <= 4) return '****';
+  return `${'*'.repeat(Math.min(text.length - 4, 6))}${text.slice(-4)}`;
+}
+
+/** 日志中脱敏配置字段 */
+export function maskAlertConfigForLog(config) {
+  if (!config || typeof config !== 'object') return config;
+  const next = { ...config };
+  if (next.alertPhone != null) next.alertPhone = maskAlertSensitive(next.alertPhone);
+  if (next.alertEmail != null) next.alertEmail = maskAlertSensitive(next.alertEmail);
+  if (next.chatId != null) next.chatId = maskAlertSensitive(next.chatId);
+  if (next.openId != null) next.openId = maskAlertSensitive(next.openId);
+  return next;
+}
+
+/** 当前登录用户（用于排查换号更新配置） */
+export function getAlertConfigActor() {
+  if (typeof window === 'undefined') {
+    return { userId: null, nickName: null, email: null, wallet: null };
+  }
+
+  const userId = localStorage.getItem('userId');
+  let nickName = null;
+  let email = null;
+  let wallet = null;
+
+  try {
+    const raw = localStorage.getItem('userInfo');
+    if (raw) {
+      const info = JSON.parse(raw);
+      nickName = info?.nickName || info?.nickname || info?.userName || info?.username || null;
+      email = info?.email || null;
+      wallet = info?.walletAddress || info?.address || null;
+    }
+  } catch {
+    /* ignore */
+  }
+
+  return {
+    userId: userId ? String(userId) : null,
+    nickName: nickName ? String(nickName) : null,
+    email: email ? maskAlertSensitive(email) : null,
+    wallet: wallet ? maskAlertSensitive(wallet) : null,
+  };
+}
+
+/**
+ * 告警配置读写日志：对比 clientUserId 与 configUserId，便于排查换号更新
+ */
+export function logAlertConfigAction(action, extra = {}) {
+  const actor = getAlertConfigActor();
+  const entry = {
+    action,
+    at: new Date().toISOString(),
+    path: typeof window !== 'undefined' ? `${window.location.pathname}${window.location.search}` : '',
+    clientUserId: actor.userId,
+    nickName: actor.nickName,
+    wallet: actor.wallet,
+    ...extra,
+  };
+
+  const configUserId = extra.configUserId != null ? String(extra.configUserId) : null;
+  const clientUserId = actor.userId ? String(actor.userId) : null;
+  const mismatch = Boolean(configUserId && clientUserId && configUserId !== clientUserId);
+
+  if (mismatch) {
+    console.warn(`${ALERT_CONFIG_LOG_PREFIX} account mismatch`, {
+      ...entry,
+      accountMismatch: true,
+      message: '配置所属用户与当前登录用户不一致，疑似换号操作',
+    });
+    return;
+  }
+
+  console.info(`${ALERT_CONFIG_LOG_PREFIX}`, entry);
+}

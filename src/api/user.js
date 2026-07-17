@@ -5,6 +5,8 @@ import { request } from '../utils/request';
 import { Interface } from '../utils/constants';
 import {
   buildFullAlertConfigPayload,
+  logAlertConfigAction,
+  maskAlertConfigForLog,
   readStoredAlertConfig,
   validateWebhookUrls,
 } from '../utils/alertConfig';
@@ -515,9 +517,18 @@ export const completeTask = (taskCode) => {
  * // tgEnabled/wechatEnabled(0|1)、chatId/openId、defaultEnabled 等
  */
 export const getAlertConfig = () => {
+  logAlertConfigAction('fetch_start');
   return request({
     url: Interface.GET_ALERT_CONFIG,
     method: 'GET',
+  }).then((res) => {
+    logAlertConfigAction('fetch_done', {
+      code: res?.code,
+      hasConfig: Boolean(res?.data),
+      configUserId: res?.data?.userId ?? null,
+      configId: res?.data?.id ?? null,
+    });
+    return res;
   });
 };
 
@@ -590,12 +601,25 @@ export const createAlertConfig = async (config) => {
       return normalized;
     }
 
+    logAlertConfigAction('create_start', {
+      payload: maskAlertConfigForLog(normalized.payload),
+    });
+
     const res = await addAlertConfig(normalized.payload);
 
     if (res?.code === 0 && res?.data) {
+      logAlertConfigAction('create_success', {
+        configUserId: res.data?.userId ?? null,
+        configId: res.data?.id ?? null,
+        payload: maskAlertConfigForLog(res.data),
+      });
       console.log('✅ 新增告警配置成功:', res.data);
       return { success: true, data: res.data };
     }
+    logAlertConfigAction('create_failed', {
+      error: res?.errorMsg || '未知错误',
+      code: res?.code,
+    });
     console.warn('⚠️ 新增告警配置失败:', res?.errorMsg || '未知错误');
     return { success: false, error: res?.errorMsg || '新增失败' };
   } catch (error) {
@@ -628,12 +652,28 @@ export const modifyAlertConfig = async (config) => {
       return normalized;
     }
 
+    const existingConfig = readStoredAlertConfig();
+    logAlertConfigAction('update_start', {
+      payload: maskAlertConfigForLog(normalized.payload),
+      storedConfigUserId: existingConfig?.userId ?? null,
+      storedConfigId: existingConfig?.id ?? null,
+    });
+
     const res = await updateAlertConfig(normalized.payload);
 
     if (res?.code === 0 && res?.data) {
+      logAlertConfigAction('update_success', {
+        configUserId: res.data?.userId ?? null,
+        configId: res.data?.id ?? null,
+        payload: maskAlertConfigForLog(res.data),
+      });
       console.log('✅ 修改告警配置成功:', res.data);
       return { success: true, data: res.data };
     }
+    logAlertConfigAction('update_failed', {
+      error: res?.errorMsg || '未知错误',
+      code: res?.code,
+    });
     console.warn('⚠️ 修改告警配置失败:', res?.errorMsg || '未知错误');
     return { success: false, error: res?.errorMsg || '修改失败' };
   } catch (error) {

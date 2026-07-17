@@ -6,6 +6,7 @@ import { Input, Switch, Toast } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import { addAlarm, completeAlarmTask, getAlarmInfoByUserId, getCoinInfo } from '@/api/alarm';
 import { createAlertConfig, modifyAlertConfig } from '@/api/user';
+import { useAlertConfig } from '@/hooks/useAlertConfig';
 import {
   alertFrequencyFromApi,
   alertFrequencyToApi,
@@ -79,6 +80,20 @@ function PCAlarmContent() {
   const [sideSubmitting, setSideSubmitting] = useState(false);
   const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
   const countryDropdownRef = useRef(null);
+  const { fetchConfig: fetchAlertConfig, restoreFromLocalStorage } = useAlertConfig({ autoFetch: false });
+
+  const applyAlertConfigToSidePanel = useCallback((cfg) => {
+    if (!cfg || typeof cfg !== 'object') return;
+    if (cfg.alertPhoneCountryCode) setCountryCode(String(cfg.alertPhoneCountryCode));
+    if (cfg.alertPhone) setPhone(String(cfg.alertPhone));
+    if (cfg.alertEmail) setEmail(String(cfg.alertEmail));
+    if (cfg.phoneEnabled !== undefined) setPhoneEnabled(Number(cfg.phoneEnabled) === 1);
+    if (cfg.emailEnabled !== undefined) setEmailEnabled(Number(cfg.emailEnabled) === 1);
+    if (cfg.smsEnabled !== undefined) setSmsEnabled(Number(cfg.smsEnabled) === 1);
+    if (cfg.webhookEnabled !== undefined) setWebhookEnabled(isAlertFlagOn(cfg.webhookEnabled));
+    setWebhookUrls(parseWebhookUrlsFromConfig(cfg));
+    setAlertFrequency(alertFrequencyFromApi(cfg.alertFrequency));
+  }, []);
 
   const [historyState, setHistoryState] = useState({
     loading: false,
@@ -715,24 +730,23 @@ function PCAlarmContent() {
   };
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      const stored = localStorage.getItem('alertConfig');
-      if (!stored || stored === 'null') return;
-      const cfg = JSON.parse(stored);
-      if (cfg?.alertPhoneCountryCode) setCountryCode(cfg.alertPhoneCountryCode);
-      if (cfg?.alertPhone) setPhone(String(cfg.alertPhone));
-      if (cfg?.alertEmail) setEmail(String(cfg.alertEmail));
-      if (cfg?.phoneEnabled !== undefined) setPhoneEnabled(Number(cfg.phoneEnabled) === 1);
-      if (cfg?.emailEnabled !== undefined) setEmailEnabled(Number(cfg.emailEnabled) === 1);
-      if (cfg?.smsEnabled !== undefined) setSmsEnabled(Number(cfg.smsEnabled) === 1);
-      if (cfg?.webhookEnabled !== undefined) setWebhookEnabled(isAlertFlagOn(cfg.webhookEnabled));
-      setWebhookUrls(parseWebhookUrlsFromConfig(cfg));
-      setAlertFrequency(alertFrequencyFromApi(cfg.alertFrequency));
-    } catch (e) {
-      // ignore invalid local data
-    }
-  }, []);
+    // 先用 localStorage 快速回填，再从接口拉取最新配置（与移动端一致）
+    const restored = restoreFromLocalStorage();
+    if (restored) applyAlertConfigToSidePanel(restored);
+
+    const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+    if (!userId) return undefined;
+
+    let cancelled = false;
+    (async () => {
+      const cfg = await fetchAlertConfig();
+      if (!cancelled && cfg) applyAlertConfigToSidePanel(cfg);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [applyAlertConfigToSidePanel, fetchAlertConfig, restoreFromLocalStorage]);
 
   const updateWebhookUrl = (index, value) => {
     setWebhookUrls((prev) => prev.map((u, i) => (i === index ? value : u)));

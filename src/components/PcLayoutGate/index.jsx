@@ -3,10 +3,14 @@
 import { useSyncExternalStore } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
+import { LogoLoading } from '@/components/Loading';
+import { ROUTE_BOOT_LOGO } from '@/utils/routeBootLoading';
 import { shouldUsePcLayout } from '@/utils/pcLayoutRoutes';
 
 const PCLayout = dynamic(() => import('@/components/PCLayout'), {
-  loading: () => null,
+  loading: () => (
+    <LogoLoading visible fullscreen mask image={ROUTE_BOOT_LOGO} size={72} />
+  ),
 });
 
 const PC_MEDIA_QUERY = '(min-width: 1024px)';
