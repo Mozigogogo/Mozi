@@ -90,9 +90,11 @@ function PCAlarmContent() {
   const historyFlushTimerRef = useRef(null);
   const historyActiveSymbolRef = useRef(null);
   const historySavingRef = useRef(false);
+  const historyDataRef = useRef({});
 
   historyActiveSymbolRef.current = historyState.activeSymbol;
   historySavingRef.current = historySaving;
+  historyDataRef.current = historyState.data;
 
   const isPriceDown = useMemo(() => {
     if (coinData.change == null || coinData.change === '--') return false;
@@ -322,6 +324,7 @@ function PCAlarmContent() {
         }
       });
       next[sym] = { ...item, warnContent: newWarnContent };
+      historyDataRef.current = next;
       return { ...prev, data: next };
     });
   }, []);
@@ -436,20 +439,45 @@ function PCAlarmContent() {
   }, [activeTab, flushHistoryChanges]);
 
   const toggleHistoryWarn = async (row) => {
-    const sym = historyState.activeSymbol;
+    const sym = historyActiveSymbolRef.current || historyState.activeSymbol;
     if (!sym) return;
 
-    await flushHistoryChanges();
+    const flushed = await flushHistoryChanges();
+    if (flushed === false) return;
 
-    const item = historyState.data?.[sym];
-    const backend = Array.isArray(item?.warnContent) ? item.warnContent : [];
-    const backendItem = backend.find((w) => w?.code === row.code);
     const baselineVal = String(historyBaselineRef.current[sym]?.[row.code] ?? '').trim();
-    if (!backendItem && !row.active) {
-      const inputVal = String(historyInputsRef.current[row.code] ?? historyInputs[row.code] ?? '').trim();
-      const effectiveVal = inputVal || baselineVal;
+    const inputVal = String(historyInputsRef.current[row.code] ?? '').trim();
+    const effectiveVal = inputVal || baselineVal;
+    const nextActive = !row.active;
+
+    const latestBackend = Array.isArray(historyDataRef.current?.[sym]?.warnContent)
+      ? historyDataRef.current[sym].warnContent
+      : [];
+    const hasBackendItem = latestBackend.some((w) => w?.code === row.code);
+
+    if (!row.active && !hasBackendItem) {
       if (!effectiveVal || !/^[0-9]+(\.[0-9]+)?$/.test(effectiveVal)) {
         Toast.show({ content: t('myAlarm.setValueFirst', { defaultValue: '请先设置告警值' }) });
+        return;
+      }
+      const formattedValue = HISTORY_PRICE_CODES.includes(row.code) ? effectiveVal : `${effectiveVal}%`;
+      try {
+        const addRes = await request({
+          url: Interface.ADD_WARN,
+          method: 'POST',
+          data: { symbol: sym, content: { [row.code]: formattedValue } },
+        });
+        if (addRes?.data !== true) {
+          Toast.show({ content: addRes?.errorMsg || t('myAlarm.enableFailed', { defaultValue: '开启失败' }) });
+          return;
+        }
+        applyHistoryContentPatch(sym, { [row.code]: formattedValue });
+        historyBaselineRef.current[sym] = {
+          ...(historyBaselineRef.current[sym] || {}),
+          [row.code]: effectiveVal,
+        };
+      } catch (e) {
+        Toast.show({ content: t('myAlarm.enableFailed', { defaultValue: '开启失败' }) });
         return;
       }
     }
@@ -462,22 +490,49 @@ function PCAlarmContent() {
       });
       const ok = Boolean(res?.data);
       if (!ok) {
-        Toast.show({ content: row.active ? t('myAlarm.disableFailed', { defaultValue: '关闭失败' }) : t('myAlarm.enableFailed', { defaultValue: '开启失败' }) });
+        Toast.show({
+          content: row.active
+            ? t('myAlarm.disableFailed', { defaultValue: '关闭失败' })
+            : t('myAlarm.enableFailed', { defaultValue: '开启失败' }),
+        });
         return;
       }
+      // upsert：warnContent 无该 code 时仅 map 不会改 active，开关会一直关着
       setHistoryState((prev) => {
         const next = { ...prev.data };
         const item = next[sym];
-        const backend = Array.isArray(item?.warnContent) ? item.warnContent : [];
-        next[sym] = {
-          ...item,
-          warnContent: backend.map((w) => (w?.code === row.code ? { ...w, active: !row.active } : w)),
-        };
+        if (!item) return prev;
+        const backend = Array.isArray(item?.warnContent) ? [...item.warnContent] : [];
+        const idx = backend.findIndex((w) => w?.code === row.code);
+        if (idx >= 0) {
+          backend[idx] = { ...backend[idx], active: nextActive };
+        } else {
+          const formattedValue = HISTORY_PRICE_CODES.includes(row.code)
+            ? effectiveVal
+            : effectiveVal
+              ? `${effectiveVal}%`
+              : row.content;
+          backend.push({
+            code: row.code,
+            content: formattedValue || row.content,
+            active: nextActive,
+          });
+        }
+        next[sym] = { ...item, warnContent: backend };
+        historyDataRef.current = next;
         return { ...prev, data: next };
       });
-      Toast.show({ content: row.active ? t('myAlarm.disableSuccess', { defaultValue: '已关闭' }) : t('myAlarm.enableSuccess', { defaultValue: '已开启' }) });
+      Toast.show({
+        content: row.active
+          ? t('myAlarm.disableSuccess', { defaultValue: '已关闭' })
+          : t('myAlarm.enableSuccess', { defaultValue: '已开启' }),
+      });
     } catch (e) {
-      Toast.show({ content: row.active ? t('myAlarm.disableFailed', { defaultValue: '关闭失败' }) : t('myAlarm.enableFailed', { defaultValue: '开启失败' }) });
+      Toast.show({
+        content: row.active
+          ? t('myAlarm.disableFailed', { defaultValue: '关闭失败' })
+          : t('myAlarm.enableFailed', { defaultValue: '开启失败' }),
+      });
     }
   };
 
