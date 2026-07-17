@@ -734,7 +734,7 @@ function PCAlarmContent() {
         if (typeof window !== 'undefined') {
           localStorage.setItem('alertConfig', JSON.stringify(result.data));
         }
-        Toast.show({ content: t('oneClickAlarm.enabled') || '已开启告警' });
+        Toast.show({ content: t('oneClickAlarm.enableSuccess') });
       } else {
         Toast.show({ content: result?.error || t('oneClickAlarm.enableFailed') });
       }
