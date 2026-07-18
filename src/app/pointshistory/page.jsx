@@ -11,7 +11,6 @@ import { safeBack } from '@/utils/navigation';
 import styles from './page.module.less';
 import { SkeletonElement } from '@/components/Skeleton';
 import PCPagination from '@/components/PCPagination';
-import PCLayout from '@/components/PCLayout';
 
 export default function PointsHistoryPage() {
   const router = useRouter();
@@ -322,9 +321,6 @@ export default function PointsHistoryPage() {
       </div>
   );
 
-  if (isPC) {
-    return <PCLayout>{content}</PCLayout>;
-  }
   return content;
 }
 

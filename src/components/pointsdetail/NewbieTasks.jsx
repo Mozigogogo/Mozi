@@ -43,13 +43,9 @@ const NewbieTasks = ({ tasksList, handleTaskClick, loading, verifyingTaskId }) =
                 />
               </div>
               <div className={styles.taskInfo}>
-                <div className={styles.taskName}>
-                  {t(task.titleKey) || task.title}
-                </div>
-                <div className={styles.taskMetaRow}>
-                  <div className={styles.dailyTaskReward}>
-                    <span>+{task.points}</span>
-                    <DeferredImg src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/new_coin.svg" className={styles.rewardIcon} alt="point" width={14} height={14} />
+                <div className={styles.taskTitleRow}>
+                  <div className={styles.taskName}>
+                    {t(task.titleKey) || task.title}
                   </div>
                   {(task.taskCode === 'PUSH' || task.taskCode === 'FIRST_POST') && (
                     <div className={styles.taskSubText}>{t('pointsDetail.tasks.push.note') || 'more than 50'}</div>
@@ -57,6 +53,12 @@ const NewbieTasks = ({ tasksList, handleTaskClick, loading, verifyingTaskId }) =
                   {(task.taskCode === 'ADD' || task.taskCode === 'ADD_WATCHLIST') && (
                     <div className={styles.taskSubText}>{t('pointsDetail.tasks.add.note') || 'more than 3'}</div>
                   )}
+                </div>
+                <div className={styles.taskMetaRow}>
+                  <div className={styles.dailyTaskReward}>
+                    <span>+{task.points}</span>
+                    <DeferredImg src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/new_coin.svg" className={styles.rewardIcon} alt="point" width={14} height={14} />
+                  </div>
                 </div>
               </div>
               <div className={styles.taskRewardPill}>

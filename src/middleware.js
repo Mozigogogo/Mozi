@@ -14,15 +14,23 @@ function shouldSkipProdCacheHeaders(pathname) {
   return /\.(ico|png|jpe?g|gif|webp|svg|woff2?|ttf|eot)$/i.test(pathname);
 }
 
+function isTelegramRequest(request) {
+  const userAgent = request.headers.get('user-agent') || '';
+  if (/Telegram/i.test(userAgent)) return true;
+
+  const referer = request.headers.get('referer') || '';
+  if (/telegram\.org|t\.me/i.test(referer)) return true;
+
+  return false;
+}
+
 export function middleware(request) {
   const pathname = request.nextUrl.pathname;
-  const userAgent = request.headers.get('user-agent') || '';
-  const isTelegramUA = /Telegram/i.test(userAgent);
 
-  if (pathname === '/' && isTelegramUA) {
+  if (pathname === '/' && isTelegramRequest(request)) {
     const url = request.nextUrl.clone();
     url.pathname = '/home';
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(url, 307);
   }
 
   const response = NextResponse.next();

@@ -1,6 +1,7 @@
 import {
   WS_URL as CONFIG_WS_URL,
   BIGORDER_CHAT_API as CONFIG_BIGORDER_CHAT_API,
+  SIGNALS_CHAT_API as CONFIG_SIGNALS_CHAT_API,
 } from '../../config/index.js';
 
 // 通用兜底提示语
@@ -16,11 +17,43 @@ export const getTgInviteLink = (inviteCode) => {
   return `https://t.me/${TG_BOT_USERNAME}?start=${inviteCode}`;
 };
 
+/**
+ * Bot 私聊深链：打开与 Bot 的对话并自动触发 /start[ payload]
+ * 需在 Telegram 内通过 openTelegramLink 打开更可靠
+ */
+export const getTgBotStartLink = (payload = '') => {
+  const p = String(payload || '').trim();
+  if (p) return `https://t.me/${TG_BOT_USERNAME}?start=${encodeURIComponent(p)}`;
+  return `https://t.me/${TG_BOT_USERNAME}?start=`;
+};
+
+/** 打开 Bot 关联的 Telegram Mini App（PC 浏览器会拉起 Telegram 客户端） */
+export const getTgMiniAppLink = (startParam = '') => {
+  const base = `https://t.me/${TG_BOT_USERNAME}`;
+  const param = String(startParam || '').trim();
+  if (!param) return `${base}?startapp`;
+  return `${base}?startapp=${encodeURIComponent(param)}`;
+};
+
+/** 告警场景：startapp=alert_BTC，Mini App 内可落到对应币种详情 */
+export const getTgAlertMiniAppLink = (symbol) => {
+  const sym = String(symbol || '')
+    .trim()
+    .toUpperCase();
+  if (sym && /^[A-Z0-9]+$/.test(sym)) {
+    return getTgMiniAppLink(`alert_${sym}`);
+  }
+  return getTgMiniAppLink();
+};
+
 // 接口基础URL - 使用代理路径避免跨域
 export const INTERFACE_URL = '/api';
 
 /** 大单侦测：浏览器直连 Python 后端（需后端 CORS + Redis） */
 export const BIGORDER_CHAT_API = CONFIG_BIGORDER_CHAT_API;
+
+/** 信号卡 Chat：SSE 流式对话 */
+export const SIGNALS_CHAT_API = CONFIG_SIGNALS_CHAT_API;
 
 /**
  * 获取适配当前页面协议的 WebSocket URL
@@ -325,6 +358,9 @@ export const Interface = {
   
   // 财经日历
   GET_FINANCE_CALENDAR: '/easy/getFinanceCalendar',
+
+  // 最新全市场信号扫描缓存
+  GET_LATEST_SCAN_CACHE: '/easy/getLatestScanCache',
   
   // 榜单分享次数
   GET_SHARE_COUNT: '/discovery/getShareCount',
@@ -376,6 +412,11 @@ export const Interface = {
   AI_ANALYZE: '/v1/analyze',
   // AI 流式对话
   AI_CHAT_STREAM: '/ai/chat/stream',
+  // Agent SSE 流式对话
+  AI_AGENT_STREAM: '/ai/agent/stream',
+  // Agent 会话列表
+  AI_AGENT_CONVERSATIONS: '/ai/agent/conversations',
+  // Agent 会话消息：GET /ai/agent/conversations/{conversationId}/messages
   // AI 聊天历史记录
   AI_CHAT_HISTORY: '/ai/chat/history',
   // AI 会话列表
@@ -386,6 +427,21 @@ export const Interface = {
   POINTS_CONSUME_CONFIG: '/points/consume/config',
   // 执行积分消费
   POINTS_CONSUME: '/points/consume',
+
+  // 分佣提现
+  COMMISSION_WITHDRAW: '/commission/withdraw',
+  COMMISSION_WITHDRAWALS: '/commission/withdrawals',
+
+  // 后台管理
+  ADMIN_LOGIN: '/admin/auth/login',
+  ADMIN_OVERVIEW: '/admin/overview',
+  ADMIN_COMMISSION_LEVELS: '/admin/commission/levels',
+  ADMIN_USERS: '/admin/users',
+  ADMIN_USER_COMMISSION_LEVEL: '/admin/users/commission-level',
+  ADMIN_COMMISSION_WITHDRAWALS: '/admin/commission/withdrawals',
+  ADMIN_TG_GROUPS: '/admin/tg/groups',
+  ADMIN_TG_GROUP_COOPERATION_STATUS: '/admin/tg/groups/cooperation-status',
+  ADMIN_TG_GROUP_COMMAND_USAGES: '/admin/tg/groups/command/usages',
 };
 
 // 业务中使用到的联系邮箱和链上地址（打包报错缺失导出）

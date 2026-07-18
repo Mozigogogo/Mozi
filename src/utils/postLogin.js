@@ -2,6 +2,7 @@ import { syncAlertConfigFromDatainfo } from './alertConfig';
 import { request } from './request';
 import { Interface } from './constants';
 import { completeTask } from '@/api/user';
+import { notifySessionChanged } from './sessionEvents';
 
 const STORAGE_KEYS = {
   // 防止 StrictMode 双挂载、以及多个入口同时触发
@@ -193,6 +194,8 @@ export async function runPostLoginSideEffects(options = {}) {
 
   const token = localStorage.getItem('token');
   if (!token) return;
+
+  notifySessionChanged();
 
   if (!options?.force) {
     // 如果同一会话已经执行过，直接返回

@@ -39,7 +39,7 @@ export default function NewCoinRankPage() {
             {item.symbol}
           </div>
         ),
-        col2: item.last || '-',  // 使用last字段作为最新价格
+        col2: item.last || '-',  // 使用last字段作为最新价格  HighlightArea
         img: item.url,
         key: item.symbol
       }));

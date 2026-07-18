@@ -6,6 +6,13 @@ import Markdown from 'markdown-to-jsx';
 import { useRobotTestSSE } from '@/hooks/useRobotTestSSE';
 import styles from './index.module.less';
 
+function createAgentRequestId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `req_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
 function StreamingMarkdown({ content, isStreaming }) {
   if (!content) return null;
 
@@ -49,16 +56,9 @@ export default function AiChatModalPc({
   const currentAiMsgIdRef = useRef(null);
 
   const { sendMessage: sendStreamMessage, isStreaming, abort } = useRobotTestSSE(
-    '/api/robot_proxy/api/v1/analyze/stream',
+    '/api/ai/agent/stream',
     {
-      headers: () => {
-        const lang = typeof window !== 'undefined'
-          ? (localStorage.getItem('i18nextLng') || 'zh')
-          : 'zh';
-        return {
-          language: lang,
-        };
-      },
+      includeLanguage: false,
       getToken: () => (typeof window !== 'undefined' ? localStorage.getItem('token') : null),
       onChunk: (_chunk, accumulated) => {
         if (!currentAiMsgIdRef.current) return;
@@ -130,15 +130,10 @@ export default function AiChatModalPc({
     currentAiMsgIdRef.current = aiMsgId;
     setMessages((prev) => [...prev, { id: aiMsgId, role: 'assistant', text: '', loading: true }]);
 
-    const lang = typeof window !== 'undefined'
-      ? (localStorage.getItem('i18nextLng') || 'zh')
-      : 'zh';
-    const normalizedSymbol = String(symbol || 'BTC').toUpperCase();
-
     await sendStreamMessage({
-      symbol: normalizedSymbol,
-      question: text,
-      lang,
+      request_id: createAgentRequestId(),
+      type: 'analyze',
+      message: text,
     });
   };
 

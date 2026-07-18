@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { markRouteBootLoading } from '@/utils/routeBootLoading';
 
 export default function AppLink({ href, className, children, onClick, style, ...props }) {
   const router = useRouter();
@@ -8,6 +9,15 @@ export default function AppLink({ href, className, children, onClick, style, ...
   const handleClick = (event) => {
     onClick?.(event);
     if (event.defaultPrevented || !href) return;
+
+    if (typeof window !== 'undefined') {
+      const nextPath = String(href).split('?')[0];
+      const currentPath = window.location.pathname;
+      if (nextPath.startsWith('/') && nextPath !== currentPath) {
+        markRouteBootLoading(nextPath);
+      }
+    }
+
     router.push(href);
   };
 

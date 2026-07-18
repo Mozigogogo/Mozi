@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Tabs, Toast, Button, TabBar } from 'antd-mobile';
 import { motion, AnimatePresence } from 'framer-motion';
-import PCLayout from '@/components/PCLayout';
 import PCCoinDetail from '@/components/PCCoinDetail';
 import PCRightTopMarquee from '@/components/PCRightTopMarquee';
 import Layout from '../../components/Layout';
@@ -17,7 +16,7 @@ import KlineChart from '../../components/KlineChart';
 import OrderBook from '../../components/OrderBook';
 import OneClickAlarmModal from '@/components/OneClickAlarmModal';
 import ExchangePickerModal from '@/components/ExchangePickerModal';
-import { Loading } from '@/components/Loading';
+import { Loading, LogoLoading } from '@/components/Loading';
 import { CaretUpIcon, CaretDownIcon, BellIcon, ShareIcon } from '@/components/Icons';
 import FloatingRobot from '@/components/FloatingRobot';
 import FloatingRobotPc from '@/components/FloatingRobotPc';
@@ -28,6 +27,8 @@ import { request } from '@/utils/request';
 import { Interface, LOOPTIME, WS_URL } from '@/utils/constants';
 import { formatNumber, formatPercent, jump2NoTab } from '@/utils/core';
 import { safeBack } from '@/utils/navigation';
+import { markTgAlertDeeplinkHandledBySymbol } from '@/utils/tgAlertDeeplink';
+import { notifyRouteBootReady, ROUTE_BOOT_LOGO } from '@/utils/routeBootLoading';
 import { MoziWebSocket } from '@/utils/moziWebSocket';
 import { useTranslation } from 'react-i18next';
 import { useAlertConfig } from '@/hooks/useAlertConfig';
@@ -44,11 +45,31 @@ import {
 } from '../../utils/websocketProtocol';
 import styles from './page.module.less';
 
+function normalizeWatchlistSymbols(data) {
+  const list = Array.isArray(data) ? data : Array.isArray(data?.list) ? data.list : [];
+  return list
+    .map((item) => String(item?.symbol || item?.coin || item?.base || '').toUpperCase())
+    .filter(Boolean);
+}
+
+async function checkIsInWatchlist(coinSymbol) {
+  try {
+    const res = await request({ url: Interface.COIN_SELF });
+    if (res?.data?.isLogin === false) return false;
+    return normalizeWatchlistSymbols(res?.data).includes(
+      String(coinSymbol || '').toUpperCase()
+    );
+  } catch {
+    return false;
+  }
+}
+
 export default function DetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const symbol = searchParams.get('symbol') || '';
   const fromFavorite = searchParams.get('fromFavorite') === '1'; // 是否从自选榜进入
+  const fromTgAlert = searchParams.get('from') === 'tg_alert';
   const { t } = useTranslation();
   // 高度调试：在 URL 加 ?debugHeight=1 时启用，避免污染日志
   const debugHeight = searchParams.get('debugHeight') === '1';
@@ -64,6 +85,24 @@ export default function DetailPage() {
     window.addEventListener('resize', checkDevice);
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
+
+  // TG Mini App 深链：带币种进入详情后自动弹出告警配置弹窗（仅移动端）
+  useEffect(() => {
+    if (!fromTgAlert || tgAlertHandledRef.current || !symbol) return;
+    if (isPC) return;
+    tgAlertHandledRef.current = true;
+    // 消费深链：避免后续整页跳转后仍因 startParam 残留被强制拉回详情
+    markTgAlertDeeplinkHandledBySymbol(symbol);
+
+    setOneClickAlarmMode('config');
+    setOneClickAlarmOpen(true);
+
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('from');
+      window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+    }
+  }, [fromTgAlert, symbol, isPC]);
 
   const renderMarketExchangeTitle = useCallback(
     (item) => {
@@ -120,13 +159,14 @@ export default function DetailPage() {
   const [activeTab, setActiveTab] = useState('chart');
   const [activeKlineTab, setActiveKlineTab] = useState('hour');
   const [chartType, setChartType] = useState('line'); // 图表类型：line | kline
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(fromFavorite);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [infoExpanded, setInfoExpanded] = useState(false);
   const [coinInfoLeft, setCoinInfoLeft] = useState([]);
   const [coinInfoRight, setCoinInfoRight] = useState([]);
   const [oneClickAlarmOpen, setOneClickAlarmOpen] = useState(false);
   const [oneClickAlarmMode, setOneClickAlarmMode] = useState('oneClick');
+  const tgAlertHandledRef = useRef(false);
   const [exchangePickerOpen, setExchangePickerOpen] = useState(false);
   const [rightHotTicker, setRightHotTicker] = useState([]);
   const [rightHotTickerLoading, setRightHotTickerLoading] = useState(true);
@@ -591,8 +631,17 @@ export default function DetailPage() {
       
       if (response?.data) {
         const coinData = response.data;
-        setCoinInfo(coinData);
-        setIsFavorite(coinData.isFavorite || false);
+        let favorite = Boolean(
+          coinData.isSelfSelected ?? coinData.isFavorite ?? coinData.favorite ?? fromFavorite
+        );
+        if (!favorite && symbol) {
+          favorite = await checkIsInWatchlist(symbol);
+        }
+        setIsFavorite(favorite);
+        setCoinInfo({
+          ...coinData,
+          isSelfSelected: coinData.isSelfSelected ?? favorite,
+        });
         
         // 设置详细信息
         const headerInfoLeft = [
@@ -623,6 +672,12 @@ export default function DetailPage() {
       console.error('获取币种信息失败:', error);
     } finally {
       setLoading(false);
+      setIsInitialLoad(false);
+      if (initialLoadTimeoutRef.current) {
+        clearTimeout(initialLoadTimeoutRef.current);
+        initialLoadTimeoutRef.current = null;
+      }
+      notifyRouteBootReady();
     }
   };
 
@@ -1112,18 +1167,19 @@ export default function DetailPage() {
   // 添加/移除自选
   const toggleFavorite = async () => {
     if (favoriteLoading) return;
-    
+
+    const curFavorite = Boolean(isFavorite || coinInfo?.isSelfSelected || fromFavorite);
+
     setFavoriteLoading(true);
     try {
       const response = await request({
-        url: isFavorite ? Interface.CANCEL_OWN : Interface.ADD_OWN,
+        url: curFavorite ? Interface.CANCEL_OWN : Interface.ADD_OWN,
         method: 'GET',
         data: { coin: symbol }
       });
       
       if (response?.code === 0) {
-        // 如果是添加操作（当前不是 isFavorite），则上报任务
-        if (!isFavorite) {
+        if (!curFavorite) {
           try {
             await completeTask('ADD_WATCHLIST');
           } catch (e) {
@@ -1131,11 +1187,11 @@ export default function DetailPage() {
           }
         }
 
-        const next = !isFavorite;
+        const next = !curFavorite;
         setIsFavorite(next);
         setCoinInfo((prev) => (prev ? { ...prev, isSelfSelected: next } : prev));
         Toast.show({
-          content: isFavorite ? '已移除自选' : '已添加自选',
+          content: curFavorite ? '已移除自选' : '已添加自选',
           position: 'bottom',
         });
       }
@@ -1297,14 +1353,30 @@ ${coinInfo.name || symbol} (${symbol})
     }
   };
 
+  useEffect(() => {
+    setIsFavorite(fromFavorite);
+    if (!symbol || fromFavorite) return undefined;
+
+    let alive = true;
+    checkIsInWatchlist(symbol).then((inList) => {
+      if (alive && inList) setIsFavorite(true);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [symbol, fromFavorite]);
+
   // 初始加载
   useEffect(() => {
     if (!symbol) {
+      setLoading(false);
+      setIsInitialLoad(false);
+      notifyRouteBootReady();
       Toast.show({
         content: '币种信息不存在',
         position: 'bottom',
       });
-      return;
+      return undefined;
     }
     
     // 设置首次加载超时（1分钟）
@@ -1684,6 +1756,10 @@ ${coinInfo.name || symbol} (${symbol})
         
         return updatedInfo;
       });
+
+      if (headerData.isSelfSelected !== undefined) {
+        setIsFavorite(Boolean(headerData.isSelfSelected));
+      }
       
       // 更新详细信息（左侧）- 使用显式检查避免假值被忽略
       setCoinInfoLeft(prev => prev.map(item => {
@@ -2359,22 +2435,42 @@ ${coinInfo.name || symbol} (${symbol})
 
   const communityFeedItems = rightCommunityPosts;
 
+  const displayIsFavorite = useMemo(
+    () => Boolean(isFavorite || coinInfo?.isSelfSelected || fromFavorite),
+    [isFavorite, coinInfo?.isSelfSelected, fromFavorite]
+  );
+
+  const showBootLoading = Boolean(symbol) && loading && !coinInfo;
+
+  useEffect(() => {
+    if (coinInfo || (!loading && symbol)) {
+      notifyRouteBootReady();
+    }
+  }, [coinInfo, loading, symbol]);
+
   if (isPC) {
     return (
-      <PCLayout>
-        <div ref={pcContentLayoutRef} className={styles.pcContentLayout}>
+      <>
+      <LogoLoading
+        visible={showBootLoading}
+        fullscreen
+        mask
+        image={ROUTE_BOOT_LOGO}
+        size={72}
+      />
+      <div ref={pcContentLayoutRef} className={styles.pcContentLayout}>
           <aside className={styles.pcContentColLeft}>
             <PCCoinDetail
               headerTitle={coinInfo?.name || symbol}
               onBack={handleDetailBack}
-              showBack={false}
+              showBack
               coinIcon={coinInfo?.url}
               symbol={symbol}
               currentPrice={coinInfo?.currentPrice}
               priceChangeAbs={coinInfo?.priceChange_24h}
               priceChangePercent={coinInfo?.priceChangePercentage_24h}
               isUp={!String(coinInfo?.priceChange_24h ?? '').includes('-')}
-              isFavorite={isFavorite}
+              isFavorite={displayIsFavorite}
               onToggleFavorite={toggleFavorite}
               onAlert={jump2Alert}
               onGoTrade={handleGoTrade}
@@ -2591,12 +2687,19 @@ ${coinInfo.name || symbol} (${symbol})
           onClose={() => setExchangePickerOpen(false)}
           onSelect={handleSelectExchange}
         />
-      </PCLayout>
+      </>
     );
   }
 
   return (
     <>
+      <LogoLoading
+        visible={showBootLoading}
+        fullscreen
+        mask
+        image={ROUTE_BOOT_LOGO}
+        size={72}
+      />
       <NavBar
         title={coinInfo?.name || symbol || t('detail.title')}
         showBack={true}

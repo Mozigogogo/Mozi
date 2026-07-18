@@ -1097,16 +1097,17 @@
   white-space: nowrap;
 }
 
+/* 解锁弹窗：大写 PX 避免 postcss 将 px 转为 vw，PC 宽屏下字号被放大 */
 .unlockDialogTitle {
-  font-size: 16px;
+  font-size: 16PX;
   font-weight: 600;
   text-align: center;
   color: #111827;
-  margin-bottom: 4px;
+  margin-bottom: 4PX;
 }
 
 .unlockDialogContent {
-  font-size: 14px;
+  font-size: 14PX;
   line-height: 1.5;
   color: #4b5563;
   text-align: left;
@@ -1114,11 +1115,11 @@
 
 .unlockDialogMain {
   text-align: left;
-  margin-bottom: 6px;
+  margin-bottom: 6PX;
 }
 
 .unlockDialogSub {
-  font-size: 12px;
+  font-size: 12PX;
   color: #9ca3af;
 }
 
@@ -1130,17 +1131,11 @@
 .unlockDialogPoints {
   color: #11B787;
   font-weight: 600;
-  margin: 0 2px;
+  margin: 0 2PX;
 }
 
-/* 解锁弹窗整体样式 & 按钮高度调整（历史遗留：曾用于 Dialog，保留 class 供自定义弹窗复用） */
 .unlockDialog {
-  :global {
-    .adm-dialog-footer .adm-dialog-button {
-      padding-top: 8px;
-      padding-bottom: 8px;
-    }
-  }
+  max-width: 400PX;
 }
 
 /* 悬浮机器人按钮 */

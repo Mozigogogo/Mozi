@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
 import {
   Layout,
   Menu,
@@ -20,6 +20,7 @@ import {
 } from '@ant-design/icons';
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { MOZI_SESSION_CHANGED, notifySessionChanged } from '@/utils/sessionEvents';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
@@ -34,6 +35,9 @@ import BenefitCodeModal from '../BenefitCodeModal';
 import BindBenefitCodeModal from '../BindBenefitCodeModal';
 import UserProfilePanelPopup from '../UserProfilePanelPopup';
 import GeneralPopup from '@/app/user/components/GeneralPopup';
+import { getAgentConversations } from '@/api/ai';
+import { MOZI_AI_CONVERSATIONS_CHANGED } from '@/utils/aiConversationEvents';
+import AiConversationRowMenu from '@/app/ai/AiConversationRowMenu';
 import { request } from '@/utils/request';
 import { EMAIL, Interface } from '@/utils/constants';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
@@ -45,6 +49,162 @@ import AISearchBadge from './AISearchBadge';
 const searchIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/search.png';
 const CDN_PUBLIC_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public';
 const MY_SUBSCRIPTION_PLAN_CODE_KEY = 'mozi_my_subscription_plan_code_v1';
+
+/** 进入这些路由时不再盖住页面内容，避免搜索层挡住详情/报警页 */
+const SEARCH_OVERLAY_YIELD_ROUTES = ['/detail', '/pc/alarm'];
+
+function getConversationId(item) {
+  return item?.conversationId || item?.conversation_id || item?.id || '';
+}
+
+function getConversationTitle(item, fallback) {
+  const raw =
+    item?.title ||
+    item?.name ||
+    item?.topic ||
+    item?.summary ||
+    item?.firstMessage ||
+    item?.lastMessage ||
+    '';
+  const text = String(raw).trim();
+  return text || fallback;
+}
+
+function normalizeConversationsResponse(res) {
+  const data = res?.data;
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.list)) return data.list;
+  if (Array.isArray(data?.conversations)) return data.conversations;
+  if (Array.isArray(data?.items)) return data.items;
+  return [];
+}
+
+const AI_CONVERSATIONS_PAGE_SIZE = 5;
+
+const AI_CHAT_ICON = `${CDN_PUBLIC_PREFIX}/icons/new_home/ai_chat.svg`;
+
+function dedupeConversations(items) {
+  const seen = new Set();
+  return items.filter((item) => {
+    const id = getConversationId(item);
+    if (!id || seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+}
+
+function resolvePcMenuIconActive(itemKey, pathname, activeContent) {
+  const isSubscriptionEntry = itemKey === '/subscribe';
+  if (activeContent) {
+    return activeContent === itemKey;
+  }
+  return (
+    pathname === itemKey ||
+    pathname.startsWith(`${itemKey}/`) ||
+    (isSubscriptionEntry &&
+      (pathname === '/subscribe' ||
+        pathname.startsWith('/subscribe/') ||
+        pathname === '/pc/benefitsPage' ||
+        pathname.startsWith('/pc/benefitsPage/')))
+  );
+}
+
+const PcMenuIcon = memo(function PcMenuIcon({
+  src,
+  activeSrc,
+  itemKey,
+  alt = 'icon',
+  activeContent = null,
+}) {
+  const pathname = usePathname();
+  const isActive = resolvePcMenuIconActive(itemKey, pathname, activeContent);
+
+  if (src === activeSrc) {
+    return (
+      <span
+        className="ant-menu-item-icon"
+        style={{
+          display: 'inline-block',
+          width: 16,
+          height: 16,
+          backgroundColor: 'currentColor',
+          WebkitMaskImage: `url(${src})`,
+          WebkitMaskSize: 'contain',
+          WebkitMaskRepeat: 'no-repeat',
+          WebkitMaskPosition: 'center',
+          maskImage: `url(${src})`,
+          maskSize: 'contain',
+          maskRepeat: 'no-repeat',
+          maskPosition: 'center',
+        }}
+        role="img"
+        aria-label={alt}
+      />
+    );
+  }
+
+  return (
+    <span
+      className="ant-menu-item-icon"
+      style={{ position: 'relative', display: 'inline-block', width: 16, height: 16 }}
+    >
+      <img
+        src={src}
+        alt={alt}
+        width={16}
+        height={16}
+        decoding="async"
+        style={{
+          width: 16,
+          height: 16,
+          objectFit: 'contain',
+          opacity: isActive ? 0 : 1,
+        }}
+      />
+      <img
+        src={activeSrc}
+        alt={`${alt}-active`}
+        width={16}
+        height={16}
+        decoding="async"
+        style={{
+          width: 16,
+          height: 16,
+          objectFit: 'contain',
+          opacity: isActive ? 1 : 0,
+          position: 'absolute',
+          top: 0,
+          left: 0,
+        }}
+      />
+    </span>
+  );
+});
+
+function AiChatMaskIcon({ color = '#333333', className = '' }) {
+  return (
+    <span
+      className={className}
+      style={{
+        display: 'inline-block',
+        width: 16,
+        height: 16,
+        flexShrink: 0,
+        backgroundColor: color,
+        WebkitMaskImage: `url(${AI_CHAT_ICON})`,
+        WebkitMaskSize: 'contain',
+        WebkitMaskRepeat: 'no-repeat',
+        WebkitMaskPosition: 'center',
+        maskImage: `url(${AI_CHAT_ICON})`,
+        maskSize: 'contain',
+        maskRepeat: 'no-repeat',
+        maskPosition: 'center',
+        transition: 'background-color 0.15s ease',
+      }}
+      aria-hidden
+    />
+  );
+}
 
 const isNonFreePlanCode = (planCode) => {
   const raw = String(planCode || '').trim();
@@ -64,7 +224,7 @@ export default function PCLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { formatValue, formatPrice } = useFormatNumber();
+  const { formatValue, formatPrice, formatSmallDecimal } = useFormatNumber();
   const { t, i18n } = useTranslation();
   const { isConnected: web3Connected } = useAccount();
   const { disconnect } = useDisconnect();
@@ -108,6 +268,8 @@ export default function PCLayout({ children }) {
   const searchRef = useRef('');
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
+  /** 从搜索结果跳转到详情/告警页时暂时让出覆盖层，主动搜索时会重置 */
+  const [searchYieldToPage, setSearchYieldToPage] = useState(false);
   const [showUserPanel, setShowUserPanel] = useState(false);
   const [showUserProfilePopup, setShowUserProfilePopup] = useState(false);
 
@@ -126,9 +288,7 @@ export default function PCLayout({ children }) {
     setUserInfo(null);
     setShowUserProfilePopup(false);
     message.success(t('user.logoutSuccess') || '退出成功');
-    if (typeof window !== 'undefined') {
-      window.location.reload();
-    }
+    notifySessionChanged();
   }, [disconnect, web3Connected, t]);
 
   useEffect(() => {
@@ -164,8 +324,8 @@ export default function PCLayout({ children }) {
     // 首次加载时同步
     syncUserInfo();
     
-    // 监听storage事件（跨标签页同步）
     window.addEventListener('storage', syncUserInfo);
+    window.addEventListener(MOZI_SESSION_CHANGED, syncUserInfo);
     
     // 定期检查 userInfo 变化（同一标签页内的更新）
     // 低优先级启动：避免与首页首屏请求抢主线程/网络
@@ -185,6 +345,7 @@ export default function PCLayout({ children }) {
     
     return () => {
       window.removeEventListener('storage', syncUserInfo);
+      window.removeEventListener(MOZI_SESSION_CHANGED, syncUserInfo);
       if (timer) clearInterval(timer);
     };
   }, []);
@@ -219,6 +380,7 @@ export default function PCLayout({ children }) {
   const handleSearch = () => {
     const keyword = searchRef.current.trim();
     if (keyword) {
+      setSearchYieldToPage(false);
       setSearchKeyword(keyword);
       setShowSearchResults(true);
     }
@@ -241,7 +403,12 @@ export default function PCLayout({ children }) {
     searchRef.current = '';
     setShowSearchResults(false);
     setSearchKeyword('');
+    setSearchYieldToPage(false);
   };
+
+  const handleSearchYieldToPage = useCallback(() => {
+    setSearchYieldToPage(true);
+  }, []);
 
   /** 顶栏 AI 问答：若搜索框有币种，进入 /ai 并默认提问「{币种}的综合分析」 */
   const handleAiNavigate = () => {
@@ -257,13 +424,81 @@ export default function PCLayout({ children }) {
   const [isCreatedListExpanded, setIsCreatedListExpanded] = useState(false);
   const [isMineExpanded, setIsMineExpanded] = useState(false);
   const [isAlertsExpanded, setIsAlertsExpanded] = useState(false);
+  const [isAiChatExpanded, setIsAiChatExpanded] = useState(false);
   const [watchlist, setWatchlist] = useState([]);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
   const [alertsList, setAlertsList] = useState([]);
   const [alertsLoading, setAlertsLoading] = useState(false);
+  const [aiConversations, setAiConversations] = useState([]);
+  const [aiConversationsLoading, setAiConversationsLoading] = useState(false);
+  const [aiConversationsVisibleCount, setAiConversationsVisibleCount] = useState(
+    AI_CONVERSATIONS_PAGE_SIZE,
+  );
 
   useEffect(() => {
     setIsMineExpanded(false);
+  }, []);
+
+  const fetchAiConversations = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) {
+      setAiConversationsLoading(true);
+    }
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setAiConversations([]);
+        return;
+      }
+      const res = await getAgentConversations();
+      if (res?.data?.isLogin === false) {
+        setAiConversations([]);
+        return;
+      }
+      setAiConversations(dedupeConversations(normalizeConversationsResponse(res)));
+    } catch (e) {
+      console.error('PC sidebar AI conversations:', e);
+      setAiConversations([]);
+    } finally {
+      if (!silent) {
+        setAiConversationsLoading(false);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (pathname === '/ai' || pathname.startsWith('/ai/')) {
+      setIsAiChatExpanded(true);
+    }
+  }, [pathname]);
+
+  useEffect(() => {
+    if (collapsed) return undefined;
+    fetchAiConversations();
+    return undefined;
+  }, [collapsed, fetchAiConversations]);
+
+  useEffect(() => {
+    const onConversationsChanged = () => {
+      fetchAiConversations({ silent: true });
+    };
+
+    window.addEventListener(MOZI_AI_CONVERSATIONS_CHANGED, onConversationsChanged);
+    return () => window.removeEventListener(MOZI_AI_CONVERSATIONS_CHANGED, onConversationsChanged);
+  }, [fetchAiConversations]);
+
+  useEffect(() => {
+    setAiConversationsVisibleCount(AI_CONVERSATIONS_PAGE_SIZE);
+  }, [aiConversations]);
+
+  const visibleAiConversations = useMemo(
+    () => aiConversations.slice(0, aiConversationsVisibleCount),
+    [aiConversations, aiConversationsVisibleCount],
+  );
+  const hasMoreAiConversations = aiConversations.length > aiConversationsVisibleCount;
+  const shouldAiChatBodyScroll = visibleAiConversations.length > AI_CONVERSATIONS_PAGE_SIZE;
+
+  const handleLoadMoreAiConversations = useCallback(() => {
+    setAiConversationsVisibleCount((prev) => prev + AI_CONVERSATIONS_PAGE_SIZE);
   }, []);
 
   const fetchWatchlist = useCallback(async () => {
@@ -380,104 +615,59 @@ export default function PCLayout({ children }) {
     });
   }, []);
 
-  // 自定义图标组件 - 使用双图标避免闪烁
-  const CustomIcon = ({ src, activeSrc, itemKey, alt = 'icon' }) => {
-    // 判断是否激活：
-    // 1. 如果有activeContent，只有当itemKey等于activeContent时才激活
-    // 2. 如果没有activeContent，根据pathname判断
-    let isActive = false;
-    const isSubscriptionEntry = itemKey === '/subscribe';
-    if (activeContent) {
-      isActive = activeContent === itemKey;
-    } else {
-      isActive =
-        pathname === itemKey ||
-        pathname.startsWith(itemKey + '/') ||
-        (isSubscriptionEntry &&
-          (pathname === '/subscribe' ||
-            pathname.startsWith('/subscribe/') ||
-            pathname === '/pc/benefitsPage' ||
-            pathname.startsWith('/pc/benefitsPage/')));
-    }
-    
-    return (
-      <span className="ant-menu-item-icon" style={{ position: 'relative', display: 'inline-block', width: 16, height: 16 }}>
-        <img 
-          src={src}
-          alt={alt} 
-          style={{ 
-            width: 16, 
-            height: 16, 
-            objectFit: 'contain',
-            opacity: isActive ? 0 : 1,
-            transition: 'opacity 0.15s ease'
-          }} 
-        />
-        <img 
-          src={activeSrc}
-          alt={`${alt}-active`} 
-          style={{ 
-            width: 16, 
-            height: 16, 
-            objectFit: 'contain',
-            opacity: isActive ? 1 : 0,
-            transition: 'opacity 0.15s ease',
-            position: 'absolute',
-            top: 0,
-            left: 0
-          }} 
-        />
-      </span>
-    );
-  };
-
   const mineRestMenuItems = useMemo(
     () => [
       {
-        key: '/subscribe',
-        icon: (
-          <CustomIcon
-            src={`${CDN_PUBLIC_PREFIX}/icons/pc/Subscribe.png`}
-            activeSrc={`${CDN_PUBLIC_PREFIX}/icons/pc/Subscribe_actived.png`}
-            itemKey="/subscribe"
-            alt="subscription"
-          />
-        ),
-        label: t('pcLayout.menu.mySubscription'),
-      },
-      {
-        key: '/ai',
-        icon: (
-          <CustomIcon
-            src={`${CDN_PUBLIC_PREFIX}/icons/new_home/ai_chat.svg`}
-            activeSrc={`${CDN_PUBLIC_PREFIX}/icons/new_home/ai_chat.svg`}
-            itemKey="/ai"
-            alt="myqa"
-          />
-        ),
-        label: t('pcLayout.menu.myQA'),
-      },
-      {
         key: '/achievement',
         icon: (
-          <CustomIcon
+          <PcMenuIcon
             src={`${CDN_PUBLIC_PREFIX}/icons/pc/Achievement.png`}
             activeSrc={`${CDN_PUBLIC_PREFIX}/icons/pc/Achievement_actived.png`}
             itemKey="/achievement"
             alt="achievements"
+            activeContent={activeContent}
           />
         ),
         label: t('pcLayout.menu.myAchievements'),
       },
+      {
+        key: '/subscribe',
+        icon: (
+          <PcMenuIcon
+            src={`${CDN_PUBLIC_PREFIX}/icons/pc/Subscribe.png`}
+            activeSrc={`${CDN_PUBLIC_PREFIX}/icons/pc/Subscribe_actived.png`}
+            itemKey="/subscribe"
+            alt="subscription"
+            activeContent={activeContent}
+          />
+        ),
+        label: t('pcLayout.menu.mySubscription'),
+      },
     ],
-    [t, activeContent, pathname]
+    [t, activeContent]
+  );
+
+  const aiMenuItemCollapsed = useMemo(
+    () => ({
+      key: '/ai',
+      icon: (
+        <PcMenuIcon
+          src={AI_CHAT_ICON}
+          activeSrc={AI_CHAT_ICON}
+          itemKey="/ai"
+          alt="myqa"
+        />
+      ),
+      label: t('pcLayout.menu.myQA'),
+    }),
+    [t]
   );
 
   const myAlertsMenuItem = useMemo(
     () => ({
       key: '/pc/alarm',
       icon: (
-        <CustomIcon
+        <PcMenuIcon
           src={`${CDN_PUBLIC_PREFIX}/icons/pc/alert@2x.png`}
           activeSrc={`${CDN_PUBLIC_PREFIX}/icons/pc/alert_actived@2x.png`}
           itemKey="/pc/alarm"
@@ -486,14 +676,14 @@ export default function PCLayout({ children }) {
       ),
       label: t('pcLayout.menu.myAlerts'),
     }),
-    [t, activeContent, pathname]
+    [t]
   );
 
   const favoritesMenuItemCollapsed = useMemo(
     () => ({
       key: '/selfrank',
       icon: (
-        <CustomIcon
+        <PcMenuIcon
           src={`${CDN_PUBLIC_PREFIX}/icons/pc/Collection@2x.png`}
           activeSrc={`${CDN_PUBLIC_PREFIX}/icons/pc/Collection_actived@2x.png`}
           itemKey="/selfrank"
@@ -502,7 +692,7 @@ export default function PCLayout({ children }) {
       ),
       label: t('pcLayout.menu.myFavorites'),
     }),
-    [t, activeContent, pathname]
+    [t]
   );
 
   // 主导航：首页 / 发现 / 社区
@@ -511,7 +701,7 @@ export default function PCLayout({ children }) {
       {
         key: '/home',
         icon: (
-          <CustomIcon
+          <PcMenuIcon
             src={`${CDN_PUBLIC_PREFIX}/icons/pc/home@2x.png`}
             activeSrc={`${CDN_PUBLIC_PREFIX}/icons/pc/home_actived@2x.png`}
             itemKey="/home"
@@ -523,7 +713,7 @@ export default function PCLayout({ children }) {
       {
         key: '/pc/find',
         icon: (
-          <CustomIcon
+          <PcMenuIcon
             src={`${CDN_PUBLIC_PREFIX}/icons/pc/find.png`}
             activeSrc={`${CDN_PUBLIC_PREFIX}/icons/pc/find_actived@2x.png`}
             itemKey="/pc/find"
@@ -535,7 +725,7 @@ export default function PCLayout({ children }) {
       {
         key: '/pc/community',
         icon: (
-          <CustomIcon
+          <PcMenuIcon
             src={`${CDN_PUBLIC_PREFIX}/icons/pc/social.png`}
             activeSrc={`${CDN_PUBLIC_PREFIX}/icons/pc/social_actived.png`}
             itemKey="/pc/community"
@@ -545,7 +735,7 @@ export default function PCLayout({ children }) {
         label: t('pcLayout.menu.community'),
       },
     ],
-    [t, activeContent, pathname]
+    [t]
   );
 
   // 展开时「我的」标题在自选区块上方单独渲染；折叠时组内保留「我的自选」图标入口 + 其余项
@@ -556,7 +746,7 @@ export default function PCLayout({ children }) {
           key: 'mine',
           label: '',
           type: 'group',
-          children: [favoritesMenuItemCollapsed, ...mineRestMenuItems],
+          children: [favoritesMenuItemCollapsed, aiMenuItemCollapsed, ...mineRestMenuItems],
         },
       ];
     }
@@ -568,7 +758,7 @@ export default function PCLayout({ children }) {
         children: mineRestMenuItems,
       },
     ];
-  }, [collapsed, favoritesMenuItemCollapsed, mineRestMenuItems]);
+  }, [collapsed, favoritesMenuItemCollapsed, aiMenuItemCollapsed, mineRestMenuItems]);
 
   const openSiderFooterPopup = useCallback((type) => {
     setSiderFooterPopupType(type);
@@ -586,12 +776,6 @@ export default function PCLayout({ children }) {
     router.push('/achievement');
   }, [router]);
 
-  const goToVideoGuides = useCallback(() => {
-    setActiveContent(null);
-    setShowSearchResults(false);
-    router.push('/');
-  }, [router]);
-
   const pcFooterLinkRows = useMemo(
     () => [
       [
@@ -606,11 +790,8 @@ export default function PCLayout({ children }) {
         { key: 'inviteRewards', label: t('pcLayout.footer.inviteRewards'), action: goToInviteRewards },
         { key: 'helpCenter', label: t('pcLayout.footer.helpCenter'), href: '/pc/help' },
       ],
-      [
-        { key: 'videoGuides', label: t('pcLayout.footer.videoGuides'), action: goToVideoGuides },
-      ],
     ],
-    [businessCooperationMailto, goToInviteRewards, goToVideoGuides, t]
+    [businessCooperationMailto, goToInviteRewards, t]
   );
 
   const pcFooterSocialLinks = useMemo(
@@ -618,7 +799,7 @@ export default function PCLayout({ children }) {
       {
         id: 'discord',
         icon: `${CDN_PUBLIC_PREFIX}/icons/discord.svg`,
-        url: 'https://discord.gg/KVGEZKsy',
+        url: 'https://discord.gg/GJW6h9GNQ8',
         label: 'Discord',
       },
       {
@@ -689,6 +870,40 @@ export default function PCLayout({ children }) {
   const isHelpPage =
     pathname === '/pc/help' || (pathname && pathname.startsWith('/pc/help/'));
 
+  const isAiRoute = pathname === '/ai' || (pathname && pathname.startsWith('/ai/'));
+  const isAlertsRoute =
+    pathname === '/pc/alarm' || (pathname && pathname.startsWith('/pc/alarm/'));
+  const isFavoritesRoute =
+    pathname === '/selfrank' || (pathname && pathname.startsWith('/selfrank/'));
+  const activeAiConversationId = useMemo(() => {
+    if (!pathname?.startsWith('/ai/')) return null;
+    const id = pathname.slice('/ai/'.length).split('/')[0];
+    return id || null;
+  }, [pathname]);
+
+  const aiConversationFallback = t('pcLayout.menu.dialogueItem', { defaultValue: '对话' });
+
+  const handleDeleteAiConversation = useCallback(
+    (conversationId) => {
+      setAiConversations((prev) =>
+        prev.filter((item) => getConversationId(item) !== conversationId),
+      );
+      if (activeAiConversationId === conversationId) {
+        setActiveContent(null);
+        setShowSearchResults(false);
+        router.push('/ai');
+      }
+    },
+    [activeAiConversationId, router],
+  );
+
+  const aiHeaderIconColor = useMemo(() => {
+    if (!isAiRoute) {
+      return '#333333';
+    }
+    return isAiChatExpanded ? '#00ac72' : '#11b787';
+  }, [isAiRoute, isAiChatExpanded]);
+
   const getSelectedKey = () => {
     if (activeContent) {
       return [activeContent];
@@ -704,14 +919,25 @@ export default function PCLayout({ children }) {
     ) {
       return ['/subscribe'];
     }
-    const flat = [...topMenuItems, myAlertsMenuItem, ...mineRestMenuItems, favoritesMenuItemCollapsed];
+    const flat = [
+      ...topMenuItems,
+      myAlertsMenuItem,
+      aiMenuItemCollapsed,
+      ...mineRestMenuItems,
+      favoritesMenuItemCollapsed,
+    ];
     const matched = flat.find(
       (item) => pathname === item.key || pathname.startsWith(`${item.key}/`)
     );
     return matched ? [matched.key] : [];
   };
 
-  // 当路由变化时，清除activeContent
+  const detailSymbol = searchParams.get('symbol') || '';
+  const shouldShowSearchOverlay =
+    showSearchResults &&
+    !(searchYieldToPage && SEARCH_OVERLAY_YIELD_ROUTES.includes(pathname));
+
+  // 当路由变化时，清除 activeContent 与搜索结果覆盖层
   useEffect(() => {
     if (
       pathname !== '/find' &&
@@ -721,7 +947,15 @@ export default function PCLayout({ children }) {
     ) {
       setActiveContent(null);
     }
-  }, [pathname]);
+    setShowSearchResults(false);
+    setSearchYieldToPage(false);
+
+    if (pathname === '/detail' || pathname === '/pc/alarm') {
+      setSearchValue('');
+      searchRef.current = '';
+      setSearchKeyword('');
+    }
+  }, [pathname, detailSymbol]);
 
   return (
     <Layout className={styles.layout}>
@@ -911,13 +1145,13 @@ export default function PCLayout({ children }) {
               <div className={styles.pcWatchlist}>
                 <button
                   type="button"
-                  className={`${styles.pcWatchlistHeader} ${pathname === '/selfrank' ? styles.pcWatchlistHeaderSelected : ''}`}
+                  className={`${styles.pcWatchlistHeader} ${isFavoritesRoute ? styles.pcWatchlistHeaderSelected : ''}`}
                   onClick={() => setIsMineExpanded((v) => !v)}
                 >
                   <span className={styles.pcWatchlistHeaderLeft}>
                     <span className={styles.pcWatchlistHeaderIconSvg} aria-hidden>
                       <img
-                        src={isMineExpanded || pathname === '/selfrank'
+                        src={isFavoritesRoute
                           ? `${CDN_PUBLIC_PREFIX}/icons/new_home/collect_actived.svg`
                           : `${CDN_PUBLIC_PREFIX}/icons/pc/Collection@2x.png`}
                         alt=""
@@ -928,13 +1162,15 @@ export default function PCLayout({ children }) {
                     <span
                       className={`${styles.pcWatchlistTitle} ${
                         isMineExpanded ? styles.pcWatchlistTitleExpanded : ''
-                      }`}
+                      } ${isFavoritesRoute ? styles.pcWatchlistTitleSelected : ''}`}
                     >
                       {t('pcLayout.menu.myFavorites')}
                     </span>
                   </span>
                   <span
-                    className={`${styles.pcWatchlistChevron} ${isMineExpanded ? styles.pcWatchlistChevronExpanded : ''}`}
+                    className={`${styles.pcWatchlistChevron} ${
+                      isMineExpanded ? styles.pcWatchlistChevronExpanded : ''
+                    } ${isFavoritesRoute ? styles.pcWatchlistChevronSelected : ''}`}
                     aria-hidden
                   />
                 </button>
@@ -945,7 +1181,7 @@ export default function PCLayout({ children }) {
                         {t('common.loading')}
                       </div>
                     ) : watchlist.length === 0 ? (
-                      <div className={styles.pcWatchlistHint}>{noFavoritesText}</div>
+                      <div className={`${styles.pcWatchlistHint} ${styles.pcWatchlistHintCenter}`}>{noFavoritesText}</div>
                     ) : (
                       watchlist.map((item) => {
                         const sym = item.symbol;
@@ -953,9 +1189,10 @@ export default function PCLayout({ children }) {
                         const isRowActive = pathname === '/detail' && activeSymbol === sym;
                         const rawChange = item.price24h;
                         const isNeg = String(rawChange ?? '').includes('-');
+                        const rawLast = item.last ?? item.currentPrice ?? item.price;
                         const priceStr =
-                          item.last !== undefined && item.last !== null && item.last !== ''
-                            ? `$${formatPrice(item.last)}`
+                          rawLast !== undefined && rawLast !== null && rawLast !== ''
+                            ? `$${formatSmallDecimal(rawLast)}`
                             : '—';
                         const changeDisplay = rawChange != null && rawChange !== '' ? formatValue(rawChange) : '—';
                         const displaySub =
@@ -1000,14 +1237,14 @@ export default function PCLayout({ children }) {
                 <button
                   type="button"
                   className={`${styles.pcWatchlistHeader} ${
-                    pathname === '/pc/alarm' ? styles.pcWatchlistHeaderSelected : ''
+                    isAlertsRoute ? styles.pcWatchlistHeaderSelected : ''
                   }`}
                   onClick={() => setIsAlertsExpanded((v) => !v)}
                 >
                   <span className={styles.pcWatchlistHeaderLeft}>
                     <span className={styles.pcWatchlistHeaderIconSvg} aria-hidden>
                       <img
-                        src={isAlertsExpanded || pathname === '/pc/alarm'
+                        src={isAlertsRoute
                           ? `${CDN_PUBLIC_PREFIX}/icons/pc/alert_actived@2x.png`
                           : `${CDN_PUBLIC_PREFIX}/icons/pc/alert@2x.png`}
                         alt=""
@@ -1018,13 +1255,15 @@ export default function PCLayout({ children }) {
                     <span
                       className={`${styles.pcWatchlistTitle} ${
                         isAlertsExpanded ? styles.pcWatchlistTitleExpanded : ''
-                      }`}
+                      } ${isAlertsRoute ? styles.pcWatchlistTitleSelected : ''}`}
                     >
                       {t('pcLayout.menu.myAlerts')}
                     </span>
                   </span>
                   <span
-                    className={`${styles.pcWatchlistChevron} ${isAlertsExpanded ? styles.pcWatchlistChevronExpanded : ''}`}
+                    className={`${styles.pcWatchlistChevron} ${
+                      isAlertsExpanded ? styles.pcWatchlistChevronExpanded : ''
+                    } ${isAlertsRoute ? styles.pcWatchlistChevronSelected : ''}`}
                     aria-hidden
                   />
                 </button>
@@ -1035,7 +1274,7 @@ export default function PCLayout({ children }) {
                         {t('common.loading')}
                       </div>
                     ) : alertsList.length === 0 ? (
-                      <div className={styles.pcWatchlistHint}>
+                      <div className={`${styles.pcWatchlistHint} ${styles.pcWatchlistHintCenter}`}>
                         {t('myAlarm.noAlerts', {
                           defaultValue: (i18n?.language || '').startsWith('en')
                             ? 'No alerts configured'
@@ -1083,6 +1322,117 @@ export default function PCLayout({ children }) {
                         </button>
                       ))
                     )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!collapsed && (
+              <div className={styles.pcWatchlist}>
+                <button
+                  type="button"
+                  className={`${styles.pcWatchlistHeader} ${
+                    isAiRoute ? styles.pcWatchlistHeaderSelected : ''
+                  }`}
+                  onClick={() => {
+                    setActiveContent(null);
+                    setShowSearchResults(false);
+                    if (pathname !== '/ai') {
+                      router.push('/ai');
+                      setIsAiChatExpanded(true);
+                    } else {
+                      setIsAiChatExpanded((v) => !v);
+                    }
+                  }}
+                >
+                  <span className={styles.pcWatchlistHeaderLeft}>
+                    <span className={styles.pcWatchlistHeaderIconSvg} aria-hidden>
+                      <AiChatMaskIcon color={aiHeaderIconColor} />
+                    </span>
+                    <span
+                      className={`${styles.pcWatchlistTitle} ${
+                        isAiChatExpanded ? styles.pcWatchlistTitleExpanded : ''
+                      } ${isAiRoute ? styles.pcWatchlistTitleSelected : ''}`}
+                    >
+                      {t('pcLayout.menu.myQA')}
+                    </span>
+                  </span>
+                  <span
+                    className={`${styles.pcWatchlistChevron} ${
+                      isAiChatExpanded ? styles.pcWatchlistChevronExpanded : ''
+                    } ${isAiRoute ? styles.pcWatchlistChevronSelected : ''}`}
+                    aria-hidden
+                  />
+                </button>
+                {isAiChatExpanded && (
+                  <div className={styles.pcAiChatSection}>
+                    <div
+                      className={`${styles.pcAiChatBody} ${
+                        shouldAiChatBodyScroll ? styles.pcAiChatBodyScrollable : ''
+                      }`}
+                    >
+                      {aiConversationsLoading && aiConversations.length === 0 ? (
+                        <div className={`${styles.pcWatchlistHint} ${styles.pcWatchlistHintCenter}`}>
+                          {t('common.loading')}
+                        </div>
+                      ) : aiConversations.length === 0 ? (
+                        <div className={`${styles.pcWatchlistHint} ${styles.pcWatchlistHintCenter}`}>
+                          {t('pcLayout.menu.noAiConversations', {
+                            defaultValue: (i18n?.language || '').startsWith('en')
+                              ? 'No conversations yet'
+                              : '暂无对话',
+                          })}
+                        </div>
+                      ) : (
+                        visibleAiConversations.map((item, index) => {
+                          const conversationId = getConversationId(item);
+                          if (!conversationId) return null;
+                          const isRowActive = activeAiConversationId === conversationId;
+                          const title = getConversationTitle(item, aiConversationFallback);
+                          return (
+                            <div
+                              key={`${conversationId}-${index}`}
+                              className={`${styles.pcAiChatRow} ${
+                                isRowActive ? styles.pcAiChatRowActive : ''
+                              }`}
+                            >
+                              <button
+                                type="button"
+                                className={styles.pcAiChatRowMain}
+                                onClick={() => {
+                                  setActiveContent(null);
+                                  setShowSearchResults(false);
+                                  router.push(`/ai/${conversationId}`);
+                                }}
+                              >
+                                <span className={styles.pcAiChatRowIcon} aria-hidden>
+                                  <AiChatMaskIcon color={isRowActive ? '#11b787' : '#94a3b8'} />
+                                </span>
+                                <span className={styles.pcAiChatRowLabel}>{title}</span>
+                              </button>
+                              <AiConversationRowMenu
+                                conversationId={conversationId}
+                                onDeleted={handleDeleteAiConversation}
+                                wrapClassName={styles.pcAiChatRowMenuWrap}
+                                buttonClassName={styles.pcAiChatRowMenuBtn}
+                                dropdownClassName={styles.pcAiChatRowDropdown}
+                                deleteMenuItemClassName={styles.pcAiChatRowDeleteItem}
+                                iconSize={14}
+                              />
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                    {hasMoreAiConversations ? (
+                      <button
+                        type="button"
+                        className={styles.pcAiChatLoadMore}
+                        onClick={handleLoadMoreAiConversations}
+                      >
+                        {t('common.loadMore')}
+                      </button>
+                    ) : null}
                   </div>
                 )}
               </div>
@@ -1160,6 +1510,9 @@ export default function PCLayout({ children }) {
                     </a>
                   ))}
                 </div>
+                <p className={styles.footerCopyright}>
+                  {t('pcLayout.footer.copyright', { startYear: 2024, endYear: new Date().getFullYear() })}
+                </p>
               </div>
             )}
           </ConfigProvider>
@@ -1173,8 +1526,14 @@ export default function PCLayout({ children }) {
           <div className={`${styles.contentWrapper} ${isHelpPage ? styles.contentWrapperHelp : ''}`}>
             <div className={`${styles.contentMain} ${isHelpPage ? styles.contentMainFlush : ''}`}>
               {(() => {
-                if (showSearchResults) {
-                  return <PCSearchResults keyword={searchKeyword} onClose={() => setShowSearchResults(false)} />;
+                if (shouldShowSearchOverlay) {
+                  return (
+                    <PCSearchResults
+                      keyword={searchKeyword}
+                      onClose={() => setShowSearchResults(false)}
+                      onYieldToPage={handleSearchYieldToPage}
+                    />
+                  );
                 } else if (activeContent === '/find') {
                   return <PCFindContent />;
                 } else if (activeContent === '/community') {
@@ -1282,6 +1641,7 @@ export default function PCLayout({ children }) {
           avatar:
             userInfo?.avatar ||
             'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png',
+          userId: userInfo?.userId || userInfo?.id,
         }}
       />
     </Layout>

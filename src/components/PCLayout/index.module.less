@@ -320,6 +320,13 @@
   gap: 12PX;
 }
 
+.footerCopyright {
+  margin: 12PX 0 0;
+  color: #999;
+  font-size: 11PX;
+  line-height: 1.5;
+}
+
 .socialIcon {
   width: 32PX;
   height: 32PX;
@@ -465,6 +472,14 @@
   }
 }
 
+.pcWatchlistTitleSelected {
+  color: #11b787;
+
+  &.pcWatchlistTitleExpanded {
+    color: #00ac72;
+  }
+}
+
 /* 与 CustomIcon（16×16）占位一致，避免和菜单项图标列错位 */
 .pcWatchlistHeaderIconSvg {
   flex-shrink: 0;
@@ -502,10 +517,6 @@
   color: rgba(0, 0, 0, 0.88);
   flex: 1;
   min-width: 0;
-
-  &.pcWatchlistTitleExpanded {
-    color: #00ac72;
-  }
 }
 
 .pcWatchlistChevron {
@@ -528,6 +539,13 @@
 
 .pcWatchlistChevronExpanded {
   transform: rotate(90deg);
+}
+
+.pcWatchlistChevronSelected {
+  background-color: #11b787;
+}
+
+.pcWatchlistChevronExpanded.pcWatchlistChevronSelected {
   background-color: #00ac72;
 }
 
@@ -711,6 +729,203 @@
 
 .pcWatchlistChangeDown {
   color: rgba(255, 32, 86, 1);
+}
+
+.pcAiChatRowIcon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+}
+@pc-ai-chat-row-height: 36px;
+@pc-ai-chat-row-gap: 4px;
+
+.pcAiChatSection {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.pcAiChatBody {
+  display: flex;
+  flex-direction: column;
+  gap: @pc-ai-chat-row-gap;
+  padding: 0 4px 4px @pcWatchlist-text-align-inset;
+  overflow-x: hidden;
+  min-height: 0;
+}
+
+.pcAiChatBodyScrollable {
+  max-height: calc(5 * @pc-ai-chat-row-height + 4 * @pc-ai-chat-row-gap);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.pcAiChatLoadMore {
+  display: block;
+  width: calc(100% - @pcWatchlist-text-align-inset - 4px);
+  margin: 0 4px 4px @pcWatchlist-text-align-inset;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #11b787;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba(17, 183, 135, 0.08);
+  }
+}
+
+.pcAiChatRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  min-height: @pc-ai-chat-row-height;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 4px 6px 4px 4px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background: rgba(245, 245, 245, 0.9);
+
+    .pcAiChatRowMain {
+      padding-right: 32px;
+    }
+
+    .pcAiChatRowMenuBtn {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+}
+
+.pcAiChatRowMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 4px 6px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  text-align: left;
+  color: rgba(0, 0, 0, 0.45);
+  transition: padding-right 0.15s ease;
+}
+
+.pcAiChatRowMenuWrap {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+
+  :global(.ant-dropdown-trigger) {
+    width: 28px !important;
+    height: 28px !important;
+    flex: none !important;
+  }
+}
+
+.pcAiChatRowMenuBtn {
+  opacity: 0;
+  pointer-events: none;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  border-radius: 6px;
+}
+
+.pcAiChatRowDropdown {
+  :global {
+    .ant-dropdown-menu {
+      min-width: 72PX !important;
+      padding: 6PX !important;
+      border-radius: 10PX !important;
+      box-shadow: 0 6PX 16PX rgba(15, 23, 42, 0.12) !important;
+    }
+
+    .ant-dropdown-menu-item {
+      border-radius: 8PX !important;
+      padding: 7PX 12PX !important;
+      min-height: 0 !important;
+      height: auto !important;
+      line-height: 1.3 !important;
+    }
+
+    .ant-dropdown-menu-title-content {
+      line-height: 1.3 !important;
+    }
+  }
+}
+
+.pcAiChatRowDeleteItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8PX;
+  color: #ef4444;
+  font-size: 14PX;
+  line-height: 1.3;
+  white-space: nowrap;
+
+  :global(.anticon) {
+    color: #ef4444;
+    font-size: 14PX !important;
+  }
+}
+
+.pcAiChatRowActive {
+  background: #fff;
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  color: #11b787;
+
+  &:hover {
+    background: #fff;
+  }
+
+  .pcAiChatRowLabel {
+    color: #11b787;
+    font-weight: 500;
+  }
+}
+
+.pcAiChatRowLabel {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.3;
+  color: rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Content */

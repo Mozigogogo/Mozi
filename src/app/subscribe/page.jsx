@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { LeftOutlined } from '@ant-design/icons';
-import PCLayout from '@/components/PCLayout';
 import VipRechargePageBody from '@/app/vip-recharge/VipRechargePageBody';
 import { safeBack } from '@/utils/navigation';
 import styles from './page.module.less';
@@ -43,9 +42,5 @@ function PCSubscribeContent() {
 }
 
 export default function SubscribePage() {
-  return (
-    <PCLayout>
-      <PCSubscribeContent />
-    </PCLayout>
-  );
+  return <PCSubscribeContent />;
 }

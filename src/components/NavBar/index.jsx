@@ -10,6 +10,7 @@ import styles from './index.less';
  * @param {string} props.title - 标题文字
  * @param {Function} props.onBack - 返回按钮点击事件，不传则使用默认路由返回
  * @param {boolean} props.showBack - 是否显示返回按钮，默认true
+ * @param {React.ReactNode} props.leftExtra - 左侧返回按钮旁的附加内容（如汉堡菜单）
  * @param {React.ReactNode} props.rightContent - 右侧自定义内容
  * @param {Function} props.onRightClick - 右侧按钮点击事件
  * @param {boolean} props.showMenu - 是否显示右侧菜单按钮
@@ -22,6 +23,7 @@ export default function NavBar({
   title = '',
   onBack,
   showBack = true,
+  leftExtra,
   rightContent,
   onRightClick,
   showMenu = false,
@@ -83,11 +85,14 @@ export default function NavBar({
             </svg>
           </div>
         )}
+        {leftExtra}
       </div>
 
       {/* 中间标题 */}
       <div className={styles.center}>
-        <div className={styles.title} style={textStyle}>{title}</div>
+        <div className={styles.title} style={textStyle} suppressHydrationWarning>
+          {title}
+        </div>
       </div>
 
       {/* 右侧操作按钮 */}

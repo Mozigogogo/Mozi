@@ -394,6 +394,13 @@
       "1y": "1年"
     },
     "addFavoriteButton": "添加自选",
+    "marketActions": {
+      "bigOrderBuy": "大额买入",
+      "bigOrderSell": "大额卖出",
+      "tradingRadarMonitoring": "监控中",
+      "tradingRadarActive": "活跃",
+      "tradingRadarAbnormal": "异常"
+    },
     "loadFinished": "已全部加载完毕",
     "robotMessage": "想听听我对行情的分析吗？",
     "pullToRefresh": {
@@ -420,10 +427,13 @@
     "tabs": {
       "watchlist": "自选",
       "watchlistDesc": "他选购的商品",
+      "watchlistDescSelf": "我选购的商品",
       "monitor": "监控",
       "monitorDesc": "他监控的商品",
+      "monitorDescSelf": "我监控的商品",
       "content": "内容",
-      "contentDesc": "他发布的内容"
+      "contentDesc": "他发布的内容",
+      "contentDescSelf": "我发布的内容"
     },
     "list": {
       "coin": "币种",
@@ -888,6 +898,7 @@
   "robot": {
     "title": "AI 助手",
     "chattingTitle": "正在对话...",
+    "newConversation": "新对话",
     "subtitle": "智能答疑 · 快速响应",
     "connecting": "连接中...",
     "conversationId": "会话ID",
@@ -924,6 +935,7 @@
     "model": {
       "analyze": "分析模型",
       "chat": "对话模型",
+      "signals": "信号卡",
       "bigOrder": "大单侦测",
       "openMenu": "切换模型"
     },
@@ -954,6 +966,83 @@
   "aiAssistant": {
     "title": "AI 助手 专业版",
     "subtitle": "智能答疑 · 快速响应"
+  },
+  "signalCard": {
+    "source": {
+      "bigorder_anomaly": "大单异动",
+      "quantitative": "量化六因子",
+      "technical": "技术分析"
+    },
+    "direction": {
+      "long": "做多",
+      "short": "做空"
+    },
+    "regime": {
+      "trending_down": "下跌趋势",
+      "trending_up": "上涨趋势",
+      "ranging": "震荡",
+      "volatile": "高波动"
+    },
+    "confidence": "置信度",
+    "confidenceShort": "CONF",
+    "gradeBadge": "{{grade}}级",
+    "liveSignalTitle": "实时交易信号",
+    "strategyVersion": "策略 v{{version}}",
+    "currentPrice": "当前价格",
+    "entryZone": "进场区间",
+    "takeProfit": "止盈 TP",
+    "stopLoss": "止损 SL",
+    "riskReward": "盈亏比",
+    "suggestedPosition": "建议仓位",
+    "kellyPosition": "Kelly仓位",
+    "signalSources": "信号源",
+    "signalFusion": "信号源融合",
+    "mathDerivation": "数学推导",
+    "historicalBacktest": "历史回测",
+    "winRate": "胜率",
+    "sample": "样本",
+    "avgProfit": "均盈",
+    "globalWinRate": "全局胜率",
+    "invalidation": "失效条件",
+    "breakAbove": "突破",
+    "breakBelow": "跌破",
+    "viewMore": "查看更多",
+    "mathMcBear": "MC看跌",
+    "mathMcBull": "MC看涨",
+    "mathVolatility": "波动率",
+    "mathTrend": "趋势",
+    "alphaPanel": {
+      "title": "今日 Alpha 信号",
+      "alert": "探测到{{count}}个S级/A级多维共振交易机会",
+      "ariaLabel": "Alpha 信号"
+    },
+    "fireBanner": {
+      "main": "探测到 S级/A级 多维共振交易机会",
+      "sub": "MULTI-DIMENSIONAL RESONANCE SIGNAL DETECTED",
+      "subShort": "多维共振信号",
+      "ariaLabel": "查看 Alpha 信号"
+    },
+    "alphaQuery": "查看更多S级多维共振交易",
+    "alphaMockReply": "结合您当前所在时区的最新市场数据，比特币呈现宽幅震荡特征。当前价格在 $103,000–$105,000 区间运行，MACD 指标显示多头动能正在减弱，但尚未形成明确的死叉信号。建议关注 $103,000 支撑位，若有效跌破则可能开启新一轮下行。",
+    "scanReply": {
+      "intro": "最新一轮全市场扫描已完成，覆盖 {{totalCoins}} 个币种",
+      "scanMinutes": "，耗时约 {{minutes}} 分钟",
+      "scanSeconds": "，耗时约 {{seconds}} 秒",
+      "signalsFound": "，共识别出 {{signalCount}} 个 S/A 级多维共振机会。",
+      "footer": "以下为优先推荐信号，请结合个人风险偏好与仓位管理决策。"
+    },
+    "mockNotes": {
+      "btc": [
+        "趋势持续性强 (Hurst > 0.55)，支撑做多",
+        "MC 上涨概率 78%，方向确认",
+        "波动率中位 P35，信号稳定"
+      ],
+      "ethSol": [
+        "Hurst 0.58，趋势方向性中等偏强",
+        "MC 上涨概率 72%，多方占优",
+        "支撑区间完好，风险收益合理"
+      ]
+    }
   },
   "language": {
     "zh": "简体中文",
@@ -1051,7 +1140,15 @@
     "inviteCode": "邀请码",
     "shareCount": "总邀请数",
     "totalEarned": "邀请积分",
+    "totalCommission": "累计分佣",
+    "withdrawnAmount": "已提现金额",
+    "withdrawableAmount": "可提现金额",
     "applyTH": "申请提现",
+    "applyWithdrawAction": "立即申请",
+    "applyWithdrawSuccess": "提现申请已提交",
+    "applyWithdrawFailed": "提现申请失败",
+    "applyWithdrawNoBalance": "暂无可提现金额",
+    "withdrawHistory": "提现记录",
     "lastVisit": "上次访问",
     "inviteRules": {
       "1": "1. 积分未来将用于生态权益",
@@ -1167,6 +1264,20 @@
   "pointsHistory": {
     "title": "积分历史",
     "empty": "暂无积分记录"
+  },
+  "withdrawHistory": {
+    "title": "提现记录",
+    "empty": "暂无提现记录",
+    "loadFailed": "加载失败",
+    "toAddress": "收款地址",
+    "status": {
+      "PENDING": "审核中",
+      "PAID": "已打款",
+      "REJECTED": "已驳回（余额已退回）",
+      "pending": "审核中",
+      "paid": "已打款",
+      "rejected": "已驳回（余额已退回）"
+    }
   },
   "pcr": {
     "title": "多空比",
@@ -1833,7 +1944,8 @@
       "businessMailSubject": "商务合作咨询",
       "inviteRewards": "邀请奖励",
       "helpCenter": "帮助中心",
-      "videoGuides": "Video Guides"
+      "videoGuides": "Video Guides",
+      "copyright": "Copyright © {{startYear}} – {{endYear}} MoziInnovations 版权所有"
     },
     "user": {
       "notLoggedIn": "未登录",
@@ -1899,7 +2011,13 @@
     "wechatAlarm": "微信告警",
     "wechatHint": "请开启微信通知，以便接收告警",
     "telegramBot": "Telegram bot",
-    "telegramHint": "请点击启动bot，以便接收告警",
+    "telegramHint": "若自动获取chatid失败，请手动填写",
+    "telegramOpenMiniApp": "前往 Telegram Mini App 开启推送",
+    "telegramOpenMiniAppHint": "在 Telegram 内完成绑定后即可接收告警",
+    "openIdPlaceholder": "请输入微信 openId",
+    "chatIdPlaceholder": "请输入 Telegram chatId",
+    "wechatOpenIdRequired": "开启微信推送时，openId 不能为空",
+    "tgChatIdRequired": "开启 Telegram 推送时，chatId 不能为空",
     "popupAlarm": "显示弹窗通知",
     "popupHint": "在应用或浏览器内以弹窗形式提醒您",
     "freqTitle": "预警频次",

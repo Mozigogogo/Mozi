@@ -38,11 +38,144 @@
   height: 40px;
   border-radius: 50%;
   object-fit: cover;
+  flex-shrink: 0;
 }
 
 .nick {
   font-size: 14px;
   font-weight: 500;
   color: #333;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
+.row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background: rgba(248, 250, 252, 0.9);
+  }
+
+  &:active {
+    background: rgba(241, 245, 249, 0.95);
+  }
+
+  &:not(:last-child) {
+    border-bottom: 1px solid #f1f5f9;
+  }
+}
+
+.rowArrow {
+  flex-shrink: 0;
+}
+
+/* PC 端：使用大写 PX，避免 postcss px→vw 在宽屏上放大 */
+.pcMode {
+  min-height: 100%;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+
+  .center {
+    padding: 80PX 20PX;
+  }
+
+  .muted {
+    font-size: 15PX;
+    color: rgba(0, 0, 0, 0.4);
+  }
+}
+
+.pcContentWrapper {
+  max-width: 960PX;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.topNav {
+  display: flex;
+  align-items: center;
+  gap: 12PX;
+  margin-bottom: 20PX;
+}
+
+.backBtn {
+  width: 43PX;
+  height: 43PX;
+  border: none;
+  border-radius: 12PX;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 1PX 3PX rgba(15, 23, 42, 0.08);
+  color: #0f172a;
+  font-size: 22PX;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.navTitle {
+  font-size: 24PX;
+  line-height: 31PX;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.pcCard {
+  flex: 1;
+  min-height: 320PX;
+  background: #fff;
+  border-radius: 24PX;
+  box-shadow: 0 2PX 8PX rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.pcList {
+  display: flex;
+  flex-direction: column;
+
+  .row {
+    gap: 14PX;
+    padding: 16PX 18PX;
+
+    &:not(:last-child) {
+      border-bottom: 1PX solid #f1f5f9;
+    }
+  }
+
+  .avatar {
+    width: 48PX;
+    height: 48PX;
+  }
+
+  .nick {
+    font-size: 16PX;
+    color: #1f2937;
+  }
+}
+
+.paginationWrap {
+  flex-shrink: 0;
+  padding: 16PX 0 4PX;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

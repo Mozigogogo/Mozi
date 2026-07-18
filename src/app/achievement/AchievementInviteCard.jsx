@@ -1,12 +1,21 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import { RightOutline } from 'antd-mobile-icons';
 import { getTgInviteLink } from '@/utils/constants';
 import styles from './AchievementInviteCard.module.less';
 
-export default function AchievementInviteCard({ pointsData, copyToClipboard }) {
+export default function AchievementInviteCard({ pointsData, copyToClipboard, onApplyWithdraw }) {
+  const router = useRouter();
   const { t } = useTranslation();
   const inviteCode = String(pointsData.inviteCode || '').trim();
+
+  const formatUsdt = (val) => {
+    const n = Number(val);
+    if (!Number.isFinite(n)) return '$0';
+    return `$${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  };
   const inviteLinkFallback =
     pointsData.inviteLink ||
     (typeof window !== 'undefined' && inviteCode
@@ -69,6 +78,39 @@ export default function AchievementInviteCard({ pointsData, copyToClipboard }) {
           <div className={styles.statLabel}>{t('pointsDetail.totalEarned')}</div>
         </div>
       </div>
+
+      <div className={styles.statsRow}>
+        <div className={styles.statBox}>
+          <div className={styles.statValue}>{formatUsdt(pointsData.totalCommission)}</div>
+          <div className={styles.statLabel}>{t('pointsDetail.totalCommission')}</div>
+        </div>
+        <div className={styles.statBox}>
+          <div className={styles.statValue}>{formatUsdt(pointsData.withdrawnAmount)}</div>
+          <div className={styles.statLabel}>{t('pointsDetail.withdrawnAmount')}</div>
+        </div>
+      </div>
+
+      <div className={styles.statsRow}>
+        <div className={styles.statBox}>
+          <div className={styles.statValue}>{formatUsdt(pointsData.withdrawableAmount)}</div>
+          <div className={styles.statLabel}>{t('pointsDetail.withdrawableAmount')}</div>
+        </div>
+        <div className={`${styles.statBox} ${styles.statBoxApply}`}>
+          <button type="button" className={styles.withdrawBtn} onClick={() => onApplyWithdraw?.()}>
+            {t('pointsDetail.applyWithdrawAction')}
+          </button>
+          <div className={styles.statLabel}>{t('pointsDetail.applyTH')}</div>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        className={styles.withdrawHistoryBtn}
+        onClick={() => router.push('/withdrawhistory')}
+      >
+        <span>{t('pointsDetail.withdrawHistory')}</span>
+        <RightOutline fontSize={14} />
+      </button>
 
       <div className={styles.rules}>
         <p>{t('pointsDetail.inviteRules.1')}</p>

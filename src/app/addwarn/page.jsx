@@ -31,7 +31,9 @@ export default function Addwarn() {
   });
 
   // 新增功能状态
-  const [bigOrderDetection, setBigOrderDetection] = useState(true);
+  // 大单侦测（已隐藏：保留原始实现，方便后续恢复）
+  // const [bigOrderDetection, setBigOrderDetection] = useState(true);
+  const [bigOrderDetection] = useState(false);
   // 交易所差价监控（已注释隐藏：保留原始实现，方便后续恢复）
   // const [spreadMonitor, setSpreadMonitor] = useState(false);
   const [spreadMonitor] = useState(false);
@@ -91,7 +93,6 @@ export default function Addwarn() {
       [key]: {
         ...prev[key],
         value,
-        enabled: value === '' ? prev[key].enabled : true,
       },
     }));
   };
@@ -339,15 +340,7 @@ export default function Addwarn() {
                 <div className={styles.configList}>
                   {Object.entries(configs).map(([key, config]) => (
                     <div key={key} className={styles.configItem}>
-                      <div className={styles.configItemHead}>
-                        <div className={styles.configLabel}>{t(config.labelKey)}</div>
-                        <Switch
-                          className={styles.configSwitch}
-                          checked={config.enabled}
-                          onChange={(checked) => handleSwitchChange(key, checked)}
-                          style={{"--checked-color":"#11B787"}}
-                        />
-                      </div>
+                      <div className={styles.configLabel}>{t(config.labelKey)}</div>
                       <div className={styles.configInputWrap}>
                         <Input
                           className={styles.configInput}
@@ -358,12 +351,19 @@ export default function Addwarn() {
                         />
                         <div className={styles.configUnit}>{config.unit}</div>
                       </div>
+                      <Switch
+                        className={styles.configSwitch}
+                        checked={config.enabled}
+                        onChange={(checked) => handleSwitchChange(key, checked)}
+                        style={{"--checked-color":"#11B787"}}
+                      />
                     </div>
                   ))}
                 </div>
             </div>
 
-            {/* 大单侦测 */}
+            {/* 大单侦测（已隐藏） */}
+            {/*
             <div className={styles.optionCard}>
                 <span>{t('addAlarm.bigOrderDetect')}</span>
                 <Switch
@@ -373,6 +373,7 @@ export default function Addwarn() {
                     style={{"--checked-color":"#11B787"}}
                 />
             </div>
+            */}
 
             {/* 交易所差价监控（已注释隐藏） */}
             {/* 
@@ -387,12 +388,14 @@ export default function Addwarn() {
             </div>
             */}
 
-            {/* 底部说明 */}
+            {/* 底部说明（大单侦测相关，已随功能隐藏） */}
+            {/*
             <div className={styles.notesSection}>
                 <p>{t('addAlarm.noteTitle')}</p>
                 <p>{t('addAlarm.note1')}</p>
                 <p>{t('addAlarm.note2')}</p>
             </div>
+            */}
 
             {/* 底部按钮 */}
             <div className={styles.bottomButtons}>

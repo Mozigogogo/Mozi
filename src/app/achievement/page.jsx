@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { Toast } from 'antd-mobile';
 import NavBar from '@/components/NavBar';
-import PCLayout from '@/components/PCLayout';
 import { getPoolStatus, getTaskPoints, getInvitationList, getTaskList, completeTask } from '@/api/points';
+import { applyCommissionWithdraw } from '@/api/commission';
 import AchievementInviteCard from './AchievementInviteCard';
 import AchievementOneTimeTasks from './AchievementOneTimeTasks';
 import AchievementMoreRewardsBanner from './AchievementMoreRewardsBanner';
@@ -17,6 +17,8 @@ import AchievementRankingCard from './AchievementRankingCard';
 import EditProfilePopup from '@/app/user/components/EditProfilePopup';
 import InviteShareModal from '@/components/InviteShareModal';
 import { safeBack } from '@/utils/navigation';
+import { fetchUserDataInfoOnce } from '@/utils/postLogin';
+import { buildInviteDatainfoPatch } from '@/utils/datainfoCommission';
 import styles from './page.module.less';
 
 function AchievementContent() {
@@ -40,6 +42,9 @@ function AchievementContent() {
     totalInvites: 0,
     earnedPoints: 0,
     totalPoints: 0,
+    totalCommission: 0,
+    withdrawnAmount: 0,
+    withdrawableAmount: 0,
   });
   const [poolStatus, setPoolStatus] = useState({
     percent: 60,
@@ -148,19 +153,64 @@ function AchievementContent() {
     }
   }, []);
 
-  const hydrateInviteCodeFromStorage = useCallback(() => {
+  const applyDatainfoToInviteData = useCallback((raw) => {
+    const patch = buildInviteDatainfoPatch(raw);
+    if (!patch) return;
+    setInviteData((prev) => ({ ...prev, ...patch }));
+  }, []);
+
+  const hydrateFromDatainfoStorage = useCallback(() => {
     try {
       const stored = localStorage.getItem('userDataInfo');
       if (!stored) return;
-      const data = JSON.parse(stored);
-      setInviteData((prev) => ({
-        ...prev,
-        inviteCode: data.inviteCode || data.invitationCode || prev.inviteCode,
-      }));
+      applyDatainfoToInviteData(JSON.parse(stored));
     } catch (error) {
       console.error('Failed to read userDataInfo:', error);
     }
-  }, []);
+  }, [applyDatainfoToInviteData]);
+
+  const fetchCommissionFromDatainfo = useCallback(async () => {
+    if (typeof window === 'undefined') return;
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const data = await fetchUserDataInfoOnce({ caller: 'achievement' });
+      if (data) applyDatainfoToInviteData(data);
+    } catch (error) {
+      console.error('Failed to fetch user datainfo for commission:', error);
+    }
+  }, [applyDatainfoToInviteData]);
+
+  const handleApplyWithdraw = useCallback(async () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) {
+      Toast.show({ content: t('pointsDetail.pleaseRegister'), position: 'bottom' });
+      return;
+    }
+
+    const withdrawable = Number(inviteData.withdrawableAmount);
+    if (!Number.isFinite(withdrawable) || withdrawable <= 0) {
+      Toast.show({ content: t('pointsDetail.applyWithdrawNoBalance'), position: 'bottom' });
+      return;
+    }
+
+    try {
+      const res = await applyCommissionWithdraw();
+      if (res?.code === 0) {
+        Toast.show({ content: t('pointsDetail.applyWithdrawSuccess'), icon: 'success', position: 'bottom' });
+        fetchCommissionFromDatainfo();
+        return;
+      }
+      Toast.show({
+        content: res?.message || t('pointsDetail.applyWithdrawFailed'),
+        icon: 'fail',
+        position: 'bottom',
+      });
+    } catch (error) {
+      console.error('Apply commission withdraw failed:', error);
+      Toast.show({ content: t('pointsDetail.applyWithdrawFailed'), icon: 'fail', position: 'bottom' });
+    }
+  }, [fetchCommissionFromDatainfo, inviteData.withdrawableAmount, t]);
 
   useEffect(() => {
     fetchPoolStatusData();
@@ -331,11 +381,18 @@ function AchievementContent() {
   }, [t]);
 
   useEffect(() => {
-    hydrateInviteCodeFromStorage();
+    hydrateFromDatainfoStorage();
+    fetchCommissionFromDatainfo();
     fetchAchievementPoints();
     fetchAchievementInvites();
     fetchAllTasks();
-  }, [fetchAchievementInvites, fetchAchievementPoints, hydrateInviteCodeFromStorage, fetchAllTasks]);
+  }, [
+    fetchAchievementInvites,
+    fetchAchievementPoints,
+    hydrateFromDatainfoStorage,
+    fetchCommissionFromDatainfo,
+    fetchAllTasks,
+  ]);
 
   const verifyStarterTask = useCallback(async (task) => {
     const code = String(task?.taskCode || '').toUpperCase();
@@ -496,7 +553,11 @@ function AchievementContent() {
 
         <div className={styles.mainGrid} ref={mainGridRef}>
           <div className={styles.leftColumn} ref={leftColumnRef}>
-            <AchievementInviteCard pointsData={inviteData} copyToClipboard={copyToClipboard} />
+            <AchievementInviteCard
+              pointsData={inviteData}
+              copyToClipboard={copyToClipboard}
+              onApplyWithdraw={handleApplyWithdraw}
+            />
             <AchievementOneTimeTasks
               tasks={starterTasks}
               onTaskClick={handleStarterTaskClick}
@@ -549,10 +610,6 @@ function AchievementContent() {
 }
 
 export default function AchievementPage() {
-  return (
-    <PCLayout>
-      <AchievementContent />
-    </PCLayout>
-  );
+  return <AchievementContent />;
 }
 

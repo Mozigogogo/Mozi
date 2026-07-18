@@ -7,8 +7,11 @@ import { useTranslation } from 'react-i18next';
 import NavBar from '@/components/NavBar';
 import InviteBanner from '@/components/InviteBanner';
 import { getPoolStatus, getTaskPoints, getInvitationList, getTaskList, completeTask } from '../../api/points';
+import { applyCommissionWithdraw } from '../../api/commission';
 import { getTgInviteLink } from '../../utils/constants';
 import { safeBack } from '@/utils/navigation';
+import { fetchUserDataInfoOnce } from '@/utils/postLogin';
+import { buildInviteDatainfoPatch } from '@/utils/datainfoCommission';
 import styles from './page.module.less';
 
 // Components
@@ -63,6 +66,9 @@ export default function PointsDetail() {
     inviteCode: '',
     totalInvites: 0,
     earnedPoints: 0,
+    totalCommission: 0,
+    withdrawnAmount: 0,
+    withdrawableAmount: 0,
     activeInvites: 0,
     pendingRewards: 0,
     level: 1,
@@ -160,27 +166,39 @@ export default function PointsDetail() {
     }
   }, [t]);
 
-  // 获取用户数据（含邀请码）- 从本地存储读取
+  const applyDatainfoToPointsData = useCallback((raw) => {
+    const patch = buildInviteDatainfoPatch(raw);
+    if (!patch) return;
+    setPointsData((prev) => ({ ...prev, ...patch }));
+  }, []);
+
+  // 从 datainfo 读取邀请码与分佣字段（本地缓存 + 接口）
   const fetchUserDataInfo = useCallback(() => {
     try {
-      // 从 localStorage 读取 userDataInfo
       const storedData = localStorage.getItem('userDataInfo');
-      
       if (storedData) {
         const data = JSON.parse(storedData);
         debugLog('🔍 [DEBUG] 从本地读取用户数据:', data);
-        
-        setPointsData(prev => ({
-          ...prev,
-          inviteCode: data.inviteCode || data.invitationCode || prev.inviteCode,
-        }));
+        applyDatainfoToPointsData(data);
       } else {
         debugLog('⚠️ [DEBUG] 本地未找到 userDataInfo 数据');
       }
     } catch (error) {
       console.error('读取本地用户数据失败:', error);
     }
-  }, []);
+  }, [applyDatainfoToPointsData]);
+
+  const fetchCommissionFromDatainfo = useCallback(async () => {
+    if (typeof window === 'undefined') return;
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const data = await fetchUserDataInfoOnce({ caller: 'pointsdetail' });
+      if (data) applyDatainfoToPointsData(data);
+    } catch (error) {
+      console.error('获取 datainfo 分佣数据失败:', error);
+    }
+  }, [applyDatainfoToPointsData]);
 
   // 获取邀请列表数据
   const fetchInvitationList = useCallback(async () => {
@@ -215,6 +233,7 @@ export default function PointsDetail() {
     // 首屏优先：先拿到用户积分总览，尽快可交互
     fetchPointsData();
     fetchUserDataInfo();
+    fetchCommissionFromDatainfo();
 
     // 次要信息延后：TG WebView 主线程紧张时先让 UI 跑起来
     scheduleLowPriority(() => fetchInvitationList());
@@ -738,6 +757,37 @@ export default function PointsDetail() {
     }
   };
 
+  const handleApplyWithdraw = async () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) {
+      Toast.show({ content: t('pointsDetail.pleaseRegister'), position: 'bottom' });
+      return;
+    }
+
+    const withdrawable = Number(pointsData.withdrawableAmount);
+    if (!Number.isFinite(withdrawable) || withdrawable <= 0) {
+      Toast.show({ content: t('pointsDetail.applyWithdrawNoBalance'), position: 'bottom' });
+      return;
+    }
+
+    try {
+      const res = await applyCommissionWithdraw();
+      if (res?.code === 0) {
+        Toast.show({ content: t('pointsDetail.applyWithdrawSuccess'), icon: 'success', position: 'bottom' });
+        fetchCommissionFromDatainfo();
+        return;
+      }
+      Toast.show({
+        content: res?.message || t('pointsDetail.applyWithdrawFailed'),
+        icon: 'fail',
+        position: 'bottom',
+      });
+    } catch (error) {
+      console.error('申请提现失败:', error);
+      Toast.show({ content: t('pointsDetail.applyWithdrawFailed'), icon: 'fail', position: 'bottom' });
+    }
+  };
+
   return (
     <div className={styles.pointsDetailContainer}>
       {/* NavBar 导航 */}
@@ -768,7 +818,11 @@ export default function PointsDetail() {
       />
 
       {/* 邀请有奖 */}
-      <InviteCard pointsData={pointsData} copyToClipboard={copyToClipboard} />
+      <InviteCard
+        pointsData={pointsData}
+        copyToClipboard={copyToClipboard}
+        onApplyWithdraw={handleApplyWithdraw}
+      />
 
       {/* 新手任务 */}
       <NewbieTasks

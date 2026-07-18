@@ -14,10 +14,11 @@
 /* PC端样式 */
 .pcPostItem {
   border-radius: 12PX;
-  padding: 12PX 16PX;
-  margin: 0 0 16PX 0;
+  padding: 14PX 16PX 14PX 24PX;
+  margin: 0 0 12PX 0;
   cursor: pointer;
   transition: box-shadow 0.3s;
+  box-sizing: border-box;
   
   &:hover {
     box-shadow: 0 4PX 12PX rgba(0, 0, 0, 0.08);
@@ -30,7 +31,7 @@
   }
   
   .postHeader {
-    margin-bottom: 8PX;
+    margin-bottom: 6PX;
     align-items: flex-start;
   }
   
@@ -48,10 +49,16 @@
   .userRow {
     gap: 6PX;
   }
-  
-  .badgeLabel {
-    padding: 2PX 6PX;
-    font-size: 11PX;
+
+  /* 用 PX 规避 postcss px→vw，分类 tag 与币种标签同尺寸 */
+  .badgeLabel,
+  .coinTag {
+    padding: 2PX 8PX;
+    font-size: 12PX;
+    line-height: 1.4;
+    border: 1PX solid #ffd591;
+    border-radius: 12PX;
+    box-sizing: border-box;
   }
   
   .postTime {
@@ -61,18 +68,28 @@
   
   .postContent {
     margin-left: 0;
-    margin-bottom: 8PX;
+    margin-bottom: 6PX;
   }
   
   .postTitle {
     font-size: 15PX;
     margin-bottom: 4PX;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    overflow: hidden;
+    word-break: break-word;
   }
   
   .postText {
     font-size: 14PX;
     line-height: 1.5;
     margin-bottom: 0;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    word-break: break-word;
   }
   
   .postImages {
@@ -91,20 +108,14 @@
     margin-top: 6PX;
     margin-bottom: 6PX;
   }
-  
-  .coinTag,
+
   .topicTag {
     padding: 4PX 10PX;
     font-size: 13PX;
   }
   
   .postFooter {
-    margin-left: 46PX;
-    padding-top: 6PX;
-  }
-  
-  .postFooter {
-    padding-top: 12PX;
+    padding-top: 10PX;
     margin-left: 0;
     padding-left: 0;
     padding-right: 0;
@@ -252,6 +263,7 @@
   align-items: center; 
   gap: 8px;
   min-width: 0;
+  flex-wrap: wrap;
 }
 
 .avatar { 
@@ -267,21 +279,26 @@
   font-weight: 600; 
   font-size: 14px; 
   color: #333;
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .badgeLabel {
+  display: inline-block;
   flex-shrink: 0;
-  padding: 2px 6px;
-  font-size: 11px;
-  color:#fa8c16;
+  padding: 2px 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #fa8c16;
   background: #FFF0E4;
-  border-radius: 4px;
+  border: 1px solid #ffd591;
+  border-radius: 12px;
   font-weight: 500;
+  box-sizing: border-box;
 }
 
 .postTime { 
@@ -336,7 +353,7 @@
 /* 币种标签样式 */
 .coinTag {
   display: inline-block;
-  padding: 4px 8px;
+  padding: 2px 8px;
   background-color: #fff2e8;
   color: #fa8c16;
   border: 1px solid #ffd591;
@@ -345,6 +362,8 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s;
+  flex-shrink: 0;
+  line-height: 1.4;
 }
 
 .coinTag:hover {

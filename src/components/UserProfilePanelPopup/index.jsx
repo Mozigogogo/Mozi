@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import RightArrowIcon from '../Icons/RightArrowIcon';
@@ -80,6 +81,42 @@ const resolveTelegramBound = (data, user) => {
   return Boolean(tgId);
 };
 
+const resolveCurrentUserId = (...extraCandidates) => {
+  const pickId = (...vals) => {
+    for (const v of vals) {
+      if (v == null) continue;
+      const s = String(v).trim();
+      if (s) return s;
+    }
+    return '';
+  };
+
+  if (typeof window !== 'undefined') {
+    try {
+      const fromStorage = localStorage.getItem('userId');
+      if (fromStorage) return pickId(fromStorage, ...extraCandidates);
+
+      const raw = localStorage.getItem('userDataInfo');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const data = parsed?.data && typeof parsed.data === 'object' ? parsed.data : parsed;
+        const user = data?.userInfo && typeof data.userInfo === 'object' ? data.userInfo : {};
+        const fromDatainfo = pickId(data?.userId, user?.userId, user?.id);
+        if (fromDatainfo) return fromDatainfo;
+      }
+
+      const ui = localStorage.getItem('userInfo');
+      if (ui) {
+        const parsed = JSON.parse(ui);
+        const fromUserInfo = pickId(parsed?.userId, parsed?.id);
+        if (fromUserInfo) return fromUserInfo;
+      }
+    } catch (_) {}
+  }
+
+  return pickId(...extraCandidates);
+};
+
 const formatPhone = (data, user) => {
   const ap = pickFirstNonEmptyString(
     data?.alertPhone,
@@ -112,10 +149,34 @@ const mapDatainfoToPopupData = (rawData, fallbackData) => {
     selectedTagId,
     boundTelegram: resolveTelegramBound(data, user),
     boundWallet: !!pickFirstNonEmptyString(user?.walletAddress, data?.walletAddress, user?.address, data?.address),
+    userId: resolveCurrentUserId(
+      data?.userId,
+      user?.userId,
+      user?.id,
+      fallbackData?.userId
+    ),
   };
   next.account = next.bio || fallbackData.account;
 
   return next;
+};
+
+const COMMISSION_SAVE_DEBOUNCE_MS = 500;
+
+const syncCommissionToLocalStorage = (value) => {
+  if (typeof window === 'undefined') return;
+  try {
+    const raw = localStorage.getItem('userDataInfo');
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    parsed.tronUsdtAddress = value;
+    if (parsed.userInfo && typeof parsed.userInfo === 'object') {
+      parsed.userInfo.tronUsdtAddress = value;
+    }
+    localStorage.setItem('userDataInfo', JSON.stringify(parsed));
+  } catch (error) {
+    console.error('[UserProfilePanelPopup] sync commission to localStorage failed:', error);
+  }
 };
 
 export default function UserProfilePanelPopup({
@@ -145,6 +206,7 @@ export default function UserProfilePanelPopup({
         initialData?.selectedTagId ||
         LEGACY_TAG_TO_ID[initialData?.selectedTag] ||
         'creator',
+      userId: resolveCurrentUserId(initialData?.userId, initialData?.id),
     }),
     [initialData, i18n?.language, t]
   );
@@ -159,6 +221,8 @@ export default function UserProfilePanelPopup({
   const [commission, setCommission] = useState(data.commission);
   const [profileData, setProfileData] = useState(data);
   const selectedTagLabel = t(`editProfile.identity.options.${selectedTagId}`);
+  const commissionSaveTimerRef = useRef(null);
+  const lastSavedCommissionRef = useRef((data.commission || '').trim());
 
   useEffect(() => {
     setProfileData(data);
@@ -168,6 +232,7 @@ export default function UserProfilePanelPopup({
     setEmail(data.email);
     setPhone(data.phone);
     setCommission(data.commission);
+    lastSavedCommissionRef.current = (data.commission || '').trim();
   }, [data]);
 
   useEffect(() => {
@@ -189,6 +254,7 @@ export default function UserProfilePanelPopup({
         setEmail(mapped.email);
         setPhone(mapped.phone);
         setCommission(mapped.commission);
+        lastSavedCommissionRef.current = (mapped.commission || '').trim();
       } catch (error) {
         console.error('[UserProfilePanelPopup] parse local userDataInfo failed:', error);
       }
@@ -205,6 +271,7 @@ export default function UserProfilePanelPopup({
         setEmail(mapped.email);
         setPhone(mapped.phone);
         setCommission(mapped.commission);
+        lastSavedCommissionRef.current = (mapped.commission || '').trim();
         localStorage.setItem('userDataInfo', JSON.stringify(res.data));
       } catch (error) {
         console.error('[UserProfilePanelPopup] fetch user datainfo failed:', error);
@@ -219,9 +286,56 @@ export default function UserProfilePanelPopup({
     };
   }, [open, data]);
 
+  const persistCommission = useCallback(async (value) => {
+    const trimmed = (value || '').trim();
+    if (trimmed === lastSavedCommissionRef.current) return;
+
+    if (typeof window !== 'undefined' && !localStorage.getItem('token')) return;
+
+    try {
+      await updateUserInfo({ tronUsdtAddress: trimmed });
+      lastSavedCommissionRef.current = trimmed;
+      syncCommissionToLocalStorage(trimmed);
+    } catch (error) {
+      console.error('[UserProfilePanelPopup] update commission failed:', error);
+    }
+  }, []);
+
+  const handleCommissionChange = useCallback(
+    (e) => {
+      const next = e.target.value;
+      setCommission(next);
+
+      if (commissionSaveTimerRef.current) {
+        clearTimeout(commissionSaveTimerRef.current);
+      }
+
+      commissionSaveTimerRef.current = setTimeout(() => {
+        persistCommission(next);
+      }, COMMISSION_SAVE_DEBOUNCE_MS);
+    },
+    [persistCommission]
+  );
+
+  useEffect(
+    () => () => {
+      if (commissionSaveTimerRef.current) {
+        clearTimeout(commissionSaveTimerRef.current);
+      }
+    },
+    []
+  );
+
   const handleSwitchTheme = () => {
     onClose?.();
     router.push('/theme');
+  };
+
+  const handleViewChannel = () => {
+    const userId = resolveCurrentUserId(profileData?.userId);
+    if (!userId) return;
+    onClose?.();
+    router.push(`/user/${encodeURIComponent(userId)}`);
   };
 
   const selectLanguage = async (lng) => {
@@ -244,8 +358,9 @@ export default function UserProfilePanelPopup({
   };
 
   if (!open) return null;
+  if (typeof document === 'undefined') return null;
 
-  return (
+  return createPortal(
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.floatingPanel} onClick={(e) => e.stopPropagation()}>
       <div className={styles.panel}>
@@ -254,7 +369,9 @@ export default function UserProfilePanelPopup({
           <div className={styles.headerRight}>
             <div className={styles.name}>{profileData.name}</div>
             <div className={styles.account}>{profileData.account}</div>
-            <div className={styles.channelBtn}>{t('user.profilePanel.viewChannel')}</div>
+            <button type="button" className={styles.channelBtn} onClick={handleViewChannel}>
+              {t('user.profilePanel.viewChannel')}
+            </button>
           </div>
         </div>
 
@@ -336,7 +453,11 @@ export default function UserProfilePanelPopup({
             <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/earn.svg" alt="" />
             <div className={styles.formField}>
               <div className={styles.formLabel}>{t('editProfile.commission.label')}</div>
-              <input value={commission} onChange={(e) => setCommission(e.target.value)} />
+              <input
+                value={commission}
+                onChange={handleCommissionChange}
+                placeholder={t('editProfile.commission.placeholder')}
+              />
             </div>
           </div>
         </div>
@@ -400,7 +521,8 @@ export default function UserProfilePanelPopup({
         </div>
       </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

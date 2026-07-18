@@ -1,16 +1,19 @@
 /* PC端搜索结果样式 */
 
 .searchResults {
-  padding: 20px;
-  background: #f5f5f5;
   min-height: calc(100vh - 64px);
+}
+
+.searchResultsLoading {
+  background: #fff;
 }
 
 .loadingWrapper {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 400px;
+  min-height: calc(100vh - 64px);
+  background: #fff;
 }
 
 .resultCard {
@@ -53,6 +56,14 @@
 
   &:hover {
     color: #11B787;
+  }
+}
+
+.actionIconActive {
+  color: rgba(250, 95, 95, 1);
+
+  &:hover {
+    color: rgba(250, 95, 95, 1);
   }
 }
 

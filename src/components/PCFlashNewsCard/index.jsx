@@ -4,6 +4,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import {
   EllipsisOutlined,
   HeartFilled,
+  HeartOutlined,
   MessageOutlined,
   ReloadOutlined,
   ShareAltOutlined,
@@ -12,7 +13,7 @@ import PCPagination from '@/components/PCPagination';
 import { useTranslation } from 'react-i18next';
 import styles from './index.module.less';
 
-function NewsItem({ item, onClick }) {
+function NewsItem({ item, onClick, onLikeClick, onShareClick }) {
   const avatarText = String(item?.account || '').trim().slice(0, 1).toUpperCase();
 
   return (
@@ -57,18 +58,34 @@ function NewsItem({ item, onClick }) {
         <div className={styles.newsTitle}>{item.title}</div>
         <div className={styles.desc}>{item.desc}</div>
         <div className={styles.actions}>
-          <span className={styles.actionLike}>
-            <HeartFilled />
-            {item.likeCount}
-          </span>
+          <button
+            type="button"
+            className={`${styles.action} ${styles.actionBtn} ${item.isLiked ? styles.actionLike : ''}`}
+            aria-label="like"
+            onClick={(e) => {
+              e.stopPropagation();
+              onLikeClick?.(item);
+            }}
+          >
+            {item.isLiked ? <HeartFilled /> : <HeartOutlined />}
+            {item.likeCount ?? 0}
+          </button>
           <span className={styles.action}>
             <MessageOutlined />
-            {item.commentCount}
+            {item.commentCount ?? 0}
           </span>
-          <span className={styles.action}>
+          <button
+            type="button"
+            className={`${styles.action} ${styles.actionBtn}`}
+            aria-label="share"
+            onClick={(e) => {
+              e.stopPropagation();
+              onShareClick?.(item);
+            }}
+          >
             <ShareAltOutlined />
-            {item.shareCount}
-          </span>
+            {item.shareCount ?? 0}
+          </button>
         </div>
       </div>
     </div>
@@ -98,6 +115,8 @@ export default function PCFlashNewsCard({
   loading = false,
   onRefresh,
   onItemClick,
+  onLikeClick,
+  onShareClick,
   page = 1,
   pageSize = 3,
   total = 0,
@@ -145,7 +164,15 @@ export default function PCFlashNewsCard({
         style={loading && lockedListHeight ? { minHeight: `${lockedListHeight}px` } : undefined}
       >
         {hasItems ? (
-          items.map((item) => <NewsItem key={item.id} item={item} onClick={onItemClick} />)
+          items.map((item) => (
+            <NewsItem
+              key={item.id}
+              item={item}
+              onClick={onItemClick}
+              onLikeClick={onLikeClick}
+              onShareClick={onShareClick}
+            />
+          ))
         ) : loading ? (
           <>
             {Array.from({ length: pageSize }).map((_, idx) => (

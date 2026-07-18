@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
 import { Toast } from "antd-mobile";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
@@ -11,8 +10,6 @@ import { request } from "@/utils/request";
 import { Interface } from "@/utils/constants";
 import { safeBack } from "@/utils/navigation";
 import styles from "./page.module.less";
-
-const PCLayout = dynamic(() => import("@/components/PCLayout"), { ssr: false });
 
 const THEMES = [
   { id: "default", nameKey: "theme.themes.default.name", descKey: "theme.themes.default.description", primaryColor: "#11B787", bgColor: "#EEF0F3", themeColor: 1 },
@@ -164,11 +161,7 @@ export default function ThemeCenterPage() {
   );
 
   if (isDesktop) {
-    return (
-      <PCLayout>
-        <div className={styles.pcContentArea}>{pageContent}</div>
-      </PCLayout>
-    );
+    return <div className={styles.pcContentArea}>{pageContent}</div>;
   }
 
   return <Layout>{pageContent}</Layout>;

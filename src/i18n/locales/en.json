@@ -394,6 +394,13 @@
       "1y": "1Y"
     },
     "addFavoriteButton": "Add Favorite",
+    "marketActions": {
+      "bigOrderBuy": "Large buy",
+      "bigOrderSell": "Large sell",
+      "tradingRadarMonitoring": "Monitoring",
+      "tradingRadarActive": "Active",
+      "tradingRadarAbnormal": "Abnormal"
+    },
     "loadFinished": "All loaded",
     "robotMessage": "Want to hear my analysis of the market?",
     "pullToRefresh": {
@@ -420,10 +427,13 @@
     "tabs": {
       "watchlist": "Watchlist",
       "watchlistDesc": "His watchlist",
+      "watchlistDescSelf": "My watchlist",
       "monitor": "Monitor",
       "monitorDesc": "Monitored",
+      "monitorDescSelf": "My monitored items",
       "content": "Content",
-      "contentDesc": "Posts"
+      "contentDesc": "Posts",
+      "contentDescSelf": "My posts"
     },
     "list": {
       "coin": "Coin",
@@ -888,6 +898,7 @@
   "robot": {
     "title": "AI Assistant",
     "chattingTitle": "In conversation...",
+    "newConversation": "New chat",
     "subtitle": "Smart Q&A · Quick Response",
     "connecting": "Connecting...",
     "conversationId": "Conversation ID",
@@ -924,6 +935,7 @@
     "model": {
       "analyze": "Analyze",
       "chat": "Chat",
+      "signals": "Signal card",
       "bigOrder": "Big order detection",
       "openMenu": "Switch model"
     },
@@ -954,6 +966,83 @@
   "aiAssistant": {
     "title": "AI Assistant Professional Edition",
     "subtitle": "Smart Q&A · Quick Response"
+  },
+  "signalCard": {
+    "source": {
+      "bigorder_anomaly": "Large-order anomaly",
+      "quantitative": "Quant six-factor",
+      "technical": "Technical analysis"
+    },
+    "direction": {
+      "long": "Long",
+      "short": "Short"
+    },
+    "regime": {
+      "trending_down": "Downtrend",
+      "trending_up": "Uptrend",
+      "ranging": "Range-bound",
+      "volatile": "High volatility"
+    },
+    "confidence": "Confidence",
+    "confidenceShort": "CONF",
+    "gradeBadge": "Grade {{grade}}",
+    "liveSignalTitle": "Live trading signal",
+    "strategyVersion": "Strategy v{{version}}",
+    "currentPrice": "Current price",
+    "entryZone": "Entry zone",
+    "takeProfit": "Take profit TP",
+    "stopLoss": "Stop loss SL",
+    "riskReward": "Risk/reward",
+    "suggestedPosition": "Suggested size",
+    "kellyPosition": "Kelly size",
+    "signalSources": "Sources",
+    "signalFusion": "Signal fusion",
+    "mathDerivation": "Math derivation",
+    "historicalBacktest": "Historical backtest",
+    "winRate": "Win rate",
+    "sample": "Sample",
+    "avgProfit": "Avg profit",
+    "globalWinRate": "Global win rate",
+    "invalidation": "Invalidation",
+    "breakAbove": "Break above",
+    "breakBelow": "Break below",
+    "viewMore": "View more",
+    "mathMcBear": "MC bearish",
+    "mathMcBull": "MC bullish",
+    "mathVolatility": "Volatility",
+    "mathTrend": "Trend",
+    "alphaPanel": {
+      "title": "Today's Alpha signals",
+      "alert": "{{count}} Grade S/A multi-factor opportunities detected",
+      "ariaLabel": "Alpha signals"
+    },
+    "fireBanner": {
+      "main": "Grade S/A multi-factor opportunities detected",
+      "sub": "MULTI-DIMENSIONAL RESONANCE SIGNAL DETECTED",
+      "subShort": "S/A GRADE SIGNAL",
+      "ariaLabel": "View Alpha signals"
+    },
+    "alphaQuery": "View more Grade S multi-factor trades",
+    "alphaMockReply": "Based on the latest market data in your timezone, Bitcoin is in a wide range. Price is trading between $103,000–$105,000. MACD shows bullish momentum fading but no clear bearish cross yet. Watch the $103,000 support; a sustained break lower may start a new leg down.",
+    "scanReply": {
+      "intro": "Latest full-market scan complete, covering {{totalCoins}} coins",
+      "scanMinutes": ", took about {{minutes}} min",
+      "scanSeconds": ", took about {{seconds}} s",
+      "signalsFound": ", found {{signalCount}} Grade S/A multi-factor opportunities.",
+      "footer": "Priority signals below — size positions according to your risk tolerance."
+    },
+    "mockNotes": {
+      "btc": [
+        "Strong trend persistence (Hurst > 0.55), supports long",
+        "MC bullish probability 78%, direction confirmed",
+        "Mid volatility P35, stable signal"
+      ],
+      "ethSol": [
+        "Hurst 0.58, moderate trend strength",
+        "MC bullish probability 72%, bulls in control",
+        "Support zone intact, favorable risk/reward"
+      ]
+    }
   },
   "language": {
     "zh": "简体中文",
@@ -1052,7 +1141,15 @@
     "inviteCode": "Invite Code",
     "shareCount": "Total Invited",
     "totalEarned": "Invite Points",
+    "totalCommission": "Total Commission",
+    "withdrawnAmount": "Withdrawn",
+    "withdrawableAmount": "Withdrawable",
     "applyTH": "Withdraw",
+    "applyWithdrawAction": "Apply Now",
+    "applyWithdrawSuccess": "Withdrawal request submitted",
+    "applyWithdrawFailed": "Withdrawal request failed",
+    "applyWithdrawNoBalance": "No withdrawable balance",
+    "withdrawHistory": "Withdrawal Records",
     "lastVisit": "Last Visit",
     "inviteRules": {
       "1": "1. Points will be used for ecosystem benefits in the future",
@@ -1168,6 +1265,20 @@
   "pointsHistory": {
     "title": "Points History",
     "empty": "No points records yet"
+  },
+  "withdrawHistory": {
+    "title": "Withdrawal Records",
+    "empty": "No withdrawal records",
+    "loadFailed": "Failed to load",
+    "toAddress": "Receiving Address",
+    "status": {
+      "PENDING": "Under Review",
+      "PAID": "Paid",
+      "REJECTED": "Rejected (Balance Refunded)",
+      "pending": "Under Review",
+      "paid": "Paid",
+      "rejected": "Rejected (Balance Refunded)"
+    }
   },
   "pcr": {
     "title": "Long/Short Ratio",
@@ -1835,7 +1946,8 @@
       "businessMailSubject": "Business cooperation inquiry",
       "inviteRewards": "Referral Rewards",
       "helpCenter": "Help Center",
-      "videoGuides": "Video Guides"
+      "videoGuides": "Video Guides",
+      "copyright": "Copyright © {{startYear}} – {{endYear}} MoziInnovations"
     },
     "user": {
       "notLoggedIn": "Not Logged In",
@@ -1901,7 +2013,13 @@
     "wechatAlarm": "WeChat alerts",
     "wechatHint": "Turn on WeChat notifications to receive alerts.",
     "telegramBot": "Telegram bot",
-    "telegramHint": "Start the bot to receive alerts.",
+    "telegramHint": "If chat ID cannot be retrieved automatically, please enter it manually.",
+    "telegramOpenMiniApp": "Open Telegram Mini App to enable alerts",
+    "telegramOpenMiniAppHint": "Bind in Telegram to receive alert notifications",
+    "openIdPlaceholder": "Enter WeChat openId",
+    "chatIdPlaceholder": "Enter Telegram chatId",
+    "wechatOpenIdRequired": "openId is required when WeChat push is enabled",
+    "tgChatIdRequired": "chatId is required when Telegram push is enabled",
     "popupAlarm": "In-app popup",
     "popupHint": "Show a popup reminder in the app or browser.",
     "freqTitle": "Alert frequency",

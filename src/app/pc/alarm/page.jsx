@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Input, Switch, Toast } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
-import PCLayout from '@/components/PCLayout';
 import { addAlarm, completeAlarmTask, getAlarmInfoByUserId, getCoinInfo } from '@/api/alarm';
 import { createAlertConfig, modifyAlertConfig } from '@/api/user';
+import { useAlertConfig } from '@/hooks/useAlertConfig';
 import {
   alertFrequencyFromApi,
   alertFrequencyToApi,
@@ -15,13 +15,20 @@ import {
   parseWebhookUrlsFromConfig,
   validateWebhookUrls,
 } from '@/utils/alertConfig';
+import {
+  buildFullWarnContentPayload,
+} from '@/utils/warnContent';
 import { request } from '@/utils/request';
-import { Interface } from '@/utils/constants';
+import { getTgAlertMiniAppLink, Interface } from '@/utils/constants';
+import { Loading } from '@/components/Loading';
 import { allCountries } from 'country-telephone-data';
 import styles from './page.module.less';
 
 const CDN_PUBLIC_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public';
 const ALERT_ICON_CDN = `${CDN_PUBLIC_PREFIX}/icons`;
+const HISTORY_PRICE_CODES = ['priceRise', 'priceFall'];
+const HISTORY_FLUSH_DEBOUNCE_MS = 500;
+const HISTORY_FLUSH_BLUR_MS = 200;
 
 function WebhookAddIcon() {
   return (
@@ -61,27 +68,71 @@ function PCAlarmContent() {
   const [spreadMonitor, setSpreadMonitor] = useState(false);
   const [phoneEnabled, setPhoneEnabled] = useState(true);
   const [emailEnabled, setEmailEnabled] = useState(true);
-  const [inAppEnabled, setInAppEnabled] = useState(false);
   const [smsEnabled, setSmsEnabled] = useState(false);
   const [countryCode, setCountryCode] = useState('+86');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [webhookEnabled, setWebhookEnabled] = useState(false);
   const [webhookUrls, setWebhookUrls] = useState(['']);
-  const [wechatEnabled, setWechatEnabled] = useState(false);
-  const [telegramEnabled, setTelegramEnabled] = useState(false);
   const [alertFrequency, setAlertFrequency] = useState('daily');
   const [webhookError, setWebhookError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [sideSubmitting, setSideSubmitting] = useState(false);
   const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
   const countryDropdownRef = useRef(null);
+  const { fetchConfig: fetchAlertConfig, restoreFromLocalStorage } = useAlertConfig({ autoFetch: false });
+
+  const applyAlertConfigToSidePanel = useCallback((cfg) => {
+    if (!cfg || typeof cfg !== 'object') return;
+    if (cfg.alertPhoneCountryCode) setCountryCode(String(cfg.alertPhoneCountryCode));
+    if (cfg.alertPhone) setPhone(String(cfg.alertPhone));
+    if (cfg.alertEmail) setEmail(String(cfg.alertEmail));
+    if (cfg.phoneEnabled !== undefined) setPhoneEnabled(Number(cfg.phoneEnabled) === 1);
+    if (cfg.emailEnabled !== undefined) setEmailEnabled(Number(cfg.emailEnabled) === 1);
+    if (cfg.smsEnabled !== undefined) setSmsEnabled(Number(cfg.smsEnabled) === 1);
+    if (cfg.webhookEnabled !== undefined) setWebhookEnabled(isAlertFlagOn(cfg.webhookEnabled));
+    setWebhookUrls(parseWebhookUrlsFromConfig(cfg));
+    setAlertFrequency(alertFrequencyFromApi(cfg.alertFrequency));
+  }, []);
 
   const [historyState, setHistoryState] = useState({
     loading: false,
     data: {},
     activeSymbol: null,
   });
+  const [historyInputs, setHistoryInputs] = useState({});
+  const [historySaving, setHistorySaving] = useState(false);
+  const [historyTogglingCode, setHistoryTogglingCode] = useState(null);
+  const historyInputsRef = useRef({});
+  const historyBaselineRef = useRef({});
+  const historyDirtyRef = useRef(new Set());
+  const historyFlushTimerRef = useRef(null);
+  const historyActiveSymbolRef = useRef(null);
+  const historySavingRef = useRef(false);
+  const historyDataRef = useRef({});
+  const historyTogglingRef = useRef(null);
+
+  historyActiveSymbolRef.current = historyState.activeSymbol;
+  historySavingRef.current = historySaving;
+  historyDataRef.current = historyState.data;
+
+  const isPriceDown = useMemo(() => {
+    if (coinData.change == null || coinData.change === '--') return false;
+    return String(coinData.change).includes('-');
+  }, [coinData.change]);
+
+  const displayChange = useMemo(() => {
+    const raw = coinData.change;
+    if (raw == null || raw === '' || raw === '--') return '--';
+    const text = String(raw).trim();
+    if (text.endsWith('%')) return text;
+    const n = parseFloat(text.replace(/,/g, ''));
+    if (Number.isFinite(n)) {
+      const prefix = n > 0 ? '+' : '';
+      return `${prefix}${n.toFixed(2)}%`;
+    }
+    return text;
+  }, [coinData.change]);
 
   useEffect(() => {
     const fetchCoinData = async () => {
@@ -163,6 +214,9 @@ function PCAlarmContent() {
         }
 
         const symbols = Object.keys(normalized || {});
+        // 重新拉取后丢弃本地输入缓存，避免触发后 active 已变但输入/开关状态不同步
+        historyBaselineRef.current = {};
+        historyDirtyRef.current = new Set();
         setHistoryState({
           loading: false,
           data: normalized || {},
@@ -219,6 +273,11 @@ function PCAlarmContent() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [countryDropdownOpen]);
 
+  const parseHistoryContentForInput = (content) => {
+    if (content == null || content === '' || content === '--') return '';
+    return String(content).replace(/[%$]/g, '').trim();
+  };
+
   const getHistoryWarnRows = (item) => {
     const backend = Array.isArray(item?.warnContent) ? item.warnContent : [];
     return historyFixedCodes.map((fixed) => {
@@ -231,39 +290,309 @@ function PCAlarmContent() {
     });
   };
 
-  const toggleHistoryWarn = async (row) => {
+  const syncHistoryInputsFromData = useCallback((sym, data) => {
+    const rows = historyFixedCodes.map((fixed) => {
+      const backend = Array.isArray(data?.[sym]?.warnContent) ? data[sym].warnContent : [];
+      const found = backend.find((x) => x?.code === fixed.code);
+      return {
+        ...fixed,
+        content: found?.content ?? fixed.defaultContent,
+      };
+    });
+    const next = {};
+    rows.forEach((row) => {
+      next[row.code] = parseHistoryContentForInput(row.content);
+    });
+    historyBaselineRef.current[sym] = { ...next };
+    historyInputsRef.current = next;
+    setHistoryInputs(next);
+    historyDirtyRef.current = new Set();
+  }, [historyFixedCodes]);
+
+  useEffect(() => {
     const sym = historyState.activeSymbol;
-    if (!sym) return;
-    const interfaceUrl = row.active ? Interface.CLOSE_WARN : Interface.OPEN_WARN;
+    if (!sym) {
+      historyInputsRef.current = {};
+      setHistoryInputs({});
+      historyDirtyRef.current = new Set();
+      return;
+    }
+    if (historyState.loading) return;
+    // 有未保存编辑时保留用户输入；否则与服务端 warnContent 对齐
+    if (historyDirtyRef.current.size > 0) return;
+    syncHistoryInputsFromData(sym, historyState.data);
+  }, [historyState.activeSymbol, historyState.loading, historyState.data, syncHistoryInputsFromData]);
+
+  const applyHistoryContentPatch = useCallback((sym, contentPatch) => {
+    setHistoryState((prev) => {
+      const next = { ...prev.data };
+      const item = next[sym];
+      if (!item) return prev;
+      const backend = Array.isArray(item?.warnContent) ? item.warnContent : [];
+      let newWarnContent = [...backend];
+      Object.entries(contentPatch).forEach(([code, formattedValue]) => {
+        const existingIndex = newWarnContent.findIndex((w) => w?.code === code);
+        if (existingIndex >= 0) {
+          newWarnContent[existingIndex] = { ...newWarnContent[existingIndex], content: formattedValue };
+        } else {
+          const rows = getHistoryWarnRows(item);
+          const row = rows.find((r) => r.code === code);
+          newWarnContent.push({ code, content: formattedValue, active: Boolean(row?.active) });
+        }
+      });
+      next[sym] = { ...item, warnContent: newWarnContent };
+      historyDataRef.current = next;
+      return { ...prev, data: next };
+    });
+  }, []);
+
+  const buildHistoryWarnItems = useCallback((sym, overrideCode, overrideValue) => {
+    const inputs = historyInputsRef.current;
+    const item = historyDataRef.current?.[sym];
+    const rows = getHistoryWarnRows(item);
+    return historyFixedCodes.map((fixed) => {
+      let raw = String(inputs[fixed.code] ?? '').trim();
+      if (!raw) {
+        const row = rows.find((r) => r.code === fixed.code);
+        raw = parseHistoryContentForInput(row?.content);
+      }
+      if (fixed.code === overrideCode && overrideValue != null) {
+        raw = String(overrideValue).trim();
+      }
+      return { code: fixed.code, content: raw };
+    });
+  }, [historyFixedCodes]);
+
+  const flushHistoryChanges = useCallback(async () => {
+    if (historyFlushTimerRef.current) {
+      clearTimeout(historyFlushTimerRef.current);
+      historyFlushTimerRef.current = null;
+    }
+
+    const sym = historyActiveSymbolRef.current;
+    if (!sym || historySavingRef.current) return true;
+
+    const baseline = historyBaselineRef.current[sym] || {};
+    const inputs = historyInputsRef.current;
+    const dirtyCodes = [...historyDirtyRef.current];
+
+    for (const code of dirtyCodes) {
+      const value = String(inputs[code] ?? '').trim();
+      const oldVal = String(baseline[code] ?? '').trim();
+      if (value === oldVal) continue;
+      if (!value || !/^[0-9]+(\.[0-9]+)?$/.test(value)) {
+        Toast.show({ content: t('myAlarm.enterNumber', { defaultValue: '请输入数字' }) });
+        return false;
+      }
+    }
+
+    const hasRealChanges = dirtyCodes.some((code) => {
+      const value = String(inputs[code] ?? '').trim();
+      const oldVal = String(baseline[code] ?? '').trim();
+      return value !== oldVal;
+    });
+
+    if (dirtyCodes.length === 0 || !hasRealChanges) {
+      historyDirtyRef.current.clear();
+      return true;
+    }
+
+    const content = buildFullWarnContentPayload(buildHistoryWarnItems(sym));
+    if (Object.keys(content).length === 0) {
+      historyDirtyRef.current.clear();
+      return true;
+    }
+
+    setHistorySaving(true);
     try {
+      const addRes = await request({
+        url: Interface.ADD_WARN,
+        method: 'POST',
+        data: { symbol: sym, content },
+      });
+
+      if (addRes?.data === true) {
+        applyHistoryContentPatch(sym, content);
+        const nextBaseline = { ...(historyBaselineRef.current[sym] || {}) };
+        Object.keys(content).forEach((code) => {
+          nextBaseline[code] = String(inputs[code] ?? parseHistoryContentForInput(content[code]) ?? '').trim();
+        });
+        historyBaselineRef.current[sym] = nextBaseline;
+        historyDirtyRef.current.clear();
+        Toast.show({ content: t('myAlarm.editSuccess', { defaultValue: '修改成功' }) });
+        return true;
+      }
+      Toast.show({ content: addRes?.errorMsg || t('myAlarm.editFailed', { defaultValue: '修改失败' }) });
+      return false;
+    } catch (e) {
+      Toast.show({ content: t('myAlarm.editFailed', { defaultValue: '修改失败' }) });
+      return false;
+    } finally {
+      setHistorySaving(false);
+    }
+  }, [applyHistoryContentPatch, buildHistoryWarnItems, t]);
+
+  const scheduleHistoryFlush = useCallback(
+    (delay = HISTORY_FLUSH_DEBOUNCE_MS) => {
+      if (historyFlushTimerRef.current) clearTimeout(historyFlushTimerRef.current);
+      historyFlushTimerRef.current = setTimeout(() => {
+        historyFlushTimerRef.current = null;
+        flushHistoryChanges();
+      }, delay);
+    },
+    [flushHistoryChanges],
+  );
+
+  const markHistoryFieldDirty = useCallback(
+    (code, value) => {
+      historyInputsRef.current = { ...historyInputsRef.current, [code]: value };
+      setHistoryInputs(historyInputsRef.current);
+      historyDirtyRef.current.add(code);
+      scheduleHistoryFlush();
+    },
+    [scheduleHistoryFlush],
+  );
+
+  const handleHistoryInputBlur = useCallback(() => {
+    scheduleHistoryFlush(HISTORY_FLUSH_BLUR_MS);
+  }, [scheduleHistoryFlush]);
+
+  const handleSelectHistorySymbol = useCallback(
+    async (sym) => {
+      if (sym === historyState.activeSymbol) return;
+      await flushHistoryChanges();
+      setHistoryState((prev) => ({ ...prev, activeSymbol: sym }));
+    },
+    [historyState.activeSymbol, flushHistoryChanges],
+  );
+
+  useEffect(() => {
+    if (activeTab !== 'history') {
+      flushHistoryChanges();
+      if (historyFlushTimerRef.current) {
+        clearTimeout(historyFlushTimerRef.current);
+        historyFlushTimerRef.current = null;
+      }
+    }
+    return () => {
+      if (historyFlushTimerRef.current) {
+        clearTimeout(historyFlushTimerRef.current);
+        historyFlushTimerRef.current = null;
+      }
+    };
+  }, [activeTab, flushHistoryChanges]);
+
+  const ensureHistoryWarnRegistered = async (sym, row, effectiveVal) => {
+    const val = String(effectiveVal ?? '').trim();
+    if (!val || !/^[0-9]+(\.[0-9]+)?$/.test(val)) {
+      Toast.show({ content: t('myAlarm.setValueFirst', { defaultValue: '请先设置告警值' }) });
+      return false;
+    }
+    const fullContent = buildFullWarnContentPayload(buildHistoryWarnItems(sym, row.code, val));
+    try {
+      const addRes = await request({
+        url: Interface.ADD_WARN,
+        method: 'POST',
+        data: { symbol: sym, content: fullContent },
+      });
+      if (addRes?.data !== true) {
+        Toast.show({ content: addRes?.errorMsg || t('myAlarm.enableFailed', { defaultValue: '开启失败' }) });
+        return false;
+      }
+      applyHistoryContentPatch(sym, fullContent);
+      historyBaselineRef.current[sym] = {
+        ...(historyBaselineRef.current[sym] || {}),
+        [row.code]: val,
+      };
+      historyDirtyRef.current.delete(row.code);
+      return true;
+    } catch (e) {
+      Toast.show({ content: t('myAlarm.enableFailed', { defaultValue: '开启失败' }) });
+      return false;
+    }
+  };
+
+  const toggleHistoryWarn = async (row) => {
+    const sym = historyActiveSymbolRef.current || historyState.activeSymbol;
+    if (!sym || historyTogglingRef.current) return;
+
+    const flushed = await flushHistoryChanges();
+    if (flushed === false) return;
+
+    const baselineVal = String(historyBaselineRef.current[sym]?.[row.code] ?? '').trim();
+    const inputVal = String(historyInputsRef.current[row.code] ?? '').trim();
+    const effectiveVal = inputVal || baselineVal || parseHistoryContentForInput(row.content);
+    const nextActive = !row.active;
+
+    historyTogglingRef.current = row.code;
+    setHistoryTogglingCode(row.code);
+
+    try {
+      // 告警触发后后端会置 active=false，仅 OPEN 无法重新开启，须先 ADD 写回当前阈值（改值能开也是因此）
+      if (nextActive) {
+        const registered = await ensureHistoryWarnRegistered(sym, row, effectiveVal);
+        if (!registered) return;
+      }
+
+      const interfaceUrl = row.active ? Interface.CLOSE_WARN : Interface.OPEN_WARN;
       const res = await request({
         url: interfaceUrl,
         data: { code: row.code, symbol: sym },
       });
       const ok = Boolean(res?.data);
       if (!ok) {
-        Toast.show({ content: row.active ? t('myAlarm.disableFailed', { defaultValue: '关闭失败' }) : t('myAlarm.enableFailed', { defaultValue: '开启失败' }) });
+        Toast.show({
+          content: row.active
+            ? t('myAlarm.disableFailed', { defaultValue: '关闭失败' })
+            : t('myAlarm.enableFailed', { defaultValue: '开启失败' }),
+        });
         return;
       }
       setHistoryState((prev) => {
         const next = { ...prev.data };
         const item = next[sym];
-        const backend = Array.isArray(item?.warnContent) ? item.warnContent : [];
-        next[sym] = {
-          ...item,
-          warnContent: backend.map((w) => (w?.code === row.code ? { ...w, active: !row.active } : w)),
-        };
+        if (!item) return prev;
+        const backend = Array.isArray(item?.warnContent) ? [...item.warnContent] : [];
+        const idx = backend.findIndex((w) => w?.code === row.code);
+        const formattedValue = HISTORY_PRICE_CODES.includes(row.code)
+          ? String(effectiveVal).trim()
+          : effectiveVal
+            ? `${String(effectiveVal).trim()}%`
+            : row.content;
+        if (idx >= 0) {
+          backend[idx] = { ...backend[idx], active: nextActive };
+        } else {
+          backend.push({
+            code: row.code,
+            content: formattedValue || row.content,
+            active: nextActive,
+          });
+        }
+        next[sym] = { ...item, warnContent: backend };
+        historyDataRef.current = next;
         return { ...prev, data: next };
       });
-      Toast.show({ content: row.active ? t('myAlarm.disableSuccess', { defaultValue: '已关闭' }) : t('myAlarm.enableSuccess', { defaultValue: '已开启' }) });
+      Toast.show({
+        content: row.active
+          ? t('myAlarm.disableSuccess', { defaultValue: '已关闭' })
+          : t('myAlarm.enableSuccess', { defaultValue: '已开启' }),
+      });
     } catch (e) {
-      Toast.show({ content: row.active ? t('myAlarm.disableFailed', { defaultValue: '关闭失败' }) : t('myAlarm.enableFailed', { defaultValue: '开启失败' }) });
+      Toast.show({
+        content: row.active
+          ? t('myAlarm.disableFailed', { defaultValue: '关闭失败' })
+          : t('myAlarm.enableFailed', { defaultValue: '开启失败' }),
+      });
+    } finally {
+      historyTogglingRef.current = null;
+      setHistoryTogglingCode(null);
     }
   };
 
   const deleteHistorySymbol = async () => {
     const sym = historyState.activeSymbol;
     if (!sym) return;
+    await flushHistoryChanges();
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
       const res = await request({
@@ -272,6 +601,7 @@ function PCAlarmContent() {
         headers: token ? { authentication: token } : undefined,
       });
       if ((res?.code === 200 || res?.code === 0) && res?.data === true) {
+        delete historyBaselineRef.current[sym];
         setHistoryState((prev) => {
           const next = { ...prev.data };
           delete next[sym];
@@ -363,7 +693,6 @@ function PCAlarmContent() {
     if (spreadMonitor) content.exchangeSpread = '';
     if (phoneEnabled) content.phoneOn = true;
     if (emailEnabled) content.emailOn = true;
-    if (inAppEnabled) content.appOn = true;
     try {
       const { getAppChannel } = await import('@/utils/core');
       const channel = getAppChannel();
@@ -401,25 +730,23 @@ function PCAlarmContent() {
   };
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      const stored = localStorage.getItem('alertConfig');
-      if (!stored || stored === 'null') return;
-      const cfg = JSON.parse(stored);
-      if (cfg?.alertPhoneCountryCode) setCountryCode(cfg.alertPhoneCountryCode);
-      if (cfg?.alertPhone) setPhone(String(cfg.alertPhone));
-      if (cfg?.alertEmail) setEmail(String(cfg.alertEmail));
-      if (cfg?.phoneEnabled !== undefined) setPhoneEnabled(Number(cfg.phoneEnabled) === 1);
-      if (cfg?.emailEnabled !== undefined) setEmailEnabled(Number(cfg.emailEnabled) === 1);
-      if (cfg?.defaultEnabled !== undefined) setInAppEnabled(Number(cfg.defaultEnabled) === 1);
-      if (cfg?.smsEnabled !== undefined) setSmsEnabled(Number(cfg.smsEnabled) === 1);
-      if (cfg?.webhookEnabled !== undefined) setWebhookEnabled(isAlertFlagOn(cfg.webhookEnabled));
-      setWebhookUrls(parseWebhookUrlsFromConfig(cfg));
-      setAlertFrequency(alertFrequencyFromApi(cfg.alertFrequency));
-    } catch (e) {
-      // ignore invalid local data
-    }
-  }, []);
+    // 先用 localStorage 快速回填，再从接口拉取最新配置（与移动端一致）
+    const restored = restoreFromLocalStorage();
+    if (restored) applyAlertConfigToSidePanel(restored);
+
+    const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+    if (!userId) return undefined;
+
+    let cancelled = false;
+    (async () => {
+      const cfg = await fetchAlertConfig();
+      if (!cancelled && cfg) applyAlertConfigToSidePanel(cfg);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [applyAlertConfigToSidePanel, fetchAlertConfig, restoreFromLocalStorage]);
 
   const updateWebhookUrl = (index, value) => {
     setWebhookUrls((prev) => prev.map((u, i) => (i === index ? value : u)));
@@ -485,14 +812,16 @@ function PCAlarmContent() {
 
     setSideSubmitting(true);
     try {
+      // PC 不提供 TG 开关：update 合并本地已有 tgEnabled/chatId；新建默认 0
       const alertConfig = {
         phoneEnabled: phoneEnabled ? 1 : 0,
         emailEnabled: emailEnabled ? 1 : 0,
         smsEnabled: smsEnabled ? 1 : 0,
-        defaultEnabled: inAppEnabled ? 1 : 0,
         webhookEnabled: webhookEnabled ? 1 : 0,
         webhookUrls: webhookCheck.urls,
         alertFrequency: alertFrequencyToApi(alertFrequency),
+        wechatEnabled: 0,
+        openId: null,
       };
       if ((phoneEnabled || smsEnabled) && phone && String(phone).trim()) {
         alertConfig.alertPhone = String(phone).trim();
@@ -512,7 +841,7 @@ function PCAlarmContent() {
         if (typeof window !== 'undefined') {
           localStorage.setItem('alertConfig', JSON.stringify(result.data));
         }
-        Toast.show({ content: t('oneClickAlarm.enabled') || '已开启告警' });
+        Toast.show({ content: t('oneClickAlarm.enableSuccess') });
       } else {
         Toast.show({ content: result?.error || t('oneClickAlarm.enableFailed') });
       }
@@ -556,7 +885,7 @@ function PCAlarmContent() {
                         key={sym}
                         type="button"
                         className={`${styles.historyCoinItem} ${historyState.activeSymbol === sym ? styles.historyCoinItemActive : ''}`}
-                        onClick={() => setHistoryState((prev) => ({ ...prev, activeSymbol: sym }))}
+                        onClick={() => handleSelectHistorySymbol(sym)}
                       >
                         <span className={styles.historyCoinAvatar}>{sym.slice(0, 1)}</span>
                         <span className={styles.historyCoinText}>
@@ -574,7 +903,9 @@ function PCAlarmContent() {
 
               <div className={styles.historyRight}>
                 {historyState.loading ? (
-                  <div className={styles.loading}>{t('addAlarm.loading')}</div>
+                  <div className={styles.loadingWrap}>
+                    <Loading tip={t('addAlarm.loading')} size={28} />
+                  </div>
                 ) : historyState.activeSymbol ? (
                   <>
                     <div className={styles.historyHeader}>
@@ -603,12 +934,22 @@ function PCAlarmContent() {
                           <div className={styles.historyRowRight}>
                             <div className={styles.historyRowInputWrap}>
                               <span className={styles.historyRowPrefix}>{row.unit === '$' ? '$' : ''}</span>
-                              <input className={styles.historyRowInput} value={row.content} readOnly />
+                              <input
+                                className={styles.historyRowInput}
+                                type="text"
+                                inputMode="decimal"
+                                value={historyInputs[row.code] ?? parseHistoryContentForInput(row.content)}
+                                disabled={historySaving}
+                                placeholder={t('myAlarm.enterNumber', { defaultValue: '请输入数字' })}
+                                onChange={(e) => markHistoryFieldDirty(row.code, e.target.value)}
+                                onBlur={handleHistoryInputBlur}
+                              />
                               <span className={styles.historyRowUnit}>{row.unit === '%' ? '%' : ''}</span>
                             </div>
                             <Switch
                               className={styles.compactSwitch}
                               checked={row.active}
+                              disabled={historySaving || historyTogglingCode === row.code}
                               onChange={() => toggleHistoryWarn(row)}
                               style={{ '--checked-color': '#11B787' }}
                             />
@@ -631,9 +972,27 @@ function PCAlarmContent() {
         ) : (
         <div className={styles.card}>
           <div className={styles.cardHeader}>
-            <div className={styles.headerTitleRow}>
-              <div className={styles.headerTitle}>{t('addAlarm.configTitle', { defaultValue: '配置告警' })}</div>
-              <div className={styles.headerMeta}>{t('addAlarm.executing', { defaultValue: '实时行情接入中' })}</div>
+            <div className={styles.cardHeaderLeft}>
+              <div className={styles.headerTitleRow}>
+                <div className={styles.headerTitle}>{t('addAlarm.configTitle', { defaultValue: '配置告警' })}</div>
+                <div className={styles.headerMeta}>{t('addAlarm.executing', { defaultValue: '实时行情接入中' })}</div>
+              </div>
+              <div className={styles.priceRow}>
+                <span className={styles.symbol}>{coinData.symbol}</span>
+                <span className={styles.priceLabel}>{t('addAlarm.latestPrice', { defaultValue: '最新价' })}</span>
+                {coinData.loading ? (
+                  <span className={styles.priceMetaMuted}>{t('addAlarm.loading', { defaultValue: '加载中...' })}</span>
+                ) : (
+                  <>
+                    <span className={`${styles.price} ${isPriceDown ? styles.negative : styles.positive}`}>
+                      {coinData.price}
+                    </span>
+                    <span className={`${styles.change} ${isPriceDown ? styles.negative : styles.positive}`}>
+                      {displayChange}
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
             <button type="button" className={styles.manageBtn}>
               <img src={`${CDN_PUBLIC_PREFIX}/icons/pc/manage.svg`} alt="" aria-hidden className={styles.manageIcon} />
@@ -641,7 +1000,9 @@ function PCAlarmContent() {
             </button>
           </div>
           {coinData.loading ? (
-            <div className={styles.loading}>{t('addAlarm.loading')}</div>
+            <div className={styles.loadingWrap}>
+              <Loading tip={t('addAlarm.loading')} size={28} />
+            </div>
           ) : (
             <div className={styles.cardBody}>
               <div className={styles.configList}>
@@ -893,53 +1254,44 @@ function PCAlarmContent() {
               <p className={styles.sideFieldHint}>{t('oneClickAlarm.webhookHint')}</p>
               {webhookError && <div className={styles.sideFieldError}>{webhookError}</div>}
 
-              <div className={styles.sideItem}>
-                <div className={styles.sideItemLabelCol}>
-                  <div className={styles.sideItemLabel}>
-                    <img src={`${ALERT_ICON_CDN}/wechat_alert.svg`} alt="" aria-hidden className={styles.sideItemIcon} />
-                    <span>{t('oneClickAlarm.wechatAlarm', { defaultValue: '微信告警' })}</span>
-                  </div>
-                  <span className={styles.sideItemSub}>{t('oneClickAlarm.wechatHint')}</span>
-                </div>
-                <Switch
-                  className={styles.compactSwitch}
-                  checked={wechatEnabled}
-                  onChange={setWechatEnabled}
-                  style={{ '--checked-color': '#11B787' }}
-                />
-              </div>
-
-              <div className={styles.sideItem}>
-                <div className={styles.sideItemLabelCol}>
-                  <div className={styles.sideItemLabel}>
-                    <img src={`${ALERT_ICON_CDN}/tgbot_alert.svg`} alt="" aria-hidden className={styles.sideItemIcon} />
-                    <span>{t('oneClickAlarm.telegramBot', { defaultValue: 'Telegram bot' })}</span>
-                  </div>
-                  <span className={styles.sideItemSub}>{t('oneClickAlarm.telegramHint')}</span>
-                </div>
-                <Switch
-                  className={styles.compactSwitch}
-                  checked={telegramEnabled}
-                  onChange={setTelegramEnabled}
-                  style={{ '--checked-color': '#11B787' }}
-                />
-              </div>
-
-              <div className={styles.sideItem}>
-                <div className={styles.sideItemLabelCol}>
-                  <div className={styles.sideItemLabel}>
-                    <img src={`${CDN_PUBLIC_PREFIX}/icons/new_detail/push.svg`} alt="" aria-hidden className={styles.sideItemIcon} />
-                    <span>{t('oneClickAlarm.popupAlarm', { defaultValue: '显示弹窗通知' })}</span>
-                  </div>
-                  <span className={styles.sideItemSub}>{t('oneClickAlarm.popupHint')}</span>
-                </div>
-                <Switch
-                  className={styles.compactSwitch}
-                  checked={inAppEnabled}
-                  onChange={setInAppEnabled}
-                  style={{ '--checked-color': '#11B787' }}
-                />
-              </div>
+              <button
+                type="button"
+                className={styles.sideTgLink}
+                aria-label={t('oneClickAlarm.telegramOpenMiniApp')}
+                onClick={() => {
+                  window.open(getTgAlertMiniAppLink(symbol), '_blank', 'noopener,noreferrer');
+                }}
+              >
+                <span className={styles.sideItemLabel}>
+                  <img
+                    src={`${ALERT_ICON_CDN}/tgbot_alert.svg`}
+                    alt=""
+                    aria-hidden
+                    className={styles.sideItemIcon}
+                    onError={(e) => {
+                      e.currentTarget.src = '/icons/telegram-group.svg';
+                    }}
+                  />
+                  <span>{t('oneClickAlarm.telegramBot')}</span>
+                </span>
+                <svg
+                  className={styles.sideTgLinkArrow}
+                  width="12"
+                  height="12"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  aria-hidden
+                >
+                  <path
+                    d="M4.5 2.5L8 6L4.5 9.5"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+              <p className={styles.sideFieldHint}>{t('oneClickAlarm.telegramOpenMiniAppHint')}</p>
 
               <div className={styles.freqSection}>
                 <div className={styles.freqTitle}>{t('oneClickAlarm.freqTitle', { defaultValue: '预警频次' })}</div>
@@ -983,9 +1335,5 @@ function PCAlarmContent() {
 }
 
 export default function PCAlarmPage() {
-  return (
-    <PCLayout>
-      <PCAlarmContent />
-    </PCLayout>
-  );
+  return <PCAlarmContent />;
 }

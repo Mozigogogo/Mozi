@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import PCLayout from '@/components/PCLayout';
 import styles from './page.module.less';
 
 function useTranslationList(key) {
@@ -19,8 +18,7 @@ export default function PCAboutPage() {
   const advantageItems = useTranslationList('pcAbout.advantageItems');
 
   return (
-    <PCLayout>
-      <div className={styles.pageWrap}>
+    <div className={styles.pageWrap}>
         <article className={styles.article}>
           <h1 className={styles.mainTitle}>{t('pcAbout.title')}</h1>
           <p className={styles.lead}>{t('pcAbout.lead')}</p>
@@ -65,6 +63,5 @@ export default function PCAboutPage() {
           </section>
         </article>
       </div>
-    </PCLayout>
   );
 }

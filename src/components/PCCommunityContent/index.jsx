@@ -21,6 +21,7 @@ import PCPublishComposer from '@/components/PCPublishComposer';
 import PCFlashNewsCard from '@/components/PCFlashNewsCard';
 import PCPagination from '@/components/PCPagination';
 import PostDetailModal from '@/components/PostDetailModal';
+import ShareAiChatModal from '@/components/ShareAiChatModal';
 import { dislikePost, undislikePost, followUser, getUserFollowStatus, unfollowUser } from '@/api/community';
 import styles from './index.module.less';
 
@@ -66,7 +67,7 @@ export default function PCCommunityContent() {
   const [searchResults, setSearchResults] = useState([]); // 搜索结果
   const [searchLoading, setSearchLoading] = useState(false); // 搜索加载状态
   const [showSearchPanel, setShowSearchPanel] = useState(false); // 是否显示搜索下拉面板
-  const [activeCapsuleTab, setActiveCapsuleTab] = useState('coin'); // 顶部胶囊tab
+  const [activeCapsuleTab, setActiveCapsuleTab] = useState('all'); // 顶部胶囊tab，默认全部
   const isDiscoveryLikeTab = activeCapsuleTab === 'discover' || activeCapsuleTab === 'qa';
   const isCoinStyleTab = activeCapsuleTab === 'coin' || activeCapsuleTab === 'all';
   const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -75,6 +76,8 @@ export default function PCCommunityContent() {
   const [detailModalVariant, setDetailModalVariant] = useState('post'); // 'post' | 'topic'
   const [detailModalLoading, setDetailModalLoading] = useState(false);
   const [detailFollowSubmitting, setDetailFollowSubmitting] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [shareModalPost, setShareModalPost] = useState(null);
   // 解决 all/coin/discover/qa 四个 tab 快速切换导致的请求竞态
   const coinPostsRequestIdRef = useRef(0);
   const hotTopicsPanelRef = useRef(null);
@@ -212,6 +215,7 @@ export default function PCCommunityContent() {
           likeCount: item?.likeCnt ?? item?.likeCount ?? 0,
           commentCount: item?.commentCnt ?? item?.commentCount ?? 0,
           shareCount: item?.shareCnt ?? item?.shareCount ?? 0,
+          isLiked: Boolean(item?.isLikedByCurrentUser ?? item?.isLiked),
         };
       });
       setFlashNewsItems(mapped);
@@ -222,6 +226,60 @@ export default function PCCommunityContent() {
       setFlashNewsTotal(0);
     } finally {
       setFlashNewsLoading(false);
+    }
+  };
+
+  // 24H 快讯点赞
+  const handleFlashNewsLike = async (item) => {
+    const postId = item?.id;
+    if (!postId) return;
+    const isLiked = Boolean(item?.isLiked);
+    const url = isLiked ? `${Interface.POSTS_UNLIKE}/${postId}` : `${Interface.POSTS_LIKE}/${postId}`;
+
+    setFlashNewsItems((prev) =>
+      prev.map((row) => {
+        if (String(row.id) !== String(postId)) return row;
+        return {
+          ...row,
+          isLiked: !isLiked,
+          likeCount: isLiked
+            ? Math.max(0, (row.likeCount || 0) - 1)
+            : (row.likeCount || 0) + 1,
+        };
+      })
+    );
+    setLikedPosts((prev) => ({ ...prev, [postId]: !isLiked }));
+
+    try {
+      const res = await request({ url, method: 'GET' });
+      const ok = res?.success === true || res?.code === 0;
+      if (!ok) throw res;
+
+      if (!isLiked) {
+        try {
+          await request({
+            url: Interface.TASK_COMPLETE,
+            method: 'POST',
+            data: { taskCode: 'DAILY_LIKE' },
+          });
+        } catch (taskError) {
+          console.error('每日点赞任务上报失败:', taskError);
+        }
+      }
+    } catch (error) {
+      console.error('快讯点赞失败:', error);
+      setFlashNewsItems((prev) =>
+        prev.map((row) => {
+          if (String(row.id) !== String(postId)) return row;
+          return {
+            ...row,
+            isLiked,
+            likeCount: item.likeCount ?? 0,
+          };
+        })
+      );
+      setLikedPosts((prev) => ({ ...prev, [postId]: isLiked }));
+      message.error(getBackendErrorMsg(error) || t('common.operationFailed'));
     }
   };
 
@@ -480,7 +538,8 @@ export default function PCCommunityContent() {
   // 点赞/取消点赞
   const toggleLike = async (e, postId) => {
     e?.stopPropagation?.();
-    const isLiked = likedPosts[postId];
+    const targetPost = coinPosts.find((post) => post.id === postId);
+    const isLiked = likedPosts[postId] ?? targetPost?.isLiked ?? false;
     const url = isLiked ? `${Interface.POSTS_UNLIKE}/${postId}` : `${Interface.POSTS_LIKE}/${postId}`;
     
     try {
@@ -495,16 +554,25 @@ export default function PCCommunityContent() {
         [postId]: !isLiked
       }));
       
-      setDiscoveryPosts(prevPosts => prevPosts.map(post => {
+      setCoinPosts(prevPosts => prevPosts.map(post => {
         if (post.id === postId) {
           return {
             ...post,
-            likeCount: isLiked ? post.likeCount - 1 : post.likeCount + 1,
+            likeCount: isLiked ? Math.max(0, (post.likeCount || 0) - 1) : (post.likeCount || 0) + 1,
             isLiked: !isLiked
           };
         }
         return post;
       }));
+
+      setDetailModalPost((prev) => {
+        if (!prev || String(prev.id) !== String(postId)) return prev;
+        return {
+          ...prev,
+          likeCount: isLiked ? Math.max(0, (prev.likeCount || 0) - 1) : (prev.likeCount || 0) + 1,
+          isLiked: !isLiked,
+        };
+      });
 
       if (!isLiked) {
         try {
@@ -603,10 +671,16 @@ export default function PCCommunityContent() {
     router.push(`/user/${encodeURIComponent(targetUserId)}`);
   };
 
-  // 分享处理
+  // 打开分享弹窗（复制链接 / Twitter / TG / 更多）
+  const openShareModal = (post) => {
+    const postId = post?.id;
+    if (!postId) return;
+    setShareModalPost(post);
+    setShareModalOpen(true);
+  };
+
   const handleShare = (post) => {
-    // 实现分享逻辑
-    console.log('分享帖子:', post);
+    openShareModal(post);
   };
 
   // 弹窗内点赞（同步更新弹窗计数）
@@ -662,36 +736,10 @@ export default function PCCommunityContent() {
     }
   };
 
-  // 弹窗内分享（PC：复制链接 / 支持则系统分享）
-  const handleDetailShare = async (post) => {
+  // 弹窗内分享：同样打开分享弹窗
+  const handleDetailShare = (post) => {
     if (detailModalVariant !== 'post') return;
-    const postId = post?.id ?? detailModalPost?.id;
-    if (!postId) return;
-    const link =
-      typeof window !== 'undefined'
-        ? `${window.location.origin}/commentinfo?id=${encodeURIComponent(String(postId))}`
-        : '';
-
-    try {
-      if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share({ url: link });
-      } else if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(link);
-        message.success(t('pcCommunity.linkCopied', { defaultValue: '链接已复制' }));
-      } else {
-        message.info(link);
-      }
-      setDetailModalPost((prev) => {
-        if (!prev || String(prev.id) !== String(postId)) return prev;
-        return {
-          ...prev,
-          shareCount: (prev.shareCount || 0) + 1,
-        };
-      });
-    } catch (e) {
-      console.error('分享失败:', e);
-      message.error(getBackendErrorMsg(e) || t('common.operationFailed'));
-    }
+    openShareModal(post || detailModalPost);
   };
 
   const handleDetailFollow = async (post) => {
@@ -992,6 +1040,14 @@ export default function PCCommunityContent() {
     syncDetailFollowStatus(mapped.authorId);
   };
 
+  // PC 分享链接 /commentinfo?id= 会重定向到 /pc/community?postId=
+  useEffect(() => {
+    const postId = searchParams.get('postId');
+    if (!postId) return;
+    goToPostDetail(postId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 仅随 URL postId 打开一次详情
+  }, [searchParams]);
+
   // PC: 话题榜单点击也复用同一套详情弹窗（PostDetailModal），只替换数据源
   const openTopicInDetailModal = async (topicId, name, description = null) => {
     const id = String(topicId || '').trim();
@@ -1253,6 +1309,14 @@ export default function PCCommunityContent() {
                 loading={flashNewsLoading}
                 onRefresh={() => fetchFlashNews(1, true)}
                 onItemClick={(item) => goToPostDetail(item?.id)}
+                onLikeClick={handleFlashNewsLike}
+                onShareClick={(item) => {
+                  openShareModal({
+                    id: item?.id,
+                    title: item?.title,
+                    content: item?.desc,
+                  });
+                }}
                 page={flashNewsPage}
                 pageSize={FLASH_NEWS_PAGE_SIZE}
                 total={flashNewsTotal}
@@ -1304,6 +1368,26 @@ export default function PCCommunityContent() {
         onComment={() => message.info(t('pcCommunity.featureInProgress.comment'))}
         onShare={handleDetailShare}
         onSubmitComment={handleDetailSubmitComment}
+      />
+      <ShareAiChatModal
+        open={shareModalOpen}
+        onClose={() => {
+          setShareModalOpen(false);
+          setShareModalPost(null);
+        }}
+        title={t('community.actions.share')}
+        question={
+          String(shareModalPost?.title || shareModalPost?.content || '')
+            .trim()
+            .slice(0, 200)
+        }
+        hidePreview
+        brandLabel=""
+        shareUrl={
+          shareModalPost?.id
+            ? `https://www.moziai.xyz/commentinfo?id=${encodeURIComponent(String(shareModalPost.id))}`
+            : ''
+        }
       />
     </div>
   );

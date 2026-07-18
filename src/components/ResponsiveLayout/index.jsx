@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, createContext, useContext } from 'react';
-import PCLayout from '../PCLayout';
 
 const DeviceContext = createContext({ isMobile: true, isPC: false });
 
@@ -9,9 +8,9 @@ export const useDevice = () => useContext(DeviceContext);
 
 /**
  * 响应式布局组件
- * 根据屏幕宽度自动切换 PC/移动端布局
+ * 根据屏幕宽度提供设备上下文；PC 壳层由根 layout 中的 PcLayoutGate 统一挂载。
  */
-export default function ResponsiveLayout({ children, pcProps = {} }) {
+export default function ResponsiveLayout({ children }) {
   const [device, setDevice] = useState({ isMobile: true, isPC: false });
   const [mounted, setMounted] = useState(false);
 
@@ -26,18 +25,9 @@ export default function ResponsiveLayout({ children, pcProps = {} }) {
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  // SSR 时默认返回移动端
   if (!mounted) {
     return <>{children}</>;
   }
 
-  return (
-    <DeviceContext.Provider value={device}>
-      {device.isPC ? (
-        <PCLayout {...pcProps}>{children}</PCLayout>
-      ) : (
-        children
-      )}
-    </DeviceContext.Provider>
-  );
+  return <DeviceContext.Provider value={device}>{children}</DeviceContext.Provider>;
 }

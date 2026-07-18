@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
 import { Picker, Toast } from 'antd-mobile';
 import { Select } from 'antd';
@@ -15,8 +14,6 @@ import { safeBack } from '@/utils/navigation';
 import { isEmpty } from 'lodash';
 import * as echarts from 'echarts';
 import styles from './page.module.less';
-
-const PCLayout = dynamic(() => import('@/components/PCLayout'), { ssr: false });
 
 const PutCallRatio = () => {
   const router = useRouter();
@@ -256,8 +253,7 @@ const PutCallRatio = () => {
 
   if (isPC) {
     return (
-      <PCLayout>
-        <div className={styles['pc-container']}>
+      <div className={styles['pc-container']}>
           <div className={styles['pc-header']}>
             <div className={styles['pc-back-container']} onClick={() => safeBack(router, { fallback: '/' })}>
               <div className={styles['pc-back-btn']}>
@@ -339,7 +335,6 @@ const PutCallRatio = () => {
             </div>
           </div>
         </div>
-      </PCLayout>
     );
   }
 

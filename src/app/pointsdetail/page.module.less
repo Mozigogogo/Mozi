@@ -1031,6 +1031,29 @@
   color: #999;
 }
 
+.inviteStatBoxApply {
+  .inviteStatLabel {
+    margin-top: 6px;
+  }
+}
+
+.inviteWithdrawBtn {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 999px;
+  background: #15bd8f;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:active {
+    background: #0f9f76;
+  }
+}
+
 .inviteRules {
   font-size: 10px;
   color: #999;
@@ -1040,6 +1063,35 @@
   p {
     margin: 0;
   }
+}
+
+.inviteWithdrawHistory {
+  width: 100%;
+  margin-top: 12px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border: 1px solid #edf2f7;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  cursor: pointer;
+
+  &:active {
+    background: rgba(255, 255, 255, 0.75);
+  }
+}
+
+.inviteWithdrawHistoryLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.inviteWithdrawHistoryArrow {
+  color: #94a3b8;
+  flex-shrink: 0;
 }
 
 /* Task Lists */
@@ -1176,11 +1228,20 @@
   margin-left: 2px;
 }
 
+.taskTitleRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+}
+
 .taskName {
   font-size: 12px;
   font-weight: 700;
   color: #333;
   line-height: 1.2;
+  flex: 0 1 auto;
 }
 
 .taskReward {
@@ -1194,7 +1255,8 @@
   font-weight: 400;
   color: rgba(142, 148, 157, 1);
   line-height: 1.2;
-  margin-left: 2px;
+  flex: 0 1 auto;
+  white-space: nowrap;
 }
 
 .taskMetaRow {

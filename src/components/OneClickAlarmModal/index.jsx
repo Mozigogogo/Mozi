@@ -7,8 +7,9 @@ import BottomSheetModal from '../BottomSheetModal';
 import CountryPickerOverlay from '../CountryPickerOverlay';
 import PopLogin from '../PopLogin';
 import { request } from '../../utils/request';
-import { Interface } from '../../utils/constants';
-import { jump2NoTab } from '../../utils/core';
+import { getTgBotStartLink, Interface } from '../../utils/constants';
+import { isTelegramEnv, jump2NoTab } from '../../utils/core';
+import { markTgAlertDeeplinkHandledBySymbol } from '../../utils/tgAlertDeeplink';
 import { saveAlarmSettings, createAlertConfig, modifyAlertConfig } from '../../api/user';
 import {
   alertFrequencyFromApi,
@@ -16,6 +17,7 @@ import {
   isAlertFlagOn,
   MAX_WEBHOOK_URLS,
   parseWebhookUrlsFromConfig,
+  resolveAlertChatId,
   validateWebhookUrls,
 } from '../../utils/alertConfig';
 import styles from './index.module.less';
@@ -57,28 +59,28 @@ function WebhookLinkIcon() {
   return <img src={alertIconUrl('hook_alert.svg')} alt="" width="24" height="24" />;
 }
 
-function WeChatBrandIcon() {
-  return <img src={alertIconUrl('wechat_alert.svg')} alt="" width="24" height="24" />;
-}
-
-function TelegramBotIcon() {
-  return <img src={alertIconUrl('tgbot_alert.svg')} alt="" width="24" height="24" />;
-}
-
 function MailAlarmIcon() {
   return (
     <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/email.svg" alt="email" width="24" height="24" />
   );
 }
 
-function PushAlarmIcon() {
-  return (
-    <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/push.svg" alt="push" width="24" height="24" />
-  );
-}
-
 function SmsAlarmIcon() {
   return <img src={alertIconUrl('sms_alert.svg')} alt="" width="24" height="24" />;
+}
+
+function TelegramAlarmIcon() {
+  return (
+    <img
+      src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/tgbot_alert.svg"
+      alt=""
+      width="24"
+      height="24"
+      onError={(e) => {
+        e.currentTarget.src = '/icons/telegram-group.svg';
+      }}
+    />
+  );
 }
 
 function PhoneInputIcon() {
@@ -144,7 +146,6 @@ export default function OneClickAlarmModal({
       emailEnabled: false,
       email: '',
       smsEnabled: false,
-      pushEnabled: false,
       ...(initialValue || {}),
     }),
     [initialValue]
@@ -156,13 +157,13 @@ export default function OneClickAlarmModal({
   const [emailEnabled, setEmailEnabled] = useState(init.emailEnabled);
   const [email, setEmail] = useState(init.email);
   const [smsEnabled, setSmsEnabled] = useState(init.smsEnabled);
-  const [pushEnabled, setPushEnabled] = useState(init.pushEnabled);
   const [webhookEnabled, setWebhookEnabled] = useState(false);
   const [webhookUrls, setWebhookUrls] = useState(['']);
-  const [wechatEnabled, setWechatEnabled] = useState(false);
-  const [telegramEnabled, setTelegramEnabled] = useState(false);
   const [alertFrequency, setAlertFrequency] = useState('daily');
   const [webhookError, setWebhookError] = useState('');
+  const [tgEnabled, setTgEnabled] = useState(false);
+  const [chatId, setChatId] = useState('');
+  const [channelError, setChannelError] = useState('');
 
   const [countryPickerOpen, setCountryPickerOpen] = useState(false);
 
@@ -239,9 +240,6 @@ export default function OneClickAlarmModal({
           if (alertConfig.emailEnabled !== undefined) {
             setEmailEnabled(alertConfig.emailEnabled === 1);
           }
-          if (alertConfig.defaultEnabled !== undefined) {
-            setPushEnabled(alertConfig.defaultEnabled === 1);
-          }
           if (alertConfig.smsEnabled !== undefined) {
             setSmsEnabled(alertConfig.smsEnabled === 1);
           }
@@ -250,6 +248,14 @@ export default function OneClickAlarmModal({
           }
           setWebhookUrls(parseWebhookUrlsFromConfig(alertConfig));
           setAlertFrequency(alertFrequencyFromApi(alertConfig.alertFrequency));
+          if (alertConfig.tgEnabled !== undefined) {
+            setTgEnabled(isAlertFlagOn(alertConfig.tgEnabled));
+          }
+          setChatId(
+            alertConfig.chatId != null && String(alertConfig.chatId).trim()
+              ? String(alertConfig.chatId).trim()
+              : resolveAlertChatId()
+          );
         } else {
           // localStorage 中没有配置数据，显示输入框
           setHideInputs(false);
@@ -261,8 +267,6 @@ export default function OneClickAlarmModal({
               if (typeof legacy.webhookEnabled === 'boolean') setWebhookEnabled(legacy.webhookEnabled);
               const legacyUrls = parseWebhookUrlsFromConfig(legacy);
               if (legacyUrls.length > 1 || legacyUrls[0]) setWebhookUrls(legacyUrls);
-              if (typeof legacy.wechatEnabled === 'boolean') setWechatEnabled(legacy.wechatEnabled);
-              if (typeof legacy.telegramEnabled === 'boolean') setTelegramEnabled(legacy.telegramEnabled);
               if (legacy.alertFrequency) {
                 setAlertFrequency(alertFrequencyFromApi(legacy.alertFrequency));
               }
@@ -462,18 +466,28 @@ export default function OneClickAlarmModal({
         return;
       }
 
+      const nextChatId = resolveAlertChatId(chatId);
+      if (tgEnabled && !nextChatId) {
+        setChannelError(t('oneClickAlarm.tgChatIdRequired'));
+        return;
+      }
+      setChannelError('');
+
       // 开始 loading
       setIsLoading(true);
 
-      // 构建告警配置参数（只在开关打开时传递对应的值）
+      // 构建告警配置参数（开关一律 0/1；update 由封装层合并完整配置）
       const alertConfig = {
         phoneEnabled: phoneEnabled ? 1 : 0,
         emailEnabled: emailEnabled ? 1 : 0,
         smsEnabled: smsEnabled ? 1 : 0,
-        defaultEnabled: pushEnabled ? 1 : 0,
         webhookEnabled: webhookEnabled ? 1 : 0,
         webhookUrls: webhookCheck.urls,
         alertFrequency: alertFrequencyToApi(alertFrequency),
+        tgEnabled: tgEnabled ? 1 : 0,
+        wechatEnabled: 0,
+        chatId: tgEnabled ? nextChatId : null,
+        openId: null,
       };
 
       // 电话与短信共用 alertPhone + alertPhoneCountryCode（任一方开启且已填则提交）
@@ -514,8 +528,22 @@ export default function OneClickAlarmModal({
           emailEnabled,
           email,
           smsEnabled,
-          pushEnabled,
         });
+
+        // TG Mini App：开启 Telegram bot 后跳转 Bot 私聊并触发 /start
+        if (tgEnabled && isTelegramEnv()) {
+          const botStartUrl = getTgBotStartLink();
+          try {
+            if (window.Telegram?.WebApp?.openTelegramLink) {
+              window.Telegram.WebApp.openTelegramLink(botStartUrl);
+            } else {
+              window.open(botStartUrl, '_blank', 'noopener,noreferrer');
+            }
+          } catch (e) {
+            console.warn('[OneClickAlarmModal] openTelegramLink failed', e);
+            window.open(botStartUrl, '_blank', 'noopener,noreferrer');
+          }
+        }
         
         // 延迟关闭弹窗
         setTimeout(() => {
@@ -633,6 +661,12 @@ export default function OneClickAlarmModal({
         return;
       }
 
+      if (addRes?.data === false) {
+        Toast.show({ content: addRes.errorMsg || t('addAlarm.saveFailed') });
+        onClose?.();
+        return;
+      }
+
       Toast.show({ content: addRes.errorMsg || t('addAlarm.saveFailed') });
     } catch (error) {
       setBtnDisabled(false);
@@ -715,15 +749,7 @@ export default function OneClickAlarmModal({
                       const config = configs[key];
                       return (
                         <div key={key} className={configStyles.configItem}>
-                          <div className={configStyles.configItemHead}>
-                            <div className={configStyles.configLabel}>{t(config.labelKey)}</div>
-                            <Switch
-                              className={configStyles.configSwitch}
-                              checked={config.enabled}
-                              onChange={(checked) => handleSwitchChange(key, checked)}
-                              style={{ '--checked-color': '#11B787' }}
-                            />
-                          </div>
+                          <div className={configStyles.configLabel}>{t(config.labelKey)}</div>
                           <div className={configStyles.configInputWrap}>
                             <Input
                               className={configStyles.configInput}
@@ -734,6 +760,12 @@ export default function OneClickAlarmModal({
                             />
                             <div className={configStyles.configUnit}>{config.unit}</div>
                           </div>
+                          <Switch
+                            className={configStyles.configSwitch}
+                            checked={config.enabled}
+                            onChange={(checked) => handleSwitchChange(key, checked)}
+                            style={{ '--checked-color': '#11B787' }}
+                          />
                         </div>
                       );
                     })}
@@ -802,6 +834,8 @@ export default function OneClickAlarmModal({
                   <Button
                     className={configStyles.viewButton}
                     onClick={() => {
+                      // 离开前标记深链已消费，防止 jump2NoTab 整页刷新后被 startParam 再次拉回详情
+                      markTgAlertDeeplinkHandledBySymbol(symbol);
                       onClose?.();
                       jump2NoTab('mywarn');
                     }}
@@ -986,46 +1020,37 @@ export default function OneClickAlarmModal({
                   <div className={styles.notifyRowInner}>
                     <div className={styles.notifyRowLeft}>
                       <span className={styles.notifyIconWrap}>
-                        <WeChatBrandIcon />
+                        <TelegramAlarmIcon />
                       </span>
-                      <div className={styles.notifyTextCol}>
-                        <span className={styles.rowLabel}>{t('oneClickAlarm.wechatAlarm')}</span>
-                        <span className={styles.rowSub}>{t('oneClickAlarm.wechatHint')}</span>
-                      </div>
+                      <span className={styles.rowLabel}>{t('oneClickAlarm.telegramBot')}</span>
                     </div>
-                    <Toggle checked={wechatEnabled} onChange={setWechatEnabled} />
+                    <Toggle
+                      checked={tgEnabled}
+                      onChange={(v) => {
+                        setTgEnabled(v);
+                        if (v && !chatId) setChatId(resolveAlertChatId());
+                        if (channelError) setChannelError('');
+                      }}
+                    />
                   </div>
                 </div>
-
-                <div className={styles.notifyRow}>
-                  <div className={styles.notifyRowInner}>
-                    <div className={styles.notifyRowLeft}>
-                      <span className={styles.notifyIconWrap}>
-                        <TelegramBotIcon />
-                      </span>
-                      <div className={styles.notifyTextCol}>
-                        <span className={styles.rowLabel}>{t('oneClickAlarm.telegramBot')}</span>
-                        <span className={styles.rowSub}>{t('oneClickAlarm.telegramHint')}</span>
-                      </div>
+                {tgEnabled && (
+                  <>
+                    <div className={styles.inputRow}>
+                      <input
+                        className={styles.input}
+                        placeholder={t('oneClickAlarm.chatIdPlaceholder')}
+                        value={chatId}
+                        onChange={(e) => {
+                          setChatId(e.target.value);
+                          if (channelError) setChannelError('');
+                        }}
+                      />
                     </div>
-                    <Toggle checked={telegramEnabled} onChange={setTelegramEnabled} />
-                  </div>
-                </div>
-
-                <div className={styles.notifyRow}>
-                  <div className={styles.notifyRowInner}>
-                    <div className={styles.notifyRowLeft}>
-                      <span className={styles.notifyIconWrap}>
-                        <PushAlarmIcon />
-                      </span>
-                      <div className={styles.notifyTextCol}>
-                        <span className={styles.rowLabel}>{t('oneClickAlarm.popupAlarm')}</span>
-                        <span className={styles.rowSub}>{t('oneClickAlarm.popupHint')}</span>
-                      </div>
-                    </div>
-                    <Toggle checked={pushEnabled} onChange={setPushEnabled} />
-                  </div>
-                </div>
+                    <p className={styles.fieldHint}>{t('oneClickAlarm.telegramHint')}</p>
+                  </>
+                )}
+                {channelError && <div className={styles.errorText}>{channelError}</div>}
 
                 <div className={styles.freqSection}>
                   <div className={styles.freqTitle}>{t('oneClickAlarm.freqTitle')}</div>

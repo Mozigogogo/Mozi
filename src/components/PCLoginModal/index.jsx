@@ -6,6 +6,7 @@ import { UserOutlined, RightOutlined, CopyOutlined, LogoutOutlined } from '@ant-
 import { useAccount, useSignMessage, useDisconnect } from 'wagmi';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { useTranslation } from 'react-i18next';
+import { notifySessionChanged } from '@/utils/sessionEvents';
 import { useRouter } from 'next/navigation';
 import { sendVerificationCode, loginByEmail, registerByEmail, loginByWallet, completeTask } from '../../api/user';
 import { ensureFirstLoginAt } from '../../utils/postLogin';
@@ -246,6 +247,7 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
         
         message.success(t('auth.loginSuccess'));
         setIsLoggedIn(true);
+        notifySessionChanged();
         onSuccess?.();
       } else {
         const errorMessage = res?.errorMsg || res?.message || t('auth.loginFailed');
@@ -349,6 +351,7 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
         
         message.success(t('auth.loginSuccess'));
         setIsLoggedIn(true);
+        notifySessionChanged();
         onSuccess?.();
       } else {
         const errorMessage = res?.errorMsg || res?.message;
@@ -439,6 +442,7 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
         
         message.success(t('auth.loginSuccess'));
         setIsLoggedIn(true);
+        notifySessionChanged();
         onSuccess?.();
       } else {
         const errorMessage = res?.errorMsg || res?.message || t('auth.loginFailed');

@@ -5,19 +5,21 @@ import Web3Provider from "../context/Web3Provider.jsx";
 import ThemeProvider from "../context/ThemeProvider.jsx";
 import TonConnectProvider from "../context/TonConnectProvider.jsx";
 import I18nProvider from "@/components/I18nProvider";
-import { LogoLoading } from "@/components/Loading";
 import VConsoleLoader from "@/components/VConsole";
 import InviteCodeHandler from "@/components/InviteCodeHandler";
 import DetailDeepLinkHandler from "@/components/DetailDeepLinkHandler";
 import TelegramRootGate from "@/components/TelegramRootGate";
 import EnvironmentDetector from "@/components/EnvironmentDetector";
 import RouteChangeHandler from "@/components/RouteChangeHandler";
+import RouteBootLoading from "@/components/RouteBootLoading";
 import TokenDebugMonitor from "@/components/TokenDebugMonitor";
 import BuildFingerprint from "@/components/BuildFingerprint";
 import ChunkErrorRecovery from "@/components/ChunkErrorRecovery";
 import GoogleAuthProvider from "../context/GoogleAuthProvider";
 import GlobalClientEffects from "@/components/GlobalClientEffects";
+import PcLayoutGate from "@/components/PcLayoutGate";
 import PerfDebug from "@/components/PerfDebug";
+import TgRootRedirectScript from "@/components/TgRootRedirectScript";
 import TelegramSdkLoader from "@/components/TelegramSdkLoader";
 import TgWcWebviewCheck from "@/components/TgWcWebviewCheck";
 
@@ -58,6 +60,7 @@ export default function RootLayout({ children }) {
         <meta name="theme-color" content="#1677ff" />
         {/* Keep only truly global/critical preload asset to avoid stealing bandwidth from home first paint */}
         <link rel="preload" href="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/community/loadding.png" as="image" />
+        <TgRootRedirectScript />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} ${chakraPetch.variable}`} suppressHydrationWarning>
         <TelegramSdkLoader />
@@ -67,6 +70,7 @@ export default function RootLayout({ children }) {
         <BuildFingerprint />
         <ChunkErrorRecovery />
         <RouteChangeHandler />
+        <RouteBootLoading />
         {process.env.NODE_ENV !== 'production' ? <TokenDebugMonitor /> : null}
         <VConsoleLoader />
         <Suspense fallback={null}>
@@ -80,8 +84,8 @@ export default function RootLayout({ children }) {
               <TonConnectProvider>
                 <Web3Provider>
                   <GlobalClientEffects />
-                  <Suspense fallback={<LogoLoading visible={true} fullscreen mask image="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/community/loadding.png" size={72} />}>
-                    {children}
+                  <Suspense fallback={null}>
+                    <PcLayoutGate>{children}</PcLayoutGate>
                   </Suspense>
                 </Web3Provider>
               </TonConnectProvider>

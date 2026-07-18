@@ -13,6 +13,7 @@ import FeedbackPopup from '../../app/user/components/FeedbackPopup';
 import FeedbackSuccessModal from '../FeedbackSuccessModal';
 import GeneralPopup from '../../app/user/components/GeneralPopup';
 import RewardPopup from '../../app/user/components/RewardPopup';
+import { notifySessionChanged } from '@/utils/sessionEvents';
 import styles from './index.module.less';
 
 export default function PCUserPanel({ open, onClose, collapsed, onLogin }) {
@@ -109,11 +110,9 @@ export default function PCUserPanel({ open, onClose, collapsed, onLogin }) {
     setUserInfo(null);
     setUserDataInfo(null);
     message.success(t('user.logoutSuccess') || '退出成功');
-    
-    // 退出后关闭弹窗
+
     onClose();
-    // 刷新页面或跳转
-    window.location.reload();
+    notifySessionChanged();
   };
 
   // 用户统计配置
