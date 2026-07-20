@@ -25,7 +25,7 @@
 | `AI_BACKEND_URL` | 可选；覆盖 `/ai` 的 **完整流式 POST URL**（请求体与 `/chat` 一致）；不设时默认 `APP_URL/api/robot_proxy/api/v1/analyze/stream` |
 | `AI_ANALYZE_FALLBACK_TO_CHAT` | 可选；`/ai` 请求 analyze 失败（如 422）时是否自动改请求 **chat/stream**（默认 `1`）；`0`/`false` 关闭 |
 | `AI_CHAT_BACKEND_URL` | 可选；覆盖 `/chat` 的 **完整流式 POST URL**（默认 `APP_URL/api/robot_proxy/api/v1/chat/stream`） |
-| `ROBOT_BACKEND_URL` | 可选；Python Robot 后端根地址，默认 `https://mozibackend-production.up.railway.app`；`/bigorder` 默认请求 `{ROBOT_BACKEND_URL}/bigorder/v1/chat` |
+| `ROBOT_BACKEND_URL` | 可选；Python Robot 后端根地址，默认 `https://www.moziai.xyz`；`/bigorder` 默认请求 `{ROBOT_BACKEND_URL}/bigorder/v1/chat` |
 | `BIGORDER_CHAT_BACKEND_URL` | 可选；覆盖 `/bigorder` 的 **完整流式 POST URL** |
 | `AI_CHAT_STREAM_TIMEOUT_MS` | 可选；`/ai` 与 `/chat` 等待 SSE 的最长时间（毫秒），默认 `300000`（5 分钟） |
 | `MOZI_DETAIL_AUTH` | 可选；Bootstrap JWT，请求头 `authentication`。在尚无用户 JWT 时用于 `POST …/user/tg/registered/check` 与 `POST …/user/login`（Telegram）；建议生产配置以便群内校验注册态 |

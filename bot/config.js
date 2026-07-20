@@ -3,7 +3,7 @@
  */
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
-const APP_URL = process.env.APP_URL || 'https://moziinnovations-production.up.railway.app';
+const APP_URL = process.env.APP_URL || 'https://www.moziai.xyz';
 /** 自建 HTTP API 根地址（不含末尾 /），请求服务时在此拼接 path */
 const API_BASE_URL = (
   (process.env.API_BASE_URL || 'https://moziinnovations.com').trim().replace(/\/+$/, '') ||
