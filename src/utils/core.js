@@ -1,5 +1,4 @@
 import { Toast } from 'antd-mobile';
-import { markRouteBootLoading } from '@/utils/routeBootLoading';
 
 /**
  * Telegram 环境检测
@@ -217,9 +216,6 @@ export const jump2Detail = (symbol, fromFavorite = false) => {
   const url = fromFavorite 
     ? `/detail?symbol=${symbol}&fromFavorite=1`
     : `/detail?symbol=${symbol}`;
-  if (typeof window !== 'undefined') {
-    markRouteBootLoading('/detail');
-  }
   window.location.href = url;
 };
 

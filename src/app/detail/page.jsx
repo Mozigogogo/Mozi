@@ -17,12 +17,12 @@ import OrderBook from '../../components/OrderBook';
 import OneClickAlarmModal from '@/components/OneClickAlarmModal';
 import ExchangePickerModal from '@/components/ExchangePickerModal';
 import { Loading, LogoLoading } from '@/components/Loading';
+import { Skeleton } from '../../components/Skeleton';
+import { detailHeaderSkeletonConfig } from '../../components/Skeleton/configs/detailPageConfig';
 import { CaretUpIcon, CaretDownIcon, BellIcon, ShareIcon } from '@/components/Icons';
 import FloatingRobot from '@/components/FloatingRobot';
 import FloatingRobotPc from '@/components/FloatingRobotPc';
 import AiChatModalPc from '@/components/AiChatModalPc';
-// import { SkeletonPage } from '../../components/Skeleton';
-// import { detailPageSkeletonConfig } from '../../components/Skeleton/configs/detailPageConfig';
 import { request } from '@/utils/request';
 import { Interface, LOOPTIME, WS_URL } from '@/utils/constants';
 import { formatNumber, formatPercent, jump2NoTab } from '@/utils/core';
@@ -103,6 +103,37 @@ export default function DetailPage() {
       window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
     }
   }, [fromTgAlert, symbol, isPC]);
+
+  // 移动端进入详情后立即解除路由 boot loading，避免全屏 LogoLoading 遮挡骨架屏
+  useLayoutEffect(() => {
+    if (!isPC) {
+      notifyRouteBootReady();
+    }
+  }, [isPC]);
+
+  const renderMobileMarketSkeleton = () => (
+    <div className={styles.sectionSkeleton}>
+      {Array.from({ length: 5 }).map((_, index) => (
+        <div key={index} className={styles.sectionSkeletonRow}>
+          <Skeleton config={{ type: 'circle', size: 24 }} />
+          <Skeleton config={{ type: 'element', width: 72, height: 16, borderRadius: 4 }} />
+          <Skeleton config={{ type: 'element', width: 56, height: 16, borderRadius: 4 }} />
+          <Skeleton config={{ type: 'element', width: 48, height: 16, borderRadius: 4 }} />
+        </div>
+      ))}
+    </div>
+  );
+
+  const renderMobileRoiSkeleton = () => (
+    <div className={styles.roiSkeletonGrid}>
+      {Array.from({ length: 4 }).map((_, index) => (
+        <Skeleton
+          key={index}
+          config={{ type: 'element', width: '100%', height: 72, borderRadius: 8 }}
+        />
+      ))}
+    </div>
+  );
 
   const renderMarketExchangeTitle = useCallback(
     (item) => {
@@ -2043,9 +2074,13 @@ ${coinInfo.name || symbol} (${symbol})
     if (!coinInfo) {
       return (
         <div className={styles.headerContainer}>
-          <div className={`${styles.headerBox} ${styles.headerLoading}`}>
-            <Loading tip={null} size={24} />
-          </div>
+          {isPC ? (
+            <div className={`${styles.headerBox} ${styles.headerLoading}`}>
+              <Loading tip={null} size={24} />
+            </div>
+          ) : (
+            <Skeleton config={detailHeaderSkeletonConfig} />
+          )}
         </div>
       );
     }
@@ -2195,9 +2230,13 @@ ${coinInfo.name || symbol} (${symbol})
           className={isPC ? `${styles.pcRightPanelCard} ${styles.pcRightRoiCard}` : ''}
           marginBottom={isPC ? '0' : undefined}
         >
-          <div className={`${styles.box} ${styles.headerLoading}`} style={{ display: 'flex' }}>
-            <Loading tip={t('common.loading')} size={24} />
-          </div>
+          {isPC ? (
+            <div className={`${styles.box} ${styles.headerLoading}`} style={{ display: 'flex' }}>
+              <Loading tip={t('common.loading')} size={24} />
+            </div>
+          ) : (
+            renderMobileRoiSkeleton()
+          )}
         </MoziCard>
       );
     }
@@ -2306,9 +2345,13 @@ ${coinInfo.name || symbol} (${symbol})
           className={isPC ? `${styles.pcRightPanelCard} ${styles.pcRightMarketCard}` : ''}
           marginBottom={isPC ? '0' : undefined}
         >
-          <div className={`${styles.box} ${styles.headerLoading}`} style={{ display: 'flex' }}>
-            <Loading tip={t('common.loading')} size={24} />
-          </div>
+          {isPC ? (
+            <div className={`${styles.box} ${styles.headerLoading}`} style={{ display: 'flex' }}>
+              <Loading tip={t('common.loading')} size={24} />
+            </div>
+          ) : (
+            renderMobileMarketSkeleton()
+          )}
         </MoziCard>
       );
     }
@@ -2440,13 +2483,13 @@ ${coinInfo.name || symbol} (${symbol})
     [isFavorite, coinInfo?.isSelfSelected, fromFavorite]
   );
 
-  const showBootLoading = Boolean(symbol) && loading && !coinInfo;
+  const showBootLoading = isPC && Boolean(symbol) && loading && !coinInfo;
 
   useEffect(() => {
-    if (coinInfo || (!loading && symbol)) {
+    if (isPC && (coinInfo || (!loading && symbol))) {
       notifyRouteBootReady();
     }
-  }, [coinInfo, loading, symbol]);
+  }, [coinInfo, loading, symbol, isPC]);
 
   if (isPC) {
     return (
@@ -2693,13 +2736,6 @@ ${coinInfo.name || symbol} (${symbol})
 
   return (
     <>
-      <LogoLoading
-        visible={showBootLoading}
-        fullscreen
-        mask
-        image={ROUTE_BOOT_LOGO}
-        size={72}
-      />
       <NavBar
         title={coinInfo?.name || symbol || t('detail.title')}
         showBack={true}

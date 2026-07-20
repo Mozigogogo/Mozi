@@ -1,18 +1,11 @@
-/**
- * 币种详情页骨架屏配置
- */
-export const detailPageSkeletonConfig = {
-  type: 'column',
-  style: { width: '100%', backgroundColor: '#fff' },
+/** 币种详情页头部骨架屏（与真实 header 布局对齐） */
+export const detailHeaderSkeletonConfig = {
+  type: 'container',
+  style: {
+    padding: '16px',
+    backgroundColor: '#fff',
+  },
   children: [
-    // 头部信息区域
-    {
-      type: 'container',
-      style: { 
-        padding: '16px',
-        backgroundColor: '#fff'
-      },
-      children: [
         // 币种基本信息行
         {
           type: 'row',
@@ -129,8 +122,17 @@ export const detailPageSkeletonConfig = {
           ]
         }
       ]
-    },
-    
+};
+
+/**
+ * 币种详情页骨架屏配置
+ */
+export const detailPageSkeletonConfig = {
+  type: 'column',
+  style: { width: '100%', backgroundColor: '#fff' },
+  children: [
+    detailHeaderSkeletonConfig,
+
     // 图表区域（包含整个图表和控制按钮）
     {
       type: 'container',

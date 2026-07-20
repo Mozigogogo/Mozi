@@ -5,7 +5,7 @@
  * 配置可以根据页面结构动态生成
  */
 
-export { detailPageSkeletonConfig } from './detailPageConfig';
+export { detailPageSkeletonConfig, detailHeaderSkeletonConfig } from './detailPageConfig';
 
 // 其他页面的骨架屏配置可以在这里导出
 // export { homePageSkeletonConfig } from './homePageConfig';

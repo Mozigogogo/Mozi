@@ -5,6 +5,7 @@ import { createChart } from 'lightweight-charts';
 import { TabBar } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import { Loading } from '../Loading';
+import { Skeleton } from '../Skeleton';
 import { LandscapeIcon } from '../Icons';
 import styles from './index.module.less';
 
@@ -816,11 +817,23 @@ const KlineChart = ({
 
       {/* 图表容器 */}
       <div className={styles.chartContainer}>
-          {(loading || !data) && (
+        {(loading || !data) && (
+          isPC ? (
             <div className={styles.loadingWrapper}>
               <Loading color="#11B787" tip="" />
             </div>
-          )}
+          ) : (
+            <div className={styles.chartSkeletonWrap} aria-hidden>
+              <div className={styles.chartSkeletonMain}>
+                <Skeleton config={{ type: 'element', width: '100%', height: '100%', borderRadius: 8 }} />
+              </div>
+              <div className={styles.chartSkeletonNavigator}>
+                <Skeleton config={{ type: 'circle', size: 24 }} />
+                <Skeleton config={{ type: 'element', width: '92%', height: 28, borderRadius: 6 }} />
+              </div>
+            </div>
+          )
+        )}
         <div ref={chartRef} className={styles.chart} style={{ opacity: (loading || !data) ? 0 : 1 }}></div>
         <div className={styles.navigatorRow} style={{ opacity: (loading || !data) ? 0 : 1 }}>
           <div className={styles.navigatorAction}>

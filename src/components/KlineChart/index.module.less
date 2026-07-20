@@ -182,6 +182,34 @@
   z-index: 10;
 }
 
+.chartSkeletonWrap {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 6px;
+  box-sizing: border-box;
+}
+
+.chartSkeletonMain {
+  width: 100%;
+  max-width: 360px;
+  height: calc(100% - 34px);
+}
+
+.chartSkeletonNavigator {
+  width: 100%;
+  max-width: 360px;
+  height: 28px;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 /* 桌面端：标题行 + 单行灰色工具栏（周期 + 图表类型），与设计稿一致 */
 /* 使用大写 PX，避免 postcss 将 px 转为 vw 导致 PC 端字号被放大 */
 .containerPc {
