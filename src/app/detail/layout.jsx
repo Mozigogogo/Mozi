@@ -1,8 +1,4 @@
-/** 详情页布局：整页刷新时先铺底色，减少白屏感 */
+/** 详情页布局壳：移动端底色由 page.module.less 的 .container 负责 */
 export default function DetailLayout({ children }) {
-  return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#efefef' }}>
-      {children}
-    </div>
-  );
+  return <div style={{ minHeight: '100vh' }}>{children}</div>;
 }

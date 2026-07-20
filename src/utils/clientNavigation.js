@@ -1,6 +1,7 @@
 export const CLIENT_NAVIGATE_EVENT = 'mozi-client-navigate';
 export const DETAIL_NAVIGATION_SHOW_EVENT = 'mozi-detail-navigation-show';
 export const DETAIL_NAVIGATION_HIDE_EVENT = 'mozi-detail-navigation-hide';
+export const ENABLE_DETAIL_NAVIGATION_SHELL = false;
 
 /** @deprecated 使用 CLIENT_NAVIGATE_EVENT */
 export const DETAIL_NAVIGATE_EVENT = CLIENT_NAVIGATE_EVENT;
@@ -40,6 +41,7 @@ function isMobileViewport() {
 
 export function showDetailNavigationShell(symbol = '') {
   if (typeof window === 'undefined') return;
+  if (!ENABLE_DETAIL_NAVIGATION_SHELL) return;
   const normalized = String(symbol || '').toUpperCase();
   try {
     if (normalized) {
@@ -63,6 +65,7 @@ export function hideDetailNavigationShell() {
 
 export function peekDetailNavigationSymbol() {
   if (typeof window === 'undefined') return '';
+  if (!ENABLE_DETAIL_NAVIGATION_SHELL) return '';
   try {
     return sessionStorage.getItem(DETAIL_NAVIGATION_SYMBOL_KEY) || '';
   } catch {
