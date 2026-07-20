@@ -7,6 +7,7 @@ import { Loading } from "@/components/Loading";
 import NavBar from "@/components/NavBar";
 import { request } from "@/utils/request";
 import { Interface } from "@/utils/constants";
+import { navigateToOrReload } from "@/utils/clientNavigation";
 import styles from "./page.module.less";
 
 const likeActiveIcon = "https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/like-active.png";
@@ -40,7 +41,7 @@ export default function MyLikesPage() {
   };
 
   const goLogin = () => {
-    window.location.href = "/user?showLogin=true";
+    navigateToOrReload("/user?showLogin=true");
   };
 
   const loadLikes = async (refresh = false) => {
@@ -84,7 +85,7 @@ export default function MyLikesPage() {
   }, [hasMore, loading, page, list]);
 
   const goToPostDetail = (postId) => {
-    window.location.href = `/commentinfo?id=${postId}`;
+    navigateToOrReload(`/commentinfo?id=${postId}`);
   };
 
   return (

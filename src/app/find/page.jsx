@@ -19,6 +19,7 @@ import { SkeletonCircle, SkeletonElement } from '@/components/Skeleton';
 import { request } from '../../utils/request';
 import { Interface, LOOPTIME } from '../../utils/constants';
 import { jump2Detail, jump2List } from '../../utils/core';
+import { navigateToOrReload } from '@/utils/clientNavigation';
 import { useAmplitude } from '../../hooks/useAmplitude';
 import { FindEvents } from '../../utils/amplitude';
 import styles from './page.module.less';
@@ -707,7 +708,7 @@ const loadingTimerRef = useRef(null);
 
   // 添加自选
   const addOwn = () => {
-    window.location.href = '/search';
+    navigateToOrReload('/search');
   };
 
   // 渲染自选列表

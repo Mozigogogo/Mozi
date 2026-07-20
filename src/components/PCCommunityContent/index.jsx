@@ -22,6 +22,7 @@ import PCFlashNewsCard from '@/components/PCFlashNewsCard';
 import PCPagination from '@/components/PCPagination';
 import PostDetailModal from '@/components/PostDetailModal';
 import ShareAiChatModal from '@/components/ShareAiChatModal';
+import { jump2Detail } from '@/utils/core';
 import { dislikePost, undislikePost, followUser, getUserFollowStatus, unfollowUser } from '@/api/community';
 import styles from './index.module.less';
 
@@ -1245,7 +1246,7 @@ export default function PCCommunityContent() {
                           onUserClick={goToUserPage}
                           onLikeClick={(postId) => toggleLike(null, postId)}
                           onShareClick={handleShare}
-                          onTagClick={(tagName) => router.push(`/detail?symbol=${tagName}`)}
+                          onTagClick={(tagName) => jump2Detail(tagName)}
                           onTopicClick={(topicId, topicName) => router.push(`/topicinfo?id=${topicId}&title=${topicName}`)}
                           isLiked={post.isLiked || likedPosts[post.id]}
                           formatTimeAgo={formatTimeAgo}

@@ -14,6 +14,8 @@ import { confirm } from '@/components/Modal/confirm';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 import { forceBlurAndResetViewport } from '@/utils/iosViewportFix';
+import { jump2Detail } from '@/utils/core';
+import { navigateToOrReload } from '@/utils/clientNavigation';
 import styles from './page.module.less';
 
 const SHARE_SITE_ORIGIN = 'https://www.moziai.xyz';
@@ -496,7 +498,7 @@ export default function CommentInfo() {
     if (postId) params.set('postId', postId);
     if (authorId) params.set('authorId', authorId);
     const query = params.toString();
-    window.location.href = query ? `/report/comment?${query}` : '/report/comment';
+    navigateToOrReload(query ? `/report/comment?${query}` : '/report/comment');
   };
 
   // 处理更新帖子
@@ -504,7 +506,7 @@ export default function CommentInfo() {
     if (e) e.stopPropagation();
     
     // 跳转到发帖页面，并传递帖子信息
-    window.location.href = `/post?id=${post.id}&title=${encodeURIComponent(post.title)}&content=${encodeURIComponent(post.content)}&isUpdate=true`;
+    navigateToOrReload(`/post?id=${post.id}&title=${encodeURIComponent(post.title)}&content=${encodeURIComponent(post.content)}&isUpdate=true`);
   };
 
   // 设置回复对象
@@ -824,7 +826,7 @@ export default function CommentInfo() {
                         key={`tag-${tag.id || tag.name}`}
                         className={styles.coinTag}
                         onClick={() => {
-                          window.location.href = `/detail?symbol=${tag.name}`;
+                          jump2Detail(tag.name);
                         }}
                       >
                         ${tag.name}$
@@ -893,7 +895,7 @@ export default function CommentInfo() {
                         key={`topic-${topic.id}`} 
                         className={styles.topicTag}
                         onClick={() => {
-                          window.location.href = `/topicinfo?id=${topic.id}`;
+                          navigateToOrReload(`/topicinfo?id=${topic.id}`);
                         }}
                       >
                         #{topic.name}

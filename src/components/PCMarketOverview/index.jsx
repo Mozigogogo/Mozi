@@ -6,6 +6,7 @@ import { Row, Col } from 'antd';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { jump2Detail } from '../../utils/core';
+import { navigateToOrReload } from '@/utils/clientNavigation';
 import { getAggregationDetail } from '../../api/market';
 import styles from './index.module.less';
 
@@ -44,7 +45,7 @@ const PCMarketOverview = memo(({ onCalendarClick, calendarExpanded = false }) =>
   const [smartAction, setSmartAction] = useState(t('overview.configAlarm'));
   const [smartOnClick, setSmartOnClick] = useState(() => () => {
     if (typeof window !== 'undefined') {
-      window.location.href = PC_ALARM_CONFIGURE_HREF;
+      navigateToOrReload(PC_ALARM_CONFIGURE_HREF);
     }
   });
 
@@ -78,7 +79,7 @@ const PCMarketOverview = memo(({ onCalendarClick, calendarExpanded = false }) =>
           setSmartAction(t('overview.configAlarm'));
           setSmartOnClick(() => () => {
             if (typeof window !== 'undefined') {
-              window.location.href = PC_ALARM_CONFIGURE_HREF;
+              navigateToOrReload(PC_ALARM_CONFIGURE_HREF);
             }
           });
           return;
@@ -116,7 +117,7 @@ const PCMarketOverview = memo(({ onCalendarClick, calendarExpanded = false }) =>
           setSmartAction(t('overview.configAlarm'));
           setSmartOnClick(() => () => {
             if (typeof window !== 'undefined') {
-              window.location.href = PC_ALARM_CONFIGURE_HREF;
+              navigateToOrReload(PC_ALARM_CONFIGURE_HREF);
             }
           });
           return;

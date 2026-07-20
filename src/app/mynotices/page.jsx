@@ -7,6 +7,7 @@ import { Loading } from "@/components/Loading";
 import NavBar from "@/components/NavBar";
 import { request } from "@/utils/request";
 import { Interface } from "@/utils/constants";
+import { navigateToOrReload } from "@/utils/clientNavigation";
 import styles from "./page.module.less";
 
 const formatTime = (timeStr, t) => {
@@ -37,7 +38,7 @@ export default function MyNoticesPage() {
   };
 
   const goLogin = () => {
-    window.location.href = "/user?showLogin=true";
+    navigateToOrReload("/user?showLogin=true");
   };
 
   const markAsRead = async () => {
@@ -94,7 +95,7 @@ export default function MyNoticesPage() {
   }, [hasMore, loading, page, list]);
 
   const goToPostDetail = (postId) => {
-    window.location.href = `/commentinfo?id=${postId}`;
+    navigateToOrReload(`/commentinfo?id=${postId}`);
   };
 
   return (

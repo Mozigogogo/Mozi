@@ -16,7 +16,7 @@ import KlineChart from '../../components/KlineChart';
 import OrderBook from '../../components/OrderBook';
 import OneClickAlarmModal from '@/components/OneClickAlarmModal';
 import ExchangePickerModal from '@/components/ExchangePickerModal';
-import { Loading, LogoLoading } from '@/components/Loading';
+import { Loading } from '@/components/Loading';
 import { Skeleton } from '../../components/Skeleton';
 import { detailHeaderSkeletonConfig } from '../../components/Skeleton/configs/detailPageConfig';
 import { CaretUpIcon, CaretDownIcon, BellIcon, ShareIcon } from '@/components/Icons';
@@ -26,9 +26,11 @@ import AiChatModalPc from '@/components/AiChatModalPc';
 import { request } from '@/utils/request';
 import { Interface, LOOPTIME, WS_URL } from '@/utils/constants';
 import { formatNumber, formatPercent, jump2NoTab } from '@/utils/core';
+import { navigateToOrReload } from '@/utils/clientNavigation';
 import { safeBack } from '@/utils/navigation';
 import { markTgAlertDeeplinkHandledBySymbol } from '@/utils/tgAlertDeeplink';
-import { notifyRouteBootReady, ROUTE_BOOT_LOGO } from '@/utils/routeBootLoading';
+import { hideDetailNavigationShell } from '@/utils/clientNavigation';
+import { notifyRouteBootReady } from '@/utils/routeBootLoading';
 import { MoziWebSocket } from '@/utils/moziWebSocket';
 import { useTranslation } from 'react-i18next';
 import { useAlertConfig } from '@/hooks/useAlertConfig';
@@ -104,11 +106,12 @@ export default function DetailPage() {
     }
   }, [fromTgAlert, symbol, isPC]);
 
-  // 移动端进入详情后立即解除路由 boot loading，避免全屏 LogoLoading 遮挡骨架屏
+  // 进入详情后立即解除路由 boot loading；移动端同时收起全局过渡骨架
   useLayoutEffect(() => {
     if (!isPC) {
-      notifyRouteBootReady();
+      hideDetailNavigationShell();
     }
+    notifyRouteBootReady();
   }, [isPC]);
 
   const renderMobileMarketSkeleton = () => (
@@ -1251,7 +1254,7 @@ export default function DetailPage() {
   const jump2Community = () => {
     if (symbol) {
       // 通过URL参数传递币种信息，自动切换到币种tab并选中对应币种
-      window.location.href = `/community?tab=currency&coin=${symbol}`;
+      navigateToOrReload(`/community?tab=currency&coin=${symbol}`);
     }
   };
 
@@ -2483,24 +2486,9 @@ ${coinInfo.name || symbol} (${symbol})
     [isFavorite, coinInfo?.isSelfSelected, fromFavorite]
   );
 
-  const showBootLoading = isPC && Boolean(symbol) && loading && !coinInfo;
-
-  useEffect(() => {
-    if (isPC && (coinInfo || (!loading && symbol))) {
-      notifyRouteBootReady();
-    }
-  }, [coinInfo, loading, symbol, isPC]);
-
   if (isPC) {
     return (
       <>
-      <LogoLoading
-        visible={showBootLoading}
-        fullscreen
-        mask
-        image={ROUTE_BOOT_LOGO}
-        size={72}
-      />
       <div ref={pcContentLayoutRef} className={styles.pcContentLayout}>
           <aside className={styles.pcContentColLeft}>
             <PCCoinDetail

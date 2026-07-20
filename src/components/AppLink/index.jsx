@@ -1,24 +1,20 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { markRouteBootLoading } from '@/utils/routeBootLoading';
+import { navigateTo } from '@/utils/clientNavigation';
 
-export default function AppLink({ href, className, children, onClick, style, ...props }) {
+export default function AppLink({ href, className, children, onClick, style, replace = false, ...props }) {
   const router = useRouter();
 
   const handleClick = (event) => {
     onClick?.(event);
     if (event.defaultPrevented || !href) return;
 
-    if (typeof window !== 'undefined') {
-      const nextPath = String(href).split('?')[0];
-      const currentPath = window.location.pathname;
-      if (nextPath.startsWith('/') && nextPath !== currentPath) {
-        markRouteBootLoading(nextPath);
-      }
-    }
+    const nextHref = String(href);
+    if (navigateTo(nextHref, { replace })) return;
 
-    router.push(href);
+    if (replace) router.replace(nextHref);
+    else router.push(nextHref);
   };
 
   const handleKeyDown = (event) => {

@@ -43,6 +43,7 @@ import { EMAIL, Interface } from '@/utils/constants';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { getShareCount } from '@/api/home';
 import { savePcAiFromSearch } from '@/utils/pcAiFromSearch';
+import { jump2Detail } from '@/utils/core';
 import styles from './index.module.less';
 import AISearchBadge from './AISearchBadge';
 
@@ -1204,7 +1205,7 @@ export default function PCLayout({ children }) {
                             className={`${styles.pcWatchlistRow} ${isRowActive ? styles.pcWatchlistRowActive : ''}`}
                             onClick={() => {
                               setActiveContent(null);
-                              router.push(`/detail?symbol=${encodeURIComponent(sym)}`);
+                              jump2Detail(sym);
                             }}
                           >
                             <span className={styles.pcWatchlistRowLeft}>

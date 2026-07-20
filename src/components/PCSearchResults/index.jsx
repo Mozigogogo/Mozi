@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { completeTask } from '@/api/user';
+import { jump2Detail } from '@/utils/core';
 import { Loading } from '@/components/Loading';
 import isEmpty from 'lodash/isEmpty';
 import styles from './index.module.less';
@@ -38,7 +39,7 @@ export default function PCSearchResults({ keyword, onClose, onYieldToPage }) {
     const sym = symbol || keyword;
     if (!sym) return;
     onYieldToPage?.();
-    router.push(`/detail?symbol=${encodeURIComponent(sym)}`);
+    jump2Detail(sym);
   };
 
   const fetchSearchResults = async () => {

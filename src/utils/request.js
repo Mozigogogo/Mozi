@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getTonPaymentTraceId } from '@/app/vip-recharge/utils/tonPaymentTrace';
+import { navigateToOrReload } from './clientNavigation.js';
 import { INTERFACE_URL, Interface } from './constants.js';
 
 // 创建axios实例
@@ -335,7 +336,7 @@ instance.interceptors.response.use(
             // 跳转到 TG 首页触发 TelegramAutoLogin。
             // 当前 TG 入口统一使用 `/home`，避免重新回到营销首页 `/`。
             if (window.location.pathname !== '/home') {
-              window.location.replace('/home');
+              navigateToOrReload('/home', { replace: true });
             } else {
               // 若已经在首页，避免整页 reload；直接通知 TelegramAutoLogin 重试登录
               window.dispatchEvent(new CustomEvent('tg-force-relogin'));

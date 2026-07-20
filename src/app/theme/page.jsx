@@ -9,6 +9,7 @@ import NavBar from "@/components/NavBar";
 import { request } from "@/utils/request";
 import { Interface } from "@/utils/constants";
 import { safeBack } from "@/utils/navigation";
+import { navigateToOrReload } from "@/utils/clientNavigation";
 import styles from "./page.module.less";
 
 const THEMES = [
@@ -79,7 +80,7 @@ export default function ThemeCenterPage() {
           if (isDesktop) {
             safeBack(router, { fallback: "/home" });
           } else {
-            window.location.href = "/user";
+            navigateToOrReload("/user");
           }
         }, 1200);
       } else {

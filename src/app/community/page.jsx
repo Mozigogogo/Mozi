@@ -25,6 +25,8 @@ import { request } from '@/utils/request';
 import { dislikePost, undislikePost } from '@/api/community';
 import { Interface } from '@/utils/constants';
 import { useAmplitude } from '../../hooks/useAmplitude';
+import { jump2Detail } from '@/utils/core';
+import { navigateToOrReload } from '@/utils/clientNavigation';
 import { CommunityEvents } from '../../utils/amplitude';
 import styles from './page.module.less';
 
@@ -754,7 +756,7 @@ export default function CommunityPage() {
     const url = `/post?templateType=${encodeURIComponent(templateType)}${urlParams}`;
     console.log('跳转URL:', url);
     
-    window.location.href = url;
+    navigateToOrReload(url);
   };
 
   // 创建话题
@@ -831,7 +833,7 @@ export default function CommunityPage() {
 
   // 跳转到帖子详情页
   const goToPostDetail = (postId) => {
-    window.location.href = `/commentinfo?id=${postId}`;
+    navigateToOrReload(`/commentinfo?id=${postId}`);
   };
 
   // 分享帖子到Telegram
@@ -880,12 +882,12 @@ export default function CommunityPage() {
   // 跳转到话题详情页
   const goToTopicDetail = (topicId, name, description = null) => {
     const defaultDesc = description || t('community.actions.noDescription');
-    window.location.href = `/topicinfo?id=${topicId}&title=${name}&description=${defaultDesc}`;
+    navigateToOrReload(`/topicinfo?id=${topicId}&title=${name}&description=${defaultDesc}`);
   };
 
   // 跳转到话题搜索页
   const goToTopicSearch = () => {
-    window.location.href = '/topicsearch';
+    navigateToOrReload('/topicsearch');
   };
 
   // 跳转到用户主页
@@ -903,11 +905,11 @@ export default function CommunityPage() {
 
     // 自己发的帖子跳转个人中心，他人帖子跳转用户详情页
     if (me && targetUserId === me) {
-      window.location.href = '/user';
+      navigateToOrReload('/user');
       return;
     }
 
-    window.location.href = `/user/${targetUserId}`;
+    navigateToOrReload(`/user/${targetUserId}`);
   };
 
   // 初始化加载
@@ -1112,8 +1114,8 @@ export default function CommunityPage() {
               onUserClick={goToUserPage}
               onLikeClick={(postId) => toggleLike(postId)}
               onShareClick={handleShare}
-              onTagClick={(tagName) => window.location.href = `/detail?symbol=${tagName}`}
-              onTopicClick={(topicId, topicName) => window.location.href = `/topicinfo?id=${topicId}&title=${topicName}`}
+              onTagClick={(tagName) => jump2Detail(tagName)}
+              onTopicClick={(topicId, topicName) => navigateToOrReload(`/topicinfo?id=${topicId}&title=${topicName}`)}
               isLiked={post.isLiked || likedPosts[post.id]}
               formatTimeAgo={formatTimeAgo}
               enableReportMenu={true}

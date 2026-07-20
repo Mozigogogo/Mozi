@@ -1,4 +1,5 @@
 import { Toast } from 'antd-mobile';
+import { navigateToOrReload } from '@/utils/clientNavigation';
 
 /**
  * Telegram 环境检测
@@ -216,12 +217,12 @@ export const jump2Detail = (symbol, fromFavorite = false) => {
   const url = fromFavorite 
     ? `/detail?symbol=${symbol}&fromFavorite=1`
     : `/detail?symbol=${symbol}`;
-  window.location.href = url;
+  navigateToOrReload(url, { symbol });
 };
 
 // 跳转到市场页
 export const jump2Market = (symbol) => {
-  window.location.href = `/market?symbol=${symbol}`;
+  navigateToOrReload(`/market?symbol=${symbol}`);
 };
 
 // 跳转到列表页
@@ -237,7 +238,7 @@ export const jump2List = (config) => {
       queryParams.append(key, value);
     });
     
-    window.location.href = `/list?${queryParams.toString()}`;
+    navigateToOrReload(`/list?${queryParams.toString()}`);
     return;
   }
   
@@ -274,7 +275,7 @@ export const jump2List = (config) => {
   if (showRanking !== undefined) queryParams.append('showRanking', showRanking);
   if (columnWidths) queryParams.append('columnWidths', JSON.stringify(columnWidths));
   
-  window.location.href = `/list?${queryParams.toString()}`;
+  navigateToOrReload(`/list?${queryParams.toString()}`);
 };
 
 // 跳转到无Tab页面
@@ -286,7 +287,7 @@ export const jump2NoTab = (pageName, params = {}) => {
   });
   
   const queryString = queryParams.toString();
-  window.location.href = `/${pageName}${queryString ? `?${queryString}` : ''}`;
+  navigateToOrReload(`/${pageName}${queryString ? `?${queryString}` : ''}`);
 };
 
 // 跳转到数据页面（如横屏图表）
@@ -297,7 +298,7 @@ export const jump2DataPage = (pageName, dataKey, data) => {
   }
   
   // 跳转到指定页面
-  window.location.href = `/${pageName}`;
+  navigateToOrReload(`/${pageName}`);
 };
 
 // 格式化数字
@@ -372,3 +373,5 @@ export const throttle = (fn, delay = 300) => {
     }
   };
 };
+
+export { navigateTo, navigateToOrReload } from '@/utils/clientNavigation';

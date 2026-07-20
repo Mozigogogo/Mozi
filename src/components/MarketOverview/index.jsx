@@ -4,7 +4,8 @@ import React, { memo, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
-import { jump2Detail } from '../../utils/core';
+import { jump2Detail } from '@/utils/core';
+import { navigateToOrReload } from '@/utils/clientNavigation';
 import { getAggregationDetail } from '../../api/market';
 import styles from './index.module.less';
 
@@ -27,7 +28,7 @@ const MarketOverview = memo(() => {
   const [smartAction, setSmartAction] = useState(t('overview.configAlarm'));
   const [smartOnClick, setSmartOnClick] = useState(() => () => {
     if (typeof window !== 'undefined') {
-      window.location.href = '/addwarn';
+      navigateToOrReload('/addwarn');
     }
   });
 
@@ -66,7 +67,7 @@ const MarketOverview = memo(() => {
           setSmartAction(t('overview.configAlarm'));
           setSmartOnClick(() => () => {
             if (typeof window !== 'undefined') {
-              window.location.href = '/addwarn';
+              navigateToOrReload('/addwarn');
             }
           });
           return;
@@ -105,7 +106,7 @@ const MarketOverview = memo(() => {
           setSmartAction(t('overview.configAlarm'));
           setSmartOnClick(() => () => {
             if (typeof window !== 'undefined') {
-              window.location.href = '/addwarn';
+              navigateToOrReload('/addwarn');
             }
           });
           return;
@@ -331,7 +332,7 @@ const MarketOverview = memo(() => {
       hasTodayUpdate: hasTodayUpdate, // 传递状态用于样式判断
       onClick: () => {
         if (typeof window !== 'undefined') {
-          window.location.href = '/daily';
+          navigateToOrReload('/daily');
         }
       }
     }

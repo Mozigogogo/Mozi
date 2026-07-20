@@ -11,6 +11,8 @@ import DetailDeepLinkHandler from "@/components/DetailDeepLinkHandler";
 import TelegramRootGate from "@/components/TelegramRootGate";
 import EnvironmentDetector from "@/components/EnvironmentDetector";
 import RouteChangeHandler from "@/components/RouteChangeHandler";
+import ClientNavigationBridge from "@/components/ClientNavigationBridge";
+import DetailNavigationShell from "@/components/DetailNavigationShell";
 import RouteBootLoading from "@/components/RouteBootLoading";
 import TokenDebugMonitor from "@/components/TokenDebugMonitor";
 import BuildFingerprint from "@/components/BuildFingerprint";
@@ -70,6 +72,8 @@ export default function RootLayout({ children }) {
         <BuildFingerprint />
         <ChunkErrorRecovery />
         <RouteChangeHandler />
+        <ClientNavigationBridge />
+        <DetailNavigationShell />
         <RouteBootLoading />
         {process.env.NODE_ENV !== 'production' ? <TokenDebugMonitor /> : null}
         <VConsoleLoader />

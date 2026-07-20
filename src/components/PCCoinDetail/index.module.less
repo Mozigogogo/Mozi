@@ -393,6 +393,37 @@
   width: 100%;
 }
 
+.overviewSkeleton {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  width: 100%;
+  padding: 8px 0;
+}
+
+.overviewSkeletonLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.overviewSkeletonRight {
+  flex: 1;
+  min-width: 0;
+}
+
+.overviewSkeletonStats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.overviewSkeletonStatCol {
+  min-width: 0;
+}
+
 @media (max-width: 900px) {
   .statGrid {
     grid-template-columns: repeat(3, minmax(0, 1fr));

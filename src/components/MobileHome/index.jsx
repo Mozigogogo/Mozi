@@ -694,6 +694,10 @@ export default function MobileHome() {
   useEffect(() => {
     if (!enableRankingFetch) return;
 
+    try {
+      router.prefetch('/detail');
+    } catch (_) {}
+
     fetchRankingData(!hasWarmCache);
     const interval = setInterval(() => {
       fetchRankingData(false);

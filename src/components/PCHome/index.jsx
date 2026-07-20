@@ -13,6 +13,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import dynamic from 'next/dynamic';
+import { jump2Detail } from '@/utils/core';
 import Image from 'next/image';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
@@ -562,7 +563,7 @@ export default function PCHome() {
             }}
             size="middle"
             onRow={(record) => ({
-              onClick: () => router.push(`/detail?symbol=${record.symbol}`),
+              onClick: () => jump2Detail(record.symbol),
               style: { cursor: 'pointer' },
             })}
           />

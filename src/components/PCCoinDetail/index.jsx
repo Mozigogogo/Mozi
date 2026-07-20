@@ -3,7 +3,7 @@
 import { useState, useCallback, Children } from 'react';
 import { LeftOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { Loading } from '@/components/Loading';
+import { Skeleton } from '@/components/Skeleton';
 import styles from './index.module.less';
 
 const ICON_FAVORITE_ACTIVE = '/icons/new_detail/like_actived.svg';
@@ -163,8 +163,23 @@ export default function PCCoinDetail({
 
       <section className={styles.overview}>
         {loading && !coinIcon ? (
-          <div className={styles.overviewLoading}>
-            <Loading tip={t('common.loading')} size={28} />
+          <div className={styles.overviewSkeleton}>
+            <div className={styles.overviewSkeletonLeft}>
+              <Skeleton config={{ type: 'circle', size: 40 }} />
+              <Skeleton config={{ type: 'element', width: 72, height: 24, borderRadius: 4 }} />
+            </div>
+            <div className={styles.overviewSkeletonRight}>
+              <Skeleton config={{ type: 'element', width: 160, height: 36, borderRadius: 6 }} />
+              <Skeleton config={{ type: 'element', width: 120, height: 18, borderRadius: 4, style: { marginTop: 8 } }} />
+              <div className={styles.overviewSkeletonStats}>
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <div key={index} className={styles.overviewSkeletonStatCol}>
+                    <Skeleton config={{ type: 'element', width: '100%', height: 14, borderRadius: 4 }} />
+                    <Skeleton config={{ type: 'element', width: '80%', height: 14, borderRadius: 4, style: { marginTop: 8 } }} />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         ) : (
           <div className={styles.overviewInner}>

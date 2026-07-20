@@ -28,6 +28,7 @@ import UserMenu from '@/app/user/components/UserMenu';
 import { useAlertConfig } from '@/hooks/useAlertConfig';
 import { getTgInviteLink } from '@/utils/constants';
 import VipBanner from '@/components/VipBanner';
+import { navigateToOrReload } from '@/utils/clientNavigation';
 import styles from '@/app/user/page.module.less';
 
 function UserBlockSkeleton({ height = 120 }) {
@@ -1595,7 +1596,7 @@ export default function UserPage() {
       icon: (<img src={'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/me_slices/skin%402x.png'} alt={t('user.skinCenter')} style={{ width: 22, height: 22 }} loading="lazy" decoding="async" />),
       text: t('user.skinCenter'),
       extra: '',
-      callback: () => { window.location.href = '/theme'; }
+      callback: () => { navigateToOrReload('/theme'); }
     },
 
     {

@@ -18,6 +18,7 @@ import ShareAiChatModal from '../ShareAiChatModal';
 import { isEmpty } from 'lodash';
 import { normalizePcFindRankType } from '@/utils/pcFindNavigation';
 import { savePcAiNav } from '@/utils/pcAiFromSearch';
+import { jump2Detail } from '@/utils/core';
 import styles from './index.module.less';
 
 const RANK_SHARE_ICON = '/icons/pc/share_toolbar.svg';
@@ -1197,7 +1198,7 @@ export default function PCFindContent() {
                             className={`${styles.rankTopCard} ${styles[`rankTopCard${idx + 1}`] || ''}`}
                             onClick={() => {
                               if (rankActiveType === 'exchange') router.push('/exchangerank');
-                              else router.push(`/detail?symbol=${encodeURIComponent(item.symbol)}`);
+                              else jump2Detail(item.symbol);
                             }}
                           >
                             <div className={styles.rankTopCardHeader}>
@@ -1297,7 +1298,7 @@ export default function PCFindContent() {
                             className={`${styles.rankTableRow} ${rankActiveType === 'exchange' ? styles.rankTableRowExchange : ''}`}
                             onClick={() => {
                               if (rankActiveType === 'exchange') router.push('/exchangerank');
-                              else router.push(`/detail?symbol=${encodeURIComponent(row.symbol)}`);
+                              else jump2Detail(row.symbol);
                             }}
                           >
                             <div className={styles.rankCoinCell}>
@@ -1409,7 +1410,7 @@ export default function PCFindContent() {
                     dataSource={marketData}
                     pagination={{ pageSize: 20 }}
                     onRow={(record) => ({
-                      onClick: () => router.push(`/detail?symbol=${record.symbol}`),
+                      onClick: () => jump2Detail(record.symbol),
                       style: { cursor: 'pointer' },
                     })}
                   />
@@ -1423,7 +1424,7 @@ export default function PCFindContent() {
                 dataSource={selfData}
                 pagination={false}
                 onRow={(record) => ({
-                  onClick: () => router.push(`/detail?symbol=${record.symbol}`),
+                  onClick: () => jump2Detail(record.symbol),
                   style: { cursor: 'pointer' },
                 })}
               />
