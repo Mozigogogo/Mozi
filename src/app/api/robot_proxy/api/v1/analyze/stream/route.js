@@ -7,7 +7,7 @@ export async function POST(req) {
     const body = await req.json();
     
     // 目标后端地址
-    const targetUrl = 'https://mozibackend-production.up.railway.app/api/v1/analyze/stream';
+    const targetUrl = 'https://www.moziai.xyz/api/v1/analyze/stream';
     
     // 过滤掉可能导致问题的 headers
     const headers = new Headers();
@@ -24,7 +24,7 @@ export async function POST(req) {
     // 确保必需的 headers 存在
     headers.set('Content-Type', 'application/json');
     headers.set('Accept', 'text/event-stream');
-    headers.set('Host', 'mozibackend-production.up.railway.app');
+    headers.set('Host', 'www.moziai.xyz');
 
     // 转发请求
     const response = await fetch(targetUrl, {

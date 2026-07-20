@@ -5,7 +5,7 @@ export const runtime = 'edge';
 const ROBOT_BACKEND_URL = (
   process.env.NEXT_PUBLIC_ROBOT_BACKEND_URL ||
   process.env.ROBOT_BACKEND_URL ||
-  'https://mozibackend-production.up.railway.app'
+  'https://www.moziai.xyz'
 ).replace(/\/$/, '');
 
 export async function POST(req) {
