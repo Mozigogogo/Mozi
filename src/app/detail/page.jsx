@@ -106,14 +106,6 @@ export default function DetailPage() {
     }
   }, [fromTgAlert, symbol, isPC]);
 
-  // 进入详情后立即解除路由 boot loading；移动端同时收起全局过渡骨架
-  useLayoutEffect(() => {
-    if (!isPC) {
-      hideDetailNavigationShell();
-    }
-    notifyRouteBootReady();
-  }, [isPC]);
-
   const renderMobileMarketSkeleton = () => (
     <div className={styles.sectionSkeleton}>
       {Array.from({ length: 5 }).map((_, index) => (
@@ -233,6 +225,27 @@ export default function DetailPage() {
     priceChange1Month: '--',
     priceChange1Year: '--'
   });
+
+  // 移动端首次进入详情时，等待首屏关键内容完成一次渲染后再收起过渡层，
+  // 避免样式 chunk 尚未稳定时暴露真实页面，出现图标和布局瞬间放大的闪烁。
+  useEffect(() => {
+    if (isPC || !symbol) return;
+    if (loading && isInitialLoad) return;
+
+    let raf1 = 0;
+    let raf2 = 0;
+    raf1 = window.requestAnimationFrame(() => {
+      raf2 = window.requestAnimationFrame(() => {
+        hideDetailNavigationShell();
+        notifyRouteBootReady();
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(raf1);
+      window.cancelAnimationFrame(raf2);
+    };
+  }, [isPC, symbol, loading, isInitialLoad]);
 
   const [orderBook, setOrderBook] = useState({
     bids: [],
@@ -711,7 +724,6 @@ export default function DetailPage() {
         clearTimeout(initialLoadTimeoutRef.current);
         initialLoadTimeoutRef.current = null;
       }
-      notifyRouteBootReady();
     }
   };
 
