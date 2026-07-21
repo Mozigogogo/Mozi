@@ -81,7 +81,14 @@ export default function PCHome() {
   const [bannerLoading, setBannerLoading] = useState(true);
   const [treeMapData, setTreeMapData] = useState([]);
   const [treeMapLoading, setTreeMapLoading] = useState(true);
-  const [activeZone, setActiveZone] = useState('arbitrage'); // arbitrage | derivatives
+  const [showArbitrageZone, setShowArbitrageZone] = useState(false);
+  const [activeZone, setActiveZone] = useState('derivatives'); // arbitrage | derivatives
+
+  useEffect(() => {
+    if (!showArbitrageZone && activeZone === 'arbitrage') {
+      setActiveZone('derivatives');
+    }
+  }, [showArbitrageZone, activeZone]);
 
   // 自动轮播
   useEffect(() => {
@@ -484,23 +491,33 @@ export default function PCHome() {
           {/* 合约专区 / 套利专区 */}
           <div>
             <div className={styles.derivativeHeader}>
-              <button
-                type="button"
-                className={`${styles.zoneTab} ${activeZone === 'arbitrage' ? styles.zoneTabActive : ''}`}
-                onClick={() => setActiveZone('arbitrage')}
-              >
-                {t('pcHome.arbitrage.title')}
-              </button>
-              <button
-                type="button"
-                className={`${styles.zoneTab} ${activeZone === 'derivatives' ? styles.zoneTabActive : ''}`}
-                onClick={() => setActiveZone('derivatives')}
-              >
-                {t('pcHome.derivatives.title')}
-              </button>
+              {showArbitrageZone ? (
+                <>
+                  <button
+                    type="button"
+                    className={`${styles.zoneTab} ${activeZone === 'arbitrage' ? styles.zoneTabActive : ''}`}
+                    onClick={() => setActiveZone('arbitrage')}
+                  >
+                    {t('pcHome.arbitrage.title')}
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.zoneTab} ${activeZone === 'derivatives' ? styles.zoneTabActive : ''}`}
+                    onClick={() => setActiveZone('derivatives')}
+                  >
+                    {t('pcHome.derivatives.title')}
+                  </button>
+                </>
+              ) : (
+                <div className={styles.derivativeSectionTitle}>{t('pcHome.derivatives.title')}</div>
+              )}
             </div>
 
-            {activeZone === 'derivatives' ? (
+            {showArbitrageZone && activeZone === 'arbitrage' ? (
+              <div className={styles.arbitrageEmbed}>
+                <ArbitrageRadar embedded={true} />
+              </div>
+            ) : (
               <div className={styles.zoneBody}>
                 <div className={styles.derivativeRow}>
                   {derivativeItems.map((item) => (
@@ -524,10 +541,6 @@ export default function PCHome() {
                 <div className={styles.marketDistributionWrapper}>
                   <MarketDistribution isPC={true} />
                 </div>
-              </div>
-            ) : (
-              <div className={styles.arbitrageEmbed}>
-                <ArbitrageRadar embedded={true} />
               </div>
             )}
           </div>

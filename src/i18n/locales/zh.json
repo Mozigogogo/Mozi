@@ -999,6 +999,7 @@
     "signalFusion": "信号源融合",
     "mathDerivation": "数学推导",
     "historicalBacktest": "历史回测",
+    "historicalWinRate": "历史胜率",
     "winRate": "胜率",
     "sample": "样本",
     "avgProfit": "均盈",

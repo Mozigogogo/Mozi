@@ -383,8 +383,6 @@ export default function SignalCard({
   const invalidation = card.invalidation ?? card.invalidation_price;
   const sources = card.sources || [];
   const winRate = card.win_rate ?? card.winRate;
-  const sampleCount = card.sample_count ?? card.sampleCount;
-  const avgProfit = card.avg_profit ?? card.avgProfit ?? card.avg_profit_pct;
 
   const isShort = direction !== 'long';
   const gradeBadgeClass = getGradeBadgeClassName(grade, styles);
@@ -482,29 +480,16 @@ export default function SignalCard({
 
   const statChips = useMemo(
     () =>
-      [
-        winRate != null
-          ? {
-              label: t('signalCard.winRate'),
+      winRate != null
+        ? [
+            {
+              label: t('signalCard.historicalWinRate'),
               value: `${Math.round(Number(winRate) * (winRate <= 1 ? 100 : 1))}%`,
               warn: false,
-            }
-          : null,
-        sampleCount != null
-          ? { label: t('signalCard.sample'), value: `n=${sampleCount}`, warn: false }
-          : null,
-        avgProfit != null
-          ? { label: t('signalCard.avgProfit'), value: formatPct(avgProfit), warn: false }
-          : null,
-        (strategy.global_win_rate ?? strategy.globalWinRate) != null
-          ? {
-              label: t('signalCard.globalWinRate'),
-              value: `${Math.round(Number(strategy.global_win_rate ?? strategy.globalWinRate) * ((strategy.global_win_rate ?? strategy.globalWinRate) <= 1 ? 100 : 1))}%`,
-              warn: true,
-            }
-          : null,
-      ].filter(Boolean),
-    [winRate, sampleCount, avgProfit, strategy.global_win_rate, strategy.globalWinRate, t]
+            },
+          ]
+        : [],
+    [winRate, t]
   );
 
   const strokeColor = gradeChart.stroke;
@@ -769,8 +754,6 @@ export default function SignalCard({
                 </div>
               ))}
             </div>
-          ) : embedded ? (
-            <div className={`${styles.backtest} ${styles.backtestExpanded} ${styles.backtestPlaceholder}`} aria-hidden />
           ) : null}
 
           {invalidation != null ? (
