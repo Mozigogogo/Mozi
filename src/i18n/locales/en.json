@@ -1792,6 +1792,9 @@
       "volume": "Volume",
       "volumeSub": "Volume"
     },
+    "arbitrage": {
+      "title": "Arbitrage Zone"
+    },
     "sectorMap": {
       "title": "Sector Selection",
       "viewMore": "View More"

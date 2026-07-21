@@ -1,0 +1,325 @@
+/* Scoped arbitrage radar styles */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+#mozi-arbitrage-radar{
+  font-family:'Inter',sans-serif;font-size:14PX;background:#F5F7FA;color:#1A1F36;
+  min-height:calc(100vh - 88PX);overflow:visible;border-radius:12PX;position:relative;
+}
+#mozi-arbitrage-radar.is-embedded{
+  min-height:0;
+  background:#fff;
+  overflow:hidden;
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
+#mozi-arbitrage-radar.is-embedded .hdr{
+  display:none;
+}
+#mozi-arbitrage-radar.is-embedded .main{
+  max-width:100%;
+  min-width:0;
+  padding:16PX 12PX 20PX;
+  overflow:hidden;
+}
+#mozi-arbitrage-radar.is-embedded .intro-strip{
+  grid-template-columns:1fr 1fr;
+  gap:10PX;
+}
+#mozi-arbitrage-radar.is-embedded .type-tabs{
+  overflow-x:auto;
+  flex-wrap:nowrap;
+}
+#mozi-arbitrage-radar.is-embedded .ttab{
+  padding:10PX 12PX;
+  white-space:nowrap;
+  flex-shrink:0;
+}
+#mozi-arbitrage-radar.is-embedded .tbl-wrap{
+  max-width:100%;
+  overflow:hidden;
+}
+#mozi-arbitrage-radar.is-embedded .tbl-hscroll.show{
+  display:block;
+}
+#mozi-arbitrage-radar.is-embedded thead th,
+#mozi-arbitrage-radar.is-embedded td{
+  padding:10PX 8PX;
+}
+#mozi-arbitrage-radar.is-embedded .sym-name{font-size:13PX}
+#mozi-arbitrage-radar.is-embedded .sym-ico{width:26PX;height:26PX;font-size:10PX}
+#mozi-arbitrage-radar.is-embedded .warn-tag{margin-left:4PX;padding:2PX 5PX;font-size:9PX}
+#mozi-arbitrage-radar *,#mozi-arbitrage-radar *::before,#mozi-arbitrage-radar *::after{box-sizing:border-box;margin:0;padding:0}
+#mozi-arbitrage-radar ::-webkit-scrollbar{width:4PX}
+#mozi-arbitrage-radar ::-webkit-scrollbar-track{background:#F5F7FA}
+#mozi-arbitrage-radar ::-webkit-scrollbar-thumb{background:#D0D7E2;border-radius:2PX}
+
+
+
+#mozi-arbitrage-radar{
+  --bg:#F5F7FA;--surface:#F8FAFC;--card:#FFFFFF;--border:#E5EAF0;--border-lit:#D0D7E2;
+  --accent:#00B890;--accent-dim:rgba(0,184,144,.1);--accent-glow:rgba(0,184,144,.28);
+  --warn:#D97706;--warn-dim:rgba(217,119,6,.1);
+  --danger:#EF4444;--pos:#059669;
+  --t1:#1A1F36;--t2:#667085;--t3:#98A2B3;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Inter',sans-serif;
+  --display:'Space Grotesk',sans-serif;
+  --r:10PX;--rs:6PX;--ease:200ms cubic-bezier(.4,0,.2,1)
+}
+
+#mozi-arbitrage-radar ::-webkit-scrollbar{width:4PX}#mozi-arbitrage-radar ::-webkit-scrollbar-track{background:var(--bg)}#mozi-arbitrage-radar ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2PX}
+
+/* HEADER */
+#mozi-arbitrage-radar .hdr{position:relative;z-index:1;background:var(--surface);border-bottom:1PX solid var(--border);height:56PX;display:flex;align-items:center;padding:0 28PX;gap:28PX}
+#mozi-arbitrage-radar .logo{display:flex;align-items:center;gap:9PX;font-family:var(--display);font-weight:700;font-size:17PX;color:var(--t1);cursor:pointer;text-decoration:none;flex-shrink:0}
+#mozi-arbitrage-radar .logo-icon{width:26PX;height:26PX;position:relative}
+#mozi-arbitrage-radar .logo-icon svg{width:26PX;height:26PX}
+#mozi-arbitrage-radar .nav{display:flex;gap:2PX}
+#mozi-arbitrage-radar .nbtn{padding:6PX 14PX;border-radius:var(--rs);font-size:13PX;font-weight:500;border:none;cursor:pointer;background:transparent;color:var(--t2);transition:all var(--ease)}
+#mozi-arbitrage-radar .nbtn:hover{color:var(--t1);background:var(--surface)}
+#mozi-arbitrage-radar .nbtn.on{color:var(--accent);background:var(--accent-dim)}
+#mozi-arbitrage-radar .hdr-r{margin-left:auto;display:flex;align-items:center;gap:12PX}
+#mozi-arbitrage-radar .delay{display:flex;align-items:center;gap:5PX;font-family:var(--mono);font-size:11PX;color:var(--t3)}
+#mozi-arbitrage-radar .d-dot{width:6PX;height:6PX;border-radius:50%;background:var(--accent);animation:dotpulse 2.4s ease infinite}
+@keyframes dotpulse{0%,100%{opacity:1;box-shadow:0 0 0 0 var(--accent-glow)}60%{opacity:.6;box-shadow:0 0 0 5PX transparent}}
+#mozi-arbitrage-radar .btn{padding:7PX 16PX;border-radius:var(--rs);font-size:13PX;font-weight:500;cursor:pointer;border:1PX solid var(--border);background:var(--surface);color:var(--t1);transition:all var(--ease)}
+#mozi-arbitrage-radar .btn:hover{border-color:var(--accent);color:var(--accent)}
+#mozi-arbitrage-radar .btn-p{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+#mozi-arbitrage-radar .btn-p:hover{background:#00a882;border-color:#00a882;color:#fff}
+
+/* MAIN */
+#mozi-arbitrage-radar .main{max-width:1080PX;margin:0 auto;padding:28PX 24PX 80PX}
+#mozi-arbitrage-radar .view{animation:vin .28s cubic-bezier(.4,0,.2,1)}
+@keyframes vin{from{opacity:0;transform:translateY(12PX)}to{opacity:1;transform:translateY(0)}}
+
+/* TABS */
+#mozi-arbitrage-radar .type-tabs{display:flex;gap:0;margin-bottom:22PX;border-bottom:1PX solid var(--border);max-width:100%}
+#mozi-arbitrage-radar .ttab{padding:10PX 20PX;font-size:13PX;font-weight:500;border:none;background:none;cursor:pointer;color:var(--t2);border-bottom:2PX solid transparent;margin-bottom:-1PX;transition:all var(--ease);white-space:nowrap}
+#mozi-arbitrage-radar .ttab.on{color:var(--accent);border-bottom-color:var(--accent)}
+#mozi-arbitrage-radar .ttab:hover{color:var(--t1)}
+
+/* TABLE */
+#mozi-arbitrage-radar .tbl-wrap{border-radius:var(--r);border:1PX solid var(--border);overflow:hidden;background:var(--card);max-width:100%}
+#mozi-arbitrage-radar .tbl-head-scroll{
+  overflow-x:auto;
+  overflow-y:hidden;
+  scrollbar-width:none;
+  background:var(--surface);
+}
+#mozi-arbitrage-radar .tbl-head-scroll::-webkit-scrollbar{display:none;height:0}
+#mozi-arbitrage-radar .tbl-hscroll{
+  display:none;
+  overflow-x:auto;
+  overflow-y:hidden;
+  height:8PX;
+  line-height:0;
+  background:#EEF2F6;
+  border:none;
+  scrollbar-width:auto;
+  scrollbar-color:#B8C2D0 #EEF2F6;
+}
+#mozi-arbitrage-radar .tbl-hscroll.show{display:block}
+#mozi-arbitrage-radar .tbl-hscroll-inner{height:1PX;pointer-events:none}
+#mozi-arbitrage-radar .tbl-hscroll::-webkit-scrollbar{height:8PX;background:#EEF2F6}
+#mozi-arbitrage-radar .tbl-hscroll::-webkit-scrollbar-track{background:#EEF2F6}
+#mozi-arbitrage-radar .tbl-hscroll::-webkit-scrollbar-thumb{background:#B8C2D0;border-radius:4PX;border:none}
+#mozi-arbitrage-radar .tbl-hscroll::-webkit-scrollbar-thumb:hover{background:#98A2B3}
+#mozi-arbitrage-radar .tbl-hscroll::-webkit-scrollbar-corner{background:#EEF2F6}
+#mozi-arbitrage-radar .tbl-body-scroll{
+  overflow-x:auto;
+  overflow-y:visible;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+#mozi-arbitrage-radar .tbl-body-scroll::-webkit-scrollbar{display:none;height:0}
+#mozi-arbitrage-radar table.tbl-sync{width:max-content;min-width:100%;border-collapse:collapse}
+#mozi-arbitrage-radar .load-more{border-bottom-left-radius:var(--r);border-bottom-right-radius:var(--r)}
+#mozi-arbitrage-radar thead th{padding:11PX 16PX;text-align:left;font-size:11PX;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;background:var(--surface);border-bottom:1PX solid var(--border);white-space:nowrap;cursor:pointer;user-select:none}
+#mozi-arbitrage-radar thead th:hover{color:var(--t2)}
+#mozi-arbitrage-radar tbody tr{border-bottom:1PX solid var(--border);cursor:pointer;transition:background var(--ease)}
+#mozi-arbitrage-radar tbody tr:last-child{border-bottom:none}
+#mozi-arbitrage-radar tbody tr:hover{background:rgba(15,23,42,.03)}
+#mozi-arbitrage-radar tbody tr:hover .row-arrow{opacity:1}
+#mozi-arbitrage-radar td{padding:13PX 16PX;font-size:13PX;vertical-align:middle;white-space:nowrap}
+#mozi-arbitrage-radar .td-num{color:var(--t3);font-family:var(--mono);font-size:12PX;width:36PX}
+#mozi-arbitrage-radar .sym-cell{display:flex;align-items:center;gap:9PX}
+#mozi-arbitrage-radar .sym-ico{width:30PX;height:30PX;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11PX;font-weight:700;flex-shrink:0}
+#mozi-arbitrage-radar .sym-name{font-weight:600;font-size:14PX}
+#mozi-arbitrage-radar .sym-sub{font-size:11PX;color:var(--t3);margin-top:1PX}
+#mozi-arbitrage-radar .exbadge{display:inline-flex;align-items:center;gap:4PX;padding:3PX 9PX;border-radius:4PX;font-size:11PX;font-weight:600;border:1PX solid}
+#mozi-arbitrage-radar .mono{font-family:var(--mono)}
+#mozi-arbitrage-radar .ann{font-family:var(--mono);font-weight:600;font-size:13PX}
+#mozi-arbitrage-radar .ann-h{color:var(--accent)}
+#mozi-arbitrage-radar .ann-m{color:var(--t1)}
+#mozi-arbitrage-radar .ann-l{color:var(--t3)}
+#mozi-arbitrage-radar .stars{display:flex;gap:2PX}
+#mozi-arbitrage-radar .s-on{color:var(--warn);font-size:11PX}
+#mozi-arbitrage-radar .s-off{color:var(--border-lit);font-size:11PX}
+#mozi-arbitrage-radar .warn-tag{display:inline-flex;align-items:center;gap:4PX;padding:2PX 7PX;border-radius:4PX;background:var(--warn-dim);border:1PX solid rgba(245,158,11,.25);color:var(--warn);font-size:10PX;font-weight:600;vertical-align:middle}
+#mozi-arbitrage-radar .row-arrow{color:var(--t3);font-size:12PX;opacity:0;transition:opacity var(--ease)}
+#mozi-arbitrage-radar .load-more{width:100%;padding:13PX;text-align:center;font-size:12PX;color:var(--t2);border:none;background:var(--surface);cursor:pointer;transition:all var(--ease);border-top:1PX solid var(--border)}
+#mozi-arbitrage-radar .load-more:hover{color:var(--accent);background:var(--accent-dim)}
+
+/* LABEL INTRO (onboarding strip) */
+#mozi-arbitrage-radar .intro-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12PX;margin-bottom:22PX}
+#mozi-arbitrage-radar .intro-card{background:var(--surface);border:1PX solid var(--border);border-radius:var(--r);padding:14PX 16PX;animation:vin .3s ease both}
+#mozi-arbitrage-radar .intro-card:nth-child(2){animation-delay:.05s}#mozi-arbitrage-radar .intro-card:nth-child(3){animation-delay:.1s}#mozi-arbitrage-radar .intro-card:nth-child(4){animation-delay:.15s}
+#mozi-arbitrage-radar .intro-icon{font-size:20PX;margin-bottom:8PX}
+#mozi-arbitrage-radar .intro-label{font-size:12PX;font-weight:600;color:var(--t1);margin-bottom:4PX}
+#mozi-arbitrage-radar .intro-desc{font-size:11PX;color:var(--t3);line-height:1.6}
+@media(max-width:700PX){#mozi-arbitrage-radar .intro-strip{grid-template-columns:1fr 1fr}}
+
+/* DETAIL */
+#mozi-arbitrage-radar .back-btn{display:inline-flex;align-items:center;gap:6PX;padding:7PX 14PX;border-radius:var(--rs);background:var(--surface);border:1PX solid var(--border);color:var(--t2);font-size:12PX;cursor:pointer;transition:all var(--ease);margin-bottom:22PX}
+#mozi-arbitrage-radar .back-btn:hover{color:var(--t1);border-color:var(--t3)}
+#mozi-arbitrage-radar .det-hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:16PX;flex-wrap:wrap;margin-bottom:24PX}
+#mozi-arbitrage-radar .det-left{}
+#mozi-arbitrage-radar .det-ttl{font-family:var(--display);font-size:24PX;font-weight:700;display:flex;align-items:center;gap:10PX}
+#mozi-arbitrage-radar .det-meta{display:flex;align-items:center;gap:12PX;margin-top:8PX;flex-wrap:wrap}
+#mozi-arbitrage-radar .cntd{display:flex;align-items:center;gap:6PX;font-size:11PX;color:var(--t2)}
+#mozi-arbitrage-radar .cntd-val{font-family:var(--mono);font-size:11PX;color:var(--t1);background:var(--surface);padding:2PX 7PX;border-radius:3PX;border:1PX solid var(--border)}
+#mozi-arbitrage-radar .det-right{text-align:right}
+#mozi-arbitrage-radar .fund-big{font-family:var(--mono);font-size:40PX;font-weight:700;color:var(--accent);line-height:1}
+#mozi-arbitrage-radar .fund-sub{font-size:11PX;color:var(--t2);margin-top:5PX}
+#mozi-arbitrage-radar .fund-ann{font-family:var(--mono);font-size:16PX;font-weight:600;color:var(--t1);margin-top:4PX}
+
+/* CHART */
+#mozi-arbitrage-radar .chart-card{background:var(--card);border:1PX solid var(--border);border-radius:var(--r);padding:20PX;margin-bottom:16PX}
+#mozi-arbitrage-radar .chart-card-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:14PX}
+#mozi-arbitrage-radar .chart-title{font-size:12PX;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.06em}
+#mozi-arbitrage-radar .chart-legend{display:flex;gap:14PX}
+#mozi-arbitrage-radar .leg-item{display:flex;align-items:center;gap:5PX;font-size:11PX;color:var(--t3)}
+#mozi-arbitrage-radar .leg-dot{width:8PX;height:8PX;border-radius:50%}
+#mozi-arbitrage-radar .chart-svg-wrap{position:relative}
+#mozi-arbitrage-radar .c-tooltip{position:absolute;background:var(--surface);border:1PX solid var(--border);border-radius:var(--rs);padding:7PX 10PX;font-family:var(--mono);font-size:11PX;pointer-events:none;opacity:0;transition:opacity .12s;white-space:nowrap;z-index:10;color:var(--t1)}
+
+/* GRID */
+#mozi-arbitrage-radar .g2{display:grid;grid-template-columns:1fr 1fr;gap:14PX;margin-bottom:14PX}
+#mozi-arbitrage-radar .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14PX;margin-bottom:14PX}
+@media(max-width:660PX){#mozi-arbitrage-radar .g2,#mozi-arbitrage-radar .g3{grid-template-columns:1fr}}
+#mozi-arbitrage-radar .card{background:var(--card);border:1PX solid var(--border);border-radius:var(--r);padding:18PX}
+#mozi-arbitrage-radar .card-t{font-size:11PX;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14PX}
+#mozi-arbitrage-radar .met-row{display:flex;justify-content:space-between;align-items:center;padding:9PX 0;border-bottom:1PX solid var(--border)}
+#mozi-arbitrage-radar .met-row:last-child{border-bottom:none}
+#mozi-arbitrage-radar .met-l{font-size:12PX;color:var(--t2)}
+#mozi-arbitrage-radar .met-v{font-family:var(--mono);font-size:13PX;font-weight:500}
+#mozi-arbitrage-radar .chg-up{color:var(--pos)}#mozi-arbitrage-radar .chg-dn{color:var(--danger)}
+
+/* CALCULATOR */
+#mozi-arbitrage-radar .calc-card{background:var(--card);border:1PX solid var(--accent-dim);border-radius:var(--r);padding:20PX;margin-bottom:14PX;position:relative;overflow:hidden}
+#mozi-arbitrage-radar .calc-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2PX;background:linear-gradient(90deg,var(--accent),transparent)}
+#mozi-arbitrage-radar .calc-t{font-family:var(--display);font-weight:600;font-size:15PX;margin-bottom:18PX;display:flex;align-items:center;gap:8PX}
+#mozi-arbitrage-radar .inp-row{display:flex;gap:10PX;flex-wrap:wrap;margin-bottom:16PX}
+#mozi-arbitrage-radar .inp-g{flex:1;min-width:130PX}
+#mozi-arbitrage-radar .inp-lbl{font-size:11PX;color:var(--t3);margin-bottom:6PX;display:flex;align-items:center;gap:4PX}
+#mozi-arbitrage-radar .inp-wrap{position:relative}
+#mozi-arbitrage-radar .inp-pfx{position:absolute;left:10PX;top:50%;transform:translateY(-50%);color:var(--t3);font-family:var(--mono);font-size:12PX;pointer-events:none}
+#mozi-arbitrage-radar .inp-f{width:100%;padding:8PX 10PX 8PX 22PX;background:var(--surface);border:1PX solid var(--border);border-radius:var(--rs);color:var(--t1);font-family:var(--mono);font-size:13PX;transition:border-color var(--ease);outline:none}
+#mozi-arbitrage-radar .inp-f:focus{border-color:var(--accent)}
+#mozi-arbitrage-radar .inp-f.np{padding-left:10PX}
+#mozi-arbitrage-radar .pbtns{display:flex;gap:4PX}
+#mozi-arbitrage-radar .pbtn{flex:1;padding:8PX 4PX;border-radius:var(--rs);border:1PX solid var(--border);background:var(--surface);color:var(--t2);font-size:12PX;cursor:pointer;transition:all var(--ease);text-align:center}
+#mozi-arbitrage-radar .pbtn.on{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+#mozi-arbitrage-radar .pbtn:hover{border-color:var(--border-lit);color:var(--t1)}
+#mozi-arbitrage-radar .steps-box{background:var(--surface);border:1PX solid var(--border);border-radius:var(--rs);padding:12PX 14PX;margin-bottom:14PX}
+#mozi-arbitrage-radar .step-row{display:flex;align-items:baseline;gap:10PX;padding:6PX 0;border-bottom:1PX solid var(--border)}
+#mozi-arbitrage-radar .step-row:last-child{border-bottom:none}
+#mozi-arbitrage-radar .step-n{width:18PX;height:18PX;border-radius:50%;background:var(--accent);color:#fff;font-size:10PX;font-weight:700;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+#mozi-arbitrage-radar .step-txt{font-size:12PX;color:var(--t2);flex:1}
+#mozi-arbitrage-radar .step-amt{font-family:var(--mono);font-size:12PX;font-weight:500;color:var(--t1)}
+#mozi-arbitrage-radar .res-table{border:1PX solid var(--border);border-radius:var(--rs);overflow:hidden}
+#mozi-arbitrage-radar .res-row{display:flex;justify-content:space-between;align-items:center;padding:10PX 14PX;border-bottom:1PX solid var(--border);transition:background .3s}
+#mozi-arbitrage-radar .res-row:last-child{border-bottom:none}
+#mozi-arbitrage-radar .res-row.tot{background:rgba(0,184,144,.08)}
+#mozi-arbitrage-radar .res-l{font-size:12PX;color:var(--t2)}
+#mozi-arbitrage-radar .res-v{font-family:var(--mono);font-size:13PX;font-weight:600}
+#mozi-arbitrage-radar .res-v.p{color:var(--pos)}#mozi-arbitrage-radar .res-v.n{color:var(--danger)}#mozi-arbitrage-radar .res-v.tot{color:var(--accent);font-size:15PX}
+#mozi-arbitrage-radar .flash{animation:flashbg .4s ease}
+@keyframes flashbg{0%{background:rgba(0,184,144,.14)}100%{background:transparent}}
+
+/* RISK */
+#mozi-arbitrage-radar .risk-box{background:rgba(245,158,11,.05);border:1PX solid rgba(245,158,11,.18);border-radius:var(--r);padding:15PX 18PX;margin-bottom:14PX}
+#mozi-arbitrage-radar .risk-t{font-size:11PX;font-weight:700;color:var(--warn);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10PX}
+#mozi-arbitrage-radar .risk-li{font-size:12PX;color:var(--t2);padding:4PX 0;padding-left:14PX;position:relative;line-height:1.6}
+#mozi-arbitrage-radar .risk-li::before{content:'•';position:absolute;left:0;color:var(--warn)}
+
+#mozi-arbitrage-radar .disc{font-size:11PX;color:var(--t3);padding:10PX 14PX;background:var(--surface);border-radius:var(--rs);border:1PX solid var(--border);line-height:1.7;margin-bottom:14PX}
+
+/* SUB VIEW */
+#mozi-arbitrage-radar .stitle{font-family:var(--display);font-size:20PX;font-weight:700;margin-bottom:5PX}
+#mozi-arbitrage-radar .ssub{font-size:13PX;color:var(--t2);margin-bottom:24PX}
+#mozi-arbitrage-radar .scard{background:var(--card);border:1PX solid var(--border);border-radius:var(--r);padding:22PX;margin-bottom:14PX}
+#mozi-arbitrage-radar .scard-t{font-size:13PX;font-weight:600;margin-bottom:14PX;padding-bottom:12PX;border-bottom:1PX solid var(--border)}
+#mozi-arbitrage-radar .tags-wrap{display:flex;gap:8PX;flex-wrap:wrap}
+#mozi-arbitrage-radar .tag{display:inline-flex;align-items:center;gap:5PX;padding:5PX 11PX;border-radius:20PX;border:1PX solid var(--border);background:var(--surface);font-size:12PX;font-weight:500;cursor:pointer;transition:all var(--ease)}
+#mozi-arbitrage-radar .tag.on{border-color:var(--accent);background:var(--accent-dim);color:var(--accent)}
+#mozi-arbitrage-radar .tag:hover{border-color:var(--border-lit)}
+#mozi-arbitrage-radar .tag-add{border-style:dashed;color:var(--t3)}
+#mozi-arbitrage-radar .tag-add:hover{border-color:var(--t3);color:var(--t2)}
+#mozi-arbitrage-radar .thr-row{display:flex;align-items:center;justify-content:space-between;padding:12PX 0;border-bottom:1PX solid var(--border)}
+#mozi-arbitrage-radar .thr-row:last-child{border-bottom:none}
+#mozi-arbitrage-radar .thr-l{font-size:13PX;color:var(--t2)}
+#mozi-arbitrage-radar .thr-r{display:flex;align-items:center;gap:8PX}
+#mozi-arbitrage-radar .thr-inp{width:72PX;padding:6PX 8PX;background:var(--surface);border:1PX solid var(--border);border-radius:var(--rs);color:var(--t1);font-family:var(--mono);font-size:13PX;text-align:right;outline:none;transition:border-color var(--ease)}
+#mozi-arbitrage-radar .thr-inp:focus{border-color:var(--accent)}
+#mozi-arbitrage-radar .thr-u{font-size:11PX;color:var(--t3);width:24PX}
+#mozi-arbitrage-radar .ch-row{display:flex;align-items:center;justify-content:space-between;padding:14PX 0;border-bottom:1PX solid var(--border)}
+#mozi-arbitrage-radar .ch-row:last-child{border-bottom:none}
+#mozi-arbitrage-radar .ch-l{display:flex;align-items:center;gap:10PX}
+#mozi-arbitrage-radar .ch-ico{width:34PX;height:34PX;border-radius:8PX;display:flex;align-items:center;justify-content:center;font-size:18PX}
+#mozi-arbitrage-radar .ch-name{font-size:13PX;font-weight:500}
+#mozi-arbitrage-radar .ch-note{font-size:11PX;color:var(--t3);margin-top:1PX}
+#mozi-arbitrage-radar .coming{font-size:10PX;color:var(--t3);background:var(--surface);border:1PX solid var(--border);padding:2PX 7PX;border-radius:4PX}
+/* Toggle */
+#mozi-arbitrage-radar .tgl{position:relative;width:36PX;height:20PX;cursor:pointer;display:flex;align-items:center;flex-shrink:0}
+#mozi-arbitrage-radar .tgl input{opacity:0;width:0;height:0;position:absolute}
+#mozi-arbitrage-radar .tgl-track{position:absolute;inset:0;background:var(--border);border-radius:10PX;transition:background var(--ease)}
+#mozi-arbitrage-radar .tgl input:checked~.tgl-track{background:var(--accent)}
+#mozi-arbitrage-radar .tgl-thumb{position:absolute;height:14PX;width:14PX;left:3PX;top:3PX;background:white;border-radius:50%;transition:transform var(--ease)}
+#mozi-arbitrage-radar .tgl input:checked~.tgl-thumb{transform:translateX(16PX)}
+#mozi-arbitrage-radar .save-bar{display:flex;justify-content:flex-end;gap:10PX;margin-top:16PX}
+
+/* TG preview */
+#mozi-arbitrage-radar .tg-wrap{background:#F0F4F8;border-radius:12PX;padding:14PX;max-width:320PX}
+#mozi-arbitrage-radar .tg-msg{background:#fff;border:1PX solid var(--border);border-radius:8PX 8PX 8PX 0;padding:12PX 14PX;font-size:12PX;line-height:1.8;color:var(--t1)}
+#mozi-arbitrage-radar .tg-time{font-size:10PX;color:var(--t3);text-align:right;margin-top:6PX}
+#mozi-arbitrage-radar .tg-btn{display:inline-block;margin-top:10PX;padding:7PX 14PX;background:rgba(0,184,144,.1);border:1PX solid rgba(0,184,144,.35);border-radius:6PX;color:var(--accent);font-size:12PX;text-decoration:none;cursor:pointer;transition:background var(--ease)}
+#mozi-arbitrage-radar .tg-btn:hover{background:rgba(0,184,144,.18)}
+
+/* TOAST */
+#mozi-arbitrage-radar #toast{position:fixed;bottom:24PX;right:24PX;z-index:999;background:var(--card);border:1PX solid var(--accent);border-radius:var(--r);padding:12PX 16PX;font-size:13PX;display:none;align-items:center;gap:8PX;box-shadow:0 4PX 24PX rgba(15,23,42,.12);animation:toastin .3s ease}
+@keyframes toastin{from{opacity:0;transform:translateY(8PX)}to{opacity:1;transform:translateY(0)}}
+
+/* HELP TOOLTIP */
+#mozi-arbitrage-radar .tip{position:relative;display:inline-flex;vertical-align:middle}
+#mozi-arbitrage-radar .tip-ico{width:14PX;height:14PX;border-radius:50%;background:#fff;border:1PX solid var(--border-lit);color:var(--t3);font-size:9PX;cursor:help;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+#mozi-arbitrage-radar .tip-txt{
+  display:none;
+  position:absolute;
+  top:calc(100% + 8PX);
+  left:50%;
+  transform:translateX(-50%);
+  background:#fff;
+  border:1PX solid var(--border);
+  border-radius:var(--rs);
+  padding:8PX 10PX;
+  font-size:11PX;
+  font-weight:400;
+  line-height:1.5;
+  color:var(--t1);
+  text-transform:none;
+  letter-spacing:normal;
+  white-space:normal;
+  width:200PX;
+  max-width:220PX;
+  box-shadow:0 4PX 16PX rgba(15,23,42,.12);
+  z-index:200;
+  pointer-events:none;
+}
+#mozi-arbitrage-radar .tip:hover .tip-txt{display:block}
+
+
+#mozi-arbitrage-radar .hdr{border-radius:12PX 12PX 0 0}
+#mozi-arbitrage-radar .hdr .logo,#mozi-arbitrage-radar .hdr .btn-p{display:none!important}
+#mozi-arbitrage-radar .nav{margin-left:0}

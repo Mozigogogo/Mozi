@@ -72,6 +72,11 @@ export const routes = [
     path: '/tradevol',
     name: '成交额',
     showTab: false
+  },
+  {
+    path: '/arbitrage',
+    name: '套利专区',
+    showTab: false
   }
 ];
 
