@@ -3618,7 +3618,7 @@ async function putCoinDirectionGuessScheduleSave({
   const body = {
     groupId: Number(groupId),
     enabled: Boolean(enabled),
-    publishTime: String(publishTime || '11:05').trim() || '11:05',
+    publishTime: String(publishTime || '09:00').trim() || '09:00',
   };
   guessApiLog('PUT /coinDirectionGuess/schedule/save ← 请求', { url, params: body });
   try {

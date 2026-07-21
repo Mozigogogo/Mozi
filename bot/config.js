@@ -246,9 +246,9 @@ const PREDICT_AUTO_PUBLISH_SYMBOL = (
   .trim()
   .toUpperCase();
 
-/** 定时自动发布时间（北京时间 HH:mm），默认 11:05；Railway Variables 设 PREDICT_AUTO_PUBLISH_TIME 可覆盖 */
+/** 定时自动发布时间（北京时间 HH:mm），默认 09:00；Railway Variables 设 PREDICT_AUTO_PUBLISH_TIME 可覆盖 */
 const PREDICT_AUTO_PUBLISH_TIME = (
-  process.env.PREDICT_AUTO_PUBLISH_TIME || '11:05'
+  process.env.PREDICT_AUTO_PUBLISH_TIME || '09:00'
 ).trim();
 
 /** 定时自动发布开关，默认开启；PREDICT_AUTO_PUBLISH_ENABLED=0 关闭 */
