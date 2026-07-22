@@ -510,24 +510,46 @@ function resolveFollowAiChoice(aiDirection) {
   return null;
 }
 
-/** AI 跟注的实际下注方向（long→涨，short→跌） */
+/** AI 跟注的实际下注方向（看涨→涨，看跌→跌）；未知时返回 null，避免默认按涨 */
 function resolveAiFollowBetDirection(aiDirection) {
   if (aiDirection === 'UP' || aiDirection === 'DOWN') return aiDirection;
-  return 'UP';
+  return null;
 }
 
 function resolveAiOppositeBetDirection(aiDirection) {
-  return resolveAiFollowBetDirection(aiDirection) === 'UP' ? 'DOWN' : 'UP';
+  const follow = resolveAiFollowBetDirection(aiDirection);
+  if (follow === 'UP') return 'DOWN';
+  if (follow === 'DOWN') return 'UP';
+  return null;
 }
 
-function directionToBetCallbackToken(direction) {
-  return direction === 'DOWN' ? 'DN' : 'UP';
+/**
+ * 按钮语义：F=跟注AI，O=反向；兼容旧消息里的 UP/DN（涨跌绝对值）
+ * @param {string} sideToken
+ * @param {'UP'|'DOWN'|null|undefined} aiDirection
+ * @returns {'UP'|'DOWN'|null}
+ */
+function resolveBetDirectionFromSideToken(sideToken, aiDirection) {
+  const token = String(sideToken || '').trim().toUpperCase();
+  if (token === 'UP' || token === 'DN' || token === 'DOWN') {
+    return token === 'UP' ? 'UP' : 'DOWN';
+  }
+  if (token === 'F' || token === 'FOLLOW') {
+    return resolveAiFollowBetDirection(aiDirection);
+  }
+  if (token === 'O' || token === 'OPP' || token === 'OPPOSITE') {
+    return resolveAiOppositeBetDirection(aiDirection);
+  }
+  return null;
 }
 
 /** 原始 up/down 统计 → 文案「跟注AI / 反向下注」对应的数据 */
 function mapStatsForFollowOppositeDisplay(raw, aiDirection, languageCode) {
   const base = normalizeGuessBetStats(raw, languageCode);
-  const followIsUp = resolveAiFollowBetDirection(aiDirection) === 'UP';
+  const followDir = resolveAiFollowBetDirection(aiDirection);
+  // AI 方向未知时不做翻转，避免看跌卡把反向注显示成跟注
+  if (followDir == null) return base;
+  const followIsUp = followDir === 'UP';
   return {
     upCount: followIsUp ? base.upCount : base.downCount,
     downCount: followIsUp ? base.downCount : base.upCount,
@@ -1130,10 +1152,11 @@ function formatBetAmountButtonText(labelLine, amount) {
   return `${labelLine}+${amount}`;
 }
 
-function buildGuessBetKeyboard(texts, guessNo, aiDirection) {
+function buildGuessBetKeyboard(texts, guessNo, _aiDirection) {
   const g = String(guessNo || '').trim();
-  const followToken = directionToBetCallbackToken(resolveAiFollowBetDirection(aiDirection));
-  const oppositeToken = directionToBetCallbackToken(resolveAiOppositeBetDirection(aiDirection));
+  // 按钮语义固定为跟注(F)/反向(O)；真正涨跌在点击时按当前 AI 方向解析
+  const followToken = 'F';
+  const oppositeToken = 'O';
   // Telegram 同行按钮等宽；3 列时 +50/+100 文案易被裁切，改为 2 列下注 + 独立自定义行
   return {
     inline_keyboard: [
@@ -2571,7 +2594,19 @@ async function tryRefreshGuessMessage(ctx, config, texts, guessNo, betResult) {
           messageId: msg.message_id,
           publisher,
         });
-        meta = getGuessMessageContext(guess);
+        const stored = getGuessMessageContext(guess);
+        meta = {
+          ...(stored || {}),
+          ...rebuilt,
+          chatId: msg.chat?.id ?? stored?.chatId ?? null,
+          messageId: msg.message_id,
+          publisher,
+          aiDirection: rebuilt.aiDirection || stored?.aiDirection || meta?.aiDirection || null,
+          aiConfidence: rebuilt.aiConfidence ?? stored?.aiConfidence ?? meta?.aiConfidence ?? null,
+          aiWinRate: rebuilt.aiWinRate ?? stored?.aiWinRate ?? meta?.aiWinRate ?? null,
+          aiWinCount: rebuilt.aiWinCount ?? stored?.aiWinCount ?? meta?.aiWinCount ?? null,
+          aiLossCount: rebuilt.aiLossCount ?? stored?.aiLossCount ?? meta?.aiLossCount ?? null,
+        };
       }
     } catch (err) {
       predictLog('bet.refresh_detail_fail', {
@@ -2607,7 +2642,19 @@ async function tryRefreshGuessMessage(ctx, config, texts, guessNo, betResult) {
                 messageId: msg.message_id,
                 publisher,
               });
-              meta = getGuessMessageContext(guess);
+              const stored = getGuessMessageContext(guess);
+              meta = {
+                ...(stored || {}),
+                ...rebuilt,
+                chatId: msg.chat.id,
+                messageId: msg.message_id,
+                publisher,
+                aiDirection: rebuilt.aiDirection || stored?.aiDirection || meta?.aiDirection || null,
+                aiConfidence: rebuilt.aiConfidence ?? stored?.aiConfidence ?? meta?.aiConfidence ?? null,
+                aiWinRate: rebuilt.aiWinRate ?? stored?.aiWinRate ?? meta?.aiWinRate ?? null,
+                aiWinCount: rebuilt.aiWinCount ?? stored?.aiWinCount ?? meta?.aiWinCount ?? null,
+                aiLossCount: rebuilt.aiLossCount ?? stored?.aiLossCount ?? meta?.aiLossCount ?? null,
+              };
             }
           }
         }
@@ -2726,20 +2773,80 @@ async function tryRefreshGuessMessage(ctx, config, texts, guessNo, betResult) {
 }
 
 /**
+ * 解析竞猜 AI 方向：优先本地上下文，其次 detail 接口
+ * @returns {Promise<'UP'|'DOWN'|null>}
+ */
+async function resolveGuessAiDirectionForBet(config, guessNo) {
+  const guess = String(guessNo || '').trim();
+  const cached = getGuessMessageContext(guess)?.aiDirection;
+  if (cached === 'UP' || cached === 'DOWN') return cached;
+  if (!config || !guess) return null;
+  try {
+    const detailRes = await getCoinDirectionGuessDetail({
+      apiBaseUrl: config.API_BASE_URL,
+      appUrl: config.APP_URL,
+      guessNo: guess,
+      path: config.COIN_DIRECTION_GUESS_DETAIL_PATH,
+    });
+    if (detailRes.ok && detailRes.item) {
+      const ai = parseGuessAiSignalFields(detailRes.item);
+      if (ai.direction === 'UP' || ai.direction === 'DOWN') {
+        patchGuessMessageContext(guess, { aiDirection: ai.direction });
+        return ai.direction;
+      }
+    }
+  } catch (err) {
+    predictLog('bet.resolve_ai_direction_fail', {
+      guessNo: guess,
+      message: err?.message || String(err),
+    });
+  }
+  return null;
+}
+
+/**
+ * 把按钮侧（F/O 或旧 UP/DN）解析成实际上注涨跌
+ * @returns {Promise<'UP'|'DOWN'|null>}
+ */
+async function resolveBetDirectionForGuess(config, guessNo, sideToken) {
+  const token = String(sideToken || '').trim().toUpperCase();
+  // 旧键盘：直接是涨跌绝对值
+  if (token === 'UP' || token === 'DN' || token === 'DOWN') {
+    return token === 'UP' ? 'UP' : 'DOWN';
+  }
+  const aiDirection = await resolveGuessAiDirectionForBet(config, guessNo);
+  return resolveBetDirectionFromSideToken(token, aiDirection);
+}
+
+/**
  * 群内下注：方向 + 积分 → POST /coinDirectionGuess/bet
  * userId 与 POST /user/login 响应 data.userId 原样一致
+ * @param {string} sideOrDirection F/O（跟注/反向）或 UP/DOWN（兼容旧按钮）
  */
-async function submitGuessBet(ctx, config, getTexts, guessNo, direction, betAmount) {
+async function submitGuessBet(ctx, config, getTexts, guessNo, sideOrDirection, betAmount) {
   const uid = ctx.from?.id;
   const languageCode = ctx.from?.language_code || 'en';
   const texts = getTexts(languageCode);
   const isZh = languageCode.toLowerCase().startsWith('zh');
-  const choice = direction === 'DOWN' ? 2 : 1;
   const guess = String(guessNo || '').trim();
   const pts = Math.floor(Number(betAmount));
 
   try {
-  const followChoice = resolveFollowAiChoice(getGuessMessageContext(guess)?.aiDirection);
+  const direction = await resolveBetDirectionForGuess(config, guess, sideOrDirection);
+  if (direction !== 'UP' && direction !== 'DOWN') {
+    predictLog('bet.resolve_direction_fail', {
+      telegramId: uid,
+      guessNo: guess,
+      sideOrDirection,
+    });
+    await answerPredictCbQuery(ctx, texts.predictVoteFailed, { show_alert: true });
+    return false;
+  }
+  const choice = direction === 'DOWN' ? 2 : 1;
+  const aiDirection =
+    getGuessMessageContext(guess)?.aiDirection ||
+    (await resolveGuessAiDirectionForBet(config, guess));
+  const followChoice = resolveFollowAiChoice(aiDirection);
   const dirLabel =
     followChoice == null
       ? choice === 1
@@ -2862,17 +2969,22 @@ async function submitGuessBet(ctx, config, getTexts, guessNo, direction, betAmou
   }
 }
 
-async function handleGuessBetDirect(ctx, config, getTexts, guessNo, direction, betAmount) {
-  await submitGuessBet(ctx, config, getTexts, guessNo, direction, betAmount);
+async function handleGuessBetDirect(ctx, config, getTexts, guessNo, sideOrDirection, betAmount) {
+  await submitGuessBet(ctx, config, getTexts, guessNo, sideOrDirection, betAmount);
 }
 
-async function handleGuessBetCustom(ctx, getTexts, guessNo, direction) {
+async function handleGuessBetCustom(ctx, config, getTexts, guessNo, sideOrDirection) {
   const uid = ctx.from?.id;
   const texts = getTexts(ctx.from?.language_code || 'en');
   const guess = String(guessNo || '').trim();
   const msg = ctx.callbackQuery?.message;
   if (!guess || uid == null || !msg || !('message_id' in msg)) {
     await ctx.answerCbQuery().catch(() => {});
+    return;
+  }
+  const direction = await resolveBetDirectionForGuess(config, guess, sideOrDirection);
+  if (direction !== 'UP' && direction !== 'DOWN') {
+    await answerPredictCbQuery(ctx, texts.predictVoteFailed, { show_alert: true });
     return;
   }
   await ctx.answerCbQuery().catch(() => {});

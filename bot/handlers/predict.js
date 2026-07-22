@@ -62,22 +62,22 @@ function registerPredict(bot, config, { getTexts }) {
     await executePredictCommand(ctx, config, getTexts, payload);
   });
 
-  bot.action(/^g:b:(UP|DN):(\d{1,6}|cst):(.+)$/, async (ctx) => {
-    const direction = ctx.match[1] === 'DN' ? 'DOWN' : 'UP';
+  bot.action(/^g:b:(UP|DN|F|O):(\d{1,6}|cst):(.+)$/, async (ctx) => {
+    const sideToken = ctx.match[1];
     const amountOrCst = ctx.match[2];
     const guessNo = ctx.match[3];
     const texts = getTexts(ctx.from?.language_code || 'en');
     try {
       if (amountOrCst === 'cst') {
-        await handleGuessBetCustom(ctx, getTexts, guessNo, direction);
+        await handleGuessBetCustom(ctx, config, getTexts, guessNo, sideToken);
         return;
       }
-      await handleGuessBetDirect(ctx, config, getTexts, guessNo, direction, Number(amountOrCst));
+      await handleGuessBetDirect(ctx, config, getTexts, guessNo, sideToken, Number(amountOrCst));
     } catch (err) {
       predictLog('bet.callback.error', {
         uid: ctx.from?.id ?? null,
         guessNo,
-        direction,
+        sideToken,
         amountOrCst,
         message: err?.message || String(err),
         stack: err?.stack?.split('\n').slice(0, 3).join(' | ') ?? null,

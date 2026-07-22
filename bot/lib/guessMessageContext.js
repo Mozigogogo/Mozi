@@ -93,6 +93,11 @@ function purgeExpired() {
  *   lastKnownStatus?: string | null;
  *   resultAnnounceSentAt?: number | null;
  *   resultAnnounceMessageId?: number | null;
+ *   aiDirection?: 'UP' | 'DOWN' | null;
+ *   aiConfidence?: number | null;
+ *   aiWinRate?: number | null;
+ *   aiWinCount?: number | null;
+ *   aiLossCount?: number | null;
  * }} data
  */
 function saveGuessMessageContext(guessNo, data) {
@@ -101,6 +106,12 @@ function saveGuessMessageContext(guessNo, data) {
   ensureLoaded();
   purgeExpired();
   const prev = contexts.get(key) || {};
+  const nextAiDirection =
+    data.aiDirection === 'UP' || data.aiDirection === 'DOWN'
+      ? data.aiDirection
+      : prev.aiDirection === 'UP' || prev.aiDirection === 'DOWN'
+        ? prev.aiDirection
+        : null;
   contexts.set(key, {
     sym: String(data.sym || prev.sym || '').trim(),
     durationMinutes:
@@ -125,6 +136,12 @@ function saveGuessMessageContext(guessNo, data) {
     lastKnownStatus: data.lastKnownStatus ?? prev.lastKnownStatus ?? null,
     resultAnnounceSentAt: data.resultAnnounceSentAt ?? prev.resultAnnounceSentAt ?? null,
     resultAnnounceMessageId: data.resultAnnounceMessageId ?? prev.resultAnnounceMessageId ?? null,
+    // 跟注/反向必须依赖 AI 方向；丢失后会错映射到涨侧
+    aiDirection: nextAiDirection,
+    aiConfidence: data.aiConfidence ?? prev.aiConfidence ?? null,
+    aiWinRate: data.aiWinRate ?? prev.aiWinRate ?? null,
+    aiWinCount: data.aiWinCount ?? prev.aiWinCount ?? null,
+    aiLossCount: data.aiLossCount ?? prev.aiLossCount ?? null,
     savedAt: prev.savedAt ?? Date.now(),
   });
   scheduleSave();
