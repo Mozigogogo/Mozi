@@ -2863,7 +2863,19 @@ async function postCoinDirectionGuessPublish({
   if (betEndAtRaw != null && String(betEndAtRaw).trim() !== '') {
     body.betEndAt = betEndAtRaw;
   }
-  guessApiLog('POST /coinDirectionGuess/publish ← 请求', { url, params: body });
+  guessApiLog('POST /coinDirectionGuess/publish ← 请求', {
+    url,
+    method: 'POST',
+    headers: {
+      'content-type': headers['content-type'],
+      accept: headers.accept,
+      referer: headers.referer || null,
+      authentication: rawAuth ? jwtPreview(rawAuth) : null,
+      hasAuthentication: Boolean(rawAuth),
+      authLength: rawAuth ? rawAuth.length : 0,
+    },
+    body,
+  });
   try {
     const res = await fetch(url, {
       method: 'POST',
@@ -2891,9 +2903,11 @@ async function postCoinDirectionGuessPublish({
       errorMessage: parseApiErrorMessage(json),
     };
     guessApiLog('POST /coinDirectionGuess/publish → 响应', {
+      url,
       httpStatus: res.status,
       ok: out.ok,
       guessNo: out.guessNo,
+      errorMessage: out.errorMessage,
       data: json,
       rawText: text,
     });

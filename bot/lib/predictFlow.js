@@ -48,6 +48,7 @@ const {
 } = require('./predictDebug');
 const { ensureTgUserToken, getCachedUserId } = require('./tgUserTokenCache');
 const { buildTelegramLoginOptsFromCtx } = require('./datainfoPoints');
+const { jwtPreview } = require('./debugLog');
 const {
   savePredictSession,
   getPredictSession,
@@ -1365,34 +1366,65 @@ async function registerCoinDirectionGuessPublish(ctx, config, { publishChatId, s
 
   try {
     const betEndAt = buildBetEndAtTimestamp();
-    predictPublishLog('发起竞猜 · 调用 publish 接口', {
-      uid,
-      groupId: publishChatId,
-      symbol: sym,
-      durationMinutes,
-      durationSeconds: formatPredictDuration(durationMinutes),
-      title,
+    const durationSeconds = formatPredictDuration(durationMinutes);
+    const publishPath = config.COIN_DIRECTION_GUESS_PUBLISH_PATH || 'coinDirectionGuess/publish';
+    const apiBase = String(config.API_BASE_URL || '').replace(/\/+$/, '');
+    const requestBody = {
+      groupId: Number(publishChatId),
+      symbol: String(sym || '').trim().toUpperCase(),
+      duration: durationSeconds,
+      title: String(title || '').trim(),
       betEndAt,
-      path: config.COIN_DIRECTION_GUESS_PUBLISH_PATH,
-      hasUserAuth: true,
+    };
+    predictPublishLog('确认发布 · 传给后端的参数', {
+      uid,
+      telegramId: String(uid),
       cachedUserId: getCachedUserId(String(uid)),
+      url: `${apiBase}/${String(publishPath).replace(/^\/+/, '')}`,
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authentication: jwtPreview(auth),
+        hasAuthentication: Boolean(auth),
+        referer: config.APP_URL ? `${String(config.APP_URL).replace(/\/+$/, '')}/` : null,
+      },
+      body: requestBody,
+      loginOpts: {
+        username: loginOpts.username || '',
+        telegramUsername: loginOpts.telegramUsername || '',
+        firstName: loginOpts.firstName || '',
+        lastName: loginOpts.lastName || '',
+        hasPhotoUrl: Boolean(loginOpts.photoUrl),
+      },
+      note: 'authentication 仅打印预览，不含完整 token',
     });
     const result = await postCoinDirectionGuessPublish({
       apiBaseUrl: config.API_BASE_URL,
       appUrl: config.APP_URL,
       auth,
-      path: config.COIN_DIRECTION_GUESS_PUBLISH_PATH,
+      path: publishPath,
       groupId: publishChatId,
       symbol: sym,
-      duration: formatPredictDuration(durationMinutes),
+      duration: durationSeconds,
       title,
       betEndAt,
+    });
+    predictPublishLog('确认发布 · 后端响应', {
+      uid,
+      telegramId: String(uid),
+      cachedUserId: getCachedUserId(String(uid)),
+      ok: result.ok,
+      httpStatus: result.status,
+      guessNo: result.guessNo ?? parseCoinDirectionGuessNo(result.json) ?? null,
+      errorMessage: result.errorMessage ?? null,
+      jsonCode: result.json?.code ?? null,
+      responsePreview: String(result.text || '').slice(0, 800),
     });
     predictLog('publish.api', {
       uid,
       groupId: publishChatId,
       symbol: sym,
-      duration: formatPredictDuration(durationMinutes),
+      duration: durationSeconds,
       betEndAt,
       ok: result.ok,
       status: result.status,
