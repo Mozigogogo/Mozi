@@ -224,6 +224,8 @@ const i18n = {
       '❌ 发布失败：未绑定目标群。请先在<strong>群内</strong>发送 <code>/predict</code>，点击「发起竞猜 →」进入私聊后再确认发布。',
     predictPublishApiFailed: (detail) =>
       `❌ 发布失败（后端）：${detail || '请稍后再试'}`,
+    predictPublishUserResolveFailed:
+      '❌ 发布失败：无法获取你的 Mozi 登录信息，请先打开 Mozi App 完成 Telegram 绑定/登录后再试。',
     predictPublishTelegramFailed: (detail) =>
       `❌ 发布失败（Telegram）：${detail || '请确认机器人在目标群有发消息权限'}`,
     predictGroupGuessFull: '本群竞猜已满，请等待现有竞猜结束',
@@ -607,6 +609,8 @@ const i18n = {
       '❌ Publish failed: no target group. Run <code>/predict</code> in the <strong>group</strong> first, tap <b>Start poll →</b>, then confirm in private chat.',
     predictPublishApiFailed: (detail) =>
       `❌ Publish failed (backend): ${detail || 'Please try again later'}`,
+    predictPublishUserResolveFailed:
+      '❌ Publish failed: could not resolve your Mozi login. Open Mozi App and finish Telegram binding/login, then try again.',
     predictPublishTelegramFailed: (detail) =>
       `❌ Publish failed (Telegram): ${detail || 'Ensure the bot can send messages in the target group'}`,
     predictGroupGuessFull:

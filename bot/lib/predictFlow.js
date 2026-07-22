@@ -1328,17 +1328,39 @@ async function registerCoinDirectionGuessPublish(ctx, config, { publishChatId, s
       json: null,
       text: '',
       errorMessage: 'missing uid or publishChatId',
+      authFailed: true,
     };
   }
 
+  // 发布必须用当前 TG 用户 JWT；禁止降级 MOZI_DETAIL_AUTH（系统 token 解不出真实用户）
+  const loginOpts = buildTelegramLoginOptsFromCtx(ctx);
   let auth = '';
   try {
-    auth = await ensureTgUserToken(config, uid, buildTelegramLoginOptsFromCtx(ctx));
+    auth = await ensureTgUserToken(config, uid, loginOpts);
   } catch (err) {
     predictLog('publish.api.auth_fail', { uid, message: err?.message || String(err) });
   }
   if (!auth) {
-    auth = String(config.MOZI_DETAIL_AUTH || '').trim();
+    try {
+      auth = await ensureTgUserToken(config, uid, { ...loginOpts, forceRefresh: true });
+    } catch (err) {
+      predictLog('publish.api.auth_refresh_fail', { uid, message: err?.message || String(err) });
+    }
+  }
+  if (!auth) {
+    predictError('publish.api.auth_missing', {
+      uid,
+      groupId: publishChatId,
+      note: 'no user JWT; skipped MOZI_DETAIL_AUTH fallback',
+    });
+    return {
+      ok: false,
+      status: 0,
+      json: null,
+      text: '',
+      errorMessage: 'unable to resolve user token',
+      authFailed: true,
+    };
   }
 
   try {
@@ -1352,6 +1374,8 @@ async function registerCoinDirectionGuessPublish(ctx, config, { publishChatId, s
       title,
       betEndAt,
       path: config.COIN_DIRECTION_GUESS_PUBLISH_PATH,
+      hasUserAuth: true,
+      cachedUserId: getCachedUserId(String(uid)),
     });
     const result = await postCoinDirectionGuessPublish({
       apiBaseUrl: config.API_BASE_URL,
@@ -1413,14 +1437,36 @@ async function bindCoinDirectionGuessMessage(ctx, config, { guessNo, tgMessageId
     };
   }
 
+  // 用户发起的 bind 同样必须用用户 JWT；自动发布路径单独传 MOZI_DETAIL_AUTH
+  const loginOpts = buildTelegramLoginOptsFromCtx(ctx);
   let auth = '';
   try {
-    auth = await ensureTgUserToken(config, uid, buildTelegramLoginOptsFromCtx(ctx));
+    auth = await ensureTgUserToken(config, uid, loginOpts);
   } catch (err) {
     predictLog('bind.api.auth_fail', { uid, message: err?.message || String(err) });
   }
   if (!auth) {
-    auth = String(config.MOZI_DETAIL_AUTH || '').trim();
+    try {
+      auth = await ensureTgUserToken(config, uid, { ...loginOpts, forceRefresh: true });
+    } catch (err) {
+      predictLog('bind.api.auth_refresh_fail', { uid, message: err?.message || String(err) });
+    }
+  }
+  if (!auth) {
+    predictError('bind.api.auth_missing', {
+      uid,
+      guessNo: guess,
+      tgMessageId: messageId,
+      note: 'no user JWT; skipped MOZI_DETAIL_AUTH fallback',
+    });
+    return {
+      ok: false,
+      status: 0,
+      json: null,
+      text: '',
+      errorMessage: 'unable to resolve user token',
+      authFailed: true,
+    };
   }
 
   try {
@@ -2239,6 +2285,7 @@ async function publishPredict(ctx, config, getTexts) {
       publishChatId,
       status: apiResult.status,
       ok: apiResult.ok,
+      authFailed: Boolean(apiResult.authFailed),
       errorMessage: apiResult.errorMessage ?? null,
       guessNo: apiResult.guessNo ?? null,
       jsonCode: apiResult.json?.code ?? null,
@@ -2249,11 +2296,18 @@ async function publishPredict(ctx, config, getTexts) {
       publishChatId,
       status: apiResult.status,
       ok: apiResult.ok,
+      authFailed: Boolean(apiResult.authFailed),
       errorMessage: apiResult.errorMessage ?? null,
       guessNo: apiResult.guessNo ?? null,
       responsePreview: String(apiResult.text || '').slice(0, 800),
       jsonCode: apiResult.json?.code ?? null,
     });
+    if (apiResult.authFailed) {
+      await replyOrEdit(ctx, session, texts.predictPublishUserResolveFailed, {
+        parse_mode: 'HTML',
+      });
+      return;
+    }
     const detail = apiResult.errorMessage || `HTTP ${apiResult.status || '—'}`;
     await replyOrEdit(ctx, session, texts.predictPublishApiFailed(escapeHtml(detail)), {
       parse_mode: 'HTML',
