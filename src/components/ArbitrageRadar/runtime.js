@@ -1,5 +1,56 @@
 /* eslint-disable */
 /** Adapted from public/mozi-radar.html */
+import { fetchCryptoArbFundingList } from '@/api/cryptoArb';
+
+const LIST_DISPLAY_LIMIT = 8;
+
+function parseFundingPct(raw) {
+  const n = parseFloat(String(raw ?? '').replace(/%/g, '').trim());
+  return Number.isFinite(n) ? n : 0;
+}
+
+function parsePeriodLabel(raw) {
+  const s = String(raw ?? '').trim();
+  return s || '8h';
+}
+
+function mapFundingItem(item, index) {
+  if (!item || typeof item !== 'object') return null;
+  const periodLabel = parsePeriodLabel(item.currentFundingPeriod ?? item.period);
+  const periodMatch = periodLabel.match(/(\d+)/);
+  const avg30Raw = item.mean30dPct;
+  const avg30 =
+    avg30Raw == null || avg30Raw === ''
+      ? null
+      : Number.isFinite(Number(avg30Raw))
+        ? Number(avg30Raw)
+        : null;
+  return {
+    rank: Number(item.rank) || index + 1,
+    sym: String(item.symbol || item.sym || '').trim().toUpperCase() || '—',
+    exchange: String(item.exchange || '').trim() || '—',
+    funding: parseFundingPct(item.currentFunding ?? item.funding),
+    period: periodMatch ? Number(periodMatch[1]) : 8,
+    periodLabel,
+    ann: Number.isFinite(Number(item.annualizedPct)) ? Number(item.annualizedPct) : 0,
+    avg30,
+    days: Number.isFinite(Number(item.continuousDays)) ? Number(item.continuousDays) : 0,
+    rating: Math.max(1, Math.min(5, Math.floor(Number(item.rating) || 0) || 1)),
+    warn: String(item.riskTag || '') === 'warning_extreme',
+    riskTooltip: item.riskTooltip != null ? String(item.riskTooltip) : null,
+    quoteVolume24h: item.quoteVolume24h != null ? String(item.quoteVolume24h) : null,
+    nextFundingTs: Number(item.nextFundingTs) || 0,
+    dataTs: Number(item.dataTs) || 0,
+    // 详情页占位（接口暂无这些字段时保持可渲染）
+    oi: 0,
+    oi24h: 0,
+    oi7d: 0,
+    basis: 0,
+    perp: 0,
+    spot: 0,
+  };
+}
+
 export function mountArbitrageRadar(__root, options = {}) {
   if (!__root || __root.__mounted) return () => {};
   __root.__mounted = true;
@@ -36,7 +87,7 @@ export function mountArbitrageRadar(__root, options = {}) {
   <div class="hdr-r">
     <div class="delay">
       <div class="d-dot"></div>
-      <span>延迟 <span id="delay-val">38</span>s</span>
+      <span>延迟 <span id="delay-val">—</span>s</span>
     </div>
   </div>
 </header>
@@ -44,17 +95,11 @@ export function mountArbitrageRadar(__root, options = {}) {
 <div id="toast"><span id="toast-txt"></span></div>`;
 
   
-// ===== DATA =====
-const ops = [
-  {rank:1,sym:'SOL',exchange:'Bybit',funding:0.025,period:8,ann:27.4,avg30:0.015,days:8,rating:4,warn:false,oi:124,oi24h:-3.2,oi7d:8.5,basis:0.12,perp:145.20,spot:145.03},
-  {rank:2,sym:'WIF',exchange:'Binance',funding:0.085,period:8,ann:93.1,avg30:0.040,days:2,rating:2,warn:true,oi:38,oi24h:12.4,oi7d:65.3,basis:0.21,perp:2.847,spot:2.841},
-  {rank:3,sym:'PEPE',exchange:'OKX',funding:0.045,period:8,ann:49.3,avg30:0.020,days:5,rating:4,warn:false,oi:92,oi24h:-1.8,oi7d:4.2,basis:0.08,perp:0.00001541,spot:0.00001540},
-  {rank:4,sym:'ORDI',exchange:'Bybit',funding:0.032,period:8,ann:35.0,avg30:0.018,days:3,rating:4,warn:false,oi:21,oi24h:2.3,oi7d:-1.1,basis:0.15,perp:31.42,spot:31.37},
-  {rank:5,sym:'BTC',exchange:'Binance',funding:0.018,period:8,ann:19.7,avg30:0.012,days:12,rating:5,warn:false,oi:4821,oi24h:-0.8,oi7d:3.1,basis:0.06,perp:61240,spot:61203},
-  {rank:6,sym:'ETH',exchange:'Bybit',funding:0.015,period:8,ann:16.4,avg30:0.011,days:6,rating:5,warn:false,oi:1243,oi24h:1.1,oi7d:2.8,basis:0.04,perp:3381,spot:3379.6},
-  {rank:7,sym:'DOGE',exchange:'OKX',funding:0.022,period:8,ann:24.1,avg30:0.019,days:4,rating:3,warn:false,oi:187,oi24h:-2.4,oi7d:6.7,basis:0.11,perp:0.1621,spot:0.1619},
-  {rank:8,sym:'AVAX',exchange:'Binance',funding:0.019,period:8,ann:20.8,avg30:0.014,days:7,rating:4,warn:false,oi:96,oi24h:0.6,oi7d:5.3,basis:0.09,perp:37.82,spot:37.79},
-];
+// ===== DATA（接口填充，最多展示 8 条）=====
+const ops = [];
+let listLoading = true;
+let listError = null;
+let listRequestId = 0;
 
   const exColors = {
   Bybit:{bg:'rgba(255,166,0,.12)',border:'rgba(255,166,0,.35)',color:'#D97706'},
@@ -80,8 +125,75 @@ function makeFundingHistory(baseRate) {
 let currentView = 'radar';
 let selectedOp = null;
 let activeTab = 'funding';
+let sortState = { key: 'ann', dir: 'desc' }; // key: funding | ann；默认年化 desc
 let calcState = {principal:10000, period:30, costRate:10};
 let countdown = {h:3,m:22,s:0};
+
+function replaceOps(items) {
+  ops.length = 0;
+  (items || []).forEach((item) => ops.push(item));
+}
+
+function buildFundingQuery() {
+  if (sortState.key === 'funding') {
+    return { fundingSort: sortState.dir };
+  }
+  return { annSort: sortState.dir || 'desc' };
+}
+
+function applyDataDelay(sec) {
+  if (!Number.isFinite(sec) || sec < 0) return;
+  delayVal = Math.max(0, Math.round(sec));
+  const el = __root.querySelector('#delay-val');
+  if (el) el.textContent = delayVal;
+}
+
+async function loadFundingList() {
+  const reqId = ++listRequestId;
+  listLoading = true;
+  listError = null;
+  if (currentView === 'radar') render();
+
+  try {
+    const result = await fetchCryptoArbFundingList(buildFundingQuery());
+    if (reqId !== listRequestId) return;
+    const mapped = (result.list || [])
+      .map((item, i) => mapFundingItem(item, i))
+      .filter(Boolean)
+      .slice(0, LIST_DISPLAY_LIMIT);
+    replaceOps(mapped);
+    applyDataDelay(result.dataDelaySec);
+  } catch (err) {
+    if (reqId !== listRequestId) return;
+    listError = err?.message || String(err);
+    replaceOps([]);
+  } finally {
+    if (reqId !== listRequestId) return;
+    listLoading = false;
+    if (currentView === 'radar') render();
+  }
+}
+
+function sortBy(key) {
+  if (sortState.key === key) {
+    sortState.dir = sortState.dir === 'desc' ? 'asc' : 'desc';
+  } else {
+    sortState.key = key;
+    sortState.dir = 'desc';
+  }
+  loadFundingList();
+}
+
+function getDisplayOps() {
+  return ops.slice(0, LIST_DISPLAY_LIMIT);
+}
+
+function sortInd(key) {
+  const on = sortState.key === key;
+  const up = on && sortState.dir === 'asc' ? 'on' : '';
+  const dn = on && sortState.dir === 'desc' ? 'on' : '';
+  return `<span class="sort-ind" aria-hidden="true"><span class="sort-up ${up}">▲</span><span class="sort-dn ${dn}">▼</span></span>`;
+}
 
 // ===== NAVIGATION =====
 function nav(view) {
@@ -118,6 +230,7 @@ function render() {
   animateRows();
   if(currentView==='detail') startCountdown();
   if(currentView==='radar') initTableHScroll();
+  if(currentView==='radar') initTableHeaderTips();
 }
 
 // ===== RADAR VIEW =====
@@ -158,14 +271,20 @@ function renderRadar() {
       <table class="tbl-sync" id="tbl-head-table">
         <thead>
           <tr>
-            <th>#</th>
-            <th>标的</th>
-            <th>交易所</th>
-            <th>当前 Funding <span class="tip" style="margin-left:4px"><span class="tip-ico">?</span><span class="tip-txt">每8小时结算一次的资金费率，正数代表多头支付给空头</span></span></th>
-            <th>年化 <span class="tip" style="margin-left:4px"><span class="tip-ico">?</span><span class="tip-txt">按当前一期费率折算，实际收益受市场波动影响</span></span></th>
-            <th>30d 均值</th>
-            <th>持续</th>
-            <th>评级</th>
+            <th class="col-num">#</th>
+            <th class="col-sym">标的</th>
+            <th class="col-ex">交易所</th>
+            <th class="th-sortable col-funding" onclick="sortBy('funding')">
+              当前 Funding ${sortInd('funding')}
+              <span class="tip" style="margin-left:4px" onclick="event.stopPropagation()"><span class="tip-ico">?</span><span class="tip-txt">每8小时结算一次的资金费率，正数代表多头支付给空头</span></span>
+            </th>
+            <th class="th-sortable col-ann" onclick="sortBy('ann')">
+              年化 ${sortInd('ann')}
+              <span class="tip" style="margin-left:4px" onclick="event.stopPropagation()"><span class="tip-ico">?</span><span class="tip-txt">按当前一期费率折算，实际收益受市场波动影响</span></span>
+            </th>
+            <th class="col-avg">30d 均值</th>
+            <th class="col-days">持续</th>
+            <th class="col-rating">评级</th>
           </tr>
         </thead>
       </table>
@@ -174,23 +293,73 @@ function renderRadar() {
       <div class="tbl-hscroll-inner" id="tbl-hscroll-inner"></div>
     </div>
     <div class="tbl-body-scroll" id="tbl-body-scroll">
-      <table class="tbl-sync" id="tbl-body-table">
-        <tbody>
-          ${ops.map((o,i)=>rowHTML(o,i)).join('')}
-        </tbody>
-      </table>
+      ${
+        listLoading
+          ? `<table class="tbl-sync" id="tbl-body-table"><tbody>${skeletonRowsHTML(LIST_DISPLAY_LIMIT)}</tbody></table>`
+          : listError
+            ? `<div class="tbl-state tbl-state-error" id="tbl-body-table">${escapeHtml(formatListError(listError))}<button type="button" class="tbl-retry" onclick="loadFundingList()">重试</button></div>`
+            : getDisplayOps().length
+              ? `<table class="tbl-sync" id="tbl-body-table"><tbody>${getDisplayOps().map((o,i)=>rowHTML(o, ops.indexOf(o), i + 1)).join('')}</tbody></table>`
+              : `<div class="tbl-state" id="tbl-body-table">暂无数据</div>`
+      }
     </div>
-    <button class="load-more" onclick="showToast('📊 已加载全部实时数据')">加载更多 ↓</button>
   </div>`;
 }
 
-function rowHTML(o,i) {
-  const col = symColors[i%symColors.length];
+function escapeHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function formatListError(msg) {
+  const s = String(msg || '').trim();
+  if (!s) return '加载失败，请稍后再试';
+  if (/status code 404/i.test(s)) return 'Funding 列表接口暂不可用（404）';
+  if (/status code 5\d\d/i.test(s)) return '服务暂时异常，请稍后再试';
+  if (/Network Error|Failed to fetch|timeout|ECONNABORTED/i.test(s)) return '网络异常，请检查网络后重试';
+  if (/Request failed with status code/i.test(s)) {
+    const code = (s.match(/status code\s+(\d+)/i) || [])[1];
+    return code ? `请求失败（${code}），请稍后再试` : '请求失败，请稍后再试';
+  }
+  return s.length > 80 ? `${s.slice(0, 80)}…` : s;
+}
+
+function skeletonRowsHTML(count = LIST_DISPLAY_LIMIT) {
+  return Array.from({ length: count }, (_, i) => `
+    <tr class="skel-row" aria-hidden="true" style="animation-delay:${i * 40}ms">
+      <td class="td-num"><span class="skel skel-num"></span></td>
+      <td>
+        <div class="sym-cell">
+          <span class="skel skel-avatar"></span>
+          <div class="skel-sym-text">
+            <span class="skel skel-line skel-w64"></span>
+            <span class="skel skel-line skel-w48"></span>
+          </div>
+        </div>
+      </td>
+      <td><span class="skel skel-badge"></span></td>
+      <td><span class="skel skel-line skel-w88"></span></td>
+      <td><span class="skel skel-line skel-w72"></span></td>
+      <td><span class="skel skel-line skel-w64"></span></td>
+      <td><span class="skel skel-line skel-w40"></span></td>
+      <td><span class="skel skel-stars"></span></td>
+    </tr>
+  `).join('');
+}
+
+function rowHTML(o,opsIdx,displayRank) {
+  const col = symColors[opsIdx%symColors.length];
   const ex = exColors[o.exchange]||{bg:'rgba(15,23,42,.04)',border:'rgba(15,23,42,.12)',color:'#64748b'};
   const annCls = o.ann>=25?'ann-h':o.ann>=8?'ann-m':'ann-l';
   const stars = [1,2,3,4,5].map(s=>`<span class="${s<=o.rating?'s-on':'s-off'}">★</span>`).join('');
-  return `<tr onclick="openDetail(ops[${i}])" style="animation-delay:${i*35}ms">
-    <td class="td-num">${o.rank}</td>
+  const periodLabel = o.periodLabel || `${o.period || 8}h`;
+  const avg30Text = o.avg30 == null ? '—' : `${Number(o.avg30).toFixed(3)}%`;
+  const warnTitle = o.riskTooltip ? ` title="${String(o.riskTooltip).replace(/"/g, '&quot;')}"` : '';
+  return `<tr onclick="openDetail(ops[${opsIdx}])" style="animation-delay:${(displayRank-1)*35}ms">
+    <td class="td-num">${o.rank || displayRank}</td>
     <td>
       <div class="sym-cell">
         <div class="sym-ico" style="background:${col}22;color:${col}">${o.sym.slice(0,3)}</div>
@@ -201,12 +370,12 @@ function rowHTML(o,i) {
       </div>
     </td>
     <td><span class="exbadge" style="background:${ex.bg};border-color:${ex.border};color:${ex.color}">${o.exchange}</span></td>
-    <td><span class="mono">${o.funding.toFixed(3)}%<span style="color:var(--t3);font-size:11px">/8h</span></span></td>
+    <td><span class="mono">${Number(o.funding).toFixed(3)}%<span style="color:var(--t3);font-size:11px">/${periodLabel}</span></span></td>
     <td>
-      <span class="ann ${annCls}">${o.ann.toFixed(1)}%</span>
-      ${o.warn?'<span class="warn-tag" style="margin-left:6px">⚠️ 极值</span>':''}
+      <span class="ann ${annCls}">${Number(o.ann).toFixed(1)}%</span>
+      ${o.warn?`<span class="warn-tag" style="margin-left:6px"${warnTitle}>⚠️ 极值</span>`:''}
     </td>
-    <td><span class="mono" style="color:var(--t3)">${o.avg30.toFixed(3)}%</span></td>
+    <td><span class="mono" style="color:var(--t3)">${avg30Text}</span></td>
     <td><span class="mono" style="color:var(--t2)">${o.days}d</span></td>
     <td><div class="stars">${stars}</div></td>
   </tr>`;
@@ -242,9 +411,9 @@ function renderDetail(o) {
       </div>
     </div>
     <div class="det-right">
-      <div class="fund-big">${o.funding.toFixed(3)}%<span style="font-size:16px;color:var(--t2);font-weight:400">/8h</span></div>
-      <div class="fund-ann">年化 ${o.ann.toFixed(1)}%</div>
-      <div class="fund-sub">30日均值 ${o.avg30.toFixed(3)}% · 当前为均值 ${(o.funding/o.avg30).toFixed(1)}x</div>
+      <div class="fund-big">${Number(o.funding).toFixed(3)}%<span style="font-size:16px;color:var(--t2);font-weight:400">/${o.periodLabel || `${o.period || 8}h`}</span></div>
+      <div class="fund-ann">年化 ${Number(o.ann).toFixed(1)}%</div>
+      <div class="fund-sub">30日均值 ${o.avg30 == null ? '—' : `${Number(o.avg30).toFixed(3)}%`}${o.avg30 ? ` · 当前为均值 ${(o.funding/o.avg30).toFixed(1)}x` : ''}</div>
     </div>
   </div>
 
@@ -308,7 +477,7 @@ function renderDetail(o) {
 
   <div class="risk-box">
     <div class="risk-t">⚠️ 风险提示</div>
-    <div class="risk-li">Funding 回归风险：当前费率为 30d 均值的 ${(o.funding/o.avg30).toFixed(1)}x，持续 ${o.days} 天后存在均值回归概率，年化可能降至 ${(o.avg30/o.funding*o.ann).toFixed(1)}%</div>
+    <div class="risk-li">Funding 回归风险：${o.avg30 ? `当前费率为 30d 均值的 ${(o.funding/o.avg30).toFixed(1)}x，持续 ${o.days} 天后存在均值回归概率，年化可能降至 ${(o.avg30/o.funding*o.ann).toFixed(1)}%` : `持续 ${o.days} 天后费率可能回落，年化收益不稳定`}</div>
     <div class="risk-li">基差扩大风险：建议保证金率 ≥ 50%，不要加杠杆。参考案例：2024年3月 BTC 单日 -15%，基差扩大至 2%+，3x 杠杆用户普遍被强平</div>
     <div class="risk-li">平台风险：分散交易所持仓，单所资金建议不超过总仓位 30%（参考：2022.11 FTX 事件）</div>
     ${o.warn?'<div class="risk-li" style="color:var(--warn)">极值警告：当前费率异常偏高，可能存在诱多行情，建议仓位减半或等待费率回落后入场</div>':''}
@@ -335,7 +504,8 @@ function initChart() {
     d+=` C${cx},${pts[i-1].y} ${cx},${pts[i].y} ${pts[i].x},${pts[i].y}`;
   }
 
-  const meanY=toY(o.avg30);
+  const meanVal = o.avg30 == null ? o.funding : o.avg30;
+  const meanY=toY(meanVal);
   const fillD=d+` L${pts[pts.length-1].x},${H} L${pts[0].x},${H} Z`;
 
   svg.innerHTML=`
@@ -347,7 +517,7 @@ function initChart() {
     </defs>
     <path d="${fillD}" fill="url(#ag)"/>
     <path d="${d}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    <line x1="${px}" y1="${meanY}" x2="${W-px}" y2="${meanY}" stroke="var(--warn)" stroke-width="1.2" stroke-dasharray="6,4" opacity=".7"/>
+    ${o.avg30 == null ? '' : `<line x1="${px}" y1="${meanY}" x2="${W-px}" y2="${meanY}" stroke="var(--warn)" stroke-width="1.2" stroke-dasharray="6,4" opacity=".7"/>`}
     ${pts.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="4" fill="transparent" class="hpt" data-i="${i}" data-v="${p.v.toFixed(5)}" data-x="${p.x}"/>`).join('')}
     <circle cx="${pts[pts.length-1].x}" cy="${pts[pts.length-1].y}" r="4" fill="var(--accent)" stroke="var(--bg)" stroke-width="2"/>
   `;
@@ -550,6 +720,89 @@ function bindTG() {
   },1200);
 }
 
+// ===== TABLE HEADER TIPS（fixed，避免被 tbl overflow 裁切）=====
+function initTableHeaderTips() {
+  if (__root.__tblTipCleanup) {
+    __root.__tblTipCleanup();
+    __root.__tblTipCleanup = null;
+  }
+
+  const tips = Array.from(__root.querySelectorAll('.tbl-head-scroll .tip'));
+  if (!tips.length) return;
+
+  const cleanups = [];
+
+  const hideTip = (txt) => {
+    if (!txt) return;
+    txt.classList.remove('is-fixed');
+    txt.style.left = '';
+    txt.style.top = '';
+    txt.style.right = '';
+    txt.style.bottom = '';
+    txt.style.transform = '';
+    txt.style.display = '';
+  };
+
+  const placeTip = (tip, txt) => {
+    if (!tip || !txt) return;
+    const rect = tip.getBoundingClientRect();
+    const tipWidth = Math.min(220, Math.max(180, txt.offsetWidth || 200));
+    let left = rect.left + rect.width / 2;
+    const pad = 12;
+    const half = tipWidth / 2;
+    left = Math.max(pad + half, Math.min(window.innerWidth - pad - half, left));
+    txt.classList.add('is-fixed');
+    txt.style.display = 'block';
+    txt.style.left = `${left}px`;
+    txt.style.top = `${rect.bottom + 8}px`;
+    txt.style.transform = 'translateX(-50%)';
+    txt.style.right = 'auto';
+    txt.style.bottom = 'auto';
+  };
+
+  tips.forEach((tip) => {
+    const txt = tip.querySelector('.tip-txt');
+    if (!txt) return;
+
+    const onEnter = () => placeTip(tip, txt);
+    const onLeave = () => hideTip(txt);
+    const onScrollOrResize = () => {
+      if (txt.classList.contains('is-fixed')) hideTip(txt);
+    };
+
+    tip.addEventListener('mouseenter', onEnter);
+    tip.addEventListener('mouseleave', onLeave);
+    tip.addEventListener('focusin', onEnter);
+    tip.addEventListener('focusout', onLeave);
+    cleanups.push(() => {
+      tip.removeEventListener('mouseenter', onEnter);
+      tip.removeEventListener('mouseleave', onLeave);
+      tip.removeEventListener('focusin', onEnter);
+      tip.removeEventListener('focusout', onLeave);
+      hideTip(txt);
+    });
+
+    const head = __root.querySelector('#tbl-head-scroll');
+    const body = __root.querySelector('#tbl-body-scroll');
+    head?.addEventListener('scroll', onScrollOrResize);
+    body?.addEventListener('scroll', onScrollOrResize);
+    window.addEventListener('scroll', onScrollOrResize, true);
+    window.addEventListener('resize', onScrollOrResize);
+    cleanups.push(() => {
+      head?.removeEventListener('scroll', onScrollOrResize);
+      body?.removeEventListener('scroll', onScrollOrResize);
+      window.removeEventListener('scroll', onScrollOrResize, true);
+      window.removeEventListener('resize', onScrollOrResize);
+    });
+  });
+
+  __root.__tblTipCleanup = () => {
+    cleanups.forEach((fn) => {
+      try { fn(); } catch (_) {}
+    });
+  };
+}
+
 // ===== TABLE TOP SCROLLBAR (between thead & tbody) =====
 function initTableHScroll() {
   const head = __root.querySelector('#tbl-head-scroll');
@@ -567,9 +820,21 @@ function initTableHScroll() {
 
   const syncColWidths = () => {
     const ths = headTable.querySelectorAll('thead th');
-    const firstRow = bodyTable.querySelector('tbody tr');
-    if (!ths.length || !firstRow) return;
+    const firstRow = bodyTable.querySelector?.('tbody tr:not(.skel-row)') || bodyTable.querySelector?.('tbody tr');
+    // 错误/空态是 div.tbl-state，没有列单元格，跳过同步以免表头列宽塌缩
+    if (!ths.length) return;
+    if (!firstRow || bodyTable.classList?.contains('tbl-state')) {
+      headTable.style.width = '100%';
+      headTable.style.tableLayout = 'fixed';
+      top.classList.remove('show');
+      return;
+    }
     const tds = firstRow.children;
+    if (!tds.length || tds.length < ths.length) {
+      headTable.style.width = '100%';
+      headTable.style.tableLayout = 'fixed';
+      return;
+    }
 
     // clear fixed widths first to measure natural size
     ths.forEach((th) => { th.style.width = ''; th.style.minWidth = ''; });
@@ -667,9 +932,10 @@ function animateRows() {
 }
 
 // ===== DELAY COUNTER =====
-let delayVal = 38;
+let delayVal = 0;
 setInterval(()=>{
-  delayVal = Math.max(12, Math.min(95, delayVal + Math.floor(Math.random()*10-4)));
+  if (!Number.isFinite(delayVal) || delayVal <= 0) return;
+  delayVal = Math.max(0, delayVal + Math.floor(Math.random()*3-1));
   const el = __root.querySelector("#delay-val");
   if(el) el.textContent=delayVal;
 },4000);
@@ -688,7 +954,7 @@ function showToast(msg) {
 
   // Patch render templates: after each render, nothing needed if we use window bridge
   const api = {
-    nav, openDetail, backToRadar, setTab, setPeriod, calcUpdate, bindTG, showToast, ops, render
+    nav, openDetail, backToRadar, setTab, sortBy, setPeriod, calcUpdate, bindTG, showToast, ops, render, loadFundingList
   };
   Object.assign(__root, api);
 
@@ -701,8 +967,14 @@ function showToast(msg) {
   __root.querySelector('#nav-radar')?.addEventListener('click', () => nav('radar'));
 
   render();
+  loadFundingList();
 
   return function cleanup() {
+    listRequestId += 1;
+    if (__root.__tblTipCleanup) {
+      __root.__tblTipCleanup();
+      __root.__tblTipCleanup = null;
+    }
     if (__root.__tblScrollCleanup) {
       __root.__tblScrollCleanup();
       __root.__tblScrollCleanup = null;

@@ -158,7 +158,7 @@ const PCHotTopics = () => {
           </div>
         </div>
         <div className={styles.skeleton}>
-          {Array.from({ length: 8 }).map((_, i) => (
+          {Array.from({ length: 10 }).map((_, i) => (
             <div key={i} className={styles.skeletonItem} />
           ))}
         </div>

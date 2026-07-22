@@ -22,12 +22,23 @@ import { buildSectorDetailHref } from '@/utils/sectorNavigation';
 import { buildPcFindRankHref } from '@/utils/pcFindNavigation';
 import { completeTask } from '@/api/user';
 import styles from './index.module.less';
+import ArbitrageBootSkeleton from '../ArbitrageRadar/BootSkeleton';
+import { SectorTreeMapChunkSkeleton, HotTopicsChunkSkeleton } from './ChunkSkeletons';
 
-// Lazy load heavy components
-const MarketDistribution = dynamic(() => import('../MarketDistribution'));
-const PCHotTopics = dynamic(() => import('../PCHotTopics'));
-const PCSectorTreeMap = dynamic(() => import('../PCSectorTreeMap'));
-const ArbitrageRadar = dynamic(() => import('../ArbitrageRadar'), { ssr: false });
+// Lazy load heavy components — 必须带 loading，否则 chunk 下载期间整块空白
+const MarketDistribution = dynamic(() => import('../MarketDistribution'), {
+  loading: () => <div className={styles.zoneBodySkeleton} />,
+});
+const PCHotTopics = dynamic(() => import('../PCHotTopics'), {
+  loading: () => <HotTopicsChunkSkeleton />,
+});
+const PCSectorTreeMap = dynamic(() => import('../PCSectorTreeMap'), {
+  loading: () => <SectorTreeMapChunkSkeleton />,
+});
+const ArbitrageRadar = dynamic(() => import('../ArbitrageRadar'), {
+  ssr: false,
+  loading: () => <ArbitrageBootSkeleton />,
+});
 
 // CDN 图片前缀
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
@@ -81,8 +92,8 @@ export default function PCHome() {
   const [bannerLoading, setBannerLoading] = useState(true);
   const [treeMapData, setTreeMapData] = useState([]);
   const [treeMapLoading, setTreeMapLoading] = useState(true);
-  const [showArbitrageZone, setShowArbitrageZone] = useState(false);
-  const [activeZone, setActiveZone] = useState('derivatives'); // arbitrage | derivatives
+  const [showArbitrageZone, setShowArbitrageZone] = useState(true);
+  const [activeZone, setActiveZone] = useState('arbitrage'); // arbitrage | derivatives
 
   useEffect(() => {
     if (!showArbitrageZone && activeZone === 'arbitrage') {

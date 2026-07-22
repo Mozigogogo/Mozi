@@ -131,12 +131,51 @@
   overflow-y:visible;
   -webkit-overflow-scrolling:touch;
   scrollbar-width:none;
+  min-height:420PX;
 }
 #mozi-arbitrage-radar .tbl-body-scroll::-webkit-scrollbar{display:none;height:0}
 #mozi-arbitrage-radar table.tbl-sync{width:max-content;min-width:100%;border-collapse:collapse}
+#mozi-arbitrage-radar #tbl-head-table{width:100%;table-layout:fixed}
+#mozi-arbitrage-radar thead th.col-num{width:48PX}
+#mozi-arbitrage-radar thead th.col-sym{width:18%}
+#mozi-arbitrage-radar thead th.col-ex{width:12%}
+#mozi-arbitrage-radar thead th.col-funding{width:18%}
+#mozi-arbitrage-radar thead th.col-ann{width:14%}
+#mozi-arbitrage-radar thead th.col-avg{width:12%}
+#mozi-arbitrage-radar thead th.col-days{width:10%}
+#mozi-arbitrage-radar thead th.col-rating{width:12%}
+#mozi-arbitrage-radar .tbl-state{
+  min-height:420PX;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12PX;
+  padding:32PX 20PX;
+  text-align:center;
+  color:var(--t3);
+  font-size:13PX;
+  box-sizing:border-box;
+}
+#mozi-arbitrage-radar .tbl-state-error{color:var(--danger)}
+#mozi-arbitrage-radar .tbl-retry{
+  border:1PX solid var(--border);
+  background:var(--surface);
+  color:var(--t1);
+  border-radius:6PX;
+  padding:7PX 14PX;
+  font-size:12PX;
+  cursor:pointer;
+}
+#mozi-arbitrage-radar .tbl-retry:hover{border-color:var(--accent);color:var(--accent)}
 #mozi-arbitrage-radar .load-more{border-bottom-left-radius:var(--r);border-bottom-right-radius:var(--r)}
-#mozi-arbitrage-radar thead th{padding:11PX 16PX;text-align:left;font-size:11PX;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;background:var(--surface);border-bottom:1PX solid var(--border);white-space:nowrap;cursor:pointer;user-select:none}
-#mozi-arbitrage-radar thead th:hover{color:var(--t2)}
+#mozi-arbitrage-radar thead th{padding:11PX 16PX;text-align:left;font-size:11PX;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;background:var(--surface);border-bottom:1PX solid var(--border);white-space:nowrap;user-select:none}
+#mozi-arbitrage-radar thead th.th-sortable{cursor:pointer}
+#mozi-arbitrage-radar thead th.th-sortable:hover{color:var(--t2)}
+#mozi-arbitrage-radar .sort-ind{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:0;margin-left:4px;vertical-align:middle;line-height:1}
+#mozi-arbitrage-radar .sort-up,#mozi-arbitrage-radar .sort-dn{font-size:8PX;color:var(--border-lit);line-height:1;transition:color .15s}
+#mozi-arbitrage-radar .sort-up.on,#mozi-arbitrage-radar .sort-dn.on{color:var(--accent)}
+#mozi-arbitrage-radar thead th.th-sortable:hover .sort-up:not(.on),#mozi-arbitrage-radar thead th.th-sortable:hover .sort-dn:not(.on){color:var(--t3)}
 #mozi-arbitrage-radar tbody tr{border-bottom:1PX solid var(--border);cursor:pointer;transition:background var(--ease)}
 #mozi-arbitrage-radar tbody tr:last-child{border-bottom:none}
 #mozi-arbitrage-radar tbody tr:hover{background:rgba(15,23,42,.03)}
@@ -160,6 +199,33 @@
 #mozi-arbitrage-radar .row-arrow{color:var(--t3);font-size:12PX;opacity:0;transition:opacity var(--ease)}
 #mozi-arbitrage-radar .load-more{width:100%;padding:13PX;text-align:center;font-size:12PX;color:var(--t2);border:none;background:var(--surface);cursor:pointer;transition:all var(--ease);border-top:1PX solid var(--border)}
 #mozi-arbitrage-radar .load-more:hover{color:var(--accent);background:var(--accent-dim)}
+
+/* TABLE SKELETON */
+#mozi-arbitrage-radar .skel-row{pointer-events:none}
+#mozi-arbitrage-radar .skel-row:hover{background:transparent}
+#mozi-arbitrage-radar .skel{
+  display:inline-block;
+  background:linear-gradient(90deg,#EEF2F6 25%,#F7F9FC 37%,#EEF2F6 63%);
+  background-size:400% 100%;
+  animation:arb-skel 1.2s ease infinite;
+  border-radius:4PX;
+  vertical-align:middle;
+}
+#mozi-arbitrage-radar .skel-num{width:18PX;height:12PX}
+#mozi-arbitrage-radar .skel-avatar{width:30PX;height:30PX;border-radius:50%;flex-shrink:0}
+#mozi-arbitrage-radar .skel-sym-text{display:flex;flex-direction:column;gap:6PX}
+#mozi-arbitrage-radar .skel-line{height:12PX}
+#mozi-arbitrage-radar .skel-badge{width:58PX;height:22PX;border-radius:4PX}
+#mozi-arbitrage-radar .skel-stars{width:72PX;height:12PX}
+#mozi-arbitrage-radar .skel-w40{width:40PX}
+#mozi-arbitrage-radar .skel-w48{width:48PX}
+#mozi-arbitrage-radar .skel-w64{width:64PX}
+#mozi-arbitrage-radar .skel-w72{width:72PX}
+#mozi-arbitrage-radar .skel-w88{width:88PX}
+@keyframes arb-skel{
+  0%{background-position:100% 50%}
+  100%{background-position:0 50%}
+}
 
 /* LABEL INTRO (onboarding strip) */
 #mozi-arbitrage-radar .intro-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12PX;margin-bottom:22PX}
@@ -317,7 +383,14 @@
   z-index:200;
   pointer-events:none;
 }
+#mozi-arbitrage-radar .tip-txt.is-fixed{
+  display:block;
+  position:fixed;
+  z-index:10000;
+}
 #mozi-arbitrage-radar .tip:hover .tip-txt{display:block}
+/* 表头 tip 由 JS 用 fixed 展示，避免被 overflow 裁切 */
+#mozi-arbitrage-radar .tbl-head-scroll .tip:hover .tip-txt:not(.is-fixed){display:none}
 
 
 #mozi-arbitrage-radar .hdr{border-radius:12PX 12PX 0 0}
