@@ -92,8 +92,8 @@ export default function PCHome() {
   const [bannerLoading, setBannerLoading] = useState(true);
   const [treeMapData, setTreeMapData] = useState([]);
   const [treeMapLoading, setTreeMapLoading] = useState(true);
-  const [showArbitrageZone, setShowArbitrageZone] = useState(false);
-  const [activeZone, setActiveZone] = useState('derivatives'); // arbitrage | derivatives
+  const [showArbitrageZone, setShowArbitrageZone] = useState(true);
+  const [activeZone, setActiveZone] = useState('arbitrage'); // arbitrage | derivatives
 
   useEffect(() => {
     if (!showArbitrageZone && activeZone === 'arbitrage') {

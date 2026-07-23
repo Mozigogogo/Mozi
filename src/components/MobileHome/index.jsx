@@ -246,8 +246,8 @@ export default function MobileHome() {
   const [hotTopics, setHotTopics] = useState([]);
   const [topicsLoading, setTopicsLoading] = useState(false);
   const [lastTopicsLoadTime, setLastTopicsLoadTime] = useState(null);
-  // 套利专区开关：改为 true 即可恢复展示
-  const [showArbitrageZone] = useState(false);
+  // 套利专区开关：改为 false 即可隐藏
+  const [showArbitrageZone] = useState(true);
   const topicsCacheTimer = useRef(null);
   const [showHotTopics, setShowHotTopics] = useState(false);
   const [enableRankingFetch, setEnableRankingFetch] = useState(false);

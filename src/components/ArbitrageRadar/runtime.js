@@ -27,7 +27,7 @@ import {
   calcBasis as calcBasisTab,
 } from './arbitrageTabs';
 
-const LIST_DISPLAY_LIMIT = 8;
+const LIST_PAGE_SIZE = 8;
 
 function parseFundingPct(raw) {
   const n = parseFloat(String(raw ?? '').replace(/%/g, '').trim());
@@ -120,6 +120,8 @@ const ops = [];
 let listLoading = true;
 let listError = null;
 let listRequestId = 0;
+let listPage = 1;
+let listTotal = 0;
 
   const exColorsLocal = exColors;
 const symColors = ['#00B890','#D97706','#6366F1','#DB2777','#0D9488','#7C3AED','#EA580C','#0891B2'];
@@ -142,7 +144,7 @@ let currentView = 'radar';
 let selectedOp = null;
 let selectedType = 'funding';
   let activeTab = options.initialTab || 'funding';
-let sortState = { key: 'ann', dir: 'desc' }; // key: funding | ann；默认年化 desc
+let sortState = { key: null, dir: 'desc' }; // key: funding | ann | null；默认不选中
 let calcState = {principal:10000, period:30, costRate:10};
 let countdown = {h:3,m:22,s:0};
 
@@ -155,7 +157,10 @@ function buildFundingQuery() {
   if (sortState.key === 'funding') {
     return { fundingSort: sortState.dir };
   }
-  return { annSort: sortState.dir || 'desc' };
+  if (sortState.key === 'ann') {
+    return { annSort: sortState.dir || 'desc' };
+  }
+  return {};
 }
 
 function applyDataDelay(sec) {
@@ -178,13 +183,30 @@ function goBack() {
   window.location.href = '/home';
 }
 
-async function loadActiveList() {
+function getTotalPages() {
+  return Math.max(1, Math.ceil((ops.length || 0) / LIST_PAGE_SIZE));
+}
+
+function clampListPage() {
+  const max = getTotalPages();
+  if (listPage > max) listPage = max;
+  if (listPage < 1) listPage = 1;
+}
+
+function setListPage(page) {
+  const next = Math.max(1, Math.min(getTotalPages(), Number(page) || 1));
+  if (next === listPage) return;
+  listPage = next;
+  if (currentView === 'radar') render();
+}
+
+async function loadActiveList({ showSkeleton } = {}) {
   const reqId = ++listRequestId;
-  const hadContent = ops.length > 0;
+  const shouldShowSkeleton = showSkeleton != null ? !!showSkeleton : ops.length === 0;
   listLoading = true;
   listError = null;
-  // 仅有数据刷新（如排序）时不重绘骨架，避免「加载完又闪一下」
-  if (currentView === 'radar' && !hadContent) render();
+  // 首次加载 / 排序：先出骨架；其它静默刷新可保留旧数据
+  if (currentView === 'radar' && shouldShowSkeleton) render();
 
   const loaders = {
     funding: () => fetchCryptoArbFundingList(buildFundingQuery()),
@@ -204,14 +226,17 @@ async function loadActiveList() {
     if (reqId !== listRequestId) return;
     const mapped = (result.list || [])
       .map((item, i) => mappers[activeTab](item, i))
-      .filter(Boolean)
-      .slice(0, LIST_DISPLAY_LIMIT);
+      .filter(Boolean);
     replaceOps(mapped);
+    listTotal = Number(result.total) || mapped.length;
+    clampListPage();
     applyDataDelay(result.dataDelaySec);
   } catch (err) {
     if (reqId !== listRequestId) return;
     listError = err?.message || String(err);
     replaceOps([]);
+    listTotal = 0;
+    listPage = 1;
   } finally {
     if (reqId !== listRequestId) return;
     listLoading = false;
@@ -219,8 +244,8 @@ async function loadActiveList() {
   }
 }
 
-async function loadFundingList() {
-  return loadActiveList();
+async function loadFundingList(opts) {
+  return loadActiveList(opts);
 }
 
 function sortBy(key) {
@@ -231,11 +256,61 @@ function sortBy(key) {
     sortState.key = key;
     sortState.dir = 'desc';
   }
-  loadFundingList();
+  listPage = 1;
+  // 先激活排序态 + 脉冲骨架，再等接口
+  loadActiveList({ showSkeleton: true });
 }
 
 function getDisplayOps() {
-  return ops.slice(0, LIST_DISPLAY_LIMIT);
+  clampListPage();
+  const start = (listPage - 1) * LIST_PAGE_SIZE;
+  return ops.slice(start, start + LIST_PAGE_SIZE);
+}
+
+/** 页码窗口：当前页附近若干页 + 首尾 */
+function getPagerPages(totalPages, current) {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  const pages = new Set([1, totalPages, current, current - 1, current + 1]);
+  if (current <= 3) {
+    pages.add(2);
+    pages.add(3);
+    pages.add(4);
+  }
+  if (current >= totalPages - 2) {
+    pages.add(totalPages - 1);
+    pages.add(totalPages - 2);
+    pages.add(totalPages - 3);
+  }
+  const sorted = [...pages].filter((p) => p >= 1 && p <= totalPages).sort((a, b) => a - b);
+  const out = [];
+  sorted.forEach((p, i) => {
+    if (i > 0 && p - sorted[i - 1] > 1) out.push('…');
+    out.push(p);
+  });
+  return out;
+}
+
+function renderPager() {
+  if (listLoading || listError || ops.length <= LIST_PAGE_SIZE) return '';
+  clampListPage();
+  const totalPages = getTotalPages();
+  const pages = getPagerPages(totalPages, listPage);
+  const prevDisabled = listPage <= 1;
+  const nextDisabled = listPage >= totalPages;
+  const totalLabel = listTotal > 0 ? listTotal : ops.length;
+
+  return `<div class="tbl-pager" role="navigation" aria-label="列表分页">
+    <button type="button" class="pager-btn pager-nav"${prevDisabled ? ' disabled' : ''} onclick="setListPage(${listPage - 1})" aria-label="上一页">‹</button>
+    ${pages.map((p) => (
+      p === '…'
+        ? '<span class="pager-ellipsis">…</span>'
+        : `<button type="button" class="pager-btn${p === listPage ? ' on' : ''}" onclick="setListPage(${p})" aria-current="${p === listPage ? 'page' : 'false'}">${p}</button>`
+    )).join('')}
+    <button type="button" class="pager-btn pager-nav"${nextDisabled ? ' disabled' : ''} onclick="setListPage(${listPage + 1})" aria-label="下一页">›</button>
+    <span class="pager-meta">${listPage}/${totalPages} · ${totalLabel}条</span>
+  </div>`;
 }
 
 function sortInd(key) {
@@ -270,8 +345,67 @@ function backToRadar() {
   render();
 }
 
+// 排序/刷新重绘表格时保留横向滚动位置
+let pendingTableScrollLeft = 0;
+// 按 Tab 锁定满页表体高度，避免末页行少导致容器上下跳动
+const lockedTblBodyH = {};
+
+function getTableScrollLeft() {
+  const body = __root.querySelector('#tbl-body-scroll');
+  const head = __root.querySelector('#tbl-head-scroll');
+  const top = __root.querySelector('#tbl-hscroll');
+  return Math.max(body?.scrollLeft || 0, head?.scrollLeft || 0, top?.scrollLeft || 0);
+}
+
+function setTableScrollLeft(x) {
+  const left = Math.max(0, Number(x) || 0);
+  const body = __root.querySelector('#tbl-body-scroll');
+  const head = __root.querySelector('#tbl-head-scroll');
+  const top = __root.querySelector('#tbl-hscroll');
+  if (body) body.scrollLeft = left;
+  if (head) head.scrollLeft = left;
+  if (top) top.scrollLeft = left;
+}
+
+function syncTableBodyHeightLock() {
+  const body = __root.querySelector('#tbl-body-scroll');
+  const wrap = __root.querySelector('.tbl-wrap');
+  if (!body || !wrap || currentView !== 'radar') return;
+
+  const dataCount = body.querySelectorAll('tbody tr:not(.skel-row)').length;
+  const canMeasure = !listLoading && !listError && dataCount >= LIST_PAGE_SIZE;
+
+  if (canMeasure) {
+    body.style.minHeight = '';
+    body.style.height = '';
+    wrap.style.minHeight = '';
+    const bodyH = Math.ceil(body.getBoundingClientRect().height);
+    const wrapH = Math.ceil(wrap.getBoundingClientRect().height);
+    const prev = lockedTblBodyH[activeTab] || { body: 0, wrap: 0 };
+    if (bodyH > 40) {
+      lockedTblBodyH[activeTab] = {
+        body: Math.max(prev.body, bodyH),
+        wrap: Math.max(prev.wrap, wrapH),
+      };
+    }
+  }
+
+  const lock = lockedTblBodyH[activeTab];
+  if (!lock) return;
+  if (lock.body > 0) {
+    body.style.minHeight = `${lock.body}px`;
+    body.style.height = `${lock.body}px`;
+  }
+  if (lock.wrap > 0) {
+    wrap.style.minHeight = `${lock.wrap}px`;
+  }
+}
+
 // ===== RENDER ROUTER =====
 function render() {
+  if (currentView === 'radar') {
+    pendingTableScrollLeft = getTableScrollLeft();
+  }
   const m = __root.querySelector("#main");
   if(currentView==='radar') m.innerHTML = renderRadar();
   else if(currentView==='detail') m.innerHTML = renderDetailRoute();
@@ -284,19 +418,26 @@ function render() {
     else if (selectedType === 'oi') { initOIChart(__root, selectedOp); }
   }
   animateRows();
-  if(currentView==='radar') initTableHScroll();
-  if(currentView==='radar') initTableHeaderTips();
+  if(currentView==='radar') {
+    initTableHScroll();
+    if (pendingTableScrollLeft > 0) setTableScrollLeft(pendingTableScrollLeft);
+    initTableHeaderTips();
+    // 先套用已锁定高度，再在布局稳定后复测满页高度
+    syncTableBodyHeightLock();
+    requestAnimationFrame(() => requestAnimationFrame(syncTableBodyHeightLock));
+  }
 }
 
 // ===== RADAR VIEW =====
 function renderRadar() {
   const staticCols = listError || (!listLoading && !getDisplayOps().length);
+  const pageStart = (listPage - 1) * LIST_PAGE_SIZE;
   const bodyContent = listLoading
-    ? `<table class="tbl-sync" id="tbl-body-table"><tbody>${skeletonRowsHTML(LIST_DISPLAY_LIMIT)}</tbody></table>`
+    ? `<table class="tbl-sync" id="tbl-body-table"><tbody>${skeletonRowsHTML(LIST_PAGE_SIZE)}</tbody></table>`
     : listError
       ? `<div class="tbl-state tbl-state-error" id="tbl-body-table">${escapeHtml(formatListError(listError))}<button type="button" class="tbl-retry" onclick="loadActiveList()">重试</button></div>`
       : getDisplayOps().length
-        ? `<table class="tbl-sync" id="tbl-body-table"><tbody>${getDisplayOps().map((o, i) => tableRowHTML(activeTab, o, ops.indexOf(o), i + 1, { rowHTML })).join('')}</tbody></table>`
+        ? `<table class="tbl-sync" id="tbl-body-table"><tbody>${getDisplayOps().map((o, i) => tableRowHTML(activeTab, o, ops.indexOf(o), pageStart + i + 1, { rowHTML })).join('')}</tbody></table>`
         : `<div class="tbl-state" id="tbl-body-table">暂无数据</div>`;
 
   return `${renderIntroStrip(activeTab)}
@@ -311,7 +452,8 @@ function renderRadar() {
       <div class="tbl-hscroll-inner" id="tbl-hscroll-inner"></div>
     </div>
     <div class="tbl-body-scroll" id="tbl-body-scroll">${bodyContent}</div>
-  </div>`;
+  </div>
+  ${renderPager()}`;
 }
 
 function renderDetailRoute() {
@@ -327,14 +469,30 @@ function applyStaticHeadColWidths(headTable, spacer, top, body) {
   if (!headTable) return;
   const ths = headTable.querySelectorAll('thead th');
   const widths = [];
-  ths.forEach((th, i) => {
+  ths.forEach((th) => {
     let w = 100;
     if (th.classList.contains('col-num')) w = 48;
     else if (th.classList.contains('col-sym')) w = 132;
+    else if (th.classList.contains('col-ex')) w = 110;
+    else if (th.classList.contains('col-funding')) w = 200;
+    else if (th.classList.contains('col-ann')) w = 120;
+    else if (th.classList.contains('col-avg')) w = 100;
+    else if (th.classList.contains('col-days')) w = 72;
+    else if (th.classList.contains('col-stars')) w = 100;
+    else if (th.classList.contains('col-flow')) w = 160;
+    else if (th.classList.contains('col-prices')) w = 160;
+    else if (th.classList.contains('col-spread') || th.classList.contains('col-basis')) w = 140;
+    else if (th.classList.contains('col-vol')) w = 120;
+    else if (th.classList.contains('col-oi')) w = 160;
+    else if (th.classList.contains('col-oi-chg')) w = 120;
+    else if (th.classList.contains('col-price-chg')) w = 100;
+    else if (th.classList.contains('col-signal')) w = 120;
+    else if (th.classList.contains('col-dir')) w = 120;
+    else if (th.classList.contains('col-funding-ann')) w = 120;
     else if (th.classList.contains('col-arrow')) w = 36;
     widths.push(w);
   });
-  const total = widths.reduce((a, b) => a + b, 0) || 720;
+  const total = Math.max(720, widths.reduce((a, b) => a + b, 0));
   headTable.style.width = `${total}px`;
   headTable.style.minWidth = `${total}px`;
   headTable.style.tableLayout = 'fixed';
@@ -352,6 +510,13 @@ function applyStaticHeadColWidths(headTable, spacer, top, body) {
       top.scrollLeft = 0;
       body.scrollLeft = 0;
       __root.querySelector('#tbl-head-scroll')?.scrollTo?.({ left: 0 });
+    } else if (pendingTableScrollLeft > 0) {
+      const headEl = __root.querySelector('#tbl-head-scroll');
+      const maxLeft = Math.max(0, (top.scrollWidth || 0) - (top.clientWidth || 0));
+      const nextLeft = Math.min(pendingTableScrollLeft, maxLeft);
+      top.scrollLeft = nextLeft;
+      body.scrollLeft = nextLeft;
+      if (headEl) headEl.scrollLeft = nextLeft;
     }
   }
 }
@@ -381,7 +546,7 @@ function formatListError(msg) {
   return s.length > 80 ? `${s.slice(0, 80)}…` : s;
 }
 
-function skeletonRowsHTML(count = LIST_DISPLAY_LIMIT) {
+function skeletonRowsHTML(count = LIST_PAGE_SIZE) {
   return Array.from({ length: count }, (_, i) => `
     <tr class="skel-row" aria-hidden="true" style="animation-delay:${i * 40}ms">
       ${skeletonCellsHTML(activeTab)}
@@ -426,9 +591,11 @@ function setTab(tab, el) {
   selectedType = tab;
   syncHeaderTitle();
   if (tab === 'funding') {
-    sortState.key = 'ann';
+    sortState.key = null;
     sortState.dir = 'desc';
   }
+  pendingTableScrollLeft = 0;
+  listPage = 1;
   replaceOps([]);
   listError = null;
   loadActiveList();
@@ -924,6 +1091,12 @@ function initTableHScroll() {
   }
 
   const syncColWidths = () => {
+    const prevLeft = Math.max(
+      pendingTableScrollLeft || 0,
+      top.scrollLeft || 0,
+      body.scrollLeft || 0,
+      head.scrollLeft || 0
+    );
     const ths = headTable.querySelectorAll('thead th');
     const isStaticBody =
       bodyTable.tagName !== 'TABLE' || bodyTable.classList?.contains('tbl-state');
@@ -994,13 +1167,24 @@ function initTableHScroll() {
       top.scrollLeft = 0;
       body.scrollLeft = 0;
       head.scrollLeft = 0;
+      syncTableBodyHeightLock();
+      return;
     }
+
+    // 改 tableLayout/列宽后浏览器常会把 scrollLeft 清零，这里恢复
+    const maxLeft = Math.max(0, (top.scrollWidth || 0) - (top.clientWidth || 0));
+    const nextLeft = Math.min(prevLeft, maxLeft);
+    top.scrollLeft = nextLeft;
+    body.scrollLeft = nextLeft;
+    head.scrollLeft = nextLeft;
+    syncTableBodyHeightLock();
   };
 
   let lock = false;
   const setScroll = (left) => {
     if (lock) return;
     lock = true;
+    pendingTableScrollLeft = left;
     if (top.scrollLeft !== left) top.scrollLeft = left;
     if (body.scrollLeft !== left) body.scrollLeft = left;
     if (head.scrollLeft !== left) head.scrollLeft = left;
@@ -1065,7 +1249,7 @@ function showToast(msg) {
 
   // Patch render templates: after each render, nothing needed if we use window bridge
   const api = {
-    nav, goBack, openDetail, backToRadar, setTab, sortBy, setPeriod, calcUpdate, calcSpread, calcBasis, bindTG, showToast, ops, render, loadFundingList, loadActiveList
+    nav, goBack, openDetail, backToRadar, setTab, setListPage, sortBy, setPeriod, calcUpdate, calcSpread, calcBasis, bindTG, showToast, ops, render, loadFundingList, loadActiveList
   };
   Object.assign(__root, api);
 

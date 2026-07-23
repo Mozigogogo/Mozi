@@ -38,8 +38,6 @@ export async function fetchCryptoArbFundingList(params = {}) {
     query.fundingSort = params.fundingSort;
   } else if (params.annSort === 'asc' || params.annSort === 'desc') {
     query.annSort = params.annSort;
-  } else {
-    query.annSort = 'desc';
   }
   return fetchCryptoArbList(Interface.CRYPTO_ARB_LIST_FUNDING, query, 'Funding 列表');
 }
