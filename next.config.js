@@ -33,7 +33,7 @@ const nextConfig = withLess({
     return [
       // {
       //   source: '/api/robot_proxy/:path*',
-      //   destination: 'https://www.moziai.xyz/:path*',
+      //   destination: 'https://askmozi.com/:path*',
       // },
       {
         source: '/api/:path*',

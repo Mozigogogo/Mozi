@@ -5,7 +5,7 @@ export const runtime = 'edge';
 const ROBOT_BACKEND_URL = (
   process.env.NEXT_PUBLIC_ROBOT_BACKEND_URL ||
   process.env.ROBOT_BACKEND_URL ||
-  'https://www.moziai.xyz'
+  'https://askmozi.com'
 ).replace(/\/$/, '');
 
 export async function POST(req) {

@@ -38,7 +38,7 @@ const PROJECT_ID = process.env.NEXT_PUBLIC_PROJECT_ID || process.env.PROJECT_ID 
 const ROBOT_BACKEND_URL = (
   process.env.NEXT_PUBLIC_ROBOT_BACKEND_URL ||
   process.env.ROBOT_BACKEND_URL ||
-  'https://www.moziai.xyz'
+  'https://askmozi.com'
 ).replace(/\/$/, '');
 const BIGORDER_CHAT_API = `${ROBOT_BACKEND_URL}/bigorder/v1/chat`;
 const SIGNALS_CHAT_API = `${ROBOT_BACKEND_URL}/signals/v1/chat`;

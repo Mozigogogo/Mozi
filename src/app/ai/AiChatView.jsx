@@ -2367,7 +2367,7 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
                     ? `${window.location.origin}/ai/${id}`
                     : `${window.location.origin}/ai`;
                 })()
-              : 'https://www.moziai.xyz/ai'
+              : 'https://askmozi.com/ai'
           }
         />
 

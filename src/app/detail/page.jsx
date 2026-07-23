@@ -1303,7 +1303,7 @@ export default function DetailPage() {
     if (!coinInfo) return;
     
     // 分享链接统一使用线上正式域名
-    const currentUrl = `https://www.moziai.xyz/detail?symbol=${encodeURIComponent(symbol || '')}`;
+    const currentUrl = `https://askmozi.com/detail?symbol=${encodeURIComponent(symbol || '')}`;
     
     // 构建分享文本
     const priceChange = coinInfo.priceChange_24h || '0';

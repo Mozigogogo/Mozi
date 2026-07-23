@@ -853,7 +853,7 @@ export default function CommunityPage() {
     
     // 社区分享统一使用线上正式域名
     const isTelegram = localStorage.getItem('appChannel') === 'tg';
-    const shareUrl = `https://www.moziai.xyz/commentinfo?id=${post.id}`;
+    const shareUrl = `https://askmozi.com/commentinfo?id=${post.id}`;
     const shareText = post.title || '来自 Mozi 社区的帖子';
     
     // Amplitude 埋点

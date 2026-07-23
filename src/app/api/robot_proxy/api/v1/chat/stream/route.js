@@ -7,7 +7,7 @@ export async function POST(req) {
     const body = await req.json();
     
     // 目标后端地址 - Chat Stream
-    const targetUrl = 'https://www.moziai.xyz/api/v1/chat/stream';
+    const targetUrl = 'https://askmozi.com/api/v1/chat/stream';
     
     // 过滤掉可能导致问题的 headers
     const headers = new Headers();
@@ -24,7 +24,7 @@ export async function POST(req) {
     // 确保必需的 headers 存在
     headers.set('Content-Type', 'application/json');
     headers.set('Accept', 'text/event-stream');
-    headers.set('Host', 'www.moziai.xyz');
+    headers.set('Host', 'askmozi.com');
 
     // 转发请求
     const response = await fetch(targetUrl, {

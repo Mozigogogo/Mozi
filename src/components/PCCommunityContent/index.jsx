@@ -1386,7 +1386,7 @@ export default function PCCommunityContent() {
         brandLabel=""
         shareUrl={
           shareModalPost?.id
-            ? `https://www.moziai.xyz/commentinfo?id=${encodeURIComponent(String(shareModalPost.id))}`
+            ? `https://askmozi.com/commentinfo?id=${encodeURIComponent(String(shareModalPost.id))}`
             : ''
         }
       />

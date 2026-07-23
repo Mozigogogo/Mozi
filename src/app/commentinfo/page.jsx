@@ -18,7 +18,7 @@ import { jump2Detail } from '@/utils/core';
 import { navigateToOrReload } from '@/utils/clientNavigation';
 import styles from './page.module.less';
 
-const SHARE_SITE_ORIGIN = 'https://www.moziai.xyz';
+const SHARE_SITE_ORIGIN = 'https://askmozi.com';
 
 function buildSiteUrl(path) {
   const p = String(path || '').startsWith('/') ? path : `/${path || ''}`;
