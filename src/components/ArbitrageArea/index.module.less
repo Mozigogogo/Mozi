@@ -1,10 +1,10 @@
-/* 合约专区 */
-.derivativeContainer {
+/* 套利专区（移动端） */
+.arbitrageContainer {
   position: relative;
   width: calc(100% - 20px);
   margin: 0 10px;
   background-color: #ffffff;
-  padding: 16px 16px 16px;
+  padding: 16px 16px 30px;
   box-sizing: border-box;
   border-radius: 20px;
   box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.05);
@@ -19,7 +19,7 @@
   background: transparent;
 }
 
-.derivativeTitle {
+.arbitrageTitle {
   position: absolute;
   top: -3px;
   left: -4px;
@@ -34,44 +34,10 @@
   z-index: 1;
 }
 
-.derivativeItem {
-  text-align: center;
-
-  .derivativeIcon {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 5px;
-    
-    img {
-      width: 28px;
-      height: 28px;
-      object-fit: contain;
-    }
-  }
-  
-  span {
-    font-size: 14px;
-    color: #000;
-  }
-  
-  /* 移动端调整 - 使用iPhone SE尺寸时放大图标 */
-  @media (max-width: 768px) {
-    .derivativeIcon img {
-      width: 28px;
-      height: 28px;
-    }
-    
-    span {
-      font-size: 14px;
-    }
-  }
-}
-
-.derivativeBody {
+.arbitrageBody {
   padding: 0;
-  padding-top: 10px; // 为绝对定位的标题留出空间
+  padding-top: 10px; /* 给标题留出空间 */
 
-  // 覆盖 Grid 组件默认样式
   :global {
     .adm-grid {
       --gap: 8px;
@@ -84,3 +50,36 @@
     }
   }
 }
+
+.arbitrageItem {
+  text-align: center;
+
+  .arbitrageIcon {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 5px;
+
+    img {
+      width: 28px;
+      height: 28px;
+      object-fit: contain;
+    }
+  }
+
+  span {
+    font-size: 14px;
+    color: #000;
+  }
+
+  @media (max-width: 768px) {
+    .arbitrageIcon img {
+      width: 28px;
+      height: 28px;
+    }
+    span {
+      font-size: 14px;
+    }
+  }
+}
+
+

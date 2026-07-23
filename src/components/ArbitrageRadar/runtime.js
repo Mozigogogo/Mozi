@@ -1,6 +1,31 @@
 /* eslint-disable */
 /** Adapted from public/mozi-radar.html */
-import { fetchCryptoArbFundingList } from '@/api/cryptoArb';
+import {
+  fetchCryptoArbFundingList,
+  fetchCryptoArbSpreadList,
+  fetchCryptoArbBasisList,
+  fetchCryptoArbOIList,
+} from '@/api/cryptoArb';
+import {
+  exColors,
+  TAB_LABELS,
+  renderIntroStrip,
+  renderTypeTabs,
+  tableHeadHTML,
+  tableRowHTML,
+  skeletonCellsHTML,
+  mapSpreadItem,
+  mapBasisItem,
+  mapOIItem,
+  renderSpreadDetail,
+  renderBasisDetail,
+  renderOIDetail,
+  initSpreadChart,
+  initBasisChart,
+  initOIChart,
+  calcSpread as calcSpreadTab,
+  calcBasis as calcBasisTab,
+} from './arbitrageTabs';
 
 const LIST_DISPLAY_LIMIT = 8;
 
@@ -81,14 +106,9 @@ export function mountArbitrageRadar(__root, options = {}) {
     ? `<main class="main" id="main"></main><div id="toast"><span id="toast-txt"></span></div>`
     : `
 <header class="hdr">
-  <nav class="nav">
-    <button type="button" class="nbtn on" id="nav-radar" data-nav="radar">套利雷达</button>
-  </nav>
-  <div class="hdr-r">
-    <div class="delay">
-      <div class="d-dot"></div>
-      <span>延迟 <span id="delay-val">—</span>s</span>
-    </div>
+  <button type="button" class="hdr-back" id="nav-back" aria-label="返回">←</button>
+  <div class="hdr-center">
+    <div class="hdr-title" id="hdr-title">${TAB_LABELS[options.initialTab || 'funding'] || 'Funding 套利'}</div>
   </div>
 </header>
 <main class="main" id="main"></main>
@@ -101,11 +121,7 @@ let listLoading = true;
 let listError = null;
 let listRequestId = 0;
 
-  const exColors = {
-  Bybit:{bg:'rgba(255,166,0,.12)',border:'rgba(255,166,0,.35)',color:'#D97706'},
-  Binance:{bg:'rgba(240,185,11,.12)',border:'rgba(240,185,11,.4)',color:'#B45309'},
-  OKX:{bg:'rgba(15,23,42,.04)',border:'rgba(15,23,42,.12)',color:'#475569'},
-};
+  const exColorsLocal = exColors;
 const symColors = ['#00B890','#D97706','#6366F1','#DB2777','#0D9488','#7C3AED','#EA580C','#0891B2'];
 
 // 30d fake funding history
@@ -124,7 +140,8 @@ function makeFundingHistory(baseRate) {
 // State
 let currentView = 'radar';
 let selectedOp = null;
-let activeTab = 'funding';
+let selectedType = 'funding';
+  let activeTab = options.initialTab || 'funding';
 let sortState = { key: 'ann', dir: 'desc' }; // key: funding | ann；默认年化 desc
 let calcState = {principal:10000, period:30, costRate:10};
 let countdown = {h:3,m:22,s:0};
@@ -148,17 +165,45 @@ function applyDataDelay(sec) {
   if (el) el.textContent = delayVal;
 }
 
-async function loadFundingList() {
+function syncHeaderTitle() {
+  const el = __root.querySelector('#hdr-title');
+  if (el) el.textContent = TAB_LABELS[activeTab] || '套利专区';
+}
+
+function goBack() {
+  if (window.history.length > 1) {
+    window.history.back();
+    return;
+  }
+  window.location.href = '/home';
+}
+
+async function loadActiveList() {
   const reqId = ++listRequestId;
+  const hadContent = ops.length > 0;
   listLoading = true;
   listError = null;
-  if (currentView === 'radar') render();
+  // 仅有数据刷新（如排序）时不重绘骨架，避免「加载完又闪一下」
+  if (currentView === 'radar' && !hadContent) render();
+
+  const loaders = {
+    funding: () => fetchCryptoArbFundingList(buildFundingQuery()),
+    spread: () => fetchCryptoArbSpreadList(),
+    basis: () => fetchCryptoArbBasisList(),
+    oi: () => fetchCryptoArbOIList(),
+  };
+  const mappers = {
+    funding: mapFundingItem,
+    spread: mapSpreadItem,
+    basis: mapBasisItem,
+    oi: mapOIItem,
+  };
 
   try {
-    const result = await fetchCryptoArbFundingList(buildFundingQuery());
+    const result = await loaders[activeTab]();
     if (reqId !== listRequestId) return;
     const mapped = (result.list || [])
-      .map((item, i) => mapFundingItem(item, i))
+      .map((item, i) => mappers[activeTab](item, i))
       .filter(Boolean)
       .slice(0, LIST_DISPLAY_LIMIT);
     replaceOps(mapped);
@@ -174,7 +219,12 @@ async function loadFundingList() {
   }
 }
 
+async function loadFundingList() {
+  return loadActiveList();
+}
+
 function sortBy(key) {
+  if (activeTab !== 'funding') return;
   if (sortState.key === key) {
     sortState.dir = sortState.dir === 'desc' ? 'asc' : 'desc';
   } else {
@@ -204,8 +254,9 @@ function nav(view) {
   render();
 }
 
-function openDetail(op) {
+function openDetail(op, type = activeTab) {
   selectedOp = op;
+  selectedType = type || activeTab || 'funding';
   currentView = 'detail';
   render();
   const scroller = __root.closest('[class*="contentMain"]') || __root;
@@ -215,6 +266,7 @@ function openDetail(op) {
 
 function backToRadar() {
   currentView = 'radar';
+  selectedType = activeTab;
   render();
 }
 
@@ -222,88 +274,90 @@ function backToRadar() {
 function render() {
   const m = __root.querySelector("#main");
   if(currentView==='radar') m.innerHTML = renderRadar();
-  else if(currentView==='detail') m.innerHTML = renderDetail(selectedOp);
+  else if(currentView==='detail') m.innerHTML = renderDetailRoute();
   else if(currentView==='sub') m.innerHTML = renderSub();
   m.className = 'main view';
-  if(currentView==='detail') initChart();
-  if(currentView==='detail') calcUpdate();
+  if(currentView==='detail') {
+    if (selectedType === 'funding') { initChart(); calcUpdate(); startCountdown(); }
+    else if (selectedType === 'spread') { initSpreadChart(__root, selectedOp); calcSpread(); }
+    else if (selectedType === 'basis') { initBasisChart(__root, selectedOp); calcBasis(); }
+    else if (selectedType === 'oi') { initOIChart(__root, selectedOp); }
+  }
   animateRows();
-  if(currentView==='detail') startCountdown();
   if(currentView==='radar') initTableHScroll();
   if(currentView==='radar') initTableHeaderTips();
 }
 
 // ===== RADAR VIEW =====
 function renderRadar() {
-  return `
-  <div class="intro-strip">
-    <div class="intro-card">
-      <div class="intro-icon">📡</div>
-      <div class="intro-label">什么是 Funding 套利？</div>
-      <div class="intro-desc">同时持有现货多单和永续合约空单，Funding 费率为正时持续收取资金费，方向风险接近中性。</div>
-    </div>
-    <div class="intro-card">
-      <div class="intro-icon">🧮</div>
-      <div class="intro-label">年化怎么算？</div>
-      <div class="intro-desc">当前 8h 费率 × 3 × 365，代表如果费率不变全年持仓的理论收益，实际会随市场波动。</div>
-    </div>
-    <div class="intro-card">
-      <div class="intro-icon">⭐</div>
-      <div class="intro-label">评级代表什么？</div>
-      <div class="intro-desc">综合年化高低、历史稳定性、持续天数打分。5星 = 当前最优质机会，不代表无风险。</div>
-    </div>
-    <div class="intro-card">
-      <div class="intro-icon">⚠️</div>
-      <div class="intro-label">「极值」标签</div>
-      <div class="intro-desc">费率超过30日均值2倍时触发。费率可能快速回落，存在诱多风险，新手需谨慎。</div>
-    </div>
-  </div>
+  const staticCols = listError || (!listLoading && !getDisplayOps().length);
+  const bodyContent = listLoading
+    ? `<table class="tbl-sync" id="tbl-body-table"><tbody>${skeletonRowsHTML(LIST_DISPLAY_LIMIT)}</tbody></table>`
+    : listError
+      ? `<div class="tbl-state tbl-state-error" id="tbl-body-table">${escapeHtml(formatListError(listError))}<button type="button" class="tbl-retry" onclick="loadActiveList()">重试</button></div>`
+      : getDisplayOps().length
+        ? `<table class="tbl-sync" id="tbl-body-table"><tbody>${getDisplayOps().map((o, i) => tableRowHTML(activeTab, o, ops.indexOf(o), i + 1, { rowHTML })).join('')}</tbody></table>`
+        : `<div class="tbl-state" id="tbl-body-table">暂无数据</div>`;
 
-  <div class="type-tabs">
-    <button class="ttab on" onclick="setTab('funding',this)">Funding 套利</button>
-    <button class="ttab" onclick="setTab('spread',this)">现货价差</button>
-    <button class="ttab" onclick="setTab('basis',this)">基差套利</button>
-    <button class="ttab" onclick="setTab('oi',this)">OI 异动</button>
-  </div>
-
-  <div class="tbl-wrap">
+  return `${renderIntroStrip(activeTab)}
+  <div class="type-tabs">${renderTypeTabs(activeTab)}</div>
+  <div class="tbl-wrap${staticCols ? ' is-static-cols' : ''}">
     <div class="tbl-head-scroll" id="tbl-head-scroll">
       <table class="tbl-sync" id="tbl-head-table">
-        <thead>
-          <tr>
-            <th class="col-num">#</th>
-            <th class="col-sym">标的</th>
-            <th class="col-ex">交易所</th>
-            <th class="th-sortable col-funding" onclick="sortBy('funding')">
-              当前 Funding ${sortInd('funding')}
-              <span class="tip" style="margin-left:4px" onclick="event.stopPropagation()"><span class="tip-ico">?</span><span class="tip-txt">每8小时结算一次的资金费率，正数代表多头支付给空头</span></span>
-            </th>
-            <th class="th-sortable col-ann" onclick="sortBy('ann')">
-              年化 ${sortInd('ann')}
-              <span class="tip" style="margin-left:4px" onclick="event.stopPropagation()"><span class="tip-ico">?</span><span class="tip-txt">按当前一期费率折算，实际收益受市场波动影响</span></span>
-            </th>
-            <th class="col-avg">30d 均值</th>
-            <th class="col-days">持续</th>
-            <th class="col-rating">评级</th>
-          </tr>
-        </thead>
+        <thead>${tableHeadHTML(activeTab, sortInd)}</thead>
       </table>
     </div>
     <div class="tbl-hscroll" id="tbl-hscroll" aria-label="表格横向滚动">
       <div class="tbl-hscroll-inner" id="tbl-hscroll-inner"></div>
     </div>
-    <div class="tbl-body-scroll" id="tbl-body-scroll">
-      ${
-        listLoading
-          ? `<table class="tbl-sync" id="tbl-body-table"><tbody>${skeletonRowsHTML(LIST_DISPLAY_LIMIT)}</tbody></table>`
-          : listError
-            ? `<div class="tbl-state tbl-state-error" id="tbl-body-table">${escapeHtml(formatListError(listError))}<button type="button" class="tbl-retry" onclick="loadFundingList()">重试</button></div>`
-            : getDisplayOps().length
-              ? `<table class="tbl-sync" id="tbl-body-table"><tbody>${getDisplayOps().map((o,i)=>rowHTML(o, ops.indexOf(o), i + 1)).join('')}</tbody></table>`
-              : `<div class="tbl-state" id="tbl-body-table">暂无数据</div>`
-      }
-    </div>
+    <div class="tbl-body-scroll" id="tbl-body-scroll">${bodyContent}</div>
   </div>`;
+}
+
+function renderDetailRoute() {
+  const o = selectedOp;
+  const idx = ops.indexOf(o);
+  if (selectedType === 'spread') return renderSpreadDetail(o, idx);
+  if (selectedType === 'basis') return renderBasisDetail(o, idx);
+  if (selectedType === 'oi') return renderOIDetail(o, idx);
+  return renderFundingDetail(o);
+}
+
+function applyStaticHeadColWidths(headTable, spacer, top, body) {
+  if (!headTable) return;
+  const ths = headTable.querySelectorAll('thead th');
+  const widths = [];
+  ths.forEach((th, i) => {
+    let w = 100;
+    if (th.classList.contains('col-num')) w = 48;
+    else if (th.classList.contains('col-sym')) w = 132;
+    else if (th.classList.contains('col-arrow')) w = 36;
+    widths.push(w);
+  });
+  const total = widths.reduce((a, b) => a + b, 0) || 720;
+  headTable.style.width = `${total}px`;
+  headTable.style.minWidth = `${total}px`;
+  headTable.style.tableLayout = 'fixed';
+  ths.forEach((th, i) => {
+    th.style.width = `${widths[i]}px`;
+    th.style.minWidth = `${widths[i]}px`;
+  });
+  if (spacer) spacer.style.width = `${total}px`;
+  const wrap = __root.querySelector('.tbl-wrap');
+  wrap?.classList.add('is-static-cols');
+  if (top && body) {
+    const need = total > body.clientWidth + 1;
+    top.classList.toggle('show', need);
+    if (!need) {
+      top.scrollLeft = 0;
+      body.scrollLeft = 0;
+      __root.querySelector('#tbl-head-scroll')?.scrollTo?.({ left: 0 });
+    }
+  }
+}
+
+function clearStaticHeadColMode() {
+  __root.querySelector('.tbl-wrap')?.classList.remove('is-static-cols');
 }
 
 function escapeHtml(str) {
@@ -330,35 +384,20 @@ function formatListError(msg) {
 function skeletonRowsHTML(count = LIST_DISPLAY_LIMIT) {
   return Array.from({ length: count }, (_, i) => `
     <tr class="skel-row" aria-hidden="true" style="animation-delay:${i * 40}ms">
-      <td class="td-num"><span class="skel skel-num"></span></td>
-      <td>
-        <div class="sym-cell">
-          <span class="skel skel-avatar"></span>
-          <div class="skel-sym-text">
-            <span class="skel skel-line skel-w64"></span>
-            <span class="skel skel-line skel-w48"></span>
-          </div>
-        </div>
-      </td>
-      <td><span class="skel skel-badge"></span></td>
-      <td><span class="skel skel-line skel-w88"></span></td>
-      <td><span class="skel skel-line skel-w72"></span></td>
-      <td><span class="skel skel-line skel-w64"></span></td>
-      <td><span class="skel skel-line skel-w40"></span></td>
-      <td><span class="skel skel-stars"></span></td>
+      ${skeletonCellsHTML(activeTab)}
     </tr>
   `).join('');
 }
 
 function rowHTML(o,opsIdx,displayRank) {
   const col = symColors[opsIdx%symColors.length];
-  const ex = exColors[o.exchange]||{bg:'rgba(15,23,42,.04)',border:'rgba(15,23,42,.12)',color:'#64748b'};
+  const ex = exColorsLocal[o.exchange]||{bg:'rgba(15,23,42,.04)',border:'rgba(15,23,42,.12)',color:'#64748b'};
   const annCls = o.ann>=25?'ann-h':o.ann>=8?'ann-m':'ann-l';
   const stars = [1,2,3,4,5].map(s=>`<span class="${s<=o.rating?'s-on':'s-off'}">★</span>`).join('');
   const periodLabel = o.periodLabel || `${o.period || 8}h`;
   const avg30Text = o.avg30 == null ? '—' : `${Number(o.avg30).toFixed(3)}%`;
   const warnTitle = o.riskTooltip ? ` title="${String(o.riskTooltip).replace(/"/g, '&quot;')}"` : '';
-  return `<tr onclick="openDetail(ops[${opsIdx}])" style="animation-delay:${(displayRank-1)*35}ms">
+  return `<tr onclick="openDetail(ops[${opsIdx}],'funding')" style="animation-delay:${(displayRank-1)*35}ms">
     <td class="td-num">${o.rank || displayRank}</td>
     <td>
       <div class="sym-cell">
@@ -381,17 +420,32 @@ function rowHTML(o,opsIdx,displayRank) {
   </tr>`;
 }
 
-function setTab(tab,el) {
-  activeTab=tab;
-  __root.querySelectorAll('.ttab').forEach(t=>t.classList.remove('on'));
-  el.classList.add('on');
-  if(tab!=='funding') showToast('📊 切换数据维度：'+{spread:'现货价差',basis:'基差套利',oi:'OI 异动'}[tab]);
+function setTab(tab, el) {
+  if (activeTab === tab) return;
+  activeTab = tab;
+  selectedType = tab;
+  syncHeaderTitle();
+  if (tab === 'funding') {
+    sortState.key = 'ann';
+    sortState.dir = 'desc';
+  }
+  replaceOps([]);
+  listError = null;
+  loadActiveList();
+}
+
+function calcSpread() {
+  calcSpreadTab(__root, selectedOp);
+}
+
+function calcBasis() {
+  calcBasisTab(__root, selectedOp);
 }
 
 // ===== DETAIL VIEW =====
-function renderDetail(o) {
+function renderFundingDetail(o) {
   const col = symColors[ops.indexOf(o)%symColors.length]||'#00B890';
-  const ex = exColors[o.exchange]||{color:'#64748b'};
+  const ex = exColorsLocal[o.exchange]||{color:'#64748b'};
   const stars = [1,2,3,4,5].map(s=>`<span class="${s<=o.rating?'s-on':'s-off'}">★</span>`).join('');
   return `
   <button class="back-btn" onclick="backToRadar()">← 返回列表</button>
@@ -720,7 +774,7 @@ function bindTG() {
   },1200);
 }
 
-// ===== TABLE HEADER TIPS（fixed，避免被 tbl overflow 裁切）=====
+// ===== TABLE HEADER TIPS（portal 到 body，避免被 tbl overflow 裁切）=====
 function initTableHeaderTips() {
   if (__root.__tblTipCleanup) {
     __root.__tblTipCleanup();
@@ -730,70 +784,121 @@ function initTableHeaderTips() {
   const tips = Array.from(__root.querySelectorAll('.tbl-head-scroll .tip'));
   if (!tips.length) return;
 
+  let floating = document.getElementById('mozi-arb-tip-float');
+  if (!floating) {
+    floating = document.createElement('div');
+    floating.id = 'mozi-arb-tip-float';
+    floating.className = 'mozi-arb-tip-float';
+    floating.setAttribute('role', 'tooltip');
+    document.body.appendChild(floating);
+  }
+
+  let activeTip = null;
+  let hideTimer = null;
+
+  const clearHideTimer = () => {
+    if (hideTimer) {
+      clearTimeout(hideTimer);
+      hideTimer = null;
+    }
+  };
+
+  const hideTip = () => {
+    clearHideTimer();
+    activeTip = null;
+    floating.classList.remove('show');
+    floating.textContent = '';
+    floating.style.left = '';
+    floating.style.top = '';
+  };
+
+  const positionFloating = (tip) => {
+    if (!tip) return;
+    const rect = tip.getBoundingClientRect();
+    // 先显示以测量尺寸
+    floating.classList.add('show');
+    const tipWidth = Math.min(220, Math.max(floating.offsetWidth || 200, 180));
+    const tipHeight = floating.offsetHeight || 48;
+    const pad = 12;
+    let left = rect.left + rect.width / 2;
+    left = Math.max(pad + tipWidth / 2, Math.min(window.innerWidth - pad - tipWidth / 2, left));
+
+    let top = rect.bottom + 8;
+    if (top + tipHeight > window.innerHeight - pad) {
+      top = Math.max(pad, rect.top - tipHeight - 8);
+    }
+
+    floating.style.left = `${left}px`;
+    floating.style.top = `${top}px`;
+  };
+
+  const placeTip = (tip) => {
+    const src = tip.querySelector('.tip-txt');
+    const text = (src?.textContent || '').trim();
+    if (!text) return;
+    clearHideTimer();
+    activeTip = tip;
+    floating.textContent = text;
+    positionFloating(tip);
+  };
+
+  // 仅在真正滚走/离开 tip 时关闭；避免 syncColWidths 触发的假 scroll 立刻藏掉
+  const onReposition = () => {
+    if (!activeTip) return;
+    if (activeTip.isConnected && activeTip.matches(':hover')) {
+      positionFloating(activeTip);
+      return;
+    }
+    hideTip();
+  };
+
   const cleanups = [];
 
-  const hideTip = (txt) => {
-    if (!txt) return;
-    txt.classList.remove('is-fixed');
-    txt.style.left = '';
-    txt.style.top = '';
-    txt.style.right = '';
-    txt.style.bottom = '';
-    txt.style.transform = '';
-    txt.style.display = '';
-  };
-
-  const placeTip = (tip, txt) => {
-    if (!tip || !txt) return;
-    const rect = tip.getBoundingClientRect();
-    const tipWidth = Math.min(220, Math.max(180, txt.offsetWidth || 200));
-    let left = rect.left + rect.width / 2;
-    const pad = 12;
-    const half = tipWidth / 2;
-    left = Math.max(pad + half, Math.min(window.innerWidth - pad - half, left));
-    txt.classList.add('is-fixed');
-    txt.style.display = 'block';
-    txt.style.left = `${left}px`;
-    txt.style.top = `${rect.bottom + 8}px`;
-    txt.style.transform = 'translateX(-50%)';
-    txt.style.right = 'auto';
-    txt.style.bottom = 'auto';
-  };
-
   tips.forEach((tip) => {
-    const txt = tip.querySelector('.tip-txt');
-    if (!txt) return;
+    const src = tip.querySelector('.tip-txt');
+    if (src) src.setAttribute('aria-hidden', 'true');
 
-    const onEnter = () => placeTip(tip, txt);
-    const onLeave = () => hideTip(txt);
-    const onScrollOrResize = () => {
-      if (txt.classList.contains('is-fixed')) hideTip(txt);
+    const onEnter = (e) => {
+      e.stopPropagation();
+      placeTip(tip);
     };
+    const onLeave = () => {
+      // 短暂延迟，避免子节点重排导致的瞬时 mouseleave
+      clearHideTimer();
+      hideTimer = setTimeout(() => {
+        if (activeTip === tip && !tip.matches(':hover')) hideTip();
+      }, 80);
+    };
+    const stop = (e) => e.stopPropagation();
 
     tip.addEventListener('mouseenter', onEnter);
     tip.addEventListener('mouseleave', onLeave);
     tip.addEventListener('focusin', onEnter);
     tip.addEventListener('focusout', onLeave);
+    tip.addEventListener('click', stop);
+    tip.addEventListener('mousedown', stop);
+
     cleanups.push(() => {
       tip.removeEventListener('mouseenter', onEnter);
       tip.removeEventListener('mouseleave', onLeave);
       tip.removeEventListener('focusin', onEnter);
       tip.removeEventListener('focusout', onLeave);
-      hideTip(txt);
+      tip.removeEventListener('click', stop);
+      tip.removeEventListener('mousedown', stop);
     });
+  });
 
-    const head = __root.querySelector('#tbl-head-scroll');
-    const body = __root.querySelector('#tbl-body-scroll');
-    head?.addEventListener('scroll', onScrollOrResize);
-    body?.addEventListener('scroll', onScrollOrResize);
-    window.addEventListener('scroll', onScrollOrResize, true);
-    window.addEventListener('resize', onScrollOrResize);
-    cleanups.push(() => {
-      head?.removeEventListener('scroll', onScrollOrResize);
-      body?.removeEventListener('scroll', onScrollOrResize);
-      window.removeEventListener('scroll', onScrollOrResize, true);
-      window.removeEventListener('resize', onScrollOrResize);
-    });
+  const head = __root.querySelector('#tbl-head-scroll');
+  const body = __root.querySelector('#tbl-body-scroll');
+  // 不用 capture 全局 scroll（容易被表格内部同步滚动误触发）
+  head?.addEventListener('scroll', onReposition, { passive: true });
+  body?.addEventListener('scroll', onReposition, { passive: true });
+  window.addEventListener('resize', onReposition);
+  cleanups.push(() => {
+    head?.removeEventListener('scroll', onReposition);
+    body?.removeEventListener('scroll', onReposition);
+    window.removeEventListener('resize', onReposition);
+    hideTip();
   });
 
   __root.__tblTipCleanup = () => {
@@ -820,19 +925,25 @@ function initTableHScroll() {
 
   const syncColWidths = () => {
     const ths = headTable.querySelectorAll('thead th');
-    const firstRow = bodyTable.querySelector?.('tbody tr:not(.skel-row)') || bodyTable.querySelector?.('tbody tr');
-    // 错误/空态是 div.tbl-state，没有列单元格，跳过同步以免表头列宽塌缩
+    const isStaticBody =
+      bodyTable.tagName !== 'TABLE' || bodyTable.classList?.contains('tbl-state');
+    const firstRow =
+      bodyTable.tagName === 'TABLE'
+        ? bodyTable.querySelector('tbody tr:not(.skel-row)') || bodyTable.querySelector('tbody tr')
+        : null;
+
     if (!ths.length) return;
-    if (!firstRow || bodyTable.classList?.contains('tbl-state')) {
-      headTable.style.width = '100%';
-      headTable.style.tableLayout = 'fixed';
-      top.classList.remove('show');
+
+    // 错误/空态：用固定列宽，避免 percentage + 100% 把表头挤在一起
+    if (isStaticBody || !firstRow) {
+      applyStaticHeadColWidths(headTable, spacer, top, body);
       return;
     }
+
+    clearStaticHeadColMode();
     const tds = firstRow.children;
     if (!tds.length || tds.length < ths.length) {
-      headTable.style.width = '100%';
-      headTable.style.tableLayout = 'fixed';
+      applyStaticHeadColWidths(headTable, spacer, top, body);
       return;
     }
 
@@ -890,9 +1001,9 @@ function initTableHScroll() {
   const setScroll = (left) => {
     if (lock) return;
     lock = true;
-    top.scrollLeft = left;
-    body.scrollLeft = left;
-    head.scrollLeft = left;
+    if (top.scrollLeft !== left) top.scrollLeft = left;
+    if (body.scrollLeft !== left) body.scrollLeft = left;
+    if (head.scrollLeft !== left) head.scrollLeft = left;
     lock = false;
   };
 
@@ -954,7 +1065,7 @@ function showToast(msg) {
 
   // Patch render templates: after each render, nothing needed if we use window bridge
   const api = {
-    nav, openDetail, backToRadar, setTab, sortBy, setPeriod, calcUpdate, bindTG, showToast, ops, render, loadFundingList
+    nav, goBack, openDetail, backToRadar, setTab, sortBy, setPeriod, calcUpdate, calcSpread, calcBasis, bindTG, showToast, ops, render, loadFundingList, loadActiveList
   };
   Object.assign(__root, api);
 
@@ -964,10 +1075,10 @@ function showToast(msg) {
   keys.forEach(k => { prev[k] = window[k]; window[k] = api[k]; });
 
   // Header nav (standalone only)
-  __root.querySelector('#nav-radar')?.addEventListener('click', () => nav('radar'));
+  __root.querySelector('#nav-back')?.addEventListener('click', goBack);
+  syncHeaderTitle();
 
-  render();
-  loadFundingList();
+  loadActiveList();
 
   return function cleanup() {
     listRequestId += 1;
@@ -975,6 +1086,8 @@ function showToast(msg) {
       __root.__tblTipCleanup();
       __root.__tblTipCleanup = null;
     }
+    const floating = document.getElementById('mozi-arb-tip-float');
+    if (floating) floating.remove();
     if (__root.__tblScrollCleanup) {
       __root.__tblScrollCleanup();
       __root.__tblScrollCleanup = null;

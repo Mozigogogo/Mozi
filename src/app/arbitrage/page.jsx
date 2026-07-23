@@ -1,8 +1,8 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 const ArbitrageRadar = dynamic(() => import('@/components/ArbitrageRadar'), {
   ssr: false,
@@ -12,24 +12,15 @@ const ArbitrageRadar = dynamic(() => import('@/components/ArbitrageRadar'), {
 });
 
 /**
- * 套利专区 — PC 入口页
- * 移动端暂跳转首页（当前仅 PC 接入）
+ * 套利专区详情页
+ * 支持 query: ?tab=funding|spread|basis|oi
  */
 export default function ArbitragePage() {
-  const router = useRouter();
-  const [ready, setReady] = useState(false);
-  const [isPC, setIsPC] = useState(false);
+  const searchParams = useSearchParams();
+  const initialTab = useMemo(() => {
+    const tab = searchParams?.get('tab');
+    return ['funding', 'spread', 'basis', 'oi'].includes(tab) ? tab : 'funding';
+  }, [searchParams]);
 
-  useEffect(() => {
-    const pc = typeof window !== 'undefined' && window.innerWidth >= 1024;
-    setIsPC(pc);
-    setReady(true);
-    if (!pc) {
-      router.replace('/home');
-    }
-  }, [router]);
-
-  if (!ready || !isPC) return null;
-
-  return <ArbitrageRadar />;
+  return <ArbitrageRadar initialTab={initialTab} />;
 }

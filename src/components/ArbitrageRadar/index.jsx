@@ -8,21 +8,21 @@ import styles from './index.module.less';
 
 /**
  * PC 套利专区 — Funding 套利雷达
- * @param {{ embedded?: boolean }} props
+ * @param {{ embedded?: boolean; initialTab?: 'funding'|'spread'|'basis'|'oi' }} props
  */
-export default function ArbitrageRadar({ embedded = false }) {
+export default function ArbitrageRadar({ embedded = false, initialTab = 'funding' }) {
   const rootRef = useRef(null);
   const [booted, setBooted] = useState(false);
 
   useEffect(() => {
     if (!rootRef.current) return undefined;
-    const cleanup = mountArbitrageRadar(rootRef.current, { embedded });
+    const cleanup = mountArbitrageRadar(rootRef.current, { embedded, initialTab });
     setBooted(true);
     return () => {
       setBooted(false);
       if (typeof cleanup === 'function') cleanup();
     };
-  }, [embedded]);
+  }, [embedded, initialTab]);
 
   return (
     <div className={styles.page}>

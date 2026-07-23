@@ -13,6 +13,8 @@ import AdaptiveSymbolText from '../AdaptiveSymbolText';
 import AdaptivePrice from '../AdaptivePrice';
 import PinkContainer from '../PinkContainer';
 import MarketDistribution from '../MarketDistribution';
+import TwoPageSwipeCarousel from '../TwoPageSwipeCarousel';
+import ArbitrageArea from '../ArbitrageArea';
 import { WS_URL } from '../../utils/constants';
 
 // Lazy load heavy components
@@ -846,7 +848,13 @@ const HomeStaticSections = memo(function HomeStaticSections({ showHotTopics, onS
   return (
     <>
       <PinkContainer />
-      <DerivativeArea />
+      <TwoPageSwipeCarousel
+        initialPage={0}
+        pages={[
+          <ArbitrageArea key="arbitrage-page-1" inCarousel />,
+          <DerivativeArea key="contract-page-2" inCarousel />,
+        ]}
+      />
       <MarketDistribution />
       {showHotTopics ? (
         <HotTopics limit={30} showViewMore={true} />

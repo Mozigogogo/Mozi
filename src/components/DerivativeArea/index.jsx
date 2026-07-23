@@ -12,7 +12,7 @@ const inventoryIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/moz
 const fundingRateIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/funding_rate.png';
 const volumeTransactionIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/trade_volume.png';
 
-export default function DerivativeArea() {
+export default function DerivativeArea({ inCarousel = false }) {
   const { t } = useTranslation();
   const router = useRouter();
 
@@ -25,7 +25,7 @@ export default function DerivativeArea() {
   ];
 
   return (
-    <div className={styles.derivativeContainer}>
+    <div className={`${styles.derivativeContainer} ${inCarousel ? styles.inCarousel : ''}`}>
       <div className={styles.derivativeTitle}>{title}</div>
       <div className={styles.derivativeBody}>
         <Grid columns={4}>

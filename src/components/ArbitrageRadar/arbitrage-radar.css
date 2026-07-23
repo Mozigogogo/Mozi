@@ -61,6 +61,9 @@
   --accent:#00B890;--accent-dim:rgba(0,184,144,.1);--accent-glow:rgba(0,184,144,.28);
   --warn:#D97706;--warn-dim:rgba(217,119,6,.1);
   --danger:#EF4444;--pos:#059669;
+  --blue:#2563EB;--blue-dim:rgba(37,99,235,.1);
+  --purple:#7C3AED;--purple-dim:rgba(124,58,237,.1);
+  --orange:#EA580C;--orange-dim:rgba(234,88,12,.1);
   --t1:#1A1F36;--t2:#667085;--t3:#98A2B3;
   --mono:'JetBrains Mono',monospace;
   --sans:'Inter',sans-serif;
@@ -71,18 +74,10 @@
 #mozi-arbitrage-radar ::-webkit-scrollbar{width:4PX}#mozi-arbitrage-radar ::-webkit-scrollbar-track{background:var(--bg)}#mozi-arbitrage-radar ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2PX}
 
 /* HEADER */
-#mozi-arbitrage-radar .hdr{position:relative;z-index:1;background:var(--surface);border-bottom:1PX solid var(--border);height:56PX;display:flex;align-items:center;padding:0 28PX;gap:28PX}
-#mozi-arbitrage-radar .logo{display:flex;align-items:center;gap:9PX;font-family:var(--display);font-weight:700;font-size:17PX;color:var(--t1);cursor:pointer;text-decoration:none;flex-shrink:0}
-#mozi-arbitrage-radar .logo-icon{width:26PX;height:26PX;position:relative}
-#mozi-arbitrage-radar .logo-icon svg{width:26PX;height:26PX}
-#mozi-arbitrage-radar .nav{display:flex;gap:2PX}
-#mozi-arbitrage-radar .nbtn{padding:6PX 14PX;border-radius:var(--rs);font-size:13PX;font-weight:500;border:none;cursor:pointer;background:transparent;color:var(--t2);transition:all var(--ease)}
-#mozi-arbitrage-radar .nbtn:hover{color:var(--t1);background:var(--surface)}
-#mozi-arbitrage-radar .nbtn.on{color:var(--accent);background:var(--accent-dim)}
-#mozi-arbitrage-radar .hdr-r{margin-left:auto;display:flex;align-items:center;gap:12PX}
-#mozi-arbitrage-radar .delay{display:flex;align-items:center;gap:5PX;font-family:var(--mono);font-size:11PX;color:var(--t3)}
-#mozi-arbitrage-radar .d-dot{width:6PX;height:6PX;border-radius:50%;background:var(--accent);animation:dotpulse 2.4s ease infinite}
-@keyframes dotpulse{0%,100%{opacity:1;box-shadow:0 0 0 0 var(--accent-glow)}60%{opacity:.6;box-shadow:0 0 0 5PX transparent}}
+#mozi-arbitrage-radar .hdr{position:relative;z-index:1;background:var(--surface);border-bottom:1PX solid var(--border);height:56PX;display:flex;align-items:center;padding:0 16PX;gap:12PX}
+#mozi-arbitrage-radar .hdr-back{display:inline-flex;align-items:center;justify-content:center;width:32PX;height:32PX;border:none;background:transparent;color:var(--t1);font-size:20PX;cursor:pointer;flex-shrink:0}
+#mozi-arbitrage-radar .hdr-center{flex:1;display:flex;justify-content:center;min-width:0}
+#mozi-arbitrage-radar .hdr-title{font-size:16PX;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #mozi-arbitrage-radar .btn{padding:7PX 16PX;border-radius:var(--rs);font-size:13PX;font-weight:500;cursor:pointer;border:1PX solid var(--border);background:var(--surface);color:var(--t1);transition:all var(--ease)}
 #mozi-arbitrage-radar .btn:hover{border-color:var(--accent);color:var(--accent)}
 #mozi-arbitrage-radar .btn-p{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
@@ -94,8 +89,11 @@
 @keyframes vin{from{opacity:0;transform:translateY(12PX)}to{opacity:1;transform:translateY(0)}}
 
 /* TABS */
-#mozi-arbitrage-radar .type-tabs{display:flex;gap:0;margin-bottom:22PX;border-bottom:1PX solid var(--border);max-width:100%}
-#mozi-arbitrage-radar .ttab{padding:10PX 20PX;font-size:13PX;font-weight:500;border:none;background:none;cursor:pointer;color:var(--t2);border-bottom:2PX solid transparent;margin-bottom:-1PX;transition:all var(--ease);white-space:nowrap}
+#mozi-arbitrage-radar .type-tabs{display:flex;gap:0;margin-bottom:22PX;border-bottom:1PX solid var(--border);max-width:100%;overflow-x:auto;scrollbar-width:none}
+#mozi-arbitrage-radar .type-tabs::-webkit-scrollbar{display:none}
+#mozi-arbitrage-radar .ttab{padding:10PX 20PX;font-size:13PX;font-weight:500;border:none;background:none;cursor:pointer;color:var(--t2);border-bottom:2PX solid transparent;margin-bottom:-1PX;transition:all var(--ease);white-space:nowrap;display:flex;align-items:center;gap:6PX;flex-shrink:0}
+#mozi-arbitrage-radar .ttab .tab-dot{width:6PX;height:6PX;border-radius:50%;background:currentColor;opacity:.5}
+#mozi-arbitrage-radar .ttab.on .tab-dot{opacity:1}
 #mozi-arbitrage-radar .ttab.on{color:var(--accent);border-bottom-color:var(--accent)}
 #mozi-arbitrage-radar .ttab:hover{color:var(--t1)}
 
@@ -135,15 +133,24 @@
 }
 #mozi-arbitrage-radar .tbl-body-scroll::-webkit-scrollbar{display:none;height:0}
 #mozi-arbitrage-radar table.tbl-sync{width:max-content;min-width:100%;border-collapse:collapse}
-#mozi-arbitrage-radar #tbl-head-table{width:100%;table-layout:fixed}
-#mozi-arbitrage-radar thead th.col-num{width:48PX}
-#mozi-arbitrage-radar thead th.col-sym{width:18%}
-#mozi-arbitrage-radar thead th.col-ex{width:12%}
-#mozi-arbitrage-radar thead th.col-funding{width:18%}
-#mozi-arbitrage-radar thead th.col-ann{width:14%}
-#mozi-arbitrage-radar thead th.col-avg{width:12%}
-#mozi-arbitrage-radar thead th.col-days{width:10%}
-#mozi-arbitrage-radar thead th.col-rating{width:12%}
+#mozi-arbitrage-radar #tbl-head-table{width:100%;min-width:720PX;table-layout:fixed}
+#mozi-arbitrage-radar .tbl-wrap.is-static-cols .tbl-head-scroll{overflow-x:auto}
+#mozi-arbitrage-radar .tbl-wrap.is-static-cols #tbl-head-table{width:auto;min-width:720PX}
+#mozi-arbitrage-radar .ex-flow{display:flex;align-items:center;gap:5PX;flex-wrap:wrap}
+#mozi-arbitrage-radar .ex-node{padding:2PX 8PX;border-radius:4PX;font-size:11PX;font-weight:600;border:1PX solid;white-space:nowrap}
+#mozi-arbitrage-radar .ex-arrow{font-size:11PX;color:var(--accent)}
+#mozi-arbitrage-radar .hint-badge{display:inline-flex;align-items:center;gap:4PX;padding:3PX 9PX;border-radius:20PX;font-size:11PX;font-weight:600;border:1PX solid;white-space:nowrap}
+#mozi-arbitrage-radar .price-stack{display:flex;flex-direction:column;gap:2PX}
+#mozi-arbitrage-radar .price-lo{color:var(--t3);font-size:11PX}
+#mozi-arbitrage-radar .price-hi{color:var(--pos);font-size:11PX}
+#mozi-arbitrage-radar .val-h{font-family:var(--mono);font-weight:600;color:var(--accent)}
+#mozi-arbitrage-radar .val-m{font-family:var(--mono);font-weight:600;color:var(--t1)}
+#mozi-arbitrage-radar .val-l{font-family:var(--mono);font-weight:600;color:var(--t3)}
+#mozi-arbitrage-radar .val-pos{font-family:var(--mono);font-weight:600;color:var(--pos)}
+#mozi-arbitrage-radar .val-neg{font-family:var(--mono);font-weight:600;color:var(--danger)}
+#mozi-arbitrage-radar .row-arrow{color:var(--t3);font-size:12PX;opacity:0;transition:all var(--ease)}
+#mozi-arbitrage-radar tbody tr:hover .row-arrow{opacity:1;transform:translateX(3PX)}
+#mozi-arbitrage-radar .risk-badge{display:inline-flex;align-items:center;gap:4PX;padding:2PX 7PX;border-radius:4PX;font-size:10PX;font-weight:600;vertical-align:middle;border:1PX solid}
 #mozi-arbitrage-radar .tbl-state{
   min-height:420PX;
   display:flex;
@@ -245,7 +252,31 @@
 #mozi-arbitrage-radar .det-meta{display:flex;align-items:center;gap:12PX;margin-top:8PX;flex-wrap:wrap}
 #mozi-arbitrage-radar .cntd{display:flex;align-items:center;gap:6PX;font-size:11PX;color:var(--t2)}
 #mozi-arbitrage-radar .cntd-val{font-family:var(--mono);font-size:11PX;color:var(--t1);background:var(--surface);padding:2PX 7PX;border-radius:3PX;border:1PX solid var(--border)}
-#mozi-arbitrage-radar .det-right{text-align:right}
+#mozi-arbitrage-radar .det-right{text-align:right;flex-shrink:0}
+#mozi-arbitrage-radar .big-val{font-family:var(--mono);font-size:38PX;font-weight:700;line-height:1}
+#mozi-arbitrage-radar .big-label{font-size:11PX;color:var(--t2);margin-top:4PX}
+#mozi-arbitrage-radar .big-sub{font-size:11PX;color:var(--t2);margin-top:5PX}
+#mozi-arbitrage-radar .type-chip{display:inline-flex;align-items:center;padding:3PX 10PX;border-radius:20PX;font-size:10PX;font-weight:700;letter-spacing:.04em;border:1PX solid}
+#mozi-arbitrage-radar .type-chip-spread{background:var(--blue-dim);border-color:rgba(37,99,235,.3);color:var(--blue)}
+#mozi-arbitrage-radar .type-chip-basis{background:var(--purple-dim);border-color:rgba(124,58,237,.3);color:var(--purple)}
+#mozi-arbitrage-radar .type-chip-oi{background:var(--orange-dim);border-color:rgba(234,88,12,.3);color:var(--orange)}
+#mozi-arbitrage-radar .xaxis{display:flex;justify-content:space-between;margin-top:8PX;font-family:var(--mono);font-size:10PX;color:var(--t3);padding:0 4PX}
+#mozi-arbitrage-radar .signal-card{border-radius:var(--r);padding:18PX;margin-bottom:14PX;border:1PX solid}
+#mozi-arbitrage-radar .signal-hdr{display:flex;align-items:center;gap:12PX;margin-bottom:10PX}
+#mozi-arbitrage-radar .signal-icon{font-size:28PX;line-height:1}
+#mozi-arbitrage-radar .signal-ttl{font-family:var(--display);font-weight:700;font-size:17PX}
+#mozi-arbitrage-radar .signal-desc{font-size:13PX;color:var(--t2);line-height:1.75}
+#mozi-arbitrage-radar .info-box{background:rgba(37,99,235,.05);border:1PX solid rgba(37,99,235,.2);border-radius:var(--r);padding:15PX 18PX;margin-bottom:14PX}
+#mozi-arbitrage-radar .info-t{font-size:11PX;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10PX}
+#mozi-arbitrage-radar .info-li{font-size:12PX;color:var(--t2);padding:3PX 0 3PX 14PX;position:relative;line-height:1.65}
+#mozi-arbitrage-radar .info-li::before{content:'→';position:absolute;left:0;color:var(--blue);font-size:10PX}
+#mozi-arbitrage-radar .calc-desc{font-size:11PX;color:var(--t2);margin-bottom:16PX}
+#mozi-arbitrage-radar .calc-card-blue{border-color:var(--blue-dim)}
+#mozi-arbitrage-radar .calc-card-blue::before{background:linear-gradient(90deg,var(--blue),transparent)}
+#mozi-arbitrage-radar .calc-card-purple{border-color:var(--purple-dim)}
+#mozi-arbitrage-radar .calc-card-purple::before{background:linear-gradient(90deg,var(--purple),transparent)}
+#mozi-arbitrage-radar .skel-w120{width:120PX}
+#mozi-arbitrage-radar .skel-w24{width:24PX}
 #mozi-arbitrage-radar .fund-big{font-family:var(--mono);font-size:40PX;font-weight:700;color:var(--accent);line-height:1}
 #mozi-arbitrage-radar .fund-sub{font-size:11PX;color:var(--t2);margin-top:5PX}
 #mozi-arbitrage-radar .fund-ann{font-family:var(--mono);font-size:16PX;font-weight:600;color:var(--t1);margin-top:4PX}
@@ -358,39 +389,34 @@
 @keyframes toastin{from{opacity:0;transform:translateY(8PX)}to{opacity:1;transform:translateY(0)}}
 
 /* HELP TOOLTIP */
-#mozi-arbitrage-radar .tip{position:relative;display:inline-flex;vertical-align:middle}
+#mozi-arbitrage-radar .tip{position:relative;display:inline-flex;vertical-align:middle;z-index:2;padding:4PX;margin:-4PX;cursor:help}
 #mozi-arbitrage-radar .tip-ico{width:14PX;height:14PX;border-radius:50%;background:#fff;border:1PX solid var(--border-lit);color:var(--t3);font-size:9PX;cursor:help;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-#mozi-arbitrage-radar .tip-txt{
+#mozi-arbitrage-radar .tip-txt{display:none!important} /* 表头文案由 body portal 展示 */
+#mozi-arbitrage-radar .tip:hover .tip-ico{border-color:var(--accent);color:var(--accent)}
+
+/* 全局 tip portal（挂在 body，不受表格 overflow 影响） */
+.mozi-arb-tip-float{
   display:none;
-  position:absolute;
-  top:calc(100% + 8PX);
-  left:50%;
+  position:fixed;
+  z-index:100000;
   transform:translateX(-50%);
   background:#fff;
-  border:1PX solid var(--border);
-  border-radius:var(--rs);
+  border:1PX solid #E2E8F0;
+  border-radius:6PX;
   padding:8PX 10PX;
   font-size:11PX;
   font-weight:400;
   line-height:1.5;
-  color:var(--t1);
+  color:#0F172A;
+  width:200PX;
+  max-width:min(220PX, calc(100vw - 24PX));
+  box-shadow:0 4PX 16PX rgba(15,23,42,.12);
+  pointer-events:none;
+  white-space:normal;
   text-transform:none;
   letter-spacing:normal;
-  white-space:normal;
-  width:200PX;
-  max-width:220PX;
-  box-shadow:0 4PX 16PX rgba(15,23,42,.12);
-  z-index:200;
-  pointer-events:none;
 }
-#mozi-arbitrage-radar .tip-txt.is-fixed{
-  display:block;
-  position:fixed;
-  z-index:10000;
-}
-#mozi-arbitrage-radar .tip:hover .tip-txt{display:block}
-/* 表头 tip 由 JS 用 fixed 展示，避免被 overflow 裁切 */
-#mozi-arbitrage-radar .tbl-head-scroll .tip:hover .tip-txt:not(.is-fixed){display:none}
+.mozi-arb-tip-float.show{display:block}
 
 
 #mozi-arbitrage-radar .hdr{border-radius:12PX 12PX 0 0}

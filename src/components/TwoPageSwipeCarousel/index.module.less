@@ -1,0 +1,65 @@
+.wrap {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.cardShell {
+  position: relative;
+  width: calc(100% - 20px);
+  margin: 0 10px;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.scrollWrapper {
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  width: 100%;
+}
+
+.scrollWrapper::-webkit-scrollbar {
+  display: none;
+}
+
+.pageContainer {
+  min-width: 100%;
+  width: 100%;
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+
+.scrollIndicator {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  height: 8px;
+  z-index: 2;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(6, 194, 112, 0.3);
+  transition: all 0.3s ease;
+}
+
+.active {
+  width: 12px;
+  height: 7px;
+  border-radius: 3px;
+  background: rgba(6, 194, 112, 1);
+}
+

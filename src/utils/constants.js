@@ -269,6 +269,9 @@ export const Interface = {
   FR_HIS: '/fundingrate/history',
   // Funding 套利列表（无需登录）
   CRYPTO_ARB_LIST_FUNDING: '/crypto_arb/list/funding',
+  CRYPTO_ARB_LIST_SPREAD: '/crypto_arb/list/spot_spread',
+  CRYPTO_ARB_LIST_BASIS: '/crypto_arb/list/basis',
+  CRYPTO_ARB_LIST_OI: '/crypto_arb/list/oi_anomaly',
   // 所有币种
   ALL_COIN: '/derivatives/allcoin',
   // 所有交易所
