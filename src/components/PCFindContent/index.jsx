@@ -283,7 +283,7 @@ export default function PCFindContent() {
       width: MARKET_TABLE_COL_WIDTHS[1],
     },
     {
-      title: t('discover.columns.symbolMarketCap'),
+      title: t('detail.market.amount24h', { defaultValue: '24H成交额' }),
       dataIndex: 'totalVolume',
       key: 'totalVolume',
       align: 'right',
@@ -1379,7 +1379,7 @@ export default function PCFindContent() {
                     {t('home.columns.lastPrice')}
                   </div>
                   <div className={`${styles.marketTableHeaderCell} ${styles.marketTableHeaderCellRight}`}>
-                    {t('discover.columns.symbolMarketCap')}
+                    {t('detail.market.amount24h', { defaultValue: '24H成交额' })}
                   </div>
                   <div className={`${styles.marketTableHeaderCell} ${styles.marketTableHeaderCellRight}`}>
                     {t('discover.columns.change24hValue')}

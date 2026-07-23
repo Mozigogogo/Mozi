@@ -7,13 +7,12 @@ import { useTranslation } from 'react-i18next';
 
 import styles from './index.module.less';
 
-const CDN = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public';
+const ICON_CDN = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com';
 
-// 套利专区图标（与合约专区区分，均来自站内已有资源）
-const fundingArbIcon = `${CDN}/benefits/big_deal.svg`; // 套利机会
-const spreadIcon = `${CDN}/icons/new_detail/price_wran.svg`; // 价格监控 / 价差
-const basisIcon = `${CDN}/benefits/market_gold.svg`; // 行情走势 / 基差
-const oiAnomalyIcon = `${CDN}/icons/new_detail/breaking.svg`; // 异动信号
+const fundingArbIcon = `${ICON_CDN}/icon-funding.svg`;
+const spreadIcon = `${ICON_CDN}/icon-spread.svg`;
+const basisIcon = `${ICON_CDN}/icon-basis.svg`;
+const oiAnomalyIcon = `${ICON_CDN}/icon-oi.svg`;
 
 export default function ArbitrageArea({ inCarousel = false }) {
   const router = useRouter();

@@ -246,6 +246,8 @@ export default function MobileHome() {
   const [hotTopics, setHotTopics] = useState([]);
   const [topicsLoading, setTopicsLoading] = useState(false);
   const [lastTopicsLoadTime, setLastTopicsLoadTime] = useState(null);
+  // 套利专区开关：改为 true 即可恢复展示
+  const [showArbitrageZone] = useState(false);
   const topicsCacheTimer = useRef(null);
   const [showHotTopics, setShowHotTopics] = useState(false);
   const [enableRankingFetch, setEnableRankingFetch] = useState(false);
@@ -805,7 +807,11 @@ export default function MobileHome() {
           </div>
         </div>
 
-        <HomeStaticSections showHotTopics={showHotTopics} onShowHotTopics={() => setShowHotTopics(true)} />
+        <HomeStaticSections
+          showHotTopics={showHotTopics}
+          onShowHotTopics={() => setShowHotTopics(true)}
+          showArbitrageZone={showArbitrageZone}
+        />
         
         <LazyMount rootMargin="220px 0px" placeholder={<HomeSectionSkeleton height={220} card />}>
           <InvestmentSection
@@ -844,17 +850,25 @@ export default function MobileHome() {
   );
 }
 
-const HomeStaticSections = memo(function HomeStaticSections({ showHotTopics, onShowHotTopics }) {
+const HomeStaticSections = memo(function HomeStaticSections({
+  showHotTopics,
+  onShowHotTopics,
+  showArbitrageZone = false,
+}) {
   return (
     <>
       <PinkContainer />
-      <TwoPageSwipeCarousel
-        initialPage={0}
-        pages={[
-          <ArbitrageArea key="arbitrage-page-1" inCarousel />,
-          <DerivativeArea key="contract-page-2" inCarousel />,
-        ]}
-      />
+      {showArbitrageZone ? (
+        <TwoPageSwipeCarousel
+          initialPage={0}
+          pages={[
+            <ArbitrageArea key="arbitrage-page-1" inCarousel />,
+            <DerivativeArea key="contract-page-2" inCarousel />,
+          ]}
+        />
+      ) : (
+        <DerivativeArea />
+      )}
       <MarketDistribution />
       {showHotTopics ? (
         <HotTopics limit={30} showViewMore={true} />
