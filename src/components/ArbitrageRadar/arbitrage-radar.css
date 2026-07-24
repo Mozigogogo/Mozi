@@ -152,8 +152,6 @@
 #mozi-arbitrage-radar .val-l{font-family:var(--mono);font-weight:600;color:var(--t3)}
 #mozi-arbitrage-radar .val-pos{font-family:var(--mono);font-weight:600;color:var(--pos)}
 #mozi-arbitrage-radar .val-neg{font-family:var(--mono);font-weight:600;color:var(--danger)}
-#mozi-arbitrage-radar .row-arrow{color:var(--t3);font-size:12PX;opacity:0;transition:all var(--ease)}
-#mozi-arbitrage-radar tbody tr:hover .row-arrow{opacity:1;transform:translateX(3PX)}
 #mozi-arbitrage-radar .risk-badge{display:inline-flex;align-items:center;gap:4PX;padding:2PX 7PX;border-radius:4PX;font-size:10PX;font-weight:600;vertical-align:middle;border:1PX solid}
 #mozi-arbitrage-radar .tbl-state{
   min-height:464PX;
@@ -228,7 +226,6 @@
 #mozi-arbitrage-radar tbody tr{border-bottom:1PX solid var(--border);cursor:pointer;transition:background var(--ease)}
 #mozi-arbitrage-radar tbody tr:last-child{border-bottom:none}
 #mozi-arbitrage-radar tbody tr:hover{background:rgba(15,23,42,.03)}
-#mozi-arbitrage-radar tbody tr:hover .row-arrow{opacity:1}
 #mozi-arbitrage-radar td{padding:13PX 16PX;font-size:13PX;vertical-align:middle;white-space:nowrap}
 #mozi-arbitrage-radar .td-num{color:var(--t3);font-family:var(--mono);font-size:12PX;width:36PX}
 #mozi-arbitrage-radar .sym-cell{display:flex;align-items:center;gap:9PX}
@@ -245,7 +242,6 @@
 #mozi-arbitrage-radar .s-on{color:var(--warn);font-size:11PX}
 #mozi-arbitrage-radar .s-off{color:var(--border-lit);font-size:11PX}
 #mozi-arbitrage-radar .warn-tag{display:inline-flex;align-items:center;gap:4PX;padding:2PX 7PX;border-radius:4PX;background:var(--warn-dim);border:1PX solid rgba(245,158,11,.25);color:var(--warn);font-size:10PX;font-weight:600;vertical-align:middle}
-#mozi-arbitrage-radar .row-arrow{color:var(--t3);font-size:12PX;opacity:0;transition:opacity var(--ease)}
 #mozi-arbitrage-radar .load-more{width:100%;padding:13PX;text-align:center;font-size:12PX;color:var(--t2);border:none;background:var(--surface);cursor:pointer;transition:all var(--ease);border-top:1PX solid var(--border)}
 #mozi-arbitrage-radar .load-more:hover{color:var(--accent);background:var(--accent-dim)}
 

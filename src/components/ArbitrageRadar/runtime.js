@@ -1,5 +1,6 @@
 /* eslint-disable */
 /** Adapted from public/mozi-radar.html */
+import i18n from '@/i18n/config';
 import {
   fetchCryptoArbFundingList,
   fetchCryptoArbSpreadList,
@@ -25,6 +26,8 @@ import {
   initOIChart,
   calcSpread as calcSpreadTab,
   calcBasis as calcBasisTab,
+  truncateDecimals,
+  displayPctTrunc,
 } from './arbitrageTabs';
 
 const LIST_PAGE_SIZE = 8;
@@ -144,7 +147,7 @@ let currentView = 'radar';
 let selectedOp = null;
 let selectedType = 'funding';
   let activeTab = options.initialTab || 'funding';
-let sortState = { key: null, dir: 'desc' }; // key: funding | ann | null；默认不选中
+let sortState = { key: null, dir: 'desc' }; // funding|ann|spreadAbs|spreadPct|quoteVolume|basisAbs|basisPct|null；默认不选中
 let calcState = {principal:10000, period:30, costRate:10};
 let countdown = {h:3,m:22,s:0};
 
@@ -159,6 +162,31 @@ function buildFundingQuery() {
   }
   if (sortState.key === 'ann') {
     return { annSort: sortState.dir || 'desc' };
+  }
+  return {};
+}
+
+/** 现货价差排序：绝对价差 / 百分比价差 / 24h 成交量；都不传则服务端默认百分比降序 */
+function buildSpreadQuery() {
+  if (sortState.key === 'spreadAbs') {
+    return { spreadAbsSort: sortState.dir };
+  }
+  if (sortState.key === 'spreadPct') {
+    return { spreadPctSort: sortState.dir };
+  }
+  if (sortState.key === 'quoteVolume') {
+    return { quoteVolumeSort: sortState.dir };
+  }
+  return {};
+}
+
+/** 期现基差排序：绝对基差 / 百分比基差；都不传则服务端默认百分比降序 */
+function buildBasisQuery() {
+  if (sortState.key === 'basisAbs') {
+    return { basisAbsSort: sortState.dir };
+  }
+  if (sortState.key === 'basisPct') {
+    return { basisPctSort: sortState.dir };
   }
   return {};
 }
@@ -210,8 +238,8 @@ async function loadActiveList({ showSkeleton } = {}) {
 
   const loaders = {
     funding: () => fetchCryptoArbFundingList(buildFundingQuery()),
-    spread: () => fetchCryptoArbSpreadList(),
-    basis: () => fetchCryptoArbBasisList(),
+    spread: () => fetchCryptoArbSpreadList(buildSpreadQuery()),
+    basis: () => fetchCryptoArbBasisList(buildBasisQuery()),
     oi: () => fetchCryptoArbOIList(),
   };
   const mappers = {
@@ -249,7 +277,14 @@ async function loadFundingList(opts) {
 }
 
 function sortBy(key) {
-  if (activeTab !== 'funding') return;
+  const fundingKeys = ['funding', 'ann'];
+  const spreadKeys = ['spreadAbs', 'spreadPct', 'quoteVolume'];
+  const basisKeys = ['basisAbs', 'basisPct'];
+  const allowed =
+    (activeTab === 'funding' && fundingKeys.includes(key)) ||
+    (activeTab === 'spread' && spreadKeys.includes(key)) ||
+    (activeTab === 'basis' && basisKeys.includes(key));
+  if (!allowed) return;
   if (sortState.key === key) {
     sortState.dir = sortState.dir === 'desc' ? 'asc' : 'desc';
   } else {
@@ -372,33 +407,28 @@ function syncTableBodyHeightLock() {
   const wrap = __root.querySelector('.tbl-wrap');
   if (!body || !wrap || currentView !== 'radar') return;
 
+  const table = body.querySelector('table.tbl-sync');
   const dataCount = body.querySelectorAll('tbody tr:not(.skel-row)').length;
-  const canMeasure = !listLoading && !listError && dataCount >= LIST_PAGE_SIZE;
+  const canMeasure = !listLoading && !listError && dataCount >= LIST_PAGE_SIZE && !!table;
+
+  // 始终清掉固定 height，否则会把容器撑出大块空白
+  body.style.height = '';
 
   if (canMeasure) {
     body.style.minHeight = '';
-    body.style.height = '';
     wrap.style.minHeight = '';
-    const bodyH = Math.ceil(body.getBoundingClientRect().height);
-    const wrapH = Math.ceil(wrap.getBoundingClientRect().height);
-    const prev = lockedTblBodyH[activeTab] || { body: 0, wrap: 0 };
-    if (bodyH > 40) {
-      lockedTblBodyH[activeTab] = {
-        body: Math.max(prev.body, bodyH),
-        wrap: Math.max(prev.wrap, wrapH),
-      };
+    // 以表格内容高度为准，避免滚动容器被旧样式撑高后测歪
+    const contentH = Math.ceil(table.getBoundingClientRect().height);
+    if (contentH > 40) {
+      lockedTblBodyH[activeTab] = { body: contentH };
     }
   }
 
   const lock = lockedTblBodyH[activeTab];
-  if (!lock) return;
-  if (lock.body > 0) {
-    body.style.minHeight = `${lock.body}px`;
-    body.style.height = `${lock.body}px`;
-  }
-  if (lock.wrap > 0) {
-    wrap.style.minHeight = `${lock.wrap}px`;
-  }
+  if (!lock?.body) return;
+  // 只用 minHeight 稳住末页高度，不用固定 height
+  body.style.minHeight = `${lock.body}px`;
+  wrap.style.minHeight = '';
 }
 
 // ===== RENDER ROUTER =====
@@ -481,15 +511,15 @@ function applyStaticHeadColWidths(headTable, spacer, top, body) {
     else if (th.classList.contains('col-stars')) w = 100;
     else if (th.classList.contains('col-flow')) w = 160;
     else if (th.classList.contains('col-prices')) w = 160;
-    else if (th.classList.contains('col-spread') || th.classList.contains('col-basis')) w = 140;
-    else if (th.classList.contains('col-vol')) w = 120;
+    else if (th.classList.contains('col-spread-abs') || th.classList.contains('col-basis-abs')) w = 150;
+    else if (th.classList.contains('col-spread') || th.classList.contains('col-basis')) w = 150;
+    else if (th.classList.contains('col-vol')) w = 160;
     else if (th.classList.contains('col-oi')) w = 160;
     else if (th.classList.contains('col-oi-chg')) w = 120;
     else if (th.classList.contains('col-price-chg')) w = 100;
     else if (th.classList.contains('col-signal')) w = 120;
     else if (th.classList.contains('col-dir')) w = 120;
     else if (th.classList.contains('col-funding-ann')) w = 120;
-    else if (th.classList.contains('col-arrow')) w = 36;
     widths.push(w);
   });
   const total = Math.max(720, widths.reduce((a, b) => a + b, 0));
@@ -560,7 +590,7 @@ function rowHTML(o,opsIdx,displayRank) {
   const annCls = o.ann>=25?'ann-h':o.ann>=8?'ann-m':'ann-l';
   const stars = [1,2,3,4,5].map(s=>`<span class="${s<=o.rating?'s-on':'s-off'}">★</span>`).join('');
   const periodLabel = o.periodLabel || `${o.period || 8}h`;
-  const avg30Text = o.avg30 == null ? '—' : `${Number(o.avg30).toFixed(3)}%`;
+  const avg30Text = o.avg30 == null ? '—' : displayPctTrunc(o.avg30);
   const warnTitle = o.riskTooltip ? ` title="${String(o.riskTooltip).replace(/"/g, '&quot;')}"` : '';
   return `<tr onclick="openDetail(ops[${opsIdx}],'funding')" style="animation-delay:${(displayRank-1)*35}ms">
     <td class="td-num">${o.rank || displayRank}</td>
@@ -574,9 +604,9 @@ function rowHTML(o,opsIdx,displayRank) {
       </div>
     </td>
     <td><span class="exbadge" style="background:${ex.bg};border-color:${ex.border};color:${ex.color}">${o.exchange}</span></td>
-    <td><span class="mono">${Number(o.funding).toFixed(3)}%<span style="color:var(--t3);font-size:11px">/${periodLabel}</span></span></td>
+    <td><span class="mono">${displayPctTrunc(o.funding)}<span style="color:var(--t3);font-size:11px">/${periodLabel}</span></span></td>
     <td>
-      <span class="ann ${annCls}">${Number(o.ann).toFixed(1)}%</span>
+      <span class="ann ${annCls}">${displayPctTrunc(o.ann)}</span>
       ${o.warn?`<span class="warn-tag" style="margin-left:6px"${warnTitle}>⚠️ 极值</span>`:''}
     </td>
     <td><span class="mono" style="color:var(--t3)">${avg30Text}</span></td>
@@ -590,14 +620,14 @@ function setTab(tab, el) {
   activeTab = tab;
   selectedType = tab;
   syncHeaderTitle();
-  if (tab === 'funding') {
-    sortState.key = null;
-    sortState.dir = 'desc';
-  }
+  sortState.key = null;
+  sortState.dir = 'desc';
   pendingTableScrollLeft = 0;
   listPage = 1;
   replaceOps([]);
   listError = null;
+  // 切 Tab 后按新列结构重新测高，避免沿用错误高度锁
+  delete lockedTblBodyH[tab];
   loadActiveList();
 }
 
@@ -632,9 +662,9 @@ function renderFundingDetail(o) {
       </div>
     </div>
     <div class="det-right">
-      <div class="fund-big">${Number(o.funding).toFixed(3)}%<span style="font-size:16px;color:var(--t2);font-weight:400">/${o.periodLabel || `${o.period || 8}h`}</span></div>
-      <div class="fund-ann">年化 ${Number(o.ann).toFixed(1)}%</div>
-      <div class="fund-sub">30日均值 ${o.avg30 == null ? '—' : `${Number(o.avg30).toFixed(3)}%`}${o.avg30 ? ` · 当前为均值 ${(o.funding/o.avg30).toFixed(1)}x` : ''}</div>
+      <div class="fund-big">${displayPctTrunc(o.funding)}<span style="font-size:16px;color:var(--t2);font-weight:400">/${o.periodLabel || `${o.period || 8}h`}</span></div>
+      <div class="fund-ann">年化 ${displayPctTrunc(o.ann)}</div>
+      <div class="fund-sub">30日均值 ${o.avg30 == null ? '—' : displayPctTrunc(o.avg30)}${o.avg30 ? ` · 当前为均值 ${(o.funding/o.avg30).toFixed(1)}x` : ''}</div>
     </div>
   </div>
 
@@ -1262,10 +1292,16 @@ function showToast(msg) {
   __root.querySelector('#nav-back')?.addEventListener('click', goBack);
   syncHeaderTitle();
 
+  const onLanguageChanged = () => {
+    if (currentView === 'radar' || currentView === 'detail') render();
+  };
+  i18n.on('languageChanged', onLanguageChanged);
+
   loadActiveList();
 
   return function cleanup() {
     listRequestId += 1;
+    i18n.off('languageChanged', onLanguageChanged);
     if (__root.__tblTipCleanup) {
       __root.__tblTipCleanup();
       __root.__tblTipCleanup = null;

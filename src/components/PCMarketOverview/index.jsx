@@ -8,6 +8,7 @@ import { Interface } from '../../utils/constants';
 import { jump2Detail } from '../../utils/core';
 import { navigateToOrReload } from '@/utils/clientNavigation';
 import { getAggregationDetail } from '../../api/market';
+import { formatMoneyCompact, localizeMoneyFmt } from '@/utils/formatMoney';
 import styles from './index.module.less';
 
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
@@ -31,7 +32,7 @@ const dbgOverview = (...args) => {
  * PC端市场概况组件 - 4个统计卡片
  */
 const PCMarketOverview = memo(({ onCalendarClick, calendarExpanded = false }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [selectedCardId, setSelectedCardId] = useState('');
 
   useEffect(() => {
@@ -41,8 +42,7 @@ const PCMarketOverview = memo(({ onCalendarClick, calendarExpanded = false }) =>
       return prev;
     });
   }, [calendarExpanded]);
-  const [smartValue, setSmartValue] = useState(t('overview.noConfig'));
-  const [smartAction, setSmartAction] = useState(t('overview.configAlarm'));
+
   const [smartOnClick, setSmartOnClick] = useState(() => () => {
     if (typeof window !== 'undefined') {
       navigateToOrReload(PC_ALARM_CONFIGURE_HREF);
@@ -54,17 +54,16 @@ const PCMarketOverview = memo(({ onCalendarClick, calendarExpanded = false }) =>
   const [smartPercentText, setSmartPercentText] = useState('');
   const [smartIsUp, setSmartIsUp] = useState(null);
 
-  // 使用硬编码的默认值
-  const [marketValue, setMarketValue] = useState('$213215亿');
+  const [marketValue, setMarketValue] = useState('--');
   const [marketChange, setMarketChange] = useState({
     isPositive: true,
-    value: '3.26%'
+    value: '--'
   });
 
-  const [turnoverValue, setTurnoverValue] = useState('$412.32亿');
+  const [turnoverValue, setTurnoverValue] = useState('--');
   const [turnoverChange, setTurnoverChange] = useState({
     isPositive: false,
-    value: '1.26%'
+    value: '--'
   });
 
   // 加载智能盯盘数据
@@ -72,20 +71,25 @@ const PCMarketOverview = memo(({ onCalendarClick, calendarExpanded = false }) =>
     const loadSmartMonitor = async () => {
       try {
         if (typeof window === 'undefined') return;
-        
-        const token = localStorage.getItem('token');
-        if (!token) {
-          setSmartValue(t('overview.noConfig'));
-          setSmartAction(t('overview.configAlarm'));
+
+        const goConfigure = () => {
+          setSmartSymbol('');
+          setSmartPercentText('');
+          setSmartIsUp(null);
           setSmartOnClick(() => () => {
             if (typeof window !== 'undefined') {
               navigateToOrReload(PC_ALARM_CONFIGURE_HREF);
             }
           });
+        };
+
+        const token = localStorage.getItem('token');
+        if (!token) {
+          goConfigure();
           return;
         }
 
-                const myWarnRes = await request({ 
+        const myWarnRes = await request({
           url: Interface.MY_WARN
         });
         const groups = myWarnRes?.data || {};
@@ -93,7 +97,7 @@ const PCMarketOverview = memo(({ onCalendarClick, calendarExpanded = false }) =>
           const entry = groups[k];
           return entry && Array.isArray(entry.warnContent);
         });
-        
+
         let chosenSymbol = null;
         let latestTs = -Infinity;
         symbolKeys.forEach((symbol) => {
@@ -113,27 +117,21 @@ const PCMarketOverview = memo(({ onCalendarClick, calendarExpanded = false }) =>
 
         const firstSymbol = chosenSymbol || symbolKeys[0];
         if (!firstSymbol) {
-          setSmartValue(t('overview.noConfig'));
-          setSmartAction(t('overview.configAlarm'));
-          setSmartOnClick(() => () => {
-            if (typeof window !== 'undefined') {
-              navigateToOrReload(PC_ALARM_CONFIGURE_HREF);
-            }
-          });
+          goConfigure();
           return;
         }
 
-        const priceRes = await request({ 
-          url: Interface.COIN_INFO, 
-          data: { coin: firstSymbol } 
+        const priceRes = await request({
+          url: Interface.COIN_INFO,
+          data: { coin: firstSymbol }
         });
-        
+
         const list = Array.isArray(priceRes?.data) ? priceRes.data : (priceRes?.data ? [priceRes.data] : []);
         const priceItem = list[0] || {};
 
         const normalizePercent = (v) => {
           if (v === undefined || v === null || v === '') return undefined;
-          const num = parseFloat(String(v).replace('%',''));
+          const num = parseFloat(String(v).replace('%', ''));
           return Number.isFinite(num) ? num : undefined;
         };
 
@@ -151,8 +149,6 @@ const PCMarketOverview = memo(({ onCalendarClick, calendarExpanded = false }) =>
         setSmartSymbol(firstSymbol);
         setSmartPercentText(percentStr);
         setSmartIsUp(Number(percentRaw) > 0 ? true : (Number(percentRaw) < 0 ? false : null));
-        setSmartValue(firstSymbol);
-        setSmartAction(t('overview.viewDetails'));
         setSmartOnClick(() => () => jump2Detail(firstSymbol));
       } catch (error) {
         console.error('加载智能盯盘数据失败:', error);
@@ -160,9 +156,9 @@ const PCMarketOverview = memo(({ onCalendarClick, calendarExpanded = false }) =>
     };
 
     loadSmartMonitor();
-  }, [t]);
+  }, []);
 
-  // 接入市场聚合数据
+  // 接入市场聚合数据（随语言切换重算单位）
   useEffect(() => {
     const pick = (obj, keys) => {
       for (const k of keys) {
@@ -173,10 +169,12 @@ const PCMarketOverview = memo(({ onCalendarClick, calendarExpanded = false }) =>
       return undefined;
     };
 
-    const formatYi = (val) => {
-      const num = Number(val);
-      if (!Number.isFinite(num)) return '--';
-      return `${(num / 1e8).toFixed(2)}亿`;
+    const resolveMoney = (num, fmt) => {
+      if (num !== undefined && Number.isFinite(Number(num))) {
+        return formatMoneyCompact(num, i18n.language);
+      }
+      if (fmt) return localizeMoneyFmt(fmt, i18n.language);
+      return '--';
     };
 
     const normalizePercent = (v) => {
@@ -205,8 +203,7 @@ const PCMarketOverview = memo(({ onCalendarClick, calendarExpanded = false }) =>
 
         const capFmt = pick(data, ['globalMarketCapFmt', 'marketCapFmt', 'totalMarketCapFmt', 'totalMarketCapFormat']);
         const capNum = pick(data, ['totalMarketCap', 'marketCap']);
-        const capStr = capFmt || (capNum !== undefined ? formatYi(capNum) : undefined) || marketValue;
-        setMarketValue(capStr);
+        setMarketValue(resolveMoney(capNum, capFmt));
 
         const capChangeRaw = pick(data, ['marketCapChangePctFmt', 'marketCapChangeFmt', 'marketCapChangePercentage24h', 'marketCapChangePerc']);
         const capChangeStr = normalizePercent(capChangeRaw);
@@ -217,8 +214,7 @@ const PCMarketOverview = memo(({ onCalendarClick, calendarExpanded = false }) =>
 
         const volFmt = pick(data, ['globalVolume24hFmt', 'totalVolumeFmt', 'volumeFmt']);
         const volNum = pick(data, ['totalVolume', 'volume']);
-        const volStr = volFmt || (volNum !== undefined ? formatYi(volNum) : undefined) || turnoverValue;
-        setTurnoverValue(volStr);
+        setTurnoverValue(resolveMoney(volNum, volFmt));
 
         const volChangeRaw = pick(data, ['volumeChangePctFmt', 'volumeChangeFmt', 'volumeChangePercentage24h']);
         const volChangeStr = normalizePercent(volChangeRaw);
@@ -234,7 +230,7 @@ const PCMarketOverview = memo(({ onCalendarClick, calendarExpanded = false }) =>
     loadAggregation();
     timer = setInterval(loadAggregation, 30000);
     return () => clearInterval(timer);
-  }, [marketValue, turnoverValue]);
+  }, [i18n.language]);
 
   const cards = [
     {
@@ -257,8 +253,9 @@ const PCMarketOverview = memo(({ onCalendarClick, calendarExpanded = false }) =>
       id: 'smart-order',
       icon: MarketMonitoringIcon,
       title: t('overview.smartMonitor'),
-      value: smartValue,
-      action: smartAction,
+      // 渲染时取 t()，避免切语言后 state 仍是旧文案
+      value: smartSymbol || t('overview.noConfig'),
+      action: smartSymbol ? t('overview.viewDetails') : t('overview.configAlarm'),
       onClick: smartOnClick,
       smartSymbol,
       smartPercentText,

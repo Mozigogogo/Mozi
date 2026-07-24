@@ -42,14 +42,36 @@ export async function fetchCryptoArbFundingList(params = {}) {
   return fetchCryptoArbList(Interface.CRYPTO_ARB_LIST_FUNDING, query, 'Funding 列表');
 }
 
-/** GET /crypto_arb/list/spot_spread */
+/**
+ * 现货价差列表
+ * GET /crypto_arb/list/spot_spread
+ * 入参互斥：spreadAbsSort / spreadPctSort / quoteVolumeSort（asc|desc）；都不传则默认百分比价差降序
+ */
 export async function fetchCryptoArbSpreadList(params = {}) {
-  return fetchCryptoArbList(Interface.CRYPTO_ARB_LIST_SPREAD, params, '现货价差列表');
+  const query = {};
+  if (params.spreadAbsSort === 'asc' || params.spreadAbsSort === 'desc') {
+    query.spreadAbsSort = params.spreadAbsSort;
+  } else if (params.spreadPctSort === 'asc' || params.spreadPctSort === 'desc') {
+    query.spreadPctSort = params.spreadPctSort;
+  } else if (params.quoteVolumeSort === 'asc' || params.quoteVolumeSort === 'desc') {
+    query.quoteVolumeSort = params.quoteVolumeSort;
+  }
+  return fetchCryptoArbList(Interface.CRYPTO_ARB_LIST_SPREAD, query, '现货价差列表');
 }
 
-/** GET /crypto_arb/list/basis */
+/**
+ * 期现基差列表
+ * GET /crypto_arb/list/basis
+ * 入参互斥：basisAbsSort / basisPctSort（asc|desc）；都不传则默认百分比基差降序
+ */
 export async function fetchCryptoArbBasisList(params = {}) {
-  return fetchCryptoArbList(Interface.CRYPTO_ARB_LIST_BASIS, params, '基差套利列表');
+  const query = {};
+  if (params.basisAbsSort === 'asc' || params.basisAbsSort === 'desc') {
+    query.basisAbsSort = params.basisAbsSort;
+  } else if (params.basisPctSort === 'asc' || params.basisPctSort === 'desc') {
+    query.basisPctSort = params.basisPctSort;
+  }
+  return fetchCryptoArbList(Interface.CRYPTO_ARB_LIST_BASIS, query, '基差套利列表');
 }
 
 /** GET /crypto_arb/list/oi_anomaly */

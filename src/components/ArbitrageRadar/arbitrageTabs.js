@@ -1,6 +1,9 @@
 /* eslint-disable */
 /** Tab-specific data mappers, list/detail HTML, charts & calculators (aligned with mozi-radar-full.html) */
 
+import i18n from '@/i18n/config';
+import { formatMoneyCompact } from '@/utils/formatMoney';
+
 export const TAB_KEYS = ['funding', 'spread', 'basis', 'oi'];
 
 export const TAB_LABELS = {
@@ -54,7 +57,91 @@ export const exColors = {
   Bitget: { bg: 'rgba(0,163,255,.1)', border: 'rgba(0,163,255,.25)', color: '#0284C7', c: '#0284C7' },
   MEXC: { bg: 'rgba(83,56,158,.1)', border: 'rgba(83,56,158,.25)', color: '#7C3AED', c: '#7C3AED' },
   BitMart: { bg: 'rgba(22,90,243,.1)', border: 'rgba(22,90,243,.25)', color: '#2563EB', c: '#2563EB' },
+  LBank: { bg: 'rgba(15,118,110,.1)', border: 'rgba(15,118,110,.25)', color: '#0F766E', c: '#0F766E' },
 };
+
+/** 原样展示价格/价差数值（不加精度裁剪） */
+export function displayRawNum(raw, { prefix = '' } = {}) {
+  if (raw == null || raw === '') return '—';
+  const s = String(raw).trim();
+  if (!s || s === 'NaN' || s === 'undefined') return '—';
+  if (prefix && s.startsWith(prefix)) return s;
+  return `${prefix}${s}`;
+}
+
+/** 带正负号的金额原值，如 +$0.002731 / -$0.01 */
+export function displaySignedMoney(raw) {
+  if (raw == null || raw === '') return '—';
+  const s = String(raw).trim().replace(/,/g, '');
+  if (!s || s === 'NaN' || s === 'undefined') return '—';
+  const n = Number(s);
+  if (!Number.isFinite(n)) return '—';
+  const body = s.replace(/^[+-]/, '');
+  if (n > 0) return `+$${body}`;
+  if (n < 0) return `-$${body}`;
+  return `$${body}`;
+}
+
+/** 截断到小数点后 digits 位，不四舍五入。276.78422 → 276.784 */
+export function truncateDecimals(raw, digits = 3) {
+  if (raw == null || raw === '') return null;
+  let s = String(raw).trim().replace(/,/g, '').replace(/%/g, '');
+  if (!s || s === 'NaN' || s === 'undefined') return null;
+
+  let sign = '';
+  if (s.startsWith('+')) s = s.slice(1);
+  if (s.startsWith('-')) {
+    sign = '-';
+    s = s.slice(1);
+  }
+
+  // 科学计数法先展开成普通小数串再截断，避免 toFixed 四舍五入
+  if (/e/i.test(s)) {
+    const n = Number(`${sign}${s}`);
+    if (!Number.isFinite(n)) return null;
+    const abs = Math.abs(n);
+    // 拆成整数+小数，用字符串拼接避免 round
+    const str = abs.toFixed(20).replace(/0+$/, '').replace(/\.$/, '');
+    s = str || '0';
+    sign = n < 0 ? '-' : '';
+  }
+
+  const [intPart, fracPart = ''] = s.split('.');
+  const int = intPart.replace(/^0+(?=\d)/, '') || '0';
+  if (digits <= 0) return `${sign}${int}`;
+  const frac = fracPart.slice(0, digits);
+  return frac ? `${sign}${int}.${frac}` : `${sign}${int}`;
+}
+
+/** 百分比展示：截断到小数点后 3 位，不四舍五入 */
+export function displayPctTrunc(raw, { signed = false, digits = 3 } = {}) {
+  const t = truncateDecimals(raw, digits);
+  if (t == null) return '—';
+  if (signed) {
+    const n = Number(String(raw).toString().replace(/,/g, '').replace(/%/g, ''));
+    if (Number.isFinite(n) && n > 0 && !t.startsWith('-') && !t.startsWith('+')) {
+      return `+${t}%`;
+    }
+  }
+  return `${t}%`;
+}
+
+/** @deprecated 使用 displayPctTrunc；保留兼容旧调用 */
+export function displaySignedPct(raw) {
+  return displayPctTrunc(raw, { signed: true, digits: 3 });
+}
+
+/**
+ * 成交量大数格式化（对齐 format_large_zh / format_large_en）
+ * 中文：万 / 亿 / 万亿；英文：K / M / B / T；均保留 2 位小数
+ */
+export function displayVolWithUnit(raw) {
+  if (raw == null || raw === '') return '—';
+  const s = String(raw).trim();
+  if (!s || s === 'NaN' || s === 'undefined') return '—';
+  const out = formatMoneyCompact(s, i18n.language, true);
+  return out.includes('--') ? '—' : out;
+}
 
 export const hintStyles = {
   多头入场: { bg: 'rgba(5,150,105,.1)', border: 'rgba(5,150,105,.3)', c: '#059669' },
@@ -99,36 +186,47 @@ function valTierCls(pct, tiers = [0.5, 0.2]) {
 
 export function mapSpreadItem(item, index) {
   if (!item || typeof item !== 'object') return null;
+  const validExchanges = Array.isArray(item.validExchanges)
+    ? item.validExchanges.map((ex) => String(ex || '').trim()).filter(Boolean)
+    : Array.isArray(item.valid_exchanges)
+      ? item.valid_exchanges.map((ex) => String(ex || '').trim()).filter(Boolean)
+      : [];
   return {
     type: 'spread',
     rank: Number(item.rank) || index + 1,
     sym: String(item.symbol || item.sym || '').trim().toUpperCase() || '—',
     minExchange: String(item.minExchange || item.min_exchange || '').trim() || '—',
     maxExchange: String(item.maxExchange || item.max_exchange || '').trim() || '—',
-    minPrice: item.minPrice ?? item.min_price ?? 0,
-    maxPrice: item.maxPrice ?? item.max_price ?? 0,
-    avgPrice: item.avgPrice ?? item.avg_price ?? 0,
-    spreadPct: Number(item.spreadPct ?? item.spread_pct) || 0,
+    minPrice: item.minPrice ?? item.min_price ?? '',
+    maxPrice: item.maxPrice ?? item.max_price ?? '',
+    avgPrice: item.avgPrice ?? item.avg_price ?? '',
+    spreadPct: item.spreadPct ?? item.spread_pct ?? '',
     spreadAbs: item.spreadAbs ?? item.spread_abs,
+    validExchanges,
     volume24h: item.totalQuoteVolume24h ?? item.total_quote_volume_24h,
-    dataTs: Number(item.dataTs ?? item.data_ts) || 0,
+    ts: Number(item.ts) || 0,
+    dataTs: Number(item.ts ?? item.dataTs ?? item.data_ts) || 0,
   };
 }
 
 export function mapBasisItem(item, index) {
   if (!item || typeof item !== 'object') return null;
+  const annRaw = item.annualizedPct ?? item.annualized_pct;
   return {
     type: 'basis',
     rank: Number(item.rank) || index + 1,
     sym: String(item.symbol || item.sym || '').trim().toUpperCase() || '—',
     exchange: String(item.exchange || item.exchangeCode || item.exchange_code || '').trim() || '—',
-    perpPrice: Number(item.perpPrice ?? item.perp_price) || 0,
-    spotPrice: Number(item.spotPrice ?? item.spot_price) || 0,
-    basisAbs: Number(item.basisAbs ?? item.basis_abs) || 0,
-    basisPct: Number(item.basisPct ?? item.basis_pct) || 0,
-    ann: Number(item.annualizedPct ?? item.annualized_pct) || 0,
-    volume24h: item.quoteVolume24h ?? item.quote_volume_24h,
-    dataTs: Number(item.dataTs ?? item.data_ts) || 0,
+    perpPrice: item.perpPrice ?? item.perp_price ?? '',
+    spotPrice: item.spotPrice ?? item.spot_price ?? '',
+    basisAbs: item.basisAbs ?? item.basis_abs ?? '',
+    basisPct: item.basisPct ?? item.basis_pct ?? '',
+    ann: annRaw == null || annRaw === '' ? null : annRaw,
+    perpVolume24h: item.perpQuoteVolume24h ?? item.perp_quote_volume_24h,
+    spotVolume24h: item.spotQuoteVolume24h ?? item.spot_quote_volume_24h,
+    volume24h: item.perpQuoteVolume24h ?? item.perp_quote_volume_24h ?? item.quoteVolume24h,
+    ts: Number(item.ts) || 0,
+    dataTs: Number(item.ts ?? item.dataTs ?? item.data_ts) || 0,
   };
 }
 
@@ -175,6 +273,10 @@ export function renderTypeTabs(activeTab) {
 export function tableHeadHTML(tab, sortIndFn) {
   const tip = (txt) =>
     `<span class="tip" style="margin-left:4px" onclick="event.stopPropagation()"><span class="tip-ico">?</span><span class="tip-txt">${txt}</span></span>`;
+  const ind = (key) =>
+    typeof sortIndFn === 'function'
+      ? sortIndFn(key)
+      : '<span class="sort-ind" aria-hidden="true"><span class="sort-up">▲</span><span class="sort-dn">▼</span></span>';
 
   if (tab === 'spread') {
     return `<tr>
@@ -182,9 +284,18 @@ export function tableHeadHTML(tab, sortIndFn) {
       <th class="col-sym">标的</th>
       <th class="col-flow">操作方向 ${tip('在低价所买入，在高价所卖出，赚取价差')}</th>
       <th class="col-prices">买入价 / 卖出价</th>
-      <th class="col-spread">价差 % ${tip('(高价-低价)/均价×100，扣手续费后才是净收益')}</th>
-      <th class="col-vol">24h 总成交量</th>
-      <th class="col-arrow"></th>
+      <th class="th-sortable col-spread-abs" onclick="sortBy('spreadAbs')">
+        绝对价差 ${ind('spreadAbs')}
+        ${tip('高价 − 低价的绝对差值')}
+      </th>
+      <th class="th-sortable col-spread" onclick="sortBy('spreadPct')">
+        价差 % ${ind('spreadPct')}
+        ${tip('(高价-低价)/均价×100，扣手续费后才是净收益；默认按此降序')}
+      </th>
+      <th class="th-sortable col-vol" onclick="sortBy('quoteVolume')">
+        24h 总成交量 ${ind('quoteVolume')}
+        ${tip('有效交易所合计 24h 成交额（计价货币）')}
+      </th>
     </tr>`;
   }
   if (tab === 'basis') {
@@ -194,10 +305,16 @@ export function tableHeadHTML(tab, sortIndFn) {
       <th class="col-ex">交易所</th>
       <th class="col-dir">方向 ${tip('升水=perp溢价，做多现货+做空perp；贴水=perp折价，反向操作')}</th>
       <th class="col-prices">perp 价 / 现货价</th>
-      <th class="col-basis">基差 % ${tip('(perp价-现货价)/现货价×100，正=升水，负=贴水')}</th>
+      <th class="th-sortable col-basis-abs" onclick="sortBy('basisAbs')">
+        绝对基差 ${ind('basisAbs')}
+        ${tip('perp 价 − 现货价的绝对差值，可正可负')}
+      </th>
+      <th class="th-sortable col-basis" onclick="sortBy('basisPct')">
+        基差 % ${ind('basisPct')}
+        ${tip('(perp价-现货价)/现货价×100，正=升水，负=贴水；默认按此降序')}
+      </th>
       <th class="col-funding-ann">Funding 年化</th>
-      <th class="col-vol">24h 成交量</th>
-      <th class="col-arrow"></th>
+      <th class="col-vol">24h 成交额 ${tip('上：合约成交额；下：现货成交额')}</th>
     </tr>`;
   }
   if (tab === 'oi') {
@@ -210,7 +327,6 @@ export function tableHeadHTML(tab, sortIndFn) {
       <th class="col-price-chg">价格 24h</th>
       <th class="col-signal">信号 ${tip('OI变化+价格变化的组合解读：多头入场/空头入场/空头平仓/多头平仓')}</th>
       <th class="col-vol">24h 成交量</th>
-      <th class="col-arrow"></th>
     </tr>`;
   }
   return `<tr>
@@ -218,11 +334,11 @@ export function tableHeadHTML(tab, sortIndFn) {
     <th class="col-sym">标的</th>
     <th class="col-ex">交易所</th>
     <th class="th-sortable col-funding" onclick="sortBy('funding')">
-      当前 Funding ${sortIndFn('funding')}
+      当前 Funding ${ind('funding')}
       ${tip('每8小时结算一次的资金费率，正数代表多头支付给空头')}
     </th>
     <th class="th-sortable col-ann" onclick="sortBy('ann')">
-      年化 ${sortIndFn('ann')}
+      年化 ${ind('ann')}
       ${tip('按当前一期费率折算，实际收益受市场波动影响')}
     </th>
     <th class="col-avg">30d 均值</th>
@@ -241,48 +357,61 @@ export function tableRowHTML(tab, o, opsIdx, displayRank, helpers = {}) {
   if (tab === 'spread') {
     const minEx = exColors[o.minExchange] || exColors.Binance;
     const maxEx = exColors[o.maxExchange] || exColors.Binance;
-    const valCls = valTierCls(o.spreadPct);
+    const valCls = valTierCls(Number(o.spreadPct) || 0);
+    const exCount = Array.isArray(o.validExchanges) ? o.validExchanges.length : 0;
+    const symSub = exCount > 0 ? `${exCount} 所有效` : '现货跨所';
+    const spreadPctText = truncateDecimals(o.spreadPct, 3);
     return `<tr ${click} style="animation-delay:${delay}ms">
       <td class="td-num">${o.rank || displayRank}</td>
-      <td><div class="sym-cell">${symIco(o.sym, opsIdx)}<div><div class="sym-name">${o.sym}</div><div class="sym-sub">现货跨所</div></div></div></td>
+      <td><div class="sym-cell">${symIco(o.sym, opsIdx)}<div><div class="sym-name">${o.sym}</div><div class="sym-sub">${symSub}</div></div></div></td>
       <td><div class="ex-flow">
         <span class="ex-node" style="background:${minEx.bg};border-color:${minEx.border};color:${minEx.color}">${o.minExchange} 买</span>
         <span class="ex-arrow">→</span>
         <span class="ex-node" style="background:${maxEx.bg};border-color:${maxEx.border};color:${maxEx.color}">${o.maxExchange} 卖</span>
       </div></td>
       <td><div class="price-stack">
-        <span class="mono price-lo">低 $${parseFloat(o.minPrice).toPrecision(4)}</span>
-        <span class="mono price-hi">高 $${parseFloat(o.maxPrice).toPrecision(4)}</span>
+        <span class="mono price-lo">低 ${displayRawNum(o.minPrice, { prefix: '$' })}</span>
+        <span class="mono price-hi">高 ${displayRawNum(o.maxPrice, { prefix: '$' })}</span>
       </div></td>
-      <td><span class="${valCls}">${o.spreadPct.toFixed(3)}%</span></td>
-      <td><span class="mono" style="color:var(--t2)">${fmtVol(o.volume24h)}</span></td>
-      <td><span class="row-arrow">→</span></td>
+      <td><span class="mono" style="color:var(--t2)">${displayRawNum(o.spreadAbs, { prefix: '$' })}</span></td>
+      <td><span class="${valCls}">${spreadPctText == null ? '—' : `${spreadPctText}%`}</span></td>
+      <td><span class="mono" style="color:var(--t2)">${displayVolWithUnit(o.volume24h)}</span></td>
     </tr>`;
   }
 
   if (tab === 'basis') {
-    const isPos = o.basisPct >= 0;
-    const basisCls = valTierCls(Math.abs(o.basisPct), [0.3, 0.1]);
+    const basisPctNum = Number(o.basisPct) || 0;
+    const isPos = basisPctNum >= 0;
+    const basisCls = valTierCls(Math.abs(basisPctNum), [0.3, 0.1]);
     const dirLabel = isPos ? '升水' : '贴水';
     const dirStyle = isPos
       ? 'background:rgba(5,150,105,.1);border-color:rgba(5,150,105,.3);color:#059669'
       : 'background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3);color:#EF4444';
+    const annText = o.ann == null || o.ann === ''
+      ? '—'
+      : (() => {
+          const trunc = truncateDecimals(o.ann, 3);
+          if (trunc == null) return '—';
+          const annNum = Number(o.ann);
+          const sign = Number.isFinite(annNum) && annNum > 0 ? '+' : '';
+          return `${sign}${trunc}%`;
+        })();
     return `<tr ${click} style="animation-delay:${delay}ms">
       <td class="td-num">${o.rank || displayRank}</td>
       <td><div class="sym-cell">${symIco(o.sym, opsIdx)}<div><div class="sym-name">${o.sym}</div><div class="sym-sub">perp vs 现货</div></div></div></td>
       <td>${exBadge(o.exchange)}</td>
       <td><span class="risk-badge" style="${dirStyle}">${dirLabel}</span></td>
       <td><div class="price-stack">
-        <span class="mono" style="color:var(--t2);font-size:11px">perp $${o.perpPrice.toLocaleString()}</span>
-        <span class="mono" style="color:var(--t3);font-size:11px">spot $${o.spotPrice.toLocaleString()}</span>
+        <span class="mono" style="color:var(--t2);font-size:11px">perp ${displayRawNum(o.perpPrice, { prefix: '$' })}</span>
+        <span class="mono" style="color:var(--t3);font-size:11px">spot ${displayRawNum(o.spotPrice, { prefix: '$' })}</span>
       </div></td>
-      <td>
-        <span class="${basisCls}">${isPos ? '+' : ''}${o.basisPct.toFixed(3)}%</span>
-        <span class="mono" style="color:var(--t3);font-size:11px;margin-left:4px">(${isPos ? '+' : ''}$${Math.abs(o.basisAbs).toFixed(2)})</span>
-      </td>
-      <td><span class="mono" style="color:var(--t2)">${o.ann >= 0 ? '+' : ''}${o.ann.toFixed(1)}% 年化</span></td>
-      <td><span class="mono" style="color:var(--t3)">${fmtVol(o.volume24h)}</span></td>
-      <td><span class="row-arrow">→</span></td>
+      <td><span class="mono" style="color:var(--t2)">${displaySignedMoney(o.basisAbs)}</span></td>
+      <td><span class="${basisCls}">${displayPctTrunc(o.basisPct, { signed: true })}</span></td>
+      <td><span class="mono" style="color:var(--t2)">${annText}</span></td>
+      <td><div class="price-stack">
+        <span class="mono" style="color:var(--t2);font-size:11px">perp ${displayVolWithUnit(o.perpVolume24h)}</span>
+        <span class="mono" style="color:var(--t3);font-size:11px">spot ${displayVolWithUnit(o.spotVolume24h)}</span>
+      </div></td>
     </tr>`;
   }
 
@@ -298,11 +427,10 @@ export function tableRowHTML(tab, o, opsIdx, displayRank, helpers = {}) {
         <span class="mono">${fmtOI(o.currentOiUsd)}</span>
         <span class="mono" style="color:var(--t3);font-size:11px">7日均值 ${fmtOI(o.avg7dOiUsd)}</span>
       </div></td>
-      <td><span class="${oiCls}">${o.oiChangePct >= 0 ? '↑' : '↓'} ${Math.abs(o.oiChangePct).toFixed(1)}%</span></td>
-      <td><span class="${priceCls}">${o.priceChange24hPct >= 0 ? '↑' : '↓'} ${Math.abs(o.priceChange24hPct).toFixed(1)}%</span></td>
+      <td><span class="${oiCls}">${o.oiChangePct >= 0 ? '↑' : '↓'} ${truncateDecimals(Math.abs(o.oiChangePct), 3) ?? '—'}%</span></td>
+      <td><span class="${priceCls}">${o.priceChange24hPct >= 0 ? '↑' : '↓'} ${truncateDecimals(Math.abs(o.priceChange24hPct), 3) ?? '—'}%</span></td>
       <td><span class="hint-badge" style="background:${hs.bg};border-color:${hs.border};color:${hs.c}">${o.correlationHint}</span></td>
       <td><span class="mono" style="color:var(--t3)">${fmtVol(o.volume24h)}</span></td>
-      <td><span class="row-arrow">→</span></td>
     </tr>`;
   }
 
@@ -315,13 +443,13 @@ export function skeletonCellsHTML(tab) {
   const num = `<td class="td-num"><span class="skel skel-num"></span></td>`;
 
   if (tab === 'spread') {
-    return `${num}${sym}${cell('skel-w120')}${cell('skel-w88')}${cell('skel-w64')}${cell('skel-w72')}${cell('skel-w24')}`;
+    return `${num}${sym}${cell('skel-w120')}${cell('skel-w88')}${cell('skel-w64')}${cell('skel-w64')}${cell('skel-w72')}`;
   }
   if (tab === 'basis') {
-    return `${num}${sym}<td><span class="skel skel-badge"></span></td>${cell('skel-w48')}${cell('skel-w88')}${cell('skel-w64')}${cell('skel-w72')}${cell('skel-w48')}${cell('skel-w24')}`;
+    return `${num}${sym}<td><span class="skel skel-badge"></span></td>${cell('skel-w48')}${cell('skel-w88')}${cell('skel-w64')}${cell('skel-w64')}${cell('skel-w72')}${cell('skel-w88')}`;
   }
   if (tab === 'oi') {
-    return `${num}${sym}<td><span class="skel skel-badge"></span></td>${cell('skel-w88')}${cell('skel-w64')}${cell('skel-w48')}${cell('skel-w72')}${cell('skel-w64')}${cell('skel-w24')}`;
+    return `${num}${sym}<td><span class="skel skel-badge"></span></td>${cell('skel-w88')}${cell('skel-w64')}${cell('skel-w48')}${cell('skel-w72')}${cell('skel-w64')}`;
   }
   return `${num}${sym}<td><span class="skel skel-badge"></span></td>${cell('skel-w88')}${cell('skel-w72')}${cell('skel-w64')}${cell('skel-w40')}<td><span class="skel skel-stars"></span></td>`;
 }
@@ -333,7 +461,15 @@ export function renderSpreadDetail(o, opsIdx) {
   const minExC = exColors[o.minExchange] || exColors.Binance;
   const maxExC = exColors[o.maxExchange] || exColors.Binance;
   const feeRate = 0.001;
-  const netSpread = o.spreadPct - feeRate * 2 * 100;
+  const spreadPctNum = Number(o.spreadPct) || 0;
+  const netSpread = spreadPctNum - feeRate * 2 * 100;
+  const validEx = Array.isArray(o.validExchanges) ? o.validExchanges : [];
+  const validExHtml = validEx.length
+    ? validEx.map((ex) => exBadge(ex)).join('')
+    : '<span style="color:var(--t3)">—</span>';
+  const avgPriceText = displayRawNum(o.avgPrice, { prefix: '$' });
+  const spreadPctText = truncateDecimals(o.spreadPct, 3);
+  const volumeText = displayVolWithUnit(o.volume24h);
   return `
   <button class="back-btn" onclick="backToRadar()">← 返回列表</button>
   <div class="det-hdr">
@@ -349,13 +485,17 @@ export function renderSpreadDetail(o, opsIdx) {
           <span class="ex-arrow" style="font-size:16px">→</span>
           <span class="ex-node" style="background:${maxExC.bg};border-color:${maxExC.border};color:${maxExC.color}">${o.maxExchange} 卖</span>
         </div>
-        <div style="font-size:11px;color:var(--t3)">24h 总成交量 ${fmtVol(o.volume24h)}</div>
+        <div style="font-size:11px;color:var(--t3)">24h 总成交量 ${volumeText} · 绝对价差 ${displayRawNum(o.spreadAbs, { prefix: '$' })}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px">
+          <span style="font-size:11px;color:var(--t3)">有效交易所</span>
+          ${validExHtml}
+        </div>
       </div>
     </div>
     <div class="det-right">
-      <div class="big-val" style="color:var(--blue)">${o.spreadPct.toFixed(3)}%</div>
+      <div class="big-val" style="color:var(--blue)">${spreadPctText == null ? '—' : `${spreadPctText}%`}</div>
       <div class="big-label">毛价差</div>
-      <div class="big-sub" style="color:${netSpread > 0 ? 'var(--pos)' : 'var(--danger)'}">扣手续费后净价差 ${netSpread > 0 ? '+' : ''}${netSpread.toFixed(3)}%</div>
+      <div class="big-sub" style="color:${netSpread > 0 ? 'var(--pos)' : 'var(--danger)'}">扣手续费后净价差 ${netSpread > 0 ? '+' : ''}${truncateDecimals(netSpread, 3) ?? netSpread}%</div>
     </div>
   </div>
   <div class="chart-card">
@@ -375,21 +515,22 @@ export function renderSpreadDetail(o, opsIdx) {
   <div class="g3">
     <div class="card">
       <div class="card-t">${o.minExchange} 买入</div>
-      <div class="met-row"><div class="met-l">现货价</div><div class="met-v" style="color:var(--pos)">$${parseFloat(o.minPrice).toPrecision(6)}</div></div>
+      <div class="met-row"><div class="met-l">现货价</div><div class="met-v" style="color:var(--pos)">${displayRawNum(o.minPrice, { prefix: '$' })}</div></div>
       <div class="met-row"><div class="met-l">买入手续费</div><div class="met-v" style="color:var(--danger)">-0.10%</div></div>
-      <div class="met-row"><div class="met-l">成交量</div><div class="met-v">${fmtVol(o.volume24h)}</div></div>
+      <div class="met-row"><div class="met-l">成交量</div><div class="met-v">${volumeText}</div></div>
     </div>
     <div class="card">
       <div class="card-t">${o.maxExchange} 卖出</div>
-      <div class="met-row"><div class="met-l">现货价</div><div class="met-v" style="color:var(--danger)">$${parseFloat(o.maxPrice).toPrecision(6)}</div></div>
+      <div class="met-row"><div class="met-l">现货价</div><div class="met-v" style="color:var(--danger)">${displayRawNum(o.maxPrice, { prefix: '$' })}</div></div>
       <div class="met-row"><div class="met-l">卖出手续费</div><div class="met-v" style="color:var(--danger)">-0.10%</div></div>
-      <div class="met-row"><div class="met-l">均价</div><div class="met-v">$${parseFloat(o.avgPrice || o.minPrice).toPrecision(6)}</div></div>
+      <div class="met-row"><div class="met-l">均价</div><div class="met-v">${avgPriceText}</div></div>
     </div>
     <div class="card">
       <div class="card-t">收益拆解</div>
-      <div class="met-row"><div class="met-l">毛价差</div><div class="met-v">+${o.spreadPct.toFixed(3)}%</div></div>
+      <div class="met-row"><div class="met-l">绝对价差</div><div class="met-v">${displayRawNum(o.spreadAbs, { prefix: '$' })}</div></div>
+      <div class="met-row"><div class="met-l">毛价差</div><div class="met-v">${spreadPctText == null ? '—' : `+${spreadPctText}%`}</div></div>
       <div class="met-row"><div class="met-l">双所手续费</div><div class="met-v" style="color:var(--danger)">-0.20%</div></div>
-      <div class="met-row"><div class="met-l">净价差</div><div class="met-v" style="color:${netSpread > 0 ? 'var(--pos)' : 'var(--danger)'}">${netSpread > 0 ? '+' : ''}${netSpread.toFixed(3)}%</div></div>
+      <div class="met-row"><div class="met-l">净价差</div><div class="met-v" style="color:${netSpread > 0 ? 'var(--pos)' : 'var(--danger)'}">${netSpread > 0 ? '+' : ''}${truncateDecimals(netSpread, 3) ?? netSpread}%</div></div>
     </div>
   </div>
   <div class="calc-card calc-card-blue">
@@ -410,16 +551,31 @@ export function renderSpreadDetail(o, opsIdx) {
     <div class="risk-li">执行风险：链上转账期间（5-30分钟）价格可能反向波动，价差可能变为负数</div>
     <div class="risk-li">滑点风险：大额（>$50,000）搬砖会产生明显滑点，需单独评估盘口深度</div>
     <div class="risk-li">提币风险：网络拥堵时转账时间延长，建议评估该链当前 Gas 费和确认时间</div>
-    ${o.spreadPct < 0.2 ? '<div class="risk-li" style="color:var(--danger)">价差过小：净价差极低，执行稍有偏差即可能亏损，建议等待更大价差机会</div>' : ''}
+    ${spreadPctNum < 0.2 ? '<div class="risk-li" style="color:var(--danger)">价差过小：净价差极低，执行稍有偏差即可能亏损，建议等待更大价差机会</div>' : ''}
   </div>`;
 }
 
 export function renderBasisDetail(o, opsIdx) {
   const col = symColors[opsIdx % symColors.length];
   const exC = (exColors[o.exchange] || {}).c || '#64748b';
-  const isPos = o.basisPct >= 0;
+  const basisPctNum = Number(o.basisPct) || 0;
+  const isPos = basisPctNum >= 0;
   const typeColor = isPos ? 'var(--pos)' : 'var(--danger)';
   const typeLabel = isPos ? '升水（perp 溢价）' : '贴水（perp 折价）';
+  const annText = o.ann == null || o.ann === ''
+    ? '—'
+    : (() => {
+        const trunc = truncateDecimals(o.ann, 3);
+        if (trunc == null) return '—';
+        const annNum = Number(o.ann);
+        const sign = Number.isFinite(annNum) && annNum > 0 ? '+' : '';
+        return `${sign}${trunc}%`;
+      })();
+  const annColor = o.ann == null || o.ann === ''
+    ? 'var(--t3)'
+    : Number(o.ann) >= 0
+      ? 'var(--pos)'
+      : 'var(--danger)';
   return `
   <button class="back-btn" onclick="backToRadar()">← 返回列表</button>
   <div class="det-hdr">
@@ -434,14 +590,15 @@ export function renderBasisDetail(o, opsIdx) {
       </div>
       <div class="det-meta">
         <div style="font-size:11px;color:var(--t2)">${typeLabel}</div>
-        <div style="font-size:11px;color:var(--t3)">Funding 年化 ${o.ann >= 0 ? '+' : ''}${o.ann.toFixed(1)}%</div>
+        <div style="font-size:11px;color:var(--t3)">Funding 年化 ${annText}</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:4px">合约 24h ${displayVolWithUnit(o.perpVolume24h)} · 现货 24h ${displayVolWithUnit(o.spotVolume24h)}</div>
       </div>
     </div>
     <div class="det-right">
-      <div class="big-val" style="color:${typeColor}">${isPos ? '+' : ''}${o.basisPct.toFixed(3)}%</div>
+      <div class="big-val" style="color:${typeColor}">${displayPctTrunc(o.basisPct, { signed: true })}</div>
       <div class="big-label">当前基差</div>
-      <div class="big-sub">perp $${o.perpPrice.toLocaleString()} vs 现货 $${o.spotPrice.toLocaleString()}</div>
-      <div class="big-sub" style="color:${typeColor};margin-top:3px">绝对差值 ${isPos ? '+' : ''}$${Math.abs(o.basisAbs).toFixed(2)}</div>
+      <div class="big-sub">perp ${displayRawNum(o.perpPrice, { prefix: '$' })} vs 现货 ${displayRawNum(o.spotPrice, { prefix: '$' })}</div>
+      <div class="big-sub" style="color:${typeColor};margin-top:3px">绝对差值 ${displaySignedMoney(o.basisAbs)}</div>
     </div>
   </div>
   <div class="chart-card">
@@ -461,14 +618,14 @@ export function renderBasisDetail(o, opsIdx) {
   <div class="g2">
     <div class="card">
       <div class="card-t">价格对比（同 ${o.exchange}）</div>
-      <div class="met-row"><div class="met-l">永续合约价</div><div class="met-v">$${o.perpPrice.toLocaleString()}</div></div>
-      <div class="met-row"><div class="met-l">现货价</div><div class="met-v">$${o.spotPrice.toLocaleString()}</div></div>
-      <div class="met-row"><div class="met-l">价差（USD）</div><div class="met-v" style="color:${typeColor}">${isPos ? '+' : ''}$${Math.abs(o.basisAbs).toFixed(2)}</div></div>
+      <div class="met-row"><div class="met-l">永续合约价</div><div class="met-v">${displayRawNum(o.perpPrice, { prefix: '$' })}</div></div>
+      <div class="met-row"><div class="met-l">现货价</div><div class="met-v">${displayRawNum(o.spotPrice, { prefix: '$' })}</div></div>
+      <div class="met-row"><div class="met-l">价差（USD）</div><div class="met-v" style="color:${typeColor}">${displaySignedMoney(o.basisAbs)}</div></div>
     </div>
     <div class="card">
       <div class="card-t">组合收益分析</div>
-      <div class="met-row"><div class="met-l">基差收益</div><div class="met-v" style="color:${typeColor}">${isPos ? '+' : ''}${o.basisPct.toFixed(3)}%</div></div>
-      <div class="met-row"><div class="met-l">Funding 年化</div><div class="met-v" style="color:${o.ann >= 0 ? 'var(--pos)' : 'var(--danger)'}">${o.ann >= 0 ? '+' : ''}${o.ann.toFixed(1)}%</div></div>
+      <div class="met-row"><div class="met-l">基差收益</div><div class="met-v" style="color:${typeColor}">${displayPctTrunc(o.basisPct, { signed: true })}</div></div>
+      <div class="met-row"><div class="met-l">Funding 年化</div><div class="met-v" style="color:${annColor}">${annText}</div></div>
       <div class="met-row"><div class="met-l">理论双重收益</div><div class="met-v" style="color:var(--accent)">基差+Funding</div></div>
     </div>
   </div>
@@ -495,7 +652,7 @@ export function renderBasisDetail(o, opsIdx) {
     <div class="risk-t">⚠️ 风险提示</div>
     <div class="risk-li">基差扩大风险：极端行情下基差可能扩大至 2%+，触发保证金不足强平</div>
     <div class="risk-li">Funding 翻转：${isPos ? '若市场转熊，Funding 可能变负，空头端需反向付费' : '贴水状态下 Funding 通常为负，持有成本需精细核算'}</div>
-    <div class="risk-li">流动性风险：成交量 ${fmtVol(o.volume24h)}/24h，大额建仓注意滑点</div>
+    <div class="risk-li">流动性风险：合约 ${displayVolWithUnit(o.perpVolume24h)} / 现货 ${displayVolWithUnit(o.spotVolume24h)}（24h），大额建仓注意滑点</div>
   </div>`;
 }
 
@@ -530,7 +687,7 @@ export function renderOIDetail(o, opsIdx) {
       </div>
     </div>
     <div class="det-right">
-      <div class="big-val" style="color:${oiChgColor}">${o.oiChangePct >= 0 ? '+' : ''}${o.oiChangePct.toFixed(1)}%</div>
+      <div class="big-val" style="color:${oiChgColor}">${displayPctTrunc(o.oiChangePct, { signed: true })}</div>
       <div class="big-label">OI vs 7日均值</div>
       <div class="big-sub">当前 ${fmtOI(o.currentOiUsd)} · 均值 ${fmtOI(o.avg7dOiUsd)}</div>
     </div>
@@ -540,7 +697,7 @@ export function renderOIDetail(o, opsIdx) {
       <div class="signal-icon">${signalMeta.icon}</div>
       <div>
         <div class="signal-ttl" style="color:${hs.c}">${o.correlationHint}</div>
-        <div style="font-size:11px;color:var(--t2);margin-top:2px">OI ${o.oiChangePct >= 0 ? '↑' : '↓'}${Math.abs(o.oiChangePct).toFixed(1)}% · 价格 ${o.priceChange24hPct >= 0 ? '↑' : '↓'}${Math.abs(o.priceChange24hPct).toFixed(1)}%</div>
+        <div style="font-size:11px;color:var(--t2);margin-top:2px">OI ${o.oiChangePct >= 0 ? '↑' : '↓'}${truncateDecimals(Math.abs(o.oiChangePct), 3) ?? '—'}% · 价格 ${o.priceChange24hPct >= 0 ? '↑' : '↓'}${truncateDecimals(Math.abs(o.priceChange24hPct), 3) ?? '—'}%</div>
       </div>
     </div>
     <div class="signal-desc">${signalMeta.desc}</div>
@@ -564,11 +721,11 @@ export function renderOIDetail(o, opsIdx) {
       <div class="card-t">OI 数据</div>
       <div class="met-row"><div class="met-l">当前 OI</div><div class="met-v">${fmtOI(o.currentOiUsd)}</div></div>
       <div class="met-row"><div class="met-l">7日均值 OI</div><div class="met-v">${fmtOI(o.avg7dOiUsd)}</div></div>
-      <div class="met-row"><div class="met-l">vs 7日均值</div><div class="met-v" style="color:${oiChgColor}">${o.oiChangePct >= 0 ? '+' : ''}${o.oiChangePct.toFixed(1)}%</div></div>
+      <div class="met-row"><div class="met-l">vs 7日均值</div><div class="met-v" style="color:${oiChgColor}">${displayPctTrunc(o.oiChangePct, { signed: true })}</div></div>
     </div>
     <div class="card">
       <div class="card-t">价格数据</div>
-      <div class="met-row"><div class="met-l">24h 涨跌</div><div class="met-v" style="color:${o.priceChange24hPct >= 0 ? 'var(--pos)' : 'var(--danger)'}">${o.priceChange24hPct >= 0 ? '↑' : '↓'} ${Math.abs(o.priceChange24hPct).toFixed(1)}%</div></div>
+      <div class="met-row"><div class="met-l">24h 涨跌</div><div class="met-v" style="color:${o.priceChange24hPct >= 0 ? 'var(--pos)' : 'var(--danger)'}">${o.priceChange24hPct >= 0 ? '↑' : '↓'} ${truncateDecimals(Math.abs(o.priceChange24hPct), 3) ?? '—'}%</div></div>
       <div class="met-row"><div class="met-l">OI/价格关系</div><div class="met-v" style="color:${hs.c}">${o.correlationHint}</div></div>
       <div class="met-row"><div class="met-l">24h 成交量</div><div class="met-v">${fmtVol(o.volume24h)}</div></div>
     </div>
@@ -637,7 +794,7 @@ export function initSpreadChart(root, o) {
   const base1 = parseFloat(o.minPrice) || 1;
   const base2 = parseFloat(o.maxPrice) || base1 * 1.01;
   const d1 = makeSeries(base1, 30, 0.005, base1 * 0.97, base1 * 1.03);
-  const d2 = d1.map((v, i) => (i === 29 ? base2 : v * (1 + (o.spreadPct / 100) * (0.4 + Math.random() * 0.6))));
+  const d2 = d1.map((v, i) => (i === 29 ? base2 : v * (1 + ((Number(o.spreadPct) || 0) / 100) * (0.4 + Math.random() * 0.6))));
   const all = [...d1, ...d2];
   const mn = Math.min(...all) * 0.999;
   const mx = Math.max(...all) * 1.001;
@@ -676,7 +833,7 @@ export function initBasisChart(root, o) {
   const svg = root.querySelector('#fchart');
   if (!svg || !o) return;
   const W = 720; const H = 160; const px = 20; const py = 14;
-  const data = makeSeries(o.basisPct, 30, 0.6, o.basisPct * -0.8, o.basisPct * 2.8);
+  const data = makeSeries(Number(o.basisPct) || 0, 30, 0.6, (Number(o.basisPct) || 0) * -0.8, (Number(o.basisPct) || 0) * 2.8);
   const mn = Math.min(Math.min(...data) * 1.3, -0.15);
   const mx = Math.max(...data) * 1.15;
   const rng = mx - mn;
@@ -740,22 +897,24 @@ export function calcSpread(root, o) {
   if (!o || !root) return;
   const principal = parseFloat(root.querySelector('#inp-spread')?.value) || 10000;
   const feeRate = 0.001;
-  const netSpread = o.spreadPct - feeRate * 2 * 100;
+  const spreadPctNum = Number(o.spreadPct) || 0;
+  const netSpread = spreadPctNum - feeRate * 2 * 100;
+  const spreadPctText = truncateDecimals(o.spreadPct, 3);
   const steps = root.querySelector('#spread-steps');
   if (steps) {
     steps.innerHTML = `
-      <div class="step-row"><div class="step-n">1</div><div class="step-txt">在 ${o.minExchange} 以 $${parseFloat(o.minPrice).toPrecision(5)} 买入 ${o.sym}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
+      <div class="step-row"><div class="step-n">1</div><div class="step-txt">在 ${o.minExchange} 以 ${displayRawNum(o.minPrice, { prefix: '$' })} 买入 ${o.sym}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
       <div class="step-row"><div class="step-n">2</div><div class="step-txt">将 ${o.sym} 转账至 ${o.maxExchange}（链上或内部划转）</div><div class="step-amt">等待确认</div></div>
-      <div class="step-row"><div class="step-n">3</div><div class="step-txt">在 ${o.maxExchange} 以 $${parseFloat(o.maxPrice).toPrecision(5)} 卖出 ${o.sym}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>`;
+      <div class="step-row"><div class="step-n">3</div><div class="step-txt">在 ${o.maxExchange} 以 ${displayRawNum(o.maxPrice, { prefix: '$' })} 卖出 ${o.sym}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>`;
   }
   const res = root.querySelector('#spread-res');
   if (res) {
     res.innerHTML = `
-      <div class="res-row"><div class="res-l">毛价差收入（${o.spreadPct.toFixed(3)}%）</div><div class="res-v p">+$${(principal * o.spreadPct / 100).toFixed(2)}</div></div>
+      <div class="res-row"><div class="res-l">毛价差收入（${spreadPctText == null ? '—' : `${spreadPctText}%`}）</div><div class="res-v p">+$${(principal * spreadPctNum / 100).toFixed(2)}</div></div>
       <div class="res-row"><div class="res-l">双所手续费（各 0.10%）</div><div class="res-v n">-$${(principal * 0.002).toFixed(2)}</div></div>
       <div class="res-row tot"><div class="res-l" style="font-weight:600;color:var(--t1)">单次净收益</div><div class="res-v tot" style="color:${netSpread > 0 ? 'var(--accent)' : 'var(--danger)'}">
         ${netSpread > 0 ? '+' : ''}$${(principal * netSpread / 100).toFixed(2)}
-        <span style="font-size:11px;color:var(--t2)">（${netSpread > 0 ? '+' : ''}${netSpread.toFixed(3)}%）</span>
+        <span style="font-size:11px;color:var(--t2)">（${netSpread > 0 ? '+' : ''}${truncateDecimals(netSpread, 3) ?? netSpread}%）</span>
       </div></div>`;
   }
 }
@@ -763,8 +922,10 @@ export function calcSpread(root, o) {
 export function calcBasis(root, o) {
   if (!o || !root) return;
   const principal = parseFloat(root.querySelector('#inp-basis')?.value) || 10000;
-  const isPos = o.basisPct >= 0;
-  const fundingAnn = o.ann;
+  const basisPctNum = Number(o.basisPct) || 0;
+  const isPos = basisPctNum >= 0;
+  const fundingAnn = Number(o.ann) || 0;
+  const annRaw = o.ann == null || o.ann === '' ? null : truncateDecimals(o.ann, 3);
   const desc = root.querySelector('#basis-calc-desc');
   if (desc) {
     desc.textContent = isPos
@@ -774,17 +935,17 @@ export function calcBasis(root, o) {
   const steps = root.querySelector('#basis-steps');
   if (steps) {
     steps.innerHTML = isPos ? `
-      <div class="step-row"><div class="step-n">1</div><div class="step-txt">在 ${o.exchange} 买入 ${o.sym} 现货，价格 $${o.spotPrice.toLocaleString()}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
-      <div class="step-row"><div class="step-n">2</div><div class="step-txt">在 ${o.exchange} 做空等量 ${o.sym} 永续合约（1x 杠杆），价格 $${o.perpPrice.toLocaleString()}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
-      <div class="step-row"><div class="step-n">3</div><div class="step-txt">持续收取 Funding 费率（+${o.ann.toFixed(1)}%/年）并等待基差收敛</div><div class="step-amt">长期持有</div></div>`
+      <div class="step-row"><div class="step-n">1</div><div class="step-txt">在 ${o.exchange} 买入 ${o.sym} 现货，价格 ${displayRawNum(o.spotPrice, { prefix: '$' })}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
+      <div class="step-row"><div class="step-n">2</div><div class="step-txt">在 ${o.exchange} 做空等量 ${o.sym} 永续合约（1x 杠杆），价格 ${displayRawNum(o.perpPrice, { prefix: '$' })}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
+      <div class="step-row"><div class="step-n">3</div><div class="step-txt">持续收取 Funding 费率（${annRaw == null ? '—' : `${Number(o.ann) > 0 ? '+' : ''}${annRaw}%`}/年）并等待基差收敛</div><div class="step-amt">长期持有</div></div>`
       : `
-      <div class="step-row"><div class="step-n">1</div><div class="step-txt">在 ${o.exchange} 做多 ${o.sym} 永续合约（1x 杠杆），价格 $${o.perpPrice.toLocaleString()}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
-      <div class="step-row"><div class="step-n">2</div><div class="step-txt">在 ${o.exchange} 借入并做空 ${o.sym} 现货，价格 $${o.spotPrice.toLocaleString()}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
+      <div class="step-row"><div class="step-n">1</div><div class="step-txt">在 ${o.exchange} 做多 ${o.sym} 永续合约（1x 杠杆），价格 ${displayRawNum(o.perpPrice, { prefix: '$' })}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
+      <div class="step-row"><div class="step-n">2</div><div class="step-txt">在 ${o.exchange} 借入并做空 ${o.sym} 现货，价格 ${displayRawNum(o.spotPrice, { prefix: '$' })}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
       <div class="step-row"><div class="step-n">3</div><div class="step-txt">贴水环境下 Funding 可能为负（空头付费），需综合评估</div><div class="step-amt">谨慎评估</div></div>`;
   }
   const res = root.querySelector('#basis-res');
   if (res) {
-    const basisGain = principal * Math.abs(o.basisPct) / 100;
+    const basisGain = principal * Math.abs(basisPctNum) / 100;
     const fundingGain = principal * Math.abs(fundingAnn) / 100 * 30 / 365;
     const fees = principal * 0.003;
     const total = basisGain + fundingGain - fees;
