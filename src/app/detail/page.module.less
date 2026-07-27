@@ -23,57 +23,194 @@
   min-height: 320px;
 }
 
-/* PC 端主内容区：左 57% / 右 43% 双栏（略收窄左侧 K 线区） */
+/* PC 端主内容区：左图表 / 右「工作区」整块（内容 + 竖条同面板）
+ * 大写 PX：detail 页 less 会走 postcss-px-to-viewport（按 375），小写 px 在宽屏会被放大 */
 .pcContentLayout {
   display: grid;
-  grid-template-columns: minmax(0, 55%) minmax(0, 45%);
-  grid-template-rows: 1fr;
-  gap: 4px;
+  grid-template-columns: minmax(0, 1fr) 32PX;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 0;
   align-items: stretch;
   width: 100%;
-  /* PCLayout 的 contentMain 内层高度：
-   * 视口高度 100vh
-   * - 顶栏固定高度 64px
-   * - contentMain padding-top 24px
-   * - contentMain padding-bottom 64px（预留底部公告栏空间）
-   */
-  /* 使用 height 而不是仅 min-height，确保 flex:1 的子组件能拿到确定高度 */
-  /* 对齐 PCLayout contentMain：
-   * 视口 100vh
-   * - 顶栏 64px
-   * - contentMain padding-top 24px
-   * - contentMain padding-bottom 64px（预留公告栏空间）
-   */
-  /*
-   * 直接跟随父级高度，避免手动用 100vh - 固定偏移估算。
-   * 父级来自 `PCLayout` 内的 `.contentMain`（flex: 1）。
-   */
   height: 100%;
   min-height: 0;
   box-sizing: border-box;
+  position: relative;
+  transition: grid-template-columns 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.pcContentColLeft,
-.pcContentColRight {
-  height: auto;
+.pcContentLayout.pcRightOpen {
+  grid-template-columns: minmax(0, 1fr) minmax(320PX, 42%);
+  gap: 0;
+}
+
+.pcContentLayout.pcRightCollapsed {
+  grid-template-columns: minmax(0, 1fr) 32PX;
+  gap: 0;
+}
+
+.pcContentColLeft {
+  height: 100%;
   min-height: 0;
   display: flex;
   flex-direction: column;
   align-self: stretch;
-  /* 与站内白卡片一致，便于后续填入模块 */
   background: #fff;
-  border-radius: 10px;
-  border: 1px solid #f0f0f0;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  border-radius: 10PX;
+  border: 1PX solid #f0f0f0;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.pcRightCollapsed .pcContentColLeft {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  /* 折叠按钮左侧分割线 */
+  border-right: 1PX solid #e5e7eb;
+}
+
+.pcRightOpen .pcContentColLeft {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  /* 折叠按钮左侧分割线 */
+  border-right: 1PX solid #e5e7eb;
+}
+
+/* 工作区整体：展开时左侧内容 + 右侧竖条；收起时只留竖条 */
+.pcWorkspace {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: #fff;
+  border: 1PX solid #f0f0f0;
+  border-left: none;
+  border-radius: 0 10PX 10PX 0;
+  box-shadow: none;
+  box-sizing: border-box;
+}
+
+.pcRightCollapsed .pcWorkspace {
+  border-left: none;
+}
+
+/* 工作区内左侧竖条：展开时在内容左侧，收起时整块只留竖条 */
+.pcRightRail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 0 32PX;
+  width: 32PX;
+  min-width: 32PX;
+  height: 100%;
+  min-height: 0;
+  padding: 10PX 0 8PX;
+  box-sizing: border-box;
+  background: #fff;
+  border: none;
+  box-shadow: none;
+  overflow: hidden;
+  position: relative;
+}
+
+.pcRightCollapsed .pcRightRail {
+  background: #fff;
+  border: none;
+  border-radius: 0;
+  padding-top: 10PX;
+}
+
+.pcRightRailToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28PX;
+  height: 28PX;
+  margin: 0;
+  padding: 0;
+  border: 1PX solid #e5e7eb;
+  border-radius: 6PX;
+  background: #fff;
+  color: #4b5563;
+  cursor: pointer;
+  box-shadow: none;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
+
+  &:hover {
+    background: #e8fff6;
+    color: #0b7556;
+    border-color: rgba(17, 183, 135, 0.35);
+    box-shadow: none;
+  }
+}
+
+.pcRightRailChevron {
+  font-size: 16PX;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.06em;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.pcWorkspaceBody {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0 4PX 0 0;
+  box-sizing: border-box;
+  opacity: 1;
+  transition: opacity 0.18s ease;
+}
+
+.pcRightCollapsed .pcWorkspaceBody {
+  flex: 0 0 0;
+  width: 0;
+  min-width: 0;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
 }
 
 .pcRightTopMarqueeWrap {
   margin-bottom: 10PX;
+  flex-shrink: 0;
 }
 
+/* 兼容旧类名 */
 .pcContentColRight {
   background: transparent;
   border: none;
+  box-shadow: none;
+}
+
+.pcRightRailLabel {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  margin-top: 10PX;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 11PX;
+  font-weight: 600;
+  color: #6b7280;
+  letter-spacing: 0.12em;
+  user-select: none;
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1.2;
+
+  &:hover {
+    color: #0b7556;
+  }
 }
 
 .pcRightPanelContainer {
@@ -896,29 +1033,53 @@
   border-radius: 12PX;
 }
 
+/* PC：大单侦测作为 K 线右侧栏，铺满侧栏高度 */
+.pcContentColLeft .orderBookSection {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+
+  > div {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    max-height: none !important;
+    display: flex;
+    flex-direction: column;
+    border-radius: 0;
+    overflow: hidden;
+  }
+}
+
 .klineContainer {
   padding: 8px 4px;
   box-sizing: border-box;
 }
 
-/* PC 详情左栏：图表区随卡片高度伸展，避免「移动端控件放大」的观感 */
+/* PC 详情：K 线铺满左半，与右侧订单簿并排 */
 .klineContainerPc {
-  /* 不要在左侧 flex-column 中把图表容器撑满，
-   * 否则容易与下方订单簿区域发生裁切/覆盖，导致底部圆角边框不显示。 */
-  flex: 0 0 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 8PX;
-  padding: 0;
-  /* 桌面端图表区域外框 */
-  border: 1px solid rgba(243, 244, 246, 1);
-  border-radius: 24PX;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  margin-bottom: 0 !important;
+  padding: 8PX !important;
+  border: none !important;
+  border-radius: 0 !important;
   overflow: hidden;
   position: relative;
   z-index: 2;
   box-sizing: border-box;
-  padding: 10PX;
+  width: 100%;
+  background: #fff;
 }
 
 /* 市场行情区域 */
@@ -1367,7 +1528,7 @@
 
 @media (max-width: 1440px) and (min-width: 1024px) {
   .pcContentLayout {
-    gap: 8PX;
+    gap: 0;
   }
 
   .pcRightTopMarqueeWrap {
@@ -1401,7 +1562,7 @@
 
 @media (max-width: 1280px) and (min-width: 1024px) {
   .pcContentLayout {
-    gap: 6PX;
+    gap: 0;
   }
 
   .pcRightTopMarqueeWrap {
@@ -1449,7 +1610,7 @@
 
 @media (max-width: 1160px) and (min-width: 1024px) {
   .pcContentLayout {
-    gap: 4PX;
+    gap: 0;
   }
 
   .pcRightTopMarqueeWrap {

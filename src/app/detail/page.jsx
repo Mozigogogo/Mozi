@@ -204,6 +204,8 @@ export default function DetailPage() {
   const rightCommunityMountedRef = useRef(false);
   const [pcAiChatOpen, setPcAiChatOpen] = useState(false);
   const [pcAiAutoSend, setPcAiAutoSend] = useState({ text: '', token: '' });
+  /** PC：右侧工作区（行情条/ROI/市场/社区）展开；默认收起，点击右侧竖条 << >> 切换 */
+  const [pcRightPanelOpen, setPcRightPanelOpen] = useState(false);
   /** PC：社区卡片总高度 = 左侧栏（ROI + 市场 + 间距）高度，底边与市场列对齐（ResizeObserver） */
   const [pcCommunityCardHeightPx, setPcCommunityCardHeightPx] = useState(null);
   const needLoop = useRef(true);
@@ -2501,7 +2503,10 @@ ${coinInfo.name || symbol} (${symbol})
   if (isPC) {
     return (
       <>
-      <div ref={pcContentLayoutRef} className={styles.pcContentLayout}>
+      <div
+        ref={pcContentLayoutRef}
+        className={`${styles.pcContentLayout} ${pcRightPanelOpen ? styles.pcRightOpen : styles.pcRightCollapsed}`}
+      >
           <aside className={styles.pcContentColLeft}>
             <PCCoinDetail
               headerTitle={coinInfo?.name || symbol}
@@ -2519,7 +2524,7 @@ ${coinInfo.name || symbol} (${symbol})
               onGoTrade={handleGoTrade}
               onShare={shareToTelegram}
               onTradingRadar={handleTradingRadar}
-              onBarrageSend={handleBarrageSend}
+              showBarrage={false}
               statColumns={[
                 // 左侧列：24H 最高价 / 24H 最低价
                 coinInfoLeft.slice(0, 2).map((x) => ({ label: x.name, value: x.value })),
@@ -2549,7 +2554,47 @@ ${coinInfo.name || symbol} (${symbol})
               )}
             </PCCoinDetail>
           </aside>
-          <section className={styles.pcContentColRight}>
+          <aside
+            className={styles.pcWorkspace}
+            aria-label={t('detail.moreInfo', { defaultValue: '更多资讯' })}
+          >
+            {/* 更多资讯左侧竖条：展开时在内容左侧，收起时整块只留竖条 */}
+            <div className={styles.pcRightRail}>
+              <button
+                type="button"
+                className={styles.pcRightRailToggle}
+                onClick={() => setPcRightPanelOpen((v) => !v)}
+                aria-expanded={pcRightPanelOpen}
+                aria-label={
+                  pcRightPanelOpen
+                    ? t('detail.collapseMoreInfo', { defaultValue: '收起更多资讯' })
+                    : t('detail.expandMoreInfo', { defaultValue: '展开更多资讯' })
+                }
+                title={
+                  pcRightPanelOpen
+                    ? t('detail.collapseMoreInfo', { defaultValue: '收起更多资讯' })
+                    : t('detail.expandMoreInfo', { defaultValue: '展开更多资讯' })
+                }
+              >
+                <span className={styles.pcRightRailChevron} aria-hidden>
+                  {pcRightPanelOpen ? '«' : '»'}
+                </span>
+              </button>
+              {!pcRightPanelOpen ? (
+                <button
+                  type="button"
+                  className={styles.pcRightRailLabel}
+                  onClick={() => setPcRightPanelOpen(true)}
+                >
+                  {t('detail.moreInfo', { defaultValue: '更多资讯' })}
+                </button>
+              ) : null}
+            </div>
+
+            <div
+              className={styles.pcWorkspaceBody}
+              aria-hidden={!pcRightPanelOpen}
+            >
             <div className={styles.pcRightTopMarqueeWrap}>
               <PCRightTopMarquee items={rightTopMarqueeItems} loading={rightHotTickerLoading} />
             </div>
@@ -2710,7 +2755,8 @@ ${coinInfo.name || symbol} (${symbol})
                 </div>
               </div>
             </div>
-          </section>
+            </div>
+          </aside>
         </div>
         {oneClickAlarmModalEl}
         <FloatingRobotPc

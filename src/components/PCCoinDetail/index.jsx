@@ -10,8 +10,8 @@ const ICON_FAVORITE_ACTIVE = '/icons/new_detail/like_actived.svg';
 const ICON_FAVORITE_INACTIVE = '/icons/new_detail/like_no_actived.svg';
 
 /**
- * PC 端币种详情页布局壳：顶栏（返回 + 操作）、行情概要、主卡片内容区、可选弹幕条。
- * 图表/大单侦测等通过 children 传入。
+ * PC 端币种详情页布局壳：顶栏（返回 + 操作）、行情概要、主卡片（左 K 线 / 右大单侦测）、可选弹幕条。
+ * children[0] = 图表，children[1+] = 右侧订单簿等。
  */
 export default function PCCoinDetail({
   headerTitle,
@@ -227,9 +227,13 @@ export default function PCCoinDetail({
 
       <div className={styles.mainCard}>
         <div className={styles.mainCardBody}>
-          {topChild}
+          <div className={styles.chartOrderRow}>
+            <div className={styles.chartPane}>{topChild}</div>
+            {restChildren.length > 0 ? (
+              <aside className={styles.orderPane}>{restChildren}</aside>
+            ) : null}
+          </div>
           {barrageBarEl}
-          {restChildren}
         </div>
       </div>
     </div>
