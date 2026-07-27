@@ -478,16 +478,29 @@ export const handleOptions = (data, type, msg) => {
       },
       tooltip: {
         trigger: 'axis',
+        confine: true,
         formatter: function (info) {
-          console.log('info', info);
-          let valueList = info[0].data.toolTips;
-          let tips = '';
-          valueList.forEach((item) => {
-            tips += `
-              ${item.url}${item.exchange}${item.value}
-            `
-          });
-          return tips;
+          if (!Array.isArray(info) || info.length === 0) return '';
+          const point = info.find((p) => p?.data?.toolTips)?.data || info[0]?.data;
+          const valueList = point?.toolTips;
+          const axisLabel = info[0]?.axisValueLabel || info[0]?.name || '';
+          if (!Array.isArray(valueList) || valueList.length === 0) {
+            const raw = info[0]?.value;
+            if (raw == null || Array.isArray(raw)) return axisLabel;
+            const pct = (Number(raw) * 100).toFixed(5).replace(/\.?0+$/, '');
+            return `${axisLabel}<br/>${pct}%`;
+          }
+          const rows = valueList.map((item) => {
+            const raw = Number(item?.value);
+            const pct = Number.isFinite(raw)
+              ? `${(raw * 100).toFixed(5).replace(/\.?0+$/, '')}%`
+              : (item?.value ?? '—');
+            const icon = item?.url
+              ? `<img src="${item.url}" style="width:14px;height:14px;border-radius:2px;vertical-align:middle;margin-right:6px;object-fit:contain;" />`
+              : '';
+            return `<div style="display:flex;align-items:center;margin:2px 0;">${icon}<span>${item?.exchange || ''}</span><span style="margin-left:8px;font-variant-numeric:tabular-nums;">${pct}</span></div>`;
+          }).join('');
+          return axisLabel ? `<div style="margin-bottom:4px;color:#666;">${axisLabel}</div>${rows}` : rows;
         }
       },
       legend: {

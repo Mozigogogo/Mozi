@@ -6,6 +6,9 @@ import {
   fetchCryptoArbSpreadList,
   fetchCryptoArbBasisList,
   fetchCryptoArbOIList,
+  fetchCryptoArbFundingDetail,
+  fetchCryptoArbSpreadDetail,
+  fetchCryptoArbBasisDetail,
 } from '@/api/cryptoArb';
 import {
   exColors,
@@ -129,19 +132,6 @@ let listTotal = 0;
   const exColorsLocal = exColors;
 const symColors = ['#00B890','#D97706','#6366F1','#DB2777','#0D9488','#7C3AED','#EA580C','#0891B2'];
 
-// 30d fake funding history
-function makeFundingHistory(baseRate) {
-  const pts = [];
-  let v = baseRate * 0.8;
-  for(let i=0;i<30;i++){
-    v += (Math.random()-.45)*baseRate*.4;
-    v = Math.max(0.001, Math.min(baseRate*2.2, v));
-    pts.push(parseFloat(v.toFixed(5)));
-  }
-  pts[29] = baseRate;
-  return pts;
-}
-
 // State
 let currentView = 'radar';
 let selectedOp = null;
@@ -150,6 +140,9 @@ let selectedType = 'funding';
 let sortState = { key: null, dir: 'desc' }; // funding|ann|spreadAbs|spreadPct|quoteVolume|basisAbs|basisPct|null；默认不选中
 let calcState = {principal:10000, period:30, costRate:10};
 let countdown = {h:3,m:22,s:0};
+let detailLoading = false;
+let detailError = null;
+let detailRequestId = 0;
 
 function replaceOps(items) {
   ops.length = 0;
@@ -368,13 +361,128 @@ function openDetail(op, type = activeTab) {
   selectedOp = op;
   selectedType = type || activeTab || 'funding';
   currentView = 'detail';
-  render();
+  detailError = null;
+  detailLoading = false;
+  if ((selectedType === 'funding' || selectedType === 'spread' || selectedType === 'basis') && op) {
+    detailLoading = true;
+    render();
+    if (selectedType === 'funding') loadFundingDetail(op);
+    else if (selectedType === 'spread') loadSpreadDetail(op);
+    else loadBasisDetail(op);
+  } else {
+    render();
+  }
   const scroller = __root.closest('[class*="contentMain"]') || __root;
   if (scroller && scroller.scrollTo) scroller.scrollTo({ top: 0, behavior: 'smooth' });
   else window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+async function loadFundingDetail(op) {
+  const reqId = ++detailRequestId;
+  const symbol = String(op?.sym || op?.symbol || '').trim();
+  const exchange = String(op?.exchange || '').trim();
+  detailLoading = true;
+  detailError = null;
+  try {
+    const detail = await fetchCryptoArbFundingDetail({ symbol, exchange });
+    if (reqId !== detailRequestId) return;
+    selectedOp = {
+      ...op,
+      ...(detail.sym ? { sym: detail.sym } : {}),
+      ...(detail.exchange ? { exchange: detail.exchange } : {}),
+      funding: detail.funding != null ? detail.funding : op.funding,
+      ann: detail.ann != null ? detail.ann : op.ann,
+      avg30: detail.avg30,
+      days: detail.days,
+      rating: detail.rating,
+      chart30d: detail.chart30d,
+      detailLoaded: true,
+    };
+    detailLoading = false;
+    detailError = null;
+  } catch (err) {
+    if (reqId !== detailRequestId) return;
+    detailLoading = false;
+    detailError = err?.message || String(err) || '加载详情失败';
+  }
+  if (currentView === 'detail' && selectedType === 'funding') render();
+}
+
+async function loadSpreadDetail(op) {
+  const reqId = ++detailRequestId;
+  const symbol = String(op?.sym || op?.symbol || '').trim();
+  detailLoading = true;
+  detailError = null;
+  try {
+    const detail = await fetchCryptoArbSpreadDetail({ symbol });
+    if (reqId !== detailRequestId) return;
+    selectedOp = {
+      ...op,
+      ...(detail.sym ? { sym: detail.sym } : {}),
+      ...(detail.minExchange ? { minExchange: detail.minExchange } : {}),
+      ...(detail.maxExchange ? { maxExchange: detail.maxExchange } : {}),
+      minPrice: detail.minPrice != null ? detail.minPrice : op.minPrice,
+      maxPrice: detail.maxPrice != null ? detail.maxPrice : op.maxPrice,
+      avgPrice: detail.avgPrice != null ? detail.avgPrice : op.avgPrice,
+      spreadPct: detail.spreadPct != null ? detail.spreadPct : op.spreadPct,
+      spreadAbs: detail.spreadAbs != null ? detail.spreadAbs : op.spreadAbs,
+      validExchanges: detail.validExchanges?.length ? detail.validExchanges : op.validExchanges,
+      volume24h: detail.volume24h != null ? detail.volume24h : op.volume24h,
+      ts: detail.ts || op.ts,
+      dataTs: detail.dataTs || op.dataTs,
+      chart30d: detail.chart30d,
+      detailLoaded: true,
+    };
+    detailLoading = false;
+    detailError = null;
+  } catch (err) {
+    if (reqId !== detailRequestId) return;
+    detailLoading = false;
+    detailError = err?.message || String(err) || '加载详情失败';
+  }
+  if (currentView === 'detail' && selectedType === 'spread') render();
+}
+
+async function loadBasisDetail(op) {
+  const reqId = ++detailRequestId;
+  const symbol = String(op?.sym || op?.symbol || '').trim();
+  const exchange = String(op?.exchange || '').trim();
+  detailLoading = true;
+  detailError = null;
+  try {
+    const detail = await fetchCryptoArbBasisDetail({ symbol, exchange });
+    if (reqId !== detailRequestId) return;
+    selectedOp = {
+      ...op,
+      ...(detail.sym ? { sym: detail.sym } : {}),
+      ...(detail.exchange ? { exchange: detail.exchange } : {}),
+      perpPrice: detail.perpPrice != null ? detail.perpPrice : op.perpPrice,
+      spotPrice: detail.spotPrice != null ? detail.spotPrice : op.spotPrice,
+      basisAbs: detail.basisAbs != null ? detail.basisAbs : op.basisAbs,
+      basisPct: detail.basisPct != null ? detail.basisPct : op.basisPct,
+      ann: detail.ann != null ? detail.ann : op.ann,
+      perpVolume24h: detail.perpVolume24h != null ? detail.perpVolume24h : op.perpVolume24h,
+      spotVolume24h: detail.spotVolume24h != null ? detail.spotVolume24h : op.spotVolume24h,
+      volume24h: detail.volume24h != null ? detail.volume24h : op.volume24h,
+      ts: detail.ts || op.ts,
+      dataTs: detail.dataTs || op.dataTs,
+      chart30d: detail.chart30d,
+      detailLoaded: true,
+    };
+    detailLoading = false;
+    detailError = null;
+  } catch (err) {
+    if (reqId !== detailRequestId) return;
+    detailLoading = false;
+    detailError = err?.message || String(err) || '加载详情失败';
+  }
+  if (currentView === 'detail' && selectedType === 'basis') render();
+}
+
 function backToRadar() {
+  detailRequestId += 1;
+  detailLoading = false;
+  detailError = null;
   currentView = 'radar';
   selectedType = activeTab;
   render();
@@ -442,9 +550,25 @@ function render() {
   else if(currentView==='sub') m.innerHTML = renderSub();
   m.className = 'main view';
   if(currentView==='detail') {
-    if (selectedType === 'funding') { initChart(); calcUpdate(); startCountdown(); }
-    else if (selectedType === 'spread') { initSpreadChart(__root, selectedOp); calcSpread(); }
-    else if (selectedType === 'basis') { initBasisChart(__root, selectedOp); calcBasis(); }
+    if (selectedType === 'funding') {
+      if (!detailLoading && !detailError) {
+        initChart();
+        calcUpdate();
+        startCountdown();
+      }
+    }
+    else if (selectedType === 'spread') {
+      if (!detailLoading && !detailError) {
+        initSpreadChart(__root, selectedOp);
+        calcSpread();
+      }
+    }
+    else if (selectedType === 'basis') {
+      if (!detailLoading && !detailError) {
+        initBasisChart(__root, selectedOp);
+        calcBasis();
+      }
+    }
     else if (selectedType === 'oi') { initOIChart(__root, selectedOp); }
   }
   animateRows();
@@ -489,8 +613,12 @@ function renderRadar() {
 function renderDetailRoute() {
   const o = selectedOp;
   const idx = ops.indexOf(o);
-  if (selectedType === 'spread') return renderSpreadDetail(o, idx);
-  if (selectedType === 'basis') return renderBasisDetail(o, idx);
+  if (selectedType === 'spread') {
+    return renderSpreadDetail(o, idx, { detailLoading, detailError });
+  }
+  if (selectedType === 'basis') {
+    return renderBasisDetail(o, idx, { detailLoading, detailError });
+  }
   if (selectedType === 'oi') return renderOIDetail(o, idx);
   return renderFundingDetail(o);
 }
@@ -640,31 +768,111 @@ function calcBasis() {
 }
 
 // ===== DETAIL VIEW =====
+function formatChartAxisLabel(ts, isLast) {
+  if (isLast) {
+    const d = new Date(ts);
+    const now = new Date();
+    if (
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth() &&
+      d.getDate() === now.getDate()
+    ) {
+      return '今天';
+    }
+  }
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return '';
+  return `${d.getMonth() + 1}月${d.getDate()}日`;
+}
+
+function buildChartAxisLabels(points) {
+  if (!points.length) {
+    return '<span>—</span>';
+  }
+  const n = points.length;
+  const idxs = n <= 5
+    ? points.map((_, i) => i)
+    : [0, Math.floor((n - 1) * 0.25), Math.floor((n - 1) * 0.5), Math.floor((n - 1) * 0.75), n - 1];
+  const uniq = [...new Set(idxs)];
+  return uniq
+    .map((i) => `<span>${formatChartAxisLabel(points[i].ts, i === n - 1)}</span>`)
+    .join('');
+}
+
+function formatHoverDate(ts) {
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return '';
+  const now = new Date();
+  if (
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
+  ) {
+    return '今天';
+  }
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
 function renderFundingDetail(o) {
-  const col = symColors[ops.indexOf(o)%symColors.length]||'#00B890';
-  const ex = exColorsLocal[o.exchange]||{color:'#64748b'};
-  const stars = [1,2,3,4,5].map(s=>`<span class="${s<=o.rating?'s-on':'s-off'}">★</span>`).join('');
+  if (!o) {
+    return `<button class="back-btn" onclick="backToRadar()">← 返回列表</button>
+      <div class="tbl-state tbl-state-error">暂无详情数据</div>`;
+  }
+
+  if (detailError) {
+    return `<button class="back-btn" onclick="backToRadar()">← 返回列表</button>
+      <div class="tbl-state tbl-state-error">${escapeHtml(detailError)}
+        <button type="button" class="tbl-retry" onclick="retryFundingDetail()">重试</button>
+      </div>`;
+  }
+
+  const col = symColors[Math.max(0, ops.indexOf(o)) % symColors.length] || '#00B890';
+  const ex = exColorsLocal[o.exchange] || { color: '#64748b' };
+  const stars = [1, 2, 3, 4, 5].map((s) => `<span class="${s <= o.rating ? 's-on' : 's-off'}">★</span>`).join('');
+  const daysText = o.days == null ? '—' : `${o.days} 天`;
+  const avg30Text = o.avg30 == null ? '—' : displayPctTrunc(o.avg30);
+  let meanRatioText = '';
+  if (o.avg30 != null && Number(o.avg30) !== 0 && o.funding != null) {
+    const ratio = Number(o.funding) / Number(o.avg30);
+    if (Number.isFinite(ratio) && ratio > 0.01 && ratio < 100) {
+      meanRatioText = ` · 当前为均值 ${ratio.toFixed(1)}x`;
+    }
+  } else if (o.avg30 != null && Number(o.avg30) !== 0 && o.ann != null) {
+    const ratio = Number(o.ann) / Number(o.avg30);
+    if (Number.isFinite(ratio) && ratio > 0.01 && ratio < 100) {
+      meanRatioText = ` · 当前为均值 ${ratio.toFixed(1)}x`;
+    }
+  }
+  const chartPoints = Array.isArray(o.chart30d) ? o.chart30d : [];
+  const axisHTML = buildChartAxisLabels(chartPoints);
+  const chartBody = detailLoading
+    ? `<div class="tbl-state" style="min-height:160px;display:flex;align-items:center;justify-content:center">加载中…</div>`
+    : chartPoints.length
+      ? `<svg id="fchart" width="100%" height="160" viewBox="0 0 700 160" preserveAspectRatio="none" style="display:block"></svg>
+         <div class="c-tooltip" id="c-tooltip"></div>`
+      : `<div class="tbl-state" style="min-height:160px;display:flex;align-items:center;justify-content:center">暂无走势数据</div>`;
+
   return `
   <button class="back-btn" onclick="backToRadar()">← 返回列表</button>
   <div class="det-hdr">
     <div class="det-left">
       <div class="det-ttl">
-        <div class="sym-ico" style="background:${col}22;color:${col};width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">${o.sym.slice(0,3)}</div>
-        ${o.sym}/USDT
+        <div class="sym-ico" style="background:${col}22;color:${col};width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">${String(o.sym || '—').slice(0, 3)}</div>
+        ${escapeHtml(o.sym)}/USDT
         <span style="font-size:14px;font-weight:500;color:var(--t3)">·</span>
-        <span style="font-size:14px;font-weight:500;color:${ex.color}">${o.exchange}</span>
-        ${o.warn?'<span class="warn-tag">⚠️ 极值</span>':''}
+        <span style="font-size:14px;font-weight:500;color:${ex.color}">${escapeHtml(o.exchange)}</span>
+        ${o.warn ? '<span class="warn-tag">⚠️ 极值</span>' : ''}
       </div>
       <div class="det-meta">
         <div class="stars">${stars}</div>
-        <div class="cntd">⏱ 下次结算 <span class="cntd-val" id="cntd-val">03:22:00</span></div>
-        <div style="font-size:11px;color:var(--t3)">持续 ${o.days} 天</div>
+        <div class="cntd">⏱ 下次结算 <span class="cntd-val" id="cntd-val">--:--:--</span></div>
+        <div style="font-size:11px;color:var(--t3)">持续 ${daysText}</div>
       </div>
     </div>
     <div class="det-right">
-      <div class="fund-big">${displayPctTrunc(o.funding)}<span style="font-size:16px;color:var(--t2);font-weight:400">/${o.periodLabel || `${o.period || 8}h`}</span></div>
-      <div class="fund-ann">年化 ${displayPctTrunc(o.ann)}</div>
-      <div class="fund-sub">30日均值 ${o.avg30 == null ? '—' : displayPctTrunc(o.avg30)}${o.avg30 ? ` · 当前为均值 ${(o.funding/o.avg30).toFixed(1)}x` : ''}</div>
+      <div class="fund-big">${o.funding == null ? '—' : displayPctTrunc(o.funding)}<span style="font-size:16px;color:var(--t2);font-weight:400">/${o.periodLabel || `${o.period || 8}h`}</span></div>
+      <div class="fund-ann">${o.ann == null ? '—' : `年化 ${displayPctTrunc(o.ann)}`}</div>
+      <div class="fund-sub">30日均值 ${avg30Text}${meanRatioText}</div>
     </div>
   </div>
 
@@ -676,27 +884,24 @@ function renderFundingDetail(o) {
         <div class="leg-item"><div class="leg-dot" style="background:var(--warn);height:2px;width:16px;border-radius:1px"></div> 30日均值</div>
       </div>
     </div>
-    <div class="chart-svg-wrap">
-      <svg id="fchart" width="100%" height="160" viewBox="0 0 700 160" preserveAspectRatio="none" style="display:block"></svg>
-      <div class="c-tooltip" id="c-tooltip"></div>
-    </div>
+    <div class="chart-svg-wrap">${chartBody}</div>
     <div style="display:flex;justify-content:space-between;margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--t3);padding:0 4px">
-      <span>6月 1日</span><span>6月 8日</span><span>6月 15日</span><span>6月 22日</span><span>今天</span>
+      ${axisHTML}
     </div>
   </div>
 
   <div class="g2">
     <div class="card">
       <div class="card-t">实时价格</div>
-      <div class="met-row"><div class="met-l">永续合约</div><div class="met-v mono">$${o.perp.toLocaleString()}</div></div>
-      <div class="met-row"><div class="met-l">现货</div><div class="met-v mono">$${o.spot.toLocaleString()}</div></div>
-      <div class="met-row"><div class="met-l">基差 <span class="tip" style="margin-left:2px"><span class="tip-ico">?</span><span class="tip-txt">(永续价 - 现货价) / 现货价。正值 = 升水，空头套利有保护。</span></span></div><div class="met-v mono" style="color:var(--pos)">+${o.basis}%</div></div>
+      <div class="met-row"><div class="met-l">永续合约</div><div class="met-v mono">$${(o.perp || 0).toLocaleString()}</div></div>
+      <div class="met-row"><div class="met-l">现货</div><div class="met-v mono">$${(o.spot || 0).toLocaleString()}</div></div>
+      <div class="met-row"><div class="met-l">基差 <span class="tip" style="margin-left:2px"><span class="tip-ico">?</span><span class="tip-txt">(永续价 - 现货价) / 现货价。正值 = 升水，空头套利有保护。</span></span></div><div class="met-v mono" style="color:var(--pos)">+${o.basis || 0}%</div></div>
     </div>
     <div class="card">
       <div class="card-t">持仓量 (OI)</div>
-      <div class="met-row"><div class="met-l">当前 OI</div><div class="met-v mono">$${o.oi}M</div></div>
-      <div class="met-row"><div class="met-l">24h 变化</div><div class="met-v mono ${o.oi24h>=0?'chg-up':'chg-dn'}">${o.oi24h>=0?'↑':'↓'} ${Math.abs(o.oi24h)}%</div></div>
-      <div class="met-row"><div class="met-l">7d 变化</div><div class="met-v mono ${o.oi7d>=0?'chg-up':'chg-dn'}">${o.oi7d>=0?'↑':'↓'} ${Math.abs(o.oi7d)}%</div></div>
+      <div class="met-row"><div class="met-l">当前 OI</div><div class="met-v mono">$${o.oi || 0}M</div></div>
+      <div class="met-row"><div class="met-l">24h 变化</div><div class="met-v mono ${(o.oi24h || 0) >= 0 ? 'chg-up' : 'chg-dn'}">${(o.oi24h || 0) >= 0 ? '↑' : '↓'} ${Math.abs(o.oi24h || 0)}%</div></div>
+      <div class="met-row"><div class="met-l">7d 变化</div><div class="met-v mono ${(o.oi7d || 0) >= 0 ? 'chg-up' : 'chg-dn'}">${(o.oi7d || 0) >= 0 ? '↑' : '↓'} ${Math.abs(o.oi7d || 0)}%</div></div>
     </div>
   </div>
 
@@ -728,38 +933,55 @@ function renderFundingDetail(o) {
 
   <div class="risk-box">
     <div class="risk-t">⚠️ 风险提示</div>
-    <div class="risk-li">Funding 回归风险：${o.avg30 ? `当前费率为 30d 均值的 ${(o.funding/o.avg30).toFixed(1)}x，持续 ${o.days} 天后存在均值回归概率，年化可能降至 ${(o.avg30/o.funding*o.ann).toFixed(1)}%` : `持续 ${o.days} 天后费率可能回落，年化收益不稳定`}</div>
+    <div class="risk-li">Funding 回归风险：${
+      o.avg30 && o.funding
+        ? `当前费率为 30d 均值的 ${(Number(o.funding) / Number(o.avg30)).toFixed(1)}x，持续 ${o.days == null ? '—' : o.days} 天后存在均值回归概率${o.ann != null && o.funding ? `，年化可能降至 ${(Number(o.avg30) / Number(o.funding) * Number(o.ann)).toFixed(1)}%` : ''}`
+        : `持续 ${o.days == null ? '—' : o.days} 天后费率可能回落，年化收益不稳定`
+    }</div>
     <div class="risk-li">基差扩大风险：建议保证金率 ≥ 50%，不要加杠杆。参考案例：2024年3月 BTC 单日 -15%，基差扩大至 2%+，3x 杠杆用户普遍被强平</div>
     <div class="risk-li">平台风险：分散交易所持仓，单所资金建议不超过总仓位 30%（参考：2022.11 FTX 事件）</div>
-    ${o.warn?'<div class="risk-li" style="color:var(--warn)">极值警告：当前费率异常偏高，可能存在诱多行情，建议仓位减半或等待费率回落后入场</div>':''}
+    ${o.warn ? '<div class="risk-li" style="color:var(--warn)">极值警告：当前费率异常偏高，可能存在诱多行情，建议仓位减半或等待费率回落后入场</div>' : ''}
   </div>`;
 }
 
 // ===== CHART =====
 function initChart() {
-  const svg = __root.querySelector("#fchart");
-  if(!svg) return;
+  const svg = __root.querySelector('#fchart');
+  if (!svg) return;
   const o = selectedOp;
-  const hist = makeFundingHistory(o.funding);
-  const W=700,H=160,px=20,py=16;
-  const min=Math.min(...hist)*.8, max=Math.max(...hist)*1.1;
-  const range=max-min;
-  const xStep=(W-px*2)/(hist.length-1);
-  const toY=v=>py+(1-(v-min)/range)*(H-py*2);
-  const pts=hist.map((v,i)=>({x:px+i*xStep,y:toY(v),v}));
+  if (!o) return;
 
-  // Smooth path using bezier
-  let d=`M${pts[0].x},${pts[0].y}`;
-  for(let i=1;i<pts.length;i++){
-    const cx=(pts[i-1].x+pts[i].x)/2;
-    d+=` C${cx},${pts[i-1].y} ${cx},${pts[i].y} ${pts[i].x},${pts[i].y}`;
+  const points = Array.isArray(o.chart30d) ? o.chart30d : [];
+  if (points.length < 2) return;
+
+  const hist = points.map((p) => p.value);
+  const W = 700;
+  const H = 160;
+  const px = 20;
+  const py = 16;
+  const minV = Math.min(...hist);
+  const maxV = Math.max(...hist);
+  const pad = Math.max((maxV - minV) * 0.15, Math.abs(maxV) * 0.05 || 0.0001);
+  const min = minV - pad;
+  const max = maxV + pad;
+  const range = max - min || 1;
+  const xStep = (W - px * 2) / (hist.length - 1);
+  const toY = (v) => py + (1 - (v - min) / range) * (H - py * 2);
+  const pts = hist.map((v, i) => ({ x: px + i * xStep, y: toY(v), v, ts: points[i].ts }));
+
+  let d = `M${pts[0].x},${pts[0].y}`;
+  for (let i = 1; i < pts.length; i++) {
+    const cx = (pts[i - 1].x + pts[i].x) / 2;
+    d += ` C${cx},${pts[i - 1].y} ${cx},${pts[i].y} ${pts[i].x},${pts[i].y}`;
   }
 
-  const meanVal = o.avg30 == null ? o.funding : o.avg30;
-  const meanY=toY(meanVal);
-  const fillD=d+` L${pts[pts.length-1].x},${H} L${pts[0].x},${H} Z`;
+  // 走势线均值（与 chart 同单位）；无数据时回退 mean30dPct
+  const chartMean = hist.reduce((a, b) => a + b, 0) / hist.length;
+  const meanVal = Number.isFinite(chartMean) ? chartMean : (o.avg30 == null ? o.funding : o.avg30);
+  const meanY = toY(meanVal);
+  const fillD = `${d} L${pts[pts.length - 1].x},${H} L${pts[0].x},${H} Z`;
 
-  svg.innerHTML=`
+  svg.innerHTML = `
     <defs>
       <linearGradient id="ag" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="var(--accent)" stop-opacity=".35"/>
@@ -768,33 +990,32 @@ function initChart() {
     </defs>
     <path d="${fillD}" fill="url(#ag)"/>
     <path d="${d}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    ${o.avg30 == null ? '' : `<line x1="${px}" y1="${meanY}" x2="${W-px}" y2="${meanY}" stroke="var(--warn)" stroke-width="1.2" stroke-dasharray="6,4" opacity=".7"/>`}
-    ${pts.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="4" fill="transparent" class="hpt" data-i="${i}" data-v="${p.v.toFixed(5)}" data-x="${p.x}"/>`).join('')}
-    <circle cx="${pts[pts.length-1].x}" cy="${pts[pts.length-1].y}" r="4" fill="var(--accent)" stroke="var(--bg)" stroke-width="2"/>
+    <line x1="${px}" y1="${meanY}" x2="${W - px}" y2="${meanY}" stroke="var(--warn)" stroke-width="1.2" stroke-dasharray="6,4" opacity=".7"/>
+    ${pts.map((p, i) => `<circle cx="${p.x}" cy="${p.y}" r="4" fill="transparent" class="hpt" data-i="${i}" data-v="${displayPctTrunc(p.v)}" data-label="${formatHoverDate(p.ts)}" data-x="${p.x}"/>`).join('')}
+    <circle cx="${pts[pts.length - 1].x}" cy="${pts[pts.length - 1].y}" r="4" fill="var(--accent)" stroke="var(--bg)" stroke-width="2"/>
   `;
 
-  // Animate path
   const pathEl = svg.querySelector('path:nth-of-type(2)');
-  if(pathEl){
-    const len=pathEl.getTotalLength?.()|| 1000;
-    pathEl.style.strokeDasharray=len;
-    pathEl.style.strokeDashoffset=len;
-    pathEl.style.transition='stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)';
-    requestAnimationFrame(()=>{ pathEl.style.strokeDashoffset=0; });
+  if (pathEl) {
+    const len = pathEl.getTotalLength?.() || 1000;
+    pathEl.style.strokeDasharray = len;
+    pathEl.style.strokeDashoffset = len;
+    pathEl.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)';
+    requestAnimationFrame(() => { pathEl.style.strokeDashoffset = 0; });
   }
 
-  // Hover
-  const tip=__root.querySelector("#c-tooltip");
-  svg.querySelectorAll('.hpt').forEach(el=>{
-    el.addEventListener('mouseenter',function(){
-      tip.style.opacity='1';
-      tip.innerHTML=`<span style="color:var(--accent)">${this.dataset.v}%</span> <span style="color:var(--t3)">·</span> ${['6/1','6/2','6/3','6/4','6/5','6/6','6/7','6/8','6/9','6/10','6/11','6/12','6/13','6/14','6/15','6/16','6/17','6/18','6/19','6/20','6/21','6/22','6/23','6/24','6/25','6/26','6/27','6/28','6/29','今天'][+this.dataset.i]}`;
-      const rect=svg.getBoundingClientRect();
-      const elRect=this.getBoundingClientRect();
-      tip.style.left=`${elRect.left-rect.left-tip.offsetWidth/2+8}px`;
-      tip.style.top=`${elRect.top-rect.top-44}px`;
+  const tip = __root.querySelector('#c-tooltip');
+  svg.querySelectorAll('.hpt').forEach((el) => {
+    el.addEventListener('mouseenter', function onEnter() {
+      if (!tip) return;
+      tip.style.opacity = '1';
+      tip.innerHTML = `<span style="color:var(--accent)">${this.dataset.v}</span> <span style="color:var(--t3)">·</span> ${this.dataset.label || ''}`;
+      const rect = svg.getBoundingClientRect();
+      const elRect = this.getBoundingClientRect();
+      tip.style.left = `${Math.max(0, elRect.left - rect.left - tip.offsetWidth / 2 + 8)}px`;
+      tip.style.top = `${elRect.top - rect.top - 44}px`;
     });
-    el.addEventListener('mouseleave',()=>{tip.style.opacity='0'});
+    el.addEventListener('mouseleave', () => { if (tip) tip.style.opacity = '0'; });
   });
 }
 
@@ -808,36 +1029,62 @@ function setPeriod(d, el) {
   calcUpdate();
 }
 
+function retryFundingDetail() {
+  if (!selectedOp) return;
+  detailError = null;
+  detailLoading = true;
+  render();
+  loadFundingDetail(selectedOp);
+}
+
+function retrySpreadDetail() {
+  if (!selectedOp) return;
+  detailError = null;
+  detailLoading = true;
+  render();
+  loadSpreadDetail(selectedOp);
+}
+
+function retryBasisDetail() {
+  if (!selectedOp) return;
+  detailError = null;
+  detailLoading = true;
+  render();
+  loadBasisDetail(selectedOp);
+}
+
 function calcUpdate() {
   const o = selectedOp;
-  if(!o) return;
-  const principal = parseFloat(__root.querySelector("#inp-principal")?.value)||10000;
+  if (!o || detailLoading || detailError) return;
+  const principal = parseFloat(__root.querySelector('#inp-principal')?.value) || 10000;
   const period = currentPeriod;
-  const costRate = parseFloat(__root.querySelector("#inp-rate")?.value)||10;
+  const costRate = parseFloat(__root.querySelector('#inp-rate')?.value) || 10;
+  const spot = Number(o.spot) || 0;
+  const funding = Number(o.funding) || 0;
 
-  const qty = (principal/o.spot).toFixed(2);
-  const totalCapital = (principal*1.3).toFixed(0);
-  const sessions = Math.floor(period*3);
-  const fundingIncome = (principal * (o.funding/100) * sessions).toFixed(2);
-  const fees = (principal*0.0004*2).toFixed(2);
-  const costAmount = (principal*(costRate/100)*(period/365)).toFixed(2);
-  const net = (parseFloat(fundingIncome)-parseFloat(fees)-parseFloat(costAmount)).toFixed(2);
-  const netAnn = ((parseFloat(net)/principal)*(365/period)*100).toFixed(1);
+  const qty = spot > 0 ? (principal / spot).toFixed(2) : '—';
+  const totalCapital = (principal * 1.3).toFixed(0);
+  const sessions = Math.floor(period * 3);
+  const fundingIncome = (principal * (funding / 100) * sessions).toFixed(2);
+  const fees = (principal * 0.0004 * 2).toFixed(2);
+  const costAmount = (principal * (costRate / 100) * (period / 365)).toFixed(2);
+  const net = (parseFloat(fundingIncome) - parseFloat(fees) - parseFloat(costAmount)).toFixed(2);
+  const netAnn = ((parseFloat(net) / principal) * (365 / period) * 100).toFixed(1);
 
-  const stepsEl = __root.querySelector("#steps-box");
-  if(stepsEl) {
-    stepsEl.innerHTML=`
-      <div class="step-row"><div class="step-n">1</div><div class="step-txt">${o.exchange} 现货买入 ${qty} 个 ${o.sym}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
-      <div class="step-row"><div class="step-n">2</div><div class="step-txt">${o.exchange} 永续合约做空 ${qty} ${o.sym}（1x 杠杆）</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
-      <div class="step-row"><div class="step-n">3</div><div class="step-txt">总占用资金（含保证金）</div><div class="step-amt">≈ $${parseInt(totalCapital).toLocaleString()}</div></div>`;
+  const stepsEl = __root.querySelector('#steps-box');
+  if (stepsEl) {
+    stepsEl.innerHTML = `
+      <div class="step-row"><div class="step-n">1</div><div class="step-txt">${escapeHtml(o.exchange)} 现货买入 ${qty} 个 ${escapeHtml(o.sym)}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
+      <div class="step-row"><div class="step-n">2</div><div class="step-txt">${escapeHtml(o.exchange)} 永续合约做空 ${qty} ${escapeHtml(o.sym)}（1x 杠杆）</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
+      <div class="step-row"><div class="step-n">3</div><div class="step-txt">总占用资金（含保证金）</div><div class="step-amt">≈ $${parseInt(totalCapital, 10).toLocaleString()}</div></div>`;
   }
 
-  const resEl = __root.querySelector("#res-table");
-  if(resEl) {
+  const resEl = __root.querySelector('#res-table');
+  if (resEl) {
     const rows = resEl.querySelectorAll('.res-row');
-    rows.forEach(r=>r.classList.add('flash'));
-    setTimeout(()=>rows.forEach(r=>r.classList.remove('flash')),400);
-    resEl.innerHTML=`
+    rows.forEach((r) => r.classList.add('flash'));
+    setTimeout(() => rows.forEach((r) => r.classList.remove('flash')), 400);
+    resEl.innerHTML = `
       <div class="res-row"><div class="res-l">📥 Funding 收入（${period}天 × ${sessions}次结算）</div><div class="res-v p">+$${parseFloat(fundingIncome).toLocaleString()}</div></div>
       <div class="res-row"><div class="res-l">💸 手续费（开仓 + 平仓）</div><div class="res-v n">-$${fees}</div></div>
       <div class="res-row"><div class="res-l">🏦 资金机会成本（按 ${costRate}%/年）</div><div class="res-v n">-$${parseFloat(costAmount).toLocaleString()}</div></div>
@@ -848,16 +1095,29 @@ function calcUpdate() {
 // ===== COUNTDOWN =====
 let cdInterval = null;
 function startCountdown() {
-  if(cdInterval) clearInterval(cdInterval);
-  let s = 3*3600+22*60;
+  if (cdInterval) clearInterval(cdInterval);
+  const targetTs = Number(selectedOp?.nextFundingTs) || 0;
+
   function tick() {
-    if(s<=0){s=8*3600}
-    s--;
-    const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;
-    const el=__root.querySelector("#cntd-val");
-    if(el) el.textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+    let s;
+    if (targetTs > 0) {
+      s = Math.max(0, Math.floor((targetTs - Date.now()) / 1000));
+    } else {
+      // 无下次结算时间时用 8h 周期倒计时兜底
+      if (typeof tick._fallback !== 'number') tick._fallback = 8 * 3600;
+      tick._fallback = tick._fallback <= 0 ? 8 * 3600 : tick._fallback - 1;
+      s = tick._fallback;
+    }
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    const el = __root.querySelector('#cntd-val');
+    if (el) {
+      el.textContent = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+    }
   }
-  cdInterval=setInterval(tick,1000);
+  tick();
+  cdInterval = setInterval(tick, 1000);
 }
 
 // ===== SUB VIEW =====
@@ -1279,7 +1539,7 @@ function showToast(msg) {
 
   // Patch render templates: after each render, nothing needed if we use window bridge
   const api = {
-    nav, goBack, openDetail, backToRadar, setTab, setListPage, sortBy, setPeriod, calcUpdate, calcSpread, calcBasis, bindTG, showToast, ops, render, loadFundingList, loadActiveList
+    nav, goBack, openDetail, backToRadar, setTab, setListPage, sortBy, setPeriod, calcUpdate, calcSpread, calcBasis, bindTG, showToast, ops, render, loadFundingList, loadActiveList, retryFundingDetail, retrySpreadDetail, retryBasisDetail
   };
   Object.assign(__root, api);
 

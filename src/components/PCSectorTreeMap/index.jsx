@@ -33,7 +33,6 @@ const PCSectorTreeMap = ({
   const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [hoveredItem, setHoveredItem] = useState(null);
-  const [isTooltipHovered, setIsTooltipHovered] = useState(false);
   const [sectorCoins, setSectorCoins] = useState([]);
   const [coinsLoading, setCoinsLoading] = useState(false);
   const [coinSortField, setCoinSortField] = useState('symbol'); // 'symbol' | 'price' | 'change24h'
@@ -41,6 +40,32 @@ const PCSectorTreeMap = ({
   const sectorCoinsCacheRef = useRef(new Map());
   const latestCoinsRequestIdRef = useRef(0);
   const favoriteToggleInFlightRef = useRef(false);
+  // 用 ref 避免 d3 handler 读到过期的 isTooltipHovered；延迟关闭避免移入面板时被提前清掉
+  const isTooltipHoveredRef = useRef(false);
+  const hidePanelTimerRef = useRef(null);
+
+  const clearHidePanelTimer = useCallback(() => {
+    if (hidePanelTimerRef.current != null) {
+      clearTimeout(hidePanelTimerRef.current);
+      hidePanelTimerRef.current = null;
+    }
+  }, []);
+
+  const scheduleHidePanel = useCallback(() => {
+    clearHidePanelTimer();
+    hidePanelTimerRef.current = setTimeout(() => {
+      hidePanelTimerRef.current = null;
+      if (!isTooltipHoveredRef.current) {
+        setHoveredItem(null);
+      }
+    }, 120);
+  }, [clearHidePanelTimer]);
+
+  const hidePanelNow = useCallback(() => {
+    clearHidePanelTimer();
+    isTooltipHoveredRef.current = false;
+    setHoveredItem(null);
+  }, [clearHidePanelTimer]);
 
   const patchSectorCoins = useCallback((category, updater) => {
     setSectorCoins((prev) => {
@@ -178,6 +203,12 @@ const PCSectorTreeMap = ({
     }
     return '#424450';
   }, [LEGEND_ITEMS]);
+
+  useEffect(() => {
+    return () => {
+      clearHidePanelTimer();
+    };
+  }, [clearHidePanelTimer]);
 
   // Update dimensions on resize
   useEffect(() => {
@@ -351,6 +382,7 @@ const PCSectorTreeMap = ({
           nodes.on('mouseenter', function(event, d) {
             d3.select(this).style('opacity', 0.9).style('z-index', 10);
             if (!showHoverPanel) return;
+            clearHidePanelTimer();
             setHoveredItem({
               name: d.data.name,
               change: d.data.change,
@@ -367,9 +399,9 @@ const PCSectorTreeMap = ({
           })
           .on('mouseleave', function() {
             d3.select(this).style('opacity', 1).style('z-index', 1);
-            if (!showHoverPanel || !isTooltipHovered) {
-              setHoveredItem(null);
-            }
+            if (!showHoverPanel) return;
+            // 延迟关闭：给鼠标移入悬浮面板的时间；若面板已 hover 则由 schedule 内 ref 判断保留
+            scheduleHidePanel();
           })
           .on('click', (event, d) => {
             if (onItemClick) onItemClick(d.data.original);
@@ -379,7 +411,10 @@ const PCSectorTreeMap = ({
       console.error("TreeMap Render Error:", error);
     }
 
-  }, [list, dimensions, loading, LEGEND_ITEMS, getColor, isTooltipHovered, showHoverPanel]);
+    return () => {
+      clearHidePanelTimer();
+    };
+  }, [list, dimensions, loading, LEGEND_ITEMS, getColor, showHoverPanel, clearHidePanelTimer, scheduleHidePanel]);
 
   const getTooltipStyle = (item) => {
     if (!item) return {};
@@ -552,6 +587,13 @@ const PCSectorTreeMap = ({
         className={`${styles.treemapContainer} ${fillHeight ? styles.treemapContainerFill : ''}`}
         ref={containerRef}
         style={fillHeight ? undefined : { position: 'relative', width: '100%', height: '600px' }}
+        onMouseLeave={(e) => {
+          // 鼠标真正离开整个 treemap（含悬浮面板）时强制关闭，避免面板卡住
+          // relatedTarget 可能是非 Node（如离开窗口），不能直接传给 contains
+          const next = e.relatedTarget;
+          if (next instanceof Node && containerRef.current?.contains(next)) return;
+          hidePanelNow();
+        }}
       >
         {loading && (
           <div className={styles.skeletonContainer}>
@@ -617,10 +659,13 @@ const PCSectorTreeMap = ({
           <div 
             className={styles.customTooltip}
             style={getTooltipStyle(hoveredItem)}
-            onMouseEnter={() => setIsTooltipHovered(true)}
+            onMouseEnter={() => {
+              clearHidePanelTimer();
+              isTooltipHoveredRef.current = true;
+            }}
             onMouseLeave={() => {
-              setIsTooltipHovered(false);
-              setHoveredItem(null);
+              isTooltipHoveredRef.current = false;
+              scheduleHidePanel();
             }}
           >
             <div className={styles.tooltipContent}>

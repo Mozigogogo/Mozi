@@ -272,6 +272,9 @@ export const Interface = {
   CRYPTO_ARB_LIST_SPREAD: '/crypto_arb/list/spot_spread',
   CRYPTO_ARB_LIST_BASIS: '/crypto_arb/list/basis',
   CRYPTO_ARB_LIST_OI: '/crypto_arb/list/oi_anomaly',
+  CRYPTO_ARB_DETAIL_FUNDING: '/crypto_arb/detail/funding',
+  CRYPTO_ARB_DETAIL_SPREAD: '/crypto_arb/detail/spot_spread',
+  CRYPTO_ARB_DETAIL_BASIS: '/crypto_arb/detail/basis',
   // 所有币种
   ALL_COIN: '/derivatives/allcoin',
   // 所有交易所

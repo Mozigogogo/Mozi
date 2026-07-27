@@ -265,7 +265,7 @@ export function renderTypeTabs(activeTab) {
     const color = TAB_COLORS[t];
     const style = on ? `style="color:${color};border-bottom-color:${color}"` : '';
     return `<button type="button" class="ttab ${on}" ${style} onclick="setTab('${t}',this)">
-      <span class="tab-dot" ${on ? `style="background:${color}"` : ''}></span>${TAB_LABELS[t]}
+      ${TAB_LABELS[t]}
     </button>`;
   }).join('');
 }
@@ -456,8 +456,76 @@ export function skeletonCellsHTML(tab) {
 
 const CHART_AXIS = '<span>6月1日</span><span>6月8日</span><span>6月15日</span><span>6月22日</span><span>今天</span>';
 
-export function renderSpreadDetail(o, opsIdx) {
-  const col = symColors[opsIdx % symColors.length];
+function formatChartAxisLabel(ts, isLast) {
+  if (isLast) {
+    const d = new Date(ts);
+    const now = new Date();
+    if (
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth() &&
+      d.getDate() === now.getDate()
+    ) {
+      return '今天';
+    }
+  }
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return '';
+  return `${d.getMonth() + 1}月${d.getDate()}日`;
+}
+
+function buildChartAxisLabels(points) {
+  if (!points.length) return '<span>—</span>';
+  const n = points.length;
+  const idxs = n <= 5
+    ? points.map((_, i) => i)
+    : [0, Math.floor((n - 1) * 0.25), Math.floor((n - 1) * 0.5), Math.floor((n - 1) * 0.75), n - 1];
+  const uniq = [...new Set(idxs)];
+  return uniq
+    .map((i) => `<span>${formatChartAxisLabel(points[i].ts, i === n - 1)}</span>`)
+    .join('');
+}
+
+function formatHoverDate(ts) {
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return '';
+  const now = new Date();
+  if (
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
+  ) {
+    return '今天';
+  }
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
+function escapeDetailHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/**
+ * @param {object} o
+ * @param {number} opsIdx
+ * @param {{ detailLoading?: boolean, detailError?: string|null }} [opts]
+ */
+export function renderSpreadDetail(o, opsIdx, opts = {}) {
+  if (!o) {
+    return `<button class="back-btn" onclick="backToRadar()">← 返回列表</button>
+      <div class="tbl-state tbl-state-error">暂无详情数据</div>`;
+  }
+
+  if (opts.detailError) {
+    return `<button class="back-btn" onclick="backToRadar()">← 返回列表</button>
+      <div class="tbl-state tbl-state-error">${escapeDetailHtml(opts.detailError)}
+        <button type="button" class="tbl-retry" onclick="retrySpreadDetail()">重试</button>
+      </div>`;
+  }
+
+  const col = symColors[Math.max(0, opsIdx) % symColors.length];
   const minExC = exColors[o.minExchange] || exColors.Binance;
   const maxExC = exColors[o.maxExchange] || exColors.Binance;
   const feeRate = 0.001;
@@ -470,20 +538,28 @@ export function renderSpreadDetail(o, opsIdx) {
   const avgPriceText = displayRawNum(o.avgPrice, { prefix: '$' });
   const spreadPctText = truncateDecimals(o.spreadPct, 3);
   const volumeText = displayVolWithUnit(o.volume24h);
+  const chartPoints = Array.isArray(o.chart30d) ? o.chart30d : [];
+  const axisHTML = buildChartAxisLabels(chartPoints);
+  const chartBody = opts.detailLoading
+    ? `<div class="tbl-state" style="min-height:160px;display:flex;align-items:center;justify-content:center">加载中…</div>`
+    : chartPoints.length
+      ? `<svg id="fchart" width="100%" height="160" viewBox="0 0 720 160" preserveAspectRatio="none" style="display:block"></svg>
+         <div class="c-tooltip" id="c-tooltip"></div>`
+      : `<div class="tbl-state" style="min-height:160px;display:flex;align-items:center;justify-content:center">暂无走势数据</div>`;
   return `
   <button class="back-btn" onclick="backToRadar()">← 返回列表</button>
   <div class="det-hdr">
     <div class="det-left">
       <div class="det-ttl">
-        <div class="sym-ico" style="background:${col}22;color:${col};width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">${o.sym.slice(0, 3)}</div>
-        ${o.sym}/USDT
+        <div class="sym-ico" style="background:${col}22;color:${col};width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">${String(o.sym || '—').slice(0, 3)}</div>
+        ${escapeDetailHtml(o.sym)}/USDT
         <span class="type-chip type-chip-spread">现货价差</span>
       </div>
       <div class="det-meta">
         <div class="ex-flow">
-          <span class="ex-node" style="background:${minExC.bg};border-color:${minExC.border};color:${minExC.color}">${o.minExchange} 买</span>
+          <span class="ex-node" style="background:${minExC.bg};border-color:${minExC.border};color:${minExC.color}">${escapeDetailHtml(o.minExchange)} 买</span>
           <span class="ex-arrow" style="font-size:16px">→</span>
-          <span class="ex-node" style="background:${maxExC.bg};border-color:${maxExC.border};color:${maxExC.color}">${o.maxExchange} 卖</span>
+          <span class="ex-node" style="background:${maxExC.bg};border-color:${maxExC.border};color:${maxExC.color}">${escapeDetailHtml(o.maxExchange)} 卖</span>
         </div>
         <div style="font-size:11px;color:var(--t3)">24h 总成交量 ${volumeText} · 绝对价差 ${displayRawNum(o.spreadAbs, { prefix: '$' })}</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px">
@@ -500,27 +576,24 @@ export function renderSpreadDetail(o, opsIdx) {
   </div>
   <div class="chart-card">
     <div class="chart-card-hdr">
-      <div class="chart-title">${o.sym} 跨所价格 30日走势</div>
+      <div class="chart-title">${escapeDetailHtml(o.sym)} 跨所价格 30日走势</div>
       <div class="chart-legend">
-        <div class="leg-item"><div class="leg-dot" style="background:var(--accent)"></div>${o.minExchange}（买入所）</div>
-        <div class="leg-item"><div class="leg-dot" style="background:var(--blue)"></div>${o.maxExchange}（卖出所）</div>
+        <div class="leg-item"><div class="leg-dot" style="background:var(--accent)"></div>${escapeDetailHtml(o.minExchange)}（买入所）</div>
+        <div class="leg-item"><div class="leg-dot" style="background:var(--blue)"></div>${escapeDetailHtml(o.maxExchange)}（卖出所）</div>
       </div>
     </div>
-    <div class="chart-svg-wrap">
-      <svg id="fchart" width="100%" height="160" viewBox="0 0 720 160" preserveAspectRatio="none" style="display:block"></svg>
-      <div class="c-tooltip" id="c-tooltip"></div>
-    </div>
-    <div class="xaxis">${CHART_AXIS}</div>
+    <div class="chart-svg-wrap">${chartBody}</div>
+    <div class="xaxis">${axisHTML}</div>
   </div>
   <div class="g3">
     <div class="card">
-      <div class="card-t">${o.minExchange} 买入</div>
+      <div class="card-t">${escapeDetailHtml(o.minExchange)} 买入</div>
       <div class="met-row"><div class="met-l">现货价</div><div class="met-v" style="color:var(--pos)">${displayRawNum(o.minPrice, { prefix: '$' })}</div></div>
       <div class="met-row"><div class="met-l">买入手续费</div><div class="met-v" style="color:var(--danger)">-0.10%</div></div>
       <div class="met-row"><div class="met-l">成交量</div><div class="met-v">${volumeText}</div></div>
     </div>
     <div class="card">
-      <div class="card-t">${o.maxExchange} 卖出</div>
+      <div class="card-t">${escapeDetailHtml(o.maxExchange)} 卖出</div>
       <div class="met-row"><div class="met-l">现货价</div><div class="met-v" style="color:var(--danger)">${displayRawNum(o.maxPrice, { prefix: '$' })}</div></div>
       <div class="met-row"><div class="met-l">卖出手续费</div><div class="met-v" style="color:var(--danger)">-0.10%</div></div>
       <div class="met-row"><div class="met-l">均价</div><div class="met-v">${avgPriceText}</div></div>
@@ -555,8 +628,20 @@ export function renderSpreadDetail(o, opsIdx) {
   </div>`;
 }
 
-export function renderBasisDetail(o, opsIdx) {
-  const col = symColors[opsIdx % symColors.length];
+export function renderBasisDetail(o, opsIdx, opts = {}) {
+  if (!o) {
+    return `<button class="back-btn" onclick="backToRadar()">← 返回列表</button>
+      <div class="tbl-state tbl-state-error">暂无详情数据</div>`;
+  }
+
+  if (opts.detailError) {
+    return `<button class="back-btn" onclick="backToRadar()">← 返回列表</button>
+      <div class="tbl-state tbl-state-error">${escapeDetailHtml(opts.detailError)}
+        <button type="button" class="tbl-retry" onclick="retryBasisDetail()">重试</button>
+      </div>`;
+  }
+
+  const col = symColors[Math.max(0, opsIdx) % symColors.length];
   const exC = (exColors[o.exchange] || {}).c || '#64748b';
   const basisPctNum = Number(o.basisPct) || 0;
   const isPos = basisPctNum >= 0;
@@ -576,15 +661,23 @@ export function renderBasisDetail(o, opsIdx) {
     : Number(o.ann) >= 0
       ? 'var(--pos)'
       : 'var(--danger)';
+  const chartPoints = Array.isArray(o.chart30d) ? o.chart30d : [];
+  const axisHTML = buildChartAxisLabels(chartPoints);
+  const chartBody = opts.detailLoading
+    ? `<div class="tbl-state" style="min-height:160px;display:flex;align-items:center;justify-content:center">加载中…</div>`
+    : chartPoints.length
+      ? `<svg id="fchart" width="100%" height="160" viewBox="0 0 720 160" preserveAspectRatio="none" style="display:block"></svg>
+         <div class="c-tooltip" id="c-tooltip"></div>`
+      : `<div class="tbl-state" style="min-height:160px;display:flex;align-items:center;justify-content:center">暂无走势数据</div>`;
   return `
   <button class="back-btn" onclick="backToRadar()">← 返回列表</button>
   <div class="det-hdr">
     <div class="det-left">
       <div class="det-ttl">
-        <div class="sym-ico" style="background:${col}22;color:${col};width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">${o.sym.slice(0, 3)}</div>
-        ${o.sym}/USDT
+        <div class="sym-ico" style="background:${col}22;color:${col};width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">${String(o.sym || '—').slice(0, 3)}</div>
+        ${escapeDetailHtml(o.sym)}/USDT
         <span style="font-size:14px;font-weight:500;color:var(--t3)">·</span>
-        <span style="font-size:14px;font-weight:500;color:${exC}">${o.exchange}</span>
+        <span style="font-size:14px;font-weight:500;color:${exC}">${escapeDetailHtml(o.exchange)}</span>
         <span class="type-chip type-chip-basis">基差套利</span>
         <span class="risk-badge" style="background:${isPos ? 'rgba(5,150,105,.1)' : 'rgba(239,68,68,.1)'};border-color:${isPos ? 'rgba(5,150,105,.3)' : 'rgba(239,68,68,.3)'};color:${typeColor}">${isPos ? '升水' : '贴水'}</span>
       </div>
@@ -609,15 +702,12 @@ export function renderBasisDetail(o, opsIdx) {
         <div class="leg-item"><div class="leg-dot" style="background:var(--border-lit);height:2px;width:16px;border-radius:1px"></div>零轴</div>
       </div>
     </div>
-    <div class="chart-svg-wrap">
-      <svg id="fchart" width="100%" height="160" viewBox="0 0 720 160" preserveAspectRatio="none" style="display:block"></svg>
-      <div class="c-tooltip" id="c-tooltip"></div>
-    </div>
-    <div class="xaxis">${CHART_AXIS}</div>
+    <div class="chart-svg-wrap">${chartBody}</div>
+    <div class="xaxis">${axisHTML}</div>
   </div>
   <div class="g2">
     <div class="card">
-      <div class="card-t">价格对比（同 ${o.exchange}）</div>
+      <div class="card-t">价格对比（同 ${escapeDetailHtml(o.exchange)}）</div>
       <div class="met-row"><div class="met-l">永续合约价</div><div class="met-v">${displayRawNum(o.perpPrice, { prefix: '$' })}</div></div>
       <div class="met-row"><div class="met-l">现货价</div><div class="met-v">${displayRawNum(o.spotPrice, { prefix: '$' })}</div></div>
       <div class="met-row"><div class="met-l">价差（USD）</div><div class="met-v" style="color:${typeColor}">${displaySignedMoney(o.basisAbs)}</div></div>
@@ -790,19 +880,22 @@ function attachChartHover(root, svg) {
 export function initSpreadChart(root, o) {
   const svg = root.querySelector('#fchart');
   if (!svg || !o) return;
+  const points = Array.isArray(o.chart30d) ? o.chart30d : [];
+  if (points.length < 1) return;
+
   const W = 720; const H = 160; const px = 20; const py = 14;
-  const base1 = parseFloat(o.minPrice) || 1;
-  const base2 = parseFloat(o.maxPrice) || base1 * 1.01;
-  const d1 = makeSeries(base1, 30, 0.005, base1 * 0.97, base1 * 1.03);
-  const d2 = d1.map((v, i) => (i === 29 ? base2 : v * (1 + ((Number(o.spreadPct) || 0) / 100) * (0.4 + Math.random() * 0.6))));
-  const all = [...d1, ...d2];
+  const d1 = points.map((p) => Number(p.minPrice));
+  const d2 = points.map((p) => Number(p.maxPrice));
+  const all = [...d1, ...d2].filter(Number.isFinite);
+  if (all.length < 1) return;
+
   const mn = Math.min(...all) * 0.999;
   const mx = Math.max(...all) * 1.001;
-  const rng = mx - mn;
-  const xS = (W - px * 2) / (d1.length - 1);
+  const rng = mx - mn || 1;
+  const xS = points.length > 1 ? (W - px * 2) / (points.length - 1) : 0;
   const toY = (v) => py + (1 - (v - mn) / rng) * (H - py * 2);
-  const p1 = d1.map((v, i) => ({ x: px + i * xS, y: toY(v), v }));
-  const p2 = d2.map((v, i) => ({ x: px + i * xS, y: toY(v), v }));
+  const p1 = points.map((p, i) => ({ x: px + i * xS, y: toY(d1[i]), v: d1[i], ts: p.ts }));
+  const p2 = points.map((p, i) => ({ x: px + i * xS, y: toY(d2[i]), v: d2[i], ts: p.ts }));
   const path = (ps) => {
     let d = `M${ps[0].x},${ps[0].y}`;
     for (let i = 1; i < ps.length; i++) {
@@ -823,23 +916,43 @@ export function initSpreadChart(root, o) {
   <path id="l2" d="${d2s}" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round"/>
   <circle cx="${p1[p1.length - 1].x}" cy="${p1[p1.length - 1].y}" r="4" fill="var(--accent)" stroke="var(--bg)" stroke-width="2"/>
   <circle cx="${p2[p2.length - 1].x}" cy="${p2[p2.length - 1].y}" r="4" fill="var(--blue)" stroke="var(--bg)" stroke-width="2"/>
-  ${p1.map((p, i) => `<rect x="${p.x - 12}" y="0" width="24" height="${H}" fill="transparent" class="hpt" data-i="${i}" data-v="${p1[i].v.toFixed(4)} / ${p2[i].v.toFixed(4)}"/>`).join('')}`;
+  ${p1.map((p, i) => `<rect x="${p.x - 12}" y="0" width="24" height="${H}" fill="transparent" class="hpt" data-i="${i}" data-v="$${Number.isFinite(p1[i].v) ? p1[i].v.toFixed(6) : '—'} / $${Number.isFinite(p2[i].v) ? p2[i].v.toFixed(6) : '—'}" data-label="${formatHoverDate(p.ts)}"/>`).join('')}`;
   animPath('l1', svg);
   animPath('l2', svg);
-  attachChartHover(root, svg);
+
+  const tip = root.querySelector('#c-tooltip');
+  if (!tip) return;
+  svg.querySelectorAll('.hpt').forEach((el) => {
+    el.addEventListener('mouseenter', function onEnter() {
+      tip.style.opacity = '1';
+      tip.innerHTML = `<span style="color:var(--accent)">${this.dataset.v}</span> <span style="color:var(--t3)">·</span> ${this.dataset.label || ''}`;
+      const r = svg.getBoundingClientRect();
+      const er = this.getBoundingClientRect();
+      const left = Math.max(0, Math.min(er.left - r.left - tip.offsetWidth / 2 + 8, r.width - tip.offsetWidth));
+      tip.style.left = `${left}px`;
+      tip.style.top = `${er.top - r.top - 44}px`;
+    });
+    el.addEventListener('mouseleave', () => { tip.style.opacity = '0'; });
+  });
 }
 
 export function initBasisChart(root, o) {
   const svg = root.querySelector('#fchart');
   if (!svg || !o) return;
+  const points = Array.isArray(o.chart30d) ? o.chart30d : [];
+  if (points.length < 1) return;
+
   const W = 720; const H = 160; const px = 20; const py = 14;
-  const data = makeSeries(Number(o.basisPct) || 0, 30, 0.6, (Number(o.basisPct) || 0) * -0.8, (Number(o.basisPct) || 0) * 2.8);
-  const mn = Math.min(Math.min(...data) * 1.3, -0.15);
-  const mx = Math.max(...data) * 1.15;
-  const rng = mx - mn;
-  const xS = (W - px * 2) / (data.length - 1);
+  const data = points.map((p) => Number(p.value));
+  const finite = data.filter(Number.isFinite);
+  if (!finite.length) return;
+
+  const mn = Math.min(Math.min(...finite) * 1.3, -0.15);
+  const mx = Math.max(...finite) * 1.15;
+  const rng = mx - mn || 1;
+  const xS = points.length > 1 ? (W - px * 2) / (points.length - 1) : 0;
   const toY = (v) => py + (1 - (v - mn) / rng) * (H - py * 2);
-  const pts = data.map((v, i) => ({ x: px + i * xS, y: toY(v), v }));
+  const pts = points.map((p, i) => ({ x: px + i * xS, y: toY(data[i]), v: data[i], ts: p.ts }));
   const zeroY = toY(0);
   let d = `M${pts[0].x},${pts[0].y}`;
   for (let i = 1; i < pts.length; i++) {
@@ -850,10 +963,24 @@ export function initBasisChart(root, o) {
   <path d="${d} L${pts[pts.length - 1].x},${H} L${pts[0].x},${H} Z" fill="url(#agB)"/>
   <line x1="${px}" y1="${zeroY}" x2="${W - px}" y2="${zeroY}" stroke="var(--border-lit)" stroke-width="1.2" stroke-dasharray="5,4" opacity=".8"/>
   <path id="bline" d="${d}" fill="none" stroke="var(--purple)" stroke-width="2" stroke-linecap="round"/>
-  ${pts.map((p, i) => `<circle cx="${p.x}" cy="${p.y}" r="5" fill="transparent" class="hpt" data-i="${i}" data-v="${p.v.toFixed(4)}%"/>`).join('')}
+  ${pts.map((p) => `<circle cx="${p.x}" cy="${p.y}" r="5" fill="transparent" class="hpt" data-v="${Number.isFinite(p.v) ? p.v.toFixed(4) : '—'}%" data-label="${formatHoverDate(p.ts)}"/>`).join('')}
   <circle cx="${pts[pts.length - 1].x}" cy="${pts[pts.length - 1].y}" r="4" fill="var(--purple)" stroke="var(--bg)" stroke-width="2"/>`;
   animPath('bline', svg);
-  attachChartHover(root, svg);
+
+  const tip = root.querySelector('#c-tooltip');
+  if (!tip) return;
+  svg.querySelectorAll('.hpt').forEach((el) => {
+    el.addEventListener('mouseenter', function onEnter() {
+      tip.style.opacity = '1';
+      tip.innerHTML = `<span style="color:var(--purple)">${this.dataset.v}</span> <span style="color:var(--t3)">·</span> ${this.dataset.label || ''}`;
+      const r = svg.getBoundingClientRect();
+      const er = this.getBoundingClientRect();
+      const left = Math.max(0, Math.min(er.left - r.left - tip.offsetWidth / 2 + 8, r.width - tip.offsetWidth));
+      tip.style.left = `${left}px`;
+      tip.style.top = `${er.top - r.top - 44}px`;
+    });
+    el.addEventListener('mouseleave', () => { tip.style.opacity = '0'; });
+  });
 }
 
 export function initOIChart(root, o) {

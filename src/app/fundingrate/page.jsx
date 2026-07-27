@@ -61,6 +61,7 @@ export default function FundingRate() {
   const chartInstance = useRef(null);
   const chartDataRef = useRef(null);
   const echartsRef = useRef(null);
+  const hisReqIdRef = useRef(0);
 
   const ensureEcharts = async () => {
     if (echartsRef.current) return echartsRef.current;
@@ -69,7 +70,58 @@ export default function FundingRate() {
     return mod;
   };
 
+  const buildHistoryChartOptions = (data) => {
+    const options = handleOptions(data, 'updownbarline');
+    options.grid = {
+      left: '5%',
+      right: '3%',
+      top: '5%',
+      bottom: '10%',
+      containLabel: true
+    };
+    if (options.yAxis && options.yAxis[0]) {
+      options.yAxis[0].axisLabel = options.yAxis[0].axisLabel || {};
+      options.yAxis[0].axisLabel.formatter = (value) => {
+        const percentage = (value * 100).toFixed(5);
+        return `${parseFloat(percentage)}%`;
+      };
+    }
+    if (options.yAxis && options.yAxis[1]) {
+      options.yAxis[1].show = false;
+    }
+    return options;
+  };
 
+  const applyHistoryChart = (frHisData) => {
+    if (!frHisData?.data) return;
+    chartDataRef.current = {
+      data: frHisData.data,
+      type: 'updownbarline',
+      msg: { title: t('fundingrate.section.history') }
+    };
+    if (!chartInstance.current) return;
+    chartInstance.current.setOption(buildHistoryChartOptions(frHisData.data), true);
+  };
+
+  // 仅拉历史费率（交易所/币种切换走这条，避免被当前费率接口阻塞）
+  const fetchHistory = async ({ coin = coinSelected, exchange = cexSelected } = {}) => {
+    if (!coin || !exchange) return;
+    const reqId = ++hisReqIdRef.current;
+    setHisLoading(true);
+    try {
+      const frHisData = await request({
+        url: Interface.FR_HIS,
+        data: { coin, exchange }
+      });
+      if (reqId !== hisReqIdRef.current) return;
+      applyHistoryChart(frHisData);
+    } catch (error) {
+      if (reqId !== hisReqIdRef.current) return;
+      console.error('获取历史费率失败:', error);
+    } finally {
+      if (reqId === hisReqIdRef.current) setHisLoading(false);
+    }
+  };
 
   // 切换标签页
   const handleTabChange = (key) => {
@@ -85,16 +137,18 @@ export default function FundingRate() {
 
   // 币种选择变更
   const handleCoinChange = (val) => {
-    setCoinSelected(val[0]);
+    const coin = val[0];
+    setCoinSelected(coin);
     setCurrentPage(1); // Reset pagination
-    getData({ coin: val[0] });
+    fetchHistory({ coin });
   };
 
   // 交易所Tab点击
   const handleExchangeTabClick = (exchange) => {
+    if (exchange === cexSelected) return;
     setCexSelected(exchange);
     setCurrentPage(1); // Reset pagination
-    getData({ exchange });
+    fetchHistory({ exchange });
   };
 
   // 初始化数据
@@ -155,29 +209,11 @@ export default function FundingRate() {
     if (showChart && chartInstance.current && chartDataRef.current) {
       setTimeout(() => {
         try {
-          const options = handleOptions(chartDataRef.current.data, chartDataRef.current.type);
-          if (chartDataRef.current.type === 'updownbarline') {
-            options.grid = {
-              left: '10%',
-              right: '3%',  // 减少右侧边距，让图表占据更多空间
-              top: '5%',
-              bottom: '25%',
-              containLabel: false
-            };
-            if (options.yAxis && options.yAxis[0]) {
-              options.yAxis[0].axisLabel = options.yAxis[0].axisLabel || {};
-              options.yAxis[0].axisLabel.formatter = (value) => {
-                // 左侧显示百分比，最多保留5位小数
-                const percentage = (value * 100).toFixed(5);
-                // 去除末尾多余的0
-                return `${parseFloat(percentage)}%`;
-              };
-            }
-            if (options.yAxis && options.yAxis[1]) {
-              options.yAxis[1].show = false;  // 隐藏右侧Y轴
-            }
-          }
-          chartInstance.current.setOption(options);
+          chartInstance.current.setOption(
+            buildHistoryChartOptions(chartDataRef.current.data),
+            true
+          );
+          chartInstance.current.resize();
         } catch (e) {
           console.log('图表重设失败', e);
         }
@@ -185,79 +221,59 @@ export default function FundingRate() {
     }
   }, [showChart]);
 
-  // 初始化图表
+  // 初始化图表（PC 历史 Tab 挂载 / 移动端图表显示时）
   useEffect(() => {
-    if (chartRef.current && !chartInstance.current) {
-      let disposed = false;
-      ensureEcharts().then((echarts) => {
-        if (disposed) return;
+    const shouldInit = isPC ? activeKey === 'historyRatio' : showChart;
+    if (!shouldInit || !chartRef.current) return;
+
+    let disposed = false;
+    ensureEcharts().then((echarts) => {
+      if (disposed || !chartRef.current) return;
+      if (!chartInstance.current) {
         chartInstance.current = echarts.init(chartRef.current);
-        // 如果已有数据，立即设置
-        if (chartDataRef.current) {
-          const options = handleOptions(chartDataRef.current.data, chartDataRef.current.type);
-          if (chartDataRef.current.type === 'updownbarline') {
-            options.grid = {
-              left: '10%',
-              right: '3%',
-              top: '5%',
-              bottom: '25%',
-              containLabel: false,
-            };
-            if (options.yAxis && options.yAxis[0]) {
-              options.yAxis[0].axisLabel = options.yAxis[0].axisLabel || {};
-              options.yAxis[0].axisLabel.formatter = (value) => {
-                const percentage = (value * 100).toFixed(5);
-                return `${parseFloat(percentage)}%`;
-              };
-            }
-            if (options.yAxis && options.yAxis[1]) {
-              options.yAxis[1].show = false;
-            }
-          }
-          chartInstance.current?.setOption(options);
-        }
-      });
+      }
+      if (chartDataRef.current) {
+        chartInstance.current.setOption(
+          buildHistoryChartOptions(chartDataRef.current.data),
+          true
+        );
+      }
+      chartInstance.current.resize();
+    });
 
-      // 窗口大小变化时重新调整图表大小
-      const handleResize = () => {
-        if (chartInstance.current) {
-          chartInstance.current.resize();
-        }
-      };
-      
-      window.addEventListener('resize', handleResize);
-      
-      return () => {
-        disposed = true;
-        window.removeEventListener('resize', handleResize);
-        if (chartInstance.current) {
-          chartInstance.current.dispose();
-          chartInstance.current = null;
-        }
-      };
-    }
-  }, [chartRef.current]);
+    const handleResize = () => {
+      chartInstance.current?.resize();
+    };
+    window.addEventListener('resize', handleResize);
 
-  // 获取数据
+    return () => {
+      disposed = true;
+      window.removeEventListener('resize', handleResize);
+      if (chartInstance.current) {
+        chartInstance.current.dispose();
+        chartInstance.current = null;
+      }
+    };
+  }, [isPC, activeKey, showChart]);
+
+  // 获取当前费率 + 历史费率（仅初始化用）
   const getData = async ({ coin = coinSelected, exchange = cexSelected }) => {
     try {
-      // 获取当前资金费率数据
       const frCurData = await request({
         url: Interface.FR_CUR
       });
 
       if (!frCurData?.data) {
-        setCurFundData({
-          ...curFundData,
+        setCurFundData((prev) => ({
+          ...prev,
           loading: false,
           close: true
-        });
+        }));
         return;
       }
 
       const tmpFundData = { ...frCurData.data };
       
-      // 处理列表数据
       const tmpList = tmpFundData.list.map((item) => {
         item.data.unshift({
           symbol: item.symbol,
@@ -275,64 +291,19 @@ export default function FundingRate() {
       tmpFundData.list = [...tmpList];
       
       setCurFundData({
-        ...curFundData,
         loading: false,
+        close: false,
         data: tmpFundData
       });
 
-      // 获取历史资金费率数据
-      setHisLoading(true);
-      const frHisData = await request({
-        url: Interface.FR_HIS,
-        data: {
-          coin,
-          exchange
-        }
-      });
-
-      console.log('历史费率数据:', frHisData);
-      console.log('图表实例:', chartInstance.current);
-
-      // 更新图表
-      if (chartInstance.current && frHisData?.data) {
-        chartDataRef.current = { 
-          data: frHisData.data, 
-          type: 'updownbarline',
-          msg: { title: t('fundingrate.section.history') }
-        };
-        const options = handleOptions(frHisData.data, 'updownbarline');
-        // 专用 grid 布局与轴格式
-        options.grid = {
-          left: '5%',
-          right: '3%',  // 减少右侧边距，让图表占据更多空间
-          top: '5%',
-          bottom: '10%',
-          containLabel: true
-        };
-          if (options.yAxis && options.yAxis[0]) {
-            options.yAxis[0].axisLabel = options.yAxis[0].axisLabel || {};
-            options.yAxis[0].axisLabel.formatter = (value) => {
-              // 左侧显示百分比，最多保留5位小数
-              const percentage = (value * 100).toFixed(5);
-              // 去除末尾多余的0
-              return `${parseFloat(percentage)}%`;
-            };
-          }
-          if (options.yAxis && options.yAxis[1]) {
-            options.yAxis[1].show = false;  // 隐藏右侧Y轴
-          }
-        chartInstance.current.setOption(options);
-      } else {
-        console.log('图表更新失败 - 图表实例:', !!chartInstance.current, '数据:', !!frHisData?.data);
-      }
-      setHisLoading(false);
+      await fetchHistory({ coin, exchange });
     } catch (error) {
       console.error('获取数据失败:', error);
-      setCurFundData({
-        ...curFundData,
+      setCurFundData((prev) => ({
+        ...prev,
         loading: false,
         close: true
-      });
+      }));
       setHisLoading(false);
     }
   };
@@ -378,12 +349,10 @@ export default function FundingRate() {
               className={`${styles['pc-tab-item']} ${activeKey === 'historyRatio' ? styles['pc-tab-active'] : ''}`}
               onClick={() => {
                 setActiveKey('historyRatio');
-                // Ensure chart is resized when switching tabs
-                setTimeout(() => {
-                  if (chartInstance.current) {
-                    chartInstance.current.resize();
-                  }
-                }, 100);
+                // 切到历史时若尚无缓存数据则立即拉取，避免只改 Tab 不请求
+                if (!chartDataRef.current && coinSelected && cexSelected) {
+                  fetchHistory({ coin: coinSelected, exchange: cexSelected });
+                }
               }}
             >
               {t('fundingrate.tabs.history')}
@@ -465,7 +434,7 @@ export default function FundingRate() {
                       className={styles['pc-select']}
                       value={coinSelected}
                       onChange={(value) => handleCoinChange([value])}
-                      options={coinList.map(c => ({ value: c.value, label: c.label }))}
+                      options={coinList.map((coin) => ({ value: coin, label: coin }))}
                       style={{ width: 120 }}
                     />
                   </div>
