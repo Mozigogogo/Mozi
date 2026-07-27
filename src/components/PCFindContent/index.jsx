@@ -15,6 +15,7 @@ import PCCalendarCard from '../PCCalendarCard';
 import NewCoinListing from '../NewCoinListing';
 import PCDailyCard from '../PCDailyCard';
 import ShareAiChatModal from '../ShareAiChatModal';
+import { SkeletonCircle, SkeletonElement } from '@/components/Skeleton';
 import { isEmpty } from 'lodash';
 import { normalizePcFindRankType } from '@/utils/pcFindNavigation';
 import { savePcAiNav } from '@/utils/pcAiFromSearch';
@@ -27,6 +28,7 @@ const RANK_COMMENT_ICON = '/icons/pc/comment_toolbar.svg';
 /** 行情表 7 列宽比例（与表头 grid 一致；后两列为操作按钮，略窄） */
 const MARKET_TABLE_COL_WIDTHS = ['17.5%', '17.5%', '17.5%', '14.25%', '14.25%', '9.5%', '9.5%'];
 const MARKET_TABLE_COL_TEMPLATE = MARKET_TABLE_COL_WIDTHS.join(' ');
+const MARKET_TABLE_SKELETON_ROWS = 10;
 
 const MARKET_TRADING_RADAR_ICON =
   'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/trading_radar.svg';
@@ -1082,7 +1084,6 @@ export default function PCFindContent() {
                               : upTradeData.upTradeArr;
 
                   return (
-                    <Spin spinning={isRankLoading}>
                       <>
                       <div className={styles.rankTopContainer}>
                       <div className={styles.rankTopHeader}>
@@ -1182,7 +1183,36 @@ export default function PCFindContent() {
                       </div>
 
                       <div className={styles.rankTop3}>
-                        {(() => {
+                        {isRankLoading
+                          ? [0, 1, 2].map((idx) => (
+                              <div
+                                key={`rank-top-skel-${idx}`}
+                                className={`${styles.rankTopCard} ${styles.rankTopCardSkeleton} ${styles[`rankTopCard${idx + 1}`] || ''}`}
+                              >
+                                <div className={styles.rankTopCardHeader}>
+                                  <span className={`${styles.rankSkelBone} ${styles.rankSkelCircle}`} style={{ width: 28, height: 28 }} />
+                                  <span className={styles.rankSkelBone} style={{ width: 64, height: 14 }} />
+                                  <div className={styles.rankTopCardRank}>
+                                    <span className={styles.rankSkelBone} style={{ width: 28, height: 28, borderRadius: 8 }} />
+                                  </div>
+                                </div>
+                                <div className={styles.rankTopCardMetrics}>
+                                  <div className={styles.rankTopCardMetricRow}>
+                                    <span className={styles.rankSkelBone} style={{ width: 48, height: 12 }} />
+                                    <span className={styles.rankSkelBone} style={{ width: 72, height: 14 }} />
+                                  </div>
+                                  <div className={styles.rankTopCardMetricRow}>
+                                    <span className={styles.rankSkelBone} style={{ width: 36, height: 12 }} />
+                                    <span className={styles.rankSkelBone} style={{ width: 56, height: 22, borderRadius: 8 }} />
+                                  </div>
+                                </div>
+                                <div className={styles.rankTopCardActions}>
+                                  <span className={styles.rankSkelBone} style={{ width: '100%', height: 28, borderRadius: 8 }} />
+                                  <span className={styles.rankSkelBone} style={{ width: '100%', height: 28, borderRadius: 8 }} />
+                                </div>
+                              </div>
+                            ))
+                          : (() => {
                           const topThree = currentRankList.slice(0, 3).map((item, index) => ({
                             ...item,
                             rankNo: index + 1,
@@ -1292,7 +1322,38 @@ export default function PCFindContent() {
                         )}
                       </div>
                       <div className={styles.rankTableBody}>
-                        {currentRankList.slice(0, 20).map((row, ridx) => (
+                        {isRankLoading
+                          ? Array.from({ length: 10 }).map((_, ridx) => (
+                              <div
+                                key={`rank-row-skel-${ridx}`}
+                                className={`${styles.rankTableRow} ${styles.rankTableRowSkeleton} ${
+                                  rankActiveType === 'exchange' ? styles.rankTableRowExchange : ''
+                                }`}
+                              >
+                                <div className={styles.rankCoinCell}>
+                                  <SkeletonCircle size={20} />
+                                  <SkeletonCircle size={24} />
+                                  <SkeletonElement width={64} height={14} borderRadius={6} />
+                                </div>
+                                <div className={styles.rankColRight}>
+                                  <SkeletonElement width={72} height={14} borderRadius={6} />
+                                </div>
+                                <div className={styles.rankColCenter}>
+                                  <SkeletonElement width={64} height={24} borderRadius={12} />
+                                </div>
+                                {rankActiveType !== 'exchange' && (
+                                  <>
+                                    <div className={styles.rankColCenter}>
+                                      <SkeletonCircle size={18} />
+                                    </div>
+                                    <div className={styles.rankColCenter}>
+                                      <SkeletonCircle size={18} />
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            ))
+                          : currentRankList.slice(0, 20).map((row, ridx) => (
                           <div
                             key={`${rankActiveType}-row-${row.symbol}-${ridx}`}
                             className={`${styles.rankTableRow} ${rankActiveType === 'exchange' ? styles.rankTableRowExchange : ''}`}
@@ -1360,14 +1421,13 @@ export default function PCFindContent() {
                       </div>
                     </div>
                     </>
-                    </Spin>
                   );
                 })()}
               </div>
             </div>
           </>
         ) : (
-          <Spin spinning={loading}>
+          <>
             {activeTab === 'market' && !isCalendarViewOpen && (
               <>
                 <div
@@ -1401,33 +1461,70 @@ export default function PCFindContent() {
                   </div>
                 </div>
                 <div className={styles.marketTableBody}>
-                  <Table
-                    key="market-table"
-                    className={styles.marketTable}
-                    tableLayout="fixed"
-                    showHeader={false}
-                    columns={marketColumns}
-                    dataSource={marketData}
-                    pagination={{ pageSize: 20 }}
-                    onRow={(record) => ({
-                      onClick: () => jump2Detail(record.symbol),
-                      style: { cursor: 'pointer' },
-                    })}
-                  />
+                  {loading ? (
+                    <div className={styles.marketTableSkeleton} aria-busy="true" aria-label={t('common.loading')}>
+                      {Array.from({ length: MARKET_TABLE_SKELETON_ROWS }).map((_, idx) => (
+                        <div
+                          key={idx}
+                          className={styles.marketTableSkeletonRow}
+                          style={{ gridTemplateColumns: MARKET_TABLE_COL_TEMPLATE }}
+                        >
+                          <div className={styles.marketTableSkeletonSymbol}>
+                            <SkeletonCircle size={24} />
+                            <SkeletonElement width={72} height={14} borderRadius={6} />
+                          </div>
+                          <div className={styles.marketTableSkeletonRight}>
+                            <SkeletonElement width={88} height={14} borderRadius={6} />
+                          </div>
+                          <div className={styles.marketTableSkeletonRight}>
+                            <SkeletonElement width={72} height={14} borderRadius={6} />
+                          </div>
+                          <div className={styles.marketTableSkeletonRight}>
+                            <SkeletonElement width={64} height={14} borderRadius={6} />
+                          </div>
+                          <div className={styles.marketTableSkeletonRight}>
+                            <SkeletonElement width={56} height={14} borderRadius={6} />
+                          </div>
+                          <div className={styles.marketTableSkeletonCenter}>
+                            <SkeletonElement width={72} height={28} borderRadius={8} />
+                          </div>
+                          <div className={styles.marketTableSkeletonCenter}>
+                            <SkeletonElement width={72} height={28} borderRadius={8} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <Table
+                      key="market-table"
+                      className={styles.marketTable}
+                      tableLayout="fixed"
+                      showHeader={false}
+                      columns={marketColumns}
+                      dataSource={marketData}
+                      pagination={{ pageSize: 20 }}
+                      onRow={(record) => ({
+                        onClick: () => jump2Detail(record.symbol),
+                        style: { cursor: 'pointer' },
+                      })}
+                    />
+                  )}
                 </div>
               </>
             )}
 
             {activeTab === 'self' && (
-              <Table
-                columns={selfColumns}
-                dataSource={selfData}
-                pagination={false}
-                onRow={(record) => ({
-                  onClick: () => jump2Detail(record.symbol),
-                  style: { cursor: 'pointer' },
-                })}
-              />
+              <Spin spinning={loading}>
+                <Table
+                  columns={selfColumns}
+                  dataSource={selfData}
+                  pagination={false}
+                  onRow={(record) => ({
+                    onClick: () => jump2Detail(record.symbol),
+                    style: { cursor: 'pointer' },
+                  })}
+                />
+              </Spin>
             )}
             {isCalendarViewOpen && (
               <div key="market-calendar" className={styles.pcCalendarView}>
@@ -1456,7 +1553,7 @@ export default function PCFindContent() {
                 </div>
               </div>
             )}
-          </Spin>
+          </>
         )}
       </Card>
 

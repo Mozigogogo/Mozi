@@ -105,6 +105,50 @@
     overflow: hidden;
   }
 
+  .marketTableSkeleton {
+    padding: 4px 0 8px;
+  }
+
+  .marketTableSkeletonRow {
+    display: grid;
+    align-items: center;
+    min-height: 56px;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    box-sizing: border-box;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    > *:first-child {
+      padding-left: 8px;
+    }
+
+    > *:last-child {
+      padding-right: 8px;
+    }
+  }
+
+  .marketTableSkeletonSymbol {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .marketTableSkeletonRight {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+  }
+
+  .marketTableSkeletonCenter {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
   .marketTable {
     :global {
       .ant-table-wrapper,
@@ -636,6 +680,50 @@
     position: relative;
     overflow: hidden;
     background: linear-gradient(180deg, #05FF9B 0%, #00B899 100%);
+  }
+
+  .rankTopCardSkeleton {
+    cursor: default;
+    /* 保持与真实 TOP3 卡片一致的主题绿渐变 */
+    background: linear-gradient(180deg, #05FF9B 0%, #00B899 100%);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+    color: transparent;
+  }
+
+  .rankSkelBone {
+    display: inline-block;
+    flex-shrink: 0;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.28) 0%,
+      rgba(255, 255, 255, 0.58) 45%,
+      rgba(255, 255, 255, 0.28) 90%
+    );
+    background-size: 220% 100%;
+    animation: rankSkelShimmer 1.25s linear infinite;
+    border-radius: 6px;
+  }
+
+  .rankSkelCircle {
+    border-radius: 50%;
+  }
+
+  .rankTableRowSkeleton {
+    cursor: default;
+    pointer-events: none;
+
+    &:hover {
+      background: transparent;
+    }
+  }
+
+  @keyframes rankSkelShimmer {
+    0% {
+      background-position: 100% 0;
+    }
+    100% {
+      background-position: -100% 0;
+    }
   }
 
   .rankTopCard::before {
