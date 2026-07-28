@@ -4,7 +4,8 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  flex: 1;
+  flex: 1 1 auto;
+  height: 100%;
   background: transparent;
   border-radius: 32px;
   overflow: hidden;
@@ -14,32 +15,34 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 14px 20px;
+  gap: 12PX;
+  padding: 8PX 16PX;
   background: #fff;
-  border-bottom: 1px solid #f9fafb;
+  border-bottom: 1PX solid #e5e7eb;
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .topBarLeft {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex: 1 1 auto;
+  gap: 8PX;
+  flex: 0 1 auto;
   min-width: 0;
+  max-width: 220PX;
 }
 
 .backBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 32PX;
+  height: 32PX;
   margin: 0;
   padding: 0;
   border: none;
   background: transparent;
-  border-radius: 8px;
+  border-radius: 8PX;
   color: #1a1a2e;
   cursor: pointer;
   flex-shrink: 0;
@@ -49,22 +52,133 @@
   }
 }
 
-.headerTitle {
-  flex: 1 1 auto;
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
   min-width: 0;
-  font-size: 17px;
+}
+
+.headerTitle {
+  min-width: 0;
+  font-size: 15PX;
   font-weight: 600;
   color: #1a1a2e;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.25;
+}
+
+.coinIcon {
+  width: 28PX;
+  height: 28PX;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #f5f5f5;
+  flex-shrink: 0;
+}
+
+.coinSymbol {
+  font-size: 11PX;
+  font-weight: 500;
+  color: #8c8c8c;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.tickerMid {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16PX;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.priceBlock {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: 1PX;
+  min-width: 0;
+  padding-right: 12PX;
+  border-right: 1PX solid #f0f0f0;
+}
+
+.priceMain {
+  font-size: 22PX;
+  font-weight: 700;
+  color: #1a1a2e;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.changeRow {
+  display: flex;
+  align-items: center;
+  gap: 4PX;
+  font-size: 11PX;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.changeArrow {
+  font-size: 9PX;
+  line-height: 1;
+}
+
+/* 与侧栏自选涨跌色一致 */
+.changeUp,
+.pcWatchlistChangeUp {
+  color: rgba(0, 188, 125, 1);
+}
+
+.changeDown,
+.pcWatchlistChangeDown {
+  color: rgba(255, 32, 86, 1);
+}
+
+.statRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14PX 20PX;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-wrap: nowrap;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  gap: 1PX;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.statLabel {
+  font-size: 11PX;
+  color: #8c8c8c;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.statValue {
+  font-size: 12PX;
+  font-weight: 500;
+  color: #1a1a2e;
+  line-height: 1.25;
+  white-space: nowrap;
 }
 
 .actions {
   display: flex;
   align-items: center;
   gap: 4px;
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   min-width: 0;
   flex-wrap: nowrap;
   justify-content: flex-end;
@@ -150,153 +264,32 @@
   font-weight: 700;
 }
 
-.overview {
-  padding: 12px 40px 16px;
-  background: #fff;
-  flex-shrink: 0;
-  border-bottom: 1PX solid #e5e7eb;
-}
-
-.overviewInner {
-  display: flex;
-  flex-direction: column;
-  gap:4px;
-  flex-wrap: wrap;
-}
-
-.overviewLeft {
-  display: flex;
-  flex-direction: row;
-  gap: 10px;
-  align-items: flex-start;
-  min-width: 0;
-}
-
-.overviewRight {
-  display: flex;
-  flex: 1;
-  gap: 24px;
-  justify-content: space-between;
-  align-items: flex-start;
-  min-width: 0;
-}
-
-.coinBlock {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-.coinIcon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-  background: #f5f5f5;
-}
-
-.coinSymbol {
-  font-size: 20px;
-  font-weight: 700;
-  color: #1a1a2e;
-}
-
-.priceBlock {
-  display: flex;
-  flex-direction: column;
-  flex: 0 1 auto;
-  gap: 8px;
-  min-width: 0;
-}
-
-.priceMain {
-  font-size: 32px;
-  font-weight: 700;
-  color: #1a1a2e;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-}
-
-.changeRow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-/* 与侧栏自选涨跌色一致 */
-.changeUp,
-.pcWatchlistChangeUp {
-  color: rgba(0, 188, 125, 1);
-}
-
-.changeDown,
-.pcWatchlistChangeDown {
-  color: rgba(255, 32, 86, 1);
-}
-
-.statGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(100px, 1fr));
-  gap: 16px 28px;
-  flex: 1 1 auto;
-  min-width: 200px;
-  max-width: 520px;
-}
-
-.statCol {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.statItem {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.statLabel {
-  font-size: 12px;
-  color: #8c8c8c;
-  line-height: 1.3;
-}
-
-.statValue {
-  font-size: 14px;
-  font-weight: 500;
-  color: #1a1a2e;
-  line-height: 1.3;
-  word-break: break-all;
-}
-
 .mainCard {
   /* 减少左右留白，让图表在所在容器里铺满更多 */
-  margin: 0 0px 20px;
+  margin: 0;
   background: #fff;
-  border-radius: 32px;
+  /* 与顶栏连成一体，只保留底部圆角 */
+  border-radius: 0 0 32PX 32PX;
   border: none;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  flex: 1;
-  min-height: 280px;
+  box-shadow: none;
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
 .mainCardBody {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 0 16px 16px;
+  padding: 4PX 12PX 12PX;
 }
 
 /* K 线（左）+ 订单簿/大单侦测（右） */
 .chartOrderRow {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -337,19 +330,26 @@
   }
 
   .mainCardBody {
-    /* desktop 下保留少量左右 padding：有呼吸感且让图表更满宽 */
-    padding: 16PX 12PX 20PX;
+    /* 顶栏与图表标题贴紧，避免超出可视区 */
+    padding: 4PX 12PX 12PX;
   }
 
   .chartOrderRow {
+    flex: 1 1 auto;
     flex-direction: row;
     align-items: stretch;
     gap: 0;
+    /* 由外层 pcContentLayout 限高，图表区填满左侧剩余空间 */
+    height: auto;
+    max-height: none;
+    min-height: 0;
+    overflow: hidden;
   }
 
   .chartPane {
     flex: 1 1 auto;
     min-width: 0;
+    min-height: 0;
     height: 100%;
     overflow: hidden;
   }
@@ -366,6 +366,7 @@
     flex: 0 0 min(320PX, 34%);
     width: min(320PX, 34%);
     max-width: 340PX;
+    min-height: 0;
     height: 100%;
     border-left: 1PX solid #e5e7eb;
     overflow: hidden;
@@ -375,6 +376,7 @@
     flex: 1 1 auto;
     min-height: 0;
     height: 100%;
+    max-height: 100%;
     display: flex;
     flex-direction: column;
   }
@@ -451,49 +453,64 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 120px;
+  min-height: 56PX;
   width: 100%;
 }
 
 .overviewSkeleton {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 24px;
+  align-items: center;
+  gap: 20PX;
   width: 100%;
-  padding: 8px 0;
 }
 
 .overviewSkeletonLeft {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8PX;
+  flex-shrink: 0;
 }
 
-.overviewSkeletonRight {
+.overviewSkeletonPrice {
+  flex-shrink: 0;
+  padding-right: 12PX;
+  border-right: 1PX solid #f0f0f0;
+}
+
+.overviewSkeletonStats {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 20PX;
   flex: 1;
   min-width: 0;
 }
 
-.overviewSkeletonStats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-  margin-top: 16px;
-}
-
 .overviewSkeletonStatCol {
+  flex-shrink: 0;
   min-width: 0;
 }
 
 @media (max-width: 900px) {
-  .statGrid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    max-width: none;
+  .topBar {
+    flex-wrap: wrap;
+    row-gap: 8PX;
   }
 
-  .overviewInner {
-    flex-direction: column;
+  .tickerMid {
+    order: 3;
+    width: 100%;
+    flex-basis: 100%;
+  }
+
+  .priceBlock {
+    border-right: none;
+    padding-right: 0;
+  }
+
+  .statRow {
+    flex-wrap: wrap;
+    gap: 10PX 16PX;
   }
 }
 
@@ -508,7 +525,7 @@
   }
 
   .topBarLeft {
-    flex-basis: 90px;
+    max-width: 180PX;
   }
 
   .headerTitle {
@@ -554,48 +571,37 @@
     font-size: 18px;
   }
 
-  .overview {
-    padding: 10px 28px 14px;
-  }
-
-  .overviewRight {
-    gap: 18px;
+  .tickerMid {
+    gap: 12PX;
   }
 
   .coinIcon {
-    width: 36px;
-    height: 36px;
+    width: 24PX;
+    height: 24PX;
   }
 
   .coinSymbol {
-    font-size: 18px;
+    font-size: 10PX;
   }
 
   .priceMain {
-    font-size: 28px;
+    font-size: 20PX;
   }
 
   .changeRow {
-    font-size: 13px;
+    font-size: 11PX;
   }
 
-  .statGrid {
-    grid-template-columns: repeat(3, minmax(88px, 1fr));
-    gap: 12px 18px;
-    min-width: 180px;
-    max-width: 460px;
-  }
-
-  .statCol {
-    gap: 12px;
+  .statRow {
+    gap: 10PX 14PX;
   }
 
   .statLabel {
-    font-size: 11px;
+    font-size: 10PX;
   }
 
   .statValue {
-    font-size: 13px;
+    font-size: 12PX;
   }
 
   .mainCard {
@@ -638,7 +644,7 @@
   }
 
   .topBarLeft {
-    flex-basis: 84px;
+    max-width: 160PX;
   }
 
   .headerTitle {
@@ -683,49 +689,38 @@
     font-size: 16px;
   }
 
-  .overview {
-    padding: 10px 20px 12px;
-  }
-
-  .overviewRight {
-    gap: 14px;
+  .tickerMid {
+    gap: 10PX;
   }
 
   .coinIcon {
-    width: 34px;
-    height: 34px;
+    width: 22PX;
+    height: 22PX;
   }
 
   .coinSymbol {
-    font-size: 17px;
+    font-size: 10PX;
   }
 
   .priceMain {
-    font-size: 24px;
+    font-size: 18PX;
   }
 
   .changeRow {
-    gap: 4px;
-    font-size: 12px;
+    gap: 4PX;
+    font-size: 10PX;
   }
 
-  .statGrid {
-    grid-template-columns: repeat(3, minmax(76px, 1fr));
-    gap: 10px 14px;
-    min-width: 0;
-    max-width: 400px;
-  }
-
-  .statCol {
-    gap: 10px;
+  .statRow {
+    gap: 8PX 12PX;
   }
 
   .statLabel {
-    font-size: 10px;
+    font-size: 10PX;
   }
 
   .statValue {
-    font-size: 12px;
+    font-size: 11PX;
   }
 
   .mainCard {
@@ -768,7 +763,7 @@
   }
 
   .topBarLeft {
-    flex-basis: 76px;
+    max-width: 140PX;
   }
 
   .headerTitle {
@@ -801,40 +796,41 @@
     }
   }
 
-  .overview {
-    padding: 8px 16px 10px;
-  }
-
-  .overviewRight {
-    gap: 10px;
+  .tickerMid {
+    gap: 8PX;
   }
 
   .coinIcon {
-    width: 32px;
-    height: 32px;
+    width: 20PX;
+    height: 20PX;
+  }
+
+  .headerTitle {
+    font-size: 13PX;
   }
 
   .coinSymbol {
-    font-size: 16px;
+    font-size: 10PX;
   }
 
   .priceMain {
-    font-size: 22px;
+    font-size: 16PX;
   }
 
   .changeRow {
-    font-size: 11px;
+    font-size: 10PX;
   }
 
-  .statGrid {
-    grid-template-columns: repeat(3, minmax(68px, 1fr));
-    gap: 8px 12px;
-    min-width: 0;
-    max-width: 340px;
+  .statRow {
+    gap: 6PX 10PX;
   }
 
-  .statCol {
-    gap: 8px;
+  .statLabel {
+    font-size: 10PX;
+  }
+
+  .statValue {
+    font-size: 11PX;
   }
 
   .mainCard {

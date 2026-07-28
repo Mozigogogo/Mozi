@@ -220,9 +220,9 @@
   padding-top: 0; /* 覆盖 .container 的 padding-top，标题顶对齐 */
 
   .chartContainer {
-    flex: 1;
-    height: 400PX;
-    min-height: 400PX;
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
     padding: 0;
     align-items: stretch;
   }
@@ -239,7 +239,7 @@
   .navigatorRow {
     max-width: none;
     height: 38PX;
-    margin-top: 10PX;
+    margin-top: 8PX;
   }
 
   .navigatorAction {
@@ -260,7 +260,7 @@
   align-items: center;
   flex-wrap: nowrap;
   gap: 18PX;
-  margin-bottom: 10PX;
+  margin-bottom: 6PX;
   flex-shrink: 0;
 }
 
@@ -317,7 +317,7 @@
   min-height: 36PX;
   box-sizing: border-box;
   border-radius: 12PX;
-  margin-bottom: 10PX;
+  margin-bottom: 6PX;
   flex-shrink: 0;
 }
 

@@ -963,6 +963,24 @@
   min-height: calc(100vh - 64px);
 }
 
+/* 币种详情：可滚动；图表区单独限高，不占满整屏 */
+.contentWrapperDetail {
+  min-height: calc(100vh - 64px);
+  height: auto;
+  overflow: visible;
+}
+
+.contentMainDetail {
+  min-height: calc(100vh - 64px);
+  height: auto;
+  max-height: none;
+  padding: 12PX;
+  padding-bottom: 52PX;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
 /* 帮助中心：内容在右侧 Content 区域内铺满并可滚动 */
 .contentWrapperHelp {
   min-height: calc(100vh - 64px);
@@ -1147,6 +1165,17 @@
     padding: 12px;
     padding-bottom: 56PX;
     min-height: calc(100vh - 56px);
+  }
+
+  .contentWrapperDetail {
+    min-height: calc(100vh - 56px);
+    height: auto;
+  }
+
+  .contentMainDetail {
+    min-height: calc(100vh - 56px);
+    padding: 8PX;
+    padding-bottom: 48PX;
   }
 
   .contentWrapperHelp {
