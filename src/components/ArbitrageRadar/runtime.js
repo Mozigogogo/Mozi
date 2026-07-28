@@ -32,6 +32,8 @@ import {
   calcBasis as calcBasisTab,
   truncateDecimals,
   displayPctTrunc,
+  displayRawNum,
+  fmtOI,
 } from './arbitrageTabs';
 
 const LIST_PAGE_SIZE = 8;
@@ -57,6 +59,31 @@ function mapFundingItem(item, index) {
       : Number.isFinite(Number(avg30Raw))
         ? Number(avg30Raw)
         : null;
+  const perp = Number(item.perpPrice ?? item.perp_price ?? item.perp);
+  const spot = Number(item.spotPrice ?? item.spot_price ?? item.spot);
+  const basisRaw = Number(item.basisPct ?? item.basis_pct ?? item.basis);
+  const basis =
+    Number.isFinite(basisRaw)
+      ? basisRaw
+      : Number.isFinite(perp) && Number.isFinite(spot) && spot !== 0
+        ? ((perp - spot) / spot) * 100
+        : null;
+  const oiUsd = Number(
+    item.oiUsd ?? item.oi_usd ?? item.openInterestUsd ?? item.currentOiUsd ?? item.current_oi_usd
+  );
+  const oiContracts = Number(item.oi ?? item.openInterest ?? item.open_interest);
+  const oi24h = Number(item.oiChange24hPct ?? item.oi_change_24h_pct ?? item.oi24h);
+  const oi7d = Number(item.oiChange7dPct ?? item.oi_change_7d_pct ?? item.oi7d);
+  const takerFeeRate = Number(item.takerFeeRate ?? item.taker_fee_rate);
+  const makerFeeRate = Number(item.makerFeeRate ?? item.maker_fee_rate);
+  const openFeeRate = Number(item.openFeeRate ?? item.open_fee_rate);
+  const closeFeeRate = Number(item.closeFeeRate ?? item.close_fee_rate);
+  const settlementsPerDay = Number(
+    item.fundingSettlementsPerDay ?? item.funding_settlements_per_day
+  );
+  const marginBufferRatio = Number(
+    item.marginBufferRatio ?? item.margin_buffer_ratio
+  );
   return {
     rank: Number(item.rank) || index + 1,
     sym: String(item.symbol || item.sym || '').trim().toUpperCase() || '—',
@@ -73,13 +100,22 @@ function mapFundingItem(item, index) {
     quoteVolume24h: item.quoteVolume24h != null ? String(item.quoteVolume24h) : null,
     nextFundingTs: Number(item.nextFundingTs) || 0,
     dataTs: Number(item.dataTs) || 0,
-    // 详情页占位（接口暂无这些字段时保持可渲染）
-    oi: 0,
-    oi24h: 0,
-    oi7d: 0,
-    basis: 0,
-    perp: 0,
-    spot: 0,
+    oiUsd: Number.isFinite(oiUsd) ? oiUsd : null,
+    oiContracts: Number.isFinite(oiContracts) ? oiContracts : null,
+    oi: Number.isFinite(oiUsd) ? oiUsd : Number.isFinite(oiContracts) ? oiContracts : null,
+    oi24h: Number.isFinite(oi24h) ? oi24h : null,
+    oi7d: Number.isFinite(oi7d) ? oi7d : null,
+    basis: Number.isFinite(basis) ? basis : null,
+    perp: Number.isFinite(perp) ? perp : null,
+    spot: Number.isFinite(spot) ? spot : null,
+    takerFeeRate: Number.isFinite(takerFeeRate) ? takerFeeRate : null,
+    makerFeeRate: Number.isFinite(makerFeeRate) ? makerFeeRate : null,
+    openFeeRate: Number.isFinite(openFeeRate) ? openFeeRate : null,
+    closeFeeRate: Number.isFinite(closeFeeRate) ? closeFeeRate : null,
+    fundingSettlementsPerDay:
+      Number.isFinite(settlementsPerDay) && settlementsPerDay > 0 ? settlementsPerDay : null,
+    marginBufferRatio:
+      Number.isFinite(marginBufferRatio) && marginBufferRatio > 0 ? marginBufferRatio : null,
   };
 }
 
@@ -289,7 +325,34 @@ function sortBy(key) {
     (activeTab === 'basis' && basisKeys.includes(key)) ||
     (activeTab === 'oi' && oiKeys.includes(key));
   if (!allowed) return;
-  if (sortState.key === key) {
+
+  // 服务端默认排序列：再点「默认降序」时取消激活态（key=null），不展示选中色
+  const defaultDescKeys = {
+    spread: 'spreadPct',
+    basis: 'basisPct',
+    oi: 'changePct',
+  };
+  const defaultKey = defaultDescKeys[activeTab];
+
+  if (key === defaultKey) {
+    if (sortState.key == null) {
+      // 当前已是默认降序 → 切升序并激活
+      sortState.key = key;
+      sortState.dir = 'asc';
+    } else if (sortState.key === key && sortState.dir === 'asc') {
+      // 升序 → 回到默认降序（无激活）
+      sortState.key = null;
+      sortState.dir = 'desc';
+    } else if (sortState.key === key && sortState.dir === 'desc') {
+      // 显式降序激活 → 取消激活（仍为默认降序）
+      sortState.key = null;
+      sortState.dir = 'desc';
+    } else {
+      // 从其他列切回默认列 → 默认降序、无激活
+      sortState.key = null;
+      sortState.dir = 'desc';
+    }
+  } else if (sortState.key === key) {
     sortState.dir = sortState.dir === 'desc' ? 'asc' : 'desc';
   } else {
     sortState.key = key;
@@ -412,8 +475,32 @@ async function loadFundingDetail(op) {
       ann: detail.ann != null ? detail.ann : op.ann,
       avg30: detail.avg30,
       days: detail.days,
-      rating: detail.rating,
+      rating: detail.rating != null ? detail.rating : op.rating,
       chart30d: detail.chart30d,
+      perp: detail.perp != null ? detail.perp : op.perp,
+      spot: detail.spot != null ? detail.spot : op.spot,
+      basis: detail.basis != null ? detail.basis : op.basis,
+      oi: detail.oi != null ? detail.oi : op.oi,
+      oiUsd: detail.oiUsd != null ? detail.oiUsd : op.oiUsd,
+      oiContracts: detail.oiContracts != null ? detail.oiContracts : op.oiContracts,
+      oi24h: detail.oi24h,
+      oi7d: detail.oi7d,
+      takerFeeRate: detail.takerFeeRate != null ? detail.takerFeeRate : op.takerFeeRate,
+      makerFeeRate: detail.makerFeeRate != null ? detail.makerFeeRate : op.makerFeeRate,
+      openFeeRate: detail.openFeeRate != null ? detail.openFeeRate : op.openFeeRate,
+      closeFeeRate: detail.closeFeeRate != null ? detail.closeFeeRate : op.closeFeeRate,
+      fundingSettlementsPerDay:
+        detail.fundingSettlementsPerDay != null
+          ? detail.fundingSettlementsPerDay
+          : op.fundingSettlementsPerDay,
+      marginBufferRatio:
+        detail.marginBufferRatio != null ? detail.marginBufferRatio : op.marginBufferRatio,
+      periodLabel: detail.periodLabel || op.periodLabel,
+      period: detail.period != null ? detail.period : op.period,
+      nextFundingTs:
+        detail.nextFundingTs != null && detail.nextFundingTs > 0
+          ? detail.nextFundingTs
+          : op.nextFundingTs,
       detailLoaded: true,
     };
     detailLoading = false;
@@ -444,6 +531,19 @@ async function loadSpreadDetail(op) {
       avgPrice: detail.avgPrice != null ? detail.avgPrice : op.avgPrice,
       spreadPct: detail.spreadPct != null ? detail.spreadPct : op.spreadPct,
       spreadAbs: detail.spreadAbs != null ? detail.spreadAbs : op.spreadAbs,
+      minExchangeFeeRate:
+        detail.minExchangeFeeRate != null ? detail.minExchangeFeeRate : op.minExchangeFeeRate,
+      maxExchangeFeeRate:
+        detail.maxExchangeFeeRate != null ? detail.maxExchangeFeeRate : op.maxExchangeFeeRate,
+      transferEtaMin: detail.transferEtaMin != null ? detail.transferEtaMin : op.transferEtaMin,
+      transferEtaMax: detail.transferEtaMax != null ? detail.transferEtaMax : op.transferEtaMax,
+      slippageHintNotional:
+        detail.slippageHintNotional != null
+          ? detail.slippageHintNotional
+          : op.slippageHintNotional,
+      withdrawFeeUsd: detail.withdrawFeeUsd,
+      chain: detail.chain != null ? detail.chain : op.chain,
+      quote: detail.quote != null ? detail.quote : op.quote,
       validExchanges: detail.validExchanges?.length ? detail.validExchanges : op.validExchanges,
       volume24h: detail.volume24h != null ? detail.volume24h : op.volume24h,
       ts: detail.ts || op.ts,
@@ -479,6 +579,24 @@ async function loadBasisDetail(op) {
       basisAbs: detail.basisAbs != null ? detail.basisAbs : op.basisAbs,
       basisPct: detail.basisPct != null ? detail.basisPct : op.basisPct,
       ann: detail.ann != null ? detail.ann : op.ann,
+      currentFunding:
+        detail.currentFunding != null ? detail.currentFunding : op.currentFunding,
+      fundingPeriod: detail.fundingPeriod || op.fundingPeriod,
+      spotFeeRate: detail.spotFeeRate != null ? detail.spotFeeRate : op.spotFeeRate,
+      perpOpenFeeRate:
+        detail.perpOpenFeeRate != null ? detail.perpOpenFeeRate : op.perpOpenFeeRate,
+      perpCloseFeeRate:
+        detail.perpCloseFeeRate != null ? detail.perpCloseFeeRate : op.perpCloseFeeRate,
+      recommendedLeverage:
+        detail.recommendedLeverage != null
+          ? detail.recommendedLeverage
+          : op.recommendedLeverage,
+      marginRatioHint:
+        detail.marginRatioHint != null ? detail.marginRatioHint : op.marginRatioHint,
+      convergenceAssumptionDays:
+        detail.convergenceAssumptionDays != null
+          ? detail.convergenceAssumptionDays
+          : op.convergenceAssumptionDays,
       perpVolume24h: detail.perpVolume24h != null ? detail.perpVolume24h : op.perpVolume24h,
       spotVolume24h: detail.spotVolume24h != null ? detail.spotVolume24h : op.spotVolume24h,
       volume24h: detail.volume24h != null ? detail.volume24h : op.volume24h,
@@ -951,15 +1069,16 @@ function renderFundingDetail(o) {
   <div class="g2">
     <div class="card">
       <div class="card-t">实时价格</div>
-      <div class="met-row"><div class="met-l">永续合约</div><div class="met-v mono">$${(o.perp || 0).toLocaleString()}</div></div>
-      <div class="met-row"><div class="met-l">现货</div><div class="met-v mono">$${(o.spot || 0).toLocaleString()}</div></div>
-      <div class="met-row"><div class="met-l">基差 <span class="tip" style="margin-left:2px"><span class="tip-ico">?</span><span class="tip-txt">(永续价 - 现货价) / 现货价。正值 = 升水，空头套利有保护。</span></span></div><div class="met-v mono" style="color:var(--pos)">+${o.basis || 0}%</div></div>
+      <div class="met-row"><div class="met-l">永续合约</div><div class="met-v mono">${displayRawNum(o.perp, { prefix: '$' })}</div></div>
+      <div class="met-row"><div class="met-l">现货</div><div class="met-v mono">${displayRawNum(o.spot, { prefix: '$' })}</div></div>
+      <div class="met-row"><div class="met-l">基差 <span class="tip" style="margin-left:2px"><span class="tip-ico">?</span><span class="tip-txt">(永续价 - 现货价) / 现货价。正值 = 升水，空头套利有保护。</span></span></div><div class="met-v mono" style="color:${Number(o.basis) >= 0 ? 'var(--pos)' : 'var(--danger)'}">${o.basis == null || o.basis === '' ? '—' : displayPctTrunc(o.basis, { signed: true })}</div></div>
     </div>
     <div class="card">
       <div class="card-t">持仓量 (OI)</div>
-      <div class="met-row"><div class="met-l">当前 OI</div><div class="met-v mono">$${o.oi || 0}M</div></div>
-      <div class="met-row"><div class="met-l">24h 变化</div><div class="met-v mono ${(o.oi24h || 0) >= 0 ? 'chg-up' : 'chg-dn'}">${(o.oi24h || 0) >= 0 ? '↑' : '↓'} ${Math.abs(o.oi24h || 0)}%</div></div>
-      <div class="met-row"><div class="met-l">7d 变化</div><div class="met-v mono ${(o.oi7d || 0) >= 0 ? 'chg-up' : 'chg-dn'}">${(o.oi7d || 0) >= 0 ? '↑' : '↓'} ${Math.abs(o.oi7d || 0)}%</div></div>
+      <div class="met-row"><div class="met-l">当前 OI</div><div class="met-v mono">${fmtOI(o.oiUsd != null ? o.oiUsd : o.oi)}</div></div>
+      ${o.oiContracts != null ? `<div class="met-row"><div class="met-l">持仓张数</div><div class="met-v mono">${Number(o.oiContracts).toLocaleString()}</div></div>` : ''}
+      <div class="met-row"><div class="met-l">24h 变化</div><div class="met-v mono ${o.oi24h == null ? '' : Number(o.oi24h) >= 0 ? 'chg-up' : 'chg-dn'}">${o.oi24h == null || o.oi24h === '' ? '—' : `${Number(o.oi24h) >= 0 ? '↑' : '↓'} ${truncateDecimals(Math.abs(Number(o.oi24h)), 3) ?? '—'}%`}</div></div>
+      <div class="met-row"><div class="met-l">7d 变化</div><div class="met-v mono ${o.oi7d == null ? '' : Number(o.oi7d) >= 0 ? 'chg-up' : 'chg-dn'}">${o.oi7d == null || o.oi7d === '' ? '—' : `${Number(o.oi7d) >= 0 ? '↑' : '↓'} ${truncateDecimals(Math.abs(Number(o.oi7d)), 3) ?? '—'}%`}</div></div>
     </div>
   </div>
 
@@ -1126,23 +1245,53 @@ function calcUpdate() {
   const period = currentPeriod;
   const costRate = parseFloat(__root.querySelector('#inp-rate')?.value) || 10;
   const spot = Number(o.spot) || 0;
+  const perp = Number(o.perp) || 0;
+  const priceForQty = spot > 0 ? spot : perp;
   const funding = Number(o.funding) || 0;
 
-  const qty = spot > 0 ? (principal / spot).toFixed(2) : '—';
-  const totalCapital = (principal * 1.3).toFixed(0);
-  const sessions = Math.floor(period * 3);
+  const openFee = Number.isFinite(Number(o.openFeeRate)) ? Number(o.openFeeRate) : null;
+  const closeFee = Number.isFinite(Number(o.closeFeeRate)) ? Number(o.closeFeeRate) : null;
+  const takerFee = Number.isFinite(Number(o.takerFeeRate)) ? Number(o.takerFeeRate) : null;
+  let feeRateSum;
+  let feeLabel;
+  if (openFee != null || closeFee != null) {
+    const open = openFee != null ? openFee : takerFee != null ? takerFee : 0.0004;
+    const close = closeFee != null ? closeFee : takerFee != null ? takerFee : 0.0004;
+    feeRateSum = open + close;
+    feeLabel = `开 ${(open * 100).toFixed(2)}% + 平 ${(close * 100).toFixed(2)}%`;
+  } else if (takerFee != null) {
+    feeRateSum = takerFee * 2;
+    feeLabel = `Taker ${(takerFee * 100).toFixed(2)}% × 2`;
+  } else {
+    feeRateSum = 0.0004 * 2;
+    feeLabel = '开仓 + 平仓';
+  }
+
+  const settlementsPerDay =
+    Number.isFinite(Number(o.fundingSettlementsPerDay)) && Number(o.fundingSettlementsPerDay) > 0
+      ? Number(o.fundingSettlementsPerDay)
+      : 3;
+  const marginRatio =
+    Number.isFinite(Number(o.marginBufferRatio)) && Number(o.marginBufferRatio) > 0
+      ? Number(o.marginBufferRatio)
+      : 1.3;
+
+  const qty = priceForQty > 0 ? (principal / priceForQty).toFixed(4) : '—';
+  const totalCapital = (principal * marginRatio).toFixed(0);
+  const sessions = Math.floor(period * settlementsPerDay);
   const fundingIncome = (principal * (funding / 100) * sessions).toFixed(2);
-  const fees = (principal * 0.0004 * 2).toFixed(2);
+  const fees = (principal * feeRateSum).toFixed(2);
   const costAmount = (principal * (costRate / 100) * (period / 365)).toFixed(2);
   const net = (parseFloat(fundingIncome) - parseFloat(fees) - parseFloat(costAmount)).toFixed(2);
   const netAnn = ((parseFloat(net) / principal) * (365 / period) * 100).toFixed(1);
+  const priceHint = spot > 0 ? '现货' : perp > 0 ? '永续' : '';
 
   const stepsEl = __root.querySelector('#steps-box');
   if (stepsEl) {
     stepsEl.innerHTML = `
-      <div class="step-row"><div class="step-n">1</div><div class="step-txt">${escapeHtml(o.exchange)} 现货买入 ${qty} 个 ${escapeHtml(o.sym)}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
+      <div class="step-row"><div class="step-n">1</div><div class="step-txt">${escapeHtml(o.exchange)} 现货买入 ${qty} 个 ${escapeHtml(o.sym)}${priceHint ? `（按${priceHint}价）` : ''}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
       <div class="step-row"><div class="step-n">2</div><div class="step-txt">${escapeHtml(o.exchange)} 永续合约做空 ${qty} ${escapeHtml(o.sym)}（1x 杠杆）</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
-      <div class="step-row"><div class="step-n">3</div><div class="step-txt">总占用资金（含保证金）</div><div class="step-amt">≈ $${parseInt(totalCapital, 10).toLocaleString()}</div></div>`;
+      <div class="step-row"><div class="step-n">3</div><div class="step-txt">总占用资金（含保证金 ×${marginRatio}）</div><div class="step-amt">≈ $${parseInt(totalCapital, 10).toLocaleString()}</div></div>`;
   }
 
   const resEl = __root.querySelector('#res-table');
@@ -1151,8 +1300,8 @@ function calcUpdate() {
     rows.forEach((r) => r.classList.add('flash'));
     setTimeout(() => rows.forEach((r) => r.classList.remove('flash')), 400);
     resEl.innerHTML = `
-      <div class="res-row"><div class="res-l">📥 Funding 收入（${period}天 × ${sessions}次结算）</div><div class="res-v p">+$${parseFloat(fundingIncome).toLocaleString()}</div></div>
-      <div class="res-row"><div class="res-l">💸 手续费（开仓 + 平仓）</div><div class="res-v n">-$${fees}</div></div>
+      <div class="res-row"><div class="res-l">📥 Funding 收入（${period}天 × ${sessions}次结算 · ${settlementsPerDay}次/日）</div><div class="res-v p">+$${parseFloat(fundingIncome).toLocaleString()}</div></div>
+      <div class="res-row"><div class="res-l">💸 手续费（${feeLabel}）</div><div class="res-v n">-$${fees}</div></div>
       <div class="res-row"><div class="res-l">🏦 资金机会成本（按 ${costRate}%/年）</div><div class="res-v n">-$${parseFloat(costAmount).toLocaleString()}</div></div>
       <div class="res-row tot"><div class="res-l" style="font-weight:600;color:var(--t1)">净收益 · ${period}天</div><div class="res-v tot">+$${parseFloat(net).toLocaleString()} <span style="font-size:12px;color:var(--t2)">（净年化 ${netAnn}%）</span></div></div>`;
   }
@@ -1169,9 +1318,11 @@ function startCountdown() {
     if (targetTs > 0) {
       s = Math.max(0, Math.floor((targetTs - Date.now()) / 1000));
     } else {
-      // 无下次结算时间时用 8h 周期倒计时兜底
-      if (typeof tick._fallback !== 'number') tick._fallback = 8 * 3600;
-      tick._fallback = tick._fallback <= 0 ? 8 * 3600 : tick._fallback - 1;
+      // 无下次结算时间时用当前周期倒计时兜底
+      const periodHours = Number(selectedOp?.period) > 0 ? Number(selectedOp.period) : 8;
+      const fallbackSecs = periodHours * 3600;
+      if (typeof tick._fallback !== 'number') tick._fallback = fallbackSecs;
+      tick._fallback = tick._fallback <= 0 ? fallbackSecs : tick._fallback - 1;
       s = tick._fallback;
     }
     const h = Math.floor(s / 3600);

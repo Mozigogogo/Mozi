@@ -202,6 +202,14 @@ export function mapSpreadItem(item, index) {
     avgPrice: item.avgPrice ?? item.avg_price ?? '',
     spreadPct: item.spreadPct ?? item.spread_pct ?? '',
     spreadAbs: item.spreadAbs ?? item.spread_abs,
+    minExchangeFeeRate: item.minExchangeFeeRate ?? item.min_exchange_fee_rate ?? null,
+    maxExchangeFeeRate: item.maxExchangeFeeRate ?? item.max_exchange_fee_rate ?? null,
+    transferEtaMin: item.transferEtaMin ?? item.transfer_eta_min ?? null,
+    transferEtaMax: item.transferEtaMax ?? item.transfer_eta_max ?? null,
+    slippageHintNotional: item.slippageHintNotional ?? item.slippage_hint_notional ?? null,
+    withdrawFeeUsd: item.withdrawFeeUsd ?? item.withdraw_fee_usd ?? null,
+    chain: item.chain != null ? String(item.chain).trim() || null : null,
+    quote: item.quote != null ? String(item.quote).trim() || null : null,
     validExchanges,
     volume24h: item.totalQuoteVolume24h ?? item.total_quote_volume_24h,
     ts: Number(item.ts) || 0,
@@ -212,6 +220,9 @@ export function mapSpreadItem(item, index) {
 export function mapBasisItem(item, index) {
   if (!item || typeof item !== 'object') return null;
   const annRaw = item.annualizedPct ?? item.annualized_pct;
+  const fundingPeriod = String(
+    item.fundingPeriod ?? item.funding_period ?? item.currentFundingPeriod ?? ''
+  ).trim() || null;
   return {
     type: 'basis',
     rank: Number(item.rank) || index + 1,
@@ -222,6 +233,15 @@ export function mapBasisItem(item, index) {
     basisAbs: item.basisAbs ?? item.basis_abs ?? '',
     basisPct: item.basisPct ?? item.basis_pct ?? '',
     ann: annRaw == null || annRaw === '' ? null : annRaw,
+    currentFunding: item.currentFunding ?? item.current_funding ?? null,
+    fundingPeriod,
+    spotFeeRate: item.spotFeeRate ?? item.spot_fee_rate ?? null,
+    perpOpenFeeRate: item.perpOpenFeeRate ?? item.perp_open_fee_rate ?? null,
+    perpCloseFeeRate: item.perpCloseFeeRate ?? item.perp_close_fee_rate ?? null,
+    recommendedLeverage: item.recommendedLeverage ?? item.recommended_leverage ?? null,
+    marginRatioHint: item.marginRatioHint ?? item.margin_ratio_hint ?? null,
+    convergenceAssumptionDays:
+      item.convergenceAssumptionDays ?? item.convergence_assumption_days ?? null,
     perpVolume24h: item.perpQuoteVolume24h ?? item.perp_quote_volume_24h,
     spotVolume24h: item.spotQuoteVolume24h ?? item.spot_quote_volume_24h,
     volume24h: item.perpQuoteVolume24h ?? item.perp_quote_volume_24h ?? item.quoteVolume24h,
@@ -527,6 +547,22 @@ function escapeDetailHtml(str) {
  * @param {number} opsIdx
  * @param {{ detailLoading?: boolean, detailError?: string|null }} [opts]
  */
+function resolveSpreadFees(o) {
+  const minFee = Number.isFinite(Number(o?.minExchangeFeeRate))
+    ? Number(o.minExchangeFeeRate)
+    : 0.001;
+  const maxFee = Number.isFinite(Number(o?.maxExchangeFeeRate))
+    ? Number(o.maxExchangeFeeRate)
+    : 0.001;
+  const feeSum = minFee + maxFee;
+  const minPct = (minFee * 100).toFixed(2);
+  const maxPct = (maxFee * 100).toFixed(2);
+  const feeLabel =
+    minPct === maxPct ? `各 ${minPct}%` : `买 ${minPct}% + 卖 ${maxPct}%`;
+  const feeSumPct = (feeSum * 100).toFixed(2);
+  return { minFee, maxFee, feeSum, minPct, maxPct, feeLabel, feeSumPct };
+}
+
 export function renderSpreadDetail(o, opsIdx, opts = {}) {
   if (!o) {
     return `<button class="back-btn" onclick="backToRadar()">← 返回列表</button>
@@ -543,9 +579,10 @@ export function renderSpreadDetail(o, opsIdx, opts = {}) {
   const col = symColors[Math.max(0, opsIdx) % symColors.length];
   const minExC = exColors[o.minExchange] || exColors.Binance;
   const maxExC = exColors[o.maxExchange] || exColors.Binance;
-  const feeRate = 0.001;
+  const { feeSum, minPct, maxPct, feeSumPct } = resolveSpreadFees(o);
   const spreadPctNum = Number(o.spreadPct) || 0;
-  const netSpread = spreadPctNum - feeRate * 2 * 100;
+  const netSpread = spreadPctNum - feeSum * 100;
+  const quote = String(o.quote || '').trim() || 'USDT';
   const validEx = Array.isArray(o.validExchanges) ? o.validExchanges : [];
   const validExHtml = validEx.length
     ? validEx.map((ex) => exBadge(ex)).join('')
@@ -553,6 +590,16 @@ export function renderSpreadDetail(o, opsIdx, opts = {}) {
   const avgPriceText = displayRawNum(o.avgPrice, { prefix: '$' });
   const spreadPctText = truncateDecimals(o.spreadPct, 3);
   const volumeText = displayVolWithUnit(o.volume24h);
+  const etaMin = Number.isFinite(Number(o.transferEtaMin)) ? Number(o.transferEtaMin) : 5;
+  const etaMax = Number.isFinite(Number(o.transferEtaMax)) ? Number(o.transferEtaMax) : 30;
+  const slipHint = Number.isFinite(Number(o.slippageHintNotional))
+    ? Number(o.slippageHintNotional)
+    : 50000;
+  const chainText = o.chain ? escapeDetailHtml(String(o.chain)) : '该链';
+  const withdrawText =
+    o.withdrawFeeUsd != null && Number.isFinite(Number(o.withdrawFeeUsd))
+      ? displayRawNum(o.withdrawFeeUsd, { prefix: '$' })
+      : '—';
   const chartPoints = Array.isArray(o.chart30d) ? o.chart30d : [];
   const axisHTML = buildChartAxisLabels(chartPoints);
   const chartBody = opts.detailLoading
@@ -567,7 +614,7 @@ export function renderSpreadDetail(o, opsIdx, opts = {}) {
     <div class="det-left">
       <div class="det-ttl">
         <div class="sym-ico" style="background:${col}22;color:${col};width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">${String(o.sym || '—').slice(0, 3)}</div>
-        ${escapeDetailHtml(o.sym)}/USDT
+        ${escapeDetailHtml(o.sym)}/${escapeDetailHtml(quote)}
         <span class="type-chip type-chip-spread">现货价差</span>
       </div>
       <div class="det-meta">
@@ -576,7 +623,7 @@ export function renderSpreadDetail(o, opsIdx, opts = {}) {
           <span class="ex-arrow" style="font-size:16px">→</span>
           <span class="ex-node" style="background:${maxExC.bg};border-color:${maxExC.border};color:${maxExC.color}">${escapeDetailHtml(o.maxExchange)} 卖</span>
         </div>
-        <div style="font-size:11px;color:var(--t3)">24h 总成交量 ${volumeText} · 绝对价差 ${displayRawNum(o.spreadAbs, { prefix: '$' })}</div>
+        <div style="font-size:11px;color:var(--t3)">24h 总成交量 ${volumeText} · 绝对价差 ${displayRawNum(o.spreadAbs, { prefix: '$' })}${o.chain ? ` · 链 ${escapeDetailHtml(String(o.chain))}` : ''}</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px">
           <span style="font-size:11px;color:var(--t3)">有效交易所</span>
           ${validExHtml}
@@ -604,20 +651,21 @@ export function renderSpreadDetail(o, opsIdx, opts = {}) {
     <div class="card">
       <div class="card-t">${escapeDetailHtml(o.minExchange)} 买入</div>
       <div class="met-row"><div class="met-l">现货价</div><div class="met-v" style="color:var(--pos)">${displayRawNum(o.minPrice, { prefix: '$' })}</div></div>
-      <div class="met-row"><div class="met-l">买入手续费</div><div class="met-v" style="color:var(--danger)">-0.10%</div></div>
+      <div class="met-row"><div class="met-l">买入手续费</div><div class="met-v" style="color:var(--danger)">-${minPct}%</div></div>
       <div class="met-row"><div class="met-l">成交量</div><div class="met-v">${volumeText}</div></div>
     </div>
     <div class="card">
       <div class="card-t">${escapeDetailHtml(o.maxExchange)} 卖出</div>
       <div class="met-row"><div class="met-l">现货价</div><div class="met-v" style="color:var(--danger)">${displayRawNum(o.maxPrice, { prefix: '$' })}</div></div>
-      <div class="met-row"><div class="met-l">卖出手续费</div><div class="met-v" style="color:var(--danger)">-0.10%</div></div>
+      <div class="met-row"><div class="met-l">卖出手续费</div><div class="met-v" style="color:var(--danger)">-${maxPct}%</div></div>
       <div class="met-row"><div class="met-l">均价</div><div class="met-v">${avgPriceText}</div></div>
     </div>
     <div class="card">
       <div class="card-t">收益拆解</div>
       <div class="met-row"><div class="met-l">绝对价差</div><div class="met-v">${displayRawNum(o.spreadAbs, { prefix: '$' })}</div></div>
       <div class="met-row"><div class="met-l">毛价差</div><div class="met-v">${spreadPctText == null ? '—' : `+${spreadPctText}%`}</div></div>
-      <div class="met-row"><div class="met-l">双所手续费</div><div class="met-v" style="color:var(--danger)">-0.20%</div></div>
+      <div class="met-row"><div class="met-l">双所手续费</div><div class="met-v" style="color:var(--danger)">-${feeSumPct}%</div></div>
+      <div class="met-row"><div class="met-l">提币费</div><div class="met-v" style="color:var(--danger)">${withdrawText === '—' ? '—' : `-${withdrawText}`}</div></div>
       <div class="met-row"><div class="met-l">净价差</div><div class="met-v" style="color:${netSpread > 0 ? 'var(--pos)' : 'var(--danger)'}">${netSpread > 0 ? '+' : ''}${truncateDecimals(netSpread, 3) ?? netSpread}%</div></div>
     </div>
   </div>
@@ -636,9 +684,9 @@ export function renderSpreadDetail(o, opsIdx, opts = {}) {
   <div class="disc">⚠️ 搬砖过程中价差可能已收敛，实际到账收益可能为负。大额操作请评估当前链上拥堵情况和滑点。</div>
   <div class="risk-box">
     <div class="risk-t">⚠️ 风险提示</div>
-    <div class="risk-li">执行风险：链上转账期间（5-30分钟）价格可能反向波动，价差可能变为负数</div>
-    <div class="risk-li">滑点风险：大额（>$50,000）搬砖会产生明显滑点，需单独评估盘口深度</div>
-    <div class="risk-li">提币风险：网络拥堵时转账时间延长，建议评估该链当前 Gas 费和确认时间</div>
+    <div class="risk-li">执行风险：链上转账期间（${etaMin}-${etaMax}分钟）价格可能反向波动，价差可能变为负数</div>
+    <div class="risk-li">滑点风险：大额（>$${slipHint.toLocaleString()}）搬砖会产生明显滑点，需单独评估盘口深度</div>
+    <div class="risk-li">提币风险：网络拥堵时转账时间延长，建议评估${chainText}当前 Gas 费和确认时间</div>
     ${spreadPctNum < 0.2 ? '<div class="risk-li" style="color:var(--danger)">价差过小：净价差极低，执行稍有偏差即可能亏损，建议等待更大价差机会</div>' : ''}
   </div>`;
 }
@@ -676,6 +724,33 @@ export function renderBasisDetail(o, opsIdx, opts = {}) {
     : Number(o.ann) >= 0
       ? 'var(--pos)'
       : 'var(--danger)';
+  const fundingPeriod = String(o.fundingPeriod || '').trim() || '8h';
+  const currentFundingText =
+    o.currentFunding == null || o.currentFunding === ''
+      ? '—'
+      : `${displayPctTrunc(o.currentFunding)}/${escapeDetailHtml(fundingPeriod)}`;
+  const leverage =
+    Number.isFinite(Number(o.recommendedLeverage)) && Number(o.recommendedLeverage) > 0
+      ? Number(o.recommendedLeverage)
+      : 1;
+  const marginHint =
+    Number.isFinite(Number(o.marginRatioHint)) && Number(o.marginRatioHint) > 0
+      ? Number(o.marginRatioHint)
+      : 0.5;
+  const marginPct = Math.round(marginHint * 100);
+  const convDays =
+    Number.isFinite(Number(o.convergenceAssumptionDays)) &&
+    Number(o.convergenceAssumptionDays) > 0
+      ? Math.floor(Number(o.convergenceAssumptionDays))
+      : 30;
+  const spotFee = Number.isFinite(Number(o.spotFeeRate)) ? Number(o.spotFeeRate) : 0.001;
+  const perpOpen = Number.isFinite(Number(o.perpOpenFeeRate))
+    ? Number(o.perpOpenFeeRate)
+    : 0.0006;
+  const perpClose = Number.isFinite(Number(o.perpCloseFeeRate))
+    ? Number(o.perpCloseFeeRate)
+    : 0.0006;
+  const feeSumPct = ((spotFee * 2 + perpOpen + perpClose) * 100).toFixed(2);
   const chartPoints = Array.isArray(o.chart30d) ? o.chart30d : [];
   const axisHTML = buildChartAxisLabels(chartPoints);
   const chartBody = opts.detailLoading
@@ -698,7 +773,7 @@ export function renderBasisDetail(o, opsIdx, opts = {}) {
       </div>
       <div class="det-meta">
         <div style="font-size:11px;color:var(--t2)">${typeLabel}</div>
-        <div style="font-size:11px;color:var(--t3)">Funding 年化 ${annText}</div>
+        <div style="font-size:11px;color:var(--t3)">Funding ${currentFundingText} · 年化 ${annText}</div>
         <div style="font-size:11px;color:var(--t3);margin-top:4px">合约 24h ${displayVolWithUnit(o.perpVolume24h)} · 现货 24h ${displayVolWithUnit(o.spotVolume24h)}</div>
       </div>
     </div>
@@ -726,12 +801,15 @@ export function renderBasisDetail(o, opsIdx, opts = {}) {
       <div class="met-row"><div class="met-l">永续合约价</div><div class="met-v">${displayRawNum(o.perpPrice, { prefix: '$' })}</div></div>
       <div class="met-row"><div class="met-l">现货价</div><div class="met-v">${displayRawNum(o.spotPrice, { prefix: '$' })}</div></div>
       <div class="met-row"><div class="met-l">价差（USD）</div><div class="met-v" style="color:${typeColor}">${displaySignedMoney(o.basisAbs)}</div></div>
+      <div class="met-row"><div class="met-l">建议杠杆</div><div class="met-v">${leverage}x</div></div>
     </div>
     <div class="card">
       <div class="card-t">组合收益分析</div>
       <div class="met-row"><div class="met-l">基差收益</div><div class="met-v" style="color:${typeColor}">${displayPctTrunc(o.basisPct, { signed: true })}</div></div>
+      <div class="met-row"><div class="met-l">当期 Funding</div><div class="met-v">${currentFundingText}</div></div>
       <div class="met-row"><div class="met-l">Funding 年化</div><div class="met-v" style="color:${annColor}">${annText}</div></div>
-      <div class="met-row"><div class="met-l">理论双重收益</div><div class="met-v" style="color:var(--accent)">基差+Funding</div></div>
+      <div class="met-row"><div class="met-l">预估收敛</div><div class="met-v">${convDays} 天</div></div>
+      <div class="met-row"><div class="met-l">手续费合计</div><div class="met-v" style="color:var(--danger)">-${feeSumPct}%</div></div>
     </div>
   </div>
   <div class="calc-card calc-card-purple">
@@ -752,12 +830,13 @@ export function renderBasisDetail(o, opsIdx, opts = {}) {
     <div class="info-li">贴水（perp < spot）通常意味着 Funding 为负，空头付费给多头，策略需反向且注意成本</div>
     <div class="info-li">本策略同时吃基差收敛 + Funding 费率，是比单纯 Funding 套利更完整的 Cash & Carry 形态</div>
   </div>
-  <div class="disc">⚠️ 基差不一定线性收敛，可能扩大后再收窄。全程需保证充足保证金率（≥50%），不构成投资建议。</div>
+  <div class="disc">⚠️ 基差不一定线性收敛，可能扩大后再收窄。全程需保证充足保证金率（≥${marginPct}%），不构成投资建议。</div>
   <div class="risk-box">
     <div class="risk-t">⚠️ 风险提示</div>
     <div class="risk-li">基差扩大风险：极端行情下基差可能扩大至 2%+，触发保证金不足强平</div>
     <div class="risk-li">Funding 翻转：${isPos ? '若市场转熊，Funding 可能变负，空头端需反向付费' : '贴水状态下 Funding 通常为负，持有成本需精细核算'}</div>
     <div class="risk-li">流动性风险：合约 ${displayVolWithUnit(o.perpVolume24h)} / 现货 ${displayVolWithUnit(o.spotVolume24h)}（24h），大额建仓注意滑点</div>
+    <div class="risk-li">杠杆与保证金：建议杠杆 ${leverage}x，保证金率建议 ≥${marginPct}%</div>
   </div>`;
 }
 
@@ -1074,25 +1153,45 @@ export function initOIChart(root, o) {
 export function calcSpread(root, o) {
   if (!o || !root) return;
   const principal = parseFloat(root.querySelector('#inp-spread')?.value) || 10000;
-  const feeRate = 0.001;
+  const { feeSum, feeLabel } = resolveSpreadFees(o);
   const spreadPctNum = Number(o.spreadPct) || 0;
-  const netSpread = spreadPctNum - feeRate * 2 * 100;
+  const withdrawFee =
+    o.withdrawFeeUsd != null && Number.isFinite(Number(o.withdrawFeeUsd))
+      ? Number(o.withdrawFeeUsd)
+      : 0;
+  const grossUsd = principal * (spreadPctNum / 100);
+  const feeUsd = principal * feeSum;
+  const netUsd = grossUsd - feeUsd - withdrawFee;
+  const netPct = principal > 0 ? (netUsd / principal) * 100 : 0;
   const spreadPctText = truncateDecimals(o.spreadPct, 3);
+  const netPctText = truncateDecimals(netPct, 3);
+  const etaMin = Number.isFinite(Number(o.transferEtaMin)) ? Number(o.transferEtaMin) : null;
+  const etaMax = Number.isFinite(Number(o.transferEtaMax)) ? Number(o.transferEtaMax) : null;
+  const etaLabel =
+    etaMin != null && etaMax != null
+      ? `约 ${etaMin}–${etaMax} 分钟`
+      : '等待确认';
+  const chainHint = o.chain ? `经 ${o.chain} ` : '';
   const steps = root.querySelector('#spread-steps');
   if (steps) {
     steps.innerHTML = `
-      <div class="step-row"><div class="step-n">1</div><div class="step-txt">在 ${o.minExchange} 以 ${displayRawNum(o.minPrice, { prefix: '$' })} 买入 ${o.sym}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
-      <div class="step-row"><div class="step-n">2</div><div class="step-txt">将 ${o.sym} 转账至 ${o.maxExchange}（链上或内部划转）</div><div class="step-amt">等待确认</div></div>
-      <div class="step-row"><div class="step-n">3</div><div class="step-txt">在 ${o.maxExchange} 以 ${displayRawNum(o.maxPrice, { prefix: '$' })} 卖出 ${o.sym}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>`;
+      <div class="step-row"><div class="step-n">1</div><div class="step-txt">在 ${escapeDetailHtml(o.minExchange)} 以 ${displayRawNum(o.minPrice, { prefix: '$' })} 买入 ${escapeDetailHtml(o.sym)}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
+      <div class="step-row"><div class="step-n">2</div><div class="step-txt">将 ${escapeDetailHtml(o.sym)} ${chainHint}转账至 ${escapeDetailHtml(o.maxExchange)}（链上或内部划转）</div><div class="step-amt">${etaLabel}</div></div>
+      <div class="step-row"><div class="step-n">3</div><div class="step-txt">在 ${escapeDetailHtml(o.maxExchange)} 以 ${displayRawNum(o.maxPrice, { prefix: '$' })} 卖出 ${escapeDetailHtml(o.sym)}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>`;
   }
+  const withdrawRow =
+    withdrawFee > 0
+      ? `<div class="res-row"><div class="res-l">提币手续费</div><div class="res-v n">-$${withdrawFee.toFixed(2)}</div></div>`
+      : '';
   const res = root.querySelector('#spread-res');
   if (res) {
     res.innerHTML = `
-      <div class="res-row"><div class="res-l">毛价差收入（${spreadPctText == null ? '—' : `${spreadPctText}%`}）</div><div class="res-v p">+$${(principal * spreadPctNum / 100).toFixed(2)}</div></div>
-      <div class="res-row"><div class="res-l">双所手续费（各 0.10%）</div><div class="res-v n">-$${(principal * 0.002).toFixed(2)}</div></div>
-      <div class="res-row tot"><div class="res-l" style="font-weight:600;color:var(--t1)">单次净收益</div><div class="res-v tot" style="color:${netSpread > 0 ? 'var(--accent)' : 'var(--danger)'}">
-        ${netSpread > 0 ? '+' : ''}$${(principal * netSpread / 100).toFixed(2)}
-        <span style="font-size:11px;color:var(--t2)">（${netSpread > 0 ? '+' : ''}${truncateDecimals(netSpread, 3) ?? netSpread}%）</span>
+      <div class="res-row"><div class="res-l">毛价差收入（${spreadPctText == null ? '—' : `${spreadPctText}%`}）</div><div class="res-v p">+$${grossUsd.toFixed(2)}</div></div>
+      <div class="res-row"><div class="res-l">双所手续费（${feeLabel}）</div><div class="res-v n">-$${feeUsd.toFixed(2)}</div></div>
+      ${withdrawRow}
+      <div class="res-row tot"><div class="res-l" style="font-weight:600;color:var(--t1)">单次净收益</div><div class="res-v tot" style="color:${netUsd > 0 ? 'var(--accent)' : 'var(--danger)'}">
+        ${netUsd > 0 ? '+' : ''}$${netUsd.toFixed(2)}
+        <span style="font-size:11px;color:var(--t2)">（${netPct > 0 ? '+' : ''}${netPctText == null ? netPct.toFixed(3) : netPctText}%）</span>
       </div></div>`;
   }
 }
@@ -1104,6 +1203,26 @@ export function calcBasis(root, o) {
   const isPos = basisPctNum >= 0;
   const fundingAnn = Number(o.ann) || 0;
   const annRaw = o.ann == null || o.ann === '' ? null : truncateDecimals(o.ann, 3);
+  const leverage =
+    Number.isFinite(Number(o.recommendedLeverage)) && Number(o.recommendedLeverage) > 0
+      ? Number(o.recommendedLeverage)
+      : 1;
+  const convDays =
+    Number.isFinite(Number(o.convergenceAssumptionDays)) &&
+    Number(o.convergenceAssumptionDays) > 0
+      ? Math.floor(Number(o.convergenceAssumptionDays))
+      : 30;
+  const spotFee = Number.isFinite(Number(o.spotFeeRate)) ? Number(o.spotFeeRate) : 0.001;
+  const perpOpen = Number.isFinite(Number(o.perpOpenFeeRate))
+    ? Number(o.perpOpenFeeRate)
+    : 0.0006;
+  const perpClose = Number.isFinite(Number(o.perpCloseFeeRate))
+    ? Number(o.perpCloseFeeRate)
+    : 0.0006;
+  // 现货开+平 + 永续开+平
+  const feeRateSum = spotFee * 2 + perpOpen + perpClose;
+  const feeLabel = `现货 ${(spotFee * 100).toFixed(2)}%×2 + 永续开 ${(perpOpen * 100).toFixed(2)}% + 平 ${(perpClose * 100).toFixed(2)}%`;
+
   const desc = root.querySelector('#basis-calc-desc');
   if (desc) {
     desc.textContent = isPos
@@ -1112,25 +1231,26 @@ export function calcBasis(root, o) {
   }
   const steps = root.querySelector('#basis-steps');
   if (steps) {
-    steps.innerHTML = isPos ? `
-      <div class="step-row"><div class="step-n">1</div><div class="step-txt">在 ${o.exchange} 买入 ${o.sym} 现货，价格 ${displayRawNum(o.spotPrice, { prefix: '$' })}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
-      <div class="step-row"><div class="step-n">2</div><div class="step-txt">在 ${o.exchange} 做空等量 ${o.sym} 永续合约（1x 杠杆），价格 ${displayRawNum(o.perpPrice, { prefix: '$' })}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
-      <div class="step-row"><div class="step-n">3</div><div class="step-txt">持续收取 Funding 费率（${annRaw == null ? '—' : `${Number(o.ann) > 0 ? '+' : ''}${annRaw}%`}/年）并等待基差收敛</div><div class="step-amt">长期持有</div></div>`
+    steps.innerHTML = isPos
+      ? `
+      <div class="step-row"><div class="step-n">1</div><div class="step-txt">在 ${escapeDetailHtml(o.exchange)} 买入 ${escapeDetailHtml(o.sym)} 现货，价格 ${displayRawNum(o.spotPrice, { prefix: '$' })}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
+      <div class="step-row"><div class="step-n">2</div><div class="step-txt">在 ${escapeDetailHtml(o.exchange)} 做空等量 ${escapeDetailHtml(o.sym)} 永续合约（${leverage}x 杠杆），价格 ${displayRawNum(o.perpPrice, { prefix: '$' })}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
+      <div class="step-row"><div class="step-n">3</div><div class="step-txt">持续收取 Funding 费率（${annRaw == null ? '—' : `${Number(o.ann) > 0 ? '+' : ''}${annRaw}%`}/年）并等待基差收敛</div><div class="step-amt">约 ${convDays} 天</div></div>`
       : `
-      <div class="step-row"><div class="step-n">1</div><div class="step-txt">在 ${o.exchange} 做多 ${o.sym} 永续合约（1x 杠杆），价格 ${displayRawNum(o.perpPrice, { prefix: '$' })}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
-      <div class="step-row"><div class="step-n">2</div><div class="step-txt">在 ${o.exchange} 借入并做空 ${o.sym} 现货，价格 ${displayRawNum(o.spotPrice, { prefix: '$' })}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
-      <div class="step-row"><div class="step-n">3</div><div class="step-txt">贴水环境下 Funding 可能为负（空头付费），需综合评估</div><div class="step-amt">谨慎评估</div></div>`;
+      <div class="step-row"><div class="step-n">1</div><div class="step-txt">在 ${escapeDetailHtml(o.exchange)} 做多 ${escapeDetailHtml(o.sym)} 永续合约（${leverage}x 杠杆），价格 ${displayRawNum(o.perpPrice, { prefix: '$' })}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
+      <div class="step-row"><div class="step-n">2</div><div class="step-txt">在 ${escapeDetailHtml(o.exchange)} 借入并做空 ${escapeDetailHtml(o.sym)} 现货，价格 ${displayRawNum(o.spotPrice, { prefix: '$' })}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
+      <div class="step-row"><div class="step-n">3</div><div class="step-txt">贴水环境下 Funding 可能为负（空头付费），按 ${convDays} 天估算收敛</div><div class="step-amt">谨慎评估</div></div>`;
   }
   const res = root.querySelector('#basis-res');
   if (res) {
-    const basisGain = principal * Math.abs(basisPctNum) / 100;
-    const fundingGain = principal * Math.abs(fundingAnn) / 100 * 30 / 365;
-    const fees = principal * 0.003;
+    const basisGain = (principal * Math.abs(basisPctNum)) / 100;
+    const fundingGain = (((principal * Math.abs(fundingAnn)) / 100) * convDays) / 365;
+    const fees = principal * feeRateSum;
     const total = basisGain + fundingGain - fees;
     res.innerHTML = `
       <div class="res-row"><div class="res-l">基差部分（若完全收敛）</div><div class="res-v p">+$${basisGain.toFixed(2)}</div></div>
-      <div class="res-row"><div class="res-l">Funding 收益（按30天估算）</div><div class="res-v p">+$${fundingGain.toFixed(2)}</div></div>
-      <div class="res-row"><div class="res-l">手续费（开+平 × 2）</div><div class="res-v n">-$${fees.toFixed(2)}</div></div>
-      <div class="res-row tot"><div class="res-l" style="font-weight:600;color:var(--t1)">30日预期净收益</div><div class="res-v tot">+$${total.toFixed(2)}</div></div>`;
+      <div class="res-row"><div class="res-l">Funding 收益（按${convDays}天估算）</div><div class="res-v p">+$${fundingGain.toFixed(2)}</div></div>
+      <div class="res-row"><div class="res-l">手续费（${feeLabel}）</div><div class="res-v n">-$${fees.toFixed(2)}</div></div>
+      <div class="res-row tot"><div class="res-l" style="font-weight:600;color:var(--t1)">${convDays}日预期净收益</div><div class="res-v tot" style="color:${total > 0 ? 'var(--accent)' : 'var(--danger)'}">${total > 0 ? '+' : ''}$${total.toFixed(2)}</div></div>`;
   }
 }

@@ -208,20 +208,14 @@ export async function fetchCryptoArbOIDetail(params = {}) {
 
 function mapFundingDetail(raw) {
   const item = raw && typeof raw === 'object' ? raw : {};
-  const avg30Raw = item.mean30dPct;
-  const avg30 =
-    avg30Raw == null || avg30Raw === ''
-      ? null
-      : Number.isFinite(Number(avg30Raw))
-        ? Number(avg30Raw)
-        : null;
-  const daysRaw = item.continuousDays;
-  const days =
-    daysRaw == null || daysRaw === ''
-      ? null
-      : Number.isFinite(Number(daysRaw))
-        ? Number(daysRaw)
-        : null;
+  const toNum = (v) => {
+    if (v == null || v === '') return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const avg30 = toNum(item.mean30dPct ?? item.mean_30d_pct);
+  const days = toNum(item.continuousDays ?? item.continuous_days);
 
   const chart30d = Array.isArray(item.chart30d)
     ? item.chart30d
@@ -236,20 +230,80 @@ function mapFundingDetail(raw) {
         .sort((a, b) => a.ts - b.ts)
     : [];
 
+  const perp = toNum(item.perpPrice ?? item.perp_price ?? item.perp);
+  const spot = toNum(item.spotPrice ?? item.spot_price ?? item.spot);
+  const basisRaw = toNum(item.basisPct ?? item.basis_pct ?? item.basis);
+  const basis =
+    basisRaw != null
+      ? basisRaw
+      : perp != null && spot != null && spot !== 0
+        ? ((perp - spot) / spot) * 100
+        : null;
+
+  // 优先 USD 名义；oi 多为张数
+  const oiUsd = toNum(
+    item.oiUsd ?? item.oi_usd ?? item.openInterestUsd ?? item.currentOiUsd ?? item.current_oi_usd
+  );
+  const oiContracts = toNum(item.oi ?? item.openInterest ?? item.open_interest);
+  const oi24h = toNum(item.oiChange24hPct ?? item.oi_change_24h_pct);
+  const oi7d = toNum(item.oiChange7dPct ?? item.oi_change_7d_pct);
+
+  const periodLabel = String(
+    item.currentFundingPeriod ?? item.current_funding_period ?? item.period ?? ''
+  ).trim() || null;
+  const periodMatch = periodLabel ? periodLabel.match(/(\d+)/) : null;
+  const settlementsPerDay = toNum(
+    item.fundingSettlementsPerDay ?? item.funding_settlements_per_day
+  );
+  const marginBufferRatio = toNum(
+    item.marginBufferRatio ?? item.margin_buffer_ratio
+  );
+  const openFeeRate = toNum(item.openFeeRate ?? item.open_fee_rate);
+  const closeFeeRate = toNum(item.closeFeeRate ?? item.close_fee_rate);
+  const takerFeeRate = toNum(item.takerFeeRate ?? item.taker_fee_rate);
+  const makerFeeRate = toNum(item.makerFeeRate ?? item.maker_fee_rate);
+  const nextFundingTs = toNum(item.nextFundingTs ?? item.next_funding_ts);
+
   return {
     sym: String(item.symbol || '').trim() || null,
     exchange: String(item.exchange || '').trim() || null,
-    funding: Number.isFinite(Number(item.currentFunding)) ? Number(item.currentFunding) : null,
-    ann: Number.isFinite(Number(item.annualizedPct)) ? Number(item.annualizedPct) : null,
+    funding: toNum(item.currentFunding ?? item.current_funding),
+    ann: toNum(item.annualizedPct ?? item.annualized_pct),
     avg30,
     days,
     rating: Math.max(1, Math.min(5, Math.floor(Number(item.rating) || 0) || 1)),
     chart30d,
+    perp,
+    spot,
+    basis,
+    // 展示用 USD；兼容旧字段名 oi
+    oi: oiUsd != null ? oiUsd : oiContracts,
+    oiUsd,
+    oiContracts,
+    oi24h,
+    oi7d,
+    takerFeeRate,
+    makerFeeRate,
+    openFeeRate,
+    closeFeeRate,
+    fundingSettlementsPerDay:
+      settlementsPerDay != null && settlementsPerDay > 0 ? settlementsPerDay : null,
+    marginBufferRatio:
+      marginBufferRatio != null && marginBufferRatio > 0 ? marginBufferRatio : null,
+    periodLabel,
+    period: periodMatch ? Number(periodMatch[1]) : 8,
+    nextFundingTs: nextFundingTs != null && nextFundingTs > 0 ? nextFundingTs : 0,
   };
 }
 
 function mapSpreadDetail(raw) {
   const item = raw && typeof raw === 'object' ? raw : {};
+  const toNum = (v) => {
+    if (v == null || v === '') return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
+
   const validExchanges = Array.isArray(item.validExchanges)
     ? item.validExchanges.map((ex) => String(ex || '').trim()).filter(Boolean)
     : Array.isArray(item.valid_exchanges)
@@ -277,18 +331,35 @@ function mapSpreadDetail(raw) {
         .sort((a, b) => a.ts - b.ts)
     : [];
 
+  const minFee = toNum(item.minExchangeFeeRate ?? item.min_exchange_fee_rate);
+  const maxFee = toNum(item.maxExchangeFeeRate ?? item.max_exchange_fee_rate);
+  const transferEtaMin = toNum(item.transferEtaMin ?? item.transfer_eta_min);
+  const transferEtaMax = toNum(item.transferEtaMax ?? item.transfer_eta_max);
+  const slippageHint = toNum(item.slippageHintNotional ?? item.slippage_hint_notional);
+  const withdrawFeeUsd = toNum(item.withdrawFeeUsd ?? item.withdraw_fee_usd);
+  const chain = String(item.chain || '').trim() || null;
+  const quote = String(item.quote || '').trim() || null;
+
   return {
     type: 'spread',
     sym: String(item.symbol || item.sym || '').trim().toUpperCase() || null,
     minExchange: String(item.minExchange || item.min_exchange || '').trim() || null,
     maxExchange: String(item.maxExchange || item.max_exchange || '').trim() || null,
-    minPrice: item.minPrice ?? item.min_price ?? null,
-    maxPrice: item.maxPrice ?? item.max_price ?? null,
-    avgPrice: item.avgPrice ?? item.avg_price ?? null,
-    spreadPct: item.spreadPct ?? item.spread_pct ?? null,
-    spreadAbs: item.spreadAbs ?? item.spread_abs ?? null,
+    minPrice: toNum(item.minPrice ?? item.min_price),
+    maxPrice: toNum(item.maxPrice ?? item.max_price),
+    avgPrice: toNum(item.avgPrice ?? item.avg_price),
+    spreadPct: toNum(item.spreadPct ?? item.spread_pct),
+    spreadAbs: toNum(item.spreadAbs ?? item.spread_abs),
+    minExchangeFeeRate: minFee,
+    maxExchangeFeeRate: maxFee,
+    transferEtaMin,
+    transferEtaMax,
+    slippageHintNotional: slippageHint,
+    withdrawFeeUsd,
+    chain,
+    quote,
     validExchanges,
-    volume24h: item.totalQuoteVolume24h ?? item.total_quote_volume_24h ?? null,
+    volume24h: toNum(item.totalQuoteVolume24h ?? item.total_quote_volume_24h),
     ts: Number(item.ts) || 0,
     dataTs: Number(item.ts ?? item.dataTs ?? item.data_ts) || 0,
     chart30d,
@@ -297,7 +368,11 @@ function mapSpreadDetail(raw) {
 
 function mapBasisDetail(raw) {
   const item = raw && typeof raw === 'object' ? raw : {};
-  const annRaw = item.annualizedPct ?? item.annualized_pct;
+  const toNum = (v) => {
+    if (v == null || v === '') return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
 
   const chart30d = Array.isArray(item.chart30d)
     ? item.chart30d
@@ -312,22 +387,36 @@ function mapBasisDetail(raw) {
         .sort((a, b) => a.ts - b.ts)
     : [];
 
+  const fundingPeriod = String(
+    item.fundingPeriod ?? item.funding_period ?? item.currentFundingPeriod ?? ''
+  ).trim() || null;
+
   return {
     type: 'basis',
     sym: String(item.symbol || item.sym || '').trim().toUpperCase() || null,
     exchange: String(item.exchange || item.exchangeCode || item.exchange_code || '').trim() || null,
-    perpPrice: item.perpPrice ?? item.perp_price ?? null,
-    spotPrice: item.spotPrice ?? item.spot_price ?? null,
-    basisAbs: item.basisAbs ?? item.basis_abs ?? null,
-    basisPct: item.basisPct ?? item.basis_pct ?? null,
-    ann: annRaw == null || annRaw === '' ? null : annRaw,
-    perpVolume24h: item.perpQuoteVolume24h ?? item.perp_quote_volume_24h ?? null,
-    spotVolume24h: item.spotQuoteVolume24h ?? item.spot_quote_volume_24h ?? null,
-    volume24h:
+    perpPrice: toNum(item.perpPrice ?? item.perp_price),
+    spotPrice: toNum(item.spotPrice ?? item.spot_price),
+    basisAbs: toNum(item.basisAbs ?? item.basis_abs),
+    basisPct: toNum(item.basisPct ?? item.basis_pct),
+    ann: toNum(item.annualizedPct ?? item.annualized_pct),
+    currentFunding: toNum(item.currentFunding ?? item.current_funding),
+    fundingPeriod,
+    spotFeeRate: toNum(item.spotFeeRate ?? item.spot_fee_rate),
+    perpOpenFeeRate: toNum(item.perpOpenFeeRate ?? item.perp_open_fee_rate),
+    perpCloseFeeRate: toNum(item.perpCloseFeeRate ?? item.perp_close_fee_rate),
+    recommendedLeverage: toNum(item.recommendedLeverage ?? item.recommended_leverage),
+    marginRatioHint: toNum(item.marginRatioHint ?? item.margin_ratio_hint),
+    convergenceAssumptionDays: toNum(
+      item.convergenceAssumptionDays ?? item.convergence_assumption_days
+    ),
+    perpVolume24h: toNum(item.perpQuoteVolume24h ?? item.perp_quote_volume_24h),
+    spotVolume24h: toNum(item.spotQuoteVolume24h ?? item.spot_quote_volume_24h),
+    volume24h: toNum(
       item.perpQuoteVolume24h ??
-      item.perp_quote_volume_24h ??
-      item.quoteVolume24h ??
-      null,
+        item.perp_quote_volume_24h ??
+        item.quoteVolume24h
+    ),
     ts: Number(item.ts) || 0,
     dataTs: Number(item.ts ?? item.dataTs ?? item.data_ts) || 0,
     chart30d,
