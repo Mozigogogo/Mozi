@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Input, Switch, Toast } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import { addAlarm, completeAlarmTask, getAlarmInfoByUserId, getCoinInfo } from '@/api/alarm';
@@ -48,6 +48,7 @@ function WebhookRemoveIcon() {
 
 function PCAlarmContent() {
   const { t } = useTranslation();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const symbol = (searchParams.get('symbol') || 'BTC').toUpperCase();
   const [activeTab, setActiveTab] = useState('config'); // config | history
@@ -1292,6 +1293,43 @@ function PCAlarmContent() {
                 </svg>
               </button>
               <p className={styles.sideFieldHint}>{t('oneClickAlarm.telegramOpenMiniAppHint')}</p>
+
+              <button
+                type="button"
+                className={styles.sideTgLink}
+                aria-label={t('oneClickAlarm.wechatAlarm')}
+                onClick={() => router.push('/wechat-alert')}
+              >
+                <span className={styles.sideItemLabel}>
+                  <img
+                    src={`${ALERT_ICON_CDN}/wechat_alert.svg`}
+                    alt=""
+                    aria-hidden
+                    className={styles.sideItemIcon}
+                    onError={(e) => {
+                      e.currentTarget.src = '/icons/pc/wechat.svg';
+                    }}
+                  />
+                  <span>{t('oneClickAlarm.wechatAlarm')}</span>
+                </span>
+                <svg
+                  className={styles.sideTgLinkArrow}
+                  width="12"
+                  height="12"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  aria-hidden
+                >
+                  <path
+                    d="M4.5 2.5L8 6L4.5 9.5"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+              <p className={styles.sideFieldHint}>{t('oneClickAlarm.wechatQrEntryHint')}</p>
 
               <div className={styles.freqSection}>
                 <div className={styles.freqTitle}>{t('oneClickAlarm.freqTitle', { defaultValue: '预警频次' })}</div>

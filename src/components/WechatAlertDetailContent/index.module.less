@@ -1,0 +1,240 @@
+.pageBody {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16PX;
+  padding: 20PX 16PX 40PX;
+  box-sizing: border-box;
+  min-height: calc(100vh - 50PX);
+  background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 40%, #fff 100%);
+}
+
+.panel {
+  position: relative;
+  width: min(100%, 360PX);
+  min-width: 280PX;
+  padding: 24PX 18PX 20PX;
+  border-radius: 20PX;
+  background: #fff;
+  box-shadow: 0 8PX 32PX rgba(37, 99, 235, 0.1);
+  box-sizing: border-box;
+}
+
+.topPill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8PX;
+  margin: 0 auto 18PX;
+  padding: 8PX 18PX;
+  width: fit-content;
+  max-width: 100%;
+  border-radius: 999PX;
+  background: #2563eb;
+  color: #fff;
+  font-family: 'PingFang SC', -apple-system, sans-serif;
+  font-size: 13PX;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  writing-mode: horizontal-tb;
+  flex-shrink: 0;
+}
+
+.topPillDot {
+  width: 4PX;
+  height: 4PX;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  flex-shrink: 0;
+}
+
+.qrWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6PX;
+  margin-bottom: 18PX;
+}
+
+.chevronLeft,
+.chevronRight {
+  color: rgba(148, 163, 184, 0.55);
+  font-size: 22PX;
+  font-weight: 300;
+  line-height: 1;
+  user-select: none;
+}
+
+.qrBox {
+  position: relative;
+  width: 180PX;
+  height: 180PX;
+  padding: 10PX;
+  border-radius: 16PX;
+  background: #fff;
+  box-shadow: 0 8PX 24PX rgba(37, 99, 235, 0.12);
+  border: 1PX solid #e2e8f0;
+  box-sizing: border-box;
+}
+
+.qrImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 8PX;
+  -webkit-touch-callout: default;
+  user-select: auto;
+}
+
+.hand {
+  position: absolute;
+  right: -6PX;
+  bottom: -4PX;
+  font-size: 22PX;
+  line-height: 1;
+  filter: drop-shadow(0 2PX 4PX rgba(0, 0, 0, 0.15));
+  pointer-events: none;
+}
+
+.divider {
+  border: none;
+  border-top: 1PX dashed #cbd5e1;
+  margin: 0 8PX 16PX;
+}
+
+.midPill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16PX;
+  padding: 7PX 16PX;
+  width: fit-content;
+  max-width: 100%;
+  border-radius: 999PX;
+  border: 1.5PX solid #93c5fd;
+  background: #eff6ff;
+  color: #1e3a8a;
+  font-family: 'PingFang SC', -apple-system, sans-serif;
+  font-size: 12PX;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+  white-space: nowrap;
+  writing-mode: horizontal-tb;
+}
+
+.featureGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8PX;
+}
+
+.featureCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6PX;
+  padding: 10PX 4PX 8PX;
+  border-radius: 12PX;
+  background: #f8fafc;
+  border: 1PX solid #eef2f7;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.featureIcon {
+  width: 36PX;
+  height: 36PX;
+  border-radius: 10PX;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18PX;
+  line-height: 1;
+}
+
+.featureTitle {
+  font-family: 'PingFang SC', -apple-system, sans-serif;
+  font-size: 11PX;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #0f172a;
+}
+
+.featureTag {
+  display: inline-block;
+  padding: 2PX 6PX;
+  border-radius: 999PX;
+  font-size: 9PX;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.footerNote {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6PX;
+  color: #64748b;
+  font-family: 'PingFang SC', -apple-system, sans-serif;
+  font-size: 12PX;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.footerDot {
+  width: 6PX;
+  height: 6PX;
+  border-radius: 50%;
+  background: #10b981;
+  flex-shrink: 0;
+}
+
+.pageBodyPc {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  padding: 12PX 24PX 32PX;
+  background: transparent;
+  overflow: auto;
+}
+
+.panelPc {
+  width: min(100%, 480PX);
+  min-width: 320PX;
+  padding: 32PX 28PX 28PX;
+  box-shadow: 0 8PX 32PX rgba(15, 23, 42, 0.08);
+}
+
+.qrBoxPc {
+  width: 220PX;
+  height: 220PX;
+  flex-shrink: 0;
+}
+
+.footerNotePc {
+  color: #64748b;
+}
+
+@media (min-width: 768PX) {
+  .pageBody:not(.pageBodyPc) {
+    padding: 32PX 24PX 48PX;
+    min-height: calc(100vh - 64PX);
+  }
+
+  .pageBody:not(.pageBodyPc) .panel {
+    width: min(100%, 420PX);
+    padding: 28PX 24PX 24PX;
+  }
+
+  .pageBody:not(.pageBodyPc) .qrBox {
+    width: 200PX;
+    height: 200PX;
+  }
+}

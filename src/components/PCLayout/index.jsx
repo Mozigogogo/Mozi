@@ -873,7 +873,10 @@ export default function PCLayout({ children }) {
 
   const isAiRoute = pathname === '/ai' || (pathname && pathname.startsWith('/ai/'));
   const isAlertsRoute =
-    pathname === '/pc/alarm' || (pathname && pathname.startsWith('/pc/alarm/'));
+    pathname === '/pc/alarm' ||
+    (pathname && pathname.startsWith('/pc/alarm/')) ||
+    pathname === '/wechat-alert' ||
+    (pathname && pathname.startsWith('/wechat-alert/'));
   const isFavoritesRoute =
     pathname === '/selfrank' || (pathname && pathname.startsWith('/selfrank/'));
   const activeAiConversationId = useMemo(() => {
@@ -911,6 +914,9 @@ export default function PCLayout({ children }) {
     }
     if (pathname === '/selfrank') {
       return ['/selfrank'];
+    }
+    if (pathname === '/wechat-alert' || pathname?.startsWith('/wechat-alert/')) {
+      return ['/pc/alarm'];
     }
     if (
       pathname === '/subscribe' ||

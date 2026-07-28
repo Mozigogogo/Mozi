@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { Input, Button, Toast, Switch } from 'antd-mobile';
 import BottomSheetModal from '../BottomSheetModal';
@@ -83,6 +84,20 @@ function TelegramAlarmIcon() {
   );
 }
 
+function WechatAlarmIcon() {
+  return (
+    <img
+      src={alertIconUrl('wechat_alert.svg')}
+      alt=""
+      width="24"
+      height="24"
+      onError={(e) => {
+        e.currentTarget.src = '/icons/pc/wechat.svg';
+      }}
+    />
+  );
+}
+
 function PhoneInputIcon() {
   return (
     <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/telephone_num.svg" alt="phone" width="14" height="16" />
@@ -138,6 +153,7 @@ export default function OneClickAlarmModal({
   initialValue,
 }) {
   const { t, i18n } = useTranslation();
+  const router = useRouter();
   const init = useMemo(
     () => ({
       phoneEnabled: true,
@@ -1051,6 +1067,36 @@ export default function OneClickAlarmModal({
                   </>
                 )}
                 {channelError && <div className={styles.errorText}>{channelError}</div>}
+
+                <button
+                  type="button"
+                  className={styles.wechatAlarmBtn}
+                  onClick={() => router.push('/wechat-alert')}
+                >
+                  <span className={styles.notifyRowLeft}>
+                    <span className={styles.notifyIconWrap}>
+                      <WechatAlarmIcon />
+                    </span>
+                    <span className={styles.rowLabel}>{t('oneClickAlarm.wechatAlarm')}</span>
+                  </span>
+                  <svg
+                    className={styles.wechatAlarmArrow}
+                    width="12"
+                    height="12"
+                    viewBox="0 0 12 12"
+                    fill="none"
+                    aria-hidden
+                  >
+                    <path
+                      d="M4.5 2.5L8 6L4.5 9.5"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+                <p className={styles.fieldHint}>{t('oneClickAlarm.wechatQrEntryHint')}</p>
 
                 <div className={styles.freqSection}>
                   <div className={styles.freqTitle}>{t('oneClickAlarm.freqTitle')}</div>

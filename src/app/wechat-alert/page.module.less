@@ -1,0 +1,53 @@
+.page {
+  min-height: 100vh;
+  background: #fff;
+  box-sizing: border-box;
+  /* NavBar fixed 高度 */
+  padding-top: 50PX;
+}
+
+.pagePc {
+  min-height: 100%;
+  height: 100%;
+  padding-top: 0;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.pcHeader {
+  display: flex;
+  align-items: center;
+  gap: 10PX;
+  padding: 4PX 4PX 16PX;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.pcBackBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32PX;
+  height: 32PX;
+  border: none;
+  border-radius: 8PX;
+  background: transparent;
+  color: #0f172a;
+  font-size: 16PX;
+  cursor: pointer;
+  padding: 0;
+
+  &:hover {
+    background: rgba(15, 23, 42, 0.06);
+  }
+}
+
+.pcTitle {
+  margin: 0;
+  font-size: 20PX;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #0f172a;
+}

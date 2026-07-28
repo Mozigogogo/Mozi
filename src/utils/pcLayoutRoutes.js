@@ -18,6 +18,7 @@ export const CONDITIONAL_PC_LAYOUT_PREFIXES = [
   '/user/',
   '/rankdiscuss',
   '/report/comment',
+  '/wechat-alert',
 ];
 
 export const PC_LAYOUT_EXCLUDED_PREFIXES = ['/admin', '/auth'];
