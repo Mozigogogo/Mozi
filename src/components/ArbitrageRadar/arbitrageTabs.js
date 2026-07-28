@@ -232,17 +232,29 @@ export function mapBasisItem(item, index) {
 
 export function mapOIItem(item, index) {
   if (!item || typeof item !== 'object') return null;
+  const changePct = Number(
+    item.changePct ?? item.change_pct ?? item.oiChangePct ?? item.oi_change_pct
+  );
+  const priceChg = Number(
+    item.priceChangePercent ??
+      item.price_change_percent ??
+      item.priceChange24hPct ??
+      item.price_change_24h_pct
+  );
   return {
     type: 'oi',
     rank: Number(item.rank) || index + 1,
     sym: String(item.symbol || item.sym || '').trim().toUpperCase() || '—',
     exchange: String(item.exchange || item.exchangeCode || item.exchange_code || '').trim() || '—',
     currentOiUsd: Number(item.currentOiUsd ?? item.current_oi_usd) || 0,
-    avg7dOiUsd: Number(item.avg7dOiUsd ?? item.avg_7d_oi_usd) || 0,
-    oiChangePct: Number(item.oiChangePct ?? item.oi_change_pct) || 0,
-    priceChange24hPct: Number(item.priceChange24hPct ?? item.price_change_24h_pct) || 0,
-    correlationHint: String(item.correlationHint ?? item.correlation_hint ?? '').trim() || '—',
+    avg7dOiUsd: Number(item.avgOiUsd ?? item.avg_oi_usd ?? item.avg7dOiUsd ?? item.avg_7d_oi_usd) || 0,
+    oiChangePct: Number.isFinite(changePct) ? changePct : 0,
+    priceChange24hPct: Number.isFinite(priceChg) ? priceChg : 0,
+    correlationHint: String(
+      item.signal ?? item.correlationHint ?? item.correlation_hint ?? ''
+    ).trim() || '—',
     volume24h: item.quoteVolume24h ?? item.quote_volume_24h,
+    sampleCount: item.sampleCount ?? item.sample_count ?? null,
     dataTs: Number(item.dataTs ?? item.data_ts) || 0,
   };
 }
@@ -323,7 +335,10 @@ export function tableHeadHTML(tab, sortIndFn) {
       <th class="col-sym">标的</th>
       <th class="col-ex">交易所</th>
       <th class="col-oi">当前 OI / 7日均值 ${tip('未平仓合约总量（USD），与7日均值比较判断是否异常')}</th>
-      <th class="col-oi-chg">vs 7日均值 ${tip('当前OI相对过去7天均值的偏离百分比')}</th>
+      <th class="th-sortable col-oi-chg" onclick="sortBy('changePct')">
+        vs 7日均值 ${ind('changePct')}
+        ${tip('当前OI相对过去7天均值的偏离百分比；默认按此降序')}
+      </th>
       <th class="col-price-chg">价格 24h</th>
       <th class="col-signal">信号 ${tip('OI变化+价格变化的组合解读：多头入场/空头入场/空头平仓/多头平仓')}</th>
       <th class="col-vol">24h 成交量</th>
@@ -753,26 +768,51 @@ const OI_SIGNAL_META = {
   多头平仓: { icon: '🔽', desc: 'OI 下降且价格下跌，多头离场平仓。偏空信号，已有多头持仓需注意控制回撤。', action: ['多头持仓建议设置止损保护利润', '等待 OI 企稳后再考虑新的多头入场', '短期不建议加仓'] },
 };
 
-export function renderOIDetail(o, opsIdx) {
-  const col = symColors[opsIdx % symColors.length];
+/**
+ * @param {object} o
+ * @param {number} opsIdx
+ * @param {{ detailLoading?: boolean, detailError?: string|null }} [opts]
+ */
+export function renderOIDetail(o, opsIdx, opts = {}) {
+  if (!o) {
+    return `<button class="back-btn" onclick="backToRadar()">← 返回列表</button>
+      <div class="tbl-state tbl-state-error">暂无详情数据</div>`;
+  }
+
+  if (opts.detailError) {
+    return `<button class="back-btn" onclick="backToRadar()">← 返回列表</button>
+      <div class="tbl-state tbl-state-error">${escapeDetailHtml(opts.detailError)}
+        <button type="button" class="tbl-retry" onclick="retryOIDetail()">重试</button>
+      </div>`;
+  }
+
+  const col = symColors[Math.max(0, opsIdx) % symColors.length];
   const exC = (exColors[o.exchange] || {}).c || '#64748b';
   const hs = hintStyles[o.correlationHint] || { bg: 'rgba(15,23,42,.04)', border: 'rgba(15,23,42,.12)', c: 'var(--t2)' };
   const signalMeta = OI_SIGNAL_META[o.correlationHint] || { icon: '📊', desc: 'OI 与价格变化，方向信号不明确。', action: ['建议观望，等待方向明朗'] };
   const oiChgColor = o.oiChangePct >= 0 ? 'var(--pos)' : 'var(--danger)';
+  const chartPoints = Array.isArray(o.chart30d) ? o.chart30d : [];
+  const axisHTML = buildChartAxisLabels(chartPoints);
+  const chartBody = opts.detailLoading
+    ? `<div class="tbl-state" style="min-height:160px;display:flex;align-items:center;justify-content:center">加载中…</div>`
+    : chartPoints.length
+      ? `<svg id="fchart" width="100%" height="160" viewBox="0 0 720 160" preserveAspectRatio="none" style="display:block"></svg>
+         <div class="c-tooltip" id="c-tooltip"></div>`
+      : `<div class="tbl-state" style="min-height:160px;display:flex;align-items:center;justify-content:center">暂无走势数据</div>`;
 
   return `
   <button class="back-btn" onclick="backToRadar()">← 返回列表</button>
   <div class="det-hdr">
     <div class="det-left">
       <div class="det-ttl">
-        <div class="sym-ico" style="background:${col}22;color:${col};width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">${o.sym.slice(0, 3)}</div>
-        ${o.sym}/USDT
+        <div class="sym-ico" style="background:${col}22;color:${col};width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">${String(o.sym || '—').slice(0, 3)}</div>
+        ${escapeDetailHtml(o.sym)}/USDT
         <span style="font-size:14px;font-weight:500;color:var(--t3)">·</span>
-        <span style="font-size:14px;font-weight:500;color:${exC}">${o.exchange}</span>
+        <span style="font-size:14px;font-weight:500;color:${exC}">${escapeDetailHtml(o.exchange)}</span>
         <span class="type-chip type-chip-oi">OI 异动</span>
       </div>
       <div class="det-meta">
-        <span class="hint-badge" style="background:${hs.bg};border-color:${hs.border};color:${hs.c};padding:4px 12px;font-size:12px">${signalMeta.icon} ${o.correlationHint}</span>
+        <span class="hint-badge" style="background:${hs.bg};border-color:${hs.border};color:${hs.c};padding:4px 12px;font-size:12px">${signalMeta.icon} ${escapeDetailHtml(o.correlationHint)}</span>
         <div style="font-size:11px;color:var(--t3)">OI vs 7日均值</div>
       </div>
     </div>
@@ -786,7 +826,7 @@ export function renderOIDetail(o, opsIdx) {
     <div class="signal-hdr">
       <div class="signal-icon">${signalMeta.icon}</div>
       <div>
-        <div class="signal-ttl" style="color:${hs.c}">${o.correlationHint}</div>
+        <div class="signal-ttl" style="color:${hs.c}">${escapeDetailHtml(o.correlationHint)}</div>
         <div style="font-size:11px;color:var(--t2);margin-top:2px">OI ${o.oiChangePct >= 0 ? '↑' : '↓'}${truncateDecimals(Math.abs(o.oiChangePct), 3) ?? '—'}% · 价格 ${o.priceChange24hPct >= 0 ? '↑' : '↓'}${truncateDecimals(Math.abs(o.priceChange24hPct), 3) ?? '—'}%</div>
       </div>
     </div>
@@ -794,17 +834,14 @@ export function renderOIDetail(o, opsIdx) {
   </div>
   <div class="chart-card">
     <div class="chart-card-hdr">
-      <div class="chart-title">OI 与价格 30日走势</div>
+      <div class="chart-title">OI 30日走势</div>
       <div class="chart-legend">
         <div class="leg-item"><div class="leg-dot" style="background:var(--orange)"></div>OI（柱状）</div>
-        <div class="leg-item"><div class="leg-dot" style="background:var(--accent)"></div>价格走势（线）</div>
+        <div class="leg-item"><div class="leg-line" style="border-top:1.5px dashed var(--warn);width:14px"></div>7日均值</div>
       </div>
     </div>
-    <div class="chart-svg-wrap">
-      <svg id="fchart" width="100%" height="160" viewBox="0 0 720 160" preserveAspectRatio="none" style="display:block"></svg>
-      <div class="c-tooltip" id="c-tooltip"></div>
-    </div>
-    <div class="xaxis">${CHART_AXIS}</div>
+    <div class="chart-svg-wrap">${chartBody}</div>
+    <div class="xaxis">${axisHTML}</div>
   </div>
   <div class="g3">
     <div class="card">
@@ -812,11 +849,12 @@ export function renderOIDetail(o, opsIdx) {
       <div class="met-row"><div class="met-l">当前 OI</div><div class="met-v">${fmtOI(o.currentOiUsd)}</div></div>
       <div class="met-row"><div class="met-l">7日均值 OI</div><div class="met-v">${fmtOI(o.avg7dOiUsd)}</div></div>
       <div class="met-row"><div class="met-l">vs 7日均值</div><div class="met-v" style="color:${oiChgColor}">${displayPctTrunc(o.oiChangePct, { signed: true })}</div></div>
+      ${o.sampleCount != null ? `<div class="met-row"><div class="met-l">样本天数</div><div class="met-v">${escapeDetailHtml(o.sampleCount)}</div></div>` : ''}
     </div>
     <div class="card">
       <div class="card-t">价格数据</div>
       <div class="met-row"><div class="met-l">24h 涨跌</div><div class="met-v" style="color:${o.priceChange24hPct >= 0 ? 'var(--pos)' : 'var(--danger)'}">${o.priceChange24hPct >= 0 ? '↑' : '↓'} ${truncateDecimals(Math.abs(o.priceChange24hPct), 3) ?? '—'}%</div></div>
-      <div class="met-row"><div class="met-l">OI/价格关系</div><div class="met-v" style="color:${hs.c}">${o.correlationHint}</div></div>
+      <div class="met-row"><div class="met-l">OI/价格关系</div><div class="met-v" style="color:${hs.c}">${escapeDetailHtml(o.correlationHint)}</div></div>
       <div class="met-row"><div class="met-l">24h 成交量</div><div class="met-v">${fmtVol(o.volume24h)}</div></div>
     </div>
     <div class="card">
@@ -986,38 +1024,51 @@ export function initBasisChart(root, o) {
 export function initOIChart(root, o) {
   const svg = root.querySelector('#fchart');
   if (!svg || !o) return;
-  const W = 720; const H = 160; const px = 20; const py = 14; const bw = 15;
-  const oiData = makeSeries(o.currentOiUsd, 30, 0.15, o.avg7dOiUsd * 0.5, o.currentOiUsd * 1.5);
-  const priceData = makeSeries(1, 30, 0.04, 0.75, 1.4);
-  const oiMn = Math.min(...oiData) * 0.9;
-  const oiMx = Math.max(...oiData) * 1.05;
-  const pMn = Math.min(...priceData) * 0.99;
-  const pMx = Math.max(...priceData) * 1.01;
-  const xS = (W - px * 2) / (oiData.length - 1);
-  const toOiY = (v) => py + (1 - (v - oiMn) / (oiMx - oiMn)) * (H - py * 2);
-  const toPY = (v) => py + (1 - (v - pMn) / (pMx - pMn)) * (H - py * 2);
-  const pPts = priceData.map((v, i) => ({ x: px + i * xS, y: toPY(v), v }));
-  let pPath = `M${pPts[0].x},${pPts[0].y}`;
-  for (let i = 1; i < pPts.length; i++) {
-    const cx = (pPts[i - 1].x + pPts[i].x) / 2;
-    pPath += ` C${cx},${pPts[i - 1].y} ${cx},${pPts[i].y} ${pPts[i].x},${pPts[i].y}`;
-  }
-  const avgY = toOiY(o.avg7dOiUsd);
-  const bars = oiData.map((v, i) => {
+  const points = Array.isArray(o.chart30d) ? o.chart30d : [];
+  if (points.length < 1) return;
+
+  const W = 720; const H = 160; const px = 20; const py = 14;
+  const oiData = points.map((p) => Number(p.value));
+  const finite = oiData.filter(Number.isFinite);
+  if (!finite.length) return;
+
+  const oiMn = Math.min(...finite) * 0.9;
+  const oiMx = Math.max(...finite) * 1.05;
+  const rng = oiMx - oiMn || 1;
+  const xS = points.length > 1 ? (W - px * 2) / (points.length - 1) : 0;
+  const bw = Math.max(4, Math.min(15, (points.length > 1 ? xS : 24) * 0.55));
+  const toOiY = (v) => py + (1 - (v - oiMn) / rng) * (H - py * 2);
+  const avgY = Number.isFinite(Number(o.avg7dOiUsd)) ? toOiY(Number(o.avg7dOiUsd)) : null;
+
+  const bars = points.map((p, i) => {
+    const v = oiData[i];
+    if (!Number.isFinite(v)) return '';
     const bx = px + i * xS - bw / 2;
-    const bh = Math.max(2, ((v - oiMn) / (oiMx - oiMn)) * (H - py * 2));
+    const bh = Math.max(2, ((v - oiMn) / rng) * (H - py * 2));
     const by = H - py - bh;
     const up = i === 0 || v >= oiData[i - 1];
-    return `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="${up ? 'rgba(249,115,22,.5)' : 'rgba(249,115,22,.25)'}" rx="2" class="hpt" data-i="${i}" data-v="OI ${fmtOI(v)}"/>`;
+    return `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="${up ? 'rgba(249,115,22,.5)' : 'rgba(249,115,22,.25)'}" rx="2" class="hpt" data-v="OI ${fmtOI(v)}" data-label="${formatHoverDate(p.ts)}"/>`;
   }).join('');
-  svg.innerHTML = `<defs><linearGradient id="agOI" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--accent)" stop-opacity=".18"/><stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>
+
+  svg.innerHTML = `
   ${bars}
-  <line x1="${px}" y1="${avgY}" x2="${W - px}" y2="${avgY}" stroke="var(--warn)" stroke-width="1" stroke-dasharray="5,4" opacity=".65"/>
-  <path d="${pPath} L${pPts[pPts.length - 1].x},${H} L${pPts[0].x},${H} Z" fill="url(#agOI)"/>
-  <path id="oiline" d="${pPath}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
-  <circle cx="${pPts[pPts.length - 1].x}" cy="${pPts[pPts.length - 1].y}" r="4" fill="var(--accent)" stroke="var(--bg)" stroke-width="2"/>`;
-  animPath('oiline', svg);
-  attachChartHover(root, svg);
+  ${avgY != null ? `<line x1="${px}" y1="${avgY}" x2="${W - px}" y2="${avgY}" stroke="var(--warn)" stroke-width="1" stroke-dasharray="5,4" opacity=".65"/>` : ''}
+  <circle cx="${px + (points.length - 1) * xS}" cy="${toOiY(oiData[oiData.length - 1])}" r="4" fill="var(--orange)" stroke="var(--bg)" stroke-width="2"/>`;
+
+  const tip = root.querySelector('#c-tooltip');
+  if (!tip) return;
+  svg.querySelectorAll('.hpt').forEach((el) => {
+    el.addEventListener('mouseenter', function onEnter() {
+      tip.style.opacity = '1';
+      tip.innerHTML = `<span style="color:var(--orange)">${this.dataset.v}</span> <span style="color:var(--t3)">·</span> ${this.dataset.label || ''}`;
+      const r = svg.getBoundingClientRect();
+      const er = this.getBoundingClientRect();
+      const left = Math.max(0, Math.min(er.left - r.left - tip.offsetWidth / 2 + 8, r.width - tip.offsetWidth));
+      tip.style.left = `${left}px`;
+      tip.style.top = `${er.top - r.top - 44}px`;
+    });
+    el.addEventListener('mouseleave', () => { tip.style.opacity = '0'; });
+  });
 }
 
 export function calcSpread(root, o) {

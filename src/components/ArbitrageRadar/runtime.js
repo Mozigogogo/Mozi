@@ -9,6 +9,7 @@ import {
   fetchCryptoArbFundingDetail,
   fetchCryptoArbSpreadDetail,
   fetchCryptoArbBasisDetail,
+  fetchCryptoArbOIDetail,
 } from '@/api/cryptoArb';
 import {
   exColors,
@@ -137,7 +138,7 @@ let currentView = 'radar';
 let selectedOp = null;
 let selectedType = 'funding';
   let activeTab = options.initialTab || 'funding';
-let sortState = { key: null, dir: 'desc' }; // funding|ann|spreadAbs|spreadPct|quoteVolume|basisAbs|basisPct|null；默认不选中
+let sortState = { key: null, dir: 'desc' }; // funding|ann|spreadAbs|spreadPct|quoteVolume|basisAbs|basisPct|changePct|null；默认不选中
 let calcState = {principal:10000, period:30, costRate:10};
 let countdown = {h:3,m:22,s:0};
 let detailLoading = false;
@@ -180,6 +181,14 @@ function buildBasisQuery() {
   }
   if (sortState.key === 'basisPct') {
     return { basisPctSort: sortState.dir };
+  }
+  return {};
+}
+
+/** OI 异动排序：相对 7 日均值偏离 %；不传则服务端默认降序 */
+function buildOiQuery() {
+  if (sortState.key === 'changePct') {
+    return { changePctSort: sortState.dir };
   }
   return {};
 }
@@ -233,7 +242,7 @@ async function loadActiveList({ showSkeleton } = {}) {
     funding: () => fetchCryptoArbFundingList(buildFundingQuery()),
     spread: () => fetchCryptoArbSpreadList(buildSpreadQuery()),
     basis: () => fetchCryptoArbBasisList(buildBasisQuery()),
-    oi: () => fetchCryptoArbOIList(),
+    oi: () => fetchCryptoArbOIList(buildOiQuery()),
   };
   const mappers = {
     funding: mapFundingItem,
@@ -273,10 +282,12 @@ function sortBy(key) {
   const fundingKeys = ['funding', 'ann'];
   const spreadKeys = ['spreadAbs', 'spreadPct', 'quoteVolume'];
   const basisKeys = ['basisAbs', 'basisPct'];
+  const oiKeys = ['changePct'];
   const allowed =
     (activeTab === 'funding' && fundingKeys.includes(key)) ||
     (activeTab === 'spread' && spreadKeys.includes(key)) ||
-    (activeTab === 'basis' && basisKeys.includes(key));
+    (activeTab === 'basis' && basisKeys.includes(key)) ||
+    (activeTab === 'oi' && oiKeys.includes(key));
   if (!allowed) return;
   if (sortState.key === key) {
     sortState.dir = sortState.dir === 'desc' ? 'asc' : 'desc';
@@ -363,12 +374,19 @@ function openDetail(op, type = activeTab) {
   currentView = 'detail';
   detailError = null;
   detailLoading = false;
-  if ((selectedType === 'funding' || selectedType === 'spread' || selectedType === 'basis') && op) {
+  if (
+    (selectedType === 'funding' ||
+      selectedType === 'spread' ||
+      selectedType === 'basis' ||
+      selectedType === 'oi') &&
+    op
+  ) {
     detailLoading = true;
     render();
     if (selectedType === 'funding') loadFundingDetail(op);
     else if (selectedType === 'spread') loadSpreadDetail(op);
-    else loadBasisDetail(op);
+    else if (selectedType === 'basis') loadBasisDetail(op);
+    else loadOIDetail(op);
   } else {
     render();
   }
@@ -479,6 +497,42 @@ async function loadBasisDetail(op) {
   if (currentView === 'detail' && selectedType === 'basis') render();
 }
 
+async function loadOIDetail(op) {
+  const reqId = ++detailRequestId;
+  const symbol = String(op?.sym || op?.symbol || '').trim();
+  const exchange = String(op?.exchange || '').trim();
+  detailLoading = true;
+  detailError = null;
+  try {
+    const detail = await fetchCryptoArbOIDetail({ symbol, exchange });
+    if (reqId !== detailRequestId) return;
+    selectedOp = {
+      ...op,
+      ...(detail.sym ? { sym: detail.sym } : {}),
+      ...(detail.exchange ? { exchange: detail.exchange } : {}),
+      currentOiUsd: detail.currentOiUsd != null ? detail.currentOiUsd : op.currentOiUsd,
+      avg7dOiUsd: detail.avg7dOiUsd != null ? detail.avg7dOiUsd : op.avg7dOiUsd,
+      oiChangePct: detail.oiChangePct != null ? detail.oiChangePct : op.oiChangePct,
+      priceChange24hPct:
+        detail.priceChange24hPct != null ? detail.priceChange24hPct : op.priceChange24hPct,
+      correlationHint: detail.correlationHint || op.correlationHint,
+      volume24h: detail.volume24h != null ? detail.volume24h : op.volume24h,
+      sampleCount: detail.sampleCount != null ? detail.sampleCount : op.sampleCount,
+      ts: detail.ts || op.ts,
+      dataTs: detail.dataTs || op.dataTs,
+      chart30d: detail.chart30d,
+      detailLoaded: true,
+    };
+    detailLoading = false;
+    detailError = null;
+  } catch (err) {
+    if (reqId !== detailRequestId) return;
+    detailLoading = false;
+    detailError = err?.message || String(err) || '加载详情失败';
+  }
+  if (currentView === 'detail' && selectedType === 'oi') render();
+}
+
 function backToRadar() {
   detailRequestId += 1;
   detailLoading = false;
@@ -569,7 +623,11 @@ function render() {
         calcBasis();
       }
     }
-    else if (selectedType === 'oi') { initOIChart(__root, selectedOp); }
+    else if (selectedType === 'oi') {
+      if (!detailLoading && !detailError) {
+        initOIChart(__root, selectedOp);
+      }
+    }
   }
   animateRows();
   if(currentView==='radar') {
@@ -619,7 +677,7 @@ function renderDetailRoute() {
   if (selectedType === 'basis') {
     return renderBasisDetail(o, idx, { detailLoading, detailError });
   }
-  if (selectedType === 'oi') return renderOIDetail(o, idx);
+  if (selectedType === 'oi') return renderOIDetail(o, idx, { detailLoading, detailError });
   return renderFundingDetail(o);
 }
 
@@ -694,7 +752,7 @@ function escapeHtml(str) {
 function formatListError(msg) {
   const s = String(msg || '').trim();
   if (!s) return '加载失败，请稍后再试';
-  if (/status code 404/i.test(s)) return 'Funding 列表接口暂不可用（404）';
+  if (/status code 404/i.test(s)) return '列表接口暂不可用（404）';
   if (/status code 5\d\d/i.test(s)) return '服务暂时异常，请稍后再试';
   if (/Network Error|Failed to fetch|timeout|ECONNABORTED/i.test(s)) return '网络异常，请检查网络后重试';
   if (/Request failed with status code/i.test(s)) {
@@ -1051,6 +1109,14 @@ function retryBasisDetail() {
   detailLoading = true;
   render();
   loadBasisDetail(selectedOp);
+}
+
+function retryOIDetail() {
+  if (!selectedOp) return;
+  detailError = null;
+  detailLoading = true;
+  render();
+  loadOIDetail(selectedOp);
 }
 
 function calcUpdate() {
@@ -1539,7 +1605,7 @@ function showToast(msg) {
 
   // Patch render templates: after each render, nothing needed if we use window bridge
   const api = {
-    nav, goBack, openDetail, backToRadar, setTab, setListPage, sortBy, setPeriod, calcUpdate, calcSpread, calcBasis, bindTG, showToast, ops, render, loadFundingList, loadActiveList, retryFundingDetail, retrySpreadDetail, retryBasisDetail
+    nav, goBack, openDetail, backToRadar, setTab, setListPage, sortBy, setPeriod, calcUpdate, calcSpread, calcBasis, bindTG, showToast, ops, render, loadFundingList, loadActiveList, retryFundingDetail, retrySpreadDetail, retryBasisDetail, retryOIDetail
   };
   Object.assign(__root, api);
 

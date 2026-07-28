@@ -74,9 +74,17 @@ export async function fetchCryptoArbBasisList(params = {}) {
   return fetchCryptoArbList(Interface.CRYPTO_ARB_LIST_BASIS, query, '基差套利列表');
 }
 
-/** GET /crypto_arb/list/oi_anomaly */
+/**
+ * OI 异动列表
+ * GET /crypto_arb/list/oi_change
+ * 入参：changePctSort（asc|desc）；不传则默认偏离 % 降序
+ */
 export async function fetchCryptoArbOIList(params = {}) {
-  return fetchCryptoArbList(Interface.CRYPTO_ARB_LIST_OI, params, 'OI 异动列表');
+  const query = {};
+  if (params.changePctSort === 'asc' || params.changePctSort === 'desc') {
+    query.changePctSort = params.changePctSort;
+  }
+  return fetchCryptoArbList(Interface.CRYPTO_ARB_LIST_OI, query, 'OI 异动列表');
 }
 
 /**
@@ -166,6 +174,36 @@ export async function fetchCryptoArbBasisDetail(params = {}) {
   }
 
   return mapBasisDetail(res.data);
+}
+
+/**
+ * OI 异动详情
+ * GET /crypto_arb/detail/oi_change
+ * @param {{ symbol: string, exchange: string }} params
+ */
+export async function fetchCryptoArbOIDetail(params = {}) {
+  const symbol = String(params.symbol || '').trim();
+  const exchange = String(params.exchange || '').trim();
+  if (!symbol || !exchange) {
+    throw new Error('缺少币种或交易所参数');
+  }
+
+  const res = await request({
+    url: Interface.CRYPTO_ARB_DETAIL_OI,
+    method: 'GET',
+    params: { symbol, exchange },
+  });
+
+  if (!res || (res.code !== 0 && res.code !== 200 && res.success !== true)) {
+    const msg = res?.errorMsg || res?.message || res?.msg || '加载 OI 详情失败';
+    throw new Error(String(msg));
+  }
+
+  if (res.data == null) {
+    throw new Error(res?.errorMsg || '数据不存在或已过期');
+  }
+
+  return mapOIDetail(res.data);
 }
 
 function mapFundingDetail(raw) {
@@ -290,6 +328,50 @@ function mapBasisDetail(raw) {
       item.perp_quote_volume_24h ??
       item.quoteVolume24h ??
       null,
+    ts: Number(item.ts) || 0,
+    dataTs: Number(item.ts ?? item.dataTs ?? item.data_ts) || 0,
+    chart30d,
+  };
+}
+
+function mapOIDetail(raw) {
+  const item = raw && typeof raw === 'object' ? raw : {};
+  const changePct = Number(
+    item.changePct ?? item.change_pct ?? item.oiChangePct ?? item.oi_change_pct
+  );
+  const priceChg = Number(
+    item.priceChangePercent ??
+      item.price_change_percent ??
+      item.priceChange24hPct ??
+      item.price_change_24h_pct
+  );
+
+  const chart30d = Array.isArray(item.chart30d)
+    ? item.chart30d
+        .map((p) => {
+          if (!p || typeof p !== 'object') return null;
+          const ts = Number(p.ts);
+          const value = Number(p.value ?? p.oiUsd ?? p.oi_usd ?? p.currentOiUsd);
+          if (!Number.isFinite(ts) || !Number.isFinite(value)) return null;
+          return { ts, value };
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.ts - b.ts)
+    : [];
+
+  return {
+    type: 'oi',
+    sym: String(item.symbol || item.sym || '').trim().toUpperCase() || null,
+    exchange: String(item.exchange || item.exchangeCode || item.exchange_code || '').trim() || null,
+    currentOiUsd: Number(item.currentOiUsd ?? item.current_oi_usd) || 0,
+    avg7dOiUsd: Number(item.avgOiUsd ?? item.avg_oi_usd ?? item.avg7dOiUsd ?? item.avg_7d_oi_usd) || 0,
+    oiChangePct: Number.isFinite(changePct) ? changePct : 0,
+    priceChange24hPct: Number.isFinite(priceChg) ? priceChg : 0,
+    correlationHint: String(
+      item.signal ?? item.correlationHint ?? item.correlation_hint ?? ''
+    ).trim() || '—',
+    volume24h: item.quoteVolume24h ?? item.quote_volume_24h ?? null,
+    sampleCount: item.sampleCount ?? item.sample_count ?? null,
     ts: Number(item.ts) || 0,
     dataTs: Number(item.ts ?? item.dataTs ?? item.data_ts) || 0,
     chart30d,
